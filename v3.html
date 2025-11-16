@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>IP 地址对比 + CIDR 合并工具（三栏紧凑布局版）</title>
+<style>
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  padding:10px;background:#f5f7fa;color:#111;margin:0;
+}
+
+/* 三栏布局 */
+.container{
+  display:flex;
+  gap:10px;
+  height:100vh;
+  box-sizing:border-box;
+}
+
+.panel{
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:6px;
+  padding:8px;
+  display:flex;
+  flex-direction:column;
+  overflow:auto;
+}
+
+.panel h2{
+  margin:0 0 6px 0;
+  font-size:15px;
+}
+
+/* 左中右宽度 */
+.left{width:28%;}
+.middle{width:28%;}
+.right{width:44%;}
+
+textarea{
+  width:100%;
+  height:200px;
+  font-family:Consolas,monospace;
+  font-size:12px;
+  border:1px solid #ccc;
+  border-radius:6px;
+  padding:6px;
+  box-sizing:border-box;
+}
+
+button{
+  background:#2563eb;color:#fff;border:none;
+  border-radius:6px;padding:6px 10px;
+  font-size:12px;font-weight:600;cursor:pointer;
+  margin-right:4px;margin-top:6px;
+}
+button:hover{opacity:.9}
+
+.box{
+  background:#fafafa;
+  font-family:Consolas,monospace;
+  font-size:12px;
+  padding:8px;
+  border:1px solid #eee;
+  border-radius:6px;
+  white-space:pre-wrap;
+  overflow:auto;
+  flex-grow:1;
+}
+
+/* 可视化颜色点 */
+.dot{
+  width:14px;height:14px;border-radius:50%;display:inline-block;margin-left:6px;
+  border:1px solid #999;
+}
+
+/* 进度条 */
+.progress-wrapper{
+  margin-bottom:6px;
+}
+.progress-bar{
+  width:100%;
+  height:6px;
+  background:#e5e7eb;
+  border-radius:4px;
+  overflow:hidden;
+}
+.progress-inner{
+  height:100%;
+  width:0%;
+  background:#2563eb;
+  transition:width .15s linear;
+}
+.progress-text{
+  font-size:11px;
+  color:#4b5563;
+  margin-top:2px;
+}
+
+/* 左下角说明文字 */
+.logic-note{
+  font-size:11px;
+  color:#6b7280;
+  margin-top:6px;
+  line-height:1.4;
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- 左侧：输入 -->
+  <div class="panel left">
+    <h2>输入 1（现网地址段）</h2>
+    <textarea id="input1" placeholder="例如：
+10.0.0.0/24
+10.0.3.0/22
+10.0.6.0/22"></textarea>
+
+    <h2>输入 2（拟新增地址段）</h2>
+    <textarea id="input2" placeholder="例如：
+10.0.0.0/21"></textarea>
+
+    <div>
+      <button onclick="compareRanges()">开始对比</button>
+    </div>
+
+    <!-- 左下角逻辑说明 -->
+    <div class="logic-note">
+      逻辑说明：<br>
+      1）输入1解析为区间并自动合并，用作“现网已用地址池”；<br>
+      2）输入2解析并合并后，按区间逐个 IP 展开；<br>
+      3）每个 IP 判断是否落在输入1合并区间内，分为“已存在 / 不存在”；<br>
+      4）两类 IP 各自再次按连续区间合并，并转换成最小 CIDR 输出；<br>
+      5）中间面板上方进度条展示展开/判断的实时进度；<br>
+      6）中间可视化区按“输入2合并后的每个网段”画一个圆点：
+      绿色=全部已存在，红色=全部不存在，黄色=部分存在。
+    </div>
+  </div>
+
+  <!-- 中间：中间过程（合并结果 + 可视化 + 进度条） -->
+  <div class="panel middle">
+    <h2>中间过程</h2>
+
+    <div class="progress-wrapper">
+      <div class="progress-bar">
+        <div id="progressInner" class="progress-inner"></div>
+      </div>
+      <div id="progressText" class="progress-text">进度：尚未开始</div>
+    </div>
+
+    <div id="summary" class="box" style="margin-bottom:8px;min-height:40%;"></div>
+    <div id="visual" class="box" style="min-height:40%;"></div>
+  </div>
+
+  <!-- 右侧：最终结果（可复制） -->
+  <div class="panel right">
+    <h2>
+      最终结果
+      <button onclick="copyResult()">复制</button>
+      <button onclick="exportExcel()">导出 CSV</button>
+    </h2>
+    <div id="result" class="box"></div>
+  </div>
+
+</div>
+
+<script>
+// ================= 基础函数 =================
+function ipToInt(ip){
+  const parts = ip.split('.').map(Number);
+  if (parts.length !== 4 || parts.some(n => !Number.isInteger(n) || n < 0 || n > 255)) {
+    throw new Error("非法 IP: " + ip);
+  }
+  return ((parts[0] << 24) >>> 0) |
+         ((parts[1] << 16) >>> 0) |
+         ((parts[2] <<  8) >>> 0) |
+         ( parts[3]       >>> 0);
+}
+
+function intToIp(i){
+  return [
+    (i >>> 24) & 255,
+    (i >>> 16) & 255,
+    (i >>>  8) & 255,
+    (i       ) & 255
+  ].join(".");
+}
+
+// CIDR / 单 IP → [start,end]
+function cidrToRange(c){
+  c = c.trim();
+  let ip, mask;
+  if (c.includes("/")) {
+    const parts = c.split("/");
+    if (parts.length !== 2) throw new Error("非法 CIDR: " + c);
+    ip = parts[0].trim();
+    mask = Number(parts[1]);
+    if (!Number.isInteger(mask) || mask < 0 || mask > 32) {
+      throw new Error("非法掩码: " + c);
+    }
+  } else {
+    ip = c;
+    mask = 32;
+  }
+  const ipInt = ipToInt(ip);
+  const maskInt = mask === 0 ? 0 : ((0xFFFFFFFF << (32 - mask)) >>> 0);
+  const start = (ipInt & maskInt) >>> 0;
+  const end   = (start | (~maskInt >>> 0)) >>> 0;
+  return [start, end];
+}
+
+function parseRanges(text){
+  const ranges = [];
+  const errors = [];
+  for (const raw of text.split(/\n+/)) {
+    const line = raw.trim();
+    if (!line || line.startsWith("#")) continue;
+    try {
+      ranges.push(cidrToRange(line));
+    } catch (e) {
+      errors.push(e.message);
+    }
+  }
+  return { ranges, errors };
+}
+
+// 按 start 排序 + 合并连续/重叠区间
+function mergeRanges(ranges){
+  if (!ranges.length) return [];
+  const sorted = ranges.slice().sort((a,b)=>a[0]-b[0]);
+  const out = [];
+  let [s,e] = sorted[0];
+  for (let i=1;i<sorted.length;i++){
+    const [cs,ce] = sorted[i];
+    if (cs <= e + 1) {
+      if (ce > e) e = ce;
+    } else {
+      out.push([s,e]);
+      [s,e] = [cs,ce];
+    }
+  }
+  out.push([s,e]);
+  return out;
+}
+
+// 在已合并区间内做二分查找
+function ipInRanges(ip, ranges){
+  let lo = 0, hi = ranges.length - 1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    const [s,e] = ranges[mid];
+    if (ip < s) hi = mid - 1;
+    else if (ip > e) lo = mid + 1;
+    else return true;
+  }
+  return false;
+}
+
+// ================= Range → 最小 CIDR =================
+function rangeToCIDR(start, end){
+  const res = [];
+  while (start <= end) {
+    let maxSize = start & -start;   // 当前起点可用的最大块
+    if (maxSize === 0) maxSize = 1;
+    const remain = end - start + 1;
+    const maxMask  = 32 - Math.floor(Math.log2(maxSize));
+    const needMask = 32 - Math.floor(Math.log2(remain));
+    const mask = Math.max(maxMask, needMask);
+    res.push(intToIp(start) + "/" + mask);
+    start += 2 ** (32 - mask);
+  }
+  return res;
+}
+
+function listToCIDR(intList){
+  if (!intList.length) return [];
+  intList.sort((a,b)=>a-b);
+  const out = [];
+  let s = intList[0];
+  let p = intList[0];
+  for (let i=1;i<intList.length;i++){
+    if (intList[i] !== p + 1) {
+      out.push(...rangeToCIDR(s, p));
+      s = intList[i];
+    }
+    p = intList[i];
+  }
+  out.push(...rangeToCIDR(s, p));
+  return out;
+}
+
+// ================= 进度条工具 =================
+function setProgress(done, total){
+  const inner = document.getElementById("progressInner");
+  const text  = document.getElementById("progressText");
+  if (!inner || !text) return;
+  if (!total || total <= 0) {
+    inner.style.width = "0%";
+    text.textContent = "进度：尚未开始";
+    return;
+  }
+  const percent = Math.floor(done * 100 / total);
+  inner.style.width = percent + "%";
+  text.textContent = "进度：" + done + " / " + total + " IP (" + percent + "%)";
+}
+
+// ================= 主流程（带进度条） =================
+const MAX_EXPAND = 1000000;
+
+async function compareRanges(){
+  const input1 = document.getElementById("input1").value.trim();
+  const input2 = document.getElementById("input2").value.trim();
+  const summary = document.getElementById("summary");
+  const visual  = document.getElementById("visual");
+  const result  = document.getElementById("result");
+
+  summary.textContent = "";
+  visual.innerHTML    = "";
+  result.textContent  = "";
+  setProgress(0, 0);
+
+  if (!input1 || !input2) {
+    result.textContent = "请输入 输入1 和 输入2。";
+    return;
+  }
+
+  const parsed1 = parseRanges(input1);
+  const parsed2 = parseRanges(input2);
+  const r1 = parsed1.ranges;
+  const r2 = parsed2.ranges;
+
+  if (!r1.length) {
+    result.textContent = "输入1 解析不到任何有效地址段。";
+    return;
+  }
+  if (!r2.length) {
+    result.textContent = "输入2 解析不到任何有效地址段。";
+    return;
+  }
+
+  const m1 = mergeRanges(r1);
+  const m2 = mergeRanges(r2);
+
+  // === 概览 ===
+  let sTxt = "=== 输入1（现网自动合并） ===\n";
+  m1.forEach(([s,e])=>{
+    sTxt += intToIp(s) + (s===e ? "" : " - " + intToIp(e)) + "\n";
+  });
+  sTxt += "\n=== 输入2（即将配置自动合并） ===\n";
+  m2.forEach(([s,e])=>{
+    sTxt += intToIp(s) + (s===e ? "" : " - " + intToIp(e)) + "\n";
+  });
+
+  if (parsed1.errors.length || parsed2.errors.length){
+    sTxt += "\n=== 解析警告 ===\n";
+    parsed1.errors.forEach(msg => sTxt += "[输入1] " + msg + "\n");
+    parsed2.errors.forEach(msg => sTxt += "[输入2] " + msg + "\n");
+  }
+  summary.textContent = sTxt;
+
+  // === 先计算总展开数量，用于进度条 ===
+  const segInfos = [];
+  let totalToExpand = 0;
+  for (const [s,e] of m2){
+    const count = e >= s ? (e - s + 1) : 0;
+    if (count <= 0) continue;
+    totalToExpand += count;
+    segInfos.push({ start: s, end: e, count: count });
+  }
+
+  if (totalToExpand === 0){
+    result.textContent = "输入2 合并后没有任何可展开的 IP。";
+    return;
+  }
+  if (totalToExpand > MAX_EXPAND){
+    result.textContent = "需要展开的 IP 数量为 " + totalToExpand +
+                         "，超过限制（" + MAX_EXPAND + "），请缩小输入2范围。";
+    return;
+  }
+
+  setProgress(0, totalToExpand);
+
+  // === 展开输入2，分类存在/不存在，并记录每个网段统计 ===
+  const existsInts    = [];
+  const notExistsInts = [];
+  const segStats      = [];
+
+  let processed = 0;
+
+  for (const seg of segInfos){
+    const s = seg.start;
+    const e = seg.end;
+    const count = seg.count;
+    let existCount = 0;
+
+    for (let ip = s; ip <= e; ip++){
+      processed++;
+      if (ipInRanges(ip, m1)) {
+        existsInts.push(ip);
+        existCount++;
+      } else {
+        notExistsInts.push(ip);
+      }
+    }
+
+    segStats.push({
+      start: s,
+      end: e,
+      existCount: existCount,
+      totalCount: count
+    });
+
+    setProgress(processed, totalToExpand);
+    await new Promise(resolve => setTimeout(resolve, 0));
+  }
+
+  // === 可视化：每个合并后的网段一个点 ===
+  let visHtml = "<strong>=== IP 拆分可视化 ===</strong><br>" +
+    "<div style='font-size:11px;color:#555;margin-bottom:4px;'>" +
+    "<span class='dot' style='background:#d1fae5;border-color:#10b981'></span> 完全已存在&nbsp;&nbsp;" +
+    "<span class='dot' style='background:#fee2e2;border-color:#ef4444'></span> 完全不存在&nbsp;&nbsp;" +
+    "<span class='dot' style='background:#fde68a;border-color:#f59e0b'></span> 部分存在" +
+    "<br>鼠标悬停圆点查看该网段范围和统计信息</div>";
+
+  segStats.forEach((seg, idx)=>{
+    const sIp = intToIp(seg.start);
+    const eIp = intToIp(seg.end);
+    let color;
+    if (seg.existCount === 0) color = "#fee2e2";
+    else if (seg.existCount === seg.totalCount) color = "#d1fae5";
+    else color = "#fde68a";
+
+    const title = 
+      "网段: " + sIp + " - " + eIp +
+      "\n总 IP 数: " + seg.totalCount +
+      "\n已存在: " + seg.existCount +
+      "\n不存在: " + (seg.totalCount - seg.existCount);
+
+    visHtml += "<div style='font-size:12px;margin:4px 0;'>" +
+      "网段 " + (idx + 1) + ": " + sIp + " - " + eIp +
+      "<span class='dot' style='background:" + color + ";' title='" +
+      title.replace(/'/g, "&#39;") + "'></span>" +
+      "</div>";
+  });
+
+  visual.innerHTML = visHtml;
+
+  // === 最终结果 ===
+  const existsCIDR    = listToCIDR(existsInts);
+  const notExistsCIDR = listToCIDR(notExistsInts);
+
+  let out = "=== 已存在（CIDR 合并） ===\n";
+  out += (existsCIDR.length ? existsCIDR.join("\n") : "无");
+  out += "\n\n=== 不存在（CIDR 合并） ===\n";
+  out += (notExistsCIDR.length ? notExistsCIDR.join("\n") : "无");
+  out += "\n\n（本次共展开 IP 数量：" + totalToExpand + "）";
+
+  result.textContent = out;
+  setProgress(totalToExpand, totalToExpand);
+}
+
+// ================= 一键复制 =================
+function copyResult(){
+  const text = document.getElementById("result").textContent;
+  if (!text.trim()){
+    alert("无结果可复制，请先点击“开始对比”。");
+    return;
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text)
+      .then(()=>alert("已复制结果"))
+      .catch(()=>alert("复制失败，请检查浏览器权限。"));
+  }else{
+    alert("当前浏览器不支持 clipboard API，请手动复制。");
+  }
+}
+
+// ================= 导出 CSV =================
+function exportExcel(){
+  const text = document.getElementById("result").textContent;
+  if (!text.trim()){
+    alert("无结果可导出，请先点击“开始对比”。");
+    return;
+  }
+  const csv = text.replace(/\n/g, "\r\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href = url;
+  a.download = "ip_compare_result.csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
