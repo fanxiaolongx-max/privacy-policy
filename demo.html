@@ -3,331 +3,430 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>外卖全流程模拟 Demo</title>
+    <title>外卖全流程仿真 Pro</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --user-color: #e3f2fd;
-            --user-btn: #2196f3;
-            --merchant-color: #fff3e0;
-            --merchant-btn: #ff9800;
-            --rider-color: #e8f5e9;
-            --rider-btn: #4caf50;
-            --text-color: #333;
+            --user-bg: #f0f7ff; --user-main: #2196f3;
+            --merch-bg: #fff8e1; --merch-main: #ff9800;
+            --rider-bg: #f1f8e9; --rider-main: #43a047;
+            --gray: #757575;
         }
-        body {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f0f2f5;
-            color: var(--text-color);
-        }
-        h1 { text-align: center; margin-bottom: 30px; color: #444; }
         
-        /* 布局容器 */
-        .app-container {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            max-width: 1400px;
-            margin: 0 auto;
-            height: 85vh;
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #eef1f5;
+            height: 100vh;
+            overflow: hidden; /* 禁止整个页面滚动，只允许内部区域滚动 */
         }
 
-        /* 角色面板通用样式 */
+        /* ============ 核心布局 ============ */
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        header {
+            background: #333;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .main-stage {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            padding: 15px;
+            overflow: hidden; /* 防止网格撑破屏幕 */
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* ============ 角色面板通用结构 ============ */
         .role-panel {
             background: white;
             border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
             display: flex;
             flex-direction: column;
-            overflow: hidden;
-            border-top: 6px solid #ccc;
+            overflow: hidden; /* 关键：限制面板溢出 */
+            border-top: 5px solid #ccc;
+            transition: all 0.3s;
         }
 
         .panel-header {
             padding: 15px;
-            text-align: center;
             font-weight: bold;
-            font-size: 1.2em;
-            border-bottom: 1px solid #eee;
+            font-size: 1.1em;
+            flex-shrink: 0; /* 标题不压缩 */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
         }
 
-        .panel-body {
+        /* 关键：内容滚动区域 */
+        .panel-content {
             flex: 1;
+            overflow-y: auto; /* 允许垂直滚动 */
             padding: 15px;
-            overflow-y: auto;
             background-color: #fafafa;
+            position: relative;
         }
 
-        /* 特定角色配色 */
-        .role-user { border-color: var(--user-btn); }
-        .role-user .panel-header { background-color: var(--user-color); color: #0d47a1; }
+        /* 底部固定操作栏（如下单按钮） */
+        .panel-footer {
+            padding: 15px;
+            background: white;
+            border-top: 1px solid #eee;
+            flex-shrink: 0;
+        }
+
+        /* 美化滚动条 */
+        .panel-content::-webkit-scrollbar { width: 6px; }
+        .panel-content::-webkit-scrollbar-track { background: transparent; }
+        .panel-content::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+        .panel-content::-webkit-scrollbar-thumb:hover { background: #aaa; }
+
+        /* ============ 角色特定配色 ============ */
+        .role-user { border-color: var(--user-main); }
+        .role-user .panel-header { background: var(--user-bg); color: var(--user-main); }
         
-        .role-merchant { border-color: var(--merchant-btn); }
-        .role-merchant .panel-header { background-color: var(--merchant-color); color: #e65100; }
+        .role-merchant { border-color: var(--merch-main); }
+        .role-merchant .panel-header { background: var(--merch-bg); color: #d84315; }
 
-        .role-rider { border-color: var(--rider-btn); }
-        .role-rider .panel-header { background-color: var(--rider-color); color: #1b5e20; }
+        .role-rider { border-color: var(--rider-main); }
+        .role-rider .panel-header { background: var(--rider-bg); color: #2e7d32; }
 
-        /* 组件样式 */
+        /* ============ 组件样式 ============ */
+        
+        /* 菜单 Grid */
         .menu-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
             gap: 10px;
-            margin-bottom: 20px;
         }
-        
         .menu-item {
             background: white;
-            border: 1px solid #ddd;
-            padding: 10px;
+            border: 1px solid #eee;
             border-radius: 8px;
-            cursor: pointer;
+            padding: 10px;
             text-align: center;
-            transition: all 0.2s;
+            cursor: pointer;
+            transition: 0.2s;
         }
-        .menu-item:hover { border-color: var(--user-btn); background-color: #f5faff; }
-        .menu-item.active { background-color: var(--user-btn); color: white; border-color: var(--user-btn); }
+        .menu-item.active {
+            border-color: var(--user-main);
+            background-color: #e3f2fd;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(33, 150, 243, 0.2);
+        }
 
+        /* 订单卡片通用 */
         .order-card {
             background: white;
             border-radius: 8px;
-            padding: 12px;
             margin-bottom: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            border-left: 4px solid #ccc;
-            font-size: 0.9em;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            padding: 12px;
             position: relative;
-            transition: all 0.3s ease;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* 商家端：模拟热敏小票打印效果 */
+        .receipt-card {
+            font-family: 'Courier New', Courier, monospace; /* 等宽字体 */
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-top: none;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            position: relative;
+            /* 锯齿边缘模拟 (简单版) */
+            border-bottom: 2px dashed #ccc; 
         }
         
-        /* 订单状态颜色条 */
-        .status-wait_pay { border-left-color: #999; }
-        .status-pending { border-left-color: #ff9800; } /* 待接单 */
-        .status-cooking { border-left-color: #9c27b0; } /* 制作中 */
-        .status-wait_rider { border-left-color: #2196f3; } /* 待抢单 */
-        .status-delivering { border-left-color: #4caf50; } /* 配送中 */
-        .status-completed { border-left-color: #607d8b; opacity: 0.8; } /* 完成 */
-
-        .order-header { display: flex; justify-content: space-between; margin-bottom: 6px; font-weight: bold; color: #555; }
-        .order-info { margin-bottom: 8px; color: #666; }
-        .order-tags span { 
-            background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; margin-right: 5px; 
+        /* 打印动画 */
+        .printing-animation {
+            animation: printSlide 2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+            transform-origin: top center;
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
         }
-        .tag-delivery { background: #e3f2fd; color: #1565c0; }
-        .tag-pickup { background: #fff3e0; color: #ef6c00; }
 
-        /* 按钮 */
+        @keyframes printSlide {
+            0% { max-height: 0; opacity: 0.5; }
+            100% { max-height: 500px; opacity: 1; }
+        }
+
+        .receipt-header {
+            text-align: center;
+            border-bottom: 1px dashed #ccc;
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .receipt-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .receipt-divider { border-bottom: 1px dashed #ccc; margin: 8px 0; }
+
+        /* 标签与按钮 */
+        .tag { padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+        .tag-del { background: #e3f2fd; color: #1976d2; }
+        .tag-pick { background: #fff3e0; color: #f57c00; }
+        
         .btn {
+            width: 100%;
+            padding: 10px;
             border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 0.85em;
+            font-weight: bold;
+            font-size: 14px;
             transition: opacity 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
         }
-        .btn:hover { opacity: 0.8; }
-        .btn-block { width: 100%; padding: 10px; font-size: 1em; margin-top: 10px;}
+        .btn:hover { opacity: 0.9; }
+        .btn:disabled { background: #ccc !important; cursor: not-allowed; }
         
-        .btn-primary { background: var(--user-btn); color: white; }
-        .btn-merchant { background: var(--merchant-btn); color: white; }
-        .btn-rider { background: var(--rider-btn); color: white; }
-        .btn-disabled { background: #ccc; cursor: not-allowed; }
-
-        .section-title {
-            font-size: 0.9em;
-            color: #888;
-            margin: 15px 0 8px 0;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+        .btn-blue { background: var(--user-main); color: white; }
+        .btn-orange { background: var(--merch-main); color: white; }
+        .btn-green { background: var(--rider-main); color: white; }
 
         /* Tab 切换 */
-        .tabs { display: flex; margin-bottom: 10px; border-bottom: 1px solid #eee; }
-        .tab { padding: 8px 15px; cursor: pointer; font-size: 0.9em; color: #666; }
+        .tabs { display: flex; border-bottom: 1px solid #eee; margin-bottom: 10px; background: white; position: sticky; top: 0; z-index: 5; }
+        .tab { flex: 1; text-align: center; padding: 10px; cursor: pointer; color: #888; font-size: 0.9rem; }
         .tab.active { color: #333; font-weight: bold; border-bottom: 2px solid #333; }
+        .badge { background: #f44336; color: white; border-radius: 10px; padding: 0 5px; font-size: 10px; vertical-align: super; }
 
-        .empty-tip { text-align: center; color: #aaa; padding: 20px; font-size: 0.9em; }
+        /* 状态提示 */
+        .empty-state { text-align: center; color: #999; padding: 30px 0; font-size: 0.9rem; }
+        .status-text { font-size: 0.85rem; font-weight: bold; }
 
-        /* 动画 */
-        .list-enter-active, .list-leave-active { transition: all 0.4s ease; }
-        .list-enter-from, .list-leave-to { opacity: 0; transform: translateX(-20px); }
+        /* 闪烁提示新订单 */
+        .flash-bg { animation: flash 1s infinite; }
+        @keyframes flash {
+            0% { background-color: var(--merch-bg); }
+            50% { background-color: #fffde7; }
+            100% { background-color: var(--merch-bg); }
+        }
+
+        /* 响应式适配 */
+        @media (max-width: 900px) {
+            .main-stage { grid-template-columns: 1fr; overflow-y: auto; display: block; }
+            .role-panel { margin-bottom: 20px; height: 500px; }
+            body { overflow: auto; }
+        }
     </style>
 </head>
 <body>
 
 <div id="app">
-    <h1>📦 外卖业务全流程仿真 Demo</h1>
+    <header>
+        <i class="fas fa-hamburger"></i> 全流程外卖仿真系统 Pro
+    </header>
 
-    <div class="app-container">
+    <div class="main-stage">
         
-        <!-- ================= 用户端 ================= -->
+        <!-- ==================== 用户端 ==================== -->
         <div class="role-panel role-user">
             <div class="panel-header">
-                <span>📱 用户端 (User)</span>
+                <span><i class="fas fa-mobile-alt"></i> 用户点餐</span>
+                <span style="font-size:0.8em; font-weight:normal">余额: ¥999</span>
             </div>
-            <div class="panel-body">
-                <!-- 配送方式选择 -->
-                <div style="display: flex; background: #eee; border-radius: 8px; padding: 4px; margin-bottom: 15px;">
-                    <div style="flex:1; text-align: center; padding: 6px; border-radius: 6px; cursor: pointer;"
-                         :style="orderForm.type === 'delivery' ? 'background:white; font-weight:bold; shadow:0 2px 4px rgba(0,0,0,0.1)' : ''"
-                         @click="orderForm.type = 'delivery'">
-                         🛵 外卖配送
+            
+            <div class="panel-content">
+                <!-- 配送方式 -->
+                <div style="background: white; padding: 4px; border-radius: 8px; display: flex; margin-bottom: 15px; border:1px solid #eee;">
+                    <div style="flex:1; text-align:center; padding:8px; border-radius:6px; cursor:pointer;" 
+                         :style="orderForm.type==='delivery'?'background:var(--user-main);color:white':'color:#666'"
+                         @click="orderForm.type='delivery'">
+                        外卖配送
                     </div>
-                    <div style="flex:1; text-align: center; padding: 6px; border-radius: 6px; cursor: pointer;"
-                         :style="orderForm.type === 'pickup' ? 'background:white; font-weight:bold; shadow:0 2px 4px rgba(0,0,0,0.1)' : ''"
-                         @click="orderForm.type = 'pickup'">
-                         🏪 到店自取
+                    <div style="flex:1; text-align:center; padding:8px; border-radius:6px; cursor:pointer;"
+                         :style="orderForm.type==='pickup'?'background:var(--user-main);color:white':'color:#666'"
+                         @click="orderForm.type='pickup'">
+                        到店自取
                     </div>
                 </div>
 
-                <!-- 菜单 -->
+                <!-- 菜品列表 -->
                 <div class="menu-grid">
-                    <div class="menu-item" 
-                         v-for="food in menu" 
-                         :key="food.id"
-                         :class="{active: orderForm.items.includes(food.name)}"
-                         @click="toggleFood(food.name)">
-                        {{ food.icon }} {{ food.name }}<br>
-                        <small>¥{{ food.price }}</small>
+                    <div class="menu-item" v-for="item in menu" :key="item.id" 
+                         :class="{active: orderForm.items.find(i=>i.id===item.id)}"
+                         @click="toggleItem(item)">
+                        <div style="font-size:24px">{{item.icon}}</div>
+                        <div style="font-weight:bold; margin:5px 0">{{item.name}}</div>
+                        <div style="color:var(--gray)">¥{{item.price}}</div>
                     </div>
                 </div>
 
-                <div style="border-top: 1px solid #eee; padding-top: 10px;">
-                    <div style="display:flex; justify-content: space-between; align-items: center;">
-                        <span>合计: <strong style="font-size: 1.2em;">¥{{ currentTotal }}</strong></span>
-                        <small style="color:#888">{{ orderForm.items.length }} 件商品</small>
-                    </div>
-                    <button class="btn btn-primary btn-block" 
-                            :class="{'btn-disabled': orderForm.items.length === 0}"
-                            @click="submitOrder">
-                        提交并支付
-                    </button>
-                </div>
-
-                <!-- 用户订单列表 -->
-                <div class="section-title">我的订单</div>
-                <transition-group name="list" tag="div">
-                    <div v-for="order in userOrders" :key="order.id" class="order-card" :class="'status-' + order.statusCode">
-                        <div class="order-header">
-                            <span>#{{ order.id }} {{ order.shopName }}</span>
-                            <span :style="{color: getStatusColor(order.statusCode)}">{{ order.statusText }}</span>
-                        </div>
-                        <div class="order-tags">
-                            <span :class="order.type === 'delivery' ? 'tag-delivery' : 'tag-pickup'">
-                                {{ order.type === 'delivery' ? '外卖' : '自取' }}
+                <!-- 历史订单流 (倒序) -->
+                <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px;">
+                    <h4 style="margin: 0 0 10px 0; color: #555;">进行中的订单</h4>
+                    <div v-for="order in activeUserOrders" :key="order.id" class="order-card">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                            <span style="font-weight:bold">{{order.shopName}}</span>
+                            <span class="status-text" :style="{color: getStatusColor(order.statusCode)}">
+                                {{order.statusText}}
                             </span>
-                            <span>{{ order.createTime }}</span>
                         </div>
-                        <div class="order-info" style="margin-top: 8px;">
-                            {{ order.items.join(', ') }}
+                        <div style="font-size:0.85rem; color:#666; margin-bottom:8px;">
+                            {{ order.items.map(i=>i.name).join('+') }} 
                         </div>
-                        <!-- 用户操作：确认收货 -->
-                        <div v-if="order.statusCode === 'delivering' || (order.type==='pickup' && order.statusCode==='wait_rider')" style="text-align: right;">
-                             <button class="btn btn-primary" @click="confirmReceipt(order)">
-                                {{ order.type==='delivery' ? '确认收货' : '已自提' }}
-                             </button>
-                        </div>
-                    </div>
-                </transition-group>
-                <div v-if="userOrders.length === 0" class="empty-tip">暂无历史订单</div>
-            </div>
-        </div>
-
-        <!-- ================= 商家端 ================= -->
-        <div class="role-panel role-merchant">
-            <div class="panel-header">
-                <span>🧑‍🍳 商家端 (Merchant)</span>
-            </div>
-            <div class="panel-body">
-                <div class="tabs">
-                    <div class="tab" :class="{active: merchantTab==='new'}" @click="merchantTab='new'">新订单 ({{ merchantNewOrders.length }})</div>
-                    <div class="tab" :class="{active: merchantTab==='cooking'}" @click="merchantTab='cooking'">制作中 ({{ merchantCookingOrders.length }})</div>
-                </div>
-
-                <transition-group name="list" tag="div">
-                    <div v-for="order in merchantCurrentList" :key="order.id" class="order-card" :class="'status-' + order.statusCode">
-                        <div class="order-header">
-                            <span>#{{ order.id }} {{ order.type === 'delivery' ? '(需配送)' : '(自取)' }}</span>
-                            <span style="font-size: 0.8em; color: #666">{{ order.totalPrice }}元</span>
-                        </div>
-                        <div class="order-info">{{ order.items.join(' + ') }}</div>
                         
-                        <!-- 商家操作区 -->
-                        <div style="display: flex; gap: 10px; margin-top: 8px;">
-                            <!-- 待接单状态 -->
-                            <template v-if="order.statusCode === 'pending'">
-                                <button class="btn btn-merchant" style="flex:1" @click="merchantAccept(order)">接单</button>
-                                <button class="btn" style="flex:1; background:#eee" @click="cancelOrder(order)">拒绝</button>
-                            </template>
-                            
-                            <!-- 制作中状态 -->
-                            <template v-if="order.statusCode === 'cooking'">
-                                <button class="btn btn-merchant" style="flex:1" @click="merchantFinishCook(order)">
-                                    {{ order.type === 'delivery' ? '出餐 (呼叫骑手)' : '出餐 (通知取餐)' }}
-                                </button>
-                            </template>
+                        <!-- 进度条模拟 -->
+                        <div style="height:4px; background:#eee; border-radius:2px; overflow:hidden; margin-bottom:8px;">
+                            <div :style="{width: getProgress(order.statusCode)+'%', background: getStatusColor(order.statusCode)}" 
+                                 style="height:100%; transition: width 0.5s;"></div>
+                        </div>
+
+                        <div v-if="['delivering','wait_pickup'].includes(order.statusCode)" style="text-align:right">
+                            <button class="btn btn-blue" style="width:auto; display:inline-block; font-size:12px; padding:5px 10px;"
+                                    @click="confirmReceipt(order)">
+                                {{order.type==='delivery' ? '确认收货' : '我已取餐'}}
+                            </button>
                         </div>
                     </div>
-                </transition-group>
+                </div>
+            </div>
 
-                <div v-if="merchantCurrentList.length === 0" class="empty-tip">
-                    {{ merchantTab==='new' ? '暂无新订单' : '后厨空闲中' }}
+            <div class="panel-footer">
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-weight:bold;">
+                    <span>合计:</span>
+                    <span style="font-size:1.2em">¥{{cartTotal}}</span>
+                </div>
+                <button class="btn btn-blue" :disabled="cartTotal===0" @click="submitOrder">
+                    <span v-if="isSubmitting"><i class="fas fa-spinner fa-spin"></i> 处理中...</span>
+                    <span v-else>立即支付</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== 商家端 ==================== -->
+        <div class="role-panel role-merchant" :class="{'flash-bg': hasNewOrder}">
+            <div class="panel-header">
+                <span><i class="fas fa-store"></i> 商家接单台</span>
+                <label style="font-size:12px; font-weight:normal; cursor:pointer;">
+                    <input type="checkbox" v-model="autoPrint"> 自动接单
+                </label>
+            </div>
+
+            <div class="tabs">
+                <div class="tab" :class="{active: merchTab==='new'}" @click="merchTab='new'">
+                    新订单 <span class="badge" v-if="merchNewCount > 0">{{merchNewCount}}</span>
+                </div>
+                <div class="tab" :class="{active: merchTab==='processing'}" @click="merchTab='processing'">
+                    制作中 <span class="badge" v-if="merchProcessCount > 0">{{merchProcessCount}}</span>
+                </div>
+            </div>
+
+            <div class="panel-content">
+                <div v-if="merchList.length === 0" class="empty-state">
+                    <i class="fas fa-coffee" style="font-size:2em; margin-bottom:10px; display:block;"></i>
+                    暂无相关订单
+                </div>
+
+                <div v-for="order in merchList" :key="order.id" 
+                     class="receipt-card" 
+                     :class="{'printing-animation': order.isPrinting}">
+                    
+                    <!-- 模拟小票样式 -->
+                    <div style="padding: 15px;">
+                        <div class="receipt-header">
+                            #{{order.daySeq}} {{order.type==='delivery'?'外卖':'自取'}}
+                        </div>
+                        <div class="receipt-row" style="color:#888; font-size:12px;">
+                            <span>下单时间:</span><span>{{order.time}}</span>
+                        </div>
+                        <div class="receipt-divider"></div>
+                        <div v-for="item in order.items" class="receipt-row">
+                            <span>{{item.name}}</span>
+                            <span>x1</span>
+                        </div>
+                        <div class="receipt-divider"></div>
+                        <div class="receipt-row" style="font-weight:bold; font-size:1.1em;">
+                            <span>实付:</span>
+                            <span>¥{{order.total}}</span>
+                        </div>
+                        <div style="margin-top:10px; font-size:12px;">
+                            备注: {{order.remark || '无备注'}}
+                        </div>
+                    </div>
+
+                    <!-- 操作按钮区 -->
+                    <div style="background:#f9f9f9; padding:10px; border-top:1px dashed #ccc;">
+                        <template v-if="order.statusCode === 'pending'">
+                            <button class="btn btn-orange" @click="merchantAccept(order)">
+                                接单 & 打印
+                            </button>
+                        </template>
+                        <template v-if="order.statusCode === 'cooking'">
+                            <button class="btn btn-orange" @click="merchantFinish(order)">
+                                {{order.type==='delivery'?'出餐 (呼叫骑手)':'出餐 (通知取餐)'}}
+                            </button>
+                        </template>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- ================= 骑手端 ================= -->
+        <!-- ==================== 骑手端 ==================== -->
         <div class="role-panel role-rider">
             <div class="panel-header">
-                <span>🛵 骑手端 (Rider)</span>
+                <span><i class="fas fa-motorcycle"></i> 骑手配送</span>
+                <span style="font-size:0.8em; color:#333">今日赚: ¥{{riderIncome}}</span>
             </div>
-            <div class="panel-body">
-                <!-- 骑手只关心配送单，自取单不显示 -->
-                <div class="tabs">
-                    <div class="tab" :class="{active: riderTab==='pool'}" @click="riderTab='pool'">抢单池 ({{ riderPool.length }})</div>
-                    <div class="tab" :class="{active: riderTab==='mine'}" @click="riderTab='mine'">配送中 ({{ riderMine.length }})</div>
+
+            <div class="tabs">
+                <div class="tab" :class="{active: riderTab==='pool'}" @click="riderTab='pool'">
+                    抢单大厅 <span class="badge" v-if="riderPoolCount>0">{{riderPoolCount}}</span>
+                </div>
+                <div class="tab" :class="{active: riderTab==='mine'}" @click="riderTab='mine'">
+                    配送中 <span class="badge" v-if="riderMineCount>0">{{riderMineCount}}</span>
+                </div>
+            </div>
+
+            <div class="panel-content">
+                <div v-if="riderList.length === 0" class="empty-state">
+                    {{riderTab==='pool'?'暂无待抢订单，休息一下':'当前没有配送任务'}}
                 </div>
 
-                <transition-group name="list" tag="div">
-                    <div v-for="order in riderCurrentList" :key="order.id" class="order-card" :class="'status-' + order.statusCode">
-                        <div class="order-header">
-                            <span>#{{ order.id }} {{ order.shopName }}</span>
-                            <span style="color: var(--rider-btn)">
-                                {{ order.statusCode === 'wait_rider' ? '待抢单' : '配送中' }}
-                            </span>
-                        </div>
-                        <div class="order-info">
-                            <div>📍 商家：美味大饭店</div>
-                            <div>🏠 顾客：模拟地址A座808</div>
-                        </div>
-                        <div class="order-info">📦 {{ order.items.join(', ') }}</div>
-
-                        <!-- 骑手操作区 -->
-                        <div style="margin-top: 8px;">
-                            <button v-if="order.statusCode === 'wait_rider'" 
-                                    class="btn btn-rider btn-block" 
-                                    @click="riderGrab(order)">
-                                ⚡ 立即抢单
-                            </button>
-                            
-                            <div v-if="order.statusCode === 'delivering'" style="display:flex; gap:10px;">
-                                <button class="btn btn-rider btn-block" @click="riderArrive(order)">
-                                    确认送达
-                                </button>
-                            </div>
-                        </div>
+                <div v-for="order in riderList" :key="order.id" class="order-card" style="border-left: 4px solid var(--rider-main);">
+                    <div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:8px;">
+                        <span><i class="fas fa-map-marker-alt" style="color:red"></i> {{order.distance}}km</span>
+                        <span style="color:#f57c00; font-size:1.1em">¥{{order.deliveryFee}}</span>
                     </div>
-                </transition-group>
+                    
+                    <div style="font-size:13px; color:#555; line-height:1.6;">
+                        <div><strong>取:</strong> 美味大饭店 ({{order.daySeq}}号)</div>
+                        <div><strong>送:</strong> {{order.address}}</div>
+                        <div style="color:#999; margin-top:4px;">{{order.items.length}} 件商品 | 预计 {{order.eta}} 分钟送达</div>
+                    </div>
 
-                <div v-if="riderCurrentList.length === 0" class="empty-tip">
-                    {{ riderTab==='pool' ? '暂无待抢订单' : '暂无进行中任务' }}
-                </div>
-
-                <!-- 简单的统计 -->
-                <div style="margin-top: auto; border-top: 1px solid #eee; padding-top: 10px; font-size: 0.8em; color: #888;">
-                    今日已送达: {{ completedOrders.filter(o => o.type === 'delivery').length }} 单
+                    <div style="margin-top:12px;">
+                        <button v-if="order.statusCode === 'wait_rider'" class="btn btn-green" @click="riderGrab(order)">
+                            抢单
+                        </button>
+                        <button v-if="order.statusCode === 'delivering'" class="btn btn-green" @click="riderArrive(order)">
+                            确认送达
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -336,186 +435,181 @@
 </div>
 
 <script>
-    const { createApp, reactive, computed, ref } = Vue;
+const { createApp, reactive, computed, ref } = Vue;
 
-    createApp({
-        setup() {
-            // ================== 数据状态 ==================
+createApp({
+    setup() {
+        // === 数据定义 ===
+        const menu = [
+            { id: 1, name: '招牌牛肉面', price: 28, icon: '🍜' },
+            { id: 2, name: '超级鸡腿堡', price: 18, icon: '🍔' },
+            { id: 3, name: '大杯冰可乐', price: 8, icon: '🥤' },
+            { id: 4, name: '脆皮炸鸡翅', price: 12, icon: '🍗' },
+            { id: 5, name: '水果沙拉碗', price: 22, icon: '🥗' },
+            { id: 6, name: '日式豚骨饭', price: 35, icon: '🍛' }
+        ];
+
+        // 全局订单池 (模拟数据库)
+        const orders = reactive([]);
+        
+        // UI 状态
+        const orderForm = reactive({ type: 'delivery', items: [] });
+        const isSubmitting = ref(false);
+        const autoPrint = ref(false);
+        const merchTab = ref('new');
+        const riderTab = ref('pool');
+        const riderIncome = ref(0);
+        const daySeqCounter = ref(1); // 每日流水号
+
+        // === 计算属性 ===
+        const cartTotal = computed(() => orderForm.items.reduce((sum, i) => sum + i.price, 0));
+        
+        const activeUserOrders = computed(() => 
+            orders.filter(o => o.statusCode !== 'completed').reverse()
+        );
+
+        const merchList = computed(() => {
+            if (merchTab.value === 'new') return orders.filter(o => o.statusCode === 'pending');
+            return orders.filter(o => o.statusCode === 'cooking' || (o.type==='pickup' && o.statusCode==='wait_pickup'));
+        });
+
+        const riderList = computed(() => {
+            if (riderTab.value === 'pool') return orders.filter(o => o.statusCode === 'wait_rider');
+            return orders.filter(o => o.statusCode === 'delivering');
+        });
+
+        // 计数器
+        const merchNewCount = computed(() => orders.filter(o => o.statusCode === 'pending').length);
+        const merchProcessCount = computed(() => orders.filter(o => o.statusCode === 'cooking').length);
+        const riderPoolCount = computed(() => orders.filter(o => o.statusCode === 'wait_rider').length);
+        const riderMineCount = computed(() => orders.filter(o => o.statusCode === 'delivering').length);
+        const hasNewOrder = computed(() => merchNewCount.value > 0);
+
+        // === 业务逻辑 ===
+
+        // 1. 用户操作
+        const toggleItem = (item) => {
+            const idx = orderForm.items.findIndex(i => i.id === item.id);
+            if (idx > -1) orderForm.items.splice(idx, 1);
+            else orderForm.items.push({...item}); // push copy
+        };
+
+        const submitOrder = () => {
+            isSubmitting.value = true;
             
-            // 模拟数据库中的所有订单
-            const allOrders = reactive([]);
-            
-            // 菜单配置
-            const menu = [
-                { id: 1, name: '香辣鸡腿堡', price: 20, icon: '🍔' },
-                { id: 2, name: '超级至尊披萨', price: 55, icon: '🍕' },
-                { id: 3, name: '冰镇可乐', price: 5, icon: '🥤' },
-                { id: 4, name: '炸薯条', price: 12, icon: '🍟' }
-            ];
-
-            // 用户下单表单
-            const orderForm = reactive({
-                type: 'delivery', // delivery or pickup
-                items: []
-            });
-
-            // 界面Tab状态
-            const merchantTab = ref('new');
-            const riderTab = ref('pool');
-
-            // ================== 计算属性 (业务视图) ==================
-
-            const currentTotal = computed(() => {
-                return orderForm.items.reduce((sum, itemName) => {
-                    const item = menu.find(f => f.name === itemName);
-                    return sum + (item ? item.price : 0);
-                }, 0);
-            });
-
-            // 用户看到的订单（倒序）
-            const userOrders = computed(() => {
-                return [...allOrders].sort((a,b) => b.id - a.id);
-            });
-
-            // 商家看到的列表
-            const merchantNewOrders = computed(() => allOrders.filter(o => o.statusCode === 'pending'));
-            const merchantCookingOrders = computed(() => allOrders.filter(o => o.statusCode === 'cooking'));
-            const merchantCurrentList = computed(() => {
-                return merchantTab.value === 'new' ? merchantNewOrders.value : merchantCookingOrders.value;
-            });
-
-            // 骑手看到的列表 (只看 Delivery 类型的单子)
-            const riderPool = computed(() => allOrders.filter(o => o.type === 'delivery' && o.statusCode === 'wait_rider'));
-            const riderMine = computed(() => allOrders.filter(o => o.type === 'delivery' && o.statusCode === 'delivering'));
-            const riderCurrentList = computed(() => {
-                return riderTab.value === 'pool' ? riderPool.value : riderMine.value;
-            });
-
-            const completedOrders = computed(() => allOrders.filter(o => o.statusCode === 'completed'));
-
-            // ================== 动作方法 (业务逻辑) ==================
-
-            // 1. 用户下单
-            const toggleFood = (name) => {
-                const idx = orderForm.items.indexOf(name);
-                if(idx > -1) orderForm.items.splice(idx, 1);
-                else orderForm.items.push(name);
-            };
-
-            const submitOrder = () => {
-                if(orderForm.items.length === 0) return;
-
+            // 模拟网络请求延迟
+            setTimeout(() => {
                 const newOrder = {
-                    id: Date.now().toString().slice(-4), // 简易ID
-                    createTime: new Date().toLocaleTimeString(),
+                    id: Date.now(),
+                    daySeq: daySeqCounter.value++, // 流水号 #1, #2...
                     type: orderForm.type,
                     items: [...orderForm.items],
-                    totalPrice: currentTotal.value,
+                    total: cartTotal.value,
                     shopName: '美味大饭店',
-                    // 状态机核心： initial state
-                    statusCode: 'pending', 
-                    statusText: '已支付，等待商家接单',
-                    riderId: null
+                    time: new Date().toLocaleTimeString(),
+                    address: '科技园B座 1808',
+                    statusCode: 'pending',
+                    statusText: '等待商家接单',
+                    // 配送相关模拟数据
+                    distance: (Math.random() * 3 + 1).toFixed(1),
+                    deliveryFee: Math.floor(Math.random() * 5 + 4),
+                    eta: Math.floor(Math.random() * 20 + 15),
+                    // UI 标志
+                    isPrinting: true 
                 };
 
-                allOrders.push(newOrder);
-                
-                // 重置表单
+                orders.push(newOrder);
                 orderForm.items = [];
-                
-                // 模拟支付稍微延迟一点点的感觉（其实是同步的，但为了UX）
-                alert(`支付成功 ¥${newOrder.totalPrice}！订单已发送给商家。`);
-            };
+                isSubmitting.value = false;
 
-            // 用户确认收货
-            const confirmReceipt = (order) => {
-                order.statusCode = 'completed';
-                order.statusText = '已完成';
-            };
-
-            // 2. 商家逻辑
-            const merchantAccept = (order) => {
-                order.statusCode = 'cooking';
-                order.statusText = '商家已接单，制作中...';
-                // 自动切换到制作中Tab方便演示
-                merchantTab.value = 'cooking'; 
-            };
-
-            const cancelOrder = (order) => {
-                const idx = allOrders.indexOf(order);
-                allOrders.splice(idx, 1);
-                alert('订单已拒绝/取消');
-            };
-
-            const merchantFinishCook = (order) => {
-                // 分流逻辑
-                if (order.type === 'delivery') {
-                    // 外卖 -> 进入骑手池
-                    order.statusCode = 'wait_rider';
-                    order.statusText = '待骑手接单';
-                } else {
-                    // 自取 -> 通知用户来拿
-                    order.statusCode = 'wait_rider'; // 复用状态码，但在前端文案上区分
-                    order.statusText = '待取餐 (请凭号取餐)';
+                // 如果开启自动接单
+                if (autoPrint.value) {
+                    setTimeout(() => merchantAccept(newOrder), 2000);
                 }
-            };
+            }, 800);
+        };
 
-            // 3. 骑手逻辑
-            const riderGrab = (order) => {
-                order.statusCode = 'delivering';
-                order.statusText = '骑手已接单，配送中';
-                order.riderId = 'Rider_001';
-                // 自动切Tab
-                riderTab.value = 'mine';
-            };
+        const confirmReceipt = (order) => {
+            order.statusCode = 'completed';
+            order.statusText = '已完成';
+        };
 
-            const riderArrive = (order) => {
-                // 骑手点击送达，通常状态变为“用户待确认”或直接“完成”
-                // 这里为了Demo简化，设为完成
-                order.statusCode = 'completed';
-                order.statusText = '已送达';
-            };
+        // 2. 商家操作
+        const merchantAccept = (order) => {
+            // 模拟打印机速度，先让状态变为 "Printing" (UI上表现为 pending 但我们在CSS做动画)
+            // 这里实际上是改变状态为 cooking
+            order.isPrinting = false; // 停止进入动画
+            order.statusCode = 'cooking';
+            order.statusText = '商家制作中';
+            merchTab.value = 'processing';
+        };
 
-            // 工具：状态颜色辅助
-            const getStatusColor = (code) => {
-                const map = {
-                    'pending': '#ff9800',
-                    'cooking': '#9c27b0',
-                    'wait_rider': '#2196f3',
-                    'delivering': '#4caf50',
-                    'completed': '#888'
-                };
-                return map[code] || '#000';
-            };
+        const merchantFinish = (order) => {
+            if (order.type === 'delivery') {
+                order.statusCode = 'wait_rider';
+                order.statusText = '等待骑手接单';
+            } else {
+                order.statusCode = 'wait_pickup';
+                order.statusText = '待取餐';
+            }
+        };
 
-            return {
-                menu,
-                orderForm,
-                currentTotal,
-                userOrders,
-                merchantTab,
-                merchantCurrentList,
-                merchantNewOrders,
-                merchantCookingOrders,
-                riderTab,
-                riderCurrentList,
-                riderPool,
-                riderMine,
-                completedOrders,
-                
-                toggleFood,
-                submitOrder,
-                confirmReceipt,
-                merchantAccept,
-                cancelOrder,
-                merchantFinishCook,
-                riderGrab,
-                riderArrive,
-                getStatusColor
+        // 3. 骑手操作
+        const riderGrab = (order) => {
+            order.statusCode = 'delivering';
+            order.statusText = '骑手已接单，配送中';
+            riderTab.value = 'mine';
+        };
+
+        const riderArrive = (order) => {
+            // 送达后不直接结束，而是变为等待用户确认，或者直接完成
+            // 这里为了简化直接给用户确认
+            // 增加收入
+            riderIncome.value += order.deliveryFee;
+            // 为了演示，先不自动完成，让用户点确认收货，或者骑手点送达就变成用户待收货
+            order.statusText = '骑手已送达';
+            // 骑手任务列表移除（逻辑上完成配送任务）
+            // 但为了UI状态同步，我们暂时把状态改为 'delivering' 保持显示，或者移除
+            // 这里改为：
+            order.statusCode = 'completed'; // 简单处理
+            order.statusText = '订单结束';
+        };
+
+        // 工具函数
+        const getStatusColor = (code) => {
+            const map = {
+                'pending': '#ff9800',
+                'cooking': '#795548',
+                'wait_rider': '#2196f3',
+                'delivering': '#4caf50',
+                'wait_pickup': '#e65100',
+                'completed': '#9e9e9e'
             };
-        }
-    }).mount('#app');
+            return map[code] || '#000';
+        };
+        
+        const getProgress = (code) => {
+            const map = {
+                'pending': 10,
+                'cooking': 30,
+                'wait_rider': 50,
+                'delivering': 80,
+                'wait_pickup': 80,
+                'completed': 100
+            };
+            return map[code] || 0;
+        };
+
+        return {
+            menu, orderForm, isSubmitting, cartTotal, autoPrint, riderIncome,
+            activeUserOrders, merchList, riderList,
+            merchNewCount, merchProcessCount, riderPoolCount, riderMineCount, hasNewOrder,
+            merchTab, riderTab,
+            toggleItem, submitOrder, confirmReceipt, merchantAccept, merchantFinish, riderGrab, riderArrive,
+            getStatusColor, getProgress
+        };
+    }
+}).mount('#app');
 </script>
-
 </body>
 </html>
