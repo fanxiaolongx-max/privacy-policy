@@ -24,13 +24,3 @@
 </div>
 
 <br/>
-
-<div align="center">
-  <img height="180em" src="https://github-readme-stats.vercel.app/api?username=你的用户名&show_icons=true&theme=radical&hide_border=true&bg_color=141321" />
-  <img height="180em" src="https://github-readme-stats.vercel.app/api/top-langs/?username=你的用户名&layout=compact&theme=radical&hide_border=true&bg_color=141321" />
-</div>
-
-<div align="center">
-  <br>
-  <img src="https://github-profile-trophy.vercel.app/?username=你的用户名&theme=radical&no-frame=true&no-bg=true&margin-w=4" />
-</div>
