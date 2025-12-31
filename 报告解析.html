@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF 文本解析器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c;
+            color: #e2e8f0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        .title-section {
+            text-align: center;
+        }
+        .text-area-container {
+            display: flex;
+            gap: 1rem;
+            flex-direction: column;
+        }
+        @media (min-width: 768px) {
+            .text-area-container {
+                flex-direction: row;
+            }
+        }
+        textarea {
+            width: 100%;
+            height: 400px;
+            padding: 1rem;
+            background-color: #2d3748;
+            border-radius: 0.5rem;
+            border: 1px solid #4a5568;
+            color: #e2e8f0;
+            resize: vertical;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+        button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+        #processBtn {
+            background-color: #4c51bf;
+            color: white;
+        }
+        #processBtn:hover {
+            background-color: #667eea;
+        }
+        #beautifyBtn {
+            background-color: #f6ad55;
+            color: white;
+        }
+        #beautifyBtn:hover {
+            background-color: #fbd38d;
+        }
+        #exportBtn {
+            background-color: #3182ce;
+            color: white;
+        }
+        #exportBtn:hover {
+            background-color: #4299e1;
+        }
+        #manualSplitBtn {
+            background-color: #2c974b;
+            color: white;
+        }
+        #manualSplitBtn:hover {
+            background-color: #38c172;
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 10;
+        }
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #4c51bf;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #2d3748;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            margin-top: 2rem;
+            table-layout: fixed; /* 固定表格布局 */
+            border: 2px solid #4a5568; /* 增强表格边框 */
+        }
+        th, td {
+            padding: 0.5rem 0.75rem; /* 减小内边距 */
+            border-bottom: 1px solid #4a5568;
+            vertical-align: top;
+            text-align: left;
+            word-wrap: break-word; /* 自动换行 */
+            font-size: 0.875rem; /* 减小字体 */
+        }
+        th {
+            background-color: #4a5568;
+            font-weight: bold;
+            position: relative;
+        }
+        tr:hover {
+            background-color: #4a5568;
+        }
+        #resultsTableContainer, #beautifiedTableContainer {
+            overflow-x: auto;
+        }
+        .error-message {
+            color: #f56565;
+            text-align: center;
+            margin-top: 1rem;
+        }
+        /* 可折叠单元格的样式 */
+        .collapsible-cell {
+            position: relative;
+            max-height: 80px; /* 默认显示80px高度 */
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .collapsible-cell.expanded {
+            max-height: none; /* 展开时取消高度限制 */
+        }
+        .toggle-link {
+            cursor: pointer;
+            color: #63b3ed;
+            font-size: 0.8rem;
+            font-weight: bold;
+            display: block;
+            margin-top: 0.25rem;
+        }
+        /* AI 状态指示器样式 */
+        .status-light {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .status-ok { background-color: #48bb78; }
+        .status-connecting { background-color: #ecc94b; }
+        .status-error { background-color: #f56565; }
+
+        .log-container {
+            width: 100%;
+            height: 200px;
+            background-color: #2d3748;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+        .log-line {
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 0.9rem;
+            color: #a0aec0;
+            cursor: pointer;
+        }
+        .log-line:hover {
+            background-color: #4a5568;
+        }
+
+        /* 自定义 Tooltip 样式 */
+        .tooltip {
+            position: fixed;
+            z-index: 20;
+            background-color: #4a5568;
+            color: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            word-wrap: break-word;
+            display: none;
+            pointer-events: none; /* Prevents tooltip from blocking mouse events */
+        }
+
+        /* 调整列宽的拖拽手柄 */
+        .resizer {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 5px;
+            height: 100%;
+            cursor: col-resize;
+            user-select: none;
+        }
+
+        .api-details-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #2d3748;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.5);
+            z-index: 30;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            display: none;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .api-details-modal pre {
+            background-color: #1a202c;
+            padding: 1rem;
+            border-radius: 0.25rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 0.8rem;
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: none;
+            border: none;
+            color: #e2e8f0;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="title-section">
+            <h1 class="text-3xl font-bold mb-2">PDF 安全报告解析器</h1>
+            <p class="text-lg">请粘贴目录和PDF全文，或直接上传PDF文件，自动解析内容到表格中。</p>
+        </div>
+
+        <!-- Ollama 设置和状态 -->
+        <div class="flex flex-col items-center p-4 bg-gray-700 rounded-lg shadow-md">
+            <h2 class="text-xl font-semibold mb-2">Ollama AI 模型设置</h2>
+            <div class="flex items-center gap-4 mb-2">
+                <label for="model-select" class="font-medium">选择模型:</label>
+                <select id="model-select" class="flex-grow p-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-gray-600 text-white"></select>
+            </div>
+            <div class="flex items-center gap-2">
+                <span id="status-light" class="status-light status-connecting"></span>
+                <span id="status-text" class="font-medium text-sm text-gray-400">正在连接本地 Ollama 服务...</span>
+            </div>
+            <div id="cors-warning" class="mt-4 text-sm text-red-300 bg-red-800 p-3 rounded-md hidden">
+                <strong>连接失败:</strong> 浏览器因安全策略 (CORS) 无法直接访问 Ollama。请确保已设置环境变量 <strong>OLLAMA_ORIGINS</strong> 的值为 <strong>*</strong>，并**完全重启** Ollama 服务。
+            </div>
+        </div>
+
+        <!-- PDF 文件上传区域 -->
+        <div class="flex flex-col items-center p-4 bg-gray-700 rounded-lg shadow-md">
+            <label for="pdfFile" class="text-lg font-semibold mb-2">上传 PDF 文件</label>
+            <input type="file" id="pdfFile" accept="application/pdf" class="file-input file-input-bordered file-input-info w-full max-w-xs">
+            <span class="text-sm mt-2 text-gray-400">选择一个PDF文件以自动填充文本框。</span>
+        </div>
+
+        <!-- 文本输入和处理区域 -->
+        <div class="text-area-container">
+            <div class="flex flex-col flex-1">
+                <label for="toc_text" class="text-xl font-semibold mb-2">目录 (TABLE OF CONTENTS)</label>
+                <textarea id="toc_text" placeholder="请在此粘贴或自动生成目录部分..."></textarea>
+            </div>
+            <div class="flex flex-col flex-1">
+                <label for="pdf_text" class="text-xl font-semibold mb-2">PDF 全文内容</label>
+                <textarea id="pdf_text" placeholder="请在此粘贴或自动生成PDF全文..."></textarea>
+            </div>
+        </div>
+        <div class="button-container">
+            <button id="processBtn">开始解析</button>
+            <button id="manualSplitBtn">手动分割</button>
+            <button id="beautifyBtn" class="hidden">美化并转换</button>
+            <button id="exportBtn" class="hidden">导出表格</button>
+        </div>
+
+        <div id="loadingOverlay" class="loading-overlay hidden">
+            <div class="loading-spinner"></div>
+            <p class="text-white mt-4">正在解析PDF，请稍候...</p>
+        </div>
+
+        <div id="resultsTableContainer"></div>
+        <div id="errorMessage" class="error-message hidden"></div>
+        <div id="beautifiedTableContainer"></div>
+
+        <div class="log-container mt-4">
+            <h3 class="text-lg font-semibold mb-2">处理日志</h3>
+            <pre id="log-output" class="log-line"></pre>
+        </div>
+
+        <!-- API Details Modal -->
+        <div id="api-details-modal" class="api-details-modal">
+            <button class="modal-close-btn" onclick="document.getElementById('api-details-modal').style.display='none';">&times;</button>
+            <h3 class="text-lg font-semibold">API 调用详情</h3>
+            <div class="flex flex-col gap-2">
+                <p class="font-bold">请求:</p>
+                <pre id="api-request-payload"></pre>
+                <p class="font-bold">返回值:</p>
+                <pre id="api-response-payload"></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- PDF.js 库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.worker.min.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const pdfFile = document.getElementById('pdfFile');
+            const tocTextarea = document.getElementById('toc_text');
+            const pdfTextarea = document.getElementById('pdf_text');
+            const processBtn = document.getElementById('processBtn');
+            const manualSplitBtn = document.getElementById('manualSplitBtn');
+            const beautifyBtn = document.getElementById('beautifyBtn');
+            const exportBtn = document.getElementById('exportBtn');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const resultsTableContainer = document.getElementById('resultsTableContainer');
+            const beautifiedTableContainer = document.getElementById('beautifiedTableContainer');
+            const errorMessage = document.getElementById('errorMessage');
+            const modelSelect = document.getElementById('model-select');
+            const statusLight = document.getElementById('status-light');
+            const statusText = document.getElementById('status-text');
+            const corsWarning = document.getElementById('cors-warning');
+            const logOutput = document.getElementById('log-output');
+            const apiDetailsModal = document.getElementById('api-details-modal');
+            const apiRequestPayload = document.getElementById('api-request-payload');
+            const apiResponsePayload = document.getElementById('api-response-payload');
+
+            let parsedResults = [];
+            let tooltipTimeout;
+            let apiLogData = {};
+
+            const tooltip = document.createElement('div');
+            tooltip.className = 'tooltip';
+            document.body.appendChild(tooltip);
+
+            let logCounter = 0;
+            function logToUI(message, logType = 'info', data = null) {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString();
+                const logId = `log-${logCounter++}`;
+
+                const logElement = document.createElement('div');
+                logElement.className = 'log-line';
+                logElement.textContent = `[${timeString}] ${message}`;
+                logElement.setAttribute('data-log-id', logId);
+
+                if (data) {
+                    apiLogData[logId] = data;
+                    logElement.style.cursor = 'pointer';
+                    logElement.style.color = (logType === 'error') ? '#f56565' : '#63b3ed';
+                    logElement.addEventListener('click', () => {
+                        const logId = logElement.getAttribute('data-log-id');
+                        const logData = apiLogData[logId];
+                        if (logData) {
+                            apiRequestPayload.textContent = JSON.stringify(logData.request, null, 2);
+                            apiResponsePayload.textContent = JSON.stringify(logData.response, null, 2);
+                            apiDetailsModal.style.display = 'flex';
+                        }
+                    });
+                } else {
+                     logElement.style.color = '#a0aec0';
+                     logElement.style.cursor = 'default';
+                }
+
+                logOutput.appendChild(logElement);
+                logOutput.scrollTop = logOutput.scrollHeight;
+            }
+
+            checkOllamaService();
+
+            pdfFile.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file && file.type === "application/pdf") {
+                    loadPdf(file);
+                } else {
+                    alert('请选择一个有效的 PDF 文件。');
+                }
+            });
+
+            processBtn.addEventListener('click', async () => {
+                const toc_text = tocTextarea.value;
+                const pdf_text = pdfTextarea.value;
+                if (!toc_text || !pdf_text) {
+                    showError('目录和PDF文本都不能为空，请手动粘贴或上传PDF文件。');
+                    return;
+                }
+
+                showLoading(true, "正在处理数据...");
+                const response = await fetch('/process_pdf', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        toc_text: toc_text,
+                        pdf_text: pdf_text
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showLoading(false); // Hide the main loader after initial data processing
+                    parsedResults = result.results;
+                    displayResults(parsedResults);
+                    generateSummariesAsync(parsedResults); // Start summary generation asynchronously
+                    beautifyBtn.classList.remove('hidden');
+                } else {
+                    showLoading(false);
+                    showError(result.error);
+                }
+            });
+
+            manualSplitBtn.addEventListener('click', () => {
+                const cursorPosition = pdfTextarea.selectionStart;
+                const fullText = pdfTextarea.value;
+                if (cursorPosition === 0) {
+                    showError('请将光标定位在您要分割的位置。');
+                    return;
+                }
+
+                const tocSection = fullText.substring(0, cursorPosition).trim();
+                const contentSection = fullText.substring(cursorPosition).trim();
+
+                tocTextarea.value = tocSection;
+                pdfTextarea.value = contentSection;
+                showError('');
+            });
+
+            beautifyBtn.addEventListener('click', async () => {
+                if (parsedResults.length === 0) {
+                    showError('请先解析PDF文件，然后美化表格。');
+                    return;
+                }
+                beautifiedTableContainer.innerHTML = '<h2><div class="mt-8 text-center text-lg font-bold text-gray-400">美化后的表格</div></h2>';
+                displayBeautifiedResults(parsedResults);
+            });
+
+            exportBtn.addEventListener('click', () => {
+                exportTableToCSV(parsedResults);
+            });
+
+            async function checkOllamaService() {
+                logToUI("正在尝试连接本地 Ollama 服务...");
+                try {
+                    const response = await fetch('http://127.0.0.1:11434/api/tags');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+
+                    statusLight.className = 'status-light status-ok';
+                    statusText.textContent = `服务已连接`;
+                    corsWarning.classList.add('hidden');
+
+                    logToUI(`成功连接到 Ollama 服务，发现 ${data.models.length} 个模型。`);
+                    modelSelect.innerHTML = '';
+                    data.models.forEach(model => {
+                        const option = document.createElement('option');
+                        option.value = model.name;
+                        option.textContent = model.name;
+                        modelSelect.appendChild(option);
+                    });
+
+                } catch (error) {
+                    statusLight.className = 'status-light status-error';
+                    statusText.textContent = '连接失败';
+                    corsWarning.classList.remove('hidden');
+                    logToUI(`连接失败: ${error.message}. 请检查 Ollama 服务是否已启动。`);
+                }
+            }
+
+            async function getSummary(text) {
+                const model = modelSelect.value;
+                if (!model) {
+                    logToUI("错误: 没有选择任何 AI 模型。");
+                    return "AI 总结失败";
+                }
+                const prompt = `用一句话总结以下文本，内容必须是中文：\n\n---\n\n${text}`;
+                try {
+                    const requestPayload = { model: model, prompt: prompt, stream: false };
+                    const response = await fetch('http://127.0.0.1:11434/api/generate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(requestPayload),
+                    });
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    return data.response.trim();
+                } catch (error) {
+                    console.error("Ollama API call failed:", error);
+                    return "AI 总结失败";
+                }
+            }
+
+            async function getBeautifiedText(text) {
+                const model = modelSelect.value;
+                if (!model) {
+                    return "美化失败";
+                }
+                const prompt = `你是一个专业的报告整理和美化助理。请对以下PDF表格中的一整行内容进行分析、整合和重新组织，然后用中文详细地总结并美化，使其更易于理解。可以适当使用表情符号来增强可读性。只提供整理后的结果，不包含任何思考过程。
+
+---
+
+${text}
+
+---
+
+请确保输出结果清晰、易懂，并且只包含整理后的内容。`;
+                const requestPayload = { model: model, prompt: prompt, stream: false };
+                try {
+                    const response = await fetch('http://127.0.0.1:11434/api/generate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(requestPayload),
+                    });
+                    const responseData = await response.json();
+                    const beautifiedText = responseData.response ? responseData.response.trim() : "美化失败";
+                    return { text: beautifiedText, request: requestPayload, response: responseData, success: response.ok };
+                } catch (error) {
+                    console.error("Ollama API call failed:", error);
+                    return { text: "美化失败", request: requestPayload, response: { error: error.message }, success: false };
+                }
+            }
+
+            const loadPdf = async (file) => {
+                showLoading(true, "正在读取PDF文件...");
+                const fileReader = new FileReader();
+                fileReader.onload = async () => {
+                    const typedarray = new Uint8Array(fileReader.result);
+                    try {
+                        const pdf = await pdfjsLib.getDocument({ data: typedarray }).promise;
+                        let fullText = '';
+                        let pageTextPromises = [];
+
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            pageTextPromises.push(pdf.getPage(i).then(page => page.getTextContent()).then(textContent => {
+                                return textContent.items.map(item => item.str).join(' ');
+                            }));
+                        }
+                        const pagesText = await Promise.all(pageTextPromises);
+                        fullText = pagesText.join('\n');
+
+                        pdfTextarea.value = fullText;
+                        tocTextarea.value = '';
+                        showError('');
+
+                    } catch (err) {
+                        showError(`处理PDF文件时出错: ${err.message}`);
+                    } finally {
+                        showLoading(false);
+                    }
+                };
+                fileReader.readAsArrayBuffer(file);
+            };
+
+            const displayResults = (results) => {
+                resultsTableContainer.innerHTML = '';
+                if (results.length === 0) {
+                    resultsTableContainer.innerHTML = '<p class="text-center text-red-400">没有找到任何匹配的条目。</p>';
+                    return;
+                }
+
+                const table = document.createElement('table');
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th style="width: 5%;">编号</th>
+                            <th style="width: 15%;">描述</th>
+                            <th style="width: 10%;">类型</th>
+                            <th style="width: 15%;">信息 (Info)</th>
+                            <th style="width: 15%;">解决方案 (Solution)</th>
+                            <th style="width: 10%;">参考 (References)</th>
+                            <th style="width: 15%;">审计文件 (Audit File)</th>
+                            <th style="width: 5%;">策略值 (Policy Value)</th>
+                            <th style="width: 10%;">AI 总结</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                `;
+                const tbody = table.querySelector('tbody');
+
+                results.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    const referencesHtml = Array.isArray(item.references) ? item.references.join('<br>') : item.references;
+
+                    const cells = `
+                        <td>${item.number}</td>
+                        <td>${item.description}</td>
+                        <td><span class="font-bold">${item.type}</span></td>
+                        <td>
+                            <div class="collapsible-cell">${item.info.replace(/\n/g, '<br>')}</div>
+                        </td>
+                        <td>
+                            <div class="collapsible-cell">${item.solution.replace(/\n/g, '<br>')}</div>
+                        </td>
+                        <td>
+                            <div class="collapsible-cell">${referencesHtml}</div>
+                        </td>
+                        <td>
+                            <div class="collapsible-cell">${item.auditFile.replace(/\n/g, '<br>')}</div>
+                        </td>
+                        <td>
+                            <div class="collapsible-cell">${item.policyValue.replace(/\n/g, '<br>')}</div>
+                        </td>
+                        <td>
+                            <div class="collapsible-cell" id="summary-${index}">
+                                正在生成...
+                            </div>
+                        </td>
+                    `;
+                    row.innerHTML = cells;
+                    tbody.appendChild(row);
+
+                    const collapsibleCells = row.querySelectorAll('.collapsible-cell');
+                    collapsibleCells.forEach(cell => {
+                        const contentHeight = cell.scrollHeight;
+                        if (contentHeight > 80) {
+                            const toggleLink = document.createElement('a');
+                            toggleLink.href = '#';
+                            toggleLink.className = 'toggle-link';
+                            toggleLink.textContent = '展开';
+                            toggleLink.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                cell.classList.toggle('expanded');
+                                toggleLink.textContent = cell.classList.contains('expanded') ? '收起' : '展开';
+                            });
+                            cell.parentElement.appendChild(toggleLink);
+                        }
+
+                        cell.addEventListener('mouseenter', (e) => {
+                            clearTimeout(tooltipTimeout);
+                            tooltipTimeout = setTimeout(() => {
+                                tooltip.textContent = cell.textContent.trim().replace(/\s*展开\s*$/, '').replace(/\s*收起\s*$/, '');
+                                tooltip.style.display = 'block';
+                                const rect = cell.getBoundingClientRect();
+                                const x = rect.left + rect.width / 2;
+                                const y = rect.top;
+                                tooltip.style.left = `${x}px`;
+                                tooltip.style.top = `${y - tooltip.offsetHeight - 10}px`;
+                            }, 300);
+                        });
+                        cell.addEventListener('mouseleave', () => {
+                            clearTimeout(tooltipTimeout);
+                            tooltip.style.display = 'none';
+                        });
+                    });
+                });
+                resultsTableContainer.appendChild(table);
+
+                const headers = table.querySelectorAll('th');
+                headers.forEach(header => {
+                    const resizer = document.createElement('div');
+                    resizer.className = 'resizer';
+                    header.appendChild(resizer);
+                    let startX, startWidth;
+                    resizer.addEventListener('mousedown', (e) => {
+                        startX = e.clientX;
+                        startWidth = header.offsetWidth;
+                        document.addEventListener('mousemove', handleMouseMove);
+                        document.addEventListener('mouseup', handleMouseUp);
+                    });
+
+                    const handleMouseMove = (e) => {
+                        const newWidth = startWidth + (e.clientX - startX);
+                        header.style.width = `${newWidth}px`;
+                    };
+
+                    const handleMouseUp = () => {
+                        document.removeEventListener('mousemove', handleMouseMove);
+                        document.removeEventListener('mouseup', handleMouseUp);
+                    };
+                });
+                exportBtn.classList.remove('hidden');
+            };
+
+            const generateSummariesAsync = async (results) => {
+                logToUI(`开始生成 AI 总结...`);
+                const summaryPromises = results.map(async (item, index) => {
+                    logToUI(`正在生成第 ${index + 1} 行的摘要...`);
+                    const textToSummarize = `${item.description}\n${item.info}`;
+                    const summary = await getSummary(textToSummarize);
+                    item.summary = summary; // Update the original item in the array
+
+                    const summaryCell = document.getElementById(`summary-${index}`);
+                    if (summaryCell) {
+                        summaryCell.textContent = summary;
+                    }
+                    logToUI(`第 ${index + 1} 行摘要生成完成。`);
+                });
+
+                await Promise.all(summaryPromises);
+                logToUI("所有 AI 总结已全部生成完毕。");
+            };
+
+            const displayBeautifiedResults = (results) => {
+                beautifiedTableContainer.innerHTML = '';
+                const table = document.createElement('table');
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th style="width: 5%;">编号</th>
+                            <th style="width: 25%;">描述</th>
+                            <th style="width: 70%;">整理结果</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                `;
+                const tbody = table.querySelector('tbody');
+
+                logToUI("开始生成美化后的表格内容...");
+
+                results.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    const cells = `
+                        <td>${item.number}</td>
+                        <td>${item.description}</td>
+                        <td id="b-result-${index}">正在美化...</td>
+                    `;
+                    row.innerHTML = cells;
+                    tbody.appendChild(row);
+                });
+                beautifiedTableContainer.appendChild(table);
+
+                beautifyTableAsync(results);
+            };
+
+            const beautifyTableAsync = async (results) => {
+                for (let i = 0; i < results.length; i++) {
+                    const item = results[i];
+                    const cellId = `b-result-${i}`;
+                    const cellElement = document.getElementById(cellId);
+
+                    const textToBeautify = `
+                        编号: ${item.number}
+                        描述: ${item.description}
+                        类型: ${item.type}
+                        信息: ${item.info}
+                        解决方案: ${item.solution}
+                        参考: ${Array.isArray(item.references) ? item.references.join('; ') : item.references}
+                        审计文件: ${item.auditFile}
+                        策略值: ${item.policyValue}
+                    `;
+
+                    logToUI(`正在美化第 ${i + 1} 行的内容...`);
+
+                    const result = await getBeautifiedText(textToBeautify);
+                    if (cellElement) {
+                        if (result.success) {
+                            let cleanedText = result.text.replace(/<think>[\s\S]*?<\/think>/g, '');
+                            cellElement.innerHTML = cleanedText.replace(/\n/g, '<br>');
+                            logToUI(`✅ 美化完成: 第 ${i + 1} 行。`, 'success', result);
+                        } else {
+                            cellElement.textContent = result.text;
+                            logToUI(`❌ 美化失败: 第 ${i + 1} 行。`, 'error', result);
+                        }
+                    }
+                }
+                logToUI("所有单元格美化完毕。");
+            };
+
+            const exportTableToCSV = (data) => {
+                if (!data || data.length === 0) {
+                    showError('没有可导出的数据。');
+                    return;
+                }
+
+                const headers = ["编号", "描述", "类型", "信息", "解决方案", "参考", "审计文件", "策略值", "AI总结"];
+                const csvRows = [];
+                csvRows.push(headers.map(h => `"${h}"`).join(','));
+
+                const getCellContent = (item, key) => {
+                    let content = item[key];
+                    if (Array.isArray(content)) {
+                        content = content.join(' ');
+                    }
+                    if (key === 'auditFile') {
+                       return content.split('\n')[0];
+                    }
+                    if (typeof content !== 'string') {
+                        content = String(content);
+                    }
+                    return content.replace(/"/g, '""');
+                };
+
+                data.forEach(item => {
+                    const row = [
+                        getCellContent(item, 'number'),
+                        getCellContent(item, 'description'),
+                        getCellContent(item, 'type'),
+                        getCellContent(item, 'info'),
+                        getCellContent(item, 'solution'),
+                        getCellContent(item, 'references'),
+                        getCellContent(item, 'auditFile'),
+                        getCellContent(item, 'policyValue'),
+                        item.summary || '无总结'
+                    ];
+                    csvRows.push(row.map(cell => `"${cell}"`).join(','));
+                });
+
+                const csvString = csvRows.join('\n');
+                const blob = new Blob([`\ufeff${csvString}`], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'pdf_analysis.csv';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            };
+
+            const showLoading = (show, message = "正在加载...") => {
+                if (show) {
+                    loadingOverlay.classList.remove('hidden');
+                    loadingOverlay.querySelector('p').textContent = message;
+                } else {
+                    loadingOverlay.classList.add('hidden');
+                }
+            };
+
+            const showError = (message) => {
+                errorMessage.textContent = message;
+                errorMessage.classList.remove('hidden');
+                if (!message) {
+                    errorMessage.classList.add('hidden');
+                }
+            };
+        });
+    </script>
+</body>
+</html>
