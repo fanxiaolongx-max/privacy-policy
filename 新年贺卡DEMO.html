@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 新年快乐</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Noto+Serif+SC:wght@300;700&family=Ma+Shan+Zheng&display=swap');
+
+        :root {
+            --primary-gold: #eebb5d;
+            --bg-gradient: linear-gradient(135deg, #0f0202 0%, #2b0606 100%);
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(238, 187, 93, 0.15);
+            --spotlight-size: 400px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--primary-gold);
+            font-family: 'Cinzel', 'Noto Serif SC', serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
+            perspective: 1000px;
+        }
+
+        /* 噪点质感 */
+        body::after {
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+            opacity: 0.15; pointer-events: none; z-index: 2;
+        }
+
+        #snowCanvas, #fireworkCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        #snowCanvas { z-index: 1; }
+        #fireworkCanvas { z-index: 20; }
+
+        /* ==================== 信封开场动画样式 ==================== */
+        .envelope-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #1a0505; /* 深色背景遮挡贺卡 */
+            z-index: 2000;
+            display: flex; justify-content: center; align-items: center;
+            transition: opacity 1s ease, visibility 1s;
+        }
+
+        .envelope-wrapper {
+            position: relative;
+            width: 300px; height: 200px;
+            cursor: pointer;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .envelope-wrapper:hover { transform: scale(1.05); }
+
+        .envelope-body {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #2a0e0e, #1a0505);
+            border: 1px solid rgba(238, 187, 93, 0.4);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            z-index: 1;
+        }
+
+        /* 信封翻盖 */
+        .envelope-flap {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #3a1212, #200606);
+            border: 1px solid rgba(238, 187, 93, 0.4);
+            clip-path: polygon(0 0, 100% 0, 50% 55%);
+            transform-origin: top;
+            transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1), z-index 0.2s;
+            z-index: 5;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        /* 信封口袋（三角形遮挡） */
+        .envelope-pocket {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(180deg, rgba(42,14,14,0) 0%, #2a0e0e 100%);
+            clip-path: polygon(0 100%, 50% 45%, 100% 100%);
+            z-index: 3;
+            border-bottom: 1px solid rgba(238, 187, 93, 0.3);
+        }
+
+        /* 火漆印章 */
+        .wax-seal {
+            position: absolute; top: 45%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px; height: 60px;
+            background: radial-gradient(circle at 30% 30%, #eebb5d, #b8860b, #5e4003);
+            border-radius: 50%;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 6;
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 28px; color: #2a0e0e; font-weight: bold;
+            text-shadow: 0 1px 1px rgba(255,255,255,0.3);
+            cursor: pointer;
+            transition: all 0.4s ease;
+            animation: pulse-seal 2s infinite;
+        }
+        
+        .wax-seal::after {
+            content: ''; position: absolute; inset: 4px; border: 1px dashed rgba(42,14,14,0.5); border-radius: 50%;
+        }
+
+        /* 提示文字 */
+        .open-hint {
+            position: absolute; bottom: -40px; width: 100%; text-align: center;
+            font-size: 0.9rem; letter-spacing: 3px; color: rgba(238,187,93,0.6);
+            animation: fadeIn 2s infinite alternate;
+        }
+
+        /* --- 开信动画状态 --- */
+        .envelope-opened .envelope-flap {
+            transform: rotateX(180deg);
+            z-index: 0; /* 翻开后层级降低 */
+        }
+        .envelope-opened .wax-seal {
+            opacity: 0; transform: translate(-50%, -50%) scale(1.5);
+        }
+        .envelope-opened .envelope-wrapper {
+            transform: translateY(50px) scale(0.9); opacity: 0;
+            transition-delay: 0.5s; /* 等盖子翻开后再消失 */
+        }
+        .envelope-opened.envelope-overlay {
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition-delay: 0.8s;
+        }
+
+        @keyframes pulse-seal { 0% { box-shadow: 0 0 0 0 rgba(238, 187, 93, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(238, 187, 93, 0); } 100% { box-shadow: 0 0 0 0 rgba(238, 187, 93, 0); } }
+
+        /* ==================== 贺卡主体（默认隐藏） ==================== */
+        .card {
+            position: relative; z-index: 10;
+            width: 90%; max-width: 600px; max-height: 90vh;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border); border-radius: 20px;
+            padding: 40px 30px; text-align: center;
+            transform-style: preserve-3d; will-change: transform;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(238, 187, 93, 0.1) inset;
+            
+            /* 初始状态：隐藏，等待信封打开 */
+            opacity: 0; 
+            transform: scale(0.8) translateY(50px);
+            transition: opacity 1.5s ease, transform 1.5s cubic-bezier(0.19, 1, 0.22, 1);
+            overflow: hidden; overflow-y: auto;
+        }
+
+        /* 贺卡出现动画类 */
+        .card-visible {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+
+        /* (其余原有样式保持不变) */
+        .card-content { position: relative; z-index: 2; }
+        .card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 20px;
+            background: radial-gradient(var(--spotlight-size) circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(238, 187, 93, 0.08), transparent 40%);
+            z-index: -1; pointer-events: none; opacity: 0; transition: opacity 0.5s;
+        }
+        .card:hover::before { opacity: 1; }
+        .card::-webkit-scrollbar { width: 4px; }
+        .card::-webkit-scrollbar-thumb { background: rgba(238, 187, 93, 0.3); border-radius: 2px; }
+
+        .year {
+            font-size: 4rem; font-weight: 700;
+            background: linear-gradient(to bottom, #fff8e1, #d4a03a, #8f6208);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            letter-spacing: 5px; margin-bottom: 5px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+        .greeting {
+            font-size: 0.95rem; letter-spacing: 3px; color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 25px; padding-bottom: 15px; 
+            border-bottom: 1px solid linear-gradient(90deg, transparent, var(--glass-border), transparent);
+            position: relative; display: inline-block; font-family: 'Noto Serif SC', serif; min-width: 200px;
+        }
+        .greeting::after {
+            content: ''; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%);
+            width: 80px; height: 1px; background: linear-gradient(90deg, transparent, var(--primary-gold), transparent);
+        }
+        .group-name { font-size: 1.8rem; font-weight: 700; color: #fff; margin-bottom: 30px; text-shadow: 0 2px 10px rgba(238, 187, 93, 0.3); letter-spacing: 1px; }
+        
+        .members-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; justify-content: center; margin-bottom: 30px; perspective: 500px; }
+        .member {
+            position: relative; font-size: 0.95rem; padding: 10px 5px;
+            background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(238, 187, 93, 0.05); border-radius: 4px; 
+            color: rgba(238, 187, 93, 0.9); opacity: 0; animation: fadeIn 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+            transition: all 0.3s; cursor: pointer; user-select: none; overflow: hidden;
+        }
+        .member::before {
+            content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+            background: linear-gradient(120deg, transparent, rgba(255,255,255,0.8), transparent);
+            background-size: 200% 100%; background-position: -100%;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            pointer-events: none; transition: background-position 0.6s;
+        }
+        .member:hover { transform: translateY(-3px); background: rgba(238, 187, 93, 0.15); border-color: rgba(238, 187, 93, 0.5); color: #fff; text-shadow: 0 0 8px var(--primary-gold); }
+        .member:hover::before { background-position: 200%; transition: background-position 0.8s; }
+        
+        /* 音乐与UI组件 */
+        .music-wrapper { position: fixed; top: 20px; right: 20px; z-index: 100; display: flex; align-items: center; gap: 10px; opacity: 0; transition: opacity 1s; }
+        .wrapper-visible { opacity: 1; }
+        
+        .visualizer { display: flex; gap: 3px; height: 15px; align-items: flex-end; opacity: 0; transition: opacity 0.5s; }
+        .bar { width: 3px; background: var(--primary-gold); animation: bounce 1s infinite ease-in-out; }
+        .bar:nth-child(1) { animation-delay: 0.1s; height: 6px; }
+        .bar:nth-child(2) { animation-delay: 0.3s; height: 10px; }
+        .bar:nth-child(3) { animation-delay: 0.5s; height: 8px; }
+        .bar:nth-child(4) { animation-delay: 0.2s; height: 12px; }
+        .music-playing .visualizer { opacity: 1; }
+        .music-control { width: 40px; height: 40px; border: 1px solid var(--glass-border); border-radius: 50%; background: rgba(0, 0, 0, 0.3); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center; cursor: pointer; transition: transform 0.3s; }
+        .music-control:hover { transform: scale(1.1); background: rgba(238, 187, 93, 0.2); }
+        .music-off { opacity: 0.6; }
+        .music-playing .music-control { animation: pulse 3s infinite; box-shadow: 0 0 15px rgba(238,187,93,0.3); }
+        .music-icon { width: 18px; height: 18px; fill: var(--primary-gold); }
+        
+        .footer-actions { margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(238, 187, 93, 0.1); display: flex; justify-content: center; gap: 15px; }
+        .btn-create { font-family: inherit; font-size: 0.8rem; background: transparent; color: rgba(238, 187, 93, 0.7); border: 1px solid rgba(238, 187, 93, 0.3); padding: 8px 20px; border-radius: 30px; cursor: pointer; transition: all 0.3s; letter-spacing: 1px; }
+        .btn-create:hover { background: var(--primary-gold); color: #1a0505; box-shadow: 0 0 15px rgba(238, 187, 93, 0.4); }
+
+        /* 弹窗 */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 200; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); opacity: 0; transition: opacity 0.3s; }
+        .modal { background: linear-gradient(145deg, #1f0808, #2a0e0e); border: 1px solid var(--primary-gold); box-shadow: 0 0 30px rgba(0,0,0,0.8); padding: 30px; border-radius: 15px; width: 90%; max-width: 400px; color: var(--primary-gold); text-align: left; transform: scale(0.9); transition: transform 0.3s; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-size: 0.8rem; color: rgba(238,187,93,0.6); }
+        .form-input, .form-textarea { width: 100%; padding: 12px; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(238, 187, 93, 0.2); color: #fff; border-radius: 5px; font-family: inherit; }
+        .form-textarea { height: 100px; resize: vertical; }
+        .modal-btns { display: flex; justify-content: space-between; margin-top: 20px; }
+        .btn-cancel { background: transparent; border: none; color: #888; cursor: pointer; }
+        .btn-submit { background: linear-gradient(45deg, #cf9b36, #eebb5d); color: #2a0e0e; border: none; padding: 10px 25px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .show-modal { display: flex; opacity: 1; }
+        .show-modal .modal { transform: scale(1); }
+
+        @keyframes bounce { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.5); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(238, 187, 93, 0.4); } 70% { box-shadow: 0 0 0 8px rgba(238, 187, 93, 0); } 100% { box-shadow: 0 0 0 0 rgba(238, 187, 93, 0); } }
+    </style>
+</head>
+<body>
+
+    <canvas id="snowCanvas"></canvas>
+    <canvas id="fireworkCanvas"></canvas>
+
+    <audio id="bgMusic" loop>
+        <source src="https://upload.wikimedia.org/wikipedia/commons/2/26/Auld_Lang_Syne.ogg" type="audio/ogg">
+        <source src="https://upload.wikimedia.org/wikipedia/commons/1/1b/Auld_Lang_Syne.mp3" type="audio/mpeg">
+    </audio>
+
+    <div class="envelope-overlay" id="envelopeOverlay">
+        <div class="envelope-wrapper" onclick="openEnvelope()">
+            <div class="envelope-body"></div>
+            <div class="envelope-pocket"></div>
+            <div class="envelope-flap"></div>
+            <div class="wax-seal">福</div>
+            <div class="open-hint">点击开启新年</div>
+        </div>
+    </div>
+
+    <div class="music-wrapper" id="musicWrapper">
+        <div class="visualizer">
+            <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        </div>
+        <div class="music-control music-off" id="musicBtn" title="开关音乐">
+            <svg class="music-icon" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+        </div>
+    </div>
+
+    <div class="card" id="mainCard">
+        <div class="card-content">
+            <div class="year">2026</div>
+            <div class="greeting" id="randomGreeting">Happy New Year</div>
+            <div class="group-name" id="displayGroupName"></div>
+            <div class="members-grid" id="memberList"></div>
+            <div class="footer-actions">
+                <button class="btn-create" onclick="openModal()">✍️ 定制我的贺卡</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="diyModal">
+        <div class="modal">
+            <h3>定制你的贺卡</h3>
+            <div class="form-group">
+                <label>群组名称</label>
+                <input type="text" class="form-input" id="inputGroupName" placeholder="例如：相亲相爱一家人">
+            </div>
+            <div class="form-group">
+                <label>成员名单</label>
+                <textarea class="form-textarea" id="inputMembers" placeholder="名单每行一个"></textarea>
+            </div>
+            <div class="modal-btns">
+                <button class="btn-cancel" onclick="closeModal()">取消</button>
+                <button class="btn-submit" onclick="generateNewCard()">生成并下载</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================= 数据区域 =================
+        // --- DATA START ---
+        const cardData = {
+            groupName: "周末大作战",
+            members: [
+                "Li Tingting", "FAN XIAOLONG", "Hou Feifang",
+                "Li Qiyan", "Liu Fan", "Lixian",
+                "Ji Yuhong", "Kou Liqin", "Maoyuheng",
+                "Qin Yimo", "Song Laijun"
+            ]
+        };
+        // --- DATA END ---
+
+        // ================= 1. 信封开场逻辑 =================
+        const envelopeOverlay = document.getElementById('envelopeOverlay');
+        const mainCard = document.getElementById('mainCard');
+        const musicWrapper = document.getElementById('musicWrapper');
+        const bgMusic = document.getElementById('bgMusic');
+        const musicBtn = document.getElementById('musicBtn');
+        let isPlaying = false;
+
+        function openEnvelope() {
+            // 1. 播放开信动画
+            envelopeOverlay.classList.add('envelope-opened');
+
+            // 2. 尝试自动播放音乐 (用户交互后通常允许)
+            bgMusic.volume = 0.5;
+            bgMusic.play().then(() => {
+                isPlaying = true;
+                musicWrapper.classList.add('music-playing');
+                musicBtn.classList.remove('music-off');
+            }).catch(e => console.log("Auto-play prevented:", e));
+
+            // 3. 显示 UI 控件
+            setTimeout(() => {
+                musicWrapper.classList.add('wrapper-visible');
+                // 显示贺卡主体
+                mainCard.classList.add('card-visible');
+            }, 800); // 等信封翻开后
+
+            // 4. 彻底移除遮罩层 (防止遮挡鼠标交互)
+            setTimeout(() => {
+                envelopeOverlay.style.display = 'none';
+            }, 1800);
+        }
+
+        // ================= 2. 初始化与祝福 =================
+        const poeticWishes = [
+            "岁岁常欢愉，年年皆胜意", "所求皆如愿，所行化坦途", "多喜乐，长安宁",
+            "旧岁千般皆如意，新年万事定称心", "凡是过往，皆为序章", "家人闲坐，灯火可亲",
+            "Happy New Year 2026"
+        ];
+        document.getElementById('displayGroupName').innerText = cardData.groupName;
+        document.getElementById('randomGreeting').innerText = poeticWishes[Math.floor(Math.random() * poeticWishes.length)];
+
+        const memberContainer = document.getElementById('memberList');
+        function renderMembers() {
+            memberContainer.innerHTML = '';
+            cardData.members.forEach((name, index) => {
+                const div = document.createElement('div');
+                div.className = 'member';
+                div.innerText = name;
+                div.setAttribute('data-text', name); 
+                div.style.animationDelay = `${0.8 + (index * 0.05)}s`; // 延迟增加，等卡片出来
+                div.addEventListener('click', (e) => createMiniFirework(e.clientX, e.clientY));
+                memberContainer.appendChild(div);
+            });
+        }
+        renderMembers();
+
+        // ================= 3. 视觉交互 =================
+        document.addEventListener('mousemove', (e) => {
+            // 只有当卡片显示后才计算
+            if(!mainCard.classList.contains('card-visible')) return;
+            
+            requestAnimationFrame(() => {
+                const rect = mainCard.getBoundingClientRect();
+                mainCard.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+                mainCard.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 2;
+                const rotateX = -((e.clientY - centerY) / centerY) * 5; 
+                const rotateY = ((e.clientX - centerX) / centerX) * 5;
+                mainCard.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            });
+        });
+        document.addEventListener('mouseleave', () => {
+             if(mainCard.classList.contains('card-visible')) {
+                mainCard.style.transform = `perspective(1000px) rotateX(0) rotateY(0)`;
+             }
+        });
+
+        // ================= 4. 音乐控制 =================
+        function toggleMusic() {
+            if (isPlaying) {
+                bgMusic.pause();
+                musicWrapper.classList.remove('music-playing');
+                musicBtn.classList.add('music-off');
+            } else {
+                bgMusic.play();
+                musicWrapper.classList.add('music-playing');
+                musicBtn.classList.remove('music-off');
+            }
+            isPlaying = !isPlaying;
+        }
+        musicBtn.addEventListener('click', toggleMusic);
+
+        // ================= 5. 粒子特效 =================
+        const snowCanvas = document.getElementById('snowCanvas');
+        const sCtx = snowCanvas.getContext('2d');
+        const fireworkCanvas = document.getElementById('fireworkCanvas');
+        const fCtx = fireworkCanvas.getContext('2d');
+        let width, height, snowParticles = [], fireworks = [];
+
+        function resize() {
+            width = snowCanvas.width = fireworkCanvas.width = window.innerWidth;
+            height = snowCanvas.height = fireworkCanvas.height = window.innerHeight;
+        }
+        class SnowParticle {
+            constructor() { this.reset(); this.y = Math.random() * height; }
+            reset() {
+                this.x = Math.random() * width; this.y = -10;
+                this.size = Math.random() * 2 + 0.5;
+                this.speed = (Math.random() * 1 + 0.3) * (this.size * 0.5);
+                this.opacity = Math.random() * 0.5 + 0.1;
+            }
+            update() {
+                this.y += this.speed; this.x += Math.sin(this.y * 0.01) * 0.5;
+                if (this.y > height) this.reset();
+            }
+            draw() {
+                sCtx.beginPath(); sCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                sCtx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`; sCtx.fill();
+            }
+        }
+        class FireworkParticle {
+            constructor(x, y) {
+                this.x = x; this.y = y;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 3 + 1;
+                this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed;
+                this.life = 1; this.decay = Math.random() * 0.02 + 0.01;
+                this.color = `hsl(${Math.random()*40 + 30}, 100%, 70%)`;
+            }
+            update() { this.x += this.vx; this.y += this.vy; this.vy += 0.05; this.life -= this.decay; }
+            draw() { fCtx.globalAlpha = this.life; fCtx.fillStyle = this.color; fCtx.beginPath(); fCtx.arc(this.x, this.y, 2, 0, Math.PI * 2); fCtx.fill(); }
+        }
+        function createMiniFirework(x, y) { for(let i=0; i<12; i++) fireworks.push(new FireworkParticle(x, y)); }
+        function initSnow() { snowParticles = []; for(let i=0; i<Math.floor(window.innerWidth * 0.1); i++) snowParticles.push(new SnowParticle()); }
+        function animateAll() {
+            sCtx.clearRect(0, 0, width, height); snowParticles.forEach(p => { p.update(); p.draw(); });
+            fCtx.clearRect(0, 0, width, height);
+            for (let i = fireworks.length - 1; i >= 0; i--) {
+                fireworks[i].update(); fireworks[i].draw();
+                if (fireworks[i].life <= 0) fireworks.splice(i, 1);
+            }
+            requestAnimationFrame(animateAll);
+        }
+        window.addEventListener('resize', () => { resize(); initSnow(); });
+        resize(); initSnow(); animateAll();
+
+        // ================= 6. 生成逻辑 =================
+        const modal = document.getElementById('diyModal');
+        function openModal() { modal.classList.add('show-modal'); document.getElementById('inputGroupName').value = cardData.groupName; document.getElementById('inputMembers').value = cardData.members.join('\n'); }
+        function closeModal() { modal.classList.remove('show-modal'); }
+        function generateNewCard() {
+            const newGroup = document.getElementById('inputGroupName').value.trim() || "新年快乐";
+            const newMembers = document.getElementById('inputMembers').value.trim().split('\n').filter(n=>n.trim()!=="");
+            
+            modal.classList.remove('show-modal');
+            mainCard.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)'; // 复位
+            
+            // 重要：生成新卡片时，确保信封是闭合状态，这样收卡人打开时才能看到动画
+            // 我们需要临时移除 class，保存代码，然后再加回来（如果不希望当前页面重置）
+            // 这里为了简单，我们保存的代码里，envelopeOverlay 应该没有 'envelope-opened' 类，
+            // 也没有 style="display: none"。
+            
+            // 恢复初始状态进行快照
+            envelopeOverlay.classList.remove('envelope-opened');
+            envelopeOverlay.style.display = 'flex';
+            mainCard.classList.remove('card-visible'); // 隐藏卡片
+
+            const newConfig = { groupName: newGroup, members: newMembers };
+            let htmlContent = document.documentElement.outerHTML;
+            
+            // 清理掉 JS 运行时产生的 style 和 class
+            htmlContent = htmlContent.replace(/ style="[^"]*"/g, '');
+            // 这一步有点暴力，但有效。更好的方式是只针对特定元素清理。
+            // 重新添加 style="display: none" 给 modal
+            htmlContent = htmlContent.replace('class="modal-overlay show-modal"', 'class="modal-overlay"');
+            
+            // 恢复当前页面状态给用户看
+            envelopeOverlay.classList.add('envelope-opened');
+            envelopeOverlay.style.display = 'none';
+            mainCard.classList.add('card-visible');
+
+            const pattern = /(\/\/ --- DATA START ---)[\s\S]*?(\/\/ --- DATA END ---)/;
+            const replacement = `$1\n        const cardData = ${JSON.stringify(newConfig, null, 4)};\n        $2`;
+            const newHtml = htmlContent.replace(pattern, replacement);
+
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(new Blob([newHtml], { type: 'text/html' }));
+            link.download = `2026新年贺卡_${newGroup}.html`;
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        }
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    </script>
+</body>
+</html>
