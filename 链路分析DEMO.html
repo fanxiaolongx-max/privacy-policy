@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>SCTP 综合链路分析器</title>
+<style>
+body{font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;margin:0;padding:20px;background:#f5f7fa;color:#222;position:relative}
+h1{margin:0 0 10px;font-size:22px}
+textarea{width:100%;height:160px;font-family:monospace;border:1px solid #ccc;border-radius:8px;padding:8px;background:#fff;margin-bottom:8px}
+button{background:#2563eb;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-weight:bold;cursor:pointer;margin-top:6px;margin-right:6px}
+button:hover{background:#1e4ed8}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
+th,td{border:1px solid #ddd;padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#eef2ff}
+tr:nth-child(even){background:#fafbff}
+.badge{padding:2px 8px;border-radius:999px;font-weight:bold;font-size:12px}
+.badge-ok{background:#dcfce7;color:#166534}
+.badge-bad{background:#fee2e2;color:#991b1b}
+.badge-part{background:#fef3c7;color:#92400e}
+.small{color:#555;font-size:12px;word-break:break-all}
+.card{background:#fff;padding:16px;border-radius:10px;box-shadow:0 3px 8px rgba(0,0,0,0.05);margin-bottom:20px}
+code{font-family:monospace;background:#f3f4f6;padding:2px 4px;border-radius:4px;font-size:12px;display:block;white-space:pre-wrap}
+#langBtn{position:absolute;top:20px;right:20px;background:#6b7280}
+#langBtn:hover{background:#4b5563}
+.toggle-btn{background:#e5e7eb;color:#111;border:none;border-radius:4px;padding:2px 8px;font-size:12px;cursor:pointer;margin-bottom:4px}
+.toggle-btn:hover{background:#d1d5db}
+.hidden{display:none;}
+.copy-btn{background:#10b981;color:#fff;border:none;border-radius:4px;padding:2px 6px;font-size:11px;margin-left:4px;cursor:pointer}
+.copy-btn:hover{background:#059669}
+.section-title{font-size:16px;margin:4px 0 8px}
+</style>
+<!-- Excel 导出库（SheetJS） -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+<button id="langBtn">🌐 English</button>
+<h1 id="mainTitle">SCTP 综合链路分析器</h1>
+
+<div class="card">
+  <div style="font-weight:bold;margin-bottom:6px;" id="inputTitle">输入区</div>
+  <div>
+    <b id="lblSctp">① 粘贴 DBSSCTP 输出：</b>
+    <textarea id="txtSctp" placeholder="%%DSP DBSSCTP:;%% 输出（可选）"></textarea>
+  </div>
+  <div>
+    <b id="lblAssoc">② 粘贴 DBSSCTPASSOC 输出：</b>
+    <textarea id="txtAssoc" placeholder="%%DSP DBSSCTPASSOC:;%% 输出（建议粘贴，用于全量配置）"></textarea>
+  </div>
+  <div>
+    <b id="lblAlm">③ 粘贴 DBS SCTP 告警：</b>
+    <textarea id="txtAlm" placeholder="包含 Module number=、Remote DSG number=、Local IP/Port、Peer IP/Port 的 DBS 告警列表（可选）"></textarea>
+  </div>
+  <div>
+    <button id="btnAnalyze">开始分析</button>
+    <button id="btnExportHtml" style="background:#059669;">导出综合表 HTML</button>
+    <button id="btnExportExcel" style="background:#0d9488;">导出综合表 Excel</button>
+  </div>
+</div>
+
+<div id="output"></div>
+
+<script>
+// ====== 多语言文本 ======
+let currentLang="zh";
+const i18n={
+  zh:{
+    mainTitle:"SCTP 综合链路分析器",
+    inputTitle:"输入区",
+    lblSctp:"① 粘贴 DBSSCTP 输出：",
+    lblAssoc:"② 粘贴 DBSSCTPASSOC 输出：",
+    lblAlm:"③ 粘贴 DBS SCTP 告警：",
+    analyze:"开始分析",
+    exportHtml:"导出综合表 HTML",
+    exportExcel:"导出综合表 Excel",
+    langBtn:"🌐 English",
+    noSctp:"（未提供 DBSSCTP 输出）",
+    noAssoc:"（未提供 DBSSCTPASSOC 输出）",
+    noAlm:"（未提供告警，默认所有链路正常）",
+    secSctp:"一、DBSSCTP 链路健康（按模块/DSG）",
+    secAssoc:"二、DBSSCTPASSOC 全量配置（含正常方向过滤公式）",
+    secMerged:"三、综合对照表（按 IP+端口匹配正常/异常）",
+    headersSctp:["Service Mod","Remote Loc","Remote DSG","Assoc ID","Link","Health","匹配告警"],
+    headersAssoc:["ID","Local IPs","Local Port","Remote IPs","Remote Port","FE 类型","正常过滤公式"],
+    headersMerged:["ID","Local IPs","Local Port","Remote IPs","Remote Port","状态","正常过滤公式","异常过滤公式"],
+    statusOk:"正常",
+    statusBad:"异常",
+    statusNoAlm:"无告警",
+    statusNoAssoc:"无配置",
+    noTable:"❗ 未解析到有效表格，请检查输入格式。",
+    showFormula:"显示公式",
+    hideFormula:"隐藏公式",
+    copyTip:"✅ 已复制到剪贴板",
+    noMerged:"（综合表需要至少提供 DBSSCTPASSOC；如同时提供告警，则可标记异常链路。）"
+  },
+  en:{
+    mainTitle:"SCTP Link Full Analyzer",
+    inputTitle:"Input Area",
+    lblSctp:"① Paste DBSSCTP Output:",
+    lblAssoc:"② Paste DBSSCTPASSOC Output:",
+    lblAlm:"③ Paste DBS SCTP Alarms:",
+    analyze:"Analyze",
+    exportHtml:"Export Merged Table HTML",
+    exportExcel:"Export Merged Table Excel",
+    langBtn:"🌐 中文",
+    noSctp:"(DBSSCTP output not provided)",
+    noAssoc:"(DBSSCTPASSOC output not provided)",
+    noAlm:"(Alarms not provided, all links treated as normal)",
+    secSctp:"1. DBSSCTP Link Health (by Module / DSG)",
+    secAssoc:"2. DBSSCTPASSOC Full Configuration (with normal Wireshark filter)",
+    secMerged:"3. Merged View (match normal/abnormal by IP+Port)",
+    headersSctp:["Service Mod","Remote Loc","Remote DSG","Assoc ID","Link","Health","Matched Alarms"],
+    headersAssoc:["ID","Local IPs","Local Port","Remote IPs","Remote Port","FE Type","Normal Filter"],
+    headersMerged:["ID","Local IPs","Local Port","Remote IPs","Remote Port","Status","Normal Filter","Abnormal Filter"],
+    statusOk:"OK",
+    statusBad:"Abnormal",
+    statusNoAlm:"No Alarm",
+    statusNoAssoc:"No Config",
+    noTable:"❗ No valid table parsed, please check the input format.",
+    showFormula:"Show Filter",
+    hideFormula:"Hide Filter",
+    copyTip:"✅ Copied to clipboard",
+    noMerged:"(Merged table requires at least DBSSCTPASSOC; with alarms provided, abnormal links will be marked.)"
+  }
+};
+
+function applyLang(){
+  const L=i18n[currentLang];
+  document.title=L.mainTitle;
+  document.getElementById("mainTitle").innerText=L.mainTitle;
+  document.getElementById("inputTitle").innerText=L.inputTitle;
+  document.getElementById("lblSctp").innerText=L.lblSctp;
+  document.getElementById("lblAssoc").innerText=L.lblAssoc;
+  document.getElementById("lblAlm").innerText=L.lblAlm;
+  document.getElementById("btnAnalyze").innerText=L.analyze;
+  document.getElementById("btnExportHtml").innerText=L.exportHtml;
+  document.getElementById("btnExportExcel").innerText=L.exportExcel;
+  document.getElementById("langBtn").innerText=L.langBtn;
+  // 重新渲染输出
+  renderAll();
+}
+
+document.getElementById("langBtn").onclick=function(){
+  currentLang=currentLang==="zh"?"en":"zh";
+  applyLang();
+};
+
+// ====== 数据缓存，用于切换语言后重渲染 ======
+let lastSctp=[], lastAssoc=[], lastAlm=[], lastMerged=[];
+
+// ====== 解析函数 ======
+function parseDBSSCTP(text){
+  const lines=text.split(/\r?\n/);
+  const arr=[];
+  let start=false;
+  for(let raw of lines){
+    const l=raw.replace(/\u00a0/g,' ').trim();
+    if(!l) continue;
+    if(!start && /service\s+module\s+number/i.test(l)){start=true;continue;}
+    if(!start) continue;
+    if(/^---/i.test(l) || /number of results/i.test(l) || /end/i.test(l)) break;
+    if(/^-{3,}$/.test(l)) continue;
+    const p=l.split(/\s{2,}|\t+/);
+    if(p.length>=8){
+      arr.push({
+        svcMod:p[0],
+        remoteLoc:p[1],
+        remoteDSG:p[2],
+        assoc:p[3],
+        link:p[4],
+        health:p[6]||"",
+        raw:l,
+        alarms:[]
+      });
+    }
+  }
+  return arr;
+}
+
+function parseASSOC(text){
+  const lines=text.split(/\r?\n/);
+  const arr=[];
+  let start=false;
+  for(let raw of lines){
+    const l=raw.replace(/\u00a0/g,' ').trim();
+    if(!l) continue;
+    if(!start && /measurement\s+object\s+id/i.test(l)){start=true;continue;}
+    if(!start) continue;
+    if(/^---/i.test(l) || /number of results/i.test(l) || /end/i.test(l)) break;
+    const p=l.split(/\s{2,}|\t+/);
+    if(p.length>=8){
+      arr.push({
+        id:p[0],
+        local1:p[1],
+        local2:p[2],
+        lport:p[3],
+        remote1:p[4],
+        remote2:p[5],
+        rport:p[6],
+        fe:p[7]||""
+      });
+    }
+  }
+  return arr;
+}
+
+function parseAlarms(text){
+  const lines=text.split(/\r?\n/);
+  const arr=[];
+  for(let raw of lines){
+    const m=raw.match(/Module number=(\d+).*Remote location number=(\d+).*Remote DSG number=(\d+),Local port=(\d+),Peer port=(\d+),IP type=([^,]+),Local IP=([\d.]+),Peer IP=([\d.]+)/);
+    if(m){
+      arr.push({
+        mod:m[1],
+        rloc:m[2],
+        dsg:m[3],
+        lport:m[4],
+        pport:m[5],
+        iptype:m[6],
+        lip:m[7],
+        pip:m[8],
+        matched:false,
+        raw:raw
+      });
+    }
+  }
+  return arr;
+}
+
+// DBSSCTP 与告警按 module+DSG 关联（仅用于 DBSSCTP 那个表）
+function matchSctpWithAlarms(sctpRows, alarms){
+  for(const s of sctpRows){
+    s.alarms=[];
+    for(const a of alarms){
+      if(a.mod===s.svcMod && a.dsg===s.remoteDSG){
+        s.alarms.push(a);
+        a.matched=true;
+      }
+    }
+  }
+}
+
+// 综合表：按 ASSOC(IP+port) 和 告警(IP+port) 匹配
+function buildMerged(assocRows, alarms){
+  const merged=[];
+  for(const r of assocRows){
+    const normalFilter = makeFilter(r.local1, r.remote1, r.lport, r.rport);
+    // 找异常匹配：local1/remote1 或 local2/remote2
+    const bads = alarms.filter(a =>
+      ((a.lip===r.local1 && a.pip===r.remote1) ||
+       (a.lip===r.local2 && a.pip===r.remote2) ) &&
+      a.lport===r.lport && a.pport===r.rport
+    );
+    let badFilter="";
+    if(bads.length){
+      // 简单：取第一条
+      const a=bads[0];
+      badFilter=makeFilter(a.lip,a.pip,a.lport,a.pport);
+    }
+    merged.push({
+      id:r.id,
+      local1:r.local1,
+      local2:r.local2,
+      lport:r.lport,
+      remote1:r.remote1,
+      remote2:r.remote2,
+      rport:r.rport,
+      fe:r.fe,
+      normalFilter,
+      badFilter,
+      hasBad: !!badFilter
+    });
+  }
+  return merged;
+}
+
+// Wireshark 过滤公式（双向）
+function makeFilter(lip,pip,lport,pport){
+  return `(ip.src == ${lip} && ip.dst == ${pip} && sctp.srcport == ${lport} && sctp.dstport == ${pport})\n`+
+         `|| (ip.src == ${pip} && ip.dst == ${lip} && sctp.srcport == ${pport} && sctp.dstport == ${lport})`;
+}
+
+// ====== 渲染 ======
+function renderAll(){
+  const L=i18n[currentLang];
+  const out=document.getElementById("output");
+  let html="";
+
+  // 1. DBSSCTP
+  html+=`<div class="card"><div class="section-title">${L.secSctp}</div>`;
+  if(!lastSctp.length){
+    html+=`<div class="small">${L.noSctp}</div></div>`;
+  }else{
+    html+='<table><tr>'+L.headersSctp.map(h=>`<th>${h}</th>`).join('')+'</tr>';
+    for(const r of lastSctp){
+      let alarmHtml="";
+      if(r.alarms && r.alarms.length){
+        alarmHtml=r.alarms.map(a=>`<div class="small">${a.lip}:${a.lport} → ${a.pip}:${a.pport}</div>`).join('');
+      }else{
+        alarmHtml=`<span class="small">${L.statusNoAlm}</span>`;
+      }
+      html+=`<tr>
+        <td>${r.svcMod}</td>
+        <td>${r.remoteLoc}</td>
+        <td>${r.remoteDSG}</td>
+        <td>${r.assoc}</td>
+        <td>${r.link}</td>
+        <td>${r.health}</td>
+        <td>${alarmHtml}</td>
+      </tr>`;
+    }
+    html+='</table></div>';
+  }
+
+  // 2. DBSSCTPASSOC
+    html+=`<div class="card"><div class="section-title">${L.secAssoc}</div>`;
+    if(!lastAssoc.length){
+    html+=`<div class="small">${L.noAssoc}</div></div>`;
+    }else{
+    html+='<table><tr>'+L.headersAssoc.map(h=>`<th>${h}</th>`).join('')+'</tr>';
+    for(const r of lastAssoc){
+        const fid=`assoc_${r.id}_${r.lport}_${r.rport}`;
+        // 生成四种组合的过滤公式
+        const filters=[
+        makeFilter(r.local1,r.remote1,r.lport,r.rport),
+        makeFilter(r.local1,r.remote2,r.lport,r.rport),
+        makeFilter(r.local2,r.remote1,r.lport,r.rport),
+        makeFilter(r.local2,r.remote2,r.lport,r.rport)
+        ];
+        html+=`<tr>
+        <td>${r.id}</td>
+        <td>${r.local1}<br>${r.local2}</td>
+        <td>${r.lport}</td>
+        <td>${r.remote1}<br>${r.remote2}</td>
+        <td>${r.rport}</td>
+        <td>${r.fe}</td>
+        <td>
+            <button class="toggle-btn" onclick="toggleFormula('${fid}')">${L.showFormula}</button>
+            <div id="${fid}" class="hidden">`;
+        filters.forEach((f,i)=>{
+        html+=`<div style="margin-bottom:6px;">
+            <div class="small">#${i+1}</div>
+            <code>${f}</code>
+            <button class="copy-btn" onclick="copyText(\`${f}\`)">复制</button>
+        </div>`;
+        });
+        html+='</div></td></tr>';
+    }
+    html+='</table></div>';
+    }
+
+
+  // 3. 综合表
+    html+=`<div class="card"><div class="section-title">${L.secMerged}</div>`;
+    if(!lastAssoc.length){
+    html+=`<div class="small">${L.noMerged}</div></div>`;
+    }else{
+    if(!lastMerged.length){
+        html+=`<div class="small">${L.noAlm}</div>`;
+    }
+    html+='<table id="mergedTable"><tr>'+L.headersMerged.map(h=>`<th>${h}</th>`).join('')+'</tr>';
+    for(const r of lastMerged){
+        const statusBadge = r.hasBad
+        ? `<span class="badge badge-bad">${L.statusBad}</span>`
+        : `<span class="badge badge-ok">${L.statusOk}</span>`;
+
+        const nfId=`nf_${r.id}_${r.lport}_${r.rport}`;
+        const bfId=`bf_${r.id}_${r.lport}_${r.rport}`;
+
+        // 四种正常路径过滤公式
+        const normalFilters=[
+        makeFilter(r.local1,r.remote1,r.lport,r.rport),
+        makeFilter(r.local1,r.remote2,r.lport,r.rport),
+        makeFilter(r.local2,r.remote1,r.lport,r.rport),
+        makeFilter(r.local2,r.remote2,r.lport,r.rport)
+        ];
+
+        html+=`<tr>
+        <td>${r.id}</td>
+        <td>${r.local1}<br>${r.local2}</td>
+        <td>${r.lport}</td>
+        <td>${r.remote1}<br>${r.remote2}</td>
+        <td>${r.rport}</td>
+        <td>${statusBadge}</td>
+        <td>
+            <button class="toggle-btn" onclick="toggleFormula('${nfId}')">${L.showFormula}</button>
+            <div id="${nfId}" class="hidden">`;
+        normalFilters.forEach((f,i)=>{
+        html+=`<div style="margin-bottom:6px;">
+            <div class="small">#${i+1}</div>
+            <code>${f}</code>
+            <button class="copy-btn" onclick="copyText(\`${f}\`)">复制</button>
+        </div>`;
+        });
+        html+='</div></td><td>';
+
+        // 异常过滤公式（单条）
+        if(r.badFilter){
+        html+=`<button class="toggle-btn" onclick="toggleFormula('${bfId}')">${L.showFormula}</button>
+            <div id="${bfId}" class="hidden">
+            <code>${r.badFilter}</code>
+            <button class="copy-btn" onclick="copyText(\`${r.badFilter}\`)">复制</button>
+            </div>`;
+        }else{
+        html+=`<span class="small">${L.statusNoAlm}</span>`;
+        }
+        html+='</td></tr>';
+    }
+    html+='</table></div>';
+    }
+
+
+  out.innerHTML=html;
+}
+
+// ====== 事件：分析 ======
+document.getElementById("btnAnalyze").onclick=function(){
+  const sctpText=document.getElementById("txtSctp").value;
+  const assocText=document.getElementById("txtAssoc").value;
+  const almText=document.getElementById("txtAlm").value;
+
+  lastSctp = sctpText.trim()?parseDBSSCTP(sctpText):[];
+  lastAssoc = assocText.trim()?parseASSOC(assocText):[];
+  lastAlm = almText.trim()?parseAlarms(almText):[];
+
+  // 先给 DBSSCTP 绑定告警信息
+  if(lastSctp.length && lastAlm.length){
+    matchSctpWithAlarms(lastSctp,lastAlm);
+  }
+
+  // 构建综合表（ASSOC + 告警）
+  if(lastAssoc.length){
+    lastMerged = buildMerged(lastAssoc,lastAlm);
+  }else{
+    lastMerged = [];
+  }
+
+  renderAll();
+};
+
+// ====== 展开/收起公式 ======
+function toggleFormula(id){
+  const div=document.getElementById(id);
+  if(!div) return;
+  const btn=event.target;
+  const L=i18n[currentLang];
+  if(div.classList.contains("hidden")){
+    div.classList.remove("hidden");
+    btn.textContent=L.hideFormula;
+  }else{
+    div.classList.add("hidden");
+    btn.textContent=L.showFormula;
+  }
+}
+
+// ====== 复制到剪贴板 ======
+function copyText(text){
+  navigator.clipboard.writeText(text).then(()=>{
+    alert(i18n[currentLang].copyTip);
+  });
+}
+
+// ====== 导出综合表 HTML ======
+document.getElementById("btnExportHtml").onclick=function(){
+  if(!lastMerged.length){
+    alert("无综合表数据可导出，请先分析并确保存在 DBSSCTPASSOC 配置。");
+    return;
+  }
+  const L=i18n[currentLang];
+  const table=document.getElementById("mergedTable");
+  if(!table){
+    alert("未找到综合表。");
+    return;
+  }
+  const htmlContent=`<!DOCTYPE html>
+<html lang="${currentLang==='zh'?'zh-CN':'en'}">
+<head><meta charset="UTF-8">
+<title>${L.secMerged}</title>
+<style>
+body{font-family:"Segoe UI",Arial,sans-serif;background:#f5f7fa;color:#222;padding:20px}
+table{width:100%;border-collapse:collapse;font-size:13px;background:#fff}
+th,td{border:1px solid #ddd;padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#eef2ff}
+tr:nth-child(even){background:#fafbff}
+.badge{padding:2px 8px;border-radius:999px;font-weight:bold;font-size:12px}
+.badge-ok{background:#dcfce7;color:#166534}
+.badge-bad{background:#fee2e2;color:#991b1b}
+.small{color:#555;font-size:12px;word-break:break-all}
+code{font-family:monospace;background:#f3f4f6;padding:2px 4px;border-radius:4px;font-size:12px;display:block;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<h2>${L.secMerged}</h2>
+${table.outerHTML}
+</body></html>`;
+
+  const blob=new Blob([htmlContent],{type:"text/html;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download="SCTP_Merged_Table.html";
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+// ====== 导出综合表 Excel ======
+document.getElementById("btnExportExcel").onclick=function(){
+  if(!lastMerged.length){
+    alert("无综合表数据可导出，请先分析并确保存在 DBSSCTPASSOC 配置。");
+    return;
+  }
+  const L=i18n[currentLang];
+  const header=L.headersMerged;
+  const data=[header];
+  for(const r of lastMerged){
+    data.push([
+      r.id,
+      `${r.local1} / ${r.local2}`,
+      r.lport,
+      `${r.remote1} / ${r.remote2}`,
+      r.rport,
+      r.hasBad ? L.statusBad : L.statusOk,
+      r.normalFilter,
+      r.badFilter || L.statusNoAlm
+    ]);
+  }
+  const ws=XLSX.utils.aoa_to_sheet(data);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Merged");
+  XLSX.writeFile(wb,"SCTP_Merged_Table.xlsx");
+};
+
+// 初始渲染（空）
+renderAll();
+applyLang();
+</script>
+</body>
+</html>
