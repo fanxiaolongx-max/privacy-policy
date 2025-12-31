@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>【最终交互编辑版】事故分析泡泡图 (Ctrl+拖动)</title>
+    <style>
+        /* --- General Styles --- */
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7f9;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        .controls-wrapper {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border: 1px solid #dee2e6;
+        }
+        .controls-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px; /* Reduced gap for tighter layout */
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        .controls-row:first-child { margin-top: 0; }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            white-space: nowrap;
+        }
+        .btn:hover { background-color: #0056b3; }
+        .btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .btn-secondary { background-color: #6c757d; }
+        .btn-secondary:hover { background-color: #5a6268; }
+        .btn-success { background-color: #28a745; }
+        .btn-success:hover { background-color: #218838; }
+        .btn-accent { background-color: #fd7e14; }
+        .btn-accent:hover { background-color: #e86a00; }
+        .btn-danger { background-color: #dc3545; }
+        .btn-danger:hover { background-color: #c82333; }
+        
+        #file-input { display: none; }
+        #file-name { font-style: italic; color: #6c757d; }
+        #chart-container {
+            width: 100%;
+            height: 600px;
+            margin-top: 20px;
+            position: relative;
+        }
+        input[type="number"], input[type="text"], select {
+            width: 60px; /* Tighter input fields */
+            padding: 8px;
+            border: 1px solid #ced4da;
+            background-color: #fff;
+            color: #495057;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        input[type="range"] { width: 100px; cursor: pointer; }
+        #size-value, #font-size-value { color: #495057; font-weight: bold; }
+        .footer { text-align: center; margin-top: 40px; font-size: 13px; color: #6c757d; }
+        .hint { font-size: 12px; color: #6c757d; text-align: center; width: 100%; margin-top: 15px !important; }
+
+        /* --- Toggle Switch Styles --- */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+            vertical-align: middle;
+        }
+        .switch input { 
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #28a745;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        /* --- Modal Styles --- */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            z-index: 999;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            z-index: 1000;
+            width: 380px;
+        }
+        .modal h3 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        .form-group label {
+            width: 120px;
+            color: #555;
+            font-size: 14px;
+        }
+        .form-group input, .form-group select {
+            flex: 1;
+            width: auto;
+        }
+        .form-group input[type="color"] {
+            padding: 0;
+            height: 30px;
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
+        .modal-actions {
+            margin-top: 25px;
+            display: flex;
+            justify-content: space-between;
+        }
+        #confirm-drag-text {
+            line-height: 1.6;
+            font-size: 15px;
+        }
+        #confirm-drag-text strong {
+            color: #007bff;
+        }
+
+        /* --- Notification Styles --- */
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 25px;
+            border-radius: 6px;
+            color: white;
+            font-size: 15px;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.5s, top 0.5s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        .notification.show {
+            opacity: 1;
+            top: 40px;
+        }
+        .notification.error {
+            background-color: #dc3545;
+        }
+        .notification.success {
+            background-color: #28a745;
+        }
+        .notification.warning {
+            background-color: #fd7e14;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="controls-wrapper">
+        <div class="controls-row">
+            <label for="file-input" class="btn">导入 Excel</label>
+            <input type="file" id="file-input" accept=".xlsx, .xls">
+            <span id="file-name">尚未选择文件</span>
+            <strong style="margin-left: 15px;">时长 (H):</strong>
+            <input type="number" id="duration-min" placeholder="最小">
+            <span>-</span>
+            <input type="number" id="duration-max" placeholder="最大">
+            <strong style="margin-left: 15px;">Y轴拉伸:</strong>
+            <input type="number" id="stretch-start" value="100">
+            <span>-</span>
+            <input type="number" id="stretch-end" value="1000">
+            <span>(</span>
+            <input type="number" id="stretch-factor" value="20" min="1" step="0.1" style="width: 50px;">
+            <span>倍)</span>
+        </div>
+        <div class="controls-row">
+            <strong>泡泡缩放:</strong>
+            <input type="range" id="size-multiplier" min="0.2" max="3" step="0.1" value="2.2">
+            <span id="size-value">2.2x</span>
+            <strong style="margin-left: 15px;">字体:</strong>
+            <input type="range" id="global-font-size" min="8" max="24" step="1" value="10">
+            <span id="font-size-value">10px</span>
+            <input type="color" id="global-font-color" value="#ffffff" style="padding: 0; height: 24px; width: 24px; border: 1px solid #ccc; background: none; vertical-align: middle; cursor:pointer;">
+            <strong style="margin-left: 15px;">Y轴偏移:</strong>
+            <input type="range" id="y-axis-offset" min="-50" max="50" step="1" value="0" style="width: 80px;">
+            <span id="y-axis-offset-value" style="width: 40px; text-align: left;">0%</span>
+            <strong style="margin-left: 15px;">启用拖动:</strong>
+            <label class="switch">
+                <input type="checkbox" id="drag-toggle" checked>
+                <span class="slider"></span>
+            </label>
+            <button id="redraw-btn" class="btn btn-accent" style="margin-left: 15px;">应用设置</button>
+            <button id="export-ppt-btn" class="btn btn-success" style="margin-left: 10px;">导出为 PPT</button>
+        </div>
+        <div class="controls-row hint">
+             <span>💡 提示: 按住 <strong>Ctrl</strong> 并用鼠标左键可拖动泡泡。按住 <strong>Shift</strong> 并滚动鼠标可缩放泡泡。双击空白处可添加新泡泡。</span>
+        </div>
+    </div>
+
+
+    <div id="chart-container"></div>
+
+</div>
+
+<div id="edit-modal-overlay" class="modal-overlay"></div>
+<div id="edit-modal" class="modal">
+    <h3 id="modal-title">编辑泡泡</h3>
+    <div class="form-group"><label for="modal-name">事故名称:</label><input type="text" id="modal-name"></div>
+    <div class="form-group"><label for="modal-users">影响用户 (万):</label><input type="number" id="modal-users"></div>
+    <div class="form-group"><label for="modal-duration">中断时长 (小时):</label><input type="number" id="modal-duration"></div>
+    <div class="form-group"><label for="modal-category">事故类别:</label><select id="modal-category"></select></div>
+    <div class="form-group"><label for="modal-bubble-color">泡泡颜色:</label><input type="color" id="modal-bubble-color"></div>
+    <div class="form-group"><label for="modal-text-color">文字颜色:</label><input type="color" id="modal-text-color"></div>
+    <div class="form-group"><label for="modal-font-size">字体大小:</label><input type="number" id="modal-font-size" min="8" max="24"></div>
+    <div class="modal-actions">
+        <button id="delete-bubble-btn" class="btn btn-danger">删除</button>
+        <div>
+            <button id="cancel-modal-btn" class="btn btn-secondary" style="margin-right: 10px;">取消</button>
+            <button id="save-changes-btn" class="btn">保存</button>
+        </div>
+    </div>
+</div>
+
+<div id="confirm-drag-modal" class="modal">
+    <h3>确认位置变更</h3>
+    <div id="confirm-drag-text"></div>
+    <div class="modal-actions" style="justify-content: flex-end;">
+        <button id="cancel-drag-btn" class="btn btn-secondary" style="margin-right: 10px;">取消</button>
+        <button id="confirm-drag-btn" class="btn btn-success">确认</button>
+    </div>
+</div>
+
+<div class="footer">
+    <p>© 2025 Powered by ECharts, SheetJS & PptxGenJS</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts/map/js/world.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.min.js"></script>
+<script>
+    if (typeof JSZip === 'undefined') {
+        console.warn('Primary CDN for JSZip (cdnjs.cloudflare.com) failed. Attempting fallback.');
+        const jszipScript = document.createElement('script');
+        jszipScript.src = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
+        document.head.appendChild(jszipScript);
+    }
+    if (typeof PptxGenJS === 'undefined') {
+        console.warn('Primary CDN for PptxGenJS (cdnjs.cloudflare.com) failed. Attempting fallback.');
+        const pptxgenScript = document.createElement('script');
+        pptxgenScript.src = 'https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.min.js';
+        document.head.appendChild(pptxgenScript);
+    }
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+        // --- DOM Element References ---
+        const fileInput = document.getElementById('file-input');
+        const fileNameSpan = document.getElementById('file-name');
+        const chartContainer = document.getElementById('chart-container');
+        const redrawBtn = document.getElementById('redraw-btn');
+        const sizeMultiplierSlider = document.getElementById('size-multiplier');
+        const sizeValueSpan = document.getElementById('size-value');
+        const durationMinInput = document.getElementById('duration-min');
+        const durationMaxInput = document.getElementById('duration-max');
+        const globalFontColorInput = document.getElementById('global-font-color');
+        const globalFontSizeSlider = document.getElementById('global-font-size');
+        const fontSizeValueSpan = document.getElementById('font-size-value');
+        const editModalOverlay = document.getElementById('edit-modal-overlay');
+        const editModal = document.getElementById('edit-modal');
+        const confirmDragModal = document.getElementById('confirm-drag-modal');
+        const confirmDragText = document.getElementById('confirm-drag-text');
+        const modalTitle = document.getElementById('modal-title');
+        const modalName = document.getElementById('modal-name');
+        const modalUsers = document.getElementById('modal-users');
+        const modalDuration = document.getElementById('modal-duration');
+        const modalCategory = document.getElementById('modal-category');
+        const modalBubbleColor = document.getElementById('modal-bubble-color');
+        const modalTextColor = document.getElementById('modal-text-color');
+        const modalFontSize = document.getElementById('modal-font-size');
+        const saveChangesBtn = document.getElementById('save-changes-btn');
+        const deleteBubbleBtn = document.getElementById('delete-bubble-btn');
+        const cancelModalBtn = document.getElementById('cancel-modal-btn');
+        const confirmDragBtn = document.getElementById('confirm-drag-btn');
+        const cancelDragBtn = document.getElementById('cancel-drag-btn');
+        const dragToggle = document.getElementById('drag-toggle');
+        const exportPptBtn = document.getElementById('export-ppt-btn');
+        const yAxisOffsetSlider = document.getElementById('y-axis-offset');
+        const yAxisOffsetValueSpan = document.getElementById('y-axis-offset-value');
+        
+        const myChart = echarts.init(chartContainer);
+        // --- State Management ---
+        let originalData = [];
+        let currentData = [];
+        let selectedItem = { id: null, isNew: false };
+        let dragInfo = {};
+        let categoryColorMap = {};
+        let fullDateRange = []; 
+        const colorPalette = ['#d9534f', '#f0ad4e', '#5cb85c', '#428bca', '#6f42c1', '#fd7e14', '#20c997', '#e83e8c'];
+        let labelManagementTimeout = null; // Debounce timer for label updates
+        let isCtrlPressed = false; // Global state for Ctrl key
+
+        // --- Event Listeners ---
+        fileInput.addEventListener('change', handleFileChange);
+        redrawBtn.addEventListener('click', () => processDataAndRenderChart(true));
+        sizeMultiplierSlider.addEventListener('input', () => {
+            sizeValueSpan.textContent = `${parseFloat(sizeMultiplierSlider.value).toFixed(1)}x`;
+            processDataAndRenderChart(false);
+        });
+        durationMinInput.addEventListener('input', () => processDataAndRenderChart(true));
+        durationMaxInput.addEventListener('input', () => processDataAndRenderChart(true));
+        globalFontColorInput.addEventListener('input', () => processDataAndRenderChart(false));
+        globalFontSizeSlider.addEventListener('input', () => {
+            fontSizeValueSpan.textContent = `${globalFontSizeSlider.value}px`;
+            processDataAndRenderChart(false);
+        });
+        
+        // MODIFIED: Toggle no longer redraws, just handles state
+        dragToggle.addEventListener('change', () => {
+            if (!dragToggle.checked) {
+                // If toggle is turned off, ensure dragging is disabled
+                // This is a safety measure in case Ctrl is being held down
+                isCtrlPressed = false;
+                setDragState(false);
+            }
+        });
+
+        exportPptBtn.addEventListener('click', exportToPptx);
+        yAxisOffsetSlider.addEventListener('input', () => {
+            yAxisOffsetValueSpan.textContent = `${yAxisOffsetSlider.value}%`;
+            processDataAndRenderChart(false);
+        });
+        window.addEventListener('resize', () => {
+            myChart.resize();
+             clearTimeout(labelManagementTimeout);
+             labelManagementTimeout = setTimeout(() => {
+                 adjustInternalLabels();
+             }, 300);
+        });
+
+        saveChangesBtn.addEventListener('click', saveChanges);
+        deleteBubbleBtn.addEventListener('click', deleteBubble);
+        cancelModalBtn.addEventListener('click', closeModal);
+        editModalOverlay.addEventListener('click', () => {
+            closeModal();
+            closeConfirmModal(false);
+        });
+        confirmDragBtn.addEventListener('click', () => closeConfirmModal(true));
+        cancelDragBtn.addEventListener('click', () => closeConfirmModal(false));
+        
+        myChart.on('click', handleChartClick);
+        myChart.on('dblclick', handleChartDoubleClick);
+        chartContainer.addEventListener('wheel', handleMouseWheel, { passive: false });
+        myChart.on('dataitemdragend', handleDragEnd);
+        
+        // --- NEW: Keydown/Keyup listeners for Ctrl-Drag ---
+        function setDragState(isDraggable) {
+            const currentOption = myChart.getOption();
+            if (!currentOption || !currentOption.series || currentOption.series.length === 0) {
+                return;
+            }
+
+            // Only proceed if the main drag toggle switch is enabled
+            if (!dragToggle.checked) {
+                return;
+            }
+
+            myChart.setOption({
+                series: currentOption.series.map(s => ({
+                    name: s.name,
+                    draggable: isDraggable,
+                    cursor: isDraggable ? 'move' : 'default'
+                }))
+            });
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Control' && !isCtrlPressed) {
+                isCtrlPressed = true;
+                setDragState(true);
+            }
+        });
+
+        document.addEventListener('keyup', (event) => {
+            if (event.key === 'Control') {
+                isCtrlPressed = false;
+                setDragState(false);
+            }
+        });
+
+        // --- Core Functions ---
+
+        function showNotification(message, type = 'error') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 500);
+            }, 4000);
+        }
+
+        function generateCategoryColorMap() {
+            const allCategories = [...new Set(originalData.map(item => item.category))];
+            categoryColorMap = {};
+            allCategories.forEach((category, index) => {
+                categoryColorMap[category] = colorPalette[index % colorPalette.length];
+            });
+        }
+        
+        function handleFileChange(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            fileNameSpan.textContent = file.name;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                originalData = XLSX.utils.sheet_to_json(worksheet, {
+                    header: ["date", "users", "duration", "category", "name", "color"], range: 1
+                }).filter(item => item.date instanceof Date && item.name !== undefined && item.name !== null)
+                  .map((item, index) => {
+                        const newItem = { ...item, id: Date.now() + index };
+                        
+                        if (newItem.name !== undefined && newItem.name !== null) {
+                            newItem.name = String(newItem.name).trim();
+                        }
+                        if (newItem.category !== undefined && newItem.category !== null) {
+                            newItem.category = String(newItem.category).trim();
+                        } else {
+                            newItem.category = "未分类";
+                        }
+
+                        if (item.color && /^#([0-9A-F]{3}){1,2}$/i.test(item.color)) {
+                            newItem.itemStyle = { color: item.color };
+                        }
+                        
+                        if (newItem.category === '其它') {
+                            newItem.category = '其他';
+                        }
+                        return newItem;
+                    });
+                
+                if (originalData.length > 0) {
+                    const allDurations = originalData.map(item => item.duration);
+                    const min = Math.floor(Math.min(...allDurations));
+                    const max = Math.ceil(Math.max(...allDurations));
+                    durationMinInput.value = min;
+                    durationMinInput.min = min;
+                    durationMaxInput.value = max;
+                    durationMaxInput.max = max;
+
+                    const allDatesInData = originalData.map(d => d.date);
+                    const minDate = new Date(Math.min.apply(null, allDatesInData));
+                    const maxDate = new Date(Math.max.apply(null, allDatesInData));
+
+                    const extendedMinDate = new Date(minDate);
+                    extendedMinDate.setMonth(extendedMinDate.getMonth() - 1);
+                    const extendedMaxDate = new Date(maxDate);
+                    extendedMaxDate.setMonth(extendedMaxDate.getMonth() + 1);
+
+                    fullDateRange = [];
+                    let currentDate = new Date(extendedMinDate);
+                    while (currentDate <= extendedMaxDate) {
+                        const year = currentDate.getFullYear();
+                        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+                        fullDateRange.push(`${year}-${month}`);
+                        currentDate.setMonth(currentDate.getMonth() + 1);
+                    }
+                } else {
+                    fullDateRange = [];
+                }
+                
+                generateCategoryColorMap();
+                processDataAndRenderChart(true);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function initialLoad() {
+             processDataAndRenderChart(true);
+        }
+        initialLoad();
+
+
+        const transformValue = (originalY, stretchStart, stretchEnd, stretchFactor) => {
+            if (stretchFactor <= 1 || stretchStart >= stretchEnd || stretchEnd === 0) return originalY;
+            const rangeSize = stretchEnd - stretchStart;
+            if (rangeSize <= 0) return originalY;
+            const stretchedRangeSize = rangeSize * stretchFactor;
+            if (originalY < stretchStart) return originalY;
+            if (originalY <= stretchEnd) return (originalY - stretchStart) / rangeSize * stretchedRangeSize + stretchStart;
+            return originalY + (stretchedRangeSize - rangeSize);
+        };
+
+        const inverseTransformValue = (transformedY, stretchStart, stretchEnd, stretchFactor) => {
+            if (stretchFactor <= 1 || stretchStart >= stretchEnd || stretchEnd === 0) return transformedY;
+            const rangeSize = stretchEnd - stretchStart;
+            if (rangeSize <= 0) return transformedY;
+            const stretchedRangeSize = rangeSize * stretchFactor;
+            const stretchedEndTransformed = stretchStart + stretchedRangeSize;
+            if (transformedY < stretchStart) return transformedY;
+            if (transformedY <= stretchedEndTransformed) return Math.round((transformedY - stretchStart) / stretchedRangeSize * rangeSize + stretchStart);
+            return Math.round(transformedY - (stretchedRangeSize - rangeSize));
+        };
+
+        function handleChartClick(params) {
+            if (params.componentType === 'series' && params.data) {
+                selectedItem = { id: params.data.id, isNew: false };
+                openModal();
+            }
+        }
+
+        function handleChartDoubleClick(params) {
+            if(params.componentType === 'series' && params.data) return;
+            if (fullDateRange.length === 0) return;
+
+            const xAxisDateStr = params.name || `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+            const yAxisValue = myChart.convertFromPixel('grid', [params.event.offsetX, params.event.offsetY])[1];
+            
+            const stretchStart = parseFloat(document.getElementById('stretch-start').value);
+            const stretchEnd = parseFloat(document.getElementById('stretch-end').value);
+            const stretchFactor = parseFloat(document.getElementById('stretch-factor').value);
+            const yAxisValueOriginalInWan = inverseTransformValue(yAxisValue, stretchStart, stretchEnd, stretchFactor);
+
+            const newBubble = {
+                id: Date.now(),
+                date: new Date(xAxisDateStr + '-15'),
+                users: Math.round(yAxisValueOriginalInWan),
+                duration: 10, category: '其他', name: '新事件',
+                itemStyle: { color: categoryColorMap['其他'] || '#8e44ad' }, 
+                label: { color: '#ffffff' }
+            };
+            originalData.push(newBubble);
+            generateCategoryColorMap();
+            processDataAndRenderChart(true).then(() => {
+                selectedItem = { id: newBubble.id, isNew: true };
+                openModal();
+            });
+        }
+        
+        function handleMouseWheel(event) {
+            const pointInPixel = [event.offsetX, event.offsetY];
+            const pointInGrid = myChart.convertFromPixel('grid', pointInPixel);
+            if (!pointInGrid) return;
+            
+            const option = myChart.getOption();
+            if (!option || !option.series || option.series.length === 0) return;
+
+            let hoveredItem = null;
+            for (const series of option.series) {
+                if (hoveredItem) break;
+                for (const item of series.data) {
+                    const itemPixel = myChart.convertToPixel('grid', item.value);
+                    const distance = Math.sqrt(Math.pow(itemPixel[0] - pointInPixel[0], 2) + Math.pow(itemPixel[1] - pointInPixel[1], 2));
+                    if (distance < item.pixelSize / 2) {
+                        hoveredItem = item;
+                        break;
+                    }
+                }
+            }
+
+            if (event.shiftKey && hoveredItem) {
+                event.preventDefault();
+                const delta = event.deltaY || event.wheelDelta;
+                const direction = delta > 0 ? -1 : 1;
+                const dataItem = originalData.find(d => d.id === hoveredItem.id);
+                if (dataItem) {
+                    dataItem.duration = Math.max(1, dataItem.duration + direction * Math.ceil(dataItem.duration * 0.1));
+                    processDataAndRenderChart(false);
+                }
+            }
+        }
+
+        function handleDragEnd(params) {
+            const stretchStart = parseFloat(document.getElementById('stretch-start').value);
+            const stretchEnd = parseFloat(document.getElementById('stretch-end').value);
+            const stretchFactor = parseFloat(document.getElementById('stretch-factor').value);
+            const droppedItem = originalData.find(d => d.id === params.data.id);
+            if(droppedItem){
+                const newDateStr = fullDateRange[params.value[0]];
+                const newTransformedY = params.value[1];
+                const newUsersOriginalInWan = inverseTransformValue(newTransformedY, stretchStart, stretchEnd, stretchFactor);
+                dragInfo = {
+                    id: droppedItem.id,
+                    newUsers: Math.round(newUsersOriginalInWan),
+                    newDate: new Date(newDateStr + '-15'),
+                    oldUsers: droppedItem.users,
+                    oldDate: droppedItem.date,
+                    name: droppedItem.name
+                };
+                confirmDragText.innerHTML = `您想更新 "<strong>${dragInfo.name}</strong>" 的位置吗?<br>` +
+                    `日期: ${dragInfo.oldDate.toISOString().slice(0, 7)} → <strong>${dragInfo.newDate.toISOString().slice(0, 7)}</strong><br>` +
+                    `用户: ${dragInfo.oldUsers} 万 → <strong>${dragInfo.newUsers} 万</strong>`;
+                editModalOverlay.style.display = 'block';
+                confirmDragModal.style.display = 'block';
+            }
+        }
+        
+        function closeConfirmModal(applyChanges) {
+            if (applyChanges && dragInfo.id) {
+                const itemToUpdate = originalData.find(d => d.id === dragInfo.id);
+                if (itemToUpdate) {
+                    itemToUpdate.users = dragInfo.newUsers;
+                    itemToUpdate.date = dragInfo.newDate;
+                }
+            }
+            editModalOverlay.style.display = 'none';
+            confirmDragModal.style.display = 'none';
+            dragInfo = {};
+            processDataAndRenderChart(true);
+        }
+
+        function openModal() {
+            const categories = [...new Set(originalData.map(d => d.category)), '其他'].filter((v, i, a) => a.indexOf(v) === i);
+            modalCategory.innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+            const originalDataItem = originalData.find(d => d.id === selectedItem.id);
+            if (!originalDataItem) return;
+
+            if (selectedItem.isNew) {
+                modalTitle.textContent = '添加新泡泡';
+                deleteBubbleBtn.style.display = 'none';
+            } else {
+                modalTitle.textContent = '编辑泡泡';
+                deleteBubbleBtn.style.display = 'inline-block';
+            }
+            modalName.value = originalDataItem.name;
+            modalUsers.value = originalDataItem.users;
+            modalDuration.value = originalDataItem.duration;
+            modalCategory.value = originalDataItem.category;
+            modalBubbleColor.value = originalDataItem.itemStyle?.color || categoryColorMap[originalDataItem.category] || '#cccccc';
+            modalTextColor.value = originalDataItem.label?.color || globalFontColorInput.value;
+            modalFontSize.value = originalDataItem.label?.fontSize || globalFontSizeSlider.value;
+            editModalOverlay.style.display = 'block';
+            editModal.style.display = 'block';
+        }
+
+        function closeModal() {
+            if (selectedItem.isNew) {
+                deleteBubble(); 
+            }
+            editModalOverlay.style.display = 'none';
+            editModal.style.display = 'none';
+            selectedItem = { id: null, isNew: false };
+        }
+
+        function saveChanges() {
+            const originalDataItem = originalData.find(d => d.id === selectedItem.id);
+            if (originalDataItem) {
+                originalDataItem.name = modalName.value;
+                originalDataItem.users = parseFloat(modalUsers.value);
+                originalDataItem.duration = parseFloat(modalDuration.value);
+                originalDataItem.category = modalCategory.value;
+                originalDataItem.itemStyle = { color: modalBubbleColor.value };
+                originalDataItem.label = { 
+                    color: modalTextColor.value,
+                    fontSize: parseInt(modalFontSize.value, 10)
+                };
+            }
+            generateCategoryColorMap();
+            processDataAndRenderChart(true);
+            closeModal();
+        }
+
+        function deleteBubble() {
+            const itemIndex = originalData.findIndex(d => d.id === selectedItem.id);
+            if (itemIndex > -1) {
+                originalData.splice(itemIndex, 1);
+            }
+            processDataAndRenderChart(true);
+            closeModal();
+        }
+
+        async function processDataAndRenderChart(runLayout = true) {
+            const minDur = parseFloat(durationMinInput.value) || 0;
+            const maxDur = parseFloat(durationMaxInput.value) || Infinity;
+            currentData = originalData.filter(d => d.duration >= minDur && d.duration <= maxDur);
+
+            if (currentData.length === 0) {
+                myChart.clear();
+                const option = { 
+                    title: { 
+                        text: '请导入 Excel 数据', 
+                        left: 'center', 
+                        top: 'center', 
+                        textStyle: { color: '#666', fontSize: 18 } 
+                    },
+                    geo: {
+                        map: 'world',
+                        silent: true,
+                        zlevel: -1,
+                        itemStyle: { areaColor: '#f5f5f5', borderColor: '#e0e0e0', borderWidth: 0.5 },
+                        emphasis: { disabled: true }
+                    },
+                    xAxis: {show: false},
+                    yAxis: {show: false},
+                    series: []
+                };
+                myChart.setOption(option);
+                return;
+            }
+            
+            const stretchStart = parseFloat(document.getElementById('stretch-start').value);
+            const stretchEnd = parseFloat(document.getElementById('stretch-end').value);
+            const stretchFactor = parseFloat(document.getElementById('stretch-factor').value);
+            const globalFontColor = globalFontColorInput.value;
+            const globalFontSize = parseInt(globalFontSizeSlider.value, 10);
+            
+            const allDurations = currentData.map(item => item.duration);
+            const minDuration = Math.min(...allDurations);
+            const maxDuration = Math.max(...allDurations);
+            const minPixelSize = 10;
+            const maxPixelSize = 70;
+
+            const calculateBubbleSize = (duration) => {
+                const sizeMultiplier = parseFloat(sizeMultiplierSlider.value);
+                if (allDurations.length <= 1 || maxDuration === minDuration) {
+                    return ((minPixelSize + maxPixelSize) / 2) * sizeMultiplier;
+                }
+                
+                const logMin = Math.log10(minDuration + 1);
+                const logMax = Math.log10(maxDuration + 1);
+                const logDuration = Math.log10(duration + 1);
+
+                if (logMax <= logMin) {
+                    return ((minPixelSize + maxPixelSize) / 2) * sizeMultiplier;
+                }
+
+                const scale = (logDuration - logMin) / (logMax - logMin);
+                const durationSize = minPixelSize + scale * (maxPixelSize - minPixelSize);
+                
+                return isNaN(durationSize) ? ((minPixelSize + maxPixelSize) / 2) * sizeMultiplier : durationSize * sizeMultiplier;
+            };
+
+            let layoutData = currentData.map(item => ({
+                ...item,
+                pixelSize: calculateBubbleSize(item.duration)
+            }));
+            
+            // Sort by pixelSize to ensure smaller bubbles are rendered on top
+            layoutData.sort((a,b) => b.pixelSize - a.pixelSize);
+
+            layoutData.forEach(item => {
+                item.transformedY = transformValue(item.users, stretchStart, stretchEnd, stretchFactor);
+            });
+            
+            let yMaxTransformed = Math.max(0, ...layoutData.map(item => item.transformedY));
+            
+            const yBuffer = yMaxTransformed * 0.1;
+            const finalYMax = yMaxTransformed + yBuffer;
+            const yAxisRange = Math.ceil(finalYMax);
+
+            const yOffsetPercentage = parseInt(document.getElementById('y-axis-offset').value, 10);
+            const yOffset = (yAxisRange * yOffsetPercentage) / 100;
+
+            const categories = [...new Set(currentData.map(item => item.category))];
+            
+            const seriesData = categories.map((category, index) => ({
+                name: category,
+                type: 'scatter',
+                // MODIFIED: Dragging is now controlled by key listeners, not a static option.
+                cursor: 'default',
+                draggable: false, 
+                z: categories.length - index,
+                data: layoutData.filter(item => item.category === category).map(item => ({
+                    id: item.id,
+                    value: [
+                        fullDateRange.indexOf(`${item.date.getFullYear()}-${String(item.date.getMonth() + 1).padStart(2, '0')}`), 
+                        item.transformedY + yOffset, item.duration, item.category, item.users, item.date.getDate(), item.name
+                    ],
+                    pixelSize: item.pixelSize,
+                    itemStyle: {
+                        color: item.itemStyle?.color || categoryColorMap[item.category] || '#ccc'
+                    },
+                    label: { 
+                        color: item.label?.color || globalFontColor,
+                        fontSize: item.label?.fontSize || globalFontSize
+                    }
+                })),
+                symbolSize: (value, params) => params.data.pixelSize,
+                itemStyle: { opacity: 0.7, borderColor: '#fff', borderWidth: 1.5, shadowBlur: 3, shadowColor: 'rgba(0, 0, 0, 0.2)' },
+                label: {
+                    show: true,
+                    position: 'inside',
+                    fontWeight: 'bold',
+                    lineHeight: globalFontSize + 4,
+                    formatter: params => {
+                        const durationUnit = `${params.value[2]}H`;
+                        const name = params.value[6];
+                        const maxLen = 8;
+                        if (name.length > maxLen * 2) return `${durationUnit}\n${name.substring(0, maxLen)}...\n`;
+                        if (name.length > maxLen) {
+                            const mid = Math.ceil(name.length / 2);
+                            return `${durationUnit}\n${name.substring(0, mid)}\n${name.substring(mid)}`;
+                        }
+                        return `${durationUnit}\n${name}`;
+                    },
+                    fontSize: globalFontSize
+                },
+                emphasis: { focus: 'series' }
+            }));
+            
+            const option = {
+                title: [{ text: '影响用户 (万)', left: '5%', top: '2%', textStyle: { color: '#343a40', fontSize: 16 } }, { text: '气泡大小: 故障时长 (小时)', right: '5%', top: '2%', textStyle: { color: '#6c757d', fontSize: 14, fontWeight: 'normal' } }],
+                color: Object.values(categoryColorMap), 
+                geo: {
+                    map: 'world',
+                    silent: true,
+                    zlevel: -1,
+                    itemStyle: {
+                        areaColor: '#f5f5f5',
+                        borderColor: '#e0e0e0',
+                        borderWidth: 0.5
+                    },
+                    emphasis: {
+                        disabled: true
+                    }
+                },
+                grid: { left: '10%', right: '10%', bottom: '10%', top: '15%' }, 
+                tooltip: {
+                    trigger: 'item',
+                    formatter: params => {
+                        const data = params.value;
+                        const dateStr = `${fullDateRange[data[0]]}-${String(data[5]).padStart(2, '0')}`;
+                        const durationVal = data[2];
+                        const originalUsers = data[4];
+                        return `<strong style="color: #000;">${data[6]}</strong><br/>类别: ${params.seriesName}<br/>日期: ${dateStr}<br/>影响用户: ${originalUsers} 万<br/>时长: ${durationVal} 小时`;
+                    }
+                },
+                legend: { right: '2%', top: '15%', orient: 'vertical', data: categories, textStyle: { color: '#495057', fontSize: 12 } },
+                xAxis: { type: 'category', name: '故障日期', data: fullDateRange, axisLine: { lineStyle: { color: '#ced4da' } }, axisLabel: { color: '#6c757d', fontSize: 11 }, splitLine: { show: true, lineStyle: { type: 'dashed', color: '#e9ecef' } }, axisTick: { show: false } },
+                yAxis: { 
+                    type: 'value', 
+                    name: '', 
+                    max: yAxisRange + yOffset, 
+                    min: -yAxisRange * 0.05 + yOffset, 
+                    axisLine: { lineStyle: { color: '#ced4da' } }, 
+                    axisLabel: { 
+                        color: '#6c757d', 
+                        fontSize: 11, 
+                        formatter: value => {
+                            if (value < 0) return '';
+                            const originalValue = inverseTransformValue(value, stretchStart, stretchEnd, stretchFactor);
+                            return originalValue === 0 ? '' : originalValue;
+                        } 
+                    }, 
+                    splitLine: { show: true, lineStyle: { type: 'dashed', color: '#e9ecef' } }, 
+                    axisTick: { show: false } 
+                },
+                dataZoom: [
+                    {
+                        type: 'slider',
+                        xAxisIndex: 0,
+                        filterMode: 'filter',
+                        bottom: 10,
+                        height: 30,
+                        start: 0,
+                        end: 100
+                    },
+                    {
+                        type: 'slider',
+                        yAxisIndex: 0,
+                        filterMode: 'filter',
+                        left: '2%',
+                        width: 20,
+                        start: 0,
+                        end: 100
+                    }
+                ],
+                series: seriesData
+            };
+            myChart.setOption(option, { notMerge: true });
+
+            clearTimeout(labelManagementTimeout);
+            labelManagementTimeout = setTimeout(() => {
+                adjustInternalLabels();
+            }, 300);
+        }
+        
+        // --- MODIFIED: Main function for label management ---
+        function adjustInternalLabels() {
+            // 根据用户的要求，此功能已被禁用，以始终在默认位置显示所有标签，
+            // 不进行自动位置调整或碰撞检测。
+            return;
+        }
+        
+        async function fetchImageAsBase64(url) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Network response was not ok.');
+                const blob = await response.blob();
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+            } catch (error) {
+                console.error("Failed to fetch map image:", error);
+                return null; 
+            }
+        }
+
+        async function exportToPptx() {
+            if (typeof PptxGenJS === 'undefined' || typeof JSZip === 'undefined') {
+                showNotification('PPT导出库加载失败，请检查您的网络连接。');
+                return;
+            }
+            
+            const option = myChart.getOption();
+            if (!option || !option.series || option.series.length === 0 || currentData.length === 0) {
+                showNotification('没有可导出的数据。', 'error');
+                return;
+            }
+
+            exportPptBtn.disabled = true;
+            exportPptBtn.textContent = '正在生成...';
+
+            const mapImageUrl = 'https://i.imgur.com/O4a2x6V.png';
+            const mapBgBase64 = await fetchImageAsBase64(mapImageUrl);
+
+            if (!mapBgBase64) {
+                showNotification('背景地图加载失败，将导出无背景的PPT。', 'warning');
+            }
+
+            let pptx = new PptxGenJS();
+            pptx.layout = 'LAYOUT_16x9';
+            let slide = pptx.addSlide();
+
+            if (mapBgBase64) {
+                slide.background = { data: mapBgBase64 };
+            }
+
+            const slideW = 10;
+            const slideH = 5.625;
+
+            slide.addText(option.title[0].text, { 
+                x: 0.5, y: 0.1, w: 4, h: 0.3, 
+                fontSize: 14, bold: true, color: '343a40'
+            });
+            slide.addText(option.title[1].text, { 
+                x: 6, y: 0.1, w: 3.5, h: 0.3, 
+                fontSize: 11, color: '6c757d', align: 'right'
+            });
+
+            const gridOpts = option.grid[0];
+            const gridX = slideW * (parseFloat(gridOpts.left) / 100);
+            const gridY = slideH * (parseFloat(gridOpts.top) / 100);
+            const gridW = slideW * (1 - (parseFloat(gridOpts.left) + parseFloat(gridOpts.right)) / 100);
+            const gridH = slideH * (1 - (parseFloat(gridOpts.top) + parseFloat(gridOpts.bottom)) / 100);
+            
+            slide.addShape(pptx.shapes.LINE, { x: gridX, y: gridY, w: 0, h: gridH, line: { color: 'ced4da' } });
+            slide.addShape(pptx.shapes.LINE, { x: gridX, y: gridY + gridH, w: gridW, h: 0, line: { color: 'ced4da' } });
+            slide.addText(option.xAxis[0].name, { x: gridX, y: gridY + gridH + 0.2, w: gridW, h: 0.3, align: 'center', color: '6c757d', fontSize: 10 });
+            
+            const xLabels = option.xAxis[0].data;
+            const xLabelCount = Math.min(xLabels.length, 12);
+            if (xLabels.length > 1) {
+                for (let i = 0; i < xLabelCount; i++) {
+                    const idx = Math.floor(i * (xLabels.length / xLabelCount));
+                    const labelX = gridX + (idx / (xLabels.length - 1)) * gridW;
+                    slide.addText(xLabels[idx], { x: labelX - 0.25, y: gridY + gridH, w: 0.5, h: 0.2, align: 'center', fontSize: 8, color: '6c757d' });
+                }
+            }
+
+            const yMax = option.yAxis[0].max;
+            const yMin = option.yAxis[0].min;
+            const yRange = yMax - yMin;
+            const yLabelCount = 6;
+            const stretchStart = parseFloat(document.getElementById('stretch-start').value);
+            const stretchEnd = parseFloat(document.getElementById('stretch-end').value);
+            const stretchFactor = parseFloat(document.getElementById('stretch-factor').value);
+
+            for (let i = 0; i < yLabelCount; i++) {
+                const transformedValue = yMin + (i / (yLabelCount - 1)) * yRange;
+                const originalValue = inverseTransformValue(transformedValue, stretchStart, stretchEnd, stretchFactor);
+                if (originalValue < 0) continue;
+                const labelY = (gridY + gridH) - ((transformedValue - yMin) / yRange) * gridH;
+                slide.addText(String(originalValue), { x: gridX - 0.5, y: labelY - 0.1, w: 0.4, h: 0.2, align: 'right', fontSize: 8, color: '6c757d' });
+            }
+
+            const legendItems = option.legend[0].data;
+            let legendY = slideH * (parseFloat(option.legend[0].top) / 100);
+            const legendX = slideW * (1 - parseFloat(gridOpts.right) / 100) + 0.2;
+            legendItems.forEach((name, index) => {
+                const color = option.color[index];
+                slide.addShape(pptx.shapes.RECTANGLE, {
+                    x: legendX, y: legendY, w: 0.2, h: 0.15,
+                    fill: { color: color.replace('#','') }
+                });
+                slide.addText(name, {
+                    x: legendX + 0.3, y: legendY - 0.02, w: 1, h: 0.15,
+                    fontSize: 10, color: '495057'
+                });
+                legendY += 0.25;
+            });
+            
+            option.series.forEach(series => {
+                series.data.forEach(bubble => {
+                    const value = bubble.value;
+                    const xIndex = value[0];
+                    const yValue = value[1];
+                    const pixelSize = bubble.pixelSize;
+                    
+                    const bubbleDiameter = (pixelSize / myChart.getWidth()) * slideW * 0.95;
+                    
+                    const bubbleCenterX = gridX + (xIndex / (xLabels.length - 1)) * gridW;
+                    const bubbleCenterY = (gridY + gridH) - ((yValue - yMin) / yRange) * gridH;
+                    
+                    const shapeX = bubbleCenterX - bubbleDiameter / 2;
+                    const shapeY = bubbleCenterY - bubbleDiameter / 2;
+                    
+                    slide.addShape(pptx.shapes.OVAL, {
+                        x: shapeX, y: shapeY, w: bubbleDiameter, h: bubbleDiameter,
+                        fill: { color: bubble.itemStyle.color.replace('#',''), transparency: 30 }
+                    });
+                    
+                    if(bubble.label.show !== false){ // Check if label should be shown
+                        const formattedText = series.label.formatter({ value: value });
+                        const textColor = bubble.label.color || globalFontColorInput.value;
+                        let fontSize = bubble.label.fontSize || parseInt(globalFontSizeSlider.value, 10);
+                        fontSize = fontSize * 0.75;
+
+                        slide.addText(formattedText, {
+                            x: shapeX, y: shapeY, w: bubbleDiameter, h: bubbleDiameter,
+                            align: 'center', valign: 'middle',
+                            color: textColor.replace('#', ''),
+                            fontSize: fontSize,
+                            bold: true
+                        });
+                    }
+                });
+            });
+
+            pptx.writeFile({ fileName: '事故分析泡泡图.pptx' });
+            showNotification('PPT文件生成成功，即将开始下载。', 'success');
+            exportPptBtn.disabled = false;
+            exportPptBtn.textContent = '导出为 PPT';
+        }
+    });
+</script>
+
+</body>
+</html>
