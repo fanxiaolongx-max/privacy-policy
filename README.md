@@ -1,1 +1,36 @@
-# privacy-policy
+<div align="center">
+  <img src="https://media.giphy.com/media/qgQUggAC3Pfv687qPC/giphy.gif" width="100" />
+  <h1>Hi there, I'm <a href="https://github.com/你的用户名">你的名字</a> 👋</h1>
+
+  <a href="https://git.io/typing-svg">
+    <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&pause=1000&color=20C20E&center=true&vCenter=true&width=435&lines=Full+Stack+Developer;Always+learning+new+tech;Open+Source+Enthusiast" alt="Typing SVG" />
+  </a>
+</div>
+
+---
+
+- 🔭 I’m currently working on **Something Cool**
+- 🌱 I’m currently learning **React, Python, Go**
+- 💬 Ask me about **Vue, Java, Linux**
+- 📫 How to reach me: **your-email@example.com**
+
+<h3 align="center">🛠 Languages and Tools</h3>
+<div align="center">
+  <img src="https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" />
+  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/Vue.js-35495E?style=for-the-badge&logo=vue.js&logoColor=4FC08D" />
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" />
+  <img src="https://img.shields.io/badge/GIT-E44C30?style=for-the-badge&logo=git&logoColor=white" />
+</div>
+
+<br/>
+
+<div align="center">
+  <img height="180em" src="https://github-readme-stats.vercel.app/api?username=你的用户名&show_icons=true&theme=radical&hide_border=true&bg_color=141321" />
+  <img height="180em" src="https://github-readme-stats.vercel.app/api/top-langs/?username=你的用户名&layout=compact&theme=radical&hide_border=true&bg_color=141321" />
+</div>
+
+<div align="center">
+  <br>
+  <img src="https://github-profile-trophy.vercel.app/?username=你的用户名&theme=radical&no-frame=true&no-bg=true&margin-w=4" />
+</div>
