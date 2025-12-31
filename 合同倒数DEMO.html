@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>顾问合同到期 · 倒计时</title>
+  <meta name="color-scheme" content="dark light" />
+  <style>
+    /* ====== 基础与主题 ====== */
+    :root{
+      --bg-1: #0f1020; /* 深夜蓝 */
+      --bg-2: #1b0f2a; /* 葡萄紫 */
+      --acc-1: #7c4dff; /* 霓虹紫 */
+      --acc-2: #00e5ff; /* 霓虹青 */
+      --acc-3: #ff4081; /* 霓虹粉 */
+      --text: #e7f3ff;
+      --muted: #9db3c7;
+      --glass: rgba(255,255,255,.08);
+      --glass-br: rgba(255,255,255,.18);
+      --ok: #2dd4bf;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+    }
+    *{ box-sizing: border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, PingFang SC, Hiragino Sans GB, Microsoft YaHei, Noto Sans CJK SC, Helvetica Neue, Arial, "Noto Color Emoji", "Apple Color Emoji", sans-serif;
+      color:var(--text);
+      /* 动态渐变背景 */
+      background:
+        radial-gradient(60vmax 60vmax at 10% 15%, #1a1a40 0, transparent 60%),
+        radial-gradient(70vmax 70vmax at 90% 10%, #2b0b3a88 0, transparent 60%),
+        radial-gradient(80vmax 80vmax at 50% 110%, #00314a88 0, transparent 70%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2));
+      overflow-x:hidden;
+    }
+    .grid-bg{
+      position:fixed; inset:0; pointer-events:none; opacity:.18;
+      background-image: linear-gradient(transparent 95%, rgba(255,255,255,.12) 95%),
+                        linear-gradient(90deg, transparent 95%, rgba(255,255,255,.12) 95%);
+      background-size: 32px 32px, 32px 32px;
+      mask-image: radial-gradient(70vmax 70vmax at 50% 50%, black 40%, transparent 100%);
+    }
+    .wrap{min-height:100%; display:flex; align-items:center; justify-content:center; padding:6vmin 4vmin}
+    .card{
+      width:min(1024px, 96vw);
+      backdrop-filter: blur(14px) saturate(120%);
+      background: linear-gradient(180deg, var(--glass), transparent);
+      border:1px solid var(--glass-br);
+      box-shadow: 0 10px 40px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.06);
+      border-radius: 24px;
+      padding: clamp(16px, 4vmin, 40px);
+      position:relative;
+    }
+    .card::before{
+      content:""; position:absolute; inset:-2px; border-radius:24px;
+      padding:2px; pointer-events:none;
+      background: conic-gradient(from 180deg at 50% 50%, var(--acc-1), var(--acc-2), var(--acc-3), var(--acc-1));
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude;
+      opacity:.35;
+      animation: spin 10s linear infinite;
+    }
+    @keyframes spin{ to{ transform: rotate(360deg); } }
+
+    /* ====== 顶部 ====== */
+    .title{
+      display:flex; gap:12px; align-items:center; flex-wrap:wrap;
+    }
+    .logo{
+      width:40px; height:40px; border-radius:12px; display:grid; place-items:center;
+      background: radial-gradient(90% 90% at 30% 20%, var(--acc-2), transparent),
+                  radial-gradient(120% 120% at 70% 80%, var(--acc-1), transparent),
+                  linear-gradient(135deg, #0006, #0000);
+      color:#001014; font-weight:900; text-shadow: 0 1px 0 #fff8;
+      box-shadow: inset 0 0 12px #fff8;
+    }
+    h1{ margin:0; font-size: clamp(22px, 4.6vmin, 40px); letter-spacing:.5px; }
+    .sub{ color:var(--muted); margin-top:6px; font-size:14px }
+
+    /* ====== 控件区 ====== */
+    .controls{ display:grid; grid-template-columns: 1fr; gap:14px; margin-top:22px }
+    @media (min-width:700px){ .controls{ grid-template-columns: 1.2fr .8fr; align-items: end } }
+
+    .field{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.18);
+      border-radius: 16px; padding: 14px; display:grid; gap:8px
+    }
+    label{ font-size:13px; color:var(--muted) }
+    input[type="date"], input[type="text"]{
+      width:100%;
+      font: inherit; color: var(--text);
+      background: #0006; border:1px solid rgba(255,255,255,.15);
+      padding: 10px 12px; border-radius: 12px; outline:none;
+    }
+    .btns{ display:flex; flex-wrap:wrap; gap:10px }
+    .btn{
+      appearance:none; border:none; cursor:pointer; user-select:none;
+      font: inherit; color:white; padding:10px 14px; border-radius:12px;
+      background: linear-gradient(135deg, var(--acc-1), var(--acc-2));
+      box-shadow: 0 6px 16px rgba(0,0,0,.25), 0 0 0 1px rgba(255,255,255,.1) inset;
+      transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
+    }
+    .btn:hover{ transform: translateY(-1px); filter:saturate(120%) }
+    .btn.secondary{ background: linear-gradient(135deg, #223 0%, #334 100%); color:#cfe7ff }
+
+    /* ====== 倒计时展示 ====== */
+    .hero{
+      margin-top: 26px;
+      border-radius: 20px; padding: clamp(18px, 5vmin, 42px);
+      background: radial-gradient(80% 140% at 100% 0%, #ffffff10 0%, #ffffff00 70%),
+                  radial-gradient(80% 140% at 0% 100%, #00e5ff15 0%, #ffffff00 70%),
+                  linear-gradient(180deg, #ffffff10, #ffffff05);
+      border:1px solid rgba(255,255,255,.16);
+      position:relative; overflow:hidden;
+    }
+    .badge{ display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; font-size:12px; color:#e8f7ff;
+      background: linear-gradient(90deg, #ffffff1a, #ffffff08); border:1px solid #ffffff33 }
+
+    .count{
+      margin-top: 14px; line-height:1.05;
+      font-weight:900; letter-spacing: 1.2px;
+      font-size: clamp(28px, 12vmin, 120px);
+      text-shadow: 0 0 22px #00e5ff55, 0 0 44px #7c4dff55;
+    }
+    .count .num{ 
+      display:inline-block; padding: 0 .04em; 
+      background: linear-gradient(180deg, #fff, #c9ecff);
+      -webkit-background-clip:text; background-clip:text; color: transparent;
+      filter: drop-shadow(0 6px 24px rgba(0,229,255,.25));
+    }
+    .subtitle{ margin-top: 10px; color:var(--muted); font-size: clamp(14px, 2.5vmin, 18px) }
+
+    /* ====== 进度条与细节 ====== */
+    .meta{ display:grid; gap:16px; margin-top: 18px }
+    @media (min-width:760px){ .meta{ grid-template-columns: 1fr 1fr; gap:18px } }
+
+    .progress{
+      position:relative; height: 14px; border-radius:999px; overflow:hidden;
+      background:#ffffff14; border:1px solid #ffffff22
+    }
+    .bar{ position:absolute; inset:0; width:0%; background: linear-gradient(90deg, var(--acc-2), var(--acc-1)); box-shadow: 0 0 24px #00e5ff55 inset }
+    .progress .tip{ position:absolute; right:8px; top:50%; transform:translateY(-50%); font-size:12px; color:#e7f3ff; text-shadow:0 1px 0 #000 }
+
+    .grid-2{ display:grid; grid-template-columns: 1fr 1fr; gap:12px }
+    .kv{ background:#ffffff0a; border:1px solid #ffffff22; padding:12px 14px; border-radius:14px }
+    .kv b{ display:block; font-size:12px; color:#bcd1e5; margin-bottom:6px }
+    .kv span{ font-weight:700; }
+
+    /* ====== 底部 ====== */
+    .footer{ margin-top: 18px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; color:var(--muted) }
+    .links{ display:flex; gap:10px; flex-wrap:wrap }
+    .link{ color:#bfe9ff; text-decoration:none; font-size:13px; padding:8px 10px; border-radius:10px; background:#ffffff0a; border:1px solid #ffffff22 }
+
+    /* 小彩带 */
+    .confetti{ position:absolute; inset:0; pointer-events:none; overflow:hidden }
+    .paper{ position:absolute; width:6px; height:14px; border-radius:2px; opacity:0; animation: fall 1.5s ease-out forwards }
+    @keyframes fall{ from{ transform: translateY(-40px) rotate(0deg) } to{ transform: translateY(120px) rotate(360deg); opacity:1 } }
+  </style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="wrap">
+  <div class="card" id="app">
+    <div class="title">
+      <div class="logo">⚡</div>
+      <div>
+        <h1>顾问合同到期 · 倒计时</h1>
+        <div class="sub">选择到期日期，自动生成一个醒目的倒计时。默认：2026-05-31。</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="field">
+        <label for="date">到期日期</label>
+        <input id="date" type="date" />
+        <div class="btns">
+          <button class="btn secondary" data-quick="month-end">月底</button>
+          <button class="btn secondary" data-quick="year-end">年底</button>
+          <button class="btn secondary" data-quick="+30">+30天</button>
+          <button class="btn secondary" data-quick="+90">+90天</button>
+          <button class="btn secondary" data-quick="+180">+180天</button>
+          <button class="btn secondary" data-quick="+365">+365天</button>
+        </div>
+      </div>
+      <div class="field" style="align-self:stretch">
+        <label>分享/导出</label>
+        <div class="btns">
+          <button class="btn" id="copy-link">复制带日期链接</button>
+          <button class="btn" id="download-ics">导出 .ics 提醒</button>
+        </div>
+        <div class="sub" id="share-hint">链接会携带 ?date=YYYY-MM-DD，可收藏或分享。</div>
+      </div>
+    </div>
+
+    <div class="hero">
+      <div class="badge" id="badge">目标：<span id="pretty-date">—</span> · <span id="weekday">—</span></div>
+      <div class="count" id="count">距离被裁还有 <span class="num" id="days">—</span> 天</div>
+      <div class="subtitle" id="subtitle">已进入冲刺阶段，稳定输出，稳住心态 ✨</div>
+
+      <div class="meta">
+        <div>
+          <div class="progress" aria-label="剩余进度">
+            <div class="bar" id="bar"></div>
+            <div class="tip" id="tip">—%</div>
+          </div>
+          <div class="sub" style="margin-top:8px">从今天 <span id="from-date">—</span> 到目标日共 <b id="total-days">—</b> 天，已完成 <b id="done-days">—</b> 天。</div>
+        </div>
+
+        <div class="grid-2">
+          <div class="kv"><b>当前时间</b><span id="now">—</span></div>
+          <div class="kv"><b>目标剩余</b><span id="remain">—天 —小时 —分</span></div>
+        </div>
+      </div>
+      <div class="confetti" id="confetti"></div>
+    </div>
+
+    <div class="footer">
+      <div>🧊 霓虹玻璃风 · 本地运行 · 无需依赖</div>
+      <div class="links">
+        <a class="link" href="#" id="reset">恢复默认（2026-05-31）</a>
+        <a class="link" href="#" id="now-btn">跳到今天 00:00</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ====== 工具函数 ======
+  const pad = (n)=> String(n).padStart(2,'0');
+  const fmtDate = (d)=> `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const zhWeek = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+
+  function endOfDay(d){ const x = new Date(d); x.setHours(23,59,59,999); return x; }
+  function startOfDay(d){ const x = new Date(d); x.setHours(0,0,0,0); return x; }
+
+  function monthEnd(base){
+    const d = new Date(base);
+    return new Date(d.getFullYear(), d.getMonth()+1, 0);
+  }
+  function yearEnd(base){
+    const d = new Date(base);
+    return new Date(d.getFullYear(), 11, 31);
+  }
+
+  function daysBetween(a, b){
+    const ms = endOfDay(b) - startOfDay(a);
+    return Math.ceil(ms / 86400000);
+  }
+
+  function parseQueryDate(){
+    const u = new URL(location.href);
+    const q = u.searchParams.get('date');
+    if(!q) return null;
+    const m = /^\d{4}-\d{2}-\d{2}$/.test(q) ? q : null;
+    return m ? new Date(q+'T12:00:00') : null; // 中午避免时区偏移
+  }
+
+  // ====== 状态 ======
+  const dateInput = document.querySelector('#date');
+  const pretty = document.querySelector('#pretty-date');
+  const weekday = document.querySelector('#weekday');
+  const daysEl = document.querySelector('#days');
+  const countEl = document.querySelector('#count');
+  const bar = document.querySelector('#bar');
+  const tip = document.querySelector('#tip');
+  const fromDateEl = document.querySelector('#from-date');
+  const totalDaysEl = document.querySelector('#total-days');
+  const doneDaysEl = document.querySelector('#done-days');
+  const nowEl = document.querySelector('#now');
+  const remainEl = document.querySelector('#remain');
+  const badge = document.querySelector('#badge');
+  const confetti = document.querySelector('#confetti');
+
+  const DEFAULT = '2026-05-31';
+
+  // 初始化日期：URL优先，其次localStorage，最后默认
+  function initDate(){
+    const q = parseQueryDate();
+    const s = localStorage.getItem('deadline');
+    const v = q ? fmtDate(q) : (s || DEFAULT);
+    dateInput.value = v;
+  }
+
+  // 彩带庆祝
+  function boom(){
+    confetti.innerHTML = '';
+    const colors = [getComputedStyle(document.documentElement).getPropertyValue('--acc-1').trim(),
+                    getComputedStyle(document.documentElement).getPropertyValue('--acc-2').trim(),
+                    getComputedStyle(document.documentElement).getPropertyValue('--acc-3').trim(), '#fff'];
+    for(let i=0;i<60;i++){
+      const p = document.createElement('div');
+      p.className = 'paper';
+      p.style.left = Math.random()*100+'%';
+      p.style.top = Math.random()*10+'%';
+      p.style.background = colors[i%colors.length];
+      p.style.animationDelay = (Math.random()*0.6)+'s';
+      p.style.transform = `translateY(${-(20+Math.random()*40)}px)`;
+      confetti.appendChild(p);
+    }
+    setTimeout(()=> confetti.innerHTML='', 2400);
+  }
+
+  // 更新页面
+  function render(){
+    const now = new Date();
+    const today0 = startOfDay(now);
+
+    // 读取输入并纠正
+    let picked = dateInput.value ? new Date(dateInput.value+'T12:00:00') : new Date(DEFAULT+'T12:00:00');
+    const target = endOfDay(picked);
+
+    // 显示友好日期
+    pretty.textContent = `${picked.getFullYear()}年${picked.getMonth()+1}月${picked.getDate()}日`;
+    weekday.textContent = zhWeek[picked.getDay()];
+
+    // 主文案/数值
+    const leftDays = daysBetween(today0, picked);
+    daysEl.textContent = Math.max(leftDays, 0);
+
+    if(leftDays > 30){
+      countEl.style.color = 'white';
+      countEl.style.textShadow = '0 0 22px #00e5ff55, 0 0 44px #7c4dff55';
+      badge.style.borderColor = '#ffffff33';
+    }else if(leftDays > 0){
+      countEl.style.color = 'var(--warn)';
+      countEl.style.textShadow = '0 0 16px #f59e0b66, 0 0 36px #f59e0b33';
+      badge.style.borderColor = '#f59e0b77';
+    }else{
+      countEl.style.color = 'var(--ok)';
+      countEl.style.textShadow = '0 0 18px #2dd4bf77, 0 0 36px #2dd4bf55';
+      badge.style.borderColor = '#2dd4bf88';
+    }
+
+    // 副标题&庆祝
+    if(leftDays <= 0){
+      countEl.innerHTML = `🎉 已经安全度过 <span class="num">${Math.abs(leftDays)}</span> 天`;
+      document.title = `已过期 ${Math.abs(leftDays)} 天 · 顾问合同倒计时`;
+      boom();
+    }else{
+      countEl.innerHTML = `距离被裁还有 <span class="num" id="days">${leftDays}</span> 天`;
+      document.title = `还剩 ${leftDays} 天 · 顾问合同倒计时`;
+    }
+
+    // 进度条（从今天到目标）
+    const total = Math.max(daysBetween(today0, picked), 0);
+    const done = 0; // 以今天为起点，已完成记 0
+    const pct = total === 0 ? 100 : Math.round((done/Math.max(total,1))*100);
+    bar.style.width = (100 - Math.min(total,100)) + '%'; // 视觉：越近越满
+    tip.textContent = `紧迫度 ${Math.min(100, Math.round((1/(total+1))*100))}%`;
+
+    fromDateEl.textContent = fmtDate(today0);
+    totalDaysEl.textContent = daysBetween(today0, picked);
+    doneDaysEl.textContent = done;
+
+    // 细节剩余
+    const diffMs = target - now;
+    const r = Math.max(diffMs, 0);
+    const rh = Math.floor((r % 86400000)/3600000);
+    const rm = Math.floor((r % 3600000)/60000);
+    remainEl.textContent = `${Math.max(leftDays,0)}天 ${pad(rh)}小时 ${pad(rm)}分`;
+
+    nowEl.textContent = `${fmtDate(now)} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+    // 存储 & 链接
+    const v = fmtDate(picked);
+    localStorage.setItem('deadline', v);
+    const u = new URL(location.href);
+    u.searchParams.set('date', v);
+    history.replaceState(null, '', u.toString());
+  }
+
+  // ====== 事件绑定 ======
+  document.addEventListener('DOMContentLoaded', ()=>{
+    initDate();
+    render();
+
+    dateInput.addEventListener('change', render);
+
+    document.querySelectorAll('[data-quick]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const kind = btn.getAttribute('data-quick');
+        const base = new Date();
+        let d = null;
+        if(kind === 'month-end') d = monthEnd(base);
+        else if(kind === 'year-end') d = yearEnd(base);
+        else if(/^\+\d+$/.test(kind)){
+          d = new Date(base);
+          d.setDate(d.getDate() + Number(kind.slice(1)));
+        }
+        dateInput.value = fmtDate(d);
+        render();
+      })
+    })
+
+    document.querySelector('#copy-link').addEventListener('click', async ()=>{
+      try{
+        await navigator.clipboard.writeText(location.href);
+        const hint = document.querySelector('#share-hint');
+        const txt = hint.textContent;
+        hint.textContent = '✅ 已复制到剪贴板！';
+        setTimeout(()=> hint.textContent = txt, 1600);
+      }catch(e){ alert('复制失败，请手动复制地址栏链接'); }
+    });
+
+    document.querySelector('#download-ics').addEventListener('click', ()=>{
+      // 生成一个全天事件的 .ics 文件
+      const v = dateInput.value || DEFAULT;
+      const dt = v.replaceAll('-', '');
+      const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Countdown//Advisor Contract//CN\nBEGIN:VEVENT\nUID:${Date.now()}@countdown\nDTSTAMP:${new Date().toISOString().replace(/[-:]/g,'').replace(/\..*/, '')}Z\nDTSTART;VALUE=DATE:${dt}\nSUMMARY:顾问合同到期日\nDESCRIPTION:距离被裁倒计时（目标日：${v}）\nEND:VEVENT\nEND:VCALENDAR`;
+      const blob = new Blob([ics], {type:'text/calendar'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `顾问合同到期-${v}.ics`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    });
+
+    document.querySelector('#reset').addEventListener('click', (e)=>{
+      e.preventDefault();
+      dateInput.value = DEFAULT;
+      render();
+    });
+
+    document.querySelector('#now-btn').addEventListener('click', (e)=>{
+      e.preventDefault();
+      // 将日期设为今天（用于演示“已过期/当天”样式）
+      dateInput.value = fmtDate(new Date());
+      render();
+    });
+
+    // 实时刷新剩余小时分钟
+    setInterval(render, 30_000); // 每30秒更新一次细节
+  });
+</script>
+</body>
+</html>
