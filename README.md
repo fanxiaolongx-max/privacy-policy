@@ -9,9 +9,9 @@
 
 ---
 
-- 🔭 I’m currently working on **IMS/PS、NFV**
+- 🔭 I’m currently working **2/3/4/5G CORE Network Engineer, Especially force on VoLTE/VoNR/IMS/PS/CS、NFVI Domain**
 - 🌱 I’m currently learning **Docker、AI 、Vibe coding、windows、linux、python**
-- 💬 Ask me about **IMS**
+- 💬 Ask me about **IMS RFC3261 Protocol**
 - 📫 How to reach me: **dragon@fanxiaolong.uk**
 
 <h3 align="center">🛠 Languages and Tools</h3>
