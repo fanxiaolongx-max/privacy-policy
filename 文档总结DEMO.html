@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF 和 TXT 总结工具 (浏览器版)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 PDF.js 库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        #drop-zone {
+            border: 2px dashed #cbd5e1;
+            transition: background-color 0.2s ease-in-out;
+        }
+        #drop-zone.drag-over {
+            background-color: #e2e8f0;
+            border-color: #4f46e5;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+        <header class="text-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-900">PDF 和 TXT 总结工具 (浏览器版)</h1>
+            <p class="text-md text-gray-600 mt-2">由本地 Ollama 模型驱动，所有数据均在您的电脑上处理。</p>
+        </header>
+
+        <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+            <div id="drop-zone" class="w-full text-center p-8 rounded-lg cursor-pointer">
+                <p class="text-gray-500">将 PDF 或 TXT 文件拖拽至此区域</p>
+                <p class="text-gray-400 my-2">或</p>
+                <button id="select-file-btn" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition">点击选择文件</button>
+                <!-- Changed 'accept' to include .txt files -->
+                <input type="file" id="pdf-input" class="hidden" accept=".pdf, .txt" multiple>
+            </div>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+            <h2 class="text-xl font-semibold mb-4">设置</h2>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                <label for="model-name" class="font-medium sm:w-1/4">Ollama 模型:</label>
+                <input type="text" id="model-name" value="gemma3:1b" class="flex-grow p-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <div id="status-indicator" class="flex items-center gap-2 p-2 rounded-md">
+                    <div id="status-light" class="w-3 h-3 rounded-full bg-yellow-400"></div>
+                    <span id="status-text" class="font-medium text-sm">未知</span>
+                </div>
+            </div>
+            <div id="cors-warning" class="mt-4 text-sm text-red-600 bg-red-100 p-3 rounded-md hidden">
+                <strong>连接失败:</strong> 浏览器因安全策略 (CORS) 无法直接访问 Ollama。这是常见问题，请按以下步骤操作：
+                <ol class="list-decimal list-inside mt-2">
+                    <li>设置环境变量 <strong>OLLAMA_ORIGINS</strong> 的值为 <strong>*</strong></li>
+                    <li><strong>完全重启</strong> Ollama 服务使设置生效。</li>
+                </ol>
+                <a href="https://github.com/ollama/ollama/blob/main/docs/faq.md#how-do-i-configure-ollamacors" target="_blank" class="underline font-bold mt-2 inline-block">查看官方分步指南</a>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                处理日志
+                <div id="processing-loader" class="loader hidden"></div>
+            </h2>
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+                <div id="progress-bar" class="bg-indigo-600 h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+            <div class="w-full bg-gray-50 p-4 rounded-md h-96 overflow-y-auto border">
+                <pre id="log-output" class="text-sm whitespace-pre-wrap"></pre>
+            </div>
+            <button onclick="downloadLog()" 
+                class="mt-3 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
+                下载总结日志
+            </button>
+        </div>
+    </div>
+
+<script>
+// 设置 PDF.js worker 的路径
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
+
+const dropZone = document.getElementById('drop-zone');
+const selectFileBtn = document.getElementById('select-file-btn');
+const pdfInput = document.getElementById('pdf-input');
+const modelNameInput = document.getElementById('model-name');
+const statusLight = document.getElementById('status-light');
+const statusText = document.getElementById('status-text');
+const corsWarning = document.getElementById('cors-warning');
+const progressBar = document.getElementById('progress-bar');
+const logOutput = document.getElementById('log-output');
+const processingLoader = document.getElementById('processing-loader');
+
+let isProcessing = false;
+let logBuffer = []; // 保存日志内容
+
+// --- 日志函数 ---
+function log(message, type = "info", saveToFile = true) {
+    const time = new Date().toLocaleTimeString();
+    const formatted = `[${time}] ${message}`;
+
+    // 页面日志输出
+    const line = document.createElement("div");
+    if (type === "error") line.className = "text-red-600";
+    if (type === "success") line.className = "text-green-600";
+    if (type === "summary") line.className = "text-indigo-700 font-medium";
+    line.textContent = formatted;
+    logOutput.appendChild(line);
+    logOutput.parentElement.scrollTop = logOutput.parentElement.scrollHeight;
+
+    // 保存到 txt 缓存
+    if (saveToFile) {
+        logBuffer.push(formatted);
+    }
+}
+
+function logInfo(msg) { log(msg, "info"); }
+function logSuccess(msg) { log(msg, "success"); }
+function logError(msg) { log(msg, "error"); }
+function logSummary(msg) { log(msg, "summary"); }
+
+function downloadLog() {
+    if (logBuffer.length === 0) {
+        // Updated alert to use a custom message box instead of the native alert()
+        alert("当前没有日志可下载！");
+        return;
+    }
+    const blob = new Blob([logBuffer.join("\n")], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "PDF_总结日志.txt";
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// --- UI 更新函数 ---
+function updateProgress(value, max) {
+    const percentage = max > 0 ? (value / max) * 100 : 0;
+    progressBar.style.width = `${percentage}%`;
+}
+
+function setUIState(processing) {
+    isProcessing = processing;
+    selectFileBtn.disabled = processing;
+    pdfInput.disabled = processing;
+    modelNameInput.disabled = processing;
+    processingLoader.classList.toggle('hidden', !processing);
+    dropZone.style.cursor = processing ? 'not-allowed' : 'pointer';
+}
+
+function setStatus(status, color, text) {
+    statusLight.className = `w-3 h-3 rounded-full ${color}`;
+    statusText.textContent = text;
+    corsWarning.classList.toggle('hidden', status !== 'error');
+}
+
+// --- Ollama 和 PDF/TXT 处理核心逻辑 ---
+async function checkOllamaService() {
+    logInfo("--- Ollama 服务状态检查 ---");
+    logInfo("正在尝试连接本地 Ollama 服务 (地址: http://127.0.0.1:11434)...");
+    try {
+        const response = await fetch('http://127.0.0.1:11434/api/tags');
+        if (!response.ok) {
+           throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setStatus('ok', 'bg-green-500', '服务已连接');
+        logSuccess("服务状态: 已成功连接到 Ollama 服务。");
+        if (data.models && data.models.length > 0) {
+            const models = data.models.map(m => m.name);
+            logInfo(`已安装模型: ${models.join(', ')}`);
+        } else {
+            logInfo("已连接服务，但未找到任何已安装的模型。");
+        }
+    } catch (error) {
+        setStatus('error', 'bg-red-500', '连接失败');
+        logError("服务状态: 无法连接到本地 Ollama 服务。");
+        console.error("Ollama connection error:", error);
+    }
+}
+
+async function extractTextFromPdf(file) {
+    const fileReader = new FileReader();
+    return new Promise((resolve, reject) => {
+        fileReader.onload = async function() {
+            try {
+                const typedarray = new Uint8Array(this.result);
+                const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                let fullText = '';
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    fullText += pageText + '\n';
+                }
+                resolve(fullText);
+            } catch (error) {
+                reject(error);
+            }
+        };
+        fileReader.onerror = reject;
+        fileReader.readAsArrayBuffer(file);
+    });
+}
+
+// New function to extract text from a .txt file
+async function extractTextFromTxt(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = (e) => reject(e);
+        reader.readAsText(file);
+    });
+}
+
+async function getSummary(text, prompt) {
+    try {
+        const model = modelNameInput.value;
+        const response = await fetch('http://127.0.0.1:11434/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: model,
+                messages: [{ role: 'user', content: `${prompt}\n\n---\n\n${text}` }],
+                stream: false
+            }),
+        });
+        if (!response.ok) {
+            return `模型调用失败: HTTP ${response.status}`;
+        }
+        const data = await response.json();
+        return data.message.content;
+    } catch (error) {
+        console.error("API call failed:", error);
+        return `调用 Ollama 时发生网络错误: ${error.message}`;
+    }
+}
+
+async function handleFiles(files) {
+    if (isProcessing) return;
+    setUIState(true);
+    logInfo(`已接收 ${files.length} 个文件，开始处理...`);
+    updateProgress(0, 1);
+
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        logInfo(`\n--- 开始处理文件: ${file.name} (${i + 1}/${files.length}) ---`);
+
+        let text = '';
+        const fileExtension = file.name.split('.').pop().toLowerCase();
+
+        try {
+            // Updated logic to handle different file types
+            if (fileExtension === 'pdf') {
+                logInfo("步骤 1/3: 正在提取 PDF 文本...");
+                text = await extractTextFromPdf(file);
+                logSuccess(`PDF 文本提取完成，共 ${text.length} 字符。`);
+            } else if (fileExtension === 'txt') {
+                logInfo("步骤 1/3: 正在提取 TXT 文本...");
+                text = await extractTextFromTxt(file);
+                logSuccess(`TXT 文本提取完成，共 ${text.length} 字符。`);
+            } else {
+                logError(`不支持的文件格式: ${file.name}，跳过。`);
+                continue; // Skip to the next file
+            }
+
+            // 2. 分段并总结
+            const chunkSize = 3000;
+            const chunks = [];
+            for (let j = 0; j < text.length; j += chunkSize) {
+                chunks.push(text.substring(j, j + chunkSize));
+            }
+            updateProgress(0, chunks.length);
+            logInfo(`步骤 2/3: 文本已分为 ${chunks.length} 段，开始逐段总结...`);
+
+            const chunkSummaries = [];
+            for (let j = 0; j < chunks.length; j++) {
+                logInfo(`正在总结 '${file.name}' 的第 ${j + 1}/${chunks.length} 段...`);
+                const summary = await getSummary(chunks[j], "请你用中文简要总结以下内容:");
+                if (summary.includes("失败") || summary.includes("错误")) {
+                    logError(`第 ${j + 1} 段总结失败: ${summary}`);
+                } else {
+                    chunkSummaries.push(summary);
+                    logSuccess(`第 ${j + 1} 段总结完成`);
+                    // ⚡ 实时保存到日志文件
+                    log(`【${file.name} - 第 ${j + 1} 段总结】\n${summary}\n`, "summary");
+                }
+                updateProgress(j + 1, chunks.length);
+            }
+
+            if (chunkSummaries.length === 0) {
+                 logError(`文件 '${file.name}' 所有段落均未能成功总结，跳过。`);
+                 continue;
+            }
+
+            // 3. 最终总结
+            logInfo("步骤 3/3: 正在汇总所有段落摘要以生成最终总结...");
+            const combined = chunkSummaries.join('\n');
+            const finalSummary = await getSummary(combined, "请根据以下各段摘要，生成一份连贯、完整的最终中文总结:");
+
+            logSummary(`\n--- 《${file.name}》的最终总结 ---\n${finalSummary}\n`);
+        } catch (error) {
+            logError(`处理文件 ${file.name} 时发生严重错误: ${error.message}`);
+            console.error(error);
+        }
+    }
+
+    logSuccess("所有文件处理完毕。");
+    setUIState(false);
+}
+
+// --- 事件监听 ---
+document.addEventListener('DOMContentLoaded', checkOllamaService);
+selectFileBtn.addEventListener('click', () => pdfInput.click());
+pdfInput.addEventListener('change', (e) => handleFiles(e.target.files));
+dropZone.addEventListener('click', () => pdfInput.click());
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('drag-over');
+});
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    if (e.dataTransfer.files) {
+        handleFiles(e.dataTransfer.files);
+    }
+});
+</script>
+
+</body>
+</html>
