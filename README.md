@@ -24,12 +24,14 @@
 </div>
 
 ### ⚖️ 法律条款
+
 | 文件名 | 链接 |
 | :--- | :--- |
 | 🛡️ 隐私政策 | [![Privacy](https://img.shields.io/badge/View-Privacy_Policy-blue?style=flat-square)](https://fanxiaolongx-max.github.io/privacy-policy/privacy.html) |
 | 📜 服务条款 | [![Terms](https://img.shields.io/badge/View-Terms_of_Service-blue?style=flat-square)](https://fanxiaolongx-max.github.io/privacy-policy/terms.html) |
 
 ### 🚀 功能演示 (Demos)
+
 | 功能名称 | 类型 | 在线演示 |
 | :--- | :--- | :--- |
 | **合同倒数** | ⏳ 工具 | [![Demo](https://img.shields.io/badge/Launch-Demo-success?style=for-the-badge&logo=clockify&logoColor=white)](https://fanxiaolongx-max.github.io/privacy-policy/合同倒数DEMO.html) |
