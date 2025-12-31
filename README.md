@@ -9,10 +9,10 @@
 
 ---
 
-- 🔭 I’m currently working on **Something Cool**
-- 🌱 I’m currently learning **React, Python, Go**
-- 💬 Ask me about **Vue, Java, Linux**
-- 📫 How to reach me: **your-email@example.com**
+- 🔭 I’m currently working on **IMS/PS、NFV**
+- 🌱 I’m currently learning **Docker、AI 、Vibe coding、windows、linux、python**
+- 💬 Ask me about **IMS**
+- 📫 How to reach me: **dragon@fanxiaolong.uk**
 
 <h3 align="center">🛠 Languages and Tools</h3>
 <div align="center">
