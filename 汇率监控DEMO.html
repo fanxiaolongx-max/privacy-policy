@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>汇率监控器 Pro (v3.4)</title>
+    <!-- Dependencies: ApexCharts & Flatpickr -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/zh.js"></script>
+    <style>
+        :root {
+            --primary-color: #007bff; --danger-color: #dc3545; --success-color: #28a745;
+            --border-color: #dee2e6; --text-color: #343a40;
+        }
+        body {
+            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            background-color: #eef2f5; color: var(--text-color); margin: 0; padding: 2em;
+        }
+        .container {
+            max-width: 950px; margin: 0 auto; background-color: #fff;
+            padding: 2em; border-radius: 12px; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        }
+        h1, h2 {
+            color: var(--primary-color); border-bottom: 2px solid var(--border-color); padding-bottom: 10px;
+        }
+        .form-grid {
+            display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto;
+            gap: 1em; align-items: flex-end; margin-bottom: 1.5em;
+        }
+        input, button {
+            padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 1em;
+        }
+        button {
+            background-color: var(--primary-color); color: white; border: none; cursor: pointer; font-weight: 500;
+        }
+        button:hover { background-color: #0056b3; }
+        .rate-card {
+            border: 1px solid var(--border-color); padding: 1.5em; margin-top: 1.5em;
+            border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        .rate-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 1em;
+        }
+        .rate-pair { font-weight: 600; font-size: 1.3em; }
+        .rate-value { font-size: 1.6em; color: var(--success-color); font-weight: 700; }
+        .rate-value.error { color: var(--danger-color); font-size: 1.1em; font-weight: 500; }
+        .date-picker-wrapper { margin-bottom: 1em; display: flex; align-items: center; gap: 10px; }
+        #alert-container { position: fixed; top: 1em; right: 1em; z-index: 1000; width: 350px; }
+        .alert {
+            padding: 15px; margin-bottom: 1rem; border-radius: .25rem; color: #fff;
+            background-color: #17a2b8; /* Info color for notifications */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .alert.alert-danger { background-color: var(--danger-color); }
+    </style>
+</head>
+<body>
+    <div id="alert-container"></div>
+    <div class="container">
+        <h1>汇率监控器 Pro <span style="font-size: 0.6em; color: #6c757d;">v3.4</span></h1>
+        <h2>添加监控</h2>
+        <form id="config-form" class="form-grid"><!-- form elements are added by JS --></form>
+        <h2>实时汇率 & 历史图表</h2>
+        <div id="rates-container">正在加载默认数据...</div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://api.frankfurter.app';
+        let monitoredPairs = [];
+        let chartInstances = {};
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        // --- Notification Handling ---
+        function testNotification() {
+             if (!("Notification" in window)) {
+                showAlert("此浏览器不支持桌面通知。", "alert-danger");
+                return;
+            }
+
+            const permission = Notification.permission;
+
+            if (permission === "granted") {
+                const notification = new Notification("通知功能已开启", {
+                    body: "您将及时收到汇率阈值提醒。",
+                    icon: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzI4YTc0NSIgd2lkdGg9IjQ4cHgiIGhlaWdodD0iNDhweCI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik05IDE2LjE3TDQuODMgMTJsLTEuNDIgMS40MUw5IDE5IDIxIDdsLTEuNDEtMS40MXoiLz48L3N2Zz4=" // Simple checkmark SVG
+                });
+            } else if (permission === "denied") {
+                // [MODIFIED] More helpful message for denied state.
+                showAlert("通知已被禁用。如果您想接收提醒，请在浏览器设置中重新允许本页面的通知。", "alert-danger");
+            } else { // permission is "default"
+                // [MODIFIED] This is where the prompt is triggered.
+                Notification.requestPermission().then(newPermission => {
+                    if (newPermission === "granted") {
+                        const notification = new Notification("通知授权成功！", {
+                            body: "您将及时收到汇率阈值提醒。",
+                            icon: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzI4YTc0NSIgd2lkdGg9IjQ4cHgiIGhlaWdodD0iNDhweCI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik05IDE2LjE3TDQuODMgMTJsLTEuNDIgMS40MUw5IDE5IDIxIDdsLTEuNDEtMS40MXoiLz48L3N2Zz4="
+                        });
+                    } else {
+                        showAlert("您已拒绝通知，将无法收到阈值提醒。", "alert-danger");
+                    }
+                });
+            }
+        }
+
+        // --- Config & Initialization ---
+        function loadConfig() {
+            const saved = localStorage.getItem('monitoredPairs');
+            if (saved && JSON.parse(saved).length > 0) {
+                 const parsed = JSON.parse(saved);
+                 monitoredPairs = parsed.map(p => {
+                    const hasDateRange = p.dateRange && p.dateRange[0] && p.dateRange[1];
+                    let dateRange;
+                    if (hasDateRange) {
+                        const savedEndDate = new Date(p.dateRange[1]);
+                        const endDate = savedEndDate > yesterday ? yesterday : savedEndDate;
+                        dateRange = [new Date(p.dateRange[0]), endDate];
+                    } else {
+                        const startDate = new Date(); startDate.setDate(yesterday.getDate() - 6);
+                        dateRange = [startDate, yesterday];
+                    }
+                    return { ...p, dateRange };
+                });
+            } else {
+                console.log("No saved data found, loading default pairs.");
+                const startDate = new Date(); startDate.setDate(yesterday.getDate() - 6);
+                monitoredPairs = [
+                    { key: 'EUR-CNY', base: 'EUR', target: 'CNY', upper: 8.0, lower: 7.8, dateRange: [new Date(startDate), new Date(yesterday)], currentRate: null },
+                    { key: 'USD-CNY', base: 'USD', target: 'CNY', upper: 7.4, lower: 7.2, dateRange: [new Date(startDate), new Date(yesterday)], currentRate: null },
+                ];
+            }
+        }
+
+        // --- Chart Creation with Annotations ---
+        function createChart(pair, data) {
+            const options = {
+                series: [{ name: `汇率 (${pair.target})`, data: data }],
+                chart: { type: 'area', height: 250, zoom: { enabled: true }, toolbar: { autoSelected: 'zoom' } },
+                annotations: {
+                    yaxis: [
+                        { y: pair.upper, borderColor: '#dc3545', strokeDashArray: 5, label: { borderColor: '#dc3545', style: { color: '#fff', background: '#dc3545' }, text: `上限: ${pair.upper}` } },
+                        { y: pair.lower, borderColor: '#28a745', strokeDashArray: 5, label: { borderColor: '#28a745', style: { color: '#fff', background: '#28a745' }, text: `下限: ${pair.lower}` } }
+                    ]
+                },
+                dataLabels: { enabled: false },
+                stroke: { width: 2 },
+                markers: { size: 0 },
+                title: { text: `${pair.base} 到 ${pair.target} 汇率走势`, align: 'left' },
+                xaxis: { type: 'datetime', labels: { datetimeUTC: false, format: 'MM-dd' } },
+                yaxis: { labels: { formatter: (val) => val.toFixed(4) } },
+                tooltip: { x: { format: 'yyyy-MM-dd' } },
+                fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.3, stops: [0, 90, 100] } },
+            };
+            if (chartInstances[pair.key]) chartInstances[pair.key].destroy();
+            const chart = new ApexCharts(document.querySelector(`#chart-${pair.key}`), options);
+            chart.render();
+            chartInstances[pair.key] = chart;
+        }
+
+        // --- DOM Ready ---
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelector('.form-grid').innerHTML = `
+                <input type="text" id="base" placeholder="基础货币 (USD)" required>
+                <input type="text" id="target" placeholder="目标货币 (CNY)" required>
+                <input type="number" id="upper" step="any" placeholder="上限阈值" required>
+                <input type="number" id="lower" step="any" placeholder="下限阈值" required>
+                <button type="submit">添加</button>`;
+
+            loadConfig();
+            renderAllCards();
+            setTimeout(testNotification, 1500); // Delay slightly for a smoother load experience
+        });
+
+        // --- Helper functions ---
+        function showAlert(message, type = 'alert-info') {
+            const alertContainer = document.getElementById('alert-container');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert ${type}`;
+            alertDiv.innerHTML = `<span>${message}</span><button style="background:none;border:none;color:white;font-size:1.2em;cursor:pointer;opacity:0.7;" onclick="this.parentElement.remove()">&times;</button>`;
+            alertContainer.appendChild(alertDiv);
+            setTimeout(() => alertDiv.remove(), 8000); // Longer timeout for important messages
+        }
+
+        // --- Full implementation of other functions (unchanged, but included for completeness) ---
+        async function fetchApi(url) { const response = await fetch(url); if (!response.ok) { const error = new Error('网络响应错误'); error.status = response.status; throw error; } return response.json(); }
+        async function fetchHistoricalData(base, target, startDate, endDate) { const end = (endDate > yesterday) ? yesterday : endDate; const startStr = startDate.toISOString().split('T')[0]; const endStr = end.toISOString().split('T')[0]; try { const data = await fetchApi(`${API_BASE}/${startStr}..${endStr}?from=${base}&to=${target}`); return Object.entries(data.rates).map(([date, rates]) => [new Date(date).getTime(), rates[target]]).sort((a, b) => a[0] - b[0]); } catch (error) { console.error(`获取历史数据失败 (${base}/${target}):`, error); if (error.status === 404) { throw new Error("货币对不受支持或日期范围无效"); } throw error; } }
+        async function fetchLatestRate(base, target) { try { const data = await fetchApi(`${API_BASE}/latest?from=${base}&to=${target}`); return data.rates[target]; } catch (error) { console.error(`获取最新汇率失败 (${base}/${target}):`, error); return null; } }
+        async function renderAllCards() { const container = document.getElementById('rates-container'); if (monitoredPairs.length === 0) { container.innerHTML = '请添加一个货币对以开始监控。'; return; } container.innerHTML = ''; for (const pair of monitoredPairs) { await renderSingleCard(pair); } }
+        async function renderSingleCard(pair) { const container = document.getElementById('rates-container'); if (document.getElementById(`card-${pair.key}`)) return; const card = document.createElement('div'); card.className = 'rate-card'; card.id = `card-${pair.key}`; card.innerHTML = `<div class="rate-header"><span class="rate-pair">${pair.base} / ${pair.target}</span><span class="rate-value" id="rate-${pair.key}">加载中...</span><button class="delete-btn" style="background-color: var(--danger-color);" data-key="${pair.key}">删除</button></div><div class="date-picker-wrapper"><span>选择日期范围:</span><input type="text" class="date-picker-input" id="datepicker-${pair.key}" placeholder="选择日期"></div><div id="chart-${pair.key}"></div>`; container.appendChild(card); flatpickr(`#datepicker-${pair.key}`, { mode: "range", dateFormat: "Y-m-d", defaultDate: pair.dateRange, locale: "zh", onChange: async function(selectedDates) { if (selectedDates.length === 2) { pair.dateRange = selectedDates; try { const data = await fetchHistoricalData(pair.base, pair.target, selectedDates[0], selectedDates[1]); chartInstances[pair.key].updateSeries([{ data }]); saveConfig(); } catch (error) { showAlert(error.message, 'alert-danger'); } } } }); try { const initialData = await fetchHistoricalData(pair.base, pair.target, pair.dateRange[0], pair.dateRange[1]); createChart(pair, initialData); const rate = await fetchLatestRate(pair.base, pair.target); if (rate !== null) { pair.currentRate = rate; document.getElementById(`rate-${pair.key}`).textContent = rate.toFixed(4); } else if (!document.getElementById(`rate-${pair.key}`).textContent.includes('错误')) { document.getElementById(`rate-${pair.key}`).textContent = "N/A"; } } catch (error) { const rateValueEl = document.getElementById(`rate-${pair.key}`); rateValueEl.textContent = error.message; rateValueEl.classList.add('error'); document.getElementById(`chart-${pair.key}`).innerHTML = `<p style="text-align:center; color: var(--danger-color);">无法加载图表数据。</p>`; } }
+        function saveConfig() { localStorage.setItem('monitoredPairs', JSON.stringify(monitoredPairs)); }
+    </script>
+</body>
+</html>
