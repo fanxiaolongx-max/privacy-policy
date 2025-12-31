@@ -24,3 +24,21 @@
 </div>
 
 <br/>
+### ⚖️ 法律条款
+| 文件名 | 链接 |
+| :--- | :--- |
+| 🛡️ 隐私政策 | [![Privacy](https://img.shields.io/badge/View-Privacy_Policy-blue?style=flat-square)](https://fanxiaolongx-max.github.io/privacy-policy/privacy.html) |
+| 📜 服务条款 | [![Terms](https://img.shields.io/badge/View-Terms_of_Service-blue?style=flat-square)](https://fanxiaolongx-max.github.io/privacy-policy/terms.html) |
+
+### 🚀 功能演示 (Demos)
+| 功能名称 | 类型 | 在线演示 |
+| :--- | :--- | :--- |
+| **合同倒数** | ⏳ 工具 | [![Demo](https://img.shields.io/badge/Launch-Demo-success?style=for-the-badge&logo=clockify&logoColor=white)](https://fanxiaolongx-max.github.io/privacy-policy/合同倒数DEMO.html) |
+| **地址比对** | 🗺️ 地理 | [![Demo](https://img.shields.io/badge/Launch-Demo-success?style=for-the-badge&logo=googlemaps&logoColor=white)](https://fanxiaolongx-max.github.io/privacy-policy/地址比对DEMO.html) |
+| **外卖流程** | 🛵 仿真 | [![Demo](https://img.shields.io/badge/Launch-Demo-success?style=for-the-badge&logo=ubereats&logoColor=white)](https://fanxiaolongx-max.github.io/privacy-policy/外卖流程DEMO.html) |
+| **报告解析** | 📄 分析 | [![Demo](https://img.shields.io/badge/Launch-Demo-success?style=for-the-badge&logo=googlefiles&logoColor=white)](https://fanxiaolongx-max.github.io/privacy-policy/报告解析DEMO.html) |
+| **文档总结** | 📝 文本 | [![Demo](https://img.shields.io/badge/Launch-Demo-success?style=for-the-badge&logo=notion&logoColor=white)](https://fanxiaolongx-max.github.io/privacy-policy/文档总结DEMO.html) |
+| **汇率监控** | 💱 金融 | [![Demo](https://img.shields.io/badge/Launch-Demo-success?style=for-the-badge&logo=bitcoin&logoColor=white)](https://fanxiaolongx-max.github.io/privacy-policy/汇率监控DEMO.html) |
+| **泡泡图表** | 🫧 可视化 | [![Demo](https://img.shields.io/badge/Launch-Demo-success?style=for-the-badge&logo=d3.js&logoColor=white)](https://fanxiaolongx-max.github.io/privacy-policy/泡泡图表DEMO.html) |
+| **表格可视** | 📊 可视化 | [![Demo](https://img.shields.io/badge/Launch-Demo-success?style=for-the-badge&logo=microsoftexcel&logoColor=white)](https://fanxiaolongx-max.github.io/privacy-policy/表格可视DEMO.html) |
+| **链路分析** | 🔗 分析 | [![Demo](https://img.shields.io/badge/Launch-Demo-success?style=for-the-badge&logo=analogue&logoColor=white)](https://fanxiaolongx-max.github.io/privacy-policy/链路分析DEMO.html) |
