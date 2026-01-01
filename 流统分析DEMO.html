@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>流量策略日志全维分析工具 v13.0 (跨月/跨年增强版)</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --diff-color: #8e44ad;
+            --engine-color: #d35400;
+            --bg-color: #f4f7f9;
+            --border-color: #e0e0e0;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --success-color: #27ae60;
+            --sa-color: #e3f2fd;
+            --nosa-color: #f5f5f5;
+            --deny-color: #ffebee;
+            --text-muted: #95a5a6;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1900px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        
+        /* 消息反馈 */
+        .alert-box { padding: 15px; margin-bottom: 20px; border-radius: 4px; display: none; font-size: 14px; }
+        .alert-success { color: #155724; background-color: #d4edda; border: 1px solid #c3e6cb; }
+        .alert-warning { color: #856404; background-color: #fff3cd; border: 1px solid #ffeeba; }
+        .alert-error   { color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; }
+        .alert-list { margin: 5px 0 0 20px; padding: 0; } .alert-list li { margin-bottom: 3px; }
+
+        /* 状态栏 */
+        .status-bar { background: #ecf0f1; padding: 10px 15px; border-radius: 6px; margin-bottom: 15px; border-left: 5px solid #bdc3c7; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+        .status-bar.diff-mode { background: #f3e5f5; border-left-color: var(--diff-color); color: #4a148c; }
+
+        /* Timeline Navigation */
+        .nav-pills { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .nav-item { padding: 8px 16px; border-radius: 20px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 13px; font-weight: 600; color: #666; transition: all 0.2s; display: flex; align-items: center; gap: 5px; }
+        .nav-item:hover { background: #f0f0f0; }
+        .nav-item.active { background: var(--diff-color); color: white; border-color: var(--diff-color); box-shadow: 0 2px 6px rgba(142, 68, 173, 0.3); }
+        .nav-arrow { font-size: 10px; opacity: 0.7; margin: 0 3px; }
+
+        /* 输入框 */
+        .input-wrapper { position: relative; }
+        textarea { width: 100%; height: 120px; padding: 12px; border: 2px solid var(--border-color); border-radius: 6px; font-family: 'Consolas', 'Monaco', monospace; font-size: 12px; box-sizing: border-box; resize: vertical; transition: all 0.2s; }
+        textarea.drag-active { border-color: var(--accent-color); background-color: #e3f2fd; box-shadow: 0 0 10px rgba(52, 152, 219, 0.2); }
+        
+        .btn-bar { margin: 15px 0 25px 0; display: flex; gap: 10px; }
+        button { padding: 10px 24px; background-color: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        button:hover { background-color: #34495e; transform: translateY(-1px); }
+        button.secondary { background-color: #95a5a6; } button.secondary:hover { background-color: #7f8c8d; }
+        button.action-btn { background-color: var(--accent-color); } button.action-btn:hover { background-color: #2980b9; }
+
+        /* Dashboard */
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; display: none; }
+        .card { background: #fff; padding: 15px; border-radius: 6px; border: 1px solid var(--border-color); border-left: 4px solid var(--accent-color); }
+        .diff-mode .card { border-left-color: var(--diff-color); }
+        .card h3 { margin: 0 0 5px 0; font-size: 11px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px; }
+        .card .value { font-size: 18px; font-weight: 700; color: var(--primary-color); }
+        .card .sub { font-size: 11px; color: #999; margin-top: 5px; }
+
+        /* Engine Section */
+        .engine-section { margin-top: 40px; border-top: 2px dashed #eee; padding-top: 20px; display: none; }
+        .engine-snapshot-block { background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 20px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+        .engine-header { font-size: 14px; font-weight: bold; color: var(--engine-color); margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .engine-header::before { content: ''; display: inline-block; width: 4px; height: 16px; background: var(--engine-color); border-radius: 2px; }
+        .engine-card { border-left-color: var(--engine-color) !important; }
+
+        /* Consistency Check */
+        .consistency-box { background: #fafafa; border: 1px solid #eee; border-radius: 6px; padding: 15px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-around; }
+        .comp-item { text-align: center; flex: 1; }
+        .comp-label { font-size: 11px; color: #7f8c8d; text-transform: uppercase; margin-bottom: 5px; }
+        .comp-val { font-size: 16px; font-weight: bold; color: #333; }
+        .comp-val.eng { color: var(--engine-color); }
+        .comp-val.poly { color: var(--accent-color); }
+        .comp-diff { font-size: 12px; font-weight: bold; padding: 2px 6px; border-radius: 4px; background: #eee; color: #555; display: inline-block; margin-top: 4px;}
+        .comp-diff.good { color: var(--success-color); background: #e8f5e9; }
+        .comp-diff.bad { color: var(--danger-color); background: #ffebee; }
+        .comp-divider { width: 1px; height: 40px; background: #ddd; margin: 0 20px; }
+
+        .section-title { font-size: 16px; font-weight: bold; margin-bottom: 10px; color: var(--primary-color); border-left: 4px solid var(--primary-color); padding-left: 10px; }
+        .diff-mode .section-title { border-left-color: var(--diff-color); color: var(--diff-color); }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; white-space: nowrap; }
+        th, td { padding: 10px 15px; border-bottom: 1px solid var(--border-color); text-align: right; }
+        th { background-color: #f8f9fa; position: sticky; top: 0; text-align: right; cursor: pointer; }
+        th:nth-child(1), td:nth-child(1), th:nth-child(2), td:nth-child(2), th:nth-child(3), td:nth-child(3), th:nth-child(4), td:nth-child(4) { text-align: left; }
+        .table-wrapper { overflow-x: auto; border: 1px solid var(--border-color); border-radius: 6px; display: none; margin-bottom: 20px; }
+
+        .row-sa { background-color: var(--sa-color); }
+        .row-nosa { background-color: var(--nosa-color); }
+        .row-deny { background-color: var(--deny-color); color: #c62828; }
+        .badge { padding: 3px 6px; border-radius: 3px; font-size: 11px; }
+        .badge-sa { background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; }
+
+        .trend-val { display: flex; align-items: center; justify-content: flex-end; gap: 5px; }
+        .trend-old { color: var(--text-muted); font-size: 0.9em; text-decoration: none; }
+        .trend-arrow { color: var(--text-muted); font-size: 0.8em; }
+        .trend-new { font-weight: bold; color: #000; }
+
+        .calc-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(44, 62, 80, 0.95); backdrop-filter: blur(5px); color: white; padding: 15px 40px; display: flex; align-items: center; justify-content: space-between; transform: translateY(100%); transition: transform 0.3s; z-index: 100; }
+        .calc-bar.active { transform: translateY(0); }
+        .calc-item div:first-child { font-size: 11px; opacity: 0.7; }
+        .calc-item div:last-child { font-size: 16px; font-weight: bold; font-family: monospace; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🗓️ 流量策略日志全维分析 v13.0 (跨月/跨年版)</h2>
+    <div id="alertBox" class="alert-box"></div>
+    <div id="statusInfo" class="status-bar" style="display:none;">
+        <span id="statusText">等待分析...</span>
+        <span id="timeRange" style="font-size:12px; opacity:0.8"></span>
+    </div>
+    
+    <div class="input-wrapper">
+        <textarea id="logInput" placeholder="在此粘贴日志内容 (支持跨天、跨月、跨年)..."></textarea>
+    </div>
+    <input type="file" id="fileInput" style="display: none;" accept=".txt,.log">
+
+    <div class="btn-bar">
+        <button onclick="processInput()">开始分析</button>
+        <button class="action-btn" onclick="document.getElementById('fileInput').click()">📂 导入文件</button>
+        <button class="secondary" onclick="loadCrossMonthDemo()">加载跨月测试数据</button>
+        <button class="secondary" onclick="reset()">清空</button>
+        <input type="text" id="filterInput" onkeyup="filterTable()" placeholder="搜索策略名..." style="padding:10px; margin-left:auto; width:250px; border:1px solid #ddd; border-radius:4px;">
+    </div>
+
+    <div id="resultContainer">
+        <div id="timelineNav" class="nav-pills" style="display:none;"></div>
+
+        <div class="dashboard" id="dashboard">
+            <div class="card"><h3 id="lblBytes">Total Matched Bytes</h3><div class="value" id="dashBytes">0</div><div class="sub" id="subBytes"></div></div>
+            <div class="card"><h3 id="lblPkts">Total Matched Pkts</h3><div class="value" id="dashPkts">0</div></div>
+            <div class="card" style="border-left-color: var(--danger-color)"><h3 id="lblDrop">Total Dropped (Pkts)</h3><div class="value" id="dashDrop">0</div><div class="sub" id="subDropBytes"></div></div>
+            <div class="card"><h3 id="lblPPS">Total Rate (PPS)</h3><div class="value" id="dashPPS">0</div><div class="sub" id="subPPS"></div></div>
+            <div class="card"><h3 id="lblBPS">Total Rate (BPS)</h3><div class="value" id="dashBPS">0</div><div class="sub" id="subBPS"></div></div>
+        </div>
+
+        <div class="group-section" id="groupSection" style="display:none;">
+            <div class="section-title" id="groupTitle">行为分组透视</div>
+            <div class="table-wrapper" style="display:block;">
+                <table class="group-table">
+                    <thead><tr><th style="text-align:left">Group Type</th><th>Count</th><th id="thPkts">Packets</th><th id="thBytes">Bytes</th><th id="thDrop" style="color:var(--danger-color)">Dropped Pkts</th><th id="thDropBytes" style="color:var(--danger-color)">Dropped Bytes</th><th id="thPPS">PPS Trend</th><th id="thBPS">BPS Trend</th></tr></thead>
+                    <tbody id="groupTbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="table-wrapper" id="tableWrapper">
+            <table id="dataTable">
+                <thead><tr>
+                    <th width="30"><input type="checkbox" onchange="toggleAll(this)"></th><th onclick="sort(1)">Slot</th><th onclick="sort(2)">Classifier Name</th><th onclick="sort(3)">Behavior</th><th onclick="sort(4, true)">Matched Pkts</th><th onclick="sort(5, true)">Matched Bytes</th><th onclick="sort(6, true)">Dropped Pkts</th><th onclick="sort(9, true)">Dropped Bytes</th><th onclick="sort(7, true)">PPS Trend (Start → End)</th><th onclick="sort(8, true)">BPS Trend (Start → End)</th>
+                </tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div class="engine-section" id="engineSection">
+            <div class="section-title" style="color:var(--engine-color); border-left-color:var(--engine-color)">转发引擎统计 (Forwarding Engine Stats)</div>
+            <div id="engineContentArea"></div>
+        </div>
+    </div>
+</div>
+
+<div class="calc-bar" id="calcBar">
+    <div><strong>选中统计: </strong> <span id="selCount">0</span></div>
+    <div style="display:flex; gap:30px">
+        <div class="calc-item"><div>Sum Bytes (Δ)</div><div id="selBytes">0</div></div>
+        <div class="calc-item"><div>Sum Drop Bytes (Δ)</div><div id="selDropBytes">0</div></div>
+        <div class="calc-item"><div>Sum PPS (Current)</div><div id="selPPS">0</div></div>
+        <div class="calc-item"><div>Sum BPS (Current)</div><div id="selBPS">0</div></div>
+    </div>
+    <button onclick="clearSel()" style="background:rgba(255,255,255,0.1); font-size:12px; border:none; color:white; padding:5px 10px; cursor:pointer">取消</button>
+</div>
+
+<script>
+    // Global State
+    let allDiffSegments = [];
+    let currentSegmentIndex = 0;
+    let isDiffMode = false;
+
+    // --- File & Drag/Drop ---
+    const dropZone = document.getElementById('logInput');
+    const fileInput = document.getElementById('fileInput');
+    fileInput.addEventListener('change', (e) => { handleFile(e.target.files[0]); fileInput.value = ''; });
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-active'); });
+    dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('drag-active'); });
+    dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('drag-active'); if(e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
+    function handleFile(file) { if(!file) return; const r = new FileReader(); r.onload = (e) => { document.getElementById('logInput').value = e.target.result; hideAlert(); processInput(); }; r.readAsText(file); }
+
+    // --- Core Logic ---
+    function showAlert(type, title, msgs = []) {
+        const box = document.getElementById('alertBox'); box.className = `alert-box alert-${type}`;
+        let html = `<span class="alert-title">${title}</span>`; if (msgs.length > 0) html += `<ul class="alert-list">${msgs.map(m => `<li>${m}</li>`).join('')}</ul>`;
+        box.innerHTML = html; box.style.display = 'block';
+    }
+    function hideAlert() { document.getElementById('alertBox').style.display = 'none'; }
+
+    function loadCrossMonthDemo() {
+        // 模拟跨月场景：1月31日 23:55 到 2月1日 00:05
+        const demo = `2025-01-31 23:55:00+08:00
+Traffic policy inbound: test-policy
+Slot: 1
+Classifier: WEB-TRAFFIC
+  Behavior: Normal-flow-UP-SA
+Matched                  100,000,000             50,000,000,000
+  +--Dropped                        5,000                     500,000
+Last 30 seconds rate
+Matched                      100,000                 500,000,000
+
+2025-02-01 00:05:00+08:00
+Traffic policy inbound: test-policy
+Slot: 1
+Classifier: WEB-TRAFFIC
+  Behavior: Normal-flow-UP-SA
+Matched                  100,600,000             50,600,000,000
+  +--Dropped                        5,200                     520,000
+Last 30 seconds rate
+Matched                      100,000                 500,000,000`;
+        document.getElementById('logInput').value = demo;
+    }
+
+    function processInput() {
+        hideAlert();
+        const text = document.getElementById('logInput').value;
+        if(!text.trim()) { showAlert('error', '输入为空', ['请粘贴日志内容或拖入文件']); return; }
+
+        // 正则支持标准 YYYY-MM-DD 格式
+        const timeHeaderRegex = /^(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})/gm;
+        let match; let indices = []; while ((match = timeHeaderRegex.exec(text)) !== null) { indices.push(match.index); }
+
+        let rawSnapshots = []; let timeWarnings = [];
+        if (indices.length <= 1) {
+            if (indices.length === 0) timeWarnings.push("未检测到标准时间戳 (YYYY-MM-DD HH:MM:SS)，视为单次快照。");
+            rawSnapshots.push(text);
+        } else {
+            for (let i = 0; i < indices.length; i++) {
+                const start = indices[i]; const end = indices[i+1] || text.length;
+                rawSnapshots.push(text.substring(start, end));
+            }
+        }
+
+        let snapshots = rawSnapshots.map((txt, idx) => {
+            const tsStr = parseTimestamp(txt);
+            return {
+                id: idx + 1,
+                timestamp: tsStr || `Snapshot ${idx+1}`,
+                // 新增：解析为 Date 对象用于排序和跨月判断
+                dateObj: tsStr ? new Date(tsStr.replace(' ', 'T').substring(0, 19)) : new Date(),
+                policyData: parseLog(txt, idx).data,
+                engineData: parseEngineStats(txt)
+            };
+        });
+
+        // 自动按时间排序（防止粘贴顺序混乱导致负数）
+        snapshots.sort((a, b) => a.dateObj - b.dateObj);
+
+        let alertType = 'success'; let alertTitle = '分析完成'; let alertMsgs = [...timeWarnings];
+        let validPolicy = snapshots.filter(s => s.policyData.length > 0).length;
+        if (validPolicy === 0 && snapshots.filter(s=>s.engineData.length>0).length === 0) { showAlert('error', '无法识别有效数据', ['请检查输入']); resetResultUI(); return; }
+        snapshots.forEach((s, idx) => { if(s.policyData.length===0) alertMsgs.push(`⚠️ 快照 ${s.timestamp} 缺失 Traffic Policy`); });
+        
+        allDiffSegments = [];
+        if (snapshots.length < 2) {
+            isDiffMode = false;
+            allDiffSegments.push({ name: "Single View", startTs: snapshots[0].timestamp, endTs: snapshots[0].timestamp, data: snapshots[0].policyData });
+        } else {
+            isDiffMode = true;
+            for(let i=0; i < snapshots.length - 1; i++) {
+                const start = snapshots[i]; const end = snapshots[i+1];
+                const diffData = calculateDiff(start.policyData, end.policyData);
+                
+                // 智能生成标签：如果跨天/跨月，显示日期
+                let nameHtml = "";
+                const isSameDay = start.dateObj.toDateString() === end.dateObj.toDateString();
+                const fmt = (d, withDate) => {
+                    const t = d.toTimeString().split(' ')[0]; // HH:MM:SS
+                    if(!withDate) return t;
+                    const m = (d.getMonth()+1).toString().padStart(2,'0');
+                    const day = d.getDate().toString().padStart(2,'0');
+                    return `${m}-${day} ${t}`;
+                };
+                
+                nameHtml = `${fmt(start.dateObj, !isSameDay)} <span class="nav-arrow">➜</span> ${fmt(end.dateObj, !isSameDay)}`;
+                if(!isSameDay) nameHtml = `<b>${nameHtml}</b>`; // 跨天加粗
+
+                allDiffSegments.push({
+                    name: nameHtml,
+                    fullStart: start.timestamp, fullEnd: end.timestamp, data: diffData
+                });
+            }
+        }
+
+        if (alertMsgs.length > 0) { alertType = 'warning'; alertTitle = '发现异常'; }
+        showAlert(alertType, alertTitle, alertMsgs);
+
+        const statusEl = document.getElementById('statusInfo'); 
+        const container = document.getElementById('resultContainer');
+        container.style.display = 'block'; statusEl.style.display = 'flex';
+        
+        if(isDiffMode) {
+            container.classList.add('diff-mode'); statusEl.classList.add('diff-mode');
+            document.getElementById('statusText').innerHTML = `<strong>多时间点分析</strong>: 检测到 ${snapshots.length} 份数据 (已按时间自动排序)`;
+        } else {
+            container.classList.remove('diff-mode'); statusEl.classList.remove('diff-mode');
+            document.getElementById('statusText').innerHTML = `<strong>单次快照模式</strong>`;
+        }
+
+        renderNav(); 
+        switchTab(0); 
+        renderEngineStats(snapshots);
+    }
+
+    function renderNav() {
+        const nav = document.getElementById('timelineNav'); nav.innerHTML = '';
+        if(allDiffSegments.length <= 1) { nav.style.display = 'none'; return; }
+        nav.style.display = 'flex';
+        allDiffSegments.forEach((seg, idx) => {
+            const btn = document.createElement('div'); btn.className = 'nav-item';
+            if(idx === 0) btn.classList.add('active');
+            btn.innerHTML = seg.name; btn.onclick = () => switchTab(idx); nav.appendChild(btn);
+        });
+    }
+
+    function switchTab(index) {
+        currentSegmentIndex = index;
+        const segment = allDiffSegments[index];
+        document.querySelectorAll('.nav-item').forEach((el, i) => { if(i===index) el.classList.add('active'); else el.classList.remove('active'); });
+        if(isDiffMode) { document.getElementById('timeRange').innerText = `${segment.fullStart} ➔ ${segment.fullEnd}`; } 
+        else { document.getElementById('timeRange').innerText = segment.startTs; }
+        updateLabels(isDiffMode);
+        renderPolicyStats(segment.data);
+    }
+
+    function resetResultUI() { document.getElementById('dashboard').style.display = 'none'; document.getElementById('groupSection').style.display = 'none'; document.getElementById('tableWrapper').style.display = 'none'; document.getElementById('engineSection').style.display = 'none'; document.getElementById('timelineNav').style.display='none';}
+    function parseTimestamp(text) { const m = text.match(/^(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2})/); return m ? m[1] : null; }
+
+    function calculateDiff(baseList, targetList) {
+        let diffList = []; let baseMap = new Map();
+        baseList.forEach(item => baseMap.set(`${item.slot}||${item.name}||${item.behavior}`, item));
+        targetList.forEach(newItem => {
+            const oldItem = baseMap.get(`${newItem.slot}||${newItem.name}||${newItem.behavior}`);
+            let diffItem = { ...newItem };
+            if (oldItem) {
+                diffItem.pkts = newItem.pkts - oldItem.pkts; 
+                diffItem.bytes = newItem.bytes - oldItem.bytes; 
+                diffItem.dropPkts = newItem.dropPkts - oldItem.dropPkts;
+                diffItem.dropBytes = newItem.dropBytes - oldItem.dropBytes;
+                // 检测计数器回绕或重启
+                if (diffItem.bytes < 0) { diffItem.warning = "Counter Reset Detected"; }
+                diffItem.ppsStart = oldItem.pps; diffItem.ppsEnd = newItem.pps; 
+                diffItem.bpsStart = oldItem.bps; diffItem.bpsEnd = newItem.bps;
+            } else { 
+                diffItem.ppsStart = 0; diffItem.ppsEnd = newItem.pps; 
+                diffItem.bpsStart = 0; diffItem.bpsEnd = newItem.bps; 
+            }
+            diffList.push(diffItem);
+        });
+        return diffList;
+    }
+
+    function parseLog(text, index) {
+        const lines = text.split('\n'); let data = []; let currentSlot = "N/A"; let currentObj = null; let context = "NONE";
+        const extractNums = (str) => { const matches = str.match(/[\d,]+/g); return matches ? matches.map(s => parseInt(s.replace(/,/g, ''), 10) || 0) : [0, 0]; };
+        lines.forEach(line => {
+            const trimmed = line.trim();
+            if (trimmed.startsWith("Slot") && trimmed.includes("Engine")) return; 
+            if (line.match(/^Slot:\s*(\d+)/)) currentSlot = line.match(/^Slot:\s*(\d+)/)[1];
+            if (line.match(/^Classifier:\s*(.+)/)) {
+                if (currentObj) data.push(currentObj);
+                currentObj = { id: index + "_" + data.length, slot: currentSlot, name: line.match(/^Classifier:\s*(.+)/)[1].trim(), behavior: "Unknown", pkts: 0, bytes: 0, dropPkts: 0, dropBytes: 0, pps: 0, bps: 0 }; context = "NONE";
+            }
+            if (currentObj && line.match(/^\s*Behavior:\s*(.+)/)) currentObj.behavior = line.match(/^\s*Behavior:\s*(.+)/)[1].trim();
+            if (trimmed.includes("Last 30 seconds rate")) context = "RATE"; else if (trimmed.includes("Item") && trimmed.includes("Bytes")) context = "TOTAL";
+            if (currentObj && line.match(/^Matched\s+/)) {
+                const nums = extractNums(line);
+                if (context === "TOTAL") { currentObj.pkts = nums[0]; currentObj.bytes = nums[1]; } else if (context === "RATE") { currentObj.pps = nums[0]; currentObj.bps = nums[1]; }
+            }
+            if (currentObj && line.match(/\+--Dropped\s+/)) { 
+                const nums = extractNums(line); 
+                if (context === "TOTAL") {
+                    currentObj.dropPkts = nums[0]; 
+                    currentObj.dropBytes = nums[1]; 
+                }
+            }
+        });
+        if (currentObj) data.push(currentObj);
+        return { data };
+    }
+
+    function parseEngineStats(text) {
+        let engines = []; const blocks = text.split(/^(?=Slot\s+\d+\s+Engine\s+\d+:)/gm);
+        blocks.forEach(block => {
+            if (!block.trim().startsWith("Slot")) return;
+            const headerMatch = block.match(/Slot\s+(\d+)\s+Engine\s+(\d+):/); if (!headerMatch) return;
+            const findValue = (k) => { for (let l of block.split('\n')) if (l.includes(k)) { const m = l.match(/(\d+)\s*$/); return m ? parseInt(m[1]) : 0; } return 0; };
+            engines.push({
+                slot: headerMatch[1], engine: headerMatch[2], newSession: findValue("Number of new session"), agingSession: findValue("Number of aging session"),
+                newIp: findValue("Number of new IP user"), agingIp: findValue("Number of aging IP user"),
+                upBw: findValue("Input upstream bandwidth"), downBw: findValue("Input downstream bandwidth"),
+                upPps: findValue("Input upstream packet rate"), downPps: findValue("Input downstream packet rate")
+            });
+        });
+        return engines;
+    }
+
+    function renderEngineStats(snapshotList) {
+        const section = document.getElementById('engineSection'); const contentArea = document.getElementById('engineContentArea'); contentArea.innerHTML = "";
+        const validSnapshots = snapshotList.filter(s => s.engineData && s.engineData.length > 0);
+        if (validSnapshots.length === 0) { section.style.display = 'none'; return; }
+        section.style.display = 'block';
+
+        validSnapshots.forEach((snap, index) => {
+            const engines = snap.engineData; let total = { upBw: 0, downBw: 0, upPps: 0, downPps: 0, newSess: 0 }; let rowsHtml = "";
+            engines.forEach(e => {
+                total.upBw += e.upBw; total.downBw += e.downBw; total.upPps += e.upPps; total.downPps += e.downPps; total.newSess += e.newSession;
+                rowsHtml += `<tr><td style="font-weight:bold; color:var(--engine-color)">Slot ${e.slot} / Engine ${e.engine}</td><td>${fmtBits(e.upBw)}</td><td>${fmtBits(e.downBw)}</td><td>${fmtNum(e.upPps)}</td><td>${fmtNum(e.downPps)}</td><td>${fmtNum(e.newSession)}</td><td>${fmtNum(e.agingSession)}</td></tr>`;
+            });
+
+            let saPPS = 0, saBPS = 0;
+            if(snap.policyData) { snap.policyData.forEach(p => { if (p.behavior.toUpperCase().includes("SA")) { saPPS += p.pps; saBPS += p.bps; } }); }
+            const engTotalPPS = total.upPps + total.downPps; const engTotalBPS = total.upBw + total.downBw;
+            const ppsDiffRaw = engTotalPPS > 0 ? ((Math.abs(engTotalPPS - saPPS) / engTotalPPS) * 100).toFixed(1) : 0;
+            const bpsDiffRaw = engTotalBPS > 0 ? ((Math.abs(engTotalBPS - saBPS) / engTotalBPS) * 100).toFixed(1) : 0;
+            const ppsClass = ppsDiffRaw > 5 ? 'bad' : 'good'; const bpsClass = bpsDiffRaw > 5 ? 'bad' : 'good';
+
+            const blockHtml = `
+                <div class="engine-snapshot-block">
+                    <div class="engine-header">Snapshot ${index+1}: ${snap.timestamp}</div>
+                    <div class="dashboard" style="display:grid; margin-bottom:15px;">
+                        <div class="card engine-card"><h3>Total Engines</h3><div class="value">${engines.length}</div></div>
+                        <div class="card engine-card"><h3>Total Upstream BW</h3><div class="value">${fmtBits(total.upBw)}</div></div>
+                        <div class="card engine-card"><h3>Total Downstream BW</h3><div class="value">${fmtBits(total.downBw)}</div></div>
+                        <div class="card engine-card"><h3>Total Packet Rate</h3><div class="value">${fmtNum(engTotalPPS)}</div></div>
+                        <div class="card engine-card"><h3>New Sessions (5m)</h3><div class="value">${fmtNum(total.newSess)}</div></div>
+                    </div>
+                    <div class="consistency-box">
+                        <div class="comp-item"><div class="comp-label">Engine Total PPS</div><div class="comp-val eng">${fmtNum(engTotalPPS)}</div></div>
+                        <div class="comp-item"><div class="comp-label">Policy (SA) PPS</div><div class="comp-val poly">${fmtNum(saPPS)}</div></div>
+                        <div class="comp-item"><div class="comp-label">Diff %</div><div class="comp-diff ${ppsClass}">${ppsDiffRaw}%</div></div>
+                        <div class="comp-divider"></div>
+                        <div class="comp-item"><div class="comp-label">Engine Total BPS</div><div class="comp-val eng">${fmtBits(engTotalBPS)}</div></div>
+                        <div class="comp-item"><div class="comp-label">Policy (SA) BPS</div><div class="comp-val poly">${fmtBits(saBPS)}</div></div>
+                        <div class="comp-item"><div class="comp-label">Diff %</div><div class="comp-diff ${bpsClass}">${bpsDiffRaw}%</div></div>
+                    </div>
+                    <div class="table-wrapper" style="display:block; margin-bottom:0;">
+                        <table><thead><tr><th style="text-align:left">Location</th><th>Upstream BW</th><th>Downstream BW</th><th>Upstream PPS</th><th>Downstream PPS</th><th>New Sessions</th><th>Aging Sessions</th></tr></thead><tbody>${rowsHtml}</tbody></table>
+                    </div>
+                </div>
+            `;
+            contentArea.insertAdjacentHTML('beforeend', blockHtml);
+        });
+    }
+
+    function updateLabels(isDiff) {
+        const prefix = isDiff ? "Δ " : "";
+        document.getElementById('lblBytes').innerText = isDiff ? "Interval Total Bytes" : "Total Matched Bytes";
+        document.getElementById('lblPkts').innerText = isDiff ? "Interval Total Pkts" : "Total Matched Pkts";
+        document.getElementById('lblDrop').innerText = isDiff ? "Interval Dropped (Pkts)" : "Total Dropped (Pkts)";
+        document.getElementById('lblPPS').innerText = isDiff ? "Total PPS Trend (Start → End)" : "Total PPS";
+        document.getElementById('lblBPS').innerText = isDiff ? "Total BPS Trend (Start → End)" : "Total BPS";
+        document.getElementById('thPkts').innerText = prefix + "Packets"; document.getElementById('thBytes').innerText = prefix + "Bytes"; 
+        document.getElementById('thDrop').innerText = prefix + "Dropped Pkts"; document.getElementById('thDropBytes').innerText = prefix + "Dropped Bytes";
+        document.getElementById('thPPS').innerText = isDiff ? "PPS (Start → End)" : "PPS"; document.getElementById('thBPS').innerText = isDiff ? "BPS (Start → End)" : "BPS";
+        document.getElementById('groupTitle').innerText = isDiff ? "区间增量分组统计" : "行为分组透视";
+        if(isDiff) { document.getElementById('subBytes').innerText = "期间产生的流量总和"; document.getElementById('subPPS').innerText = "对比 T1 与 T2 的总速率"; } 
+        else { document.getElementById('subBytes').innerText = ""; document.getElementById('subPPS').innerText = ""; }
+    }
+    function renderTrend(v1, v2, isBits) { const s1 = isBits?fmtBits(v1):fmtNum(v1); const s2 = isBits?fmtBits(v2):fmtNum(v2); return `<div class="trend-val"><span class="trend-old">${s1}</span><span class="trend-arrow">➜</span><span class="trend-new">${s2}</span></div>`; }
+    
+    function renderPolicyStats(data) {
+        const tbody = document.querySelector("#dataTable tbody"); const groupTbody = document.getElementById("groupTbody"); tbody.innerHTML = ""; groupTbody.innerHTML = "";
+        if (!data || data.length === 0) { resetResultUI(); return; }
+        
+        let total = { bytes:0, pkts:0, drop:0, dropBytes:0, bps:0, pps:0, bpsStart:0, ppsStart:0, bpsEnd:0, ppsEnd:0 }; 
+        let groups = { sa: { label: "Behavior With SA", class: "row-sa", count: 0, pkts: 0, bytes: 0, drop: 0, dropBytes:0, ppsStart:0, ppsEnd:0, bpsStart:0, bpsEnd:0, pps:0, bps:0 }, noSa: { label: "Behavior Without SA", class: "row-nosa", count: 0, pkts: 0, bytes: 0, drop: 0, dropBytes:0, ppsStart:0, ppsEnd:0, bpsStart:0, bpsEnd:0, pps:0, bps:0 }, deny: { label: "Deny / Blocked", class: "row-deny", count: 0, pkts: 0, bytes: 0, drop: 0, dropBytes:0, ppsStart:0, ppsEnd:0, bpsStart:0, bpsEnd:0, pps:0, bps:0 } };
+        
+        data.forEach(item => {
+            total.bytes += item.bytes; total.pkts += item.pkts; total.drop += item.dropPkts; total.dropBytes += item.dropBytes;
+            if(isDiffMode) { total.ppsStart += item.ppsStart; total.ppsEnd += item.ppsEnd; total.bpsStart += item.bpsStart; total.bpsEnd += item.bpsEnd; total.pps = total.ppsEnd; total.bps = total.bpsEnd; } else { total.pps += item.pps; total.bps += item.bps; }
+            
+            let type = 'noSa'; const b = item.behavior.toUpperCase(); if (b.includes("DENY")) type = 'deny'; else if (b.includes("SA")) type = 'sa';
+            groups[type].count++; groups[type].pkts += item.pkts; groups[type].bytes += item.bytes; groups[type].drop += item.dropPkts; groups[type].dropBytes += item.dropBytes;
+            if(isDiffMode) { groups[type].ppsStart += item.ppsStart; groups[type].ppsEnd += item.ppsEnd; groups[type].bpsStart += item.bpsStart; groups[type].bpsEnd += item.bpsEnd; } else { groups[type].pps += item.pps; groups[type].bps += item.bps; }
+            
+            const tr = document.createElement("tr"); tr.dataset.id = item.id;
+            let behaviorHtml = item.behavior; if (type === 'sa') behaviorHtml = `<span class="badge badge-sa">${item.behavior}</span>`; if (type === 'deny') behaviorHtml = `<span style="color:red; font-weight:bold">${item.behavior}</span>`;
+            
+            let ppsCell, bpsCell; if (isDiffMode) { ppsCell = renderTrend(item.ppsStart, item.ppsEnd, false); bpsCell = renderTrend(item.bpsStart, item.bpsEnd, true); } else { ppsCell = fmtNum(item.pps); bpsCell = fmtBits(item.bps); }
+            
+            let bytesContent = fmtBytes(item.bytes);
+            if(item.warning) { bytesContent += ` <span style="font-size:10px; background:#f39c12; color:white; padding:1px 3px; border-radius:2px;">RESET?</span>`; }
+
+            tr.innerHTML = `<td><input type="checkbox" class="row-check" onchange="calc()"></td><td>${item.slot}</td><td style="font-weight:500; color:#2c3e50">${item.name}</td><td>${behaviorHtml}</td><td>${fmtNum(item.pkts)}</td><td>${bytesContent}</td><td style="${item.dropPkts>0?'color:red;font-weight:bold':'color:#ccc'}">${fmtNum(item.dropPkts)}</td><td style="${item.dropBytes>0?'color:red;font-weight:bold':'color:#ccc'}">${fmtBytes(item.dropBytes)}</td><td>${ppsCell}</td><td>${bpsCell}</td>`; tbody.appendChild(tr);
+        });
+        
+        ['sa', 'noSa', 'deny'].forEach(key => {
+            const g = groups[key]; if (g.count > 0 || key === 'deny') {
+                const tr = document.createElement("tr"); tr.className = g.class;
+                let ppsHtml, bpsHtml; if(isDiffMode) { ppsHtml = renderTrend(g.ppsStart, g.ppsEnd, false); bpsHtml = renderTrend(g.bpsStart, g.bpsEnd, true); } else { ppsHtml = fmtNum(g.pps); bpsHtml = fmtBits(g.bps); }
+                tr.innerHTML = `<td>${g.label}</td><td style="text-align:center">${g.count}</td><td>${fmtNum(g.pkts)}</td><td>${fmtBytes(g.bytes)}</td><td style="${g.drop>0?'color:red;font-weight:bold':''}">${fmtNum(g.drop)}</td><td style="${g.dropBytes>0?'color:red;font-weight:bold':''}">${fmtBytes(g.dropBytes)}</td><td>${ppsHtml}</td><td>${bpsHtml}</td>`; groupTbody.appendChild(tr);
+            }
+        });
+        
+        document.getElementById("dashboard").style.display = "grid"; document.getElementById("groupSection").style.display = "block"; document.getElementById("tableWrapper").style.display = "block";
+        document.getElementById("dashBytes").innerText = fmtBytes(total.bytes); document.getElementById("dashPkts").innerText = fmtNum(total.pkts); 
+        document.getElementById("dashDrop").innerText = fmtNum(total.drop); document.getElementById("subDropBytes").innerText = fmtBytes(total.dropBytes);
+        if (isDiffMode) { document.getElementById("dashPPS").innerHTML = renderTrend(total.ppsStart, total.ppsEnd, false); document.getElementById("dashBPS").innerHTML = renderTrend(total.bpsStart, total.bpsEnd, true); } else { document.getElementById("dashPPS").innerText = fmtNum(total.pps); document.getElementById("dashBPS").innerText = fmtBits(total.bps); }
+    }
+
+    function calc() {
+        const currentData = allDiffSegments[currentSegmentIndex].data;
+        const checks = document.querySelectorAll(".row-check:checked"); const bar = document.getElementById("calcBar");
+        if (checks.length > 0) { bar.classList.add("active"); let s = {b:0, db:0, pps:0, bps:0}; checks.forEach(c => { const id = c.closest("tr").dataset.id; const i = currentData.find(x => x.id === id); if(i) { s.b += i.bytes; s.db += i.dropBytes; s.pps += isDiffMode ? i.ppsEnd : i.pps; s.bps += isDiffMode ? i.bpsEnd : i.bps; } c.closest("tr").classList.add("selected"); }); document.getElementById("selCount").innerText = checks.length; document.getElementById("selBytes").innerText = fmtBytes(s.b); document.getElementById("selDropBytes").innerText = fmtBytes(s.db); document.getElementById("selPPS").innerText = fmtNum(s.pps); document.getElementById("selBPS").innerText = fmtBits(s.bps); } 
+        else { bar.classList.remove("active"); document.querySelectorAll("tr").forEach(t => t.classList.remove("selected")); }
+    }
+    function toggleAll(src) { document.querySelectorAll(".row-check").forEach(c => c.checked = src.checked); calc(); }
+    function clearSel() { document.querySelectorAll("input[type=checkbox]").forEach(c => c.checked = false); calc(); }
+    function filterTable() { const v = document.getElementById("filterInput").value.toLowerCase(); document.querySelectorAll("#dataTable tbody tr").forEach(r => { r.style.display = r.innerText.toLowerCase().includes(v) ? "" : "none"; }); }
+    function reset() { document.getElementById("logInput").value = ""; hideAlert(); document.getElementById("statusInfo").style.display = "none"; resetResultUI(); document.getElementById("calcBar").classList.remove("active"); isDiffMode = false; activeData = []; allDiffSegments = []; }
+    let sortDir = 1;
+    function sort(idx, isNum) {
+        sortDir *= -1; const currentSegment = allDiffSegments[currentSegmentIndex];
+        currentSegment.data.sort((a,b) => { let va, vb; if(idx==1) {va=+a.slot; vb=+b.slot} else if(idx==2) {va=a.name; vb=b.name} else if(idx==3) {va=a.behavior; vb=b.behavior} else if(idx==4) {va=a.pkts; vb=b.pkts} else if(idx==5) {va=a.bytes; vb=b.bytes} else if(idx==6) {va=a.dropPkts; vb=b.dropPkts} else if(idx==9) {va=a.dropBytes; vb=b.dropBytes} else if(idx==7) {va = isDiffMode ? a.ppsEnd : a.pps; vb = isDiffMode ? b.ppsEnd : b.pps; } else if(idx==8) {va = isDiffMode ? a.bpsEnd : a.bps; vb = isDiffMode ? b.bpsEnd : b.bps; } return (va>vb ? 1 : -1) * sortDir; }); 
+        renderPolicyStats(currentSegment.data); clearSel();
+    }
+    function fmtNum(n) { return n.toLocaleString(); }
+    function fmtBytes(b) { const sign = b < 0 ? "-" : ""; b = Math.abs(b); if(b==0) return '0 B'; const k=1024, s=['B','KB','MB','GB','TB','PB']; const i=Math.floor(Math.log(b)/Math.log(k)); return sign + parseFloat((b/Math.pow(k,i)).toFixed(2))+' '+s[i]; }
+    function fmtBits(b) { const sign = b < 0 ? "-" : ""; b = Math.abs(b); if(b==0) return '0 bps'; const k=1000, s=['bps','Kbps','Mbps','Gbps','Tbps']; const i=Math.floor(Math.log(b)/Math.log(k)); return sign + parseFloat((b/Math.pow(k,i)).toFixed(2))+' '+s[i]; }
+</script>
+</body>
+</html>
