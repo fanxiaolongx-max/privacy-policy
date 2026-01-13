@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>本地 PDF 压缩工具 (纯前端安全版)</title>
+    <title>PDF 全能工具箱 - 终极优化版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
@@ -11,249 +11,416 @@
         .drag-active { border-color: #3b82f6; background-color: #eff6ff; }
         .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #3b82f6; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .page-card { transition: all 0.2s; cursor: grab; }
+        .page-card:active { cursor: grabbing; }
+        .page-card.dragging { opacity: 0.4; border: 2px dashed #3b82f6; }
+        .page-card:hover .delete-btn { display: block; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        /* 预设按钮选中态 */
+        .preset-btn.active { background-color: #eff6ff; border-color: #3b82f6; color: #2563eb; }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen font-sans text-gray-700">
+<body class="bg-slate-100 min-h-screen font-sans text-gray-700">
 
-    <div class="max-w-2xl mx-auto py-10 px-4">
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">PDF 极致压缩工具</h1>
-            <p class="text-sm text-gray-500">所有处理均在本地浏览器完成，文件不会上传至服务器，安全无忧。</p>
+    <div class="max-w-5xl mx-auto py-8 px-4">
+        <div class="text-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">PDF 本地工具箱</h1>
+            <p class="text-sm text-gray-500">离线处理 · 数据安全 · 纯浏览器运行</p>
         </div>
 
-        <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-            
-            <div id="drop-zone" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition-all cursor-pointer hover:border-blue-400 hover:bg-gray-50">
-                <input type="file" id="file-input" accept="application/pdf" class="hidden">
-                <div class="space-y-2">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                    <p class="text-lg font-medium text-gray-700">点击或拖拽 PDF 文件到此处</p>
-                    <p class="text-xs text-gray-400" id="file-name">支持任意大小的 PDF 文件</p>
-                </div>
+        <div class="flex justify-center mb-6">
+            <div class="bg-white p-1 rounded-lg shadow-sm inline-flex border border-gray-200 overflow-hidden">
+                <button onclick="switchTab('compress')" id="tab-compress" class="tab-btn px-4 sm:px-6 py-2 rounded-md text-sm font-medium transition-all">压缩瘦身</button>
+                <button onclick="switchTab('merge')" id="tab-merge" class="tab-btn px-4 sm:px-6 py-2 rounded-md text-sm font-medium transition-all">多文件合并</button>
+                <button onclick="switchTab('editor')" id="tab-editor" class="tab-btn px-4 sm:px-6 py-2 rounded-md text-sm font-medium transition-all">页面排序/删除</button>
             </div>
+        </div>
 
-            <div id="settings-area" class="mt-6 hidden space-y-6">
-                <div class="bg-blue-50 p-4 rounded-md text-sm text-blue-800 border border-blue-100">
-                    <span class="font-bold">注意：</span>此模式会将 PDF 页面转为图片进行压缩。处理后的 PDF 文本将<b>不可选中</b>。
-                </div>
-
-                <div>
-                    <div class="flex justify-between mb-2">
-                        <label class="font-medium text-gray-700">图片质量 (压缩率)</label>
-                        <span id="quality-val" class="text-blue-600 font-bold">0.6</span>
+        <div id="view-compress" class="view-section bg-white rounded-xl shadow-lg p-6 border border-gray-100 hidden">
+            <div class="max-w-xl mx-auto">
+                <div id="comp-drop-zone" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-400 hover:bg-gray-50 transition-all">
+                    <input type="file" id="comp-file-input" accept="application/pdf" class="hidden">
+                    <div class="space-y-2">
+                        <div class="text-4xl">🗜️</div>
+                        <p class="text-lg font-medium">点击上传 PDF (压缩)</p>
+                        <p class="text-xs text-gray-400" id="comp-file-name">通过图片化降低体积</p>
                     </div>
-                    <input type="range" id="quality" min="0.1" max="1.0" step="0.1" value="0.6" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
-                    <p class="text-xs text-gray-500 mt-1">值越小体积越小，但画面噪点越多。</p>
                 </div>
 
-                <div>
-                    <div class="flex justify-between mb-2">
-                        <label class="font-medium text-gray-700">清晰度 (分辨率缩放)</label>
-                        <span id="scale-val" class="text-blue-600 font-bold">1.0x</span>
+                <div id="comp-settings" class="mt-6 hidden space-y-6">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">快速选择压缩模式：</label>
+                        <div class="grid grid-cols-3 gap-3">
+                            <button onclick="applyPreset(0.9, 1.9, this)" class="preset-btn border border-gray-200 rounded-lg p-3 text-center hover:border-blue-300 transition-all">
+                                <div class="font-bold text-sm text-gray-800">轻度压缩</div>
+                                <div class="text-xs text-gray-400 mt-1">画质优先</div>
+                            </button>
+                            <button onclick="applyPreset(0.8, 1.8, this)" class="preset-btn active border border-blue-500 bg-blue-50 text-blue-600 rounded-lg p-3 text-center transition-all">
+                                <div class="font-bold text-sm">推荐压缩</div>
+                                <div class="text-xs opacity-75 mt-1">均衡模式</div>
+                            </button>
+                            <button onclick="applyPreset(0.7, 1.6, this)" class="preset-btn border border-gray-200 rounded-lg p-3 text-center hover:border-blue-300 transition-all">
+                                <div class="font-bold text-sm text-gray-800">强力瘦身</div>
+                                <div class="text-xs text-gray-400 mt-1">极限体积</div>
+                            </button>
+                        </div>
                     </div>
-                    <input type="range" id="scale" min="0.5" max="2.0" step="0.1" value="1.0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
-                    <p class="text-xs text-gray-500 mt-1">降低分辨率可显著减小体积，但文字会变模糊。</p>
+
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-100 grid grid-cols-2 gap-6">
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <label class="text-xs font-bold text-gray-500">图片质量</label>
+                                <span id="q-val" class="text-xs font-bold text-blue-600">0.8</span>
+                            </div>
+                            <input type="range" id="quality" min="0.1" max="1.0" step="0.1" value="0.8" class="w-full accent-blue-600" oninput="updateVal('q', this.value)">
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <label class="text-xs font-bold text-gray-500">缩放比例</label>
+                                <span id="s-val" class="text-xs font-bold text-blue-600">1.8x</span>
+                            </div>
+                            <input type="range" id="scale" min="0.5" max="2.0" step="0.1" value="1.8" class="w-full accent-blue-600" oninput="updateVal('s', this.value)">
+                        </div>
+                    </div>
+                    <button id="btn-start-compress" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md transition-all">开始压缩</button>
                 </div>
-
-                <button id="compress-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors flex justify-center items-center gap-2">
-                    开始压缩
-                </button>
-            </div>
-
-            <div id="progress-area" class="mt-8 hidden text-center">
-                <div class="spinner mx-auto mb-4"></div>
-                <p class="text-gray-700 font-medium mb-1">正在处理中...</p>
-                <p class="text-sm text-gray-500" id="progress-text">正在初始化渲染引擎...</p>
-                <div class="w-full bg-gray-200 rounded-full h-2.5 mt-3">
-                    <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
-                </div>
-            </div>
-
-            <div id="result-area" class="mt-8 hidden text-center space-y-4">
-                <div class="text-green-500 text-5xl mb-2">✓</div>
-                <h3 class="text-xl font-bold text-gray-800">压缩完成!</h3>
                 
-                <div class="flex justify-center gap-8 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                    <div>
-                        <p>原始大小</p>
-                        <p class="font-bold text-gray-900" id="old-size">-</p>
-                    </div>
-                    <div class="border-r border-gray-300"></div>
-                    <div>
-                        <p>压缩后</p>
-                        <p class="font-bold text-green-600" id="new-size">-</p>
-                    </div>
-                    <div class="border-r border-gray-300"></div>
-                    <div>
-                        <p>减少比例</p>
-                        <p class="font-bold text-blue-600" id="reduce-ratio">-</p>
+                <div id="comp-result" class="hidden mt-6 text-center">
+                    <div class="spinner mx-auto mb-4"></div>
+                    <p id="comp-status" class="mb-2 text-sm text-gray-600">处理中...</p>
+                    <div id="comp-actions" class="hidden space-y-3">
+                        <a id="comp-download" class="inline-block w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold shadow-md transition-all">下载压缩文件</a>
+                        <button onclick="resetCompress()" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 px-6 py-2 rounded-lg text-sm font-medium transition-all">压缩下一个文件</button>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <a id="download-link" href="#" class="inline-block w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-colors">
-                    下载压缩后的 PDF
-                </a>
-                <button onclick="location.reload()" class="text-sm text-gray-500 hover:text-gray-700 underline">压缩另一个文件</button>
+        <div id="view-merge" class="view-section bg-white rounded-xl shadow-lg p-6 border border-gray-100 hidden">
+            <div class="max-w-2xl mx-auto">
+                <div class="flex justify-between items-center mb-4 gap-2">
+                    <h3 class="font-bold">合并列表</h3>
+                    <div class="flex gap-2">
+                        <button onclick="clearMergeList()" class="text-red-500 text-sm font-bold border border-red-200 px-3 py-1 rounded bg-red-50 hover:bg-red-100">清空列表</button>
+                        <button onclick="document.getElementById('merge-input').click()" class="text-blue-600 text-sm font-bold border border-blue-200 px-3 py-1 rounded bg-blue-50 hover:bg-blue-100">+ 添加文件</button>
+                    </div>
+                    <input type="file" id="merge-input" accept="application/pdf" multiple class="hidden">
+                </div>
+                <ul id="merge-list" class="space-y-2 min-h-[100px] border-2 border-dashed border-gray-100 rounded-lg p-4 mb-4">
+                    <li class="text-center text-gray-400 text-sm py-4">暂无文件，请添加</li>
+                </ul>
+                <button id="btn-start-merge" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg hidden shadow-md">合并并下载</button>
+            </div>
+        </div>
+
+        <div id="view-editor" class="view-section bg-white rounded-xl shadow-lg p-6 border border-gray-100 hidden">
+            <div id="edit-upload-area" class="max-w-xl mx-auto border-2 border-dashed border-gray-300 rounded-lg p-10 text-center cursor-pointer hover:border-purple-400 hover:bg-gray-50 transition-all">
+                <input type="file" id="edit-file-input" accept="application/pdf" class="hidden">
+                <div class="text-4xl mb-2">📄</div>
+                <p class="text-lg font-medium text-gray-700">点击上传 PDF (页面编辑)</p>
+                <p class="text-xs text-gray-400">支持拖拽排序、删除页面</p>
+            </div>
+            <div id="edit-work-area" class="hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4 sticky top-0 bg-white z-10 py-2 border-b">
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg">页面排序</h3>
+                        <p class="text-xs text-gray-500">拖拽调整顺序 · <span id="page-count-display">0</span> 页</p>
+                    </div>
+                    <div class="flex gap-2">
+                         <button onclick="resetEditor()" class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            打开新文件
+                         </button>
+                        <button id="btn-save-order" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-6 py-2 rounded-lg shadow-md transition-colors flex items-center gap-2">
+                            <span>保存并下载</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="pages-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 p-2 bg-gray-50 rounded-lg min-h-[300px]">
+                    <div class="col-span-full text-center py-10 text-gray-400">正在生成页面缩略图...</div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // 配置 Worker 路径 (PDF.js 需要)
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-        const dropZone = document.getElementById('drop-zone');
-        const fileInput = document.getElementById('file-input');
-        const fileNameDisplay = document.getElementById('file-name');
-        const settingsArea = document.getElementById('settings-area');
-        const compressBtn = document.getElementById('compress-btn');
-        const progressArea = document.getElementById('progress-area');
-        const progressBar = document.getElementById('progress-bar');
-        const progressText = document.getElementById('progress-text');
-        const resultArea = document.getElementById('result-area');
         
-        let currentFile = null;
+        function switchTab(tabName) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${tabName}`).classList.remove('hidden');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.className = 'tab-btn px-4 sm:px-6 py-2 rounded-md text-sm font-medium transition-all text-gray-500 hover:text-gray-700');
+            const activeBtn = document.getElementById(`tab-${tabName}`);
+            const colors = { 'compress': 'blue', 'merge': 'indigo', 'editor': 'purple' };
+            activeBtn.className = `tab-btn px-4 sm:px-6 py-2 rounded-md text-sm font-medium transition-all bg-${colors[tabName]}-100 text-${colors[tabName]}-700 shadow-sm`;
+        }
+        switchTab('compress');
 
-        // 滑块数值显示更新
-        document.getElementById('quality').addEventListener('input', (e) => document.getElementById('quality-val').innerText = e.target.value);
-        document.getElementById('scale').addEventListener('input', (e) => document.getElementById('scale-val').innerText = e.target.value + 'x');
-
-        // 文件拖拽与选择处理
-        dropZone.addEventListener('click', () => fileInput.click());
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-active'); });
-        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-active'));
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('drag-active');
-            if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
-        });
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length) handleFile(e.target.files[0]);
-        });
-
-        function handleFile(file) {
-            if (file.type !== 'application/pdf') {
-                alert('请上传 PDF 文件');
-                return;
-            }
-            currentFile = file;
-            fileNameDisplay.innerText = `当前文件: ${file.name} (${formatBytes(file.size)})`;
-            fileNameDisplay.classList.add('text-blue-600', 'font-bold');
-            settingsArea.classList.remove('hidden');
-            resultArea.classList.add('hidden'); // 重置结果区
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(1024));
+            return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
-        // 核心压缩逻辑
-        compressBtn.addEventListener('click', async () => {
-            if (!currentFile) return;
+        // ================= 1. 压缩逻辑 (支持重置) =================
+        const compInput = document.getElementById('comp-file-input');
+        let compFile = null;
+        
+        window.applyPreset = (q, s, btn) => {
+            document.getElementById('quality').value = q;
+            document.getElementById('scale').value = s;
+            updateVal('q', q);
+            updateVal('s', s);
+            document.querySelectorAll('.preset-btn').forEach(b => {
+                b.className = 'preset-btn border border-gray-200 rounded-lg p-3 text-center hover:border-blue-300 transition-all';
+                b.querySelector('.font-bold').className = 'font-bold text-sm text-gray-800';
+                b.querySelector('.text-xs').className = 'text-xs text-gray-400 mt-1';
+            });
+            btn.className = 'preset-btn active border border-blue-500 bg-blue-50 text-blue-600 rounded-lg p-3 text-center transition-all';
+            btn.querySelector('.font-bold').className = 'font-bold text-sm';
+            btn.querySelector('.text-xs').className = 'text-xs opacity-75 mt-1';
+        };
 
-            // UI 状态更新
-            settingsArea.classList.add('hidden');
-            dropZone.classList.add('hidden');
-            progressArea.classList.remove('hidden');
+        window.updateVal = (type, val) => {
+            if(type === 'q') document.getElementById('q-val').innerText = val;
+            if(type === 's') document.getElementById('s-val').innerText = val + 'x';
+        };
 
-            try {
-                const arrayBuffer = await currentFile.arrayBuffer();
-                const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                const totalPages = pdfDoc.numPages;
+        // 重置函数
+        window.resetCompress = () => {
+            compFile = null;
+            compInput.value = ''; // 清空 input 允许重选同名文件
+            document.getElementById('comp-drop-zone').classList.remove('hidden');
+            document.getElementById('comp-settings').classList.add('hidden');
+            document.getElementById('comp-result').classList.add('hidden');
+            document.getElementById('comp-actions').classList.add('hidden');
+            document.querySelector('#comp-result .spinner').classList.remove('hidden'); // 重置 spinner
+        };
 
-                // 创建新的 PDF 文档
-                const newPdfDoc = await PDFLib.PDFDocument.create();
-
-                const quality = parseFloat(document.getElementById('quality').value);
-                const scale = parseFloat(document.getElementById('scale').value);
-
-                for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-                    // 更新进度条
-                    const percent = Math.round((pageNum / totalPages) * 100);
-                    progressBar.style.width = `${percent}%`;
-                    progressText.innerText = `正在处理第 ${pageNum} / ${totalPages} 页...`;
-
-                    // 1. 获取原始页面
-                    const page = await pdfDoc.getPage(pageNum);
-                    const viewport = page.getViewport({ scale: scale });
-
-                    // 2. 渲染到 Canvas
-                    const canvas = document.createElement('canvas');
-                    const context = canvas.getContext('2d');
-                    canvas.height = viewport.height;
-                    canvas.width = viewport.width;
-
-                    await page.render({
-                        canvasContext: context,
-                        viewport: viewport
-                    }).promise;
-
-                    // 3. 压缩：Canvas 转 JPEG DataURL
-                    const imgDataUrl = canvas.toDataURL('image/jpeg', quality);
-
-                    // 4. 将压缩后的 JPEG 嵌入新 PDF
-                    const jpgImage = await newPdfDoc.embedJpg(imgDataUrl);
-                    
-                    // 保持原始页面的宽高比例，但使用新的压缩图像
-                    // 注意：这里使用 viewport 的尺寸来定义页面大小
-                    const newPage = newPdfDoc.addPage([viewport.width, viewport.height]);
-                    newPage.drawImage(jpgImage, {
-                        x: 0,
-                        y: 0,
-                        width: viewport.width,
-                        height: viewport.height,
-                    });
-                    
-                    // 简单的延迟以允许 UI 刷新（防止浏览器卡死）
-                    await new Promise(resolve => setTimeout(resolve, 50));
+        document.getElementById('comp-drop-zone').onclick = () => compInput.click();
+        compInput.onchange = (e) => {
+            if(e.target.files[0]) {
+                // 如果当前已经在展示结果，先重置界面
+                if(!document.getElementById('comp-result').classList.contains('hidden')) {
+                    resetCompress();
                 }
-
-                // 保存并生成下载
-                progressText.innerText = '正在生成最终文件...';
-                const pdfBytes = await newPdfDoc.save();
-                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-                
-                showResult(blob);
-
-            } catch (error) {
-                console.error(error);
-                alert('处理出错，请检查文件是否加密或损坏。');
-                location.reload();
+                compFile = e.target.files[0];
+                // 重新获取因为 resetCompress 可能清空了
+                document.getElementById('comp-drop-zone').classList.add('hidden'); // 选中后隐藏上传区，直接显示设置
+                document.getElementById('comp-file-name').innerText = compFile.name + ` (${formatBytes(compFile.size)})`;
+                document.getElementById('comp-settings').classList.remove('hidden');
             }
-        });
+        };
 
-        function showResult(blob) {
-            progressArea.classList.add('hidden');
-            resultArea.classList.remove('hidden');
-
-            // 计算数据
-            const oldSize = currentFile.size;
-            const newSize = blob.size;
-            const ratio = ((oldSize - newSize) / oldSize * 100).toFixed(1);
-
-            document.getElementById('old-size').innerText = formatBytes(oldSize);
-            document.getElementById('new-size').innerText = formatBytes(newSize);
+        document.getElementById('btn-start-compress').onclick = async () => {
+            if(!compFile) return;
+            const status = document.getElementById('comp-status');
+            const downloadArea = document.getElementById('comp-actions');
+            const link = document.getElementById('comp-download');
+            const spinner = document.querySelector('#comp-result .spinner');
             
-            const ratioEl = document.getElementById('reduce-ratio');
-            if (newSize < oldSize) {
-                ratioEl.innerText = `↓ ${ratio}%`;
-                ratioEl.className = 'font-bold text-green-600';
-            } else {
-                ratioEl.innerText = `↑ ${(newSize/oldSize).toFixed(2)}x`;
-                ratioEl.className = 'font-bold text-red-500';
-                alert('提示：文件变大了！\n这通常是因为原文件已经是纯文本，而转换成图片增加了体积。\n建议降低"清晰度"或"质量"再试一次。');
+            document.getElementById('comp-result').classList.remove('hidden');
+            document.getElementById('comp-settings').classList.add('hidden');
+            spinner.classList.remove('hidden');
+            downloadArea.classList.add('hidden');
+            
+            try {
+                const arrayBuffer = await compFile.arrayBuffer();
+                const pdfDoc = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+                const newPdf = await PDFLib.PDFDocument.create();
+                const q = parseFloat(document.getElementById('quality').value);
+                const s = parseFloat(document.getElementById('scale').value);
+
+                for(let i=1; i<=pdfDoc.numPages; i++) {
+                    status.innerText = `正在处理页面: ${i} / ${pdfDoc.numPages}`;
+                    const page = await pdfDoc.getPage(i);
+                    const viewport = page.getViewport({scale: s});
+                    const cvs = document.createElement('canvas');
+                    cvs.width = viewport.width; cvs.height = viewport.height;
+                    await page.render({canvasContext: cvs.getContext('2d'), viewport}).promise;
+                    const img = await newPdf.embedJpg(cvs.toDataURL('image/jpeg', q));
+                    newPdf.addPage([viewport.width, viewport.height]).drawImage(img, {x:0, y:0, width:viewport.width, height:viewport.height});
+                }
+                
+                status.innerText = "正在打包生成...";
+                const pdfBytes = await newPdf.save();
+                const blob = new Blob([pdfBytes], {type: 'application/pdf'});
+                
+                spinner.classList.add('hidden');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'compressed_' + compFile.name;
+                downloadArea.classList.remove('hidden');
+                
+                const reduction = ((compFile.size - blob.size) / compFile.size * 100).toFixed(1);
+                const sizeText = blob.size > compFile.size ? 
+                    `⚠️ 文件变大了` : 
+                    `✅ 瘦身 ${reduction}%`;
+                
+                status.innerHTML = `<span class="font-bold text-gray-800">完成!</span> <span class="text-xs text-gray-500">${formatBytes(compFile.size)} ➝ ${formatBytes(blob.size)}</span> <br><span class="text-sm ${blob.size > compFile.size ? 'text-red-500' : 'text-green-600'} font-bold">${sizeText}</span>`;
+                
+            } catch(e) { 
+                alert('错误: ' + e.message); 
+                resetCompress();
             }
+        };
 
-            const url = URL.createObjectURL(blob);
-            const link = document.getElementById('download-link');
-            link.href = url;
-            link.download = `compressed_${currentFile.name}`;
+        // ================= 2. 合并功能 (支持清空) =================
+        let mergeFiles = [];
+        const mergeInput = document.getElementById('merge-input');
+        const mergeList = document.getElementById('merge-list');
+        const btnMerge = document.getElementById('btn-start-merge');
+
+        window.clearMergeList = () => {
+            mergeFiles = [];
+            renderMergeList();
+            mergeInput.value = '';
+        };
+
+        mergeInput.onchange = (e) => {
+            mergeFiles = [...mergeFiles, ...Array.from(e.target.files)];
+            renderMergeList();
+            btnMerge.classList.remove('hidden');
+            mergeInput.value = '';
+        };
+
+        function renderMergeList() {
+            if(mergeFiles.length === 0) {
+                 mergeList.innerHTML = '<li class="text-center text-gray-400 text-sm py-4">暂无文件，请添加</li>';
+                 btnMerge.classList.add('hidden');
+                 return;
+            }
+            mergeList.innerHTML = mergeFiles.map((f, i) => `
+                <li class="flex justify-between items-center bg-gray-50 p-2 rounded border">
+                    <div class="flex items-center gap-2 overflow-hidden">
+                        <span class="bg-gray-200 text-xs font-bold px-2 py-1 rounded text-gray-600">${i+1}</span>
+                        <span class="truncate text-sm w-40 sm:w-64" title="${f.name}">${f.name}</span>
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button onclick="moveMerge(${i}, -1)" class="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded" ${i === 0 ? 'disabled style="opacity:0.3"' : ''}>↑</button>
+                        <button onclick="moveMerge(${i}, 1)" class="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded" ${i === mergeFiles.length - 1 ? 'disabled style="opacity:0.3"' : ''}>↓</button>
+                        <button onclick="removeMerge(${i})" class="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded ml-1">×</button>
+                    </div>
+                </li>
+            `).join('');
         }
 
-        function formatBytes(bytes, decimals = 2) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const dm = decimals < 0 ? 0 : decimals;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        window.moveMerge = (index, direction) => {
+            const newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= mergeFiles.length) return;
+            [mergeFiles[index], mergeFiles[newIndex]] = [mergeFiles[newIndex], mergeFiles[index]];
+            renderMergeList();
+        };
+
+        window.removeMerge = (i) => { mergeFiles.splice(i, 1); renderMergeList(); };
+        
+        btnMerge.onclick = async () => {
+            const btn = document.getElementById('btn-start-merge');
+            btn.innerText = '正在合并...';
+            btn.disabled = true;
+            try {
+                const newPdf = await PDFLib.PDFDocument.create();
+                for(let f of mergeFiles) {
+                    const pdf = await PDFLib.PDFDocument.load(await f.arrayBuffer());
+                    (await newPdf.copyPages(pdf, pdf.getPageIndices())).forEach(p => newPdf.addPage(p));
+                }
+                const blob = new Blob([await newPdf.save()], {type: 'application/pdf'});
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'merged.pdf'; a.click();
+            } catch (e) { alert('合并失败: ' + e.message); } 
+            finally { btn.innerText = '合并并下载'; btn.disabled = false; }
+        };
+
+        // ================= 3. 页面排序/编辑功能 (支持重置) =================
+        const editInput = document.getElementById('edit-file-input');
+        const editZone = document.getElementById('edit-upload-area');
+        const editWorkArea = document.getElementById('edit-work-area');
+        const grid = document.getElementById('pages-grid');
+        let currentEditFile = null; 
+
+        window.resetEditor = () => {
+            currentEditFile = null;
+            grid.innerHTML = '<div class="col-span-full text-center py-10 text-gray-400">正在生成页面缩略图...</div>';
+            editWorkArea.classList.add('hidden');
+            editZone.classList.remove('hidden');
+            editInput.value = '';
+        };
+
+        editZone.onclick = () => editInput.click();
+        
+        editInput.onchange = async (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            currentEditFile = file; 
+            editZone.classList.add('hidden');
+            editWorkArea.classList.remove('hidden');
+            
+            const buffer = await file.arrayBuffer();
+            const pdfDoc = await pdfjsLib.getDocument({data: buffer}).promise;
+            
+            document.getElementById('page-count-display').innerText = pdfDoc.numPages;
+            grid.innerHTML = ''; 
+            for(let i=1; i<=pdfDoc.numPages; i++) {
+                const page = await pdfDoc.getPage(i);
+                const viewport = page.getViewport({scale: 0.2}); 
+                const canvas = document.createElement('canvas');
+                canvas.width = viewport.width; canvas.height = viewport.height;
+                await page.render({canvasContext: canvas.getContext('2d'), viewport}).promise;
+
+                const card = document.createElement('div');
+                card.className = "page-card relative bg-white border border-gray-200 shadow-sm rounded-lg p-2 flex flex-col items-center select-none";
+                card.draggable = true;
+                card.dataset.pageIndex = i - 1; 
+                card.innerHTML = `
+                    <div class="relative w-full h-32 flex items-center justify-center bg-gray-100 mb-2 overflow-hidden rounded">
+                        <img src="${canvas.toDataURL()}" class="max-w-full max-h-full object-contain pointer-events-none">
+                    </div>
+                    <div class="flex justify-between w-full items-center">
+                        <span class="text-xs font-bold text-gray-500 bg-gray-200 px-2 rounded">P${i}</span>
+                        <button onclick="this.closest('.page-card').remove()" class="delete-btn text-red-500 hover:bg-red-50 p-1 rounded">×</button>
+                    </div>
+                `;
+                addDnDEvents(card);
+                grid.appendChild(card);
+            }
+        };
+
+        let dragSrcEl = null;
+        function addDnDEvents(item) {
+            item.addEventListener('dragstart', function(e) { dragSrcEl = this; e.dataTransfer.effectAllowed = 'move'; this.classList.add('dragging'); });
+            item.addEventListener('dragend', function(e) { this.classList.remove('dragging'); });
+            item.addEventListener('dragover', function(e) { if(e.preventDefault) e.preventDefault(); e.dataTransfer.dropEffect = 'move'; return false; });
+            item.addEventListener('drop', function(e) {
+                if(e.stopPropagation) e.stopPropagation();
+                if(dragSrcEl !== this) {
+                    const allCards = [...grid.children];
+                    const srcIndex = allCards.indexOf(dragSrcEl);
+                    const targetIndex = allCards.indexOf(this);
+                    if(srcIndex < targetIndex) grid.insertBefore(dragSrcEl, this.nextSibling);
+                    else grid.insertBefore(dragSrcEl, this);
+                }
+                return false;
+            });
         }
+
+        document.getElementById('btn-save-order').onclick = async () => {
+            if (!currentEditFile) return;
+            const btn = document.getElementById('btn-save-order');
+            btn.innerHTML = '<span>⏳ 处理中...</span>';
+            try {
+                const freshBuffer = await currentEditFile.arrayBuffer();
+                const srcDoc = await PDFLib.PDFDocument.load(freshBuffer);
+                const newDoc = await PDFLib.PDFDocument.create();
+                const cards = document.querySelectorAll('#pages-grid .page-card');
+                const indicesToCopy = Array.from(cards).map(card => parseInt(card.dataset.pageIndex));
+                
+                if (indicesToCopy.length === 0) { alert("请至少保留一页！"); return; }
+                const copiedPages = await newDoc.copyPages(srcDoc, indicesToCopy);
+                copiedPages.forEach(page => newDoc.addPage(page));
+                const blob = new Blob([await newDoc.save()], { type: 'application/pdf' });
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'reordered_edited.pdf'; a.click();
+            } catch(e) { console.error(e); alert("保存失败"); } finally { btn.innerHTML = '<span>保存并下载</span>'; }
+        };
     </script>
 </body>
 </html>
