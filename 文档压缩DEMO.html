@@ -3,27 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF 全能工具箱 - 按钮修复版</title>
+    <title>PDF 全能工具箱 - 白底拼接版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <style>
+        /* 通用样式 */
         .drag-active { border-color: #3b82f6; background-color: #eff6ff; }
         .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #3b82f6; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        /* 卡片样式优化 */
-        .page-card { transition: all 0.2s; cursor: grab; position: relative; }
-        .page-card:active { cursor: grabbing; }
-        .page-card.dragging { opacity: 0.4; border: 2px dashed #3b82f6; }
-        
-        /* 选中状态 */
-        .page-card.selected { ring: 2px solid #3b82f6; background-color: #eff6ff; }
-        .page-card.selected .check-indicator { display: flex; }
-        
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .preset-btn.active { background-color: #eff6ff; border-color: #3b82f6; color: #2563eb; }
+
+        /* === 编辑/排序卡片样式 === */
+        .page-card { transition: all 0.2s; cursor: grab; position: relative; user-select: none; }
+        .page-card:active { cursor: grabbing; }
+        .page-card.dragging { opacity: 0.4; border: 2px dashed #3b82f6; }
+        .page-card.selected { ring: 2px solid #3b82f6; background-color: #eff6ff; }
+        .check-indicator { display: none; }
+        .page-card.selected .check-indicator { display: flex; }
+
+        /* === 拼接功能样式 === */
+        .stitch-card { cursor: pointer; transition: all 0.2s; }
+        .stitch-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .stitch-card.selected-1 { ring: 2px solid #ef4444; background-color: #fef2f2; }
+        .stitch-card.selected-2 { ring: 2px solid #3b82f6; background-color: #eff6ff; }
+        .badge-order { position: absolute; top: 0.5rem; left: 0.5rem; width: 1.5rem; height: 1.5rem; border-radius: 9999px; color: white; font-weight: bold; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; z-index: 10; }
+        .bg-badge-1 { background-color: #ef4444; } 
+        .bg-badge-2 { background-color: #3b82f6; } 
+
+        /* === 裁切器样式 (支持拖拽，增加白底) === */
+        #cropper-frame { 
+            /* 背景纹理改为纯白，因为画布本身已经是白底了 */
+            background: white;
+            cursor: grab; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        #cropper-frame:active { cursor: grabbing; }
+        #cropper-container { position: relative; overflow: hidden; border: 1px solid #e5e7eb; user-select: none; touch-action: none; margin: 0 auto; background: white; }
+        
+        #layer-base { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; overflow: hidden; background: white; } 
+        #layer-top-wrapper { position: absolute; top: 0; left: 0; overflow: hidden; z-index: 2; background: transparent; pointer-events: none; }
+        
+        /* 画布默认背景设为白色 */
+        #cvs-top, #cvs-base { position: absolute; top: 0; left: 0; transform-origin: 0 0; background: white; }
+        
+        #split-line { position: absolute; z-index: 10; background-color: #3b82f6; pointer-events: none; }
+        
+        #drag-handle {
+            position: absolute; z-index: 20; display: flex; align-items: center; justify-content: center;
+            background-color: #3b82f6; color: white; 
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
+            width: 40px; height: 40px; border-radius: 50%;
+            transition: box-shadow 0.2s;
+        }
+        #drag-handle:active { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.5); cursor: grabbing !important; }
+        .handle-h { top: 50%; transform: translate(-50%, -50%); cursor: col-resize; }
+        .handle-v { left: 50%; transform: translate(-50%, -50%); cursor: row-resize; }
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen font-sans text-gray-700">
@@ -34,11 +70,12 @@
             <p class="text-sm text-gray-500">离线处理 · 数据安全 · 纯浏览器运行</p>
         </div>
 
-        <div class="flex justify-center mb-6">
+        <div class="flex flex-wrap justify-center mb-6 gap-2">
             <div class="bg-white p-1 rounded-lg shadow-sm inline-flex border border-gray-200 overflow-hidden">
-                <button onclick="switchTab('compress')" id="tab-compress" class="tab-btn px-4 sm:px-6 py-2 rounded-md text-sm font-medium transition-all">压缩瘦身</button>
-                <button onclick="switchTab('merge')" id="tab-merge" class="tab-btn px-4 sm:px-6 py-2 rounded-md text-sm font-medium transition-all">多文件合并</button>
-                <button onclick="switchTab('editor')" id="tab-editor" class="tab-btn px-4 sm:px-6 py-2 rounded-md text-sm font-medium transition-all">排序/旋转/删除</button>
+                <button onclick="switchTab('compress')" id="tab-compress" class="tab-btn px-4 py-2 rounded-md text-sm font-medium transition-all">压缩瘦身</button>
+                <button onclick="switchTab('merge')" id="tab-merge" class="tab-btn px-4 py-2 rounded-md text-sm font-medium transition-all">多文件合并</button>
+                <button onclick="switchTab('editor')" id="tab-editor" class="tab-btn px-4 py-2 rounded-md text-sm font-medium transition-all">排序/旋转</button>
+                <button onclick="switchTab('stitch')" id="tab-stitch" class="tab-btn px-4 py-2 rounded-md text-sm font-medium transition-all text-purple-600 bg-purple-50">双页拼接</button>
             </div>
         </div>
 
@@ -46,58 +83,29 @@
             <div class="max-w-xl mx-auto">
                 <div id="comp-drop-zone" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-400 hover:bg-gray-50 transition-all">
                     <input type="file" id="comp-file-input" accept="application/pdf" class="hidden">
-                    <div class="space-y-2">
-                        <div class="text-4xl">🗜️</div>
-                        <p class="text-lg font-medium">点击上传 PDF (压缩)</p>
-                        <p class="text-xs text-gray-400" id="comp-file-name">通过图片化降低体积</p>
-                    </div>
+                    <div class="space-y-2"><div class="text-4xl">🗜️</div><p class="text-lg font-medium">点击上传 PDF (压缩)</p></div>
                 </div>
-
                 <div id="comp-settings" class="mt-6 hidden space-y-6">
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">快速选择压缩模式：</label>
-                        <div class="grid grid-cols-3 gap-3">
-                            <button onclick="applyPreset(0.9, 1.9, this)" class="preset-btn border border-gray-200 rounded-lg p-3 text-center hover:border-blue-300 transition-all">
-                                <div class="font-bold text-sm text-gray-800">轻度压缩</div>
-                                <div class="text-xs text-gray-400 mt-1">画质优先</div>
-                            </button>
-                            <button onclick="applyPreset(0.8, 1.8, this)" class="preset-btn active border border-blue-500 bg-blue-50 text-blue-600 rounded-lg p-3 text-center transition-all">
-                                <div class="font-bold text-sm">推荐压缩</div>
-                                <div class="text-xs opacity-75 mt-1">均衡模式</div>
-                            </button>
-                            <button onclick="applyPreset(0.7, 1.6, this)" class="preset-btn border border-gray-200 rounded-lg p-3 text-center hover:border-blue-300 transition-all">
-                                <div class="font-bold text-sm text-gray-800">强力瘦身</div>
-                                <div class="text-xs text-gray-400 mt-1">极限体积</div>
-                            </button>
-                        </div>
+                     <div class="grid grid-cols-3 gap-3">
+                        <button onclick="applyPreset(0.9, 1.9, this)" class="preset-btn border border-gray-200 rounded-lg p-3 text-center hover:border-blue-300">
+                            <div class="font-bold text-sm text-gray-800">轻度压缩</div><div class="text-xs text-gray-400 mt-1">画质优先</div>
+                        </button>
+                        <button onclick="applyPreset(0.8, 1.8, this)" class="preset-btn active border border-blue-500 bg-blue-50 text-blue-600 rounded-lg p-3 text-center">
+                            <div class="font-bold text-sm">推荐压缩</div><div class="text-xs opacity-75 mt-1">均衡模式</div>
+                        </button>
+                        <button onclick="applyPreset(0.7, 1.6, this)" class="preset-btn border border-gray-200 rounded-lg p-3 text-center hover:border-blue-300">
+                            <div class="font-bold text-sm text-gray-800">强力瘦身</div><div class="text-xs text-gray-400 mt-1">极限体积</div>
+                        </button>
                     </div>
-
                     <div class="bg-gray-50 p-4 rounded-lg border border-gray-100 grid grid-cols-2 gap-6">
-                        <div>
-                            <div class="flex justify-between mb-1">
-                                <label class="text-xs font-bold text-gray-500">图片质量</label>
-                                <span id="q-val" class="text-xs font-bold text-blue-600">0.8</span>
-                            </div>
-                            <input type="range" id="quality" min="0.1" max="1.0" step="0.1" value="0.8" class="w-full accent-blue-600" oninput="updateVal('q', this.value)">
-                        </div>
-                        <div>
-                            <div class="flex justify-between mb-1">
-                                <label class="text-xs font-bold text-gray-500">缩放比例</label>
-                                <span id="s-val" class="text-xs font-bold text-blue-600">1.8x</span>
-                            </div>
-                            <input type="range" id="scale" min="0.5" max="2.0" step="0.1" value="1.8" class="w-full accent-blue-600" oninput="updateVal('s', this.value)">
-                        </div>
+                        <div><label class="text-xs font-bold text-gray-500">图片质量 <span id="q-val" class="text-blue-600">0.8</span></label><input type="range" id="quality" min="0.1" max="1.0" step="0.1" value="0.8" class="w-full accent-blue-600" oninput="updateVal('q', this.value)"></div>
+                        <div><label class="text-xs font-bold text-gray-500">缩放比例 <span id="s-val" class="text-blue-600">1.8x</span></label><input type="range" id="scale" min="0.5" max="2.0" step="0.1" value="1.8" class="w-full accent-blue-600" oninput="updateVal('s', this.value)"></div>
                     </div>
-                    <button id="btn-start-compress" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md transition-all">开始压缩</button>
+                    <button id="btn-start-compress" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md">开始压缩</button>
                 </div>
-                
                 <div id="comp-result" class="hidden mt-6 text-center">
-                    <div class="spinner mx-auto mb-4"></div>
-                    <p id="comp-status" class="mb-2 text-sm text-gray-600">处理中...</p>
-                    <div id="comp-actions" class="hidden space-y-3">
-                        <a id="comp-download" class="inline-block w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold shadow-md transition-all">下载压缩文件</a>
-                        <button onclick="resetCompress()" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 px-6 py-2 rounded-lg text-sm font-medium transition-all">压缩下一个文件</button>
-                    </div>
+                    <div class="spinner mx-auto mb-4"></div><p id="comp-status" class="mb-2 text-sm text-gray-600">处理中...</p>
+                    <div id="comp-actions" class="hidden space-y-3"><a id="comp-download" class="inline-block w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold">下载压缩文件</a><button onclick="resetCompress()" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 px-6 py-2 rounded-lg text-sm font-medium">压缩下一个文件</button></div>
                 </div>
             </div>
         </div>
@@ -106,15 +114,10 @@
             <div class="max-w-2xl mx-auto">
                 <div class="flex justify-between items-center mb-4 gap-2">
                     <h3 class="font-bold">合并列表</h3>
-                    <div class="flex gap-2">
-                        <button onclick="clearMergeList()" class="text-red-500 text-sm font-bold border border-red-200 px-3 py-1 rounded bg-red-50 hover:bg-red-100">清空列表</button>
-                        <button onclick="document.getElementById('merge-input').click()" class="text-blue-600 text-sm font-bold border border-blue-200 px-3 py-1 rounded bg-blue-50 hover:bg-blue-100">+ 添加文件</button>
-                    </div>
+                    <div class="flex gap-2"><button onclick="clearMergeList()" class="text-red-500 text-sm border border-red-200 px-3 py-1 rounded bg-red-50">清空</button><button onclick="document.getElementById('merge-input').click()" class="text-blue-600 text-sm border border-blue-200 px-3 py-1 rounded bg-blue-50">+ 添加</button></div>
                     <input type="file" id="merge-input" accept="application/pdf" multiple class="hidden">
                 </div>
-                <ul id="merge-list" class="space-y-2 min-h-[100px] border-2 border-dashed border-gray-100 rounded-lg p-4 mb-4">
-                    <li class="text-center text-gray-400 text-sm py-4">暂无文件，请添加</li>
-                </ul>
+                <ul id="merge-list" class="space-y-2 min-h-[100px] border-2 border-dashed border-gray-100 rounded-lg p-4 mb-4"><li class="text-center text-gray-400 text-sm py-4">暂无文件</li></ul>
                 <button id="btn-start-merge" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg hidden shadow-md">合并并下载</button>
             </div>
         </div>
@@ -128,34 +131,62 @@
             </div>
 
             <div id="edit-work-area" class="hidden">
-                <div class="sticky top-0 bg-white z-20 py-3 border-b shadow-sm mb-4">
-                    <div class="flex flex-wrap justify-between items-center gap-4">
-                        <div class="flex items-center gap-3">
-                            <button onclick="resetEditor()" class="text-gray-500 hover:text-gray-700 text-sm flex items-center gap-1 border border-gray-300 rounded px-2 py-1">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                                重传
-                            </button>
-                            <span class="text-gray-400">|</span>
-                            <div class="flex gap-2">
-                                <button onclick="toggleSelectAll()" id="btn-select-all" class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-700 font-medium">全选</button>
-                                <button onclick="rotateSelected(-90)" class="text-sm px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded font-medium flex items-center gap-1">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
-                                    选中左旋
-                                </button>
-                                <button onclick="rotateSelected(90)" class="text-sm px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded font-medium flex items-center gap-1">
-                                    选中右旋
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6"></path></svg>
-                                </button>
-                            </div>
-                        </div>
-                        <button id="btn-save-order" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-6 py-2 rounded-lg shadow-md transition-colors flex items-center gap-2 text-sm">
-                            <span>保存 PDF</span>
-                        </button>
+                <div class="sticky top-0 bg-white z-20 py-3 border-b shadow-sm mb-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+                    <div class="flex gap-2 items-center">
+                        <button onclick="resetEditor()" class="text-sm px-3 py-1 border rounded hover:bg-gray-50 flex items-center gap-1">← 重传</button>
+                        <span class="text-gray-300">|</span>
+                        <button onclick="toggleSelectAll()" id="btn-select-all" class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded">全选</button>
+                        <button onclick="rotateSelected(-90)" class="text-sm px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded">选中左旋</button>
+                        <button onclick="rotateSelected(90)" class="text-sm px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded">选中右旋</button>
+                    </div>
+                    <button id="btn-save-order" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-6 py-2 rounded shadow-md text-sm transition-colors">保存 PDF</button>
+                </div>
+                <div id="pages-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 p-2 bg-gray-50 rounded-lg min-h-[400px]"></div>
+            </div>
+        </div>
+
+        <div id="view-stitch" class="view-section bg-white rounded-xl shadow-lg p-6 border border-gray-100 hidden">
+            <div id="stitch-upload-area" class="max-w-xl mx-auto border-2 border-dashed border-gray-300 rounded-lg p-10 text-center cursor-pointer hover:border-pink-400 hover:bg-gray-50 transition-all">
+                <input type="file" id="stitch-file-input" accept="application/pdf" class="hidden">
+                <div class="text-4xl mb-2">✂️</div>
+                <p class="text-lg font-medium text-gray-700">点击上传 PDF (裁切拼接)</p>
+                <p class="text-xs text-gray-400">选择 2 页，自由拖动排版</p>
+            </div>
+
+            <div id="stitch-select-area" class="hidden">
+                <div class="sticky top-0 bg-white z-20 py-4 border-b shadow-sm mb-4 flex justify-between items-center">
+                    <div><span class="font-bold text-gray-700">选择 2 个页面：</span><span id="stitch-status" class="text-gray-500">已选 0/2</span></div>
+                    <div class="flex gap-2">
+                        <button onclick="resetStitch()" class="text-sm px-3 py-1 border rounded hover:bg-gray-50">重置</button>
+                        <button onclick="goToCropper()" id="btn-to-cropper" class="px-4 py-1 bg-pink-600 text-white rounded shadow-sm text-sm font-bold opacity-50 cursor-not-allowed" disabled>下一步</button>
                     </div>
                 </div>
+                <div id="stitch-grid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4 p-2 bg-gray-50 rounded-lg min-h-[300px]"></div>
+            </div>
 
-                <div id="pages-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 p-2 bg-gray-50 rounded-lg min-h-[400px]">
+            <div id="stitch-cropper-area" class="hidden text-center select-none">
+                <div class="mb-4 flex flex-col md:flex-row justify-between items-center bg-gray-50 p-2 rounded gap-2">
+                    <button onclick="exitCropper()" class="text-sm text-gray-600 px-3 py-1 hover:bg-gray-200 rounded">← 返回</button>
+                    <div class="flex bg-white rounded border overflow-hidden">
+                        <button onclick="setSplitMode('horizontal')" id="mode-h" class="px-3 py-1 text-xs font-bold bg-blue-100 text-blue-700">左右拼接</button>
+                        <button onclick="setSplitMode('vertical')" id="mode-v" class="px-3 py-1 text-xs font-bold text-gray-500 hover:bg-gray-50">上下拼接</button>
                     </div>
+                    <button onclick="doStitchSave()" id="btn-final-save" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-bold shadow-md text-sm">保存 PDF</button>
+                </div>
+
+                <div class="flex justify-center gap-4 text-xs text-gray-500 mb-2">
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 bg-blue-500 rounded-full"></span> 拖动蓝点调整裁切线</span>
+                    <span class="flex items-center gap-1">✋ 拖动图片调整位置</span>
+                </div>
+                
+                <div id="cropper-frame" class="inline-block relative rounded border border-gray-200 overflow-hidden">
+                    <div id="cropper-container" style="width: 0px; height: 0px;">
+                        <div id="layer-base"><canvas id="cvs-base"></canvas></div>
+                        <div id="layer-top-wrapper"><div id="layer-top"><canvas id="cvs-top"></canvas></div></div>
+                        <div id="split-line"></div>
+                        <div id="drag-handle" class="handle-h"><svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path></svg></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -163,203 +194,65 @@
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
         
-        function switchTab(tabName) {
+        function switchTab(tab) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`view-${tabName}`).classList.remove('hidden');
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.className = 'tab-btn px-4 sm:px-6 py-2 rounded-md text-sm font-medium transition-all text-gray-500 hover:text-gray-700');
-            const activeBtn = document.getElementById(`tab-${tabName}`);
-            const colors = { 'compress': 'blue', 'merge': 'indigo', 'editor': 'purple' };
-            activeBtn.className = `tab-btn px-4 sm:px-6 py-2 rounded-md text-sm font-medium transition-all bg-${colors[tabName]}-100 text-${colors[tabName]}-700 shadow-sm`;
+            document.getElementById(`view-${tab}`).classList.remove('hidden');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.className = 'tab-btn px-4 py-2 rounded-md text-sm font-medium transition-all text-gray-500 hover:text-gray-700');
+            const color = { 'compress': 'blue', 'merge': 'indigo', 'editor': 'purple', 'stitch': 'pink' }[tab];
+            document.getElementById(`tab-${tab}`).className = `tab-btn px-4 py-2 rounded-md text-sm font-medium transition-all bg-${color}-50 text-${color}-600 shadow-sm ring-1 ring-${color}-200`;
         }
         switchTab('compress');
+        function formatBytes(b){if(b==0)return'0 B';const s=['B','KB','MB','GB'],i=Math.floor(Math.log(b)/Math.log(1024));return parseFloat((b/Math.pow(1024,i)).toFixed(2))+' '+s[i]}
 
-        function formatBytes(bytes) {
-            if (bytes === 0) return '0 B';
-            const sizes = ['B', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(1024));
-            return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
-        }
+        // === 1. 压缩 (逻辑折叠) ===
+        const compInput=document.getElementById('comp-file-input');let compFile=null;
+        window.applyPreset=(q,s,btn)=>{document.getElementById('quality').value=q;document.getElementById('scale').value=s;updateVal('q',q);updateVal('s',s);document.querySelectorAll('.preset-btn').forEach(b=>{b.className='preset-btn border border-gray-200 rounded-lg p-3 text-center hover:border-blue-300';b.querySelector('.font-bold').className='font-bold text-sm text-gray-800';b.querySelector('.text-xs').className='text-xs text-gray-400 mt-1'});btn.className='preset-btn active border border-blue-500 bg-blue-50 text-blue-600 rounded-lg p-3 text-center';btn.querySelector('.font-bold').className='font-bold text-sm';btn.querySelector('.text-xs').className='text-xs opacity-75 mt-1'};
+        window.updateVal=(t,v)=>{if(t==='q')document.getElementById('q-val').innerText=v;if(t==='s')document.getElementById('s-val').innerText=v+'x'};
+        window.resetCompress=()=>{compFile=null;compInput.value='';document.getElementById('comp-drop-zone').classList.remove('hidden');document.getElementById('comp-settings').classList.add('hidden');document.getElementById('comp-result').classList.add('hidden');document.getElementById('comp-actions').classList.add('hidden');document.querySelector('#comp-result .spinner').classList.remove('hidden')};
+        document.getElementById('comp-drop-zone').onclick=()=>compInput.click();
+        compInput.onchange=(e)=>{if(e.target.files[0]){if(!document.getElementById('comp-result').classList.contains('hidden'))resetCompress();compFile=e.target.files[0];document.getElementById('comp-drop-zone').classList.add('hidden');document.getElementById('comp-settings').classList.remove('hidden')}};
+        document.getElementById('btn-start-compress').onclick=async()=>{if(!compFile)return;const status=document.getElementById('comp-status');const dl=document.getElementById('comp-actions');const lnk=document.getElementById('comp-download');const spin=document.querySelector('#comp-result .spinner');document.getElementById('comp-result').classList.remove('hidden');document.getElementById('comp-settings').classList.add('hidden');spin.classList.remove('hidden');dl.classList.add('hidden');try{const buf=await compFile.arrayBuffer();const pdf=await pdfjsLib.getDocument({data:buf}).promise;const newPdf=await PDFLib.PDFDocument.create();const q=parseFloat(document.getElementById('quality').value);const s=parseFloat(document.getElementById('scale').value);for(let i=1;i<=pdf.numPages;i++){status.innerText=`处理页面: ${i}/${pdf.numPages}`;const p=await pdf.getPage(i);const vp=p.getViewport({scale:s});const cvs=document.createElement('canvas');cvs.width=vp.width;cvs.height=vp.height;await p.render({canvasContext:cvs.getContext('2d'),viewport:vp}).promise;const img=await newPdf.embedJpg(cvs.toDataURL('image/jpeg',q));newPdf.addPage([vp.width,vp.height]).drawImage(img,{x:0,y:0,width:vp.width,height:vp.height})}status.innerText="打包中...";const bytes=await newPdf.save();const blob=new Blob([bytes],{type:'application/pdf'});spin.classList.add('hidden');lnk.href=URL.createObjectURL(blob);lnk.download='compressed_'+compFile.name;dl.classList.remove('hidden');status.innerHTML='完成!';}catch(e){alert('Err:'+e.message);resetCompress()}};
 
-        // ================= 1. 压缩逻辑 =================
-        const compInput = document.getElementById('comp-file-input');
-        let compFile = null;
-        
-        window.applyPreset = (q, s, btn) => {
-            document.getElementById('quality').value = q;
-            document.getElementById('scale').value = s;
-            updateVal('q', q);
-            updateVal('s', s);
-            document.querySelectorAll('.preset-btn').forEach(b => {
-                b.className = 'preset-btn border border-gray-200 rounded-lg p-3 text-center hover:border-blue-300 transition-all';
-                b.querySelector('.font-bold').className = 'font-bold text-sm text-gray-800';
-                b.querySelector('.text-xs').className = 'text-xs text-gray-400 mt-1';
-            });
-            btn.className = 'preset-btn active border border-blue-500 bg-blue-50 text-blue-600 rounded-lg p-3 text-center transition-all';
-            btn.querySelector('.font-bold').className = 'font-bold text-sm';
-            btn.querySelector('.text-xs').className = 'text-xs opacity-75 mt-1';
-        };
+        // === 2. 合并 (逻辑折叠) ===
+        let mergeFiles=[];const mergeInput=document.getElementById('merge-input'),mergeList=document.getElementById('merge-list'),btnMerge=document.getElementById('btn-start-merge');
+        window.clearMergeList=()=>{mergeFiles=[];renderMergeList();mergeInput.value=''};mergeInput.onchange=(e)=>{mergeFiles=[...mergeFiles,...Array.from(e.target.files)];renderMergeList();btnMerge.classList.remove('hidden');mergeInput.value=''};
+        function renderMergeList(){if(mergeFiles.length==0){mergeList.innerHTML='<li class="text-center text-gray-400 text-sm py-4">暂无文件</li>';btnMerge.classList.add('hidden');return}mergeList.innerHTML=mergeFiles.map((f,i)=>`<li class="flex justify-between items-center bg-gray-50 p-2 rounded border"><span class="truncate text-sm w-40">${i+1}. ${f.name}</span><div class="flex gap-1"><button onclick="moveMerge(${i},-1)" class="p-1" ${i==0?'disabled':''}>↑</button><button onclick="moveMerge(${i},1)" class="p-1" ${i==mergeFiles.length-1?'disabled':''}>↓</button><button onclick="removeMerge(${i})" class="p-1 text-red-500">×</button></div></li>`).join('')}
+        window.moveMerge=(i,d)=>{if(i+d>=0&&i+d<mergeFiles.length){[mergeFiles[i],mergeFiles[i+d]]=[mergeFiles[i+d],mergeFiles[i]];renderMergeList()}};window.removeMerge=(i)=>{mergeFiles.splice(i,1);renderMergeList()};
+        btnMerge.onclick=async()=>{const btn=document.getElementById('btn-start-merge');btn.innerText='合并中...';btn.disabled=true;try{const newPdf=await PDFLib.PDFDocument.create();for(let f of mergeFiles){const pdf=await PDFLib.PDFDocument.load(await f.arrayBuffer());(await newPdf.copyPages(pdf,pdf.getPageIndices())).forEach(p=>newPdf.addPage(p))}const blob=new Blob([await newPdf.save()],{type:'application/pdf'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='merged.pdf';a.click()}catch(e){alert('Err:'+e.message)}finally{btn.innerText='合并并下载';btn.disabled=false}};
 
-        window.updateVal = (type, val) => {
-            if(type === 'q') document.getElementById('q-val').innerText = val;
-            if(type === 's') document.getElementById('s-val').innerText = val + 'x';
-        };
-
-        window.resetCompress = () => {
-            compFile = null; compInput.value = '';
-            document.getElementById('comp-drop-zone').classList.remove('hidden');
-            document.getElementById('comp-settings').classList.add('hidden');
-            document.getElementById('comp-result').classList.add('hidden');
-            document.getElementById('comp-actions').classList.add('hidden');
-            document.querySelector('#comp-result .spinner').classList.remove('hidden');
-        };
-
-        document.getElementById('comp-drop-zone').onclick = () => compInput.click();
-        compInput.onchange = (e) => {
-            if(e.target.files[0]) {
-                if(!document.getElementById('comp-result').classList.contains('hidden')) resetCompress();
-                compFile = e.target.files[0];
-                document.getElementById('comp-drop-zone').classList.add('hidden');
-                document.getElementById('comp-file-name').innerText = compFile.name + ` (${formatBytes(compFile.size)})`;
-                document.getElementById('comp-settings').classList.remove('hidden');
-            }
-        };
-
-        document.getElementById('btn-start-compress').onclick = async () => {
-            if(!compFile) return;
-            const status = document.getElementById('comp-status');
-            const downloadArea = document.getElementById('comp-actions');
-            const link = document.getElementById('comp-download');
-            const spinner = document.querySelector('#comp-result .spinner');
-            
-            document.getElementById('comp-result').classList.remove('hidden');
-            document.getElementById('comp-settings').classList.add('hidden');
-            spinner.classList.remove('hidden');
-            downloadArea.classList.add('hidden');
-            
-            try {
-                const arrayBuffer = await compFile.arrayBuffer();
-                const pdfDoc = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
-                const newPdf = await PDFLib.PDFDocument.create();
-                const q = parseFloat(document.getElementById('quality').value);
-                const s = parseFloat(document.getElementById('scale').value);
-
-                for(let i=1; i<=pdfDoc.numPages; i++) {
-                    status.innerText = `正在处理页面: ${i} / ${pdfDoc.numPages}`;
-                    const page = await pdfDoc.getPage(i);
-                    const viewport = page.getViewport({scale: s});
-                    const cvs = document.createElement('canvas');
-                    cvs.width = viewport.width; cvs.height = viewport.height;
-                    await page.render({canvasContext: cvs.getContext('2d'), viewport}).promise;
-                    const img = await newPdf.embedJpg(cvs.toDataURL('image/jpeg', q));
-                    newPdf.addPage([viewport.width, viewport.height]).drawImage(img, {x:0, y:0, width:viewport.width, height:viewport.height});
-                }
-                status.innerText = "正在打包生成...";
-                const pdfBytes = await newPdf.save();
-                const blob = new Blob([pdfBytes], {type: 'application/pdf'});
-                
-                spinner.classList.add('hidden');
-                link.href = URL.createObjectURL(blob);
-                link.download = 'compressed_' + compFile.name;
-                downloadArea.classList.remove('hidden');
-                const reduction = ((compFile.size - blob.size) / compFile.size * 100).toFixed(1);
-                const sizeText = blob.size > compFile.size ? `⚠️ 文件变大了` : `✅ 瘦身 ${reduction}%`;
-                status.innerHTML = `<span class="font-bold text-gray-800">完成!</span> <span class="text-xs text-gray-500">${formatBytes(compFile.size)} ➝ ${formatBytes(blob.size)}</span> <br><span class="text-sm ${blob.size > compFile.size ? 'text-red-500' : 'text-green-600'} font-bold">${sizeText}</span>`;
-            } catch(e) { alert('错误: ' + e.message); resetCompress(); }
-        };
-
-        // ================= 2. 合并逻辑 =================
-        let mergeFiles = [];
-        const mergeInput = document.getElementById('merge-input');
-        const mergeList = document.getElementById('merge-list');
-        const btnMerge = document.getElementById('btn-start-merge');
-
-        window.clearMergeList = () => { mergeFiles = []; renderMergeList(); mergeInput.value = ''; };
-        mergeInput.onchange = (e) => { mergeFiles = [...mergeFiles, ...Array.from(e.target.files)]; renderMergeList(); btnMerge.classList.remove('hidden'); mergeInput.value = ''; };
-
-        function renderMergeList() {
-            if(mergeFiles.length === 0) { mergeList.innerHTML = '<li class="text-center text-gray-400 text-sm py-4">暂无文件，请添加</li>'; btnMerge.classList.add('hidden'); return; }
-            mergeList.innerHTML = mergeFiles.map((f, i) => `
-                <li class="flex justify-between items-center bg-gray-50 p-2 rounded border">
-                    <div class="flex items-center gap-2 overflow-hidden">
-                        <span class="bg-gray-200 text-xs font-bold px-2 py-1 rounded text-gray-600">${i+1}</span>
-                        <span class="truncate text-sm w-40 sm:w-64" title="${f.name}">${f.name}</span>
-                    </div>
-                    <div class="flex items-center gap-1 shrink-0">
-                        <button onclick="moveMerge(${i}, -1)" class="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded" ${i === 0 ? 'disabled style="opacity:0.3"' : ''}>↑</button>
-                        <button onclick="moveMerge(${i}, 1)" class="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded" ${i === mergeFiles.length - 1 ? 'disabled style="opacity:0.3"' : ''}>↓</button>
-                        <button onclick="removeMerge(${i})" class="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded ml-1">×</button>
-                    </div>
-                </li>
-            `).join('');
-        }
-        window.moveMerge = (index, direction) => {
-            const newIndex = index + direction;
-            if (newIndex < 0 || newIndex >= mergeFiles.length) return;
-            [mergeFiles[index], mergeFiles[newIndex]] = [mergeFiles[newIndex], mergeFiles[index]];
-            renderMergeList();
-        };
-        window.removeMerge = (i) => { mergeFiles.splice(i, 1); renderMergeList(); };
-        btnMerge.onclick = async () => {
-            const btn = document.getElementById('btn-start-merge'); btn.innerText = '正在合并...'; btn.disabled = true;
-            try {
-                const newPdf = await PDFLib.PDFDocument.create();
-                for(let f of mergeFiles) {
-                    const pdf = await PDFLib.PDFDocument.load(await f.arrayBuffer());
-                    (await newPdf.copyPages(pdf, pdf.getPageIndices())).forEach(p => newPdf.addPage(p));
-                }
-                const blob = new Blob([await newPdf.save()], {type: 'application/pdf'});
-                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'merged.pdf'; a.click();
-            } catch (e) { alert('合并失败: ' + e.message); } finally { btn.innerText = '合并并下载'; btn.disabled = false; }
-        };
-
-        // ================= 3. 编辑/旋转逻辑 (UI 重构版) =================
-        const editInput = document.getElementById('edit-file-input');
-        const editZone = document.getElementById('edit-upload-area');
-        const editWorkArea = document.getElementById('edit-work-area');
-        const grid = document.getElementById('pages-grid');
-        let currentEditFile = null; 
-
-        window.resetEditor = () => {
-            currentEditFile = null;
-            grid.innerHTML = '<div class="col-span-full text-center py-10 text-gray-400">正在生成页面缩略图...</div>';
-            editWorkArea.classList.add('hidden');
-            editZone.classList.remove('hidden');
-            editInput.value = '';
-        };
-
-        editZone.onclick = () => editInput.click();
+        // === 3. 编辑 (保持不变) ===
+        const editInput=document.getElementById('edit-file-input'),editZone=document.getElementById('edit-upload-area'),editWork=document.getElementById('edit-work-area'),grid=document.getElementById('pages-grid');let currentEditFile=null;
+        window.resetEditor=()=>{currentEditFile=null;grid.innerHTML='Loading...';editWork.classList.add('hidden');editZone.classList.remove('hidden');editInput.value=''};editZone.onclick=()=>editInput.click();
         
         editInput.onchange = async (e) => {
-            const file = e.target.files[0];
-            if(!file) return;
-            currentEditFile = file; 
+            const f = e.target.files[0];
+            if(!f) return;
+            currentEditFile = f;
             editZone.classList.add('hidden');
-            editWorkArea.classList.remove('hidden');
+            editWork.classList.remove('hidden');
+            const buf = await f.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({data:buf}).promise;
             
-            const buffer = await file.arrayBuffer();
-            const pdfDoc = await pdfjsLib.getDocument({data: buffer}).promise;
-            
-            grid.innerHTML = ''; 
-            for(let i=1; i<=pdfDoc.numPages; i++) {
-                const page = await pdfDoc.getPage(i);
-                const viewport = page.getViewport({scale: 0.25}); 
-                const canvas = document.createElement('canvas');
-                canvas.width = viewport.width; canvas.height = viewport.height;
-                await page.render({canvasContext: canvas.getContext('2d'), viewport}).promise;
-
-                const card = document.createElement('div');
-                card.className = "page-card bg-white border border-gray-200 shadow-sm rounded-lg p-2 flex flex-col items-center select-none group relative";
-                card.draggable = true;
-                card.dataset.pageIndex = i - 1; 
-                card.dataset.rotation = 0;
-
-                // 修改了这里：按钮区域单独成行，不再隐藏
-                card.innerHTML = `
+            grid.innerHTML = '';
+            for(let i=1; i<=pdf.numPages; i++){
+                const p = await pdf.getPage(i);
+                const vp = p.getViewport({scale:0.25});
+                const cvs = document.createElement('canvas');
+                cvs.width=vp.width; cvs.height=vp.height;
+                await p.render({canvasContext:cvs.getContext('2d'),viewport:vp}).promise;
+                
+                const div = document.createElement('div');
+                div.className = 'page-card bg-white border border-gray-200 shadow-sm rounded-lg p-2 flex flex-col items-center select-none group relative';
+                div.draggable = true;
+                div.dataset.idx = i-1;
+                div.dataset.rot = 0;
+                
+                div.innerHTML = `
                     <div class="check-indicator absolute top-2 right-2 bg-blue-600 text-white rounded-full p-0.5 hidden z-10 shadow-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                     </div>
                     <div class="relative w-full h-40 flex items-center justify-center bg-gray-100 mb-2 overflow-hidden rounded cursor-pointer" onclick="toggleSelect(this)">
-                        <img src="${canvas.toDataURL()}" class="max-w-full max-h-full object-contain pointer-events-none transition-transform duration-200" style="transform: rotate(0deg)">
+                        <img src="${cvs.toDataURL()}" class="max-w-full max-h-full object-contain pointer-events-none transition-transform duration-200" style="transform: rotate(0deg)">
                     </div>
                     
                     <div class="w-full">
@@ -371,88 +264,318 @@
                         </div>
                     </div>
                 `;
-                addDnDEvents(card);
-                grid.appendChild(card);
+                addDnDEvents(div);
+                grid.appendChild(div);
             }
         };
 
-        window.rotateCard = (btn, deg) => {
-            const card = btn.closest('.page-card');
-            const img = card.querySelector('img');
-            let currentRotation = parseInt(card.dataset.rotation) || 0;
-            currentRotation += deg;
-            card.dataset.rotation = currentRotation;
-            img.style.transform = `rotate(${currentRotation}deg)`;
+        window.rotateCard=(btn,d)=>{const c=btn.closest('.page-card'),img=c.querySelector('img');let r=parseInt(c.dataset.rot)+d;c.dataset.rot=r;img.style.transform=`rotate(${r}deg)`};
+        window.toggleSelect=(el)=>{el.closest('.page-card').classList.toggle('selected')};
+        window.toggleSelectAll=()=>{const cs=document.querySelectorAll('.page-card'),all=Array.from(cs).every(c=>c.classList.contains('selected'));cs.forEach(c=>{if(all)c.classList.remove('selected');else c.classList.add('selected')})};
+        window.rotateSelected=(d)=>{const cs=document.querySelectorAll('.page-card.selected');if(!cs.length)return alert('请先点图片选中');cs.forEach(c=>{let r=parseInt(c.dataset.rot)+d;c.dataset.rot=r;c.querySelector('img').style.transform=`rotate(${r}deg)`})};
+        let dragSrc=null;function addDnDEvents(el){el.addEventListener('dragstart',function(e){dragSrc=this;e.dataTransfer.effectAllowed='move';this.classList.add('dragging')});el.addEventListener('dragend',function(){this.classList.remove('dragging')});el.addEventListener('dragover',function(e){if(e.preventDefault)e.preventDefault();return false});el.addEventListener('drop',function(e){if(e.stopPropagation)e.stopPropagation();if(dragSrc!==this){const all=[...grid.children],s=all.indexOf(dragSrc),t=all.indexOf(this);if(s<t)grid.insertBefore(dragSrc,this.nextSibling);else grid.insertBefore(dragSrc,this)}})};
+        
+        document.getElementById('btn-save-order').onclick=async()=>{if(!currentEditFile)return;const btn=document.getElementById('btn-save-order');btn.innerText='处理中...';try{const buf=await currentEditFile.arrayBuffer();const src=await PDFLib.PDFDocument.load(buf);const newPdf=await PDFLib.PDFDocument.create();const cards=document.querySelectorAll('#pages-grid .page-card');if(!cards.length)return alert('至少保留一页');for(const c of cards){const idx=parseInt(c.dataset.idx),rot=parseInt(c.dataset.rot)||0;const [p]=await newPdf.copyPages(src,[idx]);const exRot=p.getRotation().angle;p.setRotation(PDFLib.degrees(exRot+rot));newPdf.addPage(p)}const b=new Blob([await newPdf.save()],{type:'application/pdf'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='edited.pdf';a.click()}catch(e){console.error(e);alert('保存失败')}finally{btn.innerText='保存 PDF'}};
+
+        // ================= 4. 双页裁切拼接 (修复背景色为纯白) =================
+        const stitchInput = document.getElementById('stitch-file-input');
+        const stitchZone = document.getElementById('stitch-upload-area');
+        const stitchSelect = document.getElementById('stitch-select-area');
+        const stitchCropper = document.getElementById('stitch-cropper-area');
+        const stitchGrid = document.getElementById('stitch-grid');
+        
+        let stitchFile = null;
+        let stitchPdfDoc = null;
+        let stitchSelectedIdx = [];
+        
+        // Cropper Variables
+        let cropperSplitRatio = 0.5;
+        let cropperMode = 'horizontal';
+        let canvasW = 0, canvasH = 0;
+        let displayScale = 1;
+        let p1Offset = {x: 0, y: 0};
+        let p2Offset = {x: 0, y: 0};
+
+        window.resetStitch = () => {
+            stitchFile = null; stitchSelectedIdx = [];
+            stitchInput.value = '';
+            stitchZone.classList.remove('hidden');
+            stitchSelect.classList.add('hidden');
+            stitchCropper.classList.add('hidden');
         };
 
-        window.toggleSelect = (div) => {
-            const card = div.closest('.page-card');
-            card.classList.toggle('selected');
+        stitchZone.onclick = () => stitchInput.click();
+
+        stitchInput.onchange = async (e) => {
+            const f = e.target.files[0]; if(!f) return;
+            stitchFile = f;
+            stitchZone.classList.add('hidden');
+            stitchSelect.classList.remove('hidden');
+            
+            const buf = await f.arrayBuffer();
+            stitchPdfDoc = await pdfjsLib.getDocument({data: buf}).promise;
+            
+            stitchGrid.innerHTML = '';
+            for(let i=1; i<=stitchPdfDoc.numPages; i++){
+                const p = await stitchPdfDoc.getPage(i);
+                const vp = p.getViewport({scale:0.2});
+                const cvs = document.createElement('canvas');
+                cvs.width=vp.width; cvs.height=vp.height;
+                await p.render({canvasContext:cvs.getContext('2d'),viewport:vp}).promise;
+                const div = document.createElement('div');
+                div.className = 'stitch-card bg-white border p-2 flex flex-col items-center cursor-pointer relative';
+                div.onclick = () => toggleStitchSelect(i-1);
+                div.dataset.idx = i-1;
+                div.innerHTML = `<div class="badge-order hidden"></div><img src="${cvs.toDataURL()}"><span class="text-xs font-bold mt-1">P${i}</span>`;
+                stitchGrid.appendChild(div);
+            }
+            updateStitchSelectUI();
         };
 
-        window.toggleSelectAll = () => {
-            const cards = document.querySelectorAll('.page-card');
-            const allSelected = Array.from(cards).every(c => c.classList.contains('selected'));
-            cards.forEach(c => {
-                if(allSelected) c.classList.remove('selected');
-                else c.classList.add('selected');
-            });
-            document.getElementById('btn-select-all').innerText = allSelected ? '全选' : '取消全选';
+        window.toggleStitchSelect = (idx) => {
+            const pos = stitchSelectedIdx.indexOf(idx);
+            if(pos !== -1) stitchSelectedIdx.splice(pos, 1);
+            else {
+                if(stitchSelectedIdx.length < 2) stitchSelectedIdx.push(idx);
+                else { stitchSelectedIdx.shift(); stitchSelectedIdx.push(idx); }
+            }
+            updateStitchSelectUI();
         };
 
-        window.rotateSelected = (deg) => {
-            const selectedCards = document.querySelectorAll('.page-card.selected');
-            if(selectedCards.length === 0) return alert('请先点击图片选中要旋转的页面');
-            selectedCards.forEach(card => {
-                const img = card.querySelector('img');
-                let currentRotation = parseInt(card.dataset.rotation) || 0;
-                currentRotation += deg;
-                card.dataset.rotation = currentRotation;
-                img.style.transform = `rotate(${currentRotation}deg)`;
-            });
-        };
-
-        let dragSrcEl = null;
-        function addDnDEvents(item) {
-            item.addEventListener('dragstart', function(e) { dragSrcEl = this; e.dataTransfer.effectAllowed = 'move'; this.classList.add('dragging'); });
-            item.addEventListener('dragend', function(e) { this.classList.remove('dragging'); });
-            item.addEventListener('dragover', function(e) { if(e.preventDefault) e.preventDefault(); e.dataTransfer.dropEffect = 'move'; return false; });
-            item.addEventListener('drop', function(e) {
-                if(e.stopPropagation) e.stopPropagation();
-                if(dragSrcEl !== this) {
-                    const allCards = [...grid.children];
-                    const srcIndex = allCards.indexOf(dragSrcEl);
-                    const targetIndex = allCards.indexOf(this);
-                    if(srcIndex < targetIndex) grid.insertBefore(dragSrcEl, this.nextSibling);
-                    else grid.insertBefore(dragSrcEl, this);
+        function updateStitchSelectUI() {
+            document.getElementById('stitch-status').innerText = `已选 ${stitchSelectedIdx.length}/2`;
+            const btn = document.getElementById('btn-to-cropper');
+            if(stitchSelectedIdx.length === 2) {
+                btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+            document.querySelectorAll('.stitch-card').forEach(c => {
+                const i = parseInt(c.dataset.idx);
+                const order = stitchSelectedIdx.indexOf(i);
+                const badge = c.querySelector('.badge-order');
+                c.classList.remove('selected-1', 'selected-2');
+                badge.classList.add('hidden');
+                if(order !== -1) {
+                    c.classList.add(order === 0 ? 'selected-1' : 'selected-2');
+                    badge.classList.remove('hidden');
+                    badge.className = `badge-order ${order === 0 ? 'bg-badge-1' : 'bg-badge-2'}`;
+                    badge.innerText = order + 1;
                 }
-                return false;
             });
         }
 
-        document.getElementById('btn-save-order').onclick = async () => {
-            if (!currentEditFile) return;
-            const btn = document.getElementById('btn-save-order');
-            btn.innerHTML = '<span>⏳ 处理中...</span>';
-            try {
-                const freshBuffer = await currentEditFile.arrayBuffer();
-                const srcDoc = await PDFLib.PDFDocument.load(freshBuffer);
-                const newDoc = await PDFLib.PDFDocument.create();
-                const cards = document.querySelectorAll('#pages-grid .page-card');
-                
-                if (cards.length === 0) { alert("请至少保留一页！"); return; }
+        window.goToCropper = async () => {
+            stitchSelect.classList.add('hidden');
+            stitchCropper.classList.remove('hidden');
+            cropperSplitRatio = 0.5;
+            p1Offset = {x:0, y:0};
+            p2Offset = {x:0, y:0};
+            await initCropperCanvases();
+        };
 
-                for (const card of cards) {
-                    const pageIndex = parseInt(card.dataset.pageIndex);
-                    const rotation = parseInt(card.dataset.rotation) || 0;
-                    const [page] = await newDoc.copyPages(srcDoc, [pageIndex]);
-                    const existingRotation = page.getRotation().angle;
-                    page.setRotation(PDFLib.degrees(existingRotation + rotation));
-                    newDoc.addPage(page);
+        window.exitCropper = () => {
+            stitchCropper.classList.add('hidden');
+            stitchSelect.classList.remove('hidden');
+        };
+
+        async function initCropperCanvases() {
+            const scale = 2.0; 
+            const page1 = await stitchPdfDoc.getPage(stitchSelectedIdx[0] + 1);
+            const page2 = await stitchPdfDoc.getPage(stitchSelectedIdx[1] + 1);
+            const vp1 = page1.getViewport({scale: scale});
+            
+            canvasW = vp1.width; canvasH = vp1.height;
+            const container = document.getElementById('cropper-container');
+            const displayWidth = Math.min(window.innerWidth - 40, 600); 
+            displayScale = displayWidth / canvasW;
+            const displayHeight = canvasH * displayScale;
+            container.style.width = displayWidth + 'px';
+            container.style.height = displayHeight + 'px';
+
+            // 初始化 Top Canvas (P1) - 填充白色背景
+            const c1 = document.getElementById('cvs-top');
+            c1.width = canvasW; c1.height = canvasH;
+            c1.style.width = displayWidth + 'px'; c1.style.height = displayHeight + 'px';
+            c1.style.transform = `translate(0px, 0px)`;
+            const ctx1 = c1.getContext('2d');
+            ctx1.fillStyle = 'white'; ctx1.fillRect(0, 0, canvasW, canvasH); // 关键：填充白底
+            await page1.render({canvasContext: ctx1, viewport: vp1}).promise;
+
+            // 初始化 Base Canvas (P2) - 填充白色背景
+            const c2 = document.getElementById('cvs-base');
+            c2.width = canvasW; c2.height = canvasH;
+            c2.style.width = displayWidth + 'px'; c2.style.height = displayHeight + 'px';
+            c2.style.transform = `translate(0px, 0px)`;
+            
+            const tempCvs = document.createElement('canvas');
+            const vp2_render = page2.getViewport({scale: scale}); 
+            tempCvs.width = vp2_render.width; tempCvs.height = vp2_render.height;
+            await page2.render({canvasContext: tempCvs.getContext('2d'), viewport: vp2_render}).promise;
+            
+            const ctx2 = c2.getContext('2d');
+            ctx2.fillStyle = 'white'; ctx2.fillRect(0,0,canvasW,canvasH); // 关键：填充白底
+            ctx2.drawImage(tempCvs, 0, 0, tempCvs.width, tempCvs.height, 0, 0, canvasW, canvasH);
+            
+            updateSplitVisuals();
+        }
+
+        window.setSplitMode = (m) => {
+            cropperMode = m;
+            const hBtn = document.getElementById('mode-h');
+            const vBtn = document.getElementById('mode-v');
+            if(m === 'horizontal') {
+                hBtn.className = "px-3 py-1 text-xs font-bold bg-blue-100 text-blue-700";
+                vBtn.className = "px-3 py-1 text-xs font-bold text-gray-500 hover:bg-gray-50";
+            } else {
+                vBtn.className = "px-3 py-1 text-xs font-bold bg-blue-100 text-blue-700";
+                hBtn.className = "px-3 py-1 text-xs font-bold text-gray-500 hover:bg-gray-50";
+            }
+            updateSplitVisuals();
+        };
+
+        function updateSplitVisuals() {
+            const wrapper = document.getElementById('layer-top-wrapper');
+            const line = document.getElementById('split-line');
+            const handle = document.getElementById('drag-handle');
+            
+            if (cropperMode === 'horizontal') {
+                wrapper.style.height = '100%';
+                wrapper.style.width = (cropperSplitRatio * 100) + '%';
+                wrapper.style.borderRight = 'none'; wrapper.style.borderBottom = 'none';
+                line.style.width = '2px'; line.style.height = '100%'; line.style.top = 0; line.style.left = (cropperSplitRatio * 100) + '%';
+                handle.className = 'handle-h';
+                handle.style.left = (cropperSplitRatio * 100) + '%'; 
+                handle.style.top = '50%';
+                handle.innerHTML = '<svg class="w-4 h-4 transform rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path></svg>';
+            } else {
+                wrapper.style.width = '100%';
+                wrapper.style.height = (cropperSplitRatio * 100) + '%';
+                wrapper.style.borderBottom = 'none'; wrapper.style.borderRight = 'none';
+                line.style.height = '2px'; line.style.width = '100%'; line.style.left = 0; line.style.top = (cropperSplitRatio * 100) + '%';
+                handle.className = 'handle-v';
+                handle.style.top = (cropperSplitRatio * 100) + '%';
+                handle.style.left = '50%';
+                handle.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path></svg>';
+            }
+        }
+
+        const handle = document.getElementById('drag-handle');
+        const container = document.getElementById('cropper-container');
+        let dragMode = null; 
+        let dragStart = {x:0, y:0};
+        let startOffset = {x:0, y:0};
+        let activePage = 0; 
+
+        handle.addEventListener('mousedown', (e) => startDrag(e, 'split'));
+        handle.addEventListener('touchstart', (e) => startDrag(e, 'split'), {passive: false});
+        container.addEventListener('mousedown', (e) => startDrag(e, 'pan'));
+        container.addEventListener('touchstart', (e) => startDrag(e, 'pan'), {passive: false});
+
+        function startDrag(e, mode) {
+            e.preventDefault(); e.stopPropagation();
+            dragMode = mode;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            dragStart = {x: clientX, y: clientY};
+
+            if (mode === 'pan') {
+                const rect = container.getBoundingClientRect();
+                const relX = clientX - rect.left;
+                const relY = clientY - rect.top;
+                if (cropperMode === 'horizontal') {
+                    activePage = (relX < rect.width * cropperSplitRatio) ? 1 : 2;
+                } else {
+                    activePage = (relY < rect.height * cropperSplitRatio) ? 1 : 2;
                 }
-                const blob = new Blob([await newDoc.save()], { type: 'application/pdf' });
-                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'edited_pdf.pdf'; a.click();
-            } catch(e) { console.error(e); alert("保存失败: " + e.message); } finally { btn.innerHTML = '<span>保存 PDF</span>'; }
+                startOffset = (activePage === 1) ? {...p1Offset} : {...p2Offset};
+                container.style.cursor = 'move';
+            }
+            document.addEventListener('mousemove', onDrag);
+            document.addEventListener('touchmove', onDrag, {passive: false});
+            document.addEventListener('mouseup', stopDrag);
+            document.addEventListener('touchend', stopDrag);
+        }
+
+        function onDrag(e) {
+            if (!dragMode) return;
+            e.preventDefault();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            if (dragMode === 'split') {
+                const rect = container.getBoundingClientRect();
+                if (cropperMode === 'horizontal') {
+                    let x = clientX - rect.left;
+                    cropperSplitRatio = Math.max(0.05, Math.min(0.95, x / rect.width));
+                } else {
+                    let y = clientY - rect.top;
+                    cropperSplitRatio = Math.max(0.05, Math.min(0.95, y / rect.height));
+                }
+                updateSplitVisuals();
+            } 
+            else if (dragMode === 'pan') {
+                const deltaX = clientX - dragStart.x;
+                const deltaY = clientY - dragStart.y;
+                if (activePage === 1) {
+                    p1Offset.x = startOffset.x + deltaX;
+                    p1Offset.y = startOffset.y + deltaY;
+                    document.getElementById('cvs-top').style.transform = `translate(${p1Offset.x}px, ${p1Offset.y}px)`;
+                } else {
+                    p2Offset.x = startOffset.x + deltaX;
+                    p2Offset.y = startOffset.y + deltaY;
+                    document.getElementById('cvs-base').style.transform = `translate(${p2Offset.x}px, ${p2Offset.y}px)`;
+                }
+            }
+        }
+
+        function stopDrag() {
+            dragMode = null;
+            container.style.cursor = 'default';
+            document.removeEventListener('mousemove', onDrag);
+            document.removeEventListener('touchmove', onDrag);
+            document.removeEventListener('mouseup', stopDrag);
+            document.removeEventListener('touchend', stopDrag);
+        }
+
+        window.doStitchSave = async () => {
+            const btn = document.getElementById('btn-final-save'); btn.innerText = '生成中...';
+            try {
+                const finalCvs = document.createElement('canvas'); finalCvs.width = canvasW; finalCvs.height = canvasH;
+                const ctx = finalCvs.getContext('2d');
+                
+                // 关键：最终画布填充白底
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvasW, canvasH);
+
+                const c1 = document.getElementById('cvs-top'); const c2 = document.getElementById('cvs-base');
+                
+                const p1X = p1Offset.x / displayScale;
+                const p1Y = p1Offset.y / displayScale;
+                const p2X = p2Offset.x / displayScale;
+                const p2Y = p2Offset.y / displayScale;
+
+                if (cropperMode === 'horizontal') {
+                    const splitX = canvasW * cropperSplitRatio;
+                    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, splitX, canvasH); ctx.clip();
+                    ctx.drawImage(c1, p1X, p1Y); ctx.restore();
+                    ctx.save(); ctx.beginPath(); ctx.rect(splitX, 0, canvasW - splitX, canvasH); ctx.clip();
+                    ctx.drawImage(c2, p2X, p2Y); ctx.restore();
+                } else {
+                    const splitY = canvasH * cropperSplitRatio;
+                    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, canvasW, splitY); ctx.clip();
+                    ctx.drawImage(c1, p1X, p1Y); ctx.restore();
+                    ctx.save(); ctx.beginPath(); ctx.rect(0, splitY, canvasW, canvasH - splitY); ctx.clip();
+                    ctx.drawImage(c2, p2X, p2Y); ctx.restore();
+                }
+                const newPdf = await PDFLib.PDFDocument.create();
+                const jpgData = finalCvs.toDataURL('image/jpeg', 0.9);
+                const embeddedImg = await newPdf.embedJpg(jpgData);
+                const page = newPdf.addPage([canvasW / 2.0, canvasH / 2.0]);
+                page.drawImage(embeddedImg, { x: 0, y: 0, width: canvasW / 2.0, height: canvasH / 2.0 });
+                const blob = new Blob([await newPdf.save()], { type: 'application/pdf' });
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'stitched.pdf'; a.click();
+            } catch(e) { alert('出错: ' + e.message); console.error(e); } finally { btn.innerText = '保存 PDF'; }
         };
     </script>
 </body>
