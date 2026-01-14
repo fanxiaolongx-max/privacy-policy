@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>8位编码补零（可粘贴到Excel）</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; margin:20px; line-height:1.4;}
+    .wrap{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+    textarea{width:100%; height:360px; padding:12px; font-family:ui-monospace,Consolas,monospace; font-size:14px;}
+    .bar{display:flex; gap:10px; flex-wrap:wrap; margin:12px 0;}
+    button{padding:10px 14px; border:1px solid #ccc; background:#fff; cursor:pointer; border-radius:10px;}
+    button:hover{background:#f6f6f6;}
+    .hint{color:#555; font-size:13px;}
+    .err{white-space:pre-wrap; background:#fff3f3; border:1px solid #ffd0d0; padding:10px; border-radius:10px;}
+    .ok{white-space:pre-wrap; background:#f2fff3; border:1px solid #c9f2cf; padding:10px; border-radius:10px;}
+    label{font-weight:600; display:block; margin-bottom:6px;}
+    .small{font-size:12px; color:#666;}
+  </style>
+</head>
+<body>
+  <h2>8位编码补零 → 直接粘贴到 Excel</h2>
+  <div class="hint">
+    输入一列编码（每行一个，允许 7/8 位、允许有前导0）。输出会强制变成 <b>8位且保留0</b>，复制后粘贴到 Excel 一列即可。
+  </div>
+
+  <div class="bar">
+    <button id="btnFormat">格式化为8位</button>
+    <button id="btnCopy">复制输出（带换行）</button>
+    <button id="btnClear">清空</button>
+  </div>
+
+  <div class="wrap">
+    <div>
+      <label>输入（每行一个）</label>
+      <textarea id="input" placeholder="例如：
+01234567
+1234567
+00000001
+98765432"></textarea>
+      <div class="small">支持：空行会忽略；行内空格会自动去掉。</div>
+    </div>
+    <div>
+      <label>输出（复制此处粘贴到Excel）</label>
+      <textarea id="output" readonly placeholder="点击“格式化为8位”后这里会生成结果"></textarea>
+      <div class="small">提示：Excel 可能会自动把“00123456”显示成数字。若你想强制为文本显示，可用下面的“Excel文本模式”。</div>
+    </div>
+  </div>
+
+  <div class="bar">
+    <button id="btnExcelText">Excel文本模式（前面加 ' ）</button>
+    <button id="btnExcelFormula">Excel公式模式（=TEXT(...)）</button>
+  </div>
+
+  <div id="msg"></div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    function normalizeLine(s){
+      // 去掉两端空白 + 去掉中间空格/制表符/不可见字符
+      return (s ?? "").trim().replace(/\s+/g, "");
+    }
+
+    function formatTo8Digits(raw){
+      // 只允许数字
+      if (!/^\d+$/.test(raw)) return { ok:false, reason:"包含非数字字符" };
+      if (raw.length > 8) return { ok:false, reason:"超过8位" };
+      // 允许 1-8 位，统一补到 8 位
+      return { ok:true, value: raw.padStart(8, "0") };
+    }
+
+    function buildOutput(mode){
+      const lines = $("input").value.split(/\r?\n/);
+      const out = [];
+      const errs = [];
+
+      lines.forEach((line, idx) => {
+        const n = normalizeLine(line);
+        if (!n) return; // 忽略空行
+
+        const r = formatTo8Digits(n);
+        if (!r.ok){
+          errs.push(`第 ${idx+1} 行：${line} → ${r.reason}`);
+          return;
+        }
+
+        if (mode === "plain") out.push(r.value);
+        if (mode === "excelText") out.push("'" + r.value);               // 让Excel按文本处理
+        if (mode === "excelFormula") out.push(`=TEXT("${r.value}","00000000")`);
+      });
+
+      $("output").value = out.join("\n");
+
+      if (errs.length){
+        $("msg").innerHTML = `<div class="err"><b>发现 ${errs.length} 行无效：</b>\n${errs.join("\n")}</div>`;
+      } else {
+        $("msg").innerHTML = `<div class="ok"><b>完成：</b>共输出 ${out.length} 行</div>`;
+      }
+    }
+
+    $("btnFormat").onclick = () => buildOutput("plain");
+
+    $("btnExcelText").onclick = () => buildOutput("excelText");
+
+    $("btnExcelFormula").onclick = () => buildOutput("excelFormula");
+
+    $("btnCopy").onclick = async () => {
+      const text = $("output").value;
+      if (!text) {
+        $("msg").innerHTML = `<div class="err">输出为空：请先点击“格式化为8位”。</div>`;
+        return;
+      }
+      try{
+        await navigator.clipboard.writeText(text);
+        $("msg").innerHTML = `<div class="ok">已复制到剪贴板：直接粘贴到 Excel 一列即可。</div>`;
+      } catch(e){
+        // 兼容一些浏览器/权限限制：退回选中复制
+        $("output").focus();
+        $("output").select();
+        document.execCommand("copy");
+        $("msg").innerHTML = `<div class="ok">已尝试复制（回退方式）：如果没成功，请手动 Ctrl+C 复制输出框内容。</div>`;
+      }
+    };
+
+    $("btnClear").onclick = () => {
+      $("input").value = "";
+      $("output").value = "";
+      $("msg").innerHTML = "";
+    };
+  </script>
+</body>
+</html>
