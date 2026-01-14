@@ -36,6 +36,7 @@
 | :--- | :--- | :--- |
 | **文档压缩** | ⏳ 工具 | [![Demo](https://img.shields.io/badge/Launch-Demo-success?style=for-the-badge&logo=clockify&logoColor=white)](https://fanxiaolongx-max.github.io/privacy-policy/文档压缩DEMO.html) |
 | **合同倒数** | ⏳ 工具 | [![Demo](https://img.shields.io/badge/Launch-Demo-success?style=for-the-badge&logo=clockify&logoColor=white)](https://fanxiaolongx-max.github.io/privacy-policy/合同倒数DEMO.html) |
+| **编码补零** | ⏳ 工具 | [![Demo](https://img.shields.io/badge/Launch-Demo-success?style=for-the-badge&logo=clockify&logoColor=white)](https://fanxiaolongx-max.github.io/privacy-policy/编码补零DEMO.html) |
 | **地址比对** | 🗺️ 地理 | [![Demo](https://img.shields.io/badge/Launch-Demo-success?style=for-the-badge&logo=googlemaps&logoColor=white)](https://fanxiaolongx-max.github.io/privacy-policy/地址比对DEMO.html) |
 | **外卖流程** | 🛵 仿真 | [![Demo](https://img.shields.io/badge/Launch-Demo-success?style=for-the-badge&logo=ubereats&logoColor=white)](https://fanxiaolongx-max.github.io/privacy-policy/外卖流程DEMO.html) |
 | **报告解析** | 📄 分析 | [![Demo](https://img.shields.io/badge/Launch-Demo-success?style=for-the-badge&logo=googlefiles&logoColor=white)](https://fanxiaolongx-max.github.io/privacy-policy/报告解析DEMO.html) |
