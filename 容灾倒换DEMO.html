@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMS / SBC DR Strategy Deck</title>
+    <style>
+        :root {
+            --primary: #2563eb;       /* Corporate Blue */
+            --primary-dark: #1e40af;
+            --bg-sidebar: #0f172a;    /* Dark Navy */
+            --bg-main: #f1f5f9;       /* Light Grey */
+            --text-sidebar: #94a3b8;
+            --text-active: #ffffff;
+            --card-bg: #ffffff;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --border: #e2e8f0;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", sans-serif;
+            background-color: var(--bg-main);
+            color: #334155;
+            height: 100vh;
+            display: flex;
+            overflow: hidden; /* App-like feel */
+        }
+
+        /* --- Language Toggle Logic --- */
+        body.lang-zh .en { display: none !important; }
+        body.lang-en .zh { display: none !important; }
+
+        /* --- Sidebar (TOC) --- */
+        aside {
+            width: 280px;
+            background-color: var(--bg-sidebar);
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #1e293b;
+            flex-shrink: 0;
+        }
+
+        .brand {
+            padding: 1.5rem;
+            color: white;
+            font-weight: 700;
+            font-size: 1.2rem;
+            border-bottom: 1px solid #1e293b;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem 0;
+        }
+
+        .nav-item {
+            padding: 0.8rem 1.5rem;
+            cursor: pointer;
+            color: var(--text-sidebar);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            transition: var(--transition);
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(255,255,255,0.05);
+            color: #cbd5e1;
+        }
+
+        .nav-item.active {
+            background-color: rgba(37, 99, 235, 0.1);
+            color: var(--text-active);
+            border-left-color: var(--primary);
+            font-weight: 600;
+        }
+
+        .nav-number {
+            font-family: 'Courier New', monospace;
+            opacity: 0.5;
+            margin-right: 10px;
+            width: 20px;
+        }
+
+        .nav-item.search-match {
+            color: var(--warning);
+        }
+
+        /* --- Main Content Area --- */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Header Bar */
+        header {
+            background: white;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .search-box {
+            position: relative;
+            width: 300px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 8px 12px 8px 35px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: #f8fafc;
+            font-size: 0.9rem;
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+        }
+
+        .controls button {
+            padding: 6px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: white;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--primary);
+            transition: var(--transition);
+        }
+
+        .controls button:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Slides Container */
+        .slides-wrapper {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .slide {
+            display: none;
+            max-width: 1000px;
+            margin: 0 auto;
+            animation: fadeIn 0.4s ease-out;
+            padding-bottom: 3rem;
+        }
+
+        .slide.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Slide Content Styling */
+        .slide-header {
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 1rem;
+        }
+
+        .slide-number {
+            font-size: 4rem;
+            font-weight: 800;
+            color: #e2e8f0;
+            line-height: 1;
+            margin-bottom: -10px;
+        }
+
+        .slide-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+            border-top: 4px solid var(--primary);
+        }
+
+        .card.risk { border-top-color: var(--danger); }
+        .card.warning { border-top-color: var(--warning); }
+
+        h3 { margin-top: 0; color: #475569; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;}
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.95rem; }
+        th { text-align: left; background: #f8fafc; padding: 10px; border-bottom: 2px solid var(--border); color: #64748b; font-size: 0.85rem; text-transform: uppercase; }
+        td { padding: 12px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+        tr:last-child td { border-bottom: none; }
+
+        /* Tags */
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .tag.risk { background: #fee2e2; color: #991b1b; }
+        .tag.ok { background: #dcfce7; color: #166534; }
+        .tag.wait { background: #fef3c7; color: #92400e; }
+
+        /* Navigation Buttons at bottom of slide */
+        .slide-nav-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn-next {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-next:hover { background: var(--primary-dark); }
+
+    </style>
+</head>
+<body class="lang-zh">
+
+    <aside>
+        <div class="brand">
+            <span class="zh">IMS 容灾倒换指南</span>
+            <span class="en">IMS DR Guidebook</span>
+        </div>
+        <div class="nav-scroll" id="sidebar-nav">
+            </div>
+    </aside>
+
+    <main>
+        <header>
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" placeholder="Search / 搜索关键字..." onkeyup="filterSlides()">
+            </div>
+            <div class="controls">
+                <button onclick="toggleLang()">
+                    <span class="zh">EN / 中文切换</span>
+                    <span class="en">Switch to 中文</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="slides-wrapper">
+
+            <section class="slide active" id="slide-01">
+                <div class="slide-header">
+                    <div class="slide-number">01</div>
+                    <h1 class="slide-title">
+                        <span class="zh">整体结论 (Executive Summary)</span>
+                        <span class="en">Executive Summary</span>
+                    </h1>
+                </div>
+
+                <div class="card warning">
+                    <h3>📢 <span class="zh">核心认知</span><span class="en">Core Concept</span></h3>
+                    <p class="zh">IMS 容灾倒换不是“瞬时无感”。核心风险集中在：<strong>信令检测窗口、会话刷新、HSS/DRA 负载、PCRF 会话膨胀</strong>。</p>
+                    <p class="en">IMS DR switchover is NOT "instant and seamless". Core risks: <strong>Signaling detection window, Session Refresh, HSS/DRA Load, PCRF Session Inflation</strong>.</p>
+                </div>
+
+                <div class="card">
+                    <h3>🎯 <span class="zh">关键结论</span><span class="en">Key Conclusions</span></h3>
+                    <ul>
+                        <li>
+                            <span class="zh"><strong>SBC 角色：</strong>不是核心风险点。真正风险在 <span class="tag risk">PS/PGW + 终端行为</span> (P-CSCF IP 重分配、注册触发)。</span>
+                            <span class="en"><strong>SBC Role:</strong> Not the core risk. True risk is <span class="tag risk">PS/PGW + UE Behavior</span> (P-CSCF IP re-assignment, Reg trigger).</span>
+                        </li>
+                        <li>
+                            <span class="zh"><strong>恢复依赖：</strong>用户不可能“瞬间全部切到另一套”。恢复速度强依赖：<span class="tag wait">TCP vs UDP</span>、是否触发 <span class="tag wait">重注册 / 新呼叫</span>。</span>
+                            <span class="en"><strong>Recovery Dependency:</strong> Users won't switch instantly. Depends on <span class="tag wait">TCP vs UDP</span> and triggers like <span class="tag wait">Re-Reg / New Call</span>.</span>
+                        </li>
+                        <li>
+                            <span class="zh"><strong>倒回风险：</strong>倒回（恢复原网）阶段的负载风险通常 <span class="tag risk">≥ 倒换阶段</span>。重点关注 Cx/Sh 再次升高与 PCRF Session 再次攀升。</span>
+                            <span class="en"><strong>Rollback Risk:</strong> Rollback load risk is often <span class="tag risk">≥ Switchover</span>. Focus on Cx/Sh surge and PCRF Session climb.</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="slide-nav-footer">
+                    <button class="btn-next" onclick="nextSlide()">
+                        <span class="zh">下一页: ATS 故障分析</span>
+                        <span class="en">Next: ATS Failure Analysis</span> →
+                    </button>
+                </div>
+            </section>
+
+            <section class="slide" id="slide-02">
+                <div class="slide-header">
+                    <div class="slide-number">02</div>
+                    <h1 class="slide-title">
+                        <span class="zh">Step-1: ATS01 故障 (STP ME)</span>
+                        <span class="en">Step-1: ATS01 Failure (STP ME)</span>
+                    </h1>
+                </div>
+
+                <div class="card">
+                    <h3>📊 <span class="zh">故障特征</span><span class="en">Failure Characteristics</span></h3>
+                    <p class="zh"><strong>影响网元：</strong>MMTEL / SCC / SSF / IP-SM-GW<br><strong>S-CSCF 确认时间：</strong>约 30 秒 (Detect Window)</p>
+                    <p class="en"><strong>Impacted Nodes:</strong> MMTEL / SCC / SSF / IP-SM-GW<br><strong>S-CSCF Confirm Time:</strong> ~30 sec (Detect Window)</p>
+                </div>
+
+                <div class="card">
+                    <h3>📞 <span class="zh">语音业务影响矩阵</span><span class="en">Voice Service Impact Matrix</span></h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th><span class="zh">场景</span><span class="en">Scenario</span></th>
+                                <th><span class="zh">行为 / 结果</span><span class="en">Behavior / Result</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <span class="zh"><strong>Ongoing Call</strong><br>(ATS前释放)</span>
+                                    <span class="en"><strong>Ongoing Call</strong><br>(Released before ATS)</span>
+                                </td>
+                                <td><span class="tag ok">OK</span> <span class="zh">计费正常</span><span class="en">Billing Normal</span></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="zh"><strong>Ongoing Call</strong><br>(媒体已建立)</span>
+                                    <span class="en"><strong>Ongoing Call</strong><br>(Media Established)</span>
+                                </td>
+                                <td>
+                                    <span class="tag wait">Partial</span> 
+                                    <span class="zh">媒体继续(RTP OK)，但计费与 SRVCC 可能失败。会话刷新失败时释放 (Max 30min)。</span>
+                                    <span class="en">Media continues (RTP OK), but Billing/SRVCC may fail. Release on Session Refresh fail (Max 30min).</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="zh"><strong>New Call</strong><br>(检测窗口内)</span>
+                                    <span class="en"><strong>New Call</strong><br>(In Detect Window)</span>
+                                </td>
+                                <td><span class="tag risk">Fail</span> <span class="zh">30s内新呼叫失败。故障确认后恢复。</span><span class="en">Fails within 30s. Recovers after confirmation.</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card risk">
+                    <h3>⚠️ <span class="zh">信令负载风险 (Risk-1)</span><span class="en">Signaling Risk (Risk-1)</span></h3>
+                    <ul>
+                        <li><span class="zh">Sh 信令高于正常夜间：ATS 需从 HSS 重新下载数据。</span><span class="en">Sh signaling higher than normal night: ATS redownloads data from HSS.</span></li>
+                        <li><span class="zh">ATS01 到 HSS 的订阅未取消，HSS 发送 PNR 失败，影响 KPI。</span><span class="en">ATS01 subscription to HSS not cancelled; HSS sends PNR but fails, impacting KPI.</span></li>
+                    </ul>
+                </div>
+
+                <!-- ✅ 新增：你补充的 ATS 阶段风险点（不删除原内容） -->
+                <div class="card risk">
+                    <h3>🧨 <span class="zh">补充风险清单（ATS 阶段）</span><span class="en">Additional Risk List (ATS Phase)</span></h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 160px;">Risk</th>
+                                <th><span class="zh">说明</span><span class="en">Description</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="tag risk">Risk-1</span></td>
+                                <td>
+                                    <div class="zh">CSCF 需要约 <strong>30s</strong> 才能确认 ATS 故障，窗口内业务会受影响。</div>
+                                    <div class="en">CSCF needs about <strong>30s</strong> to confirm ATS faulty; services are impacted during the window.</div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><span class="tag risk">Risk-2</span></td>
+                                <td>
+                                    <div class="zh">STP 检测到 <strong>IP-SM-GW-1</strong> 故障后需切到 <strong>IP-SM-GW-2</strong>；否则 <strong>MT-SMS</strong> 失败。</div>
+                                    <div class="en">STP must detect <strong>IP-SM-GW-1</strong> faulty and route to <strong>IP-SM-GW-2</strong>, otherwise <strong>MT-SMS</strong> will fail.</div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><span class="tag risk">Risk-3</span></td>
+                                <td>
+                                    <div class="zh">ATS02 可能出现 <strong>License 过载</strong> 风险（承接/负载上移）。</div>
+                                    <div class="en">Potential <strong>license overload</strong> risk on ATS02 (traffic shifted / takeover load).</div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><span class="tag risk">Risk-4</span></td>
+                                <td>
+                                    <div class="zh">为下载用户数据，DRA/HSS 的 <strong>Sh 链路负载上升</strong>。</div>
+                                    <div class="en"><strong>Sh link load</strong> on DRA/HSS increases for user data download.</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="slide-nav-footer">
+                    <button class="btn-next" onclick="nextSlide()">Next Step →</button>
+                </div>
+            </section>
+
+            <section class="slide" id="slide-03">
+                <div class="slide-header">
+                    <div class="slide-number">03</div>
+                    <h1 class="slide-title">
+                        <span class="zh">Step-2: CSCF STP ME (~10m later)</span>
+                        <span class="en">Step-2: CSCF STP ME (~10m later)</span>
+                    </h1>
+                </div>
+
+                <div class="card">
+                    <h3>⏱️ <span class="zh">关键时延参数</span><span class="en">Key Latency Parameters</span></h3>
+                    <ul>
+                        <li><strong>Detect:</strong> 20s</li>
+                        <li><strong>ART (Retransmission):</strong> 6s × 3 + 2s ≈ 20s</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>📉 <span class="zh">业务影响</span><span class="en">Service Impact</span></h3>
+                    <table>
+                        <tr>
+                            <td><span class="zh">Ongoing Call</span><span class="en">Ongoing Call</span></td>
+                            <td><span class="zh">释放。无连锁影响。</span><span class="en">Released. No chain effect.</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="zh">New Register/Call</span><span class="en">New Register/Call</span></td>
+                            <td>
+                                <span class="tag risk">Delay/Fail</span>
+                                <span class="zh">受 20s 检测窗口影响。窗口内失败，确认后恢复。</span>
+                                <span class="en">Impacted by 20s window. Fails within window, recovers after.</span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="card risk">
+                    <h3>🌪️ <span class="zh">Cx 信令风暴</span><span class="en">Cx Signaling Storm</span></h3>
+                    <p class="zh">Cx 信令显著上升，DRA/HSS 链路负载高于正常夜间，需要在割接窗口重点监控。</p>
+                    <p class="en">Significant Cx signaling surge. DRA/HSS link load higher than normal. Monitor closely during window.</p>
+                </div>
+
+                <!-- ✅ 新增：你补充的 CSCF 阶段风险点 -->
+                <div class="card risk">
+                    <h3>🧨 <span class="zh">补充风险清单（CSCF 阶段）</span><span class="en">Additional Risk List (CSCF Phase)</span></h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 160px;">Risk</th>
+                                <th><span class="zh">说明</span><span class="en">Description</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="tag risk">Risk-1</span></td>
+                                <td>
+                                    <div class="zh">P-CSCF 需要约 <strong>20s</strong> 检测 CSC 故障，窗口内业务受影响。</div>
+                                    <div class="en">P-CSCF needs about <strong>20s</strong> to detect CSC faulty; services are impacted during the window.</div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><span class="tag risk">Risk-2</span></td>
+                                <td>
+                                    <div class="zh"><strong>MO Call/SMS</strong>：在新注册完成前可能失败（SBC 504）。UE 会在一定延时后发起到第二个 P-CSCF 的注册（定时器依 UE 厂商）。</div>
+                                    <div class="en"><strong>MO Call/SMS</strong> may fail before new registration (SBC returns 504). UE starts Register to 2nd P-CSCF after a delay (timer depends on UE vendors).</div>
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th><span class="zh">终端</span><span class="en">UE</span></th>
+                                                <th><span class="zh">经验值延时</span><span class="en">Delay (Experience)</span></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td>iPhone</td><td>~5s</td></tr>
+                                            <tr><td>Samsung</td><td>~5s</td></tr>
+                                            <tr><td>Huawei</td><td>~52s</td></tr>
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><span class="tag risk">Risk-3</span></td>
+                                <td>
+                                    <div class="zh">注册负载会被均衡到其它 SBC，可能引发 E/// SBC & IMS 的 <strong>容量/License 过载风险</strong>。</div>
+                                    <div class="en">Register load balances to other SBCs, which may cause <strong>capacity/license overload</strong> risks on E/// SBC & IMS.</div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><span class="tag risk">Risk-4</span></td>
+                                <td>
+                                    <div class="zh">为下载用户数据，DRA/HSS 的 <strong>Cx 链路负载上升</strong>。</div>
+                                    <div class="en"><strong>Cx link load</strong> on DRA/HSS increases for user data download.</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="slide-nav-footer">
+                    <button class="btn-next" onclick="nextSlide()">Next Step →</button>
+                </div>
+            </section>
+
+            <section class="slide" id="slide-04">
+                <div class="slide-header">
+                    <div class="slide-number">04</div>
+                    <h1 class="slide-title">
+                        <span class="zh">Step-3: SBC01 STP ME (~10m later)</span>
+                        <span class="en">Step-3: SBC01 STP ME (~10m later)</span>
+                    </h1>
+                </div>
+
+                <div class="card warning">
+                    <h3><span class="zh">检测机制与限制</span><span class="en">Detection & Limitations</span></h3>
+                    <p class="zh">CSC Detection 默认 30s。因 P-CSCF 使用 IP (非 Hostname) 注册，<strong>IP 故障期间 UE 无法快速迁移</strong>。</p>
+                    <p class="en">CSC Detection default 30s. Since P-CSCF uses IP (not Hostname), <strong>UE cannot migrate quickly during IP failure</strong>.</p>
+                </div>
+
+                <div class="card risk">
+                    <h3>💣 <span class="zh">核心高风险点 (Risk-2, 3, 4)</span><span class="en">Critical Risks (Risk-2, 3, 4)</span></h3>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <span class="tag risk">Risk-2: MT Call</span>
+                        <div class="zh">未完成重注册前，MT Call 持续失败。</div>
+                        <div class="en">MT Call fails continuously until re-registration is complete.</div>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <span class="tag risk">Risk-3: PGW Re-assignment</span>
+                        <div class="zh">PGW 可能再次分配故障的 P-CSCF IP 给 UE，导致注册恢复时间拉长。</div>
+                        <div class="en">PGW might re-assign the failed P-CSCF IP to UE, prolonging recovery.</div>
+                    </div>
+
+                    <div>
+                        <span class="tag risk">Risk-4: PCRF Session Inflation</span>
+                        <div class="zh">用户数据 2小时后删除。PCRF Session 显著高于正常，需数天恢复 (待 PGW 释放 Bearer)。</div>
+                        <div class="en">User data cleared after 2hrs. PCRF Sessions spike significantly, needs days to recover (wait for PGW bearer release).</div>
+                    </div>
+                </div>
+
+                <!-- ✅ 新增：你补充的“全量风险表述” -->
+                <div class="card risk">
+                    <h3>🧨 <span class="zh">补充风险清单（SBC/UE 行为阶段）</span><span class="en">Additional Risk List (SBC / UE Behavior)</span></h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 160px;">Risk</th>
+                                <th><span class="zh">说明</span><span class="en">Description</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="tag risk">Risk-1</span></td>
+                                <td>
+                                    <div class="zh">在 UE 尝试新的注册之前，所有 <strong>MO 业务</strong> 都会失败。</div>
+                                    <div class="en">All <strong>MO services</strong> fail until UE tries a new Register.</div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><span class="tag risk">Risk-2</span></td>
+                                <td>
+                                    <div class="zh"><strong>MT Call/SMS</strong> 依赖 CS Retry / Transfer 与 CSFB Paging 机制，表现不确定。</div>
+                                    <div class="en"><strong>MT Call/SMS</strong> depends on CS Retry / Transfer with CSFB paging; behavior may vary.</div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><span class="tag risk">Risk-3</span></td>
+                                <td>
+                                    <div class="zh">PGW 可能再次把故障的 P-CSCF IP 分配给 UE，导致部分用户恢复时间很长。</div>
+                                    <div class="en">PGW may re-allocate the faulty P-CSCF IP again to UE, so some UEs may take a long time.</div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><span class="tag risk">Risk-4</span></td>
+                                <td>
+                                    <div class="zh">PCRF session <strong>小幅增加</strong>（few increased），需关注趋势与持续时间。</div>
+                                    <div class="en">PCRF sessions <strong>increase slightly</strong> (few increased); monitor the trend and duration.</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="slide-nav-footer">
+                    <button class="btn-next" onclick="nextSlide()">Next Step →</button>
+                </div>
+            </section>
+
+            <section class="slide" id="slide-05">
+                <div class="slide-header">
+                    <div class="slide-number">05</div>
+                    <h1 class="slide-title">
+                        <span class="zh">恢复 / 倒回阶段 (Rollback)</span>
+                        <span class="en">Recovery / Rollback Phase</span>
+                    </h1>
+                </div>
+
+                <div class="card warning">
+                    <h3>📈 <span class="zh">信令与负载反弹</span><span class="en">Signaling & Load Rebound</span></h3>
+                    <p class="zh">恢复 IMS & SBC 后，Cx/Sh (到 HSS) 高于恢复前，DRA/HSS 链路再次承压。<br>PCRF session 仍会高于正常，需数天回落。</p>
+                    <p class="en">After recovery, Cx/Sh (to HSS) spikes higher than before. DRA/HSS links under pressure.<br>PCRF sessions remain high, taking days to drop.</p>
+                </div>
+
+                <!-- ✅ 新增：你补充的 rollback 风险点 -->
+                <div class="card risk">
+                    <h3>🧨 <span class="zh">补充风险清单（恢复/倒回）</span><span class="en">Additional Risk List (Recovery / Rollback)</span></h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 160px;">Risk</th>
+                                <th><span class="zh">说明</span><span class="en">Description</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="tag risk">Risk-1</span></td>
+                                <td>
+                                    <div class="zh">ATS/SBC/CSCF 恢复后，由于用户数据老化/过期触发重新下载，<strong>DRA/HSS 负载上升</strong>。</div>
+                                    <div class="en">After ATS/SBC/CSCF restore, <strong>DRA/HSS load increases</strong> to download user data, as user data is aged.</div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><span class="tag risk">Risk-2</span></td>
+                                <td>
+                                    <div class="zh">如果启用自动用户均衡（auto user balance），整体回切/回落可能需要 <strong>较长时间</strong>。</div>
+                                    <div class="en">It may take a <strong>long time</strong> if auto user balance is enabled.</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card">
+                    <h3>✅ <span class="zh">操作检查点</span><span class="en">Checkpoints</span></h3>
+                    <ul>
+                        <li><span class="zh">严格按 Rollback MOP 执行。</span><span class="en">Strictly follow Rollback MOP.</span></li>
+                        <li><span class="zh">检查 ATS Plug-in (E/// Repository adaption)。</span><span class="en">Check ATS Plug-in (E/// Repository adaption).</span></li>
+                        <li><span class="zh">SBC 用户恢复不是瞬时，可能需数天。</span><span class="en">SBC user recovery is not instant, may take days.</span></li>
+                    </ul>
+                </div>
+
+                <div class="slide-nav-footer">
+                    <button class="btn-next" onclick="nextSlide()">Next Step →</button>
+                </div>
+            </section>
+
+            <section class="slide" id="slide-06">
+                <div class="slide-header">
+                    <div class="slide-number">06</div>
+                    <h1 class="slide-title">
+                        <span class="zh">SBC 专项结论 (工程化)</span>
+                        <span class="en">SBC Specific Conclusion</span>
+                    </h1>
+                </div>
+
+                <div class="card">
+                    <h3>❓ <span class="zh">停止 SBC 后，用户是否立刻“上新 SBC”？</span><span class="en">Do users immediately "jump to new SBC" after stop?</span></h3>
+                    <p class="zh"><strong>结论：不一定。</strong>取决于终端与传输协议。用户迁移是“渐进式”的。</p>
+                    <p class="en"><strong>Conclusion: Not necessarily.</strong> Depends on terminal & transport. Migration is "progressive".</p>
+                </div>
+
+                <div class="card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th><span class="zh">场景</span><span class="en">Scenario</span></th>
+                                <th><span class="zh">行为</span><span class="en">Behavior</span></th>
+                                <th><span class="zh">结果</span><span class="en">Result</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="zh">触发新呼叫</span><span class="en">Trigger New Call</span></td>
+                                <td><span class="zh">UE 重选 P-CSCF</span><span class="en">UE Reselect P-CSCF</span></td>
+                                <td><span class="tag ok">Fast</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>TCP</strong> <span class="zh">注册</span><span class="en">Reg</span></td>
+                                <td><span class="zh">链路中断 → 立即重注册</span><span class="en">Link break → Immediate Re-reg</span></td>
+                                <td><span class="tag ok">Fast</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>UDP</strong> <span class="zh">注册</span><span class="en">Reg</span></td>
+                                <td><span class="zh">等待超时 / 刷新周期</span><span class="en">Wait for timeout / refresh</span></td>
+                                <td><span class="tag wait">Slow / Uncontrollable</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="slide-nav-footer">
+                    <button class="btn-next" onclick="nextSlide()">Next Step →</button>
+                </div>
+            </section>
+
+            <section class="slide" id="slide-07">
+                <div class="slide-header">
+                    <div class="slide-number">07</div>
+                    <h1 class="slide-title">
+                        <span class="zh">一句话总结</span>
+                        <span class="en">Summary</span>
+                    </h1>
+                </div>
+
+                <div class="card" style="background: var(--bg-sidebar); color: white; border: none; padding: 3rem;">
+                    <blockquote style="font-size: 1.5rem; border-left: 5px solid var(--primary); padding-left: 20px; margin: 0;">
+                        <span class="zh">IMS 容灾的本质不是“网元切换”，而是“检测窗口 + 会话生命周期 + UE 行为 + PS/PGW 重分配”的综合效应。</span>
+                        <span class="en">IMS DR is not just about "Node Switchover", but the combined effect of "Detection Window + Session Lifecycle + UE Behavior + PS/PGW Re-assignment".</span>
+                    </blockquote>
+                    <p style="margin-top: 2rem; color: #94a3b8;">
+                        <span class="zh">👉 真正的监控重点：HSS/DRA, PCRF, & PGW</span>
+                        <span class="en">👉 True Monitoring Focus: HSS/DRA, PCRF, & PGW</span>
+                    </p>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <script>
+        // Data for Navigation
+        const slides = [
+            { id: 'slide-01', zh: '整体结论', en: 'Executive Summary' },
+            { id: 'slide-02', zh: 'Step-1: ATS 故障', en: 'Step-1: ATS Failure' },
+            { id: 'slide-03', zh: 'Step-2: CSCF 故障', en: 'Step-2: CSCF Failure' },
+            { id: 'slide-04', zh: 'Step-3: SBC 故障', en: 'Step-3: SBC Failure' },
+            { id: 'slide-05', zh: '恢复/倒回阶段', en: 'Recovery / Rollback' },
+            { id: 'slide-06', zh: 'SBC 专项结论', en: 'SBC Conclusion' },
+            { id: 'slide-07', zh: '一句话总结', en: 'One-Liner' }
+        ];
+
+        let currentLang = 'zh';
+
+        // Initialize
+        function init() {
+            renderNav();
+            switchSlide(0);
+        }
+
+        // Render Navigation
+        function renderNav() {
+            const nav = document.getElementById('sidebar-nav');
+            nav.innerHTML = slides.map((slide, index) => `
+                <div class="nav-item" onclick="switchSlide(${index})" id="nav-${index}">
+                    <span class="nav-number">0${index + 1}</span>
+                    <span class="zh">${slide.zh}</span>
+                    <span class="en">${slide.en}</span>
+                </div>
+            `).join('');
+        }
+
+        // Switch Slide
+        function switchSlide(index) {
+            // Hide all slides
+            document.querySelectorAll('.slide').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+            // Show target
+            const targetId = slides[index].id;
+            document.getElementById(targetId).classList.add('active');
+            document.getElementById(`nav-${index}`).classList.add('active');
+            
+            // Scroll slide wrapper to top
+            document.querySelector('.slides-wrapper').scrollTop = 0;
+        }
+
+        function nextSlide() {
+            const activeNav = document.querySelector('.nav-item.active');
+            const currentIndex = parseInt(activeNav.id.split('-')[1]);
+            if (currentIndex < slides.length - 1) {
+                switchSlide(currentIndex + 1);
+            }
+        }
+
+        // Toggle Language
+        function toggleLang() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            document.body.className = `lang-${currentLang}`;
+        }
+
+        // Search Filter
+        function filterSlides() {
+            const input = document.getElementById('searchInput').value.toLowerCase();
+            const navItems = document.querySelectorAll('.nav-item');
+            
+            navItems.forEach((item, index) => {
+                const slideContent = document.getElementById(slides[index].id).innerText.toLowerCase();
+                if (input.length > 0 && slideContent.includes(input)) {
+                    item.classList.add('search-match');
+                } else {
+                    item.classList.remove('search-match');
+                }
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
