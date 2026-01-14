@@ -2,132 +2,544 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>8位编码补零（可粘贴到Excel）</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Excel 列处理工具（HTML版：补齐8位/同内容着色/导出含颜色+文本格式）</title>
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; margin:20px; line-height:1.4;}
-    .wrap{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
-    textarea{width:100%; height:360px; padding:12px; font-family:ui-monospace,Consolas,monospace; font-size:14px;}
-    .bar{display:flex; gap:10px; flex-wrap:wrap; margin:12px 0;}
-    button{padding:10px 14px; border:1px solid #ccc; background:#fff; cursor:pointer; border-radius:10px;}
-    button:hover{background:#f6f6f6;}
-    .hint{color:#555; font-size:13px;}
-    .err{white-space:pre-wrap; background:#fff3f3; border:1px solid #ffd0d0; padding:10px; border-radius:10px;}
-    .ok{white-space:pre-wrap; background:#f2fff3; border:1px solid #c9f2cf; padding:10px; border-radius:10px;}
-    label{font-weight:600; display:block; margin-bottom:6px;}
-    .small{font-size:12px; color:#666;}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; margin:18px; line-height:1.35;}
+    h2{margin:0 0 10px;}
+    .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center;}
+    .card{border:1px solid #e6e6e6; border-radius:14px; padding:14px; box-shadow:0 1px 10px rgba(0,0,0,.04); margin:12px 0;}
+    label{font-weight:600;}
+    select,input[type="text"]{padding:8px 10px; border:1px solid #d7d7d7; border-radius:10px; min-width:220px;}
+    button{padding:10px 12px; border:1px solid #d7d7d7; border-radius:12px; background:#fff; cursor:pointer;}
+    button:hover{background:#f7f7f7;}
+    button:disabled{opacity:.55; cursor:not-allowed;}
+    .muted{color:#666; font-size:13px;}
+    .ok{background:#f2fff3; border:1px solid #c9f2cf; padding:10px; border-radius:12px; white-space:pre-wrap;}
+    .err{background:#fff3f3; border:1px solid #ffd0d0; padding:10px; border-radius:12px; white-space:pre-wrap;}
+    table{border-collapse:collapse; width:100%; font-size:13px;}
+    th,td{border:1px solid #e7e7e7; padding:6px 8px; vertical-align:top;}
+    th{background:#fafafa; text-align:left;}
+    .pill{display:inline-block; padding:2px 8px; border:1px solid #e0e0e0; border-radius:999px; font-size:12px; color:#555;}
+    .spacer{flex:1;}
+    .mono{font-family:ui-monospace,Consolas,monospace;}
+    .small{font-size:12px; color:#777;}
+    .preview-wrap{max-height:420px; overflow:auto; border-radius:12px; border:1px solid #e7e7e7;}
+    .hint{margin-top:8px;}
   </style>
+
+  <!-- ✅ xlsx-js-style：支持写入单元格样式（填充色、numFmt 等） -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 </head>
 <body>
-  <h2>8位编码补零 → 直接粘贴到 Excel</h2>
-  <div class="hint">
-    输入一列编码（每行一个，允许 7/8 位、允许有前导0）。输出会强制变成 <b>8位且保留0</b>，复制后粘贴到 Excel 一列即可。
-  </div>
+  <h2>Excel 列处理工具（HTML版）</h2>
+  <div class="muted">导入 Excel → 选择页签/列 → 补齐8位（导出强制文本）/ 同内容着色（导出含颜色） → 导出新 Excel（无需宏）</div>
 
-  <div class="bar">
-    <button id="btnFormat">格式化为8位</button>
-    <button id="btnCopy">复制输出（带换行）</button>
-    <button id="btnClear">清空</button>
-  </div>
-
-  <div class="wrap">
-    <div>
-      <label>输入（每行一个）</label>
-      <textarea id="input" placeholder="例如：
-01234567
-1234567
-00000001
-98765432"></textarea>
-      <div class="small">支持：空行会忽略；行内空格会自动去掉。</div>
+  <div class="card">
+    <div class="row">
+      <label>导入 Excel：</label>
+      <input id="file" type="file" accept=".xlsx,.xls,.xlsb,.csv" />
+      <span class="pill" id="fileInfo">未导入</span>
+      <span class="spacer"></span>
+      <button id="btnExport" disabled>⬇️ 导出为新 Excel（含颜色 + 文本格式）</button>
     </div>
-    <div>
-      <label>输出（复制此处粘贴到Excel）</label>
-      <textarea id="output" readonly placeholder="点击“格式化为8位”后这里会生成结果"></textarea>
-      <div class="small">提示：Excel 可能会自动把“00123456”显示成数字。若你想强制为文本显示，可用下面的“Excel文本模式”。</div>
-    </div>
+    <div class="small hint">说明：文件只在浏览器本地处理，不会上传。</div>
   </div>
 
-  <div class="bar">
-    <button id="btnExcelText">Excel文本模式（前面加 ' ）</button>
-    <button id="btnExcelFormula">Excel公式模式（=TEXT(...)）</button>
+  <div class="card">
+    <div class="row">
+      <label>选择页签：</label>
+      <select id="sheetSel" disabled></select>
+
+      <label>选择列：</label>
+      <select id="colSel" disabled></select>
+
+      <label class="row" style="gap:6px;">
+        <input type="checkbox" id="hasHeader" checked />
+        <span>首行是表头（不处理第1行）</span>
+      </label>
+
+      <label class="row" style="gap:6px;">
+        <input type="checkbox" id="skipBlanks" checked />
+        <span>跳过空值</span>
+      </label>
+
+      <label class="row" style="gap:6px;">
+        <input type="checkbox" id="randomColor" />
+        <span>随机配色</span>
+      </label>
+    </div>
+
+    <div class="row" style="margin-top:10px;">
+      <button id="btnPad8" disabled>🔢 补齐为8位编码（导出按文本）</button>
+      <button id="btnColorize" disabled>🎨 同内容同颜色（该列着色并保留）</button>
+      <button id="btnClearColor" disabled>🧽 清除该列着色</button>
+      <button id="btnCopyCol" disabled>📋 复制该列（粘贴到Excel）</button>
+      <span class="spacer"></span>
+      <span class="muted">预览仅展示前 50 行</span>
+    </div>
   </div>
 
   <div id="msg"></div>
 
-  <script>
-    const $ = (id) => document.getElementById(id);
+  <div class="card">
+    <div class="row">
+      <label>数据预览（前 50 行）：</label>
+      <span class="pill">当前页签：<span id="curSheet" class="mono">-</span></span>
+      <span class="pill">当前列：<span id="curCol" class="mono">-</span></span>
+      <span class="pill">已着色列数：<span id="coloredCount" class="mono">0</span></span>
+      <span class="pill">已补齐文本列数：<span id="paddedCount" class="mono">0</span></span>
+    </div>
+    <div class="preview-wrap">
+      <table id="previewTbl">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="small hint">
+      说明：导出会保留“本工具生成”的颜色与文本格式（用于保留前导0）。
+      原始文件自带的颜色/样式，大多浏览器库无法完整读取，因此不保证原样式能被完整保留。
+    </div>
+  </div>
 
-    function normalizeLine(s){
-      // 去掉两端空白 + 去掉中间空格/制表符/不可见字符
-      return (s ?? "").trim().replace(/\s+/g, "");
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+
+  let wb = null;                   // workbook
+  let sheetName = null;            // current sheet
+  let colIndex = null;             // selected column index (0-based)
+
+  // ✅ 保存每个 sheet 的数据（可被修改）
+  const modifiedSheets = new Map();      // sheetName -> AOA
+
+  // ✅ 保存每个 sheet 的“列着色映射”
+  // colorMaps.get(sheetName).get(colIndex) -> Map(value -> "rgb(r,g,b)")
+  const colorMaps = new Map();
+
+  // ✅ 记录每个 sheet 哪些列做过“补齐8位”（导出时强制文本格式）
+  // padCols.get(sheetName) = Set(colIndex)
+  const padCols = new Map();
+
+  const softPalette = [
+    [255,235,238],[232,245,233],[227,242,253],[255,249,196],
+    [243,229,245],[255,224,178],[225,245,254],[241,248,233],
+    [252,228,236],[224,247,250],[237,231,246],[255,243,224]
+  ];
+
+  function rgb(arr){ return `rgb(${arr[0]},${arr[1]},${arr[2]})`; }
+
+  function randSoft(seed){
+    // deterministic-ish random by seed
+    const f = (k) => {
+      const x = Math.sin((seed+k) * 9999) * 10000;
+      return 200 + Math.floor((x - Math.floor(x)) * 56);
+    };
+    return `rgb(${f(0)},${f(1)},${f(2)})`;
+  }
+
+  function showMsg(type, text){
+    $("msg").innerHTML = `<div class="${type}">${text}</div>`;
+  }
+
+  function getSheetAOA(name){
+    if (modifiedSheets.has(name)) return modifiedSheets.get(name);
+    const ws = wb.Sheets[name];
+    const aoa = XLSX.utils.sheet_to_json(ws, {header:1, raw:false, defval:""});
+    modifiedSheets.set(name, aoa);
+    return aoa;
+  }
+
+  function setSheetAOA(name, aoa){
+    modifiedSheets.set(name, aoa);
+  }
+
+  function getColorMapFor(sheet, col){
+    if (!colorMaps.has(sheet)) colorMaps.set(sheet, new Map());
+    const m = colorMaps.get(sheet);
+    if (!m.has(col)) m.set(col, new Map());
+    return m.get(col);
+  }
+
+  function deleteColorMapFor(sheet, col){
+    if (!colorMaps.has(sheet)) return;
+    colorMaps.get(sheet).delete(col);
+    if (colorMaps.get(sheet).size === 0) colorMaps.delete(sheet);
+  }
+
+  function countColoredCols(sheet){
+    if (!colorMaps.has(sheet)) return 0;
+    return colorMaps.get(sheet).size;
+  }
+
+  function markPaddedCol(sheet, col){
+    if (!padCols.has(sheet)) padCols.set(sheet, new Set());
+    padCols.get(sheet).add(col);
+  }
+
+  function countPaddedCols(sheet){
+    if (!padCols.has(sheet)) return 0;
+    return padCols.get(sheet).size;
+  }
+
+  function colLetter(n){
+    let s = ""; n++;
+    while (n > 0){
+      const m = (n - 1) % 26;
+      s = String.fromCharCode(65 + m) + s;
+      n = Math.floor((n - 1) / 26);
     }
+    return s;
+  }
 
-    function formatTo8Digits(raw){
-      // 只允许数字
-      if (!/^\d+$/.test(raw)) return { ok:false, reason:"包含非数字字符" };
-      if (raw.length > 8) return { ok:false, reason:"超过8位" };
-      // 允许 1-8 位，统一补到 8 位
-      return { ok:true, value: raw.padStart(8, "0") };
+  function getHeaderOrFirstNonEmpty(aoa, c, hasHeader){
+    if (!aoa || aoa.length === 0) return "";
+    if (hasHeader){
+      const h = String(aoa[0]?.[c] ?? "").trim();
+      if (h) return h;
     }
+    for (let r = hasHeader ? 1 : 0; r < aoa.length; r++){
+      const v = String(aoa[r]?.[c] ?? "").trim();
+      if (v) return v;
+    }
+    return "";
+  }
 
-    function buildOutput(mode){
-      const lines = $("input").value.split(/\r?\n/);
-      const out = [];
-      const errs = [];
+  function normalizeDigits(v){
+    return String(v ?? "").trim().replace(/\s+/g, "");
+  }
 
-      lines.forEach((line, idx) => {
-        const n = normalizeLine(line);
-        if (!n) return; // 忽略空行
+  function pad8(value){
+    const s = normalizeDigits(value);
+    if (!s) return {ok:false, reason:"空值"};
+    if (!/^\d+$/.test(s)) return {ok:false, reason:"非纯数字"};
+    if (s.length > 8) return {ok:false, reason:"超过8位"};
+    return {ok:true, value: s.padStart(8, "0")};
+  }
 
-        const r = formatTo8Digits(n);
-        if (!r.ok){
-          errs.push(`第 ${idx+1} 行：${line} → ${r.reason}`);
-          return;
+  function toHexFromRgb(rgbStr){
+    const m = rgbStr.match(/rgb\((\d+),(\d+),(\d+)\)/);
+    if (!m) return null;
+    const toHex = (n) => (+n).toString(16).padStart(2,"0").toUpperCase();
+    return `${toHex(m[1])}${toHex(m[2])}${toHex(m[3])}`;
+  }
+
+  function refreshPreview(){
+    if (!wb || !sheetName) return;
+
+    const aoa = getSheetAOA(sheetName);
+    const maxCols = Math.max(...aoa.map(r => r.length), 0);
+
+    $("curSheet").textContent = sheetName;
+    $("curCol").textContent = (colIndex === null) ? "-" : `${colLetter(colIndex)} (${colIndex+1})`;
+    $("coloredCount").textContent = String(countColoredCols(sheetName));
+    $("paddedCount").textContent = String(countPaddedCols(sheetName));
+
+    const thead = $("previewTbl").querySelector("thead");
+    const tbody = $("previewTbl").querySelector("tbody");
+    thead.innerHTML = "";
+    tbody.innerHTML = "";
+
+    const headerRow = document.createElement("tr");
+    for (let c = 0; c < maxCols; c++){
+      const th = document.createElement("th");
+      th.textContent = `${colLetter(c)}`;
+      headerRow.appendChild(th);
+    }
+    thead.appendChild(headerRow);
+
+    const previewRows = Math.min(50, aoa.length);
+
+    // ✅ 预览时对“所有已着色列”都显示颜色
+    const sheetColorCols = colorMaps.has(sheetName) ? colorMaps.get(sheetName) : new Map();
+
+    for (let r = 0; r < previewRows; r++){
+      const tr = document.createElement("tr");
+      for (let c = 0; c < maxCols; c++){
+        const td = document.createElement("td");
+        const v = (aoa[r] && aoa[r][c] !== undefined) ? aoa[r][c] : "";
+        const text = String(v);
+        td.textContent = text;
+
+        if (sheetColorCols.has(c)){
+          const map = sheetColorCols.get(c);
+          const key = text.trim();
+          if (key){
+            const color = map.get(key);
+            if (color) td.style.background = color;
+          }
         }
 
-        if (mode === "plain") out.push(r.value);
-        if (mode === "excelText") out.push("'" + r.value);               // 让Excel按文本处理
-        if (mode === "excelFormula") out.push(`=TEXT("${r.value}","00000000")`);
-      });
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  }
 
-      $("output").value = out.join("\n");
+  function loadSheets(){
+    $("sheetSel").innerHTML = "";
+    wb.SheetNames.forEach((n) => {
+      const opt = document.createElement("option");
+      opt.value = n; opt.textContent = n;
+      $("sheetSel").appendChild(opt);
+    });
+    $("sheetSel").disabled = false;
+    sheetName = wb.SheetNames[0];
+    $("sheetSel").value = sheetName;
+    loadColumns();
+  }
 
-      if (errs.length){
-        $("msg").innerHTML = `<div class="err"><b>发现 ${errs.length} 行无效：</b>\n${errs.join("\n")}</div>`;
-      } else {
-        $("msg").innerHTML = `<div class="ok"><b>完成：</b>共输出 ${out.length} 行</div>`;
+  function loadColumns(){
+    const aoa = getSheetAOA(sheetName);
+    const hasHeader = $("hasHeader").checked;
+    const cols = Math.max(...aoa.map(r => r.length), 0);
+
+    $("colSel").innerHTML = "";
+    for (let c = 0; c < cols; c++){
+      const title = getHeaderOrFirstNonEmpty(aoa, c, hasHeader);
+      const opt = document.createElement("option");
+      opt.value = String(c);
+      opt.textContent = title ? `${colLetter(c)}: ${title}` : `${colLetter(c)}`;
+      $("colSel").appendChild(opt);
+    }
+
+    $("colSel").disabled = cols === 0;
+    colIndex = cols ? 0 : null;
+    if (cols) $("colSel").value = "0";
+
+    const enabled = !!cols;
+    $("btnPad8").disabled = !enabled;
+    $("btnColorize").disabled = !enabled;
+    $("btnClearColor").disabled = !enabled;
+    $("btnCopyCol").disabled = !enabled;
+    $("btnExport").disabled = !wb;
+
+    refreshPreview();
+  }
+
+  // ---- Events ----
+  $("file").addEventListener("change", async (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+
+    try{
+      const buf = await f.arrayBuffer();
+      wb = XLSX.read(buf, {type:"array"});
+
+      modifiedSheets.clear();
+      colorMaps.clear();
+      padCols.clear();
+      sheetName = null;
+      colIndex = null;
+
+      $("fileInfo").textContent = f.name;
+      showMsg("ok", "已导入文件。请选择页签与列，然后执行处理。");
+
+      loadSheets();
+
+      $("btnExport").disabled = false;
+      $("sheetSel").disabled = false;
+      $("colSel").disabled = false;
+    }catch(err){
+      console.error(err);
+      showMsg("err", "导入失败：" + (err?.message || err));
+    }
+  });
+
+  $("sheetSel").addEventListener("change", () => {
+    sheetName = $("sheetSel").value;
+    loadColumns();
+  });
+
+  $("colSel").addEventListener("change", () => {
+    colIndex = parseInt($("colSel").value, 10);
+    refreshPreview(); // ✅ 不清空颜色/补齐记录
+  });
+
+  $("hasHeader").addEventListener("change", () => loadColumns());
+
+  $("btnPad8").addEventListener("click", () => {
+    if (!wb || colIndex === null) return;
+    const aoa = getSheetAOA(sheetName);
+    const hasHeader = $("hasHeader").checked;
+    const skipBlanks = $("skipBlanks").checked;
+
+    let changed=0, skipped=0, empty=0;
+    const startRow = hasHeader ? 1 : 0;
+
+    for (let r = startRow; r < aoa.length; r++){
+      const row = aoa[r] || (aoa[r] = []);
+      const v = row[colIndex];
+
+      const s = normalizeDigits(v);
+      if (!s){
+        if (skipBlanks) { empty++; continue; }
+        row[colIndex] = "00000000"; changed++; continue;
+      }
+
+      const res = pad8(s);
+      if (!res.ok){ skipped++; continue; }
+
+      // ✅ 写回字符串（含前导0）
+      row[colIndex] = res.value;
+      changed++;
+    }
+
+    setSheetAOA(sheetName, aoa);
+
+    // ✅ 记录该列已补齐：导出时强制按文本写入
+    markPaddedCol(sheetName, colIndex);
+
+    refreshPreview();
+    showMsg("ok", `补齐完成：成功 ${changed}；空值跳过 ${empty}；跳过（非数字/超过8位）${skipped}\n提示：导出时该列会强制为“文本格式”，前导0不会丢。`);
+  });
+
+  $("btnColorize").addEventListener("click", () => {
+    if (!wb || colIndex === null) return;
+    const aoa = getSheetAOA(sheetName);
+    const hasHeader = $("hasHeader").checked;
+    const skipBlanks = $("skipBlanks").checked;
+    const random = $("randomColor").checked;
+
+    const startRow = hasHeader ? 1 : 0;
+    const map = getColorMapFor(sheetName, colIndex);
+    map.clear();
+
+    let i = 0;
+    for (let r = startRow; r < aoa.length; r++){
+      const v = String((aoa[r] && aoa[r][colIndex] !== undefined) ? aoa[r][colIndex] : "").trim();
+      if (!v){
+        if (skipBlanks) continue;
+        if (!map.has("(空)")){
+          i++;
+          map.set("(空)", random ? randSoft(i) : rgb(softPalette[(i-1)%softPalette.length]));
+        }
+        continue;
+      }
+      if (!map.has(v)){
+        i++;
+        map.set(v, random ? randSoft(i) : rgb(softPalette[(i-1)%softPalette.length]));
       }
     }
 
-    $("btnFormat").onclick = () => buildOutput("plain");
+    refreshPreview();
+    showMsg("ok", `着色完成：已为列 ${colLetter(colIndex)} 建立颜色映射（不同内容 ${map.size} 种）。切换列不会丢失；导出会写入颜色。`);
+  });
 
-    $("btnExcelText").onclick = () => buildOutput("excelText");
+  $("btnClearColor").addEventListener("click", () => {
+    if (!wb || colIndex === null) return;
+    deleteColorMapFor(sheetName, colIndex);
+    refreshPreview();
+    showMsg("ok", `已清除列 ${colLetter(colIndex)} 的着色映射。`);
+  });
 
-    $("btnExcelFormula").onclick = () => buildOutput("excelFormula");
+  $("btnCopyCol").addEventListener("click", async () => {
+    if (!wb || colIndex === null) return;
+    const aoa = getSheetAOA(sheetName);
+    const hasHeader = $("hasHeader").checked;
+    const startRow = hasHeader ? 1 : 0;
 
-    $("btnCopy").onclick = async () => {
-      const text = $("output").value;
-      if (!text) {
-        $("msg").innerHTML = `<div class="err">输出为空：请先点击“格式化为8位”。</div>`;
-        return;
-      }
-      try{
-        await navigator.clipboard.writeText(text);
-        $("msg").innerHTML = `<div class="ok">已复制到剪贴板：直接粘贴到 Excel 一列即可。</div>`;
-      } catch(e){
-        // 兼容一些浏览器/权限限制：退回选中复制
-        $("output").focus();
-        $("output").select();
-        document.execCommand("copy");
-        $("msg").innerHTML = `<div class="ok">已尝试复制（回退方式）：如果没成功，请手动 Ctrl+C 复制输出框内容。</div>`;
-      }
-    };
+    const lines = [];
+    for (let r = startRow; r < aoa.length; r++){
+      const v = (aoa[r] && aoa[r][colIndex] !== undefined) ? aoa[r][colIndex] : "";
+      lines.push(String(v ?? ""));
+    }
 
-    $("btnClear").onclick = () => {
-      $("input").value = "";
-      $("output").value = "";
-      $("msg").innerHTML = "";
-    };
-  </script>
+    try{
+      await navigator.clipboard.writeText(lines.join("\n"));
+      showMsg("ok", "已复制该列内容（带换行），可直接粘贴到 Excel 一列。");
+    }catch(e){
+      showMsg("err", "复制失败：浏览器可能限制剪贴板权限。你也可以直接导出 Excel。");
+    }
+  });
+
+  $("btnExport").addEventListener("click", () => {
+    if (!wb) return;
+
+    try{
+      const newWb = XLSX.utils.book_new();
+
+      wb.SheetNames.forEach((name) => {
+        const aoa = getSheetAOA(name);
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+        const hasHeader = $("hasHeader").checked;
+        const skipBlanks = $("skipBlanks").checked;
+        const startRow = hasHeader ? 1 : 0;
+
+        // ✅ 1) 强制把“补齐过的列”写为文本格式（保留前导0）
+        const paddedSet = padCols.get(name);
+        if (paddedSet && paddedSet.size > 0) {
+          paddedSet.forEach((c) => {
+            for (let r = startRow; r < aoa.length; r++) {
+              const vRaw = (aoa[r] && aoa[r][c] !== undefined) ? aoa[r][c] : "";
+              const v = String(vRaw ?? "");
+
+              // 如果要跳过空值，则空直接略过；否则也写成文本空字符串
+              if (skipBlanks && v.trim() === "") continue;
+
+              const addr = XLSX.utils.encode_cell({ r, c });
+              ws[addr] = ws[addr] || { v, t: "s" };
+              ws[addr].t = "s";
+              ws[addr].v = v;
+              ws[addr].z = "@"; // 文本格式
+
+              ws[addr].s = ws[addr].s || {};
+              ws[addr].s.numFmt = "@";
+            }
+          });
+        }
+
+        // ✅ 2) 把本工具生成的颜色写进导出文件（按sheet/列持久化）
+        const sheetMaps = colorMaps.get(name);
+        if (sheetMaps && sheetMaps.size > 0){
+          sheetMaps.forEach((map, c) => {
+            for (let r = startRow; r < aoa.length; r++){
+              const vRaw = (aoa[r] && aoa[r][c] !== undefined) ? aoa[r][c] : "";
+              const v = String(vRaw ?? "").trim();
+
+              let key = v;
+              if (!key){
+                if (skipBlanks) continue;
+                key = "(空)";
+              }
+
+              const color = map.get(key);
+              if (!color) continue;
+
+              const addr = XLSX.utils.encode_cell({r, c});
+              if (!ws[addr]) ws[addr] = {t:"s", v: String(vRaw ?? "")};
+
+              // 如果该单元格被强制文本，保持 t/v/z；否则也不会影响
+              if (!ws[addr].t) ws[addr].t = "s";
+              if (ws[addr].v === undefined) ws[addr].v = String(vRaw ?? "");
+
+              const hex = toHexFromRgb(color);
+              if (!hex) continue;
+
+              ws[addr].s = ws[addr].s || {};
+              ws[addr].s.fill = { patternType:"solid", fgColor:{ rgb: hex } };
+
+              // 如果你希望字看起来更清晰，可加个边框（可选）
+              // ws[addr].s.border = { top:{style:"thin",color:{rgb:"DDDDDD"}}, bottom:{style:"thin",color:{rgb:"DDDDDD"}}, left:{style:"thin",color:{rgb:"DDDDDD"}}, right:{style:"thin",color:{rgb:"DDDDDD"}} };
+            }
+          });
+        }
+
+        XLSX.utils.book_append_sheet(newWb, ws, name);
+      });
+
+      const base = $("fileInfo").textContent.replace(/\.[^.]+$/, "");
+      const outName = `processed_${base}.xlsx`;
+      XLSX.writeFile(newWb, outName);
+      showMsg("ok", "已导出新 Excel（含颜色 + 文本格式）：" + outName);
+    }catch(err){
+      console.error(err);
+      showMsg("err", "导出失败：" + (err?.message || err));
+    }
+  });
+
+})();
+</script>
 </body>
 </html>
