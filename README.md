@@ -45,3 +45,4 @@
 | **泡泡图表** | 🫧 可视化 | [![Demo](https://img.shields.io/badge/Launch-Demo-success?style=for-the-badge&logo=d3.js&logoColor=white)](https://fanxiaolongx-max.github.io/privacy-policy/泡泡图表DEMO.html) |
 | **表格可视** | 📊 可视化 | [![Demo](https://img.shields.io/badge/Launch-Demo-success?style=for-the-badge&logo=microsoftexcel&logoColor=white)](https://fanxiaolongx-max.github.io/privacy-policy/表格可视DEMO.html) |
 | **链路分析** | 🔗 分析 | [![Demo](https://img.shields.io/badge/Launch-Demo-success?style=for-the-badge&logo=analogue&logoColor=white)](https://fanxiaolongx-max.github.io/privacy-policy/链路分析DEMO.html) |
+| **容灾倒换** | 📄 分析 | [![Demo](https://img.shields.io/badge/Launch-Demo-success?style=for-the-badge&logo=googlefiles&logoColor=white)](https://fanxiaolongx-max.github.io/privacy-policy/容灾倒换DEMO.html) |
