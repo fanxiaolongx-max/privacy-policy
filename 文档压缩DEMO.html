@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF 全能工具箱 - 终极优化版</title>
+    <title>PDF 全能工具箱 - 按钮修复版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
@@ -11,19 +11,24 @@
         .drag-active { border-color: #3b82f6; background-color: #eff6ff; }
         .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #3b82f6; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .page-card { transition: all 0.2s; cursor: grab; }
+        
+        /* 卡片样式优化 */
+        .page-card { transition: all 0.2s; cursor: grab; position: relative; }
         .page-card:active { cursor: grabbing; }
         .page-card.dragging { opacity: 0.4; border: 2px dashed #3b82f6; }
-        .page-card:hover .delete-btn { display: block; }
+        
+        /* 选中状态 */
+        .page-card.selected { ring: 2px solid #3b82f6; background-color: #eff6ff; }
+        .page-card.selected .check-indicator { display: flex; }
+        
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        /* 预设按钮选中态 */
         .preset-btn.active { background-color: #eff6ff; border-color: #3b82f6; color: #2563eb; }
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen font-sans text-gray-700">
 
-    <div class="max-w-5xl mx-auto py-8 px-4">
+    <div class="max-w-6xl mx-auto py-8 px-4">
         <div class="text-center mb-6">
             <h1 class="text-3xl font-bold text-gray-800 mb-2">PDF 本地工具箱</h1>
             <p class="text-sm text-gray-500">离线处理 · 数据安全 · 纯浏览器运行</p>
@@ -33,7 +38,7 @@
             <div class="bg-white p-1 rounded-lg shadow-sm inline-flex border border-gray-200 overflow-hidden">
                 <button onclick="switchTab('compress')" id="tab-compress" class="tab-btn px-4 sm:px-6 py-2 rounded-md text-sm font-medium transition-all">压缩瘦身</button>
                 <button onclick="switchTab('merge')" id="tab-merge" class="tab-btn px-4 sm:px-6 py-2 rounded-md text-sm font-medium transition-all">多文件合并</button>
-                <button onclick="switchTab('editor')" id="tab-editor" class="tab-btn px-4 sm:px-6 py-2 rounded-md text-sm font-medium transition-all">页面排序/删除</button>
+                <button onclick="switchTab('editor')" id="tab-editor" class="tab-btn px-4 sm:px-6 py-2 rounded-md text-sm font-medium transition-all">排序/旋转/删除</button>
             </div>
         </div>
 
@@ -119,27 +124,38 @@
                 <input type="file" id="edit-file-input" accept="application/pdf" class="hidden">
                 <div class="text-4xl mb-2">📄</div>
                 <p class="text-lg font-medium text-gray-700">点击上传 PDF (页面编辑)</p>
-                <p class="text-xs text-gray-400">支持拖拽排序、删除页面</p>
+                <p class="text-xs text-gray-400">支持排序、旋转、删除页面</p>
             </div>
+
             <div id="edit-work-area" class="hidden">
-                <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4 sticky top-0 bg-white z-10 py-2 border-b">
-                    <div>
-                        <h3 class="font-bold text-gray-800 text-lg">页面排序</h3>
-                        <p class="text-xs text-gray-500">拖拽调整顺序 · <span id="page-count-display">0</span> 页</p>
-                    </div>
-                    <div class="flex gap-2">
-                         <button onclick="resetEditor()" class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                            打开新文件
-                         </button>
-                        <button id="btn-save-order" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-6 py-2 rounded-lg shadow-md transition-colors flex items-center gap-2">
-                            <span>保存并下载</span>
+                <div class="sticky top-0 bg-white z-20 py-3 border-b shadow-sm mb-4">
+                    <div class="flex flex-wrap justify-between items-center gap-4">
+                        <div class="flex items-center gap-3">
+                            <button onclick="resetEditor()" class="text-gray-500 hover:text-gray-700 text-sm flex items-center gap-1 border border-gray-300 rounded px-2 py-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                                重传
+                            </button>
+                            <span class="text-gray-400">|</span>
+                            <div class="flex gap-2">
+                                <button onclick="toggleSelectAll()" id="btn-select-all" class="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-700 font-medium">全选</button>
+                                <button onclick="rotateSelected(-90)" class="text-sm px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded font-medium flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+                                    选中左旋
+                                </button>
+                                <button onclick="rotateSelected(90)" class="text-sm px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded font-medium flex items-center gap-1">
+                                    选中右旋
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <button id="btn-save-order" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-6 py-2 rounded-lg shadow-md transition-colors flex items-center gap-2 text-sm">
+                            <span>保存 PDF</span>
                         </button>
                     </div>
                 </div>
-                <div id="pages-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 p-2 bg-gray-50 rounded-lg min-h-[300px]">
-                    <div class="col-span-full text-center py-10 text-gray-400">正在生成页面缩略图...</div>
-                </div>
+
+                <div id="pages-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 p-2 bg-gray-50 rounded-lg min-h-[400px]">
+                    </div>
             </div>
         </div>
     </div>
@@ -164,7 +180,7 @@
             return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
-        // ================= 1. 压缩逻辑 (支持重置) =================
+        // ================= 1. 压缩逻辑 =================
         const compInput = document.getElementById('comp-file-input');
         let compFile = null;
         
@@ -188,27 +204,21 @@
             if(type === 's') document.getElementById('s-val').innerText = val + 'x';
         };
 
-        // 重置函数
         window.resetCompress = () => {
-            compFile = null;
-            compInput.value = ''; // 清空 input 允许重选同名文件
+            compFile = null; compInput.value = '';
             document.getElementById('comp-drop-zone').classList.remove('hidden');
             document.getElementById('comp-settings').classList.add('hidden');
             document.getElementById('comp-result').classList.add('hidden');
             document.getElementById('comp-actions').classList.add('hidden');
-            document.querySelector('#comp-result .spinner').classList.remove('hidden'); // 重置 spinner
+            document.querySelector('#comp-result .spinner').classList.remove('hidden');
         };
 
         document.getElementById('comp-drop-zone').onclick = () => compInput.click();
         compInput.onchange = (e) => {
             if(e.target.files[0]) {
-                // 如果当前已经在展示结果，先重置界面
-                if(!document.getElementById('comp-result').classList.contains('hidden')) {
-                    resetCompress();
-                }
+                if(!document.getElementById('comp-result').classList.contains('hidden')) resetCompress();
                 compFile = e.target.files[0];
-                // 重新获取因为 resetCompress 可能清空了
-                document.getElementById('comp-drop-zone').classList.add('hidden'); // 选中后隐藏上传区，直接显示设置
+                document.getElementById('comp-drop-zone').classList.add('hidden');
                 document.getElementById('comp-file-name').innerText = compFile.name + ` (${formatBytes(compFile.size)})`;
                 document.getElementById('comp-settings').classList.remove('hidden');
             }
@@ -243,7 +253,6 @@
                     const img = await newPdf.embedJpg(cvs.toDataURL('image/jpeg', q));
                     newPdf.addPage([viewport.width, viewport.height]).drawImage(img, {x:0, y:0, width:viewport.width, height:viewport.height});
                 }
-                
                 status.innerText = "正在打包生成...";
                 const pdfBytes = await newPdf.save();
                 const blob = new Blob([pdfBytes], {type: 'application/pdf'});
@@ -252,45 +261,23 @@
                 link.href = URL.createObjectURL(blob);
                 link.download = 'compressed_' + compFile.name;
                 downloadArea.classList.remove('hidden');
-                
                 const reduction = ((compFile.size - blob.size) / compFile.size * 100).toFixed(1);
-                const sizeText = blob.size > compFile.size ? 
-                    `⚠️ 文件变大了` : 
-                    `✅ 瘦身 ${reduction}%`;
-                
+                const sizeText = blob.size > compFile.size ? `⚠️ 文件变大了` : `✅ 瘦身 ${reduction}%`;
                 status.innerHTML = `<span class="font-bold text-gray-800">完成!</span> <span class="text-xs text-gray-500">${formatBytes(compFile.size)} ➝ ${formatBytes(blob.size)}</span> <br><span class="text-sm ${blob.size > compFile.size ? 'text-red-500' : 'text-green-600'} font-bold">${sizeText}</span>`;
-                
-            } catch(e) { 
-                alert('错误: ' + e.message); 
-                resetCompress();
-            }
+            } catch(e) { alert('错误: ' + e.message); resetCompress(); }
         };
 
-        // ================= 2. 合并功能 (支持清空) =================
+        // ================= 2. 合并逻辑 =================
         let mergeFiles = [];
         const mergeInput = document.getElementById('merge-input');
         const mergeList = document.getElementById('merge-list');
         const btnMerge = document.getElementById('btn-start-merge');
 
-        window.clearMergeList = () => {
-            mergeFiles = [];
-            renderMergeList();
-            mergeInput.value = '';
-        };
-
-        mergeInput.onchange = (e) => {
-            mergeFiles = [...mergeFiles, ...Array.from(e.target.files)];
-            renderMergeList();
-            btnMerge.classList.remove('hidden');
-            mergeInput.value = '';
-        };
+        window.clearMergeList = () => { mergeFiles = []; renderMergeList(); mergeInput.value = ''; };
+        mergeInput.onchange = (e) => { mergeFiles = [...mergeFiles, ...Array.from(e.target.files)]; renderMergeList(); btnMerge.classList.remove('hidden'); mergeInput.value = ''; };
 
         function renderMergeList() {
-            if(mergeFiles.length === 0) {
-                 mergeList.innerHTML = '<li class="text-center text-gray-400 text-sm py-4">暂无文件，请添加</li>';
-                 btnMerge.classList.add('hidden');
-                 return;
-            }
+            if(mergeFiles.length === 0) { mergeList.innerHTML = '<li class="text-center text-gray-400 text-sm py-4">暂无文件，请添加</li>'; btnMerge.classList.add('hidden'); return; }
             mergeList.innerHTML = mergeFiles.map((f, i) => `
                 <li class="flex justify-between items-center bg-gray-50 p-2 rounded border">
                     <div class="flex items-center gap-2 overflow-hidden">
@@ -305,20 +292,15 @@
                 </li>
             `).join('');
         }
-
         window.moveMerge = (index, direction) => {
             const newIndex = index + direction;
             if (newIndex < 0 || newIndex >= mergeFiles.length) return;
             [mergeFiles[index], mergeFiles[newIndex]] = [mergeFiles[newIndex], mergeFiles[index]];
             renderMergeList();
         };
-
         window.removeMerge = (i) => { mergeFiles.splice(i, 1); renderMergeList(); };
-        
         btnMerge.onclick = async () => {
-            const btn = document.getElementById('btn-start-merge');
-            btn.innerText = '正在合并...';
-            btn.disabled = true;
+            const btn = document.getElementById('btn-start-merge'); btn.innerText = '正在合并...'; btn.disabled = true;
             try {
                 const newPdf = await PDFLib.PDFDocument.create();
                 for(let f of mergeFiles) {
@@ -327,11 +309,10 @@
                 }
                 const blob = new Blob([await newPdf.save()], {type: 'application/pdf'});
                 const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'merged.pdf'; a.click();
-            } catch (e) { alert('合并失败: ' + e.message); } 
-            finally { btn.innerText = '合并并下载'; btn.disabled = false; }
+            } catch (e) { alert('合并失败: ' + e.message); } finally { btn.innerText = '合并并下载'; btn.disabled = false; }
         };
 
-        // ================= 3. 页面排序/编辑功能 (支持重置) =================
+        // ================= 3. 编辑/旋转逻辑 (UI 重构版) =================
         const editInput = document.getElementById('edit-file-input');
         const editZone = document.getElementById('edit-upload-area');
         const editWorkArea = document.getElementById('edit-work-area');
@@ -358,31 +339,77 @@
             const buffer = await file.arrayBuffer();
             const pdfDoc = await pdfjsLib.getDocument({data: buffer}).promise;
             
-            document.getElementById('page-count-display').innerText = pdfDoc.numPages;
             grid.innerHTML = ''; 
             for(let i=1; i<=pdfDoc.numPages; i++) {
                 const page = await pdfDoc.getPage(i);
-                const viewport = page.getViewport({scale: 0.2}); 
+                const viewport = page.getViewport({scale: 0.25}); 
                 const canvas = document.createElement('canvas');
                 canvas.width = viewport.width; canvas.height = viewport.height;
                 await page.render({canvasContext: canvas.getContext('2d'), viewport}).promise;
 
                 const card = document.createElement('div');
-                card.className = "page-card relative bg-white border border-gray-200 shadow-sm rounded-lg p-2 flex flex-col items-center select-none";
+                card.className = "page-card bg-white border border-gray-200 shadow-sm rounded-lg p-2 flex flex-col items-center select-none group relative";
                 card.draggable = true;
                 card.dataset.pageIndex = i - 1; 
+                card.dataset.rotation = 0;
+
+                // 修改了这里：按钮区域单独成行，不再隐藏
                 card.innerHTML = `
-                    <div class="relative w-full h-32 flex items-center justify-center bg-gray-100 mb-2 overflow-hidden rounded">
-                        <img src="${canvas.toDataURL()}" class="max-w-full max-h-full object-contain pointer-events-none">
+                    <div class="check-indicator absolute top-2 right-2 bg-blue-600 text-white rounded-full p-0.5 hidden z-10 shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                     </div>
-                    <div class="flex justify-between w-full items-center">
-                        <span class="text-xs font-bold text-gray-500 bg-gray-200 px-2 rounded">P${i}</span>
-                        <button onclick="this.closest('.page-card').remove()" class="delete-btn text-red-500 hover:bg-red-50 p-1 rounded">×</button>
+                    <div class="relative w-full h-40 flex items-center justify-center bg-gray-100 mb-2 overflow-hidden rounded cursor-pointer" onclick="toggleSelect(this)">
+                        <img src="${canvas.toDataURL()}" class="max-w-full max-h-full object-contain pointer-events-none transition-transform duration-200" style="transform: rotate(0deg)">
+                    </div>
+                    
+                    <div class="w-full">
+                        <div class="text-center text-xs font-bold text-gray-500 mb-2">第 ${i} 页</div>
+                        <div class="flex justify-between gap-1 w-full">
+                             <button onclick="rotateCard(this, -90)" class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 py-1 rounded text-xs border border-blue-100 font-medium">↺ 左旋</button>
+                             <button onclick="rotateCard(this, 90)" class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 py-1 rounded text-xs border border-blue-100 font-medium">↻ 右旋</button>
+                             <button onclick="this.closest('.page-card').remove()" class="px-2 bg-red-50 hover:bg-red-100 text-red-500 rounded border border-red-100" title="删除">🗑️</button>
+                        </div>
                     </div>
                 `;
                 addDnDEvents(card);
                 grid.appendChild(card);
             }
+        };
+
+        window.rotateCard = (btn, deg) => {
+            const card = btn.closest('.page-card');
+            const img = card.querySelector('img');
+            let currentRotation = parseInt(card.dataset.rotation) || 0;
+            currentRotation += deg;
+            card.dataset.rotation = currentRotation;
+            img.style.transform = `rotate(${currentRotation}deg)`;
+        };
+
+        window.toggleSelect = (div) => {
+            const card = div.closest('.page-card');
+            card.classList.toggle('selected');
+        };
+
+        window.toggleSelectAll = () => {
+            const cards = document.querySelectorAll('.page-card');
+            const allSelected = Array.from(cards).every(c => c.classList.contains('selected'));
+            cards.forEach(c => {
+                if(allSelected) c.classList.remove('selected');
+                else c.classList.add('selected');
+            });
+            document.getElementById('btn-select-all').innerText = allSelected ? '全选' : '取消全选';
+        };
+
+        window.rotateSelected = (deg) => {
+            const selectedCards = document.querySelectorAll('.page-card.selected');
+            if(selectedCards.length === 0) return alert('请先点击图片选中要旋转的页面');
+            selectedCards.forEach(card => {
+                const img = card.querySelector('img');
+                let currentRotation = parseInt(card.dataset.rotation) || 0;
+                currentRotation += deg;
+                card.dataset.rotation = currentRotation;
+                img.style.transform = `rotate(${currentRotation}deg)`;
+            });
         };
 
         let dragSrcEl = null;
@@ -412,14 +439,20 @@
                 const srcDoc = await PDFLib.PDFDocument.load(freshBuffer);
                 const newDoc = await PDFLib.PDFDocument.create();
                 const cards = document.querySelectorAll('#pages-grid .page-card');
-                const indicesToCopy = Array.from(cards).map(card => parseInt(card.dataset.pageIndex));
                 
-                if (indicesToCopy.length === 0) { alert("请至少保留一页！"); return; }
-                const copiedPages = await newDoc.copyPages(srcDoc, indicesToCopy);
-                copiedPages.forEach(page => newDoc.addPage(page));
+                if (cards.length === 0) { alert("请至少保留一页！"); return; }
+
+                for (const card of cards) {
+                    const pageIndex = parseInt(card.dataset.pageIndex);
+                    const rotation = parseInt(card.dataset.rotation) || 0;
+                    const [page] = await newDoc.copyPages(srcDoc, [pageIndex]);
+                    const existingRotation = page.getRotation().angle;
+                    page.setRotation(PDFLib.degrees(existingRotation + rotation));
+                    newDoc.addPage(page);
+                }
                 const blob = new Blob([await newDoc.save()], { type: 'application/pdf' });
-                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'reordered_edited.pdf'; a.click();
-            } catch(e) { console.error(e); alert("保存失败"); } finally { btn.innerHTML = '<span>保存并下载</span>'; }
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'edited_pdf.pdf'; a.click();
+            } catch(e) { console.error(e); alert("保存失败: " + e.message); } finally { btn.innerHTML = '<span>保存 PDF</span>'; }
         };
     </script>
 </body>
