@@ -3,104 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>流浪咪 - 附近的猫</title>
+    <title>流浪咪 - 社区地图</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         :root {
             --primary: #FF9F43;
-            --secondary: #FFD32A;
-            --bg: #FFFDF5;
+            --bg: #F7F8FA;
             --text: #2d3436;
             --gray: #b2bec3;
             --white: #ffffff;
-            --shadow: 0 4px 15px rgba(0,0,0,0.1);
+            --shadow: 0 4px 20px rgba(0,0,0,0.06);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; -webkit-tap-highlight-color: transparent; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; -webkit-tap-highlight-color: transparent; }
         
         body { background-color: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
+        /* 顶部栏 */
         header {
-            background: var(--white);
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            z-index: 1000;
+            background: var(--white); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center;
+            height: 56px; z-index: 1000; box-shadow: 0 1px 5px rgba(0,0,0,0.03);
         }
+        .brand { font-size: 18px; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 6px; }
+        .view-toggle { background: #f1f2f6; border-radius: 18px; padding: 3px; display: flex; }
+        .toggle-btn { border: none; background: transparent; padding: 4px 12px; border-radius: 15px; font-size: 13px; color: #636e72; transition: 0.2s; }
+        .toggle-btn.active { background: var(--white); color: var(--primary); font-weight: 600; shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
-        .brand { font-size: 20px; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 8px; }
-        .view-toggle { background: #f1f2f6; border-radius: 20px; padding: 4px; display: flex; }
-        .toggle-btn { border: none; background: transparent; padding: 6px 12px; border-radius: 16px; font-size: 14px; color: var(--gray); transition: 0.3s; cursor: pointer; }
-        .toggle-btn.active { background: var(--white); color: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05); font-weight: bold; }
-
+        /* 主视图 */
         main { flex: 1; position: relative; overflow: hidden; }
         #map-container { width: 100%; height: 100%; z-index: 1; }
 
-        /* 定位加载提示 */
-        #loading-tip {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.7); color: white; padding: 15px 25px; border-radius: 25px;
-            z-index: 2000; display: flex; align-items: center; gap: 10px; font-size: 14px;
-        }
-        .fa-spinner { animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-
+        /* 地图标记 */
         .cat-marker {
-            width: 44px; height: 44px; border-radius: 50%; border: 3px solid var(--white);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.25); overflow: hidden; background: var(--primary); position: relative;
+            width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--white);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2); overflow: hidden; background: #eee; position: relative;
             transition: transform 0.2s;
         }
         .cat-marker:active { transform: scale(1.1); }
         .cat-marker img { width: 100%; height: 100%; object-fit: cover; }
-        /* 小尾巴指向 */
         .cat-marker::after {
-            content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%);
-            border-width: 6px 6px 0; border-style: solid; border-color: var(--white) transparent transparent transparent;
+            content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%);
+            border-width: 5px 5px 0; border-style: solid; border-color: var(--white) transparent transparent transparent;
         }
 
-        #list-container { display: none; height: 100%; overflow-y: auto; padding: 20px; background: var(--bg); scroll-behavior: smooth; }
+        /* 列表项 */
+        #list-container { display: none; height: 100%; overflow-y: auto; padding: 12px; background: var(--bg); padding-bottom: 80px;}
         .cat-card {
-            background: var(--white); border-radius: 16px; padding: 15px; margin-bottom: 15px;
-            box-shadow: var(--shadow); display: flex; gap: 15px; align-items: center;
+            background: var(--white); border-radius: 12px; padding: 12px; margin-bottom: 10px;
+            display: flex; gap: 12px; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            transition: background 0.2s;
         }
-        .cat-card img { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 2px solid #f1f2f6; }
-        .cat-info { flex: 1; }
-        .cat-info h3 { font-size: 16px; margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
-        .cat-id { font-size: 12px; color: #b2bec3; font-weight: normal; }
-        .cat-desc { font-size: 13px; color: #636e72; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;}
-        .cat-tags { display: flex; gap: 5px; flex-wrap: wrap; }
-        .tag { font-size: 10px; padding: 3px 8px; border-radius: 10px; background: #FFF4E6; color: var(--primary); }
-        .distance { font-size: 12px; color: var(--primary); font-weight: bold; background: #fff0d4; padding: 4px 8px; border-radius: 8px; }
-
-        .fab {
-            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            width: 60px; height: 60px; background: var(--primary); border-radius: 50%;
-            display: flex; justify-content: center; align-items: center; color: white;
-            font-size: 24px; box-shadow: 0 8px 20px rgba(255, 159, 67, 0.4);
-            cursor: pointer; z-index: 1001; transition: 0.3s; border: none;
+        .cat-card:active { background: #f0f0f0; }
+        .cat-card img { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; background: #eee; }
+        .cat-info { flex: 1; min-width: 0; }
+        .cat-top { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .cat-name { font-size: 16px; font-weight: bold; color: #333; }
+        .cat-status { font-size: 11px; padding: 2px 6px; border-radius: 4px; background: #e0f2f1; color: #009688; }
+        .cat-detail-row { font-size: 12px; color: #888; display: flex; gap: 8px; margin-top: 4px; }
+        
+        /* 详情页 Bottom Sheet */
+        .bottom-sheet {
+            position: fixed; left: 0; right: 0; bottom: 0;
+            background: var(--white); z-index: 2000;
+            border-radius: 20px 20px 0 0;
+            transform: translateY(110%); transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1);
+            box-shadow: 0 -5px 30px rgba(0,0,0,0.1);
+            max-height: 80vh; display: flex; flex-direction: column;
         }
-        .fab:active { transform: translateX(-50%) scale(0.9); }
+        .bottom-sheet.open { transform: translateY(0); }
+        .sheet-handle { width: 36px; height: 4px; background: #e0e0e0; border-radius: 2px; margin: 10px auto; flex-shrink: 0; }
+        .sheet-scroll { overflow-y: auto; padding: 0 20px 20px; }
 
+        /* 简洁版详情布局 */
+        .d-hero { display: flex; gap: 15px; margin-bottom: 15px; align-items: center; }
+        .d-avatar { width: 80px; height: 80px; border-radius: 16px; object-fit: cover; border: 1px solid #eee; }
+        .d-header h2 { font-size: 20px; margin-bottom: 5px; }
+        .d-id { font-size: 12px; color: #999; font-family: monospace; background: #f5f5f5; padding: 2px 5px; border-radius: 4px; }
+        
+        /* 属性网格 */
+        .d-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
+        .d-grid-item { background: #F8F9FA; padding: 10px; border-radius: 8px; text-align: center; }
+        .d-label { font-size: 11px; color: #999; margin-bottom: 2px; }
+        .d-val { font-size: 14px; font-weight: 600; color: #333; }
+        
+        .d-remark { font-size: 13px; color: #666; background: #fff8e1; padding: 10px; border-radius: 8px; line-height: 1.5; margin-bottom: 20px; border-left: 3px solid #ffc107;}
+
+        .d-actions { padding: 15px 20px; border-top: 1px solid #f0f0f0; display: flex; gap: 10px; padding-bottom: max(15px, env(safe-area-inset-bottom)); }
+        .btn-full { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: 600; font-size: 15px; display: flex; justify-content: center; align-items: center; gap: 5px; cursor: pointer;}
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(255, 159, 67, 0.25); }
+        .btn-default { background: #f1f2f6; color: #666; }
+
+        /* 录入弹窗 */
         #add-modal {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg); z-index: 3000;
-            padding: 20px; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex; flex-direction: column;
+            padding: 20px; transform: translateY(100%); transition: transform 0.3s; display: flex; flex-direction: column;
         }
         #add-modal.open { transform: translateY(0); }
-        .modal-header { display: flex; align-items: center; margin-bottom: 25px; }
-        .back-btn { font-size: 20px; padding: 10px; margin-right: 10px; background: none; border: none; color: var(--text); }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; font-size: 14px; color: var(--gray); margin-bottom: 8px; }
-        .form-input { width: 100%; padding: 12px 15px; border: 1px solid #eee; border-radius: 12px; background: var(--white); font-size: 16px; outline: none; }
-        .chips-group { display: flex; gap: 8px; flex-wrap: wrap; }
-        .chip { padding: 8px 16px; background: var(--white); border: 1px solid #eee; border-radius: 20px; font-size: 13px; cursor: pointer; transition: 0.2s; }
-        .chip.selected { background: var(--primary); color: white; border-color: var(--primary); }
-        .submit-btn { margin-top: auto; width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; box-shadow: 0 5px 15px rgba(255, 159, 67, 0.3); }
-        .upload-box { height: 140px; background: #f8f9fa; border: 2px dashed #dfe6e9; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--gray); margin-bottom: 20px; }
+        .input-group { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        .input-row { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .input-row:last-child { border-bottom: none; }
+        .input-row label { width: 70px; font-size: 14px; color: #666; }
+        .input-row input { flex: 1; border: none; outline: none; font-size: 15px; text-align: right; }
+        
+        .chip-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px; }
+        .chip { padding: 5px 12px; background: #f5f5f5; border-radius: 15px; font-size: 12px; color: #666; border: 1px solid transparent; }
+        .chip.active { background: #FFF4E6; color: var(--primary); border-color: var(--primary); }
+
+        /* 悬浮按钮 */
+        .fab {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            width: 56px; height: 56px; background: var(--primary); border-radius: 50%;
+            display: flex; justify-content: center; align-items: center; color: white;
+            font-size: 24px; box-shadow: 0 4px 15px rgba(255, 159, 67, 0.4);
+            z-index: 1500; border: none; transition: 0.2s; cursor: pointer;
+        }
+        .fab:active { transform: translateX(-50%) scale(0.95); }
     </style>
 </head>
 <body>
@@ -114,160 +133,129 @@
     </header>
 
     <main>
-        <div id="loading-tip"><i class="fas fa-spinner fa-spin"></i> 正在寻找附近的猫咪...</div>
         <div id="map-container"></div>
         <div id="list-container"></div>
     </main>
 
-    <button class="fab" onclick="openAddModal()">
-        <i class="fas fa-plus"></i>
-    </button>
+    <button class="fab" onclick="openAddModal()"><i class="fas fa-plus"></i></button>
 
-    <div id="add-modal">
-        <div class="modal-header">
-            <button class="back-btn" onclick="closeAddModal()"><i class="fas fa-arrow-left"></i></button>
-            <h2>发现新猫咪</h2>
-        </div>
-        <div class="upload-box">
-            <i class="fas fa-camera"></i>
-            <span>点击拍摄猫咪照片</span>
-        </div>
-        <div class="form-group">
-            <label>猫咪 ID</label>
-            <input type="text" class="form-input" id="cat-id" readonly style="background: #f1f2f6; color: #7f8c8d;">
-        </div>
-        <div class="form-group">
-            <label>主要特征</label>
-            <input type="text" class="form-input" id="cat-feature" placeholder="例如：橘白，有点胖">
-        </div>
-        <div class="form-group">
-            <label>性格标签</label>
-            <div class="chips-group" id="tags-input">
-                <span class="chip" onclick="toggleChip(this)">亲人</span>
-                <span class="chip" onclick="toggleChip(this)">警惕</span>
-                <span class="chip" onclick="toggleChip(this)">干饭王</span>
-                <span class="chip" onclick="toggleChip(this)">粘人</span>
-                <span class="chip" onclick="toggleChip(this)">凶凶的</span>
-                <span class="chip" onclick="toggleChip(this)">已绝育</span>
+    <div class="bottom-sheet" id="detail-sheet">
+        <div class="sheet-handle" onclick="closeDetail()"></div>
+        <div class="sheet-scroll">
+            <div class="d-hero">
+                <img id="d-img" class="d-avatar" src="" onerror="onImgError(this)">
+                <div class="d-header">
+                    <h2 id="d-name">猫名</h2>
+                    <span id="d-id" class="d-id">ID: --</span>
+                </div>
+            </div>
+
+            <div class="d-grid">
+                <div class="d-grid-item">
+                    <div class="d-label">状态</div>
+                    <div class="d-val" id="d-status" style="color: #009688;">-</div>
+                </div>
+                <div class="d-grid-item">
+                    <div class="d-label">性格</div>
+                    <div class="d-val" id="d-char">-</div>
+                </div>
+                <div class="d-grid-item">
+                    <div class="d-label">喜好</div>
+                    <div class="d-val" id="d-food">-</div>
+                </div>
+            </div>
+
+            <div class="d-remark" id="d-remark">
+                备注信息加载中...
             </div>
         </div>
-        <button class="submit-btn" onclick="submitCat()">确认录入</button>
+
+        <div class="d-actions">
+            <button class="btn-full btn-default" onclick="closeDetail()">关闭</button>
+            <button class="btn-full btn-primary" onclick="alert('即将唤起导航App...')">
+                <i class="fas fa-location-arrow"></i> 去喂它
+            </button>
+        </div>
+    </div>
+
+    <div id="add-modal">
+        <h2 style="margin-bottom: 20px; font-size: 20px;">📷 发现新猫咪</h2>
+        
+        <div style="height:120px; background:#f0f0f0; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#999; margin-bottom:15px;">
+            <i class="fas fa-camera" style="font-size:24px; margin-bottom:5px;"></i>
+            <span style="font-size:12px;">点击拍照(模拟)</span>
+        </div>
+
+        <div class="input-group">
+            <div class="input-row">
+                <label>名字</label>
+                <input type="text" id="add-name" placeholder="取个名字，如：大黄">
+            </div>
+            <div class="input-row">
+                <label>状态</label>
+                <input type="text" id="add-status" value="流浪中" readonly>
+            </div>
+        </div>
+
+        <div style="margin-bottom:20px;">
+            <label style="font-size:14px; color:#666; margin-bottom:5px; display:block;">选择性格标签</label>
+            <div class="chip-group" id="add-tags">
+                <div class="chip" onclick="toggleChip(this)">亲人</div>
+                <div class="chip" onclick="toggleChip(this)">怕人</div>
+                <div class="chip" onclick="toggleChip(this)">贪吃</div>
+                <div class="chip" onclick="toggleChip(this)">凶</div>
+            </div>
+        </div>
+
+        <button class="btn-full btn-primary" onclick="submitCat()">确认录入</button>
+        <button class="btn-full btn-default" style="margin-top:10px;" onclick="closeAddModal()">取消</button>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        // --- 配置数据 ---
-        // 随机生成的素材库
-        const NAMES = ["大橘", "小白", "煤球", "花花", "奥利奥", "汤圆", "芝麻", "咪咪", "黄油", "布丁", "可乐", "七喜"];
-        const FEATURES = ["左耳有剪耳", "麒麟尾", "穿白袜子", "鸳鸯眼", "很胖", "特别瘦", "长毛", "短尾巴", "背上有爱心花纹"];
-        const TAG_POOL = ["亲人", "警惕", "高冷", "贪吃", "话唠", "社牛", "胆小", "漂亮", "已绝育"];
-        
+        // --- 数据配置 ---
+        const NAMES = ["大橘", "煤球", "小白", "花花", "奥利奥", "汤圆", "芝麻", "黄油", "布丁", "可乐"];
+        const CHARS = ["亲人", "高冷", "胆小", "话唠", "社牛", "警惕"];
+        const FOODS = ["冻干", "罐头", "鸡胸肉", "猫条", "不挑食", "只吃肉"];
+        const STATUS = ["流浪中", "已绝育", "求领养", "有人喂"];
+        const REMARKS = ["常在垃圾桶附近出没，喜欢翻垃圾", "喜欢在长椅上晒太阳，很慵懒", "看见人会主动蹭裤脚，求摸摸", "比较警惕，只能远观不可亵玩", "左耳有剪耳标记，是绝育过的猫", "经常和另一只黑猫待在一起"];
+
         let map;
         let markers = [];
         let catsData = [];
-        let currentUserPos = null;
+        let userPos = { lat: 31.2304, lng: 121.4737 };
 
-        // --- 初始化入口 ---
-        function initApp() {
-            // 尝试获取地理位置
+        // --- 防裂图逻辑 ---
+        function onImgError(img) {
+            img.onerror = null;
+            const color = ['#FF9F43','#54a0ff','#ff6b6b','#1dd1a1'][Math.floor(Math.random()*4)];
+            img.src = `data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100%" height="100%" fill="${encodeURIComponent(color)}"/><text x="50%" y="55%" font-size="40" fill="white" text-anchor="middle" font-family="Arial" dy=".3em">🐱</text></svg>`;
+        }
+
+        // --- 初始化 ---
+        window.onload = function() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const { latitude, longitude } = position.coords;
-                        currentUserPos = [latitude, longitude];
-                        initMap(latitude, longitude);
-                    },
-                    (error) => {
-                        console.log("定位失败，使用默认坐标", error);
-                        // 默认定位：上海人民广场
-                        currentUserPos = [31.2304, 121.4737]; 
-                        initMap(31.2304, 121.4737);
-                        alert("无法获取定位，已切换到默认位置演示。");
-                    }
+                    p => { userPos = {lat: p.coords.latitude, lng: p.coords.longitude}; initMap(); },
+                    e => { console.log("定位失败"); initMap(); }
                 );
-            } else {
-                // 不支持定位 API
-                currentUserPos = [31.2304, 121.4737];
-                initMap(31.2304, 121.4737);
-            }
+            } else { initMap(); }
         }
 
-        // --- 随机数据生成器 ---
-        function generateRandomCats(centerLat, centerLng, count = 20) {
-            const data = [];
-            for (let i = 0; i < count; i++) {
-                // 在中心点附近 0.008 度范围内随机生成 (约1km范围)
-                const lat = centerLat + (Math.random() - 0.5) * 0.008;
-                const lng = centerLng + (Math.random() - 0.5) * 0.008;
-                
-                // 随机名字、特征、标签
-                const name = NAMES[Math.floor(Math.random() * NAMES.length)];
-                const feature = FEATURES[Math.floor(Math.random() * FEATURES.length)];
-                const tagsCount = Math.floor(Math.random() * 2) + 1; // 1-2个标签
-                const tags = [];
-                for(let j=0; j<tagsCount; j++) {
-                    const tag = TAG_POOL[Math.floor(Math.random() * TAG_POOL.length)];
-                    if(!tags.includes(tag)) tags.push(tag);
-                }
+        function initMap() {
+            catsData = generateRandomCats(userPos.lat, userPos.lng);
+            
+            map = L.map('map-container', {zoomControl: false}).setView([userPos.lat, userPos.lng], 17);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OSM' }).addTo(map);
+            
+            const meIcon = L.divIcon({className: 'me', html: `<div style="width:16px;height:16px;background:#3498db;border:2px solid #fff;border-radius:50%;box-shadow:0 0 8px #3498db;"></div>`});
+            L.marker([userPos.lat, userPos.lng], {icon: meIcon}).addTo(map);
 
-                // 随机图片尺寸以避免缓存重复视觉（placeholder trick）
-                const imgId = Math.floor(Math.random() * 16) + 1; 
-                // 使用 picsum 或者 placekitten 
-                const imgUrl = `https://placekitten.com/${200 + i}/${200 + i}`;
-
-                data.push({
-                    id: `MIMI-${8000 + i}`,
-                    lat: lat,
-                    lng: lng,
-                    name: name,
-                    feature: feature,
-                    tags: tags,
-                    img: imgUrl,
-                    distance: Math.floor(getDistance(centerLat, centerLng, lat, lng)) // 简易距离
-                });
-            }
-            // 按距离排序
-            return data.sort((a, b) => a.distance - b.distance);
+            refreshView();
         }
 
-        // --- 简易计算距离 (米) ---
-        function getDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371e3; // 地球半径
-            const φ1 = lat1 * Math.PI/180;
-            const φ2 = lat2 * Math.PI/180;
-            const Δφ = (lat2-lat1) * Math.PI/180;
-            const Δλ = (lon2-lon1) * Math.PI/180;
-            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                      Math.cos(φ1) * Math.cos(φ2) *
-                      Math.sin(Δλ/2) * Math.sin(Δλ/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c;
-        }
-
-        // --- 初始化地图 ---
-        function initMap(lat, lng) {
-            document.getElementById('loading-tip').style.display = 'none';
-
-            // 生成基于当前位置的数据
-            catsData = generateRandomCats(lat, lng, 20);
-
-            map = L.map('map-container', {
-                zoomControl: false // 隐藏默认缩放控件以美化移动端
-            }).setView([lat, lng], 16);
-
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OSM'
-            }).addTo(map);
-
-            // 添加"我在这里"的标记
-            const meIcon = L.divIcon({
-                className: 'my-location-icon',
-                html: `<div style="width:20px;height:20px;background:#3498db;border:3px solid white;border-radius:50%;box-shadow:0 0 10px rgba(52,152,219,0.5);"></div>`,
-                iconSize: [20, 20]
-            });
-            L.marker([lat, lng], {icon: meIcon}).addTo(map).bindPopup("我在这里");
-
+        function refreshView() {
             renderMarkers();
             renderList();
         }
@@ -275,129 +263,157 @@
         function renderMarkers() {
             markers.forEach(m => map.removeLayer(m));
             markers = [];
-
+            
             catsData.forEach(cat => {
-                const customIcon = L.divIcon({
-                    className: 'custom-div-icon',
-                    html: `<div class="cat-marker"><img src="${cat.img}" alt="cat"></div>`,
-                    iconSize: [44, 44],
-                    iconAnchor: [22, 48]
+                const icon = L.divIcon({
+                    className: 'custom-icon',
+                    html: `<div class="cat-marker"><img src="${cat.img}" onerror="onImgError(this)"></div>`,
+                    iconSize: [44, 44], iconAnchor: [22, 44]
                 });
-
-                const marker = L.marker([cat.lat, cat.lng], {icon: customIcon})
-                    .addTo(map)
-                    .bindPopup(`
-                        <div style="text-align:center;">
-                            <b>${cat.name}</b><br>
-                            <span style="font-size:12px;color:#666">${cat.feature}</span><br>
-                            <a href="#" onclick="alert('进入猫咪详情页')" style="color:#FF9F43;font-size:12px;">查看详情</a>
-                        </div>
-                    `);
                 
-                markers.push(marker);
+                const m = L.marker([cat.lat, cat.lng], {icon: icon})
+                    .addTo(map)
+                    .on('click', () => openDetail(cat));
+                markers.push(m);
             });
         }
 
         function renderList() {
-            const container = document.getElementById('list-container');
-            container.innerHTML = '';
-
+            const list = document.getElementById('list-container');
+            list.innerHTML = '';
             catsData.forEach(cat => {
-                const tagsHtml = cat.tags.map(t => `<span class="tag">${t}</span>`).join('');
-                const html = `
-                    <div class="cat-card" onclick="locateCat(${cat.lat}, ${cat.lng}, '${cat.name}')">
-                        <img src="${cat.img}" alt="cat">
+                const item = `
+                    <div class="cat-card" onclick="openDetailById('${cat.id}')">
+                        <img src="${cat.img}" onerror="onImgError(this)">
                         <div class="cat-info">
-                            <h3>${cat.name} <span class="cat-id">#${cat.id}</span></h3>
-                            <div class="cat-desc">${cat.feature}</div>
-                            <div class="cat-tags">${tagsHtml}</div>
+                            <div class="cat-top">
+                                <span class="cat-name">${cat.name}</span>
+                                <span class="cat-status">${cat.status}</span>
+                            </div>
+                            <div class="cat-detail-row">
+                                <i class="fas fa-map-marker-alt"></i> ${cat.dist}m | ${cat.char}
+                            </div>
                         </div>
-                        <div class="distance">${cat.distance < 1000 ? cat.distance + 'm' : (cat.distance/1000).toFixed(1)+'km'}</div>
-                    </div>
-                `;
-                container.innerHTML += html;
+                        <i class="fas fa-chevron-right" style="color:#ccc; font-size:12px;"></i>
+                    </div>`;
+                list.innerHTML += item;
             });
         }
 
-        // --- 交互逻辑 ---
-        function switchView(view) {
-            const mapEl = document.getElementById('map-container');
-            const listEl = document.getElementById('list-container');
-            const btns = document.querySelectorAll('.toggle-btn');
-            const fab = document.querySelector('.fab');
+        // --- 核心更新：交互逻辑 ---
+        function openDetailById(id) {
+            const cat = catsData.find(c => c.id === id);
+            if(cat) openDetail(cat);
+        }
 
-            if (view === 'map') {
-                mapEl.style.display = 'block';
-                listEl.style.display = 'none';
-                fab.style.display = 'flex'; // 地图模式显示加号
-                btns[0].classList.add('active');
-                btns[1].classList.remove('active');
-                setTimeout(() => map.invalidateSize(), 100);
-            } else {
-                mapEl.style.display = 'none';
-                listEl.style.display = 'block';
-                fab.style.display = 'none'; // 列表模式隐藏加号防止遮挡
-                btns[0].classList.remove('active');
-                btns[1].classList.add('active');
+        function openDetail(cat) {
+            // 1. 填充信息
+            document.getElementById('d-img').src = cat.img;
+            document.getElementById('d-name').innerText = cat.name;
+            document.getElementById('d-id').innerText = `ID: ${cat.id}`;
+            document.getElementById('d-status').innerText = cat.status;
+            document.getElementById('d-char').innerText = cat.char;
+            document.getElementById('d-food').innerText = cat.food;
+            document.getElementById('d-remark').innerText = cat.remark;
+
+            // 2. 核心逻辑：如果在列表页，强制切回地图，并飞行定位
+            const mapContainer = document.getElementById('map-container');
+            const listContainer = document.getElementById('list-container');
+            
+            if (listContainer.style.display !== 'none') {
+                // 当前是列表模式，切换视图
+                switchView('map');
             }
-        }
 
-        // 在列表点击猫咪，跳转回地图并聚焦
-        function locateCat(lat, lng, name) {
-            switchView('map');
-            map.flyTo([lat, lng], 18);
-            // 找到对应的marker并打开popup (这里简单演示)
+            // 3. 执行地图飞行定位 (flyTo)
+            map.invalidateSize(); // 确保地图渲染正确
+            map.flyTo([cat.lat, cat.lng], 18, {
+                animate: true,
+                duration: 1 // 飞行时间1秒
+            });
+
+            // 4. 稍微延迟弹出详情，让用户先看到地图移动
             setTimeout(() => {
-                alert(`已定位到：${name}`);
-            }, 500);
+                document.getElementById('detail-sheet').classList.add('open');
+            }, 400); 
         }
 
+        function closeDetail() {
+            document.getElementById('detail-sheet').classList.remove('open');
+        }
+
+        // --- 录入逻辑 ---
         function openAddModal() {
-            const randomId = 'MIMI-' + Math.floor(Date.now().toString().slice(-4));
-            document.getElementById('cat-id').value = randomId;
             document.getElementById('add-modal').classList.add('open');
+            document.getElementById('add-name').value = '';
         }
-
-        function closeAddModal() {
-            document.getElementById('add-modal').classList.remove('open');
-        }
-
-        function toggleChip(el) {
-            el.classList.toggle('selected');
-        }
+        function closeAddModal() { document.getElementById('add-modal').classList.remove('open'); }
+        function toggleChip(el) { el.classList.toggle('active'); }
 
         function submitCat() {
-            const id = document.getElementById('cat-id').value;
-            const feature = document.getElementById('cat-feature').value || "未填写特征";
-            const tags = Array.from(document.querySelectorAll('.chip.selected')).map(el => el.innerText);
+            const name = document.getElementById('add-name').value || "无名猫";
+            const chips = document.querySelectorAll('.chip.active');
+            const char = chips.length > 0 ? chips[0].innerText : "未知";
             
-            // 使用当前地图中心作为新猫坐标
             const center = map.getCenter();
             const newCat = {
-                id: id,
-                lat: center.lat,
-                lng: center.lng,
-                name: "我的新发现",
-                feature: feature,
-                tags: tags.length ? tags : ["待确认"],
-                img: `https://placekitten.com/${Math.floor(200+Math.random()*20)}/${Math.floor(200+Math.random()*20)}`,
-                distance: 0
+                id: Math.floor(Math.random()*9000+1000),
+                lat: center.lat, lng: center.lng,
+                name: name,
+                status: "新发现",
+                char: char,
+                food: "未知",
+                remark: "新录入的猫咪，等待完善信息。",
+                img: "invalid_url_trigger_backup",
+                dist: 0
             };
-
-            catsData.unshift(newCat);
-            renderMarkers();
-            renderList();
             
-            alert(`提交成功！流浪咪 ${id} 已添加地图上。`);
+            catsData.unshift(newCat);
+            refreshView();
             closeAddModal();
             
-            // 如果在列表页，提交后不自动切回地图，保留在列表看最新
-            // 如果在地图页，则保持在地图页
+            // 录入后也自动飞行定位并显示详情
+            openDetail(newCat);
         }
 
-        // 启动应用
-        window.onload = initApp;
+        // --- 工具函数 ---
+        function generateRandomCats(lat, lng) {
+            let res = [];
+            for(let i=0; i<15; i++) {
+                const rLat = lat + (Math.random()-0.5)*0.006;
+                const rLng = lng + (Math.random()-0.5)*0.006;
+                res.push({
+                    id: 8000+i,
+                    lat: rLat, lng: rLng,
+                    name: NAMES[Math.floor(Math.random()*NAMES.length)],
+                    status: STATUS[Math.floor(Math.random()*STATUS.length)],
+                    char: CHARS[Math.floor(Math.random()*CHARS.length)],
+                    food: FOODS[Math.floor(Math.random()*FOODS.length)],
+                    remark: REMARKS[Math.floor(Math.random()*REMARKS.length)],
+                    img: `https://loremflickr.com/200/200/cat?lock=${i}`,
+                    dist: Math.floor(Math.random()*600)
+                });
+            }
+            return res;
+        }
 
+        function switchView(mode) {
+            const m = document.getElementById('map-container');
+            const l = document.getElementById('list-container');
+            const btns = document.querySelectorAll('.toggle-btn');
+            const fab = document.querySelector('.fab');
+            
+            if(mode === 'map') {
+                m.style.display='block'; l.style.display='none';
+                btns[0].classList.add('active'); btns[1].classList.remove('active');
+                fab.style.display = 'flex';
+                setTimeout(()=>map.invalidateSize(), 100);
+            } else {
+                m.style.display='none'; l.style.display='block';
+                btns[0].classList.remove('active'); btns[1].classList.add('active');
+                fab.style.display = 'none';
+            }
+        }
     </script>
 </body>
 </html>
