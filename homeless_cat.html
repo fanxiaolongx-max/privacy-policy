@@ -3,58 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>流浪咪 - 社区地图</title>
+    <title>流浪咪 - 喵星球</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         :root {
             --primary: #FF9F43;
+            --primary-light: #FFF4E6;
             --bg: #F7F8FA;
             --text: #2d3436;
-            --gray: #b2bec3;
             --white: #ffffff;
-            --shadow: 0 4px 20px rgba(0,0,0,0.06);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; -webkit-tap-highlight-color: transparent; }
         
         body { background-color: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        /* 顶部栏 */
-        header {
-            background: var(--white); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center;
-            height: 56px; z-index: 1000; box-shadow: 0 1px 5px rgba(0,0,0,0.03);
+        /* --- 开屏弹窗 (Intro Screen) --- */
+        #intro-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #FFFDF9 0%, #FFF0D6 100%);
+            z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55), opacity 0.5s;
+            padding: 30px; text-align: center;
         }
+        #intro-screen.hide { transform: translateY(-100%); opacity: 0; pointer-events: none; }
+
+        .intro-avatar {
+            width: 80px; height: 80px; border-radius: 50%; border: 4px solid white;
+            box-shadow: 0 8px 20px rgba(255, 159, 67, 0.3); margin-bottom: 20px;
+            object-fit: cover;
+        }
+        .intro-title { font-size: 24px; font-weight: 800; color: #333; margin-bottom: 10px; }
+        .intro-text { font-size: 15px; color: #666; line-height: 1.6; max-width: 300px; margin-bottom: 40px; }
+        .intro-highlight { color: var(--primary); font-weight: bold; }
+
+        /* 旋转地球容器 */
+        .earth-container {
+            width: 220px; height: 220px; position: relative; margin-bottom: 40px;
+            perspective: 1000px;
+        }
+        /* 纯CSS地球模拟 */
+        .earth {
+            width: 100%; height: 100%; border-radius: 50%;
+            background: #4facfe;
+            background: radial-gradient(circle at 30% 30%, #4facfe, #00f2fe);
+            box-shadow: inset -20px -20px 50px rgba(0,0,0,0.2), 0 0 30px rgba(79, 172, 254, 0.4);
+            position: relative; animation: float 6s ease-in-out infinite;
+            overflow: hidden;
+        }
+        /* 地图纹理 (使用CSS Grid模拟经纬网，避免加载大图失败) */
+        .earth::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 200%; height: 100%;
+            background-image: radial-gradient(rgba(255,255,255,0.3) 1px, transparent 1px);
+            background-size: 20px 20px;
+            animation: rotateEarth 20s linear infinite;
+            opacity: 0.6;
+        }
+        /* 轨道上的猫 */
+        .orbit {
+            position: absolute; top: 50%; left: 50%; width: 280px; height: 280px;
+            border: 1px dashed rgba(255, 159, 67, 0.3); border-radius: 50%;
+            transform: translate(-50%, -50%) rotateX(70deg) rotateY(10deg);
+            animation: spinOrbit 10s linear infinite;
+        }
+        .orbit-cat {
+            position: absolute; top: 0; left: 50%; width: 30px; height: 30px;
+            background: white; border-radius: 50%; box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            display: flex; justify-content: center; align-items: center; font-size: 16px;
+            animation: counterRotate 10s linear infinite; /* 抵消轨道旋转保持猫头朝上 */
+        }
+
+        /* 数据面板 */
+        .data-panel {
+            background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px);
+            padding: 15px 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            margin-bottom: 30px; width: 100%; max-width: 320px;
+        }
+        .data-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; color: #666; }
+        .data-num { font-size: 20px; font-weight: 800; color: #333; font-family: 'Courier New', monospace; }
+        
+        .gender-bar { height: 6px; background: #eee; border-radius: 3px; overflow: hidden; display: flex; margin-top: 5px; }
+        .bar-male { height: 100%; background: #54a0ff; width: 45%; }
+        .bar-female { height: 100%; background: #ff6b6b; width: 55%; }
+
+        .btn-start {
+            background: var(--primary); color: white; border: none; padding: 16px 60px;
+            border-radius: 30px; font-size: 18px; font-weight: bold;
+            box-shadow: 0 10px 25px rgba(255, 159, 67, 0.4);
+            cursor: pointer; transition: transform 0.2s;
+        }
+        .btn-start:active { transform: scale(0.95); }
+
+        /* 动画定义 */
+        @keyframes rotateEarth { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        @keyframes spinOrbit { 0% { transform: translate(-50%, -50%) rotateX(70deg) rotateY(10deg) rotateZ(0deg); } 100% { transform: translate(-50%, -50%) rotateX(70deg) rotateY(10deg) rotateZ(360deg); } }
+        @keyframes counterRotate { 0% { transform: rotateZ(0deg); } 100% { transform: rotateZ(-360deg); } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+
+        /* --- 现有App样式 (保持不变) --- */
+        header { background: var(--white); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; height: 56px; z-index: 1000; box-shadow: 0 1px 5px rgba(0,0,0,0.03); }
         .brand { font-size: 18px; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 6px; }
         .view-toggle { background: #f1f2f6; border-radius: 18px; padding: 3px; display: flex; }
         .toggle-btn { border: none; background: transparent; padding: 4px 12px; border-radius: 15px; font-size: 13px; color: #636e72; transition: 0.2s; }
         .toggle-btn.active { background: var(--white); color: var(--primary); font-weight: 600; shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
-        /* 主视图 */
         main { flex: 1; position: relative; overflow: hidden; }
         #map-container { width: 100%; height: 100%; z-index: 1; }
 
-        /* 地图标记 */
-        .cat-marker {
-            width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--white);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2); overflow: hidden; background: #eee; position: relative;
-            transition: transform 0.2s;
-        }
+        .cat-marker { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--white); box-shadow: 0 4px 8px rgba(0,0,0,0.2); overflow: hidden; background: #eee; position: relative; transition: transform 0.2s; }
         .cat-marker:active { transform: scale(1.1); }
         .cat-marker img { width: 100%; height: 100%; object-fit: cover; }
-        .cat-marker::after {
-            content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%);
-            border-width: 5px 5px 0; border-style: solid; border-color: var(--white) transparent transparent transparent;
-        }
+        .cat-marker::after { content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); border-width: 5px 5px 0; border-style: solid; border-color: var(--white) transparent transparent transparent; }
 
-        /* 列表项 */
         #list-container { display: none; height: 100%; overflow-y: auto; padding: 12px; background: var(--bg); padding-bottom: 80px;}
-        .cat-card {
-            background: var(--white); border-radius: 12px; padding: 12px; margin-bottom: 10px;
-            display: flex; gap: 12px; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-            transition: background 0.2s;
-        }
+        .cat-card { background: var(--white); border-radius: 12px; padding: 12px; margin-bottom: 10px; display: flex; gap: 12px; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: background 0.2s; cursor: pointer; }
         .cat-card:active { background: #f0f0f0; }
         .cat-card img { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; background: #eee; }
         .cat-info { flex: 1; min-width: 0; }
@@ -63,66 +128,89 @@
         .cat-status { font-size: 11px; padding: 2px 6px; border-radius: 4px; background: #e0f2f1; color: #009688; }
         .cat-detail-row { font-size: 12px; color: #888; display: flex; gap: 8px; margin-top: 4px; }
         
-        /* 详情页 Bottom Sheet */
-        .bottom-sheet {
-            position: fixed; left: 0; right: 0; bottom: 0;
-            background: var(--white); z-index: 2000;
-            border-radius: 20px 20px 0 0;
-            transform: translateY(110%); transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1);
-            box-shadow: 0 -5px 30px rgba(0,0,0,0.1);
-            max-height: 80vh; display: flex; flex-direction: column;
-        }
+        .bottom-sheet { position: fixed; left: 0; right: 0; bottom: 0; background: var(--white); z-index: 2000; border-radius: 20px 20px 0 0; transform: translateY(110%); transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1); box-shadow: 0 -5px 30px rgba(0,0,0,0.1); max-height: 80vh; display: flex; flex-direction: column; }
         .bottom-sheet.open { transform: translateY(0); }
         .sheet-handle { width: 36px; height: 4px; background: #e0e0e0; border-radius: 2px; margin: 10px auto; flex-shrink: 0; }
         .sheet-scroll { overflow-y: auto; padding: 0 20px 20px; }
 
-        /* 简洁版详情布局 */
         .d-hero { display: flex; gap: 15px; margin-bottom: 15px; align-items: center; }
         .d-avatar { width: 80px; height: 80px; border-radius: 16px; object-fit: cover; border: 1px solid #eee; }
         .d-header h2 { font-size: 20px; margin-bottom: 5px; }
-        .d-id { font-size: 12px; color: #999; font-family: monospace; background: #f5f5f5; padding: 2px 5px; border-radius: 4px; }
-        
-        /* 属性网格 */
+        .d-id { font-size: 12px; color: #999; font-family: monospace; background: #f5f5f5; padding: 2px 5px; border-radius: 4px; word-break: break-all; }
         .d-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
         .d-grid-item { background: #F8F9FA; padding: 10px; border-radius: 8px; text-align: center; }
         .d-label { font-size: 11px; color: #999; margin-bottom: 2px; }
         .d-val { font-size: 14px; font-weight: 600; color: #333; }
-        
-        .d-remark { font-size: 13px; color: #666; background: #fff8e1; padding: 10px; border-radius: 8px; line-height: 1.5; margin-bottom: 20px; border-left: 3px solid #ffc107;}
-
+        .d-remark { font-size: 13px; color: #666; background: #fff8e1; padding: 12px; border-radius: 8px; line-height: 1.5; margin-bottom: 20px; border-left: 4px solid #ffc107;}
         .d-actions { padding: 15px 20px; border-top: 1px solid #f0f0f0; display: flex; gap: 10px; padding-bottom: max(15px, env(safe-area-inset-bottom)); }
-        .btn-full { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: 600; font-size: 15px; display: flex; justify-content: center; align-items: center; gap: 5px; cursor: pointer;}
+        
+        .btn-full { flex: 1; padding: 12px; border-radius: 12px; border: none; font-weight: 600; font-size: 15px; display: flex; justify-content: center; align-items: center; gap: 5px; cursor: pointer; transition: 0.2s;}
+        .btn-full:active { transform: scale(0.98); }
         .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(255, 159, 67, 0.25); }
         .btn-default { background: #f1f2f6; color: #666; }
 
-        /* 录入弹窗 */
-        #add-modal {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg); z-index: 3000;
-            padding: 20px; transform: translateY(100%); transition: transform 0.3s; display: flex; flex-direction: column;
-        }
+        #add-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #FFFDF9; z-index: 3000; padding: 20px; transform: translateY(100%); transition: transform 0.3s; display: flex; flex-direction: column; }
         #add-modal.open { transform: translateY(0); }
-        .input-group { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
-        .input-row { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .add-header { text-align: center; margin-bottom: 20px; }
+        .add-avatar-preview { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 10px; border: 4px solid white; box-shadow: 0 5px 15px rgba(255, 159, 67, 0.2); overflow: hidden; background: #eee; }
+        .id-badge-container { display: flex; justify-content: center; margin-bottom: 20px; }
+        .id-badge { font-family: 'Courier New', monospace; font-size: 11px; color: #aaa; background: #f0f0f0; padding: 4px 10px; border-radius: 20px; letter-spacing: 1px; border: 1px dashed #ccc; }
+        .input-card { background: white; padding: 15px; border-radius: 16px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
+        .input-row { display: flex; align-items: center; padding: 5px 0; border-bottom: 1px solid #f5f5f5; }
         .input-row:last-child { border-bottom: none; }
-        .input-row label { width: 70px; font-size: 14px; color: #666; }
-        .input-row input { flex: 1; border: none; outline: none; font-size: 15px; text-align: right; }
-        
-        .chip-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px; }
-        .chip { padding: 5px 12px; background: #f5f5f5; border-radius: 15px; font-size: 12px; color: #666; border: 1px solid transparent; }
-        .chip.active { background: #FFF4E6; color: var(--primary); border-color: var(--primary); }
+        .input-row label { width: 60px; font-size: 14px; font-weight: bold; color: #555; }
+        .input-row input { flex: 1; border: none; outline: none; font-size: 15px; text-align: right; background: transparent;}
+        .section-title { font-size: 13px; color: #888; margin: 15px 0 8px; font-weight: 600; display: flex; justify-content: space-between; align-items: center;}
+        .chip-group { display: flex; gap: 8px; flex-wrap: wrap; }
+        .chip { padding: 6px 14px; background: white; border: 1px solid #eee; border-radius: 20px; font-size: 12px; color: #666; transition: 0.2s; cursor: pointer; }
+        .chip.active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); font-weight: bold; }
+        .custom-input-box { display: flex; gap: 5px; margin-top: 8px; }
+        .custom-input { flex: 1; border: 1px solid #eee; border-radius: 15px; padding: 5px 10px; font-size: 12px; outline: none; }
+        .btn-add-tag { background: var(--text); color: white; border: none; border-radius: 15px; padding: 0 12px; font-size: 12px; }
+        .remark-textarea { width: 100%; height: 70px; border: 1px solid #f0f0f0; border-radius: 12px; padding: 10px; font-size: 14px; outline: none; resize: none; background: #fafafa; color: #333; margin-top: 5px; }
+        .remark-textarea::placeholder { color: #ccc; }
+        .add-footer { margin-top: auto; display: flex; gap: 10px; padding-top: 15px; }
 
-        /* 悬浮按钮 */
-        .fab {
-            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            width: 56px; height: 56px; background: var(--primary); border-radius: 50%;
-            display: flex; justify-content: center; align-items: center; color: white;
-            font-size: 24px; box-shadow: 0 4px 15px rgba(255, 159, 67, 0.4);
-            z-index: 1500; border: none; transition: 0.2s; cursor: pointer;
-        }
+        .fab { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 56px; height: 56px; background: var(--primary); border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-size: 24px; box-shadow: 0 4px 15px rgba(255, 159, 67, 0.4); z-index: 1500; border: none; transition: 0.2s; cursor: pointer; }
         .fab:active { transform: translateX(-50%) scale(0.95); }
     </style>
 </head>
 <body>
+
+    <div id="intro-screen">
+        <img class="intro-avatar" src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100%25' height='100%25' fill='%23FF9F43'/%3E%3Ctext x='50' y='55' font-size='50' text-anchor='middle' dy='.3em'%3E🐲%3C/text%3E%3C/svg%3E" alt="Dragon">
+        
+        <h1 class="intro-title">你好，我是 Dragon</h1>
+        <p class="intro-text">我非常喜欢猫。为了更方便自己和爱猫人士记录身边的流浪猫，我开发了这个 App。对于每一只猫，App都会分配一个全球唯一的ID身份证号，希望大家能够喜欢！提建议VX:anshanfan</p>
+        
+        <div class="earth-container">
+            <div class="earth"></div>
+            <div class="orbit">
+                <div class="orbit-cat" style="animation-delay: 0s;">🐱</div>
+            </div>
+            <div class="orbit" style="width: 320px; height: 320px; animation-duration: 15s; border-color: rgba(84, 160, 255, 0.3);">
+                <div class="orbit-cat" style="animation-duration: 15s; animation-delay: -5s;">🐾</div>
+            </div>
+        </div>
+
+        <div class="data-panel">
+            <div class="data-row">
+                <span>🌍 全球已收录流浪猫</span>
+            </div>
+            <div class="data-num" id="global-counter">82,301</div>
+            
+            <div class="data-row" style="margin-top: 10px; margin-bottom: 2px;">
+                <span>公母比例分布</span>
+                <span>♂ 45% / ♀ 55%</span>
+            </div>
+            <div class="gender-bar">
+                <div class="bar-male"></div>
+                <div class="bar-female"></div>
+            </div>
+        </div>
+
+        <button class="btn-start" onclick="enterApp()">开启喵星球 🚀</button>
+    </div>
 
     <header>
         <div class="brand"><i class="fas fa-paw"></i> 流浪咪</div>
@@ -149,92 +237,114 @@
                     <span id="d-id" class="d-id">ID: --</span>
                 </div>
             </div>
-
             <div class="d-grid">
-                <div class="d-grid-item">
-                    <div class="d-label">状态</div>
-                    <div class="d-val" id="d-status" style="color: #009688;">-</div>
-                </div>
-                <div class="d-grid-item">
-                    <div class="d-label">性格</div>
-                    <div class="d-val" id="d-char">-</div>
-                </div>
-                <div class="d-grid-item">
-                    <div class="d-label">喜好</div>
-                    <div class="d-val" id="d-food">-</div>
-                </div>
+                <div class="d-grid-item"><div class="d-label">状态</div><div class="d-val" id="d-status" style="color: #009688;">-</div></div>
+                <div class="d-grid-item"><div class="d-label">性格</div><div class="d-val" id="d-char">-</div></div>
+                <div class="d-grid-item"><div class="d-label">喜好</div><div class="d-val" id="d-food">-</div></div>
             </div>
-
-            <div class="d-remark" id="d-remark">
-                备注信息加载中...
-            </div>
+            <div class="d-remark" id="d-remark">备注...</div>
         </div>
-
         <div class="d-actions">
             <button class="btn-full btn-default" onclick="closeDetail()">关闭</button>
-            <button class="btn-full btn-primary" onclick="alert('即将唤起导航App...')">
-                <i class="fas fa-location-arrow"></i> 去喂它
-            </button>
+            <button class="btn-full btn-primary" onclick="alert('即将打开地图导航...')"><i class="fas fa-location-arrow"></i> 去喂它</button>
         </div>
     </div>
 
     <div id="add-modal">
-        <h2 style="margin-bottom: 20px; font-size: 20px;">📷 发现新猫咪</h2>
-        
-        <div style="height:120px; background:#f0f0f0; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#999; margin-bottom:15px;">
-            <i class="fas fa-camera" style="font-size:24px; margin-bottom:5px;"></i>
-            <span style="font-size:12px;">点击拍照(模拟)</span>
-        </div>
-
-        <div class="input-group">
-            <div class="input-row">
-                <label>名字</label>
-                <input type="text" id="add-name" placeholder="取个名字，如：大黄">
+        <div class="add-header">
+            <div class="add-avatar-preview">
+                <img id="add-img-preview" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" style="width:100%;height:100%;object-fit:cover;" onerror="onImgError(this)">
             </div>
-            <div class="input-row">
-                <label>状态</label>
-                <input type="text" id="add-status" value="流浪中" readonly>
+            <h2 style="font-size: 18px; color: #333;">✨ 发现一只新咪咪</h2>
+        </div>
+        <div class="id-badge-container"><div class="id-badge" id="generated-id">ID: GENERATING...</div></div>
+        <div class="sheet-scroll">
+            <div class="input-card">
+                <div class="input-row"><label>名字</label><input type="text" id="add-name" placeholder="给它取个名字吧"></div>
+                <div class="input-row"><label>状态</label><input type="text" id="add-status" value="流浪中" style="color: #009688;"></div>
+            </div>
+            <div class="section-title"><span>🐱 它的性格</span></div>
+            <div class="chip-group" id="tags-char">
+                <div class="chip" onclick="toggleChip(this)">亲人</div><div class="chip" onclick="toggleChip(this)">高冷</div>
+                <div class="chip" onclick="toggleChip(this)">胆小</div><div class="chip" onclick="toggleChip(this)">话唠</div>
+            </div>
+            <div class="custom-input-box">
+                <input type="text" class="custom-input" id="custom-char-input" placeholder="输入其他性格...">
+                <button class="btn-add-tag" onclick="addCustomTag('char')">添加</button>
+            </div>
+            <div class="section-title"><span>🍖 它的喜好</span></div>
+            <div class="chip-group" id="tags-food">
+                <div class="chip" onclick="toggleChip(this)">冻干</div><div class="chip" onclick="toggleChip(this)">罐头</div><div class="chip" onclick="toggleChip(this)">鸡胸肉</div>
+            </div>
+            <div class="custom-input-box">
+                <input type="text" class="custom-input" id="custom-food-input" placeholder="输入其他喜好...">
+                <button class="btn-add-tag" onclick="addCustomTag('food')">添加</button>
+            </div>
+            <div class="section-title"><span>📝 备注信息 (重要)</span></div>
+            <div class="input-card" style="padding: 10px; margin-bottom: 0;">
+                <textarea id="add-remark" class="remark-textarea" placeholder="例如：常在公园长椅下出没，中午12点会出来晒太阳..."></textarea>
             </div>
         </div>
-
-        <div style="margin-bottom:20px;">
-            <label style="font-size:14px; color:#666; margin-bottom:5px; display:block;">选择性格标签</label>
-            <div class="chip-group" id="add-tags">
-                <div class="chip" onclick="toggleChip(this)">亲人</div>
-                <div class="chip" onclick="toggleChip(this)">怕人</div>
-                <div class="chip" onclick="toggleChip(this)">贪吃</div>
-                <div class="chip" onclick="toggleChip(this)">凶</div>
-            </div>
+        <div class="add-footer">
+            <button class="btn-full btn-default" onclick="closeAddModal()">取消</button>
+            <button class="btn-full btn-primary" onclick="submitCat()">确认录入</button>
         </div>
-
-        <button class="btn-full btn-primary" onclick="submitCat()">确认录入</button>
-        <button class="btn-full btn-default" style="margin-top:10px;" onclick="closeAddModal()">取消</button>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        // --- 数据配置 ---
-        const NAMES = ["大橘", "煤球", "小白", "花花", "奥利奥", "汤圆", "芝麻", "黄油", "布丁", "可乐"];
-        const CHARS = ["亲人", "高冷", "胆小", "话唠", "社牛", "警惕"];
-        const FOODS = ["冻干", "罐头", "鸡胸肉", "猫条", "不挑食", "只吃肉"];
-        const STATUS = ["流浪中", "已绝育", "求领养", "有人喂"];
-        const REMARKS = ["常在垃圾桶附近出没，喜欢翻垃圾", "喜欢在长椅上晒太阳，很慵懒", "看见人会主动蹭裤脚，求摸摸", "比较警惕，只能远观不可亵玩", "左耳有剪耳标记，是绝育过的猫", "经常和另一只黑猫待在一起"];
+        const NAMES = ["大橘", "煤球", "小白", "花花", "奥利奥", "汤圆"];
+        const CHARS = ["亲人", "高冷", "胆小", "话唠"];
+        const FOODS = ["冻干", "罐头", "鸡胸肉", "不挑食"];
+        const STATUS = ["流浪中", "已绝育", "求领养"];
+        const REMARKS = ["常在垃圾桶附近出没", "喜欢在长椅上晒太阳", "看见人会主动蹭裤脚", "比较警惕"];
 
         let map;
         let markers = [];
         let catsData = [];
         let userPos = { lat: 31.2304, lng: 121.4737 };
 
-        // --- 防裂图逻辑 ---
-        function onImgError(img) {
-            img.onerror = null;
-            const color = ['#FF9F43','#54a0ff','#ff6b6b','#1dd1a1'][Math.floor(Math.random()*4)];
-            img.src = `data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100%" height="100%" fill="${encodeURIComponent(color)}"/><text x="50%" y="55%" font-size="40" fill="white" text-anchor="middle" font-family="Arial" dy=".3em">🐱</text></svg>`;
+        // --- 进入应用逻辑 ---
+        function enterApp() {
+            const screen = document.getElementById('intro-screen');
+            screen.classList.add('hide');
+            // 这里可以触发一些进入地图后的逻辑，比如重新定位等
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 600);
         }
 
-        // --- 初始化 ---
+        // --- 数字滚动特效 ---
+        function animateValue(obj, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.innerHTML = Math.floor(progress * (end - start) + start).toLocaleString();
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        function onImgError(img) {
+            img.onerror = null;
+            const seed = Math.floor(Math.random()*6);
+            const color = ['#FF9F43','#54a0ff','#ff6b6b','#1dd1a1','#feca57','#5f27cd'][seed];
+            const svgRaw = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                <rect width="100%" height="100%" fill="${color}"/>
+                <text x="50%" y="55%" font-size="40" fill="white" text-anchor="middle" font-family="Arial" dy=".3em">🐱</text>
+            </svg>`;
+            img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgRaw.trim());
+        }
+
         window.onload = function() {
+            // 启动数字滚动动画
+            animateValue(document.getElementById("global-counter"), 0, 82301, 2000);
+
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     p => { userPos = {lat: p.coords.latitude, lng: p.coords.longitude}; initMap(); },
@@ -243,15 +353,19 @@
             } else { initMap(); }
         }
 
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            }).replace(/-/g, '');
+        }
+
         function initMap() {
             catsData = generateRandomCats(userPos.lat, userPos.lng);
-            
             map = L.map('map-container', {zoomControl: false}).setView([userPos.lat, userPos.lng], 17);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OSM' }).addTo(map);
-            
             const meIcon = L.divIcon({className: 'me', html: `<div style="width:16px;height:16px;background:#3498db;border:2px solid #fff;border-radius:50%;box-shadow:0 0 8px #3498db;"></div>`});
             L.marker([userPos.lat, userPos.lng], {icon: meIcon}).addTo(map);
-
             refreshView();
         }
 
@@ -263,14 +377,12 @@
         function renderMarkers() {
             markers.forEach(m => map.removeLayer(m));
             markers = [];
-            
             catsData.forEach(cat => {
                 const icon = L.divIcon({
                     className: 'custom-icon',
                     html: `<div class="cat-marker"><img src="${cat.img}" onerror="onImgError(this)"></div>`,
                     iconSize: [44, 44], iconAnchor: [22, 44]
                 });
-                
                 const m = L.marker([cat.lat, cat.lng], {icon: icon})
                     .addTo(map)
                     .on('click', () => openDetail(cat));
@@ -300,91 +412,98 @@
             });
         }
 
-        // --- 核心更新：交互逻辑 ---
         function openDetailById(id) {
-            const cat = catsData.find(c => c.id === id);
+            const cat = catsData.find(c => c.id == id);
             if(cat) openDetail(cat);
         }
 
         function openDetail(cat) {
-            // 1. 填充信息
             document.getElementById('d-img').src = cat.img;
             document.getElementById('d-name').innerText = cat.name;
-            document.getElementById('d-id').innerText = `ID: ${cat.id}`;
+            document.getElementById('d-id').innerText = cat.id; 
             document.getElementById('d-status').innerText = cat.status;
             document.getElementById('d-char').innerText = cat.char;
             document.getElementById('d-food').innerText = cat.food;
-            document.getElementById('d-remark').innerText = cat.remark;
+            document.getElementById('d-remark').innerText = cat.remark || "暂无备注";
 
-            // 2. 核心逻辑：如果在列表页，强制切回地图，并飞行定位
-            const mapContainer = document.getElementById('map-container');
             const listContainer = document.getElementById('list-container');
-            
             if (listContainer.style.display !== 'none') {
-                // 当前是列表模式，切换视图
                 switchView('map');
             }
-
-            // 3. 执行地图飞行定位 (flyTo)
-            map.invalidateSize(); // 确保地图渲染正确
-            map.flyTo([cat.lat, cat.lng], 18, {
-                animate: true,
-                duration: 1 // 飞行时间1秒
-            });
-
-            // 4. 稍微延迟弹出详情，让用户先看到地图移动
+            map.invalidateSize();
+            map.flyTo([cat.lat, cat.lng], 18, { animate: true, duration: 1 });
             setTimeout(() => {
                 document.getElementById('detail-sheet').classList.add('open');
-            }, 400); 
+            }, 500); 
         }
 
         function closeDetail() {
             document.getElementById('detail-sheet').classList.remove('open');
         }
 
-        // --- 录入逻辑 ---
         function openAddModal() {
-            document.getElementById('add-modal').classList.add('open');
+            const newId = generateUUID();
+            document.getElementById('generated-id').innerText = newId;
             document.getElementById('add-name').value = '';
+            document.getElementById('add-remark').value = '';
+            document.getElementById('add-img-preview').src = 'invalid-trigger';
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            document.getElementById('add-modal').classList.add('open');
         }
+
         function closeAddModal() { document.getElementById('add-modal').classList.remove('open'); }
         function toggleChip(el) { el.classList.toggle('active'); }
 
+        function addCustomTag(type) {
+            const inputId = type === 'char' ? 'custom-char-input' : 'custom-food-input';
+            const containerId = type === 'char' ? 'tags-char' : 'tags-food';
+            const inputEl = document.getElementById(inputId);
+            const val = inputEl.value.trim();
+            if(!val) return;
+            const newChip = document.createElement('div');
+            newChip.className = 'chip active'; 
+            newChip.innerText = val;
+            newChip.onclick = function() { toggleChip(this) };
+            document.getElementById(containerId).appendChild(newChip);
+            inputEl.value = '';
+        }
+
         function submitCat() {
+            const id = document.getElementById('generated-id').innerText;
             const name = document.getElementById('add-name').value || "无名猫";
-            const chips = document.querySelectorAll('.chip.active');
-            const char = chips.length > 0 ? chips[0].innerText : "未知";
+            const remarkInput = document.getElementById('add-remark').value;
+            const finalRemark = remarkInput.trim() ? remarkInput : "用户未填写备注";
+            const charChips = document.querySelectorAll('#tags-char .chip.active');
+            const chars = Array.from(charChips).map(c => c.innerText);
+            const charStr = chars.length > 0 ? chars.join(',') : "未知";
+            const foodChips = document.querySelectorAll('#tags-food .chip.active');
+            const foods = Array.from(foodChips).map(c => c.innerText);
+            const foodStr = foods.length > 0 ? foods.join(',') : "未知";
             
             const center = map.getCenter();
             const newCat = {
-                id: Math.floor(Math.random()*9000+1000),
+                id: id,
                 lat: center.lat, lng: center.lng,
-                name: name,
-                status: "新发现",
-                char: char,
-                food: "未知",
-                remark: "新录入的猫咪，等待完善信息。",
-                img: "invalid_url_trigger_backup",
+                name: name, status: document.getElementById('add-status').value, 
+                char: charStr, 
+                food: foodStr,
+                remark: finalRemark, 
+                img: document.getElementById('add-img-preview').src, 
                 dist: 0
             };
-            
             catsData.unshift(newCat);
             refreshView();
             closeAddModal();
-            
-            // 录入后也自动飞行定位并显示详情
             openDetail(newCat);
         }
 
-        // --- 工具函数 ---
         function generateRandomCats(lat, lng) {
             let res = [];
             for(let i=0; i<15; i++) {
-                const rLat = lat + (Math.random()-0.5)*0.006;
-                const rLng = lng + (Math.random()-0.5)*0.006;
                 res.push({
-                    id: 8000+i,
-                    lat: rLat, lng: rLng,
+                    id: generateUUID(),
+                    lat: lat + (Math.random()-0.5)*0.006, 
+                    lng: lng + (Math.random()-0.5)*0.006,
                     name: NAMES[Math.floor(Math.random()*NAMES.length)],
                     status: STATUS[Math.floor(Math.random()*STATUS.length)],
                     char: CHARS[Math.floor(Math.random()*CHARS.length)],
@@ -402,7 +521,6 @@
             const l = document.getElementById('list-container');
             const btns = document.querySelectorAll('.toggle-btn');
             const fab = document.querySelector('.fab');
-            
             if(mode === 'map') {
                 m.style.display='block'; l.style.display='none';
                 btns[0].classList.add('active'); btns[1].classList.remove('active');
