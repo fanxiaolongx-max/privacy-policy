@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>阴宅风水速评工具（民俗参考）</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --panel:#0f1a33;
+      --card:#101f3f;
+      --muted:#9fb1d1;
+      --text:#e9f0ff;
+      --line:rgba(255,255,255,.12);
+      --accent:#7c3aed;
+      --accent2:#22c55e;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+      --good:#10b981;
+      --shadow: 0 18px 40px rgba(0,0,0,.35);
+      --radius: 18px;
+      --radius2: 14px;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--font);
+      background: radial-gradient(1200px 700px at 10% 0%, rgba(124,58,237,.28), transparent 60%),
+                  radial-gradient(900px 500px at 90% 20%, rgba(34,197,94,.18), transparent 55%),
+                  linear-gradient(180deg, #070b14 0%, #0b1220 45%, #081024 100%);
+      color:var(--text);
+    }
+    .wrap{
+      max-width: 1120px;
+      margin: 28px auto 48px;
+      padding: 0 16px;
+    }
+    header{
+      display:flex;
+      gap:14px;
+      align-items:flex-start;
+      justify-content:space-between;
+      margin-bottom: 14px;
+    }
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    h1{
+      font-size: 22px;
+      margin:0;
+      letter-spacing:.4px;
+    }
+    .sub{
+      color:var(--muted);
+      font-size: 13px;
+      line-height:1.5;
+      max-width: 860px;
+    }
+    .top-actions{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .chip{
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 999px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      box-shadow: 0 10px 24px rgba(0,0,0,.18);
+      user-select:none;
+    }
+    .btn{
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      transition: transform .12s ease, background .2s ease, border-color .2s ease;
+    }
+    .btn:hover{ transform: translateY(-1px); background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.22); }
+    .btn.primary{
+      background: linear-gradient(135deg, rgba(124,58,237,.85), rgba(124,58,237,.45));
+      border-color: rgba(124,58,237,.65);
+    }
+    .btn.primary:hover{ background: linear-gradient(135deg, rgba(124,58,237,.95), rgba(124,58,237,.55)); }
+    .grid{
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 14px;
+      align-items:start;
+      margin-top: 14px;
+    }
+    @media (max-width: 960px){
+      .grid{ grid-template-columns: 1fr; }
+      header{ flex-direction:column; }
+      .top-actions{ justify-content:flex-start; }
+    }
+    .panel{
+      background: rgba(16,31,63,.55);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .panel-hd{
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), transparent);
+    }
+    .panel-hd h2{
+      margin:0;
+      font-size: 15px;
+      letter-spacing:.3px;
+    }
+    .panel-hd .hint{
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .panel-bd{
+      padding: 14px 16px 16px;
+    }
+    .section{
+      border: 1px solid var(--line);
+      border-radius: var(--radius2);
+      background: rgba(0,0,0,.18);
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .section:last-child{ margin-bottom: 0; }
+    .section-title{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .section-title strong{
+      font-size: 13px;
+      letter-spacing:.2px;
+    }
+    .section-title span{
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .form{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 12px;
+    }
+    @media (max-width: 620px){
+      .form{ grid-template-columns: 1fr; }
+    }
+    label{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    input[type="text"], input[type="number"], select, textarea{
+      width:100%;
+      padding: 10px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      outline:none;
+      transition: border-color .2s ease, background .2s ease;
+    }
+    textarea{ min-height: 92px; resize: vertical; }
+    input:focus, select:focus, textarea:focus{
+      border-color: rgba(124,58,237,.65);
+      background: rgba(255,255,255,.08);
+    }
+    .row{
+      grid-column: 1 / -1;
+    }
+    .radio-group, .check-group{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:2px;
+    }
+    .pill{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      cursor:pointer;
+      user-select:none;
+      font-size: 12px;
+      transition: transform .12s ease, border-color .2s ease, background .2s ease;
+    }
+    .pill:hover{ transform: translateY(-1px); border-color: rgba(255,255,255,.22); background: rgba(255,255,255,.07); }
+    .pill input{ accent-color: var(--accent); }
+    .footer-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top: 12px;
+    }
+    .disclaimer{
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.55;
+      padding: 10px 12px;
+      border-left: 3px solid rgba(124,58,237,.8);
+      background: rgba(124,58,237,.08);
+      border-radius: 12px;
+      margin-top: 12px;
+    }
+    /* Results */
+    .score-box{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    .kpi{
+      display:flex;
+      gap: 12px;
+      align-items:center;
+      justify-content:space-between;
+      border: 1px solid var(--line);
+      border-radius: var(--radius2);
+      background: rgba(0,0,0,.18);
+      padding: 12px;
+    }
+    .kpi .left{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .kpi .label{
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .kpi .value{
+      font-size: 22px;
+      letter-spacing:.5px;
+      font-weight: 700;
+    }
+    .tag{
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      white-space:nowrap;
+    }
+    .tag.good{ border-color: rgba(16,185,129,.55); background: rgba(16,185,129,.10); }
+    .tag.mid{ border-color: rgba(245,158,11,.55); background: rgba(245,158,11,.10); }
+    .tag.bad{ border-color: rgba(239,68,68,.55); background: rgba(239,68,68,.10); }
+    .bar{
+      height: 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      overflow:hidden;
+    }
+    .bar > i{
+      display:block;
+      height:100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(239,68,68,.9), rgba(245,158,11,.9), rgba(34,197,94,.9));
+      transition: width .45s ease;
+    }
+    .card{
+      border: 1px solid var(--line);
+      border-radius: var(--radius2);
+      background: rgba(0,0,0,.18);
+      padding: 12px;
+    }
+    .card h3{
+      margin:0 0 8px 0;
+      font-size: 13px;
+      letter-spacing:.2px;
+    }
+    .list{
+      margin:0;
+      padding-left: 18px;
+      color: var(--text);
+      line-height: 1.6;
+      font-size: 13px;
+    }
+    .list li{ margin: 6px 0; }
+    .mono{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      color: rgba(233,240,255,.88);
+      background: rgba(255,255,255,.06);
+      border: 1px dashed rgba(255,255,255,.18);
+      padding: 10px;
+      border-radius: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.6;
+    }
+    .split{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 620px){
+      .split{ grid-template-columns: 1fr; }
+    }
+    .muted{ color: var(--muted); }
+    .small{ font-size: 12px; }
+    .hr{
+      height:1px; background: var(--line); margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <h1 data-i18n="appTitle">阴宅风水速评工具（民俗参考）</h1>
+        <div class="sub" data-i18n="appSub">
+          这不是科学结论，仅按传统要素（地势/水/砂/向/路/风/周边）做一个“可解释”的评分与建议，用来辅助沟通与对比选址。
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <div class="chip" title="Language / 语言">
+          <span>🌐</span>
+          <select id="langSel" style="padding:6px 10px;border-radius:999px;background:transparent;border:1px solid rgba(255,255,255,.18);color:var(--text)">
+            <option value="zh">中文</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+        <button class="btn" id="btnDemo" type="button">✨ Demo</button>
+        <button class="btn" id="btnReset" type="button">↩ 重置</button>
+        <button class="btn primary" id="btnCalc" type="button">📍 生成风水报告</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- LEFT: INPUTS -->
+      <div class="panel">
+        <div class="panel-hd">
+          <h2 data-i18n="inputTitle">输入信息</h2>
+          <div class="hint" data-i18n="inputHint">尽量按“实际情况”选择；不确定就选“未知”。</div>
+        </div>
+
+        <div class="panel-bd">
+          <div class="section">
+            <div class="section-title">
+              <strong data-i18n="secBasic">基础信息</strong>
+              <span data-i18n="secBasicHint">用于报告抬头/备注</span>
+            </div>
+            <div class="form">
+              <label>
+                <span data-i18n="siteName">地点名称（可选）</span>
+                <input type="text" id="siteName" placeholder="例如：New Cairo Cemetery" />
+              </label>
+              <label>
+                <span data-i18n="regionType">区域类型</span>
+                <select id="regionType">
+                  <option value="urban" data-i18n="optUrban">城市/近郊</option>
+                  <option value="desert" data-i18n="optDesert">沙漠/戈壁</option>
+                  <option value="mountain" data-i18n="optMountain">山地</option>
+                  <option value="rural" data-i18n="optRural">乡野/农田</option>
+                  <option value="coastal" data-i18n="optCoastal">沿海</option>
+                  <option value="unknown" data-i18n="optUnknown">未知</option>
+                </select>
+              </label>
+
+              <label>
+                <span data-i18n="purpose">用途</span>
+                <select id="purpose">
+                  <option value="yinzhai" data-i18n="optYin">阴宅（墓地/陵园）</option>
+                  <option value="yangzhai" data-i18n="optYang">阳宅（住宅/商铺）</option>
+                </select>
+              </label>
+
+              <label>
+                <span data-i18n="climate">气候/风沙</span>
+                <select id="climate">
+                  <option value="calm" data-i18n="optCalm">风小/湿润</option>
+                  <option value="normal" data-i18n="optNormal">一般</option>
+                  <option value="windy" data-i18n="optWindy">风大/风沙</option>
+                  <option value="unknown" data-i18n="optUnknown">未知</option>
+                </select>
+              </label>
+
+              <label class="row">
+                <span data-i18n="notes">补充备注（可选）</span>
+                <textarea id="notes" placeholder="比如：距离高速很近、周边很荒、路是直的、没有水系、规划墓区等"></textarea>
+              </label>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">
+              <strong data-i18n="secLand">地势与“靠/抱”</strong>
+              <span data-i18n="secLandHint">传统：背有靠、前有案、左右有护</span>
+            </div>
+            <div class="form">
+              <label>
+                <span data-i18n="backing">后靠（靠山/高地/建筑屏障）</span>
+                <select id="backing">
+                  <option value="strong" data-i18n="optStrong">强（明显靠山/高地）</option>
+                  <option value="some" data-i18n="optSome">有一点（缓坡/远山/建筑群）</option>
+                  <option value="flat" data-i18n="optFlat">无（平坦/空旷）</option>
+                  <option value="unknown" data-i18n="optUnknown">未知</option>
+                </select>
+              </label>
+
+              <label>
+                <span data-i18n="embrace">环抱（左右护砂/地形包围）</span>
+                <select id="embrace">
+                  <option value="good" data-i18n="optGood">有环抱（左右护）</option>
+                  <option value="ok" data-i18n="optOk">一般（部分护）</option>
+                  <option value="open" data-i18n="optOpen">过于开阔（不聚）</option>
+                  <option value="unknown" data-i18n="optUnknown">未知</option>
+                </select>
+              </label>
+
+              <label>
+                <span data-i18n="slope">坡度</span>
+                <select id="slope">
+                  <option value="gentle" data-i18n="optGentle">微坡/缓坡（优）</option>
+                  <option value="flat" data-i18n="optFlat">平地</option>
+                  <option value="steep" data-i18n="optSteep">陡坡（不稳）</option>
+                  <option value="unknown" data-i18n="optUnknown">未知</option>
+                </select>
+              </label>
+
+              <label>
+                <span data-i18n="ground">土质/地气（主观感受）</span>
+                <select id="ground">
+                  <option value="firm" data-i18n="optFirm">坚实/不松散</option>
+                  <option value="normal" data-i18n="optNormal">一般</option>
+                  <option value="loose" data-i18n="optLoose">松散/沙土</option>
+                  <option value="unknown" data-i18n="optUnknown">未知</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">
+              <strong data-i18n="secWater">水与“聚气”</strong>
+              <span data-i18n="secWaterHint">传统：得水为上，忌直来直去</span>
+            </div>
+            <div class="form">
+              <label>
+                <span data-i18n="water">附近是否有水（河/湖/湿地/绿化水系）</span>
+                <select id="water">
+                  <option value="meander" data-i18n="optMeander">有（弯环/可聚）</option>
+                  <option value="straight" data-i18n="optStraight">有（直线渠/直冲）</option>
+                  <option value="none" data-i18n="optNone">无</option>
+                  <option value="unknown" data-i18n="optUnknown">未知</option>
+                </select>
+              </label>
+
+              <label>
+                <span data-i18n="drainage">排水/积水风险</span>
+                <select id="drainage">
+                  <option value="good" data-i18n="optGood">良好</option>
+                  <option value="mid" data-i18n="optMid">一般</option>
+                  <option value="bad" data-i18n="optBad">差/易积水</option>
+                  <option value="unknown" data-i18n="optUnknown">未知</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">
+              <strong data-i18n="secRoad">道路/高速/“路冲”</strong>
+              <span data-i18n="secRoadHint">传统：直冲为煞；弯抱为缓</span>
+            </div>
+            <div class="form">
+              <label>
+                <span data-i18n="roadNear">最近主干道距离</span>
+                <select id="roadNear">
+                  <option value="veryClose" data-i18n="optVeryClose">很近（0–200m）</option>
+                  <option value="close" data-i18n="optClose">较近（200–800m）</option>
+                  <option value="far" data-i18n="optFar">较远（800m+）</option>
+                  <option value="unknown" data-i18n="optUnknown">未知</option>
+                </select>
+              </label>
+
+              <label>
+                <span data-i18n="roadShape">道路形态</span>
+                <select id="roadShape">
+                  <option value="straight" data-i18n="optStraightRoad">直线/长直路</option>
+                  <option value="curve" data-i18n="optCurve">弯道/环抱</option>
+                  <option value="grid" data-i18n="optGrid">棋盘路网</option>
+                  <option value="unknown" data-i18n="optUnknown">未知</option>
+                </select>
+              </label>
+
+              <label class="row">
+                <span data-i18n="roadHit">墓位/大门是否正对来路（路冲）</span>
+                <div class="radio-group">
+                  <label class="pill"><input type="radio" name="roadHit" value="yes"> <span data-i18n="optYes">是</span></label>
+                  <label class="pill"><input type="radio" name="roadHit" value="no" checked> <span data-i18n="optNo">否</span></label>
+                  <label class="pill"><input type="radio" name="roadHit" value="unknown"> <span data-i18n="optUnknown">未知</span></label>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">
+              <strong data-i18n="secFacing">朝向/日照/通风</strong>
+              <span data-i18n="secFacingHint">不同地区/宗教可能有固定朝向要求</span>
+            </div>
+            <div class="form">
+              <label>
+                <span data-i18n="facing">朝向（大致）</span>
+                <select id="facing">
+                  <option value="south" data-i18n="optSouth">南向</option>
+                  <option value="east" data-i18n="optEast">东向</option>
+                  <option value="west" data-i18n="optWest">西向</option>
+                  <option value="north" data-i18n="optNorth">北向</option>
+                  <option value="fixed" data-i18n="optFixed">按宗教/规定固定朝向</option>
+                  <option value="unknown" data-i18n="optUnknown">未知</option>
+                </select>
+              </label>
+
+              <label>
+                <span data-i18n="sun">日照</span>
+                <select id="sun">
+                  <option value="good" data-i18n="optGood">充足</option>
+                  <option value="mid" data-i18n="optMid">一般</option>
+                  <option value="poor" data-i18n="optPoor">偏差/遮挡</option>
+                  <option value="unknown" data-i18n="optUnknown">未知</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">
+              <strong data-i18n="secSurround">周边“形煞”与环境</strong>
+              <span data-i18n="secSurroundHint">噪音/工厂/电塔/尖角等</span>
+            </div>
+            <div class="form">
+              <label class="row">
+                <span data-i18n="sha">周边是否存在以下因素（可多选）</span>
+                <div class="check-group" id="shaGroup">
+                  <label class="pill"><input type="checkbox" value="pylon"> <span data-i18n="shaPylon">高压线/电塔</span></label>
+                  <label class="pill"><input type="checkbox" value="factory"> <span data-i18n="shaFactory">工厂/烟尘</span></label>
+                  <label class="pill"><input type="checkbox" value="noise"> <span data-i18n="shaNoise">噪音（高速/机场）</span></label>
+                  <label class="pill"><input type="checkbox" value="sharp"> <span data-i18n="shaSharp">尖角/刀刃形建筑</span></label>
+                  <label class="pill"><input type="checkbox" value="dump"> <span data-i18n="shaDump">垃圾场/污水</span></label>
+                  <label class="pill"><input type="checkbox" value="none"> <span data-i18n="shaNone">无明显</span></label>
+                  <label class="pill"><input type="checkbox" value="unknown"> <span data-i18n="optUnknown">未知</span></label>
+                </div>
+              </label>
+
+              <label>
+                <span data-i18n="quiet">整体清静度</span>
+                <select id="quiet">
+                  <option value="veryQuiet" data-i18n="optVeryQuiet">很清静</option>
+                  <option value="ok" data-i18n="optOk">一般</option>
+                  <option value="noisy" data-i18n="optNoisy">偏吵</option>
+                  <option value="unknown" data-i18n="optUnknown">未知</option>
+                </select>
+              </label>
+
+              <label>
+                <span data-i18n="green">植被/绿化</span>
+                <select id="green">
+                  <option value="good" data-i18n="optGood">有绿化/树</option>
+                  <option value="mid" data-i18n="optMid">少量</option>
+                  <option value="none" data-i18n="optNone">几乎无</option>
+                  <option value="unknown" data-i18n="optUnknown">未知</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div class="footer-actions">
+            <button class="btn primary" id="btnCalc2" type="button">📍 <span data-i18n="btnGenerate">生成风水报告</span></button>
+            <button class="btn" id="btnCopy" type="button">📋 <span data-i18n="btnCopy">复制报告文本</span></button>
+            <button class="btn" id="btnSave" type="button">💾 <span data-i18n="btnSave">导出JSON</span></button>
+          </div>
+
+          <div class="disclaimer" id="disclaimer">
+            <strong data-i18n="discTitle">提示：</strong>
+            <span data-i18n="discBody">
+              本工具输出为传统民俗角度的“参考意见”，不构成宗教/法律/医学建议。若涉及安葬，请优先遵循当地法律、宗教规范与家属意愿。
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: RESULTS -->
+      <div class="panel">
+        <div class="panel-hd">
+          <h2 data-i18n="resultTitle">风水报告</h2>
+          <div class="hint" id="reportMeta">—</div>
+        </div>
+
+        <div class="panel-bd">
+          <div class="score-box">
+            <div class="kpi">
+              <div class="left">
+                <div class="label" data-i18n="overallScore">综合评分（0–100）</div>
+                <div class="value" id="scoreVal">—</div>
+                <div class="bar" aria-label="score bar"><i id="scoreBar"></i></div>
+              </div>
+              <div class="tag mid" id="scoreTag">—</div>
+            </div>
+
+            <div class="split">
+              <div class="card">
+                <h3 data-i18n="breakdown">分项解读</h3>
+                <ul class="list" id="breakList"></ul>
+              </div>
+              <div class="card">
+                <h3 data-i18n="recommend">建议与避坑</h3>
+                <ul class="list" id="advList"></ul>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3 data-i18n="reportText">完整报告（可复制）</h3>
+              <div class="mono" id="reportTextBox">—</div>
+              <div class="hr"></div>
+              <div class="muted small" data-i18n="reportExplain">
+                评分规则为“可解释加权模型”，只反映传统要素强弱，不代表现实价值判断。
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+<script>
+  // ---------------- i18n ----------------
+  const I18N = {
+    zh: {
+      appTitle: "阴宅风水速评工具（民俗参考）",
+      appSub: "这不是科学结论，仅按传统要素（地势/水/砂/向/路/风/周边）做一个“可解释”的评分与建议，用来辅助沟通与对比选址。",
+      inputTitle: "输入信息",
+      inputHint: "尽量按“实际情况”选择；不确定就选“未知”。",
+      secBasic: "基础信息",
+      secBasicHint: "用于报告抬头/备注",
+      siteName: "地点名称（可选）",
+      regionType: "区域类型",
+      purpose: "用途",
+      climate: "气候/风沙",
+      notes: "补充备注（可选）",
+      secLand: "地势与“靠/抱”",
+      secLandHint: "传统：背有靠、前有案、左右有护",
+      backing: "后靠（靠山/高地/建筑屏障）",
+      embrace: "环抱（左右护砂/地形包围）",
+      slope: "坡度",
+      ground: "土质/地气（主观感受）",
+      secWater: "水与“聚气”",
+      secWaterHint: "传统：得水为上，忌直来直去",
+      water: "附近是否有水（河/湖/湿地/绿化水系）",
+      drainage: "排水/积水风险",
+      secRoad: "道路/高速/“路冲”",
+      secRoadHint: "传统：直冲为煞；弯抱为缓",
+      roadNear: "最近主干道距离",
+      roadShape: "道路形态",
+      roadHit: "墓位/大门是否正对来路（路冲）",
+      secFacing: "朝向/日照/通风",
+      secFacingHint: "不同地区/宗教可能有固定朝向要求",
+      facing: "朝向（大致）",
+      sun: "日照",
+      secSurround: "周边“形煞”与环境",
+      secSurroundHint: "噪音/工厂/电塔/尖角等",
+      sha: "周边是否存在以下因素（可多选）",
+      quiet: "整体清静度",
+      green: "植被/绿化",
+      btnGenerate: "生成风水报告",
+      btnCopy: "复制报告文本",
+      btnSave: "导出JSON",
+      discTitle: "提示：",
+      discBody: "本工具输出为传统民俗角度的“参考意见”，不构成宗教/法律/医学建议。若涉及安葬，请优先遵循当地法律、宗教规范与家属意愿。",
+      resultTitle: "风水报告",
+      overallScore: "综合评分（0–100）",
+      breakdown: "分项解读",
+      recommend: "建议与避坑",
+      reportText: "完整报告（可复制）",
+      reportExplain: "评分规则为“可解释加权模型”，只反映传统要素强弱，不代表现实价值判断。",
+      // options
+      optUrban: "城市/近郊",
+      optDesert: "沙漠/戈壁",
+      optMountain: "山地",
+      optRural: "乡野/农田",
+      optCoastal: "沿海",
+      optUnknown: "未知",
+      optYin: "阴宅（墓地/陵园）",
+      optYang: "阳宅（住宅/商铺）",
+      optCalm: "风小/湿润",
+      optNormal: "一般",
+      optWindy: "风大/风沙",
+      optStrong: "强（明显靠山/高地）",
+      optSome: "有一点（缓坡/远山/建筑群）",
+      optFlat: "无（平坦/空旷）",
+      optGood: "良好/较佳",
+      optOk: "一般",
+      optOpen: "过于开阔（不聚）",
+      optGentle: "微坡/缓坡（优）",
+      optSteep: "陡坡（不稳）",
+      optFirm: "坚实/不松散",
+      optLoose: "松散/沙土",
+      optMeander: "有（弯环/可聚）",
+      optStraight: "有（直线渠/直冲）",
+      optNone: "无",
+      optMid: "一般",
+      optBad: "差/易积水",
+      optVeryClose: "很近（0–200m）",
+      optClose: "较近（200–800m）",
+      optFar: "较远（800m+）",
+      optStraightRoad: "直线/长直路",
+      optCurve: "弯道/环抱",
+      optGrid: "棋盘路网",
+      optYes: "是",
+      optNo: "否",
+      optSouth: "南向",
+      optEast: "东向",
+      optWest: "西向",
+      optNorth: "北向",
+      optFixed: "按宗教/规定固定朝向",
+      optPoor: "偏差/遮挡",
+      optVeryQuiet: "很清静",
+      optNoisy: "偏吵",
+      shaPylon: "高压线/电塔",
+      shaFactory: "工厂/烟尘",
+      shaNoise: "噪音（高速/机场）",
+      shaSharp: "尖角/刀刃形建筑",
+      shaDump: "垃圾场/污水",
+      shaNone: "无明显"
+    },
+    en: {
+      appTitle: "Feng Shui Quick Assessment (Folklore Reference)",
+      appSub: "Not scientific. This tool scores and explains classic factors (terrain / water / forms / facing / roads / wind / surroundings) to help compare sites and communicate.",
+      inputTitle: "Inputs",
+      inputHint: "Choose based on reality; select “Unknown” if unsure.",
+      secBasic: "Basic Info",
+      secBasicHint: "Used for the report header/notes",
+      siteName: "Site name (optional)",
+      regionType: "Region type",
+      purpose: "Use case",
+      climate: "Climate / wind & sand",
+      notes: "Extra notes (optional)",
+      secLand: "Terrain & backing / embrace",
+      secLandHint: "Classic: backing behind, table in front, guardians on sides",
+      backing: "Backing (hill / higher ground / barrier)",
+      embrace: "Embrace (left-right protection / enclosure)",
+      slope: "Slope",
+      ground: "Ground feel (subjective)",
+      secWater: "Water & “Qi gathering”",
+      secWaterHint: "Classic: water helps gather; avoid straight in-out",
+      water: "Nearby water (river/lake/wetland/landscape water)",
+      drainage: "Drainage / flooding risk",
+      secRoad: "Roads / highways / “road rushing”",
+      secRoadHint: "Classic: straight rushing is harsh; curved embrace is softer",
+      roadNear: "Distance to main road",
+      roadShape: "Road pattern",
+      roadHit: "Does the plot/gate face an incoming road (road rushing)?",
+      secFacing: "Facing / sunlight / ventilation",
+      secFacingHint: "Some places/religions require fixed orientation",
+      facing: "Facing (approx.)",
+      sun: "Sunlight",
+      secSurround: "Surrounding “sha” forms & environment",
+      secSurroundHint: "Noise / factories / pylons / sharp corners etc.",
+      sha: "Check surrounding factors (multi-select)",
+      quiet: "Overall quietness",
+      green: "Greenery",
+      btnGenerate: "Generate report",
+      btnCopy: "Copy report text",
+      btnSave: "Export JSON",
+      discTitle: "Note:",
+      discBody: "Folklore reference only; not legal/religious/medical advice. For burials, follow local law, religious rules, and family consensus first.",
+      resultTitle: "Report",
+      overallScore: "Overall score (0–100)",
+      breakdown: "Breakdown",
+      recommend: "Suggestions & pitfalls",
+      reportText: "Full report (copyable)",
+      reportExplain: "This is an explainable weighted model that reflects traditional factor strength only.",
+      // options
+      optUrban: "Urban / suburb",
+      optDesert: "Desert / arid",
+      optMountain: "Mountain",
+      optRural: "Rural / farmland",
+      optCoastal: "Coastal",
+      optUnknown: "Unknown",
+      optYin: "Yin house (burial/cemetery)",
+      optYang: "Yang house (residence/business)",
+      optCalm: "Low wind / humid",
+      optNormal: "Normal",
+      optWindy: "Windy / sandy",
+      optStrong: "Strong (clear backing)",
+      optSome: "Some (gentle/remote backing)",
+      optFlat: "None (flat/open)",
+      optGood: "Good",
+      optOk: "Okay",
+      optOpen: "Too open (hard to gather)",
+      optGentle: "Gentle slope (preferred)",
+      optSteep: "Steep (unstable)",
+      optFirm: "Firm / solid",
+      optLoose: "Loose / sandy",
+      optMeander: "Yes (meandering / can gather)",
+      optStraight: "Yes (straight / rushing)",
+      optNone: "None",
+      optMid: "Medium",
+      optBad: "Bad / pooling risk",
+      optVeryClose: "Very close (0–200m)",
+      optClose: "Close (200–800m)",
+      optFar: "Far (800m+)",
+      optStraightRoad: "Straight / long straight",
+      optCurve: "Curved / embracing",
+      optGrid: "Grid",
+      optYes: "Yes",
+      optNo: "No",
+      optSouth: "South",
+      optEast: "East",
+      optWest: "West",
+      optNorth: "North",
+      optFixed: "Fixed by religion/regulation",
+      optPoor: "Poor / blocked",
+      optVeryQuiet: "Very quiet",
+      optNoisy: "Noisy",
+      shaPylon: "Power lines / pylons",
+      shaFactory: "Factory / pollution",
+      shaNoise: "Noise (highway/airport)",
+      shaSharp: "Sharp / blade-like corners",
+      shaDump: "Dump / sewage",
+      shaNone: "No obvious issues"
+    }
+  };
+
+  function setLang(lang){
+    const dict = I18N[lang] || I18N.zh;
+    document.querySelectorAll("[data-i18n]").forEach(el=>{
+      const key = el.getAttribute("data-i18n");
+      if(dict[key]) el.textContent = dict[key];
+    });
+    // update select option labels (with data-i18n on options)
+    document.querySelectorAll("option[data-i18n]").forEach(opt=>{
+      const key = opt.getAttribute("data-i18n");
+      if(dict[key]) opt.textContent = dict[key];
+    });
+    document.documentElement.lang = (lang === "en" ? "en" : "zh-CN");
+    window.__LANG__ = lang;
+    // refresh tag label if exists
+    if(window.__LAST_RESULT__) renderResult(window.__LAST_RESULT__);
+  }
+
+  // ---------------- helpers ----------------
+  const $ = (id)=>document.getElementById(id);
+
+  function getRadio(name){
+    const el = document.querySelector(`input[name="${name}"]:checked`);
+    return el ? el.value : "unknown";
+  }
+
+  function getSha(){
+    const checked = [...document.querySelectorAll("#shaGroup input[type=checkbox]:checked")].map(x=>x.value);
+    // Normalize "none" vs others
+    if(checked.includes("none") && checked.length > 1){
+      // if both none and others selected, remove "none"
+      return checked.filter(x=>x !== "none");
+    }
+    return checked.length ? checked : ["unknown"];
+  }
+
+  function nowStr(){
+    const d = new Date();
+    const pad = n => String(n).padStart(2,"0");
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  function clamp(n,min,max){ return Math.max(min, Math.min(max,n)); }
+
+  // ---------------- scoring model (explainable) ----------------
+  // 0-100. Weights reflect classic folklore priorities for burial:
+  // Terrain/backing 25, Embrace 15, Water 15, Road/冲 20, Surrounding sha 15, Climate 5, Sun 5.
+  function scoreModel(input){
+    const w = {
+      backing: 25,
+      embrace: 15,
+      water: 15,
+      road: 20,
+      sha: 15,
+      climate: 5,
+      sun: 5
+    };
+
+    // backing
+    let sBacking = ({
+      strong: 100,
+      some: 70,
+      flat: 35,
+      unknown: 55
+    })[input.backing] ?? 55;
+
+    // embrace
+    let sEmbrace = ({
+      good: 90,
+      ok: 65,
+      open: 35,
+      unknown: 55
+    })[input.embrace] ?? 55;
+
+    // slope/ground adjust (minor)
+    const slopeAdj = ({
+      gentle: +6,
+      flat: 0,
+      steep: -8,
+      unknown: 0
+    })[input.slope] ?? 0;
+
+    const groundAdj = ({
+      firm: +5,
+      normal: 0,
+      loose: -8,
+      unknown: 0
+    })[input.ground] ?? 0;
+
+    sBacking = clamp(sBacking + slopeAdj + groundAdj, 0, 100);
+
+    // water
+    let sWater = ({
+      meander: 85,
+      straight: 55,
+      none: 35,
+      unknown: 55
+    })[input.water] ?? 55;
+
+    // drainage adjust
+    const drainageAdj = ({
+      good: +6,
+      mid: 0,
+      bad: -10,
+      unknown: 0
+    })[input.drainage] ?? 0;
+
+    sWater = clamp(sWater + drainageAdj, 0, 100);
+
+    // road
+    // distance baseline
+    let sRoadDist = ({
+      veryClose: 35,
+      close: 55,
+      far: 75,
+      unknown: 60
+    })[input.roadNear] ?? 60;
+
+    // shape baseline
+    let sRoadShape = ({
+      straight: 45,
+      curve: 70,
+      grid: 55,
+      unknown: 60
+    })[input.roadShape] ?? 60;
+
+    let sRoadHit = (input.roadHit === "yes") ? 25 : (input.roadHit === "no" ? 70 : 55);
+
+    // combine road subscore
+    let sRoad = clamp((sRoadDist*0.4 + sRoadShape*0.25 + sRoadHit*0.35), 0, 100);
+
+    // sha environment
+    const shaList = input.sha;
+    let sShaBase = 70; // assume acceptable
+    if(shaList.includes("unknown")) sShaBase = 60;
+    if(shaList.includes("none")) sShaBase = 75;
+
+    // each negative sha reduces
+    const shaPenaltyMap = { pylon: 10, factory: 12, noise: 10, sharp: 8, dump: 14 };
+    let penalty = 0;
+    shaList.forEach(k => penalty += (shaPenaltyMap[k] || 0));
+
+    // quietness adjustment
+    const quietAdj = ({ veryQuiet: +6, ok: 0, noisy: -8, unknown: 0 })[input.quiet] ?? 0;
+    // greenery adjustment
+    const greenAdj = ({ good: +5, mid: 0, none: -6, unknown: 0 })[input.green] ?? 0;
+
+    let sSha = clamp(sShaBase - penalty + quietAdj + greenAdj, 0, 100);
+
+    // climate (wind/sand)
+    let sClimate = ({ calm: 75, normal: 60, windy: 40, unknown: 55 })[input.climate] ?? 55;
+
+    // sun
+    let sSun = ({ good: 70, mid: 55, poor: 40, unknown: 55 })[input.sun] ?? 55;
+
+    // overall weighted
+    const total =
+      sBacking*w.backing +
+      sEmbrace*w.embrace +
+      sWater*w.water +
+      sRoad*w.road +
+      sSha*w.sha +
+      sClimate*w.climate +
+      sSun*w.sun;
+
+    const overall = Math.round(total / 100);
+
+    // build breakdown
+    const breakdown = [
+      { key:"backing", label:"地势/靠山", score: Math.round(sBacking), weight:w.backing },
+      { key:"embrace", label:"环抱/护砂", score: Math.round(sEmbrace), weight:w.embrace },
+      { key:"water",   label:"水/排水", score: Math.round(sWater), weight:w.water },
+      { key:"road",    label:"道路/路冲", score: Math.round(sRoad), weight:w.road },
+      { key:"sha",     label:"周边形煞/环境", score: Math.round(sSha), weight:w.sha },
+      { key:"climate", label:"风沙/气候", score: Math.round(sClimate), weight:w.climate },
+      { key:"sun",     label:"日照", score: Math.round(sSun), weight:w.sun }
+    ];
+
+    return { overall, breakdown, subs: { sBacking, sEmbrace, sWater, sRoad, sSha, sClimate, sSun } };
+  }
+
+  function bandTag(score){
+    const lang = window.__LANG__ || "zh";
+    if(score >= 75) return { cls:"good", text: (lang==="en" ? "Favorable" : "偏吉（较好）") };
+    if(score >= 55) return { cls:"mid", text: (lang==="en" ? "Mixed" : "中性（可用）") };
+    return { cls:"bad", text: (lang==="en" ? "Challenging" : "偏弱（需谨慎）") };
+  }
+
+  function zhLabelForBreakKey(key){
+    const m = { backing:"地势/靠山", embrace:"环抱/护砂", water:"水/排水", road:"道路/路冲", sha:"周边形煞/环境", climate:"风沙/气候", sun:"日照" };
+    return m[key] || key;
+  }
+
+  function enLabelForBreakKey(key){
+    const m = { backing:"Terrain/Backing", embrace:"Enclosure", water:"Water/Drainage", road:"Road Impact", sha:"Surroundings", climate:"Climate", sun:"Sunlight" };
+    return m[key] || key;
+  }
+
+  function keyAdvice(input, result){
+    const lang = window.__LANG__ || "zh";
+    const adv = [];
+    const { subs } = result;
+
+    // road rushing
+    if(input.roadHit === "yes" || subs.sRoad < 45){
+      adv.push(lang==="en"
+        ? "Avoid a plot/gate directly facing a long straight road. If unavoidable, use landscaping/walls/curved approach to soften the rush."
+        : "尽量避免墓位/入口正对长直路（路冲）。若无法避免，可用绿化、围墙、曲折入园路径来“缓冲”。");
+    }
+
+    // too open / no backing
+    if(input.backing === "flat" || input.embrace === "open" || subs.sBacking < 50){
+      adv.push(lang==="en"
+        ? "Open flat terrain is hard to “gather”. Prefer sites with a gentle rise behind or clear side protection."
+        : "平坦空旷地“气易散”。优先选背后微高/有屏障、左右有护的点位。");
+    }
+
+    // water none / drainage
+    if(input.water === "none" || subs.sWater < 45){
+      adv.push(lang==="en"
+        ? "Lack of water is common in arid regions; focus on drainage design and avoid low-lying pockets where water can pool."
+        : "缺水在干旱区很常见，重点反而是排水：避开低洼易积水点，确保雨季排水通畅。");
+    }
+
+    // sand/wind
+    if(input.climate === "windy"){
+      adv.push(lang==="en"
+        ? "In windy/sandy areas, consider windbreak trees/walls, and choose locations less exposed to prevailing winds."
+        : "风大/风沙区，建议选相对背风位置，并考虑防风林/围挡，减少“燥散”。");
+    }
+
+    // sha
+    const sha = input.sha || [];
+    const shaHints = {
+      pylon: lang==="en" ? "Keep distance from pylons/power lines." : "尽量远离高压线/电塔。",
+      factory: lang==="en" ? "Avoid industrial pollution/odors." : "避开工厂烟尘/异味。",
+      noise: lang==="en" ? "Noise reduces “quiet qi”; choose deeper, buffered plots." : "噪音会破“清静气”，选更深、更有缓冲的点位。",
+      sharp: lang==="en" ? "Avoid sharp-corner sight lines pointing to the plot." : "避开尖角直指的视线。",
+      dump: lang==="en" ? "Avoid dumps/sewage and stagnant water." : "远离垃圾/污水与积水源。"
+    };
+    sha.forEach(k=>{
+      if(shaHints[k]) adv.push(shaHints[k]);
+    });
+
+    // facing
+    if(input.facing === "fixed"){
+      adv.push(lang==="en"
+        ? "If orientation is fixed by religion/regulation, prioritize terrain/road/drainage improvements instead of forcing classic facing rules."
+        : "若朝向由宗教/规定固定，优先把地势、道路缓冲、排水与环境做好，不必强行套传统“向”。");
+    }
+
+    if(!adv.length){
+      adv.push(lang==="en"
+        ? "Overall looks balanced. Verify on-site (noise, drainage, wind), and choose a plot with slight backing and buffered access."
+        : "整体较均衡。建议实地确认噪音/排水/风向，并优先选择背后略有依靠、进出道路更缓的点位。");
+    }
+    return adv.slice(0, 8);
+  }
+
+  function breakdownText(input, result){
+    const lang = window.__LANG__ || "zh";
+    return result.breakdown.map(item=>{
+      const label = (lang==="en") ? enLabelForBreakKey(item.key) : zhLabelForBreakKey(item.key);
+      const w = item.weight;
+      let note = "";
+      if(item.score >= 75) note = (lang==="en" ? "strong" : "较强");
+      else if(item.score >= 55) note = (lang==="en" ? "ok" : "一般");
+      else note = (lang==="en" ? "weak" : "偏弱");
+      return { label, score: item.score, weight:w, note };
+    });
+  }
+
+  function makeReport(input, result){
+    const lang = window.__LANG__ || "zh";
+    const tag = bandTag(result.overall);
+    const name = (input.siteName || (lang==="en" ? "Unnamed site" : "未命名地点"));
+    const t = nowStr();
+
+    const btxt = breakdownText(input, result)
+      .map(x => (lang==="en"
+        ? `- ${x.label}: ${x.score}/100 (${x.note}), weight ${x.weight}%`
+        : `- ${x.label}：${x.score}/100（${x.note}），权重 ${x.weight}%`
+      )).join("\n");
+
+    const adv = keyAdvice(input, result).map(s => `- ${s}`).join("\n");
+
+    const header = (lang==="en"
+      ? `Feng Shui Folklore Report\nSite: ${name}\nTime: ${t}\nOverall: ${result.overall}/100 (${tag.text})\n`
+      : `风水民俗参考报告\n地点：${name}\n时间：${t}\n综合：${result.overall}/100（${tag.text}）\n`
+    );
+
+    const context = (lang==="en"
+      ? `\nContext\n- Region: ${input.regionType}\n- Use: ${input.purpose}\n- Climate: ${input.climate}\n- Facing: ${input.facing}\n- Notes: ${input.notes || "(none)"}\n`
+      : `\n基本情况\n- 区域：${input.regionType}\n- 用途：${input.purpose}\n- 气候/风沙：${input.climate}\n- 朝向：${input.facing}\n- 备注：${input.notes || "（无）"}\n`
+    );
+
+    const body = (lang==="en"
+      ? `\nBreakdown\n${btxt}\n\nSuggestions\n${adv}\n\nDisclaimer\nThis is folklore reference only; follow local laws and religious rules for burial decisions.`
+      : `\n分项解读\n${btxt}\n\n建议与避坑\n${adv}\n\n免责声明\n本报告为民俗参考，不构成法律/宗教建议；安葬请优先遵循当地法律与宗教规范。`
+    );
+
+    return header + context + body;
+  }
+
+  function renderResult(payload){
+    const { input, result, reportText } = payload;
+    window.__LAST_RESULT__ = payload;
+
+    const tag = bandTag(result.overall);
+    $("scoreVal").textContent = result.overall;
+    $("scoreTag").className = `tag ${tag.cls}`;
+    $("scoreTag").textContent = tag.text;
+    $("scoreBar").style.width = `${clamp(result.overall,0,100)}%`;
+
+    const lang = window.__LANG__ || "zh";
+    $("reportMeta").textContent = (lang==="en"
+      ? `${input.siteName || "Unnamed site"} · ${nowStr()}`
+      : `${input.siteName || "未命名地点"} · ${nowStr()}`
+    );
+
+    // breakdown list
+    const bl = $("breakList");
+    bl.innerHTML = "";
+    breakdownText(input, result).forEach(x=>{
+      const li = document.createElement("li");
+      li.textContent = (lang==="en"
+        ? `${x.label}: ${x.score}/100 (${x.note})`
+        : `${x.label}：${x.score}/100（${x.note}）`
+      );
+      bl.appendChild(li);
+    });
+
+    // advice list
+    const al = $("advList");
+    al.innerHTML = "";
+    keyAdvice(input, result).forEach(s=>{
+      const li = document.createElement("li");
+      li.textContent = s;
+      al.appendChild(li);
+    });
+
+    $("reportTextBox").textContent = reportText;
+  }
+
+  function collectInput(){
+    const input = {
+      siteName: $("siteName").value.trim(),
+      regionType: $("regionType").value,
+      purpose: $("purpose").value,
+      climate: $("climate").value,
+      notes: $("notes").value.trim(),
+
+      backing: $("backing").value,
+      embrace: $("embrace").value,
+      slope: $("slope").value,
+      ground: $("ground").value,
+
+      water: $("water").value,
+      drainage: $("drainage").value,
+
+      roadNear: $("roadNear").value,
+      roadShape: $("roadShape").value,
+      roadHit: getRadio("roadHit"),
+
+      facing: $("facing").value,
+      sun: $("sun").value,
+
+      sha: getSha(),
+      quiet: $("quiet").value,
+      green: $("green").value
+    };
+    return input;
+  }
+
+  function calculate(){
+    const input = collectInput();
+    const result = scoreModel(input);
+    const reportText = makeReport(input, result);
+    renderResult({ input, result, reportText });
+  }
+
+  function resetAll(){
+    document.querySelectorAll("input[type=text], input[type=number], textarea").forEach(el=>el.value="");
+    document.querySelectorAll("select").forEach(sel=>{
+      // keep language select
+      if(sel.id === "langSel") return;
+      sel.selectedIndex = 0;
+    });
+    document.querySelectorAll("input[type=radio]").forEach(r=>{
+      if(r.name === "roadHit" && r.value === "no") r.checked = true;
+    });
+    document.querySelectorAll("#shaGroup input[type=checkbox]").forEach(c=>c.checked=false);
+
+    $("scoreVal").textContent = "—";
+    $("scoreTag").className = "tag mid";
+    $("scoreTag").textContent = "—";
+    $("scoreBar").style.width = "0%";
+    $("breakList").innerHTML = "";
+    $("advList").innerHTML = "";
+    $("reportTextBox").textContent = "—";
+    $("reportMeta").textContent = "—";
+    window.__LAST_RESULT__ = null;
+  }
+
+  function demoFill(){
+    // A desert cemetery near straight highway example
+    $("siteName").value = "Example: Desert cemetery near highway";
+    $("regionType").value = "desert";
+    $("purpose").value = "yinzhai";
+    $("climate").value = "windy";
+    $("notes").value = "Near straight highway; flat open terrain; little greenery; planned cemetery grid roads.";
+
+    $("backing").value = "flat";
+    $("embrace").value = "open";
+    $("slope").value = "flat";
+    $("ground").value = "loose";
+
+    $("water").value = "none";
+    $("drainage").value = "mid";
+
+    $("roadNear").value = "close";
+    $("roadShape").value = "grid";
+    document.querySelector(`input[name="roadHit"][value="unknown"]`).checked = true;
+
+    $("facing").value = "fixed";
+    $("sun").value = "good";
+
+    // sha
+    document.querySelectorAll("#shaGroup input[type=checkbox]").forEach(c=>c.checked=false);
+    document.querySelector(`#shaGroup input[value="noise"]`).checked = true;
+    document.querySelector(`#shaGroup input[value="none"]`).checked = false;
+
+    $("quiet").value = "veryQuiet";
+    $("green").value = "none";
+
+    calculate();
+  }
+
+  async function copyReport(){
+    const text = $("reportTextBox").textContent;
+    if(!text || text === "—") return;
+    try{
+      await navigator.clipboard.writeText(text);
+      flashBtn($("btnCopy"), "✅");
+    }catch(e){
+      // fallback
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      flashBtn($("btnCopy"), "✅");
+    }
+  }
+
+  function exportJSON(){
+    const input = collectInput();
+    const result = scoreModel(input);
+    const payload = { input, result, generatedAt: new Date().toISOString() };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "fengshui_report.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    flashBtn($("btnSave"), "✅");
+  }
+
+  function flashBtn(btn, mark){
+    const old = btn.textContent;
+    btn.textContent = mark + " " + old.replace(/^✅\s|^✨\s/,"");
+    btn.style.borderColor = "rgba(34,197,94,.6)";
+    setTimeout(()=>{
+      btn.textContent = old;
+      btn.style.borderColor = "";
+    }, 900);
+  }
+
+  // ---------------- events ----------------
+  $("btnCalc").addEventListener("click", calculate);
+  $("btnCalc2").addEventListener("click", calculate);
+  $("btnReset").addEventListener("click", resetAll);
+  $("btnDemo").addEventListener("click", demoFill);
+  $("btnCopy").addEventListener("click", copyReport);
+  $("btnSave").addEventListener("click", exportJSON);
+
+  $("langSel").addEventListener("change", (e)=> setLang(e.target.value));
+
+  // initial
+  window.__LANG__ = "zh";
+  setLang("zh");
+</script>
+</body>
+</html>
