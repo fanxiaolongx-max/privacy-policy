@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF 编辑器 Pro Ultra (修复版)</title>
+    <title>PDF 编辑器 Pro Ultra (增强版)</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -71,20 +71,6 @@
             <button class="tool-btn" id="tool-draw" onclick="setTool('draw')" title="自由绘图 (P)"><i class="ri-pencil-fill"></i><span class="tool-label">画笔</span></button>
             <button class="tool-btn" id="tool-highlight" onclick="setTool('highlight')" title="高亮笔"><i class="ri-mark-pen-fill"></i><span class="tool-label">高亮</span></button>
             <button class="tool-btn" onclick="document.getElementById('img-upload').click()" title="插入图片"><i class="ri-image-add-line"></i><span class="tool-label">图片</span></button>
-            
-            <button class="tool-btn" id="tool-rect" onclick="setTool('rect')" title="矩形">
-                <i class="ri-checkbox-blank-line"></i>
-                <span class="tool-label">矩形</span>
-            </button>
-
-            <button class="tool-btn" id="tool-circle" onclick="setTool('circle')" title="圆形">
-                <i class="ri-checkbox-blank-circle-line"></i>
-                <span class="tool-label">圆形</span>
-            </button>
-
-
-
-            
             <input type="file" id="img-upload" accept="image/*" class="hidden">
             
             <div class="mt-auto flex flex-col gap-2 mb-2">
@@ -226,13 +212,6 @@
         const history = { undo: [], redo: [], locked: false };
         let showGrid = false;
 
-        let drawShapeMode = null;   // 'rect' | 'circle' | 'arrow' | null
-        let isDrawingShape = false;
-        let startX = 0, startY = 0;
-        history.locked = true;
-        let tempObj = null;
-
-
         function initCanvas() {
             canvas = new fabric.Canvas('fabric-canvas', { preserveObjectStacking: true, selection: true });
             canvas.on('selection:created', onSelect);
@@ -241,14 +220,9 @@
             canvas.on('object:added', () => saveHistory('add'));
             canvas.on('object:modified', () => saveHistory('mod'));
             canvas.on('object:removed', () => saveHistory('rem'));
-
-            canvas.on('mouse:down', onCanvasMouseDown);
-            canvas.on('mouse:move', onCanvasMouseMove);
-            canvas.on('mouse:up', onCanvasMouseUp);
-
         }
 
-        // 文件加载 [修复：添加了 value 重置]
+        // 文件加载
         document.getElementById('file-upload').onchange = async (e) => {
             const f = e.target.files[0]; if(!f) return;
             showLoader(true, '解析 PDF...');
@@ -266,12 +240,7 @@
                 pageObjects = {}; pageRotations = {}; 
                 history.undo = []; history.redo = []; currentPage = 1;
                 await renderPage(1); resetZoom();
-            } catch(err) { alert('错误: ' + err.message); } 
-            finally { 
-                showLoader(false); 
-                // [修复核心] 清空 input 值，确保可以重复选择同一文件或重新触发事件
-                e.target.value = ''; 
-            }
+            } catch(err) { alert('错误: ' + err.message); } finally { showLoader(false); }
         };
 
         function stashCurrentObjects() {
@@ -281,11 +250,11 @@
             else delete pageObjects[currentPage];
         }
 
-        // 找到原本的 renderPage 函数，用这个替换
         async function renderPage(num) {
             showLoader(true, `加载第 ${num} 页...`);
             try {
                 const page = await pdfDoc.getPage(num);
+                // 获取旋转角度
                 const userRotation = pageRotations[num] || 0;
                 const totalRotation = (page.rotate + userRotation) % 360;
                 
@@ -298,7 +267,6 @@
                 const bgURL = tempCvs.toDataURL('image/jpeg', 0.8);
                 canvasBaseWidth = viewport.width;
                 canvas.setWidth(viewport.width); canvas.setHeight(viewport.height);
-                
                 canvas.clear(); 
                 history.undo = []; history.redo = []; updateHistoryBtns(); 
 
@@ -313,12 +281,7 @@
                             objs.forEach(o => canvas.add(o)); 
                             canvas.renderAll(); 
                             history.locked = false; 
-                            // [新增修复] 加载旧对象后，保存一次初始状态，作为撤回的基点
-                            saveHistory('init');
                         });
-                    } else {
-                        // [新增修复] 如果是新页面，也要保存初始空白状态
-                        saveHistory('init');
                     }
                     document.getElementById('page-num').innerText = num;
                     applyZoom(); showLoader(false);
@@ -338,22 +301,11 @@
             await renderPage(currentPage);
         };
 
-        // [修复核心] 改进的清空页面逻辑
         window.clearPage = () => {
             if(confirm('确定要清空当前页面的所有标注吗？(此操作不可撤销)')) {
-                // 1. 获取当前所有对象并移除（但不调用 clear()，从而保留背景图）
-                const objects = canvas.getObjects();
-                // 复制一份数组进行遍历删除，因为直接在 getObjects() 返回的数组上操作可能会有副作用
-                [...objects].forEach(o => canvas.remove(o));
-
-                // 2. 彻底清除内存中该页的缓存
-                delete pageObjects[currentPage];
-
-                // 3. 刷新画布
-                canvas.requestRenderAll();
-                
-                // 4. 记录历史
-                saveHistory('clear');
+                canvas.clear();
+                // 重新设置背景图因为 clear 会清除背景
+                renderPage(currentPage);
             }
         };
 
@@ -386,7 +338,7 @@
             } else {
                 document.getElementById('font-section').classList.add('hidden');
                 document.getElementById('text-styles').classList.add('hidden');
-                document.getElementById('size-label').innerText = (type === 'path' || type === 'brush' || type === 'polyline') ? '笔触粗细' : '大小';
+                document.getElementById('size-label').innerText = (type === 'path' || type === 'brush') ? '笔触粗细' : '大小';
             }
         }
 
@@ -417,13 +369,6 @@
                 } else {
                     brush.color = hexToRgba(color, opacity);
                 }
-            } else if (mode === 'rect' || mode === 'circle' || mode === 'arrow') {
-                // ========== 新增：鼠标拖拽画形状 ==========
-                drawShapeMode = mode;
-                canvas.isDrawingMode = false;
-                canvas.selection = false;
-                canvas.defaultCursor = 'crosshair';
-                activatePanel('shape');
             } else if (mode === 'whiteout') {
                 const rect = new fabric.Rect({ left: canvas.width/2 - 100, top: canvas.height/2 - 50, width: 200, height: 100, fill: 'white', stroke: '#e2e8f0', strokeWidth: 1 });
                 canvas.add(rect); canvas.setActiveObject(rect); setTool('select');
@@ -452,50 +397,26 @@
         };
 
         function onSelect() {
-            const obj = canvas.getActiveObject(); 
-            if(!obj) return;
-            
+            const obj = canvas.getActiveObject(); if(!obj) return;
             activatePanel(obj.type);
-
-            // 1. --- 修复颜色读取逻辑 ---
-            // 优先读取描边色(stroke)，如果没有描边(比如文字)则读取填充色(fill)
-            // 这样箭头(polyline)和文字(text)都能正确显示颜色
-            let activeColor = obj.fill;
-            if ((obj.type === 'path' || obj.type === 'polyline' || obj.type === 'rect' || obj.type === 'circle') && obj.stroke) {
-                activeColor = obj.stroke;
+            if(obj.fill && typeof obj.fill === 'string' && obj.fill.startsWith('#')) {
+                document.getElementById('prop-color').value = obj.fill;
+                document.getElementById('color-hex').innerText = obj.fill;
+                document.getElementById('color-preview').style.backgroundColor = obj.fill;
             }
-
-            // 更新颜色选择器显示
-            if(activeColor && typeof activeColor === 'string' && activeColor.startsWith('#')) {
-                document.getElementById('prop-color').value = activeColor;
-                document.getElementById('color-hex').innerText = activeColor;
-                document.getElementById('color-preview').style.backgroundColor = activeColor;
-            }
-
-            // 2. --- 根据类型更新属性面板 ---
             if(obj.type === 'i-text') {
-                // 如果是文字
                 document.getElementById('prop-font').value = obj.fontFamily || 'sans-serif';
                 document.getElementById('prop-size').value = obj.fontSize;
                 document.getElementById('size-val').innerText = obj.fontSize;
-                
-                // 更新文字样式按钮状态
                 document.getElementById('btn-bold').className = obj.fontWeight==='bold' ? 'flex-1 py-1.5 rounded bg-blue-100 text-blue-600 text-sm font-bold transition' : 'flex-1 py-1.5 rounded hover:bg-white hover:shadow-sm text-sm font-bold transition';
                 document.getElementById('btn-italic').className = obj.fontStyle==='italic' ? 'flex-1 py-1.5 rounded bg-blue-100 text-blue-600 text-sm italic transition' : 'flex-1 py-1.5 rounded hover:bg-white hover:shadow-sm text-sm italic transition';
                 document.getElementById('btn-strike').className = obj.linethrough ? 'flex-1 py-1.5 rounded bg-blue-100 text-blue-600 text-sm line-through transition' : 'flex-1 py-1.5 rounded hover:bg-white hover:shadow-sm text-sm line-through transition';
-            
-            } else if (obj.type === 'path' || obj.type === 'polyline' || obj.type === 'rect' || obj.type === 'circle') {
-                // 如果是 线条、箭头、矩形、圆形
-                // 统一读取 strokeWidth (边框粗细)
-                if (obj.strokeWidth) {
-                    document.getElementById('prop-size').value = obj.strokeWidth;
-                    document.getElementById('size-val').innerText = obj.strokeWidth.toFixed(0);
-                }
+            } else if (obj.type === 'path') {
+                document.getElementById('prop-size').value = obj.strokeWidth;
+                document.getElementById('size-val').innerText = obj.strokeWidth.toFixed(0);
             }
-
-            // 3. --- 更新透明度 (通用属性，放在最后) ---
             document.getElementById('prop-opacity').value = obj.opacity;
-            document.getElementById('opacity-val').innerText = Math.round(obj.opacity * 100) + '%';
+            document.getElementById('opacity-val').innerText = Math.round(obj.opacity*100) + '%';
         }
 
         function onClear() {
@@ -517,18 +438,8 @@
             if(key === 'opacity') document.getElementById('opacity-val').innerText = Math.round(val*100)+'%';
 
             if(obj) {
-                if(key === 'color') { 
-                    // 实体形状改填充
-                    if(obj.type === 'i-text' || obj.type === 'rect' || obj.type === 'circle') obj.set('fill', val); 
-                    // [修改处]：线条形状改描边 (增加 polyline)
-                    if(obj.type === 'path' || obj.type === 'polyline' || obj.type === 'rect' || obj.type === 'circle') obj.set('stroke', val); 
-                }
-
-                if(key === 'size') { 
-                    if(obj.type === 'i-text') obj.set('fontSize', val); 
-                    // [修改处]：线条粗细 (增加 polyline)
-                    else if(obj.type === 'path' || obj.type === 'polyline' || obj.type === 'rect' || obj.type === 'circle') obj.set('strokeWidth', val); 
-                }
+                if(key === 'color') { if(obj.type === 'i-text' || obj.type === 'rect') obj.set('fill', val); if(obj.type === 'path') obj.set('stroke', val); }
+                if(key === 'size') { if(obj.type === 'i-text') obj.set('fontSize', val); else if(obj.type === 'path') obj.set('strokeWidth', val); }
                 if(key === 'opacity') obj.set('opacity', val);
                 if(key === 'font' && obj.type === 'i-text') obj.set('fontFamily', val);
                 canvas.requestRenderAll(); saveHistory('mod');
@@ -561,69 +472,31 @@
 
         function saveHistory(type) {
             if(history.locked) return;
-
-            const snap = JSON.stringify(canvas.toJSON());
-            if (history.undo.length && history.undo[history.undo.length - 1] === snap) return; // ✅ 去重
-
-            if(history.undo.length > 50) history.undo.shift();
-            history.undo.push(snap);
-            history.redo = [];
-            updateHistoryBtns();
+            if(history.undo.length > 20) history.undo.shift();
+            history.undo.push(JSON.stringify(canvas.toJSON()));
+            history.redo = []; updateHistoryBtns();
         }
-
-        
-        // 替换原本的 undo 和 redo
         window.undo = () => {
-            // 必须至少保留一个初始状态，所以长度 <= 1 时不能撤回
-            if(history.undo.length <= 1) return;
-
-            // 1. 弹出栈顶（这是当前屏幕看到的状态），把它移到 Redo 栈去
-            const current = history.undo.pop();
-            history.redo.push(current);
-
-            // 2. 现在栈顶变成了“上一步的状态”，我们读取它（Peek），但不要弹出它
-            // 因为这变成了新的“当前状态”
-            const prev = history.undo[history.undo.length - 1];
-
+            if(history.undo.length === 0) return;
+            history.redo.push(JSON.stringify(canvas.toJSON()));
+            const prev = history.undo.pop();
             history.locked = true;
-            canvas.loadFromJSON(JSON.parse(prev), () => {
-                canvas.renderAll();
-                history.locked = false;
-                updateHistoryBtns(); // 别忘了更新按钮状态
-            });
+            canvas.loadFromJSON(JSON.parse(prev), () => { canvas.renderAll(); history.locked = false; });
+            updateHistoryBtns();
         };
-
         window.redo = () => {
             if(history.redo.length === 0) return;
-
-            // 1. 从 Redo 栈取出下一步的状态
+            history.undo.push(JSON.stringify(canvas.toJSON()));
             const next = history.redo.pop();
-            
-            // 2. 把它推入 Undo 栈，因为它即将成为当前状态
-            history.undo.push(next);
-
             history.locked = true;
-            canvas.loadFromJSON(JSON.parse(next), () => {
-                canvas.renderAll();
-                history.locked = false;
-                updateHistoryBtns();
-            });
+            canvas.loadFromJSON(JSON.parse(next), () => { canvas.renderAll(); history.locked = false; });
+            updateHistoryBtns();
         };
-
-        // 同时也更新一下按钮状态判断逻辑，因为现在我们保留了初始状态
         function updateHistoryBtns() {
-            // 只有当 Undo 栈里有多于 1 个状态（初始状态 + 至少 1 个操作）时，才能撤回
-            document.getElementById('btn-undo').disabled = history.undo.length <= 1;
+            document.getElementById('btn-undo').disabled = history.undo.length === 0;
             document.getElementById('btn-redo').disabled = history.redo.length === 0;
-            
-            // 更新样式
-            document.getElementById('btn-undo').className = history.undo.length <= 1 ? 
-                'w-8 h-8 flex items-center justify-center rounded text-slate-300 cursor-not-allowed' : 
-                'w-8 h-8 flex items-center justify-center rounded hover:bg-white hover:shadow-sm text-slate-600';
-            
-            document.getElementById('btn-redo').className = history.redo.length === 0 ? 
-                'w-8 h-8 flex items-center justify-center rounded text-slate-300 cursor-not-allowed' : 
-                'w-8 h-8 flex items-center justify-center rounded hover:bg-white hover:shadow-sm text-slate-600';
+            document.getElementById('btn-undo').className = history.undo.length===0 ? 'w-8 h-8 flex items-center justify-center rounded text-slate-300 cursor-not-allowed' : 'w-8 h-8 flex items-center justify-center rounded hover:bg-white hover:shadow-sm text-slate-600';
+            document.getElementById('btn-redo').className = history.redo.length===0 ? 'w-8 h-8 flex items-center justify-center rounded text-slate-300 cursor-not-allowed' : 'w-8 h-8 flex items-center justify-center rounded hover:bg-white hover:shadow-sm text-slate-600';
         }
 
         window.deleteActiveObject = () => { const actives = canvas.getActiveObjects(); if(actives.length) { canvas.discardActiveObject(); actives.forEach(o => canvas.remove(o)); saveHistory('del'); }};
@@ -638,185 +511,8 @@
             if((e.ctrlKey||e.metaKey) && e.key === 'y') redo();
         });
 
-        // 1. 添加箭头 (修复版)
-        window.addArrow = () => {
-            setTool('select');
-            const color = document.getElementById('prop-color').value;
-            const size = parseInt(document.getElementById('prop-size').value) || 4;
 
-            // 使用 Polyline（折线）代替 Path，兼容性更好，不会隐形
-            // 坐标点：起点 -> 终点 -> 上翼 -> 终点 -> 下翼
-            const arrow = new fabric.Polyline([
-                { x: 0, y: 0 },
-                { x: 100, y: 0 },
-                { x: 85, y: -10 },
-                { x: 100, y: 0 },
-                { x: 85, y: 10 }
-            ], {
-                left: canvas.width / 2 - 50,
-                top: canvas.height / 2,
-                fill: 'transparent', // 重点：必须显式设置为 transparent
-                stroke: color,
-                strokeWidth: size,
-                strokeLineCap: 'round', // 让拐角圆润
-                strokeLineJoin: 'round',
-                originX: 'center',
-                originY: 'center',
-                objectCaching: false // 关闭缓存，防止模糊或不显示
-            });
-
-            canvas.add(arrow);
-            canvas.setActiveObject(arrow);
-            canvas.requestRenderAll(); // 强制刷新画布
-            saveHistory('add_arrow');
-        };
-
-        // === 新增：图形工具箱 ===
-
-        function getPointer(e) {
-            return canvas.getPointer(e.e);
-        }
-
-        function onCanvasMouseDown(opt) {
-            if (!drawShapeMode) return;
-
-            history.locked = true;   // ✅ 新增：绘制中锁历史
-
-            const p = getPointer(opt);
-            isDrawingShape = true;
-            startX = p.x; startY = p.y;
-
-            const color = document.getElementById('prop-color').value;
-            const sw = parseInt(document.getElementById('prop-size').value) || 3;
-            const opacity = parseFloat(document.getElementById('prop-opacity').value) || 1;
-
-            // 先把选择关掉，防止拖拽时选中别的对象
-            canvas.selection = false;
-            canvas.discardActiveObject();
-
-            if (drawShapeMode === 'rect') {
-                tempObj = new fabric.Rect({
-                    left: startX, top: startY,
-                    width: 1, height: 1,
-                    fill: 'transparent',
-                    stroke: color,
-                    strokeWidth: sw,
-                    opacity,
-                    rx: 5, ry: 5,
-                    selectable: false,
-                    evented: false
-                });
-                canvas.add(tempObj);
-
-            } else if (drawShapeMode === 'circle') {
-                tempObj = new fabric.Ellipse({
-                    left: startX, top: startY,
-                    rx: 1, ry: 1,
-                    fill: 'transparent',
-                    stroke: color,
-                    strokeWidth: sw,
-                    opacity,
-                    originX: 'left',
-                    originY: 'top',
-                    selectable: false,
-                    evented: false
-                });
-                canvas.add(tempObj);
-
-            } else if (drawShapeMode === 'arrow') {
-                // 用 line + triangle 组合；先创建，后续 move 时更新位置/角度
-                const line = new fabric.Line([startX, startY, startX + 1, startY + 1], {
-                    stroke: color,
-                    strokeWidth: sw,
-                    selectable: false,
-                    evented: false
-                });
-
-                const head = new fabric.Triangle({
-                    width: 14, height: 14,
-                    fill: color,
-                    left: startX + 1, top: startY + 1,
-                    originX: 'center', originY: 'center',
-                    angle: 0,
-                    selectable: false,
-                    evented: false
-                });
-
-                tempObj = new fabric.Group([line, head], {
-                    selectable: false,
-                    evented: false
-                });
-                canvas.add(tempObj);
-            }
-
-            canvas.requestRenderAll();
-        }
-
-        function onCanvasMouseMove(opt) {
-            if (!isDrawingShape || !tempObj) return;
-
-            const p = getPointer(opt);
-            const x = p.x, y = p.y;
-
-            const left = Math.min(startX, x);
-            const top = Math.min(startY, y);
-            const w = Math.abs(x - startX);
-            const h = Math.abs(y - startY);
-
-            if (drawShapeMode === 'rect') {
-                tempObj.set({ left, top, width: w, height: h });
-
-            } else if (drawShapeMode === 'circle') {
-                // 椭圆：left/top 是包围盒左上角，rx/ry 是半径
-                tempObj.set({
-                    left,
-                    top,
-                    rx: w / 2,
-                    ry: h / 2
-                });
-
-            } else if (drawShapeMode === 'arrow') {
-                const [line, head] = tempObj._objects;
-
-                // 更新线
-                line.set({ x1: startX, y1: startY, x2: x, y2: y });
-
-                // 箭头角度
-                const angle = Math.atan2(y - startY, x - startX) * 180 / Math.PI;
-
-                // 更新箭头头部位置与角度
-                head.set({ left: x, top: y, angle: angle + 90 });
-
-                tempObj.addWithUpdate();
-            }
-
-            canvas.requestRenderAll();
-        }
-
-        function onCanvasMouseUp() {
-            if (!isDrawingShape || !tempObj) return;
-
-            // 固化：让它变成可选、可编辑对象
-            tempObj.set({ selectable: true, evented: true });
-            canvas.setActiveObject(tempObj);
-
-            // 结束本次绘制
-            isDrawingShape = false;
-            tempObj = null;
-
-            canvas.selection = true;
-            canvas.requestRenderAll();
-
-            // ✅ 关键：现在才解锁，并保存一次最终结果
-            history.locked = false;
-            saveHistory('draw_shape');
-
-            // 画完回到选择
-            setTool('select');
-            drawShapeMode = null;
-        }
-
-        // 导出
+        // 导出 (终极修正版 v3：完美修复旋转后内容方向错误的问题)
         window.savePDF = async () => {
             stashCurrentObjects(); // 保存当前状态
             showLoader(true, '正在进行坐标系校正与合成...');
@@ -826,35 +522,42 @@
                 const srcDoc = await PDFDocument.load(fileBytes);
                 const pages = srcDoc.getPages();
                 const totalPages = srcDoc.getPageCount();
-                const { degrees } = PDFLib; 
+                const { degrees } = PDFLib; // 解构出 degrees 函数工具
 
                 for (let i = 0; i < totalPages; i++) {
                     const pageNum = i + 1;
                     const pdfPage = pages[i];
                     
                     // --- A. 获取原始信息 ---
+                    // 关键：在设置新旋转之前，先获取页面最初始的“直立”尺寸
                     const { width: originalWidth, height: originalHeight } = pdfPage.getSize();
                     const currentRotation = pdfPage.getRotation().angle;
                     const userRotation = pageRotations[pageNum] || 0;
                     
+                    // 计算最终需要的角度 (0, 90, 180, 270)
                     let finalRotation = (currentRotation + userRotation) % 360;
                     if (finalRotation < 0) finalRotation += 360;
                     
                     // --- B. 设置元数据旋转 ---
+                    // 告诉 PDF 阅读器最终应该怎么显示这一页
                     pdfPage.setRotation(degrees(finalRotation));
 
                     // --- C. 准备标注层图片 ---
                     if (pageObjects[pageNum] && pageObjects[pageNum].length > 0) {
                         
+                        // 判断页面是否横过来了
                         const isSideways = finalRotation === 90 || finalRotation === 270;
+                        // 计算视觉上的宽高（我们在浏览器里看到的尺寸）
                         const visualWidth = isSideways ? originalHeight : originalWidth;
                         const visualHeight = isSideways ? originalWidth : originalHeight;
 
+                        // 创建临时画布，使用 2倍高清尺寸
                         const staticCvs = new fabric.StaticCanvas(null, { 
                             width: visualWidth * 2, 
                             height: visualHeight * 2
                         });
 
+                        // 恢复对象
                         await new Promise(r => {
                             fabric.util.enlivenObjects(pageObjects[pageNum], (objs) => {
                                 objs.forEach(o => staticCvs.add(o));
@@ -862,39 +565,58 @@
                             });
                         });
                         
+                        // 渲染并导出透明 PNG
                         staticCvs.renderAll();
                         const imgData = staticCvs.toDataURL({ format: 'png', multiplier: 1 });
                         const pngImage = await srcDoc.embedPng(imgData);
 
+                        // --- D. 核心修复：计算抵消旋转的绘制参数 ---
+                        // PDF 坐标系原点在左下角。我们需要根据旋转角度，把图片“摆正”。
+                        
                         let drawOptions = {};
 
                         switch (finalRotation) {
                             case 0:
+                                // 正常直立：直接绘制
                                 drawOptions = { x: 0, y: 0, width: visualWidth, height: visualHeight };
                                 break;
+                                
                             case 90:
+                                // 顺时针转了90度。我们需要把图片起点移到右下角，然后自身顺时针转90度摆放。
+                                // 注意：此时 visualWidth 其实等于 originalHeight
                                 drawOptions = {
-                                    x: originalWidth, y: 0,
-                                    width: visualWidth, height: visualHeight,
+                                    x: originalWidth, 
+                                    y: 0,
+                                    width: visualWidth, 
+                                    height: visualHeight,
                                     rotate: degrees(90)
                                 };
                                 break;
+                                
                             case 180:
+                                // 颠倒了。移到右上角，自身转180度。
                                 drawOptions = {
-                                    x: originalWidth, y: originalHeight,
-                                    width: visualWidth, height: visualHeight,
+                                    x: originalWidth,
+                                    y: originalHeight,
+                                    width: visualWidth,
+                                    height: visualHeight,
                                     rotate: degrees(180)
                                 };
                                 break;
+                                
                             case 270:
+                                // 顺时针转了270度（相当于逆时针90）。移到左上角，自身转270度。
                                 drawOptions = {
-                                    x: 0, y: originalHeight,
-                                    width: visualWidth, height: visualHeight,
+                                    x: 0,
+                                    y: originalHeight,
+                                    width: visualWidth,
+                                    height: visualHeight,
                                     rotate: degrees(270)
                                 };
                                 break;
                         }
 
+                        // 执行绘制
                         pdfPage.drawImage(pngImage, drawOptions);
                     }
                 }
