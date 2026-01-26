@@ -41,6 +41,17 @@
                 linear-gradient(to bottom, rgba(59, 130, 246, 0.1) 1px, transparent 1px);
             pointer-events: none;
         }
+        /* === 修复点击画布时的抖动/缩小问题 === */
+        .canvas-container, canvas {
+            outline: none !important; /* 移除蓝色聚焦边框 */
+            -webkit-tap-highlight-color: transparent; /* 移除移动端点击高亮 */
+        }
+        
+        /* 确保画布容器不会因为边框而溢出 */
+        #canvas-wrapper {
+            outline: none;
+            border: none;
+        }
     </style>
 </head>
 <body class="flex flex-col h-screen text-slate-800 select-none">
@@ -56,9 +67,26 @@
         </div>
         <div class="flex items-center gap-3">
             <span id="file-name" class="text-xs text-slate-400 font-mono hidden md:block max-w-[200px] truncate"></span>
+            
             <input type="file" id="file-upload" accept="application/pdf" class="hidden">
-            <button onclick="document.getElementById('file-upload').click()" class="px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-100 border border-transparent transition-all flex items-center gap-2"><i class="ri-folder-open-line"></i> 打开</button>
-            <button onclick="savePDF()" id="btn-save" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 shadow-md shadow-blue-200 transition-all opacity-50 cursor-not-allowed" disabled><i class="ri-save-3-line"></i> 导出</button>
+
+            <button onclick="document.getElementById('file-upload').click()" class="px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-100 transition-all flex items-center gap-2">
+                <i class="ri-folder-open-line"></i> 打开 PDF
+            </button>
+            
+            <button onclick="openProject()" class="px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-100 transition-all flex items-center gap-2">
+                <i class="ri-file-code-line"></i> 导入工程
+            </button>
+            
+            <div class="w-px h-4 bg-slate-300 mx-1"></div>
+            
+            <button onclick="saveProject()" class="px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-100 transition-all flex items-center gap-2">
+                <i class="ri-save-2-line"></i> 保存工程
+            </button>
+
+            <button onclick="savePDF()" id="btn-save" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 shadow-md shadow-blue-200 transition-all opacity-50 cursor-not-allowed" disabled>
+                <i class="ri-save-3-line"></i> 导出 PDF
+            </button>
         </div>
     </div>
 
@@ -213,13 +241,29 @@
         let showGrid = false;
 
         function initCanvas() {
-            canvas = new fabric.Canvas('fabric-canvas', { preserveObjectStacking: true, selection: true });
+            canvas = new fabric.Canvas('fabric-canvas', { 
+                preserveObjectStacking: true, 
+                selection: true,
+                // === 新增配置：禁止自动滚动 ===
+                fireRightClick: true,  // 某些浏览器需要这个来阻止默认行为
+                stopContextMenu: true, 
+            });
             canvas.on('selection:created', onSelect);
             canvas.on('selection:updated', onSelect);
             canvas.on('selection:cleared', onClear);
             canvas.on('object:added', () => saveHistory('add'));
             canvas.on('object:modified', () => saveHistory('mod'));
             canvas.on('object:removed', () => saveHistory('rem'));
+            canvas.on('mouse:down', function(e) {
+                // 如果是在文字编辑模式，不要拦截，否则没法输入
+                if (canvas.getActiveObject() && canvas.getActiveObject().isEditing) return;
+                
+                // 阻止默认的聚焦滚动行为
+                if (e.e) {
+                    e.e.preventDefault();
+                    e.e.stopPropagation();
+                }
+            });
         }
 
         // 文件加载
@@ -244,7 +288,15 @@
         };
 
         function stashCurrentObjects() {
-            if(!canvas) return;
+            // === 修复开始 ===
+            // 1. 在保存之前，必须取消所有选中状态！
+            // 这会将对象从临时选区中释放出来，恢复正确的绝对坐标 (left, top)
+            canvas.discardActiveObject(); 
+            
+            // 2. 强制刷新一下，确保坐标更新完成
+            canvas.requestRenderAll(); 
+            // === 修复结束 ===
+
             const objs = canvas.getObjects();
             if(objs.length > 0) pageObjects[currentPage] = objs.map(o => o.toObject());
             else delete pageObjects[currentPage];
@@ -378,10 +430,68 @@
         };
 
         window.addText = () => {
+            // === 1. 核级锁定：直接冻结容器的滚动能力 ===
+            const scrollContainer = document.getElementById('main-scroll');
+            
+            // 记录当前的滚动位置
+            const savedScrollTop = scrollContainer.scrollTop;
+            const savedScrollLeft = scrollContainer.scrollLeft;
+            
+            // 临时将 overflow 设置为 hidden，物理上禁止滚动条移动
+            // 这会强制浏览器无法执行“聚焦跳转”
+            scrollContainer.style.overflow = 'hidden';
+
+            // 防止按钮本身的焦点干扰
+            if(document.activeElement) document.activeElement.blur();
+
             setTool('text');
             const color = document.getElementById('prop-color').value;
-            const text = new fabric.IText('双击输入', { left: canvas.width/2 - 60, top: canvas.height/2, fill: color, fontSize: 40, fontFamily: 'sans-serif' });
-            canvas.add(text); canvas.setActiveObject(text); text.enterEditing(); text.selectAll();
+            const fontSize = 40 / currentZoom; 
+            
+            // 放在可视区域的中心，而不是画布的绝对中心
+            // 这样能确保文字一定出现在用户眼前，而不是跳到画布很远的地方
+            // 获取 canvas 容器在视口中的位置
+            const wrapper = document.getElementById('canvas-wrapper');
+            const wrapperRect = wrapper.getBoundingClientRect();
+            const containerRect = scrollContainer.getBoundingClientRect();
+            
+            // 计算相对于 Canvas 的中心点
+            // (容器中心 - 画布左上角) / 缩放比例
+            let targetLeft = (containerRect.width / 2 - wrapperRect.left) / currentZoom;
+            let targetTop = (containerRect.height / 2 - wrapperRect.top) / currentZoom;
+            
+            // 边界检查：不要让字跑出画布
+            targetLeft = Math.max(20, Math.min(canvas.width - 20, targetLeft));
+            targetTop = Math.max(20, Math.min(canvas.height - 20, targetTop));
+
+            const text = new fabric.IText('双击输入', { 
+                left: targetLeft, 
+                top: targetTop, 
+                fill: color, 
+                fontSize: fontSize, 
+                fontFamily: 'sans-serif',
+                originX: 'center',
+                originY: 'center'
+            });
+
+            canvas.add(text);
+            canvas.setActiveObject(text);
+            
+            // === 2. 执行聚焦操作 ===
+            // 此时容器是 overflow: hidden 的，浏览器想跳也跳不了
+            text.enterEditing();
+            text.selectAll();
+
+            // === 3. 解除锁定 ===
+            // 稍微延迟一点点，等浏览器放弃跳转念头后，再恢复滚动条
+            setTimeout(() => {
+                // 恢复原有的滚动状态
+                scrollContainer.style.overflow = 'auto';
+                
+                // 双重保险：再次强制写回原来的位置
+                scrollContainer.scrollTop = savedScrollTop;
+                scrollContainer.scrollLeft = savedScrollLeft;
+            }, 50); // 50毫秒足够让浏览器完成聚焦渲染
         };
 
         document.getElementById('img-upload').onchange = (e) => {
@@ -504,7 +614,21 @@
         window.copyObject = () => { const o = canvas.getActiveObject(); if(o) o.clone(c => _clipboard = c); };
         window.pasteObject = () => { if(!_clipboard) return; _clipboard.clone(c => { canvas.discardActiveObject(); c.set({left: c.left+20, top: c.top+20, evented: true}); if(c.type === 'activeSelection') { c.canvas = canvas; c.forEachObject(o => canvas.add(o)); c.setCoords(); } else canvas.add(c); canvas.setActiveObject(c); canvas.requestRenderAll(); saveHistory('paste'); }); };
         window.addEventListener('keydown', (e) => {
-            if((e.key === 'Delete' || e.key === 'Backspace') && (!canvas.getActiveObject() || !canvas.getActiveObject().isEditing)) deleteActiveObject();
+            // 1. 获取当前选中的对象
+            const activeObj = canvas.getActiveObject();
+
+            // 2. 关键修复：如果当前对象存在，且处于“正在编辑文字”的状态 (isEditing)
+            // 则不执行任何自定义快捷键，直接返回，允许浏览器执行默认的文字复制/粘贴行为
+            if (activeObj && activeObj.isEditing) {
+                return; 
+            }
+
+            // --- 原有的逻辑 ---
+            // 注意：Delete 的判断逻辑其实也可以简化了，因为上面已经拦截了 isEditing
+            if((e.key === 'Delete' || e.key === 'Backspace')) {
+                deleteActiveObject();
+            }
+            
             if((e.ctrlKey||e.metaKey) && e.key === 'c') copyObject();
             if((e.ctrlKey||e.metaKey) && e.key === 'v') pasteObject();
             if((e.ctrlKey||e.metaKey) && e.key === 'z') undo();
@@ -637,6 +761,143 @@
         };
         
         function showLoader(show, text) { const l = document.getElementById('loader'); if(show) { l.classList.remove('hidden'); if(text)document.getElementById('loader-text').innerText=text; } else l.classList.add('hidden'); }
+        
+        // === 2026年1月26日新增项目文件功能
+        // === 工具函数：ArrayBuffer 转 Base64 ===
+        function bufferToBase64(buffer) {
+            let binary = '';
+            const bytes = new Uint8Array(buffer);
+            const len = bytes.byteLength;
+            for (let i = 0; i < len; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return window.btoa(binary);
+        }
+
+        // === 工具函数：Base64 转 ArrayBuffer ===
+        function base64ToBuffer(base64) {
+            const binary_string = window.atob(base64);
+            const len = binary_string.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binary_string.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        window.saveProject = () => {
+            if (!pdfDoc || !fileBytes) {
+                alert('没有打开的文件');
+                return;
+            }
+
+            // 1. 关键：保存当前页面的最新状态
+            // (一定要先 discardActiveObject 防止坐标偏移，复用之前的修复)
+            canvas.discardActiveObject(); 
+            canvas.requestRenderAll();
+            stashCurrentObjects();
+
+            showLoader(true, '正在打包工程文件...');
+
+            // 2. 稍微延迟一下让 UI 渲染 loader
+            setTimeout(() => {
+                try {
+                    // 3. 构建项目数据包
+                    const projectData = {
+                        version: "1.0",
+                        filename: document.getElementById('file-name').innerText,
+                        // 将 PDF 二进制转为 Base64 字符串
+                        pdfBase64: bufferToBase64(fileBytes), 
+                        // 所有页面的标注数据
+                        annotations: pageObjects, 
+                        // 所有页面的旋转数据
+                        rotations: pageRotations 
+                    };
+
+                    // 4. 转换为 Blob 并下载
+                    const blob = new Blob([JSON.stringify(projectData)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    // 自定义后缀名为 .pdfpro
+                    link.download = `project_${Date.now()}.pdfpro`; 
+                    link.click();
+                    URL.revokeObjectURL(url);
+                } catch (e) {
+                    console.error(e);
+                    alert('保存失败，文件可能过大');
+                } finally {
+                    showLoader(false);
+                }
+            }, 100);
+        };
+
+        // 创建一个隐藏的 input 用于上传工程文件
+        const projectInput = document.createElement('input');
+        projectInput.type = 'file';
+        projectInput.accept = '.json,.pdfpro'; // 接受我们自定义的格式
+        projectInput.style.display = 'none';
+        document.body.appendChild(projectInput);
+
+        // 绑定打开工程文件的逻辑
+        window.openProject = () => {
+            projectInput.click();
+        };
+
+        projectInput.onchange = (e) => {
+            const f = e.target.files[0];
+            if (!f) return;
+
+            showLoader(true, '正在还原工程...');
+            const reader = new FileReader();
+
+            reader.onload = async (res) => {
+                try {
+                    // 1. 解析 JSON
+                    const data = JSON.parse(res.target.result);
+                    
+                    if (!data.pdfBase64 || !data.annotations) {
+                        throw new Error("文件格式不正确");
+                    }
+
+                    // 2. 还原 PDF 文件流
+                    fileBytes = base64ToBuffer(data.pdfBase64);
+                    
+                    // 3. 还原标注数据和旋转数据
+                    pageObjects = data.annotations;
+                    pageRotations = data.rotations || {}; // 兼容旧版本
+                    
+                    // 4. 重新初始化 PDF.js
+                    document.getElementById('file-name').innerText = data.filename || 'Restored Project';
+                    pdfDoc = await pdfjsLib.getDocument({data: fileBytes.slice(0)}).promise;
+                    document.getElementById('page-count').innerText = pdfDoc.numPages;
+
+                    // 5. UI 重置
+                    document.getElementById('empty-state').classList.add('hidden');
+                    document.getElementById('canvas-wrapper').classList.remove('hidden');
+                    document.getElementById('bottom-bar').classList.remove('hidden');
+                    document.getElementById('btn-save').disabled = false;
+                    document.getElementById('btn-save').classList.remove('opacity-50', 'cursor-not-allowed');
+
+                    if(!canvas) initCanvas();
+                    
+                    // 6. 渲染第一页
+                    history.undo = []; history.redo = []; 
+                    currentPage = 1;
+                    await renderPage(1);
+                    resetZoom();
+
+                } catch (err) {
+                    alert('打开失败: ' + err.message);
+                    console.error(err);
+                } finally {
+                    showLoader(false);
+                    projectInput.value = ''; // 清空 input 以便下次能选同一个文件
+                }
+            };
+            reader.readAsText(f);
+        };
+
     </script>
 </body>
 </html>
