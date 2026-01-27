@@ -273,7 +273,13 @@
             try {
                 fileBytes = await f.arrayBuffer();
                 document.getElementById('file-name').innerText = f.name;
-                pdfDoc = await pdfjsLib.getDocument({data: fileBytes.slice(0)}).promise;
+                pdfDoc = await pdfjsLib.getDocument({
+                  data: fileBytes.slice(0),
+                  cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+                  cMapPacked: true,
+                  standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/standard_fonts/',
+                }).promise;
+
                 document.getElementById('page-count').innerText = pdfDoc.numPages;
                 document.getElementById('empty-state').classList.add('hidden');
                 document.getElementById('canvas-wrapper').classList.remove('hidden');
@@ -869,7 +875,13 @@
                     
                     // 4. 重新初始化 PDF.js
                     document.getElementById('file-name').innerText = data.filename || 'Restored Project';
-                    pdfDoc = await pdfjsLib.getDocument({data: fileBytes.slice(0)}).promise;
+                    pdfDoc = await pdfjsLib.getDocument({
+                      data: fileBytes.slice(0),
+                      cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+                      cMapPacked: true,
+                      standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/standard_fonts/',
+                    }).promise;
+
                     document.getElementById('page-count').innerText = pdfDoc.numPages;
 
                     // 5. UI 重置
