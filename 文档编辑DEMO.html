@@ -230,10 +230,28 @@
     </div>
 
     <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+          'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        
+        // ✅ 生成绝对路径：保证 Worker 里 fetch() 能解析
+        const BASE_DIR = new URL('.', location.href).href; // 当前 HTML 所在目录（以 / 结尾）
+        const CMAP_URL = new URL('assets/pdfjs/cmaps/', BASE_DIR).href;
+        const STD_FONT_URL = new URL('assets/pdfjs/standard_fonts/', BASE_DIR).href;
+        
+        // ✅ 正确的 loadPdf：返回 PDFDocumentProxy
+        async function loadPdf(arrayBuffer) {
+          return pdfjsLib.getDocument({
+            data: arrayBuffer,
+            cMapUrl: CMAP_URL,
+            cMapPacked: true,
+            standardFontDataUrl: STD_FONT_URL,
+          }).promise;
+        }
+        
         const { PDFDocument, degrees } = PDFLib;
-
+        
         let pdfDoc = null, currentPage = 1, canvas = null, fileBytes = null;
+
         let pageObjects = {}; 
         let pageRotations = {}; // 存储页面旋转状态 { pageNum: angle }
         let currentZoom = 1.0, canvasBaseWidth = 0;
@@ -273,14 +291,7 @@
             try {
                 fileBytes = await f.arrayBuffer();
                 document.getElementById('file-name').innerText = f.name;
-                pdfDoc = await pdfjsLib.getDocument({
-                  data: fileBytes.slice(0),
-                  cMapUrl: './assets/pdfjs/cmaps/',
-                  cMapPacked: true,
-                  standardFontDataUrl: './assets/pdfjs/standard_fonts/',
-                }).promise;
-
-
+                pdfDoc = await loadPdf(fileBytes.slice(0));
                 document.getElementById('page-count').innerText = pdfDoc.numPages;
                 document.getElementById('empty-state').classList.add('hidden');
                 document.getElementById('canvas-wrapper').classList.remove('hidden');
@@ -876,14 +887,7 @@
                     
                     // 4. 重新初始化 PDF.js
                     document.getElementById('file-name').innerText = data.filename || 'Restored Project';
-                    pdfDoc = await pdfjsLib.getDocument({
-                      data: fileBytes.slice(0),
-                      cMapUrl: './assets/pdfjs/cmaps/',
-                      cMapPacked: true,
-                      standardFontDataUrl: './assets/pdfjs/standard_fonts/',
-                    }).promise;
-
-
+                    pdfDoc = await loadPdf(fileBytes.slice(0));
                     document.getElementById('page-count').innerText = pdfDoc.numPages;
 
                     // 5. UI 重置
