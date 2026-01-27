@@ -237,6 +237,10 @@
         const BASE_DIR = new URL('.', location.href).href; // 当前 HTML 所在目录（以 / 结尾）
         const CMAP_URL = new URL('assets/pdfjs/cmaps/', BASE_DIR).href;
         const STD_FONT_URL = new URL('assets/pdfjs/standard_fonts/', BASE_DIR).href;
+        console.log('BASE_DIR =', BASE_DIR);
+        console.log('CMAP_URL =', CMAP_URL);
+        console.log('STD_FONT_URL =', STD_FONT_URL);
+
         
         // ✅ 正确的 loadPdf：返回 PDFDocumentProxy
         async function loadPdf(arrayBuffer) {
