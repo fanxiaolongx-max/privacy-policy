@@ -275,10 +275,11 @@
                 document.getElementById('file-name').innerText = f.name;
                 pdfDoc = await pdfjsLib.getDocument({
                   data: fileBytes.slice(0),
-                  cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+                  cMapUrl: './assets/pdfjs/cmaps/',
                   cMapPacked: true,
-                  standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/standard_fonts/',
+                  standardFontDataUrl: './assets/pdfjs/standard_fonts/',
                 }).promise;
+
 
                 document.getElementById('page-count').innerText = pdfDoc.numPages;
                 document.getElementById('empty-state').classList.add('hidden');
@@ -877,10 +878,11 @@
                     document.getElementById('file-name').innerText = data.filename || 'Restored Project';
                     pdfDoc = await pdfjsLib.getDocument({
                       data: fileBytes.slice(0),
-                      cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+                      cMapUrl: './assets/pdfjs/cmaps/',
                       cMapPacked: true,
-                      standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/standard_fonts/',
+                      standardFontDataUrl: './assets/pdfjs/standard_fonts/',
                     }).promise;
+
 
                     document.getElementById('page-count').innerText = pdfDoc.numPages;
 
