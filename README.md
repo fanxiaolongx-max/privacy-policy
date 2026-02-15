@@ -48,3 +48,5 @@
 | **链路分析** | 🔗 分析 | [![Demo](https://img.shields.io/badge/Launch-Demo-success?style=for-the-badge&logo=analogue&logoColor=white)](https://fanxiaolongx-max.github.io/privacy-policy/链路分析DEMO.html) |
 | **容灾倒换** | 📄 分析 | [![Demo](https://img.shields.io/badge/Launch-Demo-success?style=for-the-badge&logo=googlefiles&logoColor=white)](https://fanxiaolongx-max.github.io/privacy-policy/容灾倒换DEMO.html) |
 | **阴宅风水** | 📄 分析 | [![Demo](https://img.shields.io/badge/Launch-Demo-success?style=for-the-badge&logo=googlefiles&logoColor=white)](https://fanxiaolongx-max.github.io/privacy-policy/阴宅风水DEMO.html) |
+| **手机远程** | 📄 分析 | [![Demo](https://img.shields.io/badge/Launch-Demo-success?style=for-the-badge&logo=googlefiles&logoColor=white)](https://fanxiaolongx-max.github.io/privacy-policy/AI.html) |
+
