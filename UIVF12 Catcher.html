@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>UI.Vision 全能抓取引擎 v6.0</title>
+    <title>UI.Vision 全能抓取引擎 v6.1</title>
     <style>
         :root { --primary: #0078D7; --bg: #1e1e1e; --panel: #252526; --text: #d4d4d4; --border: #444; --accent: #4CAF50; --highlight: #dcdcaa; --string: #ce9178; --number: #b5cea8; --key: #9cdcfe; --danger: #c53030; --warning: #d7ba7d; --console: #e67e22; --cyber: #64ffda; --blue: #3498db;}
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
@@ -10,7 +10,6 @@
         .tag { font-size: 12px; background: #e81123; color: white; padding: 3px 8px; border-radius: 12px; font-weight: bold; }
         .container { display: flex; gap: 20px; flex: 1; min-height: 0; }
         
-        /* 侧边栏及分类样式重构 */
         .sidebar { width: 260px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; box-shadow: 0 4px 12px rgba(0,0,0,0.4); overflow-y: auto; }
         .sidebar h2 { font-size: 15px; margin-top: 0; color: var(--highlight); border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
         
@@ -90,12 +89,11 @@
 <body>
 
     <h1>
-        <span>🚀 自动化脚本工程中心 v6.0</span>
-        <span class="tag">全维度级联嗅探终极版</span>
+        <span>🚀 自动化脚本工程中心 v6.1</span>
+        <span class="tag">翻页自适应防死循环版</span>
     </h1>
     
     <div class="container">
-        <!-- 左侧常用脚本侧边栏 -->
         <div class="sidebar">
             <h2>
                 📂 智能调度仓库
@@ -105,9 +103,7 @@
                 默认清爽折叠，<b>双击回填至工作台</b>。
             </div>
             
-            <div id="scriptList" style="flex:1; overflow-y:auto; padding-right: 5px; padding-bottom: 20px;">
-                <!-- 动态生成折叠分类列表 -->
-            </div>
+            <div id="scriptList" style="flex:1; overflow-y:auto; padding-right: 5px; padding-bottom: 20px;"></div>
             
             <div style="margin-top: auto; padding-top: 10px; border-top: 1px dashed var(--border);">
                 <button class="btn-add-cat" onclick="createNewCategory()">[+] 新建自定义分类</button>
@@ -121,7 +117,6 @@
             </div>
         </div>
 
-        <!-- 中间输入与解析区 -->
         <div class="left-panel">
             <label>1. 请求 URL 目标地址:</label>
             <div class="input-group">
@@ -163,7 +158,6 @@
             <div id="errorMsg" class="error"></div>
         </div>
 
-        <!-- 右侧双端输出区 -->
         <div class="right-panel">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                 <label style="margin: 0; color: var(--accent); font-size: 13px;">🤖 生产级 UI.Vision 宏代码:</label>
@@ -213,14 +207,12 @@
             };
             
             if (backupData.scripts.length === 0 && backupData.categories.length === 0) {
-                alert("⚠️ 当前仓库为空，没有需要导出的配置！");
-                return;
+                alert("⚠️ 当前仓库为空，没有需要导出的配置！"); return;
             }
 
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
             const dlAnchorElem = document.createElement('a');
             dlAnchorElem.setAttribute("href", dataStr);
-            
             const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, "");
             dlAnchorElem.setAttribute("download", `UIVision_抓取引擎配置备份_${dateStr}.json`);
             dlAnchorElem.click();
@@ -230,16 +222,13 @@
         function importBackup(event) {
             const file = event.target.files[0];
             if (!file) return;
-            
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
                     const content = e.target.result;
                     const parsed = JSON.parse(content);
-                    
                     if (parsed.scripts && Array.isArray(parsed.scripts)) {
                         const isMerge = confirm("📦 成功解析到备份文件！\n\n点击【确定】进行 融合（保留现有脚本，追加新脚本）\n点击【取消】进行 覆盖（清空现有仓库，完全替换）");
-                        
                         if (!isMerge) {
                             localStorage.setItem('uivision_saved_scripts', JSON.stringify(parsed.scripts));
                             if(parsed.categories) localStorage.setItem('uivision_custom_categories', JSON.stringify(parsed.categories));
@@ -256,31 +245,22 @@
                                 if (extIdx >= 0) {
                                     existingScripts[extIdx] = s; 
                                 } else {
-                                    if(existingScripts.some(ex => ex.id === s.id)) {
-                                        s.id = 'script_' + Math.random().toString(36).substr(2, 9);
-                                    }
+                                    if(existingScripts.some(ex => ex.id === s.id)) s.id = 'script_' + Math.random().toString(36).substr(2, 9);
                                     existingScripts.push(s);
                                 }
                             });
-                            
                             if(parsed.categories) {
                                 parsed.categories.forEach(c => {
                                     if (!existingCats.includes(c) && !DEFAULT_CATEGORIES.includes(c)) existingCats.push(c);
                                 });
                             }
-                            
                             localStorage.setItem('uivision_saved_scripts', JSON.stringify(existingScripts));
                             localStorage.setItem('uivision_custom_categories', JSON.stringify(existingCats));
                         }
-                        
                         loadSavedScripts();
                         showToast("✅ 配置快照已成功导入！");
-                    } else {
-                        alert("❌ 导入失败：该文件不是有效的抓取引擎配置备份。");
-                    }
-                } catch(err) {
-                    alert("❌ 导入失败：解析 JSON 文件出错。");
-                }
+                    } else alert("❌ 导入失败：该文件不是有效的抓取引擎配置备份。");
+                } catch(err) { alert("❌ 导入失败：解析 JSON 文件出错。"); }
                 event.target.value = ''; 
             };
             reader.readAsText(file);
@@ -304,14 +284,10 @@
                 if (!s.category || s.category === "默认分类") {
                     let detected = autoDetectCategory(s.code || "");
                     if(s.category !== detected) {
-                        s.category = detected;
-                        changed = true;
+                        s.category = detected; changed = true;
                     }
                 }
-                if (!s.id) {
-                    s.id = 'script_' + Math.random().toString(36).substr(2, 9);
-                    changed = true;
-                }
+                if (!s.id) { s.id = 'script_' + Math.random().toString(36).substr(2, 9); changed = true; }
             });
             if (changed) localStorage.setItem('uivision_saved_scripts', JSON.stringify(scripts));
         }
@@ -329,7 +305,6 @@
             if (!DEFAULT_CATEGORIES.includes(newCat) && !userCats.includes(newCat)) {
                 userCats.push(newCat);
                 localStorage.setItem('uivision_custom_categories', JSON.stringify(userCats));
-                
                 if(!expandedCategories.includes(newCat)) {
                     expandedCategories.push(newCat);
                     localStorage.setItem('uivision_expanded_cats', JSON.stringify(expandedCategories));
@@ -350,7 +325,6 @@
                 
                 expandedCategories = expandedCategories.filter(c => c !== catName);
                 localStorage.setItem('uivision_expanded_cats', JSON.stringify(expandedCategories));
-                
                 loadSavedScripts();
             }
         }
@@ -378,9 +352,7 @@
                 const groupDiv = document.createElement('div');
                 groupDiv.className = 'category-group';
                 
-                if (expandedCategories.includes(catName)) {
-                    groupDiv.classList.add('expanded');
-                }
+                if (expandedCategories.includes(catName)) groupDiv.classList.add('expanded');
 
                 groupDiv.addEventListener('dragover', e => { e.preventDefault(); groupDiv.classList.add('drag-over'); });
                 groupDiv.addEventListener('dragleave', e => { groupDiv.classList.remove('drag-over'); });
@@ -421,10 +393,7 @@
                     copyCatBtn.className = 'cat-copy-btn';
                     copyCatBtn.innerHTML = '📦';
                     copyCatBtn.title = `仅打包提取此组脚本`;
-                    copyCatBtn.onclick = (e) => {
-                        e.stopPropagation();
-                        buildAndCopyMasterScript(catScripts, catName);
-                    };
+                    copyCatBtn.onclick = (e) => { e.stopPropagation(); buildAndCopyMasterScript(catScripts, catName); };
                     actionSpan.appendChild(copyCatBtn);
                 }
 
@@ -433,23 +402,16 @@
                     delCatBtn.className = 'cat-del-btn';
                     delCatBtn.innerHTML = '✖';
                     delCatBtn.title = '删除此分类';
-                    delCatBtn.onclick = (e) => {
-                        e.stopPropagation();
-                        deleteCategory(catName);
-                    };
+                    delCatBtn.onclick = (e) => { e.stopPropagation(); deleteCategory(catName); };
                     actionSpan.appendChild(delCatBtn);
                 }
 
-                headerDiv.appendChild(titleSpan);
-                headerDiv.appendChild(actionSpan);
-                groupDiv.appendChild(headerDiv);
+                headerDiv.appendChild(titleSpan); headerDiv.appendChild(actionSpan); groupDiv.appendChild(headerDiv);
 
                 const contentDiv = document.createElement('div');
                 contentDiv.className = 'category-content';
 
-                if(catScripts.length === 0) {
-                    contentDiv.innerHTML = '<div style="color:#666; font-size:11px; text-align:center; padding: 5px;">（空）将脚本拖拽至此</div>';
-                }
+                if(catScripts.length === 0) contentDiv.innerHTML = '<div style="color:#666; font-size:11px; text-align:center; padding: 5px;">（空）将脚本拖拽至此</div>';
 
                 catScripts.forEach(script => {
                     const item = document.createElement('div');
@@ -462,30 +424,25 @@
                         setTimeout(() => item.style.opacity = '0.5', 0);
                     });
                     item.addEventListener('dragend', e => {
-                        draggedScriptId = null;
-                        item.style.opacity = '1';
+                        draggedScriptId = null; item.style.opacity = '1';
                     });
                     
                     item.addEventListener('dblclick', e => {
                         if(e.target.tagName === 'BUTTON') return;
-                        
                         document.getElementById('codeOutput').value = script.code || "";
                         document.getElementById('consoleOutput').value = script.consoleCode || "";
-                        
                         if (script.url) {
                             document.getElementById('requestUrl').value = script.url;
                             let preset = document.getElementById('urlPreset');
                             let matched = Array.from(preset.options).find(opt => opt.value === script.url);
                             preset.value = matched ? script.url : "";
                         }
-                        
                         if (script.originalFileName) document.getElementById('fileName').value = script.originalFileName;
                         else document.getElementById('fileName').value = script.name.replace(/(_CN|_AE|_DE)$/, '');
                         
                         if (script.payload) {
                             let editor = document.getElementById('jsonInput');
-                            editor.value = script.payload;
-                            editor.style.display = 'block';
+                            editor.value = script.payload; editor.style.display = 'block';
                             document.getElementById('payloadViewer').style.display = 'none';
                             formatAndAnalyzeJSON(); 
                         }
@@ -498,40 +455,33 @@
                             if(script.configOptions.autoRuntimeMonth !== undefined) document.getElementById('autoRuntimeMonth').checked = script.configOptions.autoRuntimeMonth;
                             if(script.configOptions.autoNetCareTriplicate !== undefined && document.getElementById('autoNetCareTriplicate')) document.getElementById('autoNetCareTriplicate').checked = script.configOptions.autoNetCareTriplicate;
                         }
-                        
-                        const originalBg = item.style.backgroundColor;
-                        item.style.backgroundColor = "#2e7d32"; 
+                        const originalBg = item.style.backgroundColor; item.style.backgroundColor = "#2e7d32"; 
                         setTimeout(() => item.style.backgroundColor = originalBg, 300);
-                        showToast(`✅ [${script.name}] 配置已回填至工作台！`);
+                        showToast(`✅ [${script.name}] 配置已回填！`);
                     });
                     
                     const itemTitle = document.createElement('div');
-                    itemTitle.className = 'script-item-title';
-                    itemTitle.innerText = "📄 " + script.name;
+                    itemTitle.className = 'script-item-title'; itemTitle.innerText = "📄 " + script.name;
                     
                     const actionsDiv = document.createElement('div');
                     actionsDiv.className = 'sidebar-actions';
 
                     const btnGroup = document.createElement('div');
-                    btnGroup.style.display = 'flex';
-                    btnGroup.style.gap = '5px';
+                    btnGroup.style.display = 'flex'; btnGroup.style.gap = '5px';
 
                     const uivBtn = document.createElement('button');
-                    uivBtn.className = 'mini-btn uiv';
-                    uivBtn.innerText = 'UIV';
+                    uivBtn.className = 'mini-btn uiv'; uivBtn.innerText = 'UIV';
                     uivBtn.onclick = () => copyFromMemory(script.code, "UI.Vision");
 
                     const conBtn = document.createElement('button');
-                    conBtn.className = 'mini-btn con';
-                    conBtn.innerText = 'F12';
+                    conBtn.className = 'mini-btn con'; conBtn.innerText = 'F12';
                     conBtn.onclick = () => {
                         if(script.consoleCode) copyFromMemory(script.consoleCode, "控制台脚本");
                         else alert("⚠️ 旧版脚本，请重新生成并覆盖保存。");
                     };
 
                     const delBtn = document.createElement('button');
-                    delBtn.className = 'mini-btn del';
-                    delBtn.innerHTML = '✖';
+                    delBtn.className = 'mini-btn del'; delBtn.innerHTML = '✖';
                     delBtn.onclick = function() {
                         if(confirm(`确定删除 [${script.name}] 吗？`)) {
                             let allScripts = JSON.parse(localStorage.getItem('uivision_saved_scripts') || '[]');
@@ -541,18 +491,11 @@
                         }
                     };
                     
-                    btnGroup.appendChild(uivBtn);
-                    btnGroup.appendChild(conBtn);
-                    actionsDiv.appendChild(btnGroup);
-                    actionsDiv.appendChild(delBtn);
-
-                    item.appendChild(itemTitle);
-                    item.appendChild(actionsDiv);
-                    contentDiv.appendChild(item);
+                    btnGroup.appendChild(uivBtn); btnGroup.appendChild(conBtn);
+                    actionsDiv.appendChild(btnGroup); actionsDiv.appendChild(delBtn);
+                    item.appendChild(itemTitle); item.appendChild(actionsDiv); contentDiv.appendChild(item);
                 });
-
-                groupDiv.appendChild(contentDiv);
-                list.appendChild(groupDiv);
+                groupDiv.appendChild(contentDiv); list.appendChild(groupDiv);
             });
         }
 
@@ -560,10 +503,7 @@
             const codeUIV = document.getElementById('codeOutput').value;
             const codeConsole = document.getElementById('consoleOutput').value;
             const url = document.getElementById('requestUrl').value.trim();
-            if (!codeUIV || !codeConsole) {
-                alert("⚠️ 请先生成脚本后再保存！");
-                return;
-            }
+            if (!codeUIV || !codeConsole) { alert("⚠️ 请先生成脚本后再保存！"); return; }
             
             const rawJson = parsedPayloadObj ? JSON.stringify(parsedPayloadObj, null, 4) : document.getElementById('jsonInput').value.trim();
             const originalFileName = document.getElementById('fileName').value.trim() || "PBI_自动抓取";
@@ -579,7 +519,6 @@
             const baseName = currentScriptTitle || originalFileName;
             let scripts = JSON.parse(localStorage.getItem('uivision_saved_scripts') || '[]');
             const isNetCare = url.toLowerCase().includes("netcare");
-            
             let itemsToSave = [];
 
             if (isNetCare && configOptions.autoNetCareTriplicate) {
@@ -605,18 +544,10 @@
                         });
                     });
                 } else {
-                    itemsToSave.push({ 
-                        id: 'script_' + Math.random().toString(36).substr(2, 9),
-                        name: baseName, code: codeUIV, consoleCode: codeConsole, category: autoDetectCategory(url),
-                        url: url, payload: rawJson, originalFileName: originalFileName, configOptions: configOptions
-                    });
+                    itemsToSave.push({ id: 'script_' + Math.random().toString(36).substr(2, 9), name: baseName, code: codeUIV, consoleCode: codeConsole, category: autoDetectCategory(url), url: url, payload: rawJson, originalFileName: originalFileName, configOptions: configOptions });
                 }
             } else {
-                itemsToSave.push({ 
-                    id: 'script_' + Math.random().toString(36).substr(2, 9),
-                    name: baseName, code: codeUIV, consoleCode: codeConsole, category: autoDetectCategory(url),
-                    url: url, payload: rawJson, originalFileName: originalFileName, configOptions: configOptions
-                });
+                itemsToSave.push({ id: 'script_' + Math.random().toString(36).substr(2, 9), name: baseName, code: codeUIV, consoleCode: codeConsole, category: autoDetectCategory(url), url: url, payload: rawJson, originalFileName: originalFileName, configOptions: configOptions });
             }
 
             let conflicts = itemsToSave.filter(item => scripts.some(s => s.name === item.name));
@@ -628,16 +559,11 @@
             itemsToSave.forEach(item => {
                 let existingIdx = scripts.findIndex(s => s.name === item.name);
                 if (existingIdx >= 0) {
-                    scripts[existingIdx].code = item.code;
-                    scripts[existingIdx].consoleCode = item.consoleCode;
-                    scripts[existingIdx].category = item.category;
-                    scripts[existingIdx].url = item.url;
-                    scripts[existingIdx].payload = item.payload;
-                    scripts[existingIdx].originalFileName = item.originalFileName;
+                    scripts[existingIdx].code = item.code; scripts[existingIdx].consoleCode = item.consoleCode;
+                    scripts[existingIdx].category = item.category; scripts[existingIdx].url = item.url;
+                    scripts[existingIdx].payload = item.payload; scripts[existingIdx].originalFileName = item.originalFileName;
                     scripts[existingIdx].configOptions = item.configOptions;
-                } else {
-                    scripts.push(item);
-                }
+                } else { scripts.push(item); }
                 if(!expandedCategories.includes(item.category)) expandedCategories.push(item.category);
             });
             
@@ -645,8 +571,7 @@
             localStorage.setItem('uivision_saved_scripts', JSON.stringify(scripts));
             loadSavedScripts();
             
-            const btn = document.getElementById('saveBtn');
-            const oldText = btn.innerText;
+            const btn = document.getElementById('saveBtn'); const oldText = btn.innerText;
             btn.innerText = itemsToSave.length > 1 ? "✅ 阵列已分发" : "✅ 已保存";
             setTimeout(() => btn.innerText = oldText, 2000);
         }
@@ -657,41 +582,27 @@
         }
 
         function buildAndCopyMasterScript(scriptsToRun, groupName) {
-            if (scriptsToRun.length === 0) {
-                alert("⚠️ 当前分类下没有可执行的脚本！");
-                return;
-            }
+            if (scriptsToRun.length === 0) { alert("⚠️ 当前分类下没有可执行的脚本！"); return; }
 
-            let masterCode = `(async function() {\n`;
-            masterCode += `    const totalTasks = ${scriptsToRun.length};\n`;
-            masterCode += `    console.log("%c🚀 [批量调度·${groupName}] 阵列启动！共有 " + totalTasks + " 个任务排队执行中...", "font-size: 16px; font-weight: bold; color: #00d2d3; background: #222f3e; padding: 8px 12px; border-radius: 6px; border-left: 5px solid #00d2d3;");\n\n`;
+            let masterCode = `(async function() {\n    const totalTasks = ${scriptsToRun.length};\n    console.log("%c🚀 [批量调度·${groupName}] 阵列启动！共有 " + totalTasks + " 个任务排队执行中...", "font-size: 16px; font-weight: bold; color: #00d2d3; background: #222f3e; padding: 8px 12px; border-radius: 6px; border-left: 5px solid #00d2d3;");\n\n`;
 
             scriptsToRun.forEach((script, index) => {
                 let safeName = script.name.replace(/"/g, '\\"');
-                masterCode += `    // ========================================================\n`;
-                masterCode += `    // 📦 队列 [${index + 1}/${scriptsToRun.length}]: ${script.name}\n`;
-                masterCode += `    // ========================================================\n`;
-                masterCode += `    console.log("%c\\n▶️ [调度进度: ${index + 1}/${scriptsToRun.length}] 开始注入执行: ${safeName}", "font-size: 14px; font-weight: bold; color: #feca57; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);");\n\n`;
-
+                masterCode += `    // ========================================================\n    // 📦 队列 [${index + 1}/${scriptsToRun.length}]: ${script.name}\n    // ========================================================\n    console.log("%c\\n▶️ [调度进度: ${index + 1}/${scriptsToRun.length}] 开始注入执行: ${safeName}", "font-size: 14px; font-weight: bold; color: #feca57; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);");\n\n`;
                 let cCode = script.consoleCode || "";
-                if (!cCode) {
-                    masterCode += `    console.error("⚠️ [警告] 该脚本缺少控制台版本的代码，自动跳过！");\n`;
-                } else {
+                if (!cCode) masterCode += `    console.error("⚠️ [警告] 该脚本缺少控制台版本的代码，自动跳过！");\n`;
+                else {
                     cCode = cCode.trim();
                     if (cCode.startsWith("(async")) masterCode += `    await ${cCode}\n`;
                     else masterCode += `    ${cCode}\n`;
                 }
 
                 if (index < scriptsToRun.length - 1) {
-                    masterCode += `\n    let delay_${index} = Math.floor(Math.random() * 3000) + 3000;\n`;
-                    masterCode += `    console.log("%c⏳ [调度防刷机制] 正在执行系统冷却... 随机阻断 " + (delay_${index}/1000).toFixed(1) + " 秒...", "color: #95a5a6; font-style: italic; font-size: 12px;");\n`;
-                    masterCode += `    await new Promise(r => setTimeout(r, delay_${index}));\n\n`;
+                    masterCode += `\n    let delay_${index} = Math.floor(Math.random() * 3000) + 3000;\n    console.log("%c⏳ [调度防刷机制] 正在执行系统冷却... 随机阻断 " + (delay_${index}/1000).toFixed(1) + " 秒...", "color: #95a5a6; font-style: italic; font-size: 12px;");\n    await new Promise(r => setTimeout(r, delay_${index}));\n\n`;
                 }
             });
 
-            masterCode += `\n    console.log("%c\\n🎉 [批量调度·${groupName}] 任务列车抵达终点！所有 " + totalTasks + " 个核心任务全部执行完毕！", "font-size: 16px; font-weight: bold; color: #1dd1a1; background: #222f3e; padding: 8px 12px; border-radius: 6px; border-left: 5px solid #1dd1a1;");\n`;
-            masterCode += `})();`;
-
+            masterCode += `\n    console.log("%c\\n🎉 [批量调度·${groupName}] 任务列车抵达终点！所有 " + totalTasks + " 个核心任务全部执行完毕！", "font-size: 16px; font-weight: bold; color: #1dd1a1; background: #222f3e; padding: 8px 12px; border-radius: 6px; border-left: 5px solid #1dd1a1;");\n})();`;
             copyFromMemory(masterCode, `[${groupName}] 批量阵列 (F12)`);
         }
 
@@ -779,9 +690,7 @@
             let platform = url.includes("datafab") ? "DATAFAB" : (url.includes("netcare") ? "NETCARE" : "CUSTOM");
             let payloadClone = JSON.parse(JSON.stringify(parsedPayloadObj));
             
-            if (platform === "NETCARE") {
-                payloadClone.need_summary = true;
-            }
+            if (platform === "NETCARE") payloadClone.need_summary = true;
 
             let hasCPC = false; 
             let hasNID = false; 
@@ -794,15 +703,12 @@
                     hasCPC = true; obj.values = "__CPC_IDS_PLACEHOLDER__";
                 }
 
-                // ⭐ 核心升级：同时嗅探 nid 和 nid_name
                 if (platform === "NETCARE" && autoFetchCPC) {
                     if (obj.nid !== undefined && Array.isArray(obj.nid)) {
-                        hasNID = true; 
-                        obj.nid = "__NID_PLACEHOLDER__";
+                        hasNID = true; obj.nid = "__NID_PLACEHOLDER__";
                     }
                     if (obj.nid_name !== undefined && Array.isArray(obj.nid_name)) {
-                        hasNID = true; 
-                        obj.nid_name = "__NID_PLACEHOLDER__";
+                        hasNID = true; obj.nid_name = "__NID_PLACEHOLDER__";
                     }
                 }
 
@@ -895,7 +801,7 @@
 
         function extractRows(obj) {
             if (obj && obj.data && Array.isArray(obj.data) && obj.data[0] && Array.isArray(obj.data[0].data)) return obj.data[0].data;
-            let arr = obj.results || (obj.data && obj.data.results) || obj.data || [];
+            let arr = obj.results || obj.items || obj.list || (obj.data && obj.data.results) || obj.data || [];
             return Array.isArray(arr) ? arr : (Array.isArray(obj) ? obj : [arr]);
         }\n`;
             
@@ -992,10 +898,23 @@ ${hasNID ? `            currentPayloadStr = currentPayloadStr.replace(/"__NID_PL
             
             const detailPayload = JSON.parse(currentPayloadStr);
 
-            let allDataResults = []; let globalSumData = null; let currentPage = 1; let limit = 50; let isFetching = true;
+            // 智能计算翻页游标和 limit
+            let limitVal = parseInt(detailPayload.limit || (detailPayload.answerParamList && detailPayload.answerParamList[0] && detailPayload.answerParamList[0].pageSize) || 50, 10);
+            
+            let allDataResults = []; let globalSumData = null; let currentPage = 1; let isFetching = true;
 
             while (isFetching) {
-${isPagination && platform === "DATAFAB" ? "                if(detailPayload.answerParamList) { detailPayload.answerParamList[0].pageNum = currentPage; detailPayload.answerParamList[0].requestTime = Date.now(); }" : ""}
+${isPagination ? `                
+                // 智能注入翻页参数 (兼容多平台格式)
+                if (detailPayload.answerParamList && detailPayload.answerParamList[0]) {
+                    detailPayload.answerParamList[0].pageNum = currentPage;
+                    detailPayload.answerParamList[0].requestTime = Date.now();
+                }
+                if (detailPayload.start !== undefined) detailPayload.start = (currentPage - 1) * limitVal;
+                if (detailPayload.pageNum !== undefined && !detailPayload.answerParamList) detailPayload.pageNum = currentPage;
+                if (detailPayload.pageIndex !== undefined) detailPayload.pageIndex = currentPage;
+                if (detailPayload.page !== undefined) detailPayload.page = currentPage;
+` : ""}
                 const response = await fetch("${url}", { headers: fetchHeaders, body: JSON.stringify(detailPayload), method: "POST", credentials: "include" });
                 const data = await response.json();
                 if (data.status === 9999 || data.errorCode === "9999") throw new Error("请求报错 (9999)：请检查登录状态。");
@@ -1005,7 +924,7 @@ ${isPagination && platform === "DATAFAB" ? "                if(detailPayload.ans
                 if (!pageItems || pageItems.length === 0) break;
                 allDataResults = allDataResults.concat(pageItems);
 
-                if (pageItems.length < limit) break;
+                if (pageItems.length < limitVal) break;
                 currentPage++; await new Promise(r => setTimeout(r, 300));
             }
 
