@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>UI.Vision 全能抓取引擎 v6.1</title>
+    <title>UI.Vision 全能抓取引擎 v6.3</title>
     <style>
         :root { --primary: #0078D7; --bg: #1e1e1e; --panel: #252526; --text: #d4d4d4; --border: #444; --accent: #4CAF50; --highlight: #dcdcaa; --string: #ce9178; --number: #b5cea8; --key: #9cdcfe; --danger: #c53030; --warning: #d7ba7d; --console: #e67e22; --cyber: #64ffda; --blue: #3498db;}
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
@@ -10,6 +10,7 @@
         .tag { font-size: 12px; background: #e81123; color: white; padding: 3px 8px; border-radius: 12px; font-weight: bold; }
         .container { display: flex; gap: 20px; flex: 1; min-height: 0; }
         
+        /* 侧边栏及分类样式重构 */
         .sidebar { width: 260px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; box-shadow: 0 4px 12px rgba(0,0,0,0.4); overflow-y: auto; }
         .sidebar h2 { font-size: 15px; margin-top: 0; color: var(--highlight); border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
         
@@ -89,11 +90,12 @@
 <body>
 
     <h1>
-        <span>🚀 自动化脚本工程中心 v6.1</span>
-        <span class="tag">翻页自适应防死循环版</span>
+        <span>🚀 自动化脚本工程中心 v6.3</span>
+        <span class="tag">全景透明日志 + 智能追溯版</span>
     </h1>
     
     <div class="container">
+        <!-- 左侧常用脚本侧边栏 -->
         <div class="sidebar">
             <h2>
                 📂 智能调度仓库
@@ -103,7 +105,9 @@
                 默认清爽折叠，<b>双击回填至工作台</b>。
             </div>
             
-            <div id="scriptList" style="flex:1; overflow-y:auto; padding-right: 5px; padding-bottom: 20px;"></div>
+            <div id="scriptList" style="flex:1; overflow-y:auto; padding-right: 5px; padding-bottom: 20px;">
+                <!-- 动态生成折叠分类列表 -->
+            </div>
             
             <div style="margin-top: auto; padding-top: 10px; border-top: 1px dashed var(--border);">
                 <button class="btn-add-cat" onclick="createNewCategory()">[+] 新建自定义分类</button>
@@ -117,6 +121,7 @@
             </div>
         </div>
 
+        <!-- 中间输入与解析区 -->
         <div class="left-panel">
             <label>1. 请求 URL 目标地址:</label>
             <div class="input-group">
@@ -158,6 +163,7 @@
             <div id="errorMsg" class="error"></div>
         </div>
 
+        <!-- 右侧双端输出区 -->
         <div class="right-panel">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                 <label style="margin: 0; color: var(--accent); font-size: 13px;">🤖 生产级 UI.Vision 宏代码:</label>
@@ -778,14 +784,48 @@
                 ? `        const fetchHeaders = { "accept": "application/json, text/plain, */*", "content-type": "application/json;charset=UTF-8", "x-xsrf-token": csrfToken, "x-requested-with": "XMLHttpRequest", "tenantId": "${tenantIdStr}", "project-id": "${tenantIdStr}", "SESSION-AFFINITY-KEY": "${boardId}", "language": "zh_CN" };`
                 : `        const fetchHeaders = { "accept": "application/json, text/plain, */*", "content-type": "application/json;charset=UTF-8", "x-gde-csrf-token": csrfToken, "x-requested-with": "XMLHttpRequest" };`;
 
+            // ⭐ 核心新增：智能溯源追踪的 getSmartValue
             let coreBody = `        // 【自动生成：抓取核心引擎】========================\n        // 🚀 URL: ${url}\n        // ==========================================\n${varDefBlock}\n        // ==========================================\n\n${authCode}\n${headerCode}\n
-        function getSmartValue(cell) {
+        function getSmartValue(cell, colName, isTotal = false) {
             if (cell === null || cell === undefined) return "";
             if (typeof cell !== 'object') return cell; 
-            if (cell.formula !== undefined && cell.formula !== null && cell.formula !== "") return cell.formula;
-            if (cell.summing !== undefined && cell.summing !== null && cell.summing !== "") return cell.summing;
-            if (cell.average !== undefined && cell.average !== null && cell.average !== "") return cell.average;
-            return JSON.stringify(cell);
+            
+            let isRate = false;
+            if (colName && typeof colName === 'string') {
+                let ln = colName.toLowerCase();
+                if (ln.includes("率") || ln.includes("比") || ln.includes("rate") || ln.includes("ratio") || ln.includes("%")) isRate = true;
+            }
+
+            let val = "";
+            let source = "";
+
+            if (cell.formula !== undefined && cell.formula !== null && cell.formula !== "") {
+                val = cell.formula; source = "formula (绝对优先)";
+            } else if (isRate) {
+                if (cell.average !== undefined && cell.average !== null && cell.average !== "") {
+                    val = cell.average; source = "average (率/比自动兜底)";
+                } else if (cell.summing !== undefined && cell.summing !== null && cell.summing !== "") {
+                    val = cell.summing; source = "summing (⚠️率/比被迫降级)";
+                }
+            } else {
+                if (cell.summing !== undefined && cell.summing !== null && cell.summing !== "") {
+                    val = cell.summing; source = "summing (常规累加)";
+                } else if (cell.average !== undefined && cell.average !== null && cell.average !== "") {
+                    val = cell.average; source = "average (⚠️常规被迫降级)";
+                }
+            }
+            
+            if (val === "") {
+                val = JSON.stringify(cell);
+                source = "原始对象 (解析兜底)";
+            }
+
+            // 如果是在计算总计行，并且该字段是对象格式，输出白盒溯源日志
+            if (isTotal) {
+                console.log("%c     ├─ [取数追踪] [" + colName + "] 匹配策略: " + source + " -> 值: " + val, "color: #00b894; font-size: 11px;");
+            }
+
+            return val;
         }
 
         function extractSmartSumData(resObj) {
@@ -886,7 +926,7 @@ ${hasMonthFilter ? `        runConfigs = [
         for (let runIdx = 0; runIdx < runConfigs.length; runIdx++) {
             let config = runConfigs[runIdx];
             let branchName = config.month ? config.label + " (" + config.year + "-" + config.month + ")" : "基础任务";
-            console.log("%c   ↳ 运行分支: " + branchName + "...", "color: #8e44ad; font-size: 13px;");
+            console.log("%c   ↳ 运行分支: " + branchName + "...", "color: #8e44ad; font-size: 13px; font-weight: bold;");
             
             let currentPayloadStr = JSON.stringify(baseDetailPayload);
             if (config.month) currentPayloadStr = currentPayloadStr.replace(/"__MONTH_PLACEHOLDER__"/g, JSON.stringify([config.month]));
@@ -897,15 +937,12 @@ ${hasMonthFilter ? `        runConfigs = [
 ${hasNID ? `            currentPayloadStr = currentPayloadStr.replace(/"__NID_PLACEHOLDER__"/g, JSON.stringify(fetchedNids));` : ``}
             
             const detailPayload = JSON.parse(currentPayloadStr);
-
-            // 智能计算翻页游标和 limit
             let limitVal = parseInt(detailPayload.limit || (detailPayload.answerParamList && detailPayload.answerParamList[0] && detailPayload.answerParamList[0].pageSize) || 50, 10);
             
             let allDataResults = []; let globalSumData = null; let currentPage = 1; let isFetching = true;
 
             while (isFetching) {
 ${isPagination ? `                
-                // 智能注入翻页参数 (兼容多平台格式)
                 if (detailPayload.answerParamList && detailPayload.answerParamList[0]) {
                     detailPayload.answerParamList[0].pageNum = currentPage;
                     detailPayload.answerParamList[0].requestTime = Date.now();
@@ -931,7 +968,9 @@ ${isPagination ? `
             if (allDataResults.length === 0) { console.warn("⚠️ " + branchName + " 未提取到数据，跳过。"); continue; }
 
 ${forceSumData && platform === "DATAFAB" && compId ? `
+            // ⭐ 核心新增：大盘兜底状态汇报
             if (!globalSumData) {
+                console.log("%c     ⚠️ 一阶段未截获到总计数据，触发独立大盘兜底请求...", "color: #e1b12c; font-size: 11px;");
                 const sumPayload = JSON.parse(JSON.stringify(detailPayload.answerParamList[0])); 
                 sumPayload.pageNum = 1; sumPayload.answerSource = 2; 
                 const sumReqPayload = { "id": "${compId}", "srcTenantId": detailPayload.srcTenantId, "behavior": "VIEW", "boardId": "${boardId}", "maxRows": 1000, "pageNum": 1, "pageSize": 50, "calStatistic": true, "params": sumPayload.params, "chartType": "table", "answerSource": 2 };
@@ -939,18 +978,29 @@ ${forceSumData && platform === "DATAFAB" && compId ? `
                     const sumRes = await fetch("https://datafab-pro.gtsdata.huawei.com/DataFabKernelCn/v1/answer/getValueTableSumData", { headers: fetchHeaders, body: JSON.stringify(sumReqPayload), method: "POST", credentials: "include" });
                     const sumDataRes = await sumRes.json();
                     globalSumData = extractSmartSumData(sumDataRes);
-                } catch(e) { console.error("大盘兜底提取失败", e); }
+                    if (globalSumData) console.log("%c     ✅ 兜底成功，已获取大盘数据！", "color: #2ecc71; font-size: 11px;");
+                    else console.warn("     ❌ 兜底失败，未能提取到总计数据。");
+                } catch(e) { console.error("大盘兜底请求异常: ", e); }
+            } else {
+                console.log("%c     ✅ 一阶段原生截获总计成功，无需兜底请求。", "color: #2ecc71; font-size: 11px;");
             }
-` : ``}
+` : `
+            if (globalSumData) {
+                console.log("%c     ✅ 原生截获总计数据成功。", "color: #2ecc71; font-size: 11px;");
+            } else {
+                console.log("%c     ℹ️ 报文中无总计数据 (未开启独立兜底)。", "color: #95a5a6; font-size: 11px;");
+            }
+`}
 
             const headers = [];
             allDataResults.forEach(row => { Object.keys(row).forEach(k => { if (!headers.includes(k)) headers.push(k); }); });
 
             if (globalSumData) {
+                console.log("%c     📊 开始解析大盘总计行列值...", "color: #0984e3; font-size: 11px; font-weight: bold;");
                 let totalRow = {}; totalRow[headers[0]] = "【总计】"; 
                 for (let i = 1; i < headers.length; i++) {
                     let colName = headers[i];
-                    totalRow[colName] = getSmartValue(globalSumData[colName]);
+                    totalRow[colName] = getSmartValue(globalSumData[colName], colName, true); 
                 }
                 allDataResults.push(totalRow);
             }
@@ -959,7 +1009,7 @@ ${forceSumData && platform === "DATAFAB" && compId ? `
             allDataResults.forEach(function(row) {
                 let rowArray = [];
                 headers.forEach(function(header) {
-                    let cellVal = getSmartValue(row[header]);
+                    let cellVal = getSmartValue(row[header], header, false); // 明细行不打印日志
                     let cellStr = String(cellVal).replace(/"/g, '""');
                     rowArray.push('"' + cellStr + '"');
                 });
