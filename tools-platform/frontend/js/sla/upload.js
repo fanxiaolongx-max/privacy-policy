@@ -175,7 +175,20 @@ async function captureAndUploadSnapshot(fileNames) {
                 if (valueEl.classList.contains('warn')) color = '#ffb74d';
                 if (valueEl.classList.contains('danger')) color = '#ef5350';
                 
-                snapshot.topMetrics.push({ label, value, gap, isWarn, color });
+                // 提取 sub-metrics
+                const subMetrics = [];
+                const subList = item.querySelector('.sub-metrics-list');
+                if (subList) {
+                    subList.querySelectorAll('span').forEach(subSpan => {
+                        const txt = subSpan.innerText.trim();
+                        const parts = txt.split(':');
+                        if (parts.length >= 2) {
+                            subMetrics.push({ category: parts[0].trim(), value: parts[1].trim() });
+                        }
+                    });
+                }
+                
+                snapshot.topMetrics.push({ label, value, gap, isWarn, color, subMetrics });
             }
         });
     }
