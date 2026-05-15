@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tools Platform - 工具中台</title>
+    <meta name="description" content="统一工具平台入口：UIVF12 抓取引擎 & Task SLA 风险监控台">
+    <link rel="stylesheet" href="/css/shared.css">
+    <style>
+        body { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); min-height: 100vh; }
+        .home-content { padding-top: calc(var(--navbar-h) + 60px); max-width: 1100px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
+
+        .hero { text-align: center; margin-bottom: 60px; }
+        .hero-icon { font-size: 56px; margin-bottom: 16px; }
+        .hero h1 { font-size: 42px; font-weight: 800; background: linear-gradient(90deg, #64ffda, #4a90e2, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 12px; }
+        .hero p { font-size: 16px; color: #8892b0; max-width: 600px; margin: 0 auto; line-height: 1.7; }
+
+        .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 50px; }
+
+        .tool-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 32px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: var(--card-accent, #64ffda);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+        .tool-card:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,0.4); }
+        .tool-card:hover::before { transform: scaleX(1); }
+
+        .tool-card.uivf12 { --card-accent: #64ffda; }
+        .tool-card.sla    { --card-accent: #4a90e2; }
+
+        .card-icon { font-size: 40px; }
+        .card-title { font-size: 22px; font-weight: 700; color: #fff; }
+        .card-desc { font-size: 13px; color: #8892b0; line-height: 1.7; }
+        .card-features { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+        .feature-tag { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #a8b2d8; padding: 4px 10px; border-radius: 20px; font-size: 11px; }
+        .card-arrow { margin-top: auto; display: flex; align-items: center; gap: 6px; color: var(--card-accent, #64ffda); font-size: 13px; font-weight: 600; }
+
+        .stats-bar {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 24px 32px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            gap: 20px;
+        }
+        .stat-item { text-align: center; }
+        .stat-num { font-size: 32px; font-weight: 800; background: linear-gradient(90deg, #64ffda, #4a90e2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .stat-label { font-size: 12px; color: #8892b0; margin-top: 4px; }
+
+        @media (max-width: 768px) { .tools-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="home-content">
+        <div class="hero">
+            <div class="hero-icon">⚡</div>
+            <h1>Tools Platform</h1>
+            <p>统一工具中台 · 前后端分离架构 · 数据持久化存储<br>让每一个工具都更强大、更稳定、更易扩展</p>
+        </div>
+
+        <div class="tools-grid">
+            <a href="/uivf12" class="tool-card uivf12">
+                <div class="card-icon">🚀</div>
+                <div class="card-title">UIVF12 抓取引擎</div>
+                <div class="card-desc">自动化脚本工程中心，智能调度仓库，一键生成生产级 UI.Vision 宏代码和 F12 控制台脚本。脚本分类管理，支持批量阵列执行。</div>
+                <div class="card-features">
+                    <span class="feature-tag">🧠 智能 CPC/NID 嗅探</span>
+                    <span class="feature-tag">🔄 翻页引擎</span>
+                    <span class="feature-tag">🌍 NetCare 三大区阵列</span>
+                    <span class="feature-tag">📦 服务端脚本仓库</span>
+                    <span class="feature-tag">📅 运行时双月裂变</span>
+                </div>
+                <div class="card-arrow">进入工具 →</div>
+            </a>
+
+            <a href="/sla" class="tool-card sla">
+                <div class="card-icon">📊</div>
+                <div class="card-title">Task SLA 监控台</div>
+                <div class="card-desc">全局数据合控大中台，整改/常规/专项风险三表合一，SLA 预警呼吸灯，支持批量导入、自定义指标推送、分月目标对比。</div>
+                <div class="card-features">
+                    <span class="feature-tag">⚡ SLA 倒计时预警</span>
+                    <span class="feature-tag">🎯 分月指标目标</span>
+                    <span class="feature-tag">📋 列去重提取</span>
+                    <span class="feature-tag">💾 服务端偏好持久化</span>
+                    <span class="feature-tag">📥 XLSX 批量导入</span>
+                </div>
+                <div class="card-arrow">进入工具 →</div>
+            </a>
+        </div>
+
+        <div class="stats-bar" id="statsBar">
+            <div class="stat-item">
+                <div class="stat-num" id="stat-scripts">-</div>
+                <div class="stat-label">脚本仓库数量</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num" id="stat-history">-</div>
+                <div class="stat-label">历史操作记录</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num">2</div>
+                <div class="stat-label">在线工具模块</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/shared/api.js"></script>
+    <script src="/js/shared/toast.js"></script>
+    <script src="/js/shared/navbar.js"></script>
+    <script>
+        async function loadStats() {
+            try {
+                const { scripts } = await API.get('/api/uiv/scripts');
+                document.getElementById('stat-scripts').textContent = scripts.length;
+            } catch (e) {}
+            try {
+                const history = await API.get('/api/upload/history');
+                document.getElementById('stat-history').textContent = history.length;
+            } catch (e) {}
+        }
+        document.addEventListener('DOMContentLoaded', loadStats);
+    </script>
+</body>
+</html>

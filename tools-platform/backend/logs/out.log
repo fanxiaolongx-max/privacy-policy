@@ -1,0 +1,379 @@
+2026-05-15 19:04:59: 
+✅ Tools Platform 已启动
+2026-05-15 19:04:59:    🌐 访问地址: http://localhost:3030
+2026-05-15 19:04:59:    📦 UIVF12:   http://localhost:3030/uivf12
+2026-05-15 19:04:59:    📊 SLA:      http://localhost:3030/sla
+
+2026-05-15 19:12:16: [32m[19:12:16] GET /scripts → 304 (20ms) [0m
+2026-05-15 19:12:16: [32m[19:12:16] GET /history → 304 (1ms) [0m
+2026-05-15 19:12:16: [32m[19:12:16] GET /api/health → 200 (3ms) [0m
+2026-05-15 19:26:09: [32m[19:26:09] GET /scripts → 200 (2ms) [0m
+2026-05-15 19:26:09: [32m[19:26:09] GET /history → 200 (1ms) [0m
+2026-05-15 19:26:09: [32m[19:26:09] GET /api/health → 200 (2ms) [0m
+2026-05-15 19:26:14: [32m[19:26:14] GET /scripts → 304 (2ms) [0m
+2026-05-15 19:26:14: [32m[19:26:14] GET /api/health → 200 (1ms) [0m
+2026-05-15 19:26:15: [32m[19:26:15] GET /scripts → 304 (1ms) [0m
+2026-05-15 19:26:15: [32m[19:26:15] GET /history → 304 (2ms) [0m
+2026-05-15 19:26:16: [32m[19:26:16] GET /api/health → 200 (0ms) [0m
+2026-05-15 19:27:03: [32m[19:27:03] GET /scripts → 304 (2ms) [0m
+2026-05-15 19:27:03: [32m[19:27:03] GET /history → 304 (1ms) [0m
+2026-05-15 19:27:03: [32m[19:27:03] GET /api/health → 200 (1ms) [0m
+2026-05-15 19:27:06: [32m[19:27:06] GET /scripts → 304 (1ms) [0m
+2026-05-15 19:27:06: [32m[19:27:06] GET /api/health → 200 (1ms) [0m
+2026-05-15 19:27:07: [32m[19:27:07] GET /scripts → 304 (1ms) [0m
+2026-05-15 19:27:08: [32m[19:27:08] GET /history → 304 (2ms) [0m
+2026-05-15 19:27:08: [32m[19:27:08] GET /api/health → 200 (1ms) [0m
+2026-05-15 19:27:58: [32m[19:27:58] GET /targets → 200 (2ms) [0m
+2026-05-15 19:27:58: [32m[19:27:58] GET /api/health → 200 (2ms) [0m
+2026-05-15 20:00:48: [32m[20:00:48] GET /targets → 304 (1ms) [0m
+2026-05-15 20:00:48: [32m[20:00:48] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:00:50: [32m[20:00:50] GET /scripts → 304 (1ms) [0m
+2026-05-15 20:00:51: [32m[20:00:51] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:02:21: [32m[20:02:21] GET /scripts → 304 (1ms) [0m
+2026-05-15 20:02:21: [32m[20:02:21] GET /history → 304 (2ms) [0m
+2026-05-15 20:02:21: [32m[20:02:21] GET /api/health → 200 (2ms) [0m
+2026-05-15 20:02:22: [32m[20:02:22] GET /scripts → 304 (1ms) [0m
+2026-05-15 20:02:23: [32m[20:02:23] GET /api/health → 200 (2ms) [0m
+2026-05-15 20:02:24: [32m[20:02:24] GET /targets → 304 (1ms) [0m
+2026-05-15 20:02:24: [32m[20:02:24] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:02:25: [32m[20:02:25] GET /scripts → 304 (1ms) [0m
+2026-05-15 20:02:26: [32m[20:02:26] GET /history → 304 (1ms) [0m
+2026-05-15 20:02:26: [32m[20:02:26] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:02:26: [32m[20:02:26] GET /targets → 304 (2ms) [0m
+2026-05-15 20:02:27: [32m[20:02:27] GET /api/health → 200 (2ms) [0m
+2026-05-15 20:02:30: [32m[20:02:30] GET /scripts → 304 (1ms) [0m
+2026-05-15 20:02:30: [32m[20:02:30] GET /api/health → 200 (2ms) [0m
+2026-05-15 20:04:26: [32m[20:04:26] GET /scripts → 304 (0ms) [0m
+2026-05-15 20:04:26: [32m[20:04:26] GET /history → 304 (1ms) [0m
+2026-05-15 20:04:27: [32m[20:04:27] GET /api/health → 200 (0ms) [0m
+2026-05-15 20:04:31: [32m[20:04:31] GET /targets → 304 (1ms) [0m
+2026-05-15 20:04:32: [32m[20:04:32] GET /api/health → 200 (0ms) [0m
+2026-05-15 20:08:37: [32m[20:08:37] GET /scripts → 304 (2ms) [0m
+2026-05-15 20:08:37: [32m[20:08:37] GET /history → 304 (0ms) [0m
+2026-05-15 20:08:38: [32m[20:08:38] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:08:39: [32m[20:08:39] GET /scripts → 304 (2ms) [0m
+2026-05-15 20:08:39: [32m[20:08:39] GET /api/health → 200 (2ms) [0m
+2026-05-15 20:08:46: [32m[20:08:46] POST /backup → 200 (16ms) (body: 669011B)[0m
+2026-05-15 20:08:46: [32m[20:08:46] GET /scripts → 200 (15ms) [0m
+2026-05-15 20:08:47: [32m[20:08:47] POST /history → 200 (2ms) (body: 66B)[0m
+2026-05-15 20:09:24: [32m[20:09:24] DELETE /scripts/script_e3of1c7rz → 200 (19ms) [0m
+2026-05-15 20:09:24: [32m[20:09:24] GET /scripts → 200 (17ms) [0m
+2026-05-15 20:09:25: [32m[20:09:25] POST /history → 200 (1ms) (body: 94B)[0m
+2026-05-15 20:09:25: [32m[20:09:25] DELETE /scripts/script_n1qgi7lbu → 200 (11ms) [0m
+2026-05-15 20:09:26: [32m[20:09:26] GET /scripts → 200 (14ms) [0m
+2026-05-15 20:09:26: [32m[20:09:26] POST /history → 200 (2ms) (body: 85B)[0m
+2026-05-15 20:09:28: [32m[20:09:28] DELETE /scripts/script_tmy913qu2 → 200 (16ms) [0m
+2026-05-15 20:09:28: [32m[20:09:28] GET /scripts → 200 (15ms) [0m
+2026-05-15 20:09:29: [32m[20:09:29] POST /history → 200 (2ms) (body: 83B)[0m
+2026-05-15 20:09:31: [32m[20:09:31] DELETE /scripts/script_lhj76wpz5 → 200 (15ms) [0m
+2026-05-15 20:09:31: [32m[20:09:31] GET /scripts → 200 (14ms) [0m
+2026-05-15 20:09:31: [32m[20:09:31] POST /history → 200 (2ms) (body: 85B)[0m
+2026-05-15 20:09:32: [32m[20:09:32] DELETE /scripts/script_synknci8q → 200 (10ms) [0m
+2026-05-15 20:09:32: [32m[20:09:32] GET /scripts → 200 (12ms) [0m
+2026-05-15 20:09:33: [32m[20:09:33] POST /history → 200 (2ms) (body: 85B)[0m
+2026-05-15 20:09:34: [32m[20:09:34] DELETE /scripts/script_ic6hgzj8k → 200 (14ms) [0m
+2026-05-15 20:09:34: [32m[20:09:34] GET /scripts → 200 (14ms) [0m
+2026-05-15 20:09:34: [32m[20:09:34] POST /history → 200 (2ms) (body: 101B)[0m
+2026-05-15 20:09:35: [32m[20:09:35] DELETE /scripts/script_zr0imk3b4 → 200 (13ms) [0m
+2026-05-15 20:09:35: [32m[20:09:35] GET /scripts → 200 (12ms) [0m
+2026-05-15 20:09:36: [32m[20:09:36] POST /history → 200 (3ms) (body: 110B)[0m
+2026-05-15 20:09:37: [32m[20:09:37] DELETE /scripts/script_5o8olw2sc → 200 (9ms) [0m
+2026-05-15 20:09:37: [32m[20:09:37] GET /scripts → 200 (9ms) [0m
+2026-05-15 20:09:37: [32m[20:09:37] POST /history → 200 (2ms) (body: 100B)[0m
+2026-05-15 20:09:38: [32m[20:09:38] DELETE /scripts/script_lm0fay4li → 200 (11ms) [0m
+2026-05-15 20:09:38: [32m[20:09:38] GET /scripts → 200 (6ms) [0m
+2026-05-15 20:09:39: [32m[20:09:38] POST /history → 200 (3ms) (body: 119B)[0m
+2026-05-15 20:09:40: [32m[20:09:40] DELETE /scripts/script_00o3fwl5z → 200 (11ms) [0m
+2026-05-15 20:09:40: [32m[20:09:40] GET /scripts → 200 (9ms) [0m
+2026-05-15 20:09:40: [32m[20:09:40] POST /history → 200 (1ms) (body: 84B)[0m
+2026-05-15 20:09:41: [32m[20:09:41] DELETE /scripts/script_vmlndtqoh → 200 (10ms) [0m
+2026-05-15 20:09:41: [32m[20:09:41] GET /scripts → 200 (10ms) [0m
+2026-05-15 20:09:41: [32m[20:09:41] POST /history → 200 (2ms) (body: 86B)[0m
+2026-05-15 20:09:42: [32m[20:09:42] DELETE /scripts/script_t2xy4fs8o → 200 (9ms) [0m
+2026-05-15 20:09:42: [32m[20:09:42] GET /scripts → 200 (10ms) [0m
+2026-05-15 20:09:43: [32m[20:09:43] POST /history → 200 (2ms) (body: 73B)[0m
+2026-05-15 20:09:44: [32m[20:09:44] DELETE /scripts/script_s2szelg31 → 200 (8ms) [0m
+2026-05-15 20:09:44: [32m[20:09:44] GET /scripts → 200 (8ms) [0m
+2026-05-15 20:09:44: [32m[20:09:44] POST /history → 200 (1ms) (body: 79B)[0m
+2026-05-15 20:09:45: [32m[20:09:45] DELETE /scripts/script_iw2mvwmo9 → 200 (6ms) [0m
+2026-05-15 20:09:45: [32m[20:09:45] GET /scripts → 200 (7ms) [0m
+2026-05-15 20:09:45: [32m[20:09:45] POST /history → 200 (3ms) (body: 79B)[0m
+2026-05-15 20:09:46: [32m[20:09:46] DELETE /scripts/script_aijvwdgjk → 200 (7ms) [0m
+2026-05-15 20:09:46: [32m[20:09:46] GET /scripts → 200 (7ms) [0m
+2026-05-15 20:09:47: [32m[20:09:47] POST /history → 200 (2ms) (body: 79B)[0m
+2026-05-15 20:09:48: [32m[20:09:48] DELETE /scripts/script_tchytxwng → 200 (6ms) [0m
+2026-05-15 20:09:48: [32m[20:09:48] GET /scripts → 200 (6ms) [0m
+2026-05-15 20:09:48: [32m[20:09:48] POST /history → 200 (2ms) (body: 116B)[0m
+2026-05-15 20:09:50: [32m[20:09:50] DELETE /scripts/script_ac2kd9lmi → 200 (6ms) [0m
+2026-05-15 20:09:50: [32m[20:09:50] GET /scripts → 200 (3ms) [0m
+2026-05-15 20:09:50: [32m[20:09:50] POST /history → 200 (2ms) (body: 111B)[0m
+2026-05-15 20:09:52: [32m[20:09:52] DELETE /scripts/script_ymcpehp4e → 200 (5ms) [0m
+2026-05-15 20:09:52: [32m[20:09:52] GET /scripts → 200 (3ms) [0m
+2026-05-15 20:09:53: [32m[20:09:53] POST /history → 200 (3ms) (body: 79B)[0m
+2026-05-15 20:09:54: [32m[20:09:54] DELETE /scripts/script_8bvw1yltv → 200 (4ms) [0m
+2026-05-15 20:09:54: [32m[20:09:54] GET /scripts → 200 (2ms) [0m
+2026-05-15 20:09:54: [32m[20:09:54] POST /history → 200 (3ms) (body: 76B)[0m
+2026-05-15 20:09:55: [32m[20:09:55] DELETE /scripts/script_cin7rgp5n → 200 (4ms) [0m
+2026-05-15 20:09:55: [32m[20:09:55] GET /scripts → 200 (3ms) [0m
+2026-05-15 20:09:55: [32m[20:09:55] POST /history → 200 (2ms) (body: 82B)[0m
+2026-05-15 20:09:56: [32m[20:09:56] DELETE /scripts/script_3oltwotly → 200 (4ms) [0m
+2026-05-15 20:09:56: [32m[20:09:56] GET /scripts → 200 (3ms) [0m
+2026-05-15 20:09:56: [32m[20:09:56] POST /history → 200 (2ms) (body: 82B)[0m
+2026-05-15 20:09:58: [32m[20:09:58] DELETE /scripts/script_4u0maeg30 → 200 (3ms) [0m
+2026-05-15 20:09:58: [32m[20:09:58] GET /scripts → 200 (2ms) [0m
+2026-05-15 20:09:58: [32m[20:09:58] POST /history → 200 (2ms) (body: 82B)[0m
+2026-05-15 20:10:34: [32m[20:10:34] POST /backup → 200 (10ms) (body: 1030970B)[0m
+2026-05-15 20:10:34: [32m[20:10:34] GET /scripts → 200 (25ms) [0m
+2026-05-15 20:10:34: [32m[20:10:34] POST /history → 200 (2ms) (body: 66B)[0m
+2026-05-15 20:11:02: [32m[20:11:02] GET /targets → 304 (2ms) [0m
+2026-05-15 20:11:03: [32m[20:11:03] GET /api/health → 200 (2ms) [0m
+2026-05-15 20:11:07: [32m[20:11:07] POST /config → 200 (2ms) (body: 22106B)[0m
+2026-05-15 20:11:09: [32m[20:11:09] POST /history → 200 (9ms) (body: 56B)[0m
+2026-05-15 20:11:37: [32m[20:11:37] POST /history → 200 (10ms) (body: 61B)[0m
+2026-05-15 20:11:37: [32m[20:11:37] GET /prefs/sla_prefs_other_uxx002 → 200 (1ms) [0m
+2026-05-15 20:12:01: [32m[20:12:01] GET /scripts → 304 (30ms) [0m
+2026-05-15 20:12:01: [32m[20:12:01] GET /api/health → 200 (2ms) [0m
+2026-05-15 20:12:43: [32m[20:12:43] GET /targets → 304 (2ms) [0m
+2026-05-15 20:12:44: [32m[20:12:44] GET /api/health → 200 (2ms) [0m
+2026-05-15 20:13:09: [32m[20:13:09] GET /scripts → 304 (25ms) [0m
+2026-05-15 20:13:09: [32m[20:13:09] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:13:24: [32m[20:13:24] GET /targets → 304 (2ms) [0m
+2026-05-15 20:13:24: [32m[20:13:24] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:13:28: [32m[20:13:28] GET /prefs/sla_prefs_other_uxx002 → 304 (2ms) [0m
+2026-05-15 20:13:28: [32m[20:13:28] POST /history → 200 (4ms) (body: 61B)[0m
+2026-05-15 20:13:34: [32m[20:13:34] POST /history → 200 (4ms) (body: 61B)[0m
+2026-05-15 20:13:34: [32m[20:13:34] GET /prefs/sla_prefs_other_pufzvl → 200 (6ms) [0m
+2026-05-15 20:14:31: [32m[20:14:31] POST /config → 200 (5ms) (body: 79B)[0m
+2026-05-15 20:14:32: [32m[20:14:32] GET /targets → 200 (2ms) [0m
+2026-05-15 20:14:33: [32m[20:14:33] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:14:40: [32m[20:14:40] GET /scripts → 304 (29ms) [0m
+2026-05-15 20:14:40: [32m[20:14:40] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:14:42: [32m[20:14:42] GET /targets → 304 (1ms) [0m
+2026-05-15 20:14:43: [32m[20:14:43] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:17:58: 
+✅ Tools Platform 已启动
+2026-05-15 20:17:58:    🌐 访问地址: http://localhost:3030
+2026-05-15 20:17:58:    📦 UIVF12:   http://localhost:3030/uivf12
+2026-05-15 20:17:58:    📊 SLA:      http://localhost:3030/sla
+
+2026-05-15 20:19:27: [32m[20:19:27] GET /targets → 200 (32ms) [0m
+2026-05-15 20:19:27: [32m[20:19:27] GET /api/health → 200 (4ms) [0m
+2026-05-15 20:19:33: [POST /config] Received body keys: [ 'targets', 'prefs' ]
+2026-05-15 20:19:33: [POST /config] targets defined? true prefs defined? true
+2026-05-15 20:19:33: [POST /config] Wrote targets successfully
+2026-05-15 20:19:33: [POST /config] Wrote prefs successfully, keys count: 35
+2026-05-15 20:19:33: [32m[20:19:33] POST /config → 200 (9ms) (body: 19473B)[0m
+2026-05-15 20:19:38: [32m[20:19:38] POST /history → 200 (3ms) (body: 89B)[0m
+2026-05-15 20:19:41: [32m[20:19:41] GET /prefs/sla_prefs_other_uxx002 → 200 (4ms) [0m
+2026-05-15 20:19:41: [32m[20:19:41] POST /history → 200 (5ms) (body: 61B)[0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_special_xg6eua → 200 (6ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_other_a33iom → 200 (1ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_other_5jcrzk → 200 (4ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_other_v7jtrw → 200 (4ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_rectification_x7jydx → 200 (1ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_other_vsq8j3 → 200 (3ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_risk_tfawpd → 200 (3ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_other_pufzvl → 200 (1ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_other_r7ivhq → 200 (1ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_other_4xrqmw → 200 (1ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_other_cs4972 → 200 (1ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_other_uxx002 → 304 (1ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_other_renltd → 200 (0ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_other_blghgh → 200 (0ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_other_k9sq8x → 200 (1ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_other_tl0h8g → 200 (0ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_other_irg0bu → 200 (1ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_other_fvv9vu → 200 (0ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_other_byn3uq → 200 (1ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_other_scojkl → 200 (0ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_other_n0fxcz → 200 (1ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_other_36ksoy → 200 (0ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_other_kxxuiv → 200 (1ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_other_adofvo → 200 (0ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] POST /history → 200 (1ms) (body: 62B)[0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_other_16amqd → 200 (1ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_other_d634kw → 200 (0ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_other_b4qno2 → 200 (0ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_other_ccmx6n → 200 (0ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_other_vmy0fv → 200 (1ms) [0m
+2026-05-15 20:20:04: [32m[20:20:04] GET /prefs/sla_prefs_other_3i73d → 200 (0ms) [0m
+2026-05-15 20:27:05: 
+✅ Tools Platform 已启动
+2026-05-15 20:27:05:    🌐 访问地址: http://localhost:3030
+2026-05-15 20:27:05:    📦 UIVF12:   http://localhost:3030/uivf12
+2026-05-15 20:27:05:    📊 SLA:      http://localhost:3030/sla
+
+2026-05-15 20:29:27: [32m[20:29:27] GET /targets → 200 (35ms) [0m
+2026-05-15 20:29:28: [32m[20:29:28] GET /api/health → 200 (2ms) [0m
+2026-05-15 20:29:30: [32m[20:29:30] GET /scripts → 304 (31ms) [0m
+2026-05-15 20:29:31: [32m[20:29:31] GET /api/health → 200 (2ms) [0m
+2026-05-15 20:29:32: [32m[20:29:32] GET /scripts → 304 (24ms) [0m
+2026-05-15 20:29:32: [32m[20:29:32] GET /history → 200 (3ms) [0m
+2026-05-15 20:29:32: [32m[20:29:32] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:29:33: [32m[20:29:33] GET /targets → 304 (2ms) [0m
+2026-05-15 20:29:33: [32m[20:29:33] GET /api/health → 200 (2ms) [0m
+2026-05-15 20:29:34: [32m[20:29:34] GET /snapshots → 200 (3ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_special_xg6eua → 304 (5ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_risk_tfawpd → 304 (6ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_other_36ksoy → 304 (4ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_rectification_x7jydx → 304 (2ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_other_scojkl → 304 (2ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_other_uxx002 → 304 (3ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_other_5jcrzk → 304 (2ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_other_v7jtrw → 304 (3ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_other_d634kw → 304 (3ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_other_adofvo → 304 (3ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_other_b4qno2 → 304 (4ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_other_pufzvl → 304 (5ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_other_cs4972 → 304 (1ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_other_renltd → 304 (0ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_other_r7ivhq → 304 (1ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_other_blghgh → 304 (1ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_other_4xrqmw → 304 (0ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_other_k9sq8x → 304 (0ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_other_tl0h8g → 304 (1ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_other_a33iom → 304 (0ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_other_irg0bu → 304 (0ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_other_n0fxcz → 304 (0ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] POST /history → 200 (2ms) (body: 62B)[0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_other_fvv9vu → 304 (0ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_other_byn3uq → 304 (1ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_other_kxxuiv → 304 (0ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_other_vsq8j3 → 304 (1ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_other_vmy0fv → 304 (1ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_other_ccmx6n → 304 (0ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_other_3i73d → 304 (1ms) [0m
+2026-05-15 20:29:41: [32m[20:29:41] GET /prefs/sla_prefs_other_16amqd → 304 (0ms) [0m
+2026-05-15 20:29:42: [32m[20:29:42] POST /snapshot → 200 (3ms) (body: 2450B)[0m
+2026-05-15 20:30:22: [32m[20:30:22] GET /scripts → 304 (23ms) [0m
+2026-05-15 20:30:22: [32m[20:30:22] GET /history → 200 (2ms) [0m
+2026-05-15 20:30:22: [32m[20:30:22] GET /api/health → 200 (2ms) [0m
+2026-05-15 20:30:23: [32m[20:30:23] GET /targets → 304 (2ms) [0m
+2026-05-15 20:30:23: [32m[20:30:23] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:30:24: [32m[20:30:24] GET /snapshots → 200 (2ms) [0m
+2026-05-15 20:30:34: [32m[20:30:34] GET /snapshots → 304 (1ms) [0m
+2026-05-15 20:30:36: [32m[20:30:36] GET /snapshots → 304 (2ms) [0m
+2026-05-15 20:33:57: [32m[20:33:57] GET /targets → 200 (2ms) [0m
+2026-05-15 20:33:58: [32m[20:33:58] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_rectification_x7jydx → 304 (3ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_special_xg6eua → 304 (4ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_other_renltd → 304 (2ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_other_uxx002 → 304 (3ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_other_irg0bu → 304 (3ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_other_5jcrzk → 304 (2ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_other_byn3uq → 304 (3ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_other_pufzvl → 304 (3ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_risk_tfawpd → 304 (2ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_other_36ksoy → 304 (2ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_other_adofvo → 304 (4ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_other_b4qno2 → 304 (3ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_other_kxxuiv → 304 (4ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_other_cs4972 → 304 (4ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_other_16amqd → 304 (6ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_other_ccmx6n → 304 (3ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_other_r7ivhq → 304 (4ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_other_k9sq8x → 304 (0ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_other_a33iom → 304 (0ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_other_4xrqmw → 304 (1ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_other_tl0h8g → 304 (1ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_other_blghgh → 304 (0ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_other_scojkl → 304 (1ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_other_n0fxcz → 304 (1ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_other_fvv9vu → 304 (0ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_other_v7jtrw → 304 (0ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_other_d634kw → 304 (0ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_other_vsq8j3 → 304 (0ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_other_vmy0fv → 304 (0ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] GET /prefs/sla_prefs_other_3i73d → 304 (0ms) [0m
+2026-05-15 20:34:06: [32m[20:34:06] POST /history → 200 (2ms) (body: 62B)[0m
+2026-05-15 20:34:07: [32m[20:34:07] POST /snapshot → 200 (2ms) (body: 4417B)[0m
+2026-05-15 20:34:10: [32m[20:34:10] GET /snapshots → 200 (2ms) [0m
+2026-05-15 20:37:14: [32m[20:37:14] GET /scripts → 200 (14ms) [0m
+2026-05-15 20:37:14: [32m[20:37:14] GET /history → 200 (1ms) [0m
+2026-05-15 20:37:14: [32m[20:37:14] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:37:15: [32m[20:37:15] GET /targets → 200 (1ms) [0m
+2026-05-15 20:37:15: [32m[20:37:15] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:37:16: [32m[20:37:16] GET /snapshots → 200 (1ms) [0m
+2026-05-15 20:37:48: [32m[20:37:48] GET /snapshots → 304 (1ms) [0m
+2026-05-15 20:38:38: [32m[20:38:38] GET /scripts → 304 (15ms) [0m
+2026-05-15 20:38:38: [32m[20:38:38] GET /api/health → 200 (2ms) [0m
+2026-05-15 20:38:40: [32m[20:38:40] GET /scripts → 304 (16ms) [0m
+2026-05-15 20:39:07: [32m[20:39:07] GET /scripts → 304 (17ms) [0m
+2026-05-15 20:39:08: [32m[20:39:08] GET /targets → 304 (1ms) [0m
+2026-05-15 20:39:09: [32m[20:39:09] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:39:22: [32m[20:39:22] GET /scripts → 304 (18ms) [0m
+2026-05-15 20:39:23: [32m[20:39:23] GET /api/health → 200 (0ms) [0m
+2026-05-15 20:39:23: [32m[20:39:23] GET /targets → 304 (1ms) [0m
+2026-05-15 20:39:24: [32m[20:39:24] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:39:24: [32m[20:39:24] GET /targets → 304 (1ms) [0m
+2026-05-15 20:39:24: [32m[20:39:24] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:39:25: [32m[20:39:25] GET /scripts → 304 (16ms) [0m
+2026-05-15 20:39:25: [32m[20:39:25] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:39:26: [32m[20:39:26] GET /scripts → 304 (14ms) [0m
+2026-05-15 20:39:26: [32m[20:39:26] GET /history → 304 (0ms) [0m
+2026-05-15 20:39:26: [32m[20:39:26] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:39:35: [32m[20:39:35] GET /scripts → 304 (14ms) [0m
+2026-05-15 20:39:36: [32m[20:39:36] GET /targets → 304 (1ms) [0m
+2026-05-15 20:39:36: [32m[20:39:36] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:39:54: [32m[20:39:54] GET /targets → 200 (2ms) [0m
+2026-05-15 20:39:55: [32m[20:39:55] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:39:56: [32m[20:39:56] GET /snapshots → 304 (2ms) [0m
+2026-05-15 20:40:04: [32m[20:40:04] GET /targets → 200 (1ms) [0m
+2026-05-15 20:40:04: [32m[20:40:04] GET /api/health → 200 (2ms) [0m
+2026-05-15 20:40:05: [32m[20:40:05] GET /targets → 304 (1ms) [0m
+2026-05-15 20:40:05: [32m[20:40:05] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:40:06: [32m[20:40:06] GET /snapshots → 304 (1ms) [0m
+2026-05-15 20:40:31: [32m[20:40:31] GET /snapshots → 304 (2ms) [0m
+2026-05-15 20:40:35: [32m[20:40:35] GET /snapshots → 304 (3ms) [0m
+2026-05-15 20:47:12: [32m[20:47:12] GET /targets → 200 (2ms) [0m
+2026-05-15 20:47:12: [32m[20:47:12] GET /api/health → 200 (2ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_rectification_x7jydx → 304 (3ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_special_xg6eua → 304 (2ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_risk_tfawpd → 304 (2ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_other_r7ivhq → 304 (2ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_other_4xrqmw → 304 (3ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_other_pufzvl → 304 (2ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_other_36ksoy → 304 (1ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_other_uxx002 → 304 (2ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_other_scojkl → 304 (2ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_other_renltd → 304 (2ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_other_irg0bu → 304 (2ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_other_v7jtrw → 304 (3ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_other_5jcrzk → 304 (2ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_other_byn3uq → 304 (4ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_other_cs4972 → 304 (2ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_other_d634kw → 304 (2ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_other_ccmx6n → 304 (2ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_other_b4qno2 → 304 (2ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_other_vsq8j3 → 304 (2ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_other_adofvo → 304 (3ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_other_blghgh → 304 (3ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_other_vmy0fv → 304 (1ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_other_16amqd → 304 (1ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_other_a33iom → 304 (2ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_other_k9sq8x → 304 (1ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_other_tl0h8g → 304 (1ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_other_fvv9vu → 304 (1ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_other_n0fxcz → 304 (1ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_other_kxxuiv → 304 (1ms) [0m
+2026-05-15 20:47:18: [32m[20:47:18] GET /prefs/sla_prefs_other_3i73d → 304 (0ms) [0m
+2026-05-15 20:47:19: [32m[20:47:19] POST /history → 200 (3ms) (body: 62B)[0m
+2026-05-15 20:47:19: [32m[20:47:19] POST /snapshot → 200 (2ms) (body: 5339B)[0m
+2026-05-15 20:47:23: [32m[20:47:23] GET /snapshots → 200 (2ms) [0m
+2026-05-15 20:51:24: [32m[20:51:24] GET /targets → 200 (1ms) [0m
+2026-05-15 20:51:24: [32m[20:51:24] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:51:51: [32m[20:51:51] GET /targets → 200 (1ms) [0m
+2026-05-15 20:51:51: [32m[20:51:51] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:52:01: [32m[20:52:01] GET /snapshots → 200 (2ms) [0m
+2026-05-15 20:52:49: [32m[20:52:49] GET /snapshots → 304 (2ms) [0m
+2026-05-15 20:57:56: [32m[20:57:56] GET /targets → 200 (1ms) [0m
+2026-05-15 20:57:57: [32m[20:57:57] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:57:58: [32m[20:57:58] GET /scripts → 304 (20ms) [0m
+2026-05-15 20:57:58: [32m[20:57:58] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:57:58: [32m[20:57:58] GET /scripts → 304 (12ms) [0m
+2026-05-15 20:57:58: [32m[20:57:58] GET /history → 200 (1ms) [0m
+2026-05-15 20:57:59: [32m[20:57:59] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:57:59: [32m[20:57:59] GET /targets → 304 (1ms) [0m
+2026-05-15 20:58:00: [32m[20:58:00] GET /api/health → 200 (1ms) [0m
+2026-05-15 20:58:00: [32m[20:58:00] GET /snapshots → 304 (2ms) [0m
+2026-05-15 20:58:52: [32m[20:58:52] GET /snapshots → 304 (2ms) [0m
