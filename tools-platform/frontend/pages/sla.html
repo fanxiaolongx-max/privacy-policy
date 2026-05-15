@@ -37,6 +37,26 @@
         </div>
     </div>
 
+    <!-- 全局分类管理弹窗 -->
+    <div id="category-modal" class="modal-overlay">
+        <div class="modal-content" style="width: 400px; min-width: 300px;">
+            <div class="modal-header">
+                <h3 style="margin: 0; color: #1976d2;">🏷️ 子指标分类管理</h3>
+                <button class="modal-close" onclick="closeCategoryModal()">✖</button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <div style="display:flex; gap: 10px; margin-bottom: 15px;">
+                    <input type="text" id="new-category-input" placeholder="输入新分类名称..." style="flex:1; padding: 6px; border: 1px solid #ccc; border-radius: 4px;">
+                    <button class="action-btn" onclick="addCategory()" style="background: #2e7d32; color: white; border: none;">➕ 添加</button>
+                </div>
+                <div id="category-list" style="display:flex; flex-wrap: wrap; gap: 8px;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-save" onclick="saveCategories()">保存全部分类</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 历史导入看板弹窗 -->
     <div id="history-modal" class="modal-overlay">
         <div class="modal-content" style="width: 96vw; max-width: 1800px; height: 90vh; max-height: 90vh; display: flex; flex-direction: column; resize: both; overflow: hidden; min-width: 800px; min-height: 400px; padding-bottom: 0;">
@@ -57,6 +77,7 @@
                 <span>📊 全局数据合控大中台 <span style="font-size:12px;color:#ff9800;font-weight:normal;border:1px solid #ff9800;padding:2px 6px;border-radius:12px;margin-left:10px;">旗舰定制版</span></span>
             </h2>
             <div class="system-actions">
+                <button class="sys-btn" style="background:#0277bd; color: white;" onclick="openCategoryModal()">🏷️ 全局分类</button>
                 <button class="sys-btn" style="background:#8e24aa; color: white;" onclick="openHistoryModal()">📈 历史看板</button>
                 <button class="sys-btn" onclick="SLAConfig.exportConfig()" title="备份所有的列宽、显示状态、顶部指标和预警目标">💾 导出全量配置</button>
                 <label class="sys-btn" title="导入配置文件，一键恢复设置">
@@ -126,10 +147,12 @@
     <script src="/js/sla/events.js"></script>
     <script src="/js/sla/metrics.js"></script>
     <script src="/js/sla/history.js"></script>
+    <script src="/js/sla/categories.js"></script>
     <script>
-        // 初始化：从服务端加载预警目标
+        // 初始化：从服务端加载预警目标和分类
         document.addEventListener('DOMContentLoaded', async () => {
             await SLASection.initGlobalTargets();
+            if (window.initCategories) await window.initCategories();
         });
         // 文件上传事件绑定
         document.getElementById('batch-upload').addEventListener('change', SLAUpload.handleBatchUpload, false);

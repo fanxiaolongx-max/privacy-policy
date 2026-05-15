@@ -171,16 +171,83 @@ window.deleteMetricRule = function(secId, ruleId) {
     SLAPrefs.savePrefs(secId); renderMetricList(secId); evaluateAllMetrics();
 };
 
+window.deleteSubMetricRule = function(secId, parentRuleId, subIndex) {
+    const parent = AppState[secId].customMetrics.find(r => r.id === parentRuleId);
+    if (parent && parent.subMetrics) {
+        parent.subMetrics.splice(subIndex, 1);
+        SLAPrefs.savePrefs(secId); renderMetricList(secId); evaluateAllMetrics();
+    }
+};
+
+window.showSubMetricForm = function(secId, ruleId) {
+    const form = document.getElementById(`sub-metric-form-${secId}-${ruleId}`);
+    if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
+};
+
+window.addSubMetricRule = function(secId, ruleId) {
+    const cat = document.getElementById(`sm-cat-${secId}-${ruleId}`).value;
+    const colX = document.getElementById(`sm-colx-${secId}-${ruleId}`).value;
+    const valY = document.getElementById(`sm-valy-${secId}-${ruleId}`).value.trim();
+    const colZ = document.getElementById(`sm-colz-${secId}-${ruleId}`).value;
+    
+    if (!cat || !colX || !valY || !colZ) { alert('请将子指标的分类及X/Y/Z填写完整！'); return; }
+    
+    const parent = AppState[secId].customMetrics.find(r => r.id === ruleId);
+    if (parent) {
+        if (!parent.subMetrics) parent.subMetrics = [];
+        parent.subMetrics.push({ category: cat, colX, valY, colZ });
+        SLAPrefs.savePrefs(secId); renderMetricList(secId); evaluateAllMetrics();
+    }
+};
+
 function renderMetricList(secId) {
     const state = AppState[secId];
     const list = document.getElementById(`m-list-${secId}`);
     if (!state.customMetrics.length) { list.innerHTML = '<div style="color:#aaa;font-size:12px;text-align:center;">尚无推送规则</div>'; return; }
-    list.innerHTML = state.customMetrics.map(r => `
-        <div class="rule-config-item">
-            <button class="del-btn" onclick="deleteMetricRule('${secId}', '${r.id}')" title="删除规则">✖</button>
-            <div style="font-weight:bold;color:#4a90e2;">[${escapeHTML(r.label)}]</div>
+    
+    let html = '';
+    const cats = window.GlobalCategories || ['TE', 'ORG', 'ET', 'VDF'];
+    const catOptions = cats.map(c => `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join('');
+    
+    let colOptions = '<option value="">选择列...</option>';
+    state.orderedHeaders.forEach(h => { colOptions += `<option value="${escapeHTML(h)}">${escapeHTML(h)}</option>`; });
+
+    state.customMetrics.forEach(r => {
+        let subHtml = '';
+        if (r.subMetrics && r.subMetrics.length > 0) {
+            subHtml = `<div style="margin-top:6px; padding-left: 10px; border-left: 2px solid #e1bee7;">`;
+            r.subMetrics.forEach((sm, idx) => {
+                subHtml += `
+                <div style="font-size:11px; color:#555; background: #fafafa; padding: 4px; margin-bottom: 4px; border-radius: 4px; position: relative;">
+                    <button onclick="deleteSubMetricRule('${secId}', '${r.id}', ${idx})" style="position:absolute; right:4px; top:4px; border:none; background:none; color:#d32f2f; cursor:pointer;">✖</button>
+                    <b>[${escapeHTML(sm.category)}]</b>: IF [${escapeHTML(sm.colX)}] 包含 '${escapeHTML(sm.valY)}' ➔ SHOW [${escapeHTML(sm.colZ)}]
+                </div>`;
+            });
+            subHtml += `</div>`;
+        }
+
+        html += `
+        <div class="rule-config-item" style="border-bottom: 1px dashed #eee; padding-bottom: 8px; margin-bottom: 8px;">
+            <div style="display:flex; justify-content: space-between; align-items: center;">
+                <div style="font-weight:bold;color:#4a90e2;font-size:13px;">[${escapeHTML(r.label)}]</div>
+                <div>
+                    <button class="action-btn" onclick="showSubMetricForm('${secId}', '${r.id}')" style="font-size:11px; padding:2px 6px; background:#e1bee7; color:#6a1b9a;">➕ 子指标</button>
+                    <button class="action-btn" onclick="deleteMetricRule('${secId}', '${r.id}')" style="font-size:11px; padding:2px 6px; background:#ffebee; color:#c62828;">✖</button>
+                </div>
+            </div>
             <div style="font-size:11px;color:#666;margin-top:4px;">IF [${escapeHTML(r.colX)}] 包含 '${escapeHTML(r.valY)}' <br>➔ SHOW [${escapeHTML(r.colZ)}]</div>
-        </div>`).join('');
+            ${subHtml}
+            
+            <div id="sub-metric-form-${secId}-${r.id}" style="display:none; background: #f3e5f5; padding: 8px; border-radius: 4px; margin-top: 8px;">
+                <select id="sm-cat-${secId}-${r.id}" class="picker-search" style="margin-bottom:4px;"><option value="">选择分类</option>${catOptions}</select>
+                <select id="sm-colx-${secId}-${r.id}" class="picker-search" style="margin-bottom:4px;">${colOptions}</select>
+                <input type="text" id="sm-valy-${secId}-${r.id}" class="picker-search" placeholder="包含内容(Y)..." style="margin-bottom:4px;">
+                <select id="sm-colz-${secId}-${r.id}" class="picker-search" style="margin-bottom:4px;">${colOptions}</select>
+                <button onclick="addSubMetricRule('${secId}', '${r.id}')" style="width:100%; padding:4px; background:#6a1b9a; color:white; border:none; border-radius:4px; font-size:11px; cursor:pointer;">保存子指标</button>
+            </div>
+        </div>`;
+    });
+    list.innerHTML = html;
 }
 
 document.addEventListener('click', e => {

@@ -23,7 +23,33 @@
         "valY": "总计",
         "colZ": "网络拓扑刷新完成率",
         "label": "拓扑刷新率",
-        "color": ""
+        "color": "",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "colX": "network_name_base",
+            "valY": "EG-Egypt Telecom",
+            "colZ": "网络拓扑刷新完成率"
+          },
+          {
+            "category": "ORG",
+            "colX": "network_name_base",
+            "valY": "EG-Egypt Orange",
+            "colZ": "网络拓扑刷新完成率"
+          },
+          {
+            "category": "ET",
+            "colX": "network_name_base",
+            "valY": "EG-Egypt ET",
+            "colZ": "网络拓扑刷新完成率"
+          },
+          {
+            "category": "VDF",
+            "colX": "network_name_base",
+            "valY": "EG-Egypt Vodafone",
+            "colZ": "网络拓扑刷新完成率"
+          }
+        ]
       },
       {
         "id": "m_1778790662446",
@@ -31,7 +57,33 @@
         "valY": "总计",
         "colZ": "应急预案刷新完成率",
         "label": "预案刷新率",
-        "color": ""
+        "color": "",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "colX": "network_name_base",
+            "valY": "EG-Egypt Telecom",
+            "colZ": "应急预案刷新完成率"
+          },
+          {
+            "category": "ORG",
+            "colX": "network_name_base",
+            "valY": "EG-Egypt Orange",
+            "colZ": "应急预案刷新完成率"
+          },
+          {
+            "category": "ET",
+            "colX": "network_name_base",
+            "valY": "EG-Egypt ET",
+            "colZ": "应急预案刷新完成率"
+          },
+          {
+            "category": "VDF",
+            "colX": "network_name_base",
+            "valY": "EG-Egypt Vodafone",
+            "colZ": "应急预案刷新完成率"
+          }
+        ]
       }
     ]
   },
@@ -57,7 +109,33 @@
         "valY": "汇总",
         "colZ": "closed_rate",
         "label": "版本EOS闭环率",
-        "color": ""
+        "color": "",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "colX": "name",
+            "valY": "虚拟系统部",
+            "colZ": "closed_rate"
+          },
+          {
+            "category": "ORG",
+            "colX": "name",
+            "valY": "Orange系统部",
+            "colZ": "closed_rate"
+          },
+          {
+            "category": "ET",
+            "colX": "name",
+            "valY": "e&系统部",
+            "colZ": "closed_rate"
+          },
+          {
+            "category": "VDF",
+            "colX": "name",
+            "valY": "Vodafone系统部",
+            "colZ": "closed_rate"
+          }
+        ]
       }
     ]
   },
@@ -74,7 +152,7 @@
     ],
     "columnWidths": {
       "name_en": 43,
-      "name_ch": 435,
+      "name_ch": 353,
       "版本标识": 79,
       "task_status": 120,
       "notice_type_name": 102
@@ -283,7 +361,27 @@
         "valY": "总计",
         "colZ": "总巡检完成率",
         "label": "价值网络巡检完成率",
-        "color": ""
+        "color": "",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "colX": "网络",
+            "valY": "EG-Egypt Telecom",
+            "colZ": "总巡检完成率"
+          },
+          {
+            "category": "ORG",
+            "colX": "网络",
+            "valY": "EG-Egypt Orange",
+            "colZ": "总巡检完成率"
+          },
+          {
+            "category": "ET",
+            "colX": "网络",
+            "valY": "EG-Egypt ET",
+            "colZ": "总巡检完成率"
+          }
+        ]
       }
     ]
   },
@@ -329,7 +427,15 @@
         "valY": "汇总",
         "colZ": "lb_complete_drill_rate",
         "label": "锂电池整改完成率",
-        "color": ""
+        "color": "",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "colX": "name",
+            "valY": "虚拟系统部",
+            "colZ": "lb_complete_drill_rate"
+          }
+        ]
       }
     ]
   },
@@ -354,7 +460,33 @@
         "valY": "汇总",
         "colZ": "sr_frt",
         "label": "SR FRT率",
-        "color": ""
+        "color": "",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "colX": "name",
+            "valY": "虚拟系统部",
+            "colZ": "sr_frt"
+          },
+          {
+            "category": "ORG",
+            "colX": "name",
+            "valY": "Orange系统部",
+            "colZ": "sr_frt"
+          },
+          {
+            "category": "ET",
+            "colX": "name",
+            "valY": "e&系统部",
+            "colZ": "sr_frt"
+          },
+          {
+            "category": "VDF",
+            "colX": "name",
+            "valY": "Vodafone系统部",
+            "colZ": "sr_frt"
+          }
+        ]
       }
     ]
   },
@@ -377,7 +509,33 @@
         "valY": "汇总",
         "colZ": "closed_rate",
         "label": "重急EOS闭环率",
-        "color": ""
+        "color": "",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "colX": "name",
+            "valY": "虚拟系统部",
+            "colZ": "closed_rate"
+          },
+          {
+            "category": "ORG",
+            "colX": "name",
+            "valY": "Orange系统部",
+            "colZ": "closed_rate"
+          },
+          {
+            "category": "ET",
+            "colX": "name",
+            "valY": "e&系统部",
+            "colZ": "closed_rate"
+          },
+          {
+            "category": "VDF",
+            "colX": "name",
+            "valY": "Vodafone系统部",
+            "colZ": "closed_rate"
+          }
+        ]
       }
     ]
   },
@@ -410,7 +568,33 @@
         "valY": "总计",
         "colZ": "完成率",
         "label": "TOPN风险完成率",
-        "color": ""
+        "color": "",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "colX": "network",
+            "valY": "EG-Egypt Telecom",
+            "colZ": "完成率"
+          },
+          {
+            "category": "ORG",
+            "colX": "network",
+            "valY": "EG-Egypt Orange",
+            "colZ": "完成率"
+          },
+          {
+            "category": "ET",
+            "colX": "network",
+            "valY": "EG-Egypt ET",
+            "colZ": "完成率"
+          },
+          {
+            "category": "VDF",
+            "colX": "network",
+            "valY": "EG-Egypt Vodafone",
+            "colZ": "完成率"
+          }
+        ]
       }
     ]
   },
@@ -554,7 +738,7 @@
       "name"
     ],
     "columnWidths": {
-      "版本标识": 362
+      "版本标识": 289
     },
     "sortKey": null,
     "sortAsc": true,
@@ -639,7 +823,27 @@
         "valY": "汇总",
         "colZ": "reduced_rate",
         "label": "数字证书消减率",
-        "color": ""
+        "color": "",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "colX": "name",
+            "valY": "虚拟系统部",
+            "colZ": "reduced_rate"
+          },
+          {
+            "category": "ORG",
+            "colX": "name",
+            "valY": "Orange系统部",
+            "colZ": "reduced_rate"
+          },
+          {
+            "category": "ET",
+            "colX": "name",
+            "valY": "e&系统部",
+            "colZ": "reduced_rate"
+          }
+        ]
       }
     ]
   },
@@ -664,7 +868,33 @@
         "valY": "汇总",
         "colZ": "rectify_complete_rate",
         "label": "路由器整改完成率",
-        "color": ""
+        "color": "",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "colX": "name",
+            "valY": "虚拟系统部",
+            "colZ": "rectify_complete_rate"
+          },
+          {
+            "category": "ORG",
+            "colX": "name",
+            "valY": "Orange系统部",
+            "colZ": "rectify_complete_rate"
+          },
+          {
+            "category": "ET",
+            "colX": "name",
+            "valY": "e&系统部",
+            "colZ": "rectify_complete_rate"
+          },
+          {
+            "category": "VDF",
+            "colX": "name",
+            "valY": "Vodafone系统部",
+            "colZ": "rectify_complete_rate"
+          }
+        ]
       }
     ]
   },
@@ -703,7 +933,13 @@
       "check_complete_rate",
       "rectify_complete_rate"
     ],
-    "columnWidths": {},
+    "columnWidths": {
+      "版本标识": 163,
+      "actual_not_implement_ne_num_cnt": 244,
+      "sum_nes": 108,
+      "name": 253,
+      "check_complete_rate": 316
+    },
     "sortKey": null,
     "sortAsc": true,
     "customMetrics": [
@@ -713,7 +949,33 @@
         "valY": "汇总",
         "colZ": "rectify_complete_rate",
         "label": "存储整改完成率",
-        "color": ""
+        "color": "",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "colX": "name",
+            "valY": "虚拟系统部",
+            "colZ": "rectify_complete_rate"
+          },
+          {
+            "category": "ORG",
+            "colX": "name",
+            "valY": "Orange系统部",
+            "colZ": "rectify_complete_rate"
+          },
+          {
+            "category": "ET",
+            "colX": "name",
+            "valY": "e&系统部",
+            "colZ": "rectify_complete_rate"
+          },
+          {
+            "category": "VDF",
+            "colX": "name",
+            "valY": "Vodafone系统部",
+            "colZ": "rectify_complete_rate"
+          }
+        ]
       }
     ]
   },
@@ -746,7 +1008,9 @@
       "演练完成率",
       "演练改进点"
     ],
-    "columnWidths": {},
+    "columnWidths": {
+      "版本标识": 148
+    },
     "sortKey": null,
     "sortAsc": true,
     "customMetrics": [
@@ -756,7 +1020,27 @@
         "valY": "总计",
         "colZ": "演练完成率",
         "label": "应急演练完成率",
-        "color": ""
+        "color": "",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "colX": "网络",
+            "valY": "EG-Egypt Telecom",
+            "colZ": "演练完成率"
+          },
+          {
+            "category": "ET",
+            "colX": "网络",
+            "valY": "EG-Egypt ET",
+            "colZ": "演练完成率"
+          },
+          {
+            "category": "VDF",
+            "colX": "网络",
+            "valY": "EG-Egypt Vodafone",
+            "colZ": "演练完成率"
+          }
+        ]
       }
     ]
   },
@@ -784,7 +1068,27 @@
         "valY": "总计",
         "colZ": "拦截次数2024年",
         "label": "高危命令拦截次数",
-        "color": ""
+        "color": "",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "colX": "网络",
+            "valY": "EG-Egypt Telecom",
+            "colZ": "拦截次数2024年"
+          },
+          {
+            "category": "ORG",
+            "colX": "网络",
+            "valY": "EG-Egypt Orange",
+            "colZ": "拦截次数2024年"
+          },
+          {
+            "category": "ET",
+            "colX": "网络",
+            "valY": "EG-Egypt ET",
+            "colZ": "拦截次数2024年"
+          }
+        ]
       }
     ]
   },
@@ -817,7 +1121,33 @@
         "valY": "总计",
         "colZ": "总完成率",
         "label": "整改完成率",
-        "color": ""
+        "color": "",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "colX": "network_name",
+            "valY": "EG-Egypt Telecom",
+            "colZ": "总完成率"
+          },
+          {
+            "category": "ORG",
+            "colX": "network_name",
+            "valY": "EG-Egypt Orange",
+            "colZ": "总完成率"
+          },
+          {
+            "category": "ET",
+            "colX": "network_name",
+            "valY": "EG-Egypt ET",
+            "colZ": "总完成率"
+          },
+          {
+            "category": "VDF",
+            "colX": "network_name",
+            "valY": "EG-Egypt Vodafone",
+            "colZ": "总完成率"
+          }
+        ]
       }
     ]
   },
@@ -836,7 +1166,7 @@
       "备案原因"
     ],
     "columnWidths": {
-      "版本标识": 88,
+      "版本标识": 115,
       "客户群": 105,
       "备案原因": 265,
       "操作人": 149
@@ -921,7 +1251,27 @@
         "valY": "总计",
         "colZ": "账号稽查率",
         "label": "日志稽查率",
-        "color": ""
+        "color": "",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "colX": "network_name",
+            "valY": "EG-Egypt Telecom",
+            "colZ": "账号稽查率"
+          },
+          {
+            "category": "ORG",
+            "colX": "network_name",
+            "valY": "EG-Egypt Orange",
+            "colZ": "账号稽查率"
+          },
+          {
+            "category": "ET",
+            "colX": "network_name",
+            "valY": "EG-Egypt ET",
+            "colZ": "账号稽查率"
+          }
+        ]
       }
     ]
   },
@@ -959,7 +1309,12 @@
       "name",
       "closed_rate"
     ],
-    "columnWidths": {},
+    "columnWidths": {
+      "版本标识": 134,
+      "nc_baseline_nes_new": 182,
+      "closed_nes_new": 194,
+      "unclosed_nes_new": 203
+    },
     "sortKey": null,
     "sortAsc": true,
     "customMetrics": [
@@ -969,7 +1324,33 @@
         "valY": "汇总",
         "colZ": "closed_rate",
         "label": "产品EOS闭环率",
-        "color": ""
+        "color": "",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "colX": "name",
+            "valY": "虚拟系统部",
+            "colZ": "closed_rate"
+          },
+          {
+            "category": "ORG",
+            "colX": "name",
+            "valY": "Orange系统部",
+            "colZ": "closed_rate"
+          },
+          {
+            "category": "ET",
+            "colX": "name",
+            "valY": "e&系统部",
+            "colZ": "closed_rate"
+          },
+          {
+            "category": "VDF",
+            "colX": "name",
+            "valY": "Vodafone系统部",
+            "colZ": "closed_rate"
+          }
+        ]
       }
     ]
   },

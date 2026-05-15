@@ -8,8 +8,27 @@ const { readJSON, writeJSON } = require('../models/store');
 
 const TARGETS_FILE = 'sla_targets.json';
 const PREFS_FILE = 'sla_prefs.json';
-
 const SNAPSHOTS_FILE = 'sla_snapshots.json';
+const CATEGORIES_FILE = 'sla_categories.json';
+
+// ──────────────────────────────────────────────────────────
+// 全局字典配置 (例如：指标分类)
+// ──────────────────────────────────────────────────────────
+
+// GET /api/sla/categories
+router.get('/categories', (req, res) => {
+    const defaultCats = ['TE', 'ORG', 'ET', 'VDF'];
+    const cats = readJSON(CATEGORIES_FILE, defaultCats);
+    res.json(cats);
+});
+
+// PUT /api/sla/categories
+router.put('/categories', (req, res) => {
+    const cats = req.body;
+    if (!Array.isArray(cats)) return res.status(400).json({ error: '必须是数组' });
+    writeJSON(CATEGORIES_FILE, cats);
+    res.json({ success: true });
+});
 
 // ──────────────────────────────────────────────────────────
 // 全局预警目标

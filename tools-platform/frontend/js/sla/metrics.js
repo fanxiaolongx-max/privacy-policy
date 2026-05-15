@@ -23,7 +23,29 @@ function evaluateAllMetrics() {
                 const num = parseFloat(strVal);
                 if (!isNaN(num)) matchedValue = isPercent ? Math.round(num) + '%' : Math.round(num * 100) + '%';
             }
-            window.GlobalMetrics[`${secId}_${rule.id}`] = { label: rule.label, value: matchedValue, color: rule.color };
+            
+            const evaluatedSubMetrics = [];
+            if (rule.subMetrics && rule.subMetrics.length > 0) {
+                rule.subMetrics.forEach(sm => {
+                    let smValue = '--';
+                    for (let i = 0; i < state.globalData.length; i++) {
+                        const row = state.globalData[i];
+                        const cellValX = row[sm.colX];
+                        if (cellValX !== undefined && cellValX !== null && cellValX.toString().includes(sm.valY)) {
+                            smValue = row[sm.colZ] !== undefined && row[sm.colZ] !== null ? row[sm.colZ] : '--';
+                            break;
+                        }
+                    }
+                    if (rule.label.includes('率') && smValue !== '--') {
+                        const strVal = smValue.toString().trim();
+                        const num = parseFloat(strVal);
+                        if (!isNaN(num)) smValue = strVal.endsWith('%') ? Math.round(num) + '%' : Math.round(num * 100) + '%';
+                    }
+                    evaluatedSubMetrics.push({ category: sm.category, value: smValue });
+                });
+            }
+
+            window.GlobalMetrics[`${secId}_${rule.id}`] = { label: rule.label, value: matchedValue, color: rule.color, subMetrics: evaluatedSubMetrics };
         });
     });
     renderTopStickyBar();
@@ -65,9 +87,24 @@ function renderTopStickyBar() {
         }
         const highlightClass = isWarn ? 'metric-warn-highlight' : '';
         const colorClass = isWarn ? 'danger' : m.color;
-        html += `<div class="info-group"><div class="info-item ${highlightClass}">
-            <span class="info-label">${escapeHTML(m.label)}:</span>
-            <span class="info-value ${colorClass}">${escapeHTML(String(m.value))}</span>${gapHtml}
+
+        let subHtml = '';
+        if (m.subMetrics && m.subMetrics.length > 0) {
+            subHtml = `<div class="sub-metrics-list" style="display:none; margin-top:4px; padding-top:4px; border-top:1px dashed rgba(255,255,255,0.2); font-size:11px;">`;
+            const subItems = m.subMetrics.map(sm => {
+                return `<span style="display:inline-block; margin-right:8px; white-space:nowrap; cursor:help;" title="${escapeHTML(m.label)} (${escapeHTML(sm.category)})">${escapeHTML(sm.category)}: <strong style="color:#ffb74d">${escapeHTML(String(sm.value))}</strong></span>`;
+            });
+            subHtml += subItems.join(' | ') + `</div>`;
+        }
+
+        const expandBtn = (m.subMetrics && m.subMetrics.length > 0) ? `<span onclick="this.parentNode.nextElementSibling.style.display = this.parentNode.nextElementSibling.style.display === 'none' ? 'block' : 'none'; this.innerHTML = this.innerHTML === '🔽' ? '🔼' : '🔽';" style="cursor:pointer; font-size:10px; margin-left:8px; background:rgba(255,255,255,0.1); padding:2px 4px; border-radius:4px;">🔽</span>` : '';
+
+        html += `<div class="info-group"><div class="info-item ${highlightClass}" style="flex-direction:column; align-items:flex-start;">
+            <div style="display:flex; align-items:center; width:100%;">
+                <span class="info-label">${escapeHTML(m.label)}:</span>
+                <span class="info-value ${colorClass}">${escapeHTML(String(m.value))}</span>${gapHtml}${expandBtn}
+            </div>
+            ${subHtml}
         </div></div>`;
     });
     content.innerHTML = html;

@@ -78,15 +78,24 @@ function renderHistory(data) {
         metricHeaders.forEach(h => {
             const m = mMap[h];
             if (m) {
+                let cellSubHtml = '';
+                if (m.subMetrics && m.subMetrics.length > 0) {
+                    cellSubHtml = `<div style="margin-top:4px; font-size:10px; color:#666; border-top:1px solid #e0e0e0; padding-top:2px;">`;
+                    m.subMetrics.forEach(sm => {
+                        cellSubHtml += `<div style="margin-bottom:2px;">${escapeHTML(sm.category)}: <b style="color:#e65100">${escapeHTML(String(sm.value))}</b></div>`;
+                    });
+                    cellSubHtml += `</div>`;
+                }
+
                 if (m.isWarn) {
                     const gapText = m.gap ? `<span class="snap-gap">${m.gap}</span>` : '';
-                    metricColsHtml += `<td class="warn-cell"><span class="snap-value-warn">${m.value}</span>${gapText}</td>`;
+                    metricColsHtml += `<td class="warn-cell" style="vertical-align:top;"><span class="snap-value-warn">${m.value}</span>${gapText}${cellSubHtml}</td>`;
                 } else {
                     const safeColor = m.color && m.color.includes('#') ? m.color : '#333';
-                    metricColsHtml += `<td><span class="snap-value-normal" style="color:${safeColor}; font-weight:bold;">${m.value}</span></td>`;
+                    metricColsHtml += `<td style="vertical-align:top;"><span class="snap-value-normal" style="color:${safeColor}; font-weight:bold;">${m.value}</span>${cellSubHtml}</td>`;
                 }
             } else {
-                metricColsHtml += `<td style="color:#ccc;">--</td>`;
+                metricColsHtml += `<td style="color:#ccc; vertical-align:top;">--</td>`;
             }
         });
 
