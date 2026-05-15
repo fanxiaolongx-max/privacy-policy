@@ -1,0 +1,621 @@
+[
+  {
+    "id": "mp77miiw",
+    "timestamp": "2026-05-15T17:47:19.482Z",
+    "files": [
+      "PBI_自动抓取_产品TOPN风险_Latest (1).csv",
+      "PBI_自动抓取_价值网络巡检_Latest (1).csv",
+      "PBI_自动抓取_应急演练_Latest (1).csv",
+      "PBI_自动抓取_预案拓扑_Latest (1).csv",
+      "PBI_自动抓取-CPT风险详表_Latest (1).csv",
+      "PBI_自动抓取-风险详单_Latest (1).csv",
+      "PBI_自动抓取-CPT风险详表_Latest.csv",
+      "PBI_自动抓取-风险详单_Latest.csv",
+      "PBI_自动抓取-软件MM收编_停退_Latest.csv",
+      "PBI_自动抓取-数据存储整改_Latest.csv",
+      "PBI_自动抓取-路由器整改_Latest.csv",
+      "PBI_自动抓取-事故_Latest.csv",
+      "PBI_自动抓取-SRFRT_Latest_2026年04月.csv",
+      "PBI_自动抓取-SRFRT_Latest_2026年05月.csv",
+      "PBI_自动抓取-产品EOS风险_Latest.csv",
+      "PBI_自动抓取-版本EOS风险_Latest.csv",
+      "PBI_自动抓取-重急EOS风险_Latest.csv",
+      "PBI_自动抓取-锂电池_Latest.csv",
+      "PBI_自动抓取-数字证书_Latest.csv",
+      "PBI_自动抓取_整改_Latest.csv",
+      "PBI_自动抓取-巡检详单_价值网络巡检_Latest.csv",
+      "PBI_自动抓取_延期操作补授权监控_Latest.csv",
+      "PBI_自动抓取_ADMS_事中：高危命令拦截人员管理_Latest_2026年04月.csv",
+      "PBI_自动抓取_ADMS_事中：高危命令拦截人员管理_Latest_2026年05月.csv",
+      "PBI_自动抓取_图形化拦截_CN_Latest_2026年04月.csv",
+      "PBI_自动抓取_图形化拦截_CN_Latest_2026年05月.csv",
+      "PBI_自动抓取-高风险人_15_CN_事前：操作资质积分_CO_Latest.csv",
+      "PBI_自动抓取_日志稽查率CN_Latest_2026年04月.csv",
+      "PBI_自动抓取_日志稽查率CN_Latest_2026年05月.csv",
+      "PBI_自动抓取-业务比对明细_17_CN_业务比对报告看板_CO_Latest_2026年04月.csv",
+      "PBI_自动抓取-业务比对明细_17_CN_业务比对报告看板_CO_Latest_2026年05月.csv",
+      "PBI_自动抓取_17_CN_业务比对报告看板_CO_Latest_2026年04月.csv",
+      "PBI_自动抓取_17_CN_业务比对报告看板_CO_Latest_2026年05月.csv",
+      "PBI_自动抓取-红线人员工单统计_维护红线资源_Latest.csv",
+      "PBI_自动抓取-任职匹配度_维护红线资源_Latest.csv",
+      "PBI_自动抓取_维护红线资源_Latest.csv",
+      "PBI_自动抓取-整改详单_整改_Latest.csv",
+      "PBI_自动抓取_逃生演练_Latest.csv"
+    ],
+    "summary": [
+      {
+        "section": "🔧 整改详单合集",
+        "metrics": [
+          {
+            "title": "H1完成率",
+            "value": "99.5%",
+            "status": ""
+          },
+          {
+            "title": "H2完成率",
+            "value": "9.3%",
+            "status": ""
+          },
+          {
+            "title": "2026总完成率",
+            "value": "48.9%",
+            "status": ""
+          }
+        ]
+      },
+      {
+        "section": "🛠️ CPT专项风险合集",
+        "metrics": [
+          {
+            "title": "单量",
+            "value": "307",
+            "status": ""
+          },
+          {
+            "title": "已闭环",
+            "value": "258",
+            "status": ""
+          },
+          {
+            "title": "解决率",
+            "value": "84.0%",
+            "status": ""
+          }
+        ]
+      },
+      {
+        "section": "⚠️ 常规风险合集",
+        "metrics": [
+          {
+            "title": "单量",
+            "value": "268",
+            "status": ""
+          },
+          {
+            "title": "已闭环",
+            "value": "0",
+            "status": ""
+          },
+          {
+            "title": "解决率",
+            "value": "0.0%",
+            "status": ""
+          }
+        ]
+      }
+    ],
+    "topMetrics": [
+      {
+        "label": "TOPN风险完成率",
+        "value": "69%",
+        "gap": "差 1%",
+        "isWarn": true,
+        "color": "#ef5350"
+      },
+      {
+        "label": "价值网络巡检完成率",
+        "value": "86%",
+        "gap": "差 4%",
+        "isWarn": true,
+        "color": "#ef5350"
+      },
+      {
+        "label": "应急演练完成率",
+        "value": "56%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7"
+      },
+      {
+        "label": "拓扑刷新率",
+        "value": "82%",
+        "gap": "差 18%",
+        "isWarn": true,
+        "color": "#ef5350"
+      },
+      {
+        "label": "预案刷新率",
+        "value": "82%",
+        "gap": "差 18%",
+        "isWarn": true,
+        "color": "#ef5350"
+      },
+      {
+        "label": "软件MM收编率",
+        "value": "100%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7"
+      },
+      {
+        "label": "存储整改完成率",
+        "value": "0%",
+        "gap": "差 40%",
+        "isWarn": true,
+        "color": "#ef5350"
+      },
+      {
+        "label": "路由器整改完成率",
+        "value": "7%",
+        "gap": "差 33%",
+        "isWarn": true,
+        "color": "#ef5350"
+      },
+      {
+        "label": "事故",
+        "value": "1",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7"
+      },
+      {
+        "label": "SR FRT率",
+        "value": "100%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7"
+      },
+      {
+        "label": "产品EOS闭环率",
+        "value": "92%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7"
+      },
+      {
+        "label": "版本EOS闭环率",
+        "value": "88%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7"
+      },
+      {
+        "label": "重急EOS闭环率",
+        "value": "44%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7"
+      },
+      {
+        "label": "锂电池整改完成率",
+        "value": "100%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7"
+      },
+      {
+        "label": "数字证书消减率",
+        "value": "1%",
+        "gap": "差 29%",
+        "isWarn": true,
+        "color": "#ef5350"
+      },
+      {
+        "label": "整改完成率",
+        "value": "49%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7"
+      },
+      {
+        "label": "延期补授权完成率",
+        "value": "100%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7"
+      },
+      {
+        "label": "高危命令拦截次数",
+        "value": "86",
+        "gap": "超 36",
+        "isWarn": true,
+        "color": "#ef5350"
+      },
+      {
+        "label": "GUI拦截次数",
+        "value": "120",
+        "gap": "超 20",
+        "isWarn": true,
+        "color": "#ef5350"
+      },
+      {
+        "label": "高风险人员",
+        "value": "0",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7"
+      },
+      {
+        "label": "日志稽查率",
+        "value": "92%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7"
+      },
+      {
+        "label": "业务比对回传率",
+        "value": "96%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7"
+      },
+      {
+        "label": "业务比对备案率",
+        "value": "20%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7"
+      },
+      {
+        "label": "0工单人数",
+        "value": "--",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7"
+      },
+      {
+        "label": "工单<1人数",
+        "value": "2",
+        "gap": "超 2",
+        "isWarn": true,
+        "color": "#ef5350"
+      },
+      {
+        "label": "任职率",
+        "value": "100%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7"
+      },
+      {
+        "label": "维护红线岗位满足率",
+        "value": "100%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7"
+      },
+      {
+        "label": "逃生演练完成率",
+        "value": "50%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7"
+      }
+    ]
+  },
+  {
+    "id": "mp775jlf",
+    "timestamp": "2026-05-15T17:34:07.711Z",
+    "files": [
+      "PBI_自动抓取_产品TOPN风险_Latest (1).csv",
+      "PBI_自动抓取_价值网络巡检_Latest (1).csv",
+      "PBI_自动抓取_应急演练_Latest (1).csv",
+      "PBI_自动抓取_预案拓扑_Latest (1).csv",
+      "PBI_自动抓取-CPT风险详表_Latest (1).csv",
+      "PBI_自动抓取-风险详单_Latest (1).csv",
+      "PBI_自动抓取-CPT风险详表_Latest.csv",
+      "PBI_自动抓取-风险详单_Latest.csv",
+      "PBI_自动抓取-软件MM收编_停退_Latest.csv",
+      "PBI_自动抓取-数据存储整改_Latest.csv",
+      "PBI_自动抓取-路由器整改_Latest.csv",
+      "PBI_自动抓取-事故_Latest.csv",
+      "PBI_自动抓取-SRFRT_Latest_2026年04月.csv",
+      "PBI_自动抓取-SRFRT_Latest_2026年05月.csv",
+      "PBI_自动抓取-产品EOS风险_Latest.csv",
+      "PBI_自动抓取-版本EOS风险_Latest.csv",
+      "PBI_自动抓取-重急EOS风险_Latest.csv",
+      "PBI_自动抓取-锂电池_Latest.csv",
+      "PBI_自动抓取-数字证书_Latest.csv",
+      "PBI_自动抓取_整改_Latest.csv",
+      "PBI_自动抓取-巡检详单_价值网络巡检_Latest.csv",
+      "PBI_自动抓取_延期操作补授权监控_Latest.csv",
+      "PBI_自动抓取_ADMS_事中：高危命令拦截人员管理_Latest_2026年04月.csv",
+      "PBI_自动抓取_ADMS_事中：高危命令拦截人员管理_Latest_2026年05月.csv",
+      "PBI_自动抓取_图形化拦截_CN_Latest_2026年04月.csv",
+      "PBI_自动抓取_图形化拦截_CN_Latest_2026年05月.csv",
+      "PBI_自动抓取-高风险人_15_CN_事前：操作资质积分_CO_Latest.csv",
+      "PBI_自动抓取_日志稽查率CN_Latest_2026年04月.csv",
+      "PBI_自动抓取_日志稽查率CN_Latest_2026年05月.csv",
+      "PBI_自动抓取-业务比对明细_17_CN_业务比对报告看板_CO_Latest_2026年04月.csv",
+      "PBI_自动抓取-业务比对明细_17_CN_业务比对报告看板_CO_Latest_2026年05月.csv",
+      "PBI_自动抓取_17_CN_业务比对报告看板_CO_Latest_2026年04月.csv",
+      "PBI_自动抓取_17_CN_业务比对报告看板_CO_Latest_2026年05月.csv",
+      "PBI_自动抓取-红线人员工单统计_维护红线资源_Latest.csv",
+      "PBI_自动抓取-任职匹配度_维护红线资源_Latest.csv",
+      "PBI_自动抓取_维护红线资源_Latest.csv",
+      "PBI_自动抓取-整改详单_整改_Latest.csv",
+      "PBI_自动抓取_逃生演练_Latest.csv"
+    ],
+    "summary": [
+      {
+        "section": "🔧 整改详单合集",
+        "metrics": [
+          {
+            "title": "H1完成率",
+            "value": "99.5%",
+            "status": ""
+          },
+          {
+            "title": "H2完成率",
+            "value": "9.3%",
+            "status": ""
+          },
+          {
+            "title": "2026总完成率",
+            "value": "48.9%",
+            "status": ""
+          }
+        ]
+      },
+      {
+        "section": "🛠️ CPT专项风险合集",
+        "metrics": [
+          {
+            "title": "单量",
+            "value": "307",
+            "status": ""
+          },
+          {
+            "title": "已闭环",
+            "value": "258",
+            "status": ""
+          },
+          {
+            "title": "解决率",
+            "value": "84.0%",
+            "status": ""
+          }
+        ]
+      },
+      {
+        "section": "⚠️ 常规风险合集",
+        "metrics": [
+          {
+            "title": "单量",
+            "value": "268",
+            "status": ""
+          },
+          {
+            "title": "已闭环",
+            "value": "0",
+            "status": ""
+          },
+          {
+            "title": "解决率",
+            "value": "0.0%",
+            "status": ""
+          }
+        ]
+      }
+    ],
+    "topMetrics": [
+      {
+        "label": "TOPN风险完成率",
+        "value": "69%",
+        "color": ""
+      },
+      {
+        "label": "价值网络巡检完成率",
+        "value": "86%",
+        "color": ""
+      },
+      {
+        "label": "应急演练完成率",
+        "value": "56%",
+        "color": ""
+      },
+      {
+        "label": "拓扑刷新率",
+        "value": "82%",
+        "color": ""
+      },
+      {
+        "label": "预案刷新率",
+        "value": "82%",
+        "color": ""
+      },
+      {
+        "label": "软件MM收编率",
+        "value": "100%",
+        "color": ""
+      },
+      {
+        "label": "存储整改完成率",
+        "value": "0%",
+        "color": ""
+      },
+      {
+        "label": "路由器整改完成率",
+        "value": "7%",
+        "color": ""
+      },
+      {
+        "label": "事故",
+        "value": "1",
+        "color": ""
+      },
+      {
+        "label": "SR FRT率",
+        "value": "100%",
+        "color": ""
+      },
+      {
+        "label": "产品EOS闭环率",
+        "value": "92%",
+        "color": ""
+      },
+      {
+        "label": "版本EOS闭环率",
+        "value": "88%",
+        "color": ""
+      },
+      {
+        "label": "重急EOS闭环率",
+        "value": "44%",
+        "color": ""
+      },
+      {
+        "label": "锂电池整改完成率",
+        "value": "100%",
+        "color": ""
+      },
+      {
+        "label": "数字证书消减率",
+        "value": "1%",
+        "color": ""
+      },
+      {
+        "label": "整改完成率",
+        "value": "49%",
+        "color": ""
+      },
+      {
+        "label": "延期补授权完成率",
+        "value": "100%",
+        "color": ""
+      },
+      {
+        "label": "高危命令拦截次数",
+        "value": "86",
+        "color": ""
+      },
+      {
+        "label": "GUI拦截次数",
+        "value": "120",
+        "color": ""
+      },
+      {
+        "label": "高风险人员",
+        "value": "0",
+        "color": ""
+      },
+      {
+        "label": "日志稽查率",
+        "value": "92%",
+        "color": ""
+      },
+      {
+        "label": "业务比对回传率",
+        "value": "96%",
+        "color": ""
+      },
+      {
+        "label": "业务比对备案率",
+        "value": "20%",
+        "color": ""
+      },
+      {
+        "label": "0工单人数",
+        "value": "--",
+        "color": ""
+      },
+      {
+        "label": "工单<1人数",
+        "value": "2",
+        "color": ""
+      },
+      {
+        "label": "任职率",
+        "value": "100%",
+        "color": ""
+      },
+      {
+        "label": "维护红线岗位满足率",
+        "value": "100%",
+        "color": ""
+      },
+      {
+        "label": "逃生演练完成率",
+        "value": "50%",
+        "color": ""
+      }
+    ]
+  },
+  {
+    "id": "mp76zuwl",
+    "timestamp": "2026-05-15T17:29:42.373Z",
+    "files": [
+      "PBI_自动抓取_产品TOPN风险_Latest (1).csv",
+      "PBI_自动抓取_价值网络巡检_Latest (1).csv",
+      "PBI_自动抓取_应急演练_Latest (1).csv",
+      "PBI_自动抓取_预案拓扑_Latest (1).csv",
+      "PBI_自动抓取-CPT风险详表_Latest (1).csv",
+      "PBI_自动抓取-风险详单_Latest (1).csv",
+      "PBI_自动抓取-CPT风险详表_Latest.csv",
+      "PBI_自动抓取-风险详单_Latest.csv",
+      "PBI_自动抓取-软件MM收编_停退_Latest.csv",
+      "PBI_自动抓取-数据存储整改_Latest.csv",
+      "PBI_自动抓取-路由器整改_Latest.csv",
+      "PBI_自动抓取-事故_Latest.csv",
+      "PBI_自动抓取-SRFRT_Latest_2026年04月.csv",
+      "PBI_自动抓取-SRFRT_Latest_2026年05月.csv",
+      "PBI_自动抓取-产品EOS风险_Latest.csv",
+      "PBI_自动抓取-版本EOS风险_Latest.csv",
+      "PBI_自动抓取-重急EOS风险_Latest.csv",
+      "PBI_自动抓取-锂电池_Latest.csv",
+      "PBI_自动抓取-数字证书_Latest.csv",
+      "PBI_自动抓取_整改_Latest.csv",
+      "PBI_自动抓取-巡检详单_价值网络巡检_Latest.csv",
+      "PBI_自动抓取_延期操作补授权监控_Latest.csv",
+      "PBI_自动抓取_ADMS_事中：高危命令拦截人员管理_Latest_2026年04月.csv",
+      "PBI_自动抓取_ADMS_事中：高危命令拦截人员管理_Latest_2026年05月.csv",
+      "PBI_自动抓取_图形化拦截_CN_Latest_2026年04月.csv",
+      "PBI_自动抓取_图形化拦截_CN_Latest_2026年05月.csv",
+      "PBI_自动抓取-高风险人_15_CN_事前：操作资质积分_CO_Latest.csv",
+      "PBI_自动抓取_日志稽查率CN_Latest_2026年04月.csv",
+      "PBI_自动抓取_日志稽查率CN_Latest_2026年05月.csv",
+      "PBI_自动抓取-业务比对明细_17_CN_业务比对报告看板_CO_Latest_2026年04月.csv",
+      "PBI_自动抓取-业务比对明细_17_CN_业务比对报告看板_CO_Latest_2026年05月.csv",
+      "PBI_自动抓取_17_CN_业务比对报告看板_CO_Latest_2026年04月.csv",
+      "PBI_自动抓取_17_CN_业务比对报告看板_CO_Latest_2026年05月.csv",
+      "PBI_自动抓取-红线人员工单统计_维护红线资源_Latest.csv",
+      "PBI_自动抓取-任职匹配度_维护红线资源_Latest.csv",
+      "PBI_自动抓取_维护红线资源_Latest.csv",
+      "PBI_自动抓取-整改详单_整改_Latest.csv",
+      "PBI_自动抓取_逃生演练_Latest.csv"
+    ],
+    "summary": [
+      {
+        "section": "🛠️ CPT专项风险合集",
+        "metrics": [
+          {
+            "title": "单量",
+            "value": "307",
+            "status": ""
+          },
+          {
+            "title": "已闭环",
+            "value": "258",
+            "status": ""
+          },
+          {
+            "title": "解决率",
+            "value": "84.0%",
+            "status": ""
+          }
+        ]
+      }
+    ],
+    "topMetrics": []
+  }
+]

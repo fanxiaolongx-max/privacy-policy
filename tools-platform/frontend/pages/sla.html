@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task SLA 风险监控台 - Tools Platform</title>
+    <meta name="description" content="Task SLA & 风险监控全局中台，整改/常规/专项三表合一，SLA预警呼吸灯">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="/css/shared.css">
+    <link rel="stylesheet" href="/css/sla.css">
+</head>
+<body class="sla-page">
+
+    <!-- 顶部数据舱 -->
+    <div id="global-sticky-bar">
+        <div class="sticky-bar-title">⚡ 核心数据舱：</div>
+        <div id="sticky-bar-content">
+            <span style="color:#888;">(当前未配置指标，请在下方独立表格中点击"🎯 指标"添加)</span>
+        </div>
+        <div class="sticky-actions">
+            <button id="btn-target-config" class="top-btn btn-target" style="display:none;" onclick="openTargetModal()">🎯 预警配置</button>
+            <button id="btn-expand-metrics" class="top-btn btn-expand" style="display:none;">🔽 展开多行</button>
+        </div>
+    </div>
+
+    <!-- 预警配置弹窗 -->
+    <div id="target-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🎯 配置分月目标与预警方向</h3>
+                <button class="modal-close" onclick="closeTargetModal()">✖</button>
+            </div>
+            <div class="modal-body" id="target-modal-list"></div>
+            <div class="modal-footer">
+                <button class="btn-save" onclick="saveTargets()">保存全网预警配置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 历史导入看板弹窗 -->
+    <div id="history-modal" class="modal-overlay">
+        <div class="modal-content" style="width: 96vw; max-width: 1800px; height: 90vh; max-height: 90vh; display: flex; flex-direction: column; resize: both; overflow: hidden; min-width: 800px; min-height: 400px; padding-bottom: 0;">
+            <div class="modal-header" style="flex-shrink: 0; padding-bottom: 10px;">
+                <h3 style="margin: 0; color: #1976d2;">📈 历史导入预警快照</h3>
+                <button class="modal-close" onclick="closeHistoryModal()">✖</button>
+            </div>
+            <div class="modal-body" id="history-modal-list" style="overflow-y: auto; overflow-x: auto; flex: 1; padding: 0; background: #f8f9fa;">
+                <div class="loading-text">正在加载历史快照...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="sla-content">
+        <!-- 页头区域 -->
+        <div class="header-container">
+            <h2>
+                <span>📊 全局数据合控大中台 <span style="font-size:12px;color:#ff9800;font-weight:normal;border:1px solid #ff9800;padding:2px 6px;border-radius:12px;margin-left:10px;">旗舰定制版</span></span>
+            </h2>
+            <div class="system-actions">
+                <button class="sys-btn" style="background:#8e24aa; color: white;" onclick="openHistoryModal()">📈 历史看板</button>
+                <button class="sys-btn" onclick="SLAConfig.exportConfig()" title="备份所有的列宽、显示状态、顶部指标和预警目标">💾 导出全量配置</button>
+                <label class="sys-btn" title="导入配置文件，一键恢复设置">
+                    📂 导入配置
+                    <input type="file" accept=".json" onchange="SLAConfig.importConfig(event)">
+                </label>
+            </div>
+
+            <div class="rule-box">
+                <div class="rule-col">
+                    <strong style="color:#1976d2;">🔧 【整改表】引擎：</strong>
+                    <ul>
+                        <li><b>严格前缀：</b>PBI_自动抓取-整改详单_整改_Latest</li>
+                        <li><b>Checking：</b>创单+30天 (10天红/30天黄)</li>
+                        <li><b>Rectification：</b>期望完成时间 (10天红/82天黄)</li>
+                    </ul>
+                </div>
+                <div class="rule-col rule-col-border">
+                    <strong style="color:#7b1fa2;">⚠️ 【常规风险表】引擎：</strong>
+                    <ul>
+                        <li><b>严格前缀：</b>PBI_自动抓取-风险详单_Latest</li>
+                        <li><b>Confirming：</b>创单+30天 (10天红/30天紫)</li>
+                        <li><b>Open/Suspend：</b>期望关闭时间倒计时</li>
+                    </ul>
+                </div>
+                <div class="rule-col rule-col-border">
+                    <strong style="color:#00796b;">🛠️ 【专项风险表】引擎：</strong>
+                    <ul>
+                        <li><b>严格前缀：</b>PBI_自动抓取-CPT风险详表_Latest</li>
+                        <li><b>待确认：</b>创建+30天 (10天红/30天青)</li>
+                        <li><b>处理中：</b>要求完成日期倒计时</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="upload-actions">
+                <label class="upload-btn btn-batch-xl">
+                    📦 一键批量导入所有表 (智能分流合并)
+                    <input type="file" id="batch-upload" accept=".xlsx,.xls,.csv" multiple>
+                </label>
+                <span style="color:#ccc;">|</span>
+                <label class="upload-btn btn-rect">指定导入 [整改] <input type="file" id="rect-upload" accept=".xlsx,.xls,.csv" multiple></label>
+                <label class="upload-btn btn-risk">指定导入 [常规] <input type="file" id="risk-upload" accept=".xlsx,.xls,.csv" multiple></label>
+                <label class="upload-btn btn-special">指定导入 [专项] <input type="file" id="special-upload" accept=".xlsx,.xls,.csv" multiple></label>
+            </div>
+        </div>
+
+        <div id="summary-nav-area"></div>
+
+        <div id="main-wrapper">
+            <div style="text-align:center;color:#999;padding:50px 0;border:2px dashed #ddd;border-radius:10px;">
+                请点击上方 <b>"📦 一键批量导入所有表"</b> 按钮，选择文件夹中需要分析的文件...
+            </div>
+        </div>
+    </div>
+
+    <!-- 共享脚本 -->
+    <script src="/js/shared/api.js"></script>
+    <script src="/js/shared/toast.js"></script>
+    <script src="/js/shared/navbar.js"></script>
+    <!-- SLA 模块（注意加载顺序）-->
+    <script src="/js/sla/config.js"></script>
+    <script src="/js/sla/prefs.js"></script>
+    <script src="/js/sla/upload.js"></script>
+    <script src="/js/sla/section.js"></script>
+    <script src="/js/sla/table.js"></script>
+    <script src="/js/sla/events.js"></script>
+    <script src="/js/sla/metrics.js"></script>
+    <script src="/js/sla/history.js"></script>
+    <script>
+        // 初始化：从服务端加载预警目标
+        document.addEventListener('DOMContentLoaded', async () => {
+            await SLASection.initGlobalTargets();
+        });
+        // 文件上传事件绑定
+        document.getElementById('batch-upload').addEventListener('change', SLAUpload.handleBatchUpload, false);
+        document.getElementById('rect-upload').addEventListener('change', e => SLAUpload.handleSpecificUpload(e, 'rectification'), false);
+        document.getElementById('risk-upload').addEventListener('change', e => SLAUpload.handleSpecificUpload(e, 'risk'), false);
+        document.getElementById('special-upload').addEventListener('change', e => SLAUpload.handleSpecificUpload(e, 'special'), false);
+    </script>
+</body>
+</html>

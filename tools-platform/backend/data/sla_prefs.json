@@ -1,0 +1,1000 @@
+{
+  "sla_prefs_other_r7ivhq": {
+    "visibleHeaders": [
+      "版本标识",
+      "network_name_base",
+      "应刷新网络拓扑数",
+      "已刷新网络拓扑数",
+      "网络拓扑刷新完成率",
+      "已刷新应急预案数",
+      "应急预案刷新完成率",
+      "月内即将到期网络拓扑数",
+      "月内即将到期应急预案数"
+    ],
+    "columnWidths": {
+      "月内即将到期应急预案数": 139
+    },
+    "sortKey": null,
+    "sortAsc": true,
+    "customMetrics": [
+      {
+        "id": "m_1778790642772",
+        "colX": "network_name_base",
+        "valY": "总计",
+        "colZ": "网络拓扑刷新完成率",
+        "label": "拓扑刷新率",
+        "color": ""
+      },
+      {
+        "id": "m_1778790662446",
+        "colX": "network_name_base",
+        "valY": "总计",
+        "colZ": "应急预案刷新完成率",
+        "label": "预案刷新率",
+        "color": ""
+      }
+    ]
+  },
+  "sla_prefs_other_a33iom": {
+    "visibleHeaders": [
+      "版本标识",
+      "closed_nes_new",
+      "nc_baseline_nes_new",
+      "nc_plan_tb_developed_nes",
+      "name",
+      "sent_precaution_notice_nes",
+      "deactivated_nes",
+      "unclosed_nes_new",
+      "closed_rate"
+    ],
+    "columnWidths": {},
+    "sortKey": null,
+    "sortAsc": true,
+    "customMetrics": [
+      {
+        "id": "m_1778706872642",
+        "colX": "name",
+        "valY": "汇总",
+        "colZ": "closed_rate",
+        "label": "版本EOS闭环率",
+        "color": ""
+      }
+    ]
+  },
+  "sla_prefs_rectification_x7jydx": {
+    "visibleHeaders": [
+      "task_status",
+      "task_create_time",
+      "rectify_plan_end_time",
+      "task_id",
+      "name_ch",
+      "notice_type_name",
+      "task_owner",
+      "network_name"
+    ],
+    "columnWidths": {
+      "name_en": 43,
+      "name_ch": 435,
+      "版本标识": 79,
+      "task_status": 120,
+      "notice_type_name": 102
+    },
+    "sortKey": "_SLA_",
+    "sortAsc": true,
+    "customMetrics": []
+  },
+  "sla_prefs_other_cs4972": {
+    "visibleHeaders": [
+      "版本标识",
+      "name",
+      "done_rate",
+      "not_done_rate"
+    ],
+    "columnWidths": {
+      "版本标识": 326
+    },
+    "sortKey": null,
+    "sortAsc": true,
+    "customMetrics": [
+      {
+        "id": "m_1778786563981",
+        "colX": "name",
+        "valY": "汇总",
+        "colZ": "done_rate",
+        "label": "软件MM收编率",
+        "color": ""
+      }
+    ]
+  },
+  "sla_prefs_other_v7jtrw": {
+    "visibleHeaders": [
+      "版本标识",
+      "代表处",
+      "今年"
+    ],
+    "columnWidths": {
+      "版本标识": 367,
+      "代表处": 298
+    },
+    "sortKey": null,
+    "sortAsc": true,
+    "customMetrics": [
+      {
+        "id": "m_1778708121644",
+        "colX": "代表处",
+        "valY": "总计",
+        "colZ": "今年",
+        "label": "GUI拦截次数",
+        "color": ""
+      }
+    ]
+  },
+  "sla_prefs_special_7nigy9": {
+    "visibleHeaders": [
+      "状态-Status",
+      "创建日期-Create Date",
+      "要求完成日期-Required Completion Date",
+      "任务ID-Task ID",
+      "任务标题-Task Title",
+      "任务类型-Task Type",
+      "产品线-Product Line",
+      "涉及产品-Involved Product",
+      "地区部-Region",
+      "代表处-Rep.Office",
+      "国家/地区-Country/Area",
+      "客户名称-Customer Name",
+      "任务责任人-Task Owner",
+      "任务创建人-Task Creator",
+      "任务来源-Task Source",
+      "任务来源单号-Task Source Order",
+      "网络名称-Network Name",
+      "任务源L2-Task Source L2",
+      "任务源层级-Task Source Level",
+      "计划完成日期-Planned Completion Date",
+      "实际完成日期-Actual Completion Date",
+      "取消原因-Reason For Cancellation",
+      "取消责任人-Owner Of Cancel",
+      "取消时间-Cancellation Time",
+      "关联作业单-Associated Order ID",
+      "工作日志-Work Notes",
+      "闭环审批人-Complete Review Approver",
+      "是否分产品反馈进展-Report Progress By Product",
+      "涉及网元数-Number of Involved NEs",
+      "是否建单指定产品-Specified Product When Create",
+      "地区部编码-Region Code",
+      "代表处编码-Rep. Office Code",
+      "国家/地区编码-Country/Area Code",
+      "产品线编码-Product Line Code",
+      "网络ID-Network ID",
+      "是否完成排查-Complete The Check",
+      "是否完成客户沟通-Complete The Customer Communication",
+      "不允许取消任务-Task Cancellation Is Not Allowed",
+      "网元排查后不涉及是否需要举证-Require Proof for NE Not Involved",
+      "是否开启计划管理-Enable Plan Mgmt",
+      "是否开启实施计划比例-Enable Plan Proportion",
+      "实际完成网元数-Actual number of NEs",
+      "计划网元数-Number of Planned NEs"
+    ],
+    "columnWidths": {
+      "创建日期-Create Date": 106,
+      "要求完成日期-Required Completion Date": 107,
+      "国家/地区-Country/Area": 68
+    },
+    "sortKey": "_SLA_",
+    "sortAsc": true
+  },
+  "sla_prefs_special_4ny14x": {
+    "visibleHeaders": [
+      "status",
+      "task_status",
+      "task_status_en",
+      "create_time",
+      "required_completion_time",
+      "plan_complete_date",
+      "country",
+      "enable_plan_management",
+      "source",
+      "need_proof_of_not_involved",
+      "is_process_product",
+      "impl_plan_proportion_config",
+      "confirmed_nes",
+      "task_type_cn",
+      "network_name",
+      "source_name_en",
+      "product_name",
+      "country_code",
+      "product_line",
+      "network_id",
+      "product_names",
+      "assignee",
+      "owner_show",
+      "account_number",
+      "repoffice_name_cn",
+      "task_id",
+      "title",
+      "product_code",
+      "complete_review_approver",
+      "repoffice_code",
+      "account_name",
+      "owner",
+      "task_type_en",
+      "creator",
+      "plan_nes",
+      "product_line_code",
+      "source_name_cn",
+      "risk_description",
+      "is_not_involved",
+      "creator_show",
+      "region_name_cn",
+      "task_status_cn",
+      "task_type",
+      "is_hq_create",
+      "region_code",
+      "source_name",
+      "precaution_type",
+      "is_customer_communication",
+      "actual_complete_date",
+      "release_level_cn",
+      "precaution_type_cn",
+      "parent_id",
+      "associated_order_id",
+      "is_checked",
+      "release_level",
+      "release_level_en",
+      "actual_nes",
+      "precaution_title",
+      "precaution_type_en",
+      "work_notes",
+      "source_l2_en",
+      "source_l2",
+      "source_l2_cn",
+      "mitigation_scenario_set",
+      "cancel_time",
+      "cancel_owner",
+      "cancel_reason"
+    ],
+    "columnWidths": {
+      "status": 53
+    },
+    "sortKey": "_SLA_",
+    "sortAsc": true
+  },
+  "sla_prefs_other_pufzvl": {
+    "visibleHeaders": [
+      "版本标识",
+      "网络",
+      "价值网络数",
+      "启动率",
+      "总巡检完成率",
+      "巡检单数量",
+      "识别风险数",
+      "风险闭环率",
+      "中高风险闭环率",
+      "0风险识别巡检",
+      "重复识别的风险数"
+    ],
+    "columnWidths": {},
+    "sortKey": null,
+    "sortAsc": true,
+    "customMetrics": [
+      {
+        "id": "m_1778792227261",
+        "colX": "网络",
+        "valY": "总计",
+        "colZ": "总巡检完成率",
+        "label": "价值网络巡检完成率",
+        "color": ""
+      }
+    ]
+  },
+  "sla_prefs_other_byn3uq": {
+    "visibleHeaders": [
+      "版本标识",
+      "地区部",
+      "代表处",
+      "延期补授权",
+      "未完成补授权",
+      "已完成补授权",
+      "完成率"
+    ],
+    "columnWidths": {},
+    "sortKey": null,
+    "sortAsc": true,
+    "customMetrics": [
+      {
+        "id": "m_1778791415417",
+        "colX": "地区部",
+        "valY": "总计",
+        "colZ": "完成率",
+        "label": "延期补授权完成率",
+        "color": ""
+      }
+    ]
+  },
+  "sla_prefs_other_n0fxcz": {
+    "visibleHeaders": [
+      "版本标识",
+      "name",
+      "lb_complete_bms_rate",
+      "lb_complete_tool_rate",
+      "lb_complete_drill_rate"
+    ],
+    "columnWidths": {},
+    "sortKey": null,
+    "sortAsc": true,
+    "customMetrics": [
+      {
+        "id": "m_1778787483188",
+        "colX": "name",
+        "valY": "汇总",
+        "colZ": "lb_complete_drill_rate",
+        "label": "锂电池整改完成率",
+        "color": ""
+      }
+    ]
+  },
+  "sla_prefs_other_k9sq8x": {
+    "visibleHeaders": [
+      "版本标识",
+      "sr_total",
+      "non_fault_inquiry_sr_cnt",
+      "major_sr_cnt",
+      "name",
+      "sr_frt",
+      "sr_ofr",
+      "sr_ofr_d"
+    ],
+    "columnWidths": {},
+    "sortKey": null,
+    "sortAsc": true,
+    "customMetrics": [
+      {
+        "id": "m_1778788023171",
+        "colX": "name",
+        "valY": "汇总",
+        "colZ": "sr_frt",
+        "label": "SR FRT率",
+        "color": ""
+      }
+    ]
+  },
+  "sla_prefs_other_36ksoy": {
+    "visibleHeaders": [
+      "name",
+      "closed_rate",
+      "contingency_plan_completed_rate"
+    ],
+    "columnWidths": {
+      "name": 433,
+      "closed_rate": 441
+    },
+    "sortKey": null,
+    "sortAsc": true,
+    "customMetrics": [
+      {
+        "id": "m_1778705593174",
+        "colX": "name",
+        "valY": "汇总",
+        "colZ": "closed_rate",
+        "label": "重急EOS闭环率",
+        "color": ""
+      }
+    ]
+  },
+  "sla_prefs_other_uxx002": {
+    "visibleHeaders": [
+      "版本标识",
+      "network",
+      "预警任务及风险总数",
+      "云核",
+      "无线",
+      "光",
+      "数通",
+      "软件",
+      "启动率",
+      "完成率",
+      "已闭环",
+      "待处理",
+      "处理中",
+      "已取消"
+    ],
+    "columnWidths": {
+      "版本标识": 147
+    },
+    "sortKey": null,
+    "sortAsc": true,
+    "customMetrics": [
+      {
+        "id": "m_1778792452712",
+        "colX": "network",
+        "valY": "总计",
+        "colZ": "完成率",
+        "label": "TOPN风险完成率",
+        "color": ""
+      }
+    ]
+  },
+  "sla_prefs_rectification_swtui4": {
+    "visibleHeaders": [
+      "task_status",
+      "task_create_time",
+      "rectify_plan_end_time",
+      "task_owner",
+      "task_id",
+      "source_id_ch",
+      "source_id_en",
+      "name_ch",
+      "name_en",
+      "notice_type_name",
+      "fullname",
+      "delivery_scene",
+      "region_cn_name",
+      "repoffice_cn_name",
+      "country_cn_name",
+      "network_name",
+      "network_cust_name",
+      "itr_product_line_name",
+      "product_line_name",
+      "product_category",
+      "bu",
+      "total_plan_nes合计",
+      "total_uncompleted_nes合计",
+      "h1_plan_nes合计",
+      "h1_uncompleted_nes合计",
+      "h2_plan_nes合计",
+      "h2_uncompleted_nes合计",
+      "task_hw_plan_ne_qty合计",
+      "task_hw_actual_ne_qty合计",
+      "task_cust_plan_ne_qty合计",
+      "task_cust_actual_ne_qty合计",
+      "task_not_implement_ne_qty合计",
+      "task_type",
+      "task_approved_delay_times合计",
+      "task_create_type",
+      "implement_type",
+      "support_end_time",
+      "task_implement_complete_time",
+      "request_delay_reason"
+    ],
+    "columnWidths": {
+      "name_en": 63,
+      "name_ch": 250,
+      "rectify_plan_end_time": 135,
+      "notice_type_name": 72
+    },
+    "sortKey": "_SLA_",
+    "sortAsc": true
+  },
+  "sla_prefs_other_vsq8j3": {
+    "visibleHeaders": [
+      "版本标识",
+      "地区部",
+      "业务比对日志回传完成量",
+      "需回传操作量",
+      "业务比对日志回传率",
+      "备案量",
+      "备案率"
+    ],
+    "columnWidths": {},
+    "sortKey": null,
+    "sortAsc": true,
+    "customMetrics": [
+      {
+        "id": "m_1778792882724",
+        "colX": "地区部",
+        "valY": "总计",
+        "colZ": "业务比对日志回传率",
+        "label": "业务比对回传率",
+        "color": ""
+      },
+      {
+        "id": "m_1778792901855",
+        "colX": "地区部",
+        "valY": "总计",
+        "colZ": "备案率",
+        "label": "业务比对备案率",
+        "color": ""
+      }
+    ]
+  },
+  "sla_prefs_other_vmy0fv": {
+    "visibleHeaders": [
+      "版本标识",
+      "sub_region_name_cn",
+      "预警任务及风险总数",
+      "云核",
+      "无线",
+      "光",
+      "数通",
+      "服务与软件",
+      "能源",
+      "存储",
+      "启动率",
+      "完成率",
+      "已闭环",
+      "待处理",
+      "处理中"
+    ],
+    "columnWidths": {},
+    "sortKey": null,
+    "sortAsc": true,
+    "customMetrics": [
+      {
+        "id": "m_1778791792772",
+        "colX": "sub_region_name_cn",
+        "valY": "总计",
+        "colZ": "完成率",
+        "label": "逃生演练完成率",
+        "color": ""
+      }
+    ]
+  },
+  "sla_prefs_other_djz3q": {
+    "visibleHeaders": [
+      "地区部",
+      "代表处",
+      "业务比对日志回传完成量",
+      "需回传操作量",
+      "业务比对日志回传率",
+      "备案量",
+      "备案率",
+      "ICT_已回传",
+      "ICT_需回传",
+      "ICT_回传率"
+    ],
+    "columnWidths": {},
+    "sortKey": null,
+    "sortAsc": true
+  },
+  "sla_prefs_other_4xrqmw": {
+    "visibleHeaders": [
+      "版本标识",
+      "incident_total",
+      "t1_operator_name",
+      "name"
+    ],
+    "columnWidths": {
+      "版本标识": 362
+    },
+    "sortKey": null,
+    "sortAsc": true,
+    "customMetrics": [
+      {
+        "id": "m_1778786511235",
+        "colX": "name",
+        "valY": "汇总",
+        "colZ": "incident_total",
+        "label": "事故",
+        "color": ""
+      }
+    ]
+  },
+  "sla_prefs_other_3i73d": {
+    "visibleHeaders": [
+      "版本标识",
+      "地区部",
+      "代表处",
+      "岗位计划",
+      "实际人数",
+      "缺岗",
+      "运营商维护红线人员岗位满足率"
+    ],
+    "columnWidths": {},
+    "sortKey": null,
+    "sortAsc": true,
+    "customMetrics": [
+      {
+        "id": "m_1778791639908",
+        "colX": "地区部",
+        "valY": "总计",
+        "colZ": "运营商维护红线人员岗位满足率",
+        "label": "维护红线岗位满足率",
+        "color": ""
+      }
+    ]
+  },
+  "sla_prefs_other_d634kw": {
+    "visibleHeaders": [
+      "版本标识",
+      "地区部",
+      "总人数",
+      "高危风险人员",
+      "高危风险人员占比",
+      "中低风险人员",
+      "中低风险人员占比"
+    ],
+    "columnWidths": {},
+    "sortKey": null,
+    "sortAsc": true,
+    "customMetrics": [
+      {
+        "id": "m_1778787789280",
+        "colX": "地区部",
+        "valY": "总计",
+        "colZ": "高危风险人员",
+        "label": "高风险人员",
+        "color": ""
+      }
+    ]
+  },
+  "sla_prefs_other_irg0bu": {
+    "visibleHeaders": [
+      "版本标识",
+      "need_reduce_cnt",
+      "reduced_cnt",
+      "name",
+      "reduced_rate",
+      "check_rate"
+    ],
+    "columnWidths": {
+      "版本标识": 190,
+      "need_reduce_cnt": 202
+    },
+    "sortKey": null,
+    "sortAsc": true,
+    "customMetrics": [
+      {
+        "id": "m_1778785490158",
+        "colX": "name",
+        "valY": "汇总",
+        "colZ": "reduced_rate",
+        "label": "数字证书消减率",
+        "color": ""
+      }
+    ]
+  },
+  "sla_prefs_other_blghgh": {
+    "visibleHeaders": [
+      "版本标识",
+      "rectify_plan_implement_ne_cnt",
+      "sum_nes",
+      "rectify_implement_ne_cnt",
+      "name",
+      "check_complete_rate",
+      "rectify_complete_rate",
+      "delay_rectify_complete_rate"
+    ],
+    "columnWidths": {},
+    "sortKey": null,
+    "sortAsc": true,
+    "customMetrics": [
+      {
+        "id": "m_1778787005176",
+        "colX": "name",
+        "valY": "汇总",
+        "colZ": "rectify_complete_rate",
+        "label": "路由器整改完成率",
+        "color": ""
+      }
+    ]
+  },
+  "sla_prefs_risk_eunoq8": {
+    "visibleHeaders": [
+      "risk_status",
+      "create_time",
+      "ticket_close_due_date",
+      "accept_time",
+      "is_overdue",
+      "confirm_time_start",
+      "create_time_new",
+      "accept_due_time",
+      "current_time",
+      "current_handler",
+      "current_handler_name",
+      "network",
+      "task_id",
+      "accept_end_time",
+      "eliminate_implement_due_time",
+      "modify_time_start",
+      "modify_time_end"
+    ],
+    "columnWidths": {
+      "current_handler_name": 266
+    },
+    "sortKey": "_SLA_",
+    "sortAsc": true
+  },
+  "sla_prefs_other_renltd": {
+    "visibleHeaders": [
+      "版本标识",
+      "sum_nes",
+      "actual_not_implement_ne_num_cnt",
+      "name",
+      "check_complete_rate",
+      "rectify_complete_rate"
+    ],
+    "columnWidths": {},
+    "sortKey": null,
+    "sortAsc": true,
+    "customMetrics": [
+      {
+        "id": "m_1778786309907",
+        "colX": "name",
+        "valY": "汇总",
+        "colZ": "rectify_complete_rate",
+        "label": "存储整改完成率",
+        "color": ""
+      }
+    ]
+  },
+  "sla_prefs_other_fvv9vu": {
+    "visibleHeaders": [
+      "版本标识",
+      "地区部",
+      "代表处",
+      "国家",
+      "网络ID",
+      "网络名称",
+      "产品线",
+      "网络产品线",
+      "当前是否启动巡检",
+      "当前是否完成巡检",
+      "任务涉及的巡检单"
+    ],
+    "columnWidths": {},
+    "sortKey": "当前是否完成巡检",
+    "sortAsc": true
+  },
+  "sla_prefs_other_5jcrzk": {
+    "visibleHeaders": [
+      "版本标识",
+      "网络",
+      "演练计划总数",
+      "演练启动数",
+      "演练启动率",
+      "演练完成数",
+      "演练完成率",
+      "演练改进点"
+    ],
+    "columnWidths": {},
+    "sortKey": null,
+    "sortAsc": true,
+    "customMetrics": [
+      {
+        "id": "m_1778790896339",
+        "colX": "网络",
+        "valY": "总计",
+        "colZ": "演练完成率",
+        "label": "应急演练完成率",
+        "color": ""
+      }
+    ]
+  },
+  "sla_prefs_other_kxxuiv": {
+    "visibleHeaders": [
+      "版本标识",
+      "网络",
+      "首次_拦截次数2024年",
+      "首次_拦截次数2023年",
+      "首次同比",
+      "多次_拦截次数2024年",
+      "多次_拦截次数2023年",
+      "多次同比",
+      "拦截次数2024年",
+      "拦截次数2023年",
+      "总拦截同比"
+    ],
+    "columnWidths": {},
+    "sortKey": null,
+    "sortAsc": true,
+    "customMetrics": [
+      {
+        "id": "m_1778707460232",
+        "colX": "网络",
+        "valY": "总计",
+        "colZ": "拦截次数2024年",
+        "label": "高危命令拦截次数",
+        "color": ""
+      }
+    ]
+  },
+  "sla_prefs_other_scojkl": {
+    "visibleHeaders": [
+      "版本标识",
+      "network_name",
+      "h1_plan_nes合计",
+      "h1_uncompleted_nes合计",
+      "H1到期整改完成率",
+      "h2_plan_nes合计",
+      "h2_uncompleted_nes合计",
+      "H2到期整改完成率",
+      "total_plan_nes合计",
+      "total_uncompleted_nes合计",
+      "总完成率"
+    ],
+    "columnWidths": {
+      "h1_uncompleted_nes合计": 60,
+      "h2_uncompleted_nes合计": 80,
+      "total_uncompleted_nes合计": 98,
+      "版本标识": 109
+    },
+    "sortKey": null,
+    "sortAsc": true,
+    "customMetrics": [
+      {
+        "id": "m_1778788213878",
+        "colX": "network_name",
+        "valY": "总计",
+        "colZ": "总完成率",
+        "label": "整改完成率",
+        "color": ""
+      }
+    ]
+  },
+  "sla_prefs_other_b4qno2": {
+    "visibleHeaders": [
+      "版本标识",
+      "变更单号",
+      "任务单号",
+      "产品线",
+      "账户名",
+      "操作人",
+      "评分任务状态",
+      "BU",
+      "计划开始时间",
+      "客户群",
+      "备案原因"
+    ],
+    "columnWidths": {
+      "版本标识": 88,
+      "客户群": 105,
+      "备案原因": 265,
+      "操作人": 149
+    },
+    "sortKey": "备案原因",
+    "sortAsc": false,
+    "customMetrics": []
+  },
+  "sla_prefs_other_ccmx6n": {
+    "visibleHeaders": [
+      "版本标识",
+      "地区部",
+      "代表处",
+      "近3个月月均工单小于1单人数",
+      "近3个月0工单人数"
+    ],
+    "columnWidths": {},
+    "sortKey": null,
+    "sortAsc": true,
+    "customMetrics": [
+      {
+        "id": "m_1778787565497",
+        "colX": "代表处",
+        "valY": "总计",
+        "colZ": "近3个月0工单人数",
+        "label": "0工单人数",
+        "color": ""
+      },
+      {
+        "id": "m_1778787671971",
+        "colX": "地区部",
+        "valY": "总计",
+        "colZ": "近3个月月均工单小于1单人数",
+        "label": "工单<1人数",
+        "color": ""
+      }
+    ]
+  },
+  "sla_prefs_special_xg6eua": {
+    "visibleHeaders": [
+      "task_status_en",
+      "create_time",
+      "required_completion_time",
+      "plan_complete_date",
+      "network_name",
+      "owner_show",
+      "task_id",
+      "title",
+      "owner",
+      "task_type",
+      "is_hq_create"
+    ],
+    "columnWidths": {
+      "plan_complete_date": 53,
+      "required_completion_time": 100,
+      "task_status_en": 81,
+      "_SLA_": 155,
+      "owner_show": 134
+    },
+    "sortKey": "_SLA_",
+    "sortAsc": true
+  },
+  "sla_prefs_other_adofvo": {
+    "visibleHeaders": [
+      "版本标识",
+      "rep_name_cn_mp",
+      "network_name",
+      "使用账号总数",
+      "已稽查账号数",
+      "未稽查账号数",
+      "账号稽查率"
+    ],
+    "columnWidths": {
+      "版本标识": 159
+    },
+    "sortKey": null,
+    "sortAsc": true,
+    "customMetrics": [
+      {
+        "id": "m_1778791942405",
+        "colX": "rep_name_cn_mp",
+        "valY": "总计",
+        "colZ": "账号稽查率",
+        "label": "日志稽查率",
+        "color": ""
+      }
+    ]
+  },
+  "sla_prefs_other_16amqd": {
+    "visibleHeaders": [
+      "版本标识",
+      "代表处",
+      "SPM&TD总人数",
+      "SPM_TD任职满足率",
+      "TE_TL任职满足率",
+      "备件任职满足率",
+      "总任职满足率"
+    ],
+    "columnWidths": {},
+    "sortKey": null,
+    "sortAsc": true,
+    "customMetrics": [
+      {
+        "id": "m_1778786853776",
+        "colX": "代表处",
+        "valY": "总计",
+        "colZ": "总任职满足率",
+        "label": "任职率",
+        "color": ""
+      }
+    ]
+  },
+  "sla_prefs_other_tl0h8g": {
+    "visibleHeaders": [
+      "版本标识",
+      "nc_baseline_nes_new",
+      "closed_nes_new",
+      "unclosed_nes_new",
+      "exceptional_service_sales_nes",
+      "name",
+      "closed_rate"
+    ],
+    "columnWidths": {},
+    "sortKey": null,
+    "sortAsc": true,
+    "customMetrics": [
+      {
+        "id": "m_1778705794580",
+        "colX": "name",
+        "valY": "汇总",
+        "colZ": "closed_rate",
+        "label": "产品EOS闭环率",
+        "color": ""
+      }
+    ]
+  },
+  "sla_prefs_risk_tfawpd": {
+    "visibleHeaders": [
+      "risk_status",
+      "create_time",
+      "ticket_close_due_date",
+      "is_overdue",
+      "current_handler",
+      "current_handler_name",
+      "network",
+      "task_id",
+      "risk_title",
+      "remaining_processing_days"
+    ],
+    "columnWidths": {
+      "origin_product": 121,
+      "remaining_processing_days": 74,
+      "ticket_close_due_date": 107,
+      "is_overdue": 54,
+      "risk_title": 293
+    },
+    "sortKey": "_SLA_",
+    "sortAsc": true,
+    "customMetrics": []
+  }
+}

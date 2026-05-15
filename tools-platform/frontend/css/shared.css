@@ -1,0 +1,157 @@
+/* ============================================================
+   Tools Platform - 全局共享样式
+   覆盖：导航栏、Toast、基础布局变量
+   ============================================================ */
+
+:root {
+    /* 品牌色系 */
+    --primary: #0078D7;
+    --accent: #4CAF50;
+    --danger: #c53030;
+    --warning: #d7ba7d;
+    --console: #e67e22;
+    --cyber: #64ffda;
+    --blue: #3498db;
+    --purple: #8e44ad;
+
+    /* 深色主题 */
+    --bg: #1e1e1e;
+    --panel: #252526;
+    --panel2: #2d2d2d;
+    --border: #444;
+    --text: #d4d4d4;
+    --text-muted: #888;
+    --highlight: #dcdcaa;
+
+    /* 过渡 */
+    --transition: 0.2s ease;
+
+    /* 导航栏高度 */
+    --navbar-h: 52px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Segoe UI', Tahoma, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+}
+
+/* ── 顶部导航栏 ───────────────────────────────────────── */
+#app-navbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: var(--navbar-h);
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    border-bottom: 1px solid #2a3a5a;
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    gap: 20px;
+    z-index: 10000;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+}
+
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: bold;
+    color: #fff;
+    flex-shrink: 0;
+}
+.nav-brand .brand-icon { font-size: 20px; }
+.nav-brand .brand-name { background: linear-gradient(90deg, #64ffda, #4a90e2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+.nav-divider { width: 1px; height: 24px; background: #2a3a5a; flex-shrink: 0; }
+
+.nav-links { display: flex; gap: 4px; align-items: center; flex: 1; }
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    color: #aaa;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+.nav-link:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.nav-link.active {
+    background: rgba(100,255,218,0.12);
+    color: var(--cyber);
+    border: 1px solid rgba(100,255,218,0.25);
+}
+
+.nav-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-left: auto;
+    flex-shrink: 0;
+}
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: #4CAF50; animation: pulse-green 2s infinite; }
+@keyframes pulse-green {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(76,175,80,0.6); }
+    50% { box-shadow: 0 0 0 4px rgba(76,175,80,0); }
+}
+
+/* ── Toast 通知 ────────────────────────────────────────── */
+.toast {
+    position: fixed;
+    top: -60px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 22px;
+    border-radius: 22px;
+    font-weight: bold;
+    font-size: 13px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    transition: top 0.3s cubic-bezier(.34,1.56,.64,1);
+    z-index: 99999;
+    pointer-events: none;
+    white-space: nowrap;
+}
+.toast.show { top: calc(var(--navbar-h) + 12px); }
+.toast-success { background: #2e7d32; color: #fff; }
+.toast-error   { background: #c62828; color: #fff; }
+.toast-warn    { background: #e65100; color: #fff; }
+.toast-info    { background: #1565c0; color: #fff; }
+
+/* ── 通用按钮基础 ─────────────────────────────────────── */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+.btn:hover { filter: brightness(1.15); }
+.btn-primary   { background: var(--primary); color: #fff; }
+.btn-success   { background: var(--accent); color: #fff; }
+.btn-danger    { background: var(--danger); color: #fff; }
+.btn-secondary { background: #444; color: #fff; }
+.btn-ghost     { background: transparent; border: 1px solid var(--border); color: var(--text); }
+.btn-ghost:hover { background: rgba(255,255,255,0.06); }
+
+/* ── 页面内容区域 ─────────────────────────────────────── */
+.page-content {
+    padding-top: calc(var(--navbar-h) + 20px);
+    min-height: 100vh;
+}

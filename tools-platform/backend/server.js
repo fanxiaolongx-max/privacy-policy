@@ -1,0 +1,83 @@
+/**
+ * Tools Platform - 主服务入口
+ * 统一管理 UIVF12 Catcher 和 Task SLA Killer 的后端 API
+ */
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+
+const uivRoutes = require('./routes/uiv');
+const slaRoutes = require('./routes/sla');
+const uploadRoutes = require('./routes/upload');
+
+const app = express();
+const PORT = process.env.PORT || 3030;
+
+// ============================================================
+// 中间件
+// ============================================================
+app.use(cors());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// ── 请求日志（每次 API 请求都打印到控制台）
+app.use((req, res, next) => {
+    if (!req.path.startsWith('/api')) return next(); // 只记录 API 请求
+    const start = Date.now();
+    const ts = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+    res.on('finish', () => {
+        const dur = Date.now() - start;
+        const status = res.statusCode;
+        const color = status >= 500 ? '\x1b[31m' : status >= 400 ? '\x1b[33m' : '\x1b[32m';
+        const reset = '\x1b[0m';
+        const bodySize = req.headers['content-length'] ? `(body: ${req.headers['content-length']}B)` : '';
+        console.log(`${color}[${ts}] ${req.method} ${req.path} → ${status} (${dur}ms) ${bodySize}${reset}`);
+        if (status >= 400) {
+            console.log(`  ↳ Body:`, JSON.stringify(req.body).substring(0, 300));
+        }
+    });
+    next();
+});
+
+// 静态文件 (前端)
+app.use(express.static(path.join(__dirname, '../frontend')));
+
+// ============================================================
+// API 路由
+// ============================================================
+app.use('/api/uiv', uivRoutes);         // UIV12 脚本仓库 API
+app.use('/api/sla', slaRoutes);         // SLA 配置持久化 API
+app.use('/api/upload', uploadRoutes);   // 文件上传历史 API
+
+// ============================================================
+// 前端路由回退（SPA）
+// ============================================================
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/index.html'));
+});
+app.get('/uivf12', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/pages/uivf12.html'));
+});
+app.get('/sla', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/pages/sla.html'));
+});
+
+// ============================================================
+// 健康检查
+// ============================================================
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', time: new Date().toISOString() });
+});
+
+// ── 全局错误兜底
+app.use((err, req, res, next) => {
+    console.error(`\x1b[31m[ERROR] ${req.method} ${req.path}:\x1b[0m`, err.stack || err.message);
+    res.status(500).json({ error: err.message || '服务器内部错误' });
+});
+
+app.listen(PORT, () => {
+    console.log(`\n✅ Tools Platform 已启动`);
+    console.log(`   🌐 访问地址: http://localhost:${PORT}`);
+    console.log(`   📦 UIVF12:   http://localhost:${PORT}/uivf12`);
+    console.log(`   📊 SLA:      http://localhost:${PORT}/sla\n`);
+});
