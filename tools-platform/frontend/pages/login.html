@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - Tools Platform</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f4f6f8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        .login-box {
+            background: #fff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            width: 360px;
+            text-align: center;
+        }
+        .login-box h2 {
+            margin-top: 0;
+            color: #1a237e;
+            margin-bottom: 30px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .input-group input:focus {
+            border-color: #3f51b5;
+        }
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: #3f51b5;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-login:hover {
+            background: #283593;
+        }
+        #error-msg {
+            color: #d32f2f;
+            font-size: 14px;
+            margin-top: 15px;
+            min-height: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h2>🛠️ Tools Platform 登录</h2>
+        <div class="input-group">
+            <label>用户名</label>
+            <input type="text" id="username" placeholder="请输入账号" onkeydown="handleEnter(event)">
+        </div>
+        <div class="input-group">
+            <label>密码</label>
+            <input type="password" id="password" placeholder="请输入密码" onkeydown="handleEnter(event)">
+        </div>
+        <button class="btn-login" onclick="doLogin()">登 录</button>
+        <div id="error-msg"></div>
+    </div>
+
+    <script src="/js/shared/api.js"></script>
+    <script>
+        function handleEnter(e) {
+            if (e.key === 'Enter') doLogin();
+        }
+
+        async function doLogin() {
+            const u = document.getElementById('username').value.trim();
+            const p = document.getElementById('password').value;
+            const errDiv = document.getElementById('error-msg');
+            
+            if (!u || !p) {
+                errDiv.textContent = '用户名和密码不能为空';
+                return;
+            }
+            
+            errDiv.textContent = '登录中...';
+            
+            try {
+                // api.js uses getAuthHeaders which throws us back here on 401. But login doesn't need auth header.
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: u, password: p })
+                });
+                
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.error || '登录失败');
+                }
+                
+                localStorage.setItem('tools_token', data.token);
+                localStorage.setItem('tools_user', data.username);
+                localStorage.setItem('tools_role', data.role);
+                
+                // Redirect to dashboard (index)
+                window.location.href = '/';
+            } catch (e) {
+                errDiv.textContent = e.message;
+            }
+        }
+    </script>
+</body>
+</html>

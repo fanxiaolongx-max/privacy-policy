@@ -10,6 +10,7 @@ const TARGETS_FILE = 'sla_targets.json';
 const PREFS_FILE = 'sla_prefs.json';
 const SNAPSHOTS_FILE = 'sla_snapshots.json';
 const CATEGORIES_FILE = 'sla_categories.json';
+const GROUPS_FILE = 'sla_groups.json';
 
 // ──────────────────────────────────────────────────────────
 // 全局字典配置 (例如：指标分类)
@@ -27,6 +28,24 @@ router.put('/categories', (req, res) => {
     const cats = req.body;
     if (!Array.isArray(cats)) return res.status(400).json({ error: '必须是数组' });
     writeJSON(CATEGORIES_FILE, cats);
+    res.json({ success: true });
+});
+
+// ──────────────────────────────────────────────────────────
+// 指标分组配置
+// ──────────────────────────────────────────────────────────
+
+// GET /api/sla/groups
+router.get('/groups', (req, res) => {
+    const groups = readJSON(GROUPS_FILE, []);
+    res.json(groups);
+});
+
+// PUT /api/sla/groups
+router.put('/groups', (req, res) => {
+    const groups = req.body;
+    if (!Array.isArray(groups)) return res.status(400).json({ error: '必须是数组' });
+    writeJSON(GROUPS_FILE, groups);
     res.json({ success: true });
 });
 

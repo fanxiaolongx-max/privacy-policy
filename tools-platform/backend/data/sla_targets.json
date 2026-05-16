@@ -45,7 +45,7 @@
     "11": 100,
     "12": 100,
     "type": "gte",
-    "weight": 5
+    "weight": 0
   },
   "other_4xrqmw_m_1778786511235": {
     "5": 1,
@@ -192,6 +192,7 @@
     "weight": 5
   },
   "other_r7ivhq_m_1778790642772": {
+    "4": 100,
     "5": 100,
     "6": 100,
     "7": 100,
@@ -204,6 +205,7 @@
     "weight": 1
   },
   "other_r7ivhq_m_1778790662446": {
+    "4": 100,
     "5": 100,
     "6": 100,
     "7": 100,
@@ -237,7 +239,7 @@
     "11": 100,
     "12": 100,
     "type": "gte",
-    "weight": 2
+    "weight": 0
   },
   "other_3i73d_m_1778791639908": {
     "5": 100,
@@ -261,7 +263,7 @@
     "11": 100,
     "12": 100,
     "type": "lte",
-    "weight": 2
+    "weight": 0
   },
   "other_vmy0fv_m_1778791792772": {
     "5": 50,
@@ -309,7 +311,7 @@
     "11": 50,
     "12": 50,
     "type": "lte",
-    "weight": 2
+    "weight": 0
   },
   "other_vsq8j3_m_1778792882724": {
     "5": 95,
@@ -336,13 +338,13 @@
     "weight": 1
   },
   "manual_target_1778881260277": {
-    "5": "100",
+    "5": 100,
     "type": "gte",
     "weight": 2,
     "label": "IBMS刷新率"
   },
   "manual_target_1778882000001": {
-    "5": "100",
+    "5": 100,
     "type": "gte",
     "weight": 2,
     "label": "月度例会及报告准时完成率"
@@ -353,13 +355,13 @@
     "label": "服务专刊季度提交"
   },
   "manual_target_1778882000003": {
-    "5": "1",
+    "5": 1,
     "type": "gte",
     "weight": 3,
     "label": "半年度服务峰会召开"
   },
   "manual_target_1778882000004": {
-    "5": "1",
+    "5": 1,
     "type": "gte",
     "weight": 2,
     "label": "Jam客户互动月度发布"
@@ -388,5 +390,72 @@
     "type": "gte",
     "weight": 1,
     "label": "青年人才辅导培养"
+  },
+  "other_fvv9vu_m_1778874886825": {
+    "5": 0,
+    "6": 0,
+    "7": 0,
+    "8": 0,
+    "9": 0,
+    "10": 0,
+    "11": 0,
+    "12": 0,
+    "type": "lte",
+    "weight": 0
+  },
+  "manual_target_1778882000010": {
+    "type": "gte",
+    "weight": 0,
+    "label": "Network robustness assessment"
+  },
+  "manual_target_1778882000011": {
+    "type": "gte",
+    "weight": 0,
+    "label": "Deployment of risk perception system"
+  },
+  "manual_target_1778900000001": {
+    "type": "gte",
+    "weight": 2,
+    "label": "维保订单"
+  },
+  "manual_target_1778900000002": {
+    "type": "gte",
+    "weight": 8,
+    "label": "过保订单及SPMS"
+  },
+  "manual_target_1778900000003": {
+    "type": "gte",
+    "weight": 5,
+    "label": "业务收入"
+  },
+  "manual_target_1778900000004": {
+    "type": "gte",
+    "weight": 5,
+    "label": "PS GP利润率"
+  },
+  "manual_target_1778900000005": {
+    "type": "gte",
+    "weight": 5,
+    "label": "TE备件短缺解决方案"
+  },
+  "manual_target_1778900000006": {
+    "type": "gte",
+    "weight": 5,
+    "label": "TE AOS 2.0过保订单"
+  },
+  "manual_target_1778900000007": {
+    "type": "gte",
+    "weight": 10,
+    "label": "ORG AOS 2.0过保订单"
+  },
+  "manual_target_1778900000008": {
+    "type": "gte",
+    "weight": 10,
+    "label": "VDF AOS 2.0过保订单"
+  },
+  "manual_target_1778900000009": {
+    "type": "gte",
+    "weight": 10,
+    "label": "ET成本控制(GPR提升10%)"
   }
 }

@@ -9,6 +9,8 @@ const path = require('path');
 const uivRoutes = require('./routes/uiv');
 const slaRoutes = require('./routes/sla');
 const uploadRoutes = require('./routes/upload');
+const authRoutes = require('./routes/auth');
+const { checkAuth, requireAdmin } = require('./middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3030;
@@ -39,12 +41,35 @@ app.use((req, res, next) => {
     next();
 });
 
-// 静态文件 (前端)
+// 静态文件 (前端) - 需要鉴权控制，除了 login.html 等
+app.use((req, res, next) => {
+    // Check if the route is an API route or static asset
+    if (req.path.startsWith('/api/') || req.path.endsWith('.css') || req.path.endsWith('.js') || req.path.endsWith('.png') || req.path.endsWith('.svg') || req.path === '/login.html') {
+        return next();
+    }
+    
+    // For HTML pages, we don't have token in headers easily. The JS will redirect.
+    // So we just let frontend load and the JS api calls will fail with 401 and redirect.
+    next();
+});
+
 app.use(express.static(path.join(__dirname, '../frontend')));
 
 // ============================================================
-// API 路由
+// API 路由与鉴权
 // ============================================================
+app.use('/api/auth', authRoutes);
+
+app.use('/api', checkAuth); // Protect all /api/* (except login, which is handled inside checkAuth)
+
+// Protect modifications: requireAdmin for all non-GET requests under uiv, sla, upload
+app.use('/api', (req, res, next) => {
+    if (req.path.startsWith('/auth/')) return next();
+    if (req.method !== 'GET') {
+        return requireAdmin(req, res, next);
+    }
+    next();
+});
 app.use('/api/uiv', uivRoutes);         // UIV12 脚本仓库 API
 app.use('/api/sla', slaRoutes);         // SLA 配置持久化 API
 app.use('/api/upload', uploadRoutes);   // 文件上传历史 API
@@ -54,6 +79,9 @@ app.use('/api/upload', uploadRoutes);   // 文件上传历史 API
 // ============================================================
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/index.html'));
+});
+app.get('/login.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/pages/login.html'));
 });
 app.get('/uivf12', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/pages/uivf12.html'));

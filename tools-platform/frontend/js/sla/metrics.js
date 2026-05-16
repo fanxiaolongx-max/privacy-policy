@@ -97,11 +97,16 @@ function renderTopStickyBar() {
     const btnTarget = document.getElementById('btn-target-config');
     const keys = Object.keys(window.GlobalMetrics);
     const cm = new Date().getMonth() + 1;
+    
+    // Always show target config button so users can configure targets without importing files
+    btnTarget.style.display = 'inline-block';
+    
     if (!keys.length) {
-        content.innerHTML = '<span style="color:#888;">(当前未配置指标，请在下方独立表格中点击"🎯 指标"添加)</span>';
-        btnExpand.style.display = 'none'; btnTarget.style.display = 'none'; return;
+        content.innerHTML = '<span style="color:#888;">(当前未导入数据，点击右侧"🎯 预警配置"可配置已知指标目标)</span>';
+        btnExpand.style.display = 'none'; 
+        return;
     }
-    btnExpand.style.display = 'inline-block'; btnTarget.style.display = 'inline-block';
+    btnExpand.style.display = 'inline-block';
     let html = '';
     keys.forEach(k => {
         const m = window.GlobalMetrics[k];
@@ -152,14 +157,85 @@ function renderTopStickyBar() {
 
 // ── 预警目标弹窗 ──────────────────────────────────────────
 
-window.openTargetModal = function() {
+window.openTargetModal = async function() {
     const modalList = document.getElementById('target-modal-list');
-    const keys = Object.keys(window.GlobalMetrics);
-    if (!keys.length) {
-        modalList.innerHTML = '<div style="text-align:center;padding:30px;color:#888;font-size:16px;">请先在下方独立表格中点击"🎯 指标"，添加推送规则后，再来配置预警。</div>';
+    let targetKeys = Object.keys(window.GlobalMetrics);
+    let labelMap = {};
+    let currentValues = {};
+    
+    // If no metrics are currently loaded (e.g. no file imported), fetch all known custom metrics and manual targets
+    if (targetKeys.length === 0) {
+        modalList.innerHTML = '<div style="text-align:center;padding:30px;color:#888;">正在加载全网指标配置...</div>';
+        try {
+            const configData = await API.get('/api/sla/config');
+            window.GlobalTargets = configData.targets || {};
+            const prefs = configData.prefs || {};
+            
+            // Collect all custom metrics from prefs
+            const knownLabels = {};
+            Object.keys(prefs).forEach(schemaHash => {
+                const pref = prefs[schemaHash];
+                if (pref.customMetrics && pref.customMetrics.length > 0) {
+                    let secId = '';
+                    if (schemaHash.startsWith('sla_prefs_other_')) {
+                        secId = schemaHash.replace('sla_prefs_', ''); // e.g. other_r7ivhq
+                    } else if (schemaHash.startsWith('sla_prefs_rectification')) {
+                        secId = 'rectification';
+                    } else if (schemaHash.startsWith('sla_prefs_risk')) {
+                        secId = 'risk';
+                    } else if (schemaHash.startsWith('sla_prefs_special')) {
+                        secId = 'special';
+                    } else {
+                        secId = schemaHash.replace('sla_prefs_', '');
+                    }
+                    
+                    pref.customMetrics.forEach(cm => {
+                        const targetKey = `${secId}_${cm.id}`;
+                        knownLabels[cm.id] = cm.label;
+                        labelMap[targetKey] = cm.label;
+                        if (!targetKeys.includes(targetKey)) {
+                            targetKeys.push(targetKey);
+                        }
+                    });
+                }
+            });
+            
+            // Also include anything already in GlobalTargets
+            const existingTargetKeys = Object.keys(window.GlobalTargets);
+            existingTargetKeys.forEach(k => {
+                if (!targetKeys.includes(k)) {
+                    targetKeys.push(k);
+                }
+                if (window.GlobalTargets[k].label) {
+                    labelMap[k] = window.GlobalTargets[k].label;
+                } else if (!labelMap[k]) {
+                    // Try to guess the label from known custom metrics ids
+                    let matchedLabel = k;
+                    for (const cmId in knownLabels) {
+                        if (k.endsWith(cmId)) {
+                            matchedLabel = knownLabels[cmId];
+                            break;
+                        }
+                    }
+                    labelMap[k] = matchedLabel;
+                }
+            });
+        } catch (e) {
+            console.error("Failed to load config", e);
+        }
     } else {
-        modalList.innerHTML = keys.map(k => {
-            const m = window.GlobalMetrics[k];
+        targetKeys.forEach(k => {
+            labelMap[k] = window.GlobalMetrics[k].label;
+            currentValues[k] = window.GlobalMetrics[k].value;
+        });
+    }
+
+    if (!targetKeys.length) {
+        modalList.innerHTML = '<div style="text-align:center;padding:30px;color:#888;font-size:16px;">当前没有可配置的指标。<br><br><span style="font-size:13px;">请先在下方独立表格中点击"🎯 指标"添加自定义指标。</span></div>';
+    } else {
+        modalList.innerHTML = targetKeys.map(k => {
+            const label = labelMap[k] || k;
+            const currentVal = currentValues[k] !== undefined ? currentValues[k] : '--';
             const targets = window.GlobalTargets[k] || {};
             let inputsHtml = '';
             for (let i = 1; i <= 12; i++) {
@@ -170,13 +246,13 @@ window.openTargetModal = function() {
             }
             return `<div class="target-row">
                 <div class="target-row-header">
-                    <span>🏷️ ${escapeHTML(m.label)}</span>
+                    <span>🏷️ ${escapeHTML(label)}</span>
                     <div style="display:flex;align-items:center;gap:10px;">
                         <select class="condition-select" data-key="${k}">
                             <option value="gte" ${targets.type === 'gte' || !targets.type ? 'selected' : ''}>≥ (越大越好)</option>
                             <option value="lte" ${targets.type === 'lte' ? 'selected' : ''}>≤ (越小越好)</option>
                         </select>
-                        <span style="color:#666;font-weight:normal;font-size:13px;">实时当前值: <b style="color:#4a90e2;font-size:16px;">${escapeHTML(String(m.value))}</b></span>
+                        <span style="color:#666;font-weight:normal;font-size:13px;">实时当前值: <b style="color:#4a90e2;font-size:16px;">${escapeHTML(String(currentVal))}</b></span>
                     </div>
                 </div>
                 <div class="target-months">${inputsHtml}</div>
@@ -191,13 +267,26 @@ window.closeTargetModal = function() { document.getElementById('target-modal').s
 window.saveTargets = async function() {
     const selects = document.querySelectorAll('.condition-select');
     const inputs = document.querySelectorAll('.month-input-group input');
-    let newTargets = {};
-    Object.keys(window.GlobalMetrics).forEach(k => { newTargets[k] = {}; });
-    selects.forEach(sel => { const k = sel.getAttribute('data-key'); if (newTargets[k]) newTargets[k].type = sel.value; });
+    
+    // We only update the targets that are currently shown in the modal, leaving others intact
+    let newTargets = JSON.parse(JSON.stringify(window.GlobalTargets || {}));
+    
+    selects.forEach(sel => { 
+        const k = sel.getAttribute('data-key'); 
+        if (!newTargets[k]) newTargets[k] = {};
+        newTargets[k].type = sel.value; 
+    });
+    
     inputs.forEach(input => {
         const k = input.getAttribute('data-key'), m = input.getAttribute('data-month'), val = input.value.trim();
-        if (val !== '') newTargets[k][m] = parseFloat(val);
+        if (!newTargets[k]) newTargets[k] = {};
+        if (val !== '') {
+            newTargets[k][m] = parseFloat(val);
+        } else {
+            delete newTargets[k][m];
+        }
     });
+    
     window.GlobalTargets = newTargets;
     try {
         await API.put('/api/sla/targets', window.GlobalTargets);
