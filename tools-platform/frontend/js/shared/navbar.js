@@ -8,6 +8,7 @@ function renderNavbar() {
         { href: '/',        icon: '🏠', label: '工具中台', match: p => p === '/' },
         { href: '/uivf12',  icon: '🚀', label: 'UIVF12 抓取引擎', match: p => p.startsWith('/uivf12') },
         { href: '/sla',     icon: '📊', label: 'Task SLA 监控台', match: p => p.startsWith('/sla') },
+        { href: '/report',  icon: '📈', label: '专业报表看板', match: p => p.startsWith('/report') }
     ];
 
     const linksHtml = links.map(l =>

@@ -450,7 +450,9 @@
       "sr_ofr",
       "sr_ofr_d"
     ],
-    "columnWidths": {},
+    "columnWidths": {
+      "版本标识": 185
+    },
     "sortKey": null,
     "sortAsc": true,
     "customMetrics": [
@@ -995,7 +997,58 @@
     ],
     "columnWidths": {},
     "sortKey": "当前是否完成巡检",
-    "sortAsc": true
+    "sortAsc": true,
+    "customMetrics": [
+      {
+        "id": "m_1778874886825",
+        "type": "count",
+        "colX": "",
+        "valY": "",
+        "colZ": "当前是否完成巡检",
+        "valK": "否",
+        "label": "未完成价值网络巡检单数",
+        "color": "",
+        "sourceSecId": "other_fvv9vu",
+        "subMetrics": [
+          {
+            "id": "m_1778875292508",
+            "type": "count",
+            "colX": "网络名称",
+            "valY": "EG-Egypt Telecom",
+            "colZ": "当前是否完成巡检",
+            "valK": "否",
+            "label": "未完成价值网络巡检单数",
+            "color": "",
+            "sourceSecId": "other_fvv9vu",
+            "category": "TE"
+          },
+          {
+            "id": "m_1778875402348",
+            "type": "count",
+            "colX": "网络名称",
+            "valY": "EG-Egypt Orange",
+            "colZ": "当前是否完成巡检",
+            "valK": "否",
+            "label": "未完成价值网络巡检单数",
+            "color": "",
+            "sourceSecId": "other_fvv9vu",
+            "category": "ORG"
+          },
+          {
+            "id": "m_1778875440964",
+            "type": "count",
+            "colX": "网络名称",
+            "valY": "EG-Egypt ET",
+            "colZ": "当前是否完成巡检",
+            "valK": "否",
+            "label": "未完成价值网络巡检单数",
+            "color": "",
+            "sourceSecId": "other_fvv9vu",
+            "category": "ET"
+          }
+        ]
+      }
+    ]
   },
   "sla_prefs_other_5jcrzk": {
     "visibleHeaders": [

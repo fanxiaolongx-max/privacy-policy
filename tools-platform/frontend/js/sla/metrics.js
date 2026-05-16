@@ -8,16 +8,58 @@ function evaluateAllMetrics() {
         const state = AppState[secId];
         if (!state.customMetrics || !state.customMetrics.length) return;
         state.customMetrics.forEach(rule => {
-            let matchedValue = '--';
-            for (let i = 0; i < state.globalData.length; i++) {
-                const row = state.globalData[i];
-                const cellValX = row[rule.colX];
-                if (cellValX !== undefined && cellValX !== null && cellValX.toString().includes(rule.valY)) {
-                    matchedValue = row[rule.colZ] !== undefined && row[rule.colZ] !== null ? row[rule.colZ] : '--';
-                    break;
+            const evalRule = (r, dataRows) => {
+                if (r.type === 'count') {
+                    let count = 0;
+                    for (let i = 0; i < dataRows.length; i++) {
+                        const row = dataRows[i];
+                        let passX = true;
+                        if (r.colX) {
+                            const cx = row[r.colX];
+                            passX = (cx !== undefined && cx !== null && cx.toString().includes(r.valY));
+                        }
+                        if (passX) {
+                            const cz = row[r.colZ];
+                            if (cz !== undefined && cz !== null && cz.toString().includes(r.valK)) {
+                                count++;
+                            }
+                        }
+                    }
+                    return count;
+                } else if (r.type === 'ratio') {
+                    let total = 0;
+                    let matched = 0;
+                    for (let i = 0; i < dataRows.length; i++) {
+                        const row = dataRows[i];
+                        let passX = true;
+                        if (r.colX) {
+                            const cx = row[r.colX];
+                            passX = (cx !== undefined && cx !== null && cx.toString().includes(r.valY));
+                        }
+                        if (passX) {
+                            total++;
+                            const cz = row[r.colZ];
+                            if (cz !== undefined && cz !== null && cz.toString().includes(r.valK)) {
+                                matched++;
+                            }
+                        }
+                    }
+                    return total > 0 ? Math.round((matched / total) * 100) + '%' : '0%';
+                } else {
+                    for (let i = 0; i < dataRows.length; i++) {
+                        const row = dataRows[i];
+                        const cellValX = row[r.colX];
+                        if (cellValX !== undefined && cellValX !== null && cellValX.toString().includes(r.valY)) {
+                            return row[r.colZ] !== undefined && row[r.colZ] !== null ? row[r.colZ] : '--';
+                        }
+                    }
+                    return '--';
                 }
-            }
-            if (rule.label.includes('率') && matchedValue !== '--') {
+            };
+
+            let matchedValue = evalRule(rule, state.globalData);
+
+            if (rule.label.includes('率') && matchedValue !== '--' && rule.type !== 'count' && rule.type !== 'ratio') {
                 const strVal = matchedValue.toString().trim();
                 const isPercent = strVal.endsWith('%');
                 const num = parseFloat(strVal);
@@ -27,19 +69,17 @@ function evaluateAllMetrics() {
             const evaluatedSubMetrics = [];
             if (rule.subMetrics && rule.subMetrics.length > 0) {
                 rule.subMetrics.forEach(sm => {
-                    let smValue = '--';
-                    for (let i = 0; i < state.globalData.length; i++) {
-                        const row = state.globalData[i];
-                        const cellValX = row[sm.colX];
-                        if (cellValX !== undefined && cellValX !== null && cellValX.toString().includes(sm.valY)) {
-                            smValue = row[sm.colZ] !== undefined && row[sm.colZ] !== null ? row[sm.colZ] : '--';
-                            break;
-                        }
-                    }
-                    if (rule.label.includes('率') && smValue !== '--') {
+                    const sourceData = (sm.sourceSecId && AppState[sm.sourceSecId]) 
+                                        ? AppState[sm.sourceSecId].globalData 
+                                        : (sm.sourceSecId ? [] : state.globalData);
+                    let smValue = evalRule(sm, sourceData);
+                    
+                    const effectiveLabel = sm.label || rule.label || '';
+                    if (effectiveLabel.includes('率') && smValue !== '--' && sm.type !== 'count' && sm.type !== 'ratio') {
                         const strVal = smValue.toString().trim();
+                        const isPercent = strVal.endsWith('%');
                         const num = parseFloat(strVal);
-                        if (!isNaN(num)) smValue = strVal.endsWith('%') ? Math.round(num) + '%' : Math.round(num * 100) + '%';
+                        if (!isNaN(num)) smValue = isPercent ? Math.round(num) + '%' : Math.round(num * 100) + '%';
                     }
                     evaluatedSubMetrics.push({ category: sm.category, value: smValue });
                 });
