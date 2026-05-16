@@ -128,7 +128,8 @@
             "category": "VDF",
             "value": "100%"
           }
-        ]
+        ],
+        "hasTarget": true
       },
       {
         "label": "价值网络巡检完成率",
@@ -149,7 +150,8 @@
             "category": "ET",
             "value": "100%"
           }
-        ]
+        ],
+        "hasTarget": true
       },
       {
         "label": "应急演练完成率",
@@ -170,7 +172,8 @@
             "category": "VDF",
             "value": "17%"
           }
-        ]
+        ],
+        "hasTarget": true
       },
       {
         "label": "拓扑刷新率",
@@ -195,7 +198,8 @@
             "category": "VDF",
             "value": "67%"
           }
-        ]
+        ],
+        "hasTarget": true
       },
       {
         "label": "预案刷新率",
@@ -220,7 +224,8 @@
             "category": "VDF",
             "value": "67%"
           }
-        ]
+        ],
+        "hasTarget": true
       },
       {
         "label": "软件MM收编率",
@@ -228,7 +233,8 @@
         "gap": "",
         "isWarn": false,
         "color": "#4fc3f7",
-        "subMetrics": []
+        "subMetrics": [],
+        "hasTarget": false
       },
       {
         "label": "存储整改完成率",
@@ -253,7 +259,8 @@
             "category": "VDF",
             "value": "0%"
           }
-        ]
+        ],
+        "hasTarget": false
       },
       {
         "label": "路由器整改完成率",
@@ -278,7 +285,8 @@
             "category": "VDF",
             "value": "0%"
           }
-        ]
+        ],
+        "hasTarget": true
       },
       {
         "label": "事故",
@@ -286,7 +294,8 @@
         "gap": "",
         "isWarn": false,
         "color": "#4fc3f7",
-        "subMetrics": []
+        "subMetrics": [],
+        "hasTarget": false
       },
       {
         "label": "SR FRT率",
@@ -311,7 +320,8 @@
             "category": "VDF",
             "value": "100%"
           }
-        ]
+        ],
+        "hasTarget": false
       },
       {
         "label": "产品EOS闭环率",
@@ -336,7 +346,8 @@
             "category": "VDF",
             "value": "77%"
           }
-        ]
+        ],
+        "hasTarget": true
       },
       {
         "label": "版本EOS闭环率",
@@ -361,7 +372,8 @@
             "category": "VDF",
             "value": "62%"
           }
-        ]
+        ],
+        "hasTarget": true
       },
       {
         "label": "重急EOS闭环率",
@@ -386,7 +398,8 @@
             "category": "VDF",
             "value": "100%"
           }
-        ]
+        ],
+        "hasTarget": true
       },
       {
         "label": "锂电池整改完成率",
@@ -399,7 +412,8 @@
             "category": "TE",
             "value": "100%"
           }
-        ]
+        ],
+        "hasTarget": true
       },
       {
         "label": "数字证书消减率",
@@ -420,7 +434,8 @@
             "category": "ET",
             "value": "100%"
           }
-        ]
+        ],
+        "hasTarget": true
       },
       {
         "label": "整改完成率",
@@ -445,7 +460,8 @@
             "category": "VDF",
             "value": "68%"
           }
-        ]
+        ],
+        "hasTarget": true
       },
       {
         "label": "未完成价值网络巡检单数",
@@ -466,7 +482,8 @@
             "category": "ET",
             "value": "0"
           }
-        ]
+        ],
+        "hasTarget": false
       },
       {
         "label": "延期补授权完成率",
@@ -474,7 +491,8 @@
         "gap": "",
         "isWarn": false,
         "color": "#4fc3f7",
-        "subMetrics": []
+        "subMetrics": [],
+        "hasTarget": false
       },
       {
         "label": "高危命令拦截次数",
@@ -495,7 +513,8 @@
             "category": "ET",
             "value": "12"
           }
-        ]
+        ],
+        "hasTarget": false
       },
       {
         "label": "GUI拦截次数",
@@ -503,7 +522,8 @@
         "gap": "超 20",
         "isWarn": true,
         "color": "#ef5350",
-        "subMetrics": []
+        "subMetrics": [],
+        "hasTarget": false
       },
       {
         "label": "高风险人员",
@@ -511,7 +531,8 @@
         "gap": "",
         "isWarn": false,
         "color": "#4fc3f7",
-        "subMetrics": []
+        "subMetrics": [],
+        "hasTarget": false
       },
       {
         "label": "日志稽查率",
@@ -532,7 +553,8 @@
             "category": "ET",
             "value": "90%"
           }
-        ]
+        ],
+        "hasTarget": true
       },
       {
         "label": "业务比对回传率",
@@ -540,7 +562,8 @@
         "gap": "",
         "isWarn": false,
         "color": "#4fc3f7",
-        "subMetrics": []
+        "subMetrics": [],
+        "hasTarget": true
       },
       {
         "label": "业务比对备案率",
@@ -548,7 +571,8 @@
         "gap": "",
         "isWarn": false,
         "color": "#4fc3f7",
-        "subMetrics": []
+        "subMetrics": [],
+        "hasTarget": true
       },
       {
         "label": "0工单人数",
@@ -556,7 +580,8 @@
         "gap": "",
         "isWarn": false,
         "color": "#4fc3f7",
-        "subMetrics": []
+        "subMetrics": [],
+        "hasTarget": false
       },
       {
         "label": "工单<1人数",
@@ -564,7 +589,8 @@
         "gap": "超 2",
         "isWarn": true,
         "color": "#ef5350",
-        "subMetrics": []
+        "subMetrics": [],
+        "hasTarget": false
       },
       {
         "label": "任职率",
@@ -572,7 +598,8 @@
         "gap": "",
         "isWarn": false,
         "color": "#4fc3f7",
-        "subMetrics": []
+        "subMetrics": [],
+        "hasTarget": false
       },
       {
         "label": "维护红线岗位满足率",
@@ -580,7 +607,8 @@
         "gap": "",
         "isWarn": false,
         "color": "#4fc3f7",
-        "subMetrics": []
+        "subMetrics": [],
+        "hasTarget": false
       },
       {
         "label": "逃生演练完成率",
@@ -588,7 +616,8 @@
         "gap": "",
         "isWarn": false,
         "color": "#4fc3f7",
-        "subMetrics": []
+        "subMetrics": [],
+        "hasTarget": true
       },
       {
         "id": "manual_m_1778881391517",
@@ -616,7 +645,8 @@
             "value": "100%"
           }
         ],
-        "isManual": true
+        "isManual": true,
+        "hasTarget": true
       },
       {
         "id": "manual_m_1778881680237",
@@ -644,7 +674,8 @@
             "value": "100%"
           }
         ],
-        "isManual": true
+        "isManual": true,
+        "hasTarget": true
       },
       {
         "id": "manual_m_1778881747882",
@@ -672,7 +703,8 @@
             "value": "1"
           }
         ],
-        "isManual": true
+        "isManual": true,
+        "hasTarget": true
       },
       {
         "id": "manual_m_1778881794809",
@@ -699,9 +731,149 @@
             "category": "VDF",
             "value": "2"
           }
-        ]
+        ],
+        "isManual": true,
+        "hasTarget": true
+      },
+      {
+        "id": "manual_m_1778921199296",
+        "colX": "手动指标",
+        "valY": "总计",
+        "colZ": "手动指标",
+        "label": "Network robustness assessment",
+        "color": "",
+        "value": "50%",
+        "subMetrics": [],
+        "isManual": true,
+        "hasTarget": false
+      },
+      {
+        "id": "manual_m_1778940986208",
+        "colX": "手动指标",
+        "valY": "总计",
+        "colZ": "手动指标",
+        "label": "维保订单",
+        "color": "",
+        "value": "--",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "-0.1"
+          },
+          {
+            "category": "ORG",
+            "value": "3.2"
+          },
+          {
+            "category": "ET",
+            "value": "0.0"
+          },
+          {
+            "category": "VDF",
+            "value": "1.5"
+          }
+        ],
+        "isManual": true,
+        "hasTarget": false
+      },
+      {
+        "id": "manual_m_1778941447624",
+        "colX": "手动指标",
+        "valY": "总计",
+        "colZ": "手动指标",
+        "label": "过保订单及SPMS",
+        "color": "",
+        "value": "--",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "7"
+          },
+          {
+            "category": "ORG",
+            "value": "3.3"
+          },
+          {
+            "category": "ET",
+            "value": "3.3"
+          },
+          {
+            "category": "VDF",
+            "value": "0.1"
+          }
+        ],
+        "isManual": true,
+        "hasTarget": false
+      },
+      {
+        "id": "manual_m_1778941489207",
+        "colX": "手动指标",
+        "valY": "总计",
+        "colZ": "手动指标",
+        "label": "业务收入",
+        "color": "",
+        "value": "--",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "4.0"
+          },
+          {
+            "category": "ORG",
+            "value": "2.9"
+          },
+          {
+            "category": "ET",
+            "value": "1.7"
+          },
+          {
+            "category": "VDF",
+            "value": "3.7"
+          }
+        ],
+        "isManual": true,
+        "hasTarget": false
+      },
+      {
+        "id": "manual_m_1778941531042",
+        "colX": "手动指标",
+        "valY": "总计",
+        "colZ": "手动指标",
+        "label": "PS GP利润率",
+        "color": "",
+        "value": "--",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "54%"
+          },
+          {
+            "category": "ORG",
+            "value": "59%"
+          },
+          {
+            "category": "ET",
+            "value": "7%"
+          },
+          {
+            "category": "VDF",
+            "value": "87%"
+          }
+        ],
+        "isManual": true,
+        "hasTarget": false
       }
-    ]
+    ],
+    "manualAdjustData": {
+      "TE": {},
+      "ORG": {
+        "4": 1
+      },
+      "ET": {},
+      "VDF": {
+        "15": 1
+      }
+    }
   },
   {
     "id": "mp7cd76h",

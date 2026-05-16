@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="/css/shared.css">
     <style>
         body { background: #f4f6f8; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #333; }
-        .page-container { padding-top: calc(var(--navbar-h) + 20px); max-width: 1400px; margin: 0 auto; padding-left: 20px; padding-right: 20px; padding-bottom: 40px; }
+        .page-container { padding-top: calc(var(--navbar-h) + 20px); max-width: 98%; margin: 0 auto; padding-left: 20px; padding-right: 20px; padding-bottom: 40px; }
         
         .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 15px; }
         .controls h2 { margin: 0; color: #2c3e50; font-size: 24px; }
@@ -32,11 +32,13 @@
         .score-badge.danger { background: #ffebee; color: #c62828; }
         .score-badge.success { background: #e8f5e9; color: #2e7d32; }
         
-        .matrix-container { overflow: auto; max-height: 60vh; margin-top: 10px; border-radius: 8px; border: 1px solid #eee; }
+        .matrix-container { overflow: auto; min-height: 400px; max-height: 65vh; margin-top: 10px; border-radius: 8px; border: 1px solid #eee; }
         .matrix-table { width: 100%; border-collapse: separate; border-spacing: 0; white-space: nowrap; }
         .matrix-table th, .matrix-table td { padding: 14px 12px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; text-align: center; font-size: 14px; }
         .matrix-table th { background: #f8f9fa; color: #444; font-weight: 600; position: sticky; top: 0; z-index: 10; border-top: 1px solid #eee; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .matrix-table th:first-child, .matrix-table td:first-child { border-left: 1px solid #eee; }
+        .matrix-group-cell { background: linear-gradient(135deg, #e8eaf6, #c5cae9); color: #283593; font-weight: 700; font-size: 13px; text-align: center; vertical-align: middle; min-width: 40px; max-width: 60px; white-space: normal; word-break: break-word; line-height: 1.3; border-right: 3px solid #9fa8da !important; }
+        .matrix-ungrouped-cell { background: #f5f5f5; color: #888; font-style: italic; font-size: 12px; text-align: center; vertical-align: middle; min-width: 40px; max-width: 60px; white-space: normal; word-break: break-word; line-height: 1.3; border-right: 3px solid #e0e0e0 !important; }
         
         .val-good { color: #2e7d32; font-weight: 600; }
         .val-warn { color: #d32f2f; font-weight: 700; background: #ffebee; padding: 4px 8px; border-radius: 6px; display: inline-block; cursor: help; }
@@ -48,13 +50,30 @@
         .empty-state { text-align: center; padding: 80px 20px; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
         .empty-state h3 { color: #455a64; margin-bottom: 10px; }
         .empty-state p { color: #888; }
+
+        /* Group Config Modal Styles */
+        .group-item { background: #f5f8fa; border: 1px solid #e1e8ed; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+        .group-item-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+        .group-name-input { flex: 1; padding: 4px 6px; border: 2px solid transparent; border-radius: 4px; font-size: 14px; font-weight: 600; color: #2c3e50; background: transparent; cursor: pointer; outline: none; min-width: 0; }
+        .group-name-input:hover { border-color: #9fa8da; background: #f3f4ff; }
+        .group-name-input:focus { border-color: #3949ab; background: #eef0fb; cursor: text; }
+        .group-drag-handle { cursor: grab; color: #aaa; font-size: 18px; user-select: none; padding: 0 4px; }
+        .group-metrics-list { display: flex; flex-direction: column; gap: 6px; min-height: 30px; border: 1px dashed #ccc; border-radius: 6px; padding: 8px; background: #fff; }
+        .group-metric-tag { display: flex; align-items: center; gap: 6px; background: #e3f2fd; border: 1px solid #bbdefb; border-radius: 4px; padding: 4px 8px; font-size: 13px; cursor: grab; }
+        .group-metric-tag:active { cursor: grabbing; }
+        .group-metric-remove { cursor: pointer; color: #e53935; font-weight: bold; margin-left: auto; padding: 0 2px; }
+        .unassigned-pool { display: flex; flex-wrap: wrap; gap: 6px; min-height: 36px; border: 1px dashed #ccc; border-radius: 6px; padding: 8px; background: #fffde7; }
+        .unassigned-tag { display: inline-flex; align-items: center; gap: 4px; background: #fff9c4; border: 1px solid #f9a825; border-radius: 4px; padding: 4px 8px; font-size: 12px; cursor: pointer; }
+        .unassigned-tag:hover { background: #fff176; }
+        .btn-add-group { width: 100%; padding: 10px; border: 2px dashed #9fa8da; border-radius: 8px; background: #f3f4ff; color: #3949ab; font-weight: 600; cursor: pointer; font-size: 14px; }
+        .btn-add-group:hover { background: #e8eaf6; }
     </style>
 </head>
 <body>
     <div class="page-container">
         <div class="controls">
             <h2>📈 专业报表看板</h2>
-            <div style="display:flex;gap:20px;align-items:center;">
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
                 <div>
                     <span style="font-size:14px;color:#666;margin-right:6px;">考核月份：</span>
                     <select id="target-month-select" onchange="renderCurrentSnapshot()"></select>
@@ -63,8 +82,9 @@
                     <span style="font-size:14px;color:#666;margin-right:6px;">历史快照：</span>
                     <select id="snapshot-select" onchange="loadSelectedSnapshot()"></select>
                 </div>
-                <button onclick="openWeightModal()" style="padding: 8px 16px; background: #fff; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); color: #333; font-weight: 600;">⚖️ 指标权重配置</button>
-                <button onclick="openAddMetricModal()" style="padding: 8px 16px; background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); color: #2e7d32; font-weight: 600;">➕ 手动增加指标</button>
+                <button onclick="openGroupModal()" style="padding: 8px 14px; background: #e8eaf6; border: 1px solid #9fa8da; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #283593; font-weight: 600;">📂 指标分组配置</button>
+                <button onclick="openWeightModal()" style="padding: 8px 14px; background: #fff; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #333; font-weight: 600;">⚖️ 权重配置</button>
+                <button onclick="openAddMetricModal()" style="padding: 8px 14px; background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #2e7d32; font-weight: 600;">➕ 手动增加指标</button>
             </div>
         </div>
         
@@ -95,6 +115,33 @@
                 </div>
             </div>
         </div>
+
+        <!-- Group Config Modal -->
+        <div id="group-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:999; align-items:center; justify-content:center;">
+            <div style="background:#fff; border-radius:12px; width:720px; max-width:95vw; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 10px 40px rgba(0,0,0,0.25);">
+                <div style="padding:20px 24px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="margin:0; color:#283593;">📂 指标分组配置</h3>
+                    <span style="font-size:12px; color:#888;">拖拽调整分组及指标顺序，点击指标标签分配到分组</span>
+                </div>
+                <div style="flex:1; overflow-y:auto; padding:20px 24px; display:flex; gap:20px;">
+                    <!-- Left: groups -->
+                    <div style="flex:1; min-width:0;">
+                        <div style="font-size:13px; font-weight:600; color:#555; margin-bottom:10px;">分组列表（可拖拽排序）</div>
+                        <div id="group-list-container"></div>
+                        <button class="btn-add-group" onclick="addNewGroup()">＋ 新增分组</button>
+                    </div>
+                    <!-- Right: unassigned pool -->
+                    <div style="width:200px; flex-shrink:0;">
+                        <div style="font-size:13px; font-weight:600; color:#555; margin-bottom:10px;">未分组指标 <span style="color:#999;font-weight:normal;">(点击分配)</span></div>
+                        <div id="unassigned-pool" class="unassigned-pool"></div>
+                    </div>
+                </div>
+                <div style="padding:16px 24px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:10px;">
+                    <button onclick="closeGroupModal()" style="padding:8px 18px; border:1px solid #ccc; background:#fff; border-radius:6px; cursor:pointer;">取消</button>
+                    <button onclick="saveGroups()" style="padding:8px 18px; border:none; background:#3949ab; color:#fff; border-radius:6px; cursor:pointer; font-weight:bold;">保存分组配置</button>
+                </div>
+            </div>
+        </div>
         
         <div id="report-content" class="dashboard-grid">
             <div class="empty-state">
@@ -109,3 +156,4 @@
     <script src="/js/report/report.js"></script>
 </body>
 </html>
+

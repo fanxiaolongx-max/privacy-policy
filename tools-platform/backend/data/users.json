@@ -1,0 +1,10 @@
+{
+  "admin": {
+    "role": "admin",
+    "passwordHash": "6a3221d9c0d7203abf4862f37352f8cde14d3436225e9b051507c792a7ada67f"
+  },
+  "guest": {
+    "role": "readonly",
+    "passwordHash": "6a3221d9c0d7203abf4862f37352f8cde14d3436225e9b051507c792a7ada67f"
+  }
+}

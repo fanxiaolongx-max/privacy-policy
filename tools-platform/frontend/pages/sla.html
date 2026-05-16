@@ -153,6 +153,9 @@
         document.addEventListener('DOMContentLoaded', async () => {
             await SLASection.initGlobalTargets();
             if (window.initCategories) await window.initCategories();
+            if (window.SLAMetrics && window.SLAMetrics.renderTopStickyBar) {
+                window.SLAMetrics.renderTopStickyBar();
+            }
         });
         // 文件上传事件绑定
         document.getElementById('batch-upload').addEventListener('change', SLAUpload.handleBatchUpload, false);

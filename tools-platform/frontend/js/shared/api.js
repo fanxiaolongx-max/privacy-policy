@@ -1,74 +1,83 @@
 /**
  * shared/api.js - 前端统一 API 请求模块
- * 所有对后端的 fetch 调用都通过此模块，方便统一管理 base URL 和错误处理
  */
 
 const API_BASE = window.location.origin;
 
-async function apiGet(path) {
-    const res = await fetch(`${API_BASE}${path}`);
+function getAuthHeaders() {
+    const headers = { 'Content-Type': 'application/json' };
+    const token = localStorage.getItem('tools_token');
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
+}
+
+async function handleResponse(res) {
+    if (res.status === 401) {
+        // Clear token and redirect to login
+        localStorage.removeItem('tools_token');
+        localStorage.removeItem('tools_user');
+        localStorage.removeItem('tools_role');
+        if (window.location.pathname !== '/login.html') {
+            window.location.href = '/login.html';
+        }
+    }
+    
     if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(`HTTP ${res.status} - ${body.error || path}`);
+        throw new Error(body.error || `HTTP ${res.status}`);
     }
     return res.json();
 }
 
-async function apiPost(path, body) {
-    const res = await fetch(`${API_BASE}${path}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-    });
-    if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        throw new Error(`HTTP ${res.status} - ${errBody.error || path}`);
+const API = {
+    get: async function(path) {
+        const res = await fetch(`${API_BASE}${path}`, {
+            headers: {
+                ...getAuthHeaders()
+            }
+        });
+        return handleResponse(res);
+    },
+    post: async function(path, body) {
+        const res = await fetch(`${API_BASE}${path}`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(body)
+        });
+        return handleResponse(res);
+    },
+    put: async function(path, body) {
+        const res = await fetch(`${API_BASE}${path}`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(body)
+        });
+        return handleResponse(res);
+    },
+    delete: async function(path) {
+        const res = await fetch(`${API_BASE}${path}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
+        return handleResponse(res);
+    },
+    patch: async function(path, body) {
+        const res = await fetch(`${API_BASE}${path}`, {
+            method: 'PATCH',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(body)
+        });
+        return handleResponse(res);
+    },
+    logHistory: async function(tool, action, detail = '') {
+        try {
+            await this.post('/api/upload/history', { tool, action, detail });
+        } catch (e) {
+            // 历史记录失败不影响主流程
+        }
     }
-    return res.json();
-}
+};
 
-async function apiPut(path, body) {
-    const res = await fetch(`${API_BASE}${path}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-    });
-    if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        throw new Error(`HTTP ${res.status} - ${errBody.error || path}`);
-    }
-    return res.json();
-}
-
-async function apiDelete(path) {
-    const res = await fetch(`${API_BASE}${path}`, { method: 'DELETE' });
-    if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        throw new Error(`HTTP ${res.status} - ${errBody.error || path}`);
-    }
-    return res.json();
-}
-
-async function apiPatch(path, body) {
-    const res = await fetch(`${API_BASE}${path}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-    });
-    if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        throw new Error(`HTTP ${res.status} - ${errBody.error || path}`);
-    }
-    return res.json();
-}
-
-// 记录操作历史到服务端
-async function logHistory(tool, action, detail = '') {
-    try {
-        await apiPost('/api/upload/history', { tool, action, detail });
-    } catch (e) {
-        // 历史记录失败不影响主流程
-    }
-}
-
-window.API = { get: apiGet, post: apiPost, put: apiPut, delete: apiDelete, patch: apiPatch, logHistory };
+window.API = API;
