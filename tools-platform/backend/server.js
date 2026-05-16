@@ -61,6 +61,9 @@ app.get('/uivf12', (req, res) => {
 app.get('/sla', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/pages/sla.html'));
 });
+app.get('/report', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/pages/report.html'));
+});
 
 // ============================================================
 // 健康检查

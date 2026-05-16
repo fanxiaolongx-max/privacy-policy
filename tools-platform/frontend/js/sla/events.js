@@ -147,23 +147,121 @@ function populateMetricSelects(secId) {
     const state = AppState[secId];
     let htmlX = '<option value="">1. 当此列(X)...</option>';
     let htmlZ = '<option value="">3. 则提取该行此列(Z)的值</option>';
-    state.orderedHeaders.forEach(h => { htmlX += `<option value="${escapeHTML(h)}">${escapeHTML(h)}</option>`; htmlZ += `<option value="${escapeHTML(h)}">${escapeHTML(h)}</option>`; });
+    let htmlCX = '<option value="">1. 筛选条件列(X)... (选填)</option>';
+    let htmlCZ = '<option value="">3. 目标统计列(Z)</option>';
+    
+    state.orderedHeaders.forEach(h => {
+        const hSafe = escapeHTML(h);
+        htmlX += `<option value="${hSafe}">${hSafe}</option>`;
+        htmlZ += `<option value="${hSafe}">${hSafe}</option>`;
+        htmlCX += `<option value="${hSafe}">${hSafe}</option>`;
+        htmlCZ += `<option value="${hSafe}">${hSafe}</option>`;
+    });
+    
     document.getElementById(`m-colx-${secId}`).innerHTML = htmlX;
     document.getElementById(`m-colz-${secId}`).innerHTML = htmlZ;
+    const ccolx = document.getElementById(`m-c-colx-${secId}`); if (ccolx) ccolx.innerHTML = htmlCX;
+    const ccolz = document.getElementById(`m-c-colz-${secId}`); if (ccolz) ccolz.innerHTML = htmlCZ;
+
+    // Populate Parents
+    let parentHtml = '<option value="">作为主指标独立展示</option>';
+    Object.keys(AppState).forEach(sId => {
+        const s = AppState[sId];
+        if (s.customMetrics) {
+            s.customMetrics.forEach(r => {
+                const titleStr = s.title || sId;
+                parentHtml += `<option value="${sId}|${r.id}">作为 [${escapeHTML(r.label)}] 的子指标 (归属表: ${escapeHTML(titleStr)})</option>`;
+            });
+        }
+    });
+    const parentSel = document.getElementById(`m-parent-${secId}`);
+    if (parentSel) {
+        parentSel.innerHTML = parentHtml;
+        parentSel.value = '';
+        const catSel = document.getElementById(`m-cat-${secId}`);
+        if (catSel) catSel.style.display = 'none';
+    }
+
+    // Populate Categories
+    const cats = window.GlobalCategories || ['TE', 'ORG', 'ET', 'VDF'];
+    let catHtml = '<option value="">选择分类</option>';
+    cats.forEach(c => { catHtml += `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`; });
+    const catSel = document.getElementById(`m-cat-${secId}`);
+    if (catSel) catSel.innerHTML = catHtml;
 }
 
 function addMetricRule(secId) {
-    const colX = document.getElementById(`m-colx-${secId}`).value;
-    const valY = document.getElementById(`m-valy-${secId}`).value.trim();
-    const colZ = document.getElementById(`m-colz-${secId}`).value;
-    const label = document.getElementById(`m-label-${secId}`).value.trim();
+    const typeEl = document.querySelector(`input[name="m-type-${secId}"]:checked`);
+    const type = typeEl ? typeEl.value : 'extract';
+    
+    let colX, valY, colZ, valK;
+    if (type === 'extract') {
+        colX = document.getElementById(`m-colx-${secId}`).value;
+        valY = document.getElementById(`m-valy-${secId}`).value.trim();
+        colZ = document.getElementById(`m-colz-${secId}`).value;
+        valK = '';
+        if (!colX || !valY || !colZ) { alert('请将提取模式的 X/Y/Z 列填写完整！'); return; }
+    } else {
+        const cx = document.getElementById(`m-c-colx-${secId}`);
+        const cy = document.getElementById(`m-c-valy-${secId}`);
+        const cz = document.getElementById(`m-c-colz-${secId}`);
+        const ck = document.getElementById(`m-c-valk-${secId}`);
+        colX = cx ? cx.value : '';
+        valY = cy ? cy.value.trim() : '';
+        colZ = cz ? cz.value : '';
+        valK = ck ? ck.value.trim() : '';
+        if (!colZ || !valK) { alert('请将统计/占比模式的 Z/K 填写完整！'); return; }
+    }
+
+    let label = document.getElementById(`m-label-${secId}`).value.trim();
     const color = document.getElementById(`m-color-${secId}`).value;
-    if (!colX || !valY || !colZ || !label) { alert('请将规则的 X/Y/Z 列及指标名称填写完整！'); return; }
-    const ruleId = 'm_' + new Date().getTime();
-    AppState[secId].customMetrics.push({ id: ruleId, colX, valY, colZ, label, color });
-    SLAPrefs.savePrefs(secId); renderMetricList(secId); evaluateAllMetrics();
-    document.getElementById(`m-valy-${secId}`).value = '';
+    const parentVal = document.getElementById(`m-parent-${secId}`) ? document.getElementById(`m-parent-${secId}`).value : '';
+    const category = document.getElementById(`m-cat-${secId}`) ? document.getElementById(`m-cat-${secId}`).value : '';
+
+    if (parentVal && !category) { alert('作为子指标时必须选择分类！'); return; }
+    if (!parentVal && !label) { alert('请输入主指标名称！'); return; }
+
+    if (parentVal && !label) {
+        const [parentSecId, parentRuleId] = parentVal.split('|');
+        const parentState = AppState[parentSecId];
+        if (parentState) {
+            const parent = parentState.customMetrics.find(r => r.id === parentRuleId);
+            if (parent) {
+                label = parent.label; // inherit parent's label
+            }
+        }
+    }
+
+    const rule = {
+        id: 'm_' + new Date().getTime(),
+        type, colX, valY, colZ, valK, label, color,
+        sourceSecId: secId
+    };
+
+    if (parentVal) {
+        const [parentSecId, parentRuleId] = parentVal.split('|');
+        const parentState = AppState[parentSecId];
+        if (parentState) {
+            const parent = parentState.customMetrics.find(r => r.id === parentRuleId);
+            if (parent) {
+                if (!parent.subMetrics) parent.subMetrics = [];
+                rule.category = category;
+                parent.subMetrics.push(rule);
+                SLAPrefs.savePrefs(parentSecId);
+                if (parentSecId !== secId) {
+                    renderMetricList(parentSecId);
+                }
+            }
+        }
+    } else {
+        AppState[secId].customMetrics.push(rule);
+        SLAPrefs.savePrefs(secId);
+    }
+
+    renderMetricList(secId); evaluateAllMetrics();
     document.getElementById(`m-label-${secId}`).value = '';
+    const cy = document.getElementById(`m-c-valy-${secId}`); if(cy) cy.value = '';
+    const ck = document.getElementById(`m-c-valk-${secId}`); if(ck) ck.value = '';
 }
 
 window.deleteMetricRule = function(secId, ruleId) {
@@ -179,51 +277,45 @@ window.deleteSubMetricRule = function(secId, parentRuleId, subIndex) {
     }
 };
 
-window.showSubMetricForm = function(secId, ruleId) {
-    const form = document.getElementById(`sub-metric-form-${secId}-${ruleId}`);
-    if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
-};
-
-window.addSubMetricRule = function(secId, ruleId) {
-    const cat = document.getElementById(`sm-cat-${secId}-${ruleId}`).value;
-    const colX = document.getElementById(`sm-colx-${secId}-${ruleId}`).value;
-    const valY = document.getElementById(`sm-valy-${secId}-${ruleId}`).value.trim();
-    const colZ = document.getElementById(`sm-colz-${secId}-${ruleId}`).value;
-    
-    if (!cat || !colX || !valY || !colZ) { alert('请将子指标的分类及X/Y/Z填写完整！'); return; }
-    
-    const parent = AppState[secId].customMetrics.find(r => r.id === ruleId);
-    if (parent) {
-        if (!parent.subMetrics) parent.subMetrics = [];
-        parent.subMetrics.push({ category: cat, colX, valY, colZ });
-        SLAPrefs.savePrefs(secId); renderMetricList(secId); evaluateAllMetrics();
-    }
-};
-
 function renderMetricList(secId) {
     const state = AppState[secId];
     const list = document.getElementById(`m-list-${secId}`);
     if (!state.customMetrics.length) { list.innerHTML = '<div style="color:#aaa;font-size:12px;text-align:center;">尚无推送规则</div>'; return; }
     
     let html = '';
-    const cats = window.GlobalCategories || ['TE', 'ORG', 'ET', 'VDF'];
-    const catOptions = cats.map(c => `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join('');
-    
-    let colOptions = '<option value="">选择列...</option>';
-    state.orderedHeaders.forEach(h => { colOptions += `<option value="${escapeHTML(h)}">${escapeHTML(h)}</option>`; });
-
     state.customMetrics.forEach(r => {
         let subHtml = '';
         if (r.subMetrics && r.subMetrics.length > 0) {
             subHtml = `<div style="margin-top:6px; padding-left: 10px; border-left: 2px solid #e1bee7;">`;
             r.subMetrics.forEach((sm, idx) => {
+                let sourceNote = (sm.sourceSecId && sm.sourceSecId !== secId) 
+                    ? `<span style="color:#d32f2f;font-weight:bold;">(跨表数据源: ${escapeHTML(AppState[sm.sourceSecId]?.title || sm.sourceSecId)})</span> ` 
+                    : '';
+                let smDesc = '';
+                if (sm.type === 'count') {
+                    smDesc = `统计: ${sm.colX ? `[${escapeHTML(sm.colX)}]含'${escapeHTML(sm.valY)}'且` : ''}[${escapeHTML(sm.colZ)}]含'${escapeHTML(sm.valK)}'的数量`;
+                } else if (sm.type === 'ratio') {
+                    smDesc = `占比: [${escapeHTML(sm.colZ)}]含'${escapeHTML(sm.valK)}' / ${sm.colX ? `[${escapeHTML(sm.colX)}]含'${escapeHTML(sm.valY)}'` : '总行数'}`;
+                } else {
+                    smDesc = `IF [${escapeHTML(sm.colX)}] 包含 '${escapeHTML(sm.valY)}' ➔ SHOW [${escapeHTML(sm.colZ)}]`;
+                }
+                
                 subHtml += `
                 <div style="font-size:11px; color:#555; background: #fafafa; padding: 4px; margin-bottom: 4px; border-radius: 4px; position: relative;">
                     <button onclick="deleteSubMetricRule('${secId}', '${r.id}', ${idx})" style="position:absolute; right:4px; top:4px; border:none; background:none; color:#d32f2f; cursor:pointer;">✖</button>
-                    <b>[${escapeHTML(sm.category)}]</b>: IF [${escapeHTML(sm.colX)}] 包含 '${escapeHTML(sm.valY)}' ➔ SHOW [${escapeHTML(sm.colZ)}]
+                    <b>[${escapeHTML(sm.category)}] ${escapeHTML(sm.label)}</b> ${sourceNote}: <br/>${smDesc}
                 </div>`;
             });
             subHtml += `</div>`;
+        }
+
+        let rDesc = '';
+        if (r.type === 'count') {
+            rDesc = `统计: ${r.colX ? `[${escapeHTML(r.colX)}]含'${escapeHTML(r.valY)}'且` : ''}[${escapeHTML(r.colZ)}]含'${escapeHTML(r.valK)}'的数量`;
+        } else if (r.type === 'ratio') {
+            rDesc = `占比: [${escapeHTML(r.colZ)}]含'${escapeHTML(r.valK)}' / ${r.colX ? `[${escapeHTML(r.colX)}]含'${escapeHTML(r.valY)}'` : '总行数'}`;
+        } else {
+            rDesc = `IF [${escapeHTML(r.colX)}] 包含 '${escapeHTML(r.valY)}' <br>➔ SHOW [${escapeHTML(r.colZ)}]`;
         }
 
         html += `
@@ -231,20 +323,11 @@ function renderMetricList(secId) {
             <div style="display:flex; justify-content: space-between; align-items: center;">
                 <div style="font-weight:bold;color:#4a90e2;font-size:13px;">[${escapeHTML(r.label)}]</div>
                 <div>
-                    <button class="action-btn" onclick="showSubMetricForm('${secId}', '${r.id}')" style="font-size:11px; padding:2px 6px; background:#e1bee7; color:#6a1b9a;">➕ 子指标</button>
-                    <button class="action-btn" onclick="deleteMetricRule('${secId}', '${r.id}')" style="font-size:11px; padding:2px 6px; background:#ffebee; color:#c62828;">✖</button>
+                    <button class="action-btn" onclick="deleteMetricRule('${secId}', '${r.id}')" style="font-size:11px; padding:2px 6px; background:#ffebee; color:#c62828;">✖ 删除</button>
                 </div>
             </div>
-            <div style="font-size:11px;color:#666;margin-top:4px;">IF [${escapeHTML(r.colX)}] 包含 '${escapeHTML(r.valY)}' <br>➔ SHOW [${escapeHTML(r.colZ)}]</div>
+            <div style="font-size:11px;color:#666;margin-top:4px;">${rDesc}</div>
             ${subHtml}
-            
-            <div id="sub-metric-form-${secId}-${r.id}" style="display:none; background: #f3e5f5; padding: 8px; border-radius: 4px; margin-top: 8px;">
-                <select id="sm-cat-${secId}-${r.id}" class="picker-search" style="margin-bottom:4px;"><option value="">选择分类</option>${catOptions}</select>
-                <select id="sm-colx-${secId}-${r.id}" class="picker-search" style="margin-bottom:4px;">${colOptions}</select>
-                <input type="text" id="sm-valy-${secId}-${r.id}" class="picker-search" placeholder="包含内容(Y)..." style="margin-bottom:4px;">
-                <select id="sm-colz-${secId}-${r.id}" class="picker-search" style="margin-bottom:4px;">${colOptions}</select>
-                <button onclick="addSubMetricRule('${secId}', '${r.id}')" style="width:100%; padding:4px; background:#6a1b9a; color:white; border:none; border-radius:4px; font-size:11px; cursor:pointer;">保存子指标</button>
-            </div>
         </div>`;
     });
     list.innerHTML = html;

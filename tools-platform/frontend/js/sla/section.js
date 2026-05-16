@@ -204,20 +204,49 @@ function buildDOM(secId, title, themeColor) {
                     </div>
                     <div id="c-list-${secId}" class="picker-list" style="padding:0;"></div>
                 </div>
-                <div id="metrics-picker-${secId}" class="dropdown-menu" style="right:80px;width:320px;padding:12px;border-color:#9c27b0;">
+                <div id="metrics-picker-${secId}" class="dropdown-menu" style="right:80px;width:340px;padding:12px;border-color:#9c27b0;max-height:450px;overflow-y:auto;">
                     <div style="font-weight:bold;color:#8e44ad;font-size:12px;margin-bottom:8px;border-bottom:1px solid #f3e5f5;padding-bottom:5px;">📌 配置顶部悬浮指标推送规则：</div>
-                    <select id="m-colx-${secId}" class="picker-search" style="margin-bottom:6px;cursor:pointer;"><option value="">1. 当此列(X)...</option></select>
-                    <input type="text" id="m-valy-${secId}" class="picker-search" placeholder="2. 包含内容(Y)..." style="margin-bottom:6px;">
-                    <select id="m-colz-${secId}" class="picker-search" style="margin-bottom:6px;cursor:pointer;"><option value="">3. 则提取该行此列(Z)的值</option></select>
-                    <div style="display:flex;gap:6px;margin-bottom:8px;">
-                        <input type="text" id="m-label-${secId}" class="picker-search" placeholder="4. 指标展示名称 (如含'率'字自动转%)" style="margin-bottom:0;flex:1;">
+                    
+                    <div style="margin-bottom:8px; display:flex; gap:10px; font-size:12px;">
+                        <label><input type="radio" name="m-type-${secId}" value="extract" checked onclick="document.getElementById('m-extract-config-${secId}').style.display='block'; document.getElementById('m-count-config-${secId}').style.display='none';"> 提取单行数值</label>
+                        <label><input type="radio" name="m-type-${secId}" value="count" onclick="document.getElementById('m-extract-config-${secId}').style.display='none'; document.getElementById('m-count-config-${secId}').style.display='block';"> 统计满足次数</label>
+                        <label><input type="radio" name="m-type-${secId}" value="ratio" onclick="document.getElementById('m-extract-config-${secId}').style.display='none'; document.getElementById('m-count-config-${secId}').style.display='block';"> 统计占比</label>
+                    </div>
+
+                    <!-- 提取模式 -->
+                    <div id="m-extract-config-${secId}">
+                        <select id="m-colx-${secId}" class="picker-search" style="margin-bottom:6px;cursor:pointer;"><option value="">1. 当此列(X)...</option></select>
+                        <input type="text" id="m-valy-${secId}" class="picker-search" placeholder="2. 包含内容(Y)..." style="margin-bottom:6px;">
+                        <select id="m-colz-${secId}" class="picker-search" style="margin-bottom:6px;cursor:pointer;"><option value="">3. 则提取该行此列(Z)的值</option></select>
+                    </div>
+
+                    <!-- 统计模式/占比模式 -->
+                    <div id="m-count-config-${secId}" style="display:none;">
+                        <select id="m-c-colx-${secId}" class="picker-search" style="margin-bottom:6px;cursor:pointer;"><option value="">1. 筛选条件列(X)... (选填)</option></select>
+                        <input type="text" id="m-c-valy-${secId}" class="picker-search" placeholder="2. 筛选X列包含内容(Y)... (选填)" style="margin-bottom:6px;">
+                        <select id="m-c-colz-${secId}" class="picker-search" style="margin-bottom:6px;cursor:pointer;"><option value="">3. 目标统计列(Z)</option></select>
+                        <input type="text" id="m-c-valk-${secId}" class="picker-search" placeholder="4. 统计Z列中包含关键字(K)的行数" style="margin-bottom:6px;">
+                    </div>
+
+                    <div id="m-label-container-${secId}" style="display:flex;gap:6px;margin-bottom:8px;">
+                        <input type="text" id="m-label-${secId}" class="picker-search" placeholder="指标展示名称" style="margin-bottom:0;flex:1;">
                         <select id="m-color-${secId}" class="picker-search" style="margin-bottom:0;width:80px;cursor:pointer;">
                             <option value="">颜色</option><option value="success">绿(好)</option>
                             <option value="danger">红(危)</option><option value="warn">黄(警)</option>
                         </select>
                     </div>
-                    <button id="add-metric-btn-${secId}" style="width:100%;padding:6px;background:#8e44ad;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:bold;">➕ 绑定到顶部数据舱</button>
-                    <div id="m-list-${secId}" style="margin-top:10px;max-height:150px;overflow-y:auto;border-top:1px dashed #eee;padding-top:8px;"></div>
+                    
+                    <div style="display:flex;gap:6px;margin-bottom:8px;">
+                        <select id="m-parent-${secId}" class="picker-search" style="margin-bottom:0;flex:1;cursor:pointer;" onchange="document.getElementById('m-cat-${secId}').style.display = this.value ? 'block' : 'none'; document.getElementById('m-label-container-${secId}').style.display = this.value ? 'none' : 'flex';">
+                            <option value="">作为主指标独立展示</option>
+                        </select>
+                        <select id="m-cat-${secId}" class="picker-search" style="margin-bottom:0;width:90px;cursor:pointer;display:none;">
+                            <option value="">选择分类</option>
+                        </select>
+                    </div>
+
+                    <button id="add-metric-btn-${secId}" style="width:100%;padding:6px;background:#8e44ad;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:bold;">➕ 保存规则</button>
+                    <div id="m-list-${secId}" style="margin-top:10px;border-top:1px dashed #eee;padding-top:8px;"></div>
                 </div>
             </div>
         </div>

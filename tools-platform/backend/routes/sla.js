@@ -75,6 +75,19 @@ router.delete('/snapshots/:id', (req, res) => {
     res.json({ success: true });
 });
 
+// PUT /api/sla/snapshots/:id
+router.put('/snapshots/:id', (req, res) => {
+    let snapshots = readJSON(SNAPSHOTS_FILE, []);
+    const idx = snapshots.findIndex(s => s.id === req.params.id);
+    if (idx !== -1) {
+        snapshots[idx] = { ...snapshots[idx], ...req.body };
+        writeJSON(SNAPSHOTS_FILE, snapshots);
+        res.json({ success: true });
+    } else {
+        res.status(404).json({ error: 'Snapshot not found' });
+    }
+});
+
 // ──────────────────────────────────────────────────────────
 // 表格偏好设置（列宽、显示列、排序、自定义指标规则）
 // 使用 schemaHash 作为 key，与原前端逻辑对应

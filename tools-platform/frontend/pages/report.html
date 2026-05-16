@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>专业报表看板 - Tools Platform</title>
+    <link rel="stylesheet" href="/css/shared.css">
+    <style>
+        body { background: #f4f6f8; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #333; }
+        .page-container { padding-top: calc(var(--navbar-h) + 20px); max-width: 1400px; margin: 0 auto; padding-left: 20px; padding-right: 20px; padding-bottom: 40px; }
+        
+        .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 15px; }
+        .controls h2 { margin: 0; color: #2c3e50; font-size: 24px; }
+        .controls select { padding: 8px 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; background: #fff; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        #snapshot-select { min-width: 250px; }
+        
+        .dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
+        
+        .card { background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); padding: 24px; overflow: hidden; }
+        .card-title { font-size: 18px; font-weight: 700; margin-top: 0; margin-bottom: 20px; color: #1a237e; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #e8eaf6; padding-bottom: 12px; }
+        
+        .ranking-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .ranking-table th, .ranking-table td { padding: 16px 12px; text-align: center; border-bottom: 1px solid #f0f0f0; }
+        .ranking-table th { background: #fafafa; font-weight: 600; color: #555; position: sticky; top: 0; z-index: 10; font-size: 14px; }
+        .ranking-table tr:hover td { background: #f8f9fa; }
+        .ranking-table tr:last-child td { border-bottom: none; }
+        
+        .cat-name { font-weight: 700; color: #2c3e50; font-size: 16px; }
+        .rank-medal { font-size: 20px; }
+        
+        .score-badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 18px; font-weight: 800; background: #e3f2fd; color: #1565c0; }
+        .score-badge.danger { background: #ffebee; color: #c62828; }
+        .score-badge.success { background: #e8f5e9; color: #2e7d32; }
+        
+        .matrix-container { overflow: auto; max-height: 60vh; margin-top: 10px; border-radius: 8px; border: 1px solid #eee; }
+        .matrix-table { width: 100%; border-collapse: separate; border-spacing: 0; white-space: nowrap; }
+        .matrix-table th, .matrix-table td { padding: 14px 12px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; text-align: center; font-size: 14px; }
+        .matrix-table th { background: #f8f9fa; color: #444; font-weight: 600; position: sticky; top: 0; z-index: 10; border-top: 1px solid #eee; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .matrix-table th:first-child, .matrix-table td:first-child { border-left: 1px solid #eee; }
+        
+        .val-good { color: #2e7d32; font-weight: 600; }
+        .val-warn { color: #d32f2f; font-weight: 700; background: #ffebee; padding: 4px 8px; border-radius: 6px; display: inline-block; cursor: help; }
+        .val-none { color: #aaa; }
+        
+        .manual-score { width: 60px; padding: 6px; text-align: center; border: 1px dashed #bbb; border-radius: 6px; background: #fafafa; font-family: monospace; font-size: 14px; }
+        .manual-score:focus { border-color: #4a90e2; outline: none; background: #fff; }
+        
+        .empty-state { text-align: center; padding: 80px 20px; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .empty-state h3 { color: #455a64; margin-bottom: 10px; }
+        .empty-state p { color: #888; }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <div class="controls">
+            <h2>📈 专业报表看板</h2>
+            <div style="display:flex;gap:20px;align-items:center;">
+                <div>
+                    <span style="font-size:14px;color:#666;margin-right:6px;">考核月份：</span>
+                    <select id="target-month-select" onchange="renderCurrentSnapshot()"></select>
+                </div>
+                <div>
+                    <span style="font-size:14px;color:#666;margin-right:6px;">历史快照：</span>
+                    <select id="snapshot-select" onchange="loadSelectedSnapshot()"></select>
+                </div>
+                <button onclick="openWeightModal()" style="padding: 8px 16px; background: #fff; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); color: #333; font-weight: 600;">⚖️ 指标权重配置</button>
+                <button onclick="openAddMetricModal()" style="padding: 8px 16px; background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); color: #2e7d32; font-weight: 600;">➕ 手动增加指标</button>
+            </div>
+        </div>
+        
+        <!-- Weight Config Modal -->
+        <div id="weight-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:999; align-items:center; justify-content:center;">
+            <div style="background:#fff; border-radius:12px; width:500px; max-width:90%; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
+                <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:12px; margin-bottom:16px;">⚖️ 配置指标权重</h3>
+                <div id="weight-modal-list" style="max-height:60vh; overflow-y:auto; margin-bottom:16px; display:flex; flex-direction:column; gap:10px;">
+                    <!-- populated by js -->
+                </div>
+                <div style="text-align:right; border-top:1px solid #eee; padding-top:16px;">
+                    <button onclick="closeWeightModal()" style="padding:8px 16px; border:1px solid #ccc; background:#fff; border-radius:6px; cursor:pointer; margin-right:10px;">取消</button>
+                    <button onclick="saveWeights()" style="padding:8px 16px; border:none; background:#0277bd; color:#fff; border-radius:6px; cursor:pointer; font-weight:bold;">保存并重新计算</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Manual Metric Modal -->
+        <div id="add-metric-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:999; align-items:center; justify-content:center;">
+            <div style="background:#fff; border-radius:12px; width:600px; max-width:90%; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
+                <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:12px; margin-bottom:16px; color:#2e7d32;">➕ 手动增加指标</h3>
+                <div style="max-height:60vh; overflow-y:auto; margin-bottom:16px; padding-right:10px;" id="add-metric-form">
+                    <!-- populated by js -->
+                </div>
+                <div style="text-align:right; border-top:1px solid #eee; padding-top:16px;">
+                    <button onclick="closeAddMetricModal()" style="padding:8px 16px; border:1px solid #ccc; background:#fff; border-radius:6px; cursor:pointer; margin-right:10px;">取消</button>
+                    <button onclick="saveManualMetric()" style="padding:8px 16px; border:none; background:#2e7d32; color:#fff; border-radius:6px; cursor:pointer; font-weight:bold;">保存指标到快照</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="report-content" class="dashboard-grid">
+            <div class="empty-state">
+                <h3>⏳ 正在加载快照数据...</h3>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/js/shared/api.js"></script>
+    <script src="/js/shared/toast.js"></script>
+    <script src="/js/shared/navbar.js"></script>
+    <script src="/js/report/report.js"></script>
+</body>
+</html>
