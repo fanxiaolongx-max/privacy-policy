@@ -525,6 +525,7 @@ function renderReport(snap) {
 
     content.innerHTML = rankingHtml + matrixHtml + adjustHtml + rulesHtml;
     window._currentCatData = catData;
+    window._currentOrderedMetrics = orderedMetrics;
     
     // Setup matrix filters
     setupMatrixFilters();
@@ -1092,24 +1093,68 @@ window.showSysScoreDetails = function(cat) {
     
     let passHtml = '';
     let failHtml = '';
-    let excludedHtml = '';
+    // 排除项拆成两桶
+    let onlyMissingHtml = '';  // ⚠️ 仅本群缺考：其他客户群有数据，本群没有
+    let allExcludedHtml = '';  // ⚪ 全员豁免：所有客户群都无数据 / 未配置目标
     
     const targetMonth = document.getElementById('target-month-select').value;
-    
-    Object.keys(d.values).forEach(mLabel => {
-        const cell = d.values[mLabel];
+    const allCatData = window._currentCatData || {};
+    const allMetrics = window._currentOrderedMetrics || [];
+
+    allMetrics.forEach(m => {
+        const mLabel = m.label;
+        const cell = d.values[mLabel]; // 可能为 undefined（无 subMetrics 的指标）
         const targetData = labelToTargetMap[mLabel];
         const weight = (targetData && targetData.weight !== undefined) ? parseFloat(targetData.weight) : 1;
         const hasTarget = targetData && targetData[targetMonth] !== undefined && targetData[targetMonth] !== '' && weight > 0;
-        
+
         if (!hasTarget || !cell || cell.raw === '--') {
-            excludedHtml += `<li><span style="color:#888;">${escapeHTML(mLabel)}</span> (未考核或无数据)</li>`;
+            // 判断：是否有其他客户群对这个指标有有效数据
+            const otherHasData = Object.keys(allCatData).some(otherCat => {
+                if (otherCat === cat) return false;
+                const otherCell = allCatData[otherCat].values[mLabel];
+                return otherCell && otherCell.raw !== '--' && !isNaN(otherCell.num);
+            });
+
+            if (!hasTarget) {
+                // 未配置目标/权重为0 → 全局性免考，归入全员豁免
+                allExcludedHtml += `<li><span style="color:#999;">${escapeHTML(mLabel)}</span> <span style="color:#ccc; font-size:11px;">(未配置目标值或权重为0)</span></li>`;
+            } else if (otherHasData) {
+                // 其他客户群有数据，本群独缺 → 仅本群缺考
+                onlyMissingHtml += `<li><span style="color:#b45309;">${escapeHTML(mLabel)}</span> <span style="color:#d97706; font-size:11px;">(本群暂无数据)</span></li>`;
+            } else {
+                // 所有客户群都没有这个指标的数据 → 全员豁免
+                allExcludedHtml += `<li><span style="color:#999;">${escapeHTML(mLabel)}</span> <span style="color:#ccc; font-size:11px;">(全员暂无数据)</span></li>`;
+            }
         } else if (cell.isFailing) {
             failHtml += `<li><span style="color:#d32f2f;">${escapeHTML(mLabel)}</span> (权重: ${weight}, 差值: ${cell.gapStr})</li>`;
         } else {
             passHtml += `<li><span style="color:#2e7d32;">${escapeHTML(mLabel)}</span> (权重: ${weight})</li>`;
         }
     });
+
+    // 拼接排除项区块：仅在有内容时才渲染对应子块
+    const onlyMissingBlock = onlyMissingHtml ? `
+        <div style="margin-bottom:8px;">
+            <div style="color:#b45309; font-size:11px; font-weight:bold; margin-bottom:4px; display:flex; align-items:center; gap:4px;">
+                <span>⚠️ 仅本群缺考</span>
+                <span style="color:#d97706; font-weight:normal;">— 其他客户群有数据，本群暂无</span>
+            </div>
+            <ul style="margin:0; padding-left:15px;">${onlyMissingHtml}</ul>
+        </div>` : '';
+
+    const allExcludedBlock = allExcludedHtml ? `
+        <div>
+            <div style="color:#999; font-size:11px; font-weight:bold; margin-bottom:4px; display:flex; align-items:center; gap:4px;">
+                <span>⚪ 全员豁免</span>
+                <span style="color:#bbb; font-weight:normal;">— 所有客户群均不涉及此指标</span>
+            </div>
+            <ul style="margin:0; padding-left:15px;">${allExcludedHtml}</ul>
+        </div>` : '';
+
+    const excludedSection = (onlyMissingHtml || allExcludedHtml)
+        ? `${onlyMissingBlock}${onlyMissingHtml && allExcludedHtml ? '<hr style="border:none; border-top:1px dashed #e0e0e0; margin:8px 0;">' : ''}${allExcludedBlock}`
+        : '<li style="color:#999;">无</li>';
 
     showScoreDetails(`📈 [${escapeHTML(d.name)}] 系统得分计算明细`, `
         <div style="background:#f5f8fa; padding:12px; border-radius:6px; text-align:center; margin-bottom:15px; border:1px solid #e1e8ed;">
@@ -1123,7 +1168,7 @@ window.showSysScoreDetails = function(cat) {
             <span style="font-size:18px; color:#333;"> = </span>
             <span style="color:#2c3e50; font-weight:bold; font-size:22px;">${d.baseScore}</span>
         </div>
-        <div style="display:flex; gap:10px;">
+        <div style="display:flex; gap:10px; margin-bottom:10px;">
             <div style="flex:1; background:#f1f8e9; padding:10px; border-radius:6px; border:1px solid #c8e6c9;">
                 <div style="color:#2e7d32; font-weight:bold; border-bottom:1px solid #c8e6c9; padding-bottom:5px; margin-bottom:8px;">✅ 达标项 (获权 ${d.earnedScore})</div>
                 <ul style="margin:0; padding-left:15px; font-size:12px; color:#333;">${passHtml || '<li style="color:#999;">无</li>'}</ul>
@@ -1133,9 +1178,9 @@ window.showSysScoreDetails = function(cat) {
                 <ul style="margin:0; padding-left:15px; font-size:12px; color:#333;">${failHtml || '<li style="color:#999;">无</li>'}</ul>
             </div>
         </div>
-        <div style="margin-top:10px; background:#f5f5f5; padding:10px; border-radius:6px; border:1px solid #ddd;">
-            <div style="color:#777; font-weight:bold; border-bottom:1px solid #ddd; padding-bottom:5px; margin-bottom:8px;">⚪ 排除项 (不参与折算)</div>
-            <ul style="margin:0; padding-left:15px; font-size:12px; color:#666;">${excludedHtml || '<li style="color:#999;">无</li>'}</ul>
+        <div style="background:#fafafa; padding:10px; border-radius:6px; border:1px solid #e0e0e0; font-size:12px; color:#666;">
+            <div style="color:#777; font-weight:bold; border-bottom:1px solid #e0e0e0; padding-bottom:6px; margin-bottom:8px;">🚫 不参与折算</div>
+            ${excludedSection}
         </div>
     `);
 };
