@@ -187,7 +187,7 @@
   "sla_prefs_other_v7jtrw": {
     "visibleHeaders": [
       "版本标识",
-      "代表处",
+      "network_name",
       "今年"
     ],
     "columnWidths": {
@@ -198,12 +198,15 @@
     "sortAsc": true,
     "customMetrics": [
       {
-        "id": "m_1778708121644",
-        "colX": "代表处",
+        "id": "m_1779032494393",
+        "type": "extract",
+        "colX": "network_name",
         "valY": "总计",
         "colZ": "今年",
+        "valK": "",
         "label": "GUI拦截次数",
-        "color": ""
+        "color": "",
+        "sourceSecId": "other_v7jtrw"
       }
     ]
   },
@@ -787,7 +790,45 @@
         "valY": "总计",
         "colZ": "完成率",
         "label": "逃生演练完成率",
-        "color": ""
+        "color": "",
+        "subMetrics": [
+          {
+            "id": "m_1779040543662",
+            "type": "ratio",
+            "colX": "network",
+            "valY": "EG-Egypt Telecom",
+            "colZ": "risk_status",
+            "valK": "Closed",
+            "label": "逃生演练完成率",
+            "color": "",
+            "sourceSecId": "other_g6zjrl",
+            "category": "TE"
+          },
+          {
+            "id": "m_1779040580181",
+            "type": "ratio",
+            "colX": "network",
+            "valY": "EG-Egypt Orange",
+            "colZ": "risk_status",
+            "valK": "Closed",
+            "label": "逃生演练完成率",
+            "color": "",
+            "sourceSecId": "other_g6zjrl",
+            "category": "ORG"
+          },
+          {
+            "id": "m_1779040613115",
+            "type": "ratio",
+            "colX": "network",
+            "valY": "EG-Egypt Vodafone",
+            "colZ": "risk_status",
+            "valK": "Closed",
+            "label": "逃生演练完成率",
+            "color": "",
+            "sourceSecId": "other_g6zjrl",
+            "category": "VDF"
+          }
+        ]
       }
     ]
   },
@@ -1361,8 +1402,7 @@
   "sla_prefs_other_adofvo": {
     "visibleHeaders": [
       "版本标识",
-      "rep_name_cn_mp",
-      "network_name",
+      "customer_group",
       "使用账号总数",
       "已稽查账号数",
       "未稽查账号数",
@@ -1375,30 +1415,51 @@
     "sortAsc": true,
     "customMetrics": [
       {
-        "id": "m_1778791942405",
-        "colX": "rep_name_cn_mp",
+        "id": "m_1779032730680",
+        "type": "extract",
+        "colX": "customer_group",
         "valY": "总计",
         "colZ": "账号稽查率",
+        "valK": "",
         "label": "日志稽查率",
         "color": "",
+        "sourceSecId": "other_adofvo",
         "subMetrics": [
           {
-            "category": "TE",
-            "colX": "network_name",
+            "id": "m_1779032756230",
+            "type": "extract",
+            "colX": "customer_group",
             "valY": "EG-Egypt Telecom",
-            "colZ": "账号稽查率"
+            "colZ": "账号稽查率",
+            "valK": "",
+            "label": "日志稽查率",
+            "color": "",
+            "sourceSecId": "other_adofvo",
+            "category": "TE"
           },
           {
-            "category": "ORG",
-            "colX": "network_name",
+            "id": "m_1779032770850",
+            "type": "extract",
+            "colX": "customer_group",
             "valY": "EG-Egypt Orange",
-            "colZ": "账号稽查率"
+            "colZ": "账号稽查率",
+            "valK": "",
+            "label": "日志稽查率",
+            "color": "",
+            "sourceSecId": "other_adofvo",
+            "category": "ORG"
           },
           {
-            "category": "ET",
-            "colX": "network_name",
+            "id": "m_1779032787290",
+            "type": "extract",
+            "colX": "customer_group",
             "valY": "EG-Egypt ET",
-            "colZ": "账号稽查率"
+            "colZ": "账号稽查率",
+            "valK": "",
+            "label": "日志稽查率",
+            "color": "",
+            "sourceSecId": "other_adofvo",
+            "category": "ET"
           }
         ]
       }
@@ -1498,10 +1559,11 @@
     ],
     "columnWidths": {
       "origin_product": 121,
-      "remaining_processing_days": 74,
-      "ticket_close_due_date": 107,
+      "remaining_processing_days": 57,
+      "ticket_close_due_date": 154,
       "is_overdue": 54,
-      "risk_title": 293
+      "risk_title": 273,
+      "create_time": 109
     },
     "sortKey": "_SLA_",
     "sortAsc": true,
@@ -1636,5 +1698,28 @@
       "desc": "2分/次, 上限5分",
       "deleted": true
     }
-  ]
+  ],
+  "sla_prefs_other_g6zjrl": {
+    "visibleHeaders": [
+      "版本标识",
+      "task_id",
+      "product_line_cn",
+      "risk_status",
+      "creator",
+      "creator_name",
+      "current_handler_new",
+      "current_handler_name",
+      "risk_title",
+      "create_time",
+      "network",
+      "customer",
+      "close_by"
+    ],
+    "columnWidths": {
+      "customer": 188
+    },
+    "sortKey": null,
+    "sortAsc": true,
+    "customMetrics": []
+  }
 }

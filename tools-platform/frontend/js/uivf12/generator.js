@@ -190,7 +190,16 @@ function generateScript() {
         }
 
          function extractRows(obj) {
+             // Case 1: DataFab answerParamList 标准格式: { data: [{ data: [...], totalsData: {...} }] }
              if (obj && obj.data && Array.isArray(obj.data) && obj.data[0] && Array.isArray(obj.data[0].data)) return obj.data[0].data;
+             // Case 2: ADMS/NetCare 嵌套格式: { data: { data: [...], total: N } }
+             if (obj && obj.data && !Array.isArray(obj.data) && typeof obj.data === 'object') {
+                 if (Array.isArray(obj.data.data))   return obj.data.data;
+                 if (Array.isArray(obj.data.list))   return obj.data.list;
+                 if (Array.isArray(obj.data.items))  return obj.data.items;
+                 if (Array.isArray(obj.data.records)) return obj.data.records;
+             }
+             // Case 3: 顶层平铺格式: { results/items/list: [...] } 或 { data: [...] }
              let arr = obj.results || obj.items || obj.list || (obj.data && obj.data.results) || obj.data || [];
              return Array.isArray(arr) ? arr : (Array.isArray(obj) ? obj : [arr]);
          }
