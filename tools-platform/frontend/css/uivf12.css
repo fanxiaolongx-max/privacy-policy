@@ -158,3 +158,98 @@ textarea { flex: 1; resize: none; white-space: pre; overflow: auto; line-height:
 .output-label.console-label { color: var(--console); }
 
 .error-msg { color: #ff6b6b; font-size: 12px; margin-top: 6px; min-height: 16px; }
+
+/* ── 生成日志面板 ─────────────────────────────────────── */
+.gen-log-panel {
+    margin-top: 12px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+    transition: border-color 0.2s;
+}
+.gen-log-panel:has(#genLogBody[style*="block"]) { border-color: #555; }
+
+.gen-log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 14px;
+    cursor: pointer;
+    user-select: none;
+    background: #2a2a2b;
+    transition: background 0.2s;
+}
+.gen-log-header:hover { background: #333336; }
+
+.gen-log-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #aaa;
+}
+#genLogIcon { font-size: 9px; color: #666; transition: transform 0.2s; }
+#genLogIcon.open { transform: rotate(90deg); color: var(--cyber); }
+
+.gen-log-badge {
+    background: var(--primary);
+    color: #fff;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 1px 6px;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+}
+
+.gen-log-status {
+    font-size: 11px;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+.gen-log-status.ok   { background: rgba(76,175,80,0.15); color: #4CAF50; border: 1px solid #4CAF50; }
+.gen-log-status.err  { background: rgba(197,48,48,0.15);  color: #ff6b6b; border: 1px solid #ff6b6b; }
+.gen-log-status.busy { background: rgba(230,126,34,0.15); color: #e67e22; border: 1px solid #e67e22; }
+
+.gen-log-clear {
+    background: transparent;
+    border: 1px solid #555;
+    color: #888;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: 0.2s;
+    flex: none;
+}
+.gen-log-clear:hover { border-color: #ff6b6b; color: #ff6b6b; background: rgba(255,107,107,0.08); }
+
+.gen-log-body {
+    border-top: 1px solid var(--border);
+    max-height: 180px;
+    overflow-y: auto;
+}
+.gen-log-content {
+    padding: 8px 14px;
+    font-family: Consolas, monospace;
+    font-size: 11.5px;
+    line-height: 1.7;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+/* 日志行类型 */
+.log-line { display: flex; gap: 8px; align-items: baseline; }
+.log-ts   { color: #555; flex-shrink: 0; font-size: 10px; }
+.log-msg.info    { color: #9cdcfe; }
+.log-msg.success { color: #4CAF50; }
+.log-msg.warn    { color: #d7ba7d; }
+.log-msg.error   { color: #ff6b6b; }
+.log-msg.section { color: var(--cyber); font-weight: bold; }
+.log-msg.dim     { color: #666; }
+
