@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UIVF12 抓取引擎 v6.3 - Tools Platform</title>
+    <title>UIVF12 抓取引擎 v6.6 - Tools Platform</title>
     <meta name="description" content="UI.Vision 全能抓取引擎，自动化脚本工程中心，脚本云端仓库管理">
     <link rel="stylesheet" href="/css/shared.css">
     <link rel="stylesheet" href="/css/uivf12.css">
@@ -13,8 +13,8 @@
 <body id="uiv-page">
     <div class="page-content">
         <div class="uiv-title">
-            <span>🚀 自动化脚本工程中心 v6.4</span>
-            <span class="tag">全景透明日志 + 智能追溯版</span>
+            <span>🚀 自动化脚本工程中心 v6.6</span>
+            <span class="tag">多源融合 + Formula 权威版</span>
         </div>
 
         <div class="uiv-container">
@@ -119,6 +119,26 @@
                 <textarea id="consoleOutput" readonly placeholder="生成后显示纯浏览器 F12 直跑脚本..." style="flex:1;"></textarea>
             </div>
         </div>
+
+        <!-- ── 生成日志面板 ── -->
+        <div id="genLogPanel" class="gen-log-panel">
+            <div class="gen-log-header" onclick="UIVGenLog.toggle()">
+                <span class="gen-log-title">
+                    <span id="genLogIcon">▶</span>
+                    📋 生成日志
+                    <span id="genLogBadge" class="gen-log-badge" style="display:none;">0</span>
+                </span>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span id="genLogStatus" class="gen-log-status"></span>
+                    <button class="gen-log-clear" onclick="event.stopPropagation(); UIVGenLog.clear()">清空</button>
+                </div>
+            </div>
+            <div id="genLogBody" class="gen-log-body" style="display:none;">
+                <div id="genLogContent" class="gen-log-content">
+                    <span style="color:#555; font-size:12px;">等待生成...</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- 共享脚本 -->
@@ -128,6 +148,7 @@
     <!-- UIVF12 模块 -->
     <script src="/js/uivf12/workbench.js"></script>
     <script src="/js/uivf12/copy.js"></script>
+    <script src="/js/uivf12/genlog.js"></script>
     <script src="/js/uivf12/generator.js"></script>
     <script src="/js/uivf12/save.js"></script>
     <script src="/js/uivf12/sidebar.js"></script>

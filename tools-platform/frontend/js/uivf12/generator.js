@@ -1,11 +1,16 @@
 /**
  * uivf12/generator.js - 脚本生成引擎
  * 完整移植原版生成逻辑，生成 UIV 宏代码和 F12 控制台脚本
+ * 当前工具版本: v6.6
  */
+
+const TOOL_VERSION = 'v6.6';
 
 function generateScript() {
     const errorDiv = document.getElementById('errorMsg');
     errorDiv.innerText = '';
+    UIVGenLog.start();
+    UIVGenLog.section('引擎启动 · UIVF12 ' + TOOL_VERSION);
 
     if (document.getElementById('jsonInput').style.display !== 'none') {
         window.UIVWorkbench.formatAndAnalyzeJSON();
@@ -20,12 +25,14 @@ function generateScript() {
     const autoRuntimeMonth = document.getElementById('autoRuntimeMonth').checked;
 
     const parsedPayloadObj = window.UIVWorkbench.getParsedPayload();
-    if (!parsedPayloadObj) { errorDiv.innerText = '请先提供有效的 Payload JSON！'; return; }
+    if (!parsedPayloadObj) { errorDiv.innerText = '请先提供有效的 Payload JSON！'; UIVGenLog.error('Payload 为空，请先格式化输入'); UIVGenLog.done(false); return; }
 
     const platform = url.includes('datafab') ? 'DATAFAB' : (url.includes('netcare') ? 'NETCARE' : 'CUSTOM');
+    UIVGenLog.info('目标平台: ' + platform + '  |  URL: ' + url.substring(0, 60) + (url.length > 60 ? '...' : ''));
+    UIVGenLog.section('Payload 解析');
     let payloadClone = JSON.parse(JSON.stringify(parsedPayloadObj));
 
-    if (platform === 'NETCARE') payloadClone.need_summary = true;
+    if (platform === 'NETCARE') { payloadClone.need_summary = true; UIVGenLog.dim('NetCare 模式：已自动注入 need_summary=true'); }
 
     let hasCPC = false, hasNID = false, hasMonthFilter = false;
 
@@ -62,20 +69,37 @@ function generateScript() {
     }
     traversePayload(payloadClone);
 
+    // 输出嗅探结果
+    UIVGenLog.info('CPC 嵌入点: ' + (hasCPC ? '✅ 检测到，已转为动态占位符' : '未检测到'));
+    UIVGenLog.info('NID 嵌入点: ' + (hasNID  ? '✅ 检测到，已转为动态占位符' : '未检测到'));
+    UIVGenLog.info('月份裂变: '  + (hasMonthFilter ? '✅ 已开启 [' + (autoRuntimeMonth ? '当月 + 上月双跨度运行' : '单期模式') + ']' : '关闭'));
+
+    UIVGenLog.section('参数提取');
     const pageId = window.UIVWorkbench.findKeyDeep(payloadClone, 'pageId') || '';
     const boardId = window.UIVWorkbench.findKeyDeep(payloadClone, 'boardId') || '';
     const tenantIdStr = window.UIVWorkbench.findKeyDeep(payloadClone, 'srcTenantId') || '';
     let dynamicPageName = window.UIVWorkbench.findKeyDeep(payloadClone, 'pageName') || '';
     const compId = window.UIVWorkbench.findKeyDeep(payloadClone, 'id') || '';
 
+    UIVGenLog.dim('pageId: '   + (pageId   || '(未找到)'));
+    UIVGenLog.dim('boardId: '  + (boardId  || '(未找到)'));
+    UIVGenLog.dim('tenantId: ' + (tenantIdStr || '(未找到)'));
+    UIVGenLog.dim('compId: '   + (compId   || '(未找到)'));
+
     if (autoFetchCPC && platform === 'DATAFAB' && hasCPC && !pageId) {
         errorDiv.innerText = '⚠️ 警告：缺少 pageId！已生成自动嗅探代码。';
     }
     if (dynamicPageName) dynamicPageName = '_' + dynamicPageName.replace(/[<>:"/\\|?*]+/g, '');
     const finalFileName = fileNameBase + dynamicPageName + '_Latest.csv';
-
     const title = fileNameBase + dynamicPageName;
     window.UIVWorkbench.setCurrentTitle(title + (!dynamicPageName && compId ? '_' + compId.substring(0, 6) : ''));
+
+    UIVGenLog.info('输出文件名: ' + finalFileName);
+    UIVGenLog.section('开关配置检查');
+    UIVGenLog.info('全局变量注入: ' + (useGlobalVars ? '开启' : '关闭 — 使用静态占位符'));
+    UIVGenLog.info('循环翳页: '     + (isPagination  ? '开启' : '关闭 — 仅报文第一页'));
+    UIVGenLog.info('独立大盘兆底: '  + (forceSumData && platform === 'DATAFAB' && compId ? '开启' : (forceSumData && (!compId) ? '开启（但 compId 缺失，可能失效）' : '关闭')));
+    UIVGenLog.info('运行时月份裂变: ' + (hasMonthFilter ? '开启（当月 + 上月）' : '关闭'));
 
     let paramsStr = JSON.stringify(payloadClone, null, 12);
     let varDefBlock = useGlobalVars
@@ -95,7 +119,8 @@ function generateScript() {
         : `        const fetchHeaders = { "accept": "application/json, text/plain, */*", "content-type": "application/json;charset=UTF-8", "x-gde-csrf-token": csrfToken, "x-requested-with": "XMLHttpRequest" };`;
 
     // 核心函数体
-    let coreBody = `        // 【自动生成：抓取核心引擎】========================\n        // 🚀 URL: ${url}\n        // ==========================================\n${varDefBlock}\n        // ==========================================\n\n${authCode}\n${headerCode}\n
+    const genTime = new Date().toLocaleString('zh-CN', { hour12: false });
+    let coreBody = `        // ╔══════════════════════════════════════════════════╗\n        // ║  🚀 UIVF12 自动化抓取引擎  ${TOOL_VERSION}                 ║\n        // ║  生成时间: ${genTime}\n        // ║  URL: ${url}\n        // ╚══════════════════════════════════════════════════╝\n${varDefBlock}\n        // ==========================================\n\n${authCode}\n${headerCode}\n
         function getSmartValue(cell, colName, isTotal = false) {
             if (cell === null || cell === undefined) return "";
             if (typeof cell !== 'object') return cell;
@@ -121,22 +146,71 @@ function generateScript() {
             return val;
         }
 
+        // 🔥 v6.5 多源聚合融合引擎 (Multi-source Fusion)
+        // 不再单选第一个命中源，而是把 totalsData / sumData 全部吸出来深度融合
+        // 优先保留任意源中存在 formula 的单元格，彻底根治平台数据割裂问题
         function extractSmartSumData(resObj) {
             if (!resObj) return null;
-            if (resObj.totalsData && resObj.totalsData.columns) return resObj.totalsData.columns;
-            if (resObj.data && !Array.isArray(resObj.data) && resObj.data.totalsData && resObj.data.totalsData.columns) return resObj.data.totalsData.columns;
-            if (resObj.data && Array.isArray(resObj.data) && resObj.data[0] && resObj.data[0].totalsData && resObj.data[0].totalsData.columns) return resObj.data[0].totalsData.columns;
-            if (resObj.sumData) return resObj.sumData;
-            if (resObj.data && !Array.isArray(resObj.data) && resObj.data.sumData) return resObj.data.sumData;
-            if (resObj.data && Array.isArray(resObj.data) && resObj.data[0] && resObj.data[0].sumData) return resObj.data[0].sumData;
-            return null;
+            const candidates = [];
+            // --- totalsData 系列 ---
+            if (resObj.totalsData && resObj.totalsData.columns) candidates.push(resObj.totalsData.columns);
+            if (resObj.data && !Array.isArray(resObj.data) && resObj.data.totalsData && resObj.data.totalsData.columns) candidates.push(resObj.data.totalsData.columns);
+            if (resObj.data && Array.isArray(resObj.data) && resObj.data[0] && resObj.data[0].totalsData && resObj.data[0].totalsData.columns) candidates.push(resObj.data[0].totalsData.columns);
+            // --- sumData 系列 ---
+            if (resObj.sumData) candidates.push(resObj.sumData);
+            if (resObj.data && !Array.isArray(resObj.data) && resObj.data.sumData) candidates.push(resObj.data.sumData);
+            if (resObj.data && Array.isArray(resObj.data) && resObj.data[0] && resObj.data[0].sumData) candidates.push(resObj.data[0].sumData);
+
+            if (candidates.length === 0) return null;
+            if (candidates.length === 1) return candidates[0];
+
+            // 多源命中 → 按列名深度融合
+            const hasFormula = (cell) => cell && (typeof cell.formula === 'number' || (typeof cell.formula === 'string' && cell.formula !== ''));
+            const merged = {};
+            candidates.forEach(src => {
+                if (!src || typeof src !== 'object') return;
+                Object.keys(src).forEach(col => {
+                    if (!merged[col]) {
+                        merged[col] = src[col];
+                    } else {
+                        const existing = merged[col], incoming = src[col];
+                        if (incoming && typeof incoming === 'object') {
+                            if (!hasFormula(existing) && hasFormula(incoming)) {
+                                merged[col] = incoming;                     // 新源有 formula，整体替换
+                            } else if (hasFormula(existing) && hasFormula(incoming)) {
+                                merged[col] = Object.assign({}, existing, incoming); // 双方都有，字段级合并
+                            }
+                            // existing 有 formula 而 incoming 没有 → 保持 existing 不变
+                        }
+                    }
+                });
+            });
+            console.log("%c     🔀 [v6.5 Fusion] 多源融合完成，命中源数: " + candidates.length + "，合并列数: " + Object.keys(merged).length, "color: #a29bfe; font-size: 11px;");
+            return merged;
         }
 
-        function extractRows(obj) {
-            if (obj && obj.data && Array.isArray(obj.data) && obj.data[0] && Array.isArray(obj.data[0].data)) return obj.data[0].data;
-            let arr = obj.results || obj.items || obj.list || (obj.data && obj.data.results) || obj.data || [];
-            return Array.isArray(arr) ? arr : (Array.isArray(obj) ? obj : [arr]);
-        }\n`;
+         function extractRows(obj) {
+             if (obj && obj.data && Array.isArray(obj.data) && obj.data[0] && Array.isArray(obj.data[0].data)) return obj.data[0].data;
+             let arr = obj.results || obj.items || obj.list || (obj.data && obj.data.results) || obj.data || [];
+             return Array.isArray(arr) ? arr : (Array.isArray(obj) ? obj : [arr]);
+         }
+
+         // 🔬 自动扫描 getAnswers 响应中含 formulaId 的列，构建 aggFields 参数
+         function extractAggFields(resObj) {
+             const fields = [];
+             const seen = new Set();
+             function scan(obj) {
+                 if (!obj || typeof obj !== 'object') return;
+                 if (Array.isArray(obj)) { obj.forEach(scan); return; }
+                 if (obj.formulaId && obj.displayName && !seen.has(obj.displayName)) {
+                     seen.add(obj.displayName);
+                     fields.push({ columnName: obj.displayName, aggType: 'formula' });
+                 }
+                 Object.values(obj).forEach(scan);
+             }
+             scan(resObj);
+             return fields;
+         }\n`;
 
     if (hasCPC) {
         coreBody += `
@@ -212,7 +286,7 @@ ${hasNID ? `            currentPayloadStr = currentPayloadStr.replace(/"__NID_PL
 
             const detailPayload = JSON.parse(currentPayloadStr);
             let limitVal = parseInt(detailPayload.limit || (detailPayload.answerParamList && detailPayload.answerParamList[0] && detailPayload.answerParamList[0].pageSize) || 50, 10);
-            let allDataResults = []; let globalSumData = null; let currentPage = 1; let isFetching = true;
+             let allDataResults = []; let globalSumData = null; let aggFields = []; let currentPage = 1; let isFetching = true;
 
             while (isFetching) {
 ${isPagination ? `                if (detailPayload.answerParamList && detailPayload.answerParamList[0]) {
@@ -227,6 +301,7 @@ ${isPagination ? `                if (detailPayload.answerParamList && detailPay
                 const data = await response.json();
                 if (data.status === 9999 || data.errorCode === "9999") throw new Error("请求报错 (9999)：请检查登录状态。");
                 if (!globalSumData) globalSumData = extractSmartSumData(data);
+                if (aggFields.length === 0) aggFields = extractAggFields(data);
                 let pageItems = extractRows(data);
                 if (!pageItems || pageItems.length === 0) break;
                 allDataResults = allDataResults.concat(pageItems);
@@ -236,19 +311,27 @@ ${isPagination ? `                if (detailPayload.answerParamList && detailPay
 
             if (allDataResults.length === 0) { console.warn("⚠️ " + branchName + " 未提取到数据，跳过。"); continue; }
 ${forceSumData && platform === 'DATAFAB' && compId ? `
-            if (!globalSumData) {
-                console.log("%c     ⚠️ 一阶段未截获到总计数据，触发独立大盘兜底请求...", "color: #e1b12c; font-size: 11px;");
-                const sumPayload = JSON.parse(JSON.stringify(detailPayload.answerParamList[0]));
-                sumPayload.pageNum = 1; sumPayload.answerSource = 2;
-                const sumReqPayload = { "id": "${compId}", "srcTenantId": detailPayload.srcTenantId, "behavior": "VIEW", "boardId": "${boardId}", "maxRows": 1000, "pageNum": 1, "pageSize": 50, "calStatistic": true, "params": sumPayload.params, "chartType": "table", "answerSource": 2 };
-                try {
-                    const sumRes = await fetch("https://datafab-pro.gtsdata.huawei.com/DataFabKernelCn/v1/answer/getValueTableSumData", { headers: fetchHeaders, body: JSON.stringify(sumReqPayload), method: "POST", credentials: "include" });
-                    const sumDataRes = await sumRes.json();
-                    globalSumData = extractSmartSumData(sumDataRes);
-                    if (globalSumData) console.log("%c     ✅ 兜底成功，已获取大盘数据！", "color: #2ecc71; font-size: 11px;");
-                    else console.warn("     ❌ 兜底失败，未能提取到总计数据。");
-                } catch(e) { console.error("大盘兜底请求异常: ", e); }
-            } else { console.log("%c     ✅ 一阶段原生截获总计成功，无需兜底请求。", "color: #2ecc71; font-size: 11px;"); }` : `
+            // 🔑 v6.5 强制权威数据源：无论 getAnswers 是否已返回 sumData，
+            // 始终独立请求 getValueTableSumData，因为它才含有准确的 formula。
+            // getAnswers 的 sumData 只含 average，不能作为最终来源。
+            console.log("%c     🔄 [权威数据] 强制请求 getValueTableSumData（含 formula 的唯一可信来源）...", "color: #3498db; font-size: 11px; font-weight: bold;");
+            const sumPayload = JSON.parse(JSON.stringify(detailPayload.answerParamList[0]));
+            sumPayload.pageNum = 1; sumPayload.answerSource = 2;
+            if (aggFields.length > 0) console.log("%c     🔬 [aggFields] 检测到 " + aggFields.length + " 个 formulaId 列: " + aggFields.map(f=>f.columnName).join('、'), "color: #fd79a8; font-size: 11px;");
+            const sumReqPayload = { "id": "${compId}", "srcTenantId": detailPayload.srcTenantId, "behavior": "VIEW", "boardId": "${boardId}", "maxRows": 1000, "pageNum": 1, "pageSize": 50, "calStatistic": true, "params": sumPayload.params, "chartType": "table", "answerSource": 2, ...(aggFields.length > 0 ? { aggFields } : {}) };
+            try {
+                const sumRes = await fetch("https://datafab-pro.gtsdata.huawei.com/DataFabKernelCn/v1/answer/getValueTableSumData", { headers: fetchHeaders, body: JSON.stringify(sumReqPayload), method: "POST", credentials: "include" });
+                const sumDataRes = await sumRes.json();
+                const authSumData = extractSmartSumData(sumDataRes);
+                if (authSumData) {
+                    globalSumData = authSumData;
+                    console.log("%c     ✅ [权威数据] getValueTableSumData 成功，已覆盖 getAnswers 的汇总（formula 优先）", "color: #2ecc71; font-size: 11px;");
+                } else if (globalSumData) {
+                    console.warn("     ⚠️ [权威数据] getValueTableSumData 无数据，保留 getAnswers 汇总（注意：可能无 formula）");
+                } else {
+                    console.warn("     ❌ [权威数据] 两路径均未获取到汇总数据。");
+                }
+            } catch(e) { console.error("权威大盘请求异常: ", e); }` : `
             if (globalSumData) { console.log("%c     ✅ 原生截获总计数据成功。", "color: #2ecc71; font-size: 11px;"); }
             else { console.log("%c     ℹ️ 报文中无总计数据 (未开启独立兜底)。", "color: #95a5a6; font-size: 11px;"); }`}
 
@@ -283,10 +366,15 @@ ${forceSumData && platform === 'DATAFAB' && compId ? `
         }\n`;
 
     const uivTemplate = `return (async function() {\n    try {\n${coreBody}\n        return "✅ 导出成功！子任务: " + finalSummary.join(" | ");\n    } catch (error) {\n        return "❌ 报错: " + error.message;\n    }\n})();`;
-    const consoleTemplate = `(async function() {\n    try {\n        console.log("%c🚀 [单次抓取] 任务列车启动，请保持页面开启并耐心等待...", "color: #e67e22; font-size: 14px; font-weight: bold;");\n${coreBody}\n        console.log("%c🎉 [单次抓取] 任务圆满成功！提取报告: " + finalSummary.join(" | "), "color: #4CAF50; font-size: 14px; font-weight: bold;");\n    } catch (error) {\n        console.error("%c❌ 内部报错: " + error.message, "color: #c53030; font-size: 13px; font-weight: bold;");\n    }\n})();`;
+    const consoleTemplate = `(async function() {\n    try {\n        console.log("%c🚀 [UIVF12 ${TOOL_VERSION}] 任务列车启动，请保持页面开启并耐心等待...", "color: #e67e22; font-size: 14px; font-weight: bold;");\n${coreBody}\n        console.log("%c🎉 [UIVF12 ${TOOL_VERSION}] 任务圆满成功！提取报告: " + finalSummary.join(" | "), "color: #4CAF50; font-size: 14px; font-weight: bold;");\n    } catch (error) {\n        console.error("%c❌ [UIVF12 ${TOOL_VERSION}] 内部报错: " + error.message, "color: #c53030; font-size: 13px; font-weight: bold;");\n    }\n})();`;
 
+    UIVGenLog.section('脚本构建');
+    UIVGenLog.info('脚本标题: ' + title);
+    UIVGenLog.info('平台认证: ' + (platform === 'DATAFAB' ? 'CSRF-Token (Cookie 自动提取)' : '本地存储 globalConfig CSRF'));
     document.getElementById('codeOutput').value = uivTemplate;
     document.getElementById('consoleOutput').value = consoleTemplate;
+    UIVGenLog.success('脚本内容已写入输出区！UIV + F12 Console 双版均就绪');
+    UIVGenLog.done(true, title);
 }
 
 window.UIVGenerator = { generateScript };
