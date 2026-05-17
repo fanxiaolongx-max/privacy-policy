@@ -671,7 +671,45 @@
         "valY": "总计",
         "colZ": "业务比对日志回传率",
         "label": "业务比对回传率",
-        "color": ""
+        "color": "",
+        "subMetrics": [
+          {
+            "id": "m_1778958160276",
+            "type": "ratio",
+            "colX": "客户群",
+            "valY": "Single-country Account",
+            "colZ": "评分任务状态",
+            "valK": "已完成",
+            "label": "业务比对回传率",
+            "color": "",
+            "sourceSecId": "other_b4qno2",
+            "category": "TE"
+          },
+          {
+            "id": "m_1778958189640",
+            "type": "ratio",
+            "colX": "客户群",
+            "valY": "Orange",
+            "colZ": "评分任务状态",
+            "valK": "已完成",
+            "label": "业务比对回传率",
+            "color": "",
+            "sourceSecId": "other_b4qno2",
+            "category": "ORG"
+          },
+          {
+            "id": "m_1778958249760",
+            "type": "ratio",
+            "colX": "客户群",
+            "valY": "ET (Etisalat)",
+            "colZ": "评分任务状态",
+            "valK": "已完成",
+            "label": "业务比对回传率",
+            "color": "",
+            "sourceSecId": "other_b4qno2",
+            "category": "ET"
+          }
+        ]
       },
       {
         "id": "m_1778792901855",
@@ -679,7 +717,45 @@
         "valY": "总计",
         "colZ": "备案率",
         "label": "业务比对备案率",
-        "color": ""
+        "color": "",
+        "subMetrics": [
+          {
+            "id": "m_1778957882797",
+            "type": "ratio",
+            "colX": "客户群",
+            "valY": "Single-country Account",
+            "colZ": "备案原因",
+            "valK": "[非空]",
+            "label": "业务比对备案率",
+            "color": "",
+            "sourceSecId": "other_b4qno2",
+            "category": "TE"
+          },
+          {
+            "id": "m_1778957957798",
+            "type": "ratio",
+            "colX": "客户群",
+            "valY": "Orange",
+            "colZ": "备案原因",
+            "valK": "[非空]",
+            "label": "业务比对备案率",
+            "color": "",
+            "sourceSecId": "other_b4qno2",
+            "category": "ORG"
+          },
+          {
+            "id": "m_1778957986891",
+            "type": "ratio",
+            "colX": "客户群",
+            "valY": "ET (Etisalat)",
+            "colZ": "备案原因",
+            "valK": "[非空]",
+            "label": "业务比对备案率",
+            "color": "",
+            "sourceSecId": "other_b4qno2",
+            "category": "ET"
+          }
+        ]
       }
     ]
   },
@@ -1220,7 +1296,7 @@
     ],
     "columnWidths": {
       "版本标识": 115,
-      "客户群": 105,
+      "客户群": 185,
       "备案原因": 265,
       "操作人": 149
     },
