@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,10 +9,11 @@
     <link rel="stylesheet" href="/css/shared.css">
     <link rel="stylesheet" href="/css/uivf12.css">
 </head>
+
 <body id="uiv-page">
     <div class="page-content">
         <div class="uiv-title">
-            <span>🚀 自动化脚本工程中心 v6.3</span>
+            <span>🚀 自动化脚本工程中心 v6.4</span>
             <span class="tag">全景透明日志 + 智能追溯版</span>
         </div>
 
@@ -20,7 +22,8 @@
             <div class="sidebar">
                 <h2>
                     📂 智能调度仓库
-                    <button class="cat-copy-btn" onclick="UIVCopy.copyAllConsoleScripts()" title="拷贝仓库内所有分类的全部脚本">全量打包</button>
+                    <button class="cat-copy-btn" onclick="UIVCopy.copyAllConsoleScripts()"
+                        title="拷贝仓库内所有分类的全部脚本">全量打包</button>
                 </h2>
                 <div style="font-size:11px; color:#888; margin-bottom:10px; line-height:1.4;">
                     默认清爽折叠，<b>双击回填至工作台</b>。
@@ -35,7 +38,8 @@
                         <button class="btn-io" onclick="UIVSidebar.exportBackup()">📤 导出备份</button>
                         <label class="btn-io" style="cursor:pointer;">
                             📥 导入配置
-                            <input type="file" id="importFile" style="display:none" accept=".json" onchange="UIVSidebar.importBackup(event)">
+                            <input type="file" id="importFile" style="display:none" accept=".json"
+                                onchange="UIVSidebar.importBackup(event)">
                         </label>
                     </div>
                 </div>
@@ -45,14 +49,20 @@
             <div class="left-panel">
                 <label class="panel-label">1. 请求 URL 目标地址:</label>
                 <div class="input-row">
-                    <select id="urlPreset" style="width:35%;" onchange="document.getElementById('requestUrl').value = this.value">
-                        <option value="https://datafab-pro.gtsdata.huawei.com/DataFabKernelCn/v1/answer/getAnswers">🟢 DataFab - 明细列表</option>
-                        <option value="https://netcare.huawei.com/adc-service/web/rest/v1/services/xxx">🔴 NetCare - 中国节点</option>
-                        <option value="https://netcare-ae.gts.huawei.com/adc-service/web/rest/v1/services/xxx">🔵 NetCare - 中东节点</option>
-                        <option value="https://netcare-de.gts.huawei.com/adc-service/web/rest/v1/services/xxx">🟠 NetCare - 德国节点</option>
+                    <select id="urlPreset" style="width:35%;"
+                        onchange="document.getElementById('requestUrl').value = this.value">
+                        <option value="https://datafab-pro.gtsdata.huawei.com/DataFabKernelCn/v1/answer/getAnswers">🟢
+                            DataFab - 明细列表</option>
+                        <option value="https://netcare.huawei.com/adc-service/web/rest/v1/services/xxx">🔴 NetCare -
+                            中国节点</option>
+                        <option value="https://netcare-ae.gts.huawei.com/adc-service/web/rest/v1/services/xxx">🔵
+                            NetCare - 中东节点</option>
+                        <option value="https://netcare-de.gts.huawei.com/adc-service/web/rest/v1/services/xxx">🟠
+                            NetCare - 德国节点</option>
                         <option value="">⚙️ 自定义新地址...</option>
                     </select>
-                    <input type="text" id="requestUrl" value="https://datafab-pro.gtsdata.huawei.com/DataFabKernelCn/v1/answer/getAnswers">
+                    <input type="text" id="requestUrl"
+                        value="https://datafab-pro.gtsdata.huawei.com/DataFabKernelCn/v1/answer/getAnswers">
                 </div>
 
                 <label class="panel-label" style="display:flex; justify-content:space-between; align-items:center;">
@@ -70,9 +80,12 @@
                     <label><input type="checkbox" id="useGlobalVars" checked> 全局变量注入</label>
                     <label><input type="checkbox" id="isPagination" checked> 循环翻页</label>
                     <label><input type="checkbox" id="forceSumData" checked> 独立大盘兜底</label>
-                    <label style="color:var(--warning);"><input type="checkbox" id="autoFetchCPC" checked> 动态抓取 CPC / NID</label>
-                    <label style="color:var(--cyber); font-weight:bold;"><input type="checkbox" id="autoRuntimeMonth" checked> 开启[运行时:当月+上月]动态双重裂变</label>
-                    <label style="color:var(--blue); font-weight:bold;"><input type="checkbox" id="autoNetCareTriplicate" checked> 🌍 保存侧边栏时自动生成 NetCare 三大区脚本阵列</label>
+                    <label style="color:var(--warning);"><input type="checkbox" id="autoFetchCPC" checked> 动态抓取 CPC /
+                        NID</label>
+                    <label style="color:var(--cyber); font-weight:bold;"><input type="checkbox" id="autoRuntimeMonth"
+                            checked> 开启[运行时:当月+上月]动态双重裂变</label>
+                    <label style="color:var(--blue); font-weight:bold;"><input type="checkbox"
+                            id="autoNetCareTriplicate" checked> 🌍 保存侧边栏时自动生成 NetCare 三大区脚本阵列</label>
                 </div>
 
                 <div class="btn-group">
@@ -88,15 +101,20 @@
                 <div class="output-header">
                     <label class="output-label">🤖 生产级 UI.Vision 宏代码:</label>
                     <div class="btn-group" style="gap:8px; margin:0; flex:none;">
-                        <button id="saveBtn" class="btn btn-secondary btn-action" onclick="UIVSave.saveCurrentScript()">💾 加入侧边栏</button>
-                        <button id="btnCopyUIV" class="btn btn-action" style="background:var(--accent);" onclick="UIVCopy.copyCodeText('codeOutput', 'btnCopyUIV', 'UIV 代码')">📋 复制 UIV</button>
+                        <button id="saveBtn" class="btn btn-secondary btn-action"
+                            onclick="UIVSave.saveCurrentScript()">💾 加入侧边栏</button>
+                        <button id="btnCopyUIV" class="btn btn-action" style="background:var(--accent);"
+                            onclick="UIVCopy.copyCodeText('codeOutput', 'btnCopyUIV', 'UIV 代码')">📋 复制 UIV</button>
                     </div>
                 </div>
-                <textarea id="codeOutput" readonly placeholder="生成后显示 UI.Vision 宏代码..." style="flex:1; margin-bottom:14px;"></textarea>
+                <textarea id="codeOutput" readonly placeholder="生成后显示 UI.Vision 宏代码..."
+                    style="flex:1; margin-bottom:14px;"></textarea>
 
                 <div class="output-header">
                     <label class="output-label console-label">💻 纯浏览器控制台执行脚本 (F12):</label>
-                    <button id="btnCopyConsole" class="btn btn-action" style="background:var(--console); margin:0;" onclick="UIVCopy.copyCodeText('consoleOutput', 'btnCopyConsole', '控制台代码')">📋 复制 Console</button>
+                    <button id="btnCopyConsole" class="btn btn-action" style="background:var(--console); margin:0;"
+                        onclick="UIVCopy.copyCodeText('consoleOutput', 'btnCopyConsole', '控制台代码')">📋 复制
+                        Console</button>
                 </div>
                 <textarea id="consoleOutput" readonly placeholder="生成后显示纯浏览器 F12 直跑脚本..." style="flex:1;"></textarea>
             </div>
@@ -120,4 +138,5 @@
         });
     </script>
 </body>
+
 </html>

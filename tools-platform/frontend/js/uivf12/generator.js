@@ -105,8 +105,10 @@ function generateScript() {
                 if (ln.includes("率") || ln.includes("比") || ln.includes("rate") || ln.includes("ratio") || ln.includes("%")) isRate = true;
             }
             let val = "", source = "";
-            if (cell.formula !== undefined && cell.formula !== null && cell.formula !== "") {
-                val = cell.formula; source = "formula (绝对优先)";
+            if (cell.formula !== undefined && cell.formula !== null && typeof cell.formula === 'number') {
+                val = cell.formula; source = "formula (绝对优先-数字)";
+            } else if (cell.formula !== undefined && cell.formula !== null && typeof cell.formula === 'string' && cell.formula !== "") {
+                val = cell.formula; source = "formula (绝对优先-文本)";
             } else if (isRate) {
                 if (cell.average !== undefined && cell.average !== null && cell.average !== "") { val = cell.average; source = "average (率/比自动兜底)"; }
                 else if (cell.summing !== undefined && cell.summing !== null && cell.summing !== "") { val = cell.summing; source = "summing (⚠️率/比被迫降级)"; }

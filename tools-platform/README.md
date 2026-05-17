@@ -1,0 +1,306 @@
+# Tools Platform — 工具中台
+
+> 统一工具平台，前后端分离架构，数据服务端持久化。
+> 目前集成三大工具模块：**UIVF12 抓取引擎**、**Task SLA 监控台**、**专业报表看板**。
+
+---
+
+## 目录结构
+
+```
+tools-platform/
+├── README.md
+│
+├── backend/                        # Node.js 后端服务
+│   ├── server.js                   # 主服务入口（Express，端口 3030）
+│   ├── package.json                # 依赖声明
+│   ├── ecosystem.config.js         # PM2 进程守护配置
+│   │
+│   ├── routes/                     # API 路由层
+│   │   ├── auth.js                 # 认证 & 用户管理路由
+│   │   ├── sla.js                  # Task SLA 监控台 API
+│   │   ├── uiv.js                  # UIVF12 脚本仓库 API
+│   │   └── upload.js               # 文件上传历史 API
+│   │
+│   ├── middleware/
+│   │   └── auth.js                 # JWT-like Token 鉴权中间件
+│   │
+│   ├── models/
+│   │   └── store.js                # 通用 JSON 文件读写工具
+│   │
+│   ├── data/                       # 持久化数据存储（JSON 文件）
+│   │   ├── users.json              # 用户账号 & 密码哈希
+│   │   ├── sessions.json           # 登录 Token 会话
+│   │   ├── sla_targets.json        # SLA 预警目标（分月配置）
+│   │   ├── sla_prefs.json          # SLA 用户偏好（列宽/列显示/排序/指标规则）
+│   │   ├── sla_snapshots.json      # SLA 历史导入快照（最近 50 次）
+│   │   ├── sla_categories.json     # SLA 指标分类标签配置
+│   │   ├── sla_groups.json         # SLA 指标分组配置
+│   │   ├── uiv_scripts.json        # UIVF12 脚本仓库数据
+│   │   ├── uiv_categories.json     # UIVF12 自定义分类
+│   │   └── upload_history.json     # 文件上传操作历史
+│   │
+│   └── logs/                       # PM2 运行日志
+│       ├── out.log
+│       └── error.log
+│
+└── frontend/                       # 纯静态前端（HTML + Vanilla JS + CSS）
+    ├── index.html                  # 平台主页（工具入口导航）
+    │
+    ├── pages/                      # 子页面
+    │   ├── login.html              # 登录页
+    │   ├── sla.html                # Task SLA 监控台页面
+    │   ├── uivf12.html             # UIVF12 抓取引擎页面
+    │   └── report.html             # 专业报表看板页面
+    │
+    ├── css/                        # 样式文件
+    │   ├── shared.css              # 公共样式（Navbar、布局、主题变量）
+    │   ├── sla.css                 # SLA 监控台专属样式
+    │   └── uivf12.css              # UIVF12 工具专属样式
+    │
+    └── js/                         # JavaScript 模块
+        ├── shared/                 # 全局公共模块
+        │   ├── api.js              # 统一 API 封装（自动带 Token 的 fetch）
+        │   ├── navbar.js           # 顶部导航栏渲染 & 登出逻辑
+        │   └── toast.js            # 全局 Toast 通知组件
+        │
+        ├── sla/                    # Task SLA 监控台模块（9个子模块）
+        │   ├── upload.js           # Excel 解析、表格模式识别、历史快照
+        │   ├── section.js          # 区块初始化、数据预处理、DOM 渲染
+        │   ├── table.js            # 表格渲染（虚拟列宽、排序、过滤）
+        │   ├── events.js           # 工具条事件（列设置、去重提取、指标配置）
+        │   ├── metrics.js          # 顶部悬浮指标推送、预警呼吸灯、目标弹窗
+        │   ├── prefs.js            # 用户偏好本地/服务端持久化
+        │   ├── config.js           # SLA 规则配置（周期、预警阈值等）
+        │   ├── history.js          # 操作历史记录面板
+        │   └── categories.js       # 指标分类管理
+        │
+        ├── uivf12/                 # UIVF12 抓取引擎模块（5个子模块）
+        │   ├── sidebar.js          # 脚本仓库侧边栏（分类、搜索、拖拽）
+        │   ├── workbench.js        # 工作台主控（参数输入、模式切换）
+        │   ├── generator.js        # 核心代码生成引擎（宏/F12 脚本）
+        │   ├── save.js             # 脚本保存 & 仓库管理
+        │   └── copy.js             # 代码复制 & 导出工具
+        │
+        └── report/                 # 专业报表看板模块
+            └── report.js           # 报表逻辑（快照选择、健康度评分、矩阵渲染）
+```
+
+---
+
+## 功能模块详解
+
+### 1. 认证系统（Auth）
+
+基于 Bearer Token 的轻量级鉴权机制，支持角色权限控制。
+
+| 角色 | 权限 |
+|------|------|
+| `admin`（超级管理员） | 全量 CRUD，含用户管理、数据写入 |
+| `readonly`（只读用户） | 仅查看数据，所有 POST/PUT/DELETE 被拒绝 |
+
+**API 端点：**
+
+| 方法 | 路径 | 描述 |
+|------|------|------|
+| POST | `/api/auth/login` | 登录，返回 Token |
+| POST | `/api/auth/logout` | 登出，销毁 Token |
+| GET  | `/api/auth/me` | 获取当前登录用户信息 |
+| GET  | `/api/auth/users` | 获取用户列表（仅 Admin） |
+| POST | `/api/auth/users` | 创建新用户（仅 Admin） |
+| DELETE | `/api/auth/users/:username` | 删除用户（仅 Admin） |
+| PUT  | `/api/auth/users/:username/password` | 重置密码（仅 Admin） |
+
+- Token 有效期：**7 天**
+- 密码使用 **SHA-256 + Salt** 哈希存储
+- 默认管理员账号 `admin` 不可删除
+
+---
+
+### 2. UIVF12 抓取引擎（`/uivf12`）
+
+自动化脚本工程中心，生成并管理 UI.Vision 宏代码和 F12 控制台脚本。
+
+**核心功能：**
+- **脚本仓库管理**：按分类组织脚本，支持增删改查、拖拽换分类
+- **代码生成引擎**：根据参数（CPC、NID、运营商区域）智能生成生产级脚本
+- **多模式支持**：UI.Vision 宏模式 / F12 控制台模式
+- **批量阵列执行**：支持 NetCare 中国、中东、德国三大区批量生成
+- **双月裂变**：自动根据运行时间生成跨月翻页逻辑
+- **备份还原**：一键导出/导入全量脚本仓库 JSON
+
+**API 端点：**
+
+| 方法 | 路径 | 描述 |
+|------|------|------|
+| GET  | `/api/uiv/scripts` | 获取全部脚本 & 分类列表 |
+| POST | `/api/uiv/scripts` | 新增或覆盖脚本（支持批量） |
+| DELETE | `/api/uiv/scripts/:id` | 删除指定脚本 |
+| PATCH | `/api/uiv/scripts/:id/category` | 移动脚本分类（拖拽） |
+| POST | `/api/uiv/categories` | 新建自定义分类 |
+| DELETE | `/api/uiv/categories/:name` | 删除分类及其脚本 |
+| GET  | `/api/uiv/backup` | 导出全量备份 |
+| POST | `/api/uiv/backup` | 导入备份（覆盖或融合模式） |
+
+---
+
+### 3. Task SLA 监控台（`/sla`）
+
+全局数据合控大中台，整改/风险/专项三类工单合一管理，提供 SLA 预警和指标推送。
+
+#### 3.1 多模式表格导入
+
+支持通过 Excel (.xlsx) 文件导入，自动识别三种表格模式：
+
+| 模式 | 关键字段 | SLA 计算逻辑 |
+|------|---------|------------|
+| `rectification`（整改表） | `task_status` | Checking 状态：创建时间 +30 天；整改中：计划结束时间 |
+| `risk`（风险表） | `风险状态` / `risk_status` | Risk Confirming +30 天；Risk Open：期望关闭时间 |
+| `special`（专项表） | `状态-Status` 等 | 待确认：创建日期 +30 天；处理中：要求完成日期 |
+| `other`（自由表） | 无限制 | 无 SLA 计算 |
+
+#### 3.2 预警系统
+
+- 🔴 **紧急**（≤10 天）：红色高亮行
+- 🟠 **提醒**（≤30/82 天）：橙色提醒行
+- 🔥 **重点关注**：手动标记行
+- 顶部悬浮状态栏滚动展示所有指标，异常时触发呼吸灯警告
+
+#### 3.3 顶部悬浮指标推送
+
+在每张表上可配置自定义指标规则，支持三种模式：
+
+| 模式 | 说明 |
+|------|------|
+| **提取单行数值** | IF 某列(X) 包含内容(Y) → 展示该行列(Z)的值 |
+| **统计满足次数** | 筛选 X 列含 Y，统计 Z 列中含关键字 K 的行数 |
+| **统计占比** | 满足条件行数 / 总行数，结果以百分比展示 |
+
+> **特殊关键字：** 在 Y 或 K 输入框中输入 `[空]` 匹配空白单元格，`[非空]` 匹配有内容的单元格。
+
+支持主指标 + 子指标（按分类分组）的两级层次结构，可跨表数据源引用。
+
+#### 3.4 分月预警目标
+
+为每个指标配置 1~12 月的目标值，支持两种比较方向（≥ 越大越好 / ≤ 越小越好），实时显示差距。
+
+#### 3.5 表格操作工具
+
+- **列设置**：自由显示/隐藏列，设置持久化到服务端
+- **列去重提取**：一键提取指定列所有唯一值并复制到剪贴板
+- **搜索过滤**：实时全文搜索当前表数据
+- **排序**：点击列头升降序排列
+- **导出**：导出当前视图（含过滤结果）为 Excel
+
+#### 3.6 历史快照
+
+每次导入数据自动保存快照（最多保留 50 次），支持快照命名、回溯历史、删除旧快照。
+
+**API 端点：**
+
+| 方法 | 路径 | 描述 |
+|------|------|------|
+| GET  | `/api/sla/targets` | 获取预警目标配置 |
+| PUT  | `/api/sla/targets` | 保存预警目标配置 |
+| GET  | `/api/sla/prefs/:schemaHash` | 获取指定表的用户偏好 |
+| PUT  | `/api/sla/prefs/:schemaHash` | 保存指定表的用户偏好 |
+| GET  | `/api/sla/snapshots` | 获取历史快照列表 |
+| POST | `/api/sla/snapshot` | 新增历史快照 |
+| PUT  | `/api/sla/snapshots/:id` | 更新快照（重命名等） |
+| DELETE | `/api/sla/snapshots/:id` | 删除指定快照 |
+| GET  | `/api/sla/categories` | 获取指标分类列表 |
+| PUT  | `/api/sla/categories` | 更新指标分类列表 |
+| GET  | `/api/sla/groups` | 获取指标分组配置 |
+| PUT  | `/api/sla/groups` | 更新指标分组配置 |
+| GET  | `/api/sla/config` | 导出全量配置（targets + prefs） |
+| POST | `/api/sla/config` | 导入全量配置 |
+
+---
+
+### 4. 专业报表看板（`/report`）
+
+基于 SLA 历史快照生成多维度数据分析报表。
+
+**核心功能：**
+- **客户群健康度排名**：按综合扣分情况对各客户群排序
+- **加减分统筹系统**：多维度扣分权重配置
+- **多快照历史回溯**：选择不同时间节点的快照进行对比分析
+- **数据透视矩阵**：直观展示各维度得分情况
+
+---
+
+## 技术栈
+
+| 层次 | 技术 |
+|------|------|
+| 后端运行时 | Node.js |
+| 后端框架 | Express 4.x |
+| 持久化 | JSON 文件（无数据库依赖） |
+| 进程守护 | PM2 |
+| 前端框架 | 纯 HTML + Vanilla JS（无框架依赖） |
+| 样式 | Vanilla CSS（自定义设计系统） |
+| Excel 解析 | SheetJS (xlsx) |
+| 唯一 ID | uuid v9 |
+| 文件上传 | multer |
+
+---
+
+## 快速启动
+
+### 开发模式
+
+```bash
+cd backend
+npm install
+npm run dev    # 使用 nodemon 自动重启，端口 3030
+```
+
+### 生产模式（PM2）
+
+```bash
+cd backend
+npm install --omit=dev
+
+# 启动
+pm2 start ecosystem.config.js
+
+# 查看状态
+pm2 status tools-platform
+
+# 查看日志
+pm2 logs tools-platform
+
+# 停止
+pm2 stop tools-platform
+
+# 重启
+pm2 restart tools-platform
+```
+
+启动后访问：
+- 平台主页：`http://localhost:3030`
+- UIVF12：`http://localhost:3030/uivf12`
+- SLA 监控台：`http://localhost:3030/sla`
+- 报表看板：`http://localhost:3030/report`
+- 健康检查：`http://localhost:3030/api/health`
+
+---
+
+## 数据文件说明
+
+所有数据以 JSON 格式持久化在 `backend/data/` 目录下，无需数据库，可直接备份整个 `data/` 目录迁移数据。
+
+| 文件 | 说明 | 建议备份 |
+|------|------|---------|
+| `users.json` | 用户账号信息 | ✅ 是 |
+| `sla_targets.json` | 预警目标配置（含分月目标） | ✅ 是 |
+| `sla_prefs.json` | 各表列设置及指标规则（较大） | ✅ 是 |
+| `sla_snapshots.json` | 历史导入快照（可能很大） | ✅ 是 |
+| `uiv_scripts.json` | 脚本仓库（可能很大） | ✅ 是 |
+| `sessions.json` | 登录会话（重启后自动续期） | ❌ 否 |
+
+---
+
+## 权限说明
+
+前端所有写操作（新增、修改、删除）会在请求前检查用户角色，只读用户访问时相关按钮会被隐藏或禁用。后端 API 对所有非 GET 请求强制校验 `admin` 角色，双重保障。

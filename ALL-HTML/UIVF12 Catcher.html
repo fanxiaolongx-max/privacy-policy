@@ -1,99 +1,545 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <title>UI.Vision 全能抓取引擎 v6.3</title>
     <style>
-        :root { --primary: #0078D7; --bg: #1e1e1e; --panel: #252526; --text: #d4d4d4; --border: #444; --accent: #4CAF50; --highlight: #dcdcaa; --string: #ce9178; --number: #b5cea8; --key: #9cdcfe; --danger: #c53030; --warning: #d7ba7d; --console: #e67e22; --cyber: #64ffda; --blue: #3498db;}
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
-        h1 { font-size: 22px; margin-top: 0; color: #fff; border-bottom: 2px solid var(--border); padding-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
-        .tag { font-size: 12px; background: #e81123; color: white; padding: 3px 8px; border-radius: 12px; font-weight: bold; }
-        .container { display: flex; gap: 20px; flex: 1; min-height: 0; }
-        
+        :root {
+            --primary: #0078D7;
+            --bg: #1e1e1e;
+            --panel: #252526;
+            --text: #d4d4d4;
+            --border: #444;
+            --accent: #4CAF50;
+            --highlight: #dcdcaa;
+            --string: #ce9178;
+            --number: #b5cea8;
+            --key: #9cdcfe;
+            --danger: #c53030;
+            --warning: #d7ba7d;
+            --console: #e67e22;
+            --cyber: #64ffda;
+            --blue: #3498db;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-size: 22px;
+            margin-top: 0;
+            color: #fff;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .tag {
+            font-size: 12px;
+            background: #e81123;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: bold;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+            flex: 1;
+            min-height: 0;
+        }
+
         /* 侧边栏及分类样式重构 */
-        .sidebar { width: 260px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; box-shadow: 0 4px 12px rgba(0,0,0,0.4); overflow-y: auto; }
-        .sidebar h2 { font-size: 15px; margin-top: 0; color: var(--highlight); border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
-        
-        .category-group { border: 1px solid #333; border-radius: 6px; margin-bottom: 10px; background: #2a2a2b; transition: 0.2s; overflow: hidden; }
-        .category-group.drag-over { border-color: var(--accent); box-shadow: 0 0 8px rgba(76, 175, 80, 0.4) inset; }
-        
-        .category-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 6px; cursor: pointer; user-select: none; transition: background 0.2s; }
-        .category-header:hover { background: #353538; }
-        .cat-title { font-size: 13px; color: var(--cyber); font-weight: bold; display: flex; align-items: center; gap: 4px; pointer-events: none;}
-        .cat-arrow { font-size: 10px; transition: transform 0.2s; display: inline-block; color: #888;}
-        .expanded .cat-arrow { transform: rotate(90deg); color: var(--cyber);}
-        
-        .category-actions { display: flex; gap: 5px; }
-        .cat-copy-btn { background: #444; color: white; border: none; border-radius: 4px; font-size: 10px; padding: 4px 6px; cursor: pointer; transition: 0.2s;}
-        .cat-copy-btn:hover { background: var(--console); }
-        .cat-del-btn { background: transparent; color: #888; border: none; font-size: 13px; cursor: pointer; padding: 0 3px;}
-        .cat-del-btn:hover { color: var(--danger); }
+        .sidebar {
+            width: 260px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            overflow-y: auto;
+        }
 
-        .category-content { display: none; padding: 0 6px 6px 6px; flex-direction: column; gap: 6px; border-top: 1px dashed #444; margin-top: 2px; padding-top: 8px;}
-        .expanded .category-content { display: flex; }
+        .sidebar h2 {
+            font-size: 15px;
+            margin-top: 0;
+            color: var(--highlight);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-        .script-item { background: #3e3e42; padding: 8px; border-radius: 4px; display: flex; flex-direction: column; gap: 6px; font-size: 12px; transition: 0.2s; border: 1px solid transparent; cursor: grab;}
-        .script-item:active { cursor: grabbing; opacity: 0.8; transform: scale(0.98); border-color: var(--primary);}
-        .script-item:hover { background: #4a4a4e; border-color: #555; }
-        .script-item-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #9cdcfe; font-weight: bold; pointer-events: none;}
-        .sidebar-actions { display: flex; gap: 5px; justify-content: space-between; align-items: center; pointer-events: none;}
-        .sidebar-actions button { pointer-events: auto; }
-        
-        .mini-btn { background: #555; color: white; border: none; padding: 3px 6px; border-radius: 4px; font-size: 10px; cursor: pointer; transition: 0.2s; font-weight: bold;}
-        .mini-btn:hover { filter: brightness(1.2); }
-        .mini-btn.uiv { background-color: var(--accent); }
-        .mini-btn.con { background-color: #d35400; }
-        .mini-btn.del { background-color: transparent; color: #888; font-size: 12px; padding: 0 2px;}
-        .mini-btn.del:hover { color: var(--danger); background: transparent; }
+        .category-group {
+            border: 1px solid #333;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            background: #2a2a2b;
+            transition: 0.2s;
+            overflow: hidden;
+        }
 
-        .btn-add-cat { background: transparent; border: 1px dashed #666; color: #aaa; width: 100%; padding: 8px; border-radius: 6px; font-size: 12px; cursor: pointer; transition: 0.2s; margin-bottom: 10px;}
-        .btn-add-cat:hover { border-color: var(--cyber); color: var(--cyber); background: rgba(100, 255, 218, 0.05); }
+        .category-group.drag-over {
+            border-color: var(--accent);
+            box-shadow: 0 0 8px rgba(76, 175, 80, 0.4) inset;
+        }
 
-        .btn-batch { background: linear-gradient(135deg, #2c3e50, #34495e); border: 1px solid #555; color: white; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 5px; transition: 0.2s;}
-        .btn-batch:hover { background: linear-gradient(135deg, #e67e22, #d35400); border-color: #e67e22;}
-        
-        .btn-io { background: #2d2d2d; border: 1px solid #555; color: #d4d4d4; padding: 8px; border-radius: 6px; font-size: 11px; cursor: pointer; flex: 1; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 4px;}
-        .btn-io:hover { background: #3d3d3d; color: white; border-color: #888;}
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 6px;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
 
-        .left-panel, .right-panel { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 20px; display: flex; flex-direction: column; flex: 1; box-shadow: 0 4px 12px rgba(0,0,0,0.4); overflow: hidden; }
-        label { font-weight: 600; margin-bottom: 8px; display: block; font-size: 14px; color: #569cd6; }
-        .input-group { display: flex; gap: 10px; margin-bottom: 15px; }
-        select, input[type="text"], textarea { width: 100%; background: #121212; color: #d4d4d4; border: 1px solid var(--border); border-radius: 6px; padding: 10px; font-family: Consolas, monospace; font-size: 13px; box-sizing: border-box; transition: 0.3s; }
-        select:focus, input:focus, textarea:focus { border-color: var(--primary); outline: none; }
-        textarea { flex: 1; resize: none; white-space: pre; overflow: auto; line-height: 1.4; }
-        
-        #payloadViewer { flex: 1; background: #1e1e1e; border: 1px solid var(--border); border-radius: 6px; padding: 10px; font-family: Consolas, monospace; font-size: 12px; overflow: auto; white-space: pre-wrap; margin-bottom: 15px; display: none; cursor: text;}
-        .json-key { color: var(--key); }
-        .json-string { color: var(--string); }
-        .json-number { color: var(--number); }
-        .json-boolean { color: #569cd6; }
-        .json-null { color: #569cd6; }
-        .json-important { background-color: rgba(215, 186, 125, 0.3); color: #d7ba7d; font-weight: bold; padding: 0 2px; border-radius: 2px; border-bottom: 1px solid #d7ba7d; }
+        .category-header:hover {
+            background: #353538;
+        }
 
-        .controls { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; margin-bottom: 15px; background: #2d2d2d; padding: 12px; border-radius: 6px; }
-        .controls label { margin-bottom: 0; color: #d4d4d4; display: flex; align-items: center; gap: 6px; cursor: pointer; font-weight: normal; font-size: 13px;}
-        .btn-group { display: flex; gap: 10px; }
-        button { background-color: var(--primary); color: white; border: none; padding: 10px 15px; font-size: 14px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px; }
-        button:hover { background-color: #005a9e; }
-        .btn-secondary { background-color: #444; flex: 0.8;}
-        .btn-secondary:hover { background-color: #555; }
-        .btn-danger { background-color: var(--danger); flex: 0.6; }
-        .btn-danger:hover { background-color: #9b2c2c; }
-        .btn-action { padding: 6px 12px; font-size: 12px; flex: none;}
-        #saveBtn { background-color: #34495e; }
-        #saveBtn:hover { background-color: #2c3e50; }
-        
-        .toast { position: fixed; top: -50px; left: 50%; transform: translateX(-50%); background-color: var(--accent); color: white; padding: 10px 20px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: top 0.3s ease; z-index: 9999; pointer-events: none; }
-        .toast.show { top: 20px; }
+        .cat-title {
+            font-size: 13px;
+            color: var(--cyber);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            pointer-events: none;
+        }
+
+        .cat-arrow {
+            font-size: 10px;
+            transition: transform 0.2s;
+            display: inline-block;
+            color: #888;
+        }
+
+        .expanded .cat-arrow {
+            transform: rotate(90deg);
+            color: var(--cyber);
+        }
+
+        .category-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .cat-copy-btn {
+            background: #444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 10px;
+            padding: 4px 6px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .cat-copy-btn:hover {
+            background: var(--console);
+        }
+
+        .cat-del-btn {
+            background: transparent;
+            color: #888;
+            border: none;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 0 3px;
+        }
+
+        .cat-del-btn:hover {
+            color: var(--danger);
+        }
+
+        .category-content {
+            display: none;
+            padding: 0 6px 6px 6px;
+            flex-direction: column;
+            gap: 6px;
+            border-top: 1px dashed #444;
+            margin-top: 2px;
+            padding-top: 8px;
+        }
+
+        .expanded .category-content {
+            display: flex;
+        }
+
+        .script-item {
+            background: #3e3e42;
+            padding: 8px;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 12px;
+            transition: 0.2s;
+            border: 1px solid transparent;
+            cursor: grab;
+        }
+
+        .script-item:active {
+            cursor: grabbing;
+            opacity: 0.8;
+            transform: scale(0.98);
+            border-color: var(--primary);
+        }
+
+        .script-item:hover {
+            background: #4a4a4e;
+            border-color: #555;
+        }
+
+        .script-item-title {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #9cdcfe;
+            font-weight: bold;
+            pointer-events: none;
+        }
+
+        .sidebar-actions {
+            display: flex;
+            gap: 5px;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        .sidebar-actions button {
+            pointer-events: auto;
+        }
+
+        .mini-btn {
+            background: #555;
+            color: white;
+            border: none;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: bold;
+        }
+
+        .mini-btn:hover {
+            filter: brightness(1.2);
+        }
+
+        .mini-btn.uiv {
+            background-color: var(--accent);
+        }
+
+        .mini-btn.con {
+            background-color: #d35400;
+        }
+
+        .mini-btn.del {
+            background-color: transparent;
+            color: #888;
+            font-size: 12px;
+            padding: 0 2px;
+        }
+
+        .mini-btn.del:hover {
+            color: var(--danger);
+            background: transparent;
+        }
+
+        .btn-add-cat {
+            background: transparent;
+            border: 1px dashed #666;
+            color: #aaa;
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-bottom: 10px;
+        }
+
+        .btn-add-cat:hover {
+            border-color: var(--cyber);
+            color: var(--cyber);
+            background: rgba(100, 255, 218, 0.05);
+        }
+
+        .btn-batch {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            border: 1px solid #555;
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: 0.2s;
+        }
+
+        .btn-batch:hover {
+            background: linear-gradient(135deg, #e67e22, #d35400);
+            border-color: #e67e22;
+        }
+
+        .btn-io {
+            background: #2d2d2d;
+            border: 1px solid #555;
+            color: #d4d4d4;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+            flex: 1;
+            transition: 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-io:hover {
+            background: #3d3d3d;
+            color: white;
+            border-color: #888;
+        }
+
+        .left-panel,
+        .right-panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+        }
+
+        label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: block;
+            font-size: 14px;
+            color: #569cd6;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        select,
+        input[type="text"],
+        textarea {
+            width: 100%;
+            background: #121212;
+            color: #d4d4d4;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            font-family: Consolas, monospace;
+            font-size: 13px;
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+
+        select:focus,
+        input:focus,
+        textarea:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        textarea {
+            flex: 1;
+            resize: none;
+            white-space: pre;
+            overflow: auto;
+            line-height: 1.4;
+        }
+
+        #payloadViewer {
+            flex: 1;
+            background: #1e1e1e;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            font-family: Consolas, monospace;
+            font-size: 12px;
+            overflow: auto;
+            white-space: pre-wrap;
+            margin-bottom: 15px;
+            display: none;
+            cursor: text;
+        }
+
+        .json-key {
+            color: var(--key);
+        }
+
+        .json-string {
+            color: var(--string);
+        }
+
+        .json-number {
+            color: var(--number);
+        }
+
+        .json-boolean {
+            color: #569cd6;
+        }
+
+        .json-null {
+            color: #569cd6;
+        }
+
+        .json-important {
+            background-color: rgba(215, 186, 125, 0.3);
+            color: #d7ba7d;
+            font-weight: bold;
+            padding: 0 2px;
+            border-radius: 2px;
+            border-bottom: 1px solid #d7ba7d;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+            background: #2d2d2d;
+            padding: 12px;
+            border-radius: 6px;
+        }
+
+        .controls label {
+            margin-bottom: 0;
+            color: #d4d4d4;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-weight: normal;
+            font-size: 13px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            font-size: 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        button:hover {
+            background-color: #005a9e;
+        }
+
+        .btn-secondary {
+            background-color: #444;
+            flex: 0.8;
+        }
+
+        .btn-secondary:hover {
+            background-color: #555;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            flex: 0.6;
+        }
+
+        .btn-danger:hover {
+            background-color: #9b2c2c;
+        }
+
+        .btn-action {
+            padding: 6px 12px;
+            font-size: 12px;
+            flex: none;
+        }
+
+        #saveBtn {
+            background-color: #34495e;
+        }
+
+        #saveBtn:hover {
+            background-color: #2c3e50;
+        }
+
+        .toast {
+            position: fixed;
+            top: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--accent);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: top 0.3s ease;
+            z-index: 9999;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            top: 20px;
+        }
     </style>
 </head>
+
 <body>
 
     <h1>
-        <span>🚀 自动化脚本工程中心 v6.3</span>
+        <span>🚀 自动化脚本工程中心 v6.4</span>
         <span class="tag">全景透明日志 + 智能追溯版</span>
     </h1>
-    
+
     <div class="container">
         <!-- 左侧常用脚本侧边栏 -->
         <div class="sidebar">
@@ -104,19 +550,21 @@
             <div style="font-size:11px; color:#888; margin-bottom:10px; line-height: 1.4;">
                 默认清爽折叠，<b>双击回填至工作台</b>。
             </div>
-            
+
             <div id="scriptList" style="flex:1; overflow-y:auto; padding-right: 5px; padding-bottom: 20px;">
                 <!-- 动态生成折叠分类列表 -->
             </div>
-            
+
             <div style="margin-top: auto; padding-top: 10px; border-top: 1px dashed var(--border);">
                 <button class="btn-add-cat" onclick="createNewCategory()">[+] 新建自定义分类</button>
-                <button class="btn-batch" style="margin-bottom: 10px;" onclick="copyAllConsoleScripts()">📦 拷贝全部为批量阵列 (F12)</button>
-                
+                <button class="btn-batch" style="margin-bottom: 10px;" onclick="copyAllConsoleScripts()">📦 拷贝全部为批量阵列
+                    (F12)</button>
+
                 <div style="display: flex; gap: 8px;">
                     <button class="btn-io" onclick="exportBackup()">📤 导出备份</button>
                     <button class="btn-io" onclick="document.getElementById('importFile').click()">📥 导入配置</button>
-                    <input type="file" id="importFile" style="display:none" accept=".json" onchange="importBackup(event)">
+                    <input type="file" id="importFile" style="display:none" accept=".json"
+                        onchange="importBackup(event)">
                 </div>
             </div>
         </div>
@@ -125,36 +573,45 @@
         <div class="left-panel">
             <label>1. 请求 URL 目标地址:</label>
             <div class="input-group">
-                <select id="urlPreset" style="width: 35%;" onchange="document.getElementById('requestUrl').value = this.value">
-                    <option value="https://datafab-pro.gtsdata.huawei.com/DataFabKernelCn/v1/answer/getAnswers">🟢 DataFab - 明细列表</option>
-                    <option value="https://netcare.huawei.com/adc-service/web/rest/v1/services/xxx">🔴 NetCare - 中国节点</option>
-                    <option value="https://netcare-ae.gts.huawei.com/adc-service/web/rest/v1/services/xxx">🔵 NetCare - 中东节点</option>
-                    <option value="https://netcare-de.gts.huawei.com/adc-service/web/rest/v1/services/xxx">🟠 NetCare - 德国节点</option>
+                <select id="urlPreset" style="width: 35%;"
+                    onchange="document.getElementById('requestUrl').value = this.value">
+                    <option value="https://datafab-pro.gtsdata.huawei.com/DataFabKernelCn/v1/answer/getAnswers">🟢
+                        DataFab - 明细列表</option>
+                    <option value="https://netcare.huawei.com/adc-service/web/rest/v1/services/xxx">🔴 NetCare - 中国节点
+                    </option>
+                    <option value="https://netcare-ae.gts.huawei.com/adc-service/web/rest/v1/services/xxx">🔵 NetCare -
+                        中东节点</option>
+                    <option value="https://netcare-de.gts.huawei.com/adc-service/web/rest/v1/services/xxx">🟠 NetCare -
+                        德国节点</option>
                     <option value="">⚙️ 自定义新地址...</option>
                 </select>
-                <input type="text" id="requestUrl" value="https://datafab-pro.gtsdata.huawei.com/DataFabKernelCn/v1/answer/getAnswers">
+                <input type="text" id="requestUrl"
+                    value="https://datafab-pro.gtsdata.huawei.com/DataFabKernelCn/v1/answer/getAnswers">
             </div>
-            
+
             <label style="display:flex; justify-content: space-between; align-items:center;">
                 2. 请求负载 Payload (JSON):
                 <span style="font-size:12px; color:#888; font-weight:normal;">粘贴后可点击格式化</span>
             </label>
             <textarea id="jsonInput" placeholder='{"srcTenantId":"...", "answerParamList": [...]}'></textarea>
             <div id="payloadViewer"></div>
-            
+
             <div class="input-group" style="margin-bottom:0;">
                 <input type="text" id="fileName" value="PBI_自动抓取" placeholder="文件名前缀 (例如：PBI_代表处数据) - 保存脚本时将以此为名">
             </div>
-            
+
             <div class="controls">
                 <label><input type="checkbox" id="useGlobalVars" checked> 全局变量注入</label>
                 <label><input type="checkbox" id="isPagination" checked> 循环翻页</label>
                 <label><input type="checkbox" id="forceSumData" checked> 独立大盘兜底</label>
-                <label style="color: var(--warning);"><input type="checkbox" id="autoFetchCPC" checked> 动态抓取 CPC / NID</label>
-                <label style="color: var(--cyber); font-weight: bold;"><input type="checkbox" id="autoRuntimeMonth" checked> 开启[运行时:当月+上月]动态双重裂变</label>
-                <label style="color: var(--blue); font-weight: bold;"><input type="checkbox" id="autoNetCareTriplicate" checked> 🌍 保存侧边栏时自动生成 NetCare 三大区脚本阵列</label>
+                <label style="color: var(--warning);"><input type="checkbox" id="autoFetchCPC" checked> 动态抓取 CPC /
+                    NID</label>
+                <label style="color: var(--cyber); font-weight: bold;"><input type="checkbox" id="autoRuntimeMonth"
+                        checked> 开启[运行时:当月+上月]动态双重裂变</label>
+                <label style="color: var(--blue); font-weight: bold;"><input type="checkbox" id="autoNetCareTriplicate"
+                        checked> 🌍 保存侧边栏时自动生成 NetCare 三大区脚本阵列</label>
             </div>
-            
+
             <div class="btn-group">
                 <button class="btn-secondary" onclick="formatAndAnalyzeJSON()">🔍 格式化</button>
                 <button class="btn-danger" onclick="clearAll()">🗑️ 清空</button>
@@ -169,14 +626,17 @@
                 <label style="margin: 0; color: var(--accent); font-size: 13px;">🤖 生产级 UI.Vision 宏代码:</label>
                 <div class="btn-group" style="gap: 8px; margin: 0;">
                     <button id="saveBtn" class="btn-action" onclick="saveCurrentScript()">💾 加入侧边栏</button>
-                    <button id="btnCopyUIV" class="btn-action" style="background: var(--accent);" onclick="copyCodeText('codeOutput', 'btnCopyUIV', 'UIV 代码')">📋 复制 UIV</button>
+                    <button id="btnCopyUIV" class="btn-action" style="background: var(--accent);"
+                        onclick="copyCodeText('codeOutput', 'btnCopyUIV', 'UIV 代码')">📋 复制 UIV</button>
                 </div>
             </div>
-            <textarea id="codeOutput" readonly placeholder="生成后显示 UI.Vision 宏代码..." style="flex: 1; margin-bottom: 15px;"></textarea>
+            <textarea id="codeOutput" readonly placeholder="生成后显示 UI.Vision 宏代码..."
+                style="flex: 1; margin-bottom: 15px;"></textarea>
 
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                 <label style="margin: 0; color: var(--console); font-size: 13px;">💻 纯浏览器控制台执行脚本 (F12):</label>
-                <button id="btnCopyConsole" class="btn-action" style="background: var(--console); margin: 0;" onclick="copyCodeText('consoleOutput', 'btnCopyConsole', '控制台代码')">📋 复制 Console</button>
+                <button id="btnCopyConsole" class="btn-action" style="background: var(--console); margin: 0;"
+                    onclick="copyCodeText('consoleOutput', 'btnCopyConsole', '控制台代码')">📋 复制 Console</button>
             </div>
             <textarea id="consoleOutput" readonly placeholder="生成后显示纯浏览器 F12 直跑脚本..." style="flex: 1;"></textarea>
         </div>
@@ -186,15 +646,15 @@
 
     <script>
         let parsedPayloadObj = null;
-        let currentScriptTitle = ""; 
-        let draggedScriptId = null; 
+        let currentScriptTitle = "";
+        let draggedScriptId = null;
 
         const DEFAULT_CATEGORIES = ["DataFab", "NetCare中国", "NetCare中东", "NetCare德国", "默认分类"];
         let expandedCategories = JSON.parse(localStorage.getItem('uivision_expanded_cats') || '[]');
 
-        window.onload = function() { 
-            migrateOldScripts(); 
-            loadSavedScripts(); 
+        window.onload = function () {
+            migrateOldScripts();
+            loadSavedScripts();
         };
 
         function showToast(message) {
@@ -211,7 +671,7 @@
                 expanded: JSON.parse(localStorage.getItem('uivision_expanded_cats') || '[]'),
                 exportDate: new Date().toISOString()
             };
-            
+
             if (backupData.scripts.length === 0 && backupData.categories.length === 0) {
                 alert("⚠️ 当前仓库为空，没有需要导出的配置！"); return;
             }
@@ -229,7 +689,7 @@
             const file = event.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = function (e) {
                 try {
                     const content = e.target.result;
                     const parsed = JSON.parse(content);
@@ -237,25 +697,25 @@
                         const isMerge = confirm("📦 成功解析到备份文件！\n\n点击【确定】进行 融合（保留现有脚本，追加新脚本）\n点击【取消】进行 覆盖（清空现有仓库，完全替换）");
                         if (!isMerge) {
                             localStorage.setItem('uivision_saved_scripts', JSON.stringify(parsed.scripts));
-                            if(parsed.categories) localStorage.setItem('uivision_custom_categories', JSON.stringify(parsed.categories));
-                            if(parsed.expanded) {
+                            if (parsed.categories) localStorage.setItem('uivision_custom_categories', JSON.stringify(parsed.categories));
+                            if (parsed.expanded) {
                                 expandedCategories = parsed.expanded;
                                 localStorage.setItem('uivision_expanded_cats', JSON.stringify(parsed.expanded));
                             }
                         } else {
                             let existingScripts = JSON.parse(localStorage.getItem('uivision_saved_scripts') || '[]');
                             let existingCats = JSON.parse(localStorage.getItem('uivision_custom_categories') || '[]');
-                            
+
                             parsed.scripts.forEach(s => {
                                 let extIdx = existingScripts.findIndex(ex => ex.name === s.name);
                                 if (extIdx >= 0) {
-                                    existingScripts[extIdx] = s; 
+                                    existingScripts[extIdx] = s;
                                 } else {
-                                    if(existingScripts.some(ex => ex.id === s.id)) s.id = 'script_' + Math.random().toString(36).substr(2, 9);
+                                    if (existingScripts.some(ex => ex.id === s.id)) s.id = 'script_' + Math.random().toString(36).substr(2, 9);
                                     existingScripts.push(s);
                                 }
                             });
-                            if(parsed.categories) {
+                            if (parsed.categories) {
                                 parsed.categories.forEach(c => {
                                     if (!existingCats.includes(c) && !DEFAULT_CATEGORIES.includes(c)) existingCats.push(c);
                                 });
@@ -266,8 +726,8 @@
                         loadSavedScripts();
                         showToast("✅ 配置快照已成功导入！");
                     } else alert("❌ 导入失败：该文件不是有效的抓取引擎配置备份。");
-                } catch(err) { alert("❌ 导入失败：解析 JSON 文件出错。"); }
-                event.target.value = ''; 
+                } catch (err) { alert("❌ 导入失败：解析 JSON 文件出错。"); }
+                event.target.value = '';
             };
             reader.readAsText(file);
         }
@@ -279,7 +739,7 @@
             if (lowerText.includes("netcare.huawei.com") || lowerText.includes("netcare-cn") || lowerText.includes(".cn/")) return "NetCare中国";
             if (lowerText.includes("netcare-ae") || lowerText.includes(".ae/")) return "NetCare中东";
             if (lowerText.includes("netcare-de") || lowerText.includes(".de/")) return "NetCare德国";
-            if (lowerText.includes("netcare")) return "默认分类"; 
+            if (lowerText.includes("netcare")) return "默认分类";
             return "默认分类";
         }
 
@@ -289,7 +749,7 @@
             scripts.forEach(s => {
                 if (!s.category || s.category === "默认分类") {
                     let detected = autoDetectCategory(s.code || "");
-                    if(s.category !== detected) {
+                    if (s.category !== detected) {
                         s.category = detected; changed = true;
                     }
                 }
@@ -311,7 +771,7 @@
             if (!DEFAULT_CATEGORIES.includes(newCat) && !userCats.includes(newCat)) {
                 userCats.push(newCat);
                 localStorage.setItem('uivision_custom_categories', JSON.stringify(userCats));
-                if(!expandedCategories.includes(newCat)) {
+                if (!expandedCategories.includes(newCat)) {
                     expandedCategories.push(newCat);
                     localStorage.setItem('uivision_expanded_cats', JSON.stringify(expandedCategories));
                 }
@@ -328,7 +788,7 @@
                 let scripts = JSON.parse(localStorage.getItem('uivision_saved_scripts') || '[]');
                 scripts = scripts.filter(s => s.category !== catName);
                 localStorage.setItem('uivision_saved_scripts', JSON.stringify(scripts));
-                
+
                 expandedCategories = expandedCategories.filter(c => c !== catName);
                 localStorage.setItem('uivision_expanded_cats', JSON.stringify(expandedCategories));
                 loadSavedScripts();
@@ -350,14 +810,14 @@
             let scripts = JSON.parse(localStorage.getItem('uivision_saved_scripts') || '[]');
             let categories = getCategories();
             list.innerHTML = '';
-            
+
             categories.forEach(catName => {
                 let catScripts = scripts.filter(s => s.category === catName);
                 let isCustom = !DEFAULT_CATEGORIES.includes(catName);
-                
+
                 const groupDiv = document.createElement('div');
                 groupDiv.className = 'category-group';
-                
+
                 if (expandedCategories.includes(catName)) groupDiv.classList.add('expanded');
 
                 groupDiv.addEventListener('dragover', e => { e.preventDefault(); groupDiv.classList.add('drag-over'); });
@@ -370,7 +830,7 @@
                         let targetScript = allScripts.find(s => s.id === draggedScriptId);
                         if (targetScript && targetScript.category !== catName) {
                             targetScript.category = catName;
-                            if(!expandedCategories.includes(catName)) {
+                            if (!expandedCategories.includes(catName)) {
                                 expandedCategories.push(catName);
                                 localStorage.setItem('uivision_expanded_cats', JSON.stringify(expandedCategories));
                             }
@@ -383,14 +843,14 @@
                 const headerDiv = document.createElement('div');
                 headerDiv.className = 'category-header';
                 headerDiv.onclick = (e) => {
-                    if(e.target.tagName === 'BUTTON') return;
+                    if (e.target.tagName === 'BUTTON') return;
                     toggleCategoryExpand(catName, groupDiv);
                 };
-                
+
                 const titleSpan = document.createElement('span');
                 titleSpan.className = 'cat-title';
                 titleSpan.innerHTML = `<span class="cat-arrow">▶</span> 📂 ${catName} <span style="color:#aaa;font-weight:normal;">(${catScripts.length})</span>`;
-                
+
                 const actionSpan = document.createElement('div');
                 actionSpan.className = 'category-actions';
 
@@ -417,14 +877,14 @@
                 const contentDiv = document.createElement('div');
                 contentDiv.className = 'category-content';
 
-                if(catScripts.length === 0) contentDiv.innerHTML = '<div style="color:#666; font-size:11px; text-align:center; padding: 5px;">（空）将脚本拖拽至此</div>';
+                if (catScripts.length === 0) contentDiv.innerHTML = '<div style="color:#666; font-size:11px; text-align:center; padding: 5px;">（空）将脚本拖拽至此</div>';
 
                 catScripts.forEach(script => {
                     const item = document.createElement('div');
                     item.className = 'script-item';
                     item.draggable = true;
                     item.title = "双击回填配置至工作台";
-                    
+
                     item.addEventListener('dragstart', e => {
                         draggedScriptId = script.id;
                         setTimeout(() => item.style.opacity = '0.5', 0);
@@ -432,9 +892,9 @@
                     item.addEventListener('dragend', e => {
                         draggedScriptId = null; item.style.opacity = '1';
                     });
-                    
+
                     item.addEventListener('dblclick', e => {
-                        if(e.target.tagName === 'BUTTON') return;
+                        if (e.target.tagName === 'BUTTON') return;
                         document.getElementById('codeOutput').value = script.code || "";
                         document.getElementById('consoleOutput').value = script.consoleCode || "";
                         if (script.url) {
@@ -445,30 +905,30 @@
                         }
                         if (script.originalFileName) document.getElementById('fileName').value = script.originalFileName;
                         else document.getElementById('fileName').value = script.name.replace(/(_CN|_AE|_DE)$/, '');
-                        
+
                         if (script.payload) {
                             let editor = document.getElementById('jsonInput');
                             editor.value = script.payload; editor.style.display = 'block';
                             document.getElementById('payloadViewer').style.display = 'none';
-                            formatAndAnalyzeJSON(); 
+                            formatAndAnalyzeJSON();
                         }
-                        
+
                         if (script.configOptions) {
-                            if(script.configOptions.useGlobalVars !== undefined) document.getElementById('useGlobalVars').checked = script.configOptions.useGlobalVars;
-                            if(script.configOptions.isPagination !== undefined) document.getElementById('isPagination').checked = script.configOptions.isPagination;
-                            if(script.configOptions.forceSumData !== undefined) document.getElementById('forceSumData').checked = script.configOptions.forceSumData;
-                            if(script.configOptions.autoFetchCPC !== undefined) document.getElementById('autoFetchCPC').checked = script.configOptions.autoFetchCPC;
-                            if(script.configOptions.autoRuntimeMonth !== undefined) document.getElementById('autoRuntimeMonth').checked = script.configOptions.autoRuntimeMonth;
-                            if(script.configOptions.autoNetCareTriplicate !== undefined && document.getElementById('autoNetCareTriplicate')) document.getElementById('autoNetCareTriplicate').checked = script.configOptions.autoNetCareTriplicate;
+                            if (script.configOptions.useGlobalVars !== undefined) document.getElementById('useGlobalVars').checked = script.configOptions.useGlobalVars;
+                            if (script.configOptions.isPagination !== undefined) document.getElementById('isPagination').checked = script.configOptions.isPagination;
+                            if (script.configOptions.forceSumData !== undefined) document.getElementById('forceSumData').checked = script.configOptions.forceSumData;
+                            if (script.configOptions.autoFetchCPC !== undefined) document.getElementById('autoFetchCPC').checked = script.configOptions.autoFetchCPC;
+                            if (script.configOptions.autoRuntimeMonth !== undefined) document.getElementById('autoRuntimeMonth').checked = script.configOptions.autoRuntimeMonth;
+                            if (script.configOptions.autoNetCareTriplicate !== undefined && document.getElementById('autoNetCareTriplicate')) document.getElementById('autoNetCareTriplicate').checked = script.configOptions.autoNetCareTriplicate;
                         }
-                        const originalBg = item.style.backgroundColor; item.style.backgroundColor = "#2e7d32"; 
+                        const originalBg = item.style.backgroundColor; item.style.backgroundColor = "#2e7d32";
                         setTimeout(() => item.style.backgroundColor = originalBg, 300);
                         showToast(`✅ [${script.name}] 配置已回填！`);
                     });
-                    
+
                     const itemTitle = document.createElement('div');
                     itemTitle.className = 'script-item-title'; itemTitle.innerText = "📄 " + script.name;
-                    
+
                     const actionsDiv = document.createElement('div');
                     actionsDiv.className = 'sidebar-actions';
 
@@ -482,21 +942,21 @@
                     const conBtn = document.createElement('button');
                     conBtn.className = 'mini-btn con'; conBtn.innerText = 'F12';
                     conBtn.onclick = () => {
-                        if(script.consoleCode) copyFromMemory(script.consoleCode, "控制台脚本");
+                        if (script.consoleCode) copyFromMemory(script.consoleCode, "控制台脚本");
                         else alert("⚠️ 旧版脚本，请重新生成并覆盖保存。");
                     };
 
                     const delBtn = document.createElement('button');
                     delBtn.className = 'mini-btn del'; delBtn.innerHTML = '✖';
-                    delBtn.onclick = function() {
-                        if(confirm(`确定删除 [${script.name}] 吗？`)) {
+                    delBtn.onclick = function () {
+                        if (confirm(`确定删除 [${script.name}] 吗？`)) {
                             let allScripts = JSON.parse(localStorage.getItem('uivision_saved_scripts') || '[]');
                             allScripts = allScripts.filter(s => s.id !== script.id);
                             localStorage.setItem('uivision_saved_scripts', JSON.stringify(allScripts));
                             loadSavedScripts();
                         }
                     };
-                    
+
                     btnGroup.appendChild(uivBtn); btnGroup.appendChild(conBtn);
                     actionsDiv.appendChild(btnGroup); actionsDiv.appendChild(delBtn);
                     item.appendChild(itemTitle); item.appendChild(actionsDiv); contentDiv.appendChild(item);
@@ -510,7 +970,7 @@
             const codeConsole = document.getElementById('consoleOutput').value;
             const url = document.getElementById('requestUrl').value.trim();
             if (!codeUIV || !codeConsole) { alert("⚠️ 请先生成脚本后再保存！"); return; }
-            
+
             const rawJson = parsedPayloadObj ? JSON.stringify(parsedPayloadObj, null, 4) : document.getElementById('jsonInput').value.trim();
             const originalFileName = document.getElementById('fileName').value.trim() || "PBI_自动抓取";
             const configOptions = {
@@ -529,7 +989,7 @@
 
             if (isNetCare && configOptions.autoNetCareTriplicate) {
                 let urlObj;
-                try { urlObj = new URL(url); } catch(e) {}
+                try { urlObj = new URL(url); } catch (e) { }
                 if (urlObj && urlObj.pathname) {
                     let path = urlObj.pathname + urlObj.search;
                     let regions = [
@@ -537,13 +997,13 @@
                         { cat: "NetCare中东", domain: "https://netcare-ae.gts.huawei.com", suffix: "-AE" },
                         { cat: "NetCare德国", domain: "https://netcare-de.gts.huawei.com", suffix: "-DE" }
                     ];
-                    
+
                     regions.forEach(r => {
                         let newUrl = r.domain + path;
                         let newUivCode = codeUIV.split(url).join(newUrl);
                         let newConsoleCode = codeConsole.split(url).join(newUrl);
                         let newName = baseName + r.suffix;
-                        itemsToSave.push({ 
+                        itemsToSave.push({
                             id: 'script_' + Math.random().toString(36).substr(2, 9),
                             name: newName, code: newUivCode, consoleCode: newConsoleCode, category: r.cat,
                             url: newUrl, payload: rawJson, originalFileName: originalFileName, configOptions: configOptions
@@ -559,7 +1019,7 @@
             let conflicts = itemsToSave.filter(item => scripts.some(s => s.name === item.name));
             if (conflicts.length > 0) {
                 let msg = conflicts.length > 1 ? `发现 ${conflicts.length} 个同名脚本（含裂变分发区域），是否一键覆盖更新？` : `已存在名为 [${conflicts[0].name}] 的脚本，是否覆盖更新？`;
-                if(!confirm(msg)) return;
+                if (!confirm(msg)) return;
             }
 
             itemsToSave.forEach(item => {
@@ -570,13 +1030,13 @@
                     scripts[existingIdx].payload = item.payload; scripts[existingIdx].originalFileName = item.originalFileName;
                     scripts[existingIdx].configOptions = item.configOptions;
                 } else { scripts.push(item); }
-                if(!expandedCategories.includes(item.category)) expandedCategories.push(item.category);
+                if (!expandedCategories.includes(item.category)) expandedCategories.push(item.category);
             });
-            
+
             localStorage.setItem('uivision_expanded_cats', JSON.stringify(expandedCategories));
             localStorage.setItem('uivision_saved_scripts', JSON.stringify(scripts));
             loadSavedScripts();
-            
+
             const btn = document.getElementById('saveBtn'); const oldText = btn.innerText;
             btn.innerText = itemsToSave.length > 1 ? "✅ 阵列已分发" : "✅ 已保存";
             setTimeout(() => btn.innerText = oldText, 2000);
@@ -614,7 +1074,7 @@
 
         function copyCodeText(textAreaId, btnId, typeName) {
             const codeEl = document.getElementById(textAreaId);
-            if(!codeEl || !codeEl.value) { alert("⚠️ 没有可复制的代码！"); return; }
+            if (!codeEl || !codeEl.value) { alert("⚠️ 没有可复制的代码！"); return; }
             codeEl.select(); document.execCommand('copy');
             const btn = document.getElementById(btnId);
             const oldText = btn.innerText; btn.innerText = "✅ 成功";
@@ -638,7 +1098,7 @@
                         cls = 'json-key';
                         if (/"(pageId|pageName|componentId|id|column|values|table|boardId|cpc|network_name_base|task_status|region_cn_name)"/.test(match)) cls = 'json-key json-important';
                     } else { cls = 'json-string'; }
-                } else if (/true|false/.test(match)) { cls = 'json-boolean'; } 
+                } else if (/true|false/.test(match)) { cls = 'json-boolean'; }
                 else if (/null/.test(match)) { cls = 'json-null'; }
                 return '<span class="' + cls + '">' + match + '</span>';
             });
@@ -667,7 +1127,7 @@
                 let prettyJson = JSON.stringify(obj, null, 4);
                 editor.style.display = 'none'; viewer.style.display = 'block';
                 viewer.innerHTML = syntaxHighlight(prettyJson);
-                viewer.onclick = function() { viewer.style.display = 'none'; editor.style.display = 'block'; editor.value = prettyJson; };
+                viewer.onclick = function () { viewer.style.display = 'none'; editor.style.display = 'block'; editor.value = prettyJson; };
             } catch (e) { errorDiv.innerText = "JSON 格式不合法，请检查标点或括号是否匹配。"; }
         }
 
@@ -681,8 +1141,8 @@
         function generateScript() {
             const errorDiv = document.getElementById('errorMsg');
             errorDiv.innerText = "";
-            if(document.getElementById('jsonInput').style.display !== 'none') formatAndAnalyzeJSON();
-            
+            if (document.getElementById('jsonInput').style.display !== 'none') formatAndAnalyzeJSON();
+
             const url = document.getElementById('requestUrl').value.trim();
             let fileNameBase = document.getElementById('fileName').value.trim() || "PBI_Data";
             const useGlobalVars = document.getElementById('useGlobalVars').checked;
@@ -690,21 +1150,21 @@
             const forceSumData = document.getElementById('forceSumData').checked;
             const autoFetchCPC = document.getElementById('autoFetchCPC').checked;
             const autoRuntimeMonth = document.getElementById('autoRuntimeMonth').checked;
-            
+
             if (!parsedPayloadObj) { errorDiv.innerText = "请先提供有效的 Payload JSON！"; return; }
 
             let platform = url.includes("datafab") ? "DATAFAB" : (url.includes("netcare") ? "NETCARE" : "CUSTOM");
             let payloadClone = JSON.parse(JSON.stringify(parsedPayloadObj));
-            
+
             if (platform === "NETCARE") payloadClone.need_summary = true;
 
-            let hasCPC = false; 
-            let hasNID = false; 
+            let hasCPC = false;
+            let hasNID = false;
             let hasMonthFilter = false;
 
             function traversePayload(obj) {
                 if (typeof obj !== 'object' || obj === null) return;
-                
+
                 if (platform === "DATAFAB" && autoFetchCPC && obj.column === "cpc" && Array.isArray(obj.values)) {
                     hasCPC = true; obj.values = "__CPC_IDS_PLACEHOLDER__";
                 }
@@ -727,10 +1187,10 @@
                             obj.values = "__YEAR_PLACEHOLDER__";
                         }
                     }
-                    
+
                     let sKey = Object.keys(obj).find(k => (k.toLowerCase().includes('start_date') || k.toLowerCase() === 'startdate') && typeof obj[k] === 'string' && /^[0-9]{4}-[0-9]{2}-[0-9]{2}/.test(obj[k]));
                     let eKey = Object.keys(obj).find(k => (k.toLowerCase().includes('end_date') || k.toLowerCase() === 'enddate') && typeof obj[k] === 'string' && /^[0-9]{4}-[0-9]{2}-[0-9]{2}/.test(obj[k]));
-                    
+
                     if (sKey && eKey) {
                         let sMonth = obj[sKey].substring(0, 7);
                         let eMonth = obj[eKey].substring(0, 7);
@@ -774,11 +1234,11 @@
                 varDefBlock = `        // 🎯 全局变量控制台\n        const targetRegion = (typeof storedVars !== 'undefined' && storedVars['global_region']) ? storedVars['global_region'] : "北部非洲地区部";\n        const targetOffice = (typeof storedVars !== 'undefined' && storedVars['global_office']) ? storedVars['global_office'] : "埃及代表处";\n        const targetDate = (typeof storedVars !== 'undefined' && storedVars['global_start_date']) ? storedVars['global_start_date'] : "2026-01-01";`;
                 paramsStr = paramsStr.replace(/"北部非洲地区部"/g, "targetRegion").replace(/"埃及代表处"/g, "targetOffice");
             }
-            
+
             if (hasCPC) paramsStr = paramsStr.replace(/"__CPC_IDS_PLACEHOLDER__"/g, "cpcIds");
 
-            let authCode = platform === "DATAFAB" 
-                ? `        function getCookie(n){let m=document.cookie.match(new RegExp('(^| )'+n+'=([^;]+)'));return m?decodeURIComponent(m[2]):null;}\n        let csrfToken = getCookie("XSRF-TOKEN") || getCookie("NETLIVE-XSRF-TOKEN") || "";` 
+            let authCode = platform === "DATAFAB"
+                ? `        function getCookie(n){let m=document.cookie.match(new RegExp('(^| )'+n+'=([^;]+)'));return m?decodeURIComponent(m[2]):null;}\n        let csrfToken = getCookie("XSRF-TOKEN") || getCookie("NETLIVE-XSRF-TOKEN") || "";`
                 : `        const cStr=localStorage.getItem('globalConfig'); let csrfToken="";\n        if(cStr){const m=cStr.match(/([A-Fa-f0-9]{64})/); if(m)csrfToken=m[0]; else try{let o=JSON.parse(cStr);csrfToken=o.csrfToken||(o.configData&&o.configData.csrfToken)||""}catch(e){} }`;
             let headerCode = platform === "DATAFAB"
                 ? `        const fetchHeaders = { "accept": "application/json, text/plain, */*", "content-type": "application/json;charset=UTF-8", "x-xsrf-token": csrfToken, "x-requested-with": "XMLHttpRequest", "tenantId": "${tenantIdStr}", "project-id": "${tenantIdStr}", "SESSION-AFFINITY-KEY": "${boardId}", "language": "zh_CN" };`
@@ -844,7 +1304,7 @@
             let arr = obj.results || obj.items || obj.list || (obj.data && obj.data.results) || obj.data || [];
             return Array.isArray(arr) ? arr : (Array.isArray(obj) ? obj : [arr]);
         }\n`;
-            
+
             if (hasCPC) {
                 coreBody += `
         // 🚀 阶段零：动态嗅探 CPC
@@ -1032,7 +1492,7 @@ ${forceSumData && platform === "DATAFAB" && compId ? `
         }\n`;
 
             let uivTemplate = `return (async function() {\n    try {\n${coreBody}\n        return "✅ 导出成功！子任务: " + finalSummary.join(" | ");\n    } catch (error) {\n        return "❌ 报错: " + error.message;\n    }\n})();`;
-            
+
             let consoleTemplate = `(async function() {\n    try {\n        console.log("%c🚀 [单次抓取] 任务列车启动，请保持页面开启并耐心等待...", "color: #e67e22; font-size: 14px; font-weight: bold;");\n${coreBody}\n        console.log("%c🎉 [单次抓取] 任务圆满成功！提取报告: " + finalSummary.join(" | "), "color: #4CAF50; font-size: 14px; font-weight: bold;");\n    } catch (error) {\n        console.error("%c❌ 内部报错: " + error.message, "color: #c53030; font-size: 13px; font-weight: bold;");\n    }\n})();`;
 
             document.getElementById('codeOutput').value = uivTemplate;
@@ -1041,4 +1501,5 @@ ${forceSumData && platform === "DATAFAB" && compId ? `
 
     </script>
 </body>
+
 </html>

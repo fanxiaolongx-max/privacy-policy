@@ -9,21 +9,20 @@ function evaluateAllMetrics() {
         if (!state.customMetrics || !state.customMetrics.length) return;
         state.customMetrics.forEach(rule => {
             const evalRule = (r, dataRows) => {
+                const checkMatch = (cellVal, pattern) => {
+                    const str = (cellVal !== undefined && cellVal !== null) ? cellVal.toString().trim() : '';
+                    if (pattern === '[空]') return str === '';
+                    if (pattern === '[非空]') return str !== '';
+                    return str.includes(pattern);
+                };
+
                 if (r.type === 'count') {
                     let count = 0;
                     for (let i = 0; i < dataRows.length; i++) {
                         const row = dataRows[i];
                         let passX = true;
-                        if (r.colX) {
-                            const cx = row[r.colX];
-                            passX = (cx !== undefined && cx !== null && cx.toString().includes(r.valY));
-                        }
-                        if (passX) {
-                            const cz = row[r.colZ];
-                            if (cz !== undefined && cz !== null && cz.toString().includes(r.valK)) {
-                                count++;
-                            }
-                        }
+                        if (r.colX) passX = checkMatch(row[r.colX], r.valY);
+                        if (passX && checkMatch(row[r.colZ], r.valK)) count++;
                     }
                     return count;
                 } else if (r.type === 'ratio') {
@@ -32,24 +31,17 @@ function evaluateAllMetrics() {
                     for (let i = 0; i < dataRows.length; i++) {
                         const row = dataRows[i];
                         let passX = true;
-                        if (r.colX) {
-                            const cx = row[r.colX];
-                            passX = (cx !== undefined && cx !== null && cx.toString().includes(r.valY));
-                        }
+                        if (r.colX) passX = checkMatch(row[r.colX], r.valY);
                         if (passX) {
                             total++;
-                            const cz = row[r.colZ];
-                            if (cz !== undefined && cz !== null && cz.toString().includes(r.valK)) {
-                                matched++;
-                            }
+                            if (checkMatch(row[r.colZ], r.valK)) matched++;
                         }
                     }
                     return total > 0 ? Math.round((matched / total) * 100) + '%' : '0%';
                 } else {
                     for (let i = 0; i < dataRows.length; i++) {
                         const row = dataRows[i];
-                        const cellValX = row[r.colX];
-                        if (cellValX !== undefined && cellValX !== null && cellValX.toString().includes(r.valY)) {
+                        if (checkMatch(row[r.colX], r.valY)) {
                             return row[r.colZ] !== undefined && row[r.colZ] !== null ? row[r.colZ] : '--';
                         }
                     }

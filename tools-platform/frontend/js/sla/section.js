@@ -216,16 +216,16 @@ function buildDOM(secId, title, themeColor) {
                     <!-- 提取模式 -->
                     <div id="m-extract-config-${secId}">
                         <select id="m-colx-${secId}" class="picker-search" style="margin-bottom:6px;cursor:pointer;"><option value="">1. 当此列(X)...</option></select>
-                        <input type="text" id="m-valy-${secId}" class="picker-search" placeholder="2. 包含内容(Y)..." style="margin-bottom:6px;">
+                        <input type="text" id="m-valy-${secId}" class="picker-search" placeholder="2. 包含内容(Y) (支持[空]/[非空])" style="margin-bottom:6px;">
                         <select id="m-colz-${secId}" class="picker-search" style="margin-bottom:6px;cursor:pointer;"><option value="">3. 则提取该行此列(Z)的值</option></select>
                     </div>
 
                     <!-- 统计模式/占比模式 -->
                     <div id="m-count-config-${secId}" style="display:none;">
                         <select id="m-c-colx-${secId}" class="picker-search" style="margin-bottom:6px;cursor:pointer;"><option value="">1. 筛选条件列(X)... (选填)</option></select>
-                        <input type="text" id="m-c-valy-${secId}" class="picker-search" placeholder="2. 筛选X列包含内容(Y)... (选填)" style="margin-bottom:6px;">
+                        <input type="text" id="m-c-valy-${secId}" class="picker-search" placeholder="2. 筛选X列含内容(Y) (支持[空]/[非空])" style="margin-bottom:6px;">
                         <select id="m-c-colz-${secId}" class="picker-search" style="margin-bottom:6px;cursor:pointer;"><option value="">3. 目标统计列(Z)</option></select>
-                        <input type="text" id="m-c-valk-${secId}" class="picker-search" placeholder="4. 统计Z列中包含关键字(K)的行数" style="margin-bottom:6px;">
+                        <input type="text" id="m-c-valk-${secId}" class="picker-search" placeholder="4. Z列含关键字(K) (支持[空]/[非空])" style="margin-bottom:6px;">
                     </div>
 
                     <div id="m-label-container-${secId}" style="display:flex;gap:6px;margin-bottom:8px;">
