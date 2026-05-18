@@ -72,26 +72,27 @@
 <body>
     <div class="page-container">
         <div class="controls">
-            <h2>📈 专业报表看板</h2>
+            <h2>📈 专业报表看板 (Professional Report Dashboard)</h2>
             <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
                 <div>
-                    <span style="font-size:14px;color:#666;margin-right:6px;">考核月份：</span>
+                    <span style="font-size:14px;color:#666;margin-right:6px;">考核月份 (Month)：</span>
                     <select id="target-month-select" onchange="renderCurrentSnapshot()"></select>
                 </div>
                 <div>
-                    <span style="font-size:14px;color:#666;margin-right:6px;">历史快照：</span>
+                    <span style="font-size:14px;color:#666;margin-right:6px;">历史快照 (Snapshot)：</span>
                     <select id="snapshot-select" onchange="loadSelectedSnapshot()"></select>
                 </div>
-                <button onclick="openGroupModal()" style="padding: 8px 14px; background: #e8eaf6; border: 1px solid #9fa8da; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #283593; font-weight: 600;">📂 指标分组配置</button>
-                <button onclick="openWeightModal()" style="padding: 8px 14px; background: #fff; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #333; font-weight: 600;">⚖️ 权重配置</button>
-                <button onclick="openAddMetricModal()" style="padding: 8px 14px; background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #2e7d32; font-weight: 600;">➕ 手动增加指标</button>
+                <button onclick="openGroupModal()" style="padding: 8px 14px; background: #e8eaf6; border: 1px solid #9fa8da; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #283593; font-weight: 600;">📂 指标分组配置 (Group Config)</button>
+                <button onclick="openWeightModal()" style="padding: 8px 14px; background: #fff; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #333; font-weight: 600;">⚖️ 权重配置 (Weight Config)</button>
+                <button onclick="openAddMetricModal()" style="padding: 8px 14px; background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #2e7d32; font-weight: 600;">➕ 手动增加指标 (Add Metric)</button>
+                <button onclick="openI18nModal()" style="padding: 8px 14px; background: #fff3e0; border: 1px solid #ffe0b2; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #e65100; font-weight: 600;">🌐 中英翻译配置 (I18n Config)</button>
             </div>
         </div>
         
         <!-- Weight Config Modal -->
         <div id="weight-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:999; align-items:center; justify-content:center;">
             <div style="background:#fff; border-radius:12px; width:500px; max-width:90%; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
-                <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:12px; margin-bottom:16px;">⚖️ 配置指标权重</h3>
+                <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:12px; margin-bottom:16px;">⚖️ 配置指标权重 (Config Metric Weights)</h3>
                 <div id="weight-modal-list" style="max-height:60vh; overflow-y:auto; margin-bottom:16px; display:flex; flex-direction:column; gap:10px;">
                     <!-- populated by js -->
                 </div>
@@ -105,7 +106,7 @@
         <!-- Add Manual Metric Modal -->
         <div id="add-metric-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:999; align-items:center; justify-content:center;">
             <div style="background:#fff; border-radius:12px; width:600px; max-width:90%; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
-                <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:12px; margin-bottom:16px; color:#2e7d32;">➕ 手动增加指标</h3>
+                <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:12px; margin-bottom:16px; color:#2e7d32;">➕ 手动增加指标 (Add Manual Metric)</h3>
                 <div style="max-height:60vh; overflow-y:auto; margin-bottom:16px; padding-right:10px;" id="add-metric-form">
                     <!-- populated by js -->
                 </div>
@@ -120,7 +121,7 @@
         <div id="group-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:999; align-items:center; justify-content:center;">
             <div style="background:#fff; border-radius:12px; width:720px; max-width:95vw; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 10px 40px rgba(0,0,0,0.25);">
                 <div style="padding:20px 24px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
-                    <h3 style="margin:0; color:#283593;">📂 指标分组配置</h3>
+                    <h3 style="margin:0; color:#283593;">📂 指标分组配置 (Metric Group Config)</h3>
                     <span style="font-size:12px; color:#888;">拖拽调整分组及指标顺序，点击指标标签分配到分组</span>
                 </div>
                 <div style="flex:1; overflow-y:auto; padding:20px 24px; display:flex; gap:20px;">
@@ -142,10 +143,44 @@
                 </div>
             </div>
         </div>
+
+        <!-- I18n Config Modal -->
+        <div id="i18n-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:999; align-items:center; justify-content:center;">
+            <div style="background:#fff; border-radius:12px; width:700px; max-width:95vw; display:flex; flex-direction:column; box-shadow:0 10px 40px rgba(0,0,0,0.25);">
+                <div style="padding:20px 24px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="margin:0; color:#e65100;">🌐 中英文翻译字典配置 (I18n Map Config)</h3>
+                    <span style="font-size:12px; color:#888;">可覆盖或新增中文对应的英文翻译（对所有用户生效）</span>
+                </div>
+                <div style="padding:20px 24px; display:flex; gap:10px; border-bottom:1px solid #f0f0f0;">
+                    <input type="text" id="i18n-new-zh" placeholder="中文原词 (如：新指标)" style="flex:1; padding:8px 12px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
+                    <input type="text" id="i18n-new-en" placeholder="英文翻译 (如：New Metric)" style="flex:1; padding:8px 12px; border:1px solid #ccc; border-radius:6px; font-size:13px;">
+                    <button onclick="addI18nEntry()" style="padding:8px 16px; background:#e65100; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">添加 / 修改</button>
+                </div>
+                <div style="flex:1; max-height:50vh; overflow-y:auto; padding:0 24px;">
+                    <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+                        <thead>
+                            <tr>
+                                <th style="text-align:left; padding:10px 8px; border-bottom:2px solid #eee; position:sticky; top:0; background:#fff; z-index:1;">中文原文</th>
+                                <th style="text-align:left; padding:10px 8px; border-bottom:2px solid #eee; position:sticky; top:0; background:#fff; z-index:1;">英文翻译</th>
+                                <th style="text-align:center; padding:10px 8px; border-bottom:2px solid #eee; position:sticky; top:0; background:#fff; z-index:1; width:60px;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="i18n-list-container">
+                            <!-- populated by js -->
+                        </tbody>
+                    </table>
+                </div>
+                <div style="padding:16px 24px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:10px;">
+                    <button onclick="closeI18nModal()" style="padding:8px 18px; border:1px solid #ccc; background:#fff; border-radius:6px; cursor:pointer;">取消</button>
+                    <button onclick="saveI18nMap()" style="padding:8px 18px; border:none; background:#e65100; color:#fff; border-radius:6px; cursor:pointer; font-weight:bold;">保存字典并刷新</button>
+                </div>
+            </div>
+        </div>
+
         
         <div id="report-content" class="dashboard-grid">
             <div class="empty-state">
-                <h3>⏳ 正在加载快照数据...</h3>
+                <h3>⏳ 正在加载快照数据... (Loading snapshot data...)</h3>
             </div>
         </div>
     </div>
