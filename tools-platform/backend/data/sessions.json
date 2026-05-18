@@ -19,5 +19,12 @@
       "role": "admin"
     },
     "expiresAt": 1779641179198
+  },
+  "266953418641d65bad45ced97dbdf2edb15763113390393ef7387478dc12ca81": {
+    "user": {
+      "username": "guest",
+      "role": "readonly"
+    },
+    "expiresAt": 1779712860213
   }
 }

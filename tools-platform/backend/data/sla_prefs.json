@@ -92,11 +92,16 @@
       "版本标识",
       "closed_nes_new",
       "nc_baseline_nes_new",
+      "product_service_term_close_nes",
+      "be_sent_precaution_notice_nes",
       "nc_plan_tb_developed_nes",
       "name",
+      "t1_operator",
+      "t1_operator_name",
       "sent_precaution_notice_nes",
       "deactivated_nes",
       "unclosed_nes_new",
+      "key",
       "closed_rate"
     ],
     "columnWidths": {},
@@ -1719,6 +1724,30 @@
       "customer": 188
     },
     "sortKey": null,
+    "sortAsc": true,
+    "customMetrics": []
+  },
+  "sla_prefs_risk_2g5f4q": {
+    "visibleHeaders": [
+      "版本标识",
+      "risk_status",
+      "create_time",
+      "ticket_close_due_date",
+      "origin_product",
+      "is_overdue",
+      "close_by_suspend",
+      "create_time_new",
+      "creator_name",
+      "current_handler",
+      "network"
+    ],
+    "columnWidths": {
+      "close_by_suspend": 97,
+      "ticket_close_due_date": 122,
+      "is_overdue": 65,
+      "origin_product": 134
+    },
+    "sortKey": "_SLA_",
     "sortAsc": true,
     "customMetrics": []
   }

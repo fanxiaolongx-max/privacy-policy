@@ -2423,3 +2423,445 @@
 2026-05-17 21:29:35: [32m[21:29:35] GET /groups → 200 (6ms) [0m
 2026-05-17 21:29:36: [33m[21:29:36] GET /health → 401 (1ms) [0m
 2026-05-17 21:29:36:   ↳ Body: {}
+2026-05-17 21:33:54: [32m[21:33:54] GET /scripts → 304 (30ms) [0m
+2026-05-17 21:33:54: [33m[21:33:54] GET /health → 401 (1ms) [0m
+2026-05-17 21:33:54:   ↳ Body: {}
+2026-05-17 21:33:57: [32m[21:33:57] GET /targets → 200 (1ms) [0m
+2026-05-17 21:33:57: [32m[21:33:57] GET /categories → 304 (1ms) [0m
+2026-05-17 21:33:58: [33m[21:33:58] GET /health → 401 (2ms) [0m
+2026-05-17 21:33:58:   ↳ Body: {}
+2026-05-17 21:33:58: [32m[21:33:58] GET /categories → 304 (1ms) [0m
+2026-05-17 21:33:58: [32m[21:33:58] GET /groups → 304 (1ms) [0m
+2026-05-17 21:33:58: [32m[21:33:58] GET /snapshots → 304 (6ms) [0m
+2026-05-17 21:33:58: [32m[21:33:58] GET /config → 200 (9ms) [0m
+2026-05-17 21:33:59: [33m[21:33:59] GET /health → 401 (2ms) [0m
+2026-05-17 21:33:59:   ↳ Body: {}
+2026-05-17 21:45:22: [32m[21:45:22] GET /categories → 200 (2ms) [0m
+2026-05-17 21:45:22: [32m[21:45:22] GET /groups → 200 (2ms) [0m
+2026-05-17 21:45:22: [32m[21:45:22] GET /snapshots → 200 (8ms) [0m
+2026-05-17 21:45:22: [32m[21:45:22] GET /config → 200 (12ms) [0m
+2026-05-17 21:45:23: [33m[21:45:22] GET /health → 401 (1ms) [0m
+2026-05-17 21:45:23:   ↳ Body: {}
+2026-05-17 21:57:48: [32m[21:57:48] GET /snapshots → 304 (11ms) [0m
+2026-05-17 21:57:48: [32m[21:57:48] GET /config → 200 (13ms) [0m
+2026-05-17 21:57:48: [32m[21:57:48] GET /groups → 304 (13ms) [0m
+2026-05-17 21:57:48: [32m[21:57:48] GET /categories → 304 (14ms) [0m
+2026-05-17 21:57:49: [33m[21:57:49] GET /health → 401 (1ms) [0m
+2026-05-17 21:57:49:   ↳ Body: {}
+2026-05-17 22:02:42: [32m[22:02:42] GET /snapshots → 304 (9ms) [0m
+2026-05-17 22:02:42: [32m[22:02:42] GET /categories → 304 (10ms) [0m
+2026-05-17 22:02:42: [32m[22:02:42] GET /config → 200 (12ms) [0m
+2026-05-17 22:02:42: [32m[22:02:42] GET /groups → 304 (13ms) [0m
+2026-05-17 22:02:42: [33m[22:02:42] GET /health → 401 (1ms) [0m
+2026-05-17 22:02:42:   ↳ Body: {}
+2026-05-17 22:02:43: [32m[22:02:43] GET /snapshots → 304 (6ms) [0m
+2026-05-17 22:02:43: [32m[22:02:43] GET /categories → 304 (5ms) [0m
+2026-05-17 22:02:43: [32m[22:02:43] GET /groups → 304 (6ms) [0m
+2026-05-17 22:02:43: [32m[22:02:43] GET /config → 200 (8ms) [0m
+2026-05-17 22:02:43: [33m[22:02:43] GET /health → 401 (2ms) [0m
+2026-05-17 22:02:43:   ↳ Body: {}
+2026-05-17 22:02:44: [32m[22:02:44] GET /snapshots → 304 (6ms) [0m
+2026-05-17 22:02:44: [32m[22:02:44] GET /categories → 304 (6ms) [0m
+2026-05-17 22:02:44: [32m[22:02:44] GET /config → 200 (8ms) [0m
+2026-05-17 22:02:44: [32m[22:02:44] GET /groups → 304 (8ms) [0m
+2026-05-17 22:02:44: [32m[22:02:44] GET /snapshots → 304 (7ms) [0m
+2026-05-17 22:02:44: [32m[22:02:44] GET /categories → 304 (6ms) [0m
+2026-05-17 22:02:44: [32m[22:02:44] GET /config → 200 (8ms) [0m
+2026-05-17 22:02:44: [32m[22:02:44] GET /groups → 304 (9ms) [0m
+2026-05-17 22:02:44: [32m[22:02:44] GET /snapshots → 304 (6ms) [0m
+2026-05-17 22:02:44: [32m[22:02:44] GET /categories → 304 (5ms) [0m
+2026-05-17 22:02:44: [32m[22:02:44] GET /config → 200 (7ms) [0m
+2026-05-17 22:02:44: [32m[22:02:44] GET /groups → 304 (7ms) [0m
+2026-05-17 22:02:45: [33m[22:02:45] GET /health → 401 (1ms) [0m
+2026-05-17 22:02:45:   ↳ Body: {}
+2026-05-17 22:02:46: [32m[22:02:46] GET /targets → 304 (1ms) [0m
+2026-05-17 22:02:46: [32m[22:02:46] GET /categories → 304 (1ms) [0m
+2026-05-17 22:02:47: [33m[22:02:47] GET /health → 401 (1ms) [0m
+2026-05-17 22:02:47:   ↳ Body: {}
+2026-05-17 22:02:47: [32m[22:02:47] GET /snapshots → 304 (7ms) [0m
+2026-05-17 22:03:26: [32m[22:03:26] GET /snapshots → 304 (5ms) [0m
+2026-05-17 22:03:26: [32m[22:03:26] GET /categories → 304 (5ms) [0m
+2026-05-17 22:03:26: [32m[22:03:26] GET /config → 200 (7ms) [0m
+2026-05-17 22:03:26: [32m[22:03:26] GET /groups → 304 (6ms) [0m
+2026-05-17 22:03:27: [33m[22:03:27] GET /health → 401 (1ms) [0m
+2026-05-17 22:03:27:   ↳ Body: {}
+2026-05-17 22:03:32: [32m[22:03:32] GET /targets → 304 (1ms) [0m
+2026-05-17 22:03:32: [32m[22:03:32] GET /categories → 304 (0ms) [0m
+2026-05-17 22:03:33: [33m[22:03:33] GET /health → 401 (0ms) [0m
+2026-05-17 22:03:33:   ↳ Body: {}
+2026-05-17 22:03:33: [32m[22:03:33] GET /snapshots → 304 (6ms) [0m
+2026-05-17 22:03:33: [32m[22:03:33] GET /categories → 304 (5ms) [0m
+2026-05-17 22:03:33: [32m[22:03:33] GET /config → 200 (7ms) [0m
+2026-05-17 22:03:33: [32m[22:03:33] GET /groups → 304 (8ms) [0m
+2026-05-17 22:03:33: [33m[22:03:33] GET /health → 401 (1ms) [0m
+2026-05-17 22:03:33:   ↳ Body: {}
+2026-05-17 22:42:06: [32m[22:42:06] GET /scripts → 304 (28ms) [0m
+2026-05-17 22:42:06: [32m[22:42:06] GET /history → 200 (3ms) [0m
+2026-05-17 22:42:07: [33m[22:42:07] GET /health → 401 (1ms) [0m
+2026-05-17 22:42:07:   ↳ Body: {}
+2026-05-17 22:42:10: [32m[22:42:10] GET /users → 304 (3ms) [0m
+2026-05-17 22:42:13: [32m[22:42:13] GET /scripts → 304 (14ms) [0m
+2026-05-17 22:42:14: [33m[22:42:14] GET /health → 401 (1ms) [0m
+2026-05-17 22:42:14:   ↳ Body: {}
+2026-05-17 22:42:55: [32m[22:42:55] GET /targets → 304 (2ms) [0m
+2026-05-17 22:42:55: [32m[22:42:55] GET /categories → 304 (1ms) [0m
+2026-05-17 22:42:56: [33m[22:42:56] GET /health → 401 (1ms) [0m
+2026-05-17 22:42:56:   ↳ Body: {}
+2026-05-17 22:42:56: [32m[22:42:56] GET /scripts → 304 (15ms) [0m
+2026-05-17 22:42:56: [33m[22:42:56] GET /health → 401 (1ms) [0m
+2026-05-17 22:42:56:   ↳ Body: {}
+2026-05-17 22:52:27: [32m[22:52:27] GET /targets → 304 (2ms) [0m
+2026-05-17 22:52:27: [32m[22:52:27] GET /categories → 304 (1ms) [0m
+2026-05-17 22:52:28: [33m[22:52:28] GET /health → 401 (1ms) [0m
+2026-05-17 22:52:28:   ↳ Body: {}
+2026-05-17 22:52:28: [32m[22:52:28] GET /categories → 304 (1ms) [0m
+2026-05-17 22:52:28: [32m[22:52:28] GET /snapshots → 304 (8ms) [0m
+2026-05-17 22:52:28: [32m[22:52:28] GET /config → 200 (12ms) [0m
+2026-05-17 22:52:28: [32m[22:52:28] GET /groups → 304 (1ms) [0m
+2026-05-17 22:52:28: [33m[22:52:28] GET /health → 401 (1ms) [0m
+2026-05-17 22:52:28:   ↳ Body: {}
+2026-05-17 22:52:29: [32m[22:52:29] GET /targets → 304 (1ms) [0m
+2026-05-17 22:52:29: [32m[22:52:29] GET /categories → 304 (1ms) [0m
+2026-05-17 22:52:29: [33m[22:52:29] GET /health → 401 (0ms) [0m
+2026-05-17 22:52:29:   ↳ Body: {}
+2026-05-17 22:52:30: [32m[22:52:29] GET /scripts → 304 (24ms) [0m
+2026-05-17 22:52:30: [32m[22:52:30] GET /targets → 304 (1ms) [0m
+2026-05-17 22:52:30: [32m[22:52:30] GET /categories → 304 (1ms) [0m
+2026-05-17 22:52:30: [32m[22:52:30] GET /snapshots → 304 (4ms) [0m
+2026-05-17 22:52:30: [32m[22:52:30] GET /categories → 304 (5ms) [0m
+2026-05-17 22:52:30: [32m[22:52:30] GET /config → 200 (7ms) [0m
+2026-05-17 22:52:30: [32m[22:52:30] GET /groups → 304 (8ms) [0m
+2026-05-17 22:52:31: [33m[22:52:31] GET /health → 401 (1ms) [0m
+2026-05-17 22:52:31:   ↳ Body: {}
+2026-05-18 09:59:58: [32m[09:59:58] GET /scripts → 304 (42ms) [0m
+2026-05-18 09:59:59: [32m[09:59:59] GET /history → 200 (4ms) [0m
+2026-05-18 09:59:59: [33m[09:59:59] GET /health → 401 (1ms) [0m
+2026-05-18 09:59:59:   ↳ Body: {}
+2026-05-18 10:00:00: [32m[10:00:00] GET /categories → 304 (2ms) [0m
+2026-05-18 10:00:00: [32m[10:00:00] GET /groups → 304 (2ms) [0m
+2026-05-18 10:00:00: [32m[10:00:00] GET /snapshots → 304 (11ms) [0m
+2026-05-18 10:00:00: [32m[10:00:00] GET /config → 200 (5ms) [0m
+2026-05-18 10:00:01: [33m[10:00:01] GET /health → 401 (1ms) [0m
+2026-05-18 10:00:01:   ↳ Body: {}
+2026-05-18 10:54:43: [32m[10:54:43] GET /scripts → 304 (35ms) [0m
+2026-05-18 10:54:43: [32m[10:54:43] GET /history → 304 (4ms) [0m
+2026-05-18 10:54:43: [33m[10:54:43] GET /health → 401 (2ms) [0m
+2026-05-18 10:54:43:   ↳ Body: {}
+2026-05-18 10:54:55: [32m[10:54:55] GET /targets → 200 (2ms) [0m
+2026-05-18 10:54:55: [32m[10:54:55] GET /categories → 304 (2ms) [0m
+2026-05-18 10:54:55: [33m[10:54:55] GET /health → 401 (1ms) [0m
+2026-05-18 10:54:55:   ↳ Body: {}
+2026-05-18 10:55:01: [32m[10:55:01] GET /prefs/sla_prefs_rectification_x7jydx → 304 (4ms) [0m
+2026-05-18 10:55:01: [32m[10:55:01] GET /prefs/sla_prefs_special_xg6eua → 304 (1ms) [0m
+2026-05-18 10:55:01: [32m[10:55:01] GET /prefs/sla_prefs_other_g6zjrl → 304 (2ms) [0m
+2026-05-18 10:55:01: [32m[10:55:01] GET /prefs/sla_prefs_risk_tfawpd → 304 (2ms) [0m
+2026-05-18 10:55:01: [32m[10:55:01] GET /prefs/sla_prefs_other_cs4972 → 304 (1ms) [0m
+2026-05-18 10:55:01: [32m[10:55:01] GET /prefs/sla_prefs_other_renltd → 304 (2ms) [0m
+2026-05-18 10:55:01: [32m[10:55:01] GET /prefs/sla_prefs_other_blghgh → 304 (2ms) [0m
+2026-05-18 10:55:01: [32m[10:55:01] GET /prefs/sla_prefs_other_4xrqmw → 304 (2ms) [0m
+2026-05-18 10:55:01: [32m[10:55:01] GET /prefs/sla_prefs_other_tl0h8g → 304 (1ms) [0m
+2026-05-18 10:55:01: [32m[10:55:01] GET /prefs/sla_prefs_other_a33iom → 304 (2ms) [0m
+2026-05-18 10:55:01: [32m[10:55:01] GET /prefs/sla_prefs_other_k9sq8x → 304 (2ms) [0m
+2026-05-18 10:55:01: [32m[10:55:01] GET /prefs/sla_prefs_other_36ksoy → 304 (2ms) [0m
+2026-05-18 10:55:01: [32m[10:55:01] GET /prefs/sla_prefs_other_n0fxcz → 304 (3ms) [0m
+2026-05-18 10:55:01: [32m[10:55:01] GET /prefs/sla_prefs_other_irg0bu → 304 (4ms) [0m
+2026-05-18 10:55:01: [32m[10:55:01] GET /prefs/sla_prefs_other_fvv9vu → 304 (1ms) [0m
+2026-05-18 10:55:01: [32m[10:55:01] GET /prefs/sla_prefs_other_pufzvl → 304 (2ms) [0m
+2026-05-18 10:55:01: [32m[10:55:01] GET /prefs/sla_prefs_other_5jcrzk → 304 (2ms) [0m
+2026-05-18 10:55:02: [32m[10:55:02] GET /prefs/sla_prefs_other_r7ivhq → 304 (2ms) [0m
+2026-05-18 10:55:02: [32m[10:55:02] GET /prefs/sla_prefs_other_uxx002 → 304 (2ms) [0m
+2026-05-18 10:55:02: [32m[10:55:02] GET /prefs/sla_prefs_other_kxxuiv → 304 (2ms) [0m
+2026-05-18 10:55:02: [32m[10:55:02] GET /prefs/sla_prefs_other_v7jtrw → 304 (3ms) [0m
+2026-05-18 10:55:02: [32m[10:55:02] GET /prefs/sla_prefs_other_byn3uq → 304 (2ms) [0m
+2026-05-18 10:55:02: [32m[10:55:02] GET /prefs/sla_prefs_other_ibnj66 → 304 (2ms) [0m
+2026-05-18 10:55:02: [32m[10:55:02] GET /prefs/sla_prefs_other_adofvo → 304 (2ms) [0m
+2026-05-18 10:55:02: [32m[10:55:02] GET /prefs/sla_prefs_other_b4qno2 → 304 (2ms) [0m
+2026-05-18 10:55:02: [32m[10:55:02] GET /prefs/sla_prefs_other_ccmx6n → 304 (2ms) [0m
+2026-05-18 10:55:02: [32m[10:55:02] GET /prefs/sla_prefs_other_vsq8j3 → 304 (1ms) [0m
+2026-05-18 10:55:02: [32m[10:55:02] GET /prefs/sla_prefs_other_16amqd → 304 (2ms) [0m
+2026-05-18 10:55:02: [32m[10:55:02] GET /prefs/sla_prefs_other_3i73d → 304 (2ms) [0m
+2026-05-18 10:55:02: [32m[10:55:02] GET /prefs/sla_prefs_other_scojkl → 304 (2ms) [0m
+2026-05-18 10:55:02: [32m[10:55:02] GET /prefs/sla_prefs_other_vmy0fv → 304 (2ms) [0m
+2026-05-18 10:55:02: [32m[10:55:02] POST /history → 200 (3ms) (body: 62B)[0m
+2026-05-18 10:55:02: [32m[10:55:02] POST /snapshot → 200 (13ms) (body: 7570B)[0m
+2026-05-18 10:55:21: [32m[10:55:21] GET /config → 200 (5ms) [0m
+2026-05-18 10:55:21: [32m[10:55:21] GET /snapshots → 200 (7ms) [0m
+2026-05-18 10:55:21: [32m[10:55:21] GET /categories → 304 (1ms) [0m
+2026-05-18 10:55:21: [32m[10:55:21] GET /groups → 304 (1ms) [0m
+2026-05-18 10:55:21: [33m[10:55:21] GET /health → 401 (1ms) [0m
+2026-05-18 10:55:21:   ↳ Body: {}
+2026-05-18 10:56:32: [32m[10:56:32] GET /scripts → 304 (34ms) [0m
+2026-05-18 10:56:32: [33m[10:56:32] GET /health → 401 (1ms) [0m
+2026-05-18 10:56:32:   ↳ Body: {}
+2026-05-18 11:07:33: [32m[11:07:33] GET /snapshots → 304 (14ms) [0m
+2026-05-18 11:07:34: [32m[11:07:34] GET /categories → 304 (2ms) [0m
+2026-05-18 11:07:34: [32m[11:07:34] GET /config → 200 (6ms) [0m
+2026-05-18 11:07:34: [32m[11:07:34] GET /groups → 304 (3ms) [0m
+2026-05-18 11:07:34: [33m[11:07:34] GET /health → 401 (2ms) [0m
+2026-05-18 11:07:34:   ↳ Body: {}
+2026-05-18 11:51:12: [32m[11:51:12] GET /targets → 304 (4ms) [0m
+2026-05-18 11:51:12: [32m[11:51:12] GET /categories → 304 (2ms) [0m
+2026-05-18 11:51:13: [33m[11:51:13] GET /health → 401 (2ms) [0m
+2026-05-18 11:51:13:   ↳ Body: {}
+2026-05-18 11:51:20: [32m[11:51:20] GET /prefs/sla_prefs_rectification_x7jydx → 304 (4ms) [0m
+2026-05-18 11:51:20: [32m[11:51:20] GET /prefs/sla_prefs_risk_2g5f4q → 200 (2ms) [0m
+2026-05-18 11:51:20: [32m[11:51:20] GET /prefs/sla_prefs_special_xg6eua → 304 (2ms) [0m
+2026-05-18 11:51:20: [32m[11:51:20] GET /prefs/sla_prefs_other_cs4972 → 304 (2ms) [0m
+2026-05-18 11:51:20: [32m[11:51:20] GET /prefs/sla_prefs_other_renltd → 304 (2ms) [0m
+2026-05-18 11:51:20: [32m[11:51:20] GET /prefs/sla_prefs_other_a33iom → 304 (2ms) [0m
+2026-05-18 11:51:20: [32m[11:51:20] GET /prefs/sla_prefs_other_blghgh → 304 (1ms) [0m
+2026-05-18 11:51:20: [32m[11:51:20] GET /prefs/sla_prefs_other_4xrqmw → 304 (2ms) [0m
+2026-05-18 11:51:20: [32m[11:51:20] GET /prefs/sla_prefs_other_k9sq8x → 304 (2ms) [0m
+2026-05-18 11:51:20: [32m[11:51:20] GET /prefs/sla_prefs_other_tl0h8g → 304 (2ms) [0m
+2026-05-18 11:51:20: [32m[11:51:20] GET /prefs/sla_prefs_other_36ksoy → 304 (1ms) [0m
+2026-05-18 11:51:20: [32m[11:51:20] GET /prefs/sla_prefs_other_n0fxcz → 304 (1ms) [0m
+2026-05-18 11:51:21: [32m[11:51:21] GET /prefs/sla_prefs_other_pufzvl → 304 (1ms) [0m
+2026-05-18 11:51:21: [32m[11:51:21] GET /prefs/sla_prefs_other_irg0bu → 304 (2ms) [0m
+2026-05-18 11:51:21: [32m[11:51:21] GET /prefs/sla_prefs_other_fvv9vu → 304 (2ms) [0m
+2026-05-18 11:51:21: [32m[11:51:21] GET /prefs/sla_prefs_other_g6zjrl → 304 (2ms) [0m
+2026-05-18 11:51:21: [32m[11:51:21] GET /prefs/sla_prefs_other_5jcrzk → 304 (2ms) [0m
+2026-05-18 11:51:21: [32m[11:51:21] GET /prefs/sla_prefs_other_r7ivhq → 304 (2ms) [0m
+2026-05-18 11:51:21: [32m[11:51:21] GET /prefs/sla_prefs_other_uxx002 → 304 (2ms) [0m
+2026-05-18 11:51:21: [32m[11:51:21] GET /prefs/sla_prefs_other_kxxuiv → 304 (2ms) [0m
+2026-05-18 11:51:21: [32m[11:51:21] GET /prefs/sla_prefs_other_byn3uq → 304 (2ms) [0m
+2026-05-18 11:51:21: [32m[11:51:21] GET /prefs/sla_prefs_other_v7jtrw → 304 (2ms) [0m
+2026-05-18 11:51:21: [32m[11:51:21] GET /prefs/sla_prefs_other_ibnj66 → 304 (1ms) [0m
+2026-05-18 11:51:21: [32m[11:51:21] GET /prefs/sla_prefs_other_adofvo → 304 (2ms) [0m
+2026-05-18 11:51:21: [32m[11:51:21] GET /prefs/sla_prefs_other_16amqd → 304 (3ms) [0m
+2026-05-18 11:51:21: [32m[11:51:21] GET /prefs/sla_prefs_other_b4qno2 → 304 (4ms) [0m
+2026-05-18 11:51:21: [32m[11:51:21] GET /prefs/sla_prefs_other_ccmx6n → 304 (2ms) [0m
+2026-05-18 11:51:21: [32m[11:51:21] GET /prefs/sla_prefs_other_vsq8j3 → 304 (1ms) [0m
+2026-05-18 11:51:21: [32m[11:51:21] GET /prefs/sla_prefs_other_3i73d → 304 (2ms) [0m
+2026-05-18 11:51:21: [32m[11:51:21] GET /prefs/sla_prefs_other_vmy0fv → 304 (2ms) [0m
+2026-05-18 11:51:21: [32m[11:51:21] GET /prefs/sla_prefs_other_scojkl → 304 (2ms) [0m
+2026-05-18 11:51:21: [32m[11:51:21] POST /history → 200 (3ms) (body: 62B)[0m
+2026-05-18 11:51:22: [32m[11:51:22] POST /snapshot → 200 (14ms) (body: 7567B)[0m
+2026-05-18 11:51:26: [32m[11:51:26] GET /categories → 304 (2ms) [0m
+2026-05-18 11:51:26: [33m[11:51:26] GET /health → 401 (1ms) [0m
+2026-05-18 11:51:26:   ↳ Body: {}
+2026-05-18 11:51:27: [32m[11:51:27] GET /snapshots → 200 (12ms) [0m
+2026-05-18 11:51:27: [32m[11:51:27] GET /categories → 304 (2ms) [0m
+2026-05-18 11:51:27: [32m[11:51:27] GET /groups → 304 (1ms) [0m
+2026-05-18 11:51:27: [32m[11:51:27] GET /config → 200 (2ms) [0m
+2026-05-18 11:51:27: [33m[11:51:27] GET /health → 401 (1ms) [0m
+2026-05-18 11:51:27:   ↳ Body: {}
+2026-05-18 11:53:56: [32m[11:53:56] GET /snapshots → 304 (15ms) [0m
+2026-05-18 14:51:54: [32m[14:51:54] GET /categories → 304 (4ms) [0m
+2026-05-18 14:51:54: [32m[14:51:54] GET /config → 200 (5ms) [0m
+2026-05-18 14:51:54: [32m[14:51:54] GET /groups → 304 (3ms) [0m
+2026-05-18 14:51:54: [32m[14:51:54] GET /snapshots → 304 (14ms) [0m
+2026-05-18 14:51:54: [33m[14:51:54] GET /health → 401 (1ms) [0m
+2026-05-18 14:51:54:   ↳ Body: {}
+2026-05-18 15:13:32: [32m[15:13:32] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (8ms) (body: 1517B)[0m
+2026-05-18 15:13:32: [32m[15:13:32] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 1506B)[0m
+2026-05-18 15:13:33: [32m[15:13:33] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 1492B)[0m
+2026-05-18 15:13:34: [32m[15:13:34] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (5ms) (body: 1476B)[0m
+2026-05-18 15:13:35: [32m[15:13:35] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (7ms) (body: 1454B)[0m
+2026-05-18 15:13:37: [32m[15:13:37] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 1442B)[0m
+2026-05-18 15:13:37: [32m[15:13:37] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 1432B)[0m
+2026-05-18 15:13:38: [32m[15:13:38] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 1419B)[0m
+2026-05-18 15:13:39: [32m[15:13:39] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 1432B)[0m
+2026-05-18 15:13:40: [32m[15:13:40] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 1423B)[0m
+2026-05-18 15:13:41: [32m[15:13:41] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 1412B)[0m
+2026-05-18 15:13:41: [32m[15:13:41] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (3ms) (body: 1379B)[0m
+2026-05-18 15:13:42: [32m[15:13:42] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 1358B)[0m
+2026-05-18 15:13:47: [32m[15:13:47] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (3ms) (body: 1340B)[0m
+2026-05-18 15:13:47: [32m[15:13:47] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (3ms) (body: 1319B)[0m
+2026-05-18 15:13:49: [32m[15:13:49] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 1304B)[0m
+2026-05-18 15:13:50: [32m[15:13:50] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (3ms) (body: 1286B)[0m
+2026-05-18 15:13:50: [32m[15:13:50] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (3ms) (body: 1304B)[0m
+2026-05-18 15:13:52: [32m[15:13:52] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (3ms) (body: 1286B)[0m
+2026-05-18 15:13:57: [32m[15:13:57] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 1276B)[0m
+2026-05-18 15:13:58: [32m[15:13:58] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (3ms) (body: 1267B)[0m
+2026-05-18 15:13:58: [32m[15:13:58] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (3ms) (body: 1253B)[0m
+2026-05-18 15:14:00: [32m[15:14:00] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (3ms) (body: 1242B)[0m
+2026-05-18 15:14:01: [32m[15:14:01] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 1226B)[0m
+2026-05-18 15:14:01: [32m[15:14:01] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (3ms) (body: 1208B)[0m
+2026-05-18 15:14:02: [32m[15:14:02] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (5ms) (body: 1193B)[0m
+2026-05-18 15:14:03: [32m[15:14:03] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (2ms) (body: 1174B)[0m
+2026-05-18 15:14:03: [32m[15:14:03] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (6ms) (body: 1151B)[0m
+2026-05-18 15:14:04: [32m[15:14:04] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (5ms) (body: 1141B)[0m
+2026-05-18 15:14:04: [32m[15:14:04] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (5ms) (body: 1128B)[0m
+2026-05-18 15:14:05: [32m[15:14:05] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (6ms) (body: 1118B)[0m
+2026-05-18 15:14:05: [32m[15:14:05] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (5ms) (body: 1099B)[0m
+2026-05-18 15:14:07: [32m[15:14:07] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 1109B)[0m
+2026-05-18 15:14:08: [32m[15:14:08] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (3ms) (body: 1098B)[0m
+2026-05-18 15:14:09: [32m[15:14:09] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (3ms) (body: 1091B)[0m
+2026-05-18 15:14:09: [32m[15:14:09] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 1081B)[0m
+2026-05-18 15:14:09: [32m[15:14:09] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 1066B)[0m
+2026-05-18 15:14:10: [32m[15:14:10] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 1056B)[0m
+2026-05-18 15:14:10: [32m[15:14:10] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 1043B)[0m
+2026-05-18 15:14:10: [32m[15:14:10] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (3ms) (body: 1030B)[0m
+2026-05-18 15:14:11: [32m[15:14:11] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 1018B)[0m
+2026-05-18 15:14:12: [32m[15:14:12] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (3ms) (body: 1009B)[0m
+2026-05-18 15:14:12: [32m[15:14:12] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 990B)[0m
+2026-05-18 15:14:12: [32m[15:14:12] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 977B)[0m
+2026-05-18 15:14:13: [32m[15:14:13] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 961B)[0m
+2026-05-18 15:14:14: [32m[15:14:14] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (3ms) (body: 950B)[0m
+2026-05-18 15:14:14: [32m[15:14:14] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 939B)[0m
+2026-05-18 15:14:15: [32m[15:14:15] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (6ms) (body: 920B)[0m
+2026-05-18 15:14:16: [32m[15:14:16] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (5ms) (body: 901B)[0m
+2026-05-18 15:14:17: [32m[15:14:17] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 890B)[0m
+2026-05-18 15:14:17: [32m[15:14:17] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 885B)[0m
+2026-05-18 15:14:17: [32m[15:14:17] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (6ms) (body: 857B)[0m
+2026-05-18 15:14:17: [32m[15:14:17] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 840B)[0m
+2026-05-18 15:14:19: [32m[15:14:19] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 816B)[0m
+2026-05-18 15:14:20: [32m[15:14:20] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (5ms) (body: 788B)[0m
+2026-05-18 15:14:20: [32m[15:14:20] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (5ms) (body: 779B)[0m
+2026-05-18 15:14:20: [32m[15:14:20] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (5ms) (body: 761B)[0m
+2026-05-18 15:14:21: [32m[15:14:21] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (3ms) (body: 748B)[0m
+2026-05-18 15:14:22: [32m[15:14:22] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 735B)[0m
+2026-05-18 15:14:22: [32m[15:14:22] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (5ms) (body: 712B)[0m
+2026-05-18 15:14:22: [32m[15:14:22] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 685B)[0m
+2026-05-18 15:14:25: [32m[15:14:25] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 677B)[0m
+2026-05-18 15:14:25: [32m[15:14:25] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (3ms) (body: 669B)[0m
+2026-05-18 15:14:26: [32m[15:14:26] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (2ms) (body: 651B)[0m
+2026-05-18 15:14:26: [32m[15:14:26] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 639B)[0m
+2026-05-18 15:14:26: [32m[15:14:26] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (3ms) (body: 612B)[0m
+2026-05-18 15:14:26: [32m[15:14:26] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 596B)[0m
+2026-05-18 15:14:27: [32m[15:14:27] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 573B)[0m
+2026-05-18 15:14:27: [32m[15:14:27] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 553B)[0m
+2026-05-18 15:14:28: [32m[15:14:28] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 532B)[0m
+2026-05-18 15:14:28: [32m[15:14:28] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (2ms) (body: 507B)[0m
+2026-05-18 15:14:29: [32m[15:14:29] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (3ms) (body: 483B)[0m
+2026-05-18 15:14:29: [32m[15:14:29] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 467B)[0m
+2026-05-18 15:14:30: [32m[15:14:30] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 449B)[0m
+2026-05-18 15:14:30: [32m[15:14:30] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 429B)[0m
+2026-05-18 15:14:31: [32m[15:14:31] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 417B)[0m
+2026-05-18 15:14:32: [32m[15:14:32] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (3ms) (body: 395B)[0m
+2026-05-18 15:14:32: [32m[15:14:32] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 383B)[0m
+2026-05-18 15:14:32: [32m[15:14:32] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (3ms) (body: 352B)[0m
+2026-05-18 15:14:32: [32m[15:14:32] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 345B)[0m
+2026-05-18 15:14:33: [32m[15:14:33] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (3ms) (body: 329B)[0m
+2026-05-18 15:14:34: [32m[15:14:34] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 297B)[0m
+2026-05-18 15:14:37: [32m[15:14:37] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (5ms) (body: 287B)[0m
+2026-05-18 15:14:38: [32m[15:14:38] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (2ms) (body: 297B)[0m
+2026-05-18 15:14:48: [32m[15:14:48] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (3ms) (body: 282B)[0m
+2026-05-18 15:14:50: [32m[15:14:50] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (2ms) (body: 267B)[0m
+2026-05-18 15:14:54: [32m[15:14:54] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 289B)[0m
+2026-05-18 15:15:02: [32m[15:15:02] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 317B)[0m
+2026-05-18 15:15:03: [32m[15:15:03] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 317B)[0m
+2026-05-18 15:15:05: [32m[15:15:05] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (3ms) (body: 317B)[0m
+2026-05-18 15:15:07: [32m[15:15:07] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 333B)[0m
+2026-05-18 15:15:09: [32m[15:15:09] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 354B)[0m
+2026-05-18 15:15:11: [32m[15:15:11] PUT /prefs/sla_prefs_risk_2g5f4q → 200 (4ms) (body: 353B)[0m
+2026-05-18 15:37:19: [33m[15:37:19] GET /health → 401 (1ms) [0m
+2026-05-18 15:37:19:   ↳ Body: {}
+2026-05-18 15:41:00: [32m[15:41:00] POST /login → 200 (7ms) (body: 43B)[0m
+2026-05-18 15:41:03: [32m[15:41:03] GET /snapshots → 200 (16ms) [0m
+2026-05-18 15:41:07: [32m[15:41:07] GET /categories → 200 (3ms) [0m
+2026-05-18 15:41:07: [32m[15:41:07] GET /config → 200 (6ms) [0m
+2026-05-18 15:41:08: [32m[15:41:08] GET /groups → 200 (3ms) [0m
+2026-05-18 16:10:22: [32m[16:10:22] GET /scripts → 304 (38ms) [0m
+2026-05-18 16:10:22: [32m[16:10:22] GET /history → 200 (4ms) [0m
+2026-05-18 16:10:22: [33m[16:10:22] GET /health → 401 (2ms) [0m
+2026-05-18 16:10:22:   ↳ Body: {}
+2026-05-18 16:10:25: [32m[16:10:25] GET /scripts → 304 (26ms) [0m
+2026-05-18 16:10:25: [33m[16:10:25] GET /health → 401 (2ms) [0m
+2026-05-18 16:10:25:   ↳ Body: {}
+2026-05-18 16:11:28: [32m[16:11:28] GET /targets → 304 (4ms) [0m
+2026-05-18 16:11:28: [32m[16:11:28] GET /categories → 304 (2ms) [0m
+2026-05-18 16:11:29: [33m[16:11:29] GET /health → 401 (1ms) [0m
+2026-05-18 16:11:29:   ↳ Body: {}
+2026-05-18 16:11:43: [32m[16:11:43] GET /scripts → 304 (37ms) [0m
+2026-05-18 16:11:43: [33m[16:11:43] GET /health → 401 (2ms) [0m
+2026-05-18 16:11:43:   ↳ Body: {}
+2026-05-18 16:11:52: [32m[16:11:52] PATCH /scripts/script_1vl4b6ub2/category → 200 (28ms) (body: 28B)[0m
+2026-05-18 16:11:52: [32m[16:11:52] GET /scripts → 200 (27ms) [0m
+2026-05-18 16:11:54: [32m[16:11:54] PATCH /scripts/script_1vl4b6ub2/category → 200 (28ms) (body: 28B)[0m
+2026-05-18 16:11:54: [32m[16:11:54] GET /scripts → 200 (26ms) [0m
+2026-05-18 16:12:04: [32m[16:12:04] GET /targets → 304 (2ms) [0m
+2026-05-18 16:12:04: [32m[16:12:04] GET /categories → 304 (1ms) [0m
+2026-05-18 16:12:05: [33m[16:12:05] GET /health → 401 (2ms) [0m
+2026-05-18 16:12:05:   ↳ Body: {}
+2026-05-18 16:12:06: [32m[16:12:06] GET /scripts → 304 (24ms) [0m
+2026-05-18 16:12:06: [33m[16:12:06] GET /health → 401 (2ms) [0m
+2026-05-18 16:12:06:   ↳ Body: {}
+2026-05-18 16:12:13: [32m[16:12:13] GET /targets → 304 (2ms) [0m
+2026-05-18 16:12:13: [32m[16:12:13] GET /categories → 304 (2ms) [0m
+2026-05-18 16:12:13: [33m[16:12:13] GET /health → 401 (1ms) [0m
+2026-05-18 16:12:13:   ↳ Body: {}
+2026-05-18 16:13:10: [32m[16:13:10] GET /snapshots → 304 (15ms) [0m
+2026-05-18 16:13:38: [32m[16:13:38] GET /scripts → 304 (26ms) [0m
+2026-05-18 16:13:39: [33m[16:13:39] GET /health → 401 (1ms) [0m
+2026-05-18 16:13:39:   ↳ Body: {}
+2026-05-18 16:14:06: [32m[16:14:06] GET /targets → 304 (3ms) [0m
+2026-05-18 16:14:06: [32m[16:14:06] GET /categories → 304 (2ms) [0m
+2026-05-18 16:14:06: [33m[16:14:06] GET /health → 401 (1ms) [0m
+2026-05-18 16:14:06:   ↳ Body: {}
+2026-05-18 16:14:19: [32m[16:14:19] GET /prefs/sla_prefs_rectification_x7jydx → 200 (5ms) [0m
+2026-05-18 16:14:19: [32m[16:14:19] GET /prefs/sla_prefs_special_xg6eua → 304 (6ms) [0m
+2026-05-18 16:14:19: [32m[16:14:19] GET /prefs/sla_prefs_other_renltd → 304 (2ms) [0m
+2026-05-18 16:14:19: [32m[16:14:19] GET /prefs/sla_prefs_other_cs4972 → 304 (2ms) [0m
+2026-05-18 16:14:19: [32m[16:14:19] GET /prefs/sla_prefs_risk_2g5f4q → 200 (2ms) [0m
+2026-05-18 16:14:20: [32m[16:14:20] GET /prefs/sla_prefs_other_blghgh → 304 (1ms) [0m
+2026-05-18 16:14:20: [32m[16:14:20] GET /prefs/sla_prefs_other_4xrqmw → 304 (1ms) [0m
+2026-05-18 16:14:20: [32m[16:14:20] GET /prefs/sla_prefs_other_k9sq8x → 304 (2ms) [0m
+2026-05-18 16:14:20: [32m[16:14:20] GET /prefs/sla_prefs_other_tl0h8g → 304 (1ms) [0m
+2026-05-18 16:14:20: [32m[16:14:20] GET /prefs/sla_prefs_other_a33iom → 304 (2ms) [0m
+2026-05-18 16:14:20: [32m[16:14:20] GET /prefs/sla_prefs_other_36ksoy → 304 (2ms) [0m
+2026-05-18 16:14:20: [32m[16:14:20] GET /prefs/sla_prefs_other_n0fxcz → 304 (2ms) [0m
+2026-05-18 16:14:20: [32m[16:14:20] GET /prefs/sla_prefs_other_irg0bu → 304 (2ms) [0m
+2026-05-18 16:14:20: [32m[16:14:20] GET /prefs/sla_prefs_other_g6zjrl → 304 (2ms) [0m
+2026-05-18 16:14:20: [32m[16:14:20] GET /prefs/sla_prefs_other_fvv9vu → 304 (2ms) [0m
+2026-05-18 16:14:20: [32m[16:14:20] GET /prefs/sla_prefs_other_pufzvl → 304 (2ms) [0m
+2026-05-18 16:14:20: [32m[16:14:20] GET /prefs/sla_prefs_other_5jcrzk → 304 (2ms) [0m
+2026-05-18 16:14:20: [32m[16:14:20] GET /prefs/sla_prefs_other_r7ivhq → 304 (2ms) [0m
+2026-05-18 16:14:20: [32m[16:14:20] GET /prefs/sla_prefs_other_byn3uq → 304 (2ms) [0m
+2026-05-18 16:14:20: [32m[16:14:20] GET /prefs/sla_prefs_other_uxx002 → 304 (2ms) [0m
+2026-05-18 16:14:20: [32m[16:14:20] GET /prefs/sla_prefs_other_kxxuiv → 304 (2ms) [0m
+2026-05-18 16:14:20: [32m[16:14:20] GET /prefs/sla_prefs_other_v7jtrw → 304 (1ms) [0m
+2026-05-18 16:14:20: [32m[16:14:20] GET /prefs/sla_prefs_other_ibnj66 → 304 (2ms) [0m
+2026-05-18 16:14:20: [32m[16:14:20] GET /prefs/sla_prefs_other_adofvo → 304 (2ms) [0m
+2026-05-18 16:14:20: [32m[16:14:20] GET /prefs/sla_prefs_other_b4qno2 → 304 (2ms) [0m
+2026-05-18 16:14:20: [32m[16:14:20] GET /prefs/sla_prefs_other_vsq8j3 → 304 (1ms) [0m
+2026-05-18 16:14:20: [32m[16:14:20] GET /prefs/sla_prefs_other_ccmx6n → 304 (2ms) [0m
+2026-05-18 16:14:20: [32m[16:14:20] GET /prefs/sla_prefs_other_16amqd → 304 (1ms) [0m
+2026-05-18 16:14:20: [32m[16:14:20] GET /prefs/sla_prefs_other_3i73d → 304 (2ms) [0m
+2026-05-18 16:14:20: [32m[16:14:20] GET /prefs/sla_prefs_other_scojkl → 304 (1ms) [0m
+2026-05-18 16:14:20: [32m[16:14:20] GET /prefs/sla_prefs_other_vmy0fv → 304 (2ms) [0m
+2026-05-18 16:14:20: [32m[16:14:20] POST /history → 200 (6ms) (body: 62B)[0m
+2026-05-18 16:14:21: [32m[16:14:21] POST /snapshot → 200 (17ms) (body: 7567B)[0m
+2026-05-18 16:16:01: [32m[16:16:01] PUT /prefs/sla_prefs_other_a33iom → 200 (7ms) (body: 801B)[0m
+2026-05-18 16:16:02: [32m[16:16:02] PUT /prefs/sla_prefs_other_a33iom → 200 (4ms) (body: 801B)[0m
+2026-05-18 16:16:02: [32m[16:16:02] PUT /prefs/sla_prefs_other_a33iom → 200 (4ms) (body: 530B)[0m
+2026-05-18 16:16:03: [32m[16:16:03] PUT /prefs/sla_prefs_other_a33iom → 200 (4ms) (body: 801B)[0m
+2026-05-18 16:17:44: [32m[16:17:44] GET /snapshots → 200 (14ms) [0m
+2026-05-18 16:17:44: [32m[16:17:44] GET /config → 200 (4ms) [0m
+2026-05-18 16:17:44: [32m[16:17:44] GET /categories → 304 (1ms) [0m
+2026-05-18 16:17:44: [32m[16:17:44] GET /groups → 304 (2ms) [0m
+2026-05-18 16:17:45: [33m[16:17:45] GET /health → 401 (1ms) [0m
+2026-05-18 16:17:45:   ↳ Body: {}
+2026-05-18 16:22:19: [32m[16:22:19] PUT /snapshots/mpb870x5 → 200 (17ms) (body: 8129B)[0m
+2026-05-18 16:22:53: [32m[16:22:53] PUT /snapshots/mpb870x5 → 200 (17ms) (body: 8129B)[0m
+2026-05-18 16:22:58: [32m[16:22:58] PUT /snapshots/mpb870x5 → 200 (10ms) (body: 8123B)[0m
+2026-05-18 16:23:05: [32m[16:23:05] GET /targets → 304 (3ms) [0m
+2026-05-18 16:23:05: [32m[16:23:05] GET /categories → 304 (3ms) [0m
+2026-05-18 16:23:05: [33m[16:23:05] GET /health → 401 (1ms) [0m
+2026-05-18 16:23:05:   ↳ Body: {}
+2026-05-18 16:23:09: [32m[16:23:09] GET /snapshots → 200 (10ms) [0m
+2026-05-18 16:23:10: [32m[16:23:10] GET /categories → 304 (2ms) [0m
+2026-05-18 16:23:10: [32m[16:23:10] GET /config → 200 (5ms) [0m
+2026-05-18 16:23:10: [32m[16:23:10] GET /groups → 304 (2ms) [0m
+2026-05-18 16:23:10: [33m[16:23:10] GET /health → 401 (1ms) [0m
+2026-05-18 16:23:10:   ↳ Body: {}
+2026-05-18 16:35:09: [32m[16:35:09] GET /scripts → 304 (28ms) [0m
+2026-05-18 16:35:10: [33m[16:35:10] GET /health → 401 (2ms) [0m
+2026-05-18 16:35:10:   ↳ Body: {}
+2026-05-18 16:35:10: [32m[16:35:10] GET /history → 200 (4ms) [0m
+2026-05-18 16:44:21: [32m[16:44:21] GET /snapshots → 304 (16ms) [0m
+2026-05-18 16:44:21: [32m[16:44:21] GET /categories → 304 (2ms) [0m
+2026-05-18 16:44:21: [32m[16:44:21] GET /config → 200 (7ms) [0m
+2026-05-18 16:44:21: [32m[16:44:21] GET /groups → 304 (2ms) [0m
+2026-05-18 16:44:21: [33m[16:44:21] GET /health → 401 (1ms) [0m
+2026-05-18 16:44:21:   ↳ Body: {}
+2026-05-18 21:18:26: [32m[21:18:26] GET /scripts → 304 (25ms) [0m
+2026-05-18 21:18:26: [32m[21:18:26] GET /history → 200 (1ms) [0m
+2026-05-18 21:18:27: [33m[21:18:27] GET /health → 401 (1ms) [0m
+2026-05-18 21:18:27:   ↳ Body: {}
+2026-05-18 21:18:27: [32m[21:18:27] GET /categories → 304 (8ms) [0m
+2026-05-18 21:18:27: [32m[21:18:27] GET /groups → 304 (9ms) [0m
+2026-05-18 21:18:27: [32m[21:18:27] GET /snapshots → 200 (16ms) [0m
+2026-05-18 21:18:27: [32m[21:18:27] GET /config → 200 (20ms) [0m
+2026-05-18 21:18:28: [33m[21:18:28] GET /health → 401 (1ms) [0m
+2026-05-18 21:18:28:   ↳ Body: {}
