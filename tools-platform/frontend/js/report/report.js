@@ -7,6 +7,95 @@ let currentSnapshot = null;
 let standardTotalScore = 0;
 let metricGroups = []; // [{id, name, metrics:[label,...]}]
 
+let i18nMap = {
+    "分组": "Group",
+    "总权重": "Total Weight",
+    "考核的指标名称": "Assessment Metric Name",
+    "权重": "Weight",
+    "月目标值": "Target",
+    "全局总体达标": "Global Compliance",
+    "排名": "Rank",
+    "客户群": "Customer Base",
+    "标准总分": "Standard Total Score",
+    "系统得分": "System Score",
+    "预留加减分 (手动)": "Manual Adj.",
+    "最终得分": "Final Score",
+    "类型": "Type",
+    "项目说明": "Item Description",
+    "计分规则": "Scoring Rule",
+    "操作": "Action",
+    "整改完成率": "Rectification Completion Rate",
+    "TOPN风险完成率": "TOPN Risk Completion Rate",
+    "数字证书消减率": "Digital Certificate Reduction Rate",
+    "产品EOS闭环率": "Product EOS Closure Rate",
+    "版本EOS闭环率": "Version EOS Closure Rate",
+    "重急EOS闭环率": "Critical/Urgent EOS Closure Rate",
+    "锂电池整改完成率": "Lithium Battery Rectification Completion Rate",
+    "路由器整改完成率": "Router Rectification Completion Rate",
+    "业务比对回传率": "Business Comparison Return Rate",
+    "业务比对备案率": "Business Comparison Filing Rate",
+    "日志稽查率": "Log Audit Rate",
+    "价值网络巡检完成率": "Value Network Inspection Completion Rate",
+    "逃生演练完成率": "Escape Drill Completion Rate",
+    "应急演练完成率": "Emergency Drill Completion Rate",
+    "拓扑刷新率": "Topology Refresh Rate",
+    "预案刷新率": "Contingency Plan Refresh Rate",
+    "IBMS刷新率": "IBMS Refresh Rate",
+    "月度例会及报告准时完成率": "Monthly Meeting & Report Punctuality Rate",
+    "服务专刊季度提交": "Quarterly Service Publication Submission",
+    "半年度服务峰会召开": "Semi-Annual Service Summit Holding",
+    "Jam客户互动月度发布": "Monthly Jam Customer Interaction Release",
+    "L4骨干晋升目标达成": "L4 Backbone Promotion Target Achievement",
+    "在职员工平均能力得分": "Avg Competence Score of Active Employees",
+    "专家讲座及经验分享": "Expert Lectures & Experience Sharing",
+    "项目复盘与外部对标学习": "Project Review & External Benchmarking Study",
+    "青年人才辅导培养": "Youth Talent Mentoring & Training",
+    "存储整改完成率": "Storage Rectification Completion Rate",
+    "软件MM收编率": "Software MM Incorporation Rate",
+    "SR FRT率": "SR FRT Rate",
+    "高危命令拦截次数": "High-Risk Command Interception Count",
+    "GUI拦截次数": "GUI Interception Count",
+    "任职率": "Employment Rate",
+    "维护红线岗位满足率": "Maintenance Red Line Post Fulfillment Rate",
+    "0工单人数": "Zero Work Order Headcount",
+    "延期补授权完成率": "Delayed Supplemental Auth Completion Rate",
+    "过保订单及SPMS": "Out-of-Warranty Orders & SPMS",
+    "维保订单": "Maintenance Orders",
+    "业务收入": "Business Revenue",
+    "PS GP利润率": "PS GP Margin",
+    "TE备件短缺解决方案": "TE Spare Parts Shortage Solution",
+    "TE AOS 2.0过保订单": "TE AOS 2.0 Out-of-Warranty Orders",
+    "ORG AOS 2.0过保订单": "ORG AOS 2.0 Out-of-Warranty Orders",
+    "VDF AOS 2.0过保订单": "VDF AOS 2.0 Out-of-Warranty Orders",
+    "ET成本控制(GPR提升10%)": "ET Cost Control (GPR Up 10%)",
+    "人为事故 (含整改逾期、错认漏认)": "Human Error Incident (incl. Overdue Rectification, Missed/Wrong Recognition)",
+    "恢复超60分钟事故 (华为原因)": ">60min Recovery Incident (Huawei Reason)",
+    "严重投诉 (CXO/Operation Head级别)": "Severe Complaint (CXO/Operation Head Level)",
+    "严重违规 (瞒报、无方案/越权操作)": "Severe Violation (Concealment, No Plan/Unauthorized Operation)",
+    "整改确认及执行逾期": "Overdue Rectification Confirmation & Execution",
+    "不合格的关闭整改单 (审计发现)": "Unqualified Closed Rectification Ticket (Audit Finding)",
+    "未按要求完成整改 (含延期)": "Incomplete Rectification as Required (incl. Delay)",
+    "不规范风险处理 (月度审计)": "Non-standard Risk Handling (Monthly Audit)",
+    "风险确认/挂起/关闭逾期": "Overdue Risk Confirmation/Suspension/Closure",
+    "FME离职超10天未清理账号": "FME Resigned >10 Days w/o Account Cleanup",
+    "WFM无授权违规操作 (未发客户延期邮件)": "WFM Unauthorized Violation (No Customer Delay Email)",
+    "WFM操作回退 (代表处服务质量原因)": "WFM Operation Rollback (Rep Office Service Quality Reason)",
+    "未按时完成回退复盘 (SLA:10天)": "Overdue Rollback Review (SLA: 10 Days)",
+    "ITR-FRT达不到98.5% (按月)": "ITR-FRT <98.5% (Monthly)",
+    "跨产品逃生演练及Jam宣传": "Cross-product Escape Drill & Jam Promotion",
+    "邀约客户交流呈现服务价值": "Inviting Customers to Communicate & Present Service Value"
+};
+
+function getBilingual(text) {
+    if (!text) return '';
+    const en = i18nMap[text];
+    if (en) {
+        if (en.includes('<br>')) return en;
+        return escapeHTML(text) + '<br><span style="font-size:11px;color:#888;font-weight:normal;">' + escapeHTML(en) + '</span>';
+    }
+    return escapeHTML(text);
+}
+
 function escapeHTML(str) {
     return typeof str === 'string' ? str.replace(/[&<>'"]/g, tag => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'": '&#39;','"':'&quot;'}[tag]||tag)) : str;
 }
@@ -52,6 +141,22 @@ async function initReport() {
             manualAdjustItems = [...defaultManualAdjustItems];
         }
         
+        if (globalConfig.prefs && globalConfig.prefs.i18nMap) {
+            // Strip any legacy HTML tags that might have been saved
+            const loadedI18n = globalConfig.prefs.i18nMap;
+            const cleanI18n = {};
+            for (const [k, v] of Object.entries(loadedI18n)) {
+                if (v && v.includes('<br>')) {
+                    // Extract just the English text if it matches the old format
+                    const match = v.match(/<span[^>]*>(.*?)<\/span>/);
+                    cleanI18n[k] = match ? match[1] : v.replace(/<[^>]+>/g, '');
+                } else {
+                    cleanI18n[k] = v;
+                }
+            }
+            i18nMap = { ...i18nMap, ...cleanI18n };
+        }
+        
         buildLabelTargetMap();
         
         // Populate month selector
@@ -64,8 +169,8 @@ async function initReport() {
         
         const sel = document.getElementById('snapshot-select');
         if (!snapshots.length) {
-            sel.innerHTML = '<option value="">暂无快照数据</option>';
-            document.getElementById('report-content').innerHTML = '<div class="empty-state"><h3>暂无导入记录</h3><p>请先前往 SLA 监控台导入数据并生成预警快照。</p></div>';
+            sel.innerHTML = '<option value="">暂无快照数据 (No snapshot data)</option>';
+            document.getElementById('report-content').innerHTML = '<div class="empty-state"><h3>暂无导入记录 (No import record)</h3><p>请先前往 SLA 监控台导入数据并生成预警快照。<br><span style="font-size:12px;color:#888;">Please go to the SLA dashboard to import data and generate an alert snapshot.</span></p></div>';
             return;
         }
         
@@ -80,9 +185,9 @@ async function initReport() {
         sel.value = snapshots[0].id;
         loadSelectedSnapshot();
     } catch (e) {
-        showToast('加载报表数据失败', 'error');
+        showToast('加载报表数据失败 (Failed to load report data)', 'error');
         console.error(e);
-        document.getElementById('report-content').innerHTML = '<div class="empty-state"><h3>加载失败</h3><p>请检查后端服务是否正常运行。</p></div>';
+        document.getElementById('report-content').innerHTML = '<div class="empty-state"><h3>加载失败 (Loading Failed)</h3><p>请检查后端服务是否正常运行。<br><span style="font-size:12px;color:#888;">Please check if the backend service is running normally.</span></p></div>';
     }
 }
 
@@ -174,7 +279,7 @@ function renderReport(snap) {
     }
     
     if (metricCols.length === 0) {
-        content.innerHTML = '<div class="empty-state"><h3>该快照无维度数据</h3><p>请在此快照生成前，配置相关的统计指标。</p></div>';
+        content.innerHTML = '<div class="empty-state"><h3>该快照无维度数据 (No dimension data in this snapshot)</h3><p>请在此快照生成前，配置相关的统计指标。<br><span style="font-size:12px;color:#888;">Please configure related metrics before generating this snapshot.</span></p></div>';
         return;
     }
 
@@ -295,24 +400,24 @@ function renderReport(snap) {
     let matrixHtml = `
         <div class="card" id="matrix-card">
             <h3 class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
-                <span>🧩 客户群短板透视矩阵</span>
-                <button onclick="toggleMatrixFullscreen()" style="padding:4px 10px; font-size:12px; background:#f0f4f8; border:1px solid #cbd5e1; border-radius:4px; cursor:pointer; color:#334155; display:flex; align-items:center; gap:4px; font-weight:normal;" title="全屏查看表格">
+                <span>🧩 客户群短板透视矩阵 (Customer Base Shortcoming Matrix)</span>
+                <button onclick="toggleMatrixFullscreen()" style="padding:4px 10px; font-size:12px; background:#f0f4f8; border:1px solid #cbd5e1; border-radius:4px; cursor:pointer; color:#334155; display:flex; align-items:center; gap:4px; font-weight:normal;" title="全屏查看表格 (Fullscreen)">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
-                    全屏显示
+                    全屏显示 (Fullscreen)
                 </button>
             </h3>
             <div class="matrix-container" style="background:#fff; height:100%;">
             <table class="matrix-table" id="main-matrix-table">
                 <thead>
                     <tr>
-                        ${hasGroups ? `<th style="min-width:40px; max-width:60px; white-space:normal; position:sticky; top:0; z-index:11; background:#e8eaf6; color:#283593;">分组</th>
-                                       <th style="min-width:40px; position:sticky; top:0; z-index:11; background:#e8eaf6; color:#283593;" title="分组内所有指标权重之和">总权重</th>` : ''}
-                        <th style="min-width:180px; text-align:left;">考核的指标名称</th>
-                        <th style="min-width:60px;">权重</th>
-                        <th style="min-width:100px;">${targetMonth}月目标值</th>
-                        <th style="min-width:100px; background:#fff8e1; border-right:2px solid #ffe082; color:#ef6c00;">全局总体达标</th>
+                        ${hasGroups ? `<th style="min-width:40px; max-width:60px; white-space:normal; position:sticky; top:0; z-index:11; background:#e8eaf6; color:#283593;">${getBilingual('分组')}</th>
+                                       <th style="min-width:40px; position:sticky; top:0; z-index:11; background:#e8eaf6; color:#283593;" title="分组内所有指标权重之和">${getBilingual('总权重')}</th>` : ''}
+                        <th style="min-width:180px; text-align:left;">${getBilingual('考核的指标名称')}</th>
+                        <th style="min-width:60px;">${getBilingual('权重')}</th>
+                        <th style="min-width:100px;">${targetMonth}月目标值<br><span style="font-size:10px;color:#666;font-weight:normal;">Target</span></th>
+                        <th style="min-width:100px; background:#fff8e1; border-right:2px solid #ffe082; color:#ef6c00;">${getBilingual('全局总体达标')}</th>
                         ${categories.map(cat => `<th>${escapeHTML(cat)}</th>`).join('')}
-                        ${categories.map(cat => `<th style="background:#e8f5e9;">${escapeHTML(cat)}得分</th>`).join('')}
+                        ${categories.map(cat => `<th style="background:#e8f5e9;">${escapeHTML(cat)}得分<br><span style="font-size:10px;color:#666;font-weight:normal;">Score</span></th>`).join('')}
                     </tr>
                 </thead>
                 <tbody>
@@ -352,7 +457,7 @@ function renderReport(snap) {
             globalDisplayClass = isGlobalFailing ? 'val-warn' : 'val-good';
             globalTitleAttr = isGlobalFailing ? ` title="整体不达标，距离目标差 ${globalGapStr}"` : '';
         }
-        const editBtn = m.isManual ? `<span style="cursor:pointer; margin-left:6px; font-size:12px; color:#2e7d32; background:#e8f5e9; padding:2px 6px; border-radius:4px; border:1px solid #c8e6c9;" onclick="editManualMetric('${escapeHTML(m.label)}')">✏️ 填报</span>` : '';
+        const editBtn = m.isManual ? `<span style="cursor:pointer; margin-left:6px; font-size:12px; color:#2e7d32; background:#e8f5e9; padding:2px 6px; border-radius:4px; border:1px solid #c8e6c9;" onclick="editManualMetric('${escapeHTML(m.label)}')">✏️ 填报 (Fill)</span>` : '';
 
         matrixHtml += `<tr class="matrix-data-row" data-group="${escapeHTML(row.groupName || '未分组')}">`;
 
@@ -360,14 +465,14 @@ function renderReport(snap) {
         
         // Group column
         if (hasGroups) {
-            matrixHtml += `<td class="matrix-group-cell" data-col="${colIdx++}" ${row.isGroupStart ? `rowspan="${row.groupSize}"` : `style="display:none;"`}>${escapeHTML(row.groupName || '未分组')}</td>`;
+            matrixHtml += `<td class="matrix-group-cell" data-col="${colIdx++}" ${row.isGroupStart ? `rowspan="${row.groupSize}"` : `style="display:none;"`}>${getBilingual(row.groupName || '未分组')}</td>`;
             matrixHtml += `<td class="matrix-group-cell" data-col="${colIdx++}" ${row.isGroupStart ? `rowspan="${row.groupSize}"` : `style="display:none;"`} style="font-weight:bold; color:#1565c0;">${row.groupWeight || '-'}</td>`;
         }
 
         matrixHtml += `
             <td data-col="${colIdx++}" style="text-align:left; font-weight:600; color:#2c3e50;">
                 <div style="display:flex; align-items:center;">
-                    <span>${escapeHTML(m.label)}</span>${editBtn}
+                    <span>${getBilingual(m.label)}</span>${editBtn}
                 </div>
             </td>
             <td data-col="${colIdx++}" style="color:#666; font-weight:bold; background:#fafafa;">${weight}</td>
@@ -410,7 +515,8 @@ function renderReport(snap) {
             </table>
             </div>
             <div style="margin-top:12px; font-size:12px; color:#888;">
-                * 自动打分逻辑：<strong>客户群总分 / 涉及到的指标有效权重之和 × 标准总分</strong>。若某客户群数据为空，则不计入该指标权重。
+                * 自动打分逻辑 (Scoring Logic)：<strong>客户群总分 / 涉及到的指标有效权重之和 × 标准总分</strong>。若某客户群数据为空，则不计入该指标权重。<br>
+                <span style="font-size:11px;color:#aaa;">* Auto-scoring Logic: <strong>Customer Base Total Score / Sum of Valid Weights × Standard Total Score</strong>. If data is empty, weight is omitted.</span>
             </div>
         </div>
     `;
@@ -418,16 +524,16 @@ function renderReport(snap) {
     // Generate Ranking Table
     let rankingHtml = `
         <div class="card">
-            <h3 class="card-title" style="color:#0277bd;"><span>🏇 “赛马”排行</span> <span style="font-size:12px; font-weight:normal; color:#888; margin-left:10px;">(支持预留手动调整机制)</span></h3>
+            <h3 class="card-title" style="color:#0277bd;"><span>🏇 “赛马”排行 (Horse Racing Ranking)</span> <span style="font-size:12px; font-weight:normal; color:#888; margin-left:10px;">(支持预留手动调整机制)</span></h3>
             <table class="ranking-table">
                 <thead>
                     <tr>
-                        <th style="width:60px;">排名</th>
-                        <th style="text-align:left;">客户群</th>
-                        <th>标准总分</th>
-                        <th>系统得分</th>
-                        <th>预留加减分 (手动)</th>
-                        <th>最终得分</th>
+                        <th style="width:60px;">${getBilingual('排名')}</th>
+                        <th style="text-align:left;">${getBilingual('客户群')}</th>
+                        <th>${getBilingual('标准总分')}</th>
+                        <th>${getBilingual('系统得分')}</th>
+                        <th>${getBilingual('预留加减分 (手动)')}</th>
+                        <th>${getBilingual('最终得分')}</th>
                     </tr>
                 </thead>
                 <tbody id="ranking-tbody">
@@ -440,16 +546,16 @@ function renderReport(snap) {
     let adjustHtml = `
         <div class="card" id="adjust-card" style="margin-top:20px; margin-bottom:20px;">
             <h3 class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="color:#e65100;">⚖️ 手动加减分项目配置</span>
+                <span style="color:#e65100;">⚖️ 手动加减分项目配置 (Manual Adjustment Config)</span>
                 <div style="display:flex; align-items:center; gap:10px;">
                     <span style="font-size:12px; font-weight:normal; color:#888; background:#f5f5f5; padding:4px 8px; border-radius:4px;">✨ 修改后自动保存到当前快照</span>
-                    <button onclick="openAddAdjustModal()" style="padding:4px 10px; font-size:12px; background:#e8f5e9; border:1px solid #c8e6c9; border-radius:4px; cursor:pointer; color:#2e7d32; display:flex; align-items:center; gap:4px; font-weight:normal;" title="新增自定义加减分项">
+                    <button onclick="openAddAdjustModal()" style="padding:4px 10px; font-size:12px; background:#e8f5e9; border:1px solid #c8e6c9; border-radius:4px; cursor:pointer; color:#2e7d32; display:flex; align-items:center; gap:4px; font-weight:normal;" title="新增自定义加减分项 (Add Custom Adj. Item)">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                        新增加减分项
+                        新增加减分项 (Add Adj. Item)
                     </button>
-                    <button onclick="toggleAdjustFullscreen()" style="padding:4px 10px; font-size:12px; background:#f0f4f8; border:1px solid #cbd5e1; border-radius:4px; cursor:pointer; color:#334155; display:flex; align-items:center; gap:4px; font-weight:normal;" title="全屏查看表格">
+                    <button onclick="toggleAdjustFullscreen()" style="padding:4px 10px; font-size:12px; background:#f0f4f8; border:1px solid #cbd5e1; border-radius:4px; cursor:pointer; color:#334155; display:flex; align-items:center; gap:4px; font-weight:normal;" title="全屏查看表格 (Fullscreen)">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
-                        全屏显示
+                        全屏显示 (Fullscreen)
                     </button>
                 </div>
             </h3>
@@ -457,12 +563,12 @@ function renderReport(snap) {
             <table class="matrix-table" style="font-size:12px;">
                 <thead>
                     <tr>
-                        <th style="min-width:60px;">类型</th>
-                        <th style="text-align:left;">项目说明</th>
-                        <th style="min-width:120px;">计分规则</th>
-                        ${categories.map(cat => `<th style="width:80px; background:#fff3e0;">${escapeHTML(cat)} (发生次数)</th>`).join('')}
-                        ${categories.map(cat => `<th style="width:70px; background:#e8f5e9;">${escapeHTML(cat)} (加减分)</th>`).join('')}
-                        <th style="width:60px;">操作</th>
+                        <th style="min-width:60px;">${getBilingual('类型')}</th>
+                        <th style="text-align:left;">${getBilingual('项目说明')}</th>
+                        <th style="min-width:120px;">${getBilingual('计分规则')}</th>
+                        ${categories.map(cat => `<th style="width:80px; background:#fff3e0;">${escapeHTML(cat)} (发生次数)<br><span style="font-size:10px;color:#666;font-weight:normal;">Occurrences</span></th>`).join('')}
+                        ${categories.map(cat => `<th style="width:70px; background:#e8f5e9;">${escapeHTML(cat)} (加减分)<br><span style="font-size:10px;color:#666;font-weight:normal;">Adj. Score</span></th>`).join('')}
+                        <th style="width:60px;">${getBilingual('操作')}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -476,8 +582,8 @@ function renderReport(snap) {
         const typeColor = item.type === '加分' ? '#2e7d32' : '#c62828';
         const typeBg = item.type === '加分' ? '#e8f5e9' : '#ffebee';
         adjustHtml += `<tr>
-            <td style="color:${typeColor}; background:${typeBg}; font-weight:bold; text-align:center;">${item.type}</td>
-            <td style="text-align:left;">${escapeHTML(item.name)}</td>
+            <td style="color:${typeColor}; background:${typeBg}; font-weight:bold; text-align:center;">${getBilingual(item.type)}</td>
+            <td style="text-align:left;">${getBilingual(item.name)}</td>
             <td style="color:#666;">${escapeHTML(item.desc)}</td>
         `;
         
@@ -503,7 +609,10 @@ function renderReport(snap) {
                 </tbody>
             </table>
             </div>
-            <div style="margin-top:8px; font-size:12px; color:#888;">* 填入发生次数后，系统会自动计算分值并汇总到上方赛马排行的“预留加减分”中。每一次修改都会自动静默保存至当前快照。</div>
+            <div style="margin-top:8px; font-size:12px; color:#888;">
+                * 填入发生次数后，系统会自动计算分值并汇总到上方赛马排行的“预留加减分”中。每一次修改都会自动静默保存至当前快照。<br>
+                <span style="font-size:11px;color:#aaa;">* After entering occurrences, the system auto-calculates scores and adds them to the "Manual Adj." in the ranking. Changes are auto-saved to the snapshot.</span>
+            </div>
         </div>
     `;
 
@@ -511,14 +620,14 @@ function renderReport(snap) {
         <div class="card" style="margin-top:20px; margin-bottom:40px; background:#f8fbff; border:1px solid #bbdefb; box-shadow:0 2px 8px rgba(21,101,192,0.05);">
             <h3 class="card-title" style="color:#0277bd; font-size:15px; border-bottom:1px solid #bbdefb; padding-bottom:10px; margin-bottom:12px;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:text-bottom; margin-right:6px;"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
-                计分规则与排位说明
+                计分规则与排位说明 (Scoring Rules and Ranking Explanation)
             </h3>
             <div style="font-size:13px; color:#455a64; line-height:1.8;">
-                <p style="margin:0 0 8px;"><strong>1. 标准总分基准：</strong>标准总分为当前左侧或后台配置中所有<span style="color:#0277bd; font-weight:bold;">权重＞0</span>的考核指标之和。该总分是各大区排名的公共基准，不受任何客户群是否缺考影响。</p>
-                <p style="margin:0 0 8px;"><strong>2. 考核免除机制：</strong>当某一指标在本月<span style="color:#d32f2f;">未配置明确目标值</span>，或该大区/客户群在某指标上<span style="color:#d32f2f;">暂无数据（显示为 --）</span>时，该指标将触发免除机制。<span style="color:#e65100; background:#fff3e0; padding:2px 4px; border-radius:3px;">免除指标不会扣分，也不计入该客户群的考核满权基数。</span></p>
-                <p style="margin:0 0 8px;"><strong>3. 动态折算算法（系统得分）：</strong>为了确保公平，大区最终系统得分 = <strong>( 实际达标获得的权重 / 实际参与考核的有效满权 ) × 标准总分</strong>。这意味着即使大区免考了部分指标，只要在它实际参与的指标上100%达标，它依然可以折算拿到满分。</p>
-                <p style="margin:0 0 8px;"><strong>4. 预留加减分机制：</strong>上方看板的【最终得分】= 【系统得分】+【预留加减分】。这部分主要涵盖非自动化专项奖惩（如维保、退网、重点项目攻坚等）。相关人工配置可通过上方“手动加减分项目配置”表进行设置并自动存入快照。</p>
-                <p style="margin:0;"><strong>5. 动态汇总分析：</strong>“客户群短板透视矩阵”最下方的汇总行，会智能跟随你的表头下拉过滤条件，自动排雷（跳过免考项）并实时求和有效权重与得分，方便进行透视复盘。</p>
+                <p style="margin:0 0 8px;"><strong>1. 标准总分基准 (Standard Total Score Baseline)：</strong>标准总分为当前左侧或后台配置中所有<span style="color:#0277bd; font-weight:bold;">权重＞0</span>的考核指标之和。该总分是各大区排名的公共基准，不受任何客户群是否缺考影响。<br><span style="font-size:12px;color:#888;">The Standard Total Score is the sum of all assessment metrics with a <span style="color:#0277bd; font-weight:bold;">weight > 0</span>. This total score is the public baseline for ranking all regions and is not affected by whether any customer base misses an assessment.</span></p>
+                <p style="margin:0 0 8px;"><strong>2. 考核免除机制 (Assessment Exemption Mechanism)：</strong>当某一指标在本月<span style="color:#d32f2f;">未配置明确目标值</span>，或该大区/客户群在某指标上<span style="color:#d32f2f;">暂无数据（显示为 --）</span>时，该指标将触发免除机制。<span style="color:#e65100; background:#fff3e0; padding:2px 4px; border-radius:3px;">免除指标不会扣分，也不计入该客户群的考核满权基数。</span><br><span style="font-size:12px;color:#888;">When a metric has <span style="color:#d32f2f;">no clear target value configured</span> this month, or the region/customer base has <span style="color:#d32f2f;">no data (shown as --)</span>, the exemption mechanism is triggered. <span style="color:#e65100; background:#fff3e0; padding:2px 4px; border-radius:3px;">Exempt metrics will not deduct points, nor will they be included in the full weight base.</span></span></p>
+                <p style="margin:0 0 8px;"><strong>3. 动态折算算法（系统得分） (Dynamic Conversion Algorithm - System Score)：</strong>为了确保公平，大区最终系统得分 = <strong>( 实际达标获得的权重 / 实际参与考核的有效满权 ) × 标准总分</strong>。这意味着即使大区免考了部分指标，只要在它实际参与的指标上100%达标，它依然可以折算拿到满分。<br><span style="font-size:12px;color:#888;">To ensure fairness, the final System Score = <strong>( Actual Weights Gained / Valid Full Weights Participated ) × Standard Total Score</strong>. This means even if a region is exempt from some metrics, it can still get a full score if it reaches 100% compliance on the metrics it actually participated in.</span></p>
+                <p style="margin:0 0 8px;"><strong>4. 预留加减分机制 (Reserved Manual Adjustment Mechanism)：</strong>上方看板的【最终得分】= 【系统得分】+【预留加减分】。这部分主要涵盖非自动化专项奖惩（如维保、退网、重点项目攻坚等）。相关人工配置可通过上方“手动加减分项目配置”表进行设置并自动存入快照。<br><span style="font-size:12px;color:#888;">【Final Score】 = 【System Score】 + 【Manual Adj.】. This part covers non-automated special rewards and punishments. Manual configurations can be set in the "Manual Adjustment Config" table above and are automatically saved to the snapshot.</span></p>
+                <p style="margin:0;"><strong>5. 动态汇总分析 (Dynamic Summary Analysis)：</strong>“客户群短板透视矩阵”最下方的汇总行，会智能跟随你的表头下拉过滤条件，自动排雷（跳过免考项）并实时求和有效权重与得分，方便进行透视复盘。<br><span style="font-size:12px;color:#888;">The summary row at the bottom of the "Shortcoming Matrix" intelligently follows the header dropdown filters, automatically skipping exempt items, and calculates the sum of valid weights and scores in real-time.</span></p>
             </div>
         </div>
     `;
@@ -548,12 +657,15 @@ window.setupMatrixFilters = function() {
     const filterRow = document.createElement('tr');
     filterRow.className = 'matrix-filter-row';
     
+    // Calculate the dynamic height of the bilingual header row
+    const firstRowHeight = thead.querySelector('tr:first-child').offsetHeight || 45;
+    
     headerCells.forEach((th, colIdx) => {
         const filterTh = document.createElement('th');
         filterTh.style.padding = '4px';
         filterTh.style.background = '#f1f5f9';
         filterTh.style.position = 'sticky';
-        filterTh.style.top = '45px';
+        filterTh.style.top = firstRowHeight + 'px';
         filterTh.style.zIndex = '20';
         filterTh.style.borderBottom = '1px solid #cbd5e1';
         
@@ -1055,7 +1167,7 @@ window.showScoreDetails = function(title, content) {
         modal.id = 'details-modal';
         modal.style.cssText = 'display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:99999; align-items:center; justify-content:center;';
         modal.innerHTML = `
-            <div style="background:#fff; border-radius:12px; width:560px; max-width:90%; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
+            <div style="background:#fff; border-radius:12px; width:760px; max-width:95%; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid #eee; padding-bottom:12px;">
                     <h3 id="details-modal-title" style="margin:0; color:#0277bd;"></h3>
                     <button onclick="document.getElementById('details-modal').style.display='none'" style="border:none; background:none; font-size:20px; cursor:pointer; color:#888;">&times;</button>
@@ -1077,12 +1189,12 @@ window.showScoreDetails = function(title, content) {
 };
 
 window.showStdScoreDetails = function() {
-    showScoreDetails('📊 标准总分说明', `
-        <div style="margin-bottom:10px;">标准总分为大盘所设定考核指标的总体权重之和：</div>
-        <div style="font-size:24px; font-weight:bold; color:#0277bd; text-align:center; padding:10px; background:#f5f8fa; border-radius:6px;">${standardTotalScore} 分</div>
+    showScoreDetails('📊 标准总分说明 (Standard Total Score Details)', `
+        <div style="margin-bottom:10px;">标准总分为大盘所设定考核指标的总体权重之和 (Sum of all metric weights):</div>
+        <div style="font-size:24px; font-weight:bold; color:#0277bd; text-align:center; padding:10px; background:#f5f8fa; border-radius:6px;">${standardTotalScore}</div>
         <ul style="margin-top:10px; padding-left:20px; color:#555;">
-            <li>所有配置了大于0权重的指标将全额计入标准总分。</li>
-            <li>无论某个客户群是否参与该指标的考核，标准总分保持一致，以提供横向比较的基准。</li>
+            <li>所有配置了大于0权重的指标将全额计入标准总分。<br><span style="font-size:12px;color:#999;">All metrics with a weight greater than 0 are fully counted in the standard total score.</span></li>
+            <li>无论某个客户群是否参与该指标的考核，标准总分保持一致，以提供横向比较的基准。<br><span style="font-size:12px;color:#999;">The standard total score remains the same regardless of whether a customer base participates in the metric, providing a baseline for horizontal comparison.</span></li>
         </ul>
     `);
 };
@@ -1103,13 +1215,13 @@ window.showSysScoreDetails = function(cat) {
 
     allMetrics.forEach(m => {
         const mLabel = m.label;
-        const cell = d.values[mLabel]; // 可能为 undefined（无 subMetrics 的指标）
+        const cell = d.values[mLabel];
         const targetData = labelToTargetMap[mLabel];
         const weight = (targetData && targetData.weight !== undefined) ? parseFloat(targetData.weight) : 1;
         const hasTarget = targetData && targetData[targetMonth] !== undefined && targetData[targetMonth] !== '' && weight > 0;
+        const mEn = i18nMap[mLabel] ? `<br><span style="font-size:11px; color:#aaa;">${escapeHTML(i18nMap[mLabel])}</span>` : '';
 
         if (!hasTarget || !cell || cell.raw === '--') {
-            // 判断：是否有其他客户群对这个指标有有效数据
             const otherHasData = Object.keys(allCatData).some(otherCat => {
                 if (otherCat === cat) return false;
                 const otherCell = allCatData[otherCat].values[mLabel];
@@ -1117,19 +1229,16 @@ window.showSysScoreDetails = function(cat) {
             });
 
             if (!hasTarget) {
-                // 未配置目标/权重为0 → 全局性免考，归入全员豁免
-                allExcludedHtml += `<li><span style="color:#999;">${escapeHTML(mLabel)}</span> <span style="color:#ccc; font-size:11px;">(未配置目标值或权重为0)</span></li>`;
+                allExcludedHtml += `<li style="margin-bottom:8px; line-height:1.4;"><span style="color:#999; font-weight:600;">${escapeHTML(mLabel)}</span> <span style="color:#ccc; font-size:11px;">(未配置目标值或权重为0 / No Target)</span>${mEn}</li>`;
             } else if (otherHasData) {
-                // 其他客户群有数据，本群独缺 → 仅本群缺考
-                onlyMissingHtml += `<li><span style="color:#b45309;">${escapeHTML(mLabel)}</span> <span style="color:#d97706; font-size:11px;">(本群暂无数据)</span></li>`;
+                onlyMissingHtml += `<li style="margin-bottom:8px; line-height:1.4;"><span style="color:#b45309; font-weight:600;">${escapeHTML(mLabel)}</span> <span style="color:#d97706; font-size:11px;">(本群暂无数据 / No Data)</span>${mEn}</li>`;
             } else {
-                // 所有客户群都没有这个指标的数据 → 全员豁免
-                allExcludedHtml += `<li><span style="color:#999;">${escapeHTML(mLabel)}</span> <span style="color:#ccc; font-size:11px;">(全员暂无数据)</span></li>`;
+                allExcludedHtml += `<li style="margin-bottom:8px; line-height:1.4;"><span style="color:#999; font-weight:600;">${escapeHTML(mLabel)}</span> <span style="color:#ccc; font-size:11px;">(全员暂无数据 / Global No Data)</span>${mEn}</li>`;
             }
         } else if (cell.isFailing) {
-            failHtml += `<li><span style="color:#d32f2f;">${escapeHTML(mLabel)}</span> (权重: ${weight}, 差值: ${cell.gapStr})</li>`;
+            failHtml += `<li style="margin-bottom:8px; line-height:1.4;"><span style="color:#d32f2f; font-weight:600;">${escapeHTML(mLabel)}</span> <span style="color:#888; font-size:11px;">(权重 Weight: ${weight}, 差值 Gap: ${cell.gapStr})</span>${mEn}</li>`;
         } else {
-            passHtml += `<li><span style="color:#2e7d32;">${escapeHTML(mLabel)}</span> (权重: ${weight})</li>`;
+            passHtml += `<li style="margin-bottom:8px; line-height:1.4;"><span style="color:#2e7d32; font-weight:600;">${escapeHTML(mLabel)}</span> <span style="color:#888; font-size:11px;">(权重 Weight: ${weight})</span>${mEn}</li>`;
         }
     });
 
@@ -1137,8 +1246,8 @@ window.showSysScoreDetails = function(cat) {
     const onlyMissingBlock = onlyMissingHtml ? `
         <div style="margin-bottom:8px;">
             <div style="color:#b45309; font-size:11px; font-weight:bold; margin-bottom:4px; display:flex; align-items:center; gap:4px;">
-                <span>⚠️ 仅本群缺考</span>
-                <span style="color:#d97706; font-weight:normal;">— 其他客户群有数据，本群暂无</span>
+                <span>⚠️ 仅本群缺考 (Missing in this base only)</span>
+                <span style="color:#d97706; font-weight:normal;">— 其他客户群有数据，本群暂无 (Others have data, this base has none)</span>
             </div>
             <ul style="margin:0; padding-left:15px;">${onlyMissingHtml}</ul>
         </div>` : '';
@@ -1146,40 +1255,40 @@ window.showSysScoreDetails = function(cat) {
     const allExcludedBlock = allExcludedHtml ? `
         <div>
             <div style="color:#999; font-size:11px; font-weight:bold; margin-bottom:4px; display:flex; align-items:center; gap:4px;">
-                <span>⚪ 全员豁免</span>
-                <span style="color:#bbb; font-weight:normal;">— 所有客户群均不涉及此指标</span>
+                <span>⚪ 全员豁免 (Global Exempt)</span>
+                <span style="color:#bbb; font-weight:normal;">— 所有客户群均不涉及此指标 (No base is involved in this metric)</span>
             </div>
             <ul style="margin:0; padding-left:15px;">${allExcludedHtml}</ul>
         </div>` : '';
 
     const excludedSection = (onlyMissingHtml || allExcludedHtml)
         ? `${onlyMissingBlock}${onlyMissingHtml && allExcludedHtml ? '<hr style="border:none; border-top:1px dashed #e0e0e0; margin:8px 0;">' : ''}${allExcludedBlock}`
-        : '<li style="color:#999;">无</li>';
+        : '<li style="color:#999;">无 (None)</li>';
 
-    showScoreDetails(`📈 [${escapeHTML(d.name)}] 系统得分计算明细`, `
+    showScoreDetails(`📈 [${escapeHTML(d.name)}] 系统得分计算明细 (System Score Details)`, `
         <div style="background:#f5f8fa; padding:12px; border-radius:6px; text-align:center; margin-bottom:15px; border:1px solid #e1e8ed;">
-            <div style="color:#666; font-size:12px; margin-bottom:4px;">计算公式: ( 获权 / 满权 ) × 标准总分</div>
+            <div style="color:#666; font-size:12px; margin-bottom:4px;">计算公式 (Formula): ( 获权 Earned W. / 满权 Valid W. ) × 标准总分 Standard Total Score</div>
             <span style="font-size:18px; color:#333;">( </span>
-            <span style="color:#2e7d32; font-weight:bold; font-size:18px;" title="获权">${d.earnedScore}</span>
+            <span style="color:#2e7d32; font-weight:bold; font-size:18px;" title="获权 (Earned Weight)">${d.earnedScore}</span>
             <span style="font-size:18px; color:#333;"> / </span>
-            <span style="color:#ef6c00; font-weight:bold; font-size:18px;" title="满权">${d.validWeightSum}</span>
+            <span style="color:#ef6c00; font-weight:bold; font-size:18px;" title="满权 (Valid Full Weight)">${d.validWeightSum}</span>
             <span style="font-size:18px; color:#333;"> ) × </span>
-            <span style="color:#0277bd; font-weight:bold; font-size:18px;" title="标准总分">${standardTotalScore}</span>
+            <span style="color:#0277bd; font-weight:bold; font-size:18px;" title="标准总分 (Standard Total Score)">${standardTotalScore}</span>
             <span style="font-size:18px; color:#333;"> = </span>
             <span style="color:#2c3e50; font-weight:bold; font-size:22px;">${d.baseScore}</span>
         </div>
         <div style="display:flex; gap:10px; margin-bottom:10px;">
             <div style="flex:1; background:#f1f8e9; padding:10px; border-radius:6px; border:1px solid #c8e6c9;">
-                <div style="color:#2e7d32; font-weight:bold; border-bottom:1px solid #c8e6c9; padding-bottom:5px; margin-bottom:8px;">✅ 达标项 (获权 ${d.earnedScore})</div>
-                <ul style="margin:0; padding-left:15px; font-size:12px; color:#333;">${passHtml || '<li style="color:#999;">无</li>'}</ul>
+                <div style="color:#2e7d32; font-weight:bold; border-bottom:1px solid #c8e6c9; padding-bottom:5px; margin-bottom:8px;">✅ 达标项 Passed (获权 Earned W. ${d.earnedScore})</div>
+                <ul style="margin:0; padding-left:15px; font-size:12px; color:#333;">${passHtml || '<li style="color:#999;">无 (None)</li>'}</ul>
             </div>
             <div style="flex:1; background:#ffebee; padding:10px; border-radius:6px; border:1px solid #ffcdd2;">
-                <div style="color:#c62828; font-weight:bold; border-bottom:1px solid #ffcdd2; padding-bottom:5px; margin-bottom:8px;">❌ 不达标项 (失权 ${d.validWeightSum - d.earnedScore})</div>
-                <ul style="margin:0; padding-left:15px; font-size:12px; color:#333;">${failHtml || '<li style="color:#999;">无</li>'}</ul>
+                <div style="color:#c62828; font-weight:bold; border-bottom:1px solid #ffcdd2; padding-bottom:5px; margin-bottom:8px;">❌ 不达标项 Failed (失权 Lost W. ${d.validWeightSum - d.earnedScore})</div>
+                <ul style="margin:0; padding-left:15px; font-size:12px; color:#333;">${failHtml || '<li style="color:#999;">无 (None)</li>'}</ul>
             </div>
         </div>
         <div style="background:#fafafa; padding:10px; border-radius:6px; border:1px solid #e0e0e0; font-size:12px; color:#666;">
-            <div style="color:#777; font-weight:bold; border-bottom:1px solid #e0e0e0; padding-bottom:6px; margin-bottom:8px;">🚫 不参与折算</div>
+            <div style="color:#777; font-weight:bold; border-bottom:1px solid #e0e0e0; padding-bottom:6px; margin-bottom:8px;">🚫 不参与折算 Excluded</div>
             ${excludedSection}
         </div>
     `);
@@ -1210,11 +1319,11 @@ window.showAdjScoreDetails = function(cat) {
         });
     }
     
-    showScoreDetails(`⚖️ [${escapeHTML(d.name)}] 加减分明细`, `
+    showScoreDetails(`⚖️ [${escapeHTML(d.name)}] 加减分明细 (Manual Adj. Details)`, `
         <div style="font-size:24px; font-weight:bold; color:${d.manualScore >= 0 ? '#2e7d32' : '#d32f2f'}; text-align:center; padding:10px; background:#f5f8fa; border-radius:6px; margin-bottom:15px; border:1px solid #e1e8ed;">
-            ${d.manualScore >= 0 ? '+'+d.manualScore : d.manualScore} 分
+            ${d.manualScore >= 0 ? '+'+d.manualScore : d.manualScore}
         </div>
-        ${adjDetails || '<div style="text-align:center; color:#888; padding:20px;">无加减分记录</div>'}
+        ${adjDetails || '<div style="text-align:center; color:#888; padding:20px;">无加减分记录 (No records)</div>'}
     `);
 };
 
@@ -1850,6 +1959,86 @@ window.saveGroups = async function() {
         renderCurrentSnapshot();
     } catch(e) {
         showToast('保存分组失败', 'error');
+        console.error(e);
+    }
+};
+let _editI18nMap = {};
+
+window.openI18nModal = function() {
+    _editI18nMap = { ...i18nMap };
+    renderI18nList();
+    document.getElementById('i18n-new-zh').value = '';
+    document.getElementById('i18n-new-en').value = '';
+    document.getElementById('i18n-modal').style.display = 'flex';
+};
+
+window.closeI18nModal = function() {
+    document.getElementById('i18n-modal').style.display = 'none';
+};
+
+window.renderI18nList = function() {
+    const container = document.getElementById('i18n-list-container');
+    let html = '';
+    const keys = Object.keys(_editI18nMap).sort();
+    
+    keys.forEach(zh => {
+        const en = _editI18nMap[zh];
+        html += `
+            <tr style="border-bottom:1px solid #f0f0f0;">
+                <td style="padding:8px; font-size:13px; color:#333; font-weight:600;">${escapeHTML(zh)}</td>
+                <td style="padding:8px; font-size:13px; color:#0277bd;">${escapeHTML(en)}</td>
+                <td style="padding:8px; text-align:center; white-space:nowrap;">
+                    <button onclick="editI18nEntry('${escapeHTML(zh.replace(/'/g, "\\'"))}')" style="background:none; border:none; cursor:pointer; font-size:14px; opacity:0.6; padding:4px;" title="编辑此项" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">✏️</button>
+                    <button onclick="deleteI18nEntry('${escapeHTML(zh.replace(/'/g, "\\'"))}')" style="background:none; border:none; cursor:pointer; font-size:14px; opacity:0.6; padding:4px;" title="删除此项" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">🗑️</button>
+                </td>
+            </tr>
+        `;
+    });
+    container.innerHTML = html;
+};
+
+window.editI18nEntry = function(zh) {
+    document.getElementById('i18n-new-zh').value = zh;
+    document.getElementById('i18n-new-en').value = _editI18nMap[zh] || '';
+    document.getElementById('i18n-new-en').focus();
+};
+
+window.addI18nEntry = function() {
+    const zh = document.getElementById('i18n-new-zh').value.trim();
+    const en = document.getElementById('i18n-new-en').value.trim();
+    if (!zh || !en) {
+        showToast('请填写完整的中英文', 'error');
+        return;
+    }
+    _editI18nMap[zh] = en;
+    document.getElementById('i18n-new-zh').value = '';
+    document.getElementById('i18n-new-en').value = '';
+    renderI18nList();
+};
+
+window.deleteI18nEntry = function(zh) {
+    if (confirm(`确定要删除“${zh}”的翻译吗？`)) {
+        delete _editI18nMap[zh];
+        renderI18nList();
+    }
+};
+
+window.saveI18nMap = async function() {
+    try {
+        if (!globalConfig.prefs) globalConfig.prefs = {};
+        globalConfig.prefs.i18nMap = _editI18nMap;
+        
+        await API.post('/api/sla/config', { 
+            targets: globalConfig.targets, 
+            prefs: globalConfig.prefs 
+        });
+        
+        i18nMap = { ..._editI18nMap };
+        showToast('翻译字典已保存', 'success');
+        closeI18nModal();
+        renderCurrentSnapshot();
+    } catch(e) {
+        showToast('保存失败', 'error');
         console.error(e);
     }
 };
