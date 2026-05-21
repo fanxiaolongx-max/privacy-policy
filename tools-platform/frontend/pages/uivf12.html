@@ -101,9 +101,9 @@
                 <div class="output-header">
                     <label class="output-label">🤖 生产级 UI.Vision 宏代码:</label>
                     <div class="btn-group" style="gap:8px; margin:0; flex:none;">
-                        <button id="saveBtn" class="btn btn-secondary btn-action"
+                        <button id="saveBtn" class="btn btn-secondary btn-action" style="white-space:nowrap;"
                             onclick="UIVSave.saveCurrentScript()">💾 加入侧边栏</button>
-                        <button id="btnCopyUIV" class="btn btn-action" style="background:var(--accent);"
+                        <button id="btnCopyUIV" class="btn btn-action" style="background:var(--accent); white-space:nowrap;"
                             onclick="UIVCopy.copyCodeText('codeOutput', 'btnCopyUIV', 'UIV 代码')">📋 复制 UIV</button>
                     </div>
                 </div>
@@ -112,9 +112,8 @@
 
                 <div class="output-header">
                     <label class="output-label console-label">💻 纯浏览器控制台执行脚本 (F12):</label>
-                    <button id="btnCopyConsole" class="btn btn-action" style="background:var(--console); margin:0;"
-                        onclick="UIVCopy.copyCodeText('consoleOutput', 'btnCopyConsole', '控制台代码')">📋 复制
-                        Console</button>
+                    <button id="btnCopyConsole" class="btn btn-action" style="background:var(--console); margin:0; white-space:nowrap;"
+                        onclick="UIVCopy.copyCodeText('consoleOutput', 'btnCopyConsole', '控制台代码')">📋 复制 Console</button>
                 </div>
                 <textarea id="consoleOutput" readonly placeholder="生成后显示纯浏览器 F12 直跑脚本..." style="flex:1;"></textarea>
             </div>

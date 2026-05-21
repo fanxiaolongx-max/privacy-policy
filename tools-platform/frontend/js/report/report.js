@@ -370,6 +370,9 @@ function renderReport(snap) {
         if (!labelToGroup[m.label]) orderedMetrics.push(m);
     });
 
+    window._currentGroupWeightMap = groupWeightMap;
+    window._currentLabelToGroup = labelToGroup;
+
     // Build rows with group spans
     // rows: [{groupName, groupSize, isGroupStart, metric, groupWeight}]
     const tableRows = [];
@@ -388,9 +391,9 @@ function renderReport(snap) {
             } else {
                 tableRows.push({ groupName: grpName, groupSize: 0, isGroupStart: false, metric: m });
             }
-        } else {
-            tableRows.push({ groupName: null, groupSize: 1, isGroupStart: true, metric: m });
         }
+        // Ungrouped metrics (grpName is null) are intentionally NOT added to tableRows 
+        // so they don't appear in the visual matrix table.
         i++;
     }
 
@@ -2046,3 +2049,247 @@ window.saveI18nMap = async function() {
 document.addEventListener('DOMContentLoaded', () => {
     initReport();
 });
+
+window.saveDashboardToDB = async function() {
+    if (!currentSnapshot) {
+        return showToast('无可用快照数据', 'error');
+    }
+
+    const snapshot_id = currentSnapshot.id;
+    const month = parseInt(document.getElementById('target-month-select').value);
+    
+    // Build cat scores
+    const cat_scores = [];
+    const catData = window._currentCatData || {};
+    Object.keys(catData).forEach(catName => {
+        const c = catData[catName];
+        cat_scores.push({
+            cat_name: c.name,
+            base_score: c.baseScore,
+            manual_score: c.manualScore,
+            final_score: c.finalScore
+        });
+    });
+
+    // Build metric data
+    const metric_data = [];
+    const orderedMetrics = window._currentOrderedMetrics || [];
+    
+    orderedMetrics.forEach(m => {
+        const targetData = labelToTargetMap[m.label] || {};
+        const weight = targetData.weight !== undefined ? parseFloat(targetData.weight) : 1;
+        
+        let targetStr = '--';
+        if (targetData[month] !== undefined && targetData[month] !== '') {
+            const condition = targetData.type || 'gte';
+            targetStr = (condition === 'gte' ? '≥ ' : '≤ ') + targetData[month];
+            
+            // Check if any cat has % in this metric to append % to target
+            let isPercent = false;
+            Object.keys(catData).forEach(catName => {
+                const cell = catData[catName].values[m.label];
+                if (cell && String(cell.raw).includes('%')) isPercent = true;
+            });
+            if (isPercent) targetStr += '%';
+        }
+        
+        Object.keys(catData).forEach(catName => {
+            const cell = catData[catName].values[m.label];
+            if (cell) {
+                metric_data.push({
+                    cat_name: catName,
+                    metric_label: m.label,
+                    weight: weight,
+                    target_val: targetStr,
+                    raw_val: String(cell.raw),
+                    num_val: cell.num,
+                    is_failing: cell.isFailing,
+                    gap: cell.gapStr || ''
+                });
+            }
+        });
+    });
+
+    const payload = {
+        snapshot_id: snapshot_id,
+        month: month,
+        standard_total_score: standardTotalScore,
+        cat_scores: cat_scores,
+        metric_data: metric_data,
+        raw_data: currentSnapshot
+    };
+
+    try {
+        const btn = event ? event.target : null;
+        if (btn) btn.innerHTML = '⏳ 截图中...';
+        
+        // Expand tables for full screenshot
+        const matrixContainer = document.querySelector('.matrix-container');
+        const adjustCard = document.getElementById('adjust-card');
+        
+        let origMatrixMaxHeight = '', origMatrixOverflow = '';
+        let origAdjustMaxHeight = '', origAdjustOverflow = '';
+        
+        if (matrixContainer) {
+            origMatrixMaxHeight = matrixContainer.style.maxHeight;
+            origMatrixOverflow = matrixContainer.style.overflow;
+            matrixContainer.style.maxHeight = 'none';
+            matrixContainer.style.overflow = 'visible';
+        }
+        if (adjustCard) {
+            origAdjustMaxHeight = adjustCard.style.maxHeight;
+            origAdjustOverflow = adjustCard.style.overflow;
+            adjustCard.style.maxHeight = 'none';
+            adjustCard.style.overflow = 'visible';
+        }
+        
+        const origBodyOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'visible';
+        
+        // Wait for DOM reflow
+        await new Promise(r => setTimeout(r, 300));
+        
+        const canvas = await html2canvas(document.querySelector('.page-container'), {
+            scale: 2,
+            useCORS: true,
+            windowHeight: document.querySelector('.page-container').scrollHeight
+        });
+        
+        payload.image_data = canvas.toDataURL('image/png');
+        
+        // Restore styles
+        if (matrixContainer) {
+            matrixContainer.style.maxHeight = origMatrixMaxHeight;
+            matrixContainer.style.overflow = origMatrixOverflow;
+        }
+        if (adjustCard) {
+            adjustCard.style.maxHeight = origAdjustMaxHeight;
+            adjustCard.style.overflow = origAdjustOverflow;
+        }
+        document.body.style.overflow = origBodyOverflow;
+
+        // Generate Excel File
+        if (typeof ExcelJS !== 'undefined') {
+            try {
+                if (btn) btn.innerHTML = '⏳ 正在生成报表...';
+                const workbook = new ExcelJS.Workbook();
+                const sheet = workbook.addWorksheet('短板透视矩阵');
+                
+                const stripHtml = (html) => {
+                    const tmp = document.createElement('div');
+                    tmp.innerHTML = html;
+                    return tmp.textContent || tmp.innerText || "";
+                };
+                
+                // Define columns
+                const columns = [
+                    { header: '分组 (Group)', key: 'group', width: 15 },
+                    { header: '总权重', key: 'groupWeight', width: 10 },
+                    { header: '考核的指标名称 (Metric)', key: 'metric', width: 40 },
+                    { header: '权重', key: 'weight', width: 10 },
+                    { header: '目标值 (Target)', key: 'target', width: 15 },
+                    { header: '全局总体达标', key: 'global', width: 15 }
+                ];
+                
+                const catData = window._currentCatData || {};
+                const categories = Object.keys(catData);
+                categories.forEach(cat => {
+                    columns.push({ header: cat, key: `val_${cat}`, width: 15 });
+                    columns.push({ header: `${cat}得分`, key: `score_${cat}`, width: 15 });
+                });
+                
+                sheet.columns = columns;
+                
+                // Style header
+                sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+                sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF283593' } };
+                sheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+                
+                // Add data
+                const orderedMetrics = window._currentOrderedMetrics || [];
+                const groupWeightMap = window._currentGroupWeightMap || {};
+                const labelToGroup = window._currentLabelToGroup || {};
+                
+                orderedMetrics.forEach(m => {
+                    const gName = labelToGroup[m.label];
+                    if (!gName) return; // Skip ungrouped as requested by user
+                    
+                    const rowData = {};
+                    rowData.group = stripHtml(getBilingual(gName));
+                    rowData.groupWeight = groupWeightMap[gName] || '-';
+                    rowData.metric = stripHtml(getBilingual(m.label));
+                    
+                    const targetData = labelToTargetMap[m.label] || {};
+                    const weight = targetData.weight !== undefined ? parseFloat(targetData.weight) : 1;
+                    rowData.weight = weight;
+                    
+                    let targetStr = '--';
+                    if (targetData[month] !== undefined && targetData[month] !== '') {
+                        const condition = targetData.type || 'gte';
+                        targetStr = (condition === 'gte' ? '≥ ' : '≤ ') + targetData[month];
+                        let isPercent = false;
+                        categories.forEach(cat => {
+                            if (catData[cat].values[m.label] && String(catData[cat].values[m.label].raw).includes('%')) isPercent = true;
+                        });
+                        if (isPercent) targetStr += '%';
+                    }
+                    rowData.target = targetStr;
+                    rowData.global = m.value || '--';
+                    
+                    categories.forEach(cat => {
+                        const cell = catData[cat].values[m.label] || {};
+                        rowData[`val_${cat}`] = cell.raw || '--';
+                        rowData[`score_${cat}`] = cell.isFailing ? cell.gapStr : '--';
+                    });
+                    
+                    const row = sheet.addRow(rowData);
+                    row.alignment = { vertical: 'middle', wrapText: true };
+                    
+                    // Highlight failing cells
+                    categories.forEach(cat => {
+                        const cell = catData[cat].values[m.label] || {};
+                        if (cell.isFailing) {
+                            const valColObj = sheet.getColumn(`val_${cat}`);
+                            const valCell = row.getCell(valColObj.number);
+                            valCell.font = { color: { argb: 'FFD32F2F' }, bold: true };
+                            valCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFEBEE' } };
+                        }
+                    });
+                });
+                
+                // Add total score row
+                const totalRowData = { metric: '🏁 总分 (Total Score)' };
+                categories.forEach(cat => {
+                    totalRowData[`score_${cat}`] = catData[cat].finalScore;
+                });
+                const totalRow = sheet.addRow(totalRowData);
+                totalRow.font = { bold: true };
+                totalRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF59D' } };
+                
+                const buffer = await workbook.xlsx.writeBuffer();
+                let binary = '';
+                const bytes = new Uint8Array(buffer);
+                const len = bytes.byteLength;
+                for (let i = 0; i < len; i++) {
+                    binary += String.fromCharCode(bytes[i]);
+                }
+                payload.excel_data = 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + window.btoa(binary);
+            } catch (err) {
+                console.error("Excel generation error:", err);
+            }
+        }
+
+        if (btn) btn.innerHTML = '⏳ 正在入库...';
+        const res = await API.post('/api/db/save', payload);
+        if (btn) btn.innerHTML = '💾 入库 (Save to DB)';
+        
+        if (res.success) {
+            showToast('数据及截图已成功入库 (Saved to DB successfully)', 'success');
+        } else {
+            showToast(res.error || '入库失败', 'error');
+        }
+    } catch (e) {
+        showToast('入库请求或截图失败: ' + e.message, 'error');
+        console.error(e);
+    }
+};

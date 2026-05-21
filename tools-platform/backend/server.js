@@ -60,6 +60,16 @@ app.use(express.static(path.join(__dirname, '../frontend')));
 // ============================================================
 app.use('/api/auth', authRoutes);
 
+// ============================================================
+// 健康检查
+// ============================================================
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', time: new Date().toISOString() });
+});
+
+// 开放静态图片访问，跳过 JWT 鉴权 (浏览器 <img> 标签不带 Auth header)
+app.use('/api/db/images', express.static(path.join(__dirname, '../data/images')));
+
 app.use('/api', checkAuth); // Protect all /api/* (except login, which is handled inside checkAuth)
 
 // Protect modifications: requireAdmin for all non-GET requests under uiv, sla, upload
@@ -73,6 +83,7 @@ app.use('/api', (req, res, next) => {
 app.use('/api/uiv', uivRoutes);         // UIV12 脚本仓库 API
 app.use('/api/sla', slaRoutes);         // SLA 配置持久化 API
 app.use('/api/upload', uploadRoutes);   // 文件上传历史 API
+app.use('/api/db', require('./routes/db')); // DB 保存 API
 
 // ============================================================
 // 前端路由回退（SPA）
@@ -92,12 +103,11 @@ app.get('/sla', (req, res) => {
 app.get('/report', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/pages/report.html'));
 });
-
-// ============================================================
-// 健康检查
-// ============================================================
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', time: new Date().toISOString() });
+app.get('/expedite', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/pages/expedite.html'));
+});
+app.get('/monthly', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/pages/monthly.html'));
 });
 
 // ── 全局错误兜底
