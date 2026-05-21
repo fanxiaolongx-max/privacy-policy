@@ -5,10 +5,12 @@
 function renderNavbar() {
     const path = window.location.pathname;
     const links = [
-        { href: '/',        icon: '🏠', label: '工具中台', match: p => p === '/' },
-        { href: '/uivf12',  icon: '🚀', label: 'UIVF12 抓取引擎', match: p => p.startsWith('/uivf12') },
-        { href: '/sla',     icon: '📊', label: 'Task SLA 监控台', match: p => p.startsWith('/sla') },
-        { href: '/report',  icon: '📈', label: '专业报表看板 (Reports)', match: p => p.startsWith('/report') }
+        { href: '/', icon: '🏠', label: '工具中台', match: p => p === '/' },
+        { href: '/uivf12', icon: '🚀', label: '数据抓取', match: p => p.startsWith('/uivf12') },
+        { href: '/sla', icon: '📊', label: '数据导入', match: p => p.startsWith('/sla') },
+        { href: '/report', icon: '📈', label: '报表看板', match: p => p.startsWith('/report') },
+        { href: '/expedite', icon: '⚡', label: '一键催办', match: p => p.startsWith('/expedite') },
+        { href: '/monthly', icon: '📅', label: '月报页面', match: p => p.startsWith('/monthly') }
     ];
 
     const linksHtml = links.map(l =>
@@ -17,7 +19,7 @@ function renderNavbar() {
 
     const role = localStorage.getItem('tools_role');
     const user = localStorage.getItem('tools_user');
-    
+
     // Hide all buttons that edit/add stuff if readonly
     if (role === 'readonly') {
         const style = document.createElement('style');
@@ -55,22 +57,22 @@ function renderNavbar() {
     document.body.prepend(nav);
 }
 
-window.doLogout = async function() {
+window.doLogout = async function () {
     try {
-        await fetch('/api/auth/logout', { 
-            method: 'POST', 
-            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('tools_token') } 
+        await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('tools_token') }
         });
-    } catch(e) {}
+    } catch (e) { }
     localStorage.removeItem('tools_token');
     localStorage.removeItem('tools_user');
     localStorage.removeItem('tools_role');
     window.location.href = '/login.html';
 };
 
-window.openUserModal = async function() {
+window.openUserModal = async function () {
     if (localStorage.getItem('tools_role') !== 'admin') return;
-    
+
     let m = document.getElementById('user-mgmt-modal');
     if (!m) {
         m = document.createElement('div');
@@ -78,10 +80,10 @@ window.openUserModal = async function() {
         m.style.cssText = 'position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:99999; display:none; align-items:center; justify-content:center;';
         document.body.appendChild(m);
     }
-    
+
     try {
         const res = await API.get('/api/auth/users');
-        
+
         let trs = res.map(u => `
             <tr>
                 <td style="padding:10px; border-bottom:1px solid #eee;">${u.username}</td>
@@ -115,36 +117,36 @@ window.openUserModal = async function() {
             </div>
         `;
         m.style.display = 'flex';
-    } catch(e) {
+    } catch (e) {
         alert('获取用户列表失败: ' + e.message);
     }
 };
 
-window.addUser = async function() {
+window.addUser = async function () {
     const username = document.getElementById('nu_name').value;
     const password = document.getElementById('nu_pwd').value;
     const role = document.getElementById('nu_role').value;
-    if(!username || !password) return alert('需填写完整');
+    if (!username || !password) return alert('需填写完整');
     try {
         await API.post('/api/auth/users', { username, password, role });
         alert('添加成功');
         openUserModal();
-    } catch(e) { alert(e.message); }
+    } catch (e) { alert(e.message); }
 };
-window.deleteUser = async function(u) {
-    if(!confirm('确定删除?')) return;
+window.deleteUser = async function (u) {
+    if (!confirm('确定删除?')) return;
     try {
         await API.delete('/api/auth/users/' + u);
         openUserModal();
-    } catch(e) { alert(e.message); }
+    } catch (e) { alert(e.message); }
 };
-window.resetPwd = async function(u) {
+window.resetPwd = async function (u) {
     const password = prompt('请输入新密码:');
-    if(!password) return;
+    if (!password) return;
     try {
         await API.put('/api/auth/users/' + u + '/password', { password });
         alert('重置成功');
-    } catch(e) { alert(e.message); }
+    } catch (e) { alert(e.message); }
 };
 
 // 检查服务状态

@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>一键催办 - Tools Platform</title>
+    <link rel="stylesheet" href="/css/shared.css">
+    <style>
+        body {
+            background: #f4f6f8;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: #333;
+        }
+
+        .page-container {
+            padding-top: calc(var(--navbar-h) + 20px);
+            max-width: 800px;
+            margin: 0 auto;
+            padding-left: 20px;
+            padding-right: 20px;
+            padding-bottom: 40px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .controls h2 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            padding: 24px;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .text-area-wrapper {
+            position: relative;
+        }
+
+        textarea {
+            width: 100%;
+            height: 350px;
+            padding: 16px;
+            border: 1px solid #dcdfe6;
+            border-radius: 8px;
+            background: #f8fafc;
+            font-family: monospace, Consolas, "Courier New";
+            font-size: 14px;
+            line-height: 1.6;
+            color: #334155;
+            resize: none;
+            overflow: hidden;
+            min-height: 150px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        textarea:focus {
+            border-color: #3b82f6;
+            background: #fff;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn-copy {
+            padding: 10px 20px;
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .btn-copy:hover {
+            background: #1d4ed8;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: #fff;
+            border-radius: 12px;
+        }
+
+        .empty-state h3 {
+            color: #64748b;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            color: #94a3b8;
+        }
+
+        #status-bar {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #64748b;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .btn-secondary {
+            padding: 10px 16px;
+            background: #fff;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .btn-secondary:hover {
+            background: #f8fafc;
+            border-color: #94a3b8;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: #fff;
+            border-radius: 12px;
+            width: 400px;
+            max-width: 90%;
+            padding: 24px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+            color: #1e293b;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #94a3b8;
+            cursor: pointer;
+        }
+
+        .template-group {
+            margin-bottom: 15px;
+        }
+
+        .template-group label {
+            display: block;
+            font-size: 13px;
+            color: #475569;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .template-group textarea {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            resize: vertical;
+            font-size: 13px;
+            font-family: monospace;
+            outline: none;
+        }
+
+        .template-group textarea:focus {
+            border-color: #3b82f6;
+        }
+
+        .template-help {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        .keyword-list {
+            max-height: 250px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 8px;
+            background: #f8fafc;
+        }
+
+        .keyword-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+
+        .keyword-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .keyword-delete {
+            color: #ef4444;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .add-keyword-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .add-keyword-group input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        .add-keyword-group button {
+            padding: 8px 16px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .add-keyword-group button:hover {
+            background: #059669;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page-container">
+        <div class="controls">
+            <h2>⚡ 一键催办</h2>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <select id="snapshot-selector" onchange="loadSelectedSnapshot()"
+                    style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; background: #fff; color: #334155; font-size: 13px; max-width: 200px;">
+                    <option value="">加载中...</option>
+                </select>
+                <button class="btn-secondary" onclick="openTemplateModal()">
+                    📝 模板配置
+                </button>
+                <button class="btn-secondary" onclick="openIgnoreModal()">
+                    ⚙️ 忽略关键词
+                </button>
+                <button class="btn-copy" onclick="copyToClipboard()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    一键复制简报
+                </button>
+            </div>
+        </div>
+
+        <div class="card" id="main-card">
+            <div class="empty-state" id="loading-state">
+                <h3>⏳ 正在提取最新失败指标数据...</h3>
+            </div>
+            <div id="content-state" style="display:none;">
+                <div class="text-area-wrapper">
+                    <textarea id="brief-textarea" spellcheck="false" oninput="autoResizeTextarea(this)"></textarea>
+                </div>
+                <div id="status-bar">
+                    <span id="snapshot-info"></span>
+                    <span id="failing-count"></span>
+                </div>
+
+                <div id="snapshot-image-container" style="display: none; margin-top: 24px; animation: slideUp 0.3s ease-out;">
+        <div style="background: #fff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h3 style="font-size: 15px; color: #1e293b; margin: 0;">📸 关联看板截图</h3>
+                <div>
+                    <button class="btn-copy" onclick="copyImageToClipboard(0.5)"
+                        style="padding: 8px 16px; background: #64748b; white-space: nowrap; margin-right: 8px;">
+                        📋 复制小尺寸图
+                    </button>
+                    <button class="btn-copy" onclick="copyImageToClipboard(1)"
+                        style="padding: 8px 16px; background: #8b5cf6; white-space: nowrap;">
+                        📋 复制原图
+                    </button>
+                </div>
+            </div>
+            <div id="image-viewer-wrapper"
+                style="width: 100%; overflow: hidden; position: relative; border: 1px solid #cbd5e1; border-radius: 8px; cursor: zoom-in; background: #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);"
+                onclick="openFullscreenImage()">
+                <img id="snapshot-img" src="" style="display: block; width: 100%; pointer-events: none;"
+                    crossorigin="anonymous">
+                <div
+                    style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.6); color: #fff; padding: 6px 10px; border-radius: 4px; font-size: 12px; pointer-events: none; z-index: 10;">
+                    🔍 点击全屏查看
+                </div>
+            </div>
+            
+            <div id="excel-report-container" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px dashed #cbd5e1;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 24px;">📊</span>
+                        <div>
+                            <h3 style="font-size: 15px; color: #1e293b; margin: 0;">关联 Excel 报表</h3>
+                            <div style="font-size: 12px; color: #64748b;">专业的高清排版短板透视矩阵表格</div>
+                        </div>
+                    </div>
+                    <div>
+                        <button class="btn-primary" onclick="downloadExcelReport()" style="padding: 8px 16px; background: #10b981; white-space: nowrap;">
+                            ⬇️ 下载 Excel 文件
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="ignore-modal" onclick="if(event.target === this) closeIgnoreModal()">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🚫 忽略关键词配置</h3>
+                <button class="close-btn" onclick="closeIgnoreModal()">&times;</button>
+            </div>
+            <p style="font-size: 12px; color: #64748b; margin-top: 0; margin-bottom: 12px;">
+                如果指标名称（中文或英文）包含以下关键词，则不会出现在一键催办的文本中。</p>
+            <div class="keyword-list" id="keyword-list-container">
+                <!-- Keywords will be rendered here -->
+            </div>
+            <div class="add-keyword-group">
+                <input type="text" id="new-keyword-input" placeholder="输入要忽略的关键词 (如: Storage)">
+                <button onclick="addKeyword()">添加</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="template-modal" onclick="if(event.target === this) closeTemplateModal()">
+        <div class="modal-content" style="width: 500px;">
+            <div class="modal-header">
+                <h3>📝 催办模板配置</h3>
+                <button class="close-btn" onclick="closeTemplateModal()">&times;</button>
+            </div>
+            <div class="template-group">
+                <label>头部模板 (Header)</label>
+                <textarea id="tpl-header"></textarea>
+                <div class="template-help">可用变量: {MM} 月份, {DD} 日期</div>
+            </div>
+            <div class="template-group">
+                <label>尾部模板 (Footer)</label>
+                <textarea id="tpl-footer" style="height: 120px;"></textarea>
+                <div class="template-help">在这里可以加上特定的说明，比如 Storage Rectification 等</div>
+            </div>
+            <div style="text-align: right; margin-top: 20px;">
+                <button class="btn-secondary" onclick="closeTemplateModal()">取消</button>
+                <button class="btn-copy" onclick="saveTemplateConfig()" style="margin-left: 8px;">保存配置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fullscreen Image Viewer Modal -->
+    <div id="fs-viewer-overlay"
+        style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.9); z-index:999999; overflow:hidden;">
+        <button onclick="closeFullscreenImage()"
+            style="position:absolute; top:20px; right:20px; background:#ef4444; border:none; color:#fff; font-size:15px; font-weight:bold; padding:10px 24px; border-radius:8px; cursor:pointer; z-index:1000001; box-shadow:0 4px 12px rgba(0,0,0,0.5); transition: background 0.2s;">
+            ✖ 关闭全屏 (Close)
+        </button>
+        <div
+            style="position:absolute; top:20px; left:20px; color:#fff; background:rgba(0,0,0,0.5); padding:6px 12px; border-radius:6px; pointer-events:none; z-index:10001; font-size:14px;">
+            🖱️ 鼠标滚轮缩放 / 左键拖拽平移
+        </div>
+        <div id="fs-img-container" style="width:100%; height:100%; cursor:grab; position:relative; overflow:hidden;">
+            <img id="fs-img" src=""
+                style="position:absolute; transform-origin: 0 0; pointer-events:none; transition:transform 0.05s linear;"
+                crossorigin="anonymous">
+        </div>
+    </div>
+
+    <script src="/js/shared/api.js"></script>
+    <script src="/js/shared/toast.js"></script>
+    <script src="/js/shared/navbar.js"></script>
+    <script>
+        // Hardcoded i18n map as fallback
+        let i18nMap = {
+            "整改完成率": "Rectification Completion Rate",
+            "TOPN风险完成率": "TOPN Risk Completion Rate",
+            "数字证书消减率": "Digital Certificate Reduction Rate",
+            "产品EOS闭环率": "Product EOS Closure Rate",
+            "版本EOS闭环率": "Version EOS Closure Rate",
+            "重急EOS闭环率": "Critical/Urgent EOS Closure Rate",
+            "业务比对回传率": "Business Comparison Return Rate",
+            "业务比对备案率": "Business Comparison Filing Rate",
+            "日志稽查率": "Log Audit Rate",
+            "逃生演练完成率": "Escape Drill Completion Rate",
+            "应急演练完成率": "Emergency Drill Completion Rate",
+            "拓扑刷新率": "Topology Refresh Rate",
+            "预案刷新率": "Contingency Plan Refresh Rate",
+            "SR FRT率": "SR FRT Rate"
+        };
+
+        let globalConfig = null;
+        let latestFailingData = null;
+        let ignoreKeywords = [];
+        let expediteTemplate = {
+            header: "📅 【{MM}{DD}】Target Reminder\n@所有人 Hi Team, please ensure we meet the targets for the following items this month:\n\n",
+            footer: "\nAction required ASAP. Thank you!"
+        };
+
+        function autoResizeTextarea(el) {
+            el.style.height = 'auto';
+            el.style.height = (el.scrollHeight + 2) + 'px';
+        }
+
+        function getEnName(zh) {
+            const en = i18nMap[zh];
+            if (en) {
+                // If the translation has HTML tags, strip them
+                const match = en.match(/<span[^>]*>(.*?)<\/span>/);
+                if (match) return match[1];
+                return en.replace(/<[^>]+>/g, '');
+            }
+            return zh;
+        }
+
+        async function initExpedite() {
+            try {
+                // Fetch config for i18n and ignore list
+                globalConfig = await API.get('/api/sla/config');
+                if (!globalConfig.prefs) globalConfig.prefs = {};
+
+                ignoreKeywords = globalConfig.prefs.expediteIgnoreKeywords || [];
+                if (globalConfig.prefs.expediteTemplate) {
+                    expediteTemplate = Object.assign({}, expediteTemplate, globalConfig.prefs.expediteTemplate);
+                }
+
+                if (globalConfig && globalConfig.prefs && globalConfig.prefs.i18nMap) {
+                    const cleanI18n = {};
+                    for (const [k, v] of Object.entries(globalConfig.prefs.i18nMap)) {
+                        if (v && v.includes('<br>')) {
+                            const match = v.match(/<span[^>]*>(.*?)<\/span>/);
+                            cleanI18n[k.trim()] = match ? match[1].trim() : v.replace(/<[^>]+>/g, '').trim();
+                        } else {
+                            cleanI18n[k.trim()] = v.trim();
+                        }
+                    }
+                    i18nMap = { ...i18nMap, ...cleanI18n };
+                }
+
+                // Fetch snapshot list
+                const snapshots = await API.get('/api/db/snapshots');
+                const selector = document.getElementById('snapshot-selector');
+                if (snapshots && snapshots.length > 0) {
+                    selector.innerHTML = snapshots.map(s => {
+                        const d = new Date(s.created_at);
+                        const timeStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                        return `<option value="${s.snapshot_id}">${timeStr} (${s.month}月)</option>`;
+                    }).join('');
+
+                    // Fetch data for the latest snapshot by default
+                    await loadSnapshotData(snapshots[0].snapshot_id);
+                } else {
+                    selector.innerHTML = '<option value="">暂无历史快照</option>';
+                    document.getElementById('loading-state').style.display = 'none';
+                    document.getElementById('main-card').innerHTML = '<div class="empty-state"><h3>暂无入库数据</h3><p>请先在专业报表看板页面点击「入库」按钮</p></div>';
+                }
+
+            } catch (e) {
+                console.error(e);
+                showToast('初始化失败', 'error');
+                document.getElementById('loading-state').innerHTML = '<h3>加载失败</h3><p>无法获取配置或数据</p>';
+            }
+        }
+
+        async function loadSnapshotData(snapshot_id) {
+            try {
+                document.getElementById('content-state').style.display = 'none';
+                document.getElementById('loading-state').style.display = 'block';
+                document.getElementById('loading-state').innerHTML = `<h3>⏳ 正在提取数据...</h3><p>快照: ${snapshot_id}</p>`;
+
+                latestFailingData = await API.get(`/api/db/failing/${snapshot_id}`);
+                document.getElementById('loading-state').style.display = 'none';
+
+                if (!latestFailingData || latestFailingData.message === 'No snapshots found' || latestFailingData.error) {
+                    document.getElementById('main-card').innerHTML = '<div class="empty-state"><h3>数据异常</h3><p>该快照可能已被删除或数据不完整</p></div>';
+                    return;
+                }
+
+                document.getElementById('content-state').style.display = 'block';
+                renderBriefText();
+                initImageViewer();
+            } catch (e) {
+                console.error(e);
+                showToast('数据加载失败', 'error');
+                document.getElementById('loading-state').innerHTML = '<h3>加载失败</h3><p>无法连接到数据库或接口报错</p>';
+            }
+        }
+
+        function isIgnored(zhName, enName) {
+            if (!ignoreKeywords || ignoreKeywords.length === 0) return false;
+            const zh = (zhName || '').toLowerCase();
+            const en = (enName || '').toLowerCase();
+
+            return ignoreKeywords.some(kw => {
+                const lowerKw = kw.toLowerCase();
+                return zh.includes(lowerKw) || en.includes(lowerKw);
+            });
+        }
+
+        let imgScale = 1;
+        let imgPointX = 0;
+        let imgPointY = 0;
+
+        function openFullscreenImage() {
+            const imgSrc = document.getElementById('snapshot-img').src;
+            if (!imgSrc) return;
+            const overlay = document.getElementById('fs-viewer-overlay');
+            const fsImg = document.getElementById('fs-img');
+            fsImg.src = imgSrc;
+            overlay.style.display = 'block';
+
+            // Wait for image load to center it
+            fsImg.onload = () => {
+                const cw = window.innerWidth;
+                const ch = window.innerHeight;
+                const iw = fsImg.naturalWidth;
+                const ih = fsImg.naturalHeight;
+
+                const fitScale = Math.min(cw / iw, ch / ih, 1) * 0.95;
+                imgScale = fitScale;
+
+                imgPointX = (cw - iw * imgScale) / 2;
+                imgPointY = (ch - ih * imgScale) / 2;
+
+                fsImg.style.transform = `translate(${imgPointX}px, ${imgPointY}px) scale(${imgScale})`;
+            };
+        }
+
+        function closeFullscreenImage() {
+            document.getElementById('fs-viewer-overlay').style.display = 'none';
+        }
+
+        function initImageViewer() {
+            const wrapper = document.getElementById('fs-img-container');
+            const img = document.getElementById('fs-img');
+            let panning = false;
+            let start = { x: 0, y: 0 };
+
+            wrapper.onmousedown = function (e) {
+                if (e.button !== 0) return; // Only left click
+                e.preventDefault();
+                start = { x: e.clientX - imgPointX, y: e.clientY - imgPointY };
+                panning = true;
+                wrapper.style.cursor = 'grabbing';
+            };
+
+            wrapper.onmouseup = function (e) {
+                panning = false;
+                wrapper.style.cursor = 'grab';
+            };
+
+            wrapper.onmouseleave = function (e) {
+                panning = false;
+                wrapper.style.cursor = 'grab';
+            };
+
+            wrapper.onmousemove = function (e) {
+                e.preventDefault();
+                if (!panning) return;
+                imgPointX = (e.clientX - start.x);
+                imgPointY = (e.clientY - start.y);
+                img.style.transform = `translate(${imgPointX}px, ${imgPointY}px) scale(${imgScale})`;
+            };
+
+            wrapper.onwheel = function (e) {
+                e.preventDefault();
+                const rect = wrapper.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+
+                const xs = (mouseX - imgPointX) / imgScale;
+                const ys = (mouseY - imgPointY) / imgScale;
+
+                const delta = e.deltaY || -e.wheelDelta;
+                if (delta > 0) {
+                    imgScale /= 1.15;
+                } else {
+                    imgScale *= 1.15;
+                }
+
+                if (imgScale < 0.1) imgScale = 0.1;
+                if (imgScale > 20) imgScale = 20;
+
+                imgPointX = mouseX - xs * imgScale;
+                imgPointY = mouseY - ys * imgScale;
+
+                img.style.transform = `translate(${imgPointX}px, ${imgPointY}px) scale(${imgScale})`;
+            };
+        }
+
+        function renderBriefText() {
+            if (!latestFailingData) return;
+            const data = latestFailingData;
+
+            // Format the text
+            const monthStr = String(data.month).padStart(2, '0');
+            const dayStr = String(new Date().getDate()).padStart(2, '0');
+
+            let text = expediteTemplate.header.replace(/\{MM\}/g, monthStr).replace(/\{DD\}/g, dayStr);
+
+            const failing = data.failing_metrics || {};
+            let totalFailing = 0;
+
+            const cats = Object.keys(failing).sort();
+            cats.forEach(cat => {
+                let metrics = failing[cat];
+
+                // Filter out ignored metrics
+                metrics = metrics.filter(m => {
+                    const enName = getEnName(m.metric_label);
+                    return !isIgnored(m.metric_label, enName);
+                });
+
+                if (metrics.length === 0) return; // Skip category if all failing metrics are ignored
+
+                totalFailing += metrics.length;
+
+                const metricStrs = metrics.map(m => {
+                    const enName = getEnName(m.metric_label);
+                    let targetStr = m.target_val;
+                    if (targetStr && targetStr !== '--') {
+                        const isPercent = String(m.raw_val).includes('%');
+                        if (!targetStr.includes('≥') && !targetStr.includes('≤')) {
+                            targetStr = '≥ ' + targetStr; // Default to gte
+                        }
+                        if (isPercent && !targetStr.includes('%')) {
+                            targetStr += '%';
+                        }
+                    }
+                    targetStr = targetStr.replace(/([≥≤])\s+/g, '$1'); // Clean up spaces
+
+                    let alertIcon = '';
+                    if (m.gap) {
+                        const gapNum = parseFloat(String(m.gap).replace(/[^0-9.-]/g, ''));
+                        if (!isNaN(gapNum) && gapNum >= 10) {
+                            alertIcon = '🚨 ';
+                        }
+                    }
+
+                    return `    ↳ ${alertIcon}${enName} (${m.raw_val} ➔ ${targetStr})`;
+                });
+
+                text += `🔹 [${cat}]:\n${metricStrs.join('\n')}\n`;
+            });
+
+            if (cats.length === 0) {
+                text += `✅ All targets are met or under control!\n`;
+            }
+
+            text += expediteTemplate.footer;
+
+            document.getElementById('brief-textarea').value = text;
+            autoResizeTextarea(document.getElementById('brief-textarea'));
+
+            const d = new Date(data.created_at);
+            const timeStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+            document.getElementById('snapshot-info').innerText = `数据源: 快照 ${data.snapshot_id} (入库时间: ${timeStr})`;
+            document.getElementById('failing-count').innerText = `共计催办 ${totalFailing} 项重点指标`;
+
+            if (data.image_path) {
+                document.getElementById('snapshot-image-container').style.display = 'block';
+                document.getElementById('snapshot-img').src = data.image_path;
+            } else {
+                document.getElementById('snapshot-image-container').style.display = 'none';
+            }
+            
+            if (data.excel_path) {
+                document.getElementById('excel-report-container').style.display = 'block';
+                window._currentExcelPath = data.excel_path;
+            } else {
+                document.getElementById('excel-report-container').style.display = 'none';
+                window._currentExcelPath = null;
+            }
+        }
+        
+        function downloadExcelReport() {
+            if (window._currentExcelPath) {
+                const a = document.createElement('a');
+                a.href = window._currentExcelPath;
+                a.download = `Report_${latestFailingData.snapshot_id}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                showToast('正在下载 Excel 表格...', 'success');
+            }
+        }
+
+        function copyToClipboard() {
+            const textarea = document.getElementById('brief-textarea');
+            if (!textarea || !textarea.value) return;
+
+            textarea.select();
+            document.execCommand('copy');
+            showToast('✅ 简报已复制到剪贴板！', 'success');
+
+            // clear selection
+            window.getSelection().removeAllRanges();
+        }
+
+        async function copyImageToClipboard(scaleFactor = 1) {
+            try {
+                const imgEl = document.getElementById('snapshot-img');
+                if (!imgEl.src) return;
+
+                let blobToCopy;
+                const toastId = showToast('⏳ 正在处理图片并复制，请稍候...', 'info');
+
+                if (scaleFactor === 1) {
+                    const response = await fetch(imgEl.src);
+                    blobToCopy = await response.blob();
+                } else {
+                    const img = new Image();
+                    img.crossOrigin = "anonymous";
+                    img.src = imgEl.src;
+                    await new Promise((resolve, reject) => {
+                        img.onload = resolve;
+                        img.onerror = reject;
+                    });
+
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+
+                    canvas.width = img.width * scaleFactor;
+                    canvas.height = img.height * scaleFactor;
+
+                    // High quality smoothing
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                    blobToCopy = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1.0));
+                }
+
+                await navigator.clipboard.write([
+                    new ClipboardItem({ 'image/png': blobToCopy })
+                ]);
+                showToast(scaleFactor === 1 ? '原图已成功复制到剪贴板' : '小尺寸图已成功复制到剪贴板', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('复制图片失败，您的浏览器可能不支持或需右键手动复制', 'error');
+            }
+        }
+
+        // --- Ignore Modal Logic ---
+        function openIgnoreModal() {
+            renderIgnoreList();
+            document.getElementById('ignore-modal').style.display = 'flex';
+        }
+
+        function closeIgnoreModal() {
+            document.getElementById('ignore-modal').style.display = 'none';
+        }
+
+        function renderIgnoreList() {
+            const container = document.getElementById('keyword-list-container');
+            if (!ignoreKeywords || ignoreKeywords.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:10px; color:#94a3b8; font-size:12px;">暂无忽略关键词</div>';
+                return;
+            }
+
+            let html = '';
+            ignoreKeywords.forEach((kw, idx) => {
+                html += `
+                    <div class="keyword-item">
+                        <span>${kw}</span>
+                        <button class="keyword-delete" onclick="deleteKeyword(${idx})">✕</button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        async function addKeyword() {
+            const input = document.getElementById('new-keyword-input');
+            const kw = input.value.trim();
+            if (!kw) return;
+
+            if (ignoreKeywords.includes(kw)) {
+                showToast('该关键词已存在', 'error');
+                return;
+            }
+
+            ignoreKeywords.push(kw);
+            input.value = '';
+            await saveIgnoreConfig();
+        }
+
+        async function deleteKeyword(idx) {
+            ignoreKeywords.splice(idx, 1);
+            await saveIgnoreConfig();
+        }
+
+        async function saveIgnoreConfig() {
+            if (!globalConfig) return;
+            globalConfig.prefs.expediteIgnoreKeywords = ignoreKeywords;
+
+            try {
+                await API.post('/api/sla/config', globalConfig);
+                showToast('忽略配置已更新并生效', 'success');
+                renderIgnoreList();
+                renderBriefText(); // Re-render the brief text with the new filters
+            } catch (e) {
+                showToast('保存配置失败', 'error');
+                console.error(e);
+            }
+        }
+
+        // --- Template Modal Logic ---
+        function openTemplateModal() {
+            document.getElementById('tpl-header').value = expediteTemplate.header;
+            document.getElementById('tpl-footer').value = expediteTemplate.footer;
+            document.getElementById('template-modal').style.display = 'flex';
+        }
+
+        function closeTemplateModal() {
+            document.getElementById('template-modal').style.display = 'none';
+        }
+
+        async function saveTemplateConfig() {
+            if (!globalConfig) return;
+
+            expediteTemplate.header = document.getElementById('tpl-header').value;
+            expediteTemplate.footer = document.getElementById('tpl-footer').value;
+
+            globalConfig.prefs.expediteTemplate = expediteTemplate;
+
+            try {
+                await API.post('/api/sla/config', globalConfig);
+                showToast('模板配置已保存并生效', 'success');
+                closeTemplateModal();
+                renderBriefText(); // Re-render with new templates
+            } catch (e) {
+                showToast('保存模板失败', 'error');
+                console.error(e);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initExpedite);
+    </script>
+</body>
+
+</html>
