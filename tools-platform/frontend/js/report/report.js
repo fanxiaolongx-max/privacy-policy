@@ -2210,9 +2210,22 @@ window.saveDashboardToDB = async function() {
                 const groupWeightMap = window._currentGroupWeightMap || {};
                 const labelToGroup = window._currentLabelToGroup || {};
                 
+                let curGroup = null;
+                let curGroupStartRow = -1;
+                let currentRowIdx = 2; // Header is row 1
+                const merges = [];
+                
                 orderedMetrics.forEach(m => {
                     const gName = labelToGroup[m.label];
                     if (!gName) return; // Skip ungrouped as requested by user
+                    
+                    if (gName !== curGroup) {
+                        if (curGroup && (currentRowIdx - curGroupStartRow) > 1) {
+                            merges.push({ s: curGroupStartRow, e: currentRowIdx - 1 });
+                        }
+                        curGroup = gName;
+                        curGroupStartRow = currentRowIdx;
+                    }
                     
                     const rowData = {};
                     rowData.group = stripHtml(getBilingual(gName));
@@ -2255,6 +2268,19 @@ window.saveDashboardToDB = async function() {
                             valCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFEBEE' } };
                         }
                     });
+                    
+                    currentRowIdx++;
+                });
+                
+                // Final group merge check
+                if (curGroup && (currentRowIdx - curGroupStartRow) > 1) {
+                    merges.push({ s: curGroupStartRow, e: currentRowIdx - 1 });
+                }
+                
+                // Apply merges
+                merges.forEach(m => {
+                    sheet.mergeCells(`A${m.s}:A${m.e}`);
+                    sheet.mergeCells(`B${m.s}:B${m.e}`);
                 });
                 
                 // Add total score row
