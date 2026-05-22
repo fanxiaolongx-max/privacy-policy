@@ -4,3 +4,7 @@ logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Application Data
+tools-platform/data/images/
+tools-platform/data/*.db
