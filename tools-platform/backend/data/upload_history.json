@@ -1,5 +1,12 @@
 [
   {
+    "id": "mpgvzi2r",
+    "tool": "sla",
+    "action": "批量导入",
+    "detail": "34 个文件",
+    "time": "2026-05-22T12:19:11.811Z"
+  },
+  {
     "id": "mpfgjroh",
     "tool": "sla",
     "action": "保存预警目标",

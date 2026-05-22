@@ -2149,13 +2149,18 @@ window.saveDashboardToDB = async function() {
         // Wait for DOM reflow
         await new Promise(r => setTimeout(r, 300));
         
-        const canvas = await html2canvas(document.querySelector('.page-container'), {
-            scale: 2,
-            useCORS: true,
-            windowHeight: document.querySelector('.page-container').scrollHeight
-        });
-        
-        payload.image_data = canvas.toDataURL('image/png');
+        try {
+            const canvas = await html2canvas(document.querySelector('.page-container'), {
+                scale: 2,
+                useCORS: true,
+                windowHeight: document.querySelector('.page-container').scrollHeight
+            });
+            payload.image_data = canvas.toDataURL('image/png');
+        } catch (imgError) {
+            console.error('Screenshot failed:', imgError);
+            showToast('⚠️ 截图失败，将忽略图片继续入库', 'warning');
+            payload.image_data = null;
+        }
         
         // Restore styles
         if (matrixContainer) {

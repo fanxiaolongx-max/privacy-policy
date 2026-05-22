@@ -63,7 +63,7 @@ body.sla-page {
 .metric-gap { font-size: 11px; color: #ef5350; margin-left: 6px; font-weight: bold; background: #ffebee; padding: 2px 6px; border-radius: 4px; border: 1px solid #ffcdd2; }
 
 /* ── 预警配置弹窗 ──────────────────────────────────────── */
-.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 10000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 99999; display: none; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
 .modal-content { background: #fff; width: 90%; max-width: 850px; max-height: 85vh; border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
 .modal-header { padding: 15px 20px; background: #2c3e50; color: #fff; display: flex; justify-content: space-between; align-items: center; }
 .modal-header h3 { margin: 0; font-size: 16px; }
