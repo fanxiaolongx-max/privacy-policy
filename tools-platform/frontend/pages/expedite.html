@@ -273,7 +273,7 @@
             right: 0;
             bottom: 0;
             background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
+            z-index: 99999;
             align-items: center;
             justify-content: center;
         }
@@ -583,30 +583,48 @@
     </div>
 
     <div class="modal-overlay" id="template-modal" onclick="if(event.target === this) closeTemplateModal()">
-        <div class="modal-content" style="width: 500px;">
+        <div class="modal-content" style="width: 800px; max-width: 95vw;">
             <div class="modal-header">
                 <h3>📝 催办模板配置</h3>
                 <button class="close-btn" onclick="closeTemplateModal()">&times;</button>
             </div>
-            <div class="template-group">
-                <label>头部模板 (Header)</label>
-                <textarea id="tpl-header"></textarea>
-                <div class="template-help">可用变量: {MM} 月份, {DD} 日期</div>
-            </div>
-            <div class="template-group">
-                <label>尾部模板 (Footer)</label>
-                <textarea id="tpl-footer" style="height: 120px;"></textarea>
-                <div class="template-help">在这里可以加上特定的说明，比如 Storage Rectification 等</div>
-            </div>
-            <div class="template-group">
-                <label>全局邮件抄送标题 (Email Subject)</label>
-                <input type="text" id="tpl-email" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; margin-top: 4px;">
-                <div class="template-help">可用变量: {MM} 月份, {DD} 日期</div>
-            </div>
-            <div class="template-group">
-                <label>日程/会议邀请标题 (Meeting Subject)</label>
-                <input type="text" id="tpl-meet" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; margin-top: 4px;">
-                <div class="template-help">可用变量: {MM} 月份, {DD} 日期</div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <div class="template-group">
+                        <label>群发问候语 (Group Greeting)</label>
+                        <input type="text" id="tpl-greeting-group" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; margin-top: 4px;">
+                        <div class="template-help">群发场景(群聊/邮件/会议)使用，默认: @所有人 Hi Team,</div>
+                    </div>
+                    <div class="template-group">
+                        <label>头部模板 (Header)</label>
+                        <textarea id="tpl-header" style="height: 120px;"></textarea>
+                        <div class="template-help">可用变量: {MM} 月份, {DD} 日期, {GREETING} 动态问候语</div>
+                    </div>
+                    <div class="template-group">
+                        <label>全局邮件抄送标题 (Email Subject)</label>
+                        <input type="text" id="tpl-email" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; margin-top: 4px;">
+                        <div class="template-help">可用变量: {MM} 月份, {DD} 日期</div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="template-group">
+                        <label>专属单发问候语 (Single Greeting)</label>
+                        <input type="text" id="tpl-greeting-single" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; margin-top: 4px;">
+                        <div class="template-help">单人专属分发场景使用，默认: Hi dear,</div>
+                    </div>
+                    <div class="template-group">
+                        <label>尾部模板 (Footer)</label>
+                        <textarea id="tpl-footer" style="height: 120px;"></textarea>
+                        <div class="template-help">在这里可以加上特定的说明，比如 Storage Rectification 等</div>
+                    </div>
+                    <div class="template-group">
+                        <label>日程/会议邀请标题 (Meeting Subject)</label>
+                        <input type="text" id="tpl-meet" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; margin-top: 4px;">
+                        <div class="template-help">可用变量: {MM} 月份, {DD} 日期</div>
+                    </div>
+                </div>
             </div>
             <div style="text-align: right; margin-top: 20px;">
                 <button class="btn-secondary" onclick="closeTemplateModal()">取消</button>
@@ -659,10 +677,12 @@
         let latestFailingData = null;
         let ignoreKeywords = [];
         let expediteTemplate = {
-            header: "📅 【{MM}{DD}】Target Reminder\n@所有人 Hi Team, please ensure we meet the targets for the following items this month:\n\n",
+            header: "📅 【{MM}{DD}】Target Reminder\n{GREETING} please ensure we meet the targets for the following items this month:\n\n",
             footer: "\nAction required ASAP. Thank you!",
             emailSubject: "📅 【{MM}{DD}】Target Reminder",
-            meetSubject: "📅 【{MM}{DD}】Target Reminder"
+            meetSubject: "📅 【{MM}{DD}】Target Reminder",
+            greetingGroup: "@所有人 Hi Team,",
+            greetingSingle: "Hi dear,"
         };
 
         function autoResizeTextarea(el) {
@@ -710,7 +730,11 @@
                 const selector = document.getElementById('snapshot-selector');
                 if (snapshots && snapshots.length > 0) {
                     selector.innerHTML = snapshots.map(s => {
-                        const d = new Date(s.created_at);
+                        let dateStr = s.created_at;
+                        if (!dateStr.endsWith('Z') && !dateStr.includes('+')) {
+                            dateStr = dateStr.replace(' ', 'T') + 'Z';
+                        }
+                        const d = new Date(dateStr);
                         const timeStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
                         return `<option value="${s.snapshot_id}">${timeStr} (${s.month}月)</option>`;
                     }).join('');
@@ -751,6 +775,14 @@
                 console.error(e);
                 showToast('数据加载失败', 'error');
                 document.getElementById('loading-state').innerHTML = '<h3>加载失败</h3><p>无法连接到数据库或接口报错</p>';
+            }
+        }
+
+        async function loadSelectedSnapshot() {
+            const selector = document.getElementById('snapshot-selector');
+            const selectedId = selector.value;
+            if (selectedId) {
+                await loadSnapshotData(selectedId);
             }
         }
 
@@ -863,8 +895,14 @@
             // Format the text
             const monthStr = String(data.month).padStart(2, '0');
             const dayStr = String(new Date().getDate()).padStart(2, '0');
+            const greetingGroup = expediteTemplate.greetingGroup || '@所有人 Hi Team,';
 
             let text = expediteTemplate.header.replace(/\{MM\}/g, monthStr).replace(/\{DD\}/g, dayStr);
+            if (text.includes('{GREETING}')) {
+                text = text.replace(/\{GREETING\}/g, greetingGroup);
+            } else {
+                text = text.replace('@所有人 Hi Team,', greetingGroup);
+            }
 
             const failing = data.failing_metrics || {};
             let totalFailing = 0;
@@ -1146,7 +1184,15 @@
 
             const monthStr = String(latestFailingData.month).padStart(2, '0');
             const dayStr = String(new Date().getDate()).padStart(2, '0');
-            let text = expediteTemplate.header.replace(/\{MM\}/g, monthStr).replace(/\{DD\}/g, dayStr) + '\n\n';
+            const greetingSingle = expediteTemplate.greetingSingle || 'Hi dear,';
+            
+            let text = expediteTemplate.header.replace(/\{MM\}/g, monthStr).replace(/\{DD\}/g, dayStr);
+            if (text.includes('{GREETING}')) {
+                text = text.replace(/\{GREETING\}/g, greetingSingle);
+            } else {
+                text = text.replace('@所有人 Hi Team,', greetingSingle);
+            }
+            text += '\n\n';
             
             let hasMetrics = false;
             assignedCats.forEach(cat => {
@@ -1331,11 +1377,11 @@ Write-Host "\`n➤ 正在处理邮件抄送任务..." -ForegroundColor Cyan
 $emailList = @()
 foreach ($empId in $emailUsers) {
     try {
-        $searchCmd = "welink-cli search person --text $empId"
-        $searchOutput = Invoke-Expression "$searchCmd 2>&1" | Out-String
+        $searchOutput = welink-cli search person --text $empId 2>&1 | Out-String
         $mail = ($searchOutput | ConvertFrom-Json).search_cli_person.data[0].personMail
         if (-not [string]::IsNullOrWhiteSpace($mail)) { $emailList += $mail }
     } catch {}
+}
 if ($emailList.Count -gt 0) {
     $mailString = $emailList -join ","
     Write-Host "↳ 正在发送群发邮件至: $mailString" -ForegroundColor DarkGray
@@ -1349,17 +1395,43 @@ if ($emailList.Count -gt 0) {
             // 4. Meeting
             if (meetUsers.length > 0) {
                 const getArrayStr = (arr) => arr.length === 0 ? '@()' : `@(${arr.map(u => `"${u}"`).join(',')})`;
+                
+                // Calculate meeting time in Beijing Time (+8) to bypass TZ parsing bugs in WeLink CLI Exchange XML
+                const formatToBeijingTime = (dateObj) => {
+                    const utc = dateObj.getTime() + (dateObj.getTimezoneOffset() * 60000);
+                    const beijingTime = new Date(utc + (3600000 * 8));
+                    return `${beijingTime.getFullYear()}-${String(beijingTime.getMonth() + 1).padStart(2, '0')}-${String(beijingTime.getDate()).padStart(2, '0')}T${String(beijingTime.getHours()).padStart(2, '0')}:${String(beijingTime.getMinutes()).padStart(2, '0')}:${String(beijingTime.getSeconds()).padStart(2, '0')}`;
+                };
+                
+                const now = new Date();
+                const startTStr = formatToBeijingTime(new Date(now.getTime() + 30 * 60000));
+                const endTStr = formatToBeijingTime(new Date(now.getTime() + 60 * 60000));
+
                 psScript += `\n# 4. 创建日程邀请\n`;
                 psScript += `$meetUsers = ${getArrayStr(meetUsers)}\n`;
                 psScript += `
 Write-Host "\`n➤ 正在处理日程/会议邀请任务..." -ForegroundColor Cyan
-$idString = $meetUsers -join ","
-Write-Host "> welink-cli calendar create --subject \`"$parsedMeetSubject\`" ... --description <全量报告内容>" -ForegroundColor DarkCyan
-$calOut = welink-cli calendar create --subject "$parsedMeetSubject" --start "$( (Get-Date).AddMinutes(30).ToString('yyyy-MM-dd HH:mm:ss') )" --end "$( (Get-Date).AddMinutes(60).ToString('yyyy-MM-dd HH:mm:ss') )" --location "线上会议" --attendee "$idString" --description "$msgGlobal" 2>&1 | Out-String
-if ($calOut -match "error") { 
-    Write-Host "↳ 日程创建失败: $($calOut.Trim())" -ForegroundColor Red 
-} else { 
-    Write-Host "↳ 日程创建成功！" -ForegroundColor Green 
+$meetMailList = @()
+foreach ($empId in $meetUsers) {
+    try {
+        $searchOutput = welink-cli search person --text $empId 2>&1 | Out-String
+        $mail = ($searchOutput | ConvertFrom-Json).search_cli_person.data[0].personMail
+        if (-not [string]::IsNullOrWhiteSpace($mail)) { $meetMailList += $mail }
+    } catch {}
+}
+
+if ($meetMailList.Count -gt 0) {
+    $meetMailString = $meetMailList -join ","
+    Write-Host "↳ 正在为以下邮箱发送会议邀请: $meetMailString" -ForegroundColor DarkGray
+    Write-Host "> welink-cli calendar create --subject \`"$parsedMeetSubject\`" ... --body <全量报告内容>" -ForegroundColor DarkCyan
+    $calOut = welink-cli calendar create --subject "$parsedMeetSubject" --start "${startTStr}" --end "${endTStr}" --location "线上会议" --attendee "$meetMailString" --body "$msgGlobal" 2>&1 | Out-String
+    if ($calOut -match "error|Failed") { 
+        Write-Host "↳ 日程创建失败: $($calOut.Trim())" -ForegroundColor Red 
+    } else { 
+        Write-Host "↳ 日程创建成功！" -ForegroundColor Green 
+    }
+} else {
+    Write-Host "↳ 无法解析参会人邮箱，已跳过会议创建。" -ForegroundColor Yellow
 }
 `;
             }
@@ -1522,6 +1594,8 @@ ${excelUrl ? 'Remove-Item $tempXlsx -ErrorAction SilentlyContinue' : ''}
             document.getElementById('tpl-footer').value = expediteTemplate.footer || '';
             document.getElementById('tpl-email').value = expediteTemplate.emailSubject || '📅 【{MM}{DD}】Target Reminder';
             document.getElementById('tpl-meet').value = expediteTemplate.meetSubject || '📅 【{MM}{DD}】Target Reminder';
+            document.getElementById('tpl-greeting-group').value = expediteTemplate.greetingGroup || '@所有人 Hi Team,';
+            document.getElementById('tpl-greeting-single').value = expediteTemplate.greetingSingle || 'Hi dear,';
             document.getElementById('template-modal').style.display = 'flex';
         }
 
@@ -1536,6 +1610,8 @@ ${excelUrl ? 'Remove-Item $tempXlsx -ErrorAction SilentlyContinue' : ''}
             expediteTemplate.footer = document.getElementById('tpl-footer').value;
             expediteTemplate.emailSubject = document.getElementById('tpl-email').value;
             expediteTemplate.meetSubject = document.getElementById('tpl-meet').value;
+            expediteTemplate.greetingGroup = document.getElementById('tpl-greeting-group').value;
+            expediteTemplate.greetingSingle = document.getElementById('tpl-greeting-single').value;
 
             globalConfig.prefs.expediteTemplate = expediteTemplate;
 

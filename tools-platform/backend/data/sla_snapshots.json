@@ -1,5 +1,638 @@
 [
   {
+    "id": "mpgvzibk",
+    "timestamp": "2026-05-22T12:19:12.044Z",
+    "files": [
+      "PBI_自动抓取-CPT风险详表_Latest (1).csv",
+      "PBI_自动抓取-风险详单_Latest (1).csv",
+      "PBI_自动抓取-CPT风险详表_Latest.csv",
+      "PBI_自动抓取-风险详单_Latest.csv",
+      "PBI_自动抓取-软件MM收编_停退_Latest.csv",
+      "PBI_自动抓取-数据存储整改_Latest.csv",
+      "PBI_自动抓取-路由器整改_Latest.csv",
+      "PBI_自动抓取-事故_Latest.csv",
+      "PBI_自动抓取-SRFRT_Latest_2026年05月.csv",
+      "PBI_自动抓取-产品EOS风险_Latest.csv",
+      "PBI_自动抓取-版本EOS风险_Latest.csv",
+      "PBI_自动抓取-重急EOS风险_Latest.csv",
+      "PBI_自动抓取-锂电池_Latest.csv",
+      "PBI_自动抓取-数字证书_Latest.csv",
+      "PBI_自动抓取-详单_图形化拦截_CN_Latest_2026年05月.csv",
+      "PBI_自动抓取-详单_逃生演练_Latest.csv",
+      "PBI_自动抓取-巡检详单_价值网络巡检_Latest.csv",
+      "PBI_自动抓取_价值网络巡检_Latest.csv",
+      "PBI_自动抓取_应急演练_Latest.csv",
+      "PBI_自动抓取_预案拓扑_Latest.csv",
+      "PBI_自动抓取_产品TOPN风险_Latest.csv",
+      "PBI_自动抓取_延期操作补授权监控_Latest.csv",
+      "PBI_自动抓取_ADMS_事中：高危命令拦截人员管理_Latest_2026年05月.csv",
+      "PBI_自动抓取_图形化拦截_CN_Latest_2026年05月.csv",
+      "PBI_自动抓取_15_CN_事前：操作资质积分_CO_Latest.csv",
+      "PBI_自动抓取_日志稽查率CN_Latest_2026年05月.csv",
+      "PBI_自动抓取-业务比对明细_17_CN_业务比对报告看板_CO_Latest_2026年05月.csv",
+      "PBI_自动抓取_17_CN_业务比对报告看板_CO_Latest_2026年05月.csv",
+      "PBI_自动抓取-红线人员工单统计_维护红线资源_Latest.csv",
+      "PBI_自动抓取-任职匹配度_维护红线资源_Latest.csv",
+      "PBI_自动抓取_维护红线资源_Latest.csv",
+      "PBI_自动抓取_整改_Latest.csv",
+      "PBI_自动抓取-整改详单_整改_Latest.csv",
+      "PBI_自动抓取_逃生演练_Latest.csv"
+    ],
+    "summary": [
+      {
+        "section": "🔧 整改详单合集",
+        "metrics": [
+          {
+            "title": "H1完成率",
+            "value": "99.4%",
+            "status": ""
+          },
+          {
+            "title": "H2完成率",
+            "value": "50.5%",
+            "status": ""
+          },
+          {
+            "title": "2026总完成率",
+            "value": "72.6%",
+            "status": ""
+          }
+        ]
+      },
+      {
+        "section": "⚠️ 常规风险合集",
+        "metrics": [
+          {
+            "title": "单量",
+            "value": "256",
+            "status": ""
+          },
+          {
+            "title": "已闭环",
+            "value": "0",
+            "status": ""
+          },
+          {
+            "title": "解决率",
+            "value": "0.0%",
+            "status": ""
+          }
+        ]
+      },
+      {
+        "section": "🛠️ CPT专项风险合集",
+        "metrics": [
+          {
+            "title": "单量",
+            "value": "310",
+            "status": ""
+          },
+          {
+            "title": "已闭环",
+            "value": "260",
+            "status": ""
+          },
+          {
+            "title": "解决率",
+            "value": "83.9%",
+            "status": ""
+          }
+        ]
+      }
+    ],
+    "topMetrics": [
+      {
+        "label": "软件MM收编率",
+        "value": "100%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": []
+      },
+      {
+        "label": "存储整改完成率",
+        "value": "11%",
+        "gap": "差 29%",
+        "isWarn": true,
+        "color": "#ef5350",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "0%"
+          },
+          {
+            "category": "ORG",
+            "value": "17%"
+          },
+          {
+            "category": "ET",
+            "value": "40%"
+          },
+          {
+            "category": "VDF",
+            "value": "0%"
+          }
+        ]
+      },
+      {
+        "label": "路由器整改完成率",
+        "value": "36%",
+        "gap": "差 4%",
+        "isWarn": true,
+        "color": "#ef5350",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "63%"
+          },
+          {
+            "category": "ORG",
+            "value": "62%"
+          },
+          {
+            "category": "ET",
+            "value": "90%"
+          },
+          {
+            "category": "VDF",
+            "value": "26%"
+          }
+        ]
+      },
+      {
+        "label": "事故",
+        "value": "1",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": []
+      },
+      {
+        "label": "SR FRT率",
+        "value": "84%",
+        "gap": "差 14.5%",
+        "isWarn": true,
+        "color": "#ef5350",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "75%"
+          },
+          {
+            "category": "ORG",
+            "value": "95%"
+          },
+          {
+            "category": "ET",
+            "value": "100%"
+          },
+          {
+            "category": "VDF",
+            "value": "89%"
+          }
+        ]
+      },
+      {
+        "label": "产品EOS闭环率",
+        "value": "92%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "97%"
+          },
+          {
+            "category": "ORG",
+            "value": "46%"
+          },
+          {
+            "category": "ET",
+            "value": "32%"
+          },
+          {
+            "category": "VDF",
+            "value": "77%"
+          }
+        ]
+      },
+      {
+        "label": "版本EOS闭环率",
+        "value": "88%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "96%"
+          },
+          {
+            "category": "ORG",
+            "value": "73%"
+          },
+          {
+            "category": "ET",
+            "value": "89%"
+          },
+          {
+            "category": "VDF",
+            "value": "62%"
+          }
+        ]
+      },
+      {
+        "label": "重急EOS闭环率",
+        "value": "44%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "21%"
+          },
+          {
+            "category": "ORG",
+            "value": "67%"
+          },
+          {
+            "category": "ET",
+            "value": "85%"
+          },
+          {
+            "category": "VDF",
+            "value": "100%"
+          }
+        ]
+      },
+      {
+        "label": "锂电池整改完成率",
+        "value": "100%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "100%"
+          }
+        ]
+      },
+      {
+        "label": "数字证书消减率",
+        "value": "56%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "56%"
+          },
+          {
+            "category": "ORG",
+            "value": "--"
+          },
+          {
+            "category": "ET",
+            "value": "100%"
+          }
+        ]
+      },
+      {
+        "label": "未完成价值网络巡检单数",
+        "value": "3",
+        "gap": "超 3",
+        "isWarn": true,
+        "color": "#ef5350",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "3"
+          },
+          {
+            "category": "ORG",
+            "value": "0"
+          },
+          {
+            "category": "ET",
+            "value": "0"
+          }
+        ]
+      },
+      {
+        "label": "价值网络巡检完成率",
+        "value": "86%",
+        "gap": "差 4%",
+        "isWarn": true,
+        "color": "#ef5350",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "57%"
+          },
+          {
+            "category": "ORG",
+            "value": "100%"
+          },
+          {
+            "category": "ET",
+            "value": "100%"
+          }
+        ]
+      },
+      {
+        "label": "应急演练完成率",
+        "value": "56%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "83%"
+          },
+          {
+            "category": "ET",
+            "value": "67%"
+          },
+          {
+            "category": "VDF",
+            "value": "17%"
+          }
+        ]
+      },
+      {
+        "label": "拓扑刷新率",
+        "value": "82%",
+        "gap": "差 18%",
+        "isWarn": true,
+        "color": "#ef5350",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "100%"
+          },
+          {
+            "category": "ORG",
+            "value": "100%"
+          },
+          {
+            "category": "ET",
+            "value": "83%"
+          },
+          {
+            "category": "VDF",
+            "value": "67%"
+          }
+        ]
+      },
+      {
+        "label": "预案刷新率",
+        "value": "86%",
+        "gap": "差 14%",
+        "isWarn": true,
+        "color": "#ef5350",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "100%"
+          },
+          {
+            "category": "ORG",
+            "value": "100%"
+          },
+          {
+            "category": "ET",
+            "value": "83%"
+          },
+          {
+            "category": "VDF",
+            "value": "83%"
+          }
+        ]
+      },
+      {
+        "label": "TOPN风险完成率",
+        "value": "85%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "60%"
+          },
+          {
+            "category": "ORG",
+            "value": "100%"
+          },
+          {
+            "category": "ET",
+            "value": "100%"
+          },
+          {
+            "category": "VDF",
+            "value": "100%"
+          }
+        ]
+      },
+      {
+        "label": "延期补授权完成率",
+        "value": "100%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": []
+      },
+      {
+        "label": "高危命令拦截次数",
+        "value": "44",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "12"
+          },
+          {
+            "category": "ORG",
+            "value": "7"
+          },
+          {
+            "category": "ET",
+            "value": "25"
+          }
+        ]
+      },
+      {
+        "label": "GUI拦截次数",
+        "value": "67",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "35"
+          },
+          {
+            "category": "ORG",
+            "value": "24"
+          },
+          {
+            "category": "ET",
+            "value": "8"
+          }
+        ]
+      },
+      {
+        "label": "日志稽查率",
+        "value": "91%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "88%"
+          },
+          {
+            "category": "ORG",
+            "value": "95%"
+          },
+          {
+            "category": "ET",
+            "value": "89%"
+          }
+        ]
+      },
+      {
+        "label": "业务比对回传率",
+        "value": "88%",
+        "gap": "差 7%",
+        "isWarn": true,
+        "color": "#ef5350",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "72%"
+          },
+          {
+            "category": "ORG",
+            "value": "90%"
+          },
+          {
+            "category": "ET",
+            "value": "91%"
+          }
+        ]
+      },
+      {
+        "label": "业务比对备案率",
+        "value": "12%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "6%"
+          },
+          {
+            "category": "ORG",
+            "value": "15%"
+          },
+          {
+            "category": "ET",
+            "value": "12%"
+          }
+        ]
+      },
+      {
+        "label": "0工单人数",
+        "value": "--",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": []
+      },
+      {
+        "label": "工单<1人数",
+        "value": "2",
+        "gap": "超 2",
+        "isWarn": true,
+        "color": "#ef5350",
+        "subMetrics": []
+      },
+      {
+        "label": "任职率",
+        "value": "100%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": []
+      },
+      {
+        "label": "维护红线岗位满足率",
+        "value": "100%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": []
+      },
+      {
+        "label": "整改完成率",
+        "value": "73%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "71%"
+          },
+          {
+            "category": "ORG",
+            "value": "55%"
+          },
+          {
+            "category": "ET",
+            "value": "91%"
+          },
+          {
+            "category": "VDF",
+            "value": "76%"
+          }
+        ]
+      },
+      {
+        "label": "逃生演练完成率",
+        "value": "75%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "0%"
+          },
+          {
+            "category": "ORG",
+            "value": "100%"
+          },
+          {
+            "category": "VDF",
+            "value": "100%"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "mpfftz2k",
     "timestamp": "2026-05-21T11:59:13.825Z",
     "files": [
