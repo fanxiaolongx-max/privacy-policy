@@ -240,6 +240,75 @@ tools-platform/
 
 ---
 
+## 全链路数据流走向图 (Data Flow)
+
+整个工具平台采用 **配置与大容量数据分离** 的双底座架构（`JSON` + `SQLite`），下面梳理了核心业务从“文件导入”到“月报生成”的全生命周期数据走向：
+
+```mermaid
+graph TD
+    %% 核心动作
+    A([1. 本地 Excel 拖拽 / 一键导入]) -->|前端 SheetJS 解析| B{前端内存加工处理}
+    B -->|合并/计算/提取| C(SLA 监控台视图渲染)
+    
+    %% 配置流
+    J_Prefs[(sla_prefs.json)] -.->|读取指标提取规则| B
+    J_Tgt[(sla_targets.json)] -.->|读取红线考核目标| B
+    J_Cat[(sla_categories.json)] -.->|读取客户群归属| B
+
+    %% 临时快照流
+    C -->|点击 '快照留存' / 自动缓存| D[(sla_snapshots.json)]
+    D -->|回溯功能| C
+    
+    %% 临期拦截与手工干预
+    B -.->|探测_slaDays<月底+5天| E[发现并组装临期工单]
+    C -->|在报表预览页进行手工加减分| F[计算 Manual Score]
+
+    %% 落盘入库流
+    C -->|点击 '同步至历史数据库'| G{数据聚合过滤组装}
+    E --> G
+    F --> G
+    J_Tgt -.-> G
+    
+    %% 数据库结构
+    G -->|拆分维度写入| DB[(database.sqlite)]
+    
+    subgraph SQLite 关系型数据库
+        DB_S[表: ReportSnapshots<br/>存储快照元数据及 raw_data_json]
+        DB_M[表: ReportMetricData<br/>按客户群拆解存储底层指标项明细]
+    end
+    DB --> DB_S
+    DB --> DB_M
+
+    %% 消费端流向
+    DB_S -->|提取最新 raw_data_json 和 失败指标| H(WeLink 一键催办与分发)
+    DB_M -->|分组聚合计算| H
+    
+    DB_S -->|历史快照集合 trends| I(全自动化月度大屏)
+    DB_M -->|最新短板与排名| I
+```
+
+### 数据流转步骤详解
+
+1. **第 1 步：解析与规则注入 (前端 -> 内存)**
+   - 当用户在 `SLA 监控台`点击**一键导入**时，浏览器端通过 SheetJS 将数十 MB 的 Excel 直接转为 JSON。
+   - 此时，系统会调用配置类文件（`sla_prefs.json` 规则、`sla_targets.json` 目标、`sla_categories.json` 群组），在内存中动态算出哪些指标达标、哪些未达标。
+   
+2. **第 2 步：临时快照存留 (内存 -> JSON)**
+   - 当前的内存快照会被原样压缩，追加写入 `data/sla_snapshots.json`（仅保留最近 50 次，防止文件过大爆炸），主要用于在监控台的**历史回溯**下拉框中快速切换查看原表。
+
+3. **第 3 步：一键统一入库 (内存 -> SQLite)**
+   - 当用户进入报表预览界面，完成**“人工加减分操作”**后，点击**同步至数据库**按钮。
+   - 系统会做两件事：
+     - **拦截告警**：弹窗让用户勾选“本月即将超期”的拦截单（通过 `_slaDays` 识别）。
+     - **轻量化归档**：剥离庞大无用的底层表格数据，仅将“考核项数值”、“是否达标标识”、“人工加减分”、“临期单数组”打包进 `raw_data_json`。
+   - 最终请求 `POST /api/db/save_dashboard`，数据被拆分写入 `database.sqlite` 中的 `ReportSnapshots`（主表）和 `ReportMetricData`（指标明细从表）中，实现永久留存。
+
+4. **第 4 步：全自动数据消费 (SQLite -> 页面引擎)**
+   - **一键催办页 (`expedite.js`)**：直接请求 SQLite 中时间戳最新的快照。不仅提取 `ReportMetricData` 里的不达标项分配给各客户群负责人，还会从 `raw_data_json` 中解包出**临期工单预警**，组装成英文版 WeLink 发送脚本。
+   - **月度大屏 (`monthly.js`)**：请求 SQLite 中所有的历史快照数据计算出 `trends` 渲染趋势图；然后取最新快照数据绘制矩阵透视图、加减分明细表以及高亮显示临期风险。
+
+---
+
 ## 技术栈
 
 | 层次 | 技术 |
