@@ -50,6 +50,12 @@ db.serialize(() => {
         is_failing INTEGER,
         gap TEXT
     )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS PlatformConfig (
+        key_name TEXT PRIMARY KEY,
+        value_json TEXT,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
 });
 
 const imagesDir = path.join(dataDir, 'images');
@@ -171,6 +177,30 @@ router.get('/failing/:snapshot_id', (req, res) => {
         if (!snapshot) return res.status(404).json({ error: 'Snapshot not found' });
         getFailingForSnapshot(snapshot, res);
     });
+});
+
+// Configuration Endpoints
+router.get('/config/:key', (req, res) => {
+    db.get('SELECT value_json FROM PlatformConfig WHERE key_name = ?', [req.params.key], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!row) return res.json({});
+        try {
+            res.json(JSON.parse(row.value_json));
+        } catch (e) {
+            res.json({});
+        }
+    });
+});
+
+router.post('/config/:key', (req, res) => {
+    const valueJson = JSON.stringify(req.body);
+    db.run('INSERT INTO PlatformConfig (key_name, value_json) VALUES (?, ?) ON CONFLICT(key_name) DO UPDATE SET value_json = ?, updated_at = CURRENT_TIMESTAMP', 
+        [req.params.key, valueJson, valueJson], 
+        function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ success: true });
+        }
+    );
 });
 
 module.exports = router;
