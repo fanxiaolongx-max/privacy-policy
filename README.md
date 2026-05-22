@@ -1,7 +1,7 @@
 # Tools Platform — 工具中台
 
-> 统一工具平台，前后端分离架构，数据服务端持久化。
-> 目前集成三大工具模块：**UIVF12 抓取引擎**、**Task SLA 监控台**、**专业报表看板**。
+> 统一工具平台，前后端分离架构，数据服务端持久化（JSON + SQLite）。
+> 目前集成四大核心工具模块：**UIVF12 抓取引擎**、**Task SLA 监控台**、**专业报表入库看板**、**一键催办与自动化月报系统**。
 
 ---
 
@@ -20,20 +20,23 @@ tools-platform/
 │   │   ├── auth.js                 # 认证 & 用户管理路由
 │   │   ├── sla.js                  # Task SLA 监控台 API
 │   │   ├── uiv.js                  # UIVF12 脚本仓库 API
-│   │   └── upload.js               # 文件上传历史 API
+│   │   ├── upload.js               # 文件上传历史 API
+│   │   └── db.js                   # SQLite 历史数据库读取 API
 │   │
 │   ├── middleware/
 │   │   └── auth.js                 # JWT-like Token 鉴权中间件
 │   │
 │   ├── models/
-│   │   └── store.js                # 通用 JSON 文件读写工具
+│   │   ├── store.js                # 通用 JSON 文件读写工具
+│   │   └── db.js                   # SQLite3 数据库初始化与操作封装
 │   │
-│   ├── data/                       # 持久化数据存储（JSON 文件）
+│   ├── data/                       # 持久化数据存储
+│   │   ├── database.sqlite         # 核心关系型数据库（存储快照与入库明细）
 │   │   ├── users.json              # 用户账号 & 密码哈希
 │   │   ├── sessions.json           # 登录 Token 会话
 │   │   ├── sla_targets.json        # SLA 预警目标（分月配置）
 │   │   ├── sla_prefs.json          # SLA 用户偏好（列宽/列显示/排序/指标规则）
-│   │   ├── sla_snapshots.json      # SLA 历史导入快照（最近 50 次）
+│   │   ├── sla_snapshots.json      # SLA 临时导入快照缓存
 │   │   ├── sla_categories.json     # SLA 指标分类标签配置
 │   │   ├── sla_groups.json         # SLA 指标分组配置
 │   │   ├── uiv_scripts.json        # UIVF12 脚本仓库数据
@@ -51,7 +54,9 @@ tools-platform/
     │   ├── login.html              # 登录页
     │   ├── sla.html                # Task SLA 监控台页面
     │   ├── uivf12.html             # UIVF12 抓取引擎页面
-    │   └── report.html             # 专业报表看板页面
+    │   ├── report.html             # 报表入库看板页面
+    │   ├── expedite.html           # WeLink 一键催办分发引擎
+    │   └── monthly.html            # 自动化月报大屏页面
     │
     ├── css/                        # 样式文件
     │   ├── shared.css              # 公共样式（Navbar、布局、主题变量）
@@ -82,8 +87,10 @@ tools-platform/
         │   ├── save.js             # 脚本保存 & 仓库管理
         │   └── copy.js             # 代码复制 & 导出工具
         │
-        └── report/                 # 专业报表看板模块
-            └── report.js           # 报表逻辑（快照选择、健康度评分、矩阵渲染）
+        └── report/                 # 报表与催办大屏模块
+            ├── report.js           # 数据校对与一键入库逻辑
+            ├── expedite.js         # WeLink 双语分发与文案自动化生成
+            └── monthly.js          # 月度大屏渲染（ECharts、高清截图导出）
 ```
 
 ---
@@ -217,15 +224,19 @@ tools-platform/
 
 ---
 
-### 4. 专业报表看板（`/report`）
+### 4. 自动化报表与分发系统（`/report`, `/expedite`, `/monthly`）
 
-基于 SLA 历史快照生成多维度数据分析报表。
+基于 SLA 历史快照构建的全链路数据流转中枢，涵盖“入库、通报、复盘”闭环。
 
 **核心功能：**
-- **客户群健康度排名**：按综合扣分情况对各客户群排序
-- **加减分统筹系统**：多维度扣分权重配置
-- **多快照历史回溯**：选择不同时间节点的快照进行对比分析
-- **数据透视矩阵**：直观展示各维度得分情况
+- **双重持久化引擎**：一键入库，自动剔除冗余项，将 JSON 复杂格式归档落盘至 `database.sqlite` 关系型数据库，支持长周期趋势查询。
+- **动态加减分统筹**：支持 16 种事故/奖励的人工考评加减分干预（包含审计发现违规等）。
+- **临期工单极速拦截**：在入库时自动弹窗锁定“本月底+5天”内即将超期的工单，精准分流入重点关注池。
+- **WeLink 自动化一键催办**：自动组装中英双语催办文案，区分“群聊通知”、“会议邀请”、“个人单发”，一键复制到剪贴板，彻底解放手工粘贴统计的时间。
+- **全景月度大屏**：
+  - 基于 ECharts 的多维度动态历史曲线图。
+  - 短板透视矩阵图、基准得分与评级系统。
+  - **优雅无痕导出**：支持底层无截断长图 (Image) 与自适应长卷轴无损 PDF 导出，适用于企业级高层汇报。
 
 ---
 
@@ -235,9 +246,11 @@ tools-platform/
 |------|------|
 | 后端运行时 | Node.js |
 | 后端框架 | Express 4.x |
-| 持久化 | JSON 文件（无数据库依赖） |
+| 持久化引擎 | SQLite3（历史长线数据）+ JSON文件（配置策略） |
 | 进程守护 | PM2 |
 | 前端框架 | 纯 HTML + Vanilla JS（无框架依赖） |
+| 可视化图表 | ECharts |
+| 高清导出 | html2canvas + jsPDF |
 | 样式 | Vanilla CSS（自定义设计系统） |
 | Excel 解析 | SheetJS (xlsx) |
 | 唯一 ID | uuid v9 |
