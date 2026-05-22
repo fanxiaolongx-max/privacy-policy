@@ -131,8 +131,36 @@ async function captureAndUploadSnapshot(fileNames) {
         timestamp: new Date().toISOString(),
         files: fileNames,
         summary: [], 
-        topMetrics: [] 
+        topMetrics: [],
+        expiringTickets: []
     };
+
+    // 提取在本月底+5天内需要处理的单子
+    const now = new Date();
+    const targetDate = new Date(now.getFullYear(), now.getMonth() + 1, 5, 23, 59, 59);
+    const targetDays = Math.ceil((targetDate - now) / 86400000);
+    const collectionsToPush = ['rectification', 'risk', 'special'];
+
+    collectionsToPush.forEach(secId => {
+        if (window.AppState && window.AppState[secId]) {
+            const data = window.AppState[secId].globalData || [];
+            console.log(`Checking collection: ${secId}, total rows: ${data.length}`);
+            data.forEach(row => {
+                if (row._slaDays !== undefined && row._slaDays !== 999999 && row._slaDays !== -999999) {
+                    if (row._slaDays <= targetDays) {
+                        snapshot.expiringTickets.push({
+                            collection: secId,
+                            title: window.AppState[secId].title,
+                            _slaCleanText: row._slaCleanText,
+                            _slaDays: row._slaDays,
+                            data: row
+                        });
+                    }
+                }
+            });
+            console.log(`Found ${snapshot.expiringTickets.length} expiring tickets so far.`);
+        }
+    });
 
     // 提取各个基础表格面板的数据
     document.querySelectorAll('.dashboard-panel').forEach(panel => {

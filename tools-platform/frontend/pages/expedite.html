@@ -402,6 +402,50 @@
         .add-keyword-group button:hover {
             background: #059669;
         }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 32px;
+            height: 18px;
+        }
+        .switch input { 
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #cbd5e1;
+            transition: .3s;
+            border-radius: 18px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #0078d4;
+        }
+        input:checked + .slider:before {
+            transform: translateX(14px);
+        }
+        .toggle-label {
+            font-size: 13px;
+            color: #334155;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -447,7 +491,7 @@
                                 </h3>
                                 <div style="font-size: 12px; color: #64748b; margin-bottom: 12px;">自动生成 PowerShell
                                     脚本一键分发。若无权限发附件，请取消勾选“直接分发附件”。</div>
-                                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 8px;">
                                     <button class="btn-copy" onclick="openDistributionModal()" style="padding: 6px 16px; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; white-space: nowrap;">
                                         ⚙️ 配置高级分发策略
                                     </button>
@@ -455,6 +499,12 @@
                                         style="font-size: 13px; color: #334155; display: flex; align-items: center; gap: 4px; cursor: pointer;">
                                         <input type="checkbox" id="welink-enable-media"> 启用图片/表格直接分发 (测试版)
                                     </label>
+                                </div>
+                                <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+                                    <label class="toggle-label"><label class="switch"><input type="checkbox" id="toggle-im-single" checked><span class="slider"></span></label> 专属单聊</label>
+                                    <label class="toggle-label"><label class="switch"><input type="checkbox" id="toggle-im-group" checked><span class="slider"></span></label> 全局群聊</label>
+                                    <label class="toggle-label"><label class="switch"><input type="checkbox" id="toggle-email" checked><span class="slider"></span></label> 邮件抄送</label>
+                                    <label class="toggle-label"><label class="switch"><input type="checkbox" id="toggle-meet" checked><span class="slider"></span></label> 会议邀请</label>
                                 </div>
                             </div>
                         </div>
@@ -888,6 +938,44 @@
             };
         }
 
+        function getExpiringTicketsText(data) {
+            if (!data.raw_data_json) return '';
+            let rawData;
+            try {
+                rawData = typeof data.raw_data_json === 'string' ? JSON.parse(data.raw_data_json) : data.raw_data_json;
+            } catch(e) {
+                return '';
+            }
+            const tickets = rawData.expiringTickets;
+            if (!tickets || tickets.length === 0) return '';
+
+            let text = '\n⚠️ [Expiring/Overdue Alert] The following tickets require immediate action:\n';
+            tickets.forEach(t => {
+                const td = t.data || {};
+                const id = td.task_id || td.risk_id || td.ticket_id || td['单号'] || td['问题风险编号'] || td['问题编号'] || 'Unknown ID';
+                const network = td.network_name || td['网络名称'] || td.network || 'Unknown Network';
+                
+                // Translate title
+                let enTitle = t.title.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim();
+                if (enTitle.includes('整改')) enTitle = 'Rectification';
+                else if (enTitle.includes('CPT专项风险')) enTitle = 'CPT Special Risk';
+                else if (enTitle.includes('常规风险') || enTitle === '风险') enTitle = 'Risk';
+
+                // Format SLA status
+                let slaStr = '';
+                if (typeof t._slaDays === 'number') {
+                    if (t._slaDays < 0) slaStr = `Overdue by ${Math.abs(t._slaDays)} days`;
+                    else if (t._slaDays === 0) slaStr = `Due today`;
+                    else slaStr = `Due in ${t._slaDays} days`;
+                } else {
+                    slaStr = t._slaCleanText || 'Unknown Status';
+                }
+
+                text += `    ↳ [${enTitle}] Ticket: ${id} | Network: ${network} | Status: ${slaStr}\n`;
+            });
+            return text + '\n';
+        }
+
         function renderBriefText() {
             if (!latestFailingData) return;
             const data = latestFailingData;
@@ -953,6 +1041,7 @@
                 text += `✅ All targets are met or under control!\n`;
             }
 
+            text += getExpiringTicketsText(data);
             text += expediteTemplate.footer;
 
             document.getElementById('brief-textarea').value = text;
@@ -1225,6 +1314,7 @@
                 text += `✅ All metrics for your assigned group have met the targets. Thank you for your support!\n\n`;
             }
 
+            text += getExpiringTicketsText(latestFailingData);
             text += expediteTemplate.footer;
             return text.trim();
         }
@@ -1253,6 +1343,13 @@
 
             if (imUsersArray.length === 0 && globalGroups.length === 0 && emailUsers.length === 0 && meetUsers.length === 0) {
                 return showToast('您尚未分配任何接收人，请先点击"配置高级分发策略"', 'error');
+            }
+
+            if (!document.getElementById('toggle-im-single').checked &&
+                !document.getElementById('toggle-im-group').checked &&
+                !document.getElementById('toggle-email').checked &&
+                !document.getElementById('toggle-meet').checked) {
+                return showToast('您已关闭所有分发通道滑块，请至少开启一项', 'error');
             }
 
             let psScript = `
@@ -1310,7 +1407,7 @@ ${excelUrl ? `Invoke-WebRequest -Uri "${excelUrl}" -OutFile "$tempXlsx"` : ''}
             psScript += `$parsedMeetSubject = "${parsedMeetSubject}"\n`;
 
             // 1. Sending IMs (Personalized)
-            if (imUsersArray.length > 0) {
+            if (document.getElementById('toggle-im-single').checked && imUsersArray.length > 0) {
                 psScript += `\n# 1. 专属分类单聊推送\n`;
                 imUsersArray.forEach(uid => {
                     let pText = generatePersonalizedText(uid, dynamicCats);
@@ -1344,7 +1441,7 @@ if (-not [string]::IsNullOrWhiteSpace($out)) { Write-Host $out.Trim() }
             }
 
             // 2. Global Groups
-            if (globalGroups.length > 0) {
+            if (document.getElementById('toggle-im-group').checked && globalGroups.length > 0) {
                 psScript += `\n# 2. 发送全量报告至群聊\n`;
                 const getArrayStr = (arr) => arr.length === 0 ? '@()' : `@(${arr.map(u => `"${u}"`).join(',')})`;
                 psScript += `$imGroups = ${getArrayStr(globalGroups)}\n`;
@@ -1368,7 +1465,7 @@ ${excelUrl ? `
             }
 
             // 3. Email
-            if (emailUsers.length > 0) {
+            if (document.getElementById('toggle-email').checked && emailUsers.length > 0) {
                 const getArrayStr = (arr) => arr.length === 0 ? '@()' : `@(${arr.map(u => `"${u}"`).join(',')})`;
                 psScript += `\n# 3. 自动解析邮箱并发送抄送邮件\n`;
                 psScript += `$emailUsers = ${getArrayStr(emailUsers)}\n`;
@@ -1393,7 +1490,7 @@ if ($emailList.Count -gt 0) {
             }
 
             // 4. Meeting
-            if (meetUsers.length > 0) {
+            if (document.getElementById('toggle-meet').checked && meetUsers.length > 0) {
                 const getArrayStr = (arr) => arr.length === 0 ? '@()' : `@(${arr.map(u => `"${u}"`).join(',')})`;
                 
                 // Calculate meeting time in Beijing Time (+8) to bypass TZ parsing bugs in WeLink CLI Exchange XML

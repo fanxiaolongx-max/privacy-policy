@@ -1,26 +1,261 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>月报页面 - Tools Platform</title>
+    <title>月度综合运营报告 - Tools Platform</title>
     <link rel="stylesheet" href="/css/shared.css">
     <style>
-        body { background: #f4f6f8; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #333; }
-        .page-container { padding-top: calc(var(--navbar-h) + 20px); max-width: 98%; margin: 0 auto; padding-left: 20px; padding-right: 20px; padding-bottom: 40px; }
-        .empty-state { text-align: center; padding: 100px 20px; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-        .empty-state h2 { color: #2c3e50; }
-        .empty-state p { color: #666; font-size: 16px; margin-top: 10px; }
+        body {
+            background: #f0f2f5;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #333;
+        }
+
+        .page-container {
+            padding-top: calc(var(--navbar-h) + 20px);
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-left: 20px;
+            padding-right: 20px;
+            padding-bottom: 40px;
+        }
+
+        .report-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .report-header h2 {
+            font-size: 28px;
+            color: #00285e;
+            /* Huawei-like dark blue */
+            letter-spacing: 2px;
+            margin: 0 0 10px 0;
+            font-weight: 600;
+        }
+
+        .report-header p {
+            color: #666;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .section-card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+            padding: 24px;
+            margin-bottom: 24px;
+            border-top: 4px solid #00285e;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title::before {
+            content: "";
+            display: inline-block;
+            width: 4px;
+            height: 18px;
+            background: #e31837;
+            /* Red accent */
+        }
+
+        .summary-text {
+            font-size: 15px;
+            line-height: 1.8;
+            color: #444;
+            text-align: justify;
+        }
+
+        .summary-highlight {
+            font-weight: bold;
+            color: #e31837;
+        }
+
+        .charts-row {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .chart-container {
+            flex: 1;
+            min-width: 500px;
+            height: 380px;
+            background: #fafafa;
+            border-radius: 4px;
+            border: 1px solid #eee;
+        }
+
+        .snapshot-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .ranking-table,
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .ranking-table th,
+        .matrix-table th {
+            background: #f4f6f8;
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .ranking-table td,
+        .matrix-table td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        .ranking-table tr:hover,
+        .matrix-table tr:hover {
+            background: #f9f9f9;
+        }
+
+        .score-good {
+            color: #2e7d32;
+            font-weight: bold;
+        }
+
+        .score-bad {
+            color: #d32f2f;
+            font-weight: bold;
+        }
+
+        .loader {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 16px;
+        }
+
+        .matrix-container {
+            overflow-x: auto;
+        }
     </style>
 </head>
+
 <body>
     <div class="page-container">
-        <div class="empty-state">
-            <h2>📅 月报页面 (Monthly Report)</h2>
-            <p>页面建设中... 将对接 SQLite 数据库数据生成月报。</p>
+        <div class="report-header">
+            <h2>月度运营质量与合规分析报告</h2>
+            <p id="report-date-range">分析周期: 加载中...</p>
+        </div>
+
+        <div id="loader" class="loader">
+            <p>正在分析历史数据，生成月报...</p>
+        </div>
+
+        <div id="report-content" style="display: none;">
+            <!-- 一、整体状况说明 -->
+            <div class="section-card">
+                <div class="section-title">一、整体状况与关键结论</div>
+                <div class="summary-text" id="summary-content">
+                    <!-- JS generated -->
+                </div>
+            </div>
+
+            <!-- 二、历史趋势分析 -->
+            <div class="section-card">
+                <div class="section-title">二、历史趋势与波动分析</div>
+                <div class="charts-row">
+                    <div id="chart-overall" class="chart-container"></div>
+                    <div id="chart-groups" class="chart-container"></div>
+                </div>
+            </div>
+
+            <!-- 三、最新快照分析 -->
+            <div class="section-card">
+                <div class="section-title">三、最新运行快照与短板透视 (基准: <span id="latest-snapshot-date"></span>)</div>
+                <div style="margin-bottom: 20px;">
+                    <h4 style="margin: 0 0 10px 0; color: #555;">3.1 客户群达标排名及加减分详情</h4>
+                    <div style="overflow-x: auto;">
+                        <table class="ranking-table" id="ranking-table">
+                            <thead>
+                                <tr>
+                                    <th width="80">排名</th>
+                                    <th>客户群名称</th>
+                                    <th>基准得分</th>
+                                    <th>加减分项</th>
+                                    <th>最终得分</th>
+                                    <th>评级</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- JS generated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 style="margin: 0 0 10px 0; color: #555;">3.2 客户群短板透视矩阵 (不达标项)</h4>
+                    <div class="matrix-container">
+                        <table class="matrix-table" id="matrix-table">
+                            <thead>
+                                <tr>
+                                    <th>指标名称</th>
+                                    <th>目标值</th>
+                                    <th>未达标客户群及实测值</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- JS generated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="manual-score-section" style="display: none; margin-top: 20px;">
+                    <h4 style="margin: 0 0 10px 0; color: #555;">3.3 手工考核加减分明细</h4>
+                    <div style="overflow-x: auto;">
+                        <table class="ranking-table" id="manual-score-table">
+                            <thead>
+                                <tr>
+                                    <th>客户群名称</th>
+                                    <th>手工调整分数</th>
+                                    <th>说明</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- JS generated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="full-report-section" style="margin-top: 30px;">
+                    <h4 style="margin: 0 0 10px 0; color: #555;">3.4 完整考核快照数据一览</h4>
+                    <div id="full-report-content"></div>
+                </div>
+            </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
     <script src="/js/shared/api.js"></script>
     <script src="/js/shared/navbar.js"></script>
+    <script src="/js/report/monthly.js"></script>
 </body>
+
 </html>
