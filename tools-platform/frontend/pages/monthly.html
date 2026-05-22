@@ -160,6 +160,10 @@
         <div class="report-header">
             <h2>月度运营质量与合规分析报告</h2>
             <p id="report-date-range">分析周期: 加载中...</p>
+            <div id="export-actions" style="margin-top: 15px; display: none; gap: 10px; justify-content: center;">
+                <button onclick="exportToImage()" style="padding: 8px 16px; background: #00285e; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">🖼️ 导出为长图</button>
+                <button onclick="exportToPDF()" style="padding: 8px 16px; background: #e31837; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">📄 导出为 PDF</button>
+            </div>
         </div>
 
         <div id="loader" class="loader">
@@ -253,6 +257,9 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="/js/shared/toast.js"></script>
     <script src="/js/shared/api.js"></script>
     <script src="/js/shared/navbar.js"></script>
     <script src="/js/report/monthly.js"></script>
