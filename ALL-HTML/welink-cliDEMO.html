@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>WeLink 自动化流水线生成器 (详细诊断版)</title>
+    <title>WeLink 自动化流水线生成器 (终极版)</title>
     <style>
         :root {
             --primary: #0078d4;
@@ -137,6 +137,7 @@
             font-weight: normal;
         }
 
+        /* 折叠面板样式 */
         .toggle-arrow {
             display: inline-block;
             width: 24px;
@@ -290,14 +291,6 @@
             </h3>
             <div class="info-bar">💡 提示：取消勾选某个模块，对应的 JSON 节点将被自动移除，生成的脚本体积也会相应变小。</div>
 
-            <!-- 全局日志开关 -->
-            <div class="config-module" style="border-color: #f5b396;">
-                <div class="module-header" style="color: #d83b01; background: #fdf3eb;">
-                    <input type="checkbox" id="chk_verbose" checked onchange="generateScript()">
-                    <span style="flex:1; font-weight:bold;">[调试模式] 开启详细诊断日志 (显示完整执行命令与API响应)</span>
-                </div>
-            </div>
-
             <!-- 模块 0: 全局人员基础池 -->
             <div class="config-module" id="mod_base">
                 <div class="module-header" onclick="toggleModule('mod_base')"
@@ -326,7 +319,7 @@
                 </div>
                 <div class="module-body">
                     <div style="grid-column: 1 / -1; font-size: 12px; color: #666;">
-                        📌 提示：私信的具体内容（文字、图片、文件路径）请在上方【目标人员池】中为每个人独立配置。
+                        📌 提示：私信的具体内容（文字、图片、文件路径）请在上方【目标人员池】中为每个人独立配置。取消勾选此项，JSON 中人员列表的 IM 属性将被自动抹除。
                     </div>
                 </div>
             </div>
@@ -452,27 +445,15 @@
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
-$ShowDetailLogs = <INJECT_LOG_MODE>
-
 function Write-Log {
-    param ([string]$Message, [ValidateSet("INFO", "SUCCESS", "WARN", "ERROR", "DEBUG")] [string]$Level = "INFO")
-    if ($Level -eq "DEBUG" -and -not $ShowDetailLogs) { return }
+    param ([string]$Message, [ValidateSet("INFO", "SUCCESS", "WARN", "ERROR")] [string]$Level = "INFO")
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    $color = switch ($Level) { "INFO"{"Cyan"}; "SUCCESS"{"Green"}; "WARN"{"Yellow"}; "ERROR"{"Red"}; "DEBUG"{"DarkGray"} }
-    Write-Host "[$timestamp] [$Level] $Message" -ForegroundColor $color
-}
-
-# 核心拦截器：所有命令行请求通过此函数统一打印和捕获
-function Invoke-WeLinkCmd {
-    param ([string]$Command)
-    Write-Log "Executing: $Command" -Level "DEBUG"
-    $output = Invoke-Expression "$Command 2>&1" | Out-String
-    if ($ShowDetailLogs -and -not [string]::IsNullOrWhiteSpace($output)) {
-        Write-Host "--- RAW RESPONSE ---" -ForegroundColor DarkGray
-        Write-Host $output.Trim() -ForegroundColor DarkGray
-        Write-Host "--------------------" -ForegroundColor DarkGray
+    switch ($Level) {
+        "INFO"    { Write-Host "[$timestamp] [INFO] $Message" -ForegroundColor Cyan }
+        "SUCCESS" { Write-Host "[$timestamp] [SUCCESS] $Message" -ForegroundColor Green }
+        "WARN"    { Write-Host "[$timestamp] [WARN] $Message" -ForegroundColor Yellow }
+        "ERROR"   { Write-Host "[$timestamp] [ERROR] $Message" -ForegroundColor Red }
     }
-    return $output
 }
 
 $jsonString = @"
@@ -486,10 +467,10 @@ try {
 
 Write-Log "Refreshing authentication..." -Level "INFO"
 try {
-    $authOutput = Invoke-WeLinkCmd "welink-cli auth login"
+    $authOutput = Invoke-Expression "welink-cli auth login 2>&1" | Out-String
     if ($authOutput -match "Login successful" -or $authOutput -match "Connected successfully" -or $authOutput -match "Using existing valid token") {
         Write-Log "Authentication active." -Level "SUCCESS"
-    } else { Write-Log "Auth Verification Failed." -Level "WARN" }
+    } else { Write-Log "Auth Warning. [RAW]: $($authOutput.Trim())" -Level "WARN" }
 } catch { Write-Log "Critical Error: 'auth login' failed." -Level "ERROR"; exit }
     </script>
 
@@ -502,7 +483,7 @@ foreach ($emp in $jsonContent.employees) {
     $idList += $empId
     try {
         $searchCmd = 'welink-cli search person --text "{0}"' -f $empId
-        $searchOutput = Invoke-WeLinkCmd $searchCmd
+        $searchOutput = Invoke-Expression "$searchCmd 2>&1" | Out-String
         $mail = ($searchOutput | ConvertFrom-Json).search_cli_person.data[0].personMail
         if (-not [string]::IsNullOrWhiteSpace($mail)) { $emailList += $mail }
     } catch {}
@@ -523,15 +504,15 @@ foreach ($emp in $jsonContent.employees) {
     try {
         if (-not [string]::IsNullOrWhiteSpace($emp.imMessage)) {
             $imCmd = 'welink-cli im send-to-user --receiver "{0}" --text "{1}"' -f $empId, $emp.imMessage
-            $null = Invoke-WeLinkCmd $imCmd
+            Invoke-Expression "$imCmd 2>&1" | Out-Null
         }
         if (-not [string]::IsNullOrWhiteSpace($emp.imagePath) -and (Test-Path $emp.imagePath)) {
             $imgCmd = 'welink-cli im send-to-user --receiver "{0}" --image "{1}"' -f $empId, $emp.imagePath
-            $null = Invoke-WeLinkCmd $imgCmd
+            Invoke-Expression "$imgCmd 2>&1" | Out-Null
         }
         if (-not [string]::IsNullOrWhiteSpace($emp.filePath) -and (Test-Path $emp.filePath)) {
             $fileCmd = 'welink-cli im send-to-user --receiver "{0}" --file "{1}"' -f $empId, $emp.filePath
-            $null = Invoke-WeLinkCmd $fileCmd
+            Invoke-Expression "$fileCmd 2>&1" | Out-Null
         }
         Write-Log "  -> Sent IM bundle to $empId" -Level "SUCCESS"
     } catch { Write-Log "  -> IM execution failed for $empId" -Level "ERROR" }
@@ -546,8 +527,8 @@ if ($emailList.Count -gt 0 -and $null -ne $jsonContent.mailSubject) {
     foreach ($singleMail in $emailList) {
         try {
             $mailCmd = 'welink-cli mail send --to "{0}" --subject "{1}" --body "{2}"' -f $singleMail, $jsonContent.mailSubject, $jsonContent.mailBody
-            $mailOutput = Invoke-WeLinkCmd $mailCmd
-            if ($mailOutput -match "error" -or $mailOutput -match "failed") { Write-Log "Email failed to $singleMail" -Level "ERROR" } else { Write-Log "Email sent: $singleMail" -Level "SUCCESS" }
+            $mailOutput = Invoke-Expression "$mailCmd 2>&1" | Out-String
+            if ($mailOutput -match "error") { Write-Log "Email failed to $singleMail" -Level "ERROR" } else { Write-Log "Email sent: $singleMail" -Level "SUCCESS" }
         } catch { Write-Log "Email error: $_" -Level "ERROR" }
     }
 }
@@ -559,8 +540,8 @@ if ($null -ne $jsonContent.calendar -and -not [string]::IsNullOrWhiteSpace($toAd
     try {
         $cal = $jsonContent.calendar
         $calCmd = 'welink-cli calendar create --subject "{0}" --start "{1}" --end "{2}" --location "{3}" --attendee "{4}"' -f $cal.subject, $cal.start, $cal.end, $cal.location, $toAddresses
-        $calOutput = Invoke-WeLinkCmd $calCmd
-        if ($calOutput -match "error" -or $calOutput -match "failed") { Write-Log "Calendar creation failed." -Level "ERROR" } else { Write-Log "Calendar event created!" -Level "SUCCESS" }
+        $calOutput = Invoke-Expression "$calCmd 2>&1" | Out-String
+        if ($calOutput -match "error") { Write-Log "Calendar error." -Level "ERROR" } else { Write-Log "Calendar event created!" -Level "SUCCESS" }
     } catch { Write-Log "Calendar error: $_" -Level "ERROR" }
 }
     </script>
@@ -571,7 +552,7 @@ if ($null -ne $jsonContent.group -and -not [string]::IsNullOrWhiteSpace($idStrin
     try {
         $grp = $jsonContent.group
         $groupCmd = 'welink-cli im create-group --name "{0}" --notice "{1}" --type 0 --user-account {2}' -f $grp.name, $grp.notice, $idString
-        $createGroupOutput = Invoke-WeLinkCmd $groupCmd
+        $createGroupOutput = Invoke-Expression "$groupCmd 2>&1" | Out-String
         try {
             $groupResult = $createGroupOutput | ConvertFrom-Json
             if ($groupResult.resultCode -eq "0") {
@@ -579,15 +560,15 @@ if ($null -ne $jsonContent.group -and -not [string]::IsNullOrWhiteSpace($idStrin
                 Write-Log "Group created! ID: $createdGroupId" -Level "SUCCESS"
                 
                 $groupMsgCmd = 'welink-cli im send-to-group --group-id "{0}" --text "{1}"' -f $createdGroupId, $grp.message
-                $null = Invoke-WeLinkCmd $groupMsgCmd
+                Invoke-Expression "$groupMsgCmd 2>&1" | Out-Null
                 
                 if (-not [string]::IsNullOrWhiteSpace($grp.imagePath) -and (Test-Path $grp.imagePath)) {
                     $gImgCmd = 'welink-cli im send-to-group --group-id "{0}" --image "{1}"' -f $createdGroupId, $grp.imagePath
-                    $null = Invoke-WeLinkCmd $gImgCmd
+                    Invoke-Expression "$gImgCmd 2>&1" | Out-Null
                 }
                 if (-not [string]::IsNullOrWhiteSpace($grp.filePath) -and (Test-Path $grp.filePath)) {
                     $gFileCmd = 'welink-cli im send-to-group --group-id "{0}" --file "{1}"' -f $createdGroupId, $grp.filePath
-                    $null = Invoke-WeLinkCmd $gFileCmd
+                    Invoke-Expression "$gFileCmd 2>&1" | Out-Null
                 }
                 Write-Log "Group welcome message bundle sent!" -Level "SUCCESS"
             } else { Write-Log "Group creation error." -Level "WARN" }
@@ -604,8 +585,7 @@ if ($null -ne $jsonContent.meeting -and -not [string]::IsNullOrWhiteSpace($idStr
         $meetStart = [DateTimeOffset]::new([datetime]$meet.startTime).ToUnixTimeMilliseconds()
         $meetEnd = [DateTimeOffset]::new([datetime]$meet.endTime).ToUnixTimeMilliseconds()
         $meetCmd = 'welink-cli meeting create --subject "{0}" --start-time {1} --end-time {2} --meeting-user-list {3}' -f $meet.subject, $meetStart, $meetEnd, $idStringNoQuotes
-        
-        $createMeetingOutput = Invoke-WeLinkCmd $meetCmd
+        $createMeetingOutput = Invoke-Expression "$meetCmd 2>&1" | Out-String
         try {
             $meetResult = $createMeetingOutput | ConvertFrom-Json
             if ($meetResult.code -eq 200) {
@@ -617,15 +597,15 @@ if ($null -ne $jsonContent.meeting -and -not [string]::IsNullOrWhiteSpace($idStr
                 $broadcastMsg = "【系统通知】会议创建成功！主题：$($meet.subject) | 会议ID：$meetId | 密码：$passcode | 链接：$guestUrl"
                 foreach ($uid in $idList) {
                     $uImCmd = 'welink-cli im send-to-user --receiver "{0}" --text "{1}"' -f $uid, $broadcastMsg
-                    $null = Invoke-WeLinkCmd $uImCmd
+                    Invoke-Expression "$uImCmd 2>&1" | Out-Null
                 }
                 if (-not [string]::IsNullOrWhiteSpace($createdGroupId)) {
                     $gImCmd = 'welink-cli im send-to-group --group-id "{0}" --text "{1}"' -f $createdGroupId, $broadcastMsg
-                    $null = Invoke-WeLinkCmd $gImCmd
+                    Invoke-Expression "$gImCmd 2>&1" | Out-Null
                 }
                 Write-Log "Meeting details broadcasted!" -Level "SUCCESS"
-            } else { Write-Log "Meeting API Error." -Level "WARN" }
-        } catch { Write-Log "Meeting JSON parse failed." -Level "ERROR" }
+            } else { Write-Log "Meeting API Error" -Level "WARN" }
+        } catch {}
     } catch {}
 }
     </script>
@@ -645,27 +625,17 @@ if ($null -ne $jsonContent.groupReminder) {
         }
         if (-not [string]::IsNullOrWhiteSpace($rem.footer)) { $messageText += "`n`n$($rem.footer)" }
 
-        # PowerShell 的多行参数必须用原生的数组传参才安全
         $remindArgs = @("im", "send-to-group", "--group-id", "$targetGroup", "--text", $messageText)
-        $remindCmdPreview = "welink-cli im send-to-group --group-id $targetGroup --text <MultilineContent>"
-        Write-Log "Executing: $remindCmdPreview" -Level "DEBUG"
-        
         $remindOutput = & welink-cli $remindArgs 2>&1 | Out-String
-        if ($ShowDetailLogs -and -not [string]::IsNullOrWhiteSpace($remindOutput)) {
-            Write-Host "--- RAW RESPONSE ---" -ForegroundColor DarkGray
-            Write-Host $remindOutput.Trim() -ForegroundColor DarkGray
-            Write-Host "--------------------" -ForegroundColor DarkGray
-        }
-
-        if (-not ($remindOutput -match "error" -or $remindOutput -match "failed")) { Write-Log "Group text reminder sent!" -Level "SUCCESS" }
+        if (-not ($remindOutput -match "error")) { Write-Log "Group text reminder sent!" -Level "SUCCESS" }
 
         if (-not [string]::IsNullOrWhiteSpace($rem.imagePath) -and (Test-Path $rem.imagePath)) {
             $rImgCmd = 'welink-cli im send-to-group --group-id "{0}" --image "{1}"' -f $targetGroup, $rem.imagePath
-            $null = Invoke-WeLinkCmd $rImgCmd
+            Invoke-Expression "$rImgCmd 2>&1" | Out-Null
         }
         if (-not [string]::IsNullOrWhiteSpace($rem.filePath) -and (Test-Path $rem.filePath)) {
             $rFileCmd = 'welink-cli im send-to-group --group-id "{0}" --file "{1}"' -f $targetGroup, $rem.filePath
-            $null = Invoke-WeLinkCmd $rFileCmd
+            Invoke-Expression "$rFileCmd 2>&1" | Out-Null
         }
     } catch {}
 }
@@ -819,6 +789,7 @@ $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
             });
         }
 
+        // 🟢 重点修复：删改查人员时，强制重绘界面！
         function addEmployee() {
             currentData.employees.push({ "id": "", "imMessage": "你好", "imagePath": "", "filePath": "" });
             renderDynamicEmployees();
@@ -855,6 +826,7 @@ $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
             });
         }
 
+        // 🟢 重点修复：删改查组别时，强制重绘界面！
         function addAccount() {
             if (!currentData.groupReminder.accounts) currentData.groupReminder.accounts = [];
             currentData.groupReminder.accounts.push({ "name": "NEW", "items": ["New Task"], "subNotes": "" });
@@ -872,7 +844,7 @@ $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
             syncStaticFormToJson();
         }
 
-        // --- 同步逻辑 ---
+        // --- 同步逻辑：JSON -> 表单 ---
         function syncJsonToForm() {
             try {
                 let parsed = JSON.parse(document.getElementById('jsonInput').value);
@@ -892,6 +864,7 @@ $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
             } catch (e) { }
         }
 
+        // --- 同步逻辑：表单 -> JSON与脚本 ---
         function syncStaticFormToJson() {
             currentData.mailSubject = document.getElementById('f_mailSubject').value;
             currentData.mailBody = document.getElementById('f_mailBody').value;
@@ -934,10 +907,6 @@ $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
 
             let psHeader = getPS("ps_header");
             let finalJsonData = getFilteredData();
-
-            // 写入日志模式
-            let isVerbose = document.getElementById('chk_verbose').checked ? "$true" : "$false";
-            psHeader = psHeader.replace("<INJECT_LOG_MODE>", isVerbose);
             psHeader = psHeader.replace("<INJECT_JSON_HERE>", JSON.stringify(finalJsonData, null, 4));
 
             finalScript += psHeader;

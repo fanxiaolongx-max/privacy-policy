@@ -1960,7 +1960,9 @@
     "Storage Rectification"
   ],
   "expediteTemplate": {
-    "header": "📅 【{MM}{DD}】Target Reminder\n@所有人 Hi Team, please ensure we meet the targets for the following items this month:\n\n",
-    "footer": "🎉 [All-Account] New target of storage RC: 16.2%.\n\nAction required ASAP. Thank you!"
+    "header": "📅 [TEST]【{MM}{DD}】Target Reminder\n@所有人 Hi Team, please ensure we meet the targets for the following items this month:\n\n",
+    "footer": "🎉 [All-Account] New target of storage RC: 16.2%.\n\nAction required ASAP. Thank you!",
+    "emailSubject": "📅 [TEST]【{MM}{DD}】Target Reminder Email",
+    "meetSubject": "📅 [TEST]【{MM}{DD}】Target Reminder Meeting "
   }
 }

@@ -141,6 +141,130 @@
             border-color: #94a3b8;
         }
 
+        /* Distribution Modal Styles */
+        .dist-layout {
+            display: flex;
+            gap: 20px;
+            height: 65vh;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .dist-left {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #e2e8f0;
+            padding-right: 20px;
+            overflow-y: auto;
+        }
+        .dist-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 8px;
+        }
+        .roster-chip {
+            display: inline-flex;
+            align-items: center;
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 13px;
+            margin: 4px;
+            cursor: pointer;
+            border: 1px solid #bae6fd;
+            user-select: none;
+            transition: all 0.2s;
+        }
+        .roster-chip:hover {
+            background: #bae6fd;
+            transform: translateY(-1px);
+        }
+        .roster-chip.assigned {
+            background: #f3f4f6;
+            color: #4b5563;
+            border-color: #e5e7eb;
+        }
+        .roster-chip.assigned:hover {
+            background: #e5e7eb;
+        }
+        .roster-chip.selected {
+            background: #0284c7;
+            color: white;
+            border-color: #0284c7;
+            box-shadow: 0 2px 4px rgba(2, 132, 199, 0.3);
+        }
+        .roster-chip .del-roster {
+            margin-left: 6px;
+            font-weight: bold;
+            color: inherit;
+            opacity: 0.6;
+        }
+        .roster-chip .del-roster:hover {
+            opacity: 1;
+        }
+        .dist-category {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+        .dist-category:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        @keyframes assignFlash {
+            0% { transform: scale(1); box-shadow: 0 0 0 rgba(16, 185, 129, 0); }
+            30% { transform: scale(1.02); box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); border-color: #10b981; }
+            100% { transform: scale(1); box-shadow: 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        .assign-anim {
+            animation: assignFlash 0.5s ease-out;
+        }
+        .dist-category-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #1e293b;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .dist-category-pool {
+            min-height: 40px;
+            background: #f1f5f9;
+            border-radius: 6px;
+            padding: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .assigned-chip {
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .assigned-chip .del {
+            color: #ef4444;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .assigned-chip .del:hover {
+            color: #b91c1c;
+        }
+
         .modal-overlay {
             display: none;
             position: fixed;
@@ -312,6 +436,37 @@
                 <h3>⏳ 正在提取最新失败指标数据...</h3>
             </div>
             <div id="content-state" style="display:none;">
+
+                <div id="welink-automation-container"
+                    style="margin-bottom: 24px; padding: 16px; background: #fff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-left: 4px solid #0078d4;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="display: flex; align-items: flex-start; gap: 8px;">
+                            <span style="font-size: 24px;">🚀</span>
+                            <div>
+                                <h3 style="font-size: 15px; color: #1e293b; margin: 0; margin-bottom: 8px;">WeLink 自动化分发
+                                </h3>
+                                <div style="font-size: 12px; color: #64748b; margin-bottom: 12px;">自动生成 PowerShell
+                                    脚本一键分发。若无权限发附件，请取消勾选“直接分发附件”。</div>
+                                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                                    <button class="btn-copy" onclick="openDistributionModal()" style="padding: 6px 16px; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; white-space: nowrap;">
+                                        ⚙️ 配置高级分发策略
+                                    </button>
+                                    <label
+                                        style="font-size: 13px; color: #334155; display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                                        <input type="checkbox" id="welink-enable-media"> 启用图片/表格直接分发 (测试版)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <button class="btn-primary" onclick="generateAndCopyWLS()"
+                                style="padding: 8px 16px; background: #0078d4; white-space: nowrap;">
+                                📋 复制自动化脚本
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="text-area-wrapper">
                     <textarea id="brief-textarea" spellcheck="false" oninput="autoResizeTextarea(this)"></textarea>
                 </div>
@@ -320,52 +475,93 @@
                     <span id="failing-count"></span>
                 </div>
 
-                <div id="snapshot-image-container" style="display: none; margin-top: 24px; animation: slideUp 0.3s ease-out;">
-        <div style="background: #fff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <h3 style="font-size: 15px; color: #1e293b; margin: 0;">📸 关联看板截图</h3>
-                <div>
-                    <button class="btn-copy" onclick="copyImageToClipboard(0.5)"
-                        style="padding: 8px 16px; background: #64748b; white-space: nowrap; margin-right: 8px;">
-                        📋 复制小尺寸图
-                    </button>
-                    <button class="btn-copy" onclick="copyImageToClipboard(1)"
-                        style="padding: 8px 16px; background: #8b5cf6; white-space: nowrap;">
-                        📋 复制原图
-                    </button>
-                </div>
-            </div>
-            <div id="image-viewer-wrapper"
-                style="width: 100%; overflow: hidden; position: relative; border: 1px solid #cbd5e1; border-radius: 8px; cursor: zoom-in; background: #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);"
-                onclick="openFullscreenImage()">
-                <img id="snapshot-img" src="" style="display: block; width: 100%; pointer-events: none;"
-                    crossorigin="anonymous">
-                <div
-                    style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.6); color: #fff; padding: 6px 10px; border-radius: 4px; font-size: 12px; pointer-events: none; z-index: 10;">
-                    🔍 点击全屏查看
-                </div>
-            </div>
-            
-            <div id="excel-report-container" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px dashed #cbd5e1;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 24px;">📊</span>
-                        <div>
-                            <h3 style="font-size: 15px; color: #1e293b; margin: 0;">关联 Excel 报表</h3>
-                            <div style="font-size: 12px; color: #64748b;">专业的高清排版短板透视矩阵表格</div>
+                <div id="snapshot-image-container"
+                    style="display: none; margin-top: 24px; animation: slideUp 0.3s ease-out;">
+                    <div
+                        style="background: #fff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 20px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <h3 style="font-size: 15px; color: #1e293b; margin: 0;">📸 关联看板截图</h3>
+                            <div>
+                                <button class="btn-copy" onclick="copyImageToClipboard(0.5)"
+                                    style="padding: 8px 16px; background: #64748b; white-space: nowrap; margin-right: 8px;">
+                                    📋 复制小尺寸图
+                                </button>
+                                <button class="btn-copy" onclick="copyImageToClipboard(1)"
+                                    style="padding: 8px 16px; background: #8b5cf6; white-space: nowrap;">
+                                    📋 复制原图
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                    <div>
-                        <button class="btn-primary" onclick="downloadExcelReport()" style="padding: 8px 16px; background: #10b981; white-space: nowrap;">
-                            ⬇️ 下载 Excel 文件
-                        </button>
+                        <div id="image-viewer-wrapper"
+                            style="width: 100%; overflow: hidden; position: relative; border: 1px solid #cbd5e1; border-radius: 8px; cursor: zoom-in; background: #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);"
+                            onclick="openFullscreenImage()">
+                            <img id="snapshot-img" src="" style="display: block; width: 100%; pointer-events: none;"
+                                crossorigin="anonymous">
+                            <div
+                                style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.6); color: #fff; padding: 6px 10px; border-radius: 4px; font-size: 12px; pointer-events: none; z-index: 10;">
+                                🔍 点击全屏查看
+                            </div>
+                        </div>
+
+                        <div id="excel-report-container"
+                            style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px dashed #cbd5e1;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 24px;">📊</span>
+                                    <div>
+                                        <h3 style="font-size: 15px; color: #1e293b; margin: 0;">关联 Excel 报表</h3>
+                                        <div style="font-size: 12px; color: #64748b;">专业的高清排版短板透视矩阵表格</div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <button class="btn-primary" onclick="downloadExcelReport()"
+                                        style="padding: 8px 16px; background: #10b981; white-space: nowrap;">
+                                        ⬇️ 下载 Excel 文件
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    </div>
+    </div>
+
+    <div class="modal-overlay" id="distribution-modal" onclick="if(event.target === this) closeDistributionModal()">
+        <div class="modal-content" style="width: 850px; max-width: 95vw;">
+            <div class="modal-header">
+                <h3>⚙️ WeLink 高级分发策略配置 (点击分配)</h3>
+                <button class="close-btn" onclick="closeDistributionModal()">&times;</button>
+            </div>
+            <p style="font-size: 12px; color: #64748b; margin-top: 0; margin-bottom: 12px;">
+                选中右侧员工后点击左侧分类框即可分配。系统会自动根据分类分发不同的专属催办信息。员工库及所有配置永久保存。
+            </p>
+            <div class="dist-layout">
+                <div class="dist-left" id="dist-categories">
+                    <!-- Dynamic Categories will be rendered here via JS -->
+                </div>
+                <div class="dist-right">
+                    <div style="font-size:13px; font-weight:600; color:#555; margin-bottom:10px;">👤 员工名册 <span style="color:#999;font-weight:normal;">(点选复用)</span></div>
+                    <div id="dist-roster-pool" style="flex:1; align-content: flex-start; display: flex; flex-wrap: wrap;">
+                        <!-- Roster chips -->
+                    </div>
+                    <div style="margin-top: 10px; border-top: 1px solid #e2e8f0; padding-top: 10px;">
+                        <input type="text" id="new-roster-input" placeholder="输入工号或群ID (如: l00123)" style="width: 100%; margin-bottom: 6px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px;">
+                        <input type="text" id="new-roster-name" placeholder="备注姓名/群名 (可选)" style="width: 100%; margin-bottom: 6px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px;">
+                        <button onclick="addRosterEmployee()" style="width: 100%; padding: 6px; background: #0ea5e9; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">＋ 添加至待分配库</button>
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+                <button class="btn-primary" onclick="saveDistributionPolicy()">💾 保存全部配置</button>
             </div>
         </div>
+    </div>
+    </div>
     </div>
 
     <div class="modal-overlay" id="ignore-modal" onclick="if(event.target === this) closeIgnoreModal()">
@@ -401,6 +597,16 @@
                 <label>尾部模板 (Footer)</label>
                 <textarea id="tpl-footer" style="height: 120px;"></textarea>
                 <div class="template-help">在这里可以加上特定的说明，比如 Storage Rectification 等</div>
+            </div>
+            <div class="template-group">
+                <label>全局邮件抄送标题 (Email Subject)</label>
+                <input type="text" id="tpl-email" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; margin-top: 4px;">
+                <div class="template-help">可用变量: {MM} 月份, {DD} 日期</div>
+            </div>
+            <div class="template-group">
+                <label>日程/会议邀请标题 (Meeting Subject)</label>
+                <input type="text" id="tpl-meet" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; margin-top: 4px;">
+                <div class="template-help">可用变量: {MM} 月份, {DD} 日期</div>
             </div>
             <div style="text-align: right; margin-top: 20px;">
                 <button class="btn-secondary" onclick="closeTemplateModal()">取消</button>
@@ -454,7 +660,9 @@
         let ignoreKeywords = [];
         let expediteTemplate = {
             header: "📅 【{MM}{DD}】Target Reminder\n@所有人 Hi Team, please ensure we meet the targets for the following items this month:\n\n",
-            footer: "\nAction required ASAP. Thank you!"
+            footer: "\nAction required ASAP. Thank you!",
+            emailSubject: "📅 【{MM}{DD}】Target Reminder",
+            meetSubject: "📅 【{MM}{DD}】Target Reminder"
         };
 
         function autoResizeTextarea(el) {
@@ -723,7 +931,7 @@
             } else {
                 document.getElementById('snapshot-image-container').style.display = 'none';
             }
-            
+
             if (data.excel_path) {
                 document.getElementById('excel-report-container').style.display = 'block';
                 window._currentExcelPath = data.excel_path;
@@ -731,8 +939,450 @@
                 document.getElementById('excel-report-container').style.display = 'none';
                 window._currentExcelPath = null;
             }
+
+            if (data.image_path) {
+                document.getElementById('welink-automation-container').style.display = 'block';
+            } else {
+                document.getElementById('welink-automation-container').style.display = 'none';
+            }
         }
-        
+
+        // --- Distribution Strategy Logic ---
+        window._distPolicy = {
+            roster: [],
+            assignments: {}
+        };
+        let selectedRosterId = null;
+
+        async function fetchDistributionPolicy() {
+            try {
+                const res = await API.get('/api/db/config/welink_policy_v2');
+                if (res && res.roster) {
+                    const newAssignments = {};
+                    for (const key in res.assignments) {
+                        let newKey = key;
+                        if (newKey.startsWith('[') && newKey.endsWith(']') && !newKey.startsWith('GLOBAL_')) {
+                            newKey = newKey.slice(1, -1);
+                        }
+                        newAssignments[newKey] = res.assignments[key];
+                    }
+                    res.assignments = newAssignments;
+                    window._distPolicy = res;
+                }
+            } catch (e) {
+                console.error('Failed to fetch welink policy', e);
+            }
+        }
+
+        window.GlobalCategories = ['TE', 'ORG', 'ET', 'VDF'];
+        async function fetchGlobalCategories() {
+            try {
+                const data = await API.get('/api/sla/categories');
+                if (Array.isArray(data) && data.length > 0) {
+                    window.GlobalCategories = data;
+                }
+            } catch (e) {
+                console.warn('Failed to load global categories', e);
+            }
+        }
+
+        function openDistributionModal() {
+            selectedRosterId = null;
+            renderDistributionModal();
+            document.getElementById('distribution-modal').style.display = 'flex';
+        }
+
+        function closeDistributionModal() {
+            document.getElementById('distribution-modal').style.display = 'none';
+        }
+
+        function renderDistributionModal() {
+            const rosterPool = document.getElementById('dist-roster-pool');
+            const categoriesContainer = document.getElementById('dist-categories');
+
+            const assignedIds = new Set();
+            for (const cat in window._distPolicy.assignments) {
+                (window._distPolicy.assignments[cat] || []).forEach(id => assignedIds.add(id));
+            }
+
+            let userPoolHtml = '';
+            let groupPoolHtml = '';
+            window._distPolicy.roster.forEach(emp => {
+                const isAssigned = assignedIds.has(emp.id);
+                const chip = `<div class="roster-chip ${selectedRosterId === emp.id ? 'selected' : ''} ${isAssigned && selectedRosterId !== emp.id ? 'assigned' : ''}" onclick="selectRoster('${emp.id}')">
+                    ${emp.id} ${emp.name ? `(${emp.name})` : ''}
+                    <span class="del-roster" onclick="event.stopPropagation(); deleteRoster('${emp.id}')">✕</span>
+                </div>`;
+                if (emp.id.length > 10) {
+                    groupPoolHtml += chip;
+                } else {
+                    userPoolHtml += chip;
+                }
+            });
+            
+            let finalHtml = `
+            <div style="font-size:12px; font-weight:600; color:#555; margin: 0 0 4px 4px;">👤 员工名单</div>
+            <div style="display: flex; flex-wrap: wrap; margin-bottom: 12px; min-height: 28px;">
+                ${userPoolHtml || '<span style="color:#999;font-size:12px; margin-left: 6px; font-style:italic;">暂无人员，请在下方添加</span>'}
+            </div>
+            <div style="font-size:12px; font-weight:600; color:#555; margin: 0 0 4px 4px;">👥 群组名单</div>
+            <div style="display: flex; flex-wrap: wrap; min-height: 28px;">
+                ${groupPoolHtml || '<span style="color:#999;font-size:12px; margin-left: 6px; font-style:italic;">暂无群组，请在下方添加</span>'}
+            </div>`;
+            rosterPool.innerHTML = finalHtml;
+
+            const dynamicCats = window.GlobalCategories;
+            
+            const renderCategory = (catId, title, icon) => {
+                const assigned = window._distPolicy.assignments[catId] || [];
+                let chipsHtml = assigned.map(id => {
+                    const emp = window._distPolicy.roster.find(r => r.id === id) || {id};
+                    return `<div class="assigned-chip">${emp.id} ${emp.name ? `(${emp.name})` : ''} <span class="del" onclick="event.stopPropagation(); unassign('${catId}', '${id}')">✕</span></div>`;
+                }).join('');
+                if(!chipsHtml) chipsHtml = '<span style="color:#cbd5e1; font-size:12px; font-style:italic;">选中右侧员工后，点击此处分配...</span>';
+
+                return `
+                <div id="cat-${catId}" class="dist-category" onclick="assignSelectedTo('${catId}')">
+                    <div class="dist-category-title">${icon} ${title}</div>
+                    <div class="dist-category-pool">${chipsHtml}</div>
+                </div>`;
+            };
+
+            let catHtml = '';
+            dynamicCats.forEach(cat => {
+                catHtml += renderCategory(cat, `专属单聊分发: [${cat}]`, '💬');
+            });
+            
+            catHtml += `<hr style="border:none; border-top:1px dashed #cbd5e1; margin: 20px 0;">`;
+            catHtml += renderCategory('GLOBAL_GROUP', '全局群聊推送 (全量报告)', '👥');
+            catHtml += renderCategory('GLOBAL_EMAIL', '全局邮件抄送 (全量报告)', '📧');
+            catHtml += renderCategory('GLOBAL_MEET', '日程/会议邀请 (发起沟通)', '📅');
+
+            categoriesContainer.innerHTML = catHtml;
+        }
+
+        function selectRoster(id) {
+            selectedRosterId = selectedRosterId === id ? null : id;
+            renderDistributionModal();
+        }
+
+        function addRosterEmployee() {
+            const idInput = document.getElementById('new-roster-input').value.trim();
+            const nameInput = document.getElementById('new-roster-name').value.trim();
+            if (!idInput) return showToast('请输入工号或ID', 'error');
+
+            if (!window._distPolicy.roster.find(r => r.id === idInput)) {
+                window._distPolicy.roster.push({ id: idInput, name: nameInput });
+            }
+            document.getElementById('new-roster-input').value = '';
+            document.getElementById('new-roster-name').value = '';
+            renderDistributionModal();
+        }
+
+        function deleteRoster(id) {
+            window._distPolicy.roster = window._distPolicy.roster.filter(r => r.id !== id);
+            for (const cat in window._distPolicy.assignments) {
+                window._distPolicy.assignments[cat] = (window._distPolicy.assignments[cat] || []).filter(uid => uid !== id);
+            }
+            if (selectedRosterId === id) selectedRosterId = null;
+            renderDistributionModal();
+        }
+
+        function assignSelectedTo(catId) {
+            if (!selectedRosterId) {
+                return showToast('请先在右侧选择要分配的人员/群组', 'warning');
+            }
+            
+            const isGroup = selectedRosterId.length > 10;
+            if (catId === 'GLOBAL_GROUP' && !isGroup) {
+                return showToast('❌ 群聊推送只能分配群组号 (长度>10)', 'error');
+            }
+            if (catId !== 'GLOBAL_GROUP' && isGroup) {
+                return showToast('❌ 个人通知 (单聊/邮件/日程) 只能分配个人工号', 'error');
+            }
+
+            if (!window._distPolicy.assignments[catId]) window._distPolicy.assignments[catId] = [];
+            
+            if (!window._distPolicy.assignments[catId].includes(selectedRosterId)) {
+                window._distPolicy.assignments[catId].push(selectedRosterId);
+            }
+            selectedRosterId = null;
+            renderDistributionModal();
+            
+            setTimeout(() => {
+                const catEl = document.getElementById(`cat-${catId}`);
+                if (catEl) {
+                    catEl.classList.add('assign-anim');
+                    setTimeout(() => catEl.classList.remove('assign-anim'), 500);
+                }
+            }, 10);
+        }
+
+        function unassign(catId, empId) {
+            window._distPolicy.assignments[catId] = (window._distPolicy.assignments[catId] || []).filter(id => id !== empId);
+            renderDistributionModal();
+        }
+
+        async function saveDistributionPolicy() {
+            try {
+                await API.post('/api/db/config/welink_policy_v2', window._distPolicy);
+                showToast('分发策略已保存', 'success');
+                closeDistributionModal();
+            } catch (e) {
+                showToast('分发策略保存失败', 'error');
+                console.error(e);
+            }
+        }
+
+        function generatePersonalizedText(empId, dynamicCats) {
+            const assignedCats = [];
+            for (const cat of dynamicCats) {
+                if (window._distPolicy.assignments[cat] && window._distPolicy.assignments[cat].includes(empId)) {
+                    assignedCats.push(cat);
+                }
+            }
+
+            if (assignedCats.length === 0) return null;
+
+            const monthStr = String(latestFailingData.month).padStart(2, '0');
+            const dayStr = String(new Date().getDate()).padStart(2, '0');
+            let text = expediteTemplate.header.replace(/\{MM\}/g, monthStr).replace(/\{DD\}/g, dayStr) + '\n\n';
+            
+            let hasMetrics = false;
+            assignedCats.forEach(cat => {
+                const metrics = latestFailingData.failing_metrics[cat];
+                if (metrics && metrics.length > 0) {
+                    let catHasMetrics = false;
+                    let catText = `🔹 [${cat}]:\n`;
+                    metrics.forEach(m => {
+                        const enName = getEnName(m.metric_label);
+                        if (!isIgnored(m.metric_label, enName)) {
+                            let targetStr = m.target_val && m.target_val !== '--' ? m.target_val : '';
+                            if (targetStr && !targetStr.includes('≥') && !targetStr.includes('≤')) targetStr = '≥ ' + targetStr;
+                            if (String(m.raw_val).includes('%') && targetStr && !targetStr.includes('%')) targetStr += '%';
+                            
+                            let alertIcon = '';
+                            if (m.gap && parseFloat(String(m.gap).replace(/[^0-9.-]/g, '')) >= 10) alertIcon = '🚨 ';
+                            
+                            catText += `    ↳ ${alertIcon}${enName} (${m.raw_val} ➔ ${targetStr})\n`;
+                            catHasMetrics = true;
+                        }
+                    });
+                    if (catHasMetrics) {
+                        text += catText + '\n';
+                        hasMetrics = true;
+                    }
+                }
+            });
+            
+            if (!hasMetrics) {
+                text += `✅ All metrics for your assigned group have met the targets. Thank you for your support!\n\n`;
+            }
+
+            text += expediteTemplate.footer;
+            return text.trim();
+        }
+
+        function generateAndCopyWLS() {
+            if (!latestFailingData) return showToast('无快照数据', 'error');
+
+            const origin = window.location.origin;
+            const imgUrl = document.getElementById('snapshot-img').src;
+            let excelUrl = window._currentExcelPath;
+            if (excelUrl && !excelUrl.startsWith('http')) excelUrl = origin + excelUrl;
+
+            const fullTextContent = document.getElementById('brief-textarea').value;
+            const enableMedia = document.getElementById('welink-enable-media').checked;
+
+            const dynamicCats = window.GlobalCategories;
+            const imUsersSet = new Set();
+            dynamicCats.forEach(cat => {
+                (window._distPolicy.assignments[cat] || []).forEach(id => imUsersSet.add(id));
+            });
+            const imUsersArray = Array.from(imUsersSet);
+
+            const globalGroups = window._distPolicy.assignments['GLOBAL_GROUP'] || [];
+            const emailUsers = window._distPolicy.assignments['GLOBAL_EMAIL'] || [];
+            const meetUsers = window._distPolicy.assignments['GLOBAL_MEET'] || [];
+
+            if (imUsersArray.length === 0 && globalGroups.length === 0 && emailUsers.length === 0 && meetUsers.length === 0) {
+                return showToast('您尚未分配任何接收人，请先点击"配置高级分发策略"', 'error');
+            }
+
+            let psScript = `
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+
+Write-Host "🔄 正在检查并刷新 WeLink 认证状态 (防 401 假死)..." -ForegroundColor Cyan
+$statusOutput = welink-cli auth status 2>&1 | Out-String
+
+$envParam = ""
+if ($statusOutput -match "Environment:\s*pro") {
+    $envParam = "--env pro"
+}
+
+Write-Host "> welink-cli auth login $envParam" -ForegroundColor DarkCyan
+Invoke-Expression "welink-cli auth login $envParam"
+
+# 再次校验是否成功
+$statusOutputAfter = welink-cli auth status 2>&1 | Out-String
+if ($statusOutputAfter -match "User Token:\\s*valid" -or $statusOutputAfter -match "valid \\(expires") {
+    Write-Host "✅ 认证已成功刷新/校验" -ForegroundColor Green
+} else {
+    Write-Host "⚠️ 认证已失效或未登录，任务已中止。请确认您已成功扫码登录。" -ForegroundColor Red
+    exit
+}
+
+`;
+            if (enableMedia) {
+                psScript += `
+$tempImg = Join-Path $env:TEMP "report_img_$([guid]::NewGuid().ToString().Substring(0,8)).png"
+$tempXlsx = Join-Path $env:TEMP "report_excel_$([guid]::NewGuid().ToString().Substring(0,8)).xlsx"
+
+Write-Host "📥 正在从平台拉取报表资源..." -ForegroundColor Cyan
+
+Invoke-WebRequest -Uri "${imgUrl}" -OutFile "$tempImg"
+${excelUrl ? `Invoke-WebRequest -Uri "${excelUrl}" -OutFile "$tempXlsx"` : ''}
+`;
+            }
+
+            psScript += `\nWrite-Host "🚀 开始执行自动化分发任务..." -ForegroundColor Green\n`;
+
+            const monthStr = String(latestFailingData.month).padStart(2, '0');
+            const dayStr = String(new Date().getDate()).padStart(2, '0');
+            const parsedEmailSubject = (expediteTemplate.emailSubject || "📅 【{MM}{DD}】Target Reminder").replace(/\{MM\}/g, monthStr).replace(/\{DD\}/g, dayStr);
+            const parsedMeetSubject = (expediteTemplate.meetSubject || "📅 【{MM}{DD}】Target Reminder").replace(/\{MM\}/g, monthStr).replace(/\{DD\}/g, dayStr);
+
+            // Global Full Text
+            let finalGlobalText = fullTextContent;
+            if (!enableMedia) {
+                finalGlobalText += `\n\n[Report_Picture_Download]: ${imgUrl}`;
+                if (excelUrl) finalGlobalText += `\n[Report_Excel_Download]: ${excelUrl}`;
+            }
+            psScript += `\n$msgGlobal = @"\n${finalGlobalText}\n"@\n`;
+            psScript += `$parsedEmailSubject = "${parsedEmailSubject}"\n`;
+            psScript += `$parsedMeetSubject = "${parsedMeetSubject}"\n`;
+
+            // 1. Sending IMs (Personalized)
+            if (imUsersArray.length > 0) {
+                psScript += `\n# 1. 专属分类单聊推送\n`;
+                imUsersArray.forEach(uid => {
+                    let pText = generatePersonalizedText(uid, dynamicCats);
+                    if (!enableMedia) {
+                        pText += `\n\n[Report_Picture_Download]: ${imgUrl}`;
+                        if (excelUrl) pText += `\n[Report_Excel_Download]: ${excelUrl}`;
+                    }
+                    
+                    psScript += `
+$msg_${uid.replace(/[^a-zA-Z0-9]/g, '')} = @"
+${pText}
+"@
+Write-Host "\`n➤ 正在向单聊接收人 ${uid} 发送专属催办..." -ForegroundColor DarkGray
+Write-Host "> welink-cli im send-to-user --receiver \`"${uid}\`" --text <专属文本内容>" -ForegroundColor DarkCyan
+$out = welink-cli im send-to-user --receiver "${uid}" --text "$msg_${uid.replace(/[^a-zA-Z0-9]/g, '')}" 2>&1 | Out-String
+if ([string]::IsNullOrWhiteSpace($out)) { Write-Host "↳ 发送完成" -ForegroundColor DarkGray } else { Write-Host $out.Trim() }
+`;
+                    if (enableMedia) {
+                        psScript += `
+Write-Host "> welink-cli im send-to-user --receiver \`"${uid}\`" --text \`"[Image Attachment]\`" --image \`"$tempImg\`"" -ForegroundColor DarkCyan
+$out = welink-cli im send-to-user --receiver "${uid}" --text "[Image Attachment]" --image "$tempImg" 2>&1 | Out-String
+if (-not [string]::IsNullOrWhiteSpace($out)) { Write-Host $out.Trim() }
+`;
+                        if (excelUrl) psScript += `
+Write-Host "> welink-cli im send-to-user --receiver \`"${uid}\`" --text \`"[File Attachment]\`" --file \`"$tempXlsx\`"" -ForegroundColor DarkCyan
+$out = welink-cli im send-to-user --receiver "${uid}" --text "[File Attachment]" --file "$tempXlsx" 2>&1 | Out-String
+if (-not [string]::IsNullOrWhiteSpace($out)) { Write-Host $out.Trim() }
+`;
+                    }
+                });
+            }
+
+            // 2. Global Groups
+            if (globalGroups.length > 0) {
+                psScript += `\n# 2. 发送全量报告至群聊\n`;
+                const getArrayStr = (arr) => arr.length === 0 ? '@()' : `@(${arr.map(u => `"${u}"`).join(',')})`;
+                psScript += `$imGroups = ${getArrayStr(globalGroups)}\n`;
+                psScript += `
+foreach ($gid in $imGroups) {
+    Write-Host "\`n➤ 正在向群聊 $gid 发送全量消息..." -ForegroundColor DarkGray
+    Write-Host "> welink-cli im send-to-group --group-id \`"$gid\`" --text <全量报告内容>" -ForegroundColor DarkCyan
+    $out = welink-cli im send-to-group --group-id "$gid" --text "$msgGlobal" 2>&1 | Out-String
+    if ([string]::IsNullOrWhiteSpace($out)) { Write-Host "↳ 发送完成" -ForegroundColor DarkGray } else { Write-Host $out.Trim() }
+${enableMedia ? `
+    Write-Host "> welink-cli im send-to-group --group-id \`"$gid\`" --text \`"[Image Attachment]\`" --image \`"$tempImg\`"" -ForegroundColor DarkCyan
+    $out = welink-cli im send-to-group --group-id "$gid" --text "[Image Attachment]" --image "$tempImg" 2>&1 | Out-String
+    if (-not [string]::IsNullOrWhiteSpace($out)) { Write-Host $out.Trim() }
+${excelUrl ? `
+    Write-Host "> welink-cli im send-to-group --group-id \`"$gid\`" --text \`"[File Attachment]\`" --file \`"$tempXlsx\`"" -ForegroundColor DarkCyan
+    $out = welink-cli im send-to-group --group-id "$gid" --text "[File Attachment]" --file "$tempXlsx" 2>&1 | Out-String
+    if (-not [string]::IsNullOrWhiteSpace($out)) { Write-Host $out.Trim() }
+` : ''}` : ''}
+}
+`;
+            }
+
+            // 3. Email
+            if (emailUsers.length > 0) {
+                const getArrayStr = (arr) => arr.length === 0 ? '@()' : `@(${arr.map(u => `"${u}"`).join(',')})`;
+                psScript += `\n# 3. 自动解析邮箱并发送抄送邮件\n`;
+                psScript += `$emailUsers = ${getArrayStr(emailUsers)}\n`;
+                psScript += `
+Write-Host "\`n➤ 正在处理邮件抄送任务..." -ForegroundColor Cyan
+$emailList = @()
+foreach ($empId in $emailUsers) {
+    try {
+        $searchCmd = "welink-cli search person --text $empId"
+        $searchOutput = Invoke-Expression "$searchCmd 2>&1" | Out-String
+        $mail = ($searchOutput | ConvertFrom-Json).search_cli_person.data[0].personMail
+        if (-not [string]::IsNullOrWhiteSpace($mail)) { $emailList += $mail }
+    } catch {}
+if ($emailList.Count -gt 0) {
+    $mailString = $emailList -join ","
+    Write-Host "↳ 正在发送群发邮件至: $mailString" -ForegroundColor DarkGray
+    Write-Host "> welink-cli mail send --to \`"$mailString\`" --subject \`"$parsedEmailSubject\`" --body <全量报告内容>" -ForegroundColor DarkCyan
+    $out = welink-cli mail send --to "$mailString" --subject "$parsedEmailSubject" --body "$msgGlobal" 2>&1 | Out-String
+    if (-not [string]::IsNullOrWhiteSpace($out)) { Write-Host $out.Trim() }
+}
+`;
+            }
+
+            // 4. Meeting
+            if (meetUsers.length > 0) {
+                const getArrayStr = (arr) => arr.length === 0 ? '@()' : `@(${arr.map(u => `"${u}"`).join(',')})`;
+                psScript += `\n# 4. 创建日程邀请\n`;
+                psScript += `$meetUsers = ${getArrayStr(meetUsers)}\n`;
+                psScript += `
+Write-Host "\`n➤ 正在处理日程/会议邀请任务..." -ForegroundColor Cyan
+$idString = $meetUsers -join ","
+Write-Host "> welink-cli calendar create --subject \`"$parsedMeetSubject\`" ... --description <全量报告内容>" -ForegroundColor DarkCyan
+$calOut = welink-cli calendar create --subject "$parsedMeetSubject" --start "$( (Get-Date).AddMinutes(30).ToString('yyyy-MM-dd HH:mm:ss') )" --end "$( (Get-Date).AddMinutes(60).ToString('yyyy-MM-dd HH:mm:ss') )" --location "线上会议" --attendee "$idString" --description "$msgGlobal" 2>&1 | Out-String
+if ($calOut -match "error") { 
+    Write-Host "↳ 日程创建失败: $($calOut.Trim())" -ForegroundColor Red 
+} else { 
+    Write-Host "↳ 日程创建成功！" -ForegroundColor Green 
+}
+`;
+            }
+
+            if (enableMedia) {
+                psScript += `
+Remove-Item $tempImg -ErrorAction SilentlyContinue
+${excelUrl ? 'Remove-Item $tempXlsx -ErrorAction SilentlyContinue' : ''}
+`;
+            }
+
+            psScript += `\nWrite-Host "\`n✅ 全部分发任务已完成！" -ForegroundColor Green`;
+
+            const ta = document.createElement('textarea');
+            ta.value = psScript.trim() + '\n\n';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+
+            showToast('✅ WeLink 自动化脚本已复制，请在 PowerShell 中右键粘贴执行', 'success');
+        }
+
         function downloadExcelReport() {
             if (window._currentExcelPath) {
                 const a = document.createElement('a');
@@ -868,8 +1518,10 @@
 
         // --- Template Modal Logic ---
         function openTemplateModal() {
-            document.getElementById('tpl-header').value = expediteTemplate.header;
-            document.getElementById('tpl-footer').value = expediteTemplate.footer;
+            document.getElementById('tpl-header').value = expediteTemplate.header || '';
+            document.getElementById('tpl-footer').value = expediteTemplate.footer || '';
+            document.getElementById('tpl-email').value = expediteTemplate.emailSubject || '📅 【{MM}{DD}】Target Reminder';
+            document.getElementById('tpl-meet').value = expediteTemplate.meetSubject || '📅 【{MM}{DD}】Target Reminder';
             document.getElementById('template-modal').style.display = 'flex';
         }
 
@@ -882,6 +1534,8 @@
 
             expediteTemplate.header = document.getElementById('tpl-header').value;
             expediteTemplate.footer = document.getElementById('tpl-footer').value;
+            expediteTemplate.emailSubject = document.getElementById('tpl-email').value;
+            expediteTemplate.meetSubject = document.getElementById('tpl-meet').value;
 
             globalConfig.prefs.expediteTemplate = expediteTemplate;
 
@@ -896,7 +1550,11 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', initExpedite);
+        document.addEventListener('DOMContentLoaded', () => {
+            initExpedite();
+            fetchDistributionPolicy();
+            fetchGlobalCategories();
+        });
     </script>
 </body>
 
