@@ -46,6 +46,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         document.getElementById('report-content').style.display = 'block';
+        const exportBtnContainer = document.getElementById('export-actions');
+        if (exportBtnContainer) exportBtnContainer.style.display = 'flex';
 
         const trends = data.trends;
         const latest = data.latest_snapshot;
@@ -693,3 +695,77 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
 
     document.getElementById('full-report-content').innerHTML = matrixHtml + adjustHtml;
 }
+
+window.exportToImage = async function() {
+    try {
+        const btnContainer = document.getElementById('export-actions');
+        btnContainer.style.display = 'none'; // hide buttons
+        showToast('⏳ 正在生成长图，请稍候...', 'info');
+
+        const element = document.querySelector('.page-container');
+        const canvas = await html2canvas(element, {
+            scale: 2, // High resolution
+            useCORS: true,
+            backgroundColor: '#f0f2f5',
+            windowHeight: element.scrollHeight
+        });
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.9);
+        const a = document.createElement('a');
+        a.href = imgData;
+        
+        let dateStr = document.getElementById('latest-snapshot-date').innerText || 'Latest';
+        a.download = `Monthly_Report_${dateStr}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        btnContainer.style.display = 'flex';
+        showToast('✅ 长图已成功导出！', 'success');
+    } catch (e) {
+        console.error(e);
+        document.getElementById('export-actions').style.display = 'flex';
+        showToast('导出图片失败: ' + e.message, 'error');
+    }
+};
+
+window.exportToPDF = async function() {
+    try {
+        const btnContainer = document.getElementById('export-actions');
+        btnContainer.style.display = 'none'; // hide buttons
+        showToast('⏳ 正在生成 PDF，请稍候...', 'info');
+
+        const element = document.querySelector('.page-container');
+        const canvas = await html2canvas(element, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#f0f2f5',
+            windowHeight: element.scrollHeight
+        });
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        
+        // Use jsPDF from UMD
+        const { jsPDF } = window.jspdf;
+        
+        // Convert canvas dimensions to pt for jsPDF (1px = 0.75pt, but jsPDF handles 'px' directly)
+        const pdf = new jsPDF({
+            orientation: 'p',
+            unit: 'px',
+            format: [canvas.width, canvas.height]
+        });
+        
+        // Add image to cover the entire single page
+        pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
+        
+        let dateStr = document.getElementById('latest-snapshot-date').innerText || 'Latest';
+        pdf.save(`Monthly_Report_${dateStr}.pdf`);
+
+        btnContainer.style.display = 'flex';
+        showToast('✅ PDF 已成功导出！', 'success');
+    } catch (e) {
+        console.error(e);
+        document.getElementById('export-actions').style.display = 'flex';
+        showToast('导出 PDF 失败: ' + e.message, 'error');
+    }
+};
