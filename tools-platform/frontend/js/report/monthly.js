@@ -703,12 +703,23 @@ window.exportToImage = async function() {
         showToast('⏳ 正在生成长图，请稍候...', 'info');
 
         const element = document.querySelector('.page-container');
+        
+        // Fix for html2canvas truncation: scroll to top before capturing
+        const prevScrollY = window.scrollY;
+        window.scrollTo(0, 0);
+        
+        // Add temporary bottom padding to guarantee whitespace
+        const oldPadding = element.style.paddingBottom;
+        element.style.paddingBottom = '100px';
+
         const canvas = await html2canvas(element, {
             scale: 2, // High resolution
             useCORS: true,
-            backgroundColor: '#f0f2f5',
-            windowHeight: element.scrollHeight
+            backgroundColor: '#f0f2f5'
         });
+
+        element.style.paddingBottom = oldPadding;
+        window.scrollTo(0, prevScrollY);
 
         const imgData = canvas.toDataURL('image/jpeg', 0.9);
         const a = document.createElement('a');
@@ -736,27 +747,42 @@ window.exportToPDF = async function() {
         showToast('⏳ 正在生成 PDF，请稍候...', 'info');
 
         const element = document.querySelector('.page-container');
+        
+        // Fix for html2canvas truncation: scroll to top before capturing
+        const prevScrollY = window.scrollY;
+        window.scrollTo(0, 0);
+        
+        // Add temporary bottom padding to guarantee whitespace
+        const oldPadding = element.style.paddingBottom;
+        element.style.paddingBottom = '100px';
+
         const canvas = await html2canvas(element, {
             scale: 2,
             useCORS: true,
-            backgroundColor: '#f0f2f5',
-            windowHeight: element.scrollHeight
+            backgroundColor: '#f0f2f5'
         });
+
+        element.style.paddingBottom = oldPadding;
+        window.scrollTo(0, prevScrollY);
 
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
         
         // Use jsPDF from UMD
         const { jsPDF } = window.jspdf;
         
-        // Convert canvas dimensions to pt for jsPDF (1px = 0.75pt, but jsPDF handles 'px' directly)
+        // Calculate dimensions to fit A4 width (avoiding PDF 14400pt height limit)
+        // A4 width in pt is 595.28
+        const pdfWidth = 595.28;
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        
         const pdf = new jsPDF({
             orientation: 'p',
-            unit: 'px',
-            format: [canvas.width, canvas.height]
+            unit: 'pt',
+            format: [pdfWidth, pdfHeight]
         });
         
-        // Add image to cover the entire single page
-        pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
+        // Add image to cover the entire custom-sized page
+        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
         
         let dateStr = document.getElementById('latest-snapshot-date').innerText || 'Latest';
         pdf.save(`Monthly_Report_${dateStr}.pdf`);
