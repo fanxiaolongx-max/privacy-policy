@@ -355,16 +355,22 @@
     "label": "服务专刊季度提交"
   },
   "manual_target_1778882000003": {
-    "5": 1,
+    "5": "1",
     "type": "gte",
     "weight": 3,
-    "label": "半年度服务峰会召开"
+    "label": "半年度服务峰会召开",
+    "exceedBy": "",
+    "bonus": "",
+    "autoFill": true
   },
   "manual_target_1778882000004": {
-    "5": 1,
+    "5": "1",
     "type": "gte",
     "weight": 2,
-    "label": "Jam客户互动月度发布"
+    "label": "Jam客户互动月度发布",
+    "exceedBy": 1,
+    "bonus": 0.5,
+    "autoFill": true
   },
   "manual_target_1778882000005": {
     "type": "gte",

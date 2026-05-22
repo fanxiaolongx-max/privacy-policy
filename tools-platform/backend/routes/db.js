@@ -158,7 +158,8 @@ function getFailingForSnapshot(snapshot, res) {
             created_at: snapshot.created_at,
             failing_metrics: grouped,
             image_path: snapshot.image_path,
-            excel_path: snapshot.excel_path
+            excel_path: snapshot.excel_path,
+            raw_data_json: snapshot.raw_data_json
         });
     });
 }
@@ -201,6 +202,92 @@ router.post('/config/:key', (req, res) => {
             res.json({ success: true });
         }
     );
+});
+
+router.get('/monthly_report_data', (req, res) => {
+    const sqlDaily = `
+        SELECT s.snapshot_id, s.month, DATE(s.created_at) as date, s.created_at, s.standard_total_score 
+        FROM ReportSnapshots s
+        INNER JOIN (
+            SELECT DATE(created_at) as d, MAX(id) as max_id
+            FROM ReportSnapshots
+            GROUP BY DATE(created_at)
+        ) latest ON s.id = latest.max_id
+        ORDER BY date ASC
+    `;
+
+    db.all(sqlDaily, (err, dailySnapshots) => {
+        if (err) return res.status(500).json({ error: err.message });
+        
+        if (dailySnapshots.length === 0) {
+            return res.json({ trends: [], latest_snapshot: null });
+        }
+
+        const snapshotIds = dailySnapshots.map(s => `'${s.snapshot_id}'`).join(',');
+        
+        db.all(`SELECT snapshot_id, cat_name, final_score FROM ReportCategoryScores WHERE snapshot_id IN (${snapshotIds})`, (err, catScores) => {
+            if (err) return res.status(500).json({ error: err.message });
+
+            db.all(`SELECT snapshot_id, COUNT(*) as total_metrics, SUM(CASE WHEN is_failing = 1 THEN 1 ELSE 0 END) as failing_metrics FROM ReportMetricData WHERE snapshot_id IN (${snapshotIds}) GROUP BY snapshot_id`, (err, metricStatsRows) => {
+                if (err) return res.status(500).json({ error: err.message });
+
+                const metricStatsMap = {};
+                metricStatsRows.forEach(row => {
+                    metricStatsMap[row.snapshot_id] = {
+                        total: row.total_metrics,
+                        failing: row.failing_metrics || 0
+                    };
+                });
+
+                const catScoreMap = {};
+                catScores.forEach(cs => {
+                    if (!catScoreMap[cs.snapshot_id]) catScoreMap[cs.snapshot_id] = {};
+                    catScoreMap[cs.snapshot_id][cs.cat_name] = cs.final_score;
+                });
+
+                const trends = dailySnapshots.map(s => {
+                    const stats = metricStatsMap[s.snapshot_id] || { total: 0, failing: 0 };
+                    let complianceRate = 0;
+                    if (stats.total > 0) {
+                        complianceRate = ((stats.total - stats.failing) / stats.total) * 100;
+                    }
+                    return {
+                        date: s.date,
+                        snapshot_id: s.snapshot_id,
+                        total_score: s.standard_total_score,
+                        cat_scores: catScoreMap[s.snapshot_id] || {},
+                        compliance_rate: complianceRate,
+                        metrics_total: stats.total,
+                        metrics_failing: stats.failing
+                    };
+                });
+
+                const latestSnapshotId = dailySnapshots[dailySnapshots.length - 1].snapshot_id;
+
+                db.all(`SELECT * FROM ReportCategoryScores WHERE snapshot_id = ?`, [latestSnapshotId], (err, latestCatScores) => {
+                    if (err) return res.status(500).json({ error: err.message });
+
+                    db.all(`SELECT * FROM ReportMetricData WHERE snapshot_id = ?`, [latestSnapshotId], (err, latestMetrics) => {
+                        if (err) return res.status(500).json({ error: err.message });
+
+                        db.get(`SELECT raw_data_json FROM ReportSnapshots WHERE snapshot_id = ?`, [latestSnapshotId], (err, snapRow) => {
+                            if (err) return res.status(500).json({ error: err.message });
+                            res.json({
+                                trends: trends,
+                                latest_snapshot: {
+                                    snapshot_id: latestSnapshotId,
+                                    total_score: dailySnapshots[dailySnapshots.length - 1].standard_total_score,
+                                    cat_scores: latestCatScores,
+                                    metrics: latestMetrics,
+                                    raw_data_json: snapRow ? snapRow.raw_data_json : null
+                                }
+                            });
+                        });
+                    });
+                });
+            });
+        });
+    });
 });
 
 module.exports = router;

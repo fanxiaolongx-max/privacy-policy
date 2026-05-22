@@ -260,19 +260,60 @@ function renderReport(snap) {
             if (k.startsWith('manual_') && globalConfig.targets[k].label) {
                 const label = globalConfig.targets[k].label;
                 const exists = metricCols.find(m => m.label === label);
+                
+                let valToUse = '--';
+                let subsToUse = [];
+                
+                if (globalConfig.targets[k].autoFill) {
+                    const snapIdx = snapshots.findIndex(s => s.id === snap.id);
+                    if (snapIdx >= 0 && snapIdx < snapshots.length - 1) {
+                        const prevSnap = snapshots[snapIdx + 1];
+                        const prevMetric = (prevSnap.topMetrics || []).find(m => m.label === label);
+                        if (prevMetric) {
+                            valToUse = prevMetric.value || '--';
+                            if (prevMetric.subMetrics) {
+                                subsToUse = JSON.parse(JSON.stringify(prevMetric.subMetrics));
+                            }
+                        }
+                    }
+                }
+                
                 if (!exists) {
-                    metricCols.push({
+                    const newMetric = {
                         id: `manual_m_${Date.now()}_${Math.random()}`,
                         colX: "手动指标",
                         valY: "总计",
                         colZ: "手动指标",
                         label: label,
-                        value: '--',
-                        subMetrics: [],
+                        value: valToUse,
+                        subMetrics: subsToUse,
                         isManual: true
-                    });
+                    };
+                    metricCols.push(newMetric);
+                    if (globalConfig.targets[k].autoFill) {
+                        if (!currentSnapshot.topMetrics) currentSnapshot.topMetrics = [];
+                        currentSnapshot.topMetrics.push(newMetric);
+                        API.put(`/api/sla/snapshots/${currentSnapshot.id}`, currentSnapshot).catch(e => console.error('Auto-fill save error:', e));
+                    }
                 } else {
                     exists.isManual = true;
+                    if (globalConfig.targets[k].autoFill) {
+                        let changed = false;
+                        if (!exists.value || exists.value === '--') { exists.value = valToUse; changed = true; }
+                        if (!exists.subMetrics || exists.subMetrics.length === 0) { exists.subMetrics = subsToUse; changed = true; }
+                        
+                        if (changed) {
+                            if (!currentSnapshot.topMetrics) currentSnapshot.topMetrics = [];
+                            const realExists = currentSnapshot.topMetrics.find(m => m.label === label);
+                            if (realExists) {
+                                realExists.value = exists.value;
+                                realExists.subMetrics = exists.subMetrics;
+                            } else {
+                                currentSnapshot.topMetrics.push(exists);
+                            }
+                            API.put(`/api/sla/snapshots/${currentSnapshot.id}`, currentSnapshot).catch(e => console.error('Auto-fill save error:', e));
+                        }
+                    }
                 }
             }
         });
@@ -316,6 +357,7 @@ function renderReport(snap) {
             
             let isFailing = false;
             let gapStr = '';
+            let bonusScore = 0;
             
             if (!isNaN(valNum)) {
                 if (m.hasTarget) {
@@ -331,15 +373,21 @@ function renderReport(snap) {
                     } else if (condition === 'lte' && valNum > targetNum) {
                         isFailing = true;
                         gapStr = +(valNum - targetNum).toFixed(2) + (isPercent ? '%' : '');
+                    } else if (targetData.exceedBy > 0 && targetData.bonus > 0) {
+                        if (condition === 'gte' && valNum > targetNum) {
+                            bonusScore = Math.floor((valNum - targetNum) / targetData.exceedBy) * targetData.bonus;
+                        } else if (condition === 'lte' && valNum < targetNum) {
+                            bonusScore = Math.floor((targetNum - valNum) / targetData.exceedBy) * targetData.bonus;
+                        }
                     }
                     
                     if (!isFailing) {
-                        catData[sm.category].earnedScore += weight;
+                        catData[sm.category].earnedScore += weight + bonusScore;
                     }
                 }
             }
             
-            catData[sm.category].values[m.label] = { raw: sm.value, num: valNum, isFailing: isFailing, gapStr: gapStr };
+            catData[sm.category].values[m.label] = { raw: sm.value, num: valNum, isFailing: isFailing, gapStr: gapStr, bonusScore: bonusScore || 0 };
         });
     });
 
@@ -373,27 +421,29 @@ function renderReport(snap) {
     window._currentGroupWeightMap = groupWeightMap;
     window._currentLabelToGroup = labelToGroup;
 
-    // Build rows with group spans
-    // rows: [{groupName, groupSize, isGroupStart, metric, groupWeight}]
     const tableRows = [];
     let i = 0;
     while (i < orderedMetrics.length) {
         const m = orderedMetrics[i];
-        const grpName = labelToGroup[m.label] || null;
+        const hasTgt = labelToTargetMap[m.label] && labelToTargetMap[m.label][targetMonth] !== undefined && labelToTargetMap[m.label][targetMonth] !== '';
+        const grpName = labelToGroup[m.label] || (m.isManual || hasTgt ? '未分组(Ungrouped)' : null);
+        
         if (grpName) {
-            // Count consecutive metrics in same group
-            const grpMetrics = orderedMetrics.filter(x => labelToGroup[x.label] === grpName);
+            const grpMetrics = orderedMetrics.filter(x => {
+                const xHasTgt = labelToTargetMap[x.label] && labelToTargetMap[x.label][targetMonth] !== undefined && labelToTargetMap[x.label][targetMonth] !== '';
+                return (labelToGroup[x.label] || (x.isManual || xHasTgt ? '未分组(Ungrouped)' : null)) === grpName;
+            });
             const size = grpMetrics.length;
-            // Find first occurrence
-            const firstIdx = orderedMetrics.findIndex(x => x.label === grpMetrics[0].label);
+            const firstIdx = orderedMetrics.findIndex(x => {
+                const xHasTgt = labelToTargetMap[x.label] && labelToTargetMap[x.label][targetMonth] !== undefined && labelToTargetMap[x.label][targetMonth] !== '';
+                return (labelToGroup[x.label] || (x.isManual || xHasTgt ? '未分组(Ungrouped)' : null)) === grpName && x.label === grpMetrics[0].label;
+            });
             if (i === firstIdx) {
-                tableRows.push({ groupName: grpName, groupSize: size, isGroupStart: true, metric: m, groupWeight: groupWeightMap[grpName] });
+                tableRows.push({ groupName: grpName, groupSize: size, isGroupStart: true, metric: m, groupWeight: groupWeightMap[grpName] || '-' });
             } else {
                 tableRows.push({ groupName: grpName, groupSize: 0, isGroupStart: false, metric: m });
             }
         }
-        // Ungrouped metrics (grpName is null) are intentionally NOT added to tableRows 
-        // so they don't appear in the visual matrix table.
         i++;
     }
 
@@ -460,7 +510,17 @@ function renderReport(snap) {
             globalDisplayClass = isGlobalFailing ? 'val-warn' : 'val-good';
             globalTitleAttr = isGlobalFailing ? ` title="整体不达标，距离目标差 ${globalGapStr}"` : '';
         }
-        const editBtn = m.isManual ? `<span style="cursor:pointer; margin-left:6px; font-size:12px; color:#2e7d32; background:#e8f5e9; padding:2px 6px; border-radius:4px; border:1px solid #c8e6c9;" onclick="editManualMetric('${escapeHTML(m.label)}')">✏️ 填报 (Fill)</span>` : '';
+        let autoFillBtn = '';
+        if (m.isManual) {
+            const targetData = labelToTargetMap[m.label] || {};
+            const isAuto = !!targetData.autoFill;
+            const autoColor = isAuto ? '#0288d1' : '#9e9e9e';
+            const autoBg = isAuto ? '#e1f5fe' : '#f5f5f5';
+            const autoBorder = isAuto ? '#81d4fa' : '#e0e0e0';
+            const autoText = isAuto ? '🔄 自动填报: 已开' : '🔄 自动填报: 未开';
+            autoFillBtn = `<span style="cursor:pointer; margin-left:6px; font-size:12px; color:${autoColor}; background:${autoBg}; padding:2px 6px; border-radius:4px; border:1px solid ${autoBorder};" onclick="toggleAutoFill('${escapeHTML(m.label)}')">${autoText}</span>`;
+        }
+        const editBtn = m.isManual ? `<span style="cursor:pointer; margin-left:6px; font-size:12px; color:#2e7d32; background:#e8f5e9; padding:2px 6px; border-radius:4px; border:1px solid #c8e6c9;" onclick="editManualMetric('${escapeHTML(m.label)}')">✏️ 填报 (Fill)</span>${autoFillBtn}` : '';
 
         matrixHtml += `<tr class="matrix-data-row" data-group="${escapeHTML(row.groupName || '未分组')}">`;
 
@@ -504,9 +564,10 @@ function renderReport(snap) {
             } else if (!m.hasTarget) {
                 matrixHtml += `<td data-col="${colIdx++}" class="val-none" style="background:#f1f8e9;" title="未配置目标值或权重为0，不计分">--</td>`;
             } else {
-                const earned = cell.isFailing ? 0 : weight;
+                const earned = cell.isFailing ? 0 : (weight + (cell.bonusScore || 0));
                 const scoreColor = cell.isFailing ? '#d32f2f' : '#2e7d32';
-                matrixHtml += `<td data-col="${colIdx++}" style="font-weight:bold; color:${scoreColor}; background:#f1f8e9;">${earned}</td>`;
+                const bonusDisplay = cell.bonusScore ? ` <span style="font-size:10px; color:#e65100;">(+${cell.bonusScore.toFixed(2)})</span>` : '';
+                matrixHtml += `<td data-col="${colIdx++}" style="font-weight:bold; color:${scoreColor}; background:#f1f8e9;" title="基础分: ${weight}, 超额奖励: ${cell.bonusScore||0}">${earned}${bonusDisplay}</td>`;
             }
         });
         
@@ -740,7 +801,7 @@ window.populateFilterOptions = function() {
         rows.forEach(row => {
             const cell = row.querySelector(`td[data-col="${colIdx}"]`);
             if (cell) {
-                let val = cell.innerText.trim().replace('✏️ 填报', '').trim();
+                let val = cell.innerText.trim().replace(/✏️[\s\S]*$/, '').trim();
                 if (val) uniqueValues.add(val);
             }
         });
@@ -836,7 +897,7 @@ window.filterMatrix = function() {
             const allowedSet = filters[colIdx];
             const cell = row.querySelector(`td[data-col="${colIdx}"]`);
             if (cell) {
-                let text = cell.innerText.trim().replace('✏️ 填报', '').trim();
+                let text = cell.innerText.trim().replace(/✏️[\s\S]*$/, '').trim();
                 if (!allowedSet.has(text)) {
                     match = false;
                     break;
@@ -1581,6 +1642,24 @@ window.openAddMetricModal = function() {
         return;
     }
     
+    let modal = document.getElementById('add-metric-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'add-metric-modal';
+        modal.style.cssText = 'display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:999; align-items:center; justify-content:center;';
+        modal.innerHTML = `
+            <div style="background:#fff; border-radius:12px; width:600px; max-width:90%; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
+                <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:12px; margin-bottom:16px; color:#2e7d32;">➕ 手动增加指标 (Add Manual Metric)</h3>
+                <div style="max-height:60vh; overflow-y:auto; margin-bottom:16px; padding-right:10px;" id="add-metric-form"></div>
+                <div style="text-align:right; border-top:1px solid #eee; padding-top:16px;">
+                    <button onclick="closeAddMetricModal()" style="padding:8px 16px; border:1px solid #ccc; background:#fff; border-radius:6px; cursor:pointer; margin-right:10px;">取消</button>
+                    <button onclick="saveManualMetric()" style="padding:8px 16px; border:none; background:#2e7d32; color:#fff; border-radius:6px; cursor:pointer; font-weight:bold;">保存指标到快照</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    
     const formEl = document.getElementById('add-metric-form');
     const targetMonth = document.getElementById('target-month-select').value;
     
@@ -1608,6 +1687,20 @@ window.openAddMetricModal = function() {
             </div>
         </div>
         
+        <div style="display:flex; gap:10px; margin-bottom:12px; background:#f5f8fa; padding:10px; border-radius:4px; border:1px solid #e1e8ed;">
+            <div style="flex:1;">
+                <label style="display:block; font-size:12px; color:#0277bd; margin-bottom:4px; font-weight:bold;">🏆 超额奖励 (每超出)</label>
+                <input type="number" id="manual-metric-exceed-by" step="0.1" min="0" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;" placeholder="例如: 1">
+            </div>
+            <div style="flex:1;">
+                <label style="display:block; font-size:12px; color:#0277bd; margin-bottom:4px; font-weight:bold;">➕ 给予加分</label>
+                <input type="number" id="manual-metric-bonus" step="0.1" min="0" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;" placeholder="例如: 0.1">
+            </div>
+            <div style="flex:1.5; display:flex; align-items:center;">
+                <span style="font-size:11px; color:#666; line-height:1.4;">(选填) 若客户群超额完成目标，按比例折算增加得分。留空表示不启用超额奖励。</span>
+            </div>
+        </div>
+        
         <div style="margin-bottom:16px; padding-bottom:12px; border-bottom:1px dashed #eee;">
             <label style="display:block; font-size:12px; color:#666; margin-bottom:4px;">全局总体数值 (总盘实际达成)</label>
             <input type="text" id="manual-metric-global" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;" placeholder="例如: 85 或 85%">
@@ -1630,7 +1723,6 @@ window.openAddMetricModal = function() {
     
     formEl.innerHTML = html;
     
-    const modal = document.getElementById('add-metric-modal');
     modal.querySelector('h3').innerHTML = '➕ 手动增加指标';
     
     if (document.fullscreenElement) {
@@ -1665,6 +1757,8 @@ window.editManualMetric = function(label) {
         if (targetData.type) document.getElementById('manual-metric-type').value = targetData.type;
         const targetMonth = document.getElementById('target-month-select').value;
         if (targetData[targetMonth] !== undefined) document.getElementById('manual-metric-target').value = targetData[targetMonth];
+        if (targetData.exceedBy !== undefined) document.getElementById('manual-metric-exceed-by').value = targetData.exceedBy;
+        if (targetData.bonus !== undefined) document.getElementById('manual-metric-bonus').value = targetData.bonus;
     }
     
     // Fill snapshot values if exist
@@ -1684,7 +1778,11 @@ window.editManualMetric = function(label) {
 };
 
 window.closeAddMetricModal = function() {
-    document.getElementById('add-metric-modal').style.display = 'none';
+    const modal = document.getElementById('add-metric-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.appendChild(modal);
+    }
 };
 
 window.saveManualMetric = async function() {
@@ -1732,6 +1830,11 @@ window.saveManualMetric = async function() {
     updatedTargets[targetKey].weight = validWeight;
     updatedTargets[targetKey].label = name;
     
+    const exceedBy = parseFloat(document.getElementById('manual-metric-exceed-by').value);
+    const bonus = parseFloat(document.getElementById('manual-metric-bonus').value);
+    updatedTargets[targetKey].exceedBy = isNaN(exceedBy) ? '' : exceedBy;
+    updatedTargets[targetKey].bonus = isNaN(bonus) ? '' : bonus;
+    
     if (targetVal) {
         updatedTargets[targetKey][targetMonth] = targetVal;
     }
@@ -1759,6 +1862,27 @@ window.saveManualMetric = async function() {
     } catch(e) {
         showToast('保存失败', 'error');
         console.error(e);
+    }
+};
+
+window.toggleAutoFill = async function(label) {
+    if (!globalConfig.targets) globalConfig.targets = {};
+    let targetKey = labelToTargetKeyMap[label];
+    if (!targetKey) {
+        targetKey = `manual_target_${Date.now()}`;
+        globalConfig.targets[targetKey] = { label: label };
+    }
+    
+    globalConfig.targets[targetKey].autoFill = !globalConfig.targets[targetKey].autoFill;
+    
+    try {
+        await API.put('/api/sla/targets', globalConfig.targets);
+        buildLabelTargetMap();
+        showToast(globalConfig.targets[targetKey].autoFill ? '自动填报已开启 (Auto Fill ON)' : '自动填报已关闭 (Auto Fill OFF)', 'success');
+        renderReport(currentSnapshot);
+    } catch(e) {
+        console.error(e);
+        showToast('设置失败 (Save failed)', 'error');
     }
 };
 
@@ -2050,9 +2174,97 @@ document.addEventListener('DOMContentLoaded', () => {
     initReport();
 });
 
-window.saveDashboardToDB = async function() {
+async function promptExpiringTickets(tickets) {
+    return new Promise(resolve => {
+        const modalId = 'expiring-tickets-modal';
+        let modal = document.getElementById(modalId);
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = modalId;
+            modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+            document.body.appendChild(modal);
+        }
+        
+        let listHtml = tickets.map((t, i) => {
+            const data = t.data || {};
+            const id = data.task_id || data.risk_id || data.ticket_id || data['单号'] || data['问题风险编号'] || data['问题编号'] || '未知单号';
+            const network = data.network_name || data['网络名称'] || data.network || '未知网络';
+            return `<div style="padding:8px;border-bottom:1px solid #eee;font-size:13px;display:flex;align-items:center;">
+                <input type="checkbox" class="exp-ticket-cb" value="${i}" checked style="margin-right:10px;cursor:pointer;width:16px;height:16px;">
+                <div style="flex:1;">
+                    <b>${escapeHTML(t.title)}</b> | 单号: <span style="color:#1976d2">${escapeHTML(id)}</span> | 网络: ${escapeHTML(network)} | <span style="color:#d32f2f">${escapeHTML(t._slaCleanText)}</span>
+                </div>
+            </div>`;
+        }).join('');
+        
+        modal.innerHTML = `
+            <div style="background:#fff;border-radius:8px;width:650px;max-width:90%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+                <div style="padding:16px;border-bottom:1px solid #eee;background:#fff3e0;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;align-items:center;">
+                    <h3 style="margin:0;color:#e65100;font-size:16px;">⚠️ 发现待处理的临期数据</h3>
+                    <label style="font-size:13px;cursor:pointer;color:#e65100;font-weight:bold;display:flex;align-items:center;"><input type="checkbox" id="exp-select-all" checked style="margin-right:4px;"> 全选</label>
+                </div>
+                <div style="padding:16px;overflow-y:auto;flex:1;">
+                    <p style="margin-top:0;font-size:14px;color:#333;">本次快照关联到了以下 <b>${tickets.length}</b> 条“本月底+5天内处理”条件的最新数据。请<b>勾选</b>需要一起入库的单子（取消勾选则会忽略）：</p>
+                    <div style="background:#fcfcfc;border-radius:4px;border:1px solid #ddd;max-height:250px;overflow-y:auto;margin-bottom:16px;">
+                        ${listHtml}
+                    </div>
+                    <p style="margin-bottom:0;font-size:14px;color:#d32f2f;font-weight:bold;">
+                        是否将勾选的单子统一入库？
+                    </p>
+                    <p style="margin-top:4px;font-size:12px;color:#666;">
+                        一旦入库，将会和库中已有内容一起，后面计划呈现在一键催办和月报页面。不勾选的单子将被彻底忽略。
+                    </p>
+                </div>
+                <div style="padding:16px;border-top:1px solid #eee;display:flex;justify-content:flex-end;gap:12px;background:#f8f9fa;border-radius:0 0 8px 8px;">
+                    <button id="btn-ignore-exp" style="padding:8px 16px;border:1px solid #ccc;background:#fff;border-radius:4px;cursor:pointer;color:#666;font-size:14px;">全部忽略</button>
+                    <button id="btn-confirm-exp" style="padding:8px 16px;border:none;background:#e65100;color:#fff;border-radius:4px;cursor:pointer;font-weight:bold;font-size:14px;">✅ 统一入库 (已选 <span id="exp-sel-count">${tickets.length}</span> 项)</button>
+                </div>
+            </div>
+        `;
+        
+        modal.style.display = 'flex';
+        
+        const selectAllCb = document.getElementById('exp-select-all');
+        const cbs = document.querySelectorAll('.exp-ticket-cb');
+        const countSpan = document.getElementById('exp-sel-count');
+        
+        const updateCount = () => {
+            const checkedCount = document.querySelectorAll('.exp-ticket-cb:checked').length;
+            countSpan.innerText = checkedCount;
+            selectAllCb.checked = checkedCount === cbs.length;
+        };
+        
+        selectAllCb.onchange = (e) => {
+            cbs.forEach(cb => cb.checked = e.target.checked);
+            updateCount();
+        };
+        
+        cbs.forEach(cb => {
+            cb.onchange = updateCount;
+        });
+        
+        document.getElementById('btn-ignore-exp').onclick = () => {
+            modal.style.display = 'none';
+            resolve([]);
+        };
+        
+        document.getElementById('btn-confirm-exp').onclick = () => {
+            const selectedIndices = Array.from(document.querySelectorAll('.exp-ticket-cb:checked')).map(cb => parseInt(cb.value));
+            const selectedTickets = selectedIndices.map(i => tickets[i]);
+            modal.style.display = 'none';
+            resolve(selectedTickets);
+        };
+    });
+}
+
+window.saveDashboardToDB = async function(event) {
     if (!currentSnapshot) {
         return showToast('无可用快照数据', 'error');
+    }
+
+    if (currentSnapshot.expiringTickets && currentSnapshot.expiringTickets.length > 0) {
+        const selectedTickets = await promptExpiringTickets(currentSnapshot.expiringTickets);
+        currentSnapshot.expiringTickets = selectedTickets;
     }
 
     const snapshot_id = currentSnapshot.id;
