@@ -16,7 +16,14 @@
                 <h1>🎯 需求管理广场 <span style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v1.1.0</span></h1>
                 <p>提交、追踪和管理平台新功能与优化需求</p>
             </div>
-            <button class="btn btn-primary" onclick="ReqApp.openCreateModal()">+ 提交新需求</button>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <select id="reqSortSelect" class="form-control" style="width: auto; background: rgba(15, 23, 42, 0.8);" onchange="ReqApp.renderBoard()">
+                    <option value="progress">默认排序：按进度优先</option>
+                    <option value="updated">排序：最近更新时间</option>
+                    <option value="created">排序：最近创建时间</option>
+                </select>
+                <button class="btn btn-primary" onclick="ReqApp.openCreateModal()">+ 提交新需求</button>
+            </div>
         </header>
 
         <div class="req-board" id="reqBoard">

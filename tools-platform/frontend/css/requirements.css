@@ -347,63 +347,36 @@ textarea.form-control {
 .logs-timeline {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    max-height: 200px;
-    overflow-y: auto;
-    padding-right: 8px;
+    gap: 4px;
 }
 
 .log-item {
     display: flex;
-    gap: 16px;
-    position: relative;
-}
-
-.log-item::before {
-    content: '';
-    position: absolute;
-    left: 15px;
-    top: 24px;
-    bottom: -16px;
-    width: 2px;
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.log-item:last-child::before {
-    display: none;
+    align-items: center;
+    gap: 8px;
+    background: rgba(15, 23, 42, 0.3);
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.02);
 }
 
 .log-time {
-    font-size: 11px;
+    font-size: 12px;
     color: #64748b;
-    min-width: 80px;
-    padding-top: 4px;
-}
-
-.log-node {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: #3b82f6;
-    margin-top: 6px;
-    position: relative;
-    z-index: 2;
-    border: 2px solid #1e293b;
-    box-sizing: content-box;
+    min-width: 90px;
 }
 
 .log-content {
     flex: 1;
-    background: rgba(15, 23, 42, 0.3);
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.02);
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .log-header {
     display: flex;
-    justify-content: space-between;
-    margin-bottom: 4px;
+    align-items: center;
+    gap: 8px;
 }
 
 .log-operator {
@@ -418,11 +391,10 @@ textarea.form-control {
 }
 
 .log-remark {
-    font-size: 13px;
+    font-size: 12px;
     color: #cbd5e1;
     margin: 0;
-    background: rgba(0, 0, 0, 0.2);
-    padding: 8px;
-    border-radius: 6px;
-    border-left: 2px solid #3b82f6;
+    border-left: 1px dashed rgba(255, 255, 255, 0.15);
+    padding-left: 8px;
+    font-style: italic;
 }

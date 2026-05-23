@@ -24,7 +24,24 @@ const ReqApp = {
             return;
         }
 
-        this.requirements.forEach(req => {
+        const sortType = document.getElementById('reqSortSelect') ? document.getElementById('reqSortSelect').value : 'progress';
+        let sortedReqs = [...this.requirements];
+        
+        if (sortType === 'progress') {
+            const statusOrder = { '提交': 1, '需求接受': 2, '需求实现中': 3, '需求完成': 4, '验收完成': 5, '需求评价': 6, '已拒绝': 99 };
+            sortedReqs.sort((a, b) => {
+                const orderA = statusOrder[a.status] || 99;
+                const orderB = statusOrder[b.status] || 99;
+                if (orderA !== orderB) return orderA - orderB;
+                return new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at);
+            });
+        } else if (sortType === 'updated') {
+            sortedReqs.sort((a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at));
+        } else if (sortType === 'created') {
+            sortedReqs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        }
+
+        sortedReqs.forEach(req => {
             const card = document.createElement('div');
             card.className = 'req-card';
             card.onclick = () => this.openEditModal(req.id);
@@ -369,7 +386,6 @@ const ReqApp = {
 
             el.innerHTML = `
                 <div class="log-time">${dateStr}</div>
-                <div class="log-node"></div>
                 <div class="log-content">
                     <div class="log-header">
                         <span class="log-operator">${this.escapeHTML(log.operator || 'System')}</span>
