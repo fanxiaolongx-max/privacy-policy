@@ -713,6 +713,28 @@
         ],
         "isManual": true,
         "hasTarget": true
+      },
+      {
+        "id": "manual_m_1779558232389_0.9573248323524759",
+        "colX": "手动指标",
+        "valY": "总计",
+        "colZ": "手动指标",
+        "label": "网络韧性评估",
+        "value": "--",
+        "subMetrics": [],
+        "isManual": true,
+        "hasTarget": false
+      },
+      {
+        "id": "manual_m_1779558232389_0.8365723877333199",
+        "colX": "手动指标",
+        "valY": "总计",
+        "colZ": "手动指标",
+        "label": "风险感知系统部署",
+        "value": "--",
+        "subMetrics": [],
+        "isManual": true,
+        "hasTarget": false
       }
     ],
     "expiringTickets": [

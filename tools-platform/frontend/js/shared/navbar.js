@@ -11,7 +11,7 @@ function renderNavbar() {
         { href: '/report', icon: '📈', label: '报表看板', match: p => p.startsWith('/report') },
         { href: '/expedite', icon: '⚡', label: '一键催办', match: p => p.startsWith('/expedite') },
         { href: '/monthly', icon: '📅', label: '月报页面', match: p => p.startsWith('/monthly') },
-        { href: '/requirements', icon: '🎯', label: '需求管理', match: p => p.startsWith('/requirements') }
+        { href: '/praudit', icon: '📋', label: 'PR稽查', match: p => p.startsWith('/praudit') }
     ];
 
     const linksHtml = links.map(l =>
@@ -44,10 +44,11 @@ function renderNavbar() {
         <div class="nav-links">${linksHtml}</div>
         <div style="flex:1"></div>
         
-        <div style="display:flex; align-items:center; gap:15px; font-size:14px; font-weight:600; color:#555;">
-            ${role === 'admin' ? '<a href="#" onclick="openUserModal()" style="text-decoration:none; color:#3949ab;">👥 账号管理</a>' : ''}
-            <span style="color:#0277bd;">👤 ${user || '未登录'}</span>
-            <a href="#" onclick="doLogout()" style="text-decoration:none; color:#d32f2f; background:#ffebee; padding:4px 10px; border-radius:15px;">退出</a>
+        <div style="display:flex; align-items:center; gap:12px; font-size:14px; font-weight:600; color:#e2e8f0;">
+            <a href="/requirements" class="req-btn" style="text-decoration:none; color:#fff; background: linear-gradient(135deg, #00b09b, #96c93d); padding:5px 14px; border-radius:20px; font-size:13px; font-weight:bold; box-shadow:0 3px 6px rgba(0,176,155,0.3); display:flex; align-items:center; gap:5px; transition:transform 0.2s;">🎯 需求管理/反馈</a>
+            ${role === 'admin' ? '<a href="#" onclick="openUserModal()" onmouseover="this.style.background=\'rgba(255,255,255,0.2)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.1)\'" style="text-decoration:none; color:#f8fafc; background:rgba(255,255,255,0.1); padding:5px 12px; border-radius:15px; border:1px solid rgba(255,255,255,0.2); font-size:13px; transition:background 0.2s;">👥 账号管理</a>' : ''}
+            <span style="color:#38bdf8; background:rgba(56,189,248,0.15); padding:5px 12px; border-radius:15px; border:1px solid rgba(56,189,248,0.3); font-size:13px;">👤 ${user || '未登录'}</span>
+            <a href="#" onclick="doLogout()" onmouseover="this.style.background='rgba(239,68,68,0.25)'" onmouseout="this.style.background='rgba(239,68,68,0.15)'" style="text-decoration:none; color:#fca5a5; background:rgba(239,68,68,0.15); padding:5px 12px; border-radius:15px; border:1px solid rgba(239,68,68,0.3); font-size:13px; transition:background 0.2s;">退出</a>
         </div>
 
         <div class="nav-status" style="margin-left:20px; display:flex; align-items:center; gap:12px;">
@@ -81,42 +82,66 @@ window.openUserModal = async function () {
     if (!m) {
         m = document.createElement('div');
         m.id = 'user-mgmt-modal';
-        m.style.cssText = 'position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:99999; display:none; align-items:center; justify-content:center;';
+        m.style.cssText = 'position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.6); backdrop-filter:blur(4px); z-index:99999; display:none; align-items:center; justify-content:center;';
         document.body.appendChild(m);
     }
 
     try {
         const res = await API.get('/api/auth/users');
 
-        let trs = res.map(u => `
-            <tr>
-                <td style="padding:10px; border-bottom:1px solid #eee;">${u.username}</td>
-                <td style="padding:10px; border-bottom:1px solid #eee;">${u.role === 'admin' ? '超级管理' : '只读'}</td>
-                <td style="padding:10px; border-bottom:1px solid #eee; text-align:right;">
-                    ${u.username !== 'admin' ? `<button onclick="deleteUser('${u.username}')" style="background:#ffebee; color:#d32f2f; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">删除</button>` : ''}
-                    <button onclick="resetPwd('${u.username}')" style="background:#e8eaf6; color:#3949ab; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; margin-left:5px;">重置密码</button>
+        let trs = res.map(u => {
+            const roleBadge = u.role === 'admin' 
+                ? '<span style="background:#e0e7ff; color:#4338ca; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; border:1px solid #c7d2fe;">超级管理</span>'
+                : '<span style="background:#f1f5f9; color:#64748b; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; border:1px solid #e2e8f0;">只读用户</span>';
+            
+            return `
+            <tr style="transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                <td style="padding:14px 16px; border-bottom:1px solid #f1f5f9; font-weight:500; color:#334155;">${u.username}</td>
+                <td style="padding:14px 16px; border-bottom:1px solid #f1f5f9;">${roleBadge}</td>
+                <td style="padding:14px 16px; border-bottom:1px solid #f1f5f9; text-align:right;">
+                    ${u.username !== 'admin' ? `<button onclick="deleteUser('${u.username}')" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'" style="background:#fef2f2; color:#ef4444; border:1px solid #fee2e2; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; transition:all 0.2s;">删除</button>` : ''}
+                    <button onclick="resetPwd('${u.username}')" onmouseover="this.style.background='#e0f2fe'" onmouseout="this.style.background='#f0f9ff'" style="background:#f0f9ff; color:#0284c7; border:1px solid #e0f2fe; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; transition:all 0.2s; margin-left:8px;">重置密码</button>
                 </td>
             </tr>
-        `).join('');
+            `;
+        }).join('');
 
         m.innerHTML = `
-            <div style="background:#fff; width:500px; padding:20px; border-radius:12px;">
-                <h3 style="margin-top:0;">👥 账号管理</h3>
-                <div style="display:flex; gap:10px; margin-bottom:15px;">
-                    <input id="nu_name" placeholder="新用户名" style="flex:1; padding:8px; border:1px solid #ccc; border-radius:4px;">
-                    <input id="nu_pwd" placeholder="密码" style="flex:1; padding:8px; border:1px solid #ccc; border-radius:4px;">
-                    <select id="nu_role" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
-                        <option value="readonly">只读</option>
-                        <option value="admin">超管</option>
-                    </select>
-                    <button onclick="addUser()" style="background:#2e7d32; color:#fff; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">新增</button>
+            <div style="background:#ffffff; width:650px; max-width:90%; padding:32px; border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,0.2); position:relative; animation: fadeIn 0.3s ease;">
+                <button onclick="document.getElementById('user-mgmt-modal').style.display='none'" style="position:absolute; top:24px; right:24px; background:none; border:none; font-size:24px; color:#94a3b8; cursor:pointer; line-height:1; transition:color 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#94a3b8'">&times;</button>
+                
+                <h3 style="margin-top:0; margin-bottom:24px; font-size:20px; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:8px; border-bottom:2px solid #f1f5f9; padding-bottom:16px;">
+                    👥 账号管理与权限
+                </h3>
+                
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px; margin-bottom:24px;">
+                    <div style="font-size:13px; font-weight:600; color:#475569; margin-bottom:12px;">➕ 新增账号</div>
+                    <div style="display:flex; gap:12px;">
+                        <input id="nu_name" placeholder="输入新用户名" style="flex:1; padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; outline:none; font-size:14px; transition:border-color 0.2s, box-shadow 0.2s;" onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59,130,246,0.1)'" onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none'">
+                        <input id="nu_pwd" placeholder="设置密码" style="flex:1; padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; outline:none; font-size:14px; transition:border-color 0.2s, box-shadow 0.2s;" onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59,130,246,0.1)'" onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none'">
+                        <select id="nu_role" style="padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; outline:none; font-size:14px; background:#fff; cursor:pointer;">
+                            <option value="readonly">只读权限</option>
+                            <option value="admin">超级管理</option>
+                        </select>
+                        <button onclick="addUser()" style="background:#10b981; color:#fff; border:none; padding:10px 20px; border-radius:8px; font-weight:600; cursor:pointer; transition:background 0.2s; box-shadow:0 2px 4px rgba(16,185,129,0.2);" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">新增</button>
+                    </div>
                 </div>
-                <table style="width:100%; border-collapse:collapse; text-align:left;">
-                    <thead><tr style="background:#f5f5f5;"><th style="padding:10px;">账号</th><th style="padding:10px;">权限角色</th><th style="padding:10px; text-align:right;">操作</th></tr></thead>
-                    <tbody>${trs}</tbody>
-                </table>
-                <div style="text-align:right; margin-top:20px;">
-                    <button onclick="document.getElementById('user-mgmt-modal').style.display='none'" style="padding:8px 20px; cursor:pointer;">关闭</button>
+                
+                <div style="border:1px solid #e2e8f0; border-radius:12px; overflow:hidden;">
+                    <table style="width:100%; border-collapse:collapse; text-align:left;">
+                        <thead>
+                            <tr style="background:#f8fafc; border-bottom:1px solid #e2e8f0;">
+                                <th style="padding:12px 16px; font-size:13px; font-weight:600; color:#64748b;">账号名称</th>
+                                <th style="padding:12px 16px; font-size:13px; font-weight:600; color:#64748b;">权限角色</th>
+                                <th style="padding:12px 16px; font-size:13px; font-weight:600; color:#64748b; text-align:right;">快捷操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>${trs}</tbody>
+                    </table>
+                </div>
+                
+                <div style="text-align:right; margin-top:24px;">
+                    <button onclick="document.getElementById('user-mgmt-modal').style.display='none'" style="background:#f1f5f9; color:#475569; border:none; padding:10px 24px; border-radius:8px; font-weight:600; font-size:14px; cursor:pointer; transition:background 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">完成并关闭</button>
                 </div>
             </div>
         `;
