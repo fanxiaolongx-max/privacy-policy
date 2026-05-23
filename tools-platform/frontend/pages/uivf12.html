@@ -13,7 +13,8 @@
 <body id="uiv-page">
     <div class="page-content">
         <div class="uiv-title">
-            <span>🚀 自动化脚本工程中心 v6.6</span>
+            <span>🚀 自动化脚本工程中心 <span
+                    style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v6.6.0</span></span>
             <span class="tag">多源融合 + Formula 权威版</span>
         </div>
 
@@ -79,7 +80,7 @@
                 <div class="controls">
                     <label><input type="checkbox" id="useGlobalVars" checked> 全局变量注入</label>
                     <label><input type="checkbox" id="isPagination" checked> 循环翻页</label>
-                    <label><input type="checkbox" id="forceSumData" checked> 独立大盘兜底</label>
+                    <label><input type="checkbox" id="forceSumData" checked> 强制获取汇总数据-兜底</label>
                     <label style="color:var(--warning);"><input type="checkbox" id="autoFetchCPC" checked> 动态抓取 CPC /
                         NID</label>
                     <label style="color:var(--cyber); font-weight:bold;"><input type="checkbox" id="autoRuntimeMonth"
@@ -103,7 +104,8 @@
                     <div class="btn-group" style="gap:8px; margin:0; flex:none;">
                         <button id="saveBtn" class="btn btn-secondary btn-action" style="white-space:nowrap;"
                             onclick="UIVSave.saveCurrentScript()">💾 加入侧边栏</button>
-                        <button id="btnCopyUIV" class="btn btn-action" style="background:var(--accent); white-space:nowrap;"
+                        <button id="btnCopyUIV" class="btn btn-action"
+                            style="background:var(--accent); white-space:nowrap;"
                             onclick="UIVCopy.copyCodeText('codeOutput', 'btnCopyUIV', 'UIV 代码')">📋 复制 UIV</button>
                     </div>
                 </div>
@@ -112,8 +114,10 @@
 
                 <div class="output-header">
                     <label class="output-label console-label">💻 纯浏览器控制台执行脚本 (F12):</label>
-                    <button id="btnCopyConsole" class="btn btn-action" style="background:var(--console); margin:0; white-space:nowrap;"
-                        onclick="UIVCopy.copyCodeText('consoleOutput', 'btnCopyConsole', '控制台代码')">📋 复制 Console</button>
+                    <button id="btnCopyConsole" class="btn btn-action"
+                        style="background:var(--console); margin:0; white-space:nowrap;"
+                        onclick="UIVCopy.copyCodeText('consoleOutput', 'btnCopyConsole', '控制台代码')">📋 复制
+                        Console</button>
                 </div>
                 <textarea id="consoleOutput" readonly placeholder="生成后显示纯浏览器 F12 直跑脚本..." style="flex:1;"></textarea>
             </div>

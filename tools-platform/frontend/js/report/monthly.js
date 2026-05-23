@@ -186,7 +186,7 @@ function drawCharts(trends) {
             return relVal;
         }},
         legend: { data: ['整体达标率', '达标指标数', '总考核指标数'], bottom: 0 },
-        xAxis: { type: 'category', data: dates, boundaryGap: false },
+        xAxis: { type: 'category', data: dates, boundaryGap: true },
         yAxis: [
             { 
                 type: 'value', 
@@ -203,7 +203,7 @@ function drawCharts(trends) {
                 splitLine: { show: false }
             }
         ],
-        grid: { left: '10%', right: '12%', bottom: '15%' },
+        grid: { left: '3%', right: '3%', bottom: '5%', containLabel: true },
         series: [
             {
                 name: '整体达标率',
@@ -218,7 +218,8 @@ function drawCharts(trends) {
                     ])
                 },
                 itemStyle: { color: '#00285e' },
-                label: { show: true, position: 'top', formatter: '{c}%' }
+                label: { show: true, position: 'top', formatter: '{c}%' },
+                labelLayout: { hideOverlap: true }
             },
             {
                 name: '总考核指标数',
@@ -236,7 +237,8 @@ function drawCharts(trends) {
                 smooth: true,
                 yAxisIndex: 1,
                 itemStyle: { color: '#2e7d32' },
-                label: { show: true, position: 'bottom', formatter: '{c}项' }
+                label: { show: true, position: 'bottom', formatter: '{c}项' },
+                labelLayout: { hideOverlap: true }
             }
         ]
     });
@@ -266,9 +268,9 @@ function drawCharts(trends) {
         title: { text: '各客户群达标情况趋势', left: 'center', textStyle: { fontSize: 15, fontWeight: 'normal' } },
         tooltip: { trigger: 'axis' },
         legend: { data: allCats, bottom: 0, type: 'scroll' },
-        xAxis: { type: 'category', data: dates, boundaryGap: false },
+        xAxis: { type: 'category', data: dates, boundaryGap: true },
         yAxis: { type: 'value', min: 'dataMin' },
-        grid: { left: '10%', right: '5%', bottom: '15%' },
+        grid: { left: '3%', right: '5%', bottom: '5%', containLabel: true },
         series: seriesData
     });
 

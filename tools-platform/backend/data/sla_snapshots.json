@@ -1,5 +1,933 @@
 [
   {
+    "id": "mpi1axj2",
+    "timestamp": "2026-05-23T07:35:49.164Z",
+    "files": [
+      "PBI_自动抓取-CPT风险详表_Latest (1).csv",
+      "PBI_自动抓取-风险详单_Latest (1).csv",
+      "PBI_自动抓取-CPT风险详表_Latest.csv",
+      "PBI_自动抓取-风险详单_Latest.csv",
+      "PBI_自动抓取-软件MM收编_停退_Latest.csv",
+      "PBI_自动抓取-数据存储整改_Latest.csv",
+      "PBI_自动抓取-路由器整改_Latest.csv",
+      "PBI_自动抓取-事故_Latest.csv",
+      "PBI_自动抓取-SRFRT_Latest_2026年05月.csv",
+      "PBI_自动抓取-产品EOS风险_Latest.csv",
+      "PBI_自动抓取-版本EOS风险_Latest.csv",
+      "PBI_自动抓取-重急EOS风险_Latest.csv",
+      "PBI_自动抓取-锂电池_Latest.csv",
+      "PBI_自动抓取-数字证书_Latest.csv",
+      "PBI_自动抓取-详单_图形化拦截_CN_Latest_2026年05月.csv",
+      "PBI_自动抓取-详单_逃生演练_Latest.csv",
+      "PBI_自动抓取-巡检详单_价值网络巡检_Latest.csv",
+      "PBI_自动抓取_价值网络巡检_Latest.csv",
+      "PBI_自动抓取_应急演练_Latest.csv",
+      "PBI_自动抓取_预案拓扑_Latest.csv",
+      "PBI_自动抓取_产品TOPN风险_Latest.csv",
+      "PBI_自动抓取_延期操作补授权监控_Latest.csv",
+      "PBI_自动抓取_ADMS_事中：高危命令拦截人员管理_Latest_2026年05月.csv",
+      "PBI_自动抓取_图形化拦截_CN_Latest_2026年05月.csv",
+      "PBI_自动抓取_15_CN_事前：操作资质积分_CO_Latest.csv",
+      "PBI_自动抓取_日志稽查率CN_Latest_2026年05月.csv",
+      "PBI_自动抓取-业务比对明细_17_CN_业务比对报告看板_CO_Latest_2026年05月.csv",
+      "PBI_自动抓取_17_CN_业务比对报告看板_CO_Latest_2026年05月.csv",
+      "PBI_自动抓取-红线人员工单统计_维护红线资源_Latest.csv",
+      "PBI_自动抓取-任职匹配度_维护红线资源_Latest.csv",
+      "PBI_自动抓取_维护红线资源_Latest.csv",
+      "PBI_自动抓取_整改_Latest.csv",
+      "PBI_自动抓取-整改详单_整改_Latest.csv",
+      "PBI_自动抓取_逃生演练_Latest.csv"
+    ],
+    "summary": [
+      {
+        "section": "🔧 整改详单合集",
+        "metrics": [
+          {
+            "title": "H1完成率",
+            "value": "99.4%",
+            "status": ""
+          },
+          {
+            "title": "H2完成率",
+            "value": "52.6%",
+            "status": ""
+          },
+          {
+            "title": "2026总完成率",
+            "value": "73.7%",
+            "status": ""
+          }
+        ]
+      },
+      {
+        "section": "⚠️ 常规风险合集",
+        "metrics": [
+          {
+            "title": "单量",
+            "value": "256",
+            "status": ""
+          },
+          {
+            "title": "已闭环",
+            "value": "0",
+            "status": ""
+          },
+          {
+            "title": "解决率",
+            "value": "0.0%",
+            "status": ""
+          }
+        ]
+      },
+      {
+        "section": "🛠️ CPT专项风险合集",
+        "metrics": [
+          {
+            "title": "单量",
+            "value": "310",
+            "status": ""
+          },
+          {
+            "title": "已闭环",
+            "value": "260",
+            "status": ""
+          },
+          {
+            "title": "解决率",
+            "value": "83.9%",
+            "status": ""
+          }
+        ]
+      }
+    ],
+    "topMetrics": [
+      {
+        "label": "软件MM收编率",
+        "value": "100%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [],
+        "hasTarget": false
+      },
+      {
+        "label": "存储整改完成率",
+        "value": "11%",
+        "gap": "差 29%",
+        "isWarn": true,
+        "color": "#ef5350",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "0%"
+          },
+          {
+            "category": "ORG",
+            "value": "17%"
+          },
+          {
+            "category": "ET",
+            "value": "40%"
+          },
+          {
+            "category": "VDF",
+            "value": "0%"
+          }
+        ],
+        "hasTarget": true
+      },
+      {
+        "label": "路由器整改完成率",
+        "value": "36%",
+        "gap": "差 4%",
+        "isWarn": true,
+        "color": "#ef5350",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "63%"
+          },
+          {
+            "category": "ORG",
+            "value": "62%"
+          },
+          {
+            "category": "ET",
+            "value": "90%"
+          },
+          {
+            "category": "VDF",
+            "value": "26%"
+          }
+        ],
+        "hasTarget": true
+      },
+      {
+        "label": "事故",
+        "value": "1",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [],
+        "hasTarget": false
+      },
+      {
+        "label": "SR FRT率",
+        "value": "84%",
+        "gap": "差 14.5%",
+        "isWarn": true,
+        "color": "#ef5350",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "77%"
+          },
+          {
+            "category": "ORG",
+            "value": "95%"
+          },
+          {
+            "category": "ET",
+            "value": "100%"
+          },
+          {
+            "category": "VDF",
+            "value": "89%"
+          }
+        ],
+        "hasTarget": true
+      },
+      {
+        "label": "产品EOS闭环率",
+        "value": "92%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "97%"
+          },
+          {
+            "category": "ORG",
+            "value": "46%"
+          },
+          {
+            "category": "ET",
+            "value": "32%"
+          },
+          {
+            "category": "VDF",
+            "value": "77%"
+          }
+        ],
+        "hasTarget": true
+      },
+      {
+        "label": "版本EOS闭环率",
+        "value": "88%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "96%"
+          },
+          {
+            "category": "ORG",
+            "value": "73%"
+          },
+          {
+            "category": "ET",
+            "value": "89%"
+          },
+          {
+            "category": "VDF",
+            "value": "62%"
+          }
+        ],
+        "hasTarget": true
+      },
+      {
+        "label": "重急EOS闭环率",
+        "value": "44%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "21%"
+          },
+          {
+            "category": "ORG",
+            "value": "67%"
+          },
+          {
+            "category": "ET",
+            "value": "85%"
+          },
+          {
+            "category": "VDF",
+            "value": "100%"
+          }
+        ],
+        "hasTarget": true
+      },
+      {
+        "label": "锂电池整改完成率",
+        "value": "100%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "100%"
+          }
+        ],
+        "hasTarget": true
+      },
+      {
+        "label": "数字证书消减率",
+        "value": "56%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "56%"
+          },
+          {
+            "category": "ORG",
+            "value": "--"
+          },
+          {
+            "category": "ET",
+            "value": "100%"
+          }
+        ],
+        "hasTarget": true
+      },
+      {
+        "label": "未完成价值网络巡检单数",
+        "value": "3",
+        "gap": "超 3",
+        "isWarn": true,
+        "color": "#ef5350",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "3"
+          },
+          {
+            "category": "ORG",
+            "value": "0"
+          },
+          {
+            "category": "ET",
+            "value": "0"
+          }
+        ],
+        "hasTarget": false
+      },
+      {
+        "label": "价值网络巡检完成率",
+        "value": "86%",
+        "gap": "差 4%",
+        "isWarn": true,
+        "color": "#ef5350",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "57%"
+          },
+          {
+            "category": "ORG",
+            "value": "100%"
+          },
+          {
+            "category": "ET",
+            "value": "100%"
+          }
+        ],
+        "hasTarget": true
+      },
+      {
+        "label": "应急演练完成率",
+        "value": "56%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "83%"
+          },
+          {
+            "category": "ET",
+            "value": "67%"
+          },
+          {
+            "category": "VDF",
+            "value": "17%"
+          }
+        ],
+        "hasTarget": true
+      },
+      {
+        "label": "拓扑刷新率",
+        "value": "82%",
+        "gap": "差 18%",
+        "isWarn": true,
+        "color": "#ef5350",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "100%"
+          },
+          {
+            "category": "ORG",
+            "value": "100%"
+          },
+          {
+            "category": "ET",
+            "value": "83%"
+          },
+          {
+            "category": "VDF",
+            "value": "67%"
+          }
+        ],
+        "hasTarget": true
+      },
+      {
+        "label": "预案刷新率",
+        "value": "86%",
+        "gap": "差 14%",
+        "isWarn": true,
+        "color": "#ef5350",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "100%"
+          },
+          {
+            "category": "ORG",
+            "value": "100%"
+          },
+          {
+            "category": "ET",
+            "value": "83%"
+          },
+          {
+            "category": "VDF",
+            "value": "83%"
+          }
+        ],
+        "hasTarget": true
+      },
+      {
+        "label": "TOPN风险完成率",
+        "value": "85%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "60%"
+          },
+          {
+            "category": "ORG",
+            "value": "100%"
+          },
+          {
+            "category": "ET",
+            "value": "100%"
+          },
+          {
+            "category": "VDF",
+            "value": "100%"
+          }
+        ],
+        "hasTarget": true
+      },
+      {
+        "label": "延期补授权完成率",
+        "value": "100%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [],
+        "hasTarget": false
+      },
+      {
+        "label": "高危命令拦截次数",
+        "value": "44",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "12"
+          },
+          {
+            "category": "ORG",
+            "value": "7"
+          },
+          {
+            "category": "ET",
+            "value": "25"
+          }
+        ],
+        "hasTarget": true
+      },
+      {
+        "label": "GUI拦截次数",
+        "value": "67",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "35"
+          },
+          {
+            "category": "ORG",
+            "value": "24"
+          },
+          {
+            "category": "ET",
+            "value": "8"
+          }
+        ],
+        "hasTarget": true
+      },
+      {
+        "label": "日志稽查率",
+        "value": "91%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "88%"
+          },
+          {
+            "category": "ORG",
+            "value": "95%"
+          },
+          {
+            "category": "ET",
+            "value": "89%"
+          }
+        ],
+        "hasTarget": true
+      },
+      {
+        "label": "业务比对回传率",
+        "value": "88%",
+        "gap": "差 7%",
+        "isWarn": true,
+        "color": "#ef5350",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "72%"
+          },
+          {
+            "category": "ORG",
+            "value": "90%"
+          },
+          {
+            "category": "ET",
+            "value": "91%"
+          }
+        ],
+        "hasTarget": true
+      },
+      {
+        "label": "业务比对备案率",
+        "value": "12%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "6%"
+          },
+          {
+            "category": "ORG",
+            "value": "15%"
+          },
+          {
+            "category": "ET",
+            "value": "12%"
+          }
+        ],
+        "hasTarget": true
+      },
+      {
+        "label": "0工单人数",
+        "value": "--",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [],
+        "hasTarget": false
+      },
+      {
+        "label": "工单<1人数",
+        "value": "2",
+        "gap": "超 2",
+        "isWarn": true,
+        "color": "#ef5350",
+        "subMetrics": [],
+        "hasTarget": false
+      },
+      {
+        "label": "任职率",
+        "value": "100%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [],
+        "hasTarget": false
+      },
+      {
+        "label": "维护红线岗位满足率",
+        "value": "100%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [],
+        "hasTarget": false
+      },
+      {
+        "label": "整改完成率",
+        "value": "74%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "74%"
+          },
+          {
+            "category": "ORG",
+            "value": "55%"
+          },
+          {
+            "category": "ET",
+            "value": "91%"
+          },
+          {
+            "category": "VDF",
+            "value": "76%"
+          }
+        ],
+        "hasTarget": true
+      },
+      {
+        "label": "逃生演练完成率",
+        "value": "75%",
+        "gap": "",
+        "isWarn": false,
+        "color": "#4fc3f7",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "0%"
+          },
+          {
+            "category": "ORG",
+            "value": "100%"
+          },
+          {
+            "category": "VDF",
+            "value": "100%"
+          }
+        ],
+        "hasTarget": true
+      },
+      {
+        "id": "manual_m_1779521875646_0.3367991652274034",
+        "colX": "手动指标",
+        "valY": "总计",
+        "colZ": "手动指标",
+        "label": "半年度服务峰会召开",
+        "value": "2",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "1"
+          },
+          {
+            "category": "ORG",
+            "value": "0"
+          },
+          {
+            "category": "ET",
+            "value": "0"
+          },
+          {
+            "category": "VDF",
+            "value": "1"
+          }
+        ],
+        "isManual": true,
+        "hasTarget": true
+      },
+      {
+        "id": "manual_m_1779521875646_0.12521156114840948",
+        "colX": "手动指标",
+        "valY": "总计",
+        "colZ": "手动指标",
+        "label": "Jam客户互动月度发布",
+        "value": "7",
+        "subMetrics": [
+          {
+            "category": "TE",
+            "value": "3"
+          },
+          {
+            "category": "ORG",
+            "value": "1"
+          },
+          {
+            "category": "ET",
+            "value": "1"
+          },
+          {
+            "category": "VDF",
+            "value": "2"
+          }
+        ],
+        "isManual": true,
+        "hasTarget": true
+      }
+    ],
+    "expiringTickets": [
+      {
+        "collection": "special",
+        "title": "🛠️ CPT专项风险合集",
+        "_slaCleanText": "剩余 -757 天",
+        "_slaDays": -757,
+        "data": {
+          "country": "埃及",
+          "precaution_type": "2024年证书风险",
+          "enable_plan_management": "否",
+          "source": "Common Risk NetCare",
+          "need_proof_of_not_involved": "是",
+          "is_process_product": "是",
+          "actual_complete_date": "5/14/24",
+          "impl_plan_proportion_config": "否",
+          "release_level_cn": "机关",
+          "confirmed_nes": "0",
+          "cancel_time": "4/8/24",
+          "task_type_cn": "风险排查",
+          "create_time": "3/27/24",
+          "network_name": "EG-Egypt Telecom",
+          "source_name_en": "Common Risk NetCare",
+          "product_name": "TaiShan 2280",
+          "country_code": "EG",
+          "product_line": "计算",
+          "network_id": "EG-695",
+          "precaution_type_cn": "2024年证书风险",
+          "parent_id": "CPC20240306000011",
+          "product_names": "TaiShan 2280;RH2288H V3;RH2288 V3;XH620 V3;RH8100 V3;E9000 Chassis;CH220 V3;CH121 V3;5288 V3;TaiShan 5280",
+          "task_status_en": "Draft",
+          "assignee": "Sherif Emeel Azmy 00501969",
+          "owner_show": "Sherif Emeel Azmy 00501969",
+          "status": "0",
+          "release_level": "机关",
+          "account_number": "1000022540",
+          "repoffice_name_cn": "埃及代表处",
+          "task_id": "CPT20240327000026",
+          "title": "Risk warning of Expiration of Preset Certificates on Huawei Servers-华为服务器预置证书过期风险预警",
+          "product_code": "OFFE00031185",
+          "complete_review_approver": "fufei 00534939",
+          "repoffice_code": "026921",
+          "account_name": "TE DATA",
+          "release_level_en": "HQ",
+          "owner": "s00501969",
+          "precaution_title": "华为服务器预置证书过期风险预警",
+          "required_completion_time": "6/30/24",
+          "task_type_en": "Risk Check",
+          "creator": "h84185509",
+          "plan_nes": "23",
+          "product_line_code": "133277",
+          "cancel_owner": "Sherif Emeel Azmy 00501969",
+          "source_name_cn": "公共预警",
+          "cancel_reason": "Network or device not exist",
+          "risk_description": "The preset SSL certificate of iBMC earlier than 253 (excluded) and iBMC 663 will expire on July 22, 2024. The preset SSL certificate of E9000 management module (MM910) firmware earlier than 690 (excluded) will expire on February 20, 2024. The preset SSL certificate of all versions of 9008 V5 (supporting CMC)/9032/9016/9008 server chassis management modules (KunLun CMC) will expire on February 20, 2024. After the software certificates expire, the WebUI and Redfish functions can be used properly. Some software or versions will report alarms.<br>If certificate validity period verification is enabled on the customer's network management system (NMS), the device may be out of management.<br> iBMC 253(不包含)之前和663版本使用的预置SSL证书将于2024年7月22日过期；E9000管理板MM910固件版本690(不包含)之前版本使用的预置SSL证书将于2024年2月20日过期；9008 V5（Support CMC）/9032/9016/9008服务器机框管理板Kunlun CMC所有版本使用的预置SSL证书2024年2月20日过期。这些软件的证书过期后，web和redfish功能均可以正常使用，部分软件或版本会上报告警。如果客户网管开启了证书有效期校验，可能有脱管风险。",
+          "is_not_involved": "是",
+          "mitigation_scenario_set": "2024 Digital Certificate",
+          "creator_show": "houlei 84185509",
+          "region_name_cn": "北部非洲地区部",
+          "task_status_cn": "草稿",
+          "precaution_type_en": "2024 Certificate Risk",
+          "task_type": "风险排查",
+          "is_hq_create": "是",
+          "region_code": "026902",
+          "task_status": "草稿",
+          "source_name": "公共预警",
+          "版本标识": "主版本(Base)",
+          "_slaDays": -757,
+          "_slaText": "<span class=\"badge\">确认紧急</span> 剩余 -757 天",
+          "_slaCleanText": "剩余 -757 天",
+          "_rowClass": "danger-row",
+          "_rawStringForSearch": "埃及|||2024年证书风险|||否|||common risk netcare|||是|||是|||5/14/24|||否|||机关|||0|||4/8/24|||风险排查|||3/27/24|||eg-egypt telecom|||common risk netcare|||taishan 2280|||eg|||计算|||eg-695|||2024年证书风险|||cpc20240306000011|||taishan 2280;rh2288h v3;rh2288 v3;xh620 v3;rh8100 v3;e9000 chassis;ch220 v3;ch121 v3;5288 v3;taishan 5280|||draft|||sherif emeel azmy 00501969|||sherif emeel azmy 00501969|||0|||机关|||1000022540|||埃及代表处|||cpt20240327000026|||risk warning of expiration of preset certificates on huawei servers-华为服务器预置证书过期风险预警|||offe00031185|||fufei 00534939|||026921|||te data|||hq|||s00501969|||华为服务器预置证书过期风险预警|||6/30/24|||risk check|||h84185509|||23|||133277|||sherif emeel azmy 00501969|||公共预警|||network or device not exist|||the preset ssl certificate of ibmc earlier than 253 (excluded) and ibmc 663 will expire on july 22, 2024. the preset ssl certificate of e9000 management module (mm910) firmware earlier than 690 (excluded) will expire on february 20, 2024. the preset ssl certificate of all versions of 9008 v5 (supporting cmc)/9032/9016/9008 server chassis management modules (kunlun cmc) will expire on february 20, 2024. after the software certificates expire, the webui and redfish functions can be used properly. some software or versions will report alarms.<br>if certificate validity period verification is enabled on the customer's network management system (nms), the device may be out of management.<br> ibmc 253(不包含)之前和663版本使用的预置ssl证书将于2024年7月22日过期；e9000管理板mm910固件版本690(不包含)之前版本使用的预置ssl证书将于2024年2月20日过期；9008 v5（support cmc）/9032/9016/9008服务器机框管理板kunlun cmc所有版本使用的预置ssl证书2024年2月20日过期。这些软件的证书过期后，web和redfish功能均可以正常使用，部分软件或版本会上报告警。如果客户网管开启了证书有效期校验，可能有脱管风险。|||是|||2024 digital certificate|||houlei 84185509|||北部非洲地区部|||草稿|||2024 certificate risk|||风险排查|||是|||026902|||草稿|||公共预警|||主版本(base)"
+        }
+      },
+      {
+        "collection": "special",
+        "title": "🛠️ CPT专项风险合集",
+        "_slaCleanText": "剩余 -177 天",
+        "_slaDays": -177,
+        "data": {
+          "country": "埃及",
+          "precaution_type": "NetCare共性问题",
+          "enable_plan_management": "否",
+          "source": "Common Risk NetCare",
+          "need_proof_of_not_involved": "否",
+          "is_process_product": "是",
+          "impl_plan_proportion_config": "否",
+          "release_level_cn": "机关",
+          "task_type_cn": "配置整改",
+          "create_time": "10/28/25",
+          "network_name": "EG-Egypt Telecom",
+          "source_name_en": "Common Risk NetCare",
+          "product_name": "Mobile Money-SW",
+          "country_code": "EG",
+          "product_line": "ICT服务与软件",
+          "network_id": "EG-695",
+          "precaution_type_cn": "NetCare共性问题",
+          "parent_id": "CPC20251027000003",
+          "product_names": "Mobile Money-SW;CPS;CPS-SW",
+          "task_status_en": "Draft",
+          "assignee": "Shaoweiliang 84088235",
+          "owner_show": "Shaoweiliang 84088235",
+          "status": "0",
+          "release_level": "机关",
+          "account_number": "1000005969",
+          "repoffice_name_cn": "埃及代表处",
+          "task_id": "CPT20251028000011",
+          "title": "[Mobile Money Common issue Pre-Warning] All AG templates under SchemaAPI may be accidentally deleted",
+          "product_code": "OFFE00046724",
+          "complete_review_approver": "wangmingfu 00860043",
+          "repoffice_code": "026921",
+          "account_name": "Telecom Egypt",
+          "release_level_en": "HQ",
+          "owner": "s84088235",
+          "required_completion_time": "11/30/25",
+          "task_type_en": "Configuration Rectification",
+          "creator": "z00199707",
+          "product_line_code": "100005",
+          "source_name_cn": "公共预警",
+          "risk_description": "<p>Please plan the changes as soon as possible and complete the rectification of this Pre-Warning.</p>",
+          "is_not_involved": "是",
+          "creator_show": "zhoufeng 00534405",
+          "region_name_cn": "北部非洲地区部",
+          "task_status_cn": "草稿",
+          "precaution_type_en": "NetCare Common Issues",
+          "task_type": "配置整改",
+          "is_hq_create": "是",
+          "region_code": "026902",
+          "task_status": "草稿",
+          "source_name": "公共预警",
+          "版本标识": "主版本(Base)",
+          "_slaDays": -177,
+          "_slaText": "<span class=\"badge\">确认紧急</span> 剩余 -177 天",
+          "_slaCleanText": "剩余 -177 天",
+          "_rowClass": "danger-row",
+          "_rawStringForSearch": "埃及|||netcare共性问题|||否|||common risk netcare|||否|||是|||否|||机关|||配置整改|||10/28/25|||eg-egypt telecom|||common risk netcare|||mobile money-sw|||eg|||ict服务与软件|||eg-695|||netcare共性问题|||cpc20251027000003|||mobile money-sw;cps;cps-sw|||draft|||shaoweiliang 84088235|||shaoweiliang 84088235|||0|||机关|||1000005969|||埃及代表处|||cpt20251028000011|||[mobile money common issue pre-warning] all ag templates under schemaapi may be accidentally deleted|||offe00046724|||wangmingfu 00860043|||026921|||telecom egypt|||hq|||s84088235|||11/30/25|||configuration rectification|||z00199707|||100005|||公共预警|||<p>please plan the changes as soon as possible and complete the rectification of this pre-warning.</p>|||是|||zhoufeng 00534405|||北部非洲地区部|||草稿|||netcare common issues|||配置整改|||是|||026902|||草稿|||公共预警|||主版本(base)"
+        }
+      },
+      {
+        "collection": "special",
+        "title": "🛠️ CPT专项风险合集",
+        "_slaCleanText": "剩余 -149 天",
+        "_slaDays": -149,
+        "data": {
+          "country": "埃及",
+          "precaution_type": "维护风险清零",
+          "enable_plan_management": "否",
+          "source": "Common Risk NetCare",
+          "need_proof_of_not_involved": "否",
+          "is_process_product": "是",
+          "impl_plan_proportion_config": "否",
+          "release_level_cn": "机关",
+          "confirmed_nes": "1",
+          "task_type_cn": "学习预防",
+          "create_time": "11/25/25",
+          "network_name": "EG-Egypt Telecom",
+          "source_name_en": "Common Risk NetCare",
+          "product_name": "Mobile Money-SW",
+          "country_code": "EG",
+          "product_line": "ICT服务与软件",
+          "network_id": "EG-695",
+          "precaution_type_cn": "维护风险清零",
+          "parent_id": "CPC20250825000002",
+          "product_names": "Mobile Money-SW",
+          "task_status_en": "Draft",
+          "assignee": "Shaoweiliang 84088235",
+          "owner_show": "Shaoweiliang 84088235",
+          "status": "0",
+          "release_level": "机关",
+          "account_number": "1000005969",
+          "repoffice_name_cn": "埃及代表处",
+          "task_id": "CPT20251125000009",
+          "title": "应急指导-设备异常掉电应急处理章节刷新",
+          "product_code": "OFFE00046724",
+          "complete_review_approver": "wangmingfu 00860043",
+          "repoffice_code": "026921",
+          "account_name": "Telecom Egypt",
+          "release_level_en": "HQ",
+          "owner": "s84088235",
+          "precaution_title": "2026年软件应急演练/答辩/容灾切换",
+          "required_completion_time": "12/24/25",
+          "task_type_en": "Learning and prevention",
+          "creator": "z00199707",
+          "plan_nes": "1",
+          "product_line_code": "100005",
+          "source_name_cn": "公共预警",
+          "risk_description": "<p>HQ已刷新应急指导中的《设备异常断电的应急处理》章节，请一线联系维优谢宁 wx541563获取埃及TE EVC的应急指导，学习预防，并将刷新后的应急预案上传到局点对应的iFile</p>",
+          "is_not_involved": "是",
+          "creator_show": "zhoufeng 00534405",
+          "region_name_cn": "北部非洲地区部",
+          "task_status_cn": "草稿",
+          "precaution_type_en": "Maintenance Risk Elimination",
+          "task_type": "学习预防",
+          "is_hq_create": "是",
+          "region_code": "026902",
+          "task_status": "草稿",
+          "source_name": "公共预警",
+          "版本标识": "主版本(Base)",
+          "_slaDays": -149,
+          "_slaText": "<span class=\"badge\">确认紧急</span> 剩余 -149 天",
+          "_slaCleanText": "剩余 -149 天",
+          "_rowClass": "danger-row",
+          "_rawStringForSearch": "埃及|||维护风险清零|||否|||common risk netcare|||否|||是|||否|||机关|||1|||学习预防|||11/25/25|||eg-egypt telecom|||common risk netcare|||mobile money-sw|||eg|||ict服务与软件|||eg-695|||维护风险清零|||cpc20250825000002|||mobile money-sw|||draft|||shaoweiliang 84088235|||shaoweiliang 84088235|||0|||机关|||1000005969|||埃及代表处|||cpt20251125000009|||应急指导-设备异常掉电应急处理章节刷新|||offe00046724|||wangmingfu 00860043|||026921|||telecom egypt|||hq|||s84088235|||2026年软件应急演练/答辩/容灾切换|||12/24/25|||learning and prevention|||z00199707|||1|||100005|||公共预警|||<p>hq已刷新应急指导中的《设备异常断电的应急处理》章节，请一线联系维优谢宁 wx541563获取埃及te evc的应急指导，学习预防，并将刷新后的应急预案上传到局点对应的ifile</p>|||是|||zhoufeng 00534405|||北部非洲地区部|||草稿|||maintenance risk elimination|||学习预防|||是|||026902|||草稿|||公共预警|||主版本(base)"
+        }
+      }
+    ],
+    "manualAdjustData": {
+      "TE": {},
+      "ORG": {},
+      "ET": {},
+      "VDF": {}
+    }
+  },
+  {
     "id": "mphdcshx",
     "timestamp": "2026-05-22T20:25:24.811Z",
     "files": [
@@ -8418,6 +9346,26 @@
             "value": "0%"
           }
         ]
+      },
+      {
+        "id": "manual_m_1779520964871_0.2750584786033432",
+        "colX": "手动指标",
+        "valY": "总计",
+        "colZ": "手动指标",
+        "label": "半年度服务峰会召开",
+        "value": "--",
+        "subMetrics": [],
+        "isManual": true
+      },
+      {
+        "id": "manual_m_1779520964871_0.6610159739150602",
+        "colX": "手动指标",
+        "valY": "总计",
+        "colZ": "手动指标",
+        "label": "Jam客户互动月度发布",
+        "value": "--",
+        "subMetrics": [],
+        "isManual": true
       }
     ]
   },

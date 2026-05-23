@@ -10,7 +10,8 @@ function renderNavbar() {
         { href: '/sla', icon: '📊', label: '数据导入', match: p => p.startsWith('/sla') },
         { href: '/report', icon: '📈', label: '报表看板', match: p => p.startsWith('/report') },
         { href: '/expedite', icon: '⚡', label: '一键催办', match: p => p.startsWith('/expedite') },
-        { href: '/monthly', icon: '📅', label: '月报页面', match: p => p.startsWith('/monthly') }
+        { href: '/monthly', icon: '📅', label: '月报页面', match: p => p.startsWith('/monthly') },
+        { href: '/requirements', icon: '🎯', label: '需求管理', match: p => p.startsWith('/requirements') }
     ];
 
     const linksHtml = links.map(l =>
@@ -49,9 +50,12 @@ function renderNavbar() {
             <a href="#" onclick="doLogout()" style="text-decoration:none; color:#d32f2f; background:#ffebee; padding:4px 10px; border-radius:15px;">退出</a>
         </div>
 
-        <div class="nav-status" style="margin-left:20px;">
-            <div class="status-dot"></div>
-            <span id="server-status-text">服务在线</span>
+        <div class="nav-status" style="margin-left:20px; display:flex; align-items:center; gap:12px;">
+            <div style="font-size:11px; color:#64748b; background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; font-family:monospace; letter-spacing:0.5px;">v1.1.0</div>
+            <div style="display:flex; align-items:center; gap:6px;">
+                <div class="status-dot"></div>
+                <span id="server-status-text">服务在线</span>
+            </div>
         </div>
     `;
     document.body.prepend(nav);

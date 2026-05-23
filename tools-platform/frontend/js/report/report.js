@@ -2325,6 +2325,7 @@ window.saveDashboardToDB = async function(event) {
     const payload = {
         snapshot_id: snapshot_id,
         month: month,
+        created_at: currentSnapshot.timestamp,
         standard_total_score: standardTotalScore,
         cat_scores: cat_scores,
         metric_data: metric_data,
