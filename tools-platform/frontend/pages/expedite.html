@@ -15,7 +15,7 @@
 
         .page-container {
             padding-top: calc(var(--navbar-h) + 20px);
-            max-width: 800px;
+            max-width: 1200px;
             margin: 0 auto;
             padding-left: 20px;
             padding-right: 20px;
@@ -492,17 +492,18 @@
 <body>
     <div class="page-container">
         <div class="controls">
-            <h2>一键催办 <span style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v1.0.0</span></h2>
+            <h2><span data-i18n="title">一键催办</span> <span style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v1.0.0</span></h2>
             <div style="display: flex; gap: 12px; align-items: center;">
+                <button id="lang-toggle" class="btn-secondary" style="background:#00285e; color:#fff; border:none;" onclick="toggleLang()">English</button>
                 <select id="snapshot-selector" onchange="loadSelectedSnapshot()"
                     style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; background: #fff; color: #334155; font-size: 13px; max-width: 200px;">
-                    <option value="">加载中...</option>
+                    <option value="" data-i18n="loading">加载中...</option>
                 </select>
                 <button class="btn-secondary" onclick="openTemplateModal()">
-                    📝 模板配置
+                    📝 <span data-i18n="btn_template">模板配置</span>
                 </button>
                 <button class="btn-secondary" onclick="openIgnoreModal()">
-                    ⚙️ 忽略关键词
+                    ⚙️ <span data-i18n="btn_ignore">忽略关键词</span>
                 </button>
                 <button class="btn-copy" onclick="copyToClipboard()">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -510,14 +511,14 @@
                         <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                         <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                     </svg>
-                    一键复制简报
+                    <span data-i18n="btn_copy_brief">一键复制简报</span>
                 </button>
             </div>
         </div>
 
         <div class="card" id="main-card">
             <div class="empty-state" id="loading-state">
-                <h3>⏳ 正在提取最新失败指标数据...</h3>
+                <h3>⏳ <span data-i18n="extracting_data">正在提取最新失败指标数据...</span></h3>
             </div>
             <div id="content-state" style="display:none;">
 
@@ -527,46 +528,58 @@
                         <div style="display: flex; align-items: flex-start; gap: 8px;">
                             <span style="font-size: 24px;">🚀</span>
                             <div>
-                                <h3 style="font-size: 15px; color: #1e293b; margin: 0; margin-bottom: 8px;">WeLink 自动化分发
+                                <h3 style="font-size: 15px; color: #1e293b; margin: 0; margin-bottom: 8px;" data-i18n="welink_auto">WeLink 自动化分发
                                 </h3>
-                                <div style="font-size: 12px; color: #64748b; margin-bottom: 12px;">自动生成 PowerShell
+                                <div style="font-size: 12px; color: #64748b; margin-bottom: 12px;" data-i18n="welink_desc">自动生成 PowerShell
                                     脚本一键分发。若无权限发附件，请取消勾选“直接分发附件”。</div>
                                 <div
                                     style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 8px;">
                                     <button class="btn-copy" onclick="openDistributionModal()"
                                         style="padding: 6px 16px; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; white-space: nowrap;">
-                                        ⚙️ 配置高级分发策略
+                                        ⚙️ <span data-i18n="btn_config_dist">配置高级分发策略</span>
                                     </button>
                                     <label
                                         style="font-size: 13px; color: #334155; display: flex; align-items: center; gap: 4px; cursor: pointer;">
-                                        <input type="checkbox" id="welink-enable-media"> 启用图片/表格直接分发 (测试版)
+                                        <input type="checkbox" id="welink-enable-media"> <span data-i18n="lbl_enable_media">启用图片/表格直接分发 (测试版)</span>
                                     </label>
                                 </div>
                                 <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
                                     <label class="toggle-label"><label class="switch"><input type="checkbox"
                                                 id="toggle-im-single" checked><span class="slider"></span></label>
-                                        专属单聊</label>
+                                        <span data-i18n="opt_single">专属单聊</span></label>
                                     <label class="toggle-label"><label class="switch"><input type="checkbox"
                                                 id="toggle-im-group" checked><span class="slider"></span></label>
-                                        全局群聊</label>
+                                        <span data-i18n="opt_group">全局群聊</span></label>
                                     <label class="toggle-label"><label class="switch"><input type="checkbox"
                                                 id="toggle-email" checked><span class="slider"></span></label>
-                                        邮件抄送</label>
+                                        <span data-i18n="opt_email">邮件抄送</span></label>
                                     <label class="toggle-label"><label class="switch"><input type="checkbox"
                                                 id="toggle-meet" checked><span class="slider"></span></label>
-                                        会议邀请</label>
+                                        <span data-i18n="opt_meet">会议邀请</span></label>
                                 </div>
                             </div>
                         </div>
                         <div>
                             <button class="btn-primary" onclick="generateAndCopyWLS()"
                                 style="padding: 8px 16px; background: #0078d4; white-space: nowrap;">
-                                📋 复制自动化脚本
+                                📋 <span data-i18n="btn_copy_script">复制自动化脚本</span>
                             </button>
                         </div>
                     </div>
                 </div>
 
+                <div id="manual-links-container" style="display: flex; gap: 12px; margin-bottom: 8px;">
+                    <div style="flex: 1; display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px; color: #475569; white-space: nowrap; font-weight: 500;" data-i18n="lbl_img_link">截图下载链接</span>
+                        <input type="text" id="manual-img-link" placeholder="https://..." data-i18n-placeholder="ph_img_link"
+                            style="flex: 1; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; color: #334155;">
+                    </div>
+                    <div style="flex: 1; display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 13px; color: #475569; white-space: nowrap; font-weight: 500;" data-i18n="lbl_excel_link">Excel下载链接</span>
+                        <input type="text" id="manual-excel-link" placeholder="https://..." data-i18n-placeholder="ph_excel_link"
+                            style="flex: 1; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; color: #334155;">
+                    </div>
+                </div>
                 <div class="text-area-wrapper">
                     <textarea id="brief-textarea" spellcheck="false" oninput="autoResizeTextarea(this)"></textarea>
                 </div>
@@ -581,15 +594,15 @@
                         style="background: #fff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 20px;">
                         <div
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <h3 style="font-size: 15px; color: #1e293b; margin: 0;">📸 关联看板截图</h3>
+                            <h3 style="font-size: 15px; color: #1e293b; margin: 0;" data-i18n="img_title">📸 关联看板截图</h3>
                             <div>
                                 <button class="btn-copy" onclick="copyImageToClipboard(0.5)"
                                     style="padding: 8px 16px; background: #64748b; white-space: nowrap; margin-right: 8px;">
-                                    📋 复制小尺寸图
+                                    📋 <span data-i18n="btn_copy_small">复制小尺寸图</span>
                                 </button>
                                 <button class="btn-copy" onclick="copyImageToClipboard(1)"
                                     style="padding: 8px 16px; background: #8b5cf6; white-space: nowrap;">
-                                    📋 复制原图
+                                    📋 <span data-i18n="btn_copy_orig">复制原图</span>
                                 </button>
                             </div>
                         </div>
@@ -600,7 +613,7 @@
                                 crossorigin="anonymous">
                             <div
                                 style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.6); color: #fff; padding: 6px 10px; border-radius: 4px; font-size: 12px; pointer-events: none; z-index: 10;">
-                                🔍 点击全屏查看
+                                🔍 <span data-i18n="click_fs">点击全屏查看</span>
                             </div>
                         </div>
 
@@ -610,14 +623,14 @@
                                 <div style="display: flex; align-items: center; gap: 8px;">
                                     <span style="font-size: 24px;">📊</span>
                                     <div>
-                                        <h3 style="font-size: 15px; color: #1e293b; margin: 0;">关联 Excel 报表</h3>
-                                        <div style="font-size: 12px; color: #64748b;">专业的高清排版短板透视矩阵表格</div>
+                                        <h3 style="font-size: 15px; color: #1e293b; margin: 0;" data-i18n="excel_title">关联 Excel 报表</h3>
+                                        <div style="font-size: 12px; color: #64748b;" data-i18n="excel_desc">专业的高清排版短板透视矩阵表格</div>
                                     </div>
                                 </div>
                                 <div>
                                     <button class="btn-primary" onclick="downloadExcelReport()"
                                         style="padding: 8px 16px; background: #10b981; white-space: nowrap;">
-                                        ⬇️ 下载 Excel 文件
+                                        ⬇️ <span data-i18n="btn_dl_excel">下载 Excel 文件</span>
                                     </button>
                                 </div>
                             </div>
@@ -634,10 +647,10 @@
     <div class="modal-overlay" id="distribution-modal" onclick="if(event.target === this) closeDistributionModal()">
         <div class="modal-content" style="width: 850px; max-width: 95vw;">
             <div class="modal-header">
-                <h3>⚙️ WeLink 高级分发策略配置 (点击分配)</h3>
+                <h3><span data-i18n="modal_dist_title">⚙️ WeLink 高级分发策略配置 (点击分配)</span></h3>
                 <button class="close-btn" onclick="closeDistributionModal()">&times;</button>
             </div>
-            <p style="font-size: 12px; color: #64748b; margin-top: 0; margin-bottom: 12px;">
+            <p style="font-size: 12px; color: #64748b; margin-top: 0; margin-bottom: 12px;" data-i18n="modal_dist_desc">
                 选中右侧员工后点击左侧分类框即可分配。系统会自动根据分类分发不同的专属催办信息。员工库及所有配置永久保存。
             </p>
             <div class="dist-layout">
@@ -645,26 +658,24 @@
                     <!-- Dynamic Categories will be rendered here via JS -->
                 </div>
                 <div class="dist-right">
-                    <div style="font-size:13px; font-weight:600; color:#555; margin-bottom:10px;">👤 员工名册 <span
-                            style="color:#999;font-weight:normal;">(点选复用)</span></div>
+                    <div style="font-size:13px; font-weight:600; color:#555; margin-bottom:10px;"><span data-i18n="pool_emp_title">👤 员工名册 <span style="color:#999;font-weight:normal;">(点选复用)</span></span></div>
                     <div id="dist-roster-pool"
                         style="flex:1; align-content: flex-start; display: flex; flex-wrap: wrap;">
                         <!-- Roster chips -->
                     </div>
                     <div id="add-roster-section"
                         style="margin-top: 10px; border-top: 1px solid #e2e8f0; padding-top: 10px;">
-                        <input type="text" id="new-roster-input" placeholder="输入工号或群ID (如: l00123)"
+                        <input type="text" id="new-roster-input" placeholder="输入工号或群ID (如: l00123)" data-i18n-placeholder="input_emp_placeholder"
                             style="width: 100%; margin-bottom: 6px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px;">
-                        <input type="text" id="new-roster-name" placeholder="备注姓名/群名 (可选)"
+                        <input type="text" id="new-roster-name" placeholder="备注姓名/群名 (可选)" data-i18n-placeholder="input_name_placeholder"
                             style="width: 100%; margin-bottom: 6px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px;">
                         <button onclick="addRosterEmployee()"
-                            style="width: 100%; padding: 6px; background: #0ea5e9; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">＋
-                            添加至待分配库</button>
+                            style="width: 100%; padding: 6px; background: #0ea5e9; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;"><span data-i18n="btn_add_roster">＋ 添加至待分配库</span></button>
                     </div>
                 </div>
             </div>
             <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
-                <button class="btn-primary" id="btn-save-policy" onclick="saveDistributionPolicy()">💾 保存全部配置</button>
+                <button class="btn-primary" id="btn-save-policy" onclick="saveDistributionPolicy()"><span data-i18n="btn_save_policy">💾 保存全部配置</span></button>
             </div>
         </div>
     </div>
@@ -674,17 +685,17 @@
     <div class="modal-overlay" id="ignore-modal" onclick="if(event.target === this) closeIgnoreModal()">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>🚫 忽略关键词配置</h3>
+                <h3><span data-i18n="modal_ignore_title">🚫 忽略关键词配置</span></h3>
                 <button class="close-btn" onclick="closeIgnoreModal()">&times;</button>
             </div>
-            <p style="font-size: 12px; color: #64748b; margin-top: 0; margin-bottom: 12px;">
+            <p style="font-size: 12px; color: #64748b; margin-top: 0; margin-bottom: 12px;" data-i18n="modal_ignore_desc">
                 如果指标名称（中文或英文）包含以下关键词，则不会出现在一键催办的文本中。</p>
             <div class="keyword-list" id="keyword-list-container">
                 <!-- Keywords will be rendered here -->
             </div>
             <div class="add-keyword-group">
-                <input type="text" id="new-keyword-input" placeholder="输入要忽略的关键词 (如: Storage)">
-                <button onclick="addKeyword()">添加</button>
+                <input type="text" id="new-keyword-input" placeholder="输入要忽略的关键词 (如: Storage)" data-i18n-placeholder="input_ignore_placeholder">
+                <button onclick="addKeyword()"><span data-i18n="btn_add">添加</span></button>
             </div>
         </div>
     </div>
@@ -692,54 +703,54 @@
     <div class="modal-overlay" id="template-modal" onclick="if(event.target === this) closeTemplateModal()">
         <div class="modal-content" style="width: 800px; max-width: 95vw;">
             <div class="modal-header">
-                <h3>📝 催办模板配置</h3>
+                <h3><span data-i18n="modal_tpl_title">📝 催办模板配置</span></h3>
                 <button class="close-btn" onclick="closeTemplateModal()">&times;</button>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                 <div>
                     <div class="template-group">
-                        <label>群发问候语 (Group Greeting)</label>
+                        <label data-i18n="tpl_lbl_group_greet">群发问候语 (Group Greeting)</label>
                         <input type="text" id="tpl-greeting-group"
                             style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; margin-top: 4px;">
-                        <div class="template-help">群发场景(群聊/邮件/会议)使用，默认: @所有人 Hi Team,</div>
+                        <div class="template-help" data-i18n="tpl_help_group_greet">群发场景(群聊/邮件/会议)使用，默认: @所有人 Hi Team,</div>
                     </div>
                     <div class="template-group">
-                        <label>头部模板 (Header)</label>
+                        <label data-i18n="tpl_lbl_header">头部模板 (Header)</label>
                         <textarea id="tpl-header" style="height: 120px;"></textarea>
-                        <div class="template-help">可用变量: {MM} 月份, {DD} 日期, {GREETING} 动态问候语</div>
+                        <div class="template-help" data-i18n="tpl_help_header">可用变量: {MM} 月份, {DD} 日期, {GREETING} 动态问候语</div>
                     </div>
                     <div class="template-group">
-                        <label>全局邮件抄送标题 (Email Subject)</label>
+                        <label data-i18n="tpl_lbl_email">全局邮件抄送标题 (Email Subject)</label>
                         <input type="text" id="tpl-email"
                             style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; margin-top: 4px;">
-                        <div class="template-help">可用变量: {MM} 月份, {DD} 日期</div>
+                        <div class="template-help" data-i18n="tpl_help_email">可用变量: {MM} 月份, {DD} 日期</div>
                     </div>
                 </div>
 
                 <div>
                     <div class="template-group">
-                        <label>专属单发问候语 (Single Greeting)</label>
+                        <label data-i18n="tpl_lbl_single_greet">专属单发问候语 (Single Greeting)</label>
                         <input type="text" id="tpl-greeting-single"
                             style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; margin-top: 4px;">
-                        <div class="template-help">单人专属分发场景使用，默认: Hi dear,</div>
+                        <div class="template-help" data-i18n="tpl_help_single_greet">单人专属分发场景使用，默认: Hi dear,</div>
                     </div>
                     <div class="template-group">
-                        <label>尾部模板 (Footer)</label>
+                        <label data-i18n="tpl_lbl_footer">尾部模板 (Footer)</label>
                         <textarea id="tpl-footer" style="height: 120px;"></textarea>
-                        <div class="template-help">在这里可以加上特定的说明，比如 Storage Rectification 等</div>
+                        <div class="template-help" data-i18n="tpl_help_footer">在这里可以加上特定的说明，比如 Storage Rectification 等</div>
                     </div>
                     <div class="template-group">
-                        <label>日程/会议邀请标题 (Meeting Subject)</label>
+                        <label data-i18n="tpl_lbl_meet">日程/会议邀请标题 (Meeting Subject)</label>
                         <input type="text" id="tpl-meet"
                             style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; margin-top: 4px;">
-                        <div class="template-help">可用变量: {MM} 月份, {DD} 日期</div>
+                        <div class="template-help" data-i18n="tpl_help_meet">可用变量: {MM} 月份, {DD} 日期</div>
                     </div>
                 </div>
             </div>
             <div style="text-align: right; margin-top: 20px;">
-                <button class="btn-secondary" onclick="closeTemplateModal()">取消</button>
-                <button class="btn-copy" onclick="saveTemplateConfig()" style="margin-left: 8px;">保存配置</button>
+                <button class="btn-secondary" onclick="closeTemplateModal()"><span data-i18n="btn_cancel">取消</span></button>
+                <button class="btn-copy" onclick="saveTemplateConfig()" style="margin-left: 8px;"><span data-i18n="btn_save_config">保存配置</span></button>
             </div>
         </div>
     </div>
@@ -749,10 +760,10 @@
         style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.9); z-index:999999; overflow:hidden;">
         <button onclick="closeFullscreenImage()"
             style="position:absolute; top:20px; right:20px; background:#ef4444; border:none; color:#fff; font-size:15px; font-weight:bold; padding:10px 24px; border-radius:8px; cursor:pointer; z-index:1000001; box-shadow:0 4px 12px rgba(0,0,0,0.5); transition: background 0.2s;">
-            ✖ 关闭全屏 (Close)
+            <span data-i18n="btn_close_fs">✖ 关闭全屏 (Close)</span>
         </button>
         <div
-            style="position:absolute; top:20px; left:20px; color:#fff; background:rgba(0,0,0,0.5); padding:6px 12px; border-radius:6px; pointer-events:none; z-index:10001; font-size:14px;">
+            style="position:absolute; top:20px; left:20px; color:#fff; background:rgba(0,0,0,0.5); padding:6px 12px; border-radius:6px; pointer-events:none; z-index:10001; font-size:14px;" data-i18n="fs_help">
             🖱️ 鼠标滚轮缩放 / 左键拖拽平移
         </div>
         <div id="fs-img-container" style="width:100%; height:100%; cursor:grab; position:relative; overflow:hidden;">
@@ -766,6 +777,151 @@
     <script src="/js/shared/toast.js"></script>
     <script src="/js/shared/navbar.js"></script>
     <script>
+        const i18nUi = {
+            "en": {
+                "title": "One-click Expedite",
+                "loading": "Loading...",
+                "btn_template": "Template Config",
+                "btn_ignore": "Ignore Keywords",
+                "btn_copy_brief": "Copy Briefing",
+                "extracting_data": "Extracting latest failing metrics...",
+                "welink_auto": "WeLink Automated Distribution",
+                "welink_desc": "Auto-generate PowerShell script. Uncheck 'Enable direct image/table distribution' if you lack attachment permissions.",
+                "btn_config_dist": "Configure Advanced Strategy",
+                "lbl_enable_media": "Enable direct image/table distribution (Beta)",
+                "opt_single": "Single Chat",
+                "opt_group": "Group Chat",
+                "opt_email": "Email CC",
+                "opt_meet": "Meeting Invite",
+                "btn_copy_script": "Copy Auto Script",
+                "img_title": "📸 Related Dashboard Screenshot",
+                "btn_copy_small": "Copy Small Image",
+                "btn_copy_orig": "Copy Original Image",
+                "click_fs": "Click for fullscreen",
+                "excel_title": "Related Excel Report",
+                "excel_desc": "Professional high-res matrix table",
+                "btn_dl_excel": "Download Excel File",
+                "modal_dist_title": "⚙️ WeLink Advanced Distribution Strategy (Click to Assign)",
+                "modal_dist_desc": "Select an employee on the right and click a category on the left to assign. The system will automatically distribute personalized expedite messages based on categories. Roster and configs are saved permanently.",
+                "pool_emp_title": "👤 Employee Roster <span style=\"color:#999;font-weight:normal;\">(Click to reuse)</span>",
+                "btn_add_roster": "＋ Add to Pending Pool",
+                "btn_save_policy": "💾 Save All Configurations",
+                "input_emp_placeholder": "Enter Emp ID or Group ID (e.g. l00123)",
+                "input_name_placeholder": "Remark Name/Group Name (Optional)",
+                "modal_ignore_title": "🚫 Ignore Keywords Config",
+                "modal_ignore_desc": "If a metric name contains the following keywords, it will NOT appear in the expedite brief.",
+                "input_ignore_placeholder": "Enter keyword to ignore (e.g. Storage)",
+                "btn_add": "Add",
+                "modal_tpl_title": "📝 Expedite Template Config",
+                "tpl_lbl_group_greet": "Group Greeting",
+                "tpl_help_group_greet": "Used for group scenarios (group chat/email/meeting). Default: @所有人 Hi Team,",
+                "tpl_lbl_header": "Header Template",
+                "tpl_help_header": "Available variables: {MM} Month, {DD} Day, {GREETING} Dynamic Greeting",
+                "tpl_lbl_email": "Global Email Subject",
+                "tpl_help_email": "Available variables: {MM} Month, {DD} Day",
+                "tpl_lbl_single_greet": "Single Greeting",
+                "tpl_help_single_greet": "Used for personalized individual distribution. Default: Hi dear,",
+                "tpl_lbl_footer": "Footer Template",
+                "tpl_help_footer": "You can add specific instructions here, e.g. Storage Rectification etc.",
+                "tpl_lbl_meet": "Meeting Invite Subject",
+                "tpl_help_meet": "Available variables: {MM} Month, {DD} Day",
+                "btn_cancel": "Cancel",
+                "btn_save_config": "Save Config",
+                "btn_close_fs": "✖ Close Fullscreen",
+                "fs_help": "🖱️ Scroll to zoom / Left click to drag",
+                "lbl_img_link": "Img DL Link",
+                "lbl_excel_link": "Excel DL Link",
+                "ph_img_link": "https://...",
+                "ph_excel_link": "https://...",
+                "lang_toggle": "中文"
+            },
+            "zh": {
+                "title": "一键催办",
+                "loading": "加载中...",
+                "btn_template": "模板配置",
+                "btn_ignore": "忽略关键词",
+                "btn_copy_brief": "一键复制简报",
+                "extracting_data": "正在提取最新失败指标数据...",
+                "welink_auto": "WeLink 自动化分发",
+                "welink_desc": "自动生成 PowerShell 脚本一键分发。若无权限发附件，请取消勾选“直接分发附件”。",
+                "btn_config_dist": "配置高级分发策略",
+                "lbl_enable_media": "启用图片/表格直接分发 (测试版)",
+                "opt_single": "专属单聊",
+                "opt_group": "全局群聊",
+                "opt_email": "邮件抄送",
+                "opt_meet": "会议邀请",
+                "btn_copy_script": "复制自动化脚本",
+                "img_title": "📸 关联看板截图",
+                "btn_copy_small": "复制小尺寸图",
+                "btn_copy_orig": "复制原图",
+                "click_fs": "点击全屏查看",
+                "excel_title": "关联 Excel 报表",
+                "excel_desc": "专业的高清排版短板透视矩阵表格",
+                "btn_dl_excel": "下载 Excel 文件",
+                "modal_dist_title": "⚙️ WeLink 高级分发策略配置 (点击分配)",
+                "modal_dist_desc": "选中右侧员工后点击左侧分类框即可分配。系统会自动根据分类分发不同的专属催办信息。员工库及所有配置永久保存。",
+                "pool_emp_title": "👤 员工名册 <span style=\"color:#999;font-weight:normal;\">(点选复用)</span>",
+                "btn_add_roster": "＋ 添加至待分配库",
+                "btn_save_policy": "💾 保存全部配置",
+                "input_emp_placeholder": "输入工号或群ID (如: l00123)",
+                "input_name_placeholder": "备注姓名/群名 (可选)",
+                "modal_ignore_title": "🚫 忽略关键词配置",
+                "modal_ignore_desc": "如果指标名称（中文或英文）包含以下关键词，则不会出现在一键催办的文本中。",
+                "input_ignore_placeholder": "输入要忽略的关键词 (如: Storage)",
+                "btn_add": "添加",
+                "modal_tpl_title": "📝 催办模板配置",
+                "tpl_lbl_group_greet": "群发问候语 (Group Greeting)",
+                "tpl_help_group_greet": "群发场景(群聊/邮件/会议)使用，默认: @所有人 Hi Team,",
+                "tpl_lbl_header": "头部模板 (Header)",
+                "tpl_help_header": "可用变量: {MM} 月份, {DD} 日期, {GREETING} 动态问候语",
+                "tpl_lbl_email": "全局邮件抄送标题 (Email Subject)",
+                "tpl_help_email": "可用变量: {MM} 月份, {DD} 日期",
+                "tpl_lbl_single_greet": "专属单发问候语 (Single Greeting)",
+                "tpl_help_single_greet": "单人专属分发场景使用，默认: Hi dear,",
+                "tpl_lbl_footer": "尾部模板 (Footer)",
+                "tpl_help_footer": "在这里可以加上特定的说明，比如 Storage Rectification 等",
+                "tpl_lbl_meet": "日程/会议邀请标题 (Meeting Subject)",
+                "tpl_help_meet": "可用变量: {MM} 月份, {DD} 日期",
+                "btn_cancel": "取消",
+                "btn_save_config": "保存配置",
+                "btn_close_fs": "✖ 关闭全屏 (Close)",
+                "fs_help": "🖱️ 鼠标滚轮缩放 / 左键拖拽平移",
+                "lbl_img_link": "截图下载链接",
+                "lbl_excel_link": "Excel下载链接",
+                "ph_img_link": "https://...",
+                "ph_excel_link": "https://...",
+                "lang_toggle": "English"
+            }
+        };
+
+        window.currentLang = 'zh';
+
+        function toggleLang() {
+            window.currentLang = window.currentLang === 'zh' ? 'en' : 'zh';
+            updateI18n();
+            if (document.getElementById('distribution-modal').style.display === 'flex') {
+                renderDistributionModal();
+            }
+        }
+
+        function updateI18n() {
+            document.getElementById('lang-toggle').innerText = i18nUi[window.currentLang]['lang_toggle'];
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (i18nUi[window.currentLang][key]) {
+                    el.innerHTML = i18nUi[window.currentLang][key];
+                }
+            });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (i18nUi[window.currentLang][key]) {
+                    el.setAttribute('placeholder', i18nUi[window.currentLang][key]);
+                }
+            });
+            // Update document title
+            document.title = i18nUi[window.currentLang]['title'] + ' - Tools Platform';
+        }
+
         // Hardcoded i18n map as fallback
         let i18nMap = {
             "整改完成率": "Rectification Completion Rate",
@@ -1113,19 +1269,29 @@
             document.getElementById('snapshot-info').innerText = `数据源: 快照 ${data.snapshot_id} (入库时间: ${timeStr})`;
             document.getElementById('failing-count').innerText = `共计催办 ${totalFailing} 项重点指标`;
 
+            const origin = window.location.origin;
+
             if (data.image_path) {
                 document.getElementById('snapshot-image-container').style.display = 'block';
                 document.getElementById('snapshot-img').src = data.image_path;
+                let fullImgUrl = data.image_path;
+                if (!fullImgUrl.startsWith('http')) fullImgUrl = origin + fullImgUrl;
+                document.getElementById('manual-img-link').value = fullImgUrl;
             } else {
                 document.getElementById('snapshot-image-container').style.display = 'none';
+                document.getElementById('manual-img-link').value = '';
             }
 
             if (data.excel_path) {
                 document.getElementById('excel-report-container').style.display = 'block';
                 window._currentExcelPath = data.excel_path;
+                let fullExcelUrl = data.excel_path;
+                if (!fullExcelUrl.startsWith('http')) fullExcelUrl = origin + fullExcelUrl;
+                document.getElementById('manual-excel-link').value = fullExcelUrl;
             } else {
                 document.getElementById('excel-report-container').style.display = 'none';
                 window._currentExcelPath = null;
+                document.getElementById('manual-excel-link').value = '';
             }
 
             if (data.image_path) {
@@ -1216,13 +1382,13 @@
             });
 
             let finalHtml = `
-            <div style="font-size:12px; font-weight:600; color:#555; margin: 0 0 4px 4px;">👤 员工名单</div>
+            <div style="font-size:12px; font-weight:600; color:#555; margin: 0 0 4px 4px;">${window.currentLang === 'zh' ? '👤 员工名单' : '👤 Employee List'}</div>
             <div style="display: flex; flex-wrap: wrap; margin-bottom: 12px; min-height: 28px;">
-                ${userPoolHtml || '<span style="color:#999;font-size:12px; margin-left: 6px; font-style:italic;">暂无人员，请在下方添加</span>'}
+                ${userPoolHtml || `<span style="color:#999;font-size:12px; margin-left: 6px; font-style:italic;">${window.currentLang === 'zh' ? '暂无人员，请在下方添加' : 'No personnel, please add below'}</span>`}
             </div>
-            <div style="font-size:12px; font-weight:600; color:#555; margin: 0 0 4px 4px;">👥 群组名单</div>
+            <div style="font-size:12px; font-weight:600; color:#555; margin: 0 0 4px 4px;">${window.currentLang === 'zh' ? '👥 群组名单' : '👥 Group List'}</div>
             <div style="display: flex; flex-wrap: wrap; min-height: 28px;">
-                ${groupPoolHtml || '<span style="color:#999;font-size:12px; margin-left: 6px; font-style:italic;">暂无群组，请在下方添加</span>'}
+                ${groupPoolHtml || `<span style="color:#999;font-size:12px; margin-left: 6px; font-style:italic;">${window.currentLang === 'zh' ? '暂无群组，请在下方添加' : 'No groups, please add below'}</span>`}
             </div>`;
             rosterPool.innerHTML = finalHtml;
 
@@ -1235,7 +1401,7 @@
                     const unassignBtn = isAdmin ? `<span class="del" onclick="event.stopPropagation(); unassign('${catId}', '${id}')">✕</span>` : '';
                     return `<div class="assigned-chip">${emp.id} ${emp.name ? `(${emp.name})` : ''} ${unassignBtn}</div>`;
                 }).join('');
-                if (!chipsHtml) chipsHtml = '<span style="color:#cbd5e1; font-size:12px; font-style:italic;">' + (isAdmin ? '选中右侧员工后，点击此处分配...' : '暂未分配') + '</span>';
+                if (!chipsHtml) chipsHtml = '<span style="color:#cbd5e1; font-size:12px; font-style:italic;">' + (isAdmin ? (window.currentLang === 'zh' ? '选中右侧员工后，点击此处分配...' : 'Select an employee, click here to assign...') : (window.currentLang === 'zh' ? '暂未分配' : 'Unassigned')) + '</span>';
 
                 return `
                 <div id="cat-${catId}" class="dist-category" ${isAdmin ? `onclick="assignSelectedTo('${catId}')"` : ''} style="${!isAdmin ? 'cursor:default;' : ''}">
@@ -1246,13 +1412,13 @@
 
             let catHtml = '';
             dynamicCats.forEach(cat => {
-                catHtml += renderCategory(cat, `专属单聊分发: [${cat}]`, '💬');
+                catHtml += renderCategory(cat, window.currentLang === 'zh' ? `专属单聊分发: [${cat}]` : `Single Chat Dist: [${cat}]`, '💬');
             });
 
             catHtml += `<hr style="border:none; border-top:1px dashed #cbd5e1; margin: 20px 0;">`;
-            catHtml += renderCategory('GLOBAL_GROUP', '全局群聊推送 (全量报告)', '👥');
-            catHtml += renderCategory('GLOBAL_EMAIL', '全局邮件抄送 (全量报告)', '📧');
-            catHtml += renderCategory('GLOBAL_MEET', '日程/会议邀请 (发起沟通)', '📅');
+            catHtml += renderCategory('GLOBAL_GROUP', window.currentLang === 'zh' ? '全局群聊推送 (全量报告)' : 'Global Group Push (Full Report)', '👥');
+            catHtml += renderCategory('GLOBAL_EMAIL', window.currentLang === 'zh' ? '全局邮件抄送 (全量报告)' : 'Global Email CC (Full Report)', '📧');
+            catHtml += renderCategory('GLOBAL_MEET', window.currentLang === 'zh' ? '日程/会议邀请 (发起沟通)' : 'Calendar/Meeting Invite (Initiate Comm)', '📅');
 
             categoriesContainer.innerHTML = catHtml;
         }
@@ -1392,9 +1558,17 @@
             if (!latestFailingData) return showToast('无快照数据', 'error');
 
             const origin = window.location.origin;
-            const imgUrl = document.getElementById('snapshot-img').src;
-            let excelUrl = window._currentExcelPath;
-            if (excelUrl && !excelUrl.startsWith('http')) excelUrl = origin + excelUrl;
+            
+            // Prefer manual input link, fallback to img src
+            let imgUrl = document.getElementById('manual-img-link').value.trim();
+            if (!imgUrl) imgUrl = document.getElementById('snapshot-img').src;
+
+            // Prefer manual input link, fallback to window._currentExcelPath
+            let excelUrl = document.getElementById('manual-excel-link').value.trim();
+            if (!excelUrl && window._currentExcelPath) {
+                excelUrl = window._currentExcelPath;
+                if (!excelUrl.startsWith('http')) excelUrl = origin + excelUrl;
+            }
 
             const fullTextContent = document.getElementById('brief-textarea').value;
             const enableMedia = document.getElementById('welink-enable-media').checked;

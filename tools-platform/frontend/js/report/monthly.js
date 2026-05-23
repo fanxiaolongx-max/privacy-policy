@@ -1,6 +1,277 @@
 let chartOverallInstance = null;
 let chartGroupsInstance = null;
 
+window.currentLang = localStorage.getItem('monthlyReportLang') || 'zh';
+
+const i18n = {
+    zh: {
+        title: '月度运营质量与合规分析报告 <span style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v1.0.0</span>',
+        date_range_loading: '分析周期: 加载中...',
+        filter_7_days: '最近 7 天',
+        filter_30_days: '最近 30 天',
+        filter_90_days: '最近 90 天',
+        filter_all: '全部',
+        to: '至',
+        filter: '筛选',
+        export_image: '🖼️ 导出为长图',
+        export_pdf: '📄 导出为 PDF',
+        loading_report: '正在分析历史数据，生成月报...',
+        section1_title: '一、整体状况与关键结论',
+        section2_title: '二、历史趋势与波动分析',
+        section3_title: '三、最新运行快照与短板透视',
+        section3_1_title: '3.1 客户群达标排名及加减分详情',
+        th_rank: '排名',
+        th_group: '客户群名称',
+        th_base_score: '基准得分',
+        th_adj_score: '加减分项',
+        th_final_score: '最终得分',
+        th_rating: '评级',
+        section3_2_title: '3.2 客户群短板透视矩阵 (不达标项)',
+        th_metric_name: '指标名称',
+        th_target: '目标值',
+        th_failures: '未达标客户群及实测值',
+        section3_3_title: '3.3 手工考核加减分明细',
+        th_manual_score: '手工调整分数',
+        th_desc: '说明',
+        section3_4_title: '3.4 完整考核快照数据一览',
+        
+        // JS generated strings
+        no_data: '当前时间范围内没有入库数据。',
+        analysis_period: '分析周期: {start} 至 {end} (共 {count} 份数据快照)',
+        overall_failing: '整体上共有 <span class="summary-highlight">{count}</span> 项指标存在未达标情况，主要包含：{list}。',
+        overall_passed: '整体上所有考核指标均 <span style="color:green; font-weight:bold;">100% 达标</span>。',
+        add_score: '加 {score} 分',
+        sub_score: '扣 {score} 分',
+        because: '，因为：{list}',
+        manual_details: '额外加减分情况：{details}。',
+        as_of: '截至 <strong>{date}</strong>，{overallStr} {manualStr}',
+        group_details_title: '各客户群详细达标情况如下：',
+        group_failing: '共有 <span class="summary-highlight">{count}</span> 项未达标，主要包含：{list}。',
+        group_passed: '各项指标 <span style="color:green; font-weight:bold;">全部达标</span>。',
+        expiring_warning: '⚠️ 临期任务预警 ({count}项)',
+        unknown_id: '未知单号',
+        unknown_network: '未知网络',
+        ticket_format: '<strong>[{title}]</strong> 单号: {id} | 网络: {network} | 状态: {status}',
+        
+        chart1_title: '整体达标率与指标数趋势',
+        chart1_overall_rate: '整体达标率',
+        chart1_passed_metrics: '达标指标数',
+        chart1_total_metrics: '总考核指标数',
+        chart1_y_rate: '达标率',
+        chart1_y_count: '数量',
+        chart_unit_item: '项',
+        
+        chart2_title: '各客户群达标情况趋势',
+        
+        rating_excellent: '<span style="color:green;font-weight:bold;">优秀</span>',
+        rating_good: '良好',
+        rating_warning: '<span style="color:red;font-weight:bold;">警告</span>',
+        
+        matrix_no_failures: '恭喜，当前快照无任何未达标项！',
+        manual_default_desc: '系统记录的手工作业/质量事故奖惩等调整项',
+        
+        full_title: '(附) 计分规则与排位说明及加减分详情',
+        full_th_type: '类型',
+        full_th_desc: '项目说明',
+        full_th_rule: '计分规则',
+        full_occurrences: ' (发生次数)',
+        full_adjustments: ' (加减分)',
+        
+        full_th_grouping: '分组',
+        full_th_total_weight: '总权重',
+        full_th_metric: '考核的指标名称',
+        full_th_weight: '权重',
+        full_th_month_target: '{month}月目标值',
+        full_th_global: '全局总体达标',
+        full_th_score: '得分',
+        full_ungrouped: '未分组(Ungrouped)',
+        full_ungrouped_short: '未分组'
+    },
+    en: {
+        title: 'Monthly Quality & Compliance Analysis <span style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v1.0.0</span>',
+        date_range_loading: 'Analysis Period: Loading...',
+        filter_7_days: 'Last 7 Days',
+        filter_30_days: 'Last 30 Days',
+        filter_90_days: 'Last 90 Days',
+        filter_all: 'All',
+        to: 'to',
+        filter: 'Filter',
+        export_image: '🖼️ Export Image',
+        export_pdf: '📄 Export PDF',
+        loading_report: 'Analyzing historical data, generating report...',
+        section1_title: 'I. Overall Status & Key Conclusions',
+        section2_title: 'II. Historical Trends & Volatility',
+        section3_title: 'III. Latest Snapshot & Weakness Analysis',
+        section3_1_title: '3.1 Customer Group Ranking & Score Details',
+        th_rank: 'Rank',
+        th_group: 'Group',
+        th_base_score: 'Base Score',
+        th_adj_score: 'Adjustments',
+        th_final_score: 'Final Score',
+        th_rating: 'Rating',
+        section3_2_title: '3.2 Weakness Matrix (Non-compliant Items)',
+        th_metric_name: 'Metric Name',
+        th_target: 'Target',
+        th_failures: 'Non-compliant Groups & Actuals',
+        section3_3_title: '3.3 Manual Adjustment Details',
+        th_manual_score: 'Adj. Score',
+        th_desc: 'Description',
+        section3_4_title: '3.4 Full Assessment Snapshot',
+        
+        no_data: 'No data available in the selected time range.',
+        analysis_period: 'Analysis Period: {start} to {end} ({count} snapshots)',
+        overall_failing: 'Overall, there are <span class="summary-highlight">{count}</span> non-compliant metrics, including: {list}.',
+        overall_passed: 'Overall, all metrics are <span style="color:green; font-weight:bold;">100% Compliant</span>.',
+        add_score: '+{score}',
+        sub_score: '-{score}',
+        because: ', because: {list}',
+        manual_details: 'Score Adjustments: {details}.',
+        as_of: 'As of <strong>{date}</strong>, {overallStr} {manualStr}',
+        group_details_title: 'Detailed compliance by group:',
+        group_failing: '<span class="summary-highlight">{count}</span> non-compliant items, including: {list}.',
+        group_passed: 'All metrics <span style="color:green; font-weight:bold;">Compliant</span>.',
+        expiring_warning: '⚠️ Expiring Tasks Warning ({count})',
+        unknown_id: 'Unknown ID',
+        unknown_network: 'Unknown Network',
+        ticket_format: '<strong>[{title}]</strong> ID: {id} | Network: {network} | Status: {status}',
+        
+        chart1_title: 'Overall Compliance Rate & Metrics Trend',
+        chart1_overall_rate: 'Compliance Rate',
+        chart1_passed_metrics: 'Compliant Metrics',
+        chart1_total_metrics: 'Total Metrics',
+        chart1_y_rate: 'Rate',
+        chart1_y_count: 'Count',
+        chart_unit_item: ' items',
+        
+        chart2_title: 'Compliance Trend by Group',
+        
+        rating_excellent: '<span style="color:green;font-weight:bold;">Excellent</span>',
+        rating_good: 'Good',
+        rating_warning: '<span style="color:red;font-weight:bold;">Warning</span>',
+        
+        matrix_no_failures: 'Congratulations, no non-compliant items in the current snapshot!',
+        manual_default_desc: 'System recorded manual/quality adjustment items',
+        
+        full_title: '(Appx) Scoring Rules & Adjustments',
+        full_th_type: 'Type',
+        full_th_desc: 'Description',
+        full_th_rule: 'Rule',
+        full_occurrences: ' (Count)',
+        full_adjustments: ' (Score)',
+        
+        full_th_grouping: 'Group',
+        full_th_total_weight: 'Total Weight',
+        full_th_metric: 'Metric Name',
+        full_th_weight: 'Weight',
+        full_th_month_target: '{month} Target',
+        full_th_global: 'Global Actual',
+        full_th_score: 'Score',
+        full_ungrouped: 'Ungrouped',
+        full_ungrouped_short: 'Ungrouped',
+
+        // Metric and Category mappings
+        "TE": "TE",
+        "ORG": "ORG",
+        "ET": "ET",
+        "VDF": "VDF",
+        "加分": "Bonus",
+        "扣分": "Penalty",
+        "整改完成率": "Rectification Completion Rate",
+        "TOPN风险完成率": "TOPN Risk Completion Rate",
+        "数字证书消减率": "Digital Certificate Reduction Rate",
+        "产品EOS闭环率": "Product EOS Closure Rate",
+        "版本EOS闭环率": "Version EOS Closure Rate",
+        "重急EOS闭环率": "Critical/Urgent EOS Closure Rate",
+        "锂电池整改完成率": "Lithium Battery Rectification Completion Rate",
+        "路由器整改完成率": "Router Rectification Completion Rate",
+        "业务比对回传率": "Business Comparison Return Rate",
+        "业务比对备案率": "Business Comparison Filing Rate",
+        "日志稽查率": "Log Audit Rate",
+        "价值网络巡检完成率": "Value Network Inspection Completion Rate",
+        "逃生演练完成率": "Escape Drill Completion Rate",
+        "应急演练完成率": "Emergency Drill Completion Rate",
+        "拓扑刷新率": "Topology Refresh Rate",
+        "预案刷新率": "Contingency Plan Refresh Rate",
+        "IBMS刷新率": "IBMS Refresh Rate",
+        "月度例会及报告准时完成率": "Monthly Meeting & Report Punctuality Rate",
+        "服务专刊季度提交": "Quarterly Service Publication Submission",
+        "半年度服务峰会召开": "Semi-Annual Service Summit Holding",
+        "Jam客户互动月度发布": "Monthly Jam Customer Interaction Release",
+        "L4骨干晋升目标达成": "L4 Backbone Promotion Target Achievement",
+        "在职员工平均能力得分": "Avg Competence Score of Active Employees",
+        "专家讲座及经验分享": "Expert Lectures & Experience Sharing",
+        "项目复盘与外部对标学习": "Project Review & External Benchmarking Study",
+        "青年人才辅导培养": "Youth Talent Mentoring & Training",
+        "存储整改完成率": "Storage Rectification Completion Rate",
+        "软件MM收编率": "Software MM Incorporation Rate",
+        "SR FRT率": "SR FRT Rate",
+        "高危命令拦截次数": "High-Risk Command Interception Count",
+        "GUI拦截次数": "GUI Interception Count",
+        "任职率": "Employment Rate",
+        "维护红线岗位满足率": "Maintenance Red Line Post Fulfillment Rate",
+        "0工单人数": "Zero Work Order Headcount",
+        "延期补授权完成率": "Delayed Supplemental Auth Completion Rate",
+        "过保订单及SPMS": "Out-of-Warranty Orders & SPMS",
+        "维保订单": "Maintenance Orders",
+        "业务收入": "Business Revenue",
+        "PS GP利润率": "PS GP Margin",
+        "TE备件短缺解决方案": "TE Spare Parts Shortage Solution",
+        "TE AOS 2.0过保订单": "TE AOS 2.0 Out-of-Warranty Orders",
+        "ORG AOS 2.0过保订单": "ORG AOS 2.0 Out-of-Warranty Orders",
+        "VDF AOS 2.0过保订单": "VDF AOS 2.0 Out-of-Warranty Orders",
+        "ET成本控制(GPR提升10%)": "ET Cost Control (GPR Up 10%)",
+        "人为事故 (含整改逾期、错认漏认)": "Human Error Incident (incl. Overdue Rectification, Missed/Wrong Recognition)",
+        "恢复超60分钟事故 (华为原因)": ">60min Recovery Incident (Huawei Reason)",
+        "严重投诉 (CXO/Operation Head级别)": "Severe Complaint (CXO/Operation Head Level)",
+        "严重违规 (瞒报、无方案/越权操作)": "Severe Violation (Concealment, No Plan/Unauthorized Operation)",
+        "整改确认及执行逾期": "Overdue Rectification Confirmation & Execution",
+        "不合格的关闭整改单 (审计发现)": "Unqualified Closed Rectification Ticket (Audit Finding)",
+        "未按要求完成整改 (含延期)": "Incomplete Rectification as Required (incl. Delay)",
+        "不规范风险处理 (月度审计)": "Non-standard Risk Handling (Monthly Audit)",
+        "风险确认/挂起/关闭逾期": "Overdue Risk Confirmation/Suspension/Closure",
+        "FME离职超10天未清理账号": "FME Resigned >10 Days w/o Account Cleanup",
+        "WFM无授权违规操作 (未发客户延期邮件)": "WFM Unauthorized Violation (No Customer Delay Email)",
+        "WFM操作回退 (代表处服务质量原因)": "WFM Operation Rollback (Rep Office Service Quality Reason)",
+        "未按时完成回退复盘 (SLA:10天)": "Overdue Rollback Review (SLA: 10 Days)",
+        "ITR-FRT达不到98.5% (按月)": "ITR-FRT <98.5% (Monthly)",
+        "跨产品逃生演练及Jam宣传": "Cross-product Escape Drill & Jam Promotion",
+        "邀约客户交流呈现服务价值": "Inviting Customers to Communicate & Present Service Value"
+    }
+};
+
+function t(key, params = {}) {
+    let str = i18n[window.currentLang][key] || key;
+    for (let k in params) {
+        str = str.replace(`{${k}}`, params[k]);
+    }
+    return str;
+}
+
+function tVal(text) {
+    if (!text) return '';
+    return i18n[window.currentLang][text] || text;
+}
+
+function updateStaticI18n() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (i18n[window.currentLang][key]) {
+            el.innerHTML = i18n[window.currentLang][key];
+            if (key === 'section3_title') {
+                const baselineText = window.currentLang === 'zh' ? ' (基准: ' : ' (Baseline: ';
+                el.innerHTML += `${baselineText}<span id="latest-snapshot-date">${document.getElementById('latest-snapshot-date') ? document.getElementById('latest-snapshot-date').innerText : ''}</span>)`;
+            }
+        }
+    });
+    const toggleBtn = document.getElementById('lang-toggle');
+    if (toggleBtn) {
+        toggleBtn.innerText = window.currentLang === 'zh' ? 'English' : '中文';
+    }
+}
+
+let currentTrends = null;
+let currentLatest = null;
+
 async function loadData(startDate, endDate) {
     try {
         document.getElementById('loader').style.display = 'block';
@@ -23,6 +294,20 @@ async function loadData(startDate, endDate) {
         window._categories = catDataRes || ['TE', 'ORG', 'ET', 'VDF'];
         window._globalConfig = configData || { targets: {}, prefs: {} };
         window._metricGroups = groupData || [];
+        
+        if (window._globalConfig.prefs && window._globalConfig.prefs.i18nMap) {
+            const loadedI18n = window._globalConfig.prefs.i18nMap;
+            const cleanI18n = {};
+            for (const [k, v] of Object.entries(loadedI18n)) {
+                if (v && v.includes('<br>')) {
+                    const match = v.match(/<span[^>]*>(.*?)<\/span>/);
+                    cleanI18n[k] = match ? match[1] : v.replace(/<[^>]+>/g, '');
+                } else {
+                    cleanI18n[k] = v;
+                }
+            }
+            i18n['en'] = { ...i18n['en'], ...cleanI18n };
+        }
         
         let manualAdjustItems = [];
         if (configData && configData.prefs && configData.prefs.manualAdjustItems) {
@@ -52,45 +337,70 @@ async function loadData(startDate, endDate) {
         document.getElementById('loader').style.display = 'none';
         
         if (!data || !data.trends || data.trends.length === 0) {
-            document.getElementById('report-date-range').innerText = '分析周期: 无匹配数据';
+            document.getElementById('report-date-range').innerText = t('no_data');
             document.getElementById('report-content').style.display = 'block';
-            document.getElementById('report-content').innerHTML = '<div style="text-align:center; padding:40px;">当前时间范围内没有入库数据。</div>';
+            document.getElementById('report-content').innerHTML = `<div style="text-align:center; padding:40px;">${t('no_data')}</div>`;
             return;
         }
 
         document.getElementById('report-content').style.display = 'block';
         if (exportBtnContainer) exportBtnContainer.style.display = 'flex';
 
-        const trends = data.trends;
-        const latest = data.latest_snapshot;
+        currentTrends = data.trends;
+        currentLatest = data.latest_snapshot;
 
-        const actualStartDate = trends[0].date;
-        const actualEndDate = trends[trends.length - 1].date;
-        document.getElementById('report-date-range').innerText = `分析周期: ${actualStartDate} 至 ${actualEndDate} (共 ${trends.length} 份数据快照)`;
-        document.getElementById('latest-snapshot-date').innerText = actualEndDate;
-
-        generateSummary(trends, latest);
-        drawCharts(trends);
-        renderRanking(latest);
-        renderMatrix(latest);
-        renderManualScores(latest);
-        
-        if (typeof renderFullSnapshot === 'function') {
-            renderFullSnapshot(latest, window._categories, window._globalConfig, window._metricGroups, window._manualAdjustItems);
-        }
+        renderAll();
 
     } catch (error) {
         console.error('Failed to load monthly data:', error);
-        document.getElementById('loader').innerHTML = `<p style="color:red;">数据加载失败: ${error.message}</p>`;
+        document.getElementById('loader').innerHTML = `<p style="color:red;">Failed to load data: ${error.message}</p>`;
+    }
+}
+
+function renderAll() {
+    if (!currentTrends || !currentLatest) return;
+    
+    updateStaticI18n();
+
+    const actualStartDate = currentTrends[0].date;
+    const actualEndDate = currentTrends[currentTrends.length - 1].date;
+    document.getElementById('report-date-range').innerText = t('analysis_period', {start: actualStartDate, end: actualEndDate, count: currentTrends.length});
+    
+    const latestSnapshotElem = document.getElementById('latest-snapshot-date');
+    if (latestSnapshotElem) latestSnapshotElem.innerText = actualEndDate;
+
+    generateSummary(currentTrends, currentLatest);
+    drawCharts(currentTrends);
+    renderRanking(currentLatest);
+    renderMatrix(currentLatest);
+    renderManualScores(currentLatest);
+    
+    if (typeof renderFullSnapshot === 'function') {
+        renderFullSnapshot(currentLatest, window._categories, window._globalConfig, window._metricGroups, window._manualAdjustItems);
     }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    updateStaticI18n();
+
+    const langToggleBtn = document.getElementById('lang-toggle');
+    if (langToggleBtn) {
+        langToggleBtn.addEventListener('click', () => {
+            window.currentLang = window.currentLang === 'zh' ? 'en' : 'zh';
+            localStorage.setItem('monthlyReportLang', window.currentLang);
+            if (currentTrends && currentLatest) {
+                renderAll();
+            } else {
+                updateStaticI18n();
+            }
+        });
+    }
+
     // Initial load (all data)
     loadData();
 
     // Setup filter buttons
-    const filterBtns = document.querySelectorAll('.filter-btn');
+    const filterBtns = document.querySelectorAll('.filter-btn:not(#lang-toggle)');
     const startDateInput = document.getElementById('filter-start-date');
     const endDateInput = document.getElementById('filter-end-date');
     const customBtn = document.getElementById('custom-filter-btn');
@@ -132,11 +442,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const s = startDateInput.value;
         const e = endDateInput.value;
         if (!s || !e) {
-            showToast('请选择完整的开始和结束时间', 'warn');
+            showToast('Please select start and end dates', 'warn');
             return;
         }
         if (s > e) {
-            showToast('开始时间不能晚于结束时间', 'warn');
+            showToast('Start date cannot be after end date', 'warn');
             return;
         }
         loadData(s, e);
@@ -166,9 +476,9 @@ function generateSummary(trends, latest) {
     const overallFailingArr = Array.from(overallFailingSet);
     let overallStr = '';
     if (overallFailingArr.length > 0) {
-        overallStr = `整体上共有 <span class="summary-highlight">${overallFailingArr.length}</span> 项指标存在未达标情况，主要包含：${overallFailingArr.join('、')}。`;
+        overallStr = t('overall_failing', {count: overallFailingArr.length, list: overallFailingArr.map(tVal).join('、')});
     } else {
-        overallStr = `整体上所有考核指标均 <span style="color:green; font-weight:bold;">100% 达标</span>。`;
+        overallStr = t('overall_passed');
     }
 
     const manualScoresArr = latest.cat_scores ? latest.cat_scores.filter(c => c.manual_score !== 0 && c.manual_score !== null) : [];
@@ -182,36 +492,36 @@ function generateSummary(trends, latest) {
     
     if (manualScoresArr.length > 0) {
         let details = manualScoresArr.map(c => {
-            let action = c.manual_score > 0 ? `加 ${c.manual_score} 分` : `扣 ${Math.abs(c.manual_score)} 分`;
+            let actionStr = c.manual_score > 0 ? t('add_score', {score: c.manual_score}) : t('sub_score', {score: Math.abs(c.manual_score)});
             
             let reasons = [];
             let catAdj = snapAdjData[c.cat_name] || {};
             if (window._manualAdjustItems) {
                 window._manualAdjustItems.forEach((item, idx) => {
                     if (catAdj[idx] > 0) {
-                        reasons.push(item.name);
+                        reasons.push(tVal(item.name));
                     }
                 });
             }
             
-            let reasonStr = reasons.length > 0 ? `，因为：${reasons.join('、')}` : '';
-            return `${c.cat_name}（${action}${reasonStr}）`;
+            let reasonStr = reasons.length > 0 ? t('because', {list: reasons.join('、')}) : '';
+            return `${tVal(c.cat_name)}（${actionStr}${reasonStr}）`;
         }).join('；');
-        manualStr = `额外加减分情况：${details}。`;
+        manualStr = t('manual_details', {details: details});
     }
     
     let summaryHtml = `
-        <p>截至 <strong>${currentTrend.date}</strong>，${overallStr} ${manualStr}</p>
-        <p>各客户群详细达标情况如下：</p>
+        <p>${t('as_of', {date: currentTrend.date, overallStr: overallStr, manualStr: manualStr})}</p>
+        <p>${t('group_details_title')}</p>
         <ul style="padding-left:20px; line-height:1.8;">
     `;
     
     for (let catName in catTotalMetrics) {
         let failingList = failingByCat[catName] || [];
         if (failingList.length > 0) {
-            summaryHtml += `<li>【<strong>${catName}</strong>】：共有 <span class="summary-highlight">${failingList.length}</span> 项未达标，主要包含：${failingList.join('、')}。</li>`;
+            summaryHtml += `<li>【<strong>${tVal(catName)}</strong>】：${t('group_failing', {count: failingList.length, list: failingList.map(tVal).join('、')})}</li>`;
         } else {
-            summaryHtml += `<li>【<strong>${catName}</strong>】：各项指标 <span style="color:green; font-weight:bold;">全部达标</span>。</li>`;
+            summaryHtml += `<li>【<strong>${tVal(catName)}</strong>】：${t('group_passed')}</li>`;
         }
     }
     
@@ -221,14 +531,19 @@ function generateSummary(trends, latest) {
     if (expiringTickets.length > 0) {
         summaryHtml += `
         <div style="margin-top:15px; padding:12px; background-color:#fff3e0; border-left:4px solid #e65100; border-radius:4px;">
-            <h4 style="margin:0 0 8px 0; color:#e65100; font-size:14px;">⚠️ 临期任务预警 (${expiringTickets.length}项)</h4>
+            <h4 style="margin:0 0 8px 0; color:#e65100; font-size:14px;">${t('expiring_warning', {count: expiringTickets.length})}</h4>
             <ul style="padding-left:20px; margin:0; line-height:1.6; color:#c62828; font-size:13px;">
         `;
-        expiringTickets.forEach(t => {
-            const td = t.data || {};
-            const id = td.task_id || td.risk_id || td.ticket_id || td['单号'] || td['问题风险编号'] || td['问题编号'] || '未知单号';
-            const network = td.network_name || td['网络名称'] || td.network || '未知网络';
-            summaryHtml += `<li><strong>[${t.title.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim()}]</strong> 单号: ${id} | 网络: ${network} | 状态: ${t._slaCleanText}</li>`;
+        expiringTickets.forEach(tItem => {
+            const td = tItem.data || {};
+            const id = td.task_id || td.risk_id || td.ticket_id || td['单号'] || td['问题风险编号'] || td['问题编号'] || t('unknown_id');
+            const network = td.network_name || td['网络名称'] || td.network || t('unknown_network');
+            summaryHtml += `<li>${t('ticket_format', {
+                title: tItem.title.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim(),
+                id: id,
+                network: network,
+                status: tItem._slaCleanText
+            })}</li>`;
         });
         summaryHtml += `</ul></div>`;
     }
@@ -248,37 +563,37 @@ function drawCharts(trends) {
     const passedMetrics = trends.map(t => (t.metrics_total || 0) - (t.metrics_failing || 0));
     
     chartOverall.setOption({
-        title: { text: '整体达标率与指标数趋势', left: 'center', textStyle: { fontSize: 15, fontWeight: 'normal' } },
+        title: { text: t('chart1_title'), left: 'center', textStyle: { fontSize: 15, fontWeight: 'normal' } },
         tooltip: { trigger: 'axis', formatter: function(params) {
             let relVal = params[0].name;
             for (let i = 0, l = params.length; i < l; i++) {
-                let unit = params[i].seriesName === '整体达标率' ? '%' : ' 项';
+                let unit = params[i].seriesName === t('chart1_overall_rate') ? '%' : t('chart_unit_item');
                 relVal += '<br/>' + params[i].marker + params[i].seriesName + ': ' + params[i].value + unit;
             }
             return relVal;
         }},
-        legend: { data: ['整体达标率', '达标指标数', '总考核指标数'], bottom: 0 },
+        legend: { data: [t('chart1_overall_rate'), t('chart1_passed_metrics'), t('chart1_total_metrics')], bottom: 0 },
         xAxis: { type: 'category', data: dates, boundaryGap: true },
         yAxis: [
             { 
                 type: 'value', 
                 min: 0, 
                 max: 100,
-                name: '达标率',
+                name: t('chart1_y_rate'),
                 axisLabel: { formatter: '{value}%' }
             },
             {
                 type: 'value',
-                name: '数量',
+                name: t('chart1_y_count'),
                 min: 0,
-                axisLabel: { formatter: '{value}项' },
+                axisLabel: { formatter: `{value}${t('chart_unit_item').replace(' ', '')}` },
                 splitLine: { show: false }
             }
         ],
         grid: { left: '3%', right: '3%', bottom: '5%', containLabel: true },
         series: [
             {
-                name: '整体达标率',
+                name: t('chart1_overall_rate'),
                 data: overallRates,
                 type: 'line',
                 smooth: true,
@@ -294,7 +609,7 @@ function drawCharts(trends) {
                 labelLayout: { hideOverlap: true }
             },
             {
-                name: '总考核指标数',
+                name: t('chart1_total_metrics'),
                 data: totalMetrics,
                 type: 'line',
                 smooth: true,
@@ -303,13 +618,13 @@ function drawCharts(trends) {
                 lineStyle: { type: 'dashed' }
             },
             {
-                name: '达标指标数',
+                name: t('chart1_passed_metrics'),
                 data: passedMetrics,
                 type: 'line',
                 smooth: true,
                 yAxisIndex: 1,
                 itemStyle: { color: '#2e7d32' },
-                label: { show: true, position: 'bottom', formatter: '{c}项' },
+                label: { show: true, position: 'bottom', formatter: `{c}${t('chart_unit_item').replace(' ', '')}` },
                 labelLayout: { hideOverlap: true }
             }
         ]
@@ -339,13 +654,13 @@ function drawCharts(trends) {
     });
 
     chartGroups.setOption({
-        title: { text: '各客户群达标情况趋势', left: 'center', textStyle: { fontSize: 15, fontWeight: 'normal' } },
+        title: { text: t('chart2_title'), left: 'center', textStyle: { fontSize: 15, fontWeight: 'normal' } },
         tooltip: { trigger: 'axis' },
-        legend: { data: allCats, bottom: 0, type: 'scroll' },
+        legend: { data: allCats.map(tVal), bottom: 0, type: 'scroll' },
         xAxis: { type: 'category', data: dates, boundaryGap: true },
         yAxis: { type: 'value', min: 'dataMin' },
         grid: { left: '3%', right: '5%', bottom: '5%', containLabel: true },
-        series: seriesData
+        series: seriesData.map(s => ({ ...s, name: tVal(s.name) }))
     }, true);
 
     window.addEventListener('resize', () => {
@@ -373,14 +688,14 @@ function renderRanking(latest) {
         let manualStyle = cat.manual_score < 0 ? 'color: red;' : (cat.manual_score > 0 ? 'color: green;' : 'color: #999;');
         let manualDisplay = cat.manual_score > 0 ? '+' + manualScore : manualScore;
 
-        let rating = '良好';
-        if (cat.final_score >= 95) rating = '<span style="color:green;font-weight:bold;">优秀</span>';
-        else if (cat.final_score < 80) rating = '<span style="color:red;font-weight:bold;">警告</span>';
+        let rating = t('rating_good');
+        if (cat.final_score >= 95) rating = t('rating_excellent');
+        else if (cat.final_score < 80) rating = t('rating_warning');
 
         html += `
             <tr>
                 <td style="font-weight:bold; font-size:16px;">${rankStr}</td>
-                <td style="font-weight:bold; color:#00285e;">${cat.cat_name}</td>
+                <td style="font-weight:bold; color:#00285e;">${tVal(cat.cat_name)}</td>
                 <td>${baseScore}</td>
                 <td style="${manualStyle}">${manualDisplay}</td>
                 <td style="font-size:16px; font-weight:bold; color:#333;">${finalScore}</td>
@@ -399,7 +714,7 @@ function renderMatrix(latest) {
     const failingMetrics = latest.metrics.filter(m => m.is_failing === 1);
     
     if (failingMetrics.length === 0) {
-        document.querySelector('#matrix-table tbody').innerHTML = '<tr><td colspan="3" style="text-align:center;color:#666;">恭喜，当前快照无任何未达标项！</td></tr>';
+        document.querySelector('#matrix-table tbody').innerHTML = `<tr><td colspan="3" style="text-align:center;color:#666;">${t('matrix_no_failures')}</td></tr>`;
         return;
     }
 
@@ -423,13 +738,13 @@ function renderMatrix(latest) {
         let group = metricGroups[label];
         let failuresHtml = group.failures.map(f => {
             return `<span style="display:inline-block; margin:2px 4px; padding:4px 8px; background:#ffebee; border:1px solid #ffcdd2; border-radius:4px; font-size:13px;">
-                <strong>${f.cat_name}</strong>: ${f.raw_val}
+                <strong>${tVal(f.cat_name)}</strong>: ${f.raw_val}
             </span>`;
         }).join(' ');
 
         html += `
             <tr>
-                <td style="font-weight:600; color:#444;">${label}</td>
+                <td style="font-weight:600; color:#444;">${tVal(label)}</td>
                 <td style="color:#666;">${group.target_val || '-'}</td>
                 <td>${failuresHtml}</td>
             </tr>
@@ -467,15 +782,15 @@ function renderManualScores(latest) {
         if (window._manualAdjustItems) {
             window._manualAdjustItems.forEach((item, idx) => {
                 if (catAdj[idx] > 0) {
-                    reasons.push(item.name);
+                    reasons.push(tVal(item.name));
                 }
             });
         }
-        let desc = reasons.length > 0 ? reasons.join('、') : '系统记录的手工作业/质量事故奖惩等调整项';
+        let desc = reasons.length > 0 ? reasons.join('、') : t('manual_default_desc');
         
         html += `
             <tr>
-                <td style="font-weight:bold; color:#00285e;">${c.cat_name}</td>
+                <td style="font-weight:bold; color:#00285e;">${tVal(c.cat_name)}</td>
                 <td style="${valStyle}">${valStr}</td>
                 <td style="color:#666;">（${desc}）</td>
             </tr>
@@ -609,17 +924,17 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
     while (i < orderedMetrics.length) {
         const m = orderedMetrics[i];
         const hasTgt = labelToTargetMap[m.label] && labelToTargetMap[m.label][targetMonth] !== undefined && labelToTargetMap[m.label][targetMonth] !== '';
-        const grpName = labelToGroup[m.label] || (m.isManual || hasTgt ? '未分组(Ungrouped)' : null);
+        const grpName = labelToGroup[m.label] || (m.isManual || hasTgt ? t('full_ungrouped') : null);
         
         if (grpName) {
             const grpMetrics = orderedMetrics.filter(x => {
                 const xHasTgt = labelToTargetMap[x.label] && labelToTargetMap[x.label][targetMonth] !== undefined && labelToTargetMap[x.label][targetMonth] !== '';
-                return (labelToGroup[x.label] || (x.isManual || xHasTgt ? '未分组(Ungrouped)' : null)) === grpName;
+                return (labelToGroup[x.label] || (x.isManual || xHasTgt ? t('full_ungrouped') : null)) === grpName;
             });
             const size = grpMetrics.length;
             const firstIdx = orderedMetrics.findIndex(x => {
                 const xHasTgt = labelToTargetMap[x.label] && labelToTargetMap[x.label][targetMonth] !== undefined && labelToTargetMap[x.label][targetMonth] !== '';
-                return (labelToGroup[x.label] || (x.isManual || xHasTgt ? '未分组(Ungrouped)' : null)) === grpName && x.label === grpMetrics[0].label;
+                return (labelToGroup[x.label] || (x.isManual || xHasTgt ? t('full_ungrouped') : null)) === grpName && x.label === grpMetrics[0].label;
             });
             if (i === firstIdx) {
                 tableRows.push({ groupName: grpName, groupSize: size, isGroupStart: true, metric: m, groupWeight: groupWeightMap[grpName] || '-' });
@@ -634,17 +949,17 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
 
     let matrixHtml = `
         <div style="background:#fff; overflow-x:auto;">
-        <table class="matrix-table" style="font-size:12px;">
+        <table class="matrix-table" style="font-size:11px; line-height:1.3;">
             <thead>
                 <tr>
-                    <th style="min-width:40px; background:#e8eaf6; color:#283593;">分组</th>
-                    <th style="min-width:40px; background:#e8eaf6; color:#283593;">总权重</th>
-                    <th style="min-width:180px; text-align:left;">考核的指标名称</th>
-                    <th style="min-width:60px;">权重</th>
-                    <th style="min-width:100px;">${targetMonth}月目标值</th>
-                    <th style="min-width:100px; background:#fff8e1; border-right:2px solid #ffe082; color:#ef6c00;">全局总体达标</th>
-                    ${categories.map(cat => `<th>${escapeHTML(cat)}</th>`).join('')}
-                    ${categories.map(cat => `<th style="background:#e8f5e9;">${escapeHTML(cat)}得分</th>`).join('')}
+                    <th style="width:40px; max-width:60px; background:#e8eaf6; color:#283593; white-space:normal; word-wrap:break-word;">${t('full_th_grouping')}</th>
+                    <th style="width:40px; max-width:50px; background:#e8eaf6; color:#283593; white-space:normal; word-wrap:break-word; text-align:center;">${t('full_th_total_weight')}</th>
+                    <th style="min-width:120px; max-width:220px; text-align:left; white-space:normal; word-wrap:break-word;">${t('full_th_metric')}</th>
+                    <th style="width:40px; text-align:center;">${t('full_th_weight')}</th>
+                    <th style="width:60px; text-align:center; white-space:normal; word-wrap:break-word;">${t('full_th_month_target', {month: targetMonth})}</th>
+                    <th style="width:60px; background:#fff8e1; border-right:2px solid #ffe082; color:#ef6c00; text-align:center; white-space:normal; word-wrap:break-word;">${t('full_th_global')}</th>
+                    ${categories.map(cat => `<th style="text-align:center; width:40px; white-space:normal; word-wrap:break-word;">${escapeHTML(tVal(cat))}</th>`).join('')}
+                    ${categories.map(cat => `<th style="background:#e8f5e9; text-align:center; width:40px; white-space:normal; word-wrap:break-word;">${escapeHTML(tVal(cat))}<br>${t('full_th_score')}</th>`).join('')}
                 </tr>
             </thead>
             <tbody>
@@ -681,15 +996,15 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
         
         matrixHtml += `<tr>`;
         if (metricGroups.length > 0) {
-            matrixHtml += `<td ${row.isGroupStart ? `rowspan="${row.groupSize}"` : `style="display:none;"`}>${escapeHTML(row.groupName || '未分组')}</td>`;
-            matrixHtml += `<td ${row.isGroupStart ? `rowspan="${row.groupSize}"` : `style="display:none;"`} style="font-weight:bold; color:#1565c0;">${row.groupWeight || '-'}</td>`;
+            matrixHtml += `<td ${row.isGroupStart ? `rowspan="${row.groupSize}"` : `style="display:none;"`} style="max-width:60px; white-space:normal; word-wrap:break-word;">${escapeHTML(tVal(row.groupName) || t('full_ungrouped_short'))}</td>`;
+            matrixHtml += `<td ${row.isGroupStart ? `rowspan="${row.groupSize}"` : `style="display:none;"`} style="font-weight:bold; color:#1565c0; text-align:center; max-width:50px;">${row.groupWeight || '-'}</td>`;
         }
 
         matrixHtml += `
-            <td style="text-align:left; font-weight:600; color:#2c3e50;">${escapeHTML(m.label)}</td>
-            <td style="color:#666; font-weight:bold; background:#fafafa;">${weight}</td>
-            <td style="color:#0277bd; font-weight:bold; background:#f5f8fa;">${targetStr}</td>
-            <td style="background:#fff8e1; border-right:2px solid #ffe082;"><span class="${globalDisplayClass}">${escapeHTML(String(m.value || '--'))}</span></td>`;
+            <td style="text-align:left; font-weight:600; color:#2c3e50; max-width:220px; white-space:normal; word-wrap:break-word;">${escapeHTML(tVal(m.label))}</td>
+            <td style="color:#666; font-weight:bold; background:#fafafa; text-align:center;">${weight}</td>
+            <td style="color:#0277bd; font-weight:bold; background:#f5f8fa; text-align:center; max-width:60px; white-space:normal; word-wrap:break-word;">${targetStr}</td>
+            <td style="background:#fff8e1; border-right:2px solid #ffe082; text-align:center; max-width:60px; white-space:normal; word-wrap:break-word;"><span class="${globalDisplayClass}">${escapeHTML(String(m.value || '--'))}</span></td>`;
             
         categories.forEach(cat => {
             const cell = catData[cat].values[m.label];
@@ -711,8 +1026,8 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
             } else {
                 const earned = cell.isFailing ? 0 : (weight + (cell.bonusScore || 0));
                 const scoreColor = cell.isFailing ? '#d32f2f' : '#2e7d32';
-                const bonusDisplay = cell.bonusScore ? ` <span style="font-size:10px; color:#e65100;">(+${cell.bonusScore.toFixed(2)})</span>` : '';
-                matrixHtml += `<td style="font-weight:bold; color:${scoreColor}; background:#f1f8e9;">${earned}${bonusDisplay}</td>`;
+                const bonusDisplay = cell.bonusScore ? ` <span style="font-size:9px; color:#e65100;">(+${cell.bonusScore.toFixed(2)})</span>` : '';
+                matrixHtml += `<td style="font-weight:bold; color:${scoreColor}; background:#f1f8e9; text-align:center;">${earned}${bonusDisplay}</td>`;
             }
         });
         matrixHtml += `</tr>`;
@@ -724,15 +1039,15 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
     const snapAdjustData = snap.manualAdjustData || {};
     let adjustHtml = `
         <div style="background:#fff; overflow-x:auto; margin-top:20px;">
-        <h4 style="margin: 0 0 10px 0; color: #555;">(附) 计分规则与排位说明及加减分详情</h4>
-        <table class="matrix-table" style="font-size:12px;">
+        <h4 style="margin: 0 0 10px 0; color: #555;">${t('full_title')}</h4>
+        <table class="matrix-table" style="font-size:11px; line-height:1.3;">
             <thead>
                 <tr>
-                    <th style="min-width:60px;">类型</th>
-                    <th style="text-align:left;">项目说明</th>
-                    <th style="min-width:120px;">计分规则</th>
-                    ${categories.map(cat => `<th style="width:80px; background:#fff3e0;">${escapeHTML(cat)} (发生次数)</th>`).join('')}
-                    ${categories.map(cat => `<th style="width:70px; background:#e8f5e9;">${escapeHTML(cat)} (加减分)</th>`).join('')}
+                    <th style="width:40px; text-align:center;">${t('full_th_type')}</th>
+                    <th style="text-align:left; max-width:200px; white-space:normal; word-wrap:break-word;">${t('full_th_desc')}</th>
+                    <th style="min-width:80px; max-width:120px; white-space:normal; word-wrap:break-word;">${t('full_th_rule')}</th>
+                    ${categories.map(cat => `<th style="width:60px; background:#fff3e0; text-align:center;">${escapeHTML(tVal(cat))}<br>${t('full_occurrences')}</th>`).join('')}
+                    ${categories.map(cat => `<th style="width:50px; background:#e8f5e9; text-align:center;">${escapeHTML(tVal(cat))}<br>${t('full_adjustments')}</th>`).join('')}
                 </tr>
             </thead>
             <tbody>
@@ -743,9 +1058,9 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
         const typeColor = item.type === '加分' ? '#2e7d32' : '#c62828';
         const typeBg = item.type === '加分' ? '#e8f5e9' : '#ffebee';
         adjustHtml += `<tr>
-            <td style="color:${typeColor}; background:${typeBg}; font-weight:bold; text-align:center;">${escapeHTML(item.type)}</td>
-            <td style="text-align:left;">${escapeHTML(item.name)}</td>
-            <td style="color:#666;">${escapeHTML(item.desc)}</td>
+            <td style="color:${typeColor}; background:${typeBg}; font-weight:bold; text-align:center;">${escapeHTML(tVal(item.type))}</td>
+            <td style="text-align:left; max-width:200px; white-space:normal; word-wrap:break-word;">${escapeHTML(tVal(item.name))}</td>
+            <td style="color:#666; max-width:120px; white-space:normal; word-wrap:break-word;">${escapeHTML(item.desc)}</td>
         `;
         
         categories.forEach(cat => {
@@ -780,6 +1095,9 @@ window.exportToImage = async function() {
 
         const element = document.querySelector('.page-container');
         
+        const filterContainer = document.getElementById('date-filter-container');
+        if (filterContainer) filterContainer.style.display = 'none';
+        
         // Fix for html2canvas truncation: scroll to top before capturing
         const prevScrollY = window.scrollY;
         window.scrollTo(0, 0);
@@ -796,6 +1114,8 @@ window.exportToImage = async function() {
 
         element.style.paddingBottom = oldPadding;
         window.scrollTo(0, prevScrollY);
+        
+        if (filterContainer) filterContainer.style.display = 'flex';
 
         const imgData = canvas.toDataURL('image/jpeg', 0.9);
         const a = document.createElement('a');
@@ -824,6 +1144,9 @@ window.exportToPDF = async function() {
 
         const element = document.querySelector('.page-container');
         
+        const filterContainer = document.getElementById('date-filter-container');
+        if (filterContainer) filterContainer.style.display = 'none';
+        
         // Fix for html2canvas truncation: scroll to top before capturing
         const prevScrollY = window.scrollY;
         window.scrollTo(0, 0);
@@ -840,6 +1163,8 @@ window.exportToPDF = async function() {
 
         element.style.paddingBottom = oldPadding;
         window.scrollTo(0, prevScrollY);
+        
+        if (filterContainer) filterContainer.style.display = 'flex';
 
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
         

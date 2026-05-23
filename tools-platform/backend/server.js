@@ -115,6 +115,9 @@ app.get('/monthly', (req, res) => {
 app.get('/requirements', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/pages/requirements.html'));
 });
+app.get('/praudit', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/pages/praudit.html'));
+});
 
 // ── 全局错误兜底
 app.use((err, req, res, next) => {

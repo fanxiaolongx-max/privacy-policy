@@ -6,5 +6,9 @@
   "guest": {
     "role": "readonly",
     "passwordHash": "6a3221d9c0d7203abf4862f37352f8cde14d3436225e9b051507c792a7ada67f"
+  },
+  "sayed": {
+    "role": "readonly",
+    "passwordHash": "602abdd850e932203962ddadd723172883e583a80546e17df5ac010c4ed368b2"
   }
 }

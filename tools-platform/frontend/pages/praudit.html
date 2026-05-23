@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PR进展附件记录 - 审计级批量自检系统</title>
+    <!-- 引入 SheetJS 库用于解析 Excel 文件 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="/css/shared.css">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #0078D4;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --border-color: #dcdde1;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .no-print {
+            display: block;
+        }
+
+        #printReport {
+            display: none;
+        }
+
+        .container {
+            max-width: 100%;
+            background-color: var(--card-bg);
+            padding: 20px 25px;
+            padding-top: calc(var(--navbar-h, 50px) + 20px);
+            border-radius: 10px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-top: 0;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--accent-color);
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 9px 18px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #fff;
+            background-color: var(--accent-color);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--accent-color);
+            border: 1px solid var(--accent-color);
+            box-shadow: none;
+        }
+
+        .btn-outline:hover {
+            background-color: #f0f7ff;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+        }
+
+        .btn-export {
+            background-color: var(--primary-color);
+        }
+
+        /* 表格容器 */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        th,
+        td {
+            border: 1px solid var(--border-color);
+            padding: 10px 8px;
+            vertical-align: middle;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            color: #495057;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-weight: 600;
+        }
+
+        .check-header {
+            white-space: normal;
+            min-width: 125px;
+            font-size: 0.85rem;
+        }
+
+        /* 任务号点击复制样式 */
+        .task-id-cell {
+            color: var(--accent-color);
+            font-weight: bold;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .task-id-cell:hover {
+            background-color: #e9f5ff;
+            color: #005A9E;
+        }
+
+        .task-id-cell::after {
+            content: "📋";
+            font-size: 0.8rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .task-id-cell:hover::after {
+            opacity: 1;
+        }
+
+        /* 三态检查按钮组 */
+        .toggle-group {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+            margin-bottom: 6px;
+        }
+
+        .btn-chk {
+            width: 48%;
+            padding: 5px 0;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            background: #f1f3f5;
+            border: 1px solid #ced4da;
+            color: #6c757d;
+            transition: all 0.2s;
+            box-shadow: none;
+        }
+
+        .btn-chk.pass:hover {
+            border-color: var(--success-color);
+            color: var(--success-color);
+            background: #e8f5e9;
+        }
+
+        .btn-chk.fail:hover {
+            border-color: var(--danger-color);
+            color: var(--danger-color);
+            background: #ffebee;
+        }
+
+        .btn-chk.pass.active {
+            background: var(--success-color);
+            border-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-chk.fail.active {
+            background: var(--danger-color);
+            border-color: var(--danger-color);
+            color: white;
+        }
+
+        /* 理由展示小字 */
+        .fail-reason-tag {
+            display: inline-block;
+            width: 100%;
+            max-width: 110px;
+            margin-bottom: 6px;
+            padding: 3px 5px;
+            background-color: #fdeded;
+            color: #c0392b;
+            border: 1px solid #fadbd8;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            line-height: 1.2;
+            text-align: left;
+            white-space: normal;
+            word-break: break-all;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        /* 图片上传区 */
+        .img-zone {
+            width: 90px;
+            height: 60px;
+            border: 1px dashed #adb5bd;
+            border-radius: 6px;
+            background-color: #fafafa;
+            margin: 0 auto;
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .img-zone:focus {
+            border-color: var(--accent-color);
+            outline: none;
+            background-color: #e9f5ff;
+        }
+
+        .img-zone .placeholder {
+            font-size: 0.7rem;
+            color: #95a5a6;
+            line-height: 1.3;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .img-zone img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .btn-del-img {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: rgba(231, 76, 60, 0.9);
+            color: white;
+            border: none;
+            width: 18px;
+            height: 18px;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 0;
+            line-height: 18px;
+            border-radius: 0 0 0 4px;
+            box-shadow: none;
+        }
+
+        /* 状态标识 */
+        .badge {
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            display: inline-block;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-pass {
+            background-color: #e8f5e9;
+            color: var(--success-color);
+            border: 1px solid #c8e6c9;
+        }
+
+        .badge-fail {
+            background-color: #ffebee;
+            color: var(--danger-color);
+            border: 1px solid #ffcdd2;
+        }
+
+        .badge-wait {
+            background-color: #fff8e1;
+            color: var(--warning-color);
+            border: 1px solid #ffecb3;
+        }
+
+        .action-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+            min-width: 60px;
+        }
+
+        /* 弹窗样式通用 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(3px);
+        }
+
+        .modal-card {
+            background: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        textarea.reason-box {
+            width: 100%;
+            height: 100px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 0.9rem;
+            resize: none;
+            margin-bottom: 15px;
+        }
+
+        /* 导入 Excel 区域样式 */
+        .excel-upload-zone {
+            border: 2px dashed var(--accent-color);
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px;
+            background-color: #f8fbff;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .excel-upload-zone:hover {
+            background-color: #eef5ff;
+            border-color: var(--primary-color);
+        }
+
+        .excel-upload-zone input[type="file"] {
+            display: none;
+        }
+
+        .cols-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .cols-grid label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .detail-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border: 1px solid #eee;
+            border-radius: 6px;
+        }
+
+        .detail-item span.label {
+            color: #7f8c8d;
+            font-size: 0.8rem;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .detail-item span.val {
+            font-weight: 600;
+            font-size: 0.9rem;
+            word-break: break-all;
+            color: #2c3e50;
+        }
+
+        /* 顶部消息提示框 */
+        .toast-msg {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(44, 62, 80, 0.95);
+            color: #fff;
+            padding: 10px 25px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none;
+        }
+
+        /* ========================================= */
+        /* 🖨️ 打印专属样式 (修复文字换行与图片显示版) */
+        /* ========================================= */
+        @media print {
+            @page {
+                margin: 15mm;
+                size: A4 portrait;
+            }
+
+            body {
+                background: #fff !important;
+                margin: 0;
+                padding: 0;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            #printReport {
+                display: block !important;
+                width: 100%;
+                font-family: 'Times New Roman', "SimSun", "宋体", serif;
+                color: #000;
+            }
+
+            .print-title {
+                text-align: center;
+                font-size: 22px;
+                font-weight: bold;
+                border-bottom: 2px solid #000;
+                padding-bottom: 10px;
+                margin-bottom: 30px;
+                letter-spacing: 2px;
+            }
+
+            .print-title-en {
+                display: block;
+                font-size: 15px;
+                font-weight: normal;
+                letter-spacing: 0;
+                margin-top: 4px;
+            }
+
+            .print-meta {
+                text-align: right;
+                font-size: 12px;
+                color: #555;
+                margin-top: -20px;
+                margin-bottom: 20px;
+            }
+
+            .print-card {
+                page-break-inside: avoid;
+                border: 1px solid #000;
+                margin-bottom: 30px;
+                border-radius: 4px;
+                overflow: hidden;
+            }
+
+            .print-card-header {
+                background-color: #f0f0f0;
+                padding: 10px 15px;
+                border-bottom: 1px solid #000;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .print-card-header h3 {
+                margin: 0;
+                font-size: 16px;
+                color: #000;
+            }
+
+            .print-info-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                padding: 10px 15px;
+                border-bottom: 1px dashed #ccc;
+                gap: 8px;
+                font-size: 12px;
+                font-family: 'Segoe UI', sans-serif;
+            }
+
+            .print-check-table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 12px;
+                font-family: 'Segoe UI', sans-serif;
+                table-layout: fixed;
+            }
+
+            /* 关键修复：强制表格内文字自动换行，覆盖全局的 nowrap 设定 */
+            .print-check-table th,
+            .print-check-table td {
+                border-bottom: 1px solid #eee;
+                padding: 10px 15px;
+                text-align: left;
+                vertical-align: top;
+                white-space: normal !important;
+                word-wrap: break-word;
+                word-break: break-word;
+            }
+
+            .print-check-table tr:last-child td {
+                border-bottom: none;
+            }
+
+            .p-pass {
+                color: #27ae60;
+                font-weight: bold;
+            }
+
+            .p-fail {
+                color: #c0392b;
+                font-weight: bold;
+            }
+
+            .p-wait {
+                color: #f39c12;
+                font-weight: bold;
+            }
+
+            /* 关键修复：未通过理由强制换行显示 */
+            .p-reason {
+                color: #c0392b;
+                font-size: 11px;
+                margin-top: 6px;
+                border-left: 2px solid #c0392b;
+                padding-left: 6px;
+                white-space: normal !important;
+                word-wrap: break-word;
+                word-break: break-word;
+            }
+
+            /* 关键修复：图片按比例完整缩小显示（object-fit: contain），防止被截断或挤压 */
+            .print-img {
+                max-width: 100%;
+                max-height: 120px;
+                object-fit: contain;
+                display: block;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                padding: 2px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="toast-msg" id="toastMsg">操作成功</div>
+
+    <!-- 浏览器主界面区 -->
+    <div class="container no-print">
+        <h1>PR审计-自检报告生成工具</h1>
+
+        <div class="toolbar">
+            <div>
+                <button class="btn-success" onclick="openModal('importModal')">📥 导入 Excel 文件</button>
+                <button class="btn-outline" onclick="openModal('configModal')">⚙️ 列展示设置</button>
+            </div>
+            <div>
+                <button class="btn-export" onclick="exportPDF()">📄 导出全部为 PDF (双语版)</button>
+                <button class="btn-danger" style="margin-left:10px;" onclick="clearAllData()">🗑️ 清空数据</button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="mainTable">
+                <thead id="tableHead"></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 专供打印/导出PDF的隐藏区域 -->
+    <div id="printReport"></div>
+
+    <!-- 隐藏图片文件选择器 -->
+    <input type="file" id="hiddenFileInput" accept="image/*" style="display: none;">
+
+    <!-- 1. Excel 文件导入弹窗 -->
+    <div class="modal-overlay no-print" id="importModal">
+        <div class="modal-card" style="max-width: 500px;">
+            <span class="modal-close" onclick="closeModal('importModal')">&times;</span>
+            <h3 style="margin-top:0; color: var(--primary-color);">导入 Excel 单子数据</h3>
+            <p style="font-size: 0.85rem; color: #666;">请选择包含 <b>表头</b> 的标准 Excel 文件 (.xlsx 或 .xls) 进行导入分析。</p>
+
+            <div class="excel-upload-zone" onclick="document.getElementById('excelFileInput').click()">
+                <div style="font-size: 40px; margin-bottom: 10px;">📊</div>
+                <strong style="color: var(--accent-color); font-size: 1.1rem;">点击选择 Excel 文件</strong>
+                <div style="font-size: 0.8rem; color: #888; margin-top: 5px;" id="excelFileName">未选择任何文件...</div>
+                <input type="file" id="excelFileInput" accept=".xlsx, .xls" onchange="updateFileName(this)">
+            </div>
+
+            <div style="text-align: right; margin-top: 20px;">
+                <button class="btn-outline" onclick="closeModal('importModal')" style="margin-right: 10px;">取消</button>
+                <button onclick="processExcelImport()">解析并导入</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 填写未通过理由弹窗 -->
+    <div class="modal-overlay no-print" id="reasonModal">
+        <div class="modal-card" style="max-width: 450px;">
+            <h3 style="margin-top:0; color: var(--danger-color);">填写未通过理由</h3>
+            <p style="font-size: 0.85rem; color: #666; margin-top:-5px;">请简要描述该项不合格的原因，此信息将展示在看板并录入审计报告。</p>
+            <textarea class="reason-box" id="reasonInput" placeholder="例如：客户邮件中未明确提及产品数量 / 缺少高层审批电子流..."></textarea>
+            <div style="text-align: right;">
+                <button class="btn-outline" onclick="cancelReason()" style="margin-right: 10px;">取消选择</button>
+                <button class="btn-danger" onclick="confirmReason()">确认未通过</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. 列显示设置弹窗 -->
+    <div class="modal-overlay no-print" id="configModal">
+        <div class="modal-card">
+            <span class="modal-close" onclick="closeModal('configModal')">&times;</span>
+            <h3 style="margin-top:0;">主表展示列设置</h3>
+            <div class="cols-grid" id="colsGrid"></div>
+            <div style="text-align: right; border-top: 1px solid #eee; padding-top: 15px;">
+                <button onclick="saveConfig()">保存设置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. 单据详情弹窗 -->
+    <div class="modal-overlay no-print" id="detailModal">
+        <div class="modal-card">
+            <span class="modal-close" onclick="closeModal('detailModal')">&times;</span>
+            <h3 style="margin-top:0; color: var(--primary-color);">单据完整属性表</h3>
+            <div class="detail-grid" id="detailGrid"></div>
+        </div>
+    </div>
+
+    <!-- 5. 大图查看弹窗 -->
+    <div class="modal-overlay no-print" id="imageModal" onclick="closeModal('imageModal')">
+        <div class="modal-card"
+            style="background:transparent; box-shadow:none; padding:0; display:flex; justify-content:center; align-items:center; max-width:95%; max-height:95vh;">
+            <span class="modal-close" style="color:#fff; font-size:40px; top:-20px; right:-20px;"
+                onclick="closeModal('imageModal')">&times;</span>
+            <img id="modalImg" src=""
+                style="max-width:100%; max-height:95vh; border:4px solid #fff; border-radius:4px; box-shadow:0 10px 30px rgba(0,0,0,0.5);"
+                onclick="event.stopPropagation()">
+        </div>
+    </div>
+
+    <script>
+        const ALL_FIELDS = ["任务号", "索引号", "整改通知中文ID", "整改通知英文ID", "整改通知中文链接", "整改通知英文链接", "标题", "运营商名称", "产品域", "任务状态", "处理人", "是否延期", "延期原因", "延期审批状态", "延期审批人", "延期后计划完成时间", "产品存量", "决策不实施数", "排查完成时间", "延期申请备注", "累计延期天数", "延期审批时间", "累计延期次数", "历史责任人", "延期备案方式"];
+
+        // 加入了双语对照翻译
+        const CHECK_POINTS = [
+            { key: 'c1', name: "① 书面证据", nameEn: "Written Evidence", desc: "客户确切回复", descEn: "Explicit customer reply" },
+            { key: 'c2', name: "② 产品名称", nameEn: "Product Name", desc: "附件明确包含", descEn: "Clearly included in attachment" },
+            { key: 'c3', name: "③ 数量", nameEn: "Quantity", desc: "附件明确包含", descEn: "Clearly included in attachment" },
+            { key: 'c4', name: "④ 延期时间", nameEn: "Extension Time", desc: "明确时间", descEn: "Explicit time" },
+            { key: 'c5', name: "⑤ 风险传递", nameEn: "Risk Transfer", desc: "邮件明确风险", descEn: "Risk clearly stated in email" },
+            { key: 'c6', name: "⑥ 有效性核实", nameEn: "Validity Verification", desc: "客户邮箱/签字", descEn: "Customer email/signature" },
+            { key: 'c7', name: "⑦ 高层审批", nameEn: "Executive Approval", desc: "交付部长审批", descEn: "Delivery Dept. Head approval" }
+        ];
+
+        const STORAGE_KEY_DATA = 'PR_Auditor_Checklist_Data';
+        const STORAGE_KEY_COLS = 'PR_Auditor_Visible_Cols';
+
+        let ordersData = [];
+        let visibleCols = ["任务号", "标题", "处理人", "任务状态"];
+        let pendingReasonTarget = null;
+
+        window.onload = function () {
+            const localData = localStorage.getItem(STORAGE_KEY_DATA);
+            if (localData) {
+                ordersData = JSON.parse(localData);
+                ordersData.forEach(row => {
+                    if (!row.reasons) row.reasons = { c1: '', c2: '', c3: '', c4: '', c5: '', c6: '', c7: '' };
+                });
+            }
+
+            const localCols = localStorage.getItem(STORAGE_KEY_COLS);
+            if (localCols) visibleCols = JSON.parse(localCols);
+
+            initColConfig();
+            renderTable();
+        };
+
+        function saveToStorage() {
+            try { localStorage.setItem(STORAGE_KEY_DATA, JSON.stringify(ordersData)); }
+            catch (e) { alert("本地存储已满！请精简图片。"); }
+        }
+
+        // ================== 表格渲染引擎 ==================
+        function renderTable() {
+            const thead = document.getElementById('tableHead');
+            const tbody = document.getElementById('tableBody');
+
+            let headHtml = `<tr>`;
+            visibleCols.forEach(col => { headHtml += `<th>${col}</th>`; });
+            CHECK_POINTS.forEach(cp => { headHtml += `<th class="check-header">${cp.name}<br><small style="color:#777;font-weight:normal;">${cp.desc}</small></th>`; });
+            headHtml += `<th style="width: 100px;">自检状态</th><th style="width: 80px;">操作</th></tr>`;
+            thead.innerHTML = headHtml;
+
+            tbody.innerHTML = '';
+            if (ordersData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${visibleCols.length + 9}" style="color:#999; padding:30px;">暂无自检数据，请点击上方“导入 Excel 文件”开始。</td></tr>`;
+                return;
+            }
+
+            ordersData.forEach((row, rowIndex) => {
+                const tr = document.createElement('tr');
+                let status = 'pass';
+                for (let i = 1; i <= 7; i++) {
+                    if (row.checks['c' + i] === 'fail') { status = 'fail'; break; }
+                    if (row.checks['c' + i] === 'none') { status = 'wait'; }
+                }
+
+                let htmlStr = '';
+
+                // 业务列
+                visibleCols.forEach(col => {
+                    let val = row.baseData[col] || '-';
+                    if (col === '任务号') {
+                        htmlStr += `<td><span class="task-id-cell" title="点击一键复制" onclick="copyText('${val}')">${val}</span></td>`;
+                    } else {
+                        if (val.length > 15) val = `<span title="${val}">${val.substring(0, 15)}...</span>`;
+                        htmlStr += `<td>${val}</td>`;
+                    }
+                });
+
+                // 检查点列
+                CHECK_POINTS.forEach(cp => {
+                    const cKey = cp.key;
+                    const state = row.checks[cKey];
+                    const reason = row.reasons[cKey];
+                    const imgStr = row.images[cKey];
+
+                    let reasonHtml = (state === 'fail' && reason)
+                        ? `<div class="fail-reason-tag" title="理由: ${reason}">📍 ${reason}</div>` : '';
+
+                    let imgHtml = imgStr
+                        ? `<div class="img-zone" onclick="viewLargeImage('${cKey}', ${rowIndex}, event)"><img src="${imgStr}"><button class="btn-del-img" title="删除图片" onclick="deleteImage('${cKey}', ${rowIndex}, event)">×</button></div>`
+                        : `<div class="img-zone" tabindex="0" onpaste="handlePaste(event, '${cKey}', ${rowIndex})" onclick="triggerUpload('${cKey}', ${rowIndex})"><span class="placeholder">粘贴Ctrl+V<br>或点此上传</span></div>`;
+
+                    htmlStr += `
+                    <td>
+                        <div class="toggle-group">
+                            <button class="btn-chk pass ${state === 'pass' ? 'active' : ''}" onclick="setCheck('${cKey}', ${rowIndex}, 'pass')">✔通过</button>
+                            <button class="btn-chk fail ${state === 'fail' ? 'active' : ''}" onclick="setCheck('${cKey}', ${rowIndex}, 'fail')">✘未过</button>
+                        </div>
+                        ${reasonHtml}
+                        ${imgHtml}
+                    </td>
+                `;
+                });
+
+                let statusBadge = status === 'pass' ? '<span class="badge badge-pass">✅ 合格</span>' :
+                    (status === 'fail' ? '<span class="badge badge-fail">❌ 不合格</span>' : '<span class="badge badge-wait">⏳ 待检</span>');
+
+                htmlStr += `<td>${statusBadge}</td>
+                        <td>
+                            <div class="action-cell">
+                                <button class="btn-outline" style="padding: 4px; font-size:0.75rem; width:100%;" onclick="openDetail(${rowIndex})">详情</button>
+                                <button class="btn-danger" style="padding: 4px; font-size:0.75rem; width:100%; box-shadow:none;" onclick="removeRow(${rowIndex})">删除</button>
+                            </div>
+                        </td>`;
+                tr.innerHTML = htmlStr;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // ================== 一键复制与Toast提示 ==================
+        let toastTimer;
+        function copyText(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => showToast(`任务号 ${text} 复制成功！`));
+            } else {
+                let textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.position = "fixed"; textArea.style.left = "-999999px";
+                document.body.appendChild(textArea); textArea.select();
+                try { document.execCommand('copy'); showToast(`任务号 ${text} 复制成功！`); } catch (err) { alert('复制失败，请手动复制。'); }
+                textArea.remove();
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toastMsg');
+            toast.innerText = msg; toast.style.opacity = '1'; toast.style.transform = 'translate(-50%, 10px)';
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translate(-50%, 0)'; }, 2000);
+        }
+
+        // ================== 状态设定与理由拦截 ==================
+        function setCheck(cKey, rowIndex, value) {
+            const currentState = ordersData[rowIndex].checks[cKey];
+            if (currentState === value) {
+                ordersData[rowIndex].checks[cKey] = 'none'; ordersData[rowIndex].reasons[cKey] = '';
+                saveToStorage(); renderTable(); return;
+            }
+
+            if (value === 'fail') {
+                pendingReasonTarget = { cKey, rowIndex };
+                document.getElementById('reasonInput').value = ordersData[rowIndex].reasons[cKey] || '';
+                openModal('reasonModal');
+                setTimeout(() => document.getElementById('reasonInput').focus(), 100);
+                return;
+            }
+
+            ordersData[rowIndex].checks[cKey] = 'pass'; ordersData[rowIndex].reasons[cKey] = '';
+            saveToStorage(); renderTable();
+        }
+
+        function confirmReason() {
+            if (!pendingReasonTarget) return;
+            const text = document.getElementById('reasonInput').value.trim();
+            if (!text) { alert("未通过必须填写理由！"); return; }
+            const { cKey, rowIndex } = pendingReasonTarget;
+            ordersData[rowIndex].checks[cKey] = 'fail'; ordersData[rowIndex].reasons[cKey] = text;
+            saveToStorage(); renderTable(); closeModal('reasonModal'); pendingReasonTarget = null;
+        }
+
+        function cancelReason() { closeModal('reasonModal'); pendingReasonTarget = null; }
+
+        // ================== 高级 PDF 导出引擎 (双语及完美换行/排版适配) ==================
+        function exportPDF() {
+            if (ordersData.length === 0) { alert("没有可导出的数据！"); return; }
+            const reportDiv = document.getElementById('printReport');
+            const dateStr = new Date().toLocaleString('zh-CN', { hour12: false });
+
+            let html = `
+            <div class="print-title">
+                PR进展自检审计报告
+                <span class="print-title-en">PR Progress Audit Report</span>
+            </div>
+            <div class="print-meta">导出时间 / Export Time: ${dateStr} &nbsp;&nbsp;|&nbsp;&nbsp; 抽样总数 / Total Samples: ${ordersData.length}</div>
+        `;
+
+            ordersData.forEach((row, idx) => {
+                let statusBadge = ''; let status = 'pass';
+                for (let i = 1; i <= 7; i++) { if (row.checks['c' + i] === 'fail') { status = 'fail'; break; } if (row.checks['c' + i] === 'none') status = 'wait'; }
+
+                if (status === 'pass') statusBadge = '✅ 整体合格 / Overall Pass';
+                else if (status === 'fail') statusBadge = '❌ 不合格 / Fail';
+                else statusBadge = '⏳ 检查未完成 / Pending';
+
+                html += `
+            <div class="print-card">
+                <div class="print-card-header">
+                    <h3>单号 / Order No.: ${row.id}</h3>
+                    <strong class="${status === 'pass' ? 'p-pass' : (status === 'fail' ? 'p-fail' : 'p-wait')}">${statusBadge}</strong>
+                </div>
+                <div class="print-info-grid">
+                    <div><strong>标题 / Title：</strong>${row.baseData['标题'] || '-'}</div>
+                    <div><strong>处理人 / Assignee：</strong>${row.baseData['处理人'] || '-'}</div>
+                    <div><strong>任务状态 / Status：</strong>${row.baseData['任务状态'] || '-'}</div>
+                    <div><strong>是否延期 / Is Delayed：</strong>${row.baseData['是否延期'] || '-'}</div>
+                </div>
+                <table class="print-check-table"><tbody>
+            `;
+
+                CHECK_POINTS.forEach(cp => {
+                    const state = row.checks[cp.key]; const reason = row.reasons[cp.key]; const img = row.images[cp.key];
+
+                    let stateText = state === 'pass' ? '<span class="p-pass">✔ 通过 / Pass</span>' : (state === 'fail' ? '<span class="p-fail">✘ 未通过 / Fail</span>' : '<span class="p-wait">待检查 / Pending</span>');
+                    let reasonHtml = state === 'fail' && reason ? `<div class="p-reason">不合格事由 / Reason:<br>${reason}</div>` : '';
+                    let imgHtml = img ? `<img src="${img}" class="print-img">` : '<span style="color:#aaa;font-size:11px;">(无影像证据 / No Image Evidence)</span>';
+
+                    html += `<tr>
+                            <td width="30%">
+                                <strong>${cp.name}</strong><br>
+                                <span style="font-size:11px; color:#333;">${cp.nameEn}</span><br>
+                                <span style="color:#666;font-size:10px;">${cp.desc} / ${cp.descEn}</span>
+                            </td>
+                            <td width="15%">${stateText}</td>
+                            <td width="30%">${reasonHtml}</td>
+                            <td width="25%">${imgHtml}</td>
+                        </tr>`;
+                });
+                html += `</tbody></table></div>`;
+            });
+            reportDiv.innerHTML = html;
+            setTimeout(() => { window.print(); }, 500);
+        }
+
+        // ================== Excel 解析与导入核心引擎 ==================
+        function updateFileName(input) {
+            const nameLabel = document.getElementById('excelFileName');
+            if (input.files && input.files[0]) {
+                nameLabel.innerText = "已选择: " + input.files[0].name; nameLabel.style.color = "var(--success-color)";
+            } else {
+                nameLabel.innerText = "未选择任何文件..."; nameLabel.style.color = "#888";
+            }
+        }
+
+        function processExcelImport() {
+            const fileInput = document.getElementById('excelFileInput');
+            const file = fileInput.files[0];
+
+            if (!file) { alert("请先点击虚线框选择一个 Excel 文件！"); return; }
+            if (typeof XLSX === 'undefined') { alert("核心库尚未加载，请确保电脑已联网。如果刚刚打开页面，请稍等1-2秒再试。"); return; }
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+                    if (jsonData.length === 0) { alert("检测到文件为空或没有符合格式的数据！"); return; }
+
+                    let importCount = 0; let updateCount = 0;
+
+                    jsonData.forEach(row => {
+                        let taskId = row["任务号"];
+                        if (!taskId) { const keys = Object.keys(row); if (keys.length > 0) taskId = row[keys[0]]; }
+                        if (!taskId) return;
+
+                        taskId = String(taskId).trim();
+                        let baseData = {};
+                        Object.keys(row).forEach(key => { baseData[key] = String(row[key] || '').trim(); });
+
+                        const existIdx = ordersData.findIndex(o => o.id === taskId);
+                        if (existIdx > -1) {
+                            ordersData[existIdx].baseData = { ...ordersData[existIdx].baseData, ...baseData };
+                            updateCount++;
+                        } else {
+                            ordersData.push({
+                                id: taskId, baseData: baseData,
+                                checks: { c1: 'none', c2: 'none', c3: 'none', c4: 'none', c5: 'none', c6: 'none', c7: 'none' },
+                                reasons: { c1: '', c2: '', c3: '', c4: '', c5: '', c6: '', c7: '' },
+                                images: { c1: "", c2: "", c3: "", c4: "", c5: "", c6: "", c7: "" }
+                            });
+                            importCount++;
+                        }
+                    });
+
+                    saveToStorage(); renderTable(); closeModal('importModal');
+                    fileInput.value = ''; updateFileName(fileInput);
+                    showToast(`数据导入成功！新增 ${importCount} 条，更新 ${updateCount} 条。`);
+                } catch (err) { console.error(err); alert("文件解析失败，请确保上传的是标准 Excel！"); }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // ================== 基础交互 ==================
+        function initColConfig() {
+            const grid = document.getElementById('colsGrid'); grid.innerHTML = '';
+            ALL_FIELDS.forEach(field => {
+                const isChecked = visibleCols.includes(field) ? 'checked' : '';
+                grid.innerHTML += `<label><input type="checkbox" value="${field}" class="col-chk" ${isChecked}> ${field}</label>`;
+            });
+        }
+
+        function saveConfig() {
+            const checkboxes = document.querySelectorAll('.col-chk:checked');
+            let newCols = []; checkboxes.forEach(cb => newCols.push(cb.value));
+            if (newCols.length === 0) { alert("请至少保留一列！"); return; }
+            visibleCols = newCols; localStorage.setItem(STORAGE_KEY_COLS, JSON.stringify(visibleCols));
+            renderTable(); closeModal('configModal');
+        }
+
+        function openDetail(idx) {
+            const data = ordersData[idx].baseData; const grid = document.getElementById('detailGrid'); grid.innerHTML = '';
+            ALL_FIELDS.forEach(field => { grid.innerHTML += `<div class="detail-item"><span class="label">${field}</span><span class="val">${data[field] || '-'}</span></div>`; });
+            openModal('detailModal');
+        }
+
+        function removeRow(idx) { if (confirm("确定删除此单数据及截图吗？")) { ordersData.splice(idx, 1); saveToStorage(); renderTable(); } }
+        function clearAllData() { if (confirm("【危险】确定清空所有单号与图片吗？不可逆转！")) { ordersData = []; saveToStorage(); renderTable(); } }
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // ================== 图片引擎 ==================
+        let activeUploadTarget = null;
+        function triggerUpload(cKey, rowIndex) { activeUploadTarget = { cKey, rowIndex }; document.getElementById('hiddenFileInput').click(); }
+
+        function handlePaste(event, cKey, rowIndex) {
+            const items = (event.clipboardData || window.clipboardData).items;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf("image") !== -1) {
+                    processAndSaveImage(items[i].getAsFile(), cKey, rowIndex); event.preventDefault(); break;
+                }
+            }
+        }
+
+        document.getElementById('hiddenFileInput').addEventListener('change', function (e) {
+            if (e.target.files.length > 0 && activeUploadTarget) {
+                processAndSaveImage(e.target.files[0], activeUploadTarget.cKey, activeUploadTarget.rowIndex); this.value = '';
+            }
+        });
+
+        function processAndSaveImage(file, cKey, rowIndex) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const img = new Image();
+                img.onload = function () {
+                    const canvas = document.createElement('canvas'); let width = img.width, height = img.height;
+                    if (width > 600) { height *= 600 / width; width = 600; }
+                    canvas.width = width; canvas.height = height; canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                    ordersData[rowIndex].images[cKey] = canvas.toDataURL('image/jpeg', 0.65);
+                    saveToStorage(); renderTable();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function deleteImage(cKey, rowIndex, event) {
+            event.stopPropagation();
+            if (confirm("确定删除此图片吗？")) { ordersData[rowIndex].images[cKey] = ""; saveToStorage(); renderTable(); }
+        }
+
+        function viewLargeImage(cKey, rowIndex, event) {
+            event.stopPropagation(); const src = ordersData[rowIndex].images[cKey];
+            if (src) { document.getElementById('modalImg').src = src; openModal('imageModal'); }
+        }
+    </script>
+    <script src="/js/shared/api.js"></script>
+    <script src="/js/shared/toast.js"></script>
+    <script src="/js/shared/navbar.js"></script>
+</body>
+
+</html>

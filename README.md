@@ -136,6 +136,44 @@ tools-platform/
 - **双月裂变**：自动根据运行时间生成跨月翻页逻辑
 - **备份还原**：一键导出/导入全量脚本仓库 JSON
 
+#### 2.1 脚本生成核心逻辑 (Generator Pipeline)
+当用户点击“一键生成生产级脚本”时，引擎（`generator.js`）会执行以下精密的组装逻辑：
+
+1. **平台与环境判定**
+   - 引擎首先嗅探目标 URL，判定属于 `DATAFAB`（华为数据平台）还是 `NETCARE` 体系。
+   - 根据平台自动生成相应的身份认证提取逻辑。例如 DataFab 会提取 Cookie 中的 `XSRF-TOKEN`，NetCare 会提取 `localStorage` 中的 `globalConfig` 并解构出 Token。
+
+2. **Payload 深度解析与挂载点探测**
+   - 引擎会遍历用户提供的请求体 (JSON Payload)，进行动态“占位符”替换：
+   - **CPC/NID 提取**：若开启自动嗅探且检测到相关字段（如 `cpc`, `nid` 数组），会替换为占位符。
+   - **时间裂变**：若开启“当月+上月”双重裂变，会匹配包含 `month`, `year` 或是符合同月规则的 `start_date`/`end_date`，将其转换为 `__MONTH_PLACEHOLDER__` 等运行时变量。
+   - **关键标识提取**：深度搜索 `pageId`, `boardId`, `srcTenantId`, 组件 `id`，用于后续请求构建。
+
+3. **阶段零 (Phase 0) 预加载代码生成**
+   - 如果命中了前置嗅探，会在最终脚本的最前面插入预请求代码：
+   - **DataFab CPC 嗅探**：通过 `pageId` 和 `boardId` 调用 `pageView` 日志接口，利用正则提取所有 `CPC[0-9]+`。
+   - **NetCare NID 嗅探**：调用 `op_ex_rectify_check_special_nid` 接口，根据 Product Line 提取所有特定的节点 NID 集合。
+
+4. **主循环与分页提取 (Pagination Loop)**
+   - 脚本内会构建 `runConfigs` 数组。若是开启了双月裂变，则会自动配置“当月”和“上月”两个循环分支。
+   - 分支内执行 `while (isFetching)` 循环，自动递增 `pageNum` / `pageIndex` / `start` 参数实现连续翻页。
+   - 智能适配各种奇葩后端的嵌套格式（通过 `extractRows` 兼容 `data.data`, `data.list`, `data.items` 等）。
+
+5. **v6.5 多源融合引擎与权威大盘处理**
+   - 针对 DataFab 返回的合计值（sumData / totalsData）经常零散分布且相互割裂的问题，脚本内置了**多源深度融合**机制，从报文的所有可能节点收集合计对象，按列进行 Merge，并优先保留带有 `formula`（公式源）的单元格。
+   - **强制获取汇总数据**：若勾选该项且检测到组件 `id`，不论 getAnswers 是否成功返回合计，脚本都会在拉完明细后，**独立发起**针对 `getValueTableSumData` 接口的请求。发送前会扫描前面报文里的所有 `formulaId` 动态构建 `aggFields`，以确保取到最高优的可信汇总数据。
+
+6. **智能取数算法 (`getSmartValue`)**
+   - 面对复杂的单元格对象，脚本在组装 CSV 时，严格遵循以下降级取数策略：
+   - **绝对优先**：取 `formula` 字段（解决前端计算强依赖）。
+   - **率/比字段**：列名带“率、比、rate、%”的，优先取 `average` 字段，被迫降级才取 `summing`。
+   - **常规字段**：优先取 `summing` 字段进行累加，被迫降级才取 `average`。
+   - **兜底**：若上述都没有，直接 `JSON.stringify` 整个对象防丢失。
+
+7. **最终组装与输出**
+   - 最终把所有的明细行和计算出的【总计】行拼接，打上 UTF-8 BOM（防 Excel 乱码），利用 Blob 对象生成 Blob URL 并触发浏览器自动下载。
+   - 这个完整执行闭环被包装成两套格式同步输出：**UI.Vision 宏代码** 和 **纯浏览器 F12 控制台脚本**。
+
 **API 端点：**
 
 | 方法 | 路径 | 描述 |

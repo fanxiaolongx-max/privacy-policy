@@ -180,36 +180,39 @@
 <body>
     <div class="page-container">
         <div class="report-header">
-            <h2>月度运营质量与合规分析报告 <span style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v1.0.0</span></h2>
-            <p id="report-date-range">分析周期: 加载中...</p>
+            <div style="position: absolute; right: 20px; top: calc(var(--navbar-h) + 20px);">
+                <button id="lang-toggle" class="filter-btn" style="background:#00285e; color:#fff;">English</button>
+            </div>
+            <h2 data-i18n="title">月度运营质量与合规分析报告 <span style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v1.0.0</span></h2>
+            <p id="report-date-range" data-i18n="date_range_loading">分析周期: 加载中...</p>
             <div id="date-filter-container" style="margin-top: 15px; display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap;">
                 <div style="display: flex; gap: 8px;">
-                    <button class="filter-btn" data-days="7">最近 7 天</button>
-                    <button class="filter-btn" data-days="30">最近 30 天</button>
-                    <button class="filter-btn" data-days="90">最近 90 天</button>
-                    <button class="filter-btn" data-days="all">全部</button>
+                    <button class="filter-btn" data-days="7" data-i18n="filter_7_days">最近 7 天</button>
+                    <button class="filter-btn" data-days="30" data-i18n="filter_30_days">最近 30 天</button>
+                    <button class="filter-btn" data-days="90" data-i18n="filter_90_days">最近 90 天</button>
+                    <button class="filter-btn" data-days="all" data-i18n="filter_all">全部</button>
                 </div>
                 <div style="display: flex; gap: 8px; align-items: center; margin-left: 15px;">
                     <input type="date" id="filter-start-date" style="padding: 6px; border: 1px solid #ccc; border-radius: 4px;">
-                    <span>至</span>
+                    <span data-i18n="to">至</span>
                     <input type="date" id="filter-end-date" style="padding: 6px; border: 1px solid #ccc; border-radius: 4px;">
-                    <button id="custom-filter-btn" style="padding: 6px 12px; background: #00285e; color: #fff; border: none; border-radius: 4px; cursor: pointer;">筛选</button>
+                    <button id="custom-filter-btn" style="padding: 6px 12px; background: #00285e; color: #fff; border: none; border-radius: 4px; cursor: pointer;" data-i18n="filter">筛选</button>
                 </div>
             </div>
             <div id="export-actions" style="margin-top: 15px; display: none; gap: 10px; justify-content: center;">
-                <button onclick="exportToImage()" style="padding: 8px 16px; background: #00285e; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">🖼️ 导出为长图</button>
-                <button onclick="exportToPDF()" style="padding: 8px 16px; background: #e31837; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">📄 导出为 PDF</button>
+                <button onclick="exportToImage()" style="padding: 8px 16px; background: #00285e; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;" data-i18n="export_image">🖼️ 导出为长图</button>
+                <button onclick="exportToPDF()" style="padding: 8px 16px; background: #e31837; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;" data-i18n="export_pdf">📄 导出为 PDF</button>
             </div>
         </div>
 
         <div id="loader" class="loader">
-            <p>正在分析历史数据，生成月报...</p>
+            <p data-i18n="loading_report">正在分析历史数据，生成月报...</p>
         </div>
 
         <div id="report-content" style="display: none;">
             <!-- 一、整体状况说明 -->
             <div class="section-card">
-                <div class="section-title">一、整体状况与关键结论</div>
+                <div class="section-title" data-i18n="section1_title">一、整体状况与关键结论</div>
                 <div class="summary-text" id="summary-content">
                     <!-- JS generated -->
                 </div>
@@ -217,7 +220,7 @@
 
             <!-- 二、历史趋势分析 -->
             <div class="section-card">
-                <div class="section-title">二、历史趋势与波动分析</div>
+                <div class="section-title" data-i18n="section2_title">二、历史趋势与波动分析</div>
                 <div class="charts-row">
                     <div id="chart-overall" class="chart-container"></div>
                     <div id="chart-groups" class="chart-container"></div>
@@ -226,19 +229,19 @@
 
             <!-- 三、最新快照分析 -->
             <div class="section-card">
-                <div class="section-title">三、最新运行快照与短板透视 (基准: <span id="latest-snapshot-date"></span>)</div>
+                <div class="section-title" data-i18n="section3_title">三、最新运行快照与短板透视 (基准: <span id="latest-snapshot-date"></span>)</div>
                 <div style="margin-bottom: 20px;">
-                    <h4 style="margin: 0 0 10px 0; color: #555;">3.1 客户群达标排名及加减分详情</h4>
+                    <h4 style="margin: 0 0 10px 0; color: #555;" data-i18n="section3_1_title">3.1 客户群达标排名及加减分详情</h4>
                     <div style="overflow-x: auto;">
                         <table class="ranking-table" id="ranking-table">
                             <thead>
                                 <tr>
-                                    <th width="80">排名</th>
-                                    <th>客户群名称</th>
-                                    <th>基准得分</th>
-                                    <th>加减分项</th>
-                                    <th>最终得分</th>
-                                    <th>评级</th>
+                                    <th width="80" data-i18n="th_rank">排名</th>
+                                    <th data-i18n="th_group">客户群名称</th>
+                                    <th data-i18n="th_base_score">基准得分</th>
+                                    <th data-i18n="th_adj_score">加减分项</th>
+                                    <th data-i18n="th_final_score">最终得分</th>
+                                    <th data-i18n="th_rating">评级</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -249,14 +252,14 @@
                 </div>
 
                 <div>
-                    <h4 style="margin: 0 0 10px 0; color: #555;">3.2 客户群短板透视矩阵 (不达标项)</h4>
+                    <h4 style="margin: 0 0 10px 0; color: #555;" data-i18n="section3_2_title">3.2 客户群短板透视矩阵 (不达标项)</h4>
                     <div class="matrix-container">
                         <table class="matrix-table" id="matrix-table">
                             <thead>
                                 <tr>
-                                    <th>指标名称</th>
-                                    <th>目标值</th>
-                                    <th>未达标客户群及实测值</th>
+                                    <th data-i18n="th_metric_name">指标名称</th>
+                                    <th data-i18n="th_target">目标值</th>
+                                    <th data-i18n="th_failures">未达标客户群及实测值</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -267,14 +270,14 @@
                 </div>
 
                 <div id="manual-score-section" style="display: none; margin-top: 20px;">
-                    <h4 style="margin: 0 0 10px 0; color: #555;">3.3 手工考核加减分明细</h4>
+                    <h4 style="margin: 0 0 10px 0; color: #555;" data-i18n="section3_3_title">3.3 手工考核加减分明细</h4>
                     <div style="overflow-x: auto;">
                         <table class="ranking-table" id="manual-score-table">
                             <thead>
                                 <tr>
-                                    <th>客户群名称</th>
-                                    <th>手工调整分数</th>
-                                    <th>说明</th>
+                                    <th data-i18n="th_group">客户群名称</th>
+                                    <th data-i18n="th_manual_score">手工调整分数</th>
+                                    <th data-i18n="th_desc">说明</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -285,7 +288,7 @@
                 </div>
 
                 <div id="full-report-section" style="margin-top: 30px;">
-                    <h4 style="margin: 0 0 10px 0; color: #555;">3.4 完整考核快照数据一览</h4>
+                    <h4 style="margin: 0 0 10px 0; color: #555;" data-i18n="section3_4_title">3.4 完整考核快照数据一览</h4>
                     <div id="full-report-content"></div>
                 </div>
             </div>

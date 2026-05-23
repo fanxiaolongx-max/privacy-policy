@@ -1817,8 +1817,8 @@
     "重急EOS闭环率": "Critical/Urgent EOS Closure Rate",
     "锂电池整改完成率": "Lithium Battery Rectification Completion Rate",
     "路由器整改完成率": "Router Rectification Completion Rate",
-    "业务比对回传率": "Log Comparison Return Rate",
-    "业务比对备案率": "Log Comparison Filing Rate",
+    "业务比对回传率": "Operation Log Comparison Complete Rate",
+    "业务比对备案率": "Operation Log Comparison Filing Rate",
     "日志稽查率": "Log Audit Rate",
     "价值网络巡检完成率": "Value Network Inspection Completion Rate",
     "逃生演练完成率": "Escape Drill Completion Rate",
@@ -1868,7 +1868,12 @@
     "未按时完成回退复盘 (SLA:10天)": "Overdue Rollback Review (SLA: 10 Days)",
     "ITR-FRT达不到98.5% (按月)": "ITR-FRT <98.5% (Monthly)",
     "跨产品逃生演练及Jam宣传": "Cross-product Escape Drill & Jam Promotion",
-    "邀约客户交流呈现服务价值": "Inviting Customers to Communicate & Present Service Value"
+    "邀约客户交流呈现服务价值": "Inviting Customers to Communicate & Present Service Value",
+    "网络韧性评估": "Network robustness assessment",
+    "风险感知系统部署": "Deployment of risk perception system",
+    "事故": "Incident",
+    "未完成价值网络巡检单数": "Unclosed value network inspection tickets QTY.",
+    "工单<1人数": "SR<1"
   },
   "sla_prefs_risk_xjn92q": {
     "visibleHeaders": [
@@ -1960,9 +1965,11 @@
     "Storage Rectification"
   ],
   "expediteTemplate": {
-    "header": "📅 [TEST]【{MM}{DD}】Target Reminder\n@所有人 Hi Team, please ensure we meet the targets for the following items this month:\n\n",
+    "header": "📅【{MM}{DD}】Target Reminder\n@所有人 Hi Team, please ensure we meet the targets for the following items this month:\n\n",
     "footer": "🎉 [All-Account] New target of storage RC: 16.2%.\n\nAction required ASAP. Thank you!",
-    "emailSubject": "📅 [TEST]【{MM}{DD}】Target Reminder Email",
-    "meetSubject": "📅 [TEST]【{MM}{DD}】Target Reminder Meeting "
+    "emailSubject": "📅【{MM}{DD}】Target Reminder Email",
+    "meetSubject": "📅【{MM}{DD}】Target Reminder Meeting ",
+    "greetingGroup": "@所有人 Hi Team,",
+    "greetingSingle": "Hi dear,"
   }
 }

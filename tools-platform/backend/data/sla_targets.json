@@ -412,12 +412,14 @@
   "manual_target_1778882000010": {
     "type": "gte",
     "weight": 0,
-    "label": "Network robustness assessment"
+    "label": "网络韧性评估",
+    "autoFill": false
   },
   "manual_target_1778882000011": {
     "type": "gte",
     "weight": 0,
-    "label": "Deployment of risk perception system"
+    "label": "风险感知系统部署",
+    "autoFill": false
   },
   "manual_target_1778900000001": {
     "type": "gte",

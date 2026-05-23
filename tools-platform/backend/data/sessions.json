@@ -27,11 +27,18 @@
     },
     "expiresAt": 1780127729692
   },
-  "947f6557a74e701116287e8ff11cd0a8a61a3b8ac40f8b38c89290f46184953b": {
+  "fc88befccc20d0a188d7db8aaf4bd0c5b54b365f60a7bab44ba697ba8375ed00": {
     "user": {
       "username": "admin",
       "role": "admin"
     },
-    "expiresAt": 1780130054484
+    "expiresAt": 1780163708661
+  },
+  "c677c1f211084a8de26280e8d98fa55803d5c0a058d12f1bdb0fb9db0815b735": {
+    "user": {
+      "username": "admin",
+      "role": "admin"
+    },
+    "expiresAt": 1780169405437
   }
 }
