@@ -1,7 +1,20 @@
-document.addEventListener('DOMContentLoaded', async () => {
+let chartOverallInstance = null;
+let chartGroupsInstance = null;
+
+async function loadData(startDate, endDate) {
     try {
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('report-content').style.display = 'none';
+        const exportBtnContainer = document.getElementById('export-actions');
+        if (exportBtnContainer) exportBtnContainer.style.display = 'none';
+        
+        let url = '/api/db/monthly_report_data';
+        if (startDate && endDate) {
+            url += `?startDate=${startDate}&endDate=${endDate}`;
+        }
+
         const [data, configData, catDataRes, groupData] = await Promise.all([
-            window.API.get('/api/db/monthly_report_data'),
+            window.API.get(url),
             window.API.get('/api/sla/config'),
             window.API.get('/api/sla/categories'),
             window.API.get('/api/sla/groups')
@@ -39,23 +52,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('loader').style.display = 'none';
         
         if (!data || !data.trends || data.trends.length === 0) {
-            document.getElementById('report-date-range').innerText = '暂无数据';
+            document.getElementById('report-date-range').innerText = '分析周期: 无匹配数据';
             document.getElementById('report-content').style.display = 'block';
-            document.getElementById('report-content').innerHTML = '<div style="text-align:center; padding:40px;">当前没有历史入库数据，无法生成月报。</div>';
+            document.getElementById('report-content').innerHTML = '<div style="text-align:center; padding:40px;">当前时间范围内没有入库数据。</div>';
             return;
         }
 
         document.getElementById('report-content').style.display = 'block';
-        const exportBtnContainer = document.getElementById('export-actions');
         if (exportBtnContainer) exportBtnContainer.style.display = 'flex';
 
         const trends = data.trends;
         const latest = data.latest_snapshot;
 
-        const startDate = trends[0].date;
-        const endDate = trends[trends.length - 1].date;
-        document.getElementById('report-date-range').innerText = `分析周期: ${startDate} 至 ${endDate} (共 ${trends.length} 份数据快照)`;
-        document.getElementById('latest-snapshot-date').innerText = endDate;
+        const actualStartDate = trends[0].date;
+        const actualEndDate = trends[trends.length - 1].date;
+        document.getElementById('report-date-range').innerText = `分析周期: ${actualStartDate} 至 ${actualEndDate} (共 ${trends.length} 份数据快照)`;
+        document.getElementById('latest-snapshot-date').innerText = actualEndDate;
 
         generateSummary(trends, latest);
         drawCharts(trends);
@@ -71,6 +83,64 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Failed to load monthly data:', error);
         document.getElementById('loader').innerHTML = `<p style="color:red;">数据加载失败: ${error.message}</p>`;
     }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Initial load (all data)
+    loadData();
+
+    // Setup filter buttons
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const startDateInput = document.getElementById('filter-start-date');
+    const endDateInput = document.getElementById('filter-end-date');
+    const customBtn = document.getElementById('custom-filter-btn');
+
+    function formatDate(d) {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            const days = btn.getAttribute('data-days');
+            if (days === 'all') {
+                startDateInput.value = '';
+                endDateInput.value = '';
+                loadData();
+            } else {
+                const end = new Date();
+                const start = new Date();
+                start.setDate(end.getDate() - parseInt(days));
+                
+                const sDate = formatDate(start);
+                const eDate = formatDate(end);
+                
+                startDateInput.value = sDate;
+                endDateInput.value = eDate;
+                loadData(sDate, eDate);
+            }
+        });
+    });
+
+    customBtn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        const s = startDateInput.value;
+        const e = endDateInput.value;
+        if (!s || !e) {
+            showToast('请选择完整的开始和结束时间', 'warn');
+            return;
+        }
+        if (s > e) {
+            showToast('开始时间不能晚于结束时间', 'warn');
+            return;
+        }
+        loadData(s, e);
+    });
 });
 
 function generateSummary(trends, latest) {
@@ -169,8 +239,10 @@ function generateSummary(trends, latest) {
 function drawCharts(trends) {
     const dates = trends.map(t => t.date);
     
-    // Chart 1: Overall Trend
-    const chartOverall = echarts.init(document.getElementById('chart-overall'));
+    const overallDom = document.getElementById('chart-overall');
+    let chartOverall = echarts.getInstanceByDom(overallDom);
+    if (!chartOverall) chartOverall = echarts.init(overallDom);
+    
     const overallRates = trends.map(t => t.compliance_rate !== undefined ? parseFloat(t.compliance_rate).toFixed(2) : 0);
     const totalMetrics = trends.map(t => t.metrics_total || 0);
     const passedMetrics = trends.map(t => (t.metrics_total || 0) - (t.metrics_failing || 0));
@@ -241,10 +313,12 @@ function drawCharts(trends) {
                 labelLayout: { hideOverlap: true }
             }
         ]
-    });
+    }, true); // Use true to not merge with previous options if data changed entirely
 
     // Chart 2: Groups Trend
-    const chartGroups = echarts.init(document.getElementById('chart-groups'));
+    const groupsDom = document.getElementById('chart-groups');
+    let chartGroups = echarts.getInstanceByDom(groupsDom);
+    if (!chartGroups) chartGroups = echarts.init(groupsDom);
     // Get all unique categories across all trends
     const allCatsSet = new Set();
     trends.forEach(t => {
@@ -272,11 +346,11 @@ function drawCharts(trends) {
         yAxis: { type: 'value', min: 'dataMin' },
         grid: { left: '3%', right: '5%', bottom: '5%', containLabel: true },
         series: seriesData
-    });
+    }, true);
 
     window.addEventListener('resize', () => {
-        chartOverall.resize();
-        chartGroups.resize();
+        if (chartOverall) chartOverall.resize();
+        if (chartGroups) chartGroups.resize();
     });
 }
 

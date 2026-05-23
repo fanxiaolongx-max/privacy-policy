@@ -215,18 +215,28 @@ router.post('/config/:key', (req, res) => {
 });
 
 router.get('/monthly_report_data', (req, res) => {
+    const { startDate, endDate } = req.query;
+    let dateFilter = '';
+    const params = [];
+    
+    if (startDate && endDate) {
+        dateFilter = 'WHERE DATE(created_at) >= ? AND DATE(created_at) <= ?';
+        params.push(startDate, endDate);
+    }
+
     const sqlDaily = `
         SELECT s.snapshot_id, s.month, DATE(s.created_at) as date, s.created_at, s.standard_total_score 
         FROM ReportSnapshots s
         INNER JOIN (
             SELECT DATE(created_at) as d, MAX(id) as max_id
             FROM ReportSnapshots
+            ${dateFilter}
             GROUP BY DATE(created_at)
         ) latest ON s.id = latest.max_id
         ORDER BY date ASC
     `;
 
-    db.all(sqlDaily, (err, dailySnapshots) => {
+    db.all(sqlDaily, params, (err, dailySnapshots) => {
         if (err) return res.status(500).json({ error: err.message });
         
         if (dailySnapshots.length === 0) {
