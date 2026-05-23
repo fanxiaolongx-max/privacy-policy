@@ -149,6 +149,7 @@
             overflow: hidden;
             margin-top: 10px;
         }
+
         .dist-left {
             flex: 2;
             display: flex;
@@ -157,6 +158,7 @@
             padding-right: 20px;
             overflow-y: auto;
         }
+
         .dist-right {
             flex: 1;
             display: flex;
@@ -166,6 +168,7 @@
             padding: 12px;
             border-radius: 8px;
         }
+
         .roster-chip {
             display: inline-flex;
             align-items: center;
@@ -180,33 +183,40 @@
             user-select: none;
             transition: all 0.2s;
         }
+
         .roster-chip:hover {
             background: #bae6fd;
             transform: translateY(-1px);
         }
+
         .roster-chip.assigned {
             background: #f3f4f6;
             color: #4b5563;
             border-color: #e5e7eb;
         }
+
         .roster-chip.assigned:hover {
             background: #e5e7eb;
         }
+
         .roster-chip.selected {
             background: #0284c7;
             color: white;
             border-color: #0284c7;
             box-shadow: 0 2px 4px rgba(2, 132, 199, 0.3);
         }
+
         .roster-chip .del-roster {
             margin-left: 6px;
             font-weight: bold;
             color: inherit;
             opacity: 0.6;
         }
+
         .roster-chip .del-roster:hover {
             opacity: 1;
         }
+
         .dist-category {
             background: #fff;
             border: 1px solid #e2e8f0;
@@ -215,18 +225,34 @@
             margin-bottom: 12px;
             transition: all 0.2s;
         }
+
         .dist-category:hover {
             border-color: #cbd5e1;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
         }
+
         @keyframes assignFlash {
-            0% { transform: scale(1); box-shadow: 0 0 0 rgba(16, 185, 129, 0); }
-            30% { transform: scale(1.02); box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); border-color: #10b981; }
-            100% { transform: scale(1); box-shadow: 0 0 0 rgba(16, 185, 129, 0); }
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 rgba(16, 185, 129, 0);
+            }
+
+            30% {
+                transform: scale(1.02);
+                box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+                border-color: #10b981;
+            }
+
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 rgba(16, 185, 129, 0);
+            }
         }
+
         .assign-anim {
             animation: assignFlash 0.5s ease-out;
         }
+
         .dist-category-title {
             font-weight: 600;
             font-size: 14px;
@@ -236,6 +262,7 @@
             justify-content: space-between;
             align-items: center;
         }
+
         .dist-category-pool {
             min-height: 40px;
             background: #f1f5f9;
@@ -245,6 +272,7 @@
             flex-wrap: wrap;
             gap: 6px;
         }
+
         .assigned-chip {
             background: #fff;
             border: 1px solid #cbd5e1;
@@ -254,13 +282,15 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
+
         .assigned-chip .del {
             color: #ef4444;
             cursor: pointer;
             font-weight: bold;
         }
+
         .assigned-chip .del:hover {
             color: #b91c1c;
         }
@@ -402,25 +432,32 @@
         .add-keyword-group button:hover {
             background: #059669;
         }
+
         .switch {
             position: relative;
             display: inline-block;
             width: 32px;
             height: 18px;
         }
-        .switch input { 
+
+        .switch input {
             opacity: 0;
             width: 0;
             height: 0;
         }
+
         .slider {
             position: absolute;
             cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background-color: #cbd5e1;
             transition: .3s;
             border-radius: 18px;
         }
+
         .slider:before {
             position: absolute;
             content: "";
@@ -432,12 +469,15 @@
             transition: .3s;
             border-radius: 50%;
         }
-        input:checked + .slider {
+
+        input:checked+.slider {
             background-color: #0078d4;
         }
-        input:checked + .slider:before {
+
+        input:checked+.slider:before {
             transform: translateX(14px);
         }
+
         .toggle-label {
             font-size: 13px;
             color: #334155;
@@ -452,7 +492,7 @@
 <body>
     <div class="page-container">
         <div class="controls">
-            <h2>⚡ 一键催办</h2>
+            <h2>一键催办 <span style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v1.0.0</span></h2>
             <div style="display: flex; gap: 12px; align-items: center;">
                 <select id="snapshot-selector" onchange="loadSelectedSnapshot()"
                     style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; background: #fff; color: #334155; font-size: 13px; max-width: 200px;">
@@ -491,8 +531,10 @@
                                 </h3>
                                 <div style="font-size: 12px; color: #64748b; margin-bottom: 12px;">自动生成 PowerShell
                                     脚本一键分发。若无权限发附件，请取消勾选“直接分发附件”。</div>
-                                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 8px;">
-                                    <button class="btn-copy" onclick="openDistributionModal()" style="padding: 6px 16px; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; white-space: nowrap;">
+                                <div
+                                    style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 8px;">
+                                    <button class="btn-copy" onclick="openDistributionModal()"
+                                        style="padding: 6px 16px; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; white-space: nowrap;">
                                         ⚙️ 配置高级分发策略
                                     </button>
                                     <label
@@ -501,10 +543,18 @@
                                     </label>
                                 </div>
                                 <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
-                                    <label class="toggle-label"><label class="switch"><input type="checkbox" id="toggle-im-single" checked><span class="slider"></span></label> 专属单聊</label>
-                                    <label class="toggle-label"><label class="switch"><input type="checkbox" id="toggle-im-group" checked><span class="slider"></span></label> 全局群聊</label>
-                                    <label class="toggle-label"><label class="switch"><input type="checkbox" id="toggle-email" checked><span class="slider"></span></label> 邮件抄送</label>
-                                    <label class="toggle-label"><label class="switch"><input type="checkbox" id="toggle-meet" checked><span class="slider"></span></label> 会议邀请</label>
+                                    <label class="toggle-label"><label class="switch"><input type="checkbox"
+                                                id="toggle-im-single" checked><span class="slider"></span></label>
+                                        专属单聊</label>
+                                    <label class="toggle-label"><label class="switch"><input type="checkbox"
+                                                id="toggle-im-group" checked><span class="slider"></span></label>
+                                        全局群聊</label>
+                                    <label class="toggle-label"><label class="switch"><input type="checkbox"
+                                                id="toggle-email" checked><span class="slider"></span></label>
+                                        邮件抄送</label>
+                                    <label class="toggle-label"><label class="switch"><input type="checkbox"
+                                                id="toggle-meet" checked><span class="slider"></span></label>
+                                        会议邀请</label>
                                 </div>
                             </div>
                         </div>
@@ -595,19 +645,26 @@
                     <!-- Dynamic Categories will be rendered here via JS -->
                 </div>
                 <div class="dist-right">
-                    <div style="font-size:13px; font-weight:600; color:#555; margin-bottom:10px;">👤 员工名册 <span style="color:#999;font-weight:normal;">(点选复用)</span></div>
-                    <div id="dist-roster-pool" style="flex:1; align-content: flex-start; display: flex; flex-wrap: wrap;">
+                    <div style="font-size:13px; font-weight:600; color:#555; margin-bottom:10px;">👤 员工名册 <span
+                            style="color:#999;font-weight:normal;">(点选复用)</span></div>
+                    <div id="dist-roster-pool"
+                        style="flex:1; align-content: flex-start; display: flex; flex-wrap: wrap;">
                         <!-- Roster chips -->
                     </div>
-                    <div style="margin-top: 10px; border-top: 1px solid #e2e8f0; padding-top: 10px;">
-                        <input type="text" id="new-roster-input" placeholder="输入工号或群ID (如: l00123)" style="width: 100%; margin-bottom: 6px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px;">
-                        <input type="text" id="new-roster-name" placeholder="备注姓名/群名 (可选)" style="width: 100%; margin-bottom: 6px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px;">
-                        <button onclick="addRosterEmployee()" style="width: 100%; padding: 6px; background: #0ea5e9; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">＋ 添加至待分配库</button>
+                    <div id="add-roster-section"
+                        style="margin-top: 10px; border-top: 1px solid #e2e8f0; padding-top: 10px;">
+                        <input type="text" id="new-roster-input" placeholder="输入工号或群ID (如: l00123)"
+                            style="width: 100%; margin-bottom: 6px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px;">
+                        <input type="text" id="new-roster-name" placeholder="备注姓名/群名 (可选)"
+                            style="width: 100%; margin-bottom: 6px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px;">
+                        <button onclick="addRosterEmployee()"
+                            style="width: 100%; padding: 6px; background: #0ea5e9; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">＋
+                            添加至待分配库</button>
                     </div>
                 </div>
             </div>
             <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
-                <button class="btn-primary" onclick="saveDistributionPolicy()">💾 保存全部配置</button>
+                <button class="btn-primary" id="btn-save-policy" onclick="saveDistributionPolicy()">💾 保存全部配置</button>
             </div>
         </div>
     </div>
@@ -638,12 +695,13 @@
                 <h3>📝 催办模板配置</h3>
                 <button class="close-btn" onclick="closeTemplateModal()">&times;</button>
             </div>
-            
+
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                 <div>
                     <div class="template-group">
                         <label>群发问候语 (Group Greeting)</label>
-                        <input type="text" id="tpl-greeting-group" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; margin-top: 4px;">
+                        <input type="text" id="tpl-greeting-group"
+                            style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; margin-top: 4px;">
                         <div class="template-help">群发场景(群聊/邮件/会议)使用，默认: @所有人 Hi Team,</div>
                     </div>
                     <div class="template-group">
@@ -653,15 +711,17 @@
                     </div>
                     <div class="template-group">
                         <label>全局邮件抄送标题 (Email Subject)</label>
-                        <input type="text" id="tpl-email" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; margin-top: 4px;">
+                        <input type="text" id="tpl-email"
+                            style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; margin-top: 4px;">
                         <div class="template-help">可用变量: {MM} 月份, {DD} 日期</div>
                     </div>
                 </div>
-                
+
                 <div>
                     <div class="template-group">
                         <label>专属单发问候语 (Single Greeting)</label>
-                        <input type="text" id="tpl-greeting-single" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; margin-top: 4px;">
+                        <input type="text" id="tpl-greeting-single"
+                            style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; margin-top: 4px;">
                         <div class="template-help">单人专属分发场景使用，默认: Hi dear,</div>
                     </div>
                     <div class="template-group">
@@ -671,7 +731,8 @@
                     </div>
                     <div class="template-group">
                         <label>日程/会议邀请标题 (Meeting Subject)</label>
-                        <input type="text" id="tpl-meet" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; margin-top: 4px;">
+                        <input type="text" id="tpl-meet"
+                            style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; margin-top: 4px;">
                         <div class="template-help">可用变量: {MM} 月份, {DD} 日期</div>
                     </div>
                 </div>
@@ -943,7 +1004,7 @@
             let rawData;
             try {
                 rawData = typeof data.raw_data_json === 'string' ? JSON.parse(data.raw_data_json) : data.raw_data_json;
-            } catch(e) {
+            } catch (e) {
                 return '';
             }
             const tickets = rawData.expiringTickets;
@@ -954,7 +1015,7 @@
                 const td = t.data || {};
                 const id = td.task_id || td.risk_id || td.ticket_id || td['单号'] || td['问题风险编号'] || td['问题编号'] || 'Unknown ID';
                 const network = td.network_name || td['网络名称'] || td.network || 'Unknown Network';
-                
+
                 // Translate title
                 let enTitle = t.title.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim();
                 if (enTitle.includes('整改')) enTitle = 'Rectification';
@@ -1124,6 +1185,12 @@
         }
 
         function renderDistributionModal() {
+            const isAdmin = localStorage.getItem('tools_role') === 'admin';
+
+            // Toggle visibility of admin-only elements
+            document.getElementById('add-roster-section').style.display = isAdmin ? 'block' : 'none';
+            document.getElementById('btn-save-policy').style.display = isAdmin ? 'inline-block' : 'none';
+
             const rosterPool = document.getElementById('dist-roster-pool');
             const categoriesContainer = document.getElementById('dist-categories');
 
@@ -1136,9 +1203,10 @@
             let groupPoolHtml = '';
             window._distPolicy.roster.forEach(emp => {
                 const isAssigned = assignedIds.has(emp.id);
-                const chip = `<div class="roster-chip ${selectedRosterId === emp.id ? 'selected' : ''} ${isAssigned && selectedRosterId !== emp.id ? 'assigned' : ''}" onclick="selectRoster('${emp.id}')">
+                const delBtn = isAdmin ? `<span class="del-roster" onclick="event.stopPropagation(); deleteRoster('${emp.id}')">✕</span>` : '';
+                const chip = `<div class="roster-chip ${selectedRosterId === emp.id ? 'selected' : ''} ${isAssigned && selectedRosterId !== emp.id ? 'assigned' : ''}" ${isAdmin ? `onclick="selectRoster('${emp.id}')"` : ''} style="${!isAdmin ? 'cursor:default;' : ''}">
                     ${emp.id} ${emp.name ? `(${emp.name})` : ''}
-                    <span class="del-roster" onclick="event.stopPropagation(); deleteRoster('${emp.id}')">✕</span>
+                    ${delBtn}
                 </div>`;
                 if (emp.id.length > 10) {
                     groupPoolHtml += chip;
@@ -1146,7 +1214,7 @@
                     userPoolHtml += chip;
                 }
             });
-            
+
             let finalHtml = `
             <div style="font-size:12px; font-weight:600; color:#555; margin: 0 0 4px 4px;">👤 员工名单</div>
             <div style="display: flex; flex-wrap: wrap; margin-bottom: 12px; min-height: 28px;">
@@ -1159,17 +1227,18 @@
             rosterPool.innerHTML = finalHtml;
 
             const dynamicCats = window.GlobalCategories;
-            
+
             const renderCategory = (catId, title, icon) => {
                 const assigned = window._distPolicy.assignments[catId] || [];
                 let chipsHtml = assigned.map(id => {
-                    const emp = window._distPolicy.roster.find(r => r.id === id) || {id};
-                    return `<div class="assigned-chip">${emp.id} ${emp.name ? `(${emp.name})` : ''} <span class="del" onclick="event.stopPropagation(); unassign('${catId}', '${id}')">✕</span></div>`;
+                    const emp = window._distPolicy.roster.find(r => r.id === id) || { id };
+                    const unassignBtn = isAdmin ? `<span class="del" onclick="event.stopPropagation(); unassign('${catId}', '${id}')">✕</span>` : '';
+                    return `<div class="assigned-chip">${emp.id} ${emp.name ? `(${emp.name})` : ''} ${unassignBtn}</div>`;
                 }).join('');
-                if(!chipsHtml) chipsHtml = '<span style="color:#cbd5e1; font-size:12px; font-style:italic;">选中右侧员工后，点击此处分配...</span>';
+                if (!chipsHtml) chipsHtml = '<span style="color:#cbd5e1; font-size:12px; font-style:italic;">' + (isAdmin ? '选中右侧员工后，点击此处分配...' : '暂未分配') + '</span>';
 
                 return `
-                <div id="cat-${catId}" class="dist-category" onclick="assignSelectedTo('${catId}')">
+                <div id="cat-${catId}" class="dist-category" ${isAdmin ? `onclick="assignSelectedTo('${catId}')"` : ''} style="${!isAdmin ? 'cursor:default;' : ''}">
                     <div class="dist-category-title">${icon} ${title}</div>
                     <div class="dist-category-pool">${chipsHtml}</div>
                 </div>`;
@@ -1179,7 +1248,7 @@
             dynamicCats.forEach(cat => {
                 catHtml += renderCategory(cat, `专属单聊分发: [${cat}]`, '💬');
             });
-            
+
             catHtml += `<hr style="border:none; border-top:1px dashed #cbd5e1; margin: 20px 0;">`;
             catHtml += renderCategory('GLOBAL_GROUP', '全局群聊推送 (全量报告)', '👥');
             catHtml += renderCategory('GLOBAL_EMAIL', '全局邮件抄送 (全量报告)', '📧');
@@ -1219,7 +1288,7 @@
             if (!selectedRosterId) {
                 return showToast('请先在右侧选择要分配的人员/群组', 'warning');
             }
-            
+
             const isGroup = selectedRosterId.length > 10;
             if (catId === 'GLOBAL_GROUP' && !isGroup) {
                 return showToast('❌ 群聊推送只能分配群组号 (长度>10)', 'error');
@@ -1229,13 +1298,13 @@
             }
 
             if (!window._distPolicy.assignments[catId]) window._distPolicy.assignments[catId] = [];
-            
+
             if (!window._distPolicy.assignments[catId].includes(selectedRosterId)) {
                 window._distPolicy.assignments[catId].push(selectedRosterId);
             }
             selectedRosterId = null;
             renderDistributionModal();
-            
+
             setTimeout(() => {
                 const catEl = document.getElementById(`cat-${catId}`);
                 if (catEl) {
@@ -1274,7 +1343,7 @@
             const monthStr = String(latestFailingData.month).padStart(2, '0');
             const dayStr = String(new Date().getDate()).padStart(2, '0');
             const greetingSingle = expediteTemplate.greetingSingle || 'Hi dear,';
-            
+
             let text = expediteTemplate.header.replace(/\{MM\}/g, monthStr).replace(/\{DD\}/g, dayStr);
             if (text.includes('{GREETING}')) {
                 text = text.replace(/\{GREETING\}/g, greetingSingle);
@@ -1282,7 +1351,7 @@
                 text = text.replace('@所有人 Hi Team,', greetingSingle);
             }
             text += '\n\n';
-            
+
             let hasMetrics = false;
             assignedCats.forEach(cat => {
                 const metrics = latestFailingData.failing_metrics[cat];
@@ -1295,10 +1364,10 @@
                             let targetStr = m.target_val && m.target_val !== '--' ? m.target_val : '';
                             if (targetStr && !targetStr.includes('≥') && !targetStr.includes('≤')) targetStr = '≥ ' + targetStr;
                             if (String(m.raw_val).includes('%') && targetStr && !targetStr.includes('%')) targetStr += '%';
-                            
+
                             let alertIcon = '';
                             if (m.gap && parseFloat(String(m.gap).replace(/[^0-9.-]/g, '')) >= 10) alertIcon = '🚨 ';
-                            
+
                             catText += `    ↳ ${alertIcon}${enName} (${m.raw_val} ➔ ${targetStr})\n`;
                             catHasMetrics = true;
                         }
@@ -1309,7 +1378,7 @@
                     }
                 }
             });
-            
+
             if (!hasMetrics) {
                 text += `✅ All metrics for your assigned group have met the targets. Thank you for your support!\n\n`;
             }
@@ -1415,7 +1484,7 @@ ${excelUrl ? `Invoke-WebRequest -Uri "${excelUrl}" -OutFile "$tempXlsx"` : ''}
                         pText += `\n\n[Report_Picture_Download]: ${imgUrl}`;
                         if (excelUrl) pText += `\n[Report_Excel_Download]: ${excelUrl}`;
                     }
-                    
+
                     psScript += `
 $msg_${uid.replace(/[^a-zA-Z0-9]/g, '')} = @"
 ${pText}
@@ -1492,14 +1561,14 @@ if ($emailList.Count -gt 0) {
             // 4. Meeting
             if (document.getElementById('toggle-meet').checked && meetUsers.length > 0) {
                 const getArrayStr = (arr) => arr.length === 0 ? '@()' : `@(${arr.map(u => `"${u}"`).join(',')})`;
-                
+
                 // Calculate meeting time in Beijing Time (+8) to bypass TZ parsing bugs in WeLink CLI Exchange XML
                 const formatToBeijingTime = (dateObj) => {
                     const utc = dateObj.getTime() + (dateObj.getTimezoneOffset() * 60000);
                     const beijingTime = new Date(utc + (3600000 * 8));
                     return `${beijingTime.getFullYear()}-${String(beijingTime.getMonth() + 1).padStart(2, '0')}-${String(beijingTime.getDate()).padStart(2, '0')}T${String(beijingTime.getHours()).padStart(2, '0')}:${String(beijingTime.getMinutes()).padStart(2, '0')}:${String(beijingTime.getSeconds()).padStart(2, '0')}`;
                 };
-                
+
                 const now = new Date();
                 const startTStr = formatToBeijingTime(new Date(now.getTime() + 30 * 60000));
                 const endTStr = formatToBeijingTime(new Date(now.getTime() + 60 * 60000));

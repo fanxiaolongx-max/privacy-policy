@@ -10,6 +10,7 @@ const uivRoutes = require('./routes/uiv');
 const slaRoutes = require('./routes/sla');
 const uploadRoutes = require('./routes/upload');
 const authRoutes = require('./routes/auth');
+const requirementsRoutes = require('./routes/requirements');
 const { checkAuth, requireAdmin } = require('./middleware/auth');
 
 const app = express();
@@ -75,6 +76,7 @@ app.use('/api', checkAuth); // Protect all /api/* (except login, which is handle
 // Protect modifications: requireAdmin for all non-GET requests under uiv, sla, upload
 app.use('/api', (req, res, next) => {
     if (req.path.startsWith('/auth/')) return next();
+    if (req.path.startsWith('/requirements')) return next(); // 需求管理内部自行控制权限
     if (req.method !== 'GET') {
         return requireAdmin(req, res, next);
     }
@@ -84,6 +86,7 @@ app.use('/api/uiv', uivRoutes);         // UIV12 脚本仓库 API
 app.use('/api/sla', slaRoutes);         // SLA 配置持久化 API
 app.use('/api/upload', uploadRoutes);   // 文件上传历史 API
 app.use('/api/db', require('./routes/db')); // DB 保存 API
+app.use('/api/requirements', requirementsRoutes); // 需求管理 API
 
 // ============================================================
 // 前端路由回退（SPA）
@@ -108,6 +111,9 @@ app.get('/expedite', (req, res) => {
 });
 app.get('/monthly', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/pages/monthly.html'));
+});
+app.get('/requirements', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/pages/requirements.html'));
 });
 
 // ── 全局错误兜底

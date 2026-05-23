@@ -102,9 +102,16 @@ router.post('/save', (req, res) => {
             }
         }
 
-        db.run(`INSERT INTO ReportSnapshots (snapshot_id, month, standard_total_score, raw_data_json, image_path, excel_path)
-                VALUES (?, ?, ?, ?, ?, ?)`, 
-                [snapshot_id, month, standard_total_score, JSON.stringify(raw_data), image_path, excel_path], function(err) {
+        let createdAtStr;
+        if (req.body.created_at) {
+            createdAtStr = new Date(req.body.created_at).toISOString().replace('T', ' ').substring(0, 19);
+        } else {
+            createdAtStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
+        }
+
+        db.run(`INSERT INTO ReportSnapshots (snapshot_id, month, created_at, standard_total_score, raw_data_json, image_path, excel_path)
+                VALUES (?, ?, ?, ?, ?, ?, ?)`, 
+                [snapshot_id, month, createdAtStr, standard_total_score, JSON.stringify(raw_data), image_path, excel_path], function(err) {
             if (err) {
                 db.run('ROLLBACK');
                 return res.status(500).json({ error: err.message });
@@ -194,6 +201,9 @@ router.get('/config/:key', (req, res) => {
 });
 
 router.post('/config/:key', (req, res) => {
+    if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: '没有权限，仅管理员可修改配置' });
+    }
     const valueJson = JSON.stringify(req.body);
     db.run('INSERT INTO PlatformConfig (key_name, value_json) VALUES (?, ?) ON CONFLICT(key_name) DO UPDATE SET value_json = ?, updated_at = CURRENT_TIMESTAMP', 
         [req.params.key, valueJson, valueJson], 
