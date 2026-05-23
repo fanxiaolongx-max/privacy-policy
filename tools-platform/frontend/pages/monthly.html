@@ -152,6 +152,28 @@
         .matrix-container {
             overflow-x: auto;
         }
+
+        .filter-btn {
+            padding: 6px 12px;
+            background: #f0f2f5;
+            color: #333;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn:hover {
+            background: #e8eaf6;
+            border-color: #c5cae9;
+        }
+
+        .filter-btn.active {
+            background: #00285e;
+            color: #fff;
+            border-color: #00285e;
+        }
     </style>
 </head>
 
@@ -160,6 +182,20 @@
         <div class="report-header">
             <h2>月度运营质量与合规分析报告 <span style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v1.0.0</span></h2>
             <p id="report-date-range">分析周期: 加载中...</p>
+            <div id="date-filter-container" style="margin-top: 15px; display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap;">
+                <div style="display: flex; gap: 8px;">
+                    <button class="filter-btn" data-days="7">最近 7 天</button>
+                    <button class="filter-btn" data-days="30">最近 30 天</button>
+                    <button class="filter-btn" data-days="90">最近 90 天</button>
+                    <button class="filter-btn" data-days="all">全部</button>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center; margin-left: 15px;">
+                    <input type="date" id="filter-start-date" style="padding: 6px; border: 1px solid #ccc; border-radius: 4px;">
+                    <span>至</span>
+                    <input type="date" id="filter-end-date" style="padding: 6px; border: 1px solid #ccc; border-radius: 4px;">
+                    <button id="custom-filter-btn" style="padding: 6px 12px; background: #00285e; color: #fff; border: none; border-radius: 4px; cursor: pointer;">筛选</button>
+                </div>
+            </div>
             <div id="export-actions" style="margin-top: 15px; display: none; gap: 10px; justify-content: center;">
                 <button onclick="exportToImage()" style="padding: 8px 16px; background: #00285e; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">🖼️ 导出为长图</button>
                 <button onclick="exportToPDF()" style="padding: 8px 16px; background: #e31837; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">📄 导出为 PDF</button>
