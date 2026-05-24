@@ -36,7 +36,7 @@
     "weight": 5
   },
   "other_renltd_m_1778786309907": {
-    "5": 40,
+    "5": 16,
     "6": 60,
     "7": 70,
     "8": 80,
@@ -338,24 +338,31 @@
     "weight": 1
   },
   "manual_target_1778881260277": {
-    "5": "100",
+    "5": 100,
     "type": "gte",
     "weight": 2,
     "label": "IBMS刷新率"
   },
   "manual_target_1778882000001": {
-    "5": 100,
+    "5": 1,
     "type": "gte",
     "weight": 2,
-    "label": "月度例会及报告准时完成率"
+    "label": "月度例会及报告准时完成率",
+    "exceedBy": "",
+    "bonus": "",
+    "autoFill": true
   },
   "manual_target_1778882000002": {
+    "5": 1,
     "type": "gte",
     "weight": 3,
-    "label": "服务专刊季度提交"
+    "label": "服务专刊季度提交",
+    "exceedBy": "",
+    "bonus": "",
+    "autoFill": true
   },
   "manual_target_1778882000003": {
-    "5": "1",
+    "5": 1,
     "type": "gte",
     "weight": 3,
     "label": "半年度服务峰会召开",
@@ -364,7 +371,7 @@
     "autoFill": true
   },
   "manual_target_1778882000004": {
-    "5": "1",
+    "5": 1,
     "type": "gte",
     "weight": 2,
     "label": "Jam客户互动月度发布",
