@@ -11,6 +11,7 @@ const slaRoutes = require('./routes/sla');
 const uploadRoutes = require('./routes/upload');
 const authRoutes = require('./routes/auth');
 const requirementsRoutes = require('./routes/requirements');
+const aiRoutes = require('./routes/ai');
 const { checkAuth, requireAdmin } = require('./middleware/auth');
 
 const app = express();
@@ -87,6 +88,7 @@ app.use('/api/sla', slaRoutes);         // SLA 配置持久化 API
 app.use('/api/upload', uploadRoutes);   // 文件上传历史 API
 app.use('/api/db', require('./routes/db')); // DB 保存 API
 app.use('/api/requirements', requirementsRoutes); // 需求管理 API
+app.use('/api/ai', aiRoutes); // AI 服务 API
 
 // ============================================================
 // 前端路由回退（SPA）
@@ -117,6 +119,12 @@ app.get('/requirements', (req, res) => {
 });
 app.get('/praudit', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/pages/praudit.html'));
+});
+app.get('/privacy', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/pages/privacy.html'));
+});
+app.get('/terms', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/pages/terms.html'));
 });
 
 // ── 全局错误兜底

@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
+    <meta name="google-site-verification" content="Bkzm4lbFEHnJEXGJ3bIb5QLbY1uR1ecQa7JLa8vM0cw" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>登录 - Tools Platform</title>
@@ -15,23 +17,27 @@
             justify-content: center;
             height: 100vh;
         }
+
         .login-box {
             background: #fff;
             padding: 40px;
             border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             width: 360px;
             text-align: center;
         }
+
         .login-box h2 {
             margin-top: 0;
             color: #1a237e;
             margin-bottom: 30px;
         }
+
         .input-group {
             margin-bottom: 20px;
             text-align: left;
         }
+
         .input-group label {
             display: block;
             margin-bottom: 8px;
@@ -39,6 +45,7 @@
             font-size: 14px;
             font-weight: 600;
         }
+
         .input-group input {
             width: 100%;
             padding: 12px;
@@ -49,9 +56,11 @@
             outline: none;
             transition: border-color 0.2s;
         }
+
         .input-group input:focus {
             border-color: #3f51b5;
         }
+
         .btn-login {
             width: 100%;
             padding: 12px;
@@ -64,20 +73,44 @@
             cursor: pointer;
             transition: background 0.2s;
         }
+
         .btn-login:hover {
             background: #283593;
         }
+
         #error-msg {
             color: #d32f2f;
             font-size: 14px;
             margin-top: 15px;
             min-height: 20px;
         }
+
+        .footer-links {
+            position: absolute;
+            bottom: 24px;
+            width: 100%;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .footer-links a {
+            color: #64748b;
+            text-decoration: none;
+            margin: 0 10px;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: #3f51b5;
+            text-decoration: underline;
+        }
     </style>
 </head>
+
 <body>
     <div class="login-box">
-        <h2>🛠️ Tools Platform 登录 <span style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v1.0.0</span></h2>
+        <h2>🛠️ Tools Platform 登录 <span
+                style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v1.0.0</span></h2>
         <div class="input-group">
             <label>用户名</label>
             <input type="text" id="username" placeholder="请输入账号" onkeydown="handleEnter(event)">
@@ -90,6 +123,12 @@
         <div id="error-msg"></div>
     </div>
 
+    <div class="footer-links">
+        <a href="/privacy" target="_blank">隐私政策</a>
+        <span style="color:#cbd5e1;">|</span>
+        <a href="/terms" target="_blank">服务条款</a>
+    </div>
+
     <script src="/js/shared/api.js"></script>
     <script>
         function handleEnter(e) {
@@ -100,14 +139,14 @@
             const u = document.getElementById('username').value.trim();
             const p = document.getElementById('password').value;
             const errDiv = document.getElementById('error-msg');
-            
+
             if (!u || !p) {
                 errDiv.textContent = '用户名和密码不能为空';
                 return;
             }
-            
+
             errDiv.textContent = '登录中...';
-            
+
             try {
                 // api.js uses getAuthHeaders which throws us back here on 401. But login doesn't need auth header.
                 const res = await fetch('/api/auth/login', {
@@ -115,16 +154,16 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username: u, password: p })
                 });
-                
+
                 const data = await res.json();
                 if (!res.ok) {
                     throw new Error(data.error || '登录失败');
                 }
-                
+
                 localStorage.setItem('tools_token', data.token);
                 localStorage.setItem('tools_user', data.username);
                 localStorage.setItem('tools_role', data.role);
-                
+
                 // Redirect to dashboard (index)
                 window.location.href = '/';
             } catch (e) {
@@ -133,4 +172,5 @@
         }
     </script>
 </body>
+
 </html>

@@ -396,6 +396,8 @@ pm2 stop tools-platform
 # 重启
 pm2 restart tools-platform
 ```
+# 配置gemini APi环境变量后重启
+(base) dragon@boba privacy-policy % GEMINI_API_KEY="[ENCRYPTION_KEY]" pm2 restart tools-platform --update-env
 
 启动后访问：
 - 平台主页：`http://localhost:3030`
