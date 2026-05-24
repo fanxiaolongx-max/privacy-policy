@@ -151,6 +151,18 @@ window.openUserModal = async function () {
     }
 };
 
+// ==========================================
+// 全局注入 AI 客服助手
+// ==========================================
+(function() {
+    // 确保不重复加载
+    if (!document.querySelector('script[src="/js/shared/ai-assistant.js"]')) {
+        const aiScript = document.createElement('script');
+        aiScript.src = '/js/shared/ai-assistant.js';
+        document.body.appendChild(aiScript);
+    }
+})();
+
 window.addUser = async function () {
     const username = document.getElementById('nu_name').value;
     const password = document.getElementById('nu_pwd').value;
