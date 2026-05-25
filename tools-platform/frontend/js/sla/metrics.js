@@ -51,7 +51,12 @@ function evaluateAllMetrics() {
 
             let matchedValue = evalRule(rule, state.globalData);
 
-            if (rule.label.includes('率') && matchedValue !== '--' && rule.type !== 'count' && rule.type !== 'ratio') {
+            const ruleColZ = rule.colZ || '';
+            const targetKey = `${secId}_${rule.id}`;
+            const targetDef = window.GlobalTargets ? window.GlobalTargets[targetKey] : null;
+            const isPercentFormat = targetDef && targetDef.isPercent !== undefined ? targetDef.isPercent : (rule.label.includes('率') || ruleColZ.includes('率'));
+            
+            if (isPercentFormat && matchedValue !== '--' && rule.type !== 'count' && rule.type !== 'ratio') {
                 const strVal = matchedValue.toString().trim();
                 const isPercent = strVal.endsWith('%');
                 const num = parseFloat(strVal);
@@ -67,7 +72,12 @@ function evaluateAllMetrics() {
                     let smValue = evalRule(sm, sourceData);
                     
                     const effectiveLabel = sm.label || rule.label || '';
-                    if (effectiveLabel.includes('率') && smValue !== '--' && sm.type !== 'count' && sm.type !== 'ratio') {
+                    const effectiveColZ = sm.colZ || rule.colZ || '';
+                    const smTargetKey = `${secId}_${sm.id}`;
+                    const smTargetDef = window.GlobalTargets ? (window.GlobalTargets[smTargetKey] || window.GlobalTargets[targetKey]) : null;
+                    const smIsPercentFormat = smTargetDef && smTargetDef.isPercent !== undefined ? smTargetDef.isPercent : (effectiveLabel.includes('率') || effectiveColZ.includes('率'));
+
+                    if (smIsPercentFormat && smValue !== '--' && sm.type !== 'count' && sm.type !== 'ratio') {
                         const strVal = smValue.toString().trim();
                         const isPercent = strVal.endsWith('%');
                         const num = parseFloat(strVal);
@@ -244,6 +254,10 @@ window.openTargetModal = async function() {
                             <option value="gte" ${targets.type === 'gte' || !targets.type ? 'selected' : ''}>≥ (越大越好)</option>
                             <option value="lte" ${targets.type === 'lte' ? 'selected' : ''}>≤ (越小越好)</option>
                         </select>
+                        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;color:#555;">
+                            <input type="checkbox" class="is-percent-checkbox" data-key="${k}" ${(targets.isPercent === true || (targets.isPercent === undefined && (label.includes('率') || k.includes('率')))) ? 'checked' : ''}>
+                            百分比
+                        </label>
                         <span style="color:#666;font-weight:normal;font-size:13px;">实时当前值: <b style="color:#4a90e2;font-size:16px;">${escapeHTML(String(currentVal))}</b></span>
                     </div>
                 </div>
@@ -259,6 +273,7 @@ window.closeTargetModal = function() { document.getElementById('target-modal').s
 window.saveTargets = async function() {
     const selects = document.querySelectorAll('.condition-select');
     const inputs = document.querySelectorAll('.month-input-group input');
+    const checkboxes = document.querySelectorAll('.is-percent-checkbox');
     
     // We only update the targets that are currently shown in the modal, leaving others intact
     let newTargets = JSON.parse(JSON.stringify(window.GlobalTargets || {}));
@@ -267,6 +282,12 @@ window.saveTargets = async function() {
         const k = sel.getAttribute('data-key'); 
         if (!newTargets[k]) newTargets[k] = {};
         newTargets[k].type = sel.value; 
+    });
+    
+    checkboxes.forEach(cb => {
+        const k = cb.getAttribute('data-key');
+        if (!newTargets[k]) newTargets[k] = {};
+        newTargets[k].isPercent = cb.checked;
     });
     
     inputs.forEach(input => {

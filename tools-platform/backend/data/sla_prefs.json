@@ -22,7 +22,7 @@
         "colX": "network_name_base",
         "valY": "总计",
         "colZ": "网络拓扑刷新完成率",
-        "label": "拓扑刷新率",
+        "label": "拓扑",
         "color": "",
         "subMetrics": [
           {
@@ -56,7 +56,7 @@
         "colX": "network_name_base",
         "valY": "总计",
         "colZ": "应急预案刷新完成率",
-        "label": "预案刷新率",
+        "label": "预案",
         "color": "",
         "subMetrics": [
           {
@@ -113,7 +113,7 @@
         "colX": "name",
         "valY": "汇总",
         "colZ": "closed_rate",
-        "label": "版本EOS闭环率",
+        "label": "全量EOS-版本",
         "color": "",
         "subMetrics": [
           {
@@ -184,7 +184,7 @@
         "colX": "name",
         "valY": "汇总",
         "colZ": "done_rate",
-        "label": "软件MM收编率",
+        "label": "软件MM",
         "color": ""
       }
     ]
@@ -408,7 +408,7 @@
         "colX": "网络",
         "valY": "总计",
         "colZ": "总巡检完成率",
-        "label": "价值网络巡检完成率",
+        "label": "价值网络HC",
         "color": "",
         "subMetrics": [
           {
@@ -452,7 +452,7 @@
         "colX": "地区部",
         "valY": "总计",
         "colZ": "完成率",
-        "label": "延期补授权完成率",
+        "label": "延期补授权",
         "color": ""
       }
     ]
@@ -474,7 +474,7 @@
         "colX": "name",
         "valY": "汇总",
         "colZ": "lb_complete_drill_rate",
-        "label": "锂电池整改完成率",
+        "label": "锂电",
         "color": "",
         "subMetrics": [
           {
@@ -509,7 +509,7 @@
         "colX": "name",
         "valY": "汇总",
         "colZ": "sr_frt",
-        "label": "SR FRT率",
+        "label": "SR FRT",
         "color": "",
         "subMetrics": [
           {
@@ -558,7 +558,7 @@
         "colX": "name",
         "valY": "汇总",
         "colZ": "closed_rate",
-        "label": "重急EOS闭环率",
+        "label": "重急EOS",
         "color": "",
         "subMetrics": [
           {
@@ -617,7 +617,7 @@
         "colX": "network",
         "valY": "总计",
         "colZ": "完成率",
-        "label": "TOPN风险完成率",
+        "label": "TOPN 风险",
         "color": "",
         "subMetrics": [
           {
@@ -718,7 +718,7 @@
         "colX": "地区部",
         "valY": "总计",
         "colZ": "业务比对日志回传率",
-        "label": "业务比对回传率",
+        "label": "日志回传",
         "color": "",
         "subMetrics": [
           {
@@ -764,7 +764,7 @@
         "colX": "地区部",
         "valY": "总计",
         "colZ": "备案率",
-        "label": "业务比对备案率",
+        "label": "日志回传备案",
         "color": "",
         "subMetrics": [
           {
@@ -834,7 +834,7 @@
         "colX": "sub_region_name_cn",
         "valY": "总计",
         "colZ": "完成率",
-        "label": "逃生演练完成率",
+        "label": "逃生演练",
         "color": "",
         "subMetrics": [
           {
@@ -936,7 +936,7 @@
         "colX": "地区部",
         "valY": "总计",
         "colZ": "运营商维护红线人员岗位满足率",
-        "label": "维护红线岗位满足率",
+        "label": "维护红线岗",
         "color": ""
       }
     ]
@@ -986,7 +986,7 @@
         "colX": "name",
         "valY": "汇总",
         "colZ": "reduced_rate",
-        "label": "数字证书消减率",
+        "label": "数字证书",
         "color": "",
         "subMetrics": [
           {
@@ -1031,7 +1031,7 @@
         "colX": "name",
         "valY": "汇总",
         "colZ": "rectify_complete_rate",
-        "label": "路由器整改完成率",
+        "label": "路由器",
         "color": "",
         "subMetrics": [
           {
@@ -1112,7 +1112,7 @@
         "colX": "name",
         "valY": "汇总",
         "colZ": "rectify_complete_rate",
-        "label": "存储整改完成率",
+        "label": "存储整改",
         "color": "",
         "subMetrics": [
           {
@@ -1234,7 +1234,7 @@
         "colX": "网络",
         "valY": "总计",
         "colZ": "演练完成率",
-        "label": "应急演练完成率",
+        "label": "iLab 应急演练",
         "color": "",
         "subMetrics": [
           {
@@ -1282,7 +1282,7 @@
         "colX": "网络",
         "valY": "总计",
         "colZ": "拦截次数2024年",
-        "label": "高危命令拦截次数",
+        "label": "高危命令拦截",
         "color": "",
         "subMetrics": [
           {
@@ -1335,7 +1335,7 @@
         "colX": "network_name",
         "valY": "总计",
         "colZ": "总完成率",
-        "label": "整改完成率",
+        "label": "整改",
         "color": "",
         "subMetrics": [
           {
@@ -1407,7 +1407,7 @@
         "colX": "代表处",
         "valY": "总计",
         "colZ": "近3个月0工单人数",
-        "label": "0工单人数",
+        "label": "0工单",
         "color": ""
       },
       {
@@ -1466,7 +1466,7 @@
         "valY": "总计",
         "colZ": "账号稽查率",
         "valK": "",
-        "label": "日志稽查率",
+        "label": "日志稽查",
         "color": "",
         "sourceSecId": "other_adofvo",
         "subMetrics": [
@@ -1558,7 +1558,7 @@
         "colX": "name",
         "valY": "汇总",
         "colZ": "closed_rate",
-        "label": "产品EOS闭环率",
+        "label": "全量EOS-产品",
         "color": "",
         "subMetrics": [
           {
@@ -1809,26 +1809,25 @@
     "项目说明": "Item Description",
     "计分规则": "Scoring Rule",
     "操作": "Action",
-    "整改完成率": "Rectification Completion Rate！",
+    "整改完成率": "Rectification Completion Rate",
     "TOPN风险完成率": "TOPN Risk Completion Rate",
     "数字证书消减率": "Digital Certificate Reduction Rate",
     "产品EOS闭环率": "Product EOS Closure Rate",
     "版本EOS闭环率": "Version EOS Closure Rate",
     "重急EOS闭环率": "Critical/Urgent EOS Closure Rate",
     "锂电池整改完成率": "Lithium Battery Rectification Completion Rate",
-    "路由器整改完成率": "Router Rectification Completion Rate",
-    "业务比对回传率": "Operation Log Comparison Complete Rate",
-    "业务比对备案率": "Operation Log Comparison Filing Rate",
+    "业务比对回传率": "Business Comparison Return Rate",
+    "业务比对备案率": "Business Comparison Filing Rate",
     "日志稽查率": "Log Audit Rate",
     "价值网络巡检完成率": "Value Network Inspection Completion Rate",
     "逃生演练完成率": "Escape Drill Completion Rate",
-    "应急演练完成率": "iLab Drill Completion Rate",
+    "应急演练完成率": "Emergency Drill Completion Rate",
     "拓扑刷新率": "Topology Refresh Rate",
     "预案刷新率": "Contingency Plan Refresh Rate",
     "IBMS刷新率": "IBMS Refresh Rate",
     "月度例会及报告准时完成率": "Monthly Meeting & Report Punctuality Rate",
-    "服务专刊季度提交": "Service magazine: 1 time/quarter (submit and archive on Feb.May. Aug. Nov.)",
-    "半年度服务峰会召开": "Service Summit: 1 time/half year (1: before May., 2: before Nov.)",
+    "服务专刊季度提交": "Quarterly Service Publication Submission",
+    "半年度服务峰会召开": "Semi-Annual Service Summit Holding",
     "Jam客户互动月度发布": "Monthly Jam Customer Interaction Release",
     "L4骨干晋升目标达成": "L4 Backbone Promotion Target Achievement",
     "在职员工平均能力得分": "Avg Competence Score of Active Employees",
@@ -1869,11 +1868,44 @@
     "ITR-FRT达不到98.5% (按月)": "ITR-FRT <98.5% (Monthly)",
     "跨产品逃生演练及Jam宣传": "Cross-product Escape Drill & Jam Promotion",
     "邀约客户交流呈现服务价值": "Inviting Customers to Communicate & Present Service Value",
-    "网络韧性评估": "Network robustness assessment",
-    "风险感知系统部署": "Deployment of risk perception system",
     "事故": "Incident",
     "未完成价值网络巡检单数": "Unclosed value network inspection tickets QTY.",
-    "工单<1人数": "SR<1"
+    "工单<1人数": "SR<1",
+    "整改": "RC",
+    "TOPN 风险": "TOPN Risk",
+    "数字证书": "Digital Certificate",
+    "全量EOS-产品": "Product EOS",
+    "全量EOS-版本": "Version EOS",
+    "重急EOS": "Urgent EOS",
+    "锂电": "Lithium Battery",
+    "路由器": "Router RC",
+    "日志回传": "Operation Log",
+    "日志回传备案": "Operation Log Filing",
+    "日志稽查": "Log Audit",
+    "价值网络HC": "Value Network HC",
+    "网络韧性": "Network robustness",
+    "风险感知": "Risk Perception",
+    "逃生演练": "Escape Drill",
+    "iLab 应急演练": "iLab Drill",
+    "拓扑": "Topology",
+    "预案": "Contingency",
+    "IBMS": "IBMS",
+    "月度例会": "Monthly Meeting & Report",
+    "服务专刊": "Service Magazine: 1 time/quarter",
+    "服务峰会": "Service Summit: 1 time/half year",
+    "Jam客户活动": "Monthly Jam Customer activity",
+    "L4骨干": "L4 Backbone",
+    "员工能力": "Score of Employees",
+    "专家讲座分享": "Expert Lectures & Exp Sharing",
+    "存储整改": "Storage Rectification",
+    "软件MM": "Software MM",
+    "SR FRT": "SR FRT",
+    "高危命令拦截": "High-Risk Command Interception",
+    "项目复盘学习": "Project Review & Ex Study",
+    "青年人才培养": "Youth Talent",
+    "维护红线岗": "Red Line Guys Fulfillment",
+    "0工单": "0 SR",
+    "延期补授权": "Delayed Auth"
   },
   "sla_prefs_risk_xjn92q": {
     "visibleHeaders": [
@@ -1962,11 +1994,14 @@
     "customMetrics": []
   },
   "expediteIgnoreKeywords": [
-    "Storage Rectification"
+    "Storage Rectification",
+    "Service Magazine",
+    "Service Summit",
+    "SR FRT"
   ],
   "expediteTemplate": {
     "header": "📅【{MM}{DD}】Target Reminder\n@所有人 Hi Team, please ensure we meet the targets for the following items this month:\n\n",
-    "footer": "🎉 [All-Account] New target of storage RC: 16.2%.\n\nAction required ASAP. Thank you!",
+    "footer": "\nAction required ASAP. Thank you!",
     "emailSubject": "📅【{MM}{DD}】Target Reminder Email",
     "meetSubject": "📅【{MM}{DD}】Target Reminder Meeting ",
     "greetingGroup": "@所有人 Hi Team,",
