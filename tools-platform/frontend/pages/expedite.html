@@ -1406,9 +1406,14 @@
 
             const origin = window.location.origin;
             
-            // Prefer manual input link, fallback to img src
-            let imgUrl = document.getElementById('manual-img-link').value.trim();
-            if (!imgUrl) imgUrl = document.getElementById('snapshot-img').src;
+            // Try to get image URL if screenshot features exist, else fallback to empty
+            let imgUrl = '';
+            const manualImgEl = document.getElementById('manual-img-link');
+            if (manualImgEl) imgUrl = manualImgEl.value.trim();
+            if (!imgUrl) {
+                const snapImgEl = document.getElementById('snapshot-img');
+                if (snapImgEl && snapImgEl.src) imgUrl = snapImgEl.src;
+            }
 
             // Prefer manual input link, fallback to window._currentExcelPath
             let excelUrl = document.getElementById('manual-excel-link').value.trim();
