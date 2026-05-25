@@ -55,6 +55,7 @@ const i18n = {
         
         chart1_title: '整体达标率与指标数趋势',
         chart1_overall_rate: '整体达标率',
+        chart1_true_rate: '真实整体达标率',
         chart1_passed_metrics: '达标指标数',
         chart1_total_metrics: '总考核指标数',
         chart1_y_rate: '达标率',
@@ -137,6 +138,7 @@ const i18n = {
         
         chart1_title: 'Overall Compliance Rate & Metrics Trend',
         chart1_overall_rate: 'Compliance Rate',
+        chart1_true_rate: 'True Overall Rate',
         chart1_passed_metrics: 'Compliant Metrics',
         chart1_total_metrics: 'Total Metrics',
         chart1_y_rate: 'Rate',
@@ -610,6 +612,93 @@ function drawCharts(trends) {
     let chartOverall = echarts.getInstanceByDom(overallDom);
     if (!chartOverall) chartOverall = echarts.init(overallDom);
     
+    const trueOverallRates = trends.map(t => {
+        let rawSnap = {};
+        if (t.raw_data_json) {
+            try { rawSnap = JSON.parse(t.raw_data_json); } catch(e){}
+        }
+        if (!rawSnap.topMetrics || rawSnap.topMetrics.length === 0) return t.compliance_rate !== undefined ? parseFloat(t.compliance_rate).toFixed(2) : 0;
+
+        const targetMonth = rawSnap.month || (rawSnap.timestamp ? new Date(rawSnap.timestamp).getMonth() + 1 : (new Date(t.created_at || t.date || Date.now()).getMonth() + 1));
+        
+        const labelToTargetMap = {};
+        const globalConfig = window._globalConfig;
+        const { targets, prefs } = globalConfig || {};
+        if (prefs) {
+            Object.keys(prefs).forEach(secId => {
+                const pref = prefs[secId];
+                const cleanSecId = secId.startsWith('sla_prefs_') ? secId.substring(10) : secId;
+                if (pref.customMetrics) {
+                    pref.customMetrics.forEach(rule => {
+                        const key = `${cleanSecId}_${rule.id}`;
+                        if (targets && targets[key]) labelToTargetMap[rule.label] = targets[key];
+                    });
+                }
+            });
+        }
+        if (targets) {
+            Object.keys(targets).forEach(k => {
+                if (k.startsWith('manual_') && targets[k].label) {
+                    labelToTargetMap[targets[k].label] = targets[k];
+                }
+            });
+        }
+        
+        function parseNum(str) {
+            if (str === undefined || str === null || str === '--') return NaN;
+            const n = parseFloat(String(str).replace(/[^0-9.-]/g, ''));
+            return isNaN(n) ? NaN : n;
+        }
+
+        let totalTrueMetrics = 0;
+        const failingSet = new Set();
+        
+        const fallbackMap = {
+            '产品EOS闭环率': '全量EOS-产品',
+            '版本EOS闭环率': '全量EOS-版本',
+            '业务比对回传率': '日志回传',
+            '业务比对备案率': '日志回传备案',
+            '价值网络巡检完成率': '价值网络HC',
+            '应急演练完成率': 'iLab 应急演练',
+            '锂电池整改完成率': '锂电',
+            '高危命令拦截次数': '高危命令拦截'
+        };
+        const currentTargetLabels = Object.keys(labelToTargetMap).sort((a, b) => b.length - a.length);
+
+        rawSnap.topMetrics.forEach(m => {
+            let targetData = labelToTargetMap[m.label];
+            if (!targetData) {
+                let matched = fallbackMap[m.label];
+                if (!matched) {
+                    matched = currentTargetLabels.find(n => m.label.includes(n) || n.includes(m.label) || m.label.replace(/ /g, '').includes(n.replace(/ /g, '')));
+                }
+                if (matched && labelToTargetMap[matched]) {
+                    targetData = labelToTargetMap[matched];
+                }
+            }
+
+            const weight = (targetData && targetData.weight !== undefined) ? parseFloat(targetData.weight) : 1;
+            const hasTarget = targetData && targetData[targetMonth] !== undefined && targetData[targetMonth] !== '' && weight > 0;
+            
+            if (hasTarget) {
+                totalTrueMetrics++;
+                const condition = targetData.type || 'gte';
+                const globalValNum = parseNum(m.value);
+                const targetNum = parseFloat(targetData[targetMonth]);
+                if (!isNaN(globalValNum) && !isNaN(targetNum)) {
+                    if (condition === 'gte' && globalValNum < targetNum) {
+                        failingSet.add(m.label);
+                    } else if (condition === 'lte' && globalValNum > targetNum) {
+                        failingSet.add(m.label);
+                    }
+                }
+            }
+        });
+        
+        if (totalTrueMetrics === 0) return 100.00;
+        return (((totalTrueMetrics - failingSet.size) / totalTrueMetrics) * 100).toFixed(2);
+    });
+
     const overallRates = trends.map(t => t.compliance_rate !== undefined ? parseFloat(t.compliance_rate).toFixed(2) : 0);
     const totalMetrics = trends.map(t => t.metrics_total || 0);
     const passedMetrics = trends.map(t => (t.metrics_total || 0) - (t.metrics_failing || 0));
@@ -619,12 +708,12 @@ function drawCharts(trends) {
         tooltip: { trigger: 'axis', formatter: function(params) {
             let relVal = params[0].name;
             for (let i = 0, l = params.length; i < l; i++) {
-                let unit = params[i].seriesName === t('chart1_overall_rate') ? '%' : t('chart_unit_item');
+                let unit = (params[i].seriesName === t('chart1_overall_rate') || params[i].seriesName === t('chart1_true_rate')) ? '%' : t('chart_unit_item');
                 relVal += '<br/>' + params[i].marker + params[i].seriesName + ': ' + params[i].value + unit;
             }
             return relVal;
         }},
-        legend: { data: [t('chart1_overall_rate'), t('chart1_passed_metrics'), t('chart1_total_metrics')], bottom: 0 },
+        legend: { data: [t('chart1_true_rate'), t('chart1_overall_rate'), t('chart1_passed_metrics'), t('chart1_total_metrics')], bottom: 0 },
         xAxis: { type: 'category', data: dates, boundaryGap: true },
         yAxis: [
             { 
@@ -644,6 +733,16 @@ function drawCharts(trends) {
         ],
         grid: { left: '3%', right: '3%', bottom: '5%', containLabel: true },
         series: [
+            {
+                name: t('chart1_true_rate'),
+                data: trueOverallRates,
+                type: 'line',
+                smooth: true,
+                yAxisIndex: 0,
+                itemStyle: { color: '#e65100' }, // Orange for distinction
+                label: { show: true, position: 'top', formatter: '{c}%' },
+                labelLayout: { hideOverlap: true }
+            },
             {
                 name: t('chart1_overall_rate'),
                 data: overallRates,

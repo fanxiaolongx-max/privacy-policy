@@ -225,7 +225,7 @@ router.get('/monthly_report_data', (req, res) => {
     }
 
     const sqlDaily = `
-        SELECT s.snapshot_id, s.month, DATE(s.created_at) as date, s.created_at, s.standard_total_score 
+        SELECT s.snapshot_id, s.month, DATE(s.created_at) as date, s.created_at, s.standard_total_score, s.raw_data_json 
         FROM ReportSnapshots s
         INNER JOIN (
             SELECT DATE(created_at) as d, MAX(id) as max_id
@@ -278,7 +278,8 @@ router.get('/monthly_report_data', (req, res) => {
                         cat_scores: catScoreMap[s.snapshot_id] || {},
                         compliance_rate: complianceRate,
                         metrics_total: stats.total,
-                        metrics_failing: stats.failing
+                        metrics_failing: stats.failing,
+                        raw_data_json: s.raw_data_json
                     };
                 });
 
