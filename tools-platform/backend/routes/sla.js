@@ -124,6 +124,48 @@ router.put('/prefs/:schemaHash', (req, res) => {
     const prefs = readJSON(PREFS_FILE, {});
     prefs[req.params.schemaHash] = req.body;
     writeJSON(PREFS_FILE, prefs);
+
+    try {
+        // --- 自动清理孤儿预警配置 (Clean up orphaned targets) ---
+        const validCustomMetricIds = new Set();
+        Object.keys(prefs).forEach(hash => {
+            if (prefs[hash] && prefs[hash].customMetrics) {
+                let secId = '';
+                if (hash.startsWith('sla_prefs_other_')) {
+                    secId = hash.replace('sla_prefs_', ''); 
+                } else if (hash.startsWith('sla_prefs_rectification')) {
+                    secId = 'rectification';
+                } else if (hash.startsWith('sla_prefs_risk')) {
+                    secId = 'risk';
+                } else if (hash.startsWith('sla_prefs_special')) {
+                    secId = 'special';
+                } else {
+                    secId = hash.replace('sla_prefs_', '');
+                }
+                prefs[hash].customMetrics.forEach(cm => {
+                    validCustomMetricIds.add(`${secId}_${cm.id}`);
+                });
+            }
+        });
+
+        let targets = readJSON(TARGETS_FILE, {});
+        let targetsChanged = false;
+        
+        Object.keys(targets).forEach(k => {
+            // 前端生成的自定义指标的 target key 特征是包含 "_m_"
+            if (k.includes('_m_') && !validCustomMetricIds.has(k)) {
+                delete targets[k];
+                targetsChanged = true;
+            }
+        });
+
+        if (targetsChanged) {
+            writeJSON(TARGETS_FILE, targets);
+        }
+    } catch (e) {
+        console.error('Failed to clean up orphaned targets:', e);
+    }
+
     res.json({ success: true });
 });
 
@@ -157,6 +199,97 @@ router.post('/config', (req, res) => {
     } catch (e) {
         console.error(`[POST /config] Write failed:`, e);
         res.status(500).json({ error: '保存文件失败: ' + e.message });
+    }
+});
+
+// ──────────────────────────────────────────────────────────
+// 全局重命名指标
+// ──────────────────────────────────────────────────────────
+
+// POST /api/sla/rename-metric
+router.post('/rename-metric', (req, res) => {
+    const { oldName, newName, newEn } = req.body;
+    if (!oldName || !newName || oldName === newName) {
+        return res.status(400).json({ error: '无效的名称' });
+    }
+
+    try {
+        // 1. targets
+        let targets = readJSON(TARGETS_FILE, {});
+        let targetsChanged = false;
+        Object.keys(targets).forEach(k => {
+            if (targets[k].label === oldName) {
+                targets[k].label = newName;
+                targetsChanged = true;
+            }
+        });
+        if (targetsChanged) writeJSON(TARGETS_FILE, targets);
+
+        // 2. prefs
+        let prefs = readJSON(PREFS_FILE, {});
+        let prefsChanged = false;
+        Object.keys(prefs).forEach(k => {
+            if (k.startsWith('sla_prefs_') && prefs[k].customMetrics) {
+                prefs[k].customMetrics.forEach(m => {
+                    if (m.label === oldName) {
+                        m.label = newName;
+                        prefsChanged = true;
+                    }
+                });
+            }
+        });
+        if (prefs.i18nMap && prefs.i18nMap[oldName] !== undefined) {
+            prefs.i18nMap[newName] = newEn !== undefined ? newEn : prefs.i18nMap[oldName];
+            delete prefs.i18nMap[oldName];
+            prefsChanged = true;
+        } else if (newEn !== undefined) {
+            if (!prefs.i18nMap) prefs.i18nMap = {};
+            prefs.i18nMap[newName] = newEn;
+            prefsChanged = true;
+        }
+        if (prefs.manualAdjustItems) {
+            prefs.manualAdjustItems.forEach(item => {
+                if (item.name === oldName) {
+                    item.name = newName;
+                    prefsChanged = true;
+                }
+            });
+        }
+        if (prefsChanged) writeJSON(PREFS_FILE, prefs);
+
+        // 3. groups
+        let groups = readJSON(GROUPS_FILE, []);
+        let groupsChanged = false;
+        groups.forEach(g => {
+            if (g.metrics) {
+                const idx = g.metrics.indexOf(oldName);
+                if (idx !== -1) {
+                    g.metrics[idx] = newName;
+                    groupsChanged = true;
+                }
+            }
+        });
+        if (groupsChanged) writeJSON(GROUPS_FILE, groups);
+
+        // 4. snapshots
+        let snapshots = readJSON(SNAPSHOTS_FILE, []);
+        let snapsChanged = false;
+        snapshots.forEach(s => {
+            if (s.topMetrics) {
+                s.topMetrics.forEach(m => {
+                    if (m.label === oldName) {
+                        m.label = newName;
+                        snapsChanged = true;
+                    }
+                });
+            }
+        });
+        if (snapsChanged) writeJSON(SNAPSHOTS_FILE, snapshots);
+
+        res.json({ success: true });
+    } catch (e) {
+        console.error('Rename metric failed:', e);
+        res.status(500).json({ error: e.message });
     }
 });
 

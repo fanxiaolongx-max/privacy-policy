@@ -570,11 +570,6 @@
 
                 <div id="manual-links-container" style="display: flex; gap: 12px; margin-bottom: 8px;">
                     <div style="flex: 1; display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 13px; color: #475569; white-space: nowrap; font-weight: 500;" data-i18n="lbl_img_link">截图下载链接</span>
-                        <input type="text" id="manual-img-link" placeholder="https://..." data-i18n-placeholder="ph_img_link"
-                            style="flex: 1; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; color: #334155;">
-                    </div>
-                    <div style="flex: 1; display: flex; align-items: center; gap: 8px;">
                         <span style="font-size: 13px; color: #475569; white-space: nowrap; font-weight: 500;" data-i18n="lbl_excel_link">Excel下载链接</span>
                         <input type="text" id="manual-excel-link" placeholder="https://..." data-i18n-placeholder="ph_excel_link"
                             style="flex: 1; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; color: #334155;">
@@ -588,54 +583,25 @@
                     <span id="failing-count"></span>
                 </div>
 
-                <div id="snapshot-image-container"
+                <div id="excel-report-container"
                     style="display: none; margin-top: 24px; animation: slideUp 0.3s ease-out;">
                     <div
                         style="background: #fff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 20px;">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <h3 style="font-size: 15px; color: #1e293b; margin: 0;" data-i18n="img_title">📸 关联看板截图</h3>
-                            <div>
-                                <button class="btn-copy" onclick="copyImageToClipboard(0.5)"
-                                    style="padding: 8px 16px; background: #64748b; white-space: nowrap; margin-right: 8px;">
-                                    📋 <span data-i18n="btn_copy_small">复制小尺寸图</span>
-                                </button>
-                                <button class="btn-copy" onclick="copyImageToClipboard(1)"
-                                    style="padding: 8px 16px; background: #8b5cf6; white-space: nowrap;">
-                                    📋 <span data-i18n="btn_copy_orig">复制原图</span>
-                                </button>
-                            </div>
-                        </div>
-                        <div id="image-viewer-wrapper"
-                            style="width: 100%; overflow: hidden; position: relative; border: 1px solid #cbd5e1; border-radius: 8px; cursor: zoom-in; background: #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);"
-                            onclick="openFullscreenImage()">
-                            <img id="snapshot-img" src="" style="display: block; width: 100%; pointer-events: none;"
-                                crossorigin="anonymous">
-                            <div
-                                style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.6); color: #fff; padding: 6px 10px; border-radius: 4px; font-size: 12px; pointer-events: none; z-index: 10;">
-                                🔍 <span data-i18n="click_fs">点击全屏查看</span>
-                            </div>
-                        </div>
-
-                        <div id="excel-report-container"
-                            style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px dashed #cbd5e1;">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <span style="font-size: 24px;">📊</span>
-                                    <div>
-                                        <h3 style="font-size: 15px; color: #1e293b; margin: 0;" data-i18n="excel_title">关联 Excel 报表</h3>
-                                        <div style="font-size: 12px; color: #64748b;" data-i18n="excel_desc">专业的高清排版短板透视矩阵表格</div>
-                                    </div>
-                                </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 24px;">📊</span>
                                 <div>
-                                    <button class="btn-primary" onclick="downloadExcelReport()"
-                                        style="padding: 8px 16px; background: #10b981; white-space: nowrap;">
-                                        ⬇️ <span data-i18n="btn_dl_excel">下载 Excel 文件</span>
-                                    </button>
+                                    <h3 style="font-size: 15px; color: #1e293b; margin: 0;" data-i18n="excel_title">关联 Excel 报表</h3>
+                                    <div style="font-size: 12px; color: #64748b;" data-i18n="excel_desc">专业的高清排版短板透视矩阵表格</div>
                                 </div>
                             </div>
+                            <div>
+                                <button class="btn-primary" onclick="downloadExcelReport()"
+                                    style="padding: 8px 16px; background: #10b981; white-space: nowrap;">
+                                    ⬇️ <span data-i18n="btn_dl_excel">下载 Excel 文件</span>
+                                </button>
+                            </div>
                         </div>
-
                     </div>
                 </div>
             </div>
@@ -755,23 +721,6 @@
         </div>
     </div>
 
-    <!-- Fullscreen Image Viewer Modal -->
-    <div id="fs-viewer-overlay"
-        style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.9); z-index:999999; overflow:hidden;">
-        <button onclick="closeFullscreenImage()"
-            style="position:absolute; top:20px; right:20px; background:#ef4444; border:none; color:#fff; font-size:15px; font-weight:bold; padding:10px 24px; border-radius:8px; cursor:pointer; z-index:1000001; box-shadow:0 4px 12px rgba(0,0,0,0.5); transition: background 0.2s;">
-            <span data-i18n="btn_close_fs">✖ 关闭全屏 (Close)</span>
-        </button>
-        <div
-            style="position:absolute; top:20px; left:20px; color:#fff; background:rgba(0,0,0,0.5); padding:6px 12px; border-radius:6px; pointer-events:none; z-index:10001; font-size:14px;" data-i18n="fs_help">
-            🖱️ 鼠标滚轮缩放 / 左键拖拽平移
-        </div>
-        <div id="fs-img-container" style="width:100%; height:100%; cursor:grab; position:relative; overflow:hidden;">
-            <img id="fs-img" src=""
-                style="position:absolute; transform-origin: 0 0; pointer-events:none; transition:transform 0.05s linear;"
-                crossorigin="anonymous">
-        </div>
-    </div>
 
     <script src="/js/shared/api.js"></script>
     <script src="/js/shared/toast.js"></script>
@@ -1037,7 +986,6 @@
 
                 document.getElementById('content-state').style.display = 'block';
                 renderBriefText();
-                initImageViewer();
             } catch (e) {
                 console.error(e);
                 showToast('数据加载失败', 'error');
@@ -1064,96 +1012,6 @@
             });
         }
 
-        let imgScale = 1;
-        let imgPointX = 0;
-        let imgPointY = 0;
-
-        function openFullscreenImage() {
-            const imgSrc = document.getElementById('snapshot-img').src;
-            if (!imgSrc) return;
-            const overlay = document.getElementById('fs-viewer-overlay');
-            const fsImg = document.getElementById('fs-img');
-            fsImg.src = imgSrc;
-            overlay.style.display = 'block';
-
-            // Wait for image load to center it
-            fsImg.onload = () => {
-                const cw = window.innerWidth;
-                const ch = window.innerHeight;
-                const iw = fsImg.naturalWidth;
-                const ih = fsImg.naturalHeight;
-
-                const fitScale = Math.min(cw / iw, ch / ih, 1) * 0.95;
-                imgScale = fitScale;
-
-                imgPointX = (cw - iw * imgScale) / 2;
-                imgPointY = (ch - ih * imgScale) / 2;
-
-                fsImg.style.transform = `translate(${imgPointX}px, ${imgPointY}px) scale(${imgScale})`;
-            };
-        }
-
-        function closeFullscreenImage() {
-            document.getElementById('fs-viewer-overlay').style.display = 'none';
-        }
-
-        function initImageViewer() {
-            const wrapper = document.getElementById('fs-img-container');
-            const img = document.getElementById('fs-img');
-            let panning = false;
-            let start = { x: 0, y: 0 };
-
-            wrapper.onmousedown = function (e) {
-                if (e.button !== 0) return; // Only left click
-                e.preventDefault();
-                start = { x: e.clientX - imgPointX, y: e.clientY - imgPointY };
-                panning = true;
-                wrapper.style.cursor = 'grabbing';
-            };
-
-            wrapper.onmouseup = function (e) {
-                panning = false;
-                wrapper.style.cursor = 'grab';
-            };
-
-            wrapper.onmouseleave = function (e) {
-                panning = false;
-                wrapper.style.cursor = 'grab';
-            };
-
-            wrapper.onmousemove = function (e) {
-                e.preventDefault();
-                if (!panning) return;
-                imgPointX = (e.clientX - start.x);
-                imgPointY = (e.clientY - start.y);
-                img.style.transform = `translate(${imgPointX}px, ${imgPointY}px) scale(${imgScale})`;
-            };
-
-            wrapper.onwheel = function (e) {
-                e.preventDefault();
-                const rect = wrapper.getBoundingClientRect();
-                const mouseX = e.clientX - rect.left;
-                const mouseY = e.clientY - rect.top;
-
-                const xs = (mouseX - imgPointX) / imgScale;
-                const ys = (mouseY - imgPointY) / imgScale;
-
-                const delta = e.deltaY || -e.wheelDelta;
-                if (delta > 0) {
-                    imgScale /= 1.15;
-                } else {
-                    imgScale *= 1.15;
-                }
-
-                if (imgScale < 0.1) imgScale = 0.1;
-                if (imgScale > 20) imgScale = 20;
-
-                imgPointX = mouseX - xs * imgScale;
-                imgPointY = mouseY - ys * imgScale;
-
-                img.style.transform = `translate(${imgPointX}px, ${imgPointY}px) scale(${imgScale})`;
-            };
-        }
 
         function getExpiringTicketsText(data) {
             if (!data.raw_data_json) return '';
@@ -1271,17 +1129,6 @@
 
             const origin = window.location.origin;
 
-            if (data.image_path) {
-                document.getElementById('snapshot-image-container').style.display = 'block';
-                document.getElementById('snapshot-img').src = data.image_path;
-                let fullImgUrl = data.image_path;
-                if (!fullImgUrl.startsWith('http')) fullImgUrl = origin + fullImgUrl;
-                document.getElementById('manual-img-link').value = fullImgUrl;
-            } else {
-                document.getElementById('snapshot-image-container').style.display = 'none';
-                document.getElementById('manual-img-link').value = '';
-            }
-
             if (data.excel_path) {
                 document.getElementById('excel-report-container').style.display = 'block';
                 window._currentExcelPath = data.excel_path;
@@ -1294,7 +1141,7 @@
                 document.getElementById('manual-excel-link').value = '';
             }
 
-            if (data.image_path) {
+            if (data.excel_path || data.raw_data_json) {
                 document.getElementById('welink-automation-container').style.display = 'block';
             } else {
                 document.getElementById('welink-automation-container').style.display = 'none';
@@ -1819,50 +1666,6 @@ ${excelUrl ? 'Remove-Item $tempXlsx -ErrorAction SilentlyContinue' : ''}
             window.getSelection().removeAllRanges();
         }
 
-        async function copyImageToClipboard(scaleFactor = 1) {
-            try {
-                const imgEl = document.getElementById('snapshot-img');
-                if (!imgEl.src) return;
-
-                let blobToCopy;
-                const toastId = showToast('⏳ 正在处理图片并复制，请稍候...', 'info');
-
-                if (scaleFactor === 1) {
-                    const response = await fetch(imgEl.src);
-                    blobToCopy = await response.blob();
-                } else {
-                    const img = new Image();
-                    img.crossOrigin = "anonymous";
-                    img.src = imgEl.src;
-                    await new Promise((resolve, reject) => {
-                        img.onload = resolve;
-                        img.onerror = reject;
-                    });
-
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-
-                    canvas.width = img.width * scaleFactor;
-                    canvas.height = img.height * scaleFactor;
-
-                    // High quality smoothing
-                    ctx.imageSmoothingEnabled = true;
-                    ctx.imageSmoothingQuality = 'high';
-
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-                    blobToCopy = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1.0));
-                }
-
-                await navigator.clipboard.write([
-                    new ClipboardItem({ 'image/png': blobToCopy })
-                ]);
-                showToast(scaleFactor === 1 ? '原图已成功复制到剪贴板' : '小尺寸图已成功复制到剪贴板', 'success');
-            } catch (err) {
-                console.error(err);
-                showToast('复制图片失败，您的浏览器可能不支持或需右键手动复制', 'error');
-            }
-        }
 
         // --- Ignore Modal Logic ---
         function openIgnoreModal() {

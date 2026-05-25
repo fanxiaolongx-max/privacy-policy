@@ -31,7 +31,7 @@ let i18nMap = {
     "版本EOS闭环率": "Version EOS Closure Rate",
     "重急EOS闭环率": "Critical/Urgent EOS Closure Rate",
     "锂电池整改完成率": "Lithium Battery Rectification Completion Rate",
-    "路由器整改完成率": "Router Rectification Completion Rate",
+    "路由器": "Router RC",
     "业务比对回传率": "Business Comparison Return Rate",
     "业务比对备案率": "Business Comparison Filing Rate",
     "日志稽查率": "Log Audit Rate",
@@ -2090,9 +2090,11 @@ window.saveGroups = async function() {
     }
 };
 let _editI18nMap = {};
+let _editingZh = null;
 
 window.openI18nModal = function() {
     _editI18nMap = { ...i18nMap };
+    _editingZh = null;
     renderI18nList();
     document.getElementById('i18n-new-zh').value = '';
     document.getElementById('i18n-new-en').value = '';
@@ -2105,14 +2107,27 @@ window.closeI18nModal = function() {
 
 window.renderI18nList = function() {
     const container = document.getElementById('i18n-list-container');
-    let html = '';
-    const keys = Object.keys(_editI18nMap).sort();
+    const searchInput = document.getElementById('i18n-search');
+    const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
     
-    keys.forEach(zh => {
-        const en = _editI18nMap[zh];
-        html += `
-            <tr style="border-bottom:1px solid #f0f0f0;">
-                <td style="padding:8px; font-size:13px; color:#333; font-weight:600;">${escapeHTML(zh)}</td>
+    let html = '';
+    let keys = Object.keys(_editI18nMap).sort();
+    
+    if (searchTerm) {
+        keys = keys.filter(zh => {
+            const en = _editI18nMap[zh] || '';
+            return zh.toLowerCase().includes(searchTerm) || en.toLowerCase().includes(searchTerm);
+        });
+    }
+    
+    if (keys.length === 0) {
+        html = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#999; font-size:13px;">没有找到匹配的指标</td></tr>';
+    } else {
+        keys.forEach(zh => {
+            const en = _editI18nMap[zh];
+            html += `
+                <tr style="border-bottom:1px solid #f0f0f0;">
+                    <td style="padding:8px; font-size:13px; color:#333; font-weight:600;">${escapeHTML(zh)}</td>
                 <td style="padding:8px; font-size:13px; color:#0277bd;">${escapeHTML(en)}</td>
                 <td style="padding:8px; text-align:center; white-space:nowrap;">
                     <button onclick="editI18nEntry('${escapeHTML(zh.replace(/'/g, "\\'"))}')" style="background:none; border:none; cursor:pointer; font-size:14px; opacity:0.6; padding:4px;" title="编辑此项" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">✏️</button>
@@ -2120,24 +2135,61 @@ window.renderI18nList = function() {
                 </td>
             </tr>
         `;
-    });
+        });
+    }
     container.innerHTML = html;
 };
 
 window.editI18nEntry = function(zh) {
+    _editingZh = zh;
     document.getElementById('i18n-new-zh').value = zh;
     document.getElementById('i18n-new-en').value = _editI18nMap[zh] || '';
     document.getElementById('i18n-new-en').focus();
 };
 
-window.addI18nEntry = function() {
+window.addI18nEntry = async function() {
     const zh = document.getElementById('i18n-new-zh').value.trim();
     const en = document.getElementById('i18n-new-en').value.trim();
     if (!zh || !en) {
         showToast('请填写完整的中英文', 'error');
         return;
     }
-    _editI18nMap[zh] = en;
+    
+    if (_editingZh) {
+        if (_editingZh !== zh) {
+            if (_editI18nMap[zh] !== undefined) {
+                showToast('该中文名称已存在，不能重命名为已有的指标', 'error');
+                return;
+            }
+            if (confirm(`您修改了指标的中文名称（从 [${_editingZh}] 改为 [${zh}]）。\n是否要全局同步重命名该指标？（这将自动更新历史快照、分组、考核配置中的名称）`)) {
+                try {
+                    await API.post('/api/sla/rename-metric', { oldName: _editingZh, newName: zh, newEn: en });
+                    showToast('全局重命名成功！页面即将自动刷新...', 'success');
+                    setTimeout(() => window.location.reload(), 1500);
+                    return; // Prevent further logic to avoid race condition with manual save
+                } catch(e) {
+                    showToast('全局重命名失败', 'error');
+                    console.error(e);
+                    return;
+                }
+            } else {
+                // Only update local map
+                delete _editI18nMap[_editingZh];
+                _editI18nMap[zh] = en;
+            }
+        } else {
+            _editI18nMap[zh] = en;
+        }
+    } else {
+        if (_editI18nMap[zh] !== undefined) {
+            if (!confirm(`指标 [${zh}] 已存在，是否覆盖其英文翻译？`)) {
+                return;
+            }
+        }
+        _editI18nMap[zh] = en;
+    }
+    
+    _editingZh = null;
     document.getElementById('i18n-new-zh').value = '';
     document.getElementById('i18n-new-en').value = '';
     renderI18nList();
@@ -2163,7 +2215,7 @@ window.saveI18nMap = async function() {
         i18nMap = { ..._editI18nMap };
         showToast('翻译字典已保存', 'success');
         closeI18nModal();
-        renderCurrentSnapshot();
+        setTimeout(() => window.location.reload(), 500);
     } catch(e) {
         showToast('保存失败', 'error');
         console.error(e);
@@ -2334,57 +2386,9 @@ window.saveDashboardToDB = async function(event) {
 
     try {
         const btn = event ? event.target : null;
-        if (btn) btn.innerHTML = '⏳ 截图中...';
+        if (btn) btn.innerHTML = '⏳ 正在准备数据...';
         
-        // Expand tables for full screenshot
-        const matrixContainer = document.querySelector('.matrix-container');
-        const adjustCard = document.getElementById('adjust-card');
-        
-        let origMatrixMaxHeight = '', origMatrixOverflow = '';
-        let origAdjustMaxHeight = '', origAdjustOverflow = '';
-        
-        if (matrixContainer) {
-            origMatrixMaxHeight = matrixContainer.style.maxHeight;
-            origMatrixOverflow = matrixContainer.style.overflow;
-            matrixContainer.style.maxHeight = 'none';
-            matrixContainer.style.overflow = 'visible';
-        }
-        if (adjustCard) {
-            origAdjustMaxHeight = adjustCard.style.maxHeight;
-            origAdjustOverflow = adjustCard.style.overflow;
-            adjustCard.style.maxHeight = 'none';
-            adjustCard.style.overflow = 'visible';
-        }
-        
-        const origBodyOverflow = document.body.style.overflow;
-        document.body.style.overflow = 'visible';
-        
-        // Wait for DOM reflow
-        await new Promise(r => setTimeout(r, 300));
-        
-        try {
-            const canvas = await html2canvas(document.querySelector('.page-container'), {
-                scale: 2,
-                useCORS: true,
-                windowHeight: document.querySelector('.page-container').scrollHeight
-            });
-            payload.image_data = canvas.toDataURL('image/png');
-        } catch (imgError) {
-            console.error('Screenshot failed:', imgError);
-            showToast('⚠️ 截图失败，将忽略图片继续入库', 'warning');
-            payload.image_data = null;
-        }
-        
-        // Restore styles
-        if (matrixContainer) {
-            matrixContainer.style.maxHeight = origMatrixMaxHeight;
-            matrixContainer.style.overflow = origMatrixOverflow;
-        }
-        if (adjustCard) {
-            adjustCard.style.maxHeight = origAdjustMaxHeight;
-            adjustCard.style.overflow = origAdjustOverflow;
-        }
-        document.body.style.overflow = origBodyOverflow;
+        payload.image_data = null;
 
         // Generate Excel File
         if (typeof ExcelJS !== 'undefined') {
@@ -2528,12 +2532,12 @@ window.saveDashboardToDB = async function(event) {
         if (btn) btn.innerHTML = '💾 入库 (Save to DB)';
         
         if (res.success) {
-            showToast('数据及截图已成功入库 (Saved to DB successfully)', 'success');
+            showToast('数据已成功入库 (Saved to DB successfully)', 'success');
         } else {
             showToast(res.error || '入库失败', 'error');
         }
     } catch (e) {
-        showToast('入库请求或截图失败: ' + e.message, 'error');
+        showToast('入库请求失败: ' + e.message, 'error');
         console.error(e);
     }
 };

@@ -44,7 +44,7 @@ const i18n = {
         sub_score: '扣 {score} 分',
         because: '，因为：{list}',
         manual_details: '额外加减分情况：{details}。',
-        as_of: '截至 <strong>{date}</strong>，{overallStr} {manualStr}',
+        as_of: '截至 <strong>{date}</strong> (基于 {month} 月目标)，{overallStr} {manualStr}',
         group_details_title: '各客户群详细达标情况如下：',
         group_failing: '共有 <span class="summary-highlight">{count}</span> 项未达标，主要包含：{list}。',
         group_passed: '各项指标 <span style="color:green; font-weight:bold;">全部达标</span>。',
@@ -126,7 +126,7 @@ const i18n = {
         sub_score: '-{score}',
         because: ', because: {list}',
         manual_details: 'Score Adjustments: {details}.',
-        as_of: 'As of <strong>{date}</strong>, {overallStr} {manualStr}',
+        as_of: 'As of <strong>{date}</strong> (based on Month {month} targets), {overallStr} {manualStr}',
         group_details_title: 'Detailed compliance by group:',
         group_failing: '<span class="summary-highlight">{count}</span> non-compliant items, including: {list}.',
         group_passed: 'All metrics <span style="color:green; font-weight:bold;">Compliant</span>.',
@@ -183,7 +183,7 @@ const i18n = {
         "版本EOS闭环率": "Version EOS Closure Rate",
         "重急EOS闭环率": "Critical/Urgent EOS Closure Rate",
         "锂电池整改完成率": "Lithium Battery Rectification Completion Rate",
-        "路由器整改完成率": "Router Rectification Completion Rate",
+        "路由器": "Router RC",
         "业务比对回传率": "Business Comparison Return Rate",
         "业务比对备案率": "Business Comparison Filing Rate",
         "日志稽查率": "Log Audit Rate",
@@ -369,7 +369,7 @@ function renderAll() {
     const latestSnapshotElem = document.getElementById('latest-snapshot-date');
     if (latestSnapshotElem) latestSnapshotElem.innerText = actualEndDate;
 
-    generateSummary(currentTrends, currentLatest);
+    generateSummary(currentTrends, currentLatest, window._globalConfig);
     drawCharts(currentTrends);
     renderRanking(currentLatest);
     renderMatrix(currentLatest);
@@ -453,7 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-function generateSummary(trends, latest) {
+function generateSummary(trends, latest, globalConfig) {
     if (!latest.metrics || latest.metrics.length === 0) return;
 
     const failingByCat = {};
@@ -465,7 +465,6 @@ function generateSummary(trends, latest) {
         catTotalMetrics[m.cat_name]++;
         
         if (m.is_failing === 1) {
-            overallFailingSet.add(m.metric_label);
             if (!failingByCat[m.cat_name]) failingByCat[m.cat_name] = [];
             failingByCat[m.cat_name].push(m.metric_label);
         }
@@ -473,13 +472,7 @@ function generateSummary(trends, latest) {
     
     let currentTrend = trends[trends.length - 1];
     
-    const overallFailingArr = Array.from(overallFailingSet);
-    let overallStr = '';
-    if (overallFailingArr.length > 0) {
-        overallStr = t('overall_failing', {count: overallFailingArr.length, list: overallFailingArr.map(tVal).join('、')});
-    } else {
-        overallStr = t('overall_passed');
-    }
+    // overallFailingArr calculation moved below
 
     const manualScoresArr = latest.cat_scores ? latest.cat_scores.filter(c => c.manual_score !== 0 && c.manual_score !== null) : [];
     let manualStr = '';
@@ -488,6 +481,65 @@ function generateSummary(trends, latest) {
     if (latest.raw_data_json) {
         try { rawSnap = JSON.parse(latest.raw_data_json); } catch(e){}
     }
+    const targetMonth = rawSnap.month || (rawSnap.timestamp ? new Date(rawSnap.timestamp).getMonth() + 1 : (new Date(latest.created_at || Date.now()).getMonth() + 1));
+
+    if (globalConfig && rawSnap.topMetrics) {
+        const labelToTargetMap = {};
+        const { targets, prefs } = globalConfig;
+        if (prefs) {
+            Object.keys(prefs).forEach(secId => {
+                const pref = prefs[secId];
+                const cleanSecId = secId.startsWith('sla_prefs_') ? secId.substring(10) : secId;
+                if (pref.customMetrics) {
+                    pref.customMetrics.forEach(rule => {
+                        const key = `${cleanSecId}_${rule.id}`;
+                        if (targets && targets[key]) labelToTargetMap[rule.label] = targets[key];
+                    });
+                }
+            });
+        }
+        if (targets) {
+            Object.keys(targets).forEach(k => {
+                if (k.startsWith('manual_') && targets[k].label) {
+                    labelToTargetMap[targets[k].label] = targets[k];
+                }
+            });
+        }
+        
+        // targetMonth calculated above
+        function parseNum(str) {
+            if (str === undefined || str === null || str === '--') return NaN;
+            const n = parseFloat(String(str).replace(/[^0-9.-]/g, ''));
+            return isNaN(n) ? NaN : n;
+        }
+
+        rawSnap.topMetrics.forEach(m => {
+            const targetData = labelToTargetMap[m.label];
+            const weight = (targetData && targetData.weight !== undefined) ? parseFloat(targetData.weight) : 1;
+            const hasTarget = targetData && targetData[targetMonth] !== undefined && targetData[targetMonth] !== '' && weight > 0;
+            
+            if (hasTarget) {
+                const condition = targetData.type || 'gte';
+                const globalValNum = parseNum(m.value);
+                const targetNum = parseFloat(targetData[targetMonth]);
+                if (!isNaN(globalValNum) && !isNaN(targetNum)) {
+                    if (condition === 'gte' && globalValNum < targetNum) {
+                        console.log("DEBUG_FAILING:", m.label, globalValNum, targetNum, condition); overallFailingSet.add(m.label);
+                    } else if (condition === 'lte' && globalValNum > targetNum) {
+                        console.log("DEBUG_FAILING:", m.label, globalValNum, targetNum, condition); overallFailingSet.add(m.label);
+                    }
+                }
+            }
+        });
+    }
+    const overallFailingArr = Array.from(overallFailingSet);
+    let overallStr = '';
+    if (overallFailingArr.length > 0) {
+        overallStr = t('overall_failing', {count: overallFailingArr.length, list: overallFailingArr.map(tVal).join('、')});
+    } else {
+        overallStr = t('overall_passed');
+    }
+
     const snapAdjData = rawSnap.manualAdjustData || {};
     
     if (manualScoresArr.length > 0) {
@@ -511,7 +563,7 @@ function generateSummary(trends, latest) {
     }
     
     let summaryHtml = `
-        <p>${t('as_of', {date: currentTrend.date, overallStr: overallStr, manualStr: manualStr})}</p>
+        <p>${t('as_of', {date: currentTrend.date, month: targetMonth, overallStr: overallStr, manualStr: manualStr})}</p>
         <p>${t('group_details_title')}</p>
         <ul style="padding-left:20px; line-height:1.8;">
     `;
@@ -949,15 +1001,15 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
 
     let matrixHtml = `
         <div style="background:#fff; overflow-x:auto;">
-        <table class="matrix-table" style="font-size:11px; line-height:1.3;">
+        <table class="matrix-table" style="font-size:clamp(10px, 0.85vw, 11px); line-height:1.4;">
             <thead>
                 <tr>
-                    <th style="width:40px; max-width:60px; background:#e8eaf6; color:#283593; white-space:normal; word-wrap:break-word;">${t('full_th_grouping')}</th>
+                    <th style="width:40px; max-width:60px; background:#e8eaf6; color:#283593; white-space:normal; word-wrap:break-word; text-align:center;">${t('full_th_grouping')}</th>
                     <th style="width:40px; max-width:50px; background:#e8eaf6; color:#283593; white-space:normal; word-wrap:break-word; text-align:center;">${t('full_th_total_weight')}</th>
-                    <th style="min-width:120px; max-width:220px; text-align:left; white-space:normal; word-wrap:break-word;">${t('full_th_metric')}</th>
+                    <th style="width:100px; max-width:140px; text-align:left; white-space:normal; word-wrap:break-word;">${t('full_th_metric')}</th>
                     <th style="width:40px; text-align:center;">${t('full_th_weight')}</th>
-                    <th style="width:60px; text-align:center; white-space:normal; word-wrap:break-word;">${t('full_th_month_target', {month: targetMonth})}</th>
-                    <th style="width:60px; background:#fff8e1; border-right:2px solid #ffe082; color:#ef6c00; text-align:center; white-space:normal; word-wrap:break-word;">${t('full_th_global')}</th>
+                    <th style="width:75px; text-align:center; white-space:normal; word-wrap:break-word;">${t('full_th_month_target', {month: targetMonth})}</th>
+                    <th style="width:75px; background:#fff8e1; border-right:2px solid #ffe082; color:#ef6c00; text-align:center; white-space:normal; word-wrap:break-word;">${t('full_th_global')}</th>
                     ${categories.map(cat => `<th style="text-align:center; width:40px; white-space:normal; word-wrap:break-word;">${escapeHTML(tVal(cat))}</th>`).join('')}
                     ${categories.map(cat => `<th style="background:#e8f5e9; text-align:center; width:40px; white-space:normal; word-wrap:break-word;">${escapeHTML(tVal(cat))}<br>${t('full_th_score')}</th>`).join('')}
                 </tr>
@@ -996,24 +1048,24 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
         
         matrixHtml += `<tr>`;
         if (metricGroups.length > 0) {
-            matrixHtml += `<td ${row.isGroupStart ? `rowspan="${row.groupSize}"` : `style="display:none;"`} style="max-width:60px; white-space:normal; word-wrap:break-word;">${escapeHTML(tVal(row.groupName) || t('full_ungrouped_short'))}</td>`;
+            matrixHtml += `<td ${row.isGroupStart ? `rowspan="${row.groupSize}"` : `style="display:none;"`} style="max-width:60px; white-space:normal; word-wrap:break-word; text-align:center;">${escapeHTML(tVal(row.groupName) || t('full_ungrouped_short'))}</td>`;
             matrixHtml += `<td ${row.isGroupStart ? `rowspan="${row.groupSize}"` : `style="display:none;"`} style="font-weight:bold; color:#1565c0; text-align:center; max-width:50px;">${row.groupWeight || '-'}</td>`;
         }
 
         matrixHtml += `
-            <td style="text-align:left; font-weight:600; color:#2c3e50; max-width:220px; white-space:normal; word-wrap:break-word;">${escapeHTML(tVal(m.label))}</td>
+            <td style="text-align:left; font-weight:600; color:#2c3e50; max-width:140px; white-space:normal; word-wrap:break-word;">${escapeHTML(tVal(m.label))}</td>
             <td style="color:#666; font-weight:bold; background:#fafafa; text-align:center;">${weight}</td>
-            <td style="color:#0277bd; font-weight:bold; background:#f5f8fa; text-align:center; max-width:60px; white-space:normal; word-wrap:break-word;">${targetStr}</td>
-            <td style="background:#fff8e1; border-right:2px solid #ffe082; text-align:center; max-width:60px; white-space:normal; word-wrap:break-word;"><span class="${globalDisplayClass}">${escapeHTML(String(m.value || '--'))}</span></td>`;
+            <td style="color:#0277bd; font-weight:bold; background:#f5f8fa; text-align:center; max-width:75px; white-space:normal; word-wrap:break-word;">${targetStr}</td>
+            <td style="background:#fff8e1; border-right:2px solid #ffe082; text-align:center; max-width:75px; white-space:normal; word-wrap:break-word;"><span class="${globalDisplayClass}">${escapeHTML(String(m.value || '--').trim())}</span></td>`;
             
         categories.forEach(cat => {
             const cell = catData[cat].values[m.label];
             if (!cell || cell.raw === '--') {
-                matrixHtml += `<td class="val-none">--</td>`;
+                matrixHtml += `<td class="val-none" style="text-align:center;">--</td>`;
             } else {
                 let displayClass = 'val-none';
                 if (m.hasTarget) displayClass = cell.isFailing ? 'val-warn' : 'val-good';
-                matrixHtml += `<td><span class="${displayClass}">${escapeHTML(cell.raw)}</span></td>`;
+                matrixHtml += `<td style="text-align:center;"><span class="${displayClass}">${escapeHTML(String(cell.raw).trim())}</span></td>`;
             }
         });
         
@@ -1040,7 +1092,7 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
     let adjustHtml = `
         <div style="background:#fff; overflow-x:auto; margin-top:20px;">
         <h4 style="margin: 0 0 10px 0; color: #555;">${t('full_title')}</h4>
-        <table class="matrix-table" style="font-size:11px; line-height:1.3;">
+        <table class="matrix-table" style="font-size:clamp(10px, 0.85vw, 11px); line-height:1.4;">
             <thead>
                 <tr>
                     <th style="width:40px; text-align:center;">${t('full_th_type')}</th>
@@ -1057,10 +1109,16 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
         if (item.deleted) return;
         const typeColor = item.type === '加分' ? '#2e7d32' : '#c62828';
         const typeBg = item.type === '加分' ? '#e8f5e9' : '#ffebee';
+        
+        let displayDesc = item.desc;
+        if (window.currentLang === 'en' && item.unit !== undefined) {
+            displayDesc = item.cap ? `${item.unit} pts/time, Cap ${item.cap} pts` : `${item.unit} pts/time, No cap`;
+        }
+
         adjustHtml += `<tr>
             <td style="color:${typeColor}; background:${typeBg}; font-weight:bold; text-align:center;">${escapeHTML(tVal(item.type))}</td>
             <td style="text-align:left; max-width:200px; white-space:normal; word-wrap:break-word;">${escapeHTML(tVal(item.name))}</td>
-            <td style="color:#666; max-width:120px; white-space:normal; word-wrap:break-word;">${escapeHTML(item.desc)}</td>
+            <td style="color:#666; max-width:120px; white-space:normal; word-wrap:break-word;">${escapeHTML(displayDesc)}</td>
         `;
         
         categories.forEach(cat => {
