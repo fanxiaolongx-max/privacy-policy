@@ -1122,7 +1122,9 @@
             document.getElementById('brief-textarea').value = text;
             autoResizeTextarea(document.getElementById('brief-textarea'));
 
-            const d = new Date(data.created_at);
+            let timeStrInput = data.created_at;
+            if (!timeStrInput.includes('Z')) timeStrInput = timeStrInput.replace(' ', 'T') + 'Z';
+            const d = new Date(timeStrInput);
             const timeStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
             document.getElementById('snapshot-info').innerText = `数据源: 快照 ${data.snapshot_id} (入库时间: ${timeStr})`;
             document.getElementById('failing-count').innerText = `共计催办 ${totalFailing} 项重点指标`;
