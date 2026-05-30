@@ -2,12 +2,16 @@ window.GlobalCategories = ['TE', 'ORG', 'ET', 'VDF'];
 
 async function initCategories() {
     try {
-        const data = await API.get('/api/sla/categories');
+        const mode = API.getSourceMode('sla_data');
+        const query = mode === 'auto' ? '' : `?mode=${encodeURIComponent(mode)}`;
+        const data = await API.get(`/api/sla/categories${query}`);
         if (Array.isArray(data) && data.length > 0) {
             window.GlobalCategories = data;
         }
+        if (window.renderSLASourcePanel) window.renderSLASourcePanel();
     } catch (e) {
         console.warn('Failed to load categories, using defaults.');
+        if (window.renderSLASourcePanel) window.renderSLASourcePanel();
     }
 }
 

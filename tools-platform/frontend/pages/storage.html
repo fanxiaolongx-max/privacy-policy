@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>存储迁移状态 - Tools Platform</title>
+    <link rel="stylesheet" href="/css/shared.css">
+    <style>
+        body {
+            background:
+                radial-gradient(circle at top left, rgba(14, 165, 233, 0.16), transparent 30%),
+                radial-gradient(circle at top right, rgba(34, 197, 94, 0.14), transparent 28%),
+                linear-gradient(180deg, #07111f 0%, #0f172a 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+        }
+        .storage-wrap {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: calc(var(--navbar-h) + 36px) 24px 48px;
+        }
+        .storage-hero {
+            display: flex;
+            justify-content: space-between;
+            align-items: end;
+            gap: 18px;
+            flex-wrap: wrap;
+            margin-bottom: 26px;
+        }
+        .storage-title {
+            font-size: 34px;
+            font-weight: 800;
+            margin: 0 0 10px;
+            letter-spacing: -0.4px;
+        }
+        .storage-subtitle {
+            margin: 0;
+            color: #94a3b8;
+            line-height: 1.7;
+        }
+        .storage-refresh {
+            height: 40px;
+            border-radius: 12px;
+            border: 1px solid rgba(125, 211, 252, 0.25);
+            background: rgba(15, 23, 42, 0.6);
+            color: #e2e8f0;
+            padding: 0 16px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+        .summary-card {
+            background: rgba(15, 23, 42, 0.72);
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            border-radius: 18px;
+            padding: 18px 20px;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.24);
+        }
+        .summary-label {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
+        .summary-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: #f8fafc;
+        }
+        .summary-value.ok { color: #4ade80; }
+        .summary-value.warn { color: #fbbf24; }
+        .summary-value.info { color: #7dd3fc; }
+        .status-meta {
+            margin-bottom: 18px;
+            color: #94a3b8;
+            font-size: 12px;
+        }
+        .table-list {
+            display: grid;
+            gap: 14px;
+        }
+        .table-card {
+            background: rgba(15, 23, 42, 0.74);
+            border: 1px solid rgba(148, 163, 184, 0.14);
+            border-radius: 18px;
+            padding: 18px 20px;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+        }
+        .table-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            gap: 14px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+        .table-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #f8fafc;
+            margin: 0 0 6px;
+        }
+        .table-scope {
+            color: #94a3b8;
+            font-size: 12px;
+        }
+        .badge-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            border: 1px solid transparent;
+        }
+        .badge.ok {
+            color: #86efac;
+            background: rgba(34, 197, 94, 0.14);
+            border-color: rgba(34, 197, 94, 0.24);
+        }
+        .badge.info {
+            color: #93c5fd;
+            background: rgba(59, 130, 246, 0.14);
+            border-color: rgba(59, 130, 246, 0.26);
+        }
+        .badge.warn {
+            color: #fde68a;
+            background: rgba(245, 158, 11, 0.14);
+            border-color: rgba(245, 158, 11, 0.26);
+        }
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .metric-box {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 14px;
+            padding: 12px 14px;
+        }
+        .metric-label {
+            color: #94a3b8;
+            font-size: 11px;
+            margin-bottom: 7px;
+        }
+        .metric-value {
+            color: #f8fafc;
+            font-size: 18px;
+            font-weight: 800;
+        }
+        .storage-empty {
+            padding: 28px;
+            text-align: center;
+            color: #94a3b8;
+            border-radius: 18px;
+            border: 1px dashed rgba(148, 163, 184, 0.22);
+        }
+        @media (max-width: 880px) {
+            .summary-grid, .metric-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        @media (max-width: 560px) {
+            .summary-grid, .metric-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="storage-wrap">
+        <div class="storage-hero">
+            <div>
+                <h1 class="storage-title">存储迁移状态台</h1>
+                <p class="storage-subtitle">集中查看已迁表的真实读源、一致性校验、JSON/SQLite 数量，以及当前双写状态，便于后续从双写过渡到 SQLite 主读。</p>
+            </div>
+            <button class="storage-refresh" id="refreshStorageStatus">刷新状态</button>
+        </div>
+
+        <div class="summary-grid" id="storageSummary">
+            <div class="summary-card"><div class="summary-label">总表数</div><div class="summary-value info">-</div></div>
+            <div class="summary-card"><div class="summary-label">一致表数</div><div class="summary-value ok">-</div></div>
+            <div class="summary-card"><div class="summary-label">异常表数</div><div class="summary-value warn">-</div></div>
+            <div class="summary-card"><div class="summary-label">当前检查时间</div><div class="summary-value" style="font-size:16px;">-</div></div>
+        </div>
+
+        <div class="status-meta" id="storageStatusMeta">正在加载存储迁移状态...</div>
+        <div class="table-list" id="storageTableList">
+            <div class="storage-empty">正在加载...</div>
+        </div>
+    </div>
+
+    <script src="/js/shared/api.js?v=20260530-01"></script>
+    <script src="/js/shared/navbar.js?v=20260530-08"></script>
+    <script>
+        function sourceLabel(source) {
+            if (source === 'sqlite') return 'SQLite';
+            if (source === 'json') return 'JSON';
+            return source || '-';
+        }
+
+        function renderSummary(data) {
+            const summary = data.summary || {};
+            const checkedAt = data.checkedAt ? new Date(data.checkedAt).toLocaleString('zh-CN', { hour12: false }) : '-';
+            document.getElementById('storageSummary').innerHTML = `
+                <div class="summary-card"><div class="summary-label">总表数</div><div class="summary-value info">${summary.totalTables ?? '-'}</div></div>
+                <div class="summary-card"><div class="summary-label">一致表数</div><div class="summary-value ok">${summary.matchedTables ?? '-'}</div></div>
+                <div class="summary-card"><div class="summary-label">异常表数</div><div class="summary-value warn">${summary.mismatchedTables ?? '-'}</div></div>
+                <div class="summary-card"><div class="summary-label">当前检查时间</div><div class="summary-value" style="font-size:16px;">${checkedAt}</div></div>
+            `;
+            document.getElementById('storageStatusMeta').textContent = '已迁表默认采用 JSON + SQLite 双写；auto 模式优先 JSON，JSON 为空时回退 SQLite。';
+        }
+
+        function renderTableList(data) {
+            const tables = Array.isArray(data.tables) ? data.tables : [];
+            const list = document.getElementById('storageTableList');
+            if (!tables.length) {
+                list.innerHTML = '<div class="storage-empty">暂无迁移状态数据。</div>';
+                return;
+            }
+
+            list.innerHTML = tables.map(item => `
+                <section class="table-card">
+                    <div class="table-head">
+                        <div>
+                            <h2 class="table-name">${item.label}</h2>
+                            <div class="table-scope">作用域: ${item.scope} · 表键: ${item.key}</div>
+                        </div>
+                        <div class="badge-row">
+                            <span class="badge ${item.parity === 'match' ? 'ok' : 'warn'}">一致性: ${item.parity === 'match' ? 'MATCH' : 'MISMATCH'}</span>
+                            <span class="badge info">Auto读源: ${sourceLabel(item.autoSource)}</span>
+                            <span class="badge info">写策略: ${item.writeStrategy}</span>
+                        </div>
+                    </div>
+                    <div class="metric-grid">
+                        <div class="metric-box">
+                            <div class="metric-label">JSON 数量</div>
+                            <div class="metric-value">${item.jsonCount ?? '-'}</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-label">SQLite 数量</div>
+                            <div class="metric-value">${item.sqliteCount ?? '-'}</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-label">读源结果</div>
+                            <div class="metric-value">${sourceLabel(item.autoSource)}</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-label">状态</div>
+                            <div class="metric-value">${item.parity === 'match' ? '已对齐' : '待排查'}</div>
+                        </div>
+                    </div>
+                </section>
+            `).join('');
+        }
+
+        async function loadStorageStatus() {
+            const list = document.getElementById('storageTableList');
+            const meta = document.getElementById('storageStatusMeta');
+            list.innerHTML = '<div class="storage-empty">正在重新校验迁移状态...</div>';
+            meta.textContent = '正在读取服务端迁移状态...';
+            try {
+                const data = await API.get('/api/storage/status');
+                renderSummary(data);
+                renderTableList(data);
+            } catch (err) {
+                meta.textContent = '读取失败';
+                list.innerHTML = `<div class="storage-empty">加载失败: ${err.message}</div>`;
+            }
+        }
+
+        document.getElementById('refreshStorageStatus').addEventListener('click', loadStorageStatus);
+        loadStorageStatus();
+    </script>
+</body>
+</html>

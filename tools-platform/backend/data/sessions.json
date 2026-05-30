@@ -1,25 +1,4 @@
 {
-  "266953418641d65bad45ced97dbdf2edb15763113390393ef7387478dc12ca81": {
-    "user": {
-      "username": "guest",
-      "role": "readonly"
-    },
-    "expiresAt": 1779712860213
-  },
-  "828521f4b9582eb0e6bac3ed0fc589b44805d9ba1d1fbdfb9f3d5cce90bacdf1": {
-    "user": {
-      "username": "admin",
-      "role": "admin"
-    },
-    "expiresAt": 1780127729692
-  },
-  "fc88befccc20d0a188d7db8aaf4bd0c5b54b365f60a7bab44ba697ba8375ed00": {
-    "user": {
-      "username": "admin",
-      "role": "admin"
-    },
-    "expiresAt": 1780163708661
-  },
   "b7246c960ec260ba220f35c2aa4c8b6f941eb5955f86d579c66bc4f74fa3aeb1": {
     "user": {
       "username": "admin",
@@ -34,13 +13,6 @@
     },
     "expiresAt": 1780217855124
   },
-  "1c1cdaa561d81f0ae57d0bdd7100b6736a7b6e2a84eca80835f1aca8c5866711": {
-    "user": {
-      "username": "admin",
-      "role": "admin"
-    },
-    "expiresAt": 1780253592838
-  },
   "e2d3f92e55a92d8337251d861438993b4eb8a66df61cb2008b79875c45244624": {
     "user": {
       "username": "admin",
@@ -54,5 +26,12 @@
       "role": "admin"
     },
     "expiresAt": 1780259811261
+  },
+  "e0301201c7d058261b863ddef1aac386b3b2a290a62ce32226aa98a569cf8f0d": {
+    "user": {
+      "username": "admin",
+      "role": "admin"
+    },
+    "expiresAt": 1780769597873
   }
 }

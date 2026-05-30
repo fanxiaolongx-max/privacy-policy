@@ -225,12 +225,14 @@ async function loadData(startDate, endDate) {
         if (startDate && endDate) {
             url += `?startDate=${startDate}&endDate=${endDate}`;
         }
+        const mode = window.API.getSourceMode('monthly_sla_data');
+        const query = mode === 'auto' ? '' : `?mode=${encodeURIComponent(mode)}`;
 
         const [data, configData, catDataRes, groupData] = await Promise.all([
             window.API.get(url),
-            window.API.get('/api/sla/config'),
-            window.API.get('/api/sla/categories'),
-            window.API.get('/api/sla/groups')
+            window.API.get(`/api/sla/config${query}`),
+            window.API.get(`/api/sla/categories${query}`),
+            window.API.get(`/api/sla/groups${query}`)
         ]);
         
         window._categories = catDataRes || [];
@@ -277,6 +279,7 @@ async function loadData(startDate, endDate) {
         window._manualAdjustItems = manualAdjustItems;
         
         document.getElementById('loader').style.display = 'none';
+        if (window.renderMonthlySourcePanel) window.renderMonthlySourcePanel();
         
         if (!data || !data.trends || data.trends.length === 0) {
             document.getElementById('report-date-range').innerText = t('no_data');
@@ -295,6 +298,7 @@ async function loadData(startDate, endDate) {
 
     } catch (error) {
         console.error('Failed to load monthly data:', error);
+        if (window.renderMonthlySourcePanel) window.renderMonthlySourcePanel();
         document.getElementById('loader').innerHTML = `<p style="color:red;">Failed to load data: ${error.message}</p>`;
     }
 }
@@ -324,6 +328,15 @@ function renderAll() {
 
 document.addEventListener('DOMContentLoaded', () => {
     updateStaticI18n();
+    const modeSelect = document.getElementById('monthlySourceMode');
+    if (modeSelect) {
+        modeSelect.value = window.API.getSourceMode('monthly_sla_data');
+        modeSelect.addEventListener('change', () => {
+            window.API.setSourceMode('monthly_sla_data', modeSelect.value);
+            loadData();
+        });
+    }
+    if (window.renderMonthlySourcePanel) window.renderMonthlySourcePanel();
 
     const langToggleBtn = document.getElementById('lang-toggle');
     if (langToggleBtn) {

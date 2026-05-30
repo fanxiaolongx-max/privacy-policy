@@ -66,7 +66,152 @@
         .stat-num { font-size: 32px; font-weight: 800; background: linear-gradient(90deg, #64ffda, #4a90e2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .stat-label { font-size: 12px; color: #8892b0; margin-top: 4px; }
 
-        @media (max-width: 768px) { .tools-grid { grid-template-columns: 1fr; } }
+        .history-panel {
+            margin-top: 28px;
+            margin-bottom: 48px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 18px 42px rgba(0,0,0,0.25);
+        }
+        .history-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+        .history-title-wrap { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+        .history-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+        }
+        .source-badge {
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            background: rgba(74,144,226,0.18);
+            border: 1px solid rgba(74,144,226,0.35);
+            color: #93c5fd;
+        }
+        .history-actions {
+            display:flex;
+            align-items:center;
+            gap:10px;
+            flex-wrap:wrap;
+        }
+        .history-select, .history-refresh {
+            height: 36px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.06);
+            color: #e2e8f0;
+            padding: 0 12px;
+            font-size: 13px;
+        }
+        .history-select option { color: #0f172a; }
+        .history-refresh {
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.2s ease;
+        }
+        .history-refresh:hover {
+            background: rgba(100,255,218,0.12);
+            border-color: rgba(100,255,218,0.28);
+            color: #64ffda;
+        }
+        .history-list {
+            display: grid;
+            gap: 10px;
+        }
+        .history-footer {
+            margin-top: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .history-page-info {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .history-pagination {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .history-page-btn {
+            height: 34px;
+            min-width: 86px;
+            padding: 0 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.06);
+            color: #e2e8f0;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .history-page-btn:hover:not(:disabled) {
+            background: rgba(100,255,218,0.12);
+            border-color: rgba(100,255,218,0.28);
+            color: #64ffda;
+        }
+        .history-page-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .history-row {
+            display: grid;
+            grid-template-columns: 110px 150px 1fr 180px;
+            gap: 14px;
+            align-items: center;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 14px 16px;
+        }
+        .history-tool {
+            display:inline-flex;
+            justify-content:center;
+            align-items:center;
+            min-width: 70px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            background: rgba(100,255,218,0.12);
+            color: #64ffda;
+            border: 1px solid rgba(100,255,218,0.18);
+        }
+        .history-action { color:#fff; font-size:14px; font-weight:600; }
+        .history-detail { color:#94a3b8; font-size:13px; line-height:1.5; word-break:break-word; }
+        .history-time { color:#a8b2d8; font-size:12px; text-align:right; }
+        .history-empty {
+            padding: 28px 20px;
+            text-align: center;
+            color: #94a3b8;
+            border: 1px dashed rgba(255,255,255,0.14);
+            border-radius: 14px;
+            background: rgba(255,255,255,0.03);
+        }
+        .history-caption {
+            color:#7dd3fc;
+            font-size:12px;
+        }
+
+        @media (max-width: 768px) {
+            .tools-grid { grid-template-columns: 1fr; }
+            .history-row { grid-template-columns: 1fr; }
+            .history-time { text-align: left; }
+        }
     </style>
 </head>
 <body>
@@ -167,6 +312,31 @@
                 </div>
                 <div class="card-arrow">进入模块 →</div>
             </a>
+
+            <a href="/storage" class="tool-card" style="--card-accent: #22c55e;">
+                <div class="card-icon">🗃️</div>
+                <div class="card-title">迁移状态</div>
+                <div class="card-desc">统一查看 JSON 到 SQLite 的迁移进度、真实读源、一致性校验结果和当前双写状态，方便后续安全切换到 SQLite 主读。</div>
+                <div class="card-features">
+                    <span class="feature-tag">🔍 Auto 读源</span>
+                    <span class="feature-tag">✅ Parity 校验</span>
+                    <span class="feature-tag">📊 JSON / SQLite 数量</span>
+                    <span class="feature-tag">🧭 切库治理面板</span>
+                </div>
+                <div class="card-arrow">进入模块 →</div>
+            </a>
+
+            <a href="/db-explorer" class="tool-card" style="--card-accent: #0ea5e9;">
+                <div class="card-icon">🗄️</div>
+                <div class="card-title">数据探索</div>
+                <div class="card-desc">全平台底层数据的上帝视角，直接查询 SQLite 物理表结构与内容，提供 SQL 般直观的浏览体验。</div>
+                <div class="card-features">
+                    <span class="feature-tag">🗄️ SQLite 可视化</span>
+                    <span class="feature-tag">🔍 关系型表查询</span>
+                    <span class="feature-tag">⚡ 实时数据探针</span>
+                </div>
+                <div class="card-arrow">进入模块 →</div>
+            </a>
         </div>
 
         <div class="stats-bar" id="statsBar">
@@ -183,12 +353,147 @@
                 <div class="stat-label">在线工具模块</div>
             </div>
         </div>
+
+        <section class="history-panel">
+            <div class="history-head">
+                <div class="history-title-wrap">
+                    <div class="history-title">最近操作历史</div>
+                    <div class="source-badge" id="history-source">来源: -</div>
+                    <div class="history-caption">来自 `upload_history`，用于观察当前日志读取链路</div>
+                </div>
+                <div class="history-actions">
+                    <select id="history-filter" class="history-select">
+                        <option value="">全部工具</option>
+                        <option value="uiv">数据抓取</option>
+                        <option value="sla">数据导入</option>
+                    </select>
+                    <select id="history-mode" class="history-select">
+                        <option value="auto">自动模式</option>
+                        <option value="json">强制 JSON</option>
+                        <option value="sqlite">强制 SQLite</option>
+                    </select>
+                    <button id="history-refresh" class="history-refresh">刷新历史</button>
+                </div>
+            </div>
+            <div class="history-list" id="history-list">
+                <div class="history-empty">正在加载最近操作历史...</div>
+            </div>
+            <div class="history-footer">
+                <div class="history-page-info" id="history-page-info">默认显示最近 10 条</div>
+                <div class="history-pagination">
+                    <button id="history-prev" class="history-page-btn">上一页</button>
+                    <button id="history-next" class="history-page-btn">下一页</button>
+                </div>
+            </div>
+        </section>
     </div>
 
-    <script src="/js/shared/api.js"></script>
-    <script src="/js/shared/toast.js"></script>
-    <script src="/js/shared/navbar.js"></script>
+    <script src="/js/shared/api.js?v=20260530-03"></script>
+    <script src="/js/shared/toast.js?v=20260530-03"></script>
+    <script src="/js/shared/navbar.js?v=20260530-08"></script>
     <script>
+        const historyState = {
+            items: [],
+            page: 1,
+            pageSize: 10
+        };
+
+        function formatToolLabel(tool) {
+            if (tool === 'uiv') return '数据抓取';
+            if (tool === 'sla') return '数据导入';
+            return tool || '未分类';
+        }
+
+        function formatSourceLabel(source) {
+            if (source === 'sqlite') return 'SQLite';
+            if (source === 'json') return 'JSON';
+            return source || '-';
+        }
+
+        function renderHistoryList(history) {
+            const listEl = document.getElementById('history-list');
+            const infoEl = document.getElementById('history-page-info');
+            const prevBtn = document.getElementById('history-prev');
+            const nextBtn = document.getElementById('history-next');
+            if (!listEl) return;
+
+            if (!Array.isArray(history) || history.length === 0) {
+                listEl.innerHTML = '<div class="history-empty">当前筛选条件下暂无操作记录。</div>';
+                if (infoEl) infoEl.textContent = '当前无可展示记录';
+                if (prevBtn) prevBtn.disabled = true;
+                if (nextBtn) nextBtn.disabled = true;
+                return;
+            }
+
+            const totalPages = Math.max(1, Math.ceil(history.length / historyState.pageSize));
+            if (historyState.page > totalPages) historyState.page = totalPages;
+            const start = (historyState.page - 1) * historyState.pageSize;
+            const pagedItems = history.slice(start, start + historyState.pageSize);
+
+            listEl.innerHTML = pagedItems.map(item => {
+                const time = item.time
+                    ? new Date(item.time).toLocaleString('zh-CN', { hour12: false })
+                    : '-';
+                return `
+                    <div class="history-row">
+                        <div><span class="history-tool">${formatToolLabel(item.tool)}</span></div>
+                        <div class="history-action">${item.action || '-'}</div>
+                        <div class="history-detail">${item.detail || '无附加说明'}</div>
+                        <div class="history-time">${time}</div>
+                    </div>
+                `;
+            }).join('');
+
+            const from = history.length === 0 ? 0 : start + 1;
+            const to = Math.min(start + historyState.pageSize, history.length);
+            if (infoEl) {
+                infoEl.textContent = `显示第 ${from}-${to} 条，共 ${history.length} 条 · 第 ${historyState.page}/${totalPages} 页`;
+            }
+            if (prevBtn) prevBtn.disabled = historyState.page <= 1;
+            if (nextBtn) nextBtn.disabled = historyState.page >= totalPages;
+        }
+
+        async function loadOperationHistory(resetPage = true) {
+            const filter = document.getElementById('history-filter')?.value || '';
+            const mode = document.getElementById('history-mode')?.value || 'auto';
+            const listEl = document.getElementById('history-list');
+            const sourceEl = document.getElementById('history-source');
+
+            if (resetPage) historyState.page = 1;
+            if (listEl) {
+                listEl.innerHTML = '<div class="history-empty">正在刷新操作历史...</div>';
+            }
+
+            try {
+                const params = new URLSearchParams();
+                params.set('limit', '50');
+                if (filter) params.set('tool', filter);
+                if (mode) params.set('mode', mode);
+                const query = `?${params.toString()}`;
+                const history = await API.get(`/api/upload/history${query}`);
+                historyState.items = history;
+                renderHistoryList(historyState.items);
+
+                if (sourceEl) {
+                    const path = `/api/upload/history${query}`;
+                    const source = API.getLastDataSource(path) || API.getLastDataSource('/api/upload/history') || '-';
+                    sourceEl.textContent = `来源: ${formatSourceLabel(source)}`;
+                }
+            } catch (e) {
+                if (listEl) {
+                    listEl.innerHTML = `<div class="history-empty" style="color:#fca5a5;">加载失败：${e.message}</div>`;
+                }
+                if (sourceEl) {
+                    sourceEl.textContent = '来源: 加载失败';
+                }
+            }
+        }
+
+        function changeHistoryPage(delta) {
+            historyState.page += delta;
+            renderHistoryList(historyState.items);
+        }
+
         async function loadStats() {
             try {
                 const { scripts } = await API.get('/api/uiv/scripts');
@@ -199,7 +504,17 @@
                 document.getElementById('stat-history').textContent = history.length;
             } catch (e) {}
         }
-        document.addEventListener('DOMContentLoaded', loadStats);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            loadOperationHistory();
+
+            document.getElementById('history-filter')?.addEventListener('change', () => loadOperationHistory(true));
+            document.getElementById('history-mode')?.addEventListener('change', () => loadOperationHistory(true));
+            document.getElementById('history-refresh')?.addEventListener('click', () => loadOperationHistory(true));
+            document.getElementById('history-prev')?.addEventListener('click', () => changeHistoryPage(-1));
+            document.getElementById('history-next')?.addEventListener('click', () => changeHistoryPage(1));
+        });
     </script>
 </body>
 </html>

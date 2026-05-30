@@ -9,14 +9,42 @@ const DEFAULT_CATEGORIES = ['DataFab', 'NetCare中国', 'NetCare中东', 'NetCar
 let expandedCategories = [];
 let draggedScriptId = null;
 
+function formatSourceLabel(source) {
+    if (source === 'sqlite') return 'SQLite';
+    if (source === 'json') return 'JSON';
+    if (source === 'auto') return '自动模式';
+    return source || '-';
+}
+
+function renderRepositorySource() {
+    const panel = document.getElementById('repoSourcePanel');
+    if (!panel) return;
+
+    const mode = API.getSourceMode('uiv_repository');
+    const query = mode === 'auto' ? '' : `?mode=${encodeURIComponent(mode)}`;
+    const meta = API.getLastDataSourceMeta(`/api/uiv/scripts${query}`) || API.getLastDataSourceMeta('/api/uiv/scripts') || {};
+    const scriptSource = formatSourceLabel(meta.primary);
+    const categorySource = formatSourceLabel(meta.extras ? meta.extras.categories : null);
+
+    panel.innerHTML = `
+        <span class="repo-source-badge">脚本来源: ${scriptSource}</span>
+        <span class="repo-source-badge">分类来源: ${categorySource}</span>
+        <span class="repo-source-note">当前模式: ${formatSourceLabel(mode)} · 默认要求页面直接渲染当前真实读源，便于迁移期验证。</span>
+    `;
+}
+
 // ──────────────────────────────────────────────────────────
 // 数据加载
 // ──────────────────────────────────────────────────────────
 async function loadSavedScripts() {
     try {
-        const { scripts, categories } = await API.get('/api/uiv/scripts');
+        const mode = API.getSourceMode('uiv_repository');
+        const query = mode === 'auto' ? '' : `?mode=${encodeURIComponent(mode)}`;
+        const { scripts, categories } = await API.get(`/api/uiv/scripts${query}`);
+        renderRepositorySource();
         renderSidebar(scripts, categories);
     } catch (e) {
+        renderRepositorySource();
         showToast('❌ 无法连接服务器，脚本仓库加载失败', 'error');
     }
 }

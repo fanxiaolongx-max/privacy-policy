@@ -11,7 +11,9 @@ function renderNavbar() {
         { href: '/report', icon: '📈', label: '报表看板', match: p => p.startsWith('/report') },
         { href: '/expedite', icon: '⚡', label: '一键催办', match: p => p.startsWith('/expedite') },
         { href: '/monthly', icon: '📅', label: '月报页面', match: p => p.startsWith('/monthly') },
-        { href: '/praudit', icon: '📋', label: 'PR稽查', match: p => p.startsWith('/praudit') }
+        { href: '/praudit', icon: '📋', label: 'PR稽查', match: p => p.startsWith('/praudit') },
+        { href: '/storage', icon: '💽', label: '迁移状态', match: p => p.startsWith('/storage') },
+        { href: '/db-explorer', icon: '🗄️', label: '数据探索', match: p => p.startsWith('/db-explorer') }
     ];
 
     const linksHtml = links.map(l =>

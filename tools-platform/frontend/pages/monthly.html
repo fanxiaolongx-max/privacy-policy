@@ -41,6 +41,49 @@
             font-size: 14px;
             margin: 0;
         }
+        .data-source-controls {
+            margin-top: 0;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+        .data-source-panel {
+            margin-top: 0;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+        .data-source-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            background: rgba(0, 40, 94, 0.08);
+            border: 1px solid rgba(0, 40, 94, 0.18);
+            color: #00285e;
+        }
+        .data-source-note {
+            color: #64748b;
+            font-size: 11px;
+        }
+        .data-source-select {
+            height: 34px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            background: #fff;
+            color: #334155;
+            font-size: 12px;
+            padding: 0 10px;
+            outline: none;
+        }
 
         .section-card {
             background: #fff;
@@ -185,6 +228,24 @@
             </div>
             <h2 data-i18n="title">月度运营质量与合规分析报告 <span style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v1.0.0</span></h2>
             <p id="report-date-range" data-i18n="date_range_loading">分析周期: 加载中...</p>
+            <div class="source-info-wrapper print-hide" style="display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 14px;" data-html2canvas-ignore="true">
+                <div class="data-source-controls">
+                    <span class="data-source-note">SLA配置读源模式:</span>
+                    <select id="monthlySourceMode" class="data-source-select">
+                        <option value="auto">自动模式</option>
+                        <option value="json">强制 JSON</option>
+                        <option value="sqlite">强制 SQLite</option>
+                    </select>
+                </div>
+                <div id="monthlySourcePanel" class="data-source-panel">
+                    <span class="data-source-badge">趋势来源: -</span>
+                    <span class="data-source-badge">配置来源: -</span>
+                    <span class="data-source-badge">目标来源: -</span>
+                    <span class="data-source-badge">分类来源: -</span>
+                    <span class="data-source-badge">分组来源: -</span>
+                    <span class="data-source-note">月报趋势来自 report.db，规则说明来自 SLA 配置链路。</span>
+                </div>
+            </div>
             <div id="date-filter-container" style="margin-top: 15px; display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap;">
                 <div style="display: flex; gap: 8px;">
                     <button class="filter-btn" data-days="7" data-i18n="filter_7_days">最近 7 天</button>
@@ -298,10 +359,39 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="/js/shared/toast.js"></script>
-    <script src="/js/shared/api.js"></script>
-    <script src="/js/shared/navbar.js"></script>
-    <script src="/js/report/monthly.js?v=2"></script>
+    <script src="/js/shared/toast.js?v=20260530-01"></script>
+    <script src="/js/shared/api.js?v=20260530-01"></script>
+    <script src="/js/shared/navbar.js?v=20260530-08"></script>
+    <script>
+        function formatMonthlySourceLabel(source) {
+            if (source === 'sqlite') return 'SQLite';
+            if (source === 'json') return 'JSON';
+            if (source === 'auto') return '自动模式';
+            return source || '-';
+        }
+
+        function renderMonthlySourcePanel() {
+            const panel = document.getElementById('monthlySourcePanel');
+            if (!panel) return;
+            const mode = API.getSourceMode('monthly_sla_data');
+            const query = mode === 'auto' ? '' : `?mode=${encodeURIComponent(mode)}`;
+            const trendMeta = API.getLastDataSourceMeta('/api/db/monthly_report_data') || {};
+            const configMeta = API.getLastDataSourceMeta(`/api/sla/config${query}`) || API.getLastDataSourceMeta('/api/sla/config') || {};
+            const categoryMeta = API.getLastDataSourceMeta(`/api/sla/categories${query}`) || API.getLastDataSourceMeta('/api/sla/categories') || {};
+            const groupsMeta = API.getLastDataSourceMeta(`/api/sla/groups${query}`) || API.getLastDataSourceMeta('/api/sla/groups') || {};
+            panel.innerHTML = `
+                <span class="data-source-badge">趋势来源: ${formatMonthlySourceLabel(trendMeta.primary)}</span>
+                <span class="data-source-badge">配置来源: ${formatMonthlySourceLabel(configMeta.primary)}</span>
+                <span class="data-source-badge">目标来源: ${formatMonthlySourceLabel((configMeta.extras || {}).targets)}</span>
+                <span class="data-source-badge">分类来源: ${formatMonthlySourceLabel(categoryMeta.primary)}</span>
+                <span class="data-source-badge">分组来源: ${formatMonthlySourceLabel(groupsMeta.primary)}</span>
+                <span class="data-source-note">当前模式: ${formatMonthlySourceLabel(mode)} · 月报趋势为 SQLite，规则说明来自 SLA。</span>
+            `;
+        }
+
+        window.renderMonthlySourcePanel = renderMonthlySourcePanel;
+    </script>
+    <script src="/js/report/monthly.js?v=20260530-01"></script>
 </body>
 
 </html>

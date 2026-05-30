@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据探索 - DB Explorer</title>
+    <link rel="stylesheet" href="/css/shared.css">
+    <style>
+        body {
+            background: #f4f6f8;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: #333;
+        }
+
+        .page-container {
+            padding-top: calc(var(--navbar-h) + 20px);
+            max-width: 1440px;
+            margin: 0 auto;
+            padding-left: 20px;
+            padding-right: 20px;
+            padding-bottom: 40px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .controls h2 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            padding: 24px;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .table-selector-group {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        select, input[type="number"] {
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            padding: 8px 16px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-secondary {
+            padding: 8px 16px;
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .btn-secondary:disabled, .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .data-table-container {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th {
+            background: #f8fafc;
+            padding: 12px;
+            text-align: left;
+            border-bottom: 2px solid #e2e8f0;
+            color: #475569;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+            max-width: 400px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        td.expanded {
+            white-space: pre-wrap;
+            word-break: break-all;
+            background: #fdfdfd;
+        }
+
+        td:hover {
+            background: #f8fafc;
+        }
+        
+        .json-cell {
+            font-family: monospace;
+            color: #059669;
+            cursor: pointer;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+            font-size: 14px;
+            color: #64748b;
+        }
+        
+        .page-info {
+            font-weight: 600;
+            color: #334155;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page-container">
+        <div class="controls">
+            <h2><span data-i18n="title">🗄️ 数据探索 (DB Explorer)</span></h2>
+            <div style="font-size: 13px; color: #64748b;">
+                仅超级管理员可访问
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="table-selector-group">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <label style="font-weight: 600; color: #475569;">选择数据表:</label>
+                    <select id="table-select" style="min-width: 250px;">
+                        <option value="">加载中...</option>
+                    </select>
+                </div>
+                
+                <button class="btn-primary" onclick="loadTableData(true)">🔄 刷新数据</button>
+            </div>
+
+            <div id="table-content-area" style="display: none;">
+                <div class="data-table-container">
+                    <table id="data-table">
+                        <thead>
+                            <tr id="table-head"></tr>
+                        </thead>
+                        <tbody id="table-body">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination">
+                    <div>
+                        共 <span class="page-info" id="total-rows">0</span> 条记录 
+                        | 每页显示 
+                        <select id="limit-select" onchange="loadTableData(true)" style="padding: 4px 8px;">
+                            <option value="50">50</option>
+                            <option value="100" selected>100</option>
+                            <option value="500">500</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <button class="btn-secondary" id="btn-prev" onclick="prevPage()">上一页</button>
+                        <span>第 <span class="page-info" id="current-page">1</span> 页 / 共 <span class="page-info" id="total-pages">1</span> 页</span>
+                        <button class="btn-secondary" id="btn-next" onclick="nextPage()">下一页</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="loading-state" class="empty-state">
+                请在上方选择数据表
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/shared/api.js?v=20260530-01"></script>
+    <script src="/js/shared/toast.js?v=20260530-01"></script>
+    <script src="/js/shared/navbar.js?v=20260530-08"></script>
+    
+    <script>
+        let currentOffset = 0;
+        let currentTotal = 0;
+
+        async function init() {
+            try {
+                const tables = await API.get('/api/db-explorer/tables');
+                const select = document.getElementById('table-select');
+                
+                if (!tables || tables.length === 0) {
+                    select.innerHTML = '<option value="">无可用数据表</option>';
+                    return;
+                }
+                
+                select.innerHTML = '<option value="">-- 请选择 --</option>' + 
+                    tables.map(t => `<option value="${t}">${t}</option>`).join('');
+                    
+                select.addEventListener('change', () => {
+                    if (select.value) loadTableData(true);
+                });
+            } catch (err) {
+                console.error(err);
+                if (err.message.includes('403') || err.message.includes('权限')) {
+                    document.getElementById('loading-state').innerHTML = '⚠️ 权限不足，仅超级管理员可访问。';
+                }
+            }
+        }
+
+        async function loadTableData(reset = false) {
+            const table = document.getElementById('table-select').value;
+            if (!table) return;
+
+            const limit = parseInt(document.getElementById('limit-select').value, 10);
+            if (reset) currentOffset = 0;
+
+            const loading = document.getElementById('loading-state');
+            const content = document.getElementById('table-content-area');
+            
+            loading.style.display = 'block';
+            loading.innerHTML = '⏳ 正在加载数据...';
+            content.style.display = 'none';
+
+            try {
+                const data = await API.get(`/api/db-explorer/tables/${table}?limit=${limit}&offset=${currentOffset}`);
+                
+                currentTotal = data.total;
+                
+                // Render headers
+                const thead = document.getElementById('table-head');
+                thead.innerHTML = data.schema.map(col => `<th>${col.name} <span style="font-size:11px;color:#94a3b8;font-weight:normal;">(${col.type})</span></th>`).join('');
+                
+                // Render body
+                const tbody = document.getElementById('table-body');
+                tbody.innerHTML = '';
+                
+                if (data.rows.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="${data.schema.length}" style="text-align:center;color:#94a3b8;">暂无数据</td></tr>`;
+                } else {
+                    data.rows.forEach(row => {
+                        const tr = document.createElement('tr');
+                        data.schema.forEach(col => {
+                            const td = document.createElement('td');
+                            let val = row[col.name];
+                            
+                            if (val === null) {
+                                td.innerHTML = '<span style="color:#cbd5e1;font-style:italic;">NULL</span>';
+                            } else if (typeof val === 'object') {
+                                // If for some reason it returns an object (sqlite driver might do this for JSON if parsed, but usually string)
+                                td.textContent = JSON.stringify(val);
+                                td.className = 'json-cell';
+                                td.onclick = () => td.classList.toggle('expanded');
+                            } else {
+                                const strVal = String(val);
+                                td.textContent = strVal;
+                                // Basic heurustic for JSON string detection
+                                if ((strVal.startsWith('{') && strVal.endsWith('}')) || (strVal.startsWith('[') && strVal.endsWith(']'))) {
+                                    td.className = 'json-cell';
+                                    td.onclick = () => {
+                                        if (td.classList.contains('expanded')) {
+                                            td.classList.remove('expanded');
+                                            td.textContent = strVal; // Collapse
+                                        } else {
+                                            try {
+                                                const parsed = JSON.parse(strVal);
+                                                td.textContent = JSON.stringify(parsed, null, 2);
+                                            } catch (e) {
+                                                // ignore error if not valid JSON
+                                            }
+                                            td.classList.add('expanded');
+                                        }
+                                    };
+                                }
+                            }
+                            tr.appendChild(td);
+                        });
+                        tbody.appendChild(tr);
+                    });
+                }
+
+                // Update pagination
+                document.getElementById('total-rows').textContent = currentTotal;
+                const totalPages = Math.ceil(currentTotal / limit) || 1;
+                const currentPage = Math.floor(currentOffset / limit) + 1;
+                
+                document.getElementById('current-page').textContent = currentPage;
+                document.getElementById('total-pages').textContent = totalPages;
+                
+                document.getElementById('btn-prev').disabled = currentPage <= 1;
+                document.getElementById('btn-next').disabled = currentPage >= totalPages;
+
+                loading.style.display = 'none';
+                content.style.display = 'block';
+            } catch (err) {
+                console.error(err);
+                loading.innerHTML = `❌ 加载失败: ${err.message}`;
+            }
+        }
+
+        function nextPage() {
+            const limit = parseInt(document.getElementById('limit-select').value, 10);
+            if (currentOffset + limit < currentTotal) {
+                currentOffset += limit;
+                loadTableData(false);
+            }
+        }
+
+        function prevPage() {
+            const limit = parseInt(document.getElementById('limit-select').value, 10);
+            if (currentOffset - limit >= 0) {
+                currentOffset -= limit;
+                loadTableData(false);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

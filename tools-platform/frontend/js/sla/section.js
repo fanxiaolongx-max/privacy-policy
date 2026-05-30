@@ -9,7 +9,10 @@ window.GlobalTargets = {};
 // 初始化 GlobalTargets（从服务端加载）
 async function initGlobalTargets() {
     try {
-        window.GlobalTargets = await API.get('/api/sla/targets');
+        const mode = API.getSourceMode('sla_data');
+        const query = mode === 'auto' ? '' : `?mode=${encodeURIComponent(mode)}`;
+        window.GlobalTargets = await API.get(`/api/sla/targets${query}`);
+        if (window.renderSLASourcePanel) window.renderSLASourcePanel();
     } catch (e) {}
 }
 

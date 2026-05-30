@@ -5,30 +5,46 @@
 const express = require('express');
 const router = express.Router();
 const { readJSON, writeJSON } = require('../models/store');
+const targetsRepo = require('../models/sla-targets-repository');
+const prefsRepo = require('../models/sla-prefs-repository');
+const categoriesRepo = require('../models/sla-categories-repository');
+const groupsRepo = require('../models/sla-groups-repository');
+const snapshotsRepo = require('../models/sla-snapshots-repository');
 
 const TARGETS_FILE = 'sla_targets.json';
 const PREFS_FILE = 'sla_prefs.json';
 const SNAPSHOTS_FILE = 'sla_snapshots.json';
-const CATEGORIES_FILE = 'sla_categories.json';
-const GROUPS_FILE = 'sla_groups.json';
 
 // ──────────────────────────────────────────────────────────
 // 全局字典配置 (例如：指标分类)
 // ──────────────────────────────────────────────────────────
 
 // GET /api/sla/categories
-router.get('/categories', (req, res) => {
-    const defaultCats = ['TE', 'ORG', 'ET', 'VDF'];
-    const cats = readJSON(CATEGORIES_FILE, defaultCats);
-    res.json(cats);
+router.get('/categories', async (req, res) => {
+    try {
+        const { items, source } = await categoriesRepo.listCategories({
+            mode: req.query.mode || 'auto'
+        });
+        res.setHeader('X-Data-Source', source);
+        console.log(`[DATA SOURCE] GET /api/sla/categories -> ${source.toUpperCase()}`);
+        res.json(items);
+    } catch (err) {
+        console.error('[GET /api/sla/categories] failed:', err);
+        res.status(500).json({ error: '读取分类失败' });
+    }
 });
 
 // PUT /api/sla/categories
-router.put('/categories', (req, res) => {
+router.put('/categories', async (req, res) => {
     const cats = req.body;
     if (!Array.isArray(cats)) return res.status(400).json({ error: '必须是数组' });
-    writeJSON(CATEGORIES_FILE, cats);
-    res.json({ success: true });
+    try {
+        await categoriesRepo.replaceCategories(cats);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('[PUT /api/sla/categories] failed:', err);
+        res.status(500).json({ error: '保存分类失败' });
+    }
 });
 
 // ──────────────────────────────────────────────────────────
@@ -36,17 +52,31 @@ router.put('/categories', (req, res) => {
 // ──────────────────────────────────────────────────────────
 
 // GET /api/sla/groups
-router.get('/groups', (req, res) => {
-    const groups = readJSON(GROUPS_FILE, []);
-    res.json(groups);
+router.get('/groups', async (req, res) => {
+    try {
+        const { items, source } = await groupsRepo.listGroups({
+            mode: req.query.mode || 'auto'
+        });
+        res.setHeader('X-Data-Source', source);
+        console.log(`[DATA SOURCE] GET /api/sla/groups -> ${source.toUpperCase()}`);
+        res.json(items);
+    } catch (err) {
+        console.error('[GET /api/sla/groups] failed:', err);
+        res.status(500).json({ error: '读取分组失败' });
+    }
 });
 
 // PUT /api/sla/groups
-router.put('/groups', (req, res) => {
+router.put('/groups', async (req, res) => {
     const groups = req.body;
     if (!Array.isArray(groups)) return res.status(400).json({ error: '必须是数组' });
-    writeJSON(GROUPS_FILE, groups);
-    res.json({ success: true });
+    try {
+        await groupsRepo.replaceGroups(groups);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('[PUT /api/sla/groups] failed:', err);
+        res.status(500).json({ error: '保存分组失败' });
+    }
 });
 
 // ──────────────────────────────────────────────────────────
@@ -54,17 +84,33 @@ router.put('/groups', (req, res) => {
 // ──────────────────────────────────────────────────────────
 
 // GET /api/sla/targets
-router.get('/targets', (req, res) => {
-    const targets = readJSON(TARGETS_FILE, {});
-    res.json(targets);
+router.get('/targets', async (req, res) => {
+    try {
+        const { items, source } = await targetsRepo.getTargets({
+            mode: req.query.mode || 'auto'
+        });
+        res.setHeader('X-Data-Source', source);
+        console.log(`[DATA SOURCE] GET /api/sla/targets -> ${source.toUpperCase()}`);
+        res.json(items);
+    } catch (err) {
+        console.error('[GET /api/sla/targets] failed:', err);
+        res.status(500).json({ error: '读取预警目标失败' });
+    }
 });
 
 // PUT /api/sla/targets  → 保存全量预警目标
-router.put('/targets', (req, res) => {
+router.put('/targets', async (req, res) => {
     const targets = req.body;
-    if (typeof targets !== 'object') return res.status(400).json({ error: '无效数据格式' });
-    writeJSON(TARGETS_FILE, targets);
-    res.json({ success: true });
+    if (!targets || typeof targets !== 'object' || Array.isArray(targets)) {
+        return res.status(400).json({ error: '无效数据格式' });
+    }
+    try {
+        await targetsRepo.replaceTargets(targets);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('[PUT /api/sla/targets] failed:', err);
+        res.status(500).json({ error: '保存预警目标失败' });
+    }
 });
 
 // ──────────────────────────────────────────────────────────
@@ -72,38 +118,53 @@ router.put('/targets', (req, res) => {
 // ──────────────────────────────────────────────────────────
 
 // GET /api/sla/snapshots
-router.get('/snapshots', (req, res) => {
-    const snapshots = readJSON(SNAPSHOTS_FILE, []);
-    res.json(snapshots);
+router.get('/snapshots', async (req, res) => {
+    try {
+        const { items, source } = await snapshotsRepo.listSnapshots({
+            mode: req.query.mode || 'auto'
+        });
+        res.setHeader('X-Data-Source', source);
+        console.log(`[DATA SOURCE] GET /api/sla/snapshots -> ${source.toUpperCase()}`);
+        res.json(items);
+    } catch (err) {
+        console.error('[GET /api/sla/snapshots] failed:', err);
+        res.status(500).json({ error: '读取历史快照失败' });
+    }
 });
 
 // POST /api/sla/snapshot
-router.post('/snapshot', (req, res) => {
-    let snapshots = readJSON(SNAPSHOTS_FILE, []);
-    snapshots.unshift({ id: Date.now().toString(36), ...req.body });
-    if (snapshots.length > 50) snapshots = snapshots.slice(0, 50); // 保留最近50次
-    writeJSON(SNAPSHOTS_FILE, snapshots);
-    res.json({ success: true });
+router.post('/snapshot', async (req, res) => {
+    try {
+        await snapshotsRepo.addSnapshot(req.body);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('[POST /api/sla/snapshot] failed:', err);
+        res.status(500).json({ error: '保存历史快照失败' });
+    }
 });
 
 // DELETE /api/sla/snapshots/:id
-router.delete('/snapshots/:id', (req, res) => {
-    let snapshots = readJSON(SNAPSHOTS_FILE, []);
-    snapshots = snapshots.filter(s => s.id !== req.params.id);
-    writeJSON(SNAPSHOTS_FILE, snapshots);
-    res.json({ success: true });
+router.delete('/snapshots/:id', async (req, res) => {
+    try {
+        await snapshotsRepo.deleteSnapshot(req.params.id);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('[DELETE /api/sla/snapshots/:id] failed:', err);
+        res.status(500).json({ error: '删除历史快照失败' });
+    }
 });
 
 // PUT /api/sla/snapshots/:id
-router.put('/snapshots/:id', (req, res) => {
-    let snapshots = readJSON(SNAPSHOTS_FILE, []);
-    const idx = snapshots.findIndex(s => s.id === req.params.id);
-    if (idx !== -1) {
-        snapshots[idx] = { ...snapshots[idx], ...req.body };
-        writeJSON(SNAPSHOTS_FILE, snapshots);
+router.put('/snapshots/:id', async (req, res) => {
+    try {
+        const updated = await snapshotsRepo.updateSnapshot(req.params.id, req.body);
+        if (!updated) {
+            return res.status(404).json({ error: 'Snapshot not found' });
+        }
         res.json({ success: true });
-    } else {
-        res.status(404).json({ error: 'Snapshot not found' });
+    } catch (err) {
+        console.error('[PUT /api/sla/snapshots/:id] failed:', err);
+        res.status(500).json({ error: '更新历史快照失败' });
     }
 });
 
@@ -113,17 +174,25 @@ router.put('/snapshots/:id', (req, res) => {
 // ──────────────────────────────────────────────────────────
 
 // GET /api/sla/prefs/:schemaHash
-router.get('/prefs/:schemaHash', (req, res) => {
-    const prefs = readJSON(PREFS_FILE, {});
-    const data = prefs[req.params.schemaHash] || null;
-    res.json(data);
+router.get('/prefs/:schemaHash', async (req, res) => {
+    try {
+        const { item, source } = await prefsRepo.getPrefItem(req.params.schemaHash, {
+            mode: req.query.mode || 'auto'
+        });
+        res.setHeader('X-Data-Source', source);
+        console.log(`[DATA SOURCE] GET /api/sla/prefs/${req.params.schemaHash} -> ${source.toUpperCase()}`);
+        res.json(item);
+    } catch (err) {
+        console.error('[GET /api/sla/prefs/:schemaHash] failed:', err);
+        res.status(500).json({ error: '读取偏好设置失败' });
+    }
 });
 
 // PUT /api/sla/prefs/:schemaHash
-router.put('/prefs/:schemaHash', (req, res) => {
-    const prefs = readJSON(PREFS_FILE, {});
+router.put('/prefs/:schemaHash', async (req, res) => {
+    const prefs = (await prefsRepo.getPrefsObject({ mode: 'json' })).items;
     prefs[req.params.schemaHash] = req.body;
-    writeJSON(PREFS_FILE, prefs);
+    await prefsRepo.upsertPrefItem(req.params.schemaHash, req.body);
 
     try {
         // --- 自动清理孤儿预警配置 (Clean up orphaned targets) ---
@@ -160,7 +229,7 @@ router.put('/prefs/:schemaHash', (req, res) => {
         });
 
         if (targetsChanged) {
-            writeJSON(TARGETS_FILE, targets);
+            await targetsRepo.replaceTargets(targets);
         }
     } catch (e) {
         console.error('Failed to clean up orphaned targets:', e);
@@ -174,25 +243,38 @@ router.put('/prefs/:schemaHash', (req, res) => {
 // ──────────────────────────────────────────────────────────
 
 // GET /api/sla/config  → 导出全量配置（targets + prefs）
-router.get('/config', (req, res) => {
-    const targets = readJSON(TARGETS_FILE, {});
-    const prefs = readJSON(PREFS_FILE, {});
-    res.json({ targets, prefs, exportDate: new Date().toISOString() });
+router.get('/config', async (req, res) => {
+    try {
+        const { items: targets, source: targetsSource } = await targetsRepo.getTargets({
+            mode: req.query.mode || 'auto'
+        });
+        const { items: prefs, source: prefsSource } = await prefsRepo.getPrefsObject({
+            mode: req.query.mode || 'auto'
+        });
+        res.setHeader('X-Data-Source', prefsSource);
+        res.setHeader('X-Data-Source-Targets', targetsSource);
+        res.setHeader('X-Data-Source-Prefs', prefsSource);
+        console.log(`[DATA SOURCE] GET /api/sla/config -> PREFS ${prefsSource.toUpperCase()}, TARGETS ${targetsSource.toUpperCase()}`);
+        res.json({ targets, prefs, exportDate: new Date().toISOString() });
+    } catch (err) {
+        console.error('[GET /api/sla/config] failed:', err);
+        res.status(500).json({ error: '导出配置失败' });
+    }
 });
 
 // POST /api/sla/config  → 导入配置
-router.post('/config', (req, res) => {
+router.post('/config', async (req, res) => {
     const { targets, prefs } = req.body;
     console.log(`[POST /config] Received body keys:`, Object.keys(req.body));
     console.log(`[POST /config] targets defined?`, !!targets, `prefs defined?`, !!prefs);
     
     try {
         if (targets) {
-            writeJSON(TARGETS_FILE, targets);
+            await targetsRepo.replaceTargets(targets);
             console.log(`[POST /config] Wrote targets successfully`);
         }
         if (prefs) {
-            writeJSON(PREFS_FILE, prefs);
+            await prefsRepo.replacePrefs(prefs);
             console.log(`[POST /config] Wrote prefs successfully, keys count:`, Object.keys(prefs).length);
         }
         res.json({ success: true });
@@ -207,7 +289,7 @@ router.post('/config', (req, res) => {
 // ──────────────────────────────────────────────────────────
 
 // POST /api/sla/rename-metric
-router.post('/rename-metric', (req, res) => {
+router.post('/rename-metric', async (req, res) => {
     const { oldName, newName, newEn } = req.body;
     if (!oldName || !newName || oldName === newName) {
         return res.status(400).json({ error: '无效的名称' });
@@ -223,10 +305,10 @@ router.post('/rename-metric', (req, res) => {
                 targetsChanged = true;
             }
         });
-        if (targetsChanged) writeJSON(TARGETS_FILE, targets);
+        if (targetsChanged) await targetsRepo.replaceTargets(targets);
 
         // 2. prefs
-        let prefs = readJSON(PREFS_FILE, {});
+        let prefs = (await prefsRepo.getPrefsObject({ mode: 'json' })).items;
         let prefsChanged = false;
         Object.keys(prefs).forEach(k => {
             if (k.startsWith('sla_prefs_') && prefs[k].customMetrics) {
@@ -255,10 +337,10 @@ router.post('/rename-metric', (req, res) => {
                 }
             });
         }
-        if (prefsChanged) writeJSON(PREFS_FILE, prefs);
+        if (prefsChanged) await prefsRepo.replacePrefs(prefs);
 
         // 3. groups
-        let groups = readJSON(GROUPS_FILE, []);
+        let groups = readJSON('sla_groups.json', []);
         let groupsChanged = false;
         groups.forEach(g => {
             if (g.metrics) {
@@ -269,7 +351,12 @@ router.post('/rename-metric', (req, res) => {
                 }
             }
         });
-        if (groupsChanged) writeJSON(GROUPS_FILE, groups);
+        if (groupsChanged) {
+            writeJSON('sla_groups.json', groups);
+            groupsRepo.replaceGroups(groups).catch(err => {
+                console.error('[sla-groups] sync after rename failed:', err.message);
+            });
+        }
 
         // 4. snapshots
         let snapshots = readJSON(SNAPSHOTS_FILE, []);
@@ -284,7 +371,12 @@ router.post('/rename-metric', (req, res) => {
                 });
             }
         });
-        if (snapsChanged) writeJSON(SNAPSHOTS_FILE, snapshots);
+        if (snapsChanged) {
+            writeJSON(SNAPSHOTS_FILE, snapshots);
+            snapshotsRepo.replaceSnapshots(snapshots).catch(err => {
+                console.error('[sla-snapshots] sync after rename failed:', err.message);
+            });
+        }
 
         res.json({ success: true });
     } catch (e) {

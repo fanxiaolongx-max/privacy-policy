@@ -63,6 +63,13 @@ if (!fs.existsSync(imagesDir)) {
     fs.mkdirSync(imagesDir, { recursive: true });
 }
 
+function markSqliteSource(res, routeLabel) {
+    res.setHeader('X-Data-Source', 'sqlite');
+    if (routeLabel) {
+        console.log(`[DATA SOURCE] ${routeLabel} -> SQLITE`);
+    }
+}
+
 // Serve static images
 router.use('/images', express.static(imagesDir));
 
@@ -145,6 +152,7 @@ router.post('/save', (req, res) => {
 router.get('/snapshots', (req, res) => {
     db.all('SELECT snapshot_id, month, created_at, standard_total_score FROM ReportSnapshots ORDER BY id DESC', (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
+        markSqliteSource(res, 'GET /api/db/snapshots');
         res.json(rows);
     });
 });
@@ -159,6 +167,7 @@ function getFailingForSnapshot(snapshot, res) {
             grouped[row.cat_name].push(row);
         });
         
+        markSqliteSource(res, `GET /api/db/failing/${snapshot.snapshot_id}`);
         res.json({
             snapshot_id: snapshot.snapshot_id,
             month: snapshot.month,
@@ -191,6 +200,7 @@ router.get('/failing/:snapshot_id', (req, res) => {
 router.get('/config/:key', (req, res) => {
     db.get('SELECT value_json FROM PlatformConfig WHERE key_name = ?', [req.params.key], (err, row) => {
         if (err) return res.status(500).json({ error: err.message });
+        markSqliteSource(res, `GET /api/db/config/${req.params.key}`);
         if (!row) return res.json({});
         try {
             res.json(JSON.parse(row.value_json));
@@ -240,6 +250,7 @@ router.get('/monthly_report_data', (req, res) => {
         if (err) return res.status(500).json({ error: err.message });
         
         if (dailySnapshots.length === 0) {
+            markSqliteSource(res, 'GET /api/db/monthly_report_data');
             return res.json({ trends: [], latest_snapshot: null });
         }
 
@@ -293,6 +304,7 @@ router.get('/monthly_report_data', (req, res) => {
 
                         db.get(`SELECT raw_data_json FROM ReportSnapshots WHERE snapshot_id = ?`, [latestSnapshotId], (err, snapRow) => {
                             if (err) return res.status(500).json({ error: err.message });
+                            markSqliteSource(res, 'GET /api/db/monthly_report_data');
                             res.json({
                                 trends: trends,
                                 latest_snapshot: {

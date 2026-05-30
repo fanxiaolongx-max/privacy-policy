@@ -1,29 +1,9 @@
-const fs = require('fs');
-const path = require('path');
 const crypto = require('crypto');
+const authSessionsRepo = require('../models/auth-sessions-repository');
 
-const SESSIONS_FILE = path.join(__dirname, '../data/sessions.json');
 const SALT = 'tools_platform_salt';
 
-function readJSON(file, defaultVal) {
-    if (!fs.existsSync(file)) return defaultVal;
-    try {
-        return JSON.parse(fs.readFileSync(file, 'utf8'));
-    } catch(e) {
-        return defaultVal;
-    }
-}
-
-function writeJSON(file, data) {
-    fs.writeFileSync(file, JSON.stringify(data, null, 2));
-}
-
-// Ensure sessions file exists
-if (!fs.existsSync(SESSIONS_FILE)) {
-    writeJSON(SESSIONS_FILE, {});
-}
-
-function checkAuth(req, res, next) {
+async function checkAuth(req, res, next) {
     // 登录接口无需鉴权 (req.path is relative to /api, so it's /auth/login)
     if (req.path === '/auth/login') return next();
 
@@ -33,19 +13,23 @@ function checkAuth(req, res, next) {
     }
 
     const token = authHeader.split(' ')[1];
-    const sessions = readJSON(SESSIONS_FILE, {});
-    const session = sessions[token];
+    
+    try {
+        const session = await authSessionsRepo.getSession(token);
 
-    if (!session || session.expiresAt < Date.now()) {
-        if (session) {
-            delete sessions[token];
-            writeJSON(SESSIONS_FILE, sessions);
+        if (!session || session.expiresAt < Date.now()) {
+            if (session) {
+                await authSessionsRepo.deleteSession(token);
+            }
+            return res.status(401).json({ error: '登录已过期，请重新登录' });
         }
-        return res.status(401).json({ error: '登录已过期，请重新登录' });
-    }
 
-    req.user = session.user; // { username, role }
-    next();
+        req.user = session.user; // { username, role }
+        next();
+    } catch (err) {
+        console.error('Auth check error:', err);
+        return res.status(500).json({ error: '服务器鉴权异常' });
+    }
 }
 
 function requireAdmin(req, res, next) {
@@ -63,8 +47,5 @@ function hashPassword(password) {
 module.exports = {
     checkAuth,
     requireAdmin,
-    hashPassword,
-    SESSIONS_FILE,
-    readJSON,
-    writeJSON
+    hashPassword
 };

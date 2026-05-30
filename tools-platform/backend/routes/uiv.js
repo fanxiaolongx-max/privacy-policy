@@ -4,66 +4,72 @@
  */
 const express = require('express');
 const router = express.Router();
-const { readJSON, writeJSON } = require('../models/store');
-const { v4: uuidv4 } = require('uuid');
+const categoriesRepo = require('../models/uiv-categories-repository');
+const scriptsRepo = require('../models/uiv-scripts-repository');
 
-const SCRIPTS_FILE = 'uiv_scripts.json';
-const CATS_FILE = 'uiv_categories.json';
-
-const DEFAULT_CATEGORIES = ['DataFab', 'NetCare中国', 'NetCare中东', 'NetCare德国', '默认分类'];
+const DEFAULT_CATEGORIES = categoriesRepo.DEFAULT_CATEGORIES;
 
 // ──────────────────────────────────────────────────────────
 // 脚本列表相关
 // ──────────────────────────────────────────────────────────
 
 // GET /api/uiv/scripts  → 返回全部脚本 + 分类
-router.get('/scripts', (req, res) => {
-    const scripts = readJSON(SCRIPTS_FILE, []);
-    const userCats = readJSON(CATS_FILE, []);
-    const categories = [...new Set([...DEFAULT_CATEGORIES, ...userCats])];
-    res.json({ scripts, categories });
+router.get('/scripts', async (req, res) => {
+    try {
+        const { items: scripts, source: scriptSource } = await scriptsRepo.listScripts({
+            mode: req.query.scriptsMode || req.query.mode || 'auto'
+        });
+        const { items: categories, source: categorySource } = await categoriesRepo.listCategories({
+            mode: req.query.categoriesMode || req.query.mode || 'auto'
+        });
+        res.setHeader('X-Data-Source', scriptSource);
+        res.setHeader('X-Data-Source-Categories', categorySource);
+        console.log(`[DATA SOURCE] GET /api/uiv/scripts -> SCRIPTS:${scriptSource.toUpperCase()} CATEGORIES:${categorySource.toUpperCase()}`);
+        res.json({ scripts, categories });
+    } catch (err) {
+        console.error('[GET /api/uiv/scripts] failed:', err);
+        res.status(500).json({ error: '加载脚本仓库失败' });
+    }
 });
 
 // POST /api/uiv/scripts  → 新增或覆盖脚本（支持阵列批量）
-router.post('/scripts', (req, res) => {
+router.post('/scripts', async (req, res) => {
     const { items } = req.body; // items: Array<ScriptObject>
     if (!Array.isArray(items) || items.length === 0) {
         return res.status(400).json({ error: '参数错误：items 必须为非空数组' });
     }
 
-    let scripts = readJSON(SCRIPTS_FILE, []);
-
-    items.forEach(item => {
-        if (!item.id) item.id = 'script_' + uuidv4().replace(/-/g, '').substr(0, 9);
-        const idx = scripts.findIndex(s => s.name === item.name);
-        if (idx >= 0) {
-            scripts[idx] = { ...scripts[idx], ...item };
-        } else {
-            scripts.push(item);
-        }
-    });
-
-    writeJSON(SCRIPTS_FILE, scripts);
-    res.json({ success: true, count: scripts.length });
+    try {
+        const scripts = await scriptsRepo.saveScripts(items);
+        res.json({ success: true, count: scripts.length });
+    } catch (err) {
+        console.error('[POST /api/uiv/scripts] failed:', err);
+        res.status(500).json({ error: '保存脚本失败' });
+    }
 });
 
 // DELETE /api/uiv/scripts/:id  → 删除指定脚本
-router.delete('/scripts/:id', (req, res) => {
-    let scripts = readJSON(SCRIPTS_FILE, []);
-    scripts = scripts.filter(s => s.id !== req.params.id);
-    writeJSON(SCRIPTS_FILE, scripts);
-    res.json({ success: true });
+router.delete('/scripts/:id', async (req, res) => {
+    try {
+        await scriptsRepo.deleteScriptById(req.params.id);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('[DELETE /api/uiv/scripts/:id] failed:', err);
+        res.status(500).json({ error: '删除脚本失败' });
+    }
 });
 
 // PATCH /api/uiv/scripts/:id/category  → 移动脚本到新分类（拖拽）
-router.patch('/scripts/:id/category', (req, res) => {
+router.patch('/scripts/:id/category', async (req, res) => {
     const { category } = req.body;
-    let scripts = readJSON(SCRIPTS_FILE, []);
-    const script = scripts.find(s => s.id === req.params.id);
-    if (!script) return res.status(404).json({ error: '脚本不存在' });
-    script.category = category;
-    writeJSON(SCRIPTS_FILE, scripts);
-    res.json({ success: true });
+    try {
+        const script = await scriptsRepo.moveScriptCategory(req.params.id, category);
+        if (!script) return res.status(404).json({ error: '脚本不存在' });
+        res.json({ success: true });
+    } catch (err) {
+        console.error('[PATCH /api/uiv/scripts/:id/category] failed:', err);
+        res.status(500).json({ error: '移动分类失败' });
+    }
 });
 
 // ──────────────────────────────────────────────────────────
@@ -71,29 +77,29 @@ router.patch('/scripts/:id/category', (req, res) => {
 // ──────────────────────────────────────────────────────────
 
 // POST /api/uiv/categories  → 新建自定义分类
-router.post('/categories', (req, res) => {
+router.post('/categories', async (req, res) => {
     const { name } = req.body;
     if (!name || !name.trim()) return res.status(400).json({ error: '分类名不能为空' });
-    let cats = readJSON(CATS_FILE, []);
-    if (!DEFAULT_CATEGORIES.includes(name) && !cats.includes(name)) {
-        cats.push(name.trim());
-        writeJSON(CATS_FILE, cats);
+    try {
+        const cats = await categoriesRepo.addCategory(name);
+        res.json({ success: true, categories: cats });
+    } catch (err) {
+        console.error('[POST /api/uiv/categories] failed:', err);
+        res.status(500).json({ error: '创建分类失败' });
     }
-    res.json({ success: true, categories: cats });
 });
 
 // DELETE /api/uiv/categories/:name  → 删除分类（同时清理该分类的脚本）
-router.delete('/categories/:name', (req, res) => {
+router.delete('/categories/:name', async (req, res) => {
     const catName = decodeURIComponent(req.params.name);
-    let cats = readJSON(CATS_FILE, []);
-    cats = cats.filter(c => c !== catName);
-    writeJSON(CATS_FILE, cats);
-
-    let scripts = readJSON(SCRIPTS_FILE, []);
-    scripts = scripts.filter(s => s.category !== catName);
-    writeJSON(SCRIPTS_FILE, scripts);
-
-    res.json({ success: true });
+    try {
+        await categoriesRepo.deleteCategory(catName);
+        await scriptsRepo.deleteScriptsByCategory(catName);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('[DELETE /api/uiv/categories/:name] failed:', err);
+        res.status(500).json({ error: '删除分类失败' });
+    }
 });
 
 // ──────────────────────────────────────────────────────────
@@ -101,40 +107,58 @@ router.delete('/categories/:name', (req, res) => {
 // ──────────────────────────────────────────────────────────
 
 // GET /api/uiv/backup  → 导出全量备份 JSON
-router.get('/backup', (req, res) => {
-    const scripts = readJSON(SCRIPTS_FILE, []);
-    const categories = readJSON(CATS_FILE, []);
-    res.json({ scripts, categories, exportDate: new Date().toISOString() });
+router.get('/backup', async (req, res) => {
+    try {
+        const { items: scripts, source: scriptSource } = await scriptsRepo.listScripts({
+            mode: req.query.scriptsMode || req.query.mode || 'auto'
+        });
+        const { items: allCategories, source: categorySource } = await categoriesRepo.listCategories({
+            mode: req.query.categoriesMode || req.query.mode || 'auto'
+        });
+        const categories = allCategories.filter(c => !DEFAULT_CATEGORIES.includes(c));
+        res.setHeader('X-Data-Source', scriptSource);
+        res.setHeader('X-Data-Source-Categories', categorySource);
+        console.log(`[DATA SOURCE] GET /api/uiv/backup -> SCRIPTS:${scriptSource.toUpperCase()} CATEGORIES:${categorySource.toUpperCase()}`);
+        res.json({ scripts, categories, exportDate: new Date().toISOString() });
+    } catch (err) {
+        console.error('[GET /api/uiv/backup] failed:', err);
+        res.status(500).json({ error: '导出备份失败' });
+    }
 });
 
 // POST /api/uiv/backup  → 导入备份（覆盖 or 融合）
-router.post('/backup', (req, res) => {
+router.post('/backup', async (req, res) => {
     const { scripts, categories, merge } = req.body;
     if (!Array.isArray(scripts)) return res.status(400).json({ error: '无效备份格式' });
 
-    if (merge) {
-        let existingScripts = readJSON(SCRIPTS_FILE, []);
-        let existingCats = readJSON(CATS_FILE, []);
-        scripts.forEach(s => {
-            const idx = existingScripts.findIndex(ex => ex.name === s.name);
-            if (idx >= 0) existingScripts[idx] = s;
-            else {
-                if (existingScripts.some(ex => ex.id === s.id)) s.id = 'script_' + uuidv4().replace(/-/g, '').substr(0, 9);
-                existingScripts.push(s);
-            }
-        });
-        if (categories) {
-            categories.forEach(c => {
-                if (!DEFAULT_CATEGORIES.includes(c) && !existingCats.includes(c)) existingCats.push(c);
+    try {
+        if (merge) {
+            let existingScripts = (await scriptsRepo.listScripts({ mode: 'json' })).items;
+            let existingCats = (await categoriesRepo.listCategories({ mode: 'json' })).items
+                .filter(c => !DEFAULT_CATEGORIES.includes(c));
+            scripts.forEach(s => {
+                const idx = existingScripts.findIndex(ex => ex.name === s.name);
+                if (idx >= 0) existingScripts[idx] = s;
+                else {
+                    existingScripts.push(s);
+                }
             });
+            if (categories) {
+                categories.forEach(c => {
+                    if (!DEFAULT_CATEGORIES.includes(c) && !existingCats.includes(c)) existingCats.push(c);
+                });
+            }
+            await scriptsRepo.replaceAllScripts(existingScripts);
+            await categoriesRepo.replaceCategories(existingCats);
+        } else {
+            await scriptsRepo.replaceAllScripts(scripts);
+            if (categories) await categoriesRepo.replaceCategories(categories.filter(c => !DEFAULT_CATEGORIES.includes(c)));
         }
-        writeJSON(SCRIPTS_FILE, existingScripts);
-        writeJSON(CATS_FILE, existingCats);
-    } else {
-        writeJSON(SCRIPTS_FILE, scripts);
-        if (categories) writeJSON(CATS_FILE, categories.filter(c => !DEFAULT_CATEGORIES.includes(c)));
+        res.json({ success: true });
+    } catch (err) {
+        console.error('[POST /api/uiv/backup] failed:', err);
+        res.status(500).json({ error: '导入备份失败' });
     }
-    res.json({ success: true });
 });
 
 module.exports = router;
