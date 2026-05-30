@@ -12,6 +12,7 @@ const uploadRoutes = require('./routes/upload');
 const authRoutes = require('./routes/auth');
 const requirementsRoutes = require('./routes/requirements');
 const aiRoutes = require('./routes/ai');
+const storageRoutes = require('./routes/storage');
 const { checkAuth, requireAdmin } = require('./middleware/auth');
 
 const app = express();
@@ -89,6 +90,8 @@ app.use('/api/upload', uploadRoutes);   // 文件上传历史 API
 app.use('/api/db', require('./routes/db')); // DB 保存 API
 app.use('/api/requirements', requirementsRoutes); // 需求管理 API
 app.use('/api/ai', aiRoutes); // AI 服务 API
+app.use('/api/storage', storageRoutes); // 存储迁移状态 API
+app.use('/api/db-explorer', require('./routes/db-explorer')); // 数据库浏览 API
 
 // ============================================================
 // 前端路由回退（SPA）
@@ -119,6 +122,12 @@ app.get('/requirements', (req, res) => {
 });
 app.get('/praudit', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/pages/praudit.html'));
+});
+app.get('/storage', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/pages/storage.html'));
+});
+app.get('/db-explorer', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/pages/db-explorer.html'));
 });
 app.get('/privacy', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/pages/privacy.html'));

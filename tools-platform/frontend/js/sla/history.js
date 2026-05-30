@@ -4,9 +4,13 @@ async function openHistoryModal() {
     const list = document.getElementById('history-modal-list');
     if(list) list.innerHTML = '<div class="loading-text">正在加载...</div>';
     try {
-        const data = await API.get('/api/sla/snapshots');
+        const mode = API.getSourceMode('sla_data');
+        const query = mode === 'auto' ? '' : `?mode=${encodeURIComponent(mode)}`;
+        const data = await API.get(`/api/sla/snapshots${query}`);
+        if (window.renderSLASourcePanel) window.renderSLASourcePanel();
         renderHistory(data);
     } catch(e) {
+        if (window.renderSLASourcePanel) window.renderSLASourcePanel();
         if(list) list.innerHTML = '<div style="color:red;padding:20px;">加载失败：' + e.message + '</div>';
     }
 }

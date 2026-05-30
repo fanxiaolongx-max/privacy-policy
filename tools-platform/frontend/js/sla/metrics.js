@@ -169,9 +169,12 @@ window.openTargetModal = async function() {
     if (targetKeys.length === 0) {
         modalList.innerHTML = '<div style="text-align:center;padding:30px;color:#888;">正在加载全网指标配置...</div>';
         try {
-            const configData = await API.get('/api/sla/config');
+            const mode = API.getSourceMode('sla_data');
+            const query = mode === 'auto' ? '' : `?mode=${encodeURIComponent(mode)}`;
+            const configData = await API.get(`/api/sla/config${query}`);
             window.GlobalTargets = configData.targets || {};
             const prefs = configData.prefs || {};
+            if (window.renderSLASourcePanel) window.renderSLASourcePanel();
             
             // Collect all custom metrics from prefs
             const knownLabels = {};
@@ -224,6 +227,7 @@ window.openTargetModal = async function() {
             });
         } catch (e) {
             console.error("Failed to load config", e);
+            if (window.renderSLASourcePanel) window.renderSLASourcePanel();
         }
     } else {
         targetKeys.forEach(k => {
@@ -303,6 +307,10 @@ window.saveTargets = async function() {
     window.GlobalTargets = newTargets;
     try {
         await API.put('/api/sla/targets', window.GlobalTargets);
+        if (window.renderSLASourcePanel) {
+            await SLASection.initGlobalTargets();
+            window.renderSLASourcePanel();
+        }
         showToast('✅ 预警目标已保存到服务端！');
         API.logHistory('sla', '保存预警目标');
     } catch (e) { showToast('❌ 保存失败', 'error'); }

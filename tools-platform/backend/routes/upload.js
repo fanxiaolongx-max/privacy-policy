@@ -4,50 +4,46 @@
  */
 const express = require('express');
 const router = express.Router();
-const { readJSON, writeJSON } = require('../models/store');
-
-const HISTORY_FILE = 'upload_history.json';
-const MAX_HISTORY = 200; // 最多保留 200 条记录
+const historyRepo = require('../models/upload-history-repository');
 
 // GET /api/upload/history?tool=uiv|sla&limit=50
-router.get('/history', (req, res) => {
-    const { tool, limit = 50 } = req.query;
-    let history = readJSON(HISTORY_FILE, []);
-    if (tool) history = history.filter(h => h.tool === tool);
-    res.json(history.slice(0, parseInt(limit)));
+router.get('/history', async (req, res) => {
+    try {
+        const { tool, limit = 50, mode = 'auto' } = req.query;
+        const { items, source } = await historyRepo.listHistory({ tool, limit, mode });
+        res.setHeader('X-Data-Source', source);
+        console.log(`[DATA SOURCE] GET /api/upload/history -> ${source.toUpperCase()} (mode=${mode}, tool=${tool || 'all'}, limit=${limit})`);
+        res.json(items);
+    } catch (err) {
+        console.error('[GET /api/upload/history] failed:', err);
+        res.status(500).json({ error: '读取历史记录失败' });
+    }
 });
 
 // POST /api/upload/history  → 追加一条历史记录
-router.post('/history', (req, res) => {
+router.post('/history', async (req, res) => {
     const { tool, action, detail } = req.body;
     if (!tool || !action) return res.status(400).json({ error: '参数不完整' });
 
-    let history = readJSON(HISTORY_FILE, []);
-    history.unshift({
-        id: Date.now().toString(36),
-        tool,
-        action,
-        detail: detail || '',
-        time: new Date().toISOString()
-    });
-
-    // 只保留最近 MAX_HISTORY 条
-    if (history.length > MAX_HISTORY) history = history.slice(0, MAX_HISTORY);
-    writeJSON(HISTORY_FILE, history);
-    res.json({ success: true });
+    try {
+        const item = await historyRepo.addHistory({ tool, action, detail });
+        res.json({ success: true, item });
+    } catch (err) {
+        console.error('[POST /api/upload/history] failed:', err);
+        res.status(500).json({ error: '保存历史记录失败' });
+    }
 });
 
 // DELETE /api/upload/history  → 清空历史
-router.delete('/history', (req, res) => {
-    const { tool } = req.query;
-    if (tool) {
-        let history = readJSON(HISTORY_FILE, []);
-        history = history.filter(h => h.tool !== tool);
-        writeJSON(HISTORY_FILE, history);
-    } else {
-        writeJSON(HISTORY_FILE, []);
+router.delete('/history', async (req, res) => {
+    try {
+        const { tool } = req.query;
+        await historyRepo.clearHistory({ tool });
+        res.json({ success: true });
+    } catch (err) {
+        console.error('[DELETE /api/upload/history] failed:', err);
+        res.status(500).json({ error: '清空历史记录失败' });
     }
-    res.json({ success: true });
 });
 
 module.exports = router;

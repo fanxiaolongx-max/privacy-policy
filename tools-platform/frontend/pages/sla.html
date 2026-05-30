@@ -8,6 +8,58 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="/css/shared.css">
     <link rel="stylesheet" href="/css/sla.css">
+    <style>
+        .sla-source-wrapper {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .sla-source-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        .sla-source-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        .sla-source-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            background: rgba(59,130,246,0.14);
+            border: 1px solid rgba(59,130,246,0.3);
+            color: #93c5fd;
+        }
+        .sla-source-note {
+            font-size: 11px;
+            color: #94a3b8;
+            line-height: 1.4;
+        }
+        .sla-source-select {
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid rgba(59,130,246,0.28);
+            background: rgba(15,23,42,0.65);
+            color: #e2e8f0;
+            font-size: 12px;
+            padding: 0 10px;
+            outline: none;
+        }
+        .sla-source-select option {
+            color: #0f172a;
+        }
+    </style>
 </head>
 <body class="sla-page">
 
@@ -85,6 +137,24 @@
                     <input type="file" accept=".json" onchange="SLAConfig.importConfig(event)">
                 </label>
             </div>
+            <div class="source-info-wrapper" style="display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
+                <div class="sla-source-controls">
+                    <span class="sla-source-note">SLA读源模式:</span>
+                    <select id="slaSourceMode" class="sla-source-select">
+                        <option value="auto">自动模式</option>
+                        <option value="json">强制 JSON</option>
+                        <option value="sqlite">强制 SQLite</option>
+                    </select>
+                </div>
+                <div id="slaSourcePanel" class="sla-source-panel">
+                    <span class="sla-source-badge">目标来源: -</span>
+                    <span class="sla-source-badge">偏好来源: -</span>
+                    <span class="sla-source-badge">分类来源: -</span>
+                    <span class="sla-source-badge">分组来源: -</span>
+                    <span class="sla-source-badge">快照来源: -</span>
+                    <span class="sla-source-note">迁移期要求页面直接显示真实读源，便于验证。</span>
+                </div>
+            </div>
 
             <div class="rule-box">
                 <div class="rule-col">
@@ -135,22 +205,74 @@
     </div>
 
     <!-- 共享脚本 -->
-    <script src="/js/shared/api.js"></script>
-    <script src="/js/shared/toast.js"></script>
-    <script src="/js/shared/navbar.js"></script>
+    <script src="/js/shared/api.js?v=20260530-07"></script>
+    <script src="/js/shared/toast.js?v=20260530-07"></script>
+    <script src="/js/shared/navbar.js?v=20260530-08"></script>
     <!-- SLA 模块（注意加载顺序）-->
-    <script src="/js/sla/config.js"></script>
-    <script src="/js/sla/prefs.js"></script>
-    <script src="/js/sla/upload.js"></script>
-    <script src="/js/sla/section.js"></script>
-    <script src="/js/sla/table.js"></script>
-    <script src="/js/sla/events.js"></script>
-    <script src="/js/sla/metrics.js"></script>
-    <script src="/js/sla/history.js"></script>
-    <script src="/js/sla/categories.js"></script>
+    <script src="/js/sla/config.js?v=20260530-07"></script>
+    <script src="/js/sla/prefs.js?v=20260530-07"></script>
+    <script src="/js/sla/upload.js?v=20260530-07"></script>
+    <script src="/js/sla/section.js?v=20260530-07"></script>
+    <script src="/js/sla/table.js?v=20260530-07"></script>
+    <script src="/js/sla/events.js?v=20260530-07"></script>
+    <script src="/js/sla/metrics.js?v=20260530-07"></script>
+    <script src="/js/sla/history.js?v=20260530-07"></script>
+    <script src="/js/sla/categories.js?v=20260530-07"></script>
     <script>
+        function formatSLASourceLabel(source) {
+            if (source === 'sqlite') return 'SQLite';
+            if (source === 'json') return 'JSON';
+            if (source === 'auto') return '自动模式';
+            return source || '-';
+        }
+
+        function renderSLASourcePanel() {
+            const panel = document.getElementById('slaSourcePanel');
+            if (!panel) return;
+            const mode = API.getSourceMode('sla_data');
+            const catQuery = mode === 'auto' ? '' : `?mode=${encodeURIComponent(mode)}`;
+            const targetMeta = API.getLastDataSourceMeta(`/api/sla/targets${catQuery}`) || API.getLastDataSourceMeta('/api/sla/targets') || {};
+            const prefsPath = window.__lastSLAPrefsPath || '';
+            const prefsMeta = (prefsPath && API.getLastDataSourceMeta(prefsPath)) || API.getLastDataSourceMeta(`/api/sla/config${catQuery}`) || API.getLastDataSourceMeta('/api/sla/config') || {};
+            const categoryMeta = API.getLastDataSourceMeta(`/api/sla/categories${catQuery}`) || API.getLastDataSourceMeta('/api/sla/categories') || {};
+            const groupsMeta = API.getLastDataSourceMeta(`/api/sla/groups${catQuery}`) || API.getLastDataSourceMeta('/api/sla/groups') || {};
+            const snapshotMeta = API.getLastDataSourceMeta(`/api/sla/snapshots${catQuery}`) || API.getLastDataSourceMeta('/api/sla/snapshots') || {};
+
+            panel.innerHTML = `
+                <span class="sla-source-badge">目标来源: ${formatSLASourceLabel(targetMeta.primary)}</span>
+                <span class="sla-source-badge">偏好来源: ${formatSLASourceLabel(prefsMeta.primary)}</span>
+                <span class="sla-source-badge">分类来源: ${formatSLASourceLabel(categoryMeta.primary)}</span>
+                <span class="sla-source-badge">分组来源: ${formatSLASourceLabel(groupsMeta.primary)}</span>
+                <span class="sla-source-badge">快照来源: ${formatSLASourceLabel(snapshotMeta.primary)}</span>
+                <span class="sla-source-note">当前模式: ${formatSLASourceLabel(mode)} · 迁移期要求页面直接显示真实读源。</span>
+            `;
+        }
+
+        async function initSLASourceMeta() {
+            const mode = API.getSourceMode('sla_data');
+            const query = mode === 'auto' ? '' : `?mode=${encodeURIComponent(mode)}`;
+            try { await API.get(`/api/sla/config${query}`); } catch (e) {}
+            try { await API.get(`/api/sla/targets${query}`); } catch (e) {}
+            try { await API.get(`/api/sla/categories${query}`); } catch (e) {}
+            try { await API.get(`/api/sla/groups${query}`); } catch (e) {}
+            try { await API.get(`/api/sla/snapshots${query}`); } catch (e) {}
+            renderSLASourcePanel();
+        }
+
+        window.renderSLASourcePanel = renderSLASourcePanel;
+
         // 初始化：从服务端加载预警目标和分类
         document.addEventListener('DOMContentLoaded', async () => {
+            const modeSelect = document.getElementById('slaSourceMode');
+            if (modeSelect) {
+                modeSelect.value = API.getSourceMode('sla_data');
+                modeSelect.addEventListener('change', async () => {
+                    API.setSourceMode('sla_data', modeSelect.value);
+                    await initSLASourceMeta();
+                    if (window.initCategories) await window.initCategories();
+                });
+            }
+            await initSLASourceMeta();
             await SLASection.initGlobalTargets();
             if (window.initCategories) await window.initCategories();
             if (window.SLAMetrics && window.SLAMetrics.renderTopStickyBar) {

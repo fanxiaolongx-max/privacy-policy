@@ -8,6 +8,53 @@
     <meta name="description" content="UI.Vision 全能抓取引擎，自动化脚本工程中心，脚本云端仓库管理">
     <link rel="stylesheet" href="/css/shared.css">
     <link rel="stylesheet" href="/css/uivf12.css">
+    <style>
+        .repo-source-panel {
+            margin-bottom: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        .repo-source-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .repo-source-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            background: rgba(59,130,246,0.14);
+            border: 1px solid rgba(59,130,246,0.3);
+            color: #93c5fd;
+        }
+        .repo-source-note {
+            font-size: 11px;
+            color: #94a3b8;
+            line-height: 1.4;
+        }
+        .repo-source-select {
+            height: 30px;
+            border-radius: 8px;
+            border: 1px solid rgba(59,130,246,0.28);
+            background: rgba(15,23,42,0.65);
+            color: #e2e8f0;
+            font-size: 12px;
+            padding: 0 10px;
+            outline: none;
+        }
+        .repo-source-select option {
+            color: #0f172a;
+        }
+    </style>
 </head>
 
 <body id="uiv-page">
@@ -28,6 +75,19 @@
                 </h2>
                 <div style="font-size:11px; color:#888; margin-bottom:10px; line-height:1.4;">
                     默认清爽折叠，<b>双击回填至工作台</b>。
+                </div>
+                <div class="repo-source-controls">
+                    <span class="repo-source-note">仓库读源模式:</span>
+                    <select id="repoSourceMode" class="repo-source-select">
+                        <option value="auto">自动模式</option>
+                        <option value="json">强制 JSON</option>
+                        <option value="sqlite">强制 SQLite</option>
+                    </select>
+                </div>
+                <div id="repoSourcePanel" class="repo-source-panel">
+                    <span class="repo-source-badge">脚本来源: -</span>
+                    <span class="repo-source-badge">分类来源: -</span>
+                    <span class="repo-source-note">仓库加载后会在这里显示当前真实读源。</span>
                 </div>
 
                 <div id="scriptList" style="flex:1; overflow-y:auto; padding-right:5px; padding-bottom:20px;"></div>
@@ -145,19 +205,27 @@
     </div>
 
     <!-- 共享脚本 -->
-    <script src="/js/shared/api.js"></script>
-    <script src="/js/shared/toast.js"></script>
-    <script src="/js/shared/navbar.js"></script>
+    <script src="/js/shared/api.js?v=20260530-03"></script>
+    <script src="/js/shared/toast.js?v=20260530-03"></script>
+    <script src="/js/shared/navbar.js?v=20260530-08"></script>
     <!-- UIVF12 模块 -->
-    <script src="/js/uivf12/workbench.js"></script>
-    <script src="/js/uivf12/copy.js"></script>
-    <script src="/js/uivf12/genlog.js"></script>
-    <script src="/js/uivf12/generator.js"></script>
-    <script src="/js/uivf12/save.js"></script>
-    <script src="/js/uivf12/sidebar.js"></script>
+    <script src="/js/uivf12/workbench.js?v=20260530-03"></script>
+    <script src="/js/uivf12/copy.js?v=20260530-03"></script>
+    <script src="/js/uivf12/genlog.js?v=20260530-03"></script>
+    <script src="/js/uivf12/generator.js?v=20260530-03"></script>
+    <script src="/js/uivf12/save.js?v=20260530-03"></script>
+    <script src="/js/uivf12/sidebar.js?v=20260530-03"></script>
     <script>
         // 页面初始化
         document.addEventListener('DOMContentLoaded', () => {
+            const modeSelect = document.getElementById('repoSourceMode');
+            if (modeSelect) {
+                modeSelect.value = API.getSourceMode('uiv_repository');
+                modeSelect.addEventListener('change', () => {
+                    API.setSourceMode('uiv_repository', modeSelect.value);
+                    UIVSidebar.loadSavedScripts();
+                });
+            }
             UIVSidebar.loadSavedScripts();
         });
     </script>

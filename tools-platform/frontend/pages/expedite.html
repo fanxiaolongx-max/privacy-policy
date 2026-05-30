@@ -28,6 +28,47 @@
             align-items: center;
             margin-bottom: 24px;
         }
+        .data-source-controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 0;
+        }
+        .data-source-panel {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 0;
+        }
+        .data-source-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            background: rgba(37, 99, 235, 0.12);
+            border: 1px solid rgba(37, 99, 235, 0.24);
+            color: #1d4ed8;
+        }
+        .data-source-note {
+            color: #64748b;
+            font-size: 11px;
+        }
+        .data-source-select {
+            height: 34px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            background: #fff;
+            color: #334155;
+            font-size: 12px;
+            padding: 0 10px;
+            outline: none;
+        }
 
         .controls h2 {
             margin: 0;
@@ -515,6 +556,25 @@
                 </button>
             </div>
         </div>
+        <div class="source-info-wrapper print-hide" style="display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;" data-html2canvas-ignore="true">
+            <div class="data-source-controls">
+                <span class="data-source-note">SLA配置读源模式:</span>
+                <select id="expediteSourceMode" class="data-source-select">
+                    <option value="auto">自动模式</option>
+                    <option value="json">强制 JSON</option>
+                    <option value="sqlite">强制 SQLite</option>
+                </select>
+            </div>
+            <div id="expediteSourcePanel" class="data-source-panel">
+                <span class="data-source-badge">SLA配置来源: -</span>
+                <span class="data-source-badge">目标来源: -</span>
+                <span class="data-source-badge">快照列表来源: -</span>
+                <span class="data-source-badge">快照详情来源: -</span>
+                <span class="data-source-badge">分发策略来源: -</span>
+                <span class="data-source-badge">分类来源: -</span>
+                <span class="data-source-note">催办正文来自 report.db，模板与忽略规则来自 SLA 配置。</span>
+            </div>
+        </div>
 
         <div class="card" id="main-card">
             <div class="empty-state" id="loading-state">
@@ -721,11 +781,39 @@
         </div>
     </div>
 
-
-    <script src="/js/shared/api.js"></script>
-    <script src="/js/shared/toast.js"></script>
-    <script src="/js/shared/navbar.js"></script>
+    <script src="/js/shared/api.js?v=20260530-01"></script>
+    <script src="/js/shared/toast.js?v=20260530-01"></script>
+    <script src="/js/shared/navbar.js?v=20260530-08"></script>
     <script>
+        function formatExpediteSourceLabel(source) {
+            if (source === 'sqlite') return 'SQLite';
+            if (source === 'json') return 'JSON';
+            if (source === 'auto') return '自动模式';
+            return source || '-';
+        }
+
+        function renderExpediteSourcePanel() {
+            const panel = document.getElementById('expediteSourcePanel');
+            if (!panel) return;
+            const mode = API.getSourceMode('expedite_sla_data');
+            const query = mode === 'auto' ? '' : `?mode=${encodeURIComponent(mode)}`;
+            const configMeta = API.getLastDataSourceMeta(`/api/sla/config${query}`) || API.getLastDataSourceMeta('/api/sla/config') || {};
+            const snapshotsMeta = API.getLastDataSourceMeta('/api/db/snapshots') || {};
+            const categoriesMeta = API.getLastDataSourceMeta(`/api/sla/categories${query}`) || API.getLastDataSourceMeta('/api/sla/categories') || {};
+            const policyMeta = API.getLastDataSourceMeta('/api/db/config/welink_policy_v2') || {};
+            const detailsPath = window.__lastExpediteFailingPath || '';
+            const detailMeta = (detailsPath && API.getLastDataSourceMeta(detailsPath)) || {};
+            panel.innerHTML = `
+                <span class="data-source-badge">SLA配置来源: ${formatExpediteSourceLabel(configMeta.primary)}</span>
+                <span class="data-source-badge">目标来源: ${formatExpediteSourceLabel((configMeta.extras || {}).targets)}</span>
+                <span class="data-source-badge">快照列表来源: ${formatExpediteSourceLabel(snapshotsMeta.primary)}</span>
+                <span class="data-source-badge">快照详情来源: ${formatExpediteSourceLabel(detailMeta.primary)}</span>
+                <span class="data-source-badge">分发策略来源: ${formatExpediteSourceLabel(policyMeta.primary)}</span>
+                <span class="data-source-badge">分类来源: ${formatExpediteSourceLabel(categoriesMeta.primary)}</span>
+                <span class="data-source-note">当前模式: ${formatExpediteSourceLabel(mode)} · report.db 提供故障快照，SLA 提供模板配置。</span>
+            `;
+        }
+
         const i18nUi = {
             "en": {
                 "title": "One-click Expedite",
@@ -919,8 +1007,10 @@
 
         async function initExpedite() {
             try {
+                const mode = API.getSourceMode('expedite_sla_data');
+                const query = mode === 'auto' ? '' : `?mode=${encodeURIComponent(mode)}`;
                 // Fetch config for i18n and ignore list
-                globalConfig = await API.get('/api/sla/config');
+                globalConfig = await API.get(`/api/sla/config${query}`);
                 if (!globalConfig.prefs) globalConfig.prefs = {};
 
                 ignoreKeywords = globalConfig.prefs.expediteIgnoreKeywords || [];
@@ -962,9 +1052,10 @@
                     document.getElementById('loading-state').style.display = 'none';
                     document.getElementById('main-card').innerHTML = '<div class="empty-state"><h3>暂无入库数据</h3><p>请先在专业报表看板页面点击「入库」按钮</p></div>';
                 }
-
+                renderExpediteSourcePanel();
             } catch (e) {
                 console.error(e);
+                renderExpediteSourcePanel();
                 showToast('初始化失败', 'error');
                 document.getElementById('loading-state').innerHTML = '<h3>加载失败</h3><p>无法获取配置或数据</p>';
             }
@@ -976,8 +1067,11 @@
                 document.getElementById('loading-state').style.display = 'block';
                 document.getElementById('loading-state').innerHTML = `<h3>⏳ 正在提取数据...</h3><p>快照: ${snapshot_id}</p>`;
 
-                latestFailingData = await API.get(`/api/db/failing/${snapshot_id}`);
+                const failingPath = `/api/db/failing/${snapshot_id}`;
+                latestFailingData = await API.get(failingPath);
+                window.__lastExpediteFailingPath = failingPath;
                 document.getElementById('loading-state').style.display = 'none';
+                renderExpediteSourcePanel();
 
                 if (!latestFailingData || latestFailingData.message === 'No snapshots found' || latestFailingData.error) {
                     document.getElementById('main-card').innerHTML = '<div class="empty-state"><h3>数据异常</h3><p>该快照可能已被删除或数据不完整</p></div>';
@@ -988,6 +1082,7 @@
                 renderBriefText();
             } catch (e) {
                 console.error(e);
+                renderExpediteSourcePanel();
                 showToast('数据加载失败', 'error');
                 document.getElementById('loading-state').innerHTML = '<h3>加载失败</h3><p>无法连接到数据库或接口报错</p>';
             }
@@ -1172,20 +1267,26 @@
                     res.assignments = newAssignments;
                     window._distPolicy = res;
                 }
+                renderExpediteSourcePanel();
             } catch (e) {
                 console.error('Failed to fetch welink policy', e);
+                renderExpediteSourcePanel();
             }
         }
 
         window.GlobalCategories = [];
         async function fetchGlobalCategories() {
             try {
-                const data = await API.get('/api/sla/categories');
+                const mode = API.getSourceMode('expedite_sla_data');
+                const query = mode === 'auto' ? '' : `?mode=${encodeURIComponent(mode)}`;
+                const data = await API.get(`/api/sla/categories${query}`);
                 if (Array.isArray(data) && data.length > 0) {
                     window.GlobalCategories = data;
                 }
+                renderExpediteSourcePanel();
             } catch (e) {
                 console.warn('Failed to load global categories', e);
+                renderExpediteSourcePanel();
             }
         }
 
@@ -1777,6 +1878,16 @@ ${excelUrl ? 'Remove-Item $tempXlsx -ErrorAction SilentlyContinue' : ''}
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            const modeSelect = document.getElementById('expediteSourceMode');
+            if (modeSelect) {
+                modeSelect.value = API.getSourceMode('expedite_sla_data');
+                modeSelect.addEventListener('change', () => {
+                    API.setSourceMode('expedite_sla_data', modeSelect.value);
+                    initExpedite();
+                    fetchGlobalCategories();
+                });
+            }
+            renderExpediteSourcePanel();
             initExpedite();
             fetchDistributionPolicy();
             fetchGlobalCategories();

@@ -123,11 +123,13 @@ let manualAdjustItems = [...defaultManualAdjustItems];
 
 async function initReport() {
     try {
+        const mode = API.getSourceMode('report_sla_data');
+        const query = mode === 'auto' ? '' : `?mode=${encodeURIComponent(mode)}`;
         const [snapData, catData, configData, groupData] = await Promise.all([
-            API.get('/api/sla/snapshots'),
-            API.get('/api/sla/categories'),
-            API.get('/api/sla/config'),
-            API.get('/api/sla/groups')
+            API.get(`/api/sla/snapshots${query}`),
+            API.get(`/api/sla/categories${query}`),
+            API.get(`/api/sla/config${query}`),
+            API.get(`/api/sla/groups${query}`)
         ]);
         
         snapshots = snapData || [];
@@ -171,6 +173,7 @@ async function initReport() {
         if (!snapshots.length) {
             sel.innerHTML = '<option value="">暂无快照数据 (No snapshot data)</option>';
             document.getElementById('report-content').innerHTML = '<div class="empty-state"><h3>暂无导入记录 (No import record)</h3><p>请先前往 SLA 监控台导入数据并生成预警快照。<br><span style="font-size:12px;color:#888;">Please go to the SLA dashboard to import data and generate an alert snapshot.</span></p></div>';
+            if (window.renderReportSourcePanel) window.renderReportSourcePanel();
             return;
         }
         
@@ -184,9 +187,11 @@ async function initReport() {
         // Default to the first (latest) snapshot
         sel.value = snapshots[0].id;
         loadSelectedSnapshot();
+        if (window.renderReportSourcePanel) window.renderReportSourcePanel();
     } catch (e) {
         showToast('加载报表数据失败 (Failed to load report data)', 'error');
         console.error(e);
+        if (window.renderReportSourcePanel) window.renderReportSourcePanel();
         document.getElementById('report-content').innerHTML = '<div class="empty-state"><h3>加载失败 (Loading Failed)</h3><p>请检查后端服务是否正常运行。<br><span style="font-size:12px;color:#888;">Please check if the backend service is running normally.</span></p></div>';
     }
 }
@@ -2223,6 +2228,15 @@ window.saveI18nMap = async function() {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    const modeSelect = document.getElementById('reportSourceMode');
+    if (modeSelect) {
+        modeSelect.value = API.getSourceMode('report_sla_data');
+        modeSelect.addEventListener('change', () => {
+            API.setSourceMode('report_sla_data', modeSelect.value);
+            initReport();
+        });
+    }
+    if (window.renderReportSourcePanel) window.renderReportSourcePanel();
     initReport();
 });
 

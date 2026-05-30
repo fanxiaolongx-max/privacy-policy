@@ -6,7 +6,11 @@
 async function loadPrefs(secId) {
     const state = AppState[secId];
     try {
-        const saved = await API.get(`/api/sla/prefs/${encodeURIComponent(state.schemaHash)}`);
+        const mode = API.getSourceMode('sla_data');
+        const query = mode === 'auto' ? '' : `?mode=${encodeURIComponent(mode)}`;
+        const path = `/api/sla/prefs/${encodeURIComponent(state.schemaHash)}${query}`;
+        const saved = await API.get(path);
+        window.__lastSLAPrefsPath = path;
         if (saved) {
             const validV = (saved.visibleHeaders || []).filter(h => state.orderedHeaders.includes(h));
             state.visibleHeaders = validV.length > 0 ? validV : [...state.orderedHeaders];
@@ -15,8 +19,10 @@ async function loadPrefs(secId) {
             state.sortAsc = saved.sortAsc !== undefined ? saved.sortAsc : true;
             state.customMetrics = saved.customMetrics || [];
         }
+        if (window.renderSLASourcePanel) window.renderSLASourcePanel();
     } catch (e) {
         // 服务端无数据时使用默认值（不报错）
+        if (window.renderSLASourcePanel) window.renderSLASourcePanel();
     }
 }
 
