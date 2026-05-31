@@ -11,6 +11,80 @@ function getScriptPayloadBytes(item) {
     }
 }
 
+function isCompressionSupported() {
+    return typeof CompressionStream !== 'undefined' && typeof TextEncoder !== 'undefined';
+}
+
+function bytesToBase64(bytes) {
+    let binary = '';
+    const chunkSize = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+    }
+    return btoa(binary);
+}
+
+async function compressTextToTransportField(text, algorithm = 'gzip') {
+    const normalizedText = typeof text === 'string' ? text : '';
+    const inputBytes = new TextEncoder().encode(normalizedText);
+    const stream = new Blob([inputBytes]).stream().pipeThrough(new CompressionStream(algorithm));
+    const compressedBuffer = await new Response(stream).arrayBuffer();
+    const compressedBytes = new Uint8Array(compressedBuffer);
+    return {
+        encoding: `${algorithm}+base64`,
+        originalBytes: inputBytes.byteLength,
+        compressedBytes: compressedBytes.byteLength,
+        data: bytesToBase64(compressedBytes)
+    };
+}
+
+async function buildCompressedSaveBody(items, algorithm = 'gzip') {
+    const compressedItems = [];
+
+    for (const item of items) {
+        const compressedFields = {
+            code: await compressTextToTransportField(item.code || '', algorithm),
+            consoleCode: await compressTextToTransportField(item.consoleCode || '', algorithm),
+            payload: await compressTextToTransportField(item.payload || '', algorithm)
+        };
+
+        compressedItems.push({
+            ...item,
+            code: undefined,
+            consoleCode: undefined,
+            payload: undefined,
+            compressedFields
+        });
+    }
+
+    const sanitizedItems = compressedItems.map(item => {
+        const next = { ...item };
+        delete next.code;
+        delete next.consoleCode;
+        delete next.payload;
+        return next;
+    });
+
+    return {
+        transport: {
+            compression: `${algorithm}+base64`,
+            itemCount: sanitizedItems.length
+        },
+        items: sanitizedItems
+    };
+}
+
+function summarizeCompressedItems(body) {
+    const items = Array.isArray(body && body.items) ? body.items : [];
+    return items.map(item => ({
+        name: item.name,
+        category: item.category,
+        codeBytes: item.compressedFields && item.compressedFields.code ? `${item.compressedFields.code.originalBytes} -> ${item.compressedFields.code.compressedBytes}` : '-',
+        consoleBytes: item.compressedFields && item.compressedFields.consoleCode ? `${item.compressedFields.consoleCode.originalBytes} -> ${item.compressedFields.consoleCode.compressedBytes}` : '-',
+        payloadBytes: item.compressedFields && item.compressedFields.payload ? `${item.compressedFields.payload.originalBytes} -> ${item.compressedFields.payload.compressedBytes}` : '-'
+    }));
+}
+
 function logSaveStep(step, detail) {
     const prefix = '%c[UIVF12 Save]';
     const style = 'color:#22c55e;font-weight:700;';
@@ -143,10 +217,42 @@ async function saveCurrentScript() {
         btn.innerText = itemsToSave.length > 1 ? '✅ 阵列已分发' : '✅ 已保存';
         setTimeout(() => btn.innerText = oldText, 2000);
     } catch (e) {
-        logSaveError('保存链路', e, {
+        logSaveError('普通保存链路', e, {
             names: itemsToSave.map(i => i.name)
         });
-        showToast('❌ 保存失败，请检查服务连接', 'error');
+
+        if (!isCompressionSupported()) {
+            showToast('❌ 保存失败，且当前浏览器不支持压缩重试', 'error');
+            return;
+        }
+
+        try {
+            logSaveStep('普通保存失败，开始构建 gzip 压缩重试请求');
+            const compressedBody = await buildCompressedSaveBody(itemsToSave, 'gzip');
+            logSaveStep('gzip 压缩请求已构建', {
+                requestBytes: new Blob([JSON.stringify(compressedBody)]).size,
+                items: summarizeCompressedItems(compressedBody)
+            });
+
+            const retryResult = await API.post('/api/uiv/scripts', compressedBody);
+            logSaveStep('gzip 压缩重试成功', retryResult);
+
+            logSaveStep('开始刷新侧边栏脚本仓库', {
+                reason: 'saveCurrentScript-compressed-retry'
+            });
+            await window.UIVSidebar.loadSavedScripts({ reason: 'saveCurrentScript-compressed-retry', savedItems: itemsToSave.map(i => i.name) });
+            logSaveStep('压缩重试后的侧边栏刷新完成', {
+                savedNames: itemsToSave.map(i => i.name)
+            });
+
+            showToast(itemsToSave.length > 1 ? `✅ ${itemsToSave.length} 个脚本已通过压缩重试保存！` : '✅ 脚本已通过压缩重试保存！');
+            API.logHistory('uiv', '保存脚本(压缩重试)', itemsToSave.map(i => i.name).join(', '));
+        } catch (retryError) {
+            logSaveError('gzip 压缩重试链路', retryError, {
+                names: itemsToSave.map(i => i.name)
+            });
+            showToast('❌ 保存失败，压缩重试也未成功', 'error');
+        }
     }
 }
 
