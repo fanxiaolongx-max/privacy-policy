@@ -118,7 +118,10 @@ function renderHistory(data) {
 
         html += `
             <tr>
-                <td class="sticky-col-td" style="color:#1976d2; font-weight:bold;">${d}</td>
+                <td class="sticky-col-td" style="color:#1976d2; font-weight:bold;">
+                    ${d}
+                    <button onclick="deleteHistorySnapshot('${item.id}')" style="margin-left:8px; padding:2px 6px; font-size:10px; background:#fff; border:1px solid #ffcdd2; color:#d32f2f; border-radius:4px; cursor:pointer;" title="删除此快照" onmouseover="this.style.background='#ffebee'" onmouseout="this.style.background='#fff'">删除</button>
+                </td>
                 <td><span style="background:#e3f2fd; padding:2px 6px; border-radius:10px; color:#1565c0;">${item.files.length}</span></td>
                 ${metricColsHtml}
                 <td class="summary-col">${summaryHtml}</td>
@@ -129,6 +132,18 @@ function renderHistory(data) {
     html += `</tbody></table></div>`;
     list.innerHTML = html;
 }
+
+window.deleteHistorySnapshot = async function(id) {
+    if (!confirm('确定要删除这条历史快照吗？删除后不可恢复。')) return;
+    try {
+        await API.delete('/api/sla/snapshots/' + encodeURIComponent(id));
+        showToast('✅ 快照已成功删除');
+        // 重新加载快照列表
+        openHistoryModal();
+    } catch(e) {
+        showToast('❌ 删除失败: ' + e.message, 'error');
+    }
+};
 
 window.openHistoryModal = openHistoryModal;
 window.closeHistoryModal = closeHistoryModal;

@@ -2419,27 +2419,38 @@ window.saveDashboardToDB = async function(event) {
                 
                 // Define columns
                 const columns = [
-                    { header: '分组 (Group)', key: 'group', width: 15 },
-                    { header: '总权重', key: 'groupWeight', width: 10 },
-                    { header: '考核的指标名称 (Metric)', key: 'metric', width: 40 },
+                    { header: '分组 (Group)', key: 'group', width: 18 },
+                    { header: '总权重', key: 'groupWeight', width: 12 },
+                    { header: '考核的指标名称 (Metric)', key: 'metric', width: 50 },
                     { header: '权重', key: 'weight', width: 10 },
-                    { header: '目标值 (Target)', key: 'target', width: 15 },
-                    { header: '全局总体达标', key: 'global', width: 15 }
+                    { header: '目标值 (Target)', key: 'target', width: 18 },
+                    { header: '全局总体达标', key: 'global', width: 18 }
                 ];
                 
                 const catData = window._currentCatData || {};
                 const categories = Object.keys(catData);
                 categories.forEach(cat => {
-                    columns.push({ header: cat, key: `val_${cat}`, width: 15 });
-                    columns.push({ header: `${cat}得分`, key: `score_${cat}`, width: 15 });
+                    columns.push({ header: cat, key: `val_${cat}`, width: 22 });
+                    columns.push({ header: `${cat}得分`, key: `score_${cat}`, width: 18 });
                 });
                 
                 sheet.columns = columns;
                 
+                // Set default font for all columns
+                sheet.columns.forEach(column => {
+                    column.font = { name: 'Microsoft YaHei', size: 11 };
+                    column.alignment = { vertical: 'middle', horizontal: 'center', wrapText: false };
+                });
+                // Metric name left-aligned
+                sheet.getColumn('metric').alignment = { vertical: 'middle', horizontal: 'left', wrapText: false };
+                
                 // Style header
-                sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-                sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF283593' } };
-                sheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+                const headerRow = sheet.getRow(1);
+                headerRow.font = { name: 'Microsoft YaHei', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+                headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A237E' } };
+                headerRow.alignment = { vertical: 'middle', horizontal: 'center', wrapText: false };
+                headerRow.height = 30; // Slightly taller header
+
                 
                 // Add data
                 const orderedMetrics = window._currentOrderedMetrics || [];
@@ -2492,7 +2503,15 @@ window.saveDashboardToDB = async function(event) {
                     });
                     
                     const row = sheet.addRow(rowData);
-                    row.alignment = { vertical: 'middle', wrapText: true };
+                    row.height = 25; // Professional row height
+                    
+                    // Highlight global failing cell
+                    if (m.isWarn) {
+                        const globalColObj = sheet.getColumn('global');
+                        const globalCell = row.getCell(globalColObj.number);
+                        globalCell.font = { name: 'Microsoft YaHei', size: 11, color: { argb: 'FFD32F2F' }, bold: true };
+                        globalCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFEBEE' } };
+                    }
                     
                     // Highlight failing cells
                     categories.forEach(cat => {
@@ -2500,7 +2519,7 @@ window.saveDashboardToDB = async function(event) {
                         if (cell.isFailing) {
                             const valColObj = sheet.getColumn(`val_${cat}`);
                             const valCell = row.getCell(valColObj.number);
-                            valCell.font = { color: { argb: 'FFD32F2F' }, bold: true };
+                            valCell.font = { name: 'Microsoft YaHei', size: 11, color: { argb: 'FFD32F2F' }, bold: true };
                             valCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFEBEE' } };
                         }
                     });
@@ -2513,10 +2532,22 @@ window.saveDashboardToDB = async function(event) {
                     merges.push({ s: curGroupStartRow, e: currentRowIdx - 1 });
                 }
                 
-                // Apply merges
+                // Apply merges and borders
                 merges.forEach(m => {
                     sheet.mergeCells(`A${m.s}:A${m.e}`);
                     sheet.mergeCells(`B${m.s}:B${m.e}`);
+                });
+                
+                // Apply borders to all used cells
+                sheet.eachRow((row, rowNumber) => {
+                    row.eachCell((cell) => {
+                        cell.border = {
+                            top: {style:'thin', color: {argb:'FFE0E0E0'}},
+                            left: {style:'thin', color: {argb:'FFE0E0E0'}},
+                            bottom: {style:'thin', color: {argb:'FFE0E0E0'}},
+                            right: {style:'thin', color: {argb:'FFE0E0E0'}}
+                        };
+                    });
                 });
                 
                 // Add total score row
@@ -2525,8 +2556,18 @@ window.saveDashboardToDB = async function(event) {
                     totalRowData[`score_${cat}`] = catData[cat].finalScore;
                 });
                 const totalRow = sheet.addRow(totalRowData);
-                totalRow.font = { bold: true };
+                totalRow.height = 30;
+                totalRow.font = { name: 'Microsoft YaHei', size: 12, bold: true, color: { argb: 'FF333333' } };
                 totalRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF59D' } };
+                // Also add borders to total row
+                totalRow.eachCell((cell) => {
+                    cell.border = {
+                        top: {style:'thin', color: {argb:'FFBDBDBD'}},
+                        left: {style:'thin', color: {argb:'FFBDBDBD'}},
+                        bottom: {style:'thin', color: {argb:'FFBDBDBD'}},
+                        right: {style:'thin', color: {argb:'FFBDBDBD'}}
+                    };
+                });
                 
                 const buffer = await workbook.xlsx.writeBuffer();
                 let binary = '';
