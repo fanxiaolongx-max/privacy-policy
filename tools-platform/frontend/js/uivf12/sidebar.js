@@ -9,6 +9,22 @@ const DEFAULT_CATEGORIES = ['DataFab', 'NetCare中国', 'NetCare中东', 'NetCar
 let expandedCategories = [];
 let draggedScriptId = null;
 
+function logSidebarStep(step, detail) {
+    const prefix = '%c[UIVF12 Sidebar]';
+    const style = 'color:#38bdf8;font-weight:700;';
+    if (detail === undefined) {
+        console.info(prefix, style, step);
+        return;
+    }
+    console.info(prefix, style, step, detail);
+}
+
+function logSidebarError(step, error, detail) {
+    const prefix = '%c[UIVF12 Sidebar]';
+    const style = 'color:#ef4444;font-weight:700;';
+    console.error(prefix, style, `${step} failed`, detail || '', error);
+}
+
 function formatSourceLabel(source) {
     if (source === 'sqlite') return 'SQLite';
     if (source === 'json') return 'JSON';
@@ -36,16 +52,36 @@ function renderRepositorySource() {
 // ──────────────────────────────────────────────────────────
 // 数据加载
 // ──────────────────────────────────────────────────────────
-async function loadSavedScripts() {
+async function loadSavedScripts(options = {}) {
     try {
         const mode = API.getSourceMode('uiv_repository');
         const query = mode === 'auto' ? '' : `?mode=${encodeURIComponent(mode)}`;
+        logSidebarStep('开始加载侧边栏脚本仓库', {
+            mode,
+            query: query || '(auto)',
+            reason: options.reason || 'direct'
+        });
         const { scripts, categories } = await API.get(`/api/uiv/scripts${query}`);
+        logSidebarStep('脚本仓库接口返回成功', {
+            scriptCount: scripts.length,
+            categoryCount: categories.length,
+            categoryBreakdown: categories.map(catName => ({
+                category: catName,
+                count: scripts.filter(s => s.category === catName).length
+            }))
+        });
         renderRepositorySource();
         renderSidebar(scripts, categories);
+        logSidebarStep('侧边栏渲染完成', {
+            expandedCategories: [...expandedCategories]
+        });
     } catch (e) {
+        logSidebarError('加载侧边栏脚本仓库', e, {
+            reason: options.reason || 'direct'
+        });
         renderRepositorySource();
         showToast('❌ 无法连接服务器，脚本仓库加载失败', 'error');
+        throw e;
     }
 }
 
