@@ -1,8 +1,10 @@
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
+const { ensureDataDir } = require('./store');
 
 const DB_PATH = path.join(__dirname, '../data/tools.db');
 
+ensureDataDir();
 const db = new sqlite3.Database(DB_PATH);
 
 db.serialize(() => {
