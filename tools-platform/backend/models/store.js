@@ -7,6 +7,10 @@ const path = require('path');
 
 const DATA_DIR = path.join(__dirname, '../data');
 
+function ensureDataDir() {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
 function getFilePath(filename) {
     return path.join(DATA_DIR, filename);
 }
@@ -22,8 +26,9 @@ function readJSON(filename, defaultVal = null) {
 }
 
 function writeJSON(filename, data) {
+    ensureDataDir();
     const fp = getFilePath(filename);
     fs.writeFileSync(fp, JSON.stringify(data, null, 2), 'utf-8');
 }
 
-module.exports = { readJSON, writeJSON };
+module.exports = { readJSON, writeJSON, ensureDataDir, DATA_DIR };

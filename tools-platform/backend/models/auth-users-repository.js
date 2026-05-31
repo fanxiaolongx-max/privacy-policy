@@ -1,8 +1,17 @@
 const { readJSON, writeJSON } = require('./store');
 const { run, get, all } = require('./app-db');
+const { hashPassword } = require('../middleware/auth');
 
 const USERS_FILE = 'users.json';
 let initPromise = null;
+
+function getInitialAdmin() {
+    return {
+        username: process.env.INITIAL_ADMIN_USERNAME || 'admin',
+        password: process.env.INITIAL_ADMIN_PASSWORD || 'admin123',
+        role: 'admin'
+    };
+}
 
 async function ensureReady() {
     if (!initPromise) {
@@ -21,7 +30,17 @@ async function ensureReady() {
 
             const users = readJSON(USERS_FILE, {});
             const usernames = Object.keys(users);
-            if (usernames.length === 0) return;
+            if (usernames.length === 0) {
+                const admin = getInitialAdmin();
+                await run(
+                    `INSERT OR IGNORE INTO auth_users (username, role, password_hash) VALUES (?, ?, ?)`,
+                    [admin.username, admin.role, hashPassword(admin.password)]
+                );
+                console.warn(
+                    `[auth-users] Initialized default admin "${admin.username}". Set INITIAL_ADMIN_USERNAME and INITIAL_ADMIN_PASSWORD to override it.`
+                );
+                return;
+            }
 
             await run('BEGIN TRANSACTION');
             try {

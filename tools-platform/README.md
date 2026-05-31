@@ -65,9 +65,9 @@ tools-platform/
 │   │   └── ai.js
 │   ├── middleware/
 │   ├── models/
-│   ├── data/
+│   ├── data/              # 运行时自动生成，不提交
 │   └── package.json
-└── data/
+└── data/                  # 运行时自动生成，不提交
     ├── report.db
     ├── requirements.db
     └── images/
@@ -235,13 +235,23 @@ Token 会话默认保存在：
 
 - `backend/data/sessions.json`
 
+首次运行如果没有任何用户数据，系统会自动初始化一个管理员：
+
+- 用户名：`admin`
+- 密码：`admin123`
+
+可通过环境变量覆盖：
+
+- `INITIAL_ADMIN_USERNAME`
+- `INITIAL_ADMIN_PASSWORD`
+
 ## 5. 数据存储
 
 当前项目同时使用 JSON 与 SQLite，两套存储都在运行。
 
 ### JSON 存储
 
-主要位于 `backend/data/`，例如：
+运行时主要位于 `backend/data/`，例如：
 
 - `users.json`
 - `sessions.json`
@@ -263,6 +273,8 @@ Token 会话默认保存在：
 - `data/images/`
 
 仓库中也存在 `backend/data/*.db` 文件，说明项目处于一段混合存储演进阶段。若后续继续维护，建议统一数据库目录，避免运行时读写分散。
+
+这些目录和文件都属于本地运行数据，会在首次运行或首次写入时自动生成，不需要提交到 GitHub。
 
 ## 6. 运行方式
 
@@ -315,6 +327,8 @@ npm start
 
 - `PORT`：后端端口，默认 `3030`
 - `GEMINI_API_KEY`：启用页面内 AI 助手所需
+- `INITIAL_ADMIN_USERNAME`：首次无用户数据时初始化的管理员用户名，默认 `admin`
+- `INITIAL_ADMIN_PASSWORD`：首次无用户数据时初始化的管理员密码，默认 `admin123`
 
 如果未配置 `GEMINI_API_KEY`，`/api/ai/chat` 会返回 `503`，但平台其他功能仍可运行。
 
@@ -354,4 +368,3 @@ npm start
 - 为登录、需求流转、报表入库补最小可回归测试
 - 拆分前端内联脚本，降低单页面复杂度
 - 增加部署说明与默认账号初始化脚本
-
