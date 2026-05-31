@@ -4,10 +4,56 @@
  */
 const express = require('express');
 const router = express.Router();
+const zlib = require('zlib');
 const categoriesRepo = require('../models/uiv-categories-repository');
 const scriptsRepo = require('../models/uiv-scripts-repository');
 
 const DEFAULT_CATEGORIES = categoriesRepo.DEFAULT_CATEGORIES;
+
+function decodeCompressedTextField(field, label) {
+    if (!field || typeof field !== 'object') {
+        throw new Error(`${label} 压缩字段格式无效`);
+    }
+
+    const encoding = String(field.encoding || '').toLowerCase();
+    const raw = Buffer.from(String(field.data || ''), 'base64');
+    if (raw.length === 0 && field.data) {
+        throw new Error(`${label} 压缩数据为空`);
+    }
+
+    let out;
+    if (encoding === 'gzip+base64') {
+        out = zlib.gunzipSync(raw);
+    } else if (encoding === 'deflate+base64') {
+        out = zlib.inflateSync(raw);
+    } else {
+        throw new Error(`${label} 压缩编码不支持: ${field.encoding || 'unknown'}`);
+    }
+
+    return out.toString('utf8');
+}
+
+function expandCompressedScriptItems(body) {
+    const transportCompression = body && body.transport && body.transport.compression;
+    if (!transportCompression) {
+        return Array.isArray(body && body.items) ? body.items : [];
+    }
+
+    const items = Array.isArray(body && body.items) ? body.items : [];
+    return items.map((item, index) => {
+        const expanded = { ...item };
+        const compressedFields = item && item.compressedFields;
+        if (!compressedFields || typeof compressedFields !== 'object') {
+            throw new Error(`第 ${index + 1} 条脚本缺少 compressedFields`);
+        }
+
+        expanded.code = decodeCompressedTextField(compressedFields.code, `第 ${index + 1} 条脚本 code`);
+        expanded.consoleCode = decodeCompressedTextField(compressedFields.consoleCode, `第 ${index + 1} 条脚本 consoleCode`);
+        expanded.payload = decodeCompressedTextField(compressedFields.payload, `第 ${index + 1} 条脚本 payload`);
+        delete expanded.compressedFields;
+        return expanded;
+    });
+}
 
 // ──────────────────────────────────────────────────────────
 // 脚本列表相关
@@ -34,12 +80,22 @@ router.get('/scripts', async (req, res) => {
 
 // POST /api/uiv/scripts  → 新增或覆盖脚本（支持阵列批量）
 router.post('/scripts', async (req, res) => {
-    const { items } = req.body; // items: Array<ScriptObject>
+    let items;
+    try {
+        items = expandCompressedScriptItems(req.body);
+    } catch (decodeErr) {
+        console.error('[POST /api/uiv/scripts] compressed payload decode failed:', decodeErr);
+        return res.status(400).json({ error: decodeErr.message || '压缩脚本解码失败' });
+    }
+
     if (!Array.isArray(items) || items.length === 0) {
         return res.status(400).json({ error: '参数错误：items 必须为非空数组' });
     }
 
     try {
+        if (req.body && req.body.transport && req.body.transport.compression) {
+            console.log(`[UIV COMPRESS] POST /api/uiv/scripts -> transport=${req.body.transport.compression}, items=${items.length}`);
+        }
         const scripts = await scriptsRepo.saveScripts(items);
         res.json({ success: true, count: scripts.length });
     } catch (err) {
