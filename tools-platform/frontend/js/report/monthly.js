@@ -194,6 +194,45 @@ function tVal(text) {
     return i18n[window.currentLang][text] || text;
 }
 
+function translateTicketTitle(title) {
+    const cleanTitle = String(title || '').replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim();
+    if (window.currentLang !== 'en') return cleanTitle;
+    if (cleanTitle.includes('SR详单')) return 'SR Detail Analysis';
+    if (cleanTitle.includes('整改')) return 'Rectification';
+    if (cleanTitle.includes('CPT专项风险') || cleanTitle.includes('专项风险')) return 'CPT Special Risk';
+    if (cleanTitle.includes('常规风险') || cleanTitle === '风险') return 'Risk';
+    return tVal(cleanTitle) || cleanTitle || 'Ticket';
+}
+
+function translateSlaStatus(statusText) {
+    let text = String(statusText || '').trim();
+    if (!text || window.currentLang !== 'en') return text;
+    return text
+        .replace(/历史超期/g, 'Historical overdue')
+        .replace(/SR超期/g, 'SR overdue')
+        .replace(/SR高危/g, 'SR high risk')
+        .replace(/SR预警/g, 'SR warning')
+        .replace(/Critical高危/g, 'Critical high risk')
+        .replace(/Critical预警/g, 'Critical warning')
+        .replace(/Checking紧急/g, 'Checking urgent')
+        .replace(/Checking提醒/g, 'Checking warning')
+        .replace(/整改紧急/g, 'Rectification urgent')
+        .replace(/整改提醒/g, 'Rectification warning')
+        .replace(/Confirm紧急/g, 'Confirm urgent')
+        .replace(/Confirm提醒/g, 'Confirm warning')
+        .replace(/挂起忽略/g, 'Pending ignored')
+        .replace(/已关单/g, 'Closed')
+        .replace(/缺少SLA关键时间/g, 'Missing SLA key time')
+        .replace(/已触发上游超期标识/g, 'Upstream overdue flag triggered')
+        .replace(/剩余/g, 'remaining')
+        .replace(/消耗/g, 'consumed')
+        .replace(/已超/g, 'overdue by')
+        .replace(/小时/g, 'hours')
+        .replace(/天/g, 'days')
+        .replace(/周/g, 'weeks')
+        .replace(/月/g, 'months');
+}
+
 function updateStaticI18n() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
@@ -213,6 +252,40 @@ function updateStaticI18n() {
 
 let currentTrends = null;
 let currentLatest = null;
+const MONTHLY_TARGET_MONTH_KEY = 'monthly_target_month';
+
+function getTargetMonthDefaultByDay(date = new Date()) {
+    const currentMonth = date.getMonth() + 1;
+    if (date.getDate() < 10) {
+        return currentMonth === 1 ? 12 : currentMonth - 1;
+    }
+    return currentMonth;
+}
+
+function getTodayKey() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function getMonthlyTargetMonth() {
+    const sel = document.getElementById('monthlyTargetMonth');
+    if (sel && sel.dataset.ready === 'true' && sel.value) return sel.value;
+    try {
+        const saved = JSON.parse(localStorage.getItem(MONTHLY_TARGET_MONTH_KEY) || '{}');
+        const month = parseInt(saved.month, 10);
+        if (saved.date === getTodayKey() && month >= 1 && month <= 12) return String(month);
+    } catch (e) {}
+    return String(getTargetMonthDefaultByDay());
+}
+
+function getMonthlyDateFilters() {
+    const startDateInput = document.getElementById('filter-start-date');
+    const endDateInput = document.getElementById('filter-end-date');
+    return {
+        startDate: startDateInput ? startDateInput.value : '',
+        endDate: endDateInput ? endDateInput.value : ''
+    };
+}
 
 async function loadData(startDate, endDate) {
     try {
@@ -221,10 +294,12 @@ async function loadData(startDate, endDate) {
         const exportBtnContainer = document.getElementById('export-actions');
         if (exportBtnContainer) exportBtnContainer.style.display = 'none';
         
-        let url = '/api/db/monthly_report_data';
+        const params = new URLSearchParams();
         if (startDate && endDate) {
-            url += `?startDate=${startDate}&endDate=${endDate}`;
+            params.set('startDate', startDate);
+            params.set('endDate', endDate);
         }
+        let url = `/api/db/monthly_report_data${params.toString() ? `?${params.toString()}` : ''}`;
         const mode = window.API.getSourceMode('monthly_sla_data');
         const query = mode === 'auto' ? '' : `?mode=${encodeURIComponent(mode)}`;
 
@@ -336,6 +411,24 @@ document.addEventListener('DOMContentLoaded', () => {
             loadData();
         });
     }
+    const monthSelect = document.getElementById('monthlyTargetMonth');
+    if (monthSelect) {
+        let monthOptions = '';
+        for (let i = 1; i <= 12; i++) {
+            monthOptions += `<option value="${i}">${i}月目标</option>`;
+        }
+        monthSelect.innerHTML = monthOptions;
+        monthSelect.value = getMonthlyTargetMonth();
+        monthSelect.dataset.ready = 'true';
+        monthSelect.addEventListener('change', () => {
+            localStorage.setItem(MONTHLY_TARGET_MONTH_KEY, JSON.stringify({
+                month: parseInt(monthSelect.value, 10),
+                date: getTodayKey()
+            }));
+            const { startDate, endDate } = getMonthlyDateFilters();
+            loadData(startDate && endDate ? startDate : undefined, startDate && endDate ? endDate : undefined);
+        });
+    }
     if (window.renderMonthlySourcePanel) window.renderMonthlySourcePanel();
 
     const langToggleBtn = document.getElementById('lang-toggle');
@@ -436,7 +529,7 @@ function generateSummary(trends, latest, globalConfig) {
     if (latest.raw_data_json) {
         try { rawSnap = JSON.parse(latest.raw_data_json); } catch(e){}
     }
-    const targetMonth = rawSnap.month || (rawSnap.timestamp ? new Date(rawSnap.timestamp).getMonth() + 1 : (new Date(latest.created_at || Date.now()).getMonth() + 1));
+    const targetMonth = parseInt(getMonthlyTargetMonth(), 10) || rawSnap.month || (rawSnap.timestamp ? new Date(rawSnap.timestamp).getMonth() + 1 : (new Date(latest.created_at || Date.now()).getMonth() + 1));
 
     if (globalConfig && rawSnap.topMetrics) {
         const labelToTargetMap = {};
@@ -543,13 +636,13 @@ function generateSummary(trends, latest, globalConfig) {
         `;
         expiringTickets.forEach(tItem => {
             const td = tItem.data || {};
-            const id = td.task_id || td.risk_id || td.ticket_id || td['单号'] || td['问题风险编号'] || td['问题编号'] || t('unknown_id');
+            const id = td.sr_num || td.sr_id || td.task_id || td.risk_id || td.ticket_id || td['单号'] || td['问题风险编号'] || td['问题编号'] || t('unknown_id');
             const network = td.network_name || td['网络名称'] || td.network || t('unknown_network');
             summaryHtml += `<li>${t('ticket_format', {
-                title: tItem.title.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim(),
+                title: translateTicketTitle(tItem.title),
                 id: id,
                 network: network,
-                status: tItem._slaCleanText
+                status: translateSlaStatus(tItem._slaCleanText)
             })}</li>`;
         });
         summaryHtml += `</ul></div>`;
@@ -572,7 +665,7 @@ function drawCharts(trends) {
         }
         if (!rawSnap.topMetrics || rawSnap.topMetrics.length === 0) return t.compliance_rate !== undefined ? parseFloat(t.compliance_rate).toFixed(2) : 0;
 
-        const targetMonth = rawSnap.month || (rawSnap.timestamp ? new Date(rawSnap.timestamp).getMonth() + 1 : (new Date(t.created_at || t.date || Date.now()).getMonth() + 1));
+        const targetMonth = parseInt(getMonthlyTargetMonth(), 10) || rawSnap.month || (rawSnap.timestamp ? new Date(rawSnap.timestamp).getMonth() + 1 : (new Date(t.created_at || t.date || Date.now()).getMonth() + 1));
         
         const labelToTargetMap = {};
         const globalConfig = window._globalConfig;
@@ -955,7 +1048,7 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
         });
     }
 
-    const targetMonth = snap.month || new Date(snap.timestamp).getMonth() + 1;
+    const targetMonth = parseInt(getMonthlyTargetMonth(), 10) || snap.month || new Date(snap.timestamp).getMonth() + 1;
     
     function parseNum(str) {
         if (str === undefined || str === null || str === '--') return NaN;

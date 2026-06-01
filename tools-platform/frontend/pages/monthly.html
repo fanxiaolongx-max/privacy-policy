@@ -237,6 +237,10 @@
                         <option value="sqlite">强制 SQLite</option>
                     </select>
                 </div>
+                <div class="data-source-controls">
+                    <span class="data-source-note">目标月份:</span>
+                    <select id="monthlyTargetMonth" class="data-source-select"></select>
+                </div>
                 <div id="monthlySourcePanel" class="data-source-panel">
                     <span class="data-source-badge">趋势来源: -</span>
                     <span class="data-source-badge">配置来源: -</span>
@@ -391,7 +395,7 @@
 
         window.renderMonthlySourcePanel = renderMonthlySourcePanel;
     </script>
-    <script src="/js/report/monthly.js?v=20260530-01"></script>
+    <script src="/js/report/monthly.js?v=20260601-04"></script>
 </body>
 
 </html>

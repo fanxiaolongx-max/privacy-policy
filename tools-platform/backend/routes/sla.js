@@ -4,6 +4,7 @@
  */
 const express = require('express');
 const router = express.Router();
+const zlib = require('zlib');
 const { readJSON, writeJSON } = require('../models/store');
 const targetsRepo = require('../models/sla-targets-repository');
 const prefsRepo = require('../models/sla-prefs-repository');
@@ -14,6 +15,41 @@ const snapshotsRepo = require('../models/sla-snapshots-repository');
 const TARGETS_FILE = 'sla_targets.json';
 const PREFS_FILE = 'sla_prefs.json';
 const SNAPSHOTS_FILE = 'sla_snapshots.json';
+
+function decodeCompressedTextField(field, label) {
+    if (!field || typeof field !== 'object') {
+        throw new Error(`${label} 压缩字段格式无效`);
+    }
+
+    const encoding = String(field.encoding || '').toLowerCase();
+    const raw = Buffer.from(String(field.data || ''), 'base64');
+    if (raw.length === 0 && field.data) {
+        throw new Error(`${label} 压缩数据为空`);
+    }
+
+    let out;
+    if (encoding === 'gzip+base64') {
+        out = zlib.gunzipSync(raw);
+    } else if (encoding === 'deflate+base64') {
+        out = zlib.inflateSync(raw);
+    } else {
+        throw new Error(`${label} 压缩编码不支持: ${field.encoding || 'unknown'}`);
+    }
+
+    return out.toString('utf8');
+}
+
+function expandCompressedSnapshot(body) {
+    const transportCompression = body && body.transport && body.transport.compression;
+    if (!transportCompression) return body;
+
+    const snapshotText = decodeCompressedTextField(body.compressedSnapshot, 'SLA 快照');
+    const snapshot = JSON.parse(snapshotText);
+    if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) {
+        throw new Error('SLA 快照解压后格式无效');
+    }
+    return snapshot;
+}
 
 // ──────────────────────────────────────────────────────────
 // 全局字典配置 (例如：指标分类)
@@ -134,8 +170,22 @@ router.get('/snapshots', async (req, res) => {
 
 // POST /api/sla/snapshot
 router.post('/snapshot', async (req, res) => {
+    let snapshot;
     try {
-        await snapshotsRepo.addSnapshot(req.body);
+        snapshot = expandCompressedSnapshot(req.body);
+    } catch (decodeErr) {
+        console.error('[POST /api/sla/snapshot] compressed payload decode failed:', decodeErr);
+        return res.status(400).json({ error: decodeErr.message || '压缩快照解码失败' });
+    }
+
+    try {
+        if (req.body && req.body.transport && req.body.transport.compression) {
+            console.log(
+                `[SLA COMPRESS] POST /api/sla/snapshot -> transport=${req.body.transport.compression}, ` +
+                `original=${req.body.transport.originalBytes || '-'}, compressed=${req.body.transport.compressedBytes || '-'}`
+            );
+        }
+        await snapshotsRepo.addSnapshot(snapshot);
         res.json({ success: true });
     } catch (err) {
         console.error('[POST /api/sla/snapshot] failed:', err);
@@ -156,8 +206,22 @@ router.delete('/snapshots/:id', async (req, res) => {
 
 // PUT /api/sla/snapshots/:id
 router.put('/snapshots/:id', async (req, res) => {
+    let snapshotPatch;
     try {
-        const updated = await snapshotsRepo.updateSnapshot(req.params.id, req.body);
+        snapshotPatch = expandCompressedSnapshot(req.body);
+    } catch (decodeErr) {
+        console.error('[PUT /api/sla/snapshots/:id] compressed payload decode failed:', decodeErr);
+        return res.status(400).json({ error: decodeErr.message || '压缩快照解码失败' });
+    }
+
+    try {
+        if (req.body && req.body.transport && req.body.transport.compression) {
+            console.log(
+                `[SLA COMPRESS] PUT /api/sla/snapshots/${req.params.id} -> transport=${req.body.transport.compression}, ` +
+                `original=${req.body.transport.originalBytes || '-'}, compressed=${req.body.transport.compressedBytes || '-'}`
+            );
+        }
+        const updated = await snapshotsRepo.updateSnapshot(req.params.id, snapshotPatch);
         if (!updated) {
             return res.status(404).json({ error: 'Snapshot not found' });
         }

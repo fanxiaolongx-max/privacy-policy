@@ -1005,6 +1005,66 @@
             return zh;
         }
 
+        function translateTicketTitle(title) {
+            let cleanTitle = String(title || '').replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim();
+            if (cleanTitle.includes('SR详单')) return 'SR Detail Analysis';
+            if (cleanTitle.includes('整改')) return 'Rectification';
+            if (cleanTitle.includes('CPT专项风险') || cleanTitle.includes('专项风险')) return 'CPT Special Risk';
+            if (cleanTitle.includes('常规风险') || cleanTitle === '风险') return 'Risk';
+            return getEnName(cleanTitle) || cleanTitle || 'Ticket';
+        }
+
+        function formatDurationFromDays(days) {
+            const absDays = Math.abs(days);
+            if (absDays >= 30) {
+                const months = Math.floor(absDays / 30);
+                const rest = absDays % 30;
+                return rest ? `${months} month${months > 1 ? 's' : ''} ${rest} day${rest > 1 ? 's' : ''}` : `${months} month${months > 1 ? 's' : ''}`;
+            }
+            if (absDays >= 7) {
+                const weeks = Math.floor(absDays / 7);
+                const rest = absDays % 7;
+                return rest ? `${weeks} week${weeks > 1 ? 's' : ''} ${rest} day${rest > 1 ? 's' : ''}` : `${weeks} week${weeks > 1 ? 's' : ''}`;
+            }
+            return `${absDays} day${absDays === 1 ? '' : 's'}`;
+        }
+
+        function translateSlaStatus(statusText, slaDays) {
+            if (typeof slaDays === 'number') {
+                if (slaDays < 0) return `Overdue by ${formatDurationFromDays(slaDays)}`;
+                if (slaDays === 0) return 'Due today';
+                return `Due in ${formatDurationFromDays(slaDays)}`;
+            }
+
+            let text = String(statusText || '').trim();
+            if (!text) return 'Unknown Status';
+            text = text
+                .replace(/历史超期/g, 'Historical overdue')
+                .replace(/SR超期/g, 'SR overdue')
+                .replace(/SR高危/g, 'SR high risk')
+                .replace(/SR预警/g, 'SR warning')
+                .replace(/Critical高危/g, 'Critical high risk')
+                .replace(/Critical预警/g, 'Critical warning')
+                .replace(/Checking紧急/g, 'Checking urgent')
+                .replace(/Checking提醒/g, 'Checking warning')
+                .replace(/整改紧急/g, 'Rectification urgent')
+                .replace(/整改提醒/g, 'Rectification warning')
+                .replace(/Confirm紧急/g, 'Confirm urgent')
+                .replace(/Confirm提醒/g, 'Confirm warning')
+                .replace(/挂起忽略/g, 'Pending ignored')
+                .replace(/已关单/g, 'Closed')
+                .replace(/缺少SLA关键时间/g, 'Missing SLA key time')
+                .replace(/已触发上游超期标识/g, 'Upstream overdue flag triggered')
+                .replace(/剩余/g, 'remaining')
+                .replace(/消耗/g, 'consumed')
+                .replace(/已超/g, 'overdue by')
+                .replace(/小时/g, 'hours')
+                .replace(/天/g, 'days')
+                .replace(/周/g, 'weeks')
+                .replace(/月/g, 'months');
+            return text;
+        }
+
         async function initExpedite() {
             try {
                 const mode = API.getSourceMode('expedite_sla_data');
@@ -1042,11 +1102,11 @@
                         }
                         const d = new Date(dateStr);
                         const timeStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-                        return `<option value="${s.snapshot_id}">${timeStr} (${s.month}月)</option>`;
+                        return `<option value="${s.snapshot_id}" data-month="${s.month}">${timeStr} (${s.month}月)</option>`;
                     }).join('');
 
                     // Fetch data for the latest snapshot by default
-                    await loadSnapshotData(snapshots[0].snapshot_id);
+                    await loadSnapshotData(snapshots[0].snapshot_id, snapshots[0].month);
                 } else {
                     selector.innerHTML = '<option value="">暂无历史快照</option>';
                     document.getElementById('loading-state').style.display = 'none';
@@ -1061,13 +1121,13 @@
             }
         }
 
-        async function loadSnapshotData(snapshot_id) {
+        async function loadSnapshotData(snapshot_id, month) {
             try {
                 document.getElementById('content-state').style.display = 'none';
                 document.getElementById('loading-state').style.display = 'block';
                 document.getElementById('loading-state').innerHTML = `<h3>⏳ 正在提取数据...</h3><p>快照: ${snapshot_id}</p>`;
 
-                const failingPath = `/api/db/failing/${snapshot_id}`;
+                const failingPath = month ? `/api/db/failing/${snapshot_id}?month=${encodeURIComponent(month)}` : `/api/db/failing/${snapshot_id}`;
                 latestFailingData = await API.get(failingPath);
                 window.__lastExpediteFailingPath = failingPath;
                 document.getElementById('loading-state').style.display = 'none';
@@ -1090,9 +1150,11 @@
 
         async function loadSelectedSnapshot() {
             const selector = document.getElementById('snapshot-selector');
-            const selectedId = selector.value;
+            const selectedOption = selector.options[selector.selectedIndex];
+            const selectedId = selectedOption ? selectedOption.value : '';
+            const selectedMonth = selectedOption ? selectedOption.dataset.month : '';
             if (selectedId) {
-                await loadSnapshotData(selectedId);
+                await loadSnapshotData(selectedId, selectedMonth);
             }
         }
 
@@ -1122,24 +1184,13 @@
             let text = '\n⚠️ [Expiring/Overdue Alert] The following tickets require immediate action:\n';
             tickets.forEach(t => {
                 const td = t.data || {};
-                const id = td.task_id || td.risk_id || td.ticket_id || td['单号'] || td['问题风险编号'] || td['问题编号'] || 'Unknown ID';
+                const id = td.sr_num || td.sr_id || td.task_id || td.risk_id || td.ticket_id || td['单号'] || td['问题风险编号'] || td['问题编号'] || 'Unknown ID';
                 const network = td.network_name || td['网络名称'] || td.network || 'Unknown Network';
 
-                // Translate title
-                let enTitle = t.title.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim();
-                if (enTitle.includes('整改')) enTitle = 'Rectification';
-                else if (enTitle.includes('CPT专项风险')) enTitle = 'CPT Special Risk';
-                else if (enTitle.includes('常规风险') || enTitle === '风险') enTitle = 'Risk';
+                const enTitle = translateTicketTitle(t.title);
 
                 // Format SLA status
-                let slaStr = '';
-                if (typeof t._slaDays === 'number') {
-                    if (t._slaDays < 0) slaStr = `Overdue by ${Math.abs(t._slaDays)} days`;
-                    else if (t._slaDays === 0) slaStr = `Due today`;
-                    else slaStr = `Due in ${t._slaDays} days`;
-                } else {
-                    slaStr = t._slaCleanText || 'Unknown Status';
-                }
+                const slaStr = translateSlaStatus(t._slaCleanText, t._slaDays);
 
                 text += `    ↳ [${enTitle}] Ticket: ${id} | Network: ${network} | Status: ${slaStr}\n`;
             });

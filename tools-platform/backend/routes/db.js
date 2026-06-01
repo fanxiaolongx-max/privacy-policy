@@ -28,10 +28,13 @@ db.serialize(() => {
     // Add column if it didn't exist in older versions
     db.run("ALTER TABLE ReportSnapshots ADD COLUMN image_path TEXT", () => {});
     db.run("ALTER TABLE ReportSnapshots ADD COLUMN excel_path TEXT", () => {});
+    db.run("ALTER TABLE ReportCategoryScores ADD COLUMN month INTEGER", () => {});
+    db.run("ALTER TABLE ReportMetricData ADD COLUMN month INTEGER", () => {});
     
     db.run(`CREATE TABLE IF NOT EXISTS ReportCategoryScores (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         snapshot_id TEXT,
+        month INTEGER,
         cat_name TEXT,
         base_score REAL,
         manual_score REAL,
@@ -41,6 +44,7 @@ db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS ReportMetricData (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         snapshot_id TEXT,
+        month INTEGER,
         cat_name TEXT,
         metric_label TEXT,
         weight REAL,
@@ -93,8 +97,8 @@ router.post('/save', (req, res) => {
 
         // Delete existing data for this snapshot to allow re-saving
         db.run('DELETE FROM ReportSnapshots WHERE snapshot_id = ? AND month = ?', [snapshot_id, month]);
-        db.run('DELETE FROM ReportCategoryScores WHERE snapshot_id = ?', [snapshot_id]);
-        db.run('DELETE FROM ReportMetricData WHERE snapshot_id = ?', [snapshot_id]);
+        db.run('DELETE FROM ReportCategoryScores WHERE snapshot_id = ? AND (month = ? OR month IS NULL)', [snapshot_id, month]);
+        db.run('DELETE FROM ReportMetricData WHERE snapshot_id = ? AND (month = ? OR month IS NULL)', [snapshot_id, month]);
 
         // Save excel to disk if provided
         let excel_path = null;
@@ -125,17 +129,17 @@ router.post('/save', (req, res) => {
             }
         });
 
-        const stmtCat = db.prepare(`INSERT INTO ReportCategoryScores (snapshot_id, cat_name, base_score, manual_score, final_score)
-                                    VALUES (?, ?, ?, ?, ?)`);
+        const stmtCat = db.prepare(`INSERT INTO ReportCategoryScores (snapshot_id, month, cat_name, base_score, manual_score, final_score)
+                                    VALUES (?, ?, ?, ?, ?, ?)`);
         for (const cat of (cat_scores || [])) {
-            stmtCat.run([snapshot_id, cat.cat_name, cat.base_score, cat.manual_score, cat.final_score]);
+            stmtCat.run([snapshot_id, month, cat.cat_name, cat.base_score, cat.manual_score, cat.final_score]);
         }
         stmtCat.finalize();
 
-        const stmtMetric = db.prepare(`INSERT INTO ReportMetricData (snapshot_id, cat_name, metric_label, weight, target_val, raw_val, num_val, is_failing, gap)
-                                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+        const stmtMetric = db.prepare(`INSERT INTO ReportMetricData (snapshot_id, month, cat_name, metric_label, weight, target_val, raw_val, num_val, is_failing, gap)
+                                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
         for (const m of (metric_data || [])) {
-            stmtMetric.run([snapshot_id, m.cat_name, m.metric_label, m.weight, m.target_val, m.raw_val, m.num_val, m.is_failing ? 1 : 0, m.gap]);
+            stmtMetric.run([snapshot_id, month, m.cat_name, m.metric_label, m.weight, m.target_val, m.raw_val, m.num_val, m.is_failing ? 1 : 0, m.gap]);
         }
         stmtMetric.finalize();
 
@@ -158,7 +162,10 @@ router.get('/snapshots', (req, res) => {
 });
 
 function getFailingForSnapshot(snapshot, res) {
-    db.all('SELECT * FROM ReportMetricData WHERE snapshot_id = ? AND is_failing = 1', [snapshot.snapshot_id], (err, rows) => {
+    db.all(
+        'SELECT * FROM ReportMetricData WHERE snapshot_id = ? AND (month = ? OR month IS NULL) AND is_failing = 1',
+        [snapshot.snapshot_id, snapshot.month],
+        (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         
         const grouped = {};
@@ -189,7 +196,12 @@ router.get('/latest_failing', (req, res) => {
 });
 
 router.get('/failing/:snapshot_id', (req, res) => {
-    db.get('SELECT * FROM ReportSnapshots WHERE snapshot_id = ?', [req.params.snapshot_id], (err, snapshot) => {
+    const month = req.query.month ? parseInt(req.query.month, 10) : null;
+    const sql = month
+        ? 'SELECT * FROM ReportSnapshots WHERE snapshot_id = ? AND month = ? ORDER BY id DESC LIMIT 1'
+        : 'SELECT * FROM ReportSnapshots WHERE snapshot_id = ? ORDER BY id DESC LIMIT 1';
+    const params = month ? [req.params.snapshot_id, month] : [req.params.snapshot_id];
+    db.get(sql, params, (err, snapshot) => {
         if (err) return res.status(500).json({ error: err.message });
         if (!snapshot) return res.status(404).json({ error: 'Snapshot not found' });
         getFailingForSnapshot(snapshot, res);
@@ -226,13 +238,14 @@ router.post('/config/:key', (req, res) => {
 
 router.get('/monthly_report_data', (req, res) => {
     const { startDate, endDate } = req.query;
-    let dateFilter = '';
+    const whereParts = [];
     const params = [];
     
     if (startDate && endDate) {
-        dateFilter = 'WHERE DATE(created_at) >= ? AND DATE(created_at) <= ?';
+        whereParts.push('DATE(created_at) >= ? AND DATE(created_at) <= ?');
         params.push(startDate, endDate);
     }
+    const dateFilter = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : '';
 
     const sqlDaily = `
         SELECT s.snapshot_id, s.month, DATE(s.created_at) as date, s.created_at, s.standard_total_score, s.raw_data_json 
@@ -254,17 +267,24 @@ router.get('/monthly_report_data', (req, res) => {
             return res.json({ trends: [], latest_snapshot: null });
         }
 
-        const snapshotIds = dailySnapshots.map(s => `'${s.snapshot_id}'`).join(',');
+        const snapshotIds = [...new Set(dailySnapshots.map(s => s.snapshot_id))];
+        const placeholders = snapshotIds.map(() => '?').join(',');
+        const snapshotKeySet = new Set(dailySnapshots.map(s => `${s.snapshot_id}@@${s.month || ''}`));
+        const snapshotMonthById = {};
+        dailySnapshots.forEach(s => { snapshotMonthById[s.snapshot_id] = s.month || ''; });
         
-        db.all(`SELECT snapshot_id, cat_name, final_score FROM ReportCategoryScores WHERE snapshot_id IN (${snapshotIds})`, (err, catScores) => {
+        db.all(`SELECT snapshot_id, month, cat_name, final_score FROM ReportCategoryScores WHERE snapshot_id IN (${placeholders})`, snapshotIds, (err, catScores) => {
             if (err) return res.status(500).json({ error: err.message });
+            catScores = catScores.filter(row => snapshotKeySet.has(`${row.snapshot_id}@@${row.month || ''}`) || row.month === null);
 
-            db.all(`SELECT snapshot_id, COUNT(*) as total_metrics, SUM(CASE WHEN is_failing = 1 THEN 1 ELSE 0 END) as failing_metrics FROM ReportMetricData WHERE snapshot_id IN (${snapshotIds}) GROUP BY snapshot_id`, (err, metricStatsRows) => {
+            db.all(`SELECT snapshot_id, month, COUNT(*) as total_metrics, SUM(CASE WHEN is_failing = 1 THEN 1 ELSE 0 END) as failing_metrics FROM ReportMetricData WHERE snapshot_id IN (${placeholders}) GROUP BY snapshot_id, month`, snapshotIds, (err, metricStatsRows) => {
                 if (err) return res.status(500).json({ error: err.message });
+                metricStatsRows = metricStatsRows.filter(row => snapshotKeySet.has(`${row.snapshot_id}@@${row.month || ''}`) || row.month === null);
 
                 const metricStatsMap = {};
                 metricStatsRows.forEach(row => {
-                    metricStatsMap[row.snapshot_id] = {
+                    const key = `${row.snapshot_id}@@${row.month || snapshotMonthById[row.snapshot_id] || ''}`;
+                    metricStatsMap[key] = {
                         total: row.total_metrics,
                         failing: row.failing_metrics || 0
                     };
@@ -272,12 +292,14 @@ router.get('/monthly_report_data', (req, res) => {
 
                 const catScoreMap = {};
                 catScores.forEach(cs => {
-                    if (!catScoreMap[cs.snapshot_id]) catScoreMap[cs.snapshot_id] = {};
-                    catScoreMap[cs.snapshot_id][cs.cat_name] = cs.final_score;
+                    const key = `${cs.snapshot_id}@@${cs.month || snapshotMonthById[cs.snapshot_id] || ''}`;
+                    if (!catScoreMap[key]) catScoreMap[key] = {};
+                    catScoreMap[key][cs.cat_name] = cs.final_score;
                 });
 
                 const trends = dailySnapshots.map(s => {
-                    const stats = metricStatsMap[s.snapshot_id] || { total: 0, failing: 0 };
+                    const key = `${s.snapshot_id}@@${s.month || ''}`;
+                    const stats = metricStatsMap[key] || { total: 0, failing: 0 };
                     let complianceRate = 0;
                     if (stats.total > 0) {
                         complianceRate = ((stats.total - stats.failing) / stats.total) * 100;
@@ -285,8 +307,9 @@ router.get('/monthly_report_data', (req, res) => {
                     return {
                         date: s.date,
                         snapshot_id: s.snapshot_id,
+                        month: s.month,
                         total_score: s.standard_total_score,
-                        cat_scores: catScoreMap[s.snapshot_id] || {},
+                        cat_scores: catScoreMap[key] || {},
                         compliance_rate: complianceRate,
                         metrics_total: stats.total,
                         metrics_failing: stats.failing,
@@ -294,22 +317,25 @@ router.get('/monthly_report_data', (req, res) => {
                     };
                 });
 
-                const latestSnapshotId = dailySnapshots[dailySnapshots.length - 1].snapshot_id;
+                const latestDailySnapshot = dailySnapshots[dailySnapshots.length - 1];
+                const latestSnapshotId = latestDailySnapshot.snapshot_id;
+                const latestMonth = latestDailySnapshot.month;
 
-                db.all(`SELECT * FROM ReportCategoryScores WHERE snapshot_id = ?`, [latestSnapshotId], (err, latestCatScores) => {
+                db.all(`SELECT * FROM ReportCategoryScores WHERE snapshot_id = ? AND (month = ? OR month IS NULL)`, [latestSnapshotId, latestMonth], (err, latestCatScores) => {
                     if (err) return res.status(500).json({ error: err.message });
 
-                    db.all(`SELECT * FROM ReportMetricData WHERE snapshot_id = ?`, [latestSnapshotId], (err, latestMetrics) => {
+                    db.all(`SELECT * FROM ReportMetricData WHERE snapshot_id = ? AND (month = ? OR month IS NULL)`, [latestSnapshotId, latestMonth], (err, latestMetrics) => {
                         if (err) return res.status(500).json({ error: err.message });
 
-                        db.get(`SELECT raw_data_json FROM ReportSnapshots WHERE snapshot_id = ?`, [latestSnapshotId], (err, snapRow) => {
+                        db.get(`SELECT raw_data_json FROM ReportSnapshots WHERE snapshot_id = ? AND month = ? ORDER BY id DESC LIMIT 1`, [latestSnapshotId, latestMonth], (err, snapRow) => {
                             if (err) return res.status(500).json({ error: err.message });
                             markSqliteSource(res, 'GET /api/db/monthly_report_data');
                             res.json({
                                 trends: trends,
                                 latest_snapshot: {
                                     snapshot_id: latestSnapshotId,
-                                    total_score: dailySnapshots[dailySnapshots.length - 1].standard_total_score,
+                                    month: latestMonth,
+                                    total_score: latestDailySnapshot.standard_total_score,
                                     cat_scores: latestCatScores,
                                     metrics: latestMetrics,
                                     raw_data_json: snapRow ? snapRow.raw_data_json : null

@@ -93,12 +93,71 @@ function evaluateAllMetrics() {
     renderTopStickyBar();
 }
 
+const SLA_TARGET_MONTH_KEY = 'sla_target_month';
+
+function getTargetMonthDefaultByDay(date = new Date()) {
+    const currentMonth = date.getMonth() + 1;
+    if (date.getDate() < 10) {
+        return currentMonth === 1 ? 12 : currentMonth - 1;
+    }
+    return currentMonth;
+}
+
+function getTodayKey() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function getSLATargetMonth() {
+    const sel = document.getElementById('slaTargetMonthSelect');
+    if (sel && sel.dataset.ready === 'true' && sel.value) return parseInt(sel.value, 10);
+    try {
+        const saved = JSON.parse(localStorage.getItem(SLA_TARGET_MONTH_KEY) || '{}');
+        const month = parseInt(saved.month, 10);
+        if (saved.date === getTodayKey() && month >= 1 && month <= 12) return month;
+    } catch (e) {}
+    return getTargetMonthDefaultByDay();
+}
+
+function setSLATargetMonth(month) {
+    const normalized = parseInt(month, 10);
+    if (normalized >= 1 && normalized <= 12) {
+        localStorage.setItem(SLA_TARGET_MONTH_KEY, JSON.stringify({
+            month: normalized,
+            date: getTodayKey()
+        }));
+    }
+}
+
+function initSLATargetMonthSelect() {
+    const sel = document.getElementById('slaTargetMonthSelect');
+    if (!sel) return;
+    let html = '';
+    for (let i = 1; i <= 12; i++) {
+        html += `<option value="${i}">${i}月目标</option>`;
+    }
+    sel.innerHTML = html;
+    sel.value = getSLATargetMonth();
+    sel.dataset.ready = 'true';
+    sel.addEventListener('change', () => {
+        setSLATargetMonth(sel.value);
+        renderTopStickyBar();
+        if (window.AppState && typeof updateView === 'function') {
+            Object.keys(window.AppState).forEach(secId => {
+                if (window.AppState[secId] && window.AppState[secId].globalData && window.AppState[secId].globalData.length) {
+                    updateView(secId);
+                }
+            });
+        }
+    });
+}
+
 function renderTopStickyBar() {
     const content = document.getElementById('sticky-bar-content');
     const btnExpand = document.getElementById('btn-expand-metrics');
     const btnTarget = document.getElementById('btn-target-config');
     const keys = Object.keys(window.GlobalMetrics);
-    const cm = new Date().getMonth() + 1;
+    const cm = getSLATargetMonth();
     
     // Always show target config button so users can configure targets without importing files
     btnTarget.style.display = 'inline-block';
@@ -347,3 +406,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 window.evaluateAllMetrics = evaluateAllMetrics;
 window.SLAMetrics = { evaluateAllMetrics, renderTopStickyBar };
+window.SLATargetMonth = { get: getSLATargetMonth, init: initSLATargetMonthSelect };

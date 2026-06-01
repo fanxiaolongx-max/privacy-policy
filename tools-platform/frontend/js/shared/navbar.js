@@ -9,6 +9,7 @@ function renderNavbar() {
         { href: '/uivf12', icon: '🚀', label: '数据抓取', match: p => p.startsWith('/uivf12') },
         { href: '/sla', icon: '📊', label: '数据导入', match: p => p.startsWith('/sla') },
         { href: '/report', icon: '📈', label: '报表看板', match: p => p.startsWith('/report') },
+        { href: '/frt', icon: '📊', label: 'FRT核算', match: p => p.startsWith('/frt') },
         { href: '/expedite', icon: '⚡', label: '一键催办', match: p => p.startsWith('/expedite') },
         { href: '/monthly', icon: '📅', label: '月报页面', match: p => p.startsWith('/monthly') },
         { href: '/praudit', icon: '📋', label: 'PR稽查', match: p => p.startsWith('/praudit') },
@@ -46,11 +47,11 @@ function renderNavbar() {
         <div class="nav-links">${linksHtml}</div>
         <div style="flex:1"></div>
         
-        <div style="display:flex; align-items:center; gap:12px; font-size:14px; font-weight:600; color:#e2e8f0;">
-            <a href="/requirements" class="req-btn" style="text-decoration:none; color:#fff; background: linear-gradient(135deg, #00b09b, #96c93d); padding:5px 14px; border-radius:20px; font-size:13px; font-weight:bold; box-shadow:0 3px 6px rgba(0,176,155,0.3); display:flex; align-items:center; gap:5px; transition:transform 0.2s;">🎯 需求管理/反馈</a>
-            ${role === 'admin' ? '<a href="#" onclick="openUserModal()" onmouseover="this.style.background=\'rgba(255,255,255,0.2)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.1)\'" style="text-decoration:none; color:#f8fafc; background:rgba(255,255,255,0.1); padding:5px 12px; border-radius:15px; border:1px solid rgba(255,255,255,0.2); font-size:13px; transition:background 0.2s;">👥 账号管理</a>' : ''}
-            <span style="color:#38bdf8; background:rgba(56,189,248,0.15); padding:5px 12px; border-radius:15px; border:1px solid rgba(56,189,248,0.3); font-size:13px;">👤 ${user || '未登录'}</span>
-            <a href="#" onclick="doLogout()" onmouseover="this.style.background='rgba(239,68,68,0.25)'" onmouseout="this.style.background='rgba(239,68,68,0.15)'" style="text-decoration:none; color:#fca5a5; background:rgba(239,68,68,0.15); padding:5px 12px; border-radius:15px; border:1px solid rgba(239,68,68,0.3); font-size:13px; transition:background 0.2s;">退出</a>
+        <div style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; color:#e2e8f0;">
+            <a href="/requirements" class="req-btn" style="text-decoration:none; color:#fff; background: linear-gradient(135deg, #00b09b, #96c93d); padding:4px 10px; border-radius:15px; font-size:12px; font-weight:bold; box-shadow:0 2px 4px rgba(0,176,155,0.3); display:flex; align-items:center; gap:4px; transition:transform 0.2s;">🎯 需求管理/反馈</a>
+            ${role === 'admin' ? '<a href="#" onclick="openUserModal()" onmouseover="this.style.background=\'rgba(255,255,255,0.2)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.1)\'" style="text-decoration:none; color:#f8fafc; background:rgba(255,255,255,0.1); padding:4px 10px; border-radius:12px; border:1px solid rgba(255,255,255,0.2); font-size:12px; transition:background 0.2s;">👥 账号管理</a>' : ''}
+            <span style="color:#38bdf8; background:rgba(56,189,248,0.15); padding:4px 10px; border-radius:12px; border:1px solid rgba(56,189,248,0.3); font-size:12px;">👤 ${user || '未登录'}</span>
+            <a href="#" onclick="doLogout()" onmouseover="this.style.background='rgba(239,68,68,0.25)'" onmouseout="this.style.background='rgba(239,68,68,0.15)'" style="text-decoration:none; color:#fca5a5; background:rgba(239,68,68,0.15); padding:4px 10px; border-radius:12px; border:1px solid rgba(239,68,68,0.3); font-size:12px; transition:background 0.2s;">退出</a>
         </div>
 
         <div class="nav-status" style="margin-left:20px; display:flex; align-items:center; gap:12px;">

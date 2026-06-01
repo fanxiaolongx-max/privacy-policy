@@ -94,12 +94,12 @@ body.sla-page {
 .sys-btn:hover { background: #f1f3f5; border-color: #ccc; }
 .sys-btn input[type="file"] { display: none; }
 
-.rule-box { background-color: #f8fbfd; border: 1px solid #e3f2fd; padding: 12px; margin-bottom: 15px; border-radius: 6px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; font-size: 12px; color: #555; width: 85%; }
+.rule-box { background-color: #f8fbfd; border: 1px solid #e3f2fd; padding: 10px 12px; margin-bottom: 15px; border-radius: 6px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; font-size: 11px; color: #555; width: 100%; box-sizing: border-box; }
 .rule-col { display: flex; flex-direction: column; }
-.rule-col strong { margin-bottom: 6px; font-size: 13px; }
-.rule-col ul { margin: 0; padding-left: 16px; }
-.rule-col li { margin-bottom: 4px; line-height: 1.4; }
-.rule-col-border { border-left: 1px dashed #d0d7de; padding-left: 15px; }
+.rule-col strong { margin-bottom: 4px; font-size: 12px; line-height: 1.25; }
+.rule-col ul { margin: 0; padding-left: 14px; }
+.rule-col li { margin-bottom: 3px; line-height: 1.28; }
+.rule-col-border { border-left: 1px dashed #d0d7de; padding-left: 10px; }
 
 .upload-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
 .upload-btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 18px; font-size: 14px; font-weight: bold; color: #fff; border-radius: 8px; cursor: pointer; transition: all 0.2s; box-shadow: 0 3px 6px rgba(0,0,0,0.1); }
@@ -197,3 +197,14 @@ th.drag-over { border-left: 4px solid #ff9800 !important; background-color: #fff
 .sort-active  { color: #000; font-weight: bold; }
 
 .loading-text { text-align: center; color: #4a90e2; font-size: 16px; padding: 40px; background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+
+@media (max-width: 1400px) {
+    .rule-box { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .rule-col:nth-child(3),
+    .rule-col:nth-child(4) { border-left: none; padding-left: 0; }
+}
+
+@media (max-width: 900px) {
+    .rule-box { grid-template-columns: 1fr; }
+    .rule-col { border-left: none !important; padding-left: 0 !important; }
+}
