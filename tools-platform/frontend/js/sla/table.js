@@ -49,7 +49,9 @@ function updateDashboard(secId) {
         const rate = (p,u) => p===0?'-':((p-u)/p*100).toFixed(1)+'%';
         let thtml = '-';
         if (sTP > 0) {
-            const r = (sTP-sTU)/sTP*100, cm = new Date().getMonth()+1, ct = monthlyTargets[cm]||0;
+            const r = (sTP-sTU)/sTP*100;
+            const cm = window.SLATargetMonth && window.SLATargetMonth.get ? window.SLATargetMonth.get() : (new Date().getMonth()+1);
+            const ct = monthlyTargets[cm]||0;
             thtml = `<div class="metric-value ${r>=ct?'success':'danger'}">${r.toFixed(1)}%</div>
                      <div style="font-size:12px;font-weight:bold;color:${r>=ct?'#00b050':'#d32f2f'}">${r>=ct?'✅ 达标':'⚠️ 落后'}</div>
                      <div style="font-size:11px;background:#f1f3f5;padding:2px 6px;border-radius:10px;margin-top:4px;">🎯 ${cm}月目标: ${ct}%</div>`;
@@ -58,6 +60,25 @@ function updateDashboard(secId) {
             <div class="metric-card"><div class="metric-title">H1完成率</div><div class="metric-value">${rate(sH1P,sH1U)}</div></div>
             <div class="metric-card"><div class="metric-title">H2完成率</div><div class="metric-value">${rate(sH2P,sH2U)}</div></div>
             <div class="metric-total-wrapper"><div class="metric-title">🌟 2026总完成率</div>${thtml}</div>`;
+    } else if (state.mode === 'sr') {
+        const total = data.length;
+        const active = data.filter(r => !isSRClosedStatus(r.sr_status_name) && !isSRPendingStatus(r.sr_status_name)).length;
+        const pendingIgnored = data.filter(r => isSRPendingStatus(r.sr_status_name)).length;
+        const overdue = data.filter(r => r._slaCleanText && r._slaCleanText.includes('超期')).length;
+        const danger = data.filter(r => r._rowClass === 'danger-row').length;
+        const warning = data.filter(r => r._rowClass === 'warning-row').length;
+        panel.innerHTML = `
+            <div class="metric-card"><div class="metric-title">SR总量</div><div class="metric-value" style="color:#333">${total}</div></div>
+            <div class="metric-card"><div class="metric-title">在途监控</div><div class="metric-value" style="color:#1976d2">${active}</div></div>
+            <div class="metric-card"><div class="metric-title">挂起忽略</div><div class="metric-value" style="color:#9c27b0">${pendingIgnored}</div></div>
+            <div class="metric-total-wrapper">
+                <div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span class="metric-title">🌟 SLA预警态势</span><span class="metric-value ${danger > 0 ? 'danger' : (warning > 0 ? 'warn' : 'success')}">${overdue} 超期 / ${danger} 红 / ${warning} 黄</span></div>
+                <div class="status-badge-container">
+                    <span style="background:#f1f3f5;padding:2px 8px;border-radius:12px;font-size:11px;border:1px solid #e0e0e0;">历史或当前超期: <b style="color:#d32f2f">${overdue}</b></span>
+                    <span style="background:#f1f3f5;padding:2px 8px;border-radius:12px;font-size:11px;border:1px solid #e0e0e0;">红色高危: <b style="color:#d32f2f">${danger}</b></span>
+                    <span style="background:#f1f3f5;padding:2px 8px;border-radius:12px;font-size:11px;border:1px solid #e0e0e0;">黄色预警: <b style="color:#f57c00">${warning}</b></span>
+                </div>
+            </div>`;
     } else {
         const keys = state.mode === 'risk' ? ['风险状态','risk_status'] : ['状态-Status','task_status_en','task_status','task_status_cn'];
         let t = data.length, clsd = 0, counts = {};
@@ -83,15 +104,15 @@ function renderTable(secId) {
     const data = state.currentDisplayData;
     const container = document.getElementById(`table-container-${secId}`);
     if (!data.length) { container.innerHTML = '<p style="padding:20px;text-align:center;">没有找到数据 🤷‍♂️</p>'; return; }
-    const RECT_P = SLAUpload.RECT_PRIORITY_COLS, RISK_P = SLAUpload.RISK_PRIORITY_COLS, SPEC_P = SLAUpload.SPECIAL_PRIORITY_COLS;
+    const RECT_P = SLAUpload.RECT_PRIORITY_COLS, RISK_P = SLAUpload.RISK_PRIORITY_COLS, SPEC_P = SLAUpload.SPECIAL_PRIORITY_COLS, SR_P = SLAUpload.SR_PRIORITY_COLS;
     const getIcon = k => state.sortKey !== k ? '<span class="sort-icon">⇅</span>' : (state.sortAsc ? '<span class="sort-icon sort-active">▲</span>' : '<span class="sort-icon sort-active">▼</span>');
     let html = `<table id="table-${secId}"><thead><tr>`;
     if (state.mode !== 'other') {
         const sw = state.columnWidths['_SLA_'] ? `style="width:${state.columnWidths['_SLA_']}px;min-width:${state.columnWidths['_SLA_']}px;max-width:${state.columnWidths['_SLA_']}px;"` : '';
         html += `<th data-header="_SLA_" ${sw} onclick="handleSortClick('${secId}', '_SLA_')">预警与 SLA 状态 ${getIcon('_SLA_')}</th>`;
     }
-    const targetP = state.mode==='rectification'?RECT_P:(state.mode==='risk'?RISK_P:(state.mode==='special'?SPEC_P:[]));
-    const pClass = state.mode==='rectification'?'priority-col-rect':(state.mode==='risk'?'priority-col-risk':(state.mode==='special'?'priority-col-special':''));
+    const targetP = state.mode==='rectification'?RECT_P:(state.mode==='risk'?RISK_P:(state.mode==='special'?SPEC_P:(state.mode==='sr'?SR_P:[])));
+    const pClass = state.mode==='rectification'?'priority-col-rect':(state.mode==='risk'?'priority-col-risk':(state.mode==='special'?'priority-col-special':(state.mode==='sr'?'priority-col-risk':'')));
     state.visibleHeaders.forEach(header => {
         const safe = escapeHTML(header);
         const isPriority = targetP.includes(header) ? `class="${pClass}"` : '';

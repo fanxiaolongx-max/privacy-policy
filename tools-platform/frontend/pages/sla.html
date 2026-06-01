@@ -146,6 +146,10 @@
                         <option value="sqlite">强制 SQLite</option>
                     </select>
                 </div>
+                <div class="sla-source-controls">
+                    <span class="sla-source-note">目标月份:</span>
+                    <select id="slaTargetMonthSelect" class="sla-source-select"></select>
+                </div>
                 <div id="slaSourcePanel" class="sla-source-panel">
                     <span class="sla-source-badge">目标来源: -</span>
                     <span class="sla-source-badge">偏好来源: -</span>
@@ -181,6 +185,14 @@
                         <li><b>处理中：</b>要求完成日期倒计时</li>
                     </ul>
                 </div>
+                <div class="rule-col rule-col-border">
+                    <strong style="color:#d9480f;">📞 【SR详单】引擎：</strong>
+                    <ul>
+                        <li><b>严格前缀：</b>PBI_自动抓取-详单-SR_Latest</li>
+                        <li><b>在途监控：</b>以 exp_close_date 为唯一截止基准</li>
+                        <li><b>挂起逻辑：</b>挂起单忽略，上游会每天顺延期望关闭</li>
+                    </ul>
+                </div>
             </div>
 
             <div class="upload-actions">
@@ -192,6 +204,7 @@
                 <label class="upload-btn btn-rect">指定导入 [整改] <input type="file" id="rect-upload" accept=".xlsx,.xls,.csv" multiple></label>
                 <label class="upload-btn btn-risk">指定导入 [常规] <input type="file" id="risk-upload" accept=".xlsx,.xls,.csv" multiple></label>
                 <label class="upload-btn btn-special">指定导入 [专项] <input type="file" id="special-upload" accept=".xlsx,.xls,.csv" multiple></label>
+                <label class="upload-btn" style="background:#d9480f; color:white;">指定导入 [SR] <input type="file" id="sr-upload" accept=".xlsx,.xls,.csv" multiple></label>
             </div>
         </div>
 
@@ -205,17 +218,17 @@
     </div>
 
     <!-- 共享脚本 -->
-    <script src="/js/shared/api.js?v=20260530-07"></script>
-    <script src="/js/shared/toast.js?v=20260530-07"></script>
+    <script src="/js/shared/api.js?v=20260531-02"></script>
+    <script src="/js/shared/toast.js?v=20260531-02"></script>
     <script src="/js/shared/navbar.js?v=20260530-08"></script>
     <!-- SLA 模块（注意加载顺序）-->
     <script src="/js/sla/config.js?v=20260530-07"></script>
     <script src="/js/sla/prefs.js?v=20260530-07"></script>
-    <script src="/js/sla/upload.js?v=20260530-07"></script>
-    <script src="/js/sla/section.js?v=20260530-07"></script>
-    <script src="/js/sla/table.js?v=20260530-07"></script>
-    <script src="/js/sla/events.js?v=20260530-07"></script>
-    <script src="/js/sla/metrics.js?v=20260530-07"></script>
+    <script src="/js/sla/upload.js?v=20260601-03"></script>
+    <script src="/js/sla/section.js?v=20260601-01"></script>
+    <script src="/js/sla/table.js?v=20260601-02"></script>
+    <script src="/js/sla/events.js?v=20260601-01"></script>
+    <script src="/js/sla/metrics.js?v=20260601-03"></script>
     <script src="/js/sla/history.js?v=20260530-08"></script>
     <script src="/js/sla/categories.js?v=20260530-07"></script>
     <script>
@@ -275,6 +288,9 @@
             await initSLASourceMeta();
             await SLASection.initGlobalTargets();
             if (window.initCategories) await window.initCategories();
+            if (window.SLATargetMonth && window.SLATargetMonth.init) {
+                window.SLATargetMonth.init();
+            }
             if (window.SLAMetrics && window.SLAMetrics.renderTopStickyBar) {
                 window.SLAMetrics.renderTopStickyBar();
             }
@@ -284,6 +300,7 @@
         document.getElementById('rect-upload').addEventListener('change', e => SLAUpload.handleSpecificUpload(e, 'rectification'), false);
         document.getElementById('risk-upload').addEventListener('change', e => SLAUpload.handleSpecificUpload(e, 'risk'), false);
         document.getElementById('special-upload').addEventListener('change', e => SLAUpload.handleSpecificUpload(e, 'special'), false);
+        document.getElementById('sr-upload').addEventListener('change', e => SLAUpload.handleSpecificUpload(e, 'sr'), false);
     </script>
 </body>
 </html>

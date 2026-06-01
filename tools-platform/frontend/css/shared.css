@@ -74,11 +74,11 @@ body {
 .nav-link {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    border-radius: 6px;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 4px;
     text-decoration: none;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
     color: #aaa;
     transition: var(--transition);

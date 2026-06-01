@@ -135,6 +135,9 @@ app.get('/privacy', (req, res) => {
 app.get('/terms', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/pages/terms.html'));
 });
+app.get('/frt', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/pages/frt.html'));
+});
 
 // ── 全局错误兜底
 app.use((err, req, res, next) => {

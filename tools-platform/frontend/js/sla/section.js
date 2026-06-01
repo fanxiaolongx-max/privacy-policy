@@ -28,8 +28,67 @@ window.getCompatibleVal = getCompatibleVal;
 
 // Priority cols and hash fn are accessed via SLAUpload.*
 
+function parseFlexibleDate(value) {
+    if (value === undefined || value === null || value === '') return null;
+    if (value instanceof Date && !isNaN(value)) return value;
+    const raw = String(value).trim();
+    if (!raw) return null;
+    const normalized = raw
+        .replace(/\u00a0/g, ' ')
+        .replace(/\./g, '/')
+        .replace(/-/g, '/')
+        .replace('T', ' ')
+        .replace(/Z$/, '');
+    const date = new Date(normalized);
+    return isNaN(date) ? null : date;
+}
+
+function getSRStatus(row) {
+    return getCompatibleVal(row, ['sr_status_name']).trim();
+}
+
+function isSRClosedStatus(statusText) {
+    const status = String(statusText || '').toLowerCase();
+    return ['closed', 'resolved', 'canceled', 'cancelled'].some(token => status.includes(token));
+}
+
+function isSRPendingStatus(statusText) {
+    const status = String(statusText || '').toLowerCase();
+    return ['pending', 'suspend', 'suspended', 'hold', '挂起'].some(token => status.includes(token));
+}
+
+function getSRSeverity(row) {
+    const sev = getCompatibleVal(row, ['hw_sev_name', 'urgency']).toLowerCase();
+    if (sev.includes('critical') || sev.includes('schedule action') || sev.includes('immediate action')) return 'critical';
+    if (sev.includes('major')) return 'major';
+    if (sev.includes('minor')) return 'minor';
+    return 'normal';
+}
+
+function formatSRDuration(hours) {
+    const absHours = Math.abs(Math.ceil(hours || 0));
+    if (absHours <= 48) {
+        return `${absHours} 小时`;
+    }
+
+    const days = Math.ceil(absHours / 24);
+    if (days < 7) {
+        return `${days} 天`;
+    }
+
+    if (days < 30) {
+        const weeks = Math.floor(days / 7);
+        const remainDays = days % 7;
+        return remainDays > 0 ? `${weeks}周${remainDays}天` : `${weeks}周`;
+    }
+
+    const months = Math.floor(days / 30);
+    const remainDays = days % 30;
+    return remainDays > 0 ? `${months}月${remainDays}天` : `${months}月`;
+}
+
 async function initSection(secId, mode, title, rawData, themeColor, baseName = '') {
-    const RECT_P = SLAUpload.RECT_PRIORITY_COLS, RISK_P = SLAUpload.RISK_PRIORITY_COLS, SPEC_P = SLAUpload.SPECIAL_PRIORITY_COLS;
+    const RECT_P = SLAUpload.RECT_PRIORITY_COLS, RISK_P = SLAUpload.RISK_PRIORITY_COLS, SPEC_P = SLAUpload.SPECIAL_PRIORITY_COLS, SR_P = SLAUpload.SR_PRIORITY_COLS;
     let allHeadersSet = new Set();
     rawData.forEach(row => Object.keys(row).forEach(k => allHeadersSet.add(k)));
     const allHeaders = Array.from(allHeadersSet);
@@ -38,8 +97,9 @@ async function initSection(secId, mode, title, rawData, themeColor, baseName = '
     if (mode === 'rectification' && !validHeaders.includes('task_status')) { alert(`区块 [${title}] 未找到 task_status，跳过渲染。`); return; }
     if (mode === 'risk' && !(validHeaders.includes('风险状态') || validHeaders.includes('risk_status'))) { alert(`区块 [${title}] 未找到风险状态，跳过渲染。`); return; }
     if (mode === 'special' && !(validHeaders.includes('状态-Status') || validHeaders.includes('task_status_en') || validHeaders.includes('task_status') || validHeaders.includes('task_status_cn'))) { alert(`区块 [${title}] 未找到状态列，跳过渲染。`); return; }
+    if (mode === 'sr' && !validHeaders.includes('sr_status_name')) { alert(`区块 [${title}] 未找到 sr_status_name，跳过渲染。`); return; }
 
-    const targetPriorityCols = mode === 'rectification' ? RECT_P : (mode === 'risk' ? RISK_P : (mode === 'special' ? SPEC_P : []));
+    const targetPriorityCols = mode === 'rectification' ? RECT_P : (mode === 'risk' ? RISK_P : (mode === 'special' ? SPEC_P : (mode === 'sr' ? SR_P : [])));
     const foundPriorityCols = targetPriorityCols.filter(col => validHeaders.includes(col));
     const otherCols = validHeaders.filter(col => !targetPriorityCols.includes(col));
     if (validHeaders.includes('版本标识') && !foundPriorityCols.includes('版本标识')) {
@@ -160,6 +220,91 @@ function preprocessData(secId, rawData) {
                         else if (_slaDays < 30) { _rowClass = 'warning-row'; _slaText = `<span class="badge badge-special">处理提醒</span> ${_slaText}`; }
                     } else { _slaText = '<span style="color:red">解析失败</span>'; }
                 }
+            }
+        } else if (mode === 'sr') {
+            const status = getSRStatus(row);
+            const overdueFlag = getCompatibleVal(row, ['overdue']).toLowerCase();
+            const severity = getSRSeverity(row);
+            const openDate = parseFlexibleDate(getCompatibleVal(row, ['open_date']));
+            const expCloseDate = parseFlexibleDate(getCompatibleVal(row, ['exp_close_date']));
+            const actCloseDate = parseFlexibleDate(getCompatibleVal(row, ['act_close_date']));
+            const isClosed = isSRClosedStatus(status);
+            const isPending = isSRPendingStatus(status);
+
+            if (isPending) {
+                _slaDays = 999998;
+                _slaText = `<span class="badge badge-special">挂起忽略</span> ${status || 'Pending'}`;
+                _slaCleanText = `挂起忽略 (${status || 'Pending'})`;
+            } else if (isClosed) {
+                if ((actCloseDate && expCloseDate && actCloseDate > expCloseDate) || overdueFlag === 'y') {
+                    const overdueHours = (actCloseDate && expCloseDate) ? Math.ceil((actCloseDate - expCloseDate) / 3600000) : 0;
+                    _slaDays = -1;
+                    _rowClass = 'danger-row';
+                    const overdueText = overdueHours > 0 ? formatSRDuration(overdueHours) : '已触发上游超期标识';
+                    _slaText = `<span class="badge">历史超期</span> ${overdueHours > 0 ? `已超 ${overdueText}` : overdueText}`;
+                    _slaCleanText = `历史超期 (${overdueText})`;
+                } else {
+                    _slaDays = 999997;
+                    _slaText = `<span class="badge badge-special">已关单</span> ${status || 'Closed'}`;
+                    _slaCleanText = `已关单 (${status || 'Closed'})`;
+                }
+            } else if (openDate && expCloseDate) {
+                const totalMs = expCloseDate - openDate;
+                const consumedMs = now - openDate;
+                const remainingMs = expCloseDate - now;
+                const remainingHours = Math.ceil(remainingMs / 3600000);
+                const remainingDays = Math.ceil(remainingMs / 86400000);
+                const consumeRate = totalMs > 0 ? (consumedMs / totalMs) * 100 : 100;
+                _slaDays = remainingDays;
+
+                row._srStatus = status;
+                row._srSeverity = severity;
+                row._srConsumeRate = Number.isFinite(consumeRate) ? +consumeRate.toFixed(2) : null;
+                row._srRemainingHours = remainingHours;
+                row._srRemainingDays = remainingDays;
+
+                if (remainingMs < 0 || overdueFlag === 'y') {
+                    _rowClass = 'danger-row';
+                    const overdueText = formatSRDuration(Math.abs(remainingHours));
+                    _slaText = `<span class="badge">SR超期</span> 已超 ${overdueText}`;
+                    _slaCleanText = `SR超期 (${overdueText})`;
+                } else if (severity === 'critical') {
+                    if (consumeRate > 85 || remainingHours < 12) {
+                        _rowClass = 'danger-row';
+                        const remainText = formatSRDuration(remainingHours);
+                        _slaText = `<span class="badge">Critical高危</span> 剩余 ${remainText} / 消耗 ${consumeRate.toFixed(0)}%`;
+                        _slaCleanText = `Critical高危 (${remainText}, ${consumeRate.toFixed(0)}%)`;
+                    } else if (consumeRate > 70 && remainingHours < 48) {
+                        _rowClass = 'warning-row';
+                        const remainText = formatSRDuration(remainingHours);
+                        _slaText = `<span class="badge badge-risk">Critical预警</span> 剩余 ${remainText} / 消耗 ${consumeRate.toFixed(0)}%`;
+                        _slaCleanText = `Critical预警 (${remainText}, ${consumeRate.toFixed(0)}%)`;
+                    } else {
+                        const remainText = formatSRDuration(remainingHours);
+                        _slaText = `剩余 ${remainText} / 消耗 ${consumeRate.toFixed(0)}%`;
+                        _slaCleanText = _slaText;
+                    }
+                } else {
+                    if (consumeRate > 95) {
+                        _rowClass = 'danger-row';
+                        const remainText = formatSRDuration(remainingHours);
+                        _slaText = `<span class="badge">SR高危</span> 剩余 ${remainText} / 消耗 ${consumeRate.toFixed(0)}%`;
+                        _slaCleanText = `SR高危 (${remainText}, ${consumeRate.toFixed(0)}%)`;
+                    } else if (consumeRate > 80) {
+                        _rowClass = 'warning-row';
+                        const remainText = formatSRDuration(remainingHours);
+                        _slaText = `<span class="badge badge-risk">SR预警</span> 剩余 ${remainText} / 消耗 ${consumeRate.toFixed(0)}%`;
+                        _slaCleanText = `SR预警 (${remainText}, ${consumeRate.toFixed(0)}%)`;
+                    } else {
+                        const remainText = formatSRDuration(remainingHours);
+                        _slaText = `剩余 ${remainText} / 消耗 ${consumeRate.toFixed(0)}%`;
+                        _slaCleanText = _slaText;
+                    }
+                }
+            } else {
+                _slaText = '<span style="color:#ff9800">缺少SLA关键时间</span>';
+                _slaCleanText = '缺少SLA关键时间';
+                _slaDays = 999996;
             }
         }
         if (_slaText.includes('解析失败')) _slaDays = -999999;

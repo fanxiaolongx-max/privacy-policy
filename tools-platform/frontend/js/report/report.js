@@ -6,6 +6,11 @@ let labelToTargetKeyMap = {};
 let currentSnapshot = null;
 let standardTotalScore = 0;
 let metricGroups = []; // [{id, name, metrics:[label,...]}]
+const REPORT_TARGET_MONTH_KEY = 'report_target_month';
+
+function isReportEligibleSnapshot(snapshot) {
+    return Array.isArray(snapshot && snapshot.topMetrics) && snapshot.topMetrics.length > 0;
+}
 
 let i18nMap = {
     "分组": "Group",
@@ -100,6 +105,103 @@ function escapeHTML(str) {
     return typeof str === 'string' ? str.replace(/[&<>'"]/g, tag => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'": '&#39;','"':'&quot;'}[tag]||tag)) : str;
 }
 
+function getJSONBytes(value) {
+    try {
+        return new Blob([JSON.stringify(value)]).size;
+    } catch (e) {
+        return 0;
+    }
+}
+
+function isReportCompressionSupported() {
+    return typeof CompressionStream !== 'undefined' && typeof TextEncoder !== 'undefined';
+}
+
+function bytesToBase64(bytes) {
+    let binary = '';
+    const chunkSize = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+    }
+    return btoa(binary);
+}
+
+async function compressTextToTransportField(text, algorithm = 'gzip') {
+    const normalizedText = typeof text === 'string' ? text : '';
+    const inputBytes = new TextEncoder().encode(normalizedText);
+    const stream = new Blob([inputBytes]).stream().pipeThrough(new CompressionStream(algorithm));
+    const compressedBuffer = await new Response(stream).arrayBuffer();
+    const compressedBytes = new Uint8Array(compressedBuffer);
+    return {
+        encoding: `${algorithm}+base64`,
+        originalBytes: inputBytes.byteLength,
+        compressedBytes: compressedBytes.byteLength,
+        data: bytesToBase64(compressedBytes)
+    };
+}
+
+async function buildCompressedSnapshotBody(snapshot, algorithm = 'gzip') {
+    const compressedSnapshot = await compressTextToTransportField(JSON.stringify(snapshot), algorithm);
+    return {
+        transport: {
+            compression: `${algorithm}+base64`,
+            payload: 'snapshot',
+            originalBytes: compressedSnapshot.originalBytes,
+            compressedBytes: compressedSnapshot.compressedBytes
+        },
+        compressedSnapshot
+    };
+}
+
+function logReportSaveStep(step, detail) {
+    const prefix = '%c[Report Save]';
+    const style = 'color:#2563eb;font-weight:700;';
+    if (detail === undefined) {
+        console.info(prefix, style, step);
+    } else {
+        console.info(prefix, style, step, detail);
+    }
+}
+
+function logReportSaveError(step, error, detail) {
+    const prefix = '%c[Report Save]';
+    const style = 'color:#ef4444;font-weight:700;';
+    console.error(prefix, style, `${step} failed`, detail || '', error);
+}
+
+async function putSnapshotWithCompression(snapshotId, snapshot, reason = 'snapshot-update') {
+    const path = `/api/sla/snapshots/${snapshotId}`;
+    const stats = {
+        reason,
+        requestBytes: getJSONBytes(snapshot),
+        topMetricCount: Array.isArray(snapshot && snapshot.topMetrics) ? snapshot.topMetrics.length : 0,
+        expiringTicketCount: Array.isArray(snapshot && snapshot.expiringTickets) ? snapshot.expiringTickets.length : 0
+    };
+
+    try {
+        logReportSaveStep('开始写回 SLA 快照', stats);
+        return await API.put(path, snapshot);
+    } catch (e) {
+        logReportSaveError('普通 SLA 快照写回链路', e, stats);
+        if (!isReportCompressionSupported()) {
+            throw e;
+        }
+
+        logReportSaveStep('普通写回失败，开始构建 gzip 压缩重试请求', { reason });
+        const compressedBody = await buildCompressedSnapshotBody(snapshot, 'gzip');
+        const compressedStats = {
+            reason,
+            requestBytes: getJSONBytes(compressedBody),
+            originalBytes: compressedBody.transport.originalBytes,
+            compressedBytes: compressedBody.transport.compressedBytes
+        };
+        logReportSaveStep('gzip 压缩快照写回请求已构建', compressedStats);
+        const result = await API.put(path, compressedBody);
+        logReportSaveStep('gzip 压缩快照写回成功', compressedStats);
+        return result;
+    }
+}
+
 const defaultManualAdjustItems = [
     { type: '扣分', name: '人为事故 (含整改逾期、错认漏认)', unit: 10, cap: null, desc: '10分/次, 上限无' },
     { type: '扣分', name: '恢复超60分钟事故 (华为原因)', unit: 5, cap: null, desc: '5分/次, 上限无' },
@@ -120,6 +222,42 @@ const defaultManualAdjustItems = [
 ];
 let manualAdjustItems = [...defaultManualAdjustItems];
 
+function getTargetMonthDefaultByDay(date = new Date()) {
+    const currentMonth = date.getMonth() + 1;
+    if (date.getDate() < 10) {
+        return currentMonth === 1 ? 12 : currentMonth - 1;
+    }
+    return currentMonth;
+}
+
+function getTodayKey() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function getDefaultTargetMonth() {
+    try {
+        const saved = JSON.parse(localStorage.getItem(REPORT_TARGET_MONTH_KEY) || '{}');
+        const month = parseInt(saved.month, 10);
+        if (saved.date === getTodayKey() && month >= 1 && month <= 12) return month;
+    } catch (e) {}
+    return getTargetMonthDefaultByDay();
+}
+
+function setReportTargetMonth(month) {
+    const normalized = parseInt(month, 10);
+    if (normalized >= 1 && normalized <= 12) {
+        localStorage.setItem(REPORT_TARGET_MONTH_KEY, JSON.stringify({
+            month: normalized,
+            date: getTodayKey()
+        }));
+    }
+}
+
+function getSnapshotSuggestedTargetMonth(snapshot) {
+    const month = parseInt(snapshot && snapshot.selectedTargetMonth, 10);
+    return month >= 1 && month <= 12 ? month : null;
+}
 
 async function initReport() {
     try {
@@ -132,7 +270,8 @@ async function initReport() {
             API.get(`/api/sla/groups${query}`)
         ]);
         
-        snapshots = snapData || [];
+        const allSnapshots = snapData || [];
+        snapshots = allSnapshots.filter(isReportEligibleSnapshot);
         categories = catData || ['TE', 'ORG', 'ET', 'VDF'];
         globalConfig = configData || { targets: {}, prefs: {} };
         metricGroups = groupData || [];
@@ -168,11 +307,16 @@ async function initReport() {
             monthOptions += `<option value="${i}">${i}月份</option>`;
         }
         monthSel.innerHTML = monthOptions;
+        monthSel.value = getDefaultTargetMonth();
+        monthSel.dataset.userChanged = 'false';
+        monthSel.addEventListener('change', () => {
+            monthSel.dataset.userChanged = 'true';
+        });
         
         const sel = document.getElementById('snapshot-select');
         if (!snapshots.length) {
             sel.innerHTML = '<option value="">暂无快照数据 (No snapshot data)</option>';
-            document.getElementById('report-content').innerHTML = '<div class="empty-state"><h3>暂无导入记录 (No import record)</h3><p>请先前往 SLA 监控台导入数据并生成预警快照。<br><span style="font-size:12px;color:#888;">Please go to the SLA dashboard to import data and generate an alert snapshot.</span></p></div>';
+            document.getElementById('report-content').innerHTML = '<div class="empty-state"><h3>暂无可入库报表快照 (No report-ready snapshot)</h3><p>当前只有明细/临期类快照，未包含顶部指标数据，不会参与报表看板入库。<br><span style="font-size:12px;color:#888;">Only detail/expiring snapshots were found. They do not contain topMetrics and are excluded from report saving.</span></p></div>';
             if (window.renderReportSourcePanel) window.renderReportSourcePanel();
             return;
         }
@@ -233,14 +377,17 @@ window.loadSelectedSnapshot = function() {
     const id = document.getElementById('snapshot-select').value;
     currentSnapshot = snapshots.find(s => s.id === id);
     if (currentSnapshot) {
-        // Auto-select the month based on snapshot timestamp
-        const snapMonth = new Date(currentSnapshot.timestamp).getMonth() + 1;
-        document.getElementById('target-month-select').value = snapMonth;
+        const monthSel = document.getElementById('target-month-select');
+        if (monthSel && monthSel.dataset.userChanged !== 'true') {
+            monthSel.value = getSnapshotSuggestedTargetMonth(currentSnapshot) || getDefaultTargetMonth();
+        }
         renderReport(currentSnapshot);
     }
 };
 
 window.renderCurrentSnapshot = function() {
+    const monthSel = document.getElementById('target-month-select');
+    if (monthSel) setReportTargetMonth(monthSel.value);
     if (currentSnapshot) {
         renderReport(currentSnapshot);
     }
@@ -250,6 +397,39 @@ function parseNum(str) {
     if (str === undefined || str === null || str === '--') return NaN;
     const n = parseFloat(String(str).replace(/[^0-9.-]/g, ''));
     return isNaN(n) ? NaN : n;
+}
+
+function hasUsableMetricValue(metric) {
+    if (!metric) return false;
+    const hasGlobal = metric.value !== undefined && metric.value !== null && String(metric.value).trim() !== '' && String(metric.value).trim() !== '--';
+    const hasSubs = Array.isArray(metric.subMetrics) && metric.subMetrics.some(sm => {
+        return sm && sm.value !== undefined && sm.value !== null && String(sm.value).trim() !== '' && String(sm.value).trim() !== '--';
+    });
+    return hasGlobal || hasSubs;
+}
+
+function formatSnapshotTime(snapshot) {
+    const d = new Date(snapshot && snapshot.timestamp);
+    if (Number.isNaN(d.getTime())) return snapshot && snapshot.id ? `快照 ${snapshot.id}` : '未知快照';
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+function findLatestMetricSnapshotBefore(currentSnap, label) {
+    const snapIdx = snapshots.findIndex(s => s.id === currentSnap.id);
+    if (snapIdx < 0) return null;
+
+    for (let i = snapIdx + 1; i < snapshots.length; i++) {
+        const sourceSnap = snapshots[i];
+        const sourceMetric = (sourceSnap.topMetrics || []).find(m => m.label === label);
+        if (hasUsableMetricValue(sourceMetric)) {
+            return {
+                snapshot: sourceSnap,
+                metric: sourceMetric,
+                sourceText: formatSnapshotTime(sourceSnap)
+            };
+        }
+    }
+    return null;
 }
 
 function renderReport(snap) {
@@ -268,18 +448,20 @@ function renderReport(snap) {
                 
                 let valToUse = '--';
                 let subsToUse = [];
+                let autoFillSource = null;
                 
                 if (globalConfig.targets[k].autoFill) {
-                    const snapIdx = snapshots.findIndex(s => s.id === snap.id);
-                    if (snapIdx >= 0 && snapIdx < snapshots.length - 1) {
-                        const prevSnap = snapshots[snapIdx + 1];
-                        const prevMetric = (prevSnap.topMetrics || []).find(m => m.label === label);
-                        if (prevMetric) {
-                            valToUse = prevMetric.value || '--';
-                            if (prevMetric.subMetrics) {
-                                subsToUse = JSON.parse(JSON.stringify(prevMetric.subMetrics));
-                            }
+                    const source = findLatestMetricSnapshotBefore(snap, label);
+                    if (source) {
+                        valToUse = source.metric.value || '--';
+                        if (source.metric.subMetrics) {
+                            subsToUse = JSON.parse(JSON.stringify(source.metric.subMetrics));
                         }
+                        autoFillSource = {
+                            snapshotId: source.snapshot.id,
+                            timestamp: source.snapshot.timestamp,
+                            label: source.sourceText
+                        };
                     }
                 }
                 
@@ -292,13 +474,14 @@ function renderReport(snap) {
                         label: label,
                         value: valToUse,
                         subMetrics: subsToUse,
-                        isManual: true
+                        isManual: true,
+                        autoFillSource
                     };
                     metricCols.push(newMetric);
                     if (globalConfig.targets[k].autoFill) {
                         if (!currentSnapshot.topMetrics) currentSnapshot.topMetrics = [];
                         currentSnapshot.topMetrics.push(newMetric);
-                        API.put(`/api/sla/snapshots/${currentSnapshot.id}`, currentSnapshot).catch(e => console.error('Auto-fill save error:', e));
+                        putSnapshotWithCompression(currentSnapshot.id, currentSnapshot, 'auto-fill-new-metric').catch(e => console.error('Auto-fill save error:', e));
                     }
                 } else {
                     exists.isManual = true;
@@ -306,6 +489,10 @@ function renderReport(snap) {
                         let changed = false;
                         if (!exists.value || exists.value === '--') { exists.value = valToUse; changed = true; }
                         if (!exists.subMetrics || exists.subMetrics.length === 0) { exists.subMetrics = subsToUse; changed = true; }
+                        if (autoFillSource && (!exists.autoFillSource || exists.autoFillSource.snapshotId !== autoFillSource.snapshotId)) {
+                            exists.autoFillSource = autoFillSource;
+                            changed = true;
+                        }
                         
                         if (changed) {
                             if (!currentSnapshot.topMetrics) currentSnapshot.topMetrics = [];
@@ -313,10 +500,11 @@ function renderReport(snap) {
                             if (realExists) {
                                 realExists.value = exists.value;
                                 realExists.subMetrics = exists.subMetrics;
+                                realExists.autoFillSource = exists.autoFillSource;
                             } else {
                                 currentSnapshot.topMetrics.push(exists);
                             }
-                            API.put(`/api/sla/snapshots/${currentSnapshot.id}`, currentSnapshot).catch(e => console.error('Auto-fill save error:', e));
+                            putSnapshotWithCompression(currentSnapshot.id, currentSnapshot, 'auto-fill-existing-metric').catch(e => console.error('Auto-fill save error:', e));
                         }
                     }
                 }
@@ -522,8 +710,10 @@ function renderReport(snap) {
             const autoColor = isAuto ? '#0288d1' : '#9e9e9e';
             const autoBg = isAuto ? '#e1f5fe' : '#f5f5f5';
             const autoBorder = isAuto ? '#81d4fa' : '#e0e0e0';
-            const autoText = isAuto ? '🔄 自动填报: 已开' : '🔄 自动填报: 未开';
-            autoFillBtn = `<span style="cursor:pointer; margin-left:6px; font-size:12px; color:${autoColor}; background:${autoBg}; padding:2px 6px; border-radius:4px; border:1px solid ${autoBorder};" onclick="toggleAutoFill('${escapeHTML(m.label)}')">${autoText}</span>`;
+            const sourceText = m.autoFillSource && m.autoFillSource.label ? ` · 来源: ${m.autoFillSource.label}` : '';
+            const autoText = isAuto ? `🔄 自动填报: 已开${sourceText}` : '🔄 自动填报: 未开';
+            const autoTitle = isAuto && sourceText ? `自动填报跨快照获取数据源：${m.autoFillSource.label}` : '点击切换自动填报';
+            autoFillBtn = `<span style="cursor:pointer; margin-left:6px; font-size:12px; color:${autoColor}; background:${autoBg}; padding:2px 6px; border-radius:4px; border:1px solid ${autoBorder};" title="${escapeHTML(autoTitle)}" onclick="toggleAutoFill('${escapeHTML(m.label)}')">${escapeHTML(autoText)}</span>`;
         }
         const editBtn = m.isManual ? `<span style="cursor:pointer; margin-left:6px; font-size:12px; color:#2e7d32; background:#e8f5e9; padding:2px 6px; border-radius:4px; border:1px solid #c8e6c9;" onclick="editManualMetric('${escapeHTML(m.label)}')">✏️ 填报 (Fill)</span>${autoFillBtn}` : '';
 
@@ -1159,7 +1349,7 @@ window.saveManualAdjustData = async function(silent = false) {
     currentSnapshot.manualAdjustData = newData;
     
     try {
-        await API.put('/api/sla/snapshots/' + currentSnapshot.id, currentSnapshot);
+        await putSnapshotWithCompression(currentSnapshot.id, currentSnapshot, 'manual-adjust-data');
         if (!silent) showToast('手动加减分数据已保存到快照', 'success');
     } catch (e) {
         if (!silent) showToast('保存失败', 'error');
@@ -1858,7 +2048,7 @@ window.saveManualMetric = async function() {
             currentSnapshot.topMetrics.push(newMetric);
         }
         
-        await API.put(`/api/sla/snapshots/${currentSnapshot.id}`, currentSnapshot);
+        await putSnapshotWithCompression(currentSnapshot.id, currentSnapshot, 'manual-metric-save');
         
         buildLabelTargetMap();
         showToast('手动指标保存成功', 'success');
@@ -2253,25 +2443,25 @@ async function promptExpiringTickets(tickets) {
         
         let listHtml = tickets.map((t, i) => {
             const data = t.data || {};
-            const id = data.task_id || data.risk_id || data.ticket_id || data['单号'] || data['问题风险编号'] || data['问题编号'] || '未知单号';
+            const id = data.sr_num || data.sr_id || data.task_id || data.risk_id || data.ticket_id || data['单号'] || data['问题风险编号'] || data['问题编号'] || '未知单号';
             const network = data.network_name || data['网络名称'] || data.network || '未知网络';
-            return `<div style="padding:8px;border-bottom:1px solid #eee;font-size:13px;display:flex;align-items:center;">
+            return `<div style="padding:8px 10px;border-bottom:1px solid #eee;font-size:13px;display:flex;align-items:center;gap:8px;">
                 <input type="checkbox" class="exp-ticket-cb" value="${i}" checked style="margin-right:10px;cursor:pointer;width:16px;height:16px;">
-                <div style="flex:1;">
+                <div style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escapeHTML(t.title)} | 单号: ${escapeHTML(id)} | 网络: ${escapeHTML(network)} | ${escapeHTML(t._slaCleanText)}">
                     <b>${escapeHTML(t.title)}</b> | 单号: <span style="color:#1976d2">${escapeHTML(id)}</span> | 网络: ${escapeHTML(network)} | <span style="color:#d32f2f">${escapeHTML(t._slaCleanText)}</span>
                 </div>
             </div>`;
         }).join('');
         
         modal.innerHTML = `
-            <div style="background:#fff;border-radius:8px;width:650px;max-width:90%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+            <div style="background:#fff;border-radius:10px;width:min(1080px,96vw);max-height:84vh;display:flex;flex-direction:column;box-shadow:0 8px 28px rgba(0,0,0,0.18);">
                 <div style="padding:16px;border-bottom:1px solid #eee;background:#fff3e0;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;align-items:center;">
                     <h3 style="margin:0;color:#e65100;font-size:16px;">⚠️ 发现待处理的临期数据</h3>
                     <label style="font-size:13px;cursor:pointer;color:#e65100;font-weight:bold;display:flex;align-items:center;"><input type="checkbox" id="exp-select-all" checked style="margin-right:4px;"> 全选</label>
                 </div>
                 <div style="padding:16px;overflow-y:auto;flex:1;">
                     <p style="margin-top:0;font-size:14px;color:#333;">本次快照关联到了以下 <b>${tickets.length}</b> 条“本月底+5天内处理”条件的最新数据。请<b>勾选</b>需要一起入库的单子（取消勾选则会忽略）：</p>
-                    <div style="background:#fcfcfc;border-radius:4px;border:1px solid #ddd;max-height:250px;overflow-y:auto;margin-bottom:16px;">
+                    <div style="background:#fcfcfc;border-radius:6px;border:1px solid #ddd;max-height:360px;overflow-y:auto;overflow-x:hidden;margin-bottom:16px;">
                         ${listHtml}
                     </div>
                     <p style="margin-bottom:0;font-size:14px;color:#d32f2f;font-weight:bold;">
@@ -2327,14 +2517,20 @@ window.saveDashboardToDB = async function(event) {
     if (!currentSnapshot) {
         return showToast('无可用快照数据', 'error');
     }
-
-    if (currentSnapshot.expiringTickets && currentSnapshot.expiringTickets.length > 0) {
-        const selectedTickets = await promptExpiringTickets(currentSnapshot.expiringTickets);
-        currentSnapshot.expiringTickets = selectedTickets;
+    if (!isReportEligibleSnapshot(currentSnapshot)) {
+        return showToast('当前快照没有顶部指标数据，不会入库到报表看板', 'warn');
     }
 
     const snapshot_id = currentSnapshot.id;
     const month = parseInt(document.getElementById('target-month-select').value);
+    setReportTargetMonth(month);
+    const rawDataForSave = JSON.parse(JSON.stringify(currentSnapshot));
+
+    if (rawDataForSave.expiringTickets && rawDataForSave.expiringTickets.length > 0) {
+        rawDataForSave.expiringTickets = await promptExpiringTickets(rawDataForSave.expiringTickets);
+    }
+    rawDataForSave.selectedTargetMonth = month;
+    rawDataForSave.selectedTargetMonthLabel = `${month}月`;
     
     // Build cat scores
     const cat_scores = [];
@@ -2395,7 +2591,7 @@ window.saveDashboardToDB = async function(event) {
         standard_total_score: standardTotalScore,
         cat_scores: cat_scores,
         metric_data: metric_data,
-        raw_data: currentSnapshot
+        raw_data: rawDataForSave
     };
 
     try {
@@ -2499,7 +2695,14 @@ window.saveDashboardToDB = async function(event) {
                     categories.forEach(cat => {
                         const cell = catData[cat].values[m.label] || {};
                         rowData[`val_${cat}`] = cell.raw || '--';
-                        rowData[`score_${cat}`] = cell.isFailing ? cell.gapStr : '--';
+                        if (!cell || cell.raw === undefined || cell.raw === '--') {
+                            rowData[`score_${cat}`] = '--';
+                        } else if (!m.hasTarget) {
+                            rowData[`score_${cat}`] = '--';
+                        } else {
+                            const earned = cell.isFailing ? 0 : (weight + (cell.bonusScore || 0));
+                            rowData[`score_${cat}`] = Number.isInteger(earned) ? earned : +earned.toFixed(2);
+                        }
                     });
                     
                     const row = sheet.addRow(rowData);

@@ -6,11 +6,77 @@
 const RECT_PRIORITY_COLS    = ['task_status', 'task_create_time', 'rectify_plan_end_time'];
 const RISK_PRIORITY_COLS    = ['风险状态', 'risk_status', '创单时间', 'create_time', '期望关闭时间', 'ticket_close_due_date', '期望关闭时间-挂起'];
 const SPECIAL_PRIORITY_COLS = ['状态-Status', 'task_status_en', 'task_status', 'task_status_cn', '创建日期-Create Date', 'create_time', '要求完成日期-Required Completion Date', 'required_completion_time', 'plan_complete_date'];
+const SR_PRIORITY_COLS      = ['hw_sev_name', 'urgency', 'sr_status_name', 'open_date', 'exp_close_date', 'act_close_date', 'overdue', 'sr_num', 'sr_id', 'customer_name', 'country_name_cn', 'repoffice_name_cn'];
 
 function generateSchemaHash(str) {
     let hash = 0;
     for (let i = 0; i < str.length; i++) { hash = ((hash << 5) - hash) + str.charCodeAt(i); hash = hash & hash; }
     return Math.abs(hash).toString(36);
+}
+
+function getJSONBytes(value) {
+    try {
+        return new Blob([JSON.stringify(value)]).size;
+    } catch (e) {
+        return 0;
+    }
+}
+
+function isSLACompressionSupported() {
+    return typeof CompressionStream !== 'undefined' && typeof TextEncoder !== 'undefined';
+}
+
+function bytesToBase64(bytes) {
+    let binary = '';
+    const chunkSize = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+    }
+    return btoa(binary);
+}
+
+async function compressTextToTransportField(text, algorithm = 'gzip') {
+    const normalizedText = typeof text === 'string' ? text : '';
+    const inputBytes = new TextEncoder().encode(normalizedText);
+    const stream = new Blob([inputBytes]).stream().pipeThrough(new CompressionStream(algorithm));
+    const compressedBuffer = await new Response(stream).arrayBuffer();
+    const compressedBytes = new Uint8Array(compressedBuffer);
+    return {
+        encoding: `${algorithm}+base64`,
+        originalBytes: inputBytes.byteLength,
+        compressedBytes: compressedBytes.byteLength,
+        data: bytesToBase64(compressedBytes)
+    };
+}
+
+async function buildCompressedSnapshotBody(snapshot, algorithm = 'gzip') {
+    const snapshotText = JSON.stringify(snapshot);
+    const compressedSnapshot = await compressTextToTransportField(snapshotText, algorithm);
+    return {
+        transport: {
+            compression: `${algorithm}+base64`,
+            payload: 'snapshot',
+            originalBytes: compressedSnapshot.originalBytes,
+            compressedBytes: compressedSnapshot.compressedBytes
+        },
+        compressedSnapshot
+    };
+}
+
+function logSLAUploadStep(step, detail) {
+    const prefix = '%c[SLA Upload]';
+    const style = 'color:#0ea5e9;font-weight:700;';
+    if (detail === undefined) {
+        console.info(prefix, style, step);
+        return;
+    }
+    console.info(prefix, style, step, detail);
+}
+
+function logSLAUploadError(step, error, detail) {
+    const prefix = '%c[SLA Upload]';
+    const style = 'color:#ef4444;font-weight:700;';
+    console.error(prefix, style, `${step} failed`, detail || '', error);
 }
 
 async function readFiles(files) {
@@ -46,8 +112,8 @@ async function handleSpecificUpload(e, forceMode) {
     const rawData = await readFiles(files);
     if (!rawData.length) { alert('读取失败或为空表！'); document.getElementById('main-wrapper').innerHTML = ''; return; }
     document.getElementById('main-wrapper').innerHTML = '';
-    const titleMap = { rectification: '🔧 整改监控', risk: '⚠️ 常规风险监控', special: '🛠️ 专项风险监控' };
-    const colorMap = { rectification: '#1976d2', risk: '#7b1fa2', special: '#00796b' };
+    const titleMap = { rectification: '🔧 整改监控', risk: '⚠️ 常规风险监控', special: '🛠️ 专项风险监控', sr: '📞 SR详单分析' };
+    const colorMap = { rectification: '#1976d2', risk: '#7b1fa2', special: '#00796b', sr: '#d9480f' };
     await window.SLASection.initSection(forceMode, forceMode, titleMap[forceMode], rawData, colorMap[forceMode]);
     API.logHistory('sla', `导入${titleMap[forceMode]}`, `${files.length} 个文件`);
     e.target.value = '';
@@ -65,6 +131,7 @@ async function handleBatchUpload(e) {
         rectification: { files: [], data: [], title: '🔧 整改详单合集', mode: 'rectification', color: '#1976d2' },
         risk:          { files: [], data: [], title: '⚠️ 常规风险合集', mode: 'risk', color: '#7b1fa2' },
         special:       { files: [], data: [], title: '🛠️ CPT专项风险合集', mode: 'special', color: '#00796b' },
+        sr:            { files: [], data: [], title: '📞 SR详单分析', mode: 'sr', color: '#d9480f' },
         others: {}
     };
 
@@ -73,6 +140,7 @@ async function handleBatchUpload(e) {
         if (name.startsWith('PBI_自动抓取-整改详单_整改_Latest')) { groups.rectification.files.push(file); }
         else if (name.startsWith('PBI_自动抓取-CPT风险详表_Latest')) { groups.special.files.push(file); }
         else if (name.startsWith('PBI_自动抓取-风险详单_Latest')) { groups.risk.files.push(file); }
+        else if (name.startsWith('PBI_自动抓取-详单-SR_Latest')) { groups.sr.files.push(file); }
         else {
             let baseName = name;
             const match = name.match(/(.*?Latest)/i);
@@ -90,15 +158,16 @@ async function handleBatchUpload(e) {
     });
 
     if (groups.rectification.files.length) groups.rectification.data = await readFiles(groups.rectification.files);
-    if (groups.risk.files.length)          groups.risk.data          = await readFiles(groups.risk.files);
     if (groups.special.files.length)       groups.special.data       = await readFiles(groups.special.files);
+    if (groups.risk.files.length)          groups.risk.data          = await readFiles(groups.risk.files);
+    if (groups.sr.files.length)            groups.sr.data            = await readFiles(groups.sr.files);
     for (const key in groups.others)       groups.others[key].data   = await readFiles(groups.others[key].files);
 
     document.getElementById('main-wrapper').innerHTML = '';
     let navHtml = `<h3 style="margin-top:0;color:#2e7d32;font-size:16px;">📊 批量导入成功 (共解析 ${files.length} 个文件)</h3><div class="nav-pills">`;
 
     const initPromises = [];
-    for (const key of ['rectification', 'risk', 'special']) {
+    for (const key of ['rectification', 'special', 'risk', 'sr']) {
         const g = groups[key];
         if (g.data.length > 0) {
             navHtml += `<a href="javascript:void(0);" onclick="document.getElementById('section-${key}').scrollIntoView({behavior:'smooth'})" class="nav-pill" style="border-color:${g.color};color:${g.color}">${g.title} (${g.data.length}行)</a>`;
@@ -130,6 +199,7 @@ async function captureAndUploadSnapshot(fileNames) {
     const snapshot = {
         timestamp: new Date().toISOString(),
         files: fileNames,
+        selectedTargetMonth: window.SLATargetMonth && window.SLATargetMonth.get ? window.SLATargetMonth.get() : (new Date().getMonth() + 1),
         summary: [], 
         topMetrics: [],
         expiringTickets: []
@@ -139,7 +209,7 @@ async function captureAndUploadSnapshot(fileNames) {
     const now = new Date();
     const targetDate = new Date(now.getFullYear(), now.getMonth() + 1, 5, 23, 59, 59);
     const targetDays = Math.ceil((targetDate - now) / 86400000);
-    const collectionsToPush = ['rectification', 'risk', 'special'];
+    const collectionsToPush = ['rectification', 'risk', 'special', 'sr'];
 
     collectionsToPush.forEach(secId => {
         if (window.AppState && window.AppState[secId]) {
@@ -221,12 +291,51 @@ async function captureAndUploadSnapshot(fileNames) {
         });
     }
 
+    const snapshotStats = {
+        requestBytes: getJSONBytes(snapshot),
+        files: snapshot.files.length,
+        summaryCount: snapshot.summary.length,
+        topMetricCount: snapshot.topMetrics.length,
+        expiringTicketCount: snapshot.expiringTickets.length
+    };
+
     try {
+        logSLAUploadStep('开始上传历史快照', snapshotStats);
         await API.post('/api/sla/snapshot', snapshot);
+        logSLAUploadStep('历史快照上传成功', snapshotStats);
         showToast('✅ 预警结果已生成历史快照并存档');
     } catch (e) {
+        logSLAUploadError('普通历史快照上传链路', e, snapshotStats);
         console.error('Snapshot upload failed', e);
+
+        if (!isSLACompressionSupported()) {
+            showToast('❌ 历史快照上传失败，当前浏览器不支持压缩重试', 'error');
+            return;
+        }
+
+        try {
+            logSLAUploadStep('普通快照上传失败，开始构建 gzip 压缩重试请求');
+            const compressedBody = await buildCompressedSnapshotBody(snapshot, 'gzip');
+            const compressedStats = {
+                requestBytes: getJSONBytes(compressedBody),
+                originalBytes: compressedBody.transport.originalBytes,
+                compressedBytes: compressedBody.transport.compressedBytes,
+                files: snapshot.files.length,
+                expiringTicketCount: snapshot.expiringTickets.length
+            };
+            logSLAUploadStep('gzip 压缩快照请求已构建', compressedStats);
+
+            await API.post('/api/sla/snapshot', compressedBody);
+            logSLAUploadStep('gzip 压缩快照重试成功', compressedStats);
+            showToast('✅ 预警结果已通过压缩重试生成历史快照并存档');
+        } catch (retryError) {
+            logSLAUploadError('gzip 压缩快照重试链路', retryError, {
+                files: snapshot.files.length,
+                expiringTicketCount: snapshot.expiringTickets.length
+            });
+            showToast('❌ 历史快照上传失败，压缩重试也未成功', 'error');
+        }
     }
 }
 
-window.SLAUpload = { handleBatchUpload, handleSpecificUpload, readFiles, generateSchemaHash, RECT_PRIORITY_COLS, RISK_PRIORITY_COLS, SPECIAL_PRIORITY_COLS };
+window.SLAUpload = { handleBatchUpload, handleSpecificUpload, readFiles, generateSchemaHash, RECT_PRIORITY_COLS, RISK_PRIORITY_COLS, SPECIAL_PRIORITY_COLS, SR_PRIORITY_COLS };
