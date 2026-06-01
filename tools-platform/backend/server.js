@@ -13,6 +13,8 @@ const authRoutes = require('./routes/auth');
 const requirementsRoutes = require('./routes/requirements');
 const aiRoutes = require('./routes/ai');
 const storageRoutes = require('./routes/storage');
+const frtRoutes = require('./routes/frt');
+const prauditRoutes = require('./routes/praudit');
 const { checkAuth, requireAdmin } = require('./middleware/auth');
 
 const app = express();
@@ -92,6 +94,8 @@ app.use('/api/requirements', requirementsRoutes); // 需求管理 API
 app.use('/api/ai', aiRoutes); // AI 服务 API
 app.use('/api/storage', storageRoutes); // 存储迁移状态 API
 app.use('/api/db-explorer', require('./routes/db-explorer')); // 数据库浏览 API
+app.use('/api/frt', frtRoutes); // FRT 历史快照 API
+app.use('/api/praudit', prauditRoutes); // PR审计配置 API
 
 // ============================================================
 // 前端路由回退（SPA）
