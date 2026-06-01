@@ -7,6 +7,7 @@
     <title>PR进展附件记录 - 审计级批量自检系统</title>
     <!-- 引入 SheetJS 库用于解析 Excel 文件 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     <link rel="stylesheet" href="/css/shared.css">
     <style>
         :root {
@@ -493,6 +494,11 @@
                 display: none !important;
             }
 
+            /* 强制隐藏由于外部 JS 引入的导航栏和客服图标 */
+            nav, .navbar, #topNavbar, .ai-fab, .ai-panel, #chatbot-container, .chatbot-icon, .robot-icon, iframe, .toast-msg, #toastMsg, .toast, #globalToast {
+                display: none !important;
+            }
+
             #printReport {
                 display: block !important;
                 width: 100%;
@@ -526,6 +532,43 @@
                 margin-bottom: 20px;
             }
 
+            .print-summary-page {
+                page-break-after: always;
+                font-family: 'Segoe UI', sans-serif;
+                margin-bottom: 20px;
+            }
+            .summary-kpi-container {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 30px;
+                gap: 15px;
+            }
+            .summary-kpi-card {
+                flex: 1;
+                padding: 15px;
+                background: #f8f9fa;
+                border: 2px solid #eee;
+                border-radius: 8px;
+                text-align: center;
+            }
+            .summary-kpi-value {
+                font-size: 28px;
+                font-weight: bold;
+                margin-top: 10px;
+            }
+            .summary-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+                font-size: 14px;
+            }
+            .summary-table th, .summary-table td {
+                border: 1px solid #ccc;
+                padding: 10px;
+                text-align: left;
+            }
+            .summary-table th { background: #eee; }
+
             .print-card {
                 page-break-inside: avoid;
                 border: 1px solid #000;
@@ -557,6 +600,36 @@
                 gap: 8px;
                 font-size: 12px;
                 font-family: 'Segoe UI', sans-serif;
+            }
+
+            .print-info-item {
+                border: 1px solid #d9d9d9;
+                border-radius: 6px;
+                padding: 8px 10px;
+                background: #fbfbfb;
+                min-height: 56px;
+            }
+
+            .print-info-item.full-width {
+                grid-column: 1 / -1;
+            }
+
+            .print-info-label {
+                display: block;
+                color: #4a4a4a;
+                font-size: 11px;
+                font-weight: 700;
+                line-height: 1.35;
+                margin-bottom: 4px;
+            }
+
+            .print-info-value {
+                color: #111;
+                font-size: 12px;
+                line-height: 1.5;
+                white-space: normal;
+                word-break: break-word;
+                overflow-wrap: anywhere;
             }
 
             .print-check-table {
@@ -630,12 +703,24 @@
 
     <!-- 浏览器主界面区 -->
     <div class="container no-print">
-        <h1>PR审计-自检报告生成工具</h1>
+        <h1 style="display:flex; justify-content:center; align-items:center; gap:15px; margin-bottom:20px; position:relative;">
+            <div style="position:absolute; right:0; top:0; height:100%; display:flex; align-items:center;">
+                <button class="btn-outline" style="padding: 4px 10px; font-size:12px; border-radius:15px; border-color:#ccc; color:#555;" onclick="toggleLang()" id="langBtn">中 / EN</button>
+            </div>
+            <span><span data-i18n="PR审计报告系统">PR审计报告系统</span></span>
+            <select id="auditTypeSelector" style="font-size:16px; padding:6px 12px; border-radius:6px; border:2px solid var(--accent-color); background:#fff; color:var(--primary-color); outline:none; cursor:pointer;" onchange="switchAuditType()">
+                <option value="">⏳ 加载配置中...</option>
+            </select>
+            <button class="btn-success" style="font-size:14px; padding:6px 15px; border-radius:20px;" onclick="openWizard()"><span data-i18n="➕ 自定义新审计模板">➕ 自定义新审计模板</span></button>
+            <button class="btn-warning" id="btnEditConfig" style="font-size:14px; padding:6px 15px; border-radius:20px; background:#f39c12; border:none; color:#fff; display:none;" onclick="editWizard()"><span data-i18n="✏️ 编辑模板">✏️ 编辑模板</span></button>
+            <button class="btn-danger" id="btnDeleteConfig" style="font-size:14px; padding:6px 15px; border-radius:20px; border:none; color:#fff; display:none;" onclick="deleteWizardConfig()"><span data-i18n="🗑️ 删除模板">🗑️ 删除模板</span></button>
+            <button class="btn-outline" style="font-size:14px; padding:6px 15px; border-radius:20px; border-width:2px; font-weight:bold;" onclick="loadMockData()"><span data-i18n="🧪 一键加载测试数据">🧪 一键加载测试数据</span></button>
+        </h1>
 
         <div class="toolbar">
             <div>
-                <button class="btn-success" onclick="openModal('importModal')">📥 导入 Excel 文件</button>
-                <button class="btn-outline" onclick="openModal('configModal')">⚙️ 列展示设置</button>
+                <button class="btn-success" onclick="openModal('importModal')"><span data-i18n="📥 导入 Excel 文件">📥 导入 Excel 文件</span></button>
+                <button class="btn-outline" onclick="openModal('configModal')"><span data-i18n="⚙️ 列展示设置">⚙️ 列展示设置</span></button>
             </div>
             <div>
                 <button class="btn-export" onclick="exportPDF()">📄 导出全部为 PDF (双语版)</button>
@@ -672,7 +757,7 @@
             </div>
 
             <div style="text-align: right; margin-top: 20px;">
-                <button class="btn-outline" onclick="closeModal('importModal')" style="margin-right: 10px;">取消</button>
+                <button class="btn-outline" onclick="closeModal('importModal')" style="margin-right: 10px;"><span data-i18n="取消">取消</span></button>
                 <button onclick="processExcelImport()">解析并导入</button>
             </div>
         </div>
@@ -724,46 +809,183 @@
         </div>
     </div>
 
+    <!-- 6. 自定义审计模板向导 -->
+    <div class="modal-overlay no-print" id="wizardModal">
+        <div class="modal-card" style="max-width: 750px; max-height: 90vh; overflow-y:auto;">
+            <span class="modal-close" onclick="closeModal('wizardModal')">&times;</span>
+            <h3 style="margin-top:0; color: var(--primary-color); border-bottom: 2px solid var(--accent-color); padding-bottom:10px;"><span data-i18n="✨ 自定义新审计模板">✨ 自定义新审计模板</span></h3>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="font-weight:bold; font-size:14px;">📝 模板名称:</label>
+                <input type="text" id="wizName" placeholder="例如：RFC 变更单审计" data-i18n-ph="例如：RFC 变更单审计" style="width:100%; padding:10px; margin-top:5px; border:1px solid #ccc; border-radius:4px; font-size:14px;">
+            </div>
+
+            <div style="margin-bottom: 20px; border:1px dashed #ccc; padding:15px; border-radius:6px; background:#f8fbff;">
+                <h4 style="margin-top:0; margin-bottom:5px; color:var(--accent-color);"><span data-i18n="第一步：上传样例 Excel (提取表头字段)">第一步：上传样例 Excel (提取表头字段)</span></h4>
+                <p style="font-size:12px; color:#666; margin-top:0; margin-bottom:10px;"><span data-i18n="请上传一份标准的样例数据，我们会自动提取表头供您建立字段映射。">请上传一份标准的样例数据，我们会自动提取表头供您建立字段映射。</span></p>
+                <input type="file" id="wizFileInput" accept=".xlsx, .xls, .csv">
+                <button class="btn-outline" onclick="wizParseHeaders()" style="margin-top:10px;"><span data-i18n="⚙️ 解析表头">⚙️ 解析表头</span></button>
+                <div id="wizHeadersBox" style="margin-top:12px; font-size:12px; color:#555; display:flex; flex-wrap:wrap; gap:6px;"></div>
+            </div>
+
+            <div style="margin-bottom: 20px; border:1px solid #eee; padding:15px; border-radius:6px;">
+                <h4 style="margin-top:0; margin-bottom:5px;"><span data-i18n="第二步：选择审计需要关注的字段">第二步：选择审计需要关注的字段</span></h4>
+                <p style="font-size:12px; color:#e74c3c; margin-top:0; margin-bottom:10px; font-weight:bold;"><span data-i18n="⚠️ 必看警告：请按顺序勾选！您勾选的【第一个字段】将被强制作为该审计模板的主键/单号！">⚠️ 必看警告：请按顺序勾选！您勾选的【第一个字段】将被强制作为该审计模板的主键/单号！</span></p>
+                <div id="wizFieldsGrid" class="cols-grid" style="background:#fff; padding:10px; border:1px solid #f1f1f1;"><span data-i18n="暂无解析出的字段">暂无解析出的字段</span></div>
+                
+                <div style="margin-top:15px; border-top:1px dashed #eee; padding-top:15px;">
+                    <div style="font-weight:bold; margin-bottom:5px; color:var(--accent-color); font-size:13px;">
+                        <span data-i18n="附加：选择最多 4 个字段在 PDF 报告卡片顶部高亮展示">附加：选择最多 4 个字段在 PDF 报告卡片顶部高亮展示</span>
+                    </div>
+                    <div id="wizReportFieldsBox" class="cols-grid" style="background:#f0f8ff; padding:10px; border:1px solid #cce5ff; border-radius:4px; font-size:13px;">
+                        <span style="color:#666;" data-i18n="(请先在上方勾选关注的字段)">(请先在上方勾选关注的字段)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h4 style="margin-top:0; display:flex; justify-content:space-between; align-items:center;">
+                    第三步：定义审计检查点 (Checkpoints)
+                    <button class="btn-success" style="padding:6px 12px; font-size:12px;" onclick="wizAddCheckpoint()"><span data-i18n="➕ 新增检查点">➕ 新增检查点</span></button>
+                </h4>
+                <div id="wizCheckpointsContainer" style="display:flex; flex-direction:column; gap:10px;">
+                </div>
+            </div>
+
+            <div style="text-align: right; border-top: 1px solid #eee; padding-top: 15px;">
+                <button class="btn-outline" onclick="closeModal('wizardModal')" style="margin-right: 10px;"><span data-i18n="取消">取消</span></button>
+                <button class="btn-export" onclick="wizSaveConfig()"><span data-i18n="💾 保存并生效">💾 保存并生效</span></button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        const ALL_FIELDS = ["任务号", "索引号", "整改通知中文ID", "整改通知英文ID", "整改通知中文链接", "整改通知英文链接", "标题", "运营商名称", "产品域", "任务状态", "处理人", "是否延期", "延期原因", "延期审批状态", "延期审批人", "延期后计划完成时间", "产品存量", "决策不实施数", "排查完成时间", "延期申请备注", "累计延期天数", "延期审批时间", "累计延期次数", "历史责任人", "延期备案方式"];
+        let ALL_CONFIGS = [];
+        let activeConfig = null;
 
-        // 加入了双语对照翻译
-        const CHECK_POINTS = [
-            { key: 'c1', name: "① 书面证据", nameEn: "Written Evidence", desc: "客户确切回复", descEn: "Explicit customer reply" },
-            { key: 'c2', name: "② 产品名称", nameEn: "Product Name", desc: "附件明确包含", descEn: "Clearly included in attachment" },
-            { key: 'c3', name: "③ 数量", nameEn: "Quantity", desc: "附件明确包含", descEn: "Clearly included in attachment" },
-            { key: 'c4', name: "④ 延期时间", nameEn: "Extension Time", desc: "明确时间", descEn: "Explicit time" },
-            { key: 'c5', name: "⑤ 风险传递", nameEn: "Risk Transfer", desc: "邮件明确风险", descEn: "Risk clearly stated in email" },
-            { key: 'c6', name: "⑥ 有效性核实", nameEn: "Validity Verification", desc: "客户邮箱/签字", descEn: "Customer email/signature" },
-            { key: 'c7', name: "⑦ 高层审批", nameEn: "Executive Approval", desc: "交付部长审批", descEn: "Delivery Dept. Head approval" }
-        ];
-
-        const STORAGE_KEY_DATA = 'PR_Auditor_Checklist_Data';
-        const STORAGE_KEY_COLS = 'PR_Auditor_Visible_Cols';
+        let ALL_FIELDS = [];
+        let CHECK_POINTS = [];
+        let STORAGE_KEY_DATA = '';
+        let STORAGE_KEY_COLS = '';
 
         let ordersData = [];
-        let visibleCols = ["任务号", "标题", "处理人", "任务状态"];
+        let visibleCols = [];
         let pendingReasonTarget = null;
 
-        window.onload = function () {
-            const localData = localStorage.getItem(STORAGE_KEY_DATA);
-            if (localData) {
-                ordersData = JSON.parse(localData);
-                ordersData.forEach(row => {
-                    if (!row.reasons) row.reasons = { c1: '', c2: '', c3: '', c4: '', c5: '', c6: '', c7: '' };
+        window.onload = async function () {
+            await loadConfigs();
+        };
+
+        async function loadConfigs() {
+            try {
+                const res = await API.get('/api/praudit/configs');
+                ALL_CONFIGS = res || [];
+                
+                const selector = document.getElementById('auditTypeSelector');
+                selector.innerHTML = '';
+                
+                if (ALL_CONFIGS.length === 0) {
+                    selector.innerHTML = '<option value="">无可用模板</option>';
+                    return;
+                }
+
+                ALL_CONFIGS.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.innerText = c.name;
+                    selector.appendChild(opt);
                 });
+                
+                const lastSelected = localStorage.getItem('PR_Auditor_LastConfigId');
+                if (lastSelected && ALL_CONFIGS.find(c => c.id === lastSelected)) {
+                    selector.value = lastSelected;
+                }
+                await switchAuditType();
+            } catch (e) {
+                alert("加载审计模板失败：" + e.message);
+            }
+        }
+
+        async function switchAuditType() {
+            const selector = document.getElementById('auditTypeSelector');
+            const configId = selector.value;
+            if (!configId) return;
+            
+            activeConfig = ALL_CONFIGS.find(c => c.id === configId);
+            localStorage.setItem('PR_Auditor_LastConfigId', configId);
+            
+            ALL_FIELDS = activeConfig.fields;
+            CHECK_POINTS = activeConfig.checkpoints;
+            STORAGE_KEY_DATA = `PR_Auditor_Data_${configId}`;
+            STORAGE_KEY_COLS = `PR_Auditor_Cols_${configId}`;
+            
+            try {
+                let localData = await localforage.getItem(STORAGE_KEY_DATA);
+                
+                // 兼容老版本 localStorage 数据
+                if (!localData) {
+                    const oldLocalData = localStorage.getItem(STORAGE_KEY_DATA);
+                    if (oldLocalData) {
+                        localData = JSON.parse(oldLocalData);
+                        await localforage.setItem(STORAGE_KEY_DATA, localData);
+                        localStorage.removeItem(STORAGE_KEY_DATA); // 清理旧存储
+                    }
+                }
+
+                if (localData) {
+                    ordersData = localData;
+                    ordersData.forEach(row => {
+                        if (!row.reasons) row.reasons = {};
+                        if (!row.checks) row.checks = {};
+                        if (!row.images) row.images = {};
+                        CHECK_POINTS.forEach(cp => {
+                            if (!row.reasons[cp.key]) row.reasons[cp.key] = '';
+                            if (!row.checks[cp.key]) row.checks[cp.key] = 'none';
+                            if (!row.images[cp.key]) row.images[cp.key] = '';
+                        });
+                    });
+                } else {
+                    ordersData = [];
+                }
+            } catch (e) {
+                console.error("加载数据失败", e);
+                ordersData = [];
             }
 
             const localCols = localStorage.getItem(STORAGE_KEY_COLS);
-            if (localCols) visibleCols = JSON.parse(localCols);
+            if (localCols) {
+                visibleCols = JSON.parse(localCols);
+                visibleCols = visibleCols.filter(c => ALL_FIELDS.includes(c));
+            } else {
+                visibleCols = ALL_FIELDS.slice(0, Math.min(4, ALL_FIELDS.length));
+            }
+            if (visibleCols.length === 0 && ALL_FIELDS.length > 0) visibleCols = [ALL_FIELDS[0]];
+
+            // 控制编辑按钮显示
+            const editBtn = document.getElementById('btnEditConfig');
+            const delBtn = document.getElementById('btnDeleteConfig');
+            if (editBtn) {
+                editBtn.style.display = (activeConfig && activeConfig.id !== 'rc_audit_default') ? 'inline-block' : 'none';
+            }
+            if (delBtn) {
+                delBtn.style.display = (activeConfig && activeConfig.id !== 'rc_audit_default') ? 'inline-block' : 'none';
+            }
 
             initColConfig();
-            renderTable();
-        };
+            
+            // Re-apply toggleLang logic to newly rendered tables if needed
+            if (typeof renderTable === 'function') {
+                renderTable();
+            }
+        }
 
         function saveToStorage() {
-            try { localStorage.setItem(STORAGE_KEY_DATA, JSON.stringify(ordersData)); }
-            catch (e) { alert("本地存储已满！请精简图片。"); }
+            if (!STORAGE_KEY_DATA) return;
+            // 异步非阻塞存储，极大提升流畅度且无 5MB 限制
+            localforage.setItem(STORAGE_KEY_DATA, JSON.parse(JSON.stringify(ordersData))).catch(e => {
+                console.error("IndexedDB 写入失败:", e);
+                alert("保存失败：本地数据库异常，请检查浏览器是否禁用了 IndexedDB。");
+            });
         }
 
         // ================== 表格渲染引擎 ==================
@@ -779,24 +1001,26 @@
 
             tbody.innerHTML = '';
             if (ordersData.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="${visibleCols.length + 9}" style="color:#999; padding:30px;">暂无自检数据，请点击上方“导入 Excel 文件”开始。</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="${visibleCols.length + CHECK_POINTS.length + 2}" style="color:#999; padding:30px;">暂无自检数据，请点击上方“导入 Excel 文件”开始。</td></tr>`;
                 return;
             }
 
             ordersData.forEach((row, rowIndex) => {
                 const tr = document.createElement('tr');
                 let status = 'pass';
-                for (let i = 1; i <= 7; i++) {
-                    if (row.checks['c' + i] === 'fail') { status = 'fail'; break; }
-                    if (row.checks['c' + i] === 'none') { status = 'wait'; }
+                
+                for (let i = 0; i < CHECK_POINTS.length; i++) {
+                    const cKey = CHECK_POINTS[i].key;
+                    if (row.checks[cKey] === 'fail') { status = 'fail'; break; }
+                    if (row.checks[cKey] === 'none') { status = 'wait'; }
                 }
 
                 let htmlStr = '';
 
-                // 业务列
                 visibleCols.forEach(col => {
                     let val = row.baseData[col] || '-';
-                    if (col === '任务号') {
+                    // 默认 ALL_FIELDS[0] 是唯一主键/任务号
+                    if (ALL_FIELDS.length > 0 && col === ALL_FIELDS[0]) {
                         htmlStr += `<td><span class="task-id-cell" title="点击一键复制" onclick="copyText('${val}')">${val}</span></td>`;
                     } else {
                         if (val.length > 15) val = `<span title="${val}">${val.substring(0, 15)}...</span>`;
@@ -833,11 +1057,18 @@
                 let statusBadge = status === 'pass' ? '<span class="badge badge-pass">✅ 合格</span>' :
                     (status === 'fail' ? '<span class="badge badge-fail">❌ 不合格</span>' : '<span class="badge badge-wait">⏳ 待检</span>');
 
+                const strPassAll = typeof currentLang !== 'undefined' && currentLang === 'en' ? '✔Pass All' : '✔全过';
+                const strFailAll = typeof currentLang !== 'undefined' && currentLang === 'en' ? '✘Fail All' : '✘全挂';
+                const strDetail = typeof currentLang !== 'undefined' && currentLang === 'en' ? 'Detail' : '详情';
+                const strDelete = typeof currentLang !== 'undefined' && currentLang === 'en' ? 'Delete' : '删除';
+
                 htmlStr += `<td>${statusBadge}</td>
                         <td>
-                            <div class="action-cell">
-                                <button class="btn-outline" style="padding: 4px; font-size:0.75rem; width:100%;" onclick="openDetail(${rowIndex})">详情</button>
-                                <button class="btn-danger" style="padding: 4px; font-size:0.75rem; width:100%; box-shadow:none;" onclick="removeRow(${rowIndex})">删除</button>
+                            <div class="action-cell" style="display:flex; flex-direction:column; gap:4px;">
+                                <button class="btn-success" style="padding: 4px; font-size:0.75rem; width:100%; box-shadow:none;" onclick="passAll(${rowIndex})">${strPassAll}</button>
+                                <button class="btn-warning" style="padding: 4px; font-size:0.75rem; width:100%; box-shadow:none; color:#fff;" onclick="failAll(${rowIndex})">${strFailAll}</button>
+                                <button class="btn-outline" style="padding: 4px; font-size:0.75rem; width:100%;" onclick="openDetail(${rowIndex})">${strDetail}</button>
+                                <button class="btn-danger" style="padding: 4px; font-size:0.75rem; width:100%; box-shadow:none;" onclick="removeRow(${rowIndex})">${strDelete}</button>
                             </div>
                         </td>`;
                 tr.innerHTML = htmlStr;
@@ -903,22 +1134,136 @@
             if (ordersData.length === 0) { alert("没有可导出的数据！"); return; }
             const reportDiv = document.getElementById('printReport');
             const dateStr = new Date().toLocaleString('zh-CN', { hour12: false });
+            
+            const title = activeConfig ? activeConfig.name : 'PR进展自检审计报告';
+
+            let total = ordersData.length;
+            let passCount = 0; let failCount = 0; let waitCount = 0;
+            let cpFailCounts = {};
+            CHECK_POINTS.forEach(cp => cpFailCounts[cp.key] = { name: cp.name, count: 0 });
+
+            ordersData.forEach(row => {
+                let status = 'pass';
+                for (let i = 0; i < CHECK_POINTS.length; i++) { 
+                    const cKey = CHECK_POINTS[i].key;
+                    if (row.checks[cKey] === 'fail') { 
+                        status = 'fail'; 
+                        cpFailCounts[cKey].count++;
+                    } 
+                    if (row.checks[cKey] === 'none' && status !== 'fail') status = 'wait'; 
+                }
+                if (status === 'pass') passCount++;
+                else if (status === 'fail') failCount++;
+                else waitCount++;
+            });
+
+            const passRate = total > 0 ? ((passCount / total) * 100).toFixed(1) + '%' : '0%';
+            
+            let topFailCp = null;
+            let maxFails = -1;
+            Object.values(cpFailCounts).forEach(cp => {
+                if (cp.count > maxFails) { maxFails = cp.count; topFailCp = cp; }
+            });
+
+            let execSummary = `本次审计共抽样 <strong>${total}</strong> 单，其中完全合格 <strong>${passCount}</strong> 单，不合格 <strong>${failCount}</strong> 单（整体合格率 ${passRate}）。`;
+            if (maxFails > 0) execSummary += `主要问题集中在“<strong>${topFailCp.name}</strong>”环节，共计 ${maxFails} 次未通过。`;
+            else if (total > 0 && failCount === 0) execSummary += `所有单据表现优秀，未发现任何不合格情况。`;
+
+            let cpTableHtml = '';
+            Object.values(cpFailCounts).forEach(cp => {
+                let rate = total > 0 ? ((cp.count / total) * 100).toFixed(1) + '%' : '0%';
+                cpTableHtml += `<tr><td>${cp.name}</td><td>${cp.count}</td><td>${rate}</td></tr>`;
+            });
 
             let html = `
-            <div class="print-title">
-                PR进展自检审计报告
-                <span class="print-title-en">PR Progress Audit Report</span>
+            <div class="print-summary-page">
+                <div class="print-title">
+                    ${title}
+                    <span class="print-title-en">Progress Audit Report</span>
+                </div>
+                <div class="print-meta" style="margin-bottom:40px;">导出时间 / Export Time: ${dateStr}</div>
+
+                <h3 style="border-bottom:1px solid #ccc; padding-bottom:10px; margin-bottom:20px;">总体审计情况 / Overall Summary</h3>
+                <div class="summary-kpi-container">
+                    <div class="summary-kpi-card">
+                        <div style="color:#666; font-size:12px;">抽样总数 (Total)</div>
+                        <div class="summary-kpi-value" style="color:#2c3e50;">${total}</div>
+                    </div>
+                    <div class="summary-kpi-card">
+                        <div style="color:#666; font-size:12px;">完全合格 (Pass)</div>
+                        <div class="summary-kpi-value" style="color:#27ae60;">${passCount}</div>
+                    </div>
+                    <div class="summary-kpi-card">
+                        <div style="color:#666; font-size:12px;">不合格 (Fail)</div>
+                        <div class="summary-kpi-value" style="color:#c0392b;">${failCount}</div>
+                    </div>
+                    <div class="summary-kpi-card">
+                        <div style="color:#666; font-size:12px;">待检查 (Pending)</div>
+                        <div class="summary-kpi-value" style="color:#f39c12;">${waitCount}</div>
+                    </div>
+                </div>
+
+                <div style="background:#eef5ff; padding:15px; border-left:4px solid #0078D4; margin-bottom:30px; font-size:14px; line-height:1.6;">
+                    <strong>结论总览：</strong>${execSummary}
+                </div>
+
+                <h3 style="border-bottom:1px solid #ccc; padding-bottom:10px; margin-bottom:20px;">各个审计点问题分布 / Checkpoint Issue Distribution</h3>
+                <table class="summary-table">
+                    <thead>
+                        <tr>
+                            <th>审计检查点 (Checkpoint)</th>
+                            <th width="120">未通过次数 (Fails)</th>
+                            <th width="120">问题发生率 (Rate)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${cpTableHtml}
+                    </tbody>
+                </table>
             </div>
-            <div class="print-meta">导出时间 / Export Time: ${dateStr} &nbsp;&nbsp;|&nbsp;&nbsp; 抽样总数 / Total Samples: ${ordersData.length}</div>
         `;
+
+            const rf = (activeConfig && activeConfig.reportFields && activeConfig.reportFields.length > 0) 
+                       ? activeConfig.reportFields 
+                       : ['标题', '处理人', '任务状态', '是否延期'];
+
+            const escapeHtml = (value) => String(value ?? '-')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+
+            const shouldUseFullWidthField = (label, value) => {
+                const rawValue = String(value ?? '').trim();
+                const combinedLength = String(label || '').length + rawValue.length;
+                return rawValue.length > 34 || combinedLength > 52 || /[\r\n]/.test(rawValue);
+            };
 
             ordersData.forEach((row, idx) => {
                 let statusBadge = ''; let status = 'pass';
-                for (let i = 1; i <= 7; i++) { if (row.checks['c' + i] === 'fail') { status = 'fail'; break; } if (row.checks['c' + i] === 'none') status = 'wait'; }
+                for (let i = 0; i < CHECK_POINTS.length; i++) { 
+                    const cKey = CHECK_POINTS[i].key;
+                    if (row.checks[cKey] === 'fail') { status = 'fail'; break; } 
+                    if (row.checks[cKey] === 'none') status = 'wait'; 
+                }
 
                 if (status === 'pass') statusBadge = '✅ 整体合格 / Overall Pass';
                 else if (status === 'fail') statusBadge = '❌ 不合格 / Fail';
                 else statusBadge = '⏳ 检查未完成 / Pending';
+
+                let infoGridHtml = '<div class="print-info-grid">';
+                rf.forEach(f => {
+                    const rawValue = row.baseData[f] || '-';
+                    const fullWidthClass = shouldUseFullWidthField(f, rawValue) ? ' full-width' : '';
+                    infoGridHtml += `
+                        <div class="print-info-item${fullWidthClass}">
+                            <span class="print-info-label">${escapeHtml(f)}</span>
+                            <span class="print-info-value">${escapeHtml(rawValue)}</span>
+                        </div>
+                    `;
+                });
+                infoGridHtml += '</div>';
 
                 html += `
             <div class="print-card">
@@ -926,12 +1271,7 @@
                     <h3>单号 / Order No.: ${row.id}</h3>
                     <strong class="${status === 'pass' ? 'p-pass' : (status === 'fail' ? 'p-fail' : 'p-wait')}">${statusBadge}</strong>
                 </div>
-                <div class="print-info-grid">
-                    <div><strong>标题 / Title：</strong>${row.baseData['标题'] || '-'}</div>
-                    <div><strong>处理人 / Assignee：</strong>${row.baseData['处理人'] || '-'}</div>
-                    <div><strong>任务状态 / Status：</strong>${row.baseData['任务状态'] || '-'}</div>
-                    <div><strong>是否延期 / Is Delayed：</strong>${row.baseData['是否延期'] || '-'}</div>
-                </div>
+                ${infoGridHtml}
                 <table class="print-check-table"><tbody>
             `;
 
@@ -990,7 +1330,8 @@
                     let importCount = 0; let updateCount = 0;
 
                     jsonData.forEach(row => {
-                        let taskId = row["任务号"];
+                        // Dynamically resolve primary key
+                        let taskId = row[ALL_FIELDS[0]];
                         if (!taskId) { const keys = Object.keys(row); if (keys.length > 0) taskId = row[keys[0]]; }
                         if (!taskId) return;
 
@@ -1003,12 +1344,16 @@
                             ordersData[existIdx].baseData = { ...ordersData[existIdx].baseData, ...baseData };
                             updateCount++;
                         } else {
-                            ordersData.push({
+                            const newObj = {
                                 id: taskId, baseData: baseData,
-                                checks: { c1: 'none', c2: 'none', c3: 'none', c4: 'none', c5: 'none', c6: 'none', c7: 'none' },
-                                reasons: { c1: '', c2: '', c3: '', c4: '', c5: '', c6: '', c7: '' },
-                                images: { c1: "", c2: "", c3: "", c4: "", c5: "", c6: "", c7: "" }
+                                checks: {}, reasons: {}, images: {}
+                            };
+                            CHECK_POINTS.forEach(cp => {
+                                newObj.checks[cp.key] = 'none';
+                                newObj.reasons[cp.key] = '';
+                                newObj.images[cp.key] = '';
                             });
+                            ordersData.push(newObj);
                             importCount++;
                         }
                     });
@@ -1044,14 +1389,168 @@
             openModal('detailModal');
         }
 
-        function removeRow(idx) { if (confirm("确定删除此单数据及截图吗？")) { ordersData.splice(idx, 1); saveToStorage(); renderTable(); } }
-        function clearAllData() { if (confirm("【危险】确定清空所有单号与图片吗？不可逆转！")) { ordersData = []; saveToStorage(); renderTable(); } }
+        function removeRow(idx) { 
+            const msg = typeof currentLang !== 'undefined' && currentLang === 'en' ? "Confirm delete this row and images?" : "确定删除此单数据及截图吗？";
+            if (confirm(msg)) { ordersData.splice(idx, 1); saveToStorage(); renderTable(); } 
+        }
+        
+        function passAll(idx) {
+            CHECK_POINTS.forEach(cp => {
+                ordersData[idx].checks[cp.key] = 'pass';
+                ordersData[idx].reasons[cp.key] = ''; 
+            });
+            saveToStorage();
+            renderTable();
+        }
+
+        function failAll(idx) {
+            const msg = typeof currentLang !== 'undefined' && currentLang === 'en' 
+                ? "Please enter the failure reason (will apply to all checkpoints):" 
+                : "请输入一键不通过的理由 (将应用到所有检查点)：";
+            const reason = prompt(msg);
+            if (!reason) return; 
+
+            CHECK_POINTS.forEach(cp => {
+                ordersData[idx].checks[cp.key] = 'fail';
+                ordersData[idx].reasons[cp.key] = reason;
+            });
+            saveToStorage();
+            renderTable();
+        }
+
+        function clearAllData() { 
+            const msg = typeof currentLang !== 'undefined' && currentLang === 'en' ? "[Danger] Clear all data permanently?" : "【危险】确定清空所有单号与图片吗？不可逆转！";
+            if (confirm(msg)) { ordersData = []; saveToStorage(); renderTable(); } 
+        }
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // ================== 自定义向导引擎 ==================
+        let wizHeaders = [];
+        let wizCpCounter = 0;
+        let editingConfigId = null;
+
+        function openWizard() {
+            editingConfigId = null;
+            const titleEl = document.querySelector('#wizardModal h3 span[data-i18n]');
+            if(titleEl) {
+                titleEl.setAttribute('data-i18n', '✨ 自定义新审计模板');
+                titleEl.innerText = typeof currentLang !== 'undefined' && currentLang === 'en' ? I18N_DICT['✨ 自定义新审计模板'] : '✨ 自定义新审计模板';
+            }
+            document.getElementById('wizName').value = '';
+            document.getElementById('wizFileInput').value = '';
+            document.getElementById('wizHeadersBox').innerHTML = '';
+            document.getElementById('wizFieldsGrid').innerHTML = '<span data-i18n="暂无解析出的字段">暂无解析出的字段</span>';
+            document.getElementById('wizReportFieldsBox').innerHTML = '<span style="color:#666;" data-i18n="(请先在上方勾选关注的字段)">(请先在上方勾选关注的字段)</span>';
+            wizHeaders = [];
+            document.getElementById('wizCheckpointsContainer').innerHTML = '';
+            wizCpCounter = 0;
+            wizAddCheckpoint(); 
+            openModal('wizardModal');
+        }
+
+        function editWizard() {
+            if (!activeConfig || activeConfig.id === 'rc_audit_default') return;
+            editingConfigId = activeConfig.id;
+            
+            const titleEl = document.querySelector('#wizardModal h3 span[data-i18n]');
+            if(titleEl) {
+                titleEl.setAttribute('data-i18n', '✨ 编辑审计模板');
+                titleEl.innerText = typeof currentLang !== 'undefined' && currentLang === 'en' ? I18N_DICT['✨ 编辑审计模板'] : '✨ 编辑审计模板';
+            }
+            
+            document.getElementById('wizName').value = activeConfig.name;
+            document.getElementById('wizFileInput').value = '';
+            document.getElementById('wizHeadersBox').innerHTML = '<span style="color:#27ae60;">(当前已存在映射字段，若需更换请重新上传 Excel)</span>';
+            
+            wizHeaders = activeConfig.fields || [];
+            const grid = document.getElementById('wizFieldsGrid');
+            grid.innerHTML = '';
+            wizHeaders.forEach((h, idx) => {
+                grid.innerHTML += `<label><input type="checkbox" value="${h}" class="wiz-field-chk" checked onchange="updateReportFieldsUI()"> ${h}</label>`;
+            });
+            updateReportFieldsUI(activeConfig.reportFields || []);
+
+            document.getElementById('wizCheckpointsContainer').innerHTML = '';
+            wizCpCounter = 0;
+            activeConfig.checkpoints.forEach(cp => {
+                wizCpCounter++;
+                const key = 'c' + wizCpCounter;
+                const div = document.createElement('div');
+                div.style.cssText = "display:flex; gap:10px; background:#f8f9fa; padding:15px; border:1px solid #ddd; border-radius:6px; align-items:flex-start;";
+                div.innerHTML = `
+                    <div style="font-weight:bold; font-size:16px; color:#555; margin-top:5px;">${wizCpCounter}.</div>
+                    <div style="display:flex; flex-direction:column; gap:8px; flex:1;">
+                        <input type="text" class="w-cp-name" value="${cp.name}" placeholder="检查点名称" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
+                        <input type="text" class="w-cp-name-en" value="${cp.nameEn}" placeholder="检查点英文翻译 (可选)" style="padding:8px; border:1px solid #ccc; border-radius:4px; font-size:12px;">
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:8px; flex:1;">
+                        <input type="text" class="w-cp-desc" value="${cp.desc}" placeholder="规则描述" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
+                        <input type="text" class="w-cp-desc-en" value="${cp.descEn}" placeholder="规则描述英文翻译 (可选)" style="padding:8px; border:1px solid #ccc; border-radius:4px; font-size:12px;">
+                    </div>
+                    <button class="btn-danger" style="padding:8px 12px; margin-top:2px;" onclick="this.parentElement.remove()">删除</button>
+                `;
+                div.dataset.key = key;
+                document.getElementById('wizCheckpointsContainer').appendChild(div);
+            });
+            
+            openModal('wizardModal');
+        }
+
+        async function deleteWizardConfig() {
+            if (!activeConfig || activeConfig.id === 'rc_audit_default') return;
+            const langConfirm = currentLang === 'en' 
+                ? `Are you sure you want to permanently delete the template "${activeConfig.name}"?\nNote: All associated local test data will also be cleared!`
+                : `确定要永久删除审计模板【${activeConfig.name}】吗？\n注意：与之关联的本地测试数据也会被一同清除！`;
+            
+            if (!confirm(langConfirm)) return;
+
+            try {
+                await API.delete('/api/praudit/configs/' + activeConfig.id);
+                // 清除绑定的本地数据
+                await localforage.removeItem(`PR_Auditor_Data_${activeConfig.id}`);
+                localStorage.removeItem(`PR_Auditor_Cols_${activeConfig.id}`);
+                
+                showToast(currentLang === 'en' ? "Template successfully deleted!" : "模板已成功删除！");
+                
+                // 重置选择回默认模板
+                localStorage.removeItem('PR_Auditor_LastConfigId');
+                await loadConfigs();
+            } catch(e) {
+                alert((currentLang === 'en' ? "Delete failed: " : "删除失败：") + e.message);
+            }
+        }
 
         // ================== 图片引擎 ==================
         let activeUploadTarget = null;
         function triggerUpload(cKey, rowIndex) { activeUploadTarget = { cKey, rowIndex }; document.getElementById('hiddenFileInput').click(); }
+
+        function updateReportFieldsUI(preselected = null) {
+            const checkedFields = Array.from(document.querySelectorAll('.wiz-field-chk:checked')).map(cb => cb.value);
+            const box = document.getElementById('wizReportFieldsBox');
+            
+            let currentReportFields = preselected || Array.from(document.querySelectorAll('.wiz-report-chk:checked')).map(cb => cb.value);
+            
+            if (checkedFields.length === 0) {
+                const isEn = typeof currentLang !== 'undefined' && currentLang === 'en';
+                box.innerHTML = `<span style="color:#666;">${isEn ? "(Please check monitored fields above first)" : "(请先在上方勾选关注的字段)"}</span>`;
+                return;
+            }
+            
+            box.innerHTML = '';
+            checkedFields.forEach(f => {
+                const isChecked = currentReportFields.includes(f) ? 'checked' : '';
+                box.innerHTML += `<label style="cursor:pointer;"><input type="checkbox" value="${f}" class="wiz-report-chk" ${isChecked} onchange="limitReportFields(this)"> ${f}</label>`;
+            });
+        }
+        
+        function limitReportFields(el) {
+            const checked = document.querySelectorAll('.wiz-report-chk:checked');
+            if (checked.length > 4) {
+                alert(typeof currentLang !== 'undefined' && currentLang === 'en' ? "You can select up to 4 report fields!" : "最多只能选择 4 个报告展示字段！");
+                el.checked = false;
+            }
+        }
 
         function handlePaste(event, cKey, rowIndex) {
             const items = (event.clipboardData || window.clipboardData).items;
@@ -1093,6 +1592,255 @@
             event.stopPropagation(); const src = ordersData[rowIndex].images[cKey];
             if (src) { document.getElementById('modalImg').src = src; openModal('imageModal'); }
         }
+
+
+        function wizParseHeaders() {
+            const fileInput = document.getElementById('wizFileInput');
+            const file = fileInput.files[0];
+            if (!file) return alert("请先选择样例 Excel 文件！");
+            if (typeof XLSX === 'undefined') return alert("缺少 XLSX 依赖。");
+            
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+                    
+                    if (jsonData.length === 0) return alert("文件无数据！");
+                    wizHeaders = Object.keys(jsonData[0]);
+                    
+                    document.getElementById('wizHeadersBox').innerHTML = `成功解析出 ${wizHeaders.length} 个字段：<br>` + 
+                        wizHeaders.map(h => `<span style="display:inline-block; background:#e9ecef; padding:3px 6px; border-radius:4px; border:1px solid #ddd;">${h}</span>`).join('');
+                    
+                    const grid = document.getElementById('wizFieldsGrid');
+                    grid.innerHTML = '';
+                    wizHeaders.forEach((h, idx) => {
+                        grid.innerHTML += `<label><input type="checkbox" value="${h}" class="wiz-field-chk" checked onchange="updateReportFieldsUI()"> ${h}</label>`;
+                    });
+                    updateReportFieldsUI();
+                } catch(err) {
+                    alert("解析失败，请确保格式正确：" + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function wizAddCheckpoint() {
+            wizCpCounter++;
+            const key = 'c' + wizCpCounter;
+            const div = document.createElement('div');
+            div.style.cssText = "display:flex; gap:10px; background:#f8f9fa; padding:15px; border:1px solid #ddd; border-radius:6px; align-items:flex-start;";
+            div.innerHTML = `
+                <div style="font-weight:bold; font-size:16px; color:#555; margin-top:5px;">${wizCpCounter}.</div>
+                <div style="display:flex; flex-direction:column; gap:8px; flex:1;">
+                    <input type="text" class="w-cp-name" placeholder="检查点名称 (如: 书面证据，必填)" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
+                    <input type="text" class="w-cp-name-en" placeholder="检查点英文翻译 (可选)" style="padding:8px; border:1px solid #ccc; border-radius:4px; font-size:12px;">
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px; flex:1;">
+                    <input type="text" class="w-cp-desc" placeholder="规则描述 (如: 需附带客户确认邮件截图)" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
+                    <input type="text" class="w-cp-desc-en" placeholder="规则描述英文翻译 (可选)" style="padding:8px; border:1px solid #ccc; border-radius:4px; font-size:12px;">
+                </div>
+                <button class="btn-danger" style="padding:8px 12px; margin-top:2px;" onclick="this.parentElement.remove()">删除</button>
+            `;
+            div.dataset.key = key;
+            document.getElementById('wizCheckpointsContainer').appendChild(div);
+        }
+
+        async function wizSaveConfig() {
+            const name = document.getElementById('wizName').value.trim();
+            if (!name) return alert("请输入自定义审计模板名称！");
+            
+            const checkboxes = document.querySelectorAll('.wiz-field-chk:checked');
+            const fields = Array.from(checkboxes).map(cb => cb.value);
+            if (fields.length === 0) return alert("请在第二步中至少勾选一个关注的字段！");
+            
+            const reportCheckboxes = document.querySelectorAll('.wiz-report-chk:checked');
+            const reportFields = Array.from(reportCheckboxes).map(cb => cb.value);
+            
+            const cpDivs = document.getElementById('wizCheckpointsContainer').children;
+            const checkpoints = [];
+            for (let i = 0; i < cpDivs.length; i++) {
+                const div = cpDivs[i];
+                const cpName = div.querySelector('.w-cp-name').value.trim();
+                if (!cpName) return alert(`第 ${i+1} 个检查点名称不能为空！`);
+                checkpoints.push({
+                    key: div.dataset.key,
+                    name: cpName,
+                    nameEn: div.querySelector('.w-cp-name-en').value.trim() || cpName,
+                    desc: div.querySelector('.w-cp-desc').value.trim() || '-',
+                    descEn: div.querySelector('.w-cp-desc-en').value.trim() || '-'
+                });
+            }
+            if (checkpoints.length === 0) return alert("至少需要定义一个检查点规则！");
+            
+            try {
+                const payload = { name, fields, checkpoints, reportFields };
+                if (editingConfigId) payload.id = editingConfigId;
+                const res = await API.post('/api/praudit/configs', payload);
+                showToast(editingConfigId ? "模板修改成功！" : "模板创建成功，已保存至服务器！");
+                closeModal('wizardModal');
+                
+                await loadConfigs(); 
+                document.getElementById('auditTypeSelector').value = res.id;
+                switchAuditType(); 
+            } catch(e) {
+                alert("保存模板失败：" + e.message);
+            }
+        }
+        
+        // ================== 双语切换引擎 ==================
+        const I18N_DICT = {
+    "PR审计报告系统": "PR Audit System",
+    "➕ 自定义新审计模板": "➕ Custom Audit",
+    "🧪 一键加载测试数据": "🧪 Load Mock Data",
+    "📥 导入 Excel 文件": "📥 Import Excel",
+    "⚙️ 列展示设置": "⚙️ Display Columns",
+    "🗑️ 清空所有单号": "🗑️ Clear All",
+    "导出详细报告 (PDF)": "Export Report (PDF)",
+    "✨ 自定义新审计模板": "✨ Custom Audit Template",
+    "第一步：上传样例 Excel (提取表头字段)": "Step 1: Upload Sample Excel (Extract Headers)",
+    "请上传一份标准的样例数据，我们会自动提取表头供您建立字段映射。": "Please upload a standard sample data file, we will automatically extract headers for mapping.",
+    "⚙️ 解析表头": "⚙️ Parse Headers",
+    "第二步：选择审计需要关注的字段": "Step 2: Select Fields to Monitor",
+    "⚠️ 必看警告：请按顺序勾选！您勾选的【第一个字段】将被强制作为该审计模板的主键/单号！": "⚠️ Warning: Please check in order! The FIRST checked field will be enforced as the primary key/Task ID!",
+    "暂无解析出的字段": "No fields parsed yet",
+    "第三步：定义审计检查点 (Checkpoints)": "Step 3: Define Checkpoints",
+    "➕ 新增检查点": "➕ Add Checkpoint",
+    "取消": "Cancel",
+    "💾 保存并生效": "💾 Save & Apply",
+    "模板名称:": "Template Name:",
+    "例如：RFC 变更单审计": "e.g., RFC Change Audit",
+    "✏️ 编辑模板": "✏️ Edit Template",
+    "✨ 编辑审计模板": "✨ Edit Audit Template",
+    "🗑️ 删除模板": "🗑️ Delete Template",
+    "附加：选择最多 4 个字段在 PDF 报告卡片顶部高亮展示": "Additional: Select up to 4 fields to highlight at the top of PDF report cards",
+    "(请先在上方勾选关注的字段)": "(Please check monitored fields above first)"
+};
+        let currentLang = 'zh';
+
+        function toggleLang() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            document.getElementById('langBtn').innerText = currentLang === 'zh' ? '中 / EN' : 'EN / 中';
+            
+            // 翻译带 data-i18n 的静态元素
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (currentLang === 'en' && I18N_DICT[key]) el.innerHTML = I18N_DICT[key];
+                else el.innerHTML = key;
+            });
+            
+            // 翻译 placeholder
+            document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+                const key = el.getAttribute('data-i18n-ph');
+                if (currentLang === 'en' && I18N_DICT[key]) el.placeholder = I18N_DICT[key];
+                else el.placeholder = key;
+            });
+
+            // 重新渲染表格内容 (表头、按钮、状态等)
+            if (activeConfig) renderTable();
+        }
+
+        // 修改 renderTable 中的写死中文
+        const oldRenderTable = renderTable;
+        renderTable = function() {
+            oldRenderTable(); // Render original
+            
+            // Translate dynamic table elements if EN
+            if (currentLang === 'en') {
+                const tHead = document.getElementById('tableHead');
+                if (tHead) tHead.innerHTML = tHead.innerHTML.replace('自检状态', 'Status').replace('操作', 'Actions');
+                
+                const tBody = document.getElementById('tableBody');
+                if (tBody) {
+                    tBody.innerHTML = tBody.innerHTML
+                        .replace(/暂无自检数据，请点击上方“导入 Excel 文件”开始。/g, 'No data. Please click "Import Excel" to begin.')
+                        .replace(/✔通过/g, '✔Pass')
+                        .replace(/✘未过/g, '✘Fail')
+                        .replace(/✅ 合格/g, '✅ Pass')
+                        .replace(/❌ 不合格/g, '❌ Fail')
+                        .replace(/⏳ 待检/g, '⏳ Pending')
+                        .replace(/详情/g, 'Details')
+                        .replace(/删除/g, 'Delete')
+                        .replace(/粘贴Ctrl\+V<br>或点此上传/g, 'Paste Ctrl+V<br>or Click to Upload');
+                }
+            }
+        };
+
+        // ================== 测试数据生成引擎 ==================
+        function createMockImage(text) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 400; canvas.height = 200;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#f8d7da'; ctx.fillRect(0,0,400,200);
+            ctx.fillStyle = '#721c24'; ctx.font = '24px sans-serif'; 
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(text, 200, 100);
+            return canvas.toDataURL('image/png');
+        }
+
+        function loadMockData() {
+            if (!activeConfig) return alert("请先选择或新建一个审计模板！");
+            if (ordersData.length > 0) {
+                if (!confirm("加载测试数据会将当前列表追加数据，确定继续吗？")) return;
+            }
+
+            const mockDataCount = 6;
+            const newOrders = [];
+            const titles = ["紧急修复生产环境BUG", "用户数据迁移方案", "优化数据库查询性能", "更新前端依赖组件", "修复登录接口漏洞", "重构旧版接口逻辑"];
+            const assignees = ["张三 (Zheng San)", "李四 (Li Si)", "王五 (Wang Wu)", "赵六 (Zhao Liu)", "钱七 (Qian Qi)", "孙八 (Sun Ba)"];
+
+            for (let i = 0; i < mockDataCount; i++) {
+                const id = "MOCK-TEST-" + Math.floor(100000 + Math.random() * 900000);
+                let baseData = {};
+                ALL_FIELDS.forEach((f, idx) => {
+                    if (idx === 0) baseData[f] = id;
+                    else if (f.includes('标题') || f.includes('Title')) baseData[f] = titles[i % titles.length];
+                    else if (f.includes('处理人') || f.includes('Assignee')) baseData[f] = assignees[i % assignees.length];
+                    else if (f.includes('状态') || f.includes('Status')) baseData[f] = "已完结";
+                    else if (f.includes('延期') || f.includes('Delay')) baseData[f] = "否";
+                    else baseData[f] = "模拟数据 " + (i+1);
+                });
+
+                const obj = { id, baseData, checks: {}, reasons: {}, images: {} };
+                
+                CHECK_POINTS.forEach((cp, cpIdx) => {
+                    let state = 'pass';
+                    let reason = '';
+                    let img = '';
+
+                    // 制造不同的业务场景
+                    if (i === 1 && cpIdx === 0) { 
+                        state = 'fail'; reason = '缺少核心书面证据邮件，无法查验'; 
+                        img = createMockImage('模拟证据缺失占位图'); 
+                    }
+                    else if (i === 2 && cpIdx === 1) { 
+                        state = 'fail'; reason = '截图内容不完整，未体现评审人确认'; 
+                    }
+                    else if (i === 3) { 
+                        state = 'none'; // 待检查
+                    }
+                    else if (i === 4 && cpIdx % 2 === 0) { 
+                        state = 'fail'; reason = '严重违规：时间节点不符，涉嫌造假'; 
+                        img = createMockImage('风险异常截图证据'); 
+                    }
+
+                    obj.checks[cp.key] = state;
+                    obj.reasons[cp.key] = reason;
+                    obj.images[cp.key] = img;
+                });
+
+                newOrders.push(obj);
+            }
+
+            ordersData = ordersData.concat(newOrders);
+            saveToStorage();
+            renderTable();
+            showToast("成功加载 6 条全场景测试数据！");
+        }
+
     </script>
     <script src="/js/shared/api.js"></script>
     <script src="/js/shared/toast.js"></script>

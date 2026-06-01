@@ -99,6 +99,9 @@
         .d-key { font-size: 11px; color: #888; margin-bottom: 4px; font-weight: bold; }
         .d-val { font-size: 13px; color: #333; word-break: break-word; }
         
+        .copyable { cursor: pointer; transition: color 0.2s; border-radius: 3px; padding: 0 2px; }
+        .copyable:hover { color: var(--primary); background: rgba(0, 90, 158, 0.1); }
+
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
@@ -117,6 +120,11 @@
             <div class="target-month-wrapper">
                 考核月份: 
                 <input type="month" id="targetMonth" value="2026-05" onchange="triggerRecalculate()">
+            </div>
+            
+            <div style="display:flex; gap:10px;">
+                <button class="dropdown-btn" style="background:#2e7d32; color:white; border-color:#2e7d32;" onclick="saveSnapshot(event)">💾 保存为快照</button>
+                <button class="dropdown-btn" style="background:#8e24aa; color:white; border-color:#8e24aa;" onclick="openSnapshotsModal()">🕒 历史快照</button>
             </div>
             
             <div class="upload-area" onclick="document.getElementById('fileInput').click()">
@@ -199,6 +207,18 @@
         </div>
         <div class="modal-body">
             <div id="modalGrid" class="detail-grid"></div>
+        </div>
+    </div>
+</div>
+
+<div id="snapshotsModal" class="modal">
+    <div class="modal-content" style="width: 95%; max-width: 1600px;">
+        <div class="modal-header" style="background: #8e24aa;">
+            <h2 style="margin: 0; font-size: 18px;">🕒 历史考核快照</h2>
+            <span class="close-btn" onclick="closeSnapshotsModal()">&times;</span>
+        </div>
+        <div class="modal-body" id="snapshotsBody">
+            <div style="text-align:center; padding: 20px;">正在加载历史快照...</div>
         </div>
     </div>
 </div>
@@ -364,6 +384,9 @@
         if (event.target == document.getElementById('ticketModal')) {
             closeModal();
         }
+        if (event.target == document.getElementById('snapshotsModal')) {
+            closeSnapshotsModal();
+        }
     }
 
     function triggerRecalculate() {
@@ -396,6 +419,7 @@
         
         const idxCreator = getIdx(['建单人', 'creator', 'logged by', 'reporter', 'logged_by']);
         const idxOwner = getIdx(['当前责任人', '责任人', 'owner', 'sr_owner', 'cur_assignee']);
+        const idxCustomer = getIdx(['客户名称', 'customer name', 'customer_name', 'network', '网络']);
 
         if (idxExpClose === -1) return alert("❌ 找不到【期望关闭时间】列。");
 
@@ -419,6 +443,7 @@
             
             const creator = idxCreator > -1 ? String(cols[idxCreator] || "").trim() : "-";
             const owner = idxOwner > -1 ? String(cols[idxOwner] || "").trim() : "-";
+            const customerName = idxCustomer > -1 ? String(cols[idxCustomer] || "").trim() : "未知客户";
 
             const expDate = parseDateObj(expStr);
             const actDate = parseDateObj(actStr);
@@ -435,7 +460,6 @@
             } else if (expMonth !== monthInput) {
                 reason = `非考核月 (${expMonth})`;
             } else if (type && !selectedSRTypes.includes(type)) {
-                // 读取动态复选框的值
                 reason = `未勾选的类型 (${type})`;
             } else if (bg && bg !== "运营商" && bg.toUpperCase() !== "CARRIER") {
                 reason = `非运营商 BG`;
@@ -460,7 +484,7 @@
                     sortPriority = 2; 
                     
                     const blamePerson = owner && owner !== '-' ? owner : creator;
-                    badTicketsList.push({ sr: sr, blamePerson: blamePerson, index: i });
+                    badTicketsList.push({ sr: sr, blamePerson: blamePerson, customerName: customerName || '未知客户', index: i });
                 }
             }
 
@@ -469,6 +493,7 @@
                 sr: sr,
                 creator: creator,
                 owner: owner,
+                customerName: customerName || '未知客户',
                 expStr: expStr || '-',
                 actStr: actStr || '-',
                 status: status,
@@ -489,12 +514,34 @@
 
         const blameBox = document.getElementById('blameBox');
         if (badTicketsList.length > 0) {
-            document.getElementById('badTagsContainer').innerHTML = badTicketsList.map(t => 
-                `<div class="bad-tag" onclick="openModal(${t.index})" title="点击查看详情">
-                    <span style="color:#666;font-weight:normal;">单号:</span> ${t.sr} &nbsp; 
-                    <span style="color:#666;font-weight:normal;">责:</span> <b>${t.blamePerson}</b>
-                </div>`
-            ).join('');
+            const grouped = {};
+            badTicketsList.forEach(t => {
+                if (!grouped[t.customerName]) grouped[t.customerName] = [];
+                grouped[t.customerName].push(t);
+            });
+
+            let html = '';
+            for (const cust in grouped) {
+                const tickets = grouped[cust];
+                const copyStr = tickets.map(t => `${t.sr} (${t.blamePerson})`).join('\\n');
+                
+                html += `<div style="margin-bottom: 12px; border: 1px solid #ffcccc; background: #fff; border-radius: 6px; padding: 10px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px dashed #ffe6e6; padding-bottom: 8px; margin-bottom: 10px;">
+                                <strong style="color:var(--danger); font-size:14px;">🏢 客户：${cust} <span style="color:#888; font-size:12px; font-weight:normal;">(${tickets.length}单)</span></strong>
+                                <button onclick="copyText(this, \`${copyStr}\`)" style="background:#fff0f0; border:1px solid #ffcccc; color:var(--danger); padding:4px 10px; border-radius:4px; font-size:12px; cursor:pointer; font-weight:bold; transition:all 0.2s;" onmouseover="this.style.background='#ffe6e6'" onmouseout="this.style.background='#fff0f0'">📋 复制全组名单</button>
+                            </div>
+                            <div style="display:flex; flex-wrap:wrap; gap:8px;">`;
+                
+                html += tickets.map(t => 
+                    `<div class="bad-tag" onclick="openModal(${t.index})" title="点击查看详情" style="font-weight:normal;">
+                        SR: <b>${t.sr}</b> &nbsp; 责: <b>${t.blamePerson}</b>
+                    </div>`
+                ).join('');
+                
+                html += `</div></div>`;
+            }
+            
+            document.getElementById('badTagsContainer').innerHTML = html;
             blameBox.style.display = 'block';
         } else {
             blameBox.style.display = 'none';
@@ -658,6 +705,233 @@
 
     function closeModal() {
         modal.style.display = "none";
+    }
+
+    async function saveSnapshot(event) {
+        if (!globalProcessedRows || globalProcessedRows.length === 0) {
+            return alert("暂无考核数据可保存，请先导入表格！");
+        }
+        
+        const payload = {
+            month: document.getElementById('targetMonth').value,
+            frdCount: parseInt(document.getElementById('val-frd').innerText) || 0,
+            frcCount: parseInt(document.getElementById('val-frc').innerText) || 0,
+            finalFRT: document.getElementById('val-frt').innerText,
+            selectedSRTypes: selectedSRTypes,
+            headers: globalHeadersOriginal,
+            badTickets: globalProcessedRows.filter(r => r.rowClass === "status-frd").map(r => ({
+                sr: r.sr,
+                owner: r.owner,
+                creator: r.creator,
+                customerName: r.customerName,
+                reason: r.reason,
+                rawData: r.rawData
+            }))
+        };
+
+        try {
+            const btn = event.target;
+            const originText = btn.innerText;
+            btn.innerText = "⏳ 保存中...";
+            btn.disabled = true;
+
+            await API.post('/api/frt/snapshots', payload);
+            
+            btn.innerText = originText;
+            btn.disabled = false;
+            
+            if (typeof showToast !== 'undefined') {
+                showToast('✅ 快照保存成功！');
+            } else {
+                alert('✅ 快照保存成功！');
+            }
+        } catch (e) {
+            alert("保存失败：" + e.message);
+            event.target.innerText = "💾 保存为快照";
+            event.target.disabled = false;
+        }
+    }
+
+    async function openSnapshotsModal() {
+        document.getElementById('snapshotsModal').style.display = 'block';
+        const body = document.getElementById('snapshotsBody');
+        body.innerHTML = '<div style="text-align:center; padding: 20px;">正在加载历史快照...</div>';
+
+        try {
+            const snapshots = await API.get('/api/frt/snapshots');
+            if (!snapshots || snapshots.length === 0) {
+                body.innerHTML = '<div style="text-align:center; padding: 20px; color:#999;">暂无历史快照记录</div>';
+                return;
+            }
+
+            let html = `
+                <table style="width:100%; border-collapse: collapse; font-size: 13px;">
+                    <thead>
+                        <tr>
+                            <th style="padding:10px; border-bottom:1px solid #eee; background:#f8f9fa;">生成时间</th>
+                            <th style="padding:10px; border-bottom:1px solid #eee; background:#f8f9fa;">考核月份</th>
+                            <th style="padding:10px; border-bottom:1px solid #eee; background:#f8f9fa;">FRD总数</th>
+                            <th style="padding:10px; border-bottom:1px solid #eee; background:#f8f9fa;">FRC按时数</th>
+                            <th style="padding:10px; border-bottom:1px solid #eee; background:#f8f9fa; color:var(--primary);">最终得分</th>
+                            <th style="padding:10px; border-bottom:1px solid #eee; background:#f8f9fa; width:80px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            snapshots.forEach((s, sIdx) => {
+                const dt = s.timestamp ? new Date(s.timestamp).toLocaleString() : '-';
+                const badCount = s.badTickets ? s.badTickets.length : 0;
+                
+                html += `
+                    <tr>
+                        <td style="padding:10px; border-bottom:1px solid #eee;">${dt}</td>
+                        <td style="padding:10px; border-bottom:1px solid #eee; font-weight:bold;">${s.month || '-'}</td>
+                        <td style="padding:10px; border-bottom:1px solid #eee;">${s.frdCount}</td>
+                        <td style="padding:10px; border-bottom:1px solid #eee;">${s.frcCount}</td>
+                        <td style="padding:10px; border-bottom:1px solid #eee; font-weight:bold; color:var(--primary);">${s.finalFRT}</td>
+                        <td style="padding:10px; border-bottom:1px solid #eee;">
+                            <button onclick="deleteSnapshot('${s.id}')" style="background:#fff; border:1px solid #ffcccc; color:var(--danger); border-radius:4px; padding:3px 8px; cursor:pointer; font-size:12px;">删除</button>
+                        </td>
+                    </tr>
+                `;
+                
+                if (badCount > 0) {
+                    const toggleId = 'details_' + s.id;
+                    let treeHtml = `<div id="${toggleId}" style="display:none; margin-top:10px; padding:10px; background:#fff; border:1px solid #eee; border-radius:4px;">`;
+                    
+                    const grouped = {};
+                    s.badTickets.forEach(t => {
+                        let cName = t.customerName;
+                        if (!cName && s.headers && t.rawData) {
+                            const hl = s.headers.map(h => h.toLowerCase());
+                            const idxC = hl.findIndex(h => h.includes('客户名称') || h.includes('customer name') || h.includes('network') || h.includes('网络'));
+                            if (idxC > -1) cName = t.rawData[idxC];
+                        }
+                        cName = cName || '未归类 / 未知客户';
+                        
+                        if (!grouped[cName]) grouped[cName] = [];
+                        grouped[cName].push(t);
+                    });
+
+                    let tIdxCounter = 0;
+                    for (const cust in grouped) {
+                        const tickets = grouped[cust];
+                        const copyStr = tickets.map(t => `${t.sr} (${t.owner !== '-' ? t.owner : t.creator})`).join('\\n');
+                        
+                        treeHtml += `
+                            <div style="margin-bottom:15px; border:1px solid #e2e8f0; border-radius:6px; overflow:hidden;">
+                                <div style="background:#f8fafc; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0;">
+                                    <strong style="color:#334155; font-size:13px;">🏢 客户：${cust} <span style="color:#64748b; font-weight:normal;">(${tickets.length}单)</span></strong>
+                                    <button onclick="copyText(this, \`${copyStr}\`)" style="background:#fff; border:1px solid #cbd5e1; color:#0f172a; padding:4px 10px; border-radius:4px; font-size:12px; cursor:pointer; font-weight:bold; transition:all 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#fff'">📋 复制本组名单</button>
+                                </div>
+                                <table style="width:100%; border-collapse: collapse; font-size:12px; text-align:left;">
+                                    <tr style="background:#fff; color:#475569; border-bottom:1px solid #f1f5f9;">
+                                        <th style="padding:6px; width:40px; text-align:center;">展开</th>
+                                        <th style="padding:6px;">单号 (点击复制)</th>
+                                        <th style="padding:6px;">责任人</th>
+                                        <th style="padding:6px;">扣分原因</th>
+                                    </tr>`;
+                        
+                        tickets.forEach(t => {
+                            const subToggleId = `sub_${s.id}_${tIdxCounter++}`;
+                            let subDetails = '';
+                            if (s.headers && t.rawData) {
+                                subDetails += `<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:10px; padding:15px; background:#fafafa; border:1px dashed #ccc; border-radius:4px; margin:5px 0;">`;
+                                s.headers.forEach((h, hIdx) => {
+                                    const val = t.rawData[hIdx] || '';
+                                    if (val) {
+                                        const safeVal = String(val).replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ");
+                                        subDetails += `<div style="display:flex; flex-direction:column; gap:4px; background:#fff; padding:8px; border:1px solid #eee; border-radius:4px;">
+                                            <span style="color:#64748b; font-size:11px; font-weight:bold;">${h}</span>
+                                            <span class="copyable" onclick="copyText(this, '${safeVal}')" title="点击复制" style="font-size:13px; color:#1e293b; word-break:break-word;">${val}</span>
+                                        </div>`;
+                                    }
+                                });
+                                subDetails += `</div>`;
+                            } else {
+                                subDetails += `<div style="padding:10px; color:#999; font-style:italic;">旧版快照未保存完整详情</div>`;
+                            }
+
+                            treeHtml += `<tr style="border-bottom:1px solid #f1f5f9; background:#fff;">
+                                            <td style="padding:6px; text-align:center;"><button onclick="toggleSnapshotDetails('${subToggleId}')" style="background:none; border:none; cursor:pointer; font-size:12px; color:var(--primary);">➕</button></td>
+                                            <td style="padding:6px; font-weight:bold;"><span class="copyable" onclick="copyText(this, '${t.sr}')" title="点击复制">${t.sr} 📋</span></td>
+                                            <td style="padding:6px;"><span class="copyable" onclick="copyText(this, '${t.owner}')" title="点击复制">${t.owner} 📋</span></td>
+                                            <td style="padding:6px; color:var(--danger);">${t.reason}</td>
+                                         </tr>
+                                         <tr id="${subToggleId}" style="display:none; background:#fcfcfc;">
+                                            <td colspan="4" style="padding:0 6px 10px 40px; border-bottom:2px solid #eee;">
+                                                ${subDetails}
+                                            </td>
+                                         </tr>`;
+                        });
+                        treeHtml += `</table></div>`;
+                    }
+                    treeHtml += `</div>`;
+
+                    html += `
+                        <tr>
+                            <td colspan="6" style="padding:5px 10px 15px 10px; border-bottom:2px solid #ddd; background:#fafafa;">
+                                <button onclick="toggleSnapshotDetails('${toggleId}')" style="background:#e0e7ff; color:#4338ca; border:none; padding:4px 10px; border-radius:4px; font-size:12px; cursor:pointer; font-weight:bold;">🔽 展开/折叠扣分单明细树 (${badCount}单)</button>
+                                ${treeHtml}
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    html += `<tr><td colspan="6" style="border-bottom:2px solid #ddd;"></td></tr>`;
+                }
+            });
+
+            html += `</tbody></table>`;
+            body.innerHTML = html;
+
+        } catch (e) {
+            body.innerHTML = `<div style="text-align:center; padding: 20px; color:var(--danger);">加载失败：${e.message}</div>`;
+        }
+    }
+
+    function closeSnapshotsModal() {
+        document.getElementById('snapshotsModal').style.display = 'none';
+    }
+
+    function toggleSnapshotDetails(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (el.style.display === 'none') {
+            el.style.display = (el.tagName === 'TR') ? 'table-row' : 'block';
+            if (el.tagName === 'TR') {
+                const btn = el.previousElementSibling.querySelector('button');
+                if (btn) btn.innerText = '➖';
+            }
+        } else {
+            el.style.display = 'none';
+            if (el.tagName === 'TR') {
+                const btn = el.previousElementSibling.querySelector('button');
+                if (btn) btn.innerText = '➕';
+            }
+        }
+    }
+
+    function copyText(el, text) {
+        if (el.innerText === '✅ 已复制') return; // 防连点
+        const actualText = text || el.innerText.replace(' 📋', '').trim();
+        navigator.clipboard.writeText(actualText).then(() => {
+            const originHTML = el.innerHTML;
+            el.innerHTML = '<span style="color:var(--success);">✅ 已复制</span>';
+            setTimeout(() => { el.innerHTML = originHTML; }, 1000);
+        }).catch(err => {
+            console.error('复制失败', err);
+        });
+    }
+
+    async function deleteSnapshot(id) {
+        if(!confirm('确定删除该快照？')) return;
+        try {
+            await API.delete('/api/frt/snapshots/' + id);
+            openSnapshotsModal();
+        } catch(e) {
+            alert("删除失败: " + e.message);
+        }
     }
 </script>
 </body>
