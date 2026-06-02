@@ -6,11 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PR进展附件记录 - 审计级批量自检系统</title>
     <!-- 引入 SheetJS 库用于解析 Excel 文件 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="/js/shared/xlsx.full.min.js"></script>
+    <script src="/js/shared/localforage.min.js"></script>
+    <script src="/js/shared/html2canvas.min.js"></script>
+    <script src="/js/shared/jspdf.umd.min.js"></script>
+    <script src="/js/shared/jszip.min.js"></script>
     <link rel="stylesheet" href="/css/shared.css">
     <style>
         :root {
@@ -1575,6 +1575,11 @@
             <button class="btn-danger" id="btnDeleteConfig" style="font-size:14px; padding:6px 15px; border-radius:20px; border:none; color:#fff; display:none;" onclick="deleteWizardConfig()"><span data-i18n="🗑️ 删除模板">🗑️ 删除模板</span></button>
             <button class="btn-outline" style="font-size:14px; padding:6px 15px; border-radius:20px; border-width:2px; font-weight:bold;" onclick="loadMockData()"><span data-i18n="🧪 一键加载测试数据">🧪 一键加载测试数据</span></button>
         </h1>
+        <div id="workspaceInfoBar" style="display:flex; justify-content:center; margin:-8px 0 14px;">
+            <div id="workspaceInfoText" style="font-size:12px; color:#5b6475; background:#f8fafc; border:1px solid #dbe5f0; border-radius:999px; padding:6px 14px; max-width:min(92vw, 980px); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                当前工作区：-
+            </div>
+        </div>
 
         <div class="toolbar">
             <div>
@@ -1598,7 +1603,7 @@
             </table>
         </div>
         <div id="floatingTableHeader" class="floating-table-header" aria-hidden="true"></div>
-        <input type="file" id="snapshotFileInput" accept=".zip,.json,application/zip,application/json" style="display:none;" onchange="importAuditSnapshot(this)">
+        <input type="file" id="snapshotFileInput" accept=".zip,.json,application/zip,application/json" multiple style="display:none;" onchange="importAuditSnapshot(this)">
     </div>
 
     <!-- 专供打印/导出PDF的隐藏区域 -->
@@ -1848,18 +1853,127 @@
         let CHECK_POINTS = [];
         let STORAGE_KEY_DATA = '';
         let STORAGE_KEY_COLS = '';
+        let activeWorkspace = null;
 
         let ordersData = [];
         let visibleCols = [];
         let pendingReasonTarget = null;
         let pendingImportBatch = null;
         let selectedSampleCount = 0;
+        const PR_AUDIT_WORKSPACES_KEY = 'PR_Auditor_Workspaces_V1';
 
         window.onload = async function () {
             await loadConfigs();
             initFloatingTableHeader();
             document.addEventListener('keydown', handleGlobalModalShortcuts);
         };
+
+        function createAuditWorkspaceId(prefix = 'ws') {
+            return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+        }
+
+        function getWorkspaceDataKey(workspaceId) {
+            return `PR_Auditor_Workspace_Data_${workspaceId}`;
+        }
+
+        function getWorkspaceColsKey(workspaceId) {
+            return `PR_Auditor_Workspace_Cols_${workspaceId}`;
+        }
+
+        function getLegacyConfigDataKey(configId) {
+            return `PR_Auditor_Data_${configId}`;
+        }
+
+        function getLegacyConfigColsKey(configId) {
+            return `PR_Auditor_Cols_${configId}`;
+        }
+
+        function readAuditWorkspaceMap() {
+            try {
+                const raw = JSON.parse(localStorage.getItem(PR_AUDIT_WORKSPACES_KEY) || '{}');
+                return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+            } catch (e) {
+                console.warn('[PR Audit Workspace] 读取工作区映射失败，已回退为空映射', e);
+                return {};
+            }
+        }
+
+        function writeAuditWorkspaceMap(map) {
+            localStorage.setItem(PR_AUDIT_WORKSPACES_KEY, JSON.stringify(map || {}));
+        }
+
+        function saveAuditWorkspaceForConfig(configId, workspace) {
+            if (!configId || !workspace || !workspace.id) return;
+            const map = readAuditWorkspaceMap();
+            map[configId] = {
+                id: workspace.id,
+                name: workspace.name || '',
+                templateId: workspace.templateId || configId,
+                templateName: workspace.templateName || '',
+                batchId: workspace.batchId || '',
+                mergeKey: workspace.mergeKey || '',
+                scope: workspace.scope || 'template-local',
+                groupField: workspace.groupField || '',
+                groupValue: workspace.groupValue || '',
+                groupIndex: workspace.groupIndex || 0,
+                groupCount: workspace.groupCount || 0,
+                createdAt: workspace.createdAt || new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            writeAuditWorkspaceMap(map);
+        }
+
+        function removeAuditWorkspaceForConfig(configId) {
+            if (!configId) return;
+            const map = readAuditWorkspaceMap();
+            delete map[configId];
+            writeAuditWorkspaceMap(map);
+        }
+
+        function getAuditWorkspaceForConfig(config) {
+            const configId = config && config.id ? String(config.id) : '';
+            const map = readAuditWorkspaceMap();
+            const saved = configId ? map[configId] : null;
+            if (saved && saved.id) return { ...saved };
+            return {
+                id: configId || createAuditWorkspaceId('template'),
+                name: config && config.name ? `${config.name} 工作区` : 'PR Audit Workspace',
+                templateId: configId,
+                templateName: config && config.name ? config.name : '',
+                batchId: '',
+                mergeKey: '',
+                scope: 'template-local',
+                groupField: config && config.groupField ? config.groupField : '',
+                groupValue: '',
+                groupIndex: 0,
+                groupCount: 0,
+                createdAt: new Date().toISOString()
+            };
+        }
+
+        function renderActiveWorkspaceInfo() {
+            const el = document.getElementById('workspaceInfoText');
+            if (!el) return;
+            if (!activeConfig || !activeWorkspace) {
+                el.textContent = tText('当前工作区：-', 'Current workspace: -');
+                return;
+            }
+            const scopeLabelMap = {
+                'template-local': tText('本地模板工作区', 'Local template workspace'),
+                'all': tText('全量工作区', 'Full workspace'),
+                'group': tText('分组工作区', 'Grouped workspace'),
+                'merged-import': tText('合并导入工作区', 'Merged import workspace')
+            };
+            const scopeLabel = scopeLabelMap[activeWorkspace.scope] || activeWorkspace.scope || tText('工作区', 'Workspace');
+            const groupLabel = activeWorkspace.groupField && activeWorkspace.groupValue
+                ? tText(` | 分组：${activeWorkspace.groupField} = ${activeWorkspace.groupValue}`, ` | Group: ${activeWorkspace.groupField} = ${activeWorkspace.groupValue}`)
+                : '';
+            el.textContent = tText(
+                `当前工作区：${activeWorkspace.name || '-'} | 作用域：${scopeLabel}${groupLabel}`,
+                `Current workspace: ${activeWorkspace.name || '-'} | Scope: ${scopeLabel}${groupLabel}`
+            );
+            el.title = el.textContent;
+        }
 
         function handleGlobalModalShortcuts(event) {
             if (event.key !== 'Escape') return;
@@ -1909,22 +2023,50 @@
             
             activeConfig = ALL_CONFIGS.find(c => c.id === configId);
             localStorage.setItem('PR_Auditor_LastConfigId', configId);
+            activeWorkspace = getAuditWorkspaceForConfig(activeConfig);
+            renderActiveWorkspaceInfo();
             
             ALL_FIELDS = activeConfig.fields;
             CHECK_POINTS = activeConfig.checkpoints;
-            STORAGE_KEY_DATA = `PR_Auditor_Data_${configId}`;
-            STORAGE_KEY_COLS = `PR_Auditor_Cols_${configId}`;
+            STORAGE_KEY_DATA = getWorkspaceDataKey(activeWorkspace.id);
+            STORAGE_KEY_COLS = getWorkspaceColsKey(activeWorkspace.id);
             
             try {
-                let localData = await localforage.getItem(STORAGE_KEY_DATA);
+                let localData = null;
+                if (window.__PRAUDIT_OFFLINE__) {
+                    const localMirror = localStorage.getItem(STORAGE_KEY_DATA);
+                    if (localMirror) {
+                        localData = JSON.parse(localMirror);
+                        localforage.setItem(STORAGE_KEY_DATA, localData).catch(err => {
+                            console.warn('离线工作区镜像回写 IndexedDB 失败:', err);
+                        });
+                    }
+                }
+                if (!localData) {
+                    localData = await localforage.getItem(STORAGE_KEY_DATA);
+                }
                 
-                // 兼容老版本 localStorage 数据
+                // 兼容老版本 localStorage / IndexedDB 数据，首次读取后迁移到工作区键。
                 if (!localData) {
                     const oldLocalData = localStorage.getItem(STORAGE_KEY_DATA);
                     if (oldLocalData) {
                         localData = JSON.parse(oldLocalData);
                         await localforage.setItem(STORAGE_KEY_DATA, localData);
-                        localStorage.removeItem(STORAGE_KEY_DATA); // 清理旧存储
+                        if (!window.__PRAUDIT_OFFLINE__) {
+                            localStorage.removeItem(STORAGE_KEY_DATA); // 清理旧存储
+                        }
+                    }
+                }
+                if (!localData) {
+                    const legacyDataKey = getLegacyConfigDataKey(configId);
+                    localData = await localforage.getItem(legacyDataKey);
+                    if (!localData) {
+                        const oldLocalData = localStorage.getItem(legacyDataKey);
+                        if (oldLocalData) localData = JSON.parse(oldLocalData);
+                    }
+                    if (localData) {
+                        await localforage.setItem(STORAGE_KEY_DATA, localData);
+                        saveAuditWorkspaceForConfig(configId, activeWorkspace);
                     }
                 }
 
@@ -1948,7 +2090,11 @@
                 ordersData = [];
             }
 
-            const localCols = localStorage.getItem(STORAGE_KEY_COLS);
+            let localCols = localStorage.getItem(STORAGE_KEY_COLS);
+            if (!localCols) {
+                localCols = localStorage.getItem(getLegacyConfigColsKey(configId));
+                if (localCols) localStorage.setItem(STORAGE_KEY_COLS, localCols);
+            }
             if (localCols) {
                 visibleCols = JSON.parse(localCols);
                 visibleCols = visibleCols.filter(c => ALL_FIELDS.includes(c));
@@ -1977,8 +2123,19 @@
 
         function saveToStorage() {
             if (!STORAGE_KEY_DATA) return;
+            const cloned = JSON.parse(JSON.stringify(ordersData));
+            if (activeConfig && activeWorkspace) {
+                saveAuditWorkspaceForConfig(activeConfig.id, activeWorkspace);
+            }
+            if (window.__PRAUDIT_OFFLINE__) {
+                try {
+                    localStorage.setItem(STORAGE_KEY_DATA, JSON.stringify(cloned));
+                } catch (e) {
+                    console.warn("离线 localStorage 镜像写入失败:", e);
+                }
+            }
             // 异步非阻塞存储，极大提升流畅度且无 5MB 限制
-            localforage.setItem(STORAGE_KEY_DATA, JSON.parse(JSON.stringify(ordersData))).catch(e => {
+            localforage.setItem(STORAGE_KEY_DATA, cloned).catch(e => {
                 console.error("IndexedDB 写入失败:", e);
                 alert("保存失败：本地数据库异常，请检查浏览器是否禁用了 IndexedDB。");
             });
@@ -2728,26 +2885,188 @@
             setTimeout(() => URL.revokeObjectURL(url), 1000);
         }
 
+        const PRAUDIT_OFFLINE_ASSET_PATHS = [
+            '/css/shared.css',
+            '/js/shared/xlsx.full.min.js',
+            '/js/shared/localforage.min.js',
+            '/js/shared/html2canvas.min.js',
+            '/js/shared/jspdf.umd.min.js',
+            '/js/shared/jszip.min.js',
+            '/js/shared/praudit-offline-runtime.js'
+        ];
+
+        let cachedOfflineWorkbenchHtmlTemplate = '';
+        let cachedOfflineRuntimeJs = '';
+
+        function escapeInlineScriptContent(text) {
+            return String(text || '').replace(/<\/script/gi, '<\\/script');
+        }
+
+        function wrapInlineScript(code) {
+            return `<script>\n${escapeInlineScriptContent(code)}\n</scr` + 'ipt>';
+        }
+
+        async function fetchTextAsset(path) {
+            const res = await fetch(path, { cache: 'no-store' });
+            if (!res.ok) throw new Error(`无法读取离线资源：${path}`);
+            return res.text();
+        }
+
+        function buildOfflineHtmlFromCurrentDocument() {
+            let html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+            html = html.replace(/<title>.*?<\/title>/i, '<title>PR审计报告系统（离线版）</title>');
+            html = html.replace(/<nav id="app-navbar"[\s\S]*?<\/nav>/i, '');
+            html = html.replace(/<div id="globalToast"[\s\S]*?<\/div>/i, '');
+            html = html.replace(/<div id="dataSourceBadge"[\s\S]*?<\/div>/i, '');
+            html = html.replace(/<div id="offlineModeBadge"[\s\S]*?<\/div>/i, '');
+            html = html.replace(/<div id="prauditOfflineGuide"[\s\S]*?<\/div>/i, '');
+            html = html.replace(/<div id="user-mgmt-modal"[\s\S]*?<\/div>/i, '');
+            html = html.replace(/<div id="floatingTableHeader" class="floating-table-header" aria-hidden="true">[\s\S]*?<\/div>/i, '<div id="floatingTableHeader" class="floating-table-header" aria-hidden="true"></div>');
+            return html;
+        }
+
+        async function buildOfflineWorkbenchHtml(workspaceId = '') {
+            if (window.__PRAUDIT_OFFLINE__) {
+                return buildOfflineHtmlFromCurrentDocument();
+            }
+            if (!cachedOfflineWorkbenchHtmlTemplate) {
+                const [rawHtml, sharedCss, xlsxJs, localforageJs, html2canvasJs, jspdfJs, jszipJs, offlineRuntimeJs] = await Promise.all([
+                    fetchTextAsset(window.location.pathname),
+                    fetchTextAsset(PRAUDIT_OFFLINE_ASSET_PATHS[0]),
+                    fetchTextAsset(PRAUDIT_OFFLINE_ASSET_PATHS[1]),
+                    fetchTextAsset(PRAUDIT_OFFLINE_ASSET_PATHS[2]),
+                    fetchTextAsset(PRAUDIT_OFFLINE_ASSET_PATHS[3]),
+                    fetchTextAsset(PRAUDIT_OFFLINE_ASSET_PATHS[4]),
+                    fetchTextAsset(PRAUDIT_OFFLINE_ASSET_PATHS[5]),
+                    fetchTextAsset(PRAUDIT_OFFLINE_ASSET_PATHS[6])
+                ]);
+
+                let html = rawHtml;
+                html = html.replace(/<title>.*?<\/title>/i, () => '<title>PR审计报告系统（离线版）</title>');
+                html = html.replace(/<link rel="stylesheet" href="\/css\/shared\.css">/i, () => `<style>\n${sharedCss}\n</style>`);
+                html = html.replace(/<script src="\/js\/shared\/xlsx\.full\.min\.js"><\/script>/i, () => wrapInlineScript(xlsxJs));
+                html = html.replace(/<script src="\/js\/shared\/localforage\.min\.js"><\/script>/i, () => wrapInlineScript(localforageJs));
+                html = html.replace(/<script src="\/js\/shared\/html2canvas\.min\.js"><\/script>/i, () => wrapInlineScript(html2canvasJs));
+                html = html.replace(/<script src="\/js\/shared\/jspdf\.umd\.min\.js"><\/script>/i, () => wrapInlineScript(jspdfJs));
+                html = html.replace(/<script src="\/js\/shared\/jszip\.min\.js"><\/script>/i, () => wrapInlineScript(jszipJs));
+                html = html.replace(/\s*<script src="\/js\/shared\/api\.js"><\/script>\s*<script src="\/js\/shared\/toast\.js"><\/script>\s*<script src="\/js\/shared\/navbar\.js[^"]*"><\/script>/i, () => '');
+                html = html.replace(/<script>\s*let ALL_CONFIGS = \[\];/i, () => `${wrapInlineScript('__PRAUDIT_OFFLINE_BOOTSTRAP__')}\n<script>\n        let ALL_CONFIGS = [];`);
+                cachedOfflineWorkbenchHtmlTemplate = html;
+            }
+            if (!cachedOfflineRuntimeJs) {
+                cachedOfflineRuntimeJs = await fetchTextAsset(PRAUDIT_OFFLINE_ASSET_PATHS[6]);
+            }
+            const bootstrapScript = `window.__PRAUDIT_OFFLINE__ = true;\nwindow.__PRAUDIT_OFFLINE_WORKSPACE_ID__ = ${JSON.stringify(String(workspaceId || 'default'))};\n${cachedOfflineRuntimeJs}`;
+            return cachedOfflineWorkbenchHtmlTemplate.replace('__PRAUDIT_OFFLINE_BOOTSTRAP__', escapeInlineScriptContent(bootstrapScript));
+        }
+
+        async function appendOfflineAuditWorkbenchFiles(zip, snapshotBlob, snapshotFilename, options = {}) {
+            const folderPrefix = options.folderPrefix || '';
+            const workspaceId = options.workspaceId || createSnapshotBundleId();
+            const offlineHtml = await buildOfflineWorkbenchHtml(workspaceId);
+            const htmlName = options.htmlName || 'PR审计报告系统.html';
+            const readmeName = options.readmeName || 'README.txt';
+            const readmeLines = [
+                'PR Audit Offline Workspace',
+                '',
+                '1. Open "PR审计报告系统.html".',
+                '2. Import the snapshot zip/json in the same folder.',
+                '3. Continue the audit offline and export a new snapshot package after finishing.',
+                '',
+                '1. 双击打开 “PR审计报告系统.html”。',
+                '2. 导入同目录中的快照 zip/json。',
+                '3. 审计完成后再导出新的快照包回传即可。'
+            ];
+            zip.file(`${folderPrefix}${htmlName}`, offlineHtml);
+            zip.file(`${folderPrefix}${snapshotFilename}`, snapshotBlob);
+            zip.file(`${folderPrefix}${readmeName}`, readmeLines.join('\n'));
+        }
+
+        function createSnapshotBundleId() {
+            return `praudit_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+        }
+
+        function getShortBundleToken(bundleId) {
+            return String(bundleId || '').replace(/^praudit_/, '').slice(0, 12);
+        }
+
+        function extractOfflinePackageToken(name) {
+            const matches = Array.from(String(name || '').matchAll(/（离线包-([^)）]+)）/g));
+            return matches.length ? matches[0][1] : '';
+        }
+
+        function makeOfflineTemplateLabel(baseName, bundleId, options = {}) {
+            const shortBundle = getShortBundleToken(bundleId) || Math.random().toString(36).slice(2, 8);
+            const groupLabel = options.groupValue ? `-${String(options.groupValue)}` : '';
+            return `${String(baseName || 'PR Audit')}${groupLabel}（离线包-${shortBundle}）`;
+        }
+
+        function makeOfflineTemplateId(bundleId, options = {}) {
+            const shortBundle = String(bundleId || '').replace(/^praudit_/, '').replace(/[^a-zA-Z0-9]/g, '').slice(0, 16) || Math.random().toString(36).slice(2, 10);
+            const groupPart = options.groupIndex ? `_g${options.groupIndex}` : '';
+            return `offlinepkg_${shortBundle}${groupPart}`;
+        }
+
+        function getSnapshotTemplate(snapshot) {
+            return snapshot && (snapshot.template || snapshot.config) ? (snapshot.template || snapshot.config) : {};
+        }
+
+        function buildSnapshotWorkspace(options = {}, templateConfig = activeConfig) {
+            const baseWorkspace = activeWorkspace ? JSON.parse(JSON.stringify(activeWorkspace)) : getAuditWorkspaceForConfig(templateConfig);
+            return {
+                ...baseWorkspace,
+                id: options.workspaceId || baseWorkspace.id || createAuditWorkspaceId('snapshot_ws'),
+                name: options.workspaceName || baseWorkspace.name || `${templateConfig && templateConfig.name ? templateConfig.name : 'PR Audit'} 工作区`,
+                templateId: templateConfig && templateConfig.id ? templateConfig.id : baseWorkspace.templateId || '',
+                templateName: options.templateName || (templateConfig && templateConfig.name ? templateConfig.name : baseWorkspace.templateName || ''),
+                batchId: options.bundleId || baseWorkspace.batchId || '',
+                mergeKey: options.mergeKey || baseWorkspace.mergeKey || '',
+                scope: options.scope || baseWorkspace.scope || 'all',
+                groupField: options.groupField || baseWorkspace.groupField || '',
+                groupValue: options.groupValue || baseWorkspace.groupValue || '',
+                groupIndex: options.groupIndex || baseWorkspace.groupIndex || 0,
+                groupCount: options.groupCount || baseWorkspace.groupCount || 0,
+                exportedAt: new Date().toISOString()
+            };
+        }
+
         function buildAuditSnapshot(rows = ordersData, options = {}) {
             if (!activeConfig) throw new Error('当前没有可导出的审计模板。');
             const now = new Date().toISOString();
+            const snapshotConfig = JSON.parse(JSON.stringify(activeConfig));
+            if (options.templateName) {
+                snapshotConfig.name = options.templateName;
+            }
+            if (options.templateId) {
+                snapshotConfig.id = options.templateId;
+            }
+            const snapshotWorkspace = buildSnapshotWorkspace(options, snapshotConfig);
             return {
-                version: 1,
+                version: 2,
                 type: 'praudit-work-snapshot',
                 exportedAt: now,
                 scope: options.scope || 'all',
                 groupField: options.groupField || '',
                 groupValue: options.groupValue || '',
                 sourceConfigId: activeConfig.id,
-                config: JSON.parse(JSON.stringify(activeConfig)),
+                template: snapshotConfig,
+                workspace: snapshotWorkspace,
+                config: snapshotConfig,
                 rows: JSON.parse(JSON.stringify(rows || [])),
                 visibleCols: JSON.parse(JSON.stringify(visibleCols || [])),
                 meta: {
                     app: 'tools-platform',
                     page: 'praudit',
                     rowCount: (rows || []).length,
-                    templateName: activeConfig.name,
-                    language: currentLang
+                    templateName: options.templateName || activeConfig.name,
+                    language: currentLang,
+                    bundleId: options.bundleId || '',
+                    mergeKey: options.mergeKey || '',
+                    bundleType: options.bundleType || '',
+                    groupIndex: options.groupIndex || 0,
+                    groupCount: options.groupCount || 0,
+                    workspaceId: snapshotWorkspace.id,
+                    workspaceName: snapshotWorkspace.name
                 }
             };
         }
@@ -2755,10 +3074,12 @@
         async function makeSnapshotZipBlob(snapshot) {
             if (!window.JSZip) throw new Error('缺少压缩依赖 JSZip，请检查网络后重试。');
             const zip = new JSZip();
+            const template = getSnapshotTemplate(snapshot);
             zip.file('snapshot.json', JSON.stringify(snapshot, null, 2));
             zip.file('README.txt', [
                 'PR Audit Work Snapshot',
-                `Template: ${snapshot.config && snapshot.config.name ? snapshot.config.name : '-'}`,
+                `Template: ${template && template.name ? template.name : '-'}`,
+                `Workspace: ${snapshot.workspace && snapshot.workspace.name ? snapshot.workspace.name : '-'}`,
                 `Rows: ${snapshot.rows ? snapshot.rows.length : 0}`,
                 `Scope: ${snapshot.scope || 'all'}`,
                 snapshot.groupField ? `Group: ${snapshot.groupField} = ${snapshot.groupValue}` : '',
@@ -2774,9 +3095,37 @@
                     alert('当前没有可导出的表格数据。');
                     return;
                 }
-                const snapshot = buildAuditSnapshot(ordersData, { scope: 'all' });
-                const blob = await makeSnapshotZipBlob(snapshot);
-                downloadBlob(blob, sanitizeFileName(`${activeConfig.name}_全量快照_${snapshot.rows.length}条.zip`));
+                const bundleId = createSnapshotBundleId();
+                const mergeKey = extractOfflinePackageToken(activeConfig.name) || getShortBundleToken(bundleId);
+                const offlineTemplateName = makeOfflineTemplateLabel(activeConfig.name, bundleId);
+                const offlineTemplateId = makeOfflineTemplateId(bundleId);
+                const snapshot = buildAuditSnapshot(ordersData, {
+                    scope: 'all',
+                    bundleId,
+                    mergeKey,
+                    bundleType: 'single',
+                    groupIndex: 1,
+                    groupCount: 1,
+                    templateName: offlineTemplateName,
+                    templateId: offlineTemplateId
+                });
+                const snapshotBlob = await makeSnapshotZipBlob(snapshot);
+                const packageZip = new JSZip();
+                const snapshotFilename = sanitizeFileName(`${offlineTemplateName}_PR审计快照_${snapshot.rows.length}条.zip`);
+                await appendOfflineAuditWorkbenchFiles(packageZip, snapshotBlob, snapshotFilename, {
+                    workspaceId: `single_${bundleId}`
+                });
+                packageZip.file('manifest.json', JSON.stringify({
+                    version: 1,
+                    type: 'praudit-offline-workspace',
+                    exportedAt: new Date().toISOString(),
+                    bundleId,
+                    templateName: offlineTemplateName,
+                    rowCount: snapshot.rows.length,
+                    snapshotFile: snapshotFilename
+                }, null, 2));
+                const finalBlob = await packageZip.generateAsync({ type: 'blob' });
+                downloadBlob(finalBlob, sanitizeFileName(`${offlineTemplateName}_离线审计工作包_${snapshot.rows.length}条.zip`));
             } catch (err) {
                 console.error('导出快照失败', err);
                 alert(`导出快照失败：${err.message}`);
@@ -2799,6 +3148,8 @@
                     return;
                 }
                 const groups = buildAuditGroups(ordersData, groupField).filter(group => group.rows.length > 0);
+                const bundleId = createSnapshotBundleId();
+                const mergeKey = extractOfflinePackageToken(activeConfig.name) || getShortBundleToken(bundleId);
                 const outerZip = new JSZip();
                 const originalText = btn ? btn.innerText : '';
                 if (btn) {
@@ -2808,19 +3159,34 @@
                 for (let i = 0; i < groups.length; i++) {
                     const group = groups[i];
                     if (btn) btn.innerText = tText(`生成快照 ${i + 1}/${groups.length}`, `Generating snapshot ${i + 1}/${groups.length}`);
+                    const offlineTemplateName = makeOfflineTemplateLabel(activeConfig.name, bundleId, { groupValue: group.value });
+                    const offlineTemplateId = makeOfflineTemplateId(bundleId, { groupIndex: i + 1 });
                     const snapshot = buildAuditSnapshot(group.rows, {
                         scope: 'group',
                         groupField,
-                        groupValue: group.value
+                        groupValue: group.value,
+                        bundleId,
+                        mergeKey,
+                        bundleType: 'group',
+                        groupIndex: i + 1,
+                        groupCount: groups.length,
+                        templateName: offlineTemplateName,
+                        templateId: offlineTemplateId
                     });
-                    const blob = await makeSnapshotZipBlob(snapshot);
-                    outerZip.file(sanitizeFileName(`${activeConfig.name}_${groupField}_${group.value}_${group.rows.length}条.zip`), blob);
+                    const snapshotBlob = await makeSnapshotZipBlob(snapshot);
+                    const folderName = sanitizeFileName(`${String(i + 1).padStart(2, '0')}_${group.value}`);
+                    const snapshotFilename = sanitizeFileName(`${offlineTemplateName}_${group.rows.length}条_PR审计快照.zip`);
+                    await appendOfflineAuditWorkbenchFiles(outerZip, snapshotBlob, snapshotFilename, {
+                        folderPrefix: `${folderName}/`,
+                        workspaceId: `group_${bundleId}_${i + 1}`
+                    });
                 }
                 outerZip.file('manifest.json', JSON.stringify({
                     version: 1,
                     type: 'praudit-group-snapshot-bundle',
                     exportedAt: new Date().toISOString(),
-                    templateName: activeConfig.name,
+                    bundleId,
+                    templateName: makeOfflineTemplateLabel(activeConfig.name, bundleId),
                     groupField,
                     groups: groups.map(group => ({ groupValue: group.value, rowCount: group.rows.length }))
                 }, null, 2));
@@ -2830,15 +3196,15 @@
                     `Group Field: ${groupField}`,
                     `Groups: ${groups.length}`,
                     '',
-                    'Each inner .zip is an independent snapshot package for one group.',
-                    'Send the corresponding inner .zip to the group owner.',
-                    'Import from PR Audit page -> 导入快照.',
+                    'Each group folder includes a standalone offline HTML workspace and its own snapshot zip.',
+                    'Send the corresponding group folder to the group owner.',
+                    'The receiver opens the HTML file and imports the snapshot zip in the same folder.',
                     '',
-                    '每个内层 .zip 都是一个独立分组快照包，可直接发给对应责任人导入继续处理。'
+                    '每个分组文件夹都包含一份独立离线 HTML 工作台和对应快照 zip，可直接发给责任人继续处理。'
                 ].join('\n'));
                 if (btn) btn.innerText = tText('正在压缩下载...', 'Compressing download...');
                 const finalBlob = await outerZip.generateAsync({ type: 'blob' });
-                downloadBlob(finalBlob, sanitizeFileName(`${activeConfig.name}_${groupField}_分组快照包.zip`));
+                downloadBlob(finalBlob, sanitizeFileName(`${activeConfig.name}_${groupField}_分组离线审计包.zip`));
                 if (btn) {
                     btn.disabled = false;
                     restoreI18nButtonLabel(btn, '🧩 按分组导出快照', '🧩 Export Group Snapshots');
@@ -2861,21 +3227,176 @@
             if (!window.JSZip) throw new Error('缺少压缩依赖 JSZip，请检查网络后重试。');
             const zip = await JSZip.loadAsync(file);
             const snapshotFile = zip.file('snapshot.json');
-            if (!snapshotFile) {
-                const nestedSnapshotZips = Object.keys(zip.files).filter(name => name.toLowerCase().endsWith('.zip'));
-                if (nestedSnapshotZips.length) {
-                    throw new Error('这是分组快照总包，请先解压后选择其中某个分组的内层快照 zip 导入。');
+            if (snapshotFile) {
+                return JSON.parse(await snapshotFile.async('string'));
+            }
+
+            const nestedSnapshotZips = Object.keys(zip.files).filter(name => name.toLowerCase().endsWith('.zip'));
+            if (nestedSnapshotZips.length === 1) {
+                const nestedZipBlob = await zip.file(nestedSnapshotZips[0]).async('blob');
+                const nestedZip = await JSZip.loadAsync(nestedZipBlob);
+                const nestedSnapshotFile = nestedZip.file('snapshot.json');
+                if (nestedSnapshotFile) {
+                    return JSON.parse(await nestedSnapshotFile.async('string'));
                 }
+            }
+            if (nestedSnapshotZips.length) {
+                if (nestedSnapshotZips.length > 1) {
+                    throw new Error('这是分组快照总包，请先解压后选择其中某个分组文件夹内的快照 zip 导入。');
+                }
+                throw new Error('当前压缩包内未找到可识别的 snapshot.json。');
+            }
+            if (!snapshotFile) {
                 throw new Error('压缩包中未找到 snapshot.json。');
             }
-            return JSON.parse(await snapshotFile.async('string'));
+        }
+
+        function getSnapshotBundleId(snapshot) {
+            if (snapshot && snapshot.meta && snapshot.meta.bundleId) return String(snapshot.meta.bundleId);
+            if (snapshot && snapshot.workspace && snapshot.workspace.batchId) return String(snapshot.workspace.batchId);
+            return '';
+        }
+
+        function getSnapshotMergeKey(snapshot) {
+            const metaKey = snapshot && snapshot.meta && snapshot.meta.mergeKey ? String(snapshot.meta.mergeKey) : '';
+            if (metaKey) return metaKey;
+            const workspaceKey = snapshot && snapshot.workspace && snapshot.workspace.mergeKey ? String(snapshot.workspace.mergeKey) : '';
+            if (workspaceKey) return workspaceKey;
+            const template = getSnapshotTemplate(snapshot);
+            const nameKey = template ? extractOfflinePackageToken(template.name) : '';
+            if (nameKey) return nameKey;
+            return getSnapshotBundleId(snapshot);
+        }
+
+        function getSnapshotConfigSignature(snapshot) {
+            const config = getSnapshotTemplate(snapshot);
+            return JSON.stringify({
+                fields: config.fields || [],
+                checkpoints: config.checkpoints || [],
+                reportFields: config.reportFields || [],
+                groupField: config.groupField || ''
+            });
+        }
+
+        function mergeSnapshotRows(snapshots) {
+            const mergedRows = [];
+            const rowMap = new Map();
+            let overwriteCount = 0;
+            snapshots.forEach(snapshot => {
+                (snapshot.rows || []).forEach(row => {
+                    const rowId = row && row.id ? String(row.id) : `row_${mergedRows.length}`;
+                    const clonedRow = JSON.parse(JSON.stringify(row));
+                    if (rowMap.has(rowId)) {
+                        const index = rowMap.get(rowId);
+                        mergedRows[index] = clonedRow;
+                        overwriteCount++;
+                    } else {
+                        rowMap.set(rowId, mergedRows.length);
+                        mergedRows.push(clonedRow);
+                    }
+                });
+            });
+            return { rows: mergedRows, overwriteCount };
+        }
+
+        async function importSingleSnapshotObject(snapshot, options = {}) {
+            validateAuditSnapshot(snapshot);
+            const config = JSON.parse(JSON.stringify(getSnapshotTemplate(snapshot)));
+            const snapshotWorkspace = snapshot.workspace && snapshot.workspace.id
+                ? JSON.parse(JSON.stringify(snapshot.workspace))
+                : {
+                    id: createAuditWorkspaceId('import_ws'),
+                    name: config.name || 'Imported Snapshot Workspace',
+                    templateId: snapshot.sourceConfigId || config.id || '',
+                    templateName: config.name || '',
+                    batchId: getSnapshotBundleId(snapshot),
+                    mergeKey: getSnapshotMergeKey(snapshot),
+                    scope: snapshot.scope || 'all',
+                    groupField: snapshot.groupField || '',
+                    groupValue: snapshot.groupValue || '',
+                    groupIndex: snapshot.meta && snapshot.meta.groupIndex ? snapshot.meta.groupIndex : 0,
+                    groupCount: snapshot.meta && snapshot.meta.groupCount ? snapshot.meta.groupCount : 0
+                };
+            const existingNames = options.existingNames || new Set(ALL_CONFIGS.map(c => String(c.name || '').trim()).filter(Boolean));
+            const originalName = config.name;
+            config.id = `snapshot_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+            const mergedSuffix = options.mergedLabel
+                ? `${originalName || config.name}${options.mergedLabel}`
+                : (config.name || `${originalName}（导入快照）`);
+            config.name = ensureUniqueSnapshotImportName(mergedSuffix, existingNames);
+            existingNames.add(config.name);
+            snapshotWorkspace.id = options.workspaceId || createAuditWorkspaceId(options.mergedLabel ? 'merged_ws' : 'import_ws');
+            snapshotWorkspace.name = options.workspaceName || config.name;
+            snapshotWorkspace.templateId = config.id;
+            snapshotWorkspace.templateName = config.name;
+            snapshotWorkspace.importedAt = new Date().toISOString();
+            const savedConfig = await API.post('/api/praudit/configs', {
+                id: config.id,
+                name: config.name,
+                fields: config.fields,
+                allFields: config.allFields || config.fields,
+                checkpoints: config.checkpoints,
+                reportFields: config.reportFields || [],
+                groupField: config.groupField || '',
+                filterRules: config.filterRules || [],
+                reasonTemplates: config.reasonTemplates || []
+            });
+            saveAuditWorkspaceForConfig(savedConfig.id, snapshotWorkspace);
+
+            const dataKey = getWorkspaceDataKey(snapshotWorkspace.id);
+            const colsKey = getWorkspaceColsKey(snapshotWorkspace.id);
+            const clonedRows = JSON.parse(JSON.stringify(snapshot.rows));
+            if (window.__PRAUDIT_OFFLINE__) {
+                try {
+                    localStorage.setItem(dataKey, JSON.stringify(clonedRows));
+                } catch (e) {
+                    console.warn("离线导入 localStorage 镜像写入失败:", e);
+                }
+            }
+            await localforage.setItem(dataKey, clonedRows);
+            if (Array.isArray(snapshot.visibleCols) && snapshot.visibleCols.length) {
+                localStorage.setItem(colsKey, JSON.stringify(snapshot.visibleCols.filter(col => config.fields.includes(col))));
+            }
+            return {
+                config: savedConfig,
+                workspace: snapshotWorkspace,
+                snapshot: JSON.parse(JSON.stringify(snapshot))
+            };
+        }
+
+        function buildMergedSnapshotImport(snapshotGroup) {
+            const baseSnapshot = JSON.parse(JSON.stringify(snapshotGroup[0]));
+            const { rows, overwriteCount } = mergeSnapshotRows(snapshotGroup);
+            baseSnapshot.rows = rows;
+            baseSnapshot.scope = 'merged-import';
+            baseSnapshot.groupField = '';
+            baseSnapshot.groupValue = '';
+            baseSnapshot.workspace = {
+                ...(baseSnapshot.workspace || {}),
+                id: createAuditWorkspaceId('merged_ws'),
+                name: baseSnapshot.workspace && baseSnapshot.workspace.name ? baseSnapshot.workspace.name : 'Merged PR Audit Workspace',
+                scope: 'merged-import',
+                groupField: '',
+                groupValue: '',
+                groupIndex: 0,
+                groupCount: snapshotGroup.length,
+                mergedAt: new Date().toISOString()
+            };
+            baseSnapshot.meta = {
+                ...(baseSnapshot.meta || {}),
+                importedMerged: true,
+                importedFileCount: snapshotGroup.length,
+                importedOverwriteCount: overwriteCount
+            };
+            return { snapshot: baseSnapshot, overwriteCount };
         }
 
         function validateAuditSnapshot(snapshot) {
             if (!snapshot || snapshot.type !== 'praudit-work-snapshot') {
                 throw new Error('快照类型不正确。');
             }
-            if (!snapshot.config || !snapshot.config.name || !Array.isArray(snapshot.config.fields) || !Array.isArray(snapshot.config.checkpoints)) {
+            const template = getSnapshotTemplate(snapshot);
+            if (!template || !template.name || !Array.isArray(template.fields) || !Array.isArray(template.checkpoints)) {
                 throw new Error('快照模板配置不完整。');
             }
             if (!Array.isArray(snapshot.rows)) {
@@ -2884,41 +3405,98 @@
         }
 
         async function importAuditSnapshot(input) {
-            const file = input && input.files ? input.files[0] : null;
+            const files = input && input.files ? Array.from(input.files) : [];
             try {
-                const snapshot = await readSnapshotFromFile(file);
-                validateAuditSnapshot(snapshot);
-                const config = JSON.parse(JSON.stringify(snapshot.config));
-                const existingIds = new Set(ALL_CONFIGS.map(c => c.id));
-                const existingNames = new Set(ALL_CONFIGS.map(c => String(c.name || '').trim()).filter(Boolean));
-                const originalName = config.name;
-                if (!config.id || existingIds.has(config.id)) {
-                    config.id = `snapshot_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+                if (!files.length) return;
+                const parsedSnapshots = [];
+                for (const file of files) {
+                    const snapshot = await readSnapshotFromFile(file);
+                    validateAuditSnapshot(snapshot);
+                    parsedSnapshots.push({
+                        fileName: file.name,
+                        snapshot
+                    });
                 }
-                config.name = ensureUniqueSnapshotImportName(config.name || `${originalName}（导入快照）`, existingNames);
-                const savedConfig = await API.post('/api/praudit/configs', {
-                    id: config.id,
-                    name: config.name,
-                    fields: config.fields,
-                    allFields: config.allFields || config.fields,
-                    checkpoints: config.checkpoints,
-                    reportFields: config.reportFields || [],
-                    groupField: config.groupField || '',
-                    filterRules: config.filterRules || [],
-                    reasonTemplates: config.reasonTemplates || []
+
+                const groupedByBundle = new Map();
+                parsedSnapshots.forEach(item => {
+                    const bundleId = getSnapshotMergeKey(item.snapshot);
+                    const signature = getSnapshotConfigSignature(item.snapshot);
+                    const groupKey = bundleId ? `bundle:${bundleId}::${signature}` : `single:${item.fileName}:${signature}`;
+                    if (!groupedByBundle.has(groupKey)) groupedByBundle.set(groupKey, []);
+                    groupedByBundle.get(groupKey).push(item.snapshot);
                 });
 
-                const dataKey = `PR_Auditor_Data_${savedConfig.id}`;
-                const colsKey = `PR_Auditor_Cols_${savedConfig.id}`;
-                await localforage.setItem(dataKey, JSON.parse(JSON.stringify(snapshot.rows)));
-                if (Array.isArray(snapshot.visibleCols) && snapshot.visibleCols.length) {
-                    localStorage.setItem(colsKey, JSON.stringify(snapshot.visibleCols.filter(col => config.fields.includes(col))));
+                const importedConfigs = [];
+                const existingImportNames = new Set(ALL_CONFIGS.map(c => String(c.name || '').trim()).filter(Boolean));
+                let mergedGroupCount = 0;
+                let mergedRowCount = 0;
+                for (const snapshotGroup of groupedByBundle.values()) {
+                    if (snapshotGroup.length > 1 && getSnapshotBundleId(snapshotGroup[0])) {
+                        const { snapshot: mergedSnapshot } = buildMergedSnapshotImport(snapshotGroup);
+                        const mergedLabel = tText(`（合并导入 ${snapshotGroup.length} 份）`, ` (Merged ${snapshotGroup.length} files)`);
+                        const imported = await importSingleSnapshotObject(mergedSnapshot, { mergedLabel, existingNames: existingImportNames });
+                        importedConfigs.push({
+                            config: imported.config,
+                            snapshot: imported.snapshot,
+                            rowCount: mergedSnapshot.rows.length,
+                            merged: true,
+                            fileCount: snapshotGroup.length
+                        });
+                        mergedGroupCount++;
+                        mergedRowCount += mergedSnapshot.rows.length;
+                    } else {
+                        const imported = await importSingleSnapshotObject(snapshotGroup[0], { existingNames: existingImportNames });
+                        importedConfigs.push({
+                            config: imported.config,
+                            snapshot: imported.snapshot,
+                            rowCount: (snapshotGroup[0].rows || []).length,
+                            merged: false,
+                            fileCount: 1
+                        });
+                    }
                 }
+
+                const lastImported = importedConfigs[importedConfigs.length - 1];
+                const savedConfig = lastImported.config;
                 localStorage.setItem('PR_Auditor_LastConfigId', savedConfig.id);
                 await loadConfigs();
                 document.getElementById('auditTypeSelector').value = savedConfig.id;
                 await switchAuditType();
-                showToast(tText(`快照导入成功：${savedConfig.name}（${snapshot.rows.length} 条）`, `Snapshot imported: ${savedConfig.name} (${snapshot.rows.length} rows)`));
+                if (lastImported.snapshot && activeConfig && activeConfig.id === savedConfig.id) {
+                    const importedRows = Array.isArray(lastImported.snapshot.rows)
+                        ? JSON.parse(JSON.stringify(lastImported.snapshot.rows))
+                        : [];
+                    if ((!ordersData || ordersData.length === 0) && importedRows.length > 0) {
+                        ordersData = importedRows;
+                        ordersData.forEach(row => {
+                            if (!row.reasons) row.reasons = {};
+                            if (!row.checks) row.checks = {};
+                            if (!row.images) row.images = {};
+                            CHECK_POINTS.forEach(cp => {
+                                if (!row.reasons[cp.key]) row.reasons[cp.key] = '';
+                                if (!row.checks[cp.key]) row.checks[cp.key] = 'none';
+                                if (!row.images[cp.key]) row.images[cp.key] = '';
+                            });
+                        });
+                        if (Array.isArray(lastImported.snapshot.visibleCols) && lastImported.snapshot.visibleCols.length) {
+                            visibleCols = lastImported.snapshot.visibleCols.filter(col => ALL_FIELDS.includes(col));
+                        }
+                        if (!visibleCols.length && ALL_FIELDS.length) {
+                            visibleCols = ALL_FIELDS.slice(0, Math.min(4, ALL_FIELDS.length));
+                        }
+                        renderTable();
+                        initColConfig();
+                    }
+                }
+                if (importedConfigs.length === 1 && !importedConfigs[0].merged) {
+                    showToast(tText(`快照导入成功：${savedConfig.name}（${importedConfigs[0].rowCount} 条）`, `Snapshot imported: ${savedConfig.name} (${importedConfigs[0].rowCount} rows)`));
+                } else {
+                    showToast(tText(
+                        `已导入 ${importedConfigs.length} 组快照，其中合并 ${mergedGroupCount} 组，共 ${mergedRowCount} 条合并数据`,
+                        `Imported ${importedConfigs.length} snapshot sets, merged ${mergedGroupCount} set(s), ${mergedRowCount} merged rows`
+                    ));
+                }
             } catch (err) {
                 console.error('导入快照失败', err);
                 alert(`导入快照失败：${err.message}`);
@@ -3749,8 +4327,14 @@
             try {
                 await API.delete('/api/praudit/configs/' + activeConfig.id);
                 // 清除绑定的本地数据
-                await localforage.removeItem(`PR_Auditor_Data_${activeConfig.id}`);
-                localStorage.removeItem(`PR_Auditor_Cols_${activeConfig.id}`);
+                const workspace = getAuditWorkspaceForConfig(activeConfig);
+                await localforage.removeItem(getWorkspaceDataKey(workspace.id));
+                localStorage.removeItem(getWorkspaceDataKey(workspace.id));
+                localStorage.removeItem(getWorkspaceColsKey(workspace.id));
+                await localforage.removeItem(getLegacyConfigDataKey(activeConfig.id));
+                localStorage.removeItem(getLegacyConfigDataKey(activeConfig.id));
+                localStorage.removeItem(getLegacyConfigColsKey(activeConfig.id));
+                removeAuditWorkspaceForConfig(activeConfig.id);
                 
                 showToast(currentLang === 'en' ? "Template successfully deleted!" : "模板已成功删除！");
                 
@@ -4357,6 +4941,7 @@
 
             // 重新渲染表格内容 (表头、按钮、状态等)
             if (activeConfig) renderTable();
+            renderActiveWorkspaceInfo();
             refreshWizardDynamicI18n();
             refreshWizardCollapsibleSections();
             const excelFileInput = document.getElementById('excelFileInput');
