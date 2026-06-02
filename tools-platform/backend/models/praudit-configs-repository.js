@@ -20,6 +20,30 @@ class PRAuditConfigsRepository {
         } catch (e) {
             // ignore if exists
         }
+
+        try {
+            await run(`ALTER TABLE praudit_configs ADD COLUMN groupField TEXT DEFAULT ''`);
+        } catch (e) {
+            // ignore if exists
+        }
+
+        try {
+            await run(`ALTER TABLE praudit_configs ADD COLUMN filterRules TEXT DEFAULT '[]'`);
+        } catch (e) {
+            // ignore if exists
+        }
+
+        try {
+            await run(`ALTER TABLE praudit_configs ADD COLUMN reasonTemplates TEXT DEFAULT '[]'`);
+        } catch (e) {
+            // ignore if exists
+        }
+
+        try {
+            await run(`ALTER TABLE praudit_configs ADD COLUMN allFields TEXT DEFAULT ''`);
+        } catch (e) {
+            // ignore if exists
+        }
         
         // Check if there are any configs, if not, create the default RC template
         const countRow = await get(`SELECT COUNT(*) as count FROM praudit_configs`);
@@ -57,8 +81,12 @@ class PRAuditConfigsRepository {
             id: r.id,
             name: r.name,
             fields: JSON.parse(r.fields),
+            allFields: r.allFields ? JSON.parse(r.allFields) : JSON.parse(r.fields),
             checkpoints: JSON.parse(r.checkpoints),
             reportFields: r.reportFields ? JSON.parse(r.reportFields) : [],
+            groupField: r.groupField || '',
+            filterRules: r.filterRules ? JSON.parse(r.filterRules) : [],
+            reasonTemplates: r.reasonTemplates ? JSON.parse(r.reasonTemplates) : [],
             createdAt: r.createdAt,
             updatedAt: r.updatedAt
         }));
@@ -71,30 +99,38 @@ class PRAuditConfigsRepository {
             id: row.id,
             name: row.name,
             fields: JSON.parse(row.fields),
+            allFields: row.allFields ? JSON.parse(row.allFields) : JSON.parse(row.fields),
             checkpoints: JSON.parse(row.checkpoints),
             reportFields: row.reportFields ? JSON.parse(row.reportFields) : [],
+            groupField: row.groupField || '',
+            filterRules: row.filterRules ? JSON.parse(row.filterRules) : [],
+            reasonTemplates: row.reasonTemplates ? JSON.parse(row.reasonTemplates) : [],
             createdAt: row.createdAt,
             updatedAt: row.updatedAt
         };
     }
 
     async save(config) {
-        const { id, name, fields, checkpoints, reportFields } = config;
+        const { id, name, fields, allFields, checkpoints, reportFields, groupField, filterRules, reasonTemplates } = config;
         const rfString = JSON.stringify(reportFields || []);
+        const gfString = groupField || '';
+        const filterRulesString = JSON.stringify(filterRules || []);
+        const reasonTemplatesString = JSON.stringify(reasonTemplates || []);
+        const allFieldsString = JSON.stringify(allFields || fields || []);
         
         const existing = await get(`SELECT id FROM praudit_configs WHERE id = ?`, [id]);
         if (existing) {
             await run(`
                 UPDATE praudit_configs 
-                SET name = ?, fields = ?, checkpoints = ?, reportFields = ?, updatedAt = CURRENT_TIMESTAMP
+                SET name = ?, fields = ?, allFields = ?, checkpoints = ?, reportFields = ?, groupField = ?, filterRules = ?, reasonTemplates = ?, updatedAt = CURRENT_TIMESTAMP
                 WHERE id = ?
-            `, [name, JSON.stringify(fields), JSON.stringify(checkpoints), rfString, id]);
+            `, [name, JSON.stringify(fields), allFieldsString, JSON.stringify(checkpoints), rfString, gfString, filterRulesString, reasonTemplatesString, id]);
             return this.getById(id);
         } else {
             await run(`
-                INSERT INTO praudit_configs (id, name, fields, checkpoints, reportFields)
-                VALUES (?, ?, ?, ?, ?)
-            `, [id, name, JSON.stringify(fields), JSON.stringify(checkpoints), rfString]);
+                INSERT INTO praudit_configs (id, name, fields, allFields, checkpoints, reportFields, groupField, filterRules, reasonTemplates)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `, [id, name, JSON.stringify(fields), allFieldsString, JSON.stringify(checkpoints), rfString, gfString, filterRulesString, reasonTemplatesString]);
             return this.getById(id);
         }
     }

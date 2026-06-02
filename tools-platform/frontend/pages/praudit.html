@@ -8,6 +8,9 @@
     <!-- 引入 SheetJS 库用于解析 Excel 文件 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <link rel="stylesheet" href="/css/shared.css">
     <style>
         :root {
@@ -42,6 +45,212 @@
 
         #printReport {
             display: none;
+        }
+
+        .pdf-render-root {
+            position: fixed;
+            left: -10000px;
+            top: 0;
+            width: 794px;
+            background: #fff;
+            color: #000;
+            padding: 30px;
+            font-family: 'Segoe UI', sans-serif;
+            z-index: -1;
+        }
+
+        .pdf-render-root .print-title {
+            font-size: 24px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .pdf-render-root .print-title-en,
+        .pdf-render-root .print-meta {
+            display: block;
+            color: #666;
+            font-size: 13px;
+            text-align: center;
+            font-weight: 400;
+        }
+
+        .pdf-render-root .summary-kpi-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .pdf-render-root .summary-kpi-card {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+            border-radius: 6px;
+            background: #fbfbfb;
+        }
+
+        .pdf-render-root .summary-kpi-value {
+            font-size: 22px;
+            font-weight: 700;
+            margin-top: 6px;
+        }
+
+        .pdf-render-root .summary-table,
+        .pdf-render-root .print-check-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            table-layout: fixed;
+        }
+
+        .pdf-render-root .summary-table th,
+        .pdf-render-root .summary-table td,
+        .pdf-render-root .print-check-table th,
+        .pdf-render-root .print-check-table td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+            vertical-align: top;
+            white-space: normal;
+            word-break: break-word;
+        }
+
+        .pdf-render-root .summary-table th,
+        .pdf-render-root .print-check-table th {
+            background: #eee;
+            font-weight: 700;
+        }
+
+        .pdf-render-root .print-card {
+            border: 1px solid #000;
+            margin-bottom: 24px;
+            border-radius: 4px;
+            overflow: hidden;
+            page-break-inside: avoid;
+        }
+
+        .pdf-render-root .print-card-header {
+            background: #f0f0f0;
+            padding: 10px 12px;
+            border-bottom: 1px solid #000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pdf-render-root .print-card-header h3 {
+            margin: 0;
+            font-size: 15px;
+        }
+
+        .pdf-render-root .print-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            border-top: 1px solid #999;
+            border-left: 1px solid #999;
+        }
+
+        .pdf-render-root .print-info-item {
+            display: grid;
+            grid-template-columns: minmax(118px, 34%) 1fr;
+            min-height: 58px;
+            border-right: 1px solid #999;
+            border-bottom: 1px solid #999;
+        }
+
+        .pdf-render-root .print-info-label {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: #f0f0f0;
+            border-right: 1px solid #bbb;
+            padding: 7px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            word-break: break-word;
+        }
+
+        .pdf-render-root .print-info-value {
+            display: flex;
+            align-items: center;
+            padding: 7px 8px;
+            font-size: 12px;
+            word-break: break-word;
+        }
+
+        .pdf-render-root .print-group-header {
+            margin: 24px 0 12px;
+            padding: 9px 12px;
+            border: 1px solid #999;
+            border-left: 5px solid #0078D4;
+            background: #eef5ff;
+            color: #17324d;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .pdf-render-root .print-toc-page {
+            min-height: 1030px;
+            padding: 8px 4px;
+            background: #fff;
+        }
+
+        .pdf-render-root .print-toc-title {
+            text-align: center;
+            font-size: 22px;
+            font-weight: 700;
+            margin: 0 0 22px;
+            color: #111;
+        }
+
+        .pdf-render-root .print-toc-group {
+            margin: 14px 0 8px;
+            padding: 7px 10px;
+            border-left: 4px solid #0078D4;
+            background: #eef5ff;
+            color: #17324d;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .pdf-render-root .print-toc-item {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            padding: 6px 10px;
+            border-bottom: 1px dotted #b9c2cc;
+            color: #111;
+            text-decoration: none;
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        .pdf-render-root .print-toc-hint {
+            text-align: center;
+            color: #667;
+            font-size: 11px;
+            margin-top: 16px;
+        }
+
+        .pdf-render-root .print-summary-zh { color: #17324d; }
+        .pdf-render-root .print-summary-en { color: #5c6f82; }
+        .pdf-render-root .p-pass { color: #27ae60; font-weight: 700; }
+        .pdf-render-root .p-fail { color: #c0392b; font-weight: 700; }
+        .pdf-render-root .p-wait { color: #f39c12; font-weight: 700; }
+        .pdf-render-root .p-reason {
+            color: #c0392b;
+            border-left: 2px solid #c0392b;
+            padding-left: 6px;
+            font-size: 11px;
+        }
+
+        .pdf-render-root .print-img {
+            max-width: 100%;
+            max-height: 120px;
+            object-fit: contain;
+            border: 1px solid #ddd;
+            padding: 2px;
         }
 
         .container {
@@ -117,9 +326,11 @@
         .table-container {
             width: 100%;
             overflow-x: auto;
+            overflow-y: visible;
             border: 1px solid var(--border-color);
             border-radius: 8px;
             margin-bottom: 20px;
+            background: #fff;
         }
 
         table {
@@ -137,19 +348,96 @@
             vertical-align: middle;
         }
 
+        thead {
+            position: relative;
+            z-index: 25;
+        }
+
         th {
-            background-color: #f8f9fa;
+            background: rgba(248, 249, 250, 0.98);
+            backdrop-filter: blur(6px);
             color: #495057;
-            position: sticky;
-            top: 0;
-            z-index: 10;
+            position: static;
+            z-index: 1;
             font-weight: 600;
+        }
+
+        thead th:first-child {
+            border-top-left-radius: 8px;
+        }
+
+        thead th:last-child {
+            border-top-right-radius: 8px;
+        }
+
+        .floating-table-header {
+            position: fixed;
+            display: none;
+            overflow: hidden;
+            z-index: 1200;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 10px 24px rgba(44, 62, 80, 0.18);
+            pointer-events: none;
+        }
+
+        .floating-table-header table {
+            border-collapse: collapse;
+            table-layout: fixed;
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        .floating-table-header th {
+            position: static;
+            top: auto;
+            box-shadow: none;
+            border-top: none;
+        }
+
+        .floating-group-header {
+            display: none;
+            padding: 7px 12px;
+            border-top: 1px solid #d7e6f5;
+            background: linear-gradient(90deg, #eef5ff 0%, #f8fbff 100%);
+            color: #17324d;
+            font-size: 13px;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .check-header {
             white-space: normal;
             min-width: 125px;
             font-size: 0.85rem;
+        }
+
+        .check-header-title {
+            display: block;
+            color: #2c3e50;
+            font-weight: 700;
+            line-height: 1.25;
+        }
+
+        .check-header-title-en {
+            display: block;
+            margin-top: 2px;
+            color: #4f6478;
+            font-size: 0.75rem;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .check-header-desc {
+            display: block;
+            margin-top: 4px;
+            color: #777;
+            font-size: 0.72rem;
+            font-weight: 400;
+            line-height: 1.25;
         }
 
         /* 任务号点击复制样式 */
@@ -182,17 +470,26 @@
         }
 
         /* 三态检查按钮组 */
+        .checkpoint-cell {
+            min-width: 132px;
+            display: grid;
+            grid-template-rows: auto auto auto;
+            gap: 5px;
+            align-content: start;
+            font-size: 11px;
+        }
+
         .toggle-group {
             display: flex;
-            gap: 4px;
+            gap: 5px;
             justify-content: center;
-            margin-bottom: 6px;
         }
 
         .btn-chk {
-            width: 48%;
-            padding: 5px 0;
-            font-size: 0.8rem;
+            flex: 1;
+            min-width: 0;
+            padding: 4px 0;
+            font-size: 11px;
             border-radius: 4px;
             cursor: pointer;
             font-weight: bold;
@@ -229,20 +526,19 @@
 
         /* 理由展示小字 */
         .fail-reason-tag {
-            display: inline-block;
+            display: block;
             width: 100%;
-            max-width: 110px;
-            margin-bottom: 6px;
-            padding: 3px 5px;
+            min-height: 30px;
+            padding: 3px 6px;
             background-color: #fdeded;
             color: #c0392b;
             border: 1px solid #fadbd8;
             border-radius: 4px;
-            font-size: 0.7rem;
+            font-size: 10px;
             line-height: 1.2;
             text-align: left;
             white-space: normal;
-            word-break: break-all;
+            word-break: break-word;
             overflow: hidden;
             text-overflow: ellipsis;
             display: -webkit-box;
@@ -250,40 +546,10 @@
             -webkit-box-orient: vertical;
         }
 
-        /* 图片上传区 */
-        .img-zone {
-            width: 90px;
-            height: 60px;
-            border: 1px dashed #adb5bd;
-            border-radius: 6px;
-            background-color: #fafafa;
-            margin: 0 auto;
-            position: relative;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
-
-        .img-zone:focus {
-            border-color: var(--accent-color);
-            outline: none;
-            background-color: #e9f5ff;
-        }
-
-        .img-zone .placeholder {
-            font-size: 0.7rem;
-            color: #95a5a6;
-            line-height: 1.3;
-            text-align: center;
-            pointer-events: none;
-        }
-
-        .img-zone img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+        .fail-reason-tag.empty {
+            background: #fafafa;
+            color: #9aa3ad;
+            border-color: #e5e8ec;
         }
 
         .btn-del-img {
@@ -428,6 +694,256 @@
             user-select: none;
         }
 
+        .wizard-collapsible-wrap {
+            position: relative;
+        }
+
+        .wizard-collapsible {
+            overflow: hidden;
+            transition: max-height 0.22s ease;
+            box-sizing: border-box;
+        }
+
+        .wizard-collapsible.cols-grid {
+            margin-bottom: 0;
+            align-content: start;
+        }
+
+        .wizard-collapsible.cols-grid::after {
+            content: "";
+            display: block;
+            height: 18px;
+        }
+
+        .wizard-collapsible.is-collapsed {
+            max-height: var(--collapse-height, 124px);
+            padding-bottom: 38px !important;
+        }
+
+        .wizard-collapsible.is-expanded {
+            max-height: 520px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 4px;
+            padding-bottom: 24px;
+            scroll-padding-bottom: 24px;
+        }
+
+        .wizard-collapsible.is-expanded.no-inner-scroll {
+            max-height: none;
+            overflow: visible;
+            padding-right: 0;
+        }
+
+        .wizard-collapsible-fade {
+            position: absolute;
+            left: 1px;
+            right: 1px;
+            bottom: 1px;
+            height: 30px;
+            pointer-events: none;
+            border-radius: 0 0 6px 6px;
+            background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.94) 70%, rgba(255,255,255,1) 100%);
+            display: none;
+        }
+
+        .wizard-collapsible-fade.visible {
+            display: block;
+        }
+
+        .wizard-collapse-toggle-row {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 8px;
+        }
+
+        .wizard-collapse-toggle {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border: 1px solid #d4e2f1;
+            border-radius: 999px;
+            background: #fff;
+            color: #486581;
+            font-size: 12px;
+            line-height: 1;
+            box-shadow: none;
+        }
+
+        .wizard-collapse-toggle.visible {
+            display: inline-flex;
+        }
+
+        .wizard-modal-card {
+            width: min(97vw, 1320px);
+            max-width: 1320px;
+            max-height: 92vh;
+            padding: 18px 22px 16px;
+            overflow-y: auto;
+        }
+
+        .wizard-modal-header {
+            position: sticky;
+            top: -18px;
+            z-index: 5;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin: -18px -22px 14px;
+            padding: 18px 22px 12px;
+            background: rgba(255, 255, 255, 0.98);
+            border-bottom: 1px solid #edf1f6;
+            backdrop-filter: blur(8px);
+        }
+
+        .wizard-modal-titlebox h3 {
+            margin: 0;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 8px;
+            font-size: 23px;
+        }
+
+        .wizard-modal-subtitle {
+            margin: 8px 0 0;
+            color: #617183;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .wizard-modal-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-right: 34px;
+            flex-shrink: 0;
+        }
+
+        .wizard-name-row {
+            margin-bottom: 14px;
+        }
+
+        .wizard-main-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 18px;
+            align-items: start;
+        }
+
+        .wizard-primary-stack,
+        .wizard-side-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            min-width: 0;
+        }
+
+        .wizard-full-width {
+            grid-column: 1 / -1;
+        }
+
+        .wizard-section {
+            border: 1px solid #e7edf4;
+            padding: 14px;
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .wizard-section-soft {
+            border-color: #dbeafe;
+            background: #f8fbff;
+        }
+
+        .wizard-section h4 {
+            margin-top: 0;
+            margin-bottom: 5px;
+            font-size: 15px;
+            line-height: 1.35;
+        }
+
+        .wizard-section p,
+        .wizard-section div,
+        .wizard-section label,
+        .wizard-section select,
+        .wizard-section input,
+        .wizard-section textarea,
+        .wizard-section button {
+            font-size: 13px;
+        }
+
+        .wizard-section p {
+            line-height: 1.45;
+        }
+
+        .wizard-field-tools {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .wizard-field-tools input[type="text"] {
+            flex: 1 1 220px;
+            min-width: 0;
+            padding: 8px 10px;
+            border: 1px solid #d7e0ea;
+            border-radius: 6px;
+            background: #fff;
+        }
+
+        .wizard-field-tools .btn-outline {
+            padding: 6px 10px;
+            font-size: 12px;
+            box-shadow: none;
+        }
+
+        .wizard-field-meta {
+            font-size: 12px;
+            color: #66788a;
+            margin-bottom: 8px;
+        }
+
+        #wizardModal .cols-grid {
+            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            gap: 10px 14px;
+        }
+
+        #wizardModal .cols-grid label {
+            align-items: flex-start;
+            font-size: 13px;
+            line-height: 1.35;
+        }
+
+        #wizardModal .cols-grid input[type="checkbox"] {
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        #wizardModal .modal-close {
+            top: 16px;
+            right: 18px;
+        }
+
+        .wizard-bottom-actions {
+            text-align: right;
+            border-top: 1px solid #eee;
+            padding-top: 12px;
+            margin-top: 14px;
+        }
+
+        @media (max-width: 1040px) {
+            .wizard-main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .wizard-full-width {
+                grid-column: auto;
+            }
+        }
+
         .detail-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -453,6 +969,262 @@
             font-size: 0.9rem;
             word-break: break-all;
             color: #2c3e50;
+        }
+
+        .sample-summary {
+            background: #f8fbff;
+            border: 1px solid #cfe3f8;
+            border-radius: 6px;
+            padding: 12px 14px;
+            color: #2c3e50;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin: 12px 0 16px;
+        }
+
+        .sample-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+            gap: 10px;
+            margin: 12px 0;
+        }
+
+        .sample-option {
+            border: 1px solid var(--border-color);
+            background: #fff;
+            color: #34495e;
+            box-shadow: none;
+            padding: 9px 10px;
+        }
+
+        .sample-option.active {
+            border-color: var(--accent-color);
+            background: #eef6ff;
+            color: var(--accent-color);
+            font-weight: 700;
+        }
+
+        .sample-custom-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 12px;
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        .sample-custom-row input {
+            width: 120px;
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .sample-strategy-note {
+            margin-top: 10px;
+            padding: 9px 10px;
+            background: #fffaf0;
+            border: 1px solid #f5d89d;
+            border-radius: 6px;
+            color: #7a4d00;
+            font-size: 0.82rem;
+            line-height: 1.5;
+        }
+
+        .filter-rule-row {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr 0.9fr 1.4fr auto;
+            gap: 8px;
+            align-items: center;
+            padding: 9px;
+            border: 1px solid #d8e8f8;
+            border-radius: 6px;
+            background: #fbfdff;
+            margin-bottom: 8px;
+        }
+
+        .filter-rule-row select,
+        .filter-rule-row input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #cfd8e3;
+            border-radius: 4px;
+            font-size: 12px;
+            background: #fff;
+        }
+
+        .report-field-sort-box {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .report-field-sort-row {
+            display: grid;
+            grid-template-columns: 24px 1fr auto;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 8px;
+            border: 1px solid #cfe3f8;
+            border-radius: 6px;
+            background: #fff;
+        }
+
+        .report-field-sort-index {
+            color: #52708c;
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        .report-field-sort-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .report-field-sort-actions button {
+            padding: 4px 8px;
+            font-size: 12px;
+            box-shadow: none;
+        }
+
+        .reason-template-box {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 8px 0 12px;
+        }
+
+        .reason-template-chip {
+            border: 1px solid #f1b6b6;
+            background: #fff5f5;
+            color: #a93226;
+            border-radius: 4px;
+            padding: 6px 9px;
+            font-size: 12px;
+            box-shadow: none;
+            max-width: 100%;
+            white-space: normal;
+            text-align: left;
+        }
+
+        .reason-modal-section {
+            margin: 14px 0;
+            padding: 12px;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            background: #fafafa;
+        }
+
+        .reason-modal-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .evidence-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin: 12px 0;
+            padding: 14px;
+            border: 1px solid #d8e8f8;
+            border-radius: 10px;
+            background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+        }
+
+        .evidence-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .evidence-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .evidence-actions button {
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        .evidence-preview-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 128px;
+            border: 1px dashed #c5d8ea;
+            border-radius: 8px;
+            background: #fbfdff;
+            overflow: hidden;
+            color: #7d8fa3;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .evidence-preview-box.has-image {
+            border-style: solid;
+            background: #fff;
+        }
+
+        .evidence-preview-box img {
+            display: none;
+            max-width: 100%;
+            max-height: 180px;
+            object-fit: contain;
+        }
+
+        .evidence-preview-box.has-image img {
+            display: block;
+        }
+
+        .evidence-preview-box.has-image .evidence-empty-text {
+            display: none;
+        }
+
+        .evidence-footer {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .evidence-status-tag {
+            display: block;
+            width: 100%;
+            min-height: 22px;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            line-height: 1.25;
+            border: 1px solid #d9e8f5;
+            background: #f7fbff;
+            color: #4a6278;
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .evidence-status-tag.has-image {
+            border-color: #bfe3ca;
+            background: #f1fbf4;
+            color: #26733c;
+        }
+
+        .audit-group-row td {
+            background: #eef5ff;
+            color: var(--primary-color);
+            font-weight: 700;
+            text-align: left;
+            padding: 9px 12px;
+            border-top: 2px solid var(--accent-color);
+            border-bottom: 1px solid #cfe3f8;
+            letter-spacing: 0;
         }
 
         /* 顶部消息提示框 */
@@ -537,6 +1309,50 @@
                 font-family: 'Segoe UI', sans-serif;
                 margin-bottom: 20px;
             }
+
+            .print-toc-page {
+                page-break-after: always;
+                font-family: 'Segoe UI', sans-serif;
+                margin-bottom: 20px;
+            }
+
+            .print-toc-title {
+                text-align: center;
+                font-size: 20px;
+                font-weight: 700;
+                margin: 0 0 22px;
+                color: #111;
+            }
+
+            .print-toc-group {
+                margin: 14px 0 8px;
+                padding: 7px 10px;
+                border-left: 4px solid #0078D4;
+                background: #eef5ff;
+                color: #17324d;
+                font-size: 13px;
+                font-weight: 700;
+            }
+
+            .print-toc-item {
+                display: grid;
+                grid-template-columns: 1fr auto;
+                gap: 12px;
+                padding: 6px 10px;
+                border-bottom: 1px dotted #b9c2cc;
+                color: #111;
+                text-decoration: none;
+                font-size: 12px;
+                line-height: 1.35;
+            }
+
+            .print-toc-hint {
+                text-align: center;
+                color: #667;
+                font-size: 11px;
+                margin-top: 16px;
+            }
+
             .summary-kpi-container {
                 display: flex;
                 justify-content: space-between;
@@ -595,41 +1411,65 @@
             .print-info-grid {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                padding: 10px 15px;
+                padding: 0;
                 border-bottom: 1px dashed #ccc;
-                gap: 8px;
+                border-top: 1px solid #999;
+                border-left: 1px solid #999;
+                gap: 0;
                 font-size: 12px;
                 font-family: 'Segoe UI', sans-serif;
             }
 
             .print-info-item {
-                border: 1px solid #d9d9d9;
-                border-radius: 6px;
-                padding: 8px 10px;
-                background: #fbfbfb;
-                min-height: 56px;
+                display: grid;
+                grid-template-columns: minmax(118px, 34%) 1fr;
+                min-height: 58px;
+                background: #fff;
+                border-right: 1px solid #999;
+                border-bottom: 1px solid #999;
+                break-inside: avoid;
             }
 
-            .print-info-item.full-width {
-                grid-column: 1 / -1;
+            .print-info-item.placeholder {
+                min-height: 58px;
+                background: #fff;
             }
 
             .print-info-label {
-                display: block;
-                color: #4a4a4a;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: flex-start;
+                color: #111;
                 font-size: 11px;
                 font-weight: 700;
                 line-height: 1.35;
-                margin-bottom: 4px;
-            }
-
-            .print-info-value {
-                color: #111;
-                font-size: 12px;
-                line-height: 1.5;
+                padding: 7px 8px;
+                background: #f0f0f0;
+                border-right: 1px solid #bbb;
                 white-space: normal;
                 word-break: break-word;
                 overflow-wrap: anywhere;
+            }
+
+            .print-info-value {
+                display: flex;
+                align-items: center;
+                color: #111;
+                font-size: 12px;
+                line-height: 1.5;
+                padding: 7px 8px;
+                white-space: normal;
+                word-break: break-word;
+                overflow-wrap: anywhere;
+            }
+
+            .print-summary-zh {
+                color: #17324d;
+            }
+
+            .print-summary-en {
+                color: #5c6f82;
             }
 
             .print-check-table {
@@ -654,6 +1494,25 @@
 
             .print-check-table tr:last-child td {
                 border-bottom: none;
+            }
+
+            .print-check-table thead th {
+                background: #f0f0f0;
+                border-bottom: 1px solid #999;
+                color: #111;
+                font-weight: 700;
+            }
+
+            .print-group-header {
+                page-break-after: avoid;
+                margin: 24px 0 12px;
+                padding: 9px 12px;
+                border: 1px solid #999;
+                border-left: 5px solid #0078D4;
+                background: #eef5ff;
+                color: #17324d;
+                font-size: 14px;
+                font-weight: 700;
             }
 
             .p-pass {
@@ -709,7 +1568,7 @@
             </div>
             <span><span data-i18n="PR审计报告系统">PR审计报告系统</span></span>
             <select id="auditTypeSelector" style="font-size:16px; padding:6px 12px; border-radius:6px; border:2px solid var(--accent-color); background:#fff; color:var(--primary-color); outline:none; cursor:pointer;" onchange="switchAuditType()">
-                <option value="">⏳ 加载配置中...</option>
+                <option value="" data-i18n="⏳ 加载配置中...">⏳ 加载配置中...</option>
             </select>
             <button class="btn-success" style="font-size:14px; padding:6px 15px; border-radius:20px;" onclick="openWizard()"><span data-i18n="➕ 自定义新审计模板">➕ 自定义新审计模板</span></button>
             <button class="btn-warning" id="btnEditConfig" style="font-size:14px; padding:6px 15px; border-radius:20px; background:#f39c12; border:none; color:#fff; display:none;" onclick="editWizard()"><span data-i18n="✏️ 编辑模板">✏️ 编辑模板</span></button>
@@ -723,8 +1582,12 @@
                 <button class="btn-outline" onclick="openModal('configModal')"><span data-i18n="⚙️ 列展示设置">⚙️ 列展示设置</span></button>
             </div>
             <div>
-                <button class="btn-export" onclick="exportPDF()">📄 导出全部为 PDF (双语版)</button>
-                <button class="btn-danger" style="margin-left:10px;" onclick="clearAllData()">🗑️ 清空数据</button>
+                <button class="btn-export" onclick="exportPDF()"><span data-i18n="📄 导出全部为 PDF (双语版)">📄 导出全部为 PDF (双语版)</span></button>
+                <button class="btn-export" onclick="exportPDFByGroup(this)" style="margin-left:10px;"><span data-i18n="📚 按分组导出 PDF">📚 按分组导出 PDF</span></button>
+                <button class="btn-outline" onclick="exportAuditSnapshot()" style="margin-left:10px;"><span data-i18n="📦 导出快照包">📦 导出快照包</span></button>
+                <button class="btn-outline" onclick="exportAuditSnapshotByGroup(this)" style="margin-left:10px;"><span data-i18n="🧩 按分组导出快照">🧩 按分组导出快照</span></button>
+                <button class="btn-outline" onclick="document.getElementById('snapshotFileInput').click()" style="margin-left:10px;"><span data-i18n="📥 导入快照">📥 导入快照</span></button>
+                <button class="btn-danger" style="margin-left:10px;" onclick="clearAllData()"><span data-i18n="🗑️ 清空数据">🗑️ 清空数据</span></button>
             </div>
         </div>
 
@@ -734,6 +1597,8 @@
                 <tbody id="tableBody"></tbody>
             </table>
         </div>
+        <div id="floatingTableHeader" class="floating-table-header" aria-hidden="true"></div>
+        <input type="file" id="snapshotFileInput" accept=".zip,.json,application/zip,application/json" style="display:none;" onchange="importAuditSnapshot(this)">
     </div>
 
     <!-- 专供打印/导出PDF的隐藏区域 -->
@@ -746,32 +1611,79 @@
     <div class="modal-overlay no-print" id="importModal">
         <div class="modal-card" style="max-width: 500px;">
             <span class="modal-close" onclick="closeModal('importModal')">&times;</span>
-            <h3 style="margin-top:0; color: var(--primary-color);">导入 Excel 单子数据</h3>
-            <p style="font-size: 0.85rem; color: #666;">请选择包含 <b>表头</b> 的标准 Excel 文件 (.xlsx 或 .xls) 进行导入分析。</p>
+            <h3 style="margin-top:0; color: var(--primary-color);" data-i18n="导入 Excel 单子数据">导入 Excel 单子数据</h3>
+            <p style="font-size: 0.85rem; color: #666;" data-i18n="请选择一个或多个包含表头的标准 Excel 文件 (.xlsx 或 .xls) 进行导入分析。">请选择一个或多个包含 <b>表头</b> 的标准 Excel 文件 (.xlsx 或 .xls) 进行导入分析。</p>
 
             <div class="excel-upload-zone" onclick="document.getElementById('excelFileInput').click()">
                 <div style="font-size: 40px; margin-bottom: 10px;">📊</div>
-                <strong style="color: var(--accent-color); font-size: 1.1rem;">点击选择 Excel 文件</strong>
-                <div style="font-size: 0.8rem; color: #888; margin-top: 5px;" id="excelFileName">未选择任何文件...</div>
-                <input type="file" id="excelFileInput" accept=".xlsx, .xls" onchange="updateFileName(this)">
+                <strong style="color: var(--accent-color); font-size: 1.1rem;" data-i18n="点击选择 Excel 文件（可多选）">点击选择 Excel 文件（可多选）</strong>
+                <div style="font-size: 0.8rem; color: #888; margin-top: 5px;" id="excelFileName" data-i18n="未选择任何文件...">未选择任何文件...</div>
+                <input type="file" id="excelFileInput" accept=".xlsx, .xls" multiple onchange="updateFileName(this)">
             </div>
 
             <div style="text-align: right; margin-top: 20px;">
                 <button class="btn-outline" onclick="closeModal('importModal')" style="margin-right: 10px;"><span data-i18n="取消">取消</span></button>
-                <button onclick="processExcelImport()">解析并导入</button>
+                <button onclick="processExcelImport()"><span data-i18n="解析并导入">解析并导入</span></button>
             </div>
         </div>
     </div>
 
     <!-- 2. 填写未通过理由弹窗 -->
     <div class="modal-overlay no-print" id="reasonModal">
-        <div class="modal-card" style="max-width: 450px;">
-            <h3 style="margin-top:0; color: var(--danger-color);">填写未通过理由</h3>
-            <p style="font-size: 0.85rem; color: #666; margin-top:-5px;">请简要描述该项不合格的原因，此信息将展示在看板并录入审计报告。</p>
-            <textarea class="reason-box" id="reasonInput" placeholder="例如：客户邮件中未明确提及产品数量 / 缺少高层审批电子流..."></textarea>
+        <div class="modal-card" style="max-width: 560px;">
+            <h3 style="margin-top:0; color: var(--danger-color);"><span data-i18n="填写未通过理由">填写未通过理由</span></h3>
+            <p style="font-size: 0.85rem; color: #666; margin-top:-5px;" data-i18n="请简要描述该项不合格的原因，此信息将展示在看板并录入审计报告。">请简要描述该项不合格的原因，此信息将展示在看板并录入审计报告。</p>
+            <div class="reason-modal-section">
+                <span class="reason-modal-label" data-i18n="快捷理由模板">快捷理由模板</span>
+                <div id="reasonTemplatesBox" class="reason-template-box"></div>
+            </div>
+            <label class="reason-modal-label" for="reasonInput" data-i18n="手动填写或编辑理由">手动填写或编辑理由</label>
+            <textarea class="reason-box" id="reasonInput" data-i18n-ph="例如：客户邮件中未明确提及产品数量 / 缺少高层审批电子流..." placeholder="例如：客户邮件中未明确提及产品数量 / 缺少高层审批电子流..."></textarea>
+            <div class="evidence-panel">
+                <div class="evidence-header">
+                    <div>
+                        <strong data-i18n="截图证据">截图证据</strong>
+                        <div id="reasonEvidenceStatus" style="font-size:12px; color:#666; margin-top:4px;" data-i18n="未附截图证据">未附截图证据</div>
+                    </div>
+                    <div class="evidence-actions">
+                        <button type="button" class="btn-outline" style="box-shadow:none;" onclick="prepareReasonPasteEvidence()"><span data-i18n="点击后粘贴截图">点击后粘贴截图</span></button>
+                        <button type="button" class="btn-outline" style="box-shadow:none;" onclick="uploadReasonEvidence()"><span data-i18n="上传本地图片">上传本地图片</span></button>
+                    </div>
+                </div>
+                <div id="reasonEvidencePreviewBox" class="evidence-preview-box">
+                    <img id="reasonEvidencePreviewImg" alt="Screenshot evidence preview">
+                    <span class="evidence-empty-text" data-i18n="上传或粘贴后将在这里预览，导出 PDF 时会展示。">上传或粘贴后将在这里预览，导出 PDF 时会展示。</span>
+                </div>
+                <div class="evidence-footer">
+                    <button id="reasonEvidenceDeleteBtn" type="button" class="btn-outline" style="display:none; box-shadow:none; color:#c0392b; border-color:#e5b7b7;" onclick="removeReasonEvidence()"><span data-i18n="删除截图">删除截图</span></button>
+                </div>
+            </div>
             <div style="text-align: right;">
-                <button class="btn-outline" onclick="cancelReason()" style="margin-right: 10px;">取消选择</button>
-                <button class="btn-danger" onclick="confirmReason()">确认未通过</button>
+                <button class="btn-outline" onclick="cancelReason()" style="margin-right: 10px;"><span data-i18n="取消选择">取消选择</span></button>
+                <button class="btn-danger" onclick="confirmReason()"><span data-i18n="确认未通过">确认未通过</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2.5 导入后抽查确认弹窗 -->
+    <div class="modal-overlay no-print" id="sampleModal">
+        <div class="modal-card" style="max-width: 560px;">
+            <span class="modal-close" onclick="cancelSampleImport()">&times;</span>
+            <h3 style="margin-top:0; color: var(--primary-color);" data-i18n="导入后抽查设置">导入后抽查设置</h3>
+            <p style="font-size: 0.85rem; color: #666;" data-i18n="可以只抽取一部分单据进入本次审计，降低首次检查压力。若模板设置了分组字段，会优先按分组均衡抽样；已有单据的历史检查状态会保留。">可以只抽取一部分单据进入本次审计，降低首次检查压力。若模板设置了分组字段，会优先按分组均衡抽样；已有单据的历史检查状态会保留。</p>
+            <div class="sample-summary" id="sampleSummary"></div>
+            <div class="sample-options" id="sampleOptions"></div>
+            <div class="sample-custom-row">
+                <label for="sampleCustomCount" data-i18n="自定义抽查数量">自定义抽查数量</label>
+                <input id="sampleCustomCount" type="number" min="1" step="1" placeholder="例如 15" data-i18n-ph="例如 15" oninput="setSampleCount(this.value)">
+                <span id="sampleRangeHint"></span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:22px;">
+                <button class="btn-outline" onclick="cancelSampleImport()"><span data-i18n="取消导入">取消导入</span></button>
+                <div>
+                    <button class="btn-outline" onclick="selectSampleAll()" style="margin-right: 10px;"><span data-i18n="全部导入">全部导入</span></button>
+                    <button class="btn-success" onclick="confirmSampleImport()"><span data-i18n="确认抽查导入">确认抽查导入</span></button>
+                </div>
             </div>
         </div>
     </div>
@@ -780,10 +1692,10 @@
     <div class="modal-overlay no-print" id="configModal">
         <div class="modal-card">
             <span class="modal-close" onclick="closeModal('configModal')">&times;</span>
-            <h3 style="margin-top:0;">主表展示列设置</h3>
+            <h3 style="margin-top:0;" data-i18n="主表展示列设置">主表展示列设置</h3>
             <div class="cols-grid" id="colsGrid"></div>
             <div style="text-align: right; border-top: 1px solid #eee; padding-top: 15px;">
-                <button onclick="saveConfig()">保存设置</button>
+                <button onclick="saveConfig()"><span data-i18n="保存设置">保存设置</span></button>
             </div>
         </div>
     </div>
@@ -792,7 +1704,7 @@
     <div class="modal-overlay no-print" id="detailModal">
         <div class="modal-card">
             <span class="modal-close" onclick="closeModal('detailModal')">&times;</span>
-            <h3 style="margin-top:0; color: var(--primary-color);">单据完整属性表</h3>
+            <h3 style="margin-top:0; color: var(--primary-color);" data-i18n="单据完整属性表">单据完整属性表</h3>
             <div class="detail-grid" id="detailGrid"></div>
         </div>
     </div>
@@ -811,50 +1723,119 @@
 
     <!-- 6. 自定义审计模板向导 -->
     <div class="modal-overlay no-print" id="wizardModal">
-        <div class="modal-card" style="max-width: 750px; max-height: 90vh; overflow-y:auto;">
+        <div class="modal-card wizard-modal-card">
             <span class="modal-close" onclick="closeModal('wizardModal')">&times;</span>
-            <h3 style="margin-top:0; color: var(--primary-color); border-bottom: 2px solid var(--accent-color); padding-bottom:10px;"><span data-i18n="✨ 自定义新审计模板">✨ 自定义新审计模板</span></h3>
-            
-            <div style="margin-bottom: 20px;">
-                <label style="font-weight:bold; font-size:14px;">📝 模板名称:</label>
-                <input type="text" id="wizName" placeholder="例如：RFC 变更单审计" data-i18n-ph="例如：RFC 变更单审计" style="width:100%; padding:10px; margin-top:5px; border:1px solid #ccc; border-radius:4px; font-size:14px;">
-            </div>
-
-            <div style="margin-bottom: 20px; border:1px dashed #ccc; padding:15px; border-radius:6px; background:#f8fbff;">
-                <h4 style="margin-top:0; margin-bottom:5px; color:var(--accent-color);"><span data-i18n="第一步：上传样例 Excel (提取表头字段)">第一步：上传样例 Excel (提取表头字段)</span></h4>
-                <p style="font-size:12px; color:#666; margin-top:0; margin-bottom:10px;"><span data-i18n="请上传一份标准的样例数据，我们会自动提取表头供您建立字段映射。">请上传一份标准的样例数据，我们会自动提取表头供您建立字段映射。</span></p>
-                <input type="file" id="wizFileInput" accept=".xlsx, .xls, .csv">
-                <button class="btn-outline" onclick="wizParseHeaders()" style="margin-top:10px;"><span data-i18n="⚙️ 解析表头">⚙️ 解析表头</span></button>
-                <div id="wizHeadersBox" style="margin-top:12px; font-size:12px; color:#555; display:flex; flex-wrap:wrap; gap:6px;"></div>
-            </div>
-
-            <div style="margin-bottom: 20px; border:1px solid #eee; padding:15px; border-radius:6px;">
-                <h4 style="margin-top:0; margin-bottom:5px;"><span data-i18n="第二步：选择审计需要关注的字段">第二步：选择审计需要关注的字段</span></h4>
-                <p style="font-size:12px; color:#e74c3c; margin-top:0; margin-bottom:10px; font-weight:bold;"><span data-i18n="⚠️ 必看警告：请按顺序勾选！您勾选的【第一个字段】将被强制作为该审计模板的主键/单号！">⚠️ 必看警告：请按顺序勾选！您勾选的【第一个字段】将被强制作为该审计模板的主键/单号！</span></p>
-                <div id="wizFieldsGrid" class="cols-grid" style="background:#fff; padding:10px; border:1px solid #f1f1f1;"><span data-i18n="暂无解析出的字段">暂无解析出的字段</span></div>
-                
-                <div style="margin-top:15px; border-top:1px dashed #eee; padding-top:15px;">
-                    <div style="font-weight:bold; margin-bottom:5px; color:var(--accent-color); font-size:13px;">
-                        <span data-i18n="附加：选择最多 4 个字段在 PDF 报告卡片顶部高亮展示">附加：选择最多 4 个字段在 PDF 报告卡片顶部高亮展示</span>
-                    </div>
-                    <div id="wizReportFieldsBox" class="cols-grid" style="background:#f0f8ff; padding:10px; border:1px solid #cce5ff; border-radius:4px; font-size:13px;">
-                        <span style="color:#666;" data-i18n="(请先在上方勾选关注的字段)">(请先在上方勾选关注的字段)</span>
-                    </div>
+            <div class="wizard-modal-header">
+                <div class="wizard-modal-titlebox">
+                    <h3><span data-i18n="✨ 自定义新审计模板">✨ 自定义新审计模板</span></h3>
+                    <p class="wizard-modal-subtitle"><span data-i18n="建议先解析样例表头，再按主字段、分组、过滤、PDF 展示字段逐步完成模板配置。">建议先解析样例表头，再按主字段、分组、过滤、PDF 展示字段逐步完成模板配置。</span></p>
+                </div>
+                <div class="wizard-modal-actions">
+                    <button class="btn-export" onclick="wizSaveConfig()"><span data-i18n="💾 保存并生效">💾 保存并生效</span></button>
                 </div>
             </div>
 
-            <div style="margin-bottom: 20px;">
-                <h4 style="margin-top:0; display:flex; justify-content:space-between; align-items:center;">
-                    第三步：定义审计检查点 (Checkpoints)
+            <div class="wizard-name-row">
+                <label style="font-weight:bold; font-size:13px;"><span data-i18n="📝 模板名称:">📝 模板名称:</span></label>
+                <input type="text" id="wizName" placeholder="例如：RFC 变更单审计" data-i18n-ph="例如：RFC 变更单审计" style="width:100%; padding:9px 10px; margin-top:5px; border:1px solid #ccc; border-radius:4px; font-size:13px;">
+            </div>
+
+            <div class="wizard-main-grid">
+                <div class="wizard-primary-stack">
+                    <div class="wizard-section wizard-section-soft" style="border-style:dashed;">
+                        <h4 style="color:var(--accent-color);"><span data-i18n="第一步：上传样例 Excel (提取表头字段)">第一步：上传样例 Excel (提取表头字段)</span></h4>
+                        <p style="color:#666; margin-top:0; margin-bottom:10px;"><span data-i18n="请上传一份标准的样例数据，我们会自动提取表头供您建立字段映射。">请上传一份标准的样例数据，我们会自动提取表头供您建立字段映射。</span></p>
+                <input type="file" id="wizFileInput" accept=".xlsx, .xls, .csv">
+                        <button class="btn-outline" onclick="wizParseHeaders()" style="margin-top:10px;"><span data-i18n="⚙️ 解析表头">⚙️ 解析表头</span></button>
+                        <div id="wizHeadersBox" style="margin-top:12px; font-size:12px; color:#555; display:flex; flex-wrap:wrap; gap:6px;"></div>
+                    </div>
+
+                    <div class="wizard-section">
+                        <h4><span data-i18n="第二步：选择审计需要关注的字段">第二步：选择审计需要关注的字段</span></h4>
+                        <p style="color:#e74c3c; margin-top:0; margin-bottom:10px; font-weight:bold;"><span data-i18n="⚠️ 必看警告：请按顺序勾选！您勾选的【第一个字段】将被强制作为该审计模板的主键/单号！">⚠️ 必看警告：请按顺序勾选！您勾选的【第一个字段】将被强制作为该审计模板的主键/单号！</span></p>
+                        <div class="wizard-field-tools">
+                            <input type="text" id="wizFieldSearchInput" data-i18n-ph="搜索字段名称..." placeholder="搜索字段名称..." oninput="setWizardFieldSearch(this.value)">
+                            <button type="button" class="btn-outline" onclick="setWizardVisibleFields(true)"><span data-i18n="全选当前结果">全选当前结果</span></button>
+                            <button type="button" class="btn-outline" onclick="setWizardVisibleFields(false)"><span data-i18n="取消当前结果">取消当前结果</span></button>
+                        </div>
+                        <div id="wizFieldMeta" class="wizard-field-meta"></div>
+                        <div class="wizard-collapsible-wrap">
+                            <div id="wizFieldsGrid" class="cols-grid wizard-collapsible" data-collapse-height="228" data-collapse-rows="5" data-expand-mode="full" style="background:#fff; padding:10px; border:1px solid #f1f1f1;"><span data-i18n="暂无解析出的字段">暂无解析出的字段</span></div>
+                            <div id="wizFieldsGridFade" class="wizard-collapsible-fade"></div>
+                        </div>
+                        <div class="wizard-collapse-toggle-row">
+                            <button type="button" id="wizFieldsGridToggle" class="wizard-collapse-toggle" onclick="toggleWizardCollapse('wizFieldsGrid')"></button>
+                        </div>
+
+                        <div class="wizard-section" style="margin-top:14px; padding:12px 0 0; border:none; border-top:1px dashed #eee; border-radius:0;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:6px;">
+                                <div style="font-weight:bold; color:var(--accent-color); font-size:13px;">
+                                    <span data-i18n="附加：配置导入过滤条件">附加：配置导入过滤条件</span>
+                                </div>
+                                <button type="button" class="btn-outline" style="padding:5px 10px; font-size:12px;" onclick="addFilterRule()">
+                                    <span data-i18n="➕ 新增过滤条件">➕ 新增过滤条件</span>
+                                </button>
+                            </div>
+                            <div id="wizFilterRulesBox" style="font-size:13px;">
+                                <span style="color:#666;" data-i18n="未配置过滤条件">未配置过滤条件</span>
+                            </div>
+                            <div style="font-size:12px; color:#666; margin-top:6px;">
+                                <span data-i18n="多条过滤条件会同时生效；匹配值可用逗号分隔多个值。">多条过滤条件会同时生效；匹配值可用逗号分隔多个值。</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wizard-side-stack">
+                    <div class="wizard-section">
+                        <div style="font-weight:bold; margin-bottom:6px; color:var(--accent-color); font-size:13px;">
+                            <span data-i18n="附加：选择一个字段作为审计页面分组展示依据">附加：选择一个字段作为审计页面分组展示依据</span>
+                        </div>
+                        <select id="wizGroupField" style="width:100%; padding:9px 10px; border:1px solid #cce5ff; border-radius:4px; background:#fff; color:#2c3e50; font-size:13px;">
+                            <option value="" data-i18n="不分组">不分组</option>
+                        </select>
+                        <div style="font-size:12px; color:#666; margin-top:6px;">
+                            <span data-i18n="例如选择客户群或产品线，审计表会按该字段分段展示。">例如选择客户群或产品线，审计表会按该字段分段展示。</span>
+                        </div>
+                    </div>
+
+                    <div class="wizard-section wizard-section-soft">
+                        <h4 style="color:var(--accent-color);">
+                            <span data-i18n="附加：选择最多 6 个字段在 PDF 报告卡片顶部高亮展示">附加：选择最多 6 个字段在 PDF 报告卡片顶部高亮展示</span>
+                        </h4>
+                        <p style="color:#5b6b7a; margin-top:0; margin-bottom:10px;">
+                            <span data-i18n="这部分会单独显示在 PDF 顶部信息卡中，建议挑选最关键、最适合快速浏览的字段。">这部分会单独显示在 PDF 顶部信息卡中，建议挑选最关键、最适合快速浏览的字段。</span>
+                        </p>
+                        <div class="wizard-field-tools">
+                            <input type="text" id="wizReportFieldSearchInput" data-i18n-ph="搜索已勾选字段..." placeholder="搜索已勾选字段..." oninput="setWizardReportFieldSearch(this.value)">
+                            <button type="button" class="btn-outline" onclick="setVisibleReportFields(true)"><span data-i18n="全选当前结果">全选当前结果</span></button>
+                            <button type="button" class="btn-outline" onclick="setVisibleReportFields(false)"><span data-i18n="取消当前结果">取消当前结果</span></button>
+                        </div>
+                        <div id="wizReportFieldMeta" class="wizard-field-meta"></div>
+                        <div class="wizard-collapsible-wrap">
+                            <div id="wizReportFieldsBox" class="cols-grid wizard-collapsible" data-collapse-height="196" data-collapse-rows="4" data-expand-mode="full" style="background:#f0f8ff; padding:12px; border:1px solid #cce5ff; border-radius:6px; font-size:13px;">
+                                <span style="color:#666;" data-i18n="(请先在上方勾选关注的字段)">(请先在上方勾选关注的字段)</span>
+                            </div>
+                            <div id="wizReportFieldsBoxFade" class="wizard-collapsible-fade"></div>
+                        </div>
+                        <div class="wizard-collapse-toggle-row">
+                            <button type="button" id="wizReportFieldsBoxToggle" class="wizard-collapse-toggle" onclick="toggleWizardCollapse('wizReportFieldsBox')"></button>
+                        </div>
+                        <div id="wizReportFieldsSortBox" class="report-field-sort-box"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="wizard-full-width" style="margin-bottom: 20px;">
+                <h4 style="margin-top:0; display:flex; justify-content:space-between; align-items:center; font-size:15px;">
+                    <span data-i18n="第三步：定义审计检查点 (Checkpoints)">第三步：定义审计检查点 (Checkpoints)</span>
                     <button class="btn-success" style="padding:6px 12px; font-size:12px;" onclick="wizAddCheckpoint()"><span data-i18n="➕ 新增检查点">➕ 新增检查点</span></button>
                 </h4>
                 <div id="wizCheckpointsContainer" style="display:flex; flex-direction:column; gap:10px;">
                 </div>
             </div>
 
-            <div style="text-align: right; border-top: 1px solid #eee; padding-top: 15px;">
-                <button class="btn-outline" onclick="closeModal('wizardModal')" style="margin-right: 10px;"><span data-i18n="取消">取消</span></button>
-                <button class="btn-export" onclick="wizSaveConfig()"><span data-i18n="💾 保存并生效">💾 保存并生效</span></button>
+            <div class="wizard-bottom-actions">
+                <button class="btn-outline" onclick="closeModal('wizardModal')"><span data-i18n="取消">取消</span></button>
             </div>
         </div>
     </div>
@@ -871,10 +1852,25 @@
         let ordersData = [];
         let visibleCols = [];
         let pendingReasonTarget = null;
+        let pendingImportBatch = null;
+        let selectedSampleCount = 0;
 
         window.onload = async function () {
             await loadConfigs();
+            initFloatingTableHeader();
+            document.addEventListener('keydown', handleGlobalModalShortcuts);
         };
+
+        function handleGlobalModalShortcuts(event) {
+            if (event.key !== 'Escape') return;
+            const closableModalIds = ['imageModal', 'reasonModal', 'sampleModal', 'wizardModal', 'configModal', 'detailModal', 'importModal'];
+            const openedModalId = closableModalIds.find(id => {
+                const el = document.getElementById(id);
+                return el && el.style.display === 'flex';
+            });
+            if (!openedModalId) return;
+            closeModal(openedModalId);
+        }
 
         async function loadConfigs() {
             try {
@@ -885,7 +1881,7 @@
                 selector.innerHTML = '';
                 
                 if (ALL_CONFIGS.length === 0) {
-                    selector.innerHTML = '<option value="">无可用模板</option>';
+                    selector.innerHTML = `<option value="">${tText('无可用模板', 'No templates available')}</option>`;
                     return;
                 }
 
@@ -988,24 +1984,171 @@
             });
         }
 
+        function escapeHtmlText(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function escapeJsString(value) {
+            return String(value ?? '')
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'")
+                .replace(/\r?\n/g, '\\n');
+        }
+
+        function getFloatingHeaderTop() {
+            const raw = getComputedStyle(document.documentElement).getPropertyValue('--navbar-h') || '0';
+            const navbarHeight = Number.parseFloat(raw) || 0;
+            return navbarHeight + 4;
+        }
+
+        function updateFloatingTableHeader() {
+            const container = document.querySelector('.table-container');
+            const table = document.getElementById('mainTable');
+            const thead = document.getElementById('tableHead');
+            const floating = document.getElementById('floatingTableHeader');
+            if (!container || !table || !thead || !floating || !thead.children.length) return;
+
+            const tableRect = table.getBoundingClientRect();
+            const theadRect = thead.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            const top = getFloatingHeaderTop();
+            const shouldShow = theadRect.bottom < top && tableRect.bottom > top + thead.offsetHeight;
+
+            if (!shouldShow) {
+                floating.style.display = 'none';
+                return;
+            }
+
+            const originalCells = Array.from(thead.querySelectorAll('th'));
+            const clonedHead = thead.cloneNode(true);
+            const clonedCells = Array.from(clonedHead.querySelectorAll('th'));
+            clonedCells.forEach((cell, idx) => {
+                const width = originalCells[idx] ? originalCells[idx].getBoundingClientRect().width : 100;
+                cell.style.width = `${width}px`;
+                cell.style.minWidth = `${width}px`;
+                cell.style.maxWidth = `${width}px`;
+            });
+
+            floating.innerHTML = '';
+            const cloneTable = document.createElement('table');
+            cloneTable.style.width = `${table.getBoundingClientRect().width}px`;
+            cloneTable.style.transform = `translateX(${-container.scrollLeft}px)`;
+            cloneTable.appendChild(clonedHead);
+            floating.appendChild(cloneTable);
+
+            const currentGroup = getCurrentFloatingGroup(top + thead.offsetHeight);
+            const groupBar = document.createElement('div');
+            groupBar.className = 'floating-group-header';
+            if (currentGroup) {
+                const groupPrefix = currentLang === 'en' ? 'Group' : '分组';
+                const groupUnit = currentLang === 'en' ? 'items' : '条';
+                groupBar.style.display = 'block';
+                groupBar.innerText = `${groupPrefix}：${currentGroup.field} = ${currentGroup.value} （${currentGroup.count} ${groupUnit}）`;
+            }
+            floating.appendChild(groupBar);
+
+            floating.style.display = 'block';
+            floating.style.left = `${containerRect.left}px`;
+            floating.style.top = `${top}px`;
+            floating.style.width = `${containerRect.width}px`;
+            floating.style.transform = 'none';
+            floating.style.height = 'auto';
+        }
+
+        function getCurrentFloatingGroup(anchorY) {
+            const groupRows = Array.from(document.querySelectorAll('.audit-group-row'));
+            if (!groupRows.length) return null;
+            let current = null;
+            groupRows.forEach(row => {
+                const rect = row.getBoundingClientRect();
+                if (rect.top <= anchorY) current = row;
+            });
+            if (!current) return null;
+            return {
+                field: current.dataset.groupField || '',
+                value: current.dataset.groupValue || '',
+                count: current.dataset.groupCount || '0'
+            };
+        }
+
+        function initFloatingTableHeader() {
+            const container = document.querySelector('.table-container');
+            window.addEventListener('scroll', updateFloatingTableHeader, { passive: true });
+            window.addEventListener('resize', updateFloatingTableHeader);
+            if (container) container.addEventListener('scroll', updateFloatingTableHeader, { passive: true });
+            setTimeout(updateFloatingTableHeader, 0);
+        }
+
         // ================== 表格渲染引擎 ==================
         function renderTable() {
             const thead = document.getElementById('tableHead');
             const tbody = document.getElementById('tableBody');
+            const colspan = visibleCols.length + CHECK_POINTS.length + 2;
 
             let headHtml = `<tr>`;
             visibleCols.forEach(col => { headHtml += `<th>${col}</th>`; });
-            CHECK_POINTS.forEach(cp => { headHtml += `<th class="check-header">${cp.name}<br><small style="color:#777;font-weight:normal;">${cp.desc}</small></th>`; });
+            CHECK_POINTS.forEach(cp => {
+                const name = escapeHtmlText(cp.name || '-');
+                const nameEn = escapeHtmlText(cp.nameEn || cp.name || '-');
+                const desc = escapeHtmlText(cp.desc || '-');
+                const descEn = escapeHtmlText(cp.descEn || cp.desc || '-');
+                headHtml += `
+                    <th class="check-header">
+                        <span class="check-header-title">${name}</span>
+                        <span class="check-header-title-en">${nameEn}</span>
+                        <span class="check-header-desc">${desc}<br>${descEn}</span>
+                    </th>
+                `;
+            });
             headHtml += `<th style="width: 100px;">自检状态</th><th style="width: 80px;">操作</th></tr>`;
             thead.innerHTML = headHtml;
 
             tbody.innerHTML = '';
             if (ordersData.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="${visibleCols.length + CHECK_POINTS.length + 2}" style="color:#999; padding:30px;">暂无自检数据，请点击上方“导入 Excel 文件”开始。</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="${colspan}" style="color:#999; padding:30px;">暂无自检数据，请点击上方“导入 Excel 文件”开始。</td></tr>`;
                 return;
             }
 
-            ordersData.forEach((row, rowIndex) => {
+            const groupField = activeConfig && activeConfig.groupField && ALL_FIELDS.includes(activeConfig.groupField)
+                ? activeConfig.groupField
+                : '';
+            const groupCounts = groupField ? ordersData.reduce((acc, row) => {
+                const key = (row.baseData && row.baseData[groupField]) ? row.baseData[groupField] : '未填写';
+                acc[key] = (acc[key] || 0) + 1;
+                return acc;
+            }, {}) : {};
+            let lastGroupValue = null;
+            const displayRows = ordersData.map((row, rowIndex) => ({ row, rowIndex }));
+            if (groupField) {
+                displayRows.sort((a, b) => {
+                    const av = (a.row.baseData && a.row.baseData[groupField]) ? a.row.baseData[groupField] : '未填写';
+                    const bv = (b.row.baseData && b.row.baseData[groupField]) ? b.row.baseData[groupField] : '未填写';
+                    return String(av).localeCompare(String(bv), 'zh-CN');
+                });
+            }
+
+            displayRows.forEach(({ row, rowIndex }) => {
+                if (groupField) {
+                    const groupValue = (row.baseData && row.baseData[groupField]) ? row.baseData[groupField] : '未填写';
+                    if (groupValue !== lastGroupValue) {
+                        const groupTr = document.createElement('tr');
+                        groupTr.className = 'audit-group-row';
+                        groupTr.dataset.groupField = groupField;
+                        groupTr.dataset.groupValue = groupValue;
+                        groupTr.dataset.groupCount = String(groupCounts[groupValue] || 0);
+                        const groupPrefix = typeof currentLang !== 'undefined' && currentLang === 'en' ? 'Group' : '分组';
+                        const groupUnit = typeof currentLang !== 'undefined' && currentLang === 'en' ? 'items' : '条';
+                        groupTr.innerHTML = `<td colspan="${colspan}">${groupPrefix}：${escapeHtmlText(groupField)} = ${escapeHtmlText(groupValue)} （${groupCounts[groupValue]} ${groupUnit}）</td>`;
+                        tbody.appendChild(groupTr);
+                        lastGroupValue = groupValue;
+                    }
+                }
+
                 const tr = document.createElement('tr');
                 let status = 'pass';
                 
@@ -1035,21 +2178,30 @@
                     const reason = row.reasons[cKey];
                     const imgStr = row.images[cKey];
 
-                    let reasonHtml = (state === 'fail' && reason)
-                        ? `<div class="fail-reason-tag" title="理由: ${reason}">📍 ${reason}</div>` : '';
+                    const reasonLabel = currentLang === 'en' ? 'Reason' : '理由';
+                    const evidenceLabel = currentLang === 'en' ? 'Evidence' : '证据';
+                    const passText = currentLang === 'en' ? 'Pass' : '通过';
+                    const failText = currentLang === 'en' ? 'Fail' : '未过';
+                    const reasonText = state === 'fail' && reason ? reason : (currentLang === 'en' ? 'None' : '无');
+                    const reasonClass = state === 'fail' && reason ? '' : ' empty';
+                    const reasonHtml = `<div class="fail-reason-tag${reasonClass}" title="${reasonLabel}: ${escapeHtmlText(reasonText)}">${reasonLabel}：${escapeHtmlText(reasonText)}</div>`;
 
-                    let imgHtml = imgStr
-                        ? `<div class="img-zone" onclick="viewLargeImage('${cKey}', ${rowIndex}, event)"><img src="${imgStr}"><button class="btn-del-img" title="删除图片" onclick="deleteImage('${cKey}', ${rowIndex}, event)">×</button></div>`
-                        : `<div class="img-zone" tabindex="0" onpaste="handlePaste(event, '${cKey}', ${rowIndex})" onclick="triggerUpload('${cKey}', ${rowIndex})"><span class="placeholder">粘贴Ctrl+V<br>或点此上传</span></div>`;
+                    const evidenceText = imgStr
+                        ? (currentLang === 'en' ? 'Evidence attached' : '已附截图证据')
+                        : (currentLang === 'en' ? 'No evidence' : '未附截图');
+                    const evidenceClass = imgStr ? ' has-image' : '';
+                    const evidenceHtml = `<div class="evidence-status-tag${evidenceClass}" title="${evidenceLabel}: ${evidenceText}">${evidenceLabel}：${evidenceText}</div>`;
 
                     htmlStr += `
                     <td>
-                        <div class="toggle-group">
-                            <button class="btn-chk pass ${state === 'pass' ? 'active' : ''}" onclick="setCheck('${cKey}', ${rowIndex}, 'pass')">✔通过</button>
-                            <button class="btn-chk fail ${state === 'fail' ? 'active' : ''}" onclick="setCheck('${cKey}', ${rowIndex}, 'fail')">✘未过</button>
+                        <div class="checkpoint-cell">
+                            <div class="toggle-group">
+                                <button class="btn-chk pass ${state === 'pass' ? 'active' : ''}" onclick="setCheck('${cKey}', ${rowIndex}, 'pass')">✔${passText}</button>
+                                <button class="btn-chk fail ${state === 'fail' ? 'active' : ''}" onclick="setCheck('${cKey}', ${rowIndex}, 'fail')">✘${failText}</button>
+                            </div>
+                            ${reasonHtml}
+                            ${evidenceHtml}
                         </div>
-                        ${reasonHtml}
-                        ${imgHtml}
                     </td>
                 `;
                 });
@@ -1080,13 +2232,13 @@
         let toastTimer;
         function copyText(text) {
             if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(text).then(() => showToast(`任务号 ${text} 复制成功！`));
+                navigator.clipboard.writeText(text).then(() => showToast(tText(`任务号 ${text} 复制成功！`, `Ticket ${text} copied successfully!`)));
             } else {
                 let textArea = document.createElement("textarea");
                 textArea.value = text;
                 textArea.style.position = "fixed"; textArea.style.left = "-999999px";
                 document.body.appendChild(textArea); textArea.select();
-                try { document.execCommand('copy'); showToast(`任务号 ${text} 复制成功！`); } catch (err) { alert('复制失败，请手动复制。'); }
+                try { document.execCommand('copy'); showToast(tText(`任务号 ${text} 复制成功！`, `Ticket ${text} copied successfully!`)); } catch (err) { alert(tText('复制失败，请手动复制。', 'Copy failed, please copy it manually.')); }
                 textArea.remove();
             }
         }
@@ -1096,6 +2248,84 @@
             toast.innerText = msg; toast.style.opacity = '1'; toast.style.transform = 'translate(-50%, 10px)';
             clearTimeout(toastTimer);
             toastTimer = setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translate(-50%, 0)'; }, 2000);
+        }
+
+        function restoreI18nButtonLabel(btn, zhKey, enText) {
+            if (!btn) return;
+            btn.innerHTML = `<span data-i18n="${escapeHtmlText(zhKey)}">${currentLang === 'en' ? enText : zhKey}</span>`;
+        }
+
+        function logTemplateSaveStep(message, payload = null) {
+            const prefix = '[PR Audit Template Save]';
+            if (payload === null || payload === undefined) console.log(prefix, message);
+            else console.log(prefix, message, payload);
+        }
+
+        async function fetchTemplateSaveDiagnostics(configId) {
+            const configs = await API.get('/api/praudit/configs');
+            const matched = (configs || []).find(item => item.id === configId) || null;
+            return {
+                configCount: Array.isArray(configs) ? configs.length : 0,
+                matched
+            };
+        }
+
+        function toggleWizardCollapse(contentId) {
+            const content = document.getElementById(contentId);
+            if (!content) return;
+            content.dataset.expanded = content.dataset.expanded === 'true' ? 'false' : 'true';
+            refreshWizardCollapse(contentId);
+        }
+
+        function refreshWizardCollapse(contentId) {
+            const content = document.getElementById(contentId);
+            const toggle = document.getElementById(`${contentId}Toggle`);
+            const fade = document.getElementById(`${contentId}Fade`);
+            if (!content || !toggle || !fade) return;
+
+            let collapseHeight = Number(content.dataset.collapseHeight || 124);
+            const collapseRows = Number(content.dataset.collapseRows || 0);
+            if (collapseRows > 0) {
+                const items = Array.from(content.children).filter(node => node.nodeType === 1);
+                const rowTops = [...new Set(items.map(item => item.offsetTop))].sort((a, b) => a - b);
+                if (rowTops.length > collapseRows) {
+                    const visibleRowTops = rowTops.slice(0, collapseRows);
+                    const visibleRowBottom = items
+                        .filter(item => visibleRowTops.includes(item.offsetTop))
+                        .reduce((maxBottom, item) => Math.max(maxBottom, item.offsetTop + item.offsetHeight), 0);
+                    if (visibleRowBottom > 0) collapseHeight = Math.max(collapseHeight, visibleRowBottom + 12);
+                }
+            }
+            const shouldCollapse = content.scrollHeight > collapseHeight + 8;
+            const expanded = content.dataset.expanded === 'true';
+            const expandMode = content.dataset.expandMode || 'scroll';
+            content.style.setProperty('--collapse-height', `${collapseHeight}px`);
+
+            if (!shouldCollapse) {
+                content.classList.remove('is-collapsed', 'is-expanded', 'no-inner-scroll');
+                content.scrollTop = 0;
+                toggle.classList.remove('visible');
+                fade.classList.remove('visible');
+                content.dataset.expanded = 'false';
+                return;
+            }
+
+            if (!expanded) content.scrollTop = 0;
+            content.classList.toggle('is-collapsed', !expanded);
+            content.classList.toggle('is-expanded', expanded);
+            content.classList.toggle('no-inner-scroll', expanded && expandMode === 'full');
+            toggle.classList.add('visible');
+            fade.classList.toggle('visible', !expanded);
+            toggle.innerText = expanded
+                ? tText('收起', 'Collapse')
+                : tText('展开更多', 'Expand');
+        }
+
+        function refreshWizardCollapsibleSections() {
+            requestAnimationFrame(() => {
+                refreshWizardCollapse('wizFieldsGrid');
+                refreshWizardCollapse('wizReportFieldsBox');
+            });
         }
 
         // ================== 状态设定与理由拦截 ==================
@@ -1108,7 +2338,10 @@
 
             if (value === 'fail') {
                 pendingReasonTarget = { cKey, rowIndex };
+                activeUploadTarget = { cKey, rowIndex };
                 document.getElementById('reasonInput').value = ordersData[rowIndex].reasons[cKey] || '';
+                renderReasonTemplates();
+                renderReasonEvidence();
                 openModal('reasonModal');
                 setTimeout(() => document.getElementById('reasonInput').focus(), 100);
                 return;
@@ -1118,31 +2351,136 @@
             saveToStorage(); renderTable();
         }
 
+        function renderReasonTemplates() {
+            const box = document.getElementById('reasonTemplatesBox');
+            if (!box) return;
+            const cpKey = pendingReasonTarget ? pendingReasonTarget.cKey : '';
+            const reasonTemplateMap = normalizeReasonTemplates(activeConfig && activeConfig.reasonTemplates ? activeConfig.reasonTemplates : {});
+            const templates = reasonTemplateMap[cpKey] || [];
+            if (!templates.length) {
+                box.innerHTML = `<span style="font-size:12px; color:#888;">${tText('当前检查点未配置快捷理由，可直接手动填写。', 'No shortcut reasons are configured for this checkpoint. You can type one manually.')}</span>`;
+                return;
+            }
+            box.innerHTML = templates.map(reason => `
+                <button type="button" class="reason-template-chip" onclick="applyReasonTemplate('${escapeJsString(reason)}')">${escapeHtmlText(reason)}</button>
+            `).join('');
+        }
+
+        function applyReasonTemplate(reason) {
+            const input = document.getElementById('reasonInput');
+            if (!input) return;
+            input.value = reason;
+            input.focus();
+        }
+
+        function normalizeReasonTemplates(value) {
+            if (Array.isArray(value)) {
+                const fallback = value.map(v => String(v || '').trim()).filter(Boolean);
+                const map = {};
+                CHECK_POINTS.forEach(cp => { map[cp.key] = fallback; });
+                return map;
+            }
+            if (!value || typeof value !== 'object') return {};
+            return Object.keys(value).reduce((acc, key) => {
+                acc[key] = Array.isArray(value[key])
+                    ? value[key].map(v => String(v || '').trim()).filter(Boolean)
+                    : [];
+                return acc;
+            }, {});
+        }
+
         function confirmReason() {
             if (!pendingReasonTarget) return;
             const text = document.getElementById('reasonInput').value.trim();
             if (!text) { alert("未通过必须填写理由！"); return; }
             const { cKey, rowIndex } = pendingReasonTarget;
             ordersData[rowIndex].checks[cKey] = 'fail'; ordersData[rowIndex].reasons[cKey] = text;
-            saveToStorage(); renderTable(); closeModal('reasonModal'); pendingReasonTarget = null;
+            saveToStorage(); renderTable(); closeModal('reasonModal'); pendingReasonTarget = null; activeUploadTarget = null;
         }
 
-        function cancelReason() { closeModal('reasonModal'); pendingReasonTarget = null; }
+        function cancelReason() { closeModal('reasonModal'); pendingReasonTarget = null; activeUploadTarget = null; }
 
         // ================== 高级 PDF 导出引擎 (双语及完美换行/排版适配) ==================
-        function exportPDF() {
-            if (ordersData.length === 0) { alert("没有可导出的数据！"); return; }
+        function getActiveAuditGroupField() {
+            return activeConfig && activeConfig.groupField && ALL_FIELDS.includes(activeConfig.groupField)
+                ? activeConfig.groupField
+                : '';
+        }
+
+        function getAuditGroupValue(row, groupField) {
+            return row && row.baseData && row.baseData[groupField] ? row.baseData[groupField] : '未填写';
+        }
+
+        function buildAuditGroups(rows, groupField) {
+            if (!groupField) return [{ value: '', rows: rows.slice() }];
+            const map = new Map();
+            rows.forEach(row => {
+                const value = getAuditGroupValue(row, groupField);
+                if (!map.has(value)) map.set(value, []);
+                map.get(value).push(row);
+            });
+            return Array.from(map.entries())
+                .sort((a, b) => String(a[0]).localeCompare(String(b[0]), 'zh-CN'))
+                .map(([value, groupRows]) => ({ value, rows: groupRows }));
+        }
+
+        function exportPDF(options = {}) {
+            const sourceRows = options.rows || ordersData;
+            if (sourceRows.length === 0) { alert("没有可导出的数据！"); return; }
             const reportDiv = document.getElementById('printReport');
             const dateStr = new Date().toLocaleString('zh-CN', { hour12: false });
             
             const title = activeConfig ? activeConfig.name : 'PR进展自检审计报告';
+            const groupField = options.groupField !== undefined ? options.groupField : getActiveAuditGroupField();
+            const groupValue = options.groupValue || '';
 
-            let total = ordersData.length;
+            const escapeHtml = (value) => String(value ?? '-')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+
+            const FIELD_EN_LABELS = {
+                '标题': 'Title',
+                '处理人': 'Owner',
+                '任务状态': 'Task Status',
+                '是否延期': 'Delayed',
+                '作业单号': 'Ticket ID',
+                '场景': 'Request Type',
+                '子场景': 'Operation',
+                '客户群': 'Customer Group',
+                '产品线': 'Product Line',
+                '产品': 'Product',
+                '区域': 'Region',
+                '国家': 'Country',
+                '状态': 'Status',
+                '级别': 'Level',
+                '创建时间': 'Created Time',
+                '关闭时间': 'Closed Time'
+            };
+
+            const getFieldEnLabel = (field) => FIELD_EN_LABELS[field] || field;
+            const renderBilingualLabel = (zh, en, options = {}) => {
+                const zhText = escapeHtml(zh || '-');
+                const enText = escapeHtml(en || zh || '-');
+                if (options.inline) return `${zhText} / ${enText}`;
+                return `${zhText}<br><span style="font-size:10px; color:#555; font-weight:400;">${enText}</span>`;
+            };
+            const renderCheckpointLabel = (cp, options = {}) => renderBilingualLabel(cp.name, cp.nameEn || cp.name, options);
+            const renderFieldLabel = (field) => renderBilingualLabel(field, getFieldEnLabel(field));
+            const primaryField = ALL_FIELDS[0] || '';
+            const getRowPrimaryLabel = (row) => {
+                const value = row && row.baseData && primaryField ? row.baseData[primaryField] : '';
+                return String(row.id || value || '-');
+            };
+
+            let total = sourceRows.length;
             let passCount = 0; let failCount = 0; let waitCount = 0;
             let cpFailCounts = {};
-            CHECK_POINTS.forEach(cp => cpFailCounts[cp.key] = { name: cp.name, count: 0 });
+            CHECK_POINTS.forEach(cp => cpFailCounts[cp.key] = { name: cp.name, nameEn: cp.nameEn || cp.name, count: 0 });
 
-            ordersData.forEach(row => {
+            sourceRows.forEach(row => {
                 let status = 'pass';
                 for (let i = 0; i < CHECK_POINTS.length; i++) { 
                     const cKey = CHECK_POINTS[i].key;
@@ -1165,23 +2503,59 @@
                 if (cp.count > maxFails) { maxFails = cp.count; topFailCp = cp; }
             });
 
-            let execSummary = `本次审计共抽样 <strong>${total}</strong> 单，其中完全合格 <strong>${passCount}</strong> 单，不合格 <strong>${failCount}</strong> 单（整体合格率 ${passRate}）。`;
-            if (maxFails > 0) execSummary += `主要问题集中在“<strong>${topFailCp.name}</strong>”环节，共计 ${maxFails} 次未通过。`;
-            else if (total > 0 && failCount === 0) execSummary += `所有单据表现优秀，未发现任何不合格情况。`;
+            let execSummaryZh = `本次审计共抽样 <strong>${total}</strong> 单，其中完全合格 <strong>${passCount}</strong> 单，不合格 <strong>${failCount}</strong> 单（整体合格率 ${passRate}）。`;
+            let execSummaryEn = `This audit sampled <strong>${total}</strong> tickets: <strong>${passCount}</strong> fully passed, <strong>${failCount}</strong> failed, with an overall pass rate of ${passRate}.`;
+            if (maxFails > 0) {
+                const topFailLabel = renderBilingualLabel(topFailCp.name, topFailCp.nameEn, { inline: true });
+                execSummaryZh += `主要问题集中在“<strong>${topFailLabel}</strong>”环节，共计 ${maxFails} 次未通过。`;
+                execSummaryEn += ` The main issue is concentrated in “<strong>${topFailLabel}</strong>”, with ${maxFails} failed occurrence(s).`;
+            } else if (total > 0 && failCount === 0) {
+                execSummaryZh += `所有单据表现优秀，未发现任何不合格情况。`;
+                execSummaryEn += ` All sampled tickets passed with no failed items found.`;
+            }
 
             let cpTableHtml = '';
             Object.values(cpFailCounts).forEach(cp => {
                 let rate = total > 0 ? ((cp.count / total) * 100).toFixed(1) + '%' : '0%';
-                cpTableHtml += `<tr><td>${cp.name}</td><td>${cp.count}</td><td>${rate}</td></tr>`;
+                cpTableHtml += `<tr><td>${renderBilingualLabel(cp.name, cp.nameEn)}</td><td>${cp.count}</td><td>${rate}</td></tr>`;
             });
+
+            const pdfGroups = buildAuditGroups(sourceRows, groupField);
+            let tocSeq = 0;
+            const tocGroups = pdfGroups.map(group => ({
+                value: group.value,
+                rows: group.rows.map(row => ({
+                    row,
+                    label: getRowPrimaryLabel(row),
+                    cardId: `audit-card-${++tocSeq}`
+                }))
+            }));
+            const tocHtml = `
+                <div class="print-toc-page">
+                    <div class="print-toc-title">目录 / Contents</div>
+                    ${tocGroups.map(group => `
+                        <div class="print-toc-group">${groupField ? `${escapeHtml(groupField)} = ${escapeHtml(group.value)}` : '全部单据 / All Tickets'} （${group.rows.length} 条 / items）</div>
+                        ${group.rows.map(item => `
+                            <a class="print-toc-item" href="#${item.cardId}" data-toc-target="${item.cardId}">
+                                <span>${escapeHtml(primaryField || '单号')}：${escapeHtml(item.label)}</span>
+                                <span>↗</span>
+                            </a>
+                        `).join('')}
+                    `).join('')}
+                    <div class="print-toc-hint">提示 / Note：批量生成的 PDF 支持点击目录跳转；浏览器打印版是否保留跳转取决于浏览器。</div>
+                </div>
+            `;
 
             let html = `
             <div class="print-summary-page">
                 <div class="print-title">
-                    ${title}
+                    ${escapeHtml(groupValue ? `${title} - ${groupField}: ${groupValue}` : title)}
                     <span class="print-title-en">Progress Audit Report</span>
                 </div>
-                <div class="print-meta" style="margin-bottom:40px;">导出时间 / Export Time: ${dateStr}</div>
+                <div class="print-meta" style="margin-bottom:40px;">
+                    导出时间 / Export Time: ${dateStr}
+                    ${groupValue ? `<br>分组 / Group: ${escapeHtml(groupField)} = ${escapeHtml(groupValue)}` : ''}
+                </div>
 
                 <h3 style="border-bottom:1px solid #ccc; padding-bottom:10px; margin-bottom:20px;">总体审计情况 / Overall Summary</h3>
                 <div class="summary-kpi-container">
@@ -1204,7 +2578,9 @@
                 </div>
 
                 <div style="background:#eef5ff; padding:15px; border-left:4px solid #0078D4; margin-bottom:30px; font-size:14px; line-height:1.6;">
-                    <strong>结论总览：</strong>${execSummary}
+                    <strong>结论总览 / Executive Summary：</strong>
+                    <div class="print-summary-zh">${execSummaryZh}</div>
+                    <div class="print-summary-en">${execSummaryEn}</div>
                 </div>
 
                 <h3 style="border-bottom:1px solid #ccc; padding-bottom:10px; margin-bottom:20px;">各个审计点问题分布 / Checkpoint Issue Distribution</h3>
@@ -1221,26 +2597,19 @@
                     </tbody>
                 </table>
             </div>
+            ${tocHtml}
         `;
 
             const rf = (activeConfig && activeConfig.reportFields && activeConfig.reportFields.length > 0) 
                        ? activeConfig.reportFields 
                        : ['标题', '处理人', '任务状态', '是否延期'];
 
-            const escapeHtml = (value) => String(value ?? '-')
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
-
-            const shouldUseFullWidthField = (label, value) => {
-                const rawValue = String(value ?? '').trim();
-                const combinedLength = String(label || '').length + rawValue.length;
-                return rawValue.length > 34 || combinedLength > 52 || /[\r\n]/.test(rawValue);
-            };
-
-            ordersData.forEach((row, idx) => {
+            tocGroups.forEach(group => {
+                if (groupField && !groupValue) {
+                    html += `<div class="print-group-header">分组 / Group：${escapeHtml(groupField)} = ${escapeHtml(group.value)} （${group.rows.length} 条 / items）</div>`;
+                }
+                group.rows.forEach((item, idx) => {
+                const row = item.row;
                 let statusBadge = ''; let status = 'pass';
                 for (let i = 0; i < CHECK_POINTS.length; i++) { 
                     const cKey = CHECK_POINTS[i].key;
@@ -1253,26 +2622,42 @@
                 else statusBadge = '⏳ 检查未完成 / Pending';
 
                 let infoGridHtml = '<div class="print-info-grid">';
+                let compactCellCount = 0;
+                const appendPlaceholderCell = () => {
+                    infoGridHtml += `<div class="print-info-item placeholder" aria-hidden="true"></div>`;
+                    compactCellCount = 0;
+                };
+
                 rf.forEach(f => {
                     const rawValue = row.baseData[f] || '-';
-                    const fullWidthClass = shouldUseFullWidthField(f, rawValue) ? ' full-width' : '';
                     infoGridHtml += `
-                        <div class="print-info-item${fullWidthClass}">
-                            <span class="print-info-label">${escapeHtml(f)}</span>
+                        <div class="print-info-item">
+                            <span class="print-info-label">${renderFieldLabel(f)}</span>
                             <span class="print-info-value">${escapeHtml(rawValue)}</span>
                         </div>
                     `;
+                    compactCellCount = (compactCellCount + 1) % 2;
                 });
+                if (compactCellCount === 1) appendPlaceholderCell();
                 infoGridHtml += '</div>';
 
                 html += `
-            <div class="print-card">
+            <div class="print-card" id="${item.cardId}" data-card-id="${item.cardId}">
                 <div class="print-card-header">
                     <h3>单号 / Order No.: ${row.id}</h3>
                     <strong class="${status === 'pass' ? 'p-pass' : (status === 'fail' ? 'p-fail' : 'p-wait')}">${statusBadge}</strong>
                 </div>
                 ${infoGridHtml}
-                <table class="print-check-table"><tbody>
+                <table class="print-check-table">
+                    <thead>
+                        <tr>
+                            <th width="30%">审计检查点 / Checkpoint</th>
+                            <th width="15%">是否通过 / Result</th>
+                            <th width="30%">理由 / Reason</th>
+                            <th width="25%">截图证据 / Evidence</th>
+                        </tr>
+                    </thead>
+                    <tbody>
             `;
 
                 CHECK_POINTS.forEach(cp => {
@@ -1294,40 +2679,485 @@
                         </tr>`;
                 });
                 html += `</tbody></table></div>`;
+                });
             });
+            if (options.returnHtml) {
+                return {
+                    html,
+                    filename: sanitizeFileName(groupValue ? `${title}_${groupField}_${groupValue}.pdf` : `${title}.pdf`)
+                };
+            }
             reportDiv.innerHTML = html;
             setTimeout(() => { window.print(); }, 500);
+        }
+
+        function sanitizeFileName(name) {
+            return String(name || 'report.pdf')
+                .replace(/[\\/:*?"<>|]/g, '_')
+                .replace(/\s+/g, '_')
+                .slice(0, 120);
+        }
+
+        function buildSnapshotImportSuffix() {
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            const rand = Math.random().toString(36).slice(2, 6);
+            return `${yyyy}${mm}${dd}-${rand}`;
+        }
+
+        function ensureUniqueSnapshotImportName(name, existingNames = new Set()) {
+            const baseName = String(name || tText('导入快照', 'Imported Snapshot')).trim() || tText('导入快照', 'Imported Snapshot');
+            if (!existingNames.has(baseName)) return baseName;
+            let candidate = `${baseName}（${buildSnapshotImportSuffix()}）`;
+            while (existingNames.has(candidate)) {
+                candidate = `${baseName}（${buildSnapshotImportSuffix()}）`;
+            }
+            return candidate;
+        }
+
+        function downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        function buildAuditSnapshot(rows = ordersData, options = {}) {
+            if (!activeConfig) throw new Error('当前没有可导出的审计模板。');
+            const now = new Date().toISOString();
+            return {
+                version: 1,
+                type: 'praudit-work-snapshot',
+                exportedAt: now,
+                scope: options.scope || 'all',
+                groupField: options.groupField || '',
+                groupValue: options.groupValue || '',
+                sourceConfigId: activeConfig.id,
+                config: JSON.parse(JSON.stringify(activeConfig)),
+                rows: JSON.parse(JSON.stringify(rows || [])),
+                visibleCols: JSON.parse(JSON.stringify(visibleCols || [])),
+                meta: {
+                    app: 'tools-platform',
+                    page: 'praudit',
+                    rowCount: (rows || []).length,
+                    templateName: activeConfig.name,
+                    language: currentLang
+                }
+            };
+        }
+
+        async function makeSnapshotZipBlob(snapshot) {
+            if (!window.JSZip) throw new Error('缺少压缩依赖 JSZip，请检查网络后重试。');
+            const zip = new JSZip();
+            zip.file('snapshot.json', JSON.stringify(snapshot, null, 2));
+            zip.file('README.txt', [
+                'PR Audit Work Snapshot',
+                `Template: ${snapshot.config && snapshot.config.name ? snapshot.config.name : '-'}`,
+                `Rows: ${snapshot.rows ? snapshot.rows.length : 0}`,
+                `Scope: ${snapshot.scope || 'all'}`,
+                snapshot.groupField ? `Group: ${snapshot.groupField} = ${snapshot.groupValue}` : '',
+                '',
+                'Import this zip from PR Audit page -> 导入快照.'
+            ].filter(Boolean).join('\n'));
+            return zip.generateAsync({ type: 'blob' });
+        }
+
+        async function exportAuditSnapshot() {
+            try {
+                if (!ordersData.length) {
+                    alert('当前没有可导出的表格数据。');
+                    return;
+                }
+                const snapshot = buildAuditSnapshot(ordersData, { scope: 'all' });
+                const blob = await makeSnapshotZipBlob(snapshot);
+                downloadBlob(blob, sanitizeFileName(`${activeConfig.name}_全量快照_${snapshot.rows.length}条.zip`));
+            } catch (err) {
+                console.error('导出快照失败', err);
+                alert(`导出快照失败：${err.message}`);
+            }
+        }
+
+        async function exportAuditSnapshotByGroup(btn = null) {
+            try {
+                if (!ordersData.length) {
+                    alert('当前没有可导出的表格数据。');
+                    return;
+                }
+                const groupField = getActiveAuditGroupField();
+                if (!groupField) {
+                    alert('当前审计模板未设置有效的分组字段，无法按分组导出快照。');
+                    return;
+                }
+                if (!window.JSZip) {
+                    alert('缺少压缩依赖 JSZip，请检查网络后重试。');
+                    return;
+                }
+                const groups = buildAuditGroups(ordersData, groupField).filter(group => group.rows.length > 0);
+                const outerZip = new JSZip();
+                const originalText = btn ? btn.innerText : '';
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerText = tText('正在生成分组快照...', 'Generating group snapshots...');
+                }
+                for (let i = 0; i < groups.length; i++) {
+                    const group = groups[i];
+                    if (btn) btn.innerText = tText(`生成快照 ${i + 1}/${groups.length}`, `Generating snapshot ${i + 1}/${groups.length}`);
+                    const snapshot = buildAuditSnapshot(group.rows, {
+                        scope: 'group',
+                        groupField,
+                        groupValue: group.value
+                    });
+                    const blob = await makeSnapshotZipBlob(snapshot);
+                    outerZip.file(sanitizeFileName(`${activeConfig.name}_${groupField}_${group.value}_${group.rows.length}条.zip`), blob);
+                }
+                outerZip.file('manifest.json', JSON.stringify({
+                    version: 1,
+                    type: 'praudit-group-snapshot-bundle',
+                    exportedAt: new Date().toISOString(),
+                    templateName: activeConfig.name,
+                    groupField,
+                    groups: groups.map(group => ({ groupValue: group.value, rowCount: group.rows.length }))
+                }, null, 2));
+                outerZip.file('README.txt', [
+                    'PR Audit Group Snapshot Bundle',
+                    `Template: ${activeConfig.name}`,
+                    `Group Field: ${groupField}`,
+                    `Groups: ${groups.length}`,
+                    '',
+                    'Each inner .zip is an independent snapshot package for one group.',
+                    'Send the corresponding inner .zip to the group owner.',
+                    'Import from PR Audit page -> 导入快照.',
+                    '',
+                    '每个内层 .zip 都是一个独立分组快照包，可直接发给对应责任人导入继续处理。'
+                ].join('\n'));
+                if (btn) btn.innerText = tText('正在压缩下载...', 'Compressing download...');
+                const finalBlob = await outerZip.generateAsync({ type: 'blob' });
+                downloadBlob(finalBlob, sanitizeFileName(`${activeConfig.name}_${groupField}_分组快照包.zip`));
+                if (btn) {
+                    btn.disabled = false;
+                    restoreI18nButtonLabel(btn, '🧩 按分组导出快照', '🧩 Export Group Snapshots');
+                }
+            } catch (err) {
+                console.error('按分组导出快照失败', err);
+                alert(`按分组导出快照失败：${err.message}`);
+                if (btn) {
+                    btn.disabled = false;
+                    restoreI18nButtonLabel(btn, '🧩 按分组导出快照', '🧩 Export Group Snapshots');
+                }
+            }
+        }
+
+        async function readSnapshotFromFile(file) {
+            if (!file) throw new Error('未选择快照文件。');
+            if (file.name.toLowerCase().endsWith('.json')) {
+                return JSON.parse(await file.text());
+            }
+            if (!window.JSZip) throw new Error('缺少压缩依赖 JSZip，请检查网络后重试。');
+            const zip = await JSZip.loadAsync(file);
+            const snapshotFile = zip.file('snapshot.json');
+            if (!snapshotFile) {
+                const nestedSnapshotZips = Object.keys(zip.files).filter(name => name.toLowerCase().endsWith('.zip'));
+                if (nestedSnapshotZips.length) {
+                    throw new Error('这是分组快照总包，请先解压后选择其中某个分组的内层快照 zip 导入。');
+                }
+                throw new Error('压缩包中未找到 snapshot.json。');
+            }
+            return JSON.parse(await snapshotFile.async('string'));
+        }
+
+        function validateAuditSnapshot(snapshot) {
+            if (!snapshot || snapshot.type !== 'praudit-work-snapshot') {
+                throw new Error('快照类型不正确。');
+            }
+            if (!snapshot.config || !snapshot.config.name || !Array.isArray(snapshot.config.fields) || !Array.isArray(snapshot.config.checkpoints)) {
+                throw new Error('快照模板配置不完整。');
+            }
+            if (!Array.isArray(snapshot.rows)) {
+                throw new Error('快照表格数据不完整。');
+            }
+        }
+
+        async function importAuditSnapshot(input) {
+            const file = input && input.files ? input.files[0] : null;
+            try {
+                const snapshot = await readSnapshotFromFile(file);
+                validateAuditSnapshot(snapshot);
+                const config = JSON.parse(JSON.stringify(snapshot.config));
+                const existingIds = new Set(ALL_CONFIGS.map(c => c.id));
+                const existingNames = new Set(ALL_CONFIGS.map(c => String(c.name || '').trim()).filter(Boolean));
+                const originalName = config.name;
+                if (!config.id || existingIds.has(config.id)) {
+                    config.id = `snapshot_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+                }
+                config.name = ensureUniqueSnapshotImportName(config.name || `${originalName}（导入快照）`, existingNames);
+                const savedConfig = await API.post('/api/praudit/configs', {
+                    id: config.id,
+                    name: config.name,
+                    fields: config.fields,
+                    allFields: config.allFields || config.fields,
+                    checkpoints: config.checkpoints,
+                    reportFields: config.reportFields || [],
+                    groupField: config.groupField || '',
+                    filterRules: config.filterRules || [],
+                    reasonTemplates: config.reasonTemplates || []
+                });
+
+                const dataKey = `PR_Auditor_Data_${savedConfig.id}`;
+                const colsKey = `PR_Auditor_Cols_${savedConfig.id}`;
+                await localforage.setItem(dataKey, JSON.parse(JSON.stringify(snapshot.rows)));
+                if (Array.isArray(snapshot.visibleCols) && snapshot.visibleCols.length) {
+                    localStorage.setItem(colsKey, JSON.stringify(snapshot.visibleCols.filter(col => config.fields.includes(col))));
+                }
+                localStorage.setItem('PR_Auditor_LastConfigId', savedConfig.id);
+                await loadConfigs();
+                document.getElementById('auditTypeSelector').value = savedConfig.id;
+                await switchAuditType();
+                showToast(tText(`快照导入成功：${savedConfig.name}（${snapshot.rows.length} 条）`, `Snapshot imported: ${savedConfig.name} (${snapshot.rows.length} rows)`));
+            } catch (err) {
+                console.error('导入快照失败', err);
+                alert(`导入快照失败：${err.message}`);
+            } finally {
+                if (input) input.value = '';
+            }
+        }
+
+        async function generatePdfBlobFromHtml(html) {
+            if (!window.html2canvas || !window.jspdf || !window.jspdf.jsPDF) {
+                throw new Error('缺少 PDF 生成依赖，请检查网络是否能加载 html2canvas / jsPDF。');
+            }
+            const renderRoot = document.createElement('div');
+            renderRoot.className = 'pdf-render-root';
+            renderRoot.innerHTML = html;
+            document.body.appendChild(renderRoot);
+            await new Promise(resolve => setTimeout(resolve, 80));
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const margin = 8;
+                const gap = 5;
+                const contentWidth = pageWidth - margin * 2;
+                const contentHeight = pageHeight - margin * 2;
+                let cursorY = margin;
+                let hasContentOnPage = false;
+                const cardPageMap = new Map();
+                const pendingTocLinks = [];
+
+                const renderBlock = async (el) => {
+                    const elementRect = el.getBoundingClientRect();
+                    const canvas = await html2canvas(el, {
+                        scale: 2,
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: '#ffffff',
+                        logging: false
+                    });
+                    const baseWidth = contentWidth;
+                    const baseHeight = canvas.height * baseWidth / canvas.width;
+                    const forceSinglePage = el.classList.contains('print-card') || el.classList.contains('print-toc-page');
+                    const scale = forceSinglePage && baseHeight > contentHeight
+                        ? contentHeight / baseHeight
+                        : 1;
+                    const pdfWidth = baseWidth * scale;
+                    const pdfHeight = baseHeight * scale;
+                    const cssToPdfRatio = elementRect.width ? pdfWidth / elementRect.width : 1;
+                    const tocLinks = Array.from(el.querySelectorAll('.print-toc-item[data-toc-target]')).map(linkEl => {
+                        const rect = linkEl.getBoundingClientRect();
+                        return {
+                            target: linkEl.getAttribute('data-toc-target'),
+                            x: (rect.left - elementRect.left) * cssToPdfRatio,
+                            y: (rect.top - elementRect.top) * cssToPdfRatio,
+                            w: rect.width * cssToPdfRatio,
+                            h: rect.height * cssToPdfRatio
+                        };
+                    });
+                    return {
+                        data: canvas.toDataURL('image/jpeg', 0.92),
+                        width: pdfWidth,
+                        height: pdfHeight,
+                        isSummary: el.classList.contains('print-summary-page'),
+                        isToc: el.classList.contains('print-toc-page'),
+                        isGroupHeader: el.classList.contains('print-group-header'),
+                        isCard: el.classList.contains('print-card'),
+                        cardId: el.getAttribute('data-card-id') || '',
+                        tocLinks
+                    };
+                };
+
+                const addNewPage = () => {
+                    pdf.addPage();
+                    cursorY = margin;
+                    hasContentOnPage = false;
+                };
+
+                const blocks = Array.from(renderRoot.children)
+                    .filter(el => el.classList.contains('print-summary-page') || el.classList.contains('print-toc-page') || el.classList.contains('print-group-header') || el.classList.contains('print-card'));
+
+                for (let i = 0; i < blocks.length; i++) {
+                    const block = await renderBlock(blocks[i]);
+
+                    if (block.isSummary && hasContentOnPage) addNewPage();
+                    if (block.isToc && hasContentOnPage) addNewPage();
+                    if (block.isGroupHeader && hasContentOnPage && (pageHeight - margin - cursorY) < 90) {
+                        addNewPage();
+                    }
+                    if (!block.isSummary && hasContentOnPage && cursorY + block.height > pageHeight - margin) {
+                        addNewPage();
+                    }
+
+                    const x = margin + (contentWidth - block.width) / 2;
+                    const currentPage = pdf.getNumberOfPages();
+                    pdf.addImage(block.data, 'JPEG', x, cursorY, block.width, block.height);
+                    if (block.isCard && block.cardId) {
+                        cardPageMap.set(block.cardId, currentPage);
+                    }
+                    if (block.isToc && block.tocLinks.length) {
+                        block.tocLinks.forEach(link => {
+                            pendingTocLinks.push({
+                                page: currentPage,
+                                target: link.target,
+                                x: x + link.x,
+                                y: cursorY + link.y,
+                                w: link.w,
+                                h: link.h
+                            });
+                        });
+                    }
+                    hasContentOnPage = true;
+
+                    if (block.isSummary) {
+                        if (i < blocks.length - 1) addNewPage();
+                    } else if (block.isToc) {
+                        if (i < blocks.length - 1) addNewPage();
+                    } else {
+                        cursorY += block.height + (block.isGroupHeader ? 3 : gap);
+                    }
+                }
+
+                pendingTocLinks.forEach(link => {
+                    const targetPage = cardPageMap.get(link.target);
+                    if (!targetPage) return;
+                    pdf.setPage(link.page);
+                    pdf.link(link.x, link.y, link.w, link.h, { pageNumber: targetPage });
+                });
+
+                return pdf.output('blob');
+            } finally {
+                renderRoot.remove();
+            }
+        }
+
+        async function exportPDFByGroup(btn = null) {
+            if (ordersData.length === 0) { alert("没有可导出的数据！"); return; }
+            const groupField = getActiveAuditGroupField();
+            if (!groupField) {
+                alert("当前审计模板未设置有效的分组字段，无法按分组导出。");
+                return;
+            }
+            const groups = buildAuditGroups(ordersData, groupField).filter(group => group.rows.length > 0);
+            if (!groups.length) {
+                alert("当前没有可按分组导出的数据。");
+                return;
+            }
+            if (!window.JSZip) {
+                alert("缺少压缩依赖 JSZip，请检查网络后重试。");
+                return;
+            }
+
+            const zip = new JSZip();
+            const originalText = btn ? btn.innerText : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = tText('正在生成分组 PDF...', 'Generating group PDFs...');
+            }
+            try {
+                for (let i = 0; i < groups.length; i++) {
+                    const group = groups[i];
+                    if (btn) btn.innerText = tText(`生成 PDF ${i + 1}/${groups.length}`, `Generating PDF ${i + 1}/${groups.length}`);
+                    const report = exportPDF({ rows: group.rows, groupField, groupValue: group.value, returnHtml: true });
+                    const blob = await generatePdfBlobFromHtml(report.html);
+                    zip.file(report.filename, blob);
+                }
+                if (btn) btn.innerText = tText('正在压缩下载...', 'Compressing download...');
+                const zipBlob = await zip.generateAsync({ type: 'blob' });
+                const title = activeConfig ? activeConfig.name : 'PR审计报告';
+                downloadBlob(zipBlob, sanitizeFileName(`${title}_${groupField}_分组PDF.zip`));
+            } catch (err) {
+                console.error('按分组批量导出 PDF 失败', err);
+                alert(`按分组批量导出 PDF 失败：${err.message}`);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    restoreI18nButtonLabel(btn, '📚 按分组导出 PDF', '📚 Export PDF by Group');
+                }
+            }
         }
 
         // ================== Excel 解析与导入核心引擎 ==================
         function updateFileName(input) {
             const nameLabel = document.getElementById('excelFileName');
-            if (input.files && input.files[0]) {
-                nameLabel.innerText = "已选择: " + input.files[0].name; nameLabel.style.color = "var(--success-color)";
+            const files = Array.from(input.files || []);
+            if (files.length > 0) {
+                const previewNames = files.slice(0, 3).map(file => file.name).join('、');
+                const suffix = files.length > 3 ? tText(` 等 ${files.length} 个文件`, ` and ${files.length} files`) : '';
+                nameLabel.innerText = tText(`已选择: ${previewNames}${suffix}`, `Selected: ${previewNames}${suffix}`);
+                nameLabel.style.color = "var(--success-color)";
             } else {
-                nameLabel.innerText = "未选择任何文件..."; nameLabel.style.color = "#888";
+                nameLabel.innerText = tText("未选择任何文件...", "No file selected..."); nameLabel.style.color = "#888";
             }
+        }
+
+        function parseExcelFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const firstSheetName = workbook.SheetNames[0];
+                        if (!firstSheetName) {
+                            resolve({ fileName: file.name, rows: [] });
+                            return;
+                        }
+                        const worksheet = workbook.Sheets[firstSheetName];
+                        const rows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+                        resolve({ fileName: file.name, rows });
+                    } catch (err) {
+                        reject(new Error(`${file.name}: ${err.message}`));
+                    }
+                };
+                reader.onerror = () => reject(new Error(`${file.name}: 文件读取失败`));
+                reader.readAsArrayBuffer(file);
+            });
         }
 
         function processExcelImport() {
             const fileInput = document.getElementById('excelFileInput');
-            const file = fileInput.files[0];
+            const files = Array.from(fileInput.files || []);
 
-            if (!file) { alert("请先点击虚线框选择一个 Excel 文件！"); return; }
+            if (files.length === 0) { alert("请先点击虚线框选择一个或多个 Excel 文件！"); return; }
             if (typeof XLSX === 'undefined') { alert("核心库尚未加载，请确保电脑已联网。如果刚刚打开页面，请稍等1-2秒再试。"); return; }
 
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const firstSheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheetName];
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+            Promise.all(files.map(parseExcelFile)).then(results => {
+                const candidates = [];
+                let totalParsedRows = 0;
+                const emptyFiles = [];
 
-                    if (jsonData.length === 0) { alert("检测到文件为空或没有符合格式的数据！"); return; }
-
-                    let importCount = 0; let updateCount = 0;
+                results.forEach(result => {
+                    const jsonData = result.rows || [];
+                    totalParsedRows += jsonData.length;
+                    if (jsonData.length === 0) {
+                        emptyFiles.push(result.fileName);
+                        return;
+                    }
 
                     jsonData.forEach(row => {
                         // Dynamically resolve primary key
@@ -1337,33 +3167,296 @@
 
                         taskId = String(taskId).trim();
                         let baseData = {};
-                        Object.keys(row).forEach(key => { baseData[key] = String(row[key] || '').trim(); });
-
-                        const existIdx = ordersData.findIndex(o => o.id === taskId);
-                        if (existIdx > -1) {
-                            ordersData[existIdx].baseData = { ...ordersData[existIdx].baseData, ...baseData };
-                            updateCount++;
-                        } else {
-                            const newObj = {
-                                id: taskId, baseData: baseData,
-                                checks: {}, reasons: {}, images: {}
-                            };
-                            CHECK_POINTS.forEach(cp => {
-                                newObj.checks[cp.key] = 'none';
-                                newObj.reasons[cp.key] = '';
-                                newObj.images[cp.key] = '';
-                            });
-                            ordersData.push(newObj);
-                            importCount++;
-                        }
+                        Object.keys(row).forEach(key => {
+                            const normalizedKey = String(key || '').trim();
+                            if (normalizedKey) baseData[normalizedKey] = String(row[key] || '').trim();
+                        });
+                        candidates.push({ id: taskId, baseData });
                     });
+                });
 
-                    saveToStorage(); renderTable(); closeModal('importModal');
-                    fileInput.value = ''; updateFileName(fileInput);
-                    showToast(`数据导入成功！新增 ${importCount} 条，更新 ${updateCount} 条。`);
-                } catch (err) { console.error(err); alert("文件解析失败，请确保上传的是标准 Excel！"); }
+                if (totalParsedRows === 0) { alert("检测到所选文件为空或没有符合格式的数据！"); return; }
+                if (candidates.length === 0) { alert("没有识别到有效单号，请检查首列/主键字段是否有值。"); return; }
+                const filterResult = applyImportFilterRules(candidates);
+                if (filterResult.items.length === 0) {
+                    alert(`模板过滤条件已生效，但过滤后没有剩余单据。\n原始有效单据：${candidates.length} 条\n过滤掉：${filterResult.filteredOut} 条`);
+                    return;
+                }
+                openSampleImportModal(filterResult.items, {
+                    fileCount: files.length,
+                    emptyFiles,
+                    originalCount: candidates.length,
+                    filteredOut: filterResult.filteredOut,
+                    appliedFilterRules: filterResult.appliedRules
+                });
+            }).catch(err => {
+                console.error(err);
+                alert("文件解析失败，请确保上传的是标准 Excel！\n" + err.message);
+            });
+        }
+
+        function buildImportedOrder(item) {
+            const newObj = {
+                id: item.id,
+                baseData: item.baseData,
+                checks: {},
+                reasons: {},
+                images: {}
             };
-            reader.readAsArrayBuffer(file);
+            CHECK_POINTS.forEach(cp => {
+                newObj.checks[cp.key] = 'none';
+                newObj.reasons[cp.key] = '';
+                newObj.images[cp.key] = '';
+            });
+            return newObj;
+        }
+
+        function resolveImportGroupField(candidates) {
+            const configuredField = activeConfig && activeConfig.groupField ? String(activeConfig.groupField).trim() : '';
+            if (!configuredField) return '';
+
+            const normalizeFieldName = (value) => String(value || '').replace(/\s+/g, '').toLowerCase();
+            const configuredNormalized = normalizeFieldName(configuredField);
+            const importedFields = new Set();
+
+            candidates.forEach(item => {
+                Object.keys(item.baseData || {}).forEach(key => importedFields.add(key));
+            });
+
+            if (importedFields.has(configuredField)) return configuredField;
+            return Array.from(importedFields).find(key => normalizeFieldName(key) === configuredNormalized) || '';
+        }
+
+        function resolveImportedFieldName(item, configuredField) {
+            if (!item || !item.baseData || !configuredField) return '';
+            const normalizedConfigured = String(configuredField).replace(/\s+/g, '').toLowerCase();
+            if (Object.prototype.hasOwnProperty.call(item.baseData, configuredField)) return configuredField;
+            return Object.keys(item.baseData).find(key => String(key).replace(/\s+/g, '').toLowerCase() === normalizedConfigured) || '';
+        }
+
+        function splitRuleValues(value) {
+            return String(value || '')
+                .split(/[,，;；\n]/)
+                .map(v => v.trim())
+                .filter(Boolean);
+        }
+
+        function matchesFilterRule(item, rule) {
+            const fieldName = resolveImportedFieldName(item, rule.field);
+            const rawValue = fieldName ? String(item.baseData[fieldName] || '').trim() : '';
+            const normalizedValue = rawValue.toLowerCase();
+            const values = splitRuleValues(rule.values).map(v => v.toLowerCase());
+
+            if (rule.operator === 'empty') return rawValue === '';
+            if (rule.operator === 'not_empty') return rawValue !== '';
+            if (values.length === 0) return false;
+            if (rule.operator === 'contains') return values.some(v => normalizedValue.includes(v));
+            return values.some(v => normalizedValue === v);
+        }
+
+        function applyImportFilterRules(candidates) {
+            const rules = Array.isArray(activeConfig && activeConfig.filterRules)
+                ? activeConfig.filterRules.filter(rule => rule && rule.field && rule.action && rule.operator)
+                : [];
+            if (!rules.length) {
+                return { items: candidates, filteredOut: 0, appliedRules: [] };
+            }
+
+            const items = candidates.filter(item => rules.every(rule => {
+                const matched = matchesFilterRule(item, rule);
+                return rule.action === 'exclude' ? !matched : matched;
+            }));
+            return {
+                items,
+                filteredOut: candidates.length - items.length,
+                appliedRules: rules
+            };
+        }
+
+        function openSampleImportModal(candidates, meta = {}) {
+            const uniqueMap = new Map();
+            candidates.forEach(item => uniqueMap.set(item.id, item));
+            const uniqueCandidates = Array.from(uniqueMap.values());
+            const existingCount = uniqueCandidates.filter(item => ordersData.some(o => o.id === item.id)).length;
+            const newCount = uniqueCandidates.length - existingCount;
+            const sampleGroupField = resolveImportGroupField(uniqueCandidates);
+
+            pendingImportBatch = {
+                candidates: uniqueCandidates,
+                totalRows: candidates.length,
+                fileCount: meta.fileCount || 1,
+                emptyFiles: meta.emptyFiles || [],
+                originalCount: meta.originalCount || candidates.length,
+                filteredOut: meta.filteredOut || 0,
+                appliedFilterRules: meta.appliedFilterRules || [],
+                newCount,
+                updateCount: existingCount,
+                groupField: sampleGroupField,
+                configuredGroupField: activeConfig && activeConfig.groupField ? activeConfig.groupField : ''
+            };
+
+            selectedSampleCount = Math.min(uniqueCandidates.length, getDefaultSampleCount(uniqueCandidates.length));
+            renderSampleImportModal();
+            closeModal('importModal');
+            openModal('sampleModal');
+        }
+
+        function getDefaultSampleCount(total) {
+            if (total <= 10) return total;
+            if (total <= 30) return 10;
+            if (total <= 80) return 20;
+            return 30;
+        }
+
+        function getSampleQuickCounts(total) {
+            const values = [10, 20, 30, 50].filter(v => v < total);
+            values.push(total);
+            return Array.from(new Set(values));
+        }
+
+        function renderSampleImportModal() {
+            if (!pendingImportBatch) return;
+            const total = pendingImportBatch.candidates.length;
+            const summary = document.getElementById('sampleSummary');
+            const options = document.getElementById('sampleOptions');
+            const customInput = document.getElementById('sampleCustomCount');
+            const rangeHint = document.getElementById('sampleRangeHint');
+
+            summary.innerHTML = currentLang === 'en'
+                ? `
+                    Parsed <strong>${pendingImportBatch.fileCount}</strong> file(s), recognized <strong>${pendingImportBatch.totalRows}</strong> valid row(s), and <strong>${total}</strong> unique ticket(s).<br>
+                    Expected to add <strong>${pendingImportBatch.newCount}</strong> and update <strong>${pendingImportBatch.updateCount}</strong>.
+                    ${pendingImportBatch.emptyFiles.length ? `<div class="sample-strategy-note">Note: ${pendingImportBatch.emptyFiles.length} file(s) were empty or had no recognized data and were skipped automatically.</div>` : ''}
+                    ${pendingImportBatch.appliedFilterRules.length ? `<div class="sample-strategy-note">Import filters: applied <strong>${pendingImportBatch.appliedFilterRules.length}</strong> template rule(s); original valid tickets <strong>${pendingImportBatch.originalCount}</strong>, filtered out <strong>${pendingImportBatch.filteredOut}</strong>.</div>` : ''}
+                    ${pendingImportBatch.groupField ? `<div class="sample-strategy-note">Sampling strategy: balance sampling by <strong>${escapeHtmlText(pendingImportBatch.groupField)}</strong> as evenly as possible, so each group gets a similar sample size first.</div>` : `<div class="sample-strategy-note">Sampling strategy: ${pendingImportBatch.configuredGroupField ? `template group field <strong>${escapeHtmlText(pendingImportBatch.configuredGroupField)}</strong> is configured, but no matching header was found in the imported file, so normal random sampling is used this time.` : 'no valid group field is configured, so normal random sampling is used this time.'}</div>`}
+                `
+                : `
+                    已解析 <strong>${pendingImportBatch.fileCount}</strong> 个文件，识别有效行 <strong>${pendingImportBatch.totalRows}</strong> 行，有效唯一单据 <strong>${total}</strong> 条。<br>
+                    预计新增 <strong>${pendingImportBatch.newCount}</strong> 条，更新已有 <strong>${pendingImportBatch.updateCount}</strong> 条。
+                    ${pendingImportBatch.emptyFiles.length ? `<div class="sample-strategy-note">提示：${pendingImportBatch.emptyFiles.length} 个文件为空或未识别到数据，已自动跳过。</div>` : ''}
+                    ${pendingImportBatch.appliedFilterRules.length ? `<div class="sample-strategy-note">导入过滤：已应用 <strong>${pendingImportBatch.appliedFilterRules.length}</strong> 条模板过滤条件；原始有效单据 <strong>${pendingImportBatch.originalCount}</strong> 条，过滤掉 <strong>${pendingImportBatch.filteredOut}</strong> 条。</div>` : ''}
+                    ${pendingImportBatch.groupField ? `<div class="sample-strategy-note">抽样策略：按 <strong>${escapeHtmlText(pendingImportBatch.groupField)}</strong> 尽量均衡抽取，各分组会优先获得接近相等的抽查数量。</div>` : `<div class="sample-strategy-note">抽样策略：${pendingImportBatch.configuredGroupField ? `模板已设置分组字段 <strong>${escapeHtmlText(pendingImportBatch.configuredGroupField)}</strong>，但导入文件中未找到同名表头，本次使用普通随机抽样。` : '未设置有效分组字段，本次使用普通随机抽样。'}</div>`}
+                `;
+
+            options.innerHTML = getSampleQuickCounts(total).map(count => {
+                const label = count === total ? tText(`全部 ${total}`, `All ${total}`) : tText(`抽查 ${count}`, `Sample ${count}`);
+                const active = selectedSampleCount === count ? ' active' : '';
+                return `<button type="button" class="sample-option${active}" onclick="setSampleCount(${count})">${label}</button>`;
+            }).join('');
+
+            customInput.max = String(total);
+            customInput.value = String(selectedSampleCount);
+            rangeHint.innerText = tText(`范围 1-${total}`, `Range 1-${total}`);
+        }
+
+        function setSampleCount(value) {
+            if (!pendingImportBatch) return;
+            const total = pendingImportBatch.candidates.length;
+            const count = Math.max(1, Math.min(total, parseInt(value, 10) || 1));
+            selectedSampleCount = count;
+            renderSampleImportModal();
+        }
+
+        function selectSampleAll() {
+            if (!pendingImportBatch) return;
+            selectedSampleCount = pendingImportBatch.candidates.length;
+            renderSampleImportModal();
+        }
+
+        function pickRandomSample(items, count) {
+            if (count >= items.length) return items.slice();
+            const shuffled = items.slice();
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled.slice(0, count);
+        }
+
+        function pickBalancedGroupSample(items, count, groupField) {
+            if (!groupField || count >= items.length) return pickRandomSample(items, count);
+
+            const groups = new Map();
+            items.forEach(item => {
+                const groupValue = item.baseData && item.baseData[groupField] ? item.baseData[groupField] : '未填写';
+                if (!groups.has(groupValue)) groups.set(groupValue, []);
+                groups.get(groupValue).push(item);
+            });
+
+            const buckets = Array.from(groups.entries())
+                .map(([groupValue, groupItems]) => ({
+                    groupValue,
+                    items: pickRandomSample(groupItems, groupItems.length),
+                    picked: []
+                }))
+                .sort((a, b) => String(a.groupValue).localeCompare(String(b.groupValue), 'zh-CN'));
+
+            if (buckets.length === 0) return [];
+
+            const baseQuota = Math.floor(count / buckets.length);
+            let remaining = count;
+
+            buckets.forEach(bucket => {
+                const take = Math.min(baseQuota, bucket.items.length);
+                bucket.picked = bucket.items.splice(0, take);
+                remaining -= take;
+            });
+
+            while (remaining > 0) {
+                const availableBuckets = buckets.filter(bucket => bucket.items.length > 0);
+                if (availableBuckets.length === 0) break;
+
+                availableBuckets.sort((a, b) => {
+                    if (a.picked.length !== b.picked.length) return a.picked.length - b.picked.length;
+                    return b.items.length - a.items.length;
+                });
+
+                const bucket = availableBuckets[0];
+                bucket.picked.push(bucket.items.shift());
+                remaining--;
+            }
+
+            return pickRandomSample(buckets.flatMap(bucket => bucket.picked), count);
+        }
+
+        function confirmSampleImport() {
+            if (!pendingImportBatch) return;
+            const pickedItems = pickBalancedGroupSample(pendingImportBatch.candidates, selectedSampleCount, pendingImportBatch.groupField);
+            let importCount = 0;
+            let updateCount = 0;
+
+            pickedItems.forEach(item => {
+                const existIdx = ordersData.findIndex(o => o.id === item.id);
+                if (existIdx > -1) {
+                    ordersData[existIdx].baseData = { ...ordersData[existIdx].baseData, ...item.baseData };
+                    updateCount++;
+                } else {
+                    ordersData.push(buildImportedOrder(item));
+                    importCount++;
+                }
+            });
+
+            saveToStorage();
+            renderTable();
+            closeModal('sampleModal');
+            resetImportState();
+            showToast(tText(`抽查导入完成：本次纳入 ${pickedItems.length} 条，新增 ${importCount} 条，更新 ${updateCount} 条。`, `Sample import completed: included ${pickedItems.length}, added ${importCount}, updated ${updateCount}.`));
+        }
+
+        function cancelSampleImport() {
+            closeModal('sampleModal');
+            resetImportState();
+            showToast(tText("已取消本次 Excel 导入。", "This Excel import has been cancelled."));
+        }
+
+        function resetImportState() {
+            pendingImportBatch = null;
+            selectedSampleCount = 0;
+            const fileInput = document.getElementById('excelFileInput');
+            if (fileInput) {
+                fileInput.value = '';
+                updateFileName(fileInput);
+            }
         }
 
         // ================== 基础交互 ==================
@@ -1422,26 +3515,159 @@
             const msg = typeof currentLang !== 'undefined' && currentLang === 'en' ? "[Danger] Clear all data permanently?" : "【危险】确定清空所有单号与图片吗？不可逆转！";
             if (confirm(msg)) { ordersData = []; saveToStorage(); renderTable(); } 
         }
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            if (!modal) return;
+            modal.style.display = 'flex';
+        }
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            if (!modal) return;
+            modal.style.display = 'none';
+        }
 
         // ================== 自定义向导引擎 ==================
         let wizHeaders = [];
         let wizCpCounter = 0;
         let editingConfigId = null;
+        let wizFilterRules = [];
+        let wizReportFieldOrder = [];
+        let wizSelectedFields = new Set();
+        let wizFieldSearchKeyword = '';
+        let wizReportFieldSearchKeyword = '';
+
+        function tText(zh, en) {
+            return currentLang === 'en' ? en : zh;
+        }
+
+        function normalizeSearchKeyword(value) {
+            return String(value || '').trim().toLowerCase();
+        }
+
+        function filterWizardFields(fields, keyword) {
+            const normalized = normalizeSearchKeyword(keyword);
+            if (!normalized) return fields.slice();
+            return fields.filter(field => String(field || '').toLowerCase().includes(normalized));
+        }
+
+        function getWizardCheckedFields() {
+            return wizHeaders.filter(field => wizSelectedFields.has(field));
+        }
+
+        function renderWizardFieldGrid() {
+            const grid = document.getElementById('wizFieldsGrid');
+            const meta = document.getElementById('wizFieldMeta');
+            if (!grid) return;
+            if (!wizHeaders.length) {
+                grid.innerHTML = '<span data-i18n="暂无解析出的字段">暂无解析出的字段</span>';
+                if (meta) meta.innerText = tText('尚未解析到字段。', 'No fields parsed yet.');
+                refreshWizardCollapsibleSections();
+                return;
+            }
+
+            const filteredFields = filterWizardFields(wizHeaders, wizFieldSearchKeyword);
+            if (meta) {
+                meta.innerText = tText(
+                    `已选 ${getWizardCheckedFields().length} / 全部 ${wizHeaders.length}；当前显示 ${filteredFields.length} 个字段`,
+                    `Selected ${getWizardCheckedFields().length} / Total ${wizHeaders.length}; showing ${filteredFields.length} fields`
+                );
+            }
+
+            if (!filteredFields.length) {
+                grid.innerHTML = `<span style="color:#666;">${tText('没有匹配的字段。', 'No matching fields.')}</span>`;
+                refreshWizardCollapsibleSections();
+                return;
+            }
+
+            grid.innerHTML = filteredFields.map(field => `
+                <label><input type="checkbox" value="${escapeHtmlText(field)}" class="wiz-field-chk" ${wizSelectedFields.has(field) ? 'checked' : ''} onchange="toggleWizardField(this)"> ${escapeHtmlText(field)}</label>
+            `).join('');
+            refreshWizardCollapsibleSections();
+        }
+
+        function renderWizardReportFieldMeta(checkedFields, filteredFields) {
+            const meta = document.getElementById('wizReportFieldMeta');
+            if (!meta) return;
+            if (!checkedFields.length) {
+                meta.innerText = tText('请先在第二步勾选字段。', 'Please select fields in Step 2 first.');
+                return;
+            }
+            meta.innerText = tText(
+                `已选顶部字段 ${wizReportFieldOrder.length} / 6；候选 ${checkedFields.length}；当前显示 ${filteredFields.length}`,
+                `Selected top fields ${wizReportFieldOrder.length} / 6; candidates ${checkedFields.length}; showing ${filteredFields.length}`
+            );
+        }
+
+        function setWizardFieldSearch(value) {
+            wizFieldSearchKeyword = value || '';
+            renderWizardFieldGrid();
+        }
+
+        function setWizardReportFieldSearch(value) {
+            wizReportFieldSearchKeyword = value || '';
+            updateReportFieldsUI();
+        }
+
+        function toggleWizardField(el) {
+            if (!el) return;
+            if (el.checked) wizSelectedFields.add(el.value);
+            else wizSelectedFields.delete(el.value);
+            handleWizardFieldChange();
+        }
+
+        function setWizardVisibleFields(checked) {
+            const filteredFields = filterWizardFields(wizHeaders, wizFieldSearchKeyword);
+            filteredFields.forEach(field => {
+                if (checked) wizSelectedFields.add(field);
+                else wizSelectedFields.delete(field);
+            });
+            handleWizardFieldChange();
+        }
+
+        function setVisibleReportFields(checked) {
+            const checkedFields = getWizardCheckedFields();
+            const filteredFields = filterWizardFields(checkedFields, wizReportFieldSearchKeyword);
+            if (!checked) {
+                wizReportFieldOrder = wizReportFieldOrder.filter(field => !filteredFields.includes(field));
+                updateReportFieldsUI();
+                return;
+            }
+            const nextOrder = wizReportFieldOrder.slice();
+            filteredFields.forEach(field => {
+                if (nextOrder.length >= 6) return;
+                if (!nextOrder.includes(field)) nextOrder.push(field);
+            });
+            wizReportFieldOrder = nextOrder.slice(0, 6);
+            if (filteredFields.length > 6 || filteredFields.some(field => !wizReportFieldOrder.includes(field))) {
+                showToast(tText('PDF 顶部字段最多只能保留 6 个，已按当前筛选优先勾选前 6 个。', 'PDF top fields can keep up to 6 items. The first 6 visible results were selected.'));
+            }
+            updateReportFieldsUI();
+        }
 
         function openWizard() {
             editingConfigId = null;
             const titleEl = document.querySelector('#wizardModal h3 span[data-i18n]');
             if(titleEl) {
                 titleEl.setAttribute('data-i18n', '✨ 自定义新审计模板');
-                titleEl.innerText = typeof currentLang !== 'undefined' && currentLang === 'en' ? I18N_DICT['✨ 自定义新审计模板'] : '✨ 自定义新审计模板';
+                titleEl.innerText = tText('✨ 自定义新审计模板', I18N_DICT['✨ 自定义新审计模板']);
             }
             document.getElementById('wizName').value = '';
             document.getElementById('wizFileInput').value = '';
             document.getElementById('wizHeadersBox').innerHTML = '';
             document.getElementById('wizFieldsGrid').innerHTML = '<span data-i18n="暂无解析出的字段">暂无解析出的字段</span>';
+            document.getElementById('wizFieldsGrid').dataset.expanded = 'false';
             document.getElementById('wizReportFieldsBox').innerHTML = '<span style="color:#666;" data-i18n="(请先在上方勾选关注的字段)">(请先在上方勾选关注的字段)</span>';
+            document.getElementById('wizReportFieldsBox').dataset.expanded = 'false';
+            document.getElementById('wizReportFieldsSortBox').innerHTML = '';
+            document.getElementById('wizFieldSearchInput').value = '';
+            document.getElementById('wizReportFieldSearchInput').value = '';
+            wizReportFieldOrder = [];
+            wizSelectedFields = new Set();
+            wizFieldSearchKeyword = '';
+            wizReportFieldSearchKeyword = '';
+            updateGroupFieldUI([], '');
+            wizFilterRules = [];
+            renderFilterRulesUI();
             wizHeaders = [];
             document.getElementById('wizCheckpointsContainer').innerHTML = '';
             wizCpCounter = 0;
@@ -1456,43 +3682,58 @@
             const titleEl = document.querySelector('#wizardModal h3 span[data-i18n]');
             if(titleEl) {
                 titleEl.setAttribute('data-i18n', '✨ 编辑审计模板');
-                titleEl.innerText = typeof currentLang !== 'undefined' && currentLang === 'en' ? I18N_DICT['✨ 编辑审计模板'] : '✨ 编辑审计模板';
+                titleEl.innerText = tText('✨ 编辑审计模板', I18N_DICT['✨ 编辑审计模板']);
             }
             
             document.getElementById('wizName').value = activeConfig.name;
             document.getElementById('wizFileInput').value = '';
-            document.getElementById('wizHeadersBox').innerHTML = '<span style="color:#27ae60;">(当前已存在映射字段，若需更换请重新上传 Excel)</span>';
-            
-            wizHeaders = activeConfig.fields || [];
-            const grid = document.getElementById('wizFieldsGrid');
-            grid.innerHTML = '';
-            wizHeaders.forEach((h, idx) => {
-                grid.innerHTML += `<label><input type="checkbox" value="${h}" class="wiz-field-chk" checked onchange="updateReportFieldsUI()"> ${h}</label>`;
+            document.getElementById('wizHeadersBox').innerHTML = `<span style="color:#27ae60;">${tText('(当前已存在映射字段，若需更换请重新上传 Excel)', '(Existing mapped fields are loaded. Upload a new sample Excel if you need to replace them.)')}</span>`;
+            document.getElementById('wizFieldsGrid').dataset.expanded = 'false';
+            document.getElementById('wizReportFieldsBox').dataset.expanded = 'false';
+            document.getElementById('wizFieldSearchInput').value = '';
+            document.getElementById('wizReportFieldSearchInput').value = '';
+            wizFieldSearchKeyword = '';
+            wizReportFieldSearchKeyword = '';
+
+            logTemplateSaveStep('打开编辑模板，载入当前模板状态', {
+                id: activeConfig.id,
+                name: activeConfig.name,
+                fields: activeConfig.fields || [],
+                allFields: activeConfig.allFields || activeConfig.fields || [],
+                reportFields: activeConfig.reportFields || [],
+                groupField: activeConfig.groupField || '',
+                filterRules: activeConfig.filterRules || []
             });
+            
+            wizHeaders = activeConfig.allFields || activeConfig.fields || [];
+            wizSelectedFields = new Set(activeConfig.fields || []);
+            renderWizardFieldGrid();
             updateReportFieldsUI(activeConfig.reportFields || []);
+            refreshWizardCollapsibleSections();
+            updateGroupFieldUI(null, activeConfig.groupField || '');
+            wizFilterRules = Array.isArray(activeConfig.filterRules) ? JSON.parse(JSON.stringify(activeConfig.filterRules)) : [];
+            renderFilterRulesUI();
 
             document.getElementById('wizCheckpointsContainer').innerHTML = '';
             wizCpCounter = 0;
-            activeConfig.checkpoints.forEach(cp => {
-                wizCpCounter++;
-                const key = 'c' + wizCpCounter;
-                const div = document.createElement('div');
-                div.style.cssText = "display:flex; gap:10px; background:#f8f9fa; padding:15px; border:1px solid #ddd; border-radius:6px; align-items:flex-start;";
-                div.innerHTML = `
-                    <div style="font-weight:bold; font-size:16px; color:#555; margin-top:5px;">${wizCpCounter}.</div>
-                    <div style="display:flex; flex-direction:column; gap:8px; flex:1;">
-                        <input type="text" class="w-cp-name" value="${cp.name}" placeholder="检查点名称" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
-                        <input type="text" class="w-cp-name-en" value="${cp.nameEn}" placeholder="检查点英文翻译 (可选)" style="padding:8px; border:1px solid #ccc; border-radius:4px; font-size:12px;">
-                    </div>
-                    <div style="display:flex; flex-direction:column; gap:8px; flex:1;">
-                        <input type="text" class="w-cp-desc" value="${cp.desc}" placeholder="规则描述" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
-                        <input type="text" class="w-cp-desc-en" value="${cp.descEn}" placeholder="规则描述英文翻译 (可选)" style="padding:8px; border:1px solid #ccc; border-radius:4px; font-size:12px;">
-                    </div>
-                    <button class="btn-danger" style="padding:8px 12px; margin-top:2px;" onclick="this.parentElement.remove()">删除</button>
-                `;
-                div.dataset.key = key;
-                document.getElementById('wizCheckpointsContainer').appendChild(div);
+            const reasonTemplateMap = normalizeReasonTemplates(activeConfig.reasonTemplates || {});
+            const existingCheckpoints = activeConfig.checkpoints || [];
+            wizCpCounter = Math.max(0, ...existingCheckpoints.map(cp => {
+                const match = String(cp.key || '').match(/^c(\d+)$/);
+                return match ? Number(match[1]) : 0;
+            }));
+            existingCheckpoints.forEach(cp => {
+                const cpReasons = reasonTemplateMap[cp.key] || [];
+                document.getElementById('wizCheckpointsContainer').appendChild(createWizardCheckpointElement({
+                    key: cp.key,
+                    name: cp.name,
+                    nameEn: cp.nameEn,
+                    desc: cp.desc,
+                    descEn: cp.descEn,
+                    reasons: cpReasons
+                }));
             });
+            renumberWizardCheckpoints();
             
             openModal('wizardModal');
         }
@@ -1523,43 +3764,242 @@
 
         // ================== 图片引擎 ==================
         let activeUploadTarget = null;
-        function triggerUpload(cKey, rowIndex) { activeUploadTarget = { cKey, rowIndex }; document.getElementById('hiddenFileInput').click(); }
+        function getScreenshotTargetLabel(target) {
+            if (!target || !ordersData[target.rowIndex]) return '';
+            const row = ordersData[target.rowIndex];
+            const cp = CHECK_POINTS.find(item => item.key === target.cKey);
+            const idLabel = currentLang === 'en' ? 'Ticket' : '单号';
+            return `${idLabel} ${row.id} / ${cp ? cp.name : target.cKey}`;
+        }
+
+        function renderReasonEvidence() {
+            const statusEl = document.getElementById('reasonEvidenceStatus');
+            const previewBox = document.getElementById('reasonEvidencePreviewBox');
+            const previewImg = document.getElementById('reasonEvidencePreviewImg');
+            const deleteBtn = document.getElementById('reasonEvidenceDeleteBtn');
+            if (!statusEl || !activeUploadTarget || !ordersData[activeUploadTarget.rowIndex]) return;
+            const img = ordersData[activeUploadTarget.rowIndex].images?.[activeUploadTarget.cKey];
+            statusEl.innerText = img
+                ? tText('已附截图证据，导出 PDF 时会展示。', 'Screenshot evidence attached. It will be included in the exported PDF.')
+                : tText('未附截图证据。可上传本地图片，或点击后直接粘贴截图。', 'No screenshot evidence attached. Upload a local image, or click paste and then paste a screenshot.');
+            if (previewBox) previewBox.classList.toggle('has-image', Boolean(img));
+            if (previewImg) previewImg.src = img || '';
+            if (deleteBtn) deleteBtn.style.display = img ? 'inline-flex' : 'none';
+        }
+
+        function uploadReasonEvidence() {
+            if (!activeUploadTarget) return;
+            document.getElementById('hiddenFileInput').click();
+        }
+
+        function prepareReasonPasteEvidence() {
+            if (!activeUploadTarget) return;
+            showToast(tText('请现在按 Ctrl+V 粘贴截图。', 'Press Ctrl+V now to paste the screenshot.'));
+            renderReasonEvidence();
+        }
+
+        function removeReasonEvidence() {
+            if (!activeUploadTarget) return;
+            const row = ordersData[activeUploadTarget.rowIndex];
+            if (!row || !row.images) return;
+            row.images[activeUploadTarget.cKey] = '';
+            saveToStorage();
+            renderReasonEvidence();
+            renderTable();
+            showToast(tText('截图证据已删除。', 'Screenshot evidence deleted.'));
+        }
+
+        function findImageFileFromPaste(event) {
+            const items = (event.clipboardData || window.clipboardData)?.items || [];
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf("image") !== -1) {
+                    return items[i].getAsFile();
+                }
+            }
+            return null;
+        }
 
         function updateReportFieldsUI(preselected = null) {
-            const checkedFields = Array.from(document.querySelectorAll('.wiz-field-chk:checked')).map(cb => cb.value);
+            const checkedFields = getWizardCheckedFields();
             const box = document.getElementById('wizReportFieldsBox');
+            const sortBox = document.getElementById('wizReportFieldsSortBox');
             
-            let currentReportFields = preselected || Array.from(document.querySelectorAll('.wiz-report-chk:checked')).map(cb => cb.value);
+            if (preselected) {
+                wizReportFieldOrder = preselected.filter(field => checkedFields.includes(field)).slice(0, 6);
+            } else {
+                wizReportFieldOrder = wizReportFieldOrder.filter(field => checkedFields.includes(field));
+            }
             
             if (checkedFields.length === 0) {
                 const isEn = typeof currentLang !== 'undefined' && currentLang === 'en';
                 box.innerHTML = `<span style="color:#666;">${isEn ? "(Please check monitored fields above first)" : "(请先在上方勾选关注的字段)"}</span>`;
+                if (sortBox) sortBox.innerHTML = '';
+                renderWizardReportFieldMeta([], []);
+                refreshWizardCollapsibleSections();
                 return;
             }
-            
+
+            const filteredFields = filterWizardFields(checkedFields, wizReportFieldSearchKeyword);
+            renderWizardReportFieldMeta(checkedFields, filteredFields);
+            if (!filteredFields.length) {
+                box.innerHTML = `<span style="color:#666;">${tText('没有匹配的已勾选字段。', 'No matching selected fields.')}</span>`;
+                renderReportFieldSortBox();
+                refreshWizardCollapsibleSections();
+                return;
+            }
+
             box.innerHTML = '';
-            checkedFields.forEach(f => {
-                const isChecked = currentReportFields.includes(f) ? 'checked' : '';
-                box.innerHTML += `<label style="cursor:pointer;"><input type="checkbox" value="${f}" class="wiz-report-chk" ${isChecked} onchange="limitReportFields(this)"> ${f}</label>`;
+            filteredFields.forEach(f => {
+                const isChecked = wizReportFieldOrder.includes(f) ? 'checked' : '';
+                box.innerHTML += `<label style="cursor:pointer;"><input type="checkbox" value="${escapeHtmlText(f)}" class="wiz-report-chk" ${isChecked} onchange="toggleReportField(this)"> ${escapeHtmlText(f)}</label>`;
             });
+            renderReportFieldSortBox();
+            refreshWizardCollapsibleSections();
+        }
+
+        function renderReportFieldSortBox() {
+            const sortBox = document.getElementById('wizReportFieldsSortBox');
+            if (!sortBox) return;
+            if (!wizReportFieldOrder.length) {
+                sortBox.innerHTML = `<span style="color:#666; font-size:12px;">${tText('未选择 PDF 顶部字段。', 'No PDF top fields selected.')}</span>`;
+                return;
+            }
+            sortBox.innerHTML = `
+                <div style="font-size:12px; color:#52708c; font-weight:700;">${tText('PDF 顶部字段输出顺序', 'PDF Top Field Output Order')}</div>
+                ${wizReportFieldOrder.map((field, idx) => `
+                    <div class="report-field-sort-row">
+                        <span class="report-field-sort-index">${idx + 1}.</span>
+                        <span>${escapeHtmlText(field)}</span>
+                        <span class="report-field-sort-actions">
+                            <button type="button" class="btn-outline" ${idx === 0 ? 'disabled' : ''} onclick="moveReportField(${idx}, 'up')">${tText('上移', 'Up')}</button>
+                            <button type="button" class="btn-outline" ${idx === wizReportFieldOrder.length - 1 ? 'disabled' : ''} onclick="moveReportField(${idx}, 'down')">${tText('下移', 'Down')}</button>
+                        </span>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        function toggleReportField(el) {
+            if (el.checked) {
+                if (wizReportFieldOrder.length >= 6) {
+                    alert(typeof currentLang !== 'undefined' && currentLang === 'en' ? "You can select up to 6 report fields!" : "最多只能选择 6 个报告展示字段！");
+                    el.checked = false;
+                    return;
+                }
+                if (!wizReportFieldOrder.includes(el.value)) wizReportFieldOrder.push(el.value);
+            } else {
+                wizReportFieldOrder = wizReportFieldOrder.filter(field => field !== el.value);
+            }
+            renderReportFieldSortBox();
+        }
+
+        function moveReportField(index, direction) {
+            const targetIndex = direction === 'up' ? index - 1 : index + 1;
+            if (targetIndex < 0 || targetIndex >= wizReportFieldOrder.length) return;
+            [wizReportFieldOrder[index], wizReportFieldOrder[targetIndex]] = [wizReportFieldOrder[targetIndex], wizReportFieldOrder[index]];
+            renderReportFieldSortBox();
+        }
+
+        function updateGroupFieldUI(checkedFields = null, preselected = null) {
+            const select = document.getElementById('wizGroupField');
+            if (!select) return;
+            const fields = checkedFields || getWizardCheckedFields();
+            const currentValue = preselected !== null ? preselected : select.value;
+            const emptyLabel = typeof currentLang !== 'undefined' && currentLang === 'en' ? 'No grouping' : '不分组';
+            select.innerHTML = `<option value="">${emptyLabel}</option>`;
+            fields.forEach(f => {
+                const selected = currentValue === f ? 'selected' : '';
+                select.innerHTML += `<option value="${escapeHtmlText(f)}" ${selected}>${escapeHtmlText(f)}</option>`;
+            });
+            if (currentValue && fields.includes(currentValue)) select.value = currentValue;
+        }
+
+        function renderFilterRulesUI() {
+            const box = document.getElementById('wizFilterRulesBox');
+            if (!box) return;
+            const fields = getWizardCheckedFields();
+            if (!wizFilterRules.length) {
+                box.innerHTML = `<span style="color:#666;">${tText('未配置过滤条件', 'No import filters configured')}</span>`;
+                return;
+            }
+
+            const fieldOptions = fields.map(field => `<option value="${escapeHtmlText(field)}">${escapeHtmlText(field)}</option>`).join('');
+            box.innerHTML = wizFilterRules.map((rule, idx) => `
+                <div class="filter-rule-row">
+                    <select onchange="updateFilterRule(${idx}, 'field', this.value)">
+                        <option value="">${tText('选择字段', 'Select field')}</option>
+                        ${fieldOptions}
+                    </select>
+                    <select onchange="updateFilterRule(${idx}, 'action', this.value)">
+                        <option value="include">${tText('仅保留匹配', 'Keep matches only')}</option>
+                        <option value="exclude">${tText('排除匹配', 'Exclude matches')}</option>
+                    </select>
+                    <select onchange="updateFilterRule(${idx}, 'operator', this.value)">
+                        <option value="equals">${tText('等于任一值', 'Equals any value')}</option>
+                        <option value="contains">${tText('包含任一值', 'Contains any value')}</option>
+                        <option value="not_empty">${tText('非空', 'Not empty')}</option>
+                        <option value="empty">${tText('为空', 'Empty')}</option>
+                    </select>
+                    <input type="text" value="${escapeHtmlText(rule.values || '')}" placeholder="${tText('例如：已关闭,已解决', 'e.g. Closed,Resolved')}" oninput="updateFilterRule(${idx}, 'values', this.value)">
+                    <button type="button" class="btn-danger" style="padding:7px 9px; box-shadow:none;" onclick="removeFilterRule(${idx})">${tText('删除', 'Delete')}</button>
+                </div>
+            `).join('');
+
+            wizFilterRules.forEach((rule, idx) => {
+                const row = box.children[idx];
+                if (!row) return;
+                row.children[0].value = fields.includes(rule.field) ? rule.field : '';
+                row.children[1].value = rule.action || 'include';
+                row.children[2].value = rule.operator || 'equals';
+            });
+        }
+
+        function addFilterRule() {
+            const fields = getWizardCheckedFields();
+            wizFilterRules.push({
+                field: fields[0] || '',
+                action: 'include',
+                operator: 'equals',
+                values: ''
+            });
+            renderFilterRulesUI();
+        }
+
+        function updateFilterRule(index, key, value) {
+            if (!wizFilterRules[index]) return;
+            wizFilterRules[index][key] = value;
+        }
+
+        function removeFilterRule(index) {
+            wizFilterRules.splice(index, 1);
+            renderFilterRulesUI();
+        }
+
+        function handleWizardFieldChange() {
+            renderWizardFieldGrid();
+            updateReportFieldsUI();
+            updateGroupFieldUI();
+            const fields = getWizardCheckedFields();
+            wizFilterRules = wizFilterRules.map(rule => fields.includes(rule.field) ? rule : { ...rule, field: '' });
+            renderFilterRulesUI();
         }
         
         function limitReportFields(el) {
-            const checked = document.querySelectorAll('.wiz-report-chk:checked');
-            if (checked.length > 4) {
-                alert(typeof currentLang !== 'undefined' && currentLang === 'en' ? "You can select up to 4 report fields!" : "最多只能选择 4 个报告展示字段！");
-                el.checked = false;
-            }
+            toggleReportField(el);
         }
 
-        function handlePaste(event, cKey, rowIndex) {
-            const items = (event.clipboardData || window.clipboardData).items;
-            for (let i = 0; i < items.length; i++) {
-                if (items[i].type.indexOf("image") !== -1) {
-                    processAndSaveImage(items[i].getAsFile(), cKey, rowIndex); event.preventDefault(); break;
-                }
-            }
-        }
+        document.addEventListener('paste', function(event) {
+            if (event.defaultPrevented) return;
+            if (!activeUploadTarget) return;
+            if (document.getElementById('reasonModal')?.style.display !== 'flex') return;
+            const activeEl = document.activeElement;
+            const isReasonInput = activeEl && activeEl.id === 'reasonInput';
+            if (isReasonInput) return;
+            const file = findImageFileFromPaste(event);
+            if (!file) return;
+            processAndSaveImage(file, activeUploadTarget.cKey, activeUploadTarget.rowIndex);
+            event.preventDefault();
+        });
 
         document.getElementById('hiddenFileInput').addEventListener('change', function (e) {
             if (e.target.files.length > 0 && activeUploadTarget) {
@@ -1576,7 +4016,10 @@
                     if (width > 600) { height *= 600 / width; width = 600; }
                     canvas.width = width; canvas.height = height; canvas.getContext('2d').drawImage(img, 0, 0, width, height);
                     ordersData[rowIndex].images[cKey] = canvas.toDataURL('image/jpeg', 0.65);
-                    saveToStorage(); renderTable();
+                    saveToStorage();
+                    renderTable();
+                    renderReasonEvidence();
+                    showToast(tText('截图证据已保存，导出 PDF 时会展示。', 'Screenshot evidence saved and will be shown in the exported PDF.'));
                 };
                 img.src = e.target.result;
             };
@@ -1615,12 +4058,16 @@
                     document.getElementById('wizHeadersBox').innerHTML = `成功解析出 ${wizHeaders.length} 个字段：<br>` + 
                         wizHeaders.map(h => `<span style="display:inline-block; background:#e9ecef; padding:3px 6px; border-radius:4px; border:1px solid #ddd;">${h}</span>`).join('');
                     
-                    const grid = document.getElementById('wizFieldsGrid');
-                    grid.innerHTML = '';
-                    wizHeaders.forEach((h, idx) => {
-                        grid.innerHTML += `<label><input type="checkbox" value="${h}" class="wiz-field-chk" checked onchange="updateReportFieldsUI()"> ${h}</label>`;
-                    });
+                    wizSelectedFields = new Set(wizHeaders);
+                    wizFieldSearchKeyword = '';
+                    wizReportFieldSearchKeyword = '';
+                    document.getElementById('wizFieldSearchInput').value = '';
+                    document.getElementById('wizReportFieldSearchInput').value = '';
+                    renderWizardFieldGrid();
                     updateReportFieldsUI();
+                    refreshWizardCollapsibleSections();
+                    updateGroupFieldUI();
+                    renderFilterRulesUI();
                 } catch(err) {
                     alert("解析失败，请确保格式正确：" + err.message);
                 }
@@ -1628,37 +4075,95 @@
             reader.readAsArrayBuffer(file);
         }
 
-        function wizAddCheckpoint() {
-            wizCpCounter++;
-            const key = 'c' + wizCpCounter;
+        function createWizardCheckpointElement(cp = {}) {
+            const key = cp.key || getNextWizardCheckpointKey();
             const div = document.createElement('div');
+            div.className = 'wizard-checkpoint-row';
             div.style.cssText = "display:flex; gap:10px; background:#f8f9fa; padding:15px; border:1px solid #ddd; border-radius:6px; align-items:flex-start;";
             div.innerHTML = `
-                <div style="font-weight:bold; font-size:16px; color:#555; margin-top:5px;">${wizCpCounter}.</div>
-                <div style="display:flex; flex-direction:column; gap:8px; flex:1;">
-                    <input type="text" class="w-cp-name" placeholder="检查点名称 (如: 书面证据，必填)" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
-                    <input type="text" class="w-cp-name-en" placeholder="检查点英文翻译 (可选)" style="padding:8px; border:1px solid #ccc; border-radius:4px; font-size:12px;">
+                <div class="w-cp-index" style="font-weight:bold; font-size:16px; color:#555; margin-top:5px; min-width:26px;">-</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; flex:1;">
+                    <input type="text" class="w-cp-name" value="${escapeHtmlText(cp.name || '')}" placeholder="${tText('检查点名称 (如: 书面证据，必填)', 'Checkpoint name (e.g. Written Evidence, required)')}" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
+                    <input type="text" class="w-cp-name-en" value="${escapeHtmlText(cp.nameEn || '')}" placeholder="${tText('检查点英文翻译 (可选)', 'Checkpoint English name (optional)')}" style="padding:8px; border:1px solid #ccc; border-radius:4px; font-size:12px;">
+                    <input type="text" class="w-cp-desc" value="${escapeHtmlText(cp.desc || '')}" placeholder="${tText('规则描述 (如: 需附带客户确认邮件截图)', 'Rule description (e.g. customer confirmation screenshot required)')}" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
+                    <input type="text" class="w-cp-desc-en" value="${escapeHtmlText(cp.descEn || '')}" placeholder="${tText('规则描述英文翻译 (可选)', 'Rule description in English (optional)')}" style="padding:8px; border:1px solid #ccc; border-radius:4px; font-size:12px;">
+                    <textarea class="w-cp-reasons" placeholder="${tText('该检查点的不通过快捷理由，每行一个', 'Failure reason shortcuts for this checkpoint, one per line')}" style="grid-column:1 / -1; min-height:70px; padding:8px; border:1px solid #ccc; border-radius:4px; font-size:12px; resize:vertical;">${escapeHtmlText((cp.reasons || []).join('\n'))}</textarea>
                 </div>
-                <div style="display:flex; flex-direction:column; gap:8px; flex:1;">
-                    <input type="text" class="w-cp-desc" placeholder="规则描述 (如: 需附带客户确认邮件截图)" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
-                    <input type="text" class="w-cp-desc-en" placeholder="规则描述英文翻译 (可选)" style="padding:8px; border:1px solid #ccc; border-radius:4px; font-size:12px;">
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    <button type="button" class="btn-outline w-cp-up" style="padding:6px 10px; font-size:12px; box-shadow:none;" onclick="moveWizardCheckpoint(this, 'up')">${tText('上移', 'Up')}</button>
+                    <button type="button" class="btn-outline w-cp-down" style="padding:6px 10px; font-size:12px; box-shadow:none;" onclick="moveWizardCheckpoint(this, 'down')">${tText('下移', 'Down')}</button>
+                    <button type="button" class="btn-danger w-cp-delete" style="padding:6px 10px; font-size:12px;" onclick="deleteWizardCheckpoint(this)">${tText('删除', 'Delete')}</button>
                 </div>
-                <button class="btn-danger" style="padding:8px 12px; margin-top:2px;" onclick="this.parentElement.remove()">删除</button>
             `;
             div.dataset.key = key;
-            document.getElementById('wizCheckpointsContainer').appendChild(div);
+            return div;
+        }
+
+        function getNextWizardCheckpointKey() {
+            const usedKeys = new Set(Array.from(document.querySelectorAll('#wizCheckpointsContainer > div')).map(row => row.dataset.key));
+            let key = '';
+            do {
+                wizCpCounter++;
+                key = `c${wizCpCounter}`;
+            } while (usedKeys.has(key));
+            return key;
+        }
+
+        function renumberWizardCheckpoints() {
+            const rows = Array.from(document.querySelectorAll('#wizCheckpointsContainer > div'));
+            rows.forEach((row, idx) => {
+                const indexEl = row.querySelector('.w-cp-index');
+                if (indexEl) indexEl.innerText = `${idx + 1}.`;
+                const upBtn = row.querySelector('.w-cp-up');
+                const downBtn = row.querySelector('.w-cp-down');
+                if (upBtn) upBtn.disabled = idx === 0;
+                if (downBtn) downBtn.disabled = idx === rows.length - 1;
+            });
+        }
+
+        function deleteWizardCheckpoint(button) {
+            button.closest('.wizard-checkpoint-row')?.remove();
+            renumberWizardCheckpoints();
+        }
+
+        function moveWizardCheckpoint(button, direction) {
+            const row = button.closest('.wizard-checkpoint-row');
+            const container = document.getElementById('wizCheckpointsContainer');
+            if (!row || !container) return;
+            if (direction === 'up' && row.previousElementSibling) {
+                container.insertBefore(row, row.previousElementSibling);
+            } else if (direction === 'down' && row.nextElementSibling) {
+                container.insertBefore(row.nextElementSibling, row);
+            }
+            renumberWizardCheckpoints();
+        }
+
+        function wizAddCheckpoint() {
+            document.getElementById('wizCheckpointsContainer').appendChild(createWizardCheckpointElement());
+            renumberWizardCheckpoints();
         }
 
         async function wizSaveConfig() {
             const name = document.getElementById('wizName').value.trim();
             if (!name) return alert("请输入自定义审计模板名称！");
             
-            const checkboxes = document.querySelectorAll('.wiz-field-chk:checked');
-            const fields = Array.from(checkboxes).map(cb => cb.value);
+            const allCheckboxes = wizHeaders.slice();
+            const fields = getWizardCheckedFields();
             if (fields.length === 0) return alert("请在第二步中至少勾选一个关注的字段！");
+            const uncheckedFields = allCheckboxes.filter(value => !fields.includes(value));
             
-            const reportCheckboxes = document.querySelectorAll('.wiz-report-chk:checked');
-            const reportFields = Array.from(reportCheckboxes).map(cb => cb.value);
+            const fieldsSet = new Set(fields);
+            const reportFields = wizReportFieldOrder.filter(field => fieldsSet.has(field)).slice(0, 6);
+            const groupField = document.getElementById('wizGroupField')?.value || '';
+            const reasonTemplates = {};
+            const filterRules = wizFilterRules
+                .filter(rule => rule.field && rule.action && rule.operator)
+                .map(rule => ({
+                    field: rule.field,
+                    action: rule.action,
+                    operator: rule.operator,
+                    values: rule.values || ''
+                }));
             
             const cpDivs = document.getElementById('wizCheckpointsContainer').children;
             const checkpoints = [];
@@ -1666,27 +4171,86 @@
                 const div = cpDivs[i];
                 const cpName = div.querySelector('.w-cp-name').value.trim();
                 if (!cpName) return alert(`第 ${i+1} 个检查点名称不能为空！`);
+                const cpKey = div.dataset.key;
+                const cpReasons = (div.querySelector('.w-cp-reasons')?.value || '')
+                    .split(/\n/)
+                    .map(v => v.trim())
+                    .filter(Boolean);
                 checkpoints.push({
-                    key: div.dataset.key,
+                    key: cpKey,
                     name: cpName,
                     nameEn: div.querySelector('.w-cp-name-en').value.trim() || cpName,
                     desc: div.querySelector('.w-cp-desc').value.trim() || '-',
                     descEn: div.querySelector('.w-cp-desc-en').value.trim() || '-'
                 });
+                reasonTemplates[cpKey] = cpReasons;
             }
             if (checkpoints.length === 0) return alert("至少需要定义一个检查点规则！");
             
             try {
-                const payload = { name, fields, checkpoints, reportFields };
+                const payload = { name, fields, allFields: wizHeaders.slice(), checkpoints, reportFields, groupField, filterRules, reasonTemplates };
                 if (editingConfigId) payload.id = editingConfigId;
+
+                logTemplateSaveStep('开始保存模板', {
+                    editingConfigId: editingConfigId || null,
+                    templateName: name,
+                    allFieldCount: payload.allFields.length,
+                    checkedFieldCount: fields.length,
+                    uncheckedFieldCount: uncheckedFields.length,
+                    checkedFields: fields,
+                    uncheckedFields,
+                    reportFields,
+                    groupField,
+                    filterRules,
+                    checkpointCount: checkpoints.length
+                });
+                logTemplateSaveStep('即将提交的 payload', JSON.parse(JSON.stringify(payload)));
+
                 const res = await API.post('/api/praudit/configs', payload);
+                logTemplateSaveStep('保存接口返回成功', JSON.parse(JSON.stringify(res)));
                 showToast(editingConfigId ? "模板修改成功！" : "模板创建成功，已保存至服务器！");
                 closeModal('wizardModal');
-                
-                await loadConfigs(); 
+
+                // Optimistically sync the in-memory config first so reopening the editor
+                // immediately after save still reflects the latest checked fields.
+                const configIndex = ALL_CONFIGS.findIndex(item => item.id === res.id);
+                if (configIndex >= 0) ALL_CONFIGS[configIndex] = res;
+                else ALL_CONFIGS.push(res);
+                activeConfig = res;
+                localStorage.setItem('PR_Auditor_LastConfigId', res.id);
+
+                const diagnostics = await fetchTemplateSaveDiagnostics(res.id);
+                logTemplateSaveStep('保存后自动回查模板列表完成', {
+                    configCount: diagnostics.configCount,
+                    matchedConfig: diagnostics.matched ? {
+                        id: diagnostics.matched.id,
+                        name: diagnostics.matched.name,
+                        fieldCount: Array.isArray(diagnostics.matched.fields) ? diagnostics.matched.fields.length : 0,
+                        allFieldCount: Array.isArray(diagnostics.matched.allFields) ? diagnostics.matched.allFields.length : 0,
+                        fields: diagnostics.matched.fields || [],
+                        allFields: diagnostics.matched.allFields || [],
+                        reportFields: diagnostics.matched.reportFields || [],
+                        groupField: diagnostics.matched.groupField || '',
+                        filterRules: diagnostics.matched.filterRules || []
+                    } : null
+                });
+
+                await loadConfigs();
                 document.getElementById('auditTypeSelector').value = res.id;
-                switchAuditType(); 
+                await switchAuditType();
+                logTemplateSaveStep('保存后的当前页面状态', {
+                    activeConfigId: activeConfig ? activeConfig.id : null,
+                    activeConfigName: activeConfig ? activeConfig.name : null,
+                    activeFieldCount: activeConfig && Array.isArray(activeConfig.fields) ? activeConfig.fields.length : 0,
+                    activeAllFieldCount: activeConfig && Array.isArray(activeConfig.allFields) ? activeConfig.allFields.length : 0,
+                    activeFields: activeConfig && activeConfig.fields ? activeConfig.fields : [],
+                    activeAllFields: activeConfig && activeConfig.allFields ? activeConfig.allFields : []
+                });
             } catch(e) {
+                logTemplateSaveStep('保存失败', {
+                    message: e && e.message ? e.message : String(e),
+                    stack: e && e.stack ? e.stack : ''
+                });
                 alert("保存模板失败：" + e.message);
             }
         }
@@ -1707,17 +4271,69 @@
     "第二步：选择审计需要关注的字段": "Step 2: Select Fields to Monitor",
     "⚠️ 必看警告：请按顺序勾选！您勾选的【第一个字段】将被强制作为该审计模板的主键/单号！": "⚠️ Warning: Please check in order! The FIRST checked field will be enforced as the primary key/Task ID!",
     "暂无解析出的字段": "No fields parsed yet",
+    "搜索字段名称...": "Search field names...",
+    "搜索已勾选字段...": "Search selected fields...",
+    "全选当前结果": "Select Visible",
+    "取消当前结果": "Clear Visible",
     "第三步：定义审计检查点 (Checkpoints)": "Step 3: Define Checkpoints",
     "➕ 新增检查点": "➕ Add Checkpoint",
     "取消": "Cancel",
     "💾 保存并生效": "💾 Save & Apply",
     "模板名称:": "Template Name:",
     "例如：RFC 变更单审计": "e.g., RFC Change Audit",
+    "建议先解析样例表头，再按主字段、分组、过滤、PDF 展示字段逐步完成模板配置。": "Start by parsing sample headers, then configure primary fields, grouping, filters, and PDF display fields step by step.",
     "✏️ 编辑模板": "✏️ Edit Template",
     "✨ 编辑审计模板": "✨ Edit Audit Template",
     "🗑️ 删除模板": "🗑️ Delete Template",
-    "附加：选择最多 4 个字段在 PDF 报告卡片顶部高亮展示": "Additional: Select up to 4 fields to highlight at the top of PDF report cards",
-    "(请先在上方勾选关注的字段)": "(Please check monitored fields above first)"
+    "附加：选择最多 6 个字段在 PDF 报告卡片顶部高亮展示": "Additional: Select up to 6 fields to highlight at the top of PDF report cards",
+    "这部分会单独显示在 PDF 顶部信息卡中，建议挑选最关键、最适合快速浏览的字段。": "These fields will appear in a dedicated PDF header card. Choose the most critical items for quick review.",
+    "(请先在上方勾选关注的字段)": "(Please check monitored fields above first)",
+    "附加：选择一个字段作为审计页面分组展示依据": "Additional: Select one field to group the audit page",
+    "例如选择客户群或产品线，审计表会按该字段分段展示。": "For example, choose Customer Group or Product Line to show audit items in grouped sections.",
+    "附加：配置导入过滤条件": "Additional: Configure import filters",
+    "➕ 新增过滤条件": "➕ Add Filter",
+    "多条过滤条件会同时生效；匹配值可用逗号分隔多个值。": "Multiple filters are applied together; separate multiple values with commas.",
+    "解析并导入": "Parse & Import",
+    "取消目标": "Clear Target",
+    "填写未通过理由": "Fill Failure Reason",
+    "请简要描述该项不合格的原因，此信息将展示在看板并录入审计报告。": "Briefly describe why this item failed. The reason will be shown in the dashboard and included in the audit report.",
+    "快捷理由模板": "Shortcut Reason Templates",
+    "手动填写或编辑理由": "Type or Edit Reason",
+    "例如：客户邮件中未明确提及产品数量 / 缺少高层审批电子流...": "e.g. Customer email does not clearly mention product quantity / missing executive approval flow...",
+    "取消选择": "Cancel",
+    "确认未通过": "Confirm Fail",
+    "截图证据": "Screenshot Evidence",
+    "点击后粘贴截图": "Click, Then Paste",
+    "上传本地图片": "Upload Local Image",
+    "删除截图": "Delete Image",
+    "上传或粘贴后将在这里预览，导出 PDF 时会展示。": "After upload or paste, the preview will appear here and be included in the exported PDF.",
+    "📦 导出快照包": "📦 Export Snapshot",
+    "🧩 按分组导出快照": "🧩 Export Group Snapshots",
+    "📥 导入快照": "📥 Import Snapshot",
+    "⏳ 加载配置中...": "⏳ Loading templates...",
+    "📄 导出全部为 PDF (双语版)": "📄 Export All as PDF (Bilingual)",
+    "📚 按分组导出 PDF": "📚 Export PDF by Group",
+    "🗑️ 清空数据": "🗑️ Clear Data",
+    "导入 Excel 单子数据": "Import Excel Ticket Data",
+    "请选择一个或多个包含表头的标准 Excel 文件 (.xlsx 或 .xls) 进行导入分析。": "Please choose one or more standard Excel files with headers (.xlsx or .xls) for import analysis.",
+    "点击选择 Excel 文件（可多选）": "Click to choose Excel files (multiple supported)",
+    "未选择任何文件...": "No file selected...",
+    "未附截图证据": "No screenshot evidence",
+    "导入后抽查设置": "Post-import Sampling Setup",
+    "可以只抽取一部分单据进入本次审计，降低首次检查压力。若模板设置了分组字段，会优先按分组均衡抽样；已有单据的历史检查状态会保留。": "You can sample only part of the tickets for this audit to reduce initial review effort. If a group field is configured in the template, balanced group sampling is preferred; existing audit history will be preserved.",
+    "自定义抽查数量": "Custom sample count",
+    "例如 15": "e.g. 15",
+    "取消导入": "Cancel Import",
+    "全部导入": "Import All",
+    "确认抽查导入": "Confirm Sample Import",
+    "主表展示列设置": "Main Table Column Settings",
+    "保存设置": "Save Settings",
+    "单据完整属性表": "Full Ticket Details",
+    "📝 模板名称:": "📝 Template Name:",
+    "不分组": "No grouping",
+    "未配置过滤条件": "No import filters configured",
+    "展开更多": "Expand",
+    "收起": "Collapse"
 };
         let currentLang = 'zh';
 
@@ -1741,6 +4357,42 @@
 
             // 重新渲染表格内容 (表头、按钮、状态等)
             if (activeConfig) renderTable();
+            refreshWizardDynamicI18n();
+            refreshWizardCollapsibleSections();
+            const excelFileInput = document.getElementById('excelFileInput');
+            if (excelFileInput) updateFileName(excelFileInput);
+            if (pendingImportBatch) renderSampleImportModal();
+            if (document.getElementById('reasonModal')?.style.display === 'flex') {
+                renderReasonTemplates();
+                renderReasonEvidence();
+            }
+        }
+
+        function refreshWizardDynamicI18n() {
+            renderWizardFieldGrid();
+            updateReportFieldsUI();
+            renderFilterRulesUI();
+            renderReportFieldSortBox();
+            refreshWizardCollapsibleSections();
+            document.querySelectorAll('#wizCheckpointsContainer > div').forEach(div => {
+                const name = div.querySelector('.w-cp-name');
+                const nameEn = div.querySelector('.w-cp-name-en');
+                const desc = div.querySelector('.w-cp-desc');
+                const descEn = div.querySelector('.w-cp-desc-en');
+                const reasons = div.querySelector('.w-cp-reasons');
+                if (name) name.placeholder = tText('检查点名称 (如: 书面证据，必填)', 'Checkpoint name (e.g. Written Evidence, required)');
+                if (nameEn) nameEn.placeholder = tText('检查点英文翻译 (可选)', 'Checkpoint English name (optional)');
+                if (desc) desc.placeholder = tText('规则描述 (如: 需附带客户确认邮件截图)', 'Rule description (e.g. customer confirmation screenshot required)');
+                if (descEn) descEn.placeholder = tText('规则描述英文翻译 (可选)', 'Rule description in English (optional)');
+                if (reasons) reasons.placeholder = tText('该检查点的不通过快捷理由，每行一个', 'Failure reason shortcuts for this checkpoint, one per line');
+                const upBtn = div.querySelector('.w-cp-up');
+                const downBtn = div.querySelector('.w-cp-down');
+                const delBtn = div.querySelector('.w-cp-delete');
+                if (upBtn) upBtn.innerText = tText('上移', 'Up');
+                if (downBtn) downBtn.innerText = tText('下移', 'Down');
+                if (delBtn) delBtn.innerText = tText('删除', 'Delete');
+            });
+            renumberWizardCheckpoints();
         }
 
         // 修改 renderTable 中的写死中文
@@ -1767,6 +4419,7 @@
                         .replace(/粘贴Ctrl\+V<br>或点此上传/g, 'Paste Ctrl+V<br>or Click to Upload');
                 }
             }
+            setTimeout(updateFloatingTableHeader, 0);
         };
 
         // ================== 测试数据生成引擎 ==================
