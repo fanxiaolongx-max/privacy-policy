@@ -15,6 +15,8 @@ const aiRoutes = require('./routes/ai');
 const storageRoutes = require('./routes/storage');
 const frtRoutes = require('./routes/frt');
 const prauditRoutes = require('./routes/praudit');
+const customToolsRoutes = require('./routes/custom-tools');
+const customToolsRepo = require('./models/custom-tools-repository');
 const { checkAuth, requireAdmin } = require('./middleware/auth');
 
 const app = express();
@@ -96,6 +98,7 @@ app.use('/api/storage', storageRoutes); // 存储迁移状态 API
 app.use('/api/db-explorer', require('./routes/db-explorer')); // 数据库浏览 API
 app.use('/api/frt', frtRoutes); // FRT 历史快照 API
 app.use('/api/praudit', prauditRoutes); // PR审计配置 API
+app.use('/api/custom-tools', customToolsRoutes); // 自定义 HTML 工具注册 API
 
 // ============================================================
 // 前端路由回退（SPA）
@@ -141,6 +144,19 @@ app.get('/terms', (req, res) => {
 });
 app.get('/frt', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/pages/frt.html'));
+});
+app.get('/tools/:slug', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/pages/custom-tool.html'));
+});
+app.get('/custom-tools/:slug/index.html', (req, res) => {
+    const tool = customToolsRepo.getTool(req.params.slug);
+    const filePath = customToolsRepo.getToolFilePath(req.params.slug);
+    if (!tool || !filePath) return res.status(404).send('Custom tool not found');
+    if (req.query.download === '1') {
+        const filename = `${String(tool.name || tool.slug).replace(/[\\/:*?"<>|]+/g, '_')}.html`;
+        return res.download(filePath, filename);
+    }
+    res.sendFile(filePath);
 });
 
 // ── 全局错误兜底

@@ -16,9 +16,14 @@ function renderNavbar() {
         { href: '/storage', icon: '💽', label: '迁移状态', match: p => p.startsWith('/storage') },
         { href: '/db-explorer', icon: '🗄️', label: '数据探索', match: p => p.startsWith('/db-explorer') }
     ];
+    const primaryLinks = links.slice(0, 6);
+    const overflowLinks = links.slice(6);
 
-    const linksHtml = links.map(l =>
+    const linksHtml = primaryLinks.map(l =>
         `<a href="${l.href}" class="nav-link ${l.match(path) ? 'active' : ''}">${l.icon} ${l.label}</a>`
+    ).join('');
+    const overflowHtml = overflowLinks.map(l =>
+        `<a href="${l.href}" class="nav-more-item ${l.match(path) ? 'active' : ''}">${l.icon} ${l.label}</a>`
     ).join('');
 
     const role = localStorage.getItem('tools_role');
@@ -45,6 +50,10 @@ function renderNavbar() {
         </a>
         <div class="nav-divider"></div>
         <div class="nav-links">${linksHtml}</div>
+        <div class="nav-more" id="navMore">
+            <button type="button" class="nav-more-btn" id="navMoreBtn" onclick="toggleNavMore(event)">更多工具 ▾</button>
+            <div class="nav-more-menu" id="navMoreMenu">${overflowHtml}<div class="nav-more-custom" id="navMoreCustom"></div></div>
+        </div>
         <div style="flex:1"></div>
         
         <div style="display:flex; align-items:center; gap:4px; font-size:11px; font-weight:600; color:#e2e8f0;">
@@ -64,6 +73,56 @@ function renderNavbar() {
     `;
     document.body.prepend(nav);
 }
+
+async function loadCustomToolNavLinks() {
+    const container = document.querySelector('#navMoreCustom');
+    const moreWrap = document.getElementById('navMore');
+    if (!container) return;
+    container.querySelectorAll('[data-custom-tool-nav="1"]').forEach(el => el.remove());
+    try {
+        const token = localStorage.getItem('tools_token');
+        const res = await fetch('/api/custom-tools', {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+        if (!res.ok) return;
+        const tools = await res.json();
+        if (!Array.isArray(tools) || !tools.length) {
+            if (moreWrap) moreWrap.classList.remove('has-custom-tools');
+            return;
+        }
+        const path = window.location.pathname;
+        if (moreWrap) moreWrap.classList.add('has-custom-tools');
+        const divider = document.createElement('div');
+        divider.className = 'nav-more-section-label';
+        divider.dataset.customToolNav = '1';
+        divider.textContent = '自定义工具';
+        container.appendChild(divider);
+        tools.forEach(tool => {
+            if (!tool || !tool.href || !tool.name) return;
+            const link = document.createElement('a');
+            link.href = tool.href;
+            link.dataset.customToolNav = '1';
+            link.className = `nav-more-item ${path === tool.href || path.startsWith(`${tool.href}/`) ? 'active' : ''}`;
+            link.textContent = `${tool.icon || '🧩'} ${tool.name}`;
+            container.appendChild(link);
+        });
+    } catch (e) {
+        console.warn('[Custom Tools] load nav links failed:', e);
+    }
+}
+
+window.refreshCustomToolNavLinks = loadCustomToolNavLinks;
+
+window.toggleNavMore = function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+    document.getElementById('navMore')?.classList.toggle('open');
+};
+
+document.addEventListener('click', (event) => {
+    const more = document.getElementById('navMore');
+    if (more && !more.contains(event.target)) more.classList.remove('open');
+});
 
 window.doLogout = async function () {
     try {
@@ -210,5 +269,6 @@ async function checkServerStatus() {
 
 document.addEventListener('DOMContentLoaded', () => {
     renderNavbar();
+    loadCustomToolNavLinks();
     setTimeout(checkServerStatus, 500);
 });

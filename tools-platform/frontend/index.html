@@ -206,11 +206,84 @@
             color:#7dd3fc;
             font-size:12px;
         }
+        .custom-tools-panel {
+            margin: -24px 0 28px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .custom-tools-note {
+            color: #8ba4c2;
+            font-size: 12px;
+        }
+        .custom-tool-upload {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            height: 38px;
+            padding: 0 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(100,255,218,0.28);
+            background: rgba(100,255,218,0.12);
+            color: #8fffe8;
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+        .custom-tool-upload:hover {
+            background: rgba(100,255,218,0.18);
+            border-color: rgba(100,255,218,0.42);
+        }
+        .custom-tool-actions {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            display: flex;
+            gap: 6px;
+            opacity: 0;
+            transform: translateY(-2px);
+            transition: opacity 0.18s ease, transform 0.18s ease;
+        }
+        .custom-tool-action {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(15,23,42,0.55);
+            color: #dbeafe;
+            cursor: pointer;
+            font-weight: 900;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+        .custom-tool-action:hover {
+            background: rgba(56,189,248,0.2);
+            border-color: rgba(125,211,252,0.4);
+            color: #fff;
+        }
+        .custom-tool-action.delete {
+            color: #fca5a5;
+        }
+        .custom-tool-action.delete:hover {
+            background: rgba(239,68,68,0.2);
+            border-color: rgba(252,165,165,0.4);
+        }
+        .tool-card.custom-tool:hover .custom-tool-actions,
+        .tool-card.custom-tool:focus-within .custom-tool-actions {
+            opacity: 1;
+            transform: translateY(0);
+        }
 
         @media (max-width: 768px) {
             .tools-grid { grid-template-columns: 1fr; }
             .history-row { grid-template-columns: 1fr; }
             .history-time { text-align: left; }
+            .custom-tools-panel { justify-content: flex-start; margin-top: 0; }
         }
     </style>
 </head>
@@ -222,7 +295,13 @@
             <p>统一工具中台 · 前后端分离架构 · 数据持久化存储<br>让每一个工具都更强大、更稳定、更易扩展</p>
         </div>
 
-        <div class="tools-grid">
+        <div class="custom-tools-panel" id="customToolsPanel" style="display:none;">
+            <span class="custom-tools-note">导入独立 HTML 后，会自动生成首页模块和顶部导航入口</span>
+            <button class="custom-tool-upload" id="customToolUploadBtn">导入 HTML 工具</button>
+            <input type="file" id="customToolFileInput" accept=".html,text/html" style="display:none;">
+        </div>
+
+        <div class="tools-grid" id="toolsGrid">
             <a href="/uivf12" class="tool-card uivf12">
                 <div class="card-icon">🚀</div>
                 <div class="card-title">数据抓取</div>
@@ -361,7 +440,7 @@
                 <div class="stat-label">历史操作记录</div>
             </div>
             <div class="stat-item">
-                <div class="stat-num">7</div>
+                <div class="stat-num" id="stat-tools">-</div>
                 <div class="stat-label">在线工具模块</div>
             </div>
         </div>
@@ -378,6 +457,7 @@
                         <option value="">全部工具</option>
                         <option value="uiv">数据抓取</option>
                         <option value="sla">数据导入</option>
+                        <option value="custom">自定义工具</option>
                     </select>
                     <select id="history-mode" class="history-select">
                         <option value="auto">自动模式</option>
@@ -409,10 +489,21 @@
             page: 1,
             pageSize: 10
         };
+        let customToolsCount = 0;
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
 
         function formatToolLabel(tool) {
             if (tool === 'uiv') return '数据抓取';
             if (tool === 'sla') return '数据导入';
+            if (tool === 'custom') return '自定义工具';
             return tool || '未分类';
         }
 
@@ -515,9 +606,104 @@
                 const history = await API.get('/api/upload/history');
                 document.getElementById('stat-history').textContent = history.length;
             } catch (e) {}
+            document.getElementById('stat-tools').textContent = String(10 + customToolsCount);
+        }
+
+        function renderCustomToolCards(tools) {
+            const grid = document.getElementById('toolsGrid');
+            if (!grid) return;
+            grid.querySelectorAll('[data-custom-tool-card="1"]').forEach(el => el.remove());
+            const role = localStorage.getItem('tools_role');
+            (tools || []).forEach((tool, index) => {
+                const tags = Array.isArray(tool.tags) && tool.tags.length ? tool.tags : ['自定义 HTML', '平台入口'];
+                const card = document.createElement('a');
+                card.href = tool.href;
+                card.className = 'tool-card custom-tool';
+                card.dataset.customToolCard = '1';
+                card.style.setProperty('--card-accent', ['#38bdf8', '#34d399', '#f97316', '#e879f9'][index % 4]);
+                card.innerHTML = `
+                    <div class="custom-tool-actions">
+                        <button type="button" class="custom-tool-action" title="下载 HTML" onclick="event.preventDefault(); event.stopPropagation(); downloadCustomTool('${escapeHtml(tool.slug)}')">↓</button>
+                        ${role === 'admin' ? `<button type="button" class="custom-tool-action delete" title="删除自定义工具" onclick="event.preventDefault(); event.stopPropagation(); deleteCustomTool('${escapeHtml(tool.slug)}')">×</button>` : ''}
+                    </div>
+                    <div class="card-icon">${escapeHtml(tool.icon || '🧩')}</div>
+                    <div class="card-title">${escapeHtml(tool.name || '自定义工具')}</div>
+                    <div class="card-desc">${escapeHtml(tool.description || '由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。')}</div>
+                    <div class="card-features">
+                        ${tags.map(tag => `<span class="feature-tag">${escapeHtml(tag)}</span>`).join('')}
+                    </div>
+                    <div class="card-arrow">进入模块 →</div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        async function loadCustomTools() {
+            try {
+                const tools = await API.get('/api/custom-tools');
+                customToolsCount = Array.isArray(tools) ? tools.length : 0;
+                renderCustomToolCards(tools);
+                document.getElementById('stat-tools').textContent = String(10 + customToolsCount);
+            } catch (e) {
+                customToolsCount = 0;
+                document.getElementById('stat-tools').textContent = '10';
+            }
+        }
+
+        function setupCustomToolUpload() {
+            const role = localStorage.getItem('tools_role');
+            const panel = document.getElementById('customToolsPanel');
+            const btn = document.getElementById('customToolUploadBtn');
+            const input = document.getElementById('customToolFileInput');
+            if (!panel || !btn || !input) return;
+            panel.style.display = role === 'admin' ? 'flex' : 'none';
+            btn.addEventListener('click', () => input.click());
+            input.addEventListener('change', async () => {
+                const file = input.files && input.files[0];
+                if (!file) return;
+                try {
+                    const htmlContent = await file.text();
+                    const defaultName = file.name.replace(/\.html?$/i, '');
+                    const name = prompt('请输入工具名称：', defaultName);
+                    if (!name) return;
+                    const icon = prompt('请输入工具图标，可留空：', '🧩') || '🧩';
+                    const description = prompt('请输入工具简介，可留空：', '独立 HTML 工具') || '';
+                    await API.post('/api/custom-tools', {
+                        name,
+                        icon,
+                        description,
+                        htmlContent
+                    });
+                    showToast('自定义工具导入成功，入口已生成');
+                    await loadCustomTools();
+                    if (window.refreshCustomToolNavLinks) await window.refreshCustomToolNavLinks();
+                } catch (e) {
+                    alert(`导入自定义工具失败：${e.message}`);
+                } finally {
+                    input.value = '';
+                }
+            });
+        }
+
+        function downloadCustomTool(slug) {
+            window.location.href = `/custom-tools/${encodeURIComponent(slug)}/index.html?download=1`;
+        }
+
+        async function deleteCustomTool(slug) {
+            if (!confirm('确定删除这个自定义工具入口和 HTML 文件吗？')) return;
+            try {
+                await API.delete(`/api/custom-tools/${encodeURIComponent(slug)}`);
+                showToast('自定义工具已删除');
+                await loadCustomTools();
+                if (window.refreshCustomToolNavLinks) await window.refreshCustomToolNavLinks();
+            } catch (e) {
+                alert(`删除失败：${e.message}`);
+            }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            setupCustomToolUpload();
+            loadCustomTools();
             loadStats();
             loadOperationHistory();
 
