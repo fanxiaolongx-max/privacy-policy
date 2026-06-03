@@ -170,6 +170,532 @@ body {
     font-weight: 800;
 }
 
+.nav-more-empty {
+    padding: 10px;
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+.nav-gear-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    border: 1px solid rgba(255,255,255,0.16);
+    background: rgba(255,255,255,0.08);
+    color: #e2e8f0;
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1;
+}
+.nav-gear-btn:hover {
+    background: rgba(125,211,252,0.16);
+    border-color: rgba(125,211,252,0.34);
+    color: #fff;
+}
+
+.nav-settings-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(15,23,42,0.48);
+    backdrop-filter: blur(14px);
+}
+
+.nav-settings-window {
+    width: min(980px, 94vw);
+    height: min(680px, 86vh);
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    overflow: hidden;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.45);
+    background: rgba(248,250,252,0.92);
+    box-shadow: 0 30px 90px rgba(15,23,42,0.34);
+    color: #172033;
+}
+
+.nav-settings-sidebar {
+    padding: 18px 12px;
+    background: rgba(226,232,240,0.72);
+    border-right: 1px solid rgba(148,163,184,0.34);
+}
+
+.nav-settings-title {
+    padding: 6px 10px 14px;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.nav-settings-tab {
+    width: 100%;
+    height: 36px;
+    margin-bottom: 5px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #475569;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.nav-settings-tab:hover {
+    background: rgba(255,255,255,0.58);
+}
+.nav-settings-tab.active {
+    background: #fff;
+    color: #0f172a;
+    box-shadow: 0 2px 8px rgba(15,23,42,0.08);
+}
+
+.nav-settings-main {
+    position: relative;
+    min-width: 0;
+    padding: 22px 24px;
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: 16px;
+}
+
+.nav-settings-close {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(226,232,240,0.8);
+    color: #475569;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.nav-settings-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+    padding-right: 34px;
+}
+
+.nav-settings-heading {
+    font-size: 22px;
+    font-weight: 850;
+    color: #0f172a;
+}
+
+.nav-settings-subtitle,
+.nav-settings-help {
+    margin-top: 6px;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.nav-settings-save-state {
+    min-width: 92px;
+    color: #2563eb;
+    font-size: 12px;
+    font-weight: 800;
+    text-align: right;
+}
+
+#navSettingsContent {
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.nav-settings-list {
+    display: grid;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.nav-settings-row {
+    min-height: 46px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #fff;
+}
+
+.nav-settings-check,
+.nav-settings-item-name {
+    min-width: 0;
+    color: #1e293b;
+    font-size: 13px;
+    font-weight: 750;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nav-settings-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.nav-settings-input,
+.nav-settings-select {
+    width: 100%;
+    min-width: 160px;
+    height: 32px;
+    border-radius: 7px;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #172033;
+    padding: 0 10px;
+    font-size: 13px;
+}
+
+.nav-settings-actions {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+}
+
+.nav-settings-actions button,
+.nav-settings-add {
+    height: 30px;
+    padding: 0 10px;
+    border-radius: 7px;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+.nav-settings-actions button:hover:not(:disabled),
+.nav-settings-add:hover {
+    border-color: #60a5fa;
+    color: #1d4ed8;
+    background: #eff6ff;
+}
+.nav-settings-actions button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.nav-settings-add {
+    margin-top: 12px;
+}
+
+.nav-settings-empty {
+    padding: 18px;
+    color: #64748b;
+    background: #fff;
+    border: 1px dashed #cbd5e1;
+    border-radius: 10px;
+    font-size: 13px;
+}
+
+.nav-ai-status {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.nav-ai-status span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid #bfdbfe;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 12px;
+    font-weight: 800;
+}
+.nav-ai-status span.warning {
+    border-color: #fecaca;
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.nav-ai-grid {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.nav-ai-field {
+    min-width: 0;
+    display: grid;
+    gap: 7px;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.nav-ai-field span {
+    color: #334155;
+    font-size: 12px;
+    font-weight: 850;
+}
+
+.nav-ai-field-wide {
+    grid-column: 1 / -1;
+}
+
+.nav-ai-token-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+}
+
+.nav-ai-token-row .nav-settings-add {
+    margin-top: 0;
+    height: 32px;
+    white-space: nowrap;
+}
+
+.nav-ai-token-input {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    letter-spacing: 0.02em;
+}
+
+.nav-ai-textarea {
+    width: 100%;
+    min-height: 92px;
+    resize: vertical;
+    border-radius: 9px;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #172033;
+    padding: 10px 12px;
+    font-size: 13px;
+    line-height: 1.55;
+    font-family: inherit;
+}
+
+.nav-backup-panel,
+.nav-backup-upload {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    padding: 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #fff;
+}
+
+.nav-backup-upload {
+    grid-template-columns: minmax(0, 1fr) minmax(180px, 260px) auto;
+}
+
+.nav-backup-panel-title {
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 900;
+}
+
+.nav-backup-panel-desc,
+.nav-backup-meta {
+    margin-top: 4px;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.nav-backup-toolbar,
+.nav-backup-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.nav-backup-toolbar button,
+.nav-backup-actions button,
+.nav-backup-upload button {
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid #bfdbfe;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 12px;
+    font-weight: 850;
+    cursor: pointer;
+}
+
+.nav-backup-toolbar button:hover,
+.nav-backup-actions button:hover,
+.nav-backup-upload button:hover {
+    background: #dbeafe;
+}
+
+.nav-backup-actions button.danger,
+.nav-backup-upload button.danger {
+    border-color: #fecaca;
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.nav-backup-actions button.danger:hover,
+.nav-backup-upload button.danger:hover {
+    background: #fee2e2;
+}
+
+.nav-backup-upload input {
+    min-width: 0;
+    font-size: 12px;
+    color: #334155;
+}
+
+.nav-backup-table td:last-child {
+    width: 180px;
+}
+
+.nav-backup-name {
+    color: #172033;
+    font-size: 12px;
+    font-weight: 850;
+    word-break: break-all;
+}
+
+.nav-account-create {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: minmax(130px, 1fr) minmax(130px, 1fr) 130px auto;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+}
+
+.nav-account-create input,
+.nav-account-create select {
+    height: 34px;
+    min-width: 0;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #172033;
+    padding: 0 10px;
+    font-size: 13px;
+}
+
+.nav-account-create button,
+.nav-account-actions button {
+    height: 34px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid #bfdbfe;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.nav-account-table-wrap {
+    margin-top: 12px;
+    overflow: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.nav-account-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.nav-account-table th,
+.nav-account-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    text-align: left;
+}
+
+.nav-account-table th {
+    background: #f8fafc;
+    color: #64748b;
+    font-weight: 800;
+}
+
+.nav-account-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.nav-account-role {
+    display: inline-flex;
+    padding: 4px 9px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+}
+.nav-account-role.admin {
+    background: #e0e7ff;
+    color: #4338ca;
+}
+.nav-account-role.readonly {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+@media (max-width: 780px) {
+    .nav-settings-window {
+        grid-template-columns: 1fr;
+        height: min(760px, 90vh);
+    }
+    .nav-settings-sidebar {
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        border-right: 0;
+        border-bottom: 1px solid rgba(148,163,184,0.34);
+    }
+    .nav-settings-title { display: none; }
+    .nav-settings-tab { width: auto; white-space: nowrap; }
+    .nav-settings-row {
+        grid-template-columns: 1fr;
+    }
+    .nav-account-create {
+        grid-template-columns: 1fr;
+    }
+    .nav-ai-grid,
+    .nav-ai-token-row {
+        grid-template-columns: 1fr;
+    }
+    .nav-backup-panel,
+    .nav-backup-upload {
+        grid-template-columns: 1fr;
+    }
+    .nav-backup-toolbar,
+    .nav-backup-actions {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+}
+
 .nav-status {
     display: flex;
     align-items: center;

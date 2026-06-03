@@ -383,6 +383,10 @@
             messages.push({ role: 'model', content: data.reply });
             appendMessage(data.reply, 'ai', data.tokens || 0, data.cost || 0);
         } catch (e) {
+            const last = messages[messages.length - 1];
+            if (last && last.role === 'user' && last.content === text) {
+                messages.pop();
+            }
             appendMessage('⚠️ 错误: ' + e.message, 'ai');
         } finally {
             typing.style.display = 'none';
