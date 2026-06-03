@@ -17,6 +17,9 @@ const frtRoutes = require('./routes/frt');
 const prauditRoutes = require('./routes/praudit');
 const customToolsRoutes = require('./routes/custom-tools');
 const customToolsRepo = require('./models/custom-tools-repository');
+const navSettingsRoutes = require('./routes/nav-settings');
+const aiSettingsRoutes = require('./routes/ai-settings');
+const globalBackupRoutes = require('./routes/global-backup');
 const { checkAuth, requireAdmin } = require('./middleware/auth');
 
 const app = express();
@@ -99,6 +102,9 @@ app.use('/api/db-explorer', require('./routes/db-explorer')); // 数据库浏览
 app.use('/api/frt', frtRoutes); // FRT 历史快照 API
 app.use('/api/praudit', prauditRoutes); // PR审计配置 API
 app.use('/api/custom-tools', customToolsRoutes); // 自定义 HTML 工具注册 API
+app.use('/api/nav-settings', navSettingsRoutes); // 顶部导航全局设置 API
+app.use('/api/ai-settings', aiSettingsRoutes); // 智能客服助手模型配置 API
+app.use('/api/global-backup', globalBackupRoutes); // 全局数据备份与恢复 API
 
 // ============================================================
 // 前端路由回退（SPA）
