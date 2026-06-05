@@ -28,8 +28,6 @@ db.serialize(() => {
     // Add column if it didn't exist in older versions
     db.run("ALTER TABLE ReportSnapshots ADD COLUMN image_path TEXT", () => {});
     db.run("ALTER TABLE ReportSnapshots ADD COLUMN excel_path TEXT", () => {});
-    db.run("ALTER TABLE ReportCategoryScores ADD COLUMN month INTEGER", () => {});
-    db.run("ALTER TABLE ReportMetricData ADD COLUMN month INTEGER", () => {});
     
     db.run(`CREATE TABLE IF NOT EXISTS ReportCategoryScores (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -52,8 +50,17 @@ db.serialize(() => {
         raw_val TEXT,
         num_val REAL,
         is_failing INTEGER,
-        gap TEXT
+        gap TEXT,
+        earned_score REAL,
+        proportional_scoring INTEGER,
+        completion_ratio REAL
     )`);
+
+    db.run("ALTER TABLE ReportCategoryScores ADD COLUMN month INTEGER", () => {});
+    db.run("ALTER TABLE ReportMetricData ADD COLUMN month INTEGER", () => {});
+    db.run("ALTER TABLE ReportMetricData ADD COLUMN earned_score REAL", () => {});
+    db.run("ALTER TABLE ReportMetricData ADD COLUMN proportional_scoring INTEGER", () => {});
+    db.run("ALTER TABLE ReportMetricData ADD COLUMN completion_ratio REAL", () => {});
 
     db.run(`CREATE TABLE IF NOT EXISTS PlatformConfig (
         key_name TEXT PRIMARY KEY,
@@ -136,10 +143,24 @@ router.post('/save', (req, res) => {
         }
         stmtCat.finalize();
 
-        const stmtMetric = db.prepare(`INSERT INTO ReportMetricData (snapshot_id, month, cat_name, metric_label, weight, target_val, raw_val, num_val, is_failing, gap)
-                                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+        const stmtMetric = db.prepare(`INSERT INTO ReportMetricData (snapshot_id, month, cat_name, metric_label, weight, target_val, raw_val, num_val, is_failing, gap, earned_score, proportional_scoring, completion_ratio)
+                                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
         for (const m of (metric_data || [])) {
-            stmtMetric.run([snapshot_id, month, m.cat_name, m.metric_label, m.weight, m.target_val, m.raw_val, m.num_val, m.is_failing ? 1 : 0, m.gap]);
+            stmtMetric.run([
+                snapshot_id,
+                month,
+                m.cat_name,
+                m.metric_label,
+                m.weight,
+                m.target_val,
+                m.raw_val,
+                m.num_val,
+                m.is_failing ? 1 : 0,
+                m.gap,
+                m.earned_score === undefined ? null : m.earned_score,
+                m.proportional_scoring ? 1 : 0,
+                m.completion_ratio === undefined ? null : m.completion_ratio
+            ]);
         }
         stmtMetric.finalize();
 

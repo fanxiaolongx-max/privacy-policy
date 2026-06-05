@@ -233,6 +233,12 @@ function moveArrayItem(arr, index, delta) {
     return copy;
 }
 
+function renderPageSettingsTabs() {
+    return NAV_BUILTIN_LINKS.map(item => `
+        <button class="nav-settings-tab nav-settings-tab-page" data-tab="page:${navEscape(item.id)}" onclick="switchNavSettingsTab('page:${navEscape(item.id)}')">${item.icon} ${navEscape(item.label)}</button>
+    `).join('');
+}
+
 function openNavSettingsModal() {
     if (localStorage.getItem('tools_role') !== 'admin') return;
     let modal = document.getElementById('navSettingsModal');
@@ -250,6 +256,8 @@ function openNavSettingsModal() {
                     <button class="nav-settings-tab" data-tab="ai" onclick="switchNavSettingsTab('ai')">AI 助手</button>
                     <button class="nav-settings-tab" data-tab="backup" onclick="switchNavSettingsTab('backup')">备份恢复</button>
                     <button class="nav-settings-tab" data-tab="accounts" onclick="switchNavSettingsTab('accounts')">账号管理</button>
+                    <div class="nav-settings-title nav-settings-section-title">页面配置</div>
+                    ${renderPageSettingsTabs()}
                 </div>
                 <div class="nav-settings-main">
                     <button class="nav-settings-close" onclick="closeNavSettingsModal()">×</button>
@@ -287,6 +295,11 @@ window.switchNavSettingsTab = function (tab) {
 };
 
 function getNavSettingsTitle() {
+    if (navState.settingsTab.startsWith('page:')) {
+        const pageId = navState.settingsTab.slice(5);
+        const item = NAV_BUILTIN_LINKS.find(link => link.id === pageId);
+        return item ? `${item.label}配置` : '页面配置';
+    }
     if (navState.settingsTab === 'accounts') return '账号管理';
     if (navState.settingsTab === 'ai') return 'AI 助手';
     if (navState.settingsTab === 'backup') return '备份恢复';
@@ -296,6 +309,11 @@ function getNavSettingsTitle() {
 }
 
 function getNavSettingsSubtitle() {
+    if (navState.settingsTab.startsWith('page:')) {
+        const pageId = navState.settingsTab.slice(5);
+        if (pageId === 'report') return '报表看板相关维护能力，当前支持历史快照冗余清理。';
+        return '该页面的配置预留位，后续可把页面内相关设置迁移到这里统一管理。';
+    }
     if (navState.settingsTab === 'accounts') return '修改后会自动保存，并立即影响账号权限。';
     if (navState.settingsTab === 'ai') return '修改后会自动保存，并立即影响智能客服助手配置。';
     if (navState.settingsTab === 'backup') return '备份和恢复会覆盖全局配置、数据库、上传附件与自定义工具数据。';
@@ -311,6 +329,7 @@ function renderNavSettingsContent() {
     if (!content) return;
     if (heading) heading.textContent = getNavSettingsTitle();
     if (subtitle) subtitle.textContent = getNavSettingsSubtitle();
+    if (navState.settingsTab.startsWith('page:')) return renderPageSettings(content, navState.settingsTab.slice(5));
     if (navState.settingsTab === 'accounts') return renderAccountSettings(content);
     if (navState.settingsTab === 'ai') return renderAiSettings(content);
     if (navState.settingsTab === 'backup') return renderBackupSettings(content);
@@ -777,6 +796,101 @@ window.restoreGlobalBackupFromUpload = async function () {
         return data;
     });
     renderNavSettingsContent();
+};
+
+function renderPageSettings(content, pageId) {
+    if (pageId === 'report') return renderReportPageSettings(content);
+    const item = NAV_BUILTIN_LINKS.find(link => link.id === pageId);
+    content.innerHTML = `
+        <div class="nav-page-config-placeholder">
+            <div class="nav-page-config-icon">${item?.icon || '🧩'}</div>
+            <div>
+                <div class="nav-page-config-title">${navEscape(item?.label || '页面')}配置预留位</div>
+                <div class="nav-page-config-desc">当前暂无需要迁移到全局设置的配置项。后续如果该页面新增全局级设置，可以直接放在这里。</div>
+            </div>
+        </div>
+    `;
+}
+
+function renderReportPageSettings(content) {
+    content.innerHTML = `
+        <div class="nav-settings-help">清理“历史快照 (Snapshot)”中最近 X 天内的同日冗余快照，仅保留每天最新一份。较早日期和每天最新快照都会保留，不影响月报、一键催办等按日读取最新快照的业务。</div>
+        <div class="nav-report-cleanup-card">
+            <div class="nav-report-cleanup-main">
+                <div class="nav-backup-panel-title">历史快照冗余清理</div>
+                <div class="nav-backup-panel-desc">建议先“预览影响”，确认要删除的数量后再执行清理。</div>
+                <label class="nav-report-cleanup-field">
+                    <span>清理最近</span>
+                    <input id="reportSnapshotCleanupDays" type="number" min="1" max="3650" step="1" value="30">
+                    <span>天内冗余快照</span>
+                </label>
+            </div>
+            <div class="nav-backup-toolbar">
+                <button onclick="previewReportSnapshotCleanup()">预览影响</button>
+                <button class="danger" onclick="runReportSnapshotCleanup()">执行清理</button>
+            </div>
+        </div>
+        <div id="reportSnapshotCleanupResult" class="nav-report-cleanup-result">等待预览。</div>
+    `;
+}
+
+function getReportSnapshotCleanupDays() {
+    const input = document.getElementById('reportSnapshotCleanupDays');
+    return Math.max(1, Math.min(3650, parseInt(input?.value, 10) || 30));
+}
+
+function renderReportSnapshotCleanupResult(result) {
+    const el = document.getElementById('reportSnapshotCleanupResult');
+    if (!el) return;
+    const removedPreview = (result.removed || []).slice(0, 8)
+        .map(item => `<li>${navEscape(item.date || '-')} · ${navEscape(item.timestamp || '-')} · ${navEscape(item.id || '-')}</li>`)
+        .join('');
+    el.innerHTML = `
+        <div><strong>${result.dryRun ? '预览结果' : '清理完成'}</strong></div>
+        <div>范围：最近 ${result.days} 天；清理前 ${result.beforeCount} 条，清理后 ${result.afterCount} 条，预计/实际删除 ${result.removedCount} 条。</div>
+        <div>保留的最近日期每日最新快照：${result.keptDailyCount} 天。</div>
+        ${removedPreview ? `<ul>${removedPreview}</ul>` : '<div>没有需要清理的冗余快照。</div>'}
+        ${result.removedCount > 8 ? `<div>仅展示前 8 条，剩余 ${result.removedCount - 8} 条未展开。</div>` : ''}
+    `;
+}
+
+async function requestReportSnapshotCleanup(dryRun) {
+    const res = await fetch('/api/sla/snapshots/cleanup-redundant', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaderForNav()
+        },
+        body: JSON.stringify({
+            days: getReportSnapshotCleanupDays(),
+            dryRun
+        })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    return data;
+}
+
+window.previewReportSnapshotCleanup = async function () {
+    await runGlobalBackupAction('正在预览快照清理...', async () => {
+        const result = await requestReportSnapshotCleanup(true);
+        renderReportSnapshotCleanupResult(result);
+        return result;
+    });
+};
+
+window.runReportSnapshotCleanup = async function () {
+    const days = getReportSnapshotCleanupDays();
+    const preview = await requestReportSnapshotCleanup(true);
+    renderReportSnapshotCleanupResult(preview);
+    if (!preview.removedCount) return alert('没有需要清理的冗余快照。');
+    const ok = confirm(`确定清理最近 ${days} 天内的 ${preview.removedCount} 条冗余快照吗？\n\n规则：每天只保留最新一份快照。`);
+    if (!ok) return;
+    await runGlobalBackupAction('正在清理冗余快照...', async () => {
+        const result = await requestReportSnapshotCleanup(false);
+        renderReportSnapshotCleanupResult(result);
+        return result;
+    });
 };
 
 async function renderAccountSettings(content) {

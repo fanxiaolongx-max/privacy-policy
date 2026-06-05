@@ -177,6 +177,70 @@ async function replaceSnapshots(items) {
     return normalized;
 }
 
+function getSnapshotTime(item) {
+    const time = Date.parse(item && item.timestamp);
+    return Number.isFinite(time) ? time : 0;
+}
+
+function getSnapshotDateKey(item) {
+    const time = getSnapshotTime(item);
+    if (!time) return '';
+    return new Date(time).toISOString().slice(0, 10);
+}
+
+async function cleanupRedundantDailySnapshots({ days = 30, dryRun = false } = {}) {
+    const safeDays = Math.max(1, Math.min(3650, parseInt(days, 10) || 30));
+    const cutoffTime = Date.now() - safeDays * 24 * 60 * 60 * 1000;
+    const { items, source } = await listSnapshots({ mode: 'auto' });
+    const snapshots = normalizeSnapshots(items);
+    const latestByDate = new Map();
+
+    snapshots.forEach(item => {
+        const time = getSnapshotTime(item);
+        if (!time || time < cutoffTime) return;
+        const key = getSnapshotDateKey(item);
+        const current = latestByDate.get(key);
+        if (!current || getSnapshotTime(item) > getSnapshotTime(current)) {
+            latestByDate.set(key, item);
+        }
+    });
+
+    const keepIds = new Set(Array.from(latestByDate.values()).map(item => item.id));
+    const removed = [];
+    const kept = [];
+
+    snapshots.forEach(item => {
+        const time = getSnapshotTime(item);
+        if (!time || time < cutoffTime || keepIds.has(item.id)) {
+            kept.push(item);
+        } else {
+            removed.push({
+                id: item.id,
+                timestamp: item.timestamp,
+                date: getSnapshotDateKey(item)
+            });
+        }
+    });
+
+    kept.sort((a, b) => getSnapshotTime(b) - getSnapshotTime(a) || String(b.id || '').localeCompare(String(a.id || '')));
+
+    if (!dryRun && removed.length) {
+        await replaceSnapshots(kept);
+    }
+
+    return {
+        source,
+        dryRun: Boolean(dryRun),
+        days: safeDays,
+        cutoff: new Date(cutoffTime).toISOString(),
+        beforeCount: snapshots.length,
+        afterCount: kept.length,
+        removedCount: removed.length,
+        keptDailyCount: latestByDate.size,
+        removed
+    };
+}
+
 module.exports = {
     MAX_SNAPSHOTS,
     ensureReady,
@@ -184,5 +248,6 @@ module.exports = {
     addSnapshot,
     deleteSnapshot,
     updateSnapshot,
-    replaceSnapshots
+    replaceSnapshots,
+    cleanupRedundantDailySnapshots
 };
