@@ -1,95 +1,198 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Privacy Policy - Tools Platform</title>
     <link rel="stylesheet" href="/css/shared.css">
     <style>
+        body { 
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); 
+            min-height: 100vh; 
+            margin: 0;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
         .doc-container {
             max-width: 800px;
-            margin: 80px auto 40px auto;
-            background: #ffffff;
-            padding: 50px;
-            border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            margin: calc(var(--navbar-h, 60px) + 40px) auto 40px auto;
+            background: rgba(255,255,255,0.04);
+            padding: 40px 50px;
+            border-radius: 18px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 18px 42px rgba(0,0,0,0.25);
             line-height: 1.8;
-            color: #334155;
-            font-size: 16px;
             position: relative;
+            backdrop-filter: blur(10px);
         }
+
         .doc-container h1 {
-            color: #1e293b;
+            color: #fff;
             margin-top: 0;
             margin-bottom: 24px;
-            border-bottom: 2px solid #e2e8f0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
             padding-bottom: 16px;
             font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(90deg, #64ffda, #4a90e2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-        .doc-container h2, .doc-container h3 {
-            color: #334155;
+
+        .doc-container h2,
+        .doc-container h3 {
+            color: #e2e8f0;
             margin-top: 32px;
+            margin-bottom: 16px;
+            font-weight: 700;
         }
+        
+        .doc-container h2 {
+            font-size: 22px;
+        }
+
         .doc-container p {
             margin-bottom: 16px;
+            color: #8892b0;
         }
+
         .doc-container ul {
             padding-left: 24px;
             margin-bottom: 20px;
+            color: #8892b0;
         }
+
         .doc-container li {
             margin-bottom: 8px;
         }
+
+        .doc-container strong {
+            color: #e2e8f0;
+        }
+
         .back-link {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            margin-bottom: 20px;
-            color: #667eea;
+            margin-bottom: 24px;
+            color: #64ffda;
             text-decoration: none;
             font-weight: 600;
-            transition: color 0.2s;
+            font-size: 14px;
+            transition: all 0.2s;
+            background: rgba(100,255,218,0.1);
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(100,255,218,0.2);
         }
+
         .back-link:hover {
-            color: #5a6fd6;
+            background: rgba(100,255,218,0.2);
+            border-color: rgba(100,255,218,0.4);
+            color: #8fffe8;
         }
+
         code {
-            background: #f1f5f9;
+            background: rgba(255,255,255,0.08);
             padding: 2px 6px;
             border-radius: 4px;
-            color: #ef4444;
+            color: #fca5a5;
+            font-family: monospace;
+        }
+
+        .lang-section {
+            margin-bottom: 40px;
+        }
+
+        .lang-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .lang-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.1);
+            margin: 40px 0;
+        }
+
+        @media (max-width: 768px) {
+            .doc-container {
+                margin: calc(var(--navbar-h, 60px) + 20px) 20px 40px 20px;
+                padding: 30px 20px;
+            }
         }
     </style>
 </head>
-<body style="background: #f8fafc; min-height: 100vh; box-sizing: border-box;">
-    
+
+<body>
+
     <div class="doc-container">
         <a href="javascript:history.back()" class="back-link">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-            返回上一页
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            返回 / Back
         </a>
 
-        <h1>Privacy Policy</h1>
-        <p>This application uses WhatsApp Business API to communicate with users for order notifications and customer support.</p>
-        
-        <p>We do not share, sell, or disclose any personal data to third parties.</p>
-        
-        <p><strong>Information collected:</strong></p>
-        <ul>
-          <li>User phone number (required for sending messages)</li>
-          <li>Order information sent by the user</li>
-        </ul>
-        
-        <p><strong>We only use this information for:</strong></p>
-        <ul>
-          <li>Sending order updates</li>
-          <li>Customer communication</li>
-        </ul>
-        
-        <p>If you have any questions about this privacy policy, please contact us at: <code>your-email@example.com</code></p>
+        <div class="lang-section">
+            <h1>隐私政策 (Privacy Policy)</h1>
+            <p>欢迎使用工具中台 (Tools Platform)。本隐私政策旨在说明您在使用我们服务时，我们如何收集、使用和保护您的信息。</p>
+
+            <h2>收集的信息</h2>
+            <ul>
+                <li><strong>账户与认证数据：</strong>登录时使用的用户凭证或相关授权令牌。</li>
+                <li><strong>上传的数据：</strong>用于数据分析、SLA监控、FRT KPI核算和PR稽查等业务而导入的文件（如Excel、JSON）。</li>
+                <li><strong>操作日志：</strong>用户操作记录、脚本执行历史、任务调度以及自定义工具的使用情况。</li>
+                <li><strong>偏好设置：</strong>存储在服务器或本地的自定义配置和平台偏好设置。</li>
+            </ul>
+
+            <h2>我们如何使用您的信息</h2>
+            <ul>
+                <li><strong>提供服务：</strong>执行数据抓取、处理、报表生成及各类业务管理任务。</li>
+                <li><strong>平台改进：</strong>分析工具使用模式，以提升系统性能、安全性和稳定性。</li>
+                <li><strong>安全与审计：</strong>保留操作历史，用于安全审计、错误追踪和故障排查。</li>
+            </ul>
+
+            <h2>数据保护</h2>
+            <p>我们采取适当的技术和组织措施来保护您的数据，防止未经授权的访问、篡改、泄露或销毁。我们不会向未经授权的第三方出售或共享您的数据。</p>
+
+            <h2>联系我们</h2>
+            <p>如果您对本隐私政策有任何疑问，请通过以下方式联系管理员：<code>fanxiaolongx@gmail.com</code></p>
+        </div>
+
+        <div class="lang-divider"></div>
+
+        <div class="lang-section">
+            <h1>Privacy Policy</h1>
+            <p>Welcome to the Tools Platform (工具中台). This Privacy Policy explains how we collect, use, and protect your information when you use our services.</p>
+
+            <h2>Information Collected</h2>
+            <ul>
+                <li><strong>Account and Authentication Data:</strong> User credentials or authorization tokens used when logging in.</li>
+                <li><strong>Uploaded Data:</strong> Files (e.g., Excel, JSON) imported for data analysis, SLA monitoring, FRT KPI calculation, and PR audit tasks.</li>
+                <li><strong>Operation Logs:</strong> History of user actions, script execution records, task scheduling, and custom tool usage.</li>
+                <li><strong>Preferences:</strong> Custom configurations and preference settings stored in the server or local storage.</li>
+            </ul>
+
+            <h2>How We Use Your Information</h2>
+            <ul>
+                <li><strong>Providing Services:</strong> To execute data scraping, processing, report generation, and other platform management tasks.</li>
+                <li><strong>Platform Improvement:</strong> To analyze tool usage patterns and improve system performance, security, and stability.</li>
+                <li><strong>Security and Auditing:</strong> To maintain operational history for security auditing, error tracking, and troubleshooting purposes.</li>
+            </ul>
+
+            <h2>Data Protection</h2>
+            <p>We implement appropriate technical and organizational measures to protect your data against unauthorized access, alteration, disclosure, or destruction. We do not sell or share your data with unauthorized third parties.</p>
+
+            <h2>Contact Us</h2>
+            <p>If you have any questions about this privacy policy, please contact the administrator at: <code>fanxiaolongx@gmail.com</code></p>
+        </div>
     </div>
 
-    <script src="/js/shared/api.js"></script>
+    <script src="/js/shared/api.js?v=20260530-03"></script>
     <script src="/js/shared/navbar.js?v=20260530-08"></script>
 </body>
+
 </html>
