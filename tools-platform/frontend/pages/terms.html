@@ -1,71 +1,180 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Terms of Service - Tools Platform</title>
     <link rel="stylesheet" href="/css/shared.css">
     <style>
+        body { 
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); 
+            min-height: 100vh; 
+            margin: 0;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
         .doc-container {
             max-width: 800px;
-            margin: 80px auto 40px auto;
-            background: #ffffff;
-            padding: 50px;
-            border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            margin: calc(var(--navbar-h, 60px) + 40px) auto 40px auto;
+            background: rgba(255,255,255,0.04);
+            padding: 40px 50px;
+            border-radius: 18px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 18px 42px rgba(0,0,0,0.25);
             line-height: 1.8;
-            color: #334155;
-            font-size: 16px;
             position: relative;
+            backdrop-filter: blur(10px);
         }
+
         .doc-container h1 {
-            color: #1e293b;
+            color: #fff;
             margin-top: 0;
             margin-bottom: 24px;
-            border-bottom: 2px solid #e2e8f0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
             padding-bottom: 16px;
             font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(90deg, #64ffda, #4a90e2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
+
+        .doc-container h2,
+        .doc-container h3 {
+            color: #e2e8f0;
+            margin-top: 32px;
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+        
+        .doc-container h2 {
+            font-size: 22px;
+        }
+
         .doc-container p {
             margin-bottom: 16px;
+            color: #8892b0;
         }
+
+        .doc-container ul {
+            padding-left: 24px;
+            margin-bottom: 20px;
+            color: #8892b0;
+        }
+
+        .doc-container li {
+            margin-bottom: 8px;
+        }
+
+        .doc-container strong {
+            color: #e2e8f0;
+        }
+
         .back-link {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            margin-bottom: 20px;
-            color: #667eea;
+            margin-bottom: 24px;
+            color: #64ffda;
             text-decoration: none;
             font-weight: 600;
-            transition: color 0.2s;
+            font-size: 14px;
+            transition: all 0.2s;
+            background: rgba(100,255,218,0.1);
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(100,255,218,0.2);
         }
+
         .back-link:hover {
-            color: #5a6fd6;
+            background: rgba(100,255,218,0.2);
+            border-color: rgba(100,255,218,0.4);
+            color: #8fffe8;
+        }
+
+        .lang-section {
+            margin-bottom: 40px;
+        }
+
+        .lang-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .lang-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.1);
+            margin: 40px 0;
+        }
+
+        @media (max-width: 768px) {
+            .doc-container {
+                margin: calc(var(--navbar-h, 60px) + 20px) 20px 40px 20px;
+                padding: 30px 20px;
+            }
         }
     </style>
 </head>
-<body style="background: #f8fafc; min-height: 100vh; box-sizing: border-box;">
-    
+
+<body>
+
     <div class="doc-container">
         <a href="javascript:history.back()" class="back-link">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-            返回上一页
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            返回 / Back
         </a>
 
-        <h1>Terms of Service</h1>
+        <div class="lang-section">
+            <h1>服务条款 (Terms of Service)</h1>
+            <p>访问和使用工具中台 (Tools Platform) 即表示您同意遵守以下服务条款。</p>
 
-        <p>By using this service, you agree to receive WhatsApp messages regarding your orders or customer support inquiries.</p>
-        
-        <p>This service is provided on an "as is" basis without warranties of any kind.</p>
-        
-        <p>Users must ensure that the phone number provided belongs to them and is used legally.</p>
-        
-        <p>We reserve the right to discontinue or modify the service at any time.</p>
-        
-        <p>If you do not agree with these terms, please stop using this service.</p>
+            <h2>服务的使用</h2>
+            <ul>
+                <li>您同意仅出于合法和经授权的业务目的使用本平台及其工具（包括但不限于数据抓取、SLA导入、PR稽查和报表工具）。</li>
+                <li>您有责任确保上传至本平台的任何数据或文件的准确性、安全性及合法性。</li>
+                <li>使用数据抓取及宏代码引擎时，必须遵守目标系统或网站的使用条款及适用法律。严禁恶意抓取、未经授权的数据窃取或滥用平台计算资源。</li>
+            </ul>
+
+            <h2>免责声明</h2>
+            <p>工具中台及所有包含的子工具均按“现状”和“现有”基础提供。我们不对本平台功能的稳定性、准确性或数据的绝对安全提供任何形式的明示或暗示的保证。</p>
+
+            <h2>责任限制</h2>
+            <p>对于因使用或无法使用本平台及其工具而导致的任何直接、间接、附带、特殊或后果性损害（包括但不限于业务中断或数据丢失），我们概不负责。</p>
+
+            <h2>条款修改</h2>
+            <p>我们保留随时修改、暂停或终止本平台部分或全部服务的权利，恕不另行通知。继续使用本平台即表示您接受修改后的服务条款。</p>
+        </div>
+
+        <div class="lang-divider"></div>
+
+        <div class="lang-section">
+            <h1>Terms of Service</h1>
+            <p>By accessing and using the Tools Platform (工具中台), you agree to comply with and be bound by the following terms of service.</p>
+
+            <h2>Use of Service</h2>
+            <ul>
+                <li>You agree to use the platform and its tools (including but not limited to data scraping, SLA imports, PR audit, and reporting tools) only for lawful and authorized business purposes.</li>
+                <li>You are solely responsible for ensuring the accuracy, security, and legality of any data or files you upload to the platform.</li>
+                <li>When using data scraping or macro engines, you must comply with the target system/website's terms of service and applicable laws. Malicious scraping, unauthorized data extraction, or abuse of platform computing resources is strictly prohibited.</li>
+            </ul>
+
+            <h2>Disclaimer of Warranties</h2>
+            <p>The Tools Platform and all included sub-tools are provided on an "as is" and "as available" basis. We make no warranties, express or implied, regarding the stability, accuracy, or absolute security of the platform's features or data.</p>
+
+            <h2>Limitation of Liability</h2>
+            <p>In no event shall we be liable for any direct, indirect, incidental, special, or consequential damages (including but not limited to business interruption or data loss) arising out of the use or inability to use the platform and its tools.</p>
+
+            <h2>Modifications</h2>
+            <p>We reserve the right to modify, suspend, or discontinue any part or all of the platform's services at any time without prior notice. Your continued use of the platform constitutes acceptance of the modified terms.</p>
+        </div>
     </div>
 
-    <script src="/js/shared/api.js"></script>
+    <script src="/js/shared/api.js?v=20260530-03"></script>
     <script src="/js/shared/navbar.js?v=20260530-08"></script>
 </body>
+
 </html>
