@@ -104,6 +104,73 @@
             color: #3f51b5;
             text-decoration: underline;
         }
+
+        /* --- Mini Game Styles --- */
+        .game-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            z-index: 9999;
+            display: none;
+            overflow: hidden;
+        }
+
+        .game-wrapper.active {
+            display: block;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .btn-play-game {
+            width: 100%;
+            margin-top: 15px;
+            padding: 12px;
+            background: transparent;
+            color: #64748b;
+            border: 1px dashed #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-play-game:hover {
+            border-color: #3f51b5;
+            color: #3f51b5;
+            background: rgba(63, 81, 181, 0.05);
+        }
+
+        .btn-close-game {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 10000;
+            font-size: 14px;
+            backdrop-filter: blur(4px);
+            transition: background 0.2s;
+        }
+
+        .btn-close-game:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
     </style>
 </head>
 
@@ -120,6 +187,7 @@
             <input type="password" id="password" placeholder="请输入密码" onkeydown="handleEnter(event)">
         </div>
         <button class="btn-login" onclick="doLogin()">登 录</button>
+        <button class="btn-play-game" onclick="toggleGame(true)">♨️ 休息一下</button>
         <div id="error-msg"></div>
     </div>
 
@@ -129,8 +197,27 @@
         <a href="/terms" target="_blank">服务条款</a>
     </div>
 
+    <!-- Mini Game Container -->
+    <div class="game-wrapper" id="gameWrapper">
+        <button class="btn-close-game" onclick="toggleGame(false)">退出游戏</button>
+        <iframe id="gameIframe" src="" frameborder="0" style="width: 100%; height: 100%; display: block;"></iframe>
+    </div>
+
     <script src="/js/shared/api.js"></script>
     <script>
+        function toggleGame(show) {
+            const wrapper = document.getElementById('gameWrapper');
+            const iframe = document.getElementById('gameIframe');
+            if (show) {
+                wrapper.classList.add('active');
+                if (!iframe.getAttribute('src')) {
+                    iframe.setAttribute('src', '/knight-dreams/index.html');
+                }
+            } else {
+                wrapper.classList.remove('active');
+            }
+        }
+
         function handleEnter(e) {
             if (e.key === 'Enter') doLogin();
         }
