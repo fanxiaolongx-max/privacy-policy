@@ -270,6 +270,32 @@
             color: #aaa;
         }
 
+        .ratio-score-toggle {
+            padding: 2px 7px;
+            border-radius: 999px;
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 1.6;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .ratio-score-toggle:hover {
+            border-color: #38bdf8;
+            color: #0369a1;
+            background: #f0f9ff;
+        }
+
+        .ratio-score-toggle.active {
+            border-color: #67e8f9;
+            color: #0e7490;
+            background: #ecfeff;
+            box-shadow: 0 1px 4px rgba(14, 116, 144, 0.14);
+        }
+
         .manual-score {
             width: 60px;
             padding: 6px;
@@ -651,7 +677,7 @@
 
         window.renderReportSourcePanel = renderReportSourcePanel;
     </script>
-    <script src="/js/report/report.js?v=20260601-09"></script>
+    <script src="/js/report/report.js?v=20260604-01"></script>
 </body>
 
 </html>

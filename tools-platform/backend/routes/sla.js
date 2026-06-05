@@ -232,6 +232,25 @@ router.put('/snapshots/:id', async (req, res) => {
     }
 });
 
+// POST /api/sla/snapshots/cleanup-redundant
+// 清理最近 N 天内同一天的冗余快照，只保留每天最新一份。
+router.post('/snapshots/cleanup-redundant', async (req, res) => {
+    try {
+        const result = await snapshotsRepo.cleanupRedundantDailySnapshots({
+            days: req.body?.days,
+            dryRun: req.body?.dryRun
+        });
+        console.log(
+            `[SLA SNAPSHOT CLEANUP] days=${result.days}, dryRun=${result.dryRun}, ` +
+            `before=${result.beforeCount}, after=${result.afterCount}, removed=${result.removedCount}`
+        );
+        res.json(result);
+    } catch (err) {
+        console.error('[POST /api/sla/snapshots/cleanup-redundant] failed:', err);
+        res.status(500).json({ error: '清理历史快照失败' });
+    }
+});
+
 // ──────────────────────────────────────────────────────────
 // 表格偏好设置（列宽、显示列、排序、自定义指标规则）
 // 使用 schemaHash 作为 key，与原前端逻辑对应

@@ -399,6 +399,42 @@ function parseNum(str) {
     return isNaN(n) ? NaN : n;
 }
 
+function isProportionalScoringEnabled(targetData) {
+    return !!(targetData && targetData.proportionalScoring);
+}
+
+function clampScoreRatio(value) {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return 0;
+    return Math.max(0, Math.min(1, num));
+}
+
+function calculateTargetCompletionRatio(valNum, targetNum, condition) {
+    if (!Number.isFinite(valNum) || !Number.isFinite(targetNum)) return 0;
+    if (condition === 'lte') {
+        if (valNum <= targetNum) return 1;
+        if (valNum <= 0) return targetNum >= 0 ? 1 : 0;
+        return clampScoreRatio(targetNum / valNum);
+    }
+    if (valNum >= targetNum) return 1;
+    if (targetNum <= 0) return valNum >= targetNum ? 1 : 0;
+    return clampScoreRatio(valNum / targetNum);
+}
+
+function formatScoreValue(value) {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return '--';
+    return Number.isInteger(num) ? String(num) : String(+num.toFixed(2));
+}
+
+function cleanMatrixCellFilterText(text) {
+    return String(text || '')
+        .replace(/比例计分\s*ON/g, '')
+        .replace(/比例计分/g, '')
+        .replace(/✏️[\s\S]*$/, '')
+        .trim();
+}
+
 function hasUsableMetricValue(metric) {
     if (!metric) return false;
     const hasGlobal = metric.value !== undefined && metric.value !== null && String(metric.value).trim() !== '' && String(metric.value).trim() !== '--';
@@ -574,13 +610,26 @@ function renderReport(snap) {
                         }
                     }
                     
-                    if (!isFailing) {
-                        catData[sm.category].earnedScore += weight + bonusScore;
-                    }
+                    const proportionalScoring = isProportionalScoringEnabled(targetData);
+                    const completionRatio = calculateTargetCompletionRatio(valNum, targetNum, condition);
+                    const earnedBaseScore = isFailing && proportionalScoring ? +(weight * completionRatio).toFixed(4) : (isFailing ? 0 : weight);
+                    const earnedScore = earnedBaseScore + (!isFailing ? bonusScore : 0);
+                    catData[sm.category].earnedScore += earnedScore;
+                    catData[sm.category].values[m.label] = {
+                        raw: sm.value,
+                        num: valNum,
+                        isFailing: isFailing,
+                        gapStr: gapStr,
+                        bonusScore: bonusScore || 0,
+                        earnedScore,
+                        completionRatio,
+                        proportionalScoring
+                    };
+                    return;
                 }
             }
             
-            catData[sm.category].values[m.label] = { raw: sm.value, num: valNum, isFailing: isFailing, gapStr: gapStr, bonusScore: bonusScore || 0 };
+            catData[sm.category].values[m.label] = { raw: sm.value, num: valNum, isFailing: isFailing, gapStr: gapStr, bonusScore: bonusScore || 0, earnedScore: 0, completionRatio: 0, proportionalScoring: false };
         });
     });
 
@@ -716,6 +765,14 @@ function renderReport(snap) {
             autoFillBtn = `<span style="cursor:pointer; margin-left:6px; font-size:12px; color:${autoColor}; background:${autoBg}; padding:2px 6px; border-radius:4px; border:1px solid ${autoBorder};" title="${escapeHTML(autoTitle)}" onclick="toggleAutoFill('${escapeHTML(m.label)}')">${escapeHTML(autoText)}</span>`;
         }
         const editBtn = m.isManual ? `<span style="cursor:pointer; margin-left:6px; font-size:12px; color:#2e7d32; background:#e8f5e9; padding:2px 6px; border-radius:4px; border:1px solid #c8e6c9;" onclick="editManualMetric('${escapeHTML(m.label)}')">✏️ 填报 (Fill)</span>${autoFillBtn}` : '';
+        const proportionalEnabled = isProportionalScoringEnabled(targetData);
+        const proportionalBtn = m.hasTarget ? `
+            <button class="ratio-score-toggle ${proportionalEnabled ? 'active' : ''}"
+                onclick="toggleProportionalScoring('${escapeHTML(m.label)}')"
+                title="${proportionalEnabled ? '已开启：未达标时按完成目标比例折算得分' : '未开启：未达标时该指标得 0 分'}">
+                ${proportionalEnabled ? '比例计分 ON' : '比例计分'}
+            </button>
+        ` : '';
 
         matrixHtml += `<tr class="matrix-data-row" data-group="${escapeHTML(row.groupName || '未分组')}">`;
 
@@ -729,8 +786,8 @@ function renderReport(snap) {
 
         matrixHtml += `
             <td data-col="${colIdx++}" style="text-align:left; font-weight:600; color:#2c3e50;">
-                <div style="display:flex; align-items:center;">
-                    <span>${getBilingual(m.label)}</span>${editBtn}
+                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                    <span>${getBilingual(m.label)}</span>${proportionalBtn}${editBtn}
                 </div>
             </td>
             <td data-col="${colIdx++}" style="color:#666; font-weight:bold; background:#fafafa;">${weight}</td>
@@ -759,10 +816,11 @@ function renderReport(snap) {
             } else if (!m.hasTarget) {
                 matrixHtml += `<td data-col="${colIdx++}" class="val-none" style="background:#f1f8e9;" title="未配置目标值或权重为0，不计分">--</td>`;
             } else {
-                const earned = cell.isFailing ? 0 : (weight + (cell.bonusScore || 0));
+                const earned = cell.earnedScore !== undefined ? cell.earnedScore : (cell.isFailing ? 0 : (weight + (cell.bonusScore || 0)));
                 const scoreColor = cell.isFailing ? '#d32f2f' : '#2e7d32';
                 const bonusDisplay = cell.bonusScore ? ` <span style="font-size:10px; color:#e65100;">(+${cell.bonusScore.toFixed(2)})</span>` : '';
-                matrixHtml += `<td data-col="${colIdx++}" style="font-weight:bold; color:${scoreColor}; background:#f1f8e9;" title="基础分: ${weight}, 超额奖励: ${cell.bonusScore||0}">${earned}${bonusDisplay}</td>`;
+                const ratioText = cell.proportionalScoring && cell.isFailing ? `, 完成率: ${(cell.completionRatio * 100).toFixed(1)}%` : '';
+                matrixHtml += `<td data-col="${colIdx++}" style="font-weight:bold; color:${scoreColor}; background:#f1f8e9;" title="基础分: ${weight}, 实得: ${formatScoreValue(earned)}${ratioText}, 超额奖励: ${cell.bonusScore||0}">${formatScoreValue(earned)}${bonusDisplay}</td>`;
             }
         });
         
@@ -776,6 +834,9 @@ function renderReport(snap) {
             <div style="margin-top:12px; font-size:12px; color:#888;">
                 * 自动打分逻辑 (Scoring Logic)：<strong>客户群总分 / 涉及到的指标有效权重之和 × 标准总分</strong>。若某客户群数据为空，则不计入该指标权重。<br>
                 <span style="font-size:11px;color:#aaa;">* Auto-scoring Logic: <strong>Customer Base Total Score / Sum of Valid Weights × Standard Total Score</strong>. If data is empty, weight is omitted.</span>
+                <br>
+                * 比例计分默认关闭；用户在单个指标上开启后，未达标客户群会按完成目标比例折算该指标得分。<br>
+                <span style="font-size:11px;color:#aaa;">* Proportional scoring is disabled by default. Once enabled for a metric, failing customer bases earn partial score based on target completion ratio.</span>
             </div>
         </div>
     `;
@@ -885,8 +946,9 @@ function renderReport(snap) {
                 <p style="margin:0 0 8px;"><strong>1. 标准总分基准 (Standard Total Score Baseline)：</strong>标准总分为当前左侧或后台配置中所有<span style="color:#0277bd; font-weight:bold;">权重＞0</span>的考核指标之和。该总分是各大区排名的公共基准，不受任何客户群是否缺考影响。<br><span style="font-size:12px;color:#888;">The Standard Total Score is the sum of all assessment metrics with a <span style="color:#0277bd; font-weight:bold;">weight > 0</span>. This total score is the public baseline for ranking all regions and is not affected by whether any customer base misses an assessment.</span></p>
                 <p style="margin:0 0 8px;"><strong>2. 考核免除机制 (Assessment Exemption Mechanism)：</strong>当某一指标在本月<span style="color:#d32f2f;">未配置明确目标值</span>，或该大区/客户群在某指标上<span style="color:#d32f2f;">暂无数据（显示为 --）</span>时，该指标将触发免除机制。<span style="color:#e65100; background:#fff3e0; padding:2px 4px; border-radius:3px;">免除指标不会扣分，也不计入该客户群的考核满权基数。</span><br><span style="font-size:12px;color:#888;">When a metric has <span style="color:#d32f2f;">no clear target value configured</span> this month, or the region/customer base has <span style="color:#d32f2f;">no data (shown as --)</span>, the exemption mechanism is triggered. <span style="color:#e65100; background:#fff3e0; padding:2px 4px; border-radius:3px;">Exempt metrics will not deduct points, nor will they be included in the full weight base.</span></span></p>
                 <p style="margin:0 0 8px;"><strong>3. 动态折算算法（系统得分） (Dynamic Conversion Algorithm - System Score)：</strong>为了确保公平，大区最终系统得分 = <strong>( 实际达标获得的权重 / 实际参与考核的有效满权 ) × 标准总分</strong>。这意味着即使大区免考了部分指标，只要在它实际参与的指标上100%达标，它依然可以折算拿到满分。<br><span style="font-size:12px;color:#888;">To ensure fairness, the final System Score = <strong>( Actual Weights Gained / Valid Full Weights Participated ) × Standard Total Score</strong>. This means even if a region is exempt from some metrics, it can still get a full score if it reaches 100% compliance on the metrics it actually participated in.</span></p>
-                <p style="margin:0 0 8px;"><strong>4. 预留加减分机制 (Reserved Manual Adjustment Mechanism)：</strong>上方看板的【最终得分】= 【系统得分】+【预留加减分】。这部分主要涵盖非自动化专项奖惩（如维保、退网、重点项目攻坚等）。相关人工配置可通过上方“手动加减分项目配置”表进行设置并自动存入快照。<br><span style="font-size:12px;color:#888;">【Final Score】 = 【System Score】 + 【Manual Adj.】. This part covers non-automated special rewards and punishments. Manual configurations can be set in the "Manual Adjustment Config" table above and are automatically saved to the snapshot.</span></p>
-                <p style="margin:0;"><strong>5. 动态汇总分析 (Dynamic Summary Analysis)：</strong>“客户群短板透视矩阵”最下方的汇总行，会智能跟随你的表头下拉过滤条件，自动排雷（跳过免考项）并实时求和有效权重与得分，方便进行透视复盘。<br><span style="font-size:12px;color:#888;">The summary row at the bottom of the "Shortcoming Matrix" intelligently follows the header dropdown filters, automatically skipping exempt items, and calculates the sum of valid weights and scores in real-time.</span></p>
+                <p style="margin:0 0 8px;"><strong>4. 单指标比例计分开关 (Per-Metric Proportional Scoring Toggle)：</strong>比例计分默认关闭。用户可在“客户群短板透视矩阵”的单个指标旁手动开启，开启后该指标未达标客户群不再直接获得 0 分，而是按完成目标比例折算得分；例如“≥目标”类指标按 <strong>实际值 / 目标值</strong> 折算，“≤目标”类指标按 <strong>目标值 / 实际值</strong> 折算，最高不超过该指标权重。该设置会持久记忆在对应指标配置上。<br><span style="font-size:12px;color:#888;">Proportional scoring is disabled by default. Users can enable it manually for an individual metric in the Shortcoming Matrix. Once enabled, failing customer bases no longer receive 0 for that metric; instead, they earn partial score by target completion ratio. For "≥ target" metrics, the ratio is <strong>actual / target</strong>; for "≤ target" metrics, the ratio is <strong>target / actual</strong>, capped by the metric weight. This setting is persisted on the metric configuration.</span></p>
+                <p style="margin:0 0 8px;"><strong>5. 预留加减分机制 (Reserved Manual Adjustment Mechanism)：</strong>上方看板的【最终得分】= 【系统得分】+【预留加减分】。这部分主要涵盖非自动化专项奖惩（如维保、退网、重点项目攻坚等）。相关人工配置可通过上方“手动加减分项目配置”表进行设置并自动存入快照。<br><span style="font-size:12px;color:#888;">【Final Score】 = 【System Score】 + 【Manual Adj.】. This part covers non-automated special rewards and punishments. Manual configurations can be set in the "Manual Adjustment Config" table above and are automatically saved to the snapshot.</span></p>
+                <p style="margin:0;"><strong>6. 动态汇总分析 (Dynamic Summary Analysis)：</strong>“客户群短板透视矩阵”最下方的汇总行，会智能跟随你的表头下拉过滤条件，自动排雷（跳过免考项）并实时求和有效权重与得分，方便进行透视复盘。<br><span style="font-size:12px;color:#888;">The summary row at the bottom of the "Shortcoming Matrix" intelligently follows the header dropdown filters, automatically skipping exempt items, and calculates the sum of valid weights and scores in real-time.</span></p>
             </div>
         </div>
     `;
@@ -996,7 +1058,7 @@ window.populateFilterOptions = function() {
         rows.forEach(row => {
             const cell = row.querySelector(`td[data-col="${colIdx}"]`);
             if (cell) {
-                let val = cell.innerText.trim().replace(/✏️[\s\S]*$/, '').trim();
+                let val = cleanMatrixCellFilterText(cell.innerText);
                 if (val) uniqueValues.add(val);
             }
         });
@@ -1092,7 +1154,7 @@ window.filterMatrix = function() {
             const allowedSet = filters[colIdx];
             const cell = row.querySelector(`td[data-col="${colIdx}"]`);
             if (cell) {
-                let text = cell.innerText.trim().replace(/✏️[\s\S]*$/, '').trim();
+                let text = cleanMatrixCellFilterText(cell.innerText);
                 if (!allowedSet.has(text)) {
                     match = false;
                     break;
@@ -1406,7 +1468,7 @@ function renderRanking() {
                 </td>
                 <td style="color:#2c3e50; font-weight:bold; padding:8px;">
                     <div onclick="showSysScoreDetails('${escapeHTML(cat)}')" style="cursor:pointer; border-bottom:1px dashed #0277bd; display:inline-block;" title="点击查看计算明细">${d.baseScore}</div>
-                    <div style="font-size:11px;color:#aaa;font-weight:normal;margin-top:2px;">(获权 ${d.earnedScore} / 满权 ${d.validWeightSum})</div>
+                    <div style="font-size:11px;color:#aaa;font-weight:normal;margin-top:2px;">(获权 ${formatScoreValue(d.earnedScore)} / 满权 ${formatScoreValue(d.validWeightSum)})</div>
                 </td>
                 <td style="padding:8px;">
                     <div onclick="showAdjScoreDetails('${escapeHTML(cat)}')" style="cursor:pointer; display:inline-block; border-bottom:1px dashed #e65100; font-weight:bold; color:${d.manualScore>=0?'#2e7d32':'#c62828'};" title="点击查看加减分明细">${d.manualScore >= 0 ? '+'+d.manualScore : d.manualScore}</div>
@@ -1495,7 +1557,10 @@ window.showSysScoreDetails = function(cat) {
                 allExcludedHtml += `<li style="margin-bottom:8px; line-height:1.4;"><span style="color:#999; font-weight:600;">${escapeHTML(mLabel)}</span> <span style="color:#ccc; font-size:11px;">(全员暂无数据 / Global No Data)</span>${mEn}</li>`;
             }
         } else if (cell.isFailing) {
-            failHtml += `<li style="margin-bottom:8px; line-height:1.4;"><span style="color:#d32f2f; font-weight:600;">${escapeHTML(mLabel)}</span> <span style="color:#888; font-size:11px;">(权重 Weight: ${weight}, 差值 Gap: ${cell.gapStr})</span>${mEn}</li>`;
+            const partialText = cell.proportionalScoring
+                ? `, 比例计分 Earned: ${formatScoreValue(cell.earnedScore)} / ${weight}, 完成率 ${(cell.completionRatio * 100).toFixed(1)}%`
+                : '';
+            failHtml += `<li style="margin-bottom:8px; line-height:1.4;"><span style="color:#d32f2f; font-weight:600;">${escapeHTML(mLabel)}</span> <span style="color:#888; font-size:11px;">(权重 Weight: ${weight}, 差值 Gap: ${cell.gapStr}${partialText})</span>${mEn}</li>`;
         } else {
             passHtml += `<li style="margin-bottom:8px; line-height:1.4;"><span style="color:#2e7d32; font-weight:600;">${escapeHTML(mLabel)}</span> <span style="color:#888; font-size:11px;">(权重 Weight: ${weight})</span>${mEn}</li>`;
         }
@@ -1528,7 +1593,7 @@ window.showSysScoreDetails = function(cat) {
         <div style="background:#f5f8fa; padding:12px; border-radius:6px; text-align:center; margin-bottom:15px; border:1px solid #e1e8ed;">
             <div style="color:#666; font-size:12px; margin-bottom:4px;">计算公式 (Formula): ( 获权 Earned W. / 满权 Valid W. ) × 标准总分 Standard Total Score</div>
             <span style="font-size:18px; color:#333;">( </span>
-            <span style="color:#2e7d32; font-weight:bold; font-size:18px;" title="获权 (Earned Weight)">${d.earnedScore}</span>
+            <span style="color:#2e7d32; font-weight:bold; font-size:18px;" title="获权 (Earned Weight)">${formatScoreValue(d.earnedScore)}</span>
             <span style="font-size:18px; color:#333;"> / </span>
             <span style="color:#ef6c00; font-weight:bold; font-size:18px;" title="满权 (Valid Full Weight)">${d.validWeightSum}</span>
             <span style="font-size:18px; color:#333;"> ) × </span>
@@ -1538,11 +1603,11 @@ window.showSysScoreDetails = function(cat) {
         </div>
         <div style="display:flex; gap:10px; margin-bottom:10px;">
             <div style="flex:1; background:#f1f8e9; padding:10px; border-radius:6px; border:1px solid #c8e6c9;">
-                <div style="color:#2e7d32; font-weight:bold; border-bottom:1px solid #c8e6c9; padding-bottom:5px; margin-bottom:8px;">✅ 达标项 Passed (获权 Earned W. ${d.earnedScore})</div>
+                <div style="color:#2e7d32; font-weight:bold; border-bottom:1px solid #c8e6c9; padding-bottom:5px; margin-bottom:8px;">✅ 达标项 Passed (获权 Earned W. ${formatScoreValue(d.earnedScore)})</div>
                 <ul style="margin:0; padding-left:15px; font-size:12px; color:#333;">${passHtml || '<li style="color:#999;">无 (None)</li>'}</ul>
             </div>
             <div style="flex:1; background:#ffebee; padding:10px; border-radius:6px; border:1px solid #ffcdd2;">
-                <div style="color:#c62828; font-weight:bold; border-bottom:1px solid #ffcdd2; padding-bottom:5px; margin-bottom:8px;">❌ 不达标项 Failed (失权 Lost W. ${d.validWeightSum - d.earnedScore})</div>
+                <div style="color:#c62828; font-weight:bold; border-bottom:1px solid #ffcdd2; padding-bottom:5px; margin-bottom:8px;">❌ 不达标项 Failed (失权 Lost W. ${formatScoreValue(d.validWeightSum - d.earnedScore)})</div>
                 <ul style="margin:0; padding-left:15px; font-size:12px; color:#333;">${failHtml || '<li style="color:#999;">无 (None)</li>'}</ul>
             </div>
         </div>
@@ -2081,6 +2146,32 @@ window.toggleAutoFill = async function(label) {
     }
 };
 
+window.toggleProportionalScoring = async function(label) {
+    if (!globalConfig.targets) globalConfig.targets = {};
+    let targetKey = labelToTargetKeyMap[label];
+    if (!targetKey) {
+        showToast('该指标尚未配置目标值，无法开启比例计分', 'warn');
+        return;
+    }
+
+    globalConfig.targets[targetKey].proportionalScoring = !globalConfig.targets[targetKey].proportionalScoring;
+
+    try {
+        await API.put('/api/sla/targets', globalConfig.targets);
+        buildLabelTargetMap();
+        showToast(
+            globalConfig.targets[targetKey].proportionalScoring
+                ? '比例计分已开启：未达标按完成率折算得分'
+                : '比例计分已关闭：未达标按 0 分计算',
+            'success'
+        );
+        renderReport(currentSnapshot);
+    } catch(e) {
+        console.error(e);
+        showToast('比例计分设置失败', 'error');
+    }
+};
+
 // ══════════════════════════════════════════════════════════
 // GROUP CONFIG MODAL
 // ══════════════════════════════════════════════════════════
@@ -2578,7 +2669,10 @@ window.saveDashboardToDB = async function(event) {
                     raw_val: String(cell.raw),
                     num_val: cell.num,
                     is_failing: cell.isFailing,
-                    gap: cell.gapStr || ''
+                    gap: cell.gapStr || '',
+                    earned_score: cell.earnedScore,
+                    proportional_scoring: !!cell.proportionalScoring,
+                    completion_ratio: cell.completionRatio
                 });
             }
         });
@@ -2700,7 +2794,7 @@ window.saveDashboardToDB = async function(event) {
                         } else if (!m.hasTarget) {
                             rowData[`score_${cat}`] = '--';
                         } else {
-                            const earned = cell.isFailing ? 0 : (weight + (cell.bonusScore || 0));
+                            const earned = cell.earnedScore !== undefined ? cell.earnedScore : (cell.isFailing ? 0 : (weight + (cell.bonusScore || 0)));
                             rowData[`score_${cat}`] = Number.isInteger(earned) ? earned : +earned.toFixed(2);
                         }
                     });

@@ -48,6 +48,31 @@
         .card-title { font-size: 14px; color: #666; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
         .card-value { font-size: 42px; font-weight: bold; }
         .card-sub { font-size: 12px; color: #888; margin-top: 5px; }
+
+        .trial-panel { background: linear-gradient(135deg, #ffffff 0%, #f5fbff 100%); border: 1px solid #cce4f6; border-left: 6px solid var(--primary); border-radius: 8px; padding: 18px 22px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .trial-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+        .trial-title { color: var(--primary); font-size: 16px; font-weight: 800; }
+        .trial-note { color: #64748b; font-size: 12px; }
+        .trial-grid { display: grid; grid-template-columns: repeat(4, minmax(160px, 1fr)); gap: 14px; align-items: stretch; }
+        .trial-field { background: #fff; border: 1px solid #dbeafe; border-radius: 8px; padding: 12px; }
+        .trial-label { font-size: 12px; color: #475569; font-weight: 700; margin-bottom: 7px; }
+        .trial-input-wrap { display: flex; align-items: center; gap: 6px; }
+        .trial-input { width: 100%; box-sizing: border-box; border: 1px solid #bfdbfe; border-radius: 6px; padding: 8px 10px; font-size: 15px; font-weight: 700; color: #0f172a; outline: none; }
+        .trial-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,90,158,0.12); }
+        .trial-unit { color: #64748b; font-size: 12px; font-weight: 700; }
+        .trial-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+        .trial-action-btn { border: 1px solid #bfdbfe; background: #eff6ff; color: var(--primary); border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 12px; font-weight: 700; }
+        .trial-action-btn:hover { background: #dbeafe; }
+        .trial-result { background: #0f172a; color: #fff; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; justify-content: center; min-height: 78px; }
+        .trial-result.pass { background: linear-gradient(135deg, #0f7a2f, #14a44d); }
+        .trial-result.fail { background: linear-gradient(135deg, #a43d00, #d83b01); }
+        .trial-score { font-size: 28px; line-height: 1.1; font-weight: 900; }
+        .trial-status { font-size: 13px; margin-top: 6px; opacity: 0.95; }
+        .trial-detail { grid-column: 1 / -1; background: #fff; border: 1px dashed #bfdbfe; border-radius: 8px; padding: 10px 12px; font-size: 13px; color: #334155; line-height: 1.7; }
+        @media (max-width: 900px) {
+            .dashboard { grid-template-columns: 1fr; }
+            .trial-grid { grid-template-columns: 1fr; }
+        }
         
         .target-banner { display: none; padding: 15px 25px; border-radius: 8px; margin-bottom: 15px; font-size: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); animation: fadeIn 0.5s; }
         .tb-safe { background: #e7f4e4; color: #107c10; border: 1px solid #c5e3bf; }
@@ -166,6 +191,42 @@
         </div>
     </div>
 
+    <div class="trial-panel">
+        <div class="trial-header">
+            <div>
+                <div class="trial-title">🎯 目标分与分数试算栏</div>
+                <div class="trial-note">真实核算结果不会被这里的试算值改写，用于快速判断“调分子/分母后能否达标”。</div>
+            </div>
+            <div class="trial-note" id="trialCurrentHint">当前真实结果：FRC 0 / FRD 0</div>
+        </div>
+        <div class="trial-grid">
+            <div class="trial-field">
+                <div class="trial-label">目标分 Target Score</div>
+                <div class="trial-input-wrap">
+                    <input class="trial-input" id="targetScoreInput" type="number" min="0" max="100" step="0.01" value="98.5" oninput="handleTargetScoreChange()">
+                    <span class="trial-unit">%</span>
+                </div>
+            </div>
+            <div class="trial-field">
+                <div class="trial-label">试算分子 FRC</div>
+                <input class="trial-input" id="trialFrcInput" type="number" min="0" step="1" value="0" oninput="updateFRTTrialPanel()">
+            </div>
+            <div class="trial-field">
+                <div class="trial-label">试算分母 FRD</div>
+                <input class="trial-input" id="trialFrdInput" type="number" min="0" step="1" value="0" oninput="updateFRTTrialPanel()">
+            </div>
+            <div class="trial-result" id="trialResultCard">
+                <div class="trial-score" id="trialScoreValue">0.00%</div>
+                <div class="trial-status" id="trialStatusText">等待导入数据</div>
+            </div>
+            <div class="trial-detail" id="trialDetailText">导入报表后，系统会自动把当前 FRC / FRD 带入试算栏。</div>
+        </div>
+        <div class="trial-actions">
+            <button class="trial-action-btn" onclick="syncTrialInputsFromCurrent(true)">↩ 使用当前真实值</button>
+            <button class="trial-action-btn" onclick="fillNeededFrcToTarget()">✨ 自动补齐到目标分</button>
+        </div>
+    </div>
+
     <div id="targetBanner" class="target-banner"></div>
     <div id="mathExplanation" class="math-explanation"></div>
 
@@ -236,6 +297,150 @@
     let selectedSRTypes = ["CS - Technical Request"]; // 默认过滤条件
     
     let globalProcessedRows = []; 
+    let currentFRTStats = { frcCount: 0, frdCount: 0, finalFRT: 0 };
+    const FRT_TARGET_SCORE_STORAGE_KEY = 'frt_target_score_percent_v1';
+
+    function toSafeNumber(value, fallback = 0) {
+        const n = parseFloat(value);
+        return Number.isFinite(n) ? n : fallback;
+    }
+
+    function toSafeInteger(value, fallback = 0) {
+        const n = parseInt(value, 10);
+        return Number.isFinite(n) ? n : fallback;
+    }
+
+    function getTargetScorePercent() {
+        const input = document.getElementById('targetScoreInput');
+        const raw = input ? input.value : localStorage.getItem(FRT_TARGET_SCORE_STORAGE_KEY);
+        const value = Math.min(100, Math.max(0, toSafeNumber(raw, 98.5)));
+        return Number.isFinite(value) ? value : 98.5;
+    }
+
+    function getTargetScoreRate() {
+        return getTargetScorePercent() / 100;
+    }
+
+    function initFRTTrialPanel() {
+        const savedTarget = localStorage.getItem(FRT_TARGET_SCORE_STORAGE_KEY);
+        const targetInput = document.getElementById('targetScoreInput');
+        if (targetInput && savedTarget !== null) {
+            targetInput.value = getTargetScorePercent().toFixed(2).replace(/\.00$/, '');
+        }
+        syncTrialInputsFromCurrent(false);
+        updateFRTTrialPanel();
+    }
+
+    function handleTargetScoreChange() {
+        const target = getTargetScorePercent();
+        localStorage.setItem(FRT_TARGET_SCORE_STORAGE_KEY, String(target));
+        updateFRTTrialPanel();
+        if (globalParsedData) {
+            updateTargetBanner(currentFRTStats.frcCount, currentFRTStats.frdCount, currentFRTStats.finalFRT);
+        }
+    }
+
+    function syncTrialInputsFromCurrent(showTip = false) {
+        const frcInput = document.getElementById('trialFrcInput');
+        const frdInput = document.getElementById('trialFrdInput');
+        if (frcInput) frcInput.value = currentFRTStats.frcCount;
+        if (frdInput) frdInput.value = currentFRTStats.frdCount;
+        updateFRTTrialPanel();
+        if (showTip && typeof showToast !== 'undefined') showToast('已带入当前真实 FRC / FRD');
+    }
+
+    function calculateNeededFrcForTarget(frc, frd, targetRate) {
+        if (frd <= 0) return 0;
+        return Math.max(0, Math.ceil(targetRate * frd - frc));
+    }
+
+    function calculateNeededPerfectNewTickets(frc, frd, targetRate) {
+        if (frd <= 0 || targetRate >= 1) return 0;
+        const numerator = targetRate * frd - frc;
+        return Math.max(0, Math.ceil(numerator / (1 - targetRate)));
+    }
+
+    function fillNeededFrcToTarget() {
+        const frcInput = document.getElementById('trialFrcInput');
+        const frdInput = document.getElementById('trialFrdInput');
+        const frd = Math.max(0, toSafeInteger(frdInput?.value, 0));
+        const frc = Math.max(0, toSafeInteger(frcInput?.value, 0));
+        const targetRate = getTargetScoreRate();
+        const needed = calculateNeededFrcForTarget(frc, frd, targetRate);
+        if (frcInput) frcInput.value = Math.min(frd, frc + needed);
+        updateFRTTrialPanel();
+    }
+
+    function updateFRTTrialPanel() {
+        const targetPct = getTargetScorePercent();
+        const targetRate = targetPct / 100;
+        const frc = Math.max(0, toSafeInteger(document.getElementById('trialFrcInput')?.value, 0));
+        const frd = Math.max(0, toSafeInteger(document.getElementById('trialFrdInput')?.value, 0));
+        const cappedFrc = Math.min(frc, frd);
+        if (cappedFrc !== frc) {
+            const input = document.getElementById('trialFrcInput');
+            if (input) input.value = cappedFrc;
+        }
+        const score = frd > 0 ? (cappedFrc / frd) * 100 : 0;
+        const pass = frd > 0 && score >= targetPct;
+        const neededFrc = calculateNeededFrcForTarget(cappedFrc, frd, targetRate);
+        const neededNewTickets = calculateNeededPerfectNewTickets(cappedFrc, frd, targetRate);
+        const badTickets = Math.max(0, frd - cappedFrc);
+
+        const scoreEl = document.getElementById('trialScoreValue');
+        const statusEl = document.getElementById('trialStatusText');
+        const resultCard = document.getElementById('trialResultCard');
+        const detailEl = document.getElementById('trialDetailText');
+        const hintEl = document.getElementById('trialCurrentHint');
+
+        if (scoreEl) scoreEl.innerText = `${score.toFixed(2)}%`;
+        if (resultCard) {
+            resultCard.classList.toggle('pass', pass);
+            resultCard.classList.toggle('fail', frd > 0 && !pass);
+        }
+        if (statusEl) {
+            statusEl.innerText = frd <= 0 ? '等待导入数据' : (pass ? `已达到 ${targetPct.toFixed(2)}% 目标` : `未达标，还差 ${neededFrc} 个 FRC`);
+        }
+        if (hintEl) {
+            hintEl.innerText = `当前真实结果：FRC ${currentFRTStats.frcCount} / FRD ${currentFRTStats.frdCount} / ${currentFRTStats.finalFRT.toFixed(2)}%`;
+        }
+        if (detailEl) {
+            if (frd <= 0) {
+                detailEl.innerHTML = '导入报表后，系统会自动把当前 FRC / FRD 带入试算栏。';
+            } else if (pass) {
+                detailEl.innerHTML = `✅ 当前试算已达标：${cappedFrc} ÷ ${frd} = <strong>${score.toFixed(2)}%</strong>，目标分为 <strong>${targetPct.toFixed(2)}%</strong>。`;
+            } else {
+                detailEl.innerHTML = `⚠️ 当前试算未达标：${cappedFrc} ÷ ${frd} = <strong>${score.toFixed(2)}%</strong>。若分母不变，至少还需补齐 <strong>${neededFrc}</strong> 个 FRC；若通过新增且按时闭环工单稀释 ${badTickets} 个扣分单，约需新增 <strong>${neededNewTickets}</strong> 单。`;
+            }
+        }
+    }
+
+    function updateTargetBanner(frcCount, frdCount, finalFRT) {
+        const targetPercent = getTargetScorePercent();
+        const targetRate = targetPercent / 100;
+        const banner = document.getElementById('targetBanner');
+        const mathExpDiv = document.getElementById('mathExplanation');
+
+        if (frdCount === 0) {
+            banner.innerHTML = `💡 ${document.getElementById('targetMonth').value} 月份暂无考核数据。`;
+            banner.className = "target-banner tb-safe";
+            mathExpDiv.style.display = "none";
+        } else if (finalFRT >= targetPercent) {
+            banner.innerHTML = `🎉 恭喜！得分 <strong>${finalFRT.toFixed(2)}%</strong>，已达到 <strong>${targetPercent.toFixed(2)}%</strong> 目标线！`;
+            banner.className = "target-banner tb-safe";
+            mathExpDiv.style.display = "none";
+        } else {
+            let needed = calculateNeededPerfectNewTickets(frcCount, frdCount, targetRate);
+            let badTickets = frdCount - frcCount;
+            let targetTotal = frdCount + needed;
+
+            banner.innerHTML = `<div>⚠️ 距离目标分 <strong>${targetPercent.toFixed(2)}%</strong> 还差一点！稀释扣分项还需要：</div><div class="tb-highlight">新建并闭环 <strong>${needed}</strong> 个单子 🚀</div>`;
+            banner.className = "target-banner tb-danger";
+            mathExpDiv.innerHTML = `💡 <strong>极简算理：</strong>为了稀释已产生的 <strong>${badTickets} 个扣分单</strong>，总盘子需撑大到约 <strong>${targetTotal} 单</strong>，因此需额外补充 ${targetTotal} - ${frdCount} = <strong>${needed} 单</strong>。`;
+            mathExpDiv.style.display = "block";
+        }
+        banner.style.display = "flex";
+    }
 
     function parseDateObj(dateStr) {
         if (!dateStr) return null;
@@ -511,6 +716,8 @@
         document.getElementById('val-frc').innerText = frcCount;
         let finalFRT = frdCount > 0 ? (frcCount / frdCount) * 100 : 0;
         document.getElementById('val-frt').innerText = finalFRT.toFixed(2) + "%";
+        currentFRTStats = { frcCount, frdCount, finalFRT };
+        syncTrialInputsFromCurrent(false);
 
         const blameBox = document.getElementById('blameBox');
         if (badTicketsList.length > 0) {
@@ -547,29 +754,7 @@
             blameBox.style.display = 'none';
         }
 
-        const targetRate = 0.985;
-        const banner = document.getElementById('targetBanner');
-        const mathExpDiv = document.getElementById('mathExplanation');
-        
-        if (frdCount === 0) {
-            banner.innerHTML = `💡 ${monthInput} 月份暂无考核数据。`;
-            banner.className = "target-banner tb-safe";
-            mathExpDiv.style.display = "none";
-        } else if (finalFRT >= 98.5) {
-            banner.innerHTML = `🎉 恭喜！得分 <strong>${finalFRT.toFixed(2)}%</strong>，稳居满分线！`;
-            banner.className = "target-banner tb-safe";
-            mathExpDiv.style.display = "none";
-        } else {
-            let needed = Math.ceil((targetRate * frdCount - frcCount) / (1 - targetRate));
-            let badTickets = frdCount - frcCount;
-            let targetTotal = frdCount + needed;
-            
-            banner.innerHTML = `<div>⚠️ 距离满分还差一点！稀释扣分项还需要：</div><div class="tb-highlight">新建并闭环 <strong>${needed}</strong> 个单子 🚀</div>`;
-            banner.className = "target-banner tb-danger";
-            mathExpDiv.innerHTML = `💡 <strong>极简算理：</strong>为了稀释已产生的 <strong>${badTickets} 个扣分单</strong>，总盘子需撑大到 ${badTickets} ÷ 0.015 = <strong>${targetTotal} 单</strong>，因此需额外补充 ${targetTotal} - ${frdCount} = <strong>${needed} 单</strong>。`;
-            mathExpDiv.style.display = "block";
-        }
-        banner.style.display = "flex";
+        updateTargetBanner(frcCount, frdCount, finalFRT);
         
         sortOrders = {}; 
         renderTable(); 
@@ -717,6 +902,10 @@
             frdCount: parseInt(document.getElementById('val-frd').innerText) || 0,
             frcCount: parseInt(document.getElementById('val-frc').innerText) || 0,
             finalFRT: document.getElementById('val-frt').innerText,
+            targetScore: `${getTargetScorePercent().toFixed(2)}%`,
+            trialFrc: toSafeInteger(document.getElementById('trialFrcInput')?.value, 0),
+            trialFrd: toSafeInteger(document.getElementById('trialFrdInput')?.value, 0),
+            trialFRT: document.getElementById('trialScoreValue')?.innerText || '0.00%',
             selectedSRTypes: selectedSRTypes,
             headers: globalHeadersOriginal,
             badTickets: globalProcessedRows.filter(r => r.rowClass === "status-frd").map(r => ({
@@ -772,6 +961,7 @@
                             <th style="padding:10px; border-bottom:1px solid #eee; background:#f8f9fa;">考核月份</th>
                             <th style="padding:10px; border-bottom:1px solid #eee; background:#f8f9fa;">FRD总数</th>
                             <th style="padding:10px; border-bottom:1px solid #eee; background:#f8f9fa;">FRC按时数</th>
+                            <th style="padding:10px; border-bottom:1px solid #eee; background:#f8f9fa;">目标分</th>
                             <th style="padding:10px; border-bottom:1px solid #eee; background:#f8f9fa; color:var(--primary);">最终得分</th>
                             <th style="padding:10px; border-bottom:1px solid #eee; background:#f8f9fa; width:80px;">操作</th>
                         </tr>
@@ -789,6 +979,7 @@
                         <td style="padding:10px; border-bottom:1px solid #eee; font-weight:bold;">${s.month || '-'}</td>
                         <td style="padding:10px; border-bottom:1px solid #eee;">${s.frdCount}</td>
                         <td style="padding:10px; border-bottom:1px solid #eee;">${s.frcCount}</td>
+                        <td style="padding:10px; border-bottom:1px solid #eee;">${s.targetScore || '98.50%'}</td>
                         <td style="padding:10px; border-bottom:1px solid #eee; font-weight:bold; color:var(--primary);">${s.finalFRT}</td>
                         <td style="padding:10px; border-bottom:1px solid #eee;">
                             <button onclick="deleteSnapshot('${s.id}')" style="background:#fff; border:1px solid #ffcccc; color:var(--danger); border-radius:4px; padding:3px 8px; cursor:pointer; font-size:12px;">删除</button>
@@ -871,14 +1062,14 @@
 
                     html += `
                         <tr>
-                            <td colspan="6" style="padding:5px 10px 15px 10px; border-bottom:2px solid #ddd; background:#fafafa;">
+                            <td colspan="7" style="padding:5px 10px 15px 10px; border-bottom:2px solid #ddd; background:#fafafa;">
                                 <button onclick="toggleSnapshotDetails('${toggleId}')" style="background:#e0e7ff; color:#4338ca; border:none; padding:4px 10px; border-radius:4px; font-size:12px; cursor:pointer; font-weight:bold;">🔽 展开/折叠扣分单明细树 (${badCount}单)</button>
                                 ${treeHtml}
                             </td>
                         </tr>
                     `;
                 } else {
-                    html += `<tr><td colspan="6" style="border-bottom:2px solid #ddd;"></td></tr>`;
+                    html += `<tr><td colspan="7" style="border-bottom:2px solid #ddd;"></td></tr>`;
                 }
             });
 
@@ -933,6 +1124,8 @@
             alert("删除失败: " + e.message);
         }
     }
+
+    initFRTTrialPanel();
 </script>
 </body>
 </html>

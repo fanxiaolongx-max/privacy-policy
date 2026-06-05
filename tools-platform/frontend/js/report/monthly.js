@@ -1056,6 +1056,17 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
         return isNaN(n) ? NaN : n;
     }
 
+    function formatScoreValue(value) {
+        const num = parseFloat(value);
+        if (isNaN(num)) return value;
+        return Number.isInteger(num) ? String(num) : String(+num.toFixed(2));
+    }
+
+    const metricDbMap = {};
+    (latest.metrics || []).forEach(row => {
+        metricDbMap[`${row.cat_name}@@${row.metric_label}`] = row;
+    });
+
     metricCols.forEach(m => {
         const targetData = labelToTargetMap[m.label];
         const weight = (targetData && targetData.weight !== undefined) ? parseFloat(targetData.weight) : 1;
@@ -1071,6 +1082,10 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
             let isFailing = false;
             let gapStr = '';
             let bonusScore = 0;
+            let earnedScore = 0;
+            let proportionalScoring = false;
+            let completionRatio = 0;
+            const dbMetric = metricDbMap[`${sm.category}@@${m.label}`];
             
             if (!isNaN(valNum) && m.hasTarget) {
                 catData[sm.category].validWeightSum += weight;
@@ -1089,9 +1104,27 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
                         bonusScore = Math.floor((targetNum - valNum) / targetData.exceedBy) * targetData.bonus;
                     }
                 }
-                if (!isFailing) catData[sm.category].earnedScore += weight + bonusScore;
+                if (dbMetric && dbMetric.earned_score !== null && dbMetric.earned_score !== undefined) {
+                    earnedScore = parseFloat(dbMetric.earned_score) || 0;
+                    proportionalScoring = !!dbMetric.proportional_scoring;
+                    completionRatio = dbMetric.completion_ratio === null || dbMetric.completion_ratio === undefined ? 0 : parseFloat(dbMetric.completion_ratio) || 0;
+                    if (dbMetric.is_failing !== null && dbMetric.is_failing !== undefined) isFailing = !!dbMetric.is_failing;
+                    if (dbMetric.gap !== null && dbMetric.gap !== undefined) gapStr = dbMetric.gap || gapStr;
+                } else {
+                    earnedScore = isFailing ? 0 : (weight + bonusScore);
+                }
+                catData[sm.category].earnedScore += earnedScore;
             }
-            catData[sm.category].values[m.label] = { raw: sm.value, num: valNum, isFailing: isFailing, gapStr: gapStr, bonusScore: bonusScore||0 };
+            catData[sm.category].values[m.label] = {
+                raw: sm.value,
+                num: valNum,
+                isFailing: isFailing,
+                gapStr: gapStr,
+                bonusScore: bonusScore || 0,
+                earnedScore,
+                proportionalScoring,
+                completionRatio
+            };
         });
     });
 
@@ -1221,10 +1254,12 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
             } else if (!m.hasTarget) {
                 matrixHtml += `<td class="val-none" style="background:#f1f8e9;">--</td>`;
             } else {
-                const earned = cell.isFailing ? 0 : (weight + (cell.bonusScore || 0));
+                const earned = cell.earnedScore !== undefined ? cell.earnedScore : (cell.isFailing ? 0 : (weight + (cell.bonusScore || 0)));
                 const scoreColor = cell.isFailing ? '#d32f2f' : '#2e7d32';
                 const bonusDisplay = cell.bonusScore ? ` <span style="font-size:9px; color:#e65100;">(+${cell.bonusScore.toFixed(2)})</span>` : '';
-                matrixHtml += `<td style="font-weight:bold; color:${scoreColor}; background:#f1f8e9; text-align:center;">${earned}${bonusDisplay}</td>`;
+                const ratioTitle = cell.proportionalScoring && cell.isFailing ? ` title="比例计分已开启，完成率 ${(cell.completionRatio * 100).toFixed(1)}%"` : '';
+                const ratioBadge = cell.proportionalScoring && cell.isFailing ? `<div style="font-size:9px; color:#ef6c00; font-weight:600; line-height:1.2;">${(cell.completionRatio * 100).toFixed(0)}%</div>` : '';
+                matrixHtml += `<td style="font-weight:bold; color:${scoreColor}; background:#f1f8e9; text-align:center;"${ratioTitle}>${formatScoreValue(earned)}${bonusDisplay}${ratioBadge}</td>`;
             }
         });
         matrixHtml += `</tr>`;
