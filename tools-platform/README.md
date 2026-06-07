@@ -507,6 +507,10 @@ SR 分析重点：
 
 - `backend/backups`
 
+跨平台说明：
+
+- 备份与恢复使用 Node.js 内置流程和 `JSZip`，不依赖系统 `/usr/bin/zip` 或 `/usr/bin/unzip`，Windows 可直接使用。
+
 相关 API：
 
 - `GET /api/global-backup/list`

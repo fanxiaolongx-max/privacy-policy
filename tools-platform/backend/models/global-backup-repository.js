@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { execFile } = require('child_process');
+const JSZip = require('jszip');
 
 const ROOT_DIR = path.resolve(__dirname, '../..');
 const BACKUP_DIR = path.join(ROOT_DIR, 'backend/backups');
@@ -99,16 +99,75 @@ function getBackupPath(name) {
     return fullPath;
 }
 
-function execFileAsync(command, args, options = {}) {
-    return new Promise((resolve, reject) => {
-        execFile(command, args, options, (error, stdout, stderr) => {
-            if (error) {
-                error.message = `${error.message}${stderr ? `\n${stderr}` : ''}`;
-                return reject(error);
-            }
-            resolve({ stdout, stderr });
+function toZipPath(relPath) {
+    return relPath.split(path.sep).join('/');
+}
+
+function assertSafeZipEntryName(entryName) {
+    const normalized = String(entryName || '').replace(/\\/g, '/');
+    if (!normalized || normalized.startsWith('/') || /^[a-zA-Z]:/.test(normalized)) {
+        throw new Error(`备份包包含非法路径：${entryName}`);
+    }
+    if (normalized.split('/').some(part => part === '..')) {
+        throw new Error(`备份包包含目录穿越路径：${entryName}`);
+    }
+    return normalized;
+}
+
+function getSafeExtractPath(extractDir, entryName) {
+    const safeName = assertSafeZipEntryName(entryName);
+    const targetPath = path.resolve(extractDir, ...safeName.split('/'));
+    const root = path.resolve(extractDir);
+    if (targetPath !== root && !targetPath.startsWith(root + path.sep)) {
+        throw new Error(`备份包包含非法解压路径：${entryName}`);
+    }
+    return targetPath;
+}
+
+function addPathToZip(zip, absPath, relPath) {
+    if (!fs.existsSync(absPath)) return;
+    const stat = fs.statSync(absPath);
+    if (stat.isDirectory()) {
+        const entries = fs.readdirSync(absPath, { withFileTypes: true });
+        entries.forEach(entry => {
+            addPathToZip(zip, path.join(absPath, entry.name), path.join(relPath, entry.name));
         });
+        return;
+    }
+    if (stat.isFile()) {
+        zip.file(toZipPath(relPath), fs.readFileSync(absPath));
+    }
+}
+
+async function writeZip(outputPath, manifest) {
+    const zip = new JSZip();
+    DATA_TARGETS.forEach(target => {
+        const absPath = path.join(ROOT_DIR, target.relPath);
+        if (fs.existsSync(absPath)) {
+            addPathToZip(zip, absPath, target.relPath);
+        }
     });
+    zip.file('manifest.json', JSON.stringify(manifest, null, 2));
+    const content = await zip.generateAsync({
+        type: 'nodebuffer',
+        compression: 'DEFLATE',
+        compressionOptions: { level: 6 }
+    });
+    fs.writeFileSync(outputPath, content);
+}
+
+async function extractZip(zipPath, extractDir) {
+    const zip = await JSZip.loadAsync(fs.readFileSync(zipPath));
+    const entries = Object.values(zip.files);
+    for (const entry of entries) {
+        const targetPath = getSafeExtractPath(extractDir, entry.name);
+        if (entry.dir) {
+            ensureDir(targetPath);
+        } else {
+            ensureDir(path.dirname(targetPath));
+            fs.writeFileSync(targetPath, await entry.async('nodebuffer'));
+        }
+    }
 }
 
 async function createBackup(options = {}) {
@@ -117,19 +176,9 @@ async function createBackup(options = {}) {
     const filename = `tools-platform-backup_${timestampForFile()}_${safeName(reason)}.zip`;
     const outputPath = path.join(BACKUP_DIR, filename);
     const manifest = getManifest(reason);
-    const manifestDir = path.join(BACKUP_DIR, `.tmp_${Date.now().toString(36)}_${crypto.randomBytes(3).toString('hex')}`);
-    const manifestPath = path.join(manifestDir, 'manifest.json');
-    ensureDir(manifestDir);
-    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf8');
 
     try {
-        const targetPaths = DATA_TARGETS
-            .map(target => target.relPath)
-            .filter(relPath => fs.existsSync(path.join(ROOT_DIR, relPath)));
-        if (targetPaths.length) {
-            await execFileAsync('/usr/bin/zip', ['-r', '-q', outputPath, ...targetPaths], { cwd: ROOT_DIR });
-        }
-        await execFileAsync('/usr/bin/zip', ['-j', '-q', outputPath, manifestPath], { cwd: ROOT_DIR });
+        await writeZip(outputPath, manifest);
         const stat = fs.statSync(outputPath);
         return {
             name: filename,
@@ -141,8 +190,6 @@ async function createBackup(options = {}) {
     } catch (err) {
         fs.rmSync(outputPath, { force: true });
         throw err;
-    } finally {
-        fs.rmSync(manifestDir, { recursive: true, force: true });
     }
 }
 
@@ -152,7 +199,7 @@ async function extractBackup(zipPath) {
     const extractDir = path.join(RESTORE_TMP_DIR, extractId);
     ensureDir(extractDir);
 
-    await execFileAsync('/usr/bin/unzip', ['-q', zipPath, '-d', extractDir], { cwd: ROOT_DIR });
+    await extractZip(zipPath, extractDir);
 
     const manifestPath = path.join(extractDir, 'manifest.json');
     if (!fs.existsSync(manifestPath)) {
