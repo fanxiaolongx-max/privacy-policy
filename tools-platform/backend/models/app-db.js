@@ -42,10 +42,20 @@ function all(sql, params = []) {
     });
 }
 
+function closeDatabase() {
+    return new Promise((resolve, reject) => {
+        db.close(err => {
+            if (err && err.code !== 'SQLITE_MISUSE') return reject(err);
+            resolve();
+        });
+    });
+}
+
 module.exports = {
     db,
     run,
     get,
     all,
+    closeDatabase,
     DB_PATH
 };

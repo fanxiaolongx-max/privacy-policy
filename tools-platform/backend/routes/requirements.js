@@ -181,4 +181,13 @@ router.delete('/:id', (req, res) => {
     });
 });
 
+router.closeDatabase = function closeDatabase() {
+    return new Promise((resolve, reject) => {
+        db.close(err => {
+            if (err && err.code !== 'SQLITE_MISUSE') return reject(err);
+            resolve();
+        });
+    });
+};
+
 module.exports = router;
