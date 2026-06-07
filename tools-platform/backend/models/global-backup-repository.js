@@ -124,6 +124,15 @@ function getSafeExtractPath(extractDir, entryName) {
     return targetPath;
 }
 
+function normalizeRestoreError(err, targetPath) {
+    if (err && ['EPERM', 'EBUSY', 'EACCES'].includes(err.code)) {
+        const friendly = new Error(`恢复失败：Windows 正在占用数据文件，无法写入 ${targetPath}。请先停止 tools-platform 服务后重试，或恢复成功后立即重启服务。原始错误：${err.message}`);
+        friendly.code = err.code;
+        return friendly;
+    }
+    return err;
+}
+
 function addPathToZip(zip, absPath, relPath) {
     if (!fs.existsSync(absPath)) return;
     const stat = fs.statSync(absPath);
@@ -170,6 +179,27 @@ async function extractZip(zipPath, extractDir) {
     }
 }
 
+function closeSqliteDatabase(label, closeFn) {
+    if (typeof closeFn !== 'function') return Promise.resolve({ label, skipped: true });
+    return closeFn()
+        .then(() => ({ label, closed: true }))
+        .catch(err => {
+            if (err && err.code === 'SQLITE_MISUSE') return { label, alreadyClosed: true };
+            throw err;
+        });
+}
+
+async function closeRuntimeDatabases() {
+    const appDb = require('./app-db');
+    const reportRoute = require('../routes/db');
+    const requirementsRoute = require('../routes/requirements');
+    const results = [];
+    results.push(await closeSqliteDatabase('tools.db', appDb.closeDatabase));
+    results.push(await closeSqliteDatabase('report.db', reportRoute.closeDatabase));
+    results.push(await closeSqliteDatabase('requirements.db', requirementsRoute.closeDatabase));
+    return results;
+}
+
 async function createBackup(options = {}) {
     ensureDir(BACKUP_DIR);
     const reason = options.reason || 'manual';
@@ -212,27 +242,54 @@ async function extractBackup(zipPath) {
     return { extractDir, manifest };
 }
 
-function copyDirRecursive(src, dest) {
+function syncDirRecursive(src, dest) {
     if (!fs.existsSync(src)) return;
-    fs.rmSync(dest, { recursive: true, force: true });
     fs.mkdirSync(dest, { recursive: true });
-    fs.cpSync(src, dest, { recursive: true, force: true });
+    const srcEntries = fs.readdirSync(src, { withFileTypes: true });
+    const srcNames = new Set(srcEntries.map(entry => entry.name));
+
+    srcEntries.forEach(entry => {
+        const srcPath = path.join(src, entry.name);
+        const destPath = path.join(dest, entry.name);
+        try {
+            if (entry.isDirectory()) {
+                syncDirRecursive(srcPath, destPath);
+            } else if (entry.isFile()) {
+                fs.copyFileSync(srcPath, destPath);
+            }
+        } catch (err) {
+            throw normalizeRestoreError(err, destPath);
+        }
+    });
+
+    if (!fs.existsSync(dest)) return;
+    fs.readdirSync(dest, { withFileTypes: true }).forEach(entry => {
+        if (srcNames.has(entry.name)) return;
+        const extraPath = path.join(dest, entry.name);
+        try {
+            fs.rmSync(extraPath, { recursive: true, force: true });
+        } catch (err) {
+            throw normalizeRestoreError(err, extraPath);
+        }
+    });
 }
 
 async function restoreFromZip(zipPath, options = {}) {
     const safetyBackup = options.skipSafetyBackup ? null : await createBackup({ reason: 'pre-restore' });
     const { extractDir, manifest } = await extractBackup(zipPath);
+    const closedDatabases = await closeRuntimeDatabases();
     try {
         DATA_TARGETS.forEach(target => {
             const src = path.join(extractDir, target.relPath);
             const dest = path.join(ROOT_DIR, target.relPath);
-            if (fs.existsSync(src)) copyDirRecursive(src, dest);
+            if (fs.existsSync(src)) syncDirRecursive(src, dest);
         });
         return {
             success: true,
             restoredAt: new Date().toISOString(),
             manifest,
             safetyBackup,
+            closedDatabases,
             needsRestart: true
         };
     } finally {
