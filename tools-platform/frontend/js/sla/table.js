@@ -79,6 +79,25 @@ function updateDashboard(secId) {
                     <span style="background:#f1f3f5;padding:2px 8px;border-radius:12px;font-size:11px;border:1px solid #e0e0e0;">黄色预警: <b style="color:#f57c00">${warning}</b></span>
                 </div>
             </div>`;
+    } else if (state.mode === 'vulnerability') {
+        const total = data.length;
+        const activeStatuses = ['Checking', 'Communication Dept', 'Communication Customer'];
+        const active = data.filter(r => activeStatuses.includes(getCompatibleVal(r, ['task_status']))).length;
+        const danger = data.filter(r => r._rowClass === 'danger-row').length;
+        const warning = data.filter(r => r._rowClass === 'warning-row').length;
+        const counts = {};
+        data.forEach(r => {
+            const st = getCompatibleVal(r, ['task_status']) || '未知状态';
+            counts[st] = (counts[st] || 0) + 1;
+        });
+        const bdgs = Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([s,c])=>`<span style="background:#fff7ed;padding:2px 8px;border-radius:12px;font-size:11px;border:1px solid #fed7aa;">${s}: <b style="color:#c2410c">${c}</b></span>`).join('');
+        panel.innerHTML = `
+            <div class="metric-card"><div class="metric-title">漏洞单量</div><div class="metric-value" style="color:#333">${total}</div></div>
+            <div class="metric-card"><div class="metric-title">30天内需完成</div><div class="metric-value" style="color:#c2410c">${active}</div></div>
+            <div class="metric-total-wrapper">
+                <div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span class="metric-title">🌟 漏洞预警态势</span><span class="metric-value ${danger > 0 ? 'danger' : (warning > 0 ? 'warn' : 'success')}">${danger} 红 / ${warning} 黄</span></div>
+                <div class="status-badge-container">${bdgs}</div>
+            </div>`;
     } else {
         const keys = state.mode === 'risk' ? ['风险状态','risk_status'] : ['状态-Status','task_status_en','task_status','task_status_cn'];
         let t = data.length, clsd = 0, counts = {};
@@ -104,15 +123,15 @@ function renderTable(secId) {
     const data = state.currentDisplayData;
     const container = document.getElementById(`table-container-${secId}`);
     if (!data.length) { container.innerHTML = '<p style="padding:20px;text-align:center;">没有找到数据 🤷‍♂️</p>'; return; }
-    const RECT_P = SLAUpload.RECT_PRIORITY_COLS, RISK_P = SLAUpload.RISK_PRIORITY_COLS, SPEC_P = SLAUpload.SPECIAL_PRIORITY_COLS, SR_P = SLAUpload.SR_PRIORITY_COLS;
+    const RECT_P = SLAUpload.RECT_PRIORITY_COLS, RISK_P = SLAUpload.RISK_PRIORITY_COLS, SPEC_P = SLAUpload.SPECIAL_PRIORITY_COLS, SR_P = SLAUpload.SR_PRIORITY_COLS, VULN_P = SLAUpload.VULN_PRIORITY_COLS;
     const getIcon = k => state.sortKey !== k ? '<span class="sort-icon">⇅</span>' : (state.sortAsc ? '<span class="sort-icon sort-active">▲</span>' : '<span class="sort-icon sort-active">▼</span>');
     let html = `<table id="table-${secId}"><thead><tr>`;
     if (state.mode !== 'other') {
         const sw = state.columnWidths['_SLA_'] ? `style="width:${state.columnWidths['_SLA_']}px;min-width:${state.columnWidths['_SLA_']}px;max-width:${state.columnWidths['_SLA_']}px;"` : '';
         html += `<th data-header="_SLA_" ${sw} onclick="handleSortClick('${secId}', '_SLA_')">预警与 SLA 状态 ${getIcon('_SLA_')}</th>`;
     }
-    const targetP = state.mode==='rectification'?RECT_P:(state.mode==='risk'?RISK_P:(state.mode==='special'?SPEC_P:(state.mode==='sr'?SR_P:[])));
-    const pClass = state.mode==='rectification'?'priority-col-rect':(state.mode==='risk'?'priority-col-risk':(state.mode==='special'?'priority-col-special':(state.mode==='sr'?'priority-col-risk':'')));
+    const targetP = state.mode==='rectification'?RECT_P:(state.mode==='risk'?RISK_P:(state.mode==='special'?SPEC_P:(state.mode==='sr'?SR_P:(state.mode==='vulnerability'?VULN_P:[]))));
+    const pClass = state.mode==='rectification'?'priority-col-rect':(state.mode==='risk'?'priority-col-risk':(state.mode==='special'?'priority-col-special':(state.mode==='sr'?'priority-col-risk':(state.mode==='vulnerability'?'priority-col-risk':''))));
     state.visibleHeaders.forEach(header => {
         const safe = escapeHTML(header);
         const isPriority = targetP.includes(header) ? `class="${pClass}"` : '';

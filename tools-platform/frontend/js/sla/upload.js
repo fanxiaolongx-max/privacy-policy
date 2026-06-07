@@ -7,6 +7,7 @@ const RECT_PRIORITY_COLS    = ['task_status', 'task_create_time', 'rectify_plan_
 const RISK_PRIORITY_COLS    = ['风险状态', 'risk_status', '创单时间', 'create_time', '期望关闭时间', 'ticket_close_due_date', '期望关闭时间-挂起'];
 const SPECIAL_PRIORITY_COLS = ['状态-Status', 'task_status_en', 'task_status', 'task_status_cn', '创建日期-Create Date', 'create_time', '要求完成日期-Required Completion Date', 'required_completion_time', 'plan_complete_date'];
 const SR_PRIORITY_COLS      = ['hw_sev_name', 'urgency', 'sr_status_name', 'open_date', 'exp_close_date', 'act_close_date', 'overdue', 'sr_num', 'sr_id', 'customer_name', 'country_name_cn', 'repoffice_name_cn'];
+const VULN_PRIORITY_COLS    = ['task_status', 'create_time', 'task_create_time', 'vuln_id', 'vulnerability_id', '漏洞编号', '漏洞名称', 'vulnerability_name', 'customer_name', 'network_name'];
 
 function generateSchemaHash(str) {
     let hash = 0;
@@ -112,8 +113,8 @@ async function handleSpecificUpload(e, forceMode) {
     const rawData = await readFiles(files);
     if (!rawData.length) { alert('读取失败或为空表！'); document.getElementById('main-wrapper').innerHTML = ''; return; }
     document.getElementById('main-wrapper').innerHTML = '';
-    const titleMap = { rectification: '🔧 整改监控', risk: '⚠️ 常规风险监控', special: '🛠️ 专项风险监控', sr: '📞 SR详单分析' };
-    const colorMap = { rectification: '#1976d2', risk: '#7b1fa2', special: '#00796b', sr: '#d9480f' };
+    const titleMap = { rectification: '🔧 整改监控', risk: '⚠️ 常规风险监控', special: '🛠️ 专项风险监控', sr: '📞 SR详单分析', vulnerability: '🧯 漏洞预警分析' };
+    const colorMap = { rectification: '#1976d2', risk: '#7b1fa2', special: '#00796b', sr: '#d9480f', vulnerability: '#c2410c' };
     await window.SLASection.initSection(forceMode, forceMode, titleMap[forceMode], rawData, colorMap[forceMode]);
     API.logHistory('sla', `导入${titleMap[forceMode]}`, `${files.length} 个文件`);
     e.target.value = '';
@@ -132,6 +133,7 @@ async function handleBatchUpload(e) {
         risk:          { files: [], data: [], title: '⚠️ 常规风险合集', mode: 'risk', color: '#7b1fa2' },
         special:       { files: [], data: [], title: '🛠️ CPT专项风险合集', mode: 'special', color: '#00796b' },
         sr:            { files: [], data: [], title: '📞 SR详单分析', mode: 'sr', color: '#d9480f' },
+        vulnerability: { files: [], data: [], title: '🧯 漏洞预警详单', mode: 'vulnerability', color: '#c2410c' },
         others: {}
     };
 
@@ -141,6 +143,7 @@ async function handleBatchUpload(e) {
         else if (name.startsWith('PBI_自动抓取-CPT风险详表_Latest')) { groups.special.files.push(file); }
         else if (name.startsWith('PBI_自动抓取-风险详单_Latest')) { groups.risk.files.push(file); }
         else if (name.startsWith('PBI_自动抓取-详单-SR_Latest')) { groups.sr.files.push(file); }
+        else if (name.startsWith('PBI_自动抓取-详单漏洞_漏洞预警_Latest')) { groups.vulnerability.files.push(file); }
         else {
             let baseName = name;
             const match = name.match(/(.*?Latest)/i);
@@ -161,13 +164,14 @@ async function handleBatchUpload(e) {
     if (groups.special.files.length)       groups.special.data       = await readFiles(groups.special.files);
     if (groups.risk.files.length)          groups.risk.data          = await readFiles(groups.risk.files);
     if (groups.sr.files.length)            groups.sr.data            = await readFiles(groups.sr.files);
+    if (groups.vulnerability.files.length) groups.vulnerability.data = await readFiles(groups.vulnerability.files);
     for (const key in groups.others)       groups.others[key].data   = await readFiles(groups.others[key].files);
 
     document.getElementById('main-wrapper').innerHTML = '';
     let navHtml = `<h3 style="margin-top:0;color:#2e7d32;font-size:16px;">📊 批量导入成功 (共解析 ${files.length} 个文件)</h3><div class="nav-pills">`;
 
     const initPromises = [];
-    for (const key of ['rectification', 'special', 'risk', 'sr']) {
+    for (const key of ['rectification', 'special', 'risk', 'sr', 'vulnerability']) {
         const g = groups[key];
         if (g.data.length > 0) {
             navHtml += `<a href="javascript:void(0);" onclick="document.getElementById('section-${key}').scrollIntoView({behavior:'smooth'})" class="nav-pill" style="border-color:${g.color};color:${g.color}">${g.title} (${g.data.length}行)</a>`;
@@ -209,7 +213,7 @@ async function captureAndUploadSnapshot(fileNames) {
     const now = new Date();
     const targetDate = new Date(now.getFullYear(), now.getMonth() + 1, 5, 23, 59, 59);
     const targetDays = Math.ceil((targetDate - now) / 86400000);
-    const collectionsToPush = ['rectification', 'risk', 'special', 'sr'];
+    const collectionsToPush = ['rectification', 'risk', 'special', 'sr', 'vulnerability'];
 
     collectionsToPush.forEach(secId => {
         if (window.AppState && window.AppState[secId]) {
@@ -230,6 +234,22 @@ async function captureAndUploadSnapshot(fileNames) {
             });
             console.log(`Found ${snapshot.expiringTickets.length} expiring tickets so far.`);
         }
+    });
+    const collectionOrder = ['rectification', 'special', 'risk', 'sr', 'vulnerability'];
+    snapshot.expiringTickets.sort((a, b) => {
+        const rankA = collectionOrder.indexOf(String(a && a.collection || ''));
+        const rankB = collectionOrder.indexOf(String(b && b.collection || ''));
+        const safeRankA = rankA === -1 ? 999 : rankA;
+        const safeRankB = rankB === -1 ? 999 : rankB;
+        if (safeRankA !== safeRankB) return safeRankA - safeRankB;
+        const collectionDiff = String(a && a.collection || '').localeCompare(String(b && b.collection || ''), 'zh-CN');
+        if (collectionDiff !== 0) return collectionDiff;
+        const daysA = Number(a && a._slaDays);
+        const daysB = Number(b && b._slaDays);
+        const safeA = Number.isFinite(daysA) ? daysA : 999999;
+        const safeB = Number.isFinite(daysB) ? daysB : 999999;
+        if (safeA !== safeB) return safeA - safeB;
+        return String(a && a.title || '').localeCompare(String(b && b.title || ''), 'zh-CN');
     });
 
     // 提取各个基础表格面板的数据
@@ -338,4 +358,4 @@ async function captureAndUploadSnapshot(fileNames) {
     }
 }
 
-window.SLAUpload = { handleBatchUpload, handleSpecificUpload, readFiles, generateSchemaHash, RECT_PRIORITY_COLS, RISK_PRIORITY_COLS, SPECIAL_PRIORITY_COLS, SR_PRIORITY_COLS };
+window.SLAUpload = { handleBatchUpload, handleSpecificUpload, readFiles, generateSchemaHash, RECT_PRIORITY_COLS, RISK_PRIORITY_COLS, SPECIAL_PRIORITY_COLS, SR_PRIORITY_COLS, VULN_PRIORITY_COLS };

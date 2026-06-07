@@ -193,6 +193,14 @@
                         <li><b>挂起逻辑：</b>挂起单忽略，上游会每天顺延期望关闭</li>
                     </ul>
                 </div>
+                <div class="rule-col rule-col-border">
+                    <strong style="color:#c2410c;">🧯 【漏洞预警】引擎：</strong>
+                    <ul>
+                        <li><b>严格前缀：</b>PBI_自动抓取-详单漏洞_漏洞预警_Latest</li>
+                        <li><b>建单基准：</b>create_time + 30天</li>
+                        <li><b>状态范围：</b>Checking / Communication Dept / Communication Customer</li>
+                    </ul>
+                </div>
             </div>
 
             <div class="upload-actions">
@@ -205,6 +213,7 @@
                 <label class="upload-btn btn-risk">指定导入 [常规] <input type="file" id="risk-upload" accept=".xlsx,.xls,.csv" multiple></label>
                 <label class="upload-btn btn-special">指定导入 [专项] <input type="file" id="special-upload" accept=".xlsx,.xls,.csv" multiple></label>
                 <label class="upload-btn" style="background:#d9480f; color:white;">指定导入 [SR] <input type="file" id="sr-upload" accept=".xlsx,.xls,.csv" multiple></label>
+                <label class="upload-btn" style="background:#c2410c; color:white;">指定导入 [漏洞] <input type="file" id="vuln-upload" accept=".xlsx,.xls,.csv" multiple></label>
             </div>
         </div>
 
@@ -224,9 +233,9 @@
     <!-- SLA 模块（注意加载顺序）-->
     <script src="/js/sla/config.js?v=20260530-07"></script>
     <script src="/js/sla/prefs.js?v=20260530-07"></script>
-    <script src="/js/sla/upload.js?v=20260601-03"></script>
-    <script src="/js/sla/section.js?v=20260601-01"></script>
-    <script src="/js/sla/table.js?v=20260601-02"></script>
+    <script src="/js/sla/upload.js?v=20260607-03"></script>
+    <script src="/js/sla/section.js?v=20260607-02"></script>
+    <script src="/js/sla/table.js?v=20260607-01"></script>
     <script src="/js/sla/events.js?v=20260601-01"></script>
     <script src="/js/sla/metrics.js?v=20260601-03"></script>
     <script src="/js/sla/history.js?v=20260530-08"></script>
@@ -301,6 +310,7 @@
         document.getElementById('risk-upload').addEventListener('change', e => SLAUpload.handleSpecificUpload(e, 'risk'), false);
         document.getElementById('special-upload').addEventListener('change', e => SLAUpload.handleSpecificUpload(e, 'special'), false);
         document.getElementById('sr-upload').addEventListener('change', e => SLAUpload.handleSpecificUpload(e, 'sr'), false);
+        document.getElementById('vuln-upload').addEventListener('change', e => SLAUpload.handleSpecificUpload(e, 'vulnerability'), false);
     </script>
 </body>
 </html>
