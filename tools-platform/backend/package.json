@@ -4,6 +4,7 @@
   "description": "Tools Platform Backend - UIVF12 Catcher + Task SLA Killer",
   "main": "server.js",
   "scripts": {
+    "doctor": "node preflight.js",
     "start": "node server.js",
     "dev": "nodemon server.js"
   },

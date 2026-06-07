@@ -2,6 +2,14 @@
  * Tools Platform - 主服务入口
  * 统一管理 UIVF12 Catcher 和 Task SLA Killer 的后端 API
  */
+const { runPreflight } = require('./preflight');
+
+const PORT = process.env.PORT || 3030;
+
+if (!runPreflight({ port: PORT })) {
+    process.exit(1);
+}
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -23,7 +31,6 @@ const globalBackupRoutes = require('./routes/global-backup');
 const { checkAuth, requireAdmin } = require('./middleware/auth');
 
 const app = express();
-const PORT = process.env.PORT || 3030;
 
 // ============================================================
 // 中间件
@@ -171,9 +178,23 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: err.message || '服务器内部错误' });
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log(`\n✅ Tools Platform 已启动`);
     console.log(`   🌐 访问地址: http://localhost:${PORT}`);
     console.log(`   📦 UIVF12:   http://localhost:${PORT}/uivf12`);
     console.log(`   📊 SLA:      http://localhost:${PORT}/sla\n`);
+});
+
+server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+        console.error(`\n❌ 启动失败：端口 ${PORT} 已被占用。`);
+        console.error(`   解决方式：关闭占用该端口的程序，或使用其他端口启动：`);
+        console.error(`   Windows PowerShell: $env:PORT=3031; npm start`);
+        console.error(`   macOS/Linux: PORT=3031 npm start\n`);
+    } else if (err.code === 'EACCES') {
+        console.error(`\n❌ 启动失败：没有权限监听端口 ${PORT}。请换用 1024 以上端口，或检查系统权限。\n`);
+    } else {
+        console.error('\n❌ 启动失败：', err);
+    }
+    process.exit(1);
 });
