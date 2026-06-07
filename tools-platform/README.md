@@ -176,6 +176,7 @@ AI 配置：
 - 常规风险表：`PBI_自动抓取-风险详单_Latest`
 - 专项风险表：`PBI_自动抓取-CPT风险详表_Latest`
 - SR 详单：`PBI_自动抓取-详单-SR_Latest`
+- 漏洞预警详单：`PBI_自动抓取-详单漏洞_漏洞预警_Latest`
 
 SR 分析重点：
 
@@ -186,6 +187,13 @@ SR 分析重点：
 - `hw_sev_name / urgency`：严重级别/紧急度
 - `overdue`：上游超期标识
 - 挂起单可忽略，因为上游会顺延期望关闭时间。
+
+漏洞预警分析重点：
+
+- `task_status`：当前处理状态。
+- `create_time`：建单时间。
+- 状态为 `Checking`、`Communication Dept`、`Communication Customer` 时进入 30 天完成预警。
+- 截止时间按 `create_time + 30天` 计算，剩余 10 天内红色高危，30 天内黄色提醒。
 
 相关 API：
 
@@ -555,4 +563,3 @@ tools-platform/
 - 修改前端脚本后建议更新页面里的 `?v=` 缓存参数。
 - DB 结构变更要补充 `ALTER TABLE ... ADD COLUMN` 兼容旧库。
 - 涉及报表和月报时，应优先保持“入库结果”和“展示结果”一致。
-

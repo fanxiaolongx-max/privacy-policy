@@ -43,6 +43,70 @@ function parseFlexibleDate(value) {
     return isNaN(date) ? null : date;
 }
 
+function shouldInspectDateCell(columnName, value) {
+    const col = String(columnName || '').toLowerCase();
+    const raw = String(value || '').trim();
+    if (!raw) return false;
+    if (/month|year|月份|年度|年份/.test(col)) return false;
+    const dateColumn = /(date|time|日期|时间|创建|创单|期望|要求完成|关闭|完成|create|open|close|due|end|completion|plan|start|survey)/i.test(col);
+    const concreteDateValue = (
+        /\d{4}[-/.年]\d{1,2}[-/.月]\d{1,2}/.test(raw) ||
+        /\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}/.test(raw) ||
+        /\d{4}-\d{1,2}-\d{1,2}T\d{1,2}:\d{1,2}/.test(raw)
+    );
+    return dateColumn && concreteDateValue;
+}
+
+function recordDateParseIssue(state, rowIndex, columnName, value, usage) {
+    if (!state || value === undefined || value === null || value === '') return;
+    if (!state.dateParseIssues) state.dateParseIssues = [];
+    if (!state._dateParseIssueKeys) state._dateParseIssueKeys = new Set();
+    const raw = String(value).trim();
+    if (!raw) return;
+    const key = `${rowIndex}@@${raw}`;
+    if (state._dateParseIssueKeys.has(key)) return;
+    state._dateParseIssueKeys.add(key);
+    state.dateParseIssues.push({
+        rowNumber: rowIndex + 2,
+        column: columnName,
+        value: raw,
+        usage: usage || '疑似日期字段'
+    });
+}
+
+function parseDateForSLA(state, rowIndex, columnName, value, usage) {
+    const date = parseFlexibleDate(value);
+    if (!date) recordDateParseIssue(state, rowIndex, columnName, value, usage);
+    return date;
+}
+
+function inspectDateLikeCells(state, row, rowIndex) {
+    Object.entries(row || {}).forEach(([column, value]) => {
+        if (shouldInspectDateCell(column, value) && !parseFlexibleDate(value)) {
+            recordDateParseIssue(state, rowIndex, column, value, '疑似日期字段');
+        }
+    });
+}
+
+function buildDateParseWarningHTML(secId) {
+    const state = AppState[secId];
+    const issues = (state && state.dateParseIssues) || [];
+    if (!issues.length) return '';
+    const examples = issues.slice(0, 3).map(i => `${escapeHTML(i.column)}=${escapeHTML(i.value)}`).join('；');
+    const detail = issues.slice(0, 50).map(i =>
+        `<div class="date-warning-row">第 ${i.rowNumber} 行 · ${escapeHTML(i.column)} · ${escapeHTML(i.usage)}<br><code>${escapeHTML(i.value)}</code></div>`
+    ).join('');
+    const more = issues.length > 50 ? `<div class="date-warning-more">仅展示前 50 条，剩余 ${issues.length - 50} 条请优先检查原始表日期格式。</div>` : '';
+    return `
+        <div class="date-parse-warning" id="date-warning-${secId}">
+            <span class="date-warning-icon">⚠️</span>
+            <span><b>发现 ${issues.length} 个日期值未能解析</b>，这些单元格可能影响 SLA/超期判断。建议格式：2026/05/02 19:03 或 2026-05-02 19:03。</span>
+            <span class="date-warning-example">示例：${examples}</span>
+            <span class="date-warning-help">悬停查看明细</span>
+            <div class="date-warning-tooltip">${detail}${more}</div>
+        </div>`;
+}
+
 function getSRStatus(row) {
     return getCompatibleVal(row, ['sr_status_name']).trim();
 }
@@ -88,7 +152,7 @@ function formatSRDuration(hours) {
 }
 
 async function initSection(secId, mode, title, rawData, themeColor, baseName = '') {
-    const RECT_P = SLAUpload.RECT_PRIORITY_COLS, RISK_P = SLAUpload.RISK_PRIORITY_COLS, SPEC_P = SLAUpload.SPECIAL_PRIORITY_COLS, SR_P = SLAUpload.SR_PRIORITY_COLS;
+    const RECT_P = SLAUpload.RECT_PRIORITY_COLS, RISK_P = SLAUpload.RISK_PRIORITY_COLS, SPEC_P = SLAUpload.SPECIAL_PRIORITY_COLS, SR_P = SLAUpload.SR_PRIORITY_COLS, VULN_P = SLAUpload.VULN_PRIORITY_COLS;
     let allHeadersSet = new Set();
     rawData.forEach(row => Object.keys(row).forEach(k => allHeadersSet.add(k)));
     const allHeaders = Array.from(allHeadersSet);
@@ -98,8 +162,10 @@ async function initSection(secId, mode, title, rawData, themeColor, baseName = '
     if (mode === 'risk' && !(validHeaders.includes('风险状态') || validHeaders.includes('risk_status'))) { alert(`区块 [${title}] 未找到风险状态，跳过渲染。`); return; }
     if (mode === 'special' && !(validHeaders.includes('状态-Status') || validHeaders.includes('task_status_en') || validHeaders.includes('task_status') || validHeaders.includes('task_status_cn'))) { alert(`区块 [${title}] 未找到状态列，跳过渲染。`); return; }
     if (mode === 'sr' && !validHeaders.includes('sr_status_name')) { alert(`区块 [${title}] 未找到 sr_status_name，跳过渲染。`); return; }
+    if (mode === 'vulnerability' && !validHeaders.includes('task_status')) { alert(`区块 [${title}] 未找到 task_status，跳过渲染。`); return; }
+    if (mode === 'vulnerability' && !validHeaders.includes('create_time')) { alert(`区块 [${title}] 未找到 create_time，跳过渲染。`); return; }
 
-    const targetPriorityCols = mode === 'rectification' ? RECT_P : (mode === 'risk' ? RISK_P : (mode === 'special' ? SPEC_P : (mode === 'sr' ? SR_P : [])));
+    const targetPriorityCols = mode === 'rectification' ? RECT_P : (mode === 'risk' ? RISK_P : (mode === 'special' ? SPEC_P : (mode === 'sr' ? SR_P : (mode === 'vulnerability' ? VULN_P : []))));
     const foundPriorityCols = targetPriorityCols.filter(col => validHeaders.includes(col));
     const otherCols = validHeaders.filter(col => !targetPriorityCols.includes(col));
     if (validHeaders.includes('版本标识') && !foundPriorityCols.includes('版本标识')) {
@@ -130,15 +196,18 @@ function preprocessData(secId, rawData) {
     const state = AppState[secId];
     const now = new Date();
     const mode = state.mode;
-    state.globalData = rawData.map(row => {
+    state.dateParseIssues = [];
+    state._dateParseIssueKeys = new Set();
+    state.globalData = rawData.map((row, rowIndex) => {
         let _slaDays = 999999, _slaText = '-', _slaCleanText = '-', _rowClass = '';
+        inspectDateLikeCells(state, row, rowIndex);
         if (mode === 'rectification') {
             const status = row['task_status'] ? row['task_status'].toString().trim() : '';
             if (status === 'Checking') {
                 const ct = row['task_create_time'];
                 if (ct) {
-                    const cd = new Date(ct.toString().replace(/-/g, '/'));
-                    if (!isNaN(cd)) {
+                    const cd = parseDateForSLA(state, rowIndex, 'task_create_time', ct, 'Checking 建单时间');
+                    if (cd) {
                         const dl = new Date(cd); dl.setDate(dl.getDate() + 30);
                         _slaDays = Math.ceil((dl - now) / 86400000);
                         const base = `剩余 ${_slaDays} 天`; _slaText = base; _slaCleanText = base;
@@ -149,8 +218,8 @@ function preprocessData(secId, rawData) {
             } else if (status === 'Rectification Implementation') {
                 const ret = row['rectify_plan_end_time'];
                 if (ret) {
-                    const dl = new Date(ret.toString().replace(/-/g, '/'));
-                    if (!isNaN(dl)) {
+                    const dl = parseDateForSLA(state, rowIndex, 'rectify_plan_end_time', ret, '整改期望完成时间');
+                    if (dl) {
                         _slaDays = Math.ceil((dl - now) / 86400000);
                         const base = `剩余 ${_slaDays} 天`; _slaText = base; _slaCleanText = base;
                         if (_slaDays <= 10) { _rowClass = 'danger-row'; _slaText = `<span class="badge">整改紧急</span> ${_slaText}`; _slaCleanText = `整改紧急 (${base})`; }
@@ -163,8 +232,8 @@ function preprocessData(secId, rawData) {
             if (status === 'Risk Confirming') {
                 const ctStr = getCompatibleVal(row, ['创单时间', 'create_time_new', 'create_time']);
                 if (ctStr) {
-                    const cd = new Date(ctStr.replace(/-/g, '/'));
-                    if (!isNaN(cd)) {
+                    const cd = parseDateForSLA(state, rowIndex, '创单时间/create_time', ctStr, '风险确认创单时间');
+                    if (cd) {
                         const dl = new Date(cd); dl.setDate(dl.getDate() + 30);
                         _slaDays = Math.ceil((dl - now) / 86400000);
                         const base = `剩余 ${_slaDays} 天`; _slaText = base; _slaCleanText = base;
@@ -175,8 +244,8 @@ function preprocessData(secId, rawData) {
             } else if (status === 'Risk Open') {
                 const ecStr = getCompatibleVal(row, ['期望关闭时间', 'ticket_close_due_date', 'due_time']);
                 if (ecStr) {
-                    const dl = new Date(ecStr.replace(/-/g, '/'));
-                    if (!isNaN(dl)) {
+                    const dl = parseDateForSLA(state, rowIndex, '期望关闭时间/ticket_close_due_date', ecStr, '风险期望关闭时间');
+                    if (dl) {
                         _slaDays = Math.ceil((dl - now) / 86400000);
                         const base = `剩余 ${_slaDays} 天`; _slaText = base; _slaCleanText = base;
                         if (_slaDays <= 10) { _rowClass = 'danger-row'; _slaText = `<span class="badge">Open紧急</span> ${_slaText}`; }
@@ -186,8 +255,8 @@ function preprocessData(secId, rawData) {
             } else if (status === 'Risk Suspended') {
                 const ssStr = getCompatibleVal(row, ['期望关闭时间-挂起', 'suspend_due_date']);
                 if (ssStr) {
-                    const dl = new Date(ssStr.replace(/-/g, '/'));
-                    if (!isNaN(dl)) {
+                    const dl = parseDateForSLA(state, rowIndex, '期望关闭时间-挂起/suspend_due_date', ssStr, '挂起期望关闭时间');
+                    if (dl) {
                         _slaDays = Math.ceil((dl - now) / 86400000);
                         const base = `剩余 ${_slaDays} 天`; _slaText = base; _slaCleanText = base;
                         if (_slaDays <= 10) { _rowClass = 'danger-row'; _slaText = `<span class="badge">Suspend紧急</span> ${_slaText}`; }
@@ -200,8 +269,8 @@ function preprocessData(secId, rawData) {
             if (['待确认','草稿','Draft','To Be Confirmed'].includes(status)) {
                 const ctStr = getCompatibleVal(row, ['创建日期-Create Date', 'create_time']);
                 if (ctStr) {
-                    const cd = new Date(ctStr.replace(/-/g, '/'));
-                    if (!isNaN(cd)) {
+                    const cd = parseDateForSLA(state, rowIndex, '创建日期-Create Date/create_time', ctStr, '专项风险创建日期');
+                    if (cd) {
                         const dl = new Date(cd); dl.setDate(dl.getDate() + 30);
                         _slaDays = Math.ceil((dl - now) / 86400000);
                         const base = `剩余 ${_slaDays} 天`; _slaText = base; _slaCleanText = base;
@@ -212,8 +281,8 @@ function preprocessData(secId, rawData) {
             } else if (['处理中','评审中','Processing','Reviewing'].includes(status)) {
                 const ecStr = getCompatibleVal(row, ['要求完成日期-Required Completion Date', 'required_completion_time', 'plan_complete_date']);
                 if (ecStr) {
-                    const dl = new Date(ecStr.replace(/-/g, '/'));
-                    if (!isNaN(dl)) {
+                    const dl = parseDateForSLA(state, rowIndex, '要求完成日期/required_completion_time', ecStr, '专项风险要求完成日期');
+                    if (dl) {
                         _slaDays = Math.ceil((dl - now) / 86400000);
                         const base = `剩余 ${_slaDays} 天`; _slaText = base; _slaCleanText = base;
                         if (_slaDays <= 10) { _rowClass = 'danger-row'; _slaText = `<span class="badge">处理紧急</span> ${_slaText}`; }
@@ -221,13 +290,49 @@ function preprocessData(secId, rawData) {
                     } else { _slaText = '<span style="color:red">解析失败</span>'; }
                 }
             }
+        } else if (mode === 'vulnerability') {
+            const status = getCompatibleVal(row, ['task_status']);
+            const activeStatuses = ['Checking', 'Communication Dept', 'Communication Customer'];
+            if (activeStatuses.includes(status)) {
+                const ctStr = getCompatibleVal(row, ['create_time', 'task_create_time']);
+                if (ctStr) {
+                    const cd = parseDateForSLA(state, rowIndex, 'create_time/task_create_time', ctStr, '漏洞建单时间');
+                    if (cd) {
+                        const dl = new Date(cd);
+                        dl.setDate(dl.getDate() + 30);
+                        _slaDays = Math.ceil((dl - now) / 86400000);
+                        const base = `剩余 ${_slaDays} 天`;
+                        _slaText = base;
+                        _slaCleanText = base;
+                        if (_slaDays <= 10) {
+                            _rowClass = 'danger-row';
+                            _slaText = `<span class="badge">漏洞紧急</span> ${status} / ${base}`;
+                            _slaCleanText = `漏洞紧急 (${status}, ${base})`;
+                        } else if (_slaDays < 30) {
+                            _rowClass = 'warning-row';
+                            _slaText = `<span class="badge badge-risk">漏洞提醒</span> ${status} / ${base}`;
+                            _slaCleanText = `漏洞提醒 (${status}, ${base})`;
+                        } else {
+                            _slaText = `${status} / ${base}`;
+                            _slaCleanText = _slaText;
+                        }
+                    } else {
+                        _slaText = '<span style="color:red">create_time 解析失败</span>';
+                    }
+                } else {
+                    _slaText = '<span style="color:red">缺少 create_time</span>';
+                }
+            }
         } else if (mode === 'sr') {
             const status = getSRStatus(row);
             const overdueFlag = getCompatibleVal(row, ['overdue']).toLowerCase();
             const severity = getSRSeverity(row);
-            const openDate = parseFlexibleDate(getCompatibleVal(row, ['open_date']));
-            const expCloseDate = parseFlexibleDate(getCompatibleVal(row, ['exp_close_date']));
-            const actCloseDate = parseFlexibleDate(getCompatibleVal(row, ['act_close_date']));
+            const openDateRaw = getCompatibleVal(row, ['open_date']);
+            const expCloseDateRaw = getCompatibleVal(row, ['exp_close_date']);
+            const actCloseDateRaw = getCompatibleVal(row, ['act_close_date']);
+            const openDate = openDateRaw ? parseDateForSLA(state, rowIndex, 'open_date', openDateRaw, 'SR 开单时间') : null;
+            const expCloseDate = expCloseDateRaw ? parseDateForSLA(state, rowIndex, 'exp_close_date', expCloseDateRaw, 'SR 期望关单时间') : null;
+            const actCloseDate = actCloseDateRaw ? parseDateForSLA(state, rowIndex, 'act_close_date', actCloseDateRaw, 'SR 实际关单时间') : null;
             const isClosed = isSRClosedStatus(status);
             const isPending = isSRPendingStatus(status);
 
@@ -311,6 +416,7 @@ function preprocessData(secId, rawData) {
         const cleanValuesArr = Object.values(row).map(v => v != null ? v.toString().replace(/[\r\n]+/g, ' ') : '');
         return { ...row, _slaDays, _slaText, _slaCleanText, _rowClass, _rawStringForSearch: cleanValuesArr.join('|||').toLowerCase() };
     });
+    delete state._dateParseIssueKeys;
 }
 
 function buildDOM(secId, title, themeColor) {
@@ -322,6 +428,7 @@ function buildDOM(secId, title, themeColor) {
             </h3>
         </div>
         <div class="dashboard-panel" id="dashboard-${secId}" style="display:none;"></div>
+        ${buildDateParseWarningHTML(secId)}
         <div class="toolbar" id="toolbar-${secId}">
             <div class="filter-group">
                 <button class="filter-btn active" data-sec="${secId}" data-filter="all">全部数据</button>

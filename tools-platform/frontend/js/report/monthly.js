@@ -34,7 +34,7 @@ const i18n = {
         th_manual_score: '手工调整分数',
         th_desc: '说明',
         section3_4_title: '3.4 完整考核快照数据一览',
-        
+
         // JS generated strings
         no_data: '当前时间范围内没有入库数据。',
         analysis_period: '分析周期: {start} 至 {end} (共 {count} 份数据快照)',
@@ -49,10 +49,12 @@ const i18n = {
         group_failing: '共有 <span class="summary-highlight">{count}</span> 项未达标，主要包含：{list}。',
         group_passed: '各项指标 <span style="color:green; font-weight:bold;">全部达标</span>。',
         expiring_warning: '⚠️ 临期任务预警 ({count}项)',
+        special_metric_warning: '🚩 特殊指标提醒 ({count}项)',
+        special_metric_format: '所有人注意 <strong>[{metric}]</strong> 全局值: {global} | 目标: {target} | 差距: {gap}',
         unknown_id: '未知单号',
         unknown_network: '未知网络',
         ticket_format: '<strong>[{title}]</strong> 单号: {id} | 网络: {network} | 状态: {status}',
-        
+
         chart1_title: '整体达标率与指标数趋势',
         chart1_overall_rate: '整体达标率',
         chart1_true_rate: '真实整体达标率',
@@ -61,23 +63,23 @@ const i18n = {
         chart1_y_rate: '达标率',
         chart1_y_count: '数量',
         chart_unit_item: '项',
-        
+
         chart2_title: '各客户群达标情况趋势',
-        
+
         rating_excellent: '<span style="color:green;font-weight:bold;">优秀</span>',
         rating_good: '良好',
         rating_warning: '<span style="color:red;font-weight:bold;">警告</span>',
-        
+
         matrix_no_failures: '恭喜，当前快照无任何未达标项！',
         manual_default_desc: '系统记录的手工作业/质量事故奖惩等调整项',
-        
+
         full_title: '(附) 计分规则与排位说明及加减分详情',
         full_th_type: '类型',
         full_th_desc: '项目说明',
         full_th_rule: '计分规则',
         full_occurrences: ' (发生次数)',
         full_adjustments: ' (加减分)',
-        
+
         full_th_grouping: '分组',
         full_th_total_weight: '总权重',
         full_th_metric: '考核的指标名称',
@@ -118,7 +120,7 @@ const i18n = {
         th_manual_score: 'Adj. Score',
         th_desc: 'Description',
         section3_4_title: '3.4 Full Assessment Snapshot',
-        
+
         no_data: 'No data available in the selected time range.',
         analysis_period: 'Analysis Period: {start} to {end} ({count} snapshots)',
         overall_failing: 'Overall, there are <span class="summary-highlight">{count}</span> non-compliant metrics, including: {list}.',
@@ -132,10 +134,12 @@ const i18n = {
         group_failing: '<span class="summary-highlight">{count}</span> non-compliant items, including: {list}.',
         group_passed: 'All metrics <span style="color:green; font-weight:bold;">Compliant</span>.',
         expiring_warning: '⚠️ Expiring Tasks Warning ({count})',
+        special_metric_warning: '🚩 Special Alert ({count})',
+        special_metric_format: '@ALL <strong>[{metric}]</strong> Global: {global} | Target: {target} | Gap: {gap}',
         unknown_id: 'Unknown ID',
         unknown_network: 'Unknown Network',
         ticket_format: '<strong>[{title}]</strong> ID: {id} | Network: {network} | Status: {status}',
-        
+
         chart1_title: 'Overall Compliance Rate & Metrics Trend',
         chart1_overall_rate: 'Compliance Rate',
         chart1_true_rate: 'True Overall Rate',
@@ -144,23 +148,23 @@ const i18n = {
         chart1_y_rate: 'Rate',
         chart1_y_count: 'Count',
         chart_unit_item: ' items',
-        
+
         chart2_title: 'Compliance Trend by Group',
-        
+
         rating_excellent: '<span style="color:green;font-weight:bold;">Excellent</span>',
         rating_good: 'Good',
         rating_warning: '<span style="color:red;font-weight:bold;">Warning</span>',
-        
+
         matrix_no_failures: 'Congratulations, no non-compliant items in the current snapshot!',
         manual_default_desc: 'System recorded manual/quality adjustment items',
-        
+
         full_title: '(Appx) Scoring Rules & Adjustments',
         full_th_type: 'Type',
         full_th_desc: 'Description',
         full_th_rule: 'Rule',
         full_occurrences: ' (Count)',
         full_adjustments: ' (Score)',
-        
+
         full_th_grouping: 'Group',
         full_th_total_weight: 'Total Weight',
         full_th_metric: 'Metric Name',
@@ -194,12 +198,24 @@ function tVal(text) {
     return i18n[window.currentLang][text] || text;
 }
 
+function escapeHTML(str) {
+    return typeof str === 'string' ? str.replace(/[&<>'"]/g, tag => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'": '&#39;','"':'&quot;'}[tag] || tag)) : str;
+}
+
 function translateTicketTitle(title) {
     const cleanTitle = String(title || '').replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim();
-    if (window.currentLang !== 'en') return cleanTitle;
-    if (cleanTitle.includes('SR详单')) return 'SR Detail Analysis';
+    if (window.currentLang !== 'en') {
+        if (cleanTitle.includes('漏洞预警') || cleanTitle.includes('漏洞')) return '漏洞';
+        if (cleanTitle.includes('SR详单') || cleanTitle.includes('SR')) return 'SR';
+        if (cleanTitle.includes('整改')) return '整改';
+        if (cleanTitle.includes('CPT专项风险') || cleanTitle.includes('专项风险') || cleanTitle.includes('CPT')) return 'CPT风险';
+        if (cleanTitle.includes('常规风险') || cleanTitle === '风险') return '风险';
+        return cleanTitle;
+    }
+    if (cleanTitle.includes('漏洞预警') || cleanTitle.includes('漏洞')) return 'Vulnerability Comm';
+    if (cleanTitle.includes('SR详单') || cleanTitle.includes('SR')) return 'SR';
     if (cleanTitle.includes('整改')) return 'Rectification';
-    if (cleanTitle.includes('CPT专项风险') || cleanTitle.includes('专项风险')) return 'CPT Special Risk';
+    if (cleanTitle.includes('CPT专项风险') || cleanTitle.includes('专项风险') || cleanTitle.includes('CPT')) return 'CPT';
     if (cleanTitle.includes('常规风险') || cleanTitle === '风险') return 'Risk';
     return tVal(cleanTitle) || cleanTitle || 'Ticket';
 }
@@ -214,6 +230,8 @@ function translateSlaStatus(statusText) {
         .replace(/SR预警/g, 'SR warning')
         .replace(/Critical高危/g, 'Critical high risk')
         .replace(/Critical预警/g, 'Critical warning')
+        .replace(/漏洞紧急/g, 'Vulnerability urgent')
+        .replace(/漏洞提醒/g, 'Vulnerability warning')
         .replace(/Checking紧急/g, 'Checking urgent')
         .replace(/Checking提醒/g, 'Checking warning')
         .replace(/整改紧急/g, 'Rectification urgent')
@@ -274,7 +292,7 @@ function getMonthlyTargetMonth() {
         const saved = JSON.parse(localStorage.getItem(MONTHLY_TARGET_MONTH_KEY) || '{}');
         const month = parseInt(saved.month, 10);
         if (saved.date === getTodayKey() && month >= 1 && month <= 12) return String(month);
-    } catch (e) {}
+    } catch (e) { }
     return String(getTargetMonthDefaultByDay());
 }
 
@@ -293,7 +311,7 @@ async function loadData(startDate, endDate) {
         document.getElementById('report-content').style.display = 'none';
         const exportBtnContainer = document.getElementById('export-actions');
         if (exportBtnContainer) exportBtnContainer.style.display = 'none';
-        
+
         const params = new URLSearchParams();
         if (startDate && endDate) {
             params.set('startDate', startDate);
@@ -309,11 +327,11 @@ async function loadData(startDate, endDate) {
             window.API.get(`/api/sla/categories${query}`),
             window.API.get(`/api/sla/groups${query}`)
         ]);
-        
+
         window._categories = catDataRes || [];
         window._globalConfig = configData || { targets: {}, prefs: {} };
         window._metricGroups = groupData || [];
-        
+
         if (window._globalConfig.prefs && window._globalConfig.prefs.i18nMap) {
             const loadedI18n = window._globalConfig.prefs.i18nMap;
             const cleanI18n = {};
@@ -327,7 +345,7 @@ async function loadData(startDate, endDate) {
             }
             i18n['en'] = { ...i18n['en'], ...cleanI18n };
         }
-        
+
         let manualAdjustItems = [];
         if (configData && configData.prefs && configData.prefs.manualAdjustItems) {
             manualAdjustItems = configData.prefs.manualAdjustItems;
@@ -352,10 +370,10 @@ async function loadData(startDate, endDate) {
             ];
         }
         window._manualAdjustItems = manualAdjustItems;
-        
+
         document.getElementById('loader').style.display = 'none';
         if (window.renderMonthlySourcePanel) window.renderMonthlySourcePanel();
-        
+
         if (!data || !data.trends || data.trends.length === 0) {
             document.getElementById('report-date-range').innerText = t('no_data');
             document.getElementById('report-content').style.display = 'block';
@@ -380,13 +398,13 @@ async function loadData(startDate, endDate) {
 
 function renderAll() {
     if (!currentTrends || !currentLatest) return;
-    
+
     updateStaticI18n();
 
     const actualStartDate = currentTrends[0].date;
     const actualEndDate = currentTrends[currentTrends.length - 1].date;
-    document.getElementById('report-date-range').innerText = t('analysis_period', {start: actualStartDate, end: actualEndDate, count: currentTrends.length});
-    
+    document.getElementById('report-date-range').innerText = t('analysis_period', { start: actualStartDate, end: actualEndDate, count: currentTrends.length });
+
     const latestSnapshotElem = document.getElementById('latest-snapshot-date');
     if (latestSnapshotElem) latestSnapshotElem.innerText = actualEndDate;
 
@@ -395,7 +413,7 @@ function renderAll() {
     renderRanking(currentLatest);
     renderMatrix(currentLatest);
     renderManualScores(currentLatest);
-    
+
     if (typeof renderFullSnapshot === 'function') {
         renderFullSnapshot(currentLatest, window._categories, window._globalConfig, window._metricGroups, window._manualAdjustItems);
     }
@@ -464,7 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', () => {
             filterBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            
+
             const days = btn.getAttribute('data-days');
             if (days === 'all') {
                 startDateInput.value = '';
@@ -474,10 +492,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const end = new Date();
                 const start = new Date();
                 start.setDate(end.getDate() - parseInt(days));
-                
+
                 const sDate = formatDate(start);
                 const eDate = formatDate(end);
-                
+
                 startDateInput.value = sDate;
                 endDateInput.value = eDate;
                 loadData(sDate, eDate);
@@ -507,27 +525,27 @@ function generateSummary(trends, latest, globalConfig) {
     const failingByCat = {};
     const catTotalMetrics = {};
     const overallFailingSet = new Set();
-    
+
     latest.metrics.forEach(m => {
         if (!catTotalMetrics[m.cat_name]) catTotalMetrics[m.cat_name] = 0;
         catTotalMetrics[m.cat_name]++;
-        
+
         if (m.is_failing === 1) {
             if (!failingByCat[m.cat_name]) failingByCat[m.cat_name] = [];
             failingByCat[m.cat_name].push(m.metric_label);
         }
     });
-    
+
     let currentTrend = trends[trends.length - 1];
-    
+
     // overallFailingArr calculation moved below
 
     const manualScoresArr = latest.cat_scores ? latest.cat_scores.filter(c => c.manual_score !== 0 && c.manual_score !== null) : [];
     let manualStr = '';
-    
+
     let rawSnap = {};
     if (latest.raw_data_json) {
-        try { rawSnap = JSON.parse(latest.raw_data_json); } catch(e){}
+        try { rawSnap = JSON.parse(latest.raw_data_json); } catch (e) { }
     }
     const targetMonth = parseInt(getMonthlyTargetMonth(), 10) || rawSnap.month || (rawSnap.timestamp ? new Date(rawSnap.timestamp).getMonth() + 1 : (new Date(latest.created_at || Date.now()).getMonth() + 1));
 
@@ -553,7 +571,7 @@ function generateSummary(trends, latest, globalConfig) {
                 }
             });
         }
-        
+
         // targetMonth calculated above
         function parseNum(str) {
             if (str === undefined || str === null || str === '--') return NaN;
@@ -565,7 +583,7 @@ function generateSummary(trends, latest, globalConfig) {
             const targetData = labelToTargetMap[m.label];
             const weight = (targetData && targetData.weight !== undefined) ? parseFloat(targetData.weight) : 1;
             const hasTarget = targetData && targetData[targetMonth] !== undefined && targetData[targetMonth] !== '' && weight > 0;
-            
+
             if (hasTarget) {
                 const condition = targetData.type || 'gte';
                 const globalValNum = parseNum(m.value);
@@ -583,17 +601,17 @@ function generateSummary(trends, latest, globalConfig) {
     const overallFailingArr = Array.from(overallFailingSet);
     let overallStr = '';
     if (overallFailingArr.length > 0) {
-        overallStr = t('overall_failing', {count: overallFailingArr.length, list: overallFailingArr.map(tVal).join('、')});
+        overallStr = t('overall_failing', { count: overallFailingArr.length, list: overallFailingArr.map(tVal).join('、') });
     } else {
         overallStr = t('overall_passed');
     }
 
     const snapAdjData = rawSnap.manualAdjustData || {};
-    
+
     if (manualScoresArr.length > 0) {
         let details = manualScoresArr.map(c => {
-            let actionStr = c.manual_score > 0 ? t('add_score', {score: c.manual_score}) : t('sub_score', {score: Math.abs(c.manual_score)});
-            
+            let actionStr = c.manual_score > 0 ? t('add_score', { score: c.manual_score }) : t('sub_score', { score: Math.abs(c.manual_score) });
+
             let reasons = [];
             let catAdj = snapAdjData[c.cat_name] || {};
             if (window._manualAdjustItems) {
@@ -603,70 +621,101 @@ function generateSummary(trends, latest, globalConfig) {
                     }
                 });
             }
-            
-            let reasonStr = reasons.length > 0 ? t('because', {list: reasons.join('、')}) : '';
+
+            let reasonStr = reasons.length > 0 ? t('because', { list: reasons.join('、') }) : '';
             return `${tVal(c.cat_name)}（${actionStr}${reasonStr}）`;
         }).join('；');
-        manualStr = t('manual_details', {details: details});
+        manualStr = t('manual_details', { details: details });
     }
-    
+
     let summaryHtml = `
-        <p>${t('as_of', {date: currentTrend.date, month: targetMonth, overallStr: overallStr, manualStr: manualStr})}</p>
+        <p>${t('as_of', { date: currentTrend.date, month: targetMonth, overallStr: overallStr, manualStr: manualStr })}</p>
         <p>${t('group_details_title')}</p>
         <ul style="padding-left:20px; line-height:1.8;">
     `;
-    
+
     for (let catName in catTotalMetrics) {
         let failingList = failingByCat[catName] || [];
         if (failingList.length > 0) {
-            summaryHtml += `<li>【<strong>${tVal(catName)}</strong>】：${t('group_failing', {count: failingList.length, list: failingList.map(tVal).join('、')})}</li>`;
+            summaryHtml += `<li>【<strong>${tVal(catName)}</strong>】：${t('group_failing', { count: failingList.length, list: failingList.map(tVal).join('、') })}</li>`;
         } else {
             summaryHtml += `<li>【<strong>${tVal(catName)}</strong>】：${t('group_passed')}</li>`;
         }
     }
-    
+
     summaryHtml += `</ul>`;
+
+    const specialMetricAlerts = rawSnap.specialMetricAlerts || [];
+    if (specialMetricAlerts.length > 0) {
+        summaryHtml += `
+        <div style="margin-top:15px; padding:12px; background-color:#fef2f2; border-left:4px solid #dc2626; border-radius:4px;">
+            <h4 style="margin:0 0 8px 0; color:#b91c1c; font-size:14px;">${t('special_metric_warning', { count: specialMetricAlerts.length })}</h4>
+            <ul style="padding-left:20px; margin:0; line-height:1.6; color:#991b1b; font-size:13px;">
+        `;
+        specialMetricAlerts.forEach(item => {
+            summaryHtml += `<li>${t('special_metric_format', {
+                metric: tVal(item.metric_label || item.metricLabel || '未知指标'),
+                global: item.global_val || item.globalValue || '--',
+                target: item.target_val || item.targetValue || '--',
+                gap: item.gap || '-'
+            })}</li>`;
+        });
+        summaryHtml += `</ul></div>`;
+    }
 
     const expiringTickets = rawSnap.expiringTickets || [];
     if (expiringTickets.length > 0) {
         summaryHtml += `
         <div style="margin-top:15px; padding:12px; background-color:#fff3e0; border-left:4px solid #e65100; border-radius:4px;">
-            <h4 style="margin:0 0 8px 0; color:#e65100; font-size:14px;">${t('expiring_warning', {count: expiringTickets.length})}</h4>
-            <ul style="padding-left:20px; margin:0; line-height:1.6; color:#c62828; font-size:13px;">
+            <h4 style="margin:0 0 8px 0; color:#e65100; font-size:14px;">${t('expiring_warning', { count: expiringTickets.length })}</h4>
         `;
+        const groupedByNetwork = {};
         expiringTickets.forEach(tItem => {
             const td = tItem.data || {};
-            const id = td.sr_num || td.sr_id || td.task_id || td.risk_id || td.ticket_id || td['单号'] || td['问题风险编号'] || td['问题编号'] || t('unknown_id');
             const network = td.network_name || td['网络名称'] || td.network || t('unknown_network');
-            summaryHtml += `<li>${t('ticket_format', {
-                title: translateTicketTitle(tItem.title),
-                id: id,
-                network: network,
-                status: translateSlaStatus(tItem._slaCleanText)
-            })}</li>`;
+            if (!groupedByNetwork[network]) groupedByNetwork[network] = [];
+            groupedByNetwork[network].push(tItem);
         });
-        summaryHtml += `</ul></div>`;
+        Object.keys(groupedByNetwork).sort((a, b) => a.localeCompare(b)).forEach(network => {
+            summaryHtml += `
+                <div style="margin-top:8px; padding:7px 9px; background:#fffaf0; border:1px solid #fed7aa; border-radius:6px;">
+                    <div style="font-weight:bold; color:#9a3412; margin-bottom:4px;">${window.currentLang === 'en' ? 'Network' : '网络'}: ${escapeHTML(network)} <span style="font-size:12px;font-weight:normal;">(${groupedByNetwork[network].length})</span></div>
+                    <ul style="padding-left:20px; margin:0; line-height:1.6; color:#c62828; font-size:13px;">
+            `;
+            groupedByNetwork[network].forEach(tItem => {
+                const td = tItem.data || {};
+                const id = td.sr_num || td.sr_id || td.task_id || td.risk_id || td.ticket_id || td['单号'] || td['问题风险编号'] || td['问题编号'] || t('unknown_id');
+                summaryHtml += `<li>${t('ticket_format', {
+                    title: translateTicketTitle(tItem.title),
+                    id: id,
+                    network: network,
+                    status: translateSlaStatus(tItem._slaCleanText)
+                })}</li>`;
+            });
+            summaryHtml += '</ul></div>';
+        });
+        summaryHtml += `</div>`;
     }
-    
+
     document.getElementById('summary-content').innerHTML = summaryHtml;
 }
 
 function drawCharts(trends) {
     const dates = trends.map(t => t.date);
-    
+
     const overallDom = document.getElementById('chart-overall');
     let chartOverall = echarts.getInstanceByDom(overallDom);
     if (!chartOverall) chartOverall = echarts.init(overallDom);
-    
+
     const trueOverallRates = trends.map(t => {
         let rawSnap = {};
         if (t.raw_data_json) {
-            try { rawSnap = JSON.parse(t.raw_data_json); } catch(e){}
+            try { rawSnap = JSON.parse(t.raw_data_json); } catch (e) { }
         }
         if (!rawSnap.topMetrics || rawSnap.topMetrics.length === 0) return t.compliance_rate !== undefined ? parseFloat(t.compliance_rate).toFixed(2) : 0;
 
         const targetMonth = parseInt(getMonthlyTargetMonth(), 10) || rawSnap.month || (rawSnap.timestamp ? new Date(rawSnap.timestamp).getMonth() + 1 : (new Date(t.created_at || t.date || Date.now()).getMonth() + 1));
-        
+
         const labelToTargetMap = {};
         const globalConfig = window._globalConfig;
         const { targets, prefs } = globalConfig || {};
@@ -689,7 +738,7 @@ function drawCharts(trends) {
                 }
             });
         }
-        
+
         function parseNum(str) {
             if (str === undefined || str === null || str === '--') return NaN;
             const n = parseFloat(String(str).replace(/[^0-9.-]/g, ''));
@@ -698,7 +747,7 @@ function drawCharts(trends) {
 
         let totalTrueMetrics = 0;
         const failingSet = new Set();
-        
+
         const fallbackMap = {
             '产品EOS闭环率': '全量EOS-产品',
             '版本EOS闭环率': '全量EOS-版本',
@@ -725,7 +774,7 @@ function drawCharts(trends) {
 
             const weight = (targetData && targetData.weight !== undefined) ? parseFloat(targetData.weight) : 1;
             const hasTarget = targetData && targetData[targetMonth] !== undefined && targetData[targetMonth] !== '' && weight > 0;
-            
+
             if (hasTarget) {
                 totalTrueMetrics++;
                 const condition = targetData.type || 'gte';
@@ -740,7 +789,7 @@ function drawCharts(trends) {
                 }
             }
         });
-        
+
         if (totalTrueMetrics === 0) return 100.00;
         return (((totalTrueMetrics - failingSet.size) / totalTrueMetrics) * 100).toFixed(2);
     });
@@ -748,23 +797,25 @@ function drawCharts(trends) {
     const overallRates = trends.map(t => t.compliance_rate !== undefined ? parseFloat(t.compliance_rate).toFixed(2) : 0);
     const totalMetrics = trends.map(t => t.metrics_total || 0);
     const passedMetrics = trends.map(t => (t.metrics_total || 0) - (t.metrics_failing || 0));
-    
+
     chartOverall.setOption({
         title: { text: t('chart1_title'), left: 'center', textStyle: { fontSize: 15, fontWeight: 'normal' } },
-        tooltip: { trigger: 'axis', formatter: function(params) {
-            let relVal = params[0].name;
-            for (let i = 0, l = params.length; i < l; i++) {
-                let unit = (params[i].seriesName === t('chart1_overall_rate') || params[i].seriesName === t('chart1_true_rate')) ? '%' : t('chart_unit_item');
-                relVal += '<br/>' + params[i].marker + params[i].seriesName + ': ' + params[i].value + unit;
+        tooltip: {
+            trigger: 'axis', formatter: function (params) {
+                let relVal = params[0].name;
+                for (let i = 0, l = params.length; i < l; i++) {
+                    let unit = (params[i].seriesName === t('chart1_overall_rate') || params[i].seriesName === t('chart1_true_rate')) ? '%' : t('chart_unit_item');
+                    relVal += '<br/>' + params[i].marker + params[i].seriesName + ': ' + params[i].value + unit;
+                }
+                return relVal;
             }
-            return relVal;
-        }},
+        },
         legend: { data: [t('chart1_true_rate'), t('chart1_overall_rate'), t('chart1_passed_metrics'), t('chart1_total_metrics')], bottom: 0 },
         xAxis: { type: 'category', data: dates, boundaryGap: true },
         yAxis: [
-            { 
-                type: 'value', 
-                min: 0, 
+            {
+                type: 'value',
+                min: 0,
                 max: 100,
                 name: t('chart1_y_rate'),
                 axisLabel: { formatter: '{value}%' }
@@ -834,10 +885,10 @@ function drawCharts(trends) {
     // Get all unique categories across all trends
     const allCatsSet = new Set();
     trends.forEach(t => {
-        if(t.cat_scores) Object.keys(t.cat_scores).forEach(c => allCatsSet.add(c));
+        if (t.cat_scores) Object.keys(t.cat_scores).forEach(c => allCatsSet.add(c));
     });
     const allCats = Array.from(allCatsSet);
-    
+
     const seriesData = allCats.map(cat => {
         return {
             name: cat,
@@ -868,10 +919,10 @@ function drawCharts(trends) {
 
 function renderRanking(latest) {
     if (!latest.cat_scores || latest.cat_scores.length === 0) return;
-    
+
     let sorted = [...latest.cat_scores].sort((a, b) => b.final_score - a.final_score);
     let html = '';
-    
+
     sorted.forEach((cat, index) => {
         let rankStr = index + 1;
         if (index === 0) rankStr = '🥇 1';
@@ -881,7 +932,7 @@ function renderRanking(latest) {
         let baseScore = cat.base_score ? cat.base_score.toFixed(2) : '0.00';
         let manualScore = cat.manual_score ? cat.manual_score.toFixed(2) : '0.00';
         let finalScore = cat.final_score ? cat.final_score.toFixed(2) : '0.00';
-        
+
         let manualStyle = cat.manual_score < 0 ? 'color: red;' : (cat.manual_score > 0 ? 'color: green;' : 'color: #999;');
         let manualDisplay = cat.manual_score > 0 ? '+' + manualScore : manualScore;
 
@@ -900,7 +951,7 @@ function renderRanking(latest) {
             </tr>
         `;
     });
-    
+
     document.querySelector('#ranking-table tbody').innerHTML = html;
 }
 
@@ -909,7 +960,7 @@ function renderMatrix(latest) {
 
     // Filter failing metrics (is_failing === 1)
     const failingMetrics = latest.metrics.filter(m => m.is_failing === 1);
-    
+
     if (failingMetrics.length === 0) {
         document.querySelector('#matrix-table tbody').innerHTML = `<tr><td colspan="3" style="text-align:center;color:#666;">${t('matrix_no_failures')}</td></tr>`;
         return;
@@ -953,27 +1004,27 @@ function renderMatrix(latest) {
 
 function renderManualScores(latest) {
     if (!latest.cat_scores) return;
-    
+
     const manualScores = latest.cat_scores.filter(c => c.manual_score !== 0 && c.manual_score !== null);
-    
+
     if (manualScores.length === 0) {
         document.getElementById('manual-score-section').style.display = 'none';
         return;
     }
-    
+
     document.getElementById('manual-score-section').style.display = 'block';
-    
+
     let rawSnap = {};
     if (latest.raw_data_json) {
-        try { rawSnap = JSON.parse(latest.raw_data_json); } catch(e){}
+        try { rawSnap = JSON.parse(latest.raw_data_json); } catch (e) { }
     }
     const snapAdjData = rawSnap.manualAdjustData || {};
-    
+
     let html = '';
     manualScores.forEach(c => {
         let valStyle = c.manual_score > 0 ? 'color: green; font-weight: bold;' : 'color: red; font-weight: bold;';
         let valStr = c.manual_score > 0 ? `+${c.manual_score}` : `${c.manual_score}`;
-        
+
         let reasons = [];
         let catAdj = snapAdjData[c.cat_name] || {};
         if (window._manualAdjustItems) {
@@ -984,7 +1035,7 @@ function renderManualScores(latest) {
             });
         }
         let desc = reasons.length > 0 ? reasons.join('、') : t('manual_default_desc');
-        
+
         html += `
             <tr>
                 <td style="font-weight:bold; color:#00285e;">${tVal(c.cat_name)}</td>
@@ -993,15 +1044,15 @@ function renderManualScores(latest) {
             </tr>
         `;
     });
-    
+
     document.querySelector('#manual-score-table tbody').innerHTML = html;
 }
 
 function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manualAdjustItems) {
     if (!latest.raw_data_json) return;
     let snap;
-    try { snap = JSON.parse(latest.raw_data_json); } catch(e) { return; }
-    
+    try { snap = JSON.parse(latest.raw_data_json); } catch (e) { return; }
+
     // Build labelToTargetMap
     const labelToTargetMap = {};
     const { targets, prefs } = globalConfig;
@@ -1032,7 +1083,7 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
     });
 
     const metricCols = snap.topMetrics || [];
-    
+
     // Inject missing manual
     if (targets) {
         Object.keys(targets).forEach(k => {
@@ -1042,14 +1093,14 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
                     metricCols.push({ label: label, value: '--', subMetrics: [], isManual: true });
                 } else {
                     const exists = metricCols.find(m => m.label === label);
-                    if(exists) exists.isManual = true;
+                    if (exists) exists.isManual = true;
                 }
             }
         });
     }
 
     const targetMonth = parseInt(getMonthlyTargetMonth(), 10) || snap.month || new Date(snap.timestamp).getMonth() + 1;
-    
+
     function parseNum(str) {
         if (str === undefined || str === null || str === '--') return NaN;
         const n = parseFloat(String(str).replace(/[^0-9.-]/g, ''));
@@ -1071,7 +1122,7 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
         const targetData = labelToTargetMap[m.label];
         const weight = (targetData && targetData.weight !== undefined) ? parseFloat(targetData.weight) : 1;
         m.hasTarget = targetData && targetData[targetMonth] !== undefined && targetData[targetMonth] !== '' && weight > 0;
-        
+
         const subs = m.subMetrics || [];
         subs.forEach(sm => {
             if (!catData[sm.category]) {
@@ -1086,13 +1137,13 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
             let proportionalScoring = false;
             let completionRatio = 0;
             const dbMetric = metricDbMap[`${sm.category}@@${m.label}`];
-            
+
             if (!isNaN(valNum) && m.hasTarget) {
                 catData[sm.category].validWeightSum += weight;
                 const targetNum = parseFloat(targetData[targetMonth]);
                 const condition = targetData.type || 'gte';
                 const isPercent = String(sm.value).includes('%');
-                
+
                 if (condition === 'gte' && valNum < targetNum) {
                     isFailing = true; gapStr = +(targetNum - valNum).toFixed(2) + (isPercent ? '%' : '');
                 } else if (condition === 'lte' && valNum > targetNum) {
@@ -1132,8 +1183,8 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
     const groupWeightMap = {};
     metricGroups.forEach(g => {
         let sumWeight = 0;
-        (g.metrics || []).forEach(label => { 
-            labelToGroup[label] = g.name; 
+        (g.metrics || []).forEach(label => {
+            labelToGroup[label] = g.name;
             const t = labelToTargetMap[label];
             sumWeight += (t && t.weight !== undefined) ? parseFloat(t.weight) : 1;
         });
@@ -1155,7 +1206,7 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
         const m = orderedMetrics[i];
         const hasTgt = labelToTargetMap[m.label] && labelToTargetMap[m.label][targetMonth] !== undefined && labelToTargetMap[m.label][targetMonth] !== '';
         const grpName = labelToGroup[m.label] || (m.isManual || hasTgt ? t('full_ungrouped') : null);
-        
+
         if (grpName) {
             const grpMetrics = orderedMetrics.filter(x => {
                 const xHasTgt = labelToTargetMap[x.label] && labelToTargetMap[x.label][targetMonth] !== undefined && labelToTargetMap[x.label][targetMonth] !== '';
@@ -1175,7 +1226,7 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
         i++;
     }
 
-    const escapeHTML = str => typeof str === 'string' ? str.replace(/[&<>'"]/g, tag => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'": '&#39;','"':'&quot;'}[tag]||tag)) : str;
+    const escapeHTML = str => typeof str === 'string' ? str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)) : str;
 
     let matrixHtml = `
         <div style="background:#fff; overflow-x:auto;">
@@ -1186,7 +1237,7 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
                     <th style="width:40px; max-width:50px; background:#e8eaf6; color:#283593; white-space:normal; word-wrap:break-word; text-align:center;">${t('full_th_total_weight')}</th>
                     <th style="width:100px; max-width:140px; text-align:left; white-space:normal; word-wrap:break-word;">${t('full_th_metric')}</th>
                     <th style="width:40px; text-align:center;">${t('full_th_weight')}</th>
-                    <th style="width:75px; text-align:center; white-space:normal; word-wrap:break-word;">${t('full_th_month_target', {month: targetMonth})}</th>
+                    <th style="width:75px; text-align:center; white-space:normal; word-wrap:break-word;">${t('full_th_month_target', { month: targetMonth })}</th>
                     <th style="width:75px; background:#fff8e1; border-right:2px solid #ffe082; color:#ef6c00; text-align:center; white-space:normal; word-wrap:break-word;">${t('full_th_global')}</th>
                     ${categories.map(cat => `<th style="text-align:center; width:40px; white-space:normal; word-wrap:break-word;">${escapeHTML(tVal(cat))}</th>`).join('')}
                     ${categories.map(cat => `<th style="background:#e8f5e9; text-align:center; width:40px; white-space:normal; word-wrap:break-word;">${escapeHTML(tVal(cat))}<br>${t('full_th_score')}</th>`).join('')}
@@ -1200,16 +1251,16 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
         let targetStr = '--';
         let isGlobalFailing = false;
         let globalGapStr = '';
-        
+
         const targetData = labelToTargetMap[m.label];
         const weight = (targetData && targetData.weight !== undefined) ? parseFloat(targetData.weight) : 1;
-        
+
         if (m.hasTarget) {
             const condition = targetData.type || 'gte';
             targetStr = (condition === 'gte' ? '≥ ' : '≤ ') + targetData[targetMonth];
             const isPercent = m.value && String(m.value).includes('%');
             if (isPercent) targetStr += '%';
-            
+
             const globalValNum = parseNum(m.value);
             if (!isNaN(globalValNum)) {
                 const targetNum = parseFloat(targetData[targetMonth]);
@@ -1220,10 +1271,10 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
                 }
             }
         }
-        
+
         let globalDisplayClass = 'val-none';
         if (m.hasTarget) globalDisplayClass = isGlobalFailing ? 'val-warn' : 'val-good';
-        
+
         matrixHtml += `<tr>`;
         if (metricGroups.length > 0) {
             matrixHtml += `<td ${row.isGroupStart ? `rowspan="${row.groupSize}"` : `style="display:none;"`} style="max-width:60px; white-space:normal; word-wrap:break-word; text-align:center;">${escapeHTML(tVal(row.groupName) || t('full_ungrouped_short'))}</td>`;
@@ -1235,7 +1286,7 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
             <td style="color:#666; font-weight:bold; background:#fafafa; text-align:center;">${weight}</td>
             <td style="color:#0277bd; font-weight:bold; background:#f5f8fa; text-align:center; max-width:75px; white-space:normal; word-wrap:break-word;">${targetStr}</td>
             <td style="background:#fff8e1; border-right:2px solid #ffe082; text-align:center; max-width:75px; white-space:normal; word-wrap:break-word;"><span class="${globalDisplayClass}">${escapeHTML(String(m.value || '--').trim())}</span></td>`;
-            
+
         categories.forEach(cat => {
             const cell = catData[cat].values[m.label];
             if (!cell || cell.raw === '--') {
@@ -1246,7 +1297,7 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
                 matrixHtml += `<td style="text-align:center;"><span class="${displayClass}">${escapeHTML(String(cell.raw).trim())}</span></td>`;
             }
         });
-        
+
         categories.forEach(cat => {
             const cell = catData[cat].values[m.label];
             if (!cell || cell.raw === '--') {
@@ -1264,7 +1315,7 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
         });
         matrixHtml += `</tr>`;
     });
-    
+
     matrixHtml += `</tbody></table></div>`;
 
     // Adjustments
@@ -1289,7 +1340,7 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
         if (item.deleted) return;
         const typeColor = item.type === '加分' ? '#2e7d32' : '#c62828';
         const typeBg = item.type === '加分' ? '#e8f5e9' : '#ffebee';
-        
+
         let displayDesc = item.desc;
         if (window.currentLang === 'en' && item.unit !== undefined) {
             displayDesc = item.cap ? `${item.unit} pts/time, Cap ${item.cap} pts` : `${item.unit} pts/time, No cap`;
@@ -1300,12 +1351,12 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
             <td style="text-align:left; max-width:200px; white-space:normal; word-wrap:break-word;">${escapeHTML(tVal(item.name))}</td>
             <td style="color:#666; max-width:120px; white-space:normal; word-wrap:break-word;">${escapeHTML(displayDesc)}</td>
         `;
-        
+
         categories.forEach(cat => {
             const val = (snapAdjustData[cat] && snapAdjustData[cat][idx]) || '--';
             adjustHtml += `<td style="text-align:center;">${val}</td>`;
         });
-        
+
         categories.forEach(cat => {
             let score = 0;
             const count = (snapAdjustData[cat] && snapAdjustData[cat][idx]) || 0;
@@ -1317,7 +1368,7 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
             const sColor = score > 0 ? '#2e7d32' : (score < 0 ? '#c62828' : '#333');
             adjustHtml += `<td style="font-weight:bold; text-align:center; color:${sColor};">${score}</td>`;
         });
-        
+
         adjustHtml += `</tr>`;
     });
     adjustHtml += `</tbody></table></div>`;
@@ -1325,21 +1376,21 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
     document.getElementById('full-report-content').innerHTML = matrixHtml + adjustHtml;
 }
 
-window.exportToImage = async function() {
+window.exportToImage = async function () {
     try {
         const btnContainer = document.getElementById('export-actions');
         btnContainer.style.display = 'none'; // hide buttons
         showToast('⏳ 正在生成长图，请稍候...', 'info');
 
         const element = document.querySelector('.page-container');
-        
+
         const filterContainer = document.getElementById('date-filter-container');
         if (filterContainer) filterContainer.style.display = 'none';
-        
+
         // Fix for html2canvas truncation: scroll to top before capturing
         const prevScrollY = window.scrollY;
         window.scrollTo(0, 0);
-        
+
         // Add temporary bottom padding to guarantee whitespace
         const oldPadding = element.style.paddingBottom;
         element.style.paddingBottom = '100px';
@@ -1352,19 +1403,19 @@ window.exportToImage = async function() {
 
         element.style.paddingBottom = oldPadding;
         window.scrollTo(0, prevScrollY);
-        
+
         if (filterContainer) filterContainer.style.display = 'flex';
 
         const imgData = canvas.toDataURL('image/jpeg', 0.9);
         const a = document.createElement('a');
         a.href = imgData;
-        
+
         let dateStr = document.getElementById('latest-snapshot-date').innerText || 'Latest';
         a.download = `Monthly_Report_${dateStr}.jpg`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        
+
         btnContainer.style.display = 'flex';
         showToast('✅ 长图已成功导出！', 'success');
     } catch (e) {
@@ -1374,21 +1425,21 @@ window.exportToImage = async function() {
     }
 };
 
-window.exportToPDF = async function() {
+window.exportToPDF = async function () {
     try {
         const btnContainer = document.getElementById('export-actions');
         btnContainer.style.display = 'none'; // hide buttons
         showToast('⏳ 正在生成 PDF，请稍候...', 'info');
 
         const element = document.querySelector('.page-container');
-        
+
         const filterContainer = document.getElementById('date-filter-container');
         if (filterContainer) filterContainer.style.display = 'none';
-        
+
         // Fix for html2canvas truncation: scroll to top before capturing
         const prevScrollY = window.scrollY;
         window.scrollTo(0, 0);
-        
+
         // Add temporary bottom padding to guarantee whitespace
         const oldPadding = element.style.paddingBottom;
         element.style.paddingBottom = '100px';
@@ -1401,28 +1452,28 @@ window.exportToPDF = async function() {
 
         element.style.paddingBottom = oldPadding;
         window.scrollTo(0, prevScrollY);
-        
+
         if (filterContainer) filterContainer.style.display = 'flex';
 
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        
+
         // Use jsPDF from UMD
         const { jsPDF } = window.jspdf;
-        
+
         // Calculate dimensions to fit A4 width (avoiding PDF 14400pt height limit)
         // A4 width in pt is 595.28
         const pdfWidth = 595.28;
         const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        
+
         const pdf = new jsPDF({
             orientation: 'p',
             unit: 'pt',
             format: [pdfWidth, pdfHeight]
         });
-        
+
         // Add image to cover the entire custom-sized page
         pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-        
+
         let dateStr = document.getElementById('latest-snapshot-date').innerText || 'Latest';
         pdf.save(`Monthly_Report_${dateStr}.pdf`);
 

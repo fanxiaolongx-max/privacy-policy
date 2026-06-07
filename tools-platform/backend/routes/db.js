@@ -3,6 +3,7 @@ const router = express.require ? express.Router() : require('express').Router();
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
+const zlib = require('zlib');
 
 const dataDir = path.join(__dirname, '../../data');
 if (!fs.existsSync(dataDir)) {
@@ -81,11 +82,61 @@ function markSqliteSource(res, routeLabel) {
     }
 }
 
+function decodeCompressedTextField(field, label) {
+    if (!field || typeof field !== 'object') {
+        throw new Error(`${label} 压缩字段格式无效`);
+    }
+
+    const encoding = String(field.encoding || '').toLowerCase();
+    const raw = Buffer.from(String(field.data || ''), 'base64');
+    if (raw.length === 0 && field.data) {
+        throw new Error(`${label} 压缩数据为空`);
+    }
+
+    let out;
+    if (encoding === 'gzip+base64') {
+        out = zlib.gunzipSync(raw);
+    } else if (encoding === 'deflate+base64') {
+        out = zlib.inflateSync(raw);
+    } else {
+        throw new Error(`${label} 压缩编码不支持: ${field.encoding || 'unknown'}`);
+    }
+
+    return out.toString('utf8');
+}
+
+function expandCompressedReportPayload(body) {
+    const transportCompression = body && body.transport && body.transport.compression;
+    if (!transportCompression) return body;
+
+    const payloadText = decodeCompressedTextField(body.compressedReportPayload, '报表入库数据');
+    const payload = JSON.parse(payloadText);
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+        throw new Error('报表入库数据解压后格式无效');
+    }
+    return payload;
+}
+
 // Serve static images
 router.use('/images', express.static(imagesDir));
 
 router.post('/save', (req, res) => {
-    const { snapshot_id, month, standard_total_score, cat_scores, metric_data, raw_data, image_data } = req.body;
+    let body;
+    try {
+        body = expandCompressedReportPayload(req.body);
+    } catch (decodeErr) {
+        console.error('[POST /api/db/save] compressed payload decode failed:', decodeErr);
+        return res.status(400).json({ error: decodeErr.message || '压缩报表入库数据解码失败' });
+    }
+
+    if (req.body && req.body.transport && req.body.transport.compression) {
+        console.log(
+            `[REPORT COMPRESS] POST /api/db/save -> transport=${req.body.transport.compression}, ` +
+            `original=${req.body.transport.originalBytes || '-'}, compressed=${req.body.transport.compressedBytes || '-'}`
+        );
+    }
+
+    const { snapshot_id, month, standard_total_score, cat_scores, metric_data, raw_data, image_data } = body;
     
     if (!snapshot_id) {
         return res.status(400).json({ error: 'Missing snapshot_id' });
@@ -109,8 +160,8 @@ router.post('/save', (req, res) => {
 
         // Save excel to disk if provided
         let excel_path = null;
-        if (req.body.excel_data) {
-            const matches = req.body.excel_data.match(/^data:(.+);base64,(.+)$/);
+        if (body.excel_data) {
+            const matches = body.excel_data.match(/^data:(.+);base64,(.+)$/);
             if (matches && matches.length === 3) {
                 const buffer = Buffer.from(matches[2], 'base64');
                 const filename = `${snapshot_id}_${month}.xlsx`;
@@ -121,8 +172,8 @@ router.post('/save', (req, res) => {
         }
 
         let createdAtStr;
-        if (req.body.created_at) {
-            createdAtStr = new Date(req.body.created_at).toISOString().replace('T', ' ').substring(0, 19);
+        if (body.created_at) {
+            createdAtStr = new Date(body.created_at).toISOString().replace('T', ' ').substring(0, 19);
         } else {
             createdAtStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
         }

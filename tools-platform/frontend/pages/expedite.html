@@ -28,6 +28,7 @@
             align-items: center;
             margin-bottom: 24px;
         }
+
         .data-source-controls {
             display: flex;
             gap: 8px;
@@ -35,6 +36,7 @@
             align-items: center;
             margin-bottom: 0;
         }
+
         .data-source-panel {
             display: flex;
             gap: 8px;
@@ -42,6 +44,7 @@
             align-items: center;
             margin-bottom: 0;
         }
+
         .data-source-badge {
             display: inline-flex;
             align-items: center;
@@ -55,10 +58,12 @@
             border: 1px solid rgba(37, 99, 235, 0.24);
             color: #1d4ed8;
         }
+
         .data-source-note {
             color: #64748b;
             font-size: 11px;
         }
+
         .data-source-select {
             height: 34px;
             border-radius: 8px;
@@ -533,9 +538,11 @@
 <body>
     <div class="page-container">
         <div class="controls">
-            <h2><span data-i18n="title">一键催办</span> <span style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v1.0.0</span></h2>
+            <h2><span data-i18n="title">一键催办</span> <span
+                    style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v1.0.0</span></h2>
             <div style="display: flex; gap: 12px; align-items: center;">
-                <button id="lang-toggle" class="btn-secondary" style="background:#00285e; color:#fff; border:none;" onclick="toggleLang()">English</button>
+                <button id="lang-toggle" class="btn-secondary" style="background:#00285e; color:#fff; border:none;"
+                    onclick="toggleLang()">English</button>
                 <select id="snapshot-selector" onchange="loadSelectedSnapshot()"
                     style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; background: #fff; color: #334155; font-size: 13px; max-width: 200px;">
                     <option value="" data-i18n="loading">加载中...</option>
@@ -556,7 +563,9 @@
                 </button>
             </div>
         </div>
-        <div class="source-info-wrapper print-hide" style="display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;" data-html2canvas-ignore="true">
+        <div class="source-info-wrapper print-hide"
+            style="display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;"
+            data-html2canvas-ignore="true">
             <div class="data-source-controls">
                 <span class="data-source-note">SLA配置读源模式:</span>
                 <select id="expediteSourceMode" class="data-source-select">
@@ -588,9 +597,11 @@
                         <div style="display: flex; align-items: flex-start; gap: 8px;">
                             <span style="font-size: 24px;">🚀</span>
                             <div>
-                                <h3 style="font-size: 15px; color: #1e293b; margin: 0; margin-bottom: 8px;" data-i18n="welink_auto">WeLink 自动化分发
+                                <h3 style="font-size: 15px; color: #1e293b; margin: 0; margin-bottom: 8px;"
+                                    data-i18n="welink_auto">WeLink 自动化分发
                                 </h3>
-                                <div style="font-size: 12px; color: #64748b; margin-bottom: 12px;" data-i18n="welink_desc">自动生成 PowerShell
+                                <div style="font-size: 12px; color: #64748b; margin-bottom: 12px;"
+                                    data-i18n="welink_desc">自动生成 PowerShell
                                     脚本一键分发。若无权限发附件，请取消勾选“直接分发附件”。</div>
                                 <div
                                     style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 8px;">
@@ -600,7 +611,8 @@
                                     </button>
                                     <label
                                         style="font-size: 13px; color: #334155; display: flex; align-items: center; gap: 4px; cursor: pointer;">
-                                        <input type="checkbox" id="welink-enable-media"> <span data-i18n="lbl_enable_media">启用图片/表格直接分发 (测试版)</span>
+                                        <input type="checkbox" id="welink-enable-media"> <span
+                                            data-i18n="lbl_enable_media">启用图片/表格直接分发 (测试版)</span>
                                     </label>
                                 </div>
                                 <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
@@ -630,8 +642,10 @@
 
                 <div id="manual-links-container" style="display: flex; gap: 12px; margin-bottom: 8px;">
                     <div style="flex: 1; display: flex; align-items: center; gap: 8px;">
-                        <span style="font-size: 13px; color: #475569; white-space: nowrap; font-weight: 500;" data-i18n="lbl_excel_link">Excel下载链接</span>
-                        <input type="text" id="manual-excel-link" placeholder="https://..." data-i18n-placeholder="ph_excel_link"
+                        <span style="font-size: 13px; color: #475569; white-space: nowrap; font-weight: 500;"
+                            data-i18n="lbl_excel_link">Excel下载链接</span>
+                        <input type="text" id="manual-excel-link" placeholder="https://..."
+                            data-i18n-placeholder="ph_excel_link"
                             style="flex: 1; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; color: #334155;">
                     </div>
                 </div>
@@ -651,8 +665,10 @@
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <span style="font-size: 24px;">📊</span>
                                 <div>
-                                    <h3 style="font-size: 15px; color: #1e293b; margin: 0;" data-i18n="excel_title">关联 Excel 报表</h3>
-                                    <div style="font-size: 12px; color: #64748b;" data-i18n="excel_desc">专业的高清排版短板透视矩阵表格</div>
+                                    <h3 style="font-size: 15px; color: #1e293b; margin: 0;" data-i18n="excel_title">关联
+                                        Excel 报表</h3>
+                                    <div style="font-size: 12px; color: #64748b;" data-i18n="excel_desc">专业的高清排版短板透视矩阵表格
+                                    </div>
                                 </div>
                             </div>
                             <div>
@@ -684,24 +700,30 @@
                     <!-- Dynamic Categories will be rendered here via JS -->
                 </div>
                 <div class="dist-right">
-                    <div style="font-size:13px; font-weight:600; color:#555; margin-bottom:10px;"><span data-i18n="pool_emp_title">👤 员工名册 <span style="color:#999;font-weight:normal;">(点选复用)</span></span></div>
+                    <div style="font-size:13px; font-weight:600; color:#555; margin-bottom:10px;"><span
+                            data-i18n="pool_emp_title">👤 员工名册 <span
+                                style="color:#999;font-weight:normal;">(点选复用)</span></span></div>
                     <div id="dist-roster-pool"
                         style="flex:1; align-content: flex-start; display: flex; flex-wrap: wrap;">
                         <!-- Roster chips -->
                     </div>
                     <div id="add-roster-section"
                         style="margin-top: 10px; border-top: 1px solid #e2e8f0; padding-top: 10px;">
-                        <input type="text" id="new-roster-input" placeholder="输入工号或群ID (如: l00123)" data-i18n-placeholder="input_emp_placeholder"
+                        <input type="text" id="new-roster-input" placeholder="输入工号或群ID (如: l00123)"
+                            data-i18n-placeholder="input_emp_placeholder"
                             style="width: 100%; margin-bottom: 6px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px;">
-                        <input type="text" id="new-roster-name" placeholder="备注姓名/群名 (可选)" data-i18n-placeholder="input_name_placeholder"
+                        <input type="text" id="new-roster-name" placeholder="备注姓名/群名 (可选)"
+                            data-i18n-placeholder="input_name_placeholder"
                             style="width: 100%; margin-bottom: 6px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px;">
                         <button onclick="addRosterEmployee()"
-                            style="width: 100%; padding: 6px; background: #0ea5e9; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;"><span data-i18n="btn_add_roster">＋ 添加至待分配库</span></button>
+                            style="width: 100%; padding: 6px; background: #0ea5e9; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;"><span
+                                data-i18n="btn_add_roster">＋ 添加至待分配库</span></button>
                     </div>
                 </div>
             </div>
             <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
-                <button class="btn-primary" id="btn-save-policy" onclick="saveDistributionPolicy()"><span data-i18n="btn_save_policy">💾 保存全部配置</span></button>
+                <button class="btn-primary" id="btn-save-policy" onclick="saveDistributionPolicy()"><span
+                        data-i18n="btn_save_policy">💾 保存全部配置</span></button>
             </div>
         </div>
     </div>
@@ -714,13 +736,15 @@
                 <h3><span data-i18n="modal_ignore_title">🚫 忽略关键词配置</span></h3>
                 <button class="close-btn" onclick="closeIgnoreModal()">&times;</button>
             </div>
-            <p style="font-size: 12px; color: #64748b; margin-top: 0; margin-bottom: 12px;" data-i18n="modal_ignore_desc">
+            <p style="font-size: 12px; color: #64748b; margin-top: 0; margin-bottom: 12px;"
+                data-i18n="modal_ignore_desc">
                 如果指标名称（中文或英文）包含以下关键词，则不会出现在一键催办的文本中。</p>
             <div class="keyword-list" id="keyword-list-container">
                 <!-- Keywords will be rendered here -->
             </div>
             <div class="add-keyword-group">
-                <input type="text" id="new-keyword-input" placeholder="输入要忽略的关键词 (如: Storage)" data-i18n-placeholder="input_ignore_placeholder">
+                <input type="text" id="new-keyword-input" placeholder="输入要忽略的关键词 (如: Storage)"
+                    data-i18n-placeholder="input_ignore_placeholder">
                 <button onclick="addKeyword()"><span data-i18n="btn_add">添加</span></button>
             </div>
         </div>
@@ -739,12 +763,14 @@
                         <label data-i18n="tpl_lbl_group_greet">群发问候语 (Group Greeting)</label>
                         <input type="text" id="tpl-greeting-group"
                             style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; margin-top: 4px;">
-                        <div class="template-help" data-i18n="tpl_help_group_greet">群发场景(群聊/邮件/会议)使用，默认: @所有人 Hi Team,</div>
+                        <div class="template-help" data-i18n="tpl_help_group_greet">群发场景(群聊/邮件/会议)使用，默认: @所有人 Hi Team,
+                        </div>
                     </div>
                     <div class="template-group">
                         <label data-i18n="tpl_lbl_header">头部模板 (Header)</label>
                         <textarea id="tpl-header" style="height: 120px;"></textarea>
-                        <div class="template-help" data-i18n="tpl_help_header">可用变量: {MM} 月份, {DD} 日期, {GREETING} 动态问候语</div>
+                        <div class="template-help" data-i18n="tpl_help_header">可用变量: {MM} 月份, {DD} 日期, {GREETING} 动态问候语
+                        </div>
                     </div>
                     <div class="template-group">
                         <label data-i18n="tpl_lbl_email">全局邮件抄送标题 (Email Subject)</label>
@@ -764,7 +790,8 @@
                     <div class="template-group">
                         <label data-i18n="tpl_lbl_footer">尾部模板 (Footer)</label>
                         <textarea id="tpl-footer" style="height: 120px;"></textarea>
-                        <div class="template-help" data-i18n="tpl_help_footer">在这里可以加上特定的说明，比如 Storage Rectification 等</div>
+                        <div class="template-help" data-i18n="tpl_help_footer">在这里可以加上特定的说明，比如 Storage Rectification 等
+                        </div>
                     </div>
                     <div class="template-group">
                         <label data-i18n="tpl_lbl_meet">日程/会议邀请标题 (Meeting Subject)</label>
@@ -775,8 +802,10 @@
                 </div>
             </div>
             <div style="text-align: right; margin-top: 20px;">
-                <button class="btn-secondary" onclick="closeTemplateModal()"><span data-i18n="btn_cancel">取消</span></button>
-                <button class="btn-copy" onclick="saveTemplateConfig()" style="margin-left: 8px;"><span data-i18n="btn_save_config">保存配置</span></button>
+                <button class="btn-secondary" onclick="closeTemplateModal()"><span
+                        data-i18n="btn_cancel">取消</span></button>
+                <button class="btn-copy" onclick="saveTemplateConfig()" style="margin-left: 8px;"><span
+                        data-i18n="btn_save_config">保存配置</span></button>
             </div>
         </div>
     </div>
@@ -1007,9 +1036,10 @@
 
         function translateTicketTitle(title) {
             let cleanTitle = String(title || '').replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim();
-            if (cleanTitle.includes('SR详单')) return 'SR Detail Analysis';
+            if (cleanTitle.includes('漏洞预警') || cleanTitle.includes('漏洞')) return 'Vulnerability Comm';
+            if (cleanTitle.includes('SR详单')) return 'SR';
             if (cleanTitle.includes('整改')) return 'Rectification';
-            if (cleanTitle.includes('CPT专项风险') || cleanTitle.includes('专项风险')) return 'CPT Special Risk';
+            if (cleanTitle.includes('CPT专项风险') || cleanTitle.includes('专项风险')) return 'CPT';
             if (cleanTitle.includes('常规风险') || cleanTitle === '风险') return 'Risk';
             return getEnName(cleanTitle) || cleanTitle || 'Ticket';
         }
@@ -1045,6 +1075,8 @@
                 .replace(/SR预警/g, 'SR warning')
                 .replace(/Critical高危/g, 'Critical high risk')
                 .replace(/Critical预警/g, 'Critical warning')
+                .replace(/漏洞紧急/g, 'Vulnerability urgent')
+                .replace(/漏洞提醒/g, 'Vulnerability warning')
                 .replace(/Checking紧急/g, 'Checking urgent')
                 .replace(/Checking提醒/g, 'Checking warning')
                 .replace(/整改紧急/g, 'Rectification urgent')
@@ -1182,17 +1214,49 @@
             if (!tickets || tickets.length === 0) return '';
 
             let text = '\n⚠️ [Expiring/Overdue Alert] The following tickets require immediate action:\n';
+            const groupedByNetwork = {};
             tickets.forEach(t => {
                 const td = t.data || {};
-                const id = td.sr_num || td.sr_id || td.task_id || td.risk_id || td.ticket_id || td['单号'] || td['问题风险编号'] || td['问题编号'] || 'Unknown ID';
                 const network = td.network_name || td['网络名称'] || td.network || 'Unknown Network';
+                if (!groupedByNetwork[network]) groupedByNetwork[network] = [];
+                groupedByNetwork[network].push(t);
+            });
 
-                const enTitle = translateTicketTitle(t.title);
+            Object.keys(groupedByNetwork).sort((a, b) => a.localeCompare(b)).forEach(network => {
+                text += `  Network: ${network}\n`;
+                groupedByNetwork[network].forEach(t => {
+                    const td = t.data || {};
+                    const id = td.sr_num || td.sr_id || td.task_id || td.risk_id || td.ticket_id || td['单号'] || td['问题风险编号'] || td['问题编号'] || 'Unknown ID';
 
-                // Format SLA status
-                const slaStr = translateSlaStatus(t._slaCleanText, t._slaDays);
+                    const enTitle = translateTicketTitle(t.title);
 
-                text += `    ↳ [${enTitle}] Ticket: ${id} | Network: ${network} | Status: ${slaStr}\n`;
+                    // Format SLA status
+                    const slaStr = translateSlaStatus(t._slaCleanText, t._slaDays);
+
+                    text += `    ↳ [${enTitle}] Ticket: ${id} | Status: ${slaStr}\n`;
+                });
+            });
+            return text + '\n';
+        }
+
+        function getSpecialMetricAlertsText(data) {
+            if (!data.raw_data_json) return '';
+            let rawData;
+            try {
+                rawData = typeof data.raw_data_json === 'string' ? JSON.parse(data.raw_data_json) : data.raw_data_json;
+            } catch (e) {
+                return '';
+            }
+            const alerts = rawData.specialMetricAlerts || [];
+            if (!alerts.length) return '';
+
+            let text = '\n🚩 [Special Alert]\n';
+            alerts.forEach(item => {
+                const metricName = getEnName(item.metric_label || item.metricLabel || 'Unknown Metric');
+                const globalValue = item.global_val || item.globalValue || '--';
+                const targetValue = item.target_val || item.targetValue || '--';
+                const gap = item.gap || '-';
+                text += `    ↳ @ALL [${metricName}] Global: ${globalValue} | Target: ${targetValue} | Gap: ${gap}\n`;
             });
             return text + '\n';
         }
@@ -1262,6 +1326,7 @@
                 text += `✅ All targets are met or under control!\n`;
             }
 
+            text += getSpecialMetricAlertsText(data);
             text += getExpiringTicketsText(data);
             text += expediteTemplate.footer;
 
@@ -1559,7 +1624,7 @@
             if (!latestFailingData) return showToast('无快照数据', 'error');
 
             const origin = window.location.origin;
-            
+
             // Try to get image URL if screenshot features exist, else fallback to empty
             let imgUrl = '';
             const manualImgEl = document.getElementById('manual-img-link');
