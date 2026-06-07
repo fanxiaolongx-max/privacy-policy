@@ -13,6 +13,16 @@ function formatList(items) {
     return items.map(item => `  - ${item}`).join('\n');
 }
 
+function huaweiNpmRegistryCommands() {
+    return [
+        '  npm config rm proxy',
+        '  npm config rm http-proxy',
+        '  npm config rm https-proxy',
+        '  npm config set no-proxy .huawei.com',
+        '  npm config set registry http://cmc-cd-mirror.rnd.huawei.com/npm'
+    ];
+}
+
 function ensureDirWritable(dir, label, errors) {
     try {
         fs.mkdirSync(dir, { recursive: true });
@@ -41,6 +51,7 @@ function checkSqlite(errors) {
             'sqlite3 原生包未就绪或编译失败。',
             '建议先确认 Node.js 使用 LTS 版本，推荐 Node.js 20。',
             '在 backend 目录执行：npm install',
+            '华为内网环境如 npm install 下载失败，可先配置华为 npm 源，见下方提示。',
             '如果仍失败，执行：npm rebuild sqlite3',
             'Windows 如遇 node-gyp 编译错误，请安装 Visual Studio Build Tools 2022，并勾选 Desktop development with C++。'
         ];
@@ -132,6 +143,8 @@ function runPreflight(options = {}) {
             '  npm rebuild sqlite3',
             '  npm start'
         ].join('\n'));
+        console.error(color(36, '\n华为内网 npm 源配置（如 npm install 下载失败，先执行）：'));
+        console.error(huaweiNpmRegistryCommands().join('\n'));
         if (isWindows) {
             console.error(color(36, '\nWindows sqlite3/node-gyp 提示：'));
             console.error([

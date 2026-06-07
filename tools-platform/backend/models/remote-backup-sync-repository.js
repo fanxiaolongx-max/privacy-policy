@@ -200,7 +200,7 @@ function shouldSkipLatest(settings, latest, options = {}) {
     }
     // Even when comparison is disabled, keep a short guard to avoid restore -> restart -> restore loops.
     if (!settings.compareBeforeRestore && !options.force && isSameBackup(lastSync && lastSync.remoteBackup, latest)) {
-        const lastAt = Date.parse(lastSync.restoredAt || 0);
+        const lastAt = Date.parse((lastSync && lastSync.restoredAt) || 0);
         if (Number.isFinite(lastAt) && Date.now() - lastAt < 6 * 60 * 60 * 1000) {
             return { skip: true, reason: '同一备份刚刚恢复过，已防止启动循环' };
         }
@@ -278,6 +278,7 @@ async function pullRemoteBackup(options = {}) {
 
 function shouldSkipStartupSync() {
     const lastSync = getState().lastSync || null;
+    if (!lastSync) return { skip: false, reason: '' };
     const lastAt = Date.parse(lastSync.restoredAt || 0);
     if (Number.isFinite(lastAt) && Date.now() - lastAt < 2 * 60 * 1000) {
         return { skip: true, reason: '刚刚完成远端恢复，已跳过本次启动同步以防止恢复循环' };
