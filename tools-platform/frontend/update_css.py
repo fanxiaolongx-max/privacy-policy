@@ -1,6 +1,9 @@
 import re
+from pathlib import Path
 
-with open('/Volumes/512G/06-工具开发/privacy-policy/tools-platform/frontend/css/pages/praudit.css', 'r') as f:
+TARGET = Path(__file__).resolve().parent / 'css' / 'pages' / 'praudit.css'
+
+with open(TARGET, 'r') as f:
     content = f.read()
 
 huawei_print_css = """
@@ -275,6 +278,5 @@ media_print_content = """
 # The @media print block is at the very end of the file.
 content = re.sub(r'@media print\s*\{[\s\S]*\}\s*$', media_print_content.strip() + '\n', content)
 
-with open('/Volumes/512G/06-工具开发/privacy-policy/tools-platform/frontend/css/pages/praudit.css', 'w') as f:
+with open(TARGET, 'w') as f:
     f.write(content)
-

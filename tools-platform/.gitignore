@@ -3,6 +3,7 @@ node_modules/
 
 # Runtime data and local databases
 backend/data/
+backend/runtime/
 data/
 *.db
 *.sqlite

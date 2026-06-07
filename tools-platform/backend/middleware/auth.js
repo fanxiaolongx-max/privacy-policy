@@ -27,6 +27,10 @@ async function checkAuth(req, res, next) {
         req.user = session.user; // { username, role }
         next();
     } catch (err) {
+        if (err && err.code === 'SQLITE_MISUSE') {
+            console.warn('[AUTH] SQLite connection is closed, most likely because a global restore just completed. Please restart the service.');
+            return res.status(503).json({ error: '数据恢复已完成，服务正在重启或需要手动重启。请稍后刷新页面。' });
+        }
         console.error('Auth check error:', err);
         return res.status(500).json({ error: '服务器鉴权异常' });
     }

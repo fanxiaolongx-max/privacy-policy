@@ -1,6 +1,9 @@
 import re
+from pathlib import Path
 
-with open('/Volumes/512G/06-工具开发/privacy-policy/tools-platform/frontend/css/pages/praudit.css', 'r') as f:
+TARGET = Path(__file__).resolve().parent / 'css' / 'pages' / 'praudit.css'
+
+with open(TARGET, 'r') as f:
     content = f.read()
 
 # Add new CSS classes for cover page, watermark, and kpi-label
@@ -69,5 +72,5 @@ new_classes = """
 
 content = content.replace("/* ======= HUAWEI STYLE PRINT & PDF RENDERING ======= */", "/* ======= HUAWEI STYLE PRINT & PDF RENDERING ======= */\n" + new_classes)
 
-with open('/Volumes/512G/06-工具开发/privacy-policy/tools-platform/frontend/css/pages/praudit.css', 'w') as f:
+with open(TARGET, 'w') as f:
     f.write(content)
