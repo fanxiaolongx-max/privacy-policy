@@ -311,11 +311,18 @@ async function restoreFromZip(zipPath, options = {}) {
     }
 }
 
+function deleteBackup(name) {
+    const filePath = getBackupPath(name);
+    fs.rmSync(filePath, { force: true });
+    return { success: true, name };
+}
+
 module.exports = {
     BACKUP_DIR,
     DATA_TARGETS,
     createBackup,
     listBackups,
     getBackupPath,
-    restoreFromZip
+    restoreFromZip,
+    deleteBackup
 };

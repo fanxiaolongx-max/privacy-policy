@@ -8,6 +8,9 @@ function evaluateAllMetrics() {
         const state = AppState[secId];
         if (!state.customMetrics || !state.customMetrics.length) return;
         state.customMetrics.forEach(rule => {
+            const displayLabel = typeof getMetricRuleDisplayLabel === 'function'
+                ? getMetricRuleDisplayLabel(rule)
+                : (rule.label || rule.colZ || '未命名指标');
             const evalRule = (r, dataRows) => {
                 const checkMatch = (cellVal, pattern) => {
                     const str = (cellVal !== undefined && cellVal !== null) ? cellVal.toString().trim() : '';
@@ -54,7 +57,7 @@ function evaluateAllMetrics() {
             const ruleColZ = rule.colZ || '';
             const targetKey = `${secId}_${rule.id}`;
             const targetDef = window.GlobalTargets ? window.GlobalTargets[targetKey] : null;
-            const isPercentFormat = targetDef && targetDef.isPercent !== undefined ? targetDef.isPercent : (rule.label.includes('率') || ruleColZ.includes('率'));
+            const isPercentFormat = targetDef && targetDef.isPercent !== undefined ? targetDef.isPercent : (displayLabel.includes('率') || ruleColZ.includes('率'));
             
             if (isPercentFormat && matchedValue !== '--' && rule.type !== 'count' && rule.type !== 'ratio') {
                 const strVal = matchedValue.toString().trim();
@@ -71,7 +74,9 @@ function evaluateAllMetrics() {
                                         : (sm.sourceSecId ? [] : state.globalData);
                     let smValue = evalRule(sm, sourceData);
                     
-                    const effectiveLabel = sm.label || rule.label || '';
+                    const effectiveLabel = typeof getMetricRuleDisplayLabel === 'function'
+                        ? getMetricRuleDisplayLabel(sm, rule)
+                        : (sm.label || displayLabel || '');
                     const effectiveColZ = sm.colZ || rule.colZ || '';
                     const smTargetKey = `${secId}_${sm.id}`;
                     const smTargetDef = window.GlobalTargets ? (window.GlobalTargets[smTargetKey] || window.GlobalTargets[targetKey]) : null;
@@ -87,7 +92,7 @@ function evaluateAllMetrics() {
                 });
             }
 
-            window.GlobalMetrics[`${secId}_${rule.id}`] = { label: rule.label, value: matchedValue, color: rule.color, subMetrics: evaluatedSubMetrics };
+            window.GlobalMetrics[`${secId}_${rule.id}`] = { label: displayLabel, value: matchedValue, color: rule.color, subMetrics: evaluatedSubMetrics };
         });
     });
     renderTopStickyBar();

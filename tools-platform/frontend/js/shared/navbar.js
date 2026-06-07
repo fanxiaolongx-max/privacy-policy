@@ -765,6 +765,7 @@ async function renderBackupSettings(content) {
                 <td class="nav-backup-actions">
                     <button onclick="downloadGlobalBackup('${navEscape(item.name)}')">下载</button>
                     <button class="danger" onclick="restoreGlobalBackupFromServer('${navEscape(item.name)}')">恢复</button>
+                    <button class="danger" style="background:#fff3e0; color:#e65100; border-color:#ffe0b2;" onclick="deleteGlobalBackup('${navEscape(item.name)}')">删除</button>
                 </td>
             </tr>
         `).join('');
@@ -937,7 +938,31 @@ async function downloadGlobalBackupFile(name) {
         headers: getAuthHeaderForNav()
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const blob = await res.blob();
+    
+    const contentLength = res.headers.get('content-length');
+    const total = contentLength ? parseInt(contentLength, 10) : 0;
+    
+    let loaded = 0;
+    const reader = res.body.getReader();
+    const chunks = [];
+    const indicator = document.getElementById('navSettingsSaveState');
+    
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        loaded += value.length;
+        if (indicator) {
+            if (total) {
+                const percent = Math.round((loaded / total) * 100);
+                indicator.textContent = `正在下载... ${percent}% (${formatBackupSize(loaded)} / ${formatBackupSize(total)})`;
+            } else {
+                indicator.textContent = `正在下载... 已接收 ${formatBackupSize(loaded)}`;
+            }
+        }
+    }
+    
+    const blob = new Blob(chunks, { type: res.headers.get('content-type') || 'application/zip' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -950,6 +975,21 @@ async function downloadGlobalBackupFile(name) {
 
 window.downloadGlobalBackup = async function (name) {
     await runGlobalBackupAction('正在下载备份...', () => downloadGlobalBackupFile(name));
+};
+
+window.deleteGlobalBackup = async function (name) {
+    const ok = confirm(`确定要永久删除备份文件吗？\n\n${name}`);
+    if (!ok) return;
+    await runGlobalBackupAction('正在删除备份...', async () => {
+        const res = await fetch(`/api/global-backup/delete/${encodeURIComponent(name)}`, {
+            method: 'DELETE',
+            headers: getAuthHeaderForNav()
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+        return data;
+    });
+    renderNavSettingsContent();
 };
 
 window.restoreGlobalBackupFromServer = async function (name) {
@@ -974,19 +1014,50 @@ window.restoreGlobalBackupFromUpload = async function () {
     if (!file) return alert('请先选择备份 zip 包');
     const ok = confirm(`确定要上传并恢复这个备份包吗？\n\n${file.name}\n\n此操作会覆盖当前全局配置和全部数据。系统会先自动生成恢复前安全备份。`);
     if (!ok) return;
-    await runGlobalBackupAction('正在上传并恢复备份...', async () => {
-        const form = new FormData();
-        form.append('backup', file);
-        const res = await fetch('/api/global-backup/restore/upload', {
-            method: 'POST',
-            headers: getAuthHeaderForNav(),
-            body: form
+    
+    const indicator = document.getElementById('navSettingsSaveState');
+    if (indicator) indicator.textContent = '准备上传备份...';
+    
+    try {
+        const data = await new Promise((resolve, reject) => {
+            const form = new FormData();
+            form.append('backup', file);
+            
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/api/global-backup/restore/upload', true);
+            
+            const headers = getAuthHeaderForNav();
+            Object.keys(headers).forEach(key => {
+                xhr.setRequestHeader(key, headers[key]);
+            });
+            
+            xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable && indicator) {
+                    const percent = Math.round((e.loaded / e.total) * 100);
+                    indicator.textContent = `正在上传并解压... ${percent}% (${formatBackupSize(e.loaded)} / ${formatBackupSize(e.total)})`;
+                }
+            };
+            
+            xhr.onload = () => {
+                let resData = {};
+                try { resData = JSON.parse(xhr.responseText); } catch (err) {}
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    resolve(resData);
+                } else {
+                    reject(new Error(resData.error || `HTTP ${xhr.status}`));
+                }
+            };
+            
+            xhr.onerror = () => reject(new Error('网络请求失败'));
+            xhr.send(form);
         });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+        
+        if (indicator) indicator.textContent = '操作完成';
         alert(`恢复完成。恢复前安全备份：${data.safetyBackup?.name || '-'}\n\n建议重启服务或刷新页面，确保 SQLite 连接重新加载。`);
-        return data;
-    });
+    } catch (e) {
+        if (indicator) indicator.textContent = `操作失败: ${e.message}`;
+        alert(`操作失败：${e.message}`);
+    }
     renderNavSettingsContent();
 };
 

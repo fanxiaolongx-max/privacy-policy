@@ -7,7 +7,7 @@
     <meta name="description" content="Task SLA & 风险监控全局中台，整改/常规/专项三表合一，SLA预警呼吸灯">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="/css/shared.css">
-    <link rel="stylesheet" href="/css/sla.css">
+    <link rel="stylesheet" href="/css/sla.css?v=20260607-14">
     <style>
         .sla-source-wrapper {
             display: flex;
@@ -89,6 +89,82 @@
         </div>
     </div>
 
+    <!-- 全量指标规则展示弹窗 -->
+    <div id="metric-rules-modal" class="modal-overlay">
+        <div class="modal-content metric-rules-modal-content">
+            <div class="modal-header metric-rules-modal-header">
+                <h3>📚 全量指标规则总览</h3>
+                <button class="modal-close" onclick="closeMetricRulesModal()">✖</button>
+            </div>
+            <div class="modal-body metric-rules-modal-body">
+                <div class="metric-rules-toolbar">
+                    <input type="text" id="metric-rules-search" class="picker-search" placeholder="搜索表名、指标名、字段、关键字、分类..." oninput="renderAllMetricRules()">
+                    <label class="metric-rules-check"><input type="checkbox" id="metric-rules-cross-only" onchange="renderAllMetricRules()"> 只看跨表规则</label>
+                </div>
+                <div id="metric-rules-modal-list" class="metric-rules-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 指标规则编辑弹窗 -->
+    <div id="metric-rule-edit-modal" class="modal-overlay">
+        <div class="modal-content metric-rule-edit-modal-content">
+            <div class="modal-header metric-rule-edit-header">
+                <div>
+                    <h3>✏️ 编辑指标规则</h3>
+                    <p id="metric-rule-edit-subtitle">修改模式、条件、展示统计和挂载关系</p>
+                </div>
+                <button class="modal-close" onclick="closeMetricRuleEditor()">✖</button>
+            </div>
+            <div class="modal-body metric-rule-edit-body">
+                <input type="hidden" id="metric-rule-edit-index">
+                <div class="metric-rule-edit-grid">
+                    <label class="metric-rule-edit-field">
+                        <span>指标名称</span>
+                        <input id="metric-rule-edit-label" type="text" placeholder="例如：业务比对回传率">
+                    </label>
+                    <label class="metric-rule-edit-field">
+                        <span>模式</span>
+                        <select id="metric-rule-edit-type" onchange="refreshMetricRuleEditorMode()">
+                            <option value="extract">提取 SHOW</option>
+                            <option value="count">统计 COUNT</option>
+                            <option value="ratio">占比 RATIO</option>
+                        </select>
+                    </label>
+                    <label class="metric-rule-edit-field metric-rule-edit-sub-only">
+                        <span>子指标分类/归属</span>
+                        <select id="metric-rule-edit-category"></select>
+                    </label>
+                    <label class="metric-rule-edit-field metric-rule-edit-sub-only">
+                        <span>挂载到主指标</span>
+                        <select id="metric-rule-edit-parent"></select>
+                    </label>
+                    <label class="metric-rule-edit-field">
+                        <span>条件列 X</span>
+                        <select id="metric-rule-edit-colx" style="cursor:pointer;"></select>
+                    </label>
+                    <label class="metric-rule-edit-field">
+                        <span>条件值 Y</span>
+                        <input id="metric-rule-edit-valy" type="text" placeholder="包含的关键字，可为空">
+                    </label>
+                    <label class="metric-rule-edit-field">
+                        <span>展示/统计列 Z</span>
+                        <select id="metric-rule-edit-colz" style="cursor:pointer;"></select>
+                    </label>
+                    <label class="metric-rule-edit-field metric-rule-edit-stat-only">
+                        <span>统计值 K</span>
+                        <input id="metric-rule-edit-valk" type="text" placeholder="统计/占比分子关键字">
+                    </label>
+                </div>
+                <div id="metric-rule-edit-preview" class="metric-rule-edit-preview"></div>
+            </div>
+            <div class="modal-footer metric-rule-edit-footer">
+                <button class="metric-rule-edit-cancel" onclick="closeMetricRuleEditor()">取消</button>
+                <button class="metric-rule-edit-save" onclick="saveMetricRuleEditor()">保存修改</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 全局分类管理弹窗 -->
     <div id="category-modal" class="modal-overlay">
         <div class="modal-content" style="width: 400px; min-width: 300px;">
@@ -126,11 +202,12 @@
         <!-- 页头区域 -->
         <div class="header-container">
             <h2>
-                <span>📊 全局数据合控大中台 <span style="font-size:12px;color:#ff9800;font-weight:normal;border:1px solid #ff9800;padding:2px 6px;border-radius:12px;margin-left:10px;">旗舰定制版</span> <span style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;border:none;background:none;padding:0;">v1.0.0</span></span>
+                <span>📊 全局数据合控大中台 <span style="font-size:12px;color:#ff9800;font-weight:normal;border:1px solid #ff9800;padding:2px 6px;border-radius:12px;margin-left:10px;">旗舰定制版</span> <span id="slaFrontendVersion" style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;border:none;background:none;padding:0;">v加载中</span></span>
             </h2>
             <div class="system-actions">
                 <button class="sys-btn" style="background:#0277bd; color: white;" onclick="openCategoryModal()">🏷️ 全局分类</button>
                 <button class="sys-btn" style="background:#8e24aa; color: white;" onclick="openHistoryModal()">📈 历史看板</button>
+                <button class="sys-btn" style="background:#6a1b9a; color: white;" onclick="openMetricRulesModal()">📚 全量规则</button>
                 <button class="sys-btn" onclick="SLAConfig.exportConfig()" title="备份所有的列宽、显示状态、顶部指标和预警目标">💾 导出全量配置</button>
                 <label class="sys-btn" title="导入配置文件，一键恢复设置">
                     📂 导入配置
@@ -229,15 +306,15 @@
     <!-- 共享脚本 -->
     <script src="/js/shared/api.js?v=20260531-02"></script>
     <script src="/js/shared/toast.js?v=20260531-02"></script>
-    <script src="/js/shared/navbar.js?v=20260530-08"></script>
+    <script src="/js/shared/navbar.js?v=20260607-10"></script>
     <!-- SLA 模块（注意加载顺序）-->
     <script src="/js/sla/config.js?v=20260530-07"></script>
     <script src="/js/sla/prefs.js?v=20260530-07"></script>
     <script src="/js/sla/upload.js?v=20260607-03"></script>
-    <script src="/js/sla/section.js?v=20260607-02"></script>
+    <script src="/js/sla/section.js?v=20260607-13"></script>
     <script src="/js/sla/table.js?v=20260607-01"></script>
-    <script src="/js/sla/events.js?v=20260601-01"></script>
-    <script src="/js/sla/metrics.js?v=20260601-03"></script>
+    <script src="/js/sla/events.js?v=20260607-14"></script>
+    <script src="/js/sla/metrics.js?v=20260607-04"></script>
     <script src="/js/sla/history.js?v=20260530-08"></script>
     <script src="/js/sla/categories.js?v=20260530-07"></script>
     <script>
@@ -246,6 +323,29 @@
             if (source === 'json') return 'JSON';
             if (source === 'auto') return '自动模式';
             return source || '-';
+        }
+
+        function renderSLAFrontendVersion() {
+            const versionEl = document.getElementById('slaFrontendVersion');
+            if (!versionEl) return;
+            const resourceNodes = [
+                ...document.querySelectorAll('link[href*="/css/sla.css"]'),
+                ...document.querySelectorAll('script[src*="/js/sla/"]')
+            ];
+            const versions = resourceNodes
+                .map(node => node.getAttribute('href') || node.getAttribute('src') || '')
+                .map(url => {
+                    try {
+                        return new URL(url, window.location.origin).searchParams.get('v') || '';
+                    } catch (e) {
+                        const match = url.match(/[?&]v=([^&]+)/);
+                        return match ? match[1] : '';
+                    }
+                })
+                .filter(Boolean)
+                .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+            versionEl.textContent = versions.length ? `v${versions[versions.length - 1]}` : 'v未标记';
+            versionEl.title = versions.length ? `当前页面资源最新版本：${versions[versions.length - 1]}` : '未检测到前端资源版本号';
         }
 
         function renderSLASourcePanel() {
@@ -285,6 +385,7 @@
 
         // 初始化：从服务端加载预警目标和分类
         document.addEventListener('DOMContentLoaded', async () => {
+            renderSLAFrontendVersion();
             const modeSelect = document.getElementById('slaSourceMode');
             if (modeSelect) {
                 modeSelect.value = API.getSourceMode('sla_data');
