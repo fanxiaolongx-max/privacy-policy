@@ -779,10 +779,10 @@ async function renderBackupSettings(content) {
                     <div class="nav-backup-meta">${formatBackupTime(item.modifiedAt)} · ${formatBackupSize(item.size)}</div>
                     ${item.reason ? `<div class="nav-backup-meta">Reason: ${navEscape(item.reason)}</div>` : ''}
                 </td>
-                <td class="nav-backup-actions">
-                    <button onclick="downloadGlobalBackup('${navEscape(item.name)}')">下载</button>
-                    <button class="danger" onclick="restoreGlobalBackupFromServer('${navEscape(item.name)}')">恢复</button>
-                    <button class="danger" style="background:#fff3e0; color:#e65100; border-color:#ffe0b2;" onclick="deleteGlobalBackup('${navEscape(item.name)}')">删除</button>
+                <td class="nav-backup-actions" style="display:flex; gap:6px; justify-content:flex-end;">
+                    <button onclick="downloadGlobalBackup('${navEscape(item.name)}')" title="下载备份" style="padding:4px 8px; font-size:13px; min-width:auto;">⬇️</button>
+                    <button class="danger" onclick="restoreGlobalBackupFromServer('${navEscape(item.name)}')" title="从该备份恢复" style="padding:4px 8px; font-size:13px; min-width:auto;">⏪</button>
+                    <button class="danger" style="background:#fff3e0; color:#e65100; border-color:#ffe0b2; padding:4px 8px; font-size:13px; min-width:auto;" onclick="deleteGlobalBackup('${navEscape(item.name)}')" title="永久删除此备份">🗑️</button>
                 </td>
             </tr>
         `).join('');
