@@ -647,9 +647,28 @@ function formatBackupSize(bytes) {
 function formatBackupTime(value) {
     if (!value) return '-';
     try {
-        return new Date(value).toLocaleString('zh-CN', { hour12: false });
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return value;
+        return date.toLocaleString('zh-CN', {
+            hour12: false,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            timeZoneName: 'short'
+        });
     } catch (e) {
         return value;
+    }
+}
+
+function getLocalTimeZoneLabel() {
+    try {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone || '浏览器本地时区';
+    } catch (e) {
+        return '浏览器本地时区';
     }
 }
 
@@ -708,6 +727,7 @@ function renderRemoteBackupSyncSettings(settings = {}) {
                 </div>
             </div>
             <div class="nav-remote-backup-status">
+                <span>时间显示：浏览器本地时区（${navEscape(getLocalTimeZoneLabel())}）</span>
                 <span>最近检查：${navEscape(lastCheckText)}</span>
                 <span>最近恢复：${navEscape(lastSyncText)}</span>
                 ${settings.lastError ? `<span class="warning">最近错误：${navEscape(settings.lastError)}</span>` : ''}
