@@ -222,6 +222,213 @@ AI 配置：
 - `data/images`：报表截图和 Excel 导出文件。
 - `backend/backups`：全局备份包。
 
+## 项目数据流总览
+
+下面的 Mermaid 图把主要页面、API、SQLite 表、JSON 兜底文件和备份链路串在一起，便于快速理解数据从哪里进入、写到哪里、又被哪些页面消费。
+
+```mermaid
+flowchart LR
+    User["用户 / 浏览器"] --> Navbar["顶部导航 + 全局设置"]
+    User --> UIVPage["数据抓取 / UIVF12"]
+    User --> SLAPage["数据导入 / SLA 合控"]
+    User --> ReportPage["报表看板"]
+    User --> ExpeditePage["一键催办"]
+    User --> MonthlyPage["月报页面"]
+    User --> PRAuditPage["PR 稽查"]
+    User --> FRTPage["FRT 核算"]
+    User --> ReqPage["需求广场"]
+    User --> CustomToolPage["自定义工具"]
+    User --> DBExplorer["数据探索"]
+    User --> AIAssistant["智能客服助手"]
+
+    subgraph Frontend["前端页面层"]
+        Navbar
+        UIVPage
+        SLAPage
+        ReportPage
+        ExpeditePage
+        MonthlyPage
+        PRAuditPage
+        FRTPage
+        ReqPage
+        CustomToolPage
+        DBExplorer
+        AIAssistant
+    end
+
+    subgraph API["Express API 层"]
+        AuthAPI["/api/auth"]
+        NavAPI["/api/nav-settings"]
+        AISettingsAPI["/api/ai-settings"]
+        AIAPI["/api/ai/chat"]
+        UIVAPI["/api/uiv"]
+        SLAAPI["/api/sla + /api/upload"]
+        ReportAPI["/api/db"]
+        PRAuditAPI["/api/praudit"]
+        FRTAPI["/api/frt"]
+        ReqAPI["/api/requirements"]
+        CustomToolAPI["/api/custom-tools"]
+        BackupAPI["/api/global-backup"]
+        ExplorerAPI["/api/db-explorer"]
+        StorageAPI["/api/storage"]
+    end
+
+    Navbar --> NavAPI
+    Navbar --> AuthAPI
+    Navbar --> AISettingsAPI
+    Navbar --> BackupAPI
+    AIAssistant --> AIAPI
+    UIVPage --> UIVAPI
+    SLAPage --> SLAAPI
+    ReportPage --> ReportAPI
+    ReportPage --> SLAAPI
+    ExpeditePage --> ReportAPI
+    MonthlyPage --> ReportAPI
+    PRAuditPage --> PRAuditAPI
+    FRTPage --> FRTAPI
+    ReqPage --> ReqAPI
+    CustomToolPage --> CustomToolAPI
+    DBExplorer --> ExplorerAPI
+    StorageAPI --> ToolsDB
+
+    subgraph ToolsDB["backend/data/tools.db"]
+        auth_users["auth_users"]
+        auth_sessions["auth_sessions"]
+        uiv_scripts["uiv_scripts"]
+        uiv_categories["uiv_categories"]
+        upload_history["upload_history"]
+        sla_categories["sla_categories"]
+        sla_targets["sla_targets"]
+        sla_prefs["sla_prefs"]
+        sys_dictionaries["sys_dictionaries"]
+        sla_groups["sla_groups"]
+        sla_group_items["sla_group_items"]
+        sla_snapshots["sla_snapshots"]
+        frt_snapshots["frt_snapshots"]
+        praudit_configs["praudit_configs"]
+    end
+
+    subgraph ReportDB["data/report.db"]
+        ReportSnapshots["ReportSnapshots"]
+        ReportCategoryScores["ReportCategoryScores"]
+        ReportMetricData["ReportMetricData"]
+        PlatformConfig["PlatformConfig"]
+    end
+
+    subgraph RequirementDB["data/requirements.db"]
+        Requirements["Requirements"]
+        RequirementLogs["RequirementLogs"]
+    end
+
+    subgraph JsonFallback["backend/data/*.json 历史/兜底数据"]
+        users_json["users.json"]
+        sessions_json["sessions.json"]
+        uiv_scripts_json["uiv_scripts.json"]
+        uiv_categories_json["uiv_categories.json"]
+        upload_history_json["upload_history.json"]
+        sla_json["sla_categories / sla_targets / sla_prefs / sla_groups / sla_snapshots.json"]
+        frt_json["frt_snapshots.json"]
+        nav_json["nav_settings.json"]
+        ai_json["ai_settings.json"]
+        custom_tools_json["custom_tools.json"]
+    end
+
+    subgraph Files["文件和运行态目录"]
+        Images["data/images 截图和 Excel"]
+        Outputs["outputs 导出产物"]
+        CustomHTML["backend/data/custom-tools HTML"]
+        Backups["backend/backups 全局备份包"]
+        Runtime["backend/runtime 远端同步本机配置"]
+    end
+
+    AuthAPI --> auth_users
+    AuthAPI --> auth_sessions
+    AuthAPI -. "旧数据迁移/兜底" .-> users_json
+    AuthAPI -. "旧数据迁移/兜底" .-> sessions_json
+
+    NavAPI --> nav_json
+    AISettingsAPI --> ai_json
+    AIAPI --> AIProvider["Gemini API"]
+
+    UIVAPI --> uiv_scripts
+    UIVAPI --> uiv_categories
+    UIVAPI -. "JSON 强制源/迁移兜底" .-> uiv_scripts_json
+    UIVAPI -. "JSON 强制源/迁移兜底" .-> uiv_categories_json
+
+    SLAAPI --> upload_history
+    SLAAPI --> sla_categories
+    SLAAPI --> sla_targets
+    SLAAPI --> sla_prefs
+    SLAAPI --> sys_dictionaries
+    SLAAPI --> sla_groups
+    SLAAPI --> sla_group_items
+    SLAAPI --> sla_snapshots
+    SLAAPI -. "JSON 强制源/迁移兜底" .-> upload_history_json
+    SLAAPI -. "JSON 强制源/迁移兜底" .-> sla_json
+
+    ReportAPI --> ReportSnapshots
+    ReportAPI --> ReportCategoryScores
+    ReportAPI --> ReportMetricData
+    ReportAPI --> PlatformConfig
+    ReportAPI --> Images
+    ReportSnapshots --> ExpeditePage
+    ReportSnapshots --> MonthlyPage
+    ReportCategoryScores --> MonthlyPage
+    ReportMetricData --> MonthlyPage
+
+    PRAuditAPI --> praudit_configs
+    PRAuditPage --> Outputs
+    PRAuditPage --> CustomHTML
+
+    FRTAPI --> frt_snapshots
+    FRTAPI -. "JSON 强制源/迁移兜底" .-> frt_json
+
+    ReqAPI --> Requirements
+    ReqAPI --> RequirementLogs
+
+    CustomToolAPI --> custom_tools_json
+    CustomToolAPI --> CustomHTML
+    CustomToolPage --> CustomHTML
+
+    ExplorerAPI --> ToolsDB
+    ExplorerAPI --> ReportDB
+    ExplorerAPI --> RequirementDB
+
+    BackupAPI --> Backups
+    BackupAPI --> ToolsDB
+    BackupAPI --> ReportDB
+    BackupAPI --> RequirementDB
+    BackupAPI --> JsonFallback
+    BackupAPI --> Images
+    BackupAPI --> CustomHTML
+    BackupAPI --> RemoteMain["远端主站备份 API"]
+    RemoteMain --> Backups
+    Runtime --> BackupAPI
+```
+
+主要数据表和文件说明：
+
+| 存储位置 | 表 / 文件 | 主要来源 | 主要消费方 |
+| --- | --- | --- | --- |
+| `backend/data/tools.db` | `auth_users`, `auth_sessions` | 登录、账号管理 | 全部受保护 API |
+| `backend/data/tools.db` | `uiv_scripts`, `uiv_categories` | 数据抓取 / UIVF12 | UIVF12 侧边栏、脚本仓库 |
+| `backend/data/tools.db` | `upload_history` | 数据导入、脚本/工具等操作日志 | 首页最近操作历史、数据导入日志 |
+| `backend/data/tools.db` | `sla_categories`, `sla_targets`, `sla_prefs`, `sys_dictionaries` | SLA 配置、目标月份、列偏好 | 数据导入、报表看板、月报 |
+| `backend/data/tools.db` | `sla_groups`, `sla_group_items` | 指标分组配置 | 报表看板、月报、催办 |
+| `backend/data/tools.db` | `sla_snapshots` | 风险/整改/CPT/SR/漏洞 CSV 导入快照 | 报表看板临期识别、入库前提醒 |
+| `backend/data/tools.db` | `frt_snapshots` | FRT 页面导入与核算 | FRT 核算页面 |
+| `backend/data/tools.db` | `praudit_configs` | PR 审计模板配置 | PR 稽查页面、PDF/快照导出 |
+| `data/report.db` | `ReportSnapshots` | 报表看板点击入库 | 报表看板历史快照、一键催办、月报 |
+| `data/report.db` | `ReportCategoryScores` | 报表看板入库计算结果 | 月报客户群排名、趋势、评分 |
+| `data/report.db` | `ReportMetricData` | 报表看板入库指标明细 | 月报矩阵、短板分析、比例计分展示 |
+| `data/report.db` | `PlatformConfig` | 报表看板配置写入 | 报表页面配置、自动填报偏好 |
+| `data/requirements.db` | `Requirements`, `RequirementLogs` | 需求广场 | 需求广场列表、状态流转日志 |
+| `backend/data/*.json` | `*_json` 历史配置和数据 | 旧版本存储、强制 JSON 源、迁移兜底 | 存储迁移状态台、兼容读取 |
+| `data/images` | PNG/XLSX 导出文件 | 报表看板截图、Excel 下载 | 报表页面、月报/导出 |
+| `backend/data/custom-tools` | 自定义 HTML 文件 | 自定义工具导入 | `/tools/:slug` 动态工具入口 |
+| `backend/backups` | 全局备份 zip | 手动备份、恢复前安全备份、远端同步触发备份 | 全局设置备份恢复、分站同步 |
+| `backend/runtime` | 远端同步本机配置和状态 | 全局设置远端主站同步 | 启动自动拉取备份，不参与全局备份 |
+
 ## 数据抓取 / UIVF12 脚本仓库
 
 入口：`/uivf12`
