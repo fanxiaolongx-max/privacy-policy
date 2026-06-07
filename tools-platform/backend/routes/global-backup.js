@@ -52,6 +52,15 @@ router.get('/download/:name', (req, res) => {
     }
 });
 
+router.delete('/delete/:name', (req, res) => {
+    try {
+        const result = repo.deleteBackup(req.params.name);
+        res.json(result);
+    } catch (err) {
+        handleError(res, err, '删除备份失败');
+    }
+});
+
 router.post('/restore/server/:name', async (req, res) => {
     try {
         const filePath = repo.getBackupPath(req.params.name);

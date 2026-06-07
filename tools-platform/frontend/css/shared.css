@@ -936,7 +936,7 @@ body {
 .toast.show { top: calc(var(--navbar-h) + 12px); }
 .toast-success { background: #2e7d32; color: #fff; }
 .toast-error   { background: #c62828; color: #fff; }
-.toast-warn    { background: #e65100; color: #fff; }
+.toast-warn, .toast-warning { background: #e65100; color: #fff; }
 .toast-info    { background: #1565c0; color: #fff; }
 
 /* ── 通用按钮基础 ─────────────────────────────────────── */

@@ -425,6 +425,7 @@ function buildDOM(secId, title, themeColor) {
         <div class="section-header">
             <h3 class="section-title" style="color:${themeColor}">
                 ${title} <span style="font-size:12px;color:#888;font-weight:normal;" id="row-count-badge-${secId}"></span>
+                <span class="rule-summary-badge" id="rule-summary-badge-${secId}" title="当前表暂无指标规则">主0 / 子0</span>
             </h3>
         </div>
         <div class="dashboard-panel" id="dashboard-${secId}" style="display:none;"></div>
