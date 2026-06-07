@@ -518,12 +518,25 @@ SR 分析重点：
 - `GET /api/global-backup/download/:name`
 - `POST /api/global-backup/restore/server/:name`
 - `POST /api/global-backup/restore/upload`
+- `GET /api/global-backup/remote-settings`
+- `PUT /api/global-backup/remote-settings`
+- `POST /api/global-backup/remote-check`
+- `POST /api/global-backup/remote-pull`
+
+远端主站同步：
+
+- 可在“全局设置 -> 备份恢复 -> 远端主站同步”中启用。
+- 可填写远端服务器域名、账号、密码。
+- 支持检查远端最新备份、按规则拉取恢复、强制恢复远端最新备份。
+- 可选择在拉取前请求远端主站立即生成一份新备份，主站备份列表会显示“外部同步触发”标识，文件 reason 形如 `remote-sync-request_by_<username>`。
+- 支持启动时自动检查并恢复远端最新全局备份，适合分站或 Windows 本地环境快速同步主站数据。
+- 远端同步配置和最近恢复标记保存在 `backend/runtime`，不参与全局备份，避免恢复主站数据后覆盖本机同步配置或造成启动恢复循环。
 
 风险提示：
 
 - 恢复操作会影响全局配置和业务数据。
 - 恢复前建议先创建当前状态备份。
-- 生产环境恢复后建议重启服务，确保连接和缓存状态一致。
+- 恢复成功后后端会自动结束当前进程，以释放 SQLite 文件连接并避免继续使用旧缓存；PM2 会自动拉起，手动 `npm start` 场景下请重新启动服务。
 - Windows 恢复时如果提示 `EPERM`/`Permission denied`，通常是服务或其他程序正在占用 SQLite 数据文件；请停止当前服务后再恢复，恢复完成后重新启动。
 
 ## 隐私与条款页面

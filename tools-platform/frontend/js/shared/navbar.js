@@ -33,7 +33,9 @@ let navState = {
     settingsTab: 'primary',
     saveTimer: null,
     aiSettings: null,
-    aiSaveTimer: null
+    aiSaveTimer: null,
+    remoteBackupSettings: null,
+    remoteBackupSaveTimer: null
 };
 
 function navEscape(value) {
@@ -657,16 +659,88 @@ async function fetchBackupList() {
     return res.json();
 }
 
+async function fetchRemoteBackupSettings() {
+    const res = await fetch('/api/global-backup/remote-settings', { headers: getAuthHeaderForNav() });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+}
+
+function renderRemoteBackupSyncSettings(settings = {}) {
+    const lastSync = settings.lastSync || {};
+    const lastRemote = lastSync.remoteBackup || {};
+    const lastCheck = settings.lastCheck || {};
+    const checkLatest = lastCheck.latest || {};
+    const lastSyncText = lastSync.restoredAt
+        ? `${formatBackupTime(lastSync.restoredAt)} · ${lastRemote.name || '-'}`
+        : '尚未恢复远端备份';
+    const lastCheckText = lastCheck.checkedAt
+        ? `${formatBackupTime(lastCheck.checkedAt)} · 最新：${checkLatest.name || '-'}`
+        : '尚未检查远端';
+    return `
+        <div class="nav-remote-backup-card">
+            <div class="nav-remote-backup-head">
+                <div>
+                    <div class="nav-backup-panel-title">远端主站同步</div>
+                    <div class="nav-backup-panel-desc">适合分站/Windows 本地启动时，从主站自动拉取最新全局备份并恢复。配置只保存在当前机器，不会被备份包覆盖。</div>
+                </div>
+                <label class="nav-remote-switch">
+                    <input id="remoteBackupEnabled" type="checkbox" ${settings.enabled ? 'checked' : ''} onchange="scheduleRemoteBackupSettingsSave()">
+                    启用
+                </label>
+            </div>
+            <div class="nav-remote-backup-grid">
+                <label>
+                    <span>远端网站域名</span>
+                    <input id="remoteBackupBaseUrl" class="nav-settings-input" value="${navEscape(settings.baseUrl || '')}" placeholder="例如：https://cs.fanxiaolong.uk" oninput="scheduleRemoteBackupSettingsSave()">
+                </label>
+                <label>
+                    <span>账号</span>
+                    <input id="remoteBackupUsername" class="nav-settings-input" value="${navEscape(settings.username || '')}" autocomplete="username" oninput="scheduleRemoteBackupSettingsSave()">
+                </label>
+                <label>
+                    <span>密码</span>
+                    <input id="remoteBackupPassword" type="password" class="nav-settings-input" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" placeholder="${settings.hasPassword ? `留空保持当前：${navEscape(settings.maskedPassword || '已保存')}` : '填写远端登录密码'}" onfocus="this.dataset.userTouched='1'" oninput="scheduleRemoteBackupSettingsSave({ passwordTouched: this.dataset.userTouched === '1' })">
+                </label>
+                <div class="nav-remote-checks">
+                    <label><input id="remoteBackupCompare" type="checkbox" ${settings.compareBeforeRestore !== false ? 'checked' : ''} onchange="scheduleRemoteBackupSettingsSave()"> 比较备份新旧，未更新则跳过</label>
+                    <label><input id="remoteBackupCreateBeforePull" type="checkbox" ${settings.createRemoteBackupBeforePull !== false ? 'checked' : ''} onchange="scheduleRemoteBackupSettingsSave()"> 拉取前请求主站立即生成备份</label>
+                    <label><input id="remoteBackupAutoRestore" type="checkbox" ${settings.autoRestore ? 'checked' : ''} onchange="scheduleRemoteBackupSettingsSave()"> 启动时自动恢复最新备份</label>
+                </div>
+            </div>
+            <div class="nav-remote-backup-status">
+                <span>最近检查：${navEscape(lastCheckText)}</span>
+                <span>最近恢复：${navEscape(lastSyncText)}</span>
+                ${settings.lastError ? `<span class="warning">最近错误：${navEscape(settings.lastError)}</span>` : ''}
+            </div>
+            <div class="nav-backup-toolbar nav-remote-backup-actions">
+                <button type="button" onclick="checkRemoteBackupNow()">测试连接/检查最新</button>
+                <button type="button" onclick="pullRemoteBackupNow(false)">按规则拉取恢复</button>
+                <button type="button" class="danger" onclick="pullRemoteBackupNow(true)">强制恢复远端最新</button>
+                <button type="button" onclick="clearRemoteBackupPassword()">清除密码</button>
+            </div>
+        </div>
+    `;
+}
+
 async function renderBackupSettings(content) {
     content.innerHTML = '<div class="nav-settings-empty">正在加载备份列表...</div>';
     try {
-        const data = await fetchBackupList();
+        const [data, remoteSettings] = await Promise.all([
+            fetchBackupList(),
+            fetchRemoteBackupSettings()
+        ]);
+        navState.remoteBackupSettings = remoteSettings;
         const targetText = (data.targets || []).map(item => item.relPath || item.path).join('、') || 'backend/data、data';
         const rows = (data.backups || []).map(item => `
             <tr>
                 <td>
-                    <div class="nav-backup-name">${navEscape(item.name)}</div>
+                    <div class="nav-backup-name">
+                        ${navEscape(item.name)}
+                        ${item.triggerType === 'remote-sync-request' ? '<span class="nav-backup-badge remote">外部同步触发</span>' : ''}
+                        ${item.triggerType === 'pre-restore' ? '<span class="nav-backup-badge safety">恢复前安全备份</span>' : ''}
+                    </div>
                     <div class="nav-backup-meta">${formatBackupTime(item.modifiedAt)} · ${formatBackupSize(item.size)}</div>
+                    ${item.reason ? `<div class="nav-backup-meta">Reason: ${navEscape(item.reason)}</div>` : ''}
                 </td>
                 <td class="nav-backup-actions">
                     <button onclick="downloadGlobalBackup('${navEscape(item.name)}')">下载</button>
@@ -677,6 +751,7 @@ async function renderBackupSettings(content) {
 
         content.innerHTML = `
             <div class="nav-settings-help">覆盖范围：${navEscape(targetText)}。包含全局配置、JSON 数据、SQLite 数据库、上传附件、自定义工具 HTML 等运行数据。</div>
+            ${renderRemoteBackupSyncSettings(remoteSettings)}
             <div class="nav-backup-panel">
                 <div>
                     <div class="nav-backup-panel-title">服务器备份</div>
@@ -706,6 +781,103 @@ async function renderBackupSettings(content) {
         content.innerHTML = `<div class="nav-settings-empty">加载备份列表失败：${navEscape(e.message)}</div>`;
     }
 }
+
+function collectRemoteBackupSettings(options = {}) {
+    const passwordInput = document.getElementById('remoteBackupPassword');
+    const payload = {
+        enabled: Boolean(document.getElementById('remoteBackupEnabled')?.checked),
+        baseUrl: document.getElementById('remoteBackupBaseUrl')?.value || '',
+        username: document.getElementById('remoteBackupUsername')?.value || '',
+        compareBeforeRestore: Boolean(document.getElementById('remoteBackupCompare')?.checked),
+        createRemoteBackupBeforePull: Boolean(document.getElementById('remoteBackupCreateBeforePull')?.checked),
+        autoRestore: Boolean(document.getElementById('remoteBackupAutoRestore')?.checked)
+    };
+    if (options.clearPassword) {
+        payload.clearPassword = true;
+    } else if (options.passwordTouched && passwordInput) {
+        payload.password = passwordInput.value || '';
+    }
+    return payload;
+}
+
+async function saveRemoteBackupSettingsNow(options = {}) {
+    const res = await fetch('/api/global-backup/remote-settings', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaderForNav()
+        },
+        body: JSON.stringify(collectRemoteBackupSettings(options))
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    navState.remoteBackupSettings = data;
+    const indicator = document.getElementById('navSettingsSaveState');
+    if (indicator) indicator.textContent = '远端同步设置已保存';
+    return data;
+}
+
+window.scheduleRemoteBackupSettingsSave = function (options = {}) {
+    const indicator = document.getElementById('navSettingsSaveState');
+    if (indicator) indicator.textContent = '正在保存远端同步设置...';
+    clearTimeout(navState.remoteBackupSaveTimer);
+    navState.remoteBackupSaveTimer = setTimeout(async () => {
+        try {
+            await saveRemoteBackupSettingsNow(options);
+        } catch (e) {
+            if (indicator) indicator.textContent = `保存失败: ${e.message}`;
+        }
+    }, 650);
+};
+
+window.clearRemoteBackupPassword = async function () {
+    await runGlobalBackupAction('正在清除远端密码...', async () => {
+        await saveRemoteBackupSettingsNow({ clearPassword: true });
+    });
+    renderNavSettingsContent();
+};
+
+window.checkRemoteBackupNow = async function () {
+    clearTimeout(navState.remoteBackupSaveTimer);
+    await saveRemoteBackupSettingsNow();
+    const result = await runGlobalBackupAction('正在检查远端备份...', async () => {
+        const res = await fetch('/api/global-backup/remote-check', {
+            method: 'POST',
+            headers: getAuthHeaderForNav()
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+        return data;
+    });
+    const latest = result.latest || {};
+    alert(`远端连接成功。\n\n${result.remoteCreatedBackup?.name ? `已请求主站生成新备份：${result.remoteCreatedBackup.name}\n` : ''}备份数量：${result.backups?.length || 0}\n最新备份：${latest.name || '-'}\n时间：${formatBackupTime(latest.modifiedAt || latest.createdAt)}`);
+    renderNavSettingsContent();
+};
+
+window.pullRemoteBackupNow = async function (force) {
+    clearTimeout(navState.remoteBackupSaveTimer);
+    await saveRemoteBackupSettingsNow();
+    const ok = confirm(`${force ? '确定要强制恢复远端最新备份吗？' : '确定要按规则拉取并恢复远端备份吗？'}\n\n此操作会覆盖当前全部本地数据。恢复成功后服务会自动重启或需要手动重启。`);
+    if (!ok) return;
+    await runGlobalBackupAction('正在拉取远端备份并恢复...', async () => {
+        const res = await fetch('/api/global-backup/remote-pull', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeaderForNav()
+            },
+            body: JSON.stringify({ restore: true, force })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+        if (data.restored) {
+            alert(`远端备份恢复完成：${data.latest?.name || '-'}\n\n服务将自动重启；如果是手动 npm start，请重新启动服务。`);
+        } else {
+            alert(data.message || '远端备份未更新，未执行恢复。');
+        }
+        return data;
+    });
+};
 
 async function runGlobalBackupAction(actionText, action) {
     const indicator = document.getElementById('navSettingsSaveState');

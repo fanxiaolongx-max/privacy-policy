@@ -28,6 +28,7 @@ const customToolsRepo = require('./models/custom-tools-repository');
 const navSettingsRoutes = require('./routes/nav-settings');
 const aiSettingsRoutes = require('./routes/ai-settings');
 const globalBackupRoutes = require('./routes/global-backup');
+const remoteBackupSyncRepo = require('./models/remote-backup-sync-repository');
 const { checkAuth, requireAdmin } = require('./middleware/auth');
 
 const app = express();
@@ -183,6 +184,9 @@ const server = app.listen(PORT, () => {
     console.log(`   🌐 访问地址: http://localhost:${PORT}`);
     console.log(`   📦 UIVF12:   http://localhost:${PORT}/uivf12`);
     console.log(`   📊 SLA:      http://localhost:${PORT}/sla\n`);
+    setTimeout(() => {
+        remoteBackupSyncRepo.runStartupRemoteSync();
+    }, 1200);
 });
 
 server.on('error', (err) => {

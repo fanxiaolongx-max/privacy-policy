@@ -67,6 +67,17 @@ function getManifest(reason = 'manual') {
     };
 }
 
+function getReasonFromBackupName(name) {
+    const match = String(name || '').match(/^tools-platform-backup_[^_]+_(.+)\.zip$/);
+    return match ? match[1] : '';
+}
+
+function getBackupTriggerType(reason) {
+    if (String(reason || '').startsWith('remote-sync-request')) return 'remote-sync-request';
+    if (String(reason || '').startsWith('pre-restore')) return 'pre-restore';
+    return 'manual';
+}
+
 function listBackups() {
     ensureDir(BACKUP_DIR);
     return fs.readdirSync(BACKUP_DIR)
@@ -74,8 +85,11 @@ function listBackups() {
         .map(name => {
             const filePath = path.join(BACKUP_DIR, name);
             const stat = fs.statSync(filePath);
+            const reason = getReasonFromBackupName(name);
             return {
                 name,
+                reason,
+                triggerType: getBackupTriggerType(reason),
                 size: stat.size,
                 createdAt: stat.birthtime.toISOString(),
                 modifiedAt: stat.mtime.toISOString()

@@ -1,6 +1,9 @@
 import re
+from pathlib import Path
 
-with open('/Volumes/512G/06-工具开发/privacy-policy/tools-platform/frontend/js/pages/praudit/main.js', 'r') as f:
+TARGET = Path(__file__).resolve().parent / 'js' / 'pages' / 'praudit' / 'main.js'
+
+with open(TARGET, 'r') as f:
     content = f.read()
 
 # 1. Update renderBlock return object
@@ -46,5 +49,5 @@ removal = """
 
 content = content.replace("const baseWidth = contentWidth;", removal.strip() + "\n")
 
-with open('/Volumes/512G/06-工具开发/privacy-policy/tools-platform/frontend/js/pages/praudit/main.js', 'w') as f:
+with open(TARGET, 'w') as f:
     f.write(content)
