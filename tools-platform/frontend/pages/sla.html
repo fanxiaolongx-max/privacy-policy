@@ -7,7 +7,7 @@
     <meta name="description" content="Task SLA & 风险监控全局中台，整改/常规/专项三表合一，SLA预警呼吸灯">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="/css/shared.css">
-    <link rel="stylesheet" href="/css/sla.css?v=20260607-14">
+    <link rel="stylesheet" href="/css/sla.css?v=20260608-02">
     <style>
         .sla-source-wrapper {
             display: flex;
@@ -312,8 +312,8 @@
     <script src="/js/sla/prefs.js?v=20260530-07"></script>
     <script src="/js/sla/upload.js?v=20260607-03"></script>
     <script src="/js/sla/section.js?v=20260607-13"></script>
-    <script src="/js/sla/table.js?v=20260607-01"></script>
-    <script src="/js/sla/events.js?v=20260607-14"></script>
+    <script src="/js/sla/table.js?v=20260608-02"></script>
+    <script src="/js/sla/events.js?v=20260608-02"></script>
     <script src="/js/sla/metrics.js?v=20260607-04"></script>
     <script src="/js/sla/history.js?v=20260530-08"></script>
     <script src="/js/sla/categories.js?v=20260530-07"></script>
@@ -392,10 +392,13 @@
                 modeSelect.addEventListener('change', async () => {
                     API.setSourceMode('sla_data', modeSelect.value);
                     await initSLASourceMeta();
+                    if (window.refreshMetricRulePrefsCache) await window.refreshMetricRulePrefsCache();
+                    if (window.refreshSLAHighlightViews) window.refreshSLAHighlightViews(Object.keys(window.AppState || {}));
                     if (window.initCategories) await window.initCategories();
                 });
             }
             await initSLASourceMeta();
+            if (window.refreshMetricRulePrefsCache) await window.refreshMetricRulePrefsCache();
             await SLASection.initGlobalTargets();
             if (window.initCategories) await window.initCategories();
             if (window.SLATargetMonth && window.SLATargetMonth.init) {

@@ -30,6 +30,120 @@ function countItems(value) {
     return null;
 }
 
+function getStableItemKey(item) {
+    if (!item || typeof item !== 'object') return '';
+    return String(item.id || item.key || item.name || item.title || '');
+}
+
+function alignArrayByStableKey(value) {
+    if (!Array.isArray(value)) return value;
+    if (!value.every(item => item && typeof item === 'object' && getStableItemKey(item))) {
+        return value;
+    }
+
+    return [...value].sort((a, b) => {
+        const aKey = getStableItemKey(a);
+        const bKey = getStableItemKey(b);
+        return aKey.localeCompare(bKey, undefined, { numeric: true });
+    });
+}
+
+function summarizeOrderDiff(jsonValue, sqliteValue) {
+    if (!Array.isArray(jsonValue) || !Array.isArray(sqliteValue)) return null;
+    if (jsonValue.length !== sqliteValue.length) return null;
+    if (!jsonValue.every(item => item && typeof item === 'object' && getStableItemKey(item))) return null;
+    if (!sqliteValue.every(item => item && typeof item === 'object' && getStableItemKey(item))) return null;
+
+    const jsonKeys = jsonValue.map(getStableItemKey);
+    const sqliteKeys = sqliteValue.map(getStableItemKey);
+    const sameOrder = jsonKeys.every((key, index) => key === sqliteKeys[index]);
+    if (sameOrder) return null;
+
+    const sameSet = [...jsonKeys].sort().join('\n') === [...sqliteKeys].sort().join('\n');
+    if (!sameSet) return null;
+
+    const firstIndex = jsonKeys.findIndex((key, index) => key !== sqliteKeys[index]);
+    return {
+        type: 'order-only',
+        firstIndex,
+        jsonKey: jsonKeys[firstIndex],
+        sqliteKey: sqliteKeys[firstIndex],
+        message: 'JSON 与 SQLite 内容一致，但列表顺序不同；已按稳定主键对齐后比较内容。'
+    };
+}
+
+function getValueType(value) {
+    if (Array.isArray(value)) return 'array';
+    if (value === null) return 'null';
+    return typeof value;
+}
+
+function previewValue(value, maxLen = 1200) {
+    const text = JSON.stringify(sortObjectKeysDeep(value), null, 2);
+    if (text.length <= maxLen) return text;
+    return `${text.slice(0, maxLen)}\n...（已截断，完整长度 ${text.length} 字符）`;
+}
+
+function findFirstSemanticDiff(jsonValue, sqliteValue, path = '$') {
+    if (Object.is(jsonValue, sqliteValue)) return null;
+
+    const jsonType = getValueType(jsonValue);
+    const sqliteType = getValueType(sqliteValue);
+    if (jsonType !== sqliteType) {
+        return {
+            path,
+            reason: `类型不同：JSON=${jsonType}，SQLite=${sqliteType}`,
+            jsonPreview: previewValue(jsonValue),
+            sqlitePreview: previewValue(sqliteValue)
+        };
+    }
+
+    if (Array.isArray(jsonValue)) {
+        if (jsonValue.length !== sqliteValue.length) {
+            return {
+                path,
+                reason: `数组长度不同：JSON=${jsonValue.length}，SQLite=${sqliteValue.length}`,
+                jsonPreview: previewValue(jsonValue),
+                sqlitePreview: previewValue(sqliteValue)
+            };
+        }
+        for (let i = 0; i < jsonValue.length; i++) {
+            const childDiff = findFirstSemanticDiff(jsonValue[i], sqliteValue[i], `${path}[${i}]`);
+            if (childDiff) return childDiff;
+        }
+        return null;
+    }
+
+    if (jsonValue && typeof jsonValue === 'object') {
+        const jsonKeys = Object.keys(jsonValue).sort();
+        const sqliteKeys = Object.keys(sqliteValue).sort();
+        const allKeys = Array.from(new Set([...jsonKeys, ...sqliteKeys])).sort();
+        const missingInSqlite = jsonKeys.find(key => !Object.prototype.hasOwnProperty.call(sqliteValue, key));
+        const missingInJson = sqliteKeys.find(key => !Object.prototype.hasOwnProperty.call(jsonValue, key));
+        if (missingInSqlite || missingInJson) {
+            const key = missingInSqlite || missingInJson;
+            return {
+                path: `${path}.${key}`,
+                reason: missingInSqlite ? 'SQLite 缺少该字段' : 'JSON 缺少该字段',
+                jsonPreview: previewValue(jsonValue[key]),
+                sqlitePreview: previewValue(sqliteValue[key])
+            };
+        }
+        for (const key of allKeys) {
+            const childDiff = findFirstSemanticDiff(jsonValue[key], sqliteValue[key], `${path}.${key}`);
+            if (childDiff) return childDiff;
+        }
+        return null;
+    }
+
+    return {
+        path,
+        reason: '值不同',
+        jsonPreview: previewValue(jsonValue),
+        sqlitePreview: previewValue(sqliteValue)
+    };
+}
+
 function summarizeDiff(jsonValue, sqliteValue) {
     const jsonText = JSON.stringify(sortObjectKeysDeep(jsonValue));
     const sqliteText = JSON.stringify(sortObjectKeysDeep(sqliteValue));
@@ -41,9 +155,23 @@ function summarizeDiff(jsonValue, sqliteValue) {
 
     return {
         firstDiffIndex: idx,
-        jsonExcerpt: jsonText.slice(Math.max(0, idx - 40), idx + 100),
-        sqliteExcerpt: sqliteText.slice(Math.max(0, idx - 40), idx + 100)
+        jsonLength: jsonText.length,
+        sqliteLength: sqliteText.length,
+        jsonExcerpt: jsonText.slice(Math.max(0, idx - 80), idx + 180),
+        sqliteExcerpt: sqliteText.slice(Math.max(0, idx - 80), idx + 180),
+        semantic: findFirstSemanticDiff(jsonValue, sqliteValue)
     };
+}
+
+function summarizeAlignedDiff(jsonValue, sqliteValue, { alignByStableKey = false } = {}) {
+    const orderDiff = alignByStableKey ? summarizeOrderDiff(jsonValue, sqliteValue) : null;
+    const comparableJson = alignByStableKey ? alignArrayByStableKey(jsonValue) : jsonValue;
+    const comparableSqlite = alignByStableKey ? alignArrayByStableKey(sqliteValue) : sqliteValue;
+    const diff = summarizeDiff(comparableJson, comparableSqlite);
+    if (!diff && orderDiff) {
+        return { diff: null, orderDiff };
+    }
+    return { diff, orderDiff };
 }
 
 router.get('/status', async (req, res) => {
@@ -72,6 +200,7 @@ router.get('/status', async (req, res) => {
                 label: 'UIV Scripts',
                 scope: 'uiv repository',
                 writeStrategy: 'json+sqlite',
+                alignByStableKey: true,
                 getJson: async () => (await uivScriptsRepo.listScripts({ mode: 'json' })).items,
                 getSqlite: async () => (await uivScriptsRepo.listScripts({ mode: 'sqlite' })).items,
                 getAuto: async () => uivScriptsRepo.listScripts({ mode: 'auto' })
@@ -146,7 +275,9 @@ router.get('/status', async (req, res) => {
             const jsonValue = await check.getJson();
             const sqliteValue = await check.getSqlite();
             const autoResult = await check.getAuto();
-            const diff = summarizeDiff(jsonValue, sqliteValue);
+            const { diff, orderDiff } = summarizeAlignedDiff(jsonValue, sqliteValue, {
+                alignByStableKey: !!check.alignByStableKey
+            });
             tables.push({
                 key: check.key,
                 label: check.label,
@@ -156,6 +287,7 @@ router.get('/status', async (req, res) => {
                 jsonCount: countItems(jsonValue),
                 sqliteCount: countItems(sqliteValue),
                 parity: diff ? 'mismatch' : 'match',
+                orderDiff,
                 diff
             });
         }

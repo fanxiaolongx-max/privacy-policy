@@ -31,6 +31,150 @@ function updateView(secId) {
 
 const monthlyTargets = { 1:0, 2:0, 3:10, 4:20, 5:30, 6:50, 7:60, 8:70, 9:80, 10:90, 11:100, 12:100 };
 
+function metricCellMatches(cellVal, pattern) {
+    const str = (cellVal !== undefined && cellVal !== null) ? cellVal.toString().trim() : '';
+    if (pattern === '[空]') return str === '';
+    if (pattern === '[非空]') return str !== '';
+    return str.includes(pattern || '');
+}
+
+function getMetricHighlightLabel(rule, parentRule) {
+    if (typeof getMetricRuleDisplayLabel === 'function') return getMetricRuleDisplayLabel(rule, parentRule);
+    return rule && (rule.label || rule.colZ) || '未命名指标';
+}
+
+function getMetricRulesUsingSection(secId) {
+    const rules = [];
+    const seen = new Set();
+    const addRule = (rule, parentRule, kind, sourceKey) => {
+        if (!rule) return;
+        const dedupeKey = [
+            rule.id || '',
+            rule.sourceSecId || '',
+            rule.colX || '',
+            rule.valY || '',
+            rule.colZ || '',
+            rule.valK || '',
+            rule.type || ''
+        ].join('|');
+        if (seen.has(dedupeKey)) return;
+        seen.add(dedupeKey);
+        rules.push({ rule, parentRule, kind });
+    };
+
+    Object.keys(AppState || {}).forEach(parentSecId => {
+        const parentState = AppState[parentSecId];
+        (parentState.customMetrics || []).forEach(parentRule => {
+            const mainSource = parentRule.sourceSecId || parentSecId;
+            if (mainSource === secId) {
+                addRule(parentRule, null, '主指标', `current:${parentSecId}`);
+            }
+            (parentRule.subMetrics || []).forEach(subRule => {
+                const subSource = subRule.sourceSecId || parentSecId;
+                if (subSource === secId) {
+                    addRule(subRule, parentRule, parentSecId === secId ? '子指标' : '跨表子指标', `current:${parentSecId}:${parentRule.id}`);
+                }
+            });
+        });
+    });
+
+    const savedPrefs = typeof window.getCachedMetricRulePrefs === 'function' ? window.getCachedMetricRulePrefs() : {};
+    Object.keys(savedPrefs || {}).forEach(prefKey => {
+        const prefSecId = String(prefKey || '').replace(/^sla_prefs_/, '');
+        const pref = savedPrefs[prefKey] || {};
+        (pref.customMetrics || []).forEach(parentRule => {
+            const mainSource = parentRule.sourceSecId || prefSecId;
+            if (mainSource === secId) {
+                addRule(parentRule, null, '已保存主指标', `saved:${prefKey}`);
+            }
+            (parentRule.subMetrics || []).forEach(subRule => {
+                const subSource = subRule.sourceSecId || prefSecId;
+                if (subSource === secId) {
+                    addRule(subRule, parentRule, prefSecId === secId ? '已保存子指标' : '已保存跨表子指标', `saved:${prefKey}:${parentRule.id}`);
+                }
+            });
+        });
+    });
+    return rules;
+}
+
+function getHighlightColumnMeta(secId, targetPriorityCols) {
+    const state = AppState[secId];
+    const meta = new Map();
+    const addColumn = (column, reason) => {
+        if (!column || !state.orderedHeaders.includes(column)) return;
+        if (!meta.has(column)) meta.set(column, new Set());
+        meta.get(column).add(reason);
+    };
+
+    targetPriorityCols.forEach(col => addColumn(col, 'SLA/规则判断列'));
+    getMetricRulesUsingSection(secId).forEach(({ rule, parentRule, kind }) => {
+        const label = getMetricHighlightLabel(rule, parentRule);
+        if (rule.colX) addColumn(rule.colX, `${kind}「${label}」条件列`);
+        if (rule.colZ) addColumn(rule.colZ, `${kind}「${label}」取值/统计列`);
+    });
+
+    return meta;
+}
+
+function getBuiltInRuleColumns(mode) {
+    if (mode === 'rectification') return ['task_status', 'task_create_time', 'rectify_plan_end_time'];
+    if (mode === 'risk') return ['风险状态', 'risk_status', '创单时间', 'create_time_new', 'create_time', '期望关闭时间', 'ticket_close_due_date', 'due_time', '期望关闭时间-挂起', 'suspend_due_date'];
+    if (mode === 'special') return ['状态-Status', 'task_status_en', 'task_status', 'task_status_cn', '创建日期-Create Date', 'create_time', '要求完成日期-Required Completion Date', 'required_completion_time', 'plan_complete_date'];
+    if (mode === 'sr') return ['hw_sev_name', 'urgency', 'sr_status_name', 'open_date', 'exp_close_date', 'act_close_date', 'overdue'];
+    if (mode === 'vulnerability') return ['task_status', 'create_time', 'task_create_time'];
+    return [];
+}
+
+function buildMetricCellHighlightMeta(secId) {
+    const state = AppState[secId];
+    const cellMeta = new WeakMap();
+    const addCell = (row, column, className, reason) => {
+        if (!row || !column || !state.orderedHeaders.includes(column)) return;
+        let rowMeta = cellMeta.get(row);
+        if (!rowMeta) {
+            rowMeta = {};
+            cellMeta.set(row, rowMeta);
+        }
+        if (!rowMeta[column]) rowMeta[column] = { classes: new Set(), reasons: new Set() };
+        rowMeta[column].classes.add(className);
+        rowMeta[column].reasons.add(reason);
+    };
+
+    getMetricRulesUsingSection(secId).forEach(({ rule, parentRule, kind }) => {
+        const label = getMetricHighlightLabel(rule, parentRule);
+        const ruleName = `${kind}「${label}」`;
+        const type = rule.type || 'extract';
+        const rows = state.globalData || [];
+
+        if (type === 'extract') {
+            const matchedRow = rows.find(row => rule.colX && metricCellMatches(row[rule.colX], rule.valY));
+            if (matchedRow) {
+                addCell(matchedRow, rule.colX, 'metric-condition-cell', `${ruleName} 条件命中：${rule.colX} 包含 ${rule.valY}`);
+                addCell(matchedRow, rule.colZ, 'metric-value-cell', `${ruleName} 实际取值单元格`);
+            }
+            return;
+        }
+
+        rows.forEach(row => {
+            const passX = rule.colX ? metricCellMatches(row[rule.colX], rule.valY) : true;
+            if (rule.colX && passX) {
+                addCell(row, rule.colX, 'metric-condition-cell', `${ruleName} 统计范围命中：${rule.colX} 包含 ${rule.valY || '(空条件)'}`);
+            }
+            if (passX && metricCellMatches(row[rule.colZ], rule.valK)) {
+                addCell(row, rule.colZ, 'metric-value-cell', `${ruleName} ${type === 'ratio' ? '分子' : '计数'}命中：${rule.colZ} 包含 ${rule.valK}`);
+            }
+        });
+    });
+
+    return cellMeta;
+}
+
+function buildClassAttr(classNames) {
+    const classes = classNames.filter(Boolean).join(' ');
+    return classes ? `class="${classes}"` : '';
+}
+
 function updateDashboard(secId) {
     const state = AppState[secId];
     const panel = document.getElementById(`dashboard-${secId}`);
@@ -125,18 +269,26 @@ function renderTable(secId) {
     if (!data.length) { container.innerHTML = '<p style="padding:20px;text-align:center;">没有找到数据 🤷‍♂️</p>'; return; }
     const RECT_P = SLAUpload.RECT_PRIORITY_COLS, RISK_P = SLAUpload.RISK_PRIORITY_COLS, SPEC_P = SLAUpload.SPECIAL_PRIORITY_COLS, SR_P = SLAUpload.SR_PRIORITY_COLS, VULN_P = SLAUpload.VULN_PRIORITY_COLS;
     const getIcon = k => state.sortKey !== k ? '<span class="sort-icon">⇅</span>' : (state.sortAsc ? '<span class="sort-icon sort-active">▲</span>' : '<span class="sort-icon sort-active">▼</span>');
+    const targetP = state.mode==='rectification'?RECT_P:(state.mode==='risk'?RISK_P:(state.mode==='special'?SPEC_P:(state.mode==='sr'?SR_P:(state.mode==='vulnerability'?VULN_P:[]))));
+    const highlightColumnMeta = getHighlightColumnMeta(secId, getBuiltInRuleColumns(state.mode));
+    const metricCellMeta = buildMetricCellHighlightMeta(secId);
     let html = `<table id="table-${secId}"><thead><tr>`;
     if (state.mode !== 'other') {
         const sw = state.columnWidths['_SLA_'] ? `style="width:${state.columnWidths['_SLA_']}px;min-width:${state.columnWidths['_SLA_']}px;max-width:${state.columnWidths['_SLA_']}px;"` : '';
         html += `<th data-header="_SLA_" ${sw} onclick="handleSortClick('${secId}', '_SLA_')">预警与 SLA 状态 ${getIcon('_SLA_')}</th>`;
     }
-    const targetP = state.mode==='rectification'?RECT_P:(state.mode==='risk'?RISK_P:(state.mode==='special'?SPEC_P:(state.mode==='sr'?SR_P:(state.mode==='vulnerability'?VULN_P:[]))));
     const pClass = state.mode==='rectification'?'priority-col-rect':(state.mode==='risk'?'priority-col-risk':(state.mode==='special'?'priority-col-special':(state.mode==='sr'?'priority-col-risk':(state.mode==='vulnerability'?'priority-col-risk':''))));
     state.visibleHeaders.forEach(header => {
         const safe = escapeHTML(header);
-        const isPriority = targetP.includes(header) ? `class="${pClass}"` : '';
+        const thClasses = [];
+        if (targetP.includes(header)) thClasses.push(pClass);
+        if (highlightColumnMeta.has(header)) thClasses.push('metric-involved-col');
+        const classAttr = buildClassAttr(thClasses);
+        const titleAttr = highlightColumnMeta.has(header)
+            ? `title="${escapeHTML(Array.from(highlightColumnMeta.get(header)).join('；'))}"`
+            : '';
         const wStyle = state.columnWidths[header] ? `style="width:${state.columnWidths[header]}px;min-width:${state.columnWidths[header]}px;max-width:${state.columnWidths[header]}px;"` : '';
-        html += `<th draggable="true" data-header="${safe.replace(/"/g,'&quot;')}" ${wStyle} ${isPriority} onclick="handleSortClick('${secId}', '${safe.replace(/'/g,"\\'")}'">${safe} ${getIcon(header)}</th>`;
+        html += `<th draggable="true" data-header="${safe.replace(/"/g,'&quot;')}" ${wStyle} ${classAttr} ${titleAttr} onclick="handleSortClick('${secId}', '${safe.replace(/'/g,"\\'")}')">${safe} ${getIcon(header)}</th>`;
     });
     html += '</tr></thead><tbody>';
     data.forEach(row => {
@@ -148,8 +300,18 @@ function renderTable(secId) {
         state.visibleHeaders.forEach(header => {
             const cellValue = row[header] !== undefined ? row[header] : '';
             const safe = escapeHTML(cellValue.toString().replace(/[\r\n]+/g, ' '));
+            const rowCellMeta = metricCellMeta.get(row);
+            const cellHighlight = rowCellMeta && rowCellMeta[header];
+            const tdClasses = [];
+            if (highlightColumnMeta.has(header)) tdClasses.push('metric-involved-col-cell');
+            if (cellHighlight) tdClasses.push(...Array.from(cellHighlight.classes));
+            const classAttr = buildClassAttr(tdClasses);
+            const titleParts = [safe];
+            if (cellHighlight) titleParts.push(Array.from(cellHighlight.reasons).join('；'));
+            else if (highlightColumnMeta.has(header)) titleParts.push(Array.from(highlightColumnMeta.get(header)).join('；'));
+            const title = escapeHTML(titleParts.filter(Boolean).join('\n'));
             const wStyle = state.columnWidths[header] ? `style="width:${state.columnWidths[header]}px;min-width:${state.columnWidths[header]}px;max-width:${state.columnWidths[header]}px;"` : '';
-            html += `<td title="${safe}" ${wStyle}>${safe}</td>`;
+            html += `<td title="${title}" ${classAttr} ${wStyle}>${safe}</td>`;
         });
         html += '</tr>';
     });
@@ -164,6 +326,15 @@ window.handleSortClick = function(secId, key) {
     if (state.isDraggingColumn || window._globalResizing) return;
     if (state.sortKey === key) state.sortAsc = !state.sortAsc; else { state.sortKey = key; state.sortAsc = true; }
     SLAPrefs.savePrefs(secId); updateView(secId);
+};
+
+window.refreshSLAHighlightViews = function(secIds) {
+    const ids = Array.isArray(secIds) ? secIds : [secIds];
+    Array.from(new Set(ids.filter(Boolean))).forEach(secId => {
+        if (AppState[secId] && AppState[secId].globalData && AppState[secId].globalData.length) {
+            updateView(secId);
+        }
+    });
 };
 
 function attachDragAndDrop(secId) {

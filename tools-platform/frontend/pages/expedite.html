@@ -539,7 +539,8 @@
     <div class="page-container">
         <div class="controls">
             <h2><span data-i18n="title">一键催办</span> <span
-                    style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v1.0.0</span></h2>
+                    id="expediteFrontendVersion"
+                    style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v加载中</span></h2>
             <div style="display: flex; gap: 12px; align-items: center;">
                 <button id="lang-toggle" class="btn-secondary" style="background:#00285e; color:#fff; border:none;"
                     onclick="toggleLang()">English</button>
@@ -819,6 +820,41 @@
             if (source === 'json') return 'JSON';
             if (source === 'auto') return '自动模式';
             return source || '-';
+        }
+
+        function formatVersionFromDate(dateText) {
+            const date = new Date(dateText);
+            if (Number.isNaN(date.getTime())) return '';
+            const pad = n => String(n).padStart(2, '0');
+            return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}`;
+        }
+
+        async function renderExpediteFrontendVersion() {
+            const versionEl = document.getElementById('expediteFrontendVersion');
+            if (!versionEl) return;
+            const resourceNodes = [
+                ...document.querySelectorAll('link[href*="/css/"]'),
+                ...document.querySelectorAll('script[src*="/js/shared/"]')
+            ];
+            const versions = resourceNodes
+                .map(node => node.getAttribute('href') || node.getAttribute('src') || '')
+                .map(url => {
+                    try {
+                        return new URL(url, window.location.origin).searchParams.get('v') || '';
+                    } catch (e) {
+                        const match = url.match(/[?&]v=([^&]+)/);
+                        return match ? match[1] : '';
+                    }
+                })
+                .filter(Boolean);
+            try {
+                const res = await fetch(window.location.pathname, { method: 'HEAD', cache: 'no-store' });
+                const htmlVersion = formatVersionFromDate(res.headers.get('last-modified'));
+                if (htmlVersion) versions.push(htmlVersion);
+            } catch (e) {}
+            versions.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+            versionEl.textContent = versions.length ? `v${versions[versions.length - 1]}` : 'v未标记';
+            versionEl.title = versions.length ? `当前页面资源最新版本：${versions[versions.length - 1]}` : '未检测到前端资源版本号';
         }
 
         function renderExpediteSourcePanel() {
@@ -1994,6 +2030,7 @@ ${excelUrl ? 'Remove-Item $tempXlsx -ErrorAction SilentlyContinue' : ''}
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            renderExpediteFrontendVersion();
             const modeSelect = document.getElementById('expediteSourceMode');
             if (modeSelect) {
                 modeSelect.value = API.getSourceMode('expedite_sla_data');

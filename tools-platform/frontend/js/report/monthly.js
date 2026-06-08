@@ -5,7 +5,7 @@ window.currentLang = localStorage.getItem('monthlyReportLang') || 'zh';
 
 const i18n = {
     zh: {
-        title: '月度运营质量与合规分析报告 <span style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v1.0.0</span>',
+        title: '月度运营质量与合规分析报告 <span id="monthlyFrontendVersion" style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v加载中</span>',
         date_range_loading: '分析周期: 加载中...',
         filter_7_days: '最近 7 天',
         filter_30_days: '最近 30 天',
@@ -49,11 +49,11 @@ const i18n = {
         group_failing: '共有 <span class="summary-highlight">{count}</span> 项未达标，主要包含：{list}。',
         group_passed: '各项指标 <span style="color:green; font-weight:bold;">全部达标</span>。',
         expiring_warning: '⚠️ 临期任务预警 ({count}项)',
-        special_metric_warning: '🚩 特殊指标提醒 ({count}项)',
-        special_metric_format: '所有人注意 <strong>[{metric}]</strong> 全局值: {global} | 目标: {target} | 差距: {gap}',
+        special_metric_warning: '🚩 所有人注意 特殊指标提醒 ({count}项)',
+        special_metric_format: '<strong>[{metric}]</strong> 全局值: {global} | 目标: {target} | 差距: {gap}',
         unknown_id: '未知单号',
         unknown_network: '未知网络',
-        ticket_format: '<strong>[{title}]</strong> 单号: {id} | 网络: {network} | 状态: {status}',
+        ticket_format: '<strong>[{title}]</strong> 单号: {id} | 状态: {status}',
 
         chart1_title: '整体达标率与指标数趋势',
         chart1_overall_rate: '整体达标率',
@@ -91,7 +91,7 @@ const i18n = {
         full_ungrouped_short: '未分组'
     },
     en: {
-        title: 'Monthly Quality & Compliance Analysis <span style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v1.0.0</span>',
+        title: 'Monthly Quality & Compliance Analysis <span id="monthlyFrontendVersion" style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">vLoading</span>',
         date_range_loading: 'Analysis Period: Loading...',
         filter_7_days: 'Last 7 Days',
         filter_30_days: 'Last 30 Days',
@@ -134,11 +134,11 @@ const i18n = {
         group_failing: '<span class="summary-highlight">{count}</span> non-compliant items, including: {list}.',
         group_passed: 'All metrics <span style="color:green; font-weight:bold;">Compliant</span>.',
         expiring_warning: '⚠️ Expiring Tasks Warning ({count})',
-        special_metric_warning: '🚩 Special Alert ({count})',
-        special_metric_format: '@ALL <strong>[{metric}]</strong> Global: {global} | Target: {target} | Gap: {gap}',
+        special_metric_warning: '🚩 @ALL Special Alert ({count})',
+        special_metric_format: '<strong>[{metric}]</strong> Global: {global} | Target: {target} | Gap: {gap}',
         unknown_id: 'Unknown ID',
         unknown_network: 'Unknown Network',
-        ticket_format: '<strong>[{title}]</strong> ID: {id} | Network: {network} | Status: {status}',
+        ticket_format: '<strong>[{title}]</strong> ID: {id} | Status: {status}',
 
         chart1_title: 'Overall Compliance Rate & Metrics Trend',
         chart1_overall_rate: 'Compliance Rate',
@@ -251,6 +251,18 @@ function translateSlaStatus(statusText) {
         .replace(/月/g, 'months');
 }
 
+function formatMonthlySlaStatus(ticket) {
+    let text = String(ticket && ticket._slaCleanText || '').trim();
+    if (ticket && ticket.collection === 'vulnerability') {
+        text = text
+            .replace(/^漏洞(?:紧急|提醒)\s*\(([^,，()]+)[,，]\s*(剩余\s*-?\d+\s*天)\)$/, '$1 / $2')
+            .replace(/^漏洞(?:紧急|提醒)\s+([^/]+?)\s*\/\s*(剩余\s*-?\d+\s*天)$/, '$1 / $2')
+            .replace(/^漏洞(?:紧急|提醒)\s*\((剩余\s*-?\d+\s*天)\)$/, '$1')
+            .replace(/^漏洞(?:紧急|提醒)\s*/, '');
+    }
+    return translateSlaStatus(text);
+}
+
 function updateStaticI18n() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
@@ -266,6 +278,31 @@ function updateStaticI18n() {
     if (toggleBtn) {
         toggleBtn.innerText = window.currentLang === 'zh' ? 'English' : '中文';
     }
+    renderMonthlyFrontendVersion();
+}
+
+function renderMonthlyFrontendVersion() {
+    const versionEl = document.getElementById('monthlyFrontendVersion');
+    if (!versionEl) return;
+    const resourceNodes = [
+        ...document.querySelectorAll('link[href*="/css/"]'),
+        ...document.querySelectorAll('script[src*="/js/report/monthly.js"]'),
+        ...document.querySelectorAll('script[src*="/js/shared/"]')
+    ];
+    const versions = resourceNodes
+        .map(node => node.getAttribute('href') || node.getAttribute('src') || '')
+        .map(url => {
+            try {
+                return new URL(url, window.location.origin).searchParams.get('v') || '';
+            } catch (e) {
+                const match = url.match(/[?&]v=([^&]+)/);
+                return match ? match[1] : '';
+            }
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    versionEl.textContent = versions.length ? `v${versions[versions.length - 1]}` : 'v未标记';
+    versionEl.title = versions.length ? `当前页面资源最新版本：${versions[versions.length - 1]}` : '未检测到前端资源版本号';
 }
 
 let currentTrends = null;
@@ -598,10 +635,14 @@ function generateSummary(trends, latest, globalConfig) {
             }
         });
     }
+    function formatFailingMetricLink(m) {
+        return `<a href="javascript:void(0)" onclick="const el = document.getElementById('matrix-row-${encodeURIComponent(m)}'); if(el) { el.scrollIntoView({behavior: 'smooth', block: 'center'}); el.style.backgroundColor='#fff3e0'; setTimeout(()=>el.style.backgroundColor='', 2000); } else { const fel = document.getElementById('full-row-${encodeURIComponent(m)}'); if(fel) { fel.scrollIntoView({behavior: 'smooth', block: 'center'}); fel.style.backgroundColor='#fff3e0'; setTimeout(()=>fel.style.backgroundColor='', 2000); } }" style="color:#e31837; text-decoration:underline; font-weight:bold; cursor:pointer;" title="点击跳转至该指标详情">${escapeHTML(tVal(m))}</a>`;
+    }
+
     const overallFailingArr = Array.from(overallFailingSet);
     let overallStr = '';
     if (overallFailingArr.length > 0) {
-        overallStr = t('overall_failing', { count: overallFailingArr.length, list: overallFailingArr.map(tVal).join('、') });
+        overallStr = t('overall_failing', { count: overallFailingArr.length, list: overallFailingArr.map(formatFailingMetricLink).join('、') });
     } else {
         overallStr = t('overall_passed');
     }
@@ -637,7 +678,7 @@ function generateSummary(trends, latest, globalConfig) {
     for (let catName in catTotalMetrics) {
         let failingList = failingByCat[catName] || [];
         if (failingList.length > 0) {
-            summaryHtml += `<li>【<strong>${tVal(catName)}</strong>】：${t('group_failing', { count: failingList.length, list: failingList.map(tVal).join('、') })}</li>`;
+            summaryHtml += `<li>【<strong>${tVal(catName)}</strong>】：${t('group_failing', { count: failingList.length, list: failingList.map(formatFailingMetricLink).join('、') })}</li>`;
         } else {
             summaryHtml += `<li>【<strong>${tVal(catName)}</strong>】：${t('group_passed')}</li>`;
         }
@@ -688,8 +729,7 @@ function generateSummary(trends, latest, globalConfig) {
                 summaryHtml += `<li>${t('ticket_format', {
                     title: translateTicketTitle(tItem.title),
                     id: id,
-                    network: network,
-                    status: translateSlaStatus(tItem._slaCleanText)
+                    status: formatMonthlySlaStatus(tItem)
                 })}</li>`;
             });
             summaryHtml += '</ul></div>';
@@ -991,7 +1031,7 @@ function renderMatrix(latest) {
         }).join(' ');
 
         html += `
-            <tr>
+            <tr id="matrix-row-${encodeURIComponent(label)}">
                 <td style="font-weight:600; color:#444;">${tVal(label)}</td>
                 <td style="color:#666;">${group.target_val || '-'}</td>
                 <td>${failuresHtml}</td>
@@ -1275,7 +1315,7 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
         let globalDisplayClass = 'val-none';
         if (m.hasTarget) globalDisplayClass = isGlobalFailing ? 'val-warn' : 'val-good';
 
-        matrixHtml += `<tr>`;
+        matrixHtml += `<tr id="full-row-${encodeURIComponent(m.label)}">`;
         if (metricGroups.length > 0) {
             matrixHtml += `<td ${row.isGroupStart ? `rowspan="${row.groupSize}"` : `style="display:none;"`} style="max-width:60px; white-space:normal; word-wrap:break-word; text-align:center;">${escapeHTML(tVal(row.groupName) || t('full_ungrouped_short'))}</td>`;
             matrixHtml += `<td ${row.isGroupStart ? `rowspan="${row.groupSize}"` : `style="display:none;"`} style="font-weight:bold; color:#1565c0; text-align:center; max-width:50px;">${row.groupWeight || '-'}</td>`;

@@ -2816,24 +2816,30 @@ async function promptExpiringTickets(tickets, specialMetricAlerts = []) {
             document.body.appendChild(modal);
         }
         
-        let listHtml = groupedTickets.map(group => {
+        let listHtml = groupedTickets.map((group, groupIndex) => {
+            const groupKey = `ticket-${groupIndex}`;
             const rowsHtml = group.items.map(({ ticket: t, sortedIndex }) => {
                 const data = t.data || {};
                 const id = data.sr_num || data.sr_id || data.task_id || data.risk_id || data.ticket_id || data['单号'] || data['问题风险编号'] || data['问题编号'] || '未知单号';
                 const network = data.network_name || data['网络名称'] || data.network || '未知网络';
                 const urgencyDays = getTicketUrgencyDays(t);
                 const urgencyText = urgencyDays < 0 ? `已超 ${Math.abs(urgencyDays)} 天` : `剩余 ${urgencyDays} 天`;
-                return `<div style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:13px;display:flex;align-items:center;gap:8px;">
-                    <input type="checkbox" class="exp-ticket-cb" value="${sortedIndex}" checked style="margin-right:10px;cursor:pointer;width:16px;height:16px;">
+                return `<div class="exp-select-row" data-checkbox-type="ticket" data-checkbox-value="${sortedIndex}" style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:13px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;-webkit-user-select:none;">
+                    <input type="checkbox" class="exp-ticket-cb exp-select-cb" data-group-key="${groupKey}" value="${sortedIndex}" checked style="margin-right:10px;cursor:pointer;width:16px;height:16px;">
                     <div style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escapeHTML(t.title)} | 单号: ${escapeHTML(id)} | 网络: ${escapeHTML(network)} | ${escapeHTML(t._slaCleanText)}">
                         <span style="color:#d32f2f;font-weight:700;">${escapeHTML(urgencyText)}</span> | 单号: <span style="color:#1976d2">${escapeHTML(id)}</span> | 网络: ${escapeHTML(network)} | <span style="color:#d32f2f">${escapeHTML(t._slaCleanText)}</span>
                     </div>
                 </div>`;
             }).join('');
             return `<div style="border-bottom:1px solid #e2e8f0;">
-                <div style="position:sticky;top:0;z-index:1;background:#fff7ed;padding:8px 10px;border-bottom:1px solid #fed7aa;display:flex;justify-content:space-between;align-items:center;">
+                <div style="position:sticky;top:0;z-index:1;background:#fff7ed;padding:8px 10px;border-bottom:1px solid #fed7aa;display:flex;justify-content:space-between;align-items:center;gap:10px;">
                     <b style="color:#c2410c;">${escapeHTML(group.title)}</b>
-                    <span style="font-size:12px;color:#9a3412;background:#ffedd5;border:1px solid #fed7aa;border-radius:999px;padding:2px 8px;">${group.items.length} 条，组内按 SLA 升序</span>
+                    <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+                        <label style="font-size:12px;color:#9a3412;font-weight:700;display:flex;align-items:center;gap:4px;cursor:pointer;">
+                            <input type="checkbox" class="exp-group-select" data-group-key="${groupKey}" checked style="cursor:pointer;width:14px;height:14px;"> 本组全选
+                        </label>
+                        <span style="font-size:12px;color:#9a3412;background:#ffedd5;border:1px solid #fed7aa;border-radius:999px;padding:2px 8px;">${group.items.length} 条，组内按 SLA 升序</span>
+                    </div>
                 </div>
                 ${rowsHtml}
             </div>`;
@@ -2848,8 +2854,8 @@ async function promptExpiringTickets(tickets, specialMetricAlerts = []) {
             const targetValue = item.target_val || item.targetValue || '--';
             const gap = item.gap || '-';
             const weight = item.weight !== undefined ? item.weight : '-';
-            return `<div style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:13px;display:flex;align-items:center;gap:8px;">
-                <input type="checkbox" class="special-alert-cb" value="${index}" checked style="margin-right:10px;cursor:pointer;width:16px;height:16px;">
+            return `<div class="exp-select-row" data-checkbox-type="metric" data-checkbox-value="${index}" style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:13px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;-webkit-user-select:none;">
+                <input type="checkbox" class="special-alert-cb exp-select-cb" data-group-key="special-alerts" value="${index}" checked style="margin-right:10px;cursor:pointer;width:16px;height:16px;">
                 <div style="flex:1;min-width:0;">
                     <div style="font-weight:700;color:#b91c1c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escapeHTML(metricName)}">${getBilingual(metricName)}</div>
                     <div style="font-size:12px;color:#7f1d1d;margin-top:2px;">
@@ -2865,14 +2871,22 @@ async function promptExpiringTickets(tickets, specialMetricAlerts = []) {
             <div style="background:#fff;border-radius:10px;width:min(1080px,96vw);max-height:84vh;display:flex;flex-direction:column;box-shadow:0 8px 28px rgba(0,0,0,0.18);">
                 <div style="padding:16px;border-bottom:1px solid #eee;background:#fff3e0;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;align-items:center;">
                     <h3 style="margin:0;color:#e65100;font-size:16px;">⚠️ 发现待处理的提醒数据</h3>
-                    <label style="font-size:13px;cursor:pointer;color:#e65100;font-weight:bold;display:flex;align-items:center;"><input type="checkbox" id="exp-select-all" checked style="margin-right:4px;"> 全选</label>
+                    <div style="display:flex;align-items:center;gap:14px;">
+                        <label style="font-size:13px;cursor:pointer;color:#e65100;font-weight:bold;display:flex;align-items:center;"><input type="checkbox" id="exp-select-all" checked style="margin-right:4px;"> 全选</label>
+                        <button id="btn-close-exp" title="关闭并取消本次入库" style="border:none;background:transparent;color:#9a3412;font-size:22px;line-height:1;cursor:pointer;padding:0 2px;">×</button>
+                    </div>
                 </div>
                 <div style="padding:16px;overflow-y:auto;flex:1;">
                     <p style="margin-top:0;font-size:14px;color:#333;">本次快照发现 <b>${metricAlerts.length}</b> 条特殊指标提醒、<b>${sortedTickets.length}</b> 条“本月底+5天内处理”临期数据。请<b>勾选</b>需要一起入库的提醒（取消勾选则会忽略）：</p>
                     <div style="margin-bottom:14px;border:1px solid #fecaca;border-radius:8px;overflow:hidden;background:#fffafa;">
                         <div style="background:#fee2e2;padding:8px 10px;border-bottom:1px solid #fecaca;display:flex;justify-content:space-between;align-items:center;">
-                            <b style="color:#b91c1c;">🚩 特殊指标提醒：全局不达标但客户群无值</b>
-                            <span style="font-size:12px;color:#991b1b;background:#fff;border:1px solid #fecaca;border-radius:999px;padding:2px 8px;">${metricAlerts.length} 条</span>
+                            <b style="color:#b91c1c;">🚩 所有人注意 特殊指标提醒：全局不达标但客户群无值</b>
+                            <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+                                <label style="font-size:12px;color:#991b1b;font-weight:700;display:flex;align-items:center;gap:4px;cursor:pointer;">
+                                    <input type="checkbox" class="exp-group-select" data-group-key="special-alerts" ${metricAlerts.length ? 'checked' : ''} ${metricAlerts.length ? '' : 'disabled'} style="cursor:pointer;width:14px;height:14px;"> 本组全选
+                                </label>
+                                <span style="font-size:12px;color:#991b1b;background:#fff;border:1px solid #fecaca;border-radius:999px;padding:2px 8px;">${metricAlerts.length} 条</span>
+                            </div>
                         </div>
                         <div style="max-height:180px;overflow:auto;">${metricAlertHtml}</div>
                     </div>
@@ -2896,23 +2910,83 @@ async function promptExpiringTickets(tickets, specialMetricAlerts = []) {
         modal.style.display = 'flex';
         
         const selectAllCb = document.getElementById('exp-select-all');
-        const cbs = document.querySelectorAll('.exp-ticket-cb, .special-alert-cb');
         const countSpan = document.getElementById('exp-sel-count');
+        let lastSelectIndex = null;
+
+        const getAllCbs = () => Array.from(modal.querySelectorAll('.exp-select-cb'));
+        const getGroupCbs = (groupKey) => getAllCbs().filter(cb => cb.dataset.groupKey === groupKey);
+        const getGroupSelects = () => Array.from(modal.querySelectorAll('.exp-group-select'));
+
+        const setRangeChecked = (fromIndex, toIndex, checked) => {
+            const allCbs = getAllCbs();
+            const start = Math.min(fromIndex, toIndex);
+            const end = Math.max(fromIndex, toIndex);
+            allCbs.slice(start, end + 1).forEach(cb => { cb.checked = checked; });
+        };
         
         const updateCount = () => {
-            const checkedCount = document.querySelectorAll('.exp-ticket-cb:checked, .special-alert-cb:checked').length;
+            const allCbs = getAllCbs();
+            const checkedCount = allCbs.filter(cb => cb.checked).length;
             countSpan.innerText = checkedCount;
-            selectAllCb.checked = checkedCount === cbs.length;
+            selectAllCb.checked = allCbs.length > 0 && checkedCount === allCbs.length;
+            selectAllCb.indeterminate = checkedCount > 0 && checkedCount < allCbs.length;
+
+            getGroupSelects().forEach(groupCb => {
+                const groupCbs = getGroupCbs(groupCb.dataset.groupKey);
+                const groupCheckedCount = groupCbs.filter(cb => cb.checked).length;
+                groupCb.checked = groupCbs.length > 0 && groupCheckedCount === groupCbs.length;
+                groupCb.indeterminate = groupCheckedCount > 0 && groupCheckedCount < groupCbs.length;
+            });
         };
         
         selectAllCb.onchange = (e) => {
-            cbs.forEach(cb => cb.checked = e.target.checked);
+            getAllCbs().forEach(cb => cb.checked = e.target.checked);
             updateCount();
         };
-        
-        cbs.forEach(cb => {
+
+        getGroupSelects().forEach(groupCb => {
+            groupCb.onchange = (e) => {
+                getGroupCbs(groupCb.dataset.groupKey).forEach(cb => cb.checked = e.target.checked);
+                updateCount();
+            };
+            groupCb.onclick = e => e.stopPropagation();
+        });
+
+        const handleItemToggle = (cb, event, forceToggleFromRow = false) => {
+            const allCbs = getAllCbs();
+            const currentIndex = allCbs.indexOf(cb);
+            const nextChecked = forceToggleFromRow ? !cb.checked : cb.checked;
+
+            if (forceToggleFromRow) cb.checked = nextChecked;
+            if (event && event.shiftKey && lastSelectIndex !== null && currentIndex > -1) {
+                setRangeChecked(lastSelectIndex, currentIndex, nextChecked);
+            }
+            if (currentIndex > -1) lastSelectIndex = currentIndex;
+            updateCount();
+        };
+
+        getAllCbs().forEach(cb => {
+            cb.onclick = e => {
+                e.stopPropagation();
+                handleItemToggle(cb, e, false);
+            };
             cb.onchange = updateCount;
         });
+
+        modal.querySelectorAll('.exp-select-row').forEach(row => {
+            row.onclick = e => {
+                const cb = row.querySelector('.exp-select-cb');
+                if (!cb) return;
+                handleItemToggle(cb, e, true);
+            };
+        });
+
+        updateCount();
+
+        document.getElementById('btn-close-exp').onclick = () => {
+            modal.style.display = 'none';
+            resolve({ cancelled: true, expiringTickets: [], specialMetricAlerts: [] });
+        };
         
         document.getElementById('btn-ignore-exp').onclick = () => {
             modal.style.display = 'none';
@@ -2946,6 +3020,10 @@ window.saveDashboardToDB = async function(event) {
 
     if ((rawDataForSave.expiringTickets && rawDataForSave.expiringTickets.length > 0) || specialMetricAlerts.length > 0) {
         const selectedAlerts = await promptExpiringTickets(rawDataForSave.expiringTickets || [], specialMetricAlerts);
+        if (selectedAlerts && selectedAlerts.cancelled) {
+            showToast('已取消本次入库', 'info');
+            return;
+        }
         rawDataForSave.expiringTickets = selectedAlerts.expiringTickets || [];
         rawDataForSave.specialMetricAlerts = selectedAlerts.specialMetricAlerts || [];
     } else {
