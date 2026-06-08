@@ -666,6 +666,28 @@ th:first-child, td:first-child { min-width: 160px; max-width: 250px; border-left
 th.priority-col-rect    { background-color: #e3f2fd; }
 th.priority-col-risk    { background-color: #f3e5f5; }
 th.priority-col-special { background-color: #e0f2f1; }
+th.metric-involved-col {
+    background-image: linear-gradient(0deg, rgba(255, 183, 77, 0.24), rgba(255, 183, 77, 0.24));
+    box-shadow: inset 0 -2px 0 #fb8c00;
+}
+td.metric-involved-col-cell {
+    background-color: #fffaf0;
+}
+td.metric-condition-cell {
+    background-color: #fff3cd !important;
+    box-shadow: inset 0 0 0 1px #f6c343;
+    color: #7a4b00;
+    font-weight: 700;
+}
+td.metric-value-cell {
+    background-color: #e8f5e9 !important;
+    box-shadow: inset 0 0 0 2px #43a047;
+    color: #1b5e20;
+    font-weight: 800;
+}
+td.metric-condition-cell.metric-value-cell {
+    background: linear-gradient(135deg, #fff3cd 0%, #fff3cd 48%, #e8f5e9 52%, #e8f5e9 100%) !important;
+}
 th[draggable="true"] { cursor: grab; }
 th[draggable="true"]:active { cursor: grabbing; }
 th.drag-over { border-left: 4px solid #ff9800 !important; background-color: #fff8e1 !important; }

@@ -48,6 +48,11 @@
             font-weight: 700;
             cursor: pointer;
         }
+        .storage-refresh:hover,
+        .diff-toggle:hover {
+            border-color: rgba(125, 211, 252, 0.52);
+            background: rgba(14, 165, 233, 0.16);
+        }
         .summary-grid {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -139,6 +144,16 @@
             background: rgba(245, 158, 11, 0.14);
             border-color: rgba(245, 158, 11, 0.26);
         }
+        .order-note {
+            margin-top: 14px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(125, 211, 252, 0.18);
+            background: rgba(14, 165, 233, 0.08);
+            color: #bae6fd;
+            font-size: 12px;
+            line-height: 1.6;
+        }
         .metric-grid {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -160,6 +175,88 @@
             font-size: 18px;
             font-weight: 800;
         }
+        .diff-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 14px;
+        }
+        .diff-toggle {
+            border: 1px solid rgba(251, 191, 36, 0.32);
+            background: rgba(245, 158, 11, 0.12);
+            color: #fde68a;
+            border-radius: 999px;
+            padding: 8px 14px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+        .diff-panel {
+            display: none;
+            margin-top: 14px;
+            border: 1px solid rgba(251, 191, 36, 0.2);
+            background: rgba(15, 23, 42, 0.86);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        .diff-panel.open {
+            display: block;
+        }
+        .diff-summary {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+        }
+        .diff-summary-item {
+            padding: 12px 14px;
+            border-right: 1px solid rgba(148, 163, 184, 0.12);
+        }
+        .diff-summary-item:last-child {
+            border-right: 0;
+        }
+        .diff-summary-label {
+            color: #94a3b8;
+            font-size: 11px;
+            margin-bottom: 6px;
+        }
+        .diff-summary-value {
+            color: #f8fafc;
+            font-size: 13px;
+            font-weight: 800;
+            word-break: break-word;
+        }
+        .diff-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+        }
+        .diff-column {
+            min-width: 0;
+            border-right: 1px solid rgba(148, 163, 184, 0.12);
+        }
+        .diff-column:last-child {
+            border-right: 0;
+        }
+        .diff-column-head {
+            padding: 10px 14px;
+            color: #bae6fd;
+            font-size: 12px;
+            font-weight: 800;
+            background: rgba(14, 165, 233, 0.08);
+            border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+        }
+        .diff-code {
+            margin: 0;
+            padding: 14px;
+            max-height: 260px;
+            overflow: auto;
+            color: #dbeafe;
+            font-size: 11px;
+            line-height: 1.65;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        }
         .storage-empty {
             padding: 28px;
             text-align: center;
@@ -168,12 +265,19 @@
             border: 1px dashed rgba(148, 163, 184, 0.22);
         }
         @media (max-width: 880px) {
-            .summary-grid, .metric-grid {
+            .summary-grid, .metric-grid, .diff-summary {
                 grid-template-columns: 1fr 1fr;
+            }
+            .diff-grid {
+                grid-template-columns: 1fr;
+            }
+            .diff-column {
+                border-right: 0;
+                border-bottom: 1px solid rgba(148, 163, 184, 0.12);
             }
         }
         @media (max-width: 560px) {
-            .summary-grid, .metric-grid {
+            .summary-grid, .metric-grid, .diff-summary {
                 grid-template-columns: 1fr;
             }
         }
@@ -211,6 +315,78 @@
             return source || '-';
         }
 
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function renderDiffPanel(item, index) {
+            if (item.parity !== 'mismatch' || !item.diff) return '';
+            const diff = item.diff || {};
+            const semantic = diff.semantic || {};
+            return `
+                <div class="diff-actions">
+                    <button class="diff-toggle" type="button" data-diff-toggle="${index}">查看差异详情</button>
+                </div>
+                <div class="diff-panel" id="storageDiffPanel${index}">
+                    <div class="diff-summary">
+                        <div class="diff-summary-item">
+                            <div class="diff-summary-label">差异路径</div>
+                            <div class="diff-summary-value">${escapeHtml(semantic.path || '-')}</div>
+                        </div>
+                        <div class="diff-summary-item">
+                            <div class="diff-summary-label">差异原因</div>
+                            <div class="diff-summary-value">${escapeHtml(semantic.reason || '文本内容不一致')}</div>
+                        </div>
+                        <div class="diff-summary-item">
+                            <div class="diff-summary-label">文本差异位置</div>
+                            <div class="diff-summary-value">${diff.firstDiffIndex ?? '-'}</div>
+                        </div>
+                        <div class="diff-summary-item">
+                            <div class="diff-summary-label">JSON / SQLite 长度</div>
+                            <div class="diff-summary-value">${diff.jsonLength ?? '-'} / ${diff.sqliteLength ?? '-'}</div>
+                        </div>
+                    </div>
+                    <div class="diff-grid">
+                        <div class="diff-column">
+                            <div class="diff-column-head">JSON 侧预览</div>
+                            <pre class="diff-code">${escapeHtml(semantic.jsonPreview || diff.jsonExcerpt || '-')}</pre>
+                        </div>
+                        <div class="diff-column">
+                            <div class="diff-column-head">SQLite 侧预览</div>
+                            <pre class="diff-code">${escapeHtml(semantic.sqlitePreview || diff.sqliteExcerpt || '-')}</pre>
+                        </div>
+                    </div>
+                    <div class="diff-grid">
+                        <div class="diff-column">
+                            <div class="diff-column-head">JSON 文本差异片段</div>
+                            <pre class="diff-code">${escapeHtml(diff.jsonExcerpt || '-')}</pre>
+                        </div>
+                        <div class="diff-column">
+                            <div class="diff-column-head">SQLite 文本差异片段</div>
+                            <pre class="diff-code">${escapeHtml(diff.sqliteExcerpt || '-')}</pre>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderOrderNote(item) {
+            if (!item.orderDiff) return '';
+            const order = item.orderDiff;
+            return `
+                <div class="order-note">
+                    顺序提示：${escapeHtml(order.message || 'JSON 与 SQLite 列表顺序不同。')}
+                    第一处顺序差异在第 ${Number(order.firstIndex ?? 0) + 1} 条：
+                    JSON 为「${escapeHtml(order.jsonKey || '-')}」，SQLite 为「${escapeHtml(order.sqliteKey || '-')}」。
+                </div>
+            `;
+        }
+
         function renderSummary(data) {
             const summary = data.summary || {};
             const checkedAt = data.checkedAt ? new Date(data.checkedAt).toLocaleString('zh-CN', { hour12: false }) : '-';
@@ -231,7 +407,7 @@
                 return;
             }
 
-            list.innerHTML = tables.map(item => `
+            list.innerHTML = tables.map((item, index) => `
                 <section class="table-card">
                     <div class="table-head">
                         <div>
@@ -240,6 +416,7 @@
                         </div>
                         <div class="badge-row">
                             <span class="badge ${item.parity === 'match' ? 'ok' : 'warn'}">一致性: ${item.parity === 'match' ? 'MATCH' : 'MISMATCH'}</span>
+                            ${item.orderDiff ? '<span class="badge warn">顺序: 不一致</span>' : ''}
                             <span class="badge info">Auto读源: ${sourceLabel(item.autoSource)}</span>
                             <span class="badge info">写策略: ${item.writeStrategy}</span>
                         </div>
@@ -262,8 +439,19 @@
                             <div class="metric-value">${item.parity === 'match' ? '已对齐' : '待排查'}</div>
                         </div>
                     </div>
+                    ${renderOrderNote(item)}
+                    ${renderDiffPanel(item, index)}
                 </section>
             `).join('');
+
+            list.querySelectorAll('[data-diff-toggle]').forEach(button => {
+                button.addEventListener('click', () => {
+                    const idx = button.getAttribute('data-diff-toggle');
+                    const panel = document.getElementById(`storageDiffPanel${idx}`);
+                    const isOpen = panel.classList.toggle('open');
+                    button.textContent = isOpen ? '收起差异详情' : '查看差异详情';
+                });
+            });
         }
 
         async function loadStorageStatus() {

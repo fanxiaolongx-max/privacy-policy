@@ -7,7 +7,7 @@
     <title>UIVF12 抓取引擎 v6.6 - Tools Platform</title>
     <meta name="description" content="UI.Vision 全能抓取引擎，自动化脚本工程中心，脚本云端仓库管理">
     <link rel="stylesheet" href="/css/shared.css">
-    <link rel="stylesheet" href="/css/uivf12.css">
+    <link rel="stylesheet" href="/css/uivf12.css?v=20260608-01">
     <style>
         .repo-source-panel {
             margin-bottom: 10px;
@@ -61,7 +61,8 @@
     <div class="page-content">
         <div class="uiv-title">
             <span>🚀 自动化脚本工程中心 <span
-                    style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v6.6.0</span></span>
+                    id="uivFrontendVersion"
+                    style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v加载中</span></span>
             <span class="tag">多源融合 + Formula 权威版</span>
         </div>
 
@@ -209,15 +210,39 @@
     <script src="/js/shared/toast.js?v=20260530-03"></script>
     <script src="/js/shared/navbar.js?v=20260530-08"></script>
     <!-- UIVF12 模块 -->
-    <script src="/js/uivf12/workbench.js?v=20260530-03"></script>
-    <script src="/js/uivf12/copy.js?v=20260530-03"></script>
-    <script src="/js/uivf12/genlog.js?v=20260530-03"></script>
-    <script src="/js/uivf12/generator.js?v=20260530-03"></script>
-    <script src="/js/uivf12/save.js?v=20260531-01"></script>
-    <script src="/js/uivf12/sidebar.js?v=20260531-01"></script>
+    <script src="/js/uivf12/workbench.js?v=20260608-01"></script>
+    <script src="/js/uivf12/copy.js?v=20260608-01"></script>
+    <script src="/js/uivf12/genlog.js?v=20260608-01"></script>
+    <script src="/js/uivf12/generator.js?v=20260608-01"></script>
+    <script src="/js/uivf12/save.js?v=20260608-01"></script>
+    <script src="/js/uivf12/sidebar.js?v=20260608-01"></script>
     <script>
+        function renderUIVFrontendVersion() {
+            const versionEl = document.getElementById('uivFrontendVersion');
+            if (!versionEl) return;
+            const resourceNodes = [
+                ...document.querySelectorAll('link[href*="/css/uivf12.css"]'),
+                ...document.querySelectorAll('script[src*="/js/uivf12/"]')
+            ];
+            const versions = resourceNodes
+                .map(node => node.getAttribute('href') || node.getAttribute('src') || '')
+                .map(url => {
+                    try {
+                        return new URL(url, window.location.origin).searchParams.get('v') || '';
+                    } catch (e) {
+                        const match = url.match(/[?&]v=([^&]+)/);
+                        return match ? match[1] : '';
+                    }
+                })
+                .filter(Boolean)
+                .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+            versionEl.textContent = versions.length ? `v${versions[versions.length - 1]}` : 'v未标记';
+            versionEl.title = versions.length ? `当前页面资源最新版本：${versions[versions.length - 1]}` : '未检测到前端资源版本号';
+        }
+
         // 页面初始化
         document.addEventListener('DOMContentLoaded', () => {
+            renderUIVFrontendVersion();
             const modeSelect = document.getElementById('repoSourceMode');
             if (modeSelect) {
                 modeSelect.value = API.getSourceMode('uiv_repository');

@@ -262,6 +262,7 @@ function addMetricRule(secId) {
     }
 
     renderMetricList(secId); evaluateAllMetrics(); updateAllMetricRuleSummaries();
+    if (window.refreshSLAHighlightViews) window.refreshSLAHighlightViews(Object.keys(AppState || {}));
     document.getElementById(`m-label-${secId}`).value = '';
     const cy = document.getElementById(`m-c-valy-${secId}`); if(cy) cy.value = '';
     const ck = document.getElementById(`m-c-valk-${secId}`); if(ck) ck.value = '';
@@ -270,6 +271,7 @@ function addMetricRule(secId) {
 window.deleteMetricRule = function(secId, ruleId) {
     AppState[secId].customMetrics = AppState[secId].customMetrics.filter(r => r.id !== ruleId);
     SLAPrefs.savePrefs(secId); renderMetricList(secId); evaluateAllMetrics(); updateAllMetricRuleSummaries();
+    if (window.refreshSLAHighlightViews) window.refreshSLAHighlightViews(Object.keys(AppState || {}));
 };
 
 window.deleteSubMetricRule = function(secId, parentRuleId, subIndex) {
@@ -277,6 +279,7 @@ window.deleteSubMetricRule = function(secId, parentRuleId, subIndex) {
     if (parent && parent.subMetrics) {
         parent.subMetrics.splice(subIndex, 1);
         SLAPrefs.savePrefs(secId); renderMetricList(secId); evaluateAllMetrics(); updateAllMetricRuleSummaries();
+        if (window.refreshSLAHighlightViews) window.refreshSLAHighlightViews(Object.keys(AppState || {}));
         if (document.getElementById('metric-rules-modal')?.style.display === 'flex') renderAllMetricRules();
     }
 };
@@ -574,6 +577,11 @@ async function refreshMetricRulePrefsCache() {
     }
 }
 
+window.refreshMetricRulePrefsCache = refreshMetricRulePrefsCache;
+window.getCachedMetricRulePrefs = function() {
+    return cachedMetricRulePrefs || {};
+};
+
 function highlightMetricRuleSection(secId) {
     const section = document.getElementById(`section-${secId}`);
     const metricBtn = document.getElementById(`metrics-btn-${secId}`);
@@ -852,6 +860,7 @@ window.saveMetricRuleEditor = async function() {
             }
             evaluateAllMetrics();
             updateAllMetricRuleSummaries();
+            if (window.refreshSLAHighlightViews) window.refreshSLAHighlightViews(Object.keys(AppState || {}));
         } else {
             await persistSavedMetricRuleConfig();
         }
@@ -897,6 +906,7 @@ window.deleteMetricRuleFromOverview = async function(index) {
             renderMetricList(record.parentSecId);
             evaluateAllMetrics();
             updateAllMetricRuleSummaries();
+            if (window.refreshSLAHighlightViews) window.refreshSLAHighlightViews(Object.keys(AppState || {}));
         } else {
             const pref = cachedMetricRulePrefs && cachedMetricRulePrefs[record.prefKey];
             if (!pref) throw new Error('未找到已保存配置');

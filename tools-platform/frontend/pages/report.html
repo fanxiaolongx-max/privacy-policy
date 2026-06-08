@@ -462,7 +462,7 @@
 <body>
     <div class="page-container">
         <div class="controls">
-            <h2>📈 报表看板 (Report Dashboard) <span style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v1.0.0</span></h2>
+            <h2>📈 报表看板 (Report Dashboard) <span id="reportFrontendVersion" style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v加载中</span></h2>
             <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                 <div>
                     <span style="font-size:14px;color:#666;margin-right:6px;">考核月份 (Month)：</span>
@@ -656,6 +656,30 @@
             return source || '-';
         }
 
+        function renderReportFrontendVersion() {
+            const versionEl = document.getElementById('reportFrontendVersion');
+            if (!versionEl) return;
+            const resourceNodes = [
+                ...document.querySelectorAll('link[href*="/css/"]'),
+                ...document.querySelectorAll('script[src*="/js/report/"]'),
+                ...document.querySelectorAll('script[src*="/js/shared/"]')
+            ];
+            const versions = resourceNodes
+                .map(node => node.getAttribute('href') || node.getAttribute('src') || '')
+                .map(url => {
+                    try {
+                        return new URL(url, window.location.origin).searchParams.get('v') || '';
+                    } catch (e) {
+                        const match = url.match(/[?&]v=([^&]+)/);
+                        return match ? match[1] : '';
+                    }
+                })
+                .filter(Boolean)
+                .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+            versionEl.textContent = versions.length ? `v${versions[versions.length - 1]}` : 'v未标记';
+            versionEl.title = versions.length ? `当前页面资源最新版本：${versions[versions.length - 1]}` : '未检测到前端资源版本号';
+        }
+
         function renderReportSourcePanel() {
             const panel = document.getElementById('reportSourcePanel');
             if (!panel) return;
@@ -676,8 +700,9 @@
         }
 
         window.renderReportSourcePanel = renderReportSourcePanel;
+        document.addEventListener('DOMContentLoaded', renderReportFrontendVersion);
     </script>
-    <script src="/js/report/report.js?v=20260607-06"></script>
+    <script src="/js/report/report.js?v=20260608-01"></script>
 </body>
 
 </html>
