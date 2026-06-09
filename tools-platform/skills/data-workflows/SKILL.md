@@ -41,6 +41,18 @@ python3 scripts/generate_uiv_script.py \
 
 支持的所有开关与页面完全一致：`--global-vars` (全局变量控制), `--pagination` (翻页拉取), `--force-sum` (强制大盘兜底), `--auto-cpc` (动态嗅探CPC/NID), `--auto-month` (自动当月上月裂变)。
 
+## 🚀 独立功能 3：超期与高风险明细提取器 (Risk & Overdue Extractor)
+
+你可以通过内置脚本脱离 Web 前端，直接从下载好的各种 Excel / CSV 中分析、提取出哪些 SR 已经超期、哪些漏洞即将到达 30 天红线！
+
+```bash
+python3 scripts/extract_risks.py \
+  --input-dir ./imports \
+  --output ./risk_report.json
+```
+
+这个工具会自动判断你的报表类型（整改、CPT、常规风险、SR、漏洞预警等），并根据内建的硬核 SLA 规则（如 Critical > 85% 预警等）帮你筛选出所有带有 `danger` 和 `warning` 标签的高危数据，最终输出为一份格式化良好的 JSON 报告，非常适合**企微机器人推流或定时邮件告警**。
+
 ## 🔍 指标映射说明 (Mapping Guide)
 
 在其他 Agent 中使用这个 Skill 处理原始表格时，可能会遇到 **“指标 ID 与实际指标名称对不上”、“导入的文件不知道对应哪个配置”** 的问题。原因在于，原项目在入库时对独立表的文件名进行了哈希，并且指标名称是挂载在偏好设置（`prefs`）而非目标配置（`targets`）上的。
