@@ -499,7 +499,7 @@ function collectMetricRuleRecords() {
 }
 
 function getInboundSubMetricRecords(secId) {
-    return collectCurrentMetricRuleRecords().filter(record => (
+    return collectMetricRuleRecords().filter(record => (
         record.kind === 'sub'
         && record.sourceSecId === secId
         && record.parentSecId !== secId

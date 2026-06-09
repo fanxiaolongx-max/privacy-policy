@@ -329,9 +329,11 @@ function preprocessData(secId, rawData) {
             const severity = getSRSeverity(row);
             const openDateRaw = getCompatibleVal(row, ['open_date']);
             const expCloseDateRaw = getCompatibleVal(row, ['exp_close_date']);
+            const susExpCloseDateRaw = getCompatibleVal(row, ['sus_exp_close_date', '期望关闭时间-挂起']);
             const actCloseDateRaw = getCompatibleVal(row, ['act_close_date']);
             const openDate = openDateRaw ? parseDateForSLA(state, rowIndex, 'open_date', openDateRaw, 'SR 开单时间') : null;
             const expCloseDate = expCloseDateRaw ? parseDateForSLA(state, rowIndex, 'exp_close_date', expCloseDateRaw, 'SR 期望关单时间') : null;
+            const susExpCloseDate = susExpCloseDateRaw ? parseDateForSLA(state, rowIndex, 'sus_exp_close_date', susExpCloseDateRaw, '挂起后期望关单时间') : null;
             const actCloseDate = actCloseDateRaw ? parseDateForSLA(state, rowIndex, 'act_close_date', actCloseDateRaw, 'SR 实际关单时间') : null;
             const isClosed = isSRClosedStatus(status);
             const isPending = isSRPendingStatus(status);
@@ -341,22 +343,40 @@ function preprocessData(secId, rawData) {
                 _slaText = `<span class="badge badge-special">挂起忽略</span> ${status || 'Pending'}`;
                 _slaCleanText = `挂起忽略 (${status || 'Pending'})`;
             } else if (isClosed) {
-                if ((actCloseDate && expCloseDate && actCloseDate > expCloseDate) || overdueFlag === 'y') {
-                    const overdueHours = (actCloseDate && expCloseDate) ? Math.ceil((actCloseDate - expCloseDate) / 3600000) : 0;
-                    _slaDays = -1;
-                    _rowClass = 'danger-row';
-                    const overdueText = overdueHours > 0 ? formatSRDuration(overdueHours) : '已触发上游超期标识';
-                    _slaText = `<span class="badge">历史超期</span> ${overdueHours > 0 ? `已超 ${overdueText}` : overdueText}`;
-                    _slaCleanText = `历史超期 (${overdueText})`;
+                const isOverdueByStandard = (actCloseDate && expCloseDate && actCloseDate > expCloseDate) || overdueFlag === 'y';
+                
+                if (isOverdueByStandard) {
+                    if (susExpCloseDate) {
+                        if (actCloseDate && actCloseDate <= susExpCloseDate) {
+                            _slaDays = 999997;
+                            _slaText = `<span class="badge badge-special" style="background:#0288d1;color:white;border:none;">挂起后未超期</span> ${status || 'Closed'}`;
+                            _slaCleanText = `挂起后未超期 (${status || 'Closed'})`;
+                        } else {
+                            const overdueHours = (actCloseDate && susExpCloseDate) ? Math.ceil((actCloseDate - susExpCloseDate) / 3600000) : 0;
+                            _slaDays = -1;
+                            _rowClass = 'danger-row';
+                            const overdueText = overdueHours > 0 ? formatSRDuration(overdueHours) : '已触发挂起超期';
+                            _slaText = `<span class="badge" style="background:#d32f2f;color:white;border:none;">挂起后超期</span> ${overdueHours > 0 ? `已超 ${overdueText}` : overdueText}`;
+                            _slaCleanText = `挂起后超期 (${overdueText})`;
+                        }
+                    } else {
+                        const overdueHours = (actCloseDate && expCloseDate) ? Math.ceil((actCloseDate - expCloseDate) / 3600000) : 0;
+                        _slaDays = -1;
+                        _rowClass = 'danger-row';
+                        const overdueText = overdueHours > 0 ? formatSRDuration(overdueHours) : '已触发上游超期标识';
+                        _slaText = `<span class="badge">历史超期</span> ${overdueHours > 0 ? `已超 ${overdueText}` : overdueText}`;
+                        _slaCleanText = `历史超期 (${overdueText})`;
+                    }
                 } else {
                     _slaDays = 999997;
                     _slaText = `<span class="badge badge-special">已关单</span> ${status || 'Closed'}`;
                     _slaCleanText = `已关单 (${status || 'Closed'})`;
                 }
             } else if (openDate && expCloseDate) {
-                const totalMs = expCloseDate - openDate;
+                const effectiveExpCloseDate = susExpCloseDate || expCloseDate;
+                const totalMs = effectiveExpCloseDate - openDate;
                 const consumedMs = now - openDate;
-                const remainingMs = expCloseDate - now;
+                const remainingMs = effectiveExpCloseDate - now;
                 const remainingHours = Math.ceil(remainingMs / 3600000);
                 const remainingDays = Math.ceil(remainingMs / 86400000);
                 const consumeRate = totalMs > 0 ? (consumedMs / totalMs) * 100 : 100;
