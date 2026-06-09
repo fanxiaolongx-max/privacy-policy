@@ -121,7 +121,7 @@ function getBuiltInRuleColumns(mode) {
     if (mode === 'rectification') return ['task_status', 'task_create_time', 'rectify_plan_end_time'];
     if (mode === 'risk') return ['风险状态', 'risk_status', '创单时间', 'create_time_new', 'create_time', '期望关闭时间', 'ticket_close_due_date', 'due_time', '期望关闭时间-挂起', 'suspend_due_date'];
     if (mode === 'special') return ['状态-Status', 'task_status_en', 'task_status', 'task_status_cn', '创建日期-Create Date', 'create_time', '要求完成日期-Required Completion Date', 'required_completion_time', 'plan_complete_date'];
-    if (mode === 'sr') return ['hw_sev_name', 'urgency', 'sr_status_name', 'open_date', 'exp_close_date', 'act_close_date', 'overdue'];
+    if (mode === 'sr') return ['hw_sev_name', 'urgency', 'sr_status_name', 'open_date', 'exp_close_date', 'sus_exp_close_date', 'act_close_date', 'overdue'];
     if (mode === 'vulnerability') return ['task_status', 'create_time', 'task_create_time'];
     return [];
 }
