@@ -5,9 +5,13 @@ description: Use when working on the Tools Platform project's UIVF12 data captur
 
 # Tools Platform Data Workflows
 
-这个 skill 面向 Tools Platform 项目中的数据链路模块，覆盖 `/uivf12` 数据抓取脚本、`/sla` 数据导入、`/report` 看板，以及 `/monthly` 月报。除了帮助 Agent 维护原始项目的代码外，**该 Skill 还内置了纯 Python 的月报生成脚本，能够脱离原有的 Web 服务，直接读取原始导入的 Excel/CSV 表格，一键生成完整的本地 HTML 月报。**
+这个 skill 面向 Tools Platform 项目中的数据链路模块，覆盖 `/uivf12` 数据抓取脚本、`/sla` 数据导入、`/report` 看板，以及 `/monthly` 月报。除了帮助 Agent 维护原始项目的代码外，**该 Skill 还内置了纯 Python 的月报生成脚本和抓取脚本生成器，能够完全脱离原有的 Web 服务独立运行。**
 
-## 🚀 如何独立使用该 Skill 生成月报？
+- `scripts/export_config_bundle.py`: export SLA/report configuration from an existing Tools Platform project.
+- `scripts/generate_html_monthly_report.py`: read original XLSX/CSV import files and generate an HTML monthly report.
+- `scripts/generate_uiv_script.py`: generate UIV macro and F12 console data-capture scripts directly from a raw JSON payload, bypassing the Web UI.
+
+## 🚀 独立功能 1：独立生成月报 (Headless Monthly Report)
 
 如果 Agent 只需要用该 Skill 来生成月报，可以直接使用以下命令（自带的 `scripts/generate_html_monthly_report.py` 没有任何第三方依赖）：
 
@@ -19,10 +23,23 @@ python3 scripts/generate_html_monthly_report.py \
   --output ./monthly-report.html
 ```
 
-- `--input-dir`: 包含原始 `_Latest.xlsx` 等文件的目录。
-- `--config`: 随本 Skill 导出的项目配置，包含了所有的目标值 (targets) 和 偏好设定 (prefs)。
-- `--month`: 需要生成月报的月份（如 6 代表 6月）。
-- 脚本不仅会输出一份非常美观的 `.html` 报告文件，还会附带一份同名的 `.snapshot.json` 以便二次利用数据。
+## 🚀 独立功能 2：独立生成抓取脚本 (UIV Script Generator)
+
+Agent 现在也能像前端页面一样，直接基于 Payload JSON 和目标 URL 独立生成用于抓取数据的 JavaScript 脚本。
+
+```bash
+python3 scripts/generate_uiv_script.py \
+  --payload ./request_payload.json \
+  --url "https://datafab-pro.gtsdata.huawei.com/DataFabKernelCn/v1/answer/getAnswers" \
+  --name "PBI_自动抓取-某某详单" \
+  --global-vars \
+  --pagination \
+  --auto-cpc \
+  --auto-month \
+  --output-console ./console_script.js
+```
+
+支持的所有开关与页面完全一致：`--global-vars` (全局变量控制), `--pagination` (翻页拉取), `--force-sum` (强制大盘兜底), `--auto-cpc` (动态嗅探CPC/NID), `--auto-month` (自动当月上月裂变)。
 
 ## 🔍 指标映射说明 (Mapping Guide)
 
