@@ -8,6 +8,96 @@ const RISK_PRIORITY_COLS    = ['风险状态', 'risk_status', '创单时间', 'c
 const SPECIAL_PRIORITY_COLS = ['状态-Status', 'task_status_en', 'task_status', 'task_status_cn', '创建日期-Create Date', 'create_time', '要求完成日期-Required Completion Date', 'required_completion_time', 'plan_complete_date'];
 const SR_PRIORITY_COLS      = ['hw_sev_name', 'urgency', 'sr_status_name', 'open_date', 'exp_close_date', 'act_close_date', 'overdue', 'sr_num', 'sr_id', 'customer_name', 'country_name_cn', 'repoffice_name_cn'];
 const VULN_PRIORITY_COLS    = ['task_status', 'create_time', 'task_create_time', 'vuln_id', 'vulnerability_id', '漏洞编号', '漏洞名称', 'vulnerability_name', 'customer_name', 'network_name'];
+const SLA_WORKSPACE_CACHE_KEY = 'sla_last_import_workspace_v1';
+
+function buildCachedSectionNav(sections, summaryTitle) {
+    if (!sections || sections.length <= 1) return '';
+    let navHtml = `<h3 style="margin-top:0;color:#2e7d32;font-size:16px;">${escapeHTML(summaryTitle || `📊 已恢复上次导入数据`)}</h3><div class="nav-pills">`;
+    sections.forEach(section => {
+        const count = Array.isArray(section.data) ? section.data.length : 0;
+        navHtml += `<a href="javascript:void(0);" onclick="document.getElementById('section-${section.secId}').scrollIntoView({behavior:'smooth'})" class="nav-pill" style="border-color:${section.themeColor || '#555'};color:${section.themeColor || '#555'}">${escapeHTML(section.title)} (${count}行)</a>`;
+    });
+    navHtml += '</div>';
+    return navHtml;
+}
+
+function persistWorkspaceCache(sections, meta = {}) {
+    if (!Array.isArray(sections) || !sections.length) return;
+    const payload = {
+        version: 1,
+        savedAt: new Date().toISOString(),
+        meta,
+        sections: sections.map(section => ({
+            secId: section.secId,
+            mode: section.mode,
+            title: section.title,
+            themeColor: section.themeColor,
+            baseName: section.baseName || '',
+            data: Array.isArray(section.data) ? section.data : []
+        }))
+    };
+    try {
+        localStorage.setItem(SLA_WORKSPACE_CACHE_KEY, JSON.stringify(payload));
+        logSLAUploadStep('已缓存本次导入工作区', {
+            sections: payload.sections.length,
+            rows: payload.sections.reduce((sum, section) => sum + section.data.length, 0)
+        });
+    } catch (err) {
+        logSLAUploadError('缓存导入工作区', err, { rows: payload.sections.reduce((sum, section) => sum + section.data.length, 0) });
+        if (typeof showToast === 'function') showToast('⚠️ 本次表格较大，浏览器本地缓存空间不足，切换页面后可能需要重新导入', 'warning');
+    }
+}
+
+function resetRuntimeWorkspace() {
+    if (window.AppState) {
+        Object.keys(window.AppState).forEach(key => { delete window.AppState[key]; });
+    }
+    window.GlobalMetrics = {};
+}
+
+async function restoreCachedWorkspace() {
+    if (window.AppState && Object.keys(window.AppState).length > 0) return false;
+    let payload = null;
+    try {
+        payload = JSON.parse(localStorage.getItem(SLA_WORKSPACE_CACHE_KEY) || 'null');
+    } catch (err) {
+        localStorage.removeItem(SLA_WORKSPACE_CACHE_KEY);
+        return false;
+    }
+    const sections = payload && Array.isArray(payload.sections) ? payload.sections.filter(s => s && s.secId && Array.isArray(s.data) && s.data.length) : [];
+    if (!sections.length || !window.SLASection || typeof window.SLASection.initSection !== 'function') return false;
+
+    const mainWrapper = document.getElementById('main-wrapper');
+    const summaryNav = document.getElementById('summary-nav-area');
+    if (mainWrapper) mainWrapper.innerHTML = '<div class="loading-text">⏳ 正在恢复上次导入的数据...</div>';
+    if (summaryNav) summaryNav.style.display = 'none';
+
+    try {
+        if (mainWrapper) mainWrapper.innerHTML = '';
+        const initPromises = sections.map(section =>
+            window.SLASection.initSection(section.secId, section.mode, section.title, section.data, section.themeColor || '#555', section.baseName || '')
+        );
+        if (summaryNav) {
+            const navHtml = buildCachedSectionNav(sections, payload.meta && payload.meta.summaryTitle);
+            summaryNav.innerHTML = navHtml;
+            summaryNav.style.display = navHtml ? 'block' : 'none';
+        }
+        await Promise.all(initPromises);
+        logSLAUploadStep('已恢复上次导入工作区', {
+            savedAt: payload.savedAt,
+            sections: sections.length,
+            rows: sections.reduce((sum, section) => sum + section.data.length, 0)
+        });
+        if (typeof showToast === 'function') showToast('✅ 已恢复上次导入的数据');
+        return true;
+    } catch (err) {
+        logSLAUploadError('恢复上次导入工作区', err);
+        if (mainWrapper) {
+            mainWrapper.innerHTML = '<div style="text-align:center;color:#999;padding:50px 0;border:2px dashed #ddd;border-radius:10px;">上次导入数据恢复失败，请重新导入文件。</div>';
+        }
+        return false;
+    }
+}
 
 function generateSchemaHash(str) {
     let hash = 0;
@@ -113,9 +203,18 @@ async function handleSpecificUpload(e, forceMode) {
     const rawData = await readFiles(files);
     if (!rawData.length) { alert('读取失败或为空表！'); document.getElementById('main-wrapper').innerHTML = ''; return; }
     document.getElementById('main-wrapper').innerHTML = '';
+    resetRuntimeWorkspace();
     const titleMap = { rectification: '🔧 整改监控', risk: '⚠️ 常规风险监控', special: '🛠️ 专项风险监控', sr: '📞 SR详单分析', vulnerability: '🧯 漏洞预警分析' };
     const colorMap = { rectification: '#1976d2', risk: '#7b1fa2', special: '#00796b', sr: '#d9480f', vulnerability: '#c2410c' };
     await window.SLASection.initSection(forceMode, forceMode, titleMap[forceMode], rawData, colorMap[forceMode]);
+    persistWorkspaceCache([{
+        secId: forceMode,
+        mode: forceMode,
+        title: titleMap[forceMode],
+        data: rawData,
+        themeColor: colorMap[forceMode],
+        baseName: ''
+    }], { type: 'specific', summaryTitle: `📊 已缓存 ${titleMap[forceMode]}`, files: files.map(f => f.name) });
     API.logHistory('sla', `导入${titleMap[forceMode]}`, `${files.length} 个文件`);
     e.target.value = '';
 
@@ -168,20 +267,24 @@ async function handleBatchUpload(e) {
     for (const key in groups.others)       groups.others[key].data   = await readFiles(groups.others[key].files);
 
     document.getElementById('main-wrapper').innerHTML = '';
+    resetRuntimeWorkspace();
     let navHtml = `<h3 style="margin-top:0;color:#2e7d32;font-size:16px;">📊 批量导入成功 (共解析 ${files.length} 个文件)</h3><div class="nav-pills">`;
 
     const initPromises = [];
+    const cacheSections = [];
     for (const key of ['rectification', 'special', 'risk', 'sr', 'vulnerability']) {
         const g = groups[key];
         if (g.data.length > 0) {
             navHtml += `<a href="javascript:void(0);" onclick="document.getElementById('section-${key}').scrollIntoView({behavior:'smooth'})" class="nav-pill" style="border-color:${g.color};color:${g.color}">${g.title} (${g.data.length}行)</a>`;
             initPromises.push(window.SLASection.initSection(key, g.mode, g.title, g.data, g.color));
+            cacheSections.push({ secId: key, mode: g.mode, title: g.title, data: g.data, themeColor: g.color, baseName: '' });
         }
     }
     Object.values(groups.others).forEach(o => {
         if (o.data.length > 0) {
             navHtml += `<a href="javascript:void(0);" onclick="document.getElementById('section-${o.id}').scrollIntoView({behavior:'smooth'})" class="nav-pill">${o.title} (${o.data.length}行)</a>`;
             initPromises.push(window.SLASection.initSection(o.id, o.mode, o.title, o.data, o.color, o.baseName));
+            cacheSections.push({ secId: o.id, mode: o.mode, title: o.title, data: o.data, themeColor: o.color, baseName: o.baseName });
         }
     });
 
@@ -191,6 +294,7 @@ async function handleBatchUpload(e) {
     
     // 等待所有表格的预加载和DOM构建完成
     await Promise.all(initPromises);
+    persistWorkspaceCache(cacheSections, { type: 'batch', summaryTitle: `📊 批量导入成功 (共解析 ${files.length} 个文件)`, files: files.map(f => f.name) });
     
     API.logHistory('sla', '批量导入', `${files.length} 个文件`);
     e.target.value = '';
@@ -358,4 +462,4 @@ async function captureAndUploadSnapshot(fileNames) {
     }
 }
 
-window.SLAUpload = { handleBatchUpload, handleSpecificUpload, readFiles, generateSchemaHash, RECT_PRIORITY_COLS, RISK_PRIORITY_COLS, SPECIAL_PRIORITY_COLS, SR_PRIORITY_COLS, VULN_PRIORITY_COLS };
+window.SLAUpload = { handleBatchUpload, handleSpecificUpload, readFiles, generateSchemaHash, restoreCachedWorkspace, RECT_PRIORITY_COLS, RISK_PRIORITY_COLS, SPECIAL_PRIORITY_COLS, SR_PRIORITY_COLS, VULN_PRIORITY_COLS };

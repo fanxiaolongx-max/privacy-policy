@@ -310,7 +310,7 @@
     <!-- SLA 模块（注意加载顺序）-->
     <script src="/js/sla/config.js?v=20260530-07"></script>
     <script src="/js/sla/prefs.js?v=20260530-07"></script>
-    <script src="/js/sla/upload.js?v=20260607-03"></script>
+    <script src="/js/sla/upload.js?v=20260609-01"></script>
     <script src="/js/sla/section.js?v=20260607-13"></script>
     <script src="/js/sla/table.js?v=20260608-02"></script>
     <script src="/js/sla/events.js?v=20260608-02"></script>
@@ -403,6 +403,9 @@
             if (window.initCategories) await window.initCategories();
             if (window.SLATargetMonth && window.SLATargetMonth.init) {
                 window.SLATargetMonth.init();
+            }
+            if (window.SLAUpload && window.SLAUpload.restoreCachedWorkspace) {
+                await window.SLAUpload.restoreCachedWorkspace();
             }
             if (window.SLAMetrics && window.SLAMetrics.renderTopStickyBar) {
                 window.SLAMetrics.renderTopStickyBar();
