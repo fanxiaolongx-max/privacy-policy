@@ -111,6 +111,20 @@ def overlay_sqlite_config(bundle: dict[str, Any], db_path: Path) -> None:
     finally:
         conn.close()
 
+def overlay_report_sqlite_config(bundle: dict[str, Any], db_path: Path) -> None:
+    if not db_path.exists():
+        return
+    conn = sqlite3.connect(str(db_path))
+    try:
+        if not table_exists(conn, "PlatformConfig"):
+            return
+        cur = conn.execute("SELECT key_name, value_json FROM PlatformConfig WHERE key_name IN ('welink_policy_v2', 'welink_template_config')")
+        for row in cur.fetchall():
+            key, val = row
+            bundle.setdefault("report_config", {})[key] = maybe_json(val)
+    finally:
+        conn.close()
+
 
 def targets_from_sqlite(rows: list[dict[str, Any]]) -> dict[str, Any]:
     out: dict[str, Any] = {}
@@ -209,6 +223,7 @@ def main() -> int:
         bundle[key] = read_json(backend_data / filename, default)
 
     overlay_sqlite_config(bundle, backend_data / "tools.db")
+    overlay_report_sqlite_config(bundle, project_root / "data" / "report.db")
 
 
     # Map metric IDs back to labels for targets

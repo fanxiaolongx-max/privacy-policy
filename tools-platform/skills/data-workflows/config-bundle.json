@@ -1,6 +1,6 @@
 {
   "schema": "tools-platform-data-workflows-config-v1",
-  "exported_at": "2026-06-09T10:17:48.141304+00:00",
+  "exported_at": "2026-06-09T10:58:11.478973+00:00",
   "project_root": "/Volumes/512G/06-工具开发/privacy-policy/tools-platform",
   "targets": {
     "manual_target_1778881260277": {
@@ -7866,6 +7866,68 @@
     ]
   },
   "source": "sqlite",
+  "report_config": {
+    "welink_policy_v2": {
+      "roster": [
+        {
+          "id": "964680015625281562",
+          "name": "[Update] 2026 CS OKR Performance Tracker"
+        },
+        {
+          "id": "s00712126",
+          "name": "ET SPM Sameh"
+        },
+        {
+          "id": "m00268646",
+          "name": "TE SPM Gamal"
+        },
+        {
+          "id": "i00823621",
+          "name": "ORG TD youssef"
+        },
+        {
+          "id": "h89094",
+          "name": "VDF SPM haitham"
+        },
+        {
+          "id": "00817676",
+          "name": "ElSayed"
+        }
+      ],
+      "assignments": {
+        "TE": [
+          "m00268646"
+        ],
+        "ORG": [
+          "i00823621"
+        ],
+        "ET": [
+          "s00712126"
+        ],
+        "VDF": [
+          "h89094",
+          "00817676"
+        ],
+        "GLOBAL_GROUP": [
+          "964680015625281562"
+        ],
+        "GLOBAL_EMAIL": [
+          "m00268646",
+          "i00823621",
+          "s00712126",
+          "h89094",
+          "00817676"
+        ],
+        "GLOBAL_MEET": [
+          "s00712126",
+          "m00268646",
+          "i00823621",
+          "h89094",
+          "00817676"
+        ]
+      }
+    }
+  },
   "mappings": {
     "files_to_hash_hint": "独立表的文件名（去掉_Latest.xlsx后）使用 generate_schema_hash 生成 other_<hash> 作为 secId。例如 PBI_重急EOS 映射到 other_36ksoy。",
     "metric_id_to_label": {

@@ -53,6 +53,19 @@ python3 scripts/extract_risks.py \
 
 这个工具会自动判断你的报表类型（整改、CPT、常规风险、SR、漏洞预警等），并根据内建的硬核 SLA 规则（如 Critical > 85% 预警等）帮你筛选出所有带有 `danger` 和 `warning` 标签的高危数据，最终输出为一份格式化良好的 JSON 报告，非常适合**企微机器人推流或定时邮件告警**。
 
+## 🚀 独立功能 4：一键催办文案生成器 (Expedite Alerts Generator)
+
+配合 `extract_risks.py` 生成的高危快照，你可以直接让这个脚本按照网站的“催办分配表 (Distribution Roster)”，帮你生成每个人专属的催办文案：
+
+```bash
+python3 scripts/generate_expedite_alerts.py \
+  --risk-report ./risk_report.json \
+  --config ./config-bundle.json \
+  --output ./alerts_output.json
+```
+
+这个工具会自动过滤你在网页端配置的“忽略关键词”，并把高危数据映射到具体的负责人头上，最终 `alerts_output.json` 里就是一组组 `{"张三": "⚡ 交付质量督办预警\n你好张三..."}` 这种可以直接调用企微接口发出去的终态纯文本！
+
 ## 🔍 指标映射说明 (Mapping Guide)
 
 在其他 Agent 中使用这个 Skill 处理原始表格时，可能会遇到 **“指标 ID 与实际指标名称对不上”、“导入的文件不知道对应哪个配置”** 的问题。原因在于，原项目在入库时对独立表的文件名进行了哈希，并且指标名称是挂载在偏好设置（`prefs`）而非目标配置（`targets`）上的。
