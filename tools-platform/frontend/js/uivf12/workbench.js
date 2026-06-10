@@ -45,7 +45,7 @@ function formatAndAnalyzeJSON() {
             editor.value = prettyJson;
         };
     } catch (e) {
-        errorDiv.innerText = 'JSON 格式不合法，请检查标点或括号是否匹配。';
+        errorDiv.innerText = UIVT('uiv.workbench.badJson');
     }
 }
 

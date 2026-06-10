@@ -1,7 +1,10 @@
 let chartOverallInstance = null;
 let chartGroupsInstance = null;
 
-window.currentLang = localStorage.getItem('monthlyReportLang') || 'zh';
+function getMonthlyLang() {
+    return window.ToolsI18n && window.ToolsI18n.getLanguage() === 'en-US' ? 'en' : 'zh';
+}
+window.currentLang = getMonthlyLang();
 
 const i18n = {
     zh: {
@@ -88,7 +91,18 @@ const i18n = {
         full_th_global: '全局总体达标',
         full_th_score: '得分',
         full_ungrouped: '未分组(Ungrouped)',
-        full_ungrouped_short: '未分组'
+        full_ungrouped_short: '未分组',
+        lbl_source_mode: 'SLA配置读源模式:',
+        opt_mode_auto: '自动模式',
+        opt_mode_json: '强制 JSON',
+        opt_mode_sqlite: '强制 SQLite',
+        lbl_target_month: '目标月份:',
+        msg_exporting_img: '⏳ 正在生成长图，请稍候...',
+        msg_export_img_success: '✅ 长图已成功导出！',
+        msg_export_img_fail: '导出图片失败: ',
+        msg_exporting_pdf: '⏳ 正在生成 PDF，请稍候...',
+        msg_export_pdf_success: '✅ PDF 已成功导出！',
+        msg_export_pdf_fail: '导出 PDF 失败: '
     },
     en: {
         title: 'Monthly Quality & Compliance Analysis <span id="monthlyFrontendVersion" style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">vLoading</span>',
@@ -174,6 +188,17 @@ const i18n = {
         full_th_score: 'Score',
         full_ungrouped: 'Ungrouped',
         full_ungrouped_short: 'Ungrouped',
+        lbl_source_mode: 'SLA Config Read Mode:',
+        opt_mode_auto: 'Auto Mode',
+        opt_mode_json: 'Force JSON',
+        opt_mode_sqlite: 'Force SQLite',
+        lbl_target_month: 'Target Month:',
+        msg_exporting_img: '⏳ Generating image, please wait...',
+        msg_export_img_success: '✅ Image exported successfully!',
+        msg_export_img_fail: 'Failed to export image: ',
+        msg_exporting_pdf: '⏳ Generating PDF, please wait...',
+        msg_export_pdf_success: '✅ PDF exported successfully!',
+        msg_export_pdf_fail: 'Failed to export PDF: ',
 
         // Metric and Category mappings
         "TE": "TE",
@@ -274,10 +299,6 @@ function updateStaticI18n() {
             }
         }
     });
-    const toggleBtn = document.getElementById('lang-toggle');
-    if (toggleBtn) {
-        toggleBtn.innerText = window.currentLang === 'zh' ? 'English' : '中文';
-    }
     renderMonthlyFrontendVersion();
 }
 
@@ -470,7 +491,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (monthSelect) {
         let monthOptions = '';
         for (let i = 1; i <= 12; i++) {
-            monthOptions += `<option value="${i}">${i}月目标</option>`;
+            monthOptions += `<option value="${i}">${window.currentLang === 'en' ? `Month ${i} Target` : `${i}月目标`}</option>`;
         }
         monthSelect.innerHTML = monthOptions;
         monthSelect.value = getMonthlyTargetMonth();
@@ -486,24 +507,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (window.renderMonthlySourcePanel) window.renderMonthlySourcePanel();
 
-    const langToggleBtn = document.getElementById('lang-toggle');
-    if (langToggleBtn) {
-        langToggleBtn.addEventListener('click', () => {
-            window.currentLang = window.currentLang === 'zh' ? 'en' : 'zh';
-            localStorage.setItem('monthlyReportLang', window.currentLang);
-            if (currentTrends && currentLatest) {
-                renderAll();
-            } else {
-                updateStaticI18n();
+    window.addEventListener('tools:languagechange', () => {
+        window.currentLang = getMonthlyLang();
+        
+        const monthSelect = document.getElementById('monthlyTargetMonth');
+        if (monthSelect) {
+            let monthOptions = '';
+            for (let i = 1; i <= 12; i++) {
+                monthOptions += `<option value="${i}">${window.currentLang === 'en' ? `Month ${i} Target` : `${i}月目标`}</option>`;
             }
-        });
-    }
+            const currentVal = monthSelect.value;
+            monthSelect.innerHTML = monthOptions;
+            monthSelect.value = currentVal;
+        }
+
+        if (currentTrends && currentLatest) {
+            renderAll();
+        } else {
+            updateStaticI18n();
+        }
+        if (window.renderMonthlySourcePanel) window.renderMonthlySourcePanel();
+    });
 
     // Initial load (all data)
     loadData();
 
     // Setup filter buttons
-    const filterBtns = document.querySelectorAll('.filter-btn:not(#lang-toggle)');
+    const filterBtns = document.querySelectorAll('.filter-btn');
     const startDateInput = document.getElementById('filter-start-date');
     const endDateInput = document.getElementById('filter-end-date');
     const customBtn = document.getElementById('custom-filter-btn');
@@ -1420,7 +1450,7 @@ window.exportToImage = async function () {
     try {
         const btnContainer = document.getElementById('export-actions');
         btnContainer.style.display = 'none'; // hide buttons
-        showToast('⏳ 正在生成长图，请稍候...', 'info');
+        showToast(t('msg_exporting_img'), 'info');
 
         const element = document.querySelector('.page-container');
 
@@ -1457,11 +1487,11 @@ window.exportToImage = async function () {
         document.body.removeChild(a);
 
         btnContainer.style.display = 'flex';
-        showToast('✅ 长图已成功导出！', 'success');
+        showToast(t('msg_export_img_success'), 'success');
     } catch (e) {
         console.error(e);
         document.getElementById('export-actions').style.display = 'flex';
-        showToast('导出图片失败: ' + e.message, 'error');
+        showToast(t('msg_export_img_fail') + e.message, 'error');
     }
 };
 
@@ -1469,7 +1499,7 @@ window.exportToPDF = async function () {
     try {
         const btnContainer = document.getElementById('export-actions');
         btnContainer.style.display = 'none'; // hide buttons
-        showToast('⏳ 正在生成 PDF，请稍候...', 'info');
+        showToast(t('msg_exporting_pdf'), 'info');
 
         const element = document.querySelector('.page-container');
 
@@ -1518,10 +1548,10 @@ window.exportToPDF = async function () {
         pdf.save(`Monthly_Report_${dateStr}.pdf`);
 
         btnContainer.style.display = 'flex';
-        showToast('✅ PDF 已成功导出！', 'success');
+        showToast(t('msg_export_pdf_success'), 'success');
     } catch (e) {
         console.error(e);
         document.getElementById('export-actions').style.display = 'flex';
-        showToast('导出 PDF 失败: ' + e.message, 'error');
+        showToast(t('msg_export_pdf_fail') + e.message, 'error');
     }
 };

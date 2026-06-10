@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>数据探索 - DB Explorer</title>
+    <title data-i18n="数据探索 - DB Explorer">数据探索 - DB Explorer</title>
     <link rel="stylesheet" href="/css/shared.css">
     <style>
         body {
@@ -169,8 +169,8 @@
 <body>
     <div class="page-container">
         <div class="controls">
-            <h2><span data-i18n="title">🗄️ 数据探索 (DB Explorer)</span></h2>
-            <div style="font-size: 13px; color: #64748b;">
+            <h2><span data-i18n="🗄️ 数据探索 (DB Explorer)">🗄️ 数据探索 (DB Explorer)</span></h2>
+            <div style="font-size: 13px; color: #64748b;" data-i18n="仅超级管理员可访问">
                 仅超级管理员可访问
             </div>
         </div>
@@ -178,13 +178,13 @@
         <div class="card">
             <div class="table-selector-group">
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <label style="font-weight: 600; color: #475569;">选择数据表:</label>
+                    <label style="font-weight: 600; color: #475569;" data-i18n="选择数据表:">选择数据表:</label>
                     <select id="table-select" style="min-width: 250px;">
-                        <option value="">加载中...</option>
+                        <option value="" data-i18n="加载中...">加载中...</option>
                     </select>
                 </div>
                 
-                <button class="btn-primary" onclick="loadTableData(true)">🔄 刷新数据</button>
+                <button class="btn-primary" onclick="loadTableData(true)" data-i18n="🔄 刷新数据">🔄 刷新数据</button>
             </div>
 
             <div id="table-content-area" style="display: none;">
@@ -200,8 +200,8 @@
 
                 <div class="pagination">
                     <div>
-                        共 <span class="page-info" id="total-rows">0</span> 条记录 
-                        | 每页显示 
+                        <span data-i18n="共 ">共 </span><span class="page-info" id="total-rows">0</span><span data-i18n=" 条记录"> 条记录</span> 
+                        <span data-i18n=" | 每页显示 "> | 每页显示 </span>
                         <select id="limit-select" onchange="loadTableData(true)" style="padding: 4px 8px;">
                             <option value="50">50</option>
                             <option value="100" selected>100</option>
@@ -209,14 +209,14 @@
                         </select>
                     </div>
                     <div style="display: flex; gap: 8px; align-items: center;">
-                        <button class="btn-secondary" id="btn-prev" onclick="prevPage()">上一页</button>
-                        <span>第 <span class="page-info" id="current-page">1</span> 页 / 共 <span class="page-info" id="total-pages">1</span> 页</span>
-                        <button class="btn-secondary" id="btn-next" onclick="nextPage()">下一页</button>
+                        <button class="btn-secondary" id="btn-prev" onclick="prevPage()" data-i18n="上一页">上一页</button>
+                        <span><span data-i18n="第 ">第 </span><span class="page-info" id="current-page">1</span><span data-i18n=" 页 / 共 "> 页 / 共 </span><span class="page-info" id="total-pages">1</span><span data-i18n=" 页"> 页</span></span>
+                        <button class="btn-secondary" id="btn-next" onclick="nextPage()" data-i18n="下一页">下一页</button>
                     </div>
                 </div>
             </div>
             
-            <div id="loading-state" class="empty-state">
+            <div id="loading-state" class="empty-state" data-i18n="请在上方选择数据表">
                 请在上方选择数据表
             </div>
         </div>
@@ -224,9 +224,67 @@
 
     <script src="/js/shared/api.js?v=20260530-01"></script>
     <script src="/js/shared/toast.js?v=20260530-01"></script>
-    <script src="/js/shared/navbar.js?v=20260530-08"></script>
+    <script src="/js/shared/navbar.js?v=20260611-01"></script>
     
     <script>
+        // ================== 双语切换引擎 ==================
+        const I18N_DICT = {
+            "数据探索 - DB Explorer": "DB Explorer - Tools Platform",
+            "🗄️ 数据探索 (DB Explorer)": "🗄️ DB Explorer",
+            "仅超级管理员可访问": "Super admin only",
+            "选择数据表:": "Select Table:",
+            "加载中...": "Loading...",
+            "🔄 刷新数据": "🔄 Refresh Data",
+            "共 ": "Total ",
+            " 条记录": " records",
+            " | 每页显示 ": " | Per page ",
+            "上一页": "Prev",
+            "第 ": "Page ",
+            " 页 / 共 ": " / Total ",
+            " 页": " ",
+            "下一页": "Next",
+            "请在上方选择数据表": "Please select a table above",
+            "无可用数据表": "No available tables",
+            "-- 请选择 --": "-- Select --",
+            "⚠️ 权限不足，仅超级管理员可访问。": "⚠️ Permission denied, super admin only.",
+            "⏳ 正在加载数据...": "⏳ Loading data...",
+            "暂无数据": "No data",
+            "❌ 加载失败: ": "❌ Load Failed: "
+        };
+
+        let currentLang = 'zh';
+
+        function applyLanguage(lang) {
+            if (currentLang === lang) return;
+            currentLang = lang;
+            
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (currentLang === 'en' && I18N_DICT[key]) el.innerHTML = I18N_DICT[key];
+                else el.innerHTML = key;
+            });
+            
+            // Re-render select placeholder if possible
+            const loadingState = document.getElementById('loading-state');
+            if (loadingState && loadingState.innerHTML.includes('❌') && currentLang === 'en') {
+                loadingState.innerHTML = loadingState.innerHTML.replace('加载失败: ', 'Load Failed: ');
+            }
+        }
+
+        function tText(zh, en) {
+            return currentLang === 'en' ? en : zh;
+        }
+
+        window.addEventListener('tools:languagechange', (e) => {
+            const isEn = e.detail?.lang?.startsWith('en');
+            applyLanguage(isEn ? 'en' : 'zh');
+            loadTableData(); // re-render table to translate static parts
+        });
+
+        const storedLang = localStorage.getItem('tools_lang') || navigator.language || 'zh';
+        applyLanguage(storedLang.startsWith('en') ? 'en' : 'zh');
+        // ==================================================
+
         let currentOffset = 0;
         let currentTotal = 0;
 
@@ -236,11 +294,11 @@
                 const select = document.getElementById('table-select');
                 
                 if (!tables || tables.length === 0) {
-                    select.innerHTML = '<option value="">无可用数据表</option>';
+                    select.innerHTML = `<option value="">${tText('无可用数据表', 'No available tables')}</option>`;
                     return;
                 }
                 
-                select.innerHTML = '<option value="">-- 请选择 --</option>' + 
+                select.innerHTML = `<option value="">${tText('-- 请选择 --', '-- Select --')}</option>` + 
                     tables.map(t => `<option value="${t}">${t}</option>`).join('');
                     
                 select.addEventListener('change', () => {
@@ -249,7 +307,7 @@
             } catch (err) {
                 console.error(err);
                 if (err.message.includes('403') || err.message.includes('权限')) {
-                    document.getElementById('loading-state').innerHTML = '⚠️ 权限不足，仅超级管理员可访问。';
+                    document.getElementById('loading-state').innerHTML = tText('⚠️ 权限不足，仅超级管理员可访问。', '⚠️ Permission denied, super admin only.');
                 }
             }
         }
@@ -265,7 +323,7 @@
             const content = document.getElementById('table-content-area');
             
             loading.style.display = 'block';
-            loading.innerHTML = '⏳ 正在加载数据...';
+            loading.innerHTML = tText('⏳ 正在加载数据...', '⏳ Loading data...');
             content.style.display = 'none';
 
             try {
@@ -282,7 +340,7 @@
                 tbody.innerHTML = '';
                 
                 if (data.rows.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="${data.schema.length}" style="text-align:center;color:#94a3b8;">暂无数据</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="${data.schema.length}" style="text-align:center;color:#94a3b8;">${tText('暂无数据', 'No data')}</td></tr>`;
                 } else {
                     data.rows.forEach(row => {
                         const tr = document.createElement('tr');
@@ -340,7 +398,7 @@
                 content.style.display = 'block';
             } catch (err) {
                 console.error(err);
-                loading.innerHTML = `❌ 加载失败: ${err.message}`;
+                loading.innerHTML = `${tText('❌ 加载失败: ', '❌ Load Failed: ')}${err.message}`;
             }
         }
 

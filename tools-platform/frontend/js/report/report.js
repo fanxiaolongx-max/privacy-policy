@@ -88,17 +88,38 @@ let i18nMap = {
     "未按时完成回退复盘 (SLA:10天)": "Overdue Rollback Review (SLA: 10 Days)",
     "ITR-FRT达不到98.5% (按月)": "ITR-FRT <98.5% (Monthly)",
     "跨产品逃生演练及Jam宣传": "Cross-product Escape Drill & Jam Promotion",
-    "邀约客户交流呈现服务价值": "Inviting Customers to Communicate & Present Service Value"
+    "邀约客户交流呈现服务价值": "Inviting Customers to Communicate & Present Service Value",
+    "未分组": "Ungrouped",
+    "未分组(Ungrouped)": "Ungrouped",
+    "加分": "Bonus",
+    "扣分": "Deduction",
+    "手动指标": "Manual Metric",
+    "总计": "Total"
 };
+
+function getReportLang() {
+    return window.ToolsI18n && typeof window.ToolsI18n.getLanguage === 'function'
+        ? window.ToolsI18n.getLanguage()
+        : 'zh-CN';
+}
+
+function rt(key, params) {
+    if (window.REPORT_T) return window.REPORT_T(key, params || {});
+    return key;
+}
+
+function getTranslatedLabel(text) {
+    if (!text) return '';
+    if (getReportLang() === 'en-US') {
+        const en = i18nMap[text] || i18nMap[String(text).replace(/\(Ungrouped\)/, '').trim()];
+        if (en) return en.replace(/<[^>]+>/g, '');
+    }
+    return text;
+}
 
 function getBilingual(text) {
     if (!text) return '';
-    const en = i18nMap[text];
-    if (en) {
-        if (en.includes('<br>')) return en;
-        return escapeHTML(text) + '<br><span style="font-size:11px;color:#888;font-weight:normal;">' + escapeHTML(en) + '</span>';
-    }
-    return escapeHTML(text);
+    return escapeHTML(getTranslatedLabel(text));
 }
 
 function escapeHTML(str) {
@@ -306,6 +327,48 @@ function getSnapshotSuggestedTargetMonth(snapshot) {
     return month >= 1 && month <= 12 ? month : null;
 }
 
+function renderReportMonthOptions(preserveValue = true) {
+    const monthSel = document.getElementById('target-month-select');
+    if (!monthSel) return;
+    const previousValue = preserveValue ? monthSel.value : '';
+    let monthOptions = '';
+    for (let i = 1; i <= 12; i++) {
+        monthOptions += `<option value="${i}">${rt('report.month.option', { month: i })}</option>`;
+    }
+    monthSel.innerHTML = monthOptions;
+    monthSel.value = previousValue || getDefaultTargetMonth();
+    if (!monthSel.value) monthSel.value = getDefaultTargetMonth();
+}
+
+function renderSnapshotOptions() {
+    const sel = document.getElementById('snapshot-select');
+    if (!sel) return;
+    const previousValue = sel.value;
+    if (!snapshots.length) {
+        sel.innerHTML = `<option value="">${rt('report.snapshot.none')}</option>`;
+        return;
+    }
+    sel.innerHTML = snapshots.map(s => {
+        const d = new Date(s.timestamp);
+        const tsStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        const fileCount = s.files ? (Array.isArray(s.files) ? s.files.length : 1) : 0;
+        return `<option value="${s.id}">${tsStr} (${rt('report.snapshot.optionSourceCount', { count: fileCount })})</option>`;
+    }).join('');
+    sel.value = snapshots.find(s => s.id === previousValue) ? previousValue : snapshots[0].id;
+}
+
+function renderNoReportReadyState() {
+    const content = document.getElementById('report-content');
+    if (!content) return;
+    content.innerHTML = `<div class="empty-state"><h3>${rt('report.empty.noReadyTitle')}</h3><p>${rt('report.empty.noReadyBody')}</p></div>`;
+}
+
+function renderReportLoadFailedState() {
+    const content = document.getElementById('report-content');
+    if (!content) return;
+    content.innerHTML = `<div class="empty-state"><h3>${rt('report.empty.loadFailedTitle')}</h3><p>${rt('report.empty.loadFailedBody')}</p></div>`;
+}
+
 async function initReport() {
     try {
         const mode = API.getSourceMode('report_sla_data');
@@ -349,41 +412,32 @@ async function initReport() {
         
         // Populate month selector
         const monthSel = document.getElementById('target-month-select');
-        let monthOptions = '';
-        for (let i = 1; i <= 12; i++) {
-            monthOptions += `<option value="${i}">${i}月份</option>`;
-        }
-        monthSel.innerHTML = monthOptions;
-        monthSel.value = getDefaultTargetMonth();
+        renderReportMonthOptions(false);
         monthSel.dataset.userChanged = 'false';
-        monthSel.addEventListener('change', () => {
+        monthSel.onchange = () => {
             monthSel.dataset.userChanged = 'true';
-        });
+            renderCurrentSnapshot();
+        };
         
         const sel = document.getElementById('snapshot-select');
         if (!snapshots.length) {
-            sel.innerHTML = '<option value="">暂无快照数据 (No snapshot data)</option>';
-            document.getElementById('report-content').innerHTML = '<div class="empty-state"><h3>暂无可入库报表快照 (No report-ready snapshot)</h3><p>当前只有明细/临期类快照，未包含顶部指标数据，不会参与报表看板入库。<br><span style="font-size:12px;color:#888;">Only detail/expiring snapshots were found. They do not contain topMetrics and are excluded from report saving.</span></p></div>';
+            sel.innerHTML = `<option value="">${rt('report.snapshot.none')}</option>`;
+            renderNoReportReadyState();
             if (window.renderReportSourcePanel) window.renderReportSourcePanel();
             return;
         }
         
-        sel.innerHTML = snapshots.map(s => {
-            const d = new Date(s.timestamp);
-            const tsStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-            const fileCount = s.files ? (Array.isArray(s.files) ? s.files.length : 1) : 0;
-            return `<option value="${s.id}">${tsStr} (包含 ${fileCount} 个表格源)</option>`;
-        }).join('');
+        renderSnapshotOptions();
         
         // Default to the first (latest) snapshot
         sel.value = snapshots[0].id;
         loadSelectedSnapshot();
         if (window.renderReportSourcePanel) window.renderReportSourcePanel();
     } catch (e) {
-        showToast('加载报表数据失败 (Failed to load report data)', 'error');
+        showToast(rt('report.toast.loadFailed'), 'error');
         console.error(e);
         if (window.renderReportSourcePanel) window.renderReportSourcePanel();
-        document.getElementById('report-content').innerHTML = '<div class="empty-state"><h3>加载失败 (Loading Failed)</h3><p>请检查后端服务是否正常运行。<br><span style="font-size:12px;color:#888;">Please check if the backend service is running normally.</span></p></div>';
+        renderReportLoadFailedState();
     }
 }
 
@@ -864,17 +918,17 @@ function renderReport(snap) {
     while (i < orderedMetrics.length) {
         const m = orderedMetrics[i];
         const hasTgt = labelToTargetMap[m.label] && labelToTargetMap[m.label][targetMonth] !== undefined && labelToTargetMap[m.label][targetMonth] !== '';
-        const grpName = labelToGroup[m.label] || (m.isManual || hasTgt ? '未分组(Ungrouped)' : null);
+        const grpName = labelToGroup[m.label] || (m.isManual || hasTgt ? '未分组' : null);
         
         if (grpName) {
             const grpMetrics = orderedMetrics.filter(x => {
                 const xHasTgt = labelToTargetMap[x.label] && labelToTargetMap[x.label][targetMonth] !== undefined && labelToTargetMap[x.label][targetMonth] !== '';
-                return (labelToGroup[x.label] || (x.isManual || xHasTgt ? '未分组(Ungrouped)' : null)) === grpName;
+                return (labelToGroup[x.label] || (x.isManual || xHasTgt ? '未分组' : null)) === grpName;
             });
             const size = grpMetrics.length;
             const firstIdx = orderedMetrics.findIndex(x => {
                 const xHasTgt = labelToTargetMap[x.label] && labelToTargetMap[x.label][targetMonth] !== undefined && labelToTargetMap[x.label][targetMonth] !== '';
-                return (labelToGroup[x.label] || (x.isManual || xHasTgt ? '未分组(Ungrouped)' : null)) === grpName && x.label === grpMetrics[0].label;
+                return (labelToGroup[x.label] || (x.isManual || xHasTgt ? '未分组' : null)) === grpName && x.label === grpMetrics[0].label;
             });
             if (i === firstIdx) {
                 tableRows.push({ groupName: grpName, groupSize: size, isGroupStart: true, metric: m, groupWeight: groupWeightMap[grpName] || '-' });
@@ -891,10 +945,10 @@ function renderReport(snap) {
     let matrixHtml = `
         <div class="card" id="matrix-card">
             <h3 class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
-                <span>🧩 客户群短板透视矩阵 (Customer Base Shortcoming Matrix)</span>
-                <button onclick="toggleMatrixFullscreen()" style="padding:4px 10px; font-size:12px; background:#f0f4f8; border:1px solid #cbd5e1; border-radius:4px; cursor:pointer; color:#334155; display:flex; align-items:center; gap:4px; font-weight:normal;" title="全屏查看表格 (Fullscreen)">
+                <span>${rt('report.card.matrixTitle')}</span>
+                <button onclick="toggleMatrixFullscreen()" style="padding:4px 10px; font-size:12px; background:#f0f4f8; border:1px solid #cbd5e1; border-radius:4px; cursor:pointer; color:#334155; display:flex; align-items:center; gap:4px; font-weight:normal;" title="${rt('report.action.fullscreenTitle')}">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
-                    全屏显示 (Fullscreen)
+                    ${rt('report.action.fullscreen')}
                 </button>
             </h3>
             <div class="matrix-container" style="background:#fff; height:100%;">
@@ -905,10 +959,10 @@ function renderReport(snap) {
                                        <th style="min-width:40px; position:sticky; top:0; z-index:11; background:#e8eaf6; color:#283593;" title="分组内所有指标权重之和">${getBilingual('总权重')}</th>` : ''}
                         <th style="min-width:180px; text-align:left;">${getBilingual('考核的指标名称')}</th>
                         <th style="min-width:60px;">${getBilingual('权重')}</th>
-                        <th style="min-width:100px;">${targetMonth}月目标值<br><span style="font-size:10px;color:#666;font-weight:normal;">Target</span></th>
+                        <th style="min-width:100px;">${rt('report.table.targetMonth', { month: targetMonth })}</th>
                         <th style="min-width:100px; background:#fff8e1; border-right:2px solid #ffe082; color:#ef6c00;">${getBilingual('全局总体达标')}</th>
                         ${categories.map(cat => `<th>${escapeHTML(cat)}</th>`).join('')}
-                        ${categories.map(cat => `<th style="background:#e8f5e9;">${escapeHTML(cat)}得分<br><span style="font-size:10px;color:#666;font-weight:normal;">Score</span></th>`).join('')}
+                        ${categories.map(cat => `<th style="background:#e8f5e9;">${escapeHTML(cat)} ${rt('report.table.score')}</th>`).join('')}
                     </tr>
                 </thead>
                 <tbody>
@@ -955,18 +1009,18 @@ function renderReport(snap) {
             const autoColor = isAuto ? '#0288d1' : '#9e9e9e';
             const autoBg = isAuto ? '#e1f5fe' : '#f5f5f5';
             const autoBorder = isAuto ? '#81d4fa' : '#e0e0e0';
-            const sourceText = m.autoFillSource && m.autoFillSource.label ? ` · 来源: ${m.autoFillSource.label}` : '';
-            const autoText = isAuto ? `🔄 自动填报: 已开${sourceText}` : '🔄 自动填报: 未开';
-            const autoTitle = isAuto && sourceText ? `自动填报跨快照获取数据源：${m.autoFillSource.label}` : '点击切换自动填报';
+            const sourceText = m.autoFillSource && m.autoFillSource.label ? ` · ${rt('report.auto.source')}: ${getTranslatedLabel(m.autoFillSource.label)}` : '';
+            const autoText = isAuto ? `${rt('report.auto.on')}${sourceText}` : rt('report.auto.off');
+            const autoTitle = isAuto && sourceText ? rt('report.auto.sourceTitle', { label: getTranslatedLabel(m.autoFillSource.label) }) : rt('report.auto.title');
             autoFillBtn = `<span style="cursor:pointer; margin-left:6px; font-size:12px; color:${autoColor}; background:${autoBg}; padding:2px 6px; border-radius:4px; border:1px solid ${autoBorder};" title="${escapeHTML(autoTitle)}" onclick="toggleAutoFill('${escapeHTML(m.label)}')">${escapeHTML(autoText)}</span>`;
         }
-        const editBtn = m.isManual ? `<span style="cursor:pointer; margin-left:6px; font-size:12px; color:#2e7d32; background:#e8f5e9; padding:2px 6px; border-radius:4px; border:1px solid #c8e6c9;" onclick="editManualMetric('${escapeHTML(m.label)}')">✏️ 填报 (Fill)</span>${autoFillBtn}` : '';
+        const editBtn = m.isManual ? `<span style="cursor:pointer; margin-left:6px; font-size:12px; color:#2e7d32; background:#e8f5e9; padding:2px 6px; border-radius:4px; border:1px solid #c8e6c9;" onclick="editManualMetric('${escapeHTML(m.label)}')">${rt('report.manual.fill')}</span>${autoFillBtn}` : '';
         const proportionalEnabled = isProportionalScoringEnabled(targetData);
         const proportionalBtn = m.hasTarget ? `
             <button class="ratio-score-toggle ${proportionalEnabled ? 'active' : ''}"
                 onclick="toggleProportionalScoring('${escapeHTML(m.label)}')"
-                title="${proportionalEnabled ? '已开启：未达标时按完成目标比例折算得分' : '未开启：未达标时该指标得 0 分'}">
-                ${proportionalEnabled ? '比例计分 ON' : '比例计分'}
+                title="${proportionalEnabled ? rt('report.proportional.titleOn') : rt('report.proportional.titleOff')}">
+                ${proportionalEnabled ? rt('report.proportional.on') : rt('report.proportional.off')}
             </button>
         ` : '';
 
@@ -1028,11 +1082,8 @@ function renderReport(snap) {
             </table>
             </div>
             <div style="margin-top:12px; font-size:12px; color:#888;">
-                * 自动打分逻辑 (Scoring Logic)：<strong>客户群总分 / 涉及到的指标有效权重之和 × 标准总分</strong>。若某客户群数据为空，则不计入该指标权重。<br>
-                <span style="font-size:11px;color:#aaa;">* Auto-scoring Logic: <strong>Customer Base Total Score / Sum of Valid Weights × Standard Total Score</strong>. If data is empty, weight is omitted.</span>
-                <br>
-                * 比例计分默认关闭；用户在单个指标上开启后，未达标客户群会按完成目标比例折算该指标得分。<br>
-                <span style="font-size:11px;color:#aaa;">* Proportional scoring is disabled by default. Once enabled for a metric, failing customer bases earn partial score based on target completion ratio.</span>
+                ${rt('report.logic.autoScoring')} <strong>${rt('report.logic.autoScoringBody')}</strong><br>
+                ${rt('report.logic.proportional')}
             </div>
         </div>
     `;
@@ -1040,7 +1091,7 @@ function renderReport(snap) {
     // Generate Ranking Table
     let rankingHtml = `
         <div class="card">
-            <h3 class="card-title" style="color:#0277bd;"><span>🏇 “赛马”排行 (Horse Racing Ranking)</span> <span style="font-size:12px; font-weight:normal; color:#888; margin-left:10px;">(支持预留手动调整机制)</span></h3>
+            <h3 class="card-title" style="color:#0277bd;"><span>${rt('report.card.rankingTitle')}</span> <span style="font-size:12px; font-weight:normal; color:#888; margin-left:10px;">(${rt('report.card.rankingSub')})</span></h3>
             <table class="ranking-table">
                 <thead>
                     <tr>
@@ -1062,16 +1113,16 @@ function renderReport(snap) {
     let adjustHtml = `
         <div class="card" id="adjust-card" style="margin-top:20px; margin-bottom:20px;">
             <h3 class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="color:#e65100;">⚖️ 手动加减分项目配置 (Manual Adjustment Config)</span>
+                <span style="color:#e65100;">${rt('report.card.adjustTitle')}</span>
                 <div style="display:flex; align-items:center; gap:10px;">
-                    <span style="font-size:12px; font-weight:normal; color:#888; background:#f5f5f5; padding:4px 8px; border-radius:4px;">✨ 修改后自动保存到当前快照</span>
-                    <button onclick="openAddAdjustModal()" style="padding:4px 10px; font-size:12px; background:#e8f5e9; border:1px solid #c8e6c9; border-radius:4px; cursor:pointer; color:#2e7d32; display:flex; align-items:center; gap:4px; font-weight:normal;" title="新增自定义加减分项 (Add Custom Adj. Item)">
+                    <span style="font-size:12px; font-weight:normal; color:#888; background:#f5f5f5; padding:4px 8px; border-radius:4px;">${rt('report.hint.autoSaved')}</span>
+                    <button onclick="openAddAdjustModal()" style="padding:4px 10px; font-size:12px; background:#e8f5e9; border:1px solid #c8e6c9; border-radius:4px; cursor:pointer; color:#2e7d32; display:flex; align-items:center; gap:4px; font-weight:normal;" title="${rt('report.action.addAdjustTitle')}">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                        新增加减分项 (Add Adj. Item)
+                        ${rt('report.action.addAdjust')}
                     </button>
-                    <button onclick="toggleAdjustFullscreen()" style="padding:4px 10px; font-size:12px; background:#f0f4f8; border:1px solid #cbd5e1; border-radius:4px; cursor:pointer; color:#334155; display:flex; align-items:center; gap:4px; font-weight:normal;" title="全屏查看表格 (Fullscreen)">
+                    <button onclick="toggleAdjustFullscreen()" style="padding:4px 10px; font-size:12px; background:#f0f4f8; border:1px solid #cbd5e1; border-radius:4px; cursor:pointer; color:#334155; display:flex; align-items:center; gap:4px; font-weight:normal;" title="${rt('report.action.fullscreenTitle')}">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
-                        全屏显示 (Fullscreen)
+                        ${rt('report.action.fullscreen')}
                     </button>
                 </div>
             </h3>
@@ -1082,8 +1133,8 @@ function renderReport(snap) {
                         <th style="min-width:60px;">${getBilingual('类型')}</th>
                         <th style="text-align:left;">${getBilingual('项目说明')}</th>
                         <th style="min-width:120px;">${getBilingual('计分规则')}</th>
-                        ${categories.map(cat => `<th style="width:80px; background:#fff3e0;">${escapeHTML(cat)} (发生次数)<br><span style="font-size:10px;color:#666;font-weight:normal;">Occurrences</span></th>`).join('')}
-                        ${categories.map(cat => `<th style="width:70px; background:#e8f5e9;">${escapeHTML(cat)} (加减分)<br><span style="font-size:10px;color:#666;font-weight:normal;">Adj. Score</span></th>`).join('')}
+                        ${categories.map(cat => `<th style="width:80px; background:#fff3e0;">${escapeHTML(cat)} (${rt('report.table.occurrences')})</th>`).join('')}
+                        ${categories.map(cat => `<th style="width:70px; background:#e8f5e9;">${escapeHTML(cat)} (${rt('report.table.adjustScore')})</th>`).join('')}
                         <th style="width:60px;">${getBilingual('操作')}</th>
                     </tr>
                 </thead>
@@ -1104,8 +1155,8 @@ function renderReport(snap) {
         const autoColor = isAuto ? '#0288d1' : '#9e9e9e';
         const autoBg = isAuto ? '#e1f5fe' : '#f5f5f5';
         const autoBorder = isAuto ? '#81d4fa' : '#e0e0e0';
-        const autoText = isAuto ? `🔄 自动填报: 已开${autoSource && autoSource.label ? ` · 来源: ${autoSource.label}` : ''}` : '🔄 自动填报: 未开';
-        const autoTitle = isAuto && autoSource && autoSource.label ? `自动填报跨快照获取数据源：${autoSource.label}` : '点击切换自动填报';
+        const autoText = isAuto ? `${rt('report.auto.on')}${autoSource && autoSource.label ? ` · ${rt('report.auto.source')}: ${getTranslatedLabel(autoSource.label)}` : ''}` : rt('report.auto.off');
+        const autoTitle = isAuto && autoSource && autoSource.label ? rt('report.auto.sourceTitle', { label: getTranslatedLabel(autoSource.label) }) : rt('report.auto.title');
         adjustHtml += `<tr>
             <td style="color:${typeColor}; background:${typeBg}; font-weight:bold; text-align:center;">${getBilingual(item.type)}</td>
             <td style="text-align:left;">
@@ -1130,7 +1181,7 @@ function renderReport(snap) {
         
         adjustHtml += `
             <td style="text-align:center;">
-                <button onclick="deleteAdjustItem(${idx})" style="background:none; border:none; cursor:pointer; font-size:16px; opacity:0.6; padding:4px;" title="删除此项" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">🗑️</button>
+                <button onclick="deleteAdjustItem(${idx})" style="background:none; border:none; cursor:pointer; font-size:16px; opacity:0.6; padding:4px;" title="${rt('report.common.delete')}" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">🗑️</button>
             </td>
         </tr>`;
     });
@@ -1139,26 +1190,36 @@ function renderReport(snap) {
                 </tbody>
             </table>
             </div>
-            <div style="margin-top:8px; font-size:12px; color:#888;">
-                * 填入发生次数后，系统会自动计算分值并汇总到上方赛马排行的“预留加减分”中。每一次修改都会自动静默保存至当前快照。<br>
-                <span style="font-size:11px;color:#aaa;">* After entering occurrences, the system auto-calculates scores and adds them to the "Manual Adj." in the ranking. Changes are auto-saved to the snapshot.</span>
-            </div>
+            <div style="margin-top:8px; font-size:12px; color:#888;">${rt('report.logic.manualAdjust')}</div>
         </div>
     `;
+
+    const rulesItems = getReportLang() === 'en-US'
+        ? [
+            ['1. Standard Total Score Baseline:', 'The Standard Total Score is the sum of all assessment metrics with weight > 0. It is the shared ranking baseline and is not affected by whether a customer base is exempt from some metrics.'],
+            ['2. Assessment Exemption Mechanism:', 'If a metric has no clear target this month, or a region/customer base has no data shown as --, the metric is exempted. Exempt metrics do not deduct points and are not included in that customer base full-weight base.'],
+            ['3. Dynamic Conversion Algorithm:', 'System Score = (Actual Weights Gained / Valid Full Weights Participated) x Standard Total Score. A region can still receive full converted score if it reaches 100% compliance on all metrics it actually participated in.'],
+            ['4. Per-Metric Proportional Scoring Toggle:', 'Proportional scoring is disabled by default. Once enabled for a metric, failing customer bases earn partial score by target completion ratio, capped by the metric weight.'],
+            ['5. Reserved Manual Adjustment Mechanism:', 'Final Score = System Score + Manual Adj. This covers non-automated special rewards and penalties. Manual items can be configured in the table above and saved to the snapshot.'],
+            ['6. Dynamic Summary Analysis:', 'The summary row at the bottom of the matrix follows header filters, skips exempt items, and recalculates valid weights and scores in real time.']
+        ]
+        : [
+            ['1. 标准总分基准：', '标准总分为当前左侧或后台配置中所有权重 > 0 的考核指标之和。该总分是各客户群排名的公共基准，不受任何客户群是否缺考影响。'],
+            ['2. 考核免除机制：', '当某一指标在本月未配置明确目标值，或该客户群在某指标上暂无数据（显示为 --）时，该指标会触发免除机制。免除指标不会扣分，也不计入该客户群的考核满权基数。'],
+            ['3. 动态折算算法：', '系统得分 = (实际达标获得的权重 / 实际参与考核的有效满权) × 标准总分。即使客户群免考了部分指标，只要实际参与指标 100% 达标，也可以折算拿到满分。'],
+            ['4. 单指标比例计分开关：', '比例计分默认关闭。用户可在单个指标旁手动开启，开启后未达标客户群会按完成目标比例折算得分，最高不超过该指标权重。'],
+            ['5. 预留加减分机制：', '最终得分 = 系统得分 + 预留加减分。该部分主要覆盖非自动化专项奖惩，相关人工配置可通过上方表格设置并自动存入快照。'],
+            ['6. 动态汇总分析：', '矩阵最下方的汇总行会跟随表头下拉过滤条件，跳过免考项，并实时汇总有效权重与得分。']
+        ];
 
     let rulesHtml = `
         <div class="card" style="margin-top:20px; margin-bottom:40px; background:#f8fbff; border:1px solid #bbdefb; box-shadow:0 2px 8px rgba(21,101,192,0.05);">
             <h3 class="card-title" style="color:#0277bd; font-size:15px; border-bottom:1px solid #bbdefb; padding-bottom:10px; margin-bottom:12px;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:text-bottom; margin-right:6px;"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
-                计分规则与排位说明 (Scoring Rules and Ranking Explanation)
+                ${rt('report.card.rulesTitle')}
             </h3>
             <div style="font-size:13px; color:#455a64; line-height:1.8;">
-                <p style="margin:0 0 8px;"><strong>1. 标准总分基准 (Standard Total Score Baseline)：</strong>标准总分为当前左侧或后台配置中所有<span style="color:#0277bd; font-weight:bold;">权重＞0</span>的考核指标之和。该总分是各大区排名的公共基准，不受任何客户群是否缺考影响。<br><span style="font-size:12px;color:#888;">The Standard Total Score is the sum of all assessment metrics with a <span style="color:#0277bd; font-weight:bold;">weight > 0</span>. This total score is the public baseline for ranking all regions and is not affected by whether any customer base misses an assessment.</span></p>
-                <p style="margin:0 0 8px;"><strong>2. 考核免除机制 (Assessment Exemption Mechanism)：</strong>当某一指标在本月<span style="color:#d32f2f;">未配置明确目标值</span>，或该大区/客户群在某指标上<span style="color:#d32f2f;">暂无数据（显示为 --）</span>时，该指标将触发免除机制。<span style="color:#e65100; background:#fff3e0; padding:2px 4px; border-radius:3px;">免除指标不会扣分，也不计入该客户群的考核满权基数。</span><br><span style="font-size:12px;color:#888;">When a metric has <span style="color:#d32f2f;">no clear target value configured</span> this month, or the region/customer base has <span style="color:#d32f2f;">no data (shown as --)</span>, the exemption mechanism is triggered. <span style="color:#e65100; background:#fff3e0; padding:2px 4px; border-radius:3px;">Exempt metrics will not deduct points, nor will they be included in the full weight base.</span></span></p>
-                <p style="margin:0 0 8px;"><strong>3. 动态折算算法（系统得分） (Dynamic Conversion Algorithm - System Score)：</strong>为了确保公平，大区最终系统得分 = <strong>( 实际达标获得的权重 / 实际参与考核的有效满权 ) × 标准总分</strong>。这意味着即使大区免考了部分指标，只要在它实际参与的指标上100%达标，它依然可以折算拿到满分。<br><span style="font-size:12px;color:#888;">To ensure fairness, the final System Score = <strong>( Actual Weights Gained / Valid Full Weights Participated ) × Standard Total Score</strong>. This means even if a region is exempt from some metrics, it can still get a full score if it reaches 100% compliance on the metrics it actually participated in.</span></p>
-                <p style="margin:0 0 8px;"><strong>4. 单指标比例计分开关 (Per-Metric Proportional Scoring Toggle)：</strong>比例计分默认关闭。用户可在“客户群短板透视矩阵”的单个指标旁手动开启，开启后该指标未达标客户群不再直接获得 0 分，而是按完成目标比例折算得分；例如“≥目标”类指标按 <strong>实际值 / 目标值</strong> 折算，“≤目标”类指标按 <strong>目标值 / 实际值</strong> 折算，最高不超过该指标权重。该设置会持久记忆在对应指标配置上。<br><span style="font-size:12px;color:#888;">Proportional scoring is disabled by default. Users can enable it manually for an individual metric in the Shortcoming Matrix. Once enabled, failing customer bases no longer receive 0 for that metric; instead, they earn partial score by target completion ratio. For "≥ target" metrics, the ratio is <strong>actual / target</strong>; for "≤ target" metrics, the ratio is <strong>target / actual</strong>, capped by the metric weight. This setting is persisted on the metric configuration.</span></p>
-                <p style="margin:0 0 8px;"><strong>5. 预留加减分机制 (Reserved Manual Adjustment Mechanism)：</strong>上方看板的【最终得分】= 【系统得分】+【预留加减分】。这部分主要涵盖非自动化专项奖惩（如维保、退网、重点项目攻坚等）。相关人工配置可通过上方“手动加减分项目配置”表进行设置并自动存入快照。<br><span style="font-size:12px;color:#888;">【Final Score】 = 【System Score】 + 【Manual Adj.】. This part covers non-automated special rewards and punishments. Manual configurations can be set in the "Manual Adjustment Config" table above and are automatically saved to the snapshot.</span></p>
-                <p style="margin:0;"><strong>6. 动态汇总分析 (Dynamic Summary Analysis)：</strong>“客户群短板透视矩阵”最下方的汇总行，会智能跟随你的表头下拉过滤条件，自动排雷（跳过免考项）并实时求和有效权重与得分，方便进行透视复盘。<br><span style="font-size:12px;color:#888;">The summary row at the bottom of the "Shortcoming Matrix" intelligently follows the header dropdown filters, automatically skipping exempt items, and calculates the sum of valid weights and scores in real-time.</span></p>
+                ${rulesItems.map(([title, body]) => `<p style="margin:0 0 8px;"><strong>${escapeHTML(title)}</strong>${escapeHTML(body)}</p>`).join('')}
             </div>
         </div>
     `;
@@ -1202,13 +1263,13 @@ window.setupMatrixFilters = function() {
         
         filterTh.innerHTML = `
             <div class="custom-ms" data-col="${colIdx}" style="position:relative; width:100%; text-align:left; font-weight:normal;">
-                <div class="ms-btn" onclick="toggleMsDropdown(${colIdx}, event)" style="background:#fff; border:1px solid #cbd5e1; border-radius:3px; padding:2px 4px; font-size:11px; cursor:pointer; min-height:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; justify-content:space-between; align-items:center;" title="全部">
-                    <span class="ms-text">全部</span>
+                <div class="ms-btn" onclick="toggleMsDropdown(${colIdx}, event)" style="background:#fff; border:1px solid #cbd5e1; border-radius:3px; padding:2px 4px; font-size:11px; cursor:pointer; min-height:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; justify-content:space-between; align-items:center;" title="${rt('report.filter.all')}">
+                    <span class="ms-text">${rt('report.filter.all')}</span>
                     <span style="font-size:8px; color:#888;">▼</span>
                 </div>
                 <div class="ms-dropdown" id="ms-dropdown-${colIdx}" style="display:none; position:absolute; top:100%; left:0; min-width:120px; background:#fff; border:1px solid #ccc; box-shadow:0 4px 6px rgba(0,0,0,0.1); z-index:9999; max-height:250px; overflow-y:auto; padding:6px; border-radius:4px;">
                     <label style="display:block; margin-bottom:4px; font-weight:bold; cursor:pointer; border-bottom:1px solid #eee; padding-bottom:6px; font-size:11px;">
-                        <input type="checkbox" class="ms-all-cb" checked onchange="msSelectAll(${colIdx}, this.checked)"> (全选)
+                        <input type="checkbox" class="ms-all-cb" checked onchange="msSelectAll(${colIdx}, this.checked)"> ${rt('report.filter.selectAll')}
                     </label>
                     <div class="ms-options-container"></div>
                 </div>
@@ -1326,16 +1387,16 @@ window.updateMsBtnText = function(colIdx) {
     
     const btnText = container.querySelector('.ms-text');
     if (checked.length === cbs.length) {
-        btnText.innerText = '全部';
-        btnText.parentElement.title = '全部';
+        btnText.innerText = rt('report.filter.all');
+        btnText.parentElement.title = rt('report.filter.all');
     } else if (checked.length === 0) {
-        btnText.innerText = '无';
-        btnText.parentElement.title = '无';
+        btnText.innerText = rt('report.filter.none');
+        btnText.parentElement.title = rt('report.filter.none');
     } else if (checked.length === 1) {
         btnText.innerText = checked[0].value;
         btnText.parentElement.title = checked[0].value;
     } else {
-        btnText.innerText = `已选 ${checked.length} 项`;
+        btnText.innerText = rt('report.filter.selectedCount', { count: checked.length });
         btnText.parentElement.title = checked.map(c => c.value).join(', ');
     }
 };
@@ -1457,9 +1518,9 @@ window.updateMatrixSummary = function() {
     let html = '';
     headerCells.forEach((th, colIdx) => {
         const headerText = th.innerText.trim();
-        if (headerText.includes('考核的指标名称')) {
-            html += `<td style="text-align:right; color:#283593; padding:8px;">当前筛选汇总：</td>`;
-        } else if (headerText === '权重' || headerText.includes('得分')) {
+        if (headerText.includes(getTranslatedLabel('考核的指标名称'))) {
+            html += `<td style="text-align:right; color:#283593; padding:8px;">${rt('report.summary.filtered')}</td>`;
+        } else if (headerText === getTranslatedLabel('权重') || headerText.includes(rt('report.table.score'))) {
             let sumVal = sums[colIdx] !== undefined ? sums[colIdx] : 0;
             sumVal = Math.round(sumVal * 100) / 100;
             html += `<td style="color:#c62828; padding:8px;">${sumVal}</td>`;
@@ -1622,9 +1683,9 @@ window.saveManualAdjustData = async function(silent = false) {
     
     try {
         await putSnapshotWithCompression(currentSnapshot.id, currentSnapshot, 'manual-adjust-data');
-        if (!silent) showToast('手动加减分数据已保存到快照', 'success');
+        if (!silent) showToast(rt('report.toast.manualAdjustSaved'), 'success');
     } catch (e) {
-        if (!silent) showToast('保存失败', 'error');
+        if (!silent) showToast(rt('report.toast.saveFailed'), 'error');
         console.error(e);
     }
 };
@@ -1674,14 +1735,14 @@ function renderRanking() {
                 <td style="font-weight:bold; color:#777; padding:8px;">${medal}</td>
                 <td style="text-align:left; padding:8px;" class="cat-name">${escapeHTML(d.name)}</td>
                 <td style="color:#666; font-weight:bold; padding:8px;">
-                    <span onclick="showStdScoreDetails()" style="cursor:pointer; border-bottom:1px dashed #999;" title="点击查看详情">${standardTotalScore}</span>
+                    <span onclick="showStdScoreDetails()" style="cursor:pointer; border-bottom:1px dashed #999;" title="${rt('report.detail.clickTitle')}">${standardTotalScore}</span>
                 </td>
                 <td style="color:#2c3e50; font-weight:bold; padding:8px;">
-                    <div onclick="showSysScoreDetails('${escapeHTML(cat)}')" style="cursor:pointer; border-bottom:1px dashed #0277bd; display:inline-block;" title="点击查看计算明细">${d.baseScore}</div>
-                    <div style="font-size:11px;color:#aaa;font-weight:normal;margin-top:2px;">(获权 ${formatScoreValue(d.earnedScore)} / 满权 ${formatScoreValue(d.validWeightSum)})</div>
+                    <div onclick="showSysScoreDetails('${escapeHTML(cat)}')" style="cursor:pointer; border-bottom:1px dashed #0277bd; display:inline-block;" title="${rt('report.detail.clickCalc')}">${d.baseScore}</div>
+                    <div style="font-size:11px;color:#aaa;font-weight:normal;margin-top:2px;">(${rt('report.detail.earned')} ${formatScoreValue(d.earnedScore)} / ${rt('report.detail.fullWeight')} ${formatScoreValue(d.validWeightSum)})</div>
                 </td>
                 <td style="padding:8px;">
-                    <div onclick="showAdjScoreDetails('${escapeHTML(cat)}')" style="cursor:pointer; display:inline-block; border-bottom:1px dashed #e65100; font-weight:bold; color:${d.manualScore>=0?'#2e7d32':'#c62828'};" title="点击查看加减分明细">${d.manualScore >= 0 ? '+'+d.manualScore : d.manualScore}</div>
+                    <div onclick="showAdjScoreDetails('${escapeHTML(cat)}')" style="cursor:pointer; display:inline-block; border-bottom:1px dashed #e65100; font-weight:bold; color:${d.manualScore>=0?'#2e7d32':'#c62828'};" title="${rt('report.detail.clickAdj')}">${d.manualScore >= 0 ? '+'+d.manualScore : d.manualScore}</div>
                 </td>
                 <td style="padding:8px;"><span class="${scoreClass}" style="padding:4px 12px; font-size:16px;">${d.finalScore}</span></td>
             </tr>
@@ -1705,7 +1766,7 @@ window.showScoreDetails = function(title, content) {
                 </div>
                 <div id="details-modal-content" style="max-height:60vh; overflow-y:auto; font-size:13px; line-height:1.6; padding-right:10px;"></div>
                 <div style="text-align:center; margin-top:20px; padding-top:10px; border-top:1px solid #eee;">
-                    <button onclick="document.getElementById('details-modal').style.display='none'" style="padding:8px 24px; border:1px solid #ccc; background:#fff; color:#333; border-radius:6px; cursor:pointer;">关闭</button>
+                    <button onclick="document.getElementById('details-modal').style.display='none'" style="padding:8px 24px; border:1px solid #ccc; background:#fff; color:#333; border-radius:6px; cursor:pointer;">${rt('report.detail.close')}</button>
                 </div>
             </div>
         `;
@@ -1720,12 +1781,12 @@ window.showScoreDetails = function(title, content) {
 };
 
 window.showStdScoreDetails = function() {
-    showScoreDetails('📊 标准总分说明 (Standard Total Score Details)', `
-        <div style="margin-bottom:10px;">标准总分为大盘所设定考核指标的总体权重之和 (Sum of all metric weights):</div>
+    showScoreDetails(rt('report.detail.stdTitle'), `
+        <div style="margin-bottom:10px;">${rt('report.detail.stdIntro')}</div>
         <div style="font-size:24px; font-weight:bold; color:#0277bd; text-align:center; padding:10px; background:#f5f8fa; border-radius:6px;">${standardTotalScore}</div>
         <ul style="margin-top:10px; padding-left:20px; color:#555;">
-            <li>所有配置了大于0权重的指标将全额计入标准总分。<br><span style="font-size:12px;color:#999;">All metrics with a weight greater than 0 are fully counted in the standard total score.</span></li>
-            <li>无论某个客户群是否参与该指标的考核，标准总分保持一致，以提供横向比较的基准。<br><span style="font-size:12px;color:#999;">The standard total score remains the same regardless of whether a customer base participates in the metric, providing a baseline for horizontal comparison.</span></li>
+            <li>${rt('report.detail.stdRule1')}</li>
+            <li>${rt('report.detail.stdRule2')}</li>
         </ul>
     `);
 };
@@ -1750,7 +1811,6 @@ window.showSysScoreDetails = function(cat) {
         const targetData = labelToTargetMap[mLabel];
         const weight = (targetData && targetData.weight !== undefined) ? parseFloat(targetData.weight) : 1;
         const hasTarget = targetData && targetData[targetMonth] !== undefined && targetData[targetMonth] !== '' && weight > 0;
-        const mEn = i18nMap[mLabel] ? `<br><span style="font-size:11px; color:#aaa;">${escapeHTML(i18nMap[mLabel])}</span>` : '';
 
         if (!hasTarget || !cell || cell.raw === '--') {
             const otherHasData = Object.keys(allCatData).some(otherCat => {
@@ -1760,19 +1820,19 @@ window.showSysScoreDetails = function(cat) {
             });
 
             if (!hasTarget) {
-                allExcludedHtml += `<li style="margin-bottom:8px; line-height:1.4;"><span style="color:#999; font-weight:600;">${escapeHTML(mLabel)}</span> <span style="color:#ccc; font-size:11px;">(未配置目标值或权重为0 / No Target)</span>${mEn}</li>`;
+                allExcludedHtml += `<li style="margin-bottom:8px; line-height:1.4;"><span style="color:#999; font-weight:600;">${getBilingual(mLabel)}</span> <span style="color:#ccc; font-size:11px;">(${rt('report.detail.noTarget')})</span></li>`;
             } else if (otherHasData) {
-                onlyMissingHtml += `<li style="margin-bottom:8px; line-height:1.4;"><span style="color:#b45309; font-weight:600;">${escapeHTML(mLabel)}</span> <span style="color:#d97706; font-size:11px;">(本群暂无数据 / No Data)</span>${mEn}</li>`;
+                onlyMissingHtml += `<li style="margin-bottom:8px; line-height:1.4;"><span style="color:#b45309; font-weight:600;">${getBilingual(mLabel)}</span> <span style="color:#d97706; font-size:11px;">(${rt('report.detail.noData')})</span></li>`;
             } else {
-                allExcludedHtml += `<li style="margin-bottom:8px; line-height:1.4;"><span style="color:#999; font-weight:600;">${escapeHTML(mLabel)}</span> <span style="color:#ccc; font-size:11px;">(全员暂无数据 / Global No Data)</span>${mEn}</li>`;
+                allExcludedHtml += `<li style="margin-bottom:8px; line-height:1.4;"><span style="color:#999; font-weight:600;">${getBilingual(mLabel)}</span> <span style="color:#ccc; font-size:11px;">(${rt('report.detail.globalNoData')})</span></li>`;
             }
         } else if (cell.isFailing) {
             const partialText = cell.proportionalScoring
-                ? `, 比例计分 Earned: ${formatScoreValue(cell.earnedScore)} / ${weight}, 完成率 ${(cell.completionRatio * 100).toFixed(1)}%`
+                ? `, ${rt('report.detail.partial')}: ${formatScoreValue(cell.earnedScore)} / ${weight}, ${rt('report.detail.completion')} ${(cell.completionRatio * 100).toFixed(1)}%`
                 : '';
-            failHtml += `<li style="margin-bottom:8px; line-height:1.4;"><span style="color:#d32f2f; font-weight:600;">${escapeHTML(mLabel)}</span> <span style="color:#888; font-size:11px;">(权重 Weight: ${weight}, 差值 Gap: ${cell.gapStr}${partialText})</span>${mEn}</li>`;
+            failHtml += `<li style="margin-bottom:8px; line-height:1.4;"><span style="color:#d32f2f; font-weight:600;">${getBilingual(mLabel)}</span> <span style="color:#888; font-size:11px;">(${rt('report.detail.weight')}: ${weight}, ${rt('report.detail.gap')}: ${cell.gapStr}${partialText})</span></li>`;
         } else {
-            passHtml += `<li style="margin-bottom:8px; line-height:1.4;"><span style="color:#2e7d32; font-weight:600;">${escapeHTML(mLabel)}</span> <span style="color:#888; font-size:11px;">(权重 Weight: ${weight})</span>${mEn}</li>`;
+            passHtml += `<li style="margin-bottom:8px; line-height:1.4;"><span style="color:#2e7d32; font-weight:600;">${getBilingual(mLabel)}</span> <span style="color:#888; font-size:11px;">(${rt('report.detail.weight')}: ${weight})</span></li>`;
         }
     });
 
@@ -1780,8 +1840,8 @@ window.showSysScoreDetails = function(cat) {
     const onlyMissingBlock = onlyMissingHtml ? `
         <div style="margin-bottom:8px;">
             <div style="color:#b45309; font-size:11px; font-weight:bold; margin-bottom:4px; display:flex; align-items:center; gap:4px;">
-                <span>⚠️ 仅本群缺考 (Missing in this base only)</span>
-                <span style="color:#d97706; font-weight:normal;">— 其他客户群有数据，本群暂无 (Others have data, this base has none)</span>
+                <span>${rt('report.detail.missingOnly')}</span>
+                <span style="color:#d97706; font-weight:normal;">- ${rt('report.detail.missingOnlyHint')}</span>
             </div>
             <ul style="margin:0; padding-left:15px;">${onlyMissingHtml}</ul>
         </div>` : '';
@@ -1789,40 +1849,40 @@ window.showSysScoreDetails = function(cat) {
     const allExcludedBlock = allExcludedHtml ? `
         <div>
             <div style="color:#999; font-size:11px; font-weight:bold; margin-bottom:4px; display:flex; align-items:center; gap:4px;">
-                <span>⚪ 全员豁免 (Global Exempt)</span>
-                <span style="color:#bbb; font-weight:normal;">— 所有客户群均不涉及此指标 (No base is involved in this metric)</span>
+                <span>${rt('report.detail.globalExempt')}</span>
+                <span style="color:#bbb; font-weight:normal;">- ${rt('report.detail.globalExemptHint')}</span>
             </div>
             <ul style="margin:0; padding-left:15px;">${allExcludedHtml}</ul>
         </div>` : '';
 
     const excludedSection = (onlyMissingHtml || allExcludedHtml)
         ? `${onlyMissingBlock}${onlyMissingHtml && allExcludedHtml ? '<hr style="border:none; border-top:1px dashed #e0e0e0; margin:8px 0;">' : ''}${allExcludedBlock}`
-        : '<li style="color:#999;">无 (None)</li>';
+        : `<li style="color:#999;">${rt('report.detail.none')}</li>`;
 
-    showScoreDetails(`📈 [${escapeHTML(d.name)}] 系统得分计算明细 (System Score Details)`, `
+    showScoreDetails(rt('report.detail.sysTitle', { name: escapeHTML(d.name) }), `
         <div style="background:#f5f8fa; padding:12px; border-radius:6px; text-align:center; margin-bottom:15px; border:1px solid #e1e8ed;">
-            <div style="color:#666; font-size:12px; margin-bottom:4px;">计算公式 (Formula): ( 获权 Earned W. / 满权 Valid W. ) × 标准总分 Standard Total Score</div>
+            <div style="color:#666; font-size:12px; margin-bottom:4px;">${rt('report.detail.formula')} ( ${rt('report.detail.earned')} / ${rt('report.detail.fullWeight')} ) x ${rt('report.detail.standardTotal')}</div>
             <span style="font-size:18px; color:#333;">( </span>
-            <span style="color:#2e7d32; font-weight:bold; font-size:18px;" title="获权 (Earned Weight)">${formatScoreValue(d.earnedScore)}</span>
+            <span style="color:#2e7d32; font-weight:bold; font-size:18px;" title="${rt('report.detail.earnedWeight')}">${formatScoreValue(d.earnedScore)}</span>
             <span style="font-size:18px; color:#333;"> / </span>
-            <span style="color:#ef6c00; font-weight:bold; font-size:18px;" title="满权 (Valid Full Weight)">${d.validWeightSum}</span>
+            <span style="color:#ef6c00; font-weight:bold; font-size:18px;" title="${rt('report.detail.fullWeight')}">${d.validWeightSum}</span>
             <span style="font-size:18px; color:#333;"> ) × </span>
-            <span style="color:#0277bd; font-weight:bold; font-size:18px;" title="标准总分 (Standard Total Score)">${standardTotalScore}</span>
+            <span style="color:#0277bd; font-weight:bold; font-size:18px;" title="${rt('report.detail.standardTotal')}">${standardTotalScore}</span>
             <span style="font-size:18px; color:#333;"> = </span>
             <span style="color:#2c3e50; font-weight:bold; font-size:22px;">${d.baseScore}</span>
         </div>
         <div style="display:flex; gap:10px; margin-bottom:10px;">
             <div style="flex:1; background:#f1f8e9; padding:10px; border-radius:6px; border:1px solid #c8e6c9;">
-                <div style="color:#2e7d32; font-weight:bold; border-bottom:1px solid #c8e6c9; padding-bottom:5px; margin-bottom:8px;">✅ 达标项 Passed (获权 Earned W. ${formatScoreValue(d.earnedScore)})</div>
-                <ul style="margin:0; padding-left:15px; font-size:12px; color:#333;">${passHtml || '<li style="color:#999;">无 (None)</li>'}</ul>
+                <div style="color:#2e7d32; font-weight:bold; border-bottom:1px solid #c8e6c9; padding-bottom:5px; margin-bottom:8px;">${rt('report.detail.passed')} (${rt('report.detail.earnedWeight')} ${formatScoreValue(d.earnedScore)})</div>
+                <ul style="margin:0; padding-left:15px; font-size:12px; color:#333;">${passHtml || `<li style="color:#999;">${rt('report.detail.none')}</li>`}</ul>
             </div>
             <div style="flex:1; background:#ffebee; padding:10px; border-radius:6px; border:1px solid #ffcdd2;">
-                <div style="color:#c62828; font-weight:bold; border-bottom:1px solid #ffcdd2; padding-bottom:5px; margin-bottom:8px;">❌ 不达标项 Failed (失权 Lost W. ${formatScoreValue(d.validWeightSum - d.earnedScore)})</div>
-                <ul style="margin:0; padding-left:15px; font-size:12px; color:#333;">${failHtml || '<li style="color:#999;">无 (None)</li>'}</ul>
+                <div style="color:#c62828; font-weight:bold; border-bottom:1px solid #ffcdd2; padding-bottom:5px; margin-bottom:8px;">${rt('report.detail.failed')} (${rt('report.detail.lostWeight')} ${formatScoreValue(d.validWeightSum - d.earnedScore)})</div>
+                <ul style="margin:0; padding-left:15px; font-size:12px; color:#333;">${failHtml || `<li style="color:#999;">${rt('report.detail.none')}</li>`}</ul>
             </div>
         </div>
         <div style="background:#fafafa; padding:10px; border-radius:6px; border:1px solid #e0e0e0; font-size:12px; color:#666;">
-            <div style="color:#777; font-weight:bold; border-bottom:1px solid #e0e0e0; padding-bottom:6px; margin-bottom:8px;">🚫 不参与折算 Excluded</div>
+            <div style="color:#777; font-weight:bold; border-bottom:1px solid #e0e0e0; padding-bottom:6px; margin-bottom:8px;">${rt('report.detail.excluded')}</div>
             ${excludedSection}
         </div>
     `);
@@ -1845,7 +1905,7 @@ window.showAdjScoreDetails = function(cat) {
                 const color = score > 0 ? '#2e7d32' : '#d32f2f';
                 adjDetails += `
                     <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px dashed #eee; padding-bottom:6px;">
-                        <span style="flex:1; padding-right:10px; color:#333;">${escapeHTML(item.name)} <span style="background:#eee; padding:1px 6px; border-radius:10px; font-size:11px; margin-left:4px;">x${count}</span></span>
+                        <span style="flex:1; padding-right:10px; color:#333;">${getBilingual(item.name)} <span style="background:#eee; padding:1px 6px; border-radius:10px; font-size:11px; margin-left:4px;">x${count}</span></span>
                         <span style="color:${color}; font-weight:bold;">${score > 0 ? '+'+score : score}</span>
                     </div>
                 `;
@@ -1853,11 +1913,11 @@ window.showAdjScoreDetails = function(cat) {
         });
     }
     
-    showScoreDetails(`⚖️ [${escapeHTML(d.name)}] 加减分明细 (Manual Adj. Details)`, `
+    showScoreDetails(rt('report.detail.adjTitle', { name: escapeHTML(d.name) }), `
         <div style="font-size:24px; font-weight:bold; color:${d.manualScore >= 0 ? '#2e7d32' : '#d32f2f'}; text-align:center; padding:10px; background:#f5f8fa; border-radius:6px; margin-bottom:15px; border:1px solid #e1e8ed;">
             ${d.manualScore >= 0 ? '+'+d.manualScore : d.manualScore}
         </div>
-        ${adjDetails || '<div style="text-align:center; color:#888; padding:20px;">无加减分记录 (No records)</div>'}
+        ${adjDetails || `<div style="text-align:center; color:#888; padding:20px;">${rt('report.detail.noAdjRecords')}</div>`}
     `);
 };
 
@@ -1870,33 +1930,33 @@ window.openAddAdjustModal = function() {
         modal.innerHTML = `
             <div style="background:#fff; border-radius:12px; width:440px; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
                 <h3 style="margin-top:0; margin-bottom:20px; color:#e65100; display:flex; justify-content:space-between; align-items:center;">
-                    <span>➕ 新增手动加减分项</span>
+                    <span>${rt('report.adjust.addTitle')}</span>
                     <button onclick="document.getElementById('add-adjust-modal').style.display='none'" style="border:none; background:none; font-size:20px; cursor:pointer; color:#888;">&times;</button>
                 </h3>
                 <div style="margin-bottom:15px;">
-                    <label style="display:block; margin-bottom:5px; font-size:13px; color:#555;">项目类型</label>
+                    <label style="display:block; margin-bottom:5px; font-size:13px; color:#555;">${rt('report.adjust.type')}</label>
                     <select id="new-adjust-type" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; font-size:14px;">
-                        <option value="扣分">扣分 (惩罚项)</option>
-                        <option value="加分">加分 (奖励项)</option>
+                        <option value="扣分">${rt('report.adjust.deductOption')}</option>
+                        <option value="加分">${rt('report.adjust.addOption')}</option>
                     </select>
                 </div>
                 <div style="margin-bottom:15px;">
-                    <label style="display:block; margin-bottom:5px; font-size:13px; color:#555;">项目说明名称</label>
-                    <input type="text" id="new-adjust-name" placeholder="例如：重大客户表扬" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box; font-size:14px;">
+                    <label style="display:block; margin-bottom:5px; font-size:13px; color:#555;">${rt('report.adjust.name')}</label>
+                    <input type="text" id="new-adjust-name" placeholder="${rt('report.adjust.namePlaceholder')}" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box; font-size:14px;">
                 </div>
                 <div style="display:flex; gap:15px; margin-bottom:15px;">
                     <div style="flex:1;">
-                        <label style="display:block; margin-bottom:5px; font-size:13px; color:#555;">单次分值 (发生1次加减多少分)</label>
+                        <label style="display:block; margin-bottom:5px; font-size:13px; color:#555;">${rt('report.adjust.unit')}</label>
                         <input type="number" id="new-adjust-unit" value="2" min="1" step="0.5" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box; font-size:14px;">
                     </div>
                     <div style="flex:1;">
-                        <label style="display:block; margin-bottom:5px; font-size:13px; color:#555;">累计上限封顶 (留空代表无上限)</label>
-                        <input type="number" id="new-adjust-cap" placeholder="留空无上限" min="1" step="0.5" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box; font-size:14px;">
+                        <label style="display:block; margin-bottom:5px; font-size:13px; color:#555;">${rt('report.adjust.cap')}</label>
+                        <input type="number" id="new-adjust-cap" placeholder="${rt('report.adjust.capPlaceholder')}" min="1" step="0.5" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box; font-size:14px;">
                     </div>
                 </div>
                 <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:25px;">
-                    <button onclick="document.getElementById('add-adjust-modal').style.display='none'" style="padding:8px 16px; border:1px solid #ccc; background:#fff; border-radius:6px; cursor:pointer;">取消</button>
-                    <button onclick="saveNewAdjustItem()" style="padding:8px 16px; border:none; background:#e65100; color:#fff; border-radius:6px; cursor:pointer; font-weight:bold;">保存到全局并生效</button>
+                    <button onclick="document.getElementById('add-adjust-modal').style.display='none'" style="padding:8px 16px; border:1px solid #ccc; background:#fff; border-radius:6px; cursor:pointer;">${rt('report.button.cancel')}</button>
+                    <button onclick="saveNewAdjustItem()" style="padding:8px 16px; border:none; background:#e65100; color:#fff; border-radius:6px; cursor:pointer; font-weight:bold;">${rt('report.adjust.saveGlobal')}</button>
                 </div>
             </div>
         `;
@@ -1924,7 +1984,7 @@ window.saveNewAdjustItem = async function() {
     const cap = capStr === '' ? null : parseFloat(capStr);
     
     if (!name) {
-        showToast('请输入项目名称', 'error');
+        showToast(rt('report.toast.enterItemName'), 'error');
         return;
     }
     
@@ -1938,13 +1998,13 @@ window.saveNewAdjustItem = async function() {
     
     try {
         await API.post('/api/sla/config', globalConfig);
-        showToast('自定义项目已添加', 'success');
+        showToast(rt('report.toast.customItemAdded'), 'success');
         document.getElementById('add-adjust-modal').style.display = 'none';
         
         // Re-render
         renderCurrentSnapshot();
     } catch (e) {
-        showToast('保存失败', 'error');
+        showToast(rt('report.toast.saveFailed'), 'error');
     }
 };
 
@@ -1961,7 +2021,7 @@ window.deleteAdjustItem = async function(idx) {
     
     try {
         await API.post('/api/sla/config', globalConfig);
-        showToast('项目已成功删除', 'success');
+        showToast(rt('report.toast.adjustItemDeleted'), 'success');
         
         // Re-render report to remove the row
         renderCurrentSnapshot();
@@ -1969,14 +2029,14 @@ window.deleteAdjustItem = async function(idx) {
         // Update the current snapshot to purge the removed data
         setTimeout(() => saveManualAdjustData(true), 100);
     } catch (e) {
-        showToast('删除失败', 'error');
+        showToast(rt('report.toast.deleteFailed'), 'error');
         console.error(e);
     }
 };
 
 window.openWeightModal = function() {
     if (!currentSnapshot || !currentSnapshot.topMetrics) {
-        showToast('请先加载一份快照', 'error');
+        showToast(rt('report.toast.loadSnapshotFirst'), 'error');
         return;
     }
     
@@ -2028,8 +2088,8 @@ window.openWeightModal = function() {
         
         if (!key) {
             html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px; background:#f9f9f9; border-radius:6px; border:1px solid #eee;">
-                <span style="font-weight:600; color:#555;">${escapeHTML(m.label)}</span>
-                <span style="color:#aaa; font-size:12px;">(未在SLA配置监控目标)</span>
+                <span style="font-weight:600; color:#555;">${getBilingual(m.label)}</span>
+                <span style="color:#aaa; font-size:12px;">${rt('report.group.notMonitored')}</span>
             </div>`;
         } else {
             const highlightStyle = weight === 0 ? 'border: 2px solid #e53935; background: #ffebee;' : 'border:1px solid #ccc; background:#fff;';
@@ -2037,9 +2097,9 @@ window.openWeightModal = function() {
             const strikeStyle = weight === 0 ? 'text-decoration:line-through; opacity:0.6;' : '';
 
             html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f5f8fa; border-radius:6px; border:1px solid #e1e8ed;">
-                <span style="font-weight:600; color:${labelColor}; ${strikeStyle}">${escapeHTML(m.label)}</span>
+                <span style="font-weight:600; color:${labelColor}; ${strikeStyle}">${getBilingual(m.label)}</span>
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <span style="font-size:12px; color:#666;">权重:</span>
+                    <span style="font-size:12px; color:#666;">${getTranslatedLabel('权重')}:</span>
                     <input type="number" class="metric-weight-input" data-key="${key}" value="${weight}" step="0.1" min="0" 
                            style="width:70px; padding:6px; ${highlightStyle} border-radius:4px; text-align:center;" 
                            oninput="
@@ -2067,7 +2127,7 @@ window.openWeightModal = function() {
     });
     
     if (!html) {
-        html = '<div style="color:#888; text-align:center; padding:20px;">当前快照无可配置的指标</div>';
+        html = `<div style="color:#888; text-align:center; padding:20px;">${rt('report.group.noMetrics')}</div>`;
     }
     
     listEl.innerHTML = html;
@@ -2095,20 +2155,20 @@ window.saveWeights = async function() {
         globalConfig.targets = updatedTargets;
         buildLabelTargetMap(); // Rebuild mapping with new weights
         
-        showToast('权重配置已保存，正在重新计算...', 'success');
+        showToast(rt('report.toast.weightsSaved'), 'success');
         closeWeightModal();
         
         renderCurrentSnapshot(); // Re-calculate everything
         
     } catch (e) {
-        showToast('保存权重失败', 'error');
+        showToast(rt('report.toast.weightSaveFailed'), 'error');
         console.error(e);
     }
 };
 
 window.openAddMetricModal = function() {
     if (!currentSnapshot) {
-        showToast('请先加载一份快照', 'error');
+        showToast(rt('report.toast.loadSnapshotFirst'), 'error');
         return;
     }
     
@@ -2119,11 +2179,11 @@ window.openAddMetricModal = function() {
         modal.style.cssText = 'display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:999; align-items:center; justify-content:center;';
         modal.innerHTML = `
             <div style="background:#fff; border-radius:12px; width:600px; max-width:90%; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
-                <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:12px; margin-bottom:16px; color:#2e7d32;">➕ 手动增加指标 (Add Manual Metric)</h3>
+                <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:12px; margin-bottom:16px; color:#2e7d32;">${rt('report.modal.addMetricTitle')}</h3>
                 <div style="max-height:60vh; overflow-y:auto; margin-bottom:16px; padding-right:10px;" id="add-metric-form"></div>
                 <div style="text-align:right; border-top:1px solid #eee; padding-top:16px;">
-                    <button onclick="closeAddMetricModal()" style="padding:8px 16px; border:1px solid #ccc; background:#fff; border-radius:6px; cursor:pointer; margin-right:10px;">取消</button>
-                    <button onclick="saveManualMetric()" style="padding:8px 16px; border:none; background:#2e7d32; color:#fff; border-radius:6px; cursor:pointer; font-weight:bold;">保存指标到快照</button>
+                    <button onclick="closeAddMetricModal()" style="padding:8px 16px; border:1px solid #ccc; background:#fff; border-radius:6px; cursor:pointer; margin-right:10px;">${rt('report.button.cancel')}</button>
+                    <button onclick="saveManualMetric()" style="padding:8px 16px; border:none; background:#2e7d32; color:#fff; border-radius:6px; cursor:pointer; font-weight:bold;">${rt('report.button.saveMetric')}</button>
                 </div>
             </div>
         `;
@@ -2135,48 +2195,48 @@ window.openAddMetricModal = function() {
     
     let html = `
         <div style="margin-bottom:12px;">
-            <label style="display:block; font-size:12px; color:#666; margin-bottom:4px;">指标名称 <span style="color:red;">*</span></label>
-            <input type="text" id="manual-metric-name" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;" placeholder="例如: 客户拜访完成率">
+            <label style="display:block; font-size:12px; color:#666; margin-bottom:4px;">${rt('report.metric.name')} <span style="color:red;">*</span></label>
+            <input type="text" id="manual-metric-name" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;" placeholder="${rt('report.metric.namePlaceholder')}">
         </div>
         
         <div style="display:flex; gap:10px; margin-bottom:12px;">
             <div style="flex:1;">
-                <label style="display:block; font-size:12px; color:#666; margin-bottom:4px;">指标权重</label>
+                <label style="display:block; font-size:12px; color:#666; margin-bottom:4px;">${rt('report.metric.weight')}</label>
                 <input type="number" id="manual-metric-weight" value="1" step="0.1" min="0" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
             </div>
             <div style="flex:1;">
-                <label style="display:block; font-size:12px; color:#666; margin-bottom:4px;">考核方式</label>
+                <label style="display:block; font-size:12px; color:#666; margin-bottom:4px;">${rt('report.metric.type')}</label>
                 <select id="manual-metric-type" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
-                    <option value="gte">≥ (达标需大于等于)</option>
-                    <option value="lte">≤ (达标需小于等于)</option>
+                    <option value="gte">${rt('report.metric.gte')}</option>
+                    <option value="lte">${rt('report.metric.lte')}</option>
                 </select>
             </div>
             <div style="flex:1;">
-                <label style="display:block; font-size:12px; color:#666; margin-bottom:4px;">${targetMonth}月目标值</label>
-                <input type="number" id="manual-metric-target" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;" placeholder="目标数字">
+                <label style="display:block; font-size:12px; color:#666; margin-bottom:4px;">${rt('report.metric.target', { month: targetMonth })}</label>
+                <input type="number" id="manual-metric-target" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;" placeholder="${rt('report.metric.targetPlaceholder')}">
             </div>
         </div>
         
         <div style="display:flex; gap:10px; margin-bottom:12px; background:#f5f8fa; padding:10px; border-radius:4px; border:1px solid #e1e8ed;">
             <div style="flex:1;">
-                <label style="display:block; font-size:12px; color:#0277bd; margin-bottom:4px; font-weight:bold;">🏆 超额奖励 (每超出)</label>
-                <input type="number" id="manual-metric-exceed-by" step="0.1" min="0" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;" placeholder="例如: 1">
+                <label style="display:block; font-size:12px; color:#0277bd; margin-bottom:4px; font-weight:bold;">${rt('report.metric.exceed')}</label>
+                <input type="number" id="manual-metric-exceed-by" step="0.1" min="0" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;" placeholder="1">
             </div>
             <div style="flex:1;">
-                <label style="display:block; font-size:12px; color:#0277bd; margin-bottom:4px; font-weight:bold;">➕ 给予加分</label>
-                <input type="number" id="manual-metric-bonus" step="0.1" min="0" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;" placeholder="例如: 0.1">
+                <label style="display:block; font-size:12px; color:#0277bd; margin-bottom:4px; font-weight:bold;">${rt('report.metric.bonus')}</label>
+                <input type="number" id="manual-metric-bonus" step="0.1" min="0" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;" placeholder="0.1">
             </div>
             <div style="flex:1.5; display:flex; align-items:center;">
-                <span style="font-size:11px; color:#666; line-height:1.4;">(选填) 若客户群超额完成目标，按比例折算增加得分。留空表示不启用超额奖励。</span>
+                <span style="font-size:11px; color:#666; line-height:1.4;">${rt('report.metric.bonusHint')}</span>
             </div>
         </div>
         
         <div style="margin-bottom:16px; padding-bottom:12px; border-bottom:1px dashed #eee;">
-            <label style="display:block; font-size:12px; color:#666; margin-bottom:4px;">全局总体数值 (总盘实际达成)</label>
-            <input type="text" id="manual-metric-global" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;" placeholder="例如: 85 或 85%">
+            <label style="display:block; font-size:12px; color:#666; margin-bottom:4px;">${rt('report.metric.globalValue')}</label>
+            <input type="text" id="manual-metric-global" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;" placeholder="${rt('report.metric.globalPlaceholder')}">
         </div>
         
-        <label style="display:block; font-size:12px; color:#666; margin-bottom:8px;">各客户群实际达成数值 (留空或填 -- 表示不考核该群)</label>
+        <label style="display:block; font-size:12px; color:#666; margin-bottom:8px;">${rt('report.metric.catValues')}</label>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
     `;
     
@@ -2184,7 +2244,7 @@ window.openAddMetricModal = function() {
         html += `
             <div>
                 <span style="font-size:12px; font-weight:bold; color:#2c3e50; display:inline-block; margin-bottom:2px;">${escapeHTML(cat)}</span>
-                <input type="text" class="manual-cat-input" data-cat="${cat}" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;" placeholder="实际数值 (可带%)">
+                <input type="text" class="manual-cat-input" data-cat="${cat}" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;" placeholder="${rt('report.metric.catPlaceholder')}">
             </div>
         `;
     });
@@ -2193,7 +2253,7 @@ window.openAddMetricModal = function() {
     
     formEl.innerHTML = html;
     
-    modal.querySelector('h3').innerHTML = '➕ 手动增加指标';
+    modal.querySelector('h3').innerHTML = rt('report.modal.addMetricTitle');
     
     if (document.fullscreenElement) {
         document.fullscreenElement.appendChild(modal);
@@ -2213,7 +2273,7 @@ window.editManualMetric = function(label) {
     openAddMetricModal();
     
     const modal = document.getElementById('add-metric-modal');
-    modal.querySelector('h3').innerHTML = '✏️ 填报手动指标';
+    modal.querySelector('h3').innerHTML = rt('report.metric.editTitle');
     
     const nameInput = document.getElementById('manual-metric-name');
     nameInput.value = label;
@@ -2257,7 +2317,7 @@ window.closeAddMetricModal = function() {
 
 window.saveManualMetric = async function() {
     const name = document.getElementById('manual-metric-name').value.trim();
-    if (!name) return showToast('请输入指标名称', 'error');
+    if (!name) return showToast(rt('report.toast.enterMetricName'), 'error');
     
     const weight = parseFloat(document.getElementById('manual-metric-weight').value);
     const validWeight = isNaN(weight) ? 1 : weight;
@@ -2326,11 +2386,11 @@ window.saveManualMetric = async function() {
         await putSnapshotWithCompression(currentSnapshot.id, currentSnapshot, 'manual-metric-save');
         
         buildLabelTargetMap();
-        showToast('手动指标保存成功', 'success');
+        showToast(rt('report.toast.manualMetricSaved'), 'success');
         closeAddMetricModal();
         renderCurrentSnapshot();
     } catch(e) {
-        showToast('保存失败', 'error');
+        showToast(rt('report.toast.saveFailed'), 'error');
         console.error(e);
     }
 };
@@ -2348,11 +2408,11 @@ window.toggleAutoFill = async function(label) {
     try {
         await API.put('/api/sla/targets', globalConfig.targets);
         buildLabelTargetMap();
-        showToast(globalConfig.targets[targetKey].autoFill ? '自动填报已开启 (Auto Fill ON)' : '自动填报已关闭 (Auto Fill OFF)', 'success');
+        showToast(globalConfig.targets[targetKey].autoFill ? rt('report.toast.autoFillOn') : rt('report.toast.autoFillOff'), 'success');
         renderReport(currentSnapshot);
     } catch(e) {
         console.error(e);
-        showToast('设置失败 (Save failed)', 'error');
+        showToast(rt('report.toast.settingFailed'), 'error');
     }
 };
 
@@ -2378,15 +2438,15 @@ window.toggleManualAdjustAutoFill = async function(idx) {
 
         showToast(
             prefs[key]
-                ? (changed ? '加减分自动填报已开启并已带入历史数据' : '加减分自动填报已开启')
-                : '加减分自动填报已关闭',
+                ? (changed ? rt('report.toast.adjustAutoFillOnWithData') : rt('report.toast.adjustAutoFillOn'))
+                : rt('report.toast.adjustAutoFillOff'),
             'success'
         );
         renderCurrentSnapshot();
     } catch(e) {
         prefs[key] = !prefs[key];
         console.error(e);
-        showToast('设置失败 (Save failed)', 'error');
+        showToast(rt('report.toast.settingFailed'), 'error');
     }
 };
 
@@ -2394,7 +2454,7 @@ window.toggleProportionalScoring = async function(label) {
     if (!globalConfig.targets) globalConfig.targets = {};
     let targetKey = labelToTargetKeyMap[label];
     if (!targetKey) {
-        showToast('该指标尚未配置目标值，无法开启比例计分', 'warn');
+        showToast(rt('report.toast.noTargetForProportional'), 'warn');
         return;
     }
 
@@ -2405,14 +2465,14 @@ window.toggleProportionalScoring = async function(label) {
         buildLabelTargetMap();
         showToast(
             globalConfig.targets[targetKey].proportionalScoring
-                ? '比例计分已开启：未达标按完成率折算得分'
-                : '比例计分已关闭：未达标按 0 分计算',
+                ? rt('report.toast.proportionalOn')
+                : rt('report.toast.proportionalOff'),
             'success'
         );
         renderReport(currentSnapshot);
     } catch(e) {
         console.error(e);
-        showToast('比例计分设置失败', 'error');
+        showToast(rt('report.toast.proportionalFailed'), 'error');
     }
 };
 
@@ -2457,8 +2517,8 @@ function renderGroupModal() {
         ? `点击分配到「${focusedName || '聚焦分组'}」`
         : '请先新增分组';
     poolEl.innerHTML = unassigned.length
-        ? unassigned.map(l => `<span class="unassigned-tag" onclick="assignToFocusedGroup('${escapeHTML(l)}')" title="${poolTitle}">${escapeHTML(l)}</span>`).join('')
-        : `<span style="color:#bbb; font-size:12px;">全部指标已分组</span>`;
+        ? unassigned.map(l => `<span class="unassigned-tag" onclick="assignToFocusedGroup('${escapeHTML(l)}')" title="${escapeHTML(poolTitle)}">${getBilingual(l)}</span>`).join('')
+        : `<span style="color:#bbb; font-size:12px;">${getReportLang() === 'en-US' ? 'All metrics are grouped' : '全部指标已分组'}</span>`;
 
     // Render group list
     container.innerHTML = _editGroups.map((g, gi) => {
@@ -2474,11 +2534,11 @@ function renderGroupModal() {
                     <span onclick="event.stopPropagation(); moveGroupUp(${gi})" style="cursor:${gi === 0 ? 'not-allowed' : 'pointer'}; color:${gi === 0 ? '#ddd' : '#777'}; font-size:14px; padding:0 4px; user-select:none;" title="上移">▲</span>
                     <span onclick="event.stopPropagation(); moveGroupDown(${gi})" style="cursor:${gi === _editGroups.length - 1 ? 'not-allowed' : 'pointer'}; color:${gi === _editGroups.length - 1 ? '#ddd' : '#777'}; font-size:14px; padding:0 4px; user-select:none;" title="下移">▼</span>
                 </div>
-                <input class="group-name-input" value="${escapeHTML(g.name)}" placeholder="分组名称"
+                <input class="group-name-input" value="${escapeHTML(g.name)}" placeholder="${rt('report.modal.groupList')}"
                     onclick="event.stopPropagation()"
                     oninput="_editGroups[${gi}].name = this.value"
                     onblur="updatePoolHint()">
-                <span class="focus-badge" style="font-size:11px; background:#3949ab; color:#fff; border-radius:10px; padding:1px 7px; margin-left:4px; display:${isFocused ? 'inline' : 'none'};">聚焦</span>
+                <span class="focus-badge" style="font-size:11px; background:#3949ab; color:#fff; border-radius:10px; padding:1px 7px; margin-left:4px; display:${isFocused ? 'inline' : 'none'};">${getReportLang() === 'en-US' ? 'Focused' : '聚焦'}</span>
                 <span onclick="event.stopPropagation(); removeGroup(${gi})" style="cursor:pointer; color:#e53935; font-size:18px; padding:0 4px;" title="删除分组">✕</span>
             </div>
             <div class="group-metrics-list">
@@ -2486,10 +2546,10 @@ function renderGroupModal() {
                     <div class="group-metric-tag">
                         <span onclick="event.stopPropagation(); moveMetricUp(${gi}, ${mi})" style="cursor:${mi === 0 ? 'not-allowed' : 'pointer'}; color:${mi === 0 ? '#ddd' : '#777'}; font-size:12px; padding:0 4px; user-select:none;" title="上移">▲</span>
                         <span onclick="event.stopPropagation(); moveMetricDown(${gi}, ${mi})" style="cursor:${mi === g.metrics.length - 1 ? 'not-allowed' : 'pointer'}; color:${mi === g.metrics.length - 1 ? '#ddd' : '#777'}; font-size:12px; padding:0 4px; user-select:none;" title="下移">▼</span>
-                        <span style="flex:1; margin-left:4px;">${escapeHTML(label)}</span>
+                        <span style="flex:1; margin-left:4px;">${getBilingual(label)}</span>
                         <span class="group-metric-remove" onclick="event.stopPropagation(); removeMetricFromGroup(${gi}, ${mi})">✕</span>
                     </div>`).join('')}
-                ${g.metrics.length === 0 ? `<div style="color:#bbb; font-size:12px; text-align:center; padding:4px;">点击右侧指标标签分配到此分组</div>` : ''}
+                ${g.metrics.length === 0 ? `<div style="color:#bbb; font-size:12px; text-align:center; padding:4px;">${getReportLang() === 'en-US' ? 'Click a metric tag on the right to assign it here' : '点击右侧指标标签分配到此分组'}</div>` : ''}
             </div>
         </div>
     `}).join('');
@@ -2611,11 +2671,11 @@ window.saveGroups = async function() {
         
         await API.put('/api/sla/groups', _editGroups);
         metricGroups = _editGroups;
-        showToast('分组配置已保存', 'success');
+        showToast(rt('report.toast.groupsSaved'), 'success');
         closeGroupModal();
         renderCurrentSnapshot();
     } catch(e) {
-        showToast('保存分组失败', 'error');
+        showToast(rt('report.toast.groupsSaveFailed'), 'error');
         console.error(e);
     }
 };
@@ -2651,7 +2711,7 @@ window.renderI18nList = function() {
     }
     
     if (keys.length === 0) {
-        html = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#999; font-size:13px;">没有找到匹配的指标</td></tr>';
+        html = `<tr><td colspan="3" style="text-align:center; padding:20px; color:#999; font-size:13px;">${rt('report.i18n.noMatches')}</td></tr>`;
     } else {
         keys.forEach(zh => {
             const en = _editI18nMap[zh];
@@ -2660,8 +2720,8 @@ window.renderI18nList = function() {
                     <td style="padding:8px; font-size:13px; color:#333; font-weight:600;">${escapeHTML(zh)}</td>
                 <td style="padding:8px; font-size:13px; color:#0277bd;">${escapeHTML(en)}</td>
                 <td style="padding:8px; text-align:center; white-space:nowrap;">
-                    <button onclick="editI18nEntry('${escapeHTML(zh.replace(/'/g, "\\'"))}')" style="background:none; border:none; cursor:pointer; font-size:14px; opacity:0.6; padding:4px;" title="编辑此项" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">✏️</button>
-                    <button onclick="deleteI18nEntry('${escapeHTML(zh.replace(/'/g, "\\'"))}')" style="background:none; border:none; cursor:pointer; font-size:14px; opacity:0.6; padding:4px;" title="删除此项" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">🗑️</button>
+                    <button onclick="editI18nEntry('${escapeHTML(zh.replace(/'/g, "\\'"))}')" style="background:none; border:none; cursor:pointer; font-size:14px; opacity:0.6; padding:4px;" title="${rt('report.i18n.editTitle')}" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">✏️</button>
+                    <button onclick="deleteI18nEntry('${escapeHTML(zh.replace(/'/g, "\\'"))}')" style="background:none; border:none; cursor:pointer; font-size:14px; opacity:0.6; padding:4px;" title="${rt('report.i18n.deleteTitle')}" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">🗑️</button>
                 </td>
             </tr>
         `;
@@ -2681,24 +2741,24 @@ window.addI18nEntry = async function() {
     const zh = document.getElementById('i18n-new-zh').value.trim();
     const en = document.getElementById('i18n-new-en').value.trim();
     if (!zh || !en) {
-        showToast('请填写完整的中英文', 'error');
+        showToast(rt('report.toast.fillI18n'), 'error');
         return;
     }
     
     if (_editingZh) {
         if (_editingZh !== zh) {
             if (_editI18nMap[zh] !== undefined) {
-                showToast('该中文名称已存在，不能重命名为已有的指标', 'error');
+                showToast(rt('report.toast.i18nNameExists'), 'error');
                 return;
             }
             if (confirm(`您修改了指标的中文名称（从 [${_editingZh}] 改为 [${zh}]）。\n是否要全局同步重命名该指标？（这将自动更新历史快照、分组、考核配置中的名称）`)) {
                 try {
                     await API.post('/api/sla/rename-metric', { oldName: _editingZh, newName: zh, newEn: en });
-                    showToast('全局重命名成功！页面即将自动刷新...', 'success');
+                    showToast(rt('report.toast.renameSuccess'), 'success');
                     setTimeout(() => window.location.reload(), 1500);
                     return; // Prevent further logic to avoid race condition with manual save
                 } catch(e) {
-                    showToast('全局重命名失败', 'error');
+                    showToast(rt('report.toast.renameFailed'), 'error');
                     console.error(e);
                     return;
                 }
@@ -2743,11 +2803,11 @@ window.saveI18nMap = async function() {
         });
         
         i18nMap = { ..._editI18nMap };
-        showToast('翻译字典已保存', 'success');
+        showToast(rt('report.toast.i18nSaved'), 'success');
         closeI18nModal();
         setTimeout(() => window.location.reload(), 500);
     } catch(e) {
-        showToast('保存失败', 'error');
+        showToast(rt('report.toast.saveFailed'), 'error');
         console.error(e);
     }
 };
@@ -2763,6 +2823,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (window.renderReportSourcePanel) window.renderReportSourcePanel();
     initReport();
+});
+
+window.addEventListener('tools:languagechange', () => {
+    if (window.ReportI18n && typeof window.ReportI18n.applyPage === 'function') {
+        window.ReportI18n.applyPage();
+    }
+    renderReportMonthOptions(true);
+    renderSnapshotOptions();
+    if (currentSnapshot) {
+        renderReport(currentSnapshot);
+    } else if (!snapshots.length) {
+        renderNoReportReadyState();
+    }
+    if (document.getElementById('weight-modal') && document.getElementById('weight-modal').style.display === 'flex') {
+        openWeightModal();
+    }
+    if (document.getElementById('group-modal') && document.getElementById('group-modal').style.display === 'flex') {
+        renderGroupModal();
+    }
+    if (document.getElementById('i18n-modal') && document.getElementById('i18n-modal').style.display === 'flex') {
+        renderI18nList();
+    }
+    if (window.renderReportSourcePanel) window.renderReportSourcePanel();
 });
 
 async function promptExpiringTickets(tickets, specialMetricAlerts = []) {
@@ -2790,12 +2873,12 @@ async function promptExpiringTickets(tickets, specialMetricAlerts = []) {
         });
         const groupedTickets = [];
         sortedTickets.forEach((ticket, sortedIndex) => {
-            const groupKey = `${ticket.collection || 'other'}@@${ticket.title || '其他临期数据'}`;
+            const groupKey = `${ticket.collection || 'other'}@@${ticket.title || rt('report.alert.otherTicket')}`;
             let group = groupedTickets.find(item => item.key === groupKey);
             if (!group) {
                 group = {
                     key: groupKey,
-                    title: ticket.title || '其他临期数据',
+                    title: ticket.title || rt('report.alert.otherTicket'),
                     collection: ticket.collection || 'other',
                     items: []
                 };
@@ -2820,14 +2903,14 @@ async function promptExpiringTickets(tickets, specialMetricAlerts = []) {
             const groupKey = `ticket-${groupIndex}`;
             const rowsHtml = group.items.map(({ ticket: t, sortedIndex }) => {
                 const data = t.data || {};
-                const id = data.sr_num || data.sr_id || data.task_id || data.risk_id || data.ticket_id || data['单号'] || data['问题风险编号'] || data['问题编号'] || '未知单号';
-                const network = data.network_name || data['网络名称'] || data.network || '未知网络';
+                const id = data.sr_num || data.sr_id || data.task_id || data.risk_id || data.ticket_id || data['单号'] || data['问题风险编号'] || data['问题编号'] || rt('report.alert.unknownId');
+                const network = data.network_name || data['网络名称'] || data.network || rt('report.alert.unknownNetwork');
                 const urgencyDays = getTicketUrgencyDays(t);
-                const urgencyText = urgencyDays < 0 ? `已超 ${Math.abs(urgencyDays)} 天` : `剩余 ${urgencyDays} 天`;
+                const urgencyText = urgencyDays < 0 ? rt('report.alert.overdueDays', { days: Math.abs(urgencyDays) }) : rt('report.alert.remainingDays', { days: urgencyDays });
                 return `<div class="exp-select-row" data-checkbox-type="ticket" data-checkbox-value="${sortedIndex}" style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:13px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;-webkit-user-select:none;">
                     <input type="checkbox" class="exp-ticket-cb exp-select-cb" data-group-key="${groupKey}" value="${sortedIndex}" checked style="margin-right:10px;cursor:pointer;width:16px;height:16px;">
-                    <div style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escapeHTML(t.title)} | 单号: ${escapeHTML(id)} | 网络: ${escapeHTML(network)} | ${escapeHTML(t._slaCleanText)}">
-                        <span style="color:#d32f2f;font-weight:700;">${escapeHTML(urgencyText)}</span> | 单号: <span style="color:#1976d2">${escapeHTML(id)}</span> | 网络: ${escapeHTML(network)} | <span style="color:#d32f2f">${escapeHTML(t._slaCleanText)}</span>
+                    <div style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escapeHTML(t.title)} | ${rt('report.alert.ticketId')}: ${escapeHTML(id)} | ${rt('report.alert.network')}: ${escapeHTML(network)} | ${escapeHTML(t._slaCleanText)}">
+                        <span style="color:#d32f2f;font-weight:700;">${escapeHTML(urgencyText)}</span> | ${rt('report.alert.ticketId')}: <span style="color:#1976d2">${escapeHTML(id)}</span> | ${rt('report.alert.network')}: ${escapeHTML(network)} | <span style="color:#d32f2f">${escapeHTML(t._slaCleanText)}</span>
                     </div>
                 </div>`;
             }).join('');
@@ -2836,20 +2919,20 @@ async function promptExpiringTickets(tickets, specialMetricAlerts = []) {
                     <b style="color:#c2410c;">${escapeHTML(group.title)}</b>
                     <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
                         <label style="font-size:12px;color:#9a3412;font-weight:700;display:flex;align-items:center;gap:4px;cursor:pointer;">
-                            <input type="checkbox" class="exp-group-select" data-group-key="${groupKey}" checked style="cursor:pointer;width:14px;height:14px;"> 本组全选
+                            <input type="checkbox" class="exp-group-select" data-group-key="${groupKey}" checked style="cursor:pointer;width:14px;height:14px;"> ${rt('report.alert.groupSelectAll')}
                         </label>
-                        <span style="font-size:12px;color:#9a3412;background:#ffedd5;border:1px solid #fed7aa;border-radius:999px;padding:2px 8px;">${group.items.length} 条，组内按 SLA 升序</span>
+                        <span style="font-size:12px;color:#9a3412;background:#ffedd5;border:1px solid #fed7aa;border-radius:999px;padding:2px 8px;">${rt('report.alert.groupCount', { count: group.items.length })}</span>
                     </div>
                 </div>
                 ${rowsHtml}
             </div>`;
         }).join('');
         if (!listHtml) {
-            listHtml = '<div style="padding:14px;color:#94a3b8;font-size:13px;text-align:center;">本次没有临期/超期单子提醒</div>';
+            listHtml = `<div style="padding:14px;color:#94a3b8;font-size:13px;text-align:center;">${rt('report.alert.noTickets')}</div>`;
         }
 
         const metricAlertHtml = metricAlerts.length ? metricAlerts.map((item, index) => {
-            const metricName = item.metric_label || item.metricLabel || '未知指标';
+            const metricName = item.metric_label || item.metricLabel || rt('report.alert.metricUnknown');
             const globalValue = item.global_val || item.globalValue || '--';
             const targetValue = item.target_val || item.targetValue || '--';
             const gap = item.gap || '-';
@@ -2859,33 +2942,33 @@ async function promptExpiringTickets(tickets, specialMetricAlerts = []) {
                 <div style="flex:1;min-width:0;">
                     <div style="font-weight:700;color:#b91c1c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escapeHTML(metricName)}">${getBilingual(metricName)}</div>
                     <div style="font-size:12px;color:#7f1d1d;margin-top:2px;">
-                        权重 ${escapeHTML(String(weight))} | 全局值 ${escapeHTML(String(globalValue))} | 目标 ${escapeHTML(String(targetValue))} | 差距 ${escapeHTML(String(gap))} | 所有客户群无值
+                        ${rt('report.alert.metricMeta', { weight: escapeHTML(String(weight)), globalValue: escapeHTML(String(globalValue)), targetValue: escapeHTML(String(targetValue)), gap: escapeHTML(String(gap)) })}
                     </div>
                 </div>
             </div>`;
-        }).join('') : '<div style="padding:14px;color:#94a3b8;font-size:13px;text-align:center;">本次没有特殊指标提醒</div>';
+        }).join('') : `<div style="padding:14px;color:#94a3b8;font-size:13px;text-align:center;">${rt('report.alert.noSpecial')}</div>`;
 
         const totalSelectable = sortedTickets.length + metricAlerts.length;
         
         modal.innerHTML = `
             <div style="background:#fff;border-radius:10px;width:min(1080px,96vw);max-height:84vh;display:flex;flex-direction:column;box-shadow:0 8px 28px rgba(0,0,0,0.18);">
                 <div style="padding:16px;border-bottom:1px solid #eee;background:#fff3e0;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;align-items:center;">
-                    <h3 style="margin:0;color:#e65100;font-size:16px;">⚠️ 发现待处理的提醒数据</h3>
+                    <h3 style="margin:0;color:#e65100;font-size:16px;">${rt('report.alert.title')}</h3>
                     <div style="display:flex;align-items:center;gap:14px;">
-                        <label style="font-size:13px;cursor:pointer;color:#e65100;font-weight:bold;display:flex;align-items:center;"><input type="checkbox" id="exp-select-all" checked style="margin-right:4px;"> 全选</label>
-                        <button id="btn-close-exp" title="关闭并取消本次入库" style="border:none;background:transparent;color:#9a3412;font-size:22px;line-height:1;cursor:pointer;padding:0 2px;">×</button>
+                        <label style="font-size:13px;cursor:pointer;color:#e65100;font-weight:bold;display:flex;align-items:center;"><input type="checkbox" id="exp-select-all" checked style="margin-right:4px;"> ${rt('report.alert.selectAll')}</label>
+                        <button id="btn-close-exp" title="${rt('report.alert.closeTitle')}" style="border:none;background:transparent;color:#9a3412;font-size:22px;line-height:1;cursor:pointer;padding:0 2px;">×</button>
                     </div>
                 </div>
                 <div style="padding:16px;overflow-y:auto;flex:1;">
-                    <p style="margin-top:0;font-size:14px;color:#333;">本次快照发现 <b>${metricAlerts.length}</b> 条特殊指标提醒、<b>${sortedTickets.length}</b> 条“本月底+5天内处理”临期数据。请<b>勾选</b>需要一起入库的提醒（取消勾选则会忽略）：</p>
+                    <p style="margin-top:0;font-size:14px;color:#333;">${rt('report.alert.summary', { metricCount: metricAlerts.length, ticketCount: sortedTickets.length })}</p>
                     <div style="margin-bottom:14px;border:1px solid #fecaca;border-radius:8px;overflow:hidden;background:#fffafa;">
                         <div style="background:#fee2e2;padding:8px 10px;border-bottom:1px solid #fecaca;display:flex;justify-content:space-between;align-items:center;">
-                            <b style="color:#b91c1c;">🚩 所有人注意 特殊指标提醒：全局不达标但客户群无值</b>
+                            <b style="color:#b91c1c;">${rt('report.alert.specialTitle')}</b>
                             <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
                                 <label style="font-size:12px;color:#991b1b;font-weight:700;display:flex;align-items:center;gap:4px;cursor:pointer;">
-                                    <input type="checkbox" class="exp-group-select" data-group-key="special-alerts" ${metricAlerts.length ? 'checked' : ''} ${metricAlerts.length ? '' : 'disabled'} style="cursor:pointer;width:14px;height:14px;"> 本组全选
+                                    <input type="checkbox" class="exp-group-select" data-group-key="special-alerts" ${metricAlerts.length ? 'checked' : ''} ${metricAlerts.length ? '' : 'disabled'} style="cursor:pointer;width:14px;height:14px;"> ${rt('report.alert.groupSelectAll')}
                                 </label>
-                                <span style="font-size:12px;color:#991b1b;background:#fff;border:1px solid #fecaca;border-radius:999px;padding:2px 8px;">${metricAlerts.length} 条</span>
+                                <span style="font-size:12px;color:#991b1b;background:#fff;border:1px solid #fecaca;border-radius:999px;padding:2px 8px;">${rt('report.alert.count', { count: metricAlerts.length })}</span>
                             </div>
                         </div>
                         <div style="max-height:180px;overflow:auto;">${metricAlertHtml}</div>
@@ -2894,15 +2977,15 @@ async function promptExpiringTickets(tickets, specialMetricAlerts = []) {
                         ${listHtml}
                     </div>
                     <p style="margin-bottom:0;font-size:14px;color:#d32f2f;font-weight:bold;">
-                        是否将勾选的提醒统一入库？
+                        ${rt('report.alert.confirmQuestion')}
                     </p>
                     <p style="margin-top:4px;font-size:12px;color:#666;">
-                        一旦入库，将会和库中已有内容一起，后面计划呈现在一键催办和月报页面。不勾选的提醒将被彻底忽略。
+                        ${rt('report.alert.confirmHint')}
                     </p>
                 </div>
                 <div style="padding:16px;border-top:1px solid #eee;display:flex;justify-content:flex-end;gap:12px;background:#f8f9fa;border-radius:0 0 8px 8px;">
-                    <button id="btn-ignore-exp" style="padding:8px 16px;border:1px solid #ccc;background:#fff;border-radius:4px;cursor:pointer;color:#666;font-size:14px;">全部忽略</button>
-                    <button id="btn-confirm-exp" style="padding:8px 16px;border:none;background:#e65100;color:#fff;border-radius:4px;cursor:pointer;font-weight:bold;font-size:14px;">✅ 统一入库 (已选 <span id="exp-sel-count">${totalSelectable}</span> 项)</button>
+                    <button id="btn-ignore-exp" style="padding:8px 16px;border:1px solid #ccc;background:#fff;border-radius:4px;cursor:pointer;color:#666;font-size:14px;">${rt('report.alert.ignoreAll')}</button>
+                    <button id="btn-confirm-exp" style="padding:8px 16px;border:none;background:#e65100;color:#fff;border-radius:4px;cursor:pointer;font-weight:bold;font-size:14px;" data-label-template="${escapeHTML(rt('report.alert.confirmButton', { count: '__COUNT__' }))}">${rt('report.alert.confirmButton', { count: `<span id="exp-sel-count">${totalSelectable}</span>` })}</button>
                 </div>
             </div>
         `;
@@ -3006,10 +3089,10 @@ async function promptExpiringTickets(tickets, specialMetricAlerts = []) {
 
 window.saveDashboardToDB = async function(event) {
     if (!currentSnapshot) {
-        return showToast('无可用快照数据', 'error');
+        return showToast(rt('report.toast.noSnapshot'), 'error');
     }
     if (!isReportEligibleSnapshot(currentSnapshot)) {
-        return showToast('当前快照没有顶部指标数据，不会入库到报表看板', 'warn');
+        return showToast(rt('report.toast.snapshotNotEligible'), 'warn');
     }
 
     const snapshot_id = currentSnapshot.id;
@@ -3021,7 +3104,7 @@ window.saveDashboardToDB = async function(event) {
     if ((rawDataForSave.expiringTickets && rawDataForSave.expiringTickets.length > 0) || specialMetricAlerts.length > 0) {
         const selectedAlerts = await promptExpiringTickets(rawDataForSave.expiringTickets || [], specialMetricAlerts);
         if (selectedAlerts && selectedAlerts.cancelled) {
-            showToast('已取消本次入库', 'info');
+            showToast(rt('report.toast.saveCancelled'), 'info');
             return;
         }
         rawDataForSave.expiringTickets = selectedAlerts.expiringTickets || [];
@@ -3099,14 +3182,14 @@ window.saveDashboardToDB = async function(event) {
 
     try {
         const btn = event ? event.target : null;
-        if (btn) btn.innerHTML = '⏳ 正在准备数据...';
+        if (btn) btn.innerHTML = rt('report.common.prepareData');
         
         payload.image_data = null;
 
         // Generate Excel File
         if (typeof ExcelJS !== 'undefined') {
             try {
-                if (btn) btn.innerHTML = '⏳ 正在生成报表...';
+                if (btn) btn.innerHTML = rt('report.common.generateReport');
                 const workbook = new ExcelJS.Workbook();
                 const sheet = workbook.addWorksheet('短板透视矩阵');
                 
@@ -3288,17 +3371,17 @@ window.saveDashboardToDB = async function(event) {
             }
         }
 
-        if (btn) btn.innerHTML = '⏳ 正在入库...';
+        if (btn) btn.innerHTML = rt('report.common.saveToDbBusy');
         const res = await postReportSaveWithCompression(payload);
-        if (btn) btn.innerHTML = '💾 入库 (Save to DB)';
+        if (btn) btn.innerHTML = rt('report.action.saveDb');
         
         if (res.success) {
-            showToast('数据已成功入库 (Saved to DB successfully)', 'success');
+            showToast(rt('report.toast.savedDb'), 'success');
         } else {
-            showToast(res.error || '入库失败', 'error');
+            showToast(res.error || rt('report.toast.saveDbFailed'), 'error');
         }
     } catch (e) {
-        showToast('入库请求失败: ' + e.message, 'error');
+        showToast(`${rt('report.toast.saveDbRequestFailed')}: ${e.message}`, 'error');
         console.error(e);
     }
 };

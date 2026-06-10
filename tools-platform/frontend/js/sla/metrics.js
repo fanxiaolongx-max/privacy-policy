@@ -4,6 +4,21 @@
 
 function evaluateAllMetrics() {
     window.GlobalMetrics = {};
+    const shouldAutoPercent = (label, colName) => (
+        String(label || '').includes('率') || String(colName || '').includes('率')
+    );
+    const formatMetricValueByTarget = (value, targetDef, autoPercent, ruleType) => {
+        if (value === '--' || ruleType === 'count' || ruleType === 'ratio') return value;
+        const strVal = String(value).trim();
+        if (targetDef && targetDef.isPercent === false && strVal.endsWith('%')) {
+            return strVal.replace(/%$/, '');
+        }
+        const isPercentFormat = targetDef && targetDef.isPercent !== undefined ? targetDef.isPercent : autoPercent;
+        if (!isPercentFormat) return value;
+        const isPercent = strVal.endsWith('%');
+        const num = parseFloat(strVal);
+        return !isNaN(num) ? (isPercent ? Math.round(num) + '%' : Math.round(num * 100) + '%') : value;
+    };
     Object.keys(AppState).forEach(secId => {
         const state = AppState[secId];
         if (!state.customMetrics || !state.customMetrics.length) return;
@@ -57,14 +72,7 @@ function evaluateAllMetrics() {
             const ruleColZ = rule.colZ || '';
             const targetKey = `${secId}_${rule.id}`;
             const targetDef = window.GlobalTargets ? window.GlobalTargets[targetKey] : null;
-            const isPercentFormat = targetDef && targetDef.isPercent !== undefined ? targetDef.isPercent : (displayLabel.includes('率') || ruleColZ.includes('率'));
-            
-            if (isPercentFormat && matchedValue !== '--' && rule.type !== 'count' && rule.type !== 'ratio') {
-                const strVal = matchedValue.toString().trim();
-                const isPercent = strVal.endsWith('%');
-                const num = parseFloat(strVal);
-                if (!isNaN(num)) matchedValue = isPercent ? Math.round(num) + '%' : Math.round(num * 100) + '%';
-            }
+            matchedValue = formatMetricValueByTarget(matchedValue, targetDef, shouldAutoPercent(displayLabel, ruleColZ), rule.type);
             
             const evaluatedSubMetrics = [];
             if (rule.subMetrics && rule.subMetrics.length > 0) {
@@ -80,14 +88,7 @@ function evaluateAllMetrics() {
                     const effectiveColZ = sm.colZ || rule.colZ || '';
                     const smTargetKey = `${secId}_${sm.id}`;
                     const smTargetDef = window.GlobalTargets ? (window.GlobalTargets[smTargetKey] || window.GlobalTargets[targetKey]) : null;
-                    const smIsPercentFormat = smTargetDef && smTargetDef.isPercent !== undefined ? smTargetDef.isPercent : (effectiveLabel.includes('率') || effectiveColZ.includes('率'));
-
-                    if (smIsPercentFormat && smValue !== '--' && sm.type !== 'count' && sm.type !== 'ratio') {
-                        const strVal = smValue.toString().trim();
-                        const isPercent = strVal.endsWith('%');
-                        const num = parseFloat(strVal);
-                        if (!isNaN(num)) smValue = isPercent ? Math.round(num) + '%' : Math.round(num * 100) + '%';
-                    }
+                    smValue = formatMetricValueByTarget(smValue, smTargetDef, shouldAutoPercent(effectiveLabel, effectiveColZ), sm.type);
                     evaluatedSubMetrics.push({ category: sm.category, value: smValue });
                 });
             }
@@ -137,14 +138,15 @@ function setSLATargetMonth(month) {
 function initSLATargetMonthSelect() {
     const sel = document.getElementById('slaTargetMonthSelect');
     if (!sel) return;
+    const selectedMonth = getSLATargetMonth();
     let html = '';
     for (let i = 1; i <= 12; i++) {
-        html += `<option value="${i}">${i}月目标</option>`;
+        html += `<option value="${i}">${SLAT('sla.month.option', { month: i })}</option>`;
     }
     sel.innerHTML = html;
-    sel.value = getSLATargetMonth();
+    sel.value = selectedMonth;
     sel.dataset.ready = 'true';
-    sel.addEventListener('change', () => {
+    sel.onchange = () => {
         setSLATargetMonth(sel.value);
         renderTopStickyBar();
         if (window.AppState && typeof updateView === 'function') {
@@ -154,7 +156,7 @@ function initSLATargetMonthSelect() {
                 }
             });
         }
-    });
+    };
 }
 
 function renderTopStickyBar() {
@@ -168,7 +170,7 @@ function renderTopStickyBar() {
     btnTarget.style.display = 'inline-block';
     
     if (!keys.length) {
-        content.innerHTML = '<span style="color:#888;">(当前未导入数据，点击右侧"🎯 预警配置"可配置已知指标目标)</span>';
+        content.innerHTML = `<span style="color:#888;">${SLAT('sla.sticky.noData')}</span>`;
         btnExpand.style.display = 'none'; 
         return;
     }
@@ -228,16 +230,24 @@ window.openTargetModal = async function() {
     let targetKeys = Object.keys(window.GlobalMetrics);
     let labelMap = {};
     let currentValues = {};
+    let metricI18nMap = {};
+    const translateMetricLabel = (label) => {
+        const raw = String(label || '').trim();
+        const lang = window.ToolsI18n ? window.ToolsI18n.getLanguage() : 'zh-CN';
+        if (lang !== 'en-US') return raw;
+        return metricI18nMap[raw] || raw;
+    };
     
     // If no metrics are currently loaded (e.g. no file imported), fetch all known custom metrics and manual targets
     if (targetKeys.length === 0) {
-        modalList.innerHTML = '<div style="text-align:center;padding:30px;color:#888;">正在加载全网指标配置...</div>';
+        modalList.innerHTML = `<div style="text-align:center;padding:30px;color:#888;">${SLAT('sla.metric.loadingConfig')}</div>`;
         try {
             const mode = API.getSourceMode('sla_data');
             const query = mode === 'auto' ? '' : `?mode=${encodeURIComponent(mode)}`;
             const configData = await API.get(`/api/sla/config${query}`);
             window.GlobalTargets = configData.targets || {};
             const prefs = configData.prefs || {};
+            metricI18nMap = prefs.i18nMap || {};
             if (window.renderSLASourcePanel) window.renderSLASourcePanel();
             
             // Collect all custom metrics from prefs
@@ -294,6 +304,14 @@ window.openTargetModal = async function() {
             if (window.renderSLASourcePanel) window.renderSLASourcePanel();
         }
     } else {
+        try {
+            const mode = API.getSourceMode('sla_data');
+            const query = mode === 'auto' ? '' : `?mode=${encodeURIComponent(mode)}`;
+            const configData = await API.get(`/api/sla/config${query}`);
+            metricI18nMap = (configData && configData.prefs && configData.prefs.i18nMap) || {};
+            window.GlobalTargets = configData.targets || window.GlobalTargets || {};
+            if (window.renderSLASourcePanel) window.renderSLASourcePanel();
+        } catch (e) {}
         targetKeys.forEach(k => {
             labelMap[k] = window.GlobalMetrics[k].label;
             currentValues[k] = window.GlobalMetrics[k].value;
@@ -301,32 +319,33 @@ window.openTargetModal = async function() {
     }
 
     if (!targetKeys.length) {
-        modalList.innerHTML = '<div style="text-align:center;padding:30px;color:#888;font-size:16px;">当前没有可配置的指标。<br><br><span style="font-size:13px;">请先在下方独立表格中点击"🎯 指标"添加自定义指标。</span></div>';
+        modalList.innerHTML = `<div style="text-align:center;padding:30px;color:#888;font-size:16px;">${SLAT('sla.metric.noConfig')}</div>`;
     } else {
         modalList.innerHTML = targetKeys.map(k => {
             const label = labelMap[k] || k;
+            const displayLabel = translateMetricLabel(label);
             const currentVal = currentValues[k] !== undefined ? currentValues[k] : '--';
             const targets = window.GlobalTargets[k] || {};
             let inputsHtml = '';
             for (let i = 1; i <= 12; i++) {
                 inputsHtml += `<div class="month-input-group">
-                    <label>${i}月</label>
-                    <input type="number" step="0.01" data-key="${k}" data-month="${i}" value="${targets[i] !== undefined ? targets[i] : ''}" placeholder="设定值">
+                    <label>${SLAT('sla.metric.monthLabel', { month: i })}</label>
+                    <input type="number" step="0.01" data-key="${k}" data-month="${i}" value="${targets[i] !== undefined ? targets[i] : ''}" placeholder="${SLAT('sla.metric.targetPh')}">
                 </div>`;
             }
             return `<div class="target-row">
                 <div class="target-row-header">
-                    <span>🏷️ ${escapeHTML(label)}</span>
+                    <span title="${escapeHTML(label)}">🏷️ ${escapeHTML(displayLabel)}</span>
                     <div style="display:flex;align-items:center;gap:10px;">
                         <select class="condition-select" data-key="${k}">
-                            <option value="gte" ${targets.type === 'gte' || !targets.type ? 'selected' : ''}>≥ (越大越好)</option>
-                            <option value="lte" ${targets.type === 'lte' ? 'selected' : ''}>≤ (越小越好)</option>
+                            <option value="gte" ${targets.type === 'gte' || !targets.type ? 'selected' : ''}>${SLAT('sla.metric.gte')}</option>
+                            <option value="lte" ${targets.type === 'lte' ? 'selected' : ''}>${SLAT('sla.metric.lte')}</option>
                         </select>
                         <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;color:#555;">
                             <input type="checkbox" class="is-percent-checkbox" data-key="${k}" ${(targets.isPercent === true || (targets.isPercent === undefined && (label.includes('率') || k.includes('率')))) ? 'checked' : ''}>
-                            百分比
+                            ${SLAT('sla.metric.percent')}
                         </label>
-                        <span style="color:#666;font-weight:normal;font-size:13px;">实时当前值: <b style="color:#4a90e2;font-size:16px;">${escapeHTML(String(currentVal))}</b></span>
+                        <span style="color:#666;font-weight:normal;font-size:13px;">${SLAT('sla.metric.currentValue')} <b style="color:#4a90e2;font-size:16px;">${escapeHTML(String(currentVal))}</b></span>
                     </div>
                 </div>
                 <div class="target-months">${inputsHtml}</div>
@@ -375,9 +394,9 @@ window.saveTargets = async function() {
             await SLASection.initGlobalTargets();
             window.renderSLASourcePanel();
         }
-        showToast('✅ 预警目标已保存到服务端！');
+        showToast(SLAT('sla.metric.saved'));
         API.logHistory('sla', '保存预警目标');
-    } catch (e) { showToast('❌ 保存失败', 'error'); }
+    } catch (e) { showToast(SLAT('sla.metric.saveFail'), 'error'); }
     closeTargetModal();
     renderTopStickyBar();
 };
@@ -395,8 +414,8 @@ document.addEventListener('DOMContentLoaded', () => {
     content.addEventListener('touchend', () => stickyHovered = false);
     btn.addEventListener('click', () => {
         stickyExpanded = !stickyExpanded;
-        if (stickyExpanded) { bar.classList.add('expanded'); btn.innerHTML = '🔼 收起单行'; content.scrollLeft = 0; }
-        else { bar.classList.remove('expanded'); btn.innerHTML = '🔽 展开多行'; }
+        if (stickyExpanded) { bar.classList.add('expanded'); btn.innerHTML = SLAT('sla.sticky.collapse'); content.scrollLeft = 0; }
+        else { bar.classList.remove('expanded'); btn.innerHTML = SLAT('sla.sticky.expand'); }
     });
     (function step() {
         if (!stickyHovered && !stickyExpanded && content.scrollWidth > content.clientWidth) {

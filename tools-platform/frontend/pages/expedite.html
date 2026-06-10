@@ -542,8 +542,6 @@
                     id="expediteFrontendVersion"
                     style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v加载中</span></h2>
             <div style="display: flex; gap: 12px; align-items: center;">
-                <button id="lang-toggle" class="btn-secondary" style="background:#00285e; color:#fff; border:none;"
-                    onclick="toggleLang()">English</button>
                 <select id="snapshot-selector" onchange="loadSelectedSnapshot()"
                     style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; background: #fff; color: #334155; font-size: 13px; max-width: 200px;">
                     <option value="" data-i18n="loading">加载中...</option>
@@ -568,11 +566,11 @@
             style="display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;"
             data-html2canvas-ignore="true">
             <div class="data-source-controls">
-                <span class="data-source-note">SLA配置读源模式:</span>
+                <span class="data-source-note" data-i18n="lbl_source_mode">SLA配置读源模式:</span>
                 <select id="expediteSourceMode" class="data-source-select">
-                    <option value="auto">自动模式</option>
-                    <option value="json">强制 JSON</option>
-                    <option value="sqlite">强制 SQLite</option>
+                    <option value="auto" data-i18n="opt_mode_auto">自动模式</option>
+                    <option value="json" data-i18n="opt_mode_json">强制 JSON</option>
+                    <option value="sqlite" data-i18n="opt_mode_sqlite">强制 SQLite</option>
                 </select>
             </div>
             <div id="expediteSourcePanel" class="data-source-panel">
@@ -813,12 +811,13 @@
 
     <script src="/js/shared/api.js?v=20260530-01"></script>
     <script src="/js/shared/toast.js?v=20260530-01"></script>
-    <script src="/js/shared/navbar.js?v=20260530-08"></script>
+    <script src="/js/shared/i18n.js?v=20260610-01"></script>
+    <script src="/js/shared/navbar.js?v=20260611-01"></script>
     <script>
         function formatExpediteSourceLabel(source) {
             if (source === 'sqlite') return 'SQLite';
             if (source === 'json') return 'JSON';
-            if (source === 'auto') return '自动模式';
+            if (source === 'auto') return window.currentLang === 'en' ? 'Auto Mode' : '自动模式';
             return source || '-';
         }
 
@@ -869,13 +868,13 @@
             const detailsPath = window.__lastExpediteFailingPath || '';
             const detailMeta = (detailsPath && API.getLastDataSourceMeta(detailsPath)) || {};
             panel.innerHTML = `
-                <span class="data-source-badge">SLA配置来源: ${formatExpediteSourceLabel(configMeta.primary)}</span>
-                <span class="data-source-badge">目标来源: ${formatExpediteSourceLabel((configMeta.extras || {}).targets)}</span>
-                <span class="data-source-badge">快照列表来源: ${formatExpediteSourceLabel(snapshotsMeta.primary)}</span>
-                <span class="data-source-badge">快照详情来源: ${formatExpediteSourceLabel(detailMeta.primary)}</span>
-                <span class="data-source-badge">分发策略来源: ${formatExpediteSourceLabel(policyMeta.primary)}</span>
-                <span class="data-source-badge">分类来源: ${formatExpediteSourceLabel(categoriesMeta.primary)}</span>
-                <span class="data-source-note">当前模式: ${formatExpediteSourceLabel(mode)} · report.db 提供故障快照，SLA 提供模板配置。</span>
+                <span class="data-source-badge">${i18nUi[window.currentLang]['src_sla_config'].replace('{source}', formatExpediteSourceLabel(configMeta.primary))}</span>
+                <span class="data-source-badge">${i18nUi[window.currentLang]['src_target'].replace('{source}', formatExpediteSourceLabel((configMeta.extras || {}).targets))}</span>
+                <span class="data-source-badge">${i18nUi[window.currentLang]['src_snapshot_list'].replace('{source}', formatExpediteSourceLabel(snapshotsMeta.primary))}</span>
+                <span class="data-source-badge">${i18nUi[window.currentLang]['src_snapshot_detail'].replace('{source}', formatExpediteSourceLabel(detailMeta.primary))}</span>
+                <span class="data-source-badge">${i18nUi[window.currentLang]['src_policy'].replace('{source}', formatExpediteSourceLabel(policyMeta.primary))}</span>
+                <span class="data-source-badge">${i18nUi[window.currentLang]['src_category'].replace('{source}', formatExpediteSourceLabel(categoriesMeta.primary))}</span>
+                <span class="data-source-note">${i18nUi[window.currentLang]['source_note'].replace('{mode}', formatExpediteSourceLabel(mode))}</span>
             `;
         }
 
@@ -935,6 +934,20 @@
                 "lbl_excel_link": "Excel DL Link",
                 "ph_img_link": "https://...",
                 "ph_excel_link": "https://...",
+                "ignore_empty": "No ignore keywords",
+                "source_note": "Current Mode: {mode} · report.db provides snapshots, SLA provides templates.",
+                "snapshot_info": "Data Source: Snapshot {id} (Import Time: {time})",
+                "failing_count": "Total {count} key metrics expedited",
+                "src_sla_config": "SLA Config Source: {source}",
+                "src_target": "Target Source: {source}",
+                "src_snapshot_list": "Snapshot List Source: {source}",
+                "src_snapshot_detail": "Snapshot Detail Source: {source}",
+                "src_policy": "Distribution Policy Source: {source}",
+                "src_category": "Category Source: {source}",
+                "lbl_source_mode": "SLA Config Read Mode:",
+                "opt_mode_auto": "Auto Mode",
+                "opt_mode_json": "Force JSON",
+                "opt_mode_sqlite": "Force SQLite",
                 "lang_toggle": "中文"
             },
             "zh": {
@@ -992,13 +1005,42 @@
                 "lbl_excel_link": "Excel下载链接",
                 "ph_img_link": "https://...",
                 "ph_excel_link": "https://...",
+                "ignore_empty": "暂无忽略关键词",
+                "source_note": "当前模式: {mode} · report.db 提供故障快照，SLA 提供模板配置。",
+                "snapshot_info": "数据源: 快照 {id} (入库时间: {time})",
+                "failing_count": "共计催办 {count} 项重点指标",
+                "src_sla_config": "SLA配置来源: {source}",
+                "src_target": "目标来源: {source}",
+                "src_snapshot_list": "快照列表来源: {source}",
+                "src_snapshot_detail": "快照详情来源: {source}",
+                "src_policy": "分发策略来源: {source}",
+                "src_category": "分类来源: {source}",
+                "lbl_source_mode": "SLA配置读源模式:",
+                "opt_mode_auto": "自动模式",
+                "opt_mode_json": "强制 JSON",
+                "opt_mode_sqlite": "强制 SQLite",
                 "lang_toggle": "English"
             }
         };
 
-        window.currentLang = 'zh';
+        if (window.ToolsI18n) {
+            window.ToolsI18n.register('expedite', {
+                'zh-CN': i18nUi.zh,
+                'en-US': i18nUi.en
+            });
+        }
+
+        function getSharedExpediteLang() {
+            return window.ToolsI18n && window.ToolsI18n.getLanguage() === 'en-US' ? 'en' : 'zh';
+        }
+
+        window.currentLang = getSharedExpediteLang();
 
         function toggleLang() {
+            if (window.ToolsI18n) {
+                window.ToolsI18n.toggleLanguage();
+                return;
+            }
             window.currentLang = window.currentLang === 'zh' ? 'en' : 'zh';
             updateI18n();
             if (document.getElementById('distribution-modal').style.display === 'flex') {
@@ -1007,7 +1049,7 @@
         }
 
         function updateI18n() {
-            document.getElementById('lang-toggle').innerText = i18nUi[window.currentLang]['lang_toggle'];
+            window.currentLang = getSharedExpediteLang();
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
                 if (i18nUi[window.currentLang][key]) {
@@ -1373,8 +1415,8 @@
             if (!timeStrInput.includes('Z')) timeStrInput = timeStrInput.replace(' ', 'T') + 'Z';
             const d = new Date(timeStrInput);
             const timeStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-            document.getElementById('snapshot-info').innerText = `数据源: 快照 ${data.snapshot_id} (入库时间: ${timeStr})`;
-            document.getElementById('failing-count').innerText = `共计催办 ${totalFailing} 项重点指标`;
+            document.getElementById('snapshot-info').innerText = i18nUi[window.currentLang]['snapshot_info'].replace('{id}', data.snapshot_id).replace('{time}', timeStr);
+            document.getElementById('failing-count').innerText = i18nUi[window.currentLang]['failing_count'].replace('{count}', totalFailing);
 
             const origin = window.location.origin;
 
@@ -1940,7 +1982,7 @@ ${excelUrl ? 'Remove-Item $tempXlsx -ErrorAction SilentlyContinue' : ''}
         function renderIgnoreList() {
             const container = document.getElementById('keyword-list-container');
             if (!ignoreKeywords || ignoreKeywords.length === 0) {
-                container.innerHTML = '<div style="text-align:center; padding:10px; color:#94a3b8; font-size:12px;">暂无忽略关键词</div>';
+                container.innerHTML = `<div style="text-align:center; padding:10px; color:#94a3b8; font-size:12px;">${i18nUi[window.currentLang]['ignore_empty']}</div>`;
                 return;
             }
 
@@ -2030,6 +2072,7 @@ ${excelUrl ? 'Remove-Item $tempXlsx -ErrorAction SilentlyContinue' : ''}
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            updateI18n();
             renderExpediteFrontendVersion();
             const modeSelect = document.getElementById('expediteSourceMode');
             if (modeSelect) {
@@ -2044,6 +2087,21 @@ ${excelUrl ? 'Remove-Item $tempXlsx -ErrorAction SilentlyContinue' : ''}
             initExpedite();
             fetchDistributionPolicy();
             fetchGlobalCategories();
+        });
+
+        window.addEventListener('tools:languagechange', () => {
+            updateI18n();
+            renderExpediteFrontendVersion();
+            renderExpediteSourcePanel();
+            if (document.getElementById('distribution-modal').style.display === 'flex') {
+                renderDistributionModal();
+            }
+            if (document.getElementById('ignore-modal').style.display === 'flex') {
+                renderIgnoreList();
+            }
+            if (typeof renderBriefText === 'function' && latestFailingData) {
+                renderBriefText();
+            }
         });
     </script>
 </body>

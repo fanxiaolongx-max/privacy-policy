@@ -414,7 +414,7 @@
                     </th>
                 `;
             });
-            headHtml += `<th style="width: 100px;">自检状态</th><th style="width: 80px;">操作</th></tr>`;
+            headHtml += `<th style="width: 100px;">${tText('自检状态', 'Status')}</th><th style="width: 80px;">${tText('操作', 'Actions')}</th></tr>`;
             thead.innerHTML = headHtml;
 
             tbody.innerHTML = '';
@@ -3077,10 +3077,15 @@
         
         // ================== 双语切换引擎 ==================
         const I18N_DICT = {
+    "PR进展附件记录 - 审计级批量自检系统": "PR Audit - Batch Verification System",
     "PR审计报告系统": "PR Audit System",
     "➕ 自定义新审计模板": "➕ Custom Audit",
     "🧪 一键加载测试数据": "🧪 Load Mock Data",
     "📥 导入 Excel 文件": "📥 Import Excel",
+    "📥 导入数据": "📥 Import Data",
+    "📦 导入快照": "📦 Import Snapshot",
+    "⚙️ 显示设置": "⚙️ Display Settings",
+    "📤 导出数据 ▾": "📤 Export Data ▾",
     "⚙️ 列展示设置": "⚙️ Display Columns",
     "🗑️ 清空所有单号": "🗑️ Clear All",
     "导出详细报告 (PDF)": "Export Report (PDF)",
@@ -3131,7 +3136,7 @@
     "🧩 按分组导出快照": "🧩 Export Group Snapshots",
     "📥 导入快照": "📥 Import Snapshot",
     "⏳ 加载配置中...": "⏳ Loading templates...",
-    "📄 导出全部为 PDF (双语版)": "📄 Export All as PDF (Bilingual)",
+    "📄 导出全部为 PDF": "📄 Export All as PDF",
     "📚 按分组导出 PDF": "📚 Export PDF by Group",
     "🗑️ 清空数据": "🗑️ Clear Data",
     "导入 Excel 单子数据": "Import Excel Ticket Data",
@@ -3155,11 +3160,11 @@
     "展开更多": "Expand",
     "收起": "Collapse"
 };
-        let currentLang = 'zh';
+        let currentLang = 'zh'; // Default, will be updated by event
 
-        function toggleLang() {
-            currentLang = currentLang === 'zh' ? 'en' : 'zh';
-            document.getElementById('langBtn').innerText = currentLang === 'zh' ? '中 / EN' : 'EN / 中';
+        function applyLanguage(lang) {
+            if (currentLang === lang) return;
+            currentLang = lang;
             
             // 翻译带 data-i18n 的静态元素
             document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -3188,6 +3193,15 @@
                 renderReasonEvidence();
             }
         }
+
+        window.addEventListener('tools:languagechange', (e) => {
+            const isEn = e.detail?.lang?.startsWith('en');
+            applyLanguage(isEn ? 'en' : 'zh');
+        });
+
+        // Initialize language immediately on load based on localStorage
+        const storedLang = localStorage.getItem('tools_lang') || navigator.language || 'zh';
+        applyLanguage(storedLang.startsWith('en') ? 'en' : 'zh');
 
         function refreshWizardDynamicI18n() {
             renderWizardFieldGrid();
@@ -3223,9 +3237,6 @@
             
             // Translate dynamic table elements if EN
             if (currentLang === 'en') {
-                const tHead = document.getElementById('tableHead');
-                if (tHead) tHead.innerHTML = tHead.innerHTML.replace('自检状态', 'Status').replace('操作', 'Actions');
-                
                 const tBody = document.getElementById('tableBody');
                 if (tBody) {
                     tBody.innerHTML = tBody.innerHTML

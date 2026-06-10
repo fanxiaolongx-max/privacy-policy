@@ -54,11 +54,11 @@ const UIVGenLog = (() => {
         // 重置日志区，展开面板，设置 busy 状态
         _count = 0;
         const content = document.getElementById('genLogContent');
-        if (content) content.innerHTML = '<span style="color:#555; font-size:12px;">等待生成...</span>';
+        if (content) content.innerHTML = UIVI18n.waitingMarkup();
         const badge = document.getElementById('genLogBadge');
         if (badge) { badge.textContent = '0'; badge.style.display = 'none'; }
         _open();
-        setStatus('busy', '⏳ 生成中...');
+        setStatus('busy', UIVT('uiv.log.busy'));
     }
 
     function info(msg)    { _write('ℹ️  ' + msg, 'info'); }
@@ -70,10 +70,10 @@ const UIVGenLog = (() => {
 
     function done(isOk, summary) {
         if (isOk) {
-            success('脚本生成完毕！' + (summary ? ' | ' + summary : ''));
-            setStatus('ok', '✅ 生成成功');
+            success(UIVT('uiv.log.done') + (summary ? ' | ' + summary : ''));
+            setStatus('ok', UIVT('uiv.log.ok'));
         } else {
-            setStatus('err', '❌ 生成失败');
+            setStatus('err', UIVT('uiv.log.err'));
         }
     }
 
@@ -89,12 +89,17 @@ const UIVGenLog = (() => {
     function clear() {
         _count = 0;
         const content = document.getElementById('genLogContent');
-        if (content) content.innerHTML = '<span style="color:#555; font-size:12px;">等待生成...</span>';
+        if (content) content.innerHTML = UIVI18n.waitingMarkup();
         const badge = document.getElementById('genLogBadge');
         if (badge) { badge.textContent = '0'; badge.style.display = 'none'; }
         const status = document.getElementById('genLogStatus');
         if (status) { status.className = 'gen-log-status'; status.textContent = ''; }
     }
 
-    return { start, info, success, warn, error, section, dim, done, toggle, clear };
+    function refreshI18n() {
+        const content = document.getElementById('genLogContent');
+        if (content && _count === 0) content.innerHTML = UIVI18n.waitingMarkup();
+    }
+
+    return { start, info, success, warn, error, section, dim, done, toggle, clear, refreshI18n };
 })();

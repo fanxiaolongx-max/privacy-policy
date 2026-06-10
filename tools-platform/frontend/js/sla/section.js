@@ -440,88 +440,89 @@ function preprocessData(secId, rawData) {
 }
 
 function buildDOM(secId, title, themeColor) {
+    const tt = window.SLAT || ((key) => key);
     const html = `
     <div class="section-card" id="section-${secId}">
         <div class="section-header">
             <h3 class="section-title" style="color:${themeColor}">
                 ${title} <span style="font-size:12px;color:#888;font-weight:normal;" id="row-count-badge-${secId}"></span>
-                <span class="rule-summary-badge" id="rule-summary-badge-${secId}" title="当前表暂无指标规则">主0 / 子0</span>
+                <span class="rule-summary-badge" id="rule-summary-badge-${secId}" title="${tt('sla.section.noRulesTitle')}">${tt('sla.section.ruleSummary', { main: 0, sub: 0 })}</span>
             </h3>
         </div>
         <div class="dashboard-panel" id="dashboard-${secId}" style="display:none;"></div>
         ${buildDateParseWarningHTML(secId)}
         <div class="toolbar" id="toolbar-${secId}">
             <div class="filter-group">
-                <button class="filter-btn active" data-sec="${secId}" data-filter="all">全部数据</button>
-                ${AppState[secId].mode !== 'other' ? `<button class="filter-btn" data-sec="${secId}" data-filter="focus">🔥 重点关注</button>
-                <button class="filter-btn" data-sec="${secId}" data-filter="danger">🔴 紧急</button>
-                <button class="filter-btn" data-sec="${secId}" data-filter="warning">🟠 提醒</button>` : ''}
+                <button class="filter-btn active" data-sec="${secId}" data-filter="all">${tt('sla.section.all')}</button>
+                ${AppState[secId].mode !== 'other' ? `<button class="filter-btn" data-sec="${secId}" data-filter="focus">${tt('sla.section.focus')}</button>
+                <button class="filter-btn" data-sec="${secId}" data-filter="danger">${tt('sla.section.danger')}</button>
+                <button class="filter-btn" data-sec="${secId}" data-filter="warning">${tt('sla.section.warning')}</button>` : ''}
             </div>
             <div class="search-container">
-                <input type="text" id="search-${secId}" class="search-box" placeholder="🔍 当前表内搜索...">
-                <button id="settings-btn-${secId}" class="action-btn settings-btn">⚙️ 列设置 ▼</button>
-                <button id="copy-btn-${secId}" class="action-btn copy-btn">📋 提取去重 ▼</button>
-                <button id="metrics-btn-${secId}" class="action-btn metrics-btn">🎯 指标 ▼</button>
-                <button id="export-btn-${secId}" class="action-btn export-btn">📥 导出</button>
+                <input type="text" id="search-${secId}" class="search-box" placeholder="${tt('sla.section.searchPh')}">
+                <button id="settings-btn-${secId}" class="action-btn settings-btn">${tt('sla.section.columns')}</button>
+                <button id="copy-btn-${secId}" class="action-btn copy-btn">${tt('sla.section.copyUnique')}</button>
+                <button id="metrics-btn-${secId}" class="action-btn metrics-btn">${tt('sla.section.metrics')}</button>
+                <button id="export-btn-${secId}" class="action-btn export-btn">${tt('sla.section.export')}</button>
                 <div id="column-picker-${secId}" class="dropdown-menu" style="right:250px;width:220px;">
                     <div class="picker-header">
-                        <input type="text" id="p-search-${secId}" class="picker-search" placeholder="过滤列名...">
+                        <input type="text" id="p-search-${secId}" class="picker-search" placeholder="${tt('sla.section.filterColumnsPh')}">
                         <div class="picker-actions">
-                            <button id="p-all-${secId}" class="picker-action-btn">全选</button>
-                            <button id="p-none-${secId}" class="picker-action-btn">清空</button>
+                            <button id="p-all-${secId}" class="picker-action-btn">${tt('sla.section.selectAll')}</button>
+                            <button id="p-none-${secId}" class="picker-action-btn">${tt('sla.section.clear')}</button>
                         </div>
                     </div>
                     <div id="p-list-${secId}" class="picker-list"></div>
                 </div>
                 <div id="copy-picker-${secId}" class="dropdown-menu" style="right:170px;width:240px;border-color:#ffb74d;">
                     <div class="picker-header" style="background:#fff8e1;border-bottom:1px solid #ffe0b2;">
-                        <div style="color:#e65100;font-size:12px;font-weight:bold;margin-bottom:6px;">点选列名进行去重提取：</div>
-                        <input type="text" id="c-search-${secId}" class="picker-search" placeholder="🔍 搜索提取列名..." style="border-color:#ffb74d;">
+                        <div style="color:#e65100;font-size:12px;font-weight:bold;margin-bottom:6px;">${tt('sla.section.copyHint')}</div>
+                        <input type="text" id="c-search-${secId}" class="picker-search" placeholder="${tt('sla.section.copySearchPh')}" style="border-color:#ffb74d;">
                     </div>
                     <div id="c-list-${secId}" class="picker-list" style="padding:0;"></div>
                 </div>
                 <div id="metrics-picker-${secId}" class="dropdown-menu" style="right:80px;width:340px;padding:12px;border-color:#9c27b0;max-height:450px;overflow-y:auto;">
-                    <div style="font-weight:bold;color:#8e44ad;font-size:12px;margin-bottom:8px;border-bottom:1px solid #f3e5f5;padding-bottom:5px;">📌 配置顶部悬浮指标推送规则：</div>
+                    <div style="font-weight:bold;color:#8e44ad;font-size:12px;margin-bottom:8px;border-bottom:1px solid #f3e5f5;padding-bottom:5px;">${tt('sla.section.metricHint')}</div>
                     
                     <div style="margin-bottom:8px; display:flex; gap:10px; font-size:12px;">
-                        <label><input type="radio" name="m-type-${secId}" value="extract" checked onclick="document.getElementById('m-extract-config-${secId}').style.display='block'; document.getElementById('m-count-config-${secId}').style.display='none';"> 提取单行数值</label>
-                        <label><input type="radio" name="m-type-${secId}" value="count" onclick="document.getElementById('m-extract-config-${secId}').style.display='none'; document.getElementById('m-count-config-${secId}').style.display='block';"> 统计满足次数</label>
-                        <label><input type="radio" name="m-type-${secId}" value="ratio" onclick="document.getElementById('m-extract-config-${secId}').style.display='none'; document.getElementById('m-count-config-${secId}').style.display='block';"> 统计占比</label>
+                        <label><input type="radio" name="m-type-${secId}" value="extract" checked onclick="document.getElementById('m-extract-config-${secId}').style.display='block'; document.getElementById('m-count-config-${secId}').style.display='none';"> ${tt('sla.section.extractOne')}</label>
+                        <label><input type="radio" name="m-type-${secId}" value="count" onclick="document.getElementById('m-extract-config-${secId}').style.display='none'; document.getElementById('m-count-config-${secId}').style.display='block';"> ${tt('sla.section.countTimes')}</label>
+                        <label><input type="radio" name="m-type-${secId}" value="ratio" onclick="document.getElementById('m-extract-config-${secId}').style.display='none'; document.getElementById('m-count-config-${secId}').style.display='block';"> ${tt('sla.section.countRatio')}</label>
                     </div>
 
                     <!-- 提取模式 -->
                     <div id="m-extract-config-${secId}">
-                        <select id="m-colx-${secId}" class="picker-search" style="margin-bottom:6px;cursor:pointer;"><option value="">1. 当此列(X)...</option></select>
-                        <input type="text" id="m-valy-${secId}" class="picker-search" placeholder="2. 包含内容(Y) (支持[空]/[非空])" style="margin-bottom:6px;">
-                        <select id="m-colz-${secId}" class="picker-search" style="margin-bottom:6px;cursor:pointer;"><option value="">3. 则提取该行此列(Z)的值</option></select>
+                        <select id="m-colx-${secId}" class="picker-search" style="margin-bottom:6px;cursor:pointer;"><option value="">${tt('sla.section.colXOption')}</option></select>
+                        <input type="text" id="m-valy-${secId}" class="picker-search" placeholder="${tt('sla.section.valYPh')}" style="margin-bottom:6px;">
+                        <select id="m-colz-${secId}" class="picker-search" style="margin-bottom:6px;cursor:pointer;"><option value="">${tt('sla.section.colZOption')}</option></select>
                     </div>
 
                     <!-- 统计模式/占比模式 -->
                     <div id="m-count-config-${secId}" style="display:none;">
-                        <select id="m-c-colx-${secId}" class="picker-search" style="margin-bottom:6px;cursor:pointer;"><option value="">1. 筛选条件列(X)... (选填)</option></select>
-                        <input type="text" id="m-c-valy-${secId}" class="picker-search" placeholder="2. 筛选X列含内容(Y) (支持[空]/[非空])" style="margin-bottom:6px;">
-                        <select id="m-c-colz-${secId}" class="picker-search" style="margin-bottom:6px;cursor:pointer;"><option value="">3. 目标统计列(Z)</option></select>
-                        <input type="text" id="m-c-valk-${secId}" class="picker-search" placeholder="4. Z列含关键字(K) (支持[空]/[非空])" style="margin-bottom:6px;">
+                        <select id="m-c-colx-${secId}" class="picker-search" style="margin-bottom:6px;cursor:pointer;"><option value="">${tt('sla.section.countXOption')}</option></select>
+                        <input type="text" id="m-c-valy-${secId}" class="picker-search" placeholder="${tt('sla.section.countYPh')}" style="margin-bottom:6px;">
+                        <select id="m-c-colz-${secId}" class="picker-search" style="margin-bottom:6px;cursor:pointer;"><option value="">${tt('sla.section.countZOption')}</option></select>
+                        <input type="text" id="m-c-valk-${secId}" class="picker-search" placeholder="${tt('sla.section.countKPh')}" style="margin-bottom:6px;">
                     </div>
 
                     <div id="m-label-container-${secId}" style="display:flex;gap:6px;margin-bottom:8px;">
-                        <input type="text" id="m-label-${secId}" class="picker-search" placeholder="指标展示名称" style="margin-bottom:0;flex:1;">
+                        <input type="text" id="m-label-${secId}" class="picker-search" placeholder="${tt('sla.section.metricNamePh')}" style="margin-bottom:0;flex:1;">
                         <select id="m-color-${secId}" class="picker-search" style="margin-bottom:0;width:80px;cursor:pointer;">
-                            <option value="">颜色</option><option value="success">绿(好)</option>
-                            <option value="danger">红(危)</option><option value="warn">黄(警)</option>
+                            <option value="">${tt('sla.section.color')}</option><option value="success">${tt('sla.section.green')}</option>
+                            <option value="danger">${tt('sla.section.red')}</option><option value="warn">${tt('sla.section.yellow')}</option>
                         </select>
                     </div>
                     
                     <div style="display:flex;gap:6px;margin-bottom:8px;">
                         <select id="m-parent-${secId}" class="picker-search" style="margin-bottom:0;flex:1;cursor:pointer;" onchange="document.getElementById('m-cat-${secId}').style.display = this.value ? 'block' : 'none'; document.getElementById('m-label-container-${secId}').style.display = this.value ? 'none' : 'flex';">
-                            <option value="">作为主指标独立展示</option>
+                            <option value="">${tt('sla.section.mainMetric')}</option>
                         </select>
                         <select id="m-cat-${secId}" class="picker-search" style="margin-bottom:0;width:90px;cursor:pointer;display:none;">
-                            <option value="">选择分类</option>
+                            <option value="">${tt('sla.section.chooseCategory')}</option>
                         </select>
                     </div>
 
-                    <button id="add-metric-btn-${secId}" style="width:100%;padding:6px;background:#8e44ad;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:bold;">➕ 保存规则</button>
+                    <button id="add-metric-btn-${secId}" style="width:100%;padding:6px;background:#8e44ad;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:bold;">${tt('sla.section.saveRule')}</button>
                     <div id="m-list-${secId}" style="margin-top:10px;border-top:1px dashed #eee;padding-top:8px;"></div>
                 </div>
             </div>

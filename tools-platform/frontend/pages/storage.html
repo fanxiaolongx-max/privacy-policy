@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>存储迁移状态 - Tools Platform</title>
+    <title data-i18n="存储迁移状态 - Tools Platform">存储迁移状态 - Tools Platform</title>
     <link rel="stylesheet" href="/css/shared.css">
     <style>
         body {
@@ -287,28 +287,98 @@
     <div class="storage-wrap">
         <div class="storage-hero">
             <div>
-                <h1 class="storage-title">存储迁移状态台</h1>
-                <p class="storage-subtitle">集中查看已迁表的真实读源、一致性校验、JSON/SQLite 数量，以及当前双写状态，便于后续从双写过渡到 SQLite 主读。</p>
+                <h1 class="storage-title" data-i18n="存储迁移状态台">存储迁移状态台</h1>
+                <p class="storage-subtitle" data-i18n="集中查看已迁表的真实读源、一致性校验、JSON/SQLite 数量，以及当前双写状态，便于后续从双写过渡到 SQLite 主读。">集中查看已迁表的真实读源、一致性校验、JSON/SQLite 数量，以及当前双写状态，便于后续从双写过渡到 SQLite 主读。</p>
             </div>
-            <button class="storage-refresh" id="refreshStorageStatus">刷新状态</button>
+            <button class="storage-refresh" id="refreshStorageStatus" data-i18n="刷新状态">刷新状态</button>
         </div>
 
         <div class="summary-grid" id="storageSummary">
-            <div class="summary-card"><div class="summary-label">总表数</div><div class="summary-value info">-</div></div>
-            <div class="summary-card"><div class="summary-label">一致表数</div><div class="summary-value ok">-</div></div>
-            <div class="summary-card"><div class="summary-label">异常表数</div><div class="summary-value warn">-</div></div>
-            <div class="summary-card"><div class="summary-label">当前检查时间</div><div class="summary-value" style="font-size:16px;">-</div></div>
+            <div class="summary-card"><div class="summary-label" data-i18n="总表数">总表数</div><div class="summary-value info">-</div></div>
+            <div class="summary-card"><div class="summary-label" data-i18n="一致表数">一致表数</div><div class="summary-value ok">-</div></div>
+            <div class="summary-card"><div class="summary-label" data-i18n="异常表数">异常表数</div><div class="summary-value warn">-</div></div>
+            <div class="summary-card"><div class="summary-label" data-i18n="当前检查时间">当前检查时间</div><div class="summary-value" style="font-size:16px;">-</div></div>
         </div>
 
-        <div class="status-meta" id="storageStatusMeta">正在加载存储迁移状态...</div>
+        <div class="status-meta" id="storageStatusMeta" data-i18n="正在加载存储迁移状态...">正在加载存储迁移状态...</div>
         <div class="table-list" id="storageTableList">
-            <div class="storage-empty">正在加载...</div>
+            <div class="storage-empty" data-i18n="正在加载...">正在加载...</div>
         </div>
     </div>
 
     <script src="/js/shared/api.js?v=20260530-01"></script>
-    <script src="/js/shared/navbar.js?v=20260530-08"></script>
+    <script src="/js/shared/navbar.js?v=20260611-01"></script>
     <script>
+        // ================== 双语切换引擎 ==================
+        const I18N_DICT = {
+            "存储迁移状态 - Tools Platform": "Storage Migration Status - Tools Platform",
+            "存储迁移状态台": "Storage Migration Status",
+            "集中查看已迁表的真实读源、一致性校验、JSON/SQLite 数量，以及当前双写状态，便于后续从双写过渡到 SQLite 主读。": "Centralized view of read sources, consistency checks, JSON/SQLite counts, and dual-write status for migrated tables.",
+            "刷新状态": "Refresh Status",
+            "总表数": "Total Tables",
+            "一致表数": "Matched Tables",
+            "异常表数": "Mismatched Tables",
+            "当前检查时间": "Current Check Time",
+            "正在加载存储迁移状态...": "Loading storage migration status...",
+            "正在加载...": "Loading...",
+            "已迁表默认采用 JSON + SQLite 双写；auto 模式优先 JSON，JSON 为空时回退 SQLite。": "Migrated tables default to JSON + SQLite dual write; auto prefers JSON, falls back to SQLite.",
+            "暂无迁移状态数据。": "No migration status data.",
+            "正在重新校验迁移状态...": "Revalidating migration status...",
+            "正在读取服务端迁移状态...": "Reading migration status from server...",
+            "读取失败": "Read Failed",
+            "加载失败: ": "Load Failed: ",
+            "一致性: ": "Consistency: ",
+            "顺序: 不一致": "Order: Mismatched",
+            "Auto读源: ": "Auto Read: ",
+            "写策略: ": "Write Strategy: ",
+            "JSON 数量": "JSON Count",
+            "SQLite 数量": "SQLite Count",
+            "读源结果": "Read Source",
+            "状态": "Status",
+            "已对齐": "Aligned",
+            "待排查": "Pending",
+            "差异路径": "Diff Path",
+            "差异原因": "Diff Reason",
+            "文本差异位置": "Diff Position",
+            "JSON / SQLite 长度": "JSON / SQLite Length",
+            "JSON 侧预览": "JSON Preview",
+            "SQLite 侧预览": "SQLite Preview",
+            "JSON 文本差异片段": "JSON Diff Snippet",
+            "SQLite 文本差异片段": "SQLite Diff Snippet",
+            "查看差异详情": "View Diff Details",
+            "收起差异详情": "Collapse Diff Details"
+        };
+
+        let currentLang = 'zh';
+
+        function applyLanguage(lang) {
+            if (currentLang === lang) return;
+            currentLang = lang;
+            
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (currentLang === 'en' && I18N_DICT[key]) el.innerHTML = I18N_DICT[key];
+                else el.innerHTML = key;
+            });
+
+            if (window._lastStorageData) {
+                renderSummary(window._lastStorageData);
+                renderTableList(window._lastStorageData);
+            }
+        }
+
+        function tText(zh, en) {
+            return currentLang === 'en' ? en : zh;
+        }
+
+        window.addEventListener('tools:languagechange', (e) => {
+            const isEn = e.detail?.lang?.startsWith('en');
+            applyLanguage(isEn ? 'en' : 'zh');
+        });
+
+        const storedLang = localStorage.getItem('tools_lang') || navigator.language || 'zh';
+        applyLanguage(storedLang.startsWith('en') ? 'en' : 'zh');
+        // ==================================================
         function sourceLabel(source) {
             if (source === 'sqlite') return 'SQLite';
             if (source === 'json') return 'JSON';
@@ -330,44 +400,44 @@
             const semantic = diff.semantic || {};
             return `
                 <div class="diff-actions">
-                    <button class="diff-toggle" type="button" data-diff-toggle="${index}">查看差异详情</button>
+                    <button class="diff-toggle" type="button" data-diff-toggle="${index}">${tText('查看差异详情', 'View Diff Details')}</button>
                 </div>
                 <div class="diff-panel" id="storageDiffPanel${index}">
                     <div class="diff-summary">
                         <div class="diff-summary-item">
-                            <div class="diff-summary-label">差异路径</div>
+                            <div class="diff-summary-label">${tText('差异路径', 'Diff Path')}</div>
                             <div class="diff-summary-value">${escapeHtml(semantic.path || '-')}</div>
                         </div>
                         <div class="diff-summary-item">
-                            <div class="diff-summary-label">差异原因</div>
-                            <div class="diff-summary-value">${escapeHtml(semantic.reason || '文本内容不一致')}</div>
+                            <div class="diff-summary-label">${tText('差异原因', 'Diff Reason')}</div>
+                            <div class="diff-summary-value">${escapeHtml(semantic.reason || tText('文本内容不一致', 'Text content mismatch'))}</div>
                         </div>
                         <div class="diff-summary-item">
-                            <div class="diff-summary-label">文本差异位置</div>
+                            <div class="diff-summary-label">${tText('文本差异位置', 'Diff Position')}</div>
                             <div class="diff-summary-value">${diff.firstDiffIndex ?? '-'}</div>
                         </div>
                         <div class="diff-summary-item">
-                            <div class="diff-summary-label">JSON / SQLite 长度</div>
+                            <div class="diff-summary-label">${tText('JSON / SQLite 长度', 'JSON / SQLite Length')}</div>
                             <div class="diff-summary-value">${diff.jsonLength ?? '-'} / ${diff.sqliteLength ?? '-'}</div>
                         </div>
                     </div>
                     <div class="diff-grid">
                         <div class="diff-column">
-                            <div class="diff-column-head">JSON 侧预览</div>
+                            <div class="diff-column-head">${tText('JSON 侧预览', 'JSON Preview')}</div>
                             <pre class="diff-code">${escapeHtml(semantic.jsonPreview || diff.jsonExcerpt || '-')}</pre>
                         </div>
                         <div class="diff-column">
-                            <div class="diff-column-head">SQLite 侧预览</div>
+                            <div class="diff-column-head">${tText('SQLite 侧预览', 'SQLite Preview')}</div>
                             <pre class="diff-code">${escapeHtml(semantic.sqlitePreview || diff.sqliteExcerpt || '-')}</pre>
                         </div>
                     </div>
                     <div class="diff-grid">
                         <div class="diff-column">
-                            <div class="diff-column-head">JSON 文本差异片段</div>
+                            <div class="diff-column-head">${tText('JSON 文本差异片段', 'JSON Diff Snippet')}</div>
                             <pre class="diff-code">${escapeHtml(diff.jsonExcerpt || '-')}</pre>
                         </div>
                         <div class="diff-column">
-                            <div class="diff-column-head">SQLite 文本差异片段</div>
+                            <div class="diff-column-head">${tText('SQLite 文本差异片段', 'SQLite Diff Snippet')}</div>
                             <pre class="diff-code">${escapeHtml(diff.sqliteExcerpt || '-')}</pre>
                         </div>
                     </div>
@@ -380,9 +450,9 @@
             const order = item.orderDiff;
             return `
                 <div class="order-note">
-                    顺序提示：${escapeHtml(order.message || 'JSON 与 SQLite 列表顺序不同。')}
-                    第一处顺序差异在第 ${Number(order.firstIndex ?? 0) + 1} 条：
-                    JSON 为「${escapeHtml(order.jsonKey || '-')}」，SQLite 为「${escapeHtml(order.sqliteKey || '-')}」。
+                    ${tText('顺序提示：', 'Order Note: ')}${escapeHtml(order.message || tText('JSON 与 SQLite 列表顺序不同。', 'JSON and SQLite list orders differ.'))}
+                    ${tText('第一处顺序差异在第 ', 'First difference at index ')}${Number(order.firstIndex ?? 0) + 1}${tText(' 条：', ': ')}
+                    ${tText('JSON 为「', 'JSON is [')}${escapeHtml(order.jsonKey || '-')}${tText('」，SQLite 为「', '], SQLite is [')}${escapeHtml(order.sqliteKey || '-')}${tText('」。', '].')}
                 </div>
             `;
         }
@@ -391,19 +461,19 @@
             const summary = data.summary || {};
             const checkedAt = data.checkedAt ? new Date(data.checkedAt).toLocaleString('zh-CN', { hour12: false }) : '-';
             document.getElementById('storageSummary').innerHTML = `
-                <div class="summary-card"><div class="summary-label">总表数</div><div class="summary-value info">${summary.totalTables ?? '-'}</div></div>
-                <div class="summary-card"><div class="summary-label">一致表数</div><div class="summary-value ok">${summary.matchedTables ?? '-'}</div></div>
-                <div class="summary-card"><div class="summary-label">异常表数</div><div class="summary-value warn">${summary.mismatchedTables ?? '-'}</div></div>
-                <div class="summary-card"><div class="summary-label">当前检查时间</div><div class="summary-value" style="font-size:16px;">${checkedAt}</div></div>
+                <div class="summary-card"><div class="summary-label" data-i18n="总表数">${tText('总表数', 'Total Tables')}</div><div class="summary-value info">${summary.totalTables ?? '-'}</div></div>
+                <div class="summary-card"><div class="summary-label" data-i18n="一致表数">${tText('一致表数', 'Matched Tables')}</div><div class="summary-value ok">${summary.matchedTables ?? '-'}</div></div>
+                <div class="summary-card"><div class="summary-label" data-i18n="异常表数">${tText('异常表数', 'Mismatched Tables')}</div><div class="summary-value warn">${summary.mismatchedTables ?? '-'}</div></div>
+                <div class="summary-card"><div class="summary-label" data-i18n="当前检查时间">${tText('当前检查时间', 'Current Check Time')}</div><div class="summary-value" style="font-size:16px;">${checkedAt}</div></div>
             `;
-            document.getElementById('storageStatusMeta').textContent = '已迁表默认采用 JSON + SQLite 双写；auto 模式优先 JSON，JSON 为空时回退 SQLite。';
+            document.getElementById('storageStatusMeta').textContent = tText('已迁表默认采用 JSON + SQLite 双写；auto 模式优先 JSON，JSON 为空时回退 SQLite。', 'Migrated tables default to JSON + SQLite dual write; auto prefers JSON, falls back to SQLite.');
         }
 
         function renderTableList(data) {
             const tables = Array.isArray(data.tables) ? data.tables : [];
             const list = document.getElementById('storageTableList');
             if (!tables.length) {
-                list.innerHTML = '<div class="storage-empty">暂无迁移状态数据。</div>';
+                list.innerHTML = `<div class="storage-empty" data-i18n="暂无迁移状态数据。">${tText('暂无迁移状态数据。', 'No migration status data.')}</div>`;
                 return;
             }
 
@@ -412,31 +482,31 @@
                     <div class="table-head">
                         <div>
                             <h2 class="table-name">${item.label}</h2>
-                            <div class="table-scope">作用域: ${item.scope} · 表键: ${item.key}</div>
+                            <div class="table-scope">${tText('作用域: ', 'Scope: ')}${item.scope}${tText(' · 表键: ', ' · Key: ')}${item.key}</div>
                         </div>
                         <div class="badge-row">
-                            <span class="badge ${item.parity === 'match' ? 'ok' : 'warn'}">一致性: ${item.parity === 'match' ? 'MATCH' : 'MISMATCH'}</span>
-                            ${item.orderDiff ? '<span class="badge warn">顺序: 不一致</span>' : ''}
-                            <span class="badge info">Auto读源: ${sourceLabel(item.autoSource)}</span>
-                            <span class="badge info">写策略: ${item.writeStrategy}</span>
+                            <span class="badge ${item.parity === 'match' ? 'ok' : 'warn'}">${tText('一致性: ', 'Consistency: ')}${item.parity === 'match' ? 'MATCH' : 'MISMATCH'}</span>
+                            ${item.orderDiff ? `<span class="badge warn">${tText('顺序: 不一致', 'Order: Mismatched')}</span>` : ''}
+                            <span class="badge info">${tText('Auto读源: ', 'Auto Read: ')}${sourceLabel(item.autoSource)}</span>
+                            <span class="badge info">${tText('写策略: ', 'Write Strategy: ')}${item.writeStrategy}</span>
                         </div>
                     </div>
                     <div class="metric-grid">
                         <div class="metric-box">
-                            <div class="metric-label">JSON 数量</div>
+                            <div class="metric-label" data-i18n="JSON 数量">${tText('JSON 数量', 'JSON Count')}</div>
                             <div class="metric-value">${item.jsonCount ?? '-'}</div>
                         </div>
                         <div class="metric-box">
-                            <div class="metric-label">SQLite 数量</div>
+                            <div class="metric-label" data-i18n="SQLite 数量">${tText('SQLite 数量', 'SQLite Count')}</div>
                             <div class="metric-value">${item.sqliteCount ?? '-'}</div>
                         </div>
                         <div class="metric-box">
-                            <div class="metric-label">读源结果</div>
+                            <div class="metric-label" data-i18n="读源结果">${tText('读源结果', 'Read Source')}</div>
                             <div class="metric-value">${sourceLabel(item.autoSource)}</div>
                         </div>
                         <div class="metric-box">
-                            <div class="metric-label">状态</div>
-                            <div class="metric-value">${item.parity === 'match' ? '已对齐' : '待排查'}</div>
+                            <div class="metric-label" data-i18n="状态">${tText('状态', 'Status')}</div>
+                            <div class="metric-value">${item.parity === 'match' ? tText('已对齐', 'Aligned') : tText('待排查', 'Pending')}</div>
                         </div>
                     </div>
                     ${renderOrderNote(item)}
@@ -449,7 +519,7 @@
                     const idx = button.getAttribute('data-diff-toggle');
                     const panel = document.getElementById(`storageDiffPanel${idx}`);
                     const isOpen = panel.classList.toggle('open');
-                    button.textContent = isOpen ? '收起差异详情' : '查看差异详情';
+                    button.textContent = isOpen ? tText('收起差异详情', 'Collapse Diff Details') : tText('查看差异详情', 'View Diff Details');
                 });
             });
         }
@@ -457,15 +527,16 @@
         async function loadStorageStatus() {
             const list = document.getElementById('storageTableList');
             const meta = document.getElementById('storageStatusMeta');
-            list.innerHTML = '<div class="storage-empty">正在重新校验迁移状态...</div>';
-            meta.textContent = '正在读取服务端迁移状态...';
+            list.innerHTML = `<div class="storage-empty" data-i18n="正在重新校验迁移状态...">${tText('正在重新校验迁移状态...', 'Revalidating migration status...')}</div>`;
+            meta.textContent = tText('正在读取服务端迁移状态...', 'Reading migration status from server...');
             try {
                 const data = await API.get('/api/storage/status');
+                window._lastStorageData = data;
                 renderSummary(data);
                 renderTableList(data);
             } catch (err) {
-                meta.textContent = '读取失败';
-                list.innerHTML = `<div class="storage-empty">加载失败: ${err.message}</div>`;
+                meta.textContent = tText('读取失败', 'Read Failed');
+                list.innerHTML = `<div class="storage-empty" data-i18n="加载失败: ">${tText('加载失败: ', 'Load Failed: ')}${err.message}</div>`;
             }
         }
 

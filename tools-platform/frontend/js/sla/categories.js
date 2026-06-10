@@ -42,7 +42,7 @@ function addCategory() {
     const val = input.value.trim();
     if (!val) return;
     if (window.GlobalCategories.includes(val)) {
-        showToast('分类已存在', 'warn');
+        showToast(SLAT('sla.category.exists'), 'warn');
         return;
     }
     window.GlobalCategories.push(val);
@@ -58,10 +58,10 @@ function removeCategory(index) {
 async function saveCategories() {
     try {
         await API.put('/api/sla/categories', window.GlobalCategories);
-        showToast('✅ 分类保存成功');
+        showToast(SLAT('sla.category.saved'));
         closeCategoryModal();
     } catch (e) {
-        showToast('保存失败: ' + e.message, 'error');
+        showToast(SLAT('sla.category.saveFail', { message: e.message }), 'error');
     }
 }
 

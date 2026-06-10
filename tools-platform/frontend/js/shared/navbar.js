@@ -3,25 +3,25 @@
  * 支持固定工具、自定义工具、二级分类与全局顺序设置。
  */
 const NAV_BUILTIN_LINKS = [
-    { id: 'home', href: '/', icon: '🏠', label: '工具中台', defaultCategory: 'business', match: p => p === '/' },
-    { id: 'uivf12', href: '/uivf12', icon: '🚀', label: '数据抓取', defaultCategory: 'business', match: p => p.startsWith('/uivf12') },
-    { id: 'sla', href: '/sla', icon: '📊', label: '数据导入', defaultCategory: 'business', match: p => p.startsWith('/sla') },
-    { id: 'report', href: '/report', icon: '📈', label: '报表看板', defaultCategory: 'business', match: p => p.startsWith('/report') },
-    { id: 'expedite', href: '/expedite', icon: '⚡', label: '一键催办', defaultCategory: 'business', match: p => p.startsWith('/expedite') },
-    { id: 'monthly', href: '/monthly', icon: '📅', label: '月报页面', defaultCategory: 'business', match: p => p.startsWith('/monthly') },
-    { id: 'frt', href: '/frt', icon: '📊', label: 'FRT核算', defaultCategory: 'audit', match: p => p.startsWith('/frt') },
-    { id: 'praudit', href: '/praudit', icon: '📋', label: 'PR稽查', defaultCategory: 'audit', match: p => p.startsWith('/praudit') },
-    { id: 'storage', href: '/storage', icon: '💽', label: '迁移状态', defaultCategory: 'system', match: p => p.startsWith('/storage') },
-    { id: 'db-explorer', href: '/db-explorer', icon: '🗄️', label: '数据探索', defaultCategory: 'system', match: p => p.startsWith('/db-explorer') }
+    { id: 'home', href: '/', icon: '🏠', label: '工具中台', labelKey: 'nav.home', defaultCategory: 'business', match: p => p === '/' },
+    { id: 'uivf12', href: '/uivf12', icon: '🚀', label: '数据抓取', labelKey: 'nav.uivf12', defaultCategory: 'business', match: p => p.startsWith('/uivf12') },
+    { id: 'sla', href: '/sla', icon: '📊', label: '数据导入', labelKey: 'nav.sla', defaultCategory: 'business', match: p => p.startsWith('/sla') },
+    { id: 'report', href: '/report', icon: '📈', label: '报表看板', labelKey: 'nav.report', defaultCategory: 'business', match: p => p.startsWith('/report') },
+    { id: 'expedite', href: '/expedite', icon: '⚡', label: '一键催办', labelKey: 'nav.expedite', defaultCategory: 'business', match: p => p.startsWith('/expedite') },
+    { id: 'monthly', href: '/monthly', icon: '📅', label: '月报页面', labelKey: 'nav.monthly', defaultCategory: 'business', match: p => p.startsWith('/monthly') },
+    { id: 'frt', href: '/frt', icon: '📊', label: 'FRT核算', labelKey: 'nav.frt', defaultCategory: 'audit', match: p => p.startsWith('/frt') },
+    { id: 'praudit', href: '/praudit', icon: '📋', label: 'PR稽查', labelKey: 'nav.praudit', defaultCategory: 'audit', match: p => p.startsWith('/praudit') },
+    { id: 'storage', href: '/storage', icon: '💽', label: '迁移状态', labelKey: 'nav.storage', defaultCategory: 'system', match: p => p.startsWith('/storage') },
+    { id: 'db-explorer', href: '/db-explorer', icon: '🗄️', label: '数据探索', labelKey: 'nav.dbExplorer', defaultCategory: 'system', match: p => p.startsWith('/db-explorer') }
 ];
 
 const NAV_DEFAULT_SETTINGS = {
     primaryIds: ['home', 'uivf12', 'sla', 'report', 'expedite', 'monthly'],
     categories: [
-        { id: 'business', name: '业务工具' },
-        { id: 'audit', name: '审计与核算' },
-        { id: 'system', name: '系统治理' },
-        { id: 'custom', name: '自定义工具' }
+        { id: 'business', name: '业务工具', nameEn: 'Business Tools', nameKey: 'nav.category.business' },
+        { id: 'audit', name: '审计与核算', nameEn: 'Audit & KPI', nameKey: 'nav.category.audit' },
+        { id: 'system', name: '系统治理', nameEn: 'System Governance', nameKey: 'nav.category.system' },
+        { id: 'custom', name: '自定义工具', nameEn: 'Custom Tools', nameKey: 'nav.category.custom' }
     ],
     categoryByItem: { frt: 'audit', praudit: 'audit', storage: 'system', 'db-explorer': 'system' },
     itemOrder: ['frt', 'praudit', 'storage', 'db-explorer']
@@ -38,6 +38,339 @@ let navState = {
     remoteBackupSaveTimer: null
 };
 
+function navT(key, params) {
+    return window.ToolsI18n ? window.ToolsI18n.t(key, params) : key;
+}
+
+function getNavLabel(item) {
+    return item.labelKey && window.ToolsI18n ? navT(item.labelKey) : item.label;
+}
+
+function getNavCategoryName(cat) {
+    if (!window.ToolsI18n) return cat.name;
+    const lang = window.ToolsI18n.getLanguage();
+    if (cat.nameKey) return navT(cat.nameKey);
+    const inferredKey = `nav.category.${cat.id}`;
+    const inferred = navT(inferredKey);
+    if (inferred !== inferredKey) return inferred;
+    if (lang === 'en-US' && cat.nameEn) return cat.nameEn;
+    return cat.name;
+}
+
+function registerNavbarI18n() {
+    if (!window.ToolsI18n) return;
+    window.ToolsI18n.register('navbar', {
+        'zh-CN': {
+            'nav.home': '工具中台',
+            'nav.uivf12': '数据抓取',
+            'nav.sla': '数据导入',
+            'nav.report': '报表看板',
+            'nav.expedite': '一键催办',
+            'nav.monthly': '月报页面',
+            'nav.frt': 'FRT核算',
+            'nav.praudit': 'PR稽查',
+            'nav.storage': '迁移状态',
+            'nav.dbExplorer': '数据探索',
+            'nav.more': '更多工具',
+            'nav.requirements': '需求',
+            'nav.settings': '全局导航设置',
+            'nav.userPrefix': '👤 {user}',
+            'nav.logout': '退出',
+            'nav.online': '服务在线',
+            'nav.offline': '离线',
+            'nav.language': '语言',
+            'nav.languageTitle': '切换语言',
+            'nav.category.business': '业务工具',
+            'nav.category.audit': '审计与核算',
+            'nav.category.system': '系统治理',
+            'nav.category.custom': '自定义工具',
+            'nav.uncategorized': '未分类',
+            'nav.empty': '暂无更多工具',
+            'nav.customTool': '自定义工具',
+            'nav.set.title': '全局设置',
+            'nav.set.tab.primary': '顶部菜单',
+            'nav.set.tab.categories': '二级分类',
+            'nav.set.tab.items': '分类与顺序',
+            'nav.set.tab.ai': 'AI 助手',
+            'nav.set.tab.backup': '备份恢复',
+            'nav.set.tab.accounts': '账号管理',
+            'nav.set.tab.pages': '页面配置',
+            'nav.set.saved': '已自动保存',
+            'nav.set.saving': '正在自动保存...',
+            'nav.set.saveFail': '保存失败: ',
+            'nav.set.loaded': '已加载',
+            'nav.set.pageConfig': '{page}配置',
+            'nav.set.sub.primary': '修改后会自动保存，并立即影响顶部导航。',
+            'nav.set.sub.categories': '修改后会自动保存，并立即影响“更多工具”的分类展示。',
+            'nav.set.sub.items': '修改后会自动保存，并立即影响“更多工具”的分组与排序。',
+            'nav.set.sub.ai': '修改后会自动保存，并立即影响智能客服助手配置。',
+            'nav.set.sub.backup': '备份和恢复会覆盖全局配置、数据库、上传附件与自定义工具数据。',
+            'nav.set.sub.accounts': '修改后会自动保存，并立即影响账号权限。',
+            'nav.set.sub.report': '报表看板相关维护能力，当前支持历史快照冗余清理。',
+            'nav.set.sub.pageFallback': '该页面的配置预留位，后续可把页面内相关设置迁移到这里统一管理。',
+            'nav.set.help.primary': '勾选后显示在顶部 bar；未勾选的菜单会进入“更多工具”。使用上下按钮调整顶部显示顺序。',
+            'nav.set.help.categories': '分类会显示在“更多工具”下拉菜单中。配置英文名称后，系统会在英文模式下自动应用。',
+            'nav.set.help.items': '这里管理“更多工具”里的二级分类和分类内顺序。顶部直显菜单不会出现在此列表中。',
+            'nav.set.btn.up': '上移',
+            'nav.set.btn.down': '下移',
+            'nav.set.btn.delete': '删除',
+            'nav.set.btn.addCategory': '新增分类',
+            'nav.set.emptyItems': '暂无更多工具菜单。',
+            'nav.set.placeholder.zh': '中文名称',
+            'nav.set.placeholder.en': 'English Name',
+            'nav.set.newCategory': '新分类',
+
+            'nav.page.placeholderTitle': '{page}配置预留位',
+            'nav.page.placeholderDesc': '当前暂无需要迁移到全局设置的配置项。后续如果该页面新增全局级设置，可以直接放在这里。',
+            'nav.page.report.help': '清理“历史快照 (Snapshot)”中最近 X 天内的同日冗余快照，仅保留每天最新一份。较早日期和每天最新快照都会保留，不影响月报、一键催办等按日读取最新快照的业务。',
+            'nav.page.report.title': '历史快照冗余清理',
+            'nav.page.report.desc': '建议先“预览影响”，确认要删除的数量后再执行清理。',
+            'nav.page.report.cleanLast': '清理最近',
+            'nav.page.report.days': '天内冗余快照',
+            'nav.page.report.btnPreview': '预览影响',
+            'nav.page.report.btnRun': '执行清理',
+            'nav.page.report.wait': '等待预览。',
+            'nav.page.report.res.preview': '预览结果',
+            'nav.page.report.res.done': '清理完成',
+            'nav.page.report.res.summary': '范围：最近 {days} 天；清理前 {beforeCount} 条，清理后 {afterCount} 条，预计/实际删除 {removedCount} 条。',
+            'nav.page.report.res.kept': '保留的最近日期每日最新快照：{keptDailyCount} 天。',
+            'nav.page.report.res.empty': '没有需要清理的冗余快照。',
+            'nav.page.report.res.more': '仅展示前 8 条，剩余 {remaining} 条未展开。',
+
+            'nav.ai.empty': '正在加载 AI 助手配置...',
+            'nav.ai.help': '这里配置右下角智能客服助手。Token 会保存到服务端，前端只显示脱敏状态；环境变量 GEMINI_API_KEY 仍会作为兜底。',
+            'nav.ai.sourcePrefix': '当前 Token 来源：',
+            'nav.ai.srcStored': '设置中心保存的 Token',
+            'nav.ai.srcEnv': '环境变量 GEMINI_API_KEY',
+            'nav.ai.srcNone': '未配置',
+            'nav.ai.keyNone': '尚未配置 Token',
+            'nav.ai.keyInvalid': '格式疑似无效 ',
+            'nav.ai.keyValid': '已配置 ',
+            'nav.ai.lblToken': 'API Token',
+            'nav.ai.plhToken': '点击后粘贴 Gemini API Token',
+            'nav.ai.plhKeep': '留空则保持当前：',
+            'nav.ai.btnClear': '清除 Token',
+            'nav.ai.lblModel': '模型名称',
+            'nav.ai.lblMax': '最大输出 Tokens',
+            'nav.ai.lblInputCost': '输入成本 USD / 1M Tokens',
+            'nav.ai.lblOutputCost': '输出成本 USD / 1M Tokens',
+            'nav.ai.lblUsdCny': '美元兑人民币',
+            'nav.ai.lblPrompt': '补充系统提示词',
+            'nav.ai.plhPrompt': '例如：回答优先使用中文，涉及平台操作时给出步骤。',
+            'nav.ai.failLoad': '加载 AI 助手配置失败：',
+            'nav.ai.saving': '正在保存 AI 设置...',
+            'nav.ai.saved': 'AI 设置已自动保存',
+            'nav.ai.waitSave': 'AI 设置待保存...',
+
+            'nav.bk.empty': '正在加载备份列表...',
+            'nav.bk.help': '覆盖范围：{target}。包含全局配置、JSON 数据、SQLite 数据库、上传附件、自定义工具 HTML 等运行数据。',
+            'nav.bk.remoteTitle': '远端主站同步',
+            'nav.bk.remoteDesc': '适合分站/Windows 本地启动时，从主站自动拉取最新全局备份并恢复。配置只保存在当前机器，不会被备份包覆盖。',
+            'nav.bk.enable': '启用',
+            'nav.bk.remoteDomain': '远端网站域名',
+            'nav.bk.remoteUser': '账号',
+            'nav.bk.remotePwd': '密码',
+            'nav.bk.plhPwd': '填写远端登录密码',
+            'nav.bk.optCompare': '比较备份新旧，未更新则跳过',
+            'nav.bk.optPull': '拉取前请求主站立即生成备份',
+            'nav.bk.optAuto': '启动时自动恢复最新备份',
+            'nav.bk.stLocal': '时间显示：浏览器本地时区（{tz}）',
+            'nav.bk.stCheck': '最近检查：',
+            'nav.bk.stSync': '最近恢复：',
+            'nav.bk.stError': '最近错误：',
+            'nav.bk.btnCheck': '测试连接/检查最新',
+            'nav.bk.btnPull': '按规则拉取恢复',
+            'nav.bk.btnForce': '强制恢复远端最新',
+            'nav.bk.btnClearPwd': '清除密码',
+            'nav.bk.svrTitle': '服务器备份',
+            'nav.bk.svrDesc': '生成后会保存在服务器，也可以直接下载到本地留档。',
+            'nav.bk.btnCreate': '生成服务器备份',
+            'nav.bk.btnCreateDL': '生成并下载',
+            'nav.bk.upTitle': '上传备份包恢复',
+            'nav.bk.upDesc': '仅接受平台生成的全局备份 zip 包；恢复前会自动创建 pre-restore 安全备份。',
+            'nav.bk.btnUp': '上传并恢复',
+            'nav.bk.badgeSync': '外部同步触发',
+            'nav.bk.badgeSafe': '恢复前安全备份',
+            'nav.bk.fail': '加载备份列表失败：',
+            'nav.bk.dlTitle': '下载备份',
+            'nav.bk.rsTitle': '从该备份恢复',
+            'nav.bk.delTitle': '永久删除此备份',
+            'nav.bk.thFile': '备份文件',
+            'nav.bk.thAction': '操作',
+            'nav.bk.noData': '暂无服务器备份',
+
+            'nav.acc.empty': '正在加载账号列表...',
+            'nav.acc.admin': '超级管理',
+            'nav.acc.readonly': '只读用户',
+            'nav.acc.help': '账号权限用于控制平台写入类操作。新增或调整后立即生效。',
+            'nav.acc.plhUser': '输入新用户名',
+            'nav.acc.plhPwd': '设置密码',
+            'nav.acc.btnAdd': '新增账号',
+            'nav.acc.thUser': '账号名称',
+            'nav.acc.thRole': '权限角色',
+            'nav.acc.thAction': '快捷操作',
+            'nav.acc.noData': '暂无账号',
+            'nav.acc.fail': '加载账号失败：',
+            'nav.acc.btnDel': '删除',
+            'nav.acc.btnReset': '重置密码'
+        },
+        'en-US': {
+            'nav.home': 'Home',
+            'nav.uivf12': 'Data Capture',
+            'nav.sla': 'Data Import',
+            'nav.report': 'Reports',
+            'nav.expedite': 'Expedite',
+            'nav.monthly': 'Monthly',
+            'nav.frt': 'FRT KPI',
+            'nav.praudit': 'PR Audit',
+            'nav.storage': 'Migration',
+            'nav.dbExplorer': 'Data Explorer',
+            'nav.more': 'More Tools',
+            'nav.requirements': 'Requests',
+            'nav.settings': 'Global navigation settings',
+            'nav.userPrefix': '👤 {user}',
+            'nav.logout': 'Logout',
+            'nav.online': 'Online',
+            'nav.offline': 'Offline',
+            'nav.language': 'Language',
+            'nav.languageTitle': 'Switch language',
+            'nav.category.business': 'Business Tools',
+            'nav.category.audit': 'Audit & KPI',
+            'nav.category.system': 'System Governance',
+            'nav.category.custom': 'Custom Tools',
+            'nav.uncategorized': 'Uncategorized',
+            'nav.empty': 'No more tools',
+            'nav.customTool': 'Custom Tool',
+            'nav.set.title': 'Global Settings',
+            'nav.set.tab.primary': 'Top Menu',
+            'nav.set.tab.categories': 'Categories',
+            'nav.set.tab.items': 'Items & Order',
+            'nav.set.tab.ai': 'AI Assistant',
+            'nav.set.tab.backup': 'Backup & Restore',
+            'nav.set.tab.accounts': 'Accounts',
+            'nav.set.tab.pages': 'Page Settings',
+            'nav.set.saved': 'Saved automatically',
+            'nav.set.saving': 'Saving automatically...',
+            'nav.set.saveFail': 'Save failed: ',
+            'nav.set.loaded': 'Loaded',
+            'nav.set.pageConfig': '{page} Config',
+            'nav.set.sub.primary': 'Changes are saved automatically and immediately applied to the top navigation.',
+            'nav.set.sub.categories': 'Changes are saved automatically and immediately applied to the category display in "More Tools".',
+            'nav.set.sub.items': 'Changes are saved automatically and immediately applied to the grouping and ordering in "More Tools".',
+            'nav.set.sub.ai': 'Changes are saved automatically and immediately applied to the AI Assistant configuration.',
+            'nav.set.sub.backup': 'Backup and restore will overwrite global configuration, database, uploaded files, and custom tools data.',
+            'nav.set.sub.accounts': 'Changes are saved automatically and immediately applied to account permissions.',
+            'nav.set.sub.report': 'Report dashboard maintenance. Currently supports historical snapshot cleanup.',
+            'nav.set.sub.pageFallback': "Placeholder for this page's configuration. Future page settings can be managed here.",
+            'nav.set.help.primary': 'Checked items appear in the top bar; unchecked items move to "More Tools". Use up/down buttons to reorder.',
+            'nav.set.help.categories': 'Categories are displayed in the "More Tools" dropdown. English names will apply automatically in English mode.',
+            'nav.set.help.items': 'Manage sub-categories and their ordering in "More Tools". Direct top menu items do not appear here.',
+            'nav.set.btn.up': 'Up',
+            'nav.set.btn.down': 'Down',
+            'nav.set.btn.delete': 'Delete',
+            'nav.set.btn.addCategory': 'Add Category',
+            'nav.set.emptyItems': 'No more tools available.',
+            'nav.set.placeholder.zh': 'Chinese Name',
+            'nav.set.placeholder.en': 'English Name',
+            'nav.set.newCategory': 'New Category',
+
+            'nav.page.placeholderTitle': '{page} Configuration Placeholder',
+            'nav.page.placeholderDesc': 'There are currently no configuration items to migrate to global settings. Future global settings for this page will be placed here.',
+            'nav.page.report.help': 'Clean up redundant same-day historical snapshots from the last X days, keeping only the latest snapshot per day. Older dates and daily latest snapshots are retained to ensure daily-read business metrics are unaffected.',
+            'nav.page.report.title': 'Redundant Historical Snapshot Cleanup',
+            'nav.page.report.desc': 'We recommend "Previewing Impact" to confirm the deletion count before executing cleanup.',
+            'nav.page.report.cleanLast': 'Clean up the last',
+            'nav.page.report.days': 'days of redundant snapshots',
+            'nav.page.report.btnPreview': 'Preview Impact',
+            'nav.page.report.btnRun': 'Execute Cleanup',
+            'nav.page.report.wait': 'Waiting for preview.',
+            'nav.page.report.res.preview': 'Preview Result',
+            'nav.page.report.res.done': 'Cleanup Complete',
+            'nav.page.report.res.summary': 'Scope: last {days} days; Before: {beforeCount}, After: {afterCount}, Removed (est./actual): {removedCount}.',
+            'nav.page.report.res.kept': 'Retained daily latest snapshots for recent dates: {keptDailyCount} days.',
+            'nav.page.report.res.empty': 'No redundant snapshots to clean up.',
+            'nav.page.report.res.more': 'Only showing the first 8 items, {remaining} items hidden.',
+
+            'nav.ai.empty': 'Loading AI configuration...',
+            'nav.ai.help': 'Configure the AI Assistant (bottom right). The API token is stored on the server securely. GEMINI_API_KEY environment variable acts as a fallback.',
+            'nav.ai.sourcePrefix': 'Current Token Source: ',
+            'nav.ai.srcStored': 'Stored in Settings',
+            'nav.ai.srcEnv': 'Environment Variable',
+            'nav.ai.srcNone': 'Not Configured',
+            'nav.ai.keyNone': 'No Token Configured',
+            'nav.ai.keyInvalid': 'Format seems invalid ',
+            'nav.ai.keyValid': 'Configured ',
+            'nav.ai.lblToken': 'API Token',
+            'nav.ai.plhToken': 'Click to paste Gemini API Token',
+            'nav.ai.plhKeep': 'Leave empty to keep current: ',
+            'nav.ai.btnClear': 'Clear Token',
+            'nav.ai.lblModel': 'Model Name',
+            'nav.ai.lblMax': 'Max Output Tokens',
+            'nav.ai.lblInputCost': 'Input Cost (USD / 1M)',
+            'nav.ai.lblOutputCost': 'Output Cost (USD / 1M)',
+            'nav.ai.lblUsdCny': 'USD to CNY Exchange Rate',
+            'nav.ai.lblPrompt': 'Supplemental System Prompt',
+            'nav.ai.plhPrompt': 'e.g. Please respond in English and provide step-by-step instructions.',
+            'nav.ai.failLoad': 'Failed to load AI configuration: ',
+            'nav.ai.saving': 'Saving AI settings...',
+            'nav.ai.saved': 'AI settings saved automatically',
+            'nav.ai.waitSave': 'AI settings waiting to save...',
+
+            'nav.bk.empty': 'Loading backup list...',
+            'nav.bk.help': 'Scope: {target}. Includes global configuration, JSON data, SQLite databases, uploaded files, and custom tool HTML.',
+            'nav.bk.remoteTitle': 'Remote Main Site Sync',
+            'nav.bk.remoteDesc': 'Suitable for local branch syncs from the main site. Settings are saved locally and not overwritten by backups.',
+            'nav.bk.enable': 'Enable',
+            'nav.bk.remoteDomain': 'Remote Domain',
+            'nav.bk.remoteUser': 'Username',
+            'nav.bk.remotePwd': 'Password',
+            'nav.bk.plhPwd': 'Enter remote login password',
+            'nav.bk.optCompare': 'Compare before restore, skip if not updated',
+            'nav.bk.optPull': 'Request immediate backup generation on main site before pulling',
+            'nav.bk.optAuto': 'Auto-restore latest backup on startup',
+            'nav.bk.stLocal': 'Time displayed in local timezone ({tz})',
+            'nav.bk.stCheck': 'Last Check: ',
+            'nav.bk.stSync': 'Last Sync: ',
+            'nav.bk.stError': 'Last Error: ',
+            'nav.bk.btnCheck': 'Test Connection / Check Latest',
+            'nav.bk.btnPull': 'Pull & Restore by Rules',
+            'nav.bk.btnForce': 'Force Restore Remote Latest',
+            'nav.bk.btnClearPwd': 'Clear Password',
+            'nav.bk.svrTitle': 'Server Backup',
+            'nav.bk.svrDesc': 'Backups are saved on the server and can be downloaded locally.',
+            'nav.bk.btnCreate': 'Create Server Backup',
+            'nav.bk.btnCreateDL': 'Create & Download',
+            'nav.bk.upTitle': 'Restore from Upload',
+            'nav.bk.upDesc': 'Accepts only platform-generated backup zip files. Creates a pre-restore safety backup.',
+            'nav.bk.btnUp': 'Upload & Restore',
+            'nav.bk.badgeSync': 'Remote Sync',
+            'nav.bk.badgeSafe': 'Safety Backup',
+            'nav.bk.fail': 'Failed to load backups: ',
+            'nav.bk.dlTitle': 'Download Backup',
+            'nav.bk.rsTitle': 'Restore from this backup',
+            'nav.bk.delTitle': 'Permanently delete this backup',
+            'nav.bk.thFile': 'Backup File',
+            'nav.bk.thAction': 'Action',
+            'nav.bk.noData': 'No Server Backups',
+
+            'nav.acc.empty': 'Loading accounts...',
+            'nav.acc.admin': 'Admin',
+            'nav.acc.readonly': 'Readonly',
+            'nav.acc.help': 'Account permissions control write operations on the platform. Takes effect immediately.',
+            'nav.acc.plhUser': 'New Username',
+            'nav.acc.plhPwd': 'Set Password',
+            'nav.acc.btnAdd': 'Add Account',
+            'nav.acc.thUser': 'Username',
+            'nav.acc.thRole': 'Role',
+            'nav.acc.thAction': 'Actions',
+            'nav.acc.noData': 'No Accounts',
+            'nav.acc.fail': 'Failed to load accounts: ',
+            'nav.acc.btnDel': 'Delete',
+            'nav.acc.btnReset': 'Reset Password'
+        }
+    });
+}
+
 function navEscape(value) {
     return String(value ?? '')
         .replace(/&/g, '&amp;')
@@ -53,9 +386,15 @@ function getAuthHeaderForNav() {
 }
 
 function normalizeNavSettings(settings = {}) {
+    const cats = Array.isArray(settings.categories) && settings.categories.length ? settings.categories.map(cat => {
+        const defCat = NAV_DEFAULT_SETTINGS.categories.find(c => c.id === cat.id);
+        if (defCat && !cat.nameEn) cat.nameEn = defCat.nameEn;
+        return cat;
+    }) : NAV_DEFAULT_SETTINGS.categories.slice();
+
     return {
         primaryIds: Array.isArray(settings.primaryIds) ? settings.primaryIds.map(String) : NAV_DEFAULT_SETTINGS.primaryIds.slice(),
-        categories: Array.isArray(settings.categories) && settings.categories.length ? settings.categories : NAV_DEFAULT_SETTINGS.categories.slice(),
+        categories: cats,
         categoryByItem: settings.categoryByItem && typeof settings.categoryByItem === 'object' ? { ...settings.categoryByItem } : { ...NAV_DEFAULT_SETTINGS.categoryByItem },
         itemOrder: Array.isArray(settings.itemOrder) ? settings.itemOrder.map(String) : NAV_DEFAULT_SETTINGS.itemOrder.slice()
     };
@@ -66,7 +405,7 @@ function getAllNavItems() {
         id: `custom:${tool.slug}`,
         href: tool.href,
         icon: tool.icon || '🧩',
-        label: tool.name || '自定义工具',
+        label: tool.name || navT('nav.customTool'),
         defaultCategory: 'custom',
         match: p => p === tool.href || p.startsWith(`${tool.href}/`)
     }));
@@ -79,13 +418,14 @@ function sortNavItems(items, orderIds) {
         const ai = order.has(a.id) ? order.get(a.id) : 9999;
         const bi = order.has(b.id) ? order.get(b.id) : 9999;
         if (ai !== bi) return ai - bi;
-        return a.label.localeCompare(b.label, 'zh-CN');
+        const locale = window.ToolsI18n?.getLanguage?.() || 'zh-CN';
+        return getNavLabel(a).localeCompare(getNavLabel(b), locale);
     });
 }
 
 function renderNavItem(item, className) {
     const path = window.location.pathname;
-    return `<a href="${item.href}" class="${className} ${item.match(path) ? 'active' : ''}" data-nav-item-id="${navEscape(item.id)}">${item.icon} ${navEscape(item.label)}</a>`;
+    return `<a href="${item.href}" class="${className} ${item.match(path) ? 'active' : ''}" data-nav-item-id="${navEscape(item.id)}">${item.icon} ${navEscape(getNavLabel(item))}</a>`;
 }
 
 function renderNavLinksFromState() {
@@ -108,7 +448,7 @@ function renderNavLinksFromState() {
     }
     overflowItems.forEach(item => {
         const catId = settings.categoryByItem[item.id] || item.defaultCategory || 'custom';
-        if (!categoryMap.has(catId)) categoryMap.set(catId, { id: catId, name: '未分类', items: [] });
+        if (!categoryMap.has(catId)) categoryMap.set(catId, { id: catId, name: navT('nav.uncategorized'), items: [] });
         categoryMap.get(catId).items.push(item);
     });
 
@@ -116,11 +456,11 @@ function renderNavLinksFromState() {
         .filter(cat => cat.items.length)
         .map(cat => `
             <div class="nav-more-category">
-                <div class="nav-more-section-label">${navEscape(cat.name)}</div>
+                <div class="nav-more-section-label">${navEscape(getNavCategoryName(cat))}</div>
                 ${cat.items.map(item => renderNavItem(item, 'nav-more-item')).join('')}
             </div>
         `).join('');
-    menuEl.innerHTML = menuHtml || '<div class="nav-more-empty">暂无更多工具</div>';
+    menuEl.innerHTML = menuHtml || `<div class="nav-more-empty">${navEscape(navT('nav.empty'))}</div>`;
 }
 
 async function loadNavigationData() {
@@ -165,23 +505,27 @@ function renderNavbar() {
         <div class="nav-divider"></div>
         <div class="nav-links"></div>
         <div class="nav-more" id="navMore">
-            <button type="button" class="nav-more-btn" id="navMoreBtn" onclick="toggleNavMore(event)">更多工具 ▾</button>
+            <button type="button" class="nav-more-btn" id="navMoreBtn" onclick="toggleNavMore(event)">${navEscape(navT('nav.more'))} ▾</button>
             <div class="nav-more-menu" id="navMoreMenu"></div>
         </div>
         <div style="flex:1"></div>
         
-        <div style="display:flex; align-items:center; gap:4px; font-size:11px; font-weight:600; color:#e2e8f0;">
-            <a href="/requirements" class="req-btn" style="text-decoration:none; color:#fff; background: linear-gradient(135deg, #00b09b, #96c93d); padding:3px 8px; border-radius:4px; font-size:11px; font-weight:bold; box-shadow:0 2px 4px rgba(0,176,155,0.3); display:flex; align-items:center; gap:4px; transition:transform 0.2s;">🎯 需求</a>
-            ${role === 'admin' ? '<button type="button" class="nav-gear-btn" onclick="openNavSettingsModal()" title="全局导航设置">⚙</button>' : ''}
-            <span style="color:#38bdf8; background:rgba(56,189,248,0.15); padding:3px 8px; border-radius:4px; border:1px solid rgba(56,189,248,0.3); font-size:11px;">👤 ${user || '未登录'}</span>
-            <a href="#" onclick="doLogout()" onmouseover="this.style.background='rgba(239,68,68,0.25)'" onmouseout="this.style.background='rgba(239,68,68,0.15)'" style="text-decoration:none; color:#fca5a5; background:rgba(239,68,68,0.15); padding:3px 8px; border-radius:4px; border:1px solid rgba(239,68,68,0.3); font-size:11px; transition:background 0.2s;">退出</a>
+        <div class="nav-actions">
+            <button type="button" class="nav-lang-toggle" onclick="toggleAppLanguage()" title="${navEscape(navT('nav.languageTitle'))}" aria-label="${navEscape(navT('nav.languageTitle'))}">
+                <span class="nav-lang-icon">🌐</span>
+                <span class="nav-lang-current">${window.ToolsI18n?.getLanguage?.() === 'en-US' ? 'EN' : '中文'}</span>
+            </button>
+            <a href="/requirements" class="req-btn nav-action-link">🎯 ${navEscape(navT('nav.requirements'))}</a>
+            ${role === 'admin' ? `<button type="button" class="nav-gear-btn" onclick="openNavSettingsModal()" title="${navEscape(navT('nav.settings'))}">⚙</button>` : ''}
+            <span class="nav-user-chip">${navEscape(navT('nav.userPrefix', { user: user || '未登录' }))}</span>
+            <a href="#" class="nav-logout-link" onclick="doLogout()">${navEscape(navT('nav.logout'))}</a>
         </div>
 
         <div class="nav-status" style="margin-left:20px; display:flex; align-items:center; gap:12px;">
             <div style="font-size:11px; color:#64748b; background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; font-family:monospace; letter-spacing:0.5px;" id="nav-resource-version-display"></div>
             <div style="display:flex; align-items:center; gap:6px;">
                 <div class="status-dot"></div>
-                <span id="server-status-text">服务在线</span>
+                <span id="server-status-text">${navEscape(navT('nav.online'))}</span>
             </div>
         </div>
     `;
@@ -208,6 +552,25 @@ function renderNavbar() {
 
 window.refreshCustomToolNavLinks = loadNavigationData;
 
+window.toggleAppLanguage = function () {
+    if (window.ToolsI18n) window.ToolsI18n.toggleLanguage();
+};
+
+window.addEventListener('tools:languagechange', () => {
+    registerNavbarI18n();
+    const existingNav = document.getElementById('app-navbar');
+    if (existingNav) existingNav.remove();
+    renderNavbar();
+    renderNavLinksFromState();
+    
+    // Also re-render the modal shell if it's open, to update the sidebar language without losing the open state
+    const modal = document.getElementById('navSettingsModal');
+    if (modal && modal.style.display !== 'none') {
+        renderNavSettingsSidebar();
+        renderNavSettingsContent();
+    }
+});
+
 window.toggleNavMore = function (event) {
     event.preventDefault();
     event.stopPropagation();
@@ -222,7 +585,7 @@ document.addEventListener('click', (event) => {
 function scheduleNavSettingsSave() {
     renderNavLinksFromState();
     const indicator = document.getElementById('navSettingsSaveState');
-    if (indicator) indicator.textContent = '正在自动保存...';
+    if (indicator) indicator.textContent = navT('nav.set.saving');
     clearTimeout(navState.saveTimer);
     navState.saveTimer = setTimeout(async () => {
         try {
@@ -236,9 +599,9 @@ function scheduleNavSettingsSave() {
             });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             navState.settings = normalizeNavSettings(await res.json());
-            if (indicator) indicator.textContent = '已自动保存';
+            if (indicator) indicator.textContent = navT('nav.set.saved');
         } catch (e) {
-            if (indicator) indicator.textContent = `保存失败: ${e.message}`;
+            if (indicator) indicator.textContent = navT('nav.set.saveFail') + e.message;
         }
     }, 420);
 }
@@ -254,8 +617,25 @@ function moveArrayItem(arr, index, delta) {
 
 function renderPageSettingsTabs() {
     return NAV_BUILTIN_LINKS.map(item => `
-        <button class="nav-settings-tab nav-settings-tab-page" data-tab="page:${navEscape(item.id)}" onclick="switchNavSettingsTab('page:${navEscape(item.id)}')">${item.icon} ${navEscape(item.label)}</button>
+        <button class="nav-settings-tab nav-settings-tab-page ${navState.settingsTab === `page:${item.id}` ? 'active' : ''}" data-tab="page:${navEscape(item.id)}" onclick="switchNavSettingsTab('page:${navEscape(item.id)}')">${item.icon} ${navEscape(getNavLabel(item))}</button>
     `).join('');
+}
+
+function renderNavSettingsSidebar() {
+    const sidebar = document.querySelector('.nav-settings-sidebar');
+    if (!sidebar) return;
+    const t = navState.settingsTab;
+    sidebar.innerHTML = `
+        <div class="nav-settings-title">${navEscape(navT('nav.set.title'))}</div>
+        <button class="nav-settings-tab ${t === 'primary' ? 'active' : ''}" data-tab="primary" onclick="switchNavSettingsTab('primary')">${navEscape(navT('nav.set.tab.primary'))}</button>
+        <button class="nav-settings-tab ${t === 'categories' ? 'active' : ''}" data-tab="categories" onclick="switchNavSettingsTab('categories')">${navEscape(navT('nav.set.tab.categories'))}</button>
+        <button class="nav-settings-tab ${t === 'items' ? 'active' : ''}" data-tab="items" onclick="switchNavSettingsTab('items')">${navEscape(navT('nav.set.tab.items'))}</button>
+        <button class="nav-settings-tab ${t === 'ai' ? 'active' : ''}" data-tab="ai" onclick="switchNavSettingsTab('ai')">${navEscape(navT('nav.set.tab.ai'))}</button>
+        <button class="nav-settings-tab ${t === 'backup' ? 'active' : ''}" data-tab="backup" onclick="switchNavSettingsTab('backup')">${navEscape(navT('nav.set.tab.backup'))}</button>
+        <button class="nav-settings-tab ${t === 'accounts' ? 'active' : ''}" data-tab="accounts" onclick="switchNavSettingsTab('accounts')">${navEscape(navT('nav.set.tab.accounts'))}</button>
+        <div class="nav-settings-title nav-settings-section-title">${navEscape(navT('nav.set.tab.pages'))}</div>
+        ${renderPageSettingsTabs()}
+    `;
 }
 
 function openNavSettingsModal() {
@@ -267,25 +647,15 @@ function openNavSettingsModal() {
         modal.className = 'nav-settings-modal';
         modal.innerHTML = `
             <div class="nav-settings-window">
-                <div class="nav-settings-sidebar">
-                    <div class="nav-settings-title">全局设置</div>
-                    <button class="nav-settings-tab active" data-tab="primary" onclick="switchNavSettingsTab('primary')">顶部菜单</button>
-                    <button class="nav-settings-tab" data-tab="categories" onclick="switchNavSettingsTab('categories')">二级分类</button>
-                    <button class="nav-settings-tab" data-tab="items" onclick="switchNavSettingsTab('items')">分类与顺序</button>
-                    <button class="nav-settings-tab" data-tab="ai" onclick="switchNavSettingsTab('ai')">AI 助手</button>
-                    <button class="nav-settings-tab" data-tab="backup" onclick="switchNavSettingsTab('backup')">备份恢复</button>
-                    <button class="nav-settings-tab" data-tab="accounts" onclick="switchNavSettingsTab('accounts')">账号管理</button>
-                    <div class="nav-settings-title nav-settings-section-title">页面配置</div>
-                    ${renderPageSettingsTabs()}
-                </div>
+                <div class="nav-settings-sidebar"></div>
                 <div class="nav-settings-main">
                     <button class="nav-settings-close" onclick="closeNavSettingsModal()">×</button>
                     <div class="nav-settings-head">
                         <div>
-                            <div class="nav-settings-heading" id="navSettingsHeading">顶部菜单</div>
-                            <div class="nav-settings-subtitle" id="navSettingsSubtitle">修改后会自动保存，并立即影响顶部导航。</div>
+                            <div class="nav-settings-heading" id="navSettingsHeading"></div>
+                            <div class="nav-settings-subtitle" id="navSettingsSubtitle"></div>
                         </div>
-                        <div class="nav-settings-save-state" id="navSettingsSaveState">已加载</div>
+                        <div class="nav-settings-save-state" id="navSettingsSaveState">${navEscape(navT('nav.set.loaded'))}</div>
                     </div>
                     <div id="navSettingsContent"></div>
                 </div>
@@ -294,6 +664,7 @@ function openNavSettingsModal() {
         document.body.appendChild(modal);
     }
     modal.style.display = 'flex';
+    renderNavSettingsSidebar();
     renderNavSettingsContent();
 }
 
@@ -317,28 +688,28 @@ function getNavSettingsTitle() {
     if (navState.settingsTab.startsWith('page:')) {
         const pageId = navState.settingsTab.slice(5);
         const item = NAV_BUILTIN_LINKS.find(link => link.id === pageId);
-        return item ? `${item.label}配置` : '页面配置';
+        return item ? navT('nav.set.pageConfig', { page: getNavLabel(item) }) : navT('nav.set.tab.pages');
     }
-    if (navState.settingsTab === 'accounts') return '账号管理';
-    if (navState.settingsTab === 'ai') return 'AI 助手';
-    if (navState.settingsTab === 'backup') return '备份恢复';
-    if (navState.settingsTab === 'categories') return '二级分类';
-    if (navState.settingsTab === 'items') return '分类与顺序';
-    return '顶部菜单';
+    if (navState.settingsTab === 'accounts') return navT('nav.set.tab.accounts');
+    if (navState.settingsTab === 'ai') return navT('nav.set.tab.ai');
+    if (navState.settingsTab === 'backup') return navT('nav.set.tab.backup');
+    if (navState.settingsTab === 'categories') return navT('nav.set.tab.categories');
+    if (navState.settingsTab === 'items') return navT('nav.set.tab.items');
+    return navT('nav.set.tab.primary');
 }
 
 function getNavSettingsSubtitle() {
     if (navState.settingsTab.startsWith('page:')) {
         const pageId = navState.settingsTab.slice(5);
-        if (pageId === 'report') return '报表看板相关维护能力，当前支持历史快照冗余清理。';
-        return '该页面的配置预留位，后续可把页面内相关设置迁移到这里统一管理。';
+        if (pageId === 'report') return navT('nav.set.sub.report');
+        return navT('nav.set.sub.pageFallback');
     }
-    if (navState.settingsTab === 'accounts') return '修改后会自动保存，并立即影响账号权限。';
-    if (navState.settingsTab === 'ai') return '修改后会自动保存，并立即影响智能客服助手配置。';
-    if (navState.settingsTab === 'backup') return '备份和恢复会覆盖全局配置、数据库、上传附件与自定义工具数据。';
-    if (navState.settingsTab === 'categories') return '修改后会自动保存，并立即影响“更多工具”的分类展示。';
-    if (navState.settingsTab === 'items') return '修改后会自动保存，并立即影响“更多工具”的分组与排序。';
-    return '修改后会自动保存，并立即影响顶部导航。';
+    if (navState.settingsTab === 'accounts') return navT('nav.set.sub.accounts');
+    if (navState.settingsTab === 'ai') return navT('nav.set.sub.ai');
+    if (navState.settingsTab === 'backup') return navT('nav.set.sub.backup');
+    if (navState.settingsTab === 'categories') return navT('nav.set.sub.categories');
+    if (navState.settingsTab === 'items') return navT('nav.set.sub.items');
+    return navT('nav.set.sub.primary');
 }
 
 function renderNavSettingsContent() {
@@ -348,6 +719,12 @@ function renderNavSettingsContent() {
     if (!content) return;
     if (heading) heading.textContent = getNavSettingsTitle();
     if (subtitle) subtitle.textContent = getNavSettingsSubtitle();
+
+    const indicator = document.getElementById('navSettingsSaveState');
+    if (indicator && (indicator.textContent === '已加载' || indicator.textContent === 'Loaded')) {
+        indicator.textContent = navT('nav.set.loaded');
+    }
+
     if (navState.settingsTab.startsWith('page:')) return renderPageSettings(content, navState.settingsTab.slice(5));
     if (navState.settingsTab === 'accounts') return renderAccountSettings(content);
     if (navState.settingsTab === 'ai') return renderAiSettings(content);
@@ -361,7 +738,7 @@ function renderPrimarySettings(content) {
     const items = sortNavItems(getAllNavItems(), navState.settings.primaryIds);
     const primaryIds = new Set(navState.settings.primaryIds || []);
     content.innerHTML = `
-        <div class="nav-settings-help">勾选后显示在顶部 bar；未勾选的菜单会进入“更多工具”。使用上下按钮调整顶部显示顺序。</div>
+        <div class="nav-settings-help">${navEscape(navT('nav.set.help.primary'))}</div>
         <div class="nav-settings-list">
             ${items.map(item => {
                 const index = navState.settings.primaryIds.indexOf(item.id);
@@ -369,11 +746,11 @@ function renderPrimarySettings(content) {
                     <div class="nav-settings-row">
                         <label class="nav-settings-check">
                             <input type="checkbox" ${primaryIds.has(item.id) ? 'checked' : ''} onchange="togglePrimaryNavItem('${navEscape(item.id)}', this.checked)">
-                            <span>${item.icon} ${navEscape(item.label)}</span>
+                            <span>${item.icon} ${navEscape(getNavLabel(item))}</span>
                         </label>
                         <div class="nav-settings-actions">
-                            <button onclick="movePrimaryNavItem('${navEscape(item.id)}', -1)" ${index <= 0 ? 'disabled' : ''}>上移</button>
-                            <button onclick="movePrimaryNavItem('${navEscape(item.id)}', 1)" ${index < 0 || index >= navState.settings.primaryIds.length - 1 ? 'disabled' : ''}>下移</button>
+                            <button onclick="movePrimaryNavItem('${navEscape(item.id)}', -1)" ${index <= 0 ? 'disabled' : ''}>${navEscape(navT('nav.set.btn.up'))}</button>
+                            <button onclick="movePrimaryNavItem('${navEscape(item.id)}', 1)" ${index < 0 || index >= navState.settings.primaryIds.length - 1 ? 'disabled' : ''}>${navEscape(navT('nav.set.btn.down'))}</button>
                         </div>
                     </div>
                 `;
@@ -402,26 +779,32 @@ window.movePrimaryNavItem = function (id, delta) {
 function renderCategorySettings(content) {
     const categories = navState.settings.categories || [];
     content.innerHTML = `
-        <div class="nav-settings-help">分类会显示在“更多工具”下拉菜单中。分类名称修改后自动保存。</div>
+        <div class="nav-settings-help">${navEscape(navT('nav.set.help.categories'))}</div>
         <div class="nav-settings-list">
             ${categories.map((cat, index) => `
-                <div class="nav-settings-row">
-                    <input class="nav-settings-input" value="${navEscape(cat.name)}" oninput="renameNavCategory('${navEscape(cat.id)}', this.value)">
-                    <div class="nav-settings-actions">
-                        <button onclick="moveNavCategory(${index}, -1)" ${index === 0 ? 'disabled' : ''}>上移</button>
-                        <button onclick="moveNavCategory(${index}, 1)" ${index === categories.length - 1 ? 'disabled' : ''}>下移</button>
-                        <button onclick="deleteNavCategory('${navEscape(cat.id)}')" ${categories.length <= 1 ? 'disabled' : ''}>删除</button>
+                <div class="nav-settings-row" style="flex-wrap: wrap; gap: 8px; padding-bottom: 12px;">
+                    <div style="display: flex; gap: 8px; flex: 1; min-width: 300px;">
+                        <input class="nav-settings-input" placeholder="${navEscape(navT('nav.set.placeholder.zh'))}" value="${navEscape(cat.name)}" oninput="renameNavCategory('${navEscape(cat.id)}', this.value, 'zh')">
+                        <input class="nav-settings-input" placeholder="${navEscape(navT('nav.set.placeholder.en'))}" value="${navEscape(cat.nameEn || '')}" oninput="renameNavCategory('${navEscape(cat.id)}', this.value, 'en')">
+                    </div>
+                    <div class="nav-settings-actions" style="margin-left: auto;">
+                        <button onclick="moveNavCategory(${index}, -1)" ${index === 0 ? 'disabled' : ''}>${navEscape(navT('nav.set.btn.up'))}</button>
+                        <button onclick="moveNavCategory(${index}, 1)" ${index === categories.length - 1 ? 'disabled' : ''}>${navEscape(navT('nav.set.btn.down'))}</button>
+                        <button onclick="deleteNavCategory('${navEscape(cat.id)}')" ${categories.length <= 1 ? 'disabled' : ''}>${navEscape(navT('nav.set.btn.delete'))}</button>
                     </div>
                 </div>
             `).join('')}
         </div>
-        <button class="nav-settings-add" onclick="addNavCategory()">新增分类</button>
+        <button class="nav-settings-add" onclick="addNavCategory()">${navEscape(navT('nav.set.btn.addCategory'))}</button>
     `;
 }
 
-window.renameNavCategory = function (id, name) {
+window.renameNavCategory = function (id, name, lang = 'zh') {
     const cat = (navState.settings.categories || []).find(item => item.id === id);
-    if (cat) cat.name = name.trim() || cat.name;
+    if (cat) {
+        if (lang === 'zh') cat.name = name.trim();
+        else if (lang === 'en') cat.nameEn = name.trim();
+    }
     scheduleNavSettingsSave();
 };
 
@@ -433,7 +816,7 @@ window.moveNavCategory = function (index, delta) {
 
 window.addNavCategory = function () {
     const id = `cat_${Date.now().toString(36)}`;
-    navState.settings.categories.push({ id, name: '新分类' });
+    navState.settings.categories.push({ id, name: navT('nav.set.newCategory') });
     renderNavSettingsContent();
     scheduleNavSettingsSave();
 };
@@ -457,23 +840,23 @@ function renderItemCategorySettings(content) {
     const items = sortNavItems(getAllNavItems().filter(item => !primaryIds.has(item.id)), settings.itemOrder);
     const categories = settings.categories || [];
     content.innerHTML = `
-        <div class="nav-settings-help">这里管理“更多工具”里的二级分类和分类内顺序。顶部直显菜单不会出现在此列表中。</div>
+        <div class="nav-settings-help">${navEscape(navT('nav.set.help.items'))}</div>
         <div class="nav-settings-list">
             ${items.map((item, index) => {
                 const selected = settings.categoryByItem[item.id] || item.defaultCategory || (categories[0] && categories[0].id) || '';
                 return `
                     <div class="nav-settings-row">
-                        <div class="nav-settings-item-name">${item.icon} ${navEscape(item.label)}</div>
+                        <div class="nav-settings-item-name">${item.icon} ${navEscape(getNavLabel(item))}</div>
                         <select class="nav-settings-select" onchange="setNavItemCategory('${navEscape(item.id)}', this.value)">
-                            ${categories.map(cat => `<option value="${navEscape(cat.id)}" ${cat.id === selected ? 'selected' : ''}>${navEscape(cat.name)}</option>`).join('')}
+                            ${categories.map(cat => `<option value="${navEscape(cat.id)}" ${cat.id === selected ? 'selected' : ''}>${navEscape(getNavCategoryName(cat))}</option>`).join('')}
                         </select>
                         <div class="nav-settings-actions">
-                            <button onclick="moveOverflowNavItem('${navEscape(item.id)}', -1)" ${index === 0 ? 'disabled' : ''}>上移</button>
-                            <button onclick="moveOverflowNavItem('${navEscape(item.id)}', 1)" ${index === items.length - 1 ? 'disabled' : ''}>下移</button>
+                            <button onclick="moveOverflowNavItem('${navEscape(item.id)}', -1)" ${index === 0 ? 'disabled' : ''}>${navEscape(navT('nav.set.btn.up'))}</button>
+                            <button onclick="moveOverflowNavItem('${navEscape(item.id)}', 1)" ${index === items.length - 1 ? 'disabled' : ''}>${navEscape(navT('nav.set.btn.down'))}</button>
                         </div>
                     </div>
                 `;
-            }).join('') || '<div class="nav-settings-empty">暂无更多工具菜单。</div>'}
+            }).join('') || `<div class="nav-settings-empty">${navEscape(navT('nav.set.emptyItems'))}</div>`}
         </div>
     `;
 }
@@ -495,15 +878,15 @@ window.moveOverflowNavItem = function (id, delta) {
 };
 
 function sourceLabelForAiSettings(source) {
-    if (source === 'stored') return '设置中心保存的 Token';
-    if (source === 'env') return '环境变量 GEMINI_API_KEY';
-    return '未配置';
+    if (source === 'stored') return navT('nav.ai.srcStored');
+    if (source === 'env') return navT('nav.ai.srcEnv');
+    return navT('nav.ai.srcNone');
 }
 
 function keyHealthLabelForAiSettings(settings) {
-    if (!settings.hasApiKey) return '尚未配置 Token';
-    if (!settings.keyLooksValid) return `格式疑似无效 ${settings.maskedApiKey || ''}`;
-    return `已配置 ${settings.maskedApiKey || ''}`;
+    if (!settings.hasApiKey) return navT('nav.ai.keyNone');
+    if (!settings.keyLooksValid) return navT('nav.ai.keyInvalid') + (settings.maskedApiKey || '');
+    return navT('nav.ai.keyValid') + (settings.maskedApiKey || '');
 }
 
 async function fetchAiSettingsForNav() {
@@ -514,25 +897,25 @@ async function fetchAiSettingsForNav() {
 }
 
 async function renderAiSettings(content) {
-    content.innerHTML = '<div class="nav-settings-empty">正在加载 AI 助手配置...</div>';
+    content.innerHTML = `<div class="nav-settings-empty">${navEscape(navT('nav.ai.empty'))}</div>`;
     try {
         const settings = await fetchAiSettingsForNav();
         content.innerHTML = `
-            <div class="nav-settings-help">这里配置右下角智能客服助手。Token 会保存到服务端，前端只显示脱敏状态；环境变量 GEMINI_API_KEY 仍会作为兜底。</div>
+            <div class="nav-settings-help">${navEscape(navT('nav.ai.help'))}</div>
             <div class="nav-ai-status">
-                <span>当前 Token 来源：${navEscape(sourceLabelForAiSettings(settings.apiKeySource))}</span>
+                <span>${navEscape(navT('nav.ai.sourcePrefix'))}${navEscape(sourceLabelForAiSettings(settings.apiKeySource))}</span>
                 <span class="${settings.hasApiKey && !settings.keyLooksValid ? 'warning' : ''}">${navEscape(keyHealthLabelForAiSettings(settings))}</span>
             </div>
             <div class="nav-ai-grid">
                 <label class="nav-ai-field nav-ai-field-wide">
-                    <span>API Token</span>
+                    <span>${navEscape(navT('nav.ai.lblToken'))}</span>
                     <div class="nav-ai-token-row">
-                        <input id="navAiApiKey" type="text" inputmode="text" class="nav-settings-input nav-ai-token-input" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" placeholder="${settings.hasApiKey ? `点击后粘贴新 Token；留空则保持当前：${navEscape(settings.maskedApiKey)}` : '点击后粘贴 Gemini API Token'}" onfocus="this.dataset.userTouched='1'" oninput="scheduleAiSettingsSave({ tokenTouched: this.dataset.userTouched === '1' })">
-                        <button type="button" class="nav-settings-add" onclick="clearAiApiKey()">清除 Token</button>
+                        <input id="navAiApiKey" type="text" inputmode="text" class="nav-settings-input nav-ai-token-input" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" placeholder="${settings.hasApiKey ? `${navEscape(navT('nav.ai.plhKeep'))}${navEscape(settings.maskedApiKey)}` : navEscape(navT('nav.ai.plhToken'))}" onfocus="this.dataset.userTouched='1'" oninput="scheduleAiSettingsSave({ tokenTouched: this.dataset.userTouched === '1' })">
+                        <button type="button" class="nav-settings-add" onclick="clearAiApiKey()">${navEscape(navT('nav.ai.btnClear'))}</button>
                     </div>
                 </label>
                 <label class="nav-ai-field">
-                    <span>模型名称</span>
+                    <span>${navEscape(navT('nav.ai.lblModel'))}</span>
                     <input id="navAiModel" class="nav-settings-input" list="navAiModelOptions" value="${navEscape(settings.model)}" oninput="scheduleAiSettingsSave()">
                     <datalist id="navAiModelOptions">
                         <option value="gemini-2.5-flash"></option>
@@ -545,29 +928,29 @@ async function renderAiSettings(content) {
                     <input id="navAiTemperature" type="number" min="0" max="2" step="0.1" class="nav-settings-input" value="${navEscape(settings.temperature)}" oninput="scheduleAiSettingsSave()">
                 </label>
                 <label class="nav-ai-field">
-                    <span>最大输出 Tokens</span>
+                    <span>${navEscape(navT('nav.ai.lblMax'))}</span>
                     <input id="navAiMaxTokens" type="number" min="128" max="8192" step="128" class="nav-settings-input" value="${navEscape(settings.maxOutputTokens)}" oninput="scheduleAiSettingsSave()">
                 </label>
                 <label class="nav-ai-field">
-                    <span>输入成本 USD / 1M Tokens</span>
+                    <span>${navEscape(navT('nav.ai.lblInputCost'))}</span>
                     <input id="navAiInputCost" type="number" min="0" step="0.001" class="nav-settings-input" value="${navEscape(settings.inputCostPerMillionUsd)}" oninput="scheduleAiSettingsSave()">
                 </label>
                 <label class="nav-ai-field">
-                    <span>输出成本 USD / 1M Tokens</span>
+                    <span>${navEscape(navT('nav.ai.lblOutputCost'))}</span>
                     <input id="navAiOutputCost" type="number" min="0" step="0.001" class="nav-settings-input" value="${navEscape(settings.outputCostPerMillionUsd)}" oninput="scheduleAiSettingsSave()">
                 </label>
                 <label class="nav-ai-field">
-                    <span>美元兑人民币</span>
+                    <span>${navEscape(navT('nav.ai.lblUsdCny'))}</span>
                     <input id="navAiUsdToCny" type="number" min="0" step="0.01" class="nav-settings-input" value="${navEscape(settings.usdToCny)}" oninput="scheduleAiSettingsSave()">
                 </label>
                 <label class="nav-ai-field nav-ai-field-wide">
-                    <span>补充系统提示词</span>
-                    <textarea id="navAiSystemPrompt" class="nav-ai-textarea" maxlength="5000" placeholder="例如：回答优先使用中文，涉及平台操作时给出步骤。" oninput="scheduleAiSettingsSave()">${navEscape(settings.systemPrompt || '')}</textarea>
+                    <span>${navEscape(navT('nav.ai.lblPrompt'))}</span>
+                    <textarea id="navAiSystemPrompt" class="nav-ai-textarea" maxlength="5000" placeholder="${navEscape(navT('nav.ai.plhPrompt'))}" oninput="scheduleAiSettingsSave()">${navEscape(settings.systemPrompt || '')}</textarea>
                 </label>
             </div>
         `;
     } catch (e) {
-        content.innerHTML = `<div class="nav-settings-empty">加载 AI 助手配置失败：${navEscape(e.message)}</div>`;
+        content.innerHTML = `<div class="nav-settings-empty">${navEscape(navT('nav.ai.failLoad'))}${navEscape(e.message)}</div>`;
     }
 }
 
@@ -590,7 +973,7 @@ function collectAiSettingsPayload(options = {}) {
 
 async function saveAiSettingsNow(options = {}) {
     const indicator = document.getElementById('navSettingsSaveState');
-    if (indicator) indicator.textContent = '正在保存 AI 设置...';
+    if (indicator) indicator.textContent = navT('nav.ai.saving');
     const res = await fetch('/api/ai-settings', {
         method: 'PUT',
         headers: {
@@ -612,17 +995,17 @@ async function saveAiSettingsNow(options = {}) {
     if (tokenInput) {
         tokenInput.value = '';
         tokenInput.placeholder = navState.aiSettings.hasApiKey
-            ? `留空则保持当前：${navState.aiSettings.maskedApiKey}`
-            : '输入 Gemini API Token';
+            ? `${navT('nav.ai.plhKeep')}${navState.aiSettings.maskedApiKey}`
+            : navT('nav.ai.plhToken');
     }
     const status = document.querySelector('.nav-ai-status');
     if (status) {
         status.innerHTML = `
-            <span>当前 Token 来源：${navEscape(sourceLabelForAiSettings(navState.aiSettings.apiKeySource))}</span>
+            <span>${navEscape(navT('nav.ai.sourcePrefix'))}${navEscape(sourceLabelForAiSettings(navState.aiSettings.apiKeySource))}</span>
             <span class="${navState.aiSettings.hasApiKey && !navState.aiSettings.keyLooksValid ? 'warning' : ''}">${navEscape(keyHealthLabelForAiSettings(navState.aiSettings))}</span>
         `;
     }
-    if (indicator) indicator.textContent = 'AI 设置已自动保存';
+    if (indicator) indicator.textContent = navT('nav.ai.saved');
 }
 
 window.scheduleAiSettingsSave = function (options = {}) {
@@ -632,13 +1015,13 @@ window.scheduleAiSettingsSave = function (options = {}) {
         return;
     }
     const indicator = document.getElementById('navSettingsSaveState');
-    if (indicator) indicator.textContent = 'AI 设置待保存...';
+    if (indicator) indicator.textContent = navT('nav.ai.waitSave');
     clearTimeout(navState.aiSaveTimer);
     navState.aiSaveTimer = setTimeout(async () => {
         try {
             await saveAiSettingsNow();
         } catch (e) {
-            if (indicator) indicator.textContent = `保存失败: ${e.message}`;
+            if (indicator) indicator.textContent = navT('nav.set.saveFail') + e.message;
         }
     }, 700);
 };
@@ -716,51 +1099,51 @@ function renderRemoteBackupSyncSettings(settings = {}) {
         <div class="nav-remote-backup-card">
             <div class="nav-remote-backup-head">
                 <div>
-                    <div class="nav-backup-panel-title">远端主站同步</div>
-                    <div class="nav-backup-panel-desc">适合分站/Windows 本地启动时，从主站自动拉取最新全局备份并恢复。配置只保存在当前机器，不会被备份包覆盖。</div>
+                    <div class="nav-backup-panel-title">${navEscape(navT('nav.bk.remoteTitle'))}</div>
+                    <div class="nav-backup-panel-desc">${navEscape(navT('nav.bk.remoteDesc'))}</div>
                 </div>
                 <label class="nav-remote-switch">
                     <input id="remoteBackupEnabled" type="checkbox" ${settings.enabled ? 'checked' : ''} onchange="scheduleRemoteBackupSettingsSave()">
-                    启用
+                    ${navEscape(navT('nav.bk.enable'))}
                 </label>
             </div>
             <div class="nav-remote-backup-grid">
                 <label>
-                    <span>远端网站域名</span>
+                    <span>${navEscape(navT('nav.bk.remoteDomain'))}</span>
                     <input id="remoteBackupBaseUrl" class="nav-settings-input" value="${navEscape(settings.baseUrl || '')}" placeholder="例如：https://cs.fanxiaolong.uk" oninput="scheduleRemoteBackupSettingsSave()">
                 </label>
                 <label>
-                    <span>账号</span>
+                    <span>${navEscape(navT('nav.bk.remoteUser'))}</span>
                     <input id="remoteBackupUsername" class="nav-settings-input" value="${navEscape(settings.username || '')}" autocomplete="username" oninput="scheduleRemoteBackupSettingsSave()">
                 </label>
                 <label>
-                    <span>密码</span>
-                    <input id="remoteBackupPassword" type="password" class="nav-settings-input" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" placeholder="${settings.hasPassword ? `留空保持当前：${navEscape(settings.maskedPassword || '已保存')}` : '填写远端登录密码'}" onfocus="this.dataset.userTouched='1'" oninput="scheduleRemoteBackupSettingsSave({ passwordTouched: this.dataset.userTouched === '1' })">
+                    <span>${navEscape(navT('nav.bk.remotePwd'))}</span>
+                    <input id="remoteBackupPassword" type="password" class="nav-settings-input" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" placeholder="${settings.hasPassword ? `留空保持当前：${navEscape(settings.maskedPassword || '已保存')}` : navEscape(navT('nav.bk.plhPwd'))}" onfocus="this.dataset.userTouched='1'" oninput="scheduleRemoteBackupSettingsSave({ passwordTouched: this.dataset.userTouched === '1' })">
                 </label>
                 <div class="nav-remote-checks">
-                    <label><input id="remoteBackupCompare" type="checkbox" ${settings.compareBeforeRestore !== false ? 'checked' : ''} onchange="scheduleRemoteBackupSettingsSave()"> 比较备份新旧，未更新则跳过</label>
-                    <label><input id="remoteBackupCreateBeforePull" type="checkbox" ${settings.createRemoteBackupBeforePull !== false ? 'checked' : ''} onchange="scheduleRemoteBackupSettingsSave()"> 拉取前请求主站立即生成备份</label>
-                    <label><input id="remoteBackupAutoRestore" type="checkbox" ${settings.autoRestore ? 'checked' : ''} onchange="scheduleRemoteBackupSettingsSave()"> 启动时自动恢复最新备份</label>
+                    <label><input id="remoteBackupCompare" type="checkbox" ${settings.compareBeforeRestore !== false ? 'checked' : ''} onchange="scheduleRemoteBackupSettingsSave()"> ${navEscape(navT('nav.bk.optCompare'))}</label>
+                    <label><input id="remoteBackupCreateBeforePull" type="checkbox" ${settings.createRemoteBackupBeforePull !== false ? 'checked' : ''} onchange="scheduleRemoteBackupSettingsSave()"> ${navEscape(navT('nav.bk.optPull'))}</label>
+                    <label><input id="remoteBackupAutoRestore" type="checkbox" ${settings.autoRestore ? 'checked' : ''} onchange="scheduleRemoteBackupSettingsSave()"> ${navEscape(navT('nav.bk.optAuto'))}</label>
                 </div>
             </div>
             <div class="nav-remote-backup-status">
-                <span>时间显示：浏览器本地时区（${navEscape(getLocalTimeZoneLabel())}）</span>
-                <span>最近检查：${navEscape(lastCheckText)}</span>
-                <span>最近恢复：${navEscape(lastSyncText)}</span>
-                ${settings.lastError ? `<span class="warning">最近错误：${navEscape(settings.lastError)}</span>` : ''}
+                <span>${navEscape(navT('nav.bk.stLocal', {tz: getLocalTimeZoneLabel()}))}</span>
+                <span>${navEscape(navT('nav.bk.stCheck'))}${navEscape(lastCheckText)}</span>
+                <span>${navEscape(navT('nav.bk.stSync'))}${navEscape(lastSyncText)}</span>
+                ${settings.lastError ? `<span class="warning">${navEscape(navT('nav.bk.stError'))}${navEscape(settings.lastError)}</span>` : ''}
             </div>
             <div class="nav-backup-toolbar nav-remote-backup-actions">
-                <button type="button" onclick="checkRemoteBackupNow()">测试连接/检查最新</button>
-                <button type="button" onclick="pullRemoteBackupNow(false)">按规则拉取恢复</button>
-                <button type="button" class="danger" onclick="pullRemoteBackupNow(true)">强制恢复远端最新</button>
-                <button type="button" onclick="clearRemoteBackupPassword()">清除密码</button>
+                <button type="button" onclick="checkRemoteBackupNow()">${navEscape(navT('nav.bk.btnCheck'))}</button>
+                <button type="button" onclick="pullRemoteBackupNow(false)">${navEscape(navT('nav.bk.btnPull'))}</button>
+                <button type="button" class="danger" onclick="pullRemoteBackupNow(true)">${navEscape(navT('nav.bk.btnForce'))}</button>
+                <button type="button" onclick="clearRemoteBackupPassword()">${navEscape(navT('nav.bk.btnClearPwd'))}</button>
             </div>
         </div>
     `;
 }
 
 async function renderBackupSettings(content) {
-    content.innerHTML = '<div class="nav-settings-empty">正在加载备份列表...</div>';
+    content.innerHTML = `<div class="nav-settings-empty">${navEscape(navT('nav.bk.empty'))}</div>`;
     try {
         const [data, remoteSettings] = await Promise.all([
             fetchBackupList(),
@@ -773,50 +1156,50 @@ async function renderBackupSettings(content) {
                 <td>
                     <div class="nav-backup-name">
                         ${navEscape(item.name)}
-                        ${item.triggerType === 'remote-sync-request' ? '<span class="nav-backup-badge remote">外部同步触发</span>' : ''}
-                        ${item.triggerType === 'pre-restore' ? '<span class="nav-backup-badge safety">恢复前安全备份</span>' : ''}
+                        ${item.triggerType === 'remote-sync-request' ? `<span class="nav-backup-badge remote">${navEscape(navT('nav.bk.badgeSync'))}</span>` : ''}
+                        ${item.triggerType === 'pre-restore' ? `<span class="nav-backup-badge safety">${navEscape(navT('nav.bk.badgeSafe'))}</span>` : ''}
                     </div>
                     <div class="nav-backup-meta">${formatBackupTime(item.modifiedAt)} · ${formatBackupSize(item.size)}</div>
                     ${item.reason ? `<div class="nav-backup-meta">Reason: ${navEscape(item.reason)}</div>` : ''}
                 </td>
                 <td class="nav-backup-actions" style="display:flex; gap:6px; justify-content:flex-end;">
-                    <button onclick="downloadGlobalBackup('${navEscape(item.name)}')" title="下载备份" style="padding:4px 8px; font-size:13px; min-width:auto;">⬇️</button>
-                    <button class="danger" onclick="restoreGlobalBackupFromServer('${navEscape(item.name)}')" title="从该备份恢复" style="padding:4px 8px; font-size:13px; min-width:auto;">⏪</button>
-                    <button class="danger" style="background:#fff3e0; color:#e65100; border-color:#ffe0b2; padding:4px 8px; font-size:13px; min-width:auto;" onclick="deleteGlobalBackup('${navEscape(item.name)}')" title="永久删除此备份">🗑️</button>
+                    <button onclick="downloadGlobalBackup('${navEscape(item.name)}')" title="${navEscape(navT('nav.bk.dlTitle'))}" style="padding:4px 8px; font-size:13px; min-width:auto;">⬇️</button>
+                    <button class="danger" onclick="restoreGlobalBackupFromServer('${navEscape(item.name)}')" title="${navEscape(navT('nav.bk.rsTitle'))}" style="padding:4px 8px; font-size:13px; min-width:auto;">⏪</button>
+                    <button class="danger" style="background:#fff3e0; color:#e65100; border-color:#ffe0b2; padding:4px 8px; font-size:13px; min-width:auto;" onclick="deleteGlobalBackup('${navEscape(item.name)}')" title="${navEscape(navT('nav.bk.delTitle'))}">🗑️</button>
                 </td>
             </tr>
         `).join('');
 
         content.innerHTML = `
-            <div class="nav-settings-help">覆盖范围：${navEscape(targetText)}。包含全局配置、JSON 数据、SQLite 数据库、上传附件、自定义工具 HTML 等运行数据。</div>
+            <div class="nav-settings-help">${navEscape(navT('nav.bk.help', {target: targetText}))}</div>
             ${renderRemoteBackupSyncSettings(remoteSettings)}
             <div class="nav-backup-panel">
                 <div>
-                    <div class="nav-backup-panel-title">服务器备份</div>
-                    <div class="nav-backup-panel-desc">生成后会保存在服务器，也可以直接下载到本地留档。</div>
+                    <div class="nav-backup-panel-title">${navEscape(navT('nav.bk.svrTitle'))}</div>
+                    <div class="nav-backup-panel-desc">${navEscape(navT('nav.bk.svrDesc'))}</div>
                 </div>
                 <div class="nav-backup-toolbar">
-                    <button onclick="createGlobalBackup(false)">生成服务器备份</button>
-                    <button onclick="createGlobalBackup(true)">生成并下载</button>
+                    <button onclick="createGlobalBackup(false)">${navEscape(navT('nav.bk.btnCreate'))}</button>
+                    <button onclick="createGlobalBackup(true)">${navEscape(navT('nav.bk.btnCreateDL'))}</button>
                 </div>
             </div>
             <div class="nav-backup-upload">
                 <div>
-                    <div class="nav-backup-panel-title">上传备份包恢复</div>
-                    <div class="nav-backup-panel-desc">仅接受平台生成的全局备份 zip 包；恢复前会自动创建 pre-restore 安全备份。</div>
+                    <div class="nav-backup-panel-title">${navEscape(navT('nav.bk.upTitle'))}</div>
+                    <div class="nav-backup-panel-desc">${navEscape(navT('nav.bk.upDesc'))}</div>
                 </div>
                 <input id="globalBackupUploadInput" type="file" accept=".zip,application/zip">
-                <button class="danger" onclick="restoreGlobalBackupFromUpload()">上传并恢复</button>
+                <button class="danger" onclick="restoreGlobalBackupFromUpload()">${navEscape(navT('nav.bk.btnUp'))}</button>
             </div>
             <div class="nav-account-table-wrap">
                 <table class="nav-account-table nav-backup-table">
-                    <thead><tr><th>备份文件</th><th>操作</th></tr></thead>
-                    <tbody>${rows || '<tr><td colspan="2">暂无服务器备份</td></tr>'}</tbody>
+                    <thead><tr><th>${navEscape(navT('nav.bk.thFile'))}</th><th>${navEscape(navT('nav.bk.thAction'))}</th></tr></thead>
+                    <tbody>${rows || `<tr><td colspan="2">${navEscape(navT('nav.bk.noData'))}</td></tr>`}</tbody>
                 </table>
             </div>
         `;
     } catch (e) {
-        content.innerHTML = `<div class="nav-settings-empty">加载备份列表失败：${navEscape(e.message)}</div>`;
+        content.innerHTML = `<div class="nav-settings-empty">${navEscape(navT('nav.bk.fail'))}${navEscape(e.message)}</div>`;
     }
 }
 
@@ -1085,8 +1468,8 @@ function renderPageSettings(content, pageId) {
         <div class="nav-page-config-placeholder">
             <div class="nav-page-config-icon">${item?.icon || '🧩'}</div>
             <div>
-                <div class="nav-page-config-title">${navEscape(item?.label || '页面')}配置预留位</div>
-                <div class="nav-page-config-desc">当前暂无需要迁移到全局设置的配置项。后续如果该页面新增全局级设置，可以直接放在这里。</div>
+                <div class="nav-page-config-title">${navEscape(navT('nav.page.placeholderTitle', {page: getNavLabel(item) || '页面'}))}</div>
+                <div class="nav-page-config-desc">${navEscape(navT('nav.page.placeholderDesc'))}</div>
             </div>
         </div>
     `;
@@ -1094,23 +1477,23 @@ function renderPageSettings(content, pageId) {
 
 function renderReportPageSettings(content) {
     content.innerHTML = `
-        <div class="nav-settings-help">清理“历史快照 (Snapshot)”中最近 X 天内的同日冗余快照，仅保留每天最新一份。较早日期和每天最新快照都会保留，不影响月报、一键催办等按日读取最新快照的业务。</div>
+        <div class="nav-settings-help">${navEscape(navT('nav.page.report.help'))}</div>
         <div class="nav-report-cleanup-card">
             <div class="nav-report-cleanup-main">
-                <div class="nav-backup-panel-title">历史快照冗余清理</div>
-                <div class="nav-backup-panel-desc">建议先“预览影响”，确认要删除的数量后再执行清理。</div>
+                <div class="nav-backup-panel-title">${navEscape(navT('nav.page.report.title'))}</div>
+                <div class="nav-backup-panel-desc">${navEscape(navT('nav.page.report.desc'))}</div>
                 <label class="nav-report-cleanup-field">
-                    <span>清理最近</span>
+                    <span>${navEscape(navT('nav.page.report.cleanLast'))}</span>
                     <input id="reportSnapshotCleanupDays" type="number" min="1" max="3650" step="1" value="30">
-                    <span>天内冗余快照</span>
+                    <span>${navEscape(navT('nav.page.report.days'))}</span>
                 </label>
             </div>
             <div class="nav-backup-toolbar">
-                <button onclick="previewReportSnapshotCleanup()">预览影响</button>
-                <button class="danger" onclick="runReportSnapshotCleanup()">执行清理</button>
+                <button onclick="previewReportSnapshotCleanup()">${navEscape(navT('nav.page.report.btnPreview'))}</button>
+                <button class="danger" onclick="runReportSnapshotCleanup()">${navEscape(navT('nav.page.report.btnRun'))}</button>
             </div>
         </div>
-        <div id="reportSnapshotCleanupResult" class="nav-report-cleanup-result">等待预览。</div>
+        <div id="reportSnapshotCleanupResult" class="nav-report-cleanup-result">${navEscape(navT('nav.page.report.wait'))}</div>
     `;
 }
 
@@ -1125,12 +1508,19 @@ function renderReportSnapshotCleanupResult(result) {
     const removedPreview = (result.removed || []).slice(0, 8)
         .map(item => `<li>${navEscape(item.date || '-')} · ${navEscape(item.timestamp || '-')} · ${navEscape(item.id || '-')}</li>`)
         .join('');
+    const titleText = result.dryRun ? navT('nav.page.report.res.preview') : navT('nav.page.report.res.done');
+    const summaryText = navT('nav.page.report.res.summary', { days: result.days, beforeCount: result.beforeCount, afterCount: result.afterCount, removedCount: result.removedCount })
+        .replace('{days}', result.days).replace('{beforeCount}', result.beforeCount).replace('{afterCount}', result.afterCount).replace('{removedCount}', result.removedCount);
+    const keptText = navT('nav.page.report.res.kept', { keptDailyCount: result.keptDailyCount }).replace('{keptDailyCount}', result.keptDailyCount);
+    const emptyText = navT('nav.page.report.res.empty');
+    const moreText = result.removedCount > 8 ? navT('nav.page.report.res.more', { remaining: result.removedCount - 8 }).replace('{remaining}', result.removedCount - 8) : '';
+    
     el.innerHTML = `
-        <div><strong>${result.dryRun ? '预览结果' : '清理完成'}</strong></div>
-        <div>范围：最近 ${result.days} 天；清理前 ${result.beforeCount} 条，清理后 ${result.afterCount} 条，预计/实际删除 ${result.removedCount} 条。</div>
-        <div>保留的最近日期每日最新快照：${result.keptDailyCount} 天。</div>
-        ${removedPreview ? `<ul>${removedPreview}</ul>` : '<div>没有需要清理的冗余快照。</div>'}
-        ${result.removedCount > 8 ? `<div>仅展示前 8 条，剩余 ${result.removedCount - 8} 条未展开。</div>` : ''}
+        <div><strong>${navEscape(titleText)}</strong></div>
+        <div>${navEscape(summaryText)}</div>
+        <div>${navEscape(keptText)}</div>
+        ${removedPreview ? `<ul>${removedPreview}</ul>` : `<div>${navEscape(emptyText)}</div>`}
+        ${moreText ? `<div>${navEscape(moreText)}</div>` : ''}
     `;
 }
 
@@ -1174,47 +1564,47 @@ window.runReportSnapshotCleanup = async function () {
 };
 
 async function renderAccountSettings(content) {
-    content.innerHTML = '<div class="nav-settings-empty">正在加载账号列表...</div>';
+    content.innerHTML = `<div class="nav-settings-empty">${navEscape(navT('nav.acc.empty'))}</div>`;
     try {
         const users = await API.get('/api/auth/users');
         const rows = users.map(u => {
             const roleBadge = u.role === 'admin'
-                ? '<span class="nav-account-role admin">超级管理</span>'
-                : '<span class="nav-account-role readonly">只读用户</span>';
+                ? `<span class="nav-account-role admin">${navEscape(navT('nav.acc.admin'))}</span>`
+                : `<span class="nav-account-role readonly">${navEscape(navT('nav.acc.readonly'))}</span>`;
             return `
                 <tr>
                     <td>${navEscape(u.username)}</td>
                     <td>${roleBadge}</td>
                     <td class="nav-account-actions">
-                        ${u.username !== 'admin' ? `<button onclick="deleteUser('${navEscape(u.username)}')">删除</button>` : ''}
-                        <button onclick="resetPwd('${navEscape(u.username)}')">重置密码</button>
+                        ${u.username !== 'admin' ? `<button onclick="deleteUser('${navEscape(u.username)}')">${navEscape(navT('nav.acc.btnDel'))}</button>` : ''}
+                        <button onclick="resetPwd('${navEscape(u.username)}')">${navEscape(navT('nav.acc.btnReset'))}</button>
                     </td>
                 </tr>
             `;
         }).join('');
 
         content.innerHTML = `
-            <div class="nav-settings-help">账号权限用于控制平台写入类操作。新增或调整后立即生效。</div>
+            <div class="nav-settings-help">${navEscape(navT('nav.acc.help'))}</div>
             <div class="nav-account-create">
-                <input id="nu_name" placeholder="输入新用户名">
-                <input id="nu_pwd" placeholder="设置密码" type="password">
+                <input id="nu_name" placeholder="${navEscape(navT('nav.acc.plhUser'))}">
+                <input id="nu_pwd" placeholder="${navEscape(navT('nav.acc.plhPwd'))}" type="password">
                 <select id="nu_role">
-                    <option value="readonly">只读权限</option>
-                    <option value="admin">超级管理</option>
+                    <option value="readonly">${navEscape(navT('nav.acc.readonly'))}</option>
+                    <option value="admin">${navEscape(navT('nav.acc.admin'))}</option>
                 </select>
-                <button onclick="addUser()">新增账号</button>
+                <button onclick="addUser()">${navEscape(navT('nav.acc.btnAdd'))}</button>
             </div>
             <div class="nav-account-table-wrap">
                 <table class="nav-account-table">
                     <thead>
-                        <tr><th>账号名称</th><th>权限角色</th><th>快捷操作</th></tr>
+                        <tr><th>${navEscape(navT('nav.acc.thUser'))}</th><th>${navEscape(navT('nav.acc.thRole'))}</th><th>${navEscape(navT('nav.acc.thAction'))}</th></tr>
                     </thead>
-                    <tbody>${rows || '<tr><td colspan="3">暂无账号</td></tr>'}</tbody>
+                    <tbody>${rows || `<tr><td colspan="3">${navEscape(navT('nav.acc.noData'))}</td></tr>`}</tbody>
                 </table>
             </div>
         `;
     } catch (e) {
-        content.innerHTML = `<div class="nav-settings-empty">加载账号失败：${navEscape(e.message)}</div>`;
+        content.innerHTML = `<div class="nav-settings-empty">${navEscape(navT('nav.acc.fail'))}${navEscape(e.message)}</div>`;
     }
 }
 
@@ -1354,16 +1744,35 @@ async function checkServerStatus() {
         const r = await fetch('/api/health');
         const data = await r.json();
         const el = document.getElementById('server-status-text');
-        if (el) el.textContent = '服务在线';
+        if (el) el.textContent = navT('nav.online');
     } catch (e) {
         const dot = document.querySelector('.status-dot');
         const el = document.getElementById('server-status-text');
         if (dot) dot.style.background = '#ef5350';
-        if (el) el.textContent = '离线';
+        if (el) el.textContent = navT('nav.offline');
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function ensureToolsI18nLoaded() {
+    if (window.ToolsI18n) return Promise.resolve();
+    return new Promise((resolve) => {
+        const existing = document.querySelector('script[src^="/js/shared/i18n.js"]');
+        if (existing) {
+            existing.addEventListener('load', resolve, { once: true });
+            existing.addEventListener('error', resolve, { once: true });
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = '/js/shared/i18n.js?v=20260610-01';
+        script.onload = resolve;
+        script.onerror = resolve;
+        document.head.appendChild(script);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await ensureToolsI18nLoaded();
+    registerNavbarI18n();
     renderNavbar();
     loadNavigationData();
     setTimeout(checkServerStatus, 500);

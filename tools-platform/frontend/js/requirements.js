@@ -1,3 +1,98 @@
+// ================== 双语切换引擎 ==================
+const REQ_I18N_DICT = {
+    "需求管理 - Tools Platform": "Requirements - Tools Platform",
+    "🎯 需求管理广场": "🎯 Requirements Plaza",
+    "提交、追踪和管理平台新功能与优化需求": "Submit, track, and manage new features and optimizations",
+    "默认排序：按进度优先": "Default: Sort by Progress",
+    "排序：最近更新时间": "Sort by Recently Updated",
+    "排序：最近创建时间": "Sort by Recently Created",
+    "+ 提交新需求": "+ New Request",
+    "需求详情": "Request Details",
+    "提交": "Submit",
+    "接受": "Accept",
+    "实现中": "Progressing",
+    "完成": "Done",
+    "验收": "Verify",
+    "评价": "Evaluate",
+    "需求标题": "Request Title",
+    "页面分类": "Category",
+    "请选择分类...": "Select Category...",
+    "🌐 全局通用": "🌐 General",
+    "✨ 新增页面": "✨ New Page",
+    "🏠 工具中台首页": "🏠 Home",
+    "🚀 数据抓取(UIVF12)": "🚀 Data Fetch (UIVF12)",
+    "📊 数据导入(SLA)": "📊 Data Import (SLA)",
+    "📈 报表看板": "📈 Dashboard",
+    "⚡ 一键催办": "⚡ Expedite",
+    "📅 月报页面": "📅 Monthly Report",
+    "🎯 需求管理": "🎯 Requirements",
+    "简短描述需求的核心目的": "Briefly describe the core purpose",
+    "详细说明背景、期望效果等": "Detail the background, expected results, etc.",
+    "留空或填写负责人": "Leave blank or enter assignee",
+    "流转状态时，建议填写备注": "Suggest adding a remark during state transition",
+    "需求详情描述": "Description",
+    "当前状态": "Current Status",
+    "责任人 (Assignee)": "Assignee",
+    "过点备注 (流转日志)": "Flow Remark",
+    "流转日志": "Flow Logs",
+    "删除需求": "Delete",
+    "取消": "Cancel",
+    "保存": "Save",
+    "1. 提交 (待接受)": "1. Submit (Pending)",
+    "2. 需求接受 (评估中)": "2. Accepted (Evaluating)",
+    "3. 需求实现中 (开发中)": "3. In Progress (Developing)",
+    "4. 需求完成 (待上线)": "4. Done (Pending Release)",
+    "5. 验收完成 (已上线)": "5. Verified (Released)",
+    "6. 需求评价 (归档)": "6. Evaluated (Archived)",
+    "❌ 已拒绝 (暂不采纳)": "❌ Rejected",
+    "暂无需求，点击右上角提交一个吧！": "No requests, click top right to submit one!",
+    "提交新需求": "Submit New Request",
+    "需求详情与管理": "Request Details & Management",
+    "保存中...": "Saving...",
+    "需求已更新": "Request updated",
+    "需求提交成功": "Request submitted successfully",
+    "Are you sure you want to delete this request? Related logs will also be permanently deleted.": "Are you sure you want to delete this request? Related logs will also be permanently deleted.",
+    "需求已删除": "Request deleted",
+    "暂无日志": "No logs",
+    "状态流转：": "Status changed: ",
+    "更新了信息": "Updated info",
+    "未分类": "Uncategorized",
+    "无详细描述": "No description",
+    "未分配": "Unassigned"
+};
+
+let currentReqLang = 'zh';
+
+function applyReqLanguage(lang) {
+    if (currentReqLang === lang) return;
+    currentReqLang = lang;
+    
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        // Prevent global i18n from erasing our local translation by overriding if needed
+        if (currentReqLang === 'en' && REQ_I18N_DICT[key]) el.innerHTML = REQ_I18N_DICT[key];
+        else el.innerHTML = key;
+    });
+    
+    document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+        const key = el.getAttribute('data-i18n-ph');
+        if (currentReqLang === 'en' && REQ_I18N_DICT[key]) el.placeholder = REQ_I18N_DICT[key];
+        else el.placeholder = key;
+    });
+    
+    ReqApp.renderBoard();
+}
+
+function tText(zh, en) {
+    return currentReqLang === 'en' ? en : zh;
+}
+
+window.addEventListener('tools:languagechange', (e) => {
+    const isEn = e.detail?.lang?.startsWith('en');
+    applyReqLanguage(isEn ? 'en' : 'zh');
+});
+// ==================================================
+
 const ReqApp = {
     requirements: [],
     currentReqId: null,
@@ -20,7 +115,7 @@ const ReqApp = {
         board.innerHTML = '';
 
         if (this.requirements.length === 0) {
-            board.innerHTML = '<div style="color: #64748b; grid-column: 1 / -1; text-align: center; padding: 40px;">暂无需求，点击右上角提交一个吧！</div>';
+            board.innerHTML = `<div style="color: #64748b; grid-column: 1 / -1; text-align: center; padding: 40px;">${tText('暂无需求，点击右上角提交一个吧！', 'No requests, click top right to submit one!')}</div>`;
             return;
         }
 
@@ -56,7 +151,7 @@ const ReqApp = {
 
             let miniFlowHtml = '';
             if (isRejected) {
-                miniFlowHtml = `<div style="color: #ef4444; font-size: 13px; font-weight: bold; border: 1px dashed #ef4444; padding: 4px 12px; border-radius: 12px; background: rgba(239, 68, 68, 0.1);">❌ 已拒绝采纳</div>`;
+                miniFlowHtml = `<div style="color: #ef4444; font-size: 13px; font-weight: bold; border: 1px dashed #ef4444; padding: 4px 12px; border-radius: 12px; background: rgba(239, 68, 68, 0.1);">${tText('❌ 已拒绝采纳', '❌ Rejected')}</div>`;
             } else {
                 miniFlowHtml = `<div style="display:flex; align-items:center;">`;
                 statuses.forEach((s, idx) => {
@@ -70,7 +165,7 @@ const ReqApp = {
                     miniFlowHtml += `
                         <div style="display:flex; flex-direction:column; align-items:center; gap:4px; position:relative; width: 38px;">
                             <div style="width: 12px; height: 12px; border-radius: 50%; background: ${color}; z-index: 2; ${isActive ? 'box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);' : ''}"></div>
-                            <div style="font-size: 11px; color: ${fontColor}; white-space: nowrap; transform: scale(0.9); ${isActive ? 'font-weight:bold;' : ''}">${s.replace('需求', '')}</div>
+                            <div style="font-size: 11px; color: ${fontColor}; white-space: nowrap; transform: scale(0.9); ${isActive ? 'font-weight:bold;' : ''}">${tText(s.replace('需求', ''), ['Submit', 'Accept', 'Progressing', 'Done', 'Verify', 'Evaluate'][idx] || s)}</div>
                         </div>
                     `;
                     if (idx < statuses.length - 1) {
@@ -85,9 +180,9 @@ const ReqApp = {
                 <div style="flex: 1; min-width: 0;">
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
                         <h3 class="req-title" style="margin:0; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${this.escapeHTML(req.title)}">${this.escapeHTML(req.title)}</h3>
-                        <span class="req-status-badge" style="background:rgba(255,255,255,0.1); color:#cbd5e1; margin:0;">${this.escapeHTML(req.category || '未分类')}</span>
+                        <span class="req-status-badge" style="background:rgba(255,255,255,0.1); color:#cbd5e1; margin:0;">${this.escapeHTML(req.category || tText('未分类', 'Uncategorized'))}</span>
                     </div>
-                    <div class="req-desc" style="margin-bottom: 6px; -webkit-line-clamp: 1;" title="${this.escapeHTML(req.description || '无详细描述')}">${this.escapeHTML(req.description || '无详细描述')}</div>
+                    <div class="req-desc" style="margin-bottom: 6px; -webkit-line-clamp: 1;" title="${this.escapeHTML(req.description || tText('无详细描述', 'No description'))}">${this.escapeHTML(req.description || tText('无详细描述', 'No description'))}</div>
                     <div class="req-meta" style="font-size: 12px; color: #64748b;">
                         <span>👤 ${this.escapeHTML(req.creator || 'Guest')}</span>
                         <span style="margin: 0 6px;">|</span>
@@ -100,8 +195,8 @@ const ReqApp = {
                 </div>
 
                 <div style="width: 130px; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; border-left: 1px dashed rgba(255,255,255,0.1); padding-left: 16px;">
-                    <span class="req-status-badge ${statusClass}" style="margin: 0 0 8px 0; width: 100%; text-align: center; box-sizing: border-box;">${req.status}</span>
-                    ${req.assignee ? `<span style="font-size: 12px; color: #94a3b8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:110px;" title="${this.escapeHTML(req.assignee)}">🛠️ ${this.escapeHTML(req.assignee)}</span>` : '<span style="font-size: 12px; color: #64748b; font-style: italic;">未分配</span>'}
+                    <span class="req-status-badge ${statusClass}" style="margin: 0 0 8px 0; width: 100%; text-align: center; box-sizing: border-box;">${tText(req.status, { '提交': 'Submitted', '需求接受': 'Accepted', '需求实现中': 'In Progress', '需求完成': 'Completed', '验收完成': 'Verified', '需求评价': 'Evaluated', '已拒绝': 'Rejected' }[req.status] || req.status)}</span>
+                    ${req.assignee ? `<span style="font-size: 12px; color: #94a3b8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:110px;" title="${this.escapeHTML(req.assignee)}">🛠️ ${this.escapeHTML(req.assignee)}</span>` : `<span style="font-size: 12px; color: #64748b; font-style: italic;">${tText('未分配', 'Unassigned')}</span>`}
                 </div>
             `;
             board.appendChild(card);
@@ -110,7 +205,7 @@ const ReqApp = {
 
     openCreateModal: function() {
         this.currentReqId = null;
-        document.getElementById('modalTitle').textContent = '提交新需求';
+        document.getElementById('modalTitle').textContent = tText('提交新需求', 'Submit New Request');
         
         // Reset form and enable inputs
         const inputs = ['reqTitleInput', 'reqCategorySelect', 'reqDescInput', 'reqStatusSelect', 'reqAssigneeInput', 'reqRemarkInput'];
@@ -136,7 +231,7 @@ const ReqApp = {
         try {
             const req = await API.get(`/api/requirements/${id}`);
             this.currentReqId = id;
-            document.getElementById('modalTitle').textContent = '需求详情与管理';
+            document.getElementById('modalTitle').textContent = tText('需求详情与管理', 'Request Details & Management');
             
             document.getElementById('reqTitleInput').value = req.title;
             const categorySelect = document.getElementById('reqCategorySelect');
@@ -210,7 +305,7 @@ const ReqApp = {
 
             document.getElementById('reqModal').style.display = 'flex';
         } catch (e) {
-            showToast('获取需求详情失败: ' + e.message, 'error');
+            showToast(tText('获取需求详情失败: ', 'Failed to get request details: ') + e.message, 'error');
         }
     },
 
@@ -224,11 +319,11 @@ const ReqApp = {
         const description = document.getElementById('reqDescInput').value.trim();
         
         if (!title) {
-            showToast('需求标题不能为空', 'error');
+            showToast(tText('需求标题不能为空', 'Title cannot be empty'), 'error');
             return;
         }
         if (!category) {
-            showToast('请选择页面分类', 'error');
+            showToast(tText('请选择页面分类', 'Please select a category'), 'error');
             return;
         }
 
@@ -243,39 +338,39 @@ const ReqApp = {
         try {
             const btn = document.getElementById('btnSaveReq');
             const originalText = btn.textContent;
-            btn.textContent = '保存中...';
+            btn.textContent = tText('保存中...', 'Saving...');
             btn.disabled = true;
 
             if (this.currentReqId) {
                 await API.put(`/api/requirements/${this.currentReqId}`, payload);
-                showToast('需求已更新', 'success');
+                showToast(tText('需求已更新', 'Request updated'), 'success');
             } else {
                 await API.post('/api/requirements', payload);
-                showToast('需求提交成功', 'success');
+                showToast(tText('需求提交成功', 'Request submitted successfully'), 'success');
             }
 
             this.closeModal();
             this.loadRequirements();
         } catch (e) {
-            showToast('保存失败: ' + e.message, 'error');
+            showToast(tText('保存失败: ', 'Save failed: ') + e.message, 'error');
         } finally {
             const btn = document.getElementById('btnSaveReq');
-            btn.textContent = '保存';
+            btn.textContent = tText('保存', 'Save');
             btn.disabled = false;
         }
     },
 
     deleteReq: async function() {
         if (!this.currentReqId) return;
-        if (!confirm('确定要删除这个需求吗？相关的流转日志也会被删除且不可恢复。')) return;
+        if (!confirm(tText('确定要删除这个需求吗？相关的流转日志也会被删除且不可恢复。', 'Are you sure you want to delete this request? Related logs will also be permanently deleted.'))) return;
 
         try {
             await API.delete(`/api/requirements/${this.currentReqId}`);
-            showToast('需求已删除', 'success');
+            showToast(tText('需求已删除', 'Request deleted'), 'success');
             this.closeModal();
             this.loadRequirements();
         } catch (e) {
-            showToast('删除失败: ' + e.message, 'error');
+            showToast(tText('删除失败: ', 'Delete failed: ') + e.message, 'error');
         }
     },
 
@@ -327,7 +422,7 @@ const ReqApp = {
 
                 const days = getDays(endTime - startTime);
                 // 确保至少显示0天，或者可以显示详细的停留天数
-                durationText = `<div class="step-duration" style="font-size:10px; color:#64748b; margin-top:2px;">停 ${days} 天</div>`;
+                durationText = `<div class="step-duration" style="font-size:10px; color:#64748b; margin-top:2px;">${tText(`停 ${days} 天`, `Stop ${days} days`)}</div>`;
             }
 
             let durEl = step.querySelector('.step-duration');
@@ -364,7 +459,7 @@ const ReqApp = {
         container.innerHTML = '';
         
         if (logs.length === 0) {
-            container.innerHTML = '<div style="color:#64748b; font-size:12px;">暂无日志</div>';
+            container.innerHTML = `<div style="color:#64748b; font-size:12px;">${tText('暂无日志', 'No logs')}</div>`;
             return;
         }
 
@@ -379,9 +474,10 @@ const ReqApp = {
             
             let actionText = '';
             if (log.old_status && log.new_status && log.old_status !== log.new_status) {
-                actionText = `状态流转：<span style="color:#94a3b8">${log.old_status}</span> ➔ <span style="color:#34d399">${log.new_status}</span>`;
+                const mapEn = { '提交': 'Submitted', '需求接受': 'Accepted', '需求实现中': 'In Progress', '需求完成': 'Completed', '验收完成': 'Verified', '需求评价': 'Evaluated', '已拒绝': 'Rejected' };
+                actionText = `${tText('状态流转：', 'Status: ')}<span style="color:#94a3b8">${tText(log.old_status, mapEn[log.old_status]||log.old_status)}</span> ➔ <span style="color:#34d399">${tText(log.new_status, mapEn[log.new_status]||log.new_status)}</span>`;
             } else {
-                actionText = '更新了信息';
+                actionText = tText('更新了信息', 'Updated info');
             }
 
             el.innerHTML = `
@@ -414,4 +510,6 @@ const ReqApp = {
 
 document.addEventListener('DOMContentLoaded', () => {
     ReqApp.init();
+    const storedLang = localStorage.getItem('tools_lang') || navigator.language || 'zh';
+    applyReqLanguage(storedLang.startsWith('en') ? 'en' : 'zh');
 });

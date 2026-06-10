@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>FRT 自动化核算平台 V15 (动态规则引擎版)</title>
+    <title data-i18n="📊 FRT KPI 自动化核算平台 (V15 动态类型筛选版)">FRT 自动化核算平台 V15 (动态规则引擎版)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="/css/shared.css">
     <style>
@@ -134,39 +134,39 @@
 
 <div class="container">
     <div class="header-panel">
-        <h1>📊 FRT KPI 自动化核算平台 (V15 动态类型筛选版)</h1>
+        <h1 data-i18n="📊 FRT KPI 自动化核算平台 (V15 动态类型筛选版)">📊 FRT KPI 自动化核算平台 (V15 动态类型筛选版)</h1>
         
-        <div class="guide-box">
+        <div class="guide-box" data-i18n="📌 <strong>动态筛选：</strong>右上角现已支持提取报表内所有【SR 类型】，<strong>默认仅勾选 CS - Technical Request</strong>。<br>📌 <strong>操作指引：</strong>导入表单后自由切换月份、增删 SR 类型过滤条件，KPI 瞬间重算。">
             📌 <strong>动态筛选：</strong>右上角现已支持提取报表内所有【SR 类型】，<strong>默认仅勾选 CS - Technical Request</strong>。<br>
             📌 <strong>操作指引：</strong>导入表单后自由切换月份、增删 SR 类型过滤条件，KPI 瞬间重算。
         </div>
 
         <div class="control-row">
             <div class="target-month-wrapper">
-                考核月份: 
+                <span data-i18n="考核月份:">考核月份:</span> 
                 <input type="month" id="targetMonth" value="2026-05" onchange="triggerRecalculate()">
             </div>
             
             <div style="display:flex; gap:10px;">
-                <button class="dropdown-btn" style="background:#2e7d32; color:white; border-color:#2e7d32;" onclick="saveSnapshot(event)">💾 保存为快照</button>
-                <button class="dropdown-btn" style="background:#8e24aa; color:white; border-color:#8e24aa;" onclick="openSnapshotsModal()">🕒 历史快照</button>
+                <button class="dropdown-btn" style="background:#2e7d32; color:white; border-color:#2e7d32;" onclick="saveSnapshot(event)"><span data-i18n="💾 保存为快照">💾 保存为快照</span></button>
+                <button class="dropdown-btn" style="background:#8e24aa; color:white; border-color:#8e24aa;" onclick="openSnapshotsModal()"><span data-i18n="🕒 历史快照">🕒 历史快照</span></button>
             </div>
             
             <div class="upload-area" onclick="document.getElementById('fileInput').click()">
-                <div class="upload-btn">📂 点击导入报表 (.xlsx / .csv)</div>
+                <div class="upload-btn" data-i18n="📂 点击导入报表 (.xlsx / .csv)">📂 点击导入报表 (.xlsx / .csv)</div>
                 <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" onchange="handleFile(event)">
-                <div id="loading">🚀 智能映射引擎正在全速解析中...</div>
+                <div id="loading" data-i18n="🚀 智能映射引擎正在全速解析中...">🚀 智能映射引擎正在全速解析中...</div>
             </div>
 
             <div class="dropdown-wrapper">
-                <button class="dropdown-btn" onclick="toggleMenu('typeFilterMenu', event)">🔍 筛选 SR 类型</button>
+                <button class="dropdown-btn" onclick="toggleMenu('typeFilterMenu', event)"><span data-i18n="🔍 筛选 SR 类型">🔍 筛选 SR 类型</span></button>
                 <div id="typeFilterMenu" class="dropdown-menu">
                     <div class="menu-header">
-                        <span>勾选参与考核的 SR 类型：</span>
+                        <span data-i18n="勾选参与考核的 SR 类型：">勾选参与考核的 SR 类型：</span>
                         <span class="close-menu" onclick="toggleMenu('typeFilterMenu', event)">&times;</span>
                     </div>
                     <div id="typeFilterOptions">
-                        <div style="color:#999; font-size:12px; margin-top:5px;">请先导入表格，系统会自动提取...</div>
+                        <div style="color:#999; font-size:12px; margin-top:5px;" data-i18n="请先导入表格，系统会自动提取...">请先导入表格，系统会自动提取...</div>
                     </div>
                 </div>
             </div>
@@ -175,55 +175,55 @@
 
     <div class="dashboard">
         <div class="card frd">
-            <div class="card-title">FRD (本月任务总基数)</div>
+            <div class="card-title" data-i18n="FRD (本月任务总基数)">FRD (本月任务总基数)</div>
             <div class="card-value" id="val-frd" style="color: var(--warning)">0</div>
-            <div class="card-sub">符合所选SR类型的合规工单</div>
+            <div class="card-sub" data-i18n="符合所选SR类型的合规工单">符合所选SR类型的合规工单</div>
         </div>
         <div class="card frc">
-            <div class="card-title">FRC (本月按时完成数)</div>
+            <div class="card-title" data-i18n="FRC (本月按时完成数)">FRC (本月按时完成数)</div>
             <div class="card-value" id="val-frc" style="color: var(--success)">0</div>
-            <div class="card-sub">在期望关闭时间之前已完美闭环</div>
+            <div class="card-sub" data-i18n="在期望关闭时间之前已完美闭环">在期望关闭时间之前已完美闭环</div>
         </div>
         <div class="card frt">
-            <div class="card-title">最终 FRT 得分 (FRC ÷ FRD)</div>
+            <div class="card-title" data-i18n="最终 FRT 得分 (FRC ÷ FRD)">最终 FRT 得分 (FRC ÷ FRD)</div>
             <div class="card-value" id="val-frt" style="color: var(--primary)">0.00%</div>
-            <div class="card-sub">KPI 决定性指标</div>
+            <div class="card-sub" data-i18n="KPI 决定性指标">KPI 决定性指标</div>
         </div>
     </div>
 
     <div class="trial-panel">
         <div class="trial-header">
             <div>
-                <div class="trial-title">🎯 目标分与分数试算栏</div>
-                <div class="trial-note">真实核算结果不会被这里的试算值改写，用于快速判断“调分子/分母后能否达标”。</div>
+                <div class="trial-title" data-i18n="🎯 目标分与分数试算栏">🎯 目标分与分数试算栏</div>
+                <div class="trial-note" data-i18n="真实核算结果不会被这里的试算值改写，用于快速判断“调分子/分母后能否达标”。">真实核算结果不会被这里的试算值改写，用于快速判断“调分子/分母后能否达标”。</div>
             </div>
             <div class="trial-note" id="trialCurrentHint">当前真实结果：FRC 0 / FRD 0</div>
         </div>
         <div class="trial-grid">
             <div class="trial-field">
-                <div class="trial-label">目标分 Target Score</div>
+                <div class="trial-label" data-i18n="目标分 Target Score">目标分 Target Score</div>
                 <div class="trial-input-wrap">
                     <input class="trial-input" id="targetScoreInput" type="number" min="0" max="100" step="0.01" value="98.5" oninput="handleTargetScoreChange()">
                     <span class="trial-unit">%</span>
                 </div>
             </div>
             <div class="trial-field">
-                <div class="trial-label">试算分子 FRC</div>
+                <div class="trial-label" data-i18n="试算分子 FRC">试算分子 FRC</div>
                 <input class="trial-input" id="trialFrcInput" type="number" min="0" step="1" value="0" oninput="updateFRTTrialPanel()">
             </div>
             <div class="trial-field">
-                <div class="trial-label">试算分母 FRD</div>
+                <div class="trial-label" data-i18n="试算分母 FRD">试算分母 FRD</div>
                 <input class="trial-input" id="trialFrdInput" type="number" min="0" step="1" value="0" oninput="updateFRTTrialPanel()">
             </div>
             <div class="trial-result" id="trialResultCard">
                 <div class="trial-score" id="trialScoreValue">0.00%</div>
-                <div class="trial-status" id="trialStatusText">等待导入数据</div>
+                <div class="trial-status" id="trialStatusText" data-i18n="等待导入数据">等待导入数据</div>
             </div>
-            <div class="trial-detail" id="trialDetailText">导入报表后，系统会自动把当前 FRC / FRD 带入试算栏。</div>
+            <div class="trial-detail" id="trialDetailText" data-i18n="导入报表后，系统会自动把当前 FRC / FRD 带入试算栏。">导入报表后，系统会自动把当前 FRC / FRD 带入试算栏。</div>
         </div>
         <div class="trial-actions">
-            <button class="trial-action-btn" onclick="syncTrialInputsFromCurrent(true)">↩ 使用当前真实值</button>
-            <button class="trial-action-btn" onclick="fillNeededFrcToTarget()">✨ 自动补齐到目标分</button>
+            <button class="trial-action-btn" onclick="syncTrialInputsFromCurrent(true)" data-i18n="↩ 使用当前真实值">↩ 使用当前真实值</button>
+            <button class="trial-action-btn" onclick="fillNeededFrcToTarget()" data-i18n="✨ 自动补齐到目标分">✨ 自动补齐到目标分</button>
         </div>
     </div>
 
@@ -231,18 +231,18 @@
     <div id="mathExplanation" class="math-explanation"></div>
 
     <div id="blameBox" class="blame-box">
-        <h4>🚨 “KPI杀手”点名录 - 以下单据导致了扣分 (点击单号看详情)：</h4>
+        <h4 data-i18n="🚨 “KPI杀手”点名录 - 以下单据导致了扣分 (点击单号看详情)：">🚨 “KPI杀手”点名录 - 以下单据导致了扣分 (点击单号看详情)：</h4>
         <div id="badTagsContainer" class="bad-tags-container"></div>
     </div>
 
     <div class="table-panel">
         <h3>
-            <span>📋 逐行判定诊断明细 <span style="font-size: 12px; color: #666; font-weight: normal;">(双击行看全景)</span></span>
+            <span data-i18n='📋 逐行判定诊断明细 <span style="font-size: 12px; color: #666; font-weight: normal;">(双击行看全景)</span>'>📋 逐行判定诊断明细 <span style="font-size: 12px; color: #666; font-weight: normal;">(双击行看全景)</span></span>
             <div class="dropdown-wrapper">
-                <button class="dropdown-btn" onclick="toggleMenu('columnMenu', event)">⚙️ 自定义显示列</button>
+                <button class="dropdown-btn" onclick="toggleMenu('columnMenu', event)"><span data-i18n="⚙️ 自定义显示列">⚙️ 自定义显示列</span></button>
                 <div id="columnMenu" class="dropdown-menu">
                     <div class="menu-header">
-                        <span>勾选要在表格中显示的列：</span>
+                        <span data-i18n="勾选要在表格中显示的列：">勾选要在表格中显示的列：</span>
                         <span class="close-menu" onclick="toggleMenu('columnMenu', event)">&times;</span>
                     </div>
                     <div id="columnOptions"></div>
@@ -253,7 +253,7 @@
             <table id="logTable">
                 <thead id="logTableHead"></thead>
                 <tbody id="logTableBody">
-                    <tr><td colspan="12" style="text-align: center; color: #999; padding: 30px;">等待导入 Excel 或 CSV 数据进行诊断...</td></tr>
+                    <tr><td colspan="12" style="text-align: center; color: #999; padding: 30px;" data-i18n="等待导入 Excel 或 CSV 数据进行诊断...">等待导入 Excel 或 CSV 数据进行诊断...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -263,7 +263,7 @@
 <div id="ticketModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h2 id="modalTitle">工单全景视图</h2>
+            <h2 id="modalTitle" data-i18n="工单全景视图">工单全景视图</h2>
             <span class="close-btn" onclick="closeModal()">&times;</span>
         </div>
         <div class="modal-body">
@@ -275,18 +275,18 @@
 <div id="snapshotsModal" class="modal">
     <div class="modal-content" style="width: 95%; max-width: 1600px;">
         <div class="modal-header" style="background: #8e24aa;">
-            <h2 style="margin: 0; font-size: 18px;">🕒 历史考核快照</h2>
+            <h2 style="margin: 0; font-size: 18px;" data-i18n="🕒 历史考核快照">🕒 历史考核快照</h2>
             <span class="close-btn" onclick="closeSnapshotsModal()">&times;</span>
         </div>
         <div class="modal-body" id="snapshotsBody">
-            <div style="text-align:center; padding: 20px;">正在加载历史快照...</div>
+            <div style="text-align:center; padding: 20px;" data-i18n="正在加载历史快照...">正在加载历史快照...</div>
         </div>
     </div>
 </div>
 
 <script src="/js/shared/api.js"></script>
 <script src="/js/shared/toast.js"></script>
-<script src="/js/shared/navbar.js"></script>
+<script src="/js/shared/navbar.js?v=20260611-01"></script>
 
 <script>
     let globalParsedData = null;
@@ -299,6 +299,77 @@
     let globalProcessedRows = []; 
     let currentFRTStats = { frcCount: 0, frdCount: 0, finalFRT: 0 };
     const FRT_TARGET_SCORE_STORAGE_KEY = 'frt_target_score_percent_v1';
+
+    // ================== 双语切换引擎 ==================
+    const I18N_DICT = {
+        "📊 FRT KPI 自动化核算平台 (V15 动态类型筛选版)": "📊 FRT KPI Automated Platform (V15 Dynamic Filter)",
+        "📌 <strong>动态筛选：</strong>右上角现已支持提取报表内所有【SR 类型】，<strong>默认仅勾选 CS - Technical Request</strong>。<br>📌 <strong>操作指引：</strong>导入表单后自由切换月份、增删 SR 类型过滤条件，KPI 瞬间重算。": "📌 <strong>Dynamic Filter:</strong> Extract all [SR Types] in the report, <strong>default is CS - Technical Request</strong>.<br>📌 <strong>Guide:</strong> Freely switch months or change SR type filters, KPIs will be recalculated instantly.",
+        "考核月份:": "Target Month:",
+        "💾 保存为快照": "💾 Save Snapshot",
+        "🕒 历史快照": "🕒 History Snapshots",
+        "📂 点击导入报表 (.xlsx / .csv)": "📂 Import Report (.xlsx/.csv)",
+        "🚀 智能映射引擎正在全速解析中...": "🚀 Intelligent mapping engine parsing...",
+        "🔍 筛选 SR 类型": "🔍 Filter SR Type",
+        "勾选参与考核的 SR 类型：": "Check SR Types for assessment:",
+        "请先导入表格，系统会自动提取...": "Import table first to extract...",
+        "FRD (本月任务总基数)": "FRD (Total Tasks Base)",
+        "符合所选SR类型的合规工单": "Compliant tickets matching SR types",
+        "FRC (本月按时完成数)": "FRC (Completed on Time)",
+        "在期望关闭时间之前已完美闭环": "Closed before expected time",
+        "最终 FRT 得分 (FRC ÷ FRD)": "Final FRT Score (FRC÷FRD)",
+        "KPI 决定性指标": "Decisive KPI Metric",
+        "🎯 目标分与分数试算栏": "🎯 Target Score Trial Calculation",
+        "真实核算结果不会被这里的试算值改写，用于快速判断“调分子/分母后能否达标”。": "Real result won't be overwritten, used to quickly judge if target is met after adjusting.",
+        "当前真实结果：": "Current Real Result:",
+        "目标分 Target Score": "Target Score",
+        "试算分子 FRC": "Trial FRC",
+        "试算分母 FRD": "Trial FRD",
+        "等待导入数据": "Waiting for Data Import",
+        "导入报表后，系统会自动把当前 FRC / FRD 带入试算栏。": "System will auto-fill current FRC/FRD into trial after import.",
+        "↩ 使用当前真实值": "↩ Use Current Real Value",
+        "✨ 自动补齐到目标分": "✨ Auto-fill to Target",
+        "🚨 “KPI杀手”点名录 - 以下单据导致了扣分 (点击单号看详情)：": "🚨 'KPI Killer' Roll Call - Deducted tickets (click for details):",
+        '📋 逐行判定诊断明细 <span style="font-size: 12px; color: #666; font-weight: normal;">(双击行看全景)</span>': '📋 Diagnosis Details <span style="font-size: 12px; color: #666; font-weight: normal;">(Double click for panoramic)</span>',
+        "⚙️ 自定义显示列": "⚙️ Custom Display Columns",
+        "勾选要在表格中显示的列：": "Check columns to display:",
+        "等待导入 Excel 或 CSV 数据进行诊断...": "Waiting for data import for diagnosis...",
+        "工单全景视图": "Ticket Panoramic View",
+        "🕒 历史考核快照": "🕒 History Snapshots",
+        "正在加载历史快照...": "Loading history snapshots..."
+    };
+
+    let currentLang = 'zh';
+
+    function applyLanguage(lang) {
+        if (currentLang === lang) return;
+        currentLang = lang;
+        
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (currentLang === 'en' && I18N_DICT[key]) el.innerHTML = I18N_DICT[key];
+            else el.innerHTML = key;
+        });
+
+        // Dynamic element translations
+        updateFRTTrialPanel();
+        if (globalParsedData) {
+            triggerRecalculate();
+        }
+    }
+
+    function tText(zh, en) {
+        return currentLang === 'en' ? en : zh;
+    }
+
+    window.addEventListener('tools:languagechange', (e) => {
+        const isEn = e.detail?.lang?.startsWith('en');
+        applyLanguage(isEn ? 'en' : 'zh');
+    });
+
+    // Initialize language
+    const storedLang = localStorage.getItem('tools_lang') || navigator.language || 'zh';
+    applyLanguage(storedLang.startsWith('en') ? 'en' : 'zh');
+    // ==================================================
 
     function toSafeNumber(value, fallback = 0) {
         const n = parseFloat(value);
@@ -399,18 +470,18 @@
             resultCard.classList.toggle('fail', frd > 0 && !pass);
         }
         if (statusEl) {
-            statusEl.innerText = frd <= 0 ? '等待导入数据' : (pass ? `已达到 ${targetPct.toFixed(2)}% 目标` : `未达标，还差 ${neededFrc} 个 FRC`);
+            statusEl.innerText = frd <= 0 ? tText('等待导入数据', 'Waiting for Data Import') : (pass ? tText(`已达到 ${targetPct.toFixed(2)}% 目标`, `Reached ${targetPct.toFixed(2)}% target`) : tText(`未达标，还差 ${neededFrc} 个 FRC`, `Missed target, need ${neededFrc} more FRC`));
         }
         if (hintEl) {
-            hintEl.innerText = `当前真实结果：FRC ${currentFRTStats.frcCount} / FRD ${currentFRTStats.frdCount} / ${currentFRTStats.finalFRT.toFixed(2)}%`;
+            hintEl.innerText = tText(`当前真实结果：FRC ${currentFRTStats.frcCount} / FRD ${currentFRTStats.frdCount} / ${currentFRTStats.finalFRT.toFixed(2)}%`, `Current Real Result: FRC ${currentFRTStats.frcCount} / FRD ${currentFRTStats.frdCount} / ${currentFRTStats.finalFRT.toFixed(2)}%`);
         }
         if (detailEl) {
             if (frd <= 0) {
-                detailEl.innerHTML = '导入报表后，系统会自动把当前 FRC / FRD 带入试算栏。';
+                detailEl.innerHTML = tText('导入报表后，系统会自动把当前 FRC / FRD 带入试算栏。', 'System will auto-fill FRC/FRD here after import.');
             } else if (pass) {
-                detailEl.innerHTML = `✅ 当前试算已达标：${cappedFrc} ÷ ${frd} = <strong>${score.toFixed(2)}%</strong>，目标分为 <strong>${targetPct.toFixed(2)}%</strong>。`;
+                detailEl.innerHTML = tText(`✅ 当前试算已达标：${cappedFrc} ÷ ${frd} = <strong>${score.toFixed(2)}%</strong>，目标分为 <strong>${targetPct.toFixed(2)}%</strong>。`, `✅ Trial meets target: ${cappedFrc} ÷ ${frd} = <strong>${score.toFixed(2)}%</strong>, Target: <strong>${targetPct.toFixed(2)}%</strong>.`);
             } else {
-                detailEl.innerHTML = `⚠️ 当前试算未达标：${cappedFrc} ÷ ${frd} = <strong>${score.toFixed(2)}%</strong>。若分母不变，至少还需补齐 <strong>${neededFrc}</strong> 个 FRC；若通过新增且按时闭环工单稀释 ${badTickets} 个扣分单，约需新增 <strong>${neededNewTickets}</strong> 单。`;
+                detailEl.innerHTML = tText(`⚠️ 当前试算未达标：${cappedFrc} ÷ ${frd} = <strong>${score.toFixed(2)}%</strong>。若分母不变，至少还需补齐 <strong>${neededFrc}</strong> 个 FRC；若通过新增且按时闭环工单稀释 ${badTickets} 个扣分单，约需新增 <strong>${neededNewTickets}</strong> 单。`, `⚠️ Trial below target: ${cappedFrc} ÷ ${frd} = <strong>${score.toFixed(2)}%</strong>. If FRD is fixed, you need <strong>${neededFrc}</strong> more FRC; to dilute ${badTickets} bad tickets by creating new tickets, you need ~<strong>${neededNewTickets}</strong> new tickets.`);
             }
         }
     }
@@ -422,11 +493,11 @@
         const mathExpDiv = document.getElementById('mathExplanation');
 
         if (frdCount === 0) {
-            banner.innerHTML = `💡 ${document.getElementById('targetMonth').value} 月份暂无考核数据。`;
+            banner.innerHTML = tText(`💡 ${document.getElementById('targetMonth').value} 月份暂无考核数据。`, `💡 No assessment data for ${document.getElementById('targetMonth').value}.`);
             banner.className = "target-banner tb-safe";
             mathExpDiv.style.display = "none";
         } else if (finalFRT >= targetPercent) {
-            banner.innerHTML = `🎉 恭喜！得分 <strong>${finalFRT.toFixed(2)}%</strong>，已达到 <strong>${targetPercent.toFixed(2)}%</strong> 目标线！`;
+            banner.innerHTML = tText(`🎉 恭喜！得分 <strong>${finalFRT.toFixed(2)}%</strong>，已达到 <strong>${targetPercent.toFixed(2)}%</strong> 目标线！`, `🎉 Congrats! Score <strong>${finalFRT.toFixed(2)}%</strong> meets the <strong>${targetPercent.toFixed(2)}%</strong> target!`);
             banner.className = "target-banner tb-safe";
             mathExpDiv.style.display = "none";
         } else {
@@ -434,9 +505,9 @@
             let badTickets = frdCount - frcCount;
             let targetTotal = frdCount + needed;
 
-            banner.innerHTML = `<div>⚠️ 距离目标分 <strong>${targetPercent.toFixed(2)}%</strong> 还差一点！稀释扣分项还需要：</div><div class="tb-highlight">新建并闭环 <strong>${needed}</strong> 个单子 🚀</div>`;
+            banner.innerHTML = tText(`<div>⚠️ 距离目标分 <strong>${targetPercent.toFixed(2)}%</strong> 还差一点！稀释扣分项还需要：</div><div class="tb-highlight">新建并闭环 <strong>${needed}</strong> 个单子 🚀</div>`, `<div>⚠️ Close to the <strong>${targetPercent.toFixed(2)}%</strong> target! To dilute deductions you need:</div><div class="tb-highlight">Create and close <strong>${needed}</strong> tickets 🚀</div>`);
             banner.className = "target-banner tb-danger";
-            mathExpDiv.innerHTML = `💡 <strong>极简算理：</strong>为了稀释已产生的 <strong>${badTickets} 个扣分单</strong>，总盘子需撑大到约 <strong>${targetTotal} 单</strong>，因此需额外补充 ${targetTotal} - ${frdCount} = <strong>${needed} 单</strong>。`;
+            mathExpDiv.innerHTML = tText(`💡 <strong>极简算理：</strong>为了稀释已产生的 <strong>${badTickets} 个扣分单</strong>，总盘子需撑大到约 <strong>${targetTotal} 单</strong>，因此需额外补充 ${targetTotal} - ${frdCount} = <strong>${needed} 单</strong>。`, `💡 <strong>Math logic:</strong> To dilute the existing <strong>${badTickets} bad tickets</strong>, the total base needs to grow to ~<strong>${targetTotal} tickets</strong>, so we need an extra ${targetTotal} - ${frdCount} = <strong>${needed} tickets</strong>.`);
             mathExpDiv.style.display = "block";
         }
         banner.style.display = "flex";
@@ -661,17 +732,17 @@
 
             // --- 动态过滤逻辑接入 ---
             if (!expStr) {
-                reason = "无期望关闭时间";
+                reason = tText("无期望关闭时间", "No expected close time");
             } else if (expMonth !== monthInput) {
-                reason = `非考核月 (${expMonth})`;
+                reason = tText(`非考核月 (${expMonth})`, `Not target month (${expMonth})`);
             } else if (type && !selectedSRTypes.includes(type)) {
-                reason = `未勾选的类型 (${type})`;
+                reason = tText(`未勾选的类型 (${type})`, `Unchecked type (${type})`);
             } else if (bg && bg !== "运营商" && bg.toUpperCase() !== "CARRIER") {
-                reason = `非运营商 BG`;
+                reason = tText(`非运营商 BG`, `Non-Carrier BG`);
             } else if (auth && ["Missing authentication data", "Only support emergency recovery", "Unknown"].includes(auth)) {
-                reason = `鉴权异常剔除`;
+                reason = tText(`鉴权异常剔除`, `Auth error excluded`);
             } else if (root && root.includes("不可抗力")) {
-                reason = `不可抗力免责`;
+                reason = tText(`不可抗力免责`, `Force majeure exempt`);
             } else {
                 frdCount++;
                 const isClosed = ["Closed", "Resolved"].includes(status);
@@ -680,16 +751,16 @@
                     frcCount++;
                     rowClass = "status-frc";
                     badgeHTML = `<span class="badge b-frc">✅ FRC & FRD</span>`;
-                    reason = "按时完美闭环";
+                    reason = tText("按时完美闭环", "Closed perfectly on time");
                     sortPriority = 1; 
                 } else {
                     rowClass = "status-frd";
-                    badgeHTML = `<span class="badge b-frd">⚠️ 仅入 FRD</span>`;
-                    reason = isClosed ? `晚交卷超期` : `到期未闭环`;
+                    badgeHTML = `<span class="badge b-frd">⚠️ ` + tText(`仅入 FRD`, `Only in FRD`) + `</span>`;
+                    reason = isClosed ? tText(`晚交卷超期`, `Closed late`) : tText(`到期未闭环`, `Overdue not closed`);
                     sortPriority = 2; 
                     
                     const blamePerson = owner && owner !== '-' ? owner : creator;
-                    badTicketsList.push({ sr: sr, blamePerson: blamePerson, customerName: customerName || '未知客户', index: i });
+                    badTicketsList.push({ sr: sr, blamePerson: blamePerson, customerName: customerName || tText('未知客户', 'Unknown'), index: i });
                 }
             }
 
@@ -764,10 +835,10 @@
         if (globalProcessedRows.length === 0) return;
 
         let theadHTML = `<tr>
-            <th onclick="sortTable(this, 0)" data-type="number" width="40">行号</th>
-            <th onclick="sortTable(this, 1)" data-type="string" width="90">问题单号</th>
-            <th onclick="sortTable(this, 2)" data-type="string" width="80">建单人</th>
-            <th onclick="sortTable(this, 3)" data-type="string" width="80" style="color:var(--primary);">当前责任人</th>`;
+            <th onclick="sortTable(this, 0)" data-type="number" width="40">${tText('行号', 'Row')}</th>
+            <th onclick="sortTable(this, 1)" data-type="string" width="90">${tText('问题单号', 'Ticket ID')}</th>
+            <th onclick="sortTable(this, 2)" data-type="string" width="80">${tText('建单人', 'Creator')}</th>
+            <th onclick="sortTable(this, 3)" data-type="string" width="80" style="color:var(--primary);">${tText('当前责任人', 'Assignee')}</th>`;
         
         let colIndexCounter = 4;
         
@@ -777,11 +848,11 @@
         });
 
         theadHTML += `
-            <th onclick="sortTable(this, ${colIndexCounter})" data-type="date" width="120">期望关闭</th>
-            <th onclick="sortTable(this, ${colIndexCounter+1})" data-type="date" width="120">实际关闭</th>
-            <th onclick="sortTable(this, ${colIndexCounter+2})" data-type="string" width="70">状态</th>
-            <th onclick="sortTable(this, ${colIndexCounter+3})" data-type="diagnosis" width="90">诊断结果</th>
-            <th onclick="sortTable(this, ${colIndexCounter+4})" data-type="string">过滤及扣分原因</th>
+            <th onclick="sortTable(this, ${colIndexCounter})" data-type="date" width="120">${tText('期望关闭', 'Expected Close')}</th>
+            <th onclick="sortTable(this, ${colIndexCounter+1})" data-type="date" width="120">${tText('实际关闭', 'Actual Close')}</th>
+            <th onclick="sortTable(this, ${colIndexCounter+2})" data-type="string" width="70">${tText('状态', 'Status')}</th>
+            <th onclick="sortTable(this, ${colIndexCounter+3})" data-type="diagnosis" width="90">${tText('诊断结果', 'Diagnosis')}</th>
+            <th onclick="sortTable(this, ${colIndexCounter+4})" data-type="string">${tText('过滤及扣分原因', 'Filter/Deduct Reason')}</th>
         </tr>`;
 
         document.getElementById('logTableHead').innerHTML = theadHTML;
@@ -957,13 +1028,13 @@
                 <table style="width:100%; border-collapse: collapse; font-size: 13px;">
                     <thead>
                         <tr>
-                            <th style="padding:10px; border-bottom:1px solid #eee; background:#f8f9fa;">生成时间</th>
-                            <th style="padding:10px; border-bottom:1px solid #eee; background:#f8f9fa;">考核月份</th>
-                            <th style="padding:10px; border-bottom:1px solid #eee; background:#f8f9fa;">FRD总数</th>
-                            <th style="padding:10px; border-bottom:1px solid #eee; background:#f8f9fa;">FRC按时数</th>
-                            <th style="padding:10px; border-bottom:1px solid #eee; background:#f8f9fa;">目标分</th>
-                            <th style="padding:10px; border-bottom:1px solid #eee; background:#f8f9fa; color:var(--primary);">最终得分</th>
-                            <th style="padding:10px; border-bottom:1px solid #eee; background:#f8f9fa; width:80px;">操作</th>
+                            <th style="padding:10px; border-bottom:1px solid #eee; background:#f8f9fa;">${tText('生成时间', 'Generated Time')}</th>
+                            <th style="padding:10px; border-bottom:1px solid #eee; background:#f8f9fa;">${tText('考核月份', 'Target Month')}</th>
+                            <th style="padding:10px; border-bottom:1px solid #eee; background:#f8f9fa;">${tText('FRD总数', 'Total FRD')}</th>
+                            <th style="padding:10px; border-bottom:1px solid #eee; background:#f8f9fa;">${tText('FRC按时数', 'FRC On Time')}</th>
+                            <th style="padding:10px; border-bottom:1px solid #eee; background:#f8f9fa;">${tText('目标分', 'Target Score')}</th>
+                            <th style="padding:10px; border-bottom:1px solid #eee; background:#f8f9fa; color:var(--primary);">${tText('最终得分', 'Final Score')}</th>
+                            <th style="padding:10px; border-bottom:1px solid #eee; background:#f8f9fa; width:80px;">${tText('操作', 'Actions')}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -982,7 +1053,7 @@
                         <td style="padding:10px; border-bottom:1px solid #eee;">${s.targetScore || '98.50%'}</td>
                         <td style="padding:10px; border-bottom:1px solid #eee; font-weight:bold; color:var(--primary);">${s.finalFRT}</td>
                         <td style="padding:10px; border-bottom:1px solid #eee;">
-                            <button onclick="deleteSnapshot('${s.id}')" style="background:#fff; border:1px solid #ffcccc; color:var(--danger); border-radius:4px; padding:3px 8px; cursor:pointer; font-size:12px;">删除</button>
+                            <button onclick="deleteSnapshot('${s.id}')" style="background:#fff; border:1px solid #ffcccc; color:var(--danger); border-radius:4px; padding:3px 8px; cursor:pointer; font-size:12px;">${tText('删除', 'Delete')}</button>
                         </td>
                     </tr>
                 `;
@@ -999,7 +1070,7 @@
                             const idxC = hl.findIndex(h => h.includes('客户名称') || h.includes('customer name') || h.includes('network') || h.includes('网络'));
                             if (idxC > -1) cName = t.rawData[idxC];
                         }
-                        cName = cName || '未归类 / 未知客户';
+                        cName = cName || tText('未归类 / 未知客户', 'Unknown Customer');
                         
                         if (!grouped[cName]) grouped[cName] = [];
                         grouped[cName].push(t);
@@ -1013,15 +1084,15 @@
                         treeHtml += `
                             <div style="margin-bottom:15px; border:1px solid #e2e8f0; border-radius:6px; overflow:hidden;">
                                 <div style="background:#f8fafc; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0;">
-                                    <strong style="color:#334155; font-size:13px;">🏢 客户：${cust} <span style="color:#64748b; font-weight:normal;">(${tickets.length}单)</span></strong>
-                                    <button onclick="copyText(this, \`${copyStr}\`)" style="background:#fff; border:1px solid #cbd5e1; color:#0f172a; padding:4px 10px; border-radius:4px; font-size:12px; cursor:pointer; font-weight:bold; transition:all 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#fff'">📋 复制本组名单</button>
+                                    <strong style="color:#334155; font-size:13px;">🏢 ${tText('客户：', 'Customer:')}${cust} <span style="color:#64748b; font-weight:normal;">(${tickets.length}${tText('单', ' Tickets')})</span></strong>
+                                    <button onclick="copyText(this, \`${copyStr}\`)" style="background:#fff; border:1px solid #cbd5e1; color:#0f172a; padding:4px 10px; border-radius:4px; font-size:12px; cursor:pointer; font-weight:bold; transition:all 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#fff'">📋 ${tText('复制本组名单', 'Copy List')}</button>
                                 </div>
                                 <table style="width:100%; border-collapse: collapse; font-size:12px; text-align:left;">
                                     <tr style="background:#fff; color:#475569; border-bottom:1px solid #f1f5f9;">
-                                        <th style="padding:6px; width:40px; text-align:center;">展开</th>
-                                        <th style="padding:6px;">单号 (点击复制)</th>
-                                        <th style="padding:6px;">责任人</th>
-                                        <th style="padding:6px;">扣分原因</th>
+                                        <th style="padding:6px; width:40px; text-align:center;">${tText('展开', 'Expand')}</th>
+                                        <th style="padding:6px;">${tText('单号 (点击复制)', 'Ticket (Click to copy)')}</th>
+                                        <th style="padding:6px;">${tText('责任人', 'Assignee')}</th>
+                                        <th style="padding:6px;">${tText('扣分原因', 'Deduction Reason')}</th>
                                     </tr>`;
                         
                         tickets.forEach(t => {
@@ -1041,7 +1112,7 @@
                                 });
                                 subDetails += `</div>`;
                             } else {
-                                subDetails += `<div style="padding:10px; color:#999; font-style:italic;">旧版快照未保存完整详情</div>`;
+                                subDetails += `<div style="padding:10px; color:#999; font-style:italic;">${tText('旧版快照未保存完整详情', 'Old snapshot lacks full details')}</div>`;
                             }
 
                             treeHtml += `<tr style="border-bottom:1px solid #f1f5f9; background:#fff;">
@@ -1063,7 +1134,7 @@
                     html += `
                         <tr>
                             <td colspan="7" style="padding:5px 10px 15px 10px; border-bottom:2px solid #ddd; background:#fafafa;">
-                                <button onclick="toggleSnapshotDetails('${toggleId}')" style="background:#e0e7ff; color:#4338ca; border:none; padding:4px 10px; border-radius:4px; font-size:12px; cursor:pointer; font-weight:bold;">🔽 展开/折叠扣分单明细树 (${badCount}单)</button>
+                                <button onclick="toggleSnapshotDetails('${toggleId}')" style="background:#e0e7ff; color:#4338ca; border:none; padding:4px 10px; border-radius:4px; font-size:12px; cursor:pointer; font-weight:bold;">${tText(`🔽 展开/折叠扣分单明细树 (${badCount}单)`, `🔽 Expand/Collapse Details (${badCount})`)}</button>
                                 ${treeHtml}
                             </td>
                         </tr>
@@ -1104,11 +1175,12 @@
     }
 
     function copyText(el, text) {
-        if (el.innerText === '✅ 已复制') return; // 防连点
+        const copySuccess = tText('✅ 已复制', '✅ Copied');
+        if (el.innerText === copySuccess) return; // 防连点
         const actualText = text || el.innerText.replace(' 📋', '').trim();
         navigator.clipboard.writeText(actualText).then(() => {
             const originHTML = el.innerHTML;
-            el.innerHTML = '<span style="color:var(--success);">✅ 已复制</span>';
+            el.innerHTML = `<span style="color:var(--success);">${copySuccess}</span>`;
             setTimeout(() => { el.innerHTML = originHTML; }, 1000);
         }).catch(err => {
             console.error('复制失败', err);
@@ -1116,12 +1188,12 @@
     }
 
     async function deleteSnapshot(id) {
-        if(!confirm('确定删除该快照？')) return;
+        if(!confirm(tText('确定删除该快照？', 'Are you sure you want to delete this snapshot?'))) return;
         try {
             await API.delete('/api/frt/snapshots/' + id);
             openSnapshotsModal();
         } catch(e) {
-            alert("删除失败: " + e.message);
+            alert(tText("删除失败: ", "Failed to delete: ") + e.message);
         }
     }
 

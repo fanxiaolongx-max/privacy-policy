@@ -7,16 +7,16 @@ async function exportConfig() {
     try {
         const data = await API.get('/api/sla/config');
         const keysCount = Object.keys(data.prefs || {}).length + (data.targets ? 1 : 0);
-        if (keysCount === 0) { alert('当前服务器没有可导出的记忆配置！请先导入表格使用后再试。'); return; }
+        if (keysCount === 0) { alert(SLAT('sla.config.empty')); return; }
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = `SLA_Monitor_Config_${new Date().getTime()}.json`;
         document.body.appendChild(a); a.click(); a.remove();
-        showToast('✅ 配置已导出');
+        showToast(SLAT('sla.config.exported'));
         API.logHistory('sla', '导出全量配置');
     } catch (e) {
-        showToast('❌ 导出失败', 'error');
+        showToast(SLAT('sla.config.exportFail'), 'error');
     }
 }
 
@@ -29,7 +29,7 @@ async function importConfig(event) {
     try {
         rawText = await file.text();
     } catch (readErr) {
-        alert(`❌ 文件读取失败：\n${readErr.message}`);
+        alert(SLAT('sla.config.readFail', { message: readErr.message }));
         event.target.value = '';
         return;
     }
@@ -39,13 +39,13 @@ async function importConfig(event) {
     try {
         config = JSON.parse(rawText);
     } catch (parseErr) {
-        alert(`❌ JSON 格式错误，无法解析配置文件：\n${parseErr.message}\n\n请检查文件是否是通过"导出配置"下载的原始文件。`);
+        alert(SLAT('sla.config.parseFail', { message: parseErr.message }));
         event.target.value = '';
         return;
     }
 
     if (typeof config !== 'object' || config === null) {
-        alert('❌ 配置文件格式不正确：根节点必须是对象。');
+        alert(SLAT('sla.config.badRoot'));
         event.target.value = '';
         return;
     }
@@ -77,7 +77,10 @@ async function importConfig(event) {
         normalized = config;
     } else {
         // 无法识别的格式，打印出字段帮助诊断
-        alert(`❌ 无法识别配置文件格式。\n\n文件包含的字段：\n${keys.slice(0, 10).join('\n')}${keys.length > 10 ? '\n...' : ''}\n\n支持的格式：\n① 新版平台导出的 {targets, prefs}\n② 旧版 Task SLA Killer 导出的 {sla_global_targets, sla_prefs_...}`);
+        alert(SLAT('sla.config.unknown', {
+            fields: keys.slice(0, 10).join('\n'),
+            more: keys.length > 10 ? '\n...' : ''
+        }));
         event.target.value = '';
         return;
     }
@@ -88,11 +91,11 @@ async function importConfig(event) {
         if (normalized.targets) window.GlobalTargets = normalized.targets;
         const prefsCount = Object.keys(normalized.prefs || {}).length;
         const targetsCount = Object.keys(normalized.targets || {}).length;
-        const formatTip = isOldFormat ? '（已从旧版格式自动转换）' : '';
-        alert(`✅ 配置导入成功！${formatTip}\n\n• 预警目标规则：${targetsCount} 条\n• 表格偏好记录：${prefsCount} 张\n\n请重新导入表格文件，新的设置会自动生效。`);
+        const formatTip = isOldFormat ? SLAT('sla.config.legacyTip') : '';
+        alert(SLAT('sla.config.imported', { formatTip, targets: targetsCount, prefs: prefsCount }));
         API.logHistory('sla', '导入全量配置', `format:${isOldFormat ? 'legacy' : 'new'} targets:${targetsCount} prefs:${prefsCount}`);
     } catch (apiErr) {
-        alert(`❌ 配置上传到服务端失败：\n${apiErr.message}\n\n请确认服务已启动（http://localhost:3030/api/health）。`);
+        alert(SLAT('sla.config.uploadFail', { message: apiErr.message }));
         console.error('[importConfig] 上传失败:', apiErr);
     }
 

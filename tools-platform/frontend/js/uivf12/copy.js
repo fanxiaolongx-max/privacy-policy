@@ -5,14 +5,14 @@
 
 function copyCodeText(textAreaId, btnId, typeName) {
     const codeEl = document.getElementById(textAreaId);
-    if (!codeEl || !codeEl.value) { alert('⚠️ 没有可复制的代码！'); return; }
+    if (!codeEl || !codeEl.value) { alert(UIVT('uiv.copy.noCode')); return; }
     codeEl.select();
     document.execCommand('copy');
     const btn = document.getElementById(btnId);
     const oldText = btn.innerText;
-    btn.innerText = '✅ 成功';
+    btn.innerText = UIVT('uiv.copy.successButton');
     setTimeout(() => btn.innerText = oldText, 2000);
-    showToast(`✅ ${typeName} 已复制到剪贴板！`);
+    showToast(UIVT('uiv.copy.toast', { type: typeName }));
 }
 
 function copyFromMemory(codeStr, typeName) {
@@ -22,20 +22,20 @@ function copyFromMemory(codeStr, typeName) {
     t.select();
     document.execCommand('copy');
     document.body.removeChild(t);
-    showToast(`✅ [${typeName}] 复制成功！`);
+    showToast(UIVT('uiv.copy.memoryToast', { type: typeName }));
 }
 
 async function copyAllConsoleScripts() {
     try {
         const { scripts } = await API.get('/api/uiv/scripts');
-        buildAndCopyMasterScript(scripts, '全量总仓库');
+        buildAndCopyMasterScript(scripts, UIVT('uiv.copy.allGroup'));
     } catch (e) {
-        showToast('❌ 无法获取脚本列表', 'error');
+        showToast(UIVT('uiv.copy.fetchFail'), 'error');
     }
 }
 
 function buildAndCopyMasterScript(scriptsToRun, groupName) {
-    if (scriptsToRun.length === 0) { alert('⚠️ 当前分类下没有可执行的脚本！'); return; }
+    if (scriptsToRun.length === 0) { alert(UIVT('uiv.copy.emptyGroup')); return; }
 
     let masterCode = `(async function() {\n    const totalTasks = ${scriptsToRun.length};\n    console.log("%c🚀 [批量调度·${groupName}] 阵列启动！共有 " + totalTasks + " 个任务排队执行中...", "font-size: 16px; font-weight: bold; color: #00d2d3; background: #222f3e; padding: 8px 12px; border-radius: 6px; border-left: 5px solid #00d2d3;");\n\n`;
 
@@ -57,7 +57,7 @@ function buildAndCopyMasterScript(scriptsToRun, groupName) {
 
     masterCode += `\n    console.log("%c\\n🎉 [批量调度·${groupName}] 任务列车抵达终点！所有 " + totalTasks + " 个核心任务全部执行完毕！", "font-size: 16px; font-weight: bold; color: #1dd1a1; background: #222f3e; padding: 8px 12px; border-radius: 6px; border-left: 5px solid #1dd1a1;");\n})();`;
 
-    copyFromMemory(masterCode, `[${groupName}] 批量阵列 (F12)`);
+    copyFromMemory(masterCode, UIVT('uiv.copy.batchType', { group: groupName }));
 }
 
 window.UIVCopy = { copyCodeText, copyFromMemory, copyAllConsoleScripts, buildAndCopyMasterScript };
