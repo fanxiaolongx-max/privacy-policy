@@ -8,6 +8,8 @@ const DEFAULT_CATEGORIES = ['DataFab', 'NetCare中国', 'NetCare中东', 'NetCar
 // 展开状态仅保留在内存（不再用 localStorage，服务端不存此状态）
 let expandedCategories = [];
 let draggedScriptId = null;
+let lastScripts = [];
+let lastCategories = [];
 
 function logSidebarStep(step, detail) {
     const prefix = '%c[UIVF12 Sidebar]';
@@ -26,15 +28,13 @@ function logSidebarError(step, error, detail) {
 }
 
 function formatSourceLabel(source) {
-    if (source === 'sqlite') return 'SQLite';
-    if (source === 'json') return 'JSON';
-    if (source === 'auto') return '自动模式';
-    return source || '-';
+    return window.UIVI18n ? UIVI18n.sourceLabel(source) : (source || '-');
 }
 
 function renderRepositorySource() {
     const panel = document.getElementById('repoSourcePanel');
     if (!panel) return;
+    panel.dataset.loaded = '1';
 
     const mode = API.getSourceMode('uiv_repository');
     const query = mode === 'auto' ? '' : `?mode=${encodeURIComponent(mode)}`;
@@ -43,9 +43,9 @@ function renderRepositorySource() {
     const categorySource = formatSourceLabel(meta.extras ? meta.extras.categories : null);
 
     panel.innerHTML = `
-        <span class="repo-source-badge">脚本来源: ${scriptSource}</span>
-        <span class="repo-source-badge">分类来源: ${categorySource}</span>
-        <span class="repo-source-note">当前模式: ${formatSourceLabel(mode)} · 默认要求页面直接渲染当前真实读源，便于迁移期验证。</span>
+        <span class="repo-source-badge">${UIVT('uiv.source.script', { source: scriptSource })}</span>
+        <span class="repo-source-badge">${UIVT('uiv.source.category', { source: categorySource })}</span>
+        <span class="repo-source-note">${UIVT('uiv.source.currentNote', { mode: formatSourceLabel(mode) })}</span>
     `;
 }
 
@@ -62,6 +62,8 @@ async function loadSavedScripts(options = {}) {
             reason: options.reason || 'direct'
         });
         const { scripts, categories } = await API.get(`/api/uiv/scripts${query}`);
+        lastScripts = scripts || [];
+        lastCategories = categories || [];
         logSidebarStep('脚本仓库接口返回成功', {
             scriptCount: scripts.length,
             categoryCount: categories.length,
@@ -71,7 +73,7 @@ async function loadSavedScripts(options = {}) {
             }))
         });
         renderRepositorySource();
-        renderSidebar(scripts, categories);
+        renderSidebar(lastScripts, lastCategories);
         logSidebarStep('侧边栏渲染完成', {
             expandedCategories: [...expandedCategories]
         });
@@ -80,7 +82,7 @@ async function loadSavedScripts(options = {}) {
             reason: options.reason || 'direct'
         });
         renderRepositorySource();
-        showToast('❌ 无法连接服务器，脚本仓库加载失败', 'error');
+        showToast(UIVT('uiv.toast.serverFail'), 'error');
         throw e;
     }
 }
@@ -112,7 +114,7 @@ function renderSidebar(scripts, categories) {
                     if (!expandedCategories.includes(catName)) expandedCategories.push(catName);
                     await loadSavedScripts();
                 } catch (err) {
-                    showToast('❌ 移动分类失败', 'error');
+                    showToast(UIVT('uiv.toast.moveFail'), 'error');
                 }
             }
         });
@@ -132,7 +134,7 @@ function renderSidebar(scripts, categories) {
 
         const titleSpan = document.createElement('span');
         titleSpan.className = 'cat-title';
-        titleSpan.innerHTML = `<span class="cat-arrow">▶</span> 📂 ${catName} <span style="color:#aaa;font-weight:normal;">(${catScripts.length})</span>`;
+        titleSpan.innerHTML = `<span class="cat-arrow">▶</span> 📂 ${UIVI18n.categoryLabel(catName)} <span style="color:#aaa;font-weight:normal;">(${catScripts.length})</span>`;
 
         const actionSpan = document.createElement('div');
         actionSpan.className = 'category-actions';
@@ -141,8 +143,8 @@ function renderSidebar(scripts, categories) {
             const copyCatBtn = document.createElement('button');
             copyCatBtn.className = 'cat-copy-btn';
             copyCatBtn.innerHTML = '📦';
-            copyCatBtn.title = '仅打包提取此组脚本';
-            copyCatBtn.onclick = e => { e.stopPropagation(); window.UIVBatch.buildAndCopyMasterScript(catScripts, catName); };
+            copyCatBtn.title = UIVT('uiv.category.copyTitle');
+            copyCatBtn.onclick = e => { e.stopPropagation(); window.UIVBatch.buildAndCopyMasterScript(catScripts, UIVI18n.categoryLabel(catName)); };
             actionSpan.appendChild(copyCatBtn);
         }
 
@@ -150,7 +152,7 @@ function renderSidebar(scripts, categories) {
             const delCatBtn = document.createElement('button');
             delCatBtn.className = 'cat-del-btn';
             delCatBtn.innerHTML = '✖';
-            delCatBtn.title = '删除此分类';
+            delCatBtn.title = UIVT('uiv.category.deleteTitle');
             delCatBtn.onclick = e => { e.stopPropagation(); deleteCategory(catName); };
             actionSpan.appendChild(delCatBtn);
         }
@@ -164,7 +166,7 @@ function renderSidebar(scripts, categories) {
         contentDiv.className = 'category-content';
 
         if (catScripts.length === 0) {
-            contentDiv.innerHTML = '<div style="color:#666;font-size:11px;text-align:center;padding:5px;">（空）将脚本拖拽至此</div>';
+            contentDiv.innerHTML = `<div style="color:#666;font-size:11px;text-align:center;padding:5px;">${UIVT('uiv.category.empty')}</div>`;
         }
 
         catScripts.forEach(script => {
@@ -184,7 +186,7 @@ function buildScriptItem(script) {
     const item = document.createElement('div');
     item.className = 'script-item';
     item.draggable = true;
-    item.title = '双击回填配置至工作台';
+    item.title = UIVT('uiv.script.itemTitle');
 
     item.addEventListener('dragstart', e => {
         draggedScriptId = script.id;
@@ -201,7 +203,7 @@ function buildScriptItem(script) {
         const orig = item.style.backgroundColor;
         item.style.backgroundColor = '#2e7d32';
         setTimeout(() => item.style.backgroundColor = orig, 300);
-        showToast(`✅ [${script.name}] 配置已回填！`);
+        showToast(UIVT('uiv.toast.filled', { name: script.name }));
     });
 
     const itemTitle = document.createElement('div');
@@ -223,22 +225,22 @@ function buildScriptItem(script) {
     conBtn.className = 'mini-btn con';
     conBtn.innerText = 'F12';
     conBtn.onclick = () => {
-        if (script.consoleCode) window.UIVCopy.copyFromMemory(script.consoleCode, '控制台脚本');
-        else alert('⚠️ 旧版脚本，请重新生成并覆盖保存。');
+        if (script.consoleCode) window.UIVCopy.copyFromMemory(script.consoleCode, UIVT('uiv.copy.consoleScript'));
+        else alert(UIVT('uiv.alert.legacyScript'));
     };
 
     const delBtn = document.createElement('button');
     delBtn.className = 'mini-btn del';
     delBtn.innerHTML = '✖';
     delBtn.onclick = async () => {
-        if (confirm(`确定删除 [${script.name}] 吗？`)) {
+        if (confirm(UIVT('uiv.confirm.deleteScript', { name: script.name }))) {
             try {
                 await API.delete(`/api/uiv/scripts/${script.id}`);
                 await loadSavedScripts();
-                showToast('✅ 脚本已删除');
+                showToast(UIVT('uiv.toast.scriptDeleted'));
                 API.logHistory('uiv', '删除脚本', script.name);
             } catch (err) {
-                showToast('❌ 删除失败', 'error');
+                showToast(UIVT('uiv.toast.deleteFail'), 'error');
             }
         }
     };
@@ -256,27 +258,27 @@ function buildScriptItem(script) {
 // 分类操作
 // ──────────────────────────────────────────────────────────
 async function createNewCategory() {
-    const newCat = prompt('请输入新分类名称：');
+    const newCat = prompt(UIVT('uiv.prompt.newCategory'));
     if (!newCat || !newCat.trim()) return;
     try {
         await API.post('/api/uiv/categories', { name: newCat.trim() });
         if (!expandedCategories.includes(newCat.trim())) expandedCategories.push(newCat.trim());
         await loadSavedScripts();
-        showToast('✅ 分类已创建');
+        showToast(UIVT('uiv.toast.categoryCreated'));
     } catch (e) {
-        showToast('❌ 创建失败', 'error');
+        showToast(UIVT('uiv.toast.createFail'), 'error');
     }
 }
 
 async function deleteCategory(catName) {
-    if (!confirm(`确定要删除分类 [${catName}] 吗？\n注意：该分类下的所有脚本也会被一并删除！`)) return;
+    if (!confirm(UIVT('uiv.confirm.deleteCategory', { name: UIVI18n.categoryLabel(catName) }))) return;
     try {
         await API.delete(`/api/uiv/categories/${encodeURIComponent(catName)}`);
         expandedCategories = expandedCategories.filter(c => c !== catName);
         await loadSavedScripts();
-        showToast('✅ 分类已删除');
+        showToast(UIVT('uiv.toast.categoryDeleted'));
     } catch (e) {
-        showToast('❌ 删除失败', 'error');
+        showToast(UIVT('uiv.toast.deleteFail'), 'error');
     }
 }
 
@@ -287,18 +289,18 @@ async function exportBackup() {
     try {
         const data = await API.get('/api/uiv/backup');
         if (data.scripts.length === 0 && (!data.categories || data.categories.length === 0)) {
-            alert('⚠️ 当前仓库为空，没有需要导出的配置！'); return;
+            alert(UIVT('uiv.alert.emptyExport')); return;
         }
         const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `UIVision_抓取引擎配置备份_${dateStr}.json`;
+        a.download = UIVT('uiv.export.filename', { date: dateStr });
         a.click();
-        showToast('✅ 仓库备份配置已安全导出！');
+        showToast(UIVT('uiv.toast.exported'));
         API.logHistory('uiv', '导出备份', `共 ${data.scripts.length} 个脚本`);
     } catch (e) {
-        showToast('❌ 导出失败', 'error');
+        showToast(UIVT('uiv.toast.exportFail'), 'error');
     }
 }
 
@@ -309,14 +311,14 @@ async function importBackup(event) {
     reader.onload = async e => {
         try {
             const parsed = JSON.parse(e.target.result);
-            if (!Array.isArray(parsed.scripts)) { alert('❌ 无效备份文件格式'); return; }
-            const merge = confirm('📦 成功解析备份文件！\n\n点击【确定】融合（保留现有脚本，追加新脚本）\n点击【取消】覆盖（清空现有仓库，完全替换）');
+            if (!Array.isArray(parsed.scripts)) { alert(UIVT('uiv.alert.invalidBackup')); return; }
+            const merge = confirm(UIVT('uiv.confirm.importMode'));
             await API.post('/api/uiv/backup', { scripts: parsed.scripts, categories: parsed.categories, merge });
             await loadSavedScripts();
-            showToast('✅ 配置快照已成功导入！');
+            showToast(UIVT('uiv.toast.imported'));
             API.logHistory('uiv', merge ? '融合导入' : '覆盖导入', `共 ${parsed.scripts.length} 个脚本`);
         } catch (err) {
-            alert('❌ 导入失败：解析文件出错。');
+            alert(UIVT('uiv.alert.importFail'));
         }
         event.target.value = '';
     };
@@ -324,4 +326,9 @@ async function importBackup(event) {
 }
 
 // 暴露给全局
-window.UIVSidebar = { loadSavedScripts, createNewCategory, exportBackup, importBackup };
+function refreshI18n() {
+    renderRepositorySource();
+    if (lastCategories.length) renderSidebar(lastScripts, lastCategories);
+}
+
+window.UIVSidebar = { loadSavedScripts, createNewCategory, exportBackup, importBackup, refreshI18n };

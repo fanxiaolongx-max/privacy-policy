@@ -12,7 +12,7 @@ const SLA_WORKSPACE_CACHE_KEY = 'sla_last_import_workspace_v1';
 
 function buildCachedSectionNav(sections, summaryTitle) {
     if (!sections || sections.length <= 1) return '';
-    let navHtml = `<h3 style="margin-top:0;color:#2e7d32;font-size:16px;">${escapeHTML(summaryTitle || `📊 已恢复上次导入数据`)}</h3><div class="nav-pills">`;
+    let navHtml = `<h3 style="margin-top:0;color:#2e7d32;font-size:16px;">${escapeHTML(summaryTitle || SLAT('sla.upload.cachedTitle'))}</h3><div class="nav-pills">`;
     sections.forEach(section => {
         const count = Array.isArray(section.data) ? section.data.length : 0;
         navHtml += `<a href="javascript:void(0);" onclick="document.getElementById('section-${section.secId}').scrollIntoView({behavior:'smooth'})" class="nav-pill" style="border-color:${section.themeColor || '#555'};color:${section.themeColor || '#555'}">${escapeHTML(section.title)} (${count}行)</a>`;
@@ -44,7 +44,7 @@ function persistWorkspaceCache(sections, meta = {}) {
         });
     } catch (err) {
         logSLAUploadError('缓存导入工作区', err, { rows: payload.sections.reduce((sum, section) => sum + section.data.length, 0) });
-        if (typeof showToast === 'function') showToast('⚠️ 本次表格较大，浏览器本地缓存空间不足，切换页面后可能需要重新导入', 'warning');
+        if (typeof showToast === 'function') showToast(SLAT('sla.upload.cacheLarge'), 'warning');
     }
 }
 
@@ -69,7 +69,7 @@ async function restoreCachedWorkspace() {
 
     const mainWrapper = document.getElementById('main-wrapper');
     const summaryNav = document.getElementById('summary-nav-area');
-    if (mainWrapper) mainWrapper.innerHTML = '<div class="loading-text">⏳ 正在恢复上次导入的数据...</div>';
+    if (mainWrapper) mainWrapper.innerHTML = `<div class="loading-text">${SLAT('sla.upload.restoreLoading')}</div>`;
     if (summaryNav) summaryNav.style.display = 'none';
 
     try {
@@ -88,12 +88,12 @@ async function restoreCachedWorkspace() {
             sections: sections.length,
             rows: sections.reduce((sum, section) => sum + section.data.length, 0)
         });
-        if (typeof showToast === 'function') showToast('✅ 已恢复上次导入的数据');
+        if (typeof showToast === 'function') showToast(SLAT('sla.upload.restoreSuccess'));
         return true;
     } catch (err) {
         logSLAUploadError('恢复上次导入工作区', err);
         if (mainWrapper) {
-            mainWrapper.innerHTML = '<div style="text-align:center;color:#999;padding:50px 0;border:2px dashed #ddd;border-radius:10px;">上次导入数据恢复失败，请重新导入文件。</div>';
+            mainWrapper.innerHTML = `<div style="text-align:center;color:#999;padding:50px 0;border:2px dashed #ddd;border-radius:10px;">${SLAT('sla.upload.restoreFail')}</div>`;
         }
         return false;
     }
@@ -198,13 +198,19 @@ async function readFiles(files) {
 async function handleSpecificUpload(e, forceMode) {
     const files = Array.from(e.target.files);
     if (!files.length) return;
-    document.getElementById('main-wrapper').innerHTML = '<div class="loading-text">⏳ 正在解析表格数据，请稍候...</div>';
+    document.getElementById('main-wrapper').innerHTML = `<div class="loading-text">${SLAT('sla.upload.parseLoading')}</div>`;
     document.getElementById('summary-nav-area').style.display = 'none';
     const rawData = await readFiles(files);
-    if (!rawData.length) { alert('读取失败或为空表！'); document.getElementById('main-wrapper').innerHTML = ''; return; }
+    if (!rawData.length) { alert(SLAT('sla.upload.emptyFile')); document.getElementById('main-wrapper').innerHTML = ''; return; }
     document.getElementById('main-wrapper').innerHTML = '';
     resetRuntimeWorkspace();
-    const titleMap = { rectification: '🔧 整改监控', risk: '⚠️ 常规风险监控', special: '🛠️ 专项风险监控', sr: '📞 SR详单分析', vulnerability: '🧯 漏洞预警分析' };
+    const titleMap = {
+        rectification: SLAT('sla.section.title.rect'),
+        risk: SLAT('sla.section.title.risk'),
+        special: SLAT('sla.section.title.special'),
+        sr: SLAT('sla.section.title.sr'),
+        vulnerability: SLAT('sla.section.title.vuln')
+    };
     const colorMap = { rectification: '#1976d2', risk: '#7b1fa2', special: '#00796b', sr: '#d9480f', vulnerability: '#c2410c' };
     await window.SLASection.initSection(forceMode, forceMode, titleMap[forceMode], rawData, colorMap[forceMode]);
     persistWorkspaceCache([{
@@ -214,7 +220,7 @@ async function handleSpecificUpload(e, forceMode) {
         data: rawData,
         themeColor: colorMap[forceMode],
         baseName: ''
-    }], { type: 'specific', summaryTitle: `📊 已缓存 ${titleMap[forceMode]}`, files: files.map(f => f.name) });
+    }], { type: 'specific', summaryTitle: SLAT('sla.upload.cachedSpecific', { title: titleMap[forceMode] }), files: files.map(f => f.name) });
     API.logHistory('sla', `导入${titleMap[forceMode]}`, `${files.length} 个文件`);
     e.target.value = '';
 
@@ -225,14 +231,14 @@ async function handleSpecificUpload(e, forceMode) {
 async function handleBatchUpload(e) {
     const files = Array.from(e.target.files);
     if (!files.length) return;
-    document.getElementById('main-wrapper').innerHTML = '<div class="loading-text">⏳ 正在启动智能分拣引擎分析全部文件...</div>';
+    document.getElementById('main-wrapper').innerHTML = `<div class="loading-text">${SLAT('sla.upload.smartLoading')}</div>`;
 
     const groups = {
-        rectification: { files: [], data: [], title: '🔧 整改详单合集', mode: 'rectification', color: '#1976d2' },
-        risk:          { files: [], data: [], title: '⚠️ 常规风险合集', mode: 'risk', color: '#7b1fa2' },
-        special:       { files: [], data: [], title: '🛠️ CPT专项风险合集', mode: 'special', color: '#00796b' },
-        sr:            { files: [], data: [], title: '📞 SR详单分析', mode: 'sr', color: '#d9480f' },
-        vulnerability: { files: [], data: [], title: '🧯 漏洞预警详单', mode: 'vulnerability', color: '#c2410c' },
+        rectification: { files: [], data: [], title: SLAT('sla.section.title.rectBatch'), mode: 'rectification', color: '#1976d2' },
+        risk:          { files: [], data: [], title: SLAT('sla.section.title.riskBatch'), mode: 'risk', color: '#7b1fa2' },
+        special:       { files: [], data: [], title: SLAT('sla.section.title.specialBatch'), mode: 'special', color: '#00796b' },
+        sr:            { files: [], data: [], title: SLAT('sla.section.title.sr'), mode: 'sr', color: '#d9480f' },
+        vulnerability: { files: [], data: [], title: SLAT('sla.section.title.vulnBatch'), mode: 'vulnerability', color: '#c2410c' },
         others: {}
     };
 
@@ -251,7 +257,7 @@ async function handleBatchUpload(e) {
             if (!groups.others[baseName]) {
                 groups.others[baseName] = {
                     id: 'other_' + generateSchemaHash(baseName),
-                    files: [], data: [], title: `📁 独立表: ${baseName}`,
+                    files: [], data: [], title: SLAT('sla.section.title.other', { name: baseName }),
                     mode: 'other', color: '#555', baseName
                 };
             }
@@ -268,7 +274,8 @@ async function handleBatchUpload(e) {
 
     document.getElementById('main-wrapper').innerHTML = '';
     resetRuntimeWorkspace();
-    let navHtml = `<h3 style="margin-top:0;color:#2e7d32;font-size:16px;">📊 批量导入成功 (共解析 ${files.length} 个文件)</h3><div class="nav-pills">`;
+    const batchTitle = SLAT('sla.upload.batchSuccess', { count: files.length });
+    let navHtml = `<h3 style="margin-top:0;color:#2e7d32;font-size:16px;">${batchTitle}</h3><div class="nav-pills">`;
 
     const initPromises = [];
     const cacheSections = [];
@@ -294,7 +301,7 @@ async function handleBatchUpload(e) {
     
     // 等待所有表格的预加载和DOM构建完成
     await Promise.all(initPromises);
-    persistWorkspaceCache(cacheSections, { type: 'batch', summaryTitle: `📊 批量导入成功 (共解析 ${files.length} 个文件)`, files: files.map(f => f.name) });
+    persistWorkspaceCache(cacheSections, { type: 'batch', summaryTitle: batchTitle, files: files.map(f => f.name) });
     
     API.logHistory('sla', '批量导入', `${files.length} 个文件`);
     e.target.value = '';

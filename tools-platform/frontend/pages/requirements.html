@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>需求管理 - Tools Platform</title>
+    <title data-i18n="需求管理 - Tools Platform">需求管理 - Tools Platform</title>
     <link rel="stylesheet" href="/css/shared.css">
     <link rel="stylesheet" href="/css/requirements.css">
 </head>
@@ -13,16 +13,16 @@
     <div class="req-container">
         <header class="req-header">
             <div>
-                <h1>🎯 需求管理广场 <span style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v1.1.0</span></h1>
-                <p>提交、追踪和管理平台新功能与优化需求</p>
+                <h1><span data-i18n="🎯 需求管理广场">🎯 需求管理广场</span> <span style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v1.1.0</span></h1>
+                <p data-i18n="提交、追踪和管理平台新功能与优化需求">提交、追踪和管理平台新功能与优化需求</p>
             </div>
             <div style="display: flex; gap: 12px; align-items: center;">
                 <select id="reqSortSelect" class="form-control" style="width: auto; background: rgba(15, 23, 42, 0.8);" onchange="ReqApp.renderBoard()">
-                    <option value="progress">默认排序：按进度优先</option>
-                    <option value="updated">排序：最近更新时间</option>
-                    <option value="created">排序：最近创建时间</option>
+                    <option value="progress" data-i18n="默认排序：按进度优先">默认排序：按进度优先</option>
+                    <option value="updated" data-i18n="排序：最近更新时间">排序：最近更新时间</option>
+                    <option value="created" data-i18n="排序：最近创建时间">排序：最近创建时间</option>
                 </select>
-                <button class="btn btn-primary" onclick="ReqApp.openCreateModal()">+ 提交新需求</button>
+                <button class="btn btn-primary" onclick="ReqApp.openCreateModal()" data-i18n="+ 提交新需求">+ 提交新需求</button>
             </div>
         </header>
 
@@ -35,7 +35,7 @@
     <div class="modal-overlay" id="reqModal">
         <div class="modal-content req-detail-modal">
             <div class="modal-header">
-                <h2 id="modalTitle">需求详情</h2>
+                <h2 id="modalTitle" data-i18n="需求详情">需求详情</h2>
                 <button class="close-btn" onclick="ReqApp.closeModal()">&times;</button>
             </div>
             
@@ -44,105 +44,105 @@
                 <div class="flowchart-container" id="flowchartContainer" style="display: none;">
                     <div class="flow-step" data-status="提交">
                         <div class="step-circle">1</div>
-                        <div class="step-label">提交</div>
+                        <div class="step-label" data-i18n="提交">提交</div>
                     </div>
                     <div class="step-line"></div>
                     <div class="flow-step" data-status="需求接受">
                         <div class="step-circle">2</div>
-                        <div class="step-label">接受</div>
+                        <div class="step-label" data-i18n="接受">接受</div>
                     </div>
                     <div class="step-line"></div>
                     <div class="flow-step" data-status="需求实现中">
                         <div class="step-circle">3</div>
-                        <div class="step-label">实现中</div>
+                        <div class="step-label" data-i18n="实现中">实现中</div>
                     </div>
                     <div class="step-line"></div>
                     <div class="flow-step" data-status="需求完成">
                         <div class="step-circle">4</div>
-                        <div class="step-label">完成</div>
+                        <div class="step-label" data-i18n="完成">完成</div>
                     </div>
                     <div class="step-line"></div>
                     <div class="flow-step" data-status="验收完成">
                         <div class="step-circle">5</div>
-                        <div class="step-label">验收</div>
+                        <div class="step-label" data-i18n="验收">验收</div>
                     </div>
                     <div class="step-line"></div>
                     <div class="flow-step" data-status="需求评价">
                         <div class="step-circle">6</div>
-                        <div class="step-label">评价</div>
+                        <div class="step-label" data-i18n="评价">评价</div>
                     </div>
                 </div>
 
                 <!-- 表单区 -->
                 <div class="form-row">
                     <div class="form-group" style="flex: 2;">
-                        <label>需求标题 <span class="required">*</span></label>
-                        <input type="text" id="reqTitleInput" class="form-control" placeholder="简短描述需求的核心目的">
+                        <label><span data-i18n="需求标题">需求标题</span> <span class="required">*</span></label>
+                        <input type="text" id="reqTitleInput" class="form-control" data-i18n-ph="简短描述需求的核心目的" placeholder="简短描述需求的核心目的">
                     </div>
                     <div class="form-group" style="flex: 1;">
-                        <label>页面分类 <span class="required">*</span></label>
+                        <label><span data-i18n="页面分类">页面分类</span> <span class="required">*</span></label>
                         <select id="reqCategorySelect" class="form-control">
-                            <option value="" disabled selected>请选择分类...</option>
-                            <option value="全局通用">🌐 全局通用</option>
-                            <option value="新增页面">✨ 新增页面</option>
-                            <option value="工具中台首页">🏠 工具中台首页</option>
-                            <option value="数据抓取(UIVF12)">🚀 数据抓取(UIVF12)</option>
-                            <option value="数据导入(SLA)">📊 数据导入(SLA)</option>
-                            <option value="报表看板">📈 报表看板</option>
-                            <option value="一键催办">⚡ 一键催办</option>
-                            <option value="月报页面">📅 月报页面</option>
-                            <option value="需求管理">🎯 需求管理</option>
+                            <option value="" disabled selected data-i18n="请选择分类...">请选择分类...</option>
+                            <option value="全局通用" data-i18n="🌐 全局通用">🌐 全局通用</option>
+                            <option value="新增页面" data-i18n="✨ 新增页面">✨ 新增页面</option>
+                            <option value="工具中台首页" data-i18n="🏠 工具中台首页">🏠 工具中台首页</option>
+                            <option value="数据抓取(UIVF12)" data-i18n="🚀 数据抓取(UIVF12)">🚀 数据抓取(UIVF12)</option>
+                            <option value="数据导入(SLA)" data-i18n="📊 数据导入(SLA)">📊 数据导入(SLA)</option>
+                            <option value="报表看板" data-i18n="📈 报表看板">📈 报表看板</option>
+                            <option value="一键催办" data-i18n="⚡ 一键催办">⚡ 一键催办</option>
+                            <option value="月报页面" data-i18n="📅 月报页面">📅 月报页面</option>
+                            <option value="需求管理" data-i18n="🎯 需求管理">🎯 需求管理</option>
                         </select>
                     </div>
                 </div>
                 
                 <div class="form-group">
-                    <label>需求详情描述</label>
-                    <textarea id="reqDescInput" class="form-control" rows="4" placeholder="详细说明背景、期望效果等"></textarea>
+                    <label data-i18n="需求详情描述">需求详情描述</label>
+                    <textarea id="reqDescInput" class="form-control" rows="4" data-i18n-ph="详细说明背景、期望效果等" placeholder="详细说明背景、期望效果等"></textarea>
                 </div>
 
                 <div class="form-row" id="manageRow" style="display: none;">
                     <div class="form-group half">
-                        <label>当前状态</label>
+                        <label data-i18n="当前状态">当前状态</label>
                         <select id="reqStatusSelect" class="form-control">
-                            <option value="提交">1. 提交 (待接受)</option>
-                            <option value="需求接受">2. 需求接受 (评估中)</option>
-                            <option value="需求实现中">3. 需求实现中 (开发中)</option>
-                            <option value="需求完成">4. 需求完成 (待上线)</option>
-                            <option value="验收完成">5. 验收完成 (已上线)</option>
-                            <option value="需求评价">6. 需求评价 (归档)</option>
-                            <option value="已拒绝">❌ 已拒绝 (暂不采纳)</option>
+                            <option value="提交" data-i18n="1. 提交 (待接受)">1. 提交 (待接受)</option>
+                            <option value="需求接受" data-i18n="2. 需求接受 (评估中)">2. 需求接受 (评估中)</option>
+                            <option value="需求实现中" data-i18n="3. 需求实现中 (开发中)">3. 需求实现中 (开发中)</option>
+                            <option value="需求完成" data-i18n="4. 需求完成 (待上线)">4. 需求完成 (待上线)</option>
+                            <option value="验收完成" data-i18n="5. 验收完成 (已上线)">5. 验收完成 (已上线)</option>
+                            <option value="需求评价" data-i18n="6. 需求评价 (归档)">6. 需求评价 (归档)</option>
+                            <option value="已拒绝" data-i18n="❌ 已拒绝 (暂不采纳)">❌ 已拒绝 (暂不采纳)</option>
                         </select>
                     </div>
                     <div class="form-group half">
-                        <label>责任人 (Assignee)</label>
-                        <input type="text" id="reqAssigneeInput" class="form-control" placeholder="留空或填写负责人">
+                        <label data-i18n="责任人 (Assignee)">责任人 (Assignee)</label>
+                        <input type="text" id="reqAssigneeInput" class="form-control" data-i18n-ph="留空或填写负责人" placeholder="留空或填写负责人">
                     </div>
                 </div>
 
                 <div class="form-group" id="remarkGroup" style="display: none;">
-                    <label>过点备注 (流转日志)</label>
-                    <input type="text" id="reqRemarkInput" class="form-control" placeholder="流转状态时，建议填写备注">
+                    <label data-i18n="过点备注 (流转日志)">过点备注 (流转日志)</label>
+                    <input type="text" id="reqRemarkInput" class="form-control" data-i18n-ph="流转状态时，建议填写备注" placeholder="流转状态时，建议填写备注">
                 </div>
 
                 <!-- 日志流转区 -->
                 <div class="logs-section" id="logsSection" style="display: none;">
-                    <h3><span class="icon">🕒</span> 流转日志</h3>
+                    <h3><span class="icon">🕒</span> <span data-i18n="流转日志">流转日志</span></h3>
                     <div class="logs-timeline" id="logsTimeline"></div>
                 </div>
             </div>
 
             <div class="modal-footer">
-                <button class="btn btn-danger" id="btnDeleteReq" style="display:none; margin-right:auto;" onclick="ReqApp.deleteReq()">删除需求</button>
-                <button class="btn btn-secondary" onclick="ReqApp.closeModal()">取消</button>
-                <button class="btn btn-primary" id="btnSaveReq" onclick="ReqApp.saveReq()">保存</button>
+                <button class="btn btn-danger" id="btnDeleteReq" style="display:none; margin-right:auto;" onclick="ReqApp.deleteReq()" data-i18n="删除需求">删除需求</button>
+                <button class="btn btn-secondary" onclick="ReqApp.closeModal()" data-i18n="取消">取消</button>
+                <button class="btn btn-primary" id="btnSaveReq" onclick="ReqApp.saveReq()" data-i18n="保存">保存</button>
             </div>
         </div>
     </div>
 
     <script src="/js/shared/api.js"></script>
     <script src="/js/shared/toast.js"></script>
-    <script src="/js/shared/navbar.js?v=20260530-08"></script>
+    <script src="/js/shared/navbar.js?v=20260611-01"></script>
     <script src="/js/requirements.js"></script>
 </body>
 </html>

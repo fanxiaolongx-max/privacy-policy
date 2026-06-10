@@ -482,7 +482,8 @@
 
     <script src="/js/shared/api.js?v=20260530-03"></script>
     <script src="/js/shared/toast.js?v=20260530-03"></script>
-    <script src="/js/shared/navbar.js?v=20260530-08"></script>
+    <script src="/js/shared/i18n.js?v=20260610-01"></script>
+    <script src="/js/shared/navbar.js?v=20260611-01"></script>
     <script>
         const historyState = {
             items: [],
@@ -490,6 +491,178 @@
             pageSize: 10
         };
         let customToolsCount = 0;
+
+        const HOME_I18N = {
+            'zh-CN': {
+                'home.title': 'Tools Platform - 工具中台',
+                'home.description': '统一工具平台入口：UIVF12 抓取引擎 & Task SLA 风险监控台',
+                'home.hero.desc': '统一工具中台 · 前后端分离架构 · 数据持久化存储<br>让每一个工具都更强大、更稳定、更易扩展',
+                'home.custom.note': '导入独立 HTML 后，会自动生成首页模块和顶部导航入口',
+                'home.custom.upload': '导入 HTML 工具',
+                'home.arrow.tool': '进入工具 →',
+                'home.arrow.module': '进入模块 →',
+                'home.stats.scripts': '脚本仓库数量',
+                'home.stats.history': '历史操作记录',
+                'home.stats.tools': '在线工具模块',
+                'home.history.title': '最近操作历史',
+                'home.history.source': '来源: {source}',
+                'home.history.caption': '来自 `upload_history`，用于观察当前日志读取链路',
+                'home.history.allTools': '全部工具',
+                'home.history.auto': '自动模式',
+                'home.history.json': '强制 JSON',
+                'home.history.sqlite': '强制 SQLite',
+                'home.history.refresh': '刷新历史',
+                'home.history.loading': '正在加载最近操作历史...',
+                'home.history.refreshing': '正在刷新操作历史...',
+                'home.history.empty': '当前筛选条件下暂无操作记录。',
+                'home.history.none': '当前无可展示记录',
+                'home.history.defaultPage': '默认显示最近 10 条',
+                'home.history.page': '显示第 {from}-{to} 条，共 {total} 条 · 第 {page}/{pages} 页',
+                'home.history.prev': '上一页',
+                'home.history.next': '下一页',
+                'home.history.failed': '加载失败：{message}',
+                'home.history.sourceFailed': '来源: 加载失败',
+                'home.history.noDetail': '无附加说明',
+                'home.tool.uiv': '数据抓取',
+                'home.tool.sla': '数据导入',
+                'home.tool.custom': '自定义工具',
+                'home.tool.unknown': '未分类',
+                'home.prompt.name': '请输入工具名称：',
+                'home.prompt.icon': '请输入工具图标，可留空：',
+                'home.prompt.description': '请输入工具简介，可留空：',
+                'home.toast.imported': '自定义工具导入成功，入口已生成',
+                'home.alert.importFailed': '导入自定义工具失败：{message}',
+                'home.confirm.delete': '确定删除这个自定义工具入口和 HTML 文件吗？',
+                'home.toast.deleted': '自定义工具已删除',
+                'home.alert.deleteFailed': '删除失败：{message}',
+                'home.custom.defaultName': '自定义工具',
+                'home.custom.defaultDesc': '由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。',
+                'home.custom.defaultTag1': '自定义 HTML',
+                'home.custom.defaultTag2': '平台入口',
+                'home.custom.download': '下载 HTML',
+                'home.custom.delete': '删除自定义工具'
+            },
+            'en-US': {
+                'home.title': 'Tools Platform',
+                'home.description': 'Unified tool hub for data capture, SLA import, reporting, and operations workflows.',
+                'home.hero.desc': 'A unified tool hub · Decoupled frontend/backend · Persistent data storage<br>Make every tool stronger, steadier, and easier to extend',
+                'home.custom.note': 'Import a standalone HTML file to generate a home card and top navigation entry automatically.',
+                'home.custom.upload': 'Import HTML Tool',
+                'home.arrow.tool': 'Open Tool →',
+                'home.arrow.module': 'Open Module →',
+                'home.stats.scripts': 'Script Repository Items',
+                'home.stats.history': 'Operation History Items',
+                'home.stats.tools': 'Online Tool Modules',
+                'home.history.title': 'Recent Operation History',
+                'home.history.source': 'Source: {source}',
+                'home.history.caption': 'Read from `upload_history` to verify the current log source.',
+                'home.history.allTools': 'All Tools',
+                'home.history.auto': 'Auto Mode',
+                'home.history.json': 'Force JSON',
+                'home.history.sqlite': 'Force SQLite',
+                'home.history.refresh': 'Refresh History',
+                'home.history.loading': 'Loading recent operation history...',
+                'home.history.refreshing': 'Refreshing operation history...',
+                'home.history.empty': 'No operation records for the current filter.',
+                'home.history.none': 'No records to show',
+                'home.history.defaultPage': 'Showing the latest 10 by default',
+                'home.history.page': 'Showing {from}-{to} of {total} · Page {page}/{pages}',
+                'home.history.prev': 'Previous',
+                'home.history.next': 'Next',
+                'home.history.failed': 'Load failed: {message}',
+                'home.history.sourceFailed': 'Source: load failed',
+                'home.history.noDetail': 'No extra details',
+                'home.tool.uiv': 'Data Capture',
+                'home.tool.sla': 'Data Import',
+                'home.tool.custom': 'Custom Tool',
+                'home.tool.unknown': 'Uncategorized',
+                'home.prompt.name': 'Tool name:',
+                'home.prompt.icon': 'Tool icon, optional:',
+                'home.prompt.description': 'Tool description, optional:',
+                'home.toast.imported': 'Custom tool imported and entry created',
+                'home.alert.importFailed': 'Failed to import custom tool: {message}',
+                'home.confirm.delete': 'Delete this custom tool entry and HTML file?',
+                'home.toast.deleted': 'Custom tool deleted',
+                'home.alert.deleteFailed': 'Delete failed: {message}',
+                'home.custom.defaultName': 'Custom Tool',
+                'home.custom.defaultDesc': 'A standalone HTML tool imported into the platform and available from the unified entry points.',
+                'home.custom.defaultTag1': 'Custom HTML',
+                'home.custom.defaultTag2': 'Platform Entry',
+                'home.custom.download': 'Download HTML',
+                'home.custom.delete': 'Delete custom tool'
+            }
+        };
+
+        const HOME_CARDS = {
+            '/uivf12': {
+                title: { 'zh-CN': '数据抓取', 'en-US': 'Data Capture' },
+                desc: { 'zh-CN': '自动化脚本工程中心，智能调度仓库，一键生成生产级 UI.Vision 宏代码和 F12 控制台脚本。脚本分类管理，支持批量阵列执行。', 'en-US': 'Automation script engineering center with a smart repository, one-click production-ready UI.Vision macros, and F12 console scripts. Supports categorized scripts and batch array execution.' },
+                tags: { 'zh-CN': ['🧠 智能 CPC/NID 嗅探', '🔄 翻页引擎', '🌍 NetCare 三大区阵列', '📦 服务端脚本仓库', '📅 运行时双月裂变'], 'en-US': ['🧠 Smart CPC/NID sniffing', '🔄 Pagination engine', '🌍 NetCare region arrays', '📦 Server script repository', '📅 Runtime month splitting'] },
+                arrow: 'home.arrow.tool'
+            },
+            '/sla': {
+                title: { 'zh-CN': '数据导入', 'en-US': 'Data Import' },
+                desc: { 'zh-CN': '全局数据合控大中台，整改/常规/专项风险三表合一，SLA 预警呼吸灯，支持批量导入、自定义指标推送、分月目标对比。', 'en-US': 'Global data control center combining rectification, regular, and special-risk tables, with SLA warning indicators, batch import, custom metric pushes, and monthly target comparisons.' },
+                tags: { 'zh-CN': ['⚡ SLA 倒计时预警', '🎯 分月指标目标', '📋 列去重提取', '💾 服务端偏好持久化', '📥 XLSX 批量导入'], 'en-US': ['⚡ SLA countdown alerts', '🎯 Monthly targets', '📋 Column dedup extraction', '💾 Server-side preferences', '📥 Batch XLSX import'] },
+                arrow: 'home.arrow.tool'
+            },
+            '/report': {
+                title: { 'zh-CN': '报表看板', 'en-US': 'Reports' },
+                desc: { 'zh-CN': '基于历史快照生成多维度健康度排名与扣分概览矩阵，一目了然定位短板客户群，精准推动业务整改。', 'en-US': 'Generate multidimensional health rankings and deduction matrices from historical snapshots to identify weak customer groups and drive focused remediation.' },
+                tags: { 'zh-CN': ['🏆 客户群健康度排名', '🧩 加减分统筹系统', '📆 多快照历史回溯', '📊 数据透视矩阵'], 'en-US': ['🏆 Customer-group health ranking', '🧩 Score adjustment system', '📆 Snapshot history', '📊 Pivot matrix'] },
+                arrow: 'home.arrow.tool'
+            },
+            '/expedite': {
+                title: { 'zh-CN': '一键催办', 'en-US': 'One-Click Expedite' },
+                desc: { 'zh-CN': '自动根据短板透视矩阵生成高优先级跟进文本。支持自定义忽略关键词、多模板组装，并可一键关联全屏截图及原始报表，方便无缝推送到业务群。', 'en-US': 'Automatically generate high-priority follow-up text from the weakness matrix, with custom ignore keywords, template assembly, and one-click screenshots plus source report attachment.' },
+                tags: { 'zh-CN': ['📋 一键文本复制', '📸 全屏高清截图', '📊 原生 Excel 导出', '⚙️ 自定义催办模板'], 'en-US': ['📋 One-click copy', '📸 Full-screen screenshots', '📊 Native Excel export', '⚙️ Custom expedite templates'] },
+                arrow: 'home.arrow.tool'
+            },
+            '/monthly': {
+                title: { 'zh-CN': '月报页面', 'en-US': 'Monthly Report' },
+                desc: { 'zh-CN': '基于过往历史快照数据，深度挖掘指标长期演进趋势。支持动态多月比对、趋势折线分析，为月度工作复盘提供宏观上帝视角。', 'en-US': 'Explore long-term metric trends from historical snapshots with dynamic multi-month comparison and trend analysis for monthly reviews.' },
+                tags: { 'zh-CN': ['📈 跨月趋势对比', '🔍 同比环比分析', '📥 月报快速归档'], 'en-US': ['📈 Cross-month trends', '🔍 YoY/MoM analysis', '📥 Fast monthly archiving'] },
+                arrow: 'home.arrow.tool'
+            },
+            '/frt': {
+                title: { 'zh-CN': 'FRT KPI核算', 'en-US': 'FRT KPI Calculation' },
+                desc: { 'zh-CN': 'FRT自动化核算平台 (动态规则引擎版)，支持导入报表智能提取SR类型，动态筛选、预警扣分项。', 'en-US': 'Automated FRT calculation platform with a dynamic rule engine, smart SR type extraction from imported reports, filtering, and deduction warnings.' },
+                tags: { 'zh-CN': ['⚙️ 动态规则引擎', '📉 扣分项诊断', '📅 多月智能核算'], 'en-US': ['⚙️ Dynamic rule engine', '📉 Deduction diagnostics', '📅 Multi-month calculation'] },
+                arrow: 'home.arrow.module'
+            },
+            '/requirements': {
+                title: { 'zh-CN': '需求管理', 'en-US': 'Request Management' },
+                desc: { 'zh-CN': '用于收集、管理和追踪整个平台的新需求。提供直观的流程流转视图，让用户和管理员透明地管理所有功能提议。', 'en-US': 'Collect, manage, and track platform feature requests with a clear workflow view for users and administrators.' },
+                tags: { 'zh-CN': ['📝 全民需求提交', '🔄 流程流转追踪', '📊 进度可视化'], 'en-US': ['📝 Open request submission', '🔄 Workflow tracking', '📊 Progress visualization'] },
+                arrow: 'home.arrow.module'
+            },
+            '/praudit': {
+                title: { 'zh-CN': 'PR稽查', 'en-US': 'PR Audit' },
+                desc: { 'zh-CN': '审计级批量自检系统，用于检查PR进展附件记录，支持导入Excel进行逐项校验，并可生成PDF审计报告。', 'en-US': 'Audit-grade batch self-check system for PR progress attachment records, with Excel import, item-by-item validation, and PDF audit reports.' },
+                tags: { 'zh-CN': ['📥 批量数据导入', '✅ 审计级自检', '📄 导出双语PDF'], 'en-US': ['📥 Batch data import', '✅ Audit-grade self-check', '📄 Bilingual PDF export'] },
+                arrow: 'home.arrow.module'
+            },
+            '/storage': {
+                title: { 'zh-CN': '迁移状态', 'en-US': 'Migration Status' },
+                desc: { 'zh-CN': '统一查看 JSON 到 SQLite 的迁移进度、真实读源、一致性校验结果和当前双写状态，方便后续安全切换到 SQLite 主读。', 'en-US': 'Track JSON-to-SQLite migration progress, active read source, parity checks, and dual-write status before safely switching SQLite to primary reads.' },
+                tags: { 'zh-CN': ['🔍 Auto 读源', '✅ Parity 校验', '📊 JSON / SQLite 数量', '🧭 切库治理面板'], 'en-US': ['🔍 Auto read source', '✅ Parity checks', '📊 JSON / SQLite counts', '🧭 Cutover governance'] },
+                arrow: 'home.arrow.module'
+            },
+            '/db-explorer': {
+                title: { 'zh-CN': '数据探索', 'en-US': 'Data Explorer' },
+                desc: { 'zh-CN': '全平台底层数据的上帝视角，直接查询 SQLite 物理表结构与内容，提供 SQL 般直观的浏览体验。', 'en-US': 'Inspect platform data from the ground up by browsing SQLite table structures and contents with an SQL-like experience.' },
+                tags: { 'zh-CN': ['🗄️ SQLite 可视化', '🔍 关系型表查询', '⚡ 实时数据探针'], 'en-US': ['🗄️ SQLite visualization', '🔍 Relational table browsing', '⚡ Live data probe'] },
+                arrow: 'home.arrow.module'
+            }
+        };
+
+        if (window.ToolsI18n) {
+            window.ToolsI18n.register('home', HOME_I18N);
+        }
+
+        function t(key, params = {}) {
+            return window.ToolsI18n ? window.ToolsI18n.t(key, params) : (HOME_I18N['zh-CN'][key] || key);
+        }
 
         function escapeHtml(value) {
             return String(value ?? '')
@@ -500,11 +673,66 @@
                 .replace(/'/g, '&#39;');
         }
 
+        function setText(selector, value) {
+            const el = document.querySelector(selector);
+            if (el) el.textContent = value;
+        }
+
+        function applyHomeI18n() {
+            const lang = window.ToolsI18n?.getLanguage?.() || 'zh-CN';
+            document.title = t('home.title');
+            const metaDesc = document.querySelector('meta[name="description"]');
+            if (metaDesc) metaDesc.setAttribute('content', t('home.description'));
+            const heroDesc = document.querySelector('.hero p');
+            if (heroDesc) heroDesc.innerHTML = t('home.hero.desc');
+            setText('.custom-tools-note', t('home.custom.note'));
+            setText('#customToolUploadBtn', t('home.custom.upload'));
+            document.querySelectorAll('#toolsGrid > a.tool-card:not([data-custom-tool-card="1"])').forEach(card => {
+                const data = HOME_CARDS[card.getAttribute('href')];
+                if (!data) return;
+                setTextForCard(card, data, lang);
+            });
+            const statLabels = document.querySelectorAll('.stat-label');
+            if (statLabels[0]) statLabels[0].textContent = t('home.stats.scripts');
+            if (statLabels[1]) statLabels[1].textContent = t('home.stats.history');
+            if (statLabels[2]) statLabels[2].textContent = t('home.stats.tools');
+            setText('.history-title', t('home.history.title'));
+            setText('.history-caption', t('home.history.caption'));
+            const sourceEl = document.getElementById('history-source');
+            if (sourceEl) sourceEl.textContent = t('home.history.source', { source: sourceEl.dataset.source || '-' });
+            setText('#history-refresh', t('home.history.refresh'));
+            setText('#history-prev', t('home.history.prev'));
+            setText('#history-next', t('home.history.next'));
+            setText('#history-filter option[value=""]', t('home.history.allTools'));
+            setText('#history-filter option[value="uiv"]', t('home.tool.uiv'));
+            setText('#history-filter option[value="sla"]', t('home.tool.sla'));
+            setText('#history-filter option[value="custom"]', t('home.tool.custom'));
+            setText('#history-mode option[value="auto"]', t('home.history.auto'));
+            setText('#history-mode option[value="json"]', t('home.history.json'));
+            setText('#history-mode option[value="sqlite"]', t('home.history.sqlite'));
+            if (!historyState.items.length) setText('#history-page-info', t('home.history.defaultPage'));
+        }
+
+        function setTextForCard(card, data, lang) {
+            const title = card.querySelector('.card-title');
+            const desc = card.querySelector('.card-desc');
+            const tags = card.querySelector('.card-features');
+            const arrow = card.querySelector('.card-arrow');
+            if (title) title.textContent = data.title[lang] || data.title['zh-CN'];
+            if (desc) desc.textContent = data.desc[lang] || data.desc['zh-CN'];
+            if (tags) {
+                tags.innerHTML = (data.tags[lang] || data.tags['zh-CN'])
+                    .map(tag => `<span class="feature-tag">${escapeHtml(tag)}</span>`)
+                    .join('');
+            }
+            if (arrow) arrow.textContent = t(data.arrow);
+        }
+
         function formatToolLabel(tool) {
-            if (tool === 'uiv') return '数据抓取';
-            if (tool === 'sla') return '数据导入';
-            if (tool === 'custom') return '自定义工具';
-            return tool || '未分类';
+            if (tool === 'uiv') return t('home.tool.uiv');
+            if (tool === 'sla') return t('home.tool.sla');
+            if (tool === 'custom') return t('home.tool.custom');
+            return tool || t('home.tool.unknown');
         }
 
         function formatSourceLabel(source) {
@@ -521,8 +749,8 @@
             if (!listEl) return;
 
             if (!Array.isArray(history) || history.length === 0) {
-                listEl.innerHTML = '<div class="history-empty">当前筛选条件下暂无操作记录。</div>';
-                if (infoEl) infoEl.textContent = '当前无可展示记录';
+                listEl.innerHTML = `<div class="history-empty">${escapeHtml(t('home.history.empty'))}</div>`;
+                if (infoEl) infoEl.textContent = t('home.history.none');
                 if (prevBtn) prevBtn.disabled = true;
                 if (nextBtn) nextBtn.disabled = true;
                 return;
@@ -535,13 +763,13 @@
 
             listEl.innerHTML = pagedItems.map(item => {
                 const time = item.time
-                    ? new Date(item.time).toLocaleString('zh-CN', { hour12: false })
+                    ? new Date(item.time).toLocaleString(window.ToolsI18n?.getLanguage?.() || 'zh-CN', { hour12: false })
                     : '-';
                 return `
                     <div class="history-row">
                         <div><span class="history-tool">${formatToolLabel(item.tool)}</span></div>
                         <div class="history-action">${item.action || '-'}</div>
-                        <div class="history-detail">${item.detail || '无附加说明'}</div>
+                        <div class="history-detail">${item.detail || t('home.history.noDetail')}</div>
                         <div class="history-time">${time}</div>
                     </div>
                 `;
@@ -550,7 +778,13 @@
             const from = history.length === 0 ? 0 : start + 1;
             const to = Math.min(start + historyState.pageSize, history.length);
             if (infoEl) {
-                infoEl.textContent = `显示第 ${from}-${to} 条，共 ${history.length} 条 · 第 ${historyState.page}/${totalPages} 页`;
+                infoEl.textContent = t('home.history.page', {
+                    from,
+                    to,
+                    total: history.length,
+                    page: historyState.page,
+                    pages: totalPages
+                });
             }
             if (prevBtn) prevBtn.disabled = historyState.page <= 1;
             if (nextBtn) nextBtn.disabled = historyState.page >= totalPages;
@@ -564,7 +798,7 @@
 
             if (resetPage) historyState.page = 1;
             if (listEl) {
-                listEl.innerHTML = '<div class="history-empty">正在刷新操作历史...</div>';
+                listEl.innerHTML = `<div class="history-empty">${escapeHtml(t('home.history.refreshing'))}</div>`;
             }
 
             try {
@@ -580,14 +814,16 @@
                 if (sourceEl) {
                     const path = `/api/upload/history${query}`;
                     const source = API.getLastDataSource(path) || API.getLastDataSource('/api/upload/history') || '-';
-                    sourceEl.textContent = `来源: ${formatSourceLabel(source)}`;
+                    sourceEl.dataset.source = formatSourceLabel(source);
+                    sourceEl.textContent = t('home.history.source', { source: sourceEl.dataset.source });
                 }
             } catch (e) {
                 if (listEl) {
-                    listEl.innerHTML = `<div class="history-empty" style="color:#fca5a5;">加载失败：${e.message}</div>`;
+                    listEl.innerHTML = `<div class="history-empty" style="color:#fca5a5;">${escapeHtml(t('home.history.failed', { message: e.message }))}</div>`;
                 }
                 if (sourceEl) {
-                    sourceEl.textContent = '来源: 加载失败';
+                    sourceEl.dataset.source = '';
+                    sourceEl.textContent = t('home.history.sourceFailed');
                 }
             }
         }
@@ -615,7 +851,7 @@
             grid.querySelectorAll('[data-custom-tool-card="1"]').forEach(el => el.remove());
             const role = localStorage.getItem('tools_role');
             (tools || []).forEach((tool, index) => {
-                const tags = Array.isArray(tool.tags) && tool.tags.length ? tool.tags : ['自定义 HTML', '平台入口'];
+                const tags = Array.isArray(tool.tags) && tool.tags.length ? tool.tags : [t('home.custom.defaultTag1'), t('home.custom.defaultTag2')];
                 const card = document.createElement('a');
                 card.href = tool.href;
                 card.className = 'tool-card custom-tool';
@@ -623,16 +859,16 @@
                 card.style.setProperty('--card-accent', ['#38bdf8', '#34d399', '#f97316', '#e879f9'][index % 4]);
                 card.innerHTML = `
                     <div class="custom-tool-actions">
-                        <button type="button" class="custom-tool-action" title="下载 HTML" onclick="event.preventDefault(); event.stopPropagation(); downloadCustomTool('${escapeHtml(tool.slug)}')">↓</button>
-                        ${role === 'admin' ? `<button type="button" class="custom-tool-action delete" title="删除自定义工具" onclick="event.preventDefault(); event.stopPropagation(); deleteCustomTool('${escapeHtml(tool.slug)}')">×</button>` : ''}
+                        <button type="button" class="custom-tool-action" title="${escapeHtml(t('home.custom.download'))}" onclick="event.preventDefault(); event.stopPropagation(); downloadCustomTool('${escapeHtml(tool.slug)}')">↓</button>
+                        ${role === 'admin' ? `<button type="button" class="custom-tool-action delete" title="${escapeHtml(t('home.custom.delete'))}" onclick="event.preventDefault(); event.stopPropagation(); deleteCustomTool('${escapeHtml(tool.slug)}')">×</button>` : ''}
                     </div>
                     <div class="card-icon">${escapeHtml(tool.icon || '🧩')}</div>
-                    <div class="card-title">${escapeHtml(tool.name || '自定义工具')}</div>
-                    <div class="card-desc">${escapeHtml(tool.description || '由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。')}</div>
+                    <div class="card-title">${escapeHtml(tool.name || t('home.custom.defaultName'))}</div>
+                    <div class="card-desc">${escapeHtml(tool.description || t('home.custom.defaultDesc'))}</div>
                     <div class="card-features">
                         ${tags.map(tag => `<span class="feature-tag">${escapeHtml(tag)}</span>`).join('')}
                     </div>
-                    <div class="card-arrow">进入模块 →</div>
+                    <div class="card-arrow">${escapeHtml(t('home.arrow.module'))}</div>
                 `;
                 grid.appendChild(card);
             });
@@ -664,21 +900,21 @@
                 try {
                     const htmlContent = await file.text();
                     const defaultName = file.name.replace(/\.html?$/i, '');
-                    const name = prompt('请输入工具名称：', defaultName);
+                    const name = prompt(t('home.prompt.name'), defaultName);
                     if (!name) return;
-                    const icon = prompt('请输入工具图标，可留空：', '🧩') || '🧩';
-                    const description = prompt('请输入工具简介，可留空：', '独立 HTML 工具') || '';
+                    const icon = prompt(t('home.prompt.icon'), '🧩') || '🧩';
+                    const description = prompt(t('home.prompt.description'), t('home.custom.defaultDesc')) || '';
                     await API.post('/api/custom-tools', {
                         name,
                         icon,
                         description,
                         htmlContent
                     });
-                    showToast('自定义工具导入成功，入口已生成');
+                    showToast(t('home.toast.imported'));
                     await loadCustomTools();
                     if (window.refreshCustomToolNavLinks) await window.refreshCustomToolNavLinks();
                 } catch (e) {
-                    alert(`导入自定义工具失败：${e.message}`);
+                    alert(t('home.alert.importFailed', { message: e.message }));
                 } finally {
                     input.value = '';
                 }
@@ -690,18 +926,25 @@
         }
 
         async function deleteCustomTool(slug) {
-            if (!confirm('确定删除这个自定义工具入口和 HTML 文件吗？')) return;
+            if (!confirm(t('home.confirm.delete'))) return;
             try {
                 await API.delete(`/api/custom-tools/${encodeURIComponent(slug)}`);
-                showToast('自定义工具已删除');
+                showToast(t('home.toast.deleted'));
                 await loadCustomTools();
                 if (window.refreshCustomToolNavLinks) await window.refreshCustomToolNavLinks();
             } catch (e) {
-                alert(`删除失败：${e.message}`);
+                alert(t('home.alert.deleteFailed', { message: e.message }));
             }
         }
 
+        window.addEventListener('tools:languagechange', () => {
+            applyHomeI18n();
+            renderHistoryList(historyState.items);
+            loadCustomTools();
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
+            applyHomeI18n();
             setupCustomToolUpload();
             loadCustomTools();
             loadStats();

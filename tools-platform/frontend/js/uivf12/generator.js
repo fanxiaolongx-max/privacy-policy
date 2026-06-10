@@ -10,7 +10,7 @@ function generateScript() {
     const errorDiv = document.getElementById('errorMsg');
     errorDiv.innerText = '';
     UIVGenLog.start();
-    UIVGenLog.section('引擎启动 · UIVF12 ' + TOOL_VERSION);
+    UIVGenLog.section(UIVT('uiv.generator.engineStart', { version: TOOL_VERSION }));
 
     if (document.getElementById('jsonInput').style.display !== 'none') {
         window.UIVWorkbench.formatAndAnalyzeJSON();
@@ -25,14 +25,14 @@ function generateScript() {
     const autoRuntimeMonth = document.getElementById('autoRuntimeMonth').checked;
 
     const parsedPayloadObj = window.UIVWorkbench.getParsedPayload();
-    if (!parsedPayloadObj) { errorDiv.innerText = '请先提供有效的 Payload JSON！'; UIVGenLog.error('Payload 为空，请先格式化输入'); UIVGenLog.done(false); return; }
+    if (!parsedPayloadObj) { errorDiv.innerText = UIVT('uiv.generator.needPayload'); UIVGenLog.error(UIVT('uiv.generator.needPayloadLog')); UIVGenLog.done(false); return; }
 
     const platform = url.includes('datafab') ? 'DATAFAB' : (url.includes('netcare') ? 'NETCARE' : 'CUSTOM');
-    UIVGenLog.info('目标平台: ' + platform + '  |  URL: ' + url.substring(0, 60) + (url.length > 60 ? '...' : ''));
-    UIVGenLog.section('Payload 解析');
+    UIVGenLog.info(UIVT('uiv.generator.targetPlatform', { platform, url: url.substring(0, 60) + (url.length > 60 ? '...' : '') }));
+    UIVGenLog.section(UIVT('uiv.generator.payloadSection'));
     let payloadClone = JSON.parse(JSON.stringify(parsedPayloadObj));
 
-    if (platform === 'NETCARE') { payloadClone.need_summary = true; UIVGenLog.dim('NetCare 模式：已自动注入 need_summary=true'); }
+    if (platform === 'NETCARE') { payloadClone.need_summary = true; UIVGenLog.dim(UIVT('uiv.generator.netcareSummary')); }
 
     let hasCPC = false, hasNID = false, hasMonthFilter = false;
 
@@ -70,36 +70,44 @@ function generateScript() {
     traversePayload(payloadClone);
 
     // 输出嗅探结果
-    UIVGenLog.info('CPC 嵌入点: ' + (hasCPC ? '✅ 检测到，已转为动态占位符' : '未检测到'));
-    UIVGenLog.info('NID 嵌入点: ' + (hasNID  ? '✅ 检测到，已转为动态占位符' : '未检测到'));
-    UIVGenLog.info('月份裂变: '  + (hasMonthFilter ? '✅ 已开启 [' + (autoRuntimeMonth ? '当月 + 上月双跨度运行' : '单期模式') + ']' : '关闭'));
+    const detectedText = UIVT('uiv.generator.detectedPlaceholder');
+    const notDetectedText = UIVT('uiv.generator.notDetected');
+    UIVGenLog.info(UIVT('uiv.generator.cpcPoint', { state: hasCPC ? detectedText : notDetectedText }));
+    UIVGenLog.info(UIVT('uiv.generator.nidPoint', { state: hasNID ? detectedText : notDetectedText }));
+    UIVGenLog.info(UIVT('uiv.generator.monthSplit', {
+        state: hasMonthFilter
+            ? UIVT('uiv.generator.monthEnabled', { mode: autoRuntimeMonth ? UIVT('uiv.generator.monthDual') : UIVT('uiv.generator.monthSingle') })
+            : UIVT('uiv.generator.off')
+    }));
 
-    UIVGenLog.section('参数提取');
+    UIVGenLog.section(UIVT('uiv.generator.paramsSection'));
     const pageId = window.UIVWorkbench.findKeyDeep(payloadClone, 'pageId') || '';
     const boardId = window.UIVWorkbench.findKeyDeep(payloadClone, 'boardId') || '';
     const tenantIdStr = window.UIVWorkbench.findKeyDeep(payloadClone, 'srcTenantId') || '';
     let dynamicPageName = window.UIVWorkbench.findKeyDeep(payloadClone, 'pageName') || '';
     const compId = window.UIVWorkbench.findKeyDeep(payloadClone, 'id') || '';
 
-    UIVGenLog.dim('pageId: '   + (pageId   || '(未找到)'));
-    UIVGenLog.dim('boardId: '  + (boardId  || '(未找到)'));
-    UIVGenLog.dim('tenantId: ' + (tenantIdStr || '(未找到)'));
-    UIVGenLog.dim('compId: '   + (compId   || '(未找到)'));
+    UIVGenLog.dim('pageId: '   + (pageId   || UIVT('uiv.generator.notFound')));
+    UIVGenLog.dim('boardId: '  + (boardId  || UIVT('uiv.generator.notFound')));
+    UIVGenLog.dim('tenantId: ' + (tenantIdStr || UIVT('uiv.generator.notFound')));
+    UIVGenLog.dim('compId: '   + (compId   || UIVT('uiv.generator.notFound')));
 
     if (autoFetchCPC && platform === 'DATAFAB' && hasCPC && !pageId) {
-        errorDiv.innerText = '⚠️ 警告：缺少 pageId！已生成自动嗅探代码。';
+        errorDiv.innerText = UIVT('uiv.generator.missingPageId');
     }
     if (dynamicPageName) dynamicPageName = '_' + dynamicPageName.replace(/[<>:"/\\|?*]+/g, '');
     const finalFileName = fileNameBase + dynamicPageName + '_Latest.csv';
     const title = fileNameBase + dynamicPageName;
     window.UIVWorkbench.setCurrentTitle(title + (!dynamicPageName && compId ? '_' + compId.substring(0, 6) : ''));
 
-    UIVGenLog.info('输出文件名: ' + finalFileName);
-    UIVGenLog.section('开关配置检查');
-    UIVGenLog.info('全局变量注入: ' + (useGlobalVars ? '开启' : '关闭 — 使用静态占位符'));
-    UIVGenLog.info('循环翳页: '     + (isPagination  ? '开启' : '关闭 — 仅报文第一页'));
-    UIVGenLog.info('独立大盘兆底: '  + (forceSumData && platform === 'DATAFAB' && compId ? '开启' : (forceSumData && (!compId) ? '开启（但 compId 缺失，可能失效）' : '关闭')));
-    UIVGenLog.info('运行时月份裂变: ' + (hasMonthFilter ? '开启（当月 + 上月）' : '关闭'));
+    UIVGenLog.info(UIVT('uiv.generator.outputFile', { name: finalFileName }));
+    UIVGenLog.section(UIVT('uiv.generator.switchSection'));
+    UIVGenLog.info(UIVT('uiv.generator.globalVars', { state: useGlobalVars ? UIVT('uiv.generator.on') : UIVT('uiv.generator.offStatic') }));
+    UIVGenLog.info(UIVT('uiv.generator.pagination', { state: isPagination ? UIVT('uiv.generator.on') : UIVT('uiv.generator.offFirstPage') }));
+    UIVGenLog.info(UIVT('uiv.generator.forceSum', {
+        state: forceSumData && platform === 'DATAFAB' && compId ? UIVT('uiv.generator.on') : (forceSumData && (!compId) ? UIVT('uiv.generator.onMissingComp') : UIVT('uiv.generator.off'))
+    }));
+    UIVGenLog.info(UIVT('uiv.generator.runtimeMonth', { state: hasMonthFilter ? UIVT('uiv.generator.onMonthRange') : UIVT('uiv.generator.off') }));
 
     let paramsStr = JSON.stringify(payloadClone, null, 12);
     let varDefBlock = useGlobalVars
@@ -377,12 +385,12 @@ ${forceSumData && platform === 'DATAFAB' && compId ? `
     const uivTemplate = `return (async function() {\n    try {\n${coreBody}\n        return "✅ 导出成功！子任务: " + finalSummary.join(" | ");\n    } catch (error) {\n        return "❌ 报错: " + error.message;\n    }\n})();`;
     const consoleTemplate = `(async function() {\n    try {\n        console.log("%c🚀 [UIVF12 ${TOOL_VERSION}] 任务列车启动，请保持页面开启并耐心等待...", "color: #e67e22; font-size: 14px; font-weight: bold;");\n${coreBody}\n        console.log("%c🎉 [UIVF12 ${TOOL_VERSION}] 任务圆满成功！提取报告: " + finalSummary.join(" | "), "color: #4CAF50; font-size: 14px; font-weight: bold;");\n    } catch (error) {\n        console.error("%c❌ [UIVF12 ${TOOL_VERSION}] 内部报错: " + error.message, "color: #c53030; font-size: 13px; font-weight: bold;");\n    }\n})();`;
 
-    UIVGenLog.section('脚本构建');
-    UIVGenLog.info('脚本标题: ' + title);
-    UIVGenLog.info('平台认证: ' + (platform === 'DATAFAB' ? 'CSRF-Token (Cookie 自动提取)' : '本地存储 globalConfig CSRF'));
+    UIVGenLog.section(UIVT('uiv.generator.buildSection'));
+    UIVGenLog.info(UIVT('uiv.generator.scriptTitle', { title }));
+    UIVGenLog.info(UIVT('uiv.generator.auth', { auth: platform === 'DATAFAB' ? UIVT('uiv.generator.cookieAuth') : UIVT('uiv.generator.localAuth') }));
     document.getElementById('codeOutput').value = uivTemplate;
     document.getElementById('consoleOutput').value = consoleTemplate;
-    UIVGenLog.success('脚本内容已写入输出区！UIV + F12 Console 双版均就绪');
+    UIVGenLog.success(UIVT('uiv.generator.outputReady'));
     UIVGenLog.done(true, title);
 }
 

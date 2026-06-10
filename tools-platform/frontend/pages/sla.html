@@ -306,19 +306,22 @@
     <!-- 共享脚本 -->
     <script src="/js/shared/api.js?v=20260531-02"></script>
     <script src="/js/shared/toast.js?v=20260531-02"></script>
-    <script src="/js/shared/navbar.js?v=20260607-12"></script>
+    <script src="/js/shared/i18n.js?v=20260610-01"></script>
+    <script src="/js/shared/navbar.js?v=20260611-01"></script>
     <!-- SLA 模块（注意加载顺序）-->
-    <script src="/js/sla/config.js?v=20260530-07"></script>
+    <script src="/js/sla/i18n.js?v=20260610-01"></script>
+    <script src="/js/sla/config.js?v=20260610-01"></script>
     <script src="/js/sla/prefs.js?v=20260530-07"></script>
-    <script src="/js/sla/upload.js?v=20260609-01"></script>
-    <script src="/js/sla/section.js?v=20260607-13"></script>
+    <script src="/js/sla/upload.js?v=20260610-01"></script>
+    <script src="/js/sla/section.js?v=20260610-01"></script>
     <script src="/js/sla/table.js?v=20260608-02"></script>
-    <script src="/js/sla/events.js?v=20260608-02"></script>
-    <script src="/js/sla/metrics.js?v=20260607-04"></script>
-    <script src="/js/sla/history.js?v=20260530-08"></script>
-    <script src="/js/sla/categories.js?v=20260530-07"></script>
+    <script src="/js/sla/events.js?v=20260610-03"></script>
+    <script src="/js/sla/metrics.js?v=20260610-04"></script>
+    <script src="/js/sla/history.js?v=20260610-03"></script>
+    <script src="/js/sla/categories.js?v=20260610-01"></script>
     <script>
         function formatSLASourceLabel(source) {
+            if (window.SLAI18n && typeof window.SLAI18n.sourceLabel === 'function') return window.SLAI18n.sourceLabel(source);
             if (source === 'sqlite') return 'SQLite';
             if (source === 'json') return 'JSON';
             if (source === 'auto') return '自动模式';
@@ -344,8 +347,8 @@
                 })
                 .filter(Boolean)
                 .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-            versionEl.textContent = versions.length ? `v${versions[versions.length - 1]}` : 'v未标记';
-            versionEl.title = versions.length ? `当前页面资源最新版本：${versions[versions.length - 1]}` : '未检测到前端资源版本号';
+            versionEl.textContent = versions.length ? `v${versions[versions.length - 1]}` : SLAT('sla.version.unmarked');
+            versionEl.title = versions.length ? SLAT('sla.version.title', { version: versions[versions.length - 1] }) : SLAT('sla.version.missing');
         }
 
         function renderSLASourcePanel() {
@@ -360,13 +363,14 @@
             const groupsMeta = API.getLastDataSourceMeta(`/api/sla/groups${catQuery}`) || API.getLastDataSourceMeta('/api/sla/groups') || {};
             const snapshotMeta = API.getLastDataSourceMeta(`/api/sla/snapshots${catQuery}`) || API.getLastDataSourceMeta('/api/sla/snapshots') || {};
 
+            panel.dataset.loaded = '1';
             panel.innerHTML = `
-                <span class="sla-source-badge">目标来源: ${formatSLASourceLabel(targetMeta.primary)}</span>
-                <span class="sla-source-badge">偏好来源: ${formatSLASourceLabel(prefsMeta.primary)}</span>
-                <span class="sla-source-badge">分类来源: ${formatSLASourceLabel(categoryMeta.primary)}</span>
-                <span class="sla-source-badge">分组来源: ${formatSLASourceLabel(groupsMeta.primary)}</span>
-                <span class="sla-source-badge">快照来源: ${formatSLASourceLabel(snapshotMeta.primary)}</span>
-                <span class="sla-source-note">当前模式: ${formatSLASourceLabel(mode)} · 迁移期要求页面直接显示真实读源。</span>
+                <span class="sla-source-badge">${SLAT('sla.source.targets', { source: formatSLASourceLabel(targetMeta.primary) })}</span>
+                <span class="sla-source-badge">${SLAT('sla.source.prefs', { source: formatSLASourceLabel(prefsMeta.primary) })}</span>
+                <span class="sla-source-badge">${SLAT('sla.source.categories', { source: formatSLASourceLabel(categoryMeta.primary) })}</span>
+                <span class="sla-source-badge">${SLAT('sla.source.groups', { source: formatSLASourceLabel(groupsMeta.primary) })}</span>
+                <span class="sla-source-badge">${SLAT('sla.source.snapshots', { source: formatSLASourceLabel(snapshotMeta.primary) })}</span>
+                <span class="sla-source-note">${SLAT('sla.source.currentNote', { mode: formatSLASourceLabel(mode) })}</span>
             `;
         }
 
@@ -385,6 +389,7 @@
 
         // 初始化：从服务端加载预警目标和分类
         document.addEventListener('DOMContentLoaded', async () => {
+            if (window.SLAI18n) window.SLAI18n.applyPage();
             renderSLAFrontendVersion();
             const modeSelect = document.getElementById('slaSourceMode');
             if (modeSelect) {

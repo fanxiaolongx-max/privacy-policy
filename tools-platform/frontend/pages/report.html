@@ -462,31 +462,31 @@
 <body>
     <div class="page-container">
         <div class="controls">
-            <h2>📈 报表看板 (Report Dashboard) <span id="reportFrontendVersion" style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v加载中</span></h2>
+            <h2><span id="reportPageTitle">📈 报表看板</span> <span id="reportFrontendVersion" style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v加载中</span></h2>
             <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                 <div>
-                    <span style="font-size:14px;color:#666;margin-right:6px;">考核月份 (Month)：</span>
+                    <span style="font-size:14px;color:#666;margin-right:6px;">考核月份：</span>
                     <select id="target-month-select" onchange="renderCurrentSnapshot()"></select>
                 </div>
                 <div>
-                    <span style="font-size:14px;color:#666;margin-right:6px;">历史快照 (Snapshot)：</span>
+                    <span style="font-size:14px;color:#666;margin-right:6px;">历史快照：</span>
                     <select id="snapshot-select" onchange="loadSelectedSnapshot()"></select>
                 </div>
                 <button onclick="saveDashboardToDB()"
                     style="padding: 8px 14px; background: #e3f2fd; border: 1px solid #90caf9; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #1565c0; font-weight: 600;">💾
-                    入库 (Save to DB)</button>
+                    入库</button>
                 <button onclick="openGroupModal()"
                     style="padding: 8px 14px; background: #e8eaf6; border: 1px solid #9fa8da; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #283593; font-weight: 600;">📂
-                    指标分组配置 (Group Config)</button>
+                    指标分组配置</button>
                 <button onclick="openWeightModal()"
                     style="padding: 8px 14px; background: #fff; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #333; font-weight: 600;">⚖️
-                    权重配置 (Weight Config)</button>
+                    权重配置</button>
                 <button onclick="openAddMetricModal()"
                     style="padding: 8px 14px; background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #2e7d32; font-weight: 600;">➕
-                    手动增加指标 (Add Metric)</button>
+                    手动增加指标</button>
                 <button onclick="openI18nModal()"
                     style="padding: 8px 14px; background: #fff3e0; border: 1px solid #ffe0b2; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #e65100; font-weight: 600;">🌐
-                    中英翻译配置 (I18n Config)</button>
+                    中英翻译配置</button>
             </div>
         </div>
         <div class="source-info-wrapper print-hide" style="display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;" data-html2canvas-ignore="true">
@@ -514,7 +514,7 @@
             <div
                 style="background:#fff; border-radius:12px; width:500px; max-width:90%; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
                 <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:12px; margin-bottom:16px;">⚖️
-                    配置指标权重 (Config Metric Weights)</h3>
+                    配置指标权重</h3>
                 <div id="weight-modal-list"
                     style="max-height:60vh; overflow-y:auto; margin-bottom:16px; display:flex; flex-direction:column; gap:10px;">
                     <!-- populated by js -->
@@ -535,7 +535,7 @@
                 style="background:#fff; border-radius:12px; width:600px; max-width:90%; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
                 <h3
                     style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:12px; margin-bottom:16px; color:#2e7d32;">
-                    ➕ 手动增加指标 (Add Manual Metric)</h3>
+                    ➕ 手动增加指标</h3>
                 <div style="max-height:60vh; overflow-y:auto; margin-bottom:16px; padding-right:10px;"
                     id="add-metric-form">
                     <!-- populated by js -->
@@ -556,7 +556,7 @@
                 style="background:#fff; border-radius:12px; width:720px; max-width:95vw; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 10px 40px rgba(0,0,0,0.25);">
                 <div
                     style="padding:20px 24px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
-                    <h3 style="margin:0; color:#283593;">📂 指标分组配置 (Metric Group Config)</h3>
+                    <h3 style="margin:0; color:#283593;">📂 指标分组配置</h3>
                     <span style="font-size:12px; color:#888;">拖拽调整分组及指标顺序，点击指标标签分配到分组</span>
                 </div>
                 <div style="flex:1; overflow-y:auto; padding:20px 24px; display:flex; gap:20px;">
@@ -590,7 +590,7 @@
                 style="background:#fff; border-radius:12px; width:700px; max-width:95vw; display:flex; flex-direction:column; box-shadow:0 10px 40px rgba(0,0,0,0.25);">
                 <div
                     style="padding:20px 24px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
-                    <h3 style="margin:0; color:#e65100;">🌐 中英文翻译字典配置 (I18n Map Config)</h3>
+                    <h3 style="margin:0; color:#e65100;">🌐 中英文翻译字典配置</h3>
                     <span style="font-size:12px; color:#888;">可覆盖或新增中文对应的英文翻译（对所有用户生效）</span>
                 </div>
                 <div style="padding:20px 24px; display:flex; gap:10px; border-bottom:1px solid #f0f0f0;">
@@ -639,20 +639,22 @@
 
         <div id="report-content" class="dashboard-grid">
             <div class="empty-state">
-                <h3>⏳ 正在加载快照数据... (Loading snapshot data...)</h3>
+                <h3>⏳ 正在加载快照数据...</h3>
             </div>
         </div>
     </div>
 
     <script src="/js/shared/api.js?v=20260530-01"></script>
     <script src="/js/shared/toast.js?v=20260530-01"></script>
-    <script src="/js/shared/navbar.js?v=20260530-08"></script>
+    <script src="/js/shared/i18n.js?v=20260610-01"></script>
+    <script src="/js/shared/navbar.js?v=20260611-01"></script>
+    <script src="/js/report/i18n.js?v=20260610-01"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script>
         function formatReportSourceLabel(source) {
             if (source === 'sqlite') return 'SQLite';
             if (source === 'json') return 'JSON';
-            if (source === 'auto') return '自动模式';
+            if (source === 'auto') return window.ReportI18n ? window.ReportI18n.sourceLabel(source) : '自动模式';
             return source || '-';
         }
 
@@ -676,8 +678,16 @@
                 })
                 .filter(Boolean)
                 .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-            versionEl.textContent = versions.length ? `v${versions[versions.length - 1]}` : 'v未标记';
-            versionEl.title = versions.length ? `当前页面资源最新版本：${versions[versions.length - 1]}` : '未检测到前端资源版本号';
+            const t = window.REPORT_T || ((key, params) => {
+                const fallback = {
+                    'report.version.unmarked': 'v未标记',
+                    'report.version.title': '当前页面资源最新版本：{version}',
+                    'report.version.missing': '未检测到前端资源版本号'
+                }[key] || key;
+                return Object.keys(params || {}).reduce((acc, name) => acc.replaceAll(`{${name}}`, params[name]), fallback);
+            });
+            versionEl.textContent = versions.length ? `v${versions[versions.length - 1]}` : t('report.version.unmarked');
+            versionEl.title = versions.length ? t('report.version.title', { version: versions[versions.length - 1] }) : t('report.version.missing');
         }
 
         function renderReportSourcePanel() {
@@ -689,20 +699,25 @@
             const categoryMeta = API.getLastDataSourceMeta(`/api/sla/categories${query}`) || API.getLastDataSourceMeta('/api/sla/categories') || {};
             const groupsMeta = API.getLastDataSourceMeta(`/api/sla/groups${query}`) || API.getLastDataSourceMeta('/api/sla/groups') || {};
             const configMeta = API.getLastDataSourceMeta(`/api/sla/config${query}`) || API.getLastDataSourceMeta('/api/sla/config') || {};
+            const t = window.REPORT_T || ((key) => key);
             panel.innerHTML = `
-                <span class="data-source-badge">快照来源: ${formatReportSourceLabel(snapshotMeta.primary)}</span>
-                <span class="data-source-badge">分类来源: ${formatReportSourceLabel(categoryMeta.primary)}</span>
-                <span class="data-source-badge">分组来源: ${formatReportSourceLabel(groupsMeta.primary)}</span>
-                <span class="data-source-badge">配置来源: ${formatReportSourceLabel(configMeta.primary)}</span>
-                <span class="data-source-badge">目标来源: ${formatReportSourceLabel((configMeta.extras || {}).targets)}</span>
-                <span class="data-source-note">当前模式: ${formatReportSourceLabel(mode)} · 报表快照仍来自 SLA 快照链路。</span>
+                <span class="data-source-badge">${t('report.source.snapshot')}: ${formatReportSourceLabel(snapshotMeta.primary)}</span>
+                <span class="data-source-badge">${t('report.source.category')}: ${formatReportSourceLabel(categoryMeta.primary)}</span>
+                <span class="data-source-badge">${t('report.source.group')}: ${formatReportSourceLabel(groupsMeta.primary)}</span>
+                <span class="data-source-badge">${t('report.source.config')}: ${formatReportSourceLabel(configMeta.primary)}</span>
+                <span class="data-source-badge">${t('report.source.target')}: ${formatReportSourceLabel((configMeta.extras || {}).targets)}</span>
+                <span class="data-source-note">${t('report.source.currentMode')}: ${formatReportSourceLabel(mode)} · ${t('report.source.currentNote')}</span>
             `;
         }
 
         window.renderReportSourcePanel = renderReportSourcePanel;
         document.addEventListener('DOMContentLoaded', renderReportFrontendVersion);
+        window.addEventListener('tools:languagechange', () => {
+            renderReportFrontendVersion();
+            renderReportSourcePanel();
+        });
     </script>
-    <script src="/js/report/report.js?v=20260608-01"></script>
+    <script src="/js/report/report.js?v=20260610-01"></script>
 </body>
 
 </html>

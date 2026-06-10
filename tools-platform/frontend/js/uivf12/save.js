@@ -105,7 +105,7 @@ async function saveCurrentScript() {
     const codeUIV = document.getElementById('codeOutput').value;
     const codeConsole = document.getElementById('consoleOutput').value;
     const url = document.getElementById('requestUrl').value.trim();
-    if (!codeUIV || !codeConsole) { alert('⚠️ 请先生成脚本后再保存！'); return; }
+    if (!codeUIV || !codeConsole) { alert(UIVT('uiv.save.needGenerate')); return; }
 
     logSaveStep('开始保存脚本到侧边栏', {
         url,
@@ -115,7 +115,7 @@ async function saveCurrentScript() {
 
     const parsedPayloadObj = window.UIVWorkbench.getParsedPayload();
     const rawJson = parsedPayloadObj ? JSON.stringify(parsedPayloadObj, null, 4) : document.getElementById('jsonInput').value.trim();
-    const originalFileName = document.getElementById('fileName').value.trim() || 'PBI_自动抓取';
+    const originalFileName = document.getElementById('fileName').value.trim() || UIVT('uiv.save.defaultFile');
     const configOptions = {
         useGlobalVars: document.getElementById('useGlobalVars').checked,
         isPagination: document.getElementById('isPagination').checked,
@@ -188,8 +188,8 @@ async function saveCurrentScript() {
 
     if (conflicts.length > 0) {
         const msg = conflicts.length > 1
-            ? `发现 ${conflicts.length} 个同名脚本（含裂变分发区域），是否一键覆盖更新？`
-            : `已存在名为 [${conflicts[0].name}] 的脚本，是否覆盖更新？`;
+            ? UIVT('uiv.save.conflictMany', { count: conflicts.length })
+            : UIVT('uiv.save.conflictOne', { name: conflicts[0].name });
         if (!confirm(msg)) return;
     }
 
@@ -206,7 +206,7 @@ async function saveCurrentScript() {
             savedNames: itemsToSave.map(i => i.name)
         });
 
-        showToast(itemsToSave.length > 1 ? `✅ ${itemsToSave.length} 个脚本已分发至三大区！` : '✅ 脚本已保存至仓库！');
+        showToast(itemsToSave.length > 1 ? UIVT('uiv.save.toastTriplicate', { count: itemsToSave.length }) : UIVT('uiv.save.toastSaved'));
         API.logHistory('uiv', '保存脚本', itemsToSave.map(i => i.name).join(', '));
         logSaveStep('历史记录已异步触发', {
             names: itemsToSave.map(i => i.name)
@@ -214,7 +214,7 @@ async function saveCurrentScript() {
 
         const btn = document.getElementById('saveBtn');
         const oldText = btn.innerText;
-        btn.innerText = itemsToSave.length > 1 ? '✅ 阵列已分发' : '✅ 已保存';
+        btn.innerText = itemsToSave.length > 1 ? UIVT('uiv.save.btnTriplicate') : UIVT('uiv.save.btnSaved');
         setTimeout(() => btn.innerText = oldText, 2000);
     } catch (e) {
         logSaveError('普通保存链路', e, {
@@ -222,7 +222,7 @@ async function saveCurrentScript() {
         });
 
         if (!isCompressionSupported()) {
-            showToast('❌ 保存失败，且当前浏览器不支持压缩重试', 'error');
+            showToast(UIVT('uiv.save.noCompression'), 'error');
             return;
         }
 
@@ -245,13 +245,13 @@ async function saveCurrentScript() {
                 savedNames: itemsToSave.map(i => i.name)
             });
 
-            showToast(itemsToSave.length > 1 ? `✅ ${itemsToSave.length} 个脚本已通过压缩重试保存！` : '✅ 脚本已通过压缩重试保存！');
+            showToast(itemsToSave.length > 1 ? UIVT('uiv.save.retryTriplicate', { count: itemsToSave.length }) : UIVT('uiv.save.retrySaved'));
             API.logHistory('uiv', '保存脚本(压缩重试)', itemsToSave.map(i => i.name).join(', '));
         } catch (retryError) {
             logSaveError('gzip 压缩重试链路', retryError, {
                 names: itemsToSave.map(i => i.name)
             });
-            showToast('❌ 保存失败，压缩重试也未成功', 'error');
+            showToast(UIVT('uiv.save.retryFail'), 'error');
         }
     }
 }

@@ -112,18 +112,18 @@ function renderCopyMenu(secId) {
 
 function executeCopy(secId, colName) {
     const data = AppState[secId].currentDisplayData;
-    if (!data || !data.length) { alert('当前无数据！'); return; }
+    if (!data || !data.length) { alert(SLAT('sla.copy.noData')); return; }
     const arr = data.map(r => r[colName]).filter(v => v !== undefined && v !== null && v.toString().trim() !== '');
     const unique = [...new Set(arr)];
-    if (!unique.length) { alert('无有效数据！'); return; }
+    if (!unique.length) { alert(SLAT('sla.copy.noValid')); return; }
     const text = unique.join(', ');
     if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(text).then(() => alert(`✅ 提取成功 (${unique.length}条)：\n${text}`)).catch(() => fallbackCopy(text));
+        navigator.clipboard.writeText(text).then(() => alert(SLAT('sla.copy.successCount', { count: unique.length, text }))).catch(() => fallbackCopy(text));
     } else { fallbackCopy(text); }
 }
 function fallbackCopy(text) {
     const t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select();
-    try { document.execCommand('copy'); alert(`✅ 提取成功：\n${text}`); } catch (e) { alert('复制失败'); }
+    try { document.execCommand('copy'); alert(SLAT('sla.copy.success', { text })); } catch (e) { alert(SLAT('sla.copy.fail')); }
     document.body.removeChild(t);
 }
 
@@ -146,10 +146,10 @@ function exportData(secId) {
 
 function populateMetricSelects(secId) {
     const state = AppState[secId];
-    let htmlX = '<option value="">1. 当此列(X)...</option>';
-    let htmlZ = '<option value="">3. 则提取该行此列(Z)的值</option>';
-    let htmlCX = '<option value="">1. 筛选条件列(X)... (选填)</option>';
-    let htmlCZ = '<option value="">3. 目标统计列(Z)</option>';
+    let htmlX = `<option value="">${SLAT('sla.section.colXOption')}</option>`;
+    let htmlZ = `<option value="">${SLAT('sla.section.colZOption')}</option>`;
+    let htmlCX = `<option value="">${SLAT('sla.section.countXOption')}</option>`;
+    let htmlCZ = `<option value="">${SLAT('sla.section.countZOption')}</option>`;
     
     state.orderedHeaders.forEach(h => {
         const hSafe = escapeHTML(h);
@@ -165,7 +165,7 @@ function populateMetricSelects(secId) {
     const ccolz = document.getElementById(`m-c-colz-${secId}`); if (ccolz) ccolz.innerHTML = htmlCZ;
 
     // Populate Parents
-    let parentHtml = '<option value="">作为主指标独立展示</option>';
+    let parentHtml = `<option value="">${SLAT('sla.section.mainMetric')}</option>`;
     Object.keys(AppState).forEach(sId => {
         const s = AppState[sId];
         if (s.customMetrics) {
@@ -186,7 +186,7 @@ function populateMetricSelects(secId) {
 
     // Populate Categories
     const cats = window.GlobalCategories || ['TE', 'ORG', 'ET', 'VDF'];
-    let catHtml = '<option value="">选择分类</option>';
+    let catHtml = `<option value="">${SLAT('sla.section.chooseCategory')}</option>`;
     cats.forEach(c => { catHtml += `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`; });
     const catSel = document.getElementById(`m-cat-${secId}`);
     if (catSel) catSel.innerHTML = catHtml;
@@ -312,6 +312,42 @@ let latestMetricRuleRecords = [];
 let editingMetricRuleRecord = null;
 const expandedMetricRuleGroups = new Set();
 
+function getMetricRuleI18nMap() {
+    return (cachedMetricRuleConfig && cachedMetricRuleConfig.prefs && cachedMetricRuleConfig.prefs.i18nMap)
+        || (cachedMetricRulePrefs && cachedMetricRulePrefs.i18nMap)
+        || {};
+}
+
+function translateMetricRuleLabel(label) {
+    const raw = String(label || '').trim();
+    const lang = window.ToolsI18n ? window.ToolsI18n.getLanguage() : 'zh-CN';
+    if (!raw || lang !== 'en-US') return raw;
+    return getMetricRuleI18nMap()[raw] || raw;
+}
+
+function translateMetricRuleSectionTitle(title) {
+    const raw = String(title || '').trim();
+    const lang = window.ToolsI18n ? window.ToolsI18n.getLanguage() : 'zh-CN';
+    if (!raw || lang !== 'en-US') return raw;
+    const map = {
+        '整改详单合集': SLAT('sla.section.title.rectBatch'),
+        '常规风险合集': SLAT('sla.section.title.riskBatch'),
+        'CPT专项风险合集': SLAT('sla.section.title.specialBatch'),
+        'SR详单分析': SLAT('sla.section.title.sr'),
+        '漏洞预警详单': SLAT('sla.section.title.vulnBatch'),
+        '🔧 整改监控': SLAT('sla.section.title.rect'),
+        '⚠️ 常规风险监控': SLAT('sla.section.title.risk'),
+        '🛠️ 专项风险监控': SLAT('sla.section.title.special'),
+        '📞 SR详单分析': SLAT('sla.section.title.sr'),
+        '🧯 漏洞预警分析': SLAT('sla.section.title.vuln')
+    };
+    return map[raw] || raw;
+}
+
+function getMetricRuleDisplayOrigin(origin) {
+    return origin === '当前导入' ? SLAT('sla.rules.current') : (origin === '已保存配置' ? SLAT('sla.rules.saved') : origin);
+}
+
 function normalizeMetricPrefSecId(prefKey) {
     return String(prefKey || '').replace(/^sla_prefs_/, '');
 }
@@ -321,17 +357,17 @@ function getSectionDisplayTitle(secId, prefKey) {
     if (state && state.title) return state.title;
     const normalized = normalizeMetricPrefSecId(secId || prefKey);
     if (SLA_PREF_TITLE_MAP[normalized]) return SLA_PREF_TITLE_MAP[normalized];
-    if (String(normalized).startsWith('other_')) return `独立表规则 (${normalized})`;
-    return normalized || prefKey || '未知表';
+    if (String(normalized).startsWith('other_')) return SLAT('sla.rules.otherTable', { id: normalized });
+    return normalized || prefKey || SLAT('sla.rules.unknownTable');
 }
 
 function describeMetricRule(rule) {
     if (!rule) return '';
     if (rule.type === 'count') {
-        return `COUNT ${rule.colX ? `[${escapeHTML(rule.colX)}] 包含 '${escapeHTML(rule.valY)}' 且 ` : ''}[${escapeHTML(rule.colZ)}] 包含 '${escapeHTML(rule.valK)}'`;
+        return `COUNT ${rule.colX ? `[${escapeHTML(rule.colX)}] ${SLAT('sla.rules.contains')} '${escapeHTML(rule.valY)}' ${SLAT('sla.rules.and')} ` : ''}[${escapeHTML(rule.colZ)}] ${SLAT('sla.rules.contains')} '${escapeHTML(rule.valK)}'`;
     }
     if (rule.type === 'ratio') {
-        return `RATIO [${escapeHTML(rule.colZ)}] 包含 '${escapeHTML(rule.valK)}' / ${rule.colX ? `[${escapeHTML(rule.colX)}] 包含 '${escapeHTML(rule.valY)}'` : '总行数'}`;
+        return `RATIO [${escapeHTML(rule.colZ)}] ${SLAT('sla.rules.contains')} '${escapeHTML(rule.valK)}' / ${rule.colX ? `[${escapeHTML(rule.colX)}] ${SLAT('sla.rules.contains')} '${escapeHTML(rule.valY)}'` : SLAT('sla.rules.totalRows')}`;
     }
     return `SHOW [${escapeHTML(rule.colZ)}]`;
 }
@@ -339,10 +375,10 @@ function describeMetricRule(rule) {
 function describeMetricCondition(rule) {
     if (!rule) return '-';
     if (rule.type === 'count' || rule.type === 'ratio') {
-        if (!rule.colX || !rule.valY) return '全量行';
-        return `[${escapeHTML(rule.colX)}] 包含 '${escapeHTML(rule.valY)}'`;
+        if (!rule.colX || !rule.valY) return SLAT('sla.rules.allRows');
+        return `[${escapeHTML(rule.colX)}] ${SLAT('sla.rules.contains')} '${escapeHTML(rule.valY)}'`;
     }
-    return `[${escapeHTML(rule.colX)}] 包含 '${escapeHTML(rule.valY)}'`;
+    return `[${escapeHTML(rule.colX)}] ${SLAT('sla.rules.contains')} '${escapeHTML(rule.valY)}'`;
 }
 
 function getMetricRuleSearchText(record) {
@@ -358,7 +394,12 @@ function getMetricRuleSearchText(record) {
         record.rule && record.rule.colX,
         record.rule && record.rule.valY,
         record.rule && record.rule.colZ,
-        record.rule && record.rule.valK
+        record.rule && record.rule.valK,
+        translateMetricRuleLabel(record.parentMetricName),
+        translateMetricRuleLabel(record.subMetricName),
+        translateMetricRuleSectionTitle(record.tableTitle),
+        translateMetricRuleSectionTitle(record.parentTitle),
+        translateMetricRuleSectionTitle(record.sourceTitle)
     ].filter(Boolean).join(' ').toLowerCase();
 }
 
@@ -384,10 +425,13 @@ function makeMetricRuleRecord(base) {
         conditionText: describeMetricCondition(rule),
         resultText: describeMetricRule(rule),
         relationText: base.kind === 'sub'
-            ? `挂载到 ${getSectionDisplayTitle(base.parentSecId, base.prefKey)} / ${parentMetricName}`
-            : '主指标独立展示',
-        category: base.kind === 'sub' ? (rule.category || '未分类') : '-',
-        typeText: rule.type === 'count' ? '统计' : (rule.type === 'ratio' ? '占比' : '提取')
+            ? SLAT('sla.rules.attachTo', {
+                table: translateMetricRuleSectionTitle(getSectionDisplayTitle(base.parentSecId, base.prefKey)),
+                metric: translateMetricRuleLabel(parentMetricName)
+            })
+            : SLAT('sla.rules.independent'),
+        category: base.kind === 'sub' ? (rule.category || SLAT('sla.rules.uncategorized')) : '-',
+        typeText: rule.type === 'count' ? SLAT('sla.rules.count') : (rule.type === 'ratio' ? SLAT('sla.rules.ratio') : SLAT('sla.rules.extract'))
     };
     record.searchText = getMetricRuleSearchText(record);
     return record;
@@ -398,7 +442,7 @@ function renderMetricRuleLineage(record) {
         return `
             <div class="metric-rule-lineage root">
                 <span class="metric-line-node root-dot"></span>
-                <span class="metric-line-text"><b>主指标</b><br>${escapeHTML(record.parentTitle)}</span>
+                <span class="metric-line-text"><b>${SLAT('sla.rules.rootLine')}</b><br>${escapeHTML(translateMetricRuleSectionTitle(record.parentTitle))}</span>
             </div>
         `;
     }
@@ -407,10 +451,10 @@ function renderMetricRuleLineage(record) {
         <div class="metric-rule-lineage ${isCross ? 'cross' : 'child'}">
             <span class="metric-line-branch">${isCross ? '↳' : '└'}</span>
             <span class="metric-line-text">
-                <b>${isCross ? '跨表挂载' : '本表挂载'}</b><br>
-                <span title="${escapeHTML(record.sourceTitle)}">${escapeHTML(record.sourceTitle)}</span>
+                <b>${isCross ? SLAT('sla.rules.crossAttach') : SLAT('sla.rules.localAttach')}</b><br>
+                <span title="${escapeHTML(record.sourceTitle)}">${escapeHTML(translateMetricRuleSectionTitle(record.sourceTitle))}</span>
                 <span class="metric-line-arrow">→</span>
-                <span title="${escapeHTML(record.parentTitle)}">${escapeHTML(record.parentTitle)}</span>
+                <span title="${escapeHTML(record.parentTitle)}">${escapeHTML(translateMetricRuleSectionTitle(record.parentTitle))}</span>
             </span>
         </div>
     `;
@@ -529,9 +573,9 @@ function updateMetricRuleSummary(secId) {
     }
 
     if (crossSubCount > 0) {
-        badge.innerHTML = `主${mainRules.length} / 子${subCount} <span style="color:#ff9800; font-weight:bold; margin-left:4px;">+跨表子${crossSubCount}</span>`;
+        badge.innerHTML = SLAT('sla.section.ruleSummaryCross', { main: mainRules.length, sub: subCount, cross: crossSubCount });
     } else {
-        badge.textContent = `主${mainRules.length} / 子${subCount}`;
+        badge.textContent = SLAT('sla.section.ruleSummary', { main: mainRules.length, sub: subCount });
     }
 
     badge.title = detail;
@@ -629,7 +673,7 @@ function getMetricRuleMainOptions(record) {
             value: item.origin === '当前导入'
                 ? `current|${item.parentSecId}|${item.parentRuleId}`
                 : `saved|${item.prefKey}|${item.parentRuleId}`,
-            label: `${item.parentTitle} / ${item.parentMetricName}`
+            label: `${translateMetricRuleSectionTitle(item.parentTitle)} / ${translateMetricRuleLabel(item.parentMetricName)}`
         }));
 }
 
@@ -671,13 +715,13 @@ function renderMetricRuleEditorPreview() {
     const valK = document.getElementById('metric-rule-edit-valk')?.value || '';
     const category = document.getElementById('metric-rule-edit-category')?.value || '';
     const parentSel = document.getElementById('metric-rule-edit-parent');
-    const parentText = parentSel && parentSel.selectedOptions[0] ? parentSel.selectedOptions[0].textContent : '主指标独立展示';
+    const parentText = parentSel && parentSel.selectedOptions[0] ? parentSel.selectedOptions[0].textContent : SLAT('sla.rules.independent');
     const rule = { type, colX, valY, colZ, valK };
     const preview = document.getElementById('metric-rule-edit-preview');
     if (!preview) return;
     preview.innerHTML = `
-        <div><b>规则预览</b>：IF ${describeMetricCondition(rule)} ➔ ${describeMetricRule(rule)}</div>
-        <div><b>归属预览</b>：${editingMetricRuleRecord?.kind === 'sub' ? `[${escapeHTML(category || '未分类')}] 挂载到 ${escapeHTML(parentText)}` : '主指标独立展示'}</div>
+        <div><b>${SLAT('sla.rules.previewRule')}</b>: IF ${describeMetricCondition(rule)} ➔ ${describeMetricRule(rule)}</div>
+        <div><b>${SLAT('sla.rules.previewOwner')}</b>: ${editingMetricRuleRecord?.kind === 'sub' ? `[${escapeHTML(translateMetricRuleLabel(category || SLAT('sla.rules.uncategorized')))}] ${SLAT('sla.rules.attachToMetric', { metric: escapeHTML(parentText) })}` : SLAT('sla.rules.independent')}</div>
     `;
 }
 
@@ -698,7 +742,7 @@ window.openMetricRuleEditorById = function(secId, ruleId, subIndex = -1) {
         (subIndex === -1 ? r.kind === 'main' : (r.kind === 'sub' && r.subIndex === subIndex))
     );
     if (!record) {
-        showToast('未找到对应的指标配置。', 'warning');
+        showToast(SLAT('sla.rules.notFoundConfig'), 'warning');
         return;
     }
     if (typeof latestMetricRuleRecords === 'undefined') window.latestMetricRuleRecords = [];
@@ -711,7 +755,7 @@ window.openMetricRuleEditor = function(index) {
     if (!record) return;
     const ref = findMetricRuleRef(record);
     if (!ref || !ref.rule) {
-        showToast('未找到这条规则的可编辑配置，请刷新后重试。', 'warning');
+        showToast(SLAT('sla.rules.notEditable'), 'warning');
         return;
     }
     editingMetricRuleRecord = record;
@@ -728,7 +772,7 @@ window.openMetricRuleEditor = function(index) {
         rule.colZ
     ].filter(Boolean)));
     
-    const fieldOptionsHtml = '<option value="">(空/不指定列)</option>' + candidates
+    const fieldOptionsHtml = `<option value="">${SLAT('sla.rules.emptyColumn')}</option>` + candidates
         .map(col => `<option value="${escapeHTML(col)}">${escapeHTML(col)}</option>`).join('');
 
     document.getElementById('metric-rule-edit-colx').innerHTML = fieldOptionsHtml;
@@ -747,7 +791,7 @@ window.openMetricRuleEditor = function(index) {
     const parentOptions = getMetricRuleMainOptions(record);
     document.getElementById('metric-rule-edit-parent').innerHTML = parentOptions.length
         ? parentOptions.map(item => `<option value="${escapeHTML(item.value)}">${escapeHTML(item.label)}</option>`).join('')
-        : '<option value="">无可用主指标</option>';
+        : `<option value="">${SLAT('sla.rules.noMainMetric')}</option>`;
     const currentParentValue = record.origin === '当前导入'
         ? `current|${record.parentSecId}|${record.parentRuleId}`
         : `saved|${record.prefKey}|${record.parentRuleId}`;
@@ -756,7 +800,7 @@ window.openMetricRuleEditor = function(index) {
     document.querySelectorAll('.metric-rule-edit-sub-only').forEach(el => {
         el.style.display = record.kind === 'sub' ? 'flex' : 'none';
     });
-    document.getElementById('metric-rule-edit-subtitle').textContent = `${record.origin} · ${record.parentTitle} · ${record.kind === 'sub' ? '子指标' : '主指标'}`;
+    document.getElementById('metric-rule-edit-subtitle').textContent = `${getMetricRuleDisplayOrigin(record.origin)} · ${translateMetricRuleSectionTitle(record.parentTitle)} · ${record.kind === 'sub' ? SLAT('sla.rules.sub') : SLAT('sla.rules.main')}`;
     ['metric-rule-edit-label', 'metric-rule-edit-colx', 'metric-rule-edit-valy', 'metric-rule-edit-colz', 'metric-rule-edit-valk', 'metric-rule-edit-category', 'metric-rule-edit-parent']
         .forEach(id => {
             const el = document.getElementById(id);
@@ -792,7 +836,7 @@ function moveSubMetricRule(record, ref, newParentValue) {
         const rule = ref.rule;
         const newParent = AppState[newSecId]?.customMetrics?.find(item => item.id === newRuleId);
         if (!newParent) {
-            throw new Error('未找到新的挂载主指标');
+            throw new Error(SLAT('sla.rules.notFoundParent'));
         }
         oldParent.subMetrics.splice(record.subIndex, 1);
         if (!newParent.subMetrics) newParent.subMetrics = [];
@@ -808,7 +852,7 @@ function moveSubMetricRule(record, ref, newParentValue) {
     const newPref = cachedMetricRulePrefs[newPrefKey];
     const newParent = newPref?.customMetrics?.find(item => item.id === newRuleId);
     if (!newParent) {
-        throw new Error('未找到新的挂载主指标');
+        throw new Error(SLAT('sla.rules.notFoundParent'));
     }
     ref.parent.subMetrics.splice(record.subIndex, 1);
     if (!newParent.subMetrics) newParent.subMetrics = [];
@@ -821,7 +865,7 @@ window.saveMetricRuleEditor = async function() {
     const record = editingMetricRuleRecord;
     const ref = findMetricRuleRef(record);
     if (!ref || !ref.rule) {
-        showToast('保存失败：规则已不存在，请刷新后重试。', 'error');
+        showToast(SLAT('sla.rules.saveMissing'), 'error');
         return;
     }
 
@@ -832,10 +876,10 @@ window.saveMetricRuleEditor = async function() {
     const valK = document.getElementById('metric-rule-edit-valk').value.trim();
     const label = document.getElementById('metric-rule-edit-label').value.trim();
 
-    if (!label) { showToast('请填写指标名称。', 'warning'); return; }
-    if (!colZ) { showToast('请填写展示/统计列 Z。', 'warning'); return; }
-    if (type === 'extract' && (!colX || !valY)) { showToast('提取模式需要填写条件列 X 和条件值 Y。', 'warning'); return; }
-    if (type !== 'extract' && !valK) { showToast('统计/占比模式需要填写统计值 K。', 'warning'); return; }
+    if (!label) { showToast(SLAT('sla.rules.needName'), 'warning'); return; }
+    if (!colZ) { showToast(SLAT('sla.rules.needColZ'), 'warning'); return; }
+    if (type === 'extract' && (!colX || !valY)) { showToast(SLAT('sla.rules.needExtractFields'), 'warning'); return; }
+    if (type !== 'extract' && !valK) { showToast(SLAT('sla.rules.needStatValue'), 'warning'); return; }
 
     const rule = ref.rule;
     rule.type = type;
@@ -867,10 +911,10 @@ window.saveMetricRuleEditor = async function() {
         closeMetricRuleEditor();
         await refreshMetricRulePrefsCache();
         renderAllMetricRules();
-        showToast('指标规则已保存。');
+        showToast(SLAT('sla.rules.savedToast'));
     } catch (e) {
         console.error('[SLA Metric Rules] 保存规则失败:', e);
-        showToast(`保存失败：${e.message || e}`, 'error');
+        showToast(SLAT('sla.rules.saveFail', { message: e.message || e }), 'error');
     }
 };
 
@@ -937,7 +981,7 @@ window.openMetricRulesModal = async function() {
     const crossOnly = document.getElementById('metric-rules-cross-only');
     if (crossOnly) crossOnly.checked = false;
     const list = document.getElementById('metric-rules-modal-list');
-    if (list) list.innerHTML = '<div class="metric-rules-empty">正在读取已保存的指标规则...</div>';
+    if (list) list.innerHTML = `<div class="metric-rules-empty">${SLAT('sla.rules.loading')}</div>`;
     await refreshMetricRulePrefsCache();
     renderAllMetricRules();
 };
@@ -946,6 +990,16 @@ window.closeMetricRulesModal = function() {
     const modal = document.getElementById('metric-rules-modal');
     if (modal) modal.style.display = 'none';
 };
+
+window.addEventListener('tools:languagechange', () => {
+    const modal = document.getElementById('metric-rules-modal');
+    if (modal && modal.style.display === 'flex') renderAllMetricRules();
+    const editModal = document.getElementById('metric-rule-edit-modal');
+    if (editModal && editModal.style.display === 'flex' && editingMetricRuleRecord) {
+        document.getElementById('metric-rule-edit-subtitle').textContent = `${getMetricRuleDisplayOrigin(editingMetricRuleRecord.origin)} · ${translateMetricRuleSectionTitle(editingMetricRuleRecord.parentTitle)} · ${editingMetricRuleRecord.kind === 'sub' ? SLAT('sla.rules.sub') : SLAT('sla.rules.main')}`;
+        renderMetricRuleEditorPreview();
+    }
+});
 
 window.toggleMetricRuleGroup = function(groupKey) {
     let isExpanding = false;
@@ -972,7 +1026,7 @@ window.renderAllMetricRules = function(justExpandedGroupKey = null) {
     });
 
     if (!allFilteredRecords.length) {
-        list.innerHTML = '<div class="metric-rules-empty">暂无匹配的指标规则。未导入表格时也会读取服务器已保存配置；如果这里为空，说明当前还没有保存过自定义指标规则。</div>';
+        list.innerHTML = `<div class="metric-rules-empty">${SLAT('sla.rules.empty')}</div>`;
         return;
     }
 
@@ -1012,24 +1066,24 @@ window.renderAllMetricRules = function(justExpandedGroupKey = null) {
         const mainIndex = latestMetricRuleRecords.push(mainRecord) - 1;
         const mainActionHtml = `
             <div class="metric-rule-actions">
-                <button class="metric-rule-view-btn" onclick="jumpToMetricRuleTable('${mainRecord.sourceSecId}', '${escapeHTML(mainRecord.sourceTitle)}')">查看</button>
-                <button class="metric-rule-edit-btn" onclick="openMetricRuleEditor(${mainIndex})">修改</button>
-                <button class="metric-rule-mini-danger" onclick="deleteMetricRuleFromOverview(${mainIndex})">删除</button>
+                <button class="metric-rule-view-btn" onclick="jumpToMetricRuleTable('${mainRecord.sourceSecId}', '${escapeHTML(mainRecord.sourceTitle)}')">${SLAT('sla.rules.view')}</button>
+                <button class="metric-rule-edit-btn" onclick="openMetricRuleEditor(${mainIndex})">${SLAT('sla.rules.edit')}</button>
+                <button class="metric-rule-mini-danger" onclick="deleteMetricRuleFromOverview(${mainIndex})">${SLAT('sla.rules.delete')}</button>
             </div>
         `;
         rowParts.push(`
             <tr class="metric-rule-main-row ${totalSubCount ? 'has-children' : ''}">
                 <td>
                     <div class="metric-rule-tree-head">
-                        ${totalSubCount ? `<button class="metric-rule-expand-btn ${isExpanded ? 'expanded' : ''}" onclick="toggleMetricRuleGroup('${escapeHTML(groupKey)}')" title="${isExpanded ? '收起子指标' : '展开子指标'}">${isExpanded ? '▾' : '▸'}</button>` : '<span class="metric-rule-expand-placeholder"></span>'}
+                        ${totalSubCount ? `<button class="metric-rule-expand-btn ${isExpanded ? 'expanded' : ''}" onclick="toggleMetricRuleGroup('${escapeHTML(groupKey)}')" title="${isExpanded ? SLAT('sla.rules.collapse') : SLAT('sla.rules.expand')}">${isExpanded ? '▾' : '▸'}</button>` : '<span class="metric-rule-expand-placeholder"></span>'}
                         ${renderMetricRuleLineage(mainRecord)}
                     </div>
                 </td>
-                <td title="${escapeHTML(mainRecord.tableTitle)}">${escapeHTML(mainRecord.tableTitle)}</td>
-                <td><span class="metric-rule-badge ${mainRecord.origin === '当前导入' ? 'main' : 'saved'}">${escapeHTML(mainRecord.origin)}</span></td>
-                <td><span class="metric-rule-badge main">主指标</span>${totalSubCount ? `<span class="metric-rule-child-count">${matchedSubCount === totalSubCount ? totalSubCount : `${matchedSubCount}/${totalSubCount}`} 子</span>` : ''}</td>
-                <td title="${escapeHTML(mainRecord.parentMetricName)}"><strong>${escapeHTML(mainRecord.parentMetricName)}</strong></td>
-                <td><span class="metric-rule-muted">折叠于主指标</span></td>
+                <td title="${escapeHTML(mainRecord.tableTitle)}">${escapeHTML(translateMetricRuleSectionTitle(mainRecord.tableTitle))}</td>
+                <td><span class="metric-rule-badge ${mainRecord.origin === '当前导入' ? 'main' : 'saved'}">${escapeHTML(getMetricRuleDisplayOrigin(mainRecord.origin))}</span></td>
+                <td><span class="metric-rule-badge main">${SLAT('sla.rules.main')}</span>${totalSubCount ? `<span class="metric-rule-child-count">${matchedSubCount === totalSubCount ? totalSubCount : `${matchedSubCount}/${totalSubCount}`} ${SLAT('sla.rules.childUnit')}</span>` : ''}</td>
+                <td title="${escapeHTML(mainRecord.parentMetricName)}"><strong>${escapeHTML(translateMetricRuleLabel(mainRecord.parentMetricName))}</strong></td>
+                <td><span class="metric-rule-muted">${SLAT('sla.rules.folded')}</span></td>
                 <td><span class="metric-rule-type">${escapeHTML(mainRecord.typeText)}</span></td>
                 <td title="${escapeHTML(mainRecord.conditionText)}">${mainRecord.conditionText}</td>
                 <td title="${escapeHTML(mainRecord.resultText)}">${mainRecord.resultText}</td>
@@ -1042,19 +1096,19 @@ window.renderAllMetricRules = function(justExpandedGroupKey = null) {
             const index = latestMetricRuleRecords.push(record) - 1;
             const actionHtml = `
                 <div class="metric-rule-actions">
-                    <button class="metric-rule-view-btn" onclick="jumpToMetricRuleTable('${record.sourceSecId}', '${escapeHTML(record.sourceTitle)}')">查看</button>
-                    <button class="metric-rule-edit-btn" onclick="openMetricRuleEditor(${index})">修改</button>
-                    <button class="metric-rule-mini-danger" onclick="deleteMetricRuleFromOverview(${index})">删除</button>
+                    <button class="metric-rule-view-btn" onclick="jumpToMetricRuleTable('${record.sourceSecId}', '${escapeHTML(record.sourceTitle)}')">${SLAT('sla.rules.view')}</button>
+                    <button class="metric-rule-edit-btn" onclick="openMetricRuleEditor(${index})">${SLAT('sla.rules.edit')}</button>
+                    <button class="metric-rule-mini-danger" onclick="deleteMetricRuleFromOverview(${index})">${SLAT('sla.rules.delete')}</button>
                 </div>
             `;
             rowParts.push(`
                 <tr class="metric-rule-child-row ${record.isCrossTable ? 'metric-rule-cross-row' : ''} ${groupKey === justExpandedGroupKey ? 'metric-rule-just-expanded' : ''}">
                     <td>${renderMetricRuleLineage(record)}</td>
-                    <td title="${escapeHTML(record.tableTitle)}">${escapeHTML(record.tableTitle)}</td>
-                    <td><span class="metric-rule-badge ${record.origin === '当前导入' ? 'main' : 'saved'}">${escapeHTML(record.origin)}</span></td>
-                    <td><span class="metric-rule-badge sub">${record.isCrossTable ? '跨表子指标' : '子指标'}</span></td>
-                    <td title="${escapeHTML(record.parentMetricName)}"><strong>${escapeHTML(record.parentMetricName)}</strong></td>
-                    <td title="${escapeHTML(record.subMetricName)}"><span class="metric-rule-category">[${escapeHTML(record.category)}]</span>${escapeHTML(record.subMetricName)}</td>
+                    <td title="${escapeHTML(record.tableTitle)}">${escapeHTML(translateMetricRuleSectionTitle(record.tableTitle))}</td>
+                    <td><span class="metric-rule-badge ${record.origin === '当前导入' ? 'main' : 'saved'}">${escapeHTML(getMetricRuleDisplayOrigin(record.origin))}</span></td>
+                    <td><span class="metric-rule-badge sub">${record.isCrossTable ? SLAT('sla.rules.crossSub') : SLAT('sla.rules.sub')}</span></td>
+                    <td title="${escapeHTML(record.parentMetricName)}"><strong>${escapeHTML(translateMetricRuleLabel(record.parentMetricName))}</strong></td>
+                    <td title="${escapeHTML(record.subMetricName)}"><span class="metric-rule-category">[${escapeHTML(translateMetricRuleLabel(record.category))}]</span>${escapeHTML(translateMetricRuleLabel(record.subMetricName))}</td>
                     <td><span class="metric-rule-type">${escapeHTML(record.typeText)}</span></td>
                     <td title="${escapeHTML(record.conditionText)}">${record.conditionText}</td>
                     <td title="${escapeHTML(record.resultText)}">${record.resultText}</td>
@@ -1069,27 +1123,27 @@ window.renderAllMetricRules = function(justExpandedGroupKey = null) {
 
     list.innerHTML = `
         <div class="metric-rules-summary">
-            <span>当前显示 <b>${latestMetricRuleRecords.length}</b> 条</span>
-            <span>当前导入 <b>${currentCount}</b> 条</span>
-            <span>已保存配置 <b>${savedCount}</b> 条</span>
-            <span>跨表规则 <b>${crossCount}</b> 条</span>
-            <span class="metric-rule-muted">未导入表格时仍会读取服务器保存规则</span>
+            <span>${SLAT('sla.rules.summaryShown', { count: latestMetricRuleRecords.length })}</span>
+            <span>${SLAT('sla.rules.summaryCurrent', { count: currentCount })}</span>
+            <span>${SLAT('sla.rules.summarySaved', { count: savedCount })}</span>
+            <span>${SLAT('sla.rules.summaryCross', { count: crossCount })}</span>
+            <span class="metric-rule-muted">${SLAT('sla.rules.summaryHint')}</span>
         </div>
         <div class="metric-rules-table-wrap">
             <table class="metric-rules-table">
                 <thead>
                     <tr>
-                        <th>关系链路</th>
-                        <th>规则识别表格/前缀</th>
-                        <th>来源</th>
-                        <th>规则类型</th>
-                        <th>主指标名称</th>
-                        <th>子指标名称</th>
-                        <th>模式</th>
-                        <th>条件 IF</th>
-                        <th>展示/统计 THEN</th>
-                        <th>归属/挂载关系</th>
-                        <th>操作</th>
+                        <th>${SLAT('sla.rules.thLineage')}</th>
+                        <th>${SLAT('sla.rules.thTable')}</th>
+                        <th>${SLAT('sla.rules.thSource')}</th>
+                        <th>${SLAT('sla.rules.thRuleType')}</th>
+                        <th>${SLAT('sla.rules.thMainMetric')}</th>
+                        <th>${SLAT('sla.rules.thSubMetric')}</th>
+                        <th>${SLAT('sla.rules.thMode')}</th>
+                        <th>${SLAT('sla.rules.thCondition')}</th>
+                        <th>${SLAT('sla.rules.thResult')}</th>
+                        <th>${SLAT('sla.rules.thRelation')}</th>
+                        <th>${SLAT('sla.rules.thAction')}</th>
                     </tr>
                 </thead>
                 <tbody>${rows}</tbody>

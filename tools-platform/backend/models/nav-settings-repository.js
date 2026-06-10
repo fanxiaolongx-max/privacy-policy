@@ -5,10 +5,10 @@ const SETTINGS_FILE = 'nav_settings.json';
 const DEFAULT_SETTINGS = {
     primaryIds: ['home', 'uivf12', 'sla', 'report', 'expedite', 'monthly'],
     categories: [
-        { id: 'business', name: '业务工具' },
-        { id: 'audit', name: '审计与核算' },
-        { id: 'system', name: '系统治理' },
-        { id: 'custom', name: '自定义工具' }
+        { id: 'business', name: '业务工具', nameEn: 'Business Tools' },
+        { id: 'audit', name: '审计与核算', nameEn: 'Audit & KPI' },
+        { id: 'system', name: '系统治理', nameEn: 'System Governance' },
+        { id: 'custom', name: '自定义工具', nameEn: 'Custom Tools' }
     ],
     categoryByItem: {
         frt: 'audit',
@@ -24,10 +24,16 @@ function normalizeSettings(input = {}) {
         ? input.categories
         : DEFAULT_SETTINGS.categories;
     const normalizedCategories = categories
-        .map((item, index) => ({
-            id: String(item.id || `cat_${index + 1}`).replace(/[^a-zA-Z0-9_-]+/g, '_'),
-            name: String(item.name || `分类 ${index + 1}`).trim()
-        }))
+        .map((item, index) => {
+            const cat = {
+                id: String(item.id || `cat_${index + 1}`).replace(/[^a-zA-Z0-9_-]+/g, '_'),
+                name: String(item.name || `分类 ${index + 1}`).trim()
+            };
+            if (item.nameEn) {
+                cat.nameEn = String(item.nameEn).trim();
+            }
+            return cat;
+        })
         .filter(item => item.id && item.name);
 
     return {
