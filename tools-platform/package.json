@@ -7,8 +7,8 @@
     "start": "node backend/server.js",
     "start:desktop": "electron .",
     "postinstall": "electron-builder install-app-deps",
-    "build:win": "electron-builder --win",
-    "build:mac": "electron-builder --mac"
+    "build:win": "electron-builder --win -p never",
+    "build:mac": "electron-builder --mac -p never"
   },
   "build": {
     "appId": "com.toolsplatform.app",
