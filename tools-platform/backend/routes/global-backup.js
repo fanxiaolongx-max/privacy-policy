@@ -5,8 +5,10 @@ const multer = require('multer');
 const repo = require('../models/global-backup-repository');
 const remoteRepo = require('../models/remote-backup-sync-repository');
 
+const { DATA_DIR } = require('../models/store');
+
 const router = express.Router();
-const uploadDir = path.join(__dirname, '../tmp/uploads');
+const uploadDir = path.join(DATA_DIR, '../tmp/uploads');
 fs.mkdirSync(uploadDir, { recursive: true });
 
 const upload = multer({

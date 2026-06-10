@@ -3,14 +3,14 @@ const path = require('path');
 const crypto = require('crypto');
 const JSZip = require('jszip');
 
-const ROOT_DIR = path.resolve(__dirname, '../..');
-const BACKUP_DIR = path.join(ROOT_DIR, 'backend/backups');
-const RESTORE_TMP_DIR = path.join(ROOT_DIR, 'backend/tmp/restores');
-const BACKUP_VERSION = 1;
+const { DATA_DIR } = require('./store');
+
+const BACKUP_DIR = path.join(DATA_DIR, '../backups');
+const RESTORE_TMP_DIR = path.join(DATA_DIR, '../tmp/restores');
+const BACKUP_VERSION = 2; // bumped version for the new path structure
 
 const DATA_TARGETS = [
-    { id: 'backend_data', relPath: 'backend/data' },
-    { id: 'root_data', relPath: 'data' }
+    { id: 'primary_data', absPath: DATA_DIR }
 ];
 
 function ensureDir(dir) {
@@ -48,10 +48,10 @@ function countFilesAndBytes(dir) {
 
 function getManifest(reason = 'manual') {
     const targets = DATA_TARGETS.map(target => {
-        const absPath = path.join(ROOT_DIR, target.relPath);
+        const absPath = target.absPath;
         return {
             id: target.id,
-            path: target.relPath,
+            path: target.id,
             exists: fs.existsSync(absPath),
             ...countFilesAndBytes(absPath)
         };
@@ -165,9 +165,9 @@ function addPathToZip(zip, absPath, relPath) {
 async function writeZip(outputPath, manifest) {
     const zip = new JSZip();
     DATA_TARGETS.forEach(target => {
-        const absPath = path.join(ROOT_DIR, target.relPath);
+        const absPath = target.absPath;
         if (fs.existsSync(absPath)) {
-            addPathToZip(zip, absPath, target.relPath);
+            addPathToZip(zip, absPath, target.id);
         }
     });
     zip.file('manifest.json', JSON.stringify(manifest, null, 2));
@@ -294,8 +294,8 @@ async function restoreFromZip(zipPath, options = {}) {
     const closedDatabases = await closeRuntimeDatabases();
     try {
         DATA_TARGETS.forEach(target => {
-            const src = path.join(extractDir, target.relPath);
-            const dest = path.join(ROOT_DIR, target.relPath);
+            const src = path.join(extractDir, target.id);
+            const dest = target.absPath;
             if (fs.existsSync(src)) syncDirRecursive(src, dest);
         });
         return {
