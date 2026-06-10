@@ -24,16 +24,19 @@ jobs:
           node-version: 20
 
       - name: Install Dependencies
+        working-directory: tools-platform
         run: npm install
 
       - name: Build Application (Windows)
         if: matrix.os == 'windows-latest'
+        working-directory: tools-platform
         run: npm run build:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Application (Mac)
         if: matrix.os == 'macos-latest'
+        working-directory: tools-platform
         run: npm run build:mac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -43,15 +46,15 @@ jobs:
         with:
           name: built-app-${{ matrix.os }}
           path: |
-            dist/*.exe
-            dist/*.dmg
+            tools-platform/dist/*.exe
+            tools-platform/dist/*.dmg
 
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            dist/*.exe
-            dist/*.dmg
+            tools-platform/dist/*.exe
+            tools-platform/dist/*.dmg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
