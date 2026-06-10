@@ -8,3 +8,7 @@ yarn-error.log*
 # Application Data
 tools-platform/data/images/
 tools-platform/data/*.db
+
+# Electron build output
+tools-platform/dist/
+tools-platform/node_modules/
