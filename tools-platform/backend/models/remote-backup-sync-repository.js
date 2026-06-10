@@ -3,10 +3,10 @@ const path = require('path');
 const crypto = require('crypto');
 
 const globalBackupRepo = require('./global-backup-repository');
+const { DATA_DIR } = require('./store');
 
-const ROOT_DIR = path.resolve(__dirname, '../..');
-const RUNTIME_DIR = path.join(ROOT_DIR, 'backend/runtime');
-const DOWNLOAD_DIR = path.join(ROOT_DIR, 'backend/tmp/remote-backups');
+const RUNTIME_DIR = path.join(DATA_DIR, '../runtime');
+const DOWNLOAD_DIR = path.join(DATA_DIR, '../tmp/remote-backups');
 const SETTINGS_FILE = path.join(RUNTIME_DIR, 'remote_backup_sync_settings.json');
 const STATE_FILE = path.join(RUNTIME_DIR, 'remote_backup_sync_state.json');
 

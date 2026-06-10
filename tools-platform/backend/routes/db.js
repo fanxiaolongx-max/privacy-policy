@@ -5,10 +5,10 @@ const path = require('path');
 const fs = require('fs');
 const zlib = require('zlib');
 
-const dataDir = path.join(__dirname, '../../data');
-if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-}
+const { ensureDataDir, DATA_DIR } = require('../models/store');
+
+const dataDir = DATA_DIR;
+ensureDataDir();
 
 const dbPath = path.join(dataDir, 'report.db');
 const db = new sqlite3.Database(dbPath);

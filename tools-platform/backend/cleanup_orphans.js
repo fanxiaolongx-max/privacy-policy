@@ -1,8 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 
-const PREFS_FILE = path.join(__dirname, 'data', 'sla_prefs.json');
-const TARGETS_FILE = path.join(__dirname, 'data', 'sla_targets.json');
+const { DATA_DIR } = require('./models/store');
+
+const PREFS_FILE = path.join(DATA_DIR, 'sla_prefs.json');
+const TARGETS_FILE = path.join(DATA_DIR, 'sla_targets.json');
 
 const prefs = JSON.parse(fs.readFileSync(PREFS_FILE, 'utf8'));
 const targets = JSON.parse(fs.readFileSync(TARGETS_FILE, 'utf8'));
