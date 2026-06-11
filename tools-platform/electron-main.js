@@ -7,9 +7,28 @@ const userDataPath = app.getPath('userData');
 process.env.TOOLS_DATA_DIR = path.join(userDataPath, 'data');
 console.log('[Electron] User Data Path:', process.env.TOOLS_DATA_DIR);
 
+const net = require('net');
+
+function getFreePort(startingPort) {
+    return new Promise((resolve, reject) => {
+        const server = net.createServer();
+        server.listen(startingPort, () => {
+            const port = server.address().port;
+            server.close(() => resolve(port));
+        });
+        server.on('error', (err) => {
+            if (err.code === 'EADDRINUSE') {
+                resolve(getFreePort(0)); // Let the OS assign a random free port
+            } else {
+                reject(err);
+            }
+        });
+    });
+}
+
 let mainWindow;
 
-function createWindow() {
+async function createWindow() {
     mainWindow = new BrowserWindow({
         width: 1280,
         height: 800,
@@ -21,11 +40,11 @@ function createWindow() {
         icon: path.join(__dirname, 'frontend/assets/icon.png') // Assume icon exists or fallback
     });
 
-    // Start the Express server
-    const PORT = 3030; // Alternatively, find a dynamic free port
-    process.env.PORT = PORT;
-    
     try {
+        // Start the Express server on a dynamically assigned free port
+        const PORT = await getFreePort(3030);
+        process.env.PORT = PORT;
+        
         require('./backend/server.js');
         
         // Wait a brief moment for the server to bind the port
