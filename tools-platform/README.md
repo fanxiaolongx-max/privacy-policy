@@ -54,6 +54,33 @@ $env:PORT=3030
 npm start
 ```
 
+## 桌面版打包与自动更新
+
+桌面版使用 Electron + electron-builder。Windows 安装包为 NSIS 安装版，支持选择安装目录；安装后的客户端可在“全局设置 -> 程序更新”中检查、下载并重启安装新版本。
+
+发布新版时需要先递增 `tools-platform/package.json` 中的 `version`，再推送匹配的 tag：
+
+```bash
+cd tools-platform
+npm version patch --no-git-tag-version
+cd ..
+git add tools-platform/package.json tools-platform/package-lock.json
+git commit -m "chore: release desktop v1.0.1"
+git tag v1.0.1
+git push origin main --tags
+```
+
+GitHub Actions 会在 Windows runner 上执行 `npm run build:win:publish`，并把安装包和 `latest.yml` 发布到 GitHub Releases。客户端检查更新依赖 Release 中的 `latest.yml`，因此不要手动删除该文件。
+
+本地只验证打包配置时可运行：
+
+```bash
+cd tools-platform
+npm run build:win
+```
+
+如果在 macOS 上交叉打包 Windows 版本遇到 `sqlite3` 原生依赖错误，优先以 GitHub Actions 的 Windows runner 产物为准。
+
 生产模式（PM2，推荐）：
 
 ```bash

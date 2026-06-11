@@ -1,6 +1,6 @@
 {
   "name": "tools-platform",
-  "version": "1.0.0",
+  "version": "1.0.9",
   "description": "Tools Platform Desktop App",
   "repository": "github:fanxiaolongx-max/privacy-policy",
   "main": "electron-main.js",
@@ -9,6 +9,7 @@
     "start:desktop": "electron .",
     "postinstall": "electron-builder install-app-deps",
     "build:win": "electron-builder --win -p never",
+    "build:win:publish": "electron-builder --win --publish always",
     "build:mac": "electron-builder --mac -p never"
   },
   "build": {
@@ -21,14 +22,25 @@
       "backend/**/*",
       "frontend/**/*",
       "electron-main.js",
+      "electron-preload.js",
       "package.json"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "fanxiaolongx-max",
+        "repo": "privacy-policy"
+      }
     ],
     "mac": {
       "category": "public.app-category.productivity",
       "target": [
         {
           "target": "dmg",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
       ]
     },
@@ -36,20 +48,30 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Tools Platform"
     }
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "cors": "^2.8.5",
+    "electron-updater": "^6.8.9",
     "exceljs": "^4.4.0",
     "express": "^4.18.2",
     "jszip": "^3.10.1",
     "multer": "^1.4.5-lts.1",
     "sqlite3": "^6.0.1",
-    "uuid": "^9.0.0",
-    "@google/generative-ai": "^0.24.1"
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "electron": "^28.0.0",
