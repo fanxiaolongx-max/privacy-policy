@@ -102,21 +102,28 @@ function runPreflight(options = {}) {
         errors.push(`未找到 frontend 目录：${frontendDir}`);
     }
 
-    const nodeModulesDir = path.join(backendDir, 'node_modules');
-    if (!fs.existsSync(nodeModulesDir)) {
-        errors.push(`未找到 backend/node_modules。请先执行：\n    cd backend\n    npm install`);
+    const isElectron = !!(process.versions && process.versions.electron);
+
+    if (!isElectron) {
+        const nodeModulesDir = path.join(backendDir, 'node_modules');
+        if (!fs.existsSync(nodeModulesDir)) {
+            errors.push(`未找到 backend/node_modules。请先执行：\n    cd backend\n    npm install`);
+        }
+        ['express', 'cors', 'multer', 'exceljs', 'uuid', '@google/generative-ai'].forEach(dep => checkDependency(dep, errors));
+        
+        ensureDirWritable(path.join(backendDir, 'data'), 'backend/data', errors);
+        ensureDirWritable(path.join(backendDir, 'backups'), 'backend/backups', errors);
+        ensureDirWritable(path.join(backendDir, 'logs'), 'backend/logs', errors);
+        ensureDirWritable(path.join(backendDir, 'tmp'), 'backend/tmp', errors);
+        ensureDirWritable(path.join(projectRoot, 'data'), 'data', errors);
+        ensureDirWritable(path.join(projectRoot, 'data', 'images'), 'data/images', errors);
+        ensureDirWritable(path.join(projectRoot, 'outputs'), 'outputs', errors);
+    } else {
+        const dataDir = process.env.TOOLS_DATA_DIR || path.join(backendDir, 'data');
+        ensureDirWritable(dataDir, 'app data directory', errors);
     }
-
-    ['express', 'cors', 'multer', 'exceljs', 'uuid', '@google/generative-ai'].forEach(dep => checkDependency(dep, errors));
+    
     checkSqlite(errors);
-
-    ensureDirWritable(path.join(backendDir, 'data'), 'backend/data', errors);
-    ensureDirWritable(path.join(backendDir, 'backups'), 'backend/backups', errors);
-    ensureDirWritable(path.join(backendDir, 'logs'), 'backend/logs', errors);
-    ensureDirWritable(path.join(backendDir, 'tmp'), 'backend/tmp', errors);
-    ensureDirWritable(path.join(projectRoot, 'data'), 'data', errors);
-    ensureDirWritable(path.join(projectRoot, 'data', 'images'), 'data/images', errors);
-    ensureDirWritable(path.join(projectRoot, 'outputs'), 'outputs', errors);
 
     if (!process.env.GEMINI_API_KEY) {
         warnings.push('未检测到 GEMINI_API_KEY 环境变量。AI 助手仍可在页面“全局设置”里配置 Token。');
