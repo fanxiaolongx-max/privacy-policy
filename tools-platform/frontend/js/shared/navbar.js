@@ -35,7 +35,10 @@ let navState = {
     aiSettings: null,
     aiSaveTimer: null,
     remoteBackupSettings: null,
-    remoteBackupSaveTimer: null
+    remoteBackupSaveTimer: null,
+    updaterStatus: null,
+    updaterVersion: null,
+    updaterUnsubscribe: null
 };
 
 function navT(key, params) {
@@ -92,6 +95,7 @@ function registerNavbarI18n() {
             'nav.set.tab.categories': '二级分类',
             'nav.set.tab.items': '分类与顺序',
             'nav.set.tab.ai': 'AI 助手',
+            'nav.set.tab.update': '程序更新',
             'nav.set.tab.backup': '备份恢复',
             'nav.set.tab.accounts': '账号管理',
             'nav.set.tab.pages': '页面配置',
@@ -104,6 +108,7 @@ function registerNavbarI18n() {
             'nav.set.sub.categories': '修改后会自动保存，并立即影响“更多工具”的分类展示。',
             'nav.set.sub.items': '修改后会自动保存，并立即影响“更多工具”的分组与排序。',
             'nav.set.sub.ai': '修改后会自动保存，并立即影响智能客服助手配置。',
+            'nav.set.sub.update': '检查、下载并安装桌面客户端更新。',
             'nav.set.sub.backup': '备份和恢复会覆盖全局配置、数据库、上传附件与自定义工具数据。',
             'nav.set.sub.accounts': '修改后会自动保存，并立即影响账号权限。',
             'nav.set.sub.report': '报表看板相关维护能力，当前支持历史快照冗余清理。',
@@ -161,6 +166,28 @@ function registerNavbarI18n() {
             'nav.ai.saving': '正在保存 AI 设置...',
             'nav.ai.saved': 'AI 设置已自动保存',
             'nav.ai.waitSave': 'AI 设置待保存...',
+
+            'nav.up.help': '更新来源为 GitHub Releases。下载完成后可立即重启安装，也可以稍后手动重启。',
+            'nav.up.current': '当前版本',
+            'nav.up.latest': '最新版本',
+            'nav.up.packaged': '运行模式',
+            'nav.up.packagedYes': '安装版',
+            'nav.up.packagedNo': '开发模式',
+            'nav.up.status': '更新状态',
+            'nav.up.progress': '下载进度',
+            'nav.up.btnCheck': '检查更新',
+            'nav.up.btnDownload': '下载更新',
+            'nav.up.btnInstall': '重启安装',
+            'nav.up.unavailable': '当前环境没有桌面更新能力，请在 Electron 安装版中使用。',
+            'nav.up.state.idle': '等待检查',
+            'nav.up.state.checking': '检查中',
+            'nav.up.state.available': '有可用更新',
+            'nav.up.state.not-available': '已是最新',
+            'nav.up.state.downloading': '下载中',
+            'nav.up.state.downloaded': '已下载',
+            'nav.up.state.installing': '安装中',
+            'nav.up.state.error': '更新失败',
+            'nav.up.state.dev-unavailable': '开发模式不可用',
 
             'nav.bk.empty': '正在加载备份列表...',
             'nav.bk.help': '覆盖范围：{target}。包含全局配置、JSON 数据、SQLite 数据库、上传附件、自定义工具 HTML 等运行数据。',
@@ -246,6 +273,7 @@ function registerNavbarI18n() {
             'nav.set.tab.categories': 'Categories',
             'nav.set.tab.items': 'Items & Order',
             'nav.set.tab.ai': 'AI Assistant',
+            'nav.set.tab.update': 'App Updates',
             'nav.set.tab.backup': 'Backup & Restore',
             'nav.set.tab.accounts': 'Accounts',
             'nav.set.tab.pages': 'Page Settings',
@@ -258,6 +286,7 @@ function registerNavbarI18n() {
             'nav.set.sub.categories': 'Changes are saved automatically and immediately applied to the category display in "More Tools".',
             'nav.set.sub.items': 'Changes are saved automatically and immediately applied to the grouping and ordering in "More Tools".',
             'nav.set.sub.ai': 'Changes are saved automatically and immediately applied to the AI Assistant configuration.',
+            'nav.set.sub.update': 'Check, download, and install desktop client updates.',
             'nav.set.sub.backup': 'Backup and restore will overwrite global configuration, database, uploaded files, and custom tools data.',
             'nav.set.sub.accounts': 'Changes are saved automatically and immediately applied to account permissions.',
             'nav.set.sub.report': 'Report dashboard maintenance. Currently supports historical snapshot cleanup.',
@@ -315,6 +344,28 @@ function registerNavbarI18n() {
             'nav.ai.saving': 'Saving AI settings...',
             'nav.ai.saved': 'AI settings saved automatically',
             'nav.ai.waitSave': 'AI settings waiting to save...',
+
+            'nav.up.help': 'Updates are delivered from GitHub Releases. After download, restart now to install or restart later manually.',
+            'nav.up.current': 'Current Version',
+            'nav.up.latest': 'Latest Version',
+            'nav.up.packaged': 'Runtime',
+            'nav.up.packagedYes': 'Installed App',
+            'nav.up.packagedNo': 'Development Mode',
+            'nav.up.status': 'Status',
+            'nav.up.progress': 'Download Progress',
+            'nav.up.btnCheck': 'Check for Updates',
+            'nav.up.btnDownload': 'Download Update',
+            'nav.up.btnInstall': 'Restart & Install',
+            'nav.up.unavailable': 'Desktop update capability is unavailable in this environment. Use the installed Electron app.',
+            'nav.up.state.idle': 'Waiting',
+            'nav.up.state.checking': 'Checking',
+            'nav.up.state.available': 'Update Available',
+            'nav.up.state.not-available': 'Up to Date',
+            'nav.up.state.downloading': 'Downloading',
+            'nav.up.state.downloaded': 'Downloaded',
+            'nav.up.state.installing': 'Installing',
+            'nav.up.state.error': 'Update Failed',
+            'nav.up.state.dev-unavailable': 'Unavailable in Development',
 
             'nav.bk.empty': 'Loading backup list...',
             'nav.bk.help': 'Scope: {target}. Includes global configuration, JSON data, SQLite databases, uploaded files, and custom tool HTML.',
@@ -631,6 +682,7 @@ function renderNavSettingsSidebar() {
         <button class="nav-settings-tab ${t === 'categories' ? 'active' : ''}" data-tab="categories" onclick="switchNavSettingsTab('categories')">${navEscape(navT('nav.set.tab.categories'))}</button>
         <button class="nav-settings-tab ${t === 'items' ? 'active' : ''}" data-tab="items" onclick="switchNavSettingsTab('items')">${navEscape(navT('nav.set.tab.items'))}</button>
         <button class="nav-settings-tab ${t === 'ai' ? 'active' : ''}" data-tab="ai" onclick="switchNavSettingsTab('ai')">${navEscape(navT('nav.set.tab.ai'))}</button>
+        <button class="nav-settings-tab ${t === 'update' ? 'active' : ''}" data-tab="update" onclick="switchNavSettingsTab('update')">${navEscape(navT('nav.set.tab.update'))}</button>
         <button class="nav-settings-tab ${t === 'backup' ? 'active' : ''}" data-tab="backup" onclick="switchNavSettingsTab('backup')">${navEscape(navT('nav.set.tab.backup'))}</button>
         <button class="nav-settings-tab ${t === 'accounts' ? 'active' : ''}" data-tab="accounts" onclick="switchNavSettingsTab('accounts')">${navEscape(navT('nav.set.tab.accounts'))}</button>
         <div class="nav-settings-title nav-settings-section-title">${navEscape(navT('nav.set.tab.pages'))}</div>
@@ -692,6 +744,7 @@ function getNavSettingsTitle() {
     }
     if (navState.settingsTab === 'accounts') return navT('nav.set.tab.accounts');
     if (navState.settingsTab === 'ai') return navT('nav.set.tab.ai');
+    if (navState.settingsTab === 'update') return navT('nav.set.tab.update');
     if (navState.settingsTab === 'backup') return navT('nav.set.tab.backup');
     if (navState.settingsTab === 'categories') return navT('nav.set.tab.categories');
     if (navState.settingsTab === 'items') return navT('nav.set.tab.items');
@@ -706,6 +759,7 @@ function getNavSettingsSubtitle() {
     }
     if (navState.settingsTab === 'accounts') return navT('nav.set.sub.accounts');
     if (navState.settingsTab === 'ai') return navT('nav.set.sub.ai');
+    if (navState.settingsTab === 'update') return navT('nav.set.sub.update');
     if (navState.settingsTab === 'backup') return navT('nav.set.sub.backup');
     if (navState.settingsTab === 'categories') return navT('nav.set.sub.categories');
     if (navState.settingsTab === 'items') return navT('nav.set.sub.items');
@@ -728,6 +782,7 @@ function renderNavSettingsContent() {
     if (navState.settingsTab.startsWith('page:')) return renderPageSettings(content, navState.settingsTab.slice(5));
     if (navState.settingsTab === 'accounts') return renderAccountSettings(content);
     if (navState.settingsTab === 'ai') return renderAiSettings(content);
+    if (navState.settingsTab === 'update') return renderUpdaterSettings(content);
     if (navState.settingsTab === 'backup') return renderBackupSettings(content);
     if (navState.settingsTab === 'categories') return renderCategorySettings(content);
     if (navState.settingsTab === 'items') return renderItemCategorySettings(content);
@@ -1033,6 +1088,138 @@ window.clearAiApiKey = async function () {
     } catch (e) {
         const indicator = document.getElementById('navSettingsSaveState');
         if (indicator) indicator.textContent = `清除失败: ${e.message}`;
+    }
+};
+
+function updaterStateLabel(state) {
+    const key = `nav.up.state.${state || 'idle'}`;
+    const label = navT(key);
+    return label === key ? (state || 'idle') : label;
+}
+
+function setUpdaterBusy(isBusy) {
+    document.querySelectorAll('[data-updater-action]').forEach(btn => {
+        btn.disabled = Boolean(isBusy);
+    });
+}
+
+function updateUpdaterPanel(status = navState.updaterStatus || {}) {
+    navState.updaterStatus = status || {};
+    const state = navState.updaterStatus.state || 'idle';
+    const progress = Math.max(0, Math.min(100, Number(navState.updaterStatus.progress) || 0));
+    const latest = navState.updaterStatus.latestVersion || '-';
+    const message = navState.updaterStatus.message || updaterStateLabel(state);
+
+    const latestEl = document.getElementById('navUpdaterLatest');
+    const statusEl = document.getElementById('navUpdaterStatus');
+    const progressEl = document.getElementById('navUpdaterProgress');
+    const progressTextEl = document.getElementById('navUpdaterProgressText');
+    const checkBtn = document.getElementById('navUpdaterCheckBtn');
+    const downloadBtn = document.getElementById('navUpdaterDownloadBtn');
+    const installBtn = document.getElementById('navUpdaterInstallBtn');
+
+    if (latestEl) latestEl.textContent = latest;
+    if (statusEl) statusEl.textContent = `${updaterStateLabel(state)} · ${message}`;
+    if (progressEl) progressEl.style.width = `${progress}%`;
+    if (progressTextEl) progressTextEl.textContent = `${Math.round(progress)}%`;
+
+    const checking = state === 'checking';
+    const downloading = state === 'downloading';
+    if (checkBtn) checkBtn.disabled = checking || downloading;
+    if (downloadBtn) downloadBtn.disabled = state !== 'available';
+    if (installBtn) installBtn.disabled = state !== 'downloaded';
+}
+
+async function renderUpdaterSettings(content) {
+    if (!window.ToolsUpdater) {
+        content.innerHTML = `<div class="nav-settings-empty">${navEscape(navT('nav.up.unavailable'))}</div>`;
+        return;
+    }
+
+    let versionInfo;
+    let status;
+    try {
+        versionInfo = await window.ToolsUpdater.getVersion();
+        status = await window.ToolsUpdater.getStatus();
+    } catch (e) {
+        content.innerHTML = `<div class="nav-settings-empty">${navEscape(e.message || navT('nav.up.unavailable'))}</div>`;
+        return;
+    }
+    navState.updaterVersion = versionInfo;
+    navState.updaterStatus = status;
+
+    if (!navState.updaterUnsubscribe) {
+        navState.updaterUnsubscribe = window.ToolsUpdater.onStatus((nextStatus) => {
+            updateUpdaterPanel(nextStatus);
+        });
+    }
+
+    content.innerHTML = `
+        <div class="nav-settings-help">${navEscape(navT('nav.up.help'))}</div>
+        <div class="nav-update-card">
+            <div class="nav-update-grid">
+                <div class="nav-update-field">
+                    <span>${navEscape(navT('nav.up.current'))}</span>
+                    <strong>${navEscape(versionInfo.version || '-')}</strong>
+                </div>
+                <div class="nav-update-field">
+                    <span>${navEscape(navT('nav.up.latest'))}</span>
+                    <strong id="navUpdaterLatest">${navEscape(status.latestVersion || '-')}</strong>
+                </div>
+                <div class="nav-update-field">
+                    <span>${navEscape(navT('nav.up.packaged'))}</span>
+                    <strong>${navEscape(versionInfo.packaged ? navT('nav.up.packagedYes') : navT('nav.up.packagedNo'))}</strong>
+                </div>
+            </div>
+            <div class="nav-update-status">
+                <span>${navEscape(navT('nav.up.status'))}</span>
+                <strong id="navUpdaterStatus">${navEscape(updaterStateLabel(status.state))} · ${navEscape(status.message || '')}</strong>
+            </div>
+            <div class="nav-update-progress-row">
+                <span>${navEscape(navT('nav.up.progress'))}</span>
+                <div class="nav-update-progress">
+                    <div id="navUpdaterProgress" style="width:${Math.max(0, Math.min(100, Number(status.progress) || 0))}%"></div>
+                </div>
+                <b id="navUpdaterProgressText">${Math.round(Number(status.progress) || 0)}%</b>
+            </div>
+            <div class="nav-backup-toolbar nav-update-actions">
+                <button id="navUpdaterCheckBtn" data-updater-action="check" onclick="checkToolsUpdate()">${navEscape(navT('nav.up.btnCheck'))}</button>
+                <button id="navUpdaterDownloadBtn" data-updater-action="download" onclick="downloadToolsUpdate()">${navEscape(navT('nav.up.btnDownload'))}</button>
+                <button id="navUpdaterInstallBtn" data-updater-action="install" onclick="installToolsUpdate()">${navEscape(navT('nav.up.btnInstall'))}</button>
+            </div>
+        </div>
+    `;
+    updateUpdaterPanel(status);
+}
+
+window.checkToolsUpdate = async function () {
+    if (!window.ToolsUpdater) return;
+    setUpdaterBusy(true);
+    try {
+        updateUpdaterPanel(await window.ToolsUpdater.check());
+    } catch (e) {
+        updateUpdaterPanel({ state: 'error', message: e.message, progress: 0 });
+    } finally {
+        setUpdaterBusy(false);
+        updateUpdaterPanel(navState.updaterStatus);
+    }
+};
+
+window.downloadToolsUpdate = async function () {
+    if (!window.ToolsUpdater) return;
+    try {
+        updateUpdaterPanel(await window.ToolsUpdater.download());
+    } catch (e) {
+        updateUpdaterPanel({ state: 'error', message: e.message, progress: 0 });
+    }
+};
+
+window.installToolsUpdate = async function () {
+    if (!window.ToolsUpdater) return;
+    try {
+        updateUpdaterPanel(await window.ToolsUpdater.install());
+    } catch (e) {
+        updateUpdaterPanel({ state: 'error', message: e.message, progress: 100 });
     }
 };
 

@@ -531,6 +531,82 @@ body {
     color: #b91c1c;
 }
 
+.nav-update-card {
+    margin-top: 14px;
+    display: grid;
+    gap: 14px;
+    padding: 16px;
+    border: 1px solid #bae6fd;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 68%);
+}
+
+.nav-update-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.nav-update-field,
+.nav-update-status {
+    min-width: 0;
+    display: grid;
+    gap: 5px;
+    padding: 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.82);
+    border: 1px solid #e2e8f0;
+}
+
+.nav-update-field span,
+.nav-update-status span,
+.nav-update-progress-row span {
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 850;
+}
+
+.nav-update-field strong,
+.nav-update-status strong {
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 900;
+    word-break: break-word;
+}
+
+.nav-update-progress-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) 42px;
+    gap: 10px;
+    align-items: center;
+}
+
+.nav-update-progress {
+    height: 10px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e2e8f0;
+}
+
+.nav-update-progress div {
+    height: 100%;
+    width: 0;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #2563eb, #06b6d4);
+    transition: width 0.18s ease;
+}
+
+.nav-update-progress-row b {
+    color: #1d4ed8;
+    font-size: 12px;
+    font-weight: 900;
+    text-align: right;
+}
+
+.nav-update-actions {
+    justify-content: flex-start;
+}
+
 .nav-ai-grid {
     margin-top: 14px;
     display: grid;
