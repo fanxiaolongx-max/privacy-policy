@@ -20,7 +20,8 @@ let i18nMap = {
     "月目标值": "Target",
     "全局总体达标": "Global Compliance",
     "排名": "Rank",
-    "客户群": "Customer Base",
+    "客户群": "Customer Group / Rep Office / Region",
+    "客户群/代表处/区域": "Customer Group / Rep Office / Region",
     "标准总分": "Standard Total Score",
     "系统得分": "System Score",
     "预留加减分 (手动)": "Manual Adj.",
@@ -595,7 +596,7 @@ function collectGlobalOnlyFailingMetricAlerts(targetMonth) {
         const targetText = `${condition === 'gte' ? '≥' : '≤'} ${targetRawText}${isPercent && !targetRawText.includes('%') ? '%' : ''}`;
         alerts.push({
             type: 'global_only_failing_metric',
-            title: '全局不达标但客户群无值',
+            title: '全局不达标但客户群/代表处/区域无值',
             metric_label: metric.label,
             metricLabel: metric.label,
             weight,
@@ -609,7 +610,7 @@ function collectGlobalOnlyFailingMetricAlerts(targetMonth) {
             condition,
             customer_groups_checked: activeCategories.slice(),
             created_at: new Date().toISOString(),
-            _slaCleanText: `全局不达标但客户群无值，差距 ${+gap.toFixed(2)}${isPercent ? '%' : ''}`
+            _slaCleanText: `全局不达标但客户群/代表处/区域无值，差距 ${+gap.toFixed(2)}${isPercent ? '%' : ''}`
         });
     });
 
@@ -1096,7 +1097,7 @@ function renderReport(snap) {
                 <thead>
                     <tr>
                         <th style="width:60px;">${getBilingual('排名')}</th>
-                        <th style="text-align:left;">${getBilingual('客户群')}</th>
+                        <th style="text-align:left;">${getBilingual('客户群/代表处/区域')}</th>
                         <th>${getBilingual('标准总分')}</th>
                         <th>${getBilingual('系统得分')}</th>
                         <th>${getBilingual('预留加减分 (手动)')}</th>
@@ -1196,18 +1197,18 @@ function renderReport(snap) {
 
     const rulesItems = getReportLang() === 'en-US'
         ? [
-            ['1. Standard Total Score Baseline:', 'The Standard Total Score is the sum of all assessment metrics with weight > 0. It is the shared ranking baseline and is not affected by whether a customer base is exempt from some metrics.'],
-            ['2. Assessment Exemption Mechanism:', 'If a metric has no clear target this month, or a region/customer base has no data shown as --, the metric is exempted. Exempt metrics do not deduct points and are not included in that customer base full-weight base.'],
-            ['3. Dynamic Conversion Algorithm:', 'System Score = (Actual Weights Gained / Valid Full Weights Participated) x Standard Total Score. A region can still receive full converted score if it reaches 100% compliance on all metrics it actually participated in.'],
-            ['4. Per-Metric Proportional Scoring Toggle:', 'Proportional scoring is disabled by default. Once enabled for a metric, failing customer bases earn partial score by target completion ratio, capped by the metric weight.'],
+            ['1. Standard Total Score Baseline:', 'The Standard Total Score is the sum of all assessment metrics with weight > 0. It is the shared ranking baseline and is not affected by whether a customer group / rep office / region is exempt from some metrics.'],
+            ['2. Assessment Exemption Mechanism:', 'If a metric has no clear target this month, or a customer group / rep office / region has no data shown as --, the metric is exempted. Exempt metrics do not deduct points and are not included in that customer group / rep office / region full-weight base.'],
+            ['3. Dynamic Conversion Algorithm:', 'System Score = (Actual Weights Gained / Valid Full Weights Participated) x Standard Total Score. A customer group / rep office / region can still receive full converted score if it reaches 100% compliance on all metrics it actually participated in.'],
+            ['4. Per-Metric Proportional Scoring Toggle:', 'Proportional scoring is disabled by default. Once enabled for a metric, failing customer groups / rep offices / regions earn partial score by target completion ratio, capped by the metric weight.'],
             ['5. Reserved Manual Adjustment Mechanism:', 'Final Score = System Score + Manual Adj. This covers non-automated special rewards and penalties. Manual items can be configured in the table above and saved to the snapshot.'],
             ['6. Dynamic Summary Analysis:', 'The summary row at the bottom of the matrix follows header filters, skips exempt items, and recalculates valid weights and scores in real time.']
         ]
         : [
-            ['1. 标准总分基准：', '标准总分为当前左侧或后台配置中所有权重 > 0 的考核指标之和。该总分是各客户群排名的公共基准，不受任何客户群是否缺考影响。'],
-            ['2. 考核免除机制：', '当某一指标在本月未配置明确目标值，或该客户群在某指标上暂无数据（显示为 --）时，该指标会触发免除机制。免除指标不会扣分，也不计入该客户群的考核满权基数。'],
-            ['3. 动态折算算法：', '系统得分 = (实际达标获得的权重 / 实际参与考核的有效满权) × 标准总分。即使客户群免考了部分指标，只要实际参与指标 100% 达标，也可以折算拿到满分。'],
-            ['4. 单指标比例计分开关：', '比例计分默认关闭。用户可在单个指标旁手动开启，开启后未达标客户群会按完成目标比例折算得分，最高不超过该指标权重。'],
+            ['1. 标准总分基准：', '标准总分为当前左侧或后台配置中所有权重 > 0 的考核指标之和。该总分是各客户群/代表处/区域排名的公共基准，不受任何客户群/代表处/区域是否缺考影响。'],
+            ['2. 考核免除机制：', '当某一指标在本月未配置明确目标值，或该客户群/代表处/区域在某指标上暂无数据（显示为 --）时，该指标会触发免除机制。免除指标不会扣分，也不计入该客户群/代表处/区域的考核满权基数。'],
+            ['3. 动态折算算法：', '系统得分 = (实际达标获得的权重 / 实际参与考核的有效满权) × 标准总分。即使客户群/代表处/区域免考了部分指标，只要实际参与指标 100% 达标，也可以折算拿到满分。'],
+            ['4. 单指标比例计分开关：', '比例计分默认关闭。用户可在单个指标旁手动开启，开启后未达标客户群/代表处/区域会按完成目标比例折算得分，最高不超过该指标权重。'],
             ['5. 预留加减分机制：', '最终得分 = 系统得分 + 预留加减分。该部分主要覆盖非自动化专项奖惩，相关人工配置可通过上方表格设置并自动存入快照。'],
             ['6. 动态汇总分析：', '矩阵最下方的汇总行会跟随表头下拉过滤条件，跳过免考项，并实时汇总有效权重与得分。']
         ];
@@ -1798,8 +1799,8 @@ window.showSysScoreDetails = function(cat) {
     let passHtml = '';
     let failHtml = '';
     // 排除项拆成两桶
-    let onlyMissingHtml = '';  // ⚠️ 仅本群缺考：其他客户群有数据，本群没有
-    let allExcludedHtml = '';  // ⚪ 全员豁免：所有客户群都无数据 / 未配置目标
+    let onlyMissingHtml = '';  // ⚠️ 仅当前项缺考：其他客户群/代表处/区域有数据，当前项没有
+    let allExcludedHtml = '';  // ⚪ 全员豁免：所有客户群/代表处/区域都无数据 / 未配置目标
     
     const targetMonth = document.getElementById('target-month-select').value;
     const allCatData = window._currentCatData || {};

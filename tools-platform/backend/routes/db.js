@@ -5,10 +5,10 @@ const path = require('path');
 const fs = require('fs');
 const zlib = require('zlib');
 
-const { ensureDataDir, DATA_DIR } = require('../models/store');
+const { ensureReportDataDir, REPORT_DATA_DIR } = require('../models/report-store');
 
-const dataDir = DATA_DIR;
-ensureDataDir();
+const dataDir = REPORT_DATA_DIR;
+ensureReportDataDir();
 
 const dbPath = path.join(dataDir, 'report.db');
 const db = new sqlite3.Database(dbPath);
