@@ -86,8 +86,8 @@ app.get('/api/health', (req, res) => {
 });
 
 // 开放静态图片访问，跳过 JWT 鉴权 (浏览器 <img> 标签不带 Auth header)
-const { DATA_DIR } = require('./models/store');
-app.use('/api/db/images', express.static(path.join(DATA_DIR, 'images')));
+const { REPORT_DATA_DIR } = require('./models/report-store');
+app.use('/api/db/images', express.static(path.join(REPORT_DATA_DIR, 'images')));
 
 app.use('/api', checkAuth); // Protect all /api/* (except login, which is handled inside checkAuth)
 
