@@ -58,19 +58,17 @@ npm start
 
 桌面版使用 Electron + electron-builder。Windows 安装包为 NSIS 安装版，支持选择安装目录；安装后的客户端可在“全局设置 -> 程序更新”中检查、下载并重启安装新版本。
 
-发布新版时需要先递增 `tools-platform/package.json` 中的 `version`，再推送匹配的 tag：
+发布新版时直接把代码推送到 `main`。GitHub Actions 会自动递增 `tools-platform/package.json` 的 patch 版本、提交版本号、创建 `vX.Y.Z` tag，并发布安装包：
 
 ```bash
-cd tools-platform
-npm version patch --no-git-tag-version
-cd ..
-git add tools-platform/package.json tools-platform/package-lock.json
-git commit -m "chore: release desktop v1.0.1"
-git tag v1.0.1
-git push origin main --tags
+git add .
+git commit -m "feat: update desktop app"
+git push origin main
 ```
 
-GitHub Actions 会在 Windows runner 上执行 `npm run build:win:publish`，并把安装包和 `latest.yml` 发布到 GitHub Releases。客户端检查更新依赖 Release 中的 `latest.yml`，因此不要手动删除该文件。
+也可以手动推送 `v*` tag 触发指定版本发布，但日常建议使用上面的自动发布流程。
+
+GitHub Actions 会在 Windows/macOS runner 上打包，并把安装包、`latest.yml`、`latest-mac.yml` 和 `.blockmap` 发布到 GitHub Releases。Windows 客户端检查更新依赖 Release 中的 `latest.yml`，因此不要手动删除该文件。
 
 本地只验证打包配置时可运行：
 
