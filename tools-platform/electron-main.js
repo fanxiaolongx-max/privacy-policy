@@ -1,6 +1,7 @@
 const { app, BrowserWindow, dialog, ipcMain, session, shell } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const path = require('path');
+const fs = require('fs');
 
 // IMPORTANT: Set the data directory to the OS's native user data path BEFORE requiring server.js
 const userDataPath = app.getPath('userData');
@@ -8,6 +9,7 @@ process.env.TOOLS_DATA_DIR = path.join(userDataPath, 'data');
 console.log('[Electron] User Data Path:', process.env.TOOLS_DATA_DIR);
 
 const net = require('net');
+const launchStatePath = path.join(userDataPath, 'launch-state.json');
 
 function getFreePort(startingPort) {
     return new Promise((resolve, reject) => {
@@ -36,6 +38,63 @@ let updateStatus = {
     message: '等待检查更新',
     progress: 0
 };
+
+function readLaunchState() {
+    try {
+        if (!fs.existsSync(launchStatePath)) return {};
+        return JSON.parse(fs.readFileSync(launchStatePath, 'utf-8'));
+    } catch (err) {
+        console.warn('[Electron] Failed to read launch state:', err.message);
+        return {};
+    }
+}
+
+function writeLaunchState(state) {
+    try {
+        fs.mkdirSync(path.dirname(launchStatePath), { recursive: true });
+        fs.writeFileSync(launchStatePath, JSON.stringify(state, null, 2), 'utf-8');
+    } catch (err) {
+        console.warn('[Electron] Failed to write launch state:', err.message);
+    }
+}
+
+function prepareLaunchExperience() {
+    const state = readLaunchState();
+    const currentVersion = app.getVersion();
+    const previousVersion = state.lastSeenVersion || '';
+    const launchKind = previousVersion
+        ? (previousVersion === currentVersion ? 'normal' : 'updated')
+        : 'first';
+
+    const nextState = {
+        ...state,
+        lastSeenVersion: currentVersion,
+        lastLaunchAt: new Date().toISOString(),
+        openInternalBrowser: state.openInternalBrowser !== false,
+        openSystemBrowserOnSpecialLaunch: state.openSystemBrowserOnSpecialLaunch !== false
+    };
+    writeLaunchState(nextState);
+
+    return {
+        kind: launchKind,
+        previousVersion,
+        currentVersion,
+        shouldShowWelcome: launchKind !== 'normal',
+        shouldOpenSystemBrowser: launchKind !== 'normal' && nextState.openSystemBrowserOnSpecialLaunch
+    };
+}
+
+function buildLaunchUrl(port, launchExperience) {
+    const url = new URL(`http://localhost:${port}/`);
+    if (launchExperience.shouldShowWelcome) {
+        url.searchParams.set('welcome', launchExperience.kind);
+        url.searchParams.set('version', launchExperience.currentVersion);
+        if (launchExperience.previousVersion) {
+            url.searchParams.set('from', launchExperience.previousVersion);
+        }
+    }
+    return url.toString();
+}
 
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = false;
@@ -252,6 +311,8 @@ function registerDownloadHandler() {
 }
 
 async function createWindow() {
+    const launchExperience = prepareLaunchExperience();
+
     mainWindow = new BrowserWindow({
         width: 1280,
         height: 800,
@@ -275,7 +336,13 @@ async function createWindow() {
         
         // Wait a brief moment for the server to bind the port
         setTimeout(() => {
-            mainWindow.loadURL(`http://localhost:${PORT}`);
+            const launchUrl = buildLaunchUrl(PORT, launchExperience);
+            mainWindow.loadURL(launchUrl);
+            if (launchExperience.shouldOpenSystemBrowser) {
+                shell.openExternal(launchUrl).catch((err) => {
+                    console.warn('[Electron] Failed to open system browser:', err.message);
+                });
+            }
             mainWindow.webContents.once('did-finish-load', scheduleStartupUpdateCheck);
         }, 1000);
     } catch (err) {

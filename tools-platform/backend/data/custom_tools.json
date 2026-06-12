@@ -1,0 +1,24 @@
+[
+  {
+    "slug": "eos_tool-v8",
+    "name": "EOS_Tool v8",
+    "icon": "🧩",
+    "description": "独立 HTML 工具",
+    "tags": [],
+    "href": "/tools/eos_tool-v8",
+    "filePath": "/custom-tools/eos_tool-v8/index.html",
+    "createdAt": "2026-06-05T18:58:42.884Z",
+    "updatedAt": "2026-06-05T18:58:42.884Z"
+  },
+  {
+    "slug": "esn-check",
+    "name": "ESN-Check",
+    "icon": "🧩",
+    "description": "输入表1在网运行的临时license，表2全量license-2年，输出临时lic申请次数统计",
+    "tags": [],
+    "href": "/tools/esn-check",
+    "filePath": "/custom-tools/esn-check/index.html",
+    "createdAt": "2026-06-11T20:31:25.570Z",
+    "updatedAt": "2026-06-11T20:31:25.570Z"
+  }
+]
