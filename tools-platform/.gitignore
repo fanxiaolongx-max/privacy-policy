@@ -2,9 +2,12 @@
 node_modules/
 
 # Runtime data and local databases
-backend/data/
+backend/data/*
+!backend/data/custom_tools.json
+!backend/data/custom-tools/
+!backend/data/custom-tools/**
 backend/runtime/
-data/
+/data/
 *.db
 *.sqlite
 *.sqlite3

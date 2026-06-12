@@ -1,0 +1,1644 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>重急EOS收编工具 | Urgent EOS Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 0.85rem; }
+        .kpi-card { border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: none; margin-bottom: 15px; background: white; }
+        .kpi-title { font-size: 0.75rem; color: #6c757d; font-weight: 600; text-transform: uppercase; line-height: 1.2; margin-bottom: 5px;}
+        .kpi-value { font-size: 1.6rem; font-weight: 700; color: #0d6efd; line-height: 1.2; }
+        .kpi-value.rate-good { color: #198754; }
+        .kpi-value.rate-bad { color: #dc3545; }
+        
+        .table-container { max-height: 550px; overflow-y: auto; overflow-x: auto; background: white; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        table { white-space: nowrap; font-size: 0.75rem; margin-bottom: 0 !important; }
+        .table-sm td, .table-sm th { padding: 0.3rem 0.5rem; vertical-align: middle; }
+        thead th { position: sticky; top: 0; background-color: #f8f9fa !important; z-index: 1; border-bottom: 2px solid #dee2e6; line-height: 1.2; }
+        
+        .customer-cell { min-width: 130px; max-width: 180px; white-space: normal !important; word-break: break-word; line-height: 1.2; }
+        .highlight-danger { background-color: #ffe6e6 !important; }
+        .highlight-success { background-color: #e6ffe6 !important; }
+        .baseline-adjusted-cell { background: #fff3cd !important; color: #9a5b00 !important; font-weight: 800; }
+        .baseline-adjusted-note { display: block; margin-top: 2px; font-size: 0.66rem; color: #b45309; font-weight: 700; }
+        
+        .target-input { width: 100%; min-width: 70px; padding: 2px; border: 1px solid #ced4da; border-radius: 4px; text-align: center; font-weight: bold; color: #084298; font-size: 0.8rem; }
+        .target-input:focus { outline: none; border-color: #86b7fe; box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25); }
+        .owner-input { width: 100%; min-width: 100px; padding: 2px 4px; border: 1px solid #ced4da; border-radius: 4px; text-align: center; font-size: 0.8rem; color: #495057; font-weight: bold; }
+        .owner-input:focus { outline: none; border-color: #0dcaf0; box-shadow: 0 0 0 0.25rem rgba(13,202,240,.25); }
+        .customer-row-first { border-top: 2px solid #adb5bd; }
+        .formula-text { font-size: 0.7rem !important; color: #868e96; font-weight: normal; display: block; margin-top: 2px; }
+        .bi-lang { display: block; font-size: 0.7rem; color: #6c757d; font-weight: normal; }
+        .bi-lang-title { font-size: 0.65rem; color: #adb5bd; display: block; margin-top: 2px;}
+
+        .scroll-hint { animation: pulse 2s infinite; cursor: default; }
+        @keyframes pulse { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; } }
+        .pivot-title { font-size: 1rem; color: #084298; border-left: 4px solid #084298; padding-left: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid py-3 px-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="fw-bold text-dark mb-0">
+            重急EOS收编统计与任务画靶 
+            <span class="fs-5 text-muted ms-2 fw-normal">| Urgent EOS Statistics & Target Setting</span>
+        </h3>
+        <div>
+            <button class="btn btn-sm btn-outline-danger" onclick="clearData()">清空表格数据 / Clear Data</button>
+        </div>
+    </div>
+
+    <div class="row g-2 mb-3">
+        <div class="col-md-3">
+            <div class="card kpi-card p-2 text-center h-100 justify-content-center">
+                <div class="kpi-title" id="kpi-rate-2025-title">≤2025年 收编完成率<span class="bi-lang-title">≤2025 Completion Rate</span></div>
+                <div class="kpi-value" id="rate-2025">0.00%</div>
+                <small class="text-muted" style="font-size: 0.7rem;" id="detail-2025">基线(Base): 0 | 存量(Current): 0</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card kpi-card p-2 text-center h-100 justify-content-center">
+                <div class="kpi-title" id="kpi-rate-2627-title">26-27年 当前完成率<span class="bi-lang-title">26-27 Current Completion Rate</span></div>
+                <div class="kpi-value" id="rate-2026-2027">0.00%</div>
+                <small class="text-muted" style="font-size: 0.7rem;" id="detail-2026-2027">基线(Base): 0 | 存量(Current): 0</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card kpi-card p-2 text-center h-100 justify-content-center">
+                <div class="kpi-title" id="kpi-total-baseline-title">总计：年度基线当前存量<span class="bi-lang-title">Total Baseline Installed Base</span></div>
+                <div class="kpi-value text-dark" id="total-baseline">0</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card kpi-card p-2 text-center h-100 justify-content-center">
+                <div class="kpi-title" id="kpi-total-current-title">总计：当前存量<span class="bi-lang-title">Total Current Installed Base</span></div>
+                <div class="kpi-value text-dark" id="total-current">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card kpi-card p-3 mb-3">
+        <h6 class="fw-bold mb-2">📁 1. 导入或追加基线表格 <span class="fw-normal text-muted ms-2">| Select File to Auto-Import</span></h6>
+        <div class="d-flex align-items-center gap-2">
+            <input class="form-control form-control-sm" type="file" id="fileInput" multiple accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" style="max-width: 400px;" onchange="handleFiles()">
+            
+            <div id="loading" class="spinner-border spinner-border-sm text-primary d-none ms-2" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <span id="loading-text" class="text-primary small d-none ms-1">正在解析数据，请稍候...</span>
+        </div>
+        <small class="text-muted mt-1">注：网页已自动加载默认内置数据。如果需要，您仍可以在此追加其他表格数据。</small>
+    </div>
+
+    <div class="mb-3 p-2 bg-white border rounded align-items-center shadow-sm flex-wrap gap-2" id="filterSection" style="display: none !important;">
+        <div class="form-check form-switch me-3 mb-0">
+            <input class="form-check-input" type="checkbox" role="switch" id="yearSplitSwitch" checked onchange="onYearSplitToggle()">
+            <label class="form-check-label fw-bold" for="yearSplitSwitch">按年份拆分统计 <span class="text-muted fw-normal">| Split by Year</span></label>
+        </div>
+        <div class="form-check form-switch me-3 mb-0">
+            <input class="form-check-input" type="checkbox" role="switch" id="baselineAutoFillSwitch" onchange="onBaselineAutoFillToggle()">
+            <label class="form-check-label fw-bold" for="baselineAutoFillSwitch">自动补齐基线 <span class="text-muted fw-normal">| Auto Fill Baseline</span></label>
+        </div>
+        <span class="fw-bold me-2 year-filter-control">⏳ 切换收编年份视图 <span class="text-muted fw-normal">| Select Year View:</span></span>
+        <div class="btn-group year-filter-control" id="yearFilterRadios" role="group">
+            <input type="radio" class="btn-check" name="yearFilter" id="btnradio1" value="26-27" autocomplete="off" checked onchange="onYearFilterChange()">
+            <label class="btn btn-outline-primary btn-sm px-4" for="btnradio1">2026-2027年视图</label>
+
+            <input type="radio" class="btn-check" name="yearFilter" id="btnradio2" value="<=25" autocomplete="off" onchange="onYearFilterChange()">
+            <label class="btn btn-outline-primary btn-sm px-4" for="btnradio2">≤2025年视图</label>
+        </div>
+        <span class="badge bg-info text-dark" id="yearSplitHint" style="display:none;">全部年份合并统计</span>
+    </div>
+
+    <div class="card kpi-card p-3 mb-3" id="targetSection" style="display: none;">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="fw-bold mb-0" id="section-title">🎯 2. 2026年收编任务画靶 <span class="fw-normal text-muted">| Target Setting</span> <span class="badge bg-secondary ms-2">目标 / Target: 30%</span></h6>
+            <div class="text-end d-flex align-items-center">
+                <span class="fs-6 me-3" id="global-rate-title">26年统计预计完成率<span class="bi-lang-title d-inline ms-1">Total 26 Rate:</span> <strong id="global-expected-rate" class="text-primary fs-5 ms-1">0.00%</strong></span>
+                <span id="global-target-status" class="badge bg-danger me-4">统计未达标 / Not Met</span>
+                
+                <button class="btn btn-sm btn-outline-primary me-2" onclick="openColumnModal()">⚙️ 自定义列设置</button>
+                <button class="btn btn-sm btn-outline-info me-2 fw-bold" onclick="restoreFromExportedFile()">📤 导入历史报表 (一键回填)</button>
+                <button class="btn btn-sm btn-success shadow-sm fw-bold" onclick="exportTargetDataExcel()">📥 一键导出所有年份 / Export All (Excel)</button>
+            </div>
+        </div>
+        
+        <div class="d-flex justify-content-between align-items-end mb-2">
+            <p class="text-muted mb-0" style="font-size: 0.75rem;">说明：您的输入会自动在本地保存！切换视图或刷新网页都不会丢失。<br>
+            <span class="text-black-50">Note: All inputs are auto-saved locally. Switching views or reloading will not lose your progress.</span></p>
+            
+            <div id="scroll-hint" class="d-none">
+                <span class="badge rounded-pill bg-info text-dark scroll-hint px-3 py-2 shadow-sm border border-primary">👉 提示：列较多，请向右滑动查看 / Scroll right to view more</span>
+            </div>
+        </div>
+        
+        <div class="table-container border mb-4" id="targetTableContainer">
+            <table class="table table-sm table-bordered table-hover align-middle" id="targetTable">
+                <thead class="table-light text-center">
+                    <tr id="targetTableHeadRow">
+                        </tr>
+                </thead>
+                <tbody id="targetTableBody" class="text-center">
+                    </tbody>
+            </table>
+        </div>
+
+        <div class="p-3 bg-light border rounded shadow-sm" id="pivotSection" style="display: none;">
+            <h6 class="fw-bold pivot-title mb-3" id="pivot-title">5个端到端EOS收编计划：2026年计划收编 0.00%，共计收编 0 台</h6>
+            <div class="table-container border mb-3" style="max-height: 320px;">
+                <table class="table table-sm table-bordered table-hover align-middle mb-0" id="pivotTable">
+                    <caption class="caption-top fw-bold text-secondary px-2">填入前统计 / Before Input</caption>
+                    <thead class="table-light text-center" id="pivotTableHead">
+                        </thead>
+                    <tbody id="pivotTableBody" class="text-center bg-white">
+                        </tbody>
+                </table>
+            </div>
+            <div id="pivot-change-summary" class="alert alert-info py-2 px-3 mb-3 fw-bold small" style="display:none;"></div>
+            <div class="table-container border" style="max-height: 320px;">
+                <table class="table table-sm table-bordered table-hover align-middle mb-0" id="pivotTableAfter">
+                    <caption class="caption-top fw-bold text-primary px-2">填入后统计 / After Input</caption>
+                    <thead class="table-light text-center" id="pivotTableHeadAfter">
+                        </thead>
+                    <tbody id="pivotTableBodyAfter" class="text-center bg-white">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <h6 class="fw-bold mb-2 mt-4">📄 3. 底层数据明细 <span class="fw-normal text-muted">| Source Data Details</span> <span class="badge bg-secondary" id="record-count">共 / Total 0</span></h6>
+    <div class="table-container border">
+        <table class="table table-sm table-hover table-bordered mb-0" id="dataTable">
+            <thead id="tableHead">
+                <tr><th>暂无数据，请先导入文件 / No data, please import files.</th></tr>
+            </thead>
+            <tbody id="tableBody">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="guideModal" tabindex="-1" aria-labelledby="guideModalLabel" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content shadow-lg border-0">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title fw-bold" id="guideModalLabel">🔔 填报操作指南 / Filing Instructions</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body fs-6 p-4">
+        <p class="mb-4">请按照以下步骤完成数据填报任务：<br><span class="text-muted small">Please follow the steps below to complete the target setting:</span></p>
+
+        <ol class="mb-4" style="line-height: 1.8;">
+          <li class="mb-3">
+            分别切换顶部的 <strong class="text-primary">【2026-2027年视图】</strong> 和 <strong class="text-primary">【≤2025年视图】</strong>。<br>
+            <span class="text-muted small">Switch between the <strong>[2026-2027 View]</strong> and <strong>[≤2025 View]</strong> at the top.</span>
+          </li>
+          <li class="mb-3">
+            <strong class="text-danger fs-5">最紧急必填项 (Urgent & Mandatory):</strong> 务必在每个视图中填写带黄色背景的 <strong class="bg-warning px-1 border border-warning rounded">✍️ 202x收编 Target</strong> 列，以及其右侧蓝色的 <strong class="px-1 border border-info rounded" style="background-color: #cff4fc; color: #084298;">✍️ Timeline</strong> 列。<br>
+            <span class="text-muted small">Fill in both the <strong class="bg-warning px-1 border border-warning rounded">✍️ Target</strong> and <strong class="px-1 border border-info rounded" style="background-color: #cff4fc; color: #084298;">✍️ Timeline</strong> columns.</span>
+          </li>
+          <li class="mb-3">
+            <strong class="text-info fs-5">✨ 进度一键恢复 (New!):</strong> 如果您有之前导出过的报表，可以直接点击右上角的 <strong class="text-info border border-info px-1 rounded">📤 导入历史报表</strong>，系统将瞬间为您填满之前的所有进度！<br>
+            <span class="text-muted small">Click <strong>[📤 Import & Fill]</strong> to load your previously exported Excel and restore all your inputs magically!</span>
+          </li>
+          <li class="mb-3">
+            <strong class="text-primary">导出汇总：</strong>全部填写完成后，点击右上角的 <strong class="text-success border border-success px-1 rounded">📥 一键导出所有年份</strong>。系统会自动将所有年份的填写数据合并为一个包含 2 个 Sheet 页的 Excel 文件。<br>
+            <span class="text-muted small">Click <strong>[📥 Export All (Excel)]</strong> to generate one Excel file containing all years' data in separate sheets.</span>
+          </li>
+          <li>
+            最后，请将导出的 <strong>Excel 任务表格</strong> 直接发送给 <strong class="text-danger fs-5 border-bottom border-danger">Dragon</strong>！<br>
+            <span class="text-muted small">Finally, send the exported Excel file directly to <strong class="text-danger fs-5 border-bottom border-danger">Dragon</strong>!</span>
+          </li>
+        </ol>
+      </div>
+      <div class="modal-footer justify-content-center bg-light">
+        <button type="button" class="btn btn-primary px-5 fw-bold shadow-sm" data-bs-dismiss="modal">我知道了 / Understood</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="columnModal" tabindex="-1" aria-labelledby="columnModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold" id="columnModalLabel">⚙️ 自定义可编辑列 (Custom Columns)</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small mb-3">您可以添加或删除任意可编辑文本列（导出的 Excel 会自动同步这些列与样式）。</p>
+        <ul class="list-group mb-3" id="column-list">
+          </ul>
+        <div class="input-group">
+          <input type="text" id="new-column-name" class="form-control" placeholder="输入新列名称 (如: 进展/备注)...">
+          <button class="btn btn-primary" type="button" onclick="addColumn()">+ 添加</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    function escapeHtml(unsafe) {
+        if (unsafe === undefined || unsafe === null) return '';
+        return String(unsafe).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    let globalHeaders = [];
+    let globalData = [];
+    let groupedTargetData = {}; 
+    let currentYearView = '26-27'; 
+    let yearSplitEnabled = localStorage.getItem('eos_year_split_enabled') !== 'false';
+    let baselineAutoFillEnabled = localStorage.getItem('eos_baseline_auto_fill_enabled') !== 'false';
+    let columnModalInstance = null;
+
+    let savedInputData = JSON.parse(localStorage.getItem('eos_saved_row_data') || '{}');
+    const EOS_DEBUG = true;
+    function eosLog(step, payload) {
+        if (!EOS_DEBUG) return;
+        console.log(`[EOS Debug] ${step}`, payload || '');
+    }
+    function eosWarn(step, payload) {
+        if (!EOS_DEBUG) return;
+        console.warn(`[EOS Debug] ${step}`, payload || '');
+    }
+    function getActiveViewKey() {
+        return yearSplitEnabled ? currentYearView : 'all';
+    }
+    function getViewConfig(view = getActiveViewKey()) {
+        if (view === 'all') {
+            return {
+                key: 'all',
+                baselineLabel: '全部年份',
+                targetLabel: '计划',
+                autoLabel: '剩余(自动)',
+                rateLabel: '全部年份预计完成率',
+                sectionYearLabel: '全部年份',
+                globalRateLabel: '全部年份统计预计完成率',
+                globalRateEnLabel: 'Total All Rate:',
+                targetYear: '全部年份',
+                yearPrefix: '全部年份',
+                sheetName: '全部年份收编画靶'
+            };
+        }
+        const is2627 = view === '26-27';
+        return {
+            key: view,
+            baselineLabel: is2627 ? '26/27' : '≤25',
+            targetLabel: is2627 ? '2026' : '2025',
+            autoLabel: is2627 ? '2027(自动)' : '遗留(自动)',
+            rateLabel: `${is2627 ? '26' : '≤25'}年预计完成率`,
+            sectionYearLabel: is2627 ? '2026' : '≤2025',
+            globalRateLabel: `${is2627 ? '26年' : ''}统计预计完成率`,
+            globalRateEnLabel: `Total ${is2627 ? '26 ' : ''}Rate:`,
+            targetYear: is2627 ? '2026' : '2025',
+            yearPrefix: is2627 ? '26/27' : '<=25',
+            sheetName: is2627 ? '2026年收编画靶' : '2025年收编画靶'
+        };
+    }
+    function itemMatchesView(item, view = getActiveViewKey()) {
+        if (view === 'all') return item.year > 0;
+        if (view === '26-27') return item.year === 2026 || item.year === 2027;
+        return item.year > 0 && item.year <= 2025;
+    }
+    function isVersionEOS(item) {
+        return String(item.riskType || '').includes('版本EOS');
+    }
+    function shouldShowSoftwareVersionColumn(view = getActiveViewKey()) {
+        return globalData.some(item => itemMatchesView(item, view) && isVersionEOS(item));
+    }
+    function applyBaselineAutoFillState() {
+        globalData.forEach(item => {
+            const rawBaseline = Number(item.rawBaseline !== undefined ? item.rawBaseline : item.baseline) || 0;
+            const currentStock = Number(item.current) || 0;
+            const adjustmentPotential = currentStock > rawBaseline ? currentStock - rawBaseline : 0;
+            item.rawBaseline = rawBaseline;
+            item.baselineAdjustmentPotential = adjustmentPotential;
+            item.baselineAdjustment = baselineAutoFillEnabled ? adjustmentPotential : 0;
+            item.baseline = rawBaseline;
+            item.cutBaseline = baselineAutoFillEnabled && adjustmentPotential > 0 ? currentStock : rawBaseline;
+        });
+    }
+    function syncYearSplitControls() {
+        const switchEl = document.getElementById('yearSplitSwitch');
+        if (switchEl) switchEl.checked = yearSplitEnabled;
+        const baselineSwitchEl = document.getElementById('baselineAutoFillSwitch');
+        if (baselineSwitchEl) baselineSwitchEl.checked = baselineAutoFillEnabled;
+        document.querySelectorAll('.year-filter-control').forEach(el => {
+            el.style.display = yearSplitEnabled ? '' : 'none';
+        });
+        const hintEl = document.getElementById('yearSplitHint');
+        if (hintEl) hintEl.style.display = yearSplitEnabled ? 'none' : 'inline-block';
+    }
+    function buildExpectedKeysByView() {
+        const expected = { '26-27': new Set(), '<=25': new Set(), 'all': new Set() };
+        globalData.forEach(item => {
+            const key = item.customer + '|||' + item.product;
+            if (item.year > 0) expected.all.add(key);
+            if (item.year === 2026 || item.year === 2027) expected['26-27'].add(key);
+            else if (item.year > 0 && item.year <= 2025) expected['<=25'].add(key);
+        });
+        return expected;
+    }
+
+    // ==========================================
+    // 🌟 内置默认数据预留区 (Built-in Data)
+    // ==========================================
+    const defaultBuiltInData = `
+风险编号/Risk Id	ISDP风险单号/ISDP Risk ID	ICT场景/ICT Scenario	地区部/Region	代表处/Rep. Office	国家/区域/行业/Country/Region/Industry	网络名称/Network Name	大T/Tier-1 Operator	区域系统部/Region Account	客户子网/Account Subsidiary	客户名称/Customer	产品线/Product Line	产品/Product	风险类型/Risk Type	核心网元/Core NE	收编类型/Incorporation Type	收编年度范围/Incorporation Year	容量/Capacity	年度基线/Annual Baseline	年度基线当前存量/Annual Baseline Installed Base	当前存量/Installed Base	已退网/Deactivated Nes	退网数/Retired NEs	备案数/Filed	计划EOS年份/Plan EOS	EOS延迟年月/EOS Delay To	NA级别/NA Level	风险状态/Risk Status	当前处理人/Current Handler	EOS计划时间/EOS Plan Date	应急预案/Contingency Plan	需消减预案网元数/NEs Need Contingency Plan	已完成预案网元数/NEs Completed Contingency Plan	IBMS SN	风险级别/Risk Level	网络编码/Network ID	最后更新时间/Last Updated	停服函发送时间/EOS Letter Sent	预警函发送完成时间/Warning Letter Sent	停服函客户确认时间/Received Customer Receipt	例外维保合同编号/Exceptional Maintenance Contract No.	例外维保结束时间/Exceptional Maintenance End Time	例外维保开始时间/Exceptional Maintenance Start Time	例外维保状态/Exceptional Maintenance Service Status	收编支撑信息/Incorporation Support Info	SLA情况/SLA	软件版本/Software Version	产品域/Lv2	产品族/Lv3	风险标题/Risk Title	风险描述/Risk Description	当前存量更新时间/Update Storage Date	例外审批通过完成时间/Exception Approval Date	接受完成时间/Acceptance Completion Date	创建时间/Create Time	挂起结束日期/Risk Suspension End Time	替代版本/Alternate Version	剔除数量/Cull Quantity	剔除数量 场景1-存量被搬迁/Excluded scenario 1 - installed base swapped	剔除数量 场景2-涉A场景/Excluded Scenario 2 - A-Involved Scenarios	剔除数量 场景3-战乱/Exclude quantity scenario 3 - war	剔除数量 场景3-BCM/Excluded Scenario 3 - BCM	剔除数量 场景3-客户破产/Excluded Scenario 3 - Customer Bankruptcy	剔除数量 场景4-交易风险高/Excluded Scenario 4 - High Transaction Risks	剔除数量 场景5-设备已不承载业务/Excluded Scenario 5 - Equipment No Longer Carrying Services	网元数量/Nes Number	项目编码/Project Code	项目名称/Project Name	关闭时间/Closed On	TOP级别/Top Level	快照时间/Snapshot
+ES20260121000189		运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Telecom	虚拟系统部	TE系统部	埃及 Telecom	Telecom Egypt	光	OptiX OSN 8800	 产品EOS	否	重急	2026	467	2026	467	464	3	3	0	2026			接受		2026-12-31 00:00:00		464	0	407391400	低	EG-695	2026-05-25 11:43:15				00081824000524	2030-03-30 22:00:00	2025-03-31 22:00:00	Post-warranty Service Not Start				光传送	光传送M&I	OptiX OSN 8800 T32_EOS Product Risk		2026-02-24 02:00:48	2024-12-29 22:00:00	2026-05-25 11:43:15	2026-01-21 02:03:44				0	0	0	0	0	0	0						
+ES20260117000074		运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Vodafone	Vodafone系统部	Vodafone埃及子网系统部	Vodafone 埃及子网	Vodafone Egypt	数通	PTN 6900-2-M16	 产品EOS	是	重急	2027	8	other	8	4	0	4	0	2027			初始		2027-12-31 00:00:00		4	0	403889900		EG-696	2026-01-21 02:07:18							Post-warranty Service Not Start				路由器	路由器M&I	PTN 6900-2-M16_EOS Product Risk		2026-01-21 02:07:18			2026-01-17 02:00:56				0	0	0	0	0	0	0						
+ES20260101000664		运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt ET	e&系统部	e&埃及子网系统部	Etisalat 埃及子网	Etisalat Misr	云核心网	SE2900	 产品EOS	是	重急	2027	2	other	2	2	0	0	0	2027			初始		2027-12-31 00:00:00		2	0	387114200		EG-694	2026-01-01 02:05:23				00081824001025	2028-12-31 00:00:00	2024-01-01 00:00:00	In Post-warranty Service				CS&IMS	Single Voice Core	SE2900_EOS Product Risk		2026-01-01 02:05:23			2026-01-01 02:05:23				0	0	0	0	0	0	0						
+ES20260101000639		运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Orange	Orange系统部	Orange埃及子网系统部	Orange 埃及子网	Orange Egypt for Telecommunications	云核心网	SE2900	 产品EOS	是	重急	2027	4	other	4	4	0	0	0	2027			初始		2027-12-31 00:00:00		4	0	387360000		EG-655	2026-01-01 02:05:12				00081825001129	2027-12-31 00:00:00	2026-09-30 00:00:00	Post-warranty Service Not Start				CS&IMS	Single Voice Core	SE2900_EOS Product Risk		2026-01-01 02:05:12			2026-01-01 02:05:12				0	0	0	0	0	0	0						
+ES20260101000593		运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Telecom	虚拟系统部	TE系统部	埃及 Telecom	Telecom Egypt	云核心网	SE2900	 产品EOS	是	重急	2027	16	other	16	16	0	0	0	2027			初始		2027-12-31 00:00:00		16	0	386994200		EG-695	2026-01-01 02:04:52											CS&IMS	Single Voice Core	SE2900_EOS Product Risk		2026-01-01 02:04:52			2026-01-01 02:04:52				0	0	0	0	0	0	0						
+ES20260101000397		运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Orange	Orange系统部	Orange埃及子网系统部	Orange 埃及子网	Orange Egypt for Telecommunications	云核心网	HSS9860	 产品EOS	是	重急	2027	2	other	2	2	0	0	0	2027			初始		2027-12-31 00:00:00		2	0	386668800		EG-655	2026-01-01 02:03:21				00081825001129	2027-12-31 00:00:00	2026-09-30 00:00:00	Post-warranty Service Not Start				分组核心网	SDM	HSS9860_EOS Product Risk		2026-01-01 02:03:21			2026-01-01 02:03:21				0	0	0	0	0	0	0						
+ES20260101000338		运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Telecom	虚拟系统部	TE系统部	埃及 Telecom	Telecom Egypt	云核心网	HSS9860	 产品EOS	是	重急	2027	2	other	2	2	0	0	0	2027			初始		2027-12-31 00:00:00		2	0	387332400		EG-695	2026-01-01 02:02:56											分组核心网	SDM	HSS9860_EOS Product Risk		2026-01-01 02:02:56			2026-01-01 02:02:56				0	0	0	0	0	0	0						
+ES20251108000358	0120230630000000023	运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Vodafone	Vodafone系统部	Vodafone埃及子网系统部	Vodafone 埃及子网	Vodafone Egypt	数据存储	OceanStor Dorado6000 V3	 产品EOS	否	重急	2025	2	2026	2	2	0	0	0	2025			接受		2025-06-30 00:00:00		2	0	302582800		EG-696	2026-01-08 05:43:56							Post-warranty Service Not Start				闪存存储	全闪存	OceanStor Dorado6000 V3_EOS Product Risk		2025-11-08 02:33:55			2025-11-08 02:33:55				0	0	0	0	0	0	0		5603805	Vodafone Egypt Customer Support			
+ES20251108000328	0120221216000000203	运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Vodafone	Vodafone系统部	Vodafone埃及子网系统部	Vodafone 埃及子网	Vodafone Egypt	数据存储	OceanStor 6800 V3	 产品EOS	是	重急	2025	2	2026	2	2	0	0	0	2023			停服关闭		2023-12-31 00:00:00		2	0	302323400		EG-696	2025-12-20 02:01:04							Post-warranty Service Not Start	Core NE:是			闪存存储	全闪存	OceanStor 6800 V3_EOS Product Risk		2025-11-08 02:33:37			2025-11-08 02:33:37				0	0	0	0	0	0	0		5603805	Vodafone Egypt Customer Support			
+ES20251108000317	0120221231000000202	运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Vodafone	Vodafone系统部	Vodafone埃及子网系统部	Vodafone 埃及子网	Vodafone Egypt	数通	PTN 6900-16	 产品EOS	是	重急	2025	10	2026	10	10	0	0	0	2024			停服关闭		2024-12-31 00:00:00		10	0	301004400		EG-696	2025-12-20 02:01:32							Post-warranty Service Not Start	Core NE:是			路由器	城域框式路由器	PTN 6900-16_EOS Product Risk		2025-11-08 02:33:30			2025-11-08 02:33:30				0	0	0	0	0	0	0		5603805	Vodafone Egypt Customer Support			
+ES20251108000315	0120221231000000201	运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Vodafone	Vodafone系统部	Vodafone埃及子网系统部	Vodafone 埃及子网	Vodafone Egypt	数通	PTN 6900-3	 产品EOS	是	重急	2025	98	2026	98	70	28	28	0	2024			停服关闭		2024-12-31 00:00:00		70	0	302118300		EG-696	2026-01-21 02:06:40							Post-warranty Service Not Start	Core NE:是			路由器	路由器M&I	PTN 6900-3_EOS Product Risk		2026-01-21 02:06:40			2025-11-08 02:33:29				0	0	0	0	0	0	0		5603805	Vodafone Egypt Customer Support			
+ES20251108000291	0120221231000000018	运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Vodafone	Vodafone系统部	Vodafone埃及子网系统部	Vodafone 埃及子网	Vodafone Egypt	数通	NE40E-X8	 产品EOS	是	重急	2025	20	2026	10	10	0	0	0	2024			停服关闭		2024-12-31 00:00:00		10	0	302010100		EG-696	2026-01-27 02:00:45							Post-warranty Service Not Start	Core NE:是			路由器	城域框式路由器	NE40E-X8_EOS Product Risk		2026-01-27 02:00:45			2025-11-08 02:33:16				0	0	0	0	0	0	0		5603805	Vodafone Egypt Customer Support			
+ES20251108000273	20210119000000393	运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Vodafone	Vodafone系统部	Vodafone埃及子网系统部	Vodafone 埃及子网	Vodafone Egypt	无线	BSC6900 WCDMA	 产品EOS	是	重急	2025	17	2026	17	17	0	0	0	2022			停服关闭		2022-12-31 00:00:00		17	0	301303900		EG-696	2025-12-20 02:02:00							Post-warranty Service Not Start	Core NE:是			GUC	UMTS	BSC6900 WCDMA_EOS Product Risk		2025-11-08 02:33:06			2025-11-08 02:33:06				0	0	0	0	0	0	0		5603805	Vodafone Egypt Customer Support			
+ES20251108000263	0120220314000000355	运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Vodafone	Vodafone系统部	Vodafone埃及子网系统部	Vodafone 埃及子网	Vodafone Egypt	无线	BSC6900 GSM	 产品EOS	是	重急	2025	29	2026	29	29	0	0	0	2022			停服关闭		2022-12-31 00:00:00		29	0	301328200		EG-696	2025-12-20 02:02:00							Post-warranty Service Not Start	"Core NE:是
+"			GUC	GC	BSC6900 GSM_EOS Product Risk		2025-11-08 02:33:00			2025-11-08 02:33:00				0	0	0	0	0	0	0		5603805	Vodafone Egypt Customer Support			
+ES20251027003796	0120230630000000024	运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt ET	e&系统部	e&埃及子网系统部	Etisalat 埃及子网	Etisalat Misr	数据存储	OceanStor Dorado6000 V3	 产品EOS	否	重急	2025	0	2026	1	0	1	1	0	2025			接受		2025-06-30 00:00:00		0	0	300949700		EG-694	2026-01-22 02:01:25				00081818121801							闪存存储	全闪存	OceanStor Dorado6000 V3_EOS Product Risk		2026-01-22 02:01:25			2025-10-27 10:31:51				0	0	0	0	0	0	0		56A06XA	Etisalat Misr 5 Years contract			
+ES20251027003708	0120230630000000021	运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Orange	Orange系统部	Orange埃及子网系统部	Orange 埃及子网	Orange Egypt for Telecommunications	数据存储	OceanStor Dorado5000 V3	 产品EOS	是	重急	2025	4	2026	4	0	4	4	0	2025			停服关闭		2025-06-30 00:00:00		0	0	301600700		EG-655	2026-02-05 02:00:43								Core NE:是			闪存存储	全闪存	OceanStor Dorado5000 V3_EOS Product Risk		2026-02-05 02:00:43			2025-10-27 10:31:04				0	0	0	0	0	0	0		5610289	Orange SRAN & CN Project			
+ES20251027003695		运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Telecom	虚拟系统部	TE系统部	埃及 Telecom	Telecom Egypt	数据存储	OceanStor Dorado5000 V3	 产品EOS	是	重急	2025	0	2026	0	0	0	0	0	2025			已取消		2025-06-30 00:00:00		0	0	300803300		EG-695	2025-12-11 23:59:00								Core NE:是			闪存存储	全闪存	OceanStor Dorado5000 V3_EOS Product Risk		2025-12-11 02:01:19			2025-10-27 10:03:59				0	0	0	0	0	0	0		5522997				
+ES20251027003616	0120231114000000007	运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt ET	e&系统部	e&埃及子网系统部	Etisalat 埃及子网	Etisalat Misr	数据存储	OceanStor 18800 V3	 产品EOS	是	重急	2025	0	2026	1	0	1	1	0	2023			接受		2023-12-31 00:00:00		0	0	302362300		EG-694	2026-01-22 02:01:29								Core NE:是			闪存存储	全闪存	OceanStor 18800 V3_EOS Product Risk		2026-01-22 02:01:29			2025-10-27 10:03:15				0	0	0	0	0	0	0		56A06XA	Etisalat Misr 5 Years contract			
+ES20251027003614	0120230704000000003	运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Telecom	虚拟系统部	TE系统部	埃及 Telecom	Telecom Egypt	数据存储	OceanStor 18800 V3	 产品EOS	是	重急	2025	0	2026	131	0	131	131	0	2023			接受		2023-12-31 00:00:00		0	0	302062200		EG-695	2026-01-01 02:01:29								Core NE:是			闪存存储	全闪存	OceanStor 18800 V3_EOS Product Risk		2026-01-01 02:01:29			2025-10-27 10:03:14				0	0	0	0	0	0	0		5522997	TE & TE Data CS 2014			
+ES20251027003095	0120231114000000006	运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt ET	e&系统部	e&埃及子网系统部	Etisalat 埃及子网	Etisalat Misr	数据存储	OceanStor 18800	 产品EOS	是	重急	2025	0	2026	2	0	2	2	0	2021			接受		2021-12-31 00:00:00		0	0	302948400		EG-694	2026-01-22 02:01:32								Core NE:是			闪存存储	全闪存	OceanStor 18800_EOS Product Risk		2026-01-22 02:01:32			2025-10-27 09:05:22				0	0	0	0	0	0	0		56A06XA	Etisalat Misr 5 Years contract			
+ES20251027003092	20200226000000001	运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Telecom	虚拟系统部	TE系统部	埃及 Telecom	Telecom Egypt	数据存储	OceanStor 18800	 产品EOS	是	重急	2025	0	2026	1	0	1	1	0	2021			接受		2021-12-31 00:00:00		0	0	300715100		EG-695	2026-01-01 02:01:22								Core NE:是			闪存存储	全闪存	OceanStor 18800_EOS Product Risk		2026-01-01 02:01:22			2025-10-27 09:05:20				0	0	0	0	0	0	0		5522997	TE & TE Data CS 2014			
+ES20251027003039	0120231114000000020	运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt ET	e&系统部	e&埃及子网系统部	Etisalat 埃及子网	Etisalat Misr	数据存储	OceanStor 6800 V3	 产品EOS	是	重急	2025	0	2026	1	0	1	1	0	2023			接受		2023-12-31 00:00:00		0	0	303078100		EG-694	2026-01-22 02:01:32				00081818121801				Core NE:是			闪存存储	全闪存	OceanStor 6800 V3_EOS Product Risk		2026-01-22 02:01:32			2025-10-27 09:04:48				0	0	0	0	0	0	0		56A06XA	Etisalat Misr 5 Years contract			
+ES20251027003012	0120230704000000007	运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Telecom	虚拟系统部	TE系统部	埃及 Telecom	Telecom Egypt	数据存储	OceanStor 6800 V3	 产品EOS	是	重急	2025	1	2026	5	1	4	4	0	2023			接受		2023-12-31 00:00:00		1	0	301398600		EG-695	2026-01-01 02:01:09							Post-warranty Service Not Start	Core NE:是			闪存存储	全闪存	OceanStor 6800 V3_EOS Product Risk		2026-01-01 02:01:09			2025-10-27 09:04:33				0	0	0	0	0	0	0		5522997	TE & TE Data CS 2014			
+ES20251027000262		运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt ET	e&系统部	e&埃及子网系统部	Etisalat 埃及子网	NILE ON LINE (NOL)	数通	NE40E-X16	 产品EOS	是	重急	2025	2	2026	2	2	0	0	0	2024			评估风险	Ahmed Abd El Haseeb Mohamed 00558359	2024-12-31 00:00:00		2	0	301442800		EG-694	2025-12-20 02:58:02				00081824001025	2028-12-31 00:00:00	2024-01-01 00:00:00	In Post-warranty Service				路由器	城域框式路由器	NE40E-X16_EOS Product Risk		2025-10-27 08:31:05			2025-10-27 08:31:05				0	0	0	0	0	0	0						
+ES20251026000107		运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt ET	e&系统部	e&埃及子网系统部	Etisalat 埃及子网	NILE ON LINE (NOL)	数通	NE40E-X8	 产品EOS	是	重急	2025	20	2026	20	20	0	0	0	2024			评估风险	Ahmed Abd El Haseeb Mohamed 00558359	2024-12-31 00:00:00		20	0	303103700		EG-694	2025-12-20 03:08:02				00081824001025	2028-12-31 00:00:00	2024-01-01 00:00:00	In Post-warranty Service				路由器	城域框式路由器	NE40E-X8_EOS Product Risk		2025-10-26 04:30:52			2025-10-26 04:30:52				0	0	0	0	0	0	0						
+ES20251026000024	0120221231000000179	运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt ET	e&系统部	e&埃及子网系统部	Etisalat 埃及子网	Etisalat Misr	数通	NE40E-X8	 产品EOS	是	重急	2025	52	2026	52	52	0	0	0	2024			接受		2024-12-31 00:00:00	ST20260526000003	52	52	301409800		EG-694	2025-12-20 04:23:06				00081824001025	2028-12-31 00:00:00	2024-01-01 00:00:00	In Post-warranty Service	Core NE:是			路由器	城域框式路由器	NE40E-X8_EOS Product Risk		2025-10-26 02:30:51			2025-10-26 02:30:51				0	0	0	0	0	0	0		56A06XA	Etisalat Misr 5 Years contract			
+ES20251025000776		运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Telecom	虚拟系统部	TE系统部	埃及 Telecom	Telecom Egypt	数通	NE40E-X8	 产品EOS	是	重急	2025	0	2026	0	0	0	0	0	2024			已取消		2024-12-31 00:00:00		0	0	302010500		EG-695	2025-11-10 23:59:00				00081824000024				Core NE:是			路由器	城域框式路由器	NE40E-X8_EOS Product Risk		2025-11-10 02:00:21			2025-10-25 12:30:56				0	0	0	0	0	0	0		5522997				
+ES20251024001540	20210121000001362	运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt ET	e&系统部	e&埃及子网系统部	Etisalat 埃及子网	Etisalat Misr	无线	BSC6900 WCDMA	 产品EOS	是	重急	2025	17	2026	17	17	0	0	0	2022			接受		2022-12-31 00:00:00		17	0	302044700		EG-694	2025-12-20 04:41:18				00081824001025	2028-12-31 00:00:00	2024-01-01 00:00:00	In Post-warranty Service	Core NE:是			GUC	UMTS	BSC6900 WCDMA_EOS Product Risk		2025-10-24 09:00:59			2025-10-24 09:00:59				0	0	0	0	0	0	0		56A06XA	Etisalat Misr 5 Years contract			
+ES20251024001498	20210121000001768	运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Orange	Orange系统部	Orange埃及子网系统部	Orange 埃及子网	Orange Egypt for Telecommunications	无线	BSC6900 WCDMA	 产品EOS	是	重急	2025	2	2026	2	2	0	0	0	2022			停服关闭		2022-12-31 00:00:00		2	0	300877400		EG-655	2025-12-20 04:41:44							Post-warranty Service Not Start	Core NE:是			GUC	UMTS	BSC6900 WCDMA_EOS Product Risk		2025-10-24 08:31:01			2025-10-24 08:31:01				0	0	0	0	0	0	0		5610289	Orange SRAN & CN Project			
+ES20251024001332	20210120000002318	运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt ET	e&系统部	e&埃及子网系统部	Etisalat 埃及子网	Etisalat Misr	无线	BSC6900 GSM	 产品EOS	是	重急	2025	36	2026	36	36	0	0	0	2022			接受		2022-12-31 00:00:00		36	0	301461300		EG-694	2025-12-20 04:42:34				00081824001025	2028-12-31 00:00:00	2024-01-01 00:00:00	In Post-warranty Service	"Core NE:是
+"			GUC	GC	BSC6900 GSM_EOS Product Risk		2025-10-24 07:01:12			2025-10-24 07:01:12				0	0	0	0	0	0	0		56A06XA	Etisalat Misr 5 Years contract			
+ES20251024001303	20210119000002187	运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Orange	Orange系统部	Orange埃及子网系统部	Orange 埃及子网	Orange Egypt for Telecommunications	无线	BSC6900 GSM	 产品EOS	是	重急	2025	6	2026	22	4	18	18	0	2022			停服关闭		2022-12-31 00:00:00		4	0	300869000		EG-655	2026-06-03 02:01:32							Post-warranty Service Not Start	"Core NE:是
+"			GUC	GC	BSC6900 GSM_EOS Product Risk		2026-06-03 02:01:32			2025-10-24 07:00:56				0	0	0	0	0	0	0		5610289	Orange SRAN & CN Project			
+ES20251022008824		运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Telecom	虚拟系统部	TE系统部	埃及 Telecom	Telecom Egypt	光	OptiX OSN 8800 T16	 产品EOS	是	重急	2026	115	2026	115	104	11	11	0	2026			接受		2026-12-31 00:00:00		104	0	302050000	中	EG-695	2026-05-25 11:54:45				00081824000528	2027-02-28 00:00:00	2023-12-01 00:00:00	In Post-warranty Service	Core NE:是			光传送	光传送M&I	OptiX OSN 8800 T16_EOS Product Risk		2026-02-24 02:00:40	2024-12-29 22:00:00	2026-05-25 11:54:45	2025-10-22 15:00:44				0	0	0	0	0	0	0		5522997				
+ES20251022008347		运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Orange	Orange系统部	Orange埃及子网系统部	Orange 埃及子网	Orange Egypt for Telecommunications	云核心网	iCG9815	 产品EOS	否	重急	2026	4	2026	4	4	0	0	0	2026			评估风险	Mohamed Abuelazm 00593179,Ibrahim Youssef 00823621	2026-12-31 00:00:00		4	0	302289000		EG-655	2026-04-27 13:26:47				00081825001129	2027-12-31 00:00:00	2026-09-30 00:00:00	Post-warranty Service Not Start				CS&IMS	Single Voice Core	iCG9815_EOS Product Risk		2025-10-22 14:01:35			2025-10-22 14:01:35				0	0	0	0	0	0	0		5610289				
+ES20251022007811		运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Orange	Orange系统部	Orange埃及子网系统部	Orange 埃及子网	Orange Egypt for Telecommunications	云核心网	UPCC	 产品EOS	是	重急	2026	2	2026	2	2	0	0	0	2026			评估风险	Mohamed Abuelazm 00593179,Ibrahim Youssef 00823621	2026-12-31 00:00:00		2	0	300812100		EG-655	2026-04-27 13:29:42				00081825001129	2027-12-31 00:00:00	2026-09-30 00:00:00	Post-warranty Service Not Start	"Core NE:是
+"			分组核心网	SmartPCC	UPCC_EOS Product Risk		2025-10-22 13:01:23			2025-10-22 13:01:23				0	0	0	0	0	0	0		5610289				
+ES20251022001205	0120240110000000088	运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt ET	e&系统部	e&埃及子网系统部	Etisalat 埃及子网	Etisalat Misr	云核心网	CG9812	 产品EOS	否	重急	2025	3	2026	3	1	2	2	0	2025			接受		2025-12-31 00:00:00		1	0	301299300		EG-694	2026-02-06 02:00:23				00081824001025	2028-12-31 00:00:00	2024-01-01 00:00:00	In Post-warranty Service				分组核心网	CloudEPC	CG9812_EOS Product Risk		2026-02-06 02:00:23			2025-10-22 03:31:59				0	0	0	0	0	0	0		56A06XA	Etisalat Misr 5 Years contract			
+ES20251022000799	0120240110000000056	运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt ET	e&系统部	e&埃及子网系统部	Etisalat 埃及子网	Etisalat Misr	云核心网	UGW9811	 产品EOS	是	重急	2025	5	2026	5	5	0	0	0	2025			接受		2025-12-31 00:00:00		5	0	301757400		EG-694	2025-12-20 06:41:16				00081824001025	2028-12-31 00:00:00	2024-01-01 00:00:00	In Post-warranty Service	"Core NE:是
+"			分组核心网	CloudEPC	UGW9811_EOS Product Risk		2025-10-22 03:01:26			2025-10-22 03:01:26				0	0	0	0	0	0	0		56A06XA	Etisalat Misr 5 Years contract			
+ES20251022000081		运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Telecom	虚拟系统部	TE系统部	埃及 Telecom	Telecom Egypt	云核心网	UAC3000	 产品EOS	是	重急	2026	2	2026	2	2	0	0	0	2026			评估风险	Sherif Emeel Azmy 00501969	2026-12-31 00:00:00		2	0	303147700		EG-695	2025-12-20 02:48:02				00081824000024			Post-warranty Service Not Start	"Core NE:是
+"			CS&IMS	Single Voice Core	UAC3000_EOS Product Risk		2025-10-22 02:01:21			2025-10-22 02:01:21				0	0	0	0	0	0	0		5522997				
+ES20251021010471		运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Orange	Orange系统部	Orange埃及子网系统部	Orange 埃及子网	Orange Egypt for Telecommunications	云核心网	ATS9900	 产品EOS	是	重急	2026	4	2026	4	4	0	0	0	2026			评估风险	Mohamed Abuelazm 00593179,Ibrahim Youssef 00823621	2026-12-31 00:00:00		4	0	302299300		EG-655	2026-04-27 13:41:45				00081825001129	2027-12-31 00:00:00	2026-09-30 00:00:00	Post-warranty Service Not Start	"Core NE:是
+"			CS&IMS	Single Voice Core	ATS9900_EOS Product Risk		2025-10-21 15:31:56			2025-10-21 15:31:56				0	0	0	0	0	0	0		5610289				
+ES20251021008619	20210120000002617	运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Orange	Orange系统部	Orange埃及子网系统部	Orange 埃及子网	Orange Egypt for Telecommunications	无线	BSC6900	 产品EOS	是	重急	2025	1	2026	1	0	1	1	0	2022			停服关闭		2022-12-31 00:00:00		0	0	300981200		EG-655	2026-06-03 02:01:34							Post-warranty Service Not Start	Core NE:是			GUC	UMTS	BSC6900_EOS Product Risk		2026-06-03 02:01:34			2025-10-21 13:02:25				0	0	0	0	0	0	0		5610289	Orange SRAN & CN Project			
+ES20251020000942	0120240110000000032	运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt ET	e&系统部	e&埃及子网系统部	Etisalat 埃及子网	Etisalat Misr	云核心网	USN9810	 产品EOS	是	重急	2025	2	2026	2	0	2	2	0	2025			接受		2025-12-31 00:00:00		0	0	301641700		EG-694	2026-02-06 02:00:49				00081818121801				"Core NE:是
+"			分组核心网	CloudEPC	USN9810_EOS Product Risk		2026-02-06 02:00:49			2025-10-20 04:00:56				0	0	0	0	0	0	0		56A06XA	Etisalat Misr 5 Years contract			
+ES20251020000619		运营商	北部非洲地区部	埃及代表处	埃及	EG-Egypt Orange	Orange系统部	Orange埃及子网系统部	Orange 埃及子网	Orange Egypt for Telecommunications	云核心网	CSC3300	 产品EOS	是	重急	2026	4	2026	4	4	0	0	0	2026			评估风险	Mohamed Abuelazm 00593179,Ibrahim Youssef 00823621	2026-12-31 00:00:00		4	0	303244000		EG-655	2026-04-27 14:08:43				00081825001129	2027-12-31 00:00:00	2026-09-30 00:00:00	Post-warranty Service Not Start	"Core NE:是
+"			CS&IMS	Single Voice Core	CSC3300_EOS Product Risk		2025-10-20 03:30:32			2025-10-20 03:30:32				0	0	0	0	0	0	0		5610289				
+
+    `;
+
+    window.onload = function() {
+        initCustomColumns();
+        loadBuiltInData();
+        
+        let guideModal = new bootstrap.Modal(document.getElementById('guideModal'));
+        guideModal.show();
+    };
+
+    function loadBuiltInData() {
+        let dataStr = defaultBuiltInData.trim();
+        if (!dataStr) return; 
+
+        let rawRows = dataStr.split('\n').map(line => line.split('\t'));
+        if (rawRows.length > 1) {
+            let addedCount = processParsedData(rawRows);
+            if (addedCount > 0) {
+                updateDashboard();
+                renderTargetTable();
+                renderTable();
+            }
+        }
+    }
+
+    const defaultCustomColumns = [
+        { id: 'col_timeline', name: 'Timeline' }
+    ];
+    let customColumns = [];
+
+    function initCustomColumns() {
+        let saved = localStorage.getItem('eos_custom_columns_v3');
+        if (saved) {
+            try { customColumns = JSON.parse(saved); } 
+            catch (e) { customColumns = defaultCustomColumns; }
+        } else {
+            customColumns = defaultCustomColumns;
+            localStorage.setItem('eos_custom_columns_v3', JSON.stringify(customColumns));
+        }
+    }
+
+    function openColumnModal() {
+        renderColumnManager();
+        if (!columnModalInstance) columnModalInstance = new bootstrap.Modal(document.getElementById('columnModal'));
+        columnModalInstance.show();
+    }
+
+    function renderColumnManager() {
+        const list = document.getElementById('column-list');
+        list.innerHTML = '';
+        if (customColumns.length === 0) list.innerHTML = '<li class="list-group-item text-muted text-center small">暂无自定义列，请添加</li>';
+        customColumns.forEach(col => {
+            list.innerHTML += `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span class="fw-bold">${col.name}</span>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeColumn('${col.id}')">删除</button>
+                </li>`;
+        });
+    }
+
+    function addColumn() {
+        let input = document.getElementById('new-column-name');
+        let name = input.value.trim();
+        if (!name) return;
+        let id = 'col_' + Date.now(); 
+        customColumns.push({ id, name });
+        localStorage.setItem('eos_custom_columns_v3', JSON.stringify(customColumns));
+        input.value = '';
+        renderColumnManager();
+        if (Object.keys(groupedTargetData).length > 0) renderTargetTable(); 
+    }
+
+    function removeColumn(id) {
+        customColumns = customColumns.filter(c => c.id !== id);
+        localStorage.setItem('eos_custom_columns_v3', JSON.stringify(customColumns));
+        renderColumnManager();
+        if (Object.keys(groupedTargetData).length > 0) renderTargetTable(); 
+    }
+
+    function checkTableScroll() {
+        const container = document.getElementById('targetTableContainer');
+        const hint = document.getElementById('scroll-hint');
+        if (container && hint) {
+            if (container.scrollWidth > container.clientWidth + 5) hint.classList.remove('d-none');
+            else hint.classList.add('d-none');
+        }
+    }
+    window.addEventListener('resize', checkTableScroll);
+
+    async function handleFiles() {
+        const fileInput = document.getElementById('fileInput');
+        const files = fileInput.files;
+        if (files.length === 0) return; 
+
+        document.getElementById('loading').classList.remove('d-none');
+        document.getElementById('loading-text').innerText = '正在解析数据，请稍候...';
+        document.getElementById('loading-text').classList.remove('d-none');
+        let totalAdded = 0;
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            try {
+                const arrayBuffer = await readFileAsArrayBuffer(file);
+                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+                if (jsonData.length > 0) totalAdded += processParsedData(jsonData);
+            } catch (e) {
+                console.error("读取文件出错", e);
+            }
+        }
+        
+        document.getElementById('loading').classList.add('d-none');
+        document.getElementById('loading-text').classList.add('d-none');
+        fileInput.value = ''; 
+        
+        if (totalAdded > 0) {
+            updateDashboard();
+            renderTargetTable(); 
+            renderTable();
+        } else {
+            alert('未能提取到有效数据，请检查表头。');
+        }
+    }
+
+    function readFileAsArrayBuffer(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = (e) => reject(e);
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    function processParsedData(rows) {
+        let addedCount = 0;
+        let headerRowIndex = -1;
+        let localHeaders = [];
+
+        for (let i = 0; i < Math.min(10, rows.length); i++) {
+            let rowString = rows[i].join('');
+            if (rowString.includes('风险编号') || rowString.includes('Risk Id') || rowString.includes('当前存量') || rowString.includes('Installed Base') || rowString.includes('计划EOS')) {
+                headerRowIndex = i;
+                localHeaders = rows[i].map(String).map(s => s.trim());
+                break;
+            }
+        }
+
+        if (headerRowIndex === -1) return 0;
+        if (globalHeaders.length === 0) globalHeaders = localHeaders.filter(h => h !== '');
+
+        let localIdxYear = localHeaders.findIndex(h => { let hl = String(h).toLowerCase(); return hl.includes('计划eos') || hl.includes('plan eos'); });
+        let localIdxBaseline = localHeaders.findIndex(h => { let hl = String(h).toLowerCase(); return hl.includes('年度基线当前存量') || hl.includes('annual baseline installed base'); });
+        let localIdxCurrent = localHeaders.findIndex(h => { let hl = String(h).toLowerCase(); return (hl.includes('当前存量') || hl.includes('installed base')) && !hl.includes('基线') && !hl.includes('时间') && !hl.includes('baseline'); });
+        
+        let localIdxCustomer = localHeaders.findIndex(h => { let hl = String(h).toLowerCase(); return hl.includes('客户名称') || hl.includes('customer'); });
+        let localIdxProduct = localHeaders.findIndex(h => { let hl = String(h).toLowerCase(); return (hl.includes('产品') || hl.includes('product')) && !hl.includes('线') && !hl.includes('line'); });
+        let localIdxProjCode = localHeaders.findIndex(h => { let hl = String(h).toLowerCase(); return hl.includes('项目编码') || hl.includes('project code') || hl.includes('project id'); });
+        let localIdxProjName = localHeaders.findIndex(h => { let hl = String(h).toLowerCase(); return hl.includes('项目名称') || hl.includes('project name'); });
+        let localIdxProductLine = localHeaders.findIndex(h => { let hl = String(h).toLowerCase(); return hl.includes('产品线') || hl.includes('product line'); });
+        let localIdxRiskType = localHeaders.findIndex(h => { let hl = String(h).toLowerCase(); return hl.includes('风险类型') || hl.includes('risk type'); });
+        let localIdxSoftwareVersion = localHeaders.findIndex(h => { let hl = String(h).toLowerCase(); return hl.includes('软件版本') || hl.includes('software version'); });
+
+        for (let i = headerRowIndex + 1; i < rows.length; i++) {
+            let cells = rows[i];
+            if (cells.length === 0 || cells.every(c => c === '')) continue;
+            
+            let yearVal = localIdxYear !== -1 ? parseInt(cells[localIdxYear]) : 0;
+            let baselineVal = localIdxBaseline !== -1 ? parseFloat(cells[localIdxBaseline]) : 0;
+            let currentVal = localIdxCurrent !== -1 ? parseFloat(cells[localIdxCurrent]) : 0;
+            let rawBaselineVal = isNaN(baselineVal) ? 0 : baselineVal;
+            let currentStockVal = isNaN(currentVal) ? 0 : currentVal;
+            let baselineAdjustmentPotential = currentStockVal > rawBaselineVal ? currentStockVal - rawBaselineVal : 0;
+            let baselineAdjustment = baselineAutoFillEnabled ? baselineAdjustmentPotential : 0;
+            let cutBaselineVal = baselineAutoFillEnabled && baselineAdjustmentPotential > 0 ? currentStockVal : rawBaselineVal;
+            
+            let cNameCell = localIdxCustomer !== -1 ? cells[localIdxCustomer] : undefined;
+            let customerName = (cNameCell !== undefined && cNameCell !== null && String(cNameCell).trim() !== '') ? String(cNameCell).trim() : '未知/Unknown';
+            let pNameCell = localIdxProduct !== -1 ? cells[localIdxProduct] : undefined;
+            let productName = (pNameCell !== undefined && pNameCell !== null && String(pNameCell).trim() !== '') ? String(pNameCell).trim() : '未知/Unknown';
+            let pCodeCell = localIdxProjCode !== -1 ? cells[localIdxProjCode] : undefined;
+            let projCode = (pCodeCell !== undefined && pCodeCell !== null && String(pCodeCell).trim() !== '') ? String(pCodeCell).trim() : '-';
+            let pNameCellVal = localIdxProjName !== -1 ? cells[localIdxProjName] : undefined;
+            let projName = (pNameCellVal !== undefined && pNameCellVal !== null && String(pNameCellVal).trim() !== '') ? String(pNameCellVal).trim() : '-';
+            let pLineCellVal = localIdxProductLine !== -1 ? cells[localIdxProductLine] : undefined;
+            let productLine = (pLineCellVal !== undefined && pLineCellVal !== null && String(pLineCellVal).trim() !== '') ? String(pLineCellVal).trim() : '未知/Unknown';
+            let riskTypeCellVal = localIdxRiskType !== -1 ? cells[localIdxRiskType] : undefined;
+            let riskType = (riskTypeCellVal !== undefined && riskTypeCellVal !== null && String(riskTypeCellVal).trim() !== '') ? String(riskTypeCellVal).trim() : '';
+            let softwareVersionCellVal = localIdxSoftwareVersion !== -1 ? cells[localIdxSoftwareVersion] : undefined;
+            let softwareVersion = (softwareVersionCellVal !== undefined && softwareVersionCellVal !== null && String(softwareVersionCellVal).trim() !== '') ? String(softwareVersionCellVal).trim() : '-';
+
+            let rowDataObj = {};
+            for(let j = 0; j < localHeaders.length; j++) {
+                if(localHeaders[j]) rowDataObj[localHeaders[j]] = cells[j] !== undefined ? cells[j] : '';
+            }
+
+            globalData.push({
+                dataObj: rowDataObj, year: isNaN(yearVal) ? 0 : yearVal,
+                baseline: rawBaselineVal, rawBaseline: rawBaselineVal, cutBaseline: cutBaselineVal, current: currentStockVal,
+                baselineAdjustment: baselineAdjustment, baselineAdjustmentPotential: baselineAdjustmentPotential,
+                customer: customerName, product: productName, productLine: productLine,
+                projCode: projCode, projName: projName,
+                riskType: riskType, softwareVersion: softwareVersion
+            });
+            addedCount++;
+        }
+        return addedCount;
+    }
+
+    function encodeId(str) { return btoa(unescape(encodeURIComponent(str))).replace(/[/+=]/g, ''); }
+
+    function onYearFilterChange() {
+        if (!yearSplitEnabled) return;
+        let radios = document.getElementsByName('yearFilter');
+        for(let r of radios) { if(r.checked) currentYearView = r.value; }
+        renderTargetTable(); renderTable();
+    }
+
+    function onYearSplitToggle() {
+        const switchEl = document.getElementById('yearSplitSwitch');
+        yearSplitEnabled = switchEl ? switchEl.checked : true;
+        localStorage.setItem('eos_year_split_enabled', yearSplitEnabled ? 'true' : 'false');
+        syncYearSplitControls();
+        updateDashboard();
+        renderTargetTable();
+        renderTable();
+    }
+
+    function onBaselineAutoFillToggle() {
+        const switchEl = document.getElementById('baselineAutoFillSwitch');
+        baselineAutoFillEnabled = switchEl ? switchEl.checked : false;
+        localStorage.setItem('eos_baseline_auto_fill_enabled', baselineAutoFillEnabled ? 'true' : 'false');
+        applyBaselineAutoFillState();
+        syncYearSplitControls();
+        updateDashboard();
+        renderTargetTable();
+        renderTable();
+    }
+
+    function renderTargetTable() {
+        document.getElementById('targetSection').style.display = 'block';
+        document.getElementById('filterSection').style.setProperty('display', 'flex', 'important');
+        syncYearSplitControls();
+        
+        const activeView = getActiveViewKey();
+        const viewConfig = getViewConfig(activeView);
+        const showSoftwareVersionColumn = shouldShowSoftwareVersionColumn(activeView);
+        
+        const theadRow = document.getElementById('targetTableHeadRow');
+        let thHtml = `
+            <th class="customer-cell">客户名称<span class="bi-lang">Customer</span></th>
+            <th>产品名称<span class="bi-lang">Product</span></th>
+            ${showSoftwareVersionColumn ? '<th style="min-width: 130px;">软件版本<span class="bi-lang">Software Version</span></th>' : ''}
+            <th>项目编码(合并)<span class="bi-lang">Project Code</span></th>
+            <th>项目名称(合并)<span class="bi-lang">Project Name</span></th>
+            <th id="th-baseline">${viewConfig.baselineLabel}总基线<br><span class="bi-lang d-inline">Total Baseline</span></th>
+            <th>当前存量<br><span class="bi-lang d-inline">Current Base</span></th>
+            <th>已消减<br><span class="bi-lang d-inline">History Cut</span></th>
+            <th class="table-warning" style="min-width: 100px;" id="th-target">✍️ ${viewConfig.targetLabel}收编<br><span class="bi-lang d-inline">Target</span></th>
+        `;
+        
+        customColumns.forEach(col => { 
+            thHtml += `<th class="table-info" style="min-width: 110px;">✍️ ${col.name}</th>`; 
+        });
+
+        thHtml += `
+            <th class="bg-light text-secondary" style="min-width: 90px;" id="th-target-auto">${viewConfig.autoLabel}<br><span class="bi-lang d-inline">Auto Target</span></th>
+            <th style="min-width: 120px;" id="th-rate">${viewConfig.rateLabel}<br><span class="bi-lang d-inline">Exp Rate</span></th>
+            <th>状态<br><span class="bi-lang d-inline">Status</span></th>
+        `;
+        theadRow.innerHTML = thHtml;
+
+        document.getElementById('section-title').innerHTML = `🎯 2. ${viewConfig.sectionYearLabel}收编任务画靶 <span class="fw-normal text-muted">| Target Setting</span> <span class="badge bg-secondary ms-2">目标 / Target: 30%</span>`;
+        document.getElementById('global-rate-title').innerHTML = `${viewConfig.globalRateLabel}<span class="bi-lang-title d-inline ms-1">${viewConfig.globalRateEnLabel}</span> <strong id="global-expected-rate" class="text-primary fs-5 ms-1">0.00%</strong>`;
+
+        const tbody = document.getElementById('targetTableBody');
+        tbody.innerHTML = '';
+        groupedTargetData = {};
+        const renderDebug = {
+            view: activeView,
+            globalRows: globalData.length,
+            savedKeys: Object.keys(savedInputData[activeView] || {}).length,
+            expectedKeys: 0,
+            targetHits: 0,
+            customHits: 0,
+            missSamples: [],
+            hitSamples: []
+        };
+
+        globalData.forEach(item => {
+            if (itemMatchesView(item, activeView)) {
+                let c = item.customer;
+                let p = item.product;
+                
+                if (!groupedTargetData[c]) groupedTargetData[c] = { baseline: 0, current: 0, products: {} };
+                if (!groupedTargetData[c].products[p]) {
+                    groupedTargetData[c].products[p] = { 
+                        productLine: item.productLine, baseline: 0, cutBaseline: 0, current: 0, target: 0, baselineAdjustment: 0,
+                        projCodes: new Set(), projNames: new Set(), softwareVersions: new Set()
+                    };
+                }
+                
+                groupedTargetData[c].baseline += item.baseline;
+                groupedTargetData[c].current += item.current;
+                groupedTargetData[c].products[p].baseline += item.baseline;
+                groupedTargetData[c].products[p].cutBaseline += item.cutBaseline !== undefined ? item.cutBaseline : item.baseline;
+                groupedTargetData[c].products[p].current += item.current;
+                groupedTargetData[c].products[p].baselineAdjustment += item.baselineAdjustment || 0;
+                
+                if(item.projCode && item.projCode !== '-') groupedTargetData[c].products[p].projCodes.add(item.projCode);
+                if(item.projName && item.projName !== '-') groupedTargetData[c].products[p].projNames.add(item.projName);
+                if(isVersionEOS(item) && item.softwareVersion && item.softwareVersion !== '-') groupedTargetData[c].products[p].softwareVersions.add(item.softwareVersion);
+            }
+        });
+
+        for (const [customer, cData] of Object.entries(groupedTargetData)) {
+            let isFirstRow = true;
+            let productCount = Object.keys(cData.products).length;
+
+            for (const [product, pData] of Object.entries(cData.products)) {
+                let tr = document.createElement('tr');
+                if (isFirstRow) tr.classList.add('customer-row-first');
+
+                let cutAlready = pData.cutBaseline - pData.current; 
+                let codesStr = pData.projCodes.size > 0 ? Array.from(pData.projCodes).join('<br>') : '-';
+                let namesStr = pData.projNames.size > 0 ? Array.from(pData.projNames).join('<br>') : '-';
+                let versionsStr = pData.softwareVersions.size > 0 ? Array.from(pData.softwareVersions).join('<br>') : '-';
+                let baselineAdjustedHtml = pData.baselineAdjustment > 0
+                    ? `<td class="baseline-adjusted-cell">${pData.baseline}<span class="baseline-adjusted-note">消减口径 ${pData.cutBaseline} / 补 +${pData.baselineAdjustment}</span></td>`
+                    : `<td>${pData.baseline}</td>`;
+                let encC = encodeId(customer); let encP = encodeId(product);
+
+                let html = '';
+                if (isFirstRow) html += `<td rowspan="${productCount}" class="fw-bold bg-light align-middle text-start px-2 customer-cell">${customer}</td>`;
+                
+                html += `
+                    <td class="text-start px-2 fw-bold">${product}</td>
+                    ${showSoftwareVersionColumn ? `<td class="text-start px-2" style="font-size: 0.72rem; color: #084298; max-width: 170px; text-wrap: wrap;">${versionsStr}</td>` : ''}
+                    <td class="text-start px-2" style="font-size: 0.7rem; color: #6c757d;">${codesStr}</td>
+                    <td class="text-start px-2" style="font-size: 0.7rem; color: #6c757d; max-width: 150px; text-wrap: wrap;">${namesStr}</td>
+                    ${baselineAdjustedHtml}
+                    <td>${pData.current}</td>
+                    <td class="text-success fw-bold">${cutAlready}</td>
+                `;
+
+                // 完全依赖 localStorage 作为唯一的数据状态源
+                let rowKey = customer + '|||' + product;
+                let savedViewData = savedInputData[activeView] || {};
+                let savedTarget = (savedViewData[rowKey] && savedViewData[rowKey]['target']) ? savedViewData[rowKey]['target'] : 0;
+                renderDebug.expectedKeys++;
+                if (savedViewData[rowKey]) {
+                    if (savedViewData[rowKey]['target']) renderDebug.targetHits++;
+                    if (renderDebug.hitSamples.length < 12) {
+                        renderDebug.hitSamples.push({ key: rowKey, saved: savedViewData[rowKey] });
+                    }
+                } else if (renderDebug.missSamples.length < 12) {
+                    renderDebug.missSamples.push(rowKey);
+                }
+
+                html += `
+                    <td class="table-warning px-1">
+                        <input type="number" class="target-input target-val-input" id="target-${encC}-${encP}"
+                            data-customer="${escapeHtml(customer)}" data-product="${escapeHtml(product)}" data-field="target"
+                            value="${savedTarget}" min="0" max="${pData.current}" 
+                            onchange="calculateTargets()" onkeyup="calculateTargets()">
+                    </td>
+                `;
+
+                customColumns.forEach(col => {
+                    let inputId = `dyn-${col.id}-${encC}-${encP}`;
+                    let savedColVal = (savedViewData[rowKey] && savedViewData[rowKey][col.id]) ? savedViewData[rowKey][col.id] : '';
+                    if (savedColVal) renderDebug.customHits++;
+                    html += `
+                    <td class="table-info px-1">
+                        <input type="text" class="owner-input text-primary target-val-input" id="${inputId}" 
+                            data-customer="${escapeHtml(customer)}" data-product="${escapeHtml(product)}" data-field="${col.id}"
+                            value="${escapeHtml(savedColVal)}" placeholder="${col.name}..." 
+                            onchange="calculateTargets()" onkeyup="calculateTargets()">
+                    </td>`;
+                });
+
+                html += `
+                    <td class="fw-bold bg-light text-secondary" id="auto-target-${encC}-${encP}">${pData.current}</td>
+                `;
+
+                if (isFirstRow) {
+                    html += `
+                        <td rowspan="${productCount}" class="align-middle" id="rate-${encC}">0.00%</td>
+                        <td rowspan="${productCount}" class="align-middle" id="status-${encC}"><span class="badge bg-danger">统计未达标</span></td>
+                    `;
+                }
+                
+                tr.innerHTML = html;
+                tbody.appendChild(tr);
+                isFirstRow = false;
+            }
+        }
+
+        eosLog('renderTargetTable lookup summary', renderDebug);
+        calculateTargets();
+        setTimeout(checkTableScroll, 100);
+    }
+
+    function calculateTargets() {
+        const activeView = getActiveViewKey();
+        let globalBaseline = 0;
+        let globalExpectedCompleted = 0;
+        let totalTargetSum = 0;
+
+        // 🌟 状态静默保存
+        let viewData = savedInputData[activeView] || {};
+        document.querySelectorAll('.target-val-input').forEach(input => {
+            let c = input.getAttribute('data-customer');
+            let p = input.getAttribute('data-product');
+            let f = input.getAttribute('data-field');
+            if (c && p && f) {
+                let key = c + '|||' + p;
+                if (!viewData[key]) viewData[key] = {};
+                viewData[key][f] = input.value;
+            }
+        });
+        savedInputData[activeView] = viewData;
+        localStorage.setItem('eos_saved_row_data', JSON.stringify(savedInputData));
+
+        for (const c in groupedTargetData) {
+            for (const p in groupedTargetData[c].products) {
+                groupedTargetData[c].products[p].target = 0;
+            }
+        }
+
+        const targetInputs = document.querySelectorAll('.target-input');
+        targetInputs.forEach(input => {
+            let c = input.getAttribute('data-customer');
+            let p = input.getAttribute('data-product');
+            let val = parseInt(input.value) || 0;
+            
+            let max = parseInt(input.getAttribute('max'));
+            if (val > max) { val = max; input.value = max; }
+            if (val < 0) { val = 0; input.value = 0; }
+
+            groupedTargetData[c].products[p].target = val;
+            totalTargetSum += val;
+            let currentStock = groupedTargetData[c].products[p].current;
+            document.getElementById(`auto-target-${encodeId(c)}-${encodeId(p)}`).innerText = currentStock - val;
+        });
+
+        for (const [customer, cData] of Object.entries(groupedTargetData)) {
+            let cExpectedCompleted = 0;
+            for (const p in cData.products) cExpectedCompleted += cData.products[p].cutBaseline - cData.products[p].current;
+            for (const p in cData.products) cExpectedCompleted += cData.products[p].target; 
+
+            globalBaseline += cData.baseline;
+            globalExpectedCompleted += cExpectedCompleted;
+
+            let rate = cData.baseline === 0 ? 0 : (cExpectedCompleted / cData.baseline * 100);
+            let rateEl = document.getElementById(`rate-${encodeId(customer)}`);
+            let statusEl = document.getElementById(`status-${encodeId(customer)}`);
+            let formulaHtml = `<span class="formula-text">(${cExpectedCompleted} / ${cData.baseline})</span>`;
+            
+            if (rate >= 30) {
+                rateEl.className = "fw-bold align-middle text-success"; rateEl.innerHTML = rate.toFixed(2) + '%' + formulaHtml;
+                statusEl.innerHTML = '<span class="badge bg-success">统计已达标(≥30%)<br><small>Met</small></span>';
+            } else {
+                rateEl.className = "fw-bold align-middle text-danger"; rateEl.innerHTML = rate.toFixed(2) + '%' + formulaHtml;
+                statusEl.innerHTML = '<span class="badge bg-danger">统计未达标<br><small>Not Met</small></span>';
+            }
+        }
+
+        let globalRate = globalBaseline === 0 ? 0 : (globalExpectedCompleted / globalBaseline * 100);
+        let gRateEl = document.getElementById('global-expected-rate');
+        let gStatusEl = document.getElementById('global-target-status');
+        let globalFormulaHtml = `<span class="text-muted fw-normal fs-6 ms-1">(${globalExpectedCompleted}/${globalBaseline})</span>`;
+        
+        if (globalRate >= 30) {
+            gRateEl.className = "text-success fs-5 ms-1"; gRateEl.innerHTML = globalRate.toFixed(2) + '%' + globalFormulaHtml;
+            gStatusEl.className = "badge bg-success"; gStatusEl.innerText = "统计已达标 / Total Met";
+        } else {
+            gRateEl.className = "text-danger fs-5 ms-1"; gRateEl.innerHTML = globalRate.toFixed(2) + '%' + globalFormulaHtml;
+            gStatusEl.className = "badge bg-danger"; gStatusEl.innerText = "统计未达标 / Total Not Met";
+        }
+
+        updatePivotTable(globalBaseline, globalExpectedCompleted);
+    }
+
+    function updatePivotTable(globalBaseline, globalExpectedCompleted) {
+        document.getElementById('pivotSection').style.display = 'block';
+        const viewConfig = getViewConfig();
+        let targetYearText = viewConfig.key === 'all' ? '全部年份' : `${viewConfig.targetYear}年`;
+        let planRate = globalBaseline === 0 ? 0 : (globalExpectedCompleted / globalBaseline * 100);
+
+        let dynamicTitle = `5个端到端EOS收编计划：${targetYearText}预计累计收编 ${planRate.toFixed(2)}%，共计收编 ${globalExpectedCompleted} 台`;
+        document.getElementById('pivot-title').innerText = dynamicTitle;
+        document.getElementById('pivot-title').dataset.exportTitle = dynamicTitle;
+
+        const buildPivot = (includeTarget) => {
+            let pLinesSet = new Set();
+            let pivotData = {};
+            let pLineTotals = {};
+            let total = 0;
+
+            for (const c in groupedTargetData) {
+                pivotData[c] = { total: 0 };
+                for (const p in groupedTargetData[c].products) {
+                    let pData = groupedTargetData[c].products[p];
+                    let pl = pData.productLine;
+                    let value = (pData.cutBaseline - pData.current) + (includeTarget ? pData.target : 0);
+
+                    pLinesSet.add(pl);
+                    if (!pivotData[c][pl]) pivotData[c][pl] = 0;
+                    pivotData[c][pl] += value;
+                    pivotData[c].total += value;
+                    if (!pLineTotals[pl]) pLineTotals[pl] = 0;
+                    pLineTotals[pl] += value;
+                    total += value;
+                }
+            }
+
+            return {
+                pLines: Array.from(pLinesSet).sort(),
+                pivotData,
+                pLineTotals,
+                total,
+                rate: globalBaseline === 0 ? 0 : (total / globalBaseline * 100)
+            };
+        };
+
+        const renderPivot = (target, pivot, totalLabelClass = 'bg-secondary', totalValueClass = 'bg-dark', comparePivot = null) => {
+            const formatValue = (val, baseVal, options = {}) => {
+                const onDark = !!options.onDark;
+                const mainClass = onDark ? 'text-white fw-bold fs-6' : 'text-primary fw-bold fs-6';
+                const emptyClass = onDark ? 'text-white-50' : 'text-muted';
+                const negativeClass = onDark ? 'text-warning fw-bold fs-6' : 'text-danger fw-bold fs-6';
+                let main = `<span class="${emptyClass}">-</span>`;
+                if (val > 0) main = `<span class="${mainClass}">${val}</span>`;
+                else if (val < 0) main = `<span class="${negativeClass}">${val}</span>`;
+                if (!comparePivot) return main;
+                const delta = val - (baseVal || 0);
+                if (delta === 0) return main;
+                const deltaColor = delta > 0 ? '#198754' : '#dc3545';
+                const deltaText = delta > 0 ? `较前增 ${delta}` : `较前减 ${Math.abs(delta)}`;
+                const deltaStyle = onDark
+                    ? `display:inline-block;margin-left:5px;padding:1px 6px;border-radius:999px;background:#fff;color:${deltaColor};font-size:10px;font-weight:800;`
+                    : `display:inline-block;margin-left:5px;padding:1px 5px;border-radius:999px;background:${delta > 0 ? '#e9f7ef' : '#fdeaea'};color:${deltaColor};border:1px solid ${delta > 0 ? '#a3cfbb' : '#f1aeb5'};font-size:10px;font-weight:800;`;
+                return `${main}<span style="${deltaStyle}">${deltaText}</span>`;
+            };
+            const thead = document.getElementById(target.headId);
+            const tbody = document.getElementById(target.bodyId);
+            let headHtml = `<tr><th class="bg-light fw-bold" style="min-width:120px;">客户名称 \\ 产品线</th>`;
+            pivot.pLines.forEach(pl => { headHtml += `<th>${pl}</th>`; });
+            headHtml += `<th class="table-warning fw-bold">总计 (Total)</th></tr>`;
+            thead.innerHTML = headHtml;
+
+            let bodyHtml = '';
+            let customers = Object.keys(pivot.pivotData).sort();
+            customers.forEach(c => {
+                bodyHtml += `<tr><td class="fw-bold text-start px-2 bg-light">${c}</td>`;
+                pivot.pLines.forEach(pl => {
+                    let val = pivot.pivotData[c][pl] || 0;
+                    let baseVal = comparePivot && comparePivot.pivotData[c] ? (comparePivot.pivotData[c][pl] || 0) : 0;
+                    bodyHtml += `<td>${formatValue(val, baseVal)}</td>`;
+                });
+                let baseTotal = comparePivot && comparePivot.pivotData[c] ? (comparePivot.pivotData[c].total || 0) : 0;
+                bodyHtml += `<td class="table-warning fw-bold fs-6">${formatValue(pivot.pivotData[c].total, baseTotal)}</td></tr>`;
+            });
+
+            bodyHtml += `<tr><td class="fw-bold text-start px-2 ${totalLabelClass} text-white">收编台数总计 (Total)</td>`;
+            pivot.pLines.forEach(pl => {
+                let val = pivot.pLineTotals[pl] || 0;
+                let baseVal = comparePivot ? (comparePivot.pLineTotals[pl] || 0) : 0;
+                bodyHtml += `<td class="${totalLabelClass} text-white fw-bold fs-6">${formatValue(val, baseVal, { onDark: true })}</td>`;
+            });
+            bodyHtml += `<td class="${totalValueClass} text-white fw-bold fs-5">${formatValue(pivot.total, comparePivot ? comparePivot.total : 0, { onDark: true })}</td></tr>`;
+            tbody.innerHTML = bodyHtml;
+        };
+
+        const beforePivot = buildPivot(false);
+        const afterPivot = buildPivot(true);
+        renderPivot({ headId: 'pivotTableHead', bodyId: 'pivotTableBody' }, beforePivot);
+        renderPivot({ headId: 'pivotTableHeadAfter', bodyId: 'pivotTableBodyAfter' }, afterPivot, 'bg-primary', 'bg-success', beforePivot);
+
+        const deltaTotal = afterPivot.total - beforePivot.total;
+        const deltaRate = afterPivot.rate - beforePivot.rate;
+        const summaryEl = document.getElementById('pivot-change-summary');
+        summaryEl.style.display = 'block';
+        summaryEl.innerHTML = `填入后较填入前增加 <span class="text-primary">${deltaTotal}</span> 台收编量，预计完成率提升 <span class="text-primary">${deltaRate.toFixed(2)}%</span>（${beforePivot.rate.toFixed(2)}% → ${afterPivot.rate.toFixed(2)}%）。`;
+    }
+
+    // ==========================================
+    // 🌟 一键恢复历史填写的进度 (从导出的 Excel 逆向解析)
+    // ==========================================
+    async function restoreFromExportedFile() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.xlsx, .xls, .csv';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            document.getElementById('loading').classList.remove('d-none');
+            document.getElementById('loading-text').innerText = '正在回填数据...';
+            document.getElementById('loading-text').classList.remove('d-none');
+            
+            try {
+                const arrayBuffer = await readFileAsArrayBuffer(file);
+                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                
+                let restoredCount = 0;
+                let newCustomColsAdded = false;
+                const expectedKeysByView = buildExpectedKeysByView();
+                const restoreDebug = {
+                    fileName: file.name,
+                    sheetNames: workbook.SheetNames,
+                    currentYearView,
+                    activeView: getActiveViewKey(),
+                    yearSplitEnabled,
+                    globalRows: globalData.length,
+                    expectedKeyCounts: {
+                        '26-27': expectedKeysByView['26-27'].size,
+                        '<=25': expectedKeysByView['<=25'].size,
+                        'all': expectedKeysByView.all.size
+                    },
+                    sheets: [],
+                    restoredSamples: [],
+                    unmatchedSamples: [],
+                    skippedSamples: []
+                };
+                eosLog('restore start', restoreDebug);
+                
+                workbook.SheetNames.forEach(sheetName => {
+                    let view = '';
+                    const lowerSheetName = sheetName.toLowerCase();
+                    if (sheetName.includes('全部') || lowerSheetName.includes('all')) view = 'all';
+                    else if (sheetName.includes('2026') || sheetName.includes('26')) view = '26-27';
+                    else if (sheetName.includes('2025') || sheetName.includes('25')) view = '<=25';
+                    else {
+                        restoreDebug.sheets.push({ sheetName, skipped: true, reason: 'sheet name does not include 全部/all, 2026/26, or 2025/25' });
+                        return;
+                    }
+                    
+                    const worksheet = workbook.Sheets[sheetName];
+                    const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+                    const sheetDebug = {
+                        sheetName,
+                        view,
+                        rowCount: rows.length,
+                        mergeCount: (worksheet['!merges'] || []).length,
+                        headerIdx: -1,
+                        indexes: {},
+                        headers: [],
+                        fileCustomCols: [],
+                        restoredRows: 0,
+                        matchedCurrentBase: 0,
+                        unmatchedCurrentBase: 0,
+                        skippedNoCustomer: 0,
+                        skippedNoProduct: 0,
+                        rowSamples: []
+                    };
+                    
+                    let headerIdx = -1;
+                    for (let i = 0; i < rows.length; i++) {
+                        let rowStr = rows[i].join('');
+                        if (rowStr.includes('客户名称') && rowStr.includes('产品名称') && rowStr.includes('已消减')) {
+                            headerIdx = i; break;
+                        }
+                    }
+                    sheetDebug.headerIdx = headerIdx;
+                    if (headerIdx === -1) {
+                        sheetDebug.skipped = true;
+                        sheetDebug.reason = 'header row not found: requires 客户名称 + 产品名称 + 已消减';
+                        restoreDebug.sheets.push(sheetDebug);
+                        eosWarn('restore sheet skipped', sheetDebug);
+                        return;
+                    }
+                    
+                    const headers = rows[headerIdx].map(h => String(h).trim());
+                    const idxCust = headers.findIndex(h => h.includes('客户名称'));
+                    const idxProd = headers.findIndex(h => h.includes('产品名称'));
+                    const idxHist = headers.findIndex(h => h.includes('已消减'));
+                    const idxTarget = headers.findIndex(h => h.includes('计划收编') || h.includes('Target'));
+                    sheetDebug.headers = headers;
+                    sheetDebug.indexes = { idxCust, idxProd, idxHist, idxTarget };
+                    
+                    if (idxCust === -1 || idxProd === -1 || idxTarget === -1) {
+                        sheetDebug.skipped = true;
+                        sheetDebug.reason = 'required column index missing';
+                        restoreDebug.sheets.push(sheetDebug);
+                        eosWarn('restore sheet skipped', sheetDebug);
+                        return;
+                    }
+                    
+                    const isGeneratedExportColumn = (header) => {
+                        const text = String(header || '').trim();
+                        return !text
+                            || text.includes('自动')
+                            || text.includes('预计完成率')
+                            || text.includes('Exp Rate')
+                            || text.includes('状态')
+                            || text.includes('Status');
+                    };
+
+                    let fileCustomCols = [];
+                    let customColumnRanges = [];
+                    if (idxHist !== -1 && idxTarget > idxHist + 1) {
+                        customColumnRanges.push({ start: idxHist + 1, end: idxTarget, source: 'between history and target' });
+                    }
+                    if (idxTarget !== -1) {
+                        let end = headers.length;
+                        for (let c = idxTarget + 1; c < headers.length; c++) {
+                            if (isGeneratedExportColumn(headers[c])) {
+                                end = c;
+                                break;
+                            }
+                        }
+                        if (end > idxTarget + 1) {
+                            customColumnRanges.push({ start: idxTarget + 1, end, source: 'after target before generated columns' });
+                        }
+                    }
+                    customColumnRanges.forEach(range => {
+                        for (let c = range.start; c < range.end; c++) {
+                            let cName = headers[c];
+                            if (!cName) continue;
+                            
+                            let existingCol = customColumns.find(col => col.name === cName);
+                            let mappedId = '';
+                            if (existingCol) {
+                                mappedId = existingCol.id;
+                            } else {
+                                mappedId = 'col_' + Date.now() + Math.floor(Math.random() * 1000);
+                                customColumns.push({ id: mappedId, name: cName });
+                                newCustomColsAdded = true;
+                            }
+                            if (!fileCustomCols.some(col => col.colIdx === c || col.name === cName)) {
+                                fileCustomCols.push({ name: cName, colIdx: c, mappedId: mappedId, source: range.source });
+                            }
+                        }
+                    });
+                    sheetDebug.fileCustomCols = fileCustomCols.map(c => ({ name: c.name, colIdx: c.colIdx, mappedId: c.mappedId, source: c.source }));
+                    if (!fileCustomCols.length) {
+                        eosWarn('restore custom column detection empty', {
+                            sheetName,
+                            idxHist,
+                            idxTarget,
+                            headers,
+                            note: 'No custom columns found between 已消减->Target or Target->自动/预计完成率/状态.'
+                        });
+                    }
+                    
+                    if (!savedInputData[view]) savedInputData[view] = {};
+                    
+                    let lastNonEmptyCustomer = '';
+                    for (let i = headerIdx + 1; i < rows.length; i++) {
+                        let row = rows[i];
+                        if (!row || row.length === 0) continue;
+                        const rawCustomer = row[idxCust] !== undefined ? String(row[idxCust]).trim() : '';
+                        if (rawCustomer) lastNonEmptyCustomer = rawCustomer;
+                        if (!rawCustomer && !lastNonEmptyCustomer) {
+                            sheetDebug.skippedNoCustomer++;
+                            if (restoreDebug.skippedSamples.length < 20) {
+                                restoreDebug.skippedSamples.push({
+                                    sheetName,
+                                    rowNumber: i + 1,
+                                    reason: 'empty customer cell',
+                                    product: row[idxProd],
+                                    wouldUsePreviousCustomer: lastNonEmptyCustomer || '(none)'
+                                });
+                            }
+                            continue;
+                        }
+                        
+                        let cName = rawCustomer || lastNonEmptyCustomer;
+                        let pName = String(row[idxProd]).trim();
+                        if (!cName || !pName) {
+                            sheetDebug.skippedNoProduct++;
+                            if (restoreDebug.skippedSamples.length < 20) {
+                                restoreDebug.skippedSamples.push({ sheetName, rowNumber: i + 1, reason: 'empty customer or product', customer: cName, product: pName });
+                            }
+                            continue;
+                        }
+                        
+                        let key = cName + '|||' + pName;
+                        if (!savedInputData[view][key]) savedInputData[view][key] = {};
+                        
+                        let tVal = parseInt(row[idxTarget]) || 0;
+                        savedInputData[view][key]['target'] = tVal;
+                        
+                        fileCustomCols.forEach(fc => {
+                            let val = row[fc.colIdx] !== undefined ? String(row[fc.colIdx]) : '';
+                            savedInputData[view][key][fc.mappedId] = val;
+                        });
+                        
+                        restoredCount++;
+                        sheetDebug.restoredRows++;
+                        const matchedCurrentBase = expectedKeysByView[view].has(key);
+                        if (matchedCurrentBase) sheetDebug.matchedCurrentBase++;
+                        else {
+                            sheetDebug.unmatchedCurrentBase++;
+                            if (restoreDebug.unmatchedSamples.length < 20) {
+                                restoreDebug.unmatchedSamples.push({ sheetName, rowNumber: i + 1, view, key, target: tVal });
+                            }
+                        }
+                        if (restoreDebug.restoredSamples.length < 20) {
+                            restoreDebug.restoredSamples.push({ sheetName, rowNumber: i + 1, view, key, target: tVal, matchedCurrentBase });
+                        }
+                        if (sheetDebug.rowSamples.length < 12) {
+                            sheetDebug.rowSamples.push({ rowNumber: i + 1, key, target: tVal, matchedCurrentBase });
+                        }
+                    }
+                    restoreDebug.sheets.push(sheetDebug);
+                    eosLog('restore sheet parsed', sheetDebug);
+                });
+                
+                if (newCustomColsAdded) {
+                    localStorage.setItem('eos_custom_columns_v3', JSON.stringify(customColumns));
+                    renderColumnManager();
+                }
+                localStorage.setItem('eos_saved_row_data', JSON.stringify(savedInputData));
+                restoreDebug.restoredCount = restoredCount;
+                restoreDebug.savedInputKeyCountsAfter = {
+                    '26-27': Object.keys(savedInputData['26-27'] || {}).length,
+                    '<=25': Object.keys(savedInputData['<=25'] || {}).length,
+                    'all': Object.keys(savedInputData.all || {}).length
+                };
+                restoreDebug.savedInputSamplesAfter = {
+                    '26-27': Object.entries(savedInputData['26-27'] || {}).slice(0, 8),
+                    '<=25': Object.entries(savedInputData['<=25'] || {}).slice(0, 8),
+                    'all': Object.entries(savedInputData.all || {}).slice(0, 8)
+                };
+                eosLog('restore final summary', restoreDebug);
+                
+                document.getElementById('loading').classList.add('d-none');
+                document.getElementById('loading-text').classList.add('d-none');
+                
+                if (restoredCount > 0) {
+                    renderTargetTable();
+                    alert(`✅ 成功回填 ${restoredCount} 条记录的进度！\n[Successfully restored inputs for ${restoredCount} records!]`);
+                } else {
+                    alert('未在文件中找到有效的填报数据，请确认上传的是之前导出的报表。');
+                }
+                
+            } catch (err) {
+                console.error(err);
+                document.getElementById('loading').classList.add('d-none');
+                document.getElementById('loading-text').classList.add('d-none');
+                alert('读取文件失败，请重试。');
+            }
+        };
+        input.click();
+    }
+
+    // ==========================================
+    // 🌟 一键导出当前统计模式 (包含漏填拦截校验)
+    // ==========================================
+    async function exportTargetDataExcel() {
+        calculateTargets();
+
+        let hasIncomplete = false;
+        
+        let expectedKeys = buildExpectedKeysByView();
+        const viewsToProcess = yearSplitEnabled ? ['26-27', '<=25'] : ['all'];
+
+        let timelineColId = null;
+        let timelineCol = customColumns.find(c => c.name.toLowerCase().includes('timeline'));
+        if (timelineCol) timelineColId = timelineCol.id;
+
+        for (let view of viewsToProcess) {
+            let keys = Array.from(expectedKeys[view]);
+            let viewData = savedInputData[view] || {};
+            for (let key of keys) {
+                let targetVal = parseInt(viewData[key]?.target) || 0;
+                let timelineVal = timelineColId ? (viewData[key]?.[timelineColId] || '').trim() : '';
+                
+                let isTargetEmpty = (targetVal === 0);
+                let isTimelineEmpty = timelineColId ? (timelineVal === '') : true;
+
+                if (isTargetEmpty && isTimelineEmpty) {
+                    hasIncomplete = true;
+                    break;
+                }
+            }
+            if (hasIncomplete) break;
+        }
+
+        if (hasIncomplete) {
+            let confirmExport = confirm("⚠️ 填报漏项警告 / Incomplete Data Warning:\n\n系统检测到存在【Target(计划收编)】和【Timeline】均未填写的行（即：同时为空/为0）。\n[System detected rows where BOTH 'Target' and 'Timeline' are unfilled.]\n\n您确定要保留空值强行导出吗？\n[Are you sure you want to export with unfilled data?]\n\n- 点击 [确定 / OK]：继续导出 / Continue to Export\n- 点击 [取消 / Cancel]：返回补充 / Return to Edit");
+            if (!confirmExport) return; 
+        }
+
+        const workbook = new ExcelJS.Workbook();
+        workbook.creator = 'Urgent EOS Tool';
+
+        const borderAll = { top: {style:'thin', color:{argb:'FFDDDDDD'}}, left: {style:'thin', color:{argb:'FFDDDDDD'}}, bottom: {style:'thin', color:{argb:'FFDDDDDD'}}, right: {style:'thin', color:{argb:'FFDDDDDD'}} };
+        const fontBold = { bold: true, size: 10, name: 'Microsoft YaHei' };
+        const fontNormal = { size: 10, name: 'Microsoft YaHei' };
+        const alignCenter = { vertical: 'middle', horizontal: 'center', wrapText: true };
+        const alignLeft = { vertical: 'middle', horizontal: 'left', wrapText: true };
+
+        const colorGrey = { type: 'pattern', pattern: 'solid', fgColor: {argb: 'FFF8F9FA'} };
+        const colorBlue = { type: 'pattern', pattern: 'solid', fgColor: {argb: 'FFCFF4FC'} };
+        const colorYellow = { type: 'pattern', pattern: 'solid', fgColor: {argb: 'FFFFF3CD'} };
+        const colorDark = { type: 'pattern', pattern: 'solid', fgColor: {argb: 'FF6C757D'} };
+        const colorBlack = { type: 'pattern', pattern: 'solid', fgColor: {argb: 'FF212529'} };
+
+        for (let view of viewsToProcess) {
+            const viewConfig = getViewConfig(view);
+            const showSoftwareVersionColumn = shouldShowSoftwareVersionColumn(view);
+            let sheetName = viewConfig.sheetName;
+            let yearPrefix = viewConfig.yearPrefix;
+            let targetYear = viewConfig.targetYear;
+
+            const ws = workbook.addWorksheet(sheetName, { views: [{ state: 'frozen', ySplit: 5, xSplit: 2 }] });
+
+            let localGrouped = {};
+            globalData.forEach(item => {
+                if (!itemMatchesView(item, view)) return;
+
+                let c = item.customer;
+                let p = item.product;
+                if (!localGrouped[c]) localGrouped[c] = { baseline: 0, current: 0, products: {} };
+                if (!localGrouped[c].products[p]) {
+                    localGrouped[c].products[p] = { 
+                        productLine: item.productLine, baseline: 0, cutBaseline: 0, current: 0, target: 0, baselineAdjustment: 0,
+                        projCodes: new Set(), projNames: new Set(), softwareVersions: new Set()
+                    };
+                }
+                
+                localGrouped[c].baseline += item.baseline;
+                localGrouped[c].current += item.current;
+                localGrouped[c].products[p].baseline += item.baseline;
+                localGrouped[c].products[p].cutBaseline += item.cutBaseline !== undefined ? item.cutBaseline : item.baseline;
+                localGrouped[c].products[p].current += item.current;
+                localGrouped[c].products[p].baselineAdjustment += item.baselineAdjustment || 0;
+                
+                if(item.projCode && item.projCode !== '-') localGrouped[c].products[p].projCodes.add(item.projCode);
+                if(item.projName && item.projName !== '-') localGrouped[c].products[p].projNames.add(item.projName);
+                if(isVersionEOS(item) && item.softwareVersion && item.softwareVersion !== '-') localGrouped[c].products[p].softwareVersions.add(item.softwareVersion);
+            });
+
+            let viewData = savedInputData[view] || {};
+            let localGlobalBaseline = 0;
+            let localGlobalExpectedCompleted = 0;
+
+            for (const c in localGrouped) {
+                let cExpectedCompleted = 0;
+                for (const p in localGrouped[c].products) {
+                    let rowKey = c + '|||' + p;
+                    let tVal = (viewData[rowKey] && viewData[rowKey]['target']) ? parseInt(viewData[rowKey]['target']) : 0;
+                    if (isNaN(tVal) || tVal < 0) tVal = 0;
+                    let max = localGrouped[c].products[p].current;
+                    if (tVal > max) tVal = max;
+                    
+                    localGrouped[c].products[p].target = tVal;
+                    cExpectedCompleted += localGrouped[c].products[p].cutBaseline - localGrouped[c].products[p].current;
+                    cExpectedCompleted += tVal;
+                }
+                localGlobalBaseline += localGrouped[c].baseline;
+                localGlobalExpectedCompleted += cExpectedCompleted;
+            }
+
+            let planRate = localGlobalBaseline === 0 ? 0 : (localGlobalExpectedCompleted / localGlobalBaseline * 100);
+            const targetYearText = view === 'all' ? '全部年份' : `${targetYear}年`;
+            let dynamicTitle = `5个端到端EOS收编计划：${targetYearText}预计累计收编 ${planRate.toFixed(2)}%，共计收编 ${localGlobalExpectedCompleted} 台`;
+
+            let titleRow = ws.addRow([dynamicTitle]);
+            titleRow.font = { bold: true, size: 14, name: 'Microsoft YaHei', color: { argb: 'FF084298' } };
+            titleRow.height = 30;
+            
+            let pLinesSet = new Set();
+            let pivotData = {}; let pLineTotals = {}; 
+            for (const c in localGrouped) {
+                pivotData[c] = { total: 0 };
+                for (const p in localGrouped[c].products) {
+                    let pData = localGrouped[c].products[p];
+                    let pl = pData.productLine;
+                    let val = (pData.cutBaseline - pData.current) + pData.target; 
+                    pLinesSet.add(pl);
+                    if (!pivotData[c][pl]) pivotData[c][pl] = 0;
+                    pivotData[c][pl] += val;
+                    pivotData[c].total += val;
+                    if (!pLineTotals[pl]) pLineTotals[pl] = 0;
+                    pLineTotals[pl] += val;
+                }
+            }
+            let pLines = Array.from(pLinesSet).sort();
+            let pivotHeaderArr = ["客户名称 \\ 产品线", ...pLines, "总计 (Total)"];
+            ws.mergeCells(1, 1, 1, pivotHeaderArr.length > 5 ? pivotHeaderArr.length : 5); 
+            titleRow.getCell(1).alignment = { vertical: 'middle', horizontal: 'left' };
+
+            let pivotHeadRow = ws.addRow(pivotHeaderArr);
+            pivotHeadRow.height = 20;
+            pivotHeadRow.eachCell((cell, colNum) => {
+                cell.font = fontBold; cell.alignment = alignCenter; cell.border = borderAll;
+                cell.fill = colNum === pivotHeaderArr.length ? colorYellow : colorGrey; 
+            });
+
+            let customers = Object.keys(pivotData).sort();
+            customers.forEach(c => {
+                let rowData = [c];
+                pLines.forEach(pl => rowData.push(pivotData[c][pl] || '-'));
+                rowData.push(pivotData[c].total);
+                let row = ws.addRow(rowData);
+                row.eachCell((cell, colNum) => {
+                    cell.font = (colNum === 1 || colNum === pivotHeaderArr.length || cell.value !== '-') ? fontBold : fontNormal;
+                    cell.alignment = colNum === 1 ? alignLeft : alignCenter;
+                    cell.border = borderAll;
+                    if(colNum === 1) cell.fill = colorGrey;
+                    if(colNum === pivotHeaderArr.length) cell.fill = colorYellow;
+                    if(colNum > 1 && colNum < pivotHeaderArr.length && cell.value !== '-') cell.font = { ...fontBold, color: {argb: 'FF0D6EFD'} };
+                });
+            });
+
+            let pivotTotalArr = ["收编台数总计 (Total)"];
+            let finalTotal = 0;
+            pLines.forEach(pl => { let val = pLineTotals[pl]||0; pivotTotalArr.push(val||'-'); finalTotal += val; });
+            pivotTotalArr.push(finalTotal);
+            let pivotFootRow = ws.addRow(pivotTotalArr);
+            pivotFootRow.eachCell((cell, colNum) => {
+                cell.font = { ...fontBold, color: {argb: 'FFFFFFFF'} };
+                cell.alignment = colNum === 1 ? alignLeft : alignCenter;
+                cell.border = borderAll;
+                cell.fill = colNum === pivotHeaderArr.length ? colorBlack : colorDark;
+            });
+
+            ws.addRow([]); 
+            
+            const detailStartRowIndex = ws.rowCount + 1; 
+            
+            let detailHeaders = [
+                "客户名称 (Customer)", "产品线 (Product Line)", "产品名称 (Product)"
+            ];
+            if (showSoftwareVersionColumn) detailHeaders.push("软件版本 (Software Version)");
+            detailHeaders.push(
+                "项目编码 (Project Code)", "项目名称 (Project Name)", 
+                `${yearPrefix}总基线 (Baseline)`, `${yearPrefix}当前存量 (Current Base)`, "已消减 (History Cut)",
+                `${targetYear}计划收编 (Target)`
+            );
+            customColumns.forEach(c => detailHeaders.push(c.name));
+            detailHeaders.push(`${viewConfig.autoLabel}`, "预计完成率 (Exp Rate)", "状态 (Status)");
+
+            let headerRow = ws.addRow(detailHeaders);
+            headerRow.height = 25;
+            let baseColCount = showSoftwareVersionColumn ? 9 : 8;
+            let targetColIndex = baseColCount + 1; 
+            let customColStart = targetColIndex + 1; 
+            let customColCount = customColumns.length;
+            let autoTargetColIndex = targetColIndex + customColCount + 1;
+            let leftAlignColCount = showSoftwareVersionColumn ? 6 : 5;
+            let dimTextCols = showSoftwareVersionColumn ? [4, 5, 6] : [4, 5];
+            let baselineColIndex = showSoftwareVersionColumn ? 7 : 6;
+            
+            headerRow.eachCell((cell, colNum) => {
+                cell.font = fontBold; cell.alignment = alignCenter; cell.border = borderAll;
+                if (colNum <= baseColCount) cell.fill = colorGrey;
+                else if (colNum === targetColIndex) cell.fill = colorYellow; 
+                else if (colNum >= customColStart && colNum < customColStart + customColCount) cell.fill = colorBlue; 
+                else cell.fill = colorGrey;
+            });
+
+            let currentRowIndex = detailStartRowIndex + 1;
+            
+            for (const [customer, cData] of Object.entries(localGrouped)) {
+                let cExpectedCompleted = 0;
+                for (const p in cData.products) cExpectedCompleted += cData.products[p].cutBaseline - cData.products[p].current;
+                for (const p in cData.products) cExpectedCompleted += cData.products[p].target;
+                let cRate = cData.baseline === 0 ? 0 : (cExpectedCompleted / cData.baseline * 100);
+                let cRateStr = cRate.toFixed(2) + `% (${cExpectedCompleted}/${cData.baseline})`;
+                let statusStr = cRate >= 30 ? "统计已达标" : "统计未达标";
+                let isMet = cRate >= 30;
+
+                let customerStartRow = currentRowIndex;
+                let productCount = Object.keys(cData.products).length;
+
+                for (const [product, pData] of Object.entries(cData.products)) {
+                    let historyCut = pData.cutBaseline - pData.current;
+                    let targetTarget = pData.target;
+                    let autoTarget = pData.current - targetTarget;
+                    
+                    let codesStr = Array.from(pData.projCodes).join('\n') || '-';
+                    let namesStr = Array.from(pData.projNames).join('\n') || '-';
+                    let versionsStr = Array.from(pData.softwareVersions).join('\n') || '-';
+
+                    let rowKey = customer + '|||' + product;
+                    let customVals = customColumns.map(col => {
+                        return (viewData[rowKey] && viewData[rowKey][col.id]) ? viewData[rowKey][col.id] : "";
+                    });
+
+                    let rowData = [customer, pData.productLine, product];
+                    if (showSoftwareVersionColumn) rowData.push(versionsStr);
+                    rowData.push(
+                        codesStr, namesStr,
+                        pData.baseline, pData.current, historyCut,
+                        targetTarget,
+                        ...customVals,
+                        autoTarget, cRateStr, statusStr
+                    );
+
+                    let dataRow = ws.addRow(rowData);
+                    let maxLines = Math.max(pData.projCodes.size, pData.projNames.size, pData.softwareVersions.size, 1);
+                    if (maxLines > 1) dataRow.height = maxLines * 15;
+
+                    dataRow.eachCell((cell, colNum) => {
+                        cell.border = borderAll; cell.font = fontNormal;
+                        cell.alignment = (colNum <= leftAlignColCount) ? alignLeft : alignCenter;
+                        
+                        if (colNum === 1) { cell.font = fontBold; cell.fill = colorGrey; }
+                        if (colNum === 3) cell.font = fontBold;
+                        if (dimTextCols.includes(colNum)) cell.font = { ...fontNormal, color: {argb: colNum === 4 && showSoftwareVersionColumn ? 'FF084298' : 'FF6C757D'} }; 
+                        if (colNum === baselineColIndex && pData.baselineAdjustment > 0) {
+                            cell.fill = colorYellow;
+                            cell.font = { ...fontBold, color: {argb: 'FF9A5B00'} };
+                            cell.note = `当前存量大于原基线，已自动补齐基线 +${pData.baselineAdjustment}`;
+                        }
+                        if (colNum === baseColCount && historyCut > 0) cell.font = { ...fontBold, color: {argb: 'FF198754'} }; 
+                        
+                        if (colNum === targetColIndex) { cell.fill = colorYellow; cell.font = fontBold; } 
+                        if (colNum >= customColStart && colNum < customColStart + customColCount) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: {argb: 'FFF0F8FF'} }; 
+                        if (colNum === autoTargetColIndex) { cell.fill = colorGrey; cell.font = { ...fontBold, color: {argb: 'FF6C757D'} }; } 
+                        
+                        if (colNum === detailHeaders.length - 1) cell.font = { ...fontBold, color: {argb: isMet ? 'FF198754' : 'FFDC3545'} };
+                        if (colNum === detailHeaders.length) cell.font = { ...fontBold, color: {argb: isMet ? 'FF198754' : 'FFDC3545'} };
+                    });
+
+                    currentRowIndex++;
+                }
+                
+                if (productCount > 1) {
+                    let endRow = customerStartRow + productCount - 1;
+                    ws.mergeCells(customerStartRow, 1, endRow, 1); 
+                    ws.mergeCells(customerStartRow, detailHeaders.length - 1, endRow, detailHeaders.length - 1); 
+                    ws.mergeCells(customerStartRow, detailHeaders.length, endRow, detailHeaders.length); 
+                }
+            }
+
+            ws.columns = [
+                { width: 18 }, { width: 15 }, { width: 22 }, { width: 18 }, { width: 35 },
+                { width: 12 }, { width: 12 }, { width: 12 }
+            ];
+            if (showSoftwareVersionColumn) {
+                ws.columns = [
+                    { width: 18 }, { width: 15 }, { width: 22 }, { width: 20 }, { width: 18 }, { width: 35 },
+                    { width: 12 }, { width: 12 }, { width: 12 }
+                ];
+            }
+            ws.getColumn(targetColIndex).width = 14;
+            for(let i=0; i<customColCount; i++) ws.getColumn(customColStart + i).width = 15;
+            ws.getColumn(autoTargetColIndex).width = 14;
+            ws.getColumn(autoTargetColIndex + 1).width = 18;
+            ws.getColumn(autoTargetColIndex + 2).width = 14;
+        }
+
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        saveAs(blob, `Urgent_EOS收编任务汇报_全部年份.xlsx`);
+    }
+
+    // --- 底层明细表格处理逻辑 ---
+    function updateDashboard() {
+        let base25 = 0, curr25 = 0, cut25 = 0;
+        let base2627 = 0, curr2627 = 0, cut2627 = 0;
+        let totalBase = 0, totalCurr = 0, totalCut = 0;
+        globalData.forEach(item => {
+            const historyCut = (item.cutBaseline !== undefined ? item.cutBaseline : item.baseline) - item.current;
+            totalBase += item.baseline; totalCurr += item.current; totalCut += historyCut;
+            if (item.year > 0 && item.year <= 2025) { base25 += item.baseline; curr25 += item.current; cut25 += historyCut; } 
+            else if (item.year === 2026 || item.year === 2027) { base2627 += item.baseline; curr2627 += item.current; cut2627 += historyCut; }
+        });
+        let rate25 = base25 === 0 ? 0 : (cut25 / base25 * 100);
+        let rate2627 = base2627 === 0 ? 0 : (cut2627 / base2627 * 100);
+        let totalRate = totalBase === 0 ? 0 : (totalCut / totalBase * 100);
+        const rate2025El = document.getElementById('rate-2025');
+        const rate2627El = document.getElementById('rate-2026-2027');
+        rate2025El.className = "kpi-value";
+        rate2627El.className = "kpi-value";
+
+        if (yearSplitEnabled) {
+            document.getElementById('kpi-rate-2025-title').innerHTML = '≤2025年 收编完成率<span class="bi-lang-title">≤2025 Completion Rate</span>';
+            document.getElementById('kpi-rate-2627-title').innerHTML = '26-27年 当前完成率<span class="bi-lang-title">26-27 Current Completion Rate</span>';
+            document.getElementById('kpi-total-baseline-title').innerHTML = '总计：年度基线当前存量<span class="bi-lang-title">Total Baseline Installed Base</span>';
+            document.getElementById('kpi-total-current-title').innerHTML = '总计：当前存量<span class="bi-lang-title">Total Current Installed Base</span>';
+            rate2025El.innerText = rate25.toFixed(2) + '%';
+            document.getElementById('detail-2025').innerText = `基线(Base): ${base25} | 存量(Cur): ${curr25}`;
+            rate2627El.innerText = rate2627.toFixed(2) + '%';
+            document.getElementById('detail-2026-2027').innerText = `基线(Base): ${base2627} | 存量(Cur): ${curr2627}`;
+        } else {
+            document.getElementById('kpi-rate-2025-title').innerHTML = '全部年份 收编完成率<span class="bi-lang-title">All Years Completion Rate</span>';
+            document.getElementById('kpi-rate-2627-title').innerHTML = '全部年份 已消减数量<span class="bi-lang-title">All Years History Cut</span>';
+            document.getElementById('kpi-total-baseline-title').innerHTML = '全部年份：年度基线当前存量<span class="bi-lang-title">All Years Baseline Installed Base</span>';
+            document.getElementById('kpi-total-current-title').innerHTML = '全部年份：当前存量<span class="bi-lang-title">All Years Current Installed Base</span>';
+            rate2025El.innerText = totalRate.toFixed(2) + '%';
+            document.getElementById('detail-2025').innerText = `基线(Base): ${totalBase} | 存量(Cur): ${totalCurr}`;
+            rate2627El.innerText = totalCut;
+            rate2627El.className = "kpi-value text-success";
+            document.getElementById('detail-2026-2027').innerText = baselineAutoFillEnabled ? '已消减按补齐后的消减口径计算，完成率分母仍为原始基线' : `已消减 = 基线 - 当前存量 (${totalBase} - ${totalCurr})`;
+        }
+        document.getElementById('total-baseline').innerText = totalBase;
+        document.getElementById('total-current').innerText = totalCurr;
+    }
+
+    function renderTable() {
+        const thead = document.getElementById('tableHead'); const tbody = document.getElementById('tableBody');
+        if (globalHeaders.length > 0) thead.innerHTML = '<tr>' + globalHeaders.map(h => `<th>${h}</th>`).join('') + '</tr>';
+        tbody.innerHTML = '';
+        let displayCount = 0;
+        const activeView = getActiveViewKey();
+
+        globalData.forEach(item => {
+            if (!itemMatchesView(item, activeView)) return; 
+
+            displayCount++;
+            let tr = document.createElement('tr');
+            if (item.current === 0 && item.baseline > 0) tr.classList.add('highlight-success');
+            else if (item.current > 0 && item.year < 2025 && item.year > 0) tr.classList.add('highlight-danger');
+
+            let tdHtml = '';
+            globalHeaders.forEach(headerKey => { tdHtml += `<td>${item.dataObj[headerKey] !== undefined ? item.dataObj[headerKey] : ''}</td>`; });
+            tr.innerHTML = tdHtml;
+            tbody.appendChild(tr);
+        });
+        document.getElementById('record-count').innerText = `共 / Total ${displayCount}`;
+    }
+
+    function clearData() {
+        if (confirm('确定要清空所有基础数据吗？（注意：这不会清空您的输入进度缓存）\nAre you sure you want to clear all base data? (Your input progress will still be saved)')) {
+            globalHeaders = []; globalData = []; groupedTargetData = {};
+            document.getElementById('tableHead').innerHTML = '<tr><th>暂无数据，请先导入文件 / No data, please import files.</th></tr>';
+            document.getElementById('tableBody').innerHTML = '';
+            document.getElementById('targetTableBody').innerHTML = '';
+            document.getElementById('targetSection').style.display = 'none';
+            document.getElementById('pivotSection').style.display = 'none';
+            document.getElementById('filterSection').style.setProperty('display', 'none', 'important');
+            document.getElementById('fileInput').value = '';
+            updateDashboard(); document.getElementById('record-count').innerText = `共 / Total 0`;
+        }
+    }
+</script>
+
+</body>
+</html>
