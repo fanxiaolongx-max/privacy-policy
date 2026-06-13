@@ -314,7 +314,7 @@ function registerDownloadHandler() {
 }
 
 function createTray() {
-    const iconPath = path.join(__dirname, 'frontend/assets/icon.png');
+    const iconPath = path.join(__dirname, 'frontend/assets/icon.ico');
     // Fallback to native if icon is missing, but usually electron builder packages the icon
     try {
         tray = new Tray(iconPath);
@@ -356,7 +356,7 @@ async function createWindow() {
             preload: path.join(__dirname, 'electron-preload.js')
         },
         autoHideMenuBar: true, // Hide menu bar for a cleaner look
-        icon: path.join(__dirname, 'frontend/assets/icon.png') // Assume icon exists or fallback
+        icon: path.join(__dirname, 'frontend/assets/icon.ico') // Assume icon exists or fallback
     });
 
     registerDownloadHandler();
@@ -390,16 +390,48 @@ async function createWindow() {
     mainWindow.on('close', function (event) {
         if (!isQuitting) {
             event.preventDefault();
-            mainWindow.hide();
             
-            if (isFirstClose && tray) {
-                tray.displayBalloon({
-                    title: '工具已隐藏至后台托盘',
-                    content: '程序仍在后台稳定运行，点击托盘图标可重新打开主窗口。',
-                    iconType: 'info'
-                });
-                isFirstClose = false;
+            const state = readLaunchState();
+            if (state.closeBehavior === 'minimize') {
+                mainWindow.hide();
+                return;
+            } else if (state.closeBehavior === 'quit') {
+                isQuitting = true;
+                app.quit();
+                return;
             }
+
+            dialog.showMessageBox(mainWindow, {
+                type: 'question',
+                buttons: ['最小化到后台托盘 (推荐)', '完全退出程序'],
+                defaultId: 0,
+                cancelId: 0,
+                title: '关闭窗口',
+                message: '您希望如何处理程序？',
+                detail: '最小化到后台托盘可以保持服务运行，随时通过右下角托盘快速打开主窗口。',
+                checkboxLabel: '记住我的选择，以后不再提示',
+                checkboxChecked: true
+            }).then(({ response, checkboxChecked }) => {
+                if (checkboxChecked) {
+                    state.closeBehavior = response === 1 ? 'quit' : 'minimize';
+                    writeLaunchState(state);
+                }
+
+                if (response === 1) {
+                    isQuitting = true;
+                    app.quit();
+                } else {
+                    mainWindow.hide();
+                    if (isFirstClose && tray) {
+                        tray.displayBalloon({
+                            title: '工具已隐藏至后台托盘',
+                            content: '程序仍在后台稳定运行中，点击托盘图标可重新打开主窗口。',
+                            iconType: 'info'
+                        });
+                        isFirstClose = false;
+                    }
+                }
+            });
         }
     });
 
