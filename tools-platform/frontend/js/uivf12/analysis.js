@@ -687,8 +687,17 @@
             responseRules,
             canRefill: Boolean(script.payload && script.configOptions),
             hasPayload: Boolean(script.payload),
-            hasConfig: Boolean(script.configOptions)
+            hasConfig: Boolean(script.configOptions),
+            updatedAt: script.updatedAt || script.createdAt || ''
         };
+    }
+
+    function formatLocalTime(isoString) {
+        if (!isoString) return '-';
+        const d = new Date(isoString);
+        if (isNaN(d.getTime())) return '-';
+        const pad = n => n.toString().padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}<br><span class="analysis-muted">${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}</span>`;
     }
 
     function renderPills(items, className = '') {
@@ -799,7 +808,7 @@
         }
 
         if (rows.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="12" class="script-analysis-empty">没有匹配的脚本</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="13" class="script-analysis-empty">没有匹配的脚本</td></tr>';
             return;
         }
 
@@ -823,6 +832,7 @@
                 <td><div class="analysis-main-text" style="cursor:pointer;" title="点击复制内容" onclick="event.stopPropagation(); UIVScriptAnalysis.copyCellText(this.innerText)">${escapeHtml(row.name)}</div>${row.isDirty ? '<div class="analysis-muted">已修改，待保存</div>' : ''}</td>
                 <td><div class="analysis-main-text" style="cursor:pointer;" title="点击复制内容" onclick="event.stopPropagation(); UIVScriptAnalysis.copyCellText(this.innerText)">${escapeHtml(row.outputName)}</div><div class="analysis-muted" style="cursor:pointer;" title="点击复制内容" onclick="event.stopPropagation(); UIVScriptAnalysis.copyCellText(this.innerText)">${escapeHtml(row.pageName || '-')}</div></td>
                 <td><div class="analysis-url" style="cursor:pointer;" title="点击复制内容" onclick="event.stopPropagation(); UIVScriptAnalysis.copyCellText(this.innerText)">${escapeHtml(row.url || '-')}</div></td>
+                <td><div style="font-size:11px;line-height:1.4;text-align:center;">${formatLocalTime(row.updatedAt)}</div></td>
                 <td>${renderPills([row.platform], row.platform === 'DataFab' ? 'good' : '')}</td>
                 <td>
                     ${renderPills([row.method, row.auth])}

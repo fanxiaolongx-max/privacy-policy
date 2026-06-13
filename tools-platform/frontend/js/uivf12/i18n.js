@@ -155,7 +155,7 @@
             'uiv.version.title': 'Latest frontend asset version: {version}',
             'uiv.version.missing': 'No frontend asset version detected',
             'uiv.header.tag': 'Multi-source Fusion + Formula Authority',
-            'uiv.repo.title': '📂 Smart Dispatch Repository',
+            'uiv.repo.title': '📂 Smart Repository',
             'uiv.repo.copyAll': 'Package All',
             'uiv.repo.copyAllTitle': 'Copy all scripts from every repository category',
             'uiv.repo.tip': 'Collapsed by default. <b>Double-click to refill the workbench</b>.',
