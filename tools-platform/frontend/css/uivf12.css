@@ -430,17 +430,18 @@ textarea { flex: 1; resize: none; white-space: pre; overflow: auto; line-height:
     }
 }
 .script-analysis-table th:nth-child(1), .script-analysis-table td:nth-child(1) { width: 90px; }
-.script-analysis-table th:nth-child(2), .script-analysis-table td:nth-child(2) { width: 180px; }
-.script-analysis-table th:nth-child(3), .script-analysis-table td:nth-child(3) { width: 170px; }
-.script-analysis-table th:nth-child(4), .script-analysis-table td:nth-child(4) { width: 250px; }
-.script-analysis-table th:nth-child(5), .script-analysis-table td:nth-child(5) { width: 82px; }
-.script-analysis-table th:nth-child(6), .script-analysis-table td:nth-child(6) { width: 150px; }
-.script-analysis-table th:nth-child(7), .script-analysis-table td:nth-child(7) { width: 210px; }
-.script-analysis-table th:nth-child(8), .script-analysis-table td:nth-child(8) { width: 280px; }
-.script-analysis-table th:nth-child(9), .script-analysis-table td:nth-child(9) { width: 190px; }
+.script-analysis-table th:nth-child(2), .script-analysis-table td:nth-child(2) { width: 130px; }
+.script-analysis-table th:nth-child(3), .script-analysis-table td:nth-child(3) { width: 130px; }
+.script-analysis-table th:nth-child(4), .script-analysis-table td:nth-child(4) { width: 180px; }
+.script-analysis-table th:nth-child(5), .script-analysis-table td:nth-child(5) { width: 110px; }
+.script-analysis-table th:nth-child(6), .script-analysis-table td:nth-child(6) { width: 82px; }
+.script-analysis-table th:nth-child(7), .script-analysis-table td:nth-child(7) { width: 150px; }
+.script-analysis-table th:nth-child(8), .script-analysis-table td:nth-child(8) { width: 210px; }
+.script-analysis-table th:nth-child(9), .script-analysis-table td:nth-child(9) { width: 280px; }
 .script-analysis-table th:nth-child(10), .script-analysis-table td:nth-child(10) { width: 190px; }
-.script-analysis-table th:nth-child(11), .script-analysis-table td:nth-child(11) { width: 120px; }
-.script-analysis-table th:nth-child(12), .script-analysis-table td:nth-child(12) { width: 130px; }
+.script-analysis-table th:nth-child(11), .script-analysis-table td:nth-child(11) { width: 190px; }
+.script-analysis-table th:nth-child(12), .script-analysis-table td:nth-child(12) { width: 120px; }
+.script-analysis-table th:nth-child(13), .script-analysis-table td:nth-child(13) { width: 130px; }
 .analysis-main-text {
     color: #f8fafc;
     font-weight: 700;

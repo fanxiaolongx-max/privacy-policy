@@ -64,6 +64,8 @@ function normalizeScript(item) {
     const normalized = { ...item };
     if (!normalized.id) {
         normalized.id = 'script_' + uuidv4().replace(/-/g, '').slice(0, 9);
+        normalized.createdAt = new Date().toISOString();
+        normalized.updatedAt = new Date().toISOString();
     }
     return normalized;
 }
@@ -159,11 +161,13 @@ async function saveScripts(items) {
     let scripts = readScriptsFromJson();
 
     incoming.forEach(item => {
-        const idx = scripts.findIndex(s => s.name === item.name);
+        const idx = scripts.findIndex(s => s.name === item.name || s.id === item.id);
+        const now = new Date().toISOString();
         if (idx >= 0) {
-            scripts[idx] = { ...scripts[idx], ...item };
+            scripts[idx] = { ...scripts[idx], ...item, updatedAt: now };
+            if (!scripts[idx].createdAt) scripts[idx].createdAt = now;
         } else {
-            scripts.push(item);
+            scripts.push({ ...item, createdAt: item.createdAt || now, updatedAt: now });
         }
     });
 

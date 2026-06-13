@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain, session, shell } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, session, shell, Tray, Menu } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const fs = require('fs');
@@ -29,6 +29,9 @@ function getFreePort(startingPort) {
 }
 
 let mainWindow;
+let tray = null;
+let isQuitting = false;
+let isFirstClose = true;
 let downloadHandlerRegistered = false;
 let updateInfo = null;
 let updateDownloaded = false;
@@ -310,6 +313,37 @@ function registerDownloadHandler() {
     });
 }
 
+function createTray() {
+    const iconPath = path.join(__dirname, 'frontend/assets/icon.png');
+    // Fallback to native if icon is missing, but usually electron builder packages the icon
+    try {
+        tray = new Tray(iconPath);
+        const contextMenu = Menu.buildFromTemplate([
+            { label: '显示主窗口', click: () => { if (mainWindow) mainWindow.show(); } },
+            { type: 'separator' },
+            { label: '完全退出程序', click: () => {
+                isQuitting = true;
+                app.quit();
+            }}
+        ]);
+        tray.setToolTip('数据抓取引擎');
+        tray.setContextMenu(contextMenu);
+
+        tray.on('click', () => {
+            if (mainWindow) {
+                if (mainWindow.isVisible()) {
+                    mainWindow.hide();
+                } else {
+                    mainWindow.show();
+                    mainWindow.focus();
+                }
+            }
+        });
+    } catch (e) {
+        console.warn('[Electron] Failed to create Tray:', e);
+    }
+}
+
 async function createWindow() {
     const launchExperience = prepareLaunchExperience();
 
@@ -349,10 +383,34 @@ async function createWindow() {
         dialog.showErrorBox('Server Startup Failed', `Failed to start the local server: ${err.message}`);
     }
 
+    if (!tray) {
+        createTray();
+    }
+
+    mainWindow.on('close', function (event) {
+        if (!isQuitting) {
+            event.preventDefault();
+            mainWindow.hide();
+            
+            if (isFirstClose && tray) {
+                tray.displayBalloon({
+                    title: '工具已隐藏至后台托盘',
+                    content: '程序仍在后台稳定运行，点击托盘图标可重新打开主窗口。',
+                    iconType: 'info'
+                });
+                isFirstClose = false;
+            }
+        }
+    });
+
     mainWindow.on('closed', function () {
         mainWindow = null;
     });
 }
+
+app.on('before-quit', () => {
+    isQuitting = true;
+});
 
 app.on('ready', createWindow);
 app.whenReady().then(() => {
