@@ -117,13 +117,59 @@
         return JSON.stringify(payload, null, 10);
     }
 
-    function replaceBasePayloadInCode(code, payload) {
+    function replaceBasePayloadInCode(code, payload, row) {
         if (!code || typeof code !== 'string' || !payload) return code || '';
         const markerIndex = code.indexOf('baseDetailPayload');
         if (markerIndex < 0) return code;
         const range = findBalancedObjectRange(code, markerIndex);
         if (!range) return code;
-        return code.slice(0, range.start) + stringifyPayloadForCode(payload) + code.slice(range.end);
+
+        let payloadClone = cloneJson(payload);
+        const config = row ? (row.script.configOptions || row.configOptions) : {};
+        const platform = row ? row.platform : '';
+
+        let hasCPC = false;
+        function traversePayload(obj) {
+            if (typeof obj !== 'object' || obj === null) return;
+            if (platform === 'DataFab' && config.autoFetchCPC && obj.column === 'cpc' && Array.isArray(obj.values)) {
+                hasCPC = true; obj.values = '__CPC_IDS_PLACEHOLDER__';
+            }
+            if (platform === 'NetCare' && config.autoFetchCPC) {
+                if (obj.nid !== undefined && Array.isArray(obj.nid)) { obj.nid = '__NID_PLACEHOLDER__'; }
+                if (obj.nid_name !== undefined && Array.isArray(obj.nid_name)) { obj.nid_name = '__NID_PLACEHOLDER__'; }
+            }
+            if (config.autoRuntimeMonth) {
+                if (typeof obj.column === 'string' && Array.isArray(obj.values) && obj.values.length === 1 && typeof obj.values[0] === 'string') {
+                    if (obj.column.toLowerCase().includes('month') && /^[0-9]{1,2}$/.test(obj.values[0])) {
+                        obj.values = '__MONTH_PLACEHOLDER__';
+                    }
+                    if (obj.column.toLowerCase().includes('year') && /^[0-9]{4}$/.test(obj.values[0])) {
+                        obj.values = '__YEAR_PLACEHOLDER__';
+                    }
+                }
+                let sKey = Object.keys(obj).find(k => (k.toLowerCase().includes('start_date') || k.toLowerCase() === 'startdate') && typeof obj[k] === 'string' && /^[0-9]{4}-[0-9]{2}-[0-9]{2}/.test(obj[k]));
+                let eKey = Object.keys(obj).find(k => (k.toLowerCase().includes('end_date') || k.toLowerCase() === 'enddate') && typeof obj[k] === 'string' && /^[0-9]{4}-[0-9]{2}-[0-9]{2}/.test(obj[k]));
+                if (sKey && eKey) {
+                    const sMonth = obj[sKey].substring(0, 7), eMonth = obj[eKey].substring(0, 7);
+                    if (sMonth === eMonth) {
+                        obj[sKey] = '__START_DATE_PLACEHOLDER__' + obj[sKey].substring(10);
+                        obj[eKey] = '__END_DATE_PLACEHOLDER__' + obj[eKey].substring(10);
+                    }
+                }
+            }
+            for (let key in obj) { traversePayload(obj[key]); }
+        }
+        traversePayload(payloadClone);
+
+        let paramsStr = stringifyPayloadForCode(payloadClone);
+        if (config.useGlobalVars) {
+            paramsStr = paramsStr.replace(/"北部非洲地区部"/g, 'targetRegion').replace(/"埃及代表处"/g, 'targetOffice');
+        }
+        if (hasCPC) {
+            paramsStr = paramsStr.replace(/"__CPC_IDS_PLACEHOLDER__"/g, 'cpcIds');
+        }
+
+        return code.slice(0, range.start) + paramsStr + code.slice(range.end);
     }
 
     function parseEditedValue(rawValue) {
@@ -619,6 +665,7 @@
             script,
             payload,
             isDirty: modifiedRows.has(script.id),
+            dirtyFields: modifiedRows.get(script.id)?.dirtyFields || new Set(),
             category: script.category || '默认分类',
             name: script.name || '',
             outputName,
@@ -669,9 +716,11 @@
         return `<div class="analysis-pill-list">${visible.map(item => {
             const dupKey = `filter:${item.key}=${item.value}`;
             const isDup = !item.isEmpty && freqMap && freqMap.get(dupKey) > 1;
+            const isDirty = row.dirtyFields && row.dirtyFields.has(`filter:${item.key}`);
             const dupClass = isDup ? ' duplicate' : '';
+            const dirtyClass = isDirty ? ' unsaved-field' : '';
             const dupAttr = isDup ? ` data-dup-key="${escapeHtml(dupKey)}"` : '';
-            return `<span class="analysis-pill editable ${item.isEmpty ? 'empty' : ''}${dupClass}"${dupAttr} title="${escapeHtml(item.value ? `${item.key}=${item.value}${isDup ? ' (在多条脚本中复用)' : ''}` : `${item.key}=空值，可点击编辑`)}" onclick="event.stopPropagation(); UIVScriptAnalysis.editFilter('${escapeHtml(row.id)}', '${escapeHtml(item.key)}')">
+            return `<span class="analysis-pill editable ${item.isEmpty ? 'empty' : ''}${dupClass}${dirtyClass}"${dupAttr} title="${escapeHtml(item.value ? `${item.key}=${item.value}${isDup ? ' (在多条脚本中复用)' : ''}` : `${item.key}=空值，可点击编辑`)}" onclick="event.stopPropagation(); UIVScriptAnalysis.editFilter('${escapeHtml(row.id)}', '${escapeHtml(item.key)}')">
                 ${escapeHtml(item.key)}${item.displayValue ? '=' + escapeHtml(item.displayValue) : '=空值'}
                 <button class="analysis-filter-remove" title="删除字段" onclick="event.stopPropagation(); UIVScriptAnalysis.deleteFilter('${escapeHtml(row.id)}', '${escapeHtml(item.key)}')">×</button>
             </span>`;
@@ -694,9 +743,11 @@
             }
             const dupKey = `core:${label}=${value}`;
             const isDup = freqMap && freqMap.get(dupKey) > 1;
+            const isDirty = row.dirtyFields && row.dirtyFields.has(`core:${label}`);
             const dupClass = isDup ? ' duplicate' : '';
+            const dirtyClass = isDirty ? ' unsaved-field' : '';
             const dupAttr = isDup ? ` data-dup-key="${escapeHtml(dupKey)}"` : '';
-            return `<span class="analysis-pill editable${dupClass}"${dupAttr} title="点击编辑: ${escapeHtml(label)}=${escapeHtml(value)}${isDup ? ' (在多条脚本中复用)' : ''}" onclick="event.stopPropagation(); UIVScriptAnalysis.editCoreObject('${escapeHtml(row.id)}', '${escapeHtml(label)}')">${escapeHtml(label)}=${escapeHtml(shortDisplayValue(value))}</span>`;
+            return `<span class="analysis-pill editable${dupClass}${dirtyClass}"${dupAttr} title="点击编辑: ${escapeHtml(label)}=${escapeHtml(value)}${isDup ? ' (在多条脚本中复用)' : ''}" onclick="event.stopPropagation(); UIVScriptAnalysis.editCoreObject('${escapeHtml(row.id)}', '${escapeHtml(label)}')">${escapeHtml(label)}=${escapeHtml(shortDisplayValue(value))}</span>`;
         }).join('')}</div>`;
     }
 
@@ -818,10 +869,13 @@
         return analyzedRows.find(item => item.id === scriptId);
     }
 
-    function setRowPayload(scriptId, payload) {
+    function setRowPayload(scriptId, payload, dirtyKey) {
         const row = findRow(scriptId);
         if (!row || !payload) return;
-        modifiedRows.set(scriptId, { payload: cloneJson(payload) });
+        const existing = modifiedRows.get(scriptId) || { payload: null, dirtyFields: new Set() };
+        existing.payload = cloneJson(payload);
+        if (dirtyKey) existing.dirtyFields.add(dirtyKey);
+        modifiedRows.set(scriptId, existing);
         const idx = analyzedRows.findIndex(item => item.id === scriptId);
         if (idx >= 0) analyzedRows[idx] = analyzeScript(row.script);
         updateSaveButtonState();
@@ -872,7 +926,7 @@
             showToast('未找到可修改的字段', 'error');
             return;
         }
-        setRowPayload(scriptId, nextPayload);
+        setRowPayload(scriptId, nextPayload, `filter:${key}`);
         render();
     }
 
@@ -938,7 +992,7 @@
             return;
         }
 
-        setRowPayload(scriptId, nextPayload);
+        setRowPayload(scriptId, nextPayload, `core:${label}`);
         render();
     }
 
@@ -960,7 +1014,7 @@
             showToast('未找到可删除的字段', 'error');
             return;
         }
-        setRowPayload(scriptId, nextPayload);
+        setRowPayload(scriptId, nextPayload, `filter:${key}`);
         render();
     }
 
@@ -971,8 +1025,8 @@
             ...row.script,
             url: row.script.url || row.url,
             payload: payloadText,
-            code: replaceBasePayloadInCode(row.script.code || '', payload),
-            consoleCode: replaceBasePayloadInCode(row.script.consoleCode || '', payload),
+            code: replaceBasePayloadInCode(row.script.code || '', payload, row),
+            consoleCode: replaceBasePayloadInCode(row.script.consoleCode || '', payload, row),
             configOptions: row.script.configOptions || row.configOptions
         };
     }
