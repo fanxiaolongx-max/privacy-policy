@@ -331,4 +331,29 @@ function refreshI18n() {
     if (lastCategories.length) renderSidebar(lastScripts, lastCategories);
 }
 
-window.UIVSidebar = { loadSavedScripts, createNewCategory, exportBackup, importBackup, refreshI18n };
+function getScripts() {
+    return Array.isArray(lastScripts) ? [...lastScripts] : [];
+}
+
+function getCategories() {
+    return Array.isArray(lastCategories) ? [...lastCategories] : [];
+}
+
+function refillScript(scriptId) {
+    const script = lastScripts.find(item => item.id === scriptId);
+    if (!script) return false;
+    window.UIVWorkbench.fillWorkbench(script);
+    showToast(UIVT('uiv.toast.filled', { name: script.name }));
+    return true;
+}
+
+window.UIVSidebar = {
+    loadSavedScripts,
+    createNewCategory,
+    exportBackup,
+    importBackup,
+    refreshI18n,
+    getScripts,
+    getCategories,
+    refillScript
+};

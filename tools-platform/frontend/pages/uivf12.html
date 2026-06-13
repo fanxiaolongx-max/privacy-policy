@@ -7,7 +7,7 @@
     <title>UIVF12 抓取引擎 v6.6 - Tools Platform</title>
     <meta name="description" content="UI.Vision 全能抓取引擎，自动化脚本工程中心，脚本云端仓库管理">
     <link rel="stylesheet" href="/css/shared.css?v=20260612-01">
-    <link rel="stylesheet" href="/css/uivf12.css?v=20260608-01">
+    <link rel="stylesheet" href="/css/uivf12.css?v=20260613-01">
     <style>
         .repo-source-panel {
             margin-bottom: 10px;
@@ -90,6 +90,7 @@
                     <span class="repo-source-badge">分类来源: -</span>
                     <span class="repo-source-note">仓库加载后会在这里显示当前真实读源。</span>
                 </div>
+                <button class="btn-script-analysis" onclick="UIVScriptAnalysis.open()">脚本分析</button>
 
                 <div id="scriptList" style="flex:1; overflow-y:auto; padding-right:5px; padding-bottom:20px;"></div>
 
@@ -205,6 +206,81 @@
         </div>
     </div>
 
+    <div id="scriptAnalysisModal" class="script-analysis-overlay" aria-hidden="true">
+        <div class="script-analysis-modal" role="dialog" aria-modal="true" aria-labelledby="scriptAnalysisTitle">
+            <div class="script-analysis-header">
+                <div>
+                    <h3 id="scriptAnalysisTitle">脚本仓库分析</h3>
+                    <p id="scriptAnalysisSummary">正在读取脚本仓库...</p>
+                </div>
+                <button class="script-analysis-close" onclick="UIVScriptAnalysis.close()" aria-label="关闭">×</button>
+            </div>
+            <div class="script-analysis-toolbar">
+                <input id="scriptAnalysisSearch" type="text" placeholder="搜索分类、脚本、URL、字段..." oninput="UIVScriptAnalysis.render()">
+                <select id="scriptAnalysisCategory" onchange="UIVScriptAnalysis.render()">
+                    <option value="">全部分类</option>
+                </select>
+                <button class="script-analysis-save" onclick="UIVScriptAnalysis.saveChanges()">保存修改</button>
+                <button class="script-analysis-refresh" onclick="UIVScriptAnalysis.reload()">刷新</button>
+            </div>
+            <div class="script-analysis-table-wrap">
+                <table class="script-analysis-table">
+                    <thead>
+                        <tr>
+                            <th>分类</th>
+                            <th>脚本名称</th>
+                            <th>生成表名称</th>
+                            <th>请求 URL</th>
+                            <th>平台</th>
+                            <th>请求</th>
+                            <th>核心对象</th>
+                            <th>筛选字段</th>
+                            <th>运行开关</th>
+                            <th>响应取表</th>
+                            <th>回填状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scriptAnalysisRows">
+                        <tr><td colspan="12" class="script-analysis-empty">等待分析...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="script-analysis-footer">
+                <span>双击行可回填；点击筛选字段可改值，点击 × 可删除字段；保存前关闭窗口会提示先保存。</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="scriptAnalysisMiniDialog" class="script-analysis-mini-overlay" aria-hidden="true">
+        <div class="script-analysis-mini-dialog" role="dialog" aria-modal="true" aria-labelledby="scriptAnalysisMiniTitle">
+            <div class="script-analysis-mini-header">
+                <h4 id="scriptAnalysisMiniTitle">确认操作</h4>
+                <button class="script-analysis-mini-close" onclick="UIVScriptAnalysis.cancelDialog()" aria-label="关闭">×</button>
+            </div>
+            <div class="script-analysis-mini-body">
+                <p id="scriptAnalysisMiniMessage"></p>
+                <textarea id="scriptAnalysisMiniInput" placeholder="输入字段值"></textarea>
+                <div id="scriptAnalysisMultiEditor" class="script-analysis-multi-editor"></div>
+                <button id="scriptAnalysisMultiAdd" class="script-analysis-multi-add" onclick="UIVScriptAnalysis.addMultiValue()" type="button">+ 添加一项</button>
+                <div id="scriptAnalysisSaveAsFields" class="script-analysis-saveas-fields">
+                    <label>
+                        新脚本名称
+                        <input id="scriptAnalysisSaveAsName" type="text" placeholder="请输入新脚本名称">
+                    </label>
+                    <label>
+                        保存分类
+                        <select id="scriptAnalysisSaveAsCategory"></select>
+                    </label>
+                </div>
+            </div>
+            <div class="script-analysis-mini-footer">
+                <button class="script-analysis-mini-btn secondary" onclick="UIVScriptAnalysis.cancelDialog()">取消</button>
+                <button id="scriptAnalysisMiniConfirm" class="script-analysis-mini-btn primary" onclick="UIVScriptAnalysis.confirmDialog()">确认</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 共享脚本 -->
     <script src="/js/shared/api.js?v=20260612-02"></script>
     <script src="/js/shared/toast.js?v=20260530-03"></script>
@@ -217,7 +293,8 @@
     <script src="/js/uivf12/genlog.js?v=20260610-01"></script>
     <script src="/js/uivf12/generator.js?v=20260610-01"></script>
     <script src="/js/uivf12/save.js?v=20260610-01"></script>
-    <script src="/js/uivf12/sidebar.js?v=20260610-01"></script>
+    <script src="/js/uivf12/sidebar.js?v=20260613-01"></script>
+    <script src="/js/uivf12/analysis.js?v=20260613-01"></script>
     <script>
         function renderUIVFrontendVersion() {
             const versionEl = document.getElementById('uivFrontendVersion');
