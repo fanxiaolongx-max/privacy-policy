@@ -522,6 +522,15 @@ textarea { flex: 1; resize: none; white-space: pre; overflow: auto; line-height:
     position: relative;
     transform: scale(1.05);
 }
+.analysis-pill.unsaved-field {
+    border-color: rgba(248,113,113,0.7) !important;
+    box-shadow: inset 0 0 0 1px rgba(248,113,113,0.4);
+    animation: unsavedPulse 2s infinite alternate;
+}
+@keyframes unsavedPulse {
+    from { border-color: rgba(248,113,113,0.4); }
+    to { border-color: rgba(248,113,113,0.9); }
+}
 .analysis-pill.good {
     background: rgba(34,197,94,0.12);
     border-color: rgba(34,197,94,0.28);
