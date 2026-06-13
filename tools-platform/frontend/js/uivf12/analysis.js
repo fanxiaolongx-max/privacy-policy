@@ -523,13 +523,14 @@
         };
     }
 
-    function buildCoreObjects({ platform, payload, codeHints, tenantId, boardId, pageId, componentId }) {
+    function buildCoreObjects({ platform, payload, codeHints, tenantId, boardId, pageId, componentId, id }) {
         if (platform === 'DataFab') {
             return [
                 ['tenant', tenantId],
                 ['board', boardId],
                 ['page', pageId],
-                ['component', componentId]
+                ['componentId', componentId],
+                ['id', id]
             ].filter(item => item[1]);
         }
 
@@ -586,11 +587,12 @@
         const outputName = codeHints.outputName || (script.originalFileName
             ? `${script.originalFileName}${pageName ? '_' + pageName : ''}_Latest.csv`
             : text(script.name, '').replace(/(_CN|_AE|_DE)$/, '') + '_Latest.csv');
-        const componentId = text(payload ? getDeepFirst(payload, 'id') : codeHints.componentId, '');
+        const realComponentId = text(payload ? getDeepFirst(payload, 'componentId') : codeHints.componentId, '');
+        const realId = text(payload ? getDeepFirst(payload, 'id') : '', '');
         const pageId = text(payload ? getDeepFirst(payload, 'pageId') : codeHints.pageId, '');
         const boardId = text(payload ? getDeepFirst(payload, 'boardId') : codeHints.boardId, '');
         const tenantId = text(payload ? getDeepFirst(payload, 'srcTenantId') : codeHints.tenantId, '');
-        const coreObjects = buildCoreObjects({ platform, payload, codeHints, tenantId, boardId, pageId, componentId });
+        const coreObjects = buildCoreObjects({ platform, payload, codeHints, tenantId, boardId, pageId, componentId: realComponentId, id: realId });
         const limitVal = payload
             ? (payload.limit || getDeepFirst(payload, 'pageSize') || getDeepFirst(payload, 'maxRows'))
             : '';
@@ -627,7 +629,7 @@
             tenantId,
             boardId,
             pageId,
-            componentId,
+            componentId: realComponentId || realId,
             coreObjects,
             pageName,
             limitVal,
@@ -649,7 +651,7 @@
         )).join('')}</div>`;
     }
 
-    function renderFilterPills(row, filters) {
+    function renderFilterPills(row, filters, freqMap) {
         if (!filters || filters.length === 0) {
             return '<span class="analysis-muted">未识别到筛选字段</span>';
         }
@@ -664,12 +666,16 @@
         const emptyHint = !expanded && emptyCount > 0 && valuedFilters.length > 0
             ? `<span class="analysis-pill off">另${emptyCount}个空值字段</span>`
             : '';
-        return `<div class="analysis-pill-list">${visible.map(item => `
-            <span class="analysis-pill editable ${item.isEmpty ? 'empty' : ''}" title="${escapeHtml(item.value ? `${item.key}=${item.value}` : `${item.key}=空值，可点击编辑`)}" onclick="event.stopPropagation(); UIVScriptAnalysis.editFilter('${escapeHtml(row.id)}', '${escapeHtml(item.key)}')">
+        return `<div class="analysis-pill-list">${visible.map(item => {
+            const dupKey = `filter:${item.key}=${item.value}`;
+            const isDup = !item.isEmpty && freqMap && freqMap.get(dupKey) > 1;
+            const dupClass = isDup ? ' duplicate' : '';
+            const dupAttr = isDup ? ` data-dup-key="${escapeHtml(dupKey)}"` : '';
+            return `<span class="analysis-pill editable ${item.isEmpty ? 'empty' : ''}${dupClass}"${dupAttr} title="${escapeHtml(item.value ? `${item.key}=${item.value}${isDup ? ' (在多条脚本中复用)' : ''}` : `${item.key}=空值，可点击编辑`)}" onclick="event.stopPropagation(); UIVScriptAnalysis.editFilter('${escapeHtml(row.id)}', '${escapeHtml(item.key)}')">
                 ${escapeHtml(item.key)}${item.displayValue ? '=' + escapeHtml(item.displayValue) : '=空值'}
                 <button class="analysis-filter-remove" title="删除字段" onclick="event.stopPropagation(); UIVScriptAnalysis.deleteFilter('${escapeHtml(row.id)}', '${escapeHtml(item.key)}')">×</button>
-            </span>
-        `).join('')}${emptyHint}${extra}</div>`;
+            </span>`;
+        }).join('')}${emptyHint}${extra}</div>`;
     }
 
     function renderOptionPills(options) {
@@ -678,13 +684,30 @@
         )).join('')}</div>`;
     }
 
-    function renderCoreObjects(row) {
+    function renderCoreObjects(row, freqMap) {
         if (!row.coreObjects || row.coreObjects.length === 0) {
             return '<span class="analysis-muted">脚本中未识别到核心对象</span>';
         }
-        return row.coreObjects.map(([label, value]) => (
-            `<div class="analysis-muted">${escapeHtml(label)}: ${escapeHtml(value)}</div>`
-        )).join('');
+        return `<div class="analysis-pill-list">${row.coreObjects.map(([label, value]) => {
+            if (label === 'endpoint' || label === 'service') {
+                return `<span class="analysis-pill off" style="cursor:pointer;" title="点击复制内容 (URL提取不可修改)" data-copy-val="${escapeHtml(value)}" onclick="event.stopPropagation(); UIVScriptAnalysis.copyCellText(this.getAttribute('data-copy-val'))">${escapeHtml(label)}=${escapeHtml(shortDisplayValue(value))}</span>`;
+            }
+            const dupKey = `core:${label}=${value}`;
+            const isDup = freqMap && freqMap.get(dupKey) > 1;
+            const dupClass = isDup ? ' duplicate' : '';
+            const dupAttr = isDup ? ` data-dup-key="${escapeHtml(dupKey)}"` : '';
+            return `<span class="analysis-pill editable${dupClass}"${dupAttr} title="点击编辑: ${escapeHtml(label)}=${escapeHtml(value)}${isDup ? ' (在多条脚本中复用)' : ''}" onclick="event.stopPropagation(); UIVScriptAnalysis.editCoreObject('${escapeHtml(row.id)}', '${escapeHtml(label)}')">${escapeHtml(label)}=${escapeHtml(shortDisplayValue(value))}</span>`;
+        }).join('')}</div>`;
+    }
+
+    function copyCellText(text) {
+        if (!text || text === '-' || text === '空') return;
+        navigator.clipboard.writeText(text).then(() => {
+            if (window.showToast) showToast(`已复制: ${text.length > 30 ? text.substring(0, 30) + '...' : text}`);
+        }).catch(err => {
+            console.error('复制失败', err);
+            if (window.showToast) showToast('复制失败', 'error');
+        });
     }
 
     function rowMatches(row, keyword, category) {
@@ -729,19 +752,33 @@
             return;
         }
 
+        const freqMap = new Map();
+        analyzedRows.forEach(r => {
+            r.coreObjects.forEach(([lbl, val]) => {
+                if (lbl === 'endpoint' || lbl === 'service') return;
+                const k = `core:${lbl}=${val}`;
+                freqMap.set(k, (freqMap.get(k) || 0) + 1);
+            });
+            r.filters.forEach(item => {
+                if (item.isEmpty) return;
+                const k = `filter:${item.key}=${item.value}`;
+                freqMap.set(k, (freqMap.get(k) || 0) + 1);
+            });
+        });
+
         tbody.innerHTML = rows.map(row => `
             <tr class="${row.id === highlightedScriptId ? 'new-saved-row' : ''}" data-script-id="${escapeHtml(row.id)}" onclick="UIVScriptAnalysis.selectRow('${escapeHtml(row.id)}')" ondblclick="UIVScriptAnalysis.refill('${escapeHtml(row.id)}')">
-                <td><div class="analysis-main-text">${escapeHtml(window.UIVI18n ? UIVI18n.categoryLabel(row.category) : row.category)}</div></td>
-                <td><div class="analysis-main-text">${escapeHtml(row.name)}</div>${row.isDirty ? '<div class="analysis-muted">已修改，待保存</div>' : ''}</td>
-                <td><div class="analysis-main-text">${escapeHtml(row.outputName)}</div><div class="analysis-muted">${escapeHtml(row.pageName || '-')}</div></td>
-                <td><div class="analysis-url">${escapeHtml(row.url || '-')}</div></td>
+                <td><div class="analysis-main-text" style="cursor:pointer;" title="点击复制内容" onclick="event.stopPropagation(); UIVScriptAnalysis.copyCellText(this.innerText)">${escapeHtml(window.UIVI18n ? UIVI18n.categoryLabel(row.category) : row.category)}</div></td>
+                <td><div class="analysis-main-text" style="cursor:pointer;" title="点击复制内容" onclick="event.stopPropagation(); UIVScriptAnalysis.copyCellText(this.innerText)">${escapeHtml(row.name)}</div>${row.isDirty ? '<div class="analysis-muted">已修改，待保存</div>' : ''}</td>
+                <td><div class="analysis-main-text" style="cursor:pointer;" title="点击复制内容" onclick="event.stopPropagation(); UIVScriptAnalysis.copyCellText(this.innerText)">${escapeHtml(row.outputName)}</div><div class="analysis-muted" style="cursor:pointer;" title="点击复制内容" onclick="event.stopPropagation(); UIVScriptAnalysis.copyCellText(this.innerText)">${escapeHtml(row.pageName || '-')}</div></td>
+                <td><div class="analysis-url" style="cursor:pointer;" title="点击复制内容" onclick="event.stopPropagation(); UIVScriptAnalysis.copyCellText(this.innerText)">${escapeHtml(row.url || '-')}</div></td>
                 <td>${renderPills([row.platform], row.platform === 'DataFab' ? 'good' : '')}</td>
                 <td>
                     ${renderPills([row.method, row.auth])}
                     <div class="analysis-muted">pageSize/maxRows: ${escapeHtml(row.limitVal || '-')}</div>
                 </td>
-                <td>${renderCoreObjects(row)}</td>
-                <td>${renderFilterPills(row, row.filters)}</td>
+                <td>${renderCoreObjects(row, freqMap)}</td>
+                <td>${renderFilterPills(row, row.filters, freqMap)}</td>
                 <td>${renderOptionPills(row.options)}</td>
                 <td>${renderPills(row.responseRules, 'warn')}</td>
                 <td>${renderPills([
@@ -835,6 +872,72 @@
             showToast('未找到可修改的字段', 'error');
             return;
         }
+        setRowPayload(scriptId, nextPayload);
+        render();
+    }
+
+    async function editCoreObject(scriptId, label) {
+        const row = findRow(scriptId);
+        if (!row || !row.payload) {
+            showToast('当前脚本没有可编辑 Payload', 'error');
+            return;
+        }
+
+        const CORE_OBJ_KEY_MAP = {
+            'tenant': 'srcTenantId',
+            'board': 'boardId',
+            'page': 'pageId',
+            'componentId': 'componentId',
+            'id': 'id',
+            'product_line': 'product_line',
+            'group_by': 'group_by',
+            'region_code': 'region_code',
+            'office_code': 'office_code',
+            'country_code': 'country_code'
+        };
+
+        let payloadKey = CORE_OBJ_KEY_MAP[label];
+
+        if (!payloadKey) {
+            showToast('该核心对象不支持在此直接修改', 'error');
+            return;
+        }
+
+        const objArr = row.coreObjects.find(item => item[0] === label);
+        const currentValue = objArr ? objArr[1] : '';
+
+        const nextRaw = await openMiniDialog({
+            title: `编辑核心对象`,
+            message: `[${label}] -> 映射到 Payload Key: ${payloadKey}`,
+            input: true,
+            value: currentValue,
+            confirmText: '应用修改'
+        });
+
+        if (nextRaw === null) return;
+
+        const nextPayload = cloneJson(row.payload);
+        
+        let changed = false;
+        function walk(obj) {
+            if (!obj || typeof obj !== 'object') return;
+            if (Array.isArray(obj)) {
+                obj.forEach(walk);
+                return;
+            }
+            if (Object.prototype.hasOwnProperty.call(obj, payloadKey)) {
+                obj[payloadKey] = parseEditedValue(nextRaw);
+                changed = true;
+            }
+            Object.keys(obj).forEach(itemKey => walk(obj[itemKey]));
+        }
+        walk(nextPayload);
+
+        if (!changed) {
+            showToast(`未在 Payload 中找到 ${payloadKey} 字段，可能格式不兼容`, 'error');
+            return;
+        }
+
         setRowPayload(scriptId, nextPayload);
         render();
     }
@@ -1102,6 +1205,21 @@
         if (event.key === 'Escape') close();
     });
 
+    document.addEventListener('mouseover', e => {
+        const pill = e.target.closest('.analysis-pill.duplicate');
+        if (pill && pill.dataset.dupKey) {
+            const key = pill.dataset.dupKey;
+            document.querySelectorAll(`.analysis-pill.duplicate[data-dup-key="${CSS.escape(key)}"]`).forEach(el => el.classList.add('dup-hover'));
+        }
+    });
+
+    document.addEventListener('mouseout', e => {
+        const pill = e.target.closest('.analysis-pill.duplicate');
+        if (pill && pill.dataset.dupKey) {
+            document.querySelectorAll('.analysis-pill.duplicate.dup-hover').forEach(el => el.classList.remove('dup-hover'));
+        }
+    });
+
     window.UIVScriptAnalysis = {
         open,
         close,
@@ -1110,6 +1228,7 @@
         refill,
         selectRow,
         editFilter,
+        editCoreObject,
         deleteFilter,
         toggleFilters,
         copyModified,
@@ -1119,6 +1238,7 @@
         addMultiValue,
         removeMultiValue,
         confirmDialog,
-        cancelDialog
+        cancelDialog,
+        copyCellText
     };
 })();
