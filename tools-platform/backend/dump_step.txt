@@ -1,0 +1,38 @@
+Created At: 2026-06-17T22:00:47Z
+Completed At: 2026-06-17T22:00:47Z
+
+				The command completed successfully.
+				Output:
+				Created At: 2026-06-17T21:29:57Z
+Completed At: 2026-06-17T21:29:58Z
+File Path: `file:///Volumes/512G/06-%E5%B7%A5%E5%85%B7%E5%BC%80%E5%8F%91/privacy-policy/tools-platform/backend/data/sla_targets.json`
+Total Lines: 596
+Total Bytes: 10350
+Showing lines 1 to 596
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1: {
+2:   "manual_target_1778881260277": {
+3:     "5": 100,
+4:     "6": 100,
+5:     "label": "IBMS",
+6:     "type": "gte",
+7:     "weight": 2,
+8:     "autoFill": true,
+9:     "isPercent": true,
+10:     "exceedBy": "",
+11:     "bonus": ""
+12:   },
+13:   "manual_target_1778882000001": {
+14:     "5": 1,
+15:     "6": 1,
+16:     "7": 1,
+17:     "8": 1,
+18:     "9": 1,
+19:     "10": 1,
+20:     "11": 1,
+21:     "12": 1,
+22:     "label": "月度例会",
+23:     "type": "gte",
+24:     "weight": 2,
+25:     "au
+

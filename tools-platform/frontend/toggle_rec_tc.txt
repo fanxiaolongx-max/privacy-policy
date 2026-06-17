@@ -1,0 +1,26 @@
+{
+  "Description": "\"Add custom standard score UI to report.html\"",
+  "Instruction": "\"Add the total score inputs next to the select dropdowns\"",
+  "ReplacementChunks": "[{\"AllowMultiple\":false,\"EndLine\":474,\"ReplacementContent\":\"                <div>\\n                    <span style=\\\"font-size:14px;color:#666;margin-right:6px;\\\">历史快照：</span>\\n                    <select id=\\\"snapshot-select\\\" onchange=\\\"loadSelectedSnapshot()\\\"></select>\\n                </div>\\n                <div style=\\\"display: flex; align-items: center; border: 1px solid #ccc; padding: 6px 12px; border-radius: 8px; background: #fff; gap: 8px; height: 34px; box-sizing: border-box;\\\">\\n                    <label style=\\\"font-size:13px;color:#333;cursor:pointer;display:flex;align-items:center;margin:0;\\\">\\n                        <input type=\\\"checkbox\\\" id=\\\"auto-std-score-cb\\\" onchange=\\\"toggleAutoStdScore()\\\" checked style=\\\"margin-right:6px; cursor:pointer;\\\"> 自动计算总分\\n                    </label>\\n                    <input type=\\\"number\\\" id=\\\"custom-std-score-input\\\" value=\\\"100\\\" style=\\\"width: 50px; border: 1px solid #ddd; border-radius: 4px; padding: 2px 4px; font-size: 13px;\\\" disabled onchange=\\\"updateCustomStdScore()\\\">\\n                </div>\",\"StartLine\":471,\"TargetContent\":\"                <div>\\n                    <span style=\\\"font-size:14px;color:#666;margin-right:6px;\\\">历史快照：</span>\\n                    <select id=\\\"snapshot-select\\\" onchange=\\\"loadSelectedSnapshot()\\\"></select>\\n                </div>\"}]",
+  "TargetFile": "\"/Volumes/512G/06-工具开发/privacy-policy/tools-platform/frontend/pages/report.html\"",
+  "toolAction": "\"Modify report.html\"",
+  "toolSummary": "\"Add UI controls for standard score\""
+}
+---
+{
+  "Description": "\"Add functions to handle custom std score\"",
+  "Instruction": "\"Add toggleAutoStdScore and updateCustomStdScore logic\"",
+  "ReplacementChunks": "[{\"AllowMultiple\":false,\"EndLine\":497,\"ReplacementContent\":\"window.renderCurrentSnapshot = function() {\\n    const monthSel = document.getElementById('target-month-select');\\n    if (monthSel) setReportTargetMonth(monthSel.value);\\n    if (currentSnapshot) {\\n        renderReport(currentSnapshot);\\n    }\\n};\\n\\nwindow.toggleAutoStdScore = async function() {\\n    const cb = document.getElementById('auto-std-score-cb');\\n    const input = document.getElementById('custom-std-score-input');\\n    if (!cb || !input) return;\\n    input.disabled = cb.checked;\\n    \\n    if (!globalConfig.prefs) globalConfig.prefs = {};\\n    globalConfig.prefs.isAutoStandardTotalScore = cb.checked;\\n    try {\\n        await API.post('/api/sla/config', globalConfig);\\n        showToast(rt('report.toast.autoFillOn') || '配置已保存', 'success');\\n        if (currentSnapshot) renderReport(currentSnapshot);\\n    } catch (e) {\\n        console.error(e);\\n        showToast(rt('report.toast.saveFailed') || '保存失败', 'error');\\n    }\\n};\\n\\nwindow.updateCustomStdScore = async function() {\\n    const input = document.getElementById('custom-std-score-input');\\n    if (!input) return;\\n    let val = parseFloat(input.value);\\n    if (isNaN(val) || val <= 0) val = 100;\\n    input.value = val;\\n    \\n    if (!globalConfig.prefs) globalConfig.prefs = {};\\n    globalConfig.prefs.customStandardTotalScore = val;\\n    try {\\n        await API.post('/api/sla/config', globalConfig);\\n        showToast('配置已保存', 'success');\\n        if (currentSnapshot) renderReport(currentSnapshot);\\n    } catch (e) {\\n        console.error(e);\\n        showToast(rt('report.toast.saveFailed') || '保存失败', 'error');\\n    }\\n};\",\"StartLine\":490,\"TargetContent\":\"window.renderCurrentSnapshot = function() {\\n    const monthSel = document.getElementById('target-month-select');\\n    if (monthSel) setReportTargetMonth(monthSel.value);\\n    if (currentSnapshot) {\\n        renderReport(currentSnapshot);\\n    }\\n};\"}]",
+  "TargetFile": "\"/Volumes/512G/06-工具开发/privacy-policy/tools-platform/frontend/js/report/report.js\"",
+  "toolAction": "\"Add std score toggles\"",
+  "toolSummary": "\"Add toggle and update functions for std score\""
+}
+---
+{
+  "CommandLine": "\"grep -rn \\\"toggleAutoStdScore\\\" /Volumes/512G/06-工具开发/privacy-policy/tools-platform/frontend\"",
+  "Cwd": "\"/Volumes/512G/06-工具开发/privacy-policy/tools-platform/frontend\"",
+  "WaitMsBeforeAsync": "500",
+  "toolAction": "\"Search for toggleAutoStdScore\"",
+  "toolSummary": "\"Search for toggle function\""
+}
+---

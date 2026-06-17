@@ -105,6 +105,10 @@
             'sla.upload.special': '指定导入 [专项]',
             'sla.upload.sr': '指定导入 [SR]',
             'sla.upload.vuln': '指定导入 [漏洞]',
+            'sla.upload.clearCache': '清空当前缓存',
+            'sla.upload.confirmClearCache': '确认清空当前页面导入缓存？这只会清除浏览器本地保存的当前导入内容，不会删除历史快照、上传历史或服务端配置。',
+            'sla.upload.clearCacheSuccess': '已清空当前导入缓存',
+            'sla.upload.clearCacheFail': '清空导入缓存失败，请检查浏览器本地存储权限。',
             'sla.upload.cachedTitle': '📊 已恢复上次导入数据',
             'sla.upload.restoreLoading': '⏳ 正在恢复上次导入的数据...',
             'sla.upload.restoreSuccess': '✅ 已恢复上次导入的数据',
@@ -353,6 +357,10 @@
             'sla.upload.special': 'Import [Special]',
             'sla.upload.sr': 'Import [SR]',
             'sla.upload.vuln': 'Import [Vulnerability]',
+            'sla.upload.clearCache': 'Clear Current Cache',
+            'sla.upload.confirmClearCache': 'Clear the current import cache? This only removes the browser-saved current import content. Historical snapshots, upload history, and server config will not be deleted.',
+            'sla.upload.clearCacheSuccess': 'Current import cache cleared',
+            'sla.upload.clearCacheFail': 'Failed to clear the import cache. Check browser local storage permissions.',
             'sla.upload.cachedTitle': '📊 Restored Last Import',
             'sla.upload.restoreLoading': '⏳ Restoring last imported data...',
             'sla.upload.restoreSuccess': '✅ Restored last imported data',
@@ -613,6 +621,7 @@
             label.textContent = t(key) + ' ';
             label.appendChild(input);
         });
+        setText('.upload-cache-clear', t('sla.upload.clearCache'));
         const mainEmpty = document.querySelector('#main-wrapper > div');
         if (mainEmpty && !document.querySelector('#main-wrapper .section-card')) {
             mainEmpty.innerHTML = t('sla.empty.main');

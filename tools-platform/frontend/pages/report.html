@@ -472,9 +472,19 @@
                     <span style="font-size:14px;color:#666;margin-right:6px;">历史快照：</span>
                     <select id="snapshot-select" onchange="loadSelectedSnapshot()"></select>
                 </div>
+                <div style="display: flex; align-items: center; border: 1px solid #ccc; padding: 6px 12px; border-radius: 8px; background: #fff; gap: 8px; height: 34px; box-sizing: border-box;">
+                    <label style="font-size:13px;color:#333;cursor:pointer;display:flex;align-items:center;margin:0;">
+                        <input type="checkbox" id="auto-std-score-cb" onchange="toggleAutoStdScore()" checked style="margin-right:6px; cursor:pointer;"> 自动计算总分
+                    </label>
+                    <input type="number" id="custom-std-score-input" value="100" style="width: 50px; border: 1px solid #ddd; border-radius: 4px; padding: 2px 4px; font-size: 13px;" disabled onchange="updateCustomStdScore()">
+                </div>
                 <button onclick="saveDashboardToDB()"
                     style="padding: 8px 14px; background: #e3f2fd; border: 1px solid #90caf9; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #1565c0; font-weight: 600;">💾
                     入库</button>
+                                <button onclick="openTemplateMappingModal()" style="padding: 8px 14px; background: #fff3e0; border: 1px solid #ffb74d; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #e65100; font-weight: 600;">⚙️ 模板映射</button>
+                <button onclick="exportYuxiangExcel()"
+                    style="padding: 8px 14px; background: #fce4ec; border: 1px solid #f48fb1; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #ad1457; font-weight: 600;">🐴
+                    一键导出“于祥”的赛马表</button>
                 <button onclick="openGroupModal()"
                     style="padding: 8px 14px; background: #e8eaf6; border: 1px solid #9fa8da; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #283593; font-weight: 600;">📂
                     指标分组配置</button>
@@ -497,6 +507,8 @@
                     <option value="json">强制 JSON</option>
                     <option value="sqlite">强制 SQLite</option>
                 </select>
+
+
             </div>
             <div id="reportSourcePanel" class="data-source-panel">
                 <span class="data-source-badge">快照来源: -</span>
@@ -717,7 +729,38 @@
             renderReportSourcePanel();
         });
     </script>
-    <script src="/js/report/report.js?v=20260612-04"></script>
+    
+        <!-- Template Mapping Modal -->
+        <div id="template-mapping-modal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999;">
+            <div class="modal-content" style="background:#fff; width:90%; max-width:1000px; margin:50px auto; padding:20px; border-radius:8px; max-height:80vh; display:flex; flex-direction:column;">
+                <h2>⚙️ 配置 Excel 模板映射</h2>
+                <p>将系统指标与 Excel 模板的具体行建立映射关系，以应对模板的动态变化。C 列文本会保存至 Excel 中。</p>
+                <div style="flex:1; overflow-y:auto; margin:15px 0;">
+                    <table class="matrix-table" style="width:100%;">
+                        <thead>
+                            <tr>
+                                <th style="width:50px;">行号</th>
+                                <th style="width:40%;">Excel 模板 C 列文本 (可编辑)</th>
+                                <th>映射到系统指标</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mapping-tbody">
+                            <tr><td colspan="3" style="text-align:center;">加载中...</td></tr>
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 10px; text-align: center;">
+                        <button type="button" onclick="addNewMappingRow()" style="font-size: 13px; padding: 6px 12px; cursor: pointer; border-radius: 4px; border: 1px dashed #ccc; background: #f9f9f9; color: #666;">+ 手动增加新空行</button>
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <button class="btn btn-secondary" onclick="document.getElementById('template-mapping-modal').style.display='none'">取消</button>
+                    <button class="btn btn-info" onclick="autoFillSequentialMapping()" style="margin-right:10px;">✨ 一键按顺序自动预填</button>
+                    <button class="btn btn-primary" onclick="saveTemplateMapping()">保存并修改模板</button>
+                </div>
+            </div>
+        </div>
+
+        <script src="/js/report/report.js?v=20260612-04"></script>
 </body>
 
 </html>

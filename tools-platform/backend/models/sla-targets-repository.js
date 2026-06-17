@@ -21,41 +21,48 @@ function writeTargetsToJson(items) {
 
 async function replaceTargetsInDbRaw(items) {
     const normalized = normalizeTargets(items);
-    await run('DELETE FROM sla_targets');
-    for (const [targetKey, payload] of Object.entries(normalized)) {
-        const autoFill = payload.autoFill === undefined ? null : (payload.autoFill ? 1 : 0);
-        const isPercent = payload.isPercent === undefined ? null : (payload.isPercent ? 1 : 0);
-        const exceedBy = payload.exceedBy === undefined ? null : payload.exceedBy;
-        const bonus = payload.bonus === undefined ? null : payload.bonus;
-        const weight = payload.weight === undefined ? null : payload.weight;
-        const type = payload.type === undefined ? null : payload.type;
-        const label = payload.label === undefined ? null : payload.label;
-        
-        const extraConfig = {};
-        for (const [k, v] of Object.entries(payload || {})) {
-            if (!['label', 'type', 'weight', 'autoFill', 'isPercent', 'exceedBy', 'bonus'].includes(k)) {
-                extraConfig[k] = v;
+    await run('BEGIN TRANSACTION');
+    try {
+        await run('DELETE FROM sla_targets');
+        for (const [targetKey, payload] of Object.entries(normalized)) {
+            const autoFill = payload.autoFill === undefined ? null : (payload.autoFill ? 1 : 0);
+            const isPercent = payload.isPercent === undefined ? null : (payload.isPercent ? 1 : 0);
+            const exceedBy = payload.exceedBy === undefined ? null : payload.exceedBy;
+            const bonus = payload.bonus === undefined ? null : payload.bonus;
+            const weight = payload.weight === undefined ? null : payload.weight;
+            const type = payload.type === undefined ? null : payload.type;
+            const label = payload.label === undefined ? null : payload.label;
+            
+            const extraConfig = {};
+            for (const [k, v] of Object.entries(payload || {})) {
+                if (!['label', 'type', 'weight', 'autoFill', 'isPercent', 'exceedBy', 'bonus'].includes(k)) {
+                    extraConfig[k] = v;
+                }
             }
-        }
 
-        await run(
-            `INSERT INTO sla_targets (
-                target_key, label, target_type, weight, 
-                auto_fill, is_percent, exceed_by, bonus, 
-                extra_config_json, updated_at
-             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-            [
-                targetKey,
-                label,
-                type,
-                weight,
-                autoFill,
-                isPercent,
-                exceedBy,
-                bonus,
-                JSON.stringify(extraConfig)
-            ]
-        );
+            await run(
+                `INSERT INTO sla_targets (
+                    target_key, label, target_type, weight, 
+                    auto_fill, is_percent, exceed_by, bonus, 
+                    extra_config_json, updated_at
+                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+                [
+                    targetKey,
+                    label,
+                    type,
+                    weight,
+                    autoFill,
+                    isPercent,
+                    exceedBy,
+                    bonus,
+                    JSON.stringify(extraConfig)
+                ]
+            );
+        }
+        await run('COMMIT');
+    } catch (e) {
+        await run('ROLLBACK');
+        throw e;
     }
 }
 
@@ -64,14 +71,8 @@ async function ensureReady() {
         initPromise = (async () => {
             const tableInfo = await all('PRAGMA table_info(sla_targets)');
             
-            // Re-create the table to remove affinities from exceed_by and bonus to preserve types,
-            // or just rely on SQLite type preservation if we don't specify TEXT.
-            // Actually, dropping the table and recreating it is safest since this is dev phase.
-            await run('PRAGMA foreign_keys=off');
-            await run('DROP TABLE IF EXISTS sla_targets');
-            
             await run(`
-                CREATE TABLE sla_targets (
+                CREATE TABLE IF NOT EXISTS sla_targets (
                     target_key TEXT PRIMARY KEY,
                     label TEXT,
                     target_type TEXT,
@@ -84,7 +85,7 @@ async function ensureReady() {
                     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             `);
-            await run('PRAGMA foreign_keys=on');
+
 
             const targets = readTargetsFromJson();
             if (Object.keys(targets).length === 0) return;

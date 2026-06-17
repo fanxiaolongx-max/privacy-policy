@@ -20,5 +20,16 @@
     "filePath": "/custom-tools/esn-check/index.html",
     "createdAt": "2026-06-11T20:31:25.570Z",
     "updatedAt": "2026-06-11T20:31:25.570Z"
+  },
+  {
+    "slug": "network_safety_meeting_summary",
+    "name": "安全大会模板",
+    "icon": "🛡️",
+    "description": "直接编辑安全大会幻灯片，并按页面样式一键导出 PDF。",
+    "tags": ["模板", "PDF", "安全大会"],
+    "href": "/tools/network_safety_meeting_summary",
+    "filePath": "/custom-tools/network_safety_meeting_summary/index.html",
+    "createdAt": "2026-06-16T13:49:05.303Z",
+    "updatedAt": "2026-06-16T14:20:00.000Z"
   }
 ]

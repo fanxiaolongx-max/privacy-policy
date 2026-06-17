@@ -495,6 +495,43 @@ window.renderCurrentSnapshot = function() {
     }
 };
 
+window.toggleAutoStdScore = async function() {
+    const cb = document.getElementById('auto-std-score-cb');
+    const input = document.getElementById('custom-std-score-input');
+    if (!cb || !input) return;
+    input.disabled = cb.checked;
+    
+    if (!globalConfig.prefs) globalConfig.prefs = {};
+    globalConfig.prefs.isAutoStandardTotalScore = cb.checked;
+    try {
+        await API.post('/api/sla/config', globalConfig);
+        showToast(rt('report.toast.autoFillOn') || '配置已保存', 'success');
+        if (currentSnapshot) renderReport(currentSnapshot);
+    } catch (e) {
+        console.error(e);
+        showToast(rt('report.toast.saveFailed') || '保存失败', 'error');
+    }
+};
+
+window.updateCustomStdScore = async function() {
+    const input = document.getElementById('custom-std-score-input');
+    if (!input) return;
+    let val = parseFloat(input.value);
+    if (isNaN(val) || val <= 0) val = 100;
+    input.value = val;
+    
+    if (!globalConfig.prefs) globalConfig.prefs = {};
+    globalConfig.prefs.customStandardTotalScore = val;
+    try {
+        await API.post('/api/sla/config', globalConfig);
+        showToast('配置已保存', 'success');
+        if (currentSnapshot) renderReport(currentSnapshot);
+    } catch (e) {
+        console.error(e);
+        showToast(rt('report.toast.saveFailed') || '保存失败', 'error');
+    }
+};
+
 function parseNum(str) {
     if (str === undefined || str === null || str === '--') return NaN;
     const n = parseFloat(String(str).replace(/[^0-9.-]/g, ''));
@@ -816,15 +853,32 @@ function renderReport(snap) {
         };
     });
 
+    // ── Arrange metricCols by group order ──────────────────────────────
+    // Build a lookup: label -> group name (or null)
+    const labelToGroup = {};
+    const groupWeightMap = {};
+    metricGroups.forEach(g => {
+        let sumWeight = 0;
+        (g.metrics || []).forEach(label => { 
+            labelToGroup[label] = g.name; 
+            const targetData = labelToTargetMap[label];
+            sumWeight += (targetData && targetData.weight !== undefined) ? parseFloat(targetData.weight) : 1;
+        });
+        groupWeightMap[g.name] = sumWeight;
+    });
+
     standardTotalScore = 0;
 
     // Populate values and calculate dynamic weighted score
     metricCols.forEach(m => {
+        const isOthers = labelToGroup[m.label] === 'Others';
         const targetData = labelToTargetMap[m.label];
         const weight = (targetData && targetData.weight !== undefined) ? parseFloat(targetData.weight) : 1;
         m.hasTarget = targetData && targetData[targetMonth] !== undefined && targetData[targetMonth] !== '' && weight > 0;
         
-        standardTotalScore += weight;
+        if (!isOthers) {
+            standardTotalScore += weight;
+        }
         
         const subs = m.subMetrics || [];
         subs.forEach(sm => {
@@ -841,7 +895,9 @@ function renderReport(snap) {
             
             if (!isNaN(valNum)) {
                 if (m.hasTarget) {
-                    catData[sm.category].validWeightSum += weight;
+                    if (!isOthers) {
+                        catData[sm.category].validWeightSum += weight;
+                    }
                     
                     const targetNum = parseFloat(targetData[targetMonth]);
                     const condition = targetData.type || 'gte';
@@ -865,7 +921,11 @@ function renderReport(snap) {
                     const completionRatio = calculateTargetCompletionRatio(valNum, targetNum, condition);
                     const earnedBaseScore = isFailing && proportionalScoring ? +(weight * completionRatio).toFixed(4) : (isFailing ? 0 : weight);
                     const earnedScore = earnedBaseScore + (!isFailing ? bonusScore : 0);
-                    catData[sm.category].earnedScore += earnedScore;
+                    
+                    if (!isOthers) {
+                        catData[sm.category].earnedScore += earnedScore;
+                    }
+                    
                     catData[sm.category].values[m.label] = {
                         raw: sm.value,
                         num: valNum,
@@ -884,19 +944,22 @@ function renderReport(snap) {
         });
     });
 
+    const prefs = globalConfig.prefs || {};
+    const isAutoStdScore = prefs.isAutoStandardTotalScore !== false;
+    const customStdScore = prefs.customStandardTotalScore !== undefined ? Number(prefs.customStandardTotalScore) : 100;
+    
+    let autoStdScore = standardTotalScore;
+    standardTotalScore = isAutoStdScore ? autoStdScore : customStdScore;
+    
+    const autoCb = document.getElementById('auto-std-score-cb');
+    const customInput = document.getElementById('custom-std-score-input');
+    if (autoCb) autoCb.checked = isAutoStdScore;
+    if (customInput) {
+        customInput.value = customStdScore;
+        customInput.disabled = isAutoStdScore;
+    }
+
     // ── Arrange metricCols by group order ──────────────────────────────
-    // Build a lookup: label -> group name (or null)
-    const labelToGroup = {};
-    const groupWeightMap = {};
-    metricGroups.forEach(g => {
-        let sumWeight = 0;
-        (g.metrics || []).forEach(label => { 
-            labelToGroup[label] = g.name; 
-            const targetData = labelToTargetMap[label];
-            sumWeight += (targetData && targetData.weight !== undefined) ? parseFloat(targetData.weight) : 1;
-        });
-        groupWeightMap[g.name] = sumWeight;
-    });
 
     // Build ordered list: grouped metrics first (in group order, then metric order), then ungrouped
     const orderedMetrics = [];
@@ -969,114 +1032,125 @@ function renderReport(snap) {
                 <tbody>
     `;
     
-    tableRows.forEach(row => {
-        const m = row.metric;
-        let targetStr = '--';
-        let isGlobalFailing = false;
-        let globalGapStr = '';
-        
-        const targetData = labelToTargetMap[m.label];
-        const weight = (targetData && targetData.weight !== undefined) ? parseFloat(targetData.weight) : 1;
-        
-        if (m.hasTarget) {
-            const condition = targetData.type || 'gte';
-            targetStr = (condition === 'gte' ? '≥ ' : '≤ ') + targetData[targetMonth];
-            const isPercent = m.value && String(m.value).includes('%');
-            if (isPercent) targetStr += '%';
+    const mainTableRows = tableRows.filter(r => r.groupName !== 'Others');
+    const othersTableRows = tableRows.filter(r => r.groupName === 'Others');
+
+    function generateMatrixRowsHtml(rows, isOthersTable) {
+        let html = '';
+        rows.forEach(row => {
+            const m = row.metric;
+            let targetStr = '--';
+            let isGlobalFailing = false;
+            let globalGapStr = '';
             
-            const globalValNum = parseNum(m.value);
-            if (!isNaN(globalValNum)) {
-                const targetNum = parseFloat(targetData[targetMonth]);
-                if (condition === 'gte' && globalValNum < targetNum) {
-                    isGlobalFailing = true;
-                    globalGapStr = +(targetNum - globalValNum).toFixed(2) + (isPercent ? '%' : '');
-                } else if (condition === 'lte' && globalValNum > targetNum) {
-                    isGlobalFailing = true;
-                    globalGapStr = +(globalValNum - targetNum).toFixed(2) + (isPercent ? '%' : '');
+            const targetData = labelToTargetMap[m.label];
+            const weight = (targetData && targetData.weight !== undefined) ? parseFloat(targetData.weight) : 1;
+            
+            if (m.hasTarget) {
+                const condition = targetData.type || 'gte';
+                targetStr = (condition === 'gte' ? '≥ ' : '≤ ') + targetData[targetMonth];
+                const isPercent = m.value && String(m.value).includes('%');
+                if (isPercent) targetStr += '%';
+                
+                const globalValNum = parseNum(m.value);
+                if (!isNaN(globalValNum)) {
+                    const targetNum = parseFloat(targetData[targetMonth]);
+                    if (condition === 'gte' && globalValNum < targetNum) {
+                        isGlobalFailing = true;
+                        globalGapStr = +(targetNum - globalValNum).toFixed(2) + (isPercent ? '%' : '');
+                    } else if (condition === 'lte' && globalValNum > targetNum) {
+                        isGlobalFailing = true;
+                        globalGapStr = +(globalValNum - targetNum).toFixed(2) + (isPercent ? '%' : '');
+                    }
                 }
             }
-        }
-        
-        let globalDisplayClass = 'val-none';
-        let globalTitleAttr = '';
-        if (m.hasTarget) {
-            globalDisplayClass = isGlobalFailing ? 'val-warn' : 'val-good';
-            globalTitleAttr = isGlobalFailing ? ` title="整体不达标，距离目标差 ${globalGapStr}"` : '';
-        }
-        let autoFillBtn = '';
-        if (m.isManual) {
-            const targetData = labelToTargetMap[m.label] || {};
-            const isAuto = !!targetData.autoFill;
-            const autoColor = isAuto ? '#0288d1' : '#9e9e9e';
-            const autoBg = isAuto ? '#e1f5fe' : '#f5f5f5';
-            const autoBorder = isAuto ? '#81d4fa' : '#e0e0e0';
-            const sourceText = m.autoFillSource && m.autoFillSource.label ? ` · ${rt('report.auto.source')}: ${getTranslatedLabel(m.autoFillSource.label)}` : '';
-            const autoText = isAuto ? `${rt('report.auto.on')}${sourceText}` : rt('report.auto.off');
-            const autoTitle = isAuto && sourceText ? rt('report.auto.sourceTitle', { label: getTranslatedLabel(m.autoFillSource.label) }) : rt('report.auto.title');
-            autoFillBtn = `<span style="cursor:pointer; margin-left:6px; font-size:12px; color:${autoColor}; background:${autoBg}; padding:2px 6px; border-radius:4px; border:1px solid ${autoBorder};" title="${escapeHTML(autoTitle)}" onclick="toggleAutoFill('${escapeHTML(m.label)}')">${escapeHTML(autoText)}</span>`;
-        }
-        const editBtn = m.isManual ? `<span style="cursor:pointer; margin-left:6px; font-size:12px; color:#2e7d32; background:#e8f5e9; padding:2px 6px; border-radius:4px; border:1px solid #c8e6c9;" onclick="editManualMetric('${escapeHTML(m.label)}')">${rt('report.manual.fill')}</span>${autoFillBtn}` : '';
-        const proportionalEnabled = isProportionalScoringEnabled(targetData);
-        const proportionalBtn = m.hasTarget ? `
-            <button class="ratio-score-toggle ${proportionalEnabled ? 'active' : ''}"
-                onclick="toggleProportionalScoring('${escapeHTML(m.label)}')"
-                title="${proportionalEnabled ? rt('report.proportional.titleOn') : rt('report.proportional.titleOff')}">
-                ${proportionalEnabled ? rt('report.proportional.on') : rt('report.proportional.off')}
-            </button>
-        ` : '';
-
-        matrixHtml += `<tr class="matrix-data-row" data-group="${escapeHTML(row.groupName || '未分组')}">`;
-
-        let colIdx = 0;
-        
-        // Group column
-        if (hasGroups) {
-            matrixHtml += `<td class="matrix-group-cell" data-col="${colIdx++}" ${row.isGroupStart ? `rowspan="${row.groupSize}"` : `style="display:none;"`}>${getBilingual(row.groupName || '未分组')}</td>`;
-            matrixHtml += `<td class="matrix-group-cell" data-col="${colIdx++}" ${row.isGroupStart ? `rowspan="${row.groupSize}"` : `style="display:none;"`} style="font-weight:bold; color:#1565c0;">${row.groupWeight || '-'}</td>`;
-        }
-
-        matrixHtml += `
-            <td data-col="${colIdx++}" style="text-align:left; font-weight:600; color:#2c3e50;">
-                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                    <span>${getBilingual(m.label)}</span>${proportionalBtn}${editBtn}
-                </div>
-            </td>
-            <td data-col="${colIdx++}" style="color:#666; font-weight:bold; background:#fafafa;">${weight}</td>
-            <td data-col="${colIdx++}" style="color:#0277bd; font-weight:bold; background:#f5f8fa;">${targetStr}</td>
-            <td data-col="${colIdx++}" style="background:#fff8e1; border-right:2px solid #ffe082;"><span class="${globalDisplayClass}"${globalTitleAttr}>${escapeHTML(String(m.value || '--'))}</span></td>`;
             
-        categories.forEach(cat => {
-            const cell = catData[cat].values[m.label];
-            if (!cell || cell.raw === '--') {
-                matrixHtml += `<td data-col="${colIdx++}" class="val-none">--</td>`;
-            } else {
-                let displayClass = 'val-none';
-                let titleAttr = '';
-                if (m.hasTarget) {
-                    displayClass = cell.isFailing ? 'val-warn' : 'val-good';
-                    titleAttr = cell.isFailing ? ` title="不达标，距离目标差 ${cell.gapStr}"` : ` title="达标"`;
+            let globalDisplayClass = 'val-none';
+            let globalTitleAttr = '';
+            if (m.hasTarget) {
+                globalDisplayClass = isGlobalFailing ? 'val-warn' : 'val-good';
+                globalTitleAttr = isGlobalFailing ? ` title="整体不达标，距离目标差 ${globalGapStr}"` : '';
+            }
+            let autoFillBtn = '';
+            if (m.isManual) {
+                const targetData = labelToTargetMap[m.label] || {};
+                const isAuto = !!targetData.autoFill;
+                const autoColor = isAuto ? '#0288d1' : '#9e9e9e';
+                const autoBg = isAuto ? '#e1f5fe' : '#f5f5f5';
+                const autoBorder = isAuto ? '#81d4fa' : '#e0e0e0';
+                const sourceText = m.autoFillSource && m.autoFillSource.label ? ` · ${rt('report.auto.source')}: ${getTranslatedLabel(m.autoFillSource.label)}` : '';
+                const autoText = isAuto ? `${rt('report.auto.on')}${sourceText}` : rt('report.auto.off');
+                const autoTitle = isAuto && sourceText ? rt('report.auto.sourceTitle', { label: getTranslatedLabel(m.autoFillSource.label) }) : rt('report.auto.title');
+                autoFillBtn = `<span style="cursor:pointer; margin-left:6px; font-size:12px; color:${autoColor}; background:${autoBg}; padding:2px 6px; border-radius:4px; border:1px solid ${autoBorder};" title="${escapeHTML(autoTitle)}" onclick="toggleAutoFill('${escapeHTML(m.label)}')">${escapeHTML(autoText)}</span>`;
+            }
+            const editBtn = m.isManual ? `<span style="cursor:pointer; margin-left:6px; font-size:12px; color:#2e7d32; background:#e8f5e9; padding:2px 6px; border-radius:4px; border:1px solid #c8e6c9;" onclick="editManualMetric('${escapeHTML(m.label)}')">${rt('report.manual.fill')}</span>${autoFillBtn}` : '';
+            const proportionalEnabled = isProportionalScoringEnabled(targetData);
+            const proportionalBtn = m.hasTarget && !isOthersTable ? `
+                <button class="ratio-score-toggle ${proportionalEnabled ? 'active' : ''}"
+                    onclick="toggleProportionalScoring('${escapeHTML(m.label)}')"
+                    title="${proportionalEnabled ? rt('report.proportional.titleOn') : rt('report.proportional.titleOff')}">
+                    ${proportionalEnabled ? rt('report.proportional.on') : rt('report.proportional.off')}
+                </button>
+            ` : '';
+
+            html += `<tr class="matrix-data-row" data-group="${escapeHTML(row.groupName || '未分组')}">`;
+
+            let colIdx = 0;
+            
+            // Group column
+            if (hasGroups) {
+                html += `<td class="matrix-group-cell" data-col="${colIdx++}" ${row.isGroupStart ? `rowspan="${row.groupSize}"` : `style="display:none;"`}>${getBilingual(row.groupName || '未分组')}</td>`;
+                html += `<td class="matrix-group-cell" data-col="${colIdx++}" ${row.isGroupStart ? `rowspan="${row.groupSize}"` : `style="display:none;"`} style="font-weight:bold; color:#1565c0;">${row.groupWeight || '-'}</td>`;
+            }
+
+            html += `
+                <td data-col="${colIdx++}" style="text-align:left; font-weight:600; color:#2c3e50;">
+                    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                        <span>${getBilingual(m.label)}</span>${proportionalBtn}${editBtn}
+                    </div>
+                </td>
+                <td data-col="${colIdx++}" style="color:#666; font-weight:bold; background:#fafafa;">${weight}</td>
+                <td data-col="${colIdx++}" style="color:#0277bd; font-weight:bold; background:#f5f8fa;">${targetStr}</td>
+                <td data-col="${colIdx++}" style="background:#fff8e1; border-right:2px solid #ffe082;"><span class="${globalDisplayClass}"${globalTitleAttr}>${escapeHTML(String(m.value || '--'))}</span></td>`;
+                
+            categories.forEach(cat => {
+                const cell = catData[cat].values[m.label];
+                if (!cell || cell.raw === '--') {
+                    html += `<td data-col="${colIdx++}" class="val-none">--</td>`;
+                } else {
+                    let displayClass = 'val-none';
+                    let titleAttr = '';
+                    if (m.hasTarget) {
+                        displayClass = cell.isFailing ? 'val-warn' : 'val-good';
+                        titleAttr = cell.isFailing ? ` title="不达标，距离目标差 ${cell.gapStr}"` : ` title="达标"`;
+                    }
+                    html += `<td data-col="${colIdx++}"><span class="${displayClass}"${titleAttr}>${escapeHTML(cell.raw)}</span></td>`;
                 }
-                matrixHtml += `<td data-col="${colIdx++}"><span class="${displayClass}"${titleAttr}>${escapeHTML(cell.raw)}</span></td>`;
-            }
+            });
+            
+            categories.forEach(cat => {
+                const cell = catData[cat].values[m.label];
+                if (isOthersTable) {
+                    html += `<td data-col="${colIdx++}" class="val-none" style="background:#f1f8e9;" title="额外监控指标，不计分">--</td>`;
+                } else if (!cell || cell.raw === '--') {
+                    html += `<td data-col="${colIdx++}" class="val-none" style="background:#f1f8e9;">--</td>`;
+                } else if (!m.hasTarget) {
+                    html += `<td data-col="${colIdx++}" class="val-none" style="background:#f1f8e9;" title="未配置目标值或权重为0，不计分">--</td>`;
+                } else {
+                    const earned = cell.earnedScore !== undefined ? cell.earnedScore : (cell.isFailing ? 0 : (weight + (cell.bonusScore || 0)));
+                    const scoreColor = cell.isFailing ? '#d32f2f' : '#2e7d32';
+                    const bonusDisplay = cell.bonusScore ? ` <span style="font-size:10px; color:#e65100;">(+${cell.bonusScore.toFixed(2)})</span>` : '';
+                    const ratioText = cell.proportionalScoring && cell.isFailing ? `, 完成率: ${(cell.completionRatio * 100).toFixed(1)}%` : '';
+                    html += `<td data-col="${colIdx++}" style="font-weight:bold; color:${scoreColor}; background:#f1f8e9;" title="基础分: ${weight}, 实得: ${formatScoreValue(earned)}${ratioText}, 超额奖励: ${cell.bonusScore||0}">${formatScoreValue(earned)}${bonusDisplay}</td>`;
+                }
+            });
+            
+            html += `</tr>`;
         });
-        
-        categories.forEach(cat => {
-            const cell = catData[cat].values[m.label];
-            if (!cell || cell.raw === '--') {
-                matrixHtml += `<td data-col="${colIdx++}" class="val-none" style="background:#f1f8e9;">--</td>`;
-            } else if (!m.hasTarget) {
-                matrixHtml += `<td data-col="${colIdx++}" class="val-none" style="background:#f1f8e9;" title="未配置目标值或权重为0，不计分">--</td>`;
-            } else {
-                const earned = cell.earnedScore !== undefined ? cell.earnedScore : (cell.isFailing ? 0 : (weight + (cell.bonusScore || 0)));
-                const scoreColor = cell.isFailing ? '#d32f2f' : '#2e7d32';
-                const bonusDisplay = cell.bonusScore ? ` <span style="font-size:10px; color:#e65100;">(+${cell.bonusScore.toFixed(2)})</span>` : '';
-                const ratioText = cell.proportionalScoring && cell.isFailing ? `, 完成率: ${(cell.completionRatio * 100).toFixed(1)}%` : '';
-                matrixHtml += `<td data-col="${colIdx++}" style="font-weight:bold; color:${scoreColor}; background:#f1f8e9;" title="基础分: ${weight}, 实得: ${formatScoreValue(earned)}${ratioText}, 超额奖励: ${cell.bonusScore||0}">${formatScoreValue(earned)}${bonusDisplay}</td>`;
-            }
-        });
-        
-        matrixHtml += `</tr>`;
-    });
+        return html;
+    }
+
+    matrixHtml += generateMatrixRowsHtml(mainTableRows, false);
     
     matrixHtml += `
                 </tbody>
@@ -1225,7 +1299,44 @@ function renderReport(snap) {
         </div>
     `;
 
-    content.innerHTML = rankingHtml + matrixHtml + adjustHtml + rulesHtml;
+    let othersMatrixHtml = '';
+    if (othersTableRows && othersTableRows.length > 0) {
+        othersMatrixHtml = `
+        <div class="card" id="others-matrix-card" style="margin-top: 20px;">
+            <h3 class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="color:#607d8b;">额外监控表 (Others 分组)</span>
+                <button onclick="toggleOthersMatrixFullscreen()" style="padding:4px 10px; font-size:12px; background:#f0f4f8; border:1px solid #cbd5e1; border-radius:4px; cursor:pointer; color:#334155; display:flex; align-items:center; gap:4px; font-weight:normal;" title="${rt('report.action.fullscreenTitle')}">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+                    ${rt('report.action.fullscreen')}
+                </button>
+            </h3>
+            <div class="matrix-container" style="background:#fff; height:100%;">
+            <table class="matrix-table" id="others-matrix-table">
+                <thead>
+                    <tr>
+                        ${hasGroups ? `<th style="min-width:40px; max-width:60px; white-space:normal; position:sticky; top:0; z-index:11; background:#eceff1; color:#37474f;">${getBilingual('分组')}</th>
+                                       <th style="min-width:40px; position:sticky; top:0; z-index:11; background:#eceff1; color:#37474f;" title="分组内所有指标权重之和">${getBilingual('总权重')}</th>` : ''}
+                        <th style="min-width:180px; text-align:left;">${getBilingual('考核的指标名称')}</th>
+                        <th style="min-width:60px;">${getBilingual('权重')}</th>
+                        <th style="min-width:100px;">${rt('report.table.targetMonth', { month: targetMonth })}</th>
+                        <th style="min-width:100px; background:#fff8e1; border-right:2px solid #ffe082; color:#ef6c00;">${getBilingual('全局总体达标')}</th>
+                        ${categories.map(cat => `<th>${escapeHTML(cat)}</th>`).join('')}
+                        ${categories.map(cat => `<th style="background:#f1f8e9; color:#888;">${escapeHTML(cat)} ${rt('report.table.score')}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${generateMatrixRowsHtml(othersTableRows, true)}
+                </tbody>
+            </table>
+            </div>
+            <div style="margin-top:12px; font-size:12px; color:#888;">
+                ⚠️ 当前为 Others 分组的额外监控表，该表内指标不计入总分。
+            </div>
+        </div>
+        `;
+    }
+
+    content.innerHTML = rankingHtml + matrixHtml + adjustHtml + othersMatrixHtml + rulesHtml;
     window._currentCatData = catData;
     window._currentOrderedMetrics = orderedMetrics;
     
@@ -1580,6 +1691,52 @@ window.toggleMatrixFullscreen = function() {
     }
 };
 
+window.toggleOthersMatrixFullscreen = function() {
+    const card = document.getElementById('others-matrix-card');
+    const table = card.querySelector('.matrix-table');
+    if (!card) return;
+    
+    if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+        if (card.requestFullscreen) {
+            card.requestFullscreen();
+        } else if (card.msRequestFullscreen) {
+            card.msRequestFullscreen();
+        } else if (card.mozRequestFullScreen) {
+            card.mozRequestFullScreen();
+        } else if (card.webkitRequestFullscreen) {
+            card.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+        }
+        card.style.overflow = 'auto';
+        card.style.display = 'flex';
+        card.style.flexDirection = 'column';
+        if (table) table.style.height = '100%';
+        const container = card.querySelector('.matrix-container');
+        if (container) {
+            container.style.flex = '1';
+            container.style.maxHeight = 'none';
+        }
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        }
+        card.style.overflow = '';
+        card.style.display = '';
+        card.style.flexDirection = '';
+        if (table) table.style.height = '';
+        const container = card.querySelector('.matrix-container');
+        if (container) {
+            container.style.flex = '';
+            container.style.maxHeight = '';
+        }
+    }
+};
+
 window.toggleAdjustFullscreen = function() {
     const card = document.getElementById('adjust-card');
     const table = card.querySelector('.matrix-table');
@@ -1808,6 +1965,8 @@ window.showSysScoreDetails = function(cat) {
 
     allMetrics.forEach(m => {
         const mLabel = m.label;
+        if (window._currentLabelToGroup && window._currentLabelToGroup[mLabel] === 'Others') return;
+
         const cell = d.values[mLabel];
         const targetData = labelToTargetMap[mLabel];
         const weight = (targetData && targetData.weight !== undefined) ? parseFloat(targetData.weight) : 1;
@@ -3088,6 +3247,247 @@ async function promptExpiringTickets(tickets, specialMetricAlerts = []) {
     });
 }
 
+window.exportYuxiangExcel = async function() {
+    const orderedMetrics = window._currentOrderedMetrics;
+    if (!currentSnapshot || !orderedMetrics || !window._currentCatData) {
+        return showToast('无数据可导出', 'warn');
+    }
+    const btn = event.currentTarget;
+    const oldHtml = btn.innerHTML;
+    btn.innerHTML = '⏳ 正在导出...';
+    btn.disabled = true;
+
+    try {
+        const payload = {
+            metrics: [],
+            adjustments: [],
+            totals: {
+                subTotal: { TE: 0, ORG: 0, ET: 0, VDF: 0 },
+                adjustTotal: { TE: 0, ORG: 0, ET: 0, VDF: 0 },
+                weightInMonth: { TE: 0, ORG: 0, ET: 0, VDF: 0 },
+                finalResult: { TE: 0, ORG: 0, ET: 0, VDF: 0 }
+            }
+        };
+
+        const monthStr = document.getElementById('target-month-select').value || '未知';
+        const targetMonth = parseInt(monthStr, 10);
+        const targetCats = ['TE', 'ORG', 'ET', 'VDF'];
+
+        // Filter out Others group metrics
+        const labelGroupLookup = window._currentLabelToGroup || {};
+        const mainMetrics = orderedMetrics.filter(m => labelGroupLookup[m.label] !== 'Others');
+        mainMetrics.forEach(m => {
+            const labelEn = rt(m.label, true) || m.label;
+            const targetData = labelToTargetMap[m.label];
+            let target = targetData && targetData[targetMonth] !== undefined ? targetData[targetMonth] : '';
+            if (target !== '' && targetData) {
+                if (targetData.type === 'gte') target = '≥ ' + target;
+                else if (targetData.type === 'lte') target = '≤ ' + target;
+            }
+            const metricData = { label: m.label, labelEn, target };
+            
+            targetCats.forEach(cat => {
+                const cell = window._currentCatData[cat] && window._currentCatData[cat].values ? window._currentCatData[cat].values[m.label] : null;
+                const weight = Number(m.weight) || 0;
+                
+                let achv = '';
+                let score = 0;
+                
+                if (cell) {
+                    if (cell.isFailing) {
+                        achv = cell.raw;
+                    } else {
+                        achv = cell.raw;
+                    }
+                    score = cell.earnedScore !== undefined ? cell.earnedScore : (cell.isFailing ? 0 : (weight + (cell.bonusScore || 0)));
+                }
+                
+                metricData[cat] = { achv, score, isFailing: cell ? cell.isFailing : false };
+            });
+            payload.metrics.push(metricData);
+        });
+
+        // Add manual adjustments
+        manualAdjustItems.forEach((item, idx) => {
+            const labelEn = rt(item.name, true) || item.name;
+            const adjData = { label: item.name, labelEn };
+            
+            targetCats.forEach(cat => {
+                let score = 0;
+                if (currentSnapshot.manualAdjustData && currentSnapshot.manualAdjustData[cat]) {
+                    const count = currentSnapshot.manualAdjustData[cat][idx] || 0;
+                    if (count > 0) {
+                        score = count * item.unit;
+                        if (score > item.cap) score = item.cap;
+                        if (item.type === '扣分') score = -score;
+                    }
+                }
+                adjData[cat] = { score, count: (currentSnapshot.manualAdjustData && currentSnapshot.manualAdjustData[cat]) ? (currentSnapshot.manualAdjustData[cat][idx] || 0) : 0 };
+                payload.totals.adjustTotal[cat] += score;
+            });
+            payload.adjustments.push(adjData);
+        });
+
+        // Merge 全量EOS & 日志回传 & 拓扑与预案
+        const mergedMetrics = [];
+        let eosProduct = null;
+        let logBase = null;
+        let topoBase = null;
+
+        const parseFloatSafe = (val) => {
+            if (typeof val === 'string' && val.endsWith('%')) return parseFloat(val);
+            if (typeof val === 'string' || typeof val === 'number') {
+                const n = parseFloat(val);
+                return isNaN(n) ? 0 : n;
+            }
+            return 0;
+        };
+        const isPct = (val) => typeof val === 'string' && val.endsWith('%');
+
+        const mergeTwoMetrics = (baseObj, newObj, newLabel) => {
+            baseObj.label = newLabel;
+            
+            const t1str = baseObj.target !== undefined && baseObj.target !== '' ? String(baseObj.target).trim() : '--';
+            const t2str = newObj.target !== undefined && newObj.target !== '' ? String(newObj.target).trim() : '--';
+            baseObj.target = `${t1str} & ${t2str}`;
+            
+            ['TE', 'ORG', 'ET', 'VDF'].forEach(cat => {
+                const a1str = baseObj[cat].achv !== undefined && baseObj[cat].achv !== '' ? String(baseObj[cat].achv).trim() : '--';
+                const a2str = newObj[cat].achv !== undefined && newObj[cat].achv !== '' ? String(newObj[cat].achv).trim() : '--';
+                
+                if (baseObj[cat].achv === '' && newObj[cat].achv === '') {
+                    baseObj[cat].achv = '';
+                } else {
+                    baseObj[cat].achv = `${a1str} & ${a2str}`;
+                }
+                
+                const s1 = parseFloatSafe(baseObj[cat].score);
+                const s2 = parseFloatSafe(newObj[cat].score);
+                baseObj[cat].score = s1 + s2;
+                
+                baseObj[cat].isFailing = baseObj[cat].isFailing || newObj[cat].isFailing;
+            });
+        };
+
+        payload.metrics.forEach(md => {
+            if (md.label === '全量EOS-产品') {
+                eosProduct = md;
+                mergedMetrics.push(eosProduct);
+            } else if (md.label === '全量EOS-版本') {
+                if (eosProduct) {
+                    mergeTwoMetrics(eosProduct, md, '全量EOS (合并)');
+                } else {
+                    mergedMetrics.push(md);
+                }
+            } else if (md.label === '日志回传') {
+                logBase = md;
+                mergedMetrics.push(logBase);
+            } else if (md.label === '日志回传备案') {
+                if (logBase) {
+                    mergeTwoMetrics(logBase, md, '日志回传 (合并)');
+                } else {
+                    mergedMetrics.push(md);
+                }
+            } else if (md.label === '拓扑') {
+                topoBase = md;
+                mergedMetrics.push(topoBase);
+            } else if (md.label === '预案') {
+                if (topoBase) {
+                    mergeTwoMetrics(topoBase, md, '拓扑与预案 (合并)');
+                } else {
+                    mergedMetrics.push(md);
+                }
+            } else {
+                mergedMetrics.push(md);
+            }
+        });
+        payload.metrics = mergedMetrics;
+
+        // Totals
+        targetCats.forEach(cat => {
+            const d = window._currentCatData[cat];
+            if (d) {
+                // subTotal should be pure earned weights (实际获权值) instead of standardized base score
+                payload.totals.subTotal[cat] = d.earnedScore;
+                payload.totals.weightInMonth[cat] = d.validWeightSum; // 满权值
+                payload.totals.finalResult[cat] = d.finalScore;
+            }
+        });
+
+        const token = localStorage.getItem('tools_token');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        
+        const response = await fetch('/api/sla/export-yuxiang', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            throw new Error('导出失败: ' + await response.text());
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `每月赛马-分网络_${monthStr}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+    } catch(e) {
+        console.error(e);
+        showToast('导出失败: ' + e.message, 'error');
+    } finally {
+        btn.innerHTML = oldHtml;
+        btn.disabled = false;
+    }
+}
+
+
+window.addNewMappingRow = function() {
+    const tbody = document.getElementById('mapping-tbody');
+    const rows = tbody.querySelectorAll('tr');
+    let lastRowNumber = 2; // Default if empty
+    if (rows.length > 0) {
+        const lastRow = rows[rows.length - 1];
+        const td = lastRow.querySelector('td:first-child');
+        if (td) {
+            lastRowNumber = parseInt(td.innerText, 10) || lastRowNumber;
+        }
+    }
+    const newRowNumber = lastRowNumber + 1;
+    const newIdx = window._currentTemplateData ? window._currentTemplateData.length : rows.length;
+    
+    // We need to generate the options html based on what's already there
+    // If we have an existing select, we can clone its innerHTML
+    let selectHtmlOptions = '<option value="">-- 未映射 --</option>';
+    const existingSelect = tbody.querySelector('.mapping-select');
+    if (existingSelect) {
+        // Just copy its innerHTML but remove any 'selected' attribute
+        selectHtmlOptions = existingSelect.innerHTML.replace(/selected(="")?/g, '');
+    }
+    
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td>${newRowNumber}</td>
+        <td><input type="text" class="mapping-text" data-idx="${newIdx}" value="" style="width:100%; padding:4px; box-sizing:border-box;"></td>
+        <td>
+            <select class="mapping-select" data-idx="${newIdx}" style="width:100%; padding:4px;">
+                ${selectHtmlOptions}
+            </select>
+        </td>
+    `;
+    tbody.appendChild(tr);
+    
+    // also push a blank entry to _currentTemplateData so save mapping works
+    if (window._currentTemplateData) {
+        window._currentTemplateData.push({ r: newRowNumber, text: '', mapping: '' });
+    }
+};
+
 window.saveDashboardToDB = async function(event) {
     if (!currentSnapshot) {
         return showToast(rt('report.toast.noSnapshot'), 'error');
@@ -3385,4 +3785,177 @@ window.saveDashboardToDB = async function(event) {
         showToast(`${rt('report.toast.saveDbRequestFailed')}: ${e.message}`, 'error');
         console.error(e);
     }
+};
+
+
+window.openTemplateMappingModal = async function() {
+    const modal = document.getElementById('template-mapping-modal');
+    modal.style.display = 'block';
+    const tbody = document.getElementById('mapping-tbody');
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">加载中...</td></tr>';
+    
+    try {
+        const token = localStorage.getItem('tools_token');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        
+        const res = await fetch('/api/sla/template-mapping', { headers });
+        const data = await res.json();
+        
+        
+        // If window._currentOrderedMetrics is missing, try to reconstruct it from metricCols and ungrouped
+        let metricsList = window._currentOrderedMetrics || [];
+        if (metricsList.length === 0 && typeof metricCols !== 'undefined') {
+             metricsList = [...metricCols];
+        }
+        
+        // Ensure merged labels are in the options list so auto-fill can select them!
+        const metrics = metricsList.map(m => m.label);
+        if (!metrics.includes('全量EOS (合并)')) metrics.push('全量EOS (合并)');
+        if (!metrics.includes('日志回传 (合并)')) metrics.push('日志回传 (合并)');
+        if (!metrics.includes('拓扑与预案 (合并)')) metrics.push('拓扑与预案 (合并)');
+        
+        // manualAdjustItems is a global array in report.js
+        const adjs = (typeof manualAdjustItems !== 'undefined' ? manualAdjustItems : []).map(a => a.name);
+
+        const sys = ['SYS_SubTotal', 'SYS_AdjustTotal', 'SYS_WeightInMonth', 'SYS_FinalResult'];
+        const allOptions = [...metrics, ...adjs, ...sys];
+        
+        window._currentTemplateData = data;
+        
+        let html = '';
+        data.forEach((row, idx) => {
+            let selectHtml = `<select class="mapping-select" data-idx="${idx}" style="width:100%; padding:4px;">
+                <option value="">-- 未映射 --</option>`;
+            allOptions.forEach(opt => {
+                const isSelected = row.mapping === opt ? 'selected' : '';
+                selectHtml += `<option value="${opt}" ${isSelected}>${opt}</option>`;
+            });
+            selectHtml += `</select>`;
+            
+            html += `<tr>
+                <td>${row.r}</td>
+                <td><input type="text" class="mapping-text" data-idx="${idx}" value="${escapeHTML(row.text)}" style="width:100%; padding:4px; box-sizing:border-box;"></td>
+                <td>${selectHtml}</td>
+            </tr>`;
+        });
+        tbody.innerHTML = html;
+        
+    } catch(e) {
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red;">加载失败: ${e.message}</td></tr>`;
+    }
+};
+
+window.saveTemplateMapping = async function() {
+    if (!window._currentTemplateData) return;
+    const texts = document.querySelectorAll('.mapping-text');
+    const selects = document.querySelectorAll('.mapping-select');
+    
+    const payload = [];
+    window._currentTemplateData.forEach((row, idx) => {
+        payload.push({
+            r: row.r,
+            text: texts[idx].value,
+            mapping: selects[idx].value
+        });
+    });
+    
+    try {
+        const token = localStorage.getItem('tools_token');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        
+        const res = await fetch('/api/sla/template-mapping', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+            showToast('模板修改并映射成功！');
+            document.getElementById('template-mapping-modal').style.display = 'none';
+        } else {
+            showToast('保存失败', 'error');
+        }
+    } catch(e) {
+        showToast('保存失败: ' + e.message, 'error');
+    }
+};
+
+
+window.autoFillSequentialMapping = function() {
+    if (!window._currentTemplateData) return;
+    
+    // 1. Build ordered main metrics
+    const orderedMetrics = window._currentOrderedMetrics || [];
+    const labelGroupLookup = window._currentLabelToGroup || {};
+    const mainMetricsRaw = orderedMetrics.filter(m => labelGroupLookup[m.label] !== 'Others');
+    
+    // Merge EOS, Log, Topo
+    const mainMetrics = [];
+    let eosProduct = null;
+    let logBase = null;
+    let topoBase = null;
+    mainMetricsRaw.forEach(m => {
+        if (m.label === '全量EOS-产品') {
+            eosProduct = { label: '全量EOS (合并)' };
+            mainMetrics.push(eosProduct);
+        } else if (m.label === '全量EOS-版本') {
+            if (!eosProduct) mainMetrics.push(m);
+        } else if (m.label === '日志回传') {
+            logBase = { label: '日志回传 (合并)' };
+            mainMetrics.push(logBase);
+        } else if (m.label === '日志回传备案') {
+            if (!logBase) mainMetrics.push(m);
+        } else if (m.label === '拓扑') {
+            topoBase = { label: '拓扑与预案 (合并)' };
+            mainMetrics.push(topoBase);
+        } else if (m.label === '预案') {
+            if (!topoBase) mainMetrics.push(m);
+        } else {
+            mainMetrics.push(m);
+        }
+    });
+
+    const adjs = (typeof manualAdjustItems !== 'undefined' ? manualAdjustItems : []);
+    
+    const selects = document.querySelectorAll('.mapping-select');
+    
+    // Helper to find select by row
+    const setSelectByRow = (r, val) => {
+        const idx = window._currentTemplateData.findIndex(d => d.r === r);
+        if (idx !== -1 && selects[idx]) {
+            // Only set if option exists
+            if (Array.from(selects[idx].options).some(o => o.value === val)) {
+                selects[idx].value = val;
+            }
+        }
+    };
+    
+    // Fill metrics 3 to 36
+    mainMetrics.forEach((m, i) => {
+        const r = 3 + i;
+        if (r <= 36) {
+            setSelectByRow(r, m.label);
+        }
+    });
+    
+    // Fill SubTotal 37
+    setSelectByRow(37, 'SYS_SubTotal');
+    
+    // Fill Adjustments 38 to 51, 52 to 53
+    adjs.forEach((a, i) => {
+        let r;
+        if (i < 14) r = 38 + i;
+        else r = 52 + (i - 14);
+        if (r <= 53) {
+            setSelectByRow(r, a.name);
+        }
+    });
+    
+    // Fill Totals 54, 55, 56
+    setSelectByRow(54, 'SYS_AdjustTotal');
+    setSelectByRow(55, 'SYS_WeightInMonth');
+    setSelectByRow(56, 'SYS_FinalResult');
+    
+    showToast('已按照顺序自动填入选项！请核对后点击【保存】。', 'success');
 };

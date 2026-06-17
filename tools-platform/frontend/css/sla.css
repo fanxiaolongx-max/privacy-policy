@@ -106,6 +106,34 @@ body.sla-page {
 .upload-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 10px rgba(0,0,0,0.15); }
 .upload-btn:active { transform: translateY(0); }
 .upload-btn input[type="file"] { display: none; }
+.upload-cache-clear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 14px;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    background: #fff5f5;
+    color: #b91c1c;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.upload-cache-clear:hover {
+    background: #fee2e2;
+    border-color: #f87171;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(185,28,28,0.12);
+}
+.upload-cache-clear:active { transform: translateY(0); }
+.sla-empty-workspace {
+    text-align: center;
+    color: #999;
+    padding: 50px 0;
+    border: 2px dashed #ddd;
+    border-radius: 10px;
+}
 .btn-batch-xl { background: linear-gradient(135deg, #ff9800, #f57c00); font-size: 15px; padding: 12px 24px; border: 2px solid #fff; outline: 2px solid #ff9800; }
 .btn-rect   { background-color: #4a90e2; }
 .btn-risk   { background-color: #673ab7; }

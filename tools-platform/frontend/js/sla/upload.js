@@ -55,6 +55,38 @@ function resetRuntimeWorkspace() {
     window.GlobalMetrics = {};
 }
 
+function renderEmptyWorkspace() {
+    const summaryNav = document.getElementById('summary-nav-area');
+    const mainWrapper = document.getElementById('main-wrapper');
+    if (summaryNav) {
+        summaryNav.innerHTML = '';
+        summaryNav.style.display = 'none';
+    }
+    if (mainWrapper) {
+        mainWrapper.innerHTML = `<div class="sla-empty-workspace">${SLAT('sla.empty.main')}</div>`;
+    }
+    document.querySelectorAll('.upload-actions input[type="file"]').forEach(input => { input.value = ''; });
+    if (window.SLAMetrics && typeof window.SLAMetrics.renderTopStickyBar === 'function') {
+        window.SLAMetrics.renderTopStickyBar();
+    }
+}
+
+function clearWorkspaceCache({ skipConfirm = false } = {}) {
+    if (!skipConfirm && !confirm(SLAT('sla.upload.confirmClearCache'))) return false;
+    try {
+        localStorage.removeItem(SLA_WORKSPACE_CACHE_KEY);
+    } catch (err) {
+        logSLAUploadError('清空导入工作区缓存', err);
+        if (typeof showToast === 'function') showToast(SLAT('sla.upload.clearCacheFail'), 'error');
+        return false;
+    }
+    resetRuntimeWorkspace();
+    renderEmptyWorkspace();
+    logSLAUploadStep('已清空当前导入工作区缓存');
+    if (typeof showToast === 'function') showToast(SLAT('sla.upload.clearCacheSuccess'));
+    return true;
+}
+
 async function restoreCachedWorkspace() {
     if (window.AppState && Object.keys(window.AppState).length > 0) return false;
     let payload = null;
@@ -469,4 +501,4 @@ async function captureAndUploadSnapshot(fileNames) {
     }
 }
 
-window.SLAUpload = { handleBatchUpload, handleSpecificUpload, readFiles, generateSchemaHash, restoreCachedWorkspace, RECT_PRIORITY_COLS, RISK_PRIORITY_COLS, SPECIAL_PRIORITY_COLS, SR_PRIORITY_COLS, VULN_PRIORITY_COLS };
+window.SLAUpload = { handleBatchUpload, handleSpecificUpload, readFiles, generateSchemaHash, restoreCachedWorkspace, clearWorkspaceCache, RECT_PRIORITY_COLS, RISK_PRIORITY_COLS, SPECIAL_PRIORITY_COLS, SR_PRIORITY_COLS, VULN_PRIORITY_COLS };

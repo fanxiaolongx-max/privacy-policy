@@ -173,6 +173,8 @@ app.get('/custom-tools/:slug/index.html', (req, res) => {
     }
     res.sendFile(filePath);
 });
+app.use('/custom-tools', express.static(customToolsRepo.CUSTOM_TOOLS_DIR));
+
 
 // ── 全局错误兜底
 app.use((err, req, res, next) => {

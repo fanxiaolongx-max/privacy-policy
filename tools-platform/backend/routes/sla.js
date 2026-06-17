@@ -467,5 +467,265 @@ router.post('/rename-metric', async (req, res) => {
         res.status(500).json({ error: e.message });
     }
 });
+router.post('/export-yuxiang', async (req, res) => {
+    try {
+        const { metrics, adjustments, totals } = req.body;
+        const ExcelJS = require('exceljs');
+        const path = require('path');
+        const fs = require('fs');
+
+        const templatePath = path.join(__dirname, '../templates/每月赛马-分网络.xlsx');
+        if (!fs.existsSync(templatePath)) {
+            return res.status(404).send('Template file not found');
+        }
+
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.readFile(templatePath);
+        const sheet = workbook.worksheets[0];
+
+        const mappingToRow = {};
+        const maxRow = Math.max(sheet.rowCount, 100);
+        for(let r = 3; r <= maxRow; r++) {
+            const cell = sheet.getRow(r).getCell(3);
+            if (cell.value) {
+                // Force left alignment properly (clone style to avoid mutating workbook default)
+                cell.style = Object.assign({}, cell.style);
+                cell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: false };
+                
+                // Strip legacy tag if it exists in C column
+                if (typeof cell.value === 'string' && cell.value.includes('[Map:')) {
+                    cell.value = cell.value.replace(/\s*\[Map:\s*.+?\]/g, '');
+                }
+            }
+            
+            // Read mapping from Column 26 (Z)
+            const zVal = sheet.getRow(r).getCell(26).value;
+            if (typeof zVal === 'string') {
+                const match = zVal.match(/\[Map:\s*(.+?)\]/);
+                if (match) {
+                    mappingToRow[match[1]] = r;
+                }
+            } else if (typeof cell.value === 'string') { 
+                 // fallback legacy read
+                 const matchC = cell.value.match(/\[Map:\s*(.+?)\]/);
+                 if (matchC) mappingToRow[matchC[1]] = r;
+            }
+        }
+
+        const setCell = (rowObj, col, val, isScore = false, isMissing = false, isProblematic = false) => {
+            const cell = rowObj.getCell(col);
+            
+            if (val === '--' || val === '' || val === null || val === undefined) {
+                val = '/';
+            }
+            if (isMissing && isScore && val === 0) {
+                val = '/'; // If the cell is missing, score is /
+            }
+
+            if (typeof val === 'string' && val.endsWith('%')) {
+                cell.value = val;
+            } else {
+                cell.value = val;
+                cell.numFmt = 'General';
+            }
+            // Clone style to avoid mutating workbook default
+            cell.style = Object.assign({}, cell.style);
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+            if (isProblematic) {
+                cell.font = Object.assign({}, cell.font, { color: { argb: 'FFFF0000' }, bold: true });
+            }
+        };
+
+        if (Array.isArray(metrics)) {
+            metrics.forEach((m, idx) => {
+                const r = mappingToRow[m.label] || (3 + idx); // fallback to sequential if not mapped
+                if (r) {
+                    const row = sheet.getRow(r);
+                    const isPercent = ['TE', 'ORG', 'ET', 'VDF'].some(cat => m[cat] && String(m[cat].achv).includes('%'));
+                    let tgt = m.target;
+                    if (isPercent && tgt !== null && tgt !== undefined && tgt !== '' && !String(tgt).includes('%')) {
+                        tgt = String(tgt) + '%';
+                    }
+                    setCell(row, 10, tgt);
+
+                    ['TE', 'ORG', 'ET', 'VDF'].forEach((cat, cIdx) => {
+                        const achvCol = 11 + cIdx;
+                        const scoreCol = 15 + cIdx;
+                        if (m[cat]) {
+                            const isMissing = (m[cat].achv === '' || m[cat].achv === '--' || m[cat].achv === null);
+                            const isProblematic = m[cat].isFailing;
+                            setCell(row, achvCol, m[cat].achv, false, false, isProblematic);
+                            setCell(row, scoreCol, m[cat].score, true, isMissing, isProblematic);
+                        } else {
+                            setCell(row, achvCol, '/');
+                            setCell(row, scoreCol, '/');
+                        }
+                    });
+                }
+            });
+        }
+
+        if (Array.isArray(adjustments)) {
+            adjustments.forEach((a, idx) => {
+                const aName = a.label; // using a.label from frontend
+                let fallbackR;
+                if (idx < 14) fallbackR = 38 + idx;
+                else fallbackR = 52 + (idx - 14);
+                
+                const r = aName && mappingToRow[aName] ? mappingToRow[aName] : fallbackR;
+                if (r) {
+                    const row = sheet.getRow(r);
+                    // Adjustments Target: 0 for Deduct, "Add" for Addition
+                    if (r >= 52) {
+                        setCell(row, 10, "Add");
+                    } else {
+                        setCell(row, 10, 0);
+                    }
+
+                    ['TE', 'ORG', 'ET', 'VDF'].forEach((cat, cIdx) => {
+                        const achvCol = 11 + cIdx;
+                        const scoreCol = 15 + cIdx;
+                        const catData = a[cat] || { score: 0, count: 0 };
+                        const score = catData.score;
+                        const count = catData.count;
+                        
+                        if (score === 0) {
+                            setCell(row, achvCol, '/');
+                            setCell(row, scoreCol, '/');
+                        } else {
+                            const isProblematic = score < 0;
+                            setCell(row, achvCol, count, false, false, isProblematic);
+                            setCell(row, scoreCol, score, true, false, isProblematic);
+                        }
+                    });
+                }
+            });
+        }
+
+        const fillRow = (rIndex, targetCol, sourceObj, fields = ['TE', 'ORG', 'ET', 'VDF']) => {
+            if (!sourceObj) return;
+            const row = sheet.getRow(rIndex);
+            fields.forEach((cat, idx) => {
+                const cIndex = targetCol + idx;
+                setCell(row, cIndex, sourceObj[cat]);
+            });
+        };
+
+        if (totals) {
+            fillRow(mappingToRow['SYS_SubTotal'] || 37, 15, totals.subTotal);
+            fillRow(mappingToRow['SYS_AdjustTotal'] || 54, 15, totals.adjustTotal);
+            fillRow(mappingToRow['SYS_WeightInMonth'] || 55, 15, totals.weightInMonth);
+            fillRow(mappingToRow['SYS_FinalResult'] || 56, 15, totals.finalResult);
+        }
+
+        // Fix column widths
+        sheet.getColumn(3).width = 70;
+        for (let c = 10; c <= 18; c++) {
+            sheet.getColumn(c).width = 12;
+        }
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename="export.xlsx"');
+        await workbook.xlsx.write(res);
+        res.end();
+    } catch (e) {
+        console.error('Export Yuxiang failed:', e);
+        res.status(500).send(e.message);
+    }
+});
+
+
+router.get('/template-mapping', async (req, res) => {
+    try {
+        const ExcelJS = require('exceljs');
+        const path = require('path');
+        const fs = require('fs');
+        const templatePath = path.join(__dirname, '../templates/每月赛马-分网络.xlsx');
+        if (!fs.existsSync(templatePath)) return res.json([]);
+        
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.readFile(templatePath);
+        const sheet = workbook.worksheets[0];
+        const data = [];
+        const maxRow = Math.max(sheet.rowCount, 100);
+        for(let r = 3; r <= maxRow; r++) {
+            const val = sheet.getRow(r).getCell(3).value || '';
+            let text = val;
+            let mapping = '';
+            // clean up legacy Map tag in C column
+            if (typeof val === 'string') {
+                const matchC = val.match(/\[Map:\s*(.+?)\]/);
+                if (matchC) {
+                    text = val.replace(/\s*\[Map:\s*.+?\]/, '');
+                }
+            }
+            // read from Column 26 (Z)
+            const zVal = sheet.getRow(r).getCell(26).value;
+            if (typeof zVal === 'string') {
+                const matchZ = zVal.match(/\[Map:\s*(.+?)\]/);
+                if (matchZ) {
+                    mapping = matchZ[1];
+                }
+            } else if (typeof val === 'string' && val.includes('[Map:')) {
+                // fallback legacy read
+                const matchC = val.match(/\[Map:\s*(.+?)\]/);
+                if (matchC) mapping = matchC[1];
+            }
+            data.push({ r, text: String(text).trim(), mapping, originalVal: val });
+        }
+        
+        let lastDataRowIndex = data.length - 1;
+        while (lastDataRowIndex >= 0) {
+            const row = data[lastDataRowIndex];
+            if (row.text !== '' || row.mapping !== '') {
+                break;
+            }
+            lastDataRowIndex--;
+        }
+        
+        res.json(data.slice(0, lastDataRowIndex + 1));
+    } catch(e) {
+        res.status(500).send(e.message);
+    }
+});
+
+router.post('/template-mapping', async (req, res) => {
+    try {
+        const updates = req.body;
+        const ExcelJS = require('exceljs');
+        const path = require('path');
+        const fs = require('fs');
+        const templatePath = path.join(__dirname, '../templates/每月赛马-分网络.xlsx');
+        
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.readFile(templatePath);
+        const sheet = workbook.worksheets[0];
+        
+        updates.forEach(u => {
+            const cell = sheet.getRow(u.r).getCell(3);
+            // Clean up C column text just in case
+            let finalVal = u.text;
+            if (typeof finalVal === 'string') {
+                finalVal = finalVal.replace(/\s*\[Map:\s*.+?\]/g, '');
+            }
+            cell.value = finalVal;
+            cell.style = Object.assign({}, cell.style);
+            cell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: false };
+            
+            // Write mapping to Column 26 (Z)
+            const zCell = sheet.getRow(u.r).getCell(26);
+            if (u.mapping) {
+                zCell.value = `[Map:${u.mapping}]`;
+            } else {
+                zCell.value = '';
+            }
+        });
+        
+        await workbook.xlsx.writeFile(templatePath);
+        res.json({ success: true });
+    } catch(e) {
+        res.status(500).send(e.message);
+    }
+});
 
 module.exports = router;

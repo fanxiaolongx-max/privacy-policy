@@ -7,7 +7,7 @@
     <meta name="description" content="Task SLA & 风险监控全局中台，整改/常规/专项三表合一，SLA预警呼吸灯">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="/css/shared.css?v=20260612-01">
-    <link rel="stylesheet" href="/css/sla.css?v=20260608-02">
+    <link rel="stylesheet" href="/css/sla.css?v=20260616-01">
     <style>
         .sla-source-wrapper {
             display: flex;
@@ -291,13 +291,14 @@
                 <label class="upload-btn btn-special">指定导入 [专项] <input type="file" id="special-upload" accept=".xlsx,.xls,.csv" multiple></label>
                 <label class="upload-btn" style="background:#d9480f; color:white;">指定导入 [SR] <input type="file" id="sr-upload" accept=".xlsx,.xls,.csv" multiple></label>
                 <label class="upload-btn" style="background:#c2410c; color:white;">指定导入 [漏洞] <input type="file" id="vuln-upload" accept=".xlsx,.xls,.csv" multiple></label>
+                <button type="button" class="upload-cache-clear" onclick="SLAUpload.clearWorkspaceCache()">清空当前缓存</button>
             </div>
         </div>
 
         <div id="summary-nav-area"></div>
 
         <div id="main-wrapper">
-            <div style="text-align:center;color:#999;padding:50px 0;border:2px dashed #ddd;border-radius:10px;">
+            <div class="sla-empty-workspace">
                 请点击上方 <b>"📦 一键批量导入所有表"</b> 按钮，选择文件夹中需要分析的文件...
             </div>
         </div>
@@ -309,10 +310,10 @@
     <script src="/js/shared/i18n.js?v=20260610-01"></script>
     <script src="/js/shared/navbar.js?v=20260612-01"></script>
     <!-- SLA 模块（注意加载顺序）-->
-    <script src="/js/sla/i18n.js?v=20260610-01"></script>
+    <script src="/js/sla/i18n.js?v=20260616-01"></script>
     <script src="/js/sla/config.js?v=20260610-01"></script>
     <script src="/js/sla/prefs.js?v=20260530-07"></script>
-    <script src="/js/sla/upload.js?v=20260610-01"></script>
+    <script src="/js/sla/upload.js?v=20260616-01"></script>
     <script src="/js/sla/section.js?v=20260610-01"></script>
     <script src="/js/sla/table.js?v=20260608-02"></script>
     <script src="/js/sla/events.js?v=20260610-03"></script>
