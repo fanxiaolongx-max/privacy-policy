@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>安全大会报告设计</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- PDF Export Dependencies -->
+    <script src="/js/shared/html2canvas.min.js"></script>
+    <script src="/js/shared/jspdf.umd.min.js"></script>
+    
+    <!-- Custom CSS for Slide Content -->
+    <link rel="stylesheet" href="css/app.css">
+</head>
+<body class="bg-zinc-950 text-zinc-100 font-sans h-screen w-screen overflow-hidden flex flex-col">
+
+    <!-- Premium Top Navigation -->
+    <header class="h-14 flex items-center justify-between px-6 bg-zinc-900/80 backdrop-blur-md border-b border-zinc-800 shrink-0 z-50">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-brand-500/20">
+                <i class="ph-fill ph-presentation-chart text-white text-lg"></i>
+            </div>
+            <h1 class="text-[15px] font-semibold text-zinc-100 tracking-wide">安全大会报告</h1>
+            <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-zinc-800 text-zinc-400 border border-zinc-700 ml-2 shadow-sm">自动保存</span>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button id="toggleAiBtn" class="h-8 px-3 rounded-md bg-purple-600 hover:bg-purple-500 text-white flex items-center gap-2 transition shadow-lg shadow-purple-900/20 mr-2">
+                <i class="ph-fill ph-magic-wand"></i>
+                <span class="text-xs font-medium">AI 助手</span>
+            </button>
+
+            <div id="status" class="flex items-center gap-2 text-xs text-zinc-400 mr-4">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+                <span id="statusText">已就绪</span>
+            </div>
+
+            <button id="addCaseBtn" class="flex items-center gap-2 h-8 px-3 rounded-md bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-sm font-medium transition-all hover:scale-105 active:scale-95 shadow-sm">
+                <i class="ph ph-plus"></i> 新增案例页
+            </button>
+            
+            <button id="exportPdfBtn" class="flex items-center gap-2 h-8 px-4 rounded-md bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium shadow-md shadow-brand-500/20 transition-all hover:scale-105 active:scale-95">
+                <i class="ph ph-file-pdf"></i> 导出 PDF
+            </button>
+
+            <!-- Dropdown for more actions -->
+            <div class="relative group">
+                <button class="flex items-center justify-center w-8 h-8 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors">
+                    <i class="ph ph-dots-three-outline-vertical text-lg"></i>
+                </button>
+                
+                <div class="absolute right-0 top-full mt-2 w-48 py-1 rounded-xl bg-zinc-800 border border-zinc-700 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-right scale-95 group-hover:scale-100 z-50">
+                    <button id="exportJsonBtn" class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-700/50 hover:text-white transition-colors text-left">
+                        <i class="ph ph-export text-lg text-zinc-400"></i> 导出 JSON
+                    </button>
+                    <label class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-700/50 hover:text-white transition-colors cursor-pointer">
+                        <i class="ph ph-import text-lg text-zinc-400"></i> 导入 JSON
+                        <input id="importJsonInput" type="file" accept="application/json,.json" hidden>
+                    </label>
+                    <div class="h-px bg-zinc-700/50 my-1"></div>
+                    <button id="resetBtn" class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors text-left">
+                        <i class="ph ph-arrow-counter-clockwise text-lg"></i> 恢复默认模板
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 flex overflow-hidden">
+        <!-- Sidebar -->
+        <aside id="sidebar" style="width: 256px;" class="bg-zinc-900 border-r border-zinc-800/80 flex flex-col z-40 shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.2)] relative transition-[width] duration-200 ease-out">
+            <div class="p-4 border-b border-zinc-800/50">
+                <div class="flex items-center justify-between text-xs font-semibold text-zinc-400 mb-3 tracking-wider">
+                    <span class="uppercase">缩略图大小</span>
+                    <span id="thumbZoomLabel" class="text-brand-400 font-mono">34%</span>
+                </div>
+                <input id="thumbZoom" type="range" min="20" max="50" value="34" class="w-full accent-brand-500 h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer">
+            </div>
+            <div id="thumbDeck" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+                <!-- Thumbnails will be rendered here -->
+            </div>
+        </aside>
+
+        <!-- Main Canvas Area -->
+        <div class="flex-1 relative bg-pattern overflow-hidden flex flex-col">
+            
+            <div id="deckWrapper" class="flex-1 overflow-auto flex items-center justify-center p-8 custom-scrollbar">
+                <div id="deck" class="relative transition-all duration-300">
+                    
+<div class="slide-wrap is-active">
+    <div class="slide-num">1</div>
+    <section class="slide cover-slide">
+        <div class="cover-banner">
+            <div class="cn editable" contenteditable="true">闭风险、除隐患、守住网络安全生命线！</div>
+            <div class="en editable" contenteditable="true">Eliminate potential dangers and defend network stability lifeline</div>
+        </div>
+        <div class="cover-photo"></div>
+        <div class="cover-copy">
+            <h1 class="editable" contenteditable="true">[组织] Network Safety</h1>
+            <div class="sub editable" contenteditable="true">Meeting Briefing</div>
+            <div class="date editable" contenteditable="true">[YYYY-MM]</div>
+        </div>
+        <div class="footer"><span>Network Confidential</span><span class="logo">HUAWEI</span></div>
+    </section>
+</div>
+
+<div class="slide-wrap">
+    <div class="slide-num">2</div>
+    <section class="slide">
+        <div class="slide-pad">
+            <h2 class="slide-title editable" contenteditable="true">Network Safety Monthly Meeting</h2>
+            <div class="rules-grid">
+                <div class="rule-box">
+                    <div class="rule-head editable" contenteditable="true">Rule</div>
+                    <ol class="editable" contenteditable="true">
+                        <li>Attendees are requested to join on time.</li>
+                        <li>Complete required preparation before the meeting.</li>
+                        <li>Follow meeting discipline and certification requirements.</li>
+                    </ol>
+                </div>
+                <div class="qr">
+                    <div class="rule-head editable" contenteditable="true">Attendance QR</div>
+                    <div class="qr-box"><span>HIS</span></div>
+                    <div class="editable" contenteditable="true" style="font-size:7px;text-align:center;">[Paste QR screenshot before export if needed]</div>
+                </div>
+                <div class="rule-box">
+                    <div class="rule-head editable" contenteditable="true">Discipline</div>
+                    <ol class="editable" contenteditable="true">
+                        <li>Be punctual and prepared.</li>
+                        <li>Keep laptops closed and phones silent.</li>
+                        <li>Online attendees keep mute.</li>
+                        <li>Stay focused and avoid leaving early.</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        <div class="footer"><span>Network Confidential</span><span class="logo">HUAWEI</span></div>
+    </section>
+</div>
+
+<div class="slide-wrap">
+    <div class="slide-num">3</div>
+    <section class="slide">
+        <div class="slide-pad">
+            <h2 class="slide-title editable" contenteditable="true">Agenda</h2>
+            <table class="agenda-table">
+                <tbody contenteditable="true" class="editable">
+                    <tr class="active"><td class="idx">1</td><td>Opening Speech ([time])</td><td class="owner">[Owner]</td></tr>
+                    <tr><td class="idx">2</td><td>Network Safety Case Study ([time])</td><td class="owner">[Owner]</td></tr>
+                    <tr><td class="idx">3</td><td>Network Safety Process & Regulation Introduction ([time])</td><td class="owner">[Owner]</td></tr>
+                    <tr><td class="idx">4</td><td>Internal Control ([time])</td><td class="owner">[Owner]</td></tr>
+                    <tr><td class="idx">5</td><td>Exam ([time])</td><td class="owner">All</td></tr>
+                    <tr><td class="idx">6</td><td>Award Distribution</td><td class="owner">[Owner]</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="footer"><span>Network Confidential</span><span class="logo">HUAWEI</span></div>
+    </section>
+</div>
+
+<div class="slide-wrap">
+    <div class="slide-num">4</div>
+    <section class="slide">
+        <div class="slide-pad">
+            <h2 class="slide-title editable" contenteditable="true">Opening Speech</h2>
+            <div class="speaker">
+                <div class="avatar"></div>
+                <div class="editable" contenteditable="true">[Speaker]</div>
+                <div class="editable" contenteditable="true">[Title]</div>
+            </div>
+        </div>
+        <div class="footer"><span>Network Confidential</span><span class="logo">HUAWEI</span></div>
+    </section>
+</div>
+
+<div class="slide-wrap">
+    <div class="slide-num">5</div>
+    <section class="slide">
+        <div class="slide-pad">
+            <h2 class="slide-title editable" contenteditable="true">Agenda</h2>
+            <table class="agenda-table">
+                <tbody contenteditable="true" class="editable">
+                    <tr><td class="idx">1</td><td>Opening Speech ([time])</td><td class="owner">[Owner]</td></tr>
+                    <tr class="active"><td class="idx">2</td><td>Network Safety Case Study ([time])</td><td class="owner">[Owner]</td></tr>
+                    <tr><td class="idx">3</td><td>Network Safety Process & Regulation Introduction ([time])</td><td class="owner">[Owner]</td></tr>
+                    <tr><td class="idx">4</td><td>Internal Control ([time])</td><td class="owner">[Owner]</td></tr>
+                    <tr><td class="idx">5</td><td>Exam ([time])</td><td class="owner">All</td></tr>
+                    <tr><td class="idx">6</td><td>Award Distribution</td><td class="owner">[Owner]</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="footer"><span>Network Confidential</span><span class="logo">HUAWEI</span></div>
+    </section>
+</div>
+
+<div class="slide-wrap case-template">
+    <div class="slide-num">6</div>
+    <section class="slide">
+        <div class="slide-pad">
+            <h2 class="small-title editable" contenteditable="true">Case 1: [Case title]</h2>
+            <div class="case-layout">
+                <div class="case-labels">
+                    <div class="editable" contenteditable="true">Problem<br>Description</div>
+                    <div class="editable" contenteditable="true">Root<br>Cause</div>
+                    <div class="editable" contenteditable="true">Action<br>Analysis</div>
+                    <div class="editable" contenteditable="true">Improvement</div>
+                </div>
+                <div class="case-cells editable" contenteditable="true">
+                    <div>[Describe time, symptom and impact]</div>
+                    <div>[Describe root cause]</div>
+                    <div>[Describe process/tool/people gap]</div>
+                    <div>[Describe improvement actions and owner]</div>
+                </div>
+            </div>
+            <div class="sticky-note editable" contenteditable="true">Owner: [Name]<br>Requirement: use the fixed template.<br>Need to review with [Reviewer].</div>
+        </div>
+        <div class="footer"><span>Network Confidential</span><span class="logo">HUAWEI</span></div>
+    </section>
+</div>
+
+<div class="slide-wrap">
+    <div class="slide-num">7</div>
+    <section class="slide">
+        <div class="slide-pad">
+            <h2 class="small-title editable" contenteditable="true">Case 2: [Case title]</h2>
+            <div class="sticky-note editable" contenteditable="true" style="top:118px;left:72px;width:220px;">Owner: [Name]<br>Requirement: 1. Use the fixed template.<br>2. Need to review with [Reviewer].</div>
+        </div>
+        <div class="footer"><span>Network Confidential</span><span class="logo">HUAWEI</span></div>
+    </section>
+</div>
+
+<div class="slide-wrap">
+    <div class="slide-num">8</div>
+    <section class="slide">
+        <div class="slide-pad">
+            <h2 class="slide-title editable" contenteditable="true">Agenda</h2>
+            <table class="agenda-table">
+                <tbody contenteditable="true" class="editable">
+                    <tr><td class="idx">1</td><td>Opening Speech ([time])</td><td class="owner">[Owner]</td></tr>
+                    <tr><td class="idx">2</td><td>Network Safety Case Study ([time])</td><td class="owner">[Owner]</td></tr>
+                    <tr class="active"><td class="idx">3</td><td>Network Safety Process & Regulation Introduction ([time])</td><td class="owner">[Owner]</td></tr>
+                    <tr><td class="idx">4</td><td>Internal Control ([time])</td><td class="owner">[Owner]</td></tr>
+                    <tr><td class="idx">5</td><td>Exam ([time])</td><td class="owner">All</td></tr>
+                    <tr><td class="idx">6</td><td>Award Distribution</td><td class="owner">[Owner]</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="footer"><span>Network Confidential</span><span class="logo">HUAWEI</span></div>
+    </section>
+</div>
+
+<div class="slide-wrap">
+    <div class="slide-num">9</div>
+    <section class="slide">
+        <div class="slide-pad">
+            <h2 class="slide-title editable" contenteditable="true">Process & Regulation</h2>
+            <div class="two-col">
+                <div class="box">
+                    <h3 class="small-title editable" contenteditable="true">Key Control Points</h3>
+                    <ol class="plain-list editable" contenteditable="true">
+                        <li>[KCP 1]</li>
+                        <li>[KCP 2]</li>
+                        <li>[KCP 3]</li>
+                        <li>[KCP 4]</li>
+                    </ol>
+                </div>
+                <div class="box">
+                    <h3 class="small-title editable" contenteditable="true">Reporting Requirements</h3>
+                    <ol class="plain-list editable" contenteditable="true">
+                        <li>[Requirement 1]</li>
+                        <li>[Requirement 2]</li>
+                        <li>[Requirement 3]</li>
+                        <li>[Requirement 4]</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        <div class="footer"><span>Network Confidential</span><span class="logo">HUAWEI</span></div>
+    </section>
+</div>
+
+<div class="slide-wrap">
+    <div class="slide-num">10</div>
+    <section class="slide">
+        <div class="slide-pad">
+            <h2 class="slide-title editable" contenteditable="true">Summary & Actions</h2>
+            <table class="agenda-table">
+                <tbody contenteditable="true" class="editable">
+                    <tr class="active"><td class="idx">1</td><td>[Action item]</td><td class="owner">[Owner / Date]</td></tr>
+                    <tr><td class="idx">2</td><td>[Action item]</td><td class="owner">[Owner / Date]</td></tr>
+                    <tr><td class="idx">3</td><td>[Action item]</td><td class="owner">[Owner / Date]</td></tr>
+                    <tr><td class="idx">4</td><td>[Action item]</td><td class="owner">[Owner / Date]</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="footer"><span>Network Confidential</span><span class="logo">HUAWEI</span></div>
+    </section>
+</div>
+
+                </div>
+            </div>
+
+            <!-- Floating Zoom Controls -->
+            <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-1 p-1.5 rounded-full bg-zinc-800/80 backdrop-blur-md border border-zinc-700 shadow-2xl z-50">
+                <button id="zoomOutBtn" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-zinc-700 text-zinc-400 hover:text-zinc-100 transition-colors" title="缩小">
+                    <i class="ph ph-minus"></i>
+                </button>
+                <span id="mainZoomLabel" class="w-16 text-center text-xs font-medium font-mono text-zinc-300 select-none">100%</span>
+                <button id="zoomInBtn" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-zinc-700 text-zinc-400 hover:text-zinc-100 transition-colors" title="放大">
+                    <i class="ph ph-plus"></i>
+                </button>
+                <div class="w-px h-4 bg-zinc-600 mx-1"></div>
+                <button id="zoomFitBtn" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-zinc-700 text-zinc-400 hover:text-zinc-100 transition-colors" title="适应屏幕">
+                    <i class="ph ph-corners-out"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- AI Sidebar (Right) -->
+        <aside id="aiSidebar" class="w-80 bg-zinc-900 border-l border-zinc-800/80 flex flex-col z-40 shrink-0 shadow-[-4px_0_24px_rgba(0,0,0,0.2)] transition-transform duration-300 translate-x-full absolute right-0 top-0 bottom-0">
+            <div class="p-4 border-b border-zinc-800/50 flex items-center justify-between">
+                <div class="flex items-center space-x-2 text-purple-400">
+                    <i class="ph-fill ph-magic-wand text-lg"></i>
+                    <span class="font-semibold tracking-wide">PPT Copilot</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button id="aiSettingsBtn" class="text-zinc-500 hover:text-purple-400 transition" title="个性化规范设置">
+                        <i class="ph-bold ph-faders"></i>
+                    </button>
+                    <button id="closeAiBtn" class="text-zinc-500 hover:text-zinc-300 transition">
+                        <i class="ph-bold ph-x"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Personalized Rules Panel (Hidden) -->
+            <div id="aiSettingsPanel" class="hidden p-4 bg-zinc-950 border-b border-zinc-800/80">
+                <label class="block text-xs text-zinc-400 mb-2">个性化制作规范与经验 (全局生效)</label>
+                <textarea id="aiRulesInput" rows="4" placeholder="例如：1. 案例标题统一使用红底白字；2. 改进措施必须明确责任人..." class="w-full bg-zinc-900 border border-zinc-700 rounded p-2 text-zinc-200 text-xs focus:outline-none focus:border-purple-500 resize-none custom-scrollbar"></textarea>
+                <div class="flex justify-end mt-2">
+                    <button id="saveAiRulesBtn" class="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 rounded transition">保存规范</button>
+                </div>
+            </div>
+            
+            <div id="aiChatWindow" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar text-sm">
+                <!-- Chat messages will be injected here -->
+                <div class="flex items-start space-x-2">
+                    <div class="w-8 h-8 rounded bg-purple-600/20 text-purple-400 flex items-center justify-center shrink-0">
+                        <i class="ph-fill ph-robot"></i>
+                    </div>
+                    <div class="bg-zinc-800 text-zinc-200 rounded-lg rounded-tl-none p-3 max-w-[85%] leading-relaxed shadow-sm border border-zinc-700/50">
+                        你好！我是你的专属 PPT AI 助手。请问你需要生成什么类型的幻灯片？比如：“帮我写一页关于密码安全的案例”。
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 bg-zinc-900 border-t border-zinc-800/50">
+                <div class="relative">
+                    <textarea id="aiInput" rows="2" placeholder="让 AI 帮你生成页面..." class="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 pr-10 text-zinc-100 text-sm focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 resize-none custom-scrollbar transition"></textarea>
+                    <button id="aiSendBtn" class="absolute right-2 bottom-2 w-8 h-8 rounded bg-purple-600 hover:bg-purple-500 text-white flex items-center justify-center transition shadow-md">
+                        <i class="ph-bold ph-paper-plane-right"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <!-- Slide Templates -->
+    <template id="caseSlideTemplate">
+        <div class="slide-wrap">
+            <div class="slide-num"></div>
+            <section class="slide">
+                <div class="slide-pad">
+                    <h2 class="small-title editable" contenteditable="true">Case: [Case title]</h2>
+                    <div class="case-layout">
+                        <div class="case-labels">
+                            <div class="editable" contenteditable="true">Problem<br>Description</div>
+                            <div class="editable" contenteditable="true">Root<br>Cause</div>
+                            <div class="editable" contenteditable="true">Action<br>Analysis</div>
+                            <div class="editable" contenteditable="true">Improvement</div>
+                        </div>
+                        <div class="case-cells editable" contenteditable="true">
+                            <div>[Describe time, symptom and impact]</div>
+                            <div>[Describe root cause]</div>
+                            <div>[Describe gap]</div>
+                            <div>[Describe actions and owner]</div>
+                        </div>
+                    </div>
+                    <div class="sticky-note editable" contenteditable="true">Owner: [Name]<br>Requirement: use the fixed template.<br>Need to review with [Reviewer].</div>
+                </div>
+                <div class="footer"><span>Network Confidential</span><span class="logo">HUAWEI</span></div>
+            </section>
+        </div>
+    </template>
+
+    <!-- App Logic -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -364,6 +364,18 @@
         }[ch]));
     }
 
+    function encodeAttrValue(value) {
+        return encodeURIComponent(String(value ?? ''));
+    }
+
+    function decodeAttrValue(value) {
+        try {
+            return decodeURIComponent(String(value || ''));
+        } catch (e) {
+            return String(value || '');
+        }
+    }
+
     function compactValue(value) {
         if (value === null || value === undefined || value === '') return '';
         if (Array.isArray(value)) {
@@ -412,6 +424,62 @@
             if (found !== '') return found;
         }
         return '';
+    }
+
+    function joinPath(path) {
+        if (!path || path.length === 0) return '$';
+        return path.reduce((out, part) => {
+            if (String(part).startsWith('[')) return out + part;
+            return out ? `${out}.${part}` : part;
+        }, '');
+    }
+
+    function collectCoreGroups(payload, keyDefs) {
+        const groups = [];
+        const seenGroups = new Set();
+
+        function walk(obj, path = []) {
+            if (!obj || typeof obj !== 'object') return;
+            if (Array.isArray(obj)) {
+                obj.forEach((item, index) => walk(item, path.concat(`[${index}]`)));
+                return;
+            }
+
+            const items = [];
+            keyDefs.forEach(({ label, key }) => {
+                if (!Object.prototype.hasOwnProperty.call(obj, key) || obj[key] === undefined || obj[key] === null) return;
+                const value = compactValue(obj[key]);
+                if (value && value !== '空') items.push([label, value]);
+            });
+
+            if (items.length > 0) {
+                const pathText = joinPath(path);
+                const signature = `${pathText}:${items.map(([label, value]) => `${label}=${value}`).join('|')}`;
+                if (!seenGroups.has(signature)) {
+                    seenGroups.add(signature);
+                    groups.push({ id: `G${groups.length + 1}`, path: pathText, items });
+                }
+            }
+
+            Object.keys(obj).forEach(itemKey => walk(obj[itemKey], path.concat(itemKey)));
+        }
+
+        walk(payload);
+        return groups;
+    }
+
+    function flattenCoreGroups(groups) {
+        const seen = new Set();
+        const out = [];
+        (groups || []).forEach(group => {
+            (group.items || []).forEach(([label, value]) => {
+                const signature = `${label}=${value}`;
+                if (seen.has(signature)) return;
+                seen.add(signature);
+                out.push([label, value]);
+            });
+        });
+        return out;
     }
 
     function collectColumnFilters(obj, out = [], seen = new Set()) {
@@ -570,26 +638,46 @@
     }
 
     function buildCoreObjects({ platform, payload, codeHints, tenantId, boardId, pageId, componentId, id }) {
+        let groups;
         if (platform === 'DataFab') {
-            return [
+            groups = collectCoreGroups(payload, [
+                { label: 'tenant', key: 'srcTenantId' },
+                { label: 'board', key: 'boardId' },
+                { label: 'page', key: 'pageId' },
+                { label: 'componentId', key: 'componentId' },
+                { label: 'id', key: 'id' }
+            ]);
+            const fallbackItems = [
                 ['tenant', tenantId],
                 ['board', boardId],
                 ['page', pageId],
                 ['componentId', componentId],
                 ['id', id]
             ].filter(item => item[1]);
+            if (fallbackItems.length > 0) {
+                const existingLabels = new Set(groups.flatMap(group => group.items.map(([label]) => label)));
+                const missingItems = fallbackItems.filter(([label]) => !existingLabels.has(label));
+                if (missingItems.length > 0) groups.push({ id: `G${groups.length + 1}`, path: '代码提示', items: missingItems });
+            }
+            return { entries: flattenCoreGroups(groups), groups };
         }
 
-        const entries = [
+        groups = [];
+        const urlItems = [
             ['endpoint', codeHints.endpoint],
-            ['service', codeHints.serviceName],
-            ['product_line', payload ? compactValue(getDeepFirst(payload, 'product_line')) : ''],
-            ['group_by', payload ? compactValue(getDeepFirst(payload, 'group_by')) : ''],
-            ['region_code', payload ? compactValue(getDeepFirst(payload, 'region_code')) : ''],
-            ['office_code', payload ? compactValue(getDeepFirst(payload, 'office_code')) : ''],
-            ['country_code', payload ? compactValue(getDeepFirst(payload, 'country_code')) : '']
-        ];
-        return entries.filter(item => item[1] && item[1] !== '空');
+            ['service', codeHints.serviceName]
+        ].filter(item => item[1] && item[1] !== '空');
+        if (urlItems.length > 0) groups.push({ id: 'G1', path: 'URL', items: urlItems });
+
+        const payloadGroups = collectCoreGroups(payload, [
+            { label: 'product_line', key: 'product_line' },
+            { label: 'group_by', key: 'group_by' },
+            { label: 'region_code', key: 'region_code' },
+            { label: 'office_code', key: 'office_code' },
+            { label: 'country_code', key: 'country_code' }
+        ]).map((group, index) => ({ ...group, id: `G${groups.length + index + 1}` }));
+        groups.push(...payloadGroups);
+        return { entries: flattenCoreGroups(groups), groups };
     }
 
     function platformFromUrl(url, category) {
@@ -638,7 +726,7 @@
         const pageId = text(payload ? getDeepFirst(payload, 'pageId') : codeHints.pageId, '');
         const boardId = text(payload ? getDeepFirst(payload, 'boardId') : codeHints.boardId, '');
         const tenantId = text(payload ? getDeepFirst(payload, 'srcTenantId') : codeHints.tenantId, '');
-        const coreObjects = buildCoreObjects({ platform, payload, codeHints, tenantId, boardId, pageId, componentId: realComponentId, id: realId });
+        const coreResult = buildCoreObjects({ platform, payload, codeHints, tenantId, boardId, pageId, componentId: realComponentId, id: realId });
         const limitVal = payload
             ? (payload.limit || getDeepFirst(payload, 'pageSize') || getDeepFirst(payload, 'maxRows'))
             : '';
@@ -677,7 +765,8 @@
             boardId,
             pageId,
             componentId: realComponentId || realId,
-            coreObjects,
+            coreObjects: coreResult.entries,
+            coreGroups: coreResult.groups,
             pageName,
             limitVal,
             filters,
@@ -746,7 +835,19 @@
         if (!row.coreObjects || row.coreObjects.length === 0) {
             return '<span class="analysis-muted">脚本中未识别到核心对象</span>';
         }
-        return `<div class="analysis-pill-list">${row.coreObjects.map(([label, value]) => {
+        const groups = row.coreGroups && row.coreGroups.length > 0
+            ? row.coreGroups
+            : [{ id: 'G1', path: '兼容视图', items: row.coreObjects }];
+        return `<div class="analysis-core-groups">${groups.map(group => {
+            const groupTitle = `组 ${group.id}${group.path ? ` · ${group.path}` : ''}`;
+            return `<div class="analysis-core-group" title="${escapeHtml(groupTitle)}">
+                <span class="analysis-core-group-id">${escapeHtml(group.id)}</span>
+                <div class="analysis-pill-list">${(group.items || []).map(([label, value]) => renderCoreObjectPill(row, freqMap, label, value, group.path)).join('')}</div>
+            </div>`;
+        }).join('')}</div>`;
+    }
+
+    function renderCoreObjectPill(row, freqMap, label, value, groupPath = '') {
             if (label === 'endpoint' || label === 'service') {
                 return `<span class="analysis-pill off" style="cursor:pointer;" title="点击复制内容 (URL提取不可修改)" data-copy-val="${escapeHtml(value)}" onclick="event.stopPropagation(); UIVScriptAnalysis.copyCellText(this.getAttribute('data-copy-val'))">${escapeHtml(label)}=${escapeHtml(shortDisplayValue(value))}</span>`;
             }
@@ -756,8 +857,7 @@
             const dupClass = isDup ? ' duplicate' : '';
             const dirtyClass = isDirty ? ' unsaved-field' : '';
             const dupAttr = isDup ? ` data-dup-key="${escapeHtml(dupKey)}"` : '';
-            return `<span class="analysis-pill editable${dupClass}${dirtyClass}"${dupAttr} title="点击编辑: ${escapeHtml(label)}=${escapeHtml(value)}${isDup ? ' (在多条脚本中复用)' : ''}" onclick="event.stopPropagation(); UIVScriptAnalysis.editCoreObject('${escapeHtml(row.id)}', '${escapeHtml(label)}')">${escapeHtml(label)}=${escapeHtml(shortDisplayValue(value))}</span>`;
-        }).join('')}</div>`;
+            return `<span class="analysis-pill editable${dupClass}${dirtyClass}"${dupAttr} title="点击编辑: ${escapeHtml(label)}=${escapeHtml(value)}${isDup ? ' (在多条脚本中复用)' : ''}" onclick="event.stopPropagation(); UIVScriptAnalysis.editCoreObject('${escapeHtml(row.id)}', '${escapeHtml(label)}', '${encodeAttrValue(value)}', '${encodeAttrValue(groupPath)}')">${escapeHtml(label)}=${escapeHtml(shortDisplayValue(value))}</span>`;
     }
 
     function copyCellText(text) {
@@ -776,6 +876,8 @@
         const haystack = [
             row.category, row.name, row.outputName, row.url, row.platform,
             row.tenantId, row.boardId, row.pageId, row.componentId, row.pageName,
+            row.coreObjects.map(item => item.join('=')).join(' '),
+            (row.coreGroups || []).map(group => `${group.id} ${group.path || ''}`).join(' '),
             row.filters.map(item => `${item.key}=${item.value}`).join(' ')
         ].join(' ').toLowerCase();
         return haystack.includes(keyword.toLowerCase());
@@ -940,7 +1042,7 @@
         render();
     }
 
-    async function editCoreObject(scriptId, label) {
+    async function editCoreObject(scriptId, label, encodedValue = '', encodedPath = '') {
         const row = findRow(scriptId);
         if (!row || !row.payload) {
             showToast('当前脚本没有可编辑 Payload', 'error');
@@ -967,7 +1069,10 @@
             return;
         }
 
-        const objArr = row.coreObjects.find(item => item[0] === label);
+        const requestedValue = decodeAttrValue(encodedValue);
+        const requestedPath = decodeAttrValue(encodedPath);
+        const objArr = row.coreObjects.find(item => item[0] === label && (!requestedValue || item[1] === requestedValue))
+            || row.coreObjects.find(item => item[0] === label);
         const currentValue = objArr ? objArr[1] : '';
 
         const nextRaw = await openMiniDialog({
@@ -983,17 +1088,21 @@
         const nextPayload = cloneJson(row.payload);
         
         let changed = false;
-        function walk(obj) {
+        const shouldMatchCurrentValue = row.coreObjects.filter(item => item[0] === label).length > 1 && requestedValue;
+        function walk(obj, path = []) {
             if (!obj || typeof obj !== 'object') return;
             if (Array.isArray(obj)) {
-                obj.forEach(walk);
+                obj.forEach((item, index) => walk(item, path.concat(`[${index}]`)));
                 return;
             }
             if (Object.prototype.hasOwnProperty.call(obj, payloadKey)) {
-                obj[payloadKey] = parseEditedValue(nextRaw);
-                changed = true;
+                const isRequestedGroup = !requestedPath || requestedPath === '代码提示' || joinPath(path) === requestedPath;
+                if (isRequestedGroup && (!shouldMatchCurrentValue || compactValue(obj[payloadKey]) === requestedValue)) {
+                    obj[payloadKey] = parseEditedValue(nextRaw);
+                    changed = true;
+                }
             }
-            Object.keys(obj).forEach(itemKey => walk(obj[itemKey]));
+            Object.keys(obj).forEach(itemKey => walk(obj[itemKey], path.concat(itemKey)));
         }
         walk(nextPayload);
 

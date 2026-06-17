@@ -1,0 +1,91 @@
+Created At: 2026-06-17T17:23:39Z
+Completed At: 2026-06-17T17:23:41Z
+The following changes were made by the multi_replace_file_content tool to: /Volumes/512G/06-工具开发/privacy-policy/tools-platform/frontend/pages/report.html. If relevant, proactively run terminal commands to execute this code for the USER. Don't ask for permission.
+[diff_block_start]
+@@ -472,6 +472,12 @@
+                     <span style="font-size:14px;color:#666;margin-right:6px;">历史快照：</span>
+                     <select id="snapshot-select" onchange="loadSelectedSnapshot()"></select>
+                 </div>
++                <div style="display: flex; align-items: center; border: 1px solid #ccc; padding: 6px 12px; border-radius: 8px; background: #fff; gap: 8px; height: 34px; box-sizing: border-box;">
++                    <label style="font-size:13px;color:#333;cursor:pointer;display:flex;align-items:center;margin:0;">
++                        <input type="checkbox" id="auto-std-score-cb" onchange="toggleAutoStdScore()" checked style="margin-right:6px; cursor:pointer;"> 自动计算总分
++                    </label>
++                    <input type="number" id="custom-std-score-input" value="100" style="width: 50px; border: 1px solid #ddd; border-radius: 4px; padding: 2px 4px; font-size: 13px;" disabled onchange="updateCustomStdScore()">
++                </div>
+                 <button onclick="saveDashboardToDB()"
+                     style="padding: 8px 14px; background: #e3f2fd; border: 1px solid #90caf9; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #1565c0; font-weight: 600;">💾
+                     入库</button>
+[diff_block_end]
+
+Please note that the above snippet only shows the MODIFIED lines from the last change. It shows up to 3 lines of unchanged lines before and after the modified lines. The actual file contents may have many more lines not shown.
+---
+Created At: 2026-06-17T17:23:54Z
+Completed At: 2026-06-17T17:23:56Z
+The following changes were made by the multi_replace_file_content tool to: /Volumes/512G/06-工具开发/privacy-policy/tools-platform/frontend/js/report/report.js. If relevant, proactively run terminal commands to execute this code for the USER. Don't ask for permission.
+[diff_block_start]
+@@ -495,6 +495,43 @@
+     }
+ };
+ 
++window.toggleAutoStdScore = async function() {
++    const cb = document.getElementById('auto-std-score-cb');
++    const input = document.getElementById('custom-std-score-input');
++    if (!cb || !input) return;
++    input.disabled = cb.checked;
++    
++    if (!globalConfig.prefs) globalConfig.prefs = {};
++    globalConfig.prefs.isAutoStandardTotalScore = cb.checked;
++    try {
++        await API.post('/api/sla/config', globalConfig);
++        showToast(rt('report.toast.autoFillOn') || '配置已保存', 'success');
++        if (currentSnapshot) renderReport(currentSnapshot);
++    } catch (e) {
++        console.error(e);
++        showToast(rt('report.toast.saveFailed') || '保存失败', 'error');
++    }
++};
++
++window.updateCustomStdScore = async function() {
++    const input = document.getElementById('custom-std-score-input');
++    if (!input) return;
++    let val = parseFloat(input.value);
++    if (isNaN(val) || val <= 0) val = 100;
++    input.value = val;
++    
++    if (!globalConfig.prefs) globalConfig.prefs = {};
++    globalConfig.prefs.customStandardTotalScore = val;
++    try {
++        await API.post('/api/sla/config', globalConfig);
++        showToast('配置已保存', 'success');
++        if (currentSnapshot) renderReport(currentSnapshot);
++    } catch (e) {
++        console.error(e);
++        showToast(rt('report.toast.saveFailed') || '保存失败', 'error');
++    }
++};
++
+ function parseNum(str) {
+     if (str === undefined || str === null || str === '--') return NaN;
+     const n = parseFloat(String(str).replace(/[^0-9.-]/g, ''));
+[diff_block_end]
+
+Please note that the above snippet only shows the MODIFIED lines from the last change. It shows up to 3 lines of unchanged lines before and after the modified lines. The actual file contents may have many more lines not shown.
+---
+Created At: 2026-06-17T21:49:45Z
+Completed At: 2026-06-17T21:49:45Z
+
+				The command completed successfully.
+				Output:
+				/Volumes/512G/06-工具开发/privacy-policy/tools-platform/frontend/pages/report.html:477:                        <input type="checkbox" id="auto-std-score-cb" onchange="toggleAutoStdScore()" checked style="margin-right:6px; cursor:pointer;"> 自动计算总分
+
+
+---
+Created At: 2026-06-17T21:49:50Z
+Completed At: 2026-06-17T21:49:50Z
+
+				The command completed successfully.
+				Output:
+				/Volumes/512G/06-工具开发/privacy-policy/tools-platform/frontend/pages/report.html:477:                        <input type="checkbox" id="auto-std-score-cb" onchange="toggleAutoStdScore()" checked style="margin-right:6px; cursor:pointer;"> 自动计算总分
+
+
+---
