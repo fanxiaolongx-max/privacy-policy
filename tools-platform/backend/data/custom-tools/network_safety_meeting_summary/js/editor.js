@@ -6,7 +6,23 @@ export function scrubClone(clone) {
     });
     clone.querySelectorAll('.editable').forEach(el => el.classList.remove('editable'));
     clone.querySelectorAll('.is-active').forEach(el => el.classList.remove('is-active'));
+    clone.querySelectorAll('.ppt-selected, .ppt-selected-secondary, .ppt-editing, .ppt-inner-editing').forEach(el => {
+        el.classList.remove('ppt-selected', 'ppt-selected-secondary', 'ppt-editing', 'ppt-inner-editing');
+    });
+    clone.querySelectorAll('.ppt-snap-guide').forEach(el => el.remove());
     return clone;
+}
+
+export function serializeDeck(deck) {
+    const clone = deck.cloneNode(true);
+    clone.querySelectorAll('.ppt-selected, .ppt-selected-secondary, .ppt-editing, .ppt-inner-editing').forEach(el => {
+        el.classList.remove('ppt-selected', 'ppt-selected-secondary', 'ppt-editing', 'ppt-inner-editing');
+    });
+    clone.querySelectorAll('.ppt-snap-guide').forEach(el => el.remove());
+    clone.querySelectorAll('[contenteditable="true"]').forEach(el => {
+        el.setAttribute('contenteditable', 'false');
+    });
+    return clone.innerHTML;
 }
 
 export function downloadBlob(filename, blob) {

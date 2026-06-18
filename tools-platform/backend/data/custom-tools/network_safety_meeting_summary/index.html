@@ -52,6 +52,10 @@
                 <i class="ph-fill ph-magic-wand"></i>
                 <span class="text-xs font-medium">AI 助手</span>
             </button>
+            <button id="toggleLayersBtn" class="h-8 px-3 rounded-md bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 flex items-center gap-2 transition shadow-sm">
+                <i class="ph-fill ph-stack"></i>
+                <span class="text-xs font-medium">图层</span>
+            </button>
 
             <div id="status" class="flex items-center gap-2 text-xs text-zinc-400 mr-4">
                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
@@ -64,6 +68,19 @@
             <button id="redoBtn" class="h-8 w-8 rounded-md bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 transition-all shadow-sm flex items-center justify-center disabled:opacity-50 mr-2" title="重做 (Ctrl+Y)">
                 <i class="ph-bold ph-arrow-u-up-right"></i>
             </button>
+
+            <div class="relative">
+                <button id="addElementMenuBtn" class="flex items-center gap-2 h-8 px-3 rounded-md bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium transition-all shadow-sm">
+                    <i class="ph ph-plus-circle"></i> 添加组件
+                </button>
+                <div id="addElementMenu" class="hidden absolute left-0 top-full mt-2 w-40 py-1 rounded-xl bg-zinc-800 border border-zinc-700 shadow-2xl z-50">
+                    <button class="add-element-btn w-full flex items-center gap-3 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-700/50 hover:text-white text-left" data-element-kind="title"><i class="ph ph-text-h-two"></i> 标题</button>
+                    <button class="add-element-btn w-full flex items-center gap-3 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-700/50 hover:text-white text-left" data-element-kind="text"><i class="ph ph-text-t"></i> 文本框</button>
+                    <button class="add-element-btn w-full flex items-center gap-3 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-700/50 hover:text-white text-left" data-element-kind="image"><i class="ph ph-image"></i> 图片</button>
+                    <button class="add-element-btn w-full flex items-center gap-3 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-700/50 hover:text-white text-left" data-element-kind="table"><i class="ph ph-table"></i> 表格</button>
+                    <button class="add-element-btn w-full flex items-center gap-3 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-700/50 hover:text-white text-left" data-element-kind="note"><i class="ph ph-note"></i> 便签</button>
+                </div>
+            </div>
 
             <button id="addCaseBtn" class="flex items-center gap-2 h-8 px-3 rounded-md bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-sm font-medium transition-all hover:scale-105 active:scale-95 shadow-sm">
                 <i class="ph ph-plus"></i> 新增案例页
@@ -433,6 +450,80 @@
         </aside>
     </main>
 
+    <aside id="layersPanel" class="layers-panel hidden">
+        <div class="layers-panel-head">
+            <div>
+                <div class="layers-panel-title">当前页图层</div>
+                <div class="layers-panel-hint">Shift 点击可多选</div>
+            </div>
+            <button id="closeLayersBtn" type="button" title="关闭图层面板"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <div class="layers-align-actions">
+            <button type="button" data-align="left" title="左对齐"><i class="ph ph-align-left-simple"></i></button>
+            <button type="button" data-align="center" title="水平居中"><i class="ph ph-align-center-horizontal-simple"></i></button>
+            <button type="button" data-align="right" title="右对齐"><i class="ph ph-align-right-simple"></i></button>
+            <button type="button" data-align="top" title="顶端对齐"><i class="ph ph-align-top-simple"></i></button>
+            <button type="button" data-align="middle" title="垂直居中"><i class="ph ph-align-center-vertical-simple"></i></button>
+            <button type="button" data-align="bottom" title="底端对齐"><i class="ph ph-align-bottom-simple"></i></button>
+            <button type="button" data-align="distribute-h" title="水平等距"><i class="ph ph-columns"></i></button>
+            <button type="button" data-align="distribute-v" title="垂直等距"><i class="ph ph-rows"></i></button>
+        </div>
+        <div id="layersList" class="layers-list custom-scrollbar"></div>
+        <div id="propertiesPanel" class="properties-panel">
+            <div class="properties-empty">选择单个组件后编辑属性</div>
+            <div class="properties-content hidden">
+                <div class="properties-section-title">位置与尺寸</div>
+                <div class="property-grid">
+                    <label>X <input type="number" step="1" data-property="x"></label>
+                    <label>Y <input type="number" step="1" data-property="y"></label>
+                    <label>宽 <input type="number" min="12" step="1" data-property="width"></label>
+                    <label>高 <input type="number" min="12" step="1" data-property="height"></label>
+                    <label>旋转 <input type="number" step="1" data-property="rotate"></label>
+                    <label>层级 <input type="number" min="0" step="1" data-property="zIndex"></label>
+                </div>
+
+                <div class="properties-text-section">
+                    <div class="properties-section-title">文字样式</div>
+                    <div class="property-grid">
+                        <label>字号 <input type="number" min="5" max="96" step="1" data-property="fontSize"></label>
+                        <label>颜色 <input type="color" data-property="color"></label>
+                        <label>背景 <input type="color" data-property="backgroundColor"></label>
+                    </div>
+                    <div class="property-button-row">
+                        <button type="button" data-style-action="bold" title="粗体"><i class="ph-bold ph-text-b"></i></button>
+                        <button type="button" data-style-action="italic" title="斜体"><i class="ph-bold ph-text-italic"></i></button>
+                        <button type="button" data-style-action="align-left" title="左对齐"><i class="ph-bold ph-text-align-left"></i></button>
+                        <button type="button" data-style-action="align-center" title="居中"><i class="ph-bold ph-text-align-center"></i></button>
+                        <button type="button" data-style-action="align-right" title="右对齐"><i class="ph-bold ph-text-align-right"></i></button>
+                        <button type="button" data-style-action="background-transparent" title="透明背景"><i class="ph-bold ph-drop-half-bottom"></i></button>
+                    </div>
+                </div>
+
+                <div class="properties-image-section hidden">
+                    <div class="properties-section-title">图片</div>
+                    <div class="property-button-row wide">
+                        <button type="button" data-image-action="replace"><i class="ph-bold ph-image"></i> 替换</button>
+                        <select data-property="objectFit">
+                            <option value="cover">填充裁剪</option>
+                            <option value="contain">完整显示</option>
+                            <option value="fill">拉伸填充</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="properties-table-section hidden">
+                    <div class="properties-section-title">表格</div>
+                    <div class="property-button-row wide">
+                        <button type="button" data-table-action="add-row">＋ 行</button>
+                        <button type="button" data-table-action="delete-row">－ 行</button>
+                        <button type="button" data-table-action="add-column">＋ 列</button>
+                        <button type="button" data-table-action="delete-column">－ 列</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
     <!-- Slide Templates -->
     <template id="caseSlideTemplate">
         <div class="slide-wrap">
@@ -462,6 +553,6 @@
     </template>
 
     <!-- App Logic -->
-    <script type="module" src="js/app.js?v=20260618-02"></script>
+    <script type="module" src="js/app.js?v=20260618-23"></script>
 </body>
 </html>
