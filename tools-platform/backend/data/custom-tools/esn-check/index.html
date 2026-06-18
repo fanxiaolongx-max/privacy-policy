@@ -1,192 +1,731 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>企业级 ESN 数据洞察系统 (高阶透视版)</title>
+    <title>ESN 数据洞察系统 (高阶透视版)</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <style>
         /* 现代化全局变量与基础样式 */
         :root {
-            --primary: #2563eb; --primary-hover: #1d4ed8;
-            --success: #10b981; --success-hover: #059669;
-            --bg-body: #f8fafc; --bg-surface: #ffffff;
-            --border: #e2e8f0; --text-main: #0f172a; --text-muted: #64748b;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success: #10b981;
+            --success-hover: #059669;
+            --bg-body: #f8fafc;
+            --bg-surface: #ffffff;
+            --border: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
             --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            --radius-md: 8px; --radius-lg: 12px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
         }
 
-        html, body {
-            margin: 0; padding: 0; width: 100%; height: 100%;
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-            background-color: var(--bg-body); color: var(--text-main);
-            display: flex; flex-direction: column; overflow: hidden;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
         .navbar {
-            background: var(--bg-surface); padding: 12px 24px;
-            border-bottom: 1px solid var(--border); box-shadow: var(--shadow-sm);
-            display: flex; justify-content: space-between; align-items: center; z-index: 30;
+            background: var(--bg-surface);
+            padding: 12px 24px;
+            border-bottom: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 30;
         }
-        .navbar h1 { margin: 0; font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-        
-        .btn-export {
-            background-color: var(--success); color: white; border: none; padding: 8px 16px;
-            font-size: 13px; font-weight: 600; border-radius: var(--radius-md); cursor: pointer;
-            display: none; transition: all 0.2s; box-shadow: var(--shadow-sm);
-        }
-        .btn-export:hover { background-color: var(--success-hover); transform: translateY(-1px); }
 
-        .main-content { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth; }
+        .navbar h1 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-export {
+            background-color: var(--success);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            display: none;
+            transition: all 0.2s;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-export:hover {
+            background-color: var(--success-hover);
+            transform: translateY(-1px);
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            scroll-behavior: smooth;
+        }
 
         /* 控制面板：导入卡片 */
-        .control-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
         .upload-card {
-            background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
-            padding: 16px; box-shadow: var(--shadow-sm); transition: border-color 0.2s;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            box-shadow: var(--shadow-sm);
+            transition: border-color 0.2s;
         }
-        .upload-card h3 { margin: 0 0 8px 0; font-size: 14px; color: var(--text-main); }
-        .upload-card p { font-size: 12px; color: var(--text-muted); margin: 0 0 12px 0; }
+
+        .upload-card h3 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            color: var(--text-main);
+        }
+
+        .upload-card p {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin: 0 0 12px 0;
+        }
+
         .file-input-wrapper input[type="file"] {
-            font-size: 13px; width: 100%; cursor: pointer; padding: 8px; 
-            background: #f1f5f9; border: 1px dashed #cbd5e1; border-radius: var(--radius-md); box-sizing: border-box;
+            font-size: 13px;
+            width: 100%;
+            cursor: pointer;
+            padding: 8px;
+            background: #f1f5f9;
+            border: 1px dashed #cbd5e1;
+            border-radius: var(--radius-md);
+            box-sizing: border-box;
         }
-        .file-input-wrapper input:disabled { cursor: not-allowed; opacity: 0.6; }
+
+        .file-input-wrapper input:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
 
         /* 极客终端日志区 */
         .terminal-container {
-            background: #1e1e1e; border-radius: var(--radius-md); box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
-            display: flex; flex-direction: column; overflow: hidden;
+            background: #1e1e1e;
+            border-radius: var(--radius-md);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
+
         .terminal-header {
-            background: #2d2d2d; padding: 6px 16px; font-size: 11px; color: #a1a1aa;
-            display: flex; justify-content: space-between; border-bottom: 1px solid #000;
+            background: #2d2d2d;
+            padding: 6px 16px;
+            font-size: 11px;
+            color: #a1a1aa;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #000;
         }
+
         .log-terminal {
-            color: #4ade80; font-family: "Courier New", Courier, monospace;
-            font-size: 12px; padding: 12px 16px; height: 120px; overflow-y: auto; line-height: 1.6;
+            color: #4ade80;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 12px;
+            padding: 12px 16px;
+            height: 120px;
+            overflow-y: auto;
+            line-height: 1.6;
         }
-        .log-line { margin-bottom: 4px; }
-        .log-time { color: #94a3b8; margin-right: 8px; }
-        .log-warn { color: #fbbf24; } .log-error { color: #ef4444; }
+
+        .log-line {
+            margin-bottom: 4px;
+        }
+
+        .log-time {
+            color: #94a3b8;
+            margin-right: 8px;
+        }
+
+        .log-warn {
+            color: #fbbf24;
+        }
+
+        .log-error {
+            color: #ef4444;
+        }
 
         /* 进度条 */
         .progress-panel {
-            background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md);
-            padding: 16px; display: none; box-shadow: var(--shadow-sm);
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            display: none;
+            box-shadow: var(--shadow-sm);
         }
-        .progress-item { margin-bottom: 8px; }
-        .progress-info { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; color: var(--text-main); font-weight: 600;}
-        .progress-track { height: 10px; background: #e2e8f0; border-radius: 5px; overflow: hidden; }
-        
-        .progress-fill { 
-            height: 100%; background: var(--primary); width: 0%; transition: width 0.2s linear; 
-            position: relative; overflow: hidden;
+
+        .progress-item {
+            margin-bottom: 8px;
         }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 6px;
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        .progress-track {
+            height: 10px;
+            background: #e2e8f0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.2s linear;
+            position: relative;
+            overflow: hidden;
+        }
+
         .progress-fill::after {
-            content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-            transform: translateX(-100%); animation: shimmer 1.5s infinite;
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transform: translateX(-100%);
+            animation: shimmer 1.5s infinite;
         }
-        @keyframes shimmer { 100% { transform: translateX(100%); } }
-        .progress-fill.success { background: var(--success); }
-        .progress-fill.success::after { display: none; }
+
+        @keyframes shimmer {
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .progress-fill.success {
+            background: var(--success);
+        }
+
+        .progress-fill.success::after {
+            display: none;
+        }
 
         /* 独立行透视表看板 */
-        .summary-dashboard { display: flex; flex-direction: column; gap: 24px; display: none; }
-        .summary-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--shadow-sm); }
-        .summary-title { font-size: 14px; font-weight: 700; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;}
-        .summary-hint { font-size: 11px; font-weight: normal; color: var(--text-muted); background: #f1f5f9; padding: 4px 8px; border-radius: 4px; }
-        
-        .insight-box {
-            background: #fff1f2; border: 1px solid #fecdd3; padding: 12px 16px; border-radius: var(--radius-md); 
-            margin-bottom: 16px; font-size: 13px; color: #881337; line-height: 1.6;
+        .summary-dashboard {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            display: none;
         }
-        .insight-box strong.highlight { color: #e11d48; font-weight: 700; font-size: 14px; }
-        .insight-box span.highlight { color: #e11d48; font-weight: 700; }
 
-        .crosstab-container { overflow: auto; max-height: 400px; border: 1px solid var(--border); border-radius: var(--radius-md); background: #ffffff;}
-        .crosstab-table { border-collapse: collapse; width: 100%; font-size: 12px; }
-        .crosstab-table th, .crosstab-table td { border: 1px solid var(--border); padding: 8px 12px; text-align: center; white-space: nowrap; }
-        
-        .crosstab-table thead tr:nth-child(1) th { background: #e2e8f0; position: sticky; top: 0; z-index: 3; color: #0f172a; box-shadow: 0 1px 0 var(--border); }
-        .crosstab-table thead tr:nth-child(2) th { background: #f1f5f9; position: sticky; top: 34px; z-index: 2; color: #475569; box-shadow: 0 1px 0 var(--border); font-weight: 500;}
-        .crosstab-table tbody th { text-align: left; background: #f8fafc; position: sticky; left: 0; z-index: 1; box-shadow: 1px 0 0 var(--border); color: #334155;}
-        .crosstab-table thead tr:nth-child(1) th:first-child { position: sticky; left: 0; z-index: 5; background: #cbd5e1; }
-        
-        .line-header { cursor: pointer; user-select: none; transition: background 0.2s; position: relative; padding-right: 22px !important; color: var(--primary) !important;}
-        .line-header:hover { background: #dbeafe !important; }
-        .line-header::after { content: '▸'; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 14px; transition: transform 0.2s;}
-        .line-header.expanded { background: #dbeafe !important; }
-        .line-header.expanded::after { content: '▾'; }
-        
-        .agg-val { background-color: #f8fafc; font-weight: 600; color: #0f172a; } 
-        .crosstab-table .zero-val { color: #cbd5e1; }
-        .crosstab-table .total-cell { background: #f1f5f9; font-weight: 700; color: var(--primary); }
-        
-        .crosstab-table tfoot th { background: #f1f5f9; font-weight: 700; position: sticky; bottom: 0; z-index: 2; box-shadow: 0 -1px 0 var(--border); }
-        .crosstab-table tfoot th:first-child { z-index: 4; left: 0; background: #e2e8f0;}
+        .summary-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            box-shadow: var(--shadow-sm);
+        }
 
-        .fade-in { animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-2px); } to { opacity: 1; transform: translateY(0); } }
+        .summary-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .summary-hint {
+            font-size: 11px;
+            font-weight: normal;
+            color: var(--text-muted);
+            background: #f1f5f9;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .insight-box {
+            background: #fff1f2;
+            border: 1px solid #fecdd3;
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: #881337;
+            line-height: 1.6;
+        }
+
+        .insight-box strong.highlight {
+            color: #e11d48;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .insight-box span.highlight {
+            color: #e11d48;
+            font-weight: 700;
+        }
+
+        .crosstab-container {
+            overflow: auto;
+            max-height: 400px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            background: #ffffff;
+        }
+
+        .crosstab-table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 12px;
+        }
+
+        .crosstab-table th,
+        .crosstab-table td {
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .crosstab-table thead tr:nth-child(1) th {
+            background: #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 3;
+            color: #0f172a;
+            box-shadow: 0 1px 0 var(--border);
+        }
+
+        .crosstab-table thead tr:nth-child(2) th {
+            background: #f1f5f9;
+            position: sticky;
+            top: 34px;
+            z-index: 2;
+            color: #475569;
+            box-shadow: 0 1px 0 var(--border);
+            font-weight: 500;
+        }
+
+        .crosstab-table tbody th {
+            text-align: left;
+            background: #f8fafc;
+            position: sticky;
+            left: 0;
+            z-index: 1;
+            box-shadow: 1px 0 0 var(--border);
+            color: #334155;
+        }
+
+        .crosstab-table thead tr:nth-child(1) th:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 5;
+            background: #cbd5e1;
+        }
+
+        .line-header {
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+            position: relative;
+            padding-right: 22px !important;
+            color: var(--primary) !important;
+        }
+
+        .line-header:hover {
+            background: #dbeafe !important;
+        }
+
+        .line-header::after {
+            content: '▸';
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+            transition: transform 0.2s;
+        }
+
+        .line-header.expanded {
+            background: #dbeafe !important;
+        }
+
+        .line-header.expanded::after {
+            content: '▾';
+        }
+
+        .agg-val {
+            background-color: #f8fafc;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .crosstab-table .zero-val {
+            color: #cbd5e1;
+        }
+
+        .crosstab-table .total-cell {
+            background: #f1f5f9;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .crosstab-table tfoot th {
+            background: #f1f5f9;
+            font-weight: 700;
+            position: sticky;
+            bottom: 0;
+            z-index: 2;
+            box-shadow: 0 -1px 0 var(--border);
+        }
+
+        .crosstab-table tfoot th:first-child {
+            z-index: 4;
+            left: 0;
+            background: #e2e8f0;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-2px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
         /* 底层结果区 */
-        .data-views { display: flex; flex-direction: column; gap: 20px; }
-        .table-panel { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-lg); display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow-sm); }
-        .panel-header { padding: 10px 16px; border-bottom: 1px solid var(--border); background: #f8fafc; display: flex; justify-content: space-between; align-items: center; }
-        .panel-header-title { font-weight: 700; font-size: 13px; color: var(--text-main); }
-        .panel-body { overflow: auto; max-height: 500px; background: #ffffff; }
+        .data-views {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
 
-        .column-ctrl { position: relative; display: inline-block; }
-        .btn-ctrl { background: #ffffff; border: 1px solid var(--border); padding: 4px 10px; font-size: 12px; border-radius: var(--radius-md); cursor: pointer; display: flex; align-items: center; gap: 6px;}
-        .btn-ctrl:hover { border-color: var(--primary); color: var(--primary); }
-        .column-menu { 
-            display: none; position: absolute; right: 0; top: 110%; background: #ffffff; border: 1px solid var(--border); 
-            border-radius: var(--radius-md); box-shadow: var(--shadow-md); padding: 10px; width: 220px; z-index: 100; max-height: 250px; overflow-y: auto;
+        .table-panel {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
         }
-        .column-menu.show { display: block; }
-        .column-menu label { display: flex; align-items: center; gap: 8px; padding: 4px 6px; font-size: 12px; cursor: pointer;}
-        
-        .data-table { border-collapse: collapse; width: 100%; font-size: 12px; table-layout: fixed; }
-        .data-table th { background: #f8fafc; color: var(--text-muted); font-weight: 600; border-bottom: 1px solid var(--border); border-right: 1px solid #f1f5f9; padding: 8px 12px; text-align: left; position: sticky; top: 0; z-index: 10; white-space: nowrap; }
-        .data-table td { border-bottom: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; padding: 6px 12px; max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .data-table th.priority-col { background: #eff6ff; color: #1e40af; }
-        .data-table td.priority-col { background: #f8fafc; font-weight: 500; }
-        .data-table th.freq-col { background: #e0e7ff; color: #3730a3; width: 80px;}
-        .data-table td.freq-col { font-weight: 700; color: #3730a3; text-align: center; }
-        .panel-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-        .filter-group { display: inline-flex; align-items: center; gap: 4px; padding: 3px; background: #f1f5f9; border: 1px solid var(--border); border-radius: var(--radius-md); }
-        .filter-btn { border: 0; background: transparent; color: #475569; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; }
-        .filter-btn.active { background: #ffffff; color: var(--primary); box-shadow: var(--shadow-sm); }
-        .data-table tr.freq-highlight td { background: #fff7ed; }
-        .data-table tr.freq-highlight td.freq-col { background: #fed7aa; color: #9a3412; }
-        .data-table tr.freq-highlight { cursor: pointer; }
-        .data-table tr.freq-highlight:hover td { background: #ffedd5; }
-        .match-tip { color: #9a3412; font-size: 11px; font-weight: 700; margin-left: 6px; }
+
+        .panel-header {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            background: #f8fafc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-header-title {
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--text-main);
+        }
+
+        .panel-body {
+            overflow: auto;
+            max-height: 500px;
+            background: #ffffff;
+        }
+
+        .column-ctrl {
+            position: relative;
+            display: inline-block;
+        }
+
+        .btn-ctrl {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            padding: 4px 10px;
+            font-size: 12px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-ctrl:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .column-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 110%;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-md);
+            padding: 10px;
+            width: 220px;
+            z-index: 100;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .column-menu.show {
+            display: block;
+        }
+
+        .column-menu label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .data-table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 12px;
+            table-layout: fixed;
+        }
+
+        .data-table th {
+            background: #f8fafc;
+            color: var(--text-muted);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+            border-right: 1px solid #f1f5f9;
+            padding: 8px 12px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            white-space: nowrap;
+        }
+
+        .data-table td {
+            border-bottom: 1px solid #f1f5f9;
+            border-right: 1px solid #f1f5f9;
+            padding: 6px 12px;
+            max-width: 180px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .data-table th.priority-col {
+            background: #eff6ff;
+            color: #1e40af;
+        }
+
+        .data-table td.priority-col {
+            background: #f8fafc;
+            font-weight: 500;
+        }
+
+        .data-table th.freq-col {
+            background: #e0e7ff;
+            color: #3730a3;
+            width: 80px;
+        }
+
+        .data-table td.freq-col {
+            font-weight: 700;
+            color: #3730a3;
+            text-align: center;
+        }
+
+        .panel-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .filter-group {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px;
+            background: #f1f5f9;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+        }
+
+        .filter-btn {
+            border: 0;
+            background: transparent;
+            color: #475569;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .filter-btn.active {
+            background: #ffffff;
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .data-table tr.freq-highlight td {
+            background: #fff7ed;
+        }
+
+        .data-table tr.freq-highlight td.freq-col {
+            background: #fed7aa;
+            color: #9a3412;
+        }
+
+        .data-table tr.freq-highlight {
+            cursor: pointer;
+        }
+
+        .data-table tr.freq-highlight:hover td {
+            background: #ffedd5;
+        }
+
+        .match-tip {
+            color: #9a3412;
+            font-size: 11px;
+            font-weight: 700;
+            margin-left: 6px;
+        }
+
         .modal-mask {
-            display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(15, 23, 42, 0.45);
-            align-items: center; justify-content: center; padding: 24px; box-sizing: border-box;
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: rgba(15, 23, 42, 0.45);
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            box-sizing: border-box;
         }
-        .modal-mask.show { display: flex; }
+
+        .modal-mask.show {
+            display: flex;
+        }
+
         .modal-panel {
-            width: min(1180px, 96vw); max-height: 88vh; background: #ffffff; border-radius: var(--radius-lg);
-            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25); display: flex; flex-direction: column; overflow: hidden;
+            width: min(1180px, 96vw);
+            max-height: 88vh;
+            background: #ffffff;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
-        .modal-head { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-        .modal-title { font-size: 14px; font-weight: 800; color: var(--text-main); }
-        .modal-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
-        .modal-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-        .modal-close { border: 1px solid var(--border); background: #ffffff; color: #334155; height: 30px; padding: 0 10px; border-radius: 7px; cursor: pointer; font-weight: 700; }
-        .modal-body { padding: 14px 18px 18px; overflow: auto; }
-        .modal-body .panel-body { max-height: 58vh; border: 1px solid var(--border); border-radius: var(--radius-md); }
-        .empty-state { padding: 40px; text-align: center; color: var(--text-muted); font-size: 13px; }
+
+        .modal-head {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .modal-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .modal-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .modal-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .modal-close {
+            border: 1px solid var(--border);
+            background: #ffffff;
+            color: #334155;
+            height: 30px;
+            padding: 0 10px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .modal-body {
+            padding: 14px 18px 18px;
+            overflow: auto;
+        }
+
+        .modal-body .panel-body {
+            max-height: 58vh;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+        }
+
+        .empty-state {
+            padding: 40px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
     </style>
 </head>
+
 <body>
 
     <div class="navbar">
-        <h1>📊 企业级 ESN 数据洞察系统 (定制美化版)</h1>
+        <h1>📊 ESN 数据洞察系统 (定制美化版)</h1>
         <button id="export-btn" class="btn-export">⬇️ 导出精美报表至 Excel</button>
     </div>
 
@@ -231,7 +770,7 @@
                 <div id="normal-count-insight"></div>
                 <div class="crosstab-container" id="normal-count-crosstab"></div>
             </div>
-            
+
             <div class="summary-card" style="border-top: 4px solid #f59e0b;">
                 <div class="summary-title">
                     <span>🟠 ANY 聚合分布 (去重配置项统计)</span>
@@ -251,7 +790,7 @@
                     <div class="empty-state">等待执行步骤 2 导入全量数据...</div>
                 </div>
             </div>
-            
+
             <div class="summary-card" style="border-top: 4px solid #ec4899;">
                 <div class="summary-title">
                     <span>🔴 ANY 聚合分布 (全量申请次数统计)</span>
@@ -270,9 +809,12 @@
                     <div class="panel-header-title">🟢 标准数据明细区</div>
                     <div class="panel-actions">
                         <div class="filter-group">
-                            <button class="filter-btn active" data-filter-btn="normal-all" onclick="setDetailFilter('normal', 'all')">全部</button>
-                            <button class="filter-btn" data-filter-btn="normal-high" onclick="setDetailFilter('normal', 'high')">全量&gt;1</button>
-                            <button class="filter-btn" data-filter-btn="normal-none" onclick="setDetailFilter('normal', 'none')">无匹配</button>
+                            <button class="filter-btn active" data-filter-btn="normal-all"
+                                onclick="setDetailFilter('normal', 'all')">全部</button>
+                            <button class="filter-btn" data-filter-btn="normal-high"
+                                onclick="setDetailFilter('normal', 'high')">全量&gt;1</button>
+                            <button class="filter-btn" data-filter-btn="normal-none"
+                                onclick="setDetailFilter('normal', 'none')">无匹配</button>
                         </div>
                         <div class="column-ctrl">
                             <button class="btn-ctrl" onclick="toggleMenu('normal-col-menu')">⚙️ 自定义显示列</button>
@@ -280,16 +822,21 @@
                         </div>
                     </div>
                 </div>
-                <div class="panel-body" id="normal-output"><div class="empty-state">暂无数据...</div></div>
+                <div class="panel-body" id="normal-output">
+                    <div class="empty-state">暂无数据...</div>
+                </div>
             </div>
             <div class="table-panel">
                 <div class="panel-header">
                     <div class="panel-header-title">🟠 ANY 聚合明细区</div>
                     <div class="panel-actions">
                         <div class="filter-group">
-                            <button class="filter-btn active" data-filter-btn="any-all" onclick="setDetailFilter('any', 'all')">全部</button>
-                            <button class="filter-btn" data-filter-btn="any-high" onclick="setDetailFilter('any', 'high')">全量&gt;1</button>
-                            <button class="filter-btn" data-filter-btn="any-none" onclick="setDetailFilter('any', 'none')">无匹配</button>
+                            <button class="filter-btn active" data-filter-btn="any-all"
+                                onclick="setDetailFilter('any', 'all')">全部</button>
+                            <button class="filter-btn" data-filter-btn="any-high"
+                                onclick="setDetailFilter('any', 'high')">全量&gt;1</button>
+                            <button class="filter-btn" data-filter-btn="any-none"
+                                onclick="setDetailFilter('any', 'none')">无匹配</button>
                         </div>
                         <div class="column-ctrl">
                             <button class="btn-ctrl" onclick="toggleMenu('any-col-menu')">⚙️ 自定义显示列</button>
@@ -297,7 +844,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="panel-body" id="any-output"><div class="empty-state">暂无数据...</div></div>
+                <div class="panel-body" id="any-output">
+                    <div class="empty-state">暂无数据...</div>
+                </div>
             </div>
         </div>
 
@@ -325,10 +874,10 @@
     </div>
 
     <script>
-        let rawGlobal = {}; 
-        let globalData = {}; 
+        let rawGlobal = {};
+        let globalData = {};
         let currentFileName = "智能分析报告.xlsx";
-        const NEW_COL_NAME = "全量频次"; 
+        const NEW_COL_NAME = "全量频次";
         const SOURCE_FILE_COL = "来源文件";
         const SOURCE_SHEET_COL = "来源工作表";
 
@@ -347,14 +896,14 @@
         const logger = {
             el: document.getElementById('log-terminal'),
             statusEl: document.getElementById('terminal-status'),
-            log(msg, type='info') {
+            log(msg, type = 'info') {
                 const time = new Date().toLocaleTimeString('en-US', { hour12: false });
-                let css = ''; if(type==='warn') css='log-warn'; if(type==='error') css='log-error';
+                let css = ''; if (type === 'warn') css = 'log-warn'; if (type === 'error') css = 'log-error';
                 this.el.innerHTML += `<div class="log-line ${css}"><span class="log-time">[${time}]</span> ${msg}</div>`;
-                this.el.scrollTop = this.el.scrollHeight; 
+                this.el.scrollTop = this.el.scrollHeight;
             },
-            status(text, active=false) { 
-                this.statusEl.textContent = text; 
+            status(text, active = false) {
+                this.statusEl.textContent = text;
                 this.statusEl.style.color = active ? '#fbbf24' : '#a1a1aa';
             }
         };
@@ -371,21 +920,21 @@
                     </div>`;
                 this.list.insertAdjacentHTML('beforeend', html);
             },
-            update(id, percent, text, isSuccess=false) {
+            update(id, percent, text, isSuccess = false) {
                 const fill = document.getElementById(`prog-fill-${id}`);
                 const stat = document.getElementById(`prog-stat-${id}`);
-                if(!fill || !stat) return;
+                if (!fill || !stat) return;
                 fill.style.width = `${percent}%`; stat.textContent = `${text} ${percent}%`;
-                if(isSuccess) fill.classList.add('success');
+                if (isSuccess) fill.classList.add('success');
             }
         };
 
         function toggleMenu(menuId) {
-            document.querySelectorAll('.column-menu').forEach(m => { if(m.id !== menuId) m.classList.remove('show'); });
+            document.querySelectorAll('.column-menu').forEach(m => { if (m.id !== menuId) m.classList.remove('show'); });
             document.getElementById(menuId).classList.toggle('show');
         }
-        document.addEventListener('click', function(e) {
-            if(!e.target.closest('.column-ctrl')) document.querySelectorAll('.column-menu').forEach(m => m.classList.remove('show'));
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.column-ctrl')) document.querySelectorAll('.column-menu').forEach(m => m.classList.remove('show'));
         });
         function buildColumnMenu(type) {
             const menu = document.getElementById(`${type}-col-menu`);
@@ -395,7 +944,7 @@
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox'; checkbox.value = header; checkbox.checked = uiVisibleColumns[type].has(header);
                 checkbox.addEventListener('change', (e) => {
-                    if(e.target.checked) uiVisibleColumns[type].add(header); else uiVisibleColumns[type].delete(header);
+                    if (e.target.checked) uiVisibleColumns[type].add(header); else uiVisibleColumns[type].delete(header);
                     renderSpecificUI(type);
                 });
                 label.appendChild(checkbox); label.appendChild(document.createTextNode(header)); menu.appendChild(label);
@@ -535,7 +1084,7 @@
             currentMatchRows = [];
         }
 
-        document.getElementById('match-modal').addEventListener('click', function(e) {
+        document.getElementById('match-modal').addEventListener('click', function (e) {
             if (e.target === this) closeMatchModal();
         });
 
@@ -551,26 +1100,26 @@
             });
         }
 
-        document.getElementById('excel-file-base').addEventListener('change', async function(e) {
+        document.getElementById('excel-file-base').addEventListener('change', async function (e) {
             const files = Array.from(e.target.files);
             if (files.length === 0) return;
 
             logger.status("🚀 Processing Base", true);
             logger.log("==========================================");
             logger.log("启动核心数据清洗管道...");
-            
+
             document.getElementById('export-btn').style.display = 'none';
             document.getElementById('excel-file-full').disabled = true;
             document.getElementById('summary-dashboard').style.display = 'none';
             currentFileName = (files.length > 1 ? "批量合并_" : "") + files[0].name.replace(/\.[^/.]+$/, "") + "_洞察分析.xlsx";
-            
+
             progressCtrl.show();
-            rawGlobal = {}; 
+            rawGlobal = {};
             allAvailableHeaders = { normal: new Set(), any: new Set() };
             fullMatchMap = new Map();
             fullAvailableHeaders = new Set();
             matchVisibleColumns = new Set();
-            expandedPivotLines = { 'normal-count': new Set(), 'any-count': new Set(), 'normal-freq': new Set(), 'any-freq': new Set() }; 
+            expandedPivotLines = { 'normal-count': new Set(), 'any-count': new Set(), 'normal-freq': new Set(), 'any-freq': new Set() };
             const baseEsnSeen = new Map();
             const duplicateEsnMap = new Map();
 
@@ -580,8 +1129,8 @@
                 try {
                     logger.log(`>> [1/3] 开始读取硬盘文件: ${file.name}`);
                     const arrayBuffer = await readFileWithProgress(file, fid);
-                    
-                    progressCtrl.update(fid, 20, "底层结构解码中..."); await paintUI(); 
+
+                    progressCtrl.update(fid, 20, "底层结构解码中..."); await paintUI();
                     const workbook = XLSX.read(arrayBuffer, { type: 'array', cellFormula: false, cellHTML: false, cellText: false });
                     const TARGET_SHEET = "NIS重点遗留任务";
                     let sheetsToProcess = workbook.SheetNames.includes(TARGET_SHEET) ? [TARGET_SHEET] : workbook.SheetNames;
@@ -590,11 +1139,11 @@
                     for (let sheetName of sheetsToProcess) {
                         if (!rawGlobal[sheetName]) rawGlobal[sheetName] = { headers: new Set(), normalRaw: [], anyRaw: [] };
                         const worksheet = workbook.Sheets[sheetName];
-                        
+
                         const rawRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
                         if (rawRows.length === 0) continue;
                         rawRows[0].forEach(h => rawGlobal[sheetName].headers.add(h));
-                        
+
                         const dataRows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
                         const totalRows = dataRows.length; let processed = 0; const CHUNK = 8000;
 
@@ -638,7 +1187,7 @@
 
             logger.log("执行时序逻辑：精准比对生效时间并去重...");
             globalData = {};
-            for(let sheetName of Object.keys(rawGlobal)) {
+            for (let sheetName of Object.keys(rawGlobal)) {
                 const sheetRaw = rawGlobal[sheetName];
                 await paintUI();
                 const cleanedNormal = processNormalDeduplication(sheetRaw.normalRaw);
@@ -646,8 +1195,8 @@
                 const headersArr = Array.from(sheetRaw.headers);
 
                 globalData[sheetName] = { headers: headersArr, normal: cleanedNormal, any: cleanedAny };
-                if(cleanedNormal.length > 0) headersArr.forEach(h => allAvailableHeaders.normal.add(h));
-                if(cleanedAny.length > 0) headersArr.forEach(h => allAvailableHeaders.any.add(h));
+                if (cleanedNormal.length > 0) headersArr.forEach(h => allAvailableHeaders.normal.add(h));
+                if (cleanedAny.length > 0) headersArr.forEach(h => allAvailableHeaders.any.add(h));
             }
 
             initDefaultVisibleColumns();
@@ -658,13 +1207,13 @@
             progressCtrl.hide();
             logger.log("✅ 基础数据流清洗完毕，看板与底层 UI 已重绘。");
             logger.status("🟢 Base Ready", false);
-            
+
             document.getElementById('summary-dashboard').scrollIntoView({ behavior: 'smooth', block: 'start' });
             document.getElementById('export-btn').style.display = 'block';
             document.getElementById('excel-file-full').disabled = false;
         });
 
-        document.getElementById('excel-file-full').addEventListener('change', async function(e) {
+        document.getElementById('excel-file-full').addEventListener('change', async function (e) {
             const files = Array.from(e.target.files);
             if (files.length === 0) return;
 
@@ -672,29 +1221,29 @@
             logger.status("🚀 Processing Full", true);
             logger.log("==========================================");
             logger.log(`开始极速处理全量参照数据...`);
-            
+
             const freqMap = new Map();
             fullMatchMap = new Map();
             fullAvailableHeaders = new Set([SOURCE_FILE_COL, SOURCE_SHEET_COL]);
-            
+
             for (let i = 0; i < files.length; i++) {
                 const file = files[i]; const fid = `full-${i}`; progressCtrl.add(fid, file.name);
 
                 try {
                     logger.log(`>> [1/3] IO 读取全量包: ${file.name}`);
                     const arrayBuffer = await readFileWithProgress(file, fid);
-                    
-                    progressCtrl.update(fid, 20, "结构解码中(请勿操作)..."); await paintUI(); 
+
+                    progressCtrl.update(fid, 20, "结构解码中(请勿操作)..."); await paintUI();
                     const workbook = XLSX.read(arrayBuffer, { type: 'array', cellFormula: false, cellHTML: false, cellText: false });
                     logger.log(`>> [3/3] 核心解码完成。启动分片微任务，无感构建海量联合字典...`);
 
                     for (let sheetName of workbook.SheetNames) {
-                        const dataRows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]); 
-                        const totalRows = dataRows.length; let processed = 0; const CHUNK = 20000; 
+                        const dataRows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+                        const totalRows = dataRows.length; let processed = 0; const CHUNK = 20000;
 
                         while (processed < totalRows) {
                             const end = Math.min(processed + CHUNK, totalRows);
-                            for(let j = processed; j < end; j++){
+                            for (let j = processed; j < end; j++) {
                                 const row = dataRows[j];
                                 const esnVal = getEsnValue(row);
                                 if (esnVal) {
@@ -716,7 +1265,7 @@
                         }
                     }
                     progressCtrl.update(fid, 100, "合并成功", true);
-                } catch (err) { 
+                } catch (err) {
                     progressCtrl.update(fid, 0, `失败`); logger.log(`❌ 异常: ${err.message}`, 'error');
                 }
             }
@@ -726,16 +1275,16 @@
                 const sheetInfo = globalData[sheetName];
                 if (!sheetInfo.headers.includes(NEW_COL_NAME)) { sheetInfo.headers.push(NEW_COL_NAME); }
                 allAvailableHeaders.normal.add(NEW_COL_NAME); allAvailableHeaders.any.add(NEW_COL_NAME);
-                
+
                 const assignFreq = (row) => {
                     const esnVal = getEsnValue(row);
-                    if(esnVal) {
+                    if (esnVal) {
                         const netVal = getNetValue(row); const prodVal = getProdValue(row);
                         const compositeKey = `${netVal}_${prodVal}_${esnVal}`;
                         row[NEW_COL_NAME] = freqMap.get(compositeKey) || 0;
                     } else { row[NEW_COL_NAME] = 0; }
                 };
-                sheetInfo.normal.forEach(assignFreq); 
+                sheetInfo.normal.forEach(assignFreq);
                 sheetInfo.any.forEach(assignFreq);
 
                 sheetInfo.normal.sort((a, b) => (Number(b[NEW_COL_NAME]) || 0) - (Number(a[NEW_COL_NAME]) || 0));
@@ -748,7 +1297,7 @@
             updateDashboard();
             buildColumnMenu('normal'); buildColumnMenu('any');
             renderSpecificUI('normal'); renderSpecificUI('any');
-            
+
             progressCtrl.hide();
             logger.log(`🎉 全量数据链路比对完成，明细已按频次降序呈现！`);
             logger.status("🟢 Analysis Done", false);
@@ -760,7 +1309,7 @@
             rows.forEach(row => {
                 const esnVal = getEsnValue(row); const timeVal = getTimeValue(row);
                 if (esnVal === '') { uniqueMap.set(Symbol('empty'), row); return; }
-                if (!uniqueMap.has(esnVal)) { uniqueMap.set(esnVal, row); } 
+                if (!uniqueMap.has(esnVal)) { uniqueMap.set(esnVal, row); }
                 else {
                     const existingRow = uniqueMap.get(esnVal);
                     const existingDate = new Date(getTimeValue(existingRow).replace(/-/g, '/'));
@@ -776,7 +1325,7 @@
             rows.forEach(row => {
                 const net = getNetValue(row); const prod = getProdValue(row);
                 const compositeKey = `${net}_${prod}`; const timeVal = getTimeValue(row);
-                if (!uniqueMap.has(compositeKey)) { uniqueMap.set(compositeKey, row); } 
+                if (!uniqueMap.has(compositeKey)) { uniqueMap.set(compositeKey, row); }
                 else {
                     const existingRow = uniqueMap.get(compositeKey);
                     const existingDate = new Date(getTimeValue(existingRow).replace(/-/g, '/'));
@@ -796,14 +1345,14 @@
                 const n = getNetValue(r) || '未分类网络';
                 const p = getProdValue(r) || '未分类产品';
                 const pl = getProdLineValue(r) || '未分类产品线';
-                
+
                 const val = metric === 'freq' ? (Number(r[NEW_COL_NAME]) || 0) : 1;
 
                 nets.add(n); prods.add(p);
-                if (!prodToLine[p] || prodToLine[p] === '未分类产品线') prodToLine[p] = pl; 
-                
+                if (!prodToLine[p] || prodToLine[p] === '未分类产品线') prodToLine[p] = pl;
+
                 if (!counts[n]) counts[n] = {}; if (!lineCounts[n]) lineCounts[n] = {};
-                
+
                 counts[n][p] = (counts[n][p] || 0) + val;
                 lineCounts[n][pl] = (lineCounts[n][pl] || 0) + val;
                 colTotals.prods[p] = (colTotals.prods[p] || 0) + val;
@@ -820,7 +1369,7 @@
             const sortedLines = Object.keys(lineToProds).sort();
             sortedLines.forEach(pl => lineToProds[pl].sort());
             const sortedNets = Array.from(nets).sort();
-            
+
             const sortedProds = [];
             sortedLines.forEach(pl => sortedProds.push(...lineToProds[pl]));
 
@@ -829,7 +1378,7 @@
 
         function generateInsightHTML(data, metric) {
             if (data.sortedNets.length === 0) return '';
-            
+
             let allItems = [];
             data.sortedNets.forEach(n => {
                 data.sortedProds.forEach(p => {
@@ -843,16 +1392,16 @@
                     }
                 });
             });
-            
+
             allItems.sort((a, b) => b.val - a.val);
             if (allItems.length === 0) return '';
 
             const unit = metric === 'count' ? '项配置' : '次申请记录';
             const top1 = allItems[0];
-            
+
             let html = `<div class="insight-box">`;
             html += `<strong>💡 智能洞察：</strong>当前视图中，分布最突出的是 <strong>【${top1.net}】</strong> 网络的 <strong>【${top1.line} - ${top1.prod}】</strong>，达到 <strong class="highlight">${top1.val}</strong> ${unit}。`;
-            
+
             if (allItems.length > 1) {
                 html += `<br>整体 <strong>TOP 3 高频分布</strong> 依次为：`;
                 const top3 = allItems.slice(0, 3);
@@ -868,15 +1417,15 @@
 
             const expSet = expandedPivotLines[pivotId];
             let html = '<table class="crosstab-table"><thead><tr><th rowspan="2" style="vertical-align: middle; min-width: 120px;">网络 \\ 产品层级</th>';
-            data.sortedLines.forEach(pl => { 
+            data.sortedLines.forEach(pl => {
                 const isExp = expSet.has(pl);
                 const colspan = isExp ? data.lineToProds[pl].length : 1;
                 const activeClass = isExp ? 'expanded' : '';
                 const safePl = pl.replace(/'/g, "\\'");
-                html += `<th colspan="${colspan}" class="line-header ${activeClass}" onclick="togglePivot('${pivotId}', '${safePl}')">${pl}</th>`; 
+                html += `<th colspan="${colspan}" class="line-header ${activeClass}" onclick="togglePivot('${pivotId}', '${safePl}')">${pl}</th>`;
             });
             html += '<th rowspan="2" style="vertical-align: middle; min-width: 80px;">总计</th></tr><tr>';
-            data.sortedLines.forEach(pl => { 
+            data.sortedLines.forEach(pl => {
                 if (expSet.has(pl)) {
                     data.lineToProds[pl].forEach(p => { html += `<th class="fade-in" style="color:#0f172a;">${p}</th>`; });
                 } else { html += `<th class="fade-in" style="font-weight:normal; font-style:italic;">[产品汇总]</th>`; }
@@ -902,7 +1451,7 @@
             });
 
             html += '</tbody><tfoot><tr><th>各项总计</th>';
-            data.sortedLines.forEach(pl => { 
+            data.sortedLines.forEach(pl => {
                 if (expSet.has(pl)) {
                     data.lineToProds[pl].forEach(p => { html += `<th class="fade-in">${data.colTotals.prods[p] || 0}</th>`; });
                 } else { html += `<th class="fade-in agg-val">${data.colTotals.lines[pl] || 0}</th>`; }
@@ -911,23 +1460,23 @@
             return html;
         }
 
-        window.togglePivot = function(pivotId, lineName) {
-            if (expandedPivotLines[pivotId].has(lineName)) { expandedPivotLines[pivotId].delete(lineName); } 
+        window.togglePivot = function (pivotId, lineName) {
+            if (expandedPivotLines[pivotId].has(lineName)) { expandedPivotLines[pivotId].delete(lineName); }
             else { expandedPivotLines[pivotId].add(lineName); }
-            updateDashboard(); 
+            updateDashboard();
         };
 
         function updateDashboard() {
-            document.getElementById('summary-dashboard').style.display = 'flex'; 
+            document.getElementById('summary-dashboard').style.display = 'flex';
             let allNormal = [], allAny = [];
             Object.values(globalData).forEach(sheet => {
                 allNormal = allNormal.concat(sheet.normal); allAny = allAny.concat(sheet.any);
             });
-            
+
             const ncData = prepareCrosstabData(allNormal, 'count');
             document.getElementById('normal-count-insight').innerHTML = generateInsightHTML(ncData, 'count');
             document.getElementById('normal-count-crosstab').innerHTML = getCrosstabHTML(ncData, 'normal-count');
-            
+
             const acData = prepareCrosstabData(allAny, 'count');
             document.getElementById('any-count-insight').innerHTML = generateInsightHTML(acData, 'count');
             document.getElementById('any-count-crosstab').innerHTML = getCrosstabHTML(acData, 'any-count');
@@ -937,7 +1486,7 @@
                 const nfData = prepareCrosstabData(allNormal, 'freq');
                 document.getElementById('normal-freq-insight').innerHTML = generateInsightHTML(nfData, 'freq');
                 document.getElementById('normal-freq-crosstab').innerHTML = getCrosstabHTML(nfData, 'normal-freq');
-                
+
                 const afData = prepareCrosstabData(allAny, 'freq');
                 document.getElementById('any-freq-insight').innerHTML = generateInsightHTML(afData, 'freq');
                 document.getElementById('any-freq-crosstab').innerHTML = getCrosstabHTML(afData, 'any-freq');
@@ -951,12 +1500,12 @@
 
         function renderSpecificUI(type) {
             const outBox = document.getElementById(`${type}-output`);
-            outBox.innerHTML = ''; 
+            outBox.innerHTML = '';
 
             Object.keys(globalData).forEach(sheetName => {
                 const sheetInfo = globalData[sheetName];
                 const rows = applyDetailFilter(sheetInfo[type], type);
-                if(rows.length === 0) return;
+                if (rows.length === 0) return;
 
                 const orderedHeaders = getReorderedHeaders(sheetInfo.headers);
                 const finalHeadersToRender = orderedHeaders.filter(h => uiVisibleColumns[type].has(h));
@@ -980,18 +1529,18 @@
             table.className = 'data-table';
             const thead = document.createElement('thead');
             const headerTr = document.createElement('tr');
-            
+
             headers.forEach(headerText => {
                 const th = document.createElement('th');
                 th.textContent = headerText; th.title = headerText;
-                if(headerText === NEW_COL_NAME) th.className = 'freq-col';
+                if (headerText === NEW_COL_NAME) th.className = 'freq-col';
                 else if (isPriorityHeader(headerText)) th.className = 'priority-col';
                 headerTr.appendChild(th);
             });
             thead.appendChild(headerTr); table.appendChild(thead);
 
             const tbody = document.createElement('tbody');
-            
+
             // 无限制直接全量渲染，交给浏览器自身性能消化
             rows.forEach(row => {
                 const tr = document.createElement('tr');
@@ -1007,37 +1556,37 @@
                     const td = document.createElement('td');
                     const cellValue = row[headerText] !== undefined ? row[headerText] : '';
                     td.textContent = cellValue; td.title = cellValue;
-                    if(headerText === NEW_COL_NAME && canOpenMatches) {
+                    if (headerText === NEW_COL_NAME && canOpenMatches) {
                         const tip = document.createElement('span');
                         tip.className = 'match-tip';
                         tip.textContent = '查看';
                         td.appendChild(tip);
                     }
-                    if(headerText === NEW_COL_NAME) td.className = 'freq-col';
+                    if (headerText === NEW_COL_NAME) td.className = 'freq-col';
                     else if (isPriorityHeader(headerText)) td.className = 'priority-col';
                     tr.appendChild(td);
                 });
                 tbody.appendChild(tr);
             });
-            
+
             table.appendChild(tbody); wrap.appendChild(table); return wrap;
         }
 
         // ================= 样式化导出核心引擎 =================
         function createExcelPivotSheet(data) {
             const aoa = []; const merges = [];
-            const row0 = ["网络 \\ 产品层级"]; merges.push({ s: { r: 0, c: 0 }, e: { r: 1, c: 0 } }); 
+            const row0 = ["网络 \\ 产品层级"]; merges.push({ s: { r: 0, c: 0 }, e: { r: 1, c: 0 } });
             let colIndex = 1;
-            
+
             const sortedProds = [];
             data.sortedLines.forEach(pl => {
                 const span = data.lineToProds[pl].length; row0.push(pl);
-                for (let i = 1; i < span; i++) row0.push(""); 
+                for (let i = 1; i < span; i++) row0.push("");
                 if (span > 1) merges.push({ s: { r: 0, c: colIndex }, e: { r: 0, c: colIndex + span - 1 } });
                 colIndex += span;
-                sortedProds.push(...data.lineToProds[pl]); 
+                sortedProds.push(...data.lineToProds[pl]);
             });
-            row0.push("总计"); merges.push({ s: { r: 0, c: colIndex }, e: { r: 1, c: colIndex } }); 
+            row0.push("总计"); merges.push({ s: { r: 0, c: colIndex }, e: { r: 1, c: colIndex } });
             aoa.push(row0);
 
             const row1 = [""]; sortedProds.forEach(p => row1.push(p)); row1.push(""); aoa.push(row1);
@@ -1058,24 +1607,24 @@
             sortedProds.forEach(p => rowFooter.push(colTotals[p])); rowFooter.push(grandTotal); aoa.push(rowFooter);
 
             const ws = XLSX.utils.aoa_to_sheet(aoa); ws['!merges'] = merges;
-            
+
             // 样式渲染 (使用 xlsx-js-style 特性)
             const range = XLSX.utils.decode_range(ws['!ref']);
-            for(let R = range.s.r; R <= range.e.r; ++R) {
-                if(!ws['!rows']) ws['!rows'] = [];
+            for (let R = range.s.r; R <= range.e.r; ++R) {
+                if (!ws['!rows']) ws['!rows'] = [];
                 ws['!rows'][R] = { hpt: (R === 0 || R === 1) ? 24 : 18 }; // 表头稍微高点
-                for(let C = range.s.c; C <= range.e.c; ++C) {
-                    const cellRef = XLSX.utils.encode_cell({c:C, r:R});
-                    if(!ws[cellRef]) ws[cellRef] = { t: 's', v: '' }; 
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                    const cellRef = XLSX.utils.encode_cell({ c: C, r: R });
+                    if (!ws[cellRef]) ws[cellRef] = { t: 's', v: '' };
                     const cell = ws[cellRef];
-                    
+
                     cell.s = {
                         font: { name: "Microsoft YaHei", sz: 10, color: { rgb: "334155" } },
                         alignment: { vertical: "center", horizontal: "center" },
                         border: { top: { style: "thin", color: { rgb: "CBD5E1" } }, bottom: { style: "thin", color: { rgb: "CBD5E1" } }, left: { style: "thin", color: { rgb: "CBD5E1" } }, right: { style: "thin", color: { rgb: "CBD5E1" } } }
                     };
 
-                    if(R === 0 || R === 1) { // 顶级/次级表头
+                    if (R === 0 || R === 1) { // 顶级/次级表头
                         cell.s.fill = { fgColor: { rgb: R === 0 ? "E2E8F0" : "F1F5F9" } };
                         cell.s.font.bold = true; cell.s.font.color = { rgb: "0F172A" };
                     } else if (R === range.e.r || C === range.e.c) { // 底部或右侧总计
@@ -1089,14 +1638,14 @@
             }
 
             const cols = [{ wch: 18 }]; sortedProds.forEach(p => cols.push({ wch: Math.max(10, p.length + 4) })); cols.push({ wch: 12 });
-            ws['!cols'] = cols; 
+            ws['!cols'] = cols;
             ws['!views'] = [{ state: 'frozen', xSplit: 1, ySplit: 2 }]; // 冻结窗格
             return ws;
         }
 
-        document.getElementById('export-btn').addEventListener('click', async function() {
+        document.getElementById('export-btn').addEventListener('click', async function () {
             if (Object.keys(globalData).length === 0) return;
-            
+
             logger.log("触发导出引擎，构建报表架构...");
             progressCtrl.show(); progressCtrl.add('export', '生成企业级汇报表');
             progressCtrl.update('export', 10, '计算透视区...'); await paintUI();
@@ -1108,11 +1657,11 @@
             });
 
             // 1. 生成并附加带样式的透视表
-            if(allNormal.length > 0) {
+            if (allNormal.length > 0) {
                 const ws = createExcelPivotSheet(prepareCrosstabData(allNormal, 'count'));
                 XLSX.utils.book_append_sheet(newWorkbook, ws, "透视_标准_去重数");
             }
-            if(allAny.length > 0) {
+            if (allAny.length > 0) {
                 const ws = createExcelPivotSheet(prepareCrosstabData(allAny, 'count'));
                 // 给 ANY 表增加特定的 Tab 颜色标识
                 ws['!tabcolor'] = { rgb: "F59E0B" };
@@ -1121,8 +1670,8 @@
 
             const hasFreq = allAvailableHeaders.normal.has(NEW_COL_NAME) || allAvailableHeaders.any.has(NEW_COL_NAME);
             if (hasFreq) {
-                if(allNormal.length > 0) XLSX.utils.book_append_sheet(newWorkbook, createExcelPivotSheet(prepareCrosstabData(allNormal, 'freq')), "透视_标准_申请汇总");
-                if(allAny.length > 0) {
+                if (allNormal.length > 0) XLSX.utils.book_append_sheet(newWorkbook, createExcelPivotSheet(prepareCrosstabData(allNormal, 'freq')), "透视_标准_申请汇总");
+                if (allAny.length > 0) {
                     const ws = createExcelPivotSheet(prepareCrosstabData(allAny, 'freq'));
                     ws['!tabcolor'] = { rgb: "F59E0B" };
                     XLSX.utils.book_append_sheet(newWorkbook, ws, "透视_ANY_申请汇总");
@@ -1135,30 +1684,30 @@
             Object.keys(globalData).forEach(sheetName => {
                 const sheetInfo = globalData[sheetName];
                 const orderedHeaders = getReorderedHeaders(sheetInfo.headers);
-                
+
                 const appendDataToBook = (dataRows, targetSheetName, isAny = false) => {
-                    if(dataRows.length === 0) return;
+                    if (dataRows.length === 0) return;
                     const excelRows = [orderedHeaders];
                     dataRows.forEach(rowObj => excelRows.push(orderedHeaders.map(header => rowObj[header] !== undefined ? rowObj[header] : '')));
                     const ws = XLSX.utils.aoa_to_sheet(excelRows);
-                    
+
                     // 应用高级样式
                     const range = XLSX.utils.decode_range(ws['!ref']);
-                    for(let R = range.s.r; R <= range.e.r; ++R) {
-                        if(!ws['!rows']) ws['!rows'] = [];
+                    for (let R = range.s.r; R <= range.e.r; ++R) {
+                        if (!ws['!rows']) ws['!rows'] = [];
                         ws['!rows'][R] = { hpt: R === 0 ? 24 : 18 };
-                        for(let C = range.s.c; C <= range.e.c; ++C) {
-                            const cellRef = XLSX.utils.encode_cell({c:C, r:R});
-                            if(!ws[cellRef]) ws[cellRef] = { t: 's', v: '' }; 
+                        for (let C = range.s.c; C <= range.e.c; ++C) {
+                            const cellRef = XLSX.utils.encode_cell({ c: C, r: R });
+                            if (!ws[cellRef]) ws[cellRef] = { t: 's', v: '' };
                             const cell = ws[cellRef];
-                            
+
                             cell.s = {
                                 font: { name: "Microsoft YaHei", sz: 10, color: { rgb: "334155" } },
                                 alignment: { vertical: "center", horizontal: "left" },
                                 border: { top: { style: "thin", color: { rgb: "E2E8F0" } }, bottom: { style: "thin", color: { rgb: "E2E8F0" } }, left: { style: "thin", color: { rgb: "E2E8F0" } }, right: { style: "thin", color: { rgb: "E2E8F0" } } }
                             };
 
-                            if(R === 0) { // 顶级表头
+                            if (R === 0) { // 顶级表头
                                 cell.s.fill = { fgColor: { rgb: "E2E8F0" } };
                                 cell.s.font.bold = true; cell.s.font.color = { rgb: "0F172A" };
                                 cell.s.alignment.horizontal = "center";
@@ -1167,30 +1716,31 @@
                     }
 
                     ws['!cols'] = orderedHeaders.map((h, i) => {
-                        let maxLen = String(h||'').replace(/[^\x00-\xff]/g, 'aa').length;
-                        for (let r=1; r<excelRows.length; r++) {
-                            const l = String(excelRows[r][i]||'').replace(/[^\x00-\xff]/g, 'aa').length;
+                        let maxLen = String(h || '').replace(/[^\x00-\xff]/g, 'aa').length;
+                        for (let r = 1; r < excelRows.length; r++) {
+                            const l = String(excelRows[r][i] || '').replace(/[^\x00-\xff]/g, 'aa').length;
                             if (l > maxLen) maxLen = l;
                         }
                         return { wch: Math.min(Math.max(maxLen + 3, 12), 45) };
                     });
-                    
+
                     ws['!views'] = [{ state: 'frozen', ySplit: 1 }]; // 冻结首行
-                    if(isAny) ws['!tabcolor'] = { rgb: "F59E0B" }; // ANY 橘色页签
+                    if (isAny) ws['!tabcolor'] = { rgb: "F59E0B" }; // ANY 橘色页签
 
                     XLSX.utils.book_append_sheet(newWorkbook, ws, targetSheetName.substring(0, 31));
                 };
 
-                appendDataToBook(sheetInfo.normal, `${sheetName.substring(0,25)}_标准`, false);
-                appendDataToBook(sheetInfo.any, `${sheetName.substring(0,25)}_ANY`, true);
+                appendDataToBook(sheetInfo.normal, `${sheetName.substring(0, 25)}_标准`, false);
+                appendDataToBook(sheetInfo.any, `${sheetName.substring(0, 25)}_ANY`, true);
             });
 
             progressCtrl.update('export', 90, '流下载中...'); await paintUI();
-            
+
             XLSX.writeFile(newWorkbook, currentFileName);
             progressCtrl.update('export', 100, '完成', true); progressCtrl.hide();
             logger.log("🚀 企业级样式报表已生成完毕！");
         });
     </script>
 </body>
+
 </html>

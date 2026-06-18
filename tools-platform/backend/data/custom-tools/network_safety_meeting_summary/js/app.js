@@ -5,8 +5,28 @@ import * as editor from './editor.js';
 const deck = document.getElementById('deck');
 const deckWrapper = document.getElementById('deckWrapper');
 const thumbDeck = document.getElementById('thumbDeck');
-const thumbZoom = document.getElementById('thumbZoom');
-const thumbZoomLabel = document.getElementById('thumbZoomLabel');
+const sidebar = document.getElementById('sidebar');
+const aiSidebar = document.getElementById('aiSidebar');
+
+function updateThumbScale() {
+    if (!sidebar || !thumbDeck) return;
+    const item = thumbDeck.querySelector('.thumb-item');
+    const num = item?.querySelector('.thumb-num');
+    const shell = item?.querySelector('.thumb-shell');
+    if (!item || !num || !shell) return;
+
+    const itemStyle = getComputedStyle(item);
+    const shellStyle = getComputedStyle(shell);
+    const availableWidth = item.clientWidth
+        - parseFloat(itemStyle.paddingLeft)
+        - parseFloat(itemStyle.paddingRight)
+        - parseFloat(itemStyle.gap || '0')
+        - num.getBoundingClientRect().width
+        - parseFloat(shellStyle.borderLeftWidth)
+        - parseFloat(shellStyle.borderRightWidth);
+    const scale = Math.max(0.1, availableWidth / 480);
+    document.documentElement.style.setProperty('--thumb-scale', scale);
+}
 const mainZoomLabel = document.getElementById('mainZoomLabel');
 const statusText = document.getElementById('statusText');
 
@@ -14,6 +34,49 @@ let activeSlideIndex = store.getActiveSlideIndex();
 let saveTimer = null;
 let thumbTimer = null;
 let currentEditorScale = 1.0;
+
+// --- History Stack ---
+let historyStack = [];
+let historyIndex = -1;
+const maxHistory = 50;
+
+function pushHistory(html) {
+    if (historyIndex >= 0 && historyStack[historyIndex] === html) return;
+    historyStack = historyStack.slice(0, historyIndex + 1);
+    historyStack.push(html);
+    if (historyStack.length > maxHistory) historyStack.shift();
+    historyIndex = historyStack.length - 1;
+    updateUndoRedoBtns();
+}
+
+function updateUndoRedoBtns() {
+    const undoBtn = document.getElementById('undoBtn');
+    const redoBtn = document.getElementById('redoBtn');
+    if (undoBtn) undoBtn.disabled = historyIndex <= 0;
+    if (redoBtn) redoBtn.disabled = historyIndex >= historyStack.length - 1;
+}
+
+function undo() {
+    if (historyIndex > 0) {
+        historyIndex--;
+        deck.innerHTML = historyStack[historyIndex];
+        renumberSlides();
+        setActiveSlide(activeSlideIndex);
+        store.saveState(deck.innerHTML);
+        updateUndoRedoBtns();
+    }
+}
+
+function redo() {
+    if (historyIndex < historyStack.length - 1) {
+        historyIndex++;
+        deck.innerHTML = historyStack[historyIndex];
+        renumberSlides();
+        setActiveSlide(activeSlideIndex);
+        store.saveState(deck.innerHTML);
+        updateUndoRedoBtns();
+    }
+}
 
 function setStatus(text) {
     statusText.textContent = text;
@@ -53,6 +116,37 @@ function renderThumbnails() {
         item.addEventListener('click', () => setActiveSlide(index));
         thumbDeck.appendChild(item);
     });
+
+    updateThumbScale();
+
+    if (window.Sortable && !thumbDeck.sortableInst) {
+        thumbDeck.sortableInst = Sortable.create(thumbDeck, {
+            animation: 150,
+            onEnd: function (evt) {
+                if (evt.oldIndex === evt.newIndex) return;
+                const slides = getSlideWraps();
+                const movedSlide = slides[evt.oldIndex];
+                if (evt.newIndex >= slides.length) {
+                    deck.appendChild(movedSlide);
+                } else if (evt.newIndex < evt.oldIndex) {
+                    deck.insertBefore(movedSlide, slides[evt.newIndex]);
+                } else {
+                    deck.insertBefore(movedSlide, slides[evt.newIndex].nextSibling);
+                }
+                
+                if (activeSlideIndex === evt.oldIndex) {
+                    activeSlideIndex = evt.newIndex;
+                } else if (activeSlideIndex > evt.oldIndex && activeSlideIndex <= evt.newIndex) {
+                    activeSlideIndex--;
+                } else if (activeSlideIndex < evt.oldIndex && activeSlideIndex >= evt.newIndex) {
+                    activeSlideIndex++;
+                }
+                renumberSlides();
+                setActiveSlide(activeSlideIndex);
+                saveDeck();
+            }
+        });
+    }
 }
 
 function scheduleThumbnails() {
@@ -73,28 +167,9 @@ function saveDeck() {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
         store.saveState(deck.innerHTML);
+        pushHistory(deck.innerHTML);
         setStatus('已自动保存');
     }, 500);
-}
-
-function applyThumbZoom(value) {
-    const scale = Number(value) / 100;
-    document.documentElement.style.setProperty('--thumb-scale', String(scale));
-    thumbZoomLabel.textContent = `${value}%`;
-    store.saveThumbZoom(value);
-    
-    const sidebar = document.getElementById('sidebar');
-    if (sidebar) {
-        // Thumbnail width is 480 * scale
-        // Add 32px for #thumbDeck padding (p-4 = 16px * 2)
-        // Add 32px for .thumb-item padding (16px * 2)
-        // Add 12px for gap
-        // Add 20px for .thumb-num min-width
-        // Add 14px extra buffer for custom-scrollbar and borders
-        // Total extra width = 32 + 32 + 12 + 20 + 14 = 110
-        const newWidth = Math.max(180, 480 * scale + 110);
-        sidebar.style.width = `${newWidth}px`;
-    }
 }
 
 function applyEditorZoom(scale) {
@@ -108,13 +183,11 @@ function bootstrap() {
     if (savedHtml) {
         deck.innerHTML = savedHtml;
     }
+    pushHistory(deck.innerHTML);
     
     renumberSlides();
     setActiveSlide(activeSlideIndex);
-    
-    const savedZoom = store.getThumbZoom();
-    thumbZoom.value = savedZoom;
-    applyThumbZoom(savedZoom);
+    updateThumbScale();
     
     setTimeout(() => {
         document.getElementById('zoomFitBtn')?.click();
@@ -159,7 +232,171 @@ deck.addEventListener('paste', event => {
     reader.readAsDataURL(file);
 });
 
-thumbZoom.addEventListener('input', e => applyThumbZoom(e.target.value));
+// --- Toolbar Events ---
+document.getElementById('undoBtn')?.addEventListener('click', undo);
+document.getElementById('redoBtn')?.addEventListener('click', redo);
+
+document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        if (e.shiftKey) redo(); else undo();
+        e.preventDefault();
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        redo();
+        e.preventDefault();
+    }
+});
+
+document.getElementById('duplicateSlideBtn')?.addEventListener('click', () => {
+    const wraps = getSlideWraps();
+    if (!wraps[activeSlideIndex]) return;
+    const clone = wraps[activeSlideIndex].cloneNode(true);
+    clone.classList.remove('is-active');
+    wraps[activeSlideIndex].after(clone);
+    renumberSlides();
+    setActiveSlide(activeSlideIndex + 1);
+    saveDeck();
+});
+
+document.getElementById('deleteSlideBtn')?.addEventListener('click', () => {
+    const wraps = getSlideWraps();
+    if (wraps.length <= 1) return alert('最后一页无法删除');
+    if (confirm('确定要删除当前页吗？')) {
+        wraps[activeSlideIndex].remove();
+        renumberSlides();
+        setActiveSlide(Math.max(0, activeSlideIndex - 1));
+        saveDeck();
+    }
+});
+
+document.querySelectorAll('.theme-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+        const theme = e.currentTarget.dataset.theme;
+        document.documentElement.setAttribute('data-theme', theme);
+    });
+});
+
+document.getElementById('presentBtn')?.addEventListener('click', () => {
+    document.body.classList.add('presentation-mode');
+    if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen();
+    }
+});
+
+document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement) {
+        document.body.classList.remove('presentation-mode');
+    }
+});
+
+document.addEventListener('keydown', e => {
+    if (document.body.classList.contains('presentation-mode')) {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+            const wraps = getSlideWraps();
+            if (activeSlideIndex < wraps.length - 1) setActiveSlide(activeSlideIndex + 1);
+            e.preventDefault();
+        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+            if (activeSlideIndex > 0) setActiveSlide(activeSlideIndex - 1);
+            e.preventDefault();
+        } else if (e.key === 'Escape') {
+            if (document.exitFullscreen) document.exitFullscreen();
+        }
+    }
+});
+
+// --- Rich Text Toolbar ---
+const rtToolbar = document.getElementById('richTextToolbar');
+document.addEventListener('selectionchange', () => {
+    const selection = window.getSelection();
+    if (!selection.rangeCount) return;
+    const range = selection.getRangeAt(0);
+    const container = range.commonAncestorContainer;
+    const editable = container.nodeType === 3 ? container.parentElement.closest('.editable') : container.closest('.editable');
+    
+    if (editable && selection.toString().trim().length > 0) {
+        const rect = range.getBoundingClientRect();
+        rtToolbar.classList.remove('hidden');
+        rtToolbar.style.top = `${rect.top - 40}px`;
+        rtToolbar.style.left = `${rect.left + (rect.width / 2) - (rtToolbar.offsetWidth / 2)}px`;
+    } else {
+        if (rtToolbar && !rtToolbar.contains(container)) {
+            rtToolbar.classList.add('hidden');
+        }
+    }
+});
+
+rtToolbar?.querySelectorAll('.rt-btn').forEach(btn => {
+    btn.addEventListener('mousedown', e => {
+        e.preventDefault(); // Keep selection
+        document.execCommand(btn.dataset.command, false, null);
+        saveDeck();
+    });
+});
+rtToolbar?.querySelector('.rt-color')?.addEventListener('input', e => {
+    document.execCommand(e.target.dataset.command, false, e.target.value);
+    saveDeck();
+});
+
+// --- Media Upload (Click & Drag) ---
+deck.addEventListener('click', e => {
+    const target = e.target.closest('.qr-box, .cover-photo, .avatar');
+    if (!target) return;
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = ev => {
+        const file = ev.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+            target.style.background = `url("${reader.result}") center / cover no-repeat`;
+            target.innerHTML = '';
+            saveDeck();
+            scheduleThumbnails();
+        };
+        reader.readAsDataURL(file);
+    };
+    input.click();
+});
+
+deck.addEventListener('dragover', e => {
+    e.preventDefault();
+    const target = e.target.closest('.qr-box, .cover-photo, .avatar, .slide-pad');
+    if (target) target.style.opacity = '0.8';
+});
+deck.addEventListener('dragleave', e => {
+    e.preventDefault();
+    const target = e.target.closest('.qr-box, .cover-photo, .avatar, .slide-pad');
+    if (target) target.style.opacity = '1';
+});
+deck.addEventListener('drop', e => {
+    e.preventDefault();
+    const target = e.target.closest('.qr-box, .cover-photo, .avatar, .slide-pad');
+    if (!target) return;
+    target.style.opacity = '1';
+    const file = e.dataTransfer.files[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        if (target.classList.contains('slide-pad')) {
+            const img = document.createElement('img');
+            img.src = reader.result;
+            img.style.maxWidth = '180px';
+            img.style.maxHeight = '120px';
+            img.style.objectFit = 'contain';
+            img.style.position = 'absolute';
+            img.style.left = '210px';
+            img.style.top = '130px';
+            target.appendChild(img);
+        } else {
+            target.style.background = `url("${reader.result}") center / cover no-repeat`;
+            target.innerHTML = '';
+        }
+        saveDeck();
+        scheduleThumbnails();
+    };
+    reader.readAsDataURL(file);
+});
+
 
 document.getElementById('addCaseBtn').addEventListener('click', () => {
     const template = document.getElementById('caseSlideTemplate');
@@ -282,7 +519,7 @@ deleteBtn.addEventListener('click', () => {
 
 // --- AI Copilot Feature ---
 const toggleAiBtn = document.getElementById('toggleAiBtn');
-const aiSidebar = document.getElementById('aiSidebar');
+
 const closeAiBtn = document.getElementById('closeAiBtn');
 const aiChatWindow = document.getElementById('aiChatWindow');
 const aiInput = document.getElementById('aiInput');
@@ -293,9 +530,35 @@ const aiRulesInput = document.getElementById('aiRulesInput');
 const saveAiRulesBtn = document.getElementById('saveAiRulesBtn');
 
 let aiMessages = [];
+let aiReplacingSlide = false;
+
+document.querySelectorAll('.ai-shortcut-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+        const action = e.currentTarget.dataset.action;
+        const activeWrap = deck.querySelector('.slide-wrap.is-active');
+        if (!activeWrap) return;
+        
+        let promptText = '';
+        let displayMsg = '';
+        const baseRule = '【非常重要】请严格保持原有的所有HTML结构、类名(class)和非文本元素完全不变！必须返回完整的 <div class="slide-wrap">...</div> 代码，并用 ```html 包裹。';
+        
+        if (action === 'polish') { promptText = '请帮我润色当前幻灯片页面的文本内容，使其更专业流畅。' + baseRule; displayMsg = '✨ 请帮我润色当前页面'; }
+        if (action === 'translate_en') { promptText = '请将当前幻灯片页面的所有中文内容翻译为专业的英文。' + baseRule; displayMsg = '🌐 请将当前页面翻译为英文'; }
+        if (action === 'translate_zh') { promptText = '请将当前幻灯片页面的所有英文内容翻译为中文。' + baseRule; displayMsg = '🇨🇳 请将当前页面翻译为中文'; }
+        
+        const htmlContext = activeWrap.outerHTML;
+        
+        aiReplacingSlide = true;
+        sendAiMessage(promptText + '\n\n```html\n' + htmlContext + '\n```', displayMsg);
+    });
+});
 
 function toggleAi() {
-    aiSidebar.classList.toggle('translate-x-full');
+    if (aiSidebar.style.marginRight === '0px' || !aiSidebar.style.marginRight) {
+        aiSidebar.style.marginRight = '-' + aiSidebar.offsetWidth + 'px';
+    } else {
+        aiSidebar.style.marginRight = '0px';
+    }
 }
 
 if (toggleAiBtn) toggleAiBtn.addEventListener('click', toggleAi);
@@ -316,8 +579,8 @@ function appendAiMessage(role, text) {
     const div = document.createElement('div');
     div.className = "flex items-start space-x-2 mt-4";
     if (role === 'user') {
+        div.classList.add('justify-end');
         div.innerHTML = `
-            <div class="flex-1"></div>
             <div class="bg-purple-600 text-white rounded-lg rounded-tr-none p-3 max-w-[85%] leading-relaxed shadow-sm text-[13px]">
                 ${text.replace(/\n/g, '<br>')}
             </div>
@@ -339,33 +602,28 @@ function appendAiMessage(role, text) {
     aiChatWindow.scrollTop = aiChatWindow.scrollHeight;
 }
 
-async function sendAiMessage() {
-    const text = aiInput.value.trim();
-    if (!text) return;
+async function sendAiMessage(hiddenContent = null, displayMsg = null) {
+    const text = hiddenContent || aiInput.value.trim();
+    if (!text && !hiddenContent) return;
     
     aiInput.value = '';
-    appendAiMessage('user', text);
+    
+    appendAiMessage('user', displayMsg || (hiddenContent ? '...' : text));
     aiMessages.push({ role: 'user', content: text });
     
     const loadingId = 'ai-loading-' + Date.now();
     const loadDiv = document.createElement('div');
     loadDiv.id = loadingId;
     loadDiv.className = "flex items-start space-x-2 mt-4 opacity-50";
-    loadDiv.innerHTML = `<div class="w-8 h-8 rounded bg-purple-600/20 text-purple-400 flex items-center justify-center shrink-0"><i class="ph-fill ph-robot animate-pulse"></i></div><div class="bg-zinc-800 text-zinc-200 rounded-lg rounded-tl-none p-3 text-xs">正在思考并生成代码...</div>`;
+    loadDiv.innerHTML = `<div class="w-8 h-8 rounded bg-purple-600/20 text-purple-400 flex items-center justify-center shrink-0"><i class="ph-fill ph-robot animate-pulse"></i></div><div class="bg-zinc-800 text-zinc-200 rounded-lg rounded-tl-none p-3 text-xs">正在生成...</div>`;
     aiChatWindow.appendChild(loadDiv);
     aiChatWindow.scrollTop = aiChatWindow.scrollHeight;
 
     try {
         const deckSlides = deck.querySelectorAll('.slide-wrap');
-        const coverTpl = deckSlides[0] ? deckSlides[0].outerHTML : '';
-        const ruleTpl = deckSlides[1] ? deckSlides[1].outerHTML : '';
-        const agendaTpl = deckSlides[2] ? deckSlides[2].outerHTML : '';
-        const caseTpl = document.getElementById('caseSlideTemplate') ? document.getElementById('caseSlideTemplate').innerHTML : '';
-        
         const customRules = localStorage.getItem('ppt_copilot_rules') || '';
         const rulesBlock = customRules ? `\n【用户专属 PPT 制作规范（必须严格遵守）】\n${customRules}\n\n` : '';
-        
-        const templates = `${rulesBlock}[封面模板示例]\n${coverTpl}\n\n[规则模板示例]\n${ruleTpl}\n\n[议程模板示例]\n${agendaTpl}\n\n[案例模板示例]\n${caseTpl}`;
+        const templates = `${rulesBlock}使用这些示例模板的类名和结构，如果用户请求修改现有幻灯片，请返回替换后的完整 HTML 代码。`;
 
         const tokenMatch = document.cookie.match(/(^|;)\s*jwt_token=([^;]+)/);
         const token = tokenMatch ? tokenMatch[2] : localStorage.getItem('tools_token');
@@ -382,53 +640,75 @@ async function sendAiMessage() {
             })
         });
         
-        const el = document.getElementById(loadingId);
-        if (el) el.remove();
-        
-        if (!res.ok) {
-            const err = await res.json();
-            throw new Error(err.error || '请求失败');
-        }
+        loadDiv.remove();
+        if (!res.ok) throw new Error('请求失败');
         
         const data = await res.json();
         let reply = data.reply || '';
         aiMessages.push({ role: 'model', content: reply });
         
         let htmlContent = reply;
+        let originalReply = reply;
         const htmlMatch = reply.match(/```html\n([\s\S]*?)```/i) || reply.match(/```\n([\s\S]*?)```/i);
+        
         if (htmlMatch) {
             htmlContent = htmlMatch[1];
+            reply = reply.replace(htmlMatch[0], '').trim();
+        } else {
+            const startIdx = reply.indexOf('<div class="slide-wrap');
+            if (startIdx !== -1) {
+                htmlContent = reply.substring(startIdx);
+                reply = reply.substring(0, startIdx).trim();
+            }
         }
         
-        if (htmlContent.includes('class="slide-wrap"') || htmlContent.includes("class='slide-wrap'")) {
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = htmlContent;
-            
-            const generatedWraps = tempDiv.querySelectorAll('.slide-wrap');
-            if (generatedWraps.length > 0) {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = htmlContent;
+        const generatedWraps = tempDiv.querySelectorAll('.slide-wrap');
+        
+        if (generatedWraps.length > 0) {
+            if (aiReplacingSlide) {
+                const activeWrap = deck.querySelector('.slide-wrap.is-active');
+                if (activeWrap) {
+                    const activeIndex = getSlideWraps().indexOf(activeWrap);
+                    generatedWraps[0].classList.add('is-active');
+                    activeWrap.after(generatedWraps[0]);
+                    activeWrap.classList.remove('is-active');
+                    setActiveSlide(activeIndex + 1);
+                }
+                aiReplacingSlide = false;
+                appendAiMessage('model', '✨ **新页面已生成！** 已在当前页后方插入。' + (reply ? '<br><br>' + escapeHtml(reply) : ''));
+            } else {
                 generatedWraps.forEach(wrap => {
                     wrap.classList.remove('is-active');
                     deck.appendChild(wrap);
                 });
-                
-                renumberSlides();
-                saveDeck();
-                scheduleThumbnails();
-                
-                appendAiMessage('model', '✨ **幻灯片生成完毕！** 我已经为您添加到了画布末尾，请在左侧预览。');
-            } else {
-                appendAiMessage('model', reply);
+                appendAiMessage('model', '✨ **幻灯片已添加至末尾。**' + (reply ? '<br><br>' + escapeHtml(reply) : ''));
             }
+            renumberSlides();
+            saveDeck();
+            scheduleThumbnails();
         } else {
-            appendAiMessage('model', reply);
+            aiReplacingSlide = false;
+            appendAiMessage('model', escapeHtml(originalReply));
         }
-        
     } catch (error) {
         const el = document.getElementById(loadingId);
         if (el) el.remove();
         appendAiMessage('model', `⚠️ 发生错误: ${error.message}`);
         aiMessages.pop();
     }
+}
+
+function escapeHtml(unsafe) {
+    if (!unsafe) return '';
+    return unsafe
+         .toString()
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;");
 }
 
 if (aiSendBtn) aiSendBtn.addEventListener('click', sendAiMessage);
@@ -438,6 +718,61 @@ if (aiInput) aiInput.addEventListener('keydown', (e) => {
         sendAiMessage();
     }
 });
+
+function initResizers() {
+    let isResizingLeft = false;
+    let isResizingRight = false;
+    const leftResizer = document.getElementById('leftResizer');
+    const rightResizer = document.getElementById('rightResizer');
+
+    if (leftResizer) {
+        leftResizer.addEventListener('mousedown', (e) => {
+            isResizingLeft = true;
+            document.body.style.cursor = 'col-resize';
+            // Disable transition for smoother dragging
+            sidebar.style.transition = 'none';
+            e.preventDefault();
+        });
+    }
+
+    if (rightResizer) {
+        rightResizer.addEventListener('mousedown', (e) => {
+            isResizingRight = true;
+            document.body.style.cursor = 'col-resize';
+            aiSidebar.style.transition = 'none';
+            e.preventDefault();
+        });
+    }
+
+    window.addEventListener('mousemove', (e) => {
+        if (isResizingLeft) {
+            const newWidth = Math.max(150, Math.min(e.clientX, 800));
+            sidebar.style.width = newWidth + 'px';
+            updateThumbScale();
+        }
+        if (isResizingRight) {
+            const newWidth = Math.max(300, Math.min(window.innerWidth - e.clientX, 1200));
+            aiSidebar.style.width = newWidth + 'px';
+            if (aiSidebar.style.marginRight !== '0px' && aiSidebar.style.marginRight !== '') {
+                aiSidebar.style.marginRight = '-' + newWidth + 'px';
+            }
+        }
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (isResizingLeft || isResizingRight) {
+            isResizingLeft = false;
+            isResizingRight = false;
+            document.body.style.cursor = '';
+            // Restore transitions
+            sidebar.style.transition = '';
+            aiSidebar.style.transition = '';
+            updateThumbScale();
+        }
+    });
+}
+
+initResizers();
 
 // Start app
 bootstrap();

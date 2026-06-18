@@ -29,6 +29,8 @@
     <!-- PDF Export Dependencies -->
     <script src="/js/shared/html2canvas.min.js"></script>
     <script src="/js/shared/jspdf.umd.min.js"></script>
+    <!-- SortableJS -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     
     <!-- Custom CSS for Slide Content -->
     <link rel="stylesheet" href="css/app.css">
@@ -56,10 +58,35 @@
                 <span id="statusText">已就绪</span>
             </div>
 
+            <button id="undoBtn" class="h-8 w-8 rounded-md bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 transition-all shadow-sm flex items-center justify-center disabled:opacity-50" title="撤销 (Ctrl+Z)">
+                <i class="ph-bold ph-arrow-u-up-left"></i>
+            </button>
+            <button id="redoBtn" class="h-8 w-8 rounded-md bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 transition-all shadow-sm flex items-center justify-center disabled:opacity-50 mr-2" title="重做 (Ctrl+Y)">
+                <i class="ph-bold ph-arrow-u-up-right"></i>
+            </button>
+
             <button id="addCaseBtn" class="flex items-center gap-2 h-8 px-3 rounded-md bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-sm font-medium transition-all hover:scale-105 active:scale-95 shadow-sm">
                 <i class="ph ph-plus"></i> 新增案例页
             </button>
             
+            <div class="relative group mr-2">
+                <button class="flex items-center gap-2 h-8 px-3 rounded-md bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-sm font-medium transition-all shadow-sm">
+                    <i class="ph ph-files"></i> 当前页
+                </button>
+                <div class="absolute left-0 top-full mt-2 w-40 py-1 rounded-xl bg-zinc-800 border border-zinc-700 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <button id="duplicateSlideBtn" class="w-full flex items-center gap-3 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-700/50 hover:text-white transition-colors text-left">
+                        <i class="ph ph-copy"></i> 复制当前页
+                    </button>
+                    <button id="deleteSlideBtn" class="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors text-left">
+                        <i class="ph ph-trash"></i> 删除当前页
+                    </button>
+                </div>
+            </div>
+
+            <button id="presentBtn" class="flex items-center gap-2 h-8 px-3 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium shadow-md shadow-emerald-500/20 transition-all hover:scale-105 active:scale-95 mr-2">
+                <i class="ph-fill ph-play"></i> 演示
+            </button>
+
             <button id="exportPdfBtn" class="flex items-center gap-2 h-8 px-4 rounded-md bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium shadow-md shadow-brand-500/20 transition-all hover:scale-105 active:scale-95">
                 <i class="ph ph-file-pdf"></i> 导出 PDF
             </button>
@@ -82,6 +109,17 @@
                     <button id="resetBtn" class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors text-left">
                         <i class="ph ph-arrow-counter-clockwise text-lg"></i> 恢复默认模板
                     </button>
+                    <div class="h-px bg-zinc-700/50 my-1"></div>
+                    <div class="px-4 py-2 text-xs text-zinc-500 font-medium">主题颜色</div>
+                    <button class="theme-btn w-full flex items-center gap-3 px-4 py-1.5 text-sm text-zinc-300 hover:bg-zinc-700/50 hover:text-white transition-colors text-left" data-theme="huawei">
+                        <span class="w-3 h-3 rounded-full bg-[#a42a18]"></span> 华为红
+                    </button>
+                    <button class="theme-btn w-full flex items-center gap-3 px-4 py-1.5 text-sm text-zinc-300 hover:bg-zinc-700/50 hover:text-white transition-colors text-left" data-theme="tech">
+                        <span class="w-3 h-3 rounded-full bg-[#3b82f6]"></span> 科技蓝
+                    </button>
+                    <button class="theme-btn w-full flex items-center gap-3 px-4 py-1.5 text-sm text-zinc-300 hover:bg-zinc-700/50 hover:text-white transition-colors text-left" data-theme="dark">
+                        <span class="w-3 h-3 rounded-full bg-[#10b981]"></span> 极光绿
+                    </button>
                 </div>
             </div>
         </div>
@@ -89,14 +127,8 @@
 
     <main class="flex-1 flex overflow-hidden">
         <!-- Sidebar -->
-        <aside id="sidebar" style="width: 256px;" class="bg-zinc-900 border-r border-zinc-800/80 flex flex-col z-40 shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.2)] relative transition-[width] duration-200 ease-out">
-            <div class="p-4 border-b border-zinc-800/50">
-                <div class="flex items-center justify-between text-xs font-semibold text-zinc-400 mb-3 tracking-wider">
-                    <span class="uppercase">缩略图大小</span>
-                    <span id="thumbZoomLabel" class="text-brand-400 font-mono">34%</span>
-                </div>
-                <input id="thumbZoom" type="range" min="20" max="50" value="34" class="w-full accent-brand-500 h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer">
-            </div>
+        <aside id="sidebar" style="width: 256px;" class="bg-zinc-900 border-r border-zinc-800/80 flex flex-col z-40 shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.2)] relative ease-out">
+            <div id="leftResizer" class="absolute right-0 top-0 bottom-0 w-1.5 hover:bg-purple-500 cursor-col-resize z-50 transition-colors"></div>
             <div id="thumbDeck" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                 <!-- Thumbnails will be rendered here -->
             </div>
@@ -105,6 +137,15 @@
         <!-- Main Canvas Area -->
         <div class="flex-1 relative bg-pattern overflow-hidden flex flex-col">
             
+            <!-- Floating Rich Text Toolbar -->
+            <div id="richTextToolbar" class="absolute hidden z-50 bg-zinc-800/90 backdrop-blur-md border border-zinc-700 shadow-xl rounded-lg p-1.5 flex items-center gap-1 transition-opacity">
+                <button class="rt-btn font-bold text-zinc-300 hover:text-white hover:bg-zinc-700 w-7 h-7 rounded flex items-center justify-center transition-colors" data-command="bold" title="加粗">B</button>
+                <button class="rt-btn italic text-zinc-300 hover:text-white hover:bg-zinc-700 w-7 h-7 rounded flex items-center justify-center transition-colors" data-command="italic" title="斜体">I</button>
+                <button class="rt-btn underline text-zinc-300 hover:text-white hover:bg-zinc-700 w-7 h-7 rounded flex items-center justify-center transition-colors" data-command="underline" title="下划线">U</button>
+                <div class="w-px h-4 bg-zinc-600 mx-1"></div>
+                <input type="color" class="rt-color bg-transparent cursor-pointer w-6 h-6 p-0 border-0" data-command="foreColor" title="字体颜色">
+            </div>
+
             <div id="deckWrapper" class="flex-1 overflow-auto flex items-center justify-center p-8 custom-scrollbar">
                 <div id="deck" class="relative transition-all duration-300">
                     
@@ -338,7 +379,8 @@
         </div>
 
         <!-- AI Sidebar (Right) -->
-        <aside id="aiSidebar" class="w-80 bg-zinc-900 border-l border-zinc-800/80 flex flex-col z-40 shrink-0 shadow-[-4px_0_24px_rgba(0,0,0,0.2)] transition-transform duration-300 translate-x-full absolute right-0 top-0 bottom-0">
+        <aside id="aiSidebar" style="width: 480px; margin-right: -480px;" class="bg-zinc-900 border-l border-zinc-800/80 flex flex-col z-40 shrink-0 shadow-[-4px_0_24px_rgba(0,0,0,0.2)] transition-[margin] duration-300 relative">
+            <div id="rightResizer" class="absolute left-0 top-0 bottom-0 w-1.5 hover:bg-purple-500 cursor-col-resize z-50 transition-colors"></div>
             <div class="p-4 border-b border-zinc-800/50 flex items-center justify-between">
                 <div class="flex items-center space-x-2 text-purple-400">
                     <i class="ph-fill ph-magic-wand text-lg"></i>
@@ -375,7 +417,12 @@
                 </div>
             </div>
 
-            <div class="p-4 bg-zinc-900 border-t border-zinc-800/50">
+            <div class="px-4 py-2 bg-zinc-900 border-t border-zinc-800/50 flex flex-wrap gap-2">
+                <button class="ai-shortcut-btn px-2 py-1 bg-zinc-800 hover:bg-purple-600/20 hover:text-purple-400 border border-zinc-700 hover:border-purple-500/50 rounded text-xs text-zinc-300 transition-colors shadow-sm" data-action="polish">✨ 润色当前页</button>
+                <button class="ai-shortcut-btn px-2 py-1 bg-zinc-800 hover:bg-blue-600/20 hover:text-blue-400 border border-zinc-700 hover:border-blue-500/50 rounded text-xs text-zinc-300 transition-colors shadow-sm" data-action="translate_en">🌐 翻为英文</button>
+                <button class="ai-shortcut-btn px-2 py-1 bg-zinc-800 hover:bg-emerald-600/20 hover:text-emerald-400 border border-zinc-700 hover:border-emerald-500/50 rounded text-xs text-zinc-300 transition-colors shadow-sm" data-action="translate_zh">🇨🇳 翻为中文</button>
+            </div>
+            <div class="p-4 bg-zinc-900 pt-2 border-t-0">
                 <div class="relative">
                     <textarea id="aiInput" rows="2" placeholder="让 AI 帮你生成页面..." class="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 pr-10 text-zinc-100 text-sm focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 resize-none custom-scrollbar transition"></textarea>
                     <button id="aiSendBtn" class="absolute right-2 bottom-2 w-8 h-8 rounded bg-purple-600 hover:bg-purple-500 text-white flex items-center justify-center transition shadow-md">
@@ -415,6 +462,6 @@
     </template>
 
     <!-- App Logic -->
-    <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/app.js?v=20260618-02"></script>
 </body>
 </html>

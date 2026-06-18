@@ -27,7 +27,25 @@ export async function exportPdf(deck, setStatusCallback) {
     }
     
     let renderHost = null;
+    const originalGetComputedStyle = window.getComputedStyle;
+
     try {
+        // Patch getComputedStyle to fix html2canvas crash with modern color() function
+        window.getComputedStyle = function(el, pseudoElt) {
+            const style = originalGetComputedStyle(el, pseudoElt);
+            return new Proxy(style, {
+                get(target, prop) {
+                    let val = target[prop];
+                    if (typeof val === 'string' && val.includes('color(')) {
+                        val = val.replace(/color\((srgb|display-p3)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+))?\)/g, (match, space, r, g, b, a) => {
+                            return `rgba(${Math.round(parseFloat(r)*255)}, ${Math.round(parseFloat(g)*255)}, ${Math.round(parseFloat(b)*255)}, ${a || 1})`;
+                        });
+                    }
+                    return typeof val === 'function' ? val.bind(target) : val;
+                }
+            });
+        };
+
         document.activeElement && document.activeElement.blur();
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: [960, 720], compress: true });
@@ -65,6 +83,7 @@ export async function exportPdf(deck, setStatusCallback) {
         alert(`导出 PDF 失败：${err.message}`);
         return false;
     } finally {
+        window.getComputedStyle = originalGetComputedStyle;
         if (renderHost) renderHost.remove();
     }
 }
