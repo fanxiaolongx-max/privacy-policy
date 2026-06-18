@@ -79,7 +79,9 @@ function getValueType(value) {
 }
 
 function previewValue(value, maxLen = 1200) {
+    if (value === undefined) return 'undefined';
     const text = JSON.stringify(sortObjectKeysDeep(value), null, 2);
+    if (text === undefined) return 'undefined';
     if (text.length <= maxLen) return text;
     return `${text.slice(0, maxLen)}\n...（已截断，完整长度 ${text.length} 字符）`;
 }

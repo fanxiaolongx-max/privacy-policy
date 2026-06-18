@@ -3247,177 +3247,314 @@ async function promptExpiringTickets(tickets, specialMetricAlerts = []) {
     });
 }
 
-window.exportYuxiangExcel = async function() {
+window.buildYuxiangPayload = function() {
     const orderedMetrics = window._currentOrderedMetrics;
     if (!currentSnapshot || !orderedMetrics || !window._currentCatData) {
+        return null;
+    }
+
+    const payload = {
+        metrics: [],
+        adjustments: [],
+        totals: {
+            subTotal: { TE: 0, ORG: 0, ET: 0, VDF: 0 },
+            adjustTotal: { TE: 0, ORG: 0, ET: 0, VDF: 0 },
+            weightInMonth: { TE: 0, ORG: 0, ET: 0, VDF: 0 },
+            finalResult: { TE: 0, ORG: 0, ET: 0, VDF: 0 }
+        }
+    };
+
+    const monthStr = document.getElementById('target-month-select').value || '未知';
+    const targetMonth = parseInt(monthStr, 10);
+    const targetCats = ['TE', 'ORG', 'ET', 'VDF'];
+
+    // Filter out Others group metrics
+    const labelGroupLookup = window._currentLabelToGroup || {};
+    const mainMetrics = orderedMetrics.filter(m => labelGroupLookup[m.label] !== 'Others');
+    mainMetrics.forEach(m => {
+        const labelEn = rt(m.label, true) || m.label;
+        const targetData = labelToTargetMap[m.label];
+        let target = targetData && targetData[targetMonth] !== undefined ? targetData[targetMonth] : '';
+        if (target !== '' && targetData) {
+            if (targetData.type === 'gte') target = '≥ ' + target;
+            else if (targetData.type === 'lte') target = '≤ ' + target;
+        }
+        const metricData = { label: m.label, labelEn, target };
+        
+        targetCats.forEach(cat => {
+            const cell = window._currentCatData[cat] && window._currentCatData[cat].values ? window._currentCatData[cat].values[m.label] : null;
+            const weight = Number(m.weight) || 0;
+            
+            let achv = '';
+            let score = 0;
+            
+            if (cell) {
+                achv = cell.raw;
+                score = cell.earnedScore !== undefined ? cell.earnedScore : (cell.isFailing ? 0 : (weight + (cell.bonusScore || 0)));
+            }
+            
+            metricData[cat] = { achv, score, isFailing: cell ? cell.isFailing : false };
+        });
+        payload.metrics.push(metricData);
+    });
+
+    // Add manual adjustments
+    manualAdjustItems.forEach((item, idx) => {
+        if (item.deleted) return;
+        const labelEn = rt(item.name, true) || item.name;
+        const adjData = { label: item.name, labelEn };
+        
+        targetCats.forEach(cat => {
+            let score = 0;
+            if (currentSnapshot.manualAdjustData && currentSnapshot.manualAdjustData[cat]) {
+                const count = currentSnapshot.manualAdjustData[cat][idx] || 0;
+                if (count > 0) {
+                    score = count * item.unit;
+                    if (score > item.cap) score = item.cap;
+                    if (item.type === '扣分') score = -score;
+                }
+            }
+            adjData[cat] = { score, count: (currentSnapshot.manualAdjustData && currentSnapshot.manualAdjustData[cat]) ? (currentSnapshot.manualAdjustData[cat][idx] || 0) : 0 };
+            payload.totals.adjustTotal[cat] += score;
+        });
+        payload.adjustments.push(adjData);
+    });
+
+    // Merge 全量EOS & 日志回传 & 拓扑与预案
+    const mergedMetrics = [];
+    let eosProduct = null;
+    let logBase = null;
+    let topoBase = null;
+
+    const parseFloatSafe = (val) => {
+        if (typeof val === 'string' && val.endsWith('%')) return parseFloat(val);
+        if (typeof val === 'string' || typeof val === 'number') {
+            const n = parseFloat(val);
+            return isNaN(n) ? 0 : n;
+        }
+        return 0;
+    };
+
+    const mergeTwoMetrics = (baseObj, newObj, newLabel) => {
+        baseObj.label = newLabel;
+        
+        const t1str = baseObj.target !== undefined && baseObj.target !== '' ? String(baseObj.target).trim() : '--';
+        const t2str = newObj.target !== undefined && newObj.target !== '' ? String(newObj.target).trim() : '--';
+        baseObj.target = `${t1str} & ${t2str}`;
+        
+        targetCats.forEach(cat => {
+            const a1str = baseObj[cat].achv !== undefined && baseObj[cat].achv !== '' ? String(baseObj[cat].achv).trim() : '--';
+            const a2str = newObj[cat].achv !== undefined && newObj[cat].achv !== '' ? String(newObj[cat].achv).trim() : '--';
+            
+            if (baseObj[cat].achv === '' && newObj[cat].achv === '') {
+                baseObj[cat].achv = '';
+            } else {
+                baseObj[cat].achv = `${a1str} & ${a2str}`;
+            }
+            
+            const s1 = parseFloatSafe(baseObj[cat].score);
+            const s2 = parseFloatSafe(newObj[cat].score);
+            baseObj[cat].score = s1 + s2;
+            
+            baseObj[cat].isFailing = baseObj[cat].isFailing || newObj[cat].isFailing;
+        });
+    };
+
+    payload.metrics.forEach(md => {
+        if (md.label === '全量EOS-产品') {
+            eosProduct = md;
+            mergedMetrics.push(eosProduct);
+        } else if (md.label === '全量EOS-版本') {
+            if (eosProduct) {
+                mergeTwoMetrics(eosProduct, md, '全量EOS (合并)');
+            } else {
+                mergedMetrics.push(md);
+            }
+        } else if (md.label === '日志回传') {
+            logBase = md;
+            mergedMetrics.push(logBase);
+        } else if (md.label === '日志回传备案') {
+            if (logBase) {
+                mergeTwoMetrics(logBase, md, '日志回传 (合并)');
+            } else {
+                mergedMetrics.push(md);
+            }
+        } else if (md.label === '拓扑') {
+            topoBase = md;
+            mergedMetrics.push(topoBase);
+        } else if (md.label === '预案') {
+            if (topoBase) {
+                mergeTwoMetrics(topoBase, md, '拓扑与预案 (合并)');
+            } else {
+                mergedMetrics.push(md);
+            }
+        } else {
+            mergedMetrics.push(md);
+        }
+    });
+    payload.metrics = mergedMetrics;
+
+    // Totals
+    targetCats.forEach(cat => {
+        const d = window._currentCatData[cat];
+        if (d) {
+            payload.totals.subTotal[cat] = d.earnedScore;
+            payload.totals.weightInMonth[cat] = d.validWeightSum;
+            payload.totals.finalResult[cat] = d.finalScore;
+        }
+    });
+
+    return payload;
+};
+
+window.exportYuxiangExcel = async function() {
+    const payload = buildYuxiangPayload();
+    if (!payload) {
         return showToast('无数据可导出', 'warn');
     }
-    const btn = event.currentTarget;
+    window._yuxiangPreviewData = payload;
+    window._yuxiangOverrides = {};
+    
+    document.getElementById('yuxiang-preview-modal').style.display = 'flex';
+    document.getElementById('yuxiang-preview-tbody').innerHTML = '<tr><td style="text-align:center; padding: 20px;">正在生成真实 Excel 快照...</td></tr>';
+    
+    try {
+        const token = localStorage.getItem('tools_token');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        
+        const response = await fetch('/api/sla/preview-yuxiang', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const snapshot = await response.json();
+        window._yuxiangPreviewSnapshot = snapshot;
+        renderYuxiangPreview();
+    } catch (e) {
+        console.error(e);
+        document.getElementById('yuxiang-preview-tbody').innerHTML = `<tr><td style="text-align:center; color:red;">生成预览失败: ${e.message}</td></tr>`;
+    }
+};
+
+window.renderYuxiangPreview = function() {
+    const tbody = document.getElementById('yuxiang-preview-tbody');
+    const snapshot = window._yuxiangPreviewSnapshot;
+    if (!snapshot) return;
+
+    const skipRender = new Set();
+    const cellSpans = {};
+
+    if (snapshot.merges) {
+        snapshot.merges.forEach(mergeStr => {
+            const parts = mergeStr.split(':');
+            if (parts.length === 2) {
+                const parseAddress = (addr) => {
+                    const match = addr.match(/([A-Z]+)(\d+)/);
+                    if (!match) return null;
+                    const cStr = match[1];
+                    const r = parseInt(match[2], 10);
+                    let c = 0;
+                    for (let i = 0; i < cStr.length; i++) {
+                        c = c * 26 + (cStr.charCodeAt(i) - 64);
+                    }
+                    return { r, c, addr };
+                };
+                const start = parseAddress(parts[0]);
+                const end = parseAddress(parts[1]);
+                if (start && end) {
+                    const rowspan = end.r - start.r + 1;
+                    const colspan = end.c - start.c + 1;
+                    cellSpans[start.addr] = { rowspan, colspan };
+                    
+                    for (let rr = start.r; rr <= end.r; rr++) {
+                        for (let cc = start.c; cc <= end.c; cc++) {
+                            if (rr === start.r && cc === start.c) continue;
+                            let colStr = '';
+                            let tempC = cc;
+                            while (tempC > 0) {
+                                let m = (tempC - 1) % 26;
+                                colStr = String.fromCharCode(65 + m) + colStr;
+                                tempC = Math.floor((tempC - m) / 26);
+                            }
+                            skipRender.add(colStr + rr);
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    let html = '';
+    snapshot.rows.forEach((row, rIdx) => {
+        const r = rIdx + 1;
+        html += '<tr>';
+        row.forEach((cell, cIdx) => {
+            const c = cIdx + 1;
+            if (skipRender.has(cell.address)) {
+                return;
+            }
+            
+            let attrs = '';
+            if (cellSpans[cell.address]) {
+                const spans = cellSpans[cell.address];
+                if (spans.rowspan > 1) attrs += ` rowspan="${spans.rowspan}"`;
+                if (spans.colspan > 1) attrs += ` colspan="${spans.colspan}"`;
+            }
+            
+            let style = 'border:1px dashed #e0e0e0; padding:2px 4px; position:relative; font-size:inherit; ';
+            if (cell.bg && cell.bg !== '00000000' && cell.bg !== 'FFFFFFFF') {
+                style += `background-color:#${cell.bg.slice(2)}; `;
+            }
+            if (cell.color && cell.color !== 'FF000000') {
+                style += `color:#${cell.color.slice(2)}; `;
+            }
+            if (cell.bold) {
+                style += 'font-weight:bold; ';
+            }
+            style += `text-align:${cell.align || 'left'}; `;
+
+            let val = cell.val || '';
+            const key = `${r}_${c}`;
+            if (window._yuxiangOverrides[key] !== undefined) {
+                val = window._yuxiangOverrides[key];
+                style += 'background-color:#fff3e0; '; // highlight overridden cells
+            }
+
+            html += `<td ${attrs} style="${style}"><div contenteditable="true" style="outline:none; min-height:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" onblur="updateYuxiangPreviewData(${r}, ${c}, this.innerText, this)">${escapeHTML(val)}</div></td>`;
+        });
+        html += '</tr>';
+    });
+    
+    tbody.innerHTML = html;
+};
+
+window.updateYuxiangPreviewData = function(r, c, value, el) {
+    const key = `${r}_${c}`;
+    window._yuxiangOverrides[key] = value;
+    if (el && el.parentElement) {
+        el.parentElement.style.backgroundColor = '#fff3e0';
+    }
+};
+
+window.confirmYuxiangExport = async function() {
+    const payload = window._yuxiangPreviewData;
+    if (!payload) return;
+
+    const btn = document.getElementById('btn-confirm-yuxiang-export');
     const oldHtml = btn.innerHTML;
     btn.innerHTML = '⏳ 正在导出...';
     btn.disabled = true;
 
     try {
-        const payload = {
-            metrics: [],
-            adjustments: [],
-            totals: {
-                subTotal: { TE: 0, ORG: 0, ET: 0, VDF: 0 },
-                adjustTotal: { TE: 0, ORG: 0, ET: 0, VDF: 0 },
-                weightInMonth: { TE: 0, ORG: 0, ET: 0, VDF: 0 },
-                finalResult: { TE: 0, ORG: 0, ET: 0, VDF: 0 }
-            }
-        };
-
         const monthStr = document.getElementById('target-month-select').value || '未知';
-        const targetMonth = parseInt(monthStr, 10);
-        const targetCats = ['TE', 'ORG', 'ET', 'VDF'];
-
-        // Filter out Others group metrics
-        const labelGroupLookup = window._currentLabelToGroup || {};
-        const mainMetrics = orderedMetrics.filter(m => labelGroupLookup[m.label] !== 'Others');
-        mainMetrics.forEach(m => {
-            const labelEn = rt(m.label, true) || m.label;
-            const targetData = labelToTargetMap[m.label];
-            let target = targetData && targetData[targetMonth] !== undefined ? targetData[targetMonth] : '';
-            if (target !== '' && targetData) {
-                if (targetData.type === 'gte') target = '≥ ' + target;
-                else if (targetData.type === 'lte') target = '≤ ' + target;
-            }
-            const metricData = { label: m.label, labelEn, target };
-            
-            targetCats.forEach(cat => {
-                const cell = window._currentCatData[cat] && window._currentCatData[cat].values ? window._currentCatData[cat].values[m.label] : null;
-                const weight = Number(m.weight) || 0;
-                
-                let achv = '';
-                let score = 0;
-                
-                if (cell) {
-                    if (cell.isFailing) {
-                        achv = cell.raw;
-                    } else {
-                        achv = cell.raw;
-                    }
-                    score = cell.earnedScore !== undefined ? cell.earnedScore : (cell.isFailing ? 0 : (weight + (cell.bonusScore || 0)));
-                }
-                
-                metricData[cat] = { achv, score, isFailing: cell ? cell.isFailing : false };
-            });
-            payload.metrics.push(metricData);
-        });
-
-        // Add manual adjustments
-        manualAdjustItems.forEach((item, idx) => {
-            const labelEn = rt(item.name, true) || item.name;
-            const adjData = { label: item.name, labelEn };
-            
-            targetCats.forEach(cat => {
-                let score = 0;
-                if (currentSnapshot.manualAdjustData && currentSnapshot.manualAdjustData[cat]) {
-                    const count = currentSnapshot.manualAdjustData[cat][idx] || 0;
-                    if (count > 0) {
-                        score = count * item.unit;
-                        if (score > item.cap) score = item.cap;
-                        if (item.type === '扣分') score = -score;
-                    }
-                }
-                adjData[cat] = { score, count: (currentSnapshot.manualAdjustData && currentSnapshot.manualAdjustData[cat]) ? (currentSnapshot.manualAdjustData[cat][idx] || 0) : 0 };
-                payload.totals.adjustTotal[cat] += score;
-            });
-            payload.adjustments.push(adjData);
-        });
-
-        // Merge 全量EOS & 日志回传 & 拓扑与预案
-        const mergedMetrics = [];
-        let eosProduct = null;
-        let logBase = null;
-        let topoBase = null;
-
-        const parseFloatSafe = (val) => {
-            if (typeof val === 'string' && val.endsWith('%')) return parseFloat(val);
-            if (typeof val === 'string' || typeof val === 'number') {
-                const n = parseFloat(val);
-                return isNaN(n) ? 0 : n;
-            }
-            return 0;
-        };
-        const isPct = (val) => typeof val === 'string' && val.endsWith('%');
-
-        const mergeTwoMetrics = (baseObj, newObj, newLabel) => {
-            baseObj.label = newLabel;
-            
-            const t1str = baseObj.target !== undefined && baseObj.target !== '' ? String(baseObj.target).trim() : '--';
-            const t2str = newObj.target !== undefined && newObj.target !== '' ? String(newObj.target).trim() : '--';
-            baseObj.target = `${t1str} & ${t2str}`;
-            
-            ['TE', 'ORG', 'ET', 'VDF'].forEach(cat => {
-                const a1str = baseObj[cat].achv !== undefined && baseObj[cat].achv !== '' ? String(baseObj[cat].achv).trim() : '--';
-                const a2str = newObj[cat].achv !== undefined && newObj[cat].achv !== '' ? String(newObj[cat].achv).trim() : '--';
-                
-                if (baseObj[cat].achv === '' && newObj[cat].achv === '') {
-                    baseObj[cat].achv = '';
-                } else {
-                    baseObj[cat].achv = `${a1str} & ${a2str}`;
-                }
-                
-                const s1 = parseFloatSafe(baseObj[cat].score);
-                const s2 = parseFloatSafe(newObj[cat].score);
-                baseObj[cat].score = s1 + s2;
-                
-                baseObj[cat].isFailing = baseObj[cat].isFailing || newObj[cat].isFailing;
-            });
-        };
-
-        payload.metrics.forEach(md => {
-            if (md.label === '全量EOS-产品') {
-                eosProduct = md;
-                mergedMetrics.push(eosProduct);
-            } else if (md.label === '全量EOS-版本') {
-                if (eosProduct) {
-                    mergeTwoMetrics(eosProduct, md, '全量EOS (合并)');
-                } else {
-                    mergedMetrics.push(md);
-                }
-            } else if (md.label === '日志回传') {
-                logBase = md;
-                mergedMetrics.push(logBase);
-            } else if (md.label === '日志回传备案') {
-                if (logBase) {
-                    mergeTwoMetrics(logBase, md, '日志回传 (合并)');
-                } else {
-                    mergedMetrics.push(md);
-                }
-            } else if (md.label === '拓扑') {
-                topoBase = md;
-                mergedMetrics.push(topoBase);
-            } else if (md.label === '预案') {
-                if (topoBase) {
-                    mergeTwoMetrics(topoBase, md, '拓扑与预案 (合并)');
-                } else {
-                    mergedMetrics.push(md);
-                }
-            } else {
-                mergedMetrics.push(md);
-            }
-        });
-        payload.metrics = mergedMetrics;
-
-        // Totals
-        targetCats.forEach(cat => {
-            const d = window._currentCatData[cat];
-            if (d) {
-                // subTotal should be pure earned weights (实际获权值) instead of standardized base score
-                payload.totals.subTotal[cat] = d.earnedScore;
-                payload.totals.weightInMonth[cat] = d.validWeightSum; // 满权值
-                payload.totals.finalResult[cat] = d.finalScore;
-            }
-        });
-
         const token = localStorage.getItem('tools_token');
         const headers = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
         
+        payload.overrides = window._yuxiangOverrides || {};
+
         const response = await fetch('/api/sla/export-yuxiang', {
             method: 'POST',
             headers: headers,
@@ -3437,6 +3574,9 @@ window.exportYuxiangExcel = async function() {
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
+
+        document.getElementById('yuxiang-preview-modal').style.display = 'none';
+        showToast('导出成功', 'success');
     } catch(e) {
         console.error(e);
         showToast('导出失败: ' + e.message, 'error');
@@ -3444,7 +3584,7 @@ window.exportYuxiangExcel = async function() {
         btn.innerHTML = oldHtml;
         btn.disabled = false;
     }
-}
+};
 
 
 window.addNewMappingRow = function() {
