@@ -3,6 +3,7 @@
     --red: #a42a18;
     --gray: #b7b7b0;
     --gray-dark: #8d8d86;
+    --line: #cbc8c0;
     --note: #f3ec12;
     --slide-w: 480px;
     --slide-h: 360px;
@@ -158,6 +159,7 @@ body.presentation-mode #deckWrapper {
 .slide-pad { position: absolute; inset: 26px 34px 30px; }
 .editable { outline: 1px solid transparent; border-radius: 2px; min-height: 1em; }
 .editable:hover { outline-color: color-mix(in srgb, var(--red) 32%, transparent); }
+.editable[contenteditable="true"] { cursor: text; user-select: text; }
 .editable:focus { outline: 2px solid color-mix(in srgb, var(--red) 65%, transparent); background: rgba(255,255,255,.72); }
 .slide-title { color: var(--red); font-weight: 700; font-size: 16px; line-height: 1.15; margin: 0 0 12px; }
 .small-title { color: var(--red); font-weight: 700; font-size: 12px; margin: 0 0 7px; }
@@ -201,3 +203,466 @@ body.presentation-mode #deckWrapper {
 #aiChatWindow img { max-width: 100%; height: auto; border-radius: 4px; }
 #aiChatWindow pre { max-height: 200px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; font-size: 11px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; }
 #aiChatWindow code { word-break: break-all; }
+
+/* PowerPoint-like component editor */
+.ppt-element {
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.ppt-element:not(.ppt-locked):not(.ppt-editing),
+.ppt-inner-element:not([contenteditable="true"]) {
+    cursor: move;
+}
+
+.ppt-element.ppt-selected,
+.ppt-inner-element.ppt-selected {
+    outline: 1px solid #60a5fa !important;
+    outline-offset: 1px;
+}
+
+.ppt-element.ppt-selected-secondary,
+.ppt-inner-element.ppt-selected-secondary {
+    outline: 1px dashed #a78bfa !important;
+    outline-offset: 1px;
+}
+
+.ppt-element.ppt-locked.ppt-selected {
+    outline-color: #f59e0b !important;
+}
+
+.ppt-element.ppt-editing {
+    cursor: text;
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+.ppt-element.ppt-editing .editable,
+.ppt-element .editable[contenteditable="true"],
+.ppt-inner-element[contenteditable="true"] {
+    user-select: text;
+    -webkit-user-select: text;
+    cursor: text;
+}
+
+.ppt-inner-element {
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.ppt-inner-element:hover:not([contenteditable="true"]) {
+    outline: 1px dashed rgba(96, 165, 250, .65);
+    outline-offset: 1px;
+}
+
+.ppt-image-placeholder {
+    width: 160px;
+    height: 100px;
+    display: grid;
+    place-items: center;
+    border: 1px dashed #94a3b8;
+    border-radius: 4px;
+    color: #64748b;
+    background: #f1f5f9;
+    font-size: 9px;
+}
+
+.ppt-image-placeholder.has-image {
+    border: 0;
+    color: transparent;
+}
+
+.ppt-component-toolbar {
+    position: fixed;
+    display: none;
+    align-items: center;
+    gap: 2px;
+    padding: 4px;
+    border: 1px solid #3f3f46;
+    border-radius: 8px;
+    background: rgba(24, 24, 27, .96);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .35);
+    z-index: 10001;
+}
+
+.ppt-component-toolbar.is-visible {
+    display: flex;
+}
+
+.ppt-component-toolbar button {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 5px;
+    color: #d4d4d8;
+    background: transparent;
+    cursor: pointer;
+}
+
+.ppt-component-toolbar button:hover {
+    color: #fff;
+    background: #3f3f46;
+}
+
+.ppt-component-toolbar button[data-action="delete"]:hover {
+    background: #dc2626;
+}
+
+.ppt-component-toolbar .ppt-component-name {
+    max-width: 110px;
+    padding: 0 6px;
+    color: #a1a1aa;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.moveable-control-box {
+    position: fixed;
+    display: none;
+    pointer-events: none;
+    z-index: 10000 !important;
+}
+
+.moveable-control-box .moveable-line {
+    position: absolute;
+    pointer-events: none;
+    background: #3b82f6 !important;
+}
+
+.moveable-line-top,
+.moveable-line-bottom {
+    left: 0;
+    width: 100%;
+    height: 1px;
+}
+
+.moveable-line-top { top: 0; }
+.moveable-line-bottom { bottom: 0; }
+
+.moveable-line-left,
+.moveable-line-right {
+    top: 0;
+    width: 1px;
+    height: 100%;
+}
+
+.moveable-line-left { left: 0; }
+.moveable-line-right { right: 0; }
+
+.moveable-control-box .moveable-control {
+    position: absolute;
+    display: none;
+    pointer-events: auto;
+    width: 9px !important;
+    height: 9px !important;
+    margin-top: -4px !important;
+    margin-left: -4px !important;
+    border: 1px solid #fff !important;
+    background: #3b82f6 !important;
+}
+
+.moveable-control-box.is-resizable .moveable-resizable,
+.moveable-control-box.is-rotatable .moveable-rotation-control,
+.moveable-control-box.is-rotatable .moveable-rotation-line {
+    display: block;
+}
+
+.moveable-n { top: 0; left: 50%; cursor: ns-resize; }
+.moveable-s { bottom: -8px; left: 50%; cursor: ns-resize; }
+.moveable-w { top: 50%; left: 0; cursor: ew-resize; }
+.moveable-e { top: 50%; right: -8px; cursor: ew-resize; }
+.moveable-nw { top: 0; left: 0; cursor: nwse-resize; }
+.moveable-ne { top: 0; right: -8px; cursor: nesw-resize; }
+.moveable-sw { bottom: -8px; left: 0; cursor: nesw-resize; }
+.moveable-se { right: -8px; bottom: -8px; cursor: nwse-resize; }
+
+.moveable-rotation-line {
+    position: absolute;
+    display: none;
+    left: 50%;
+    bottom: 100%;
+    width: 1px;
+    height: 28px;
+    background: #a855f7;
+}
+
+.moveable-control-box .moveable-rotation-control {
+    left: 50%;
+    bottom: calc(100% + 28px);
+    border-color: #a855f7 !important;
+    background: #a855f7 !important;
+    cursor: grab;
+}
+
+.ppt-snap-guide {
+    position: absolute;
+    z-index: 9999;
+    display: none;
+    pointer-events: none;
+    background: #f43f5e;
+    box-shadow: 0 0 4px rgba(244, 63, 94, .75);
+}
+
+.ppt-snap-guide.is-visible {
+    display: block;
+}
+
+.ppt-snap-guide.is-vertical {
+    top: 0;
+    bottom: 0;
+    width: 1px;
+}
+
+.ppt-snap-guide.is-horizontal {
+    left: 0;
+    right: 0;
+    height: 1px;
+}
+
+.layers-panel {
+    position: fixed;
+    top: 64px;
+    right: 14px;
+    bottom: 14px;
+    width: 286px;
+    z-index: 10002;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid #3f3f46;
+    border-radius: 12px;
+    background: rgba(24, 24, 27, .97);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, .45);
+    backdrop-filter: blur(12px);
+}
+
+.layers-panel.hidden {
+    display: none;
+}
+
+.layers-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 14px;
+    border-bottom: 1px solid #3f3f46;
+}
+
+.layers-panel-title {
+    color: #f4f4f5;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.layers-panel-hint {
+    margin-top: 2px;
+    color: #71717a;
+    font-size: 10px;
+}
+
+.layers-panel-head button,
+.layers-align-actions button,
+.layer-action {
+    border: 0;
+    color: #a1a1aa;
+    background: transparent;
+    cursor: pointer;
+}
+
+.layers-panel-head button:hover,
+.layers-align-actions button:hover,
+.layer-action:hover {
+    color: #fff;
+    background: #3f3f46;
+}
+
+.layers-panel-head button {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+}
+
+.layers-align-actions {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 2px;
+    padding: 8px;
+    border-bottom: 1px solid #3f3f46;
+}
+
+.layers-align-actions button {
+    height: 28px;
+    border-radius: 5px;
+}
+
+.layers-align-actions button:disabled {
+    opacity: .3;
+    cursor: not-allowed;
+}
+
+.layers-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+    min-height: 120px;
+}
+
+.layer-row {
+    display: grid;
+    grid-template-columns: 28px 28px minmax(0, 1fr) 28px 28px;
+    align-items: center;
+    min-height: 38px;
+    margin-bottom: 3px;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    color: #d4d4d8;
+    background: #27272a;
+}
+
+.layer-row:hover {
+    border-color: #52525b;
+}
+
+.layer-row.is-selected {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, .15);
+}
+
+.layer-row.is-hidden {
+    opacity: .55;
+}
+
+.layer-drag-handle {
+    color: #71717a;
+    text-align: center;
+    cursor: grab;
+}
+
+.layer-name {
+    overflow: hidden;
+    padding: 0 6px;
+    font-size: 11px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+
+.layer-action {
+    width: 26px;
+    height: 26px;
+    border-radius: 5px;
+}
+
+.properties-panel {
+    max-height: 48%;
+    overflow-y: auto;
+    border-top: 1px solid #3f3f46;
+    background: #18181b;
+}
+
+.properties-empty {
+    padding: 18px 14px;
+    color: #71717a;
+    font-size: 11px;
+    text-align: center;
+}
+
+.properties-content {
+    padding: 10px;
+}
+
+.properties-content.hidden,
+.properties-image-section.hidden,
+.properties-table-section.hidden {
+    display: none;
+}
+
+.properties-section-title {
+    margin: 5px 0 7px;
+    color: #a1a1aa;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .04em;
+}
+
+.property-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.property-grid label {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr);
+    align-items: center;
+    gap: 4px;
+    color: #a1a1aa;
+    font-size: 10px;
+}
+
+.property-grid input,
+.property-button-row select {
+    width: 100%;
+    height: 28px;
+    box-sizing: border-box;
+    border: 1px solid #3f3f46;
+    border-radius: 5px;
+    color: #e4e4e7;
+    background: #27272a;
+    font-size: 11px;
+}
+
+.property-grid input[type="number"] {
+    padding: 0 6px;
+}
+
+.property-grid input[type="color"] {
+    padding: 2px;
+}
+
+.property-button-row {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.property-button-row button {
+    min-width: 30px;
+    height: 28px;
+    padding: 0 8px;
+    border: 1px solid #3f3f46;
+    border-radius: 5px;
+    color: #d4d4d8;
+    background: #27272a;
+    cursor: pointer;
+}
+
+.property-button-row button:hover,
+.property-button-row button.is-active {
+    border-color: #3b82f6;
+    color: #fff;
+    background: rgba(59, 130, 246, .22);
+}
+
+.property-button-row.wide {
+    flex-wrap: wrap;
+}
+
+.property-button-row.wide button,
+.property-button-row.wide select {
+    flex: 1;
+    min-width: 70px;
+}
+
+body.presentation-mode .ppt-component-toolbar,
+body.presentation-mode .moveable-control-box,
+body.presentation-mode .layers-panel,
+body.presentation-mode .ppt-snap-guide {
+    display: none !important;
+}

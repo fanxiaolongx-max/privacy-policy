@@ -1,6 +1,7 @@
 // js/app.js
-import * as store from './store.js';
-import * as editor from './editor.js';
+import * as store from './store.js?v=20260618-23';
+import * as editor from './editor.js?v=20260618-23';
+import { createComponentEditor } from './component-editor.js?v=20260618-23';
 
 const deck = document.getElementById('deck');
 const deckWrapper = document.getElementById('deckWrapper');
@@ -34,6 +35,7 @@ let activeSlideIndex = store.getActiveSlideIndex();
 let saveTimer = null;
 let thumbTimer = null;
 let currentEditorScale = 1.0;
+let componentEditor = null;
 
 // --- History Stack ---
 let historyStack = [];
@@ -61,6 +63,7 @@ function undo() {
         historyIndex--;
         deck.innerHTML = historyStack[historyIndex];
         renumberSlides();
+        componentEditor?.refresh();
         setActiveSlide(activeSlideIndex);
         store.saveState(deck.innerHTML);
         updateUndoRedoBtns();
@@ -72,6 +75,7 @@ function redo() {
         historyIndex++;
         deck.innerHTML = historyStack[historyIndex];
         renumberSlides();
+        componentEditor?.refresh();
         setActiveSlide(activeSlideIndex);
         store.saveState(deck.innerHTML);
         updateUndoRedoBtns();
@@ -157,17 +161,20 @@ function scheduleThumbnails() {
 function setActiveSlide(index) {
     const wraps = getSlideWraps();
     if (!wraps.length) return;
+    componentEditor?.clearSelection();
     activeSlideIndex = Math.max(0, Math.min(index, wraps.length - 1));
     wraps.forEach((wrap, i) => wrap.classList.toggle('is-active', i === activeSlideIndex));
     store.saveActiveSlideIndex(activeSlideIndex);
     renderThumbnails();
+    componentEditor?.refreshLayers();
 }
 
 function saveDeck() {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
-        store.saveState(deck.innerHTML);
-        pushHistory(deck.innerHTML);
+        const html = editor.serializeDeck(deck);
+        store.saveState(html);
+        pushHistory(html);
         setStatus('已自动保存');
     }, 500);
 }
@@ -176,6 +183,7 @@ function applyEditorZoom(scale) {
     currentEditorScale = scale;
     document.documentElement.style.setProperty('--editor-scale', String(scale));
     mainZoomLabel.textContent = `${Math.round(scale * 100)}%`;
+    componentEditor?.refreshControls();
 }
 
 function bootstrap() {
@@ -183,7 +191,8 @@ function bootstrap() {
     if (savedHtml) {
         deck.innerHTML = savedHtml;
     }
-    pushHistory(deck.innerHTML);
+    componentEditor?.refresh();
+    pushHistory(editor.serializeDeck(deck));
     
     renumberSlides();
     setActiveSlide(activeSlideIndex);
@@ -237,6 +246,7 @@ document.getElementById('undoBtn')?.addEventListener('click', undo);
 document.getElementById('redoBtn')?.addEventListener('click', redo);
 
 document.addEventListener('keydown', e => {
+    if (e.target.closest('input, textarea, [contenteditable="true"]')) return;
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
         if (e.shiftKey) redo(); else undo();
         e.preventDefault();
@@ -336,9 +346,9 @@ rtToolbar?.querySelector('.rt-color')?.addEventListener('input', e => {
     saveDeck();
 });
 
-// --- Media Upload (Click & Drag) ---
-deck.addEventListener('click', e => {
-    const target = e.target.closest('.qr-box, .cover-photo, .avatar');
+// --- Media Upload (Double-click & Drag) ---
+deck.addEventListener('dblclick', e => {
+    const target = e.target.closest('.qr-box, .cover-photo, .avatar, .ppt-image-placeholder');
     if (!target) return;
     const input = document.createElement('input');
     input.type = 'file';
@@ -349,6 +359,7 @@ deck.addEventListener('click', e => {
         const reader = new FileReader();
         reader.onload = () => {
             target.style.background = `url("${reader.result}") center / cover no-repeat`;
+            target.classList.add('has-image');
             target.innerHTML = '';
             saveDeck();
             scheduleThumbnails();
@@ -356,21 +367,22 @@ deck.addEventListener('click', e => {
         reader.readAsDataURL(file);
     };
     input.click();
+    e.stopPropagation();
 });
 
 deck.addEventListener('dragover', e => {
     e.preventDefault();
-    const target = e.target.closest('.qr-box, .cover-photo, .avatar, .slide-pad');
+    const target = e.target.closest('.qr-box, .cover-photo, .avatar, .ppt-image-placeholder, .slide-pad');
     if (target) target.style.opacity = '0.8';
 });
 deck.addEventListener('dragleave', e => {
     e.preventDefault();
-    const target = e.target.closest('.qr-box, .cover-photo, .avatar, .slide-pad');
+    const target = e.target.closest('.qr-box, .cover-photo, .avatar, .ppt-image-placeholder, .slide-pad');
     if (target) target.style.opacity = '1';
 });
 deck.addEventListener('drop', e => {
     e.preventDefault();
-    const target = e.target.closest('.qr-box, .cover-photo, .avatar, .slide-pad');
+    const target = e.target.closest('.qr-box, .cover-photo, .avatar, .ppt-image-placeholder, .slide-pad');
     if (!target) return;
     target.style.opacity = '1';
     const file = e.dataTransfer.files[0];
@@ -389,6 +401,7 @@ deck.addEventListener('drop', e => {
             target.appendChild(img);
         } else {
             target.style.background = `url("${reader.result}") center / cover no-repeat`;
+            target.classList.add('has-image');
             target.innerHTML = '';
         }
         saveDeck();
@@ -403,9 +416,39 @@ document.getElementById('addCaseBtn').addEventListener('click', () => {
     if (!template) return;
     deck.appendChild(template.content.firstElementChild.cloneNode(true));
     renumberSlides();
+    componentEditor?.refresh();
     setActiveSlide(getSlideWraps().length - 1);
     saveDeck();
 });
+
+document.querySelectorAll('.add-element-btn').forEach(button => {
+    button.addEventListener('click', () => {
+        componentEditor?.addElement(button.dataset.elementKind);
+        document.getElementById('addElementMenu')?.classList.add('hidden');
+    });
+});
+
+document.getElementById('addElementMenuBtn')?.addEventListener('click', event => {
+    event.stopPropagation();
+    document.getElementById('addElementMenu')?.classList.toggle('hidden');
+});
+
+document.addEventListener('click', event => {
+    if (!event.target.closest('#addElementMenu, #addElementMenuBtn')) {
+        document.getElementById('addElementMenu')?.classList.add('hidden');
+    }
+});
+
+function toggleLayersPanel(forceOpen = null) {
+    const panel = document.getElementById('layersPanel');
+    if (!panel) return;
+    const shouldOpen = forceOpen === null ? panel.classList.contains('hidden') : forceOpen;
+    panel.classList.toggle('hidden', !shouldOpen);
+    if (shouldOpen) componentEditor?.refreshLayers();
+}
+
+document.getElementById('toggleLayersBtn')?.addEventListener('click', () => toggleLayersPanel());
+document.getElementById('closeLayersBtn')?.addEventListener('click', () => toggleLayersPanel(false));
 
 document.getElementById('exportPdfBtn').addEventListener('click', async (e) => {
     const btn = e.currentTarget;
@@ -437,6 +480,7 @@ document.getElementById('importJsonInput').addEventListener('change', async even
             if (!payload || !payload.html) throw new Error('JSON 数据无效');
             deck.innerHTML = payload.html;
             renumberSlides();
+            componentEditor?.refresh();
             setActiveSlide(0);
             saveDeck();
             setStatus('导入完成');
@@ -465,56 +509,6 @@ document.getElementById('zoomFitBtn').addEventListener('click', () => {
     const h = deckWrapper.clientHeight - 80;
     const scale = Math.max(0.5, Math.min(w / 480, h / 360));
     applyEditorZoom(scale);
-});
-
-// --- Global Content Deletion Feature ---
-const deleteBtn = document.createElement('button');
-deleteBtn.innerHTML = '<i class="ph-bold ph-trash"></i>';
-deleteBtn.className = 'absolute hidden z-50 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg flex items-center justify-center cursor-pointer transition-transform hover:scale-110 active:scale-95';
-document.body.appendChild(deleteBtn);
-
-let currentDeleteTarget = null;
-const deletableSelectors = ['.editable', '.rule-box', 'tr', 'li', '.box', '.qr', '.sticky-note', '.speaker', '.cover-banner', '.cover-photo', '.cover-copy', '.footer', 'img', '.agenda-table', '.case-layout', '.case-cells div', '.case-labels div'];
-
-deck.addEventListener('mouseover', (e) => {
-    const target = e.target.closest(deletableSelectors.join(', '));
-    if (!target) return;
-    
-    currentDeleteTarget = target;
-    const rect = target.getBoundingClientRect();
-    
-    deleteBtn.style.top = `${rect.top - 12}px`;
-    deleteBtn.style.left = `${rect.right - 12}px`;
-    deleteBtn.classList.remove('hidden');
-});
-
-deleteBtn.addEventListener('mouseover', () => {
-    deleteBtn.classList.remove('hidden');
-});
-
-document.addEventListener('mousemove', (e) => {
-    if (!currentDeleteTarget) return;
-    const targetRect = currentDeleteTarget.getBoundingClientRect();
-    const btnRect = deleteBtn.getBoundingClientRect();
-    
-    const pad = 16;
-    const isHoveringTarget = e.clientX >= targetRect.left - pad && e.clientX <= targetRect.right + pad && e.clientY >= targetRect.top - pad && e.clientY <= targetRect.bottom + pad;
-    const isHoveringBtn = e.clientX >= btnRect.left - pad && e.clientX <= btnRect.right + pad && e.clientY >= btnRect.top - pad && e.clientY <= btnRect.bottom + pad;
-    
-    if (!isHoveringTarget && !isHoveringBtn) {
-        deleteBtn.classList.add('hidden');
-        currentDeleteTarget = null;
-    }
-});
-
-deleteBtn.addEventListener('click', () => {
-    if (currentDeleteTarget) {
-        currentDeleteTarget.remove();
-        deleteBtn.classList.add('hidden');
-        currentDeleteTarget = null;
-        saveDeck();
-        scheduleThumbnails();
-    }
 });
 
 // --- AI Copilot Feature ---
@@ -674,6 +668,7 @@ async function sendAiMessage(hiddenContent = null, displayMsg = null) {
                     generatedWraps[0].classList.add('is-active');
                     activeWrap.after(generatedWraps[0]);
                     activeWrap.classList.remove('is-active');
+                    componentEditor?.refresh();
                     setActiveSlide(activeIndex + 1);
                 }
                 aiReplacingSlide = false;
@@ -683,6 +678,7 @@ async function sendAiMessage(hiddenContent = null, displayMsg = null) {
                     wrap.classList.remove('is-active');
                     deck.appendChild(wrap);
                 });
+                componentEditor?.refresh();
                 appendAiMessage('model', '✨ **幻灯片已添加至末尾。**' + (reply ? '<br><br>' + escapeHtml(reply) : ''));
             }
             renumberSlides();
@@ -775,4 +771,14 @@ function initResizers() {
 initResizers();
 
 // Start app
+componentEditor = createComponentEditor({
+    deck,
+    getScale: () => currentEditorScale,
+    onChange: () => {
+        setStatus('正在保存...');
+        saveDeck();
+        scheduleThumbnails();
+    },
+    onStatus: setStatus
+});
 bootstrap();
