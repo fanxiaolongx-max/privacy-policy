@@ -1,8 +1,8 @@
 // js/app.js
-import * as store from './store.js?v=20260620-25';
-import * as editor from './editor.js?v=20260620-25';
-import { createComponentEditor } from './component-editor.js?v=20260620-25';
-import { initContextMenu } from './context-menu.js?v=20260620-25';
+import * as store from './store.js?v=20260620-26';
+import * as editor from './editor.js?v=20260620-26';
+import { createComponentEditor } from './component-editor.js?v=20260620-26';
+import { initContextMenu } from './context-menu.js?v=20260620-26';
 import { defaultSlides } from './default-slides.js';
 import { renderSlide, slideToJson } from './slide-factory.js';
 

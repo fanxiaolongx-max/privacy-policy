@@ -174,18 +174,19 @@ export async function exportPptx(deck, setStatusCallback) {
                 height: 1080
             });
             
-            // Fix PptxGenJS aggressive base64 caching bug:
-            // 1. We use PNG instead of JPEG so the varying pixel is not crushed by lossy compression.
-            // 2. We draw a unique pixel with varying alpha so the image data is mathematically unique.
-            // Because PNG is lossless and uses DEFLATE, changing the first pixel completely scrambles the resulting base64 stream.
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = `rgba(0, 0, 0, ${(i + 1) / 255})`;
-            ctx.fillRect(0, 0, 1, 1);
+            // To completely bypass PptxGenJS's aggressive caching (which hashes the first 100 characters),
+            // we must ensure the image header is different. By varying the canvas height slightly for each slide,
+            // the PNG IHDR chunk (which stores dimensions) will be different, guaranteeing a unique base64 string!
+            const finalCanvas = document.createElement('canvas');
+            finalCanvas.width = canvas.width;
+            finalCanvas.height = canvas.height + i; // +0, +1, +2... unique height!
+            const ctx = finalCanvas.getContext('2d');
+            ctx.drawImage(canvas, 0, 0);
             
-            const img = canvas.toDataURL('image/png');
+            const img = finalCanvas.toDataURL('image/png'); // MUST use PNG! JPEG height is stored after 100 bytes, so it fails the cache check!
             
             const slide = pptx.addSlide();
-            slide.addImage({ data: img, x: 0, y: 0, w: '100%', h: '100%' });
+            slide.addImage({ data: img, x: 0, y: 0, w: 10, h: 5.625 }); // Explicitly fill 16:9 layout to prevent white gaps
         }
         
         setStatusCallback('正在打包 PPTX 文件...');
