@@ -32,6 +32,68 @@ async function sendMessageWithRetry(chat, content, maxAttempts = 3) {
     throw lastError;
 }
 
+function stripJsonFence(value) {
+    return String(value || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+}
+
+function parseAiJson(value) {
+    const raw = stripJsonFence(value);
+    try {
+        return JSON.parse(raw);
+    } catch (firstError) {
+        const start = raw.indexOf('{');
+        const end = raw.lastIndexOf('}');
+        if (start >= 0 && end > start) return JSON.parse(raw.slice(start, end + 1));
+        throw firstError;
+    }
+}
+
+function fallbackPptActions(instruction, operationContext) {
+    const components = Array.isArray(operationContext?.components) ? operationContext.components : [];
+    const unlocked = components.filter(item => !item.locked);
+    const excludesTitle = /除标题|标题除外|不动标题/.test(instruction);
+    const targets = unlocked
+        .filter(item => !(excludesTitle && /标题/.test(String(item.type))))
+        .map(item => item.id)
+        .filter(Boolean);
+    if (!targets.length) return null;
+
+    const columnMatch = String(instruction).match(/([二两三四五六2-6])\s*栏/);
+    const columnMap = { 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6 };
+    const columns = columnMatch ? (columnMap[columnMatch[1]] || Number(columnMatch[1])) : null;
+    if (columns) {
+        return {
+            summary: `已使用本地布局引擎整理为 ${columns} 栏`,
+            actions: [
+                {
+                    type: 'grid',
+                    targets,
+                    columns,
+                    gap: 12,
+                    x: 34,
+                    y: 72,
+                    width: 412,
+                    rowHeight: Math.max(60, Math.floor(240 / Math.ceil(targets.length / columns))),
+                    equalWidth: true
+                },
+                {
+                    type: 'setStyle',
+                    targets,
+                    styles: {
+                        borderRadius: '8px',
+                        padding: '10px',
+                        borderWidth: '1px',
+                        borderStyle: 'solid',
+                        borderColor: '#d4d4d8'
+                    }
+                }
+            ],
+            fallback: true
+        };
+    }
+    return null;
+}
+
 /**
  * POST /api/ai/chat
  * 接收对话历史和页面上下文，返回 Gemini 响应
@@ -124,6 +186,94 @@ ${aiSettings.systemPrompt ? `\n**管理员补充要求**：\n${aiSettings.system
 });
 
 /**
+ * POST /api/ai/ppt-copilot-actions
+ * 针对单个选中组件生成受控、可校验的结构化修改动作
+ */
+router.post('/ppt-copilot-actions', checkAuth, async (req, res) => {
+    try {
+        const aiSettings = aiSettingsRepo.getRuntimeSettings();
+        if (!aiSettings.hasApiKey || !aiSettings.keyLooksValid) {
+            return res.status(503).json({ error: 'AI API Token 未配置或格式无效。' });
+        }
+        const { instruction, context, component, rules } = req.body || {};
+        const operationContext = context || (component ? { scope: 'single', components: [component] } : null);
+        if (!instruction || typeof instruction !== 'string' || !operationContext || typeof operationContext !== 'object') {
+            return res.status(400).json({ error: '缺少修改指令或组件上下文。' });
+        }
+
+        const systemInstruction = `你是 PPT 组件与页面布局精确修改助手。你只能返回 JSON，不得返回 Markdown 或解释。
+返回结构：
+{"summary":"一句话说明","actions":[...]}
+
+允许的 action：
+1. {"type":"setText","target":"组件id","value":"新文本"}
+2. {"type":"setStyle","target":"组件id或all","targets":["id1","id2"],"styles":{...}}
+3. {"type":"move","target":"组件id或all","targets":["id1"],"dx":数字,"dy":数字}
+4. {"type":"setPosition","target":"组件id","x":数字,"y":数字}
+5. {"type":"resize","target":"组件id或all","targets":["id1"],"width":数字,"height":数字}
+6. {"type":"align","targets":["id1","id2"],"mode":"left|center|right|top|middle|bottom"}
+7. {"type":"grid","targets":["id1","id2"],"columns":2,"gap":12,"x":40,"y":70,"width":400,"rowHeight":90,"equalWidth":true}
+
+setStyle 只允许以下属性：
+backgroundColor,borderColor,borderWidth,borderRadius,borderStyle,boxShadow,opacity,padding,
+color,fontFamily,fontSize,fontWeight,fontStyle,lineHeight,letterSpacing,textAlign,textDecoration。
+
+要求：
+- 不修改用户没有要求的属性。
+- 多选批量操作应使用 target:"all" 或 targets。
+- 整页重排必须为每个动作提供 target/targets，优先使用 grid、align 和 setPosition。
+- 不移动页脚等 locked 组件；上下文中的组件 id 必须原样使用。
+- 尺寸坐标基于 480x360 幻灯片。
+- CSS 数值需要带单位，例如 "24px"；opacity 使用 0 到 1。
+- 不生成 HTML、脚本、URL 或事件处理器。
+- actions 最多 40 条，尽量合并相同目标的样式操作。`;
+
+        const genAI = new GoogleGenerativeAI(aiSettings.apiKey);
+        const model = genAI.getGenerativeModel({
+            model: aiSettings.model,
+            systemInstruction,
+            generationConfig: {
+                maxOutputTokens: Math.min(Math.max(aiSettings.maxOutputTokens, 4096), 8192),
+                temperature: 0.1,
+                responseMimeType: 'application/json'
+            }
+        });
+        const prompt = `用户要求：${instruction.slice(0, 2000)}
+操作范围：${operationContext.scope || 'single'}
+组件上下文：${JSON.stringify(operationContext).slice(0, 24000)}
+用户规范：${String(rules || '').slice(0, 3000)}`;
+        let parsed;
+        let firstRaw = '';
+        try {
+            const result = await model.generateContent(prompt);
+            firstRaw = result.response.text();
+            parsed = parseAiJson(firstRaw);
+        } catch (parseError) {
+            console.warn('[AI Copilot Actions] invalid JSON, retrying:', parseError.message);
+            try {
+                const retryPrompt = `${prompt}
+
+你上一次输出的 JSON 无法解析。请重新输出更短、更紧凑的完整 JSON。
+不要解释，不要 Markdown。每个 action 只保留必要字段。
+上次输出（可能被截断）：
+${firstRaw.slice(0, 6000)}`;
+                const retryResult = await model.generateContent(retryPrompt);
+                parsed = parseAiJson(retryResult.response.text());
+            } catch (retryError) {
+                const fallback = fallbackPptActions(instruction, operationContext);
+                if (fallback) return res.json(fallback);
+                throw new Error('AI 返回的结构化结果不完整，请缩短要求后重试');
+            }
+        }
+        const actions = Array.isArray(parsed.actions) ? parsed.actions.slice(0, 40) : [];
+        res.json({ summary: String(parsed.summary || '组件修改完成'), actions });
+    } catch (error) {
+        console.error('[AI Copilot Actions] error:', error);
+        res.status(500).json({ error: 'AI 组件修改失败: ' + error.message });
+    }
+});
+
+/**
  * POST /api/ai/ppt-copilot
  * 专为 PPT Copilot 优化的 AI 生成接口，直接返回 HTML 代码格式的幻灯片
  */
@@ -142,18 +292,32 @@ router.post('/ppt-copilot', checkAuth, async (req, res) => {
             return res.status(400).json({ error: '无效的 messages 参数' });
         }
 
-        const systemInstruction = `你是一个专业的幻灯片（PPT）代码生成助手。
-你的任务是根据用户的需求，生成符合格式的 PPT 幻灯片。
-**极其重要：你必须且只能使用以下提供的 HTML 模板结构，严格原样保留 HTML 标签、class 属性和 contenteditable 属性，只替换其中的文本内容！不要自创 HTML 结构，不要使用 Markdown 列表，你的回复应该仅仅是一段或多段符合模板的有效 HTML 代码。**
+        const systemInstruction = `你是一个专业的幻灯片（PPT）内容生成助手。
+你的任务是根据用户的需求，生成符合格式的 PPT 幻灯片 JSON 数据。
+**极其重要：你必须返回一段合法的 JSON 数组，每个元素代表一页幻灯片。不要返回任何 Markdown 或 HTML！**
 
-可用模板库如下：
----
-${templates || ''}
----
+**关于排版与主题（核心要求）**：
+- 用户希望你**自由发挥排版**，不必拘泥于固定的模板或表格格式！
+- 你可以大量使用 \`"layout": "custom"\`，在 \`html\` 字段中自由编写排版代码（如使用 flex, grid, div 结构等）。
+- **为了保持整体 PPT 的主题一致性**，你生成的 HTML 必须复用页面的基础类名，例如：
+  - 页面大标题：\`<h2 class="slide-title editable">你的标题</h2>\`
+  - 正文/段落容器：包含 \`class="editable"\`，如 \`<div class="editable">...</div>\` 或 \`<p class="editable">...</p>\`
+- **画布尺寸与字号规范（极重要）**：当前幻灯片的物理画布是标准宽屏（**1920x1080 像素**），因此你需要使用大号的排版与字号：
+  - **正文字号**：推荐使用 \`text-2xl\` (24px) 或 \`text-3xl\` (30px)。
+  - **模块标题**：推荐使用 \`text-4xl\` (36px)。
+  - **最大号的页面大标题**：仅建议使用 \`text-5xl\` 或 \`text-6xl\`。
+  - **间距调整**：务必保证内容的呼吸感，多使用 \`gap-8\`, \`gap-12\`, \`p-8\` 等大间距，以适应 1920x1080 边界。
+- **防止垂直溢出（严禁文字超出底部）**：大字号会占用更多空间！你必须极度精简文案，提炼核心结论，绝对不要生成大段长篇文本导致内容撑破屏幕底部！如果内容多，请务必使用多列布局（如 \`grid grid-cols-2\` 或 \`grid-cols-3\`）来横向分摊内容。
+- 文本如果需要特定强调，可以使用 \`<strong>\` 或内联颜色，但整体基础颜色交由外部 CSS 控制即可。
+如果你觉得有必要，依然可以使用以下快捷 Layout，但推荐优先使用 custom 自由排版：
+1. 封面: {"layout": "cover", "title": "主标题", "subtitle": "副标题"}
+2. 目录: {"layout": "agenda", "title": "标题", "rows": [{"active": true, "content": "事项"}]}
+3. 自由排版 (最推荐): {"layout": "custom", "html": "<h2 class='slide-title editable'>标题</h2><div class='editable flex gap-4'>自由结构代码...</div>"}
+
 **规则**：
-1. 请根据用户请求的类型（封面、议程、规则、案例），直接返回对应的 HTML 代码块。
-2. 你可以组合多个幻灯片（即返回多段 \`<div class="slide-wrap">...</div>\`）。
-3. 只返回 HTML 代码，不要任何解释说明的文字，不要包含 \`\`\`html 这样的包裹符（或者如果有，前端也会处理，但最好直接返回干净的代码）。`;
+1. 返回形式必须是 JSON 数组，例如：[ { "layout": "custom", "html": "..." } ]
+2. 只返回 JSON，不要解释说明文字，不要 \`\`\`json 包裹符。
+${templates || ''}`;
 
         const genAI = new GoogleGenerativeAI(aiSettings.apiKey);
         const model = genAI.getGenerativeModel({ 
@@ -167,8 +331,9 @@ ${templates || ''}
                 parts: [{ text: msg.content }]
             })),
             generationConfig: {
-                maxOutputTokens: aiSettings.maxOutputTokens,
+                maxOutputTokens: 8192,
                 temperature: 0.2, // Lower temperature for more stable template generation
+                responseMimeType: "application/json",
             },
         });
 

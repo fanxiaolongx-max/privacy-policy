@@ -102,7 +102,7 @@
 
     <script src="/js/shared/api.js?v=20260612-02"></script>
     <script src="/js/shared/toast.js?v=20260530-03"></script>
-    <script src="/js/shared/navbar.js?v=20260612-01"></script>
+    <script src="/js/shared/navbar.js?v=20260620-01"></script>
     <script>
         function getToolSlug() {
             const parts = window.location.pathname.split('/').filter(Boolean);
@@ -124,7 +124,7 @@
                 document.getElementById('toolName').textContent = tool.name || '自定义工具';
                 document.getElementById('openRawTool').href = tool.filePath;
                 host.className = '';
-                host.innerHTML = `<iframe class="custom-tool-frame" src="${tool.filePath}" title="${tool.name || 'Custom Tool'}"></iframe>`;
+                host.innerHTML = `<iframe class="custom-tool-frame" src="${tool.filePath}" title="${tool.name || 'Custom Tool'}" allow="fullscreen"></iframe>`;
             } catch (err) {
                 host.textContent = `加载自定义工具失败：${err.message}`;
             }

@@ -23,10 +23,14 @@
   },
   {
     "slug": "network_safety_meeting_summary",
-    "name": "安全大会模板",
+    "name": "华子胶片设计工具",
     "icon": "🛡️",
-    "description": "直接编辑安全大会幻灯片，并按页面样式一键导出 PDF。",
-    "tags": ["模板", "PDF", "安全大会"],
+    "description": "直接编辑华子胶片幻灯片，并按页面样式一键导出 PDF。",
+    "tags": [
+      "模板",
+      "PDF",
+      "华子胶片"
+    ],
     "href": "/tools/network_safety_meeting_summary",
     "filePath": "/custom-tools/network_safety_meeting_summary/index.html",
     "createdAt": "2026-06-16T13:49:05.303Z",

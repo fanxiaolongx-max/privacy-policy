@@ -72,6 +72,9 @@ app.use((req, res, next) => {
 });
 
 app.use(express.static(path.join(__dirname, '../frontend')));
+app.get('/favicon.ico', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/assets/icon.ico'));
+});
 
 // ============================================================
 // API 路由与鉴权

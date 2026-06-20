@@ -1,7 +1,10 @@
 // js/app.js
 import * as store from './store.js?v=20260618-23';
 import * as editor from './editor.js?v=20260618-23';
-import { createComponentEditor } from './component-editor.js?v=20260618-23';
+import { createComponentEditor } from './component-editor.js';
+import { initContextMenu } from './context-menu.js';
+import { defaultSlides } from './default-slides.js';
+import { renderSlide, slideToJson } from './slide-factory.js';
 
 const deck = document.getElementById('deck');
 const deckWrapper = document.getElementById('deckWrapper');
@@ -25,7 +28,7 @@ function updateThumbScale() {
         - num.getBoundingClientRect().width
         - parseFloat(shellStyle.borderLeftWidth)
         - parseFloat(shellStyle.borderRightWidth);
-    const scale = Math.max(0.1, availableWidth / 480);
+    const scale = Math.max(0.01, availableWidth / 1920);
     document.documentElement.style.setProperty('--thumb-scale', scale);
 }
 const mainZoomLabel = document.getElementById('mainZoomLabel');
@@ -36,6 +39,84 @@ let saveTimer = null;
 let thumbTimer = null;
 let currentEditorScale = 1.0;
 let componentEditor = null;
+let thumbnailKeyboardFocus = false;
+let slideClipboard = null;
+let canvasPanX = 0;
+let canvasPanY = 0;
+let canvasPanState = null;
+let selectedSlideIndices = new Set();
+
+function applyCanvasPan() {
+    deck.style.translate = `${canvasPanX}px ${canvasPanY}px`;
+    componentEditor?.refreshControls();
+}
+
+function resetCanvasPan() {
+    canvasPanX = 0;
+    canvasPanY = 0;
+    applyCanvasPan();
+}
+
+function initCanvasPan() {
+    deckWrapper.addEventListener('pointerdown', event => {
+        if (event.button !== 0 || event.target !== deckWrapper) return;
+        if (document.body.classList.contains('presentation-mode')) return;
+
+        canvasPanState = {
+            pointerId: event.pointerId,
+            startX: event.clientX,
+            startY: event.clientY,
+            panX: canvasPanX,
+            panY: canvasPanY
+        };
+        deckWrapper.classList.add('is-panning');
+        deckWrapper.setPointerCapture(event.pointerId);
+        event.preventDefault();
+    });
+
+    deckWrapper.addEventListener('pointermove', event => {
+        if (!canvasPanState || event.pointerId !== canvasPanState.pointerId) return;
+        canvasPanX = canvasPanState.panX + event.clientX - canvasPanState.startX;
+        canvasPanY = canvasPanState.panY + event.clientY - canvasPanState.startY;
+        applyCanvasPan();
+    });
+
+    const finishCanvasPan = event => {
+        if (!canvasPanState || event.pointerId !== canvasPanState.pointerId) return;
+        if (deckWrapper.hasPointerCapture(event.pointerId)) {
+            deckWrapper.releasePointerCapture(event.pointerId);
+        }
+        canvasPanState = null;
+        deckWrapper.classList.remove('is-panning');
+        componentEditor?.refreshControls();
+    };
+
+    deckWrapper.addEventListener('pointerup', finishCanvasPan);
+    deckWrapper.addEventListener('pointercancel', finishCanvasPan);
+}
+
+function initWheelZoom() {
+    deckWrapper.addEventListener('wheel', event => {
+        if (!event.ctrlKey && !event.metaKey) return;
+        if (document.body.classList.contains('presentation-mode')) return;
+
+        event.preventDefault();
+        const previousScale = currentEditorScale;
+        const scaleStep = event.deltaY < 0 ? 0.1 : -0.1;
+        const nextScale = Math.max(0.5, Math.min(3, Math.round((previousScale + scaleStep) * 10) / 10));
+        if (nextScale === previousScale) return;
+
+        const deckRect = deck.getBoundingClientRect();
+        const pointerX = event.clientX - deckRect.left;
+        const pointerY = event.clientY - deckRect.top;
+        const ratio = nextScale / previousScale;
+
+        canvasPanX += pointerX * (1 - ratio);
+        canvasPanY += pointerY * (1 - ratio);
+        applyEditorZoom(nextScale);
+        applyCanvasPan();
+    }, { passive: false });
+}
 
 // --- History Stack ---
 let historyStack = [];
@@ -87,7 +168,7 @@ function setStatus(text) {
 }
 
 function getSlideWraps() {
-    return Array.from(deck.querySelectorAll('.slide-wrap'));
+    return Array.from(deck.querySelectorAll('.slide-wrap')).filter(wrap => wrap.querySelector('.slide'));
 }
 
 function renumberSlides() {
@@ -102,7 +183,8 @@ function renderThumbnails() {
     thumbDeck.innerHTML = '';
     wraps.forEach((wrap, index) => {
         const item = document.createElement('div');
-        item.className = `thumb-item ${index === activeSlideIndex ? 'active' : ''}`;
+        const isActive = index === activeSlideIndex || selectedSlideIndices.has(index);
+        item.className = `thumb-item ${isActive ? 'active' : ''}`;
         
         const numSpan = document.createElement('span');
         numSpan.className = 'thumb-num';
@@ -112,12 +194,39 @@ function renderThumbnails() {
         shell.className = 'thumb-shell';
         
         const slide = wrap.querySelector('.slide');
+        if (!slide) return;
         shell.appendChild(editor.scrubClone(slide.cloneNode(true)));
         
         item.appendChild(numSpan);
         item.appendChild(shell);
         
-        item.addEventListener('click', () => setActiveSlide(index));
+        item.tabIndex = 0;
+        item.setAttribute('role', 'button');
+        item.setAttribute('aria-label', `第 ${index + 1} 页`);
+        item.addEventListener('click', (event) => {
+            thumbnailKeyboardFocus = true;
+            if (event.shiftKey && selectedSlideIndices.size > 0) {
+                const lastActive = activeSlideIndex;
+                const min = Math.min(lastActive, index);
+                const max = Math.max(lastActive, index);
+                selectedSlideIndices.clear();
+                for (let i = min; i <= max; i++) selectedSlideIndices.add(i);
+                activeSlideIndex = index;
+                renderThumbnails();
+            } else if (event.metaKey || event.ctrlKey) {
+                if (selectedSlideIndices.has(index)) {
+                    selectedSlideIndices.delete(index);
+                    if (selectedSlideIndices.size === 0) selectedSlideIndices.add(index);
+                } else {
+                    selectedSlideIndices.add(index);
+                }
+                activeSlideIndex = index;
+                renderThumbnails();
+            } else {
+                setActiveSlide(index);
+            }
+            thumbDeck.querySelector('.thumb-item.active')?.focus({ preventScroll: true });
+        });
         thumbDeck.appendChild(item);
     });
 
@@ -163,10 +272,14 @@ function setActiveSlide(index) {
     if (!wraps.length) return;
     componentEditor?.clearSelection();
     activeSlideIndex = Math.max(0, Math.min(index, wraps.length - 1));
+    selectedSlideIndices.clear();
+    selectedSlideIndices.add(activeSlideIndex);
     wraps.forEach((wrap, i) => wrap.classList.toggle('is-active', i === activeSlideIndex));
     store.saveActiveSlideIndex(activeSlideIndex);
     renderThumbnails();
     componentEditor?.refreshLayers();
+    updatePresentationPageLabel();
+    if (document.body.classList.contains('presentation-mode')) clearPresentationInk();
 }
 
 function saveDeck() {
@@ -177,6 +290,32 @@ function saveDeck() {
         pushHistory(html);
         setStatus('已自动保存');
     }, 500);
+}
+
+function deleteActiveSlide() {
+    const wraps = getSlideWraps();
+    if (wraps.length <= 1) {
+        setStatus('最后一页无法删除');
+        return false;
+    }
+    const toDelete = Array.from(selectedSlideIndices).sort((a, b) => b - a);
+    if (toDelete.length >= wraps.length) {
+        setStatus('不能删除所有页');
+        return false;
+    }
+    toDelete.forEach(idx => {
+        if (wraps[idx]) wraps[idx].remove();
+    });
+    
+    renumberSlides();
+    const minDeleted = Math.min(...toDelete);
+    setActiveSlide(Math.min(minDeleted, getSlideWraps().length - 1));
+    
+    if (thumbnailKeyboardFocus) {
+        thumbDeck.querySelector('.thumb-item.active')?.focus({ preventScroll: true });
+    }
+    saveDeck();
+    return true;
 }
 
 function applyEditorZoom(scale) {
@@ -190,7 +329,22 @@ function bootstrap() {
     const savedHtml = store.loadState();
     if (savedHtml) {
         deck.innerHTML = savedHtml;
+    } else {
+        const customTemplate = localStorage.getItem('ppt_custom_default_template');
+        deck.innerHTML = '';
+        if (customTemplate) {
+            deck.innerHTML = customTemplate;
+        } else {
+            defaultSlides.forEach((data, i) => {
+                const slide = renderSlide(data);
+                if (i === 0) slide.classList.add('is-active');
+                deck.appendChild(slide);
+            });
+        }
     }
+    deck.querySelectorAll('.slide-wrap').forEach(wrap => {
+        if (!wrap.querySelector('.slide')) wrap.remove();
+    });
     componentEditor?.refresh();
     pushHistory(editor.serializeDeck(deck));
     
@@ -268,15 +422,83 @@ document.getElementById('duplicateSlideBtn')?.addEventListener('click', () => {
 });
 
 document.getElementById('deleteSlideBtn')?.addEventListener('click', () => {
-    const wraps = getSlideWraps();
-    if (wraps.length <= 1) return alert('最后一页无法删除');
     if (confirm('确定要删除当前页吗？')) {
-        wraps[activeSlideIndex].remove();
-        renumberSlides();
-        setActiveSlide(Math.max(0, activeSlideIndex - 1));
-        saveDeck();
+        deleteActiveSlide();
     }
 });
+
+thumbDeck.addEventListener('focusin', event => {
+    if (event.target.closest('.thumb-item')) thumbnailKeyboardFocus = true;
+});
+
+document.addEventListener('pointerdown', event => {
+    if (!event.target.closest('#thumbDeck')) thumbnailKeyboardFocus = false;
+}, true);
+
+document.addEventListener('keydown', event => {
+    if (!thumbnailKeyboardFocus) return;
+    if (document.body.classList.contains('presentation-mode')) return;
+    if (event.target.closest('input, textarea, [contenteditable="true"]')) return;
+    
+    const command = event.ctrlKey || event.metaKey;
+    const key = event.key.toLowerCase();
+    
+    if (['delete', 'backspace'].includes(key)) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        deleteActiveSlide();
+    } else if (command && key === 'c') {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        const wraps = getSlideWraps();
+        const toCopy = Array.from(selectedSlideIndices).sort((a, b) => a - b);
+        slideClipboard = document.createElement('div');
+        toCopy.forEach(idx => {
+            if (wraps[idx]) slideClipboard.appendChild(wraps[idx].cloneNode(true));
+        });
+        setStatus(`已复制 ${toCopy.length} 页`);
+    } else if (command && key === 'x') {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        const wraps = getSlideWraps();
+        const toCopy = Array.from(selectedSlideIndices).sort((a, b) => a - b);
+        slideClipboard = document.createElement('div');
+        toCopy.forEach(idx => {
+            if (wraps[idx]) slideClipboard.appendChild(wraps[idx].cloneNode(true));
+        });
+        deleteActiveSlide();
+        setStatus(`已剪切 ${toCopy.length} 页`);
+    } else if (command && key === 'v') {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (slideClipboard) {
+            const wraps = getSlideWraps();
+            let insertTarget = wraps[Math.max(...Array.from(selectedSlideIndices))] || wraps[activeSlideIndex];
+            
+            let pastedCount = 0;
+            Array.from(slideClipboard.children).forEach(child => {
+                const clone = child.cloneNode(true);
+                clone.classList.remove('is-active');
+                if (insertTarget) {
+                    insertTarget.after(clone);
+                } else {
+                    deck.appendChild(clone);
+                }
+                insertTarget = clone;
+                pastedCount++;
+            });
+            
+            renumberSlides();
+            setActiveSlide(activeSlideIndex + pastedCount);
+            saveDeck();
+            setStatus(`已粘贴 ${pastedCount} 页`);
+        }
+    } else if (command && key === 'a') {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        // Since only single slide selection is supported, we just prevent default whole page selection
+    }
+}, true);
 
 document.querySelectorAll('.theme-btn').forEach(btn => {
     btn.addEventListener('click', e => {
@@ -285,36 +507,203 @@ document.querySelectorAll('.theme-btn').forEach(btn => {
     });
 });
 
-document.getElementById('presentBtn')?.addEventListener('click', () => {
+const presentationOverlay = document.getElementById('presentationOverlay');
+const presentationCanvas = document.getElementById('presentationInkCanvas');
+const presentationLaser = document.getElementById('presentationLaser');
+const presentationPageLabel = document.getElementById('presentationPageLabel');
+let presentationTool = 'navigate';
+let presentationDrawing = null;
+let presentationViewState = null;
+
+function updatePresentationPageLabel() {
+    if (presentationPageLabel) presentationPageLabel.textContent = `${activeSlideIndex + 1} / ${getSlideWraps().length}`;
+}
+
+function resizePresentationCanvas() {
+    if (!presentationCanvas) return;
+    const ratio = window.devicePixelRatio || 1;
+    presentationCanvas.width = Math.round(window.innerWidth * ratio);
+    presentationCanvas.height = Math.round(window.innerHeight * ratio);
+    presentationCanvas.style.width = `${window.innerWidth}px`;
+    presentationCanvas.style.height = `${window.innerHeight}px`;
+    const context = presentationCanvas.getContext('2d');
+    context.setTransform(ratio, 0, 0, ratio, 0, 0);
+    context.lineCap = 'round';
+    context.lineJoin = 'round';
+}
+
+function clearPresentationInk() {
+    if (!presentationCanvas) return;
+    presentationCanvas.getContext('2d').clearRect(0, 0, presentationCanvas.width, presentationCanvas.height);
+}
+
+function fitPresentationSlide() {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const scale = Math.max(.1, Math.min(width / 1920, height / 1080));
+    applyEditorZoom(scale);
+    resetCanvasPan();
+}
+
+function setPresentationTool(tool) {
+    presentationTool = tool;
+    presentationOverlay.dataset.tool = tool;
+    presentationOverlay.querySelectorAll('[data-presentation-tool]').forEach(button => {
+        button.classList.toggle('is-active', button.dataset.presentationTool === tool);
+    });
+    presentationLaser.classList.remove('is-visible');
+}
+
+function fullscreenDocument() {
+    try {
+        return window.parent?.document || document;
+    } catch {
+        return document;
+    }
+}
+
+async function enterPresentation() {
+    if (document.body.classList.contains('presentation-mode')) return;
+    document.activeElement?.blur?.();
+    componentEditor?.clearSelection();
+    presentationViewState = {
+        scale: currentEditorScale,
+        panX: canvasPanX,
+        panY: canvasPanY
+    };
     document.body.classList.add('presentation-mode');
-    if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen();
+    presentationOverlay.setAttribute('aria-hidden', 'false');
+    setPresentationTool('navigate');
+    updatePresentationPageLabel();
+    resizePresentationCanvas();
+    fitPresentationSlide();
+
+    const fullscreenTarget = window.frameElement || document.documentElement;
+    try {
+        if (fullscreenTarget.requestFullscreen) {
+            await fullscreenTarget.requestFullscreen({ navigationUI: 'hide' });
+        } else if (fullscreenTarget.webkitRequestFullscreen) {
+            fullscreenTarget.webkitRequestFullscreen();
+        }
+        setTimeout(() => {
+            resizePresentationCanvas();
+            fitPresentationSlide();
+        }, 100);
+    } catch (error) {
+        console.warn('[Presentation] fullscreen failed:', error);
+        setStatus('浏览器未允许全屏，已进入只读演示模式');
+    }
+}
+
+async function exitPresentation() {
+    if (!document.body.classList.contains('presentation-mode')) return;
+    const fullscreenDoc = fullscreenDocument();
+    document.body.classList.remove('presentation-mode');
+    presentationOverlay.setAttribute('aria-hidden', 'true');
+    try {
+        if (fullscreenDoc.fullscreenElement && fullscreenDoc.exitFullscreen) await fullscreenDoc.exitFullscreen();
+        else if (fullscreenDoc.webkitFullscreenElement && fullscreenDoc.webkitExitFullscreen) fullscreenDoc.webkitExitFullscreen();
+    } catch (error) {
+        console.warn('[Presentation] exit fullscreen failed:', error);
+    }
+    presentationLaser.classList.remove('is-visible');
+    clearPresentationInk();
+    if (presentationViewState) {
+        applyEditorZoom(presentationViewState.scale);
+        canvasPanX = presentationViewState.panX;
+        canvasPanY = presentationViewState.panY;
+        applyCanvasPan();
+    }
+    presentationViewState = null;
+}
+
+function changePresentationSlide(direction) {
+    const nextIndex = Math.max(0, Math.min(activeSlideIndex + direction, getSlideWraps().length - 1));
+    if (nextIndex !== activeSlideIndex) setActiveSlide(nextIndex);
+}
+
+document.getElementById('presentBtn')?.addEventListener('click', enterPresentation);
+document.getElementById('presentationPrevBtn')?.addEventListener('click', () => changePresentationSlide(-1));
+document.getElementById('presentationNextBtn')?.addEventListener('click', () => changePresentationSlide(1));
+document.getElementById('presentationClearBtn')?.addEventListener('click', clearPresentationInk);
+document.getElementById('presentationExitBtn')?.addEventListener('click', exitPresentation);
+document.querySelectorAll('[data-presentation-tool]').forEach(button => {
+    button.addEventListener('click', () => setPresentationTool(button.dataset.presentationTool));
+});
+
+presentationCanvas?.addEventListener('pointerdown', event => {
+    if (presentationTool === 'pen') {
+        presentationDrawing = { pointerId: event.pointerId };
+        presentationCanvas.setPointerCapture(event.pointerId);
+        const context = presentationCanvas.getContext('2d');
+        context.beginPath();
+        context.moveTo(event.clientX, event.clientY);
+        context.strokeStyle = '#ef4444';
+        context.lineWidth = 4;
+    } else if (presentationTool === 'navigate') {
+        presentationDrawing = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY };
     }
 });
+
+presentationCanvas?.addEventListener('pointermove', event => {
+    if (presentationTool === 'laser') {
+        presentationLaser.style.left = `${event.clientX}px`;
+        presentationLaser.style.top = `${event.clientY}px`;
+        presentationLaser.classList.add('is-visible');
+    }
+    if (presentationTool === 'pen' && presentationDrawing?.pointerId === event.pointerId) {
+        const context = presentationCanvas.getContext('2d');
+        context.lineTo(event.clientX, event.clientY);
+        context.stroke();
+    }
+});
+
+presentationCanvas?.addEventListener('pointerup', event => {
+    if (!presentationDrawing || presentationDrawing.pointerId !== event.pointerId) return;
+    if (presentationTool === 'navigate') {
+        const moved = Math.hypot(event.clientX - presentationDrawing.startX, event.clientY - presentationDrawing.startY);
+        if (moved < 8) changePresentationSlide(event.clientX < window.innerWidth / 2 ? -1 : 1);
+    }
+    presentationDrawing = null;
+});
+presentationCanvas?.addEventListener('pointercancel', () => { presentationDrawing = null; });
+presentationCanvas?.addEventListener('pointerleave', () => presentationLaser.classList.remove('is-visible'));
 
 document.addEventListener('fullscreenchange', () => {
-    if (!document.fullscreenElement) {
-        document.body.classList.remove('presentation-mode');
+    if (!document.fullscreenElement && !fullscreenDocument().fullscreenElement && document.body.classList.contains('presentation-mode')) {
+        exitPresentation();
     }
 });
+try {
+    window.parent.document.addEventListener('fullscreenchange', () => {
+        if (!window.parent.document.fullscreenElement && document.body.classList.contains('presentation-mode')) exitPresentation();
+    });
+} catch {}
 
 document.addEventListener('keydown', e => {
-    if (document.body.classList.contains('presentation-mode')) {
-        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
-            const wraps = getSlideWraps();
-            if (activeSlideIndex < wraps.length - 1) setActiveSlide(activeSlideIndex + 1);
-            e.preventDefault();
-        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
-            if (activeSlideIndex > 0) setActiveSlide(activeSlideIndex - 1);
-            e.preventDefault();
-        } else if (e.key === 'Escape') {
-            if (document.exitFullscreen) document.exitFullscreen();
-        }
-    }
+    if (!document.body.classList.contains('presentation-mode')) return;
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') changePresentationSlide(1);
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') changePresentationSlide(-1);
+    else if (e.key.toLowerCase() === 'l') setPresentationTool('laser');
+    else if (e.key.toLowerCase() === 'p') setPresentationTool('pen');
+    else if (e.key.toLowerCase() === 'c') clearPresentationInk();
+    else if (e.key === 'Escape') exitPresentation();
+    else return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+}, true);
+
+window.addEventListener('resize', () => {
+    if (!document.body.classList.contains('presentation-mode')) return;
+    resizePresentationCanvas();
+    fitPresentationSlide();
 });
 
 // --- Rich Text Toolbar ---
 const rtToolbar = document.getElementById('richTextToolbar');
+let savedRangeForColor = null;
+let savedEditableForColor = null;
+
 document.addEventListener('selectionchange', () => {
     const selection = window.getSelection();
     if (!selection.rangeCount) return;
@@ -323,28 +712,101 @@ document.addEventListener('selectionchange', () => {
     const editable = container.nodeType === 3 ? container.parentElement.closest('.editable') : container.closest('.editable');
     
     if (editable && selection.toString().trim().length > 0) {
+        savedRangeForColor = range.cloneRange();
+        savedEditableForColor = editable;
         const rect = range.getBoundingClientRect();
         rtToolbar.classList.remove('hidden');
         rtToolbar.style.top = `${rect.top - 40}px`;
         rtToolbar.style.left = `${rect.left + (rect.width / 2) - (rtToolbar.offsetWidth / 2)}px`;
+        
+        // Update font name and size labels
+        const fontBtnSpan = document.querySelector('#rtFontNameBtn span');
+        const sizeBtnSpan = document.querySelector('#rtFontSizeBtn span');
+        if (fontBtnSpan) {
+            let fontName = document.queryCommandValue('fontName') || '字体';
+            fontName = fontName.split(',')[0].replace(/['"]/g, '').trim(); // Take first font, remove quotes
+            // Map common English fonts to Chinese if needed
+            const fontMap = { 'SimSun': '宋体', 'SimHei': '黑体', 'Microsoft YaHei': '微软雅黑', 'PingFang SC': '苹方', 'ui-sans-serif': '默认字体', 'system-ui': '默认字体', 'sans-serif': '默认字体' };
+            fontBtnSpan.textContent = fontMap[fontName] || fontName;
+        }
+        if (sizeBtnSpan) {
+            const fontSize = document.queryCommandValue('fontSize');
+            const sizeMap = { '1': '极小', '2': '较小', '3': '常规', '4': '中等', '5': '较大', '6': '极大', '7': '超大' };
+            sizeBtnSpan.textContent = sizeMap[fontSize] || '字号';
+        }
     } else {
         if (rtToolbar && !rtToolbar.contains(container)) {
             rtToolbar.classList.add('hidden');
+            document.querySelectorAll('.rt-dropdown-menu').forEach(m => m.classList.add('hidden'));
         }
+    }
+});
+
+// Dropdown Toggle Logic
+document.addEventListener('mousedown', e => {
+    // Handle dropdown toggles
+    const toggle = e.target.closest('.rt-dropdown-toggle');
+    if (toggle) {
+        e.preventDefault(); // Keep selection
+        const menu = toggle.nextElementSibling;
+        const isHidden = menu.classList.contains('hidden');
+        document.querySelectorAll('.rt-dropdown-menu').forEach(m => m.classList.add('hidden'));
+        if (isHidden) menu.classList.remove('hidden');
+        return;
+    }
+    
+    // Hide dropdowns when clicking outside
+    if (!e.target.closest('.rt-dropdown')) {
+        document.querySelectorAll('.rt-dropdown-menu').forEach(m => m.classList.add('hidden'));
     }
 });
 
 rtToolbar?.querySelectorAll('.rt-btn').forEach(btn => {
     btn.addEventListener('mousedown', e => {
         e.preventDefault(); // Keep selection
-        document.execCommand(btn.dataset.command, false, null);
+        if (!btn.dataset.command) return;
+        document.execCommand(btn.dataset.command, false, btn.dataset.value || null);
         saveDeck();
+        
+        // Hide dropdowns after clicking a command
+        document.querySelectorAll('.rt-dropdown-menu').forEach(m => m.classList.add('hidden'));
+        
+        // Manually trigger selectionchange to update labels
+        document.dispatchEvent(new Event('selectionchange'));
     });
 });
-rtToolbar?.querySelector('.rt-color')?.addEventListener('input', e => {
+
+rtToolbar?.querySelector('.rt-color')?.addEventListener('mousedown', e => {
+    // 阻止默认行为，防止焦点离开富文本框导致选区丢失
+    // color picker 依然会因为 click 事件而正常弹出
+    e.preventDefault();
+});
+
+// 颜色选择器在 input 时（拖拽中）实时预览可能因焦点冲突失败，
+// 改为在 change 时（面板关闭后）最终应用颜色并彻底恢复焦点。
+rtToolbar?.querySelector('.rt-color')?.addEventListener('change', e => {
+    if (savedEditableForColor && savedRangeForColor) {
+        savedEditableForColor.focus();
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(savedRangeForColor);
+    }
+    document.execCommand('styleWithCSS', false, true);
     document.execCommand(e.target.dataset.command, false, e.target.value);
     saveDeck();
 });
+// 兼容实时拖拽：在拖拽时也尝试应用（有些浏览器不需要强制 focus 也能生效）
+rtToolbar?.querySelector('.rt-color')?.addEventListener('input', e => {
+    if (savedRangeForColor) {
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(savedRangeForColor);
+        document.execCommand('styleWithCSS', false, true);
+        document.execCommand(e.target.dataset.command, false, e.target.value);
+    }
+});
+
+// (Removed obsolete rt-select listener)
 
 // --- Media Upload (Double-click & Drag) ---
 deck.addEventListener('dblclick', e => {
@@ -411,8 +873,8 @@ deck.addEventListener('drop', e => {
 });
 
 
-document.getElementById('addCaseBtn').addEventListener('click', () => {
-    const template = document.getElementById('caseSlideTemplate');
+document.getElementById('addBlankBtn').addEventListener('click', () => {
+    const template = document.getElementById('blankSlideTemplate');
     if (!template) return;
     deck.appendChild(template.content.firstElementChild.cloneNode(true));
     renumberSlides();
@@ -439,16 +901,85 @@ document.addEventListener('click', event => {
     }
 });
 
-function toggleLayersPanel(forceOpen = null) {
+const LAYERS_AUTO_OPEN_KEY = 'ppt_layers_auto_open';
+const PROPERTIES_HEIGHT_KEY = 'ppt_properties_panel_height';
+let restorePropertiesPanelHeight = () => {};
+
+function shouldAutoOpenLayers() {
+    return localStorage.getItem(LAYERS_AUTO_OPEN_KEY) !== 'false';
+}
+
+function toggleLayersPanel(forceOpen = null, source = 'manual') {
     const panel = document.getElementById('layersPanel');
     if (!panel) return;
     const shouldOpen = forceOpen === null ? panel.classList.contains('hidden') : forceOpen;
     panel.classList.toggle('hidden', !shouldOpen);
-    if (shouldOpen) componentEditor?.refreshLayers();
+    if (source === 'manual') {
+        localStorage.setItem(LAYERS_AUTO_OPEN_KEY, shouldOpen ? 'true' : 'false');
+    }
+    syncRightPanels();
+    if (shouldOpen) {
+        requestAnimationFrame(restorePropertiesPanelHeight);
+        componentEditor?.refreshLayers();
+    }
 }
 
 document.getElementById('toggleLayersBtn')?.addEventListener('click', () => toggleLayersPanel());
 document.getElementById('closeLayersBtn')?.addEventListener('click', () => toggleLayersPanel(false));
+
+function initLayersPropertiesResizer() {
+    const panel = document.getElementById('layersPanel');
+    const propertiesPanel = document.getElementById('propertiesPanel');
+    const resizer = document.getElementById('layersPropertiesResizer');
+    if (!panel || !propertiesPanel || !resizer) return;
+
+    const applyHeight = height => {
+        const maxHeight = Math.max(180, panel.clientHeight - 190);
+        const nextHeight = Math.max(180, Math.min(height, maxHeight));
+        propertiesPanel.style.flexBasis = `${nextHeight}px`;
+        return nextHeight;
+    };
+
+    restorePropertiesPanelHeight = () => {
+        if (panel.classList.contains('hidden') || panel.clientHeight <= 0) return;
+        const savedHeight = Number(localStorage.getItem(PROPERTIES_HEIGHT_KEY));
+        if (Number.isFinite(savedHeight) && savedHeight > 0) applyHeight(savedHeight);
+    };
+
+    let resizeState = null;
+    resizer.addEventListener('pointerdown', event => {
+        if (event.button !== 0) return;
+        resizeState = {
+            pointerId: event.pointerId,
+            startY: event.clientY,
+            startHeight: propertiesPanel.getBoundingClientRect().height
+        };
+        panel.classList.add('is-resizing-properties');
+        resizer.setPointerCapture(event.pointerId);
+        event.preventDefault();
+    });
+
+    resizer.addEventListener('pointermove', event => {
+        if (!resizeState || event.pointerId !== resizeState.pointerId) return;
+        applyHeight(resizeState.startHeight + resizeState.startY - event.clientY);
+    });
+
+    const finishResize = event => {
+        if (!resizeState || event.pointerId !== resizeState.pointerId) return;
+        const height = applyHeight(propertiesPanel.getBoundingClientRect().height);
+        localStorage.setItem(PROPERTIES_HEIGHT_KEY, String(Math.round(height)));
+        if (resizer.hasPointerCapture(event.pointerId)) resizer.releasePointerCapture(event.pointerId);
+        resizeState = null;
+        panel.classList.remove('is-resizing-properties');
+    };
+
+    resizer.addEventListener('pointerup', finishResize);
+    resizer.addEventListener('pointercancel', finishResize);
+    window.addEventListener('resize', () => {
+        const currentHeight = propertiesPanel.getBoundingClientRect().height;
+        if (currentHeight) applyHeight(currentHeight);
+    });
+}
 
 document.getElementById('exportPdfBtn').addEventListener('click', async (e) => {
     const btn = e.currentTarget;
@@ -469,7 +1000,7 @@ document.getElementById('exportJsonBtn').addEventListener('click', () => {
         exportedAt: new Date().toISOString(),
         html: deck.innerHTML
     };
-    editor.downloadBlob(`安全大会模板_${new Date().toISOString().slice(0, 10)}.json`, new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' }));
+    editor.downloadBlob(`华子胶片设计_${new Date().toISOString().slice(0, 10)}.json`, new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' }));
 });
 
 document.getElementById('importJsonInput').addEventListener('change', async event => {
@@ -491,8 +1022,21 @@ document.getElementById('importJsonInput').addEventListener('change', async even
     event.target.value = '';
 });
 
+document.getElementById('setDefaultBtn')?.addEventListener('click', () => {
+    localStorage.setItem('ppt_custom_default_template', editor.serializeDeck(deck));
+    setStatus('已成功将当前所有幻灯片保存为您的专属默认模板！');
+});
+
 document.getElementById('resetBtn').addEventListener('click', () => {
-    if (confirm('确认恢复默认模板？当前编辑的内容将被清空。')) {
+    if (confirm('确认清空当前正在编辑的所有内容，重新开始吗？（如果设置过默认模板，将恢复为您的默认模板）')) {
+        store.clearState();
+        location.reload();
+    }
+});
+
+document.getElementById('restoreSystemBtn')?.addEventListener('click', () => {
+    if (confirm('确认清除您设置的自定义默认模板，并恢复到系统出厂模板吗？当前内容也会被清空！')) {
+        localStorage.removeItem('ppt_custom_default_template');
         store.clearState();
         location.reload();
     }
@@ -507,8 +1051,9 @@ document.getElementById('zoomInBtn').addEventListener('click', () => {
 document.getElementById('zoomFitBtn').addEventListener('click', () => {
     const w = deckWrapper.clientWidth - 80;
     const h = deckWrapper.clientHeight - 80;
-    const scale = Math.max(0.5, Math.min(w / 480, h / 360));
+    const scale = Math.max(0.1, Math.min(w / 1920, h / 1080));
     applyEditorZoom(scale);
+    resetCanvasPan();
 });
 
 // --- AI Copilot Feature ---
@@ -526,33 +1071,140 @@ const saveAiRulesBtn = document.getElementById('saveAiRulesBtn');
 let aiMessages = [];
 let aiReplacingSlide = false;
 
+function isAiSidebarOpen() {
+    return aiSidebar && (aiSidebar.style.marginRight === '0px' || !aiSidebar.style.marginRight);
+}
+
+function syncRightPanels() {
+    const offset = isAiSidebarOpen() ? aiSidebar.offsetWidth : 0;
+    document.documentElement.style.setProperty('--ai-sidebar-offset', `${offset}px`);
+}
+
 document.querySelectorAll('.ai-shortcut-btn').forEach(btn => {
-    btn.addEventListener('click', e => {
+    btn.addEventListener('click', async e => {
         const action = e.currentTarget.dataset.action;
+        if (action === 'modify_selected') {
+            await modifyWithStructuredAi('selection');
+            return;
+        }
+        if (action === 'layout_page') {
+            await modifyWithStructuredAi('page');
+            return;
+        }
+        if (action === 'audit_layout') {
+            const issues = componentEditor?.auditPageLayout() || [];
+            if (!issues.length) {
+                appendAiMessage('model', '✅ 当前页未发现明显的越界、文字溢出或严重重叠。');
+            } else {
+                const counts = issues.reduce((result, issue) => {
+                    result[issue.type] = (result[issue.type] || 0) + 1;
+                    return result;
+                }, {});
+                appendAiMessage('model', `🔎 发现 ${issues.length} 个排版问题：越界 ${counts.outOfBounds || 0}、文字溢出 ${counts.textOverflow || 0}、重叠 ${counts.overlap || 0}。可点击“修复排版”。`);
+            }
+            return;
+        }
+        if (action === 'fix_layout') {
+            const result = componentEditor?.autoFixPageLayout();
+            appendAiMessage('model', result?.fixed
+                ? `🪄 已修复 ${result.fixed} 项，剩余 ${result.remaining.length} 个需要人工确认的问题。`
+                : '✅ 当前页无需自动修复。');
+            scheduleThumbnails();
+            return;
+        }
+        if (action === 'unify_deck') {
+            const changed = componentEditor?.unifyDeckStyle() || 0;
+            appendAiMessage('model', changed
+                ? `🎨 已统一 ${changed} 处样式：标题层级、正文中英文字体、卡片边框圆角与页脚。`
+                : '当前没有可统一的样式。');
+            scheduleThumbnails();
+            return;
+        }
         const activeWrap = deck.querySelector('.slide-wrap.is-active');
         if (!activeWrap) return;
         
         let promptText = '';
         let displayMsg = '';
-        const baseRule = '【非常重要】请严格保持原有的所有HTML结构、类名(class)和非文本元素完全不变！必须返回完整的 <div class="slide-wrap">...</div> 代码，并用 ```html 包裹。';
+        const baseRule = '【非常重要】以下是当前幻灯片的 JSON 数据。请只润色/翻译文本内容（如标题、列表、正文等），严格保持 `layout`、`id`、原有的 HTML 结构、类名(class) 和非文本元素完全不变！必须返回合法的 JSON 数组，包含修改后的这页数据。';
         
-        if (action === 'polish') { promptText = '请帮我润色当前幻灯片页面的文本内容，使其更专业流畅。' + baseRule; displayMsg = '✨ 请帮我润色当前页面'; }
-        if (action === 'translate_en') { promptText = '请将当前幻灯片页面的所有中文内容翻译为专业的英文。' + baseRule; displayMsg = '🌐 请将当前页面翻译为英文'; }
-        if (action === 'translate_zh') { promptText = '请将当前幻灯片页面的所有英文内容翻译为中文。' + baseRule; displayMsg = '🇨🇳 请将当前页面翻译为中文'; }
+        if (action === 'polish') { promptText = '请帮我润色以下幻灯片页面的文本内容，使其更专业流畅。' + baseRule; displayMsg = '✨ 请帮我润色当前页面'; }
+        if (action === 'translate_en') { promptText = '请将以下幻灯片页面的所有中文内容翻译为专业的英文。' + baseRule; displayMsg = '🌐 请将当前页面翻译为英文'; }
+        if (action === 'translate_zh') { promptText = '请将以下幻灯片页面的所有英文内容翻译为中文。' + baseRule; displayMsg = '🇨🇳 请将当前页面翻译为中文'; }
         
-        const htmlContext = activeWrap.outerHTML;
+        const slideJson = slideToJson(activeWrap);
+        const htmlContext = JSON.stringify([slideJson], null, 2);
         
         aiReplacingSlide = true;
-        sendAiMessage(promptText + '\n\n```html\n' + htmlContext + '\n```', displayMsg);
+        sendAiMessage(promptText + '\n\n```json\n' + htmlContext + '\n```', displayMsg);
     });
 });
 
+async function modifyWithStructuredAi(scope = 'selection') {
+    const context = scope === 'page'
+        ? componentEditor?.getPageContext()
+        : componentEditor?.getSelectionContext();
+    if (!context?.components?.length) {
+        appendAiMessage('model', scope === 'page' ? '当前页面没有可重排的组件。' : '请先在画布中选中一个或多个组件，再输入修改要求。');
+        return;
+    }
+    const instruction = aiInput.value.trim();
+    if (!instruction) {
+        appendAiMessage('model', scope === 'page'
+            ? '请先描述页面布局要求，例如“除标题外整理成三栏卡片，间距一致”。'
+            : '请先描述修改要求，例如“统一为深蓝底白字并顶端对齐”。');
+        aiInput.focus();
+        return;
+    }
+    aiInput.value = '';
+    appendAiMessage('user', `${scope === 'page' ? '🧩' : '🎯'} ${escapeHtml(instruction)}`);
+    const loadingId = `ai-component-loading-${Date.now()}`;
+    const loadDiv = document.createElement('div');
+    loadDiv.id = loadingId;
+    loadDiv.className = 'flex items-start space-x-2 mt-4 opacity-50';
+    loadDiv.innerHTML = `<div class="w-8 h-8 rounded bg-amber-600/20 text-amber-300 flex items-center justify-center shrink-0"><i class="ph-fill ph-robot animate-pulse"></i></div><div class="bg-zinc-800 text-zinc-200 rounded-lg rounded-tl-none p-3 text-xs">${scope === 'page' ? '正在规划当前页布局...' : `正在分析 ${context.components.length} 个选中组件...`}</div>`;
+    aiChatWindow.appendChild(loadDiv);
+    aiChatWindow.scrollTop = aiChatWindow.scrollHeight;
+    try {
+        const tokenMatch = document.cookie.match(/(^|;)\s*jwt_token=([^;]+)/);
+        const token = tokenMatch ? tokenMatch[2] : localStorage.getItem('tools_token');
+        const response = await fetch('/api/ai/ppt-copilot-actions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': token ? `Bearer ${token}` : ''
+            },
+            body: JSON.stringify({
+                instruction,
+                context,
+                rules: localStorage.getItem('ppt_copilot_rules') || ''
+            })
+        });
+        const responseText = await response.text();
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch {
+            throw new Error(response.ok ? 'AI 返回格式异常，请重试' : `服务请求失败（${response.status}）`);
+        }
+        if (!response.ok) throw new Error(data.error || '请求失败');
+        const applied = componentEditor.applyAiActions(data.actions, scope);
+        if (!applied) throw new Error('AI 未返回可执行的修改');
+        appendAiMessage('model', `✅ ${escapeHtml(data.summary || `已执行 ${applied} 项修改`)}`);
+        scheduleThumbnails();
+    } catch (error) {
+        appendAiMessage('model', `⚠️ ${escapeHtml(error.message)}`);
+    } finally {
+        document.getElementById(loadingId)?.remove();
+    }
+}
+
 function toggleAi() {
-    if (aiSidebar.style.marginRight === '0px' || !aiSidebar.style.marginRight) {
+    if (isAiSidebarOpen()) {
         aiSidebar.style.marginRight = '-' + aiSidebar.offsetWidth + 'px';
     } else {
         aiSidebar.style.marginRight = '0px';
     }
+    syncRightPanels();
 }
 
 if (toggleAiBtn) toggleAiBtn.addEventListener('click', toggleAi);
@@ -600,6 +1252,14 @@ async function sendAiMessage(hiddenContent = null, displayMsg = null) {
     const text = hiddenContent || aiInput.value.trim();
     if (!text && !hiddenContent) return;
     
+    // 如果用户的输入明显是“生成/新建页面”的意图，即使选中了组件，也强制走全局生成逻辑
+    const isGenerationPrompt = /^(生成|写一个|创建|新建|帮我写|帮我做|增加一页)/.test(text);
+
+    if (!hiddenContent && !isGenerationPrompt && componentEditor?.getSelectionContext()) {
+        await modifyWithStructuredAi('selection');
+        return;
+    }
+    
     aiInput.value = '';
     
     appendAiMessage('user', displayMsg || (hiddenContent ? '...' : text));
@@ -616,8 +1276,16 @@ async function sendAiMessage(hiddenContent = null, displayMsg = null) {
     try {
         const deckSlides = deck.querySelectorAll('.slide-wrap');
         const customRules = localStorage.getItem('ppt_copilot_rules') || '';
-        const rulesBlock = customRules ? `\n【用户专属 PPT 制作规范（必须严格遵守）】\n${customRules}\n\n` : '';
-        const templates = `${rulesBlock}使用这些示例模板的类名和结构，如果用户请求修改现有幻灯片，请返回替换后的完整 HTML 代码。`;
+        const rulesBlock = customRules ? `\n【用户专属 PPT 制作规范】\n${customRules}\n\n` : '';
+        
+        let currentTemplateBlock = '';
+        const activeWrap = deck.querySelector('.slide-wrap.is-active');
+        if (activeWrap && !aiReplacingSlide) {
+            const currentJson = slideToJson(activeWrap);
+            currentTemplateBlock = `\n【参考排版风格】\n你可以参考以下这页 PPT 的排版风格和结构（这是用户当前选中的页面）：\n\`\`\`json\n${JSON.stringify([currentJson])}\n\`\`\`\n如果用户的需求适合这种排版，请尽量沿用这种布局结构。\n`;
+        }
+        
+        const templates = `${rulesBlock}${currentTemplateBlock}`;
 
         const tokenMatch = document.cookie.match(/(^|;)\s*jwt_token=([^;]+)/);
         const token = tokenMatch ? tokenMatch[2] : localStorage.getItem('tools_token');
@@ -641,26 +1309,27 @@ async function sendAiMessage(hiddenContent = null, displayMsg = null) {
         let reply = data.reply || '';
         aiMessages.push({ role: 'model', content: reply });
         
-        let htmlContent = reply;
-        let originalReply = reply;
-        const htmlMatch = reply.match(/```html\n([\s\S]*?)```/i) || reply.match(/```\n([\s\S]*?)```/i);
+        let jsonStr = reply;
+        const jsonMatch = reply.match(/```json\n([\s\S]*?)```/i) || reply.match(/```\n([\s\S]*?)```/i);
+        if (jsonMatch) {
+            jsonStr = jsonMatch[1];
+        }
         
-        if (htmlMatch) {
-            htmlContent = htmlMatch[1];
-            reply = reply.replace(htmlMatch[0], '').trim();
-        } else {
-            const startIdx = reply.indexOf('<div class="slide-wrap');
-            if (startIdx !== -1) {
-                htmlContent = reply.substring(startIdx);
-                reply = reply.substring(0, startIdx).trim();
+        let generatedSlides = [];
+        try {
+            generatedSlides = JSON.parse(jsonStr);
+        } catch (e) {
+            const arrMatch = jsonStr.substring(jsonStr.indexOf('['));
+            try {
+                generatedSlides = JSON.parse(arrMatch);
+            } catch (err) {
+                console.warn('Failed to parse AI JSON response', jsonStr);
             }
         }
         
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = htmlContent;
-        const generatedWraps = tempDiv.querySelectorAll('.slide-wrap');
-        
-        if (generatedWraps.length > 0) {
+        if (Array.isArray(generatedSlides) && generatedSlides.length > 0) {
+            const generatedWraps = generatedSlides.map(slideData => renderSlide(slideData));
+            
             if (aiReplacingSlide) {
                 const activeWrap = deck.querySelector('.slide-wrap.is-active');
                 if (activeWrap) {
@@ -668,25 +1337,42 @@ async function sendAiMessage(hiddenContent = null, displayMsg = null) {
                     generatedWraps[0].classList.add('is-active');
                     activeWrap.after(generatedWraps[0]);
                     activeWrap.classList.remove('is-active');
+                    const slide = generatedWraps[0].querySelector('.slide');
+                    if (slide) {
+                        slide.classList.add('ai-generated-glow');
+                        window.autoFitSlide(slide);
+                    }
                     componentEditor?.refresh();
                     setActiveSlide(activeIndex + 1);
                 }
                 aiReplacingSlide = false;
-                appendAiMessage('model', '✨ **新页面已生成！** 已在当前页后方插入。' + (reply ? '<br><br>' + escapeHtml(reply) : ''));
+                appendAiMessage('model', '✨ **新页面已生成！** 已在当前页后方插入。');
             } else {
                 generatedWraps.forEach(wrap => {
                     wrap.classList.remove('is-active');
                     deck.appendChild(wrap);
+                    const slide = wrap.querySelector('.slide');
+                    if (slide) {
+                        slide.classList.add('ai-generated-glow');
+                        window.autoFitSlide(slide);
+                    }
                 });
                 componentEditor?.refresh();
-                appendAiMessage('model', '✨ **幻灯片已添加至末尾。**' + (reply ? '<br><br>' + escapeHtml(reply) : ''));
+                appendAiMessage('model', '✨ **幻灯片已添加至末尾。**');
+                const slidesCount = getSlideWraps().length;
+                setActiveSlide(slidesCount - generatedWraps.length);
             }
             renumberSlides();
             saveDeck();
             scheduleThumbnails();
         } else {
             aiReplacingSlide = false;
-            appendAiMessage('model', escapeHtml(originalReply));
+            const cleanStr = jsonStr.trim();
+            if (cleanStr.startsWith('[') || cleanStr.startsWith('{')) {
+                appendAiMessage('model', `⚠️ **生成的内容存在格式错误或因内容过长被截断**。请尝试要求 AI 减少单次生成的篇幅（不要让它一次性排版太复杂的结构）。`);
+            } else {
+                appendAiMessage('model', escapeHtml(reply));
+            }
         }
     } catch (error) {
         const el = document.getElementById(loadingId);
@@ -707,7 +1393,7 @@ function escapeHtml(unsafe) {
          .replace(/'/g, "&#039;");
 }
 
-if (aiSendBtn) aiSendBtn.addEventListener('click', sendAiMessage);
+if (aiSendBtn) aiSendBtn.addEventListener('click', () => sendAiMessage());
 if (aiInput) aiInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -752,6 +1438,7 @@ function initResizers() {
             if (aiSidebar.style.marginRight !== '0px' && aiSidebar.style.marginRight !== '') {
                 aiSidebar.style.marginRight = '-' + newWidth + 'px';
             }
+            syncRightPanels();
         }
     });
 
@@ -769,6 +1456,11 @@ function initResizers() {
 }
 
 initResizers();
+initCanvasPan();
+initWheelZoom();
+initLayersPropertiesResizer();
+syncRightPanels();
+window.addEventListener('resize', syncRightPanels);
 
 // Start app
 componentEditor = createComponentEditor({
@@ -779,6 +1471,127 @@ componentEditor = createComponentEditor({
         saveDeck();
         scheduleThumbnails();
     },
-    onStatus: setStatus
+    onStatus: setStatus,
+    onSelectionChange: selectedElements => {
+        if (selectedElements.length && shouldAutoOpenLayers()) {
+            toggleLayersPanel(true, 'auto');
+        }
+    }
 });
 bootstrap();
+
+// --- Context Menu ---
+initContextMenu(deckWrapper, thumbDeck, {
+    isComponentSelected: (component) => componentEditor?.isComponentSelected(component),
+    selectComponent: (component, additive) => componentEditor?.selectComponent(component, additive),
+    copyComponents: () => componentEditor?.copyComponents(),
+    cutComponents: () => componentEditor?.cutComponents(),
+    pasteComponents: () => componentEditor?.pasteComponents(),
+    duplicateComponents: () => componentEditor?.duplicateComponents(),
+    groupComponents: () => componentEditor?.groupComponents(),
+    ungroupComponents: () => componentEditor?.ungroupComponents(),
+    bringToFront: () => componentEditor?.bringToFront(),
+    toggleLock: () => componentEditor?.toggleLock(),
+    deleteComponents: () => componentEditor?.deleteComponents(),
+    changeBackground: () => {
+        const file = document.createElement('input');
+        file.type = 'file';
+        file.accept = 'image/*';
+        file.onchange = e => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const slide = deck.querySelector('.slide-wrap.is-active .slide');
+                if (slide) {
+                    slide.style.background = `url("${reader.result}") center / cover no-repeat`;
+                    saveDeck();
+                    scheduleThumbnails();
+                }
+            };
+            if (e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
+        };
+        file.click();
+    },
+    addSlide: () => document.getElementById('addBlankBtn')?.click(),
+    getActiveSlideIndex: () => activeSlideIndex,
+    setActiveSlide: (index) => setActiveSlide(index),
+    copySlide: () => {
+        const wraps = getSlideWraps();
+        const toCopy = Array.from(selectedSlideIndices).sort((a, b) => a - b);
+        slideClipboard = document.createElement('div');
+        toCopy.forEach(idx => {
+            if (wraps[idx]) slideClipboard.appendChild(wraps[idx].cloneNode(true));
+        });
+        setStatus(`已复制 ${toCopy.length} 页`);
+    },
+    cutSlide: () => {
+        const wraps = getSlideWraps();
+        const toCopy = Array.from(selectedSlideIndices).sort((a, b) => a - b);
+        slideClipboard = document.createElement('div');
+        toCopy.forEach(idx => {
+            if (wraps[idx]) slideClipboard.appendChild(wraps[idx].cloneNode(true));
+        });
+        deleteActiveSlide();
+        setStatus(`已剪切 ${toCopy.length} 页`);
+    },
+    pasteSlide: () => {
+        if (slideClipboard) {
+            const wraps = getSlideWraps();
+            let insertTarget = wraps[Math.max(...Array.from(selectedSlideIndices))] || wraps[activeSlideIndex];
+            
+            let pastedCount = 0;
+            Array.from(slideClipboard.children).forEach(child => {
+                const clone = child.cloneNode(true);
+                clone.classList.remove('is-active');
+                if (insertTarget) {
+                    insertTarget.after(clone);
+                } else {
+                    deck.appendChild(clone);
+                }
+                insertTarget = clone;
+                pastedCount++;
+            });
+            
+            renumberSlides();
+            setActiveSlide(activeSlideIndex + pastedCount);
+            saveDeck();
+            setStatus(`已粘贴 ${pastedCount} 页`);
+        }
+    },
+    duplicateSlide: () => document.getElementById('duplicateSlideBtn')?.click(),
+    deleteSlide: deleteActiveSlide
+});
+
+window.autoFitSlide = function(slide) {
+    const pad = slide.querySelector('.slide-pad');
+    if (!pad) return;
+    
+    const wrap = slide.closest('.slide-wrap');
+    const wasHidden = wrap && window.getComputedStyle(wrap).display === 'none';
+    if (wasHidden) {
+        wrap.style.display = 'block';
+        wrap.style.visibility = 'hidden';
+    }
+    
+    let iterations = 0;
+    while (pad.scrollHeight > pad.clientHeight && iterations < 30) {
+        let changed = false;
+        const textElements = pad.querySelectorAll('h1, h2, h3, h4, h5, h6, p, li, span, div.editable, div');
+        textElements.forEach(el => {
+            if (el.innerText && el.innerText.trim().length > 0) {
+                const style = window.getComputedStyle(el);
+                const fontSize = parseFloat(style.fontSize);
+                if (fontSize > 14) {
+                    el.style.fontSize = (fontSize * 0.95) + 'px';
+                    changed = true;
+                }
+            }
+        });
+        if (!changed) break;
+        iterations++;
+    }
+    
+    if (wasHidden) {
+        wrap.style.display = '';
+        wrap.style.visibility = '';
+    }
+};
