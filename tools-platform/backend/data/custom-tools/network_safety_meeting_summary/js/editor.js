@@ -64,7 +64,7 @@ export async function exportPdf(deck, setStatusCallback) {
 
         document.activeElement && document.activeElement.blur();
         const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: [960, 720], compress: true });
+        const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: [1920, 1080], compress: true });
         const slides = Array.from(deck.querySelectorAll('.slide'));
         
         renderHost = document.createElement('div');
@@ -79,20 +79,20 @@ export async function exportPdf(deck, setStatusCallback) {
             setStatusCallback(`正在生成页面 ${i + 1}/${slides.length}`);
             
             const canvas = await html2canvas(exportSlide, {
-                scale: 4,
+                scale: 2,
                 backgroundColor: '#fbfbf9',
                 useCORS: true,
-                windowWidth: 1280,
-                windowHeight: 960,
-                width: 480,
-                height: 360
+                windowWidth: 1920,
+                windowHeight: 1080,
+                width: 1920,
+                height: 1080
             });
-            const img = canvas.toDataURL('image/png');
-            if (i > 0) pdf.addPage([960, 720], 'landscape');
-            pdf.addImage(img, 'PNG', 0, 0, 960, 720);
+            const img = canvas.toDataURL('image/jpeg', 0.9);
+            if (i > 0) pdf.addPage([1920, 1080], 'landscape');
+            pdf.addImage(img, 'JPEG', 0, 0, 1920, 1080);
         }
         
-        pdf.save(`安全大会_${new Date().toISOString().slice(0, 10)}.pdf`);
+        pdf.save(`华子胶片_${new Date().toISOString().slice(0, 10)}.pdf`);
         return true;
     } catch (err) {
         console.error('PDF Export Error:', err);

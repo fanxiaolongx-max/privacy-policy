@@ -581,7 +581,7 @@ function renderNavbar() {
         </div>
     `;
     document.body.prepend(nav);
-    
+
     // Automatically extract resource cache version from navbar.js script tag
     const versionDisplay = document.getElementById('nav-resource-version-display');
     if (versionDisplay) {
@@ -597,7 +597,7 @@ function renderNavbar() {
         }
         versionDisplay.textContent = detectedVersion;
     }
-    
+
     renderNavLinksFromState();
 }
 
@@ -613,7 +613,7 @@ window.addEventListener('tools:languagechange', () => {
     if (existingNav) existingNav.remove();
     renderNavbar();
     renderNavLinksFromState();
-    
+
     // Also re-render the modal shell if it's open, to update the sidebar language without losing the open state
     const modal = document.getElementById('navSettingsModal');
     if (modal && modal.style.display !== 'none') {
@@ -796,8 +796,8 @@ function renderPrimarySettings(content) {
         <div class="nav-settings-help">${navEscape(navT('nav.set.help.primary'))}</div>
         <div class="nav-settings-list">
             ${items.map(item => {
-                const index = navState.settings.primaryIds.indexOf(item.id);
-                return `
+        const index = navState.settings.primaryIds.indexOf(item.id);
+        return `
                     <div class="nav-settings-row">
                         <label class="nav-settings-check">
                             <input type="checkbox" ${primaryIds.has(item.id) ? 'checked' : ''} onchange="togglePrimaryNavItem('${navEscape(item.id)}', this.checked)">
@@ -809,7 +809,7 @@ function renderPrimarySettings(content) {
                         </div>
                     </div>
                 `;
-            }).join('')}
+    }).join('')}
         </div>
     `;
 }
@@ -898,8 +898,8 @@ function renderItemCategorySettings(content) {
         <div class="nav-settings-help">${navEscape(navT('nav.set.help.items'))}</div>
         <div class="nav-settings-list">
             ${items.map((item, index) => {
-                const selected = settings.categoryByItem[item.id] || item.defaultCategory || (categories[0] && categories[0].id) || '';
-                return `
+        const selected = settings.categoryByItem[item.id] || item.defaultCategory || (categories[0] && categories[0].id) || '';
+        return `
                     <div class="nav-settings-row">
                         <div class="nav-settings-item-name">${item.icon} ${navEscape(getNavLabel(item))}</div>
                         <select class="nav-settings-select" onchange="setNavItemCategory('${navEscape(item.id)}', this.value)">
@@ -911,7 +911,7 @@ function renderItemCategorySettings(content) {
                         </div>
                     </div>
                 `;
-            }).join('') || `<div class="nav-settings-empty">${navEscape(navT('nav.set.emptyItems'))}</div>`}
+    }).join('') || `<div class="nav-settings-empty">${navEscape(navT('nav.set.emptyItems'))}</div>`}
         </div>
     `;
 }
@@ -1314,7 +1314,7 @@ function renderRemoteBackupSyncSettings(settings = {}) {
                 </div>
             </div>
             <div class="nav-remote-backup-status">
-                <span>${navEscape(navT('nav.bk.stLocal', {tz: getLocalTimeZoneLabel()}))}</span>
+                <span>${navEscape(navT('nav.bk.stLocal', { tz: getLocalTimeZoneLabel() }))}</span>
                 <span>${navEscape(navT('nav.bk.stCheck'))}${navEscape(lastCheckText)}</span>
                 <span>${navEscape(navT('nav.bk.stSync'))}${navEscape(lastSyncText)}</span>
                 ${settings.lastError ? `<span class="warning">${navEscape(navT('nav.bk.stError'))}${navEscape(settings.lastError)}</span>` : ''}
@@ -1358,7 +1358,7 @@ async function renderBackupSettings(content) {
         `).join('');
 
         content.innerHTML = `
-            <div class="nav-settings-help">${navEscape(navT('nav.bk.help', {target: targetText}))}</div>
+            <div class="nav-settings-help">${navEscape(navT('nav.bk.help', { target: targetText }))}</div>
             ${renderRemoteBackupSyncSettings(remoteSettings)}
             <div class="nav-backup-panel">
                 <div>
@@ -1525,15 +1525,15 @@ async function downloadGlobalBackupFile(name) {
         headers: getAuthHeaderForNav()
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    
+
     const contentLength = res.headers.get('content-length');
     const total = contentLength ? parseInt(contentLength, 10) : 0;
-    
+
     let loaded = 0;
     const reader = res.body.getReader();
     const chunks = [];
     const indicator = document.getElementById('navSettingsSaveState');
-    
+
     while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -1548,7 +1548,7 @@ async function downloadGlobalBackupFile(name) {
             }
         }
     }
-    
+
     const blob = new Blob(chunks, { type: res.headers.get('content-type') || 'application/zip' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1601,44 +1601,44 @@ window.restoreGlobalBackupFromUpload = async function () {
     if (!file) return alert('请先选择备份 zip 包');
     const ok = confirm(`确定要上传并恢复这个备份包吗？\n\n${file.name}\n\n此操作会覆盖当前全局配置和全部数据。系统会先自动生成恢复前安全备份。`);
     if (!ok) return;
-    
+
     const indicator = document.getElementById('navSettingsSaveState');
     if (indicator) indicator.textContent = '准备上传备份...';
-    
+
     try {
         const data = await new Promise((resolve, reject) => {
             const form = new FormData();
             form.append('backup', file);
-            
+
             const xhr = new XMLHttpRequest();
             xhr.open('POST', '/api/global-backup/restore/upload', true);
-            
+
             const headers = getAuthHeaderForNav();
             Object.keys(headers).forEach(key => {
                 xhr.setRequestHeader(key, headers[key]);
             });
-            
+
             xhr.upload.onprogress = (e) => {
                 if (e.lengthComputable && indicator) {
                     const percent = Math.round((e.loaded / e.total) * 100);
                     indicator.textContent = `正在上传并解压... ${percent}% (${formatBackupSize(e.loaded)} / ${formatBackupSize(e.total)})`;
                 }
             };
-            
+
             xhr.onload = () => {
                 let resData = {};
-                try { resData = JSON.parse(xhr.responseText); } catch (err) {}
+                try { resData = JSON.parse(xhr.responseText); } catch (err) { }
                 if (xhr.status >= 200 && xhr.status < 300) {
                     resolve(resData);
                 } else {
                     reject(new Error(resData.error || `HTTP ${xhr.status}`));
                 }
             };
-            
+
             xhr.onerror = () => reject(new Error('网络请求失败'));
             xhr.send(form);
         });
-        
+
         if (indicator) indicator.textContent = '操作完成';
         alert(`恢复完成。恢复前安全备份：${data.safetyBackup?.name || '-'}\n\n建议重启服务或刷新页面，确保 SQLite 连接重新加载。`);
     } catch (e) {
@@ -1655,7 +1655,7 @@ function renderPageSettings(content, pageId) {
         <div class="nav-page-config-placeholder">
             <div class="nav-page-config-icon">${item?.icon || '🧩'}</div>
             <div>
-                <div class="nav-page-config-title">${navEscape(navT('nav.page.placeholderTitle', {page: getNavLabel(item) || '页面'}))}</div>
+                <div class="nav-page-config-title">${navEscape(navT('nav.page.placeholderTitle', { page: getNavLabel(item) || '页面' }))}</div>
                 <div class="nav-page-config-desc">${navEscape(navT('nav.page.placeholderDesc'))}</div>
             </div>
         </div>
@@ -1701,7 +1701,7 @@ function renderReportSnapshotCleanupResult(result) {
     const keptText = navT('nav.page.report.res.kept', { keptDailyCount: result.keptDailyCount }).replace('{keptDailyCount}', result.keptDailyCount);
     const emptyText = navT('nav.page.report.res.empty');
     const moreText = result.removedCount > 8 ? navT('nav.page.report.res.more', { remaining: result.removedCount - 8 }).replace('{remaining}', result.removedCount - 8) : '';
-    
+
     el.innerHTML = `
         <div><strong>${navEscape(titleText)}</strong></div>
         <div>${navEscape(summaryText)}</div>
@@ -1823,10 +1823,10 @@ window.openUserModal = async function () {
         const res = await API.get('/api/auth/users');
 
         let trs = res.map(u => {
-            const roleBadge = u.role === 'admin' 
+            const roleBadge = u.role === 'admin'
                 ? '<span style="background:#e0e7ff; color:#4338ca; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; border:1px solid #c7d2fe;">超级管理</span>'
                 : '<span style="background:#f1f5f9; color:#64748b; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; border:1px solid #e2e8f0;">只读用户</span>';
-            
+
             return `
             <tr style="transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
                 <td style="padding:14px 16px; border-bottom:1px solid #f1f5f9; font-weight:500; color:#334155;">${u.username}</td>
@@ -1887,7 +1887,10 @@ window.openUserModal = async function () {
 // ==========================================
 // 全局注入 AI 客服助手
 // ==========================================
-(function() {
+(function () {
+    // 华子胶片设计工具内置了自己的 AI 助手，避免重复显示全局悬浮入口。
+    if (window.location.pathname.startsWith('/tools/network_safety_meeting_summary')) return;
+
     // 确保不重复加载
     if (!document.querySelector('script[src="/js/shared/ai-assistant.js"]')) {
         const aiScript = document.createElement('script');

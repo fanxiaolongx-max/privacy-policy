@@ -67,16 +67,23 @@ function componentName(element) {
     if (element.matches('img')) return '图片';
     if (element.matches('.slide-title, .small-title')) return '标题';
     if (element.classList.contains('box')) return '内容卡片';
+    if (element.classList.contains('ppt-shape')) return '形状';
+    if (element.classList.contains('ppt-line')) return '线条';
+    if (element.classList.contains('ppt-icon')) return '图标';
+    if (element.classList.contains('ppt-timeline')) return '时间轴';
+    if (element.classList.contains('ppt-card')) return '内容卡片';
     return '文本';
 }
 
-export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
+export function createComponentEditor({ deck, getScale, onChange, onStatus, onSelectionChange }) {
     let selected = null;
     const selectedSet = new Set();
     let clipboard = [];
+    let pasteCount = 0;
     let moveable = null;
     let toolbar = null;
     let directDrag = null;
+    let lassoDrag = null;
     let directResize = null;
     let directRotate = null;
     let layerPointerDrag = null;
@@ -87,6 +94,7 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
     let horizontalGuide = null;
     let editingComponent = null;
     let editingTarget = null;
+    let formatPainter = null;
 
     function ensureToolbar() {
         if (toolbar) return toolbar;
@@ -171,6 +179,52 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
         return element.matches('.editable') ? element : element.querySelector('.editable');
     }
 
+    function captureFormat(element) {
+        const editable = selectedEditable(element);
+        const outerStyle = getComputedStyle(element);
+        const textStyle = editable ? getComputedStyle(editable) : null;
+        return {
+            sourceId: element.dataset.pptElementId,
+            outer: {
+                background: outerStyle.background,
+                border: outerStyle.border,
+                borderRadius: outerStyle.borderRadius,
+                boxShadow: outerStyle.boxShadow,
+                opacity: outerStyle.opacity
+            },
+            text: textStyle ? {
+                color: textStyle.color,
+                fontFamily: textStyle.fontFamily,
+                fontSize: textStyle.fontSize,
+                fontWeight: textStyle.fontWeight,
+                fontStyle: textStyle.fontStyle,
+                lineHeight: textStyle.lineHeight,
+                letterSpacing: textStyle.letterSpacing,
+                textAlign: textStyle.textAlign,
+                textDecoration: textStyle.textDecoration,
+                textTransform: textStyle.textTransform
+            } : null
+        };
+    }
+
+    function setFormatPainter(snapshot) {
+        formatPainter = snapshot;
+        document.body.classList.toggle('is-format-painting', Boolean(snapshot));
+        propertiesPanel?.querySelector('[data-style-action="format-painter"]')
+            ?.classList.toggle('is-active', Boolean(snapshot));
+    }
+
+    function applyFormatPainter(target) {
+        if (!formatPainter || !target || target.dataset.pptElementId === formatPainter.sourceId) return false;
+        Object.assign(target.style, formatPainter.outer);
+        const editable = selectedEditable(target);
+        if (editable && formatPainter.text) Object.assign(editable.style, formatPainter.text);
+        setFormatPainter(null);
+        commitChange();
+        onStatus?.('格式已应用');
+        return true;
+    }
+
     function isImageComponent(element = selected) {
         return Boolean(element?.matches('img, .cover-photo, .avatar, .qr-box, .ppt-image-placeholder')
             || element?.querySelector('.qr-box, img'));
@@ -187,7 +241,9 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
     }
 
     function isLayoutBoundInner(element = selected) {
-        return Boolean(element?.matches('td, th, li') || element?.closest('table'));
+        if (!element || element.matches('table, .agenda-table')) return false;
+        return Boolean(element.matches('td, th, li')
+            || (element.classList.contains('ppt-inner-element') && element.closest('table')));
     }
 
     function parentComponent(element = selected) {
@@ -211,6 +267,15 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
 
     function activeSlide() {
         return deck.querySelector('.slide-wrap.is-active .slide');
+    }
+
+    function topLevelElements(slide = activeSlide()) {
+        if (!slide) return [];
+        return Array.from(slide.querySelectorAll('.ppt-element')).filter(element => {
+            if (element.classList.contains('ppt-inner-element') || element.classList.contains('ppt-hidden')) return false;
+            const parent = element.parentElement?.closest('.ppt-element');
+            return !parent || parent === element || !slide.contains(parent);
+        });
     }
 
     function elementRectInSlide(element) {
@@ -278,8 +343,8 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
         if (!bounds || !slide) return { dx, dy };
         const others = Array.from(slide.querySelectorAll('.ppt-element'))
             .filter(element => !selectedSet.has(element) && !element.classList.contains('ppt-hidden'));
-        const xTargets = [0, 240, 480];
-        const yTargets = [0, 180, 360];
+        const xTargets = [0, 960, 1920];
+        const yTargets = [0, 540, 1080];
         others.forEach(element => {
             const rect = elementRectInSlide(element);
             xTargets.push(rect.left, rect.centerX, rect.right);
@@ -411,22 +476,43 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
             width: rect.width,
             height: rect.height,
             rotate: parseFloat(selected.dataset.pptRotate || computed.rotate || '0') || 0,
-            zIndex: parseInt(computed.zIndex, 10) || 0
+            zIndex: parseInt(computed.zIndex, 10) || 0,
+            opacity: Math.round((parseFloat(computed.opacity) || 1) * 100),
+            borderRadius: parseFloat(computed.borderRadius) || 0,
+            borderWidth: parseFloat(computed.borderWidth) || 0,
+            padding: parseFloat(computed.padding) || 0
         };
         Object.entries(values).forEach(([property, value]) => {
             const input = content.querySelector(`[data-property="${property}"]`);
             if (input && document.activeElement !== input) input.value = String(Math.round(value * 100) / 100);
         });
+        const borderColorInput = content.querySelector('[data-property="borderColor"]');
+        if (document.activeElement !== borderColorInput) borderColorInput.value = rgbToHex(computed.borderColor);
 
         const editable = selectedEditable();
         const textSection = content.querySelector('.properties-text-section');
         textSection.classList.toggle('hidden', !editable);
         if (editable) {
             const style = getComputedStyle(editable);
+            const fontFamilyInput = content.querySelector('[data-property="fontFamily"]');
             const fontSizeInput = content.querySelector('[data-property="fontSize"]');
+            const lineHeightInput = content.querySelector('[data-property="lineHeight"]');
             const colorInput = content.querySelector('[data-property="color"]');
             const backgroundInput = content.querySelector('[data-property="backgroundColor"]');
+            if (document.activeElement !== fontFamilyInput) {
+                const currentFamily = style.fontFamily.toLowerCase();
+                const matchingOption = Array.from(fontFamilyInput.options).find(option => {
+                    const primaryFont = option.value.split(',')[0].replace(/['"]/g, '').trim().toLowerCase();
+                    return currentFamily.includes(primaryFont);
+                });
+                fontFamilyInput.value = matchingOption?.value || 'Arial, sans-serif';
+            }
             if (document.activeElement !== fontSizeInput) fontSizeInput.value = String(Math.round(parseFloat(style.fontSize) * 100) / 100);
+            if (document.activeElement !== lineHeightInput) {
+                const lineHeight = parseFloat(style.lineHeight);
+                const fontSize = parseFloat(style.fontSize) || 1;
+                lineHeightInput.value = String(Math.round((Number.isFinite(lineHeight) ? lineHeight / fontSize : 1.2) * 10) / 10);
+            }
             if (document.activeElement !== colorInput) colorInput.value = rgbToHex(style.color);
             if (document.activeElement !== backgroundInput) backgroundInput.value = rgbToHex(getComputedStyle(selected).backgroundColor);
             content.querySelector('[data-style-action="bold"]').classList.toggle('is-active', Number(style.fontWeight) >= 600 || style.fontWeight === 'bold');
@@ -434,6 +520,7 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
             ['left', 'center', 'right'].forEach(align => {
                 content.querySelector(`[data-style-action="align-${align}"]`).classList.toggle('is-active', style.textAlign === align);
             });
+            content.querySelector('[data-style-action="format-painter"]')?.classList.toggle('is-active', Boolean(formatPainter));
         }
 
         const imageSection = content.querySelector('.properties-image-section');
@@ -469,6 +556,7 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
 
     function select(element, additive = false) {
         if (!element || !element.isConnected) return clearSelection();
+        if (!additive) applyFormatPainter(element);
         stopTextEditing();
         if (!additive) {
             selectedSet.clear();
@@ -482,6 +570,7 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
             selected = element;
         }
         updateSelectionVisuals();
+        onSelectionChange?.(getSelectedElements());
         if (selectedSet.size) onStatus?.(selectedSet.size > 1 ? `已选择 ${selectedSet.size} 个组件` : `${componentName(selected)}已选中；Shift 点击多选`);
     }
 
@@ -576,10 +665,16 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
             const clone = source.cloneNode(true);
             clone.classList.remove('ppt-selected', 'ppt-selected-secondary', 'ppt-editing');
             clone.dataset.pptElementId = createId();
-            clone.style.position = clone.style.position || (getComputedStyle(source).position === 'static' ? 'relative' : getComputedStyle(source).position);
-            clone.style.left = `${numberStyle(source, 'left') + 10}px`;
-            clone.style.top = `${numberStyle(source, 'top') + 10}px`;
-            source.after(clone);
+            
+            const rect = elementRectInSlide(source);
+            clone.style.position = 'absolute';
+            clone.style.margin = '0';
+            clone.style.left = `${rect.left + 15}px`;
+            clone.style.top = `${rect.top + 15}px`;
+            clone.style.width = `${rect.width}px`;
+            clone.style.height = `${rect.height}px`;
+            
+            activeSlide().appendChild(clone);
             return clone;
         });
         markComponents(activeSlide());
@@ -590,27 +685,150 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
         commitChange();
     }
 
+    function groupSelected() {
+        const elements = getSelectedElements();
+        if (elements.length < 2) return;
+        
+        // 1. Snapshot all bounding rects BEFORE modifying the DOM to prevent flex layout shifts
+        const rects = elements.map(el => ({
+            el,
+            rect: elementRectInSlide(el)
+        }));
+        
+        const bounds = selectionBounds(elements);
+        if (!bounds) return;
+
+        const group = document.createElement('div');
+        group.className = 'ppt-element ppt-group';
+        group.style.position = 'absolute';
+        group.style.left = `${bounds.left}px`;
+        group.style.top = `${bounds.top}px`;
+        group.style.width = `${bounds.width}px`;
+        group.style.height = `${bounds.height}px`;
+        group.dataset.pptElementType = 'group';
+        group.dataset.pptElementId = createId();
+
+        rects.forEach(({ el, rect }) => {
+            el.style.position = 'absolute';
+            el.style.margin = '0';
+            el.style.left = `${rect.left - bounds.left}px`;
+            el.style.top = `${rect.top - bounds.top}px`;
+            el.style.width = `${rect.width}px`;
+            el.style.height = `${rect.height}px`;
+            
+            el.classList.remove('ppt-element', 'ppt-selected', 'ppt-selected-secondary');
+            el.classList.add('ppt-inner-element');
+            group.appendChild(el);
+        });
+
+        activeSlide().appendChild(group);
+        selectedSet.clear();
+        selectedSet.add(group);
+        selected = group;
+        updateSelectionVisuals();
+        refreshMoveable();
+        commitChange();
+        onStatus?.('已组合组件');
+    }
+
+    function ungroupSelected() {
+        const groups = getSelectedElements().filter(el => el.classList.contains('ppt-group'));
+        if (!groups.length) return;
+
+        selectedSet.clear();
+        const slide = activeSlide();
+
+        groups.forEach(group => {
+            const groupLeft = parseFloat(group.style.left || 0);
+            const groupTop = parseFloat(group.style.top || 0);
+            const children = Array.from(group.children);
+            
+            group.style.rotate = '0deg'; 
+            group.dataset.pptRotate = '0';
+
+            children.forEach(el => {
+                const elLeft = parseFloat(el.style.left || 0);
+                const elTop = parseFloat(el.style.top || 0);
+                el.style.left = `${groupLeft + elLeft}px`;
+                el.style.top = `${groupTop + elTop}px`;
+                
+                el.classList.remove('ppt-inner-element');
+                el.classList.add('ppt-element');
+                slide.appendChild(el);
+                selectedSet.add(el);
+            });
+            group.remove();
+        });
+
+        selected = getSelectedElements().at(-1);
+        updateSelectionVisuals();
+        refreshMoveable();
+        commitChange();
+        onStatus?.('已取消组合');
+    }
+
     function copySelected() {
         const sources = getSelectedElements();
         if (!sources.length) return;
         clipboard = sources.map(source => {
             const clone = source.cloneNode(true);
             clone.classList.remove('ppt-selected', 'ppt-selected-secondary', 'ppt-editing');
-            return clone;
+            return {
+                node: clone,
+                rect: elementRectInSlide(source)
+            };
         });
+        pasteCount = 0;
         onStatus?.(`已复制 ${clipboard.length} 个组件`);
+    }
+
+    function cutSelected() {
+        if (!selectedSet.size) return;
+        copySelected();
+        deleteSelected();
+    }
+
+    function selectAllComponents() {
+        const slide = activeSlide();
+        if (!slide) return;
+        const elements = Array.from(slide.querySelectorAll('.ppt-element')).filter(el => !el.classList.contains('ppt-locked') && !el.classList.contains('ppt-hidden'));
+        if (!elements.length) return;
+        selectedSet.clear();
+        elements.forEach(el => selectedSet.add(el));
+        selected = elements.at(-1);
+        updateSelectionVisuals();
+        refreshMoveable();
+        positionToolbar();
+        onStatus?.(`已全选 ${elements.length} 个组件`);
     }
 
     function pasteClipboard() {
         if (!clipboard.length) return;
         const slide = activeSlide();
         if (!slide) return;
-        const clones = clipboard.map(source => {
-            const clone = source.cloneNode(true);
+        
+        pasteCount++;
+        
+        const clones = clipboard.map(item => {
+            const clone = item.node.cloneNode(true);
             clone.dataset.pptElementId = createId();
-            clone.style.position = clone.style.position || 'relative';
-            clone.style.left = `${numberStyle(clone, 'left') + 10}px`;
-            clone.style.top = `${numberStyle(clone, 'top') + 10}px`;
+            clone.style.position = 'absolute';
+            clone.style.margin = '0';
+            
+            let offsetX = pasteCount * 60;
+            let offsetY = pasteCount * 60;
+            
+            if (item.rect.left + offsetX + item.rect.width > 1920 || item.rect.top + offsetY + item.rect.height > 1080) {
+                pasteCount = 1;
+                offsetX = 60;
+                offsetY = 60;
+            }
+            
+            clone.style.left = `${item.rect.left + offsetX}px`;
+            clone.style.top = `${item.rect.top + offsetY}px`;
+            clone.style.width = `${item.rect.width}px`;
+            clone.style.height = `${item.rect.height}px`;
+            
             slide.appendChild(clone);
             return clone;
         });
@@ -665,20 +883,293 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
         onChange?.();
     }
 
+    function describeElement(element) {
+        const editable = selectedEditable(element);
+        const style = getComputedStyle(element);
+        const textStyle = editable ? getComputedStyle(editable) : null;
+        return {
+            id: element.dataset.pptElementId,
+            type: element.dataset.pptElementType || componentName(element),
+            locked: element.classList.contains('ppt-locked'),
+            text: editable?.innerText || '',
+            html: editable?.innerHTML || '',
+            rect: elementRectInSlide(element),
+            style: {
+                backgroundColor: style.backgroundColor,
+                borderColor: style.borderColor,
+                borderWidth: style.borderWidth,
+                borderRadius: style.borderRadius,
+                opacity: style.opacity,
+                padding: style.padding,
+                color: textStyle?.color || style.color,
+                fontFamily: textStyle?.fontFamily || '',
+                fontSize: textStyle?.fontSize || '',
+                fontWeight: textStyle?.fontWeight || '',
+                fontStyle: textStyle?.fontStyle || '',
+                lineHeight: textStyle?.lineHeight || '',
+                textAlign: textStyle?.textAlign || ''
+            }
+        };
+    }
+
+    function getSelectionContext() {
+        const elements = getSelectedElements();
+        if (!elements.length) return null;
+        return {
+            scope: elements.length === 1 ? 'single' : 'selection',
+            components: elements.map(describeElement),
+            bounds: selectionBounds(elements)
+        };
+    }
+
+    function getPageContext() {
+        const elements = topLevelElements();
+        return {
+            scope: 'page',
+            slide: { width: 1920, height: 1080 },
+            components: elements.slice(0, 80).map(describeElement)
+        };
+    }
+
+    function applyAiActions(actions, scope = 'selection') {
+        if (!Array.isArray(actions)) return 0;
+        const scopedElements = scope === 'page'
+            ? topLevelElements()
+            : getSelectedElements();
+        if (!scopedElements.length) return 0;
+        const elementById = new Map(scopedElements.map(element => [element.dataset.pptElementId, element]));
+        const allowedOuterStyles = new Set([
+            'backgroundColor', 'borderColor', 'borderWidth', 'borderRadius',
+            'borderStyle', 'boxShadow', 'opacity', 'padding'
+        ]);
+        const allowedTextStyles = new Set([
+            'color', 'fontFamily', 'fontSize', 'fontWeight', 'fontStyle',
+            'lineHeight', 'letterSpacing', 'textAlign', 'textDecoration'
+        ]);
+        const pixelStyles = new Set([
+            'borderWidth', 'borderRadius', 'padding', 'fontSize', 'letterSpacing'
+        ]);
+        let applied = 0;
+        const resolveTargets = action => {
+            if (action.target === 'all') return scopedElements;
+            if (Array.isArray(action.targets)) return action.targets.map(id => elementById.get(id)).filter(Boolean);
+            if (action.target && elementById.has(action.target)) return [elementById.get(action.target)];
+            return scopedElements.length === 1 ? scopedElements : [];
+        };
+        actions.slice(0, 40).forEach(action => {
+            if (!action || typeof action !== 'object') return;
+            const targets = resolveTargets(action).filter(element => !element.classList.contains('ppt-locked'));
+            if (action.type === 'setText' && typeof action.value === 'string') {
+                targets.forEach(element => {
+                    const editable = selectedEditable(element);
+                    if (!editable) return;
+                    editable.textContent = action.value.slice(0, 5000);
+                    applied++;
+                });
+            }
+            if (action.type === 'setStyle' && action.styles && typeof action.styles === 'object') {
+                targets.forEach(element => {
+                    const editable = selectedEditable(element);
+                    Object.entries(action.styles).forEach(([key, value]) => {
+                        if (typeof value !== 'string' && typeof value !== 'number') return;
+                        const normalizedValue = typeof value === 'number' && pixelStyles.has(key) ? `${value}px` : value;
+                        const safeValue = String(normalizedValue).trim();
+                        if (!safeValue || /url\s*\(|expression\s*\(|javascript:|[;}]/i.test(safeValue)) return;
+                        if (allowedOuterStyles.has(key)) {
+                            element.style[key] = safeValue;
+                            applied++;
+                        } else if (editable && allowedTextStyles.has(key)) {
+                            editable.style[key] = safeValue;
+                            applied++;
+                        }
+                    });
+                });
+            }
+            if (action.type === 'move') {
+                const dx = Number(action.dx) || 0;
+                const dy = Number(action.dy) || 0;
+                targets.forEach(element => {
+                    moveBy(element, Math.max(-1920, Math.min(1920, dx)), Math.max(-1080, Math.min(1080, dy)));
+                    applied++;
+                });
+            }
+            if (action.type === 'setPosition') {
+                targets.forEach(element => {
+                    const rect = elementRectInSlide(element);
+                    const x = Number.isFinite(Number(action.x)) ? Number(action.x) : rect.left;
+                    const y = Number.isFinite(Number(action.y)) ? Number(action.y) : rect.top;
+                    moveBy(element, Math.max(0, Math.min(1920, x)) - rect.left, Math.max(0, Math.min(1080, y)) - rect.top);
+                    applied++;
+                });
+            }
+            if (action.type === 'resize') {
+                targets.forEach(element => {
+                    if (Number.isFinite(Number(action.width))) element.style.width = `${Math.max(12, Math.min(1920, Number(action.width)))}px`;
+                    if (Number.isFinite(Number(action.height))) element.style.height = `${Math.max(12, Math.min(1080, Number(action.height)))}px`;
+                    applied++;
+                });
+            }
+            if (action.type === 'align' && targets.length >= 2) {
+                const entries = targets.map(element => ({ element, rect: elementRectInSlide(element) }));
+                const bounds = selectionBounds(targets);
+                const mode = String(action.mode || 'left');
+                if (mode === 'left') entries.forEach(entry => moveBy(entry.element, bounds.left - entry.rect.left, 0));
+                if (mode === 'center') entries.forEach(entry => moveBy(entry.element, bounds.centerX - entry.rect.centerX, 0));
+                if (mode === 'right') entries.forEach(entry => moveBy(entry.element, bounds.right - entry.rect.right, 0));
+                if (mode === 'top') entries.forEach(entry => moveBy(entry.element, 0, bounds.top - entry.rect.top));
+                if (mode === 'middle') entries.forEach(entry => moveBy(entry.element, 0, bounds.centerY - entry.rect.centerY));
+                if (mode === 'bottom') entries.forEach(entry => moveBy(entry.element, 0, bounds.bottom - entry.rect.bottom));
+                applied++;
+            }
+            if (action.type === 'grid' && targets.length >= 2) {
+                const columns = Math.max(1, Math.min(6, Number(action.columns) || 2));
+                const gap = Math.max(0, Math.min(60, Number(action.gap) || 12));
+                const startX = Math.max(0, Math.min(440, Number(action.x) || 40));
+                const startY = Math.max(0, Math.min(320, Number(action.y) || 70));
+                const totalWidth = Math.max(20, Math.min(440, Number(action.width) || 400));
+                const cellWidth = (totalWidth - gap * (columns - 1)) / columns;
+                targets.forEach((element, index) => {
+                    const rect = elementRectInSlide(element);
+                    const rowHeight = Math.max(20, Number(action.rowHeight) || rect.height);
+                    const targetX = startX + (index % columns) * (cellWidth + gap);
+                    const targetY = startY + Math.floor(index / columns) * (rowHeight + gap);
+                    moveBy(element, targetX - rect.left, targetY - rect.top);
+                    if (action.equalWidth !== false) element.style.width = `${cellWidth}px`;
+                    applied++;
+                });
+            }
+        });
+        if (applied) {
+            updateSelectionVisuals();
+            commitChange();
+        }
+        return applied;
+    }
+
+    function auditPageLayout() {
+        const elements = topLevelElements().filter(element => !element.classList.contains('ppt-locked'));
+        const issues = [];
+        elements.forEach(element => {
+            const rect = elementRectInSlide(element);
+            if (rect.left < 0 || rect.top < 0 || rect.right > 1920 || rect.bottom > 1080) {
+                issues.push({ type: 'outOfBounds', id: element.dataset.pptElementId, name: componentName(element) });
+            }
+            const editable = selectedEditable(element);
+            if (editable && (editable.scrollWidth > editable.clientWidth + 2 || editable.scrollHeight > editable.clientHeight + 2)) {
+                issues.push({ type: 'textOverflow', id: element.dataset.pptElementId, name: componentName(element) });
+            }
+        });
+        for (let i = 0; i < elements.length; i++) {
+            const a = elementRectInSlide(elements[i]);
+            for (let j = i + 1; j < elements.length; j++) {
+                if (elements[i].contains(elements[j]) || elements[j].contains(elements[i])) continue;
+                const b = elementRectInSlide(elements[j]);
+                const overlapWidth = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
+                const overlapHeight = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+                const overlapArea = overlapWidth * overlapHeight;
+                const smallerArea = Math.max(1, Math.min(a.width * a.height, b.width * b.height));
+                if (overlapArea / smallerArea > .18) {
+                    issues.push({
+                        type: 'overlap',
+                        ids: [elements[i].dataset.pptElementId, elements[j].dataset.pptElementId],
+                        names: [componentName(elements[i]), componentName(elements[j])]
+                    });
+                }
+            }
+        }
+        return issues;
+    }
+
+    function autoFixPageLayout() {
+        const slide = activeSlide();
+        const elements = topLevelElements(slide).filter(element => !element.classList.contains('ppt-locked'));
+        let fixed = 0;
+        elements.forEach(element => {
+            const rect = elementRectInSlide(element);
+            const targetX = Math.max(8, Math.min(472 - rect.width, rect.left));
+            const targetY = Math.max(8, Math.min(352 - rect.height, rect.top));
+            if (targetX !== rect.left || targetY !== rect.top) {
+                moveBy(element, targetX - rect.left, targetY - rect.top);
+                fixed++;
+            }
+            const editable = selectedEditable(element);
+            if (editable && editable.scrollHeight > editable.clientHeight + 2) {
+                let size = parseFloat(getComputedStyle(editable).fontSize) || 10;
+                while (size > 6 && editable.scrollHeight > editable.clientHeight + 2) {
+                    size -= .5;
+                    editable.style.fontSize = `${size}px`;
+                }
+                fixed++;
+            }
+        });
+
+        const movable = elements.filter(element => !/标题/.test(componentName(element)));
+        const overlaps = auditPageLayout().filter(issue => issue.type === 'overlap');
+        if (overlaps.length && movable.length >= 2) {
+            const columns = movable.length >= 5 ? 3 : 2;
+            const gap = 10;
+            const startX = 34;
+            const startY = 72;
+            const totalWidth = 412;
+            const cellWidth = (totalWidth - gap * (columns - 1)) / columns;
+            const rows = Math.ceil(movable.length / columns);
+            const rowHeight = Math.max(48, Math.min(110, (250 - gap * (rows - 1)) / rows));
+            movable.forEach((element, index) => {
+                const rect = elementRectInSlide(element);
+                const x = startX + (index % columns) * (cellWidth + gap);
+                const y = startY + Math.floor(index / columns) * (rowHeight + gap);
+                moveBy(element, x - rect.left, y - rect.top);
+                element.style.width = `${cellWidth}px`;
+                element.style.height = `${rowHeight}px`;
+                fixed++;
+            });
+        }
+        if (fixed) {
+            updateSelectionVisuals();
+            commitChange();
+        }
+        return { fixed, remaining: auditPageLayout() };
+    }
+
+    function unifyDeckStyle() {
+        let changed = 0;
+        deck.querySelectorAll('.slide').forEach(slide => {
+            slide.querySelectorAll('.slide-title, .small-title').forEach(title => {
+                title.style.fontFamily = "'Microsoft YaHei', 'PingFang SC', sans-serif";
+                title.style.fontWeight = '700';
+                title.style.color = 'var(--red)';
+                changed++;
+            });
+            slide.querySelectorAll('.editable').forEach(editable => {
+                if (!editable.matches('.slide-title, .small-title')) {
+                    editable.style.fontFamily = "'Microsoft YaHei', 'PingFang SC', sans-serif";
+                    editable.style.lineHeight ||= '1.4';
+                    changed++;
+                }
+            });
+            slide.querySelectorAll('.ppt-card, .rule-box, .box').forEach(card => {
+                card.style.borderRadius = '8px';
+                card.style.borderColor = '#d4d4d8';
+                card.style.borderStyle = 'solid';
+                card.style.borderWidth = '1px';
+                changed++;
+            });
+            slide.querySelectorAll('.footer').forEach(footer => {
+                footer.style.fontFamily = "Arial, 'Microsoft YaHei', sans-serif";
+                footer.style.opacity = '.85';
+                changed++;
+            });
+        });
+        if (changed) commitChange();
+        return changed;
+    }
+
     function handleClick(event) {
-        if (event.target.closest('.moveable-control-box, .ppt-component-toolbar')) return;
-        if (event.target.closest('[contenteditable="true"], .ppt-editing')) return;
         if (suppressClick) {
             suppressClick = false;
-            return;
         }
-        const component = resolveComponent(event.target);
-        if (!component) {
-            if (event.target.closest('.slide')) clearSelection();
-            return;
-        }
-        if (event.shiftKey) window.getSelection()?.removeAllRanges();
-        select(component, event.shiftKey);
+        // Selection is now fully handled by pointer events (handlePointerDown/Up)
+        // to ensure robustness across browsers and drag scenarios.
     }
 
     function handleDoubleClick(event) {
@@ -722,12 +1213,53 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
                     <tr><td class="idx">2</td><td>双击编辑内容</td><td class="owner">日期</td></tr>
                 </tbody>
             `;
-        } else {
+        } else if (kind === 'note') {
             element = document.createElement('div');
             element.className = 'ppt-created-element sticky-note editable';
             element.textContent = '双击编辑便签';
             element.style.transform = 'none';
             element.style.rotate = '-5deg';
+        } else if (kind === 'card') {
+            element = document.createElement('div');
+            element.className = 'ppt-created-element ppt-card editable';
+            element.innerHTML = '<strong>卡片标题</strong><br>双击编辑卡片内容';
+            Object.assign(element.style, {
+                width: '220px', minHeight: '90px', padding: '14px',
+                background: '#ffffff', border: '1px solid #d4d4d8',
+                borderRadius: '10px', boxShadow: '0 8px 20px rgba(0,0,0,.12)'
+            });
+        } else if (kind === 'shape') {
+            element = document.createElement('div');
+            element.className = 'ppt-created-element ppt-shape';
+            Object.assign(element.style, {
+                width: '100px', height: '70px', background: 'var(--red)',
+                borderRadius: '12px', opacity: '.9'
+            });
+        } else if (kind === 'line') {
+            element = document.createElement('div');
+            element.className = 'ppt-created-element ppt-line';
+            Object.assign(element.style, {
+                width: '180px', height: '4px', background: 'var(--red)',
+                borderRadius: '999px'
+            });
+        } else if (kind === 'icon') {
+            element = document.createElement('div');
+            element.className = 'ppt-created-element ppt-icon editable';
+            element.textContent = '🛡️';
+            Object.assign(element.style, {
+                width: '64px', height: '64px', fontSize: '40px',
+                display: 'grid', placeItems: 'center'
+            });
+        } else if (kind === 'timeline') {
+            element = document.createElement('div');
+            element.className = 'ppt-created-element ppt-timeline';
+            element.innerHTML = `
+                <div class="ppt-timeline-line"></div>
+                <div class="ppt-timeline-item editable"><b>01</b><span>阶段一</span></div>
+                <div class="ppt-timeline-item editable"><b>02</b><span>阶段二</span></div>
+                <div class="ppt-timeline-item editable"><b>03</b><span>阶段三</span></div>
+            `;
+            Object.assign(element.style, { width: '330px', height: '86px' });
         }
         element.style.position = 'absolute';
         element.style.left = '60px';
@@ -737,7 +1269,7 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
         markComponents(slide);
         select(element);
         commitChange();
-        if (kind === 'title' || kind === 'text' || kind === 'note') {
+        if (['title', 'text', 'note', 'card', 'icon'].includes(kind)) {
             startTextEditing(element);
         }
     }
@@ -811,18 +1343,35 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
         commitChange();
     }
 
-    function reorderLayer(draggedId, targetId) {
+    function reorderLayer(draggedId, targetId, placement = 'before') {
         const orderedTopDown = layerElements();
         const dragged = findLayerElement(draggedId);
         const target = findLayerElement(targetId);
         if (!dragged || !target || dragged === target) return;
         const without = orderedTopDown.filter(element => element !== dragged);
         const targetIndex = without.indexOf(target);
-        without.splice(targetIndex, 0, dragged);
+        without.splice(targetIndex + (placement === 'after' ? 1 : 0), 0, dragged);
         without.reverse().forEach((element, index) => {
             element.style.zIndex = String(index + 1);
         });
         commitChange();
+    }
+
+    function clearLayerDragFeedback() {
+        layersList?.querySelectorAll('.is-dragging, .is-drop-before, .is-drop-after').forEach(row => {
+            row.classList.remove('is-dragging', 'is-drop-before', 'is-drop-after');
+        });
+    }
+
+    function updateLayerDropFeedback(row, clientY) {
+        if (!row || row.classList.contains('is-dragging')) return null;
+        layersList.querySelectorAll('.is-drop-before, .is-drop-after').forEach(item => {
+            if (item !== row) item.classList.remove('is-drop-before', 'is-drop-after');
+        });
+        const placement = clientY < row.getBoundingClientRect().top + row.offsetHeight / 2 ? 'before' : 'after';
+        row.classList.toggle('is-drop-before', placement === 'before');
+        row.classList.toggle('is-drop-after', placement === 'after');
+        return placement;
     }
 
     function moveBy(element, dx, dy) {
@@ -879,9 +1428,20 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
             selected.style.rotate = `${value}deg`;
         }
         if (property === 'zIndex') selected.style.zIndex = String(Math.max(0, Math.round(value)));
+        if (property === 'opacity') selected.style.opacity = String(Math.max(0, Math.min(100, value)) / 100);
+        if (property === 'borderRadius') selected.style.borderRadius = `${Math.max(0, value)}px`;
+        if (property === 'borderWidth') {
+            selected.style.borderStyle = value > 0 ? (getComputedStyle(selected).borderStyle === 'none' ? 'solid' : getComputedStyle(selected).borderStyle) : 'none';
+            selected.style.borderWidth = `${Math.max(0, value)}px`;
+        }
+        if (property === 'padding') selected.style.padding = `${Math.max(0, value)}px`;
         if (property === 'fontSize') {
             const editable = selectedEditable();
             if (editable) editable.style.fontSize = `${Math.max(5, value)}px`;
+        }
+        if (property === 'lineHeight') {
+            const editable = selectedEditable();
+            if (editable) editable.style.lineHeight = String(Math.max(.6, Math.min(4, value)));
         }
         commitChange();
     }
@@ -889,6 +1449,16 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
     function applyTextStyle(action) {
         const editable = selectedEditable();
         if (!editable) return;
+        if (action === 'format-painter') {
+            if (formatPainter) {
+                setFormatPainter(null);
+                onStatus?.('已取消格式刷');
+            } else if (selected) {
+                setFormatPainter(captureFormat(selected));
+                onStatus?.('格式刷已启用，请点击目标组件');
+            }
+            return;
+        }
         const style = getComputedStyle(editable);
         if (action === 'bold') editable.style.fontWeight = Number(style.fontWeight) >= 600 || style.fontWeight === 'bold' ? '400' : '700';
         if (action === 'italic') editable.style.fontStyle = style.fontStyle === 'italic' ? 'normal' : 'italic';
@@ -998,14 +1568,34 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
     function handlePointerDown(event) {
         if (event.button !== 0 || event.target.closest('.moveable-control-box, .ppt-component-toolbar')) return;
         if (event.target.closest('[contenteditable="true"], .ppt-editing')) return;
-        const component = resolveComponent(event.target);
-        if (!component || component.classList.contains('ppt-locked') || component.classList.contains('ppt-editing')) return;
+        const selectedContainer = getSelectedElements().find(element =>
+            element === event.target || element.contains(event.target)
+        );
+        const component = selectedContainer || resolveComponent(event.target);
+        if (!component || component.classList.contains('ppt-locked') || component.classList.contains('ppt-editing')) {
+            const slide = event.target.closest('.slide-wrap');
+            if (slide || event.target.closest('#deckWrapper')) {
+                if (!event.shiftKey) clearSelection();
+                lassoDrag = {
+                    pointerId: event.pointerId,
+                    startX: event.clientX,
+                    startY: event.clientY,
+                    slide: slide || deck.querySelector('.slide-wrap.is-active') || deck.querySelector('.slide-wrap'),
+                    box: null
+                };
+                if (lassoDrag.slide) lassoDrag.slide.setPointerCapture?.(event.pointerId);
+            }
+            return;
+        }
         if (event.shiftKey) {
             window.getSelection()?.removeAllRanges();
             event.preventDefault();
-            return;
         }
-        if (!selectedSet.has(component)) select(component, event.shiftKey);
+        const wasSelected = selectedSet.has(component);
+        if (!wasSelected) {
+            select(component, event.shiftKey);
+        }
+        
         if (isLayoutBoundInner(component)) return;
         const movable = getSelectedElements().filter(element => !element.classList.contains('ppt-locked'));
         directDrag = {
@@ -1018,12 +1608,44 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
                 top: numberStyle(element, 'top')
             })),
             bounds: selectionBounds(movable),
-            moved: false
+            moved: false,
+            componentClicked: component,
+            wasSelected: wasSelected,
+            shiftKey: event.shiftKey
         };
         component.setPointerCapture?.(event.pointerId);
+        window.getSelection()?.removeAllRanges();
+        if (component.matches('table, .agenda-table')) event.preventDefault();
     }
 
     function handlePointerMove(event) {
+        if (lassoDrag && event.pointerId === lassoDrag.pointerId) {
+            let dx = event.clientX - lassoDrag.startX;
+            let dy = event.clientY - lassoDrag.startY;
+            if (!lassoDrag.box && Math.hypot(dx, dy) > 3) {
+                lassoDrag.box = document.createElement('div');
+                lassoDrag.box.className = 'ppt-lasso-box';
+                lassoDrag.box.style.position = 'fixed';
+                lassoDrag.box.style.border = '1px solid #3b82f6';
+                lassoDrag.box.style.backgroundColor = 'rgba(59, 130, 246, 0.15)';
+                lassoDrag.box.style.zIndex = '999999';
+                lassoDrag.box.style.pointerEvents = 'none';
+                document.body.appendChild(lassoDrag.box);
+            }
+            if (lassoDrag.box) {
+                const left = Math.min(event.clientX, lassoDrag.startX);
+                const top = Math.min(event.clientY, lassoDrag.startY);
+                const width = Math.abs(dx);
+                const height = Math.abs(dy);
+                lassoDrag.box.style.left = `${left}px`;
+                lassoDrag.box.style.top = `${top}px`;
+                lassoDrag.box.style.width = `${width}px`;
+                lassoDrag.box.style.height = `${height}px`;
+            }
+            event.preventDefault();
+            return;
+        }
+
         if (!directDrag || event.pointerId !== directDrag.pointerId) return;
         let dx = (event.clientX - directDrag.startX) / getScale();
         let dy = (event.clientY - directDrag.startY) / getScale();
@@ -1041,11 +1663,56 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
     }
 
     function handlePointerUp(event) {
+        if (lassoDrag && event.pointerId === lassoDrag.pointerId) {
+            if (lassoDrag.box) {
+                const lassoRect = lassoDrag.box.getBoundingClientRect();
+                const elements = Array.from(lassoDrag.slide?.querySelectorAll('.ppt-element') || []);
+                elements.forEach(el => {
+                    if (el.classList.contains('ppt-locked')) return;
+                    // parent components should be selected if we intersect them.
+                    // to prevent inner elements from being lasso'd separately when not intended, we can just allow everything for now.
+                    if (el.classList.contains('ppt-inner-element') && el.closest('.table, table, .agenda-table')) return; 
+                    
+                    const rect = el.getBoundingClientRect();
+                    const intersect = !(rect.right < lassoRect.left || 
+                                        rect.left > lassoRect.right || 
+                                        rect.bottom < lassoRect.top || 
+                                        rect.top > lassoRect.bottom);
+                    if (intersect) {
+                        select(el, true); // true = additive selection
+                    }
+                });
+                lassoDrag.box.remove();
+                lassoDrag.box = null;
+            }
+            if (lassoDrag.slide) lassoDrag.slide.releasePointerCapture?.(event.pointerId);
+            lassoDrag = null;
+            return;
+        }
+
         if (!directDrag || event.pointerId !== directDrag.pointerId) return;
         const changed = directDrag.moved;
+        const component = directDrag.componentClicked;
+        const wasSelected = directDrag.wasSelected;
+        const shiftKey = directDrag.shiftKey;
+        
         directDrag = null;
         hideGuides();
-        suppressClick = changed;
+        suppressClick = true; // Selection is handled here, suppress the native click event.
+        
+        if (!changed && component) {
+            if (shiftKey && wasSelected) {
+                // Shift-click an already selected item to deselect it
+                selectedSet.delete(component);
+                if (selected === component) selected = getSelectedElements().at(-1) || null;
+                updateSelectionVisuals();
+                onSelectionChange?.(getSelectedElements());
+            } else if (!shiftKey && wasSelected && selectedSet.size > 1) {
+                // Normal click on an item that was part of a multi-selection clears the rest
+                select(component, false);
+            }
+        }
+        
         if (changed) commitChange();
     }
 
@@ -1159,9 +1826,29 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
             return;
         }
         const command = event.ctrlKey || event.metaKey;
+        if (command && event.shiftKey && event.key.toLowerCase() === 'g') {
+            event.preventDefault();
+            ungroupSelected();
+            return;
+        }
+        if (command && event.key.toLowerCase() === 'g') {
+            event.preventDefault();
+            groupSelected();
+            return;
+        }
+        if (command && event.key.toLowerCase() === 'a') {
+            event.preventDefault();
+            selectAllComponents();
+            return;
+        }
         if (command && event.key.toLowerCase() === 'c' && selectedSet.size) {
             event.preventDefault();
             copySelected();
+            return;
+        }
+        if (command && event.key.toLowerCase() === 'x' && selectedSet.size) {
+            event.preventDefault();
+            cutSelected();
             return;
         }
         if (command && event.key.toLowerCase() === 'v' && clipboard.length) {
@@ -1180,6 +1867,11 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
             return;
         }
         if (event.key === 'Escape') {
+            if (formatPainter) {
+                setFormatPainter(null);
+                onStatus?.('已取消格式刷');
+                return;
+            }
             clearSelection();
             return;
         }
@@ -1252,15 +1944,30 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
         if (!row) return;
         event.dataTransfer.setData('text/plain', row.dataset.layerId);
         event.dataTransfer.effectAllowed = 'move';
+        row.classList.add('is-dragging');
+        requestAnimationFrame(() => {
+            if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+        });
     });
     layersList?.addEventListener('dragover', event => {
-        if (event.target.closest('.layer-row')) event.preventDefault();
+        const row = event.target.closest('.layer-row');
+        if (!row) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+        updateLayerDropFeedback(row, event.clientY);
     });
     layersList?.addEventListener('drop', event => {
         const row = event.target.closest('.layer-row');
         if (!row) return;
         event.preventDefault();
-        reorderLayer(event.dataTransfer.getData('text/plain'), row.dataset.layerId);
+        const placement = row.classList.contains('is-drop-after') ? 'after' : 'before';
+        const draggedId = event.dataTransfer.getData('text/plain');
+        clearLayerDragFeedback();
+        reorderLayer(draggedId, row.dataset.layerId, placement);
+    });
+    layersList?.addEventListener('dragend', clearLayerDragFeedback);
+    layersList?.addEventListener('dragleave', event => {
+        if (!layersList.contains(event.relatedTarget)) clearLayerDragFeedback();
     });
     layersList?.addEventListener('pointerdown', event => {
         const handle = event.target.closest('.layer-drag-handle');
@@ -1268,21 +1975,33 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
         if (!row) return;
         layerPointerDrag = {
             pointerId: event.pointerId,
-            layerId: row.dataset.layerId
+            layerId: row.dataset.layerId,
+            targetId: null,
+            placement: 'before'
         };
+        row.classList.add('is-dragging');
         handle.setPointerCapture?.(event.pointerId);
+        event.preventDefault();
+    });
+    layersList?.addEventListener('pointermove', event => {
+        if (!layerPointerDrag || event.pointerId !== layerPointerDrag.pointerId) return;
+        const targetRow = document.elementFromPoint(event.clientX, event.clientY)?.closest('.layer-row');
+        if (!targetRow || targetRow.dataset.layerId === layerPointerDrag.layerId) return;
+        layerPointerDrag.targetId = targetRow.dataset.layerId;
+        layerPointerDrag.placement = updateLayerDropFeedback(targetRow, event.clientY) || 'before';
         event.preventDefault();
     });
     layersList?.addEventListener('pointerup', event => {
         if (!layerPointerDrag || event.pointerId !== layerPointerDrag.pointerId) return;
-        const targetRow = document.elementFromPoint(event.clientX, event.clientY)?.closest('.layer-row');
-        const draggedId = layerPointerDrag.layerId;
+        const { layerId, targetId, placement } = layerPointerDrag;
         layerPointerDrag = null;
-        if (targetRow) reorderLayer(draggedId, targetRow.dataset.layerId);
+        clearLayerDragFeedback();
+        if (targetId) reorderLayer(layerId, targetId, placement);
         event.preventDefault();
     });
     layersList?.addEventListener('pointercancel', () => {
         layerPointerDrag = null;
+        clearLayerDragFeedback();
     });
     document.querySelectorAll('.layers-align-actions button').forEach(button => {
         button.addEventListener('click', () => alignSelection(button.dataset.align));
@@ -1291,10 +2010,17 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
         const property = event.target.dataset.property;
         if (!property) return;
         if (property === 'objectFit') applyObjectFit(event.target.value);
+        if (property === 'fontFamily') {
+            const editable = selectedEditable();
+            if (editable) {
+                editable.style.fontFamily = event.target.value;
+                commitChange();
+            }
+        }
     });
     propertiesPanel?.addEventListener('input', event => {
         const property = event.target.dataset.property;
-        if (['x', 'y', 'width', 'height', 'rotate', 'zIndex', 'fontSize'].includes(property)) {
+        if (['x', 'y', 'width', 'height', 'rotate', 'zIndex', 'opacity', 'borderRadius', 'borderWidth', 'padding', 'fontSize', 'lineHeight'].includes(property)) {
             applyNumericProperty(property, event.target.value);
         }
         if (property === 'color') {
@@ -1306,6 +2032,10 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
         }
         if (property === 'backgroundColor' && selected) {
             selected.style.background = event.target.value;
+            commitChange();
+        }
+        if (property === 'borderColor' && selected) {
+            selected.style.borderColor = event.target.value;
             commitChange();
         }
     });
@@ -1331,7 +2061,24 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus }) {
         clearSelection,
         refreshControls: refreshMoveable,
         refreshLayers: renderLayers,
-        addElement
+        addElement,
+        getSelectionContext,
+        getPageContext,
+        applyAiActions,
+        auditPageLayout,
+        autoFixPageLayout,
+        unifyDeckStyle,
+        copyComponents: copySelected,
+        cutComponents: cutSelected,
+        pasteComponents: pasteClipboard,
+        duplicateComponents: duplicateSelected,
+        deleteComponents: deleteSelected,
+        groupComponents: groupSelected,
+        ungroupComponents: ungroupSelected,
+        bringToFront,
+        toggleLock,
+        isComponentSelected: (component) => selectedSet.has(component),
+        selectComponent: select
     };
 }
 
