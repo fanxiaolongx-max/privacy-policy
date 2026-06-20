@@ -1,8 +1,8 @@
 // js/app.js
-import * as store from './store.js?v=20260618-23';
-import * as editor from './editor.js?v=20260618-23';
-import { createComponentEditor } from './component-editor.js';
-import { initContextMenu } from './context-menu.js';
+import * as store from './store.js?v=20260620-25';
+import * as editor from './editor.js?v=20260620-25';
+import { createComponentEditor } from './component-editor.js?v=20260620-25';
+import { initContextMenu } from './context-menu.js?v=20260620-25';
 import { defaultSlides } from './default-slides.js';
 import { renderSlide, slideToJson } from './slide-factory.js';
 
@@ -17,7 +17,7 @@ function updateThumbScale() {
     const item = thumbDeck.querySelector('.thumb-item');
     const num = item?.querySelector('.thumb-num');
     const shell = item?.querySelector('.thumb-shell');
-    if (!item || !num || !shell) return;
+    if (!item || !num || !shell || item.clientWidth === 0) return;
 
     const itemStyle = getComputedStyle(item);
     const shellStyle = getComputedStyle(shell);
@@ -271,6 +271,7 @@ function setActiveSlide(index) {
     const wraps = getSlideWraps();
     if (!wraps.length) return;
     componentEditor?.clearSelection();
+    window.getSelection()?.removeAllRanges();
     activeSlideIndex = Math.max(0, Math.min(index, wraps.length - 1));
     selectedSlideIndices.clear();
     selectedSlideIndices.add(activeSlideIndex);
@@ -615,6 +616,9 @@ async function exitPresentation() {
         applyCanvasPan();
     }
     presentationViewState = null;
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => updateThumbScale());
+    });
 }
 
 function changePresentationSlide(direction) {
@@ -706,7 +710,13 @@ let savedEditableForColor = null;
 
 document.addEventListener('selectionchange', () => {
     const selection = window.getSelection();
-    if (!selection.rangeCount) return;
+    if (!selection.rangeCount) {
+        if (rtToolbar) {
+            rtToolbar.classList.add('hidden');
+            document.querySelectorAll('.rt-dropdown-menu').forEach(m => m.classList.add('hidden'));
+        }
+        return;
+    }
     const range = selection.getRangeAt(0);
     const container = range.commonAncestorContainer;
     const editable = container.nodeType === 3 ? container.parentElement.closest('.editable') : container.closest('.editable');
@@ -980,6 +990,20 @@ function initLayersPropertiesResizer() {
         if (currentHeight) applyHeight(currentHeight);
     });
 }
+
+
+document.getElementById('exportPptxBtn')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> 导出中...';
+    
+    const success = await editor.exportPptx(deck, setStatus);
+    
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
+    setStatus(success ? 'PPT 已导出' : '导出失败');
+});
 
 document.getElementById('exportPdfBtn').addEventListener('click', async (e) => {
     const btn = e.currentTarget;
