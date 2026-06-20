@@ -427,17 +427,10 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus, onSe
     function positionToolbar() {
         const bar = ensureToolbar();
         const elements = getSelectedElements();
-        if (!elements.length) {
+        if (!elements.length || editingTarget) {
             bar.classList.remove('is-visible');
             return;
         }
-        const rects = elements.map(element => element.getBoundingClientRect());
-        const leftEdge = Math.min(...rects.map(rect => rect.left));
-        const topEdge = Math.min(...rects.map(rect => rect.top));
-        const top = Math.max(8, topEdge - bar.offsetHeight - 8);
-        const left = Math.max(8, Math.min(window.innerWidth - bar.offsetWidth - 8, leftEdge));
-        bar.style.top = `${top}px`;
-        bar.style.left = `${left}px`;
         bar.querySelector('.ppt-component-name').textContent = elements.length > 1
             ? `已选 ${elements.length} 个`
             : selected.dataset.pptElementType || componentName(selected);
@@ -446,7 +439,17 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus, onSe
         bar.querySelector('[data-action="lock"] i').className = elements.every(element => element.classList.contains('ppt-locked'))
             ? 'ph-bold ph-lock-key-open'
             : 'ph-bold ph-lock-key';
+        
+        // Add class before measuring so offsetHeight is not 0
         bar.classList.add('is-visible');
+        
+        const rects = elements.map(element => element.getBoundingClientRect());
+        const leftEdge = Math.min(...rects.map(rect => rect.left));
+        const topEdge = Math.min(...rects.map(rect => rect.top));
+        const top = Math.max(8, topEdge - bar.offsetHeight - 8);
+        const left = Math.max(8, Math.min(window.innerWidth - bar.offsetWidth - 8, leftEdge));
+        bar.style.top = `${top}px`;
+        bar.style.left = `${left}px`;
     }
 
     function rgbToHex(color) {
@@ -631,6 +634,7 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus, onSe
             moveable.rotatable = false;
             refreshMoveable();
         }
+        positionToolbar();
     }
 
     function stopTextEditing() {
@@ -639,6 +643,7 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus, onSe
         deck.querySelectorAll('[data-ppt-editable="true"][contenteditable="true"]').forEach(editable => {
             editable.setAttribute('contenteditable', 'false');
         });
+        window.getSelection()?.removeAllRanges();
         editingComponent = null;
         editingTarget = null;
         if (selected && moveable) {
@@ -648,6 +653,7 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus, onSe
             moveable.rotatable = enabled;
             refreshMoveable();
         }
+        positionToolbar();
     }
 
     function deleteSelected() {
