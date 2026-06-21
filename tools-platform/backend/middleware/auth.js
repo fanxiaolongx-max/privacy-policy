@@ -13,7 +13,7 @@ async function checkAuth(req, res, next) {
     }
 
     const token = authHeader.split(' ')[1];
-    
+
     try {
         const session = await authSessionsRepo.getSession(token);
 
@@ -44,6 +44,36 @@ function requireAdmin(req, res, next) {
     }
 }
 
+async function checkHtmlAuth(req, res, next) {
+    let token = null;
+    const cookieHeader = req.headers.cookie;
+    if (cookieHeader) {
+        const cookies = cookieHeader.split(';');
+        for (let c of cookies) {
+            const [k, v] = c.trim().split('=');
+            if (k === 'tools_token') {
+                token = v;
+                break;
+            }
+        }
+    }
+
+    if (!token) return res.redirect('/login.html');
+
+    try {
+        const session = await authSessionsRepo.getSession(token);
+        if (!session || session.expiresAt < Date.now()) {
+            if (session) await authSessionsRepo.deleteSession(token);
+            return res.redirect('/login.html');
+        }
+        req.user = session.user;
+        next();
+    } catch (err) {
+        console.error('HTML Auth check error:', err);
+        return res.redirect('/login.html');
+    }
+}
+
 function hashPassword(password) {
     return crypto.createHash('sha256').update(password + SALT).digest('hex');
 }
@@ -51,5 +81,6 @@ function hashPassword(password) {
 module.exports = {
     checkAuth,
     requireAdmin,
+    checkHtmlAuth,
     hashPassword
 };

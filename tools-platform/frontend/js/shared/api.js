@@ -95,6 +95,9 @@ function getAuthHeaders() {
     const token = localStorage.getItem('tools_token');
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
+        if (typeof document !== 'undefined' && !document.cookie.includes('tools_token=')) {
+            document.cookie = `tools_token=${token}; path=/; max-age=${7 * 24 * 60 * 60}`;
+        }
     }
     return headers;
 }
@@ -105,6 +108,9 @@ async function handleResponse(res, requestMeta = {}) {
         localStorage.removeItem('tools_token');
         localStorage.removeItem('tools_user');
         localStorage.removeItem('tools_role');
+        if (typeof document !== 'undefined') {
+            document.cookie = 'tools_token=; path=/; max-age=0';
+        }
         if (window.location.pathname !== '/login.html') {
             const currentParams = new URLSearchParams(window.location.search);
             const loginParams = new URLSearchParams();

@@ -29,7 +29,7 @@ const navSettingsRoutes = require('./routes/nav-settings');
 const aiSettingsRoutes = require('./routes/ai-settings');
 const globalBackupRoutes = require('./routes/global-backup');
 const remoteBackupSyncRepo = require('./models/remote-backup-sync-repository');
-const { checkAuth, requireAdmin } = require('./middleware/auth');
+const { checkAuth, requireAdmin, checkHtmlAuth } = require('./middleware/auth');
 
 const app = express();
 
@@ -163,9 +163,10 @@ app.get('/terms', (req, res) => {
 app.get('/frt', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/pages/frt.html'));
 });
-app.get('/tools/:slug', (req, res) => {
+app.get('/tools/:slug', checkHtmlAuth, (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/pages/custom-tool.html'));
 });
+app.use('/custom-tools', checkHtmlAuth);
 app.get('/custom-tools/:slug/index.html', (req, res) => {
     const tool = customToolsRepo.getTool(req.params.slug);
     const filePath = customToolsRepo.getToolFilePath(req.params.slug);

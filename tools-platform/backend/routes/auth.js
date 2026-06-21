@@ -22,6 +22,7 @@ router.post('/login', async (req, res) => {
         const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000;
         await authSessionsRepo.saveSession(token, username, user.role, expiresAt);
         
+        res.cookie('tools_token', token, { maxAge: 7 * 24 * 60 * 60 * 1000, path: '/' });
         res.json({ success: true, token, role: user.role, username });
     } catch (err) {
         console.error('Login error:', err);
@@ -34,6 +35,7 @@ router.post('/logout', checkAuth, async (req, res) => {
     try {
         const token = req.headers.authorization.split(' ')[1];
         await authSessionsRepo.deleteSession(token);
+        res.clearCookie('tools_token', { path: '/' });
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: '注销失败' });
