@@ -7,102 +7,221 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>登录 - Tools Platform</title>
     <style>
-        body {
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+
+        /* 清除默认边距，全屏铺满 */
+        body,
+        html {
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: #f4f6f8;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #050810;
+            /* 深空蓝紫底色 */
+        }
+
+        /* 动画画布 */
+        #spaceCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* 登录容器，浮在画布上 */
+        .login-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        /* 毛玻璃面板 Glassmorphism */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+            padding: 50px 40px;
+            width: 440px;
+            text-align: center;
+            color: white;
+            transition: transform 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        /* 标题排版 */
+        .glass-panel h2 {
+            margin: 0 0 8px;
+            font-weight: 600;
+            font-size: 26px;
+            letter-spacing: 1px;
+            background: linear-gradient(to right, #fff, #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            gap: 10px;
         }
 
-        .login-box {
-            background: #fff;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            width: 360px;
-            text-align: center;
+        .version-badge {
+            font-size: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 8px;
+            border-radius: 10px;
+            color: #a5b4fc;
+            font-weight: normal;
         }
 
-        .login-box h2 {
-            margin-top: 0;
-            color: #1a237e;
-            margin-bottom: 30px;
+        .glass-panel .subtitle {
+            margin: 0 0 25px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.4);
+            letter-spacing: 1px;
         }
 
+        /* 表单输入框 */
         .input-group {
             margin-bottom: 20px;
             text-align: left;
+            position: relative;
         }
 
         .input-group label {
             display: block;
             margin-bottom: 8px;
-            color: #555;
-            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
             font-weight: 600;
+            letter-spacing: 1px;
         }
 
         .input-group input {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 16px;
-            box-sizing: border-box;
+            padding: 14px 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            font-size: 15px;
             outline: none;
-            transition: border-color 0.2s;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+            letter-spacing: 1px;
+        }
+
+        .input-group input::placeholder {
+            color: rgba(255, 255, 255, 0.2);
         }
 
         .input-group input:focus {
-            border-color: #3f51b5;
+            border-color: rgba(99, 102, 241, 0.6);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
         }
 
-        .btn-login {
+        /* 渐变按钮 */
+        button.btn-login {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 2px;
+            margin-top: 5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button.btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.5);
+            background: linear-gradient(135deg, #6366f1 0%, #60a5fa 100%);
+        }
+
+        button.btn-login:active {
+            transform: translateY(0);
+        }
+
+        /* 辅助按钮 */
+        button.btn-play-game {
             width: 100%;
             padding: 12px;
-            background: #3f51b5;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: bold;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.3s ease;
+            margin-top: 15px;
         }
 
-        .btn-login:hover {
-            background: #283593;
+        button.btn-play-game:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(165, 180, 252, 0.5);
+            color: rgba(165, 180, 252, 1);
         }
 
         #error-msg {
-            color: #d32f2f;
-            font-size: 14px;
+            color: #ef4444;
+            font-size: 13px;
             margin-top: 15px;
             min-height: 20px;
         }
 
         .footer-links {
-            position: absolute;
-            bottom: 24px;
-            width: 100%;
+            margin-top: 40px;
             text-align: center;
             font-size: 13px;
         }
 
         .footer-links a {
-            color: #64748b;
+            color: rgba(255, 255, 255, 0.4);
             text-decoration: none;
             margin: 0 10px;
             transition: color 0.2s;
         }
 
         .footer-links a:hover {
-            color: #3f51b5;
-            text-decoration: underline;
+            color: #a5b4fc;
+        }
+
+        /* 加载小动画 */
+        .loader {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         /* --- Mini Game Styles --- */
@@ -128,30 +247,6 @@
             height: 100%;
         }
 
-        .btn-play-game {
-            width: 100%;
-            margin-top: 15px;
-            padding: 12px;
-            background: transparent;
-            color: #64748b;
-            border: 1px dashed #cbd5e1;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .btn-play-game:hover {
-            border-color: #3f51b5;
-            color: #3f51b5;
-            background: rgba(63, 81, 181, 0.05);
-        }
-
         .btn-close-game {
             position: absolute;
             top: 20px;
@@ -160,7 +255,7 @@
             color: #fff;
             border: 1px solid rgba(255, 255, 255, 0.2);
             padding: 8px 16px;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
             z-index: 10000;
             font-size: 14px;
@@ -175,27 +270,32 @@
 </head>
 
 <body>
-    <div class="login-box">
-        <h2>🛠️ Tools Platform 登录 <span
-                style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v1.0.10</span></h2>
-        <div style="font-size: 13px; color: #94a3b8; margin-top: -20px; margin-bottom: 25px;">默认账号：admin / admin123</div>
-        <div class="input-group">
-            <label>用户名</label>
-            <input type="text" id="username" placeholder="请输入账号" onkeydown="handleEnter(event)">
-        </div>
-        <div class="input-group">
-            <label>密码</label>
-            <input type="password" id="password" placeholder="请输入密码" onkeydown="handleEnter(event)">
-        </div>
-        <button class="btn-login" onclick="doLogin()">登 录</button>
-        <button class="btn-play-game" onclick="toggleGame(true)">♨️ 休息一下</button>
-        <div id="error-msg"></div>
-    </div>
+    <canvas id="spaceCanvas"></canvas>
 
-    <div class="footer-links">
-        <a href="/privacy" target="_blank">隐私政策</a>
-        <span style="color:#cbd5e1;">|</span>
-        <a href="/terms" target="_blank">服务条款</a>
+    <div class="login-wrapper">
+        <div class="glass-panel" id="loginPanel">
+            <h2>🛠️ Tools Platform <span class="version-badge">v1.0.10</span></h2>
+            <div class="subtitle">默认账号：admin / admin123</div>
+
+            <div class="input-group">
+                <label>用户名</label>
+                <input type="text" id="username" placeholder="请输入账号" onkeydown="handleEnter(event)">
+            </div>
+            <div class="input-group">
+                <label>密码</label>
+                <input type="password" id="password" placeholder="请输入密码" onkeydown="handleEnter(event)">
+            </div>
+
+            <button class="btn-login" id="loginBtn" onclick="doLogin()">登 录</button>
+            <button class="btn-play-game" onclick="toggleGame(true)">♨️ 休息一下</button>
+            <div id="error-msg"></div>
+        </div>
+
+        <div class="footer-links">
+            <a href="/privacy" target="_blank">隐私政策</a>
+            <span style="color:rgba(255,255,255,0.2);">|</span>
+            <a href="/terms" target="_blank">服务条款</a>
+        </div>
     </div>
 
     <!-- Mini Game Container -->
@@ -206,16 +306,96 @@
 
     <script src="/js/shared/api.js?v=20260612-02"></script>
     <script>
+        // --- 星空动画逻辑 ---
+        const canvas = document.getElementById('spaceCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height;
+        let stars = [];
+
+        const numStars = 800;
+        const baseSpeed = 2.5;
+        const warpSpeed = 45;
+        let currentSpeed = baseSpeed;
+        let targetSpeed = baseSpeed;
+        const fov = 400;
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Star {
+            constructor() {
+                this.reset(true);
+            }
+            reset(randomZ = false) {
+                this.x = (Math.random() - 0.5) * width * 2;
+                this.y = (Math.random() - 0.5) * height * 2;
+                this.z = randomZ ? Math.random() * width + 100 : width + 100;
+                this.pz = this.z;
+            }
+            update() {
+                this.pz = this.z;
+                this.z -= currentSpeed;
+                if (this.z < 1) {
+                    this.reset(false);
+                    this.pz = this.z;
+                }
+            }
+            draw() {
+                const sx = (this.x / this.z) * fov + width / 2;
+                const sy = (this.y / this.z) * fov + height / 2;
+                const px = (this.x / this.pz) * fov + width / 2;
+                const py = (this.y / this.pz) * fov + height / 2;
+
+                const distanceRatio = 1 - (this.z / width);
+                const opacity = Math.max(0.1, distanceRatio);
+                const lineWidth = Math.max(0.5, distanceRatio * (currentSpeed > 10 ? 4 : 2));
+
+                ctx.beginPath();
+                ctx.moveTo(px, py);
+                ctx.lineTo(sx, sy);
+                ctx.strokeStyle = `rgba(165, 180, 252, ${opacity})`;
+                ctx.lineWidth = lineWidth;
+                ctx.stroke();
+            }
+        }
+
+        for (let i = 0; i < numStars; i++) {
+            stars.push(new Star());
+        }
+
+        function animate() {
+            currentSpeed += (targetSpeed - currentSpeed) * 0.05;
+            ctx.fillStyle = 'rgba(5, 8, 16, 0.4)';
+            ctx.fillRect(0, 0, width, height);
+
+            stars.forEach(star => {
+                star.update();
+                star.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // --- 业务逻辑 ---
         function toggleGame(show) {
             const wrapper = document.getElementById('gameWrapper');
             const iframe = document.getElementById('gameIframe');
             if (show) {
                 wrapper.classList.add('active');
-                if (!iframe.getAttribute('src')) {
-                    iframe.setAttribute('src', '/knight-dreams/index.html');
-                }
+                // 每次打开都重新加载游戏
+                iframe.setAttribute('src', '/knight-dreams/index.html');
             } else {
                 wrapper.classList.remove('active');
+                // 退出时清空 iframe 地址，彻底销毁游戏进程和声音
+                iframe.setAttribute('src', '');
             }
         }
 
@@ -227,16 +407,25 @@
             const u = document.getElementById('username').value.trim();
             const p = document.getElementById('password').value;
             const errDiv = document.getElementById('error-msg');
+            const btn = document.getElementById('loginBtn');
+            const panel = document.getElementById('loginPanel');
 
             if (!u || !p) {
                 errDiv.textContent = '用户名和密码不能为空';
                 return;
             }
 
-            errDiv.textContent = '登录中...';
+            errDiv.textContent = '';
+
+            // 触发跃迁动画
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '正在登录 <span class="loader"></span>';
+            btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+            btn.style.boxShadow = '0 10px 25px -5px rgba(16, 185, 129, 0.5)';
+            panel.style.transform = 'scale(0.95)';
+            targetSpeed = warpSpeed;
 
             try {
-                // api.js uses getAuthHeaders which throws us back here on 401. But login doesn't need auth header.
                 const res = await fetch('/api/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -252,10 +441,21 @@
                 localStorage.setItem('tools_user', data.username);
                 localStorage.setItem('tools_role', data.role);
 
-                // Redirect to dashboard (index)
-                window.location.href = '/';
+                // 稍微等待动画展示一下爽感
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 800);
+
             } catch (e) {
-                errDiv.textContent = e.message;
+                // 恢复原状
+                setTimeout(() => {
+                    targetSpeed = baseSpeed;
+                    btn.innerHTML = '登 录';
+                    btn.style.background = '';
+                    btn.style.boxShadow = '';
+                    panel.style.transform = 'scale(1)';
+                    errDiv.textContent = e.message;
+                }, 500);
             }
         }
     </script>
