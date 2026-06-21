@@ -1805,6 +1805,7 @@ window.doLogout = async function () {
     localStorage.removeItem('tools_token');
     localStorage.removeItem('tools_user');
     localStorage.removeItem('tools_role');
+    document.cookie = 'tools_token=; path=/; max-age=0';
     window.location.href = '/login.html';
 };
 
