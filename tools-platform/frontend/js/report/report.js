@@ -2905,44 +2905,57 @@ window.addI18nEntry = async function() {
         return;
     }
     
-    if (_editingZh) {
-        if (_editingZh !== zh) {
-            if (_editI18nMap[zh] !== undefined) {
-                showToast(rt('report.toast.i18nNameExists'), 'error');
-                return;
-            }
-            if (confirm(`您修改了指标的中文名称（从 [${_editingZh}] 改为 [${zh}]）。\n是否要全局同步重命名该指标？（这将自动更新历史快照、分组、考核配置中的名称）`)) {
-                try {
-                    await API.post('/api/sla/rename-metric', { oldName: _editingZh, newName: zh, newEn: en });
-                    showToast(rt('report.toast.renameSuccess'), 'success');
-                    setTimeout(() => window.location.reload(), 1500);
-                    return; // Prevent further logic to avoid race condition with manual save
-                } catch(e) {
-                    showToast(rt('report.toast.renameFailed'), 'error');
-                    console.error(e);
+    const previousMap = { ..._editI18nMap };
+    try {
+        if (_editingZh) {
+            if (_editingZh !== zh) {
+                if (_editI18nMap[zh] !== undefined) {
+                    showToast(rt('report.toast.i18nNameExists'), 'error');
                     return;
                 }
+                if (confirm(`您修改了指标的中文名称（从 [${_editingZh}] 改为 [${zh}]）。\n是否要全局同步重命名该指标？（这将自动更新历史快照、分组、考核配置中的名称）`)) {
+                    try {
+                        await API.post('/api/sla/rename-metric', { oldName: _editingZh, newName: zh, newEn: en });
+                        showToast(rt('report.toast.renameSuccess'), 'success');
+                        setTimeout(() => window.location.reload(), 1500);
+                        return; // Prevent further logic to avoid race condition with manual save
+                    } catch(e) {
+                        showToast(rt('report.toast.renameFailed'), 'error');
+                        console.error(e);
+                        return;
+                    }
+                } else {
+                    delete _editI18nMap[_editingZh];
+                    _editI18nMap[zh] = en;
+                }
             } else {
-                // Only update local map
-                delete _editI18nMap[_editingZh];
                 _editI18nMap[zh] = en;
             }
         } else {
+            if (_editI18nMap[zh] !== undefined) {
+                if (!confirm(`指标 [${zh}] 已存在，是否覆盖其英文翻译？`)) {
+                    return;
+                }
+            }
             _editI18nMap[zh] = en;
         }
-    } else {
-        if (_editI18nMap[zh] !== undefined) {
-            if (!confirm(`指标 [${zh}] 已存在，是否覆盖其英文翻译？`)) {
-                return;
-            }
-        }
-        _editI18nMap[zh] = en;
+
+        // “添加 / 修改”即刻持久化，避免用户关闭弹窗后丢失刚添加的翻译。
+        await API.put('/api/sla/prefs/i18nMap', _editI18nMap);
+        if (!globalConfig.prefs) globalConfig.prefs = {};
+        globalConfig.prefs.i18nMap = { ..._editI18nMap };
+        i18nMap = { ..._editI18nMap };
+
+        _editingZh = null;
+        document.getElementById('i18n-new-zh').value = '';
+        document.getElementById('i18n-new-en').value = '';
+        renderI18nList();
+        showToast(rt('report.toast.i18nSaved'), 'success');
+    } catch (e) {
+        _editI18nMap = previousMap;
+        showToast(rt('report.toast.saveFailed'), 'error');
+        console.error(e);
     }
-    
-    _editingZh = null;
-    document.getElementById('i18n-new-zh').value = '';
-    document.getElementById('i18n-new-en').value = '';
-    renderI18nList();
 };
 
 window.deleteI18nEntry = function(zh) {
@@ -2956,11 +2969,8 @@ window.saveI18nMap = async function() {
     try {
         if (!globalConfig.prefs) globalConfig.prefs = {};
         globalConfig.prefs.i18nMap = _editI18nMap;
-        
-        await API.post('/api/sla/config', { 
-            targets: globalConfig.targets, 
-            prefs: globalConfig.prefs 
-        });
+
+        await API.put('/api/sla/prefs/i18nMap', _editI18nMap);
         
         i18nMap = { ..._editI18nMap };
         showToast(rt('report.toast.i18nSaved'), 'success');
@@ -3253,7 +3263,10 @@ window.buildYuxiangPayload = function() {
         return null;
     }
 
+    const monthStr = document.getElementById('target-month-select').value || '';
+    const targetMonth = parseInt(monthStr, 10);
     const payload = {
+        targetMonth: targetMonth >= 1 && targetMonth <= 12 ? targetMonth : null,
         metrics: [],
         adjustments: [],
         totals: {
@@ -3264,8 +3277,6 @@ window.buildYuxiangPayload = function() {
         }
     };
 
-    const monthStr = document.getElementById('target-month-select').value || '未知';
-    const targetMonth = parseInt(monthStr, 10);
     const targetCats = ['TE', 'ORG', 'ET', 'VDF'];
 
     // Filter out Others group metrics

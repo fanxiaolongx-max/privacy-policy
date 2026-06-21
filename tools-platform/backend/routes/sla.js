@@ -468,7 +468,7 @@ router.post('/rename-metric', async (req, res) => {
     }
 });
 async function fillYuxiangWorkbook(body) {
-    const { metrics, adjustments, totals } = body;
+    const { metrics, adjustments, totals, targetMonth } = body;
     const ExcelJS = require('exceljs');
     const path = require('path');
     const fs = require('fs');
@@ -481,6 +481,15 @@ async function fillYuxiangWorkbook(body) {
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.readFile(templatePath);
     const sheet = workbook.worksheets[0];
+
+    const monthNumber = Number(targetMonth);
+    if (Number.isInteger(monthNumber) && monthNumber >= 1 && monthNumber <= 12) {
+        const monthLabels = ['Jan.', 'Feb.', 'Mar.', 'Apr.', 'May.', 'Jun.', 'Jul.', 'Aug.', 'Sep.', 'Oct.', 'Nov.', 'Dec.'];
+        const monthLabel = monthLabels[monthNumber - 1];
+        sheet.getCell('J1').value = `Target\n  (${monthLabel})`;
+        sheet.getCell('K1').value = `Achivement\n (${monthLabel})`;
+        sheet.getCell('O1').value = `Score\n (${monthLabel})`;
+    }
 
     const mappingToRow = {};
     const maxRow = Math.max(sheet.rowCount, 100);
