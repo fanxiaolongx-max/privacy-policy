@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>六个一信息收集</title>
+    <style>
+        :root {
+            --primary: #1768ac;
+            --primary-dark: #0d4f87;
+            --bg: #eef3f8;
+            --card: #fff;
+            --line: #d8e2ec;
+            --text: #172033;
+            --muted: #66758a;
+            --danger: #cf3f4f;
+            --success: #16845b;
+            --shadow: 0 10px 30px rgba(29, 55, 84, .09);
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: "Segoe UI", "Microsoft YaHei", sans-serif; }
+        button, input, textarea, select { font: inherit; }
+        button { cursor: pointer; }
+        .app { max-width: 1180px; margin: 0 auto; padding: 24px; }
+        .hero {
+            padding: 24px 28px; color: #fff; border-radius: 16px;
+            background: linear-gradient(135deg, #0d4f87, #2384cb);
+            box-shadow: var(--shadow); margin-bottom: 18px;
+        }
+        .hero h1 { margin: 0 0 6px; font-size: 24px; }
+        .hero p { margin: 0; opacity: .82; font-size: 14px; }
+        .tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+        .tab, .btn {
+            border: 1px solid var(--line); background: #fff; color: #34506b;
+            border-radius: 9px; padding: 9px 15px; font-weight: 700;
+        }
+        .tab.active, .btn.primary { color: #fff; background: var(--primary); border-color: var(--primary); }
+        .btn.danger { color: var(--danger); border-color: #efbdc3; }
+        .btn.ghost { background: transparent; }
+        .btn.small { padding: 6px 10px; font-size: 12px; }
+        .panel { display: none; }
+        .panel.active { display: block; }
+        .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); }
+        .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px; }
+        .toolbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .template-select { min-width: 280px; }
+        .template-select label { display: block; color: var(--muted); font-size: 12px; font-weight: 700; margin-bottom: 5px; }
+        input, textarea, select {
+            width: 100%; border: 1px solid #c8d5e2; border-radius: 8px; padding: 10px 12px;
+            background: #fff; color: var(--text); outline: none;
+        }
+        input:focus, textarea:focus, select:focus { border-color: #55a0db; box-shadow: 0 0 0 3px rgba(23,104,172,.1); }
+        textarea { min-height: 88px; resize: vertical; }
+        .form-wrap { padding: 4px 22px 24px; }
+        .template-heading { border-bottom: 1px solid var(--line); padding: 18px 0; margin-bottom: 20px; }
+        .template-heading h2 { margin: 0 0 5px; font-size: 20px; }
+        .template-heading p { margin: 0; color: var(--muted); font-size: 13px; }
+        .dynamic-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+        .field { min-width: 0; }
+        .field.full { grid-column: 1 / -1; }
+        .field-label { display: block; margin-bottom: 7px; font-size: 14px; font-weight: 750; }
+        .required::after { content: " *"; color: var(--danger); }
+        .field-help { color: var(--muted); font-size: 12px; margin: -3px 0 8px; }
+        .field-error { display: none; color: var(--danger); font-size: 12px; font-weight: 650; margin-top: 6px; line-height: 1.45; }
+        .field-error.show { display: block; }
+        input.invalid, textarea.invalid { border-color: var(--danger); background: #fff8f8; }
+        .suggestion-box { border: 1px solid #cfe0ee; border-radius: 10px; background: #f7fbff; margin-bottom: 10px; overflow: hidden; }
+        .suggestion-toggle {
+            width: 100%; border: 0; background: transparent; color: #285b82; padding: 11px 12px;
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+            font-size: 12px; font-weight: 800; text-align: left;
+        }
+        .suggestion-toggle:hover { background: #edf7fe; }
+        .suggestion-toggle-icon { transition: transform .2s ease; }
+        .suggestion-box.open .suggestion-toggle-icon { transform: rotate(180deg); }
+        .suggestion-content { display: none; padding: 0 12px 12px; }
+        .suggestion-box.open .suggestion-content { display: block; }
+        .suggestion-groups { display: flex; flex-direction: column; gap: 10px; }
+        .suggestion-category { color: var(--primary-dark); font-size: 12px; font-weight: 800; margin-bottom: 6px; }
+        .suggestion-items { display: flex; flex-wrap: wrap; gap: 6px; }
+        .suggestion-chip {
+            border: 1px solid #bdd8ec; background: #fff; color: #285b82; border-radius: 18px;
+            padding: 6px 10px; font-size: 12px; font-weight: 650; text-align: left;
+        }
+        .suggestion-chip:hover { background: #e5f3fd; border-color: #6caad7; }
+        .option-list { display: flex; flex-direction: column; gap: 8px; }
+        .option-list.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+        .option {
+            display: flex; align-items: center; gap: 9px; border: 1px solid var(--line);
+            border-radius: 9px; padding: 10px 12px; background: #fff; cursor: pointer;
+        }
+        .option:hover { border-color: #7eb4dd; background: #f5faff; }
+        .option:has(input:checked) { border-color: var(--primary); background: #eaf4fc; color: var(--primary-dark); font-weight: 700; }
+        .option input { width: 16px; height: 16px; margin: 0; box-shadow: none; }
+        .org-chart { overflow-x: auto; padding: 8px 4px 14px; text-align: center; }
+        .org-chart ul { position: relative; display: flex; justify-content: center; margin: 0; padding: 22px 0 0; }
+        .org-chart > ul { padding-top: 0; }
+        .org-chart li { position: relative; list-style: none; padding: 22px 7px 0; min-width: 145px; }
+        .org-chart li::before, .org-chart li::after {
+            content: ""; position: absolute; top: 0; width: 50%; height: 22px; border-top: 2px solid #aac4d8;
+        }
+        .org-chart li::before { right: 50%; }
+        .org-chart li::after { left: 50%; border-left: 2px solid #aac4d8; }
+        .org-chart li:only-child::before, .org-chart li:only-child::after { display: none; }
+        .org-chart li:first-child::before, .org-chart li:last-child::after { border: 0; }
+        .org-chart li:last-child::before { border-right: 2px solid #aac4d8; border-radius: 0 7px 0 0; }
+        .org-chart li:first-child::after { border-radius: 7px 0 0 0; }
+        .org-chart ul ul::before {
+            content: ""; position: absolute; top: 0; left: 50%; height: 22px; border-left: 2px solid #aac4d8;
+        }
+        .org-node {
+            display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+            min-width: 132px; min-height: 46px; padding: 9px 12px; border: 1px solid #a9c8df;
+            border-radius: 10px; background: #fff; color: #2b5878; box-shadow: 0 4px 12px rgba(34, 91, 130, .08);
+        }
+        .org-node:hover { background: #f0f8fe; border-color: #609fcf; }
+        .org-node:has(input:checked) { color: #fff; background: var(--primary); border-color: var(--primary); font-weight: 750; }
+        .org-node input { width: 16px; height: 16px; margin: 0; }
+        .org-unassigned { margin-top: 10px; padding-top: 12px; border-top: 1px dashed var(--line); text-align: left; }
+        .org-unassigned-title { color: var(--muted); font-size: 12px; font-weight: 750; margin-bottom: 7px; }
+        .org-unassigned-items { display: flex; flex-wrap: wrap; gap: 7px; }
+        .org-builder { border: 1px solid #cbdbe8; border-radius: 10px; background: #f7fafc; padding: 12px; }
+        .org-builder-help { color: var(--muted); font-size: 12px; line-height: 1.55; margin-bottom: 10px; }
+        .org-root-drop {
+            border: 2px dashed #9dbbd2; border-radius: 9px; padding: 10px; margin-bottom: 10px;
+            color: #557189; background: #fff; text-align: center; font-size: 12px; font-weight: 750;
+        }
+        .org-root-drop.drag-over { border-color: var(--primary); color: var(--primary); background: #eaf5fd; }
+        .org-builder-tree { min-height: 70px; }
+        .org-builder-branch { margin-left: 22px; padding-left: 14px; border-left: 2px solid #c4d7e6; }
+        .org-builder-node { margin: 7px 0; }
+        .org-builder-card {
+            display: inline-flex; align-items: center; gap: 7px; min-width: 240px; padding: 7px 8px;
+            border: 1px solid #abc8dd; border-radius: 8px; background: #fff; color: #315d7c;
+            font-size: 12px; font-weight: 750; cursor: grab; user-select: none;
+        }
+        .org-builder-card::before { content: "⠿"; color: #7a9bb3; font-size: 15px; }
+        .org-builder-name {
+            min-width: 100px; padding: 5px 7px; border: 1px solid transparent; background: transparent;
+            color: #315d7c; font-size: 12px; font-weight: 750;
+        }
+        .org-builder-name:focus { background: #fff; border-color: #67a5d2; }
+        .org-builder-action {
+            flex: 0 0 auto; border: 0; border-radius: 6px; padding: 5px 7px; background: #edf4f9;
+            color: #53718a; font-size: 11px; font-weight: 750;
+        }
+        .org-builder-action:hover { background: #dcecf7; color: #225f8b; }
+        .org-builder-action.delete:hover { background: #fdecef; color: var(--danger); }
+        .org-builder-card.dragging { opacity: .42; }
+        .org-builder-card.drag-over { border-color: var(--primary); background: #e8f4fc; box-shadow: 0 0 0 3px rgba(23,104,172,.12); }
+        .org-builder-empty { color: var(--muted); text-align: center; padding: 18px; font-size: 12px; }
+        .org-builder-warning { color: var(--danger); font-size: 12px; margin-top: 8px; }
+        .org-builder-add {
+            display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;
+            margin-top: 12px; padding-top: 12px; border-top: 1px dashed #c7d8e5;
+        }
+        details.org-advanced { margin-top: 10px; }
+        details.org-advanced summary { cursor: pointer; color: #526b82; font-size: 12px; font-weight: 750; }
+        .submit-row { display: flex; justify-content: flex-end; padding-top: 24px; grid-column: 1 / -1; }
+        .submit-row .btn { min-width: 180px; padding: 12px 20px; }
+        .empty { padding: 60px 20px; text-align: center; color: var(--muted); }
+        .editor-layout { display: grid; grid-template-columns: 280px 1fr; min-height: 560px; }
+        .template-list { border-right: 1px solid var(--line); padding: 14px; }
+        .template-item {
+            width: 100%; text-align: left; border: 1px solid transparent; background: transparent;
+            border-radius: 9px; padding: 11px; margin-bottom: 6px; color: var(--text);
+        }
+        .template-item.active { background: #eaf4fc; border-color: #b8d8ef; color: var(--primary-dark); }
+        .template-item strong, .template-item span { display: block; }
+        .template-item span { color: var(--muted); font-size: 11px; margin-top: 3px; }
+        .editor-main { padding: 20px; min-width: 0; }
+        .editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .editor-grid .full { grid-column: 1 / -1; }
+        .editor-label { display: block; font-size: 12px; color: var(--muted); font-weight: 750; margin-bottom: 5px; }
+        .field-editor-head { display: flex; justify-content: space-between; align-items: center; margin: 24px 0 10px; }
+        .field-editor-head h3 { margin: 0; font-size: 16px; }
+        .field-row {
+            display: grid; grid-template-columns: 34px minmax(130px, 1fr) 86px 70px 190px;
+            gap: 8px; align-items: center; border: 1px solid var(--line); border-radius: 10px;
+            padding: 10px; margin-bottom: 8px; background: #fafcfe;
+        }
+        .field-index { color: var(--muted); text-align: center; font-weight: 800; }
+        .field-meta { color: var(--muted); font-size: 11px; margin-top: 3px; }
+        .field-actions { display: flex; gap: 5px; justify-content: flex-end; }
+        .editor-footer { display: flex; justify-content: space-between; gap: 10px; margin-top: 22px; }
+        .table-wrap { overflow: auto; }
+        table { border-collapse: collapse; width: 100%; min-width: 820px; }
+        th, td { padding: 11px 13px; border-bottom: 1px solid var(--line); text-align: left; font-size: 13px; vertical-align: top; }
+        th { background: #f4f7fa; color: #52657a; position: sticky; top: 0; }
+        .answer-summary { max-width: 620px; white-space: pre-wrap; line-height: 1.55; }
+        .ledger-table { min-width: max-content; }
+        .ledger-table th, .ledger-table td { min-width: 130px; max-width: 300px; }
+        .ledger-table th:first-child, .ledger-table td:first-child {
+            position: sticky; left: 0; z-index: 2; min-width: 112px; background: #fff;
+        }
+        .ledger-table th:first-child { z-index: 4; background: #f4f7fa; }
+        .ledger-actions { display: flex; gap: 6px; white-space: nowrap; }
+        .ledger-value { white-space: pre-wrap; word-break: break-word; }
+        .ledger-link { color: var(--primary); text-decoration: none; }
+        .ledger-link:hover { text-decoration: underline; }
+        .ledger-meta { color: var(--muted); font-size: 11px; white-space: nowrap; }
+        .modal {
+            display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(16, 30, 46, .55);
+            align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal.open { display: flex; }
+        .modal-box { width: min(680px, 100%); max-height: 90vh; overflow: auto; background: #fff; border-radius: 14px; box-shadow: 0 24px 70px rgba(0,0,0,.25); }
+        .modal-head, .modal-foot { padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .modal-head { border-bottom: 1px solid var(--line); }
+        .modal-head h3 { margin: 0; }
+        .modal-body { padding: 20px; }
+        .modal-foot { border-top: 1px solid var(--line); justify-content: flex-end; }
+        .toast {
+            position: fixed; right: 22px; bottom: 22px; z-index: 2000; padding: 12px 16px;
+            color: #fff; background: #26394d; border-radius: 9px; box-shadow: var(--shadow);
+            opacity: 0; transform: translateY(10px); pointer-events: none; transition: .2s;
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast.success { background: var(--success); }
+        .toast.error { background: var(--danger); }
+        @media (max-width: 820px) {
+            .app { padding: 12px; }
+            .toolbar { align-items: stretch; flex-direction: column; }
+            .template-select { min-width: 0; }
+            .dynamic-form, .editor-grid { grid-template-columns: 1fr; }
+            .field, .field.full, .editor-grid .full { grid-column: 1; }
+            .editor-layout { grid-template-columns: 1fr; }
+            .template-list { border-right: 0; border-bottom: 1px solid var(--line); }
+            .field-row { grid-template-columns: 30px 1fr; }
+            .field-row > :nth-child(n+3) { grid-column: 2; }
+            .field-actions { justify-content: flex-start; }
+        }
+    </style>
+</head>
+<body>
+<main class="app">
+    <header class="hero">
+        <h1>六个一信息收集</h1>
+        <p>选择调查类型填写并直接提交到平台数据库。管理员可自由配置类型、字段和选项。</p>
+    </header>
+
+    <nav class="tabs">
+        <button class="tab active" data-panel="fillPanel">填写调查</button>
+        <button class="tab admin-only" data-panel="templatePanel">模板配置</button>
+        <button class="tab admin-only" data-panel="ledgerPanel">信息台账</button>
+        <button class="tab admin-only" data-panel="historyPanel">提交记录</button>
+    </nav>
+
+    <section id="fillPanel" class="panel active card">
+        <div class="toolbar">
+            <div class="template-select">
+                <label for="templateSelect">调查类型</label>
+                <select id="templateSelect"></select>
+            </div>
+            <button id="resetFormBtn" class="btn">重置当前表单</button>
+        </div>
+        <div id="formHost" class="form-wrap"></div>
+    </section>
+
+    <section id="templatePanel" class="panel card admin-only">
+        <div class="editor-layout">
+            <aside class="template-list">
+                <button id="newTemplateBtn" class="btn primary" style="width:100%;margin-bottom:12px;">＋ 新建调查类型</button>
+                <div id="templateList"></div>
+            </aside>
+            <div id="templateEditor" class="editor-main"></div>
+        </div>
+    </section>
+
+    <section id="historyPanel" class="panel card admin-only">
+        <div class="toolbar">
+            <div class="template-select">
+                <label for="historyTemplateSelect">筛选调查类型</label>
+                <select id="historyTemplateSelect"></select>
+            </div>
+            <button id="refreshHistoryBtn" class="btn">刷新记录</button>
+        </div>
+        <div id="historyHost" class="table-wrap"></div>
+    </section>
+
+    <section id="ledgerPanel" class="panel card admin-only">
+        <div class="toolbar">
+            <div class="toolbar-actions" style="flex:1;">
+                <div class="template-select">
+                    <label for="ledgerTemplateSelect">调查类型</label>
+                    <select id="ledgerTemplateSelect"></select>
+                </div>
+                <div class="template-select">
+                    <label for="ledgerSearch">搜索</label>
+                    <input id="ledgerSearch" placeholder="搜索任意字段内容">
+                </div>
+            </div>
+            <div class="toolbar-actions">
+                <button id="ledgerAddBtn" class="btn primary">＋ 新增记录</button>
+                <button id="ledgerExportBtn" class="btn">导出 Excel</button>
+                <button id="ledgerRefreshBtn" class="btn">刷新</button>
+            </div>
+        </div>
+        <div id="ledgerHost" class="table-wrap"></div>
+    </section>
+</main>
+
+<div id="fieldModal" class="modal">
+    <div class="modal-box">
+        <div class="modal-head"><h3 id="fieldModalTitle">配置字段</h3><button class="btn small" data-close-modal>关闭</button></div>
+        <div class="modal-body">
+            <div class="editor-grid">
+                <div><label class="editor-label">字段名称 *</label><input id="fieldLabel"></div>
+                <div><label class="editor-label">字段标识</label><input id="fieldKey" placeholder="例如 activityDate"></div>
+                <div class="full"><label class="editor-label">Excel 导出列名称</label><input id="fieldExportLabel" placeholder="留空则使用字段名称"></div>
+                <div><label class="editor-label">字段类型</label>
+                    <select id="fieldType">
+                        <option value="text">单行文本</option><option value="textarea">多行文本</option>
+                        <option value="date">日期</option><option value="number">数字</option>
+                        <option value="select">下拉选择</option><option value="radio">单选</option>
+                        <option value="checkbox">多选</option>
+                    </select>
+                </div>
+                <div><label class="editor-label">占用宽度</label><select id="fieldWidth"><option value="full">整行</option><option value="half">半行</option></select></div>
+                <div><label class="editor-label">选项显示方式</label><select id="fieldDisplay"><option value="standard">普通列表</option><option value="cards">卡片组合</option><option value="orgchart">组织架构图</option></select></div>
+                <div><label class="editor-label">默认值</label><input id="fieldDefault"></div>
+                <div class="full"><label class="editor-label">辅助说明</label><input id="fieldDescription"></div>
+                <div class="full"><label class="editor-label">输入提示</label><input id="fieldPlaceholder"></div>
+                <div id="numberRange" class="full editor-grid">
+                    <div><label class="editor-label">最小值</label><input id="fieldMin" type="number"></div>
+                    <div><label class="editor-label">最大值</label><input id="fieldMax" type="number"></div>
+                </div>
+                <div id="optionsArea" class="full">
+                    <label class="editor-label">选项（每行一个；可写“显示名称 | 存储值”）</label>
+                    <textarea id="fieldOptions" placeholder="代表 (VP) | vp&#10;BU长 | bu_director"></textarea>
+                </div>
+                <div id="suggestionsArea" class="full">
+                    <label class="editor-label">推荐输入模板（每行一个，格式：分类 | 模板内容）</label>
+                    <textarea id="fieldSuggestions" placeholder="保障类 | {客户}{节日/事件}首日保障&#10;故障恢复类 | P1{故障描述}故障恢复保障"></textarea>
+                </div>
+                <div id="orgChartArea" class="full">
+                    <label class="editor-label">组织架构拖拽配置</label>
+                    <div class="org-builder">
+                        <div class="org-builder-help">拖动角色到另一个角色卡片上，可设为其下级；拖到顶层区域，可设为最高层。角色来源于上方“选项”。</div>
+                        <div id="orgRootDrop" class="org-root-drop">拖到这里设为顶层角色</div>
+                        <div id="orgBuilderTree" class="org-builder-tree"></div>
+                        <div id="orgBuilderWarning" class="org-builder-warning"></div>
+                        <div class="org-builder-add">
+                            <input id="orgNewRoleName" placeholder="输入新角色名称">
+                            <button id="orgAddRoleBtn" type="button" class="btn primary small">＋ 新建顶层角色</button>
+                        </div>
+                    </div>
+                    <details class="org-advanced">
+                        <summary>高级：文本方式配置</summary>
+                        <textarea id="fieldOrgChart" style="margin-top:8px;" placeholder="VP (Region President) |&#10;代表 (VP) | VP (Region President)&#10;交付VP (Delivery VP) | 代表 (VP)"></textarea>
+                    </details>
+                </div>
+                <div id="urlValidationArea" class="full">
+                    <label class="option"><input id="fieldUrlValidation" type="checkbox"> 启用网址及指定域名校验</label>
+                    <div class="editor-grid" style="margin-top:10px;">
+                        <div class="full"><label class="editor-label">允许的域名（每行一个，不包含 https://）</label><textarea id="fieldUrlDomains" placeholder="onebox.huawei.com"></textarea></div>
+                        <label class="option"><input id="fieldAllowNone" type="checkbox"> 允许填写“无”</label>
+                        <div><label class="editor-label">无数据占位值</label><input id="fieldNoneValue" value="无"></div>
+                    </div>
+                </div>
+                <label class="full option"><input id="fieldRequired" type="checkbox"> 此字段必填</label>
+            </div>
+        </div>
+        <div class="modal-foot"><button class="btn" data-close-modal>取消</button><button id="saveFieldBtn" class="btn primary">保存字段</button></div>
+    </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<div id="recordModal" class="modal">
+    <div class="modal-box" style="width:min(900px,100%);">
+        <div class="modal-head"><h3 id="recordModalTitle">编辑记录</h3><button class="btn small" data-close-record>关闭</button></div>
+        <div class="modal-body">
+            <div style="margin-bottom:16px;"><label class="editor-label">调查类型</label><select id="recordTemplateSelect"></select></div>
+            <form id="recordForm" class="dynamic-form"></form>
+        </div>
+        <div class="modal-foot"><button class="btn" data-close-record>取消</button><button id="saveRecordBtn" class="btn primary">保存记录</button></div>
+    </div>
+</div>
+
+<script>
+(() => {
+    const state = { templates: [], activeId: '', editingTemplate: null, editingFieldIndex: -1, submissions: [], ledgerRows: [], ledgerEditingId: '' };
+    const role = localStorage.getItem('tools_role') || '';
+    const isAdmin = role === 'admin';
+
+    const $ = selector => document.querySelector(selector);
+    const $$ = selector => Array.from(document.querySelectorAll(selector));
+    const clone = value => JSON.parse(JSON.stringify(value));
+    const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+    const makeId = prefix => `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    const managerStatColumns = [
+        { key: '__managerAD', label: '系统部AD Account Director', patterns: [/^AD$/i, /Account Director/i] },
+        { key: '__managerDeliveryVP', label: '交付副代表 Delivery & Service Director', patterns: [/Delivery VP/i, /交付VP/i, /交付副代表/i] },
+        { key: '__managerBG', label: 'BG长 BG Director', patterns: [/BG Director/i, /BG长/i, /BU Director/i, /BU长/i] },
+        { key: '__managerCountry', label: '代表 Country General Manager', patterns: [/^VP$/i, /^代表 \(VP\)$/i, /Country General Manager/i] },
+        { key: '__managerRegion', label: '地总 Region President', patterns: [/Region President/i, /地区部总裁/i, /地总/i] }
+    ];
+    const localToday = () => {
+        const now = new Date();
+        const offset = now.getTimezoneOffset() * 60000;
+        return new Date(now.getTime() - offset).toISOString().slice(0, 10);
+    };
+
+    function authHeaders() {
+        const token = localStorage.getItem('tools_token');
+        return { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+    }
+    async function api(path, options = {}) {
+        const res = await fetch(path, {
+            cache: 'no-store',
+            ...options,
+            headers: { ...authHeaders(), ...(options.headers || {}) }
+        });
+        if (res.status === 401) {
+            window.top.location.href = '/login.html';
+            throw new Error('登录已过期');
+        }
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(body.error || `请求失败 (${res.status})`);
+        return body;
+    }
+    function toast(message, type = 'success') {
+        const el = $('#toast');
+        el.textContent = message; el.className = `toast ${type} show`;
+        clearTimeout(el.timer); el.timer = setTimeout(() => el.classList.remove('show'), 2600);
+    }
+
+    function setupPermissions() {
+        if (!isAdmin) $$('.admin-only').forEach(el => el.remove());
+    }
+    function activatePanel(tab) {
+        $$('.tab').forEach(item => item.classList.toggle('active', item === tab));
+        $$('.panel').forEach(panel => panel.classList.toggle('active', panel.id === tab.dataset.panel));
+    }
+    function setupTabs() {
+        $$('.tab').forEach(tab => tab.addEventListener('click', async () => {
+            const currentPanel = $('.panel.active');
+            const leavingTemplateEditor = currentPanel && currentPanel.id === 'templatePanel' && tab.dataset.panel !== 'templatePanel';
+            if (leavingTemplateEditor && state.editingTemplate) {
+                const saved = await saveTemplate({ silent: true });
+                if (!saved) return;
+            }
+            if (tab.dataset.panel === 'fillPanel') {
+                try {
+                    await loadTemplates(state.activeId);
+                } catch (err) {
+                    toast(err.message, 'error');
+                    return;
+                }
+            }
+            activatePanel(tab);
+            if (tab.dataset.panel === 'historyPanel') loadHistory();
+            if (tab.dataset.panel === 'ledgerPanel') loadLedger();
+        }));
+    }
+
+    async function loadTemplates(preferredId = '') {
+        state.templates = await api('/api/surveys/templates');
+        const available = state.templates.filter(template => template.active);
+        state.activeId = preferredId && available.some(item => item.id === preferredId)
+            ? preferredId : (available.some(item => item.id === state.activeId) ? state.activeId : (available[0] && available[0].id || ''));
+        renderTemplateSelectors();
+        renderForm();
+        if (isAdmin) renderTemplateList();
+    }
+    function renderTemplateSelectors() {
+        const available = state.templates.filter(template => template.active);
+        $('#templateSelect').innerHTML = available.length
+            ? available.map(item => `<option value="${escapeHtml(item.id)}"${item.id === state.activeId ? ' selected' : ''}>${escapeHtml(item.name)}</option>`).join('')
+            : '<option value="">暂无可用模板</option>';
+        if (isAdmin && $('#historyTemplateSelect')) {
+            $('#historyTemplateSelect').innerHTML = '<option value="">全部类型</option>' +
+                state.templates.map(item => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)}</option>`).join('');
+        }
+        if (isAdmin && $('#ledgerTemplateSelect')) {
+            const current = $('#ledgerTemplateSelect').value;
+            $('#ledgerTemplateSelect').innerHTML = '<option value="">全部类型</option>' +
+                state.templates.map(item => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)}</option>`).join('');
+            if (state.templates.some(item => item.id === current)) $('#ledgerTemplateSelect').value = current;
+        }
+    }
+
+    function renderForm() {
+        const host = $('#formHost');
+        const template = state.templates.find(item => item.id === state.activeId && item.active);
+        if (!template) {
+            host.innerHTML = '<div class="empty">暂无可填写的调查模板。</div>';
+            return;
+        }
+        host.innerHTML = `
+            <div class="template-heading"><h2>${escapeHtml(template.name)}</h2><p>${escapeHtml(template.description || '')}</p></div>
+            <form id="surveyForm" class="dynamic-form">
+                ${template.fields.map(renderField).join('')}
+                <div class="submit-row"><button type="submit" class="btn primary">提交到数据库</button></div>
+            </form>`;
+        $('#surveyForm').addEventListener('submit', submitSurvey);
+        bindSuggestionButtons();
+        bindAutoDateFields();
+        bindOrgChartCascade(template);
+        bindFieldValidation(template);
+    }
+    function renderField(field) {
+        const required = field.required ? 'required' : '';
+        const label = `<label class="field-label ${required}">${escapeHtml(field.label)}</label>`;
+        const help = field.description ? `<div class="field-help">${escapeHtml(field.description)}</div>` : '';
+        const common = `name="${escapeHtml(field.key)}" ${required} ${field.placeholder ? `placeholder="${escapeHtml(field.placeholder)}"` : ''}`;
+        let control = '';
+        if (field.type === 'textarea') {
+            const suggestions = Array.isArray(field.suggestions) ? field.suggestions : [];
+            const suggestionHtml = suggestions.length ? `
+                <div class="suggestion-box">
+                    <button type="button" class="suggestion-toggle" aria-expanded="false">
+                        <span>展开推荐模板（点击模板后仍可自由修改）</span>
+                        <span class="suggestion-toggle-icon">⌄</span>
+                    </button>
+                    <div class="suggestion-content">
+                        <div class="suggestion-groups">${suggestions.map(group => `
+                            <div>
+                                <div class="suggestion-category">${escapeHtml(group.category)}</div>
+                                <div class="suggestion-items">${group.items.map(item => `<button type="button" class="suggestion-chip" data-suggestion-target="${escapeHtml(field.key)}" data-suggestion-value="${escapeHtml(item)}">${escapeHtml(item)}</button>`).join('')}</div>
+                            </div>`).join('')}
+                        </div>
+                    </div>
+                </div>` : '';
+            control = `${suggestionHtml}<textarea ${common}>${escapeHtml(field.defaultValue || '')}</textarea>`;
+        } else if (field.type === 'select') {
+            control = `<select ${common}><option value="">请选择</option>${field.options.map(option => `<option value="${escapeHtml(option.value)}"${String(field.defaultValue) === String(option.value) ? ' selected' : ''}>${escapeHtml(option.label)}</option>`).join('')}</select>`;
+        } else if (field.type === 'radio' || field.type === 'checkbox') {
+            if (field.type === 'checkbox' && field.display === 'orgchart') {
+                control = renderOrgChart(field);
+            } else {
+                control = `<div class="option-list ${field.display === 'cards' ? 'cards' : ''}">${field.options.map((option, optionIndex) => {
+                const checked = field.type === 'checkbox'
+                    ? (Array.isArray(field.defaultValue) && field.defaultValue.includes(option.value))
+                    : String(field.defaultValue) === String(option.value);
+                const optionRequired = field.required && field.type === 'radio' && optionIndex === 0 ? 'required' : '';
+                return `<label class="option"><input type="${field.type}" name="${escapeHtml(field.key)}" value="${escapeHtml(option.value)}" ${optionRequired} ${checked ? 'checked' : ''}> <span>${escapeHtml(option.label)}</span></label>`;
+                }).join('')}</div>`;
+            }
+        } else {
+            const range = field.type === 'number'
+                ? `${field.min !== null && field.min !== undefined ? `min="${field.min}"` : ''} ${field.max !== null && field.max !== undefined ? `max="${field.max}"` : ''}`
+                : '';
+            const useToday = field.type === 'date' && !field.defaultValue;
+            const value = useToday ? localToday() : (field.defaultValue || '');
+            const autoDateAttrs = useToday ? 'data-auto-today="1" data-user-modified="0"' : '';
+            control = `<input type="${field.type}" ${common} ${range} ${autoDateAttrs} value="${escapeHtml(value)}">`;
+        }
+        const error = field.validation && field.validation.type === 'url'
+            ? `<div class="field-error" data-field-error="${escapeHtml(field.key)}"></div>` : '';
+        return `<div class="field ${field.width === 'half' ? '' : 'full'}">${label}${help}${control}${error}</div>`;
+    }
+    function renderOrgChart(field) {
+        const options = new Map((field.options || []).map(option => [option.value, option]));
+        const nodes = (field.orgChart || []).filter(node => options.has(node.value));
+        const nodeValues = new Set(nodes.map(node => node.value));
+        const children = new Map();
+        nodes.forEach(node => {
+            const parent = node.parentValue && nodeValues.has(node.parentValue) ? node.parentValue : '';
+            if (!children.has(parent)) children.set(parent, []);
+            children.get(parent).push(node.value);
+        });
+        const checkedValues = new Set(Array.isArray(field.defaultValue) ? field.defaultValue : []);
+        const rendered = new Set();
+        const renderNode = (value, ancestors = new Set()) => {
+            if (ancestors.has(value) || rendered.has(value)) return '';
+            rendered.add(value);
+            const option = options.get(value);
+            const nextAncestors = new Set(ancestors); nextAncestors.add(value);
+            const childHtml = (children.get(value) || []).map(child => renderNode(child, nextAncestors)).filter(Boolean).join('');
+            return `<li>
+                <label class="org-node"><input type="checkbox" name="${escapeHtml(field.key)}" value="${escapeHtml(option.value)}" data-org-value="${escapeHtml(option.value)}" ${checkedValues.has(option.value) ? 'checked' : ''}><span>${escapeHtml(option.label)}</span></label>
+                ${childHtml ? `<ul>${childHtml}</ul>` : ''}
+            </li>`;
+        };
+        const roots = (children.get('') || []).map(value => renderNode(value)).filter(Boolean).join('');
+        const unassigned = (field.options || []).filter(option => !rendered.has(option.value));
+        return `<div class="org-chart">${roots ? `<ul>${roots}</ul>` : ''}
+            ${unassigned.length ? `<div class="org-unassigned"><div class="org-unassigned-title">其他角色</div><div class="org-unassigned-items">
+                ${unassigned.map(option => `<label class="option"><input type="checkbox" name="${escapeHtml(field.key)}" value="${escapeHtml(option.value)}" ${checkedValues.has(option.value) ? 'checked' : ''}><span>${escapeHtml(option.label)}</span></label>`).join('')}
+            </div></div>` : ''}
+        </div>`;
+    }
+    function bindSuggestionButtons() {
+        $$('.suggestion-toggle').forEach(button => button.addEventListener('click', () => {
+            const box = button.closest('.suggestion-box');
+            const open = box.classList.toggle('open');
+            button.setAttribute('aria-expanded', String(open));
+            button.querySelector('span:first-child').textContent = open
+                ? '收起推荐模板'
+                : '展开推荐模板（点击模板后仍可自由修改）';
+        }));
+        $$('.suggestion-chip').forEach(button => button.addEventListener('click', () => {
+            const form = $('#surveyForm');
+            const input = form && form.elements[button.dataset.suggestionTarget];
+            if (!input) return;
+            input.value = button.dataset.suggestionValue || '';
+            input.focus();
+            input.setSelectionRange(input.value.length, input.value.length);
+        }));
+    }
+    function bindAutoDateFields() {
+        $$('input[type="date"][data-auto-today="1"]').forEach(input => {
+            input.addEventListener('change', () => { input.dataset.userModified = '1'; });
+            input.addEventListener('input', () => { input.dataset.userModified = '1'; });
+        });
+    }
+    function bindOrgChartCascade(template) {
+        template.fields
+            .filter(field => field.type === 'checkbox' && field.display === 'orgchart')
+            .forEach(field => {
+                const directChildren = new Map();
+                (field.orgChart || []).forEach(node => {
+                    if (!node.parentValue) return;
+                    if (!directChildren.has(node.parentValue)) directChildren.set(node.parentValue, []);
+                    directChildren.get(node.parentValue).push(node.value);
+                });
+                const getDescendants = value => {
+                    const result = [];
+                    const visit = parent => {
+                        (directChildren.get(parent) || []).forEach(child => {
+                            if (result.includes(child)) return;
+                            result.push(child);
+                            visit(child);
+                        });
+                    };
+                    visit(value);
+                    return result;
+                };
+                $$(`input[type="checkbox"][name="${CSS.escape(field.key)}"][data-org-value]`).forEach(input => {
+                    input.addEventListener('change', () => {
+                        getDescendants(input.value).forEach(value => {
+                            const child = document.querySelector(
+                                `input[type="checkbox"][name="${CSS.escape(field.key)}"][data-org-value="${CSS.escape(value)}"]`
+                            );
+                            if (child) child.checked = input.checked;
+                        });
+                    });
+                });
+            });
+    }
+    function validateUrlField(field, input) {
+        const validation = field.validation;
+        if (!validation || validation.type !== 'url') return true;
+        const value = input.value.trim();
+        const error = document.querySelector(`[data-field-error="${CSS.escape(field.key)}"]`);
+        let message = '';
+        if (!value) {
+            if (field.required) message = `请填写${field.label}`;
+        } else if (!(validation.allowNone && value === validation.noneValue)) {
+            let parsed;
+            try {
+                parsed = new URL(value);
+            } catch (err) {
+                message = '必须填写完整网址，例如 https://example.com/path';
+            }
+            if (parsed && parsed.protocol !== 'https:') {
+                message = '链接必须以 https:// 开头';
+            }
+            if (parsed && !message) {
+                const hostname = parsed.hostname.toLowerCase();
+                const domains = Array.isArray(validation.domains) ? validation.domains : [];
+                const allowed = !domains.length || domains.some(domain =>
+                    hostname === domain.toLowerCase() || hostname.endsWith(`.${domain.toLowerCase()}`)
+                );
+                if (!allowed) message = `链接域名必须是：${domains.join('、')}`;
+            }
+        }
+        input.classList.toggle('invalid', Boolean(message));
+        if (error) {
+            error.textContent = message ? `⚠ ${message}` : '';
+            error.classList.toggle('show', Boolean(message));
+        }
+        return !message;
+    }
+    function bindFieldValidation(template) {
+        template.fields.filter(field => field.validation && field.validation.type === 'url').forEach(field => {
+            const input = $('#surveyForm').elements[field.key];
+            if (!input) return;
+            input.addEventListener('input', () => validateUrlField(field, input));
+            input.addEventListener('blur', () => validateUrlField(field, input));
+        });
+    }
+    async function submitSurvey(event) {
+        event.preventDefault();
+        const template = state.templates.find(item => item.id === state.activeId);
+        const form = event.currentTarget;
+        if (!form.reportValidity()) return;
+        const invalidUrlField = template.fields.find(field => {
+            if (!field.validation || field.validation.type !== 'url') return false;
+            const input = form.elements[field.key];
+            return input && !validateUrlField(field, input);
+        });
+        if (invalidUrlField) {
+            form.elements[invalidUrlField.key].focus();
+            return;
+        }
+        const unconfirmedDates = $$('input[type="date"][data-auto-today="1"]').filter(input =>
+            input.form === form && input.dataset.userModified !== '1' && input.value === localToday()
+        );
+        if (unconfirmedDates.length) {
+            const labels = unconfirmedDates.map(input => {
+                const field = template.fields.find(item => item.key === input.name);
+                return field ? field.label : input.name;
+            }).join('、');
+            if (!confirm(`${labels}由系统默认填写为今天（${localToday()}），您尚未修改。是否确认使用该日期提交？`)) {
+                unconfirmedDates[0].focus();
+                return;
+            }
+        }
+        const missingMulti = template.fields.find(field =>
+            field.required && field.type === 'checkbox' &&
+            !form.querySelector(`input[name="${CSS.escape(field.key)}"]:checked`)
+        );
+        if (missingMulti) {
+            toast(`请选择“${missingMulti.label}”`, 'error');
+            return;
+        }
+        const answers = {};
+        template.fields.forEach(field => {
+            if (field.type === 'checkbox') {
+                answers[field.key] = $$(`input[name="${CSS.escape(field.key)}"]:checked`).map(input => input.value);
+            } else if (field.type === 'radio') {
+                const selected = $(`input[name="${CSS.escape(field.key)}"]:checked`);
+                answers[field.key] = selected ? selected.value : '';
+            } else {
+                const input = form.elements[field.key];
+                answers[field.key] = input ? input.value : '';
+            }
+        });
+        const button = form.querySelector('button[type="submit"]');
+        button.disabled = true; button.textContent = '正在提交...';
+        try {
+            const result = await api('/api/surveys/submissions', {
+                method: 'POST', body: JSON.stringify({ templateId: template.id, answers })
+            });
+            toast(`提交成功，记录号：${result.submission.id}`);
+            form.reset();
+            form.querySelectorAll('input[type="date"][data-auto-today="1"]').forEach(input => {
+                input.dataset.userModified = '0';
+            });
+        } catch (err) {
+            toast(err.message, 'error');
+        } finally {
+            button.disabled = false; button.textContent = '提交到数据库';
+        }
+    }
+
+    function renderTemplateList() {
+        const list = $('#templateList');
+        list.innerHTML = state.templates.map(template => `
+            <button class="template-item ${state.editingTemplate && state.editingTemplate.id === template.id ? 'active' : ''}" data-template-id="${escapeHtml(template.id)}">
+                <strong>${escapeHtml(template.name)}</strong><span>${template.fields.length} 个字段 · ${template.active ? '启用' : '停用'}</span>
+            </button>`).join('');
+        list.querySelectorAll('[data-template-id]').forEach(button => button.addEventListener('click', () => editTemplate(button.dataset.templateId)));
+        if (!state.editingTemplate && state.templates[0]) editTemplate(state.templates[0].id);
+    }
+    function editTemplate(id) {
+        const template = state.templates.find(item => item.id === id);
+        if (!template) return;
+        state.editingTemplate = clone(template);
+        renderTemplateList();
+        renderTemplateEditor();
+    }
+    function newTemplate() {
+        state.editingTemplate = {
+            id: makeId('survey'), name: '新调查类型', description: '', active: true,
+            fields: [{ id: makeId('field'), key: 'description', label: '内容描述', description: '', type: 'textarea', required: true, placeholder: '', defaultValue: '', width: 'full', display: 'standard', min: null, max: null, options: [] }]
+        };
+        renderTemplateList();
+        renderTemplateEditor();
+    }
+    function renderTemplateEditor() {
+        const host = $('#templateEditor');
+        const template = state.editingTemplate;
+        if (!template) { host.innerHTML = '<div class="empty">请选择或新建一个模板。</div>'; return; }
+        host.innerHTML = `
+            <div class="editor-grid">
+                <div><label class="editor-label">调查类型名称 *</label><input id="templateName" value="${escapeHtml(template.name)}"></div>
+                <div><label class="editor-label">状态</label><select id="templateActive"><option value="1"${template.active ? ' selected' : ''}>启用</option><option value="0"${!template.active ? ' selected' : ''}>停用</option></select></div>
+                <div class="full"><label class="editor-label">说明</label><input id="templateDescription" value="${escapeHtml(template.description || '')}"></div>
+            </div>
+            <div class="field-editor-head"><h3>字段组合</h3><button id="addFieldBtn" class="btn primary small">＋ 添加字段</button></div>
+            <div id="fieldRows">${template.fields.map((field, index) => renderFieldRow(field, index)).join('')}</div>
+            <div class="editor-footer">
+                <button id="deleteTemplateBtn" class="btn danger">删除模板</button>
+                <button id="saveTemplateBtn" class="btn primary">保存模板</button>
+            </div>`;
+        $('#addFieldBtn').addEventListener('click', () => openFieldModal(-1));
+        $('#saveTemplateBtn').addEventListener('click', () => saveTemplate());
+        $('#deleteTemplateBtn').addEventListener('click', deleteTemplate);
+        host.querySelectorAll('[data-field-action]').forEach(button => button.addEventListener('click', handleFieldAction));
+    }
+    function renderFieldRow(field, index) {
+        const typeNames = { text:'单行文本', textarea:'多行文本', date:'日期', number:'数字', select:'下拉', radio:'单选', checkbox:'多选' };
+        return `<div class="field-row">
+            <div class="field-index">${index + 1}</div>
+            <div><strong>${escapeHtml(field.label)}</strong><div class="field-meta">${escapeHtml(field.key)} · ${field.required ? '必填' : '选填'}</div></div>
+            <div>${typeNames[field.type] || field.type}</div>
+            <div>${field.width === 'half' ? '半行' : '整行'}</div>
+            <div class="field-actions">
+                <button class="btn small" data-field-action="up" data-index="${index}">↑</button>
+                <button class="btn small" data-field-action="down" data-index="${index}">↓</button>
+                <button class="btn small" data-field-action="edit" data-index="${index}">编辑</button>
+                <button class="btn small danger" data-field-action="delete" data-index="${index}">删除</button>
+            </div>
+        </div>`;
+    }
+    function handleFieldAction(event) {
+        const action = event.currentTarget.dataset.fieldAction;
+        const index = Number(event.currentTarget.dataset.index);
+        const fields = state.editingTemplate.fields;
+        if (action === 'edit') return openFieldModal(index);
+        if (action === 'delete') {
+            if (fields.length <= 1) return toast('模板至少保留一个字段', 'error');
+            if (confirm(`确定删除字段“${fields[index].label}”吗？`)) fields.splice(index, 1);
+        } else if (action === 'up' && index > 0) {
+            [fields[index - 1], fields[index]] = [fields[index], fields[index - 1]];
+        } else if (action === 'down' && index < fields.length - 1) {
+            [fields[index + 1], fields[index]] = [fields[index], fields[index + 1]];
+        }
+        renderTemplateEditor();
+    }
+
+    function openFieldModal(index) {
+        state.editingFieldIndex = index;
+        const field = index >= 0 ? state.editingTemplate.fields[index] : {
+            id: makeId('field'), key: '', label: '', description: '', type: 'text', required: false,
+            placeholder: '', defaultValue: '', width: 'full', display: 'standard', min: null, max: null, options: [], suggestions: [], orgChart: [], validation: null
+        };
+        $('#fieldModalTitle').textContent = index >= 0 ? '编辑字段' : '添加字段';
+        $('#fieldLabel').value = field.label || ''; $('#fieldKey').value = field.key || '';
+        $('#fieldExportLabel').value = field.exportLabel || '';
+        $('#fieldType').value = field.type || 'text'; $('#fieldWidth').value = field.width || 'full';
+        $('#fieldDisplay').value = field.display || 'standard'; $('#fieldDefault').value = Array.isArray(field.defaultValue) ? field.defaultValue.join(',') : (field.defaultValue || '');
+        $('#fieldDescription').value = field.description || ''; $('#fieldPlaceholder').value = field.placeholder || '';
+        $('#fieldMin').value = field.min ?? ''; $('#fieldMax').value = field.max ?? ''; $('#fieldRequired').checked = Boolean(field.required);
+        $('#fieldOptions').value = (field.options || []).map(option => option.label === option.value ? option.label : `${option.label} | ${option.value}`).join('\n');
+        $('#fieldSuggestions').value = (field.suggestions || []).flatMap(group => group.items.map(item => `${group.category} | ${item}`)).join('\n');
+        const optionLabels = new Map((field.options || []).map(option => [option.value, option.label]));
+        $('#fieldOrgChart').value = (field.orgChart || []).map(node =>
+            `${optionLabels.get(node.value) || node.value} | ${optionLabels.get(node.parentValue) || node.parentValue || ''}`
+        ).join('\n');
+        const urlValidation = field.validation && field.validation.type === 'url' ? field.validation : null;
+        $('#fieldUrlValidation').checked = Boolean(urlValidation);
+        $('#fieldUrlDomains').value = urlValidation ? (urlValidation.domains || []).join('\n') : '';
+        $('#fieldAllowNone').checked = urlValidation ? urlValidation.allowNone !== false : true;
+        $('#fieldNoneValue').value = urlValidation ? (urlValidation.noneValue || '无') : '无';
+        updateFieldTypeAreas();
+        renderOrgBuilder();
+        $('#fieldModal').classList.add('open');
+    }
+    function readEditorOptions() {
+        return $('#fieldOptions').value.split('\n').map(line => line.trim()).filter(Boolean).map(line => {
+            const [labelPart, ...valueParts] = line.split('|');
+            const label = labelPart.trim();
+            return { label, value: valueParts.join('|').trim() || label };
+        }).filter(option => option.label && option.value);
+    }
+    function writeEditorOptions(options) {
+        $('#fieldOptions').value = options.map(option =>
+            option.label === option.value ? option.label : `${option.label} | ${option.value}`
+        ).join('\n');
+    }
+    function readOrgRelationMap(options) {
+        const valueByName = new Map();
+        options.forEach(option => {
+            valueByName.set(option.label, option.value);
+            valueByName.set(option.value, option.value);
+        });
+        const relations = new Map(options.map(option => [option.value, '']));
+        $('#fieldOrgChart').value.split('\n').map(line => line.trim()).filter(Boolean).forEach(line => {
+            const separator = line.indexOf('|');
+            const valueText = (separator >= 0 ? line.slice(0, separator) : line).trim();
+            const parentText = separator >= 0 ? line.slice(separator + 1).trim() : '';
+            const value = valueByName.get(valueText);
+            const parentValue = valueByName.get(parentText) || '';
+            if (value) relations.set(value, parentValue === value ? '' : parentValue);
+        });
+        return relations;
+    }
+    function writeOrgRelations(relations, options) {
+        const labelByValue = new Map(options.map(option => [option.value, option.label]));
+        $('#fieldOrgChart').value = options.map(option => {
+            const parentValue = relations.get(option.value) || '';
+            return `${option.label} | ${labelByValue.get(parentValue) || ''}`;
+        }).join('\n');
+    }
+    function renderOrgBuilder() {
+        const tree = $('#orgBuilderTree');
+        const warning = $('#orgBuilderWarning');
+        if (!tree || $('#fieldType').value !== 'checkbox' || $('#fieldDisplay').value !== 'orgchart') return;
+        const options = readEditorOptions();
+        warning.textContent = '';
+        if (!options.length) {
+            tree.innerHTML = '<div class="org-builder-empty">请先在“选项”中添加角色。</div>';
+            return;
+        }
+        const optionMap = new Map(options.map(option => [option.value, option]));
+        const relations = readOrgRelationMap(options);
+        const children = new Map();
+        options.forEach(option => {
+            const parent = optionMap.has(relations.get(option.value)) ? relations.get(option.value) : '';
+            if (!children.has(parent)) children.set(parent, []);
+            children.get(parent).push(option.value);
+        });
+        const rendered = new Set();
+        const renderNode = (value, ancestors = new Set()) => {
+            if (rendered.has(value) || ancestors.has(value)) return '';
+            rendered.add(value);
+            const option = optionMap.get(value);
+            const nextAncestors = new Set(ancestors); nextAncestors.add(value);
+            const childHtml = (children.get(value) || []).map(child => renderNode(child, nextAncestors)).filter(Boolean).join('');
+            return `<div class="org-builder-node">
+                <div class="org-builder-card" draggable="true" data-org-builder-value="${escapeHtml(value)}">
+                    <input class="org-builder-name" data-org-rename="${escapeHtml(value)}" value="${escapeHtml(option.label)}" aria-label="角色名称">
+                    <button type="button" class="org-builder-action" data-org-move="up" data-org-value="${escapeHtml(value)}" title="同层上移">↑</button>
+                    <button type="button" class="org-builder-action" data-org-move="down" data-org-value="${escapeHtml(value)}" title="同层下移">↓</button>
+                    <button type="button" class="org-builder-action delete" data-org-delete="${escapeHtml(value)}">删除</button>
+                </div>
+                ${childHtml ? `<div class="org-builder-branch">${childHtml}</div>` : ''}
+            </div>`;
+        };
+        let html = (children.get('') || []).map(value => renderNode(value)).filter(Boolean).join('');
+        options.filter(option => !rendered.has(option.value)).forEach(option => { html += renderNode(option.value); });
+        tree.innerHTML = html || '<div class="org-builder-empty">暂无组织角色。</div>';
+        bindOrgBuilderDrag(relations, options);
+        bindOrgBuilderActions(relations, options);
+    }
+    function bindOrgBuilderActions(relations, options) {
+        const warning = $('#orgBuilderWarning');
+        $$('[data-org-move]').forEach(button => {
+            button.addEventListener('mousedown', event => event.stopPropagation());
+            button.addEventListener('click', event => {
+                event.stopPropagation();
+                const value = button.dataset.orgValue;
+                const direction = button.dataset.orgMove;
+                const parentValue = relations.get(value) || '';
+                const siblings = options.filter(option => (relations.get(option.value) || '') === parentValue);
+                const siblingIndex = siblings.findIndex(option => option.value === value);
+                const targetSibling = direction === 'up' ? siblings[siblingIndex - 1] : siblings[siblingIndex + 1];
+                if (!targetSibling) {
+                    warning.textContent = direction === 'up' ? '该角色已在当前层级最前。' : '该角色已在当前层级最后。';
+                    return;
+                }
+                const currentIndex = options.findIndex(option => option.value === value);
+                const targetIndex = options.findIndex(option => option.value === targetSibling.value);
+                [options[currentIndex], options[targetIndex]] = [options[targetIndex], options[currentIndex]];
+                writeEditorOptions(options);
+                writeOrgRelations(relations, options);
+                warning.textContent = '';
+                renderOrgBuilder();
+            });
+        });
+        $$('[data-org-rename]').forEach(input => {
+            input.addEventListener('dragstart', event => event.preventDefault());
+            input.addEventListener('mousedown', event => event.stopPropagation());
+            const commit = () => {
+                const value = input.dataset.orgRename;
+                const name = input.value.trim();
+                if (!name) {
+                    warning.textContent = '角色名称不能为空。';
+                    const original = options.find(option => option.value === value);
+                    input.value = original ? original.label : '';
+                    return;
+                }
+                const duplicate = options.some(option => option.value !== value && option.label === name);
+                if (duplicate) {
+                    warning.textContent = '角色名称不能重复。';
+                    return;
+                }
+                const option = options.find(item => item.value === value);
+                if (!option || option.label === name) return;
+                option.label = name;
+                writeEditorOptions(options);
+                writeOrgRelations(relations, options);
+                warning.textContent = '';
+                renderOrgBuilder();
+            };
+            input.addEventListener('change', commit);
+            input.addEventListener('keydown', event => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    input.blur();
+                }
+            });
+        });
+        $$('[data-org-delete]').forEach(button => {
+            button.addEventListener('mousedown', event => event.stopPropagation());
+            button.addEventListener('click', event => {
+                event.stopPropagation();
+                const value = button.dataset.orgDelete;
+                const option = options.find(item => item.value === value);
+                if (!option || !confirm(`确定删除角色“${option.label}”吗？其下级将移动到顶层。`)) return;
+                const nextOptions = options.filter(item => item.value !== value);
+                relations.delete(value);
+                relations.forEach((parentValue, childValue) => {
+                    if (parentValue === value) relations.set(childValue, '');
+                });
+                writeEditorOptions(nextOptions);
+                writeOrgRelations(relations, nextOptions);
+                warning.textContent = '';
+                renderOrgBuilder();
+            });
+        });
+    }
+    function addOrgBuilderRole() {
+        const input = $('#orgNewRoleName');
+        const warning = $('#orgBuilderWarning');
+        const name = input.value.trim();
+        if (!name) {
+            warning.textContent = '请输入新角色名称。';
+            input.focus();
+            return;
+        }
+        const options = readEditorOptions();
+        if (options.some(option => option.label === name)) {
+            warning.textContent = '角色名称已存在。';
+            input.focus();
+            return;
+        }
+        const usedValues = new Set(options.map(option => option.value));
+        let value = name;
+        if (usedValues.has(value)) {
+            value = `role_${Date.now().toString(36)}`;
+        }
+        options.push({ label: name, value });
+        const relations = readOrgRelationMap(options);
+        relations.set(value, '');
+        writeEditorOptions(options);
+        writeOrgRelations(relations, options);
+        input.value = '';
+        warning.textContent = '';
+        renderOrgBuilder();
+    }
+    function bindOrgBuilderDrag(relations, options) {
+        const warning = $('#orgBuilderWarning');
+        const descendantsOf = value => {
+            const result = new Set();
+            const visit = parent => {
+                relations.forEach((parentValue, childValue) => {
+                    if (parentValue === parent && !result.has(childValue)) {
+                        result.add(childValue);
+                        visit(childValue);
+                    }
+                });
+            };
+            visit(value);
+            return result;
+        };
+        const applyParent = (value, parentValue) => {
+            if (!value || value === parentValue || descendantsOf(value).has(parentValue)) {
+                warning.textContent = '不能把角色拖到自己或自己的下级下面。';
+                return;
+            }
+            relations.set(value, parentValue || '');
+            writeOrgRelations(relations, options);
+            renderOrgBuilder();
+        };
+        $$('.org-builder-card').forEach(card => {
+            card.addEventListener('dragstart', event => {
+                state.draggedOrgValue = card.dataset.orgBuilderValue;
+                card.classList.add('dragging');
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/plain', state.draggedOrgValue);
+            });
+            card.addEventListener('dragend', () => {
+                card.classList.remove('dragging');
+                $$('.drag-over').forEach(item => item.classList.remove('drag-over'));
+            });
+            card.addEventListener('dragover', event => {
+                event.preventDefault();
+                card.classList.add('drag-over');
+            });
+            card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+            card.addEventListener('drop', event => {
+                event.preventDefault();
+                card.classList.remove('drag-over');
+                applyParent(state.draggedOrgValue || event.dataTransfer.getData('text/plain'), card.dataset.orgBuilderValue);
+            });
+        });
+        const rootDrop = $('#orgRootDrop');
+        rootDrop.ondragover = event => { event.preventDefault(); rootDrop.classList.add('drag-over'); };
+        rootDrop.ondragleave = () => rootDrop.classList.remove('drag-over');
+        rootDrop.ondrop = event => {
+            event.preventDefault();
+            rootDrop.classList.remove('drag-over');
+            applyParent(state.draggedOrgValue || event.dataTransfer.getData('text/plain'), '');
+        };
+    }
+    function updateFieldTypeAreas() {
+        const type = $('#fieldType').value;
+        $('#optionsArea').style.display = ['select','radio','checkbox'].includes(type) ? 'block' : 'none';
+        $('#suggestionsArea').style.display = type === 'textarea' ? 'block' : 'none';
+        $('#orgChartArea').style.display = type === 'checkbox' && $('#fieldDisplay').value === 'orgchart' ? 'block' : 'none';
+        $('#urlValidationArea').style.display = ['text', 'textarea'].includes(type) ? 'block' : 'none';
+        $('#numberRange').style.display = type === 'number' ? 'grid' : 'none';
+        $('#fieldDisplay').disabled = !['radio','checkbox'].includes(type);
+        if (type === 'checkbox' && $('#fieldDisplay').value === 'orgchart') renderOrgBuilder();
+    }
+    function saveField() {
+        const label = $('#fieldLabel').value.trim();
+        if (!label) return toast('请输入字段名称', 'error');
+        const type = $('#fieldType').value;
+        const options = $('#fieldOptions').value.split('\n').map(line => line.trim()).filter(Boolean).map(line => {
+            const [labelPart, ...valueParts] = line.split('|');
+            const optionLabel = labelPart.trim();
+            const optionValue = valueParts.join('|').trim() || optionLabel;
+            return { label: optionLabel, value: optionValue };
+        });
+        const suggestionGroups = new Map();
+        $('#fieldSuggestions').value.split('\n').map(line => line.trim()).filter(Boolean).forEach(line => {
+            const separator = line.indexOf('|');
+            const category = separator >= 0 ? line.slice(0, separator).trim() : '推荐模板';
+            const item = separator >= 0 ? line.slice(separator + 1).trim() : line;
+            if (!category || !item) return;
+            if (!suggestionGroups.has(category)) suggestionGroups.set(category, []);
+            suggestionGroups.get(category).push(item);
+        });
+        const optionValueByName = new Map();
+        options.forEach(option => {
+            optionValueByName.set(option.label, option.value);
+            optionValueByName.set(option.value, option.value);
+        });
+        const orgChart = $('#fieldOrgChart').value.split('\n').map(line => line.trim()).filter(Boolean).map(line => {
+            const separator = line.indexOf('|');
+            const valueText = (separator >= 0 ? line.slice(0, separator) : line).trim();
+            const parentText = separator >= 0 ? line.slice(separator + 1).trim() : '';
+            return {
+                value: optionValueByName.get(valueText) || valueText,
+                parentValue: optionValueByName.get(parentText) || parentText
+            };
+        });
+        const validation = $('#fieldUrlValidation').checked && ['text', 'textarea'].includes(type) ? {
+            type: 'url',
+            allowNone: $('#fieldAllowNone').checked,
+            noneValue: $('#fieldNoneValue').value.trim() || '无',
+            domains: $('#fieldUrlDomains').value.split(/[\n,，]/).map(value => value.trim().toLowerCase())
+                .map(value => value.replace(/^https?:\/\//, '').replace(/\/.*$/, ''))
+                .filter(Boolean)
+        } : null;
+        if (validation && validation.domains.length === 0) return toast('网址校验至少配置一个允许域名', 'error');
+        if (['select','radio','checkbox'].includes(type) && !options.length) return toast('选择类字段至少需要一个选项', 'error');
+        const old = state.editingFieldIndex >= 0 ? state.editingTemplate.fields[state.editingFieldIndex] : {};
+        const field = {
+            id: old.id || makeId('field'),
+            key: $('#fieldKey').value.trim() || `field_${Date.now().toString(36)}`,
+            label, type, options,
+            exportLabel: $('#fieldExportLabel').value.trim(),
+            suggestions: Array.from(suggestionGroups, ([category, items]) => ({ category, items })),
+            orgChart,
+            validation,
+            description: $('#fieldDescription').value.trim(),
+            placeholder: $('#fieldPlaceholder').value.trim(),
+            defaultValue: type === 'checkbox'
+                ? $('#fieldDefault').value.split(',').map(value => value.trim()).filter(Boolean)
+                : $('#fieldDefault').value,
+            width: $('#fieldWidth').value,
+            display: $('#fieldDisplay').value,
+            required: $('#fieldRequired').checked,
+            min: $('#fieldMin').value === '' ? null : Number($('#fieldMin').value),
+            max: $('#fieldMax').value === '' ? null : Number($('#fieldMax').value)
+        };
+        if (state.editingFieldIndex >= 0) state.editingTemplate.fields[state.editingFieldIndex] = field;
+        else state.editingTemplate.fields.push(field);
+        $('#fieldModal').classList.remove('open');
+        renderTemplateEditor();
+    }
+    async function saveTemplate({ silent = false } = {}) {
+        state.editingTemplate.name = $('#templateName').value.trim();
+        state.editingTemplate.description = $('#templateDescription').value.trim();
+        state.editingTemplate.active = $('#templateActive').value === '1';
+        if (!state.editingTemplate.name) {
+            toast('请输入调查类型名称', 'error');
+            return false;
+        }
+        try {
+            const saved = await api('/api/surveys/templates', { method: 'POST', body: JSON.stringify(state.editingTemplate) });
+            state.editingTemplate = clone(saved);
+            await loadTemplates(saved.id);
+            editTemplate(saved.id);
+            if (!silent) toast('模板已保存');
+            else toast('模板修改已自动保存');
+            return true;
+        } catch (err) {
+            toast(err.message, 'error');
+            return false;
+        }
+    }
+    async function deleteTemplate() {
+        const template = state.editingTemplate;
+        if (!template || !state.templates.some(item => item.id === template.id)) {
+            state.editingTemplate = null; renderTemplateList(); renderTemplateEditor(); return;
+        }
+        if (!confirm(`确定删除调查模板“${template.name}”吗？历史提交记录会保留。`)) return;
+        try {
+            await api(`/api/surveys/templates/${encodeURIComponent(template.id)}`, { method: 'DELETE' });
+            state.editingTemplate = null;
+            await loadTemplates();
+            toast('模板已删除');
+        } catch (err) { toast(err.message, 'error'); }
+    }
+
+    function ledgerFields(templateId = '') {
+        const templates = templateId ? state.templates.filter(item => item.id === templateId) : state.templates;
+        const fields = new Map();
+        templates.forEach(template => template.fields.forEach(field => {
+            if (!fields.has(field.key)) fields.set(field.key, field);
+        }));
+        const result = Array.from(fields.values());
+        const managerIndex = result.findIndex(field => field.key === 'managerRoles');
+        const derived = managerStatColumns.map(column => ({ ...column, derived: 'manager-stat' }));
+        if (managerIndex >= 0) result.splice(managerIndex + 1, 0, ...derived);
+        else result.push(...derived);
+        return result;
+    }
+    function ledgerFieldValue(item, field) {
+        if (field.derived === 'manager-stat') {
+            const template = state.templates.find(candidate => candidate.id === item.templateId);
+            const managerField = template && template.fields.find(candidate => candidate.key === 'managerRoles');
+            const labels = new Map((managerField && managerField.options || []).map(option => [String(option.value), String(option.label)]));
+            const selected = Array.isArray(item.answers.managerRoles) ? item.answers.managerRoles.map(String) : [];
+            const texts = Array.from(new Set(selected.flatMap(value => [value, labels.get(value) || '']).filter(Boolean)));
+            return texts.some(value => field.patterns.some(pattern => pattern.test(value))) ? 1 : 0;
+        }
+        return item.answers[field.key];
+    }
+    async function loadLedger() {
+        if (!isAdmin) return;
+        const templateId = $('#ledgerTemplateSelect').value;
+        $('#ledgerHost').innerHTML = '<div class="empty">正在加载台账...</div>';
+        try {
+            state.ledgerRows = await api(`/api/surveys/submissions?limit=5000${templateId ? `&templateId=${encodeURIComponent(templateId)}` : ''}`);
+            renderLedger();
+        } catch (err) {
+            $('#ledgerHost').innerHTML = `<div class="empty">${escapeHtml(err.message)}</div>`;
+        }
+    }
+    function formatLedgerValue(value, item, field) {
+        let normalized = value;
+        if (Array.isArray(value)) {
+            const template = state.templates.find(candidate => candidate.id === item.templateId);
+            const templateField = template && template.fields.find(candidate => candidate.key === field.key);
+            const labels = new Map((templateField && templateField.options || []).map(option => [String(option.value), String(option.label)]));
+            normalized = Array.from(new Set(value.map(entry => labels.get(String(entry)) || String(entry)))).join('/');
+        }
+        const text = String(normalized ?? '');
+        if (/^https:\/\//i.test(text)) {
+            return `<a class="ledger-link" href="${escapeHtml(text)}" target="_blank" rel="noopener">${escapeHtml(text)}</a>`;
+        }
+        return escapeHtml(text);
+    }
+    function renderLedger() {
+        const host = $('#ledgerHost');
+        const templateId = $('#ledgerTemplateSelect').value;
+        const query = $('#ledgerSearch').value.trim().toLowerCase();
+        const fields = ledgerFields(templateId);
+        const rows = state.ledgerRows.filter(item => !query || JSON.stringify(item).toLowerCase().includes(query));
+        if (!rows.length) {
+            host.innerHTML = '<div class="empty">暂无符合条件的录入信息。</div>';
+            return;
+        }
+        host.innerHTML = `<table class="ledger-table"><thead><tr>
+            <th>操作</th><th>调查类型</th><th>提交时间</th><th>提交人</th>
+            ${fields.map(field => `<th>${escapeHtml(field.label)}</th>`).join('')}
+            <th>记录号</th>
+        </tr></thead><tbody>${rows.map(item => `<tr>
+            <td><div class="ledger-actions">
+                <button class="btn small" data-ledger-edit="${escapeHtml(item.id)}">编辑</button>
+                <button class="btn small danger" data-ledger-delete="${escapeHtml(item.id)}">删除</button>
+            </div></td>
+            <td>${escapeHtml(item.templateName)}</td>
+            <td><span class="ledger-meta">${escapeHtml(new Date(item.createdAt).toLocaleString('zh-CN'))}</span></td>
+            <td>${escapeHtml(item.submittedBy || '-')}</td>
+            ${fields.map(field => `<td class="ledger-value">${formatLedgerValue(ledgerFieldValue(item, field), item, field)}</td>`).join('')}
+            <td><span class="ledger-meta">${escapeHtml(item.id)}</span></td>
+        </tr>`).join('')}</tbody></table>`;
+        host.querySelectorAll('[data-ledger-edit]').forEach(button =>
+            button.addEventListener('click', () => openRecordModal(button.dataset.ledgerEdit))
+        );
+        host.querySelectorAll('[data-ledger-delete]').forEach(button =>
+            button.addEventListener('click', () => deleteLedgerRecord(button.dataset.ledgerDelete))
+        );
+    }
+    function recordFieldHtml(field, value) {
+        const required = field.required ? 'required' : '';
+        const label = `<label class="field-label ${required}">${escapeHtml(field.label)}</label>`;
+        const help = field.description ? `<div class="field-help">${escapeHtml(field.description)}</div>` : '';
+        let control = '';
+        if (field.type === 'textarea') {
+            control = `<textarea name="${escapeHtml(field.key)}" ${required}>${escapeHtml(value ?? '')}</textarea>`;
+        } else if (field.type === 'select') {
+            control = `<select name="${escapeHtml(field.key)}" ${required}><option value="">请选择</option>${field.options.map(option =>
+                `<option value="${escapeHtml(option.value)}"${String(value ?? '') === String(option.value) ? ' selected' : ''}>${escapeHtml(option.label)}</option>`
+            ).join('')}</select>`;
+        } else if (field.type === 'radio' || field.type === 'checkbox') {
+            const selected = new Set(Array.isArray(value) ? value : [value]);
+            control = `<div class="option-list cards">${field.options.map(option =>
+                `<label class="option"><input type="${field.type}" name="${escapeHtml(field.key)}" value="${escapeHtml(option.value)}" ${selected.has(option.value) ? 'checked' : ''}><span>${escapeHtml(option.label)}</span></label>`
+            ).join('')}</div>`;
+        } else {
+            const inputValue = value ?? (field.type === 'date' ? localToday() : field.defaultValue || '');
+            control = `<input type="${field.type}" name="${escapeHtml(field.key)}" value="${escapeHtml(inputValue)}" ${required}>`;
+        }
+        return `<div class="field ${field.width === 'half' ? '' : 'full'}">${label}${help}${control}</div>`;
+    }
+    function openRecordModal(id = '') {
+        state.ledgerEditingId = id;
+        const record = id ? state.ledgerRows.find(item => item.id === id) : null;
+        const available = record
+            ? state.templates
+            : state.templates.filter(template => template.active);
+        $('#recordModalTitle').textContent = record ? '编辑录入信息' : '新增录入信息';
+        $('#recordTemplateSelect').innerHTML = available.map(template =>
+            `<option value="${escapeHtml(template.id)}"${record && template.id === record.templateId ? ' selected' : ''}>${escapeHtml(template.name)}</option>`
+        ).join('');
+        renderRecordForm(record);
+        $('#recordModal').classList.add('open');
+    }
+    function renderRecordForm(record = null) {
+        const templateId = $('#recordTemplateSelect').value;
+        const template = state.templates.find(item => item.id === templateId);
+        $('#recordForm').innerHTML = template
+            ? template.fields.map(field => recordFieldHtml(field, record && record.templateId === templateId ? record.answers[field.key] : undefined)).join('')
+            : '<div class="empty">无可用模板</div>';
+    }
+    function collectRecordAnswers(template) {
+        const form = $('#recordForm');
+        if (!form.reportValidity()) return null;
+        const answers = {};
+        for (const field of template.fields) {
+            if (field.type === 'checkbox') {
+                answers[field.key] = Array.from(form.querySelectorAll(`input[name="${CSS.escape(field.key)}"]:checked`)).map(input => input.value);
+                if (field.required && answers[field.key].length === 0) {
+                    toast(`请选择“${field.label}”`, 'error');
+                    return null;
+                }
+            } else if (field.type === 'radio') {
+                const input = form.querySelector(`input[name="${CSS.escape(field.key)}"]:checked`);
+                answers[field.key] = input ? input.value : '';
+                if (field.required && !answers[field.key]) {
+                    toast(`请选择“${field.label}”`, 'error');
+                    return null;
+                }
+            } else {
+                const input = form.elements[field.key];
+                answers[field.key] = input ? input.value : '';
+            }
+        }
+        return answers;
+    }
+    async function saveLedgerRecord() {
+        const templateId = $('#recordTemplateSelect').value;
+        const template = state.templates.find(item => item.id === templateId);
+        if (!template) return toast('请选择调查类型', 'error');
+        const answers = collectRecordAnswers(template);
+        if (!answers) return;
+        try {
+            if (state.ledgerEditingId) {
+                await api(`/api/surveys/submissions/${encodeURIComponent(state.ledgerEditingId)}`, {
+                    method: 'PUT', body: JSON.stringify({ templateId, answers })
+                });
+                toast('记录已更新');
+            } else {
+                await api('/api/surveys/submissions', {
+                    method: 'POST', body: JSON.stringify({ templateId, answers })
+                });
+                toast('记录已新增');
+            }
+            $('#recordModal').classList.remove('open');
+            await loadLedger();
+        } catch (err) {
+            toast(err.message, 'error');
+        }
+    }
+    async function deleteLedgerRecord(id) {
+        const record = state.ledgerRows.find(item => item.id === id);
+        if (!record || !confirm(`确定删除“${record.templateName}”的这条录入记录吗？此操作不可恢复。`)) return;
+        try {
+            await api(`/api/surveys/submissions/${encodeURIComponent(id)}`, { method: 'DELETE' });
+            toast('记录已删除');
+            await loadLedger();
+        } catch (err) {
+            toast(err.message, 'error');
+        }
+    }
+    async function exportLedgerExcel() {
+        const templateId = $('#ledgerTemplateSelect').value;
+        try {
+            const res = await fetch(`/api/surveys/export.xlsx${templateId ? `?templateId=${encodeURIComponent(templateId)}` : ''}`, {
+                cache: 'no-store', headers: authHeaders()
+            });
+            if (!res.ok) {
+                const body = await res.json().catch(() => ({}));
+                throw new Error(body.error || '导出失败');
+            }
+            const blob = await res.blob();
+            const disposition = res.headers.get('Content-Disposition') || '';
+            const match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+            const filename = match ? decodeURIComponent(match[1]) : `六个一信息台账_${localToday()}.xlsx`;
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url; link.download = filename; document.body.appendChild(link); link.click(); link.remove();
+            URL.revokeObjectURL(url);
+            toast('Excel 已导出');
+        } catch (err) {
+            toast(err.message, 'error');
+        }
+    }
+
+    async function loadHistory() {
+        if (!isAdmin) return;
+        const templateId = $('#historyTemplateSelect').value;
+        $('#historyHost').innerHTML = '<div class="empty">正在加载...</div>';
+        try {
+            state.submissions = await api(`/api/surveys/submissions?limit=300${templateId ? `&templateId=${encodeURIComponent(templateId)}` : ''}`);
+            renderHistory();
+        } catch (err) {
+            $('#historyHost').innerHTML = `<div class="empty">${escapeHtml(err.message)}</div>`;
+        }
+    }
+    function renderHistory() {
+        const host = $('#historyHost');
+        if (!state.submissions.length) { host.innerHTML = '<div class="empty">暂无提交记录。</div>'; return; }
+        host.innerHTML = `<table><thead><tr><th>提交时间</th><th>调查类型</th><th>提交人</th><th>填写内容</th><th>记录号</th></tr></thead><tbody>
+            ${state.submissions.map(item => {
+                const template = state.templates.find(t => t.id === item.templateId);
+                const labels = Object.fromEntries((template && template.fields || []).map(field => [field.key, field.label]));
+                const summary = Object.entries(item.answers).map(([key, value]) => `${labels[key] || key}：${Array.isArray(value) ? Array.from(new Set(value)).join('/') : value}`).join('\n');
+                return `<tr><td>${escapeHtml(new Date(item.createdAt).toLocaleString('zh-CN'))}</td><td>${escapeHtml(item.templateName)}</td><td>${escapeHtml(item.submittedBy || '-')}</td><td class="answer-summary">${escapeHtml(summary)}</td><td>${escapeHtml(item.id)}</td></tr>`;
+            }).join('')}</tbody></table>`;
+    }
+
+    $('#templateSelect').addEventListener('change', event => { state.activeId = event.target.value; renderForm(); });
+    $('#resetFormBtn').addEventListener('click', renderForm);
+    if (isAdmin) {
+        $('#newTemplateBtn').addEventListener('click', newTemplate);
+        $('#refreshHistoryBtn').addEventListener('click', loadHistory);
+        $('#historyTemplateSelect').addEventListener('change', loadHistory);
+        $('#ledgerTemplateSelect').addEventListener('change', loadLedger);
+        $('#ledgerSearch').addEventListener('input', renderLedger);
+        $('#ledgerRefreshBtn').addEventListener('click', loadLedger);
+        $('#ledgerAddBtn').addEventListener('click', () => openRecordModal());
+        $('#ledgerExportBtn').addEventListener('click', exportLedgerExcel);
+        $('#recordTemplateSelect').addEventListener('change', () => renderRecordForm());
+        $('#saveRecordBtn').addEventListener('click', saveLedgerRecord);
+        $$('[data-close-record]').forEach(button => button.addEventListener('click', () => $('#recordModal').classList.remove('open')));
+        $('#recordModal').addEventListener('click', event => {
+            if (event.target === $('#recordModal')) $('#recordModal').classList.remove('open');
+        });
+    }
+    $('#fieldType').addEventListener('change', updateFieldTypeAreas);
+    $('#fieldDisplay').addEventListener('change', updateFieldTypeAreas);
+    $('#fieldOptions').addEventListener('change', renderOrgBuilder);
+    $('#fieldOrgChart').addEventListener('change', renderOrgBuilder);
+    $('#orgAddRoleBtn').addEventListener('click', addOrgBuilderRole);
+    $('#orgNewRoleName').addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            addOrgBuilderRole();
+        }
+    });
+    $('#saveFieldBtn').addEventListener('click', saveField);
+    $$('[data-close-modal]').forEach(button => button.addEventListener('click', () => $('#fieldModal').classList.remove('open')));
+    $('#fieldModal').addEventListener('click', event => { if (event.target === $('#fieldModal')) $('#fieldModal').classList.remove('open'); });
+
+    setupPermissions();
+    setupTabs();
+    loadTemplates().catch(err => {
+        $('#formHost').innerHTML = `<div class="empty">加载失败：${escapeHtml(err.message)}</div>`;
+    });
+})();
+</script>
+</body>
+</html>
