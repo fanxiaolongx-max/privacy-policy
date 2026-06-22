@@ -24,6 +24,7 @@ const storageRoutes = require('./routes/storage');
 const frtRoutes = require('./routes/frt');
 const prauditRoutes = require('./routes/praudit');
 const customToolsRoutes = require('./routes/custom-tools');
+const surveysRoutes = require('./routes/surveys');
 const customToolsRepo = require('./models/custom-tools-repository');
 const navSettingsRoutes = require('./routes/nav-settings');
 const aiSettingsRoutes = require('./routes/ai-settings');
@@ -98,6 +99,7 @@ app.use('/api', checkAuth); // Protect all /api/* (except login, which is handle
 app.use('/api', (req, res, next) => {
     if (req.path.startsWith('/auth/')) return next();
     if (req.path.startsWith('/requirements')) return next(); // 需求管理内部自行控制权限
+    if (req.path.startsWith('/surveys')) return next(); // 调查模板和提交由模块内部控制权限
     if (req.method !== 'GET') {
         return requireAdmin(req, res, next);
     }
@@ -114,6 +116,7 @@ app.use('/api/db-explorer', require('./routes/db-explorer')); // 数据库浏览
 app.use('/api/frt', frtRoutes); // FRT 历史快照 API
 app.use('/api/praudit', prauditRoutes); // PR审计配置 API
 app.use('/api/custom-tools', customToolsRoutes); // 自定义 HTML 工具注册 API
+app.use('/api/surveys', surveysRoutes); // 可配置调查模板与提交记录 API
 app.use('/api/nav-settings', navSettingsRoutes); // 顶部导航全局设置 API
 app.use('/api/ai-settings', aiSettingsRoutes); // 智能客服助手模型配置 API
 app.use('/api/global-backup', globalBackupRoutes); // 全局数据备份与恢复 API
