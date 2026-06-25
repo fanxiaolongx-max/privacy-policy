@@ -145,6 +145,9 @@ app.get('/expedite', (req, res) => {
 app.get('/monthly', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/pages/monthly.html'));
 });
+app.get('/bigscreen', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/pages/bigscreen.html'));
+});
 app.get('/requirements', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/pages/requirements.html'));
 });

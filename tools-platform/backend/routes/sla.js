@@ -519,6 +519,7 @@ async function fillYuxiangWorkbook(body) {
                 if (matchC) mappingToRow[matchC[1]] = r;
         }
     }
+    const hasExplicitTemplateMapping = Object.keys(mappingToRow).length > 0;
 
     const setCell = (rowObj, col, val, isScore = false, isMissing = false, isProblematic = false) => {
         const cell = rowObj.getCell(col);
@@ -543,10 +544,63 @@ async function fillYuxiangWorkbook(body) {
             cell.font = Object.assign({}, cell.font, { color: { argb: 'FFFF0000' }, bold: true });
         }
     };
+    const columnName = (col) => {
+        let out = '';
+        let n = col;
+        while (n > 0) {
+            const rem = (n - 1) % 26;
+            out = String.fromCharCode(65 + rem) + out;
+            n = Math.floor((n - rem) / 26);
+        }
+        return out;
+    };
+    const unmergeOverlappingCells = (rowIndex, startCol, endCol) => {
+        const mergeEntries = Object.values(sheet._merges || {});
+        mergeEntries.forEach(merge => {
+            const model = merge && merge.model;
+            if (!model) return;
+            const rowOverlaps = model.top <= rowIndex && model.bottom >= rowIndex;
+            const colOverlaps = model.left <= endCol && model.right >= startCol;
+            if (!rowOverlaps || !colOverlaps) return;
+            const range = `${columnName(model.left)}${model.top}:${columnName(model.right)}${model.bottom}`;
+            try {
+                sheet.unMergeCells(range);
+            } catch (e) {}
+        });
+    };
+    const getRowMapping = rowIndex => {
+        const zVal = sheet.getRow(rowIndex).getCell(26).value;
+        if (typeof zVal !== 'string') return '';
+        const match = zVal.match(/\[Map:\s*(.+?)\]/);
+        return match ? match[1] : '';
+    };
+    const formatSystemSummaryRow = rowIndex => {
+        const row = sheet.getRow(rowIndex);
+        const label = row.getCell(3).text || row.getCell(1).text || row.getCell(3).value || row.getCell(1).value || '';
+        unmergeOverlappingCells(rowIndex, 1, 5);
+        sheet.mergeCells(`A${rowIndex}:E${rowIndex}`);
+        const cell = row.getCell(1);
+        cell.value = label;
+        cell.style = Object.assign({}, cell.style);
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.font = Object.assign({}, cell.font, { bold: true });
+    };
+    const fillYearTargetCells = row => {
+        const rowIndex = row.number;
+        unmergeOverlappingCells(rowIndex, 6, 9);
+        sheet.mergeCells(`F${rowIndex}:I${rowIndex}`);
+        setCell(row, 6, '/');
+    };
+    const getAdjustUnitText = (adjustment) => {
+        const unit = Number(adjustment.unit);
+        if (!Number.isFinite(unit)) return '';
+        const suffix = adjustment.type === '扣分' || adjustment.type === 'Deduct' ? 'case' : 'time';
+        return `${unit} point/${suffix}`;
+    };
 
     if (Array.isArray(metrics)) {
         metrics.forEach((m, idx) => {
-            const r = mappingToRow[m.label] || (3 + idx); // fallback to sequential if not mapped
+            const r = mappingToRow[m.label] || (!hasExplicitTemplateMapping ? (3 + idx) : null);
             if (r) {
                 const row = sheet.getRow(r);
                 const isPercent = ['TE', 'ORG', 'ET', 'VDF'].some(cat => m[cat] && String(m[cat].achv).includes('%'));
@@ -580,15 +634,21 @@ async function fillYuxiangWorkbook(body) {
             if (idx < 14) fallbackR = 38 + idx;
             else fallbackR = 52 + (idx - 14);
             
-            const r = aName && mappingToRow[aName] ? mappingToRow[aName] : fallbackR;
+            const r = (aName && mappingToRow[aName]) || (!hasExplicitTemplateMapping ? fallbackR : null);
             if (r) {
                 const row = sheet.getRow(r);
-                // Adjustments Target: 0 for Deduct, "Add" for Addition
-                if (r >= 52) {
-                    setCell(row, 10, "Add");
-                } else {
-                    setCell(row, 10, 0);
-                }
+                const typeText = a.type === '加分' || a.type === 'Add' ? 'Add' : 'Deduct';
+                const templateTextCell = row.getCell(3);
+                const templateText = templateTextCell.text || templateTextCell.value || '';
+                unmergeOverlappingCells(r, 1, 5);
+                setCell(row, 1, typeText);
+                setCell(row, 2, 'All');
+                setCell(row, 3, templateText);
+                row.getCell(3).alignment = { horizontal: 'left', vertical: 'middle', wrapText: false };
+                setCell(row, 4, getAdjustUnitText(a));
+                setCell(row, 5, 'Timely');
+                fillYearTargetCells(row);
+                setCell(row, 10, '/');
 
                 ['TE', 'ORG', 'ET', 'VDF'].forEach((cat, cIdx) => {
                     const achvCol = 11 + cIdx;
@@ -611,7 +671,11 @@ async function fillYuxiangWorkbook(body) {
     }
 
     const fillRow = (rIndex, targetCol, sourceObj, fields = ['TE', 'ORG', 'ET', 'VDF']) => {
-        if (!sourceObj) return;
+        if (!rIndex || !sourceObj) return;
+        const rowMapping = getRowMapping(rIndex);
+        if (['SYS_SubTotal', 'SYS_AdjustTotal', 'SYS_WeightInMonth', 'SYS_FinalResult'].includes(rowMapping)) {
+            formatSystemSummaryRow(rIndex);
+        }
         const row = sheet.getRow(rIndex);
         fields.forEach((cat, idx) => {
             const cIndex = targetCol + idx;
@@ -620,10 +684,10 @@ async function fillYuxiangWorkbook(body) {
     };
 
     if (totals) {
-        fillRow(mappingToRow['SYS_SubTotal'] || 37, 15, totals.subTotal);
-        fillRow(mappingToRow['SYS_AdjustTotal'] || 54, 15, totals.adjustTotal);
-        fillRow(mappingToRow['SYS_WeightInMonth'] || 55, 15, totals.weightInMonth);
-        fillRow(mappingToRow['SYS_FinalResult'] || 56, 15, totals.finalResult);
+        fillRow(mappingToRow['SYS_SubTotal'] || (!hasExplicitTemplateMapping ? 37 : null), 15, totals.subTotal);
+        fillRow(mappingToRow['SYS_AdjustTotal'] || (!hasExplicitTemplateMapping ? 54 : null), 15, totals.adjustTotal);
+        fillRow(mappingToRow['SYS_WeightInMonth'] || (!hasExplicitTemplateMapping ? 55 : null), 15, totals.weightInMonth);
+        fillRow(mappingToRow['SYS_FinalResult'] || (!hasExplicitTemplateMapping ? 56 : null), 15, totals.finalResult);
     }
 
     // Fix column widths
@@ -776,9 +840,69 @@ router.post('/template-mapping', async (req, res) => {
         const workbook = new ExcelJS.Workbook();
         await workbook.xlsx.readFile(templatePath);
         const sheet = workbook.worksheets[0];
-        
-        updates.forEach(u => {
-            const cell = sheet.getRow(u.r).getCell(3);
+
+        const clone = value => {
+            if (value === undefined || value === null) return value;
+            return JSON.parse(JSON.stringify(value));
+        };
+        const maxCol = Math.max(sheet.columnCount || 26, 26);
+        const snapshotRow = rowNumber => {
+            const row = sheet.getRow(rowNumber);
+            const cells = [];
+            for (let c = 1; c <= maxCol; c++) {
+                const cell = row.getCell(c);
+                cells[c] = {
+                    value: clone(cell.value),
+                    style: clone(cell.style || {}),
+                    numFmt: cell.numFmt,
+                    alignment: clone(cell.alignment),
+                    font: clone(cell.font),
+                    fill: clone(cell.fill),
+                    border: clone(cell.border),
+                    protection: clone(cell.protection)
+                };
+            }
+            return {
+                height: row.height,
+                hidden: row.hidden,
+                outlineLevel: row.outlineLevel,
+                cells
+            };
+        };
+        const applyRowSnapshot = (rowNumber, snapshot) => {
+            const row = sheet.getRow(rowNumber);
+            row.height = snapshot.height;
+            row.hidden = snapshot.hidden;
+            row.outlineLevel = snapshot.outlineLevel;
+            for (let c = 1; c <= maxCol; c++) {
+                const target = row.getCell(c);
+                const source = snapshot.cells[c] || {};
+                if (target.isMerged && target.master && target.address !== target.master.address) continue;
+                target.value = clone(source.value);
+                target.style = clone(source.style || {});
+                if (source.numFmt) target.numFmt = source.numFmt;
+                if (source.alignment) target.alignment = clone(source.alignment);
+                if (source.font) target.font = clone(source.font);
+                if (source.fill) target.fill = clone(source.fill);
+                if (source.border) target.border = clone(source.border);
+                if (source.protection) target.protection = clone(source.protection);
+            }
+        };
+        const rowSnapshots = {};
+        const maxRow = Math.max(sheet.rowCount, 100);
+        for (let r = 3; r <= maxRow; r++) {
+            rowSnapshots[r] = snapshotRow(r);
+        }
+
+        updates.forEach((u, idx) => {
+            const targetR = Number.isInteger(Number(u.r)) ? Number(u.r) : 3 + idx;
+            const sourceR = Number.isInteger(Number(u.sourceR)) ? Number(u.sourceR) : null;
+            const templateSourceR = Number.isInteger(Number(u.templateSourceR)) ? Number(u.templateSourceR) : null;
+            const fallbackR = targetR > 3 ? targetR - 1 : 3;
+            const snapshot = rowSnapshots[sourceR] || rowSnapshots[templateSourceR] || rowSnapshots[fallbackR] || snapshotRow(targetR);
+            applyRowSnapshot(targetR, snapshot);
+
+            const cell = sheet.getRow(targetR).getCell(3);
             // Clean up C column text just in case
             let finalVal = u.text;
             if (typeof finalVal === 'string') {
@@ -789,7 +913,7 @@ router.post('/template-mapping', async (req, res) => {
             cell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: false };
             
             // Write mapping to Column 26 (Z)
-            const zCell = sheet.getRow(u.r).getCell(26);
+            const zCell = sheet.getRow(targetR).getCell(26);
             if (u.mapping) {
                 zCell.value = `[Map:${u.mapping}]`;
             } else {

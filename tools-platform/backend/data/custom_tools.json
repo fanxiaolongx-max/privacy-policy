@@ -25,7 +25,7 @@
     "slug": "network_safety_meeting_summary",
     "name": "华子胶片设计工具",
     "icon": "🛡️",
-    "description": "直接编辑华子胶片幻灯片，并按页面样式一键导出 PDF。",
+    "description": "专业华为风格胶片编辑器，模板内所有组件均可增删、修改、拖拽与缩放，并支持导出 PDF/PPT。",
     "tags": [
       "模板",
       "PDF",
@@ -34,7 +34,7 @@
     "href": "/tools/network_safety_meeting_summary",
     "filePath": "/custom-tools/network_safety_meeting_summary/index.html",
     "createdAt": "2026-06-16T13:49:05.303Z",
-    "updatedAt": "2026-06-16T14:20:00.000Z"
+    "updatedAt": "2026-06-23T08:35:00.000Z"
   },
   {
     "slug": "tool-mqp55fna",

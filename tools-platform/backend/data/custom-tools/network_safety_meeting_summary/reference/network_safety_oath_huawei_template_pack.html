@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Network Safety Oath - Huawei Style Template Pack</title>
+<style>
+:root{
+  --red:#c7000b;
+  --red-dark:#9f0008;
+  --black:#1f1f1f;
+  --dark:#333;
+  --gray:#666;
+  --light:#f4f5f6;
+  --line:#ddd;
+  --white:#fff;
+  --green:#2e8b57;
+  --amber:#d98c00;
+}
+*{box-sizing:border-box}
+html,body{
+  margin:0;
+  background:#e9eaec;
+  color:var(--dark);
+  font-family:"Segoe UI","Microsoft YaHei","PingFang SC","Noto Sans CJK SC",Arial,sans-serif;
+}
+body{padding:24px}
+.deck{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:34px;
+}
+.slide{
+  width:min(1600px,100%);
+  aspect-ratio:16/9;
+  background:#fff;
+  position:relative;
+  overflow:hidden;
+  box-shadow:0 18px 55px rgba(0,0,0,.18);
+  padding:34px 46px 34px;
+}
+.slide::before{
+  content:"";
+  position:absolute;left:0;right:0;top:0;height:8px;background:var(--red);
+}
+.slide::after{
+  content:"";
+  position:absolute;
+  width:260px;height:260px;
+  border-radius:50%;
+  right:-100px;top:-90px;
+  border:34px solid rgba(199,0,11,.05);
+}
+.header{
+  position:relative;z-index:1;
+  display:flex;justify-content:space-between;align-items:flex-start;gap:20px;
+  margin-bottom:22px;
+}
+.kicker{
+  color:var(--red);font-size:13px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px;
+}
+h1{
+  margin:0;color:var(--black);font-size:clamp(30px,3vw,50px);line-height:1.06;letter-spacing:-.025em;
+}
+.subtitle{margin-top:8px;color:var(--gray);font-size:18px}
+.tag{
+  border-left:5px solid var(--red);background:var(--light);padding:10px 16px;
+  color:var(--black);font-size:14px;font-weight:700;white-space:nowrap;
+}
+.footer{
+  position:absolute;left:46px;right:46px;bottom:13px;
+  display:flex;align-items:center;color:#8a8a8a;font-size:11px;letter-spacing:.08em;z-index:2;
+}
+.footer .rule{height:1px;background:#d7d7d7;flex:1;margin:0 14px}
+.page-no{font-weight:700;color:var(--red)}
+.card{
+  border:1px solid var(--line);
+  background:#fff;
+  padding:20px;
+}
+.card-title{
+  font-size:18px;font-weight:700;color:var(--black);margin-bottom:10px;
+}
+.muted{color:var(--gray)}
+.red{color:var(--red);font-weight:700}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.section-title{
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:3px solid var(--red);padding-bottom:9px;margin-bottom:14px;
+}
+.section-title h2{margin:0;font-size:20px;color:var(--black)}
+.section-title span{font-size:12px;color:var(--gray);letter-spacing:.14em;text-transform:uppercase}
+.icon-box{
+  width:42px;height:42px;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:18px;margin-bottom:14px;
+}
+.list{margin:0;padding-left:20px;line-height:1.7}
+.big-number{font-size:42px;font-weight:800;color:var(--red);line-height:1}
+.metric{font-size:17px;color:var(--gray);margin-top:8px}
+.progress{
+  height:10px;background:#ececec;margin-top:14px;overflow:hidden;
+}
+.progress span{display:block;height:100%;background:var(--red)}
+.center{display:flex;align-items:center;justify-content:center;text-align:center}
+.flow{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:40px;
+}
+.flow-step{
+  flex:1;border:1px solid var(--line);padding:18px;background:#fff;position:relative;min-height:130px;
+}
+.flow-step::after{
+  content:"→";position:absolute;right:-22px;top:50%;transform:translateY(-50%);
+  color:var(--red);font-size:26px;font-weight:700;
+}
+.flow-step:last-child::after{display:none}
+.flow-step .n{
+  width:30px;height:30px;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;
+  font-weight:700;margin-bottom:12px;
+}
+.timeline{position:relative;margin-top:34px;padding-top:26px}
+.timeline::before{
+  content:"";position:absolute;left:4%;right:4%;top:40px;height:4px;background:#dedede;
+}
+.timeline-items{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;position:relative}
+.t-item{text-align:center}
+.t-dot{
+  width:22px;height:22px;border-radius:50%;background:var(--red);margin:4px auto 18px;border:5px solid #fff;
+  box-shadow:0 0 0 2px var(--red);
+}
+.t-date{font-weight:700;color:var(--red);margin-bottom:8px}
+.quote{
+  border-left:8px solid var(--red);padding:24px 28px;background:var(--light);
+  font-size:28px;font-weight:700;color:var(--black);line-height:1.45;
+}
+.matrix{
+  display:grid;grid-template-columns:120px repeat(4,1fr);grid-template-rows:50px repeat(4,1fr);
+  border:1px solid var(--line);margin-top:18px;
+}
+.matrix > div{
+  border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;padding:10px;text-align:center;
+}
+.matrix .head{background:var(--light);font-weight:700}
+.matrix .low{background:#edf7f1}
+.matrix .med{background:#fff6df}
+.matrix .high{background:#fde9e9}
+.matrix .crit{background:#f6cfd2;color:var(--red-dark);font-weight:700}
+.dashboard{
+  display:grid;grid-template-columns:1.2fr .8fr;gap:20px;
+}
+.chart{
+  height:260px;border:1px solid var(--line);padding:20px;display:flex;align-items:flex-end;gap:18px;
+}
+.bar{
+  flex:1;background:linear-gradient(to top,var(--red),#e96870);position:relative;
+}
+.bar span{
+  position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);font-size:12px;color:var(--gray);
+}
+.legend{display:flex;gap:16px;margin-top:16px;font-size:13px;color:var(--gray)}
+.dot{width:10px;height:10px;background:var(--red);display:inline-block;margin-right:6px}
+.cover{
+  display:flex;flex-direction:column;justify-content:center;height:100%;padding-bottom:40px;position:relative;z-index:1;
+}
+.cover h1{font-size:70px;max-width:1000px}
+.cover .cn{font-size:34px;color:var(--gray);margin-top:14px}
+.cover .line{width:110px;height:7px;background:var(--red);margin:28px 0}
+.cover .meta{font-size:18px;color:var(--gray)}
+.agenda{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:28px}
+.agenda-item{
+  display:grid;grid-template-columns:70px 1fr;align-items:center;border-bottom:1px solid var(--line);padding:16px 0;
+}
+.agenda-item .idx{font-size:34px;color:var(--red);font-weight:800}
+.agenda-item h3{margin:0 0 5px;font-size:19px;color:var(--black)}
+.agenda-item p{margin:0;color:var(--gray)}
+.hero-split{
+  display:grid;grid-template-columns:.9fr 1.1fr;gap:28px;align-items:center;height:610px;
+}
+.hero-visual{
+  height:100%;background:linear-gradient(135deg,#f4f5f6,#fff);
+  border-left:12px solid var(--red);display:flex;align-items:center;justify-content:center;
+}
+.hero-circle{
+  width:300px;height:300px;border-radius:50%;border:38px solid rgba(199,0,11,.1);
+  display:flex;align-items:center;justify-content:center;font-size:74px;font-weight:800;color:var(--red);
+}
+.comparison{display:grid;grid-template-columns:1fr 100px 1fr;gap:0;align-items:stretch;margin-top:24px}
+.vs{display:flex;align-items:center;justify-content:center;color:var(--red);font-size:30px;font-weight:800}
+.pillar{padding:22px;border:1px solid var(--line)}
+.pillar h3{margin-top:0;color:var(--black)}
+.summary{
+  display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:20px;
+}
+.summary .big{
+  min-height:250px;display:flex;flex-direction:column;justify-content:center;border-left:10px solid var(--red);background:var(--light);padding:32px;
+}
+.summary .big h2{font-size:38px;margin:0 0 14px;color:var(--black)}
+.summary .big p{font-size:19px;line-height:1.6;margin:0}
+@media(max-width:1100px){
+  body{padding:0}
+  .slide{width:100%;aspect-ratio:auto;min-height:100vh}
+  .grid-2,.grid-3,.grid-4,.dashboard,.agenda,.comparison,.summary,.hero-split{grid-template-columns:1fr}
+  .flow{flex-direction:column}.flow-step::after{display:none}
+  .footer{position:static;margin-top:20px}
+}
+@media print{
+  @page{size:16in 9in;margin:0}
+  body{padding:0;background:#fff}
+  .deck{gap:0}
+  .slide{width:100vw;height:100vh;page-break-after:always;box-shadow:none}
+}
+</style>
+</head>
+<body>
+<div class="deck">
+
+  <!-- 1 Cover -->
+  <section class="slide">
+    <div class="cover">
+      <div class="kicker">Customer First · Quality First · Responsibility First</div>
+      <h1>Network Safety Oath</h1>
+      <div class="cn">网络安全宣誓</div>
+      <div class="line"></div>
+      <div class="meta">Huawei-style 16:9 Presentation Template</div>
+    </div>
+    <div class="footer"><span>NETWORK SAFETY</span><div class="rule"></div><span class="page-no">01</span></div>
+  </section>
+
+  <!-- 2 Agenda -->
+  <section class="slide">
+    <div class="header">
+      <div><div class="kicker">Overview</div><h1>Agenda</h1><div class="subtitle">目录页模板</div></div>
+      <div class="tag">TEMPLATE 02</div>
+    </div>
+    <div class="agenda">
+      <div class="agenda-item"><div class="idx">01</div><div><h3>Background</h3><p>背景与目标</p></div></div>
+      <div class="agenda-item"><div class="idx">02</div><div><h3>Key Principles</h3><p>核心原则</p></div></div>
+      <div class="agenda-item"><div class="idx">03</div><div><h3>Safety Actions</h3><p>安全行动</p></div></div>
+      <div class="agenda-item"><div class="idx">04</div><div><h3>Risk Control</h3><p>风险控制</p></div></div>
+      <div class="agenda-item"><div class="idx">05</div><div><h3>Customer Commitment</h3><p>客户承诺</p></div></div>
+      <div class="agenda-item"><div class="idx">06</div><div><h3>Closing Oath</h3><p>宣誓与总结</p></div></div>
+    </div>
+    <div class="footer"><span>NETWORK SAFETY OATH</span><div class="rule"></div><span class="page-no">02</span></div>
+  </section>
+
+  <!-- 3 Two column -->
+  <section class="slide">
+    <div class="header">
+      <div><div class="kicker">Two-column Layout</div><h1>Key Commitments</h1><div class="subtitle">左右双栏内容模板</div></div>
+      <div class="tag">TEMPLATE 03</div>
+    </div>
+    <div class="grid-2">
+      <div>
+        <div class="section-title"><h2>English</h2><span>Commitment</span></div>
+        <div class="card">
+          <div class="card-title">Customer First</div>
+          <p>Put customers first. Work hard. Take responsibility.</p>
+          <ul class="list">
+            <li>No excuses</li><li>No avoidance</li><li>No complaints</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="section-title"><h2>中文</h2><span>承诺</span></div>
+        <div class="card">
+          <div class="card-title">以客户为先</div>
+          <p>努力工作，勇于担责。</p>
+          <ul class="list">
+            <li>不找借口</li><li>不推诿</li><li>不抱怨</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer"><span>ONE TEAM · ONE STANDARD</span><div class="rule"></div><span class="page-no">03</span></div>
+  </section>
+
+  <!-- 4 Three cards -->
+  <section class="slide">
+    <div class="header">
+      <div><div class="kicker">Card Layout</div><h1>Three Core Principles</h1><div class="subtitle">三栏卡片模板</div></div>
+      <div class="tag">TEMPLATE 04</div>
+    </div>
+    <div class="grid-3">
+      <div class="card"><div class="icon-box">01</div><div class="card-title">Customer First</div><p class="muted">Understand customer needs and create measurable value.</p></div>
+      <div class="card"><div class="icon-box">02</div><div class="card-title">Safety First</div><p class="muted">Follow every red line and control every operational risk.</p></div>
+      <div class="card"><div class="icon-box">03</div><div class="card-title">Ownership</div><p class="muted">Face problems directly and close every issue completely.</p></div>
+    </div>
+    <div class="quote" style="margin-top:28px">“No hiding. No delay. Face problems and solve them.”</div>
+    <div class="footer"><span>CORE PRINCIPLES</span><div class="rule"></div><span class="page-no">04</span></div>
+  </section>
+
+  <!-- 5 Four metrics -->
+  <section class="slide">
+    <div class="header">
+      <div><div class="kicker">Dashboard Layout</div><h1>Safety Performance Overview</h1><div class="subtitle">四项指标模板</div></div>
+      <div class="tag">TEMPLATE 05</div>
+    </div>
+    <div class="grid-4">
+      <div class="card"><div class="big-number">100%</div><div class="metric">Procedure Compliance</div><div class="progress"><span style="width:100%"></span></div></div>
+      <div class="card"><div class="big-number">0</div><div class="metric">Red-line Violations</div><div class="progress"><span style="width:4%"></span></div></div>
+      <div class="card"><div class="big-number">96%</div><div class="metric">Risk Closure Rate</div><div class="progress"><span style="width:96%"></span></div></div>
+      <div class="card"><div class="big-number">24h</div><div class="metric">Average Response Time</div><div class="progress"><span style="width:72%"></span></div></div>
+    </div>
+    <div class="footer"><span>SAFETY PERFORMANCE</span><div class="rule"></div><span class="page-no">05</span></div>
+  </section>
+
+  <!-- 6 Process -->
+  <section class="slide">
+    <div class="header">
+      <div><div class="kicker">Process Layout</div><h1>Safe Change Management</h1><div class="subtitle">横向流程图模板</div></div>
+      <div class="tag">TEMPLATE 06</div>
+    </div>
+    <div class="flow">
+      <div class="flow-step"><div class="n">1</div><div class="card-title">Understand</div><p class="muted">Know the network and customer requirements.</p></div>
+      <div class="flow-step"><div class="n">2</div><div class="card-title">Assess</div><p class="muted">Identify risks and prepare mitigation plans.</p></div>
+      <div class="flow-step"><div class="n">3</div><div class="card-title">Approve</div><p class="muted">Follow the change procedure and authorization flow.</p></div>
+      <div class="flow-step"><div class="n">4</div><div class="card-title">Execute</div><p class="muted">Operate carefully and monitor every step.</p></div>
+      <div class="flow-step"><div class="n">5</div><div class="card-title">Verify</div><p class="muted">Confirm service health and close all issues.</p></div>
+    </div>
+    <div class="footer"><span>CHANGE MANAGEMENT</span><div class="rule"></div><span class="page-no">06</span></div>
+  </section>
+
+  <!-- 7 Timeline -->
+  <section class="slide">
+    <div class="header">
+      <div><div class="kicker">Timeline Layout</div><h1>Safety Improvement Roadmap</h1><div class="subtitle">时间轴模板</div></div>
+      <div class="tag">TEMPLATE 07</div>
+    </div>
+    <div class="timeline">
+      <div class="timeline-items">
+        <div class="t-item"><div class="t-dot"></div><div class="t-date">Phase 1</div><div class="card-title">Baseline</div><p class="muted">Assess current network risks.</p></div>
+        <div class="t-item"><div class="t-dot"></div><div class="t-date">Phase 2</div><div class="card-title">Planning</div><p class="muted">Define controls and owners.</p></div>
+        <div class="t-item"><div class="t-dot"></div><div class="t-date">Phase 3</div><div class="card-title">Execution</div><p class="muted">Implement corrective actions.</p></div>
+        <div class="t-item"><div class="t-dot"></div><div class="t-date">Phase 4</div><div class="card-title">Verification</div><p class="muted">Validate closure and quality.</p></div>
+        <div class="t-item"><div class="t-dot"></div><div class="t-date">Phase 5</div><div class="card-title">Optimization</div><p class="muted">Standardize and improve.</p></div>
+      </div>
+    </div>
+    <div class="footer"><span>ROADMAP</span><div class="rule"></div><span class="page-no">07</span></div>
+  </section>
+
+  <!-- 8 Comparison -->
+  <section class="slide">
+    <div class="header">
+      <div><div class="kicker">Comparison Layout</div><h1>Reactive vs. Proactive Safety</h1><div class="subtitle">对比分析模板</div></div>
+      <div class="tag">TEMPLATE 08</div>
+    </div>
+    <div class="comparison">
+      <div class="pillar">
+        <div class="section-title"><h2>Reactive</h2><span>After Issue</span></div>
+        <ul class="list">
+          <li>Respond after failure</li>
+          <li>Depend on escalation</li>
+          <li>Temporary workaround</li>
+          <li>Limited prevention</li>
+        </ul>
+      </div>
+      <div class="vs">VS</div>
+      <div class="pillar">
+        <div class="section-title"><h2>Proactive</h2><span>Before Issue</span></div>
+        <ul class="list">
+          <li>Identify risks early</li>
+          <li>Own the problem directly</li>
+          <li>Close root causes</li>
+          <li>Prevent recurrence</li>
+        </ul>
+      </div>
+    </div>
+    <div class="quote" style="margin-top:28px">Stay close to the network. Prevent problems early.</div>
+    <div class="footer"><span>PROACTIVE SAFETY</span><div class="rule"></div><span class="page-no">08</span></div>
+  </section>
+
+  <!-- 9 Risk matrix -->
+  <section class="slide">
+    <div class="header">
+      <div><div class="kicker">Risk Layout</div><h1>Network Risk Matrix</h1><div class="subtitle">风险矩阵模板</div></div>
+      <div class="tag">TEMPLATE 09</div>
+    </div>
+    <div class="matrix">
+      <div class="head">Impact / Probability</div><div class="head">Rare</div><div class="head">Possible</div><div class="head">Likely</div><div class="head">Almost Certain</div>
+      <div class="head">Critical</div><div class="med">Medium</div><div class="high">High</div><div class="crit">Critical</div><div class="crit">Critical</div>
+      <div class="head">Major</div><div class="low">Low</div><div class="med">Medium</div><div class="high">High</div><div class="crit">Critical</div>
+      <div class="head">Moderate</div><div class="low">Low</div><div class="med">Medium</div><div class="med">Medium</div><div class="high">High</div>
+      <div class="head">Minor</div><div class="low">Low</div><div class="low">Low</div><div class="med">Medium</div><div class="med">Medium</div>
+    </div>
+    <div class="footer"><span>RISK CONTROL</span><div class="rule"></div><span class="page-no">09</span></div>
+  </section>
+
+  <!-- 10 Dashboard -->
+  <section class="slide">
+    <div class="header">
+      <div><div class="kicker">Data Layout</div><h1>Monthly Safety Trend</h1><div class="subtitle">数据图表模板</div></div>
+      <div class="tag">TEMPLATE 10</div>
+    </div>
+    <div class="dashboard">
+      <div>
+        <div class="section-title"><h2>Issue Closure Trend</h2><span>Monthly</span></div>
+        <div class="chart">
+          <div class="bar" style="height:42%"><span>Jan</span></div>
+          <div class="bar" style="height:58%"><span>Feb</span></div>
+          <div class="bar" style="height:68%"><span>Mar</span></div>
+          <div class="bar" style="height:76%"><span>Apr</span></div>
+          <div class="bar" style="height:88%"><span>May</span></div>
+          <div class="bar" style="height:96%"><span>Jun</span></div>
+        </div>
+        <div class="legend"><span><i class="dot"></i>Closure Rate</span></div>
+      </div>
+      <div>
+        <div class="section-title"><h2>Highlights</h2><span>Key Data</span></div>
+        <div class="card"><div class="big-number">+54%</div><div class="metric">Improvement in closure rate</div></div>
+        <div class="card" style="margin-top:14px"><div class="big-number">-37%</div><div class="metric">Reduction in recurring issues</div></div>
+      </div>
+    </div>
+    <div class="footer"><span>MONTHLY TREND</span><div class="rule"></div><span class="page-no">10</span></div>
+  </section>
+
+  <!-- 11 Hero split -->
+  <section class="slide">
+    <div class="header">
+      <div><div class="kicker">Hero Layout</div><h1>One Team, One Commitment</h1><div class="subtitle">大标题+视觉重点模板</div></div>
+      <div class="tag">TEMPLATE 11</div>
+    </div>
+    <div class="hero-split">
+      <div>
+        <div class="quote">I will honor this pledge.<br>I will lead by example.<br><span class="red">I will keep my promise.</span></div>
+      </div>
+      <div class="hero-visual"><div class="hero-circle">100%</div></div>
+    </div>
+    <div class="footer"><span>TEAM OATH</span><div class="rule"></div><span class="page-no">11</span></div>
+  </section>
+
+  <!-- 12 Summary -->
+  <section class="slide">
+    <div class="header">
+      <div><div class="kicker">Closing Layout</div><h1>Key Takeaways</h1><div class="subtitle">总结收尾模板</div></div>
+      <div class="tag">TEMPLATE 12</div>
+    </div>
+    <div class="summary">
+      <div class="big">
+        <h2>Customer First</h2>
+        <p>Understand the customer, create value, and take ownership.</p>
+      </div>
+      <div class="big">
+        <h2>Safety First</h2>
+        <p>Respect every red line and make every operation successful.</p>
+      </div>
+      <div class="big">
+        <h2>Act Early</h2>
+        <p>Prevent risks before they become incidents.</p>
+      </div>
+      <div class="big">
+        <h2>Close the Loop</h2>
+        <p>Face issues directly and resolve them completely.</p>
+      </div>
+    </div>
+    <div class="footer"><span>NETWORK SAFETY OATH</span><div class="rule"></div><span class="page-no">12</span></div>
+  </section>
+
+</div>
+</body>
+</html>

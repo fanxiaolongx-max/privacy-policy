@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>运营大屏看板 - Tools Platform</title>
+    <link rel="stylesheet" href="/css/shared.css?v=20260612-01">
+    <style>
+        :root {
+            --screen-bg: #07111f;
+            --panel-bg: rgba(12, 26, 45, 0.82);
+            --panel-line: rgba(120, 190, 255, 0.24);
+            --text-main: #eef7ff;
+            --text-muted: #8ea8c5;
+            --cyan: #39d5ff;
+            --green: #38e6a3;
+            --amber: #ffc857;
+            --red: #ff5d73;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background:
+                radial-gradient(circle at 14% 12%, rgba(57, 213, 255, 0.18), transparent 32%),
+                radial-gradient(circle at 86% 18%, rgba(255, 200, 87, 0.14), transparent 34%),
+                linear-gradient(135deg, #06101e 0%, #0a1728 48%, #0d1f2f 100%);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(126, 190, 255, 0.07) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(126, 190, 255, 0.07) 1px, transparent 1px);
+            background-size: 54px 54px;
+            mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent 88%);
+        }
+
+        .bigscreen {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            padding: calc(var(--navbar-h) + 18px) 24px 24px;
+        }
+
+        .screen-header {
+            display: grid;
+            grid-template-columns: minmax(280px, 1fr) auto minmax(280px, 1fr);
+            gap: 18px;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .title-block {
+            min-width: 0;
+        }
+
+        .title-block h1 {
+            margin: 0;
+            font-size: 30px;
+            letter-spacing: 0;
+            color: #fff;
+            font-weight: 800;
+        }
+
+        .subtitle {
+            margin-top: 8px;
+            color: var(--text-muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .signal-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            min-height: 44px;
+            padding: 0 18px;
+            border: 1px solid rgba(57, 213, 255, 0.34);
+            background: linear-gradient(90deg, rgba(57, 213, 255, 0.08), rgba(56, 230, 163, 0.1));
+            box-shadow: 0 0 28px rgba(57, 213, 255, 0.12);
+        }
+
+        .signal-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 14px var(--green);
+        }
+
+        .screen-actions {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .screen-select,
+        .screen-input,
+        .screen-btn {
+            height: 36px;
+            border: 1px solid rgba(120, 190, 255, 0.24);
+            background: rgba(6, 16, 30, 0.78);
+            color: #dff6ff;
+            padding: 0 10px;
+            font-size: 12px;
+            outline: none;
+        }
+
+        .screen-select option {
+            color: #0f172a;
+        }
+
+        .screen-btn {
+            cursor: pointer;
+            font-weight: 800;
+            color: #06101e;
+            background: linear-gradient(90deg, var(--cyan), var(--green));
+            border-color: transparent;
+        }
+
+        .screen-grid {
+            display: grid;
+            grid-template-columns: 1.08fr 1.42fr 1.08fr;
+            grid-template-rows: auto 340px 360px;
+            gap: 16px;
+        }
+
+        .panel {
+            position: relative;
+            min-width: 0;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-line);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03), 0 18px 45px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+        }
+
+        .panel::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            border-top: 2px solid rgba(57, 213, 255, 0.42);
+        }
+
+        .panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 16px 8px;
+        }
+
+        .panel-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: #f8fcff;
+        }
+
+        .panel-sub {
+            color: var(--text-muted);
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        .panel-body {
+            padding: 8px 16px 16px;
+            height: calc(100% - 46px);
+        }
+
+        .kpi-row {
+            grid-column: 1 / 4;
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .kpi {
+            min-height: 116px;
+            padding: 16px;
+            border: 1px solid rgba(120, 190, 255, 0.22);
+            background: linear-gradient(135deg, rgba(14, 36, 61, 0.92), rgba(10, 25, 42, 0.82));
+        }
+
+        .kpi-label {
+            color: var(--text-muted);
+            font-size: 12px;
+            margin-bottom: 12px;
+        }
+
+        .kpi-value {
+            font-size: 31px;
+            line-height: 1;
+            font-weight: 900;
+            color: #fff;
+        }
+
+        .kpi-value.good {
+            color: var(--green);
+        }
+
+        .kpi-value.warn {
+            color: var(--amber);
+        }
+
+        .kpi-value.bad {
+            color: var(--red);
+        }
+
+        .kpi-foot {
+            margin-top: 12px;
+            font-size: 11px;
+            color: #7ea0c0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .chart {
+            width: 100%;
+            height: 100%;
+            min-height: 220px;
+        }
+
+        .main-trend {
+            grid-column: 2;
+            grid-row: 2 / 4;
+        }
+
+        .main-trend .panel-body {
+            height: calc(100% - 46px);
+        }
+
+        .weak-list,
+        .rank-list,
+        .metric-list {
+            display: grid;
+            gap: 10px;
+            max-height: 100%;
+            overflow: auto;
+            padding-right: 4px;
+        }
+
+        .rank-row,
+        .weak-row,
+        .metric-row {
+            display: grid;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(120, 190, 255, 0.12);
+        }
+
+        .rank-row {
+            grid-template-columns: 34px 1fr 72px;
+        }
+
+        .weak-row {
+            grid-template-columns: 1fr 58px;
+        }
+
+        .metric-row {
+            grid-template-columns: 1.2fr 0.8fr 0.7fr 52px;
+        }
+
+        .row-name {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-weight: 700;
+            color: #f6fbff;
+        }
+
+        .row-meta {
+            color: var(--text-muted);
+            font-size: 11px;
+            margin-top: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .rank-no {
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #07111f;
+            background: var(--cyan);
+            font-weight: 900;
+            font-size: 12px;
+        }
+
+        .rank-score {
+            text-align: right;
+            font-weight: 900;
+            color: var(--green);
+            font-size: 18px;
+        }
+
+        .weak-count {
+            text-align: right;
+            color: var(--red);
+            font-weight: 900;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 44px;
+            height: 24px;
+            padding: 0 8px;
+            border: 1px solid rgba(120, 190, 255, 0.22);
+            color: #dff6ff;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .pill.bad {
+            border-color: rgba(255, 93, 115, 0.38);
+            color: #ffbcc6;
+            background: rgba(255, 93, 115, 0.1);
+        }
+
+        .source-strip {
+            margin-top: 16px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            color: var(--text-muted);
+            font-size: 11px;
+        }
+
+        .source-strip span {
+            border: 1px solid rgba(120, 190, 255, 0.2);
+            background: rgba(6, 16, 30, 0.5);
+            padding: 6px 9px;
+        }
+
+        .empty {
+            height: 100%;
+            min-height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: var(--text-muted);
+            border: 1px dashed rgba(120, 190, 255, 0.2);
+        }
+
+        @media (max-width: 1280px) {
+            .screen-header {
+                grid-template-columns: 1fr;
+            }
+
+            .signal-bar,
+            .screen-actions {
+                justify-content: flex-start;
+            }
+
+            .screen-grid {
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: auto;
+            }
+
+            .kpi-row,
+            .main-trend {
+                grid-column: 1 / 3;
+                grid-row: auto;
+            }
+
+            .kpi-row {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 760px) {
+            .bigscreen {
+                padding-left: 14px;
+                padding-right: 14px;
+            }
+
+            .title-block h1 {
+                font-size: 24px;
+            }
+
+            .screen-grid,
+            .kpi-row {
+                grid-template-columns: 1fr;
+            }
+
+            .kpi-row,
+            .main-trend {
+                grid-column: auto;
+            }
+
+            .screen-actions {
+                align-items: stretch;
+            }
+
+            .screen-select,
+            .screen-input,
+            .screen-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="bigscreen">
+        <header class="screen-header">
+            <div class="title-block">
+                <h1>运营质量综合大屏</h1>
+                <div class="subtitle" id="bigscreenSubtitle">数据来自月报页面与报表看板入库结果，正在加载...</div>
+            </div>
+            <div class="signal-bar">
+                <span class="signal-dot"></span>
+                <strong id="bigscreenStatus">REPORT.DB LIVE</strong>
+            </div>
+            <div class="screen-actions">
+                <select id="rangeSelect" class="screen-select" aria-label="时间范围">
+                    <option value="30">最近 30 天</option>
+                    <option value="90">最近 90 天</option>
+                    <option value="all">全部数据</option>
+                    <option value="custom">自定义</option>
+                </select>
+                <input id="startDate" class="screen-input" type="date" aria-label="开始日期">
+                <input id="endDate" class="screen-input" type="date" aria-label="结束日期">
+                <button id="refreshBtn" class="screen-btn">刷新</button>
+            </div>
+        </header>
+
+        <section class="screen-grid">
+            <div class="kpi-row" id="kpiRow"></div>
+
+            <section class="panel">
+                <div class="panel-head">
+                    <div class="panel-title">客户群得分排行</div>
+                    <div class="panel-sub">最新快照</div>
+                </div>
+                <div class="panel-body">
+                    <div id="rankList" class="rank-list"></div>
+                </div>
+            </section>
+
+            <section class="panel main-trend">
+                <div class="panel-head">
+                    <div class="panel-title">整体态势趋势</div>
+                    <div class="panel-sub" id="trendSub">达标率 / 总分 / 未达标项</div>
+                </div>
+                <div class="panel-body">
+                    <div id="trendChart" class="chart"></div>
+                </div>
+            </section>
+
+            <section class="panel">
+                <div class="panel-head">
+                    <div class="panel-title">短板指标聚焦</div>
+                    <div class="panel-sub">按未达标客户群数</div>
+                </div>
+                <div class="panel-body">
+                    <div id="weakList" class="weak-list"></div>
+                </div>
+            </section>
+
+            <section class="panel">
+                <div class="panel-head">
+                    <div class="panel-title">指标风险分布</div>
+                    <div class="panel-sub">最新快照</div>
+                </div>
+                <div class="panel-body">
+                    <div id="riskChart" class="chart"></div>
+                </div>
+            </section>
+
+            <section class="panel">
+                <div class="panel-head">
+                    <div class="panel-title">最新考核明细</div>
+                    <div class="panel-sub">重点指标</div>
+                </div>
+                <div class="panel-body">
+                    <div id="metricList" class="metric-list"></div>
+                </div>
+            </section>
+        </section>
+
+        <div class="source-strip" id="sourceStrip">
+            <span>趋势来源: -</span>
+            <span>快照来源: -</span>
+            <span>最新刷新: -</span>
+        </div>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <script src="/js/shared/toast.js?v=20260530-01"></script>
+    <script src="/js/shared/api.js?v=20260612-02"></script>
+    <script src="/js/shared/i18n.js?v=20260610-01"></script>
+    <script src="/js/shared/navbar.js?v=20260625-01"></script>
+    <script src="/js/report/bigscreen.js?v=20260625-01"></script>
+</body>
+
+</html>

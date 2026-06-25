@@ -1,10 +1,10 @@
 // js/app.js
-import * as store from './store.js?v=20260620-26';
-import * as editor from './editor.js?v=20260620-26';
-import { createComponentEditor } from './component-editor.js?v=20260620-26';
-import { initContextMenu } from './context-menu.js?v=20260620-26';
-import { defaultSlides } from './default-slides.js';
-import { renderSlide, slideToJson } from './slide-factory.js';
+import * as store from './store.js?v=20260623-1';
+import * as editor from './editor.js?v=20260623-1';
+import { createComponentEditor } from './component-editor.js?v=20260623-4';
+import { initContextMenu } from './context-menu.js?v=20260623-1';
+import { defaultSlides } from './default-slides.js?v=20260623-1';
+import { renderSlide, slideToJson } from './slide-factory.js?v=20260623-2';
 
 const deck = document.getElementById('deck');
 const deckWrapper = document.getElementById('deckWrapper');
@@ -331,7 +331,7 @@ function bootstrap() {
     if (savedHtml) {
         deck.innerHTML = savedHtml;
     } else {
-        const customTemplate = localStorage.getItem('ppt_custom_default_template');
+        const customTemplate = localStorage.getItem('ppt_custom_default_template_v5');
         deck.innerHTML = '';
         if (customTemplate) {
             deck.innerHTML = customTemplate;
@@ -1047,7 +1047,7 @@ document.getElementById('importJsonInput').addEventListener('change', async even
 });
 
 document.getElementById('setDefaultBtn')?.addEventListener('click', () => {
-    localStorage.setItem('ppt_custom_default_template', editor.serializeDeck(deck));
+    localStorage.setItem('ppt_custom_default_template_v5', editor.serializeDeck(deck));
     setStatus('已成功将当前所有幻灯片保存为您的专属默认模板！');
 });
 
@@ -1060,7 +1060,7 @@ document.getElementById('resetBtn').addEventListener('click', () => {
 
 document.getElementById('restoreSystemBtn')?.addEventListener('click', () => {
     if (confirm('确认清除您设置的自定义默认模板，并恢复到系统出厂模板吗？当前内容也会被清空！')) {
-        localStorage.removeItem('ppt_custom_default_template');
+        localStorage.removeItem('ppt_custom_default_template_v5');
         store.clearState();
         location.reload();
     }

@@ -34,7 +34,7 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 
     <!-- Custom CSS for Slide Content -->
-    <link rel="stylesheet" href="css/app.css?v=20260620-12">
+    <link rel="stylesheet" href="css/app.css?v=20260623-4">
 </head>
 
 <body class="bg-zinc-950 text-zinc-100 font-sans h-screen w-screen overflow-hidden flex flex-col">
@@ -560,17 +560,35 @@
     <template id="blankSlideTemplate">
         <div class="slide-wrap">
             <div class="slide-num"></div>
-            <section class="slide">
+            <section class="slide ht-blank-slide">
                 <div class="slide-pad">
-                    <h2 class="slide-title editable" contenteditable="true">点击输入标题</h2>
+                    <div class="huawei-template">
+                        <div class="template-component ht-header" data-component-name="页面标题">
+                            <div>
+                                <div class="ht-kicker template-editable editable" contenteditable="true">Presentation Topic</div>
+                                <h1 class="template-editable editable" contenteditable="true">点击输入页面标题</h1>
+                                <div class="ht-subtitle template-editable editable" contenteditable="true">用一句话概括本页核心信息</div>
+                            </div>
+                            <div class="ht-tag template-editable editable" contenteditable="true">NEW SLIDE</div>
+                        </div>
+                        <div class="template-component ht-blank-guide" data-component-name="内容占位区">
+                            <div class="ht-blank-guide-mark">+</div>
+                            <h2 class="template-editable editable" contenteditable="true">从“添加组件”开始构建内容</h2>
+                            <p class="template-editable editable" contenteditable="true">可添加文本、图片、表格、卡片、时间轴等组件；此占位区也可直接删除。</p>
+                        </div>
+                        <div class="template-component ht-footer" data-component-name="页脚">
+                            <span class="template-editable editable" contenteditable="true">HUAWEI PRESENTATION</span>
+                            <i></i>
+                            <b class="template-editable editable" contenteditable="true">NEW</b>
+                        </div>
+                    </div>
                 </div>
-                <div class="footer"><span>Network Confidential</span><span class="logo">HUAWEI</span></div>
             </section>
         </div>
     </template>
 
     <!-- App Logic -->
-    <script type="module" src="js/app.js?v=20260620-26"></script>
+    <script type="module" src="js/app.js?v=20260623-4"></script>
 </body>
 
 </html>

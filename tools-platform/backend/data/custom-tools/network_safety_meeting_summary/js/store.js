@@ -1,7 +1,7 @@
 // js/store.js
-export const STORAGE_KEY = 'networkSafetyDeckHtml.v3';
-export const ACTIVE_KEY = 'networkSafetyDeckActiveSlide.v3';
-export const THUMB_ZOOM_KEY = 'networkSafetyDeckThumbZoom.v3';
+export const STORAGE_KEY = 'networkSafetyDeckHtml.v5';
+export const ACTIVE_KEY = 'networkSafetyDeckActiveSlide.v5';
+export const THUMB_ZOOM_KEY = 'networkSafetyDeckThumbZoom.v5';
 
 export function saveState(htmlContent) {
     localStorage.setItem(STORAGE_KEY, htmlContent);
