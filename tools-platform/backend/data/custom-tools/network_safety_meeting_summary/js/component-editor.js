@@ -10,6 +10,7 @@ const STRUCTURAL_COMPONENTS = [
     '.sticky-note',
     '.two-col > .box',
     '.footer',
+    '.template-component',
     '.ppt-created-element',
     'img'
 ].join(', ');
@@ -23,7 +24,7 @@ const STANDALONE_TEXT = [
 
 const COMPONENT_SELECTOR = `${STRUCTURAL_COMPONENTS}, ${STANDALONE_TEXT}`;
 const LOCKED_BY_DEFAULT = '.footer';
-const INTERNAL_TEXT_SELECTOR = '.editable, td, th, li, .case-cells > div, .case-labels > div';
+const INTERNAL_TEXT_SELECTOR = '.editable, td, th, li, .case-cells > div, .case-labels > div, .template-editable';
 
 function createId() {
     if (window.crypto?.randomUUID) return window.crypto.randomUUID();
@@ -46,6 +47,7 @@ function isTextEditingTarget(target) {
 }
 
 function componentName(element) {
+    if (element.dataset.componentName) return element.dataset.componentName;
     if (element.classList.contains('ppt-inner-element')) {
         if (element.matches('td, th')) return '表格单元格';
         if (element.matches('li')) return '列表项';
@@ -64,6 +66,7 @@ function componentName(element) {
     if (element.classList.contains('cover-banner')) return '封面横幅';
     if (element.classList.contains('cover-copy')) return '封面文字';
     if (element.classList.contains('footer')) return '页脚';
+    if (element.classList.contains('template-component')) return '模板组件';
     if (element.matches('img')) return '图片';
     if (element.matches('.slide-title, .small-title')) return '标题';
     if (element.classList.contains('box')) return '内容卡片';
@@ -1194,83 +1197,86 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus, onSe
         let element;
         if (kind === 'title') {
             element = document.createElement('h2');
-            element.className = 'ppt-created-element slide-title editable';
-            element.textContent = '新标题';
-            element.style.width = '260px';
+            element.className = 'ppt-created-element ht-created-title editable';
+            element.dataset.componentName = '页面标题';
+            element.textContent = '点击输入页面标题';
+            Object.assign(element.style, { width: '1040px', minHeight: '86px' });
         } else if (kind === 'text') {
             element = document.createElement('div');
-            element.className = 'ppt-created-element editable';
-            element.textContent = '双击编辑文本';
-            element.style.width = '220px';
-            element.style.minHeight = '44px';
-            element.style.padding = '8px';
-            element.style.fontSize = '10px';
+            element.className = 'ppt-created-element ht-created-text editable';
+            element.dataset.componentName = '正文文本';
+            element.innerHTML = '在此输入正文内容。建议保持观点简洁、层次清晰。';
+            Object.assign(element.style, { width: '760px', minHeight: '150px' });
         } else if (kind === 'image') {
             element = document.createElement('div');
-            element.className = 'ppt-created-element ppt-image-placeholder';
-            element.textContent = '双击选择图片';
+            element.className = 'ppt-created-element ppt-image-placeholder ht-created-image';
+            element.dataset.componentName = '图片';
+            element.innerHTML = '<span>IMAGE</span><strong>双击或拖入图片</strong><small>支持 PNG / JPG</small>';
+            Object.assign(element.style, { width: '620px', height: '360px' });
         } else if (kind === 'table') {
             element = document.createElement('table');
-            element.className = 'ppt-created-element agenda-table';
-            element.style.width = '320px';
+            element.className = 'ppt-created-element ht-created-table';
+            element.dataset.componentName = '数据表格';
+            element.style.width = '1120px';
             element.innerHTML = `
                 <tbody class="editable" contenteditable="false">
-                    <tr class="active"><td class="idx">1</td><td>双击编辑内容</td><td class="owner">负责人</td></tr>
-                    <tr><td class="idx">2</td><td>双击编辑内容</td><td class="owner">日期</td></tr>
+                    <tr><th>项目</th><th>当前状态</th><th>负责人</th><th>计划时间</th></tr>
+                    <tr><td>重点任务一</td><td>进行中</td><td>责任人</td><td>YYYY-MM-DD</td></tr>
+                    <tr><td>重点任务二</td><td>待启动</td><td>责任人</td><td>YYYY-MM-DD</td></tr>
                 </tbody>
             `;
         } else if (kind === 'note') {
             element = document.createElement('div');
-            element.className = 'ppt-created-element sticky-note editable';
-            element.textContent = '双击编辑便签';
-            element.style.transform = 'none';
-            element.style.rotate = '-5deg';
+            element.className = 'ppt-created-element ht-created-note editable';
+            element.dataset.componentName = '重点提示';
+            element.innerHTML = '<strong>重点提示</strong><br>双击编辑需要特别强调的结论或行动要求。';
+            Object.assign(element.style, { width: '650px', minHeight: '190px' });
         } else if (kind === 'card') {
             element = document.createElement('div');
-            element.className = 'ppt-created-element ppt-card editable';
-            element.innerHTML = '<strong>卡片标题</strong><br>双击编辑卡片内容';
-            Object.assign(element.style, {
-                width: '220px', minHeight: '90px', padding: '14px',
-                background: '#ffffff', border: '1px solid #d4d4d8',
-                borderRadius: '10px', boxShadow: '0 8px 20px rgba(0,0,0,.12)'
-            });
+            element.className = 'ppt-created-element ppt-card ht-created-card editable';
+            element.dataset.componentName = '内容卡片';
+            element.innerHTML = '<i>01</i><strong>卡片标题</strong><span>用一段简洁内容说明核心观点、进展或结论。</span>';
+            Object.assign(element.style, { width: '500px', minHeight: '270px' });
         } else if (kind === 'shape') {
             element = document.createElement('div');
-            element.className = 'ppt-created-element ppt-shape';
+            element.className = 'ppt-created-element ppt-shape ht-created-shape';
+            element.dataset.componentName = '强调形状';
             Object.assign(element.style, {
-                width: '100px', height: '70px', background: 'var(--red)',
-                borderRadius: '12px', opacity: '.9'
+                width: '220px', height: '150px'
             });
         } else if (kind === 'line') {
             element = document.createElement('div');
-            element.className = 'ppt-created-element ppt-line';
+            element.className = 'ppt-created-element ppt-line ht-created-line';
+            element.dataset.componentName = '分隔线';
             Object.assign(element.style, {
-                width: '180px', height: '4px', background: 'var(--red)',
-                borderRadius: '999px'
+                width: '680px', height: '8px'
             });
         } else if (kind === 'icon') {
             element = document.createElement('div');
-            element.className = 'ppt-created-element ppt-icon editable';
-            element.textContent = '🛡️';
+            element.className = 'ppt-created-element ppt-icon ht-created-icon editable';
+            element.dataset.componentName = '编号图标';
+            element.textContent = '01';
             Object.assign(element.style, {
-                width: '64px', height: '64px', fontSize: '40px',
-                display: 'grid', placeItems: 'center'
+                width: '120px', height: '120px'
             });
         } else if (kind === 'timeline') {
             element = document.createElement('div');
-            element.className = 'ppt-created-element ppt-timeline';
+            element.className = 'ppt-created-element ppt-timeline ht-created-timeline';
+            element.dataset.componentName = '时间轴';
             element.innerHTML = `
                 <div class="ppt-timeline-line"></div>
-                <div class="ppt-timeline-item editable"><b>01</b><span>阶段一</span></div>
-                <div class="ppt-timeline-item editable"><b>02</b><span>阶段二</span></div>
-                <div class="ppt-timeline-item editable"><b>03</b><span>阶段三</span></div>
+                <div class="ppt-timeline-item editable"><b>01</b><span>现状分析</span><small>明确问题与目标</small></div>
+                <div class="ppt-timeline-item editable"><b>02</b><span>方案实施</span><small>落实责任与动作</small></div>
+                <div class="ppt-timeline-item editable"><b>03</b><span>闭环验证</span><small>复盘结果并固化</small></div>
             `;
-            Object.assign(element.style, { width: '330px', height: '86px' });
+            Object.assign(element.style, { width: '1320px', height: '300px' });
         }
+        if (!element) return;
+        const createdCount = slide.querySelectorAll('.ppt-created-element').length;
         element.style.position = 'absolute';
-        element.style.left = '60px';
-        element.style.top = '60px';
-        element.style.zIndex = '5';
+        element.style.left = `${180 + (createdCount % 4) * 38}px`;
+        element.style.top = `${260 + (createdCount % 5) * 38}px`;
+        element.style.zIndex = String(20 + createdCount);
         slide.appendChild(element);
         markComponents(slide);
         select(element);

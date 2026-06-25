@@ -97,11 +97,14 @@ export function renderSlide(slideData) {
         `;
     } else if (slideData.layout === 'custom') {
         // Free-form HTML layout
+        const customFooter = String(slideData.html || '').includes('huawei-template')
+            ? ''
+            : renderFooter();
         section.innerHTML = `
             <div class="slide-pad">
                 ${slideData.html || ''}
             </div>
-            ${renderFooter()}
+            ${customFooter}
         `;
     }
 

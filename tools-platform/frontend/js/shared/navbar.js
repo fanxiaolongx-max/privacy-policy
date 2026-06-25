@@ -9,6 +9,7 @@ const NAV_BUILTIN_LINKS = [
     { id: 'report', href: '/report', icon: '📈', label: '报表看板', labelKey: 'nav.report', defaultCategory: 'business', match: p => p.startsWith('/report') },
     { id: 'expedite', href: '/expedite', icon: '⚡', label: '一键催办', labelKey: 'nav.expedite', defaultCategory: 'business', match: p => p.startsWith('/expedite') },
     { id: 'monthly', href: '/monthly', icon: '📅', label: '月报页面', labelKey: 'nav.monthly', defaultCategory: 'business', match: p => p.startsWith('/monthly') },
+    { id: 'bigscreen', href: '/bigscreen', icon: '🖥️', label: '大屏看板', labelKey: 'nav.bigscreen', defaultCategory: 'business', match: p => p.startsWith('/bigscreen') },
     { id: 'frt', href: '/frt', icon: '📊', label: 'FRT核算', labelKey: 'nav.frt', defaultCategory: 'audit', match: p => p.startsWith('/frt') },
     { id: 'praudit', href: '/praudit', icon: '📋', label: 'PR稽查', labelKey: 'nav.praudit', defaultCategory: 'audit', match: p => p.startsWith('/praudit') },
     { id: 'storage', href: '/storage', icon: '💽', label: '迁移状态', labelKey: 'nav.storage', defaultCategory: 'system', match: p => p.startsWith('/storage') },
@@ -16,7 +17,7 @@ const NAV_BUILTIN_LINKS = [
 ];
 
 const NAV_DEFAULT_SETTINGS = {
-    primaryIds: ['home', 'uivf12', 'sla', 'report', 'expedite', 'monthly'],
+    primaryIds: ['home', 'uivf12', 'sla', 'report', 'expedite', 'monthly', 'bigscreen'],
     categories: [
         { id: 'business', name: '业务工具', nameEn: 'Business Tools', nameKey: 'nav.category.business' },
         { id: 'audit', name: '审计与核算', nameEn: 'Audit & KPI', nameKey: 'nav.category.audit' },
@@ -70,6 +71,7 @@ function registerNavbarI18n() {
             'nav.report': '报表看板',
             'nav.expedite': '一键催办',
             'nav.monthly': '月报页面',
+            'nav.bigscreen': '大屏看板',
             'nav.frt': 'FRT核算',
             'nav.praudit': 'PR稽查',
             'nav.storage': '迁移状态',
@@ -248,6 +250,7 @@ function registerNavbarI18n() {
             'nav.report': 'Reports',
             'nav.expedite': 'Expedite',
             'nav.monthly': 'Monthly',
+            'nav.bigscreen': 'Big Screen',
             'nav.frt': 'FRT KPI',
             'nav.praudit': 'PR Audit',
             'nav.storage': 'Migration',

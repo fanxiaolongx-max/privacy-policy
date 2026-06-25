@@ -291,6 +291,21 @@ const defaultManualAdjustItems = [
 ];
 let manualAdjustItems = [...defaultManualAdjustItems];
 
+function calculateManualAdjustScore(item, count) {
+    if (!item || item.deleted) return 0;
+    const occurrences = parseInt(count, 10) || 0;
+    if (occurrences <= 0) return 0;
+
+    const unit = parseFloat(item.unit);
+    if (Number.isNaN(unit)) return 0;
+
+    let score = occurrences * unit;
+    const cap = item.cap === null || item.cap === undefined || item.cap === '' ? null : parseFloat(item.cap);
+    if (cap !== null && !Number.isNaN(cap) && score > cap) score = cap;
+
+    return item.type === '扣分' ? -score : score;
+}
+
 function getTargetMonthDefaultByDay(date = new Date()) {
     const currentMonth = date.getMonth() + 1;
     if (date.getDate() < 10) {
@@ -1081,9 +1096,9 @@ function renderReport(snap) {
                 const sourceText = m.autoFillSource && m.autoFillSource.label ? ` · ${rt('report.auto.source')}: ${getTranslatedLabel(m.autoFillSource.label)}` : '';
                 const autoText = isAuto ? `${rt('report.auto.on')}${sourceText}` : rt('report.auto.off');
                 const autoTitle = isAuto && sourceText ? rt('report.auto.sourceTitle', { label: getTranslatedLabel(m.autoFillSource.label) }) : rt('report.auto.title');
-                autoFillBtn = `<span style="cursor:pointer; margin-left:6px; font-size:12px; color:${autoColor}; background:${autoBg}; padding:2px 6px; border-radius:4px; border:1px solid ${autoBorder};" title="${escapeHTML(autoTitle)}" onclick="toggleAutoFill('${escapeHTML(m.label)}')">${escapeHTML(autoText)}</span>`;
+                autoFillBtn = `<span style="cursor:pointer; margin-left:4px; font-size:10px; color:${autoColor}; background:${autoBg}; padding:1px 4px; border-radius:3px; border:1px solid ${autoBorder}; font-weight:500; line-height:1.35;" title="${escapeHTML(autoTitle)}" onclick="toggleAutoFill('${escapeHTML(m.label)}')">${escapeHTML(autoText)}</span>`;
             }
-            const editBtn = m.isManual ? `<span style="cursor:pointer; margin-left:6px; font-size:12px; color:#2e7d32; background:#e8f5e9; padding:2px 6px; border-radius:4px; border:1px solid #c8e6c9;" onclick="editManualMetric('${escapeHTML(m.label)}')">${rt('report.manual.fill')}</span>${autoFillBtn}` : '';
+            const editBtn = m.isManual ? `<span style="cursor:pointer; margin-left:4px; font-size:10px; color:#4f7d53; background:#f2faf3; padding:1px 4px; border-radius:3px; border:1px solid #d8ead9; font-weight:500; line-height:1.35;" onclick="editManualMetric('${escapeHTML(m.label)}')">${rt('report.manual.fill')}</span>${autoFillBtn}` : '';
             const proportionalEnabled = isProportionalScoringEnabled(targetData);
             const proportionalBtn = m.hasTarget && !isOthersTable ? `
                 <button class="ratio-score-toggle ${proportionalEnabled ? 'active' : ''}"
@@ -1237,7 +1252,7 @@ function renderReport(snap) {
             <td style="text-align:left;">
                 <div style="display:flex; flex-direction:column; gap:5px;">
                     <span>${getBilingual(item.name)}</span>
-                    <span style="cursor:pointer; align-self:flex-start; font-size:12px; color:${autoColor}; background:${autoBg}; padding:2px 6px; border-radius:4px; border:1px solid ${autoBorder};" title="${escapeHTML(autoTitle)}" onclick="toggleManualAdjustAutoFill(${idx})">${escapeHTML(autoText)}</span>
+                    <span style="cursor:pointer; align-self:flex-start; font-size:10px; color:${autoColor}; background:${autoBg}; padding:1px 4px; border-radius:3px; border:1px solid ${autoBorder}; font-weight:500; line-height:1.35;" title="${escapeHTML(autoTitle)}" onclick="toggleManualAdjustAutoFill(${idx})">${escapeHTML(autoText)}</span>
                 </div>
             </td>
             <td style="color:#666;">${escapeHTML(item.desc)}</td>
@@ -1790,12 +1805,7 @@ window.calculateManualAdjustments = function() {
         const item = manualAdjustItems[idx];
         if (!item || item.deleted) return;
         
-        let score = occurrences * item.unit;
-        if (item.cap !== null && score > item.cap) score = item.cap;
-        
-        if (item.type === '扣分') {
-            score = -score;
-        }
+        const score = calculateManualAdjustScore(item, occurrences);
         
         // update display
         const scoreCell = document.getElementById(`adjust-score-${cat}-${idx}`);
@@ -2058,9 +2068,7 @@ window.showAdjScoreDetails = function(cat) {
         manualAdjustItems.forEach((item, idx) => {
             const count = catAdj[idx] || 0;
             if (count > 0) {
-                let score = count * item.unit;
-                if (score > item.cap) score = item.cap;
-                if (item.type === '扣分') score = -score;
+                const score = calculateManualAdjustScore(item, count);
                 
                 const color = score > 0 ? '#2e7d32' : '#d32f2f';
                 adjDetails += `
@@ -3313,16 +3321,21 @@ window.buildYuxiangPayload = function() {
     manualAdjustItems.forEach((item, idx) => {
         if (item.deleted) return;
         const labelEn = rt(item.name, true) || item.name;
-        const adjData = { label: item.name, labelEn };
+        const adjData = {
+            label: item.name,
+            labelEn,
+            type: item.type,
+            unit: item.unit,
+            cap: item.cap,
+            desc: item.desc
+        };
         
         targetCats.forEach(cat => {
             let score = 0;
             if (currentSnapshot.manualAdjustData && currentSnapshot.manualAdjustData[cat]) {
                 const count = currentSnapshot.manualAdjustData[cat][idx] || 0;
                 if (count > 0) {
-                    score = count * item.unit;
-                    if (score > item.cap) score = item.cap;
-                    if (item.type === '扣分') score = -score;
+                    score = calculateManualAdjustScore(item, count);
                 }
             }
             adjData[cat] = { score, count: (currentSnapshot.manualAdjustData && currentSnapshot.manualAdjustData[cat]) ? (currentSnapshot.manualAdjustData[cat][idx] || 0) : 0 };
@@ -3598,45 +3611,111 @@ window.confirmYuxiangExport = async function() {
 };
 
 
-window.addNewMappingRow = function() {
+function getTemplateMappingRowsFromDom() {
+    if (!window._currentTemplateData) return [];
     const tbody = document.getElementById('mapping-tbody');
-    const rows = tbody.querySelectorAll('tr');
-    let lastRowNumber = 2; // Default if empty
-    if (rows.length > 0) {
-        const lastRow = rows[rows.length - 1];
-        const td = lastRow.querySelector('td:first-child');
-        if (td) {
-            lastRowNumber = parseInt(td.innerText, 10) || lastRowNumber;
-        }
+    const rows = Array.from(tbody.querySelectorAll('tr[data-template-idx]'));
+    rows.forEach(tr => {
+        const idx = parseInt(tr.getAttribute('data-template-idx'), 10);
+        const row = window._currentTemplateData[idx];
+        if (!row) return;
+        const textInput = tr.querySelector('.mapping-text');
+        const select = tr.querySelector('.mapping-select');
+        row.text = textInput ? textInput.value : '';
+        row.mapping = select ? select.value : '';
+    });
+    return window._currentTemplateData;
+}
+
+function getTemplateMappingOptionsHtml(selectedValue = '') {
+    const options = window._templateMappingOptions || [];
+    let html = '<option value="">-- 未映射 --</option>';
+    options.forEach(opt => {
+        const selected = selectedValue === opt ? 'selected' : '';
+        html += `<option value="${escapeHTML(opt)}" ${selected}>${escapeHTML(opt)}</option>`;
+    });
+    return html;
+}
+
+function renderTemplateMappingRows() {
+    const tbody = document.getElementById('mapping-tbody');
+    if (!tbody || !window._currentTemplateData) return;
+
+    const data = window._currentTemplateData;
+    data.forEach((row, idx) => {
+        if (!row.sourceR) row.sourceR = row.r || null;
+        row.r = 3 + idx;
+    });
+
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#888;">暂无模板行</td></tr>';
+        return;
     }
-    const newRowNumber = lastRowNumber + 1;
-    const newIdx = window._currentTemplateData ? window._currentTemplateData.length : rows.length;
-    
-    // We need to generate the options html based on what's already there
-    // If we have an existing select, we can clone its innerHTML
-    let selectHtmlOptions = '<option value="">-- 未映射 --</option>';
-    const existingSelect = tbody.querySelector('.mapping-select');
-    if (existingSelect) {
-        // Just copy its innerHTML but remove any 'selected' attribute
-        selectHtmlOptions = existingSelect.innerHTML.replace(/selected(="")?/g, '');
+
+    tbody.innerHTML = data.map((row, idx) => {
+        const selectHtml = `<select class="mapping-select" data-idx="${idx}" style="width:100%; padding:4px;">${getTemplateMappingOptionsHtml(row.mapping || '')}</select>`;
+        return `<tr data-template-idx="${idx}">
+            <td>${row.r}</td>
+            <td><input type="text" class="mapping-text" data-idx="${idx}" value="${escapeHTML(row.text || '')}" style="width:100%; padding:4px; box-sizing:border-box;"></td>
+            <td>${selectHtml}</td>
+            <td style="white-space:nowrap; text-align:center;">
+                <button type="button" onclick="insertMappingRowAfter(${idx})" title="在下方插入行" style="padding:2px 6px; margin:0 1px; border:1px solid #d1d5db; background:#fff; border-radius:3px; cursor:pointer;">＋</button>
+                <button type="button" onclick="moveMappingRow(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} title="上移" style="padding:2px 6px; margin:0 1px; border:1px solid #d1d5db; background:#fff; border-radius:3px; cursor:pointer; ${idx === 0 ? 'opacity:.35; cursor:not-allowed;' : ''}">↑</button>
+                <button type="button" onclick="moveMappingRow(${idx}, 1)" ${idx === data.length - 1 ? 'disabled' : ''} title="下移" style="padding:2px 6px; margin:0 1px; border:1px solid #d1d5db; background:#fff; border-radius:3px; cursor:pointer; ${idx === data.length - 1 ? 'opacity:.35; cursor:not-allowed;' : ''}">↓</button>
+                <button type="button" onclick="deleteMappingRow(${idx})" title="删除行" style="padding:2px 6px; margin:0 1px; border:1px solid #f1c7c7; background:#fffafa; color:#b91c1c; border-radius:3px; cursor:pointer;">×</button>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function createBlankTemplateMappingRow(insertIndex) {
+    const previous = window._currentTemplateData && window._currentTemplateData[insertIndex - 1];
+    const next = window._currentTemplateData && window._currentTemplateData[insertIndex];
+    return {
+        r: 3 + insertIndex,
+        sourceR: null,
+        templateSourceR: previous ? previous.sourceR || previous.r : (next ? next.sourceR || next.r : null),
+        text: '',
+        mapping: '',
+        isNew: true
+    };
+}
+
+window.insertMappingRowAfter = function(idx) {
+    if (!window._currentTemplateData) return;
+    getTemplateMappingRowsFromDom();
+    const insertIndex = Math.max(0, Math.min(idx + 1, window._currentTemplateData.length));
+    window._currentTemplateData.splice(insertIndex, 0, createBlankTemplateMappingRow(insertIndex));
+    renderTemplateMappingRows();
+};
+
+window.moveMappingRow = function(idx, delta) {
+    if (!window._currentTemplateData) return;
+    getTemplateMappingRowsFromDom();
+    const nextIdx = idx + delta;
+    if (nextIdx < 0 || nextIdx >= window._currentTemplateData.length) return;
+    const rows = window._currentTemplateData;
+    const [row] = rows.splice(idx, 1);
+    rows.splice(nextIdx, 0, row);
+    renderTemplateMappingRows();
+};
+
+window.deleteMappingRow = function(idx) {
+    if (!window._currentTemplateData) return;
+    getTemplateMappingRowsFromDom();
+    if (idx < 0 || idx >= window._currentTemplateData.length) return;
+    window._currentTemplateData.splice(idx, 1);
+    renderTemplateMappingRows();
+};
+
+window.addNewMappingRow = function() {
+    if (!window._currentTemplateData) {
+        window._currentTemplateData = [];
+    } else {
+        getTemplateMappingRowsFromDom();
     }
-    
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-        <td>${newRowNumber}</td>
-        <td><input type="text" class="mapping-text" data-idx="${newIdx}" value="" style="width:100%; padding:4px; box-sizing:border-box;"></td>
-        <td>
-            <select class="mapping-select" data-idx="${newIdx}" style="width:100%; padding:4px;">
-                ${selectHtmlOptions}
-            </select>
-        </td>
-    `;
-    tbody.appendChild(tr);
-    
-    // also push a blank entry to _currentTemplateData so save mapping works
-    if (window._currentTemplateData) {
-        window._currentTemplateData.push({ r: newRowNumber, text: '', mapping: '' });
-    }
+    window._currentTemplateData.push(createBlankTemplateMappingRow(window._currentTemplateData.length));
+    renderTemplateMappingRows();
 };
 
 window.saveDashboardToDB = async function(event) {
@@ -3943,7 +4022,7 @@ window.openTemplateMappingModal = async function() {
     const modal = document.getElementById('template-mapping-modal');
     modal.style.display = 'block';
     const tbody = document.getElementById('mapping-tbody');
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">加载中...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">加载中...</td></tr>';
     
     try {
         const token = localStorage.getItem('tools_token');
@@ -3972,44 +4051,31 @@ window.openTemplateMappingModal = async function() {
         const sys = ['SYS_SubTotal', 'SYS_AdjustTotal', 'SYS_WeightInMonth', 'SYS_FinalResult'];
         const allOptions = [...metrics, ...adjs, ...sys];
         
-        window._currentTemplateData = data;
-        
-        let html = '';
-        data.forEach((row, idx) => {
-            let selectHtml = `<select class="mapping-select" data-idx="${idx}" style="width:100%; padding:4px;">
-                <option value="">-- 未映射 --</option>`;
-            allOptions.forEach(opt => {
-                const isSelected = row.mapping === opt ? 'selected' : '';
-                selectHtml += `<option value="${opt}" ${isSelected}>${opt}</option>`;
-            });
-            selectHtml += `</select>`;
-            
-            html += `<tr>
-                <td>${row.r}</td>
-                <td><input type="text" class="mapping-text" data-idx="${idx}" value="${escapeHTML(row.text)}" style="width:100%; padding:4px; box-sizing:border-box;"></td>
-                <td>${selectHtml}</td>
-            </tr>`;
-        });
-        tbody.innerHTML = html;
+        window._templateMappingOptions = allOptions;
+        window._currentTemplateData = data.map((row, idx) => ({
+            ...row,
+            r: 3 + idx,
+            sourceR: row.sourceR || row.r
+        }));
+        renderTemplateMappingRows();
         
     } catch(e) {
-        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red;">加载失败: ${e.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">加载失败: ${e.message}</td></tr>`;
     }
 };
 
 window.saveTemplateMapping = async function() {
     if (!window._currentTemplateData) return;
-    const texts = document.querySelectorAll('.mapping-text');
-    const selects = document.querySelectorAll('.mapping-select');
+    getTemplateMappingRowsFromDom();
     
-    const payload = [];
-    window._currentTemplateData.forEach((row, idx) => {
-        payload.push({
+    const payload = window._currentTemplateData.map((row, idx) => ({
             r: row.r,
-            text: texts[idx].value,
-            mapping: selects[idx].value
-        });
-    });
+            sourceR: row.sourceR || null,
+            templateSourceR: row.templateSourceR || null,
+            isNew: !!row.isNew,
+            text: row.text || '',
+            mapping: row.mapping || ''
+        }));
     
     try {
         const token = localStorage.getItem('tools_token');
