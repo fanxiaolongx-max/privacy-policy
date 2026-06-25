@@ -1091,9 +1091,11 @@ const aiSettingsBtn = document.getElementById('aiSettingsBtn');
 const aiSettingsPanel = document.getElementById('aiSettingsPanel');
 const aiRulesInput = document.getElementById('aiRulesInput');
 const saveAiRulesBtn = document.getElementById('saveAiRulesBtn');
+const PPT_COPILOT_RULES_KEY = 'ppt_copilot_rules';
 
 let aiMessages = [];
 let aiReplacingSlide = false;
+let pptCopilotRules = localStorage.getItem(PPT_COPILOT_RULES_KEY) || '';
 
 function isAiSidebarOpen() {
     return aiSidebar && (aiSidebar.style.marginRight === '0px' || !aiSidebar.style.marginRight);
@@ -1102,6 +1104,56 @@ function isAiSidebarOpen() {
 function syncRightPanels() {
     const offset = isAiSidebarOpen() ? aiSidebar.offsetWidth : 0;
     document.documentElement.style.setProperty('--ai-sidebar-offset', `${offset}px`);
+}
+
+function getAuthToken() {
+    const tokenMatch = document.cookie.match(/(^|;)\s*jwt_token=([^;]+)/);
+    return tokenMatch ? tokenMatch[2] : localStorage.getItem('tools_token');
+}
+
+function getPptCopilotRules() {
+    return pptCopilotRules || localStorage.getItem(PPT_COPILOT_RULES_KEY) || '';
+}
+
+async function loadPptCopilotRules() {
+    try {
+        const token = getAuthToken();
+        const response = await fetch('/api/ai-settings', {
+            headers: { 'Authorization': token ? `Bearer ${token}` : '' }
+        });
+        if (!response.ok) throw new Error('load failed');
+        const settings = await response.json();
+        const serverRules = String(settings.pptCopilotRules || '');
+        const localRules = localStorage.getItem(PPT_COPILOT_RULES_KEY) || '';
+        pptCopilotRules = serverRules || localRules;
+        if (pptCopilotRules) localStorage.setItem(PPT_COPILOT_RULES_KEY, pptCopilotRules);
+        if (aiRulesInput) aiRulesInput.value = pptCopilotRules;
+        if (!serverRules && localRules) {
+            await savePptCopilotRules(localRules, { silent: true });
+        }
+    } catch {
+        pptCopilotRules = localStorage.getItem(PPT_COPILOT_RULES_KEY) || '';
+        if (aiRulesInput) aiRulesInput.value = pptCopilotRules;
+    }
+}
+
+async function savePptCopilotRules(value, options = {}) {
+    pptCopilotRules = String(value || '').trim();
+    localStorage.setItem(PPT_COPILOT_RULES_KEY, pptCopilotRules);
+    const token = getAuthToken();
+    const response = await fetch('/api/ai-settings', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token ? `Bearer ${token}` : ''
+        },
+        body: JSON.stringify({ pptCopilotRules })
+    });
+    if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || '保存规范失败');
+    }
+    if (!options.silent) appendAiMessage('model', '✅ 个性化制作规范已保存。');
 }
 
 document.querySelectorAll('.ai-shortcut-btn').forEach(btn => {
@@ -1189,8 +1241,7 @@ async function modifyWithStructuredAi(scope = 'selection') {
     aiChatWindow.appendChild(loadDiv);
     aiChatWindow.scrollTop = aiChatWindow.scrollHeight;
     try {
-        const tokenMatch = document.cookie.match(/(^|;)\s*jwt_token=([^;]+)/);
-        const token = tokenMatch ? tokenMatch[2] : localStorage.getItem('tools_token');
+        const token = getAuthToken();
         const response = await fetch('/api/ai/ppt-copilot-actions', {
             method: 'POST',
             headers: {
@@ -1200,7 +1251,7 @@ async function modifyWithStructuredAi(scope = 'selection') {
             body: JSON.stringify({
                 instruction,
                 context,
-                rules: localStorage.getItem('ppt_copilot_rules') || ''
+                rules: getPptCopilotRules()
             })
         });
         const responseText = await response.text();
@@ -1237,11 +1288,23 @@ if (closeAiBtn) closeAiBtn.addEventListener('click', toggleAi);
 if (aiSettingsBtn) {
     aiSettingsBtn.addEventListener('click', () => {
         aiSettingsPanel.classList.toggle('hidden');
+        aiRulesInput.value = getPptCopilotRules();
     });
-    aiRulesInput.value = localStorage.getItem('ppt_copilot_rules') || '';
-    saveAiRulesBtn.addEventListener('click', () => {
-        localStorage.setItem('ppt_copilot_rules', aiRulesInput.value.trim());
-        aiSettingsPanel.classList.add('hidden');
+    aiRulesInput.value = getPptCopilotRules();
+    loadPptCopilotRules();
+    saveAiRulesBtn.addEventListener('click', async () => {
+        const originalText = saveAiRulesBtn.textContent;
+        saveAiRulesBtn.textContent = '保存中...';
+        saveAiRulesBtn.disabled = true;
+        try {
+            await savePptCopilotRules(aiRulesInput.value);
+            aiSettingsPanel.classList.add('hidden');
+        } catch (error) {
+            appendAiMessage('model', `⚠️ ${escapeHtml(error.message)}，已先保存到本机浏览器。`);
+        } finally {
+            saveAiRulesBtn.textContent = originalText;
+            saveAiRulesBtn.disabled = false;
+        }
     });
 }
 
@@ -1299,7 +1362,7 @@ async function sendAiMessage(hiddenContent = null, displayMsg = null) {
 
     try {
         const deckSlides = deck.querySelectorAll('.slide-wrap');
-        const customRules = localStorage.getItem('ppt_copilot_rules') || '';
+        const customRules = getPptCopilotRules();
         const rulesBlock = customRules ? `\n【用户专属 PPT 制作规范】\n${customRules}\n\n` : '';
         
         let currentTemplateBlock = '';
@@ -1311,8 +1374,7 @@ async function sendAiMessage(hiddenContent = null, displayMsg = null) {
         
         const templates = `${rulesBlock}${currentTemplateBlock}`;
 
-        const tokenMatch = document.cookie.match(/(^|;)\s*jwt_token=([^;]+)/);
-        const token = tokenMatch ? tokenMatch[2] : localStorage.getItem('tools_token');
+        const token = getAuthToken();
 
         const res = await fetch('/api/ai/ppt-copilot', {
             method: 'POST',

@@ -46,5 +46,16 @@
     "filePath": "/custom-tools/tool-mqp55fna/index.html",
     "createdAt": "2026-06-22T11:37:36.886Z",
     "updatedAt": "2026-06-22T11:37:36.886Z"
+  },
+  {
+    "slug": "tool-mqtlwcrv",
+    "name": "博客爬虫脚本生成工具",
+    "icon": "🧩",
+    "description": "由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。",
+    "tags": [],
+    "href": "/tools/tool-mqtlwcrv",
+    "filePath": "/custom-tools/tool-mqtlwcrv/index.html",
+    "createdAt": "2026-06-25T14:37:31.435Z",
+    "updatedAt": "2026-06-25T14:37:31.435Z"
   }
 ]
