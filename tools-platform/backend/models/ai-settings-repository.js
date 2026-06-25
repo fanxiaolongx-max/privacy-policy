@@ -11,7 +11,8 @@ const DEFAULT_SETTINGS = {
     inputCostPerMillionUsd: 0.075,
     outputCostPerMillionUsd: 0.3,
     usdToCny: 7.2,
-    systemPrompt: ''
+    systemPrompt: '',
+    pptCopilotRules: ''
 };
 
 function clampNumber(value, fallback, min, max) {
@@ -31,7 +32,8 @@ function normalizeSettings(input = {}, previous = {}) {
         inputCostPerMillionUsd: clampNumber(base.inputCostPerMillionUsd, DEFAULT_SETTINGS.inputCostPerMillionUsd, 0, 999),
         outputCostPerMillionUsd: clampNumber(base.outputCostPerMillionUsd, DEFAULT_SETTINGS.outputCostPerMillionUsd, 0, 999),
         usdToCny: clampNumber(base.usdToCny, DEFAULT_SETTINGS.usdToCny, 0, 99),
-        systemPrompt: String(base.systemPrompt || '').slice(0, 5000)
+        systemPrompt: String(base.systemPrompt || '').slice(0, 5000),
+        pptCopilotRules: String(base.pptCopilotRules || '').slice(0, 20000)
     };
 }
 
@@ -75,6 +77,7 @@ function getPublicSettings() {
         outputCostPerMillionUsd: runtime.outputCostPerMillionUsd,
         usdToCny: runtime.usdToCny,
         systemPrompt: runtime.systemPrompt,
+        pptCopilotRules: runtime.pptCopilotRules,
         hasApiKey: runtime.hasApiKey,
         keyLooksValid: runtime.hasApiKey ? runtime.keyLooksValid : false,
         apiKeySource: runtime.apiKeySource,

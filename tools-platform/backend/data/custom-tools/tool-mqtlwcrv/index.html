@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3MS 爬虫脚本维护与生成工具</title>
+    <style>
+        :root {
+            --bg-color: #1e1e1e;
+            --panel-bg: #2d2d2d;
+            --text-color: #d4d4d4;
+            --accent: #007acc;
+            --accent-hover: #005f9e;
+            --border: #444;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+        h1 { font-size: 20px; margin-top: 0; color: #fff; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .container { display: flex; flex-direction: column; height: 100%; gap: 15px; }
+        
+        /* 表单配置区 */
+        .config-panel { background: var(--panel-bg); padding: 15px; border-radius: 6px; border: 1px solid var(--border); }
+        .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        label { font-size: 13px; font-weight: bold; color: #aaa; }
+        input { 
+            background: #1e1e1e; border: 1px solid #555; color: #fff; 
+            padding: 8px; border-radius: 4px; font-family: monospace; font-size: 13px;
+        }
+        input:focus { outline: none; border-color: var(--accent); }
+        
+        /* 编辑器区 */
+        .editor-panel { flex-grow: 1; display: flex; flex-direction: column; gap: 10px; }
+        textarea {
+            flex-grow: 1; width: 100%; background: #1e1e1e; color: #ce9178;
+            border: 1px solid var(--border); border-radius: 6px; padding: 15px;
+            font-family: Consolas, "Courier New", monospace; font-size: 13px;
+            line-height: 1.5; resize: none; box-sizing: border-box; white-space: pre;
+        }
+        textarea:focus { outline: none; border-color: var(--accent); }
+        
+        /* 按钮区 */
+        .actions { display: flex; gap: 10px; align-items: center; }
+        button {
+            background: var(--accent); color: white; border: none; padding: 10px 20px;
+            border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px;
+            transition: background 0.2s;
+        }
+        button:hover { background: var(--accent-hover); }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #218838; }
+        .status { margin-left: 10px; font-size: 13px; color: #4caf50; font-weight: bold; opacity: 0; transition: opacity 0.3s; }
+    </style>
+</head>
+<body>
+
+    <h1>🛠️ 3MS 博客爬虫脚本生成与维护工具</h1>
+
+    <div class="container">
+        <div class="config-panel">
+            <div class="config-grid">
+                <div class="form-group">
+                    <label>脚本版本号 (@version)</label>
+                    <input type="text" id="cfg-version" value="8.0">
+                </div>
+                <div class="form-group">
+                    <label>最小请求间隔 (minDelay, 毫秒)</label>
+                    <input type="number" id="cfg-min-delay" value="1000">
+                </div>
+                <div class="form-group">
+                    <label>最大请求间隔 (maxDelay, 毫秒)</label>
+                    <input type="number" id="cfg-max-delay" value="2000">
+                </div>
+                <div class="form-group">
+                    <label>树状目录接口前缀 (Tree API)</label>
+                    <input type="text" id="cfg-api-tree" value="https://3ms.huawei.com/api/category/v1/61/categories/tree">
+                </div>
+                <div class="form-group">
+                    <label>文章列表接口路径 (Blogs API)</label>
+                    <input type="text" id="cfg-api-blogs" value="/api/blog/v1/61/front/groups/">
+                </div>
+            </div>
+            <div class="actions">
+                <button onclick="generateScript()">⬇️ 应用上方配置并生成脚本</button>
+                <span style="font-size: 12px; color: #888;">提示：应用后会覆盖下方编辑框的内容。若网页底层逻辑大改，请直接在下方框内手敲代码修改。</span>
+            </div>
+        </div>
+
+        <div class="editor-panel">
+            <textarea id="script-editor" spellcheck="false"></textarea>
+            <div class="actions">
+                <button class="btn-success" onclick="copyScript()">📋 一键复制代码</button>
+                <button class="btn-success" onclick="downloadScript()">💾 下载为 .user.js 文件</button>
+                <span class="status" id="status-msg">操作成功！</span>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/template" id="script-template">
+// ==UserScript==
+// @name         页面博客数据爬取 (终极全能版-树状目录搜索升级)
+// @namespace    http://tampermonkey.net/
+// @version      {{VERSION}}
+// @description  全链路双轨透传，支持UI随意拖拽、树状目录展示、精准搜索过滤、过滤后全选、随时中断导出
+// @match        *://3ms.huawei.com/*
+// @grant        none
+// @run-at       document-idle
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    // ==================== 可配置参数 ====================
+    const CONFIG = {
+        minDelay: {{MIN_DELAY}},    // 最小请求间隔(毫秒)
+        maxDelay: {{MAX_DELAY}},    // 最大请求间隔(毫秒)
+        batchSize: 5,      // 每批请求数量
+        limit: 40,         // 每页数量(通常为40)
+        maxRetries: 3,     // 请求失败重试次数
+        verbose: true      // 是否在控制台打印详情
+    };
+    // =================================================
+
+    // 全局状态控制
+    let isRunning = false;
+    let shouldStop = false;
+    let rawTreeData = [];
+
+    // 全局参数动态提取
+    const url = window.location.href;
+    const groupIdMatch = url.match(/\/groups\/(\d+)\//);
+    const moduleIdMatch = url.match(/moduleId=(\d+)/);
+    const categoryMatch = url.match(/category=(\d+)/);
+    
+    // 提取地址栏的语言参数 (l=zh-cn 或 l=en)
+    const langMatch = url.match(/[?&]l=([^&#]+)/i);
+    const rawLang = langMatch ? langMatch[1].toLowerCase() : 'zh-cn';
+
+    // 博客列表接口映射：英文映射为 'english'，中文/其他保持为空字符串 ''
+    let blogLangParam = '';
+    if (rawLang === 'en' || rawLang === 'english') {
+        blogLangParam = 'english';
+    }
+
+    const groupId = groupIdMatch ? groupIdMatch[1] : '';
+    const moduleId = moduleIdMatch ? moduleIdMatch[1] : '';
+    const categoryId = categoryMatch ? categoryMatch[1] : '';
+
+    // ==================== 核心请求功能 ====================
+    async function fetchWithRetry(fetchUrl, retries = CONFIG.maxRetries) {
+        for (let i = 0; i < retries; i++) {
+            try {
+                const res = await fetch(fetchUrl);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                if (data.code !== 200) throw new Error(`ERR ${data.code}`);
+                return data;
+            } catch (err) {
+                if (i === retries - 1) {
+                    logUI(`❌ 请求失败: ${err.message}`);
+                    return { code: -1, error: err.message, data: [] };
+                }
+                if (shouldStop) break;
+                logUI(`⚠️ 等待2秒重试 (${i + 1}/${retries})...`);
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+        }
+        return { code: -1, data: [] };
+    }
+
+    function buildCategoryTreeUrl(gId, mId) {
+        const langStr = (rawLang === 'en' || rawLang === 'english') ? `&lang=en` : '';
+        return `{{API_TREE}}?appId=61&scope=1&resourceType=0&ownerId=${gId}&moduleId=${mId}${langStr}&r=${Date.now()}`;
+    }
+
+    function buildUrl(path, offset, gId, mId, locStr) {
+        const params = new URLSearchParams({
+            years: '', location: locStr, kosCategories: '', isUnTag: 0, tag: '',
+            sortType: '', sortField: '', secrecy: '', isMy: 0, 
+            language: blogLangParam, 
+            limit: CONFIG.limit, offset: offset, moduleId: mId, elite: '', isMyComment: '', r: Date.now()
+        });
+        return `https://3ms.huawei.com${path}?${params.toString()}`;
+    }
+
+    function buildCountUrl(gId, mId, locStr) {
+        const params = new URLSearchParams({
+            years: '', location: locStr, kosCategories: '', isUnTag: 0, tag: '',
+            sortType: '', sortField: '', secrecy: '', 
+            language: blogLangParam, 
+            moduleId: mId, r: Date.now()
+        });
+        return `https://3ms.huawei.com{{API_BLOGS}}${gId}/blogs/count?${params.toString()}`;
+    }
+
+    // 预处理目录树数据，附加短名称和完整路径
+    function processTreeData(tree, prefix = '') {
+        for (const node of tree) {
+            const shortName = node.name?.nameCN || node.name?.nameEN || '未知目录';
+            const fullName = prefix ? `${prefix} > ${shortName}` : shortName;
+            node._shortName = shortName;
+            node._fullName = fullName;
+            node._count = node.resourceCount || 0;
+            if (node.children && node.children.length > 0) {
+                processTreeData(node.children, fullName);
+            }
+        }
+    }
+
+    // ==================== UI 面板构建 ====================
+    let uiLogBox;
+    let startBtn;
+    let categoryBox;
+    let treeContainer;
+
+    async function initUI() {
+        if (!groupId || !moduleId) return;
+
+        const panel = document.createElement('div');
+        panel.style.cssText = `
+            position: fixed; top: 100px; right: 50px; width: 420px; height: 600px;
+            min-width: 320px; min-height: 400px;
+            background: rgba(0, 0, 0, 0.88); color: #fff; z-index: 999999;
+            border-radius: 8px; padding: 15px; font-family: monospace;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5); font-size: 13px;
+            resize: both; overflow: hidden; display: flex; flex-direction: column;
+        `;
+
+        // 标题栏（拖拽把手）
+        const title = document.createElement('div');
+        title.innerHTML = '🚀 <b>博客爬取 (树状搜索版)</b> <span style="font-size:11px;color:#aaa;">(按住拖动)</span>';
+        title.style.cssText = `
+            margin-bottom: 10px; font-size: 15px; border-bottom: 1px solid #444; 
+            padding-bottom: 8px; cursor: move; flex-shrink: 0; user-select: none;
+        `;
+
+        // 自由拖拽逻辑
+        let isDragging = false;
+        let startX, startY, initialLeft, initialTop;
+        title.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            const rect = panel.getBoundingClientRect();
+            initialLeft = rect.left;
+            initialTop = rect.top;
+            
+            panel.style.right = 'auto';
+            panel.style.bottom = 'auto';
+            panel.style.left = initialLeft + 'px';
+            panel.style.top = initialTop + 'px';
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+        function onMouseMove(e) {
+            if (!isDragging) return;
+            panel.style.left = (initialLeft + (e.clientX - startX)) + 'px';
+            panel.style.top = (initialTop + (e.clientY - startY)) + 'px';
+        }
+        function onMouseUp() {
+            isDragging = false;
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        }
+
+        // 目录选择区主容器
+        categoryBox = document.createElement('div');
+        categoryBox.style.cssText = `
+            flex-grow: 1; display: flex; flex-direction: column; background: #222;
+            padding: 8px; border-radius: 4px; margin-bottom: 10px;
+            border: 1px inset #555; overflow: hidden;
+        `;
+        categoryBox.innerHTML = '<span style="color:#aaa;">⏳ 正在拉取树状目录...</span>';
+
+        // 核心操作按钮
+        startBtn = document.createElement('button');
+        startBtn.innerText = '▶ 开始爬取选中项并导出';
+        startBtn.disabled = true; 
+        startBtn.style.cssText = `
+            flex-shrink: 0; width: 100%; padding: 10px; background: #0078D7; color: white;
+            border: none; border-radius: 4px; cursor: pointer; font-weight: bold;
+            margin-bottom: 10px; transition: background 0.2s; font-size: 14px;
+        `;
+        
+        startBtn.onmouseover = () => {
+            if (!isRunning && !startBtn.disabled) startBtn.style.background = '#005A9E';
+            else if (!shouldStop && isRunning) startBtn.style.background = '#c9302c';
+        };
+        startBtn.onmouseout = () => {
+            if (!isRunning && !startBtn.disabled) startBtn.style.background = '#0078D7';
+            else if (!shouldStop && isRunning) startBtn.style.background = '#d9534f';
+        };
+
+        startBtn.onclick = () => {
+            if (!isRunning) startScraping();
+            else if (!shouldStop) {
+                shouldStop = true;
+                startBtn.innerText = '⏳ 正在安全中断请求...';
+                startBtn.disabled = true;
+                startBtn.style.background = '#666';
+            }
+        };
+
+        // 日志区
+        uiLogBox = document.createElement('div');
+        uiLogBox.style.cssText = `
+            height: 120px; flex-shrink: 0; overflow-y: auto; background: #111;
+            padding: 8px; border-radius: 4px; color: #0f0; border: 1px inset #444;
+            line-height: 1.5; white-space: pre-wrap; word-break: break-all;
+        `;
+        
+        const debugLangStr = (rawLang === 'en' || rawLang === 'english') ? '英语(&lang=en)' : '中文(剔除lang)';
+        uiLogBox.innerText = `✅ Group: ${groupId} | 目录接口: ${debugLangStr}\n等待拉取目录树...`;
+
+        panel.appendChild(title);
+        panel.appendChild(categoryBox);
+        panel.appendChild(startBtn);
+        panel.appendChild(uiLogBox);
+        document.body.appendChild(panel);
+
+        await loadAndRenderCategories();
+    }
+
+    function logUI(msg) {
+        if (CONFIG.verbose) console.log(msg);
+        if (uiLogBox) {
+            uiLogBox.innerText += `\n${msg}`;
+            uiLogBox.scrollTop = uiLogBox.scrollHeight;
+        }
+    }
+
+    // ==================== 树状目录渲染与过滤逻辑 ====================
+    async function loadAndRenderCategories() {
+        const catUrl = buildCategoryTreeUrl(groupId, moduleId);
+        const res = await fetchWithRetry(catUrl);
+        
+        if (res.code === 200 && res.data) {
+            rawTreeData = res.data;
+            processTreeData(rawTreeData); 
+            
+            categoryBox.innerHTML = '';
+            
+            // 顶层悬浮控制面板 (含搜索框)
+            const topBar = document.createElement('div');
+            topBar.style.cssText = 'flex-shrink: 0; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed #555; z-index: 10;';
+            
+            const searchInput = document.createElement('input');
+            searchInput.type = 'text';
+            searchInput.placeholder = '🔍 搜索目录名称进行过滤...';
+            searchInput.style.cssText = `
+                width: 100%; box-sizing: border-box; margin-bottom: 8px; 
+                background: #333; color: white; border: 1px solid #555; 
+                padding: 6px; border-radius: 4px; font-family: monospace; outline: none;
+            `;
+            
+            const btnRow = document.createElement('div');
+            
+            const selectAll = document.createElement('span');
+            selectAll.innerText = '[选中当前可见]';
+            selectAll.style.cssText = 'cursor:pointer; color:#00BFFF; margin-right:15px; font-weight:bold; font-size: 12px;';
+            selectAll.onclick = () => {
+                document.querySelectorAll('.tree-node').forEach(node => {
+                    if (node.style.display !== 'none') {
+                        const cb = node.domElements.checkbox;
+                        if (cb && !cb.disabled) cb.checked = true;
+                    }
+                });
+            };
+            
+            const selectNone = document.createElement('span');
+            selectNone.innerText = '[取消当前可见]';
+            selectNone.style.cssText = 'cursor:pointer; color:#FFB6C1; font-weight:bold; font-size: 12px;';
+            selectNone.onclick = () => {
+                document.querySelectorAll('.tree-node').forEach(node => {
+                    if (node.style.display !== 'none') {
+                        const cb = node.domElements.checkbox;
+                        if (cb && !cb.disabled) cb.checked = false;
+                    }
+                });
+            };
+            
+            btnRow.appendChild(selectAll);
+            btnRow.appendChild(selectNone);
+            topBar.appendChild(searchInput);
+            topBar.appendChild(btnRow);
+            categoryBox.appendChild(topBar);
+
+            // 滚动树状列表区
+            treeContainer = document.createElement('div');
+            treeContainer.style.cssText = 'flex-grow: 1; overflow-y: auto;';
+            renderTreeDOM(rawTreeData, treeContainer, 0);
+            categoryBox.appendChild(treeContainer);
+
+            // 搜索过滤事件
+            searchInput.addEventListener('input', (e) => {
+                const keyword = e.target.value.toLowerCase().trim();
+                const allNodes = treeContainer.querySelectorAll('.tree-node');
+                
+                if (!keyword) {
+                    allNodes.forEach(node => {
+                        node.style.display = 'block';
+                        if (node.dataset.level > 0 && node.domElements.childGroup) {
+                            node.domElements.childGroup.style.display = 'none';
+                            if (node.domElements.toggle) node.domElements.toggle.innerText = '▶';
+                        }
+                    });
+                    return;
+                }
+
+                allNodes.forEach(node => node.style.display = 'none');
+
+                allNodes.forEach(node => {
+                    if (node.dataset.search.includes(keyword)) {
+                        node.style.display = 'block';
+                        let curr = node;
+                        while (curr.parentElement) {
+                            curr = curr.parentElement.closest('.tree-node');
+                            if (!curr) break;
+                            curr.style.display = 'block';
+                            if (curr.domElements.childGroup) {
+                                curr.domElements.childGroup.style.display = 'block';
+                            }
+                            if (curr.domElements.toggle) {
+                                curr.domElements.toggle.innerText = '▼';
+                            }
+                        }
+                    }
+                });
+            });
+
+            startBtn.disabled = false;
+            logUI(`✅ 成功拉取树状目录，请勾选后开始。`);
+        } else {
+            categoryBox.innerHTML = '<span style="color:red">❌ 拉取目录树失败，请刷新页面重试。</span>';
+            logUI('❌ 目录树接口请求失败。');
+        }
+    }
+
+    function renderTreeDOM(nodes, container, level = 0) {
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'tree-group';
+        groupDiv.style.paddingLeft = level === 0 ? '0px' : '18px';
+
+        nodes.forEach(node => {
+            const nodeDiv = document.createElement('div');
+            nodeDiv.className = 'tree-node';
+            nodeDiv.dataset.search = node._fullName.toLowerCase();
+            nodeDiv.dataset.level = level;
+
+            const row = document.createElement('div');
+            row.style.cssText = 'display: flex; align-items: center; margin: 3px 0; white-space: nowrap;';
+
+            const hasChildren = node.children && node.children.length > 0;
+            
+            const toggle = document.createElement('span');
+            toggle.style.cssText = `
+                width: 14px; height: 14px; line-height: 13px; text-align: center; cursor: pointer; 
+                color: #bbb; margin-right: 5px; font-size: 9px; display: inline-block; 
+                user-select: none; border: 1px solid transparent; flex-shrink: 0;
+            `;
+            if (hasChildren) {
+                toggle.innerText = '▶';
+                toggle.style.border = '1px solid #555';
+                toggle.style.borderRadius = '2px';
+                toggle.style.background = '#333';
+            }
+
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.className = 'cat-checkbox';
+            cb.value = node.id;
+            cb.dataset.location = node.location || node.id;
+            cb.dataset.fullname = node._fullName; 
+
+            if (categoryId && categoryId === String(node.id)) cb.checked = true;
+            else if (!categoryId && level === 0) cb.checked = true;
+
+            const label = document.createElement('label');
+            label.style.cssText = 'cursor: pointer; margin-left: 4px; color: #ddd; font-size: 13px; overflow: hidden; text-overflow: ellipsis; user-select: none;';
+            label.innerText = `${node._shortName} (${node._count})`;
+
+            label.onclick = (e) => {
+                e.preventDefault();
+                cb.checked = !cb.checked;
+            };
+
+            row.appendChild(toggle);
+            row.appendChild(cb);
+            row.appendChild(label);
+            nodeDiv.appendChild(row);
+
+            nodeDiv.domElements = { row, toggle, checkbox: cb, childGroup: null };
+
+            if (hasChildren) {
+                const childrenContainer = renderTreeDOM(node.children, null, level + 1);
+                childrenContainer.style.display = 'none'; 
+                nodeDiv.appendChild(childrenContainer);
+                nodeDiv.domElements.childGroup = childrenContainer;
+
+                toggle.onclick = () => {
+                    const isCollapsed = childrenContainer.style.display === 'none';
+                    childrenContainer.style.display = isCollapsed ? 'block' : 'none';
+                    toggle.innerText = isCollapsed ? '▼' : '▶';
+                };
+            }
+
+            groupDiv.appendChild(nodeDiv);
+        });
+
+        if (container) container.appendChild(groupDiv);
+        return groupDiv;
+    }
+
+    // ==================== CSV 导出逻辑 ====================
+    function formatTime(timestamp) {
+        return new Date(timestamp * 1000).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+    }
+
+    function exportToCSV(blogs, gId) {
+        logUI('💾 正在生成 CSV 文件...');
+        const headers = ['博客ID', '所属目录(完整路径)', '标题', '作者中文名', '作者英文名', '发布时间', '阅读量', '点赞量', '评论量', '系统语言环境', '博客链接'];
+        
+        const rows = blogs.map(blog => {
+            const id = blog.id || '';
+            const catName = `"${(blog._categoryName || '默认全局').replace(/"/g, '""')}"`;
+            const title = `"${(blog.title || '').replace(/[\r\n]+/g, ' ').replace(/"/g, '""')}"`;
+            const nameCN = `"${(blog.creator?.userNameCN || '').replace(/[\r\n]+/g, ' ').replace(/"/g, '""')}"`;
+            const nameEN = `"${(blog.creator?.userNameEN || '').replace(/[\r\n]+/g, ' ').replace(/"/g, '""')}"`;
+            const time = `"${formatTime(blog.createTime)}"`;
+            const read = blog.counter?.readCount || 0;
+            const like = blog.counter?.likeCount || 0;
+            const comment = blog.counter?.commentCount || 0;
+            const lang = `"${blog.language || rawLang}"`;
+            const link = `"https://3ms.huawei.com/km/groups/${gId}/blogs/details/${blog.id}?l=${rawLang}&moduleId=${moduleId}"`;
+
+            return [id, catName, title, nameCN, nameEN, time, read, like, comment, lang, link].join(',');
+        });
+
+        const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        
+        const dateStr = new Date().toISOString().slice(0, 10);
+        link.href = downloadUrl;
+        link.setAttribute('download', `3ms_blogs_group_${gId}_lang_${rawLang}_${dateStr}.csv`);
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        logUI('✅ CSV 文件已触发下载！');
+    }
+
+    function resetUIState() {
+        isRunning = false;
+        startBtn.disabled = false;
+        startBtn.innerText = '▶ 再次运行 / 继续爬取';
+        startBtn.style.background = '#0078D7';
+        document.querySelectorAll('.cat-checkbox').forEach(cb => cb.disabled = false);
+    }
+
+    // ==================== 主爬取逻辑 ====================
+    async function startScraping() {
+        const selectedCheckboxes = Array.from(document.querySelectorAll('.cat-checkbox:checked'));
+        if (selectedCheckboxes.length === 0) {
+            logUI('⚠️ 至少需要勾选一个目录！');
+            return;
+        }
+
+        const targetCategories = selectedCheckboxes.map(cb => ({
+            id: cb.value,
+            location: cb.dataset.location,
+            name: cb.dataset.fullname
+        }));
+
+        isRunning = true;
+        shouldStop = false;
+        startBtn.innerText = '⏹ 停止爬取并立刻导出';
+        startBtn.style.background = '#d9534f';
+        document.querySelectorAll('.cat-checkbox').forEach(cb => cb.disabled = true);
+        
+        logUI('------------------------');
+        logUI(`🚀 准备爬取 ${targetCategories.length} 个选中的目录...`);
+
+        let allBlogs = [];
+        let seenIds = new Set(); 
+
+        for (let cIndex = 0; cIndex < targetCategories.length; cIndex++) {
+            if (shouldStop) break;
+
+            const currentCat = targetCategories[cIndex];
+            logUI(`\n📁 正在处理目录 [${cIndex + 1}/${targetCategories.length}]: ${currentCat.name}`);
+
+            const countUrl = buildCountUrl(groupId, moduleId, currentCat.location);
+            const countData = await fetchWithRetry(countUrl);
+            
+            if (countData.code !== 200) {
+                logUI(`❌ [${currentCat.name}] 获取总数失败，跳过。`);
+                continue;
+            }
+
+            const totalCount = countData.data.totalCount;
+            if (totalCount === 0) {
+                logUI(`⚠️ [${currentCat.name}] 无文章数据，跳过。`);
+                continue;
+            }
+
+            const totalPages = Math.ceil(totalCount / CONFIG.limit);
+            logUI(`   👉 目标: ${totalCount} 篇 | 需爬取: ${totalPages} 页`);
+
+            const offsets = Array.from({ length: totalPages }, (_, i) => i * CONFIG.limit);
+            const batches = [];
+            for (let i = 0; i < offsets.length; i += CONFIG.batchSize) {
+                batches.push(offsets.slice(i, i + CONFIG.batchSize));
+            }
+
+            let fetchedPages = 0;
+
+            for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+                if (shouldStop) break;
+                const batch = batches[batchIndex];
+
+                if (batchIndex > 0) {
+                    const delayMs = Math.floor(Math.random() * (CONFIG.maxDelay - CONFIG.minDelay + 1)) + CONFIG.minDelay;
+                    await new Promise(resolve => setTimeout(resolve, delayMs));
+                }
+
+                for (let i = 0; i < batch.length; i++) {
+                    if (shouldStop) break;
+                    const offset = batch[i];
+                    
+                    if (i > 0) {
+                        const pageDelay = Math.floor(Math.random() * (CONFIG.maxDelay - CONFIG.minDelay + 1)) + CONFIG.minDelay;
+                        await new Promise(resolve => setTimeout(resolve, pageDelay));
+                    }
+
+                    if (shouldStop) break;
+
+                    const blogUrl = buildUrl(`{{API_BLOGS}}${groupId}/blogs`, offset, groupId, moduleId, currentCat.location);
+                    
+                    fetchedPages++;
+                    logUI(`   ⏳ 进度: ${fetchedPages}/${totalPages} 页 (offset=${offset})`);
+                    
+                    const result = await fetchWithRetry(blogUrl);
+                    
+                    const pageBlogs = result.data || [];
+                    for (const blog of pageBlogs) {
+                        if (blog && blog.id && !seenIds.has(blog.id)) {
+                            seenIds.add(blog.id);
+                            blog._categoryName = currentCat.name; 
+                            allBlogs.push(blog);
+                        }
+                    }
+                }
+            }
+        }
+
+        logUI('='.repeat(20));
+        
+        if (shouldStop) {
+            logUI(`🛑 用户主动停止！已成功获取前 ${allBlogs.length} 篇有效去重数据。`);
+        } else {
+            logUI(`🎉 抓取完成！共获取: ${allBlogs.length} 篇有效去重数据。`);
+        }
+
+        if (allBlogs.length > 0) {
+            exportToCSV(allBlogs, groupId);
+        } else {
+            logUI('⚠️ 未获取到任何有效数据，跳过导出。');
+        }
+
+        resetUIState();
+    }
+
+    initUI();
+
+})();
+    </script>
+
+    <script>
+        // JS 逻辑层：用于管理界面的模板渲染和下载
+        const templateNode = document.getElementById('script-template');
+        const editorNode = document.getElementById('script-editor');
+
+        function generateScript() {
+            // 获取用户配置
+            const cfg = {
+                VERSION: document.getElementById('cfg-version').value,
+                MIN_DELAY: document.getElementById('cfg-min-delay').value,
+                MAX_DELAY: document.getElementById('cfg-max-delay').value,
+                API_TREE: document.getElementById('cfg-api-tree').value,
+                API_BLOGS: document.getElementById('cfg-api-blogs').value,
+            };
+
+            // 获取原始模板字符串
+            let rawTemplate = templateNode.innerHTML.trim();
+
+            // 替换占位符
+            for (const key in cfg) {
+                // 使用正则全局替换所有的 {{KEY}}
+                const regex = new RegExp(`{{${key}}}`, 'g');
+                rawTemplate = rawTemplate.replace(regex, cfg[key]);
+            }
+
+            // 写入编辑器区
+            editorNode.value = rawTemplate;
+            showStatus("✅ 配置已应用，请在下方检查或修改代码！");
+        }
+
+        function copyScript() {
+            if (!editorNode.value) return showStatus("❌ 代码框为空，请先生成！");
+            navigator.clipboard.writeText(editorNode.value).then(() => {
+                showStatus("✅ 代码已复制到剪贴板！");
+            }).catch(() => {
+                showStatus("❌ 复制失败，请手动全选复制！");
+            });
+        }
+
+        function downloadScript() {
+            if (!editorNode.value) return showStatus("❌ 代码框为空，请先生成！");
+            const blob = new Blob([editorNode.value], { type: 'application/javascript;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `3MS_Crawler_v${document.getElementById('cfg-version').value}.user.js`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showStatus("✅ 脚本已触发下载！");
+        }
+
+        function showStatus(msg) {
+            const status = document.getElementById('status-msg');
+            status.innerText = msg;
+            status.style.opacity = 1;
+            setTimeout(() => status.style.opacity = 0, 3000);
+        }
+
+        // 初始化加载一次默认配置
+        generateScript();
+    </script>
+</body>
+</html>
