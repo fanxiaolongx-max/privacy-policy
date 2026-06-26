@@ -2,11 +2,11 @@ const express = require('express');
 const router = express.Router();
 const repo = require('../models/ai-settings-repository');
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
     res.json(await repo.getPublicSettings());
 });
 
-router.put('/', (req, res) => {
+router.put('/', async (req, res) => {
     try {
         res.json(await repo.saveSettings(req.body || {}));
     } catch (err) {
