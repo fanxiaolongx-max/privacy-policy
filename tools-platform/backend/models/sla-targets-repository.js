@@ -74,10 +74,6 @@ async function ensureReady() {
                 )
             `);
 
-
-            
-            if (Object.keys(targets).length === 0) return;
-            await replaceTargetsInDbRaw(targets);
         })().catch(err => {
             initPromise = null;
             throw err;
