@@ -17,6 +17,7 @@
             --green: #38e6a3;
             --amber: #ffc857;
             --red: #ff5d73;
+            --screen-scroll-duration: 56s;
         }
 
         * {
@@ -50,8 +51,9 @@
         .bigscreen {
             position: relative;
             z-index: 1;
-            min-height: 100vh;
-            padding: calc(var(--navbar-h) + 18px) 24px 24px;
+            height: 100vh;
+            padding: calc(var(--navbar-h) + 14px) 22px 18px;
+            overflow: hidden;
         }
 
         .screen-header {
@@ -59,7 +61,7 @@
             grid-template-columns: minmax(280px, 1fr) auto minmax(280px, 1fr);
             gap: 18px;
             align-items: center;
-            margin-bottom: 18px;
+            margin-bottom: 14px;
         }
 
         .title-block {
@@ -133,11 +135,19 @@
             border-color: transparent;
         }
 
+        .screen-btn.secondary {
+            color: #dff6ff;
+            background: rgba(57, 213, 255, 0.12);
+            border-color: rgba(57, 213, 255, 0.32);
+        }
+
         .screen-grid {
             display: grid;
-            grid-template-columns: 1.08fr 1.42fr 1.08fr;
-            grid-template-rows: auto 340px 360px;
-            gap: 16px;
+            grid-template-columns: 1.08fr 0.96fr 0.96fr;
+            grid-template-rows: 92px minmax(205px, 0.9fr) minmax(235px, 1.18fr);
+            gap: 14px;
+            height: calc(100vh - var(--navbar-h) - 196px);
+            min-height: 0;
         }
 
         .panel {
@@ -185,25 +195,34 @@
         .kpi-row {
             grid-column: 1 / 4;
             display: grid;
-            grid-template-columns: repeat(6, minmax(0, 1fr));
+            grid-template-columns: 1.25fr 1fr 1.25fr 0.9fr;
             gap: 14px;
         }
 
         .kpi {
-            min-height: 116px;
-            padding: 16px;
+            min-height: 0;
+            padding: 12px 15px;
             border: 1px solid rgba(120, 190, 255, 0.22);
             background: linear-gradient(135deg, rgba(14, 36, 61, 0.92), rgba(10, 25, 42, 0.82));
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            gap: 8px;
         }
 
         .kpi-label {
             color: var(--text-muted);
             font-size: 12px;
-            margin-bottom: 12px;
+        }
+
+        .kpi-main {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr);
+            align-items: end;
+            gap: 12px;
         }
 
         .kpi-value {
-            font-size: 31px;
+            font-size: 28px;
             line-height: 1;
             font-weight: 900;
             color: #fff;
@@ -221,8 +240,22 @@
             color: var(--red);
         }
 
+        .kpi-side {
+            min-width: 0;
+            justify-self: end;
+            max-width: 100%;
+            padding: 5px 8px;
+            border: 1px solid rgba(120, 190, 255, 0.18);
+            background: rgba(57, 213, 255, 0.06);
+            color: #cfe4f8;
+            font-size: 11px;
+            font-weight: 800;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
         .kpi-foot {
-            margin-top: 12px;
             font-size: 11px;
             color: #7ea0c0;
             overflow: hidden;
@@ -230,19 +263,52 @@
             white-space: nowrap;
         }
 
+        .kpi-meter {
+            height: 4px;
+            overflow: hidden;
+            background: rgba(120, 190, 255, 0.12);
+        }
+
+        .kpi-meter span {
+            display: block;
+            height: 100%;
+            width: var(--meter, 0%);
+            background: linear-gradient(90deg, var(--red), var(--amber), var(--green));
+        }
+
         .chart {
             width: 100%;
             height: 100%;
-            min-height: 220px;
+            min-height: 0;
         }
 
         .main-trend {
-            grid-column: 2;
-            grid-row: 2 / 4;
+            grid-column: 3;
+            grid-row: 2;
         }
 
         .main-trend .panel-body {
             height: calc(100% - 46px);
+        }
+
+        .failure-focus {
+            grid-column: 1;
+            grid-row: 2 / 4;
+        }
+
+        .customer-focus {
+            grid-column: 2;
+            grid-row: 2;
+        }
+
+        .concentration-panel {
+            grid-column: 2;
+            grid-row: 3;
+        }
+
+        .pass-strip-panel {
+            grid-column: 3;
+            grid-row: 3;
         }
 
         .weak-list,
@@ -253,6 +319,57 @@
             max-height: 100%;
             overflow: auto;
             padding-right: 4px;
+        }
+
+        .rank-list {
+            align-content: start;
+            overflow: hidden;
+        }
+
+        .rank-list-wrap {
+            height: 100%;
+            display: grid;
+            grid-template-rows: minmax(0, 1fr) auto;
+            gap: 10px;
+        }
+
+        .rank-summary {
+            padding: 9px 10px;
+            border: 1px solid rgba(57, 213, 255, 0.18);
+            background: rgba(57, 213, 255, 0.06);
+            color: #c5def6;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .rank-summary strong {
+            color: #ffffff;
+            font-weight: 900;
+        }
+
+        .rank-summary .good {
+            color: var(--green);
+        }
+
+        .rank-summary .bad {
+            color: var(--red);
+        }
+
+        .weak-list {
+            display: block;
+            overflow: hidden;
+            padding-right: 0;
+        }
+
+        .weak-scroll-track {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            animation: weakScroll var(--screen-scroll-duration) linear infinite;
+        }
+
+        .weak-scroll-track:hover {
+            animation-play-state: paused;
         }
 
         .rank-row,
@@ -266,11 +383,39 @@
         }
 
         .rank-row {
-            grid-template-columns: 34px 1fr 72px;
+            grid-template-columns: 28px 1fr 34px;
+            min-width: 0;
+            padding: 10px;
+            border: 1px solid rgba(120, 190, 255, 0.14);
+            background: rgba(57, 213, 255, 0.05);
+        }
+
+        .rank-row>div {
+            min-width: 0;
+        }
+
+        .rank-marquee {
+            display: block;
+            min-width: 0;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .rank-marquee-text {
+            display: inline-block;
+            min-width: max-content;
+            padding-right: 36px;
+            animation: rankMarquee 24s linear infinite;
+            will-change: transform;
+        }
+
+        .rank-marquee:hover .rank-marquee-text {
+            animation-play-state: paused;
         }
 
         .weak-row {
-            grid-template-columns: 1fr 58px;
+            grid-template-columns: 1fr 78px;
+            align-items: start;
         }
 
         .metric-row {
@@ -296,14 +441,14 @@
         }
 
         .rank-no {
-            height: 28px;
+            height: 24px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             color: #07111f;
             background: var(--cyan);
             font-weight: 900;
-            font-size: 12px;
+            font-size: 11px;
         }
 
         .rank-score {
@@ -311,12 +456,250 @@
             font-weight: 900;
             color: var(--green);
             font-size: 18px;
+            line-height: 1;
+        }
+
+        .rank-score-label {
+            display: block;
+            margin-top: 3px;
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 700;
         }
 
         .weak-count {
             text-align: right;
             color: var(--red);
             font-weight: 900;
+        }
+
+        .risk-card {
+            padding: 10px;
+            border: 1px solid rgba(255, 93, 115, 0.22);
+            background: linear-gradient(135deg, rgba(255, 93, 115, 0.12), rgba(12, 26, 45, 0.2));
+            min-height: 112px;
+        }
+
+        .risk-main {
+            min-width: 0;
+            display: contents;
+        }
+
+        .risk-card .row-name {
+            font-size: 18px;
+            line-height: 1.18;
+        }
+
+        .risk-card .row-meta {
+            font-size: 12px;
+            color: #9fb9d4;
+        }
+
+        .risk-metric-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            grid-column: 1 / 3;
+            grid-row: 1;
+            min-width: 0;
+        }
+
+        .risk-detail {
+            grid-column: 1;
+            grid-row: 2;
+            min-width: 0;
+        }
+
+        .risk-count-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 24px;
+            height: 20px;
+            padding: 0 7px;
+            border: 1px solid rgba(255, 93, 115, 0.42);
+            background: rgba(255, 93, 115, 0.16);
+            color: #ff8fa0;
+            font-size: 12px;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .risk-owner {
+            grid-column: 2;
+            grid-row: 2;
+            align-self: stretch;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding-left: 8px;
+            border-left: 1px solid rgba(120, 190, 255, 0.13);
+            color: var(--text-muted);
+            min-width: 0;
+        }
+
+        .owner-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(57, 213, 255, 0.34);
+            background: rgba(57, 213, 255, 0.1);
+            color: #bdefff;
+            font-size: 14px;
+            font-weight: 900;
+        }
+
+        .owner-name {
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-align: center;
+            font-size: 10px;
+            font-weight: 800;
+        }
+
+        .owner-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .risk-cats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .cat-chip {
+            max-width: 100%;
+            padding: 6px 9px;
+            border: 1px solid rgba(255, 93, 115, 0.26);
+            background: rgba(255, 93, 115, 0.1);
+            color: #ffd5db;
+            font-size: 12px;
+            font-weight: 800;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .cat-chip.severity-high {
+            color: #fff1f3;
+            background: rgba(255, 93, 115, 0.22);
+            border-color: rgba(255, 93, 115, 0.56);
+            box-shadow: 0 0 16px rgba(255, 93, 115, 0.12);
+        }
+
+        .cat-chip.severity-mid {
+            color: #ffe8b7;
+            background: rgba(255, 200, 87, 0.16);
+            border-color: rgba(255, 200, 87, 0.42);
+        }
+
+        .cat-chip.severity-low {
+            color: #ffd5db;
+            background: rgba(255, 93, 115, 0.09);
+            border-color: rgba(255, 93, 115, 0.24);
+        }
+
+        .pass-ticker {
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .pass-track {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px 12px;
+            animation: passScroll var(--screen-scroll-duration) linear infinite;
+        }
+
+        .pass-track:hover {
+            animation-play-state: paused;
+        }
+
+        .pass-item {
+            min-width: 0;
+            padding: 8px 9px;
+            border: 1px solid rgba(56, 230, 163, 0.18);
+            background: rgba(56, 230, 163, 0.07);
+            color: #c8ffe9;
+            font-size: 12px;
+            display: grid;
+            grid-template-columns: 24px 1fr;
+            gap: 8px;
+            align-items: center;
+            min-height: 58px;
+        }
+
+        .pass-item strong {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #effff8;
+        }
+
+        .pass-check {
+            width: 22px;
+            height: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(56, 230, 163, 0.16);
+            border: 1px solid rgba(56, 230, 163, 0.46);
+            color: var(--green);
+            font-size: 15px;
+            font-weight: 900;
+            box-shadow: 0 0 14px rgba(56, 230, 163, 0.12);
+        }
+
+        .pass-text {
+            min-width: 0;
+        }
+
+        @keyframes passScroll {
+
+            0%,
+            10% {
+                transform: translateY(0);
+            }
+
+            100% {
+                transform: translateY(-42%);
+            }
+        }
+
+        @keyframes weakScroll {
+
+            0%,
+            8% {
+                transform: translateY(0);
+            }
+
+            100% {
+                transform: translateY(-50%);
+            }
+        }
+
+        @keyframes rankMarquee {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
         }
 
         .pill {
@@ -339,7 +722,7 @@
         }
 
         .source-strip {
-            margin-top: 16px;
+            margin-top: 10px;
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
@@ -351,6 +734,175 @@
             border: 1px solid rgba(120, 190, 255, 0.2);
             background: rgba(6, 16, 30, 0.5);
             padding: 6px 9px;
+        }
+
+        .owner-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(2, 8, 16, 0.72);
+            backdrop-filter: blur(6px);
+        }
+
+        .owner-modal.open {
+            display: flex;
+        }
+
+        .owner-dialog {
+            width: min(980px, calc(100vw - 48px));
+            max-height: min(760px, calc(100vh - 72px));
+            display: grid;
+            grid-template-rows: auto auto minmax(0, 1fr) auto;
+            border: 1px solid rgba(57, 213, 255, 0.32);
+            background: #0a1728;
+            box-shadow: 0 28px 80px rgba(0, 0, 0, 0.46);
+        }
+
+        .owner-dialog-head,
+        .owner-dialog-foot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(120, 190, 255, 0.16);
+        }
+
+        .owner-dialog-foot {
+            border-top: 1px solid rgba(120, 190, 255, 0.16);
+            border-bottom: 0;
+            justify-content: flex-end;
+        }
+
+        .owner-dialog-title {
+            font-size: 16px;
+            font-weight: 900;
+        }
+
+        .owner-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1.05fr auto;
+            gap: 10px;
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(120, 190, 255, 0.12);
+        }
+
+        .owner-form input,
+        .owner-form select {
+            height: 34px;
+            border: 1px solid rgba(120, 190, 255, 0.24);
+            background: rgba(6, 16, 30, 0.78);
+            color: #dff6ff;
+            padding: 0 9px;
+            outline: none;
+            min-width: 0;
+        }
+
+        .owner-form option {
+            color: #0f172a;
+        }
+
+        .owner-avatar-picker {
+            min-width: 0;
+            height: 34px;
+            display: grid;
+            grid-template-columns: 30px minmax(0, 1fr);
+            align-items: center;
+            gap: 8px;
+            border: 1px solid rgba(120, 190, 255, 0.24);
+            background: rgba(6, 16, 30, 0.78);
+            padding: 0 8px;
+            color: #dff6ff;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .owner-avatar-picker input {
+            display: none;
+        }
+
+        .owner-avatar-preview {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(57, 213, 255, 0.32);
+            background: rgba(57, 213, 255, 0.1);
+            color: #bdefff;
+            font-size: 11px;
+            font-weight: 900;
+            overflow: hidden;
+        }
+
+        .owner-avatar-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .owner-avatar-label {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #9fb9d4;
+            font-size: 12px;
+        }
+
+        .owner-table-wrap {
+            overflow: auto;
+            padding: 0 16px 12px;
+        }
+
+        .owner-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .owner-table th,
+        .owner-table td {
+            padding: 9px 8px;
+            border-bottom: 1px solid rgba(120, 190, 255, 0.12);
+            text-align: left;
+            color: #cfe4f8;
+        }
+
+        .owner-table th {
+            color: #8ea8c5;
+            font-size: 11px;
+            font-weight: 900;
+        }
+
+        .owner-mini-avatar {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(57, 213, 255, 0.32);
+            background: rgba(57, 213, 255, 0.1);
+            color: #bdefff;
+            font-weight: 900;
+            overflow: hidden;
+        }
+
+        .owner-mini-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .owner-delete {
+            color: #ffbcc6;
+            cursor: pointer;
+            font-weight: 900;
         }
 
         .empty {
@@ -377,21 +929,65 @@
             .screen-grid {
                 grid-template-columns: 1fr 1fr;
                 grid-template-rows: auto;
+                min-height: auto;
             }
 
             .kpi-row,
-            .main-trend {
+            .main-trend,
+            .failure-focus,
+            .customer-focus,
+            .concentration-panel,
+            .pass-strip-panel {
                 grid-column: 1 / 3;
                 grid-row: auto;
             }
 
             .kpi-row {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-height: 850px) and (min-width: 1281px) {
+            .bigscreen {
+                padding-top: calc(var(--navbar-h) + 10px);
+            }
+
+            .screen-header {
+                margin-bottom: 10px;
+            }
+
+            .subtitle {
+                margin-top: 5px;
+            }
+
+            .screen-grid {
+                grid-template-rows: 82px minmax(188px, 0.82fr) minmax(210px, 1.18fr);
+                height: calc(100vh - var(--navbar-h) - 174px);
+                gap: 10px;
+            }
+
+            .panel-head {
+                padding: 11px 14px 6px;
+            }
+
+            .panel-body {
+                padding: 6px 14px 12px;
+                height: calc(100% - 40px);
+            }
+
+            .kpi {
+                padding: 10px 14px;
+            }
+
+            .kpi-value {
+                font-size: 25px;
             }
         }
 
         @media (max-width: 760px) {
             .bigscreen {
+                height: auto;
+                overflow: visible;
                 padding-left: 14px;
                 padding-right: 14px;
             }
@@ -405,8 +1001,17 @@
                 grid-template-columns: 1fr;
             }
 
+            .weak-scroll-track,
+            .pass-track {
+                grid-template-columns: 1fr;
+            }
+
             .kpi-row,
-            .main-trend {
+            .main-trend,
+            .failure-focus,
+            .customer-focus,
+            .concentration-panel,
+            .pass-strip-panel {
                 grid-column: auto;
             }
 
@@ -427,7 +1032,7 @@
     <main class="bigscreen">
         <header class="screen-header">
             <div class="title-block">
-                <h1>运营质量综合大屏</h1>
+                <h1>EG运营质量综合大屏</h1>
                 <div class="subtitle" id="bigscreenSubtitle">数据来自月报页面与报表看板入库结果，正在加载...</div>
             </div>
             <div class="signal-bar">
@@ -444,56 +1049,60 @@
                 <input id="startDate" class="screen-input" type="date" aria-label="开始日期">
                 <input id="endDate" class="screen-input" type="date" aria-label="结束日期">
                 <button id="refreshBtn" class="screen-btn">刷新</button>
+                <button id="ownerConfigBtn" class="screen-btn secondary">责任人配置</button>
             </div>
         </header>
 
         <section class="screen-grid">
             <div class="kpi-row" id="kpiRow"></div>
 
-            <section class="panel">
+            <section class="panel customer-focus">
                 <div class="panel-head">
-                    <div class="panel-title">客户群得分排行</div>
-                    <div class="panel-sub">最新快照</div>
+                    <div class="panel-title">未达标客户群</div>
+                    <div class="panel-sub">按当前分数</div>
                 </div>
                 <div class="panel-body">
-                    <div id="rankList" class="rank-list"></div>
+                    <div class="rank-list-wrap">
+                        <div id="rankList" class="rank-list"></div>
+                        <div id="rankSummary" class="rank-summary">正在分析客户群风险...</div>
+                    </div>
                 </div>
             </section>
 
             <section class="panel main-trend">
                 <div class="panel-head">
-                    <div class="panel-title">整体态势趋势</div>
-                    <div class="panel-sub" id="trendSub">达标率 / 总分 / 未达标项</div>
+                    <div class="panel-title">风险走势</div>
+                    <div class="panel-sub" id="trendSub">未达标项 / 达标率</div>
                 </div>
                 <div class="panel-body">
                     <div id="trendChart" class="chart"></div>
                 </div>
             </section>
 
-            <section class="panel">
+            <section class="panel failure-focus">
                 <div class="panel-head">
-                    <div class="panel-title">短板指标聚焦</div>
-                    <div class="panel-sub">按未达标客户群数</div>
+                    <div class="panel-title">整体未达标诊断</div>
+                    <div class="panel-sub">指标 × 未达标客户群</div>
                 </div>
                 <div class="panel-body">
                     <div id="weakList" class="weak-list"></div>
                 </div>
             </section>
 
-            <section class="panel">
+            <section class="panel concentration-panel">
                 <div class="panel-head">
-                    <div class="panel-title">指标风险分布</div>
-                    <div class="panel-sub">最新快照</div>
+                    <div class="panel-title">短板集中度</div>
+                    <div class="panel-sub">按客户群数</div>
                 </div>
                 <div class="panel-body">
                     <div id="riskChart" class="chart"></div>
                 </div>
             </section>
 
-            <section class="panel">
+            <section class="panel pass-strip-panel">
                 <div class="panel-head">
-                    <div class="panel-title">最新考核明细</div>
-                    <div class="panel-sub">重点指标</div>
+                    <div class="panel-title">已达标指标巡检</div>
+                    <div class="panel-sub">辅助滚动</div>
                 </div>
                 <div class="panel-body">
                     <div id="metricList" class="metric-list"></div>
@@ -508,12 +1117,55 @@
         </div>
     </main>
 
+    <div id="ownerModal" class="owner-modal" aria-hidden="true">
+        <div class="owner-dialog" role="dialog" aria-modal="true" aria-labelledby="ownerDialogTitle">
+            <div class="owner-dialog-head">
+                <div>
+                    <div id="ownerDialogTitle" class="owner-dialog-title">责任人配置</div>
+                    <div class="panel-sub">优先匹配“客户群 + 指标”，未命中时使用客户群默认责任人。</div>
+                </div>
+                <button class="screen-btn secondary" onclick="BigscreenOwners.close()">关闭</button>
+            </div>
+            <div class="owner-form">
+                <select id="ownerCatSelect" aria-label="客户群"></select>
+                <select id="ownerMetricSelect" aria-label="指标">
+                    <option value="">客户群默认</option>
+                </select>
+                <input id="ownerNameInput" type="text" placeholder="责任人名字">
+                <label class="owner-avatar-picker">
+                    <span id="ownerAvatarPreview" class="owner-avatar-preview">图</span>
+                    <span id="ownerAvatarLabel" class="owner-avatar-label">上传头像图片</span>
+                    <input id="ownerAvatarInput" type="file" accept="image/*">
+                </label>
+                <button class="screen-btn" onclick="BigscreenOwners.add()">添加</button>
+            </div>
+            <div class="owner-table-wrap">
+                <table class="owner-table">
+                    <thead>
+                        <tr>
+                            <th>头像</th>
+                            <th>客户群</th>
+                            <th>指标维度</th>
+                            <th>责任人</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ownerRows"></tbody>
+                </table>
+            </div>
+            <div class="owner-dialog-foot">
+                <button class="screen-btn secondary" onclick="BigscreenOwners.close()">取消</button>
+                <button class="screen-btn" onclick="BigscreenOwners.save()">保存到服务器</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
     <script src="/js/shared/toast.js?v=20260530-01"></script>
     <script src="/js/shared/api.js?v=20260612-02"></script>
     <script src="/js/shared/i18n.js?v=20260610-01"></script>
     <script src="/js/shared/navbar.js?v=20260625-01"></script>
-    <script src="/js/report/bigscreen.js?v=20260625-01"></script>
+    <script src="/js/report/bigscreen.js?v=20260626-23"></script>
 </body>
 
 </html>
