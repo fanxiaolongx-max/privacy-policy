@@ -307,13 +307,13 @@
     </div>
 
     <script src="/js/shared/api.js?v=20260626-01"></script>
-    <script src="/js/shared/navbar.js?v=20260625-01"></script>
+    <script src="/js/shared/navbar.js?v=20260626-02"></script>
     <script>
         // ================== 双语切换引擎 ==================
         const I18N_DICT = {
             "存储迁移状态 - Tools Platform": "Storage Migration Status - Tools Platform",
             "存储迁移状态台": "Storage Migration Status",
-            "集中查看已迁表的真实读源、一致性校验、JSON/SQLite 数量，以及当前双写状态，便于后续从双写过渡到 SQLite 主读。": "Centralized view of read sources, consistency checks, JSON/SQLite counts, and dual-write status for migrated tables.",
+            "集中查看已迁表的真实读源、一致性校验、JSON/SQLite 数量，以及当前双写状态，便于后续从双写过渡到 SQLite 主读。": "Centralized view of SQLite-only read sources, legacy JSON status, and migration checks.",
             "刷新状态": "Refresh Status",
             "总表数": "Total Tables",
             "一致表数": "Matched Tables",
@@ -321,7 +321,7 @@
             "当前检查时间": "Current Check Time",
             "正在加载存储迁移状态...": "Loading storage migration status...",
             "正在加载...": "Loading...",
-            "已迁表默认采用 JSON + SQLite 双写；auto 模式优先 JSON，JSON 为空时回退 SQLite。": "Migrated tables default to JSON + SQLite dual write; auto prefers JSON, falls back to SQLite.",
+            "运行时已切换为 SQLite-only；旧 JSON 文件不存在时显示为 JSON 已禁用。": "Runtime is SQLite-only; missing legacy JSON files are shown as JSON disabled.",
             "暂无迁移状态数据。": "No migration status data.",
             "正在重新校验迁移状态...": "Revalidating migration status...",
             "正在读取服务端迁移状态...": "Reading migration status from server...",

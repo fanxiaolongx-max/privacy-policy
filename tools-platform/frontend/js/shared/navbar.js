@@ -1964,7 +1964,15 @@ function ensureToolsI18nLoaded() {
     });
 }
 
+function ensureMigrationStatusLoaded() {
+    if (document.querySelector('script[src^="/js/shared/migration-status.js"]')) return;
+    const script = document.createElement('script');
+    script.src = '/js/shared/migration-status.js?v=20260626-01';
+    document.head.appendChild(script);
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
+    ensureMigrationStatusLoaded();
     await ensureToolsI18nLoaded();
     registerNavbarI18n();
     renderNavbar();

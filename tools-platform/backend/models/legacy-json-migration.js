@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const { DATA_DIR, readJSON } = require('./store');
-const { run, get } = require('./app-db');
+const { run, get, all } = require('./app-db');
 const { readKV, writeKV } = require('./kv-store');
 
 const uploadHistoryRepo = require('./upload-history-repository');
@@ -47,10 +47,36 @@ async function tableCount(tableName, whereClause = '', params = []) {
     return row ? Number(row.count || 0) : 0;
 }
 
+async function tableHasAllKeys(tableName, columnName, keys) {
+    const wanted = Array.from(new Set((keys || []).map(String).filter(Boolean)));
+    if (!wanted.length) return false;
+    const placeholders = wanted.map(() => '?').join(',');
+    const rows = await all(`SELECT ${columnName} AS item_key FROM ${tableName} WHERE ${columnName} IN (${placeholders})`, wanted);
+    return rows.length >= wanted.length;
+}
+
 async function kvExists(category, key) {
     const sentinel = { __missing: true };
     const value = await readKV(category, key, sentinel);
     return value !== sentinel;
+}
+
+async function readExistingKV(category, key, fallback) {
+    return readKV(category, key, fallback);
+}
+
+function itemCount(value) {
+    if (Array.isArray(value)) return value.length;
+    if (value && typeof value === 'object') return Object.keys(value).length;
+    return value === undefined || value === null ? 0 : 1;
+}
+
+function hasMeaningfulKvValue(key, existing, incoming) {
+    if (!hasItems(incoming)) return true;
+    if (key === 'ai_settings') {
+        return Boolean(existing && existing.apiKey);
+    }
+    return itemCount(existing) >= itemCount(incoming);
 }
 
 function redactValue(key, value) {
@@ -159,9 +185,11 @@ async function runStep(step, migrated) {
 }
 
 async function migrateKvFile(filename, key, defaultValue) {
-    if (!legacyFileExists(filename) || await kvExists('sys', key)) return null;
+    if (!legacyFileExists(filename)) return null;
     const value = legacyJson(filename, defaultValue);
     if (!hasItems(value)) return null;
+    const existing = await readExistingKV('sys', key, defaultValue);
+    if (await kvExists('sys', key) && hasMeaningfulKvValue(key, existing, value)) return null;
     await writeKV('sys', key, value);
     return `sys/${key}`;
 }
@@ -170,7 +198,7 @@ async function migrateUploadHistory() {
     const items = legacyJson('upload_history.json', []);
     if (!legacyFileExists('upload_history.json') || !Array.isArray(items) || !items.length) return null;
     await uploadHistoryRepo.ensureReady();
-    if (await tableCount('upload_history') > 0) return null;
+    if (await tableHasAllKeys('upload_history', 'id', items.map(item => item && item.id))) return null;
 
     for (const item of items) {
         if (!item || !item.id || !item.tool || !item.action || !item.time) continue;
@@ -196,7 +224,7 @@ async function migrateUivScripts() {
     const items = legacyJson('uiv_scripts.json', []);
     if (!legacyFileExists('uiv_scripts.json') || !Array.isArray(items) || !items.length) return null;
     await uivScriptsRepo.ensureReady();
-    if (await tableCount('uiv_scripts') > 0) return null;
+    if (await tableHasAllKeys('uiv_scripts', 'id', items.map(item => item && item.id))) return null;
     await uivScriptsRepo.replaceAllScripts(items);
     return `uiv_scripts:${items.length}`;
 }
@@ -214,7 +242,7 @@ async function migrateSlaGroups() {
     const items = legacyJson('sla_groups.json', []);
     if (!legacyFileExists('sla_groups.json') || !Array.isArray(items) || !items.length) return null;
     await slaGroupsRepo.ensureReady();
-    if (await tableCount('sla_groups') > 0) return null;
+    if (await tableHasAllKeys('sla_groups', 'group_key', items.map(item => item && item.id))) return null;
     await slaGroupsRepo.replaceGroups(items);
     return `sla_groups:${items.length}`;
 }
@@ -223,7 +251,7 @@ async function migrateSlaTargets() {
     const items = legacyJson('sla_targets.json', {});
     if (!legacyFileExists('sla_targets.json') || !hasItems(items)) return null;
     await slaTargetsRepo.ensureReady();
-    if (await tableCount('sla_targets') > 0) return null;
+    if (await tableHasAllKeys('sla_targets', 'target_key', Object.keys(items))) return null;
     await slaTargetsRepo.replaceTargets(items);
     return `sla_targets:${Object.keys(items).length}`;
 }
@@ -232,7 +260,14 @@ async function migrateSlaPrefs() {
     const items = legacyJson('sla_prefs.json', {});
     if (!legacyFileExists('sla_prefs.json') || !hasItems(items)) return null;
     await slaPrefsRepo.ensureReady();
-    if (await tableCount('sla_prefs') > 0) return null;
+    const prefKeys = Object.keys(items).filter(key => key !== 'i18nMap');
+    if (prefKeys.length) {
+        const placeholders = prefKeys.map(() => '?').join(',');
+        const rows = await all(`SELECT pref_key FROM sla_prefs WHERE pref_key IN (${placeholders})`, prefKeys);
+        if (rows.length >= prefKeys.length) return null;
+    } else if (await tableCount('sla_prefs') > 0 || await tableCount('sys_dictionaries', "WHERE category = 'i18n'") > 0) {
+        return null;
+    }
     await slaPrefsRepo.replacePrefs(items);
     return `sla_prefs:${Object.keys(items).length}`;
 }
@@ -241,7 +276,7 @@ async function migrateSlaSnapshots() {
     const items = legacyJson('sla_snapshots.json', []);
     if (!legacyFileExists('sla_snapshots.json') || !Array.isArray(items) || !items.length) return null;
     await slaSnapshotsRepo.ensureReady();
-    if (await tableCount('sla_snapshots') > 0) return null;
+    if (await tableHasAllKeys('sla_snapshots', 'id', items.map(item => item && item.id))) return null;
     await slaSnapshotsRepo.replaceSnapshots(items);
     return `sla_snapshots:${items.length}`;
 }
@@ -250,7 +285,7 @@ async function migrateFrtSnapshots() {
     const items = legacyJson('frt_snapshots.json', []);
     if (!legacyFileExists('frt_snapshots.json') || !Array.isArray(items) || !items.length) return null;
     await frtSnapshotsRepo.ensureReady();
-    if (await tableCount('frt_snapshots') > 0) return null;
+    if (await tableHasAllKeys('frt_snapshots', 'id', items.map(item => item && item.id))) return null;
 
     for (const item of items) {
         if (!item || !item.id) continue;
@@ -267,7 +302,8 @@ async function migrateAuthUsers() {
     const items = legacyJson('users.json', {});
     if (!legacyFileExists('users.json') || !hasItems(items)) return null;
     await authUsersRepo.ensureReady();
-    if (await tableCount('auth_users') > 1) return null;
+    const existingCount = await tableCount('auth_users');
+    if (existingCount > Object.keys(items).length && await tableHasAllKeys('auth_users', 'username', Object.keys(items))) return null;
 
     for (const [username, user] of Object.entries(items)) {
         if (!username || !user || !user.passwordHash) continue;
@@ -280,7 +316,7 @@ async function migrateAuthSessions() {
     const items = legacyJson('sessions.json', {});
     if (!legacyFileExists('sessions.json') || !hasItems(items)) return null;
     await authSessionsRepo.ensureReady();
-    if (await tableCount('auth_sessions') > 0) return null;
+    if (await tableHasAllKeys('auth_sessions', 'token', Object.keys(items))) return null;
 
     for (const [token, session] of Object.entries(items)) {
         const user = session && session.user ? session.user : {};
