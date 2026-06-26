@@ -18,8 +18,7 @@ async function ensureReady() {
             const row = await get('SELECT COUNT(1) AS count FROM uiv_categories');
             if (row && row.count > 0) return;
 
-            
-            const allCategories = [...DEFAULT_CATEGORIES, ...jsonCategories];
+            const allCategories = [...DEFAULT_CATEGORIES];
 
             await run('BEGIN TRANSACTION');
             try {
@@ -101,46 +100,33 @@ async function syncJsonCategoriesToDb(categories) {
 
 async function addCategory(name) {
     const trimmedName = String(name || '').trim();
-    
-    if (!trimmedName) {
-        return categories;
+    if (!trimmedName) return [];
+
+    try {
+        await ensureReady();
+        await run(
+            `INSERT OR IGNORE INTO uiv_categories (name, is_default)
+             VALUES (?, 0)`,
+            [trimmedName]
+        );
+    } catch (err) {
+        console.error('[uiv-categories] SQLite insert failed:', err.message);
     }
-
-    if (!DEFAULT_CATEGORIES.includes(trimmedName) && !categories.includes(trimmedName)) {
-        categories.push(trimmedName);
-        writeCategoriesToJson(categories);
-
-        try {
-            await ensureReady();
-            await run(
-                `INSERT OR REPLACE INTO uiv_categories (name, is_default)
-                 VALUES (?, 0)`,
-                [trimmedName]
-            );
-        } catch (err) {
-            console.error('[uiv-categories] SQLite dual-write failed:', err.message);
-        }
-    }
-
     return [];
 }
 
 async function deleteCategory(name) {
-    const categories = [].filter(item => item !== name);
-    writeCategoriesToJson(categories);
-
     try {
         await ensureReady();
         await run('DELETE FROM uiv_categories WHERE name = ? AND is_default = 0', [name]);
     } catch (err) {
         console.error('[uiv-categories] SQLite delete sync failed:', err.message);
     }
-
-    return categories;
+    return [];
 }
 
 async function replaceCategories(categories) {
-    const normalized = categories;
+    const normalized = normalizeCategories(categories);
 
     await syncJsonCategoriesToDb(normalized);
 
