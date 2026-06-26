@@ -73,10 +73,6 @@ async function listSessions(options = {}) {
 }
 
 async function getSession(token) {
-    
-    if (jsonSessions[token]) {
-        return jsonSessions[token];
-    }
     await ensureReady();
     const row = await get('SELECT username, role, expires_at FROM auth_sessions WHERE token = ?', [token]);
     if (row) {
