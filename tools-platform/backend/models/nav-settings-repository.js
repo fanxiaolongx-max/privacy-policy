@@ -49,9 +49,9 @@ async function getSettings() {
     return normalizeSettings(await readKV('sys', 'nav_settings', DEFAULT_SETTINGS));
 }
 
-function saveSettings(settings) {
+async function saveSettings(settings) {
     const normalized = normalizeSettings(settings);
-    writeJSON(SETTINGS_FILE, normalized);
+    await writeKV('sys', 'nav_settings', normalized);
     return normalized;
 }
 
