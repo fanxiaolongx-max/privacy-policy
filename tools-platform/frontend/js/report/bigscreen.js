@@ -7,7 +7,268 @@
         ownerDraft: [],
         pendingOwnerAvatar: '',
         charts: {},
-        monthlyPath: '/api/db/monthly_report_data'
+        monthlyPath: '/api/db/monthly_report_data',
+        refreshTimer: null,
+        isRefreshing: false,
+        lastRefreshSignature: '',
+        lastSuccessfulRefreshAt: null,
+        refreshStatus: '',
+        refreshStatusKey: 'statusSynced',
+        i18nMap: {},
+        contactInfo: null
+    };
+
+    const BIGSCREEN_I18N = {
+        'zh-CN': {
+            title: 'EG运营质量综合大屏',
+            loadingSubtitle: '数据来自月报页面与报表看板入库结果，正在加载...',
+            noDataSubtitle: '当前筛选范围内暂无入库数据。',
+            subtitle: '分析周期 {start} 至 {end}，最新快照 {snapshot}，目标月份 {month}',
+            range30: '最近 30 天',
+            range90: '最近 90 天',
+            rangeAll: '全部数据',
+            rangeCustom: '自定义',
+            refresh: '刷新',
+            syncing: '同步中',
+            ownerConfig: '责任人配置',
+            fullscreen: '全屏',
+            exitFullscreen: '退出全屏',
+            fullscreenTitle: '全屏显示',
+            exitFullscreenTitle: '退出全屏显示',
+            rankTitle: '未达标客户群',
+            rankSub: '按当前分数',
+            trendTitle: '风险走势',
+            trendSub: '未达标项 / 达标率',
+            weakTitle: '整体未达标诊断',
+            weakSub: '指标 × 未达标客户群',
+            carouselTitle: '综合轮播诊断',
+            carouselSub: '多维指标展示',
+            manualTitle: '额外加减分：',
+            passTitle: '已达标指标巡检',
+            passSub: '辅助滚动',
+            trendSource: '趋势来源',
+            snapshotSource: '快照来源',
+            latestRefresh: '最新刷新',
+            dataScope: '数据口径: 月报趋势 + 报表看板入库快照',
+            sourceSqlite: 'SQLite',
+            sourceJson: 'JSON',
+            sourceAuto: '自动模式',
+            statusSynced: '数据已同步',
+            statusAutoNoChange: '自动同步完成，无变化',
+            statusManualNoChange: '数据已同步，无变化',
+            statusUpdated: '数据已更新',
+            statusLoaded: '数据已加载',
+            statusFailedKeep: '刷新失败，沿用上次数据',
+            noReportData: '暂无可展示数据，请先在报表看板完成入库。',
+            noFailingCustomers: '当前无未达标客户群',
+            failedCustomerGroups: '未达标客户群数',
+            rankStable: '当前客户群整体稳定，暂无需要突出跟进的未达标客户群。',
+            rankSummary: '当前排名第 <strong>1</strong> 的客户群为 <strong>{firstCat}</strong>，得分 <strong class="good">{firstScore}</strong>；第 <strong>{lastRank}</strong> 为 <strong>{lastCat}</strong>，得分 <strong class="bad">{lastScore}</strong>。',
+            rankRiskLeader: '未达标项最集中在 <strong>{cat}</strong>（<strong class="bad">{count}</strong> 项）。',
+            scoreUnit: '分',
+            failingMetricCount: '（总计未达标指标: {metrics}个 | 客户群明细数: {rows}条）',
+            passingMetricCount: '（总计达标指标: {metrics}个 | 客户群明细数: {rows}条）',
+            emptyWeak: '当前最新快照无未达标项',
+            emptyMetricData: '暂无指标明细数据',
+            emptyPassing: '暂无已达标指标',
+            target: '目标',
+            actual: '实测',
+            current: '当前',
+            gap: '差距',
+            deviation: '偏离强度',
+            noRisk: '无风险',
+            itemUnit: '项',
+            change: '变化量',
+            period: '区间: {start} 至 {end}',
+            previousCapture: '上次采集: {date}',
+            currentCapture: '本次采集: {date}',
+            concentrationByCustomer: '短板集中度 (按客户群)',
+            failingItems: '未达标项',
+            passRate: '达标率',
+            noFailingCarousel: '当前无未达标指标',
+            manualEmpty: '当前最新快照无客户群产生额外加减分',
+            manualDesc: '({count}次，共 {sign}{score}分)',
+            add: '加分',
+            deduct: '扣分',
+            unnamedConfig: '未命名配置',
+            ownerPending: '责任人待配置',
+            ownerTodo: '待配置',
+            ownerDefault: '客户群默认',
+            ownerGlobal: '整体 / 全局',
+            ownerNone: '无工号',
+            ownerFallbackCat: '整体/全局',
+            ownerDefaultLoop: '未配置(默认轮播)',
+            ownerModalTitle: '责任人配置',
+            ownerModalSub: '优先匹配“客户群 + 指标”，未命中时使用客户群默认责任人。',
+            close: '关闭',
+            cancel: '取消',
+            saveServer: '保存到服务器',
+            addBtn: '添加',
+            updateSave: '更新并保存',
+            avatarHeader: '头像',
+            customerGroup: '客户群',
+            metricDimension: '指标维度',
+            owner: '责任人',
+            empId: '工号',
+            action: '操作',
+            edit: '编辑',
+            delete: '删除',
+            noOwners: '暂无责任人配置',
+            ownerNamePlaceholder: '责任人名字',
+            empIdPlaceholder: '工号',
+            avatarPlaceholder: '图',
+            uploadAvatar: '上传头像图片',
+            avatarSelected: '已选择头像',
+            chooseImage: '请选择图片文件',
+            avatarReadFail: '头像图片读取失败',
+            ownerRequired: '请先选择客户群并填写责任人名字',
+            ownerSaved: '责任人配置已保存，共 {count} 条',
+            saveFailed: '保存失败: {message}',
+            loadFailed: '大屏数据加载失败: {message}',
+            loadFailedShort: '加载失败: {message}',
+            contactDefault: '如果您对看板数据有疑问或者建议，请联系 fanxiaolong 84300033，谢谢！',
+            contactModalTitle: '联系信息配置',
+            contactModalSub: '底部提示语会跟随顶部语言切换按钮自动切换中英文。',
+            contactZhLabel: '中文提示语',
+            contactEnLabel: '英文提示语',
+            contactZhPlaceholder: '请输入中文联系提示',
+            contactEnPlaceholder: '请输入英文联系提示',
+            contactSaved: '联系信息已保存',
+            contactSaveFail: '保存失败: {message}',
+            noSnapshot: '-',
+            unknownMetric: '未知指标',
+            unknown: 'Unknown',
+            global: '全局',
+            processing: '处理中',
+            currentNo: '当前无{title}',
+            sourceRefreshStatus: '数据源来自 NetcareCloud / 看板 / 3MS / IBMS / iSales，5 分钟自动刷新一次数据',
+            sourceRefreshNoData: '等待入库数据，数据源来自 NetcareCloud / 看板 / 3MS / IBMS / iSales'
+        },
+        'en-US': {
+            title: 'EG Operational Quality Dashboard',
+            loadingSubtitle: 'Loading data from monthly trends and saved report snapshots...',
+            noDataSubtitle: 'No saved data is available for the selected range.',
+            subtitle: 'Analysis period {start} to {end}; latest snapshot {snapshot}; target month {month}',
+            range30: 'Last 30 Days',
+            range90: 'Last 90 Days',
+            rangeAll: 'All Data',
+            rangeCustom: 'Custom',
+            refresh: 'Refresh',
+            syncing: 'Syncing',
+            ownerConfig: 'Owner Config',
+            fullscreen: 'Fullscreen',
+            exitFullscreen: 'Exit Fullscreen',
+            fullscreenTitle: 'Enter fullscreen',
+            exitFullscreenTitle: 'Exit fullscreen',
+            rankTitle: 'At-Risk Customer Groups',
+            rankSub: 'By current score',
+            trendTitle: 'Risk Trend',
+            trendSub: 'Failed Items / Pass Rate',
+            weakTitle: 'Overall Failure Diagnosis',
+            weakSub: 'Metric x failed customer group',
+            carouselTitle: 'Diagnostic Carousel',
+            carouselSub: 'Multi-dimensional indicators',
+            manualTitle: 'Manual Adjustments:',
+            passTitle: 'Passed Metric Patrol',
+            passSub: 'Auto scroll',
+            trendSource: 'Trend Source',
+            snapshotSource: 'Snapshot Source',
+            latestRefresh: 'Last Refresh',
+            dataScope: 'Scope: monthly trends + saved report snapshots',
+            sourceSqlite: 'SQLite',
+            sourceJson: 'JSON',
+            sourceAuto: 'Auto Mode',
+            statusSynced: 'Data synced',
+            statusAutoNoChange: 'Auto sync complete, no changes',
+            statusManualNoChange: 'Data synced, no changes',
+            statusUpdated: 'Data updated',
+            statusLoaded: 'Data loaded',
+            statusFailedKeep: 'Refresh failed, keeping previous data',
+            noReportData: 'No data to display. Save a report snapshot first.',
+            noFailingCustomers: 'No at-risk customer groups',
+            failedCustomerGroups: 'Failed customer groups',
+            rankStable: 'All customer groups are stable. No at-risk group needs highlighting.',
+            rankSummary: 'The No. <strong>1</strong> customer group is <strong>{firstCat}</strong>, score <strong class="good">{firstScore}</strong>; No. <strong>{lastRank}</strong> is <strong>{lastCat}</strong>, score <strong class="bad">{lastScore}</strong>.',
+            rankRiskLeader: 'Failures are most concentrated in <strong>{cat}</strong> (<strong class="bad">{count}</strong> items).',
+            scoreUnit: 'pts',
+            failingMetricCount: '({metrics} failed metrics | {rows} customer-group rows)',
+            passingMetricCount: '({metrics} passed metrics | {rows} customer-group rows)',
+            emptyWeak: 'No failed items in the latest snapshot',
+            emptyMetricData: 'No metric details available',
+            emptyPassing: 'No passed metrics',
+            target: 'Target',
+            actual: 'Actual',
+            current: 'Current',
+            gap: 'Gap',
+            deviation: 'Deviation',
+            noRisk: 'No Risk',
+            itemUnit: 'items',
+            change: 'Change',
+            period: 'Period: {start} to {end}',
+            previousCapture: 'Previous: {date}',
+            currentCapture: 'Current: {date}',
+            concentrationByCustomer: 'Weakness Concentration (by Customer Group)',
+            failingItems: 'Failed Items',
+            passRate: 'Pass Rate',
+            noFailingCarousel: 'No failed metrics',
+            manualEmpty: 'No customer-group manual adjustments in the latest snapshot',
+            manualDesc: '({count} times, {sign}{score} pts)',
+            add: 'Bonus',
+            deduct: 'Deduction',
+            unnamedConfig: 'Unnamed Config',
+            ownerPending: 'Owner pending',
+            ownerTodo: 'Pending',
+            ownerDefault: 'Customer-group default',
+            ownerGlobal: 'Overall / Global',
+            ownerNone: 'No ID',
+            ownerFallbackCat: 'Overall/Global',
+            ownerDefaultLoop: 'Unconfigured (default carousel)',
+            ownerModalTitle: 'Owner Config',
+            ownerModalSub: 'Match by customer group + metric first; fallback to customer-group default owner.',
+            close: 'Close',
+            cancel: 'Cancel',
+            saveServer: 'Save to Server',
+            addBtn: 'Add',
+            updateSave: 'Update and Save',
+            avatarHeader: 'Avatar',
+            customerGroup: 'Customer Group',
+            metricDimension: 'Metric',
+            owner: 'Owner',
+            empId: 'Employee ID',
+            action: 'Action',
+            edit: 'Edit',
+            delete: 'Delete',
+            noOwners: 'No owner configuration',
+            ownerNamePlaceholder: 'Owner name',
+            empIdPlaceholder: 'Employee ID',
+            avatarPlaceholder: 'Img',
+            uploadAvatar: 'Upload avatar',
+            avatarSelected: 'Avatar selected',
+            chooseImage: 'Please choose an image file',
+            avatarReadFail: 'Failed to read avatar image',
+            ownerRequired: 'Please select a customer group and enter owner name',
+            ownerSaved: 'Owner config saved, {count} records',
+            saveFailed: 'Save failed: {message}',
+            loadFailed: 'Big screen data load failed: {message}',
+            loadFailedShort: 'Load failed: {message}',
+            contactDefault: 'If you have any questions or suggestions about the dashboard data, please contact fanxiaolong at 84300033. Thank you!',
+            contactModalTitle: 'Contact Info Config',
+            contactModalSub: 'The footer message follows the top language switch between Chinese and English.',
+            contactZhLabel: 'Chinese Message',
+            contactEnLabel: 'English Message',
+            contactZhPlaceholder: 'Enter the Chinese contact message',
+            contactEnPlaceholder: 'Enter the English contact message',
+            contactSaved: 'Contact information saved',
+            contactSaveFail: 'Save failed: {message}',
+            noSnapshot: '-',
+            unknownMetric: 'Unknown Metric',
+            unknown: 'Unknown',
+            global: 'Global',
+            processing: 'In Progress',
+            currentNo: 'No current {title}',
+            sourceRefreshStatus: 'Sources: NetcareCloud / Dashboard / 3MS / IBMS / iSales; auto-refresh every 5 min',
+            sourceRefreshNoData: 'Waiting for saved data. Sources: NetcareCloud / Dashboard / 3MS / IBMS / iSales'
+        }
     };
 
     function $(id) {
@@ -22,6 +283,174 @@
             "'": '&#39;',
             '"': '&quot;'
         }[tag] || tag));
+    }
+
+    function lang() {
+        return window.ToolsI18n && typeof window.ToolsI18n.getLanguage === 'function'
+            ? window.ToolsI18n.getLanguage()
+            : 'zh-CN';
+    }
+
+    function isEn() {
+        return lang() === 'en-US';
+    }
+
+    function tr(key, params = {}) {
+        const dict = BIGSCREEN_I18N[lang()] || BIGSCREEN_I18N['zh-CN'];
+        const fallback = BIGSCREEN_I18N['zh-CN'];
+        const template = dict[key] ?? fallback[key] ?? key;
+        return String(template).replace(/\{(\w+)\}/g, (_, name) => (
+            Object.prototype.hasOwnProperty.call(params, name) ? params[name] : `{${name}}`
+        ));
+    }
+
+    function defaultContactInfo() {
+        return {
+            zh: BIGSCREEN_I18N['zh-CN'].contactDefault,
+            en: BIGSCREEN_I18N['en-US'].contactDefault
+        };
+    }
+
+    function cleanContactText(value) {
+        return String(value || '').trim().replace(/^[*•]\s*/, '');
+    }
+
+    function normalizeContactInfo(raw) {
+        const defaults = defaultContactInfo();
+        if (!raw || typeof raw !== 'object') return defaults;
+        const zh = cleanContactText(raw.zh || raw.zhCN || raw['zh-CN'] || raw.text || '');
+        const en = cleanContactText(raw.en || raw.enUS || raw['en-US'] || '');
+        return {
+            zh: zh || defaults.zh,
+            en: en || defaults.en
+        };
+    }
+
+    function renderContactInfo() {
+        const dom = $('contactInfoText');
+        if (!dom) return;
+        const info = normalizeContactInfo(state.contactInfo);
+        dom.textContent = isEn() ? info.en : info.zh;
+    }
+
+    function cleanI18nValue(value) {
+        if (!value) return '';
+        const text = String(value);
+        if (text.includes('<br>')) {
+            const match = text.match(/<span[^>]*>(.*?)<\/span>/);
+            return match ? match[1] : text.replace(/<[^>]+>/g, '');
+        }
+        return text.replace(/<[^>]+>/g, '');
+    }
+
+    function translated(value) {
+        const text = String(value ?? '');
+        if (!text || !isEn()) return text;
+        const clean = text.replace(/\(Ungrouped\)/, '').trim();
+        return state.i18nMap[text] || state.i18nMap[clean] || text;
+    }
+
+    function sourceLabel(source) {
+        if (source === 'sqlite') return tr('sourceSqlite');
+        if (source === 'json') return tr('sourceJson');
+        if (source === 'auto') return tr('sourceAuto');
+        return source || '-';
+    }
+
+    function applyStaticI18n() {
+        const h1 = document.querySelector('.title-block h1');
+        if (h1) h1.textContent = tr('title');
+        document.title = `${tr('title')} - Tools Platform`;
+        if ($('bigscreenSubtitle') && !state.latest) {
+            $('bigscreenSubtitle').textContent = tr('loadingSubtitle');
+        }
+        const rangeSelect = $('rangeSelect');
+        if (rangeSelect) {
+            const labels = { '30': tr('range30'), '90': tr('range90'), all: tr('rangeAll'), custom: tr('rangeCustom') };
+            Array.from(rangeSelect.options).forEach(option => {
+                if (labels[option.value]) option.textContent = labels[option.value];
+            });
+        }
+        const ownerBtn = $('ownerConfigBtn');
+        if (ownerBtn) ownerBtn.textContent = tr('ownerConfig');
+        const refreshBtn = $('refreshBtn');
+        if (refreshBtn) refreshBtn.textContent = state.isRefreshing ? tr('syncing') : tr('refresh');
+        const startInput = $('startDate');
+        if (startInput) startInput.setAttribute('aria-label', isEn() ? 'Start date' : '开始日期');
+        const endInput = $('endDate');
+        if (endInput) endInput.setAttribute('aria-label', isEn() ? 'End date' : '结束日期');
+        syncFullscreenButton();
+
+        const setPanel = (selector, titleKey, subKey) => {
+            const panel = document.querySelector(selector);
+            if (!panel) return;
+            const title = panel.querySelector('.panel-title');
+            const sub = panel.querySelector('.panel-sub');
+            if (title) title.textContent = tr(titleKey);
+            if (sub && subKey) sub.textContent = tr(subKey);
+        };
+        setPanel('.customer-focus', 'rankTitle', 'rankSub');
+        setPanel('.main-trend', 'trendTitle', 'trendSub');
+        setPanel('.metric-carousel-panel', 'carouselTitle', 'carouselSub');
+        setPanel('.pass-strip-panel', 'passTitle', 'passSub');
+        const weakPanel = document.querySelector('.failure-focus');
+        if (weakPanel) {
+            const title = weakPanel.querySelector('.panel-title');
+            const sub = weakPanel.querySelector('.panel-sub');
+            if (title) title.innerHTML = `${escapeHTML(tr('weakTitle'))} <span id="failingMetricsCount" style="font-size:12px;color:#ff5d73;font-weight:normal;margin-left:8px;"></span>`;
+            if (sub) sub.textContent = tr('weakSub');
+        }
+        const manualTitle = document.querySelector('.manual-title');
+        if (manualTitle) manualTitle.textContent = tr('manualTitle');
+        const ownerTitle = $('ownerDialogTitle');
+        if (ownerTitle) ownerTitle.textContent = tr('ownerModalTitle');
+        const modalSub = document.querySelector('#ownerModal .owner-dialog-head .panel-sub');
+        if (modalSub) modalSub.textContent = tr('ownerModalSub');
+        const contactTitle = $('contactDialogTitle');
+        if (contactTitle) contactTitle.textContent = tr('contactModalTitle');
+        const contactSub = $('contactDialogSub');
+        if (contactSub) contactSub.textContent = tr('contactModalSub');
+        const contactZhLabel = $('contactZhLabel');
+        if (contactZhLabel) contactZhLabel.textContent = tr('contactZhLabel');
+        const contactEnLabel = $('contactEnLabel');
+        if (contactEnLabel) contactEnLabel.textContent = tr('contactEnLabel');
+        const contactZhInput = $('contactZhInput');
+        if (contactZhInput) contactZhInput.placeholder = tr('contactZhPlaceholder');
+        const contactEnInput = $('contactEnInput');
+        if (contactEnInput) contactEnInput.placeholder = tr('contactEnPlaceholder');
+        const ownerNameInput = $('ownerNameInput');
+        if (ownerNameInput) ownerNameInput.placeholder = tr('ownerNamePlaceholder');
+        const ownerEmpInput = $('ownerEmpIdInput');
+        if (ownerEmpInput) ownerEmpInput.placeholder = tr('empIdPlaceholder');
+        const avatarLabel = $('ownerAvatarLabel');
+        if (avatarLabel && !state.pendingOwnerAvatar) avatarLabel.textContent = tr('uploadAvatar');
+        const avatarPreview = $('ownerAvatarPreview');
+        if (avatarPreview && !state.pendingOwnerAvatar) avatarPreview.textContent = tr('avatarPlaceholder');
+        const headers = document.querySelectorAll('.owner-table thead th');
+        [tr('avatarHeader'), tr('customerGroup'), tr('metricDimension'), tr('owner'), tr('empId'), tr('action')].forEach((label, idx) => {
+            if (headers[idx]) headers[idx].textContent = label;
+        });
+        const addOwnerBtn = $('btnAddOwner');
+        if (addOwnerBtn) addOwnerBtn.textContent = editingOwnerIndex >= 0 ? tr('updateSave') : tr('addBtn');
+        const closeBtns = document.querySelectorAll('#ownerModal button');
+        closeBtns.forEach(btn => {
+            if (btn.getAttribute('onclick') === 'BigscreenOwners.close()') {
+                btn.textContent = btn.closest('.owner-dialog-foot') ? tr('cancel') : tr('close');
+            } else if (btn.getAttribute('onclick') === 'BigscreenOwners.save()') {
+                btn.textContent = tr('saveServer');
+            } else if (btn.getAttribute('onclick') === 'BigscreenOwners.add()' && btn.id !== 'btnAddOwner') {
+                btn.textContent = tr('addBtn');
+            }
+        });
+        const contactBtns = document.querySelectorAll('#contactModal button');
+        contactBtns.forEach(btn => {
+            if (btn.getAttribute('onclick') === 'BigscreenContact.close()') {
+                btn.textContent = btn.closest('.owner-dialog-foot') ? tr('cancel') : tr('close');
+            } else if (btn.getAttribute('onclick') === 'BigscreenContact.save()') {
+                btn.textContent = tr('saveServer');
+            }
+        });
+        renderContactInfo();
     }
 
     function num(value, fallback = 0) {
@@ -80,7 +509,23 @@
         const btn = $('refreshBtn');
         if (!btn) return;
         btn.disabled = loading;
-        btn.textContent = loading ? '加载中' : '刷新';
+        btn.textContent = loading ? tr('syncing') : tr('refresh');
+    }
+
+    function renderScriptVersion() {
+        const target = $('scriptVersion');
+        if (!target) return;
+        const script = [...document.scripts].find(item => item.src && item.src.includes('/js/report/bigscreen.js'));
+        const src = script ? script.src : '';
+        let version = '-';
+        try {
+            version = new URL(src, window.location.href).searchParams.get('v') || '-';
+        } catch (e) {
+            const match = src.match(/[?&]v=([^&]+)/);
+            version = match ? match[1] : '-';
+        }
+        target.textContent = `v${version}`;
+        target.title = isEn() ? `Current big screen script version: ${version}` : `当前大屏脚本版本: ${version}`;
     }
 
     function metricSummary(latest) {
@@ -115,23 +560,23 @@
         const alerts = Array.isArray(raw.specialMetricAlerts) ? raw.specialMetricAlerts : [];
 
         const groups = [
-            { id: 'vulnerability', title: '漏洞预警', icon: '🧯', items: tickets.filter(t => t.collection === 'vulnerability'), type: 'ticket' },
-            { id: 'rectification', title: '整改预警', icon: '🛠️', items: tickets.filter(t => t.collection === 'rectification'), type: 'ticket' },
-            { id: 'risk_sr', title: '风险/专项/工单预警', icon: '📞', items: tickets.filter(t => ['risk', 'special', 'sr'].includes(t.collection)), type: 'ticket' },
-            { id: 'metric_alerts', title: '全局指标告警', icon: '🚨', items: alerts, type: 'alert' }
+            { id: 'vulnerability', title: isEn() ? 'Vulnerability Alerts' : '漏洞预警', emptyTitle: isEn() ? 'vulnerability alerts' : '漏洞', icon: '🧯', items: tickets.filter(t => t.collection === 'vulnerability'), type: 'ticket' },
+            { id: 'rectification', title: isEn() ? 'Rectification Alerts' : '整改预警', emptyTitle: isEn() ? 'rectification alerts' : '整改', icon: '🛠️', items: tickets.filter(t => t.collection === 'rectification'), type: 'ticket' },
+            { id: 'risk_sr', title: isEn() ? 'Risk/Special/SR Alerts' : '风险/专项/工单预警', emptyTitle: isEn() ? 'risk/SR alerts' : '风险/专项/工单', icon: '📞', items: tickets.filter(t => ['risk', 'special', 'sr'].includes(t.collection)), type: 'ticket' },
+            { id: 'metric_alerts', title: isEn() ? 'Global Metric Alerts' : '全局指标告警', emptyTitle: isEn() ? 'global metric alerts' : '全局指标', icon: '🚨', items: alerts, type: 'alert' }
         ];
 
         $('kpiRow').innerHTML = groups.map(group => {
             let slidesHtml = '';
 
             if (group.items.length === 0) {
-                slidesHtml = `<div class="kpi-empty">✅ 当前无${group.title.replace('预警', '').replace('告警', '')}</div>`;
+                slidesHtml = `<div class="kpi-empty">✅ ${escapeHTML(tr('currentNo', { title: group.emptyTitle }))}</div>`;
             } else {
                 const slideDivs = group.items.map(item => {
                     if (group.type === 'ticket') {
                         const tId = item.data?.task_id || item.data?.sr_num || item.data?.precaution_id || item.title || 'Unknown';
-                        const net = item.data?.network_name || item.data?.network_cust_name || item.data?.customer_name_cn || '全局';
-                        let statusText = item._slaCleanText || item.data?.task_status || item._srStatus || '处理中';
+                        const net = item.data?.network_name || item.data?.network_cust_name || item.data?.customer_name_cn || tr('global');
+                        let statusText = item._slaCleanText || item.data?.task_status || item._srStatus || tr('processing');
                         let badgeClass = 'safe';
                         if (statusText.includes('紧急') || statusText.includes('严重') || statusText.includes('超期')) {
                             badgeClass = 'danger';
@@ -152,10 +597,10 @@
                         `;
                     } else {
                         // Alert
-                        const label = item.metricLabel || item.metric_label || '未知指标';
+                        const label = translated(item.metricLabel || item.metric_label || tr('unknownMetric'));
                         const val = item.globalValue || item.global_val || '-';
                         const target = item.targetValue || item.target_val || '-';
-                        const gap = item.gap ? `差距 ${item.gap}` : '不达标';
+                        const gap = item.gap ? `${tr('gap')} ${item.gap}` : tr('failingItems');
 
                         return `
                             <div class="kpi-slide-item">
@@ -164,7 +609,7 @@
                                     <div class="kpi-status-badge danger">${escapeHTML(gap)}</div>
                                 </div>
                                 <div class="kpi-slide-row2">
-                                    <div class="kpi-network">目标: ${escapeHTML(target)}</div>
+                                    <div class="kpi-network">${escapeHTML(tr('target'))}: ${escapeHTML(target)}</div>
                                 </div>
                             </div>
                         `;
@@ -239,26 +684,20 @@
         if (!rows.length) {
             $('rankList').style.gridTemplateColumns = '';
             $('rankList').style.gridTemplateRows = '';
-            $('rankList').innerHTML = '<div class="empty">当前无未达标客户群</div>';
-            if ($('rankSummary')) $('rankSummary').textContent = '当前客户群整体稳定，暂无需要突出跟进的未达标客户群。';
+            $('rankList').innerHTML = `<div class="empty">${escapeHTML(tr('noFailingCustomers'))}</div>`;
+            if ($('rankSummary')) $('rankSummary').textContent = tr('rankStable');
             return;
         }
         $('rankList').style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
         $('rankList').style.gridTemplateRows = 'repeat(2, minmax(0, 1fr))';
         $('rankList').innerHTML = rows.slice(0, 4).map((item, index) => {
-            const metricText = item.metrics.length
-                ? `${item.metrics.slice(0, 5).join('、')}${item.metrics.length > 5 ? ' 等' : ''}`
-                : '当前无未达标指标';
             return `
             <div class="rank-row">
                 <div class="rank-no">${index + 1}</div>
                 <div>
-                    <div class="row-name" title="${escapeHTML(item.cat)}">${escapeHTML(item.cat)}</div>
-                    <div class="row-meta rank-marquee" title="${escapeHTML(item.metrics.join('、'))}">
-                        <span class="rank-marquee-text">${escapeHTML(metricText)}　　${escapeHTML(metricText)}</span>
-                    </div>
+                    <div class="row-name" title="${escapeHTML(translated(item.cat))}">${escapeHTML(translated(item.cat))}</div>
                 </div>
-                <div class="rank-score">${fmt(item.score, 1)}<span class="rank-score-label">分</span></div>
+                <div class="rank-score">${fmt(item.score, 1)}<span class="rank-score-label">${escapeHTML(tr('scoreUnit'))}</span></div>
             </div>
         `;
         }).join('');
@@ -287,11 +726,14 @@
         const last = rows[rows.length - 1];
         const riskLeader = [...rows].sort((a, b) => b.metrics.length - a.metrics.length || a.score - b.score)[0];
         $('rankSummary').innerHTML = `
-            当前排名第 <strong>1</strong> 的客户群为 <strong>${escapeHTML(first.cat)}</strong>，
-            得分 <strong class="good">${fmt(first.score, 1)}</strong>；
-            第 <strong>${rows.length}</strong> 为 <strong>${escapeHTML(last.cat)}</strong>，
-            得分 <strong class="bad">${fmt(last.score, 1)}</strong>。
-            ${riskLeader && riskLeader.metrics.length ? `未达标项最集中在 <strong>${escapeHTML(riskLeader.cat)}</strong>（<strong class="bad">${riskLeader.metrics.length}</strong> 项）。` : ''}
+            ${tr('rankSummary', {
+            firstCat: escapeHTML(translated(first.cat)),
+            firstScore: fmt(first.score, 1),
+            lastRank: rows.length,
+            lastCat: escapeHTML(translated(last.cat)),
+            lastScore: fmt(last.score, 1)
+        })}
+            ${riskLeader && riskLeader.metrics.length ? tr('rankRiskLeader', { cat: escapeHTML(translated(riskLeader.cat)), count: riskLeader.metrics.length }) : ''}
         `;
     }
 
@@ -401,7 +843,7 @@
             let owner = map[ownerKey('整体', item.label)] || map[ownerKey('', item.label)] || map[ownerKey('全局', item.label)];
             if (owner) {
                 const key = owner.owner_name + '|' + (owner.emp_id || '');
-                ownersMap.set(key, { ...owner, managedCats: new Set(['整体/全局']) });
+                ownersMap.set(key, { ...owner, managedCats: new Set([tr('ownerFallbackCat')]) });
             }
         }
 
@@ -410,7 +852,7 @@
                 if (!o.owner_name) return;
                 const key = o.owner_name + '|' + (o.emp_id || '');
                 if (!ownersMap.has(key)) {
-                    ownersMap.set(key, { ...o, managedCats: new Set(['未配置(默认轮播)']) });
+                    ownersMap.set(key, { ...o, managedCats: new Set([tr('ownerDefaultLoop')]) });
                 }
             });
         }
@@ -476,14 +918,14 @@
 
         if (!rows.length) {
             if (countDom) countDom.textContent = '';
-            $('weakList').innerHTML = '<div class="empty">当前最新快照无未达标项</div>';
+            $('weakList').innerHTML = `<div class="empty">${escapeHTML(tr('emptyWeak'))}</div>`;
             return;
         }
 
         if (countDom) {
             const distinctFailingMetrics = rows.length;
             const totalFailingRows = rows.reduce((acc, r) => acc + (r.rows ? r.rows.length : r.count), 0);
-            countDom.textContent = `(总计未达标指标: ${distinctFailingMetrics}个 | 客户群明细数: ${totalFailingRows}条)`;
+            countDom.textContent = tr('failingMetricCount', { metrics: distinctFailingMetrics, rows: totalFailingRows });
         }
 
         const loopRows = rows.length > 4 ? rows.concat(rows) : rows;
@@ -495,18 +937,18 @@
             <div class="weak-row risk-card">
                 <div class="risk-main">
                     <div class="risk-metric-title">
-                        <div class="row-name" title="${escapeHTML(item.label)}">${escapeHTML(item.label)}</div>
-                        <span class="risk-count-badge" title="未达标客户群数">${item.count}</span>
+                        <div class="row-name" title="${escapeHTML(translated(item.label))}">${escapeHTML(translated(item.label))}</div>
+                        <span class="risk-count-badge" title="${escapeHTML(tr('failedCustomerGroups'))}">${item.count}</span>
                     </div>
                     <div class="risk-detail">
-                        <div class="row-meta">目标 ${escapeHTML(item.target)}</div>
+                        <div class="row-meta">${escapeHTML(tr('target'))} ${escapeHTML(item.target)}</div>
                         <div class="risk-cats">
                             ${(() => {
                 const sortedRows = [...item.rows].sort((a, b) => failSeverityScore(b) - failSeverityScore(a));
                 const maxScore = sortedRows.length ? failSeverityScore(sortedRows[0]) : 0;
                 return sortedRows.map(row => `
-                                <span class="cat-chip ${severityClass(row, maxScore)}" data-cat="${escapeHTML(row.cat_name || '-')}" title="${escapeHTML(row.cat_name || '-')} | 实测 ${escapeHTML(row.raw_val ?? row.num_val ?? '-')} | 目标 ${escapeHTML(row.target_val || '-')} | 偏离强度 ${fmt(failSeverityScore(row) * 100, 1)}">
-                                    ${escapeHTML(row.cat_name || '-')}：${escapeHTML(row.raw_val ?? row.num_val ?? '-')}
+                                <span class="cat-chip ${severityClass(row, maxScore)}" data-cat="${escapeHTML(row.cat_name || '-')}" title="${escapeHTML(translated(row.cat_name || '-'))} | ${escapeHTML(tr('actual'))} ${escapeHTML(row.raw_val ?? row.num_val ?? '-')} | ${escapeHTML(tr('target'))} ${escapeHTML(row.target_val || '-')} | ${escapeHTML(tr('deviation'))} ${fmt(failSeverityScore(row) * 100, 1)}">
+                                    ${escapeHTML(translated(row.cat_name || '-'))}：${escapeHTML(row.raw_val ?? row.num_val ?? '-')}
                                 </span>
                                 `).join('');
             })()}
@@ -560,19 +1002,20 @@
         });
 
         if (!activeItems.length) {
-            strip.innerHTML = '<div style="color:#6e8ca8; font-size:12px;">当前最新快照无客户群产生额外加减分</div>';
+            strip.innerHTML = `<div style="color:#6e8ca8; font-size:12px;">${escapeHTML(tr('manualEmpty'))}</div>`;
             return;
         }
 
         const itemsHtml = activeItems.map(item => {
             const isAdd = item.type === '加分';
             const sign = isAdd ? '+' : '-';
+            const typeText = isAdd ? tr('add') : tr('deduct');
             return `
                 <div class="manual-item">
-                    <span class="manual-item-type ${item.type}">${escapeHTML(item.type)}</span>
-                    <span class="manual-item-name" style="color:var(--cyan); margin-right: 8px;">[${escapeHTML(item.cat)}]</span>
-                    <span class="manual-item-name">${escapeHTML(item.name)}</span>
-                    <span class="manual-item-desc">(${item.count}次，共 ${sign}${item.totalScore}分)</span>
+                    <span class="manual-item-type ${item.type}">${escapeHTML(typeText)}</span>
+                    <span class="manual-item-name" style="color:var(--cyan); margin-right: 8px;">[${escapeHTML(translated(item.cat))}]</span>
+                    <span class="manual-item-name">${escapeHTML(translated(item.name))}</span>
+                    <span class="manual-item-desc">${escapeHTML(tr('manualDesc', { count: item.count, sign, score: item.totalScore }))}</span>
                 </div>
             `;
         }).join('');
@@ -625,7 +1068,7 @@
         if (avatar && isImageAvatar(avatar)) {
             return `<span class="${className}"><img src="${escapeHTML(avatar)}" alt=""></span>`;
         }
-        const label = avatar || name.slice(0, 1) || '责';
+        const label = avatar || name.slice(0, 1) || (isEn() ? 'O' : '责');
         return `<span class="${className}">${escapeHTML(label.slice(0, 2))}</span>`;
     }
 
@@ -633,18 +1076,18 @@
         const owners = resolveOwnersForMetric(item);
         if (!owners.length) {
             return `
-                <div class="risk-owner" title="责任人待配置">
+                <div class="risk-owner" title="${escapeHTML(tr('ownerPending'))}">
                     <div class="owner-slider">
                         <div class="owner-slide-item">
-                            <span class="owner-avatar">责</span>
-                            <span class="owner-name">待配置</span>
+                            <span class="owner-avatar">${escapeHTML(isEn() ? 'O' : '责')}</span>
+                            <span class="owner-name">${escapeHTML(tr('ownerTodo'))}</span>
                         </div>
                     </div>
                 </div>
             `;
         }
 
-        const tooltip = owners.map(o => `${o.owner_name} (${o.emp_id || '无工号'}) - ${o.cat_name}`).join('\\n');
+        const tooltip = owners.map(o => `${o.owner_name} (${o.emp_id || tr('ownerNone')}) - ${translated(o.cat_name)}`).join('\\n');
 
         if (owners.length === 1) {
             const owner = owners[0];
@@ -691,7 +1134,7 @@
 
         if (!metrics.length) {
             if (countDom) countDom.textContent = '';
-            $('metricList').innerHTML = '<div class="empty">暂无指标明细数据</div>';
+            $('metricList').innerHTML = `<div class="empty">${escapeHTML(tr('emptyMetricData'))}</div>`;
             return;
         }
         const passRows = metrics
@@ -706,32 +1149,50 @@
             if (passRows.length > 0) {
                 const distinctPassingMetrics = new Set(passRows.map(m => m.metric_label)).size;
                 const totalPassingRows = passRows.length;
-                countDom.textContent = `(总计达标指标: ${distinctPassingMetrics}个 | 客户群明细数: ${totalPassingRows}条)`;
+                countDom.textContent = tr('passingMetricCount', { metrics: distinctPassingMetrics, rows: totalPassingRows });
             } else {
                 countDom.textContent = '';
             }
         }
 
         if (!passRows.length) {
-            $('metricList').innerHTML = '<div class="empty">暂无已达标指标</div>';
+            $('metricList').innerHTML = `<div class="empty">${escapeHTML(tr('emptyPassing'))}</div>`;
             return;
         }
-        const loopRows = passRows.length > 6 ? passRows.concat(passRows) : passRows;
-        const rowCount = Math.ceil(loopRows.length / 2);
-        const duration = Math.max(8, rowCount * 5); // 5s per row (slightly faster as items are smaller, but visually consistent)
+        const shouldScroll = passRows.length > 6;
+        const rowCount = Math.ceil(passRows.length / 2);
+        const duration = Math.max(18, rowCount * 6);
+        const renderPassItems = rows => rows.map(item => `
+            <div class="pass-item">
+                <span class="pass-check">✓</span>
+                <span class="pass-text">
+                    <strong title="${escapeHTML(translated(item.metric_label))}">${escapeHTML(translated(item.metric_label || '-'))}</strong>
+                    <span>${escapeHTML(translated(item.cat_name || '-'))} · ${escapeHTML(tr('actual'))} ${escapeHTML(item.raw_val ?? item.num_val ?? '-')} · ${escapeHTML(tr('target'))} ${escapeHTML(item.target_val || '-')}</span>
+                </span>
+            </div>
+        `).join('');
         $('metricList').innerHTML = `
-            <div class="pass-track" style="${passRows.length > 6 ? `animation: passScroll ${duration}s linear infinite;` : 'animation:none;'}">
-                ${loopRows.map(item => `
-                    <div class="pass-item">
-                        <span class="pass-check">✓</span>
-                        <span class="pass-text">
-                            <strong title="${escapeHTML(item.metric_label)}">${escapeHTML(item.metric_label || '-')}</strong>
-                            <span>${escapeHTML(item.cat_name || '-')} · 实测 ${escapeHTML(item.raw_val ?? item.num_val ?? '-')} · 目标 ${escapeHTML(item.target_val || '-')}</span>
-                        </span>
-                    </div>
-                `).join('')}
+            <div class="pass-track" style="${shouldScroll ? `--pass-scroll-duration: ${duration}s;` : ''}">
+                <div class="pass-page">${renderPassItems(passRows)}</div>
+                ${shouldScroll ? `<div class="pass-page" aria-hidden="true">${renderPassItems(passRows)}</div>` : ''}
             </div>
         `;
+        restartAutoScroll('metricList', '.pass-track', shouldScroll);
+    }
+
+    function restartAutoScroll(containerId, trackSelector, shouldScroll) {
+        const container = $(containerId);
+        const track = container ? container.querySelector(trackSelector) : null;
+        if (!track) return;
+        track.classList.remove('is-scrolling');
+        if (!shouldScroll) return;
+        window.requestAnimationFrame(() => {
+            // Force a layout read so the animation starts after the panel height is stable.
+            void track.offsetHeight;
+            window.requestAnimationFrame(() => {
+                track.classList.add('is-scrolling');
+            });
+        });
     }
 
     function getOwnerOptions() {
@@ -749,14 +1210,14 @@
         const catsList = cats.filter(c => c !== '整体' && c !== '全局');
         if (catSelect) {
             catSelect.innerHTML = [
-                '<option value="整体">整体 / 全局</option>',
-                ...catsList.map(cat => `<option value="${escapeHTML(cat)}">${escapeHTML(cat)}</option>`)
+                `<option value="整体">${escapeHTML(tr('ownerGlobal'))}</option>`,
+                ...catsList.map(cat => `<option value="${escapeHTML(cat)}">${escapeHTML(translated(cat))}</option>`)
             ].join('');
         }
         if (metricSelect) {
             metricSelect.innerHTML = [
-                '<option value="">客户群默认</option>',
-                ...metricLabels.map(label => `<option value="${escapeHTML(label)}">${escapeHTML(label)}</option>`)
+                `<option value="">${escapeHTML(tr('ownerDefault'))}</option>`,
+                ...metricLabels.map(label => `<option value="${escapeHTML(label)}">${escapeHTML(translated(label))}</option>`)
             ].join('');
         }
     }
@@ -765,19 +1226,19 @@
         const tbody = $('ownerRows');
         if (!tbody) return;
         if (!state.ownerDraft.length) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#8ea8c5;padding:22px;">暂无责任人配置</td></tr>';
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#8ea8c5;padding:22px;">${escapeHTML(tr('noOwners'))}</td></tr>`;
             return;
         }
         tbody.innerHTML = state.ownerDraft.map((item, index) => `
             <tr>
                 <td>${avatarMarkup(item, 'owner-mini-avatar')}</td>
-                <td>${escapeHTML(item.cat_name)}</td>
-                <td>${escapeHTML(item.metric_label || '客户群默认')}</td>
+                <td>${escapeHTML(translated(item.cat_name))}</td>
+                <td>${escapeHTML(item.metric_label ? translated(item.metric_label) : tr('ownerDefault'))}</td>
                 <td>${escapeHTML(item.owner_name)}</td>
                 <td>${escapeHTML(item.emp_id || '-')}</td>
                 <td>
-                    <span class="owner-edit" onclick="BigscreenOwners.edit(${index})" style="color:var(--cyan);cursor:pointer;margin-right:8px;">编辑</span>
-                    <span class="owner-delete" onclick="BigscreenOwners.remove(${index})">删除</span>
+                    <span class="owner-edit" onclick="BigscreenOwners.edit(${index})" style="color:var(--cyan);cursor:pointer;margin-right:8px;">${escapeHTML(tr('edit'))}</span>
+                    <span class="owner-delete" onclick="BigscreenOwners.remove(${index})">${escapeHTML(tr('delete'))}</span>
                 </td>
             </tr>
         `).join('');
@@ -789,14 +1250,14 @@
         const preview = $('ownerAvatarPreview');
         const label = $('ownerAvatarLabel');
         if (input) input.value = '';
-        if (preview) preview.innerHTML = '图';
-        if (label) label.textContent = '上传头像图片';
+        if (preview) preview.innerHTML = tr('avatarPlaceholder');
+        if (label) label.textContent = tr('uploadAvatar');
     }
 
     function resizeAvatarFile(file) {
         return new Promise((resolve, reject) => {
             if (!file || !file.type || !file.type.startsWith('image/')) {
-                reject(new Error('请选择图片文件'));
+                reject(new Error(tr('chooseImage')));
                 return;
             }
             const reader = new FileReader();
@@ -815,10 +1276,10 @@
                     ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
                     resolve(canvas.toDataURL('image/png'));
                 };
-                img.onerror = () => reject(new Error('头像图片读取失败'));
+                img.onerror = () => reject(new Error(tr('avatarReadFail')));
                 img.src = reader.result;
             };
-            reader.onerror = () => reject(new Error('头像图片读取失败'));
+            reader.onerror = () => reject(new Error(tr('avatarReadFail')));
             reader.readAsDataURL(file);
         });
     }
@@ -847,7 +1308,7 @@
     function openOwnerModal() {
         state.ownerDraft = (state.owners || []).map(item => ({ ...item }));
         editingOwnerIndex = -1;
-        if ($('btnAddOwner')) $('btnAddOwner').textContent = '添加';
+        if ($('btnAddOwner')) $('btnAddOwner').textContent = tr('addBtn');
         resetOwnerAvatarPicker();
         renderOwnerOptions();
         renderOwnerRows();
@@ -876,11 +1337,11 @@
         if (item.avatar) {
             state.pendingOwnerAvatar = item.avatar;
             if ($('ownerAvatarPreview')) $('ownerAvatarPreview').innerHTML = `<img src="${escapeHTML(item.avatar)}" alt="">`;
-            if ($('ownerAvatarLabel')) $('ownerAvatarLabel').textContent = '已选择头像';
+            if ($('ownerAvatarLabel')) $('ownerAvatarLabel').textContent = tr('avatarSelected');
         } else {
             resetOwnerAvatarPicker();
         }
-        if ($('btnAddOwner')) $('btnAddOwner').textContent = '更新并保存';
+        if ($('btnAddOwner')) $('btnAddOwner').textContent = tr('updateSave');
     }
 
     function addOwnerDraft() {
@@ -890,7 +1351,7 @@
         const empId = $('ownerEmpIdInput') ? $('ownerEmpIdInput').value.trim() : '';
         const avatar = state.pendingOwnerAvatar || '';
         if (!cat || !name) {
-            if (window.showToast) window.showToast('请先选择客户群并填写责任人名字', 'error');
+            if (window.showToast) window.showToast(tr('ownerRequired'), 'error');
             return;
         }
         const next = { cat_name: cat, metric_label: metric, owner_name: name, emp_id: empId, avatar };
@@ -898,7 +1359,7 @@
         if (editingOwnerIndex >= 0) {
             state.ownerDraft[editingOwnerIndex] = next;
             editingOwnerIndex = -1;
-            if ($('btnAddOwner')) $('btnAddOwner').textContent = '添加';
+            if ($('btnAddOwner')) $('btnAddOwner').textContent = tr('addBtn');
         } else {
             const idx = state.ownerDraft.findIndex(item => item.cat_name === cat && (item.metric_label || '') === metric);
             if (idx >= 0) state.ownerDraft[idx] = next;
@@ -922,10 +1383,10 @@
             state.owners = state.ownerDraft.map(item => ({ ...item }));
             closeOwnerModal();
             renderWeakList();
-            if (window.showToast) window.showToast(`责任人配置已保存，共 ${state.ownerDraft.length} 条`);
+            if (window.showToast) window.showToast(tr('ownerSaved', { count: state.ownerDraft.length }));
         } catch (error) {
             console.error('[bigscreen] save owners failed:', error);
-            if (window.showToast) window.showToast(`保存失败: ${error.message}`, 'error');
+            if (window.showToast) window.showToast(tr('saveFailed', { message: error.message }), 'error');
         }
     }
 
@@ -950,7 +1411,7 @@
             legend: {
                 top: 6,
                 textStyle: { color: chartTextColor() },
-                data: ['未达标项', '达标率']
+                data: [tr('failingItems'), tr('passRate')]
             },
             grid: { left: 42, right: 54, top: 54, bottom: 34 },
             xAxis: {
@@ -978,7 +1439,7 @@
             ],
             series: [
                 {
-                    name: '未达标项',
+                    name: tr('failingItems'),
                     type: 'bar',
                     yAxisIndex: 1,
                     data: failing,
@@ -986,7 +1447,7 @@
                     itemStyle: { color: 'rgba(255,93,115,0.8)' }
                 },
                 {
-                    name: '达标率',
+                    name: tr('passRate'),
                     type: 'line',
                     smooth: true,
                     data: rates,
@@ -1034,10 +1495,14 @@
     function renderRiskChart() {
         const dom = $('riskChart');
         if (!dom || !window.echarts) return;
+        if (state.charts.risk && state.charts.risk.getDom && state.charts.risk.getDom() !== dom) {
+            state.charts.risk.dispose();
+            state.charts.risk = null;
+        }
         if (!state.charts.risk) state.charts.risk = echarts.init(dom);
         const failingByCat = groupFailingCustomers();
         const data = failingByCat.slice(0, 7).map(item => ({
-            name: item.cat,
+            name: translated(item.cat),
             value: item.count
         }));
 
@@ -1060,13 +1525,13 @@
                 },
                 label: {
                     show: true,
-                    formatter: '{b}\n{c}项',
+                    formatter: params => `${params.name}\n${params.value}${tr('itemUnit')}`,
                     color: '#9fb9d4',
                     fontSize: 11,
                     lineHeight: 14
                 },
                 labelLine: { length: 8, length2: 8, lineStyle: { color: '#4a5b7d' } },
-                data: data.length ? data : [{ name: '无风险', value: 0 }]
+                data: data.length ? data : [{ name: tr('noRisk'), value: 0 }]
             }],
             color: ['#ff5d73', '#ff8fa0', '#f59e0b', '#fbbf24', '#38bdf8', '#7dd3fc', '#818cf8']
         };
@@ -1085,18 +1550,22 @@
 
         let dateStr = '';
         if (currTrend && currTrend.date && prevTrend && prevTrend.date) {
-            dateStr = `(区间: ${prevTrend.date} 至 ${currTrend.date})`;
+            dateStr = `(${tr('period', { start: prevTrend.date, end: currTrend.date })})`;
         } else if (prevTrend && prevTrend.date) {
-            dateStr = `(上次采集: ${prevTrend.date})`;
+            dateStr = `(${tr('previousCapture', { date: prevTrend.date })})`;
         } else if (currTrend && currTrend.date) {
-            dateStr = `(本次采集: ${currTrend.date})`;
+            dateStr = `(${tr('currentCapture', { date: currTrend.date })})`;
         }
 
         const metrics = Array.isArray(latest.metrics) ? latest.metrics : [];
         const failing = metrics.filter(item => Number(item.is_failing) === 1);
 
         if (!failing.length) {
-            carousel.innerHTML = '<div class="empty">当前无未达标指标</div>';
+            if (state.charts.risk) {
+                state.charts.risk.dispose();
+                state.charts.risk = null;
+            }
+            carousel.innerHTML = `<div class="empty">${escapeHTML(tr('noFailingCarousel'))}</div>`;
             return;
         }
 
@@ -1124,7 +1593,7 @@
 
         const firstSlide = `
             <div class="carousel-slide active" data-index="0">
-                <div class="carousel-metric-name">短板集中度 (按客户群)</div>
+                <div class="carousel-metric-name">${escapeHTML(tr('concentrationByCustomer'))}</div>
                 <div id="riskChart" class="chart" style="flex:1;"></div>
             </div>
         `;
@@ -1165,10 +1634,10 @@
                             <div style="display:flex; flex-direction:column; gap:6px; ${isSingle ? 'flex:1; overflow:hidden;' : ''}">
                                 <div class="carousel-metric-name" style="display:flex; justify-content:space-between; align-items:flex-end; flex-shrink:0;">
                                     <div>
-                                        ${escapeHTML(group.label)} 
+                                        ${escapeHTML(translated(group.label))} 
                                         <span style="font-size:12px;color:#9fb9d4;font-weight:normal;margin-left:6px;">${escapeHTML(dateStr)}</span>
                                     </div>
-                                    <div style="font-size:12px;color:#9fb9d4;font-weight:normal;padding-right:4px;">变化量</div>
+                                    <div style="font-size:12px;color:#9fb9d4;font-weight:normal;padding-right:4px;">${escapeHTML(tr('change'))}</div>
                                 </div>
                                 <div class="carousel-metric-details" style="${isSingle ? '' : 'flex:none; overflow-y:visible;'}">
                                     ${sortedRows.map(row => {
@@ -1191,9 +1660,9 @@
 
                     return `
                                             <div class="carousel-cat-row ${isZero ? 'zero-alert' : ''}">
-                                                <div class="carousel-cat-name" title="${escapeHTML(row.cat_name)}">${escapeHTML(row.cat_name)}</div>
+                                                <div class="carousel-cat-name" title="${escapeHTML(translated(row.cat_name))}">${escapeHTML(translated(row.cat_name))}</div>
                                                 <div class="carousel-cat-vals">
-                                                    目标: ${escapeHTML(row.target_val)} | 当前: <strong class="${isZero ? 'text-red' : ''}">${escapeHTML(row.raw_val ?? row.num_val)}</strong>
+                                                    ${escapeHTML(tr('target'))}: ${escapeHTML(row.target_val)} | ${escapeHTML(tr('current'))}: <strong class="${isZero ? 'text-red' : ''}">${escapeHTML(row.raw_val ?? row.num_val)}</strong>
                                                 </div>
                                                 <div>${diffHtml}</div>
                                             </div>
@@ -1207,20 +1676,30 @@
             `;
         }).join('');
 
+        if (state.charts.risk) {
+            state.charts.risk.dispose();
+            state.charts.risk = null;
+        }
         carousel.innerHTML = firstSlide + slidesHtml;
-        renderRiskChart();
+        window.requestAnimationFrame(() => {
+            renderRiskChart();
+        });
         startMetricsCarousel(slidesData.length + 1);
     }
 
     function renderSourceStrip() {
         const trendMeta = window.API.getLastDataSourceMeta(state.monthlyPath) || window.API.getLastDataSourceMeta('/api/db/monthly_report_data') || {};
         const snapshotsMeta = window.API.getLastDataSourceMeta('/api/db/snapshots') || {};
-        const now = new Date().toLocaleString('zh-CN', { hour12: false });
+        const refreshTime = state.lastSuccessfulRefreshAt || new Date();
+        const now = refreshTime.toLocaleString('zh-CN', { hour12: false });
+        const status = state.refreshStatusKey ? tr(state.refreshStatusKey) : (state.refreshStatus || tr('statusSynced'));
+        const statusClass = status.includes('失败') || status.includes('failed') ? 'warn' : (status.includes('更新') || status.includes('updated') ? 'good' : '');
         $('sourceStrip').innerHTML = `
-            <span>趋势来源: ${escapeHTML(trendMeta.primary || '-')}</span>
-            <span>快照来源: ${escapeHTML(snapshotsMeta.primary || '-')}</span>
-            <span>最新刷新: ${escapeHTML(now)}</span>
-            <span>数据口径: 月报趋势 + 报表看板入库快照</span>
+            <span>${escapeHTML(tr('trendSource'))}: ${escapeHTML(sourceLabel(trendMeta.primary))}</span>
+            <span>${escapeHTML(tr('snapshotSource'))}: ${escapeHTML(sourceLabel(snapshotsMeta.primary))}</span>
+            <span>${escapeHTML(tr('latestRefresh'))}: ${escapeHTML(now)}</span>
+            <span class="refresh-status ${statusClass}">${escapeHTML(status)}</span>
+            <span>${escapeHTML(tr('dataScope'))}</span>
         `;
     }
 
@@ -1228,14 +1707,14 @@
         const trends = state.trends || [];
         const latest = state.latest || {};
         if (!trends.length) {
-            $('bigscreenSubtitle').textContent = '当前筛选范围内暂无入库数据。';
-            $('bigscreenStatus').textContent = 'NO DATA';
+            $('bigscreenSubtitle').textContent = tr('noDataSubtitle');
+            $('bigscreenStatus').textContent = tr('sourceRefreshNoData');
             return;
         }
         const start = trends[0].date;
         const end = trends[trends.length - 1].date;
-        $('bigscreenSubtitle').textContent = `分析周期 ${start} 至 ${end}，最新快照 ${latest.snapshot_id || '-'}，目标月份 ${latest.month || '-'}`;
-        $('bigscreenStatus').textContent = 'REPORT.DB LIVE';
+        $('bigscreenSubtitle').textContent = tr('subtitle', { start, end, snapshot: latest.snapshot_id || '-', month: latest.month || '-' });
+        $('bigscreenStatus').textContent = tr('sourceRefreshStatus');
     }
 
     function renderEmptyPage(message) {
@@ -1248,9 +1727,92 @@
         renderSourceStrip();
     }
 
+    function applySnapshotExtras(latest) {
+        if (!latest || !latest.raw_data_json) return [];
+        const metricOrder = [];
+        try {
+            const raw = typeof latest.raw_data_json === 'string'
+                ? JSON.parse(latest.raw_data_json)
+                : latest.raw_data_json;
+
+            if (raw && Array.isArray(raw.specialMetricAlerts)) {
+                if (!latest.metrics) latest.metrics = [];
+                raw.specialMetricAlerts.forEach(alert => {
+                    const label = alert.metric_label || alert.metricLabel;
+                    const exists = latest.metrics.some(m => m.metric_label === label && m.cat_name === '整体');
+                    if (!exists) {
+                        latest.metrics.push({
+                            cat_name: '整体',
+                            metric_label: label,
+                            target_val: alert.target_val || alert.targetValue || '-',
+                            raw_val: alert.global_val || alert.globalValue || '-',
+                            num_val: parseFloat(alert.global_val || alert.globalValue) || 0,
+                            is_failing: 1,
+                            is_special_alert: true
+                        });
+                    }
+                });
+            }
+
+            if (Array.isArray(latest.metrics)) {
+                latest.metrics.forEach(m => {
+                    if (m.is_special_alert) return;
+                    const lbl = m.metric_label || '未命名指标';
+                    if (!metricOrder.includes(lbl)) metricOrder.push(lbl);
+                });
+
+                if (raw && Array.isArray(raw.topMetrics)) {
+                    const topOrder = raw.topMetrics.map(m => m.label || m.metricLabel);
+                    const specialLabels = [...new Set(latest.metrics.filter(m => m.is_special_alert).map(m => m.metric_label || '未命名指标'))];
+
+                    specialLabels.forEach(lbl => {
+                        const topIdx = topOrder.indexOf(lbl);
+                        if (topIdx >= 0) {
+                            let insertAfterIdx = -1;
+                            for (let i = topIdx - 1; i >= 0; i--) {
+                                const prevLbl = topOrder[i];
+                                const prevInUnique = metricOrder.indexOf(prevLbl);
+                                if (prevInUnique >= 0) {
+                                    insertAfterIdx = prevInUnique;
+                                    break;
+                                }
+                            }
+                            metricOrder.splice(insertAfterIdx + 1, 0, lbl);
+                        } else {
+                            metricOrder.push(lbl);
+                        }
+                    });
+                } else {
+                    const specialLabels = [...new Set(latest.metrics.filter(m => m.is_special_alert).map(m => m.metric_label || '未命名指标'))];
+                    metricOrder.push(...specialLabels);
+                }
+            }
+        } catch (e) {
+            console.warn('[bigscreen] parse special metrics failed:', e);
+        }
+        return metricOrder;
+    }
+
+    function makeRefreshSignature(payload) {
+        try {
+            return JSON.stringify(payload);
+        } catch (e) {
+            return `${Date.now()}`;
+        }
+    }
+
+    function updateI18nMapFromConfig(config) {
+        const loaded = config && config.prefs && config.prefs.i18nMap;
+        const clean = {};
+        Object.entries(loaded || {}).forEach(([key, value]) => {
+            clean[key] = cleanI18nValue(value);
+        });
+        state.i18nMap = clean;
+    }
+
     function renderAll() {
         if (!state.trends.length || !state.latest) {
-            renderEmptyPage('暂无可展示数据，请先在报表看板完成入库。');
+            renderEmptyPage(tr('noReportData'));
             return;
         }
         renderSubtitle();
@@ -1264,8 +1826,12 @@
         renderSourceStrip();
     }
 
-    async function loadBigscreenData() {
-        setLoading(true);
+    async function loadBigscreenData(options = {}) {
+        const silent = Boolean(options.silent);
+        const source = options.source || (silent ? 'auto' : 'manual');
+        if (state.isRefreshing) return;
+        state.isRefreshing = true;
+        if (!silent) setLoading(true);
         try {
             const range = getCurrentRange();
             state.monthlyPath = `/api/db/monthly_report_data${range.query}`;
@@ -1280,87 +1846,56 @@
                 }),
                 window.API.get('/api/sla/config').catch(() => ({}))
             ]);
-            state.globalConfig = globalConfig || {};
-            state.trends = Array.isArray(monthlyData && monthlyData.trends) ? monthlyData.trends : [];
-            state.latest = monthlyData ? monthlyData.latest_snapshot : null;
 
-            if (state.latest && state.latest.raw_data_json) {
-                try {
-                    const raw = typeof state.latest.raw_data_json === 'string'
-                        ? JSON.parse(state.latest.raw_data_json)
-                        : state.latest.raw_data_json;
+            const nextLatest = monthlyData ? monthlyData.latest_snapshot : null;
+            const nextMetricOrder = applySnapshotExtras(nextLatest);
+            const nextTrends = Array.isArray(monthlyData && monthlyData.trends) ? monthlyData.trends : [];
+            const nextSnapshots = Array.isArray(snapshots) ? snapshots : [];
+            const nextOwners = Array.isArray(owners) ? owners : [];
+            const nextGlobalConfig = globalConfig || {};
+            updateI18nMapFromConfig(nextGlobalConfig);
+            const nextSignature = makeRefreshSignature({
+                trends: nextTrends,
+                latest: nextLatest,
+                snapshots: nextSnapshots,
+                owners: nextOwners,
+                globalConfig: nextGlobalConfig
+            });
+            const hasRenderedData = Boolean(state.lastRefreshSignature);
+            const unchanged = hasRenderedData && nextSignature === state.lastRefreshSignature;
 
-                    if (raw && Array.isArray(raw.specialMetricAlerts)) {
-                        if (!state.latest.metrics) state.latest.metrics = [];
-                        raw.specialMetricAlerts.forEach(alert => {
-                            const label = alert.metric_label || alert.metricLabel;
-                            const exists = state.latest.metrics.some(m => m.metric_label === label && m.cat_name === '整体');
-                            if (!exists) {
-                                state.latest.metrics.push({
-                                    cat_name: '整体',
-                                    metric_label: label,
-                                    target_val: alert.target_val || alert.targetValue || '-',
-                                    raw_val: alert.global_val || alert.globalValue || '-',
-                                    num_val: parseFloat(alert.global_val || alert.globalValue) || 0,
-                                    is_failing: 1,
-                                    is_special_alert: true
-                                });
-                            }
-                        });
-                    }
-
-                    // Extract order from the original DB returned metrics list (which reflects report dashboard order)
-                    if (state.latest && Array.isArray(state.latest.metrics)) {
-                        const uniqueOrder = [];
-                        state.latest.metrics.forEach(m => {
-                            if (m.is_special_alert) return; // Skip special alerts for the first pass
-                            const lbl = m.metric_label || '未命名指标';
-                            if (!uniqueOrder.includes(lbl)) uniqueOrder.push(lbl);
-                        });
-
-                        // Weave special alerts into the correct relative position using topMetrics as a guide
-                        if (raw && Array.isArray(raw.topMetrics)) {
-                            const topOrder = raw.topMetrics.map(m => m.label || m.metricLabel);
-                            const specialLabels = [...new Set(state.latest.metrics.filter(m => m.is_special_alert).map(m => m.metric_label || '未命名指标'))];
-
-                            specialLabels.forEach(lbl => {
-                                const topIdx = topOrder.indexOf(lbl);
-                                if (topIdx >= 0) {
-                                    let insertAfterIdx = -1;
-                                    for (let i = topIdx - 1; i >= 0; i--) {
-                                        const prevLbl = topOrder[i];
-                                        const prevInUnique = uniqueOrder.indexOf(prevLbl);
-                                        if (prevInUnique >= 0) {
-                                            insertAfterIdx = prevInUnique;
-                                            break;
-                                        }
-                                    }
-                                    uniqueOrder.splice(insertAfterIdx + 1, 0, lbl);
-                                } else {
-                                    uniqueOrder.push(lbl);
-                                }
-                            });
-                        } else {
-                            const specialLabels = [...new Set(state.latest.metrics.filter(m => m.is_special_alert).map(m => m.metric_label || '未命名指标'))];
-                            uniqueOrder.push(...specialLabels);
-                        }
-
-                        state.metricOrder = uniqueOrder;
-                    }
-                } catch (e) {
-                    console.warn('[bigscreen] parse special metrics failed:', e);
-                }
+            state.lastSuccessfulRefreshAt = new Date();
+            if (unchanged) {
+                state.refreshStatusKey = source === 'auto' ? 'statusAutoNoChange' : 'statusManualNoChange';
+                state.refreshStatus = '';
+                renderSourceStrip();
+                return;
             }
 
-            state.snapshots = Array.isArray(snapshots) ? snapshots : [];
-            state.owners = Array.isArray(owners) ? owners : [];
+            state.globalConfig = nextGlobalConfig;
+            state.trends = nextTrends;
+            state.latest = nextLatest;
+            state.metricOrder = nextMetricOrder;
+            state.snapshots = nextSnapshots;
+            state.owners = nextOwners;
+            state.lastRefreshSignature = nextSignature;
+            state.refreshStatusKey = hasRenderedData ? 'statusUpdated' : 'statusLoaded';
+            state.refreshStatus = '';
             renderAll();
         } catch (error) {
             console.error('[bigscreen] load failed:', error);
-            if (window.showToast) window.showToast(`大屏数据加载失败: ${error.message}`, 'error');
-            renderEmptyPage(`加载失败: ${error.message}`);
+            const hasRenderedData = Boolean(state.lastRefreshSignature);
+            state.refreshStatusKey = hasRenderedData ? 'statusFailedKeep' : '';
+            state.refreshStatus = hasRenderedData ? '' : tr('loadFailedShort', { message: error.message });
+            if (!silent && window.showToast) window.showToast(tr('loadFailed', { message: error.message }), 'error');
+            if (hasRenderedData) {
+                renderSourceStrip();
+            } else {
+                renderEmptyPage(tr('loadFailedShort', { message: error.message }));
+            }
         } finally {
-            setLoading(false);
+            state.isRefreshing = false;
+            if (!silent) setLoading(false);
         }
     }
 
@@ -1371,16 +1906,26 @@
         if (rangeSelect) {
             rangeSelect.addEventListener('change', () => {
                 const custom = rangeSelect.value === 'custom';
-                if (!custom) loadBigscreenData();
+                if (!custom) loadBigscreenData({ source: 'range' });
                 if (startInput) startInput.disabled = !custom;
                 if (endInput) endInput.disabled = !custom;
             });
         }
         if (startInput) startInput.disabled = true;
         if (endInput) endInput.disabled = true;
-        if ($('refreshBtn')) $('refreshBtn').addEventListener('click', loadBigscreenData);
+        if ($('refreshBtn')) $('refreshBtn').addEventListener('click', () => loadBigscreenData({ source: 'manual' }));
         if ($('ownerConfigBtn')) $('ownerConfigBtn').addEventListener('click', openOwnerModal);
         if ($('ownerAvatarInput')) $('ownerAvatarInput').addEventListener('change', handleOwnerAvatarChange);
+        document.addEventListener('fullscreenchange', syncFullscreenButton);
+        syncFullscreenButton();
+        window.addEventListener('tools:languagechange', () => {
+            applyStaticI18n();
+            renderScriptVersion();
+            if (state.trends.length && state.latest) renderAll();
+            else renderSubtitle();
+            renderOwnerOptions();
+            renderOwnerRows();
+        });
         window.addEventListener('resize', () => {
             Object.values(state.charts).forEach(chart => chart && chart.resize && chart.resize());
         });
@@ -1395,48 +1940,101 @@
         close: closeOwnerModal
     };
 
-    window.editContactInfo = async function () {
-        const dom = $('contactInfoText');
-        const currentText = dom ? dom.textContent : '';
-        const newText = prompt('配置联系方式信息：', currentText);
-
-        if (newText !== null) {
-            const val = newText.trim() || '如果对看板数据有疑问或者建议，请联系xxxx';
-            if (dom) dom.textContent = val;
-
-            try {
-                await window.API.post('/api/db/config/bigscreen_contact_info', { text: val });
-                if (window.showToast) window.showToast('联系信息已保存');
-            } catch (err) {
-                console.error('保存联系信息失败', err);
-                if (window.showToast) window.showToast('保存失败: ' + err.message, 'error');
-            }
+    function openContactModal() {
+        const info = normalizeContactInfo(state.contactInfo);
+        const zhInput = $('contactZhInput');
+        const enInput = $('contactEnInput');
+        if (zhInput) zhInput.value = info.zh;
+        if (enInput) enInput.value = info.en;
+        const modal = $('contactModal');
+        if (modal) {
+            modal.classList.add('open');
+            modal.setAttribute('aria-hidden', 'false');
         }
+        applyStaticI18n();
+        setTimeout(() => {
+            const focusInput = isEn() ? enInput : zhInput;
+            if (focusInput) focusInput.focus();
+        }, 0);
+    }
+
+    function closeContactModal() {
+        const modal = $('contactModal');
+        if (modal) {
+            modal.classList.remove('open');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+    }
+
+    async function saveContactInfo() {
+        const defaults = defaultContactInfo();
+        const zh = String(($('contactZhInput') && $('contactZhInput').value) || '').trim() || defaults.zh;
+        const en = String(($('contactEnInput') && $('contactEnInput').value) || '').trim() || defaults.en;
+        const nextInfo = { zh, en };
+        state.contactInfo = nextInfo;
+        renderContactInfo();
+
+        try {
+            await window.API.post('/api/db/config/bigscreen_contact_info', nextInfo);
+            closeContactModal();
+            if (window.showToast) window.showToast(tr('contactSaved'));
+        } catch (err) {
+            console.error('保存联系信息失败', err);
+            if (window.showToast) window.showToast(tr('contactSaveFail', { message: err.message }), 'error');
+        }
+    }
+
+    window.BigscreenContact = {
+        open: openContactModal,
+        close: closeContactModal,
+        save: saveContactInfo
     };
+
+    window.editContactInfo = function () {
+        openContactModal();
+    };
+
+    function syncFullscreenButton() {
+        const btn = $('fullscreenBtn');
+        const text = $('fullscreenBtnText');
+        const isFullscreen = Boolean(document.fullscreenElement);
+        if (text) text.textContent = isFullscreen ? tr('exitFullscreen') : tr('fullscreen');
+        if (btn) btn.title = isFullscreen ? tr('exitFullscreenTitle') : tr('fullscreenTitle');
+    }
 
     window.toggleFullScreen = function () {
         if (!document.fullscreenElement) {
             document.documentElement.requestFullscreen().catch(err => {
                 console.log(`Error attempting to enable fullscreen: ${err.message}`);
-                if (window.showToast) window.showToast('无法全屏: ' + err.message, 'error');
+                if (window.showToast) window.showToast((isEn() ? 'Unable to enter fullscreen: ' : '无法全屏: ') + err.message, 'error');
+                syncFullscreenButton();
             });
         } else {
             if (document.exitFullscreen) {
-                document.exitFullscreen();
+                document.exitFullscreen().catch(err => {
+                    console.log(`Error attempting to exit fullscreen: ${err.message}`);
+                    if (window.showToast) window.showToast((isEn() ? 'Unable to exit fullscreen: ' : '退出全屏失败: ') + err.message, 'error');
+                });
             }
         }
     };
 
     document.addEventListener('DOMContentLoaded', () => {
         window.API.get('/api/db/config/bigscreen_contact_info').then(res => {
-            if (res && res.text) {
-                const dom = $('contactInfoText');
-                if (dom) dom.textContent = res.text;
-            }
-        }).catch(err => console.error('Failed to load contact info', err));
+            state.contactInfo = normalizeContactInfo(res);
+            renderContactInfo();
+        }).catch(err => {
+            console.error('Failed to load contact info', err);
+            state.contactInfo = defaultContactInfo();
+            renderContactInfo();
+        });
 
         initControls();
-        loadBigscreenData();
-        setInterval(loadBigscreenData, 5 * 60 * 1000);
+        applyStaticI18n();
+        renderScriptVersion();
+        loadBigscreenData({ source: 'initial' });
+        state.refreshTimer = setInterval(() => {
+            loadBigscreenData({ silent: true, source: 'auto' });
+        }, 5 * 60 * 1000);
     });
 })();
