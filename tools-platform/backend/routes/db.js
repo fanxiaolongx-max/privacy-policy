@@ -68,6 +68,16 @@ db.serialize(() => {
         value_json TEXT,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS BigscreenOwners (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        cat_name TEXT NOT NULL,
+        metric_label TEXT DEFAULT '',
+        owner_name TEXT NOT NULL,
+        avatar TEXT DEFAULT '',
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(cat_name, metric_label)
+    )`);
 });
 
 const imagesDir = path.join(dataDir, 'images');
@@ -415,6 +425,68 @@ router.get('/monthly_report_data', (req, res) => {
                             });
                         });
                     });
+                });
+            });
+        });
+    });
+});
+
+router.get('/bigscreen_owners', (req, res) => {
+    db.all(
+        `SELECT id, cat_name, metric_label, owner_name, avatar, updated_at
+         FROM BigscreenOwners
+         ORDER BY cat_name ASC, metric_label ASC`,
+        (err, rows) => {
+            if (err) return res.status(500).json({ error: err.message });
+            markSqliteSource(res, 'GET /api/db/bigscreen_owners');
+            res.json(rows || []);
+        }
+    );
+});
+
+router.post('/bigscreen_owners', (req, res) => {
+    const rows = Array.isArray(req.body && req.body.items) ? req.body.items : [];
+    const normalized = rows
+        .map(item => ({
+            cat_name: String(item.cat_name || '').trim(),
+            metric_label: String(item.metric_label || '').trim(),
+            owner_name: String(item.owner_name || '').trim(),
+            avatar: String(item.avatar || '').trim()
+        }))
+        .filter(item => item.cat_name && item.owner_name);
+
+    db.serialize(() => {
+        db.run('BEGIN TRANSACTION');
+        db.run('DELETE FROM BigscreenOwners', err => {
+            if (err) {
+                db.run('ROLLBACK');
+                return res.status(500).json({ error: err.message });
+            }
+
+            const stmt = db.prepare(
+                `INSERT INTO BigscreenOwners (cat_name, metric_label, owner_name, avatar, updated_at)
+                 VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                 ON CONFLICT(cat_name, metric_label) DO UPDATE SET
+                    owner_name = excluded.owner_name,
+                    avatar = excluded.avatar,
+                    updated_at = CURRENT_TIMESTAMP`
+            );
+
+            for (const item of normalized) {
+                stmt.run([item.cat_name, item.metric_label, item.owner_name, item.avatar]);
+            }
+            stmt.finalize(err => {
+                if (err) {
+                    db.run('ROLLBACK');
+                    return res.status(500).json({ error: err.message });
+                }
+                db.run('COMMIT', err => {
+                    if (err) {
+                        db.run('ROLLBACK');
+                        return res.status(500).json({ error: err.message });
+                    }
+                    markSqliteSource(res, 'POST /api/db/bigscreen_owners');
+                    res.json({ success: true, count: normalized.length });
                 });
             });
         });

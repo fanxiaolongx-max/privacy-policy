@@ -70,7 +70,7 @@
             <div class="config-grid">
                 <div class="form-group">
                     <label>脚本版本号 (@version)</label>
-                    <input type="text" id="cfg-version" value="8.0">
+                    <input type="text" id="cfg-version" value="8.1">
                 </div>
                 <div class="form-group">
                     <label>最小请求间隔 (minDelay, 毫秒)</label>
@@ -133,6 +133,7 @@
     // 全局状态控制
     let isRunning = false;
     let shouldStop = false;
+    let isPanelClosed = false;
     let rawTreeData = [];
 
     // 全局参数动态提取
@@ -237,16 +238,42 @@
 
         // 标题栏（拖拽把手）
         const title = document.createElement('div');
-        title.innerHTML = '🚀 <b>博客爬取 (树状搜索版)</b> <span style="font-size:11px;color:#aaa;">(按住拖动)</span>';
         title.style.cssText = `
             margin-bottom: 10px; font-size: 15px; border-bottom: 1px solid #444; 
             padding-bottom: 8px; cursor: move; flex-shrink: 0; user-select: none;
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
         `;
+
+        const titleText = document.createElement('span');
+        titleText.innerHTML = '🚀 <b>博客爬取 (树状搜索版)</b> <span style="font-size:11px;color:#aaa;">(按住拖动)</span>';
+
+        const closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.innerText = '×';
+        closeBtn.title = '关闭浮窗';
+        closeBtn.style.cssText = `
+            width: 24px; height: 24px; line-height: 20px; padding: 0;
+            border: 1px solid #666; border-radius: 4px; background: #333; color: #fff;
+            cursor: pointer; font-size: 18px; font-weight: bold; flex-shrink: 0;
+        `;
+        closeBtn.onmouseover = () => closeBtn.style.background = '#d9534f';
+        closeBtn.onmouseout = () => closeBtn.style.background = '#333';
+        closeBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            shouldStop = true;
+            isPanelClosed = true;
+            panel.remove();
+        };
+
+        title.appendChild(titleText);
+        title.appendChild(closeBtn);
 
         // 自由拖拽逻辑
         let isDragging = false;
         let startX, startY, initialLeft, initialTop;
         title.addEventListener('mousedown', (e) => {
+            if (e.target === closeBtn) return;
             isDragging = true;
             startX = e.clientX;
             startY = e.clientY;
@@ -333,7 +360,7 @@
 
     function logUI(msg) {
         if (CONFIG.verbose) console.log(msg);
-        if (uiLogBox) {
+        if (!isPanelClosed && uiLogBox) {
             uiLogBox.innerText += `\n${msg}`;
             uiLogBox.scrollTop = uiLogBox.scrollHeight;
         }
@@ -572,6 +599,7 @@
 
     // ==================== 主爬取逻辑 ====================
     async function startScraping() {
+        if (isPanelClosed) return;
         const selectedCheckboxes = Array.from(document.querySelectorAll('.cat-checkbox:checked'));
         if (selectedCheckboxes.length === 0) {
             logUI('⚠️ 至少需要勾选一个目录！');
@@ -597,7 +625,7 @@
         let seenIds = new Set(); 
 
         for (let cIndex = 0; cIndex < targetCategories.length; cIndex++) {
-            if (shouldStop) break;
+            if (shouldStop || isPanelClosed) break;
 
             const currentCat = targetCategories[cIndex];
             logUI(`\n📁 正在处理目录 [${cIndex + 1}/${targetCategories.length}]: ${currentCat.name}`);
@@ -628,7 +656,7 @@
             let fetchedPages = 0;
 
             for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
-                if (shouldStop) break;
+                if (shouldStop || isPanelClosed) break;
                 const batch = batches[batchIndex];
 
                 if (batchIndex > 0) {
@@ -637,7 +665,7 @@
                 }
 
                 for (let i = 0; i < batch.length; i++) {
-                    if (shouldStop) break;
+                    if (shouldStop || isPanelClosed) break;
                     const offset = batch[i];
                     
                     if (i > 0) {
@@ -645,7 +673,7 @@
                         await new Promise(resolve => setTimeout(resolve, pageDelay));
                     }
 
-                    if (shouldStop) break;
+                    if (shouldStop || isPanelClosed) break;
 
                     const blogUrl = buildUrl(`{{API_BLOGS}}${groupId}/blogs`, offset, groupId, moduleId, currentCat.location);
                     
@@ -666,6 +694,8 @@
             }
         }
 
+        if (isPanelClosed) return;
+
         logUI('='.repeat(20));
         
         if (shouldStop) {
@@ -680,7 +710,7 @@
             logUI('⚠️ 未获取到任何有效数据，跳过导出。');
         }
 
-        resetUIState();
+        if (!isPanelClosed) resetUIState();
     }
 
     initUI();
