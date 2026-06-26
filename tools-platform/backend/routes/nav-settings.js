@@ -2,11 +2,11 @@ const express = require('express');
 const router = express.Router();
 const repo = require('../models/nav-settings-repository');
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
     res.json(await repo.getSettings());
 });
 
-router.put('/', (req, res) => {
+router.put('/', async (req, res) => {
     try {
         res.json(await repo.saveSettings(req.body || {}));
     } catch (err) {

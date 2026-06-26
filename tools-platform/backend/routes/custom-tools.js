@@ -3,13 +3,13 @@ const router = express.Router();
 const repo = require('../models/custom-tools-repository');
 const historyRepo = require('../models/upload-history-repository');
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
     res.json(await repo.listTools());
 });
 
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
     try {
-        const tool = repo.createTool(req.body || {});
+        const tool = await repo.createTool(req.body || {});
         historyRepo.addHistory({
             tool: 'custom',
             action: '导入自定义工具',
@@ -21,7 +21,7 @@ router.post('/', (req, res) => {
     }
 });
 
-router.delete('/:slug', (req, res) => {
+router.delete('/:slug', async (req, res) => {
     try {
         const tool = await repo.getTool(req.params.slug);
         const deleted = await repo.deleteTool(req.params.slug);
