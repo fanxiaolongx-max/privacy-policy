@@ -1,7 +1,14 @@
-const fs = require('fs');
-const prefs = JSON.parse(fs.readFileSync('/Volumes/512G/06-工具开发/privacy-policy/tools-platform/backend/data/sla_prefs.json', 'utf8'));
-const categories = JSON.parse(fs.readFileSync('/Volumes/512G/06-工具开发/privacy-policy/tools-platform/backend/data/sla_categories.json', 'utf8'));
+const prefsRepo = require('./models/sla-prefs-repository');
+const categoriesRepo = require('./models/sla-categories-repository');
+const { closeDatabase } = require('./models/app-db');
 
-// orderedMetrics is basically metric map? Wait, sla_prefs doesn't have orderedMetrics.
-// Where are metrics stored?
-console.log(Object.keys(prefs));
+(async () => {
+    const prefs = (await prefsRepo.getPrefsObject()).items;
+    const categories = (await categoriesRepo.listCategories()).items;
+    console.log({ prefKeys: Object.keys(prefs), categories });
+    await closeDatabase();
+})().catch(async err => {
+    console.error(err);
+    try { await closeDatabase(); } catch {}
+    process.exit(1);
+});
