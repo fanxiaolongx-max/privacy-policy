@@ -29,7 +29,7 @@ async function replaceTargetsInDbRaw(items) {
             }
 
             await run(
-                `INSERT INTO sla_targets (
+                `INSERT OR REPLACE INTO sla_targets (
                     target_key, label, target_type, weight, 
                     auto_fill, is_percent, exceed_by, bonus, 
                     extra_config_json, updated_at
