@@ -30,6 +30,7 @@ const navSettingsRoutes = require('./routes/nav-settings');
 const aiSettingsRoutes = require('./routes/ai-settings');
 const globalBackupRoutes = require('./routes/global-backup');
 const remoteBackupSyncRepo = require('./models/remote-backup-sync-repository');
+const legacyJsonMigration = require('./models/legacy-json-migration');
 const { checkAuth, requireAdmin, checkHtmlAuth } = require('./middleware/auth');
 
 const app = express();
@@ -87,6 +88,12 @@ app.use('/api/auth', authRoutes);
 // ============================================================
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', time: new Date().toISOString() });
+});
+
+// 旧 JSON -> SQLite 启动迁移报告。允许未登录访问，便于 Windows 打包版升级后定位数据迁移问题。
+app.get('/api/migration-status', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(legacyJsonMigration.getLastMigrationReport());
 });
 
 // 开放静态图片访问，跳过 JWT 鉴权 (浏览器 <img> 标签不带 Auth header)
@@ -173,15 +180,19 @@ app.get('/tools/:slug', checkHtmlAuth, (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/pages/custom-tool.html'));
 });
 app.use('/custom-tools', checkHtmlAuth);
-app.get('/custom-tools/:slug/index.html', (req, res) => {
-    const tool = customToolsRepo.getTool(req.params.slug);
-    const filePath = customToolsRepo.getToolFilePath(req.params.slug);
-    if (!tool || !filePath) return res.status(404).send('Custom tool not found');
-    if (req.query.download === '1') {
-        const filename = `${String(tool.name || tool.slug).replace(/[\\/:*?"<>|]+/g, '_')}.html`;
-        return res.download(filePath, filename);
+app.get('/custom-tools/:slug/index.html', async (req, res, next) => {
+    try {
+        const tool = await customToolsRepo.getTool(req.params.slug);
+        const filePath = await customToolsRepo.getToolFilePath(req.params.slug);
+        if (!tool || !filePath) return res.status(404).send('Custom tool not found');
+        if (req.query.download === '1') {
+            const filename = `${String(tool.name || tool.slug).replace(/[\\/:*?"<>|]+/g, '_')}.html`;
+            return res.download(filePath, filename);
+        }
+        res.sendFile(filePath);
+    } catch (err) {
+        next(err);
     }
-    res.sendFile(filePath);
 });
 app.use('/custom-tools', express.static(customToolsRepo.CUSTOM_TOOLS_DIR));
 
@@ -192,26 +203,35 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: err.message || '服务器内部错误' });
 });
 
-const server = app.listen(PORT, () => {
-    console.log(`\n✅ Tools Platform 已启动`);
-    console.log(`   🌐 访问地址: http://localhost:${PORT}`);
-    console.log(`   📦 UIVF12:   http://localhost:${PORT}/uivf12`);
-    console.log(`   📊 SLA:      http://localhost:${PORT}/sla\n`);
-    setTimeout(() => {
-        remoteBackupSyncRepo.runStartupRemoteSync();
-    }, 1200);
-});
+async function startServer() {
+    await legacyJsonMigration.runStartupLegacyJsonMigration();
 
-server.on('error', (err) => {
-    if (err.code === 'EADDRINUSE') {
-        console.error(`\n❌ 启动失败：端口 ${PORT} 已被占用。`);
-        console.error(`   解决方式：关闭占用该端口的程序，或使用其他端口启动：`);
-        console.error(`   Windows PowerShell: $env:PORT=3031; npm start`);
-        console.error(`   macOS/Linux: PORT=3031 npm start\n`);
-    } else if (err.code === 'EACCES') {
-        console.error(`\n❌ 启动失败：没有权限监听端口 ${PORT}。请换用 1024 以上端口，或检查系统权限。\n`);
-    } else {
-        console.error('\n❌ 启动失败：', err);
-    }
+    const server = app.listen(PORT, () => {
+        console.log(`\n✅ Tools Platform 已启动`);
+        console.log(`   🌐 访问地址: http://localhost:${PORT}`);
+        console.log(`   📦 UIVF12:   http://localhost:${PORT}/uivf12`);
+        console.log(`   📊 SLA:      http://localhost:${PORT}/sla\n`);
+        setTimeout(() => {
+            remoteBackupSyncRepo.runStartupRemoteSync();
+        }, 1200);
+    });
+
+    server.on('error', (err) => {
+        if (err.code === 'EADDRINUSE') {
+            console.error(`\n❌ 启动失败：端口 ${PORT} 已被占用。`);
+            console.error(`   解决方式：关闭占用该端口的程序，或使用其他端口启动：`);
+            console.error(`   Windows PowerShell: $env:PORT=3031; npm start`);
+            console.error(`   macOS/Linux: PORT=3031 npm start\n`);
+        } else if (err.code === 'EACCES') {
+            console.error(`\n❌ 启动失败：没有权限监听端口 ${PORT}。请换用 1024 以上端口，或检查系统权限。\n`);
+        } else {
+            console.error('\n❌ 启动失败：', err);
+        }
+        process.exit(1);
+    });
+}
+
+startServer().catch(err => {
+    console.error('\n❌ 启动失败：旧 JSON 自动迁移失败：', err);
     process.exit(1);
 });

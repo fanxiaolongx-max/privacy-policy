@@ -196,10 +196,10 @@ const API = {
     getSourceMode: function(scope = 'default') {
         const map = readSourceModeMap();
         const mode = map[scope];
-        return ['auto', 'json', 'sqlite'].includes(mode) ? mode : 'auto';
+        return ['auto', 'sqlite'].includes(mode) ? mode : 'auto';
     },
     setSourceMode: function(scope = 'default', mode = 'auto') {
-        const normalized = ['auto', 'json', 'sqlite'].includes(mode) ? mode : 'auto';
+        const normalized = ['auto', 'sqlite'].includes(mode) ? mode : 'auto';
         const map = readSourceModeMap();
         map[scope] = normalized;
         writeSourceModeMap(map);

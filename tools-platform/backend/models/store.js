@@ -9,4 +9,20 @@ function ensureDataDir() {
     }
 }
 
-module.exports = { ensureDataDir, DATA_DIR };
+function readJSON(filename, fallback) {
+    ensureDataDir();
+    const filePath = path.isAbsolute(filename) ? filename : path.join(DATA_DIR, filename);
+    try {
+        if (!fs.existsSync(filePath)) return fallback;
+        return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    } catch (err) {
+        console.error(`[store] Failed to read JSON ${filename}:`, err.message);
+        return fallback;
+    }
+}
+
+module.exports = {
+    ensureDataDir,
+    DATA_DIR,
+    readJSON
+};

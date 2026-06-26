@@ -39,7 +39,7 @@ async function saveRegistry(items) {
 }
 
 async function getTool(slug) {
-    return listTools().find(item => item.slug === slug) || null;
+    return (await listTools()).find(item => item.slug === slug) || null;
 }
 
 function saveToolFile(slug, htmlContent) {
@@ -63,7 +63,7 @@ async function createTool(payload) {
         throw err;
     }
 
-    const tools = listTools();
+    const tools = await listTools();
     const existingSlugs = new Set(tools.map(item => item.slug));
     const slug = createSlug(payload.slug || name, existingSlugs);
     const now = new Date().toISOString();
@@ -81,15 +81,15 @@ async function createTool(payload) {
 
     saveToolFile(slug, htmlContent);
     tools.push(tool);
-    saveRegistry(tools);
+    await saveRegistry(tools);
     return tool;
 }
 
 async function deleteTool(slug) {
-    const tools = listTools();
+    const tools = await listTools();
     const next = tools.filter(item => item.slug !== slug);
     if (next.length === tools.length) return false;
-    saveRegistry(next);
+    await saveRegistry(next);
     fs.rmSync(path.join(CUSTOM_TOOLS_DIR, slug), { recursive: true, force: true });
     return true;
 }

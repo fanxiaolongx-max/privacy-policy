@@ -73,52 +73,52 @@ async function main() {
     const comparisons = [
         {
             name: 'upload_history',
-            getJson: async () => (await uploadHistoryRepo.listHistory({ mode: 'json', limit: 1000 })).items,
+            getJson: async () => readJSON('upload_history.json', []),
             getSqlite: async () => (await uploadHistoryRepo.listHistory({ mode: 'sqlite', limit: 1000 })).items
         },
         {
             name: 'uiv_categories',
-            getJson: async () => (await uivCategoriesRepo.listCategories({ mode: 'json' })).items,
+            getJson: async () => readJSON('uiv_categories.json', []),
             getSqlite: async () => (await uivCategoriesRepo.listCategories({ mode: 'sqlite' })).items
         },
         {
             name: 'uiv_scripts',
-            getJson: async () => (await uivScriptsRepo.listScripts({ mode: 'json' })).items,
+            getJson: async () => readJSON('uiv_scripts.json', []),
             getSqlite: async () => (await uivScriptsRepo.listScripts({ mode: 'sqlite' })).items
         },
         {
             name: 'sla_categories',
-            getJson: async () => (await slaCategoriesRepo.listCategories({ mode: 'json' })).items,
+            getJson: async () => readJSON('sla_categories.json', []),
             getSqlite: async () => (await slaCategoriesRepo.listCategories({ mode: 'sqlite' })).items
         },
         {
             name: 'sla_groups',
-            getJson: async () => (await slaGroupsRepo.listGroups({ mode: 'json' })).items,
+            getJson: async () => readJSON('sla_groups.json', []),
             getSqlite: async () => (await slaGroupsRepo.listGroups({ mode: 'sqlite' })).items
         },
         {
             name: 'sla_snapshots',
-            getJson: async () => (await slaSnapshotsRepo.listSnapshots({ mode: 'json' })).items,
+            getJson: async () => readJSON('sla_snapshots.json', []),
             getSqlite: async () => (await slaSnapshotsRepo.listSnapshots({ mode: 'sqlite' })).items
         },
         {
             name: 'sla_targets',
-            getJson: async () => (await slaTargetsRepo.getTargets({ mode: 'json' })).items,
+            getJson: async () => readJSON('sla_targets.json', {}),
             getSqlite: async () => (await slaTargetsRepo.getTargets({ mode: 'sqlite' })).items
         },
         {
             name: 'sla_prefs',
-            getJson: async () => (await slaPrefsRepo.getPrefsObject({ mode: 'json' })).items,
+            getJson: async () => readJSON('sla_prefs.json', {}),
             getSqlite: async () => (await slaPrefsRepo.getPrefsObject({ mode: 'sqlite' })).items
         },
         {
             name: 'auth_users',
-            getJson: async () => (await authUsersRepo.listUsers({ mode: 'json' })).items,
+            getJson: async () => readJSON('users.json', {}),
             getSqlite: async () => (await authUsersRepo.listUsers({ mode: 'sqlite' })).items
         },
         {
             name: 'auth_sessions',
-            getJson: async () => (await authSessionsRepo.listSessions({ mode: 'json' })).items,
+            getJson: async () => readJSON('sessions.json', {}),
             getSqlite: async () => (await authSessionsRepo.listSessions({ mode: 'sqlite' })).items
         }
     ];

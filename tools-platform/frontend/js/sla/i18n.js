@@ -68,7 +68,7 @@
             'sla.source.mode': 'SLA读源模式:',
             'sla.source.targetMonth': '目标月份:',
             'sla.source.auto': '自动模式',
-            'sla.source.json': '强制 JSON',
+            'sla.source.json': 'JSON',
             'sla.source.sqlite': '强制 SQLite',
             'sla.source.targets': '目标来源: {source}',
             'sla.source.prefs': '偏好来源: {source}',
@@ -320,7 +320,7 @@
             'sla.source.mode': 'SLA source mode:',
             'sla.source.targetMonth': 'Target month:',
             'sla.source.auto': 'Auto Mode',
-            'sla.source.json': 'Force JSON',
+            'sla.source.json': 'JSON',
             'sla.source.sqlite': 'Force SQLite',
             'sla.source.targets': 'Target source: {source}',
             'sla.source.prefs': 'Preference source: {source}',
@@ -606,7 +606,6 @@
         if (sourceNotes[0]) sourceNotes[0].textContent = t('sla.source.mode');
         if (sourceNotes[1]) sourceNotes[1].textContent = t('sla.source.targetMonth');
         setText('#slaSourceMode option[value="auto"]', t('sla.source.auto'));
-        setText('#slaSourceMode option[value="json"]', t('sla.source.json'));
         setText('#slaSourceMode option[value="sqlite"]', t('sla.source.sqlite'));
         renderInitialSourcePanel();
         applyRuleBox();

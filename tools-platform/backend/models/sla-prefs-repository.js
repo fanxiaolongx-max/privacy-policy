@@ -115,19 +115,7 @@ async function readPrefsObjectFromDb() {
     return out;
 }
 
-async function getPrefsObject({ mode = 'auto' } = {}) {
-    const normalizedMode = String(mode || 'auto').toLowerCase();
-    
-    
-
-    try {
-        const dbItems = await readPrefsObjectFromDb();
-        if (dbItems && Object.keys(dbItems).length > 0) {
-            return { items: dbItems, source: 'sqlite' };
-        }
-    } catch (err) {}
-
-    
+async function getPrefsObject() {
     return { items: await readPrefsObjectFromDb(), source: 'sqlite' };
 }
 
@@ -177,7 +165,7 @@ async function upsertPrefItem(prefKey, payload) {
         console.error('[sla-prefs] SQLite upsert sync failed:', err.message);
     }
 
-    return prefs[prefKey];
+    return payload;
 }
 
 module.exports = {

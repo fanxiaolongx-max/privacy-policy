@@ -83,8 +83,8 @@ async function listFromDb() {
     }).filter(Boolean);
 }
 
-async function listScripts(options = {}) {
-    const items = await listFromDb(options);
+async function listScripts() {
+    const items = await listFromDb();
     return { items, source: 'sqlite' };
 }
 

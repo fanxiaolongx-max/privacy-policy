@@ -108,19 +108,7 @@ async function readFromDb() {
     return out;
 }
 
-async function getTargets({ mode = 'auto' } = {}) {
-    const normalizedMode = String(mode || 'auto').toLowerCase();
-    
-    
-
-    try {
-        const dbItems = await readFromDb();
-        if (dbItems && Object.keys(dbItems).length > 0) {
-            return { items: dbItems, source: 'sqlite' };
-        }
-    } catch (err) {}
-
-    
+async function getTargets() {
     return { items: await readFromDb(), source: 'sqlite' };
 }
 

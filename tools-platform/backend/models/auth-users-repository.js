@@ -52,8 +52,8 @@ async function listFromDb() {
     return result;
 }
 
-async function listUsers(options = {}) {
-    const items = await listFromDb(options);
+async function listUsers() {
+    const items = await listFromDb();
     return { items, source: 'sqlite' };
 }
 
