@@ -3745,6 +3745,7 @@ window.saveDashboardToDB = async function(event) {
     }
     rawDataForSave.selectedTargetMonth = month;
     rawDataForSave.selectedTargetMonthLabel = `${month}月`;
+    rawDataForSave.manualAdjustItems = typeof manualAdjustItems !== 'undefined' ? manualAdjustItems : [];
     
     // Build cat scores
     const cat_scores = [];
