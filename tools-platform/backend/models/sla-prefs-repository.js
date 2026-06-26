@@ -83,10 +83,6 @@ async function ensureReady() {
 
             const row = await get('SELECT COUNT(1) AS count FROM sla_prefs');
             if (row && row.count > 0) return;
-
-            
-            if (Object.keys(prefs).length === 0) return;
-            await replacePrefsInDbRaw(prefs);
         })().catch(err => {
             initPromise = null;
             throw err;

@@ -73,6 +73,7 @@
     "jszip": "^3.10.1",
     "multer": "^1.4.5-lts.1",
     "sqlite3": "^6.0.1",
+    "supertest": "^7.2.2",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
