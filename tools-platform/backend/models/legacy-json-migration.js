@@ -477,6 +477,42 @@ async function runStartupLegacyJsonMigration() {
     const skippedCount = records.filter(item => item.status === 'skipped').length;
     const hasLegacyJson = records.some(item => item.legacyPresent);
 
+    if (failedCount === 0 && hasLegacyJson) {
+        try {
+            const JSZip = require('jszip');
+            const zip = new JSZip();
+            const filesToDelete = [];
+            let addedToZip = false;
+
+            for (const record of records) {
+                if (record.legacyPresent && record.step && record.step.sourceFile) {
+                    const filePath = path.join(DATA_DIR, record.step.sourceFile);
+                    if (fs.existsSync(filePath)) {
+                        const content = fs.readFileSync(filePath);
+                        zip.file(record.step.sourceFile, content);
+                        filesToDelete.push(filePath);
+                        addedToZip = true;
+                    }
+                }
+            }
+
+            if (addedToZip) {
+                const ts = new Date().toISOString().replace(/[:.]/g, '-');
+                const zipPath = path.join(DATA_DIR, `legacy_json_backup_${ts}.zip`);
+                const content = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+                fs.writeFileSync(zipPath, content);
+                console.log(`[legacy-json-migration] created backup zip: ${zipPath}`);
+
+                for (const filePath of filesToDelete) {
+                    fs.unlinkSync(filePath);
+                    console.log(`[legacy-json-migration] deleted old json: ${filePath}`);
+                }
+            }
+        } catch (e) {
+            console.error('[legacy-json-migration] failed to zip and delete old json files:', e);
+        }
+    }
+
     lastMigrationReport = {
         status: failedCount ? 'failed' : (migratedCount ? 'success' : 'skipped'),
         startedAt,
