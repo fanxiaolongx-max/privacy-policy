@@ -73,7 +73,14 @@ async function listFromDb() {
         FROM uiv_scripts
         ORDER BY rowid ASC
     `);
-    return rows.map(row => JSON.parse(row.payload_json));
+    return rows.map(row => {
+        try {
+            return JSON.parse(row.payload_json);
+        } catch(e) {
+            console.error('[uiv-scripts] Bad JSON payload in DB:', e.message);
+            return null;
+        }
+    }).filter(Boolean);
 }
 
 async function listScripts(options = {}) {

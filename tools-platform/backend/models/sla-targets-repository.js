@@ -125,10 +125,6 @@ async function getTargets({ mode = 'auto' } = {}) {
     } catch (err) {}
 
     
-    if (Object.keys(jsonTargets).length > 0) {
-        return { items: jsonTargets, source: 'json' };
-    }
-
     return { items: await readFromDb(), source: 'sqlite' };
 }
 

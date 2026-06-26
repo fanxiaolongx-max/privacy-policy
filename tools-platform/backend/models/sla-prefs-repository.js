@@ -132,10 +132,6 @@ async function getPrefsObject({ mode = 'auto' } = {}) {
     } catch (err) {}
 
     
-    if (Object.keys(jsonPrefs).length > 0) {
-        return { items: jsonPrefs, source: 'json' };
-    }
-
     return { items: await readPrefsObjectFromDb(), source: 'sqlite' };
 }
 
