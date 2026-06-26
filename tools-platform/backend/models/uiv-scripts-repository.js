@@ -109,53 +109,37 @@ async function replaceScriptsInDb(scripts) {
 
 async function saveScripts(items) {
     const incoming = Array.isArray(items) ? items.map(normalizeScript) : [];
-    let scripts = [];
-
-    incoming.forEach(item => {
-        const idx = scripts.findIndex(s => s.name === item.name || s.id === item.id);
-        const now = new Date().toISOString();
-        if (idx >= 0) {
-            scripts[idx] = { ...scripts[idx], ...item, updatedAt: now };
-            if (!scripts[idx].createdAt) scripts[idx].createdAt = now;
-        } else {
-            scripts.push({ ...item, createdAt: item.createdAt || now, updatedAt: now });
-        }
-    });
-
-    scripts = writeScriptsToJson(scripts);
 
     try {
         for (const item of incoming) {
-            const latest = scripts.find(script => script.name === item.name) || item;
-            await upsertScriptInDb(latest);
+            item.updatedAt = new Date().toISOString();
+            await upsertScriptInDb(item);
         }
     } catch (err) {
-        console.error('[uiv-scripts] SQLite dual-write failed:', err.message);
+        console.error('[uiv-scripts] SQLite save failed:', err.message);
     }
 
-    return scripts;
+    return incoming;
 }
 
 async function deleteScriptById(id) {
-    const normalized = [].filter(script => script.id !== id);
-
     try {
         await ensureReady();
         await run('DELETE FROM uiv_scripts WHERE id = ?', [id]);
     } catch (err) {
         console.error('[uiv-scripts] SQLite delete sync failed:', err.message);
     }
-
-    return scripts;
+    return [];
 }
 
 async function moveScriptCategory(id, category) {
-    
-    const script = scripts.find(item => item.id === id);
-    if (!script) return null;
+    await ensureReady();
+    const row = await get('SELECT payload_json FROM uiv_scripts WHERE id = ?', [id]);
+    if (!row) return null;
 
+    const script = JSON.parse(row.payload_json);
     script.category = category;
-    writeScriptsToJson(scripts);
+    script.updatedAt = new Date().toISOString();
 
     await upsertScriptInDb(script);
 
@@ -163,20 +147,17 @@ async function moveScriptCategory(id, category) {
 }
 
 async function deleteScriptsByCategory(category) {
-    const normalized = [].filter(script => script.category !== category);
-
     try {
         await ensureReady();
         await run('DELETE FROM uiv_scripts WHERE category = ?', [category]);
     } catch (err) {
         console.error('[uiv-scripts] SQLite category delete sync failed:', err.message);
     }
-
-    return scripts;
+    return [];
 }
 
 async function replaceAllScripts(scripts) {
-    const normalized = scripts;
+    const normalized = Array.isArray(scripts) ? scripts.map(normalizeScript) : [];
 
     await replaceScriptsInDb(normalized);
 
