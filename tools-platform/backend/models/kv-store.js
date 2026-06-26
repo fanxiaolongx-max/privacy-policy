@@ -3,13 +3,13 @@ const { run, get } = require('./app-db');
 let ready = false;
 async function initKV() {
     if (ready) return;
-    await run('CREATE TABLE IF NOT EXISTS sys_dictionaries (category TEXT, key TEXT, value TEXT, PRIMARY KEY(category, key))');
+    await run('CREATE TABLE IF NOT EXISTS sys_kv_store (category TEXT, key TEXT, value TEXT, PRIMARY KEY(category, key))');
     ready = true;
 }
 
 async function readKV(category, key, defaultVal) {
     await initKV();
-    const row = await get('SELECT value FROM sys_dictionaries WHERE category = ? AND key = ?', [category, key]);
+    const row = await get('SELECT value FROM sys_kv_store WHERE category = ? AND key = ?', [category, key]);
     if (!row) return defaultVal;
     try {
         return JSON.parse(row.value);
@@ -20,7 +20,7 @@ async function readKV(category, key, defaultVal) {
 
 async function writeKV(category, key, val) {
     await initKV();
-    await run('INSERT OR REPLACE INTO sys_dictionaries (category, key, value) VALUES (?, ?, ?)', [category, key, JSON.stringify(val)]);
+    await run('INSERT OR REPLACE INTO sys_kv_store (category, key, value) VALUES (?, ?, ?)', [category, key, JSON.stringify(val)]);
 }
 
 module.exports = { readKV, writeKV };
