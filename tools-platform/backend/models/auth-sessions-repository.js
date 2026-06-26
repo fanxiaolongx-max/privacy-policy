@@ -18,34 +18,6 @@ async function ensureReady() {
             const row = await get('SELECT COUNT(1) AS count FROM auth_sessions');
             if (row && row.count > 0) return;
 
-            const sessions = readJSON(SESSIONS_FILE, {});
-            const tokens = Object.keys(sessions);
-            if (tokens.length === 0) return;
-
-            let jsonChanged = false;
-            await run('BEGIN TRANSACTION');
-            try {
-                const now = Date.now();
-                for (const token of tokens) {
-                    const session = sessions[token];
-                    if (session.expiresAt > now) {
-                        await run(
-                            `INSERT OR IGNORE INTO auth_sessions (token, username, role, expires_at) VALUES (?, ?, ?, ?)`,
-                            [token, session.user.username, session.user.role, session.expiresAt]
-                        );
-                    } else {
-                        delete sessions[token];
-                        jsonChanged = true;
-                    }
-                }
-                await run('COMMIT');
-                if (jsonChanged) {
-                    writeJSON(SESSIONS_FILE, sessions);
-                }
-            } catch (err) {
-                await run('ROLLBACK').catch(() => {});
-                throw err;
-            }
         })().catch(err => {
             initPromise = null;
             throw err;
