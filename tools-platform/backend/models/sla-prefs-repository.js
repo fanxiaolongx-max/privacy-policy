@@ -140,9 +140,9 @@ async function getPrefItem(prefKey, { mode = 'auto' } = {}) {
 }
 
 async function replacePrefs(items) {
-    const normalized = groups || [];
+    const normalized = items || {};
     await ensureReady();
-    await replaceGroupsInDbRaw(normalized);
+    await replacePrefsInDbRaw(normalized);
     return normalized;
 }
 

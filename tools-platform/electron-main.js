@@ -83,7 +83,7 @@ function prepareLaunchExperience() {
         previousVersion,
         currentVersion,
         shouldShowWelcome: launchKind !== 'normal',
-        shouldOpenSystemBrowser: launchKind !== 'normal' && nextState.openSystemBrowserOnSpecialLaunch
+        shouldOpenSystemBrowser: true // 每次启动都强制调用系统默认浏览器打开
     };
 }
 

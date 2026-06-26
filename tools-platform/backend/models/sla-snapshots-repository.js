@@ -125,9 +125,9 @@ async function updateSnapshot(id, patch) {
 }
 
 async function replaceSnapshots(items) {
-    const normalized = groups || [];
+    const normalized = items || [];
     await ensureReady();
-    await replaceGroupsInDbRaw(normalized);
+    await replaceSnapshotsInDbRaw(normalized);
     return normalized;
 }
 
