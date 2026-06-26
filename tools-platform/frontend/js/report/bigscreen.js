@@ -347,7 +347,11 @@
         const text = String(value ?? '');
         if (!text || !isEn()) return text;
         const clean = text.replace(/\(Ungrouped\)/, '').trim();
-        return state.i18nMap[text] || state.i18nMap[clean] || text;
+        const hardcoded = {
+            '整体': 'Global/Overall',
+            '全局': 'Global/Overall'
+        };
+        return hardcoded[text] || hardcoded[clean] || state.i18nMap[text] || state.i18nMap[clean] || text;
     }
 
     function sourceLabel(source) {
@@ -679,6 +683,10 @@
         return Object.values(grouped).sort((a, b) => b.count - a.count || a.cat.localeCompare(b.cat));
     }
 
+    function renderFlapChars(valueStr) {
+        return String(valueStr).split('').map(char => `<span class="flap-char">${char}</span>`).join('');
+    }
+
     function renderRankList() {
         const rows = getCustomerScoreRows();
         if (!rows.length) {
@@ -697,10 +705,17 @@
                 <div>
                     <div class="row-name" title="${escapeHTML(translated(item.cat))}">${escapeHTML(translated(item.cat))}</div>
                 </div>
-                <div class="rank-score">${fmt(item.score, 1)}<span class="rank-score-label">${escapeHTML(tr('scoreUnit'))}</span></div>
+                <div class="rank-score">
+                    <div class="flap-board" data-val="${fmt(item.score, 1)}">
+                        ${renderFlapChars(fmt(item.score, 1))}
+                    </div>
+                    <span class="rank-score-label">${escapeHTML(tr('scoreUnit'))}</span>
+                </div>
             </div>
         `;
         }).join('');
+        
+        startScoreFlipAnimation();
         renderRankSummary(rows);
     }
 
@@ -909,6 +924,64 @@
                 chip.classList.remove('active-highlight');
                 chip.classList.add('dimmed');
             }
+        });
+    }
+
+    function startScoreFlipAnimation() {
+        const boards = document.querySelectorAll('.flap-board');
+        if (!boards.length) return;
+        
+        boards.forEach((board) => {
+            const realVal = String(board.getAttribute('data-val'));
+            const chars = board.querySelectorAll('.flap-char');
+            
+            // Random start delay for the whole board (0 - 400ms)
+            const boardDelay = Math.random() * 400;
+            
+            setTimeout(() => {
+                chars.forEach((c, idx) => {
+                    if (c.dataset.flipping) return;
+                    
+                    const finalChar = realVal[idx] || '';
+                    if (finalChar === '.') {
+                        c.textContent = finalChar;
+                        return;
+                    }
+
+                    c.dataset.flipping = "true";
+                    
+                    // Each digit starts with a slightly random offset (0 - 150ms)
+                    const charStartOffset = Math.random() * 150;
+                    
+                    setTimeout(() => {
+                        // Random mechanical speed (120ms - 220ms per full flip)
+                        const speed = Math.floor(Math.random() * 100) + 120;
+                        
+                        // Right-most digits flip more times (like an odometer settling)
+                        // Range: ~4 flips for first digit, up to ~15 flips for last digit
+                        const minFlips = 4 + idx * 3;
+                        const targetFlips = Math.floor(Math.random() * 6) + minFlips;
+                        
+                        c.style.animation = `flapTurn ${speed}ms linear infinite`;
+                        
+                        let flips = 0;
+                        setTimeout(() => {
+                            const scramble = setInterval(() => {
+                                c.textContent = Math.floor(Math.random() * 10).toString();
+                                flips++;
+                                if (flips >= targetFlips) {
+                                    clearInterval(scramble);
+                                    c.textContent = finalChar;
+                                    setTimeout(() => {
+                                        c.style.animation = 'none';
+                                        delete c.dataset.flipping;
+                                    }, speed / 2); // Wait for the final half-cycle to finish returning to 0deg
+                                }
+                            }, speed);
+                        }, speed / 2); // Text changes exactly when flipped 90deg edge-on
+                    }, charStartOffset);
+                });
+            }, boardDelay);
         });
     }
 
@@ -1437,29 +1510,57 @@
                     splitLine: { show: false }
                 }
             ],
+            animationDuration: 2000,
+            animationEasing: 'cubicOut',
             series: [
                 {
                     name: tr('failingItems'),
                     type: 'bar',
                     yAxisIndex: 1,
                     data: failing,
-                    barMaxWidth: 22,
-                    itemStyle: { color: 'rgba(255,93,115,0.8)' }
+                    barMaxWidth: 16,
+                    itemStyle: { 
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: 'rgba(255,93,115,1)' },
+                            { offset: 1, color: 'rgba(255,93,115,0.05)' }
+                        ]),
+                        borderRadius: [4, 4, 0, 0],
+                        shadowColor: 'rgba(255,93,115,0.3)',
+                        shadowBlur: 8
+                    }
                 },
                 {
                     name: tr('passRate'),
                     type: 'line',
                     smooth: true,
                     data: rates,
-                    symbolSize: 7,
-                    lineStyle: { width: 3, color: '#39d5ff' },
+                    symbolSize: 0,
+                    lineStyle: { width: 3, color: '#39d5ff', shadowColor: 'rgba(57,213,255,0.8)', shadowBlur: 12 },
                     itemStyle: { color: '#39d5ff' },
                     areaStyle: {
                         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                            { offset: 0, color: 'rgba(57,213,255,0.28)' },
+                            { offset: 0, color: 'rgba(57,213,255,0.38)' },
                             { offset: 1, color: 'rgba(57,213,255,0.02)' }
                         ])
                     }
+                },
+                {
+                    name: tr('passRate'),
+                    type: 'effectScatter',
+                    data: rates,
+                    symbolSize: 6,
+                    showEffectOn: 'render',
+                    rippleEffect: {
+                        brushType: 'stroke',
+                        scale: 4,
+                        period: 3
+                    },
+                    itemStyle: { 
+                        color: '#baffdf',
+                        shadowBlur: 14,
+                        shadowColor: '#38e6a3'
+                    },
+                    zlevel: 2
                 }
             ]
         }, true);
@@ -1515,13 +1616,15 @@
             },
             series: [{
                 type: 'pie',
-                radius: ['45%', '75%'],
+                radius: ['45%', '72%'],
                 center: ['50%', '50%'],
                 avoidLabelOverlap: true,
                 itemStyle: {
-                    borderRadius: 4,
+                    borderRadius: 6,
                     borderColor: 'rgba(15,23,42,0.8)',
-                    borderWidth: 2
+                    borderWidth: 2,
+                    shadowBlur: 10,
+                    shadowColor: 'rgba(0, 0, 0, 0.4)'
                 },
                 label: {
                     show: true,
@@ -1531,7 +1634,12 @@
                     lineHeight: 14
                 },
                 labelLine: { length: 8, length2: 8, lineStyle: { color: '#4a5b7d' } },
-                data: data.length ? data : [{ name: tr('noRisk'), value: 0 }]
+                data: data.length ? data : [{ name: tr('noRisk'), value: 0 }],
+                animationType: 'scale',
+                animationEasing: 'elasticOut',
+                animationDelay: function (idx) {
+                    return Math.random() * 200;
+                }
             }],
             color: ['#ff5d73', '#ff8fa0', '#f59e0b', '#fbbf24', '#38bdf8', '#7dd3fc', '#818cf8']
         };
