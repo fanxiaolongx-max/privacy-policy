@@ -90,10 +90,7 @@ async function trimDbSnapshots() {
 }
 
 async function addSnapshot(payload) {
-    
     const item = { id: Date.now().toString(36), ...payload };
-    snapshots.unshift(item);
-    writeSnapshotsToJson(snapshots);
 
     try {
         await upsertSnapshotInDb(item);
@@ -106,27 +103,25 @@ async function addSnapshot(payload) {
 }
 
 async function deleteSnapshot(id) {
-    const normalized = [].filter(item => item.id !== id);
     try {
         await ensureReady();
         await run('DELETE FROM sla_snapshots WHERE id = ?', [id]);
     } catch (err) {
         console.error('[sla-snapshots] SQLite delete sync failed:', err.message);
     }
-    return snapshots;
+    return [];
 }
 
 async function updateSnapshot(id, patch) {
-    
-    const idx = snapshots.findIndex(item => item.id === id);
+    const items = await listFromDb();
+    const idx = items.findIndex(s => s.id === id);
     if (idx === -1) return null;
 
-    snapshots[idx] = { ...snapshots[idx], ...patch };
-    writeSnapshotsToJson(snapshots);
+    items[idx] = { ...items[idx], ...patch };
 
-    await upsertSnapshotInDb(snapshots[idx]);
+    await upsertSnapshotInDb(items[idx]);
 
-    return snapshots[idx];
+    return items[idx];
 }
 
 async function replaceSnapshots(items) {

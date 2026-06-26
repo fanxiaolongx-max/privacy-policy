@@ -93,10 +93,7 @@ async function trimDbSnapshots() {
 }
 
 async function addSnapshot(payload) {
-    
     const item = { id: Date.now().toString(36), timestamp: new Date().toISOString(), ...payload };
-    snapshots.unshift(item);
-    writeSnapshotsToJson(snapshots);
 
     try {
         await upsertSnapshotInDb(item);
