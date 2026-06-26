@@ -106,14 +106,13 @@ async function addSnapshot(payload) {
 }
 
 async function deleteSnapshot(id) {
-    const normalized = [].filter(item => item.id !== id);
     try {
         await ensureReady();
         await run('DELETE FROM frt_snapshots WHERE id = ?', [id]);
     } catch (err) {
         console.error('[frt-snapshots] SQLite delete sync failed:', err.message);
     }
-    return snapshots;
+    return []; // Return empty array or throw, but don't return undefined snapshots
 }
 
 module.exports = {

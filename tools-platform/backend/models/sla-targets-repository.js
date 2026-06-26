@@ -125,9 +125,9 @@ async function getTargets({ mode = 'auto' } = {}) {
 }
 
 async function replaceTargets(items) {
-    const normalized = groups || [];
+    const normalized = items || {};
     await ensureReady();
-    await replaceGroupsInDbRaw(normalized);
+    await replaceTargetsInDbRaw(normalized);
     return normalized;
 }
 
