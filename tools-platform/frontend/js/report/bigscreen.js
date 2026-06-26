@@ -110,22 +110,22 @@
     function renderKpis() {
         const latest = state.latest || {};
         const raw = parseRaw(latest.raw_data_json);
-        
+
         const tickets = Array.isArray(raw.expiringTickets) ? raw.expiringTickets : [];
         const alerts = Array.isArray(raw.specialMetricAlerts) ? raw.specialMetricAlerts : [];
-        
+
         const groups = [
             { id: 'vulnerability', title: '漏洞预警', icon: '🧯', items: tickets.filter(t => t.collection === 'vulnerability'), type: 'ticket' },
             { id: 'rectification', title: '整改预警', icon: '🛠️', items: tickets.filter(t => t.collection === 'rectification'), type: 'ticket' },
-            { id: 'risk_sr', title: '风险与工单预警', icon: '📞', items: tickets.filter(t => ['risk', 'special', 'sr'].includes(t.collection)), type: 'ticket' },
+            { id: 'risk_sr', title: '风险/专项/工单预警', icon: '📞', items: tickets.filter(t => ['risk', 'special', 'sr'].includes(t.collection)), type: 'ticket' },
             { id: 'metric_alerts', title: '全局指标告警', icon: '🚨', items: alerts, type: 'alert' }
         ];
 
         $('kpiRow').innerHTML = groups.map(group => {
             let slidesHtml = '';
-            
+
             if (group.items.length === 0) {
-                slidesHtml = `<div class="kpi-empty">✅ 当前无${group.title.replace('预警','').replace('告警','')}</div>`;
+                slidesHtml = `<div class="kpi-empty">✅ 当前无${group.title.replace('预警', '').replace('告警', '')}</div>`;
             } else {
                 const slideDivs = group.items.map(item => {
                     if (group.type === 'ticket') {
@@ -138,7 +138,7 @@
                         } else if (statusText.includes('预警') || statusText.includes('剩余')) {
                             badgeClass = 'warning';
                         }
-                        
+
                         return `
                             <div class="kpi-slide-item">
                                 <div class="kpi-slide-row1">
@@ -156,7 +156,7 @@
                         const val = item.globalValue || item.global_val || '-';
                         const target = item.targetValue || item.target_val || '-';
                         const gap = item.gap ? `差距 ${item.gap}` : '不达标';
-                        
+
                         return `
                             <div class="kpi-slide-item">
                                 <div class="kpi-slide-row1">
@@ -170,7 +170,7 @@
                         `;
                     }
                 });
-                
+
                 // For seamless looping, append a copy of the first slide at the end if count > 1
                 const renderedSlides = slideDivs.join('');
                 slidesHtml = slideDivs.length > 1 ? renderedSlides + slideDivs[0] : renderedSlides;
@@ -190,22 +190,22 @@
                 </div>
             `;
         }).join('');
-        
+
         initKpiCarousel();
     }
 
     let kpiRotationInterval = null;
     function initKpiCarousel() {
         if (kpiRotationInterval) clearInterval(kpiRotationInterval);
-        
+
         kpiRotationInterval = setInterval(() => {
             const sliders = document.querySelectorAll('.kpi-slider[data-count]');
             sliders.forEach(slider => {
                 const count = parseInt(slider.getAttribute('data-count'), 10);
                 if (count <= 1) return;
-                
+
                 let current = parseInt(slider.getAttribute('data-current') || '0', 10);
-                
+
                 if (current === count) {
                     slider.style.transition = 'none';
                     slider.style.transform = `translateY(0)`;
@@ -214,7 +214,7 @@
                     slider.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
                     current = 0;
                 }
-                
+
                 current++;
                 slider.setAttribute('data-current', current);
                 slider.style.transform = `translateY(-${current * 100}%)`;
@@ -487,8 +487,10 @@
         }
 
         const loopRows = rows.length > 4 ? rows.concat(rows) : rows;
+        const rowCount = Math.ceil(loopRows.length / 2);
+        const duration = Math.max(8, rowCount * 6); // 6s per row for steady readable speed, min 8s
         $('weakList').innerHTML = `
-            <div class="weak-scroll-track" style="${rows.length > 4 ? '' : 'animation:none;'}">
+            <div class="weak-scroll-track" style="${rows.length > 4 ? `animation: weakScroll ${duration}s linear infinite;` : 'animation:none;'}">
                 ${loopRows.map(item => `
             <div class="weak-row risk-card">
                 <div class="risk-main">
@@ -526,6 +528,91 @@
         });
 
         initOwnerRotation();
+    }
+
+    function renderManualAdjustStrip() {
+        const strip = $('manualItemsStrip');
+        if (!strip) return;
+
+        const prefs = state.globalConfig && state.globalConfig.prefs ? state.globalConfig.prefs : {};
+        const latest = state.latest || {};
+        const raw = parseRaw(latest.raw_data_json);
+        const manualItems = Array.isArray(raw.manualAdjustItems) ? raw.manualAdjustItems : (Array.isArray(prefs.manualAdjustItems) ? prefs.manualAdjustItems : []);
+        const manualAdjustData = raw.manualAdjustData || {};
+
+        const activeItems = [];
+        Object.keys(manualAdjustData).forEach(cat => {
+            const catData = manualAdjustData[cat];
+            Object.keys(catData).forEach(idx => {
+                const count = parseInt(catData[idx], 10) || 0;
+                if (count > 0 && manualItems[idx] && !manualItems[idx].deleted) {
+                    const itemDef = manualItems[idx];
+                    const unit = parseFloat(itemDef.unit) || 0;
+                    activeItems.push({
+                        cat: cat,
+                        name: itemDef.name || '未命名配置',
+                        type: itemDef.type || '扣分',
+                        count: count,
+                        totalScore: count * unit
+                    });
+                }
+            });
+        });
+
+        if (!activeItems.length) {
+            strip.innerHTML = '<div style="color:#6e8ca8; font-size:12px;">当前最新快照无客户群产生额外加减分</div>';
+            return;
+        }
+
+        const itemsHtml = activeItems.map(item => {
+            const isAdd = item.type === '加分';
+            const sign = isAdd ? '+' : '-';
+            return `
+                <div class="manual-item">
+                    <span class="manual-item-type ${item.type}">${escapeHTML(item.type)}</span>
+                    <span class="manual-item-name" style="color:var(--cyan); margin-right: 8px;">[${escapeHTML(item.cat)}]</span>
+                    <span class="manual-item-name">${escapeHTML(item.name)}</span>
+                    <span class="manual-item-desc">(${item.count}次，共 ${sign}${item.totalScore}分)</span>
+                </div>
+            `;
+        }).join('');
+
+        strip.innerHTML = `
+            <div class="manual-track" data-count="${activeItems.length}" data-current="0">
+                ${itemsHtml}
+                ${itemsHtml}
+            </div>
+        `;
+
+        initManualRotation();
+    }
+
+    let manualRotationInterval = null;
+
+    function initManualRotation() {
+        if (manualRotationInterval) clearInterval(manualRotationInterval);
+
+        manualRotationInterval = setInterval(() => {
+            const sliders = document.querySelectorAll('.manual-track[data-count]');
+            sliders.forEach(slider => {
+                const count = parseInt(slider.getAttribute('data-count'), 10);
+                if (count <= 1) return;
+
+                let current = parseInt(slider.getAttribute('data-current') || '0', 10);
+
+                if (current === count) {
+                    slider.style.transition = 'none';
+                    slider.style.transform = `translateY(0)`;
+                    current = 0;
+                    void slider.offsetHeight;
+                    slider.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+                }
+
+                current++;
+                slider.setAttribute('data-current', current);
+                slider.style.transform = `translateY(-${current * 100}%)`;
+            });
+        }, 4000); // Wait 4 seconds per item
     }
 
     function isImageAvatar(value) {
@@ -630,19 +717,19 @@
             return;
         }
         const loopRows = passRows.length > 6 ? passRows.concat(passRows) : passRows;
+        const rowCount = Math.ceil(loopRows.length / 2);
+        const duration = Math.max(8, rowCount * 5); // 5s per row (slightly faster as items are smaller, but visually consistent)
         $('metricList').innerHTML = `
-            <div class="pass-ticker">
-                <div class="pass-track" style="${passRows.length > 6 ? '' : 'animation:none;'}">
-                    ${loopRows.map(item => `
-                        <div class="pass-item">
-                            <span class="pass-check">✓</span>
-                            <span class="pass-text">
-                                <strong title="${escapeHTML(item.metric_label)}">${escapeHTML(item.metric_label || '-')}</strong>
-                                <span>${escapeHTML(item.cat_name || '-')} · 实测 ${escapeHTML(item.raw_val ?? item.num_val ?? '-')} · 目标 ${escapeHTML(item.target_val || '-')}</span>
-                            </span>
-                        </div>
-                    `).join('')}
-                </div>
+            <div class="pass-track" style="${passRows.length > 6 ? `animation: passScroll ${duration}s linear infinite;` : 'animation:none;'}">
+                ${loopRows.map(item => `
+                    <div class="pass-item">
+                        <span class="pass-check">✓</span>
+                        <span class="pass-text">
+                            <strong title="${escapeHTML(item.metric_label)}">${escapeHTML(item.metric_label || '-')}</strong>
+                            <span>${escapeHTML(item.cat_name || '-')} · 实测 ${escapeHTML(item.raw_val ?? item.num_val ?? '-')} · 目标 ${escapeHTML(item.target_val || '-')}</span>
+                        </span>
+                    </div>
+                `).join('')}
             </div>
         `;
     }
@@ -1173,6 +1260,7 @@
         renderMetricList();
         renderTrendChart();
         renderFailingMetricsCarousel();
+        renderManualAdjustStrip();
         renderSourceStrip();
     }
 
@@ -1181,7 +1269,7 @@
         try {
             const range = getCurrentRange();
             state.monthlyPath = `/api/db/monthly_report_data${range.query}`;
-            const [monthlyData, snapshots, owners] = await Promise.all([
+            const [monthlyData, snapshots, owners, globalConfig] = await Promise.all([
                 window.API.get(state.monthlyPath),
                 window.API.get('/api/db/snapshots'),
                 window.API.get('/api/db/config/bigscreen_owners').then(data => (
@@ -1189,8 +1277,10 @@
                 )).catch(error => {
                     console.warn('[bigscreen] owners config unavailable:', error.message);
                     return [];
-                })
+                }),
+                window.API.get('/api/sla/config').catch(() => ({}))
             ]);
+            state.globalConfig = globalConfig || {};
             state.trends = Array.isArray(monthlyData && monthlyData.trends) ? monthlyData.trends : [];
             state.latest = monthlyData ? monthlyData.latest_snapshot : null;
 
@@ -1218,7 +1308,7 @@
                             }
                         });
                     }
-                    
+
                     // Extract order from the original DB returned metrics list (which reflects report dashboard order)
                     if (state.latest && Array.isArray(state.latest.metrics)) {
                         const uniqueOrder = [];
@@ -1227,12 +1317,12 @@
                             const lbl = m.metric_label || '未命名指标';
                             if (!uniqueOrder.includes(lbl)) uniqueOrder.push(lbl);
                         });
-                        
+
                         // Weave special alerts into the correct relative position using topMetrics as a guide
                         if (raw && Array.isArray(raw.topMetrics)) {
                             const topOrder = raw.topMetrics.map(m => m.label || m.metricLabel);
                             const specialLabels = [...new Set(state.latest.metrics.filter(m => m.is_special_alert).map(m => m.metric_label || '未命名指标'))];
-                            
+
                             specialLabels.forEach(lbl => {
                                 const topIdx = topOrder.indexOf(lbl);
                                 if (topIdx >= 0) {
@@ -1254,7 +1344,7 @@
                             const specialLabels = [...new Set(state.latest.metrics.filter(m => m.is_special_alert).map(m => m.metric_label || '未命名指标'))];
                             uniqueOrder.push(...specialLabels);
                         }
-                        
+
                         state.metricOrder = uniqueOrder;
                     }
                 } catch (e) {
