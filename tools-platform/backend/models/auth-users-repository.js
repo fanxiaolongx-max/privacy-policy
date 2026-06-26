@@ -22,8 +22,15 @@ async function ensureReady() {
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             `);
-
-            
+            const row = await get('SELECT COUNT(1) AS count FROM auth_users');
+            if (row && row.count === 0) {
+                const initial = getInitialAdmin();
+                const hash = await hashPassword(initial.password);
+                await run(
+                    'INSERT INTO auth_users (username, role, password_hash) VALUES (?, ?, ?)',
+                    [initial.username, initial.role, hash]
+                );
+            }
         })().catch(err => {
             initPromise = null;
             throw err;
@@ -51,10 +58,6 @@ async function listUsers(options = {}) {
 }
 
 async function getUser(username) {
-    
-    if (jsonUsers[username]) {
-        return jsonUsers[username];
-    }
     await ensureReady();
     const row = await get('SELECT role, password_hash FROM auth_users WHERE username = ?', [username]);
     if (row) {
