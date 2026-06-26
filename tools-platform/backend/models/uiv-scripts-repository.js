@@ -1,8 +1,6 @@
-const { readJSON, writeJSON } = require('./store');
 const { run, get, all } = require('./app-db');
 const { v4: uuidv4 } = require('uuid');
 
-const SCRIPTS_FILE = 'uiv_scripts.json';
 
 let initPromise = null;
 
@@ -48,9 +46,7 @@ async function ensureReady() {
             const row = await get('SELECT COUNT(1) AS count FROM uiv_scripts');
             if (row && row.count > 0) return;
 
-            const scripts = readScriptsFromJson();
-            if (scripts.length === 0) return;
-            await replaceScriptsInDbRaw(scripts);
+            
         })().catch(err => {
             initPromise = null;
             throw err;
@@ -70,17 +66,6 @@ function normalizeScript(item) {
     return normalized;
 }
 
-function readScriptsFromJson() {
-    const scripts = readJSON(SCRIPTS_FILE, []);
-    return Array.isArray(scripts) ? scripts.map(normalizeScript) : [];
-}
-
-function writeScriptsToJson(scripts) {
-    const normalized = Array.isArray(scripts) ? scripts.map(normalizeScript) : [];
-    writeJSON(SCRIPTS_FILE, normalized);
-    return normalized;
-}
-
 async function listFromDb() {
     await ensureReady();
     const rows = await all(`
@@ -91,43 +76,9 @@ async function listFromDb() {
     return rows.map(row => JSON.parse(row.payload_json));
 }
 
-async function listScripts({ mode = 'auto' } = {}) {
-    const normalizedMode = String(mode || 'auto').toLowerCase();
-
-    if (normalizedMode === 'json') {
-        return {
-            items: readScriptsFromJson(),
-            source: 'json'
-        };
-    }
-
-    if (normalizedMode === 'sqlite' || normalizedMode === 'db') {
-        return {
-            items: await listFromDb(),
-            source: 'sqlite'
-        };
-    }
-
-    // --- AUTO MODE PRIORITY: SQLITE ---
-    try {
-        const dbRes = await listFromDb();
-        if (dbRes && (Array.isArray(dbRes) ? dbRes.length > 0 : Object.keys(dbRes).length > 0)) {
-            return { items: dbRes, source: 'sqlite' };
-        }
-    } catch (err) {}
-
-    const jsonScripts = readScriptsFromJson();
-    if (jsonScripts.length > 0) {
-        return {
-            items: jsonScripts,
-            source: 'json'
-        };
-    }
-
-    return {
-        items: await listFromDb(),
-        source: 'sqlite'
-    };
+async function listScripts(options = {}) {
+    const items = await listFromDb(options);
+    return { items, source: 'sqlite' };
 }
 
 async function upsertScriptInDb(script) {
@@ -158,7 +109,7 @@ async function replaceScriptsInDb(scripts) {
 
 async function saveScripts(items) {
     const incoming = Array.isArray(items) ? items.map(normalizeScript) : [];
-    let scripts = readScriptsFromJson();
+    let scripts = [];
 
     incoming.forEach(item => {
         const idx = scripts.findIndex(s => s.name === item.name || s.id === item.id);
@@ -186,7 +137,7 @@ async function saveScripts(items) {
 }
 
 async function deleteScriptById(id) {
-    const scripts = writeScriptsToJson(readScriptsFromJson().filter(script => script.id !== id));
+    const normalized = [].filter(script => script.id !== id);
 
     try {
         await ensureReady();
@@ -199,24 +150,20 @@ async function deleteScriptById(id) {
 }
 
 async function moveScriptCategory(id, category) {
-    const scripts = readScriptsFromJson();
+    
     const script = scripts.find(item => item.id === id);
     if (!script) return null;
 
     script.category = category;
     writeScriptsToJson(scripts);
 
-    try {
-        await upsertScriptInDb(script);
-    } catch (err) {
-        console.error('[uiv-scripts] SQLite category sync failed:', err.message);
-    }
+    await upsertScriptInDb(script);
 
     return script;
 }
 
 async function deleteScriptsByCategory(category) {
-    const scripts = writeScriptsToJson(readScriptsFromJson().filter(script => script.category !== category));
+    const normalized = [].filter(script => script.category !== category);
 
     try {
         await ensureReady();
@@ -229,13 +176,9 @@ async function deleteScriptsByCategory(category) {
 }
 
 async function replaceAllScripts(scripts) {
-    const normalized = writeScriptsToJson(scripts);
+    const normalized = scripts;
 
-    try {
-        await replaceScriptsInDb(normalized);
-    } catch (err) {
-        console.error('[uiv-scripts] SQLite replace sync failed:', err.message);
-    }
+    await replaceScriptsInDb(normalized);
 
     return normalized;
 }

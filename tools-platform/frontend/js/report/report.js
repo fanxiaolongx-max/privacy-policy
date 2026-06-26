@@ -3781,9 +3781,11 @@ window.saveDashboardToDB = async function(event) {
             if (isPercent) targetStr += '%';
         }
         
+        let hasAnyCustomerData = false;
         Object.keys(catData).forEach(catName => {
             const cell = catData[catName].values[m.label];
             if (cell) {
+                hasAnyCustomerData = true;
                 metric_data.push({
                     cat_name: catName,
                     metric_label: m.label,
@@ -3799,6 +3801,39 @@ window.saveDashboardToDB = async function(event) {
                 });
             }
         });
+        
+        // If a metric has no customer data but has a global value, save it as '整体'
+        if (!hasAnyCustomerData && hasFilledValue(m.value)) {
+            const globalValNum = parseNum(m.value);
+            const targetNum = parseFloat(targetData[month]);
+            let isFailing = m.isWarn || m.isFailing || false;
+            let gapStr = m.gap || '';
+            
+            if (Number.isFinite(globalValNum) && Number.isFinite(targetNum)) {
+                const condition = targetData.type || 'gte';
+                if (condition === 'gte' && globalValNum < targetNum) {
+                    isFailing = true;
+                    gapStr = (targetNum - globalValNum).toFixed(1);
+                } else if (condition === 'lte' && globalValNum > targetNum) {
+                    isFailing = true;
+                    gapStr = (globalValNum - targetNum).toFixed(1);
+                }
+            }
+            
+            metric_data.push({
+                cat_name: '整体',
+                metric_label: m.label,
+                weight: weight,
+                target_val: targetStr,
+                raw_val: String(m.value),
+                num_val: globalValNum,
+                is_failing: isFailing,
+                gap: gapStr,
+                earned_score: null,
+                proportional_scoring: false,
+                completion_ratio: null
+            });
+        }
     });
 
     const payload = {

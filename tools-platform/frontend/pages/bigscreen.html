@@ -19,6 +19,8 @@
             --red: #ff5d73;
             --screen-scroll-duration: 56s;
         }
+        
+        .ai-fab { display: none !important; }
 
         * {
             box-sizing: border-box;
@@ -201,58 +203,129 @@
 
         .kpi {
             min-height: 0;
-            padding: 12px 15px;
+            padding: 10px 14px;
             border: 1px solid rgba(120, 190, 255, 0.22);
             background: linear-gradient(135deg, rgba(14, 36, 61, 0.92), rgba(10, 25, 42, 0.82));
-            display: grid;
-            grid-template-rows: auto 1fr auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .kpi-title {
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .kpi-title-icon {
+            font-size: 14px;
+        }
+
+        .kpi-slider-wrap {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            min-height: 48px; /* Give it enough height to show one slide */
+        }
+        
+        .kpi-slider {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            will-change: transform;
+        }
+        
+        .kpi-slide-item {
+            flex: 0 0 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .kpi-slide-row1 {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             gap: 8px;
         }
 
-        .kpi-label {
-            color: var(--text-muted);
-            font-size: 12px;
+        .kpi-slide-row2 {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
         }
 
-        .kpi-main {
-            display: grid;
-            grid-template-columns: auto minmax(0, 1fr);
-            align-items: end;
-            gap: 12px;
-        }
-
-        .kpi-value {
-            font-size: 28px;
-            line-height: 1;
-            font-weight: 900;
-            color: #fff;
-        }
-
-        .kpi-value.good {
-            color: var(--green);
-        }
-
-        .kpi-value.warn {
-            color: var(--amber);
-        }
-
-        .kpi-value.bad {
-            color: var(--red);
-        }
-
-        .kpi-side {
-            min-width: 0;
-            justify-self: end;
-            max-width: 100%;
-            padding: 5px 8px;
-            border: 1px solid rgba(120, 190, 255, 0.18);
-            background: rgba(57, 213, 255, 0.06);
-            color: #cfe4f8;
-            font-size: 11px;
+        .kpi-ticket-id {
+            font-size: 16px;
             font-weight: 800;
+            color: #fff;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+        }
+        
+        .kpi-metric-val {
+            font-size: 16px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .kpi-network {
+            font-size: 12px;
+            color: #8ea8c5;
+            background: rgba(142, 168, 197, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 60%;
+        }
+
+        .kpi-status-badge {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+        
+        .kpi-status-badge.danger {
+            background: rgba(255, 60, 60, 0.15);
+            color: #ff4d4d;
+            border: 1px solid rgba(255, 60, 60, 0.3);
+        }
+        
+        .kpi-status-badge.warning {
+            background: rgba(255, 170, 0, 0.15);
+            color: #ffb700;
+            border: 1px solid rgba(255, 170, 0, 0.3);
+        }
+        
+        .kpi-status-badge.safe {
+            background: rgba(30, 215, 96, 0.15);
+            color: #1ed760;
+            border: 1px solid rgba(30, 215, 96, 0.3);
+        }
+
+        .kpi-empty {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1ed760;
+            font-size: 13px;
+            font-weight: 600;
+            gap: 6px;
         }
 
         .kpi-foot {
@@ -383,7 +456,7 @@
         }
 
         .rank-row {
-            grid-template-columns: 28px 1fr 34px;
+            grid-template-columns: 28px 1fr auto;
             min-width: 0;
             padding: 10px;
             border: 1px solid rgba(120, 190, 255, 0.14);
@@ -500,7 +573,7 @@
             align-items: center;
             gap: 10px;
             margin-bottom: 8px;
-            grid-column: 1 / 3;
+            grid-column: 1;
             grid-row: 1;
             min-width: 0;
         }
@@ -528,17 +601,31 @@
 
         .risk-owner {
             grid-column: 2;
-            grid-row: 2;
+            grid-row: 1 / 3;
             align-self: stretch;
+            position: relative;
+            border-left: 1px solid rgba(120, 190, 255, 0.13);
+            color: var(--text-muted);
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .owner-slider {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .owner-slide-item {
+            flex: 0 0 100%;
+            height: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             gap: 5px;
             padding-left: 8px;
-            border-left: 1px solid rgba(120, 190, 255, 0.13);
-            color: var(--text-muted);
-            min-width: 0;
         }
 
         .owner-avatar {
@@ -565,6 +652,16 @@
             font-weight: 800;
         }
 
+        .owner-empid {
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-align: center;
+            font-size: 9px;
+            color: #6484a5;
+        }
+
         .owner-avatar img {
             width: 100%;
             height: 100%;
@@ -589,7 +686,136 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            transition: all 0.4s ease;
         }
+        
+        .cat-chip.dimmed {
+            opacity: 0.35;
+            filter: grayscale(80%);
+        }
+        
+        .cat-chip.active-highlight {
+            transform: scale(1.04);
+            box-shadow: 0 0 16px rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+            z-index: 1;
+            position: relative;
+        }
+
+        .metric-carousel {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            border: 1px solid rgba(120, 190, 255, 0.12);
+            border-radius: 8px;
+            background: rgba(12, 26, 45, 0.4);
+        }
+
+        .carousel-slide {
+            position: absolute;
+            inset: 0;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.6s ease, transform 0.6s ease;
+            transform: translateX(20px);
+            pointer-events: none;
+        }
+
+        .carousel-slide.active {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: auto;
+            z-index: 2;
+        }
+
+        .carousel-slide.prev {
+            transform: translateX(-20px);
+            opacity: 0;
+        }
+
+        .carousel-metric-name {
+            font-size: 16px;
+            font-weight: 800;
+            color: #ff8fa0;
+            border-bottom: 1px solid rgba(255, 93, 115, 0.2);
+            padding-bottom: 6px;
+        }
+        
+        .carousel-metric-details {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .carousel-cat-row {
+            display: grid;
+            grid-template-columns: 80px 1fr auto;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            background: rgba(255, 93, 115, 0.04);
+            border: 1px solid rgba(255, 93, 115, 0.15);
+            border-radius: 4px;
+            animation: failingPulse 2.5s infinite ease-in-out;
+        }
+        
+        @keyframes failingPulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 93, 115, 0);
+            }
+            50% {
+                box-shadow: 0 0 10px 0 rgba(255, 93, 115, 0.3) inset, 0 0 5px 0 rgba(255, 93, 115, 0.2);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 93, 115, 0);
+            }
+        }
+
+        .carousel-cat-row.zero-alert {
+            background: rgba(255, 93, 115, 0.12);
+            border-color: rgba(255, 93, 115, 0.4);
+            animation: failingPulseZero 1.5s infinite ease-in-out;
+        }
+
+        .carousel-cat-row.zero-alert .carousel-cat-name {
+            color: #ff5d73;
+            text-shadow: 0 0 8px rgba(255, 93, 115, 0.4);
+        }
+
+        .text-red {
+            color: #ff5d73 !important;
+        }
+
+        @keyframes failingPulseZero {
+            0% { box-shadow: 0 0 0 0 rgba(255, 93, 115, 0); }
+            50% { box-shadow: 0 0 16px 0 rgba(255, 93, 115, 0.5) inset, 0 0 8px 0 rgba(255, 93, 115, 0.4); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 93, 115, 0); }
+        }
+
+        .carousel-cat-name {
+            font-weight: 700;
+            color: #fff;
+            font-size: 13px;
+        }
+        
+        .carousel-cat-vals {
+            font-size: 12px;
+            color: #9fb9d4;
+        }
+        
+        .carousel-cat-diff {
+            font-weight: 800;
+            font-size: 13px;
+        }
+        .carousel-cat-diff.up { color: var(--green); }
+        .carousel-cat-diff.down { color: var(--red); }
+        .carousel-cat-diff.flat { color: var(--text-muted); }
 
         .cat-chip.severity-high {
             color: #fff1f3;
@@ -676,7 +902,7 @@
             }
 
             100% {
-                transform: translateY(-42%);
+                transform: translateY(-50%);
             }
         }
 
@@ -721,8 +947,15 @@
             background: rgba(255, 93, 115, 0.1);
         }
 
-        .source-strip {
+        .bottom-bar {
             margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 20px;
+        }
+
+        .source-strip {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
@@ -734,6 +967,15 @@
             border: 1px solid rgba(120, 190, 255, 0.2);
             background: rgba(6, 16, 30, 0.5);
             padding: 6px 9px;
+        }
+
+        .contact-info {
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+        
+        .contact-info:hover {
+            color: var(--cyan);
         }
 
         .owner-modal {
@@ -784,7 +1026,7 @@
 
         .owner-form {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1.05fr auto;
+            grid-template-columns: 1fr 1fr 1fr 0.8fr 1.05fr auto;
             gap: 10px;
             padding: 14px 16px;
             border-bottom: 1px solid rgba(120, 190, 255, 0.12);
@@ -1050,6 +1292,12 @@
                 <input id="endDate" class="screen-input" type="date" aria-label="结束日期">
                 <button id="refreshBtn" class="screen-btn">刷新</button>
                 <button id="ownerConfigBtn" class="screen-btn secondary">责任人配置</button>
+                <button class="screen-btn secondary" onclick="toggleFullScreen()" title="全屏显示">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="vertical-align: text-bottom;">
+                        <path d="M5 5h5v2H7v3H5V5zm9 0h5v5h-2V7h-3V5zm5 14h-5v-2h3v-3h2v5zM5 19v-5h2v3h3v2H5z"/>
+                    </svg>
+                    全屏
+                </button>
             </div>
         </header>
 
@@ -1081,7 +1329,7 @@
 
             <section class="panel failure-focus">
                 <div class="panel-head">
-                    <div class="panel-title">整体未达标诊断</div>
+                    <div class="panel-title">整体未达标诊断 <span id="failingMetricsCount" style="font-size:12px;color:#ff5d73;font-weight:normal;margin-left:8px;"></span></div>
                     <div class="panel-sub">指标 × 未达标客户群</div>
                 </div>
                 <div class="panel-body">
@@ -1089,19 +1337,21 @@
                 </div>
             </section>
 
-            <section class="panel concentration-panel">
+            <section class="panel metric-carousel-panel">
                 <div class="panel-head">
-                    <div class="panel-title">短板集中度</div>
-                    <div class="panel-sub">按客户群数</div>
+                    <div class="panel-title">综合轮播诊断</div>
+                    <div class="panel-sub">多维指标展示</div>
                 </div>
                 <div class="panel-body">
-                    <div id="riskChart" class="chart"></div>
+                    <div id="failingMetricsCarousel" class="metric-carousel">
+                        <div class="empty">正在加载指标详情...</div>
+                    </div>
                 </div>
             </section>
 
             <section class="panel pass-strip-panel">
                 <div class="panel-head">
-                    <div class="panel-title">已达标指标巡检</div>
+                    <div class="panel-title">已达标指标巡检 <span id="passingMetricsCount" style="font-size:12px;color:var(--cyan);font-weight:normal;margin-left:8px;"></span></div>
                     <div class="panel-sub">辅助滚动</div>
                 </div>
                 <div class="panel-body">
@@ -1110,10 +1360,13 @@
             </section>
         </section>
 
-        <div class="source-strip" id="sourceStrip">
-            <span>趋势来源: -</span>
-            <span>快照来源: -</span>
-            <span>最新刷新: -</span>
+        <div class="bottom-bar">
+            <div class="source-strip" id="sourceStrip">
+                <span>趋势来源: -</span>
+                <span>快照来源: -</span>
+                <span>最新刷新: -</span>
+            </div>
+            <span class="contact-info" id="contactInfoText" onclick="editContactInfo()">如果对看板数据有疑问或者建议，请联系xxxx</span>
         </div>
     </main>
 
@@ -1132,6 +1385,7 @@
                     <option value="">客户群默认</option>
                 </select>
                 <input id="ownerNameInput" type="text" placeholder="责任人名字">
+                <input id="ownerEmpIdInput" type="text" placeholder="工号">
                 <label class="owner-avatar-picker">
                     <span id="ownerAvatarPreview" class="owner-avatar-preview">图</span>
                     <span id="ownerAvatarLabel" class="owner-avatar-label">上传头像图片</span>
@@ -1147,6 +1401,7 @@
                             <th>客户群</th>
                             <th>指标维度</th>
                             <th>责任人</th>
+                            <th>工号</th>
                             <th>操作</th>
                         </tr>
                     </thead>

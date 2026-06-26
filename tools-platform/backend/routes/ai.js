@@ -100,7 +100,7 @@ function fallbackPptActions(instruction, operationContext) {
  */
 router.post('/chat', checkAuth, async (req, res) => {
     try {
-        const aiSettings = aiSettingsRepo.getRuntimeSettings();
+        const aiSettings = await aiSettingsRepo.getRuntimeSettings();
         if (!aiSettings.hasApiKey) {
             return res.status(503).json({ 
                 error: '未配置 AI 助手 API Token，当前不可用。请管理员在全局设置中配置，或继续使用 GEMINI_API_KEY 环境变量兜底。'
@@ -191,7 +191,7 @@ ${aiSettings.systemPrompt ? `\n**管理员补充要求**：\n${aiSettings.system
  */
 router.post('/ppt-copilot-actions', checkAuth, async (req, res) => {
     try {
-        const aiSettings = aiSettingsRepo.getRuntimeSettings();
+        const aiSettings = await aiSettingsRepo.getRuntimeSettings();
         if (!aiSettings.hasApiKey || !aiSettings.keyLooksValid) {
             return res.status(503).json({ error: 'AI API Token 未配置或格式无效。' });
         }
@@ -279,7 +279,7 @@ ${firstRaw.slice(0, 6000)}`;
  */
 router.post('/ppt-copilot', checkAuth, async (req, res) => {
     try {
-        const aiSettings = aiSettingsRepo.getRuntimeSettings();
+        const aiSettings = await aiSettingsRepo.getRuntimeSettings();
         if (!aiSettings.hasApiKey) {
             return res.status(503).json({ error: '未配置 AI API Token。' });
         }

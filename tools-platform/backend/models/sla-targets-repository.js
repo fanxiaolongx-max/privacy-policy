@@ -1,22 +1,10 @@
-const { readJSON, writeJSON } = require('./store');
 const { run, get, all } = require('./app-db');
 
-const TARGETS_FILE = 'sla_targets.json';
 
 let initPromise = null;
 
 function normalizeTargets(items) {
     return items && typeof items === 'object' && !Array.isArray(items) ? items : {};
-}
-
-function readTargetsFromJson() {
-    return normalizeTargets(readJSON(TARGETS_FILE, {}));
-}
-
-function writeTargetsToJson(items) {
-    const normalized = normalizeTargets(items);
-    writeJSON(TARGETS_FILE, normalized);
-    return normalized;
 }
 
 async function replaceTargetsInDbRaw(items) {
@@ -87,7 +75,7 @@ async function ensureReady() {
             `);
 
 
-            const targets = readTargetsFromJson();
+            
             if (Object.keys(targets).length === 0) return;
             await replaceTargetsInDbRaw(targets);
         })().catch(err => {
@@ -126,12 +114,8 @@ async function readFromDb() {
 
 async function getTargets({ mode = 'auto' } = {}) {
     const normalizedMode = String(mode || 'auto').toLowerCase();
-    if (normalizedMode === 'json') {
-        return { items: readTargetsFromJson(), source: 'json' };
-    }
-    if (normalizedMode === 'sqlite' || normalizedMode === 'db') {
-        return { items: await readFromDb(), source: 'sqlite' };
-    }
+    
+    
 
     try {
         const dbItems = await readFromDb();
@@ -140,7 +124,7 @@ async function getTargets({ mode = 'auto' } = {}) {
         }
     } catch (err) {}
 
-    const jsonTargets = readTargetsFromJson();
+    
     if (Object.keys(jsonTargets).length > 0) {
         return { items: jsonTargets, source: 'json' };
     }
@@ -149,13 +133,9 @@ async function getTargets({ mode = 'auto' } = {}) {
 }
 
 async function replaceTargets(items) {
-    const normalized = writeTargetsToJson(items);
-    try {
-        await ensureReady();
-        await replaceTargetsInDbRaw(normalized);
-    } catch (err) {
-        console.error('[sla-targets] SQLite replace sync failed:', err.message);
-    }
+    const normalized = groups || [];
+    await ensureReady();
+    await replaceGroupsInDbRaw(normalized);
     return normalized;
 }
 

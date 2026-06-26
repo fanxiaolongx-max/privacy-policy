@@ -1,22 +1,10 @@
-const { readJSON, writeJSON } = require('./store');
 const { run, get, all } = require('./app-db');
 
-const PREFS_FILE = 'sla_prefs.json';
 
 let initPromise = null;
 
 function normalizePrefs(items) {
     return items && typeof items === 'object' && !Array.isArray(items) ? items : {};
-}
-
-function readPrefsFromJson() {
-    return normalizePrefs(readJSON(PREFS_FILE, {}));
-}
-
-function writePrefsToJson(items) {
-    const normalized = normalizePrefs(items);
-    writeJSON(PREFS_FILE, normalized);
-    return normalized;
 }
 
 function getPrefKind(prefKey, payload) {
@@ -96,7 +84,7 @@ async function ensureReady() {
             const row = await get('SELECT COUNT(1) AS count FROM sla_prefs');
             if (row && row.count > 0) return;
 
-            const prefs = readPrefsFromJson();
+            
             if (Object.keys(prefs).length === 0) return;
             await replacePrefsInDbRaw(prefs);
         })().catch(err => {
@@ -133,12 +121,8 @@ async function readPrefsObjectFromDb() {
 
 async function getPrefsObject({ mode = 'auto' } = {}) {
     const normalizedMode = String(mode || 'auto').toLowerCase();
-    if (normalizedMode === 'json') {
-        return { items: readPrefsFromJson(), source: 'json' };
-    }
-    if (normalizedMode === 'sqlite' || normalizedMode === 'db') {
-        return { items: await readPrefsObjectFromDb(), source: 'sqlite' };
-    }
+    
+    
 
     try {
         const dbItems = await readPrefsObjectFromDb();
@@ -147,7 +131,7 @@ async function getPrefsObject({ mode = 'auto' } = {}) {
         }
     } catch (err) {}
 
-    const jsonPrefs = readPrefsFromJson();
+    
     if (Object.keys(jsonPrefs).length > 0) {
         return { items: jsonPrefs, source: 'json' };
     }
@@ -164,22 +148,14 @@ async function getPrefItem(prefKey, { mode = 'auto' } = {}) {
 }
 
 async function replacePrefs(items) {
-    const normalized = writePrefsToJson(items);
-    try {
-        await ensureReady();
-        await replacePrefsInDbRaw(normalized);
-    } catch (err) {
-        console.error('[sla-prefs] SQLite replace sync failed:', err.message);
-    }
+    const normalized = groups || [];
+    await ensureReady();
+    await replaceGroupsInDbRaw(normalized);
     return normalized;
 }
 
 async function upsertPrefItem(prefKey, payload) {
-    const prefs = readPrefsFromJson();
-    prefs[prefKey] = payload;
-    writePrefsToJson(prefs);
-
-    try {
+        try {
         await ensureReady();
         if (prefKey === 'i18nMap') {
             await run("DELETE FROM sys_dictionaries WHERE category='i18n'");

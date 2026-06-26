@@ -62,6 +62,7 @@ db.serialize(() => {
     db.run("ALTER TABLE ReportMetricData ADD COLUMN earned_score REAL", () => {});
     db.run("ALTER TABLE ReportMetricData ADD COLUMN proportional_scoring INTEGER", () => {});
     db.run("ALTER TABLE ReportMetricData ADD COLUMN completion_ratio REAL", () => {});
+    db.run("ALTER TABLE BigscreenOwners ADD COLUMN emp_id TEXT DEFAULT ''", () => {});
 
     db.run(`CREATE TABLE IF NOT EXISTS PlatformConfig (
         key_name TEXT PRIMARY KEY,
@@ -74,6 +75,7 @@ db.serialize(() => {
         cat_name TEXT NOT NULL,
         metric_label TEXT DEFAULT '',
         owner_name TEXT NOT NULL,
+        emp_id TEXT DEFAULT '',
         avatar TEXT DEFAULT '',
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(cat_name, metric_label)
@@ -305,7 +307,7 @@ router.get('/config/:key', (req, res) => {
 });
 
 router.post('/config/:key', (req, res) => {
-    if (!req.user || req.user.role !== 'admin') {
+    if (req.params.key !== 'bigscreen_contact_info' && (!req.user || req.user.role !== 'admin')) {
         return res.status(403).json({ error: '没有权限，仅管理员可修改配置' });
     }
     const valueJson = JSON.stringify(req.body);
@@ -402,28 +404,42 @@ router.get('/monthly_report_data', (req, res) => {
                 const latestDailySnapshot = dailySnapshots[dailySnapshots.length - 1];
                 const latestSnapshotId = latestDailySnapshot.snapshot_id;
                 const latestMonth = latestDailySnapshot.month;
+                
+                const prevDailySnapshot = dailySnapshots.length > 1 ? dailySnapshots[dailySnapshots.length - 2] : null;
 
                 db.all(`SELECT * FROM ReportCategoryScores WHERE snapshot_id = ? AND (month = ? OR month IS NULL)`, [latestSnapshotId, latestMonth], (err, latestCatScores) => {
                     if (err) return res.status(500).json({ error: err.message });
 
                     db.all(`SELECT * FROM ReportMetricData WHERE snapshot_id = ? AND (month = ? OR month IS NULL)`, [latestSnapshotId, latestMonth], (err, latestMetrics) => {
                         if (err) return res.status(500).json({ error: err.message });
-
-                        db.get(`SELECT raw_data_json FROM ReportSnapshots WHERE snapshot_id = ? AND month = ? ORDER BY id DESC LIMIT 1`, [latestSnapshotId, latestMonth], (err, snapRow) => {
-                            if (err) return res.status(500).json({ error: err.message });
-                            markSqliteSource(res, 'GET /api/db/monthly_report_data');
-                            res.json({
-                                trends: trends,
-                                latest_snapshot: {
-                                    snapshot_id: latestSnapshotId,
-                                    month: latestMonth,
-                                    total_score: latestDailySnapshot.standard_total_score,
-                                    cat_scores: latestCatScores,
-                                    metrics: latestMetrics,
-                                    raw_data_json: snapRow ? snapRow.raw_data_json : null
-                                }
+                        
+                        const finishResponse = (prevMetrics) => {
+                            db.get(`SELECT raw_data_json FROM ReportSnapshots WHERE snapshot_id = ? AND month = ? ORDER BY id DESC LIMIT 1`, [latestSnapshotId, latestMonth], (err, snapRow) => {
+                                if (err) return res.status(500).json({ error: err.message });
+                                markSqliteSource(res, 'GET /api/db/monthly_report_data');
+                                res.json({
+                                    trends: trends,
+                                    latest_snapshot: {
+                                        snapshot_id: latestSnapshotId,
+                                        month: latestMonth,
+                                        total_score: latestDailySnapshot.standard_total_score,
+                                        cat_scores: latestCatScores,
+                                        metrics: latestMetrics,
+                                        previous_metrics: prevMetrics,
+                                        raw_data_json: snapRow ? snapRow.raw_data_json : null
+                                    }
+                                });
                             });
-                        });
+                        };
+
+                        if (prevDailySnapshot) {
+                            db.all(`SELECT * FROM ReportMetricData WHERE snapshot_id = ? AND (month = ? OR month IS NULL)`, [prevDailySnapshot.snapshot_id, prevDailySnapshot.month], (err, prevMetrics) => {
+                                if (err) return res.status(500).json({ error: err.message });
+                                finishResponse(prevMetrics);
+                            });
+                        } else {
+                            finishResponse([]);
+                        }
                     });
                 });
             });
@@ -433,7 +449,7 @@ router.get('/monthly_report_data', (req, res) => {
 
 router.get('/bigscreen_owners', (req, res) => {
     db.all(
-        `SELECT id, cat_name, metric_label, owner_name, avatar, updated_at
+        `SELECT id, cat_name, metric_label, owner_name, emp_id, avatar, updated_at
          FROM BigscreenOwners
          ORDER BY cat_name ASC, metric_label ASC`,
         (err, rows) => {
@@ -451,6 +467,7 @@ router.post('/bigscreen_owners', (req, res) => {
             cat_name: String(item.cat_name || '').trim(),
             metric_label: String(item.metric_label || '').trim(),
             owner_name: String(item.owner_name || '').trim(),
+            emp_id: String(item.emp_id || '').trim(),
             avatar: String(item.avatar || '').trim()
         }))
         .filter(item => item.cat_name && item.owner_name);
@@ -464,16 +481,17 @@ router.post('/bigscreen_owners', (req, res) => {
             }
 
             const stmt = db.prepare(
-                `INSERT INTO BigscreenOwners (cat_name, metric_label, owner_name, avatar, updated_at)
-                 VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                `INSERT INTO BigscreenOwners (cat_name, metric_label, owner_name, emp_id, avatar, updated_at)
+                 VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                  ON CONFLICT(cat_name, metric_label) DO UPDATE SET
                     owner_name = excluded.owner_name,
+                    emp_id = excluded.emp_id,
                     avatar = excluded.avatar,
                     updated_at = CURRENT_TIMESTAMP`
             );
 
             for (const item of normalized) {
-                stmt.run([item.cat_name, item.metric_label, item.owner_name, item.avatar]);
+                stmt.run([item.cat_name, item.metric_label, item.owner_name, item.emp_id, item.avatar]);
             }
             stmt.finalize(err => {
                 if (err) {

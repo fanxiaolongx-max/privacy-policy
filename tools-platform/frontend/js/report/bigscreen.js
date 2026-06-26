@@ -109,66 +109,117 @@
 
     function renderKpis() {
         const latest = state.latest || {};
-        const trends = state.trends || [];
-        const lastTrend = trends[trends.length - 1] || {};
-        const stats = metricSummary(latest);
         const raw = parseRaw(latest.raw_data_json);
-        const expiringCount = Array.isArray(raw.expiringTickets) ? raw.expiringTickets.length : 0;
-        const specialCount = Array.isArray(raw.specialMetricAlerts) ? raw.specialMetricAlerts.length : 0;
-        const score = num(latest.total_score ?? lastTrend.total_score, 0);
-        const rate = num(lastTrend.compliance_rate, stats.passRate);
-        const failingByMetric = groupFailingMetrics();
-        const failingByCat = groupFailingCustomers();
-        const topMetric = failingByMetric[0];
-        const maxFailingMetricCount = failingByMetric.length ? Math.max(...failingByMetric.map(item => item.count)) : 0;
-        const maxFailingCatCount = failingByCat.length ? Math.max(...failingByCat.map(item => item.count)) : 0;
-
-        const kpis = [
-            {
-                label: '未达标明细',
-                value: stats.metricFailing,
-                side: `总 ${stats.metricTotal} 个`,
-                foot: `整体指标 ${stats.metricTotal} 个 · 已达标 ${stats.metricPassing} 个`,
-                meter: stats.metricTotal ? stats.metricFailing / stats.metricTotal * 100 : 0,
-                tone: stats.metricFailing ? 'bad' : 'good'
-            },
-            {
-                label: '受影响客户群',
-                value: failingByCat.length,
-                side: failingByCat[0] ? failingByCat[0].cat : '暂无风险',
-                foot: failingByCat[0] ? `最多 ${failingByCat[0].count} 项未达标` : '客户群全部稳定',
-                meter: maxFailingCatCount ? failingByCat[0].count / maxFailingCatCount * 100 : 0,
-                tone: failingByCat.length ? 'bad' : 'good'
-            },
-            {
-                label: '最大短板指标',
-                value: topMetric ? topMetric.count : 0,
-                side: topMetric ? topMetric.label : '无短板',
-                foot: topMetric ? `涉及 ${topMetric.count} 个客户群` : '当前无未达标指标',
-                meter: maxFailingMetricCount ? topMetric.count / maxFailingMetricCount * 100 : 0,
-                tone: topMetric ? 'bad' : 'good'
-            },
-            {
-                label: '辅助状态',
-                value: `${fmt(rate, 0)}%`,
-                side: `总分 ${fmt(score, 1)}`,
-                foot: `预警 ${expiringCount + specialCount} · 快照 ${latest.snapshot_id || '-'}`,
-                meter: rate,
-                tone: rate >= 95 ? 'good' : (rate >= 85 ? 'warn' : 'bad')
-            }
+        
+        const tickets = Array.isArray(raw.expiringTickets) ? raw.expiringTickets : [];
+        const alerts = Array.isArray(raw.specialMetricAlerts) ? raw.specialMetricAlerts : [];
+        
+        const groups = [
+            { id: 'vulnerability', title: '漏洞预警', icon: '🧯', items: tickets.filter(t => t.collection === 'vulnerability'), type: 'ticket' },
+            { id: 'rectification', title: '整改预警', icon: '🛠️', items: tickets.filter(t => t.collection === 'rectification'), type: 'ticket' },
+            { id: 'risk_sr', title: '风险与工单预警', icon: '📞', items: tickets.filter(t => ['risk', 'special', 'sr'].includes(t.collection)), type: 'ticket' },
+            { id: 'metric_alerts', title: '全局指标告警', icon: '🚨', items: alerts, type: 'alert' }
         ];
 
-        $('kpiRow').innerHTML = kpis.map(item => `
-            <div class="kpi">
-                <div class="kpi-label">${escapeHTML(item.label)}</div>
-                <div class="kpi-main">
-                    <div class="kpi-value ${item.tone || ''}">${escapeHTML(item.value)}</div>
-                    <div class="kpi-side" title="${escapeHTML(item.side || '')}">${escapeHTML(item.side || '')}</div>
+        $('kpiRow').innerHTML = groups.map(group => {
+            let slidesHtml = '';
+            
+            if (group.items.length === 0) {
+                slidesHtml = `<div class="kpi-empty">✅ 当前无${group.title.replace('预警','').replace('告警','')}</div>`;
+            } else {
+                const slideDivs = group.items.map(item => {
+                    if (group.type === 'ticket') {
+                        const tId = item.data?.task_id || item.data?.sr_num || item.data?.precaution_id || item.title || 'Unknown';
+                        const net = item.data?.network_name || item.data?.network_cust_name || item.data?.customer_name_cn || '全局';
+                        let statusText = item._slaCleanText || item.data?.task_status || item._srStatus || '处理中';
+                        let badgeClass = 'safe';
+                        if (statusText.includes('紧急') || statusText.includes('严重') || statusText.includes('超期')) {
+                            badgeClass = 'danger';
+                        } else if (statusText.includes('预警') || statusText.includes('剩余')) {
+                            badgeClass = 'warning';
+                        }
+                        
+                        return `
+                            <div class="kpi-slide-item">
+                                <div class="kpi-slide-row1">
+                                    <div class="kpi-ticket-id" title="${escapeHTML(tId)}">${escapeHTML(tId)}</div>
+                                    <div class="kpi-status-badge ${badgeClass}">${escapeHTML(statusText)}</div>
+                                </div>
+                                <div class="kpi-slide-row2">
+                                    <div class="kpi-network" title="${escapeHTML(net)}">${escapeHTML(net)}</div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        // Alert
+                        const label = item.metricLabel || item.metric_label || '未知指标';
+                        const val = item.globalValue || item.global_val || '-';
+                        const target = item.targetValue || item.target_val || '-';
+                        const gap = item.gap ? `差距 ${item.gap}` : '不达标';
+                        
+                        return `
+                            <div class="kpi-slide-item">
+                                <div class="kpi-slide-row1">
+                                    <div class="kpi-metric-val" title="${escapeHTML(label)}">${escapeHTML(label)}: ${escapeHTML(val)}</div>
+                                    <div class="kpi-status-badge danger">${escapeHTML(gap)}</div>
+                                </div>
+                                <div class="kpi-slide-row2">
+                                    <div class="kpi-network">目标: ${escapeHTML(target)}</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                // For seamless looping, append a copy of the first slide at the end if count > 1
+                const renderedSlides = slideDivs.join('');
+                slidesHtml = slideDivs.length > 1 ? renderedSlides + slideDivs[0] : renderedSlides;
+            }
+
+            return `
+                <div class="kpi">
+                    <div class="kpi-title">
+                        <span class="kpi-title-icon">${group.icon}</span>
+                        ${escapeHTML(group.title)} <span style="font-size: 14px; opacity: 0.8; margin-left: 4px;">(${group.items.length})</span>
+                    </div>
+                    <div class="kpi-slider-wrap">
+                        <div class="kpi-slider" data-count="${group.items.length}" data-current="0" style="transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);">
+                            ${slidesHtml}
+                        </div>
+                    </div>
                 </div>
-                <div class="kpi-meter" style="--meter:${Math.max(0, Math.min(100, num(item.meter, 0)))}%;"><span></span></div>
-                <div class="kpi-foot">${escapeHTML(item.foot)}</div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
+        
+        initKpiCarousel();
+    }
+
+    let kpiRotationInterval = null;
+    function initKpiCarousel() {
+        if (kpiRotationInterval) clearInterval(kpiRotationInterval);
+        
+        kpiRotationInterval = setInterval(() => {
+            const sliders = document.querySelectorAll('.kpi-slider[data-count]');
+            sliders.forEach(slider => {
+                const count = parseInt(slider.getAttribute('data-count'), 10);
+                if (count <= 1) return;
+                
+                let current = parseInt(slider.getAttribute('data-current') || '0', 10);
+                
+                if (current === count) {
+                    slider.style.transition = 'none';
+                    slider.style.transform = `translateY(0)`;
+                    slider.setAttribute('data-current', '0');
+                    void slider.offsetHeight;
+                    slider.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+                    current = 0;
+                }
+                
+                current++;
+                slider.setAttribute('data-current', current);
+                slider.style.transform = `translateY(-${current * 100}%)`;
+            });
+        }, 3500);
     }
 
     function groupFailingCustomers() {
@@ -238,10 +289,16 @@
         $('rankSummary').innerHTML = `
             当前排名第 <strong>1</strong> 的客户群为 <strong>${escapeHTML(first.cat)}</strong>，
             得分 <strong class="good">${fmt(first.score, 1)}</strong>；
-            倒数第 <strong>${rows.length}</strong> 为 <strong>${escapeHTML(last.cat)}</strong>，
+            第 <strong>${rows.length}</strong> 为 <strong>${escapeHTML(last.cat)}</strong>，
             得分 <strong class="bad">${fmt(last.score, 1)}</strong>。
             ${riskLeader && riskLeader.metrics.length ? `未达标项最集中在 <strong>${escapeHTML(riskLeader.cat)}</strong>（<strong class="bad">${riskLeader.metrics.length}</strong> 项）。` : ''}
         `;
+    }
+
+    function getMetricSortIndex(label) {
+        if (!state.metricOrder) return 9999;
+        const idx = state.metricOrder.indexOf(label);
+        return idx >= 0 ? idx : 9999;
     }
 
     function groupFailingMetrics() {
@@ -264,7 +321,9 @@
             grouped[label].values.push(item.raw_val || item.num_val || '-');
             grouped[label].rows.push(item);
         });
-        return Object.values(grouped).sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+        return Object.values(grouped).sort((a, b) => {
+            return getMetricSortIndex(a.label) - getMetricSortIndex(b.label) || b.count - a.count || a.label.localeCompare(b.label);
+        });
     }
 
     function parseMetricNumber(value) {
@@ -306,12 +365,127 @@
         return 'severity-low';
     }
 
+
+
+    function ownerKey(cat, metric = '') {
+        return `${String(cat || '').trim()}@@${String(metric || '').trim()}`;
+    }
+
+    function ownerMap() {
+        const map = {};
+        (state.owners || []).forEach(item => {
+            map[ownerKey(item.cat_name, item.metric_label)] = item;
+        });
+        return map;
+    }
+
+    function resolveOwnersForMetric(item) {
+        const map = ownerMap();
+        const sortedRows = [...(item.rows || [])].sort((a, b) => failSeverityScore(b) - failSeverityScore(a));
+        const ownersMap = new Map();
+
+        for (const row of sortedRows) {
+            let owner = map[ownerKey(row.cat_name, item.label)];
+            if (!owner) owner = map[ownerKey(row.cat_name, '')];
+            if (owner) {
+                const key = owner.owner_name + '|' + (owner.emp_id || '');
+                if (!ownersMap.has(key)) {
+                    ownersMap.set(key, { ...owner, managedCats: new Set([row.cat_name]) });
+                } else {
+                    ownersMap.get(key).managedCats.add(row.cat_name);
+                }
+            }
+        }
+
+        if (ownersMap.size === 0) {
+            let owner = map[ownerKey('整体', item.label)] || map[ownerKey('', item.label)] || map[ownerKey('全局', item.label)];
+            if (owner) {
+                const key = owner.owner_name + '|' + (owner.emp_id || '');
+                ownersMap.set(key, { ...owner, managedCats: new Set(['整体/全局']) });
+            }
+        }
+
+        if (ownersMap.size === 0) {
+            (state.owners || []).forEach(o => {
+                if (!o.owner_name) return;
+                const key = o.owner_name + '|' + (o.emp_id || '');
+                if (!ownersMap.has(key)) {
+                    ownersMap.set(key, { ...o, managedCats: new Set(['未配置(默认轮播)']) });
+                }
+            });
+        }
+
+        return Array.from(ownersMap.values());
+    }
+
+    let ownerRotationInterval = null;
+
+    function initOwnerRotation() {
+        if (ownerRotationInterval) clearInterval(ownerRotationInterval);
+
+        ownerRotationInterval = setInterval(() => {
+            const sliders = document.querySelectorAll('.owner-slider[data-count]');
+            sliders.forEach(slider => {
+                const count = parseInt(slider.getAttribute('data-count'), 10);
+                if (count <= 1) return;
+
+                let current = parseInt(slider.getAttribute('data-current') || '0', 10);
+
+                if (current === count) {
+                    slider.style.transition = 'none';
+                    slider.style.transform = `translateY(0)`;
+                    current = 0;
+                    void slider.offsetHeight;
+                    slider.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+                }
+
+                current++;
+                slider.setAttribute('data-current', current);
+                slider.style.transform = `translateY(-${current * 100}%)`;
+
+                updateChipHighlights(slider, count, current);
+            });
+        }, 3000);
+    }
+
+    function updateChipHighlights(slider, count, current) {
+        const realIdx = current % count;
+        const activeItem = slider.children[realIdx];
+        if (!activeItem) return;
+
+        const catNames = (activeItem.getAttribute('data-cats') || '').split(',');
+        const card = slider.closest('.risk-card');
+        if (!card) return;
+
+        const chips = card.querySelectorAll('.cat-chip');
+        chips.forEach(chip => {
+            const chipCat = chip.getAttribute('data-cat');
+            if (catNames.includes(chipCat)) {
+                chip.classList.add('active-highlight');
+                chip.classList.remove('dimmed');
+            } else {
+                chip.classList.remove('active-highlight');
+                chip.classList.add('dimmed');
+            }
+        });
+    }
+
     function renderWeakList() {
         const rows = groupFailingMetrics();
+        const countDom = $('failingMetricsCount');
+
         if (!rows.length) {
+            if (countDom) countDom.textContent = '';
             $('weakList').innerHTML = '<div class="empty">当前最新快照无未达标项</div>';
             return;
         }
+
+        if (countDom) {
+            const distinctFailingMetrics = rows.length;
+            const totalFailingRows = rows.reduce((acc, r) => acc + (r.rows ? r.rows.length : r.count), 0);
+            countDom.textContent = `(总计未达标指标: ${distinctFailingMetrics}个 | 客户群明细数: ${totalFailingRows}条)`;
+        }
+
         const loopRows = rows.length > 4 ? rows.concat(rows) : rows;
         $('weakList').innerHTML = `
             <div class="weak-scroll-track" style="${rows.length > 4 ? '' : 'animation:none;'}">
@@ -326,14 +500,14 @@
                         <div class="row-meta">目标 ${escapeHTML(item.target)}</div>
                         <div class="risk-cats">
                             ${(() => {
-                                const sortedRows = [...item.rows].sort((a, b) => failSeverityScore(b) - failSeverityScore(a));
-                                const maxScore = sortedRows.length ? failSeverityScore(sortedRows[0]) : 0;
-                                return sortedRows.map(row => `
-                                <span class="cat-chip ${severityClass(row, maxScore)}" title="${escapeHTML(row.cat_name || '-')} | 实测 ${escapeHTML(row.raw_val ?? row.num_val ?? '-')} | 目标 ${escapeHTML(row.target_val || '-')} | 偏离强度 ${fmt(failSeverityScore(row) * 100, 1)}">
+                const sortedRows = [...item.rows].sort((a, b) => failSeverityScore(b) - failSeverityScore(a));
+                const maxScore = sortedRows.length ? failSeverityScore(sortedRows[0]) : 0;
+                return sortedRows.map(row => `
+                                <span class="cat-chip ${severityClass(row, maxScore)}" data-cat="${escapeHTML(row.cat_name || '-')}" title="${escapeHTML(row.cat_name || '-')} | 实测 ${escapeHTML(row.raw_val ?? row.num_val ?? '-')} | 目标 ${escapeHTML(row.target_val || '-')} | 偏离强度 ${fmt(failSeverityScore(row) * 100, 1)}">
                                     ${escapeHTML(row.cat_name || '-')}：${escapeHTML(row.raw_val ?? row.num_val ?? '-')}
                                 </span>
                                 `).join('');
-                            })()}
+            })()}
                         </div>
                     </div>
                 </div>
@@ -342,30 +516,16 @@
                 `).join('')}
             </div>
         `;
-    }
 
-    function ownerKey(cat, metric = '') {
-        return `${String(cat || '').trim()}@@${String(metric || '').trim()}`;
-    }
-
-    function ownerMap() {
-        const map = {};
-        (state.owners || []).forEach(item => {
-            map[ownerKey(item.cat_name, item.metric_label)] = item;
+        const sliders = document.querySelectorAll('.owner-slider[data-count]');
+        sliders.forEach(slider => {
+            const count = parseInt(slider.getAttribute('data-count'), 10);
+            if (count > 1) {
+                updateChipHighlights(slider, count, 0);
+            }
         });
-        return map;
-    }
 
-    function resolveOwnerForMetric(item) {
-        const map = ownerMap();
-        const sortedRows = [...(item.rows || [])].sort((a, b) => failSeverityScore(b) - failSeverityScore(a));
-        for (const row of sortedRows) {
-            const exact = map[ownerKey(row.cat_name, item.label)];
-            if (exact) return exact;
-            const catDefault = map[ownerKey(row.cat_name, '')];
-            if (catDefault) return catDefault;
-        }
-        return null;
+        initOwnerRotation();
     }
 
     function isImageAvatar(value) {
@@ -383,35 +543,88 @@
     }
 
     function renderOwnerBlock(item) {
-        const owner = resolveOwnerForMetric(item);
-        if (!owner) {
+        const owners = resolveOwnersForMetric(item);
+        if (!owners.length) {
             return `
                 <div class="risk-owner" title="责任人待配置">
-                    <span class="owner-avatar">责</span>
-                    <span class="owner-name">待配置</span>
+                    <div class="owner-slider">
+                        <div class="owner-slide-item">
+                            <span class="owner-avatar">责</span>
+                            <span class="owner-name">待配置</span>
+                        </div>
+                    </div>
                 </div>
             `;
         }
-        const title = owner.metric_label
-            ? `${owner.cat_name} / ${owner.metric_label}`
-            : `${owner.cat_name} 默认责任人`;
+
+        const tooltip = owners.map(o => `${o.owner_name} (${o.emp_id || '无工号'}) - ${o.cat_name}`).join('\\n');
+
+        if (owners.length === 1) {
+            const owner = owners[0];
+            const empIdHtml = owner.emp_id ? `<span class="owner-empid">${escapeHTML(owner.emp_id)}</span>` : '';
+            return `
+                <div class="risk-owner" title="${escapeHTML(tooltip)}">
+                    <div class="owner-slider">
+                        <div class="owner-slide-item">
+                            ${avatarMarkup(owner)}
+                            <span class="owner-name">${escapeHTML(owner.owner_name)}</span>
+                            ${empIdHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        const maxN = Math.min(owners.length, 10);
+        const displayOwners = owners.slice(0, maxN);
+        const sliderItems = [...displayOwners, displayOwners[0]];
+
         return `
-            <div class="risk-owner" title="${escapeHTML(title)}">
-                ${avatarMarkup(owner)}
-                <span class="owner-name">${escapeHTML(owner.owner_name)}</span>
+            <div class="risk-owner" title="${escapeHTML(tooltip)}">
+                <div class="owner-slider" data-count="${maxN}" data-current="0" style="transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);">
+                    ${sliderItems.map(owner => {
+            const empIdHtml = owner.emp_id ? `<span class="owner-empid">${escapeHTML(owner.emp_id)}</span>` : '';
+            const cats = Array.from(owner.managedCats || []).join(',');
+            return `
+                            <div class="owner-slide-item" data-cats="${escapeHTML(cats)}">
+                                ${avatarMarkup(owner)}
+                                <span class="owner-name">${escapeHTML(owner.owner_name)}</span>
+                                ${empIdHtml}
+                            </div>
+                        `;
+        }).join('')}
+                </div>
             </div>
         `;
     }
 
     function renderMetricList() {
         const metrics = Array.isArray(state.latest && state.latest.metrics) ? state.latest.metrics : [];
+        const countDom = $('passingMetricsCount');
+
         if (!metrics.length) {
+            if (countDom) countDom.textContent = '';
             $('metricList').innerHTML = '<div class="empty">暂无指标明细数据</div>';
             return;
         }
         const passRows = metrics
             .filter(item => Number(item.is_failing) !== 1)
-            .sort((a, b) => String(a.metric_label || '').localeCompare(String(b.metric_label || '')));
+            .sort((a, b) => {
+                const labelA = String(a.metric_label || '');
+                const labelB = String(b.metric_label || '');
+                return getMetricSortIndex(labelA) - getMetricSortIndex(labelB) || labelA.localeCompare(labelB);
+            });
+
+        if (countDom) {
+            if (passRows.length > 0) {
+                const distinctPassingMetrics = new Set(passRows.map(m => m.metric_label)).size;
+                const totalPassingRows = passRows.length;
+                countDom.textContent = `(总计达标指标: ${distinctPassingMetrics}个 | 客户群明细数: ${totalPassingRows}条)`;
+            } else {
+                countDom.textContent = '';
+            }
+        }
+
         if (!passRows.length) {
             $('metricList').innerHTML = '<div class="empty">暂无已达标指标</div>';
             return;
@@ -445,8 +658,13 @@
         const { cats, metricLabels } = getOwnerOptions();
         const catSelect = $('ownerCatSelect');
         const metricSelect = $('ownerMetricSelect');
+
+        const catsList = cats.filter(c => c !== '整体' && c !== '全局');
         if (catSelect) {
-            catSelect.innerHTML = cats.map(cat => `<option value="${escapeHTML(cat)}">${escapeHTML(cat)}</option>`).join('');
+            catSelect.innerHTML = [
+                '<option value="整体">整体 / 全局</option>',
+                ...catsList.map(cat => `<option value="${escapeHTML(cat)}">${escapeHTML(cat)}</option>`)
+            ].join('');
         }
         if (metricSelect) {
             metricSelect.innerHTML = [
@@ -460,7 +678,7 @@
         const tbody = $('ownerRows');
         if (!tbody) return;
         if (!state.ownerDraft.length) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#8ea8c5;padding:22px;">暂无责任人配置</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#8ea8c5;padding:22px;">暂无责任人配置</td></tr>';
             return;
         }
         tbody.innerHTML = state.ownerDraft.map((item, index) => `
@@ -469,7 +687,11 @@
                 <td>${escapeHTML(item.cat_name)}</td>
                 <td>${escapeHTML(item.metric_label || '客户群默认')}</td>
                 <td>${escapeHTML(item.owner_name)}</td>
-                <td><span class="owner-delete" onclick="BigscreenOwners.remove(${index})">删除</span></td>
+                <td>${escapeHTML(item.emp_id || '-')}</td>
+                <td>
+                    <span class="owner-edit" onclick="BigscreenOwners.edit(${index})" style="color:var(--cyan);cursor:pointer;margin-right:8px;">编辑</span>
+                    <span class="owner-delete" onclick="BigscreenOwners.remove(${index})">删除</span>
+                </td>
             </tr>
         `).join('');
     }
@@ -533,8 +755,12 @@
         }
     }
 
+    let editingOwnerIndex = -1;
+
     function openOwnerModal() {
         state.ownerDraft = (state.owners || []).map(item => ({ ...item }));
+        editingOwnerIndex = -1;
+        if ($('btnAddOwner')) $('btnAddOwner').textContent = '添加';
         resetOwnerAvatarPicker();
         renderOwnerOptions();
         renderOwnerRows();
@@ -553,20 +779,47 @@
         }
     }
 
+    function editOwnerDraft(index) {
+        editingOwnerIndex = index;
+        const item = state.ownerDraft[index];
+        if ($('ownerCatSelect')) $('ownerCatSelect').value = item.cat_name;
+        if ($('ownerMetricSelect')) $('ownerMetricSelect').value = item.metric_label || '';
+        if ($('ownerNameInput')) $('ownerNameInput').value = item.owner_name;
+        if ($('ownerEmpIdInput')) $('ownerEmpIdInput').value = item.emp_id || '';
+        if (item.avatar) {
+            state.pendingOwnerAvatar = item.avatar;
+            if ($('ownerAvatarPreview')) $('ownerAvatarPreview').innerHTML = `<img src="${escapeHTML(item.avatar)}" alt="">`;
+            if ($('ownerAvatarLabel')) $('ownerAvatarLabel').textContent = '已选择头像';
+        } else {
+            resetOwnerAvatarPicker();
+        }
+        if ($('btnAddOwner')) $('btnAddOwner').textContent = '更新并保存';
+    }
+
     function addOwnerDraft() {
         const cat = $('ownerCatSelect') ? $('ownerCatSelect').value : '';
         const metric = $('ownerMetricSelect') ? $('ownerMetricSelect').value : '';
         const name = $('ownerNameInput') ? $('ownerNameInput').value.trim() : '';
+        const empId = $('ownerEmpIdInput') ? $('ownerEmpIdInput').value.trim() : '';
         const avatar = state.pendingOwnerAvatar || '';
         if (!cat || !name) {
             if (window.showToast) window.showToast('请先选择客户群并填写责任人名字', 'error');
             return;
         }
-        const next = { cat_name: cat, metric_label: metric, owner_name: name, avatar };
-        const idx = state.ownerDraft.findIndex(item => item.cat_name === cat && (item.metric_label || '') === metric);
-        if (idx >= 0) state.ownerDraft[idx] = next;
-        else state.ownerDraft.push(next);
+        const next = { cat_name: cat, metric_label: metric, owner_name: name, emp_id: empId, avatar };
+
+        if (editingOwnerIndex >= 0) {
+            state.ownerDraft[editingOwnerIndex] = next;
+            editingOwnerIndex = -1;
+            if ($('btnAddOwner')) $('btnAddOwner').textContent = '添加';
+        } else {
+            const idx = state.ownerDraft.findIndex(item => item.cat_name === cat && (item.metric_label || '') === metric);
+            if (idx >= 0) state.ownerDraft[idx] = next;
+            else state.ownerDraft.push(next);
+        }
+
         if ($('ownerNameInput')) $('ownerNameInput').value = '';
+        if ($('ownerEmpIdInput')) $('ownerEmpIdInput').value = '';
         resetOwnerAvatarPicker();
         renderOwnerRows();
     }
@@ -664,49 +917,212 @@
         }, true);
     }
 
+    let metricsCarouselInterval = null;
+
+    function startMetricsCarousel(count) {
+        if (metricsCarouselInterval) clearInterval(metricsCarouselInterval);
+        if (count <= 1) return;
+
+        let currentIndex = 0;
+        metricsCarouselInterval = setInterval(() => {
+            const carousel = $('failingMetricsCarousel');
+            if (!carousel) {
+                clearInterval(metricsCarouselInterval);
+                return;
+            }
+            const slides = carousel.querySelectorAll('.carousel-slide');
+            if (!slides.length) return;
+
+            const prevIndex = currentIndex;
+            currentIndex = (currentIndex + 1) % count;
+
+            slides.forEach((slide, i) => {
+                slide.classList.remove('active', 'prev');
+                if (i === currentIndex) slide.classList.add('active');
+                if (i === prevIndex) slide.classList.add('prev');
+            });
+        }, 5000);
+    }
+
     function renderRiskChart() {
         const dom = $('riskChart');
         if (!dom || !window.echarts) return;
         if (!state.charts.risk) state.charts.risk = echarts.init(dom);
-        const weakRows = groupFailingMetrics();
-        const rows = weakRows.slice(0, 8).reverse();
+        const failingByCat = groupFailingCustomers();
+        const data = failingByCat.slice(0, 7).map(item => ({
+            name: item.cat,
+            value: item.count
+        }));
 
-        state.charts.risk.setOption({
-            backgroundColor: 'transparent',
-            tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-            grid: { left: 176, right: 92, top: 18, bottom: 28 },
-            xAxis: {
-                type: 'value',
-                minInterval: 1,
-                axisLabel: { color: chartTextColor() },
-                splitLine: { lineStyle: { color: 'rgba(120,190,255,0.12)' } }
-            },
-            yAxis: {
-                type: 'category',
-                data: rows.length ? rows.map(item => item.label) : ['无风险项'],
-                axisLabel: {
-                    color: chartTextColor(),
-                    overflow: 'truncate',
-                    width: 166,
-                    align: 'right',
-                    margin: 10
-                },
-                axisLine: { lineStyle: { color: 'rgba(183,203,224,0.34)' } }
+        const option = {
+            tooltip: {
+                trigger: 'item',
+                backgroundColor: 'rgba(15,23,42,0.9)',
+                borderColor: '#4a5b7d',
+                textStyle: { color: '#e2e8f0' }
             },
             series: [{
-                name: '未达标客户群数',
-                type: 'bar',
-                data: rows.length ? rows.map(item => item.count) : [0],
-                barMaxWidth: 12,
-                label: { show: true, position: 'right', color: '#ffd5db' },
+                type: 'pie',
+                radius: ['45%', '75%'],
+                center: ['50%', '50%'],
+                avoidLabelOverlap: true,
                 itemStyle: {
-                    color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-                        { offset: 0, color: 'rgba(255,93,115,0.55)' },
-                        { offset: 1, color: 'rgba(255,200,87,0.9)' }
-                    ])
-                }
-            }]
-        }, true);
+                    borderRadius: 4,
+                    borderColor: 'rgba(15,23,42,0.8)',
+                    borderWidth: 2
+                },
+                label: {
+                    show: true,
+                    formatter: '{b}\n{c}项',
+                    color: '#9fb9d4',
+                    fontSize: 11,
+                    lineHeight: 14
+                },
+                labelLine: { length: 8, length2: 8, lineStyle: { color: '#4a5b7d' } },
+                data: data.length ? data : [{ name: '无风险', value: 0 }]
+            }],
+            color: ['#ff5d73', '#ff8fa0', '#f59e0b', '#fbbf24', '#38bdf8', '#7dd3fc', '#818cf8']
+        };
+        state.charts.risk.setOption(option);
+    }
+
+    function renderFailingMetricsCarousel() {
+        const carousel = $('failingMetricsCarousel');
+        if (!carousel) return;
+
+        const latest = state.latest || {};
+        const prevMetrics = latest.previous_metrics || [];
+        const trends = state.trends || [];
+        const prevTrend = trends.length > 1 ? trends[trends.length - 2] : null;
+        const currTrend = trends.length > 0 ? trends[trends.length - 1] : null;
+
+        let dateStr = '';
+        if (currTrend && currTrend.date && prevTrend && prevTrend.date) {
+            dateStr = `(区间: ${prevTrend.date} 至 ${currTrend.date})`;
+        } else if (prevTrend && prevTrend.date) {
+            dateStr = `(上次采集: ${prevTrend.date})`;
+        } else if (currTrend && currTrend.date) {
+            dateStr = `(本次采集: ${currTrend.date})`;
+        }
+
+        const metrics = Array.isArray(latest.metrics) ? latest.metrics : [];
+        const failing = metrics.filter(item => Number(item.is_failing) === 1);
+
+        if (!failing.length) {
+            carousel.innerHTML = '<div class="empty">当前无未达标指标</div>';
+            return;
+        }
+
+        const grouped = {};
+        failing.forEach(item => {
+            const label = item.metric_label || '未命名指标';
+            if (!grouped[label]) grouped[label] = { label, rows: [] };
+            grouped[label].rows.push(item);
+        });
+        const metricGroups = Object.values(grouped).sort((a, b) => {
+            return getMetricSortIndex(a.label) - getMetricSortIndex(b.label) || b.rows.length - a.rows.length || a.label.localeCompare(b.label);
+        });
+
+        const parseNumberVal = (val) => {
+            if (val === null || val === undefined) return null;
+            if (typeof val === 'number') return val;
+            const match = String(val).match(/-?\d+(\.\d+)?/);
+            return match ? parseFloat(match[0]) : null;
+        };
+
+        const getPrevValue = (catName, metricLabel) => {
+            const prev = prevMetrics.find(p => p.cat_name === catName && p.metric_label === metricLabel);
+            return prev ? parseNumberVal(prev.num_val ?? prev.raw_val) : null;
+        };
+
+        const firstSlide = `
+            <div class="carousel-slide active" data-index="0">
+                <div class="carousel-metric-name">短板集中度 (按客户群)</div>
+                <div id="riskChart" class="chart" style="flex:1;"></div>
+            </div>
+        `;
+
+        const MAX_LINES_PER_SLIDE = 7;
+        const slidesData = [];
+        let currentSlideGroups = [];
+        let currentSlideLines = 0;
+
+        for (const group of metricGroups) {
+            const groupLines = 1.5 + group.rows.length;
+            if (currentSlideGroups.length === 0) {
+                currentSlideGroups.push(group);
+                currentSlideLines += groupLines;
+            } else if (currentSlideLines + groupLines <= MAX_LINES_PER_SLIDE) {
+                currentSlideGroups.push(group);
+                currentSlideLines += groupLines;
+            } else {
+                slidesData.push(currentSlideGroups);
+                currentSlideGroups = [group];
+                currentSlideLines = groupLines;
+            }
+        }
+        if (currentSlideGroups.length > 0) {
+            slidesData.push(currentSlideGroups);
+        }
+
+        const slidesHtml = slidesData.map((groupsInSlide, slideIdx) => {
+            const index = slideIdx + 1;
+
+            return `
+                <div class="carousel-slide" data-index="${index}" style="display:flex; flex-direction:column; gap:16px;">
+                    ${groupsInSlide.map(group => {
+                const sortedRows = [...group.rows].sort((a, b) => failSeverityScore(b) - failSeverityScore(a));
+                const isSingle = groupsInSlide.length === 1;
+
+                return `
+                            <div style="display:flex; flex-direction:column; gap:6px; ${isSingle ? 'flex:1; overflow:hidden;' : ''}">
+                                <div class="carousel-metric-name" style="display:flex; justify-content:space-between; align-items:flex-end; flex-shrink:0;">
+                                    <div>
+                                        ${escapeHTML(group.label)} 
+                                        <span style="font-size:12px;color:#9fb9d4;font-weight:normal;margin-left:6px;">${escapeHTML(dateStr)}</span>
+                                    </div>
+                                    <div style="font-size:12px;color:#9fb9d4;font-weight:normal;padding-right:4px;">变化量</div>
+                                </div>
+                                <div class="carousel-metric-details" style="${isSingle ? '' : 'flex:none; overflow-y:visible;'}">
+                                    ${sortedRows.map(row => {
+                    const curVal = parseNumberVal(row.num_val ?? row.raw_val);
+                    const prevVal = getPrevValue(row.cat_name, row.metric_label);
+                    let diffHtml = '<span class="carousel-cat-diff flat">-</span>';
+
+                    if (prevVal !== null && curVal !== null) {
+                        const diff = curVal - prevVal;
+                        if (Math.abs(diff) > 0.001) {
+                            if (diff > 0) {
+                                diffHtml = '<span class="carousel-cat-diff up">↑ ' + fmt(Math.abs(diff), 1) + '</span>';
+                            } else if (diff < 0) {
+                                diffHtml = '<span class="carousel-cat-diff down">↓ ' + fmt(Math.abs(diff), 1) + '</span>';
+                            }
+                        }
+                    }
+
+                    const isZero = curVal === 0;
+
+                    return `
+                                            <div class="carousel-cat-row ${isZero ? 'zero-alert' : ''}">
+                                                <div class="carousel-cat-name" title="${escapeHTML(row.cat_name)}">${escapeHTML(row.cat_name)}</div>
+                                                <div class="carousel-cat-vals">
+                                                    目标: ${escapeHTML(row.target_val)} | 当前: <strong class="${isZero ? 'text-red' : ''}">${escapeHTML(row.raw_val ?? row.num_val)}</strong>
+                                                </div>
+                                                <div>${diffHtml}</div>
+                                            </div>
+                                        `;
+                }).join('')}
+                                </div>
+                            </div>
+                        `;
+            }).join('')}
+                </div>
+            `;
+        }).join('');
+
+        carousel.innerHTML = firstSlide + slidesHtml;
+        renderRiskChart();
+        startMetricsCarousel(slidesData.length + 1);
     }
 
     function renderSourceStrip() {
@@ -756,7 +1172,7 @@
         renderWeakList();
         renderMetricList();
         renderTrendChart();
-        renderRiskChart();
+        renderFailingMetricsCarousel();
         renderSourceStrip();
     }
 
@@ -777,6 +1193,75 @@
             ]);
             state.trends = Array.isArray(monthlyData && monthlyData.trends) ? monthlyData.trends : [];
             state.latest = monthlyData ? monthlyData.latest_snapshot : null;
+
+            if (state.latest && state.latest.raw_data_json) {
+                try {
+                    const raw = typeof state.latest.raw_data_json === 'string'
+                        ? JSON.parse(state.latest.raw_data_json)
+                        : state.latest.raw_data_json;
+
+                    if (raw && Array.isArray(raw.specialMetricAlerts)) {
+                        if (!state.latest.metrics) state.latest.metrics = [];
+                        raw.specialMetricAlerts.forEach(alert => {
+                            const label = alert.metric_label || alert.metricLabel;
+                            const exists = state.latest.metrics.some(m => m.metric_label === label && m.cat_name === '整体');
+                            if (!exists) {
+                                state.latest.metrics.push({
+                                    cat_name: '整体',
+                                    metric_label: label,
+                                    target_val: alert.target_val || alert.targetValue || '-',
+                                    raw_val: alert.global_val || alert.globalValue || '-',
+                                    num_val: parseFloat(alert.global_val || alert.globalValue) || 0,
+                                    is_failing: 1,
+                                    is_special_alert: true
+                                });
+                            }
+                        });
+                    }
+                    
+                    // Extract order from the original DB returned metrics list (which reflects report dashboard order)
+                    if (state.latest && Array.isArray(state.latest.metrics)) {
+                        const uniqueOrder = [];
+                        state.latest.metrics.forEach(m => {
+                            if (m.is_special_alert) return; // Skip special alerts for the first pass
+                            const lbl = m.metric_label || '未命名指标';
+                            if (!uniqueOrder.includes(lbl)) uniqueOrder.push(lbl);
+                        });
+                        
+                        // Weave special alerts into the correct relative position using topMetrics as a guide
+                        if (raw && Array.isArray(raw.topMetrics)) {
+                            const topOrder = raw.topMetrics.map(m => m.label || m.metricLabel);
+                            const specialLabels = [...new Set(state.latest.metrics.filter(m => m.is_special_alert).map(m => m.metric_label || '未命名指标'))];
+                            
+                            specialLabels.forEach(lbl => {
+                                const topIdx = topOrder.indexOf(lbl);
+                                if (topIdx >= 0) {
+                                    let insertAfterIdx = -1;
+                                    for (let i = topIdx - 1; i >= 0; i--) {
+                                        const prevLbl = topOrder[i];
+                                        const prevInUnique = uniqueOrder.indexOf(prevLbl);
+                                        if (prevInUnique >= 0) {
+                                            insertAfterIdx = prevInUnique;
+                                            break;
+                                        }
+                                    }
+                                    uniqueOrder.splice(insertAfterIdx + 1, 0, lbl);
+                                } else {
+                                    uniqueOrder.push(lbl);
+                                }
+                            });
+                        } else {
+                            const specialLabels = [...new Set(state.latest.metrics.filter(m => m.is_special_alert).map(m => m.metric_label || '未命名指标'))];
+                            uniqueOrder.push(...specialLabels);
+                        }
+                        
+                        state.metricOrder = uniqueOrder;
+                    }
+                } catch (e) {
+                    console.warn('[bigscreen] parse special metrics failed:', e);
+                }
+            }
+
             state.snapshots = Array.isArray(snapshots) ? snapshots : [];
             state.owners = Array.isArray(owners) ? owners : [];
             renderAll();
@@ -812,14 +1297,54 @@
     }
 
     window.BigscreenOwners = {
-        open: openOwnerModal,
-        close: closeOwnerModal,
         add: addOwnerDraft,
         remove: removeOwnerDraft,
-        save: saveOwners
+        edit: editOwnerDraft,
+        save: saveOwners,
+        open: openOwnerModal,
+        close: closeOwnerModal
+    };
+
+    window.editContactInfo = async function () {
+        const dom = $('contactInfoText');
+        const currentText = dom ? dom.textContent : '';
+        const newText = prompt('配置联系方式信息：', currentText);
+
+        if (newText !== null) {
+            const val = newText.trim() || '如果对看板数据有疑问或者建议，请联系xxxx';
+            if (dom) dom.textContent = val;
+
+            try {
+                await window.API.post('/api/db/config/bigscreen_contact_info', { text: val });
+                if (window.showToast) window.showToast('联系信息已保存');
+            } catch (err) {
+                console.error('保存联系信息失败', err);
+                if (window.showToast) window.showToast('保存失败: ' + err.message, 'error');
+            }
+        }
+    };
+
+    window.toggleFullScreen = function () {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+                console.log(`Error attempting to enable fullscreen: ${err.message}`);
+                if (window.showToast) window.showToast('无法全屏: ' + err.message, 'error');
+            });
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
     };
 
     document.addEventListener('DOMContentLoaded', () => {
+        window.API.get('/api/db/config/bigscreen_contact_info').then(res => {
+            if (res && res.text) {
+                const dom = $('contactInfoText');
+                if (dom) dom.textContent = res.text;
+            }
+        }).catch(err => console.error('Failed to load contact info', err));
+
         initControls();
         loadBigscreenData();
         setInterval(loadBigscreenData, 5 * 60 * 1000);
