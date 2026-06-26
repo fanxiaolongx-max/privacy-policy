@@ -189,8 +189,8 @@ router.post('/backup', async (req, res) => {
 
     try {
         if (merge) {
-            let existingScripts = (await scriptsRepo.listScripts({ mode: 'json' })).items;
-            let existingCats = (await categoriesRepo.listCategories({ mode: 'json' })).items
+            let existingScripts = (await scriptsRepo.listScripts({ mode: 'auto' })).items;
+            let existingCats = (await categoriesRepo.listCategories({ mode: 'auto' })).items
                 .filter(c => !DEFAULT_CATEGORIES.includes(c));
             scripts.forEach(s => {
                 const idx = existingScripts.findIndex(ex => ex.name === s.name);

@@ -5,16 +5,11 @@
 const express = require('express');
 const router = express.Router();
 const zlib = require('zlib');
-const { readJSON, writeJSON } = require('../models/store');
 const targetsRepo = require('../models/sla-targets-repository');
 const prefsRepo = require('../models/sla-prefs-repository');
 const categoriesRepo = require('../models/sla-categories-repository');
 const groupsRepo = require('../models/sla-groups-repository');
 const snapshotsRepo = require('../models/sla-snapshots-repository');
-
-const TARGETS_FILE = 'sla_targets.json';
-const PREFS_FILE = 'sla_prefs.json';
-const SNAPSHOTS_FILE = 'sla_snapshots.json';
 
 function decodeCompressedTextField(field, label) {
     if (!field || typeof field !== 'object') {
@@ -273,7 +268,7 @@ router.get('/prefs/:schemaHash', async (req, res) => {
 
 // PUT /api/sla/prefs/:schemaHash
 router.put('/prefs/:schemaHash', async (req, res) => {
-    const prefs = (await prefsRepo.getPrefsObject({ mode: 'json' })).items;
+    const prefs = (await prefsRepo.getPrefsObject({ mode: 'auto' })).items;
     prefs[req.params.schemaHash] = req.body;
     await prefsRepo.upsertPrefItem(req.params.schemaHash, req.body);
 
@@ -300,7 +295,7 @@ router.put('/prefs/:schemaHash', async (req, res) => {
             }
         });
 
-        let targets = readJSON(TARGETS_FILE, {});
+        let targets = (await targetsRepo.getTargets({ mode: 'auto' })).items;
         let targetsChanged = false;
         
         Object.keys(targets).forEach(k => {
@@ -380,7 +375,7 @@ router.post('/rename-metric', async (req, res) => {
 
     try {
         // 1. targets
-        let targets = readJSON(TARGETS_FILE, {});
+        let targets = (await targetsRepo.getTargets({ mode: 'auto' })).items;
         let targetsChanged = false;
         Object.keys(targets).forEach(k => {
             if (targets[k].label === oldName) {
@@ -391,7 +386,7 @@ router.post('/rename-metric', async (req, res) => {
         if (targetsChanged) await targetsRepo.replaceTargets(targets);
 
         // 2. prefs
-        let prefs = (await prefsRepo.getPrefsObject({ mode: 'json' })).items;
+        let prefs = (await prefsRepo.getPrefsObject({ mode: 'auto' })).items;
         let prefsChanged = false;
         Object.keys(prefs).forEach(k => {
             if (k.startsWith('sla_prefs_') && prefs[k].customMetrics) {
@@ -423,7 +418,7 @@ router.post('/rename-metric', async (req, res) => {
         if (prefsChanged) await prefsRepo.replacePrefs(prefs);
 
         // 3. groups
-        let groups = readJSON('sla_groups.json', []);
+        let groups = (await groupsRepo.listGroups({ mode: 'auto' })).items;
         let groupsChanged = false;
         groups.forEach(g => {
             if (g.metrics) {
@@ -435,14 +430,11 @@ router.post('/rename-metric', async (req, res) => {
             }
         });
         if (groupsChanged) {
-            writeJSON('sla_groups.json', groups);
-            groupsRepo.replaceGroups(groups).catch(err => {
-                console.error('[sla-groups] sync after rename failed:', err.message);
-            });
+            await groupsRepo.replaceGroups(groups);
         }
 
         // 4. snapshots
-        let snapshots = readJSON(SNAPSHOTS_FILE, []);
+        let snapshots = (await snapshotsRepo.listSnapshots({ mode: 'auto' })).items;
         let snapsChanged = false;
         snapshots.forEach(s => {
             if (s.topMetrics) {
@@ -455,10 +447,7 @@ router.post('/rename-metric', async (req, res) => {
             }
         });
         if (snapsChanged) {
-            writeJSON(SNAPSHOTS_FILE, snapshots);
-            snapshotsRepo.replaceSnapshots(snapshots).catch(err => {
-                console.error('[sla-snapshots] sync after rename failed:', err.message);
-            });
+            await snapshotsRepo.replaceSnapshots(snapshots);
         }
 
         res.json({ success: true });

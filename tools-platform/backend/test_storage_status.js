@@ -8,19 +8,20 @@ const slaTargetsRepo = require('./models/sla-targets-repository');
 const slaPrefsRepo = require('./models/sla-prefs-repository');
 const authUsersRepo = require('./models/auth-users-repository');
 const authSessionsRepo = require('./models/auth-sessions-repository');
+const { readJSON } = require('./models/store');
 
 async function test() {
     const checks = [
-        { key: 'upload_history', getJson: async () => (await uploadHistoryRepo.listHistory({ mode: 'json', limit: 1 })).items, getSqlite: async () => (await uploadHistoryRepo.listHistory({ mode: 'sqlite', limit: 1 })).items },
-        { key: 'uiv_categories', getJson: async () => (await uivCategoriesRepo.listCategories({ mode: 'json' })).items, getSqlite: async () => (await uivCategoriesRepo.listCategories({ mode: 'sqlite' })).items },
-        { key: 'uiv_scripts', getJson: async () => (await uivScriptsRepo.listScripts({ mode: 'json' })).items, getSqlite: async () => (await uivScriptsRepo.listScripts({ mode: 'sqlite' })).items },
-        { key: 'sla_categories', getJson: async () => (await slaCategoriesRepo.listCategories({ mode: 'json' })).items, getSqlite: async () => (await slaCategoriesRepo.listCategories({ mode: 'sqlite' })).items },
-        { key: 'sla_groups', getJson: async () => (await slaGroupsRepo.listGroups({ mode: 'json' })).items, getSqlite: async () => (await slaGroupsRepo.listGroups({ mode: 'sqlite' })).items },
-        { key: 'sla_snapshots', getJson: async () => (await slaSnapshotsRepo.listSnapshots({ mode: 'json' })).items, getSqlite: async () => (await slaSnapshotsRepo.listSnapshots({ mode: 'sqlite' })).items },
-        { key: 'sla_targets', getJson: async () => (await slaTargetsRepo.getTargets({ mode: 'json' })).items, getSqlite: async () => (await slaTargetsRepo.getTargets({ mode: 'sqlite' })).items },
-        { key: 'sla_prefs', getJson: async () => (await slaPrefsRepo.getPrefsObject({ mode: 'json' })).items, getSqlite: async () => (await slaPrefsRepo.getPrefsObject({ mode: 'sqlite' })).items },
-        { key: 'auth_users', getJson: async () => (await authUsersRepo.listUsers({ mode: 'json' })).items, getSqlite: async () => (await authUsersRepo.listUsers({ mode: 'sqlite' })).items },
-        { key: 'auth_sessions', getJson: async () => (await authSessionsRepo.listSessions({ mode: 'json' })).items, getSqlite: async () => (await authSessionsRepo.listSessions({ mode: 'sqlite' })).items }
+        { key: 'upload_history', getJson: async () => readJSON('upload_history.json', []), getSqlite: async () => (await uploadHistoryRepo.listHistory({ mode: 'sqlite', limit: 1 })).items },
+        { key: 'uiv_categories', getJson: async () => readJSON('uiv_categories.json', []), getSqlite: async () => (await uivCategoriesRepo.listCategories({ mode: 'sqlite' })).items },
+        { key: 'uiv_scripts', getJson: async () => readJSON('uiv_scripts.json', []), getSqlite: async () => (await uivScriptsRepo.listScripts({ mode: 'sqlite' })).items },
+        { key: 'sla_categories', getJson: async () => readJSON('sla_categories.json', []), getSqlite: async () => (await slaCategoriesRepo.listCategories({ mode: 'sqlite' })).items },
+        { key: 'sla_groups', getJson: async () => readJSON('sla_groups.json', []), getSqlite: async () => (await slaGroupsRepo.listGroups({ mode: 'sqlite' })).items },
+        { key: 'sla_snapshots', getJson: async () => readJSON('sla_snapshots.json', []), getSqlite: async () => (await slaSnapshotsRepo.listSnapshots({ mode: 'sqlite' })).items },
+        { key: 'sla_targets', getJson: async () => readJSON('sla_targets.json', {}), getSqlite: async () => (await slaTargetsRepo.getTargets({ mode: 'sqlite' })).items },
+        { key: 'sla_prefs', getJson: async () => readJSON('sla_prefs.json', {}), getSqlite: async () => (await slaPrefsRepo.getPrefsObject({ mode: 'sqlite' })).items },
+        { key: 'auth_users', getJson: async () => readJSON('users.json', {}), getSqlite: async () => (await authUsersRepo.listUsers({ mode: 'sqlite' })).items },
+        { key: 'auth_sessions', getJson: async () => readJSON('sessions.json', {}), getSqlite: async () => (await authSessionsRepo.listSessions({ mode: 'sqlite' })).items }
     ];
 
     for (const check of checks) {

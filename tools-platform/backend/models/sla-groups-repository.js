@@ -140,8 +140,8 @@ async function listFromDb() {
     }));
 }
 
-async function listGroups(options = {}) {
-    const items = await listFromDb(options);
+async function listGroups() {
+    const items = await listFromDb();
     return { items, source: 'sqlite' };
 }
 

@@ -1,6 +1,9 @@
+const fs = require('fs');
+const path = require('path');
 const express = require('express');
 const router = express.Router();
 
+const { DATA_DIR, readJSON } = require('../models/store');
 const uploadHistoryRepo = require('../models/upload-history-repository');
 const uivCategoriesRepo = require('../models/uiv-categories-repository');
 const uivScriptsRepo = require('../models/uiv-scripts-repository');
@@ -176,6 +179,14 @@ function summarizeAlignedDiff(jsonValue, sqliteValue, { alignByStableKey = false
     return { diff, orderDiff };
 }
 
+function legacyJsonExists(filename) {
+    return fs.existsSync(path.join(DATA_DIR, filename));
+}
+
+function readLegacyJson(filename, fallback) {
+    return readJSON(filename, fallback);
+}
+
 router.get('/status', async (req, res) => {
     try {
         const checks = [
@@ -183,8 +194,9 @@ router.get('/status', async (req, res) => {
                 key: 'upload_history',
                 label: 'Upload History',
                 scope: 'homepage history / upload logs',
-                writeStrategy: 'json+sqlite',
-                getJson: async () => (await uploadHistoryRepo.listHistory({ mode: 'json', limit: 1000 })).items,
+                writeStrategy: 'sqlite-only',
+                jsonFile: 'upload_history.json',
+                getJson: async () => readLegacyJson('upload_history.json', []),
                 getSqlite: async () => (await uploadHistoryRepo.listHistory({ mode: 'sqlite', limit: 1000 })).items,
                 getAuto: async () => uploadHistoryRepo.listHistory({ mode: 'auto', limit: 1000 })
             },
@@ -192,8 +204,9 @@ router.get('/status', async (req, res) => {
                 key: 'uiv_categories',
                 label: 'UIV Categories',
                 scope: 'uiv repository',
-                writeStrategy: 'json+sqlite',
-                getJson: async () => (await uivCategoriesRepo.listCategories({ mode: 'json' })).items,
+                writeStrategy: 'sqlite-only',
+                jsonFile: 'uiv_categories.json',
+                getJson: async () => readLegacyJson('uiv_categories.json', []),
                 getSqlite: async () => (await uivCategoriesRepo.listCategories({ mode: 'sqlite' })).items,
                 getAuto: async () => uivCategoriesRepo.listCategories({ mode: 'auto' })
             },
@@ -201,9 +214,10 @@ router.get('/status', async (req, res) => {
                 key: 'uiv_scripts',
                 label: 'UIV Scripts',
                 scope: 'uiv repository',
-                writeStrategy: 'json+sqlite',
+                writeStrategy: 'sqlite-only',
                 alignByStableKey: true,
-                getJson: async () => (await uivScriptsRepo.listScripts({ mode: 'json' })).items,
+                jsonFile: 'uiv_scripts.json',
+                getJson: async () => readLegacyJson('uiv_scripts.json', []),
                 getSqlite: async () => (await uivScriptsRepo.listScripts({ mode: 'sqlite' })).items,
                 getAuto: async () => uivScriptsRepo.listScripts({ mode: 'auto' })
             },
@@ -211,8 +225,9 @@ router.get('/status', async (req, res) => {
                 key: 'sla_categories',
                 label: 'SLA Categories',
                 scope: 'sla workspace',
-                writeStrategy: 'json+sqlite',
-                getJson: async () => (await slaCategoriesRepo.listCategories({ mode: 'json' })).items,
+                writeStrategy: 'sqlite-only',
+                jsonFile: 'sla_categories.json',
+                getJson: async () => readLegacyJson('sla_categories.json', []),
                 getSqlite: async () => (await slaCategoriesRepo.listCategories({ mode: 'sqlite' })).items,
                 getAuto: async () => slaCategoriesRepo.listCategories({ mode: 'auto' })
             },
@@ -220,8 +235,9 @@ router.get('/status', async (req, res) => {
                 key: 'sla_groups',
                 label: 'SLA Groups',
                 scope: 'sla workspace',
-                writeStrategy: 'json+sqlite',
-                getJson: async () => (await slaGroupsRepo.listGroups({ mode: 'json' })).items,
+                writeStrategy: 'sqlite-only',
+                jsonFile: 'sla_groups.json',
+                getJson: async () => readLegacyJson('sla_groups.json', []),
                 getSqlite: async () => (await slaGroupsRepo.listGroups({ mode: 'sqlite' })).items,
                 getAuto: async () => slaGroupsRepo.listGroups({ mode: 'auto' })
             },
@@ -229,8 +245,9 @@ router.get('/status', async (req, res) => {
                 key: 'sla_snapshots',
                 label: 'SLA Snapshots',
                 scope: 'sla history',
-                writeStrategy: 'json+sqlite',
-                getJson: async () => (await slaSnapshotsRepo.listSnapshots({ mode: 'json' })).items,
+                writeStrategy: 'sqlite-only',
+                jsonFile: 'sla_snapshots.json',
+                getJson: async () => readLegacyJson('sla_snapshots.json', []),
                 getSqlite: async () => (await slaSnapshotsRepo.listSnapshots({ mode: 'sqlite' })).items,
                 getAuto: async () => slaSnapshotsRepo.listSnapshots({ mode: 'auto' })
             },
@@ -238,8 +255,9 @@ router.get('/status', async (req, res) => {
                 key: 'sla_targets',
                 label: 'SLA Targets',
                 scope: 'sla workspace',
-                writeStrategy: 'json+sqlite',
-                getJson: async () => (await slaTargetsRepo.getTargets({ mode: 'json' })).items,
+                writeStrategy: 'sqlite-only',
+                jsonFile: 'sla_targets.json',
+                getJson: async () => readLegacyJson('sla_targets.json', {}),
                 getSqlite: async () => (await slaTargetsRepo.getTargets({ mode: 'sqlite' })).items,
                 getAuto: async () => slaTargetsRepo.getTargets({ mode: 'auto' })
             },
@@ -247,8 +265,9 @@ router.get('/status', async (req, res) => {
                 key: 'sla_prefs',
                 label: 'SLA Prefs',
                 scope: 'sla workspace',
-                writeStrategy: 'json+sqlite',
-                getJson: async () => (await slaPrefsRepo.getPrefsObject({ mode: 'json' })).items,
+                writeStrategy: 'sqlite-only',
+                jsonFile: 'sla_prefs.json',
+                getJson: async () => readLegacyJson('sla_prefs.json', {}),
                 getSqlite: async () => (await slaPrefsRepo.getPrefsObject({ mode: 'sqlite' })).items,
                 getAuto: async () => slaPrefsRepo.getPrefsObject({ mode: 'auto' })
             },
@@ -256,8 +275,9 @@ router.get('/status', async (req, res) => {
                 key: 'auth_users',
                 label: 'Auth Users',
                 scope: 'system accounts',
-                writeStrategy: 'json+sqlite',
-                getJson: async () => (await authUsersRepo.listUsers({ mode: 'json' })).items,
+                writeStrategy: 'sqlite-only',
+                jsonFile: 'users.json',
+                getJson: async () => readLegacyJson('users.json', {}),
                 getSqlite: async () => (await authUsersRepo.listUsers({ mode: 'sqlite' })).items,
                 getAuto: async () => authUsersRepo.listUsers({ mode: 'auto' })
             },
@@ -265,8 +285,9 @@ router.get('/status', async (req, res) => {
                 key: 'auth_sessions',
                 label: 'Auth Sessions',
                 scope: 'system auth',
-                writeStrategy: 'json+sqlite',
-                getJson: async () => (await authSessionsRepo.listSessions({ mode: 'json' })).items,
+                writeStrategy: 'sqlite-only',
+                jsonFile: 'sessions.json',
+                getJson: async () => readLegacyJson('sessions.json', {}),
                 getSqlite: async () => (await authSessionsRepo.listSessions({ mode: 'sqlite' })).items,
                 getAuto: async () => authSessionsRepo.listSessions({ mode: 'auto' })
             }
@@ -277,31 +298,38 @@ router.get('/status', async (req, res) => {
             const jsonValue = await check.getJson();
             const sqliteValue = await check.getSqlite();
             const autoResult = await check.getAuto();
+            const jsonExists = check.jsonFile ? legacyJsonExists(check.jsonFile) : true;
             const { diff, orderDiff } = summarizeAlignedDiff(jsonValue, sqliteValue, {
                 alignByStableKey: !!check.alignByStableKey
             });
+            const parity = !jsonExists ? 'json-disabled' : (diff ? 'mismatch' : 'match');
             tables.push({
                 key: check.key,
                 label: check.label,
                 scope: check.scope,
                 writeStrategy: check.writeStrategy,
+                jsonFile: check.jsonFile,
+                legacyJsonPresent: jsonExists,
                 autoSource: autoResult.source,
                 jsonCount: countItems(jsonValue),
                 sqliteCount: countItems(sqliteValue),
-                parity: diff ? 'mismatch' : 'match',
-                orderDiff,
-                diff
+                parity,
+                orderDiff: parity === 'mismatch' ? orderDiff : null,
+                diff: parity === 'mismatch' ? diff : null
             });
         }
 
         const matchCount = tables.filter(t => t.parity === 'match').length;
+        const disabledCount = tables.filter(t => t.parity === 'json-disabled').length;
+        const mismatchCount = tables.filter(t => t.parity === 'mismatch').length;
         res.setHeader('X-Data-Source', 'runtime');
         res.json({
             checkedAt: new Date().toISOString(),
             summary: {
                 totalTables: tables.length,
                 matchedTables: matchCount,
-                mismatchedTables: tables.length - matchCount
+                disabledJsonTables: disabledCount,
+                mismatchedTables: mismatchCount
             },
             tables
         });

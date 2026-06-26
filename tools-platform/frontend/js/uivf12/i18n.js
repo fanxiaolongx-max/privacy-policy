@@ -18,7 +18,7 @@
             'uiv.repo.tip': '默认清爽折叠，<b>双击回填至工作台</b>。',
             'uiv.repo.mode': '仓库读源模式:',
             'uiv.source.auto': '自动模式',
-            'uiv.source.json': '强制 JSON',
+            'uiv.source.json': 'JSON',
             'uiv.source.sqlite': '强制 SQLite',
             'uiv.source.script': '脚本来源: {source}',
             'uiv.source.category': '分类来源: {source}',
@@ -161,7 +161,7 @@
             'uiv.repo.tip': 'Collapsed by default. <b>Double-click to refill the workbench</b>.',
             'uiv.repo.mode': 'Repository source mode:',
             'uiv.source.auto': 'Auto Mode',
-            'uiv.source.json': 'Force JSON',
+            'uiv.source.json': 'JSON',
             'uiv.source.sqlite': 'Force SQLite',
             'uiv.source.script': 'Script source: {source}',
             'uiv.source.category': 'Category source: {source}',
@@ -355,7 +355,6 @@
         setHtml('.sidebar h2 + div', t('uiv.repo.tip'));
         setText('.repo-source-controls .repo-source-note', t('uiv.repo.mode'));
         setText('#repoSourceMode option[value="auto"]', t('uiv.source.auto'));
-        setText('#repoSourceMode option[value="json"]', t('uiv.source.json'));
         setText('#repoSourceMode option[value="sqlite"]', t('uiv.source.sqlite'));
         const sourcePanel = document.getElementById('repoSourcePanel');
         if (sourcePanel && !sourcePanel.dataset.loaded) {

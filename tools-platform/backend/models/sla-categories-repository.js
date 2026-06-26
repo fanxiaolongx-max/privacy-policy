@@ -23,7 +23,7 @@ async function ensureReady() {
             if (row && row.count > 0) return;
 
             
-            for (const name of categories) {
+            for (const name of DEFAULT_CATEGORIES) {
                 await run('INSERT OR IGNORE INTO sla_categories (name) VALUES (?)', [name]);
             }
         })().catch(err => {
@@ -41,8 +41,8 @@ async function listFromDb() {
     return rows.map(row => row.name);
 }
 
-async function listCategories(options = {}) {
-    const items = await listFromDb(options);
+async function listCategories() {
+    const items = await listFromDb();
     return { items, source: 'sqlite' };
 }
 

@@ -58,8 +58,8 @@ async function listFromDb() {
     return rows.map(row => JSON.parse(row.payload_json));
 }
 
-async function listSnapshots(options = {}) {
-    const items = await listFromDb(options);
+async function listSnapshots() {
+    const items = await listFromDb();
     return { items, source: 'sqlite' };
 }
 

@@ -67,8 +67,8 @@ async function listFromDb() {
     return [...orderedDefaults, ...customs];
 }
 
-async function listCategories(options = {}) {
-    const items = await listFromDb(options);
+async function listCategories() {
+    const items = await listFromDb();
     return { items, source: 'sqlite' };
 }
 
