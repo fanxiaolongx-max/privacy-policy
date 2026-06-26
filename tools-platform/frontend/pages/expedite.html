@@ -1102,7 +1102,17 @@
         }
 
         function getEnName(zh) {
-            const en = i18nMap[zh];
+            let en = i18nMap[zh];
+            
+            if (!en && typeof zh === 'string' && zh.startsWith('整体') && zh.length > 2) {
+                let suffix = zh.substring(2).trim();
+                let suffixEn = i18nMap[suffix] || suffix;
+                const match = suffixEn.match(/<span[^>]*>(.*?)<\/span>/);
+                if (match) suffixEn = match[1];
+                else suffixEn = suffixEn.replace(/<[^>]+>/g, '');
+                en = 'Overall ' + suffixEn;
+            }
+
             if (en) {
                 // If the translation has HTML tags, strip them
                 const match = en.match(/<span[^>]*>(.*?)<\/span>/);
@@ -1397,7 +1407,8 @@
                     return `    ↳ ${alertIcon}${enName} (${m.raw_val} ➔ ${targetStr})`;
                 });
 
-                text += `🔹 [${cat}]:\n${metricStrs.join('\n')}\n`;
+                const translatedCat = getEnName(cat);
+                text += `🔹 [${translatedCat}]:\n${metricStrs.join('\n')}\n`;
             });
 
             if (cats.length === 0) {

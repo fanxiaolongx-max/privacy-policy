@@ -220,7 +220,15 @@ function t(key, params = {}) {
 
 function tVal(text) {
     if (!text) return '';
-    return i18n[window.currentLang][text] || text;
+    if (i18n[window.currentLang][text]) return i18n[window.currentLang][text];
+    
+    // 自动处理“整体xxx”这类动态拼接的词组
+    if (window.currentLang === 'en' && typeof text === 'string' && text.startsWith('整体') && text.length > 2) {
+        let suffix = text.substring(2).trim();
+        return 'Overall ' + (i18n['en'][suffix] || suffix);
+    }
+    
+    return text;
 }
 
 function escapeHTML(str) {
