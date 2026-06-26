@@ -80,11 +80,6 @@ async function saveUser(username, role, passwordHash) {
 
 async function deleteUser(username) {
     
-    if (users[username]) {
-        delete users[username];
-        writeUsersToJson(users);
-    }
-
     try {
         await ensureReady();
         await run('DELETE FROM auth_users WHERE username = ?', [username]);

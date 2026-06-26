@@ -88,13 +88,7 @@ async function getSession(token) {
     return null;
 }
 
-async function saveSession(token, username, role, expiresAt) {
-    
-    sessions[token] = {
-        user: { username, role },
-        expiresAt
-    };
-    writeSessionsToJson(sessions);
+async function addSession(token, username, role, expiresAt) {
 
     try {
         await ensureReady();
@@ -109,11 +103,6 @@ async function saveSession(token, username, role, expiresAt) {
 
 async function deleteSession(token) {
     
-    if (sessions[token]) {
-        delete sessions[token];
-        writeSessionsToJson(sessions);
-    }
-
     try {
         await ensureReady();
         await run('DELETE FROM auth_sessions WHERE token = ?', [token]);
