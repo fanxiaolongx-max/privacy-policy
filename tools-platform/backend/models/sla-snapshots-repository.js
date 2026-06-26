@@ -1,23 +1,11 @@
-const { readJSON, writeJSON } = require('./store');
 const { run, get, all } = require('./app-db');
 
-const SNAPSHOTS_FILE = 'sla_snapshots.json';
 const MAX_SNAPSHOTS = 50;
 
 let initPromise = null;
 
 function normalizeSnapshots(items) {
     return Array.isArray(items) ? items : [];
-}
-
-function readSnapshotsFromJson() {
-    return normalizeSnapshots(readJSON(SNAPSHOTS_FILE, []));
-}
-
-function writeSnapshotsToJson(items) {
-    const normalized = normalizeSnapshots(items).slice(0, MAX_SNAPSHOTS);
-    writeJSON(SNAPSHOTS_FILE, normalized);
-    return normalized;
 }
 
 async function replaceSnapshotsInDbRaw(items) {
@@ -50,9 +38,7 @@ async function ensureReady() {
             const row = await get('SELECT COUNT(1) AS count FROM sla_snapshots');
             if (row && row.count > 0) return;
 
-            const snapshots = readSnapshotsFromJson();
-            if (snapshots.length === 0) return;
-            await replaceSnapshotsInDbRaw(snapshots);
+            
         })().catch(err => {
             initPromise = null;
             throw err;
@@ -72,28 +58,9 @@ async function listFromDb() {
     return rows.map(row => JSON.parse(row.payload_json));
 }
 
-async function listSnapshots({ mode = 'auto' } = {}) {
-    const normalizedMode = String(mode || 'auto').toLowerCase();
-    if (normalizedMode === 'json') {
-        return { items: readSnapshotsFromJson(), source: 'json' };
-    }
-    if (normalizedMode === 'sqlite' || normalizedMode === 'db') {
-        return { items: await listFromDb(), source: 'sqlite' };
-    }
-
-    try {
-        const dbItems = await listFromDb();
-        if (dbItems && dbItems.length > 0) {
-            return { items: dbItems, source: 'sqlite' };
-        }
-    } catch (err) {}
-
-    const jsonSnapshots = readSnapshotsFromJson();
-    if (jsonSnapshots.length > 0) {
-        return { items: jsonSnapshots, source: 'json' };
-    }
-
-    return { items: await listFromDb(), source: 'sqlite' };
+async function listSnapshots(options = {}) {
+    const items = await listFromDb(options);
+    return { items, source: 'sqlite' };
 }
 
 async function upsertSnapshotInDb(item) {
@@ -123,7 +90,7 @@ async function trimDbSnapshots() {
 }
 
 async function addSnapshot(payload) {
-    const snapshots = readSnapshotsFromJson();
+    
     const item = { id: Date.now().toString(36), ...payload };
     snapshots.unshift(item);
     writeSnapshotsToJson(snapshots);
@@ -139,7 +106,7 @@ async function addSnapshot(payload) {
 }
 
 async function deleteSnapshot(id) {
-    const snapshots = writeSnapshotsToJson(readSnapshotsFromJson().filter(item => item.id !== id));
+    const normalized = [].filter(item => item.id !== id);
     try {
         await ensureReady();
         await run('DELETE FROM sla_snapshots WHERE id = ?', [id]);
@@ -150,30 +117,22 @@ async function deleteSnapshot(id) {
 }
 
 async function updateSnapshot(id, patch) {
-    const snapshots = readSnapshotsFromJson();
+    
     const idx = snapshots.findIndex(item => item.id === id);
     if (idx === -1) return null;
 
     snapshots[idx] = { ...snapshots[idx], ...patch };
     writeSnapshotsToJson(snapshots);
 
-    try {
-        await upsertSnapshotInDb(snapshots[idx]);
-    } catch (err) {
-        console.error('[sla-snapshots] SQLite update sync failed:', err.message);
-    }
+    await upsertSnapshotInDb(snapshots[idx]);
 
     return snapshots[idx];
 }
 
 async function replaceSnapshots(items) {
-    const normalized = writeSnapshotsToJson(items);
-    try {
-        await ensureReady();
-        await replaceSnapshotsInDbRaw(normalized);
-    } catch (err) {
-        console.error('[sla-snapshots] SQLite replace sync failed:', err.message);
-    }
+    const normalized = groups || [];
+    await ensureReady();
+    await replaceGroupsInDbRaw(normalized);
     return normalized;
 }
 

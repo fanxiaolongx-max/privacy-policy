@@ -1,8 +1,8 @@
+const { readKV, writeKV } = require('./kv-store');
 const fs = require('fs');
 const path = require('path');
-const { readJSON, writeJSON, DATA_DIR, ensureDataDir } = require('./store');
+const { DATA_DIR, ensureDataDir } = require('./store');
 
-const REGISTRY_FILE = 'custom_tools.json';
 const CUSTOM_TOOLS_DIR = path.join(DATA_DIR, 'custom-tools');
 
 function ensureCustomToolsDir() {
@@ -29,16 +29,16 @@ function createSlug(name, existingSlugs = new Set()) {
     return slug;
 }
 
-function listTools() {
-    const items = readJSON(REGISTRY_FILE, []);
+async function listTools() {
+    const items = await readKV('sys', 'custom_tools', []);
     return Array.isArray(items) ? items : [];
 }
 
-function saveRegistry(items) {
-    writeJSON(REGISTRY_FILE, items);
+async function saveRegistry(items) {
+    await writeKV('sys', 'custom_tools', items);
 }
 
-function getTool(slug) {
+async function getTool(slug) {
     return listTools().find(item => item.slug === slug) || null;
 }
 
@@ -49,7 +49,7 @@ function saveToolFile(slug, htmlContent) {
     fs.writeFileSync(path.join(toolDir, 'index.html'), htmlContent, 'utf-8');
 }
 
-function createTool(payload) {
+async function createTool(payload) {
     const name = String(payload.name || '').trim();
     const htmlContent = String(payload.htmlContent || '');
     if (!name) {
@@ -85,7 +85,7 @@ function createTool(payload) {
     return tool;
 }
 
-function deleteTool(slug) {
+async function deleteTool(slug) {
     const tools = listTools();
     const next = tools.filter(item => item.slug !== slug);
     if (next.length === tools.length) return false;
@@ -94,7 +94,7 @@ function deleteTool(slug) {
     return true;
 }
 
-function getToolFilePath(slug) {
+async function getToolFilePath(slug) {
     const safeSlug = normalizeSlug(slug);
     if (!safeSlug || safeSlug !== slug) return null;
     return path.join(CUSTOM_TOOLS_DIR, safeSlug, 'index.html');

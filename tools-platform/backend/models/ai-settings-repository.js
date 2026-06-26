@@ -1,6 +1,5 @@
-const { readJSON, writeJSON } = require('./store');
 
-const SETTINGS_FILE = 'ai_settings.json';
+const { readKV, writeKV } = require('./kv-store');
 
 const DEFAULT_SETTINGS = {
     provider: 'gemini',
@@ -45,16 +44,15 @@ function maskApiKey(apiKey) {
 
 function isLikelyValidApiKey(apiKey) {
     if (!apiKey) return false;
-    // Google API keys used by Gemini usually start with AIza and are much longer than a short code.
     return /^AIza[0-9A-Za-z_-]{20,}$/.test(String(apiKey).trim());
 }
 
-function getStoredSettings() {
-    return normalizeSettings(readJSON(SETTINGS_FILE, DEFAULT_SETTINGS));
+async function getStoredSettings() {
+    return normalizeSettings(await readKV('sys', 'ai_settings', DEFAULT_SETTINGS));
 }
 
-function getRuntimeSettings() {
-    const stored = getStoredSettings();
+async function getRuntimeSettings() {
+    const stored = await getStoredSettings();
     const envKey = String(process.env.GEMINI_API_KEY || '').trim();
     const apiKey = stored.apiKey || envKey;
     return {
@@ -66,8 +64,8 @@ function getRuntimeSettings() {
     };
 }
 
-function getPublicSettings() {
-    const runtime = getRuntimeSettings();
+async function getPublicSettings() {
+    const runtime = await getRuntimeSettings();
     return {
         provider: runtime.provider,
         model: runtime.model,
@@ -85,8 +83,8 @@ function getPublicSettings() {
     };
 }
 
-function saveSettings(payload = {}) {
-    const current = getStoredSettings();
+async function saveSettings(payload = {}) {
+    const current = await getStoredSettings();
     const nextPayload = { ...payload };
     if (payload.clearApiKey) {
         nextPayload.apiKey = '';
@@ -95,11 +93,11 @@ function saveSettings(payload = {}) {
     }
     const normalized = normalizeSettings(nextPayload, current);
     if (normalized.apiKey && !isLikelyValidApiKey(normalized.apiKey)) {
-        const err = new Error('API Token 格式疑似无效：Gemini API Key 通常以 AIza 开头，且长度明显长于短验证码。');
+        const err = new Error('API Token 格式疑似无效');
         err.statusCode = 400;
         throw err;
     }
-    writeJSON(SETTINGS_FILE, normalized);
+    await writeKV('sys', 'ai_settings', normalized);
     return getPublicSettings();
 }
 

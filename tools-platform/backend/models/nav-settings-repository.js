@@ -1,6 +1,5 @@
-const { readJSON, writeJSON } = require('./store');
+const { readKV, writeKV } = require('./kv-store');
 
-const SETTINGS_FILE = 'nav_settings.json';
 
 const DEFAULT_SETTINGS = {
     primaryIds: ['home', 'uivf12', 'sla', 'report', 'expedite', 'monthly'],
@@ -46,8 +45,8 @@ function normalizeSettings(input = {}) {
     };
 }
 
-function getSettings() {
-    return normalizeSettings(readJSON(SETTINGS_FILE, DEFAULT_SETTINGS));
+async function getSettings() {
+    return normalizeSettings(await readKV('sys', 'nav_settings', DEFAULT_SETTINGS));
 }
 
 function saveSettings(settings) {

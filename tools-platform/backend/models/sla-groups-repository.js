@@ -1,22 +1,10 @@
-const { readJSON, writeJSON } = require('./store');
 const { run, get, all } = require('./app-db');
 
-const GROUPS_FILE = 'sla_groups.json';
 
 let initPromise = null;
 
 function normalizeGroups(groups) {
     return Array.isArray(groups) ? groups : [];
-}
-
-function readGroupsFromJson() {
-    return normalizeGroups(readJSON(GROUPS_FILE, []));
-}
-
-function writeGroupsToJson(groups) {
-    const normalized = normalizeGroups(groups);
-    writeJSON(GROUPS_FILE, normalized);
-    return normalized;
 }
 
 async function replaceGroupsInDbRaw(groups) {
@@ -115,9 +103,7 @@ async function ensureReady() {
             const row = await get('SELECT COUNT(1) AS count FROM sla_groups');
             if (row && row.count > 0) return;
 
-            const groups = readGroupsFromJson();
-            if (groups.length === 0) return;
-            await replaceGroupsInDbRaw(groups);
+            
         })().catch(err => {
             initPromise = null;
             throw err;
@@ -154,38 +140,15 @@ async function listFromDb() {
     }));
 }
 
-async function listGroups({ mode = 'auto' } = {}) {
-    const normalizedMode = String(mode || 'auto').toLowerCase();
-    if (normalizedMode === 'json') {
-        return { items: readGroupsFromJson(), source: 'json' };
-    }
-    if (normalizedMode === 'sqlite' || normalizedMode === 'db') {
-        return { items: await listFromDb(), source: 'sqlite' };
-    }
-
-    try {
-        const dbItems = await listFromDb();
-        if (dbItems && dbItems.length > 0) {
-            return { items: dbItems, source: 'sqlite' };
-        }
-    } catch (err) {}
-
-    const jsonGroups = readGroupsFromJson();
-    if (jsonGroups.length > 0) {
-        return { items: jsonGroups, source: 'json' };
-    }
-
-    return { items: await listFromDb(), source: 'sqlite' };
+async function listGroups(options = {}) {
+    const items = await listFromDb(options);
+    return { items, source: 'sqlite' };
 }
 
 async function replaceGroups(groups) {
-    const normalized = writeGroupsToJson(groups);
-    try {
-        await ensureReady();
-        await replaceGroupsInDbRaw(normalized);
-    } catch (err) {
-        console.error('[sla-groups] SQLite replace sync failed:', err.message);
-    }
+    const normalized = groups || [];
+    await ensureReady();
+    await replaceGroupsInDbRaw(normalized);
     return normalized;
 }
 

@@ -1,7 +1,5 @@
-const { readJSON, writeJSON } = require('./store');
 const { run, get, all } = require('./app-db');
 
-const SESSIONS_FILE = 'sessions.json';
 let initPromise = null;
 
 async function ensureReady() {
@@ -56,14 +54,6 @@ async function ensureReady() {
     return initPromise;
 }
 
-function readSessionsFromJson() {
-    return readJSON(SESSIONS_FILE, {});
-}
-
-function writeSessionsToJson(sessions) {
-    writeJSON(SESSIONS_FILE, sessions);
-}
-
 async function listFromDb() {
     await ensureReady();
     const rows = await all('SELECT token, username, role, expires_at FROM auth_sessions');
@@ -77,47 +67,13 @@ async function listFromDb() {
     return result;
 }
 
-async function listSessions({ mode = 'auto' } = {}) {
-    const normalizedMode = String(mode || 'auto').toLowerCase();
-
-    if (normalizedMode === 'json') {
-        return {
-            items: readSessionsFromJson(),
-            source: 'json'
-        };
-    }
-
-    if (normalizedMode === 'sqlite' || normalizedMode === 'db') {
-        return {
-            items: await listFromDb(),
-            source: 'sqlite'
-        };
-    }
-
-    // --- AUTO MODE PRIORITY: SQLITE ---
-    try {
-        const dbRes = await listFromDb();
-        if (dbRes && (Array.isArray(dbRes) ? dbRes.length > 0 : Object.keys(dbRes).length > 0)) {
-            return { items: dbRes, source: 'sqlite' };
-        }
-    } catch (err) {}
-
-    const jsonSessions = readSessionsFromJson();
-    if (Object.keys(jsonSessions).length > 0) {
-        return {
-            items: jsonSessions,
-            source: 'json'
-        };
-    }
-
-    return {
-        items: await listFromDb(),
-        source: 'sqlite'
-    };
+async function listSessions(options = {}) {
+    const items = await listFromDb(options);
+    return { items, source: 'sqlite' };
 }
 
 async function getSession(token) {
-    const jsonSessions = readSessionsFromJson();
+    
     if (jsonSessions[token]) {
         return jsonSessions[token];
     }
@@ -133,7 +89,7 @@ async function getSession(token) {
 }
 
 async function saveSession(token, username, role, expiresAt) {
-    const sessions = readSessionsFromJson();
+    
     sessions[token] = {
         user: { username, role },
         expiresAt
@@ -152,7 +108,7 @@ async function saveSession(token, username, role, expiresAt) {
 }
 
 async function deleteSession(token) {
-    const sessions = readSessionsFromJson();
+    
     if (sessions[token]) {
         delete sessions[token];
         writeSessionsToJson(sessions);

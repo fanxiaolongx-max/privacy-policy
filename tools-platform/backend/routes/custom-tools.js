@@ -4,7 +4,7 @@ const repo = require('../models/custom-tools-repository');
 const historyRepo = require('../models/upload-history-repository');
 
 router.get('/', (req, res) => {
-    res.json(repo.listTools());
+    res.json(await repo.listTools());
 });
 
 router.post('/', (req, res) => {
@@ -23,8 +23,8 @@ router.post('/', (req, res) => {
 
 router.delete('/:slug', (req, res) => {
     try {
-        const tool = repo.getTool(req.params.slug);
-        const deleted = repo.deleteTool(req.params.slug);
+        const tool = await repo.getTool(req.params.slug);
+        const deleted = await repo.deleteTool(req.params.slug);
         if (!deleted) return res.status(404).json({ error: '自定义工具不存在' });
         historyRepo.addHistory({
             tool: 'custom',

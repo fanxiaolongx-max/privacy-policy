@@ -1,7 +1,5 @@
-const { readJSON, writeJSON } = require('./store');
 const { run, get, all } = require('./app-db');
 
-const CATS_FILE = 'uiv_categories.json';
 const DEFAULT_CATEGORIES = ['DataFab', 'NetCare中国', 'NetCare中东', 'NetCare德国', '默认分类'];
 
 let initPromise = null;
@@ -20,7 +18,7 @@ async function ensureReady() {
             const row = await get('SELECT COUNT(1) AS count FROM uiv_categories');
             if (row && row.count > 0) return;
 
-            const jsonCategories = readCategoriesFromJson();
+            
             const allCategories = [...DEFAULT_CATEGORIES, ...jsonCategories];
 
             await run('BEGIN TRANSACTION');
@@ -56,16 +54,6 @@ function normalizeCategories(categories) {
     )];
 }
 
-function readCategoriesFromJson() {
-    return normalizeCategories(readJSON(CATS_FILE, []));
-}
-
-function writeCategoriesToJson(categories) {
-    const normalized = normalizeCategories(categories);
-    writeJSON(CATS_FILE, normalized);
-    return normalized;
-}
-
 async function listFromDb() {
     await ensureReady();
     const rows = await all(`
@@ -80,43 +68,9 @@ async function listFromDb() {
     return [...orderedDefaults, ...customs];
 }
 
-async function listCategories({ mode = 'auto' } = {}) {
-    const normalizedMode = String(mode || 'auto').toLowerCase();
-
-    if (normalizedMode === 'json') {
-        return {
-            items: [...DEFAULT_CATEGORIES, ...readCategoriesFromJson()],
-            source: 'json'
-        };
-    }
-
-    if (normalizedMode === 'sqlite' || normalizedMode === 'db') {
-        return {
-            items: await listFromDb(),
-            source: 'sqlite'
-        };
-    }
-
-    // --- AUTO MODE PRIORITY: SQLITE ---
-    try {
-        const dbRes = await listFromDb();
-        if (dbRes && (Array.isArray(dbRes) ? dbRes.length > 0 : Object.keys(dbRes).length > 0)) {
-            return { items: dbRes, source: 'sqlite' };
-        }
-    } catch (err) {}
-
-    const jsonCategories = readCategoriesFromJson();
-    if (jsonCategories.length > 0) {
-        return {
-            items: [...DEFAULT_CATEGORIES, ...jsonCategories],
-            source: 'json'
-        };
-    }
-
-    return {
-        items: await listFromDb(),
-        source: 'sqlite'
-    };
+async function listCategories(options = {}) {
+    const items = await listFromDb(options);
+    return { items, source: 'sqlite' };
 }
 
 async function syncJsonCategoriesToDb(categories) {
@@ -147,7 +101,7 @@ async function syncJsonCategoriesToDb(categories) {
 
 async function addCategory(name) {
     const trimmedName = String(name || '').trim();
-    const categories = readCategoriesFromJson();
+    
     if (!trimmedName) {
         return categories;
     }
@@ -168,11 +122,11 @@ async function addCategory(name) {
         }
     }
 
-    return readCategoriesFromJson();
+    return [];
 }
 
 async function deleteCategory(name) {
-    const categories = readCategoriesFromJson().filter(item => item !== name);
+    const categories = [].filter(item => item !== name);
     writeCategoriesToJson(categories);
 
     try {
@@ -186,13 +140,9 @@ async function deleteCategory(name) {
 }
 
 async function replaceCategories(categories) {
-    const normalized = writeCategoriesToJson(categories);
+    const normalized = categories;
 
-    try {
-        await syncJsonCategoriesToDb(normalized);
-    } catch (err) {
-        console.error('[uiv-categories] SQLite replace sync failed:', err.message);
-    }
+    await syncJsonCategoriesToDb(normalized);
 
     return normalized;
 }
