@@ -88,7 +88,7 @@ async function getSession(token) {
     return null;
 }
 
-async function addSession(token, username, role, expiresAt) {
+async function saveSession(token, username, role, expiresAt) {
 
     try {
         await ensureReady();
