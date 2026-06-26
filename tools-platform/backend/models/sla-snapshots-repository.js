@@ -12,7 +12,7 @@ async function replaceSnapshotsInDbRaw(items) {
     await run('DELETE FROM sla_snapshots');
     for (const item of items) {
         await run(
-            `INSERT INTO sla_snapshots (id, timestamp, payload_json, updated_at)
+            `INSERT OR REPLACE INTO sla_snapshots (id, timestamp, payload_json, updated_at)
              VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
             [
                 item.id,

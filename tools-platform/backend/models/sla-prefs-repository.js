@@ -26,13 +26,13 @@ async function replacePrefsInDbRaw(items) {
         if (prefKey === 'i18nMap') {
             for (const [k, v] of Object.entries(payload)) {
                 await run(
-                    `INSERT INTO sys_dictionaries (dict_key, dict_value, category, updated_at) VALUES (?, ?, 'i18n', CURRENT_TIMESTAMP)`,
+                    `INSERT OR REPLACE INTO sys_dictionaries (dict_key, dict_value, category, updated_at) VALUES (?, ?, 'i18n', CURRENT_TIMESTAMP)`,
                     [k, String(v)]
                 );
             }
         } else {
             await run(
-                `INSERT INTO sla_prefs (pref_key, pref_kind, payload_json, updated_at)
+                `INSERT OR REPLACE INTO sla_prefs (pref_key, pref_kind, payload_json, updated_at)
                  VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
                 [
                     prefKey,
@@ -153,7 +153,7 @@ async function upsertPrefItem(prefKey, payload) {
             await run("DELETE FROM sys_dictionaries WHERE category='i18n'");
             for (const [k, v] of Object.entries(payload)) {
                 await run(
-                    `INSERT INTO sys_dictionaries (dict_key, dict_value, category, updated_at) VALUES (?, ?, 'i18n', CURRENT_TIMESTAMP)`,
+                    `INSERT OR REPLACE INTO sys_dictionaries (dict_key, dict_value, category, updated_at) VALUES (?, ?, 'i18n', CURRENT_TIMESTAMP)`,
                     [k, String(v)]
                 );
             }
