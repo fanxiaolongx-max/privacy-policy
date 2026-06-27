@@ -225,6 +225,30 @@ function renderTopStickyBar() {
 
 // ── 预警目标弹窗 ──────────────────────────────────────────
 
+function getSecIdFromSLAPrefKey(schemaHash) {
+    if (schemaHash.startsWith('sla_prefs_other_')) return schemaHash.replace('sla_prefs_', '');
+    if (schemaHash.startsWith('sla_prefs_rectification')) return 'rectification';
+    if (schemaHash.startsWith('sla_prefs_risk')) return 'risk';
+    if (schemaHash.startsWith('sla_prefs_special')) return 'special';
+    return schemaHash.replace('sla_prefs_', '');
+}
+
+function collectSavedCustomMetricTargets(prefs, targetKeys, labelMap) {
+    const knownLabels = {};
+    Object.keys(prefs || {}).forEach(schemaHash => {
+        const pref = prefs[schemaHash];
+        if (!pref || !Array.isArray(pref.customMetrics) || !pref.customMetrics.length) return;
+        const secId = getSecIdFromSLAPrefKey(schemaHash);
+        pref.customMetrics.forEach(cm => {
+            const targetKey = `${secId}_${cm.id}`;
+            knownLabels[cm.id] = cm.label;
+            labelMap[targetKey] = cm.label;
+            if (!targetKeys.includes(targetKey)) targetKeys.push(targetKey);
+        });
+    });
+    return knownLabels;
+}
+
 window.openTargetModal = async function() {
     const modalList = document.getElementById('target-modal-list');
     let targetKeys = Object.keys(window.GlobalMetrics);
@@ -249,54 +273,28 @@ window.openTargetModal = async function() {
             const prefs = configData.prefs || {};
             metricI18nMap = prefs.i18nMap || {};
             if (window.renderSLASourcePanel) window.renderSLASourcePanel();
-            
-            // Collect all custom metrics from prefs
-            const knownLabels = {};
-            Object.keys(prefs).forEach(schemaHash => {
-                const pref = prefs[schemaHash];
-                if (pref.customMetrics && pref.customMetrics.length > 0) {
-                    let secId = '';
-                    if (schemaHash.startsWith('sla_prefs_other_')) {
-                        secId = schemaHash.replace('sla_prefs_', ''); // e.g. other_r7ivhq
-                    } else if (schemaHash.startsWith('sla_prefs_rectification')) {
-                        secId = 'rectification';
-                    } else if (schemaHash.startsWith('sla_prefs_risk')) {
-                        secId = 'risk';
-                    } else if (schemaHash.startsWith('sla_prefs_special')) {
-                        secId = 'special';
-                    } else {
-                        secId = schemaHash.replace('sla_prefs_', '');
-                    }
-                    
-                    pref.customMetrics.forEach(cm => {
-                        const targetKey = `${secId}_${cm.id}`;
-                        knownLabels[cm.id] = cm.label;
-                        labelMap[targetKey] = cm.label;
-                        if (!targetKeys.includes(targetKey)) {
-                            targetKeys.push(targetKey);
-                        }
-                    });
-                }
-            });
+
+            const knownLabels = collectSavedCustomMetricTargets(prefs, targetKeys, labelMap);
             
             // Also include anything already in GlobalTargets
             const existingTargetKeys = Object.keys(window.GlobalTargets);
             existingTargetKeys.forEach(k => {
-                if (!targetKeys.includes(k)) {
-                    targetKeys.push(k);
-                }
                 if (window.GlobalTargets[k].label) {
+                    if (!targetKeys.includes(k)) targetKeys.push(k);
                     labelMap[k] = window.GlobalTargets[k].label;
                 } else if (!labelMap[k]) {
                     // Try to guess the label from known custom metrics ids
-                    let matchedLabel = k;
+                    let matchedLabel = '';
                     for (const cmId in knownLabels) {
                         if (k.endsWith(cmId)) {
                             matchedLabel = knownLabels[cmId];
                             break;
                         }
                     }
-                    labelMap[k] = matchedLabel;
+                    if (matchedLabel) {
+                        if (!targetKeys.includes(k)) targetKeys.push(k);
+                        labelMap[k] = matchedLabel;
+                    }
                 }
             });
         } catch (e) {
@@ -310,11 +308,14 @@ window.openTargetModal = async function() {
             const configData = await API.get(`/api/sla/config${query}`);
             metricI18nMap = (configData && configData.prefs && configData.prefs.i18nMap) || {};
             window.GlobalTargets = configData.targets || window.GlobalTargets || {};
+            collectSavedCustomMetricTargets((configData && configData.prefs) || {}, targetKeys, labelMap);
             if (window.renderSLASourcePanel) window.renderSLASourcePanel();
         } catch (e) {}
         targetKeys.forEach(k => {
-            labelMap[k] = window.GlobalMetrics[k].label;
-            currentValues[k] = window.GlobalMetrics[k].value;
+            if (window.GlobalMetrics[k]) {
+                labelMap[k] = window.GlobalMetrics[k].label;
+                currentValues[k] = window.GlobalMetrics[k].value;
+            }
         });
     }
 

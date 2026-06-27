@@ -268,9 +268,12 @@ function addMetricRule(secId) {
     const ck = document.getElementById(`m-c-valk-${secId}`); if(ck) ck.value = '';
 }
 
-window.deleteMetricRule = function(secId, ruleId) {
+window.deleteMetricRule = async function(secId, ruleId) {
+    const existingRule = AppState[secId]?.customMetrics?.find(r => r.id === ruleId);
     AppState[secId].customMetrics = AppState[secId].customMetrics.filter(r => r.id !== ruleId);
-    SLAPrefs.savePrefs(secId); renderMetricList(secId); evaluateAllMetrics(); updateAllMetricRuleSummaries();
+    SLAPrefs.savePrefs(secId);
+    await removeMetricRuleTarget({ origin: '当前导入', parentSecId: secId, secId, parentRuleId: ruleId }, existingRule);
+    renderMetricList(secId); evaluateAllMetrics(); updateAllMetricRuleSummaries();
     if (window.refreshSLAHighlightViews) window.refreshSLAHighlightViews(Object.keys(AppState || {}));
 };
 
@@ -352,6 +355,34 @@ function getMetricRuleDisplayOrigin(origin) {
 
 function normalizeMetricPrefSecId(prefKey) {
     return String(prefKey || '').replace(/^sla_prefs_/, '');
+}
+
+function getMetricRuleTargetSecId(record) {
+    if (!record) return '';
+    if (record.origin === '当前导入') return record.parentSecId || record.secId || '';
+    const prefKey = String(record.prefKey || '');
+    if (prefKey.startsWith('sla_prefs_other_')) return prefKey.replace('sla_prefs_', '');
+    if (prefKey.startsWith('sla_prefs_rectification')) return 'rectification';
+    if (prefKey.startsWith('sla_prefs_risk')) return 'risk';
+    if (prefKey.startsWith('sla_prefs_special')) return 'special';
+    return normalizeMetricPrefSecId(prefKey);
+}
+
+async function removeMetricRuleTarget(record, rule) {
+    const secId = getMetricRuleTargetSecId(record);
+    const ruleId = (rule && rule.id) || (record && record.parentRuleId);
+    const targetKey = secId && ruleId ? `${secId}_${ruleId}` : '';
+    if (!targetKey || !window.GlobalTargets || !Object.prototype.hasOwnProperty.call(window.GlobalTargets, targetKey)) return;
+    delete window.GlobalTargets[targetKey];
+    try {
+        await API.put('/api/sla/targets', window.GlobalTargets);
+        if (window.SLASection && typeof window.SLASection.initGlobalTargets === 'function') {
+            await window.SLASection.initGlobalTargets();
+        }
+        if (window.renderSLASourcePanel) window.renderSLASourcePanel();
+    } catch (e) {
+        console.warn('[SLA Metric Rules] 清理已删除规则的预警目标失败:', e);
+    }
 }
 
 function getSectionDisplayTitle(secId, prefKey) {
@@ -1111,7 +1142,7 @@ window.renderMetricRuleCopyRows = function() {
                     ? `<span class="metric-rule-copy-static">-</span>`
                     : renderMetricRuleCopySelect(categoryOptions, row.category, 'category')}</td>
                 <td>${record.kind === 'sub'
-                    ? renderMetricRuleCopySelect(parentOptions, row.parent, 'parent').replace('<select', '<select onchange="handleMetricRuleCopyParentChange(this)"')
+                    ? renderMetricRuleCopySelect(parentOptions, row.parent, 'parent')
                     : `<span class="metric-rule-copy-static">${SLAT('sla.rules.independent')}</span>`}</td>
                 <td>${renderMetricRuleCopySelect(fieldOptions, row.colX, 'colX')}</td>
                 <td><input data-field="valY" value="${escapeHTML(row.valY)}"></td>
@@ -1400,41 +1431,6 @@ function findMetricRuleCopyParent(parentValue) {
     return null;
 }
 
-window.handleMetricRuleCopyParentChange = function(selectEl) {
-    const parentRef = findMetricRuleCopyParent(selectEl.value);
-    if (parentRef && parentRef.parent) {
-        const newLabel = getMetricRuleDisplayLabel(parentRef.parent, null);
-        const tr = selectEl.closest('tr');
-        if (tr) {
-            if (newLabel) {
-                const labelInput = tr.querySelector('input[data-field="label"]');
-                if (labelInput) labelInput.value = newLabel;
-            }
-
-            const pseudoRecord = {
-                sourceSecId: parentRef.parent.sourceSecId || parentRef.secId,
-                prefKey: parentRef.prefKey
-            };
-            const fieldCandidates = Array.from(new Set([
-                ...getMetricRuleFieldCandidates(pseudoRecord),
-                parentRef.parent.colX,
-                parentRef.parent.colZ
-            ].filter(Boolean)));
-            const fieldOptions = [{ value: '', label: SLAT('sla.rules.emptyColumn') }, ...fieldCandidates.map(col => ({ value: col, label: col }))];
-
-            ['colX', 'colZ'].forEach(colName => {
-                const select = tr.querySelector(`select[data-field="${colName}"]`);
-                if (select) {
-                    const currentVal = select.value;
-                    select.innerHTML = fieldOptions.map(item => {
-                        return `<option value="${escapeHTML(item.value)}" ${item.value === currentVal ? 'selected' : ''}>${escapeHTML(item.label)}</option>`;
-                    }).join('');
-                }
-            });
-        }
-    }
-};
-
 window.saveMetricRuleCopies = async function() {
     if (!copyingMetricRuleRecord) return;
     const record = copyingMetricRuleRecord;
@@ -1609,6 +1605,7 @@ window.deleteMetricRuleFromOverview = async function(index) {
             }
             await persistSavedMetricRuleConfig();
         }
+        await removeMetricRuleTarget(record, ref.rule);
         await refreshMetricRulePrefsCache();
         renderAllMetricRules();
         showToast('指标规则已删除。');
