@@ -249,6 +249,151 @@ function collectSavedCustomMetricTargets(prefs, targetKeys, labelMap) {
     return knownLabels;
 }
 
+let targetModalState = {
+    view: 'cards',
+    items: [],
+    draft: {}
+};
+
+function isDefaultPercentTarget(label, key, targetDef) {
+    return targetDef.isPercent === true || (targetDef.isPercent === undefined && (String(label || '').includes('率') || String(key || '').includes('率')));
+}
+
+function buildTargetDraft(targetKeys, labelMap) {
+    const draft = {};
+    targetKeys.forEach(k => {
+        const targets = window.GlobalTargets[k] || {};
+        const label = labelMap[k] || targets.label || k;
+        draft[k] = {
+            type: targets.type || 'gte',
+            isPercent: isDefaultPercentTarget(label, k, targets)
+        };
+        for (let i = 1; i <= 12; i++) {
+            draft[k][String(i)] = targets[i] !== undefined ? String(targets[i]) : '';
+        }
+    });
+    return draft;
+}
+
+function collectTargetDraftFromDom() {
+    if (!targetModalState || !targetModalState.draft) return;
+    document.querySelectorAll('#target-modal .condition-select').forEach(sel => {
+        const k = sel.getAttribute('data-key');
+        if (!k) return;
+        if (!targetModalState.draft[k]) targetModalState.draft[k] = {};
+        targetModalState.draft[k].type = sel.value || 'gte';
+    });
+    document.querySelectorAll('#target-modal .is-percent-checkbox').forEach(cb => {
+        const k = cb.getAttribute('data-key');
+        if (!k) return;
+        if (!targetModalState.draft[k]) targetModalState.draft[k] = {};
+        targetModalState.draft[k].isPercent = cb.checked;
+    });
+    document.querySelectorAll('#target-modal .target-month-input').forEach(input => {
+        const k = input.getAttribute('data-key');
+        const m = input.getAttribute('data-month');
+        if (!k || !m) return;
+        if (!targetModalState.draft[k]) targetModalState.draft[k] = {};
+        targetModalState.draft[k][m] = input.value.trim();
+    });
+}
+
+function renderTargetViewToggle() {
+    const btn = document.getElementById('target-view-toggle');
+    if (!btn) return;
+    const isTable = targetModalState.view === 'table';
+    btn.textContent = SLAT(isTable ? 'sla.metric.cardMode' : 'sla.metric.tableMode');
+    btn.title = SLAT(isTable ? 'sla.metric.cardModeTitle' : 'sla.metric.tableModeTitle');
+}
+
+function renderTargetCards() {
+    return targetModalState.items.map(item => {
+        const draft = targetModalState.draft[item.key] || {};
+        let inputsHtml = '';
+        for (let i = 1; i <= 12; i++) {
+            inputsHtml += `<div class="month-input-group">
+                <label>${SLAT('sla.metric.monthLabel', { month: i })}</label>
+                <input class="target-month-input" type="number" step="0.01" data-key="${item.key}" data-month="${i}" value="${escapeHTML(draft[String(i)] || '')}" placeholder="${SLAT('sla.metric.targetPh')}">
+            </div>`;
+        }
+        return `<div class="target-row">
+            <div class="target-row-header">
+                <span title="${escapeHTML(item.label)}">🏷️ ${escapeHTML(item.displayLabel)}</span>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <select class="condition-select" data-key="${item.key}">
+                        <option value="gte" ${draft.type === 'gte' || !draft.type ? 'selected' : ''}>${SLAT('sla.metric.gte')}</option>
+                        <option value="lte" ${draft.type === 'lte' ? 'selected' : ''}>${SLAT('sla.metric.lte')}</option>
+                    </select>
+                    <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;color:#555;">
+                        <input type="checkbox" class="is-percent-checkbox" data-key="${item.key}" ${draft.isPercent ? 'checked' : ''}>
+                        ${SLAT('sla.metric.percent')}
+                    </label>
+                    <span style="color:#666;font-weight:normal;font-size:13px;">${SLAT('sla.metric.currentValue')} <b style="color:#4a90e2;font-size:16px;">${escapeHTML(String(item.currentVal))}</b></span>
+                </div>
+            </div>
+            <div class="target-months">${inputsHtml}</div>
+        </div>`;
+    }).join('');
+}
+
+function renderTargetTable() {
+    const monthHeaders = Array.from({ length: 12 }, (_, i) => `<th>${SLAT('sla.metric.monthLabel', { month: i + 1 })}</th>`).join('');
+    const rows = targetModalState.items.map(item => {
+        const draft = targetModalState.draft[item.key] || {};
+        const monthCells = Array.from({ length: 12 }, (_, index) => {
+            const month = String(index + 1);
+            return `<td><input class="target-month-input target-table-input" type="number" step="0.01" data-key="${item.key}" data-month="${month}" value="${escapeHTML(draft[month] || '')}" placeholder="${SLAT('sla.metric.targetPh')}"></td>`;
+        }).join('');
+        return `<tr>
+            <th class="target-table-metric" title="${escapeHTML(item.label)}">🏷️ ${escapeHTML(item.displayLabel)}</th>
+            <td class="target-table-current">${escapeHTML(String(item.currentVal))}</td>
+            <td>
+                <select class="condition-select" data-key="${item.key}">
+                    <option value="gte" ${draft.type === 'gte' || !draft.type ? 'selected' : ''}>${SLAT('sla.metric.gteShort')}</option>
+                    <option value="lte" ${draft.type === 'lte' ? 'selected' : ''}>${SLAT('sla.metric.lteShort')}</option>
+                </select>
+            </td>
+            <td class="target-table-percent">
+                <input type="checkbox" class="is-percent-checkbox" data-key="${item.key}" ${draft.isPercent ? 'checked' : ''}>
+            </td>
+            ${monthCells}
+        </tr>`;
+    }).join('');
+    return `<div class="target-table-wrap">
+        <table class="target-config-table">
+            <thead>
+                <tr>
+                    <th>${SLAT('sla.metric.tableMetric')}</th>
+                    <th>${SLAT('sla.metric.tableCurrent')}</th>
+                    <th>${SLAT('sla.metric.tableDirection')}</th>
+                    <th>${SLAT('sla.metric.percent')}</th>
+                    ${monthHeaders}
+                </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+        </table>
+    </div>`;
+}
+
+function renderTargetModalList() {
+    const modalList = document.getElementById('target-modal-list');
+    if (!modalList) return;
+    const modal = document.getElementById('target-modal');
+    if (modal) modal.classList.toggle('target-modal-table-mode', targetModalState.view === 'table');
+    renderTargetViewToggle();
+    if (!targetModalState.items.length) {
+        modalList.innerHTML = `<div style="text-align:center;padding:30px;color:#888;font-size:16px;">${SLAT('sla.metric.noConfig')}</div>`;
+        return;
+    }
+    modalList.innerHTML = targetModalState.view === 'table' ? renderTargetTable() : renderTargetCards();
+}
+
+window.toggleTargetViewMode = function() {
+    collectTargetDraftFromDom();
+    targetModalState.view = targetModalState.view === 'table' ? 'cards' : 'table';
+    renderTargetModalList();
+};
+
 window.openTargetModal = async function() {
     const modalList = document.getElementById('target-modal-list');
     let targetKeys = Object.keys(window.GlobalMetrics);
@@ -319,72 +464,46 @@ window.openTargetModal = async function() {
         });
     }
 
-    if (!targetKeys.length) {
-        modalList.innerHTML = `<div style="text-align:center;padding:30px;color:#888;font-size:16px;">${SLAT('sla.metric.noConfig')}</div>`;
-    } else {
-        modalList.innerHTML = targetKeys.map(k => {
-            const label = labelMap[k] || k;
-            const displayLabel = translateMetricLabel(label);
-            const currentVal = currentValues[k] !== undefined ? currentValues[k] : '--';
-            const targets = window.GlobalTargets[k] || {};
-            let inputsHtml = '';
-            for (let i = 1; i <= 12; i++) {
-                inputsHtml += `<div class="month-input-group">
-                    <label>${SLAT('sla.metric.monthLabel', { month: i })}</label>
-                    <input type="number" step="0.01" data-key="${k}" data-month="${i}" value="${targets[i] !== undefined ? targets[i] : ''}" placeholder="${SLAT('sla.metric.targetPh')}">
-                </div>`;
-            }
-            return `<div class="target-row">
-                <div class="target-row-header">
-                    <span title="${escapeHTML(label)}">🏷️ ${escapeHTML(displayLabel)}</span>
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <select class="condition-select" data-key="${k}">
-                            <option value="gte" ${targets.type === 'gte' || !targets.type ? 'selected' : ''}>${SLAT('sla.metric.gte')}</option>
-                            <option value="lte" ${targets.type === 'lte' ? 'selected' : ''}>${SLAT('sla.metric.lte')}</option>
-                        </select>
-                        <label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;color:#555;">
-                            <input type="checkbox" class="is-percent-checkbox" data-key="${k}" ${(targets.isPercent === true || (targets.isPercent === undefined && (label.includes('率') || k.includes('率')))) ? 'checked' : ''}>
-                            ${SLAT('sla.metric.percent')}
-                        </label>
-                        <span style="color:#666;font-weight:normal;font-size:13px;">${SLAT('sla.metric.currentValue')} <b style="color:#4a90e2;font-size:16px;">${escapeHTML(String(currentVal))}</b></span>
-                    </div>
-                </div>
-                <div class="target-months">${inputsHtml}</div>
-            </div>`;
-        }).join('');
-    }
+    targetModalState.items = targetKeys.map(k => {
+        const label = labelMap[k] || (window.GlobalTargets[k] && window.GlobalTargets[k].label) || k;
+        return {
+            key: k,
+            label,
+            displayLabel: translateMetricLabel(label),
+            currentVal: currentValues[k] !== undefined ? currentValues[k] : '--'
+        };
+    });
+    targetModalState.draft = buildTargetDraft(targetKeys, labelMap);
+    renderTargetModalList();
     document.getElementById('target-modal').style.display = 'flex';
 };
 
-window.closeTargetModal = function() { document.getElementById('target-modal').style.display = 'none'; };
+window.closeTargetModal = function() {
+    const modal = document.getElementById('target-modal');
+    modal.style.display = 'none';
+    modal.classList.remove('target-modal-table-mode');
+};
 
 window.saveTargets = async function() {
-    const selects = document.querySelectorAll('.condition-select');
-    const inputs = document.querySelectorAll('.month-input-group input');
-    const checkboxes = document.querySelectorAll('.is-percent-checkbox');
+    collectTargetDraftFromDom();
     
     // We only update the targets that are currently shown in the modal, leaving others intact
     let newTargets = JSON.parse(JSON.stringify(window.GlobalTargets || {}));
     
-    selects.forEach(sel => { 
-        const k = sel.getAttribute('data-key'); 
+    targetModalState.items.forEach(item => {
+        const k = item.key;
+        const draft = targetModalState.draft[k] || {};
         if (!newTargets[k]) newTargets[k] = {};
-        newTargets[k].type = sel.value; 
-    });
-    
-    checkboxes.forEach(cb => {
-        const k = cb.getAttribute('data-key');
-        if (!newTargets[k]) newTargets[k] = {};
-        newTargets[k].isPercent = cb.checked;
-    });
-    
-    inputs.forEach(input => {
-        const k = input.getAttribute('data-key'), m = input.getAttribute('data-month'), val = input.value.trim();
-        if (!newTargets[k]) newTargets[k] = {};
-        if (val !== '') {
-            newTargets[k][m] = parseFloat(val);
-        } else {
-            delete newTargets[k][m];
+        newTargets[k].type = draft.type || 'gte';
+        newTargets[k].isPercent = !!draft.isPercent;
+        for (let i = 1; i <= 12; i++) {
+            const month = String(i);
+            const val = String(draft[month] || '').trim();
+            if (val !== '') {
+                newTargets[k][month] = parseFloat(val);
+            } else {
+                delete newTargets[k][month];
+            }
         }
     });
     

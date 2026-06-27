@@ -6,8 +6,8 @@
     <title>Task SLA 风险监控台 - Tools Platform</title>
     <meta name="description" content="Task SLA & 风险监控全局中台，整改/常规/专项三表合一，SLA预警呼吸灯">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link rel="stylesheet" href="/css/shared.css?v=20260627-02">
-    <link rel="stylesheet" href="/css/sla.css?v=20260627-06">
+    <link rel="stylesheet" href="/css/shared.css?v=20260627-21">
+    <link rel="stylesheet" href="/css/sla.css?v=20260627-21">
     <style>
         .sla-source-wrapper {
             display: flex;
@@ -113,7 +113,10 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>🎯 配置分月目标与预警方向</h3>
-                <button class="modal-close" onclick="closeTargetModal()">✖</button>
+                <div class="target-modal-header-actions">
+                    <button id="target-view-toggle" class="target-view-toggle" onclick="toggleTargetViewMode()">切换表格模式</button>
+                    <button class="modal-close" onclick="closeTargetModal()">✖</button>
+                </div>
             </div>
             <div class="modal-body" id="target-modal-list"></div>
             <div class="modal-footer">
@@ -386,21 +389,21 @@
     </div>
 
     <!-- 共享脚本 -->
-    <script src="/js/shared/api.js?v=20260626-01"></script>
-    <script src="/js/shared/toast.js?v=20260531-02"></script>
-    <script src="/js/shared/i18n.js?v=20260610-01"></script>
-    <script src="/js/shared/navbar.js?v=20260626-02"></script>
+    <script src="/js/shared/api.js?v=20260627-21"></script>
+    <script src="/js/shared/toast.js?v=20260627-21"></script>
+    <script src="/js/shared/i18n.js?v=20260627-21"></script>
+    <script src="/js/shared/navbar.js?v=20260627-21"></script>
     <!-- SLA 模块（注意加载顺序）-->
-    <script src="/js/sla/i18n.js?v=20260627-05"></script>
-    <script src="/js/sla/config.js?v=20260610-01"></script>
-    <script src="/js/sla/prefs.js?v=20260530-07"></script>
-    <script src="/js/sla/upload.js?v=20260616-01"></script>
-    <script src="/js/sla/section.js?v=20260610-01"></script>
-    <script src="/js/sla/table.js?v=20260608-02"></script>
-    <script src="/js/sla/events.js?v=20260627-19"></script>
-    <script src="/js/sla/metrics.js?v=20260627-02"></script>
-    <script src="/js/sla/history.js?v=20260610-03"></script>
-    <script src="/js/sla/categories.js?v=20260610-01"></script>
+    <script src="/js/sla/i18n.js?v=20260627-21"></script>
+    <script src="/js/sla/config.js?v=20260627-21"></script>
+    <script src="/js/sla/prefs.js?v=20260627-21"></script>
+    <script src="/js/sla/upload.js?v=20260627-21"></script>
+    <script src="/js/sla/section.js?v=20260627-21"></script>
+    <script src="/js/sla/table.js?v=20260627-21"></script>
+    <script src="/js/sla/events.js?v=20260627-21"></script>
+    <script src="/js/sla/metrics.js?v=20260627-21"></script>
+    <script src="/js/sla/history.js?v=20260627-21"></script>
+    <script src="/js/sla/categories.js?v=20260627-21"></script>
     <script>
         function formatSLASourceLabel(source) {
             if (window.SLAI18n && typeof window.SLAI18n.sourceLabel === 'function') return window.SLAI18n.sourceLabel(source);
