@@ -59,8 +59,9 @@ function updateUivBatchSpeedButton() {
     const btn = document.querySelector('.btn-batch-speed');
     if (!btn) return;
     const speed = getUivBatchSpeed();
+    const seconds = getUivCooldownMs(speed) / 1000;
     btn.textContent = speed + 'x';
-    btn.title = `当前 ${speed} 倍速：脚本间隔约 ${getUivCooldownMs(speed) / 1000} 秒。点击切换 1x / 2x / 4x。`;
+    btn.title = UIVT('uiv.repo.batchSpeedTitle', { speed, seconds });
 }
 
 function cycleUivBatchSpeed() {
@@ -68,7 +69,7 @@ function cycleUivBatchSpeed() {
     const next = UIV_BATCH_SPEEDS[(UIV_BATCH_SPEEDS.indexOf(current) + 1) % UIV_BATCH_SPEEDS.length];
     localStorage.setItem(UIV_BATCH_SPEED_KEY, String(next));
     updateUivBatchSpeedButton();
-    showToast(`UI.Vision 批量速度已切换为 ${next}x，脚本间隔约 ${getUivCooldownMs(next) / 1000} 秒`, 'success');
+    showToast(UIVT('uiv.repo.batchSpeedToast', { speed: next, seconds: getUivCooldownMs(next) / 1000 }), 'success');
 }
 
 function getUivOpenUrl(rawUrl) {
@@ -91,27 +92,6 @@ function extractUrlFromCode(code) {
 
 function resolveUivScriptUrl(script) {
     return script.url || extractUrlFromCode(script.code) || extractUrlFromCode(script.consoleCode);
-}
-
-function inferUivDownloadFiles(scriptCode) {
-    const code = String(scriptCode || '');
-    const outputMatch = code.match(/let\s+finalOutputName\s*=\s*"([^"]+)"/);
-    const baseName = outputMatch ? outputMatch[1] : '';
-    if (!baseName) return [];
-    const hasRuntimeMonth = code.includes('runConfigs = [') && code.includes('currentYear') && code.includes('prevYear');
-    if (!hasRuntimeMonth) return [baseName];
-
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth() + 1;
-    const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const prevYear = prevDate.getFullYear();
-    const prevMonth = prevDate.getMonth() + 1;
-    const pad = n => String(n).padStart(2, '0');
-    return [
-        baseName.replace('.csv', `_${currentYear}年${pad(currentMonth)}月.csv`),
-        baseName.replace('.csv', `_${prevYear}年${pad(prevMonth)}月.csv`)
-    ];
 }
 
 function buildLoginProbeScript(rawUrl) {
@@ -359,6 +339,16 @@ function buildUivProgressPanelScript(state) {
 function buildUivCompletionDialogScript(summary) {
     return `(() => {
         const summary = ${JSON.stringify(summary)};
+        function readWindowState() {
+            try {
+                const parsed = window.name ? JSON.parse(window.name) : {};
+                return parsed && typeof parsed === 'object' ? parsed : {};
+            } catch (e) {
+                return {};
+            }
+        }
+        const actualFiles = Array.from(new Set((readWindowState().uivf12Downloads || []).filter(Boolean)));
+        const hasActualFiles = actualFiles.length > 0;
         const old = document.getElementById('uivf12-completion-dialog');
         if (old) old.remove();
         const overlay = document.createElement('div');
@@ -375,10 +365,10 @@ function buildUivCompletionDialogScript(summary) {
             'color:#e2e8f0',
             'padding:20px'
         ].join(';');
-        const fileRows = summary.files.map((name, index) =>
-            '<div style="display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid rgba(148,163,184,.12);">' +
-                '<span style="color:#67e8f9;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;width:34px;">#' + String(index + 1).padStart(2, '0') + '</span>' +
-                '<span style="word-break:break-all;color:#f8fafc;">' + String(name).replace(/[<>&]/g, ch => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[ch])) + '</span>' +
+        const fileRows = actualFiles.map((name, index) =>
+            '<div style="display:grid;grid-template-columns:46px minmax(0,1fr);gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid rgba(148,163,184,.14);font-size:13px;line-height:1.45;">' +
+                '<span style="color:#67e8f9;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-weight:800;">#' + String(index + 1).padStart(2, '0') + '</span>' +
+                '<span style="word-break:break-all;white-space:normal;color:#f8fafc;font-weight:650;">' + String(name).replace(/[<>&]/g, ch => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[ch])) + '</span>' +
             '</div>'
         ).join('');
         overlay.innerHTML =
@@ -393,17 +383,64 @@ function buildUivCompletionDialogScript(summary) {
                 '<div style="padding:18px 22px;">' +
                     '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px;">' +
                         '<div style="border:1px solid rgba(103,232,249,.18);border-radius:10px;padding:10px;background:rgba(8,47,73,.28);"><div style="font-size:10px;color:#7dd3fc;text-transform:uppercase;">脚本任务</div><div style="font-size:22px;font-weight:900;">' + summary.taskCount + '</div></div>' +
-                        '<div style="border:1px solid rgba(103,232,249,.18);border-radius:10px;padding:10px;background:rgba(8,47,73,.28);"><div style="font-size:10px;color:#7dd3fc;text-transform:uppercase;">预计文件</div><div style="font-size:22px;font-weight:900;">' + summary.fileCount + '</div></div>' +
+                        '<div style="border:1px solid rgba(103,232,249,.18);border-radius:10px;padding:10px;background:rgba(8,47,73,.28);"><div style="font-size:10px;color:#7dd3fc;text-transform:uppercase;">实际文件</div><div style="font-size:22px;font-weight:900;">' + (hasActualFiles ? actualFiles.length : '未检测') + '</div></div>' +
                         '<div style="border:1px solid rgba(103,232,249,.18);border-radius:10px;padding:10px;background:rgba(8,47,73,.28);"><div style="font-size:10px;color:#7dd3fc;text-transform:uppercase;">下载位置</div><div style="font-size:12px;font-weight:800;color:#fef3c7;margin-top:7px;">浏览器默认下载目录</div></div>' +
                     '</div>' +
-                    '<div style="font-size:12px;color:#cbd5e1;margin-bottom:10px;">实际路径取决于本机浏览器下载设置。网页无法读取真实本机下载路径；未启用 XModules 时通常是 Downloads 文件夹。</div>' +
-                    '<div style="max-height:280px;overflow:auto;border:1px solid rgba(148,163,184,.16);border-radius:10px;padding:4px 12px;background:rgba(2,6,23,.34);">' + (fileRows || '<div style="padding:12px;color:#94a3b8;">未识别到文件名</div>') + '</div>' +
+                    '<div style="font-size:12px;color:#cbd5e1;margin-bottom:10px;">文件名来自本次页面实际触发的下载动作。实际路径取决于本机浏览器下载设置；网页无法读取真实本机下载路径。</div>' +
+                    '<div style="max-height:320px;overflow:auto;border:1px solid rgba(148,163,184,.16);border-radius:10px;padding:4px 14px;background:rgba(2,6,23,.34);">' + (fileRows || '<div style="padding:14px;color:#94a3b8;font-size:13px;">未检测到本次下载文件名。若浏览器或扩展绕过页面下载事件，文件数量将不显示。</div>') + '</div>' +
                 '</div>' +
             '</div>';
         overlay.querySelector('#uivf12-completion-close').onclick = () => overlay.remove();
         overlay.addEventListener('click', event => { if (event.target === overlay) overlay.remove(); });
         document.documentElement.appendChild(overlay);
         return 'completion-shown';
+    })();`;
+}
+
+function buildUivDownloadRecorderScript(options = {}) {
+    return `(() => {
+        const reset = ${options.reset ? 'true' : 'false'};
+        function readWindowState() {
+            try {
+                const parsed = window.name ? JSON.parse(window.name) : {};
+                return parsed && typeof parsed === 'object' ? parsed : {};
+            } catch (e) {
+                return {};
+            }
+        }
+        function writeWindowState(nextState) {
+            window.name = JSON.stringify(nextState);
+        }
+        function recordDownloadName(name) {
+            if (!name) return;
+            const bag = readWindowState();
+            const list = Array.isArray(bag.uivf12Downloads) ? bag.uivf12Downloads : [];
+            list.push(String(name));
+            bag.uivf12Downloads = list;
+            writeWindowState(bag);
+        }
+        const bag = readWindowState();
+        if (reset) {
+            bag.uivf12Downloads = [];
+            writeWindowState(bag);
+        }
+        if (!window.__uivf12DownloadRecorderBound) {
+            window.__uivf12DownloadRecorderBound = true;
+            const originalClick = HTMLAnchorElement.prototype.click;
+            HTMLAnchorElement.prototype.click = function () {
+                try {
+                    if (this && this.download) recordDownloadName(this.download);
+                } catch (e) {}
+                return originalClick.apply(this, arguments);
+            };
+            document.addEventListener('click', function (event) {
+                try {
+                    const link = event.target && event.target.closest ? event.target.closest('a[download]') : null;
+                    if (link && link.download) recordDownloadName(link.download);
+                } catch (e) {}
+            }, true);
+        }
+        return 'download-recorder-ready';
     })();`;
 }
 
@@ -423,8 +460,7 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
                 name: script.name || `Task ${index + 1}`,
                 url: resolvedUrl,
                 openUrl: getUivOpenUrl(resolvedUrl),
-                code: script.code || '',
-                downloadFiles: inferUivDownloadFiles(script.code || '')
+                code: script.code || ''
             };
         })
         .filter(script => script.openUrl && script.code);
@@ -434,7 +470,6 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
     }
 
     const groupedScripts = groupUivScriptsByOpenUrl(usableScripts);
-    const downloadFiles = usableScripts.flatMap(script => script.downloadFiles || []);
     const siteStates = groupedScripts.map((group, index) => ({
         label: `${index + 1}. ${group.openUrl}`,
         total: group.scripts.length,
@@ -468,6 +503,11 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
         Target: `UIVF12 ${groupName} UI.Vision batch started. Total executable tasks: ${usableScripts.length}. Sites: ${groupedScripts.length}. Speed: ${speed}x. Cooldown: ${cooldownMs}ms`,
         Value: '',
         Description: ''
+    }, {
+        Command: 'executeScript',
+        Target: buildUivDownloadRecorderScript({ reset: true }),
+        Value: '',
+        Description: 'Reset and install UIVF12 download recorder.'
     }, {
         Command: 'store',
         Target: '900',
@@ -507,7 +547,8 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
             { Command: 'echo', Target: `[Site ${groupProgress}] Open ${group.openUrl} and run ${group.scripts.length} task(s)`, Value: '', Description: '' },
             { Command: 'open', Target: group.openUrl, Value: '', Description: '' },
             { Command: 'waitForPageToLoad', Target: '30000', Value: '', Description: '' },
-            { Command: 'pause', Target: '3000', Value: '', Description: '' }
+            { Command: 'pause', Target: '3000', Value: '', Description: '' },
+            { Command: 'executeScript', Target: buildUivDownloadRecorderScript(), Value: '', Description: 'Install UIVF12 download recorder on the current site.' }
         );
         pushPanelCommand('检测登录', `${group.openUrl} 页面已打开，开始检测登录态`);
         commands.push(
@@ -552,8 +593,6 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
         Target: buildUivCompletionDialogScript({
             groupName,
             taskCount: usableScripts.length,
-            fileCount: downloadFiles.length,
-            files: downloadFiles,
             finishedAt: new Date().toLocaleString('zh-CN', { hour12: false })
         }),
         Value: '',

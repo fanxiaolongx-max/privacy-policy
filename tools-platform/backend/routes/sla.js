@@ -10,6 +10,7 @@ const prefsRepo = require('../models/sla-prefs-repository');
 const categoriesRepo = require('../models/sla-categories-repository');
 const groupsRepo = require('../models/sla-groups-repository');
 const snapshotsRepo = require('../models/sla-snapshots-repository');
+const ruleTemplatesRepo = require('../models/sla-rule-templates-repository');
 
 function decodeCompressedTextField(field, label) {
     if (!field || typeof field !== 'object') {
@@ -359,6 +360,27 @@ router.post('/config', async (req, res) => {
     } catch (e) {
         console.error(`[POST /config] Write failed:`, e);
         res.status(500).json({ error: '保存文件失败: ' + e.message });
+    }
+});
+
+// GET /api/sla/rule-templates/fast-mapping → 指标规则复制速填模板
+router.get('/rule-templates/fast-mapping', async (req, res) => {
+    try {
+        res.json(await ruleTemplatesRepo.getTemplate('fast_mapping'));
+    } catch (err) {
+        console.error('[GET /api/sla/rule-templates/fast-mapping] failed:', err);
+        res.status(500).json({ error: '读取规则速填模板失败' });
+    }
+});
+
+// PUT /api/sla/rule-templates/fast-mapping → 保存指标规则复制速填模板
+router.put('/rule-templates/fast-mapping', async (req, res) => {
+    try {
+        const text = req.body && typeof req.body.text === 'string' ? req.body.text : '';
+        res.json(await ruleTemplatesRepo.saveTemplate('fast_mapping', text));
+    } catch (err) {
+        console.error('[PUT /api/sla/rule-templates/fast-mapping] failed:', err);
+        res.status(500).json({ error: '保存规则速填模板失败' });
     }
 });
 

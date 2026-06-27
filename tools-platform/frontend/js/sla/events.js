@@ -150,7 +150,7 @@ function populateMetricSelects(secId) {
     let htmlZ = `<option value="">${SLAT('sla.section.colZOption')}</option>`;
     let htmlCX = `<option value="">${SLAT('sla.section.countXOption')}</option>`;
     let htmlCZ = `<option value="">${SLAT('sla.section.countZOption')}</option>`;
-    
+
     state.orderedHeaders.forEach(h => {
         const hSafe = escapeHTML(h);
         htmlX += `<option value="${hSafe}">${hSafe}</option>`;
@@ -158,7 +158,7 @@ function populateMetricSelects(secId) {
         htmlCX += `<option value="${hSafe}">${hSafe}</option>`;
         htmlCZ += `<option value="${hSafe}">${hSafe}</option>`;
     });
-    
+
     document.getElementById(`m-colx-${secId}`).innerHTML = htmlX;
     document.getElementById(`m-colz-${secId}`).innerHTML = htmlZ;
     const ccolx = document.getElementById(`m-c-colx-${secId}`); if (ccolx) ccolx.innerHTML = htmlCX;
@@ -195,7 +195,7 @@ function populateMetricSelects(secId) {
 function addMetricRule(secId) {
     const typeEl = document.querySelector(`input[name="m-type-${secId}"]:checked`);
     const type = typeEl ? typeEl.value : 'extract';
-    
+
     let colX, valY, colZ, valK;
     if (type === 'extract') {
         colX = document.getElementById(`m-colx-${secId}`).value;
@@ -310,6 +310,8 @@ let cachedMetricRulePrefs = null;
 let cachedMetricRuleConfig = null;
 let latestMetricRuleRecords = [];
 let editingMetricRuleRecord = null;
+let copyingMetricRuleRecord = null;
+let metricRuleFastMappingTemplateText = '';
 const expandedMetricRuleGroups = new Set();
 
 function getMetricRuleI18nMap() {
@@ -381,12 +383,59 @@ function describeMetricCondition(rule) {
     return `[${escapeHTML(rule.colX)}] ${SLAT('sla.rules.contains')} '${escapeHTML(rule.valY)}'`;
 }
 
+function getMetricRuleModeFieldLabels(type) {
+    if (type === 'count') {
+        return {
+            colX: SLAT('sla.rules.countColX'),
+            valY: SLAT('sla.rules.countValY'),
+            colZ: SLAT('sla.rules.countColZ'),
+            valK: SLAT('sla.rules.countValK'),
+            showValK: true
+        };
+    }
+    if (type === 'ratio') {
+        return {
+            colX: SLAT('sla.rules.ratioColX'),
+            valY: SLAT('sla.rules.ratioValY'),
+            colZ: SLAT('sla.rules.ratioColZ'),
+            valK: SLAT('sla.rules.ratioValK'),
+            showValK: true
+        };
+    }
+    return {
+        colX: SLAT('sla.rules.extractColX'),
+        valY: SLAT('sla.rules.extractValY'),
+        colZ: SLAT('sla.rules.extractColZ'),
+        valK: SLAT('sla.rules.extractValK'),
+        showValK: false
+    };
+}
+
+function updateMetricRuleEditorModeLabels(type) {
+    const labels = getMetricRuleModeFieldLabels(type || 'extract');
+    const set = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+    };
+    set('metric-rule-edit-colx-label', labels.colX);
+    set('metric-rule-edit-valy-label', labels.valY);
+    set('metric-rule-edit-colz-label', labels.colZ);
+    set('metric-rule-edit-valk-label', labels.valK);
+}
+
 function getMetricRuleSearchText(record) {
+    const ruleType = record.rule && record.rule.type ? record.rule.type : 'extract';
+    const modeAliases = ruleType === 'count'
+        ? '统计 count COUNT'
+        : (ruleType === 'ratio' ? '占比 比例 ratio RATIO' : '提取 extract show SHOW');
     return [
         record.label,
         record.parentMetricName,
         record.subMetricName,
         record.category,
+        record.typeText,
+        ruleType,
+        modeAliases,
         record.tableTitle,
         record.parentTitle,
         record.sourceTitle,
@@ -554,10 +603,10 @@ function updateMetricRuleSummary(secId) {
     const badge = document.getElementById(`rule-summary-badge-${secId}`);
     const state = AppState && AppState[secId];
     if (!badge || !state) return;
-    
+
     const mainRules = state.customMetrics || [];
     const subCount = mainRules.reduce((sum, rule) => sum + ((rule.subMetrics || []).length), 0);
-    
+
     const crossSubRecords = getInboundSubMetricRecords(secId);
     const crossSubCount = crossSubRecords.length;
 
@@ -593,7 +642,7 @@ function renderMetricRuleCard(record, options = {}) {
     const deleteBtn = record.kind === 'sub' && options.allowDelete
         ? `<button onclick="deleteSubMetricRule('${record.parentSecId}', '${record.parentRuleId}', ${record.subIndex}); renderMetricList('${record.sourceSecId}'); if (document.getElementById('metric-rules-modal')?.style.display === 'flex') renderAllMetricRules();" style="border:none; background:none; color:#d32f2f; cursor:pointer;">✖ 删除</button>`
         : '';
-    
+
     let sourceNote = `<span style="color:#d32f2f;font-weight:bold;">(跨表挂载至: ${escapeHTML(record.parentTitle)})</span>`;
     return `
         <div style="font-size:11px; color:#555; background: #fafafa; padding: 6px; padding-right: 80px; margin-bottom: 4px; border-radius: 4px; position: relative;">
@@ -706,6 +755,7 @@ function findSavedRuleRef(record) {
 function findMetricRuleRef(record) {
     return record.origin === '当前导入' ? findCurrentRuleRef(record) : findSavedRuleRef(record);
 }
+window.findMetricRuleRef = findMetricRuleRef;
 
 function renderMetricRuleEditorPreview() {
     const type = document.getElementById('metric-rule-edit-type')?.value || 'extract';
@@ -727,6 +777,7 @@ function renderMetricRuleEditorPreview() {
 
 window.refreshMetricRuleEditorMode = function() {
     const type = document.getElementById('metric-rule-edit-type')?.value || 'extract';
+    updateMetricRuleEditorModeLabels(type);
     document.querySelectorAll('.metric-rule-edit-stat-only').forEach(el => {
         el.style.display = type === 'extract' ? 'none' : 'flex';
     });
@@ -735,9 +786,9 @@ window.refreshMetricRuleEditorMode = function() {
 
 window.openMetricRuleEditorById = function(secId, ruleId, subIndex = -1) {
     const allRecords = collectMetricRuleRecords();
-    const record = allRecords.find(r => 
-        r.origin === '当前导入' && 
-        r.parentSecId === secId && 
+    const record = allRecords.find(r =>
+        r.origin === '当前导入' &&
+        r.parentSecId === secId &&
         r.parentRuleId === ruleId &&
         (subIndex === -1 ? r.kind === 'main' : (r.kind === 'sub' && r.subIndex === subIndex))
     );
@@ -771,7 +822,7 @@ window.openMetricRuleEditor = function(index) {
         rule.colX,
         rule.colZ
     ].filter(Boolean)));
-    
+
     const fieldOptionsHtml = `<option value="">${SLAT('sla.rules.emptyColumn')}</option>` + candidates
         .map(col => `<option value="${escapeHTML(col)}">${escapeHTML(col)}</option>`).join('');
 
@@ -918,6 +969,601 @@ window.saveMetricRuleEditor = async function() {
     }
 };
 
+function createMetricRuleId() {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+        return `m_${window.crypto.randomUUID()}`;
+    }
+    return `m_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+}
+
+function cloneMetricRuleForCopy(sourceRule, record, rowData) {
+    const cloned = JSON.parse(JSON.stringify(sourceRule || {}));
+    cloned.id = createMetricRuleId();
+    cloned.type = rowData.type;
+    cloned.colX = rowData.colX;
+    cloned.valY = rowData.valY;
+    cloned.colZ = rowData.colZ;
+    cloned.valK = rowData.type === 'extract' ? '' : rowData.valK;
+    cloned.label = rowData.label;
+    cloned.sourceSecId = sourceRule.sourceSecId || record.sourceSecId;
+    if (record.kind === 'main') {
+        cloned.subMetrics = [];
+    } else {
+        delete cloned.subMetrics;
+        cloned.category = rowData.category || sourceRule.category || record.category || SLAT('sla.rules.uncategorized');
+    }
+    return cloned;
+}
+
+function getMetricRuleCopyFieldOptions(record, rule) {
+    return Array.from(new Set([
+        ...getMetricRuleFieldCandidates(record),
+        rule.colX,
+        rule.colZ
+    ].filter(Boolean)));
+}
+
+function readMetricRuleCopyRows() {
+    return Array.from(document.querySelectorAll('#metric-rule-copy-rows tr')).map((row, index) => ({
+        index: index + 1,
+        label: row.querySelector('[data-field="label"]')?.value.trim() || '',
+        type: row.querySelector('[data-field="type"]')?.value || 'extract',
+        category: row.querySelector('[data-field="category"]')?.value || '',
+        parent: row.querySelector('[data-field="parent"]')?.value || '',
+        colX: row.querySelector('[data-field="colX"]')?.value.trim() || '',
+        valY: row.querySelector('[data-field="valY"]')?.value.trim() || '',
+        colZ: row.querySelector('[data-field="colZ"]')?.value.trim() || '',
+        valK: row.querySelector('[data-field="valK"]')?.value.trim() || ''
+    }));
+}
+
+function getMetricRuleCopyDraftCount() {
+    const input = document.getElementById('metric-rule-copy-count');
+    const count = Number(input?.value || 1);
+    return Math.max(1, Math.min(50, Number.isFinite(count) ? Math.floor(count) : 1));
+}
+
+function renderMetricRuleCopySelect(options, value, field, disabled = false) {
+    const optionHtml = options.map(item => {
+        const itemValue = typeof item === 'string' ? item : item.value;
+        const label = typeof item === 'string' ? item : item.label;
+        return `<option value="${escapeHTML(itemValue)}" ${itemValue === value ? 'selected' : ''}>${escapeHTML(label)}</option>`;
+    }).join('');
+    return `<select data-field="${field}" ${disabled ? 'disabled style="background: #f1f5f9; color: #94a3b8;"' : ''}>${optionHtml}</select>`;
+}
+
+function updateMetricRuleCopyHeaders(type) {
+    const labels = getMetricRuleModeFieldLabels(type || 'extract');
+    const headers = document.querySelectorAll('#metric-rule-copy-modal .metric-rule-copy-table th');
+    const headerKeys = [
+        '#',
+        SLAT('sla.modal.metricName'),
+        SLAT('sla.modal.mode'),
+        SLAT('sla.modal.category'),
+        SLAT('sla.modal.parent'),
+        labels.colX,
+        labels.valY,
+        labels.colZ,
+        labels.valK,
+        SLAT('sla.rules.thAction')
+    ];
+    headerKeys.forEach((text, index) => {
+        if (headers[index]) headers[index].textContent = text;
+    });
+    if (headers[8]) headers[8].style.display = labels.showValK ? '' : 'none';
+    document.querySelectorAll('#metric-rule-copy-modal .metric-rule-copy-valk-col').forEach(el => {
+        el.style.display = labels.showValK ? '' : 'none';
+    });
+}
+window.updateMetricRuleCopyHeaders = updateMetricRuleCopyHeaders;
+
+window.renderMetricRuleCopyRows = function() {
+    if (!copyingMetricRuleRecord) return;
+    const record = copyingMetricRuleRecord;
+    const ref = findMetricRuleRef(record);
+    const tbody = document.getElementById('metric-rule-copy-rows');
+    if (!tbody || !ref?.rule) return;
+
+    const currentRows = readMetricRuleCopyRows();
+    const count = getMetricRuleCopyDraftCount();
+    const countInput = document.getElementById('metric-rule-copy-count');
+    if (countInput && String(countInput.value) !== String(count)) countInput.value = String(count);
+
+    const rule = ref.rule;
+    const copyType = rule.type || 'extract';
+    const copyLabels = getMetricRuleModeFieldLabels(copyType);
+    const fieldCandidates = getMetricRuleCopyFieldOptions(record, rule);
+    const fieldOptions = [{ value: '', label: SLAT('sla.rules.emptyColumn') }, ...fieldCandidates.map(col => ({ value: col, label: col }))];
+    const typeOptions = [
+        { value: 'extract', label: SLAT('sla.modal.extract') },
+        { value: 'count', label: SLAT('sla.modal.count') },
+        { value: 'ratio', label: SLAT('sla.modal.ratio') }
+    ];
+    const cats = window.GlobalCategories || ['TE', 'ORG', 'ET', 'VDF'];
+    const categoryOptions = cats.map(cat => ({ value: cat, label: cat }));
+    const parentOptions = getMetricRuleMainOptions(record);
+    const currentParentValue = record.origin === '当前导入'
+        ? `current|${record.parentSecId}|${record.parentRuleId}`
+        : `saved|${record.prefKey}|${record.parentRuleId}`;
+    const baseLabel = getMetricRuleDisplayLabel(rule, ref.parent);
+    const rows = [];
+
+    for (let i = 0; i < count; i += 1) {
+        const existing = currentRows[i] || {};
+        const mapping = (window.currentCopyMappings && window.currentCopyMappings[i]) || null;
+        const rowType = existing.type || copyType;
+        const row = {
+            label: existing.label || baseLabel,
+            type: rowType,
+            category: mapping ? mapping.category : (existing.category || rule.category || record.category || cats[0] || ''),
+            parent: existing.parent || currentParentValue,
+            colX: existing.colX || rule.colX || '',
+            valY: mapping && rowType === 'extract' ? mapping.conditionValue : (existing.valY || rule.valY || ''),
+            colZ: existing.colZ || rule.colZ || '',
+            valK: mapping && rowType !== 'extract' ? mapping.conditionValue : (existing.valK || rule.valK || '')
+        };
+        rows.push(`
+            <tr>
+                <td class="metric-rule-copy-index">${i + 1}</td>
+                <td><input data-field="label" value="${escapeHTML(row.label)}" ${record.kind === 'sub' ? 'disabled style="background: #f1f5f9; color: #94a3b8;"' : ''}></td>
+                <td>${renderMetricRuleCopySelect(typeOptions, row.type, 'type', true)}</td>
+                <td>${record.kind === 'main'
+                    ? `<span class="metric-rule-copy-static">-</span>`
+                    : renderMetricRuleCopySelect(categoryOptions, row.category, 'category')}</td>
+                <td>${record.kind === 'sub'
+                    ? renderMetricRuleCopySelect(parentOptions, row.parent, 'parent').replace('<select', '<select onchange="handleMetricRuleCopyParentChange(this)"')
+                    : `<span class="metric-rule-copy-static">${SLAT('sla.rules.independent')}</span>`}</td>
+                <td>${renderMetricRuleCopySelect(fieldOptions, row.colX, 'colX')}</td>
+                <td><input data-field="valY" value="${escapeHTML(row.valY)}"></td>
+                <td>${renderMetricRuleCopySelect(fieldOptions, row.colZ, 'colZ')}</td>
+                <td class="metric-rule-copy-valk-col" style="${copyLabels.showValK ? '' : 'display:none;'}"><input data-field="valK" value="${escapeHTML(row.valK)}"></td>
+                <td><button type="button" class="metric-rule-copy-row-delete" onclick="deleteMetricRuleCopyRow(${i})">${SLAT('sla.rules.delete')}</button></td>
+            </tr>
+        `);
+    }
+    tbody.innerHTML = rows.join('');
+    updateMetricRuleCopyHeaders(copyType);
+};
+
+window.deleteMetricRuleCopyRow = function(index) {
+    const tbody = document.getElementById('metric-rule-copy-rows');
+    if (!tbody) return;
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    if (rows.length <= 1) {
+        showToast(SLAT('sla.rules.copyNeedOneRow'), 'warning');
+        return;
+    }
+    const target = rows[index];
+    if (!target) return;
+    target.remove();
+    if (Array.isArray(window.currentCopyMappings)) {
+        window.currentCopyMappings.splice(index, 1);
+    }
+    const remainingRows = Array.from(tbody.querySelectorAll('tr'));
+    remainingRows.forEach((row, rowIndex) => {
+        const indexCell = row.querySelector('.metric-rule-copy-index');
+        const deleteBtn = row.querySelector('.metric-rule-copy-row-delete');
+        if (indexCell) indexCell.textContent = String(rowIndex + 1);
+        if (deleteBtn) deleteBtn.setAttribute('onclick', `deleteMetricRuleCopyRow(${rowIndex})`);
+    });
+    const countInput = document.getElementById('metric-rule-copy-count');
+    if (countInput) countInput.value = String(remainingRows.length);
+};
+
+function setMetricRuleFastMappingControlsEnabled(enabled) {
+    ['metric-rule-fast-apply-btn', 'metric-rule-fast-template-btn'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        btn.disabled = !enabled;
+        btn.setAttribute('aria-disabled', enabled ? 'false' : 'true');
+        btn.title = enabled ? '' : SLAT('sla.rules.fastMappingMainDisabled');
+        btn.classList.toggle('disabled', !enabled);
+    });
+}
+
+window.openMetricRuleCopyModal = function(index) {
+    const record = latestMetricRuleRecords[index];
+    if (!record) return;
+    const ref = findMetricRuleRef(record);
+    if (!ref || !ref.rule) {
+        showToast(SLAT('sla.rules.notEditable'), 'warning');
+        return;
+    }
+    copyingMetricRuleRecord = record;
+    window.copyingMetricRuleRecord = record;
+    window.currentCopyMappings = [];
+    const rule = ref.rule;
+    const modal = document.getElementById('metric-rule-copy-modal');
+    if (!modal) return;
+
+    document.getElementById('metric-rule-copy-index').value = String(index);
+    document.getElementById('metric-rule-copy-count').value = '1';
+    document.getElementById('metric-rule-copy-subtitle').textContent = `${getMetricRuleDisplayOrigin(record.origin)} · ${translateMetricRuleSectionTitle(record.parentTitle)} · ${record.kind === 'sub' ? SLAT('sla.rules.sub') : SLAT('sla.rules.main')}`;
+    document.getElementById('metric-rule-copy-original').innerHTML = `
+        <div><b>${SLAT('sla.rules.copyOriginal')}</b>: ${escapeHTML(translateMetricRuleLabel(getMetricRuleDisplayLabel(rule, ref.parent)))}</div>
+        <div><b>${SLAT('sla.rules.previewRule')}</b>: IF ${describeMetricCondition(rule)} ➔ ${describeMetricRule(rule)}</div>
+        <div><b>${SLAT('sla.rules.previewOwner')}</b>: ${escapeHTML(record.relationText || '')}</div>
+    `;
+    const tbody = document.getElementById('metric-rule-copy-rows');
+    if (tbody) tbody.innerHTML = '';
+    setMetricRuleFastMappingControlsEnabled(record.kind === 'sub');
+    renderMetricRuleCopyRows();
+    modal.style.display = 'flex';
+};
+
+window.closeMetricRuleCopyModal = function() {
+    const modal = document.getElementById('metric-rule-copy-modal');
+    if (modal) modal.style.display = 'none';
+    copyingMetricRuleRecord = null;
+    window.copyingMetricRuleRecord = null;
+    window.currentCopyMappings = [];
+};
+
+window.currentCopyMappings = [];
+window.metricRuleFastMappingTemplateText = '';
+
+async function loadMetricRuleFastMappingTemplate() {
+    try {
+        const data = await API.get('/api/sla/rule-templates/fast-mapping');
+        metricRuleFastMappingTemplateText = data && typeof data.text === 'string' ? data.text : '';
+        window.metricRuleFastMappingTemplateText = metricRuleFastMappingTemplateText;
+        return metricRuleFastMappingTemplateText;
+    } catch (e) {
+        console.error('Failed to load fast mapping template', e);
+        return metricRuleFastMappingTemplateText || '';
+    }
+}
+
+function parseMetricRuleMappingText(text) {
+    const lines = String(text || '').split('\n').map(l => l.trim()).filter(Boolean);
+    const mappings = [];
+    for (const line of lines) {
+        let parts;
+        if (line.includes('\t')) {
+            parts = line.split('\t').map(item => item.trim());
+        } else if (line.includes(',')) {
+            parts = line.split(',').map(item => item.trim());
+        } else {
+            parts = line.split(/\s+/).map(item => item.trim());
+        }
+        parts = parts.filter(Boolean);
+        if (parts.length >= 2) {
+            mappings.push({ category: parts[0], conditionValue: parts.slice(1).join(' ') });
+        } else if (parts.length === 1) {
+            mappings.push({ category: parts[0], conditionValue: '' });
+        }
+    }
+    return mappings;
+}
+
+function getMetricRuleTemplateCategories() {
+    const cats = Array.isArray(window.GlobalCategories) && window.GlobalCategories.length
+        ? window.GlobalCategories
+        : ['TE', 'ORG', 'ET', 'VDF'];
+    return Array.from(new Set(cats.map(cat => String(cat || '').trim()).filter(Boolean)));
+}
+
+function renderMetricRuleMappingTemplateRows(mappings = []) {
+    const tbody = document.getElementById('metric-rule-mapping-rows');
+    if (!tbody) return;
+    const categories = getMetricRuleTemplateCategories();
+    const savedByCategory = new Map();
+    mappings.forEach(row => {
+        if (row && row.category && !savedByCategory.has(row.category)) {
+            savedByCategory.set(row.category, row.conditionValue || '');
+        }
+    });
+    const extraCategories = mappings
+        .map(row => row.category)
+        .filter(cat => cat && !categories.includes(cat));
+    const rowCategories = Array.from(new Set([...categories, ...extraCategories]));
+    const categoryOptions = rowCategories.map(cat => `<option value="${escapeHTML(cat)}">${escapeHTML(cat)}</option>`).join('');
+    const rows = rowCategories.map(category => ({
+        category,
+        conditionValue: savedByCategory.has(category) ? savedByCategory.get(category) : ''
+    }));
+    tbody.innerHTML = rows.map((row, index) => `
+        <tr>
+            <td class="metric-rule-template-index">${index + 1}</td>
+            <td>
+                <select data-field="category">
+                    ${categoryOptions.replace(`value="${escapeHTML(row.category || '')}"`, `value="${escapeHTML(row.category || '')}" selected`)}
+                </select>
+            </td>
+            <td><input data-field="conditionValue" value="${escapeHTML(row.conditionValue || '')}" placeholder="例如：整改超期"></td>
+        </tr>
+    `).join('');
+}
+
+function readMetricRuleMappingTemplateRows(includeEmpty = false) {
+    return Array.from(document.querySelectorAll('#metric-rule-mapping-rows tr')).map(row => ({
+        category: row.querySelector('[data-field="category"]')?.value.trim() || '',
+        conditionValue: row.querySelector('[data-field="conditionValue"]')?.value.trim() || ''
+    })).filter(row => includeEmpty || row.category || row.conditionValue);
+}
+
+function serializeMetricRuleMappingTemplateRows() {
+    return readMetricRuleMappingTemplateRows()
+        .filter(row => row.category && row.conditionValue)
+        .map(row => `${row.category}\t${row.conditionValue || ''}`.trimEnd())
+        .join('\n');
+}
+
+window.handleMetricRuleMappingPaste = function(event) {
+    const text = event.clipboardData?.getData('text/plain') || '';
+    const rawLines = text.split('\n').map(line => line.trim()).filter(Boolean);
+    if (!rawLines.length) return;
+    event.preventDefault();
+
+    const targetRow = event.target?.closest('tr');
+    const allRows = Array.from(document.querySelectorAll('#metric-rule-mapping-rows tr'));
+    const startIndex = Math.max(0, allRows.indexOf(targetRow));
+    const rows = readMetricRuleMappingTemplateRows(true);
+    const pastedRows = rawLines.map(line => line.split('\t').map(item => item.trim()));
+    const hasTwoColumns = pastedRows.some(parts => parts.length >= 2);
+    if (hasTwoColumns) {
+        const rowByCategory = new Map(rows.map((row, index) => [row.category, index]));
+        pastedRows.forEach(parts => {
+            const category = parts[0] || '';
+            if (!rowByCategory.has(category)) return;
+            rows[rowByCategory.get(category)].conditionValue = parts.slice(1).join(' ').trim();
+        });
+    } else {
+        rawLines.forEach((line, offset) => {
+            if (!rows[startIndex + offset]) return;
+            rows[startIndex + offset].conditionValue = line;
+        });
+    }
+    renderMetricRuleMappingTemplateRows(rows);
+};
+
+window.openMetricRuleMappingModal = async function() {
+    if (copyingMetricRuleRecord && copyingMetricRuleRecord.kind === 'main') {
+        showToast(SLAT('sla.rules.fastMappingMainDisabled'), 'warning');
+        return;
+    }
+    const modal = document.getElementById('metric-rule-mapping-modal');
+    if (modal) {
+        const text = await loadMetricRuleFastMappingTemplate();
+        renderMetricRuleMappingTemplateRows(parseMetricRuleMappingText(text));
+        modal.style.display = 'flex';
+    }
+};
+
+window.closeMetricRuleMappingModal = function() {
+    const modal = document.getElementById('metric-rule-mapping-modal');
+    if (modal) modal.style.display = 'none';
+};
+
+window.saveAndApplyMetricRuleMapping = async function() {
+    const text = serializeMetricRuleMappingTemplateRows();
+
+    try {
+        if (typeof API !== 'undefined' && API.put) {
+            await API.put('/api/sla/rule-templates/fast-mapping', { text });
+        }
+        metricRuleFastMappingTemplateText = text;
+        window.metricRuleFastMappingTemplateText = text;
+    } catch (e) {
+        console.error('Failed to save fast mapping template', e);
+        showToast(SLAT('sla.rules.fastMappingSaveFail', { message: e.message || e }), 'error');
+        return;
+    }
+
+    closeMetricRuleMappingModal();
+    applyParsedMappingText(text);
+};
+
+window.directApplyMetricRuleMapping = async function() {
+    if (copyingMetricRuleRecord && copyingMetricRuleRecord.kind === 'main') {
+        showToast(SLAT('sla.rules.fastMappingMainDisabled'), 'warning');
+        return;
+    }
+    const text = metricRuleFastMappingTemplateText || await loadMetricRuleFastMappingTemplate();
+    if (!text) {
+        showToast(SLAT('sla.rules.fastMappingMissingTemplate'), 'warning');
+        return;
+    }
+    applyParsedMappingText(text);
+};
+
+function applyParsedMappingText(text) {
+    const mappings = parseMetricRuleMappingText(text);
+
+    if (mappings.length === 0) {
+        showToast(SLAT('sla.rules.fastMappingParseEmpty'), 'warning');
+        return;
+    }
+
+    window.currentCopyMappings = mappings;
+    const countInput = document.getElementById('metric-rule-copy-count');
+    if (countInput) {
+        countInput.value = mappings.length;
+    }
+    renderMetricRuleCopyRows();
+    window.currentCopyMappings = [];
+    showToast(SLAT('sla.rules.fastMappingApplied', { count: mappings.length }), 'success');
+}
+
+function findMetricRuleCopyParent(parentValue) {
+    const [scope, key, ruleId] = String(parentValue || '').split('|');
+    if (scope === 'current') {
+        const state = AppState && AppState[key];
+        const parent = state?.customMetrics?.find(rule => rule.id === ruleId);
+        return parent ? { scope, secId: key, parent } : null;
+    }
+    if (scope === 'saved') {
+        const pref = cachedMetricRulePrefs && cachedMetricRulePrefs[key];
+        const parent = pref?.customMetrics?.find(rule => rule.id === ruleId);
+        return parent ? { scope, prefKey: key, parent } : null;
+    }
+    return null;
+}
+
+window.handleMetricRuleCopyParentChange = function(selectEl) {
+    const parentRef = findMetricRuleCopyParent(selectEl.value);
+    if (parentRef && parentRef.parent) {
+        const newLabel = getMetricRuleDisplayLabel(parentRef.parent, null);
+        const tr = selectEl.closest('tr');
+        if (tr) {
+            if (newLabel) {
+                const labelInput = tr.querySelector('input[data-field="label"]');
+                if (labelInput) labelInput.value = newLabel;
+            }
+
+            const pseudoRecord = {
+                sourceSecId: parentRef.parent.sourceSecId || parentRef.secId,
+                prefKey: parentRef.prefKey
+            };
+            const fieldCandidates = Array.from(new Set([
+                ...getMetricRuleFieldCandidates(pseudoRecord),
+                parentRef.parent.colX,
+                parentRef.parent.colZ
+            ].filter(Boolean)));
+            const fieldOptions = [{ value: '', label: SLAT('sla.rules.emptyColumn') }, ...fieldCandidates.map(col => ({ value: col, label: col }))];
+
+            ['colX', 'colZ'].forEach(colName => {
+                const select = tr.querySelector(`select[data-field="${colName}"]`);
+                if (select) {
+                    const currentVal = select.value;
+                    select.innerHTML = fieldOptions.map(item => {
+                        return `<option value="${escapeHTML(item.value)}" ${item.value === currentVal ? 'selected' : ''}>${escapeHTML(item.label)}</option>`;
+                    }).join('');
+                }
+            });
+        }
+    }
+};
+
+window.saveMetricRuleCopies = async function() {
+    if (!copyingMetricRuleRecord) return;
+    const record = copyingMetricRuleRecord;
+    const ref = findMetricRuleRef(record);
+    if (!ref || !ref.rule) {
+        showToast(SLAT('sla.rules.saveMissing'), 'error');
+        return;
+    }
+
+    const rows = readMetricRuleCopyRows();
+    if (!rows.length) return;
+
+    const allRecords = typeof collectMetricRuleRecords === 'function' ? collectMetricRuleRecords() : latestMetricRuleRecords || [];
+    const allExistingLabels = new Set();
+    const existingSignatures = new Set();
+
+    allRecords.forEach(r => {
+        const ref = typeof findMetricRuleRef === 'function' ? findMetricRuleRef(r) : null;
+        if (ref && ref.rule) {
+            if (ref.rule.label) {
+                allExistingLabels.add(ref.rule.label);
+            }
+            if (r.kind === 'sub') {
+                const rType = ref.rule.type || 'extract';
+                const sig = [
+                    rType,
+                    ref.rule.category || r.category || '',
+                    r.parentRuleId || '',
+                    ref.rule.colX || '',
+                    ref.rule.valY || '',
+                    ref.rule.colZ || '',
+                    rType === 'extract' ? '' : (ref.rule.valK || '')
+                ].join('||');
+                existingSignatures.add(sig);
+            }
+        }
+    });
+
+    const newLabels = new Set();
+    const newSignatures = new Set();
+
+    for (const row of rows) {
+        if (!row.label && record.kind === 'main') { showToast(`${SLAT('sla.rules.copyRowPrefix', { index: row.index })}${SLAT('sla.rules.needName')}`, 'warning'); return; }
+
+        if (record.kind === 'main') {
+            if (allExistingLabels.has(row.label)) { showToast(`${SLAT('sla.rules.copyRowPrefix', { index: row.index })}指标名称「${escapeHTML(row.label)}」已存在，请修改`, 'warning'); return; }
+            if (newLabels.has(row.label)) { showToast(`${SLAT('sla.rules.copyRowPrefix', { index: row.index })}批量复制中包含了重复的指标名称「${escapeHTML(row.label)}」`, 'warning'); return; }
+            newLabels.add(row.label);
+        } else if (record.kind === 'sub') {
+            const parentId = (row.parent || '').split('|')[2] || '';
+            const rowType = row.type || 'extract';
+            const sig = [
+                rowType,
+                row.category || '',
+                parentId,
+                row.colX || '',
+                row.valY || '',
+                row.colZ || '',
+                rowType === 'extract' ? '' : (row.valK || '')
+            ].join('||');
+
+            if (existingSignatures.has(sig)) {
+                showToast(`${SLAT('sla.rules.copyRowPrefix', { index: row.index })}复制的规则与现有规则完全一致，请修改条件或字段`, 'warning'); return;
+            }
+            if (newSignatures.has(sig)) {
+                showToast(`${SLAT('sla.rules.copyRowPrefix', { index: row.index })}批量复制中包含完全相同的规则配置，请修改`, 'warning'); return;
+            }
+            newSignatures.add(sig);
+        }
+
+        if (!row.colZ) { showToast(`${SLAT('sla.rules.copyRowPrefix', { index: row.index })}${SLAT('sla.rules.needColZ')}`, 'warning'); return; }
+        if (row.type === 'extract' && (!row.colX || !row.valY)) { showToast(`${SLAT('sla.rules.copyRowPrefix', { index: row.index })}${SLAT('sla.rules.needExtractFields')}`, 'warning'); return; }
+        if (row.type !== 'extract' && !row.valK) { showToast(`${SLAT('sla.rules.copyRowPrefix', { index: row.index })}${SLAT('sla.rules.needStatValue')}`, 'warning'); return; }
+        if (record.kind === 'sub' && !row.parent) { showToast(`${SLAT('sla.rules.copyRowPrefix', { index: row.index })}${SLAT('sla.rules.notFoundParent')}`, 'warning'); return; }
+    }
+
+    const changedCurrentSecIds = new Set();
+    let changedSaved = false;
+    try {
+        rows.forEach(row => {
+            const copied = cloneMetricRuleForCopy(ref.rule, record, row);
+            if (record.kind === 'main') {
+                if (record.origin === '当前导入') {
+                    const state = AppState[record.parentSecId];
+                    if (!state) throw new Error(SLAT('sla.rules.copyMissingTarget'));
+                    if (!state.customMetrics) state.customMetrics = [];
+                    state.customMetrics.push(copied);
+                    changedCurrentSecIds.add(record.parentSecId);
+                } else {
+                    const pref = cachedMetricRulePrefs && cachedMetricRulePrefs[record.prefKey];
+                    if (!pref) throw new Error(SLAT('sla.rules.copyMissingTarget'));
+                    if (!pref.customMetrics) pref.customMetrics = [];
+                    pref.customMetrics.push(copied);
+                    changedSaved = true;
+                }
+                return;
+            }
+
+            const target = findMetricRuleCopyParent(row.parent);
+            if (!target) throw new Error(SLAT('sla.rules.notFoundParent'));
+            if (!target.parent.subMetrics) target.parent.subMetrics = [];
+            target.parent.subMetrics.push(copied);
+            if (target.scope === 'current') changedCurrentSecIds.add(target.secId);
+            else changedSaved = true;
+        });
+
+        for (const secId of changedCurrentSecIds) {
+            if (AppState[secId]) {
+                await SLAPrefs.savePrefs(secId);
+                renderMetricList(secId);
+            }
+        }
+        if (changedCurrentSecIds.size) {
+            evaluateAllMetrics();
+            updateAllMetricRuleSummaries();
+            if (window.refreshSLAHighlightViews) window.refreshSLAHighlightViews(Object.keys(AppState || {}));
+        }
+        if (changedSaved) await persistSavedMetricRuleConfig();
+
+        closeMetricRuleCopyModal();
+        await refreshMetricRulePrefsCache();
+        renderAllMetricRules();
+        showToast(SLAT('sla.rules.copySavedToast', { count: rows.length }));
+    } catch (e) {
+        console.error('[SLA Metric Rules] 复制规则失败:', e);
+        showToast(SLAT('sla.rules.copyFail', { message: e.message || e }), 'error');
+    }
+};
+
 window.deleteMetricRuleFromOverview = async function(index) {
     const record = latestMetricRuleRecords[index];
     if (!record) return;
@@ -982,7 +1628,10 @@ window.openMetricRulesModal = async function() {
     if (crossOnly) crossOnly.checked = false;
     const list = document.getElementById('metric-rules-modal-list');
     if (list) list.innerHTML = `<div class="metric-rules-empty">${SLAT('sla.rules.loading')}</div>`;
-    await refreshMetricRulePrefsCache();
+    await Promise.all([
+        refreshMetricRulePrefsCache(),
+        loadMetricRuleFastMappingTemplate()
+    ]);
     renderAllMetricRules();
 };
 
@@ -997,7 +1646,12 @@ window.addEventListener('tools:languagechange', () => {
     const editModal = document.getElementById('metric-rule-edit-modal');
     if (editModal && editModal.style.display === 'flex' && editingMetricRuleRecord) {
         document.getElementById('metric-rule-edit-subtitle').textContent = `${getMetricRuleDisplayOrigin(editingMetricRuleRecord.origin)} · ${translateMetricRuleSectionTitle(editingMetricRuleRecord.parentTitle)} · ${editingMetricRuleRecord.kind === 'sub' ? SLAT('sla.rules.sub') : SLAT('sla.rules.main')}`;
-        renderMetricRuleEditorPreview();
+        refreshMetricRuleEditorMode();
+    }
+    const copyModal = document.getElementById('metric-rule-copy-modal');
+    if (copyModal && copyModal.style.display === 'flex' && copyingMetricRuleRecord) {
+        const index = latestMetricRuleRecords.indexOf(copyingMetricRuleRecord);
+        if (index >= 0) openMetricRuleCopyModal(index);
     }
 });
 
@@ -1068,6 +1722,7 @@ window.renderAllMetricRules = function(justExpandedGroupKey = null) {
             <div class="metric-rule-actions">
                 <button class="metric-rule-view-btn" onclick="jumpToMetricRuleTable('${mainRecord.sourceSecId}', '${escapeHTML(mainRecord.sourceTitle)}')">${SLAT('sla.rules.view')}</button>
                 <button class="metric-rule-edit-btn" onclick="openMetricRuleEditor(${mainIndex})">${SLAT('sla.rules.edit')}</button>
+                <button class="metric-rule-copy-btn" onclick="openMetricRuleCopyModal(${mainIndex})">${SLAT('sla.rules.copy')}</button>
                 <button class="metric-rule-mini-danger" onclick="deleteMetricRuleFromOverview(${mainIndex})">${SLAT('sla.rules.delete')}</button>
             </div>
         `;
@@ -1098,6 +1753,7 @@ window.renderAllMetricRules = function(justExpandedGroupKey = null) {
                 <div class="metric-rule-actions">
                     <button class="metric-rule-view-btn" onclick="jumpToMetricRuleTable('${record.sourceSecId}', '${escapeHTML(record.sourceTitle)}')">${SLAT('sla.rules.view')}</button>
                     <button class="metric-rule-edit-btn" onclick="openMetricRuleEditor(${index})">${SLAT('sla.rules.edit')}</button>
+                    <button class="metric-rule-copy-btn" onclick="openMetricRuleCopyModal(${index})">${SLAT('sla.rules.copy')}</button>
                     <button class="metric-rule-mini-danger" onclick="deleteMetricRuleFromOverview(${index})">${SLAT('sla.rules.delete')}</button>
                 </div>
             `;
@@ -1162,19 +1818,19 @@ function renderMetricList(secId) {
     const list = document.getElementById(`m-list-${secId}`);
     const inboundRecords = getInboundSubMetricRecords(secId);
     if (!state.customMetrics.length && !inboundRecords.length) { list.innerHTML = '<div style="color:#aaa;font-size:12px;text-align:center;">尚无推送规则</div>'; return; }
-    
+
     let html = '';
     state.customMetrics.forEach(r => {
         let subHtml = '';
         if (r.subMetrics && r.subMetrics.length > 0) {
             subHtml = `<div style="margin-top:6px; padding-left: 10px; border-left: 2px solid #e1bee7;">`;
             r.subMetrics.forEach((sm, idx) => {
-                let sourceNote = (sm.sourceSecId && sm.sourceSecId !== secId) 
-                    ? `<span style="color:#d32f2f;font-weight:bold;">(跨表数据源: ${escapeHTML(AppState[sm.sourceSecId]?.title || sm.sourceSecId)})</span> ` 
+                let sourceNote = (sm.sourceSecId && sm.sourceSecId !== secId)
+                    ? `<span style="color:#d32f2f;font-weight:bold;">(跨表数据源: ${escapeHTML(AppState[sm.sourceSecId]?.title || sm.sourceSecId)})</span> `
                     : '';
                 const smLabel = getMetricRuleDisplayLabel(sm, r);
                 let smDesc = describeMetricRule(sm);
-                
+
                 subHtml += `
                 <div style="font-size:11px; color:#555; background: #fafafa; padding: 6px; padding-right: 80px; margin-bottom: 4px; border-radius: 4px; position: relative;">
                     <div style="position:absolute; right:6px; top:6px; display:flex; gap:6px;">
