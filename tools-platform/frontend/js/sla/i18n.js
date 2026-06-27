@@ -190,8 +190,17 @@
             'sla.metric.targetPh': '设定值',
             'sla.metric.gte': '≥ (越大越好)',
             'sla.metric.lte': '≤ (越小越好)',
+            'sla.metric.gteShort': '≥ 越大越好',
+            'sla.metric.lteShort': '≤ 越小越好',
             'sla.metric.percent': '百分比',
             'sla.metric.currentValue': '实时当前值:',
+            'sla.metric.tableMode': '切换表格模式',
+            'sla.metric.cardMode': '切换卡片模式',
+            'sla.metric.tableModeTitle': '每个指标一行、每个月一列批量编辑',
+            'sla.metric.cardModeTitle': '按指标卡片逐项编辑',
+            'sla.metric.tableMetric': '指标',
+            'sla.metric.tableCurrent': '当前值',
+            'sla.metric.tableDirection': '预警方向',
             'sla.metric.saved': '✅ 预警目标已保存到服务端！',
             'sla.metric.saveFail': '❌ 保存失败',
             'sla.rules.loading': '正在读取已保存的指标规则...',
@@ -479,8 +488,17 @@
             'sla.metric.targetPh': 'Target',
             'sla.metric.gte': '≥ (higher is better)',
             'sla.metric.lte': '≤ (lower is better)',
+            'sla.metric.gteShort': '≥ Higher',
+            'sla.metric.lteShort': '≤ Lower',
             'sla.metric.percent': 'Percent',
             'sla.metric.currentValue': 'Current value:',
+            'sla.metric.tableMode': 'Table View',
+            'sla.metric.cardMode': 'Card View',
+            'sla.metric.tableModeTitle': 'Edit one metric per row and one month per column',
+            'sla.metric.cardModeTitle': 'Edit targets by metric cards',
+            'sla.metric.tableMetric': 'Metric',
+            'sla.metric.tableCurrent': 'Current',
+            'sla.metric.tableDirection': 'Direction',
             'sla.metric.saved': '✅ Alert targets saved to server',
             'sla.metric.saveFail': '❌ Save failed',
             'sla.rules.loading': 'Reading saved metric rules...',
@@ -619,6 +637,12 @@
         setText('#btn-expand-metrics', t('sla.sticky.expand'));
         setText('#target-modal h3', t('sla.modal.targetTitle'));
         setText('#target-modal .btn-save', t('sla.modal.saveTargets'));
+        const targetViewToggle = document.getElementById('target-view-toggle');
+        if (targetViewToggle) {
+            const isTable = typeof targetModalState !== 'undefined' && targetModalState.view === 'table';
+            targetViewToggle.textContent = t(isTable ? 'sla.metric.cardMode' : 'sla.metric.tableMode');
+            targetViewToggle.title = t(isTable ? 'sla.metric.cardModeTitle' : 'sla.metric.tableModeTitle');
+        }
         setText('#metric-rules-modal h3', t('sla.modal.rulesTitle'));
         setPlaceholder('#metric-rules-search', t('sla.modal.rulesSearch'));
         const crossOnly = document.querySelector('.metric-rules-check');
