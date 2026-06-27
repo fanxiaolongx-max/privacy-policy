@@ -629,7 +629,7 @@
         }
         setText('#metric-rule-edit-modal h3', t('sla.modal.editTitle'));
         setText('#metric-rule-edit-subtitle', t('sla.modal.editSubtitle'));
-        const editLabels = document.querySelectorAll('.metric-rule-edit-field > span');
+        const editLabels = document.querySelectorAll('#metric-rule-edit-modal .metric-rule-edit-field > span');
         [
             'sla.modal.metricName', 'sla.modal.mode', 'sla.modal.category', 'sla.modal.parent',
             'sla.modal.colX', 'sla.modal.valY', 'sla.modal.colZ', 'sla.modal.valK'

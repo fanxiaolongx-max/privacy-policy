@@ -274,7 +274,7 @@
 
     <div class="login-wrapper">
         <div class="glass-panel" id="loginPanel">
-            <h2>🛠️ Tools Platform <span class="version-badge">v1.0.10</span></h2>
+            <h2>🛠️ Tools Platform <span class="version-badge" id="appVersionBadge">v1.0.57</span></h2>
             <div class="subtitle">默认账号：admin / admin123</div>
 
             <div class="input-group">
@@ -386,6 +386,23 @@
         animate();
 
         // --- 业务逻辑 ---
+        async function loadAppVersion() {
+            const badge = document.getElementById('appVersionBadge');
+            if (!badge) return;
+            try {
+                const res = await fetch('/api/app-version', { cache: 'no-store' });
+                if (!res.ok) throw new Error('version api failed');
+                const data = await res.json();
+                if (data && data.version) {
+                    badge.textContent = `v${String(data.version).replace(/^v/i, '')}`;
+                }
+            } catch (e) {
+                console.warn('[Login] load app version failed:', e);
+            }
+        }
+
+        loadAppVersion();
+
         function toggleGame(show) {
             const wrapper = document.getElementById('gameWrapper');
             const iframe = document.getElementById('gameIframe');

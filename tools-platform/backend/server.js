@@ -14,6 +14,7 @@ if (!runPreflight({ port: PORT })) {
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const appPackage = require('../package.json');
 
 const uivRoutes = require('./routes/uiv');
 const slaRoutes = require('./routes/sla');
@@ -89,6 +90,15 @@ app.use('/api/auth', authRoutes);
 // ============================================================
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', time: new Date().toISOString() });
+});
+
+// 登录页未登录可访问，用根 package.json 版本号对齐 GitHub/electron-builder 打包版本。
+app.get('/api/app-version', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({
+        name: appPackage.productName || appPackage.name || 'Tools Platform',
+        version: appPackage.version || '0.0.0'
+    });
 });
 
 // 旧 JSON -> SQLite 启动迁移报告。允许未登录访问，便于 Windows 打包版升级后定位数据迁移问题。
