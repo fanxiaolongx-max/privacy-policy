@@ -2,6 +2,7 @@
  * Tools Platform - 主服务入口
  * 统一管理 UIVF12 Catcher 和 Task SLA Killer 的后端 API
  */
+require('./logger/daily-file-console').installDailyFileConsole();
 const { runPreflight } = require('./preflight');
 
 const PORT = process.env.PORT || 3030;
@@ -107,6 +108,7 @@ app.use('/api', (req, res, next) => {
     if (req.path.startsWith('/auth/')) return next();
     if (req.path.startsWith('/requirements')) return next(); // 需求管理内部自行控制权限
     if (req.path.startsWith('/surveys')) return next(); // 调查模板和提交由模块内部控制权限
+    if (req.method === 'POST' && req.path === '/uiv/run-uivision-macro') return next(); // 只生成临时 runner，不修改业务数据
     if (req.method !== 'GET') {
         return requireAdmin(req, res, next);
     }

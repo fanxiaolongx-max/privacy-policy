@@ -6,6 +6,7 @@ const SALT = 'tools_platform_salt';
 async function checkAuth(req, res, next) {
     // 登录接口无需鉴权 (req.path is relative to /api, so it's /auth/login)
     if (req.path === '/auth/login') return next();
+    if (req.method === 'GET' && /^\/uiv\/uivision-runner\/[a-f0-9]{32}$/.test(req.path)) return next();
 
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {

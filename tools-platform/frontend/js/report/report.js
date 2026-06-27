@@ -124,7 +124,7 @@ function getBilingual(text) {
 }
 
 function escapeHTML(str) {
-    return typeof str === 'string' ? str.replace(/[&<>'"]/g, tag => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'": '&#39;','"':'&quot;'}[tag]||tag)) : str;
+    return typeof str === 'string' ? str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)) : str;
 }
 
 function getJSONBytes(value) {
@@ -324,7 +324,7 @@ function getDefaultTargetMonth() {
         const saved = JSON.parse(localStorage.getItem(REPORT_TARGET_MONTH_KEY) || '{}');
         const month = parseInt(saved.month, 10);
         if (saved.date === getTodayKey() && month >= 1 && month <= 12) return month;
-    } catch (e) {}
+    } catch (e) { }
     return getTargetMonthDefaultByDay();
 }
 
@@ -366,7 +366,7 @@ function renderSnapshotOptions() {
     }
     sel.innerHTML = snapshots.map(s => {
         const d = new Date(s.timestamp);
-        const tsStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        const tsStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
         const fileCount = s.files ? (Array.isArray(s.files) ? s.files.length : 1) : 0;
         return `<option value="${s.id}">${tsStr} (${rt('report.snapshot.optionSourceCount', { count: fileCount })})</option>`;
     }).join('');
@@ -395,19 +395,19 @@ async function initReport() {
             API.get(`/api/sla/config${query}`),
             API.get(`/api/sla/groups${query}`)
         ]);
-        
+
         const allSnapshots = snapData || [];
         snapshots = allSnapshots.filter(isReportEligibleSnapshot);
         categories = catData || ['TE', 'ORG', 'ET', 'VDF'];
         globalConfig = configData || { targets: {}, prefs: {} };
         metricGroups = groupData || [];
-        
+
         if (globalConfig.prefs && globalConfig.prefs.manualAdjustItems) {
             manualAdjustItems = globalConfig.prefs.manualAdjustItems;
         } else {
             manualAdjustItems = [...defaultManualAdjustItems];
         }
-        
+
         if (globalConfig.prefs && globalConfig.prefs.i18nMap) {
             // Strip any legacy HTML tags that might have been saved
             const loadedI18n = globalConfig.prefs.i18nMap;
@@ -423,9 +423,9 @@ async function initReport() {
             }
             i18nMap = { ...i18nMap, ...cleanI18n };
         }
-        
+
         buildLabelTargetMap();
-        
+
         // Populate month selector
         const monthSel = document.getElementById('target-month-select');
         renderReportMonthOptions(false);
@@ -434,7 +434,7 @@ async function initReport() {
             monthSel.dataset.userChanged = 'true';
             renderCurrentSnapshot();
         };
-        
+
         const sel = document.getElementById('snapshot-select');
         if (!snapshots.length) {
             sel.innerHTML = `<option value="">${rt('report.snapshot.none')}</option>`;
@@ -442,9 +442,9 @@ async function initReport() {
             if (window.renderReportSourcePanel) window.renderReportSourcePanel();
             return;
         }
-        
+
         renderSnapshotOptions();
-        
+
         // Default to the first (latest) snapshot
         sel.value = snapshots[0].id;
         loadSelectedSnapshot();
@@ -461,12 +461,12 @@ function buildLabelTargetMap() {
     const { targets, prefs } = globalConfig;
     labelToTargetMap = {};
     labelToTargetKeyMap = {};
-    
+
     if (prefs) {
         Object.keys(prefs).forEach(secId => {
             const pref = prefs[secId];
             const cleanSecId = secId.startsWith('sla_prefs_') ? secId.substring(10) : secId;
-            
+
             if (pref.customMetrics) {
                 pref.customMetrics.forEach(rule => {
                     const key = `${cleanSecId}_${rule.id}`;
@@ -478,7 +478,7 @@ function buildLabelTargetMap() {
             }
         });
     }
-    
+
     // Map manual targets
     if (targets) {
         Object.keys(targets).forEach(k => {
@@ -490,7 +490,7 @@ function buildLabelTargetMap() {
     }
 }
 
-window.loadSelectedSnapshot = function() {
+window.loadSelectedSnapshot = function () {
     const id = document.getElementById('snapshot-select').value;
     currentSnapshot = snapshots.find(s => s.id === id);
     if (currentSnapshot) {
@@ -502,7 +502,7 @@ window.loadSelectedSnapshot = function() {
     }
 };
 
-window.renderCurrentSnapshot = function() {
+window.renderCurrentSnapshot = function () {
     const monthSel = document.getElementById('target-month-select');
     if (monthSel) setReportTargetMonth(monthSel.value);
     if (currentSnapshot) {
@@ -510,12 +510,12 @@ window.renderCurrentSnapshot = function() {
     }
 };
 
-window.toggleAutoStdScore = async function() {
+window.toggleAutoStdScore = async function () {
     const cb = document.getElementById('auto-std-score-cb');
     const input = document.getElementById('custom-std-score-input');
     if (!cb || !input) return;
     input.disabled = cb.checked;
-    
+
     if (!globalConfig.prefs) globalConfig.prefs = {};
     globalConfig.prefs.isAutoStandardTotalScore = cb.checked;
     try {
@@ -528,13 +528,13 @@ window.toggleAutoStdScore = async function() {
     }
 };
 
-window.updateCustomStdScore = async function() {
+window.updateCustomStdScore = async function () {
     const input = document.getElementById('custom-std-score-input');
     if (!input) return;
     let val = parseFloat(input.value);
     if (isNaN(val) || val <= 0) val = 100;
     input.value = val;
-    
+
     if (!globalConfig.prefs) globalConfig.prefs = {};
     globalConfig.prefs.customStandardTotalScore = val;
     try {
@@ -585,6 +585,8 @@ function cleanMatrixCellFilterText(text) {
     return String(text || '')
         .replace(/比例计分\s*ON/g, '')
         .replace(/比例计分/g, '')
+        .replace(/Proportional\s*ON/g, '')
+        .replace(/Proportional/g, '')
         .replace(/✏️[\s\S]*$/, '')
         .trim();
 }
@@ -771,20 +773,20 @@ function renderReport(snap) {
     const content = document.getElementById('report-content');
     const { topMetrics } = snap;
     const targetMonth = document.getElementById('target-month-select').value;
-    
+
     let metricCols = [...(topMetrics || [])];
-    
+
     // Auto inject manual metrics that are missing in current snapshot
     if (globalConfig.targets) {
         Object.keys(globalConfig.targets).forEach(k => {
             if (k.startsWith('manual_') && globalConfig.targets[k].label) {
                 const label = globalConfig.targets[k].label;
                 const exists = metricCols.find(m => m.label === label);
-                
+
                 let valToUse = '--';
                 let subsToUse = [];
                 let autoFillSource = null;
-                
+
                 if (globalConfig.targets[k].autoFill) {
                     const source = findLatestMetricSnapshotBefore(snap, label);
                     if (source) {
@@ -799,7 +801,7 @@ function renderReport(snap) {
                         };
                     }
                 }
-                
+
                 if (!exists) {
                     const newMetric = {
                         id: `manual_m_${Date.now()}_${Math.random()}`,
@@ -828,7 +830,7 @@ function renderReport(snap) {
                             exists.autoFillSource = autoFillSource;
                             changed = true;
                         }
-                        
+
                         if (changed) {
                             if (!currentSnapshot.topMetrics) currentSnapshot.topMetrics = [];
                             const realExists = currentSnapshot.topMetrics.find(m => m.label === label);
@@ -846,7 +848,7 @@ function renderReport(snap) {
             }
         });
     }
-    
+
     if (metricCols.length === 0) {
         content.innerHTML = '<div class="empty-state"><h3>该快照无维度数据 (No dimension data in this snapshot)</h3><p>请在此快照生成前，配置相关的统计指标。<br><span style="font-size:12px;color:#888;">Please configure related metrics before generating this snapshot.</span></p></div>';
         return;
@@ -874,8 +876,8 @@ function renderReport(snap) {
     const groupWeightMap = {};
     metricGroups.forEach(g => {
         let sumWeight = 0;
-        (g.metrics || []).forEach(label => { 
-            labelToGroup[label] = g.name; 
+        (g.metrics || []).forEach(label => {
+            labelToGroup[label] = g.name;
             const targetData = labelToTargetMap[label];
             sumWeight += (targetData && targetData.weight !== undefined) ? parseFloat(targetData.weight) : 1;
         });
@@ -890,11 +892,11 @@ function renderReport(snap) {
         const targetData = labelToTargetMap[m.label];
         const weight = (targetData && targetData.weight !== undefined) ? parseFloat(targetData.weight) : 1;
         m.hasTarget = targetData && targetData[targetMonth] !== undefined && targetData[targetMonth] !== '' && weight > 0;
-        
+
         if (!isOthers) {
             standardTotalScore += weight;
         }
-        
+
         const subs = m.subMetrics || [];
         subs.forEach(sm => {
             if (!catData[sm.category]) {
@@ -903,21 +905,21 @@ function renderReport(snap) {
                 if (!categories.includes(sm.category)) categories.push(sm.category);
             }
             const valNum = parseNum(sm.value);
-            
+
             let isFailing = false;
             let gapStr = '';
             let bonusScore = 0;
-            
+
             if (!isNaN(valNum)) {
                 if (m.hasTarget) {
                     if (!isOthers) {
                         catData[sm.category].validWeightSum += weight;
                     }
-                    
+
                     const targetNum = parseFloat(targetData[targetMonth]);
                     const condition = targetData.type || 'gte';
                     const isPercent = String(sm.value).includes('%');
-                    
+
                     if (condition === 'gte' && valNum < targetNum) {
                         isFailing = true;
                         gapStr = +(targetNum - valNum).toFixed(2) + (isPercent ? '%' : '');
@@ -931,16 +933,16 @@ function renderReport(snap) {
                             bonusScore = Math.floor((targetNum - valNum) / targetData.exceedBy) * targetData.bonus;
                         }
                     }
-                    
+
                     const proportionalScoring = isProportionalScoringEnabled(targetData);
                     const completionRatio = calculateTargetCompletionRatio(valNum, targetNum, condition);
                     const earnedBaseScore = isFailing && proportionalScoring ? +(weight * completionRatio).toFixed(4) : (isFailing ? 0 : weight);
                     const earnedScore = earnedBaseScore + (!isFailing ? bonusScore : 0);
-                    
+
                     if (!isOthers) {
                         catData[sm.category].earnedScore += earnedScore;
                     }
-                    
+
                     catData[sm.category].values[m.label] = {
                         raw: sm.value,
                         num: valNum,
@@ -954,7 +956,7 @@ function renderReport(snap) {
                     return;
                 }
             }
-            
+
             catData[sm.category].values[m.label] = { raw: sm.value, num: valNum, isFailing: isFailing, gapStr: gapStr, bonusScore: bonusScore || 0, earnedScore: 0, completionRatio: 0, proportionalScoring: false };
         });
     });
@@ -962,10 +964,10 @@ function renderReport(snap) {
     const prefs = globalConfig.prefs || {};
     const isAutoStdScore = prefs.isAutoStandardTotalScore !== false;
     const customStdScore = prefs.customStandardTotalScore !== undefined ? Number(prefs.customStandardTotalScore) : 100;
-    
+
     let autoStdScore = standardTotalScore;
     standardTotalScore = isAutoStdScore ? autoStdScore : customStdScore;
-    
+
     const autoCb = document.getElementById('auto-std-score-cb');
     const customInput = document.getElementById('custom-std-score-input');
     if (autoCb) autoCb.checked = isAutoStdScore;
@@ -998,7 +1000,7 @@ function renderReport(snap) {
         const m = orderedMetrics[i];
         const hasTgt = labelToTargetMap[m.label] && labelToTargetMap[m.label][targetMonth] !== undefined && labelToTargetMap[m.label][targetMonth] !== '';
         const grpName = labelToGroup[m.label] || (m.isManual || hasTgt ? '未分组' : null);
-        
+
         if (grpName) {
             const grpMetrics = orderedMetrics.filter(x => {
                 const xHasTgt = labelToTargetMap[x.label] && labelToTargetMap[x.label][targetMonth] !== undefined && labelToTargetMap[x.label][targetMonth] !== '';
@@ -1046,7 +1048,7 @@ function renderReport(snap) {
                 </thead>
                 <tbody>
     `;
-    
+
     const mainTableRows = tableRows.filter(r => r.groupName !== 'Others');
     const othersTableRows = tableRows.filter(r => r.groupName === 'Others');
 
@@ -1057,16 +1059,16 @@ function renderReport(snap) {
             let targetStr = '--';
             let isGlobalFailing = false;
             let globalGapStr = '';
-            
+
             const targetData = labelToTargetMap[m.label];
             const weight = (targetData && targetData.weight !== undefined) ? parseFloat(targetData.weight) : 1;
-            
+
             if (m.hasTarget) {
                 const condition = targetData.type || 'gte';
                 targetStr = (condition === 'gte' ? '≥ ' : '≤ ') + targetData[targetMonth];
                 const isPercent = m.value && String(m.value).includes('%');
                 if (isPercent) targetStr += '%';
-                
+
                 const globalValNum = parseNum(m.value);
                 if (!isNaN(globalValNum)) {
                     const targetNum = parseFloat(targetData[targetMonth]);
@@ -1079,7 +1081,7 @@ function renderReport(snap) {
                     }
                 }
             }
-            
+
             let globalDisplayClass = 'val-none';
             let globalTitleAttr = '';
             if (m.hasTarget) {
@@ -1100,7 +1102,7 @@ function renderReport(snap) {
             }
             const editBtn = m.isManual ? `<span style="cursor:pointer; margin-left:4px; font-size:10px; color:#4f7d53; background:#f2faf3; padding:1px 4px; border-radius:3px; border:1px solid #d8ead9; font-weight:500; line-height:1.35;" onclick="editManualMetric('${escapeHTML(m.label)}')">${rt('report.manual.fill')}</span>${autoFillBtn}` : '';
             const proportionalEnabled = isProportionalScoringEnabled(targetData);
-            const proportionalBtn = m.hasTarget && !isOthersTable ? `
+            const proportionalBtn = m.hasTarget ? `
                 <button class="ratio-score-toggle ${proportionalEnabled ? 'active' : ''}"
                     onclick="toggleProportionalScoring('${escapeHTML(m.label)}')"
                     title="${proportionalEnabled ? rt('report.proportional.titleOn') : rt('report.proportional.titleOff')}">
@@ -1111,7 +1113,7 @@ function renderReport(snap) {
             html += `<tr class="matrix-data-row" data-group="${escapeHTML(row.groupName || '未分组')}">`;
 
             let colIdx = 0;
-            
+
             // Group column
             if (hasGroups) {
                 html += `<td class="matrix-group-cell" data-col="${colIdx++}" ${row.isGroupStart ? `rowspan="${row.groupSize}"` : `style="display:none;"`}>${getBilingual(row.groupName || '未分组')}</td>`;
@@ -1127,7 +1129,7 @@ function renderReport(snap) {
                 <td data-col="${colIdx++}" style="color:#666; font-weight:bold; background:#fafafa;">${weight}</td>
                 <td data-col="${colIdx++}" style="color:#0277bd; font-weight:bold; background:#f5f8fa;">${targetStr}</td>
                 <td data-col="${colIdx++}" style="background:#fff8e1; border-right:2px solid #ffe082;"><span class="${globalDisplayClass}"${globalTitleAttr}>${escapeHTML(String(m.value || '--'))}</span></td>`;
-                
+
             categories.forEach(cat => {
                 const cell = catData[cat].values[m.label];
                 if (!cell || cell.raw === '--') {
@@ -1142,12 +1144,10 @@ function renderReport(snap) {
                     html += `<td data-col="${colIdx++}"><span class="${displayClass}"${titleAttr}>${escapeHTML(cell.raw)}</span></td>`;
                 }
             });
-            
+
             categories.forEach(cat => {
                 const cell = catData[cat].values[m.label];
-                if (isOthersTable) {
-                    html += `<td data-col="${colIdx++}" class="val-none" style="background:#f1f8e9;" title="额外监控指标，不计分">--</td>`;
-                } else if (!cell || cell.raw === '--') {
+                if (!cell || cell.raw === '--') {
                     html += `<td data-col="${colIdx++}" class="val-none" style="background:#f1f8e9;">--</td>`;
                 } else if (!m.hasTarget) {
                     html += `<td data-col="${colIdx++}" class="val-none" style="background:#f1f8e9;" title="未配置目标值或权重为0，不计分">--</td>`;
@@ -1156,17 +1156,21 @@ function renderReport(snap) {
                     const scoreColor = cell.isFailing ? '#d32f2f' : '#2e7d32';
                     const bonusDisplay = cell.bonusScore ? ` <span style="font-size:10px; color:#e65100;">(+${cell.bonusScore.toFixed(2)})</span>` : '';
                     const ratioText = cell.proportionalScoring && cell.isFailing ? `, 完成率: ${(cell.completionRatio * 100).toFixed(1)}%` : '';
-                    html += `<td data-col="${colIdx++}" style="font-weight:bold; color:${scoreColor}; background:#f1f8e9;" title="基础分: ${weight}, 实得: ${formatScoreValue(earned)}${ratioText}, 超额奖励: ${cell.bonusScore||0}">${formatScoreValue(earned)}${bonusDisplay}</td>`;
+                    const scoreTitle = isOthersTable
+                        ? `额外监控指标，不计入总分；基础分: ${weight}, 实得: ${formatScoreValue(earned)}${ratioText}, 超额奖励: ${cell.bonusScore || 0}`
+                        : `基础分: ${weight}, 实得: ${formatScoreValue(earned)}${ratioText}, 超额奖励: ${cell.bonusScore || 0}`;
+                    const ratioBadge = cell.proportionalScoring && cell.isFailing ? `<div style="font-size:9px; color:#ef6c00; font-weight:600; line-height:1.2;">${(cell.completionRatio * 100).toFixed(0)}%</div>` : '';
+                    html += `<td data-col="${colIdx++}" style="font-weight:bold; color:${scoreColor}; background:#f1f8e9;" title="${scoreTitle}">${formatScoreValue(earned)}${bonusDisplay}${ratioBadge}</td>`;
                 }
             });
-            
+
             html += `</tr>`;
         });
         return html;
     }
 
     matrixHtml += generateMatrixRowsHtml(mainTableRows, false);
-    
+
     matrixHtml += `
                 </tbody>
             </table>
@@ -1234,10 +1238,10 @@ function renderReport(snap) {
     const snapAdjustData = currentSnapshot.manualAdjustData || {};
     const manualAutoPrefs = getManualAdjustAutoFillPrefs();
     const manualAutoSources = currentSnapshot.manualAdjustAutoFillSources || {};
-    
+
     manualAdjustItems.forEach((item, idx) => {
         if (item.deleted) return;
-        
+
         const typeColor = item.type === '加分' ? '#2e7d32' : '#c62828';
         const typeBg = item.type === '加分' ? '#e8f5e9' : '#ffebee';
         const isAuto = !!manualAutoPrefs[idx];
@@ -1257,25 +1261,25 @@ function renderReport(snap) {
             </td>
             <td style="color:#666;">${escapeHTML(item.desc)}</td>
         `;
-        
+
         // Input fields for occurrences
         categories.forEach(cat => {
             const val = (snapAdjustData[cat] && snapAdjustData[cat][idx]) || '';
             adjustHtml += `<td><input type="number" class="manual-adjust-input" data-cat="${escapeHTML(cat)}" data-idx="${idx}" value="${val}" min="0" step="1" onchange="calculateManualAdjustments(); saveManualAdjustData(true);" style="width:100%; text-align:center; border:1px solid #ddd; padding:4px; border-radius:3px;"></td>`;
         });
-        
+
         // Computed scores fields
         categories.forEach(cat => {
             adjustHtml += `<td id="adjust-score-${escapeHTML(cat)}-${idx}" style="font-weight:bold; text-align:center;">0</td>`;
         });
-        
+
         adjustHtml += `
             <td style="text-align:center;">
                 <button onclick="deleteAdjustItem(${idx})" style="background:none; border:none; cursor:pointer; font-size:16px; opacity:0.6; padding:4px;" title="${rt('report.common.delete')}" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">🗑️</button>
             </td>
         </tr>`;
     });
-    
+
     adjustHtml += `
                 </tbody>
             </table>
@@ -1319,7 +1323,7 @@ function renderReport(snap) {
         othersMatrixHtml = `
         <div class="card" id="others-matrix-card" style="margin-top: 20px;">
             <h3 class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="color:#607d8b;">额外监控表 (Others 分组)</span>
+                <span style="color:#607d8b;">额外监控表-不计入总分 (Others 分组)</span>
                 <button onclick="toggleOthersMatrixFullscreen()" style="padding:4px 10px; font-size:12px; background:#f0f4f8; border:1px solid #cbd5e1; border-radius:4px; cursor:pointer; color:#334155; display:flex; align-items:center; gap:4px; font-weight:normal;" title="${rt('report.action.fullscreenTitle')}">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
                     ${rt('report.action.fullscreen')}
@@ -1345,7 +1349,7 @@ function renderReport(snap) {
             </table>
             </div>
             <div style="margin-top:12px; font-size:12px; color:#888;">
-                ⚠️ 当前为 Others 分组的额外监控表，该表内指标不计入总分。
+                ⚠️ 当前为 Others 分组的额外监控表，该表内指标支持比例计分展示，但不计入总分和排名。
             </div>
         </div>
         `;
@@ -1354,31 +1358,31 @@ function renderReport(snap) {
     content.innerHTML = rankingHtml + matrixHtml + adjustHtml + othersMatrixHtml + rulesHtml;
     window._currentCatData = catData;
     window._currentOrderedMetrics = orderedMetrics;
-    
+
     // Setup matrix filters
     setupMatrixFilters();
-    
+
     // We must call calculateManualAdjustments first so the sum goes into ranking
     setTimeout(calculateManualAdjustments, 0);
 }
 
-window.setupMatrixFilters = function() {
+window.setupMatrixFilters = function () {
     const table = document.getElementById('main-matrix-table');
     if (!table) return;
-    
+
     const thead = table.querySelector('thead');
     const headerCells = thead.querySelectorAll('tr:first-child th');
-    
+
     // Remove existing if any
     const existing = thead.querySelector('.matrix-filter-row');
     if (existing) existing.remove();
-    
+
     const filterRow = document.createElement('tr');
     filterRow.className = 'matrix-filter-row';
-    
+
     // Calculate the dynamic height of the bilingual header row
     const firstRowHeight = thead.querySelector('tr:first-child').offsetHeight || 45;
-    
+
     headerCells.forEach((th, colIdx) => {
         const filterTh = document.createElement('th');
         filterTh.style.padding = '4px';
@@ -1387,7 +1391,7 @@ window.setupMatrixFilters = function() {
         filterTh.style.top = firstRowHeight + 'px';
         filterTh.style.zIndex = '20';
         filterTh.style.borderBottom = '1px solid #cbd5e1';
-        
+
         filterTh.innerHTML = `
             <div class="custom-ms" data-col="${colIdx}" style="position:relative; width:100%; text-align:left; font-weight:normal;">
                 <div class="ms-btn" onclick="toggleMsDropdown(${colIdx}, event)" style="background:#fff; border:1px solid #cbd5e1; border-radius:3px; padding:2px 4px; font-size:11px; cursor:pointer; min-height:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; justify-content:space-between; align-items:center;" title="${rt('report.filter.all')}">
@@ -1402,14 +1406,14 @@ window.setupMatrixFilters = function() {
                 </div>
             </div>
         `;
-        
+
         filterRow.appendChild(filterTh);
     });
-    
+
     thead.appendChild(filterRow);
-    
+
     // Global click listener to close dropdowns
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (!e.target.closest('.custom-ms')) {
             document.querySelectorAll('.ms-dropdown').forEach(d => {
                 d.style.display = 'none';
@@ -1417,42 +1421,42 @@ window.setupMatrixFilters = function() {
             });
         }
     });
-    
+
     populateFilterOptions();
-    
+
     // Initialize summary row immediately
     if (typeof updateMatrixSummary === 'function') {
         updateMatrixSummary();
     }
 };
 
-window.toggleMsDropdown = function(colIdx, e) {
+window.toggleMsDropdown = function (colIdx, e) {
     if (e) e.stopPropagation();
     const dropdown = document.getElementById(`ms-dropdown-${colIdx}`);
     const isVisible = dropdown.style.display === 'block';
-    
+
     // Close all
     document.querySelectorAll('.ms-dropdown').forEach(d => {
         d.style.display = 'none';
         if (d.closest('th')) d.closest('th').style.zIndex = '20';
     });
-    
+
     if (!isVisible) {
         dropdown.style.display = 'block';
         if (dropdown.closest('th')) dropdown.closest('th').style.zIndex = '30';
     }
 };
 
-window.populateFilterOptions = function() {
+window.populateFilterOptions = function () {
     const table = document.getElementById('main-matrix-table');
     const msContainers = table.querySelectorAll('.custom-ms');
     const tbody = table.querySelector('tbody');
     const rows = Array.from(tbody.querySelectorAll('tr.matrix-data-row'));
-    
+
     msContainers.forEach(container => {
         const colIdx = parseInt(container.getAttribute('data-col'));
         const uniqueValues = new Set();
-        
+
         rows.forEach(row => {
             const cell = row.querySelector(`td[data-col="${colIdx}"]`);
             if (cell) {
@@ -1460,11 +1464,11 @@ window.populateFilterOptions = function() {
                 if (val) uniqueValues.add(val);
             }
         });
-        
+
         const sorted = Array.from(uniqueValues).sort();
         const optContainer = container.querySelector('.ms-options-container');
         optContainer.innerHTML = '';
-        
+
         sorted.forEach(val => {
             const label = document.createElement('label');
             label.style.display = 'block';
@@ -1472,14 +1476,14 @@ window.populateFilterOptions = function() {
             label.style.fontSize = '11px';
             label.style.cursor = 'pointer';
             label.style.whiteSpace = 'nowrap';
-            
+
             const cb = document.createElement('input');
             cb.type = 'checkbox';
             cb.checked = true;
             cb.value = val;
             cb.className = 'ms-opt-cb';
             cb.onchange = () => msCheckboxChange(colIdx);
-            
+
             label.appendChild(cb);
             label.appendChild(document.createTextNode(' ' + val));
             optContainer.appendChild(label);
@@ -1487,7 +1491,7 @@ window.populateFilterOptions = function() {
     });
 };
 
-window.msSelectAll = function(colIdx, isChecked) {
+window.msSelectAll = function (colIdx, isChecked) {
     const container = document.querySelector(`.custom-ms[data-col="${colIdx}"]`);
     const cbs = container.querySelectorAll('.ms-opt-cb');
     cbs.forEach(cb => cb.checked = isChecked);
@@ -1495,23 +1499,23 @@ window.msSelectAll = function(colIdx, isChecked) {
     filterMatrix();
 };
 
-window.msCheckboxChange = function(colIdx) {
+window.msCheckboxChange = function (colIdx) {
     const container = document.querySelector(`.custom-ms[data-col="${colIdx}"]`);
     const cbs = container.querySelectorAll('.ms-opt-cb');
     const allCb = container.querySelector('.ms-all-cb');
-    
+
     const allChecked = Array.from(cbs).every(cb => cb.checked);
     allCb.checked = allChecked;
-    
+
     updateMsBtnText(colIdx);
     filterMatrix();
 };
 
-window.updateMsBtnText = function(colIdx) {
+window.updateMsBtnText = function (colIdx) {
     const container = document.querySelector(`.custom-ms[data-col="${colIdx}"]`);
     const cbs = container.querySelectorAll('.ms-opt-cb');
     const checked = Array.from(cbs).filter(cb => cb.checked);
-    
+
     const btnText = container.querySelector('.ms-text');
     if (checked.length === cbs.length) {
         btnText.innerText = rt('report.filter.all');
@@ -1528,10 +1532,10 @@ window.updateMsBtnText = function(colIdx) {
     }
 };
 
-window.filterMatrix = function() {
+window.filterMatrix = function () {
     const table = document.getElementById('main-matrix-table');
     const msContainers = Array.from(table.querySelectorAll('.custom-ms'));
-    
+
     // Build filters map: colIdx -> set of allowed values
     const filters = {};
     msContainers.forEach(container => {
@@ -1542,10 +1546,10 @@ window.filterMatrix = function() {
             filters[colIdx] = new Set(checkedVals);
         }
     });
-    
+
     const tbody = table.querySelector('tbody');
     const rows = Array.from(tbody.querySelectorAll('tr.matrix-data-row'));
-    
+
     rows.forEach(row => {
         let match = true;
         for (let colIdx in filters) {
@@ -1563,9 +1567,9 @@ window.filterMatrix = function() {
         }
         row.style.display = match ? '' : 'none';
     });
-    
+
     // Fix rowspans
-    const groups = {}; 
+    const groups = {};
     rows.forEach(row => {
         const groupName = row.getAttribute('data-group');
         if (groupName) {
@@ -1573,7 +1577,7 @@ window.filterMatrix = function() {
             if (row.style.display !== 'none') groups[groupName].push(row);
         }
     });
-    
+
     Object.keys(groups).forEach(gName => {
         const visibleRows = groups[gName];
         rows.forEach(row => {
@@ -1584,7 +1588,7 @@ window.filterMatrix = function() {
                 if (grpCell2) grpCell2.style.display = 'none';
             }
         });
-        
+
         if (visibleRows.length > 0) {
             const firstRow = visibleRows[0];
             const grpCell1 = firstRow.querySelector('td[data-col="0"]');
@@ -1599,15 +1603,15 @@ window.filterMatrix = function() {
             }
         }
     });
-    
+
     // Update summary row
     updateMatrixSummary();
 };
 
-window.updateMatrixSummary = function() {
+window.updateMatrixSummary = function () {
     const table = document.getElementById('main-matrix-table');
     if (!table) return;
-    
+
     let summaryRow = table.querySelector('.matrix-summary-row');
     if (!summaryRow) {
         summaryRow = document.createElement('tr');
@@ -1620,10 +1624,10 @@ window.updateMatrixSummary = function() {
         summaryRow.style.boxShadow = '0 -2px 10px rgba(0,0,0,0.1)';
         table.querySelector('tbody').appendChild(summaryRow);
     }
-    
+
     const rows = Array.from(table.querySelectorAll('tbody tr.matrix-data-row'));
     const visibleRows = rows.filter(r => r.style.display !== 'none');
-    
+
     const sums = {};
     visibleRows.forEach(row => {
         const cells = row.querySelectorAll('td[data-col]');
@@ -1632,7 +1636,7 @@ window.updateMatrixSummary = function() {
             if (cell.classList.contains('val-none')) return;
             const text = cell.innerText.trim();
             if (text === '--') return;
-            
+
             const val = parseFloat(text);
             if (!isNaN(val)) {
                 if (!sums[col]) sums[col] = 0;
@@ -1640,7 +1644,7 @@ window.updateMatrixSummary = function() {
             }
         });
     });
-    
+
     const headerCells = table.querySelectorAll('thead tr:first-child th');
     let html = '';
     headerCells.forEach((th, colIdx) => {
@@ -1658,11 +1662,11 @@ window.updateMatrixSummary = function() {
     summaryRow.innerHTML = html;
 };
 
-window.toggleMatrixFullscreen = function() {
+window.toggleMatrixFullscreen = function () {
     const card = document.getElementById('matrix-card');
     const table = card.querySelector('.matrix-table');
     if (!card) return;
-    
+
     if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
         // Enter fullscreen
         if (card.requestFullscreen) {
@@ -1706,11 +1710,11 @@ window.toggleMatrixFullscreen = function() {
     }
 };
 
-window.toggleOthersMatrixFullscreen = function() {
+window.toggleOthersMatrixFullscreen = function () {
     const card = document.getElementById('others-matrix-card');
     const table = card.querySelector('.matrix-table');
     if (!card) return;
-    
+
     if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
         if (card.requestFullscreen) {
             card.requestFullscreen();
@@ -1752,17 +1756,17 @@ window.toggleOthersMatrixFullscreen = function() {
     }
 };
 
-window.toggleAdjustFullscreen = function() {
+window.toggleAdjustFullscreen = function () {
     const card = document.getElementById('adjust-card');
     const table = card.querySelector('.matrix-table');
     if (!card) return;
-    
+
     if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
         if (card.requestFullscreen) card.requestFullscreen();
         else if (card.msRequestFullscreen) card.msRequestFullscreen();
         else if (card.mozRequestFullScreen) card.mozRequestFullScreen();
         else if (card.webkitRequestFullscreen) card.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
-        
+
         card.style.overflow = 'auto';
         card.style.display = 'flex';
         card.style.flexDirection = 'column';
@@ -1777,7 +1781,7 @@ window.toggleAdjustFullscreen = function() {
         else if (document.msExitFullscreen) document.msExitFullscreen();
         else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
         else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-        
+
         card.style.overflow = '';
         card.style.display = '';
         card.style.flexDirection = '';
@@ -1790,33 +1794,33 @@ window.toggleAdjustFullscreen = function() {
     }
 };
 
-window.calculateManualAdjustments = function() {
+window.calculateManualAdjustments = function () {
     const inputs = document.querySelectorAll('.manual-adjust-input');
     const catSums = {};
-    
+
     // reset sums
     categories.forEach(cat => catSums[cat] = 0);
-    
+
     inputs.forEach(input => {
         const cat = input.getAttribute('data-cat');
         const idx = parseInt(input.getAttribute('data-idx'));
         const occurrences = parseInt(input.value) || 0;
-        
+
         const item = manualAdjustItems[idx];
         if (!item || item.deleted) return;
-        
+
         const score = calculateManualAdjustScore(item, occurrences);
-        
+
         // update display
         const scoreCell = document.getElementById(`adjust-score-${cat}-${idx}`);
         if (scoreCell) {
             scoreCell.innerText = score;
             scoreCell.style.color = score < 0 ? '#d32f2f' : (score > 0 ? '#2e7d32' : '#000');
         }
-        
+
         catSums[cat] += score;
     });
-    
+
     // Inject sums into ranking inputs
     categories.forEach(cat => {
         const manualInput = document.getElementById(`manual-score-${cat}`);
@@ -1827,17 +1831,17 @@ window.calculateManualAdjustments = function() {
             window._currentCatData[cat].manualScore = catSums[cat];
         }
     });
-    
+
     renderRanking();
 };
 
-window.saveManualAdjustData = async function(silent = false) {
+window.saveManualAdjustData = async function (silent = false) {
     if (!currentSnapshot) return;
-    
+
     const inputs = document.querySelectorAll('.manual-adjust-input');
     const newData = {};
     categories.forEach(cat => newData[cat] = {});
-    
+
     inputs.forEach(input => {
         const cat = input.getAttribute('data-cat');
         const idx = input.getAttribute('data-idx');
@@ -1846,9 +1850,9 @@ window.saveManualAdjustData = async function(silent = false) {
             newData[cat][idx] = val;
         }
     });
-    
+
     currentSnapshot.manualAdjustData = newData;
-    
+
     try {
         await putSnapshotWithCompression(currentSnapshot.id, currentSnapshot, 'manual-adjust-data');
         if (!silent) showToast(rt('report.toast.manualAdjustSaved'), 'success');
@@ -1861,7 +1865,7 @@ window.saveManualAdjustData = async function(silent = false) {
 function renderRanking() {
     const catData = window._currentCatData;
     const cats = Object.keys(catData);
-    
+
     // Calculate final scores
     cats.forEach(cat => {
         const d = catData[cat];
@@ -1869,7 +1873,7 @@ function renderRanking() {
         if (manualInput) {
             d.manualScore = parseFloat(manualInput.value) || 0;
         }
-        
+
         let baseScore = 0;
         if (d.validWeightSum > 0) {
             baseScore = (d.earnedScore / d.validWeightSum) * standardTotalScore;
@@ -1877,13 +1881,13 @@ function renderRanking() {
         d.baseScore = +baseScore.toFixed(2);
         d.finalScore = +(d.baseScore + d.manualScore).toFixed(2);
     });
-    
+
     // Sort
     const sortedCats = cats.sort((a, b) => catData[b].finalScore - catData[a].finalScore);
-    
+
     const tbody = document.getElementById('ranking-tbody');
     if (!tbody) return;
-    
+
     let html = '';
     sortedCats.forEach((cat, index) => {
         const d = catData[cat];
@@ -1891,13 +1895,13 @@ function renderRanking() {
         if (index === 0) medal = '<span class="rank-medal">🥇</span>';
         if (index === 1) medal = '<span class="rank-medal">🥈</span>';
         if (index === 2) medal = '<span class="rank-medal">🥉</span>';
-        
+
         let scoreClass = 'score-badge';
         const ratio = d.validWeightSum > 0 ? (d.baseScore / standardTotalScore) : 0;
-        
+
         if (ratio >= 0.95) scoreClass += ' success';
         else if (ratio < 0.8) scoreClass += ' danger';
-        
+
         html += `
             <tr>
                 <td style="font-weight:bold; color:#777; padding:8px;">${medal}</td>
@@ -1910,17 +1914,17 @@ function renderRanking() {
                     <div style="font-size:11px;color:#aaa;font-weight:normal;margin-top:2px;">(${rt('report.detail.earned')} ${formatScoreValue(d.earnedScore)} / ${rt('report.detail.fullWeight')} ${formatScoreValue(d.validWeightSum)})</div>
                 </td>
                 <td style="padding:8px;">
-                    <div onclick="showAdjScoreDetails('${escapeHTML(cat)}')" style="cursor:pointer; display:inline-block; border-bottom:1px dashed #e65100; font-weight:bold; color:${d.manualScore>=0?'#2e7d32':'#c62828'};" title="${rt('report.detail.clickAdj')}">${d.manualScore >= 0 ? '+'+d.manualScore : d.manualScore}</div>
+                    <div onclick="showAdjScoreDetails('${escapeHTML(cat)}')" style="cursor:pointer; display:inline-block; border-bottom:1px dashed #e65100; font-weight:bold; color:${d.manualScore >= 0 ? '#2e7d32' : '#c62828'};" title="${rt('report.detail.clickAdj')}">${d.manualScore >= 0 ? '+' + d.manualScore : d.manualScore}</div>
                 </td>
                 <td style="padding:8px;"><span class="${scoreClass}" style="padding:4px 12px; font-size:16px;">${d.finalScore}</span></td>
             </tr>
         `;
     });
-    
+
     tbody.innerHTML = html;
 }
 
-window.showScoreDetails = function(title, content) {
+window.showScoreDetails = function (title, content) {
     let modal = document.getElementById('details-modal');
     if (!modal) {
         modal = document.createElement('div');
@@ -1948,7 +1952,7 @@ window.showScoreDetails = function(title, content) {
     modal.style.display = 'flex';
 };
 
-window.showStdScoreDetails = function() {
+window.showStdScoreDetails = function () {
     showScoreDetails(rt('report.detail.stdTitle'), `
         <div style="margin-bottom:10px;">${rt('report.detail.stdIntro')}</div>
         <div style="font-size:24px; font-weight:bold; color:#0277bd; text-align:center; padding:10px; background:#f5f8fa; border-radius:6px;">${standardTotalScore}</div>
@@ -1959,16 +1963,16 @@ window.showStdScoreDetails = function() {
     `);
 };
 
-window.showSysScoreDetails = function(cat) {
+window.showSysScoreDetails = function (cat) {
     const d = window._currentCatData[cat];
-    if(!d) return;
-    
+    if (!d) return;
+
     let passHtml = '';
     let failHtml = '';
     // 排除项拆成两桶
     let onlyMissingHtml = '';  // ⚠️ 仅当前项缺考：其他客户群/代表处/区域有数据，当前项没有
     let allExcludedHtml = '';  // ⚪ 全员豁免：所有客户群/代表处/区域都无数据 / 未配置目标
-    
+
     const targetMonth = document.getElementById('target-month-select').value;
     const allCatData = window._currentCatData || {};
     const allMetrics = window._currentOrderedMetrics || [];
@@ -2058,10 +2062,10 @@ window.showSysScoreDetails = function(cat) {
     `);
 };
 
-window.showAdjScoreDetails = function(cat) {
+window.showAdjScoreDetails = function (cat) {
     const d = window._currentCatData[cat];
-    if(!d) return;
-    
+    if (!d) return;
+
     let adjDetails = '';
     if (currentSnapshot && currentSnapshot.manualAdjustData && currentSnapshot.manualAdjustData[cat]) {
         const catAdj = currentSnapshot.manualAdjustData[cat];
@@ -2069,27 +2073,27 @@ window.showAdjScoreDetails = function(cat) {
             const count = catAdj[idx] || 0;
             if (count > 0) {
                 const score = calculateManualAdjustScore(item, count);
-                
+
                 const color = score > 0 ? '#2e7d32' : '#d32f2f';
                 adjDetails += `
                     <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px dashed #eee; padding-bottom:6px;">
                         <span style="flex:1; padding-right:10px; color:#333;">${getBilingual(item.name)} <span style="background:#eee; padding:1px 6px; border-radius:10px; font-size:11px; margin-left:4px;">x${count}</span></span>
-                        <span style="color:${color}; font-weight:bold;">${score > 0 ? '+'+score : score}</span>
+                        <span style="color:${color}; font-weight:bold;">${score > 0 ? '+' + score : score}</span>
                     </div>
                 `;
             }
         });
     }
-    
+
     showScoreDetails(rt('report.detail.adjTitle', { name: escapeHTML(d.name) }), `
         <div style="font-size:24px; font-weight:bold; color:${d.manualScore >= 0 ? '#2e7d32' : '#d32f2f'}; text-align:center; padding:10px; background:#f5f8fa; border-radius:6px; margin-bottom:15px; border:1px solid #e1e8ed;">
-            ${d.manualScore >= 0 ? '+'+d.manualScore : d.manualScore}
+            ${d.manualScore >= 0 ? '+' + d.manualScore : d.manualScore}
         </div>
         ${adjDetails || `<div style="text-align:center; color:#888; padding:20px;">${rt('report.detail.noAdjRecords')}</div>`}
     `);
 };
 
-window.openAddAdjustModal = function() {
+window.openAddAdjustModal = function () {
     let modal = document.getElementById('add-adjust-modal');
     if (!modal) {
         modal = document.createElement('div');
@@ -2129,46 +2133,46 @@ window.openAddAdjustModal = function() {
             </div>
         `;
     }
-    
+
     modal.querySelector('#new-adjust-name').value = '';
     modal.querySelector('#new-adjust-unit').value = '2';
     modal.querySelector('#new-adjust-cap').value = '';
-    
+
     const card = document.getElementById('adjust-card');
     if (document.fullscreenElement === card) {
         card.appendChild(modal);
     } else {
         document.body.appendChild(modal);
     }
-    
+
     modal.style.display = 'flex';
 };
 
-window.saveNewAdjustItem = async function() {
+window.saveNewAdjustItem = async function () {
     const type = document.getElementById('new-adjust-type').value;
     const name = document.getElementById('new-adjust-name').value.trim();
     const unit = parseFloat(document.getElementById('new-adjust-unit').value) || 0;
     const capStr = document.getElementById('new-adjust-cap').value.trim();
     const cap = capStr === '' ? null : parseFloat(capStr);
-    
+
     if (!name) {
         showToast(rt('report.toast.enterItemName'), 'error');
         return;
     }
-    
+
     const desc = cap === null ? `${unit}分/次, 上限无` : `${unit}分/次, 上限${cap}分`;
-    
+
     manualAdjustItems.push({ type, name, unit, cap, desc });
-    
+
     // Save to global prefs
     if (!globalConfig.prefs) globalConfig.prefs = {};
     globalConfig.prefs.manualAdjustItems = manualAdjustItems;
-    
+
     try {
         await API.post('/api/sla/config', globalConfig);
         showToast(rt('report.toast.customItemAdded'), 'success');
         document.getElementById('add-adjust-modal').style.display = 'none';
-        
+
         // Re-render
         renderCurrentSnapshot();
     } catch (e) {
@@ -2176,24 +2180,24 @@ window.saveNewAdjustItem = async function() {
     }
 };
 
-window.deleteAdjustItem = async function(idx) {
+window.deleteAdjustItem = async function (idx) {
     if (!confirm('确定要全局删除该加减分项目吗？\n删除后该项目将不再计分，且在所有快照中隐藏！')) {
         return;
     }
-    
+
     manualAdjustItems[idx].deleted = true;
-    
+
     // Save to global prefs
     if (!globalConfig.prefs) globalConfig.prefs = {};
     globalConfig.prefs.manualAdjustItems = manualAdjustItems;
-    
+
     try {
         await API.post('/api/sla/config', globalConfig);
         showToast(rt('report.toast.adjustItemDeleted'), 'success');
-        
+
         // Re-render report to remove the row
         renderCurrentSnapshot();
-        
+
         // Update the current snapshot to purge the removed data
         setTimeout(() => saveManualAdjustData(true), 100);
     } catch (e) {
@@ -2202,14 +2206,14 @@ window.deleteAdjustItem = async function(idx) {
     }
 };
 
-window.openWeightModal = function() {
+window.openWeightModal = function () {
     if (!currentSnapshot || !currentSnapshot.topMetrics) {
         showToast(rt('report.toast.loadSnapshotFirst'), 'error');
         return;
     }
-    
+
     let metricCols = [...(currentSnapshot.topMetrics || [])];
-    
+
     // Auto inject manual metrics that are missing in current snapshot
     if (globalConfig.targets) {
         Object.keys(globalConfig.targets).forEach(k => {
@@ -2225,7 +2229,7 @@ window.openWeightModal = function() {
     // Sort metricCols according to metricGroups order
     const orderedMetrics = [];
     const assignedLabels = new Set();
-    
+
     // 1. Grouped metrics first
     metricGroups.forEach(g => {
         (g.metrics || []).forEach(label => {
@@ -2236,24 +2240,24 @@ window.openWeightModal = function() {
             }
         });
     });
-    
+
     // 2. Append ungrouped metrics
     metricCols.forEach(m => {
         if (!assignedLabels.has(m.label)) {
             orderedMetrics.push(m);
         }
     });
-    
+
     metricCols = orderedMetrics;
 
     const listEl = document.getElementById('weight-modal-list');
-    
+
     let html = '';
     metricCols.forEach(m => {
         const targetData = labelToTargetMap[m.label];
         const weight = (targetData && targetData.weight !== undefined) ? parseFloat(targetData.weight) : 1;
         const key = labelToTargetKeyMap[m.label];
-        
+
         if (!key) {
             html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px; background:#f9f9f9; border-radius:6px; border:1px solid #eee;">
                 <span style="font-weight:600; color:#555;">${getBilingual(m.label)}</span>
@@ -2293,24 +2297,24 @@ window.openWeightModal = function() {
             </div>`;
         }
     });
-    
+
     if (!html) {
         html = `<div style="color:#888; text-align:center; padding:20px;">${rt('report.group.noMetrics')}</div>`;
     }
-    
+
     listEl.innerHTML = html;
     document.getElementById('weight-modal').style.display = 'flex';
 };
 
-window.closeWeightModal = function() {
+window.closeWeightModal = function () {
     document.getElementById('weight-modal').style.display = 'none';
 };
 
-window.saveWeights = async function() {
+window.saveWeights = async function () {
     try {
         const inputs = document.querySelectorAll('.metric-weight-input');
         let updatedTargets = { ...globalConfig.targets };
-        
+
         inputs.forEach(input => {
             const key = input.getAttribute('data-key');
             const w = parseFloat(input.value) || 0;
@@ -2318,28 +2322,28 @@ window.saveWeights = async function() {
                 updatedTargets[key].weight = w;
             }
         });
-        
+
         await API.put('/api/sla/targets', updatedTargets);
         globalConfig.targets = updatedTargets;
         buildLabelTargetMap(); // Rebuild mapping with new weights
-        
+
         showToast(rt('report.toast.weightsSaved'), 'success');
         closeWeightModal();
-        
+
         renderCurrentSnapshot(); // Re-calculate everything
-        
+
     } catch (e) {
         showToast(rt('report.toast.weightSaveFailed'), 'error');
         console.error(e);
     }
 };
 
-window.openAddMetricModal = function() {
+window.openAddMetricModal = function () {
     if (!currentSnapshot) {
         showToast(rt('report.toast.loadSnapshotFirst'), 'error');
         return;
     }
-    
+
     let modal = document.getElementById('add-metric-modal');
     if (!modal) {
         modal = document.createElement('div');
@@ -2357,10 +2361,10 @@ window.openAddMetricModal = function() {
         `;
         document.body.appendChild(modal);
     }
-    
+
     const formEl = document.getElementById('add-metric-form');
     const targetMonth = document.getElementById('target-month-select').value;
-    
+
     let html = `
         <div style="margin-bottom:12px;">
             <label style="display:block; font-size:12px; color:#666; margin-bottom:4px;">${rt('report.metric.name')} <span style="color:red;">*</span></label>
@@ -2407,7 +2411,7 @@ window.openAddMetricModal = function() {
         <label style="display:block; font-size:12px; color:#666; margin-bottom:8px;">${rt('report.metric.catValues')}</label>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
     `;
-    
+
     categories.forEach(cat => {
         html += `
             <div>
@@ -2416,13 +2420,13 @@ window.openAddMetricModal = function() {
             </div>
         `;
     });
-    
+
     html += `</div>`;
-    
+
     formEl.innerHTML = html;
-    
+
     modal.querySelector('h3').innerHTML = rt('report.modal.addMetricTitle');
-    
+
     if (document.fullscreenElement) {
         document.fullscreenElement.appendChild(modal);
     } else if (document.webkitFullscreenElement) {
@@ -2430,24 +2434,24 @@ window.openAddMetricModal = function() {
     } else {
         document.body.appendChild(modal);
     }
-    
+
     modal.style.display = 'flex';
 };
 
-window.editManualMetric = function(label) {
+window.editManualMetric = function (label) {
     if (!currentSnapshot) return;
-    
+
     // Open modal to generate DOM
     openAddMetricModal();
-    
+
     const modal = document.getElementById('add-metric-modal');
     modal.querySelector('h3').innerHTML = rt('report.metric.editTitle');
-    
+
     const nameInput = document.getElementById('manual-metric-name');
     nameInput.value = label;
     nameInput.setAttribute('readonly', 'readonly');
     nameInput.style.backgroundColor = '#f0f0f0';
-    
+
     // Fill target data
     const targetData = labelToTargetMap[label];
     if (targetData) {
@@ -2458,7 +2462,7 @@ window.editManualMetric = function(label) {
         if (targetData.exceedBy !== undefined) document.getElementById('manual-metric-exceed-by').value = targetData.exceedBy;
         if (targetData.bonus !== undefined) document.getElementById('manual-metric-bonus').value = targetData.bonus;
     }
-    
+
     // Fill snapshot values if exist
     const existingMetric = (currentSnapshot.topMetrics || []).find(m => m.label === label);
     if (existingMetric) {
@@ -2475,7 +2479,7 @@ window.editManualMetric = function(label) {
     }
 };
 
-window.closeAddMetricModal = function() {
+window.closeAddMetricModal = function () {
     const modal = document.getElementById('add-metric-modal');
     if (modal) {
         modal.style.display = 'none';
@@ -2483,17 +2487,17 @@ window.closeAddMetricModal = function() {
     }
 };
 
-window.saveManualMetric = async function() {
+window.saveManualMetric = async function () {
     const name = document.getElementById('manual-metric-name').value.trim();
     if (!name) return showToast(rt('report.toast.enterMetricName'), 'error');
-    
+
     const weight = parseFloat(document.getElementById('manual-metric-weight').value);
     const validWeight = isNaN(weight) ? 1 : weight;
     const type = document.getElementById('manual-metric-type').value;
     const targetVal = document.getElementById('manual-metric-target').value.trim();
     const globalVal = document.getElementById('manual-metric-global').value.trim() || '--';
     const targetMonth = document.getElementById('target-month-select').value;
-    
+
     const subMetrics = [];
     document.querySelectorAll('.manual-cat-input').forEach(input => {
         const cat = input.getAttribute('data-cat');
@@ -2502,7 +2506,7 @@ window.saveManualMetric = async function() {
             subMetrics.push({ category: cat, value: val });
         }
     });
-    
+
     const metricId = `manual_m_${Date.now()}`;
     const newMetric = {
         id: metricId,
@@ -2514,12 +2518,12 @@ window.saveManualMetric = async function() {
         value: globalVal,
         subMetrics: subMetrics
     };
-    
+
     let targetKey = labelToTargetKeyMap[name];
     if (!targetKey) {
         targetKey = `manual_target_${Date.now()}`;
     }
-    
+
     let updatedTargets = { ...globalConfig.targets };
     if (!updatedTargets[targetKey]) {
         updatedTargets[targetKey] = {};
@@ -2527,22 +2531,22 @@ window.saveManualMetric = async function() {
     updatedTargets[targetKey].type = type;
     updatedTargets[targetKey].weight = validWeight;
     updatedTargets[targetKey].label = name;
-    
+
     const exceedBy = parseFloat(document.getElementById('manual-metric-exceed-by').value);
     const bonus = parseFloat(document.getElementById('manual-metric-bonus').value);
     updatedTargets[targetKey].exceedBy = isNaN(exceedBy) ? '' : exceedBy;
     updatedTargets[targetKey].bonus = isNaN(bonus) ? '' : bonus;
-    
+
     if (targetVal) {
         updatedTargets[targetKey][targetMonth] = targetVal;
     }
-    
+
     try {
         await API.put('/api/sla/targets', updatedTargets);
         globalConfig.targets = updatedTargets;
-        
+
         if (!currentSnapshot.topMetrics) currentSnapshot.topMetrics = [];
-        
+
         const existingIdx = currentSnapshot.topMetrics.findIndex(m => m.label === name);
         if (existingIdx > -1) {
             newMetric.id = currentSnapshot.topMetrics[existingIdx].id; // preserve ID
@@ -2550,41 +2554,41 @@ window.saveManualMetric = async function() {
         } else {
             currentSnapshot.topMetrics.push(newMetric);
         }
-        
+
         await putSnapshotWithCompression(currentSnapshot.id, currentSnapshot, 'manual-metric-save');
-        
+
         buildLabelTargetMap();
         showToast(rt('report.toast.manualMetricSaved'), 'success');
         closeAddMetricModal();
         renderCurrentSnapshot();
-    } catch(e) {
+    } catch (e) {
         showToast(rt('report.toast.saveFailed'), 'error');
         console.error(e);
     }
 };
 
-window.toggleAutoFill = async function(label) {
+window.toggleAutoFill = async function (label) {
     if (!globalConfig.targets) globalConfig.targets = {};
     let targetKey = labelToTargetKeyMap[label];
     if (!targetKey) {
         targetKey = `manual_target_${Date.now()}`;
         globalConfig.targets[targetKey] = { label: label };
     }
-    
+
     globalConfig.targets[targetKey].autoFill = !globalConfig.targets[targetKey].autoFill;
-    
+
     try {
         await API.put('/api/sla/targets', globalConfig.targets);
         buildLabelTargetMap();
         showToast(globalConfig.targets[targetKey].autoFill ? rt('report.toast.autoFillOn') : rt('report.toast.autoFillOff'), 'success');
         renderReport(currentSnapshot);
-    } catch(e) {
+    } catch (e) {
         console.error(e);
         showToast(rt('report.toast.settingFailed'), 'error');
     }
 };
 
-window.toggleManualAdjustAutoFill = async function(idx) {
+window.toggleManualAdjustAutoFill = async function (idx) {
     if (!globalConfig.prefs) globalConfig.prefs = {};
     const prefs = getManualAdjustAutoFillPrefs();
     const key = String(idx);
@@ -2611,14 +2615,14 @@ window.toggleManualAdjustAutoFill = async function(idx) {
             'success'
         );
         renderCurrentSnapshot();
-    } catch(e) {
+    } catch (e) {
         prefs[key] = !prefs[key];
         console.error(e);
         showToast(rt('report.toast.settingFailed'), 'error');
     }
 };
 
-window.toggleProportionalScoring = async function(label) {
+window.toggleProportionalScoring = async function (label) {
     if (!globalConfig.targets) globalConfig.targets = {};
     let targetKey = labelToTargetKeyMap[label];
     if (!targetKey) {
@@ -2638,7 +2642,7 @@ window.toggleProportionalScoring = async function(label) {
             'success'
         );
         renderReport(currentSnapshot);
-    } catch(e) {
+    } catch (e) {
         console.error(e);
         showToast(rt('report.toast.proportionalFailed'), 'error');
     }
@@ -2670,7 +2674,7 @@ function getAllMetricLabels() {
 function renderGroupModal() {
     const container = document.getElementById('group-list-container');
     const poolEl = document.getElementById('unassigned-pool');
-    
+
     const allLabels = getAllMetricLabels();
     const assignedLabels = new Set(_editGroups.flatMap(g => g.metrics || []));
     const unassigned = allLabels.filter(l => !assignedLabels.has(l));
@@ -2723,7 +2727,7 @@ function renderGroupModal() {
     `}).join('');
 }
 
-window.moveGroupUp = function(gi) {
+window.moveGroupUp = function (gi) {
     if (gi <= 0) return;
     const temp = _editGroups[gi - 1];
     _editGroups[gi - 1] = _editGroups[gi];
@@ -2733,7 +2737,7 @@ window.moveGroupUp = function(gi) {
     renderGroupModal();
 };
 
-window.moveGroupDown = function(gi) {
+window.moveGroupDown = function (gi) {
     if (gi >= _editGroups.length - 1) return;
     const temp = _editGroups[gi + 1];
     _editGroups[gi + 1] = _editGroups[gi];
@@ -2743,7 +2747,7 @@ window.moveGroupDown = function(gi) {
     renderGroupModal();
 };
 
-window.moveMetricUp = function(gi, mi) {
+window.moveMetricUp = function (gi, mi) {
     if (mi <= 0) return;
     const metrics = _editGroups[gi].metrics;
     const temp = metrics[mi - 1];
@@ -2752,7 +2756,7 @@ window.moveMetricUp = function(gi, mi) {
     renderGroupModal();
 };
 
-window.moveMetricDown = function(gi, mi) {
+window.moveMetricDown = function (gi, mi) {
     const metrics = _editGroups[gi].metrics;
     if (mi >= metrics.length - 1) return;
     const temp = metrics[mi + 1];
@@ -2761,7 +2765,7 @@ window.moveMetricDown = function(gi, mi) {
     renderGroupModal();
 };
 
-window.assignToFocusedGroup = function(label) {
+window.assignToFocusedGroup = function (label) {
     if (_editGroups.length === 0) {
         _editGroups.push({ id: `grp_${Date.now()}`, name: '默认分组', metrics: [] });
         _focusedGroupIdx = 0;
@@ -2773,7 +2777,7 @@ window.assignToFocusedGroup = function(label) {
 };
 
 // Lightweight focus update - NO full re-render so input stays editable
-window.setFocusedGroup = function(gi) {
+window.setFocusedGroup = function (gi) {
     if (_focusedGroupIdx === gi) return; // already focused, skip
     _focusedGroupIdx = gi;
     // Update borders
@@ -2787,7 +2791,7 @@ window.setFocusedGroup = function(gi) {
     updatePoolHint();
 };
 
-window.updatePoolHint = function() {
+window.updatePoolHint = function () {
     const groupName = (_editGroups[_focusedGroupIdx] || {}).name || '聚焦分组';
     const title = _editGroups.length > 0 ? `点击分配到「${groupName}」` : '请先新增分组';
     document.querySelectorAll('#unassigned-pool .unassigned-tag').forEach(tag => {
@@ -2795,17 +2799,17 @@ window.updatePoolHint = function() {
     });
 };
 
-window.removeGroup = function(gi) {
+window.removeGroup = function (gi) {
     _editGroups.splice(gi, 1);
     renderGroupModal();
 };
 
-window.removeMetricFromGroup = function(gi, mi) {
+window.removeMetricFromGroup = function (gi, mi) {
     _editGroups[gi].metrics.splice(mi, 1);
     renderGroupModal();
 };
 
-window.addNewGroup = function() {
+window.addNewGroup = function () {
     _editGroups.push({ id: `grp_${Date.now()}`, name: '新分组', metrics: [] });
     _focusedGroupIdx = _editGroups.length - 1;
     renderGroupModal();
@@ -2819,7 +2823,7 @@ window.addNewGroup = function() {
     }, 30);
 };
 
-window.openGroupModal = function() {
+window.openGroupModal = function () {
     // Deep clone current groups for editing
     _editGroups = JSON.parse(JSON.stringify(metricGroups));
     _focusedGroupIdx = 0;
@@ -2827,22 +2831,22 @@ window.openGroupModal = function() {
     document.getElementById('group-modal').style.display = 'flex';
 };
 
-window.closeGroupModal = function() {
+window.closeGroupModal = function () {
     document.getElementById('group-modal').style.display = 'none';
 };
 
-window.saveGroups = async function() {
+window.saveGroups = async function () {
     try {
         // Collect current names from inputs
         const inputs = document.querySelectorAll('.group-name-input');
-        inputs.forEach((inp, i) => { if (_editGroups[i]) _editGroups[i].name = inp.value.trim() || `分组${i+1}`; });
-        
+        inputs.forEach((inp, i) => { if (_editGroups[i]) _editGroups[i].name = inp.value.trim() || `分组${i + 1}`; });
+
         await API.put('/api/sla/groups', _editGroups);
         metricGroups = _editGroups;
         showToast(rt('report.toast.groupsSaved'), 'success');
         closeGroupModal();
         renderCurrentSnapshot();
-    } catch(e) {
+    } catch (e) {
         showToast(rt('report.toast.groupsSaveFailed'), 'error');
         console.error(e);
     }
@@ -2850,7 +2854,7 @@ window.saveGroups = async function() {
 let _editI18nMap = {};
 let _editingZh = null;
 
-window.openI18nModal = function() {
+window.openI18nModal = function () {
     _editI18nMap = { ...i18nMap };
     _editingZh = null;
     renderI18nList();
@@ -2859,25 +2863,25 @@ window.openI18nModal = function() {
     document.getElementById('i18n-modal').style.display = 'flex';
 };
 
-window.closeI18nModal = function() {
+window.closeI18nModal = function () {
     document.getElementById('i18n-modal').style.display = 'none';
 };
 
-window.renderI18nList = function() {
+window.renderI18nList = function () {
     const container = document.getElementById('i18n-list-container');
     const searchInput = document.getElementById('i18n-search');
     const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
-    
+
     let html = '';
     let keys = Object.keys(_editI18nMap).sort();
-    
+
     if (searchTerm) {
         keys = keys.filter(zh => {
             const en = _editI18nMap[zh] || '';
             return zh.toLowerCase().includes(searchTerm) || en.toLowerCase().includes(searchTerm);
         });
     }
-    
+
     if (keys.length === 0) {
         html = `<tr><td colspan="3" style="text-align:center; padding:20px; color:#999; font-size:13px;">${rt('report.i18n.noMatches')}</td></tr>`;
     } else {
@@ -2898,21 +2902,21 @@ window.renderI18nList = function() {
     container.innerHTML = html;
 };
 
-window.editI18nEntry = function(zh) {
+window.editI18nEntry = function (zh) {
     _editingZh = zh;
     document.getElementById('i18n-new-zh').value = zh;
     document.getElementById('i18n-new-en').value = _editI18nMap[zh] || '';
     document.getElementById('i18n-new-en').focus();
 };
 
-window.addI18nEntry = async function() {
+window.addI18nEntry = async function () {
     const zh = document.getElementById('i18n-new-zh').value.trim();
     const en = document.getElementById('i18n-new-en').value.trim();
     if (!zh || !en) {
         showToast(rt('report.toast.fillI18n'), 'error');
         return;
     }
-    
+
     const previousMap = { ..._editI18nMap };
     try {
         if (_editingZh) {
@@ -2927,7 +2931,7 @@ window.addI18nEntry = async function() {
                         showToast(rt('report.toast.renameSuccess'), 'success');
                         setTimeout(() => window.location.reload(), 1500);
                         return; // Prevent further logic to avoid race condition with manual save
-                    } catch(e) {
+                    } catch (e) {
                         showToast(rt('report.toast.renameFailed'), 'error');
                         console.error(e);
                         return;
@@ -2966,25 +2970,25 @@ window.addI18nEntry = async function() {
     }
 };
 
-window.deleteI18nEntry = function(zh) {
+window.deleteI18nEntry = function (zh) {
     if (confirm(`确定要删除“${zh}”的翻译吗？`)) {
         delete _editI18nMap[zh];
         renderI18nList();
     }
 };
 
-window.saveI18nMap = async function() {
+window.saveI18nMap = async function () {
     try {
         if (!globalConfig.prefs) globalConfig.prefs = {};
         globalConfig.prefs.i18nMap = _editI18nMap;
 
         await API.put('/api/sla/prefs/i18nMap', _editI18nMap);
-        
+
         i18nMap = { ..._editI18nMap };
         showToast(rt('report.toast.i18nSaved'), 'success');
         closeI18nModal();
         setTimeout(() => window.location.reload(), 500);
-    } catch(e) {
+    } catch (e) {
         showToast(rt('report.toast.saveFailed'), 'error');
         console.error(e);
     }
@@ -3076,7 +3080,7 @@ async function promptExpiringTickets(tickets, specialMetricAlerts = []) {
             modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
             document.body.appendChild(modal);
         }
-        
+
         let listHtml = groupedTickets.map((group, groupIndex) => {
             const groupKey = `ticket-${groupIndex}`;
             const rowsHtml = group.items.map(({ ticket: t, sortedIndex }) => {
@@ -3127,7 +3131,7 @@ async function promptExpiringTickets(tickets, specialMetricAlerts = []) {
         }).join('') : `<div style="padding:14px;color:#94a3b8;font-size:13px;text-align:center;">${rt('report.alert.noSpecial')}</div>`;
 
         const totalSelectable = sortedTickets.length + metricAlerts.length;
-        
+
         modal.innerHTML = `
             <div style="background:#fff;border-radius:10px;width:min(1080px,96vw);max-height:84vh;display:flex;flex-direction:column;box-shadow:0 8px 28px rgba(0,0,0,0.18);">
                 <div style="padding:16px;border-bottom:1px solid #eee;background:#fff3e0;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;align-items:center;">
@@ -3167,9 +3171,9 @@ async function promptExpiringTickets(tickets, specialMetricAlerts = []) {
                 </div>
             </div>
         `;
-        
+
         modal.style.display = 'flex';
-        
+
         const selectAllCb = document.getElementById('exp-select-all');
         const countSpan = document.getElementById('exp-sel-count');
         let lastSelectIndex = null;
@@ -3184,7 +3188,7 @@ async function promptExpiringTickets(tickets, specialMetricAlerts = []) {
             const end = Math.max(fromIndex, toIndex);
             allCbs.slice(start, end + 1).forEach(cb => { cb.checked = checked; });
         };
-        
+
         const updateCount = () => {
             const allCbs = getAllCbs();
             const checkedCount = allCbs.filter(cb => cb.checked).length;
@@ -3199,7 +3203,7 @@ async function promptExpiringTickets(tickets, specialMetricAlerts = []) {
                 groupCb.indeterminate = groupCheckedCount > 0 && groupCheckedCount < groupCbs.length;
             });
         };
-        
+
         selectAllCb.onchange = (e) => {
             getAllCbs().forEach(cb => cb.checked = e.target.checked);
             updateCount();
@@ -3248,12 +3252,12 @@ async function promptExpiringTickets(tickets, specialMetricAlerts = []) {
             modal.style.display = 'none';
             resolve({ cancelled: true, expiringTickets: [], specialMetricAlerts: [] });
         };
-        
+
         document.getElementById('btn-ignore-exp').onclick = () => {
             modal.style.display = 'none';
             resolve({ expiringTickets: [], specialMetricAlerts: [] });
         };
-        
+
         document.getElementById('btn-confirm-exp').onclick = () => {
             const selectedIndices = Array.from(document.querySelectorAll('.exp-ticket-cb:checked')).map(cb => parseInt(cb.value));
             const selectedTickets = selectedIndices.map(i => sortedTickets[i]);
@@ -3265,7 +3269,7 @@ async function promptExpiringTickets(tickets, specialMetricAlerts = []) {
     });
 }
 
-window.buildYuxiangPayload = function() {
+window.buildYuxiangPayload = function () {
     const orderedMetrics = window._currentOrderedMetrics;
     if (!currentSnapshot || !orderedMetrics || !window._currentCatData) {
         return null;
@@ -3299,19 +3303,19 @@ window.buildYuxiangPayload = function() {
             else if (targetData.type === 'lte') target = '≤ ' + target;
         }
         const metricData = { label: m.label, labelEn, target };
-        
+
         targetCats.forEach(cat => {
             const cell = window._currentCatData[cat] && window._currentCatData[cat].values ? window._currentCatData[cat].values[m.label] : null;
             const weight = Number(m.weight) || 0;
-            
+
             let achv = '';
             let score = 0;
-            
+
             if (cell) {
                 achv = cell.raw;
                 score = cell.earnedScore !== undefined ? cell.earnedScore : (cell.isFailing ? 0 : (weight + (cell.bonusScore || 0)));
             }
-            
+
             metricData[cat] = { achv, score, isFailing: cell ? cell.isFailing : false };
         });
         payload.metrics.push(metricData);
@@ -3329,7 +3333,7 @@ window.buildYuxiangPayload = function() {
             cap: item.cap,
             desc: item.desc
         };
-        
+
         targetCats.forEach(cat => {
             let score = 0;
             if (currentSnapshot.manualAdjustData && currentSnapshot.manualAdjustData[cat]) {
@@ -3361,25 +3365,25 @@ window.buildYuxiangPayload = function() {
 
     const mergeTwoMetrics = (baseObj, newObj, newLabel) => {
         baseObj.label = newLabel;
-        
+
         const t1str = baseObj.target !== undefined && baseObj.target !== '' ? String(baseObj.target).trim() : '--';
         const t2str = newObj.target !== undefined && newObj.target !== '' ? String(newObj.target).trim() : '--';
         baseObj.target = `${t1str} & ${t2str}`;
-        
+
         targetCats.forEach(cat => {
             const a1str = baseObj[cat].achv !== undefined && baseObj[cat].achv !== '' ? String(baseObj[cat].achv).trim() : '--';
             const a2str = newObj[cat].achv !== undefined && newObj[cat].achv !== '' ? String(newObj[cat].achv).trim() : '--';
-            
+
             if (baseObj[cat].achv === '' && newObj[cat].achv === '') {
                 baseObj[cat].achv = '';
             } else {
                 baseObj[cat].achv = `${a1str} & ${a2str}`;
             }
-            
+
             const s1 = parseFloatSafe(baseObj[cat].score);
             const s2 = parseFloatSafe(newObj[cat].score);
             baseObj[cat].score = s1 + s2;
-            
+
             baseObj[cat].isFailing = baseObj[cat].isFailing || newObj[cat].isFailing;
         });
     };
@@ -3431,22 +3435,22 @@ window.buildYuxiangPayload = function() {
     return payload;
 };
 
-window.exportYuxiangExcel = async function() {
+window.exportYuxiangExcel = async function () {
     const payload = buildYuxiangPayload();
     if (!payload) {
         return showToast('无数据可导出', 'warn');
     }
     window._yuxiangPreviewData = payload;
     window._yuxiangOverrides = {};
-    
+
     document.getElementById('yuxiang-preview-modal').style.display = 'flex';
     document.getElementById('yuxiang-preview-tbody').innerHTML = '<tr><td style="text-align:center; padding: 20px;">正在生成真实 Excel 快照...</td></tr>';
-    
+
     try {
         const token = localStorage.getItem('tools_token');
         const headers = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
-        
+
         const response = await fetch('/api/sla/preview-yuxiang', {
             method: 'POST',
             headers: headers,
@@ -3462,7 +3466,7 @@ window.exportYuxiangExcel = async function() {
     }
 };
 
-window.renderYuxiangPreview = function() {
+window.renderYuxiangPreview = function () {
     const tbody = document.getElementById('yuxiang-preview-tbody');
     const snapshot = window._yuxiangPreviewSnapshot;
     if (!snapshot) return;
@@ -3491,7 +3495,7 @@ window.renderYuxiangPreview = function() {
                     const rowspan = end.r - start.r + 1;
                     const colspan = end.c - start.c + 1;
                     cellSpans[start.addr] = { rowspan, colspan };
-                    
+
                     for (let rr = start.r; rr <= end.r; rr++) {
                         for (let cc = start.c; cc <= end.c; cc++) {
                             if (rr === start.r && cc === start.c) continue;
@@ -3519,14 +3523,14 @@ window.renderYuxiangPreview = function() {
             if (skipRender.has(cell.address)) {
                 return;
             }
-            
+
             let attrs = '';
             if (cellSpans[cell.address]) {
                 const spans = cellSpans[cell.address];
                 if (spans.rowspan > 1) attrs += ` rowspan="${spans.rowspan}"`;
                 if (spans.colspan > 1) attrs += ` colspan="${spans.colspan}"`;
             }
-            
+
             let style = 'border:1px dashed #e0e0e0; padding:2px 4px; position:relative; font-size:inherit; ';
             if (cell.bg && cell.bg !== '00000000' && cell.bg !== 'FFFFFFFF') {
                 style += `background-color:#${cell.bg.slice(2)}; `;
@@ -3550,11 +3554,11 @@ window.renderYuxiangPreview = function() {
         });
         html += '</tr>';
     });
-    
+
     tbody.innerHTML = html;
 };
 
-window.updateYuxiangPreviewData = function(r, c, value, el) {
+window.updateYuxiangPreviewData = function (r, c, value, el) {
     const key = `${r}_${c}`;
     window._yuxiangOverrides[key] = value;
     if (el && el.parentElement) {
@@ -3562,7 +3566,7 @@ window.updateYuxiangPreviewData = function(r, c, value, el) {
     }
 };
 
-window.confirmYuxiangExport = async function() {
+window.confirmYuxiangExport = async function () {
     const payload = window._yuxiangPreviewData;
     if (!payload) return;
 
@@ -3576,7 +3580,7 @@ window.confirmYuxiangExport = async function() {
         const token = localStorage.getItem('tools_token');
         const headers = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
-        
+
         payload.overrides = window._yuxiangOverrides || {};
 
         const response = await fetch('/api/sla/export-yuxiang', {
@@ -3601,7 +3605,7 @@ window.confirmYuxiangExport = async function() {
 
         document.getElementById('yuxiang-preview-modal').style.display = 'none';
         showToast('导出成功', 'success');
-    } catch(e) {
+    } catch (e) {
         console.error(e);
         showToast('导出失败: ' + e.message, 'error');
     } finally {
@@ -3681,7 +3685,7 @@ function createBlankTemplateMappingRow(insertIndex) {
     };
 }
 
-window.insertMappingRowAfter = function(idx) {
+window.insertMappingRowAfter = function (idx) {
     if (!window._currentTemplateData) return;
     getTemplateMappingRowsFromDom();
     const insertIndex = Math.max(0, Math.min(idx + 1, window._currentTemplateData.length));
@@ -3689,7 +3693,7 @@ window.insertMappingRowAfter = function(idx) {
     renderTemplateMappingRows();
 };
 
-window.moveMappingRow = function(idx, delta) {
+window.moveMappingRow = function (idx, delta) {
     if (!window._currentTemplateData) return;
     getTemplateMappingRowsFromDom();
     const nextIdx = idx + delta;
@@ -3700,7 +3704,7 @@ window.moveMappingRow = function(idx, delta) {
     renderTemplateMappingRows();
 };
 
-window.deleteMappingRow = function(idx) {
+window.deleteMappingRow = function (idx) {
     if (!window._currentTemplateData) return;
     getTemplateMappingRowsFromDom();
     if (idx < 0 || idx >= window._currentTemplateData.length) return;
@@ -3708,7 +3712,7 @@ window.deleteMappingRow = function(idx) {
     renderTemplateMappingRows();
 };
 
-window.addNewMappingRow = function() {
+window.addNewMappingRow = function () {
     if (!window._currentTemplateData) {
         window._currentTemplateData = [];
     } else {
@@ -3718,7 +3722,7 @@ window.addNewMappingRow = function() {
     renderTemplateMappingRows();
 };
 
-window.saveDashboardToDB = async function(event) {
+window.saveDashboardToDB = async function (event) {
     if (!currentSnapshot) {
         return showToast(rt('report.toast.noSnapshot'), 'error');
     }
@@ -3746,7 +3750,7 @@ window.saveDashboardToDB = async function(event) {
     rawDataForSave.selectedTargetMonth = month;
     rawDataForSave.selectedTargetMonthLabel = `${month}月`;
     rawDataForSave.manualAdjustItems = typeof manualAdjustItems !== 'undefined' ? manualAdjustItems : [];
-    
+
     // Build cat scores
     const cat_scores = [];
     const catData = window._currentCatData || {};
@@ -3763,16 +3767,16 @@ window.saveDashboardToDB = async function(event) {
     // Build metric data
     const metric_data = [];
     const orderedMetrics = window._currentOrderedMetrics || [];
-    
+
     orderedMetrics.forEach(m => {
         const targetData = labelToTargetMap[m.label] || {};
         const weight = targetData.weight !== undefined ? parseFloat(targetData.weight) : 1;
-        
+
         let targetStr = '--';
         if (targetData[month] !== undefined && targetData[month] !== '') {
             const condition = targetData.type || 'gte';
             targetStr = (condition === 'gte' ? '≥ ' : '≤ ') + targetData[month];
-            
+
             // Check if any cat has % in this metric to append % to target
             let isPercent = false;
             Object.keys(catData).forEach(catName => {
@@ -3781,7 +3785,7 @@ window.saveDashboardToDB = async function(event) {
             });
             if (isPercent) targetStr += '%';
         }
-        
+
         let hasAnyCustomerData = false;
         Object.keys(catData).forEach(catName => {
             const cell = catData[catName].values[m.label];
@@ -3802,14 +3806,14 @@ window.saveDashboardToDB = async function(event) {
                 });
             }
         });
-        
+
         // If a metric has no customer data but has a global value, save it as '整体'
         if (!hasAnyCustomerData && hasFilledValue(m.value)) {
             const globalValNum = parseNum(m.value);
             const targetNum = parseFloat(targetData[month]);
             let isFailing = m.isWarn || m.isFailing || false;
             let gapStr = m.gap || '';
-            
+
             if (Number.isFinite(globalValNum) && Number.isFinite(targetNum)) {
                 const condition = targetData.type || 'gte';
                 if (condition === 'gte' && globalValNum < targetNum) {
@@ -3820,7 +3824,7 @@ window.saveDashboardToDB = async function(event) {
                     gapStr = (globalValNum - targetNum).toFixed(1);
                 }
             }
-            
+
             metric_data.push({
                 cat_name: '整体',
                 metric_label: m.label,
@@ -3850,7 +3854,7 @@ window.saveDashboardToDB = async function(event) {
     try {
         const btn = event ? event.target : null;
         if (btn) btn.innerHTML = rt('report.common.prepareData');
-        
+
         payload.image_data = null;
 
         // Generate Excel File
@@ -3859,13 +3863,13 @@ window.saveDashboardToDB = async function(event) {
                 if (btn) btn.innerHTML = rt('report.common.generateReport');
                 const workbook = new ExcelJS.Workbook();
                 const sheet = workbook.addWorksheet('短板透视矩阵');
-                
+
                 const stripHtml = (html) => {
                     const tmp = document.createElement('div');
                     tmp.innerHTML = html;
                     return tmp.textContent || tmp.innerText || "";
                 };
-                
+
                 // Define columns
                 const columns = [
                     { header: '分组 (Group)', key: 'group', width: 18 },
@@ -3875,16 +3879,16 @@ window.saveDashboardToDB = async function(event) {
                     { header: '目标值 (Target)', key: 'target', width: 18 },
                     { header: '全局总体达标', key: 'global', width: 18 }
                 ];
-                
+
                 const catData = window._currentCatData || {};
                 const categories = Object.keys(catData);
                 categories.forEach(cat => {
                     columns.push({ header: cat, key: `val_${cat}`, width: 22 });
                     columns.push({ header: `${cat}得分`, key: `score_${cat}`, width: 18 });
                 });
-                
+
                 sheet.columns = columns;
-                
+
                 // Set default font for all columns
                 sheet.columns.forEach(column => {
                     column.font = { name: 'Microsoft YaHei', size: 11 };
@@ -3892,7 +3896,7 @@ window.saveDashboardToDB = async function(event) {
                 });
                 // Metric name left-aligned
                 sheet.getColumn('metric').alignment = { vertical: 'middle', horizontal: 'left', wrapText: false };
-                
+
                 // Style header
                 const headerRow = sheet.getRow(1);
                 headerRow.font = { name: 'Microsoft YaHei', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
@@ -3900,21 +3904,21 @@ window.saveDashboardToDB = async function(event) {
                 headerRow.alignment = { vertical: 'middle', horizontal: 'center', wrapText: false };
                 headerRow.height = 30; // Slightly taller header
 
-                
+
                 // Add data
                 const orderedMetrics = window._currentOrderedMetrics || [];
                 const groupWeightMap = window._currentGroupWeightMap || {};
                 const labelToGroup = window._currentLabelToGroup || {};
-                
+
                 let curGroup = null;
                 let curGroupStartRow = -1;
                 let currentRowIdx = 2; // Header is row 1
                 const merges = [];
-                
+
                 orderedMetrics.forEach(m => {
                     const gName = labelToGroup[m.label];
                     if (!gName) return; // Skip ungrouped as requested by user
-                    
+
                     if (gName !== curGroup) {
                         if (curGroup && (currentRowIdx - curGroupStartRow) > 1) {
                             merges.push({ s: curGroupStartRow, e: currentRowIdx - 1 });
@@ -3922,16 +3926,16 @@ window.saveDashboardToDB = async function(event) {
                         curGroup = gName;
                         curGroupStartRow = currentRowIdx;
                     }
-                    
+
                     const rowData = {};
                     rowData.group = stripHtml(getBilingual(gName));
                     rowData.groupWeight = groupWeightMap[gName] || '-';
                     rowData.metric = stripHtml(getBilingual(m.label));
-                    
+
                     const targetData = labelToTargetMap[m.label] || {};
                     const weight = targetData.weight !== undefined ? parseFloat(targetData.weight) : 1;
                     rowData.weight = weight;
-                    
+
                     let targetStr = '--';
                     if (targetData[month] !== undefined && targetData[month] !== '') {
                         const condition = targetData.type || 'gte';
@@ -3944,7 +3948,7 @@ window.saveDashboardToDB = async function(event) {
                     }
                     rowData.target = targetStr;
                     rowData.global = m.value || '--';
-                    
+
                     categories.forEach(cat => {
                         const cell = catData[cat].values[m.label] || {};
                         rowData[`val_${cat}`] = cell.raw || '--';
@@ -3957,10 +3961,10 @@ window.saveDashboardToDB = async function(event) {
                             rowData[`score_${cat}`] = Number.isInteger(earned) ? earned : +earned.toFixed(2);
                         }
                     });
-                    
+
                     const row = sheet.addRow(rowData);
                     row.height = 25; // Professional row height
-                    
+
                     // Highlight global failing cell
                     if (m.isWarn) {
                         const globalColObj = sheet.getColumn('global');
@@ -3968,7 +3972,7 @@ window.saveDashboardToDB = async function(event) {
                         globalCell.font = { name: 'Microsoft YaHei', size: 11, color: { argb: 'FFD32F2F' }, bold: true };
                         globalCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFEBEE' } };
                     }
-                    
+
                     // Highlight failing cells
                     categories.forEach(cat => {
                         const cell = catData[cat].values[m.label] || {};
@@ -3979,33 +3983,33 @@ window.saveDashboardToDB = async function(event) {
                             valCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFEBEE' } };
                         }
                     });
-                    
+
                     currentRowIdx++;
                 });
-                
+
                 // Final group merge check
                 if (curGroup && (currentRowIdx - curGroupStartRow) > 1) {
                     merges.push({ s: curGroupStartRow, e: currentRowIdx - 1 });
                 }
-                
+
                 // Apply merges and borders
                 merges.forEach(m => {
                     sheet.mergeCells(`A${m.s}:A${m.e}`);
                     sheet.mergeCells(`B${m.s}:B${m.e}`);
                 });
-                
+
                 // Apply borders to all used cells
                 sheet.eachRow((row, rowNumber) => {
                     row.eachCell((cell) => {
                         cell.border = {
-                            top: {style:'thin', color: {argb:'FFE0E0E0'}},
-                            left: {style:'thin', color: {argb:'FFE0E0E0'}},
-                            bottom: {style:'thin', color: {argb:'FFE0E0E0'}},
-                            right: {style:'thin', color: {argb:'FFE0E0E0'}}
+                            top: { style: 'thin', color: { argb: 'FFE0E0E0' } },
+                            left: { style: 'thin', color: { argb: 'FFE0E0E0' } },
+                            bottom: { style: 'thin', color: { argb: 'FFE0E0E0' } },
+                            right: { style: 'thin', color: { argb: 'FFE0E0E0' } }
                         };
                     });
                 });
-                
+
                 // Add total score row
                 const totalRowData = { metric: '🏁 总分 (Total Score)' };
                 categories.forEach(cat => {
@@ -4018,13 +4022,13 @@ window.saveDashboardToDB = async function(event) {
                 // Also add borders to total row
                 totalRow.eachCell((cell) => {
                     cell.border = {
-                        top: {style:'thin', color: {argb:'FFBDBDBD'}},
-                        left: {style:'thin', color: {argb:'FFBDBDBD'}},
-                        bottom: {style:'thin', color: {argb:'FFBDBDBD'}},
-                        right: {style:'thin', color: {argb:'FFBDBDBD'}}
+                        top: { style: 'thin', color: { argb: 'FFBDBDBD' } },
+                        left: { style: 'thin', color: { argb: 'FFBDBDBD' } },
+                        bottom: { style: 'thin', color: { argb: 'FFBDBDBD' } },
+                        right: { style: 'thin', color: { argb: 'FFBDBDBD' } }
                     };
                 });
-                
+
                 const buffer = await workbook.xlsx.writeBuffer();
                 let binary = '';
                 const bytes = new Uint8Array(buffer);
@@ -4041,7 +4045,7 @@ window.saveDashboardToDB = async function(event) {
         if (btn) btn.innerHTML = rt('report.common.saveToDbBusy');
         const res = await postReportSaveWithCompression(payload);
         if (btn) btn.innerHTML = rt('report.action.saveDb');
-        
+
         if (res.success) {
             showToast(rt('report.toast.savedDb'), 'success');
         } else {
@@ -4054,39 +4058,39 @@ window.saveDashboardToDB = async function(event) {
 };
 
 
-window.openTemplateMappingModal = async function() {
+window.openTemplateMappingModal = async function () {
     const modal = document.getElementById('template-mapping-modal');
     modal.style.display = 'block';
     const tbody = document.getElementById('mapping-tbody');
     tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">加载中...</td></tr>';
-    
+
     try {
         const token = localStorage.getItem('tools_token');
         const headers = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
-        
+
         const res = await fetch('/api/sla/template-mapping', { headers });
         const data = await res.json();
-        
-        
+
+
         // If window._currentOrderedMetrics is missing, try to reconstruct it from metricCols and ungrouped
         let metricsList = window._currentOrderedMetrics || [];
         if (metricsList.length === 0 && typeof metricCols !== 'undefined') {
-             metricsList = [...metricCols];
+            metricsList = [...metricCols];
         }
-        
+
         // Ensure merged labels are in the options list so auto-fill can select them!
         const metrics = metricsList.map(m => m.label);
         if (!metrics.includes('全量EOS (合并)')) metrics.push('全量EOS (合并)');
         if (!metrics.includes('日志回传 (合并)')) metrics.push('日志回传 (合并)');
         if (!metrics.includes('拓扑与预案 (合并)')) metrics.push('拓扑与预案 (合并)');
-        
+
         // manualAdjustItems is a global array in report.js
         const adjs = (typeof manualAdjustItems !== 'undefined' ? manualAdjustItems : []).map(a => a.name);
 
         const sys = ['SYS_SubTotal', 'SYS_AdjustTotal', 'SYS_WeightInMonth', 'SYS_FinalResult'];
         const allOptions = [...metrics, ...adjs, ...sys];
-        
+
         window._templateMappingOptions = allOptions;
         window._currentTemplateData = data.map((row, idx) => ({
             ...row,
@@ -4094,30 +4098,30 @@ window.openTemplateMappingModal = async function() {
             sourceR: row.sourceR || row.r
         }));
         renderTemplateMappingRows();
-        
-    } catch(e) {
+
+    } catch (e) {
         tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">加载失败: ${e.message}</td></tr>`;
     }
 };
 
-window.saveTemplateMapping = async function() {
+window.saveTemplateMapping = async function () {
     if (!window._currentTemplateData) return;
     getTemplateMappingRowsFromDom();
-    
+
     const payload = window._currentTemplateData.map((row, idx) => ({
-            r: row.r,
-            sourceR: row.sourceR || null,
-            templateSourceR: row.templateSourceR || null,
-            isNew: !!row.isNew,
-            text: row.text || '',
-            mapping: row.mapping || ''
-        }));
-    
+        r: row.r,
+        sourceR: row.sourceR || null,
+        templateSourceR: row.templateSourceR || null,
+        isNew: !!row.isNew,
+        text: row.text || '',
+        mapping: row.mapping || ''
+    }));
+
     try {
         const token = localStorage.getItem('tools_token');
         const headers = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
-        
+
         const res = await fetch('/api/sla/template-mapping', {
             method: 'POST',
             headers,
@@ -4129,20 +4133,20 @@ window.saveTemplateMapping = async function() {
         } else {
             showToast('保存失败', 'error');
         }
-    } catch(e) {
+    } catch (e) {
         showToast('保存失败: ' + e.message, 'error');
     }
 };
 
 
-window.autoFillSequentialMapping = function() {
+window.autoFillSequentialMapping = function () {
     if (!window._currentTemplateData) return;
-    
+
     // 1. Build ordered main metrics
     const orderedMetrics = window._currentOrderedMetrics || [];
     const labelGroupLookup = window._currentLabelToGroup || {};
     const mainMetricsRaw = orderedMetrics.filter(m => labelGroupLookup[m.label] !== 'Others');
-    
+
     // Merge EOS, Log, Topo
     const mainMetrics = [];
     let eosProduct = null;
@@ -4170,9 +4174,9 @@ window.autoFillSequentialMapping = function() {
     });
 
     const adjs = (typeof manualAdjustItems !== 'undefined' ? manualAdjustItems : []);
-    
+
     const selects = document.querySelectorAll('.mapping-select');
-    
+
     // Helper to find select by row
     const setSelectByRow = (r, val) => {
         const idx = window._currentTemplateData.findIndex(d => d.r === r);
@@ -4183,7 +4187,7 @@ window.autoFillSequentialMapping = function() {
             }
         }
     };
-    
+
     // Fill metrics 3 to 36
     mainMetrics.forEach((m, i) => {
         const r = 3 + i;
@@ -4191,10 +4195,10 @@ window.autoFillSequentialMapping = function() {
             setSelectByRow(r, m.label);
         }
     });
-    
+
     // Fill SubTotal 37
     setSelectByRow(37, 'SYS_SubTotal');
-    
+
     // Fill Adjustments 38 to 51, 52 to 53
     adjs.forEach((a, i) => {
         let r;
@@ -4204,11 +4208,11 @@ window.autoFillSequentialMapping = function() {
             setSelectByRow(r, a.name);
         }
     });
-    
+
     // Fill Totals 54, 55, 56
     setSelectByRow(54, 'SYS_AdjustTotal');
     setSelectByRow(55, 'SYS_WeightInMonth');
     setSelectByRow(56, 'SYS_FinalResult');
-    
+
     showToast('已按照顺序自动填入选项！请核对后点击【保存】。', 'success');
 };

@@ -53,6 +53,32 @@
             border-color: rgba(125, 211, 252, 0.52);
             background: rgba(14, 165, 233, 0.16);
         }
+        .hero-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .storage-danger {
+            height: 40px;
+            border-radius: 12px;
+            border: 1px solid rgba(248, 113, 113, 0.34);
+            background: rgba(127, 29, 29, 0.28);
+            color: #fecaca;
+            padding: 0 16px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+        .storage-danger:hover {
+            border-color: rgba(248, 113, 113, 0.7);
+            background: rgba(220, 38, 38, 0.24);
+        }
+        .storage-danger:disabled,
+        .storage-refresh:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
         .summary-grid {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -83,6 +109,23 @@
             margin-bottom: 18px;
             color: #94a3b8;
             font-size: 12px;
+        }
+        .cleanup-result {
+            display: none;
+            margin: 0 0 18px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(125, 211, 252, 0.18);
+            background: rgba(14, 165, 233, 0.08);
+            color: #bae6fd;
+            font-size: 12px;
+            line-height: 1.6;
+            word-break: break-word;
+        }
+        .cleanup-result.warn {
+            border-color: rgba(248, 113, 113, 0.26);
+            background: rgba(127, 29, 29, 0.18);
+            color: #fecaca;
         }
         .table-list {
             display: grid;
@@ -290,7 +333,10 @@
                 <h1 class="storage-title" data-i18n="存储迁移状态台">存储迁移状态台</h1>
                 <p class="storage-subtitle" data-i18n="集中查看已迁表的真实读源、一致性校验、JSON/SQLite 数量，以及当前双写状态，便于后续从双写过渡到 SQLite 主读。">集中查看已迁表的真实读源、一致性校验、JSON/SQLite 数量，以及当前双写状态，便于后续从双写过渡到 SQLite 主读。</p>
             </div>
-            <button class="storage-refresh" id="refreshStorageStatus" data-i18n="刷新状态">刷新状态</button>
+            <div class="hero-actions">
+                <button class="storage-danger" id="cleanupJsonFiles" data-i18n="清理所有 JSON 文件">清理所有 JSON 文件</button>
+                <button class="storage-refresh" id="refreshStorageStatus" data-i18n="刷新状态">刷新状态</button>
+            </div>
         </div>
 
         <div class="summary-grid" id="storageSummary">
@@ -301,6 +347,7 @@
         </div>
 
         <div class="status-meta" id="storageStatusMeta" data-i18n="正在加载存储迁移状态...">正在加载存储迁移状态...</div>
+        <div class="cleanup-result" id="cleanupJsonResult"></div>
         <div class="table-list" id="storageTableList">
             <div class="storage-empty" data-i18n="正在加载...">正在加载...</div>
         </div>
@@ -315,6 +362,7 @@
             "存储迁移状态台": "Storage Migration Status",
             "集中查看已迁表的真实读源、一致性校验、JSON/SQLite 数量，以及当前双写状态，便于后续从双写过渡到 SQLite 主读。": "Centralized view of SQLite-only read sources, legacy JSON status, and migration checks.",
             "刷新状态": "Refresh Status",
+            "清理所有 JSON 文件": "Clean All JSON Files",
             "总表数": "Total Tables",
             "一致表数": "Matched Tables",
             "异常表数": "Mismatched Tables",
@@ -346,7 +394,11 @@
             "JSON 文本差异片段": "JSON Diff Snippet",
             "SQLite 文本差异片段": "SQLite Diff Snippet",
             "查看差异详情": "View Diff Details",
-            "收起差异详情": "Collapse Diff Details"
+            "收起差异详情": "Collapse Diff Details",
+            "确认清理当前数据目录顶层的所有 JSON 文件？系统会先生成 zip 备份，再删除 JSON。": "Clean all top-level JSON files in the current data directory? A ZIP backup will be created before deletion.",
+            "正在备份并清理 JSON 文件...": "Backing up and cleaning JSON files...",
+            "清理完成": "Cleanup Complete",
+            "清理失败": "Cleanup Failed"
         };
 
         let currentLang = 'zh';
@@ -552,7 +604,43 @@
             }
         }
 
+        async function cleanupJsonFiles() {
+            const button = document.getElementById('cleanupJsonFiles');
+            const resultBox = document.getElementById('cleanupJsonResult');
+            const confirmed = window.confirm(tText(
+                '确认清理当前数据目录顶层的所有 JSON 文件？系统会先生成 zip 备份，再删除 JSON。',
+                'Clean all top-level JSON files in the current data directory? A ZIP backup will be created before deletion.'
+            ));
+            if (!confirmed) return;
+
+            button.disabled = true;
+            resultBox.className = 'cleanup-result';
+            resultBox.style.display = 'block';
+            resultBox.textContent = tText('正在备份并清理 JSON 文件...', 'Backing up and cleaning JSON files...');
+
+            try {
+                const data = await API.post('/api/storage/cleanup-json', {});
+                const deletedFiles = Array.isArray(data.deletedFiles) && data.deletedFiles.length
+                    ? data.deletedFiles.join('、')
+                    : tText('无', 'None');
+                resultBox.innerHTML = `
+                    <strong>${tText('清理完成', 'Cleanup Complete')}</strong><br>
+                    ${escapeHtml(data.message || '')}<br>
+                    ${tText('删除文件: ', 'Deleted files: ')}${escapeHtml(deletedFiles)}<br>
+                    ${tText('备份文件: ', 'Backup file: ')}${escapeHtml(data.backupFile || '-')}<br>
+                    ${tText('数据目录: ', 'Data directory: ')}${escapeHtml(data.dataDir || '-')}
+                `;
+                await loadStorageStatus();
+            } catch (err) {
+                resultBox.className = 'cleanup-result warn';
+                resultBox.innerHTML = `<strong>${tText('清理失败', 'Cleanup Failed')}</strong><br>${escapeHtml(err.message)}`;
+            } finally {
+                button.disabled = false;
+            }
+        }
+
         document.getElementById('refreshStorageStatus').addEventListener('click', loadStorageStatus);
+        document.getElementById('cleanupJsonFiles').addEventListener('click', cleanupJsonFiles);
         loadStorageStatus();
     </script>
 </body>

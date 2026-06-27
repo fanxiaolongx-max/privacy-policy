@@ -54,7 +54,7 @@
             margin-bottom: 20px;
         }
 
-        select, input[type="number"] {
+        select, input[type="number"], input[type="date"] {
             padding: 8px 12px;
             border: 1px solid #cbd5e1;
             border-radius: 6px;
@@ -163,6 +163,38 @@
             padding: 60px 20px;
             color: #64748b;
         }
+
+        .log-export-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .field-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .helper-text {
+            margin-top: 10px;
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .status-text {
+            min-height: 20px;
+            color: #64748b;
+            font-size: 13px;
+        }
     </style>
 </head>
 
@@ -172,6 +204,24 @@
             <h2><span data-i18n="🗄️ 数据探索 (DB Explorer)">🗄️ 数据探索 (DB Explorer)</span></h2>
             <div style="font-size: 13px; color: #64748b;" data-i18n="仅超级管理员可访问">
                 仅超级管理员可访问
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="log-export-grid">
+                <div class="field-group">
+                    <label for="log-from-date" data-i18n="日志开始日期">日志开始日期</label>
+                    <input id="log-from-date" type="date">
+                </div>
+                <div class="field-group">
+                    <label for="log-to-date" data-i18n="日志结束日期">日志结束日期</label>
+                    <input id="log-to-date" type="date">
+                </div>
+                <button class="btn-primary" id="btn-export-logs" onclick="exportLogs()" data-i18n="⬇️ 下载日志压缩包">⬇️ 下载日志压缩包</button>
+                <div id="log-export-status" class="status-text"></div>
+            </div>
+            <div class="helper-text" data-i18n="默认收集最近 3 天日志，压缩包包含每日目录日志以及旧累计日志按日期过滤后的内容。">
+                默认收集最近 3 天日志，压缩包包含每日目录日志以及旧累计日志按日期过滤后的内容。
             </div>
         </div>
 
@@ -249,7 +299,11 @@
             "⚠️ 权限不足，仅超级管理员可访问。": "⚠️ Permission denied, super admin only.",
             "⏳ 正在加载数据...": "⏳ Loading data...",
             "暂无数据": "No data",
-            "❌ 加载失败: ": "❌ Load Failed: "
+            "❌ 加载失败: ": "❌ Load Failed: ",
+            "日志开始日期": "Log Start Date",
+            "日志结束日期": "Log End Date",
+            "⬇️ 下载日志压缩包": "⬇️ Download Logs ZIP",
+            "默认收集最近 3 天日志，压缩包包含每日目录日志以及旧累计日志按日期过滤后的内容。": "By default, the ZIP collects the last 3 days, including daily log folders and date-filtered legacy cumulative logs."
         };
 
         let currentLang = 'zh';
@@ -288,7 +342,23 @@
         let currentOffset = 0;
         let currentTotal = 0;
 
+        function formatDateInput(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function initLogDateRange() {
+            const to = new Date();
+            const from = new Date();
+            from.setDate(to.getDate() - 2);
+            document.getElementById('log-from-date').value = formatDateInput(from);
+            document.getElementById('log-to-date').value = formatDateInput(to);
+        }
+
         async function init() {
+            initLogDateRange();
             try {
                 const tables = await API.get('/api/db-explorer/tables');
                 const select = document.getElementById('table-select');
@@ -309,6 +379,54 @@
                 if (err.message.includes('403') || err.message.includes('权限')) {
                     document.getElementById('loading-state').innerHTML = tText('⚠️ 权限不足，仅超级管理员可访问。', '⚠️ Permission denied, super admin only.');
                 }
+            }
+        }
+
+        async function exportLogs() {
+            const from = document.getElementById('log-from-date').value;
+            const to = document.getElementById('log-to-date').value;
+            const button = document.getElementById('btn-export-logs');
+            const status = document.getElementById('log-export-status');
+
+            if (!from || !to) {
+                status.textContent = tText('请选择日志日期范围', 'Please select a log date range');
+                return;
+            }
+
+            const params = new URLSearchParams({ from, to });
+            button.disabled = true;
+            status.textContent = tText('正在打包日志...', 'Packaging logs...');
+
+            try {
+                const token = localStorage.getItem('tools_token');
+                const res = await fetch(`${API_BASE}/api/db-explorer/logs/export?${params.toString()}`, {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {}
+                });
+
+                if (!res.ok) {
+                    const body = await res.json().catch(() => ({}));
+                    throw new Error(body.error || `HTTP ${res.status}`);
+                }
+
+                const blob = await res.blob();
+                const disposition = res.headers.get('Content-Disposition') || '';
+                const match = disposition.match(/filename="([^"]+)"/);
+                const filename = match ? match[1] : `tools-platform-logs_${from}_${to}.zip`;
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(url);
+
+                status.textContent = tText('日志压缩包已开始下载', 'Log ZIP download started');
+            } catch (err) {
+                console.error(err);
+                status.textContent = `${tText('日志导出失败: ', 'Log export failed: ')}${err.message}`;
+            } finally {
+                button.disabled = false;
             }
         }
 

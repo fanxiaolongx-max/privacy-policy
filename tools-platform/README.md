@@ -92,7 +92,8 @@ PM2 配置说明（`backend/ecosystem.config.js`）：
 
 - 进程名：`tools-platform`
 - 最大内存自动重启：256MB
-- 日志路径：`backend/logs/out.log`、`backend/logs/error.log`
+- PM2 兼容日志路径：`backend/logs/out.log`、`backend/logs/error.log`
+- 应用每日归档日志：`backend/logs/YYYY-MM-DD/out.log`、`backend/logs/YYYY-MM-DD/error.log`
 - 生产环境变量：`NODE_ENV=production`，`PORT=3030`
 
 `npm start` 会自动执行启动自检，检查 Node 版本、依赖包、SQLite 原生包、必要目录权限等。也可以单独运行：

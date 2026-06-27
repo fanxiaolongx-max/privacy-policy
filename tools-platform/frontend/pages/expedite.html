@@ -93,6 +93,73 @@
             margin-bottom: 24px;
         }
 
+        .expedite-explanation-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+            padding: 22px;
+            margin-bottom: 24px;
+        }
+
+        .expedite-explanation-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .expedite-explanation-head h3 {
+            margin: 0;
+            color: #1e293b;
+            font-size: 17px;
+        }
+
+        .expedite-explanation-head span {
+            color: #64748b;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .expedite-explanation-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .expedite-explanation-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px 14px;
+        }
+
+        .expedite-explanation-item strong {
+            display: block;
+            color: #334155;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        .expedite-explanation-item p {
+            margin: 0;
+            color: #64748b;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 760px) {
+            .expedite-explanation-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .expedite-explanation-head {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+        }
+
         .text-area-wrapper {
             position: relative;
         }
@@ -680,6 +747,7 @@
                 </div>
             </div>
         </div>
+        <div id="expedite-explanation-section" class="expedite-explanation-card"></div>
     </div>
     </div>
     </div>
@@ -1033,6 +1101,61 @@
 
         window.currentLang = getSharedExpediteLang();
 
+        const expediteExplanationContent = {
+            zh: {
+                title: '阅读说明与常见疑问',
+                subtitle: '用于发送前快速确认口径，减少因为数据来源、模板和分发方式造成的误解。',
+                items: [
+                    ['这个页面做什么？', '从报表入库快照里提取需要跟进的未达标指标，整理成可复制、可分发的催办文本。'],
+                    ['数据从哪里来？', '催办指标来自 report.db 的入库快照；模板、忽略关键词、分发策略等配置来自 SLA 配置。'],
+                    ['为什么有些指标没出现？', '没有未达标、没有可用快照、命中忽略关键词，或不在当前催办口径内的指标不会进入正文。'],
+                    ['“一键复制简报”会自动发送吗？', '不会。它只复制文本到剪贴板，仍需要你粘贴到目标渠道并确认后再发送。'],
+                    ['WeLink 自动化分发是什么？', '它会按分发策略生成脚本，帮助拆分专属单聊、群聊、邮件或会议内容；执行前建议先检查脚本和收件范围。'],
+                    ['模板配置影响哪里？', '头部、尾部、问候语、邮件标题和会议标题会替换到生成正文里，保存后对后续生成结果生效。'],
+                    ['忽略关键词怎么判断？', '指标中文名或英文名包含已配置关键词时，会从催办正文中过滤掉，适合排除暂不需要催办的专项项。'],
+                    ['Others 监控项算分吗？', '如果额外监控项出现在催办内容中，它更偏风险提醒，不代表计入总分；发送前可以按实际需要保留或删除。'],
+                    ['Excel 下载链接有什么用？', '可把高清短板矩阵或明细表一起发出，方便被催办人查看具体指标、区域和客户群。'],
+                    ['发送前建议检查什么？', '建议确认快照日期、催办对象、指标数值、忽略规则、Excel 链接、群聊范围和正文措辞。']
+                ]
+            },
+            en: {
+                title: 'Reading Notes & Common Questions',
+                subtitle: 'Use this checklist before sending to avoid confusion about data source, templates, and distribution behavior.',
+                items: [
+                    ['What is this page for?', 'It extracts failing metrics from stored report snapshots and turns them into copyable or distributable expedite text.'],
+                    ['Where does the data come from?', 'Expedite metrics come from stored report.db snapshots; templates, ignore keywords, and distribution policies come from SLA config.'],
+                    ['Why are some metrics missing?', 'Metrics without failures, without usable snapshots, matching ignore keywords, or outside the expedite scope are filtered out.'],
+                    ['Does “Copy Briefing” send anything?', 'No. It only copies text to the clipboard. You still need to paste, review, and send it manually.'],
+                    ['What is WeLink automation?', 'It generates scripts based on the distribution policy for single chats, group chats, email, or meetings. Review the script and recipient scope before running it.'],
+                    ['What do templates affect?', 'Header, footer, greetings, email subjects, and meeting subjects are injected into generated text after the config is saved.'],
+                    ['How do ignore keywords work?', 'If a metric name in Chinese or English contains a configured keyword, it is removed from the expedite text.'],
+                    ['Do Others monitoring items count toward score?', 'If they appear here, treat them as risk reminders rather than score contributors. Keep or remove them before sending as needed.'],
+                    ['What is the Excel link for?', 'It helps recipients inspect the high-resolution weakness matrix or detail table alongside the expedite message.'],
+                    ['What should I check before sending?', 'Check snapshot date, recipients, metric values, ignore rules, Excel link, group scope, and wording.']
+                ]
+            }
+        };
+
+        function renderExpediteExplanation() {
+            const container = document.getElementById('expedite-explanation-section');
+            if (!container) return;
+            const content = expediteExplanationContent[window.currentLang] || expediteExplanationContent.zh;
+            container.innerHTML = `
+                <div class="expedite-explanation-head">
+                    <h3>${content.title}</h3>
+                    <span>${content.subtitle}</span>
+                </div>
+                <div class="expedite-explanation-grid">
+                    ${content.items.map(([title, body]) => `
+                        <div class="expedite-explanation-item">
+                            <strong>${title}</strong>
+                            <p>${body}</p>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
         function toggleLang() {
             if (window.ToolsI18n) {
                 window.ToolsI18n.toggleLanguage();
@@ -1061,6 +1184,7 @@
             });
             // Update document title
             document.title = i18nUi[window.currentLang]['title'] + ' - Tools Platform';
+            renderExpediteExplanation();
         }
 
         // Hardcoded i18n map as fallback

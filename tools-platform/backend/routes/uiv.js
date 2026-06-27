@@ -5,10 +5,17 @@
 const express = require('express');
 const router = express.Router();
 const zlib = require('zlib');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const crypto = require('crypto');
+const { execFile, execFileSync } = require('child_process');
 const categoriesRepo = require('../models/uiv-categories-repository');
 const scriptsRepo = require('../models/uiv-scripts-repository');
+const { DATA_DIR, ensureDataDir } = require('../models/store');
 
 const DEFAULT_CATEGORIES = categoriesRepo.DEFAULT_CATEGORIES;
+const UIVISION_EXTENSION_ID = 'gcbalfbdmfieckjlnblleoemohcganoc';
 
 function decodeCompressedTextField(field, label) {
     if (!field || typeof field !== 'object') {
@@ -53,6 +60,198 @@ function expandCompressedScriptItems(body) {
         delete expanded.compressedFields;
         return expanded;
     });
+}
+
+function pathExists(filePath) {
+    try {
+        return !!filePath && fs.existsSync(filePath);
+    } catch (e) {
+        return false;
+    }
+}
+
+function firstExisting(paths) {
+    return paths.find(pathExists) || '';
+}
+
+function queryWindowsAppPath(exeName) {
+    if (process.platform !== 'win32') return '';
+    const keys = [
+        `HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\${exeName}`,
+        `HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\${exeName}`
+    ];
+    for (const key of keys) {
+        try {
+            const out = execFileSync('reg', ['query', key, '/ve'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+            const match = out.match(/REG_SZ\s+(.+\.exe)/i);
+            if (match && pathExists(match[1].trim())) return match[1].trim();
+        } catch (e) {}
+    }
+    return '';
+}
+
+function findOnPath(command) {
+    const tool = process.platform === 'win32' ? 'where' : 'which';
+    try {
+        const out = execFileSync(tool, [command], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+        return out.split(/\r?\n/).map(s => s.trim()).find(Boolean) || '';
+    } catch (e) {
+        return '';
+    }
+}
+
+function detectBrowser() {
+    const candidates = [];
+    if (process.platform === 'win32') {
+        const pf = process.env.PROGRAMFILES || 'C:\\Program Files';
+        const pfx86 = process.env['PROGRAMFILES(X86)'] || 'C:\\Program Files (x86)';
+        const local = process.env.LOCALAPPDATA || '';
+        candidates.push(
+            { name: 'Chrome', path: firstExisting([path.join(pf, 'Google/Chrome/Application/chrome.exe'), path.join(pfx86, 'Google/Chrome/Application/chrome.exe'), local ? path.join(local, 'Google/Chrome/Application/chrome.exe') : '']) || queryWindowsAppPath('chrome.exe') || findOnPath('chrome') },
+            { name: 'Edge', path: firstExisting([path.join(pfx86, 'Microsoft/Edge/Application/msedge.exe'), path.join(pf, 'Microsoft/Edge/Application/msedge.exe'), local ? path.join(local, 'Microsoft/Edge/Application/msedge.exe') : '']) || queryWindowsAppPath('msedge.exe') || findOnPath('msedge') }
+        );
+    } else if (process.platform === 'darwin') {
+        candidates.push(
+            { name: 'Chrome', path: firstExisting(['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome']) },
+            { name: 'Edge', path: firstExisting(['/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge']) }
+        );
+    } else {
+        candidates.push(
+            { name: 'Chrome', path: findOnPath('google-chrome') || findOnPath('chrome') || findOnPath('chromium') || findOnPath('chromium-browser') },
+            { name: 'Edge', path: findOnPath('microsoft-edge') || findOnPath('msedge') }
+        );
+    }
+    return candidates.find(item => item.path && pathExists(item.path)) || null;
+}
+
+function getChromeLikeUserDataRoots(browserName) {
+    const home = os.homedir();
+    if (process.platform === 'win32') {
+        const local = process.env.LOCALAPPDATA || path.join(home, 'AppData/Local');
+        return browserName === 'Edge'
+            ? [path.join(local, 'Microsoft/Edge/User Data')]
+            : [path.join(local, 'Google/Chrome/User Data')];
+    }
+    if (process.platform === 'darwin') {
+        return browserName === 'Edge'
+            ? [path.join(home, 'Library/Application Support/Microsoft Edge')]
+            : [path.join(home, 'Library/Application Support/Google/Chrome')];
+    }
+    return browserName === 'Edge'
+        ? [path.join(home, '.config/microsoft-edge')]
+        : [path.join(home, '.config/google-chrome'), path.join(home, '.config/chromium')];
+}
+
+function detectUiVisionExtension(browserName) {
+    const roots = getChromeLikeUserDataRoots(browserName);
+    const hits = [];
+    for (const root of roots) {
+        if (!pathExists(root)) continue;
+        let profiles = [];
+        try {
+            profiles = fs.readdirSync(root, { withFileTypes: true })
+                .filter(entry => entry.isDirectory() && (entry.name === 'Default' || /^Profile \d+$/.test(entry.name)))
+                .map(entry => path.join(root, entry.name));
+        } catch (e) {}
+        for (const profile of profiles) {
+            const extRoot = path.join(profile, 'Extensions', UIVISION_EXTENSION_ID);
+            if (!pathExists(extRoot)) continue;
+            hits.push(extRoot);
+        }
+    }
+    return hits;
+}
+
+function makeUiVisionEmbeddedHtml(macro, allowedOrigin) {
+    const macroJson = JSON.stringify(macro);
+    const originLabel = String(allowedOrigin || '当前 Tools Platform 地址');
+    return `<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>UIVF12 Direct Runner</title>
+  <style>
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:#08111f;color:#e2e8f0;margin:0;display:grid;place-items:center;min-height:100vh}
+    main{width:min(760px,calc(100vw - 40px));background:rgba(15,23,42,.92);border:1px solid rgba(56,189,248,.35);border-radius:16px;padding:24px;box-shadow:0 24px 80px rgba(0,0,0,.35)}
+    h1{font-size:22px;margin:0 0 8px}p{color:#94a3b8;line-height:1.6}.status{margin-top:16px;color:#67e8f9;font-weight:700}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>UIVF12 Direct Runner</h1>
+    <p>正在通过 UI.Vision embedded macro 启动批量阵列。若没有自动运行，请确认 UI.Vision 已安装，并在插件设置中允许 embedded macros，把 ${originLabel.replace(/</g, '&lt;')} 加入白名单。</p>
+    <div class="status" id="status">Preparing macro...</div>
+  </main>
+  <script id="macro-json" type="application/json">${macroJson.replace(/</g, '\\u003c')}</script>
+  <script>
+    (function () {
+      const status = document.getElementById('status');
+      try {
+        const macro = JSON.parse(document.getElementById('macro-json').textContent);
+        window.addEventListener('kantuInvokeSuccess', function () {
+          status.textContent = 'UI.Vision 已接收宏，正在执行...';
+        });
+        window.dispatchEvent(new CustomEvent('kantuSaveAndRunMacro', {
+          detail: {
+            json: macro,
+            direct: true,
+            storageMode: 'browser',
+            closeRPA: false,
+            loadmacrotree: '0'
+          }
+        }));
+        status.textContent = '已发送给 UI.Vision，等待扩展接管...';
+      } catch (error) {
+        status.textContent = '启动失败: ' + error.message;
+      }
+    })();
+  </script>
+</body>
+</html>`;
+}
+
+function launchBrowser(browser, url) {
+    return new Promise((resolve, reject) => {
+        const child = execFile(browser.path, [url], { windowsHide: false }, err => {
+            if (err) reject(err);
+        });
+        child.on('spawn', () => resolve());
+        child.on('error', reject);
+    });
+}
+
+function getUiVisionRunDir() {
+    ensureDataDir();
+    const runDir = path.join(DATA_DIR, '../tmp/uivision-runs');
+    fs.mkdirSync(runDir, { recursive: true });
+    return runDir;
+}
+
+function assertSafeRunId(runId) {
+    return typeof runId === 'string' && /^[a-f0-9]{32}$/.test(runId);
+}
+
+function normalizeRunnerOrigin(rawOrigin) {
+    if (!rawOrigin || typeof rawOrigin !== 'string') return '';
+    try {
+        const parsed = new URL(rawOrigin);
+        if (!['http:', 'https:'].includes(parsed.protocol)) return '';
+        return parsed.origin;
+    } catch (e) {
+        return '';
+    }
+}
+
+function decodeMacroFromRequest(body) {
+    if (body && body.macro && typeof body.macro === 'object') {
+        return body.macro;
+    }
+    const compressed = body && body.compressedMacro;
+    if (!compressed || compressed.encoding !== 'gzip-base64' || typeof compressed.data !== 'string') {
+        return null;
+    }
+    const raw = zlib.gunzipSync(Buffer.from(compressed.data, 'base64')).toString('utf8');
+    return JSON.parse(raw);
 }
 
 // ──────────────────────────────────────────────────────────
@@ -101,6 +300,75 @@ router.post('/scripts', async (req, res) => {
     } catch (err) {
         console.error('[POST /api/uiv/scripts] failed:', err);
         res.status(500).json({ error: '保存脚本失败' });
+    }
+});
+
+router.get('/uivision-runner/:runId', (req, res) => {
+    const runId = req.params.runId;
+    if (!assertSafeRunId(runId)) {
+        return res.status(400).send('Invalid run id');
+    }
+    const htmlPath = path.join(getUiVisionRunDir(), `${runId}.html`);
+    if (!pathExists(htmlPath)) {
+        return res.status(404).send('UI.Vision runner not found or expired');
+    }
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store');
+    res.sendFile(htmlPath);
+});
+
+router.post('/run-uivision-macro', async (req, res) => {
+    let macro;
+    try {
+        macro = decodeMacroFromRequest(req.body);
+    } catch (decodeErr) {
+        return res.status(400).json({ error: `解压 UI.Vision 宏失败：${decodeErr.message}` });
+    }
+    if (!macro || typeof macro !== 'object' || !Array.isArray(macro.Commands)) {
+        return res.status(400).json({ error: '参数错误：macro.Commands 必须为数组' });
+    }
+
+    try {
+        const runDir = getUiVisionRunDir();
+        const runId = crypto.randomBytes(16).toString('hex');
+        const ts = new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 14);
+        const safeName = String(macro.Name || 'UIVF12_Batch_UIV').replace(/[\\/:*?"<>|]+/g, '_').slice(0, 80);
+        const macroPath = path.join(runDir, `${safeName}_${ts}.json`);
+        const htmlPath = path.join(runDir, `${runId}.html`);
+        const host = req.get('host') || `localhost:${process.env.PORT || 3030}`;
+        const origin = normalizeRunnerOrigin(req.body && req.body.origin) || `${req.protocol}://${host}`;
+        const runnerUrl = `${origin}/api/uiv/uivision-runner/${runId}`;
+        fs.writeFileSync(macroPath, JSON.stringify(macro, null, 2), 'utf8');
+        fs.writeFileSync(htmlPath, makeUiVisionEmbeddedHtml(macro, origin), 'utf8');
+
+        const browser = detectBrowser();
+        const extensionCandidates = browser ? detectUiVisionExtension(browser.name) : [];
+        let browserLaunched = false;
+        let browserLaunchError = '';
+        if (req.body && req.body.launchLocalBrowser && browser) {
+            try {
+                await launchBrowser(browser, runnerUrl);
+                browserLaunched = true;
+            } catch (launchErr) {
+                browserLaunchError = launchErr.message || String(launchErr);
+            }
+        }
+
+        res.json({
+            success: true,
+            browser,
+            browserLaunched,
+            browserLaunchError,
+            macroPath,
+            htmlPath,
+            url: runnerUrl,
+            uiVisionExtensionDetected: browser ? extensionCandidates.length > 0 : null,
+            uiVisionExtensionCandidates: extensionCandidates,
+            note: '已生成 Tools Platform 托管的 UI.Vision embedded macro 启动页。'
+        });
+    } catch (err) {
+        console.error('[POST /api/uiv/run-uivision-macro] failed:', err);
+        res.status(500).json({ error: `启动 UI.Vision 失败：${err.message}` });
     }
 });
 

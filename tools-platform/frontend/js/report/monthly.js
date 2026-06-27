@@ -90,6 +90,9 @@ const i18n = {
         full_th_month_target: '{month}月目标值',
         full_th_global: '全局总体达标',
         full_th_score: '得分',
+        full_others_badge: '监控项',
+        full_others_score_hint: '额外监控指标，不计入总分',
+        full_proportional_hint: '比例计分已开启，完成率 {ratio}%',
         full_ungrouped: '未分组(Ungrouped)',
         full_ungrouped_short: '未分组',
         lbl_source_mode: 'SLA配置读源模式:',
@@ -185,6 +188,9 @@ const i18n = {
         full_th_month_target: '{month} Target',
         full_th_global: 'Global Actual',
         full_th_score: 'Score',
+        full_others_badge: 'Monitor',
+        full_others_score_hint: 'Additional monitoring metric, not included in total score',
+        full_proportional_hint: 'Proportional scoring is enabled, completion {ratio}%',
         full_ungrouped: 'Ungrouped',
         full_ungrouped_short: 'Ungrouped',
         lbl_source_mode: 'SLA Config Read Mode:',
@@ -227,6 +233,15 @@ function tVal(text) {
     }
     
     return text;
+}
+
+function isOthersMetricLabel(label) {
+    const groups = Array.isArray(window._metricGroups) ? window._metricGroups : [];
+    return groups.some(group => group && group.name === 'Others' && Array.isArray(group.metrics) && group.metrics.includes(label));
+}
+
+function othersMetricBadgeHtml() {
+    return `<span style="display:inline-block; margin-left:4px; padding:1px 5px; border-radius:999px; background:#eceff1; color:#607d8b; font-size:9px; font-weight:700; vertical-align:middle;">${t('full_others_badge')}</span>`;
 }
 
 function escapeHTML(str) {
@@ -481,6 +496,61 @@ function renderAll() {
     if (typeof renderFullSnapshot === 'function') {
         renderFullSnapshot(currentLatest, window._categories, window._globalConfig, window._metricGroups, window._manualAdjustItems);
     }
+    renderMonthlyExplanation();
+}
+
+function renderMonthlyExplanation() {
+    const container = document.getElementById('monthly-explanation-section');
+    if (!container) return;
+
+    const zhItems = [
+        ['这份月报看什么？', '它展示的是报表看板已经入库的历史快照。排名、趋势和明细都围绕“最新入库快照”和所选时间范围展开。'],
+        ['排名分数从哪里来？', '客户群/代表处/区域排名直接使用报表看板入库时保存的基准得分、手工加减分和最终得分，不会在月报页面重新改写历史总分。'],
+        ['系统得分是什么意思？', '系统得分来自自动指标。系统会按该对象实际参与考核的有效指标权重计算，再折算到标准总分，所以缺数据或未配置目标的指标不会直接扣分。'],
+        ['预留加减分是什么？', '这是人工记录的专项奖惩，例如质量事故、严重投诉、专项加分等。最终得分 = 系统得分 + 预留加减分。'],
+        ['短板透视矩阵怎么看？', '这里只列出未达标项，方便快速定位哪个指标、哪些客户群/代表处/区域有风险。点摘要里的指标名可以跳到对应明细。'],
+        ['“监控项 / Others”算分吗？', '不算入总分和排名。它们是额外监控指标，所以在月报里会用灰色、虚线或“监控项”标签区分，避免被误认为正式扣分项。'],
+        ['比例计分是什么意思？', '比例计分开启后，未达标不是直接 0 分，而是按完成目标的比例给部分分。例如目标 100、实际 80，可能按 80% 折算该指标分。'],
+        ['为什么有些地方显示 --？', '-- 通常表示该对象没有数据、该指标没有参与、或本月没有可用目标。这类项一般不会作为有效扣分项处理。'],
+        ['全局总体达标和客户群达标有什么区别？', '全局总体达标看的是该指标整体值；客户群/代表处/区域列看的是每个对象自己的值。全局异常不一定代表每个对象都有数据或都扣分。'],
+        ['完整快照表为什么很大？', '它是为了追溯入库当时的完整现场：指标、目标、实测值、得分、比例计分和手工加减分都会尽量保留下来，方便事后核对。'],
+        ['历史结果会不会被当前配置影响？', '排名和已入库分数以历史入库结果为准。页面展示会读取当前分组和翻译配置来辅助理解，但不会因此改写历史入库分数。']
+    ];
+
+    const enItems = [
+        ['What should I read first?', 'This report shows saved snapshots from the Report Dashboard. Rankings, trends, and details are based on the latest saved snapshot and the selected date range.'],
+        ['Where do ranking scores come from?', 'Customer group / rep office / region rankings use the base score, manual adjustment, and final score saved at ingestion time. The monthly page does not rewrite historical totals.'],
+        ['What does System Score mean?', 'System Score comes from automated metrics. It is calculated from the valid metric weights the object actually participated in, then converted to the standard total score. Missing data or metrics without targets do not directly deduct points.'],
+        ['What are Manual Adjustments?', 'These are manually recorded rewards or penalties, such as quality incidents, serious complaints, or special bonuses. Final Score = System Score + Manual Adjustment.'],
+        ['How should I read the Weakness Matrix?', 'It only lists non-compliant items, so readers can quickly find which metric and which customer group / rep office / region needs attention. Metric links in the summary jump to details.'],
+        ['Do Monitor / Others metrics affect score?', 'No. They are additional monitoring metrics and are not included in total score or ranking. They are shown in gray, dashed styles, or with a Monitor badge to avoid confusion.'],
+        ['What is proportional scoring?', 'When enabled, a failing metric does not automatically get 0. It earns partial score based on completion ratio. For example, target 100 and actual 80 may earn 80% of that metric weight.'],
+        ['Why do some cells show --?', '-- usually means no data, not participating in that metric, or no usable target for the selected month. These items are generally not treated as effective deductions.'],
+        ['Global actual vs object actual?', 'Global actual is the overall value of a metric. Customer group / rep office / region columns show each object’s own value. A global issue does not always mean every object has data or loses points.'],
+        ['Why is the full snapshot table so large?', 'It preserves the full ingestion-time context: metrics, targets, actuals, earned score, proportional scoring, and manual adjustments, so the result can be audited later.'],
+        ['Can current config change historical results?', 'Saved rankings and scores follow the historical ingested result. Current grouping and translation settings help display the data, but do not rewrite historical scores.']
+    ];
+
+    const items = window.currentLang === 'en' ? enItems : zhItems;
+    const title = window.currentLang === 'en' ? 'Reading Notes & Common Questions' : '阅读说明与常见疑问';
+    const subtitle = window.currentLang === 'en'
+        ? 'These notes explain the parts that are easiest to misunderstand when reading the monthly report.'
+        : '下面这些说明用于解释月报里最容易被误解的地方。';
+
+    container.innerHTML = `
+        <div style="background:#f8fbff; border:1px solid #bbdefb; border-radius:12px; padding:18px 20px; box-shadow:0 2px 8px rgba(21,101,192,0.05);">
+            <h4 style="margin:0 0 6px; color:#0277bd; font-size:16px;">${escapeHTML(title)}</h4>
+            <div style="color:#607d8b; font-size:13px; margin-bottom:14px;">${escapeHTML(subtitle)}</div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:12px;">
+                ${items.map(([itemTitle, body]) => `
+                    <div style="background:#fff; border:1px solid #e3edf7; border-radius:10px; padding:12px 14px;">
+                        <div style="font-weight:700; color:#263238; margin-bottom:6px;">${escapeHTML(itemTitle)}</div>
+                        <div style="font-size:13px; line-height:1.7; color:#546e7a;">${escapeHTML(body)}</div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -672,7 +742,10 @@ function generateSummary(trends, latest, globalConfig) {
         });
     }
     function formatFailingMetricLink(m) {
-        return `<a href="javascript:void(0)" onclick="const el = document.getElementById('matrix-row-${encodeURIComponent(m)}'); if(el) { el.scrollIntoView({behavior: 'smooth', block: 'center'}); el.style.backgroundColor='#fff3e0'; setTimeout(()=>el.style.backgroundColor='', 2000); } else { const fel = document.getElementById('full-row-${encodeURIComponent(m)}'); if(fel) { fel.scrollIntoView({behavior: 'smooth', block: 'center'}); fel.style.backgroundColor='#fff3e0'; setTimeout(()=>fel.style.backgroundColor='', 2000); } }" style="color:#e31837; text-decoration:underline; font-weight:bold; cursor:pointer;" title="点击跳转至该指标详情">${escapeHTML(tVal(m))}</a>`;
+        const isOthers = isOthersMetricLabel(m);
+        const color = isOthers ? '#607d8b' : '#e31837';
+        const title = isOthers ? t('full_others_score_hint') : '点击跳转至该指标详情';
+        return `<a href="javascript:void(0)" onclick="const el = document.getElementById('matrix-row-${encodeURIComponent(m)}'); if(el) { el.scrollIntoView({behavior: 'smooth', block: 'center'}); el.style.backgroundColor='${isOthers ? '#eceff1' : '#fff3e0'}'; setTimeout(()=>el.style.backgroundColor='', 2000); } else { const fel = document.getElementById('full-row-${encodeURIComponent(m)}'); if(fel) { fel.scrollIntoView({behavior: 'smooth', block: 'center'}); fel.style.backgroundColor='${isOthers ? '#eceff1' : '#fff3e0'}'; setTimeout(()=>fel.style.backgroundColor='', 2000); } }" style="color:${color}; text-decoration:underline; font-weight:bold; cursor:pointer;" title="${escapeHTML(title)}">${escapeHTML(tVal(m))}${isOthers ? othersMetricBadgeHtml() : ''}</a>`;
     }
 
     const overallFailingArr = Array.from(overallFailingSet);
@@ -1060,16 +1133,27 @@ function renderMatrix(latest) {
     let html = '';
     for (let label in metricGroups) {
         let group = metricGroups[label];
+        const isOthers = isOthersMetricLabel(label);
         let failuresHtml = group.failures.map(f => {
-            return `<span style="display:inline-block; margin:2px 4px; padding:4px 8px; background:#ffebee; border:1px solid #ffcdd2; border-radius:4px; font-size:13px;">
+            const chipStyle = isOthers
+                ? 'display:inline-block; margin:2px 4px; padding:4px 8px; background:#f5f7f8; border:1px dashed #cfd8dc; border-radius:4px; font-size:13px; color:#607d8b;'
+                : 'display:inline-block; margin:2px 4px; padding:4px 8px; background:#ffebee; border:1px solid #ffcdd2; border-radius:4px; font-size:13px;';
+            return `<span style="${chipStyle}">
                 <strong>${tVal(f.cat_name)}</strong>: ${f.raw_val}
             </span>`;
         }).join(' ');
+        const metricCellStyle = isOthers
+            ? 'font-weight:600; color:#607d8b; background:#fafafa;'
+            : 'font-weight:600; color:#444;';
+        const targetCellStyle = isOthers
+            ? 'color:#78909c; background:#fafafa;'
+            : 'color:#666;';
+        const rowStyle = isOthers ? ' style="background:#fafafa;" title="' + escapeHTML(t('full_others_score_hint')) + '"' : '';
 
         html += `
-            <tr id="matrix-row-${encodeURIComponent(label)}">
-                <td style="font-weight:600; color:#444;">${tVal(label)}</td>
-                <td style="color:#666;">${group.target_val || '-'}</td>
+            <tr id="matrix-row-${encodeURIComponent(label)}"${rowStyle}>
+                <td style="${metricCellStyle}">${escapeHTML(tVal(label))}${isOthers ? othersMetricBadgeHtml() : ''}</td>
+                <td style="${targetCellStyle}">${group.target_val || '-'}</td>
                 <td>${failuresHtml}</td>
             </tr>
         `;
@@ -1194,10 +1278,23 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
         metricDbMap[`${row.cat_name}@@${row.metric_label}`] = row;
     });
 
+    const labelToGroup = {};
+    const groupWeightMap = {};
+    metricGroups.forEach(g => {
+        let sumWeight = 0;
+        (g.metrics || []).forEach(label => {
+            labelToGroup[label] = g.name;
+            const t = labelToTargetMap[label];
+            sumWeight += (t && t.weight !== undefined) ? parseFloat(t.weight) : 1;
+        });
+        groupWeightMap[g.name] = sumWeight;
+    });
+
     metricCols.forEach(m => {
         const targetData = labelToTargetMap[m.label];
         const weight = (targetData && targetData.weight !== undefined) ? parseFloat(targetData.weight) : 1;
         m.hasTarget = targetData && targetData[targetMonth] !== undefined && targetData[targetMonth] !== '' && weight > 0;
+        const isOthersMetric = labelToGroup[m.label] === 'Others';
 
         const subs = m.subMetrics || [];
         subs.forEach(sm => {
@@ -1215,7 +1312,9 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
             const dbMetric = metricDbMap[`${sm.category}@@${m.label}`];
 
             if (!isNaN(valNum) && m.hasTarget) {
-                catData[sm.category].validWeightSum += weight;
+                if (!isOthersMetric) {
+                    catData[sm.category].validWeightSum += weight;
+                }
                 const targetNum = parseFloat(targetData[targetMonth]);
                 const condition = targetData.type || 'gte';
                 const isPercent = String(sm.value).includes('%');
@@ -1240,7 +1339,9 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
                 } else {
                     earnedScore = isFailing ? 0 : (weight + bonusScore);
                 }
-                catData[sm.category].earnedScore += earnedScore;
+                if (!isOthersMetric) {
+                    catData[sm.category].earnedScore += earnedScore;
+                }
             }
             catData[sm.category].values[m.label] = {
                 raw: sm.value,
@@ -1253,18 +1354,6 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
                 completionRatio
             };
         });
-    });
-
-    const labelToGroup = {};
-    const groupWeightMap = {};
-    metricGroups.forEach(g => {
-        let sumWeight = 0;
-        (g.metrics || []).forEach(label => {
-            labelToGroup[label] = g.name;
-            const t = labelToTargetMap[label];
-            sumWeight += (t && t.weight !== undefined) ? parseFloat(t.weight) : 1;
-        });
-        groupWeightMap[g.name] = sumWeight;
     });
 
     const orderedMetrics = [];
@@ -1324,6 +1413,8 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
 
     tableRows.forEach(row => {
         const m = row.metric;
+        const isOthersMetric = labelToGroup[m.label] === 'Others';
+        const rowStyle = isOthersMetric ? ' style="background:#fafafa;"' : '';
         let targetStr = '--';
         let isGlobalFailing = false;
         let globalGapStr = '';
@@ -1351,15 +1442,30 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
         let globalDisplayClass = 'val-none';
         if (m.hasTarget) globalDisplayClass = isGlobalFailing ? 'val-warn' : 'val-good';
 
-        matrixHtml += `<tr id="full-row-${encodeURIComponent(m.label)}">`;
+        matrixHtml += `<tr id="full-row-${encodeURIComponent(m.label)}"${rowStyle}>`;
         if (metricGroups.length > 0) {
-            matrixHtml += `<td ${row.isGroupStart ? `rowspan="${row.groupSize}"` : `style="display:none;"`} style="max-width:60px; white-space:normal; word-wrap:break-word; text-align:center;">${escapeHTML(tVal(row.groupName) || t('full_ungrouped_short'))}</td>`;
-            matrixHtml += `<td ${row.isGroupStart ? `rowspan="${row.groupSize}"` : `style="display:none;"`} style="font-weight:bold; color:#1565c0; text-align:center; max-width:50px;">${row.groupWeight || '-'}</td>`;
+            const groupCellStyle = isOthersMetric
+                ? 'max-width:60px; white-space:normal; word-wrap:break-word; text-align:center; background:#eceff1; color:#607d8b;'
+                : 'max-width:60px; white-space:normal; word-wrap:break-word; text-align:center;';
+            const groupWeightStyle = isOthersMetric
+                ? 'font-weight:bold; color:#78909c; text-align:center; max-width:50px; background:#eceff1;'
+                : 'font-weight:bold; color:#1565c0; text-align:center; max-width:50px;';
+            matrixHtml += `<td ${row.isGroupStart ? `rowspan="${row.groupSize}"` : `style="display:none;"`} style="${groupCellStyle}">${escapeHTML(tVal(row.groupName) || t('full_ungrouped_short'))}</td>`;
+            matrixHtml += `<td ${row.isGroupStart ? `rowspan="${row.groupSize}"` : `style="display:none;"`} style="${groupWeightStyle}">${row.groupWeight || '-'}</td>`;
         }
 
+        const metricNameStyle = isOthersMetric
+            ? 'text-align:left; font-weight:600; color:#607d8b; max-width:140px; white-space:normal; word-wrap:break-word;'
+            : 'text-align:left; font-weight:600; color:#2c3e50; max-width:140px; white-space:normal; word-wrap:break-word;';
+        const metricBadge = isOthersMetric
+            ? `<span style="display:inline-block; margin-left:4px; padding:1px 5px; border-radius:999px; background:#eceff1; color:#607d8b; font-size:9px; font-weight:700;">${t('full_others_badge')}</span>`
+            : '';
+        const weightStyle = isOthersMetric
+            ? 'color:#78909c; font-weight:bold; background:#f5f7f8; text-align:center;'
+            : 'color:#666; font-weight:bold; background:#fafafa; text-align:center;';
         matrixHtml += `
-            <td style="text-align:left; font-weight:600; color:#2c3e50; max-width:140px; white-space:normal; word-wrap:break-word;">${escapeHTML(tVal(m.label))}</td>
-            <td style="color:#666; font-weight:bold; background:#fafafa; text-align:center;">${weight}</td>
+            <td style="${metricNameStyle}">${escapeHTML(tVal(m.label))}${metricBadge}</td>
+            <td style="${weightStyle}">${weight}</td>
             <td style="color:#0277bd; font-weight:bold; background:#f5f8fa; text-align:center; max-width:75px; white-space:normal; word-wrap:break-word;">${targetStr}</td>
             <td style="background:#fff8e1; border-right:2px solid #ffe082; text-align:center; max-width:75px; white-space:normal; word-wrap:break-word;"><span class="${globalDisplayClass}">${escapeHTML(String(m.value || '--').trim())}</span></td>`;
 
@@ -1382,11 +1488,17 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
                 matrixHtml += `<td class="val-none" style="background:#f1f8e9;">--</td>`;
             } else {
                 const earned = cell.earnedScore !== undefined ? cell.earnedScore : (cell.isFailing ? 0 : (weight + (cell.bonusScore || 0)));
-                const scoreColor = cell.isFailing ? '#d32f2f' : '#2e7d32';
+                const scoreColor = isOthersMetric ? '#78909c' : (cell.isFailing ? '#d32f2f' : '#2e7d32');
+                const scoreBg = isOthersMetric ? '#f5f7f8' : '#f1f8e9';
                 const bonusDisplay = cell.bonusScore ? ` <span style="font-size:9px; color:#e65100;">(+${cell.bonusScore.toFixed(2)})</span>` : '';
-                const ratioTitle = cell.proportionalScoring && cell.isFailing ? ` title="比例计分已开启，完成率 ${(cell.completionRatio * 100).toFixed(1)}%"` : '';
-                const ratioBadge = cell.proportionalScoring && cell.isFailing ? `<div style="font-size:9px; color:#ef6c00; font-weight:600; line-height:1.2;">${(cell.completionRatio * 100).toFixed(0)}%</div>` : '';
-                matrixHtml += `<td style="font-weight:bold; color:${scoreColor}; background:#f1f8e9; text-align:center;"${ratioTitle}>${formatScoreValue(earned)}${bonusDisplay}${ratioBadge}</td>`;
+                const proportionalHint = cell.proportionalScoring && cell.isFailing ? t('full_proportional_hint', { ratio: (cell.completionRatio * 100).toFixed(1) }) : '';
+                const titleText = isOthersMetric
+                    ? `${t('full_others_score_hint')}${proportionalHint ? `; ${proportionalHint}` : ''}`
+                    : proportionalHint;
+                const ratioTitle = titleText ? ` title="${escapeHTML(titleText)}"` : '';
+                const ratioBadgeColor = isOthersMetric ? '#9ca3af' : '#ef6c00';
+                const ratioBadge = cell.proportionalScoring && cell.isFailing ? `<div style="font-size:9px; color:${ratioBadgeColor}; font-weight:600; line-height:1.2;">${(cell.completionRatio * 100).toFixed(0)}%</div>` : '';
+                matrixHtml += `<td style="font-weight:bold; color:${scoreColor}; background:${scoreBg}; text-align:center;${isOthersMetric ? ' border:1px dashed #cfd8dc;' : ''}"${ratioTitle}>${formatScoreValue(earned)}${bonusDisplay}${ratioBadge}</td>`;
             }
         });
         matrixHtml += `</tr>`;

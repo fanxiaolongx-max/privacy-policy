@@ -93,6 +93,14 @@
 .btn-add-cat:hover { border-color: var(--cyber); color: var(--cyber); background: rgba(100,255,218,0.05); }
 .btn-batch-pkg { background: linear-gradient(135deg, #2c3e50, #34495e); border: 1px solid #555; color: #fff; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 5px; transition: var(--transition); margin-bottom: 8px; }
 .btn-batch-pkg:hover { background: linear-gradient(135deg, #e67e22, #d35400); border-color: #e67e22; }
+.btn-batch-uiv { background: linear-gradient(135deg, #134e4a, #0f766e); border-color: #14b8a6; }
+.btn-batch-uiv:hover { background: linear-gradient(135deg, #0f766e, #0d9488); border-color: #5eead4; }
+.btn-batch-run-row { display: flex; gap: 8px; align-items: stretch; margin-bottom: 8px; }
+.btn-batch-run-row .btn-batch-uiv-run { flex: 1; min-width: 0; margin-bottom: 0; }
+.btn-batch-uiv-run { background: linear-gradient(135deg, #1d4ed8, #7c3aed); border-color: #60a5fa; }
+.btn-batch-uiv-run:hover { background: linear-gradient(135deg, #2563eb, #9333ea); border-color: #c4b5fd; }
+.btn-batch-speed { width: 58px; flex: 0 0 58px; border: 1px solid rgba(103,232,249,0.55); border-radius: 6px; background: rgba(8,47,73,0.72); color: #bae6fd; font-size: 12px; font-weight: 800; cursor: pointer; transition: var(--transition); }
+.btn-batch-speed:hover { border-color: #67e8f9; color: #fff; background: rgba(14,116,144,0.75); }
 .btn-io { background: #2d2d2d; border: 1px solid #555; color: #d4d4d4; padding: 8px; border-radius: 6px; font-size: 11px; cursor: pointer; flex: 1; transition: var(--transition); display: flex; justify-content: center; align-items: center; gap: 4px; }
 .btn-io:hover { background: #3d3d3d; color: #fff; border-color: #888; }
 .btn-script-analysis {

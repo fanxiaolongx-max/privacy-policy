@@ -485,11 +485,11 @@ async function runStartupLegacyJsonMigration() {
             let addedToZip = false;
 
             for (const record of records) {
-                if (record.legacyPresent && record.step && record.step.sourceFile) {
-                    const filePath = path.join(DATA_DIR, record.step.sourceFile);
+                if (record.legacyPresent && record.sourceFile) {
+                    const filePath = path.join(DATA_DIR, record.sourceFile);
                     if (fs.existsSync(filePath)) {
                         const content = fs.readFileSync(filePath);
-                        zip.file(record.step.sourceFile, content);
+                        zip.file(record.sourceFile, content);
                         filesToDelete.push(filePath);
                         addedToZip = true;
                     }

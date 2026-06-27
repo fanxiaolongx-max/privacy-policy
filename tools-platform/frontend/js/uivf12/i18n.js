@@ -26,6 +26,8 @@
             'uiv.source.currentNote': '当前模式: {mode} · 默认要求页面直接渲染当前真实读源，便于迁移期验证。',
             'uiv.repo.newCategory': '[+] 新建自定义分类',
             'uiv.repo.copyBatch': '📦 拷贝全部为批量阵列 (F12)',
+            'uiv.repo.copyBatchUiv': '📦 拷贝全部为批量阵列 (UI.V)',
+            'uiv.repo.runBatchUiv': '🚀 运行批脚本',
             'uiv.repo.export': '📤 导出备份',
             'uiv.repo.import': '📥 导入配置',
             'uiv.input.urlLabel': '1. 请求 URL 目标地址:',
@@ -97,6 +99,8 @@
             'uiv.copy.fetchFail': '❌ 无法获取脚本列表',
             'uiv.copy.emptyGroup': '⚠️ 当前分类下没有可执行的脚本！',
             'uiv.copy.batchType': '[{group}] 批量阵列 (F12)',
+            'uiv.copy.batchTypeUiv': '[{group}] 批量阵列 (UI.V)',
+            'uiv.copy.noUivBatch': '⚠️ 当前仓库没有可打包的 UI.Vision 脚本，请重新生成并保存脚本。',
             'uiv.workbench.badJson': 'JSON 格式不合法，请检查标点或括号是否匹配。',
             'uiv.save.needGenerate': '⚠️ 请先生成脚本后再保存！',
             'uiv.save.defaultFile': 'PBI_自动抓取',
@@ -169,6 +173,8 @@
             'uiv.source.currentNote': 'Current mode: {mode} · The page renders the active source directly for migration checks.',
             'uiv.repo.newCategory': '[+] New Custom Category',
             'uiv.repo.copyBatch': '📦 Copy All as Batch Array (F12)',
+            'uiv.repo.copyBatchUiv': '📦 Copy All as Batch Array (UI.V)',
+            'uiv.repo.runBatchUiv': '🚀 Run Batch',
             'uiv.repo.export': '📤 Export Backup',
             'uiv.repo.import': '📥 Import Config',
             'uiv.input.urlLabel': '1. Request URL target:',
@@ -240,6 +246,8 @@
             'uiv.copy.fetchFail': '❌ Unable to fetch script list',
             'uiv.copy.emptyGroup': '⚠️ This category has no executable scripts.',
             'uiv.copy.batchType': '[{group}] Batch Array (F12)',
+            'uiv.copy.batchTypeUiv': '[{group}] Batch Array (UI.V)',
+            'uiv.copy.noUivBatch': '⚠️ No packageable UI.Vision scripts in the repository. Regenerate and save scripts first.',
             'uiv.workbench.badJson': 'Invalid JSON. Check punctuation or bracket matching.',
             'uiv.save.needGenerate': '⚠️ Generate a script before saving.',
             'uiv.save.defaultFile': 'PBI_Auto_Capture',
@@ -365,7 +373,9 @@
             `;
         }
         setText('.btn-add-cat', t('uiv.repo.newCategory'));
-        setText('.btn-batch-pkg', t('uiv.repo.copyBatch'));
+        setText('.btn-batch-pkg:not(.btn-batch-uiv):not(.btn-batch-uiv-run)', t('uiv.repo.copyBatch'));
+        setText('.btn-batch-uiv', t('uiv.repo.copyBatchUiv'));
+        setText('.btn-batch-uiv-run', t('uiv.repo.runBatchUiv'));
         setText('.btn-io[onclick="UIVSidebar.exportBackup()"]', t('uiv.repo.export'));
         const importLabel = document.querySelector('label.btn-io');
         if (importLabel) {

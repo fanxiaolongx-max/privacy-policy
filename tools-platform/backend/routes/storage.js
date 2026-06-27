@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const JSZip = require('jszip');
 const express = require('express');
 const router = express.Router();
 
@@ -187,6 +188,27 @@ function readLegacyJson(filename, fallback) {
     return readJSON(filename, fallback);
 }
 
+function listTopLevelJsonFiles() {
+    if (!fs.existsSync(DATA_DIR)) return [];
+    return fs.readdirSync(DATA_DIR, { withFileTypes: true })
+        .filter(entry => entry.isFile() && entry.name.toLowerCase().endsWith('.json'))
+        .map(entry => {
+            const absPath = path.join(DATA_DIR, entry.name);
+            const stat = fs.statSync(absPath);
+            return {
+                name: entry.name,
+                path: absPath,
+                bytes: stat.size,
+                modifiedAt: stat.mtime.toISOString()
+            };
+        })
+        .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function timestampForFile() {
+    return new Date().toISOString().replace(/[:.]/g, '-');
+}
+
 router.get('/status', async (req, res) => {
     try {
         const checks = [
@@ -336,6 +358,64 @@ router.get('/status', async (req, res) => {
     } catch (err) {
         console.error('[GET /api/storage/status] failed:', err);
         res.status(500).json({ error: '读取存储状态失败' });
+    }
+});
+
+router.post('/cleanup-json', async (req, res) => {
+    try {
+        const files = listTopLevelJsonFiles();
+        if (!files.length) {
+            return res.json({
+                success: true,
+                deletedCount: 0,
+                deletedFiles: [],
+                backupFile: null,
+                dataDir: DATA_DIR,
+                message: '未发现可清理的 JSON 文件。'
+            });
+        }
+
+        const zip = new JSZip();
+        const manifest = {
+            type: 'tools-platform-json-cleanup-backup',
+            createdAt: new Date().toISOString(),
+            dataDir: DATA_DIR,
+            files: files.map(file => ({
+                name: file.name,
+                bytes: file.bytes,
+                modifiedAt: file.modifiedAt
+            }))
+        };
+
+        zip.file('manifest.json', JSON.stringify(manifest, null, 2));
+        for (const file of files) {
+            zip.file(file.name, fs.readFileSync(file.path));
+        }
+
+        const backupName = `legacy_json_cleanup_${timestampForFile()}.zip`;
+        const backupPath = path.join(DATA_DIR, backupName);
+        const content = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+        fs.writeFileSync(backupPath, content);
+
+        const deletedFiles = [];
+        for (const file of files) {
+            fs.unlinkSync(file.path);
+            deletedFiles.push(file.name);
+        }
+
+        console.log(`[storage] cleaned ${deletedFiles.length} legacy json files; backup=${backupPath}`);
+        res.json({
+            success: true,
+            deletedCount: deletedFiles.length,
+            deletedFiles,
+            backupFile: backupName,
+            backupPath,
+            dataDir: DATA_DIR,
+            message: `已备份并删除 ${deletedFiles.length} 个 JSON 文件。`
+        });
+    } catch (err) {
+        console.error('[POST /api/storage/cleanup-json] failed:', err);
+        res.status(500).json({ error: '清理 JSON 文件失败' });
     }
 });
 

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>UIVF12 Direct Runner</title>
+    <style>
+        body {
+            min-height: 100vh;
+            margin: 0;
+            display: grid;
+            place-items: center;
+            background: #08111f;
+            color: #e2e8f0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+        }
+        main {
+            width: min(760px, calc(100vw - 40px));
+            box-sizing: border-box;
+            padding: 24px;
+            border: 1px solid rgba(56, 189, 248, .35);
+            border-radius: 16px;
+            background: rgba(15, 23, 42, .92);
+            box-shadow: 0 24px 80px rgba(0, 0, 0, .35);
+        }
+        h1 { margin: 0 0 8px; font-size: 22px; }
+        p { color: #94a3b8; line-height: 1.6; }
+        .status { margin-top: 16px; color: #67e8f9; font-weight: 700; }
+        .hint { margin-top: 12px; font-size: 12px; color: #cbd5e1; }
+        code { color: #bae6fd; }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>UIVF12 Direct Runner</h1>
+        <p>正在通过 UI.Vision embedded macro 启动批量阵列。若没有自动运行，请确认 UI.Vision 已安装，并在插件设置中允许 embedded macros，把当前工具域名加入白名单。</p>
+        <div class="status" id="status">正在读取本地宏数据...</div>
+        <div class="hint">当前域名: <code id="originLabel"></code></div>
+    </main>
+    <script>
+        (async function () {
+            const status = document.getElementById('status');
+            const originLabel = document.getElementById('originLabel');
+            originLabel.textContent = window.location.origin;
+
+            function fail(message) {
+                status.textContent = message;
+                status.style.color = '#fecaca';
+            }
+
+            function openDb() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open('uivf12-direct-runner', 1);
+                    request.onupgradeneeded = event => {
+                        const db = event.target.result;
+                        if (!db.objectStoreNames.contains('runs')) {
+                            db.createObjectStore('runs', { keyPath: 'id' });
+                        }
+                    };
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error || new Error('无法打开本地 IndexedDB'));
+                });
+            }
+
+            async function readPayload(runId) {
+                const db = await openDb();
+                try {
+                    return await new Promise((resolve, reject) => {
+                        const tx = db.transaction('runs', 'readwrite');
+                        const store = tx.objectStore('runs');
+                        const getReq = store.get(runId);
+                        getReq.onsuccess = () => {
+                            const payload = getReq.result || null;
+                            if (payload) store.delete(runId);
+                            resolve(payload);
+                        };
+                        getReq.onerror = () => reject(getReq.error || new Error('读取本地宏数据失败'));
+                    });
+                } finally {
+                    db.close();
+                }
+            }
+
+            try {
+                const runId = (window.location.hash || '').replace(/^#/, '');
+                if (!/^[a-f0-9]{32}$/.test(runId)) {
+                    fail('启动失败：缺少有效的 runner id。请回到 UIVF12 页面重新点击直接运行。');
+                    return;
+                }
+
+                const storageKey = 'uivf12_direct_runner_' + runId;
+                let payload = await readPayload(runId);
+                if (!payload) {
+                    const raw = localStorage.getItem(storageKey);
+                    payload = raw ? JSON.parse(raw) : null;
+                    if (raw) localStorage.removeItem(storageKey);
+                }
+                if (!payload) {
+                    fail('启动失败：未找到本地宏数据。请回到 UIVF12 页面重新点击直接运行。');
+                    return;
+                }
+
+                const macro = payload && payload.macro;
+                if (!macro || !Array.isArray(macro.Commands)) {
+                    fail('启动失败：宏数据格式不正确。');
+                    return;
+                }
+
+                window.addEventListener('kantuInvokeSuccess', function () {
+                    status.textContent = 'UI.Vision 已接收宏，正在执行...';
+                });
+                window.dispatchEvent(new CustomEvent('kantuSaveAndRunMacro', {
+                    detail: {
+                        json: macro,
+                        direct: true,
+                        storageMode: 'browser',
+                        closeRPA: false,
+                        loadmacrotree: '0'
+                    }
+                }));
+                status.textContent = '已发送给 UI.Vision，等待扩展接管...';
+            } catch (error) {
+                fail('启动失败：' + error.message);
+            }
+        })();
+    </script>
+</body>
+</html>
