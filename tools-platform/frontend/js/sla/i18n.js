@@ -35,6 +35,19 @@
             'sla.modal.valKPh': '统计/占比分子关键字',
             'sla.modal.cancel': '取消',
             'sla.modal.save': '保存修改',
+            'sla.modal.copyTitle': '📋 复制指标规则',
+            'sla.modal.copySubtitle': '批量复制后逐行修改字段并保存',
+            'sla.modal.copyCount': '复制数量',
+            'sla.modal.copyHint': '每一行都会创建一条新规则，保存前可以横向修改名称、模式、字段和挂载关系。',
+            'sla.modal.copySave': '保存复制',
+            'sla.modal.fastApply': '⚡ 快速映射填写',
+            'sla.modal.fastTemplate': '快速映射模板',
+            'sla.modal.mappingTitle': '快速映射模板编辑',
+            'sla.modal.mappingSubtitle': '固定两列填写；从 Excel 复制两列后粘贴到任意单元格即可自动填充。',
+            'sla.modal.mappingHint': '分类来自全局分类；从 Excel 粘贴一列条件值会按当前行向下填充，粘贴两列会按分类名匹配填充。',
+            'sla.modal.mappingCategory': '子指标分类',
+            'sla.modal.mappingCondition': '条件值',
+            'sla.modal.mappingSaveApply': '保存并应用',
             'sla.category.title': '🏷️ 指标维度分类管理（客户群/代表处/地区部）',
             'sla.category.inputPh': '输入新分类名称...',
             'sla.category.add': '➕ 添加',
@@ -192,6 +205,7 @@
             'sla.rules.folded': '折叠于主指标',
             'sla.rules.view': '查看',
             'sla.rules.edit': '修改',
+            'sla.rules.copy': '复制',
             'sla.rules.delete': '删除',
             'sla.rules.expand': '展开子指标',
             'sla.rules.collapse': '收起子指标',
@@ -241,6 +255,29 @@
             'sla.rules.needColZ': '请填写展示/统计列 Z。',
             'sla.rules.needExtractFields': '提取模式需要填写条件列 X 和条件值 Y。',
             'sla.rules.needStatValue': '统计/占比模式需要填写统计值 K。',
+            'sla.rules.copyOriginal': '原始规则',
+            'sla.rules.copyRowPrefix': '第 {index} 行：',
+            'sla.rules.copyMissingTarget': '未找到复制目标配置',
+            'sla.rules.copySavedToast': '已复制保存 {count} 条指标规则。',
+            'sla.rules.copyFail': '复制失败：{message}',
+            'sla.rules.copyNeedOneRow': '至少需要保留一行待复制规则。',
+            'sla.rules.fastMappingMainDisabled': '主指标复制不需要模板速填，请直接修改指标名称和字段。',
+            'sla.rules.fastMappingMissingTemplate': '没有找到已保存的模板，请先点击“快速映射模板”进行配置。',
+            'sla.rules.fastMappingParseEmpty': '没有解析到有效的映射数据，请检查格式。',
+            'sla.rules.fastMappingApplied': '已成功应用 {count} 条映射配置。',
+            'sla.rules.fastMappingSaveFail': '保存速填模板失败：{message}',
+            'sla.rules.extractColX': '条件列 X',
+            'sla.rules.extractValY': '条件值 Y',
+            'sla.rules.extractColZ': '展示列 Z',
+            'sla.rules.extractValK': '统计值 K',
+            'sla.rules.countColX': '筛选列 X（可选）',
+            'sla.rules.countValY': '筛选值 Y（可选）',
+            'sla.rules.countColZ': '统计列 Z',
+            'sla.rules.countValK': '统计值 K',
+            'sla.rules.ratioColX': '分母筛选列 X（可选）',
+            'sla.rules.ratioValY': '分母筛选值 Y（可选）',
+            'sla.rules.ratioColZ': '分子列 Z',
+            'sla.rules.ratioValK': '分子值 K',
             'sla.config.empty': '当前服务器没有可导出的记忆配置！请先导入表格使用后再试。',
             'sla.config.exported': '✅ 配置已导出',
             'sla.config.exportFail': '❌ 导出失败',
@@ -287,6 +324,19 @@
             'sla.modal.valKPh': 'Numerator keyword',
             'sla.modal.cancel': 'Cancel',
             'sla.modal.save': 'Save Changes',
+            'sla.modal.copyTitle': '📋 Copy Metric Rule',
+            'sla.modal.copySubtitle': 'Copy in bulk, edit each row, then save',
+            'sla.modal.copyCount': 'Copy Count',
+            'sla.modal.copyHint': 'Each row creates a new rule. Edit names, mode, fields, and attachment before saving.',
+            'sla.modal.copySave': 'Save Copies',
+            'sla.modal.fastApply': '⚡ Quick Mapping Fill',
+            'sla.modal.fastTemplate': 'Quick Mapping Template',
+            'sla.modal.mappingTitle': 'Edit Quick Mapping Template',
+            'sla.modal.mappingSubtitle': 'Use two fixed columns. Paste two copied Excel columns into any cell to auto-fill.',
+            'sla.modal.mappingHint': 'Categories come from global categories. Pasting one Excel column fills condition values downward; pasting two columns matches by category name.',
+            'sla.modal.mappingCategory': 'Sub-metric Category',
+            'sla.modal.mappingCondition': 'Condition Value',
+            'sla.modal.mappingSaveApply': 'Save and Apply',
             'sla.category.title': '🏷️ Metric Dimension Categories (Customer Group / Office / Region)',
             'sla.category.inputPh': 'Enter new category...',
             'sla.category.add': '➕ Add',
@@ -444,6 +494,7 @@
             'sla.rules.folded': 'Folded under main metric',
             'sla.rules.view': 'View',
             'sla.rules.edit': 'Edit',
+            'sla.rules.copy': 'Copy',
             'sla.rules.delete': 'Delete',
             'sla.rules.expand': 'Expand sub-metrics',
             'sla.rules.collapse': 'Collapse sub-metrics',
@@ -493,6 +544,29 @@
             'sla.rules.needColZ': 'Choose display/count column Z.',
             'sla.rules.needExtractFields': 'Extract mode requires condition column X and condition value Y.',
             'sla.rules.needStatValue': 'Count/ratio mode requires count value K.',
+            'sla.rules.copyOriginal': 'Original Rule',
+            'sla.rules.copyRowPrefix': 'Row {index}: ',
+            'sla.rules.copyMissingTarget': 'Copy target config was not found',
+            'sla.rules.copySavedToast': 'Copied and saved {count} metric rules.',
+            'sla.rules.copyFail': 'Copy failed: {message}',
+            'sla.rules.copyNeedOneRow': 'Keep at least one rule row to copy.',
+            'sla.rules.fastMappingMainDisabled': 'Quick mapping is not needed for main metric copies. Edit the metric name and fields directly.',
+            'sla.rules.fastMappingMissingTemplate': 'No saved template found. Click "Quick Mapping Template" to configure one first.',
+            'sla.rules.fastMappingParseEmpty': 'No valid mapping data was parsed. Check the format.',
+            'sla.rules.fastMappingApplied': 'Applied {count} mapping rows.',
+            'sla.rules.fastMappingSaveFail': 'Failed to save quick-fill template: {message}',
+            'sla.rules.extractColX': 'Condition Column X',
+            'sla.rules.extractValY': 'Condition Value Y',
+            'sla.rules.extractColZ': 'Display Column Z',
+            'sla.rules.extractValK': 'Count Value K',
+            'sla.rules.countColX': 'Filter Column X (optional)',
+            'sla.rules.countValY': 'Filter Value Y (optional)',
+            'sla.rules.countColZ': 'Count Column Z',
+            'sla.rules.countValK': 'Count Value K',
+            'sla.rules.ratioColX': 'Denominator Filter Column X (optional)',
+            'sla.rules.ratioValY': 'Denominator Filter Value Y (optional)',
+            'sla.rules.ratioColZ': 'Numerator Column Z',
+            'sla.rules.ratioValK': 'Numerator Value K',
             'sla.config.empty': 'No memory configuration exists on the server yet. Import table data first, then try again.',
             'sla.config.exported': '✅ Config exported',
             'sla.config.exportFail': '❌ Export failed',
@@ -566,8 +640,43 @@
         setText('#metric-rule-edit-type option[value="ratio"]', t('sla.modal.ratio'));
         setPlaceholder('#metric-rule-edit-valy', t('sla.modal.valYPh'));
         setPlaceholder('#metric-rule-edit-valk', t('sla.modal.valKPh'));
-        setText('.metric-rule-edit-cancel', t('sla.modal.cancel'));
-        setText('.metric-rule-edit-save', t('sla.modal.save'));
+        setText('#metric-rule-edit-modal .metric-rule-edit-cancel', t('sla.modal.cancel'));
+        setText('#metric-rule-edit-modal .metric-rule-edit-save', t('sla.modal.save'));
+        setText('#metric-rule-copy-modal h3', t('sla.modal.copyTitle'));
+        setText('#metric-rule-copy-subtitle', t('sla.modal.copySubtitle'));
+        setText('#metric-rule-copy-modal .metric-rule-copy-count-field > span', t('sla.modal.copyCount'));
+        setText('#metric-rule-copy-modal .metric-rule-copy-hint', t('sla.modal.copyHint'));
+        const copySave = document.querySelector('#metric-rule-copy-modal .metric-rule-edit-save');
+        if (copySave) copySave.textContent = t('sla.modal.copySave');
+        const copyCancel = document.querySelector('#metric-rule-copy-modal .metric-rule-edit-cancel');
+        if (copyCancel) copyCancel.textContent = t('sla.modal.cancel');
+        setText('#metric-rule-fast-apply-btn', t('sla.modal.fastApply'));
+        setText('#metric-rule-fast-template-btn', t('sla.modal.fastTemplate'));
+        const copyHeaders = document.querySelectorAll('#metric-rule-copy-modal .metric-rule-copy-table th');
+        if (typeof window.updateMetricRuleCopyHeaders === 'function') {
+            const type = window.copyingMetricRuleRecord ? (window.findMetricRuleRef?.(window.copyingMetricRuleRecord)?.rule?.type || 'extract') : 'extract';
+            window.updateMetricRuleCopyHeaders(type);
+        } else {
+            [
+                '#', 'sla.modal.metricName', 'sla.modal.mode', 'sla.modal.category', 'sla.modal.parent',
+                'sla.modal.colX', 'sla.modal.valY', 'sla.modal.colZ', 'sla.modal.valK', 'sla.rules.thAction'
+            ].forEach((key, index) => {
+                if (!copyHeaders[index]) return;
+                copyHeaders[index].textContent = key === '#' ? '#' : t(key);
+            });
+        }
+        setText('#metric-rule-mapping-modal h3', t('sla.modal.mappingTitle'));
+        setText('#metric-rule-mapping-modal .metric-rule-template-header p', t('sla.modal.mappingSubtitle'));
+        setText('#metric-rule-mapping-modal .metric-rule-template-toolbar span', t('sla.modal.mappingHint'));
+        const mappingHeaders = document.querySelectorAll('#metric-rule-mapping-modal .metric-rule-template-table th');
+        ['#', 'sla.modal.mappingCategory', 'sla.modal.mappingCondition'].forEach((key, index) => {
+            if (!mappingHeaders[index]) return;
+            mappingHeaders[index].textContent = key === '#' ? '#' : t(key);
+        });
+        const mappingCancel = document.querySelector('#metric-rule-mapping-modal .metric-rule-template-footer .metric-rule-mapping-btn.secondary');
+        if (mappingCancel) mappingCancel.textContent = t('sla.modal.cancel');
+        const mappingApply = document.querySelector('#metric-rule-mapping-modal .metric-rule-template-footer .metric-rule-mapping-btn:not(.secondary)');
+        if (mappingApply) mappingApply.textContent = t('sla.modal.mappingSaveApply');
         setText('#category-modal h3', t('sla.category.title'));
         setPlaceholder('#new-category-input', t('sla.category.inputPh'));
         setText('#category-modal .action-btn', t('sla.category.add'));

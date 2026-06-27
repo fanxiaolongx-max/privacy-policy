@@ -28,6 +28,8 @@
             'uiv.repo.copyBatch': '📦 拷贝全部为批量阵列 (F12)',
             'uiv.repo.copyBatchUiv': '📦 拷贝全部为批量阵列 (UI.V)',
             'uiv.repo.runBatchUiv': '🚀 运行批脚本',
+            'uiv.repo.batchSpeedTitle': '当前 {speed} 倍速：脚本间隔约 {seconds} 秒。点击切换 1x / 2x / 4x。',
+            'uiv.repo.batchSpeedToast': 'UI.Vision 批量速度已切换为 {speed}x，脚本间隔约 {seconds} 秒',
             'uiv.repo.export': '📤 导出备份',
             'uiv.repo.import': '📥 导入配置',
             'uiv.input.urlLabel': '1. 请求 URL 目标地址:',
@@ -175,6 +177,8 @@
             'uiv.repo.copyBatch': '📦 Copy All as Batch Array (F12)',
             'uiv.repo.copyBatchUiv': '📦 Copy All as Batch Array (UI.V)',
             'uiv.repo.runBatchUiv': '🚀 Run Batch',
+            'uiv.repo.batchSpeedTitle': 'Current {speed}x speed: script interval is about {seconds}s. Click to switch 1x / 2x / 4x.',
+            'uiv.repo.batchSpeedToast': 'UI.Vision batch speed switched to {speed}x, script interval about {seconds}s',
             'uiv.repo.export': '📤 Export Backup',
             'uiv.repo.import': '📥 Import Config',
             'uiv.input.urlLabel': '1. Request URL target:',
@@ -376,6 +380,9 @@
         setText('.btn-batch-pkg:not(.btn-batch-uiv):not(.btn-batch-uiv-run)', t('uiv.repo.copyBatch'));
         setText('.btn-batch-uiv', t('uiv.repo.copyBatchUiv'));
         setText('.btn-batch-uiv-run', t('uiv.repo.runBatchUiv'));
+        if (window.UIVCopy && typeof window.UIVCopy.updateUivBatchSpeedButton === 'function') {
+            window.UIVCopy.updateUivBatchSpeedButton();
+        }
         setText('.btn-io[onclick="UIVSidebar.exportBackup()"]', t('uiv.repo.export'));
         const importLabel = document.querySelector('label.btn-io');
         if (importLabel) {

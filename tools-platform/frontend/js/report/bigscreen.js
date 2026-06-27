@@ -20,7 +20,7 @@
 
     const BIGSCREEN_I18N = {
         'zh-CN': {
-            title: 'EG运营质量综合大屏',
+            title: 'EG运营质量综合看板',
             loadingSubtitle: '数据来自月报页面与报表看板入库结果，正在加载...',
             noDataSubtitle: '当前筛选范围内暂无入库数据。',
             subtitle: '分析周期 {start} 至 {end}，最新快照 {snapshot}，目标月份 {month}',
@@ -714,7 +714,7 @@
             </div>
         `;
         }).join('');
-        
+
         startScoreFlipAnimation();
         renderRankSummary(rows);
     }
@@ -930,18 +930,18 @@
     function startScoreFlipAnimation() {
         const boards = document.querySelectorAll('.flap-board');
         if (!boards.length) return;
-        
+
         boards.forEach((board) => {
             const realVal = String(board.getAttribute('data-val'));
             const chars = board.querySelectorAll('.flap-char');
-            
+
             // Random start delay for the whole board (0 - 400ms)
             const boardDelay = Math.random() * 400;
-            
+
             setTimeout(() => {
                 chars.forEach((c, idx) => {
                     if (c.dataset.flipping) return;
-                    
+
                     const finalChar = realVal[idx] || '';
                     if (finalChar === '.') {
                         c.textContent = finalChar;
@@ -949,21 +949,21 @@
                     }
 
                     c.dataset.flipping = "true";
-                    
+
                     // Each digit starts with a slightly random offset (0 - 150ms)
                     const charStartOffset = Math.random() * 150;
-                    
+
                     setTimeout(() => {
                         // Random mechanical speed (120ms - 220ms per full flip)
                         const speed = Math.floor(Math.random() * 100) + 120;
-                        
+
                         // Right-most digits flip more times (like an odometer settling)
                         // Range: ~4 flips for first digit, up to ~15 flips for last digit
                         const minFlips = 4 + idx * 3;
                         const targetFlips = Math.floor(Math.random() * 6) + minFlips;
-                        
+
                         c.style.animation = `flapTurn ${speed}ms linear infinite`;
-                        
+
                         let flips = 0;
                         setTimeout(() => {
                             const scramble = setInterval(() => {
@@ -1519,7 +1519,7 @@
                     yAxisIndex: 1,
                     data: failing,
                     barMaxWidth: 16,
-                    itemStyle: { 
+                    itemStyle: {
                         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
                             { offset: 0, color: 'rgba(255,93,115,1)' },
                             { offset: 1, color: 'rgba(255,93,115,0.05)' }
@@ -1555,7 +1555,7 @@
                         scale: 4,
                         period: 3
                     },
-                    itemStyle: { 
+                    itemStyle: {
                         color: '#baffdf',
                         shadowBlur: 14,
                         shadowColor: '#38e6a3'
