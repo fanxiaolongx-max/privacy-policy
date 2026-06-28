@@ -116,7 +116,7 @@ function renderHistory(data) {
         .history-table-wrapper { overflow: auto; max-width: 100%; height: 100%; border-radius: 4px; position: relative; }
         .history-table { width: max-content; min-width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12px; }
         .history-table th { background: #f1f3f4; padding: 10px; text-align: left; border-bottom: 2px solid #ccc; border-right: 1px solid #ddd; position: sticky; top: 0; z-index: 10; font-weight: bold; white-space: nowrap; }
-        .history-table td { padding: 8px 10px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; vertical-align: middle; white-space: nowrap; }
+        .history-table td { padding: 10px 12px; border-bottom: 1px solid #eee; border-right: 1px solid #eee; vertical-align: middle; white-space: nowrap; }
         .history-table tr:hover td { background: #f9f9f9; }
         .history-table td.warn-cell { background: #ffebee; border-left: 2px solid #ef5350; }
         .snap-gap { display: block; font-size: 10px; color: #d32f2f; font-weight: bold; margin-top: 2px; }
@@ -126,13 +126,17 @@ function renderHistory(data) {
         .sticky-col-td { left: 0; position: sticky; background: #fafafa !important; z-index: 11 !important; box-shadow: 2px 0 5px rgba(0,0,0,0.05); border-right: 2px solid #ccc !important; }
         .history-table tr:hover td.sticky-col-td { background: #f0f0f0 !important; }
         .summary-col { min-width: 350px; white-space: normal !important; word-wrap: break-word; }
-        .history-auto-import-badge { display:inline-flex; align-items:center; margin-top:4px; padding:2px 6px; border-radius:999px; background:#ecfeff; border:1px solid #67e8f9; color:#0369a1; font-size:10px; font-weight:800; line-height:1.4; }
+        .history-import-cell { display:flex; flex-direction:column; align-items:flex-start; gap:8px; min-width:156px; padding:4px 0; }
+        .history-import-time { color:#1976d2; font-weight:800; line-height:1.45; white-space:normal; word-break:break-word; }
+        .history-auto-import-badge { display:inline-flex; align-items:center; padding:3px 8px; border-radius:999px; background:#ecfeff; border:1px solid #67e8f9; color:#0369a1; font-size:10px; font-weight:800; line-height:1.35; }
+        .history-delete-btn { display:inline-flex; align-items:center; justify-content:center; min-height:24px; padding:3px 8px; font-size:11px; background:#fff; border:1px solid #fecaca; color:#dc2626; border-radius:6px; cursor:pointer; line-height:1.2; }
+        .history-delete-btn:hover { background:#fff1f2; border-color:#fca5a5; }
     </style>
     <div class="history-table-wrapper">
     <table class="history-table">
         <thead>
             <tr>
-                <th class="sticky-col" style="min-width: 140px;">${SLAT('sla.history.importTime')}</th>
+                <th class="sticky-col" style="min-width: 170px;">${SLAT('sla.history.importTime')}</th>
                 <th>${SLAT('sla.history.sourceTables')}</th>
                 ${metricHeaders.map(h => `<th title="${escapeHTML(h)}">${escapeHTML(getHistoryMetricLabel(h))}</th>`).join('')}
                 <th class="summary-col">${SLAT('sla.history.summary')}</th>
@@ -144,7 +148,7 @@ function renderHistory(data) {
     data.forEach(item => {
         const d = new Date(item.timestamp).toLocaleString('zh-CN', { hour12: false });
         const isAutoImport = item.importSource === 'uivf12' || item.source === 'uivf12';
-        const autoImportBadge = isAutoImport ? '<div><span class="history-auto-import-badge">自动导入</span></div>' : '';
+        const autoImportBadge = isAutoImport ? '<span class="history-auto-import-badge">自动导入</span>' : '';
         
         // 构建当前行的指标 map
         const mMap = {};
@@ -197,10 +201,12 @@ function renderHistory(data) {
 
         html += `
             <tr>
-                <td class="sticky-col-td" style="color:#1976d2; font-weight:bold;">
-                    ${d}
-                    ${autoImportBadge}
-                    <button onclick="deleteHistorySnapshot('${item.id}')" style="margin-left:8px; padding:2px 6px; font-size:10px; background:#fff; border:1px solid #ffcdd2; color:#d32f2f; border-radius:4px; cursor:pointer;" title="${SLAT('sla.history.deleteTitle')}" onmouseover="this.style.background='#ffebee'" onmouseout="this.style.background='#fff'">${SLAT('sla.history.delete')}</button>
+                <td class="sticky-col-td">
+                    <div class="history-import-cell">
+                        <div class="history-import-time">${escapeHTML(d)}</div>
+                        ${autoImportBadge}
+                        <button class="history-delete-btn" onclick="deleteHistorySnapshot('${item.id}')" title="${SLAT('sla.history.deleteTitle')}">${SLAT('sla.history.delete')}</button>
+                    </div>
                 </td>
                 <td><span style="background:#e3f2fd; padding:2px 6px; border-radius:10px; color:#1565c0;">${item.files.length}</span></td>
                 ${metricColsHtml}
