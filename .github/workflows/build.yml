@@ -73,12 +73,7 @@ jobs:
 
   build:
     needs: prepare-release
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest, macos-latest]
-    
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-latest
 
     steps:
       - name: Checkout code
@@ -96,28 +91,17 @@ jobs:
         run: npm install
 
       - name: Build Application (Windows)
-        if: matrix.os == 'windows-latest'
         working-directory: tools-platform
         run: npm run build:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Application (Mac)
-        if: matrix.os == 'macos-latest'
-        working-directory: tools-platform
-        run: npm run build:mac
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_IDENTITY_AUTO_DISCOVERY: false
-          DEBUG: electron-builder
-
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: built-app-${{ matrix.os }}
+          name: built-app-windows
           path: |
             tools-platform/dist/*.exe
-            tools-platform/dist/*.dmg
             tools-platform/dist/*.yml
             tools-platform/dist/*.blockmap
 
@@ -128,7 +112,6 @@ jobs:
           name: ${{ needs.prepare-release.outputs.release_tag }}
           files: |
             tools-platform/dist/*.exe
-            tools-platform/dist/*.dmg
             tools-platform/dist/*.yml
             tools-platform/dist/*.blockmap
         env:

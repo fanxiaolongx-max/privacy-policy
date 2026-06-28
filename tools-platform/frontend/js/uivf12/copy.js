@@ -221,12 +221,126 @@ function resolveUivScriptUrl(script) {
 function buildLoginProbeScript(rawUrl) {
     const lowerUrl = String(rawUrl || '').toLowerCase();
     if (lowerUrl.includes('datafab')) {
-        return 'return (document.cookie.indexOf("XSRF-TOKEN=") !== -1 || document.cookie.indexOf("NETLIVE-XSRF-TOKEN=") !== -1) ? "true" : "false";';
+        return `return (function () {
+            const cookie = String(document.cookie || "");
+            const ok = cookie.indexOf("XSRF-TOKEN=") !== -1 || cookie.indexOf("NETLIVE-XSRF-TOKEN=") !== -1;
+            return JSON.stringify({
+                ok,
+                reason: ok ? "ok" : "xsrf_cookie_missing",
+                cookieLen: cookie.length,
+                host: location.host,
+                href: location.href
+            });
+        })();`;
     }
     if (lowerUrl.includes('netcare')) {
-        return 'return (localStorage.getItem("globalConfig") && document.cookie && document.cookie.length > 20) ? "true" : "false";';
+        return `return (function () {
+            const cfg = localStorage.getItem("globalConfig") || "";
+            const cookie = String(document.cookie || "");
+            let token = "";
+            const match = cfg.match(/[A-Fa-f0-9]{64}/);
+            if (match) token = match[0];
+            if (!token) {
+                try {
+                    const parsed = JSON.parse(cfg || "{}");
+                    const config = Array.isArray(parsed) ? (parsed[0] || {}) : parsed;
+                    token = config.csrfToken || (config.configData && config.configData.csrfToken) || "";
+                } catch (e) {}
+            }
+            const hasToken = String(token || "").length >= 16;
+            const hasCookie = cookie.length > 20;
+            return JSON.stringify({
+                ok: hasToken && hasCookie,
+                reason: hasToken && hasCookie ? "ok" : (!hasToken ? "csrf_missing" : "cookie_missing"),
+                hasToken,
+                tokenLen: token ? String(token).length : 0,
+                globalConfigLen: cfg.length,
+                cookieLen: cookie.length,
+                host: location.host,
+                href: location.href
+            });
+        })();`;
     }
-    return 'return (document.cookie || localStorage.length > 0) ? "true" : "false";';
+    return `return (function () {
+        const cookie = String(document.cookie || "");
+        const ok = Boolean(cookie || localStorage.length > 0);
+        return JSON.stringify({
+            ok,
+            reason: ok ? "ok" : "no_cookie_or_localstorage",
+            cookieLen: cookie.length,
+            localStorageLen: localStorage.length,
+            host: location.host,
+            href: location.href
+        });
+    })();`;
+}
+
+function buildLoginProbeStatusScript(loginVar, siteUrl) {
+    return `return (function () {
+        const raw = ${'${' + loginVar + '}'};
+        let parsed = {};
+        try {
+            parsed = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
+        } catch (e) {
+            parsed = { ok: raw === 'true', reason: 'parse_failed', raw: String(raw || '') };
+        }
+        const ok = parsed.ok === true || parsed.ok === 'true' || raw === 'true';
+        const reason = parsed.reason || (ok ? 'ok' : 'unknown');
+        try {
+            const bag = window.name ? JSON.parse(window.name) : {};
+            const logs = Array.isArray(bag.uivf12LoginProbeLogs) ? bag.uivf12LoginProbeLogs : [];
+            logs.push({ at: new Date().toISOString(), ok, reason, site: ${JSON.stringify(siteUrl || '')}, detail: parsed });
+            bag.uivf12LoginProbeLogs = logs.slice(-80);
+            window.name = JSON.stringify(bag);
+        } catch (e) {}
+        return ok ? 'true' : 'false';
+    })();`;
+}
+
+function buildAppendPanelLogScript(loginVar, siteUrl) {
+    return `return (function () {
+        const raw = ${'${' + loginVar + '}'} || '';
+        let parsed = {};
+        try {
+            parsed = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
+        } catch (e) {
+            parsed = { ok: raw === 'true', reason: 'parse_failed', raw: String(raw || '') };
+        }
+        const ok = parsed.ok === true || parsed.ok === 'true' || raw === 'true';
+        const reason = parsed.reason || (ok ? 'ok' : 'unknown');
+        const msg = '登录探测 ${String(siteUrl || '').replace(/'/g, "\\'")} -> ' + (ok ? 'OK' : 'WAIT') +
+            ' · reason=' + reason +
+            ' · tokenLen=' + (parsed.tokenLen || 0) +
+            ' · globalConfigLen=' + (parsed.globalConfigLen || 0) +
+            ' · cookieLen=' + (parsed.cookieLen || 0) +
+            ' · host=' + (parsed.host || location.host);
+        const target = document.getElementById('uivf12-batch-log-scroll');
+        if (target) {
+            const line = document.createElement('div');
+            line.style.cssText = 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fde68a;';
+            line.textContent = new Date().toLocaleTimeString('zh-CN', { hour12: false }) + ' ' + msg;
+            target.appendChild(line);
+            while (target.children.length > 100) target.removeChild(target.firstChild);
+            target.scrollTop = target.scrollHeight;
+        }
+        return msg;
+    })();`;
+}
+
+function buildNetcareGlobalConfigCompatScript() {
+    return `return (function () {
+        try {
+            const raw = localStorage.getItem('globalConfig') || '';
+            const parsed = JSON.parse(raw || '{}');
+            if (Array.isArray(parsed) && parsed[0] && typeof parsed[0] === 'object') {
+                localStorage.setItem('globalConfig', JSON.stringify(parsed[0]));
+                return 'globalConfig-array-normalized';
+            }
+            return 'globalConfig-ok';
+        } catch (e) {
+            return 'globalConfig-parse-skip:' + (e && e.message ? e.message : e);
+        }
+    })();`;
 }
 
 function groupUivScriptsByOpenUrl(scripts) {
@@ -571,18 +685,36 @@ function buildUivCompletionDialogScript(summary) {
             '</details>';
         }).join('');
         const noDownloadRows = noDownloadTasks.map(item => {
+            const fetchRows = Array.isArray(item.recentFetch) ? item.recentFetch : [];
+            const fetchHtml = fetchRows.length
+                ? '<div style="margin-top:6px;border-top:1px solid rgba(251,191,36,.18);padding-top:6px;">' +
+                    '<div style="color:#fde68a;font-weight:800;margin-bottom:4px;">最近 Fetch 诊断</div>' +
+                    fetchRows.map(fetchItem => {
+                        const status = fetchItem.status !== undefined && fetchItem.status !== '' ? fetchItem.status : '-';
+                        const ok = fetchItem.ok !== undefined && fetchItem.ok !== '' ? fetchItem.ok : '-';
+                        const contentType = fetchItem.contentType || '-';
+                        const err = fetchItem.error ? (' · ' + fetchItem.error) : '';
+                        const duration = fetchItem.durationMs !== undefined && fetchItem.durationMs !== '' ? (' · ' + fetchItem.durationMs + 'ms') : '';
+                        return '<div style="padding:4px 0;border-top:1px dashed rgba(251,191,36,.12);">' +
+                            '<div style="color:#fef3c7;word-break:break-all;">' + escapeHtml(fetchItem.url || '-') + '</div>' +
+                            '<div style="color:#fde68a;">status=' + escapeHtml(status) + ' · ok=' + escapeHtml(ok) + ' · type=' + escapeHtml(contentType) + duration + escapeHtml(err) + '</div>' +
+                        '</div>';
+                    }).join('') +
+                '</div>'
+                : '';
             const lines = [
                 ['时间', item.at || ''],
                 ['该脚本前后下载数', String(item.before || 0) + ' -> ' + String(item.after || 0)],
                 ['该脚本前后导入数', String(item.beforeImports || 0) + ' -> ' + String(item.afterImports || 0)],
-                ['脚本返回', item.result || '']
+                ['脚本返回', item.result || ''],
+                ['审计结论', item.auditResult || '']
             ].filter(pair => pair[1] !== undefined && pair[1] !== null && String(pair[1]) !== '');
             const detailHtml = lines.map(pair =>
                 '<div style="display:grid;grid-template-columns:82px minmax(0,1fr);gap:8px;padding:2px 0;">' +
                     '<span style="color:#fde68a;">' + escapeHtml(pair[0]) + '</span>' +
                     '<span style="color:#fef3c7;word-break:break-all;">' + escapeHtml(pair[1]) + '</span>' +
                 '</div>'
-            ).join('');
+            ).join('') + fetchHtml;
             return '<details style="padding:8px 0;border-bottom:1px solid rgba(251,191,36,.14);font-size:12px;line-height:1.45;">' +
                 '<summary style="cursor:pointer;color:#fde68a;font-weight:750;word-break:break-all;">' + escapeHtml(item.name || '未命名脚本') + '</summary>' +
                 '<div style="margin-top:6px;padding:8px;border-radius:8px;background:rgba(146,64,14,.16);font-size:11px;">' + detailHtml + '</div>' +
@@ -692,6 +824,15 @@ function buildUivDownloadRecorderScript(options = {}) {
             });
             bag.uivf12AutoImportFailures = list;
             writeWindowState(bag);
+        }
+        function rememberFetchDiagnostic(info) {
+            try {
+                const bag = readWindowState();
+                const list = Array.isArray(bag.uivf12FetchDiagnostics) ? bag.uivf12FetchDiagnostics : [];
+                list.push(Object.assign({ at: new Date().toISOString() }, info || {}));
+                bag.uivf12FetchDiagnostics = list.slice(-40);
+                writeWindowState(bag);
+            } catch (e) {}
         }
         function hasRecentDirectCapture(name) {
             if (!name) return false;
@@ -916,6 +1057,44 @@ function buildUivDownloadRecorderScript(options = {}) {
                     handleDownloadLink(link);
                 } catch (e) {}
             }, true);
+            const originalFetch = window.fetch;
+            if (typeof originalFetch === 'function') {
+                window.fetch = async function () {
+                    const started = Date.now();
+                    const requestUrl = (() => {
+                        try {
+                            const input = arguments[0];
+                            return typeof input === 'string' ? input : (input && input.url ? input.url : String(input || ''));
+                        } catch (e) {
+                            return '';
+                        }
+                    })();
+                    try {
+                        const response = await originalFetch.apply(this, arguments);
+                        try {
+                            const contentType = response.headers && response.headers.get ? response.headers.get('content-type') : '';
+                            rememberFetchDiagnostic({
+                                url: requestUrl,
+                                status: response.status,
+                                ok: response.ok,
+                                redirected: response.redirected,
+                                contentType: contentType || '',
+                                durationMs: Date.now() - started
+                            });
+                        } catch (e) {}
+                        return response;
+                    } catch (error) {
+                        rememberFetchDiagnostic({
+                            url: requestUrl,
+                            status: 'FETCH_ERROR',
+                            ok: false,
+                            error: error && error.message ? error.message : String(error),
+                            durationMs: Date.now() - started
+                        });
+                        throw error;
+                    }
+                };
+            }
         }
         window.__uivf12AutoImportCapture = uploadCsvText;
         return 'download-recorder-ready';
@@ -964,7 +1143,7 @@ function buildUivCaptureCountScript() {
     })();`;
 }
 
-function buildUivTaskDownloadAuditScript(taskName, beforeVar) {
+function buildUivTaskDownloadAuditScript(taskName, beforeVar, resultVar) {
     return `return (function () {
         function readWindowState() {
             try {
@@ -990,18 +1169,32 @@ function buildUivTaskDownloadAuditScript(taskName, beforeVar) {
         const bag = readWindowState();
         const downloads = Array.isArray(bag.uivf12Downloads) ? bag.uivf12Downloads : [];
         const imports = Array.isArray(bag.uivf12AutoImportDatasets) ? bag.uivf12AutoImportDatasets : [];
+        const fetchDiagnostics = Array.isArray(bag.uivf12FetchDiagnostics) ? bag.uivf12FetchDiagnostics : [];
         const after = { downloads: downloads.length, imports: imports.length };
         const downloadDelta = after.downloads - before.downloads;
         const importDelta = after.imports - before.imports;
         if (downloadDelta <= 0 && importDelta <= 0) {
             const list = Array.isArray(bag.uivf12NoDownloadTasks) ? bag.uivf12NoDownloadTasks : [];
+            const scriptResult = String('${' + resultVar + '}' || '');
+            const recentFetch = fetchDiagnostics.slice(-5).map(item => ({
+                url: item && item.url ? String(item.url).slice(0, 260) : '',
+                status: item && item.status !== undefined ? item.status : '',
+                ok: item && item.ok !== undefined ? item.ok : '',
+                redirected: item && item.redirected !== undefined ? item.redirected : '',
+                contentType: item && item.contentType ? String(item.contentType).slice(0, 120) : '',
+                error: item && item.error ? String(item.error).slice(0, 260) : '',
+                durationMs: item && item.durationMs !== undefined ? item.durationMs : '',
+                at: item && item.at ? item.at : ''
+            }));
             list.push({
                 name: ${JSON.stringify(taskName)},
                 before: before.downloads,
                 after: after.downloads,
                 beforeImports: before.imports,
                 afterImports: after.imports,
-                result: '未检测到下载或自动导入数量增加',
+                result: scriptResult || '未检测到下载或自动导入数量增加',
+                auditResult: '未检测到下载或自动导入数量增加',
+                recentFetch,
                 at: new Date().toISOString()
             });
             bag.uivf12NoDownloadTasks = list;
@@ -1117,6 +1310,11 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
     groupedScripts.forEach((group, groupIndex) => {
         const groupProgress = `${groupIndex + 1}/${groupedScripts.length}`;
         const loginVar = `uivLoginOk_site_${groupIndex + 1}`;
+        const loginStatusVar = `uivLoginStatus_site_${groupIndex + 1}`;
+        const loginDetailVar = `uivLoginDetail_site_${groupIndex + 1}`;
+        const compatVar = `uivLoginCompat_site_${groupIndex + 1}`;
+        const isNetcareSite = String(group.openUrl || '').toLowerCase().includes('netcare');
+        const siteWarmupMs = String(group.openUrl || '').toLowerCase().includes('netcare') ? 10000 : 5000;
         siteStates[groupIndex].status = 'running';
         if (groupIndex > 0) {
             pushPanelCommand('切换站点', `准备打开 ${group.openUrl}`);
@@ -1125,17 +1323,29 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
             { Command: 'echo', Target: `[Site ${groupProgress}] Open ${group.openUrl} and run ${group.scripts.length} task(s)`, Value: '', Description: '' },
             { Command: 'store', Target: 'true', Value: '!ERRORIGNORE', Description: 'Do not fail the batch if a site keeps loading beyond UI.Vision page-load timeout.' },
             { Command: 'open', Target: group.openUrl, Value: '', Description: '' },
-            { Command: 'pause', Target: '5000', Value: '', Description: 'Give the site shell time to initialize even if the load event is noisy.' },
+            { Command: 'pause', Target: String(siteWarmupMs), Value: '', Description: 'Give the site shell time to initialize even if the load event is noisy.' },
             { Command: 'store', Target: 'false', Value: '!ERRORIGNORE', Description: 'Resume strict error handling after tolerant site open.' },
             { Command: 'executeScript', Target: buildUivDownloadRecorderScript({ autoImport }), Value: '', Description: 'Install UIVF12 download recorder on the current site.' }
         );
+        if (isNetcareSite) {
+            commands.push(
+                { Command: 'executeScript', Target: buildNetcareGlobalConfigCompatScript(), Value: compatVar, Description: 'Normalize NetCare globalConfig for legacy scripts.' },
+                { Command: 'echo', Target: `[Site ${groupProgress}] NetCare globalConfig compat: ${'${' + compatVar + '}'}`, Value: '', Description: '' }
+            );
+        }
         pushPanelCommand('检测登录', `${group.openUrl} 页面已打开，开始检测登录态`);
         commands.push(
             { Command: 'executeScript', Target: group.loginProbe, Value: loginVar, Description: 'Check whether the current platform already has a login token.' },
-            { Command: 'while_v2', Target: '${' + loginVar + '} != "true"', Value: '', Description: '' },
+            { Command: 'executeScript', Target: buildLoginProbeStatusScript(loginVar, group.openUrl), Value: loginStatusVar, Description: 'Normalize login probe result.' },
+            { Command: 'executeScript', Target: buildAppendPanelLogScript(loginVar, group.openUrl), Value: loginDetailVar, Description: 'Append login probe detail to floating panel.' },
+            { Command: 'echo', Target: `[Site ${groupProgress}] Login probe: ${'${' + loginDetailVar + '}'}`, Value: '', Description: '' },
+            { Command: 'while_v2', Target: '${' + loginStatusVar + '} != "true"', Value: '', Description: '' },
             { Command: 'executeScript', Target: `alert("UIVF12 批量任务等待登录：${group.openUrl}\\n\\n该站点共有 ${group.scripts.length} 个任务等待执行。请在当前页面完成登录。UI.Vision 会每 10 秒自动检测一次，检测到登录后继续执行。"); return "waiting-login";`, Value: '', Description: '' },
             { Command: 'pause', Target: '10000', Value: '', Description: '' },
             { Command: 'executeScript', Target: group.loginProbe, Value: loginVar, Description: 'Re-check login token.' },
+            { Command: 'executeScript', Target: buildLoginProbeStatusScript(loginVar, group.openUrl), Value: loginStatusVar, Description: 'Normalize login probe result.' },
+            { Command: 'executeScript', Target: buildAppendPanelLogScript(loginVar, group.openUrl), Value: loginDetailVar, Description: 'Append login probe detail to floating panel.' },
+            { Command: 'echo', Target: `[Site ${groupProgress}] Login probe: ${'${' + loginDetailVar + '}'}`, Value: '', Description: '' },
             { Command: 'endWhile', Target: '', Value: '', Description: '' },
             { Command: 'echo', Target: `[Site ${groupProgress}] Login detected for ${group.openUrl}`, Value: '', Description: '' }
         );
@@ -1154,7 +1364,7 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
                 { Command: 'executeScript', Target: script.code, Value: resultVar, Description: `Run UIVF12 script: ${script.name}` },
                 { Command: 'pause', Target: '500', Value: '', Description: 'Let download click/import state settle before auditing.' },
                 { Command: 'executeScript', Target: buildUivAutoImportFlushScript(), Value: '', Description: 'Wait for UIVF12 auto-import file upload.' },
-                { Command: 'executeScript', Target: buildUivTaskDownloadAuditScript(script.name, beforeCaptureVar), Value: auditVar, Description: `Audit download result: ${script.name}` },
+                { Command: 'executeScript', Target: buildUivTaskDownloadAuditScript(script.name, beforeCaptureVar, resultVar), Value: auditVar, Description: `Audit download result: ${script.name}` },
                 { Command: 'echo', Target: `[${progress}] ${script.name} result: ${'${' + resultVar + '}'}`, Value: '', Description: '' },
                 { Command: 'echo', Target: `[${progress}] ${script.name} download audit: ${'${' + auditVar + '}'}`, Value: '', Description: '' },
                 { Command: 'pause', Target: String(cooldownMs), Value: '', Description: `Cooldown adjusted by UIVF12 speed ${speed}x.` }

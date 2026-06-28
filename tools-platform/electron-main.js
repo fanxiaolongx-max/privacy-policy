@@ -2,10 +2,52 @@ const { app, BrowserWindow, dialog, ipcMain, session, shell, Tray, Menu } = requ
 const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const fs = require('fs');
+const util = require('util');
+const { spawn } = require('child_process');
 
 // IMPORTANT: Set the data directory to the OS's native user data path BEFORE requiring server.js
 const userDataPath = app.getPath('userData');
 process.env.TOOLS_DATA_DIR = path.join(userDataPath, 'data');
+const electronLogRoot = path.join(userDataPath, 'logs');
+const runtimeStatusPath = path.join(electronLogRoot, 'runtime-status.json');
+
+function getLogDay() {
+    return new Date().toISOString().slice(0, 10);
+}
+
+function appendElectronLog(type, args) {
+    try {
+        const dayDir = path.join(electronLogRoot, getLogDay());
+        fs.mkdirSync(dayDir, { recursive: true });
+        const line = `[${new Date().toISOString()}] ${args.map((arg) => {
+            if (typeof arg === 'string') return arg;
+            return util.inspect(arg, { depth: 5, breakLength: 160 });
+        }).join(' ')}\n`;
+        fs.appendFileSync(path.join(dayDir, type === 'error' ? 'error.log' : 'out.log'), line, 'utf-8');
+    } catch (_err) {
+        // Avoid recursive logging failures while the app is starting.
+    }
+}
+
+function setupElectronFileLogging() {
+    const originalLog = console.log.bind(console);
+    const originalWarn = console.warn.bind(console);
+    const originalError = console.error.bind(console);
+    console.log = (...args) => {
+        appendElectronLog('out', args);
+        originalLog(...args);
+    };
+    console.warn = (...args) => {
+        appendElectronLog('out', args);
+        originalWarn(...args);
+    };
+    console.error = (...args) => {
+        appendElectronLog('error', args);
+        originalError(...args);
+    };
+}
+
+setupElectronFileLogging();
 console.log('[Electron] User Data Path:', process.env.TOOLS_DATA_DIR);
 
 const net = require('net');
@@ -28,10 +70,11 @@ function getFreePort(startingPort) {
     });
 }
 
-let mainWindow;
+let utilityWindow = null;
+let localPort = null;
+let localServerStarted = false;
 let tray = null;
 let isQuitting = false;
-let isFirstClose = true;
 let downloadHandlerRegistered = false;
 let updateInfo = null;
 let updateDownloaded = false;
@@ -73,7 +116,7 @@ function prepareLaunchExperience() {
         ...state,
         lastSeenVersion: currentVersion,
         lastLaunchAt: new Date().toISOString(),
-        openInternalBrowser: state.openInternalBrowser !== false,
+        openInternalBrowser: false,
         openSystemBrowserOnSpecialLaunch: state.openSystemBrowserOnSpecialLaunch !== false
     };
     writeLaunchState(nextState);
@@ -83,12 +126,12 @@ function prepareLaunchExperience() {
         previousVersion,
         currentVersion,
         shouldShowWelcome: launchKind !== 'normal',
-        shouldOpenSystemBrowser: true // 每次启动都强制调用系统默认浏览器打开
+        shouldOpenSystemBrowser: true
     };
 }
 
 function buildLaunchUrl(port, launchExperience) {
-    const url = new URL(`http://localhost:${port}/`);
+    const url = new URL(`http://127.0.0.1:${port}/`);
     if (launchExperience.shouldShowWelcome) {
         url.searchParams.set('welcome', launchExperience.kind);
         url.searchParams.set('version', launchExperience.currentVersion);
@@ -110,9 +153,14 @@ function broadcastUpdateStatus(patch = {}) {
         updatedAt: new Date().toISOString()
     };
 
-    if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('updater:status', updateStatus);
-    }
+    BrowserWindow.getAllWindows().forEach((win) => {
+        if (!win.isDestroyed()) {
+            win.webContents.send('updater:status', updateStatus);
+        }
+    });
+
+    writeRuntimeStatusSnapshot();
+    refreshTrayMenu();
 
     return updateStatus;
 }
@@ -256,6 +304,24 @@ function registerUpdaterIpcHandlers() {
     });
 }
 
+function registerDesktopIpcHandlers() {
+    ipcMain.handle('desktop:get-runtime-snapshot', () => ({
+        baseUrl: getAppBaseUrl(),
+        version: app.getVersion(),
+        packaged: app.isPackaged,
+        updateStatus,
+        logs: getRecentLogFiles().map((item) => ({
+            label: item.label,
+            content: item.content !== undefined ? item.content : readTail(item.filePath)
+        }))
+    }));
+
+    ipcMain.handle('desktop:open-logs-folder', () => {
+        openLogsFolder();
+        return true;
+    });
+}
+
 function scheduleStartupUpdateCheck() {
     if (!app.isPackaged) return;
     setTimeout(() => {
@@ -274,7 +340,7 @@ function registerDownloadHandler() {
     downloadHandlerRegistered = true;
 
     session.defaultSession.on('will-download', (event, item, webContents) => {
-        const ownerWindow = BrowserWindow.fromWebContents(webContents) || mainWindow;
+        const ownerWindow = BrowserWindow.fromWebContents(webContents) || BrowserWindow.getFocusedWindow() || undefined;
         const filename = item.getFilename();
         const savePath = dialog.showSaveDialogSync(ownerWindow, {
             title: '保存文件',
@@ -315,149 +381,586 @@ function registerDownloadHandler() {
 
 function createTray() {
     const iconPath = path.join(__dirname, 'frontend/assets/icon.ico');
-    // Fallback to native if icon is missing, but usually electron builder packages the icon
     try {
         tray = new Tray(iconPath);
-        const contextMenu = Menu.buildFromTemplate([
-            { label: '显示主窗口', click: () => { if (mainWindow) mainWindow.show(); } },
-            { type: 'separator' },
-            { label: '完全退出程序', click: () => {
-                isQuitting = true;
-                app.quit();
-            }}
-        ]);
-        tray.setToolTip('数据抓取引擎');
-        tray.setContextMenu(contextMenu);
-
-        tray.on('click', () => {
-            if (mainWindow) {
-                if (mainWindow.isVisible()) {
-                    mainWindow.hide();
-                } else {
-                    mainWindow.show();
-                    mainWindow.focus();
-                }
-            }
-        });
+        tray.setToolTip('Tools Platform 本地服务');
+        tray.on('click', () => openAppPath('/'));
+        tray.on('double-click', () => openAppPath('/'));
+        refreshTrayMenu();
     } catch (e) {
         console.warn('[Electron] Failed to create Tray:', e);
     }
 }
 
-async function createWindow() {
-    const launchExperience = prepareLaunchExperience();
+function getAppBaseUrl() {
+    return localPort ? `http://127.0.0.1:${localPort}` : null;
+}
 
-    mainWindow = new BrowserWindow({
-        width: 1280,
-        height: 800,
-        webPreferences: {
-            nodeIntegration: false,
-            contextIsolation: true,
-            preload: path.join(__dirname, 'electron-preload.js')
-        },
-        autoHideMenuBar: true, // Hide menu bar for a cleaner look
-        icon: path.join(__dirname, 'frontend/assets/icon.ico') // Assume icon exists or fallback
+function openAppPath(pathname = '/') {
+    const baseUrl = getAppBaseUrl();
+    if (!baseUrl) {
+        dialog.showMessageBox({
+            type: 'warning',
+            title: '本地服务启动中',
+            message: 'Tools Platform 本地服务还在启动，请稍后再试。'
+        });
+        return;
+    }
+    const target = new URL(pathname, baseUrl).toString();
+    shell.openExternal(target).catch((err) => {
+        dialog.showErrorBox('打开失败', err.message || String(err));
     });
+}
 
+function escapeHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function readTail(filePath, maxBytes = 90000) {
+    try {
+        if (!fs.existsSync(filePath)) return '';
+        const stat = fs.statSync(filePath);
+        const start = Math.max(0, stat.size - maxBytes);
+        const buffer = Buffer.alloc(stat.size - start);
+        const fd = fs.openSync(filePath, 'r');
+        fs.readSync(fd, buffer, 0, buffer.length, start);
+        fs.closeSync(fd);
+        return buffer.toString('utf-8');
+    } catch (err) {
+        return `[读取失败] ${filePath}\n${err.message || err}`;
+    }
+}
+
+function getRecentLogFiles() {
+    const logRoots = [
+        { label: '运行日志', root: electronLogRoot },
+        { label: '项目日志', root: path.join(__dirname, 'backend/logs') }
+    ];
+    const files = [];
+    logRoots.forEach(({ label, root }) => {
+        try {
+            if (fs.existsSync(root)) {
+                const dayDirs = fs.readdirSync(root)
+                    .filter((name) => /^\d{4}-\d{2}-\d{2}$/.test(name))
+                    .sort()
+                    .reverse()
+                    .slice(0, 3);
+                dayDirs.forEach((day) => {
+                    ['error.log', 'out.log'].forEach((name) => {
+                        const filePath = path.join(root, day, name);
+                        if (fs.existsSync(filePath)) files.push({ label: `${label}/${day}/${name}`, filePath });
+                    });
+                });
+                ['error.log', 'out.log'].forEach((name) => {
+                    const filePath = path.join(root, name);
+                    if (fs.existsSync(filePath)) files.push({ label: `${label}/${name}`, filePath });
+                });
+            }
+        } catch (err) {
+            files.push({ label: `${label}目录读取失败`, content: err.message || String(err) });
+        }
+    });
+    return files;
+}
+
+function writeRuntimeStatusSnapshot() {
+    try {
+        fs.mkdirSync(electronLogRoot, { recursive: true });
+        const payload = {
+            baseUrl: getAppBaseUrl(),
+            version: app.getVersion(),
+            packaged: app.isPackaged,
+            updateStatus,
+            logs: getRecentLogFiles()
+                .filter((item) => item.filePath)
+                .map((item) => ({
+                    label: item.label,
+                    filePath: item.filePath
+                })),
+            updatedAt: new Date().toISOString()
+        };
+        fs.writeFileSync(runtimeStatusPath, JSON.stringify(payload, null, 2), 'utf-8');
+    } catch (err) {
+        console.warn('[Electron] Failed to write runtime status:', err.message || err);
+    }
+}
+
+function createLogWindow() {
+    if (process.platform === 'win32' && openNativeRuntimeWindow()) {
+        return;
+    }
+
+    if (utilityWindow && !utilityWindow.isDestroyed()) {
+        utilityWindow.focus();
+    } else {
+        utilityWindow = new BrowserWindow({
+            width: 980,
+            height: 720,
+            minWidth: 760,
+            minHeight: 520,
+            title: 'Tools Platform 运行日志',
+            autoHideMenuBar: true,
+            icon: path.join(__dirname, 'frontend/assets/icon.ico'),
+            webPreferences: {
+                nodeIntegration: false,
+                contextIsolation: true,
+                preload: path.join(__dirname, 'electron-preload.js')
+            }
+        });
+        utilityWindow.on('closed', () => {
+            utilityWindow = null;
+        });
+    }
+
+    const html = `<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Tools Platform 运行日志</title>
+<style>
+body{margin:0;background:#0f172a;color:#dbeafe;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;}
+header{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 20px;background:rgba(15,23,42,.94);border-bottom:1px solid rgba(148,163,184,.25);backdrop-filter:blur(12px);}
+h1{margin:0;font-size:18px;color:#f8fafc;}
+.meta{font-size:12px;color:#93c5fd;margin-top:4px;}
+button{border:1px solid rgba(96,165,250,.35);background:#1d4ed8;color:#fff;border-radius:8px;padding:8px 12px;cursor:pointer;}
+.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
+main{padding:18px 20px 28px;}
+.status{border:1px solid rgba(34,211,238,.28);border-radius:12px;margin-bottom:16px;background:linear-gradient(135deg,rgba(8,47,73,.86),rgba(15,23,42,.72));padding:14px;}
+.statusTop{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:10px;}
+.statusTitle{font-size:14px;font-weight:800;color:#f8fafc;}
+.statusMsg{font-size:12px;color:#bfdbfe;margin-top:3px;}
+.pill{font-size:12px;color:#67e8f9;border:1px solid rgba(103,232,249,.28);border-radius:999px;padding:4px 9px;background:rgba(14,116,144,.25);}
+.bar{height:9px;background:rgba(148,163,184,.18);border-radius:999px;overflow:hidden;border:1px solid rgba(148,163,184,.16);}
+.bar span{display:block;height:100%;width:0;background:linear-gradient(90deg,#06b6d4,#3b82f6,#8b5cf6);box-shadow:0 0 18px rgba(34,211,238,.42);transition:width .25s ease;}
+section{border:1px solid rgba(148,163,184,.22);border-radius:10px;margin-bottom:16px;overflow:hidden;background:rgba(15,23,42,.62);}
+h2{margin:0;padding:10px 12px;font-size:13px;color:#67e8f9;background:rgba(30,41,59,.85);border-bottom:1px solid rgba(148,163,184,.18);}
+pre{margin:0;padding:12px;max-height:340px;overflow:auto;white-space:pre-wrap;word-break:break-word;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#e2e8f0;}
+.empty{border:1px dashed rgba(148,163,184,.28);border-radius:10px;padding:18px;color:#94a3b8;}
+</style>
+</head>
+<body>
+<header>
+<div>
+<h1>Tools Platform 运行日志</h1>
+<div class="meta" id="runtimeMeta">加载中...</div>
+</div>
+<div class="actions">
+<button id="openLogsButton">打开日志目录</button>
+<button id="refreshButton">刷新</button>
+</div>
+</header>
+<main>
+<div class="status">
+<div class="statusTop">
+<div>
+<div class="statusTitle">更新状态</div>
+<div class="statusMsg" id="updateMessage">等待检查更新</div>
+</div>
+<div class="pill" id="updateState">idle</div>
+</div>
+<div class="bar"><span id="updateProgress"></span></div>
+</div>
+<div id="logs"><div class="empty">正在读取日志...</div></div>
+</main>
+<script>
+(function () {
+    const runtimeMeta = document.getElementById('runtimeMeta');
+    const updateMessage = document.getElementById('updateMessage');
+    const updateState = document.getElementById('updateState');
+    const updateProgress = document.getElementById('updateProgress');
+    const logs = document.getElementById('logs');
+    const refreshButton = document.getElementById('refreshButton');
+    const openLogsButton = document.getElementById('openLogsButton');
+
+    function setText(node, value) {
+        node.textContent = value == null ? '' : String(value);
+    }
+
+    function renderLogs(items) {
+        logs.innerHTML = '';
+        if (!items || !items.length) {
+            const empty = document.createElement('div');
+            empty.className = 'empty';
+            empty.textContent = '未发现日志文件。';
+            logs.appendChild(empty);
+            return;
+        }
+        items.forEach((item) => {
+            const section = document.createElement('section');
+            const title = document.createElement('h2');
+            const pre = document.createElement('pre');
+            title.textContent = item.label || '日志';
+            pre.textContent = item.content || '暂无内容';
+            section.appendChild(title);
+            section.appendChild(pre);
+            logs.appendChild(section);
+        });
+    }
+
+    async function refreshSnapshot() {
+        if (!window.ToolsDesktop || !window.ToolsDesktop.getRuntimeSnapshot) {
+            setText(runtimeMeta, '当前窗口缺少桌面桥接能力，请重启应用。');
+            return;
+        }
+        const snapshot = await window.ToolsDesktop.getRuntimeSnapshot();
+        const status = snapshot.updateStatus || {};
+        setText(runtimeMeta, '本地服务：' + (snapshot.baseUrl || '启动中') + ' · 版本 v' + snapshot.version + ' · 每 2 秒自动刷新');
+        setText(updateMessage, status.message || '等待检查更新');
+        setText(updateState, status.state || 'idle');
+        updateProgress.style.width = Math.max(0, Math.min(100, Number(status.progress) || 0)) + '%';
+        renderLogs(snapshot.logs || []);
+    }
+
+    refreshButton.addEventListener('click', refreshSnapshot);
+    openLogsButton.addEventListener('click', () => {
+        if (window.ToolsDesktop && window.ToolsDesktop.openLogsFolder) window.ToolsDesktop.openLogsFolder();
+    });
+    refreshSnapshot();
+    setInterval(refreshSnapshot, 2000);
+})();
+</script>
+</body>
+</html>`;
+
+    utilityWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+}
+
+function openNativeRuntimeWindow() {
+    try {
+        writeRuntimeStatusSnapshot();
+        const scriptPath = path.join(userDataPath, 'tools-platform-runtime-monitor.ps1');
+        fs.writeFileSync(scriptPath, getNativeRuntimeMonitorScript(), 'utf-8');
+        const child = spawn('powershell.exe', [
+            '-NoProfile',
+            '-ExecutionPolicy',
+            'Bypass',
+            '-STA',
+            '-File',
+            scriptPath,
+            '-StatusPath',
+            runtimeStatusPath
+        ], {
+            detached: true,
+            stdio: 'ignore',
+            windowsHide: false
+        });
+        child.unref();
+        return true;
+    } catch (err) {
+        console.warn('[Electron] Failed to open native runtime window:', err.message || err);
+        dialog.showMessageBox({
+            type: 'warning',
+            title: '原生窗口打开失败',
+            message: 'Windows 原生日志窗口打开失败，将使用备用窗口显示。',
+            detail: err.message || String(err)
+        });
+        return false;
+    }
+}
+
+function getNativeRuntimeMonitorScript() {
+    return String.raw`param(
+    [Parameter(Mandatory=$true)][string]$StatusPath
+)
+
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
+
+function Read-TailText([string]$Path, [int]$MaxChars) {
+    if (-not (Test-Path -LiteralPath $Path)) { return "" }
+    try {
+        $text = Get-Content -LiteralPath $Path -Raw -Encoding UTF8 -ErrorAction Stop
+        if ($text.Length -gt $MaxChars) { return $text.Substring($text.Length - $MaxChars) }
+        return $text
+    } catch {
+        return "[读取失败] " + $Path + [Environment]::NewLine + $_.Exception.Message
+    }
+}
+
+function Load-Snapshot {
+    if (-not (Test-Path -LiteralPath $StatusPath)) { return $null }
+    try {
+        return Get-Content -LiteralPath $StatusPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    } catch {
+        return $null
+    }
+}
+
+$form = New-Object System.Windows.Forms.Form
+$form.Text = "Tools Platform 运行状态"
+$form.StartPosition = "CenterScreen"
+$form.Size = New-Object System.Drawing.Size(1000, 720)
+$form.MinimumSize = New-Object System.Drawing.Size(820, 560)
+$form.BackColor = [System.Drawing.Color]::FromArgb(245, 247, 250)
+
+$title = New-Object System.Windows.Forms.Label
+$title.Text = "Tools Platform 运行状态"
+$title.Font = New-Object System.Drawing.Font("Microsoft YaHei UI", 14, [System.Drawing.FontStyle]::Bold)
+$title.AutoSize = $true
+$title.Location = New-Object System.Drawing.Point(16, 14)
+$form.Controls.Add($title)
+
+$meta = New-Object System.Windows.Forms.Label
+$meta.Text = "正在读取运行状态..."
+$meta.Font = New-Object System.Drawing.Font("Microsoft YaHei UI", 9)
+$meta.AutoSize = $true
+$meta.Location = New-Object System.Drawing.Point(18, 48)
+$form.Controls.Add($meta)
+
+$openFolder = New-Object System.Windows.Forms.Button
+$openFolder.Text = "打开日志目录"
+$openFolder.Size = New-Object System.Drawing.Size(110, 30)
+$openFolder.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Right
+$openFolder.Location = New-Object System.Drawing.Point(735, 16)
+$form.Controls.Add($openFolder)
+
+$refresh = New-Object System.Windows.Forms.Button
+$refresh.Text = "刷新"
+$refresh.Size = New-Object System.Drawing.Size(80, 30)
+$refresh.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Right
+$refresh.Location = New-Object System.Drawing.Point(855, 16)
+$form.Controls.Add($refresh)
+
+$statusBox = New-Object System.Windows.Forms.GroupBox
+$statusBox.Text = "更新状态"
+$statusBox.Font = New-Object System.Drawing.Font("Microsoft YaHei UI", 9)
+$statusBox.Location = New-Object System.Drawing.Point(18, 78)
+$statusBox.Size = New-Object System.Drawing.Size(940, 92)
+$statusBox.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
+$form.Controls.Add($statusBox)
+
+$statusText = New-Object System.Windows.Forms.Label
+$statusText.Text = "等待检查更新"
+$statusText.AutoSize = $true
+$statusText.Location = New-Object System.Drawing.Point(16, 28)
+$statusBox.Controls.Add($statusText)
+
+$progress = New-Object System.Windows.Forms.ProgressBar
+$progress.Location = New-Object System.Drawing.Point(18, 56)
+$progress.Size = New-Object System.Drawing.Size(900, 20)
+$progress.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
+$progress.Minimum = 0
+$progress.Maximum = 100
+$statusBox.Controls.Add($progress)
+
+$tabs = New-Object System.Windows.Forms.TabControl
+$tabs.Location = New-Object System.Drawing.Point(18, 184)
+$tabs.Size = New-Object System.Drawing.Size(940, 470)
+$tabs.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Bottom -bor [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
+$form.Controls.Add($tabs)
+
+$lastLogKeys = ""
+
+function Render-Snapshot {
+    $snapshot = Load-Snapshot
+    if ($null -eq $snapshot) {
+        $meta.Text = "运行状态文件暂不可读：" + $StatusPath
+        return
+    }
+    $meta.Text = "本地服务：" + $(if ($snapshot.baseUrl) { $snapshot.baseUrl } else { "启动中" }) + "    版本：v" + $snapshot.version + "    刷新时间：" + (Get-Date).ToString("HH:mm:ss")
+    $up = $snapshot.updateStatus
+    if ($null -ne $up) {
+        $statusText.Text = "[" + $up.state + "] " + $up.message
+        $value = 0
+        [int]::TryParse([string]$up.progress, [ref]$value) | Out-Null
+        if ($value -lt 0) { $value = 0 }
+        if ($value -gt 100) { $value = 100 }
+        $progress.Value = $value
+    }
+
+    $logs = @($snapshot.logs)
+    $keys = ($logs | ForEach-Object { $_.label + "|" + $_.filePath }) -join ";;"
+    if ($keys -ne $script:lastLogKeys) {
+        $tabs.TabPages.Clear()
+        foreach ($log in $logs) {
+            $page = New-Object System.Windows.Forms.TabPage
+            $page.Text = $log.label
+            $box = New-Object System.Windows.Forms.TextBox
+            $box.Multiline = $true
+            $box.ReadOnly = $true
+            $box.ScrollBars = "Both"
+            $box.WordWrap = $false
+            $box.Dock = "Fill"
+            $box.Font = New-Object System.Drawing.Font("Consolas", 9)
+            $box.Tag = $log.filePath
+            $page.Controls.Add($box)
+            $tabs.TabPages.Add($page) | Out-Null
+        }
+        $script:lastLogKeys = $keys
+    }
+
+    foreach ($page in $tabs.TabPages) {
+        if ($page.Controls.Count -gt 0) {
+            $box = $page.Controls[0]
+            $box.Text = Read-TailText $box.Tag 90000
+            $box.SelectionStart = $box.TextLength
+            $box.ScrollToCaret()
+        }
+    }
+}
+
+$openFolder.Add_Click({
+    $root = Split-Path -Parent $StatusPath
+    if (Test-Path -LiteralPath $root) { Start-Process explorer.exe $root }
+})
+$refresh.Add_Click({ Render-Snapshot })
+
+$timer = New-Object System.Windows.Forms.Timer
+$timer.Interval = 2000
+$timer.Add_Tick({ Render-Snapshot })
+$timer.Start()
+
+Render-Snapshot
+[void]$form.ShowDialog()
+`;
+}
+
+function openLogsFolder() {
+    const logRoot = electronLogRoot;
+    fs.mkdirSync(logRoot, { recursive: true });
+    shell.openPath(logRoot).catch((err) => {
+        dialog.showErrorBox('打开日志目录失败', err.message || String(err));
+    });
+}
+
+async function checkForUpdatesFromTray() {
+    if (!app.isPackaged) {
+        dialog.showMessageBox({
+            type: 'info',
+            title: '检查更新',
+            message: '开发模式不支持自动更新。',
+            detail: `当前开发版本：v${app.getVersion()}`
+        });
+        return;
+    }
+    try {
+        await autoUpdater.checkForUpdates();
+        dialog.showMessageBox({
+            type: updateStatus.state === 'available' ? 'info' : 'none',
+            title: '检查更新',
+            message: updateStatus.message || '检查完成',
+            detail: updateStatus.latestVersion ? `最新版本：${updateStatus.latestVersion}` : ''
+        });
+    } catch (err) {
+        dialog.showErrorBox('检查更新失败', err.message || String(err));
+    }
+}
+
+async function downloadUpdateFromTray() {
+    try {
+        await autoUpdater.downloadUpdate();
+    } catch (err) {
+        dialog.showErrorBox('下载更新失败', err.message || String(err));
+    }
+}
+
+function installUpdateFromTray() {
+    if (!updateDownloaded) return;
+    isQuitting = true;
+    autoUpdater.quitAndInstall(false, true);
+}
+
+function restartApp() {
+    isQuitting = true;
+    app.relaunch();
+    app.quit();
+}
+
+function toggleOpenAtLogin(menuItem) {
+    const next = !!menuItem.checked;
+    app.setLoginItemSettings({ openAtLogin: next });
+    refreshTrayMenu();
+}
+
+function refreshTrayMenu() {
+    if (!tray) return;
+    writeRuntimeStatusSnapshot();
+    const baseUrl = getAppBaseUrl();
+    const loginSettings = app.getLoginItemSettings();
+    const menuTemplate = [
+        { label: `Tools Platform v${app.getVersion()}`, enabled: false },
+        { label: baseUrl || '本地服务启动中...', enabled: false },
+        { type: 'separator' },
+        { label: '打开 Tools Platform', click: () => openAppPath('/') },
+        { label: '打开数据抓取', click: () => openAppPath('/uivf12') },
+        { label: '打开数据导入', click: () => openAppPath('/sla') },
+        { label: '打开报表看板', click: () => openAppPath('/report') },
+        { type: 'separator' },
+        { label: '查看实时日志/更新进度', click: createLogWindow },
+        { label: '打开日志文件夹', click: openLogsFolder },
+        { type: 'separator' },
+        { label: `更新状态：${updateStatus.message || '等待检查更新'}`, enabled: false },
+        { label: '检查更新', click: checkForUpdatesFromTray },
+        ...(updateStatus.state === 'available' ? [{ label: '下载更新', click: downloadUpdateFromTray }] : []),
+        ...(updateStatus.state === 'downloaded' ? [{ label: '重启并安装更新', click: installUpdateFromTray }] : []),
+        { type: 'separator' },
+        { label: '开机自启动', type: 'checkbox', checked: !!loginSettings.openAtLogin, click: toggleOpenAtLogin },
+        { label: '重启本地服务', click: restartApp },
+        { label: '完全退出程序', click: () => {
+            isQuitting = true;
+            app.quit();
+        }}
+    ];
+    tray.setContextMenu(Menu.buildFromTemplate(menuTemplate));
+}
+
+async function startTrayApp() {
+    const launchExperience = prepareLaunchExperience();
     registerDownloadHandler();
 
     try {
-        // Start the Express server on a dynamically assigned free port
         const PORT = await getFreePort(3030);
         process.env.PORT = PORT;
-        
-        require('./backend/server.js');
-        
-        // Wait a brief moment for the server to bind the port
+        localPort = PORT;
+        writeRuntimeStatusSnapshot();
+
+        if (!localServerStarted) {
+            localServerStarted = true;
+            require('./backend/server.js');
+        }
+
+        if (!tray) {
+            createTray();
+        } else {
+            refreshTrayMenu();
+        }
+
         setTimeout(() => {
             const launchUrl = buildLaunchUrl(PORT, launchExperience);
-            mainWindow.loadURL(launchUrl);
             if (launchExperience.shouldOpenSystemBrowser) {
                 shell.openExternal(launchUrl).catch((err) => {
                     console.warn('[Electron] Failed to open system browser:', err.message);
                 });
             }
-            mainWindow.webContents.once('did-finish-load', scheduleStartupUpdateCheck);
+            scheduleStartupUpdateCheck();
         }, 1000);
     } catch (err) {
         dialog.showErrorBox('Server Startup Failed', `Failed to start the local server: ${err.message}`);
     }
-
-    if (!tray) {
-        createTray();
-    }
-
-    mainWindow.on('close', function (event) {
-        if (!isQuitting) {
-            event.preventDefault();
-            
-            const state = readLaunchState();
-            if (state.closeBehavior === 'minimize') {
-                mainWindow.hide();
-                return;
-            } else if (state.closeBehavior === 'quit') {
-                isQuitting = true;
-                app.quit();
-                return;
-            }
-
-            dialog.showMessageBox(mainWindow, {
-                type: 'question',
-                buttons: ['最小化到后台托盘 (推荐)', '完全退出程序'],
-                defaultId: 0,
-                cancelId: 0,
-                title: '关闭窗口',
-                message: '您希望如何处理程序？',
-                detail: '最小化到后台托盘可以保持服务运行，随时通过右下角托盘快速打开主窗口。',
-                checkboxLabel: '记住我的选择，以后不再提示',
-                checkboxChecked: true
-            }).then(({ response, checkboxChecked }) => {
-                if (checkboxChecked) {
-                    state.closeBehavior = response === 1 ? 'quit' : 'minimize';
-                    writeLaunchState(state);
-                }
-
-                if (response === 1) {
-                    isQuitting = true;
-                    app.quit();
-                } else {
-                    mainWindow.hide();
-                    if (isFirstClose && tray) {
-                        tray.displayBalloon({
-                            title: '工具已隐藏至后台托盘',
-                            content: '程序仍在后台稳定运行中，点击托盘图标可重新打开主窗口。',
-                            iconType: 'info'
-                        });
-                        isFirstClose = false;
-                    }
-                }
-            });
-        }
-    });
-
-    mainWindow.on('closed', function () {
-        mainWindow = null;
-    });
 }
 
 app.on('before-quit', () => {
     isQuitting = true;
 });
 
-app.on('ready', createWindow);
 app.whenReady().then(() => {
     setupAutoUpdater();
     registerUpdaterIpcHandlers();
+    registerDesktopIpcHandlers();
+    startTrayApp();
 });
 
 app.on('window-all-closed', function () {
-    if (process.platform !== 'darwin') {
+    if (isQuitting && process.platform !== 'darwin') {
         app.quit();
     }
 });
 
 app.on('activate', function () {
-    if (mainWindow === null) {
-        createWindow();
-    }
+    openAppPath('/');
 });
