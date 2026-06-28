@@ -26,7 +26,7 @@ function installDailyFileConsole(options = {}) {
     if (global.__TOOLS_DAILY_FILE_CONSOLE_INSTALLED__) return;
     global.__TOOLS_DAILY_FILE_CONSOLE_INSTALLED__ = true;
 
-    const logRoot = options.logRoot || path.join(__dirname, '..', 'logs');
+    const logRoot = options.logRoot || process.env.TOOLS_LOG_DIR || path.join(__dirname, '..', 'logs');
     const original = {
         log: console.log.bind(console),
         warn: console.warn.bind(console),
