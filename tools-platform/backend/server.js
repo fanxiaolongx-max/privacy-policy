@@ -86,6 +86,7 @@ const PUBLIC_ASSET_EXTS = new Set([
 function shouldProtectHtmlEntry(req) {
     if (req.method !== 'GET' && req.method !== 'HEAD') return false;
     if (req.path.startsWith('/api/')) return false;
+    if (req.path.startsWith('/knight-dreams/')) return false;
     if (PUBLIC_HTML_PATHS.has(req.path)) return false;
     const ext = path.extname(req.path).toLowerCase();
     if (PUBLIC_ASSET_EXTS.has(ext)) return false;
