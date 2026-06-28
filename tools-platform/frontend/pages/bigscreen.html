@@ -481,9 +481,9 @@
         }
 
         .rank-row {
-            grid-template-columns: 52px minmax(0, 1fr) 94px;
+            grid-template-columns: 48px minmax(40px, 1fr) minmax(126px, auto);
             min-width: 0;
-            padding: 14px 18px;
+            padding: 14px 12px;
             border: 1px solid rgba(120, 190, 255, 0.14);
             background: rgba(57, 213, 255, 0.05);
         }
@@ -589,17 +589,22 @@
         }
 
         .rank-score {
-            justify-self: center;
+            justify-self: end;
             text-align: center;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            justify-content: flex-end;
+            gap: 5px;
+            min-width: 0;
+            max-width: 100%;
         }
 
         .flap-board {
             display: inline-flex;
             gap: 2px;
             perspective: 800px;
+            min-width: 0;
+            flex: 0 1 auto;
         }
 
         .flap-char {
@@ -655,11 +660,13 @@
         }
 
         .rank-score-label {
-            display: block;
-            margin-top: 3px;
+            display: inline-flex;
+            align-items: center;
+            flex: 0 0 auto;
             font-size: 10px;
             color: var(--text-muted);
             font-weight: 700;
+            white-space: nowrap;
         }
 
         .rank-row .row-name {

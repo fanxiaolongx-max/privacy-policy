@@ -227,6 +227,37 @@ async function readFiles(files) {
     return results.reduce((a, b) => a.concat(b), []);
 }
 
+function getVersionSuffixFromName(name) {
+    const fileName = String(name || '');
+    const latestIdx = fileName.lastIndexOf('Latest');
+    if (latestIdx !== -1) {
+        return fileName.substring(latestIdx + 6).replace(/\.[^/.]+$/, '').trim();
+    }
+    return fileName.replace(/\.[^/.]+$/, '').trim();
+}
+
+function normalizeStructuredRows(name, rows) {
+    const suffix = getVersionSuffixFromName(name);
+    return (Array.isArray(rows) ? rows : []).map(row => ({
+        ...(row && typeof row === 'object' ? row : {}),
+        '版本标识': row && row['版本标识'] !== undefined ? row['版本标识'] : (suffix || '主版本(Base)')
+    }));
+}
+
+async function readSources(sources) {
+    const out = [];
+    const files = [];
+    (sources || []).forEach(source => {
+        if (source && Array.isArray(source.__uivRows)) {
+            out.push(...normalizeStructuredRows(source.name, source.__uivRows));
+        } else if (source) {
+            files.push(source);
+        }
+    });
+    if (files.length) out.push(...await readFiles(files));
+    return out;
+}
+
 async function handleSpecificUpload(e, forceMode) {
     const files = Array.from(e.target.files);
     if (!files.length) return;
@@ -263,6 +294,13 @@ async function handleSpecificUpload(e, forceMode) {
 async function handleBatchUpload(e) {
     const files = Array.from(e.target.files);
     if (!files.length) return;
+    await processBatchFiles(files);
+    e.target.value = '';
+}
+
+async function processBatchFiles(files, meta = {}) {
+    files = Array.from(files || []).filter(Boolean);
+    if (!files.length) return;
     document.getElementById('main-wrapper').innerHTML = `<div class="loading-text">${SLAT('sla.upload.smartLoading')}</div>`;
 
     const groups = {
@@ -297,12 +335,12 @@ async function handleBatchUpload(e) {
         }
     });
 
-    if (groups.rectification.files.length) groups.rectification.data = await readFiles(groups.rectification.files);
-    if (groups.special.files.length)       groups.special.data       = await readFiles(groups.special.files);
-    if (groups.risk.files.length)          groups.risk.data          = await readFiles(groups.risk.files);
-    if (groups.sr.files.length)            groups.sr.data            = await readFiles(groups.sr.files);
-    if (groups.vulnerability.files.length) groups.vulnerability.data = await readFiles(groups.vulnerability.files);
-    for (const key in groups.others)       groups.others[key].data   = await readFiles(groups.others[key].files);
+    if (groups.rectification.files.length) groups.rectification.data = await readSources(groups.rectification.files);
+    if (groups.special.files.length)       groups.special.data       = await readSources(groups.special.files);
+    if (groups.risk.files.length)          groups.risk.data          = await readSources(groups.risk.files);
+    if (groups.sr.files.length)            groups.sr.data            = await readSources(groups.sr.files);
+    if (groups.vulnerability.files.length) groups.vulnerability.data = await readSources(groups.vulnerability.files);
+    for (const key in groups.others)       groups.others[key].data   = await readSources(groups.others[key].files);
 
     document.getElementById('main-wrapper').innerHTML = '';
     resetRuntimeWorkspace();
@@ -333,13 +371,60 @@ async function handleBatchUpload(e) {
     
     // 等待所有表格的预加载和DOM构建完成
     await Promise.all(initPromises);
-    persistWorkspaceCache(cacheSections, { type: 'batch', summaryTitle: batchTitle, files: files.map(f => f.name) });
+    persistWorkspaceCache(cacheSections, { type: meta.type || 'batch', summaryTitle: meta.summaryTitle || batchTitle, files: files.map(f => f.name), source: meta.source || '' });
     
-    API.logHistory('sla', '批量导入', `${files.length} 个文件`);
-    e.target.value = '';
+    API.logHistory('sla', meta.historyAction || '批量导入', `${files.length} 个文件`);
     
     // 所有表格渲染完后，触发快照抓取 (稍微等一下让浏览器重绘)
     setTimeout(() => captureAndUploadSnapshot(files.map(f => f.name)), 300);
+}
+
+function getUivAutoImportParams() {
+    const params = new URLSearchParams(window.location.search || '');
+    const sessionId = params.get('uivImportSession') || '';
+    const token = params.get('uivImportToken') || '';
+    if (!/^[a-f0-9]{32}$/.test(sessionId) || !/^[a-f0-9]{32}$/.test(token)) return null;
+    return { sessionId, token };
+}
+
+async function importUivAutoSession() {
+    const params = getUivAutoImportParams();
+    if (!params) return false;
+    const mainWrapper = document.getElementById('main-wrapper');
+    const summaryNav = document.getElementById('summary-nav-area');
+    if (summaryNav) summaryNav.style.display = 'none';
+    if (mainWrapper) mainWrapper.innerHTML = `<div class="loading-text">⏳ 正在接收 UIVF12 抓取文件并自动导入...</div>`;
+    try {
+        const metaUrl = `/api/uiv-auto-import/${encodeURIComponent(params.sessionId)}?token=${encodeURIComponent(params.token)}`;
+        const meta = await fetch(metaUrl, { cache: 'no-store' }).then(res => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+        });
+        const datasets = Array.isArray(meta.datasets) ? meta.datasets : [];
+        if (!datasets.length) throw new Error('自动导入会话中没有可导入数据集');
+        const sources = datasets.map(dataset => ({
+            name: dataset.name || `${dataset.id}.csv`,
+            __uivRows: Array.isArray(dataset.rows) ? dataset.rows : []
+        })).filter(source => source.__uivRows.length);
+        if (!sources.length) throw new Error('自动导入数据集为空');
+        await processBatchFiles(sources, {
+            type: 'uiv-auto-import',
+            source: 'uivf12',
+            historyAction: 'UIVF12 自动导入',
+            summaryTitle: `📊 UIVF12 自动导入成功 (共解析 ${sources.length} 个数据集)`
+        });
+        if (typeof showToast === 'function') showToast(`✅ 已自动导入 UIVF12 抓取数据集：${sources.length} 个`);
+        const cleanUrl = `${window.location.pathname}${window.location.hash || ''}`;
+        window.history.replaceState({}, document.title, cleanUrl);
+        return true;
+    } catch (err) {
+        logSLAUploadError('UIVF12 自动导入', err, params);
+        if (mainWrapper) {
+            mainWrapper.innerHTML = `<div style="text-align:center;color:#b91c1c;background:#fff5f5;padding:28px;border:1px solid #fecaca;border-radius:10px;">UIVF12 自动导入失败：${escapeHTML(err.message || String(err))}<br><br><span style="color:#666;font-size:13px;">抓取文件仍会保留在浏览器默认下载目录，可手动点击上方批量导入。</span></div>`;
+        }
+        if (typeof showToast === 'function') showToast(`❌ UIVF12 自动导入失败：${err.message}`, 'error');
+        return true;
+    }
 }
 
 async function captureAndUploadSnapshot(fileNames) {
@@ -501,4 +586,4 @@ async function captureAndUploadSnapshot(fileNames) {
     }
 }
 
-window.SLAUpload = { handleBatchUpload, handleSpecificUpload, readFiles, generateSchemaHash, restoreCachedWorkspace, clearWorkspaceCache, RECT_PRIORITY_COLS, RISK_PRIORITY_COLS, SPECIAL_PRIORITY_COLS, SR_PRIORITY_COLS, VULN_PRIORITY_COLS };
+window.SLAUpload = { handleBatchUpload, handleSpecificUpload, processBatchFiles, importUivAutoSession, readFiles, generateSchemaHash, restoreCachedWorkspace, clearWorkspaceCache, RECT_PRIORITY_COLS, RISK_PRIORITY_COLS, SPECIAL_PRIORITY_COLS, SR_PRIORITY_COLS, VULN_PRIORITY_COLS };
