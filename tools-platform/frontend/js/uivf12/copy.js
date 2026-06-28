@@ -72,6 +72,130 @@ function cycleUivBatchSpeed() {
     showToast(UIVT('uiv.repo.batchSpeedToast', { speed: next, seconds: getUivCooldownMs(next) / 1000 }), 'success');
 }
 
+function registerUivAutoImportBridge(autoImport) {
+    if (!autoImport || !autoImport.sessionId || !autoImport.token) return;
+    window.__uivf12AutoImportBridgeSessions = window.__uivf12AutoImportBridgeSessions || {};
+    window.__uivf12AutoImportBridgeSessions[autoImport.sessionId] = autoImport;
+    window.__uivf12AutoImportBridgeNameCounts = window.__uivf12AutoImportBridgeNameCounts || {};
+    if (window.__uivf12AutoImportBridgeBound) return;
+    window.__uivf12AutoImportBridgeBound = true;
+    function rowsFromTable(table) {
+        const headers = Array.isArray(table && table.headers) ? table.headers : [];
+        const values = Array.isArray(table && table.values) ? table.values : [];
+        if (!headers.length || !values.length) return [];
+        return values
+            .filter(row => Array.isArray(row) && row.some(value => String(value || '').trim() !== ''))
+            .map(row => {
+                const obj = {};
+                headers.forEach((header, index) => {
+                    obj[String(header || ('列' + (index + 1))).trim() || ('列' + (index + 1))] = row[index] !== undefined ? row[index] : '';
+                });
+                return obj;
+            });
+    }
+    function uniquifyUploadName(sessionId, name) {
+        const baseName = String(name || 'uivf12_capture.csv');
+        const key = `${sessionId}::${baseName}`;
+        const count = window.__uivf12AutoImportBridgeNameCounts[key] || 0;
+        window.__uivf12AutoImportBridgeNameCounts[key] = count + 1;
+        if (count === 0) return baseName;
+        const dot = baseName.lastIndexOf('.');
+        if (dot > 0 && dot > baseName.lastIndexOf('/')) {
+            return `${baseName.slice(0, dot)} (${count})${baseName.slice(dot)}`;
+        }
+        return `${baseName} (${count})`;
+    }
+    function makeBridgeUploadId() {
+        const bytes = new Uint8Array(8);
+        crypto.getRandomValues(bytes);
+        return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+    }
+    function chunkRows(rows, maxRows = 12, maxBytes = 22000) {
+        const chunks = [];
+        let current = [];
+        let currentBytes = 0;
+        rows.forEach(row => {
+            const rowBytes = (() => { try { return JSON.stringify(row).length; } catch (e) { return 1024; } })();
+            if (current.length && (current.length >= maxRows || currentBytes + rowBytes > maxBytes)) {
+                chunks.push(current);
+                current = [];
+                currentBytes = 0;
+            }
+            current.push(row);
+            currentBytes += rowBytes;
+        });
+        if (current.length) chunks.push(current);
+        return chunks;
+    }
+    async function postDatasetRows(session, uploadName, rows, meta) {
+        const chunks = chunkRows(rows);
+        const clientUploadId = makeBridgeUploadId();
+        let latestResult = null;
+        for (let index = 0; index < chunks.length; index++) {
+            const res = await fetch(session.uploadUrl, {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({
+                    name: uploadName,
+                    rows: chunks[index],
+                    append: true,
+                    clientUploadId,
+                    chunkIndex: index,
+                    chunkCount: chunks.length,
+                    origin: meta.origin || '',
+                    groupName: session.groupName || meta.groupName || ''
+                })
+            });
+            const result = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(`HTTP ${res.status}: ${result.error || res.statusText || 'upload failed'} (chunk ${index + 1}/${chunks.length})`);
+            latestResult = result;
+        }
+        return latestResult || {};
+    }
+    window.addEventListener('message', async event => {
+        const data = event.data || {};
+        if (!data || data.type !== 'uivf12-auto-import-dataset') return;
+        const sessions = window.__uivf12AutoImportBridgeSessions || {};
+        const session = sessions[data.sessionId];
+        if (!session || session.token !== data.token) return;
+
+        const reply = payload => {
+            try {
+                if (event.source && typeof event.source.postMessage === 'function') {
+                    event.source.postMessage(Object.assign({
+                        type: 'uivf12-auto-import-ack',
+                        requestId: data.requestId,
+                        sessionId: data.sessionId
+                    }, payload), event.origin || '*');
+                }
+            } catch (e) {}
+        };
+
+        try {
+            const rows = data.table ? rowsFromTable(data.table) : (Array.isArray(data.rows) ? data.rows : []);
+            if (!rows.length) throw new Error('缺少结构化 rows 数据');
+            const uploadName = uniquifyUploadName(data.sessionId, data.name);
+            const result = await postDatasetRows(session, uploadName, rows, {
+                origin: data.origin || event.origin || '',
+                groupName: data.groupName || ''
+            });
+            reply({ ok: true, result });
+        } catch (error) {
+            console.warn('[UIVF12 Auto Import Bridge] upload failed:', data.name, error);
+            reply({
+                ok: false,
+                error: error.message || '自动导入桥接上传失败',
+                detail: {
+                    name: data.name || '',
+                    rowCount: data.table && Array.isArray(data.table.values) ? data.table.values.length : (Array.isArray(data.rows) ? data.rows.length : 0),
+                    headerCount: data.table && Array.isArray(data.table.headers) ? data.table.headers.length : 0,
+                    approxBytes: (() => { try { return JSON.stringify(data.table || data.rows || []).length; } catch (e) { return 0; } })()
+                }
+            });
+        }
+    });
+}
+
 function getUivOpenUrl(rawUrl) {
     try {
         const parsed = new URL(rawUrl || '');
@@ -100,7 +224,7 @@ function buildLoginProbeScript(rawUrl) {
         return 'return (document.cookie.indexOf("XSRF-TOKEN=") !== -1 || document.cookie.indexOf("NETLIVE-XSRF-TOKEN=") !== -1) ? "true" : "false";';
     }
     if (lowerUrl.includes('netcare')) {
-        return 'return localStorage.getItem("globalConfig") ? "true" : "false";';
+        return 'return (localStorage.getItem("globalConfig") && document.cookie && document.cookie.length > 20) ? "true" : "false";';
     }
     return 'return (document.cookie || localStorage.length > 0) ? "true" : "false";';
 }
@@ -121,6 +245,33 @@ function groupUivScriptsByOpenUrl(scripts) {
         groupMap.get(script.openUrl).scripts.push(script);
     });
     return groups;
+}
+
+function sampleUivScriptsPerSite(scripts, perSite = 2) {
+    const prepared = scripts
+        .map((script, index) => {
+            const resolvedUrl = resolveUivScriptUrl(script);
+            return {
+                script,
+                index,
+                openUrl: getUivOpenUrl(resolvedUrl)
+            };
+        })
+        .filter(item => item.openUrl && (item.script.code || item.script.consoleCode));
+    const map = new Map();
+    prepared.forEach(item => {
+        if (!map.has(item.openUrl)) map.set(item.openUrl, []);
+        map.get(item.openUrl).push(item);
+    });
+    const sampled = [];
+    map.forEach(items => {
+        const pool = [...items];
+        for (let i = 0; i < perSite && pool.length; i++) {
+            const pickIndex = Math.floor(Math.random() * pool.length);
+            sampled.push(pool.splice(pickIndex, 1)[0].script);
+        }
+    });
+    return sampled;
 }
 
 function buildUivProgressPanelScript(state) {
@@ -347,8 +498,15 @@ function buildUivCompletionDialogScript(summary) {
                 return {};
             }
         }
-        const actualFiles = Array.from(new Set((readWindowState().uivf12Downloads || []).filter(Boolean)));
+        const actualFiles = (readWindowState().uivf12Downloads || []).filter(Boolean);
+        const importedFiles = (readWindowState().uivf12AutoImportDatasets || []).filter(Boolean);
+        const failedImports = (readWindowState().uivf12AutoImportFailures || []).filter(Boolean);
+        const noDownloadTasks = (readWindowState().uivf12NoDownloadTasks || []).filter(Boolean);
         const hasActualFiles = actualFiles.length > 0;
+        const hasImportedFiles = importedFiles.length > 0;
+        const hasFailedImports = failedImports.length > 0;
+        const hasNoDownloadTasks = noDownloadTasks.length > 0;
+        const importUrl = summary.autoImport && summary.autoImport.slaUrl ? summary.autoImport.slaUrl : '';
         const old = document.getElementById('uivf12-completion-dialog');
         if (old) old.remove();
         const overlay = document.createElement('div');
@@ -371,6 +529,48 @@ function buildUivCompletionDialogScript(summary) {
                 '<span style="word-break:break-all;white-space:normal;color:#f8fafc;font-weight:650;">' + String(name).replace(/[<>&]/g, ch => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[ch])) + '</span>' +
             '</div>'
         ).join('');
+        const escapeHtml = value => String(value === undefined || value === null ? '' : value).replace(/[<>&]/g, ch => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[ch]));
+        const failedRows = failedImports.map(item => {
+            const detail = item && typeof item.detail === 'object' ? item.detail : {};
+            const detailLines = [
+                ['时间', item.at || ''],
+                ['行数', detail.rowCount],
+                ['字段数', detail.headerCount],
+                ['桥接负载约', detail.approxBytes ? (detail.approxBytes + ' bytes') : ''],
+                ['桥接错误', detail.bridgeError],
+                ['Fetch 错误', detail.fetchError],
+                ['完整信息', detail.message || detail.error || item.reason || '']
+            ].filter(pair => pair[1] !== undefined && pair[1] !== null && String(pair[1]) !== '');
+            const detailHtml = detailLines.map(pair =>
+                '<div style="display:grid;grid-template-columns:82px minmax(0,1fr);gap:8px;padding:2px 0;">' +
+                    '<span style="color:#fda4af;">' + escapeHtml(pair[0]) + '</span>' +
+                    '<span style="color:#fecaca;word-break:break-all;">' + escapeHtml(pair[1]) + '</span>' +
+                '</div>'
+            ).join('');
+            return '<details style="padding:8px 0;border-bottom:1px solid rgba(251,113,133,.14);font-size:12px;line-height:1.45;">' +
+                '<summary style="cursor:pointer;color:#fecaca;font-weight:750;word-break:break-all;">' + escapeHtml(item.name || item) +
+                    '<span style="margin-left:8px;color:#fda4af;font-weight:600;">' + escapeHtml(item.reason || '自动导入失败') + '</span>' +
+                '</summary>' +
+                '<div style="margin-top:6px;padding:8px;border-radius:8px;background:rgba(127,29,29,.16);font-size:11px;">' + detailHtml + '</div>' +
+            '</details>';
+        }).join('');
+        const noDownloadRows = noDownloadTasks.map(item => {
+            const lines = [
+                ['时间', item.at || ''],
+                ['下载数变化', String(item.before || 0) + ' -> ' + String(item.after || 0)],
+                ['脚本返回', item.result || '']
+            ].filter(pair => pair[1] !== undefined && pair[1] !== null && String(pair[1]) !== '');
+            const detailHtml = lines.map(pair =>
+                '<div style="display:grid;grid-template-columns:82px minmax(0,1fr);gap:8px;padding:2px 0;">' +
+                    '<span style="color:#fde68a;">' + escapeHtml(pair[0]) + '</span>' +
+                    '<span style="color:#fef3c7;word-break:break-all;">' + escapeHtml(pair[1]) + '</span>' +
+                '</div>'
+            ).join('');
+            return '<details style="padding:8px 0;border-bottom:1px solid rgba(251,191,36,.14);font-size:12px;line-height:1.45;">' +
+                '<summary style="cursor:pointer;color:#fde68a;font-weight:750;word-break:break-all;">' + escapeHtml(item.name || '未命名脚本') + '</summary>' +
+                '<div style="margin-top:6px;padding:8px;border-radius:8px;background:rgba(146,64,14,.16);font-size:11px;">' + detailHtml + '</div>' +
+            '</details>';
+        }).join('');
         overlay.innerHTML =
             '<div style="width:min(720px,100%);max-height:calc(100vh - 40px);overflow:hidden;background:rgba(15,23,42,.96);border:1px solid rgba(56,189,248,.38);border-radius:16px;box-shadow:0 24px 90px rgba(0,0,0,.45);">' +
                 '<div style="padding:20px 22px 14px;border-bottom:1px solid rgba(148,163,184,.16);display:flex;justify-content:space-between;gap:16px;align-items:flex-start;">' +
@@ -384,15 +584,30 @@ function buildUivCompletionDialogScript(summary) {
                     '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px;">' +
                         '<div style="border:1px solid rgba(103,232,249,.18);border-radius:10px;padding:10px;background:rgba(8,47,73,.28);"><div style="font-size:10px;color:#7dd3fc;text-transform:uppercase;">脚本任务</div><div style="font-size:22px;font-weight:900;">' + summary.taskCount + '</div></div>' +
                         '<div style="border:1px solid rgba(103,232,249,.18);border-radius:10px;padding:10px;background:rgba(8,47,73,.28);"><div style="font-size:10px;color:#7dd3fc;text-transform:uppercase;">实际文件</div><div style="font-size:22px;font-weight:900;">' + (hasActualFiles ? actualFiles.length : '未检测') + '</div></div>' +
-                        '<div style="border:1px solid rgba(103,232,249,.18);border-radius:10px;padding:10px;background:rgba(8,47,73,.28);"><div style="font-size:10px;color:#7dd3fc;text-transform:uppercase;">下载位置</div><div style="font-size:12px;font-weight:800;color:#fef3c7;margin-top:7px;">浏览器默认下载目录</div></div>' +
+                        '<div style="border:1px solid rgba(103,232,249,.18);border-radius:10px;padding:10px;background:rgba(8,47,73,.28);"><div style="font-size:10px;color:#7dd3fc;text-transform:uppercase;">自动导入</div><div style="font-size:22px;font-weight:900;">' + (hasImportedFiles ? importedFiles.length : '未暂存') + '</div></div>' +
                     '</div>' +
-                    '<div style="font-size:12px;color:#cbd5e1;margin-bottom:10px;">文件名来自本次页面实际触发的下载动作。实际路径取决于本机浏览器下载设置；网页无法读取真实本机下载路径。</div>' +
+                    '<div style="font-size:12px;color:#cbd5e1;margin-bottom:10px;">文件会继续下载到浏览器默认下载目录；自动导入只上传浏览器端解析后的结构化 rows，不上传原始 CSV 文件。</div>' +
+                    (importUrl && hasImportedFiles ? '<div id="uivf12-import-open-hint" style="margin-bottom:12px;padding:10px;border:1px solid rgba(34,197,94,.28);border-radius:10px;background:rgba(22,101,52,.16);font-size:12px;color:#bbf7d0;line-height:1.55;">即将在新标签页打开数据导入页面并执行智能分流合并，当前抓取结果页会保留。<a href="' + importUrl.replace(/"/g, '&quot;') + '" target="_blank" rel="noopener" style="color:#67e8f9;font-weight:800;margin-left:8px;">立即打开</a><div style="margin-top:4px;color:#fde68a;">如果浏览器拦截了自动打开新标签页，请点击上方“立即打开”。</div></div>' : '') +
+                    (hasFailedImports ? '<div style="margin-bottom:12px;padding:10px 14px;border:1px solid rgba(251,113,133,.3);border-radius:10px;background:rgba(127,29,29,.18);"><div style="font-size:12px;color:#fecaca;font-weight:850;margin-bottom:6px;">以下文件下载成功，但自动导入失败</div>' + failedRows + '</div>' : '') +
+                    (hasNoDownloadTasks ? '<div style="margin-bottom:12px;padding:10px 14px;border:1px solid rgba(251,191,36,.3);border-radius:10px;background:rgba(146,64,14,.16);"><div style="font-size:12px;color:#fde68a;font-weight:850;margin-bottom:6px;">以下脚本已执行，但未检测到下载文件</div>' + noDownloadRows + '</div>' : '') +
                     '<div style="max-height:320px;overflow:auto;border:1px solid rgba(148,163,184,.16);border-radius:10px;padding:4px 14px;background:rgba(2,6,23,.34);">' + (fileRows || '<div style="padding:14px;color:#94a3b8;font-size:13px;">未检测到本次下载文件名。若浏览器或扩展绕过页面下载事件，文件数量将不显示。</div>') + '</div>' +
                 '</div>' +
             '</div>';
         overlay.querySelector('#uivf12-completion-close').onclick = () => overlay.remove();
         overlay.addEventListener('click', event => { if (event.target === overlay) overlay.remove(); });
         document.documentElement.appendChild(overlay);
+        if (importUrl && hasImportedFiles) {
+            setTimeout(function () {
+                const opened = window.open(importUrl, '_blank', 'noopener');
+                if (!opened) {
+                    const hint = overlay.querySelector('#uivf12-import-open-hint');
+                    if (hint) {
+                        hint.style.borderColor = 'rgba(251,191,36,.42)';
+                        hint.style.background = 'rgba(146,64,14,.18)';
+                    }
+                }
+            }, 1800);
+        }
         return 'completion-shown';
     })();`;
 }
@@ -400,6 +615,7 @@ function buildUivCompletionDialogScript(summary) {
 function buildUivDownloadRecorderScript(options = {}) {
     return `(() => {
         const reset = ${options.reset ? 'true' : 'false'};
+        const autoImport = ${JSON.stringify(options.autoImport || null)};
         function readWindowState() {
             try {
                 const parsed = window.name ? JSON.parse(window.name) : {};
@@ -419,28 +635,332 @@ function buildUivDownloadRecorderScript(options = {}) {
             bag.uivf12Downloads = list;
             writeWindowState(bag);
         }
+        function recordAutoImportName(name) {
+            if (!name) return;
+            const bag = readWindowState();
+            const list = Array.isArray(bag.uivf12AutoImportDatasets) ? bag.uivf12AutoImportDatasets : [];
+            list.push(String(name));
+            bag.uivf12AutoImportDatasets = list;
+            writeWindowState(bag);
+        }
+        function recordAutoImportFailure(name, reason) {
+            if (!name) return;
+            const bag = readWindowState();
+            const list = Array.isArray(bag.uivf12AutoImportFailures) ? bag.uivf12AutoImportFailures : [];
+            const detail = reason && typeof reason === 'object' ? reason : { message: reason };
+            const message = detail.message || detail.error || '自动导入失败';
+            const signature = String(name) + '::' + String(message);
+            if (list.some(item => item && item.signature === signature)) return;
+            list.push({
+                name: String(name),
+                reason: String(message).slice(0, 260),
+                signature,
+                detail,
+                at: new Date().toISOString()
+            });
+            bag.uivf12AutoImportFailures = list;
+            writeWindowState(bag);
+        }
+        function hasRecentDirectCapture(name) {
+            if (!name) return false;
+            const captures = window.__uivf12RecentDirectCaptures || {};
+            return Date.now() - (captures[String(name)] || 0) < 5000;
+        }
+        function markRecentDirectCapture(name) {
+            if (!name) return;
+            window.__uivf12RecentDirectCaptures = window.__uivf12RecentDirectCaptures || {};
+            window.__uivf12RecentDirectCaptures[String(name)] = Date.now();
+        }
+        function parseCsv(text) {
+            const table = parseCsvTable(text);
+            return tableToRows(table);
+        }
+        function parseCsvTable(text) {
+            const normalized = String(text || '').replace(/^\\uFEFF/, '');
+            const rows = [];
+            let row = [];
+            let field = '';
+            let inQuotes = false;
+            for (let i = 0; i < normalized.length; i++) {
+                const ch = normalized[i];
+                const next = normalized[i + 1];
+                if (inQuotes) {
+                    if (ch === '"' && next === '"') {
+                        field += '"';
+                        i++;
+                    } else if (ch === '"') {
+                        inQuotes = false;
+                    } else {
+                        field += ch;
+                    }
+                } else if (ch === '"') {
+                    inQuotes = true;
+                } else if (ch === ',') {
+                    row.push(field);
+                    field = '';
+                } else if (ch === '\\n') {
+                    row.push(field);
+                    rows.push(row);
+                    row = [];
+                    field = '';
+                } else if (ch !== '\\r') {
+                    field += ch;
+                }
+            }
+            if (field !== '' || row.length) {
+                row.push(field);
+                rows.push(row);
+            }
+            return {
+                headers: (rows.shift() || []).map(h => String(h || '').trim()),
+                values: rows.filter(values => values.some(v => String(v || '').trim() !== ''))
+            };
+        }
+        function tableToRows(table) {
+            const headers = Array.isArray(table && table.headers) ? table.headers : [];
+            const values = Array.isArray(table && table.values) ? table.values : [];
+            return values.map(row => {
+                const obj = {};
+                headers.forEach((header, index) => {
+                    obj[header || ('列' + (index + 1))] = row[index] !== undefined ? row[index] : '';
+                });
+                return obj;
+            });
+        }
+        async function uploadBlob(name, blob) {
+            if (!autoImport || !autoImport.uploadUrl || !blob || !name) return;
+            if (hasRecentDirectCapture(name)) return;
+            try {
+                if (!window.__uivf12AutoImport) window.__uivf12AutoImport = { pending: [] };
+                const pending = blob.text().then(function (text) {
+                    const table = parseCsvTable(text);
+                    if (!table.values.length) throw new Error('empty rows');
+                    return uploadDataset(name, table);
+                }).then(function (result) {
+                    if (!result) throw new Error('upload failed');
+                    recordAutoImportName(result.dataset && result.dataset.name ? result.dataset.name : name);
+                    return result;
+                }).catch(function (err) {
+                    console.warn('[UIVF12 Auto Import] upload failed:', name, err);
+                    recordAutoImportFailure(name, err && err.__uivDetail ? err.__uivDetail : { message: err && err.message ? err.message : 'Blob 自动导入失败' });
+                    return null;
+                });
+                window.__uivf12AutoImport.pending.push(pending);
+            } catch (err) {
+                console.warn('[UIVF12 Auto Import] upload init failed:', name, err);
+            }
+        }
+        async function uploadCsvText(name, csvText) {
+            if (!autoImport || !autoImport.uploadUrl || !name) return null;
+            try {
+                const table = parseCsvTable(csvText);
+                if (!table.values.length) throw new Error('empty rows');
+                const result = await uploadDataset(name, table);
+                if (!result) throw new Error('upload failed');
+                markRecentDirectCapture(name);
+                recordAutoImportName(result.dataset && result.dataset.name ? result.dataset.name : name);
+                return result;
+            } catch (err) {
+                console.warn('[UIVF12 Auto Import] direct dataset upload failed:', name, err);
+                recordAutoImportFailure(name, err && err.__uivDetail ? err.__uivDetail : { message: err && err.message ? err.message : '直接自动导入失败' });
+                return null;
+            }
+        }
+        function uploadViaBridge(name, table) {
+            return new Promise(resolve => {
+                if (!window.opener || window.opener.closed || !autoImport.bridgeOrigin) {
+                    resolve(null);
+                    return;
+                }
+                const requestId = Date.now().toString(36) + Math.random().toString(36).slice(2);
+                const timer = setTimeout(function () {
+                    window.removeEventListener('message', onMessage);
+                    resolve(null);
+                }, 60000);
+                function onMessage(event) {
+                    const data = event.data || {};
+                    if (!data || data.type !== 'uivf12-auto-import-ack' || data.requestId !== requestId) return;
+                    clearTimeout(timer);
+                    window.removeEventListener('message', onMessage);
+                    if (data.ok) {
+                        resolve({ ok: true, result: data.result || { ok: true } });
+                    } else {
+                        resolve({ ok: false, error: data.error || 'bridge upload failed', detail: data.detail || null });
+                    }
+                }
+                window.addEventListener('message', onMessage);
+                try {
+                    window.opener.postMessage({
+                        type: 'uivf12-auto-import-dataset',
+                        requestId,
+                        sessionId: autoImport.sessionId,
+                        token: autoImport.token,
+                        name: String(name),
+                        table,
+                        origin: location.origin,
+                        groupName: autoImport.groupName || ''
+                    }, autoImport.bridgeOrigin);
+                } catch (error) {
+                    clearTimeout(timer);
+                    window.removeEventListener('message', onMessage);
+                    resolve(null);
+                }
+            });
+        }
+        async function uploadDataset(name, table) {
+            const bridgeResult = await uploadViaBridge(name, table);
+            if (bridgeResult && bridgeResult.ok) return bridgeResult.result;
+            const rows = tableToRows(table);
+            try {
+                const res = await fetch(autoImport.uploadUrl, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify({
+                        name: String(name),
+                        rows,
+                        origin: location.origin,
+                        groupName: autoImport.groupName || ''
+                    })
+                });
+                const result = await res.json().catch(function () { return {}; });
+                if (!res.ok) throw new Error('HTTP ' + res.status + ': ' + (result.error || 'upload failed'));
+                return result;
+            } catch (err) {
+                console.warn('[UIVF12 Auto Import] fetch upload failed:', name, err);
+                const detail = {
+                    message: bridgeResult && bridgeResult.error ? bridgeResult.error : (err && err.message ? err.message : 'upload failed'),
+                    bridgeError: bridgeResult && bridgeResult.error ? bridgeResult.error : '',
+                    fetchError: err && err.message ? err.message : '',
+                    rowCount: table && Array.isArray(table.values) ? table.values.length : rows.length,
+                    headerCount: table && Array.isArray(table.headers) ? table.headers.length : 0,
+                    approxBytes: (() => { try { return JSON.stringify(table || {}).length; } catch (e) { return 0; } })()
+                };
+                const wrapped = new Error(detail.message);
+                wrapped.__uivDetail = detail;
+                throw wrapped;
+            }
+        }
+        function handleDownloadLink(link) {
+            if (!link || !link.download || link.__uivf12DownloadHandled) return;
+            link.__uivf12DownloadHandled = true;
+            recordDownloadName(link.download);
+            const blob = window.__uivf12ObjectUrlBlobs && window.__uivf12ObjectUrlBlobs.get(link.href);
+            if (blob) uploadBlob(link.download, blob);
+            setTimeout(function () {
+                try { delete link.__uivf12DownloadHandled; } catch (e) {}
+            }, 1000);
+        }
         const bag = readWindowState();
         if (reset) {
             bag.uivf12Downloads = [];
+            bag.uivf12AutoImportDatasets = [];
+            bag.uivf12AutoImportFailures = [];
+            bag.uivf12NoDownloadTasks = [];
             writeWindowState(bag);
         }
         if (!window.__uivf12DownloadRecorderBound) {
             window.__uivf12DownloadRecorderBound = true;
+            window.__uivf12ObjectUrlBlobs = window.__uivf12ObjectUrlBlobs || new Map();
+            window.__uivf12AutoImportCapture = uploadCsvText;
+            const originalCreateObjectURL = URL.createObjectURL;
+            URL.createObjectURL = function (value) {
+                const url = originalCreateObjectURL.apply(URL, arguments);
+                try {
+                    if (value instanceof Blob) window.__uivf12ObjectUrlBlobs.set(url, value);
+                } catch (e) {}
+                return url;
+            };
             const originalClick = HTMLAnchorElement.prototype.click;
             HTMLAnchorElement.prototype.click = function () {
                 try {
-                    if (this && this.download) recordDownloadName(this.download);
+                    handleDownloadLink(this);
                 } catch (e) {}
                 return originalClick.apply(this, arguments);
             };
             document.addEventListener('click', function (event) {
                 try {
                     const link = event.target && event.target.closest ? event.target.closest('a[download]') : null;
-                    if (link && link.download) recordDownloadName(link.download);
+                    handleDownloadLink(link);
                 } catch (e) {}
             }, true);
         }
+        window.__uivf12AutoImportCapture = uploadCsvText;
         return 'download-recorder-ready';
+    })();`;
+}
+
+function injectUivAutoImportCapture(code) {
+    const source = String(code || '');
+    if (source.includes('__uivf12AutoImportCapture')) return source;
+    const injection = 'if (window.__uivf12AutoImportCapture) await window.__uivf12AutoImportCapture(finalOutputName, csvContent);\n            ';
+    const blobPattern = /const\s+blob\s*=\s*new\s+Blob\s*\(\s*\[\s*csvContent\s*\]\s*,\s*\{\s*type\s*:\s*(['"])text\/csv;charset=utf-8;\1\s*\}\s*\)\s*;/g;
+    if (blobPattern.test(source)) {
+        return source.replace(blobPattern, injection + '$&');
+    }
+    const linkPattern = /const\s+link\s*=\s*document\.createElement\s*\(\s*(['"])a\1\s*\)\s*;/;
+    if (linkPattern.test(source)) {
+        return source.replace(linkPattern, injection + '$&');
+    }
+    return source;
+}
+
+function buildUivAutoImportFlushScript() {
+    return `return (async function () {
+        try {
+            const bridge = window.__uivf12AutoImport;
+            const pending = bridge && Array.isArray(bridge.pending) ? bridge.pending.splice(0) : [];
+            if (pending.length) await Promise.allSettled(pending);
+            return 'auto-import-flushed:' + pending.length;
+        } catch (error) {
+            return 'auto-import-flush-failed:' + error.message;
+        }
+    })();`;
+}
+
+function buildUivDownloadCountScript() {
+    return `return (function () {
+        try {
+            const parsed = window.name ? JSON.parse(window.name) : {};
+            return String(Array.isArray(parsed.uivf12Downloads) ? parsed.uivf12Downloads.length : 0);
+        } catch (error) {
+            return '0';
+        }
+    })();`;
+}
+
+function buildUivTaskDownloadAuditScript(taskName, beforeVar, resultVar) {
+    return `return (function () {
+        function readWindowState() {
+            try {
+                const parsed = window.name ? JSON.parse(window.name) : {};
+                return parsed && typeof parsed === 'object' ? parsed : {};
+            } catch (e) {
+                return {};
+            }
+        }
+        const beforeRaw = '${' + beforeVar + '}';
+        const parsedBefore = parseInt(beforeRaw, 10);
+        const result = String('${' + resultVar + '}' || '');
+        const bag = readWindowState();
+        const downloads = Array.isArray(bag.uivf12Downloads) ? bag.uivf12Downloads : [];
+        const after = downloads.length;
+        const before = Number.isFinite(parsedBefore) ? parsedBefore : after;
+        if (after <= before) {
+            const list = Array.isArray(bag.uivf12NoDownloadTasks) ? bag.uivf12NoDownloadTasks : [];
+            list.push({
+                name: ${JSON.stringify(taskName)},
+                before,
+                after,
+                result: result.slice(0, 500),
+                at: new Date().toISOString()
+            });
+            bag.uivf12NoDownloadTasks = list;
+            window.name = JSON.stringify(bag);
+            return 'no-download';
+        }
+        const delta = after - before;
+        return delta > 0 ? ('downloaded:' + delta) : 'downloaded';
     })();`;
 }
 
@@ -451,6 +971,16 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
 
     const speed = UIV_BATCH_SPEEDS.includes(Number(options.speed)) ? Number(options.speed) : getUivBatchSpeed();
     const cooldownMs = getUivCooldownMs(speed);
+    const autoImportSessionId = options.autoImportSessionId || makeRunnerId();
+    const autoImportToken = options.autoImportToken || makeRunnerId();
+    const autoImport = {
+        sessionId: autoImportSessionId,
+        token: autoImportToken,
+        groupName,
+        uploadUrl: `${window.location.origin}/api/uiv-auto-import/${autoImportSessionId}/datasets?token=${autoImportToken}`,
+        slaUrl: `${window.location.origin}/sla?uivImportSession=${autoImportSessionId}&uivImportToken=${autoImportToken}&autoImport=1`,
+        bridgeOrigin: window.location.origin
+    };
     const commands = [];
     const usableScripts = scriptsToRun
         .map((script, index) => {
@@ -460,7 +990,7 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
                 name: script.name || `Task ${index + 1}`,
                 url: resolvedUrl,
                 openUrl: getUivOpenUrl(resolvedUrl),
-                code: script.code || ''
+                code: injectUivAutoImportCapture(script.code || '')
             };
         })
         .filter(script => script.openUrl && script.code);
@@ -505,9 +1035,9 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
         Description: ''
     }, {
         Command: 'executeScript',
-        Target: buildUivDownloadRecorderScript({ reset: true }),
+        Target: buildUivDownloadRecorderScript({ reset: true, autoImport }),
         Value: '',
-        Description: 'Reset and install UIVF12 download recorder.'
+        Description: 'Reset and install UIVF12 download recorder and auto-import bridge.'
     }, {
         Command: 'store',
         Target: '900',
@@ -515,9 +1045,9 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
         Description: 'Allow long-running capture scripts to finish before UI.Vision marks the command as disconnected.'
     }, {
         Command: 'store',
-        Target: '120',
+        Target: '25',
         Value: '!TIMEOUT_PAGELOAD',
-        Description: 'Allow slower enterprise pages to load before continuing.'
+        Description: 'Keep site open checks tolerant; enterprise pages may keep loading background resources for minutes.'
     }, {
         Command: 'echo',
         Target: 'Preflight: XModules optional. This batch will not block if XModules are absent or disabled.',
@@ -545,10 +1075,11 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
         }
         commands.push(
             { Command: 'echo', Target: `[Site ${groupProgress}] Open ${group.openUrl} and run ${group.scripts.length} task(s)`, Value: '', Description: '' },
+            { Command: 'store', Target: 'true', Value: '!ERRORIGNORE', Description: 'Do not fail the batch if a site keeps loading beyond UI.Vision page-load timeout.' },
             { Command: 'open', Target: group.openUrl, Value: '', Description: '' },
-            { Command: 'waitForPageToLoad', Target: '30000', Value: '', Description: '' },
-            { Command: 'pause', Target: '3000', Value: '', Description: '' },
-            { Command: 'executeScript', Target: buildUivDownloadRecorderScript(), Value: '', Description: 'Install UIVF12 download recorder on the current site.' }
+            { Command: 'pause', Target: '5000', Value: '', Description: 'Give the site shell time to initialize even if the load event is noisy.' },
+            { Command: 'store', Target: 'false', Value: '!ERRORIGNORE', Description: 'Resume strict error handling after tolerant site open.' },
+            { Command: 'executeScript', Target: buildUivDownloadRecorderScript({ autoImport }), Value: '', Description: 'Install UIVF12 download recorder on the current site.' }
         );
         pushPanelCommand('检测登录', `${group.openUrl} 页面已打开，开始检测登录态`);
         commands.push(
@@ -566,11 +1097,17 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
             const nextRunIndex = runIndex + 1;
             const progress = `${nextRunIndex}/${usableScripts.length}`;
             const resultVar = `uivResult_${nextRunIndex}`;
+            const beforeDownloadVar = `uivDownloadBefore_${nextRunIndex}`;
+            const auditVar = `uivDownloadAudit_${nextRunIndex}`;
             pushPanelCommand('任务执行中', `开始 ${script.name}`);
             commands.push(
                 { Command: 'echo', Target: `[${progress}] Run ${script.name}`, Value: '', Description: '' },
+                { Command: 'executeScript', Target: buildUivDownloadCountScript(), Value: beforeDownloadVar, Description: `Record download count before: ${script.name}` },
                 { Command: 'executeScript', Target: script.code, Value: resultVar, Description: `Run UIVF12 script: ${script.name}` },
+                { Command: 'executeScript', Target: buildUivAutoImportFlushScript(), Value: '', Description: 'Wait for UIVF12 auto-import file upload.' },
+                { Command: 'executeScript', Target: buildUivTaskDownloadAuditScript(script.name, beforeDownloadVar, resultVar), Value: auditVar, Description: `Audit download result: ${script.name}` },
                 { Command: 'echo', Target: `[${progress}] ${script.name} result: ${'${' + resultVar + '}'}`, Value: '', Description: '' },
+                { Command: 'echo', Target: `[${progress}] ${script.name} download audit: ${'${' + auditVar + '}'}`, Value: '', Description: '' },
                 { Command: 'pause', Target: String(cooldownMs), Value: '', Description: `Cooldown adjusted by UIVF12 speed ${speed}x.` }
             );
             runIndex = nextRunIndex;
@@ -590,10 +1127,16 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
     pushPanelCommand('全部完成', '全部站点任务完成');
     commands.push({
         Command: 'executeScript',
+        Target: buildUivAutoImportFlushScript(),
+        Value: '',
+        Description: 'Final wait for UIVF12 auto-import uploads.'
+    }, {
+        Command: 'executeScript',
         Target: buildUivCompletionDialogScript({
             groupName,
             taskCount: usableScripts.length,
-            finishedAt: new Date().toLocaleString('zh-CN', { hour12: false })
+            finishedAt: new Date().toLocaleString('zh-CN', { hour12: false }),
+            autoImport
         }),
         Value: '',
         Description: 'Show UIVF12 completion summary dialog.'
@@ -692,7 +1235,7 @@ async function openLocalUivRunner(macro) {
     const runId = makeRunnerId();
     await saveLocalUivRun(runId, macro);
     const runnerUrl = `${window.location.origin}/pages/uivision-runner-local.html#${runId}`;
-    const opened = window.open(runnerUrl, '_blank', 'noopener');
+    const opened = window.open(runnerUrl, '_blank');
     if (!opened) {
         showToast('⚠️ 浏览器拦截了启动页弹窗，请允许本站弹窗后重试。', 'error');
     }
@@ -703,7 +1246,16 @@ async function runAllUivScriptsDirect() {
     try {
         const { scripts } = await API.get('/api/uiv/scripts');
         const speed = getUivBatchSpeed();
-        const macro = buildUivBatchMacro(scripts, UIVT('uiv.copy.allGroup'), { speed });
+        const autoImportSessionId = makeRunnerId();
+        const autoImportToken = makeRunnerId();
+        const autoImport = {
+            sessionId: autoImportSessionId,
+            token: autoImportToken,
+            groupName: UIVT('uiv.copy.allGroup'),
+            uploadUrl: `${window.location.origin}/api/uiv-auto-import/${autoImportSessionId}/datasets?token=${autoImportToken}`
+        };
+        registerUivAutoImportBridge(autoImport);
+        const macro = buildUivBatchMacro(scripts, UIVT('uiv.copy.allGroup'), { speed, autoImportSessionId, autoImportToken });
         const runnerUrl = await openLocalUivRunner(macro);
         showToast('✅ 已打开 UI.Vision 批量阵列启动页：当前浏览器', 'success');
         console.info('[UIVF12 Direct Run]', { mode: 'local-runner', url: runnerUrl, commands: macro.Commands.length, speed });
@@ -711,6 +1263,32 @@ async function runAllUivScriptsDirect() {
         showToast(`❌ 直接运行失败：${error.message}`, 'error');
         showUiVisionSetupDialog({ error: error.message });
         console.error('[UIVF12 Direct Run] failed', error);
+    }
+}
+
+async function runTestUivScriptsDirect() {
+    try {
+        const { scripts } = await API.get('/api/uiv/scripts');
+        const sampledScripts = sampleUivScriptsPerSite(scripts, 2);
+        if (!sampledScripts.length) throw new Error(UIVT('uiv.copy.noUivBatch'));
+        const speed = getUivBatchSpeed();
+        const autoImportSessionId = makeRunnerId();
+        const autoImportToken = makeRunnerId();
+        const autoImport = {
+            sessionId: autoImportSessionId,
+            token: autoImportToken,
+            groupName: '测试批脚本-每站点2个',
+            uploadUrl: `${window.location.origin}/api/uiv-auto-import/${autoImportSessionId}/datasets?token=${autoImportToken}`
+        };
+        registerUivAutoImportBridge(autoImport);
+        const macro = buildUivBatchMacro(sampledScripts, '测试批脚本-每站点2个', { speed, autoImportSessionId, autoImportToken });
+        const runnerUrl = await openLocalUivRunner(macro);
+        showToast(`✅ 已打开 UI.Vision 测试批脚本：${sampledScripts.length} 个任务`, 'success');
+        console.info('[UIVF12 Direct Test Run]', { mode: 'local-runner', url: runnerUrl, commands: macro.Commands.length, speed, scripts: sampledScripts.map(s => s.name) });
+    } catch (error) {
+        showToast(`❌ 测试批脚本启动失败：${error.message}`, 'error');
+        showUiVisionSetupDialog({ error: error.message });
+        console.error('[UIVF12 Direct Test Run] failed', error);
     }
 }
 
@@ -803,6 +1381,7 @@ window.UIVCopy = {
     copyAllConsoleScripts,
     copyAllUivScripts,
     runAllUivScriptsDirect,
+    runTestUivScriptsDirect,
     cycleUivBatchSpeed,
     updateUivBatchSpeedButton,
     buildAndCopyMasterScript,

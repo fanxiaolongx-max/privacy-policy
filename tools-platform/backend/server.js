@@ -17,6 +17,7 @@ const path = require('path');
 const appPackage = require('../package.json');
 
 const uivRoutes = require('./routes/uiv');
+const uivAutoImportRoutes = require('./routes/uiv-auto-import');
 const slaRoutes = require('./routes/sla');
 const uploadRoutes = require('./routes/upload');
 const authRoutes = require('./routes/auth');
@@ -110,6 +111,7 @@ app.get('/api/migration-status', (req, res) => {
 // 开放静态图片访问，跳过 JWT 鉴权 (浏览器 <img> 标签不带 Auth header)
 const { REPORT_DATA_DIR } = require('./models/report-store');
 app.use('/api/db/images', express.static(path.join(REPORT_DATA_DIR, 'images')));
+app.use('/api/uiv-auto-import', uivAutoImportRoutes);
 
 app.use('/api', checkAuth); // Protect all /api/* (except login, which is handled inside checkAuth)
 
