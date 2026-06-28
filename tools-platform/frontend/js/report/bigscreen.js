@@ -396,7 +396,13 @@
         setPanel('.customer-focus', 'rankTitle', 'rankSub');
         setPanel('.main-trend', 'trendTitle', 'trendSub');
         setPanel('.metric-carousel-panel', 'carouselTitle', 'carouselSub');
-        setPanel('.pass-strip-panel', 'passTitle', 'passSub');
+        const passPanel = document.querySelector('.pass-strip-panel');
+        if (passPanel) {
+            const title = passPanel.querySelector('.panel-title');
+            const sub = passPanel.querySelector('.panel-sub');
+            if (title) title.innerHTML = `${escapeHTML(tr('passTitle'))} <span id="passingMetricsCount" style="font-size:12px;color:var(--cyan);font-weight:normal;margin-left:8px;"></span>`;
+            if (sub) sub.textContent = tr('passSub');
+        }
         const weakPanel = document.querySelector('.failure-focus');
         if (weakPanel) {
             const title = weakPanel.querySelector('.panel-title');
