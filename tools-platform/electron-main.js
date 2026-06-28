@@ -10,6 +10,7 @@ const userDataPath = app.getPath('userData');
 process.env.TOOLS_DATA_DIR = path.join(userDataPath, 'data');
 const electronLogRoot = path.join(userDataPath, 'logs');
 const runtimeStatusPath = path.join(electronLogRoot, 'runtime-status.json');
+const runtimeCommandPath = path.join(electronLogRoot, 'runtime-command.json');
 process.env.TOOLS_LOG_DIR = electronLogRoot;
 if (process.env.TOOLS_DAILY_LOGS === undefined) {
     process.env.TOOLS_DAILY_LOGS = '0';
@@ -90,6 +91,8 @@ let updateStatus = {
 };
 let latestDownloadProgress = null;
 let updateBalloonMilestonesShown = new Set();
+let runtimeCommandTimer = null;
+let lastRuntimeCommandId = '';
 
 function readLaunchState() {
     try {
@@ -550,6 +553,7 @@ function writeRuntimeStatusSnapshot() {
             version: app.getVersion(),
             packaged: app.isPackaged,
             updateStatus,
+            commandPath: runtimeCommandPath,
             logs: getRecentLogFiles()
                 .filter((item) => item.filePath)
                 .map((item) => ({
@@ -562,6 +566,47 @@ function writeRuntimeStatusSnapshot() {
     } catch (err) {
         console.warn('[Electron] Failed to write runtime status:', err.message || err);
     }
+}
+
+function readRuntimeCommand() {
+    try {
+        if (!fs.existsSync(runtimeCommandPath)) return null;
+        const text = fs.readFileSync(runtimeCommandPath, 'utf-8').replace(/^\uFEFF/, '');
+        if (!text.trim()) return null;
+        return JSON.parse(text);
+    } catch (err) {
+        console.warn('[Electron] Failed to read runtime command:', err.message || err);
+        return null;
+    }
+}
+
+async function handleRuntimeCommand(command) {
+    if (!command || !command.action) return;
+    const commandId = String(command.id || '');
+    if (commandId && commandId === lastRuntimeCommandId) return;
+    lastRuntimeCommandId = commandId || `${command.action}:${Date.now()}`;
+    if (command.action === 'check-update') {
+        await checkForUpdatesFromTray({ showDialog: false });
+    } else if (command.action === 'download-update') {
+        await downloadUpdateFromTray({ showDialog: false });
+    } else if (command.action === 'install-update') {
+        installUpdateFromTray();
+    }
+}
+
+function startRuntimeCommandWatcher() {
+    if (runtimeCommandTimer) return;
+    const existingCommand = readRuntimeCommand();
+    if (existingCommand && existingCommand.id) {
+        lastRuntimeCommandId = String(existingCommand.id);
+    }
+    runtimeCommandTimer = setInterval(() => {
+        const command = readRuntimeCommand();
+        if (!command) return;
+        handleRuntimeCommand(command).catch((err) => {
+            console.warn('[Electron] Failed to handle runtime command:', err.message || err);
+        });
+    }, 1000);
 }
 
 function createLogWindow() {
@@ -598,6 +643,7 @@ header{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-c
 h1{margin:0;font-size:18px;color:#f8fafc;}
 .meta{font-size:12px;color:#93c5fd;margin-top:4px;}
 button{border:1px solid rgba(96,165,250,.35);background:#1d4ed8;color:#fff;border-radius:8px;padding:8px 12px;cursor:pointer;}
+button:disabled{opacity:.45;cursor:not-allowed;}
 .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
 main{padding:18px 20px 28px;}
 .status{border:1px solid rgba(34,211,238,.28);border-radius:12px;margin-bottom:16px;background:linear-gradient(135deg,rgba(8,47,73,.86),rgba(15,23,42,.72));padding:14px;}
@@ -620,6 +666,9 @@ pre{margin:0;padding:12px;max-height:340px;overflow:auto;white-space:pre-wrap;wo
 <div class="meta" id="runtimeMeta">加载中...</div>
 </div>
 <div class="actions">
+<button id="checkUpdateButton">检查更新</button>
+<button id="downloadUpdateButton">下载更新</button>
+<button id="installUpdateButton">安装更新</button>
 <button id="openLogsButton">打开日志目录</button>
 <button id="refreshButton">刷新</button>
 </div>
@@ -646,6 +695,9 @@ pre{margin:0;padding:12px;max-height:340px;overflow:auto;white-space:pre-wrap;wo
     const logs = document.getElementById('logs');
     const refreshButton = document.getElementById('refreshButton');
     const openLogsButton = document.getElementById('openLogsButton');
+    const checkUpdateButton = document.getElementById('checkUpdateButton');
+    const downloadUpdateButton = document.getElementById('downloadUpdateButton');
+    const installUpdateButton = document.getElementById('installUpdateButton');
 
     function setText(node, value) {
         node.textContent = value == null ? '' : String(value);
@@ -683,12 +735,27 @@ pre{margin:0;padding:12px;max-height:340px;overflow:auto;white-space:pre-wrap;wo
         setText(updateMessage, status.message || '等待检查更新');
         setText(updateState, status.state || 'idle');
         updateProgress.style.width = Math.max(0, Math.min(100, Number(status.progress) || 0)) + '%';
+        const state = status.state || 'idle';
+        checkUpdateButton.disabled = state === 'checking' || state === 'downloading' || state === 'installing';
+        downloadUpdateButton.disabled = state !== 'available';
+        installUpdateButton.disabled = state !== 'downloaded';
         renderLogs(snapshot.logs || []);
     }
 
     refreshButton.addEventListener('click', refreshSnapshot);
     openLogsButton.addEventListener('click', () => {
         if (window.ToolsDesktop && window.ToolsDesktop.openLogsFolder) window.ToolsDesktop.openLogsFolder();
+    });
+    checkUpdateButton.addEventListener('click', async () => {
+        if (window.ToolsUpdater && window.ToolsUpdater.check) await window.ToolsUpdater.check();
+        await refreshSnapshot();
+    });
+    downloadUpdateButton.addEventListener('click', async () => {
+        if (window.ToolsUpdater && window.ToolsUpdater.download) await window.ToolsUpdater.download();
+        await refreshSnapshot();
+    });
+    installUpdateButton.addEventListener('click', async () => {
+        if (window.ToolsUpdater && window.ToolsUpdater.install) await window.ToolsUpdater.install();
     });
     refreshSnapshot();
     setInterval(refreshSnapshot, 2000);
@@ -784,15 +851,22 @@ function getNativeRuntimeMonitorScript() {
     [Parameter(Mandatory=$true)][string]$StatusPath
 )
 
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
+
+function Normalize-LogText([string]$Text) {
+    if ($null -eq $Text) { return "" }
+    $ansiPattern = ([string][char]27) + "\[[0-9;?]*[ -/]*[@-~]"
+    return [regex]::Replace($Text, $ansiPattern, "")
+}
 
 function Read-TailText([string]$Path, [int]$MaxChars) {
     if (-not (Test-Path -LiteralPath $Path)) { return "" }
     try {
         $text = Get-Content -LiteralPath $Path -Raw -Encoding UTF8 -ErrorAction Stop
-        if ($text.Length -gt $MaxChars) { return $text.Substring($text.Length - $MaxChars) }
-        return $text
+        if ($text.Length -gt $MaxChars) { return Normalize-LogText ($text.Substring($text.Length - $MaxChars)) }
+        return Normalize-LogText $text
     } catch {
         return "[Read failed] " + $Path + [Environment]::NewLine + $_.Exception.Message
     }
@@ -804,6 +878,25 @@ function Load-Snapshot {
         return Get-Content -LiteralPath $StatusPath -Raw -Encoding UTF8 | ConvertFrom-Json
     } catch {
         return $null
+    }
+}
+
+function Write-Command([string]$Action) {
+    $snapshot = Load-Snapshot
+    if ($null -eq $snapshot -or -not $snapshot.commandPath) {
+        [System.Windows.Forms.MessageBox]::Show("Runtime command path is missing. Please refresh and try again.", "Tools Platform") | Out-Null
+        return
+    }
+    try {
+        $payload = @{
+            id = ([DateTime]::UtcNow.Ticks.ToString())
+            action = $Action
+            createdAt = ([DateTime]::UtcNow.ToString("o"))
+        } | ConvertTo-Json -Compress
+        Set-Content -LiteralPath ([string]$snapshot.commandPath) -Value $payload -Encoding UTF8
+        Render-Snapshot
+    } catch {
+        [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, "Tools Platform") | Out-Null
     }
 }
 
@@ -829,17 +922,38 @@ $meta.Location = New-Object System.Drawing.Point(18, 48)
 $form.Controls.Add($meta)
 
 $openFolder = New-Object System.Windows.Forms.Button
-$openFolder.Text = "Open Logs"
-$openFolder.Size = New-Object System.Drawing.Size(110, 30)
+$openFolder.Text = "日志目录"
+$openFolder.Size = New-Object System.Drawing.Size(82, 30)
 $openFolder.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Right
-$openFolder.Location = New-Object System.Drawing.Point(735, 16)
+$openFolder.Location = New-Object System.Drawing.Point(612, 16)
 $form.Controls.Add($openFolder)
 
+$checkUpdate = New-Object System.Windows.Forms.Button
+$checkUpdate.Text = "检查更新"
+$checkUpdate.Size = New-Object System.Drawing.Size(82, 30)
+$checkUpdate.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Right
+$checkUpdate.Location = New-Object System.Drawing.Point(700, 16)
+$form.Controls.Add($checkUpdate)
+
+$downloadUpdate = New-Object System.Windows.Forms.Button
+$downloadUpdate.Text = "下载更新"
+$downloadUpdate.Size = New-Object System.Drawing.Size(82, 30)
+$downloadUpdate.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Right
+$downloadUpdate.Location = New-Object System.Drawing.Point(788, 16)
+$form.Controls.Add($downloadUpdate)
+
+$installUpdate = New-Object System.Windows.Forms.Button
+$installUpdate.Text = "安装更新"
+$installUpdate.Size = New-Object System.Drawing.Size(82, 30)
+$installUpdate.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Right
+$installUpdate.Location = New-Object System.Drawing.Point(876, 16)
+$form.Controls.Add($installUpdate)
+
 $refresh = New-Object System.Windows.Forms.Button
-$refresh.Text = "Refresh"
-$refresh.Size = New-Object System.Drawing.Size(80, 30)
+$refresh.Text = "刷新"
+$refresh.Size = New-Object System.Drawing.Size(60, 30)
 $refresh.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Right
-$refresh.Location = New-Object System.Drawing.Point(855, 16)
+$refresh.Location = New-Object System.Drawing.Point(898, 50)
 $form.Controls.Add($refresh)
 
 $statusBox = New-Object System.Windows.Forms.GroupBox
@@ -884,6 +998,10 @@ function Render-Snapshot {
     $up = $snapshot.updateStatus
     if ($null -ne $up) {
         $statusText.Text = "[" + $up.state + "] " + $up.message
+        $state = [string]$up.state
+        $checkUpdate.Enabled = ($state -ne "checking" -and $state -ne "downloading" -and $state -ne "installing")
+        $downloadUpdate.Enabled = ($state -eq "available")
+        $installUpdate.Enabled = ($state -eq "downloaded")
         $value = 0
         [int]::TryParse([string]$up.progress, [ref]$value) | Out-Null
         if ($value -lt 0) { $value = 0 }
@@ -904,7 +1022,7 @@ function Render-Snapshot {
             $box.ScrollBars = "Both"
             $box.WordWrap = $false
             $box.Dock = "Fill"
-            $box.Font = New-Object System.Drawing.Font("Consolas", 9)
+            $box.Font = New-Object System.Drawing.Font("Microsoft YaHei UI", 9)
             $box.Tag = $log.filePath
             $page.Controls.Add($box)
             $tabs.TabPages.Add($page) | Out-Null
@@ -927,6 +1045,9 @@ $openFolder.Add_Click({
     if (Test-Path -LiteralPath $root) { Start-Process explorer.exe $root }
 })
 $refresh.Add_Click({ Render-Snapshot })
+$checkUpdate.Add_Click({ Write-Command "check-update" })
+$downloadUpdate.Add_Click({ Write-Command "download-update" })
+$installUpdate.Add_Click({ Write-Command "install-update" })
 
 $timer = New-Object System.Windows.Forms.Timer
 $timer.Interval = 2000
@@ -946,30 +1067,60 @@ function openLogsFolder() {
     });
 }
 
-async function checkForUpdatesFromTray() {
+async function checkForUpdatesFromTray(options = {}) {
+    const showDialog = options.showDialog !== false;
     if (!app.isPackaged) {
-        dialog.showMessageBox({
-            type: 'info',
-            title: '检查更新',
-            message: '开发模式不支持自动更新。',
-            detail: `当前开发版本：v${app.getVersion()}`
+        broadcastUpdateStatus({
+            state: 'dev-unavailable',
+            message: '开发模式不支持自动更新',
+            progress: 0
         });
+        if (showDialog) {
+            dialog.showMessageBox({
+                type: 'info',
+                title: '检查更新',
+                message: '开发模式不支持自动更新。',
+                detail: `当前开发版本：v${app.getVersion()}`
+            });
+        }
         return;
     }
     try {
         await autoUpdater.checkForUpdates();
-        dialog.showMessageBox({
-            type: updateStatus.state === 'available' ? 'info' : 'none',
-            title: '检查更新',
-            message: updateStatus.message || '检查完成',
-            detail: updateStatus.latestVersion ? `最新版本：${updateStatus.latestVersion}` : ''
-        });
+        if (showDialog) {
+            dialog.showMessageBox({
+                type: updateStatus.state === 'available' ? 'info' : 'none',
+                title: '检查更新',
+                message: updateStatus.message || '检查完成',
+                detail: updateStatus.latestVersion ? `最新版本：${updateStatus.latestVersion}` : ''
+            });
+        }
     } catch (err) {
-        dialog.showErrorBox('检查更新失败', err.message || String(err));
+        broadcastUpdateStatus({
+            state: 'error',
+            message: err.message || String(err),
+            progress: 0
+        });
+        if (showDialog) dialog.showErrorBox('检查更新失败', err.message || String(err));
     }
 }
 
-async function downloadUpdateFromTray() {
+async function downloadUpdateFromTray(options = {}) {
+    const showDialog = options.showDialog !== false;
+    if (!app.isPackaged) {
+        broadcastUpdateStatus({
+            state: 'dev-unavailable',
+            message: '开发模式不支持自动更新',
+            progress: 0
+        });
+        if (showDialog) dialog.showMessageBox({ type: 'info', title: '下载更新', message: '开发模式不支持自动更新。' });
+        return;
+    }
+    if (!updateInfo || updateStatus.state !== 'available') {
+        broadcastUpdateStatus({ message: '请先检查并确认有可用更新' });
+        if (showDialog) dialog.showMessageBox({ type: 'info', title: '下载更新', message: '请先检查并确认有可用更新。' });
+        return;
+    }
     try {
         broadcastUpdateStatus({
             state: 'downloading',
@@ -980,7 +1131,12 @@ async function downloadUpdateFromTray() {
         await autoUpdater.downloadUpdate();
     } catch (err) {
         stopUpdateProgressBalloons('Tools Platform 更新失败', err.message || String(err));
-        dialog.showErrorBox('下载更新失败', err.message || String(err));
+        broadcastUpdateStatus({
+            state: 'error',
+            message: err.message || String(err),
+            progress: 0
+        });
+        if (showDialog) dialog.showErrorBox('下载更新失败', err.message || String(err));
     }
 }
 
@@ -1054,6 +1210,8 @@ async function startTrayApp() {
         } else {
             refreshTrayMenu();
         }
+
+        startRuntimeCommandWatcher();
 
         setTimeout(() => {
             const launchUrl = buildLaunchUrl(PORT, launchExperience);
