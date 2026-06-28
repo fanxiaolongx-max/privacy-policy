@@ -88,6 +88,8 @@ let updateStatus = {
     message: '等待检查更新',
     progress: 0
 };
+let latestDownloadProgress = null;
+let updateBalloonMilestonesShown = new Set();
 
 function readLaunchState() {
     try {
@@ -149,6 +151,67 @@ function buildLaunchUrl(port, launchExperience) {
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = false;
 
+function showTrayBalloon(title, content) {
+    if (!tray || process.platform !== 'win32') return;
+    try {
+        tray.displayBalloon({
+            title,
+            content,
+            iconType: 'info',
+            noSound: true
+        });
+    } catch (err) {
+        console.warn('[Electron] Failed to show tray balloon:', err.message || err);
+    }
+}
+
+function formatBytes(value) {
+    const bytes = Number(value) || 0;
+    if (bytes <= 0) return '';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let size = bytes;
+    let unitIndex = 0;
+    while (size >= 1024 && unitIndex < units.length - 1) {
+        size /= 1024;
+        unitIndex += 1;
+    }
+    return `${size.toFixed(size >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+}
+
+function buildDownloadProgressText() {
+    const status = latestDownloadProgress || updateStatus || {};
+    const percent = Math.max(0, Math.min(100, Math.round(Number(status.percent ?? status.progress) || 0)));
+    const transferred = formatBytes(status.transferred);
+    const total = formatBytes(status.total);
+    const speed = formatBytes(status.bytesPerSecond);
+    const parts = [`已下载 ${percent}%`];
+    if (transferred && total) parts.push(`${transferred} / ${total}`);
+    if (speed) parts.push(`${speed}/s`);
+    return parts.join(' · ');
+}
+
+function stopUpdateProgressBalloons(finalTitle, finalContent) {
+    latestDownloadProgress = null;
+    updateBalloonMilestonesShown = new Set();
+    if (finalTitle && finalContent) {
+        showTrayBalloon(finalTitle, finalContent);
+    }
+}
+
+function startUpdateProgressBalloons() {
+    stopUpdateProgressBalloons();
+    updateBalloonMilestonesShown = new Set(['start']);
+    showTrayBalloon('Tools Platform 更新', '开始下载更新。可在“查看实时日志/更新进度”窗口查看实时进度。');
+}
+
+function maybeShowDownloadMilestoneBalloon(progress) {
+    const percent = Math.max(0, Math.min(100, Math.round(Number(progress && progress.percent) || 0)));
+    const milestone = [25, 50, 75].find((value) => percent >= value && !updateBalloonMilestonesShown.has(value));
+    if (!milestone) return;
+    updateBalloonMilestonesShown.add(milestone);
+    showTrayBalloon('Tools Platform 更新下载中', buildDownloadProgressText());
+}
+
 function broadcastUpdateStatus(patch = {}) {
     updateStatus = {
         ...updateStatus,
@@ -192,6 +255,7 @@ function setupAutoUpdater() {
     autoUpdater.on('update-not-available', (info) => {
         updateInfo = info;
         updateDownloaded = false;
+        stopUpdateProgressBalloons();
         broadcastUpdateStatus({
             state: 'not-available',
             latestVersion: info.version,
@@ -201,6 +265,8 @@ function setupAutoUpdater() {
     });
 
     autoUpdater.on('download-progress', (progress) => {
+        latestDownloadProgress = progress || null;
+        maybeShowDownloadMilestoneBalloon(progress);
         broadcastUpdateStatus({
             state: 'downloading',
             message: `正在下载更新 ${Math.round(progress.percent || 0)}%`,
@@ -214,6 +280,7 @@ function setupAutoUpdater() {
     autoUpdater.on('update-downloaded', (info) => {
         updateInfo = info;
         updateDownloaded = true;
+        stopUpdateProgressBalloons('Tools Platform 更新已下载', '更新已下载完成，可在托盘菜单中选择“重启并安装更新”。');
         broadcastUpdateStatus({
             state: 'downloaded',
             latestVersion: info.version,
@@ -223,6 +290,7 @@ function setupAutoUpdater() {
     });
 
     autoUpdater.on('error', (err) => {
+        stopUpdateProgressBalloons('Tools Platform 更新失败', err && err.message ? err.message : String(err));
         broadcastUpdateStatus({
             state: 'error',
             message: err && err.message ? err.message : String(err),
@@ -280,9 +348,11 @@ function registerUpdaterIpcHandlers() {
                 message: '正在准备下载更新...',
                 progress: 0
             });
+            startUpdateProgressBalloons();
             await autoUpdater.downloadUpdate();
             return updateStatus;
         } catch (err) {
+            stopUpdateProgressBalloons('Tools Platform 更新失败', err && err.message ? err.message : String(err));
             return broadcastUpdateStatus({
                 state: 'error',
                 message: err && err.message ? err.message : String(err),
@@ -642,7 +712,7 @@ function openNativeRuntimeWindow() {
     try {
         writeRuntimeStatusSnapshot();
         const scriptPath = path.join(userDataPath, 'tools-platform-runtime-monitor.ps1');
-        fs.writeFileSync(scriptPath, getNativeRuntimeMonitorScript(), 'utf-8');
+        fs.writeFileSync(scriptPath, `\uFEFF${getNativeRuntimeMonitorScript()}`, 'utf-8');
         let stderr = '';
         let stdout = '';
         let settled = false;
@@ -724,7 +794,7 @@ function Read-TailText([string]$Path, [int]$MaxChars) {
         if ($text.Length -gt $MaxChars) { return $text.Substring($text.Length - $MaxChars) }
         return $text
     } catch {
-        return "[读取失败] " + $Path + [Environment]::NewLine + $_.Exception.Message
+        return "[Read failed] " + $Path + [Environment]::NewLine + $_.Exception.Message
     }
 }
 
@@ -738,50 +808,50 @@ function Load-Snapshot {
 }
 
 $form = New-Object System.Windows.Forms.Form
-$form.Text = "Tools Platform 运行状态"
+$form.Text = "Tools Platform Runtime Monitor"
 $form.StartPosition = "CenterScreen"
 $form.Size = New-Object System.Drawing.Size(1000, 720)
 $form.MinimumSize = New-Object System.Drawing.Size(820, 560)
 $form.BackColor = [System.Drawing.Color]::FromArgb(245, 247, 250)
 
 $title = New-Object System.Windows.Forms.Label
-$title.Text = "Tools Platform 运行状态"
-$title.Font = New-Object System.Drawing.Font("Microsoft YaHei UI", 14, [System.Drawing.FontStyle]::Bold)
+$title.Text = "Tools Platform Runtime Monitor"
+$title.Font = New-Object System.Drawing.Font("Segoe UI", 14, [System.Drawing.FontStyle]::Bold)
 $title.AutoSize = $true
 $title.Location = New-Object System.Drawing.Point(16, 14)
 $form.Controls.Add($title)
 
 $meta = New-Object System.Windows.Forms.Label
-$meta.Text = "正在读取运行状态..."
-$meta.Font = New-Object System.Drawing.Font("Microsoft YaHei UI", 9)
+$meta.Text = "Loading runtime status..."
+$meta.Font = New-Object System.Drawing.Font("Segoe UI", 9)
 $meta.AutoSize = $true
 $meta.Location = New-Object System.Drawing.Point(18, 48)
 $form.Controls.Add($meta)
 
 $openFolder = New-Object System.Windows.Forms.Button
-$openFolder.Text = "打开日志目录"
+$openFolder.Text = "Open Logs"
 $openFolder.Size = New-Object System.Drawing.Size(110, 30)
 $openFolder.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Right
 $openFolder.Location = New-Object System.Drawing.Point(735, 16)
 $form.Controls.Add($openFolder)
 
 $refresh = New-Object System.Windows.Forms.Button
-$refresh.Text = "刷新"
+$refresh.Text = "Refresh"
 $refresh.Size = New-Object System.Drawing.Size(80, 30)
 $refresh.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Right
 $refresh.Location = New-Object System.Drawing.Point(855, 16)
 $form.Controls.Add($refresh)
 
 $statusBox = New-Object System.Windows.Forms.GroupBox
-$statusBox.Text = "更新状态"
-$statusBox.Font = New-Object System.Drawing.Font("Microsoft YaHei UI", 9)
+$statusBox.Text = "Update Status"
+$statusBox.Font = New-Object System.Drawing.Font("Segoe UI", 9)
 $statusBox.Location = New-Object System.Drawing.Point(18, 78)
 $statusBox.Size = New-Object System.Drawing.Size(940, 92)
 $statusBox.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
 $form.Controls.Add($statusBox)
 
 $statusText = New-Object System.Windows.Forms.Label
-$statusText.Text = "等待检查更新"
+$statusText.Text = "Waiting for update check"
 $statusText.AutoSize = $true
 $statusText.Location = New-Object System.Drawing.Point(16, 28)
 $statusBox.Controls.Add($statusText)
@@ -805,10 +875,12 @@ $lastLogKeys = ""
 function Render-Snapshot {
     $snapshot = Load-Snapshot
     if ($null -eq $snapshot) {
-        $meta.Text = "运行状态文件暂不可读：" + $StatusPath
+        $meta.Text = "Runtime status file is not readable: " + $StatusPath
         return
     }
-    $meta.Text = "本地服务：" + $(if ($snapshot.baseUrl) { $snapshot.baseUrl } else { "启动中" }) + "    版本：v" + $snapshot.version + "    刷新时间：" + (Get-Date).ToString("HH:mm:ss")
+    $baseUrlText = "Starting"
+    if ($snapshot.baseUrl) { $baseUrlText = [string]$snapshot.baseUrl }
+    $meta.Text = "Local service: " + $baseUrlText + "    Version: v" + $snapshot.version + "    Refreshed: " + (Get-Date).ToString("HH:mm:ss")
     $up = $snapshot.updateStatus
     if ($null -ne $up) {
         $statusText.Text = "[" + $up.state + "] " + $up.message
@@ -899,8 +971,15 @@ async function checkForUpdatesFromTray() {
 
 async function downloadUpdateFromTray() {
     try {
+        broadcastUpdateStatus({
+            state: 'downloading',
+            message: '正在准备下载更新...',
+            progress: 0
+        });
+        startUpdateProgressBalloons();
         await autoUpdater.downloadUpdate();
     } catch (err) {
+        stopUpdateProgressBalloons('Tools Platform 更新失败', err.message || String(err));
         dialog.showErrorBox('下载更新失败', err.message || String(err));
     }
 }
