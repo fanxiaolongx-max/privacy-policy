@@ -10,6 +10,10 @@ const userDataPath = app.getPath('userData');
 process.env.TOOLS_DATA_DIR = path.join(userDataPath, 'data');
 const electronLogRoot = path.join(userDataPath, 'logs');
 const runtimeStatusPath = path.join(electronLogRoot, 'runtime-status.json');
+process.env.TOOLS_LOG_DIR = electronLogRoot;
+if (process.env.TOOLS_DAILY_LOGS === undefined) {
+    process.env.TOOLS_DAILY_LOGS = '0';
+}
 
 function getLogDay() {
     return new Date().toISOString().slice(0, 10);
@@ -491,10 +495,6 @@ function writeRuntimeStatusSnapshot() {
 }
 
 function createLogWindow() {
-    if (process.platform === 'win32' && openNativeRuntimeWindow()) {
-        return;
-    }
-
     if (utilityWindow && !utilityWindow.isDestroyed()) {
         utilityWindow.focus();
     } else {
@@ -630,11 +630,22 @@ pre{margin:0;padding:12px;max-height:340px;overflow:auto;white-space:pre-wrap;wo
     utilityWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
 }
 
+function openRuntimeStatusWindow() {
+    if (process.platform === 'win32') {
+        openNativeRuntimeWindow();
+        return;
+    }
+    createLogWindow();
+}
+
 function openNativeRuntimeWindow() {
     try {
         writeRuntimeStatusSnapshot();
         const scriptPath = path.join(userDataPath, 'tools-platform-runtime-monitor.ps1');
         fs.writeFileSync(scriptPath, getNativeRuntimeMonitorScript(), 'utf-8');
+        let stderr = '';
+        let stdout = '';
+        let settled = false;
         const child = spawn('powershell.exe', [
             '-NoProfile',
             '-ExecutionPolicy',
@@ -645,11 +656,46 @@ function openNativeRuntimeWindow() {
             '-StatusPath',
             runtimeStatusPath
         ], {
-            detached: true,
-            stdio: 'ignore',
+            stdio: ['ignore', 'pipe', 'pipe'],
             windowsHide: false
         });
-        child.unref();
+
+        child.stdout.on('data', (chunk) => {
+            stdout += chunk.toString();
+        });
+        child.stderr.on('data', (chunk) => {
+            stderr += chunk.toString();
+        });
+        child.on('error', (err) => {
+            if (settled) return;
+            settled = true;
+            console.warn('[Electron] Failed to start native runtime window:', err.message || err);
+            dialog.showMessageBox({
+                type: 'warning',
+                title: '原生窗口打开失败',
+                message: 'Windows 原生日志窗口启动失败，将使用备用窗口显示。',
+                detail: err.message || String(err)
+            }).finally(createLogWindow);
+        });
+        child.on('close', (code) => {
+            if (settled) return;
+            settled = true;
+            if (code !== 0) {
+                const detail = [stderr.trim(), stdout.trim()].filter(Boolean).join('\n\n') || `PowerShell exit code: ${code}`;
+                console.warn('[Electron] Native runtime window exited early:', detail);
+                dialog.showMessageBox({
+                    type: 'warning',
+                    title: '原生窗口打开失败',
+                    message: 'Windows 原生日志窗口启动后立即退出，将使用备用窗口显示。',
+                    detail
+                }).finally(createLogWindow);
+            }
+        });
+        setTimeout(() => {
+            if (!settled) {
+                settled = true;
+            }
+        }, 1800);
         return true;
     } catch (err) {
         console.warn('[Electron] Failed to open native runtime window:', err.message || err);
@@ -658,7 +704,7 @@ function openNativeRuntimeWindow() {
             title: '原生窗口打开失败',
             message: 'Windows 原生日志窗口打开失败，将使用备用窗口显示。',
             detail: err.message || String(err)
-        });
+        }).finally(createLogWindow);
         return false;
     }
 }
@@ -891,7 +937,7 @@ function refreshTrayMenu() {
         { label: '打开数据导入', click: () => openAppPath('/sla') },
         { label: '打开报表看板', click: () => openAppPath('/report') },
         { type: 'separator' },
-        { label: '查看实时日志/更新进度', click: createLogWindow },
+        { label: '查看实时日志/更新进度', click: openRuntimeStatusWindow },
         { label: '打开日志文件夹', click: openLogsFolder },
         { type: 'separator' },
         { label: `更新状态：${updateStatus.message || '等待检查更新'}`, enabled: false },
