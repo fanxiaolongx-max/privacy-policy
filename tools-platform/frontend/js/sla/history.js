@@ -126,6 +126,7 @@ function renderHistory(data) {
         .sticky-col-td { left: 0; position: sticky; background: #fafafa !important; z-index: 11 !important; box-shadow: 2px 0 5px rgba(0,0,0,0.05); border-right: 2px solid #ccc !important; }
         .history-table tr:hover td.sticky-col-td { background: #f0f0f0 !important; }
         .summary-col { min-width: 350px; white-space: normal !important; word-wrap: break-word; }
+        .history-auto-import-badge { display:inline-flex; align-items:center; margin-top:4px; padding:2px 6px; border-radius:999px; background:#ecfeff; border:1px solid #67e8f9; color:#0369a1; font-size:10px; font-weight:800; line-height:1.4; }
     </style>
     <div class="history-table-wrapper">
     <table class="history-table">
@@ -142,6 +143,8 @@ function renderHistory(data) {
 
     data.forEach(item => {
         const d = new Date(item.timestamp).toLocaleString('zh-CN', { hour12: false });
+        const isAutoImport = item.importSource === 'uivf12' || item.source === 'uivf12';
+        const autoImportBadge = isAutoImport ? '<div><span class="history-auto-import-badge">自动导入</span></div>' : '';
         
         // 构建当前行的指标 map
         const mMap = {};
@@ -196,6 +199,7 @@ function renderHistory(data) {
             <tr>
                 <td class="sticky-col-td" style="color:#1976d2; font-weight:bold;">
                     ${d}
+                    ${autoImportBadge}
                     <button onclick="deleteHistorySnapshot('${item.id}')" style="margin-left:8px; padding:2px 6px; font-size:10px; background:#fff; border:1px solid #ffcdd2; color:#d32f2f; border-radius:4px; cursor:pointer;" title="${SLAT('sla.history.deleteTitle')}" onmouseover="this.style.background='#ffebee'" onmouseout="this.style.background='#fff'">${SLAT('sla.history.delete')}</button>
                 </td>
                 <td><span style="background:#e3f2fd; padding:2px 6px; border-radius:10px; color:#1565c0;">${item.files.length}</span></td>

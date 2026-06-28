@@ -33,6 +33,7 @@ function persistWorkspaceCache(sections, meta = {}) {
             title: section.title,
             themeColor: section.themeColor,
             baseName: section.baseName || '',
+            sourceFiles: Array.isArray(section.sourceFiles) ? section.sourceFiles : [],
             data: Array.isArray(section.data) ? section.data : []
         }))
     };
@@ -107,7 +108,7 @@ async function restoreCachedWorkspace() {
     try {
         if (mainWrapper) mainWrapper.innerHTML = '';
         const initPromises = sections.map(section =>
-            window.SLASection.initSection(section.secId, section.mode, section.title, section.data, section.themeColor || '#555', section.baseName || '')
+            window.SLASection.initSection(section.secId, section.mode, section.title, section.data, section.themeColor || '#555', section.baseName || '', section.sourceFiles || [])
         );
         if (summaryNav) {
             const navHtml = buildCachedSectionNav(sections, payload.meta && payload.meta.summaryTitle);
@@ -236,6 +237,47 @@ function getVersionSuffixFromName(name) {
     return fileName.replace(/\.[^/.]+$/, '').trim();
 }
 
+function getSourceName(source) {
+    return String(source && source.name || '').trim();
+}
+
+function getSourceNames(sources) {
+    return Array.from(new Set((sources || []).map(getSourceName).filter(Boolean)));
+}
+
+function getSelectedImportMonth() {
+    const month = window.SLATargetMonth && typeof window.SLATargetMonth.get === 'function'
+        ? Number(window.SLATargetMonth.get())
+        : (new Date().getMonth() + 1);
+    return Number.isFinite(month) && month >= 1 && month <= 12 ? month : (new Date().getMonth() + 1);
+}
+
+function extractLatestFileMonth(name) {
+    const match = String(name || '').match(/Latest[_\s-]*(?:20\d{2})年(0?[1-9]|1[0-2])月/i);
+    return match ? Number(match[1]) : null;
+}
+
+function filterSourcesByTargetMonth(sources) {
+    const targetMonth = getSelectedImportMonth();
+    const kept = [];
+    const ignored = [];
+    (sources || []).forEach(source => {
+        const month = extractLatestFileMonth(getSourceName(source));
+        if (month && month !== targetMonth) ignored.push(source);
+        else kept.push(source);
+    });
+    if (ignored.length) {
+        logSLAUploadStep('已按目标月份忽略导入文件', {
+            targetMonth,
+            ignored: ignored.map(getSourceName)
+        });
+        if (typeof showToast === 'function') {
+            showToast(`已按目标月份 ${targetMonth} 月忽略 ${ignored.length} 个其他月份文件`, 'warning');
+        }
+    }
+    return { kept, ignored, targetMonth };
+}
+
 function normalizeStructuredRows(name, rows) {
     const suffix = getVersionSuffixFromName(name);
     return (Array.isArray(rows) ? rows : []).map(row => ({
@@ -259,8 +301,15 @@ async function readSources(sources) {
 }
 
 async function handleSpecificUpload(e, forceMode) {
-    const files = Array.from(e.target.files);
+    let files = Array.from(e.target.files);
     if (!files.length) return;
+    const monthFilter = filterSourcesByTargetMonth(files);
+    files = monthFilter.kept;
+    if (!files.length) {
+        alert(`所选文件均不是目标月份 ${monthFilter.targetMonth} 月的数据，已忽略导入。`);
+        e.target.value = '';
+        return;
+    }
     document.getElementById('main-wrapper').innerHTML = `<div class="loading-text">${SLAT('sla.upload.parseLoading')}</div>`;
     document.getElementById('summary-nav-area').style.display = 'none';
     const rawData = await readFiles(files);
@@ -275,20 +324,22 @@ async function handleSpecificUpload(e, forceMode) {
         vulnerability: SLAT('sla.section.title.vuln')
     };
     const colorMap = { rectification: '#1976d2', risk: '#7b1fa2', special: '#00796b', sr: '#d9480f', vulnerability: '#c2410c' };
-    await window.SLASection.initSection(forceMode, forceMode, titleMap[forceMode], rawData, colorMap[forceMode]);
+    const sourceFiles = getSourceNames(files);
+    await window.SLASection.initSection(forceMode, forceMode, titleMap[forceMode], rawData, colorMap[forceMode], '', sourceFiles);
     persistWorkspaceCache([{
         secId: forceMode,
         mode: forceMode,
         title: titleMap[forceMode],
         data: rawData,
         themeColor: colorMap[forceMode],
-        baseName: ''
+        baseName: '',
+        sourceFiles
     }], { type: 'specific', summaryTitle: SLAT('sla.upload.cachedSpecific', { title: titleMap[forceMode] }), files: files.map(f => f.name) });
     API.logHistory('sla', `导入${titleMap[forceMode]}`, `${files.length} 个文件`);
     e.target.value = '';
 
     // 触发快照抓取
-    setTimeout(() => captureAndUploadSnapshot(files.map(f => f.name)), 300);
+    setTimeout(() => captureAndUploadSnapshot(files.map(f => f.name), { source: 'manual' }), 300);
 }
 
 async function handleBatchUpload(e) {
@@ -301,6 +352,15 @@ async function handleBatchUpload(e) {
 async function processBatchFiles(files, meta = {}) {
     files = Array.from(files || []).filter(Boolean);
     if (!files.length) return;
+    const monthFilter = filterSourcesByTargetMonth(files);
+    files = monthFilter.kept;
+    if (!files.length) {
+        const mainWrapper = document.getElementById('main-wrapper');
+        if (mainWrapper) {
+            mainWrapper.innerHTML = `<div style="text-align:center;color:#92400e;background:#fffbeb;padding:28px;border:1px solid #fde68a;border-radius:10px;">所选文件均不是目标月份 ${monthFilter.targetMonth} 月的数据，已忽略导入。<br><br><span style="color:#666;font-size:13px;">请切换目标月份或选择对应月份文件后重试。</span></div>`;
+        }
+        return;
+    }
     document.getElementById('main-wrapper').innerHTML = `<div class="loading-text">${SLAT('sla.upload.smartLoading')}</div>`;
 
     const groups = {
@@ -352,16 +412,18 @@ async function processBatchFiles(files, meta = {}) {
     for (const key of ['rectification', 'special', 'risk', 'sr', 'vulnerability']) {
         const g = groups[key];
         if (g.data.length > 0) {
+            const sourceFiles = getSourceNames(g.files);
             navHtml += `<a href="javascript:void(0);" onclick="document.getElementById('section-${key}').scrollIntoView({behavior:'smooth'})" class="nav-pill" style="border-color:${g.color};color:${g.color}">${g.title} (${g.data.length}行)</a>`;
-            initPromises.push(window.SLASection.initSection(key, g.mode, g.title, g.data, g.color));
-            cacheSections.push({ secId: key, mode: g.mode, title: g.title, data: g.data, themeColor: g.color, baseName: '' });
+            initPromises.push(window.SLASection.initSection(key, g.mode, g.title, g.data, g.color, '', sourceFiles));
+            cacheSections.push({ secId: key, mode: g.mode, title: g.title, data: g.data, themeColor: g.color, baseName: '', sourceFiles });
         }
     }
     Object.values(groups.others).forEach(o => {
         if (o.data.length > 0) {
+            const sourceFiles = getSourceNames(o.files);
             navHtml += `<a href="javascript:void(0);" onclick="document.getElementById('section-${o.id}').scrollIntoView({behavior:'smooth'})" class="nav-pill">${o.title} (${o.data.length}行)</a>`;
-            initPromises.push(window.SLASection.initSection(o.id, o.mode, o.title, o.data, o.color, o.baseName));
-            cacheSections.push({ secId: o.id, mode: o.mode, title: o.title, data: o.data, themeColor: o.color, baseName: o.baseName });
+            initPromises.push(window.SLASection.initSection(o.id, o.mode, o.title, o.data, o.color, o.baseName, sourceFiles));
+            cacheSections.push({ secId: o.id, mode: o.mode, title: o.title, data: o.data, themeColor: o.color, baseName: o.baseName, sourceFiles });
         }
     });
 
@@ -376,20 +438,34 @@ async function processBatchFiles(files, meta = {}) {
     API.logHistory('sla', meta.historyAction || '批量导入', `${files.length} 个文件`);
     
     // 所有表格渲染完后，触发快照抓取 (稍微等一下让浏览器重绘)
-    setTimeout(() => captureAndUploadSnapshot(files.map(f => f.name)), 300);
+    setTimeout(() => captureAndUploadSnapshot(files.map(f => f.name), { source: meta.source || 'manual' }), 300);
 }
 
 function getUivAutoImportParams() {
     const params = new URLSearchParams(window.location.search || '');
     const sessionId = params.get('uivImportSession') || '';
     const token = params.get('uivImportToken') || '';
+    const targetMonth = parseInt(params.get('targetMonth') || '', 10);
     if (!/^[a-f0-9]{32}$/.test(sessionId) || !/^[a-f0-9]{32}$/.test(token)) return null;
-    return { sessionId, token };
+    return { sessionId, token, targetMonth: targetMonth >= 1 && targetMonth <= 12 ? targetMonth : null };
+}
+
+function applyAutoImportTargetMonth(targetMonth) {
+    if (!(targetMonth >= 1 && targetMonth <= 12)) return;
+    if (window.SLATargetMonth && typeof window.SLATargetMonth.set === 'function') {
+        window.SLATargetMonth.set(targetMonth);
+    }
+    const select = document.getElementById('slaTargetMonthSelect');
+    if (select) {
+        select.value = String(targetMonth);
+        select.dataset.ready = 'true';
+    }
 }
 
 async function importUivAutoSession() {
     const params = getUivAutoImportParams();
     if (!params) return false;
+    applyAutoImportTargetMonth(params.targetMonth);
     const mainWrapper = document.getElementById('main-wrapper');
     const summaryNav = document.getElementById('summary-nav-area');
     if (summaryNav) summaryNav.style.display = 'none';
@@ -427,10 +503,11 @@ async function importUivAutoSession() {
     }
 }
 
-async function captureAndUploadSnapshot(fileNames) {
+async function captureAndUploadSnapshot(fileNames, meta = {}) {
     const snapshot = {
         timestamp: new Date().toISOString(),
         files: fileNames,
+        importSource: meta.source || 'manual',
         selectedTargetMonth: window.SLATargetMonth && window.SLATargetMonth.get ? window.SLATargetMonth.get() : (new Date().getMonth() + 1),
         summary: [], 
         topMetrics: [],

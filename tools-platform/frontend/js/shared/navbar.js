@@ -31,6 +31,7 @@ const NAV_DEFAULT_SETTINGS = {
 let navState = {
     settings: JSON.parse(JSON.stringify(NAV_DEFAULT_SETTINGS)),
     customTools: [],
+    currentPrimaryItems: [],
     settingsTab: 'primary',
     saveTimer: null,
     aiSettings: null,
@@ -493,6 +494,7 @@ function renderNavLinksFromState() {
     const primaryItems = (settings.primaryIds || []).map(id => itemById.get(id)).filter(Boolean);
     const primaryIds = new Set(primaryItems.map(item => item.id));
     const overflowItems = sortNavItems(allItems.filter(item => !primaryIds.has(item.id)), settings.itemOrder);
+    navState.currentPrimaryItems = primaryItems;
 
     primaryEl.innerHTML = primaryItems.map(item => renderNavItem(item, 'nav-link')).join('');
 
@@ -515,6 +517,80 @@ function renderNavLinksFromState() {
             </div>
         `).join('');
     menuEl.innerHTML = menuHtml || `<div class="nav-more-empty">${navEscape(navT('nav.empty'))}</div>`;
+    queueResponsiveNavbarUpdate();
+}
+
+let navResponsiveRaf = null;
+
+function queueResponsiveNavbarUpdate() {
+    if (navResponsiveRaf) cancelAnimationFrame(navResponsiveRaf);
+    navResponsiveRaf = requestAnimationFrame(updateResponsiveNavbar);
+}
+
+function isNavbarOverflowing(nav) {
+    const primaryEl = nav.querySelector('.nav-links');
+    const moreEl = document.getElementById('navMore');
+    const actionsEl = nav.querySelector('.nav-actions');
+    const statusEl = nav.querySelector('.nav-status');
+    const rightEdge = actionsEl?.getBoundingClientRect?.().left || statusEl?.getBoundingClientRect?.().left || nav.getBoundingClientRect().right;
+    const menuEdge = moreEl?.getBoundingClientRect?.().right || primaryEl?.getBoundingClientRect?.().right || 0;
+    const visibleLinks = Array.from(primaryEl?.querySelectorAll('.nav-link:not(.nav-responsive-hidden)') || []);
+    const lastLink = visibleLinks[visibleLinks.length - 1];
+    const lastLinkEdge = lastLink?.getBoundingClientRect?.().right || 0;
+    const moreLeft = moreEl?.getBoundingClientRect?.().left || Infinity;
+    return nav.scrollWidth > nav.clientWidth + 1 || menuEdge > rightEdge - 8 || lastLinkEdge > moreLeft - 10;
+}
+
+function updateResponsiveNavbar() {
+    navResponsiveRaf = null;
+    const nav = document.getElementById('app-navbar');
+    const primaryEl = nav?.querySelector('.nav-links');
+    const menuEl = document.getElementById('navMoreMenu');
+    if (!nav || !primaryEl || !menuEl) return;
+
+    primaryEl.querySelectorAll('.nav-link.nav-responsive-hidden').forEach(link => {
+        link.classList.remove('nav-responsive-hidden');
+    });
+    document.getElementById('navResponsiveCategory')?.remove();
+    if (!menuEl.children.length) {
+        menuEl.innerHTML = `<div class="nav-more-empty">${navEscape(navT('nav.empty'))}</div>`;
+    }
+
+    const links = Array.from(primaryEl.querySelectorAll('.nav-link'));
+    if (!links.length || !isNavbarOverflowing(nav)) return;
+
+    const nonActive = links.filter(link => !link.classList.contains('active')).reverse();
+    const active = links.filter(link => link.classList.contains('active')).reverse();
+    const candidates = [...nonActive, ...active];
+    const collapsedIds = [];
+
+    for (const link of candidates) {
+        if (!isNavbarOverflowing(nav)) break;
+        link.classList.add('nav-responsive-hidden');
+        const itemId = link.getAttribute('data-nav-item-id');
+        if (itemId) collapsedIds.push(itemId);
+    }
+
+    if (!collapsedIds.length) return;
+
+    const itemById = new Map((navState.currentPrimaryItems || []).map(item => [item.id, item]));
+    const collapsedItems = collapsedIds
+        .map(id => itemById.get(id))
+        .filter(Boolean)
+        .reverse();
+    if (!collapsedItems.length) return;
+
+    const emptyEl = menuEl.querySelector(':scope > .nav-more-empty');
+    if (emptyEl && menuEl.children.length === 1) emptyEl.remove();
+
+    const category = document.createElement('div');
+    category.className = 'nav-more-category nav-responsive-category';
+    category.id = 'navResponsiveCategory';
+    category.innerHTML = `
+        <div class="nav-more-section-label">${navEscape(navT('nav.more'))}</div>
+        ${collapsedItems.map(item => renderNavItem(item, 'nav-more-item nav-responsive-more-item')).join('')}
+    `;
+    menuEl.prepend(category);
 }
 
 async function loadNavigationData() {
@@ -569,10 +645,10 @@ function renderNavbar() {
                 <span class="nav-lang-icon">🌐</span>
                 <span class="nav-lang-current">${window.ToolsI18n?.getLanguage?.() === 'en-US' ? 'EN' : '中文'}</span>
             </button>
-            <a href="/requirements" class="req-btn nav-action-link">🎯 ${navEscape(navT('nav.requirements'))}</a>
+            <a href="/requirements" class="req-btn nav-action-link" title="${navEscape(navT('nav.requirements'))}"><span class="nav-action-icon">🎯</span><span class="nav-action-text">${navEscape(navT('nav.requirements'))}</span></a>
             ${role === 'admin' ? `<button type="button" class="nav-gear-btn" onclick="openNavSettingsModal()" title="${navEscape(navT('nav.settings'))}">⚙</button>` : ''}
-            <span class="nav-user-chip">${navEscape(navT('nav.userPrefix', { user: user || '未登录' }))}</span>
-            <a href="#" class="nav-logout-link" onclick="doLogout()">${navEscape(navT('nav.logout'))}</a>
+            <span class="nav-user-chip" title="${navEscape(user || '未登录')}"><span class="nav-action-icon">👤</span><span class="nav-action-text">${navEscape(user || '未登录')}</span></span>
+            <a href="#" class="nav-logout-link" onclick="doLogout()" title="${navEscape(navT('nav.logout'))}"><span class="nav-action-icon">↩</span><span class="nav-action-text">${navEscape(navT('nav.logout'))}</span></a>
         </div>
 
         <div class="nav-status" style="margin-left:20px; display:flex; align-items:center; gap:12px;">
@@ -624,6 +700,8 @@ window.addEventListener('tools:languagechange', () => {
         renderNavSettingsContent();
     }
 });
+
+window.addEventListener('resize', queueResponsiveNavbarUpdate);
 
 window.toggleNavMore = function (event) {
     event.preventDefault();

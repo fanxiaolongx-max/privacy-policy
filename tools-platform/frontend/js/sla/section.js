@@ -151,7 +151,7 @@ function formatSRDuration(hours) {
     return remainDays > 0 ? `${months}月${remainDays}天` : `${months}月`;
 }
 
-async function initSection(secId, mode, title, rawData, themeColor, baseName = '') {
+async function initSection(secId, mode, title, rawData, themeColor, baseName = '', sourceFiles = []) {
     const RECT_P = SLAUpload.RECT_PRIORITY_COLS, RISK_P = SLAUpload.RISK_PRIORITY_COLS, SPEC_P = SLAUpload.SPECIAL_PRIORITY_COLS, SR_P = SLAUpload.SR_PRIORITY_COLS, VULN_P = SLAUpload.VULN_PRIORITY_COLS;
     let allHeadersSet = new Set();
     rawData.forEach(row => Object.keys(row).forEach(k => allHeadersSet.add(k)));
@@ -181,7 +181,8 @@ async function initSection(secId, mode, title, rawData, themeColor, baseName = '
         globalData: [], currentDisplayData: [],
         sortKey: null, sortAsc: true, currentFilter: 'all',
         columnWidths: {}, isDraggingColumn: false, draggedHeaderName: null,
-        customMetrics: []
+        customMetrics: [],
+        sourceFiles: Array.from(new Set((Array.isArray(sourceFiles) ? sourceFiles : []).filter(Boolean).map(String)))
     };
 
     await SLAPrefs.loadPrefs(secId);
@@ -441,11 +442,17 @@ function preprocessData(secId, rawData) {
 
 function buildDOM(secId, title, themeColor) {
     const tt = window.SLAT || ((key) => key);
+    const sourceFiles = (AppState[secId] && Array.isArray(AppState[secId].sourceFiles)) ? AppState[secId].sourceFiles : [];
+    const sourceFileText = sourceFiles.join('；');
+    const sourceFileHtml = sourceFiles.length
+        ? `<span class="section-source-files" title="${escapeHTML(sourceFileText)}">导入文件：${escapeHTML(sourceFileText)}</span>`
+        : '';
     const html = `
     <div class="section-card" id="section-${secId}">
         <div class="section-header">
             <h3 class="section-title" style="color:${themeColor}">
                 ${title} <span style="font-size:12px;color:#888;font-weight:normal;" id="row-count-badge-${secId}"></span>
+                ${sourceFileHtml}
                 <span class="rule-summary-badge" id="rule-summary-badge-${secId}" title="${tt('sla.section.noRulesTitle')}">${tt('sla.section.ruleSummary', { main: 0, sub: 0 })}</span>
             </h3>
         </div>

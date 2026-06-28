@@ -507,6 +507,22 @@ function buildUivCompletionDialogScript(summary) {
         const hasFailedImports = failedImports.length > 0;
         const hasNoDownloadTasks = noDownloadTasks.length > 0;
         const importUrl = summary.autoImport && summary.autoImport.slaUrl ? summary.autoImport.slaUrl : '';
+        function buildImportUrl(month) {
+            if (!importUrl) return '';
+            try {
+                const url = new URL(importUrl, window.location.origin);
+                const normalized = parseInt(month, 10);
+                if (normalized >= 1 && normalized <= 12) url.searchParams.set('targetMonth', String(normalized));
+                else url.searchParams.delete('targetMonth');
+                return url.href;
+            } catch (e) {
+                return importUrl;
+            }
+        }
+        const monthOptions = ['<option value="">SLA默认月份</option>'].concat(Array.from({ length: 12 }, (_, index) => {
+            const month = index + 1;
+            return '<option value="' + month + '">' + month + '月</option>';
+        })).join('');
         const old = document.getElementById('uivf12-completion-dialog');
         if (old) old.remove();
         const overlay = document.createElement('div');
@@ -557,7 +573,8 @@ function buildUivCompletionDialogScript(summary) {
         const noDownloadRows = noDownloadTasks.map(item => {
             const lines = [
                 ['时间', item.at || ''],
-                ['下载数变化', String(item.before || 0) + ' -> ' + String(item.after || 0)],
+                ['该脚本前后下载数', String(item.before || 0) + ' -> ' + String(item.after || 0)],
+                ['该脚本前后导入数', String(item.beforeImports || 0) + ' -> ' + String(item.afterImports || 0)],
                 ['脚本返回', item.result || '']
             ].filter(pair => pair[1] !== undefined && pair[1] !== null && String(pair[1]) !== '');
             const detailHtml = lines.map(pair =>
@@ -587,7 +604,13 @@ function buildUivCompletionDialogScript(summary) {
                         '<div style="border:1px solid rgba(103,232,249,.18);border-radius:10px;padding:10px;background:rgba(8,47,73,.28);"><div style="font-size:10px;color:#7dd3fc;text-transform:uppercase;">自动导入</div><div style="font-size:22px;font-weight:900;">' + (hasImportedFiles ? importedFiles.length : '未暂存') + '</div></div>' +
                     '</div>' +
                     '<div style="font-size:12px;color:#cbd5e1;margin-bottom:10px;">文件会继续下载到浏览器默认下载目录；自动导入只上传浏览器端解析后的结构化 rows，不上传原始 CSV 文件。</div>' +
-                    (importUrl && hasImportedFiles ? '<div id="uivf12-import-open-hint" style="margin-bottom:12px;padding:10px;border:1px solid rgba(34,197,94,.28);border-radius:10px;background:rgba(22,101,52,.16);font-size:12px;color:#bbf7d0;line-height:1.55;">即将在新标签页打开数据导入页面并执行智能分流合并，当前抓取结果页会保留。<a href="' + importUrl.replace(/"/g, '&quot;') + '" target="_blank" rel="noopener" style="color:#67e8f9;font-weight:800;margin-left:8px;">立即打开</a><div style="margin-top:4px;color:#fde68a;">如果浏览器拦截了自动打开新标签页，请点击上方“立即打开”。</div></div>' : '') +
+                    (importUrl && hasImportedFiles ? '<div id="uivf12-import-open-hint" style="margin-bottom:12px;padding:10px;border:1px solid rgba(34,197,94,.28);border-radius:10px;background:rgba(22,101,52,.16);font-size:12px;color:#bbf7d0;line-height:1.55;">' +
+                        '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
+                            '<span>即将在新标签页打开数据导入页面并执行智能分流合并，当前抓取结果页会保留。</span>' +
+                            '<label style="display:inline-flex;align-items:center;gap:5px;color:#d1fae5;">目标月份<select id="uivf12-import-target-month" style="height:24px;border-radius:6px;border:1px solid rgba(103,232,249,.34);background:rgba(15,23,42,.78);color:#e0f2fe;font-size:12px;">' + monthOptions + '</select></label>' +
+                            '<a id="uivf12-import-open-link" href="' + buildImportUrl('').replace(/"/g, '&quot;') + '" target="_blank" rel="noopener" style="color:#67e8f9;font-weight:800;">立即打开</a>' +
+                        '</div>' +
+                        '<div style="margin-top:4px;color:#fde68a;">如果浏览器拦截了自动打开新标签页，请点击上方“立即打开”。</div></div>' : '') +
                     (hasFailedImports ? '<div style="margin-bottom:12px;padding:10px 14px;border:1px solid rgba(251,113,133,.3);border-radius:10px;background:rgba(127,29,29,.18);"><div style="font-size:12px;color:#fecaca;font-weight:850;margin-bottom:6px;">以下文件下载成功，但自动导入失败</div>' + failedRows + '</div>' : '') +
                     (hasNoDownloadTasks ? '<div style="margin-bottom:12px;padding:10px 14px;border:1px solid rgba(251,191,36,.3);border-radius:10px;background:rgba(146,64,14,.16);"><div style="font-size:12px;color:#fde68a;font-weight:850;margin-bottom:6px;">以下脚本已执行，但未检测到下载文件</div>' + noDownloadRows + '</div>' : '') +
                     '<div style="max-height:320px;overflow:auto;border:1px solid rgba(148,163,184,.16);border-radius:10px;padding:4px 14px;background:rgba(2,6,23,.34);">' + (fileRows || '<div style="padding:14px;color:#94a3b8;font-size:13px;">未检测到本次下载文件名。若浏览器或扩展绕过页面下载事件，文件数量将不显示。</div>') + '</div>' +
@@ -597,8 +620,17 @@ function buildUivCompletionDialogScript(summary) {
         overlay.addEventListener('click', event => { if (event.target === overlay) overlay.remove(); });
         document.documentElement.appendChild(overlay);
         if (importUrl && hasImportedFiles) {
+            const monthSelect = overlay.querySelector('#uivf12-import-target-month');
+            const openLink = overlay.querySelector('#uivf12-import-open-link');
+            const syncImportLink = function () {
+                const nextUrl = buildImportUrl(monthSelect ? monthSelect.value : '');
+                if (openLink && nextUrl) openLink.href = nextUrl;
+                return nextUrl;
+            };
+            if (monthSelect) monthSelect.addEventListener('change', syncImportLink);
+            syncImportLink();
             setTimeout(function () {
-                const opened = window.open(importUrl, '_blank', 'noopener');
+                const opened = window.open(syncImportLink(), '_blank', 'noopener');
                 if (!opened) {
                     const hint = overlay.querySelector('#uivf12-import-open-hint');
                     if (hint) {
@@ -918,18 +950,21 @@ function buildUivAutoImportFlushScript() {
     })();`;
 }
 
-function buildUivDownloadCountScript() {
+function buildUivCaptureCountScript() {
     return `return (function () {
         try {
             const parsed = window.name ? JSON.parse(window.name) : {};
-            return String(Array.isArray(parsed.uivf12Downloads) ? parsed.uivf12Downloads.length : 0);
+            return JSON.stringify({
+                downloads: Array.isArray(parsed.uivf12Downloads) ? parsed.uivf12Downloads.length : 0,
+                imports: Array.isArray(parsed.uivf12AutoImportDatasets) ? parsed.uivf12AutoImportDatasets.length : 0
+            });
         } catch (error) {
-            return '0';
+            return '{"downloads":0,"imports":0}';
         }
     })();`;
 }
 
-function buildUivTaskDownloadAuditScript(taskName, beforeVar, resultVar) {
+function buildUivTaskDownloadAuditScript(taskName, beforeVar) {
     return `return (function () {
         function readWindowState() {
             try {
@@ -939,28 +974,41 @@ function buildUivTaskDownloadAuditScript(taskName, beforeVar, resultVar) {
                 return {};
             }
         }
-        const beforeRaw = '${' + beforeVar + '}';
-        const parsedBefore = parseInt(beforeRaw, 10);
-        const result = String('${' + resultVar + '}' || '');
+        function parseCounts(raw) {
+            try {
+                const parsed = JSON.parse(String(raw || '{}'));
+                return {
+                    downloads: Number.isFinite(Number(parsed.downloads)) ? Number(parsed.downloads) : 0,
+                    imports: Number.isFinite(Number(parsed.imports)) ? Number(parsed.imports) : 0
+                };
+            } catch (e) {
+                const fallback = parseInt(String(raw || '0'), 10);
+                return { downloads: Number.isFinite(fallback) ? fallback : 0, imports: 0 };
+            }
+        }
+        const before = parseCounts('${' + beforeVar + '}');
         const bag = readWindowState();
         const downloads = Array.isArray(bag.uivf12Downloads) ? bag.uivf12Downloads : [];
-        const after = downloads.length;
-        const before = Number.isFinite(parsedBefore) ? parsedBefore : after;
-        if (after <= before) {
+        const imports = Array.isArray(bag.uivf12AutoImportDatasets) ? bag.uivf12AutoImportDatasets : [];
+        const after = { downloads: downloads.length, imports: imports.length };
+        const downloadDelta = after.downloads - before.downloads;
+        const importDelta = after.imports - before.imports;
+        if (downloadDelta <= 0 && importDelta <= 0) {
             const list = Array.isArray(bag.uivf12NoDownloadTasks) ? bag.uivf12NoDownloadTasks : [];
             list.push({
                 name: ${JSON.stringify(taskName)},
-                before,
-                after,
-                result: result.slice(0, 500),
+                before: before.downloads,
+                after: after.downloads,
+                beforeImports: before.imports,
+                afterImports: after.imports,
+                result: '未检测到下载或自动导入数量增加',
                 at: new Date().toISOString()
             });
             bag.uivf12NoDownloadTasks = list;
             window.name = JSON.stringify(bag);
             return 'no-download';
         }
-        const delta = after - before;
-        return delta > 0 ? ('downloaded:' + delta) : 'downloaded';
+        return 'captured:download+' + Math.max(0, downloadDelta) + ',import+' + Math.max(0, importDelta);
     })();`;
 }
 
@@ -1097,15 +1145,16 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
             const nextRunIndex = runIndex + 1;
             const progress = `${nextRunIndex}/${usableScripts.length}`;
             const resultVar = `uivResult_${nextRunIndex}`;
-            const beforeDownloadVar = `uivDownloadBefore_${nextRunIndex}`;
+            const beforeCaptureVar = `uivCaptureBefore_${nextRunIndex}`;
             const auditVar = `uivDownloadAudit_${nextRunIndex}`;
             pushPanelCommand('任务执行中', `开始 ${script.name}`);
             commands.push(
                 { Command: 'echo', Target: `[${progress}] Run ${script.name}`, Value: '', Description: '' },
-                { Command: 'executeScript', Target: buildUivDownloadCountScript(), Value: beforeDownloadVar, Description: `Record download count before: ${script.name}` },
+                { Command: 'executeScript', Target: buildUivCaptureCountScript(), Value: beforeCaptureVar, Description: `Record capture count before: ${script.name}` },
                 { Command: 'executeScript', Target: script.code, Value: resultVar, Description: `Run UIVF12 script: ${script.name}` },
+                { Command: 'pause', Target: '500', Value: '', Description: 'Let download click/import state settle before auditing.' },
                 { Command: 'executeScript', Target: buildUivAutoImportFlushScript(), Value: '', Description: 'Wait for UIVF12 auto-import file upload.' },
-                { Command: 'executeScript', Target: buildUivTaskDownloadAuditScript(script.name, beforeDownloadVar, resultVar), Value: auditVar, Description: `Audit download result: ${script.name}` },
+                { Command: 'executeScript', Target: buildUivTaskDownloadAuditScript(script.name, beforeCaptureVar), Value: auditVar, Description: `Audit download result: ${script.name}` },
                 { Command: 'echo', Target: `[${progress}] ${script.name} result: ${'${' + resultVar + '}'}`, Value: '', Description: '' },
                 { Command: 'echo', Target: `[${progress}] ${script.name} download audit: ${'${' + auditVar + '}'}`, Value: '', Description: '' },
                 { Command: 'pause', Target: String(cooldownMs), Value: '', Description: `Cooldown adjusted by UIVF12 speed ${speed}x.` }
