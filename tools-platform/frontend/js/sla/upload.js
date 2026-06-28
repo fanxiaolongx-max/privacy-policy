@@ -10,15 +10,53 @@ const SR_PRIORITY_COLS      = ['hw_sev_name', 'urgency', 'sr_status_name', 'open
 const VULN_PRIORITY_COLS    = ['task_status', 'create_time', 'task_create_time', 'vuln_id', 'vulnerability_id', '漏洞编号', '漏洞名称', 'vulnerability_name', 'customer_name', 'network_name'];
 const SLA_WORKSPACE_CACHE_KEY = 'sla_last_import_workspace_v1';
 
-function buildCachedSectionNav(sections, summaryTitle) {
-    if (!sections || sections.length <= 1) return '';
-    let navHtml = `<h3 style="margin-top:0;color:#2e7d32;font-size:16px;">${escapeHTML(summaryTitle || SLAT('sla.upload.cachedTitle'))}</h3><div class="nav-pills">`;
-    sections.forEach(section => {
+function ensureLazyWorkspaceStyles() {
+    if (document.getElementById('sla-lazy-workspace-style')) return;
+    const style = document.createElement('style');
+    style.id = 'sla-lazy-workspace-style';
+    style.textContent = `
+        .sla-section-tabs-shell { margin: 14px 0 16px; padding: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; }
+        .sla-section-tabs-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
+        .sla-section-tabs-title { margin:0; color:#166534; font-size:16px; font-weight:800; }
+        .sla-section-tabs-hint { color:#64748b; font-size:12px; white-space:nowrap; }
+        .sla-section-tabs { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+        .sla-section-tab { border:1px solid var(--tab-color, #64748b); color:var(--tab-color, #334155); background:#fff; border-radius:999px; padding:7px 11px; cursor:pointer; font-size:12px; font-weight:800; box-shadow:0 1px 2px rgba(15,23,42,.06); transition:background .16s ease, color .16s ease, transform .16s ease; }
+        .sla-section-tab:hover { transform:translateY(-1px); background:#f1f5f9; }
+        .sla-section-tab.active { background:var(--tab-color, #334155); color:#fff; box-shadow:0 6px 14px rgba(15,23,42,.16); }
+        .sla-section-tab .tab-count { opacity:.78; font-weight:700; margin-left:4px; }
+        .sla-lazy-table-placeholder { margin: 14px; padding: 24px; text-align:center; color:#64748b; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:10px; font-size:13px; }
+        @media (max-width: 760px) {
+            .sla-section-tabs-head { align-items:flex-start; flex-direction:column; }
+            .sla-section-tabs-hint { white-space:normal; }
+            .sla-section-tab { max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+function buildSectionTabs(sections, summaryTitle) {
+    if (!Array.isArray(sections) || !sections.length) return '';
+    ensureLazyWorkspaceStyles();
+    const title = escapeHTML(summaryTitle || SLAT('sla.upload.cachedTitle'));
+    const hint = sections.length > 1
+        ? `默认仅加载第 1 个表格明细，其余 ${sections.length - 1} 个点击标签后加载，减少页面卡顿。`
+        : '当前仅 1 个表格。';
+    const buttons = sections.map((section, index) => {
         const count = Array.isArray(section.data) ? section.data.length : 0;
-        navHtml += `<a href="javascript:void(0);" onclick="document.getElementById('section-${section.secId}').scrollIntoView({behavior:'smooth'})" class="nav-pill" style="border-color:${section.themeColor || '#555'};color:${section.themeColor || '#555'}">${escapeHTML(section.title)} (${count}行)</a>`;
-    });
-    navHtml += '</div>';
-    return navHtml;
+        const color = section.themeColor || '#555';
+        return `<button type="button" class="sla-section-tab ${index === 0 ? 'active' : ''}" data-sec-id="${escapeHTML(section.secId)}" onclick="SLAUpload.activateSectionTab('${escapeHTML(section.secId)}')" style="--tab-color:${escapeHTML(color)}" title="${escapeHTML(section.title)}">${escapeHTML(section.title)}<span class="tab-count">${count}行</span></button>`;
+    }).join('');
+    return `<div class="sla-section-tabs-shell">
+        <div class="sla-section-tabs-head">
+            <h3 class="sla-section-tabs-title">${title}</h3>
+            <span class="sla-section-tabs-hint">${escapeHTML(hint)}</span>
+        </div>
+        <div class="sla-section-tabs">${buttons}</div>
+    </div>`;
+}
+
+function buildCachedSectionNav(sections, summaryTitle) {
+    return buildSectionTabs(sections || [], summaryTitle);
 }
 
 function persistWorkspaceCache(sections, meta = {}) {
@@ -72,6 +110,31 @@ function renderEmptyWorkspace() {
     }
 }
 
+function activateSectionTab(secId) {
+    const sectionId = String(secId || '');
+    if (!sectionId) return;
+    document.querySelectorAll('#main-wrapper .section-card').forEach(section => {
+        section.style.display = section.id === `section-${sectionId}` ? '' : 'none';
+    });
+    document.querySelectorAll('.sla-section-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.secId === sectionId);
+    });
+    const state = window.AppState && window.AppState[sectionId];
+    if (state && state.tableRenderSuspended) {
+        state.tableRenderSuspended = false;
+        const container = document.getElementById(`table-container-${sectionId}`);
+        if (container) delete container.dataset.lazyPlaceholder;
+        if (typeof updateView === 'function') updateView(sectionId);
+    }
+    const section = document.getElementById(`section-${sectionId}`);
+    if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function activateInitialSection(sections) {
+    const first = Array.isArray(sections) && sections.length ? sections[0] : null;
+    if (first && first.secId) activateSectionTab(first.secId);
+}
+
 function clearWorkspaceCache({ skipConfirm = false } = {}) {
     if (!skipConfirm && !confirm(SLAT('sla.upload.confirmClearCache'))) return false;
     try {
@@ -107,8 +170,8 @@ async function restoreCachedWorkspace() {
 
     try {
         if (mainWrapper) mainWrapper.innerHTML = '';
-        const initPromises = sections.map(section =>
-            window.SLASection.initSection(section.secId, section.mode, section.title, section.data, section.themeColor || '#555', section.baseName || '', section.sourceFiles || [])
+        const initPromises = sections.map((section, index) =>
+            window.SLASection.initSection(section.secId, section.mode, section.title, section.data, section.themeColor || '#555', section.baseName || '', section.sourceFiles || [], { deferTableRender: index > 0 })
         );
         if (summaryNav) {
             const navHtml = buildCachedSectionNav(sections, payload.meta && payload.meta.summaryTitle);
@@ -116,6 +179,7 @@ async function restoreCachedWorkspace() {
             summaryNav.style.display = navHtml ? 'block' : 'none';
         }
         await Promise.all(initPromises);
+        activateInitialSection(sections);
         logSLAUploadStep('已恢复上次导入工作区', {
             savedAt: payload.savedAt,
             sections: sections.length,
@@ -405,34 +469,33 @@ async function processBatchFiles(files, meta = {}) {
     document.getElementById('main-wrapper').innerHTML = '';
     resetRuntimeWorkspace();
     const batchTitle = SLAT('sla.upload.batchSuccess', { count: files.length });
-    let navHtml = `<h3 style="margin-top:0;color:#2e7d32;font-size:16px;">${batchTitle}</h3><div class="nav-pills">`;
-
     const initPromises = [];
     const cacheSections = [];
     for (const key of ['rectification', 'special', 'risk', 'sr', 'vulnerability']) {
         const g = groups[key];
         if (g.data.length > 0) {
             const sourceFiles = getSourceNames(g.files);
-            navHtml += `<a href="javascript:void(0);" onclick="document.getElementById('section-${key}').scrollIntoView({behavior:'smooth'})" class="nav-pill" style="border-color:${g.color};color:${g.color}">${g.title} (${g.data.length}行)</a>`;
-            initPromises.push(window.SLASection.initSection(key, g.mode, g.title, g.data, g.color, '', sourceFiles));
             cacheSections.push({ secId: key, mode: g.mode, title: g.title, data: g.data, themeColor: g.color, baseName: '', sourceFiles });
         }
     }
     Object.values(groups.others).forEach(o => {
         if (o.data.length > 0) {
             const sourceFiles = getSourceNames(o.files);
-            navHtml += `<a href="javascript:void(0);" onclick="document.getElementById('section-${o.id}').scrollIntoView({behavior:'smooth'})" class="nav-pill">${o.title} (${o.data.length}行)</a>`;
-            initPromises.push(window.SLASection.initSection(o.id, o.mode, o.title, o.data, o.color, o.baseName, sourceFiles));
             cacheSections.push({ secId: o.id, mode: o.mode, title: o.title, data: o.data, themeColor: o.color, baseName: o.baseName, sourceFiles });
         }
     });
 
-    navHtml += '</div>';
+    cacheSections.forEach((section, index) => {
+        initPromises.push(window.SLASection.initSection(section.secId, section.mode, section.title, section.data, section.themeColor || '#555', section.baseName || '', section.sourceFiles || [], { deferTableRender: index > 0 }));
+    });
+
+    const navHtml = buildSectionTabs(cacheSections, batchTitle);
     document.getElementById('summary-nav-area').innerHTML = navHtml;
     document.getElementById('summary-nav-area').style.display = 'block';
     
-    // 等待所有表格的预加载和DOM构建完成
+    // 等待所有表格的数据预处理完成；只有当前标签页渲染明细表 DOM。
     await Promise.all(initPromises);
+    activateInitialSection(cacheSections);
     persistWorkspaceCache(cacheSections, { type: meta.type || 'batch', summaryTitle: meta.summaryTitle || batchTitle, files: files.map(f => f.name), source: meta.source || '' });
     
     API.logHistory('sla', meta.historyAction || '批量导入', `${files.length} 个文件`);
@@ -663,4 +726,4 @@ async function captureAndUploadSnapshot(fileNames, meta = {}) {
     }
 }
 
-window.SLAUpload = { handleBatchUpload, handleSpecificUpload, processBatchFiles, importUivAutoSession, readFiles, generateSchemaHash, restoreCachedWorkspace, clearWorkspaceCache, RECT_PRIORITY_COLS, RISK_PRIORITY_COLS, SPECIAL_PRIORITY_COLS, SR_PRIORITY_COLS, VULN_PRIORITY_COLS };
+window.SLAUpload = { handleBatchUpload, handleSpecificUpload, processBatchFiles, importUivAutoSession, readFiles, generateSchemaHash, restoreCachedWorkspace, clearWorkspaceCache, activateSectionTab, RECT_PRIORITY_COLS, RISK_PRIORITY_COLS, SPECIAL_PRIORITY_COLS, SR_PRIORITY_COLS, VULN_PRIORITY_COLS };

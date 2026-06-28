@@ -151,7 +151,7 @@ function formatSRDuration(hours) {
     return remainDays > 0 ? `${months}月${remainDays}天` : `${months}月`;
 }
 
-async function initSection(secId, mode, title, rawData, themeColor, baseName = '', sourceFiles = []) {
+async function initSection(secId, mode, title, rawData, themeColor, baseName = '', sourceFiles = [], options = {}) {
     const RECT_P = SLAUpload.RECT_PRIORITY_COLS, RISK_P = SLAUpload.RISK_PRIORITY_COLS, SPEC_P = SLAUpload.SPECIAL_PRIORITY_COLS, SR_P = SLAUpload.SR_PRIORITY_COLS, VULN_P = SLAUpload.VULN_PRIORITY_COLS;
     let allHeadersSet = new Set();
     rawData.forEach(row => Object.keys(row).forEach(k => allHeadersSet.add(k)));
@@ -182,7 +182,8 @@ async function initSection(secId, mode, title, rawData, themeColor, baseName = '
         sortKey: null, sortAsc: true, currentFilter: 'all',
         columnWidths: {}, isDraggingColumn: false, draggedHeaderName: null,
         customMetrics: [],
-        sourceFiles: Array.from(new Set((Array.isArray(sourceFiles) ? sourceFiles : []).filter(Boolean).map(String)))
+        sourceFiles: Array.from(new Set((Array.isArray(sourceFiles) ? sourceFiles : []).filter(Boolean).map(String))),
+        tableRenderSuspended: !!(options && options.deferTableRender)
     };
 
     await SLAPrefs.loadPrefs(secId);

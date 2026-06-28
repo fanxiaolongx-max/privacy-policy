@@ -24,8 +24,17 @@ function updateView(secId) {
         });
     }
     state.currentDisplayData = displayData;
-    document.getElementById(`row-count-badge-${secId}`).innerText = `(展示 ${displayData.length} 行)`;
+    const rowBadge = document.getElementById(`row-count-badge-${secId}`);
+    if (rowBadge) rowBadge.innerText = `(展示 ${displayData.length} 行)`;
     updateDashboard(secId);
+    if (state.tableRenderSuspended) {
+        const container = document.getElementById(`table-container-${secId}`);
+        if (container && !container.dataset.lazyPlaceholder) {
+            container.dataset.lazyPlaceholder = '1';
+            container.innerHTML = `<div class="sla-lazy-table-placeholder">已完成 ${displayData.length} 行数据预处理，点击上方表格标签后再加载明细表。</div>`;
+        }
+        return;
+    }
     renderTable(secId);
 }
 
