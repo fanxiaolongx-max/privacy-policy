@@ -550,4 +550,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 window.evaluateAllMetrics = evaluateAllMetrics;
 window.SLAMetrics = { evaluateAllMetrics, renderTopStickyBar };
-window.SLATargetMonth = { get: getSLATargetMonth, init: initSLATargetMonthSelect };
+window.SLATargetMonth = { get: getSLATargetMonth, set: setSLATargetMonth, init: initSLATargetMonthSelect };
