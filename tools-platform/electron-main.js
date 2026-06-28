@@ -168,6 +168,39 @@ function showTrayBalloon(title, content) {
     }
 }
 
+function formatUpdaterError(err) {
+    const raw = err && err.message ? err.message : String(err || '');
+    const statusMatch = raw.match(/\b(?:HttpError|HTTP|status(?: code)?)[^\d]{0,12}(\d{3})\b/i);
+    const statusCode = statusMatch ? statusMatch[1] : '';
+    const hasHtml = /<!doctype html|<html[\s>]|<body[\s>]/i.test(raw);
+    const isGitHub = /github\.com|api\.github\.com/i.test(raw);
+
+    if (statusCode === '502' && isGitHub) {
+        return {
+            message: 'GitHub 更新服务暂时不可用，请稍后重试。',
+            detail: 'GitHub 返回了 502 错误页，当前发布包通常没有问题。可过几分钟再点“检查更新”。'
+        };
+    }
+    if (hasHtml && isGitHub) {
+        return {
+            message: statusCode
+                ? `GitHub 更新接口返回异常页面（HTTP ${statusCode}），请稍后重试。`
+                : 'GitHub 更新接口返回异常页面，请稍后重试。',
+            detail: '已隐藏 GitHub 返回的 HTML 错误页内容，避免弹窗过长。'
+        };
+    }
+    if (/Unable to find latest version on GitHub/i.test(raw)) {
+        return {
+            message: '暂时无法获取 GitHub 最新版本信息，请稍后重试。',
+            detail: statusCode ? `GitHub HTTP ${statusCode}` : raw.slice(0, 500)
+        };
+    }
+    return {
+        message: raw.slice(0, 500) || '更新失败',
+        detail: raw.length > 500 ? `${raw.slice(0, 500)}...` : raw
+    };
+}
+
 function formatBytes(value) {
     const bytes = Number(value) || 0;
     if (bytes <= 0) return '';
@@ -293,10 +326,12 @@ function setupAutoUpdater() {
     });
 
     autoUpdater.on('error', (err) => {
-        stopUpdateProgressBalloons('Tools Platform 更新失败', err && err.message ? err.message : String(err));
+        const formatted = formatUpdaterError(err);
+        stopUpdateProgressBalloons('Tools Platform 更新失败', formatted.message);
         broadcastUpdateStatus({
             state: 'error',
-            message: err && err.message ? err.message : String(err),
+            message: formatted.message,
+            detail: formatted.detail,
             progress: 0
         });
     });
@@ -323,9 +358,11 @@ function registerUpdaterIpcHandlers() {
             await autoUpdater.checkForUpdates();
             return updateStatus;
         } catch (err) {
+            const formatted = formatUpdaterError(err);
             return broadcastUpdateStatus({
                 state: 'error',
-                message: err && err.message ? err.message : String(err),
+                message: formatted.message,
+                detail: formatted.detail,
                 progress: 0
             });
         }
@@ -355,10 +392,12 @@ function registerUpdaterIpcHandlers() {
             await autoUpdater.downloadUpdate();
             return updateStatus;
         } catch (err) {
-            stopUpdateProgressBalloons('Tools Platform 更新失败', err && err.message ? err.message : String(err));
+            const formatted = formatUpdaterError(err);
+            stopUpdateProgressBalloons('Tools Platform 更新失败', formatted.message);
             return broadcastUpdateStatus({
                 state: 'error',
-                message: err && err.message ? err.message : String(err),
+                message: formatted.message,
+                detail: formatted.detail,
                 progress: 0
             });
         }
@@ -858,7 +897,64 @@ Add-Type -AssemblyName System.Drawing
 function Normalize-LogText([string]$Text) {
     if ($null -eq $Text) { return "" }
     $ansiPattern = ([string][char]27) + "\[[0-9;?]*[ -/]*[@-~]"
-    return [regex]::Replace($Text, $ansiPattern, "")
+    $clean = [regex]::Replace($Text, $ansiPattern, "")
+    $clean = $clean -replace "(\S)(\[\d{4}-\d{2}-\d{2}T)", ('$1' + [Environment]::NewLine + '$2')
+    $clean = $clean -replace "(\S)(\[\d{2}:\d{2}:\d{2}\])", ('$1' + [Environment]::NewLine + '$2')
+    $clean = $clean -replace "(\S)(GET\s+/)", ('$1' + [Environment]::NewLine + '$2')
+    $clean = $clean -replace "(\S)(POST\s+/)", ('$1' + [Environment]::NewLine + '$2')
+    $clean = $clean -replace "(\S)(\[(?:DATA SOURCE|Electron|AI|UIVF12|SLA Upload)\])", ('$1' + [Environment]::NewLine + '$2')
+    $clean = $clean -replace "\r?\n{3,}", ([Environment]::NewLine + [Environment]::NewLine)
+    return $clean.Trim()
+}
+
+function Append-ColoredText([System.Windows.Forms.RichTextBox]$Box, [string]$Text, [System.Drawing.Color]$Color, [System.Drawing.FontStyle]$Style) {
+    $start = $Box.TextLength
+    $Box.AppendText($Text)
+    $Box.Select($start, $Text.Length)
+    $Box.SelectionColor = $Color
+    $Box.SelectionFont = New-Object System.Drawing.Font($Box.Font, $Style)
+    $Box.Select($Box.TextLength, 0)
+}
+
+function Append-LogLine([System.Windows.Forms.RichTextBox]$Box, [string]$Line) {
+    if ([string]::IsNullOrWhiteSpace($Line)) {
+        $Box.AppendText([Environment]::NewLine)
+        return
+    }
+    $color = [System.Drawing.Color]::FromArgb(31, 41, 55)
+    $style = [System.Drawing.FontStyle]::Regular
+    if ($Line -match "ERROR|Error|failed|Failed|失败|Exception|HttpError| 5\d\d ") {
+        $color = [System.Drawing.Color]::FromArgb(185, 28, 28)
+        $style = [System.Drawing.FontStyle]::Bold
+    } elseif ($Line -match "->\s*200|成功|downloaded|已下载") {
+        $color = [System.Drawing.Color]::FromArgb(4, 120, 87)
+    } elseif ($Line -match "\[DATA SOURCE\]|SQLITE|SQLite") {
+        $color = [System.Drawing.Color]::FromArgb(29, 78, 216)
+    } elseif ($Line -match "\[Electron\]|\[AI\]|\[UIVF12\]|\[SLA Upload\]") {
+        $color = [System.Drawing.Color]::FromArgb(126, 34, 206)
+    } elseif ($Line -match "->\s*30\d") {
+        $color = [System.Drawing.Color]::FromArgb(180, 83, 9)
+    }
+
+    $timeMatch = [regex]::Match($Line, "^(\[\d{4}-\d{2}-\d{2}T[^\]]+\]|\[\d{2}:\d{2}:\d{2}\])")
+    if ($timeMatch.Success) {
+        Append-ColoredText $Box $timeMatch.Value ([System.Drawing.Color]::FromArgb(100, 116, 139)) ([System.Drawing.FontStyle]::Bold)
+        Append-ColoredText $Box ($Line.Substring($timeMatch.Length) + [Environment]::NewLine) $color $style
+    } else {
+        Append-ColoredText $Box ($Line + [Environment]::NewLine) $color $style
+    }
+}
+
+function Set-LogBoxText([System.Windows.Forms.RichTextBox]$Box, [string]$Text) {
+    $Box.SuspendLayout()
+    $Box.Clear()
+    $lines = $Text -split "\r?\n"
+    foreach ($line in $lines) {
+        Append-LogLine $Box $line
+    }
+    $Box.SelectionStart = $Box.TextLength
+    $Box.ScrollToCaret()
+    $Box.ResumeLayout()
 }
 
 function Read-TailText([string]$Path, [int]$MaxChars) {
@@ -1016,14 +1112,16 @@ function Render-Snapshot {
         foreach ($log in $logs) {
             $page = New-Object System.Windows.Forms.TabPage
             $page.Text = $log.label
-            $box = New-Object System.Windows.Forms.TextBox
-            $box.Multiline = $true
+            $box = New-Object System.Windows.Forms.RichTextBox
             $box.ReadOnly = $true
             $box.ScrollBars = "Both"
             $box.WordWrap = $false
             $box.Dock = "Fill"
-            $box.Font = New-Object System.Drawing.Font("Microsoft YaHei UI", 9)
+            $box.BorderStyle = [System.Windows.Forms.BorderStyle]::FixedSingle
+            $box.BackColor = [System.Drawing.Color]::FromArgb(252, 253, 255)
+            $box.Font = New-Object System.Drawing.Font("Consolas", 9)
             $box.Tag = $log.filePath
+            $box.AccessibleDescription = ""
             $page.Controls.Add($box)
             $tabs.TabPages.Add($page) | Out-Null
         }
@@ -1033,9 +1131,11 @@ function Render-Snapshot {
     foreach ($page in $tabs.TabPages) {
         if ($page.Controls.Count -gt 0) {
             $box = $page.Controls[0]
-            $box.Text = Read-TailText $box.Tag 90000
-            $box.SelectionStart = $box.TextLength
-            $box.ScrollToCaret()
+            $nextText = Read-TailText $box.Tag 120000
+            if ($box.AccessibleDescription -ne $nextText) {
+                $box.AccessibleDescription = $nextText
+                Set-LogBoxText $box $nextText
+            }
         }
     }
 }
@@ -1096,12 +1196,21 @@ async function checkForUpdatesFromTray(options = {}) {
             });
         }
     } catch (err) {
+        const formatted = formatUpdaterError(err);
         broadcastUpdateStatus({
             state: 'error',
-            message: err.message || String(err),
+            message: formatted.message,
+            detail: formatted.detail,
             progress: 0
         });
-        if (showDialog) dialog.showErrorBox('检查更新失败', err.message || String(err));
+        if (showDialog) {
+            dialog.showMessageBox({
+                type: 'error',
+                title: '检查更新失败',
+                message: formatted.message,
+                detail: formatted.detail
+            });
+        }
     }
 }
 
@@ -1130,13 +1239,22 @@ async function downloadUpdateFromTray(options = {}) {
         startUpdateProgressBalloons();
         await autoUpdater.downloadUpdate();
     } catch (err) {
-        stopUpdateProgressBalloons('Tools Platform 更新失败', err.message || String(err));
+        const formatted = formatUpdaterError(err);
+        stopUpdateProgressBalloons('Tools Platform 更新失败', formatted.message);
         broadcastUpdateStatus({
             state: 'error',
-            message: err.message || String(err),
+            message: formatted.message,
+            detail: formatted.detail,
             progress: 0
         });
-        if (showDialog) dialog.showErrorBox('下载更新失败', err.message || String(err));
+        if (showDialog) {
+            dialog.showMessageBox({
+                type: 'error',
+                title: '下载更新失败',
+                message: formatted.message,
+                detail: formatted.detail
+            });
+        }
     }
 }
 
