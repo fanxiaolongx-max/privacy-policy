@@ -13,3 +13,8 @@ contextBridge.exposeInMainWorld('ToolsUpdater', {
         return () => ipcRenderer.removeListener('updater:status', listener);
     }
 });
+
+contextBridge.exposeInMainWorld('ToolsDesktop', {
+    getRuntimeSnapshot: () => ipcRenderer.invoke('desktop:get-runtime-snapshot'),
+    openLogsFolder: () => ipcRenderer.invoke('desktop:open-logs-folder')
+});
