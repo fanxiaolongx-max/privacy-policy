@@ -205,6 +205,136 @@
             color: #a5b4fc;
         }
 
+        .legal-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 10020;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 28px;
+            background: rgba(2, 6, 23, 0.62);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+
+        .legal-modal.open {
+            display: flex;
+        }
+
+        .legal-dialog {
+            width: min(860px, 94vw);
+            max-height: min(760px, 88vh);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-radius: 22px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: rgba(15, 23, 42, 0.92);
+            box-shadow: 0 30px 90px rgba(0, 0, 0, 0.58), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            color: #e5eefc;
+        }
+
+        .legal-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 20px 24px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .legal-head h3 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 700;
+            background: linear-gradient(to right, #fff, #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .legal-close {
+            width: 34px;
+            height: 34px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.06);
+            color: rgba(255, 255, 255, 0.78);
+            cursor: pointer;
+            font-size: 22px;
+            line-height: 1;
+        }
+
+        .legal-close:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+        }
+
+        .legal-body {
+            overflow: auto;
+            padding: 10px 28px 28px;
+            line-height: 1.75;
+            color: rgba(226, 232, 240, 0.76);
+        }
+
+        .legal-body h1 {
+            margin: 20px 0 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 26px;
+        }
+
+        .legal-body h2 {
+            margin: 24px 0 10px;
+            color: #e5e7eb;
+            font-size: 18px;
+        }
+
+        .legal-body p,
+        .legal-body ul {
+            margin: 0 0 14px;
+        }
+
+        .legal-body ul {
+            padding-left: 22px;
+        }
+
+        .legal-body li {
+            margin-bottom: 8px;
+        }
+
+        .legal-body strong {
+            color: #f8fafc;
+        }
+
+        .legal-body code {
+            padding: 2px 6px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #fca5a5;
+        }
+
+        .legal-divider {
+            height: 1px;
+            margin: 28px 0;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        @media (max-width: 560px) {
+            .legal-modal {
+                padding: 14px;
+            }
+
+            .legal-head {
+                padding: 16px 18px 12px;
+            }
+
+            .legal-body {
+                padding: 8px 18px 22px;
+            }
+        }
+
         /* 加载小动画 */
         .loader {
             display: inline-block;
@@ -292,9 +422,19 @@
         </div>
 
         <div class="footer-links">
-            <a href="/privacy" target="_blank">隐私政策</a>
+            <a href="/privacy" onclick="openLegalModal('privacy'); return false;">隐私政策</a>
             <span style="color:rgba(255,255,255,0.2);">|</span>
-            <a href="/terms" target="_blank">服务条款</a>
+            <a href="/terms" onclick="openLegalModal('terms'); return false;">服务条款</a>
+        </div>
+    </div>
+
+    <div class="legal-modal" id="legalModal" aria-hidden="true" onclick="handleLegalBackdrop(event)">
+        <div class="legal-dialog" role="dialog" aria-modal="true" aria-labelledby="legalModalTitle">
+            <div class="legal-head">
+                <h3 id="legalModalTitle">隐私政策</h3>
+                <button type="button" class="legal-close" onclick="closeLegalModal()" aria-label="关闭">×</button>
+            </div>
+            <div class="legal-body" id="legalModalBody"></div>
         </div>
     </div>
 
@@ -328,6 +468,115 @@
 
         window.addEventListener('resize', resize);
         resize();
+
+        const LEGAL_CONTENT = {
+            privacy: {
+                title: '隐私政策 (Privacy Policy)',
+                html: `
+                    <h1>隐私政策 (Privacy Policy)</h1>
+                    <p>欢迎使用工具中台 (Tools Platform)。本隐私政策旨在说明您在使用我们服务时，我们如何收集、使用和保护您的信息。</p>
+                    <h2>收集的信息</h2>
+                    <ul>
+                        <li><strong>账户与认证数据：</strong>登录时使用的用户凭证或相关授权令牌。</li>
+                        <li><strong>上传的数据：</strong>用于数据分析、SLA监控、FRT KPI核算和PR稽查等业务而导入的文件（如Excel、JSON）。</li>
+                        <li><strong>操作日志：</strong>用户操作记录、脚本执行历史、任务调度以及自定义工具的使用情况。</li>
+                        <li><strong>偏好设置：</strong>存储在服务器或本地的自定义配置和平台偏好设置。</li>
+                    </ul>
+                    <h2>我们如何使用您的信息</h2>
+                    <ul>
+                        <li><strong>提供服务：</strong>执行数据抓取、处理、报表生成及各类业务管理任务。</li>
+                        <li><strong>平台改进：</strong>分析工具使用模式，以提升系统性能、安全性和稳定性。</li>
+                        <li><strong>安全与审计：</strong>保留操作历史，用于安全审计、错误追踪和故障排查。</li>
+                    </ul>
+                    <h2>数据保护</h2>
+                    <p>我们采取适当的技术和组织措施来保护您的数据，防止未经授权的访问、篡改、泄露或销毁。我们不会向未经授权的第三方出售或共享您的数据。</p>
+                    <h2>联系我们</h2>
+                    <p>如果您对本隐私政策有任何疑问，请通过以下方式联系管理员：<code>fanxiaolongx@gmail.com</code></p>
+                    <div class="legal-divider"></div>
+                    <h1>Privacy Policy</h1>
+                    <p>Welcome to the Tools Platform (工具中台). This Privacy Policy explains how we collect, use, and protect your information when you use our services.</p>
+                    <h2>Information Collected</h2>
+                    <ul>
+                        <li><strong>Account and Authentication Data:</strong> User credentials or authorization tokens used when logging in.</li>
+                        <li><strong>Uploaded Data:</strong> Files (e.g., Excel, JSON) imported for data analysis, SLA monitoring, FRT KPI calculation, and PR audit tasks.</li>
+                        <li><strong>Operation Logs:</strong> History of user actions, script execution records, task scheduling, and custom tool usage.</li>
+                        <li><strong>Preferences:</strong> Custom configurations and preference settings stored in the server or local storage.</li>
+                    </ul>
+                    <h2>How We Use Your Information</h2>
+                    <ul>
+                        <li><strong>Providing Services:</strong> To execute data scraping, processing, report generation, and other platform management tasks.</li>
+                        <li><strong>Platform Improvement:</strong> To analyze tool usage patterns and improve system performance, security, and stability.</li>
+                        <li><strong>Security and Auditing:</strong> To maintain operational history for security auditing, error tracking, and troubleshooting purposes.</li>
+                    </ul>
+                    <h2>Data Protection</h2>
+                    <p>We implement appropriate technical and organizational measures to protect your data against unauthorized access, alteration, disclosure, or destruction. We do not sell or share your data with unauthorized third parties.</p>
+                    <h2>Contact Us</h2>
+                    <p>If you have any questions about this privacy policy, please contact the administrator at: <code>fanxiaolongx@gmail.com</code></p>
+                `
+            },
+            terms: {
+                title: '服务条款 (Terms of Service)',
+                html: `
+                    <h1>服务条款 (Terms of Service)</h1>
+                    <p>访问和使用工具中台 (Tools Platform) 即表示您同意遵守以下服务条款。</p>
+                    <h2>服务的使用</h2>
+                    <ul>
+                        <li>您同意仅出于合法和经授权的业务目的使用本平台及其工具（包括但不限于数据抓取、SLA导入、PR稽查和报表工具）。</li>
+                        <li>您有责任确保上传至本平台的任何数据或文件的准确性、安全性及合法性。</li>
+                        <li>使用数据抓取及宏代码引擎时，必须遵守目标系统或网站的使用条款及适用法律。严禁恶意抓取、未经授权的数据窃取或滥用平台计算资源。</li>
+                    </ul>
+                    <h2>免责声明</h2>
+                    <p>工具中台及所有包含的子工具均按“现状”和“现有”基础提供。我们不对本平台功能的稳定性、准确性或数据的绝对安全提供任何形式的明示或暗示的保证。</p>
+                    <h2>责任限制</h2>
+                    <p>对于因使用或无法使用本平台及其工具而导致的任何直接、间接、附带、特殊或后果性损害（包括但不限于业务中断或数据丢失），我们概不负责。</p>
+                    <h2>条款修改</h2>
+                    <p>我们保留随时修改、暂停或终止本平台部分或全部服务的权利，恕不另行通知。继续使用本平台即表示您接受修改后的服务条款。</p>
+                    <div class="legal-divider"></div>
+                    <h1>Terms of Service</h1>
+                    <p>By accessing and using the Tools Platform (工具中台), you agree to comply with and be bound by the following terms of service.</p>
+                    <h2>Use of Service</h2>
+                    <ul>
+                        <li>You agree to use the platform and its tools (including but not limited to data scraping, SLA imports, PR audit, and reporting tools) only for lawful and authorized business purposes.</li>
+                        <li>You are solely responsible for ensuring the accuracy, security, and legality of any data or files you upload to the platform.</li>
+                        <li>When using data scraping or macro engines, you must comply with the target system/website's terms of service and applicable laws. Malicious scraping, unauthorized data extraction, or abuse of platform computing resources is strictly prohibited.</li>
+                    </ul>
+                    <h2>Disclaimer of Warranties</h2>
+                    <p>The Tools Platform and all included sub-tools are provided on an "as is" and "as available" basis. We make no warranties, express or implied, regarding the stability, accuracy, or absolute security of the platform's features or data.</p>
+                    <h2>Limitation of Liability</h2>
+                    <p>In no event shall we be liable for any direct, indirect, incidental, special, or consequential damages (including but not limited to business interruption or data loss) arising out of the use or inability to use the platform and its tools.</p>
+                    <h2>Modifications</h2>
+                    <p>We reserve the right to modify, suspend, or discontinue any part or all of the platform's services at any time without prior notice. Your continued use of the platform constitutes acceptance of the modified terms.</p>
+                `
+            }
+        };
+
+        function openLegalModal(type) {
+            const item = LEGAL_CONTENT[type] || LEGAL_CONTENT.privacy;
+            const modal = document.getElementById('legalModal');
+            const title = document.getElementById('legalModalTitle');
+            const body = document.getElementById('legalModalBody');
+            if (!modal || !title || !body) return;
+            title.textContent = item.title;
+            body.innerHTML = item.html;
+            body.scrollTop = 0;
+            modal.classList.add('open');
+            modal.setAttribute('aria-hidden', 'false');
+        }
+
+        function closeLegalModal() {
+            const modal = document.getElementById('legalModal');
+            if (!modal) return;
+            modal.classList.remove('open');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
+        function handleLegalBackdrop(event) {
+            if (event.target && event.target.id === 'legalModal') closeLegalModal();
+        }
+
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape') closeLegalModal();
+        });
 
         class Star {
             constructor() {
