@@ -29,6 +29,8 @@
             rangeAll: '全部数据',
             rangeCustom: '自定义',
             refresh: '刷新',
+            exportHtml: '导出HTML',
+            exportingHtml: '导出中',
             syncing: '同步中',
             ownerConfig: '责任人配置',
             fullscreen: '全屏',
@@ -124,6 +126,9 @@
             ownerRequired: '请先选择客户群并填写责任人名字',
             ownerSaved: '责任人配置已保存，共 {count} 条',
             saveFailed: '保存失败: {message}',
+            exportNoData: '当前大屏还没有可导出的数据',
+            exportDone: 'HTML 已导出',
+            exportFailed: '导出失败: {message}',
             loadFailed: '大屏数据加载失败: {message}',
             loadFailedShort: '加载失败: {message}',
             contactDefault: '如果您对看板数据有疑问或者建议，请联系 fanxiaolong 84300033，谢谢！',
@@ -154,6 +159,8 @@
             rangeAll: 'All Data',
             rangeCustom: 'Custom',
             refresh: 'Refresh',
+            exportHtml: 'Export HTML',
+            exportingHtml: 'Exporting',
             syncing: 'Syncing',
             ownerConfig: 'Owner Config',
             fullscreen: 'Fullscreen',
@@ -249,6 +256,9 @@
             ownerRequired: 'Please select a customer group and enter owner name',
             ownerSaved: 'Owner config saved, {count} records',
             saveFailed: 'Save failed: {message}',
+            exportNoData: 'No big screen data is available to export',
+            exportDone: 'HTML exported',
+            exportFailed: 'Export failed: {message}',
             loadFailed: 'Big screen data load failed: {message}',
             loadFailedShort: 'Load failed: {message}',
             contactDefault: 'If you have any questions or suggestions about the dashboard data, please contact fanxiaolong at 84300033. Thank you!',
@@ -379,6 +389,8 @@
         if (ownerBtn) ownerBtn.textContent = tr('ownerConfig');
         const refreshBtn = $('refreshBtn');
         if (refreshBtn) refreshBtn.textContent = state.isRefreshing ? tr('syncing') : tr('refresh');
+        const exportBtn = $('exportHtmlBtn');
+        if (exportBtn) exportBtn.textContent = tr('exportHtml');
         const startInput = $('startDate');
         if (startInput) startInput.setAttribute('aria-label', isEn() ? 'Start date' : '开始日期');
         const endInput = $('endDate');
@@ -536,6 +548,261 @@
         }
         target.textContent = `v${version}`;
         target.title = isEn() ? `Current big screen script version: ${version}` : `当前大屏脚本版本: ${version}`;
+    }
+
+    function downloadTextFile(filename, content, type = 'text/html;charset=utf-8') {
+        const blob = new Blob([content], { type });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function syncCloneFormState(clonedDoc) {
+        const sourceFields = document.querySelectorAll('input, textarea, select');
+        const clonedFields = clonedDoc.querySelectorAll('input, textarea, select');
+        sourceFields.forEach((field, idx) => {
+            const clone = clonedFields[idx];
+            if (!clone) return;
+            if (field.tagName === 'SELECT') {
+                Array.from(clone.options).forEach(option => {
+                    option.removeAttribute('selected');
+                    if (option.value === field.value) option.setAttribute('selected', 'selected');
+                });
+            } else if (field.type === 'checkbox' || field.type === 'radio') {
+                if (field.checked) clone.setAttribute('checked', 'checked');
+                else clone.removeAttribute('checked');
+            } else {
+                clone.setAttribute('value', field.value || '');
+                if (field.tagName === 'TEXTAREA') clone.textContent = field.value || '';
+            }
+            if (field.disabled) clone.setAttribute('disabled', 'disabled');
+            else clone.removeAttribute('disabled');
+        });
+    }
+
+    function replaceCanvasWithImages(clonedDoc) {
+        const canvases = document.querySelectorAll('canvas');
+        const clonedCanvases = clonedDoc.querySelectorAll('canvas');
+        canvases.forEach((canvas, idx) => {
+            const clone = clonedCanvases[idx];
+            if (!clone) return;
+            try {
+                const img = clonedDoc.createElement('img');
+                img.src = canvas.toDataURL('image/png');
+                img.alt = 'chart';
+                img.width = canvas.width;
+                img.height = canvas.height;
+                img.style.cssText = clone.getAttribute('style') || '';
+                img.style.width = clone.style.width || `${canvas.clientWidth || canvas.width}px`;
+                img.style.height = clone.style.height || `${canvas.clientHeight || canvas.height}px`;
+                img.style.display = clone.style.display || 'block';
+                clone.replaceWith(img);
+            } catch (e) {
+                console.warn('[bigscreen] chart canvas export skipped:', e);
+            }
+        });
+    }
+
+    function freezeExportedScoreFlaps(clonedDoc) {
+        clonedDoc.querySelectorAll('.flap-board').forEach(board => {
+            const value = String(board.getAttribute('data-val') || '');
+            board.querySelectorAll('.flap-char').forEach((char, idx) => {
+                char.textContent = value[idx] || '';
+                char.style.animation = 'none';
+                char.style.transform = 'rotateX(0deg)';
+                char.style.filter = 'brightness(1)';
+                delete char.dataset.flipping;
+            });
+        });
+    }
+
+    function normalizeExportedKpiSliders(clonedDoc) {
+        clonedDoc.querySelectorAll('.kpi-slider[data-count]').forEach(slider => {
+            const count = parseInt(slider.getAttribute('data-count'), 10);
+            if (!count || count <= 1) {
+                slider.style.transform = 'translateY(0)';
+                slider.setAttribute('data-current', '0');
+                return;
+            }
+            const current = parseInt(slider.getAttribute('data-current') || '0', 10);
+            const normalized = ((current % count) + count) % count;
+            slider.setAttribute('data-current', String(normalized));
+            slider.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+            slider.style.transform = `translateY(-${normalized * 100}%)`;
+        });
+    }
+
+    function appendStandaloneRuntime(clonedDoc) {
+        const script = clonedDoc.createElement('script');
+        script.textContent = `
+            (function () {
+                function initKpiCarousel() {
+                    setInterval(function () {
+                        document.querySelectorAll('.kpi-slider[data-count]').forEach(function (slider) {
+                            var count = parseInt(slider.getAttribute('data-count'), 10);
+                            if (!count || count <= 1) return;
+                            var current = parseInt(slider.getAttribute('data-current') || '0', 10);
+                            if (current === count) {
+                                slider.style.transition = 'none';
+                                slider.style.transform = 'translateY(0)';
+                                slider.setAttribute('data-current', '0');
+                                void slider.offsetHeight;
+                                slider.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+                                current = 0;
+                            }
+                            current += 1;
+                            slider.setAttribute('data-current', String(current));
+                            slider.style.transform = 'translateY(-' + (current * 100) + '%)';
+                        });
+                    }, 3500);
+                }
+
+                function resetScoreFlaps() {
+                    document.querySelectorAll('.flap-board').forEach(function (board) {
+                        var value = String(board.getAttribute('data-val') || '');
+                        board.querySelectorAll('.flap-char').forEach(function (char, idx) {
+                            char.textContent = value[idx] || '';
+                            char.style.animation = 'none';
+                            char.style.transform = 'rotateX(0deg)';
+                            char.style.filter = 'brightness(1)';
+                        });
+                    });
+                }
+
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', function () {
+                        resetScoreFlaps();
+                        initKpiCarousel();
+                    });
+                } else {
+                    resetScoreFlaps();
+                    initKpiCarousel();
+                }
+            })();
+        `;
+        clonedDoc.body.appendChild(script);
+    }
+
+    async function inlineStylesheets(clonedDoc) {
+        const links = Array.from(clonedDoc.querySelectorAll('link[rel="stylesheet"]'));
+        await Promise.all(links.map(async link => {
+            const href = link.getAttribute('href');
+            if (!href) return;
+            try {
+                const absoluteUrl = new URL(href, window.location.href);
+                if (absoluteUrl.origin !== window.location.origin) {
+                    link.remove();
+                    return;
+                }
+                const res = await fetch(absoluteUrl.href);
+                if (!res.ok) throw new Error(`${res.status}`);
+                const css = await res.text();
+                const style = clonedDoc.createElement('style');
+                style.setAttribute('data-inlined-from', href);
+                style.textContent = css;
+                link.replaceWith(style);
+            } catch (e) {
+                console.warn('[bigscreen] stylesheet inline skipped:', href, e);
+                link.remove();
+            }
+        }));
+    }
+
+    function getBigscreenExportData() {
+        return {
+            exportedAt: new Date().toISOString(),
+            language: lang(),
+            range: getCurrentRange(),
+            monthlyPath: state.monthlyPath,
+            trends: state.trends || [],
+            latest: state.latest || null,
+            snapshots: state.snapshots || [],
+            owners: state.owners || [],
+            contactInfo: state.contactInfo || null,
+            i18nMap: state.i18nMap || {},
+            metricOrder: state.metricOrder || [],
+            refreshStatusKey: state.refreshStatusKey || '',
+            lastSuccessfulRefreshAt: state.lastSuccessfulRefreshAt ? state.lastSuccessfulRefreshAt.toISOString() : null
+        };
+    }
+
+    async function buildStandaloneHtml() {
+        const parserDoc = new DOMParser().parseFromString(
+            `<!DOCTYPE html>\n${document.documentElement.outerHTML}`,
+            'text/html'
+        );
+
+        syncCloneFormState(parserDoc);
+        replaceCanvasWithImages(parserDoc);
+        freezeExportedScoreFlaps(parserDoc);
+        normalizeExportedKpiSliders(parserDoc);
+
+        const appNavbar = parserDoc.getElementById('app-navbar');
+        if (appNavbar) appNavbar.remove();
+        parserDoc.querySelectorAll('[data-export-exclude="true"]').forEach(el => el.remove());
+        parserDoc.querySelectorAll('script').forEach(script => script.remove());
+
+        await inlineStylesheets(parserDoc);
+
+        const exportStyle = parserDoc.createElement('style');
+        exportStyle.textContent = `
+            :root { --navbar-h: 0px !important; }
+            .bigscreen { padding-top: 14px !important; }
+            @media (max-height: 850px) and (min-width: 1281px) {
+                .bigscreen { padding-top: 10px !important; }
+            }
+        `;
+        parserDoc.head.appendChild(exportStyle);
+
+        const dataScript = parserDoc.createElement('script');
+        dataScript.type = 'application/json';
+        dataScript.id = 'bigscreen-export-data';
+        dataScript.textContent = JSON.stringify(getBigscreenExportData()).replace(/</g, '\\u003C');
+        parserDoc.body.appendChild(dataScript);
+
+        const generatedMeta = parserDoc.createElement('meta');
+        generatedMeta.name = 'bigscreen-exported-at';
+        generatedMeta.content = new Date().toISOString();
+        parserDoc.head.appendChild(generatedMeta);
+        appendStandaloneRuntime(parserDoc);
+
+        return `<!DOCTYPE html>\n${parserDoc.documentElement.outerHTML}`;
+    }
+
+    async function exportStandaloneHtml() {
+        if (!state.latest && !state.trends.length) {
+            if (window.showToast) window.showToast(tr('exportNoData'), 'warn');
+            return;
+        }
+
+        const btn = $('exportHtmlBtn');
+        const prevText = btn ? btn.textContent : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = tr('exportingHtml');
+        }
+
+        try {
+            Object.values(state.charts).forEach(chart => chart && chart.resize && chart.resize());
+            const html = await buildStandaloneHtml();
+            const date = new Date();
+            const stamp = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}_${String(date.getHours()).padStart(2, '0')}${String(date.getMinutes()).padStart(2, '0')}`;
+            downloadTextFile(`bigscreen-dashboard-${stamp}.html`, html);
+            if (window.showToast) window.showToast(tr('exportDone'), 'success');
+        } catch (e) {
+            console.error('[bigscreen] export html failed:', e);
+            if (window.showToast) window.showToast(tr('exportFailed', { message: e.message }), 'error');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = prevText || tr('exportHtml');
+            }
+        }
     }
 
     function metricSummary(latest) {
@@ -2029,6 +2296,7 @@
         if (endInput) endInput.disabled = true;
         if ($('refreshBtn')) $('refreshBtn').addEventListener('click', () => loadBigscreenData({ source: 'manual' }));
         if ($('ownerConfigBtn')) $('ownerConfigBtn').addEventListener('click', openOwnerModal);
+        if ($('exportHtmlBtn')) $('exportHtmlBtn').addEventListener('click', exportStandaloneHtml);
         if ($('ownerAvatarInput')) $('ownerAvatarInput').addEventListener('change', handleOwnerAvatarChange);
         document.addEventListener('fullscreenchange', syncFullscreenButton);
         syncFullscreenButton();

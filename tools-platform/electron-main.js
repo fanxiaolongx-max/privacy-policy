@@ -957,6 +957,36 @@ function Set-LogBoxText([System.Windows.Forms.RichTextBox]$Box, [string]$Text) {
     $Box.ResumeLayout()
 }
 
+function Append-LogBoxText([System.Windows.Forms.RichTextBox]$Box, [string]$Text, [bool]$ScrollToEnd) {
+    if ([string]::IsNullOrEmpty($Text)) { return }
+    $Box.SuspendLayout()
+    $lines = $Text -split "\r?\n"
+    foreach ($line in $lines) {
+        Append-LogLine $Box $line
+    }
+    if ($ScrollToEnd) {
+        $Box.SelectionStart = $Box.TextLength
+        $Box.ScrollToCaret()
+    }
+    $Box.ResumeLayout()
+}
+
+function Update-LogBoxText([System.Windows.Forms.RichTextBox]$Box, [string]$NextText) {
+    $previousText = [string]$Box.AccessibleDescription
+    if ($previousText -eq $NextText) { return }
+
+    $wasAtEnd = ($Box.SelectionStart -ge [Math]::Max(0, $Box.TextLength - 2))
+    if ($previousText -and $NextText.StartsWith($previousText)) {
+        $delta = $NextText.Substring($previousText.Length)
+        $Box.AccessibleDescription = $NextText
+        Append-LogBoxText $Box $delta $wasAtEnd
+        return
+    }
+
+    $Box.AccessibleDescription = $NextText
+    Set-LogBoxText $Box $NextText
+}
+
 function Read-TailText([string]$Path, [int]$MaxChars) {
     if (-not (Test-Path -LiteralPath $Path)) { return "" }
     try {
@@ -1132,10 +1162,7 @@ function Render-Snapshot {
         if ($page.Controls.Count -gt 0) {
             $box = $page.Controls[0]
             $nextText = Read-TailText $box.Tag 120000
-            if ($box.AccessibleDescription -ne $nextText) {
-                $box.AccessibleDescription = $nextText
-                Set-LogBoxText $box $nextText
-            }
+            Update-LogBoxText $box $nextText
         }
     }
 }

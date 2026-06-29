@@ -6,6 +6,7 @@ let labelToTargetKeyMap = {};
 let currentSnapshot = null;
 let standardTotalScore = 0;
 let metricGroups = []; // [{id, name, metrics:[label,...]}]
+let editingManualMetricLabel = null;
 const REPORT_TARGET_MONTH_KEY = 'report_target_month';
 
 function isReportEligibleSnapshot(snapshot) {
@@ -290,6 +291,7 @@ const defaultManualAdjustItems = [
     { type: '加分', name: '邀约客户交流呈现服务价值', unit: 2, cap: 10, desc: '2分/次, 上限10分' }
 ];
 let manualAdjustItems = [...defaultManualAdjustItems];
+let editingAdjustItemIndex = null;
 
 function calculateManualAdjustScore(item, count) {
     if (!item || item.deleted) return 0;
@@ -304,6 +306,48 @@ function calculateManualAdjustScore(item, count) {
     if (cap !== null && !Number.isNaN(cap) && score > cap) score = cap;
 
     return item.type === '扣分' ? -score : score;
+}
+
+function buildManualAdjustDesc(unit, cap) {
+    return cap === null ? `${unit}分/次, 上限无` : `${unit}分/次, 上限${cap}分`;
+}
+
+async function saveManualAdjustItemsConfig(successMessage) {
+    if (!globalConfig.prefs) globalConfig.prefs = {};
+    globalConfig.prefs.manualAdjustItems = manualAdjustItems;
+
+    await API.post('/api/sla/config', globalConfig);
+    showToast(successMessage, 'success');
+    renderCurrentSnapshot();
+}
+
+function syncManualMetricGroupLabel(oldLabel, newLabel) {
+    if (!oldLabel || !newLabel || oldLabel === newLabel || !Array.isArray(metricGroups)) return false;
+    let changed = false;
+    metricGroups = metricGroups.map(group => {
+        if (!Array.isArray(group.metrics)) return group;
+        const nextMetrics = group.metrics.map(label => {
+            if (label === oldLabel) {
+                changed = true;
+                return newLabel;
+            }
+            return label;
+        });
+        return { ...group, metrics: Array.from(new Set(nextMetrics)) };
+    });
+    return changed;
+}
+
+function removeManualMetricFromGroups(label) {
+    if (!label || !Array.isArray(metricGroups)) return false;
+    let changed = false;
+    metricGroups = metricGroups.map(group => {
+        if (!Array.isArray(group.metrics)) return group;
+        const nextMetrics = group.metrics.filter(metricLabel => metricLabel !== label);
+        if (nextMetrics.length !== group.metrics.length) changed = true;
+        return { ...group, metrics: nextMetrics };
+    });
+    return changed;
 }
 
 function getTargetMonthDefaultByDay(date = new Date()) {
@@ -1098,9 +1142,13 @@ function renderReport(snap) {
                 const sourceText = m.autoFillSource && m.autoFillSource.label ? ` · ${rt('report.auto.source')}: ${getTranslatedLabel(m.autoFillSource.label)}` : '';
                 const autoText = isAuto ? `${rt('report.auto.on')}${sourceText}` : rt('report.auto.off');
                 const autoTitle = isAuto && sourceText ? rt('report.auto.sourceTitle', { label: getTranslatedLabel(m.autoFillSource.label) }) : rt('report.auto.title');
-                autoFillBtn = `<span style="cursor:pointer; margin-left:4px; font-size:10px; color:${autoColor}; background:${autoBg}; padding:1px 4px; border-radius:3px; border:1px solid ${autoBorder}; font-weight:500; line-height:1.35;" title="${escapeHTML(autoTitle)}" onclick="toggleAutoFill('${escapeHTML(m.label)}')">${escapeHTML(autoText)}</span>`;
+                autoFillBtn = `<span style="cursor:pointer; margin-left:4px; font-size:10px; color:${autoColor}; background:${autoBg}; padding:1px 4px; border-radius:3px; border:1px solid ${autoBorder}; font-weight:500; line-height:1.35;" title="${escapeHTML(autoTitle)}" onclick='toggleAutoFill(${JSON.stringify(m.label)})'>${escapeHTML(autoText)}</span>`;
             }
-            const editBtn = m.isManual ? `<span style="cursor:pointer; margin-left:4px; font-size:10px; color:#4f7d53; background:#f2faf3; padding:1px 4px; border-radius:3px; border:1px solid #d8ead9; font-weight:500; line-height:1.35;" onclick="editManualMetric('${escapeHTML(m.label)}')">${rt('report.manual.fill')}</span>${autoFillBtn}` : '';
+            const manualActionButtons = m.isManual ? `
+                <span style="cursor:pointer; margin-left:4px; font-size:10px; color:#4f7d53; background:#f2faf3; padding:1px 4px; border-radius:3px; border:1px solid #d8ead9; font-weight:500; line-height:1.35;" onclick='editManualMetric(${JSON.stringify(m.label)})'>${rt('report.common.edit')}</span>
+                <span style="cursor:pointer; margin-left:4px; font-size:10px; color:#b42318; background:#fff1f0; padding:1px 4px; border-radius:3px; border:1px solid #ffd6d3; font-weight:500; line-height:1.35;" onclick='deleteManualMetric(${JSON.stringify(m.label)})'>${rt('report.common.delete')}</span>
+                ${autoFillBtn}
+            ` : '';
             const proportionalEnabled = isProportionalScoringEnabled(targetData);
             const proportionalBtn = m.hasTarget ? `
                 <button class="ratio-score-toggle ${proportionalEnabled ? 'active' : ''}"
@@ -1123,7 +1171,7 @@ function renderReport(snap) {
             html += `
                 <td data-col="${colIdx++}" style="text-align:left; font-weight:600; color:#2c3e50;">
                     <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                        <span>${getBilingual(m.label)}</span>${proportionalBtn}${editBtn}
+                        <span>${getBilingual(m.label)}</span>${proportionalBtn}${manualActionButtons}
                     </div>
                 </td>
                 <td data-col="${colIdx++}" style="color:#666; font-weight:bold; background:#fafafa;">${weight}</td>
@@ -1275,6 +1323,7 @@ function renderReport(snap) {
 
         adjustHtml += `
             <td style="text-align:center;">
+                <button onclick="openAddAdjustModal(${idx})" style="background:none; border:none; cursor:pointer; font-size:16px; opacity:0.6; padding:4px;" title="${rt('report.common.edit')}" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">✏️</button>
                 <button onclick="deleteAdjustItem(${idx})" style="background:none; border:none; cursor:pointer; font-size:16px; opacity:0.6; padding:4px;" title="${rt('report.common.delete')}" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">🗑️</button>
             </td>
         </tr>`;
@@ -2093,7 +2142,10 @@ window.showAdjScoreDetails = function (cat) {
     `);
 };
 
-window.openAddAdjustModal = function () {
+window.openAddAdjustModal = function (idx = null) {
+    const editIdx = Number.isInteger(idx) && manualAdjustItems[idx] && !manualAdjustItems[idx].deleted ? idx : null;
+    editingAdjustItemIndex = editIdx;
+
     let modal = document.getElementById('add-adjust-modal');
     if (!modal) {
         modal = document.createElement('div');
@@ -2102,7 +2154,7 @@ window.openAddAdjustModal = function () {
         modal.innerHTML = `
             <div style="background:#fff; border-radius:12px; width:440px; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
                 <h3 style="margin-top:0; margin-bottom:20px; color:#e65100; display:flex; justify-content:space-between; align-items:center;">
-                    <span>${rt('report.adjust.addTitle')}</span>
+                    <span id="adjust-modal-title">${rt('report.adjust.addTitle')}</span>
                     <button onclick="document.getElementById('add-adjust-modal').style.display='none'" style="border:none; background:none; font-size:20px; cursor:pointer; color:#888;">&times;</button>
                 </h3>
                 <div style="margin-bottom:15px;">
@@ -2128,15 +2180,19 @@ window.openAddAdjustModal = function () {
                 </div>
                 <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:25px;">
                     <button onclick="document.getElementById('add-adjust-modal').style.display='none'" style="padding:8px 16px; border:1px solid #ccc; background:#fff; border-radius:6px; cursor:pointer;">${rt('report.button.cancel')}</button>
-                    <button onclick="saveNewAdjustItem()" style="padding:8px 16px; border:none; background:#e65100; color:#fff; border-radius:6px; cursor:pointer; font-weight:bold;">${rt('report.adjust.saveGlobal')}</button>
+                    <button id="adjust-modal-save-btn" onclick="saveNewAdjustItem()" style="padding:8px 16px; border:none; background:#e65100; color:#fff; border-radius:6px; cursor:pointer; font-weight:bold;">${rt('report.adjust.saveGlobal')}</button>
                 </div>
             </div>
         `;
     }
 
-    modal.querySelector('#new-adjust-name').value = '';
-    modal.querySelector('#new-adjust-unit').value = '2';
-    modal.querySelector('#new-adjust-cap').value = '';
+    const item = editIdx === null ? null : manualAdjustItems[editIdx];
+    modal.querySelector('#adjust-modal-title').textContent = editIdx === null ? rt('report.adjust.addTitle') : rt('report.adjust.editTitle');
+    modal.querySelector('#adjust-modal-save-btn').textContent = editIdx === null ? rt('report.adjust.saveGlobal') : rt('report.adjust.updateGlobal');
+    modal.querySelector('#new-adjust-type').value = item ? item.type : '扣分';
+    modal.querySelector('#new-adjust-name').value = item ? item.name : '';
+    modal.querySelector('#new-adjust-unit').value = item ? item.unit : '2';
+    modal.querySelector('#new-adjust-cap').value = item && item.cap !== null && item.cap !== undefined && item.cap !== '' ? item.cap : '';
 
     const card = document.getElementById('adjust-card');
     if (document.fullscreenElement === card) {
@@ -2160,21 +2216,32 @@ window.saveNewAdjustItem = async function () {
         return;
     }
 
-    const desc = cap === null ? `${unit}分/次, 上限无` : `${unit}分/次, 上限${cap}分`;
+    if (unit <= 0) {
+        showToast(rt('report.toast.enterValidAdjustUnit'), 'error');
+        return;
+    }
 
-    manualAdjustItems.push({ type, name, unit, cap, desc });
+    if (capStr !== '' && (!Number.isFinite(cap) || cap <= 0)) {
+        showToast(rt('report.toast.enterValidAdjustCap'), 'error');
+        return;
+    }
 
-    // Save to global prefs
-    if (!globalConfig.prefs) globalConfig.prefs = {};
-    globalConfig.prefs.manualAdjustItems = manualAdjustItems;
+    const desc = buildManualAdjustDesc(unit, cap);
+    const nextItem = { type, name, unit, cap, desc };
+
+    if (editingAdjustItemIndex === null) {
+        manualAdjustItems.push(nextItem);
+    } else {
+        manualAdjustItems[editingAdjustItemIndex] = {
+            ...manualAdjustItems[editingAdjustItemIndex],
+            ...nextItem
+        };
+    }
 
     try {
-        await API.post('/api/sla/config', globalConfig);
-        showToast(rt('report.toast.customItemAdded'), 'success');
+        await saveManualAdjustItemsConfig(editingAdjustItemIndex === null ? rt('report.toast.customItemAdded') : rt('report.toast.adjustItemUpdated'));
         document.getElementById('add-adjust-modal').style.display = 'none';
-
-        // Re-render
-        renderCurrentSnapshot();
+        editingAdjustItemIndex = null;
     } catch (e) {
         showToast(rt('report.toast.saveFailed'), 'error');
     }
@@ -2187,16 +2254,8 @@ window.deleteAdjustItem = async function (idx) {
 
     manualAdjustItems[idx].deleted = true;
 
-    // Save to global prefs
-    if (!globalConfig.prefs) globalConfig.prefs = {};
-    globalConfig.prefs.manualAdjustItems = manualAdjustItems;
-
     try {
-        await API.post('/api/sla/config', globalConfig);
-        showToast(rt('report.toast.adjustItemDeleted'), 'success');
-
-        // Re-render report to remove the row
-        renderCurrentSnapshot();
+        await saveManualAdjustItemsConfig(rt('report.toast.adjustItemDeleted'));
 
         // Update the current snapshot to purge the removed data
         setTimeout(() => saveManualAdjustData(true), 100);
@@ -2343,6 +2402,7 @@ window.openAddMetricModal = function () {
         showToast(rt('report.toast.loadSnapshotFirst'), 'error');
         return;
     }
+    editingManualMetricLabel = null;
 
     let modal = document.getElementById('add-metric-modal');
     if (!modal) {
@@ -2440,17 +2500,19 @@ window.openAddMetricModal = function () {
 
 window.editManualMetric = function (label) {
     if (!currentSnapshot) return;
+    editingManualMetricLabel = label;
 
     // Open modal to generate DOM
     openAddMetricModal();
+    editingManualMetricLabel = label;
 
     const modal = document.getElementById('add-metric-modal');
     modal.querySelector('h3').innerHTML = rt('report.metric.editTitle');
 
     const nameInput = document.getElementById('manual-metric-name');
     nameInput.value = label;
-    nameInput.setAttribute('readonly', 'readonly');
-    nameInput.style.backgroundColor = '#f0f0f0';
+    nameInput.removeAttribute('readonly');
+    nameInput.style.backgroundColor = '#fff';
 
     // Fill target data
     const targetData = labelToTargetMap[label];
@@ -2485,11 +2547,28 @@ window.closeAddMetricModal = function () {
         modal.style.display = 'none';
         document.body.appendChild(modal);
     }
+    editingManualMetricLabel = null;
 };
 
 window.saveManualMetric = async function () {
     const name = document.getElementById('manual-metric-name').value.trim();
     if (!name) return showToast(rt('report.toast.enterMetricName'), 'error');
+    const originalLabel = editingManualMetricLabel;
+    const isEditing = !!originalLabel;
+
+    if (isEditing && name !== originalLabel) {
+        const duplicateInSnapshot = (currentSnapshot.topMetrics || []).some(m => m.label === name && m.label !== originalLabel);
+        const duplicateInTargets = !!labelToTargetKeyMap[name] && labelToTargetKeyMap[name] !== labelToTargetKeyMap[originalLabel];
+        if (duplicateInSnapshot || duplicateInTargets) {
+            return showToast(rt('report.toast.metricNameExists'), 'error');
+        }
+    } else if (!isEditing) {
+        const duplicateInSnapshot = (currentSnapshot.topMetrics || []).some(m => m.label === name);
+        const duplicateInTargets = !!labelToTargetKeyMap[name];
+        if (duplicateInSnapshot || duplicateInTargets) {
+            return showToast(rt('report.toast.metricNameExists'), 'error');
+        }
+    }
 
     const weight = parseFloat(document.getElementById('manual-metric-weight').value);
     const validWeight = isNaN(weight) ? 1 : weight;
@@ -2519,7 +2598,7 @@ window.saveManualMetric = async function () {
         subMetrics: subMetrics
     };
 
-    let targetKey = labelToTargetKeyMap[name];
+    let targetKey = isEditing ? labelToTargetKeyMap[originalLabel] : labelToTargetKeyMap[name];
     if (!targetKey) {
         targetKey = `manual_target_${Date.now()}`;
     }
@@ -2547,22 +2626,70 @@ window.saveManualMetric = async function () {
 
         if (!currentSnapshot.topMetrics) currentSnapshot.topMetrics = [];
 
-        const existingIdx = currentSnapshot.topMetrics.findIndex(m => m.label === name);
+        const existingIdx = currentSnapshot.topMetrics.findIndex(m => m.label === (isEditing ? originalLabel : name));
         if (existingIdx > -1) {
             newMetric.id = currentSnapshot.topMetrics[existingIdx].id; // preserve ID
+            newMetric.isManual = true;
             currentSnapshot.topMetrics[existingIdx] = newMetric;
         } else {
+            newMetric.isManual = true;
             currentSnapshot.topMetrics.push(newMetric);
+        }
+
+        const groupsChanged = isEditing && syncManualMetricGroupLabel(originalLabel, name);
+        if (groupsChanged) {
+            await API.put('/api/sla/groups', metricGroups);
         }
 
         await putSnapshotWithCompression(currentSnapshot.id, currentSnapshot, 'manual-metric-save');
 
         buildLabelTargetMap();
         showToast(rt('report.toast.manualMetricSaved'), 'success');
+        editingManualMetricLabel = null;
         closeAddMetricModal();
         renderCurrentSnapshot();
     } catch (e) {
         showToast(rt('report.toast.saveFailed'), 'error');
+        console.error(e);
+    }
+};
+
+window.deleteManualMetric = async function (label) {
+    if (!currentSnapshot || !label) return;
+    if (!confirm(rt('report.confirm.deleteManualMetric', { name: label }))) {
+        return;
+    }
+
+    const originalTargets = { ...(globalConfig.targets || {}) };
+    const originalGroups = JSON.parse(JSON.stringify(metricGroups || []));
+    const originalTopMetrics = JSON.parse(JSON.stringify(currentSnapshot.topMetrics || []));
+
+    try {
+        if (!globalConfig.targets) globalConfig.targets = {};
+        const targetKey = labelToTargetKeyMap[label];
+        if (targetKey && targetKey.startsWith('manual_')) {
+            delete globalConfig.targets[targetKey];
+            await API.put('/api/sla/targets', globalConfig.targets);
+        }
+
+        currentSnapshot.topMetrics = (currentSnapshot.topMetrics || []).filter(m => m.label !== label);
+
+        const groupsChanged = removeManualMetricFromGroups(label);
+        if (groupsChanged) {
+            await API.put('/api/sla/groups', metricGroups);
+        }
+
+        await putSnapshotWithCompression(currentSnapshot.id, currentSnapshot, 'manual-metric-delete');
+
+        buildLabelTargetMap();
+        showToast(rt('report.toast.manualMetricDeleted'), 'success');
+        renderCurrentSnapshot();
+    } catch (e) {
+        globalConfig.targets = originalTargets;
+        metricGroups = originalGroups;
+        currentSnapshot.topMetrics = originalTopMetrics;
+        buildLabelTargetMap();
+        showToast(rt('report.toast.deleteFailed'), 'error');
         console.error(e);
     }
 };
