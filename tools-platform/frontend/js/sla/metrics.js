@@ -571,6 +571,11 @@ window.saveTargets = async function() {
         const draft = targetModalState.draft[k] || {};
         const before = currentTargets[k] || {};
         const next = buildTargetFromDraft(before, draft);
+        
+        if (!next.label && item.label && item.label !== k) {
+            next.label = item.label;
+        }
+
         if (stableTargetStringify(before) !== stableTargetStringify(next)) {
             changedTargets.push({ key: k, target: next });
         }
