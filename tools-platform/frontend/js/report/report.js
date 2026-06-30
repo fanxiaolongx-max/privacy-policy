@@ -1515,12 +1515,16 @@ window.populateFilterOptions = function () {
     msContainers.forEach(container => {
         const colIdx = parseInt(container.getAttribute('data-col'));
         const uniqueValues = new Set();
+        const valueToRowIdx = {};
 
-        rows.forEach(row => {
+        rows.forEach((row, rowIdx) => {
             const cell = row.querySelector(`td[data-col="${colIdx}"]`);
             if (cell) {
                 let val = cleanMatrixCellFilterText(cell.innerText);
-                if (val) uniqueValues.add(val);
+                if (val) {
+                    uniqueValues.add(val);
+                    if (valueToRowIdx[val] === undefined) valueToRowIdx[val] = rowIdx;
+                }
             }
         });
 
@@ -1529,7 +1533,7 @@ window.populateFilterOptions = function () {
         optContainer.innerHTML = '';
 
         const headerText = table.querySelector(`thead tr:first-child th:nth-child(${colIdx + 1})`).innerText || '';
-        const isTargetCol = headerText.includes('月目标值');
+        const isTargetCol = headerText.includes('月目标值') || headerText.includes('Target');
         let allChecked = true;
 
         sorted.forEach(val => {
@@ -1542,11 +1546,24 @@ window.populateFilterOptions = function () {
 
             const cb = document.createElement('input');
             cb.type = 'checkbox';
-            cb.checked = true;
-            if (isTargetCol && val === '--') {
-                cb.checked = false;
-                allChecked = false;
+            
+            const firstRowIdx = valueToRowIdx[val];
+            if (window._preserveMatrixFilters && window._matrixFilterStateByRow && window._matrixFilterStateByRow[colIdx]) {
+                const state = window._matrixFilterStateByRow[colIdx];
+                if (state.all) {
+                    cb.checked = true;
+                } else {
+                    cb.checked = state.allowedRows.has(firstRowIdx);
+                }
+                if (!cb.checked) allChecked = false;
+            } else {
+                cb.checked = true;
+                if (isTargetCol && val === '--') {
+                    cb.checked = false;
+                    allChecked = false;
+                }
             }
+            
             cb.value = val;
             cb.className = 'ms-opt-cb';
             cb.onchange = () => msCheckboxChange(colIdx);
@@ -1607,19 +1624,37 @@ window.filterMatrix = function () {
     const table = document.getElementById('main-matrix-table');
     const msContainers = Array.from(table.querySelectorAll('.custom-ms'));
 
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr.matrix-data-row'));
+
     // Build filters map: colIdx -> set of allowed values
     const filters = {};
+    const filterStateByRow = {};
     msContainers.forEach(container => {
         const colIdx = parseInt(container.getAttribute('data-col'));
         const allCb = container.querySelector('.ms-all-cb');
+        
+        filterStateByRow[colIdx] = { all: allCb.checked, allowedRows: new Set() };
+        
         if (!allCb.checked) {
             const checkedVals = Array.from(container.querySelectorAll('.ms-opt-cb:checked')).map(cb => cb.value);
-            filters[colIdx] = new Set(checkedVals);
+            const valSet = new Set(checkedVals);
+            filters[colIdx] = valSet;
+            
+            rows.forEach((row, rowIdx) => {
+                const cell = row.querySelector(`td[data-col="${colIdx}"]`);
+                if (cell) {
+                    let text = cleanMatrixCellFilterText(cell.innerText);
+                    if (valSet.has(text)) {
+                        filterStateByRow[colIdx].allowedRows.add(rowIdx);
+                    }
+                }
+            });
         }
     });
+    window._matrixFilterStateByRow = filterStateByRow;
 
-    const tbody = table.querySelector('tbody');
-    const rows = Array.from(tbody.querySelectorAll('tr.matrix-data-row'));
+
 
     rows.forEach(row => {
         let match = true;
@@ -3182,7 +3217,9 @@ window.addEventListener('tools:languagechange', () => {
     renderReportMonthOptions(true);
     renderSnapshotOptions();
     if (currentSnapshot) {
+        window._preserveMatrixFilters = true;
         renderReport(currentSnapshot);
+        window._preserveMatrixFilters = false;
     } else if (!snapshots.length) {
         renderNoReportReadyState();
     }
