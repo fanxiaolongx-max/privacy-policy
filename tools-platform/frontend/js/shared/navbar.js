@@ -2049,11 +2049,129 @@ function ensureMigrationStatusLoaded() {
     document.head.appendChild(script);
 }
 
+function initBackToTopButton() {
+    if (document.getElementById('globalBackToTop')) return;
+
+    const styleId = 'globalBackToTopStyle';
+    if (!document.getElementById(styleId)) {
+        const style = document.createElement('style');
+        style.id = styleId;
+        style.textContent = `
+            #globalBackToTop {
+                position: fixed;
+                right: 22px;
+                bottom: 24px;
+                z-index: 10050;
+                width: 40px;
+                height: 40px;
+                border: 1px solid rgba(255, 255, 255, 0.22);
+                border-radius: 999px;
+                background: rgba(15, 23, 42, 0.58);
+                color: #e2e8f0;
+                box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                cursor: pointer;
+                display: grid;
+                place-items: center;
+                font-size: 20px;
+                line-height: 1;
+                opacity: 0;
+                visibility: hidden;
+                transform: translateY(10px);
+                transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease, background 0.18s ease;
+            }
+            #globalBackToTop.visible {
+                opacity: 0.82;
+                visibility: visible;
+                transform: translateY(0);
+            }
+            #globalBackToTop:hover {
+                opacity: 1;
+                background: rgba(15, 23, 42, 0.78);
+                color: #fff;
+            }
+            #globalBackToTop:focus-visible {
+                outline: 3px solid rgba(100, 255, 218, 0.28);
+                outline-offset: 3px;
+            }
+            @media (max-width: 720px) {
+                #globalBackToTop {
+                    right: 14px;
+                    bottom: 16px;
+                    width: 38px;
+                    height: 38px;
+                }
+            }
+            @media print {
+                #globalBackToTop { display: none !important; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    const button = document.createElement('button');
+    button.id = 'globalBackToTop';
+    button.type = 'button';
+    button.setAttribute('aria-label', '回到顶部');
+    button.title = '回到顶部';
+    button.textContent = '↑';
+    document.body.appendChild(button);
+
+    let lastScrollElement = null;
+    let rafPending = false;
+    const threshold = 360;
+
+    function getWindowScrollTop() {
+        return window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+    }
+
+    function getActiveScrollTop() {
+        const windowTop = getWindowScrollTop();
+        const elementTop = lastScrollElement && document.contains(lastScrollElement)
+            ? lastScrollElement.scrollTop || 0
+            : 0;
+        return Math.max(windowTop, elementTop);
+    }
+
+    function updateVisibility() {
+        rafPending = false;
+        button.classList.toggle('visible', getActiveScrollTop() > threshold);
+    }
+
+    function queueVisibilityUpdate(event) {
+        const target = event && event.target;
+        if (target && target !== document && target !== window && target !== document.documentElement && target !== document.body) {
+            if (target.scrollTop > threshold) lastScrollElement = target;
+        }
+        if (rafPending) return;
+        rafPending = true;
+        window.requestAnimationFrame(updateVisibility);
+    }
+
+    function scrollElementToTop(element) {
+        if (!element || !document.contains(element) || !element.scrollTo) return;
+        if ((element.scrollTop || 0) <= 0) return;
+        element.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    button.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        scrollElementToTop(document.scrollingElement);
+        scrollElementToTop(lastScrollElement);
+    });
+
+    window.addEventListener('scroll', queueVisibilityUpdate, { passive: true });
+    document.addEventListener('scroll', queueVisibilityUpdate, { passive: true, capture: true });
+    setTimeout(updateVisibility, 300);
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     ensureMigrationStatusLoaded();
     await ensureToolsI18nLoaded();
     registerNavbarI18n();
     renderNavbar();
+    initBackToTopButton();
     loadNavigationData();
     setTimeout(checkServerStatus, 500);
 });
