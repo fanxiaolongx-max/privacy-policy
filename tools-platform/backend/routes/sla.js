@@ -5,6 +5,7 @@
 const express = require('express');
 const router = express.Router();
 const zlib = require('zlib');
+const crypto = require('crypto');
 const targetsRepo = require('../models/sla-targets-repository');
 const prefsRepo = require('../models/sla-prefs-repository');
 const categoriesRepo = require('../models/sla-categories-repository');
@@ -12,6 +13,100 @@ const categoryCascadeRepo = require('../models/sla-category-cascade-repository')
 const groupsRepo = require('../models/sla-groups-repository');
 const snapshotsRepo = require('../models/sla-snapshots-repository');
 const ruleTemplatesRepo = require('../models/sla-rule-templates-repository');
+const auditLogRepo = require('../models/audit-log-repository');
+
+function getRequestSource(req) {
+    return req.get('x-tools-source') || req.get('referer') || req.originalUrl || '';
+}
+
+function getRequestActor(req) {
+    return req.user?.username || req.user?.name || req.session?.user?.username || req.ip || '';
+}
+
+function stableStringify(value) {
+    if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
+    if (value && typeof value === 'object') {
+        return `{${Object.keys(value).sort().map(key => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(',')}}`;
+    }
+    return JSON.stringify(value);
+}
+
+function hashObject(value) {
+    return crypto.createHash('sha256').update(stableStringify(value || {})).digest('hex').slice(0, 16);
+}
+
+function summarizeConfig({ targets = {}, prefs = {} } = {}) {
+    const schemaPrefs = Object.entries(prefs || {})
+        .filter(([, pref]) => pref && Array.isArray(pref.customMetrics));
+    const labels = [];
+    let subMetricCount = 0;
+
+    schemaPrefs.forEach(([, pref]) => {
+        pref.customMetrics.forEach(metric => {
+            if (metric && metric.label) labels.push(metric.label);
+            subMetricCount += Array.isArray(metric?.subMetrics) ? metric.subMetrics.length : 0;
+        });
+    });
+
+    const uniqueLabels = Array.from(new Set(labels)).sort();
+    return {
+        targetCount: Object.keys(targets || {}).length,
+        prefCount: Object.keys(prefs || {}).length,
+        schemaPrefCount: schemaPrefs.length,
+        mainMetricCount: labels.length,
+        subMetricCount,
+        labels: uniqueLabels,
+        hash: hashObject({ targets, prefs })
+    };
+}
+
+function diffConfigSummary(before, after) {
+    const beforeLabels = new Set(before.labels || []);
+    const afterLabels = new Set(after.labels || []);
+    const removedLabels = [...beforeLabels].filter(label => !afterLabels.has(label)).sort();
+    const addedLabels = [...afterLabels].filter(label => !beforeLabels.has(label)).sort();
+    return {
+        before: {
+            targetCount: before.targetCount,
+            prefCount: before.prefCount,
+            schemaPrefCount: before.schemaPrefCount,
+            mainMetricCount: before.mainMetricCount,
+            subMetricCount: before.subMetricCount,
+            hash: before.hash
+        },
+        after: {
+            targetCount: after.targetCount,
+            prefCount: after.prefCount,
+            schemaPrefCount: after.schemaPrefCount,
+            mainMetricCount: after.mainMetricCount,
+            subMetricCount: after.subMetricCount,
+            hash: after.hash
+        },
+        removedLabels,
+        addedLabels
+    };
+}
+
+function isDestructiveConfigChange(diff) {
+    const mainDrop = diff.before.mainMetricCount - diff.after.mainMetricCount;
+    const subDrop = diff.before.subMetricCount - diff.after.subMetricCount;
+    const schemaDrop = diff.before.schemaPrefCount - diff.after.schemaPrefCount;
+    return mainDrop >= 5 || subDrop >= 10 || schemaDrop >= 5 || diff.removedLabels.length >= 5;
+}
+
+async function writeAudit(req, action, summary) {
+    try {
+        await auditLogRepo.addAuditLog({
+            scope: 'sla',
+            action,
+            actor: getRequestActor(req),
+            source: getRequestSource(req),
+            summary
+        });
+    } catch (err) {
+        console.error('[audit_log] write failed:', err.message);
+    }
+}
 
 function decodeCompressedTextField(field, label) {
     if (!field || typeof field !== 'object') {
@@ -166,11 +261,49 @@ router.put('/targets', async (req, res) => {
         return res.status(400).json({ error: '无效数据格式' });
     }
     try {
+        const beforeTargets = (await targetsRepo.getTargets({ mode: 'auto' })).items;
         await targetsRepo.replaceTargets(targets);
+        const summary = {
+            before: { targetCount: Object.keys(beforeTargets || {}).length, hash: hashObject(beforeTargets) },
+            after: { targetCount: Object.keys(targets || {}).length, hash: hashObject(targets) },
+            changedKeys: Object.keys(targets || {}).filter(key => stableStringify(targets[key]) !== stableStringify(beforeTargets[key])).slice(0, 50),
+            removedKeys: Object.keys(beforeTargets || {}).filter(key => !Object.prototype.hasOwnProperty.call(targets, key)).slice(0, 50)
+        };
+        await writeAudit(req, 'sla.targets.replace', summary);
         res.json({ success: true });
     } catch (err) {
         console.error('[PUT /api/sla/targets] failed:', err);
         res.status(500).json({ error: '保存预警目标失败' });
+    }
+});
+
+// PATCH /api/sla/targets/:targetKey → 局部更新单个预警目标
+router.patch('/targets/:targetKey', async (req, res) => {
+    const patch = req.body;
+    if (!patch || typeof patch !== 'object' || Array.isArray(patch)) {
+        return res.status(400).json({ error: '无效数据格式' });
+    }
+    try {
+        const { items: targets } = await targetsRepo.getTargets({ mode: 'auto' });
+        const before = targets[req.params.targetKey] || null;
+        const shouldReplace = patch.__replace === true;
+        const cleanPatch = { ...patch };
+        delete cleanPatch.__replace;
+        const next = shouldReplace ? cleanPatch : {
+            ...(before || {}),
+            ...cleanPatch
+        };
+        const saved = await targetsRepo.upsertTarget(req.params.targetKey, next);
+        await writeAudit(req, 'sla.targets.patch', {
+            targetKey: req.params.targetKey,
+            mode: shouldReplace ? 'replace-one' : 'merge',
+            before,
+            after: saved
+        });
+        res.json({ success: true, item: saved });
+    } catch (err) {
+        console.error('[PATCH /api/sla/targets/:targetKey] failed:', err);
+        res.status(500).json({ error: '更新预警目标失败' });
     }
 });
 
@@ -377,6 +510,28 @@ router.post('/config', async (req, res) => {
     console.log(`[POST /config] targets defined?`, !!targets, `prefs defined?`, !!prefs);
     
     try {
+        const beforeTargets = (await targetsRepo.getTargets({ mode: 'auto' })).items;
+        const beforePrefs = (await prefsRepo.getPrefsObject({ mode: 'auto' })).items;
+        const beforeSummary = summarizeConfig({ targets: beforeTargets, prefs: beforePrefs });
+        const afterSummary = summarizeConfig({
+            targets: targets || beforeTargets,
+            prefs: prefs || beforePrefs
+        });
+        const diff = diffConfigSummary(beforeSummary, afterSummary);
+        const confirmed = req.body.confirmImpact === true || req.body.confirmDestructive === true;
+
+        if (isDestructiveConfigChange(diff) && !confirmed) {
+            await writeAudit(req, 'sla.config.replace.blocked', {
+                reason: 'destructive_config_change_requires_confirmation',
+                ...diff
+            });
+            return res.status(409).json({
+                error: '本次配置写入会明显减少已保存指标规则，需要确认后才能继续',
+                requiresConfirmation: true,
+                impact: diff
+            });
+        }
+
         if (targets) {
             await targetsRepo.replaceTargets(targets);
             console.log(`[POST /config] Wrote targets successfully`);
@@ -385,10 +540,56 @@ router.post('/config', async (req, res) => {
             await prefsRepo.replacePrefs(prefs);
             console.log(`[POST /config] Wrote prefs successfully, keys count:`, Object.keys(prefs).length);
         }
+        await writeAudit(req, 'sla.config.replace', {
+            confirmed,
+            ...diff
+        });
         res.json({ success: true });
     } catch (e) {
         console.error(`[POST /config] Write failed:`, e);
         res.status(500).json({ error: '保存文件失败: ' + e.message });
+    }
+});
+
+// PATCH /api/sla/config/prefs → 局部更新偏好配置，避免小配置覆盖整包 SLA config
+router.patch('/config/prefs', async (req, res) => {
+    const updates = req.body && req.body.updates;
+    if (!updates || typeof updates !== 'object' || Array.isArray(updates)) {
+        return res.status(400).json({ error: 'updates 必须是对象' });
+    }
+
+    try {
+        const { items: beforePrefs } = await prefsRepo.getPrefsObject({ mode: 'auto' });
+        const changed = {};
+        for (const [prefKey, payload] of Object.entries(updates)) {
+            await prefsRepo.upsertPrefItem(prefKey, payload);
+            changed[prefKey] = {
+                beforeHash: hashObject(beforePrefs[prefKey]),
+                afterHash: hashObject(payload)
+            };
+        }
+        await writeAudit(req, 'sla.config.prefs.patch', {
+            keys: Object.keys(updates),
+            changed
+        });
+        res.json({ success: true, keys: Object.keys(updates) });
+    } catch (err) {
+        console.error('[PATCH /api/sla/config/prefs] failed:', err);
+        res.status(500).json({ error: '局部保存配置失败' });
+    }
+});
+
+// GET /api/sla/audit-log?limit=100 → 查看服务端配置变动审计
+router.get('/audit-log', async (req, res) => {
+    try {
+        const items = await auditLogRepo.listAuditLog({
+            scope: 'sla',
+            limit: req.query.limit || 100
+        });
+        res.json(items);
+    } catch (err) {
+        console.error('[GET /api/sla/audit-log] failed:', err);
+        res.status(500).json({ error: '读取审计日志失败' });
     }
 });
 

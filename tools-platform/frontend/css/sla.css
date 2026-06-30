@@ -68,6 +68,7 @@ body.sla-page {
 #target-modal.target-modal-table-mode .modal-content { width: 98vw; max-width: 1480px; }
 .modal-header { padding: 15px 20px; background: #2c3e50; color: #fff; display: flex; justify-content: space-between; align-items: center; }
 .modal-header h3 { margin: 0; font-size: 16px; }
+.target-title-stats { display: inline-block; margin-left: 10px; font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.72); vertical-align: middle; }
 .target-modal-header-actions { display: flex; align-items: center; gap: 10px; }
 .target-view-toggle { border: 1px solid rgba(255,255,255,0.32); background: rgba(255,255,255,0.12); color: #fff; border-radius: 6px; padding: 6px 10px; font-size: 12px; font-weight: 700; cursor: pointer; }
 .target-view-toggle:hover { background: rgba(255,255,255,0.2); }
@@ -82,16 +83,19 @@ body.sla-page {
 .target-row-header { display: flex; justify-content: space-between; margin-bottom: 12px; font-weight: bold; color: #1976d2; padding-bottom: 8px; border-bottom: 1px dashed #eee; align-items: center; flex-wrap: wrap; gap: 10px; }
 .target-months { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px 15px; }
 .month-input-group { display: flex; align-items: center; background: #f1f3f5; padding: 4px 8px; border-radius: 6px; border: 1px solid #ddd; }
+.month-input-group.empty-target-cell { background: #fff8e1; border-color: #f4d27a; border-style: dashed; }
 .month-input-group label { font-size: 12px; color: #555; width: 35px; font-weight: bold; }
 .month-input-group input { flex: 1; border: none; background: transparent; font-size: 13px; text-align: right; outline: none; font-weight: bold; color: #333; width: 100%; }
 .month-input-group input::placeholder { color: #aaa; font-weight: normal; }
 .month-input-group:focus-within { border-color: #4a90e2; background: #fff; box-shadow: 0 0 0 2px rgba(74,144,226,0.1); }
+.target-month-input.empty-target-input::placeholder { color: #c58b00; }
 .condition-select { padding: 4px; border: 1px solid #ccc; border-radius: 4px; background: #fff; font-size: 12px; color: #444; outline: none; cursor: pointer; }
 .condition-select:focus { border-color: #4a90e2; }
 .target-table-wrap { overflow: auto; border: 1px solid #dde4ed; border-radius: 8px; background: #fff; max-height: calc(85vh - 170px); }
 .target-config-table { width: max-content; min-width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12px; }
 .target-config-table th,
 .target-config-table td { border-bottom: 1px solid #edf0f4; border-right: 1px solid #edf0f4; padding: 8px; vertical-align: middle; background: #fff; }
+.target-config-table td.empty-target-cell { background: #fff8e1; }
 .target-config-table thead th { position: sticky; top: 0; z-index: 2; background: #eef5ff; color: #31506f; font-weight: 800; white-space: nowrap; }
 .target-config-table th:first-child,
 .target-config-table td:first-child { position: sticky; left: 0; z-index: 1; }
@@ -100,6 +104,7 @@ body.sla-page {
 .target-table-current { color: #4a90e2; font-weight: 800; text-align: center; min-width: 82px; }
 .target-table-percent { text-align: center; }
 .target-table-input { width: 82px; box-sizing: border-box; border: 1px solid #d5dde8; border-radius: 5px; padding: 6px 7px; text-align: right; font-weight: 700; color: #333; outline: none; }
+.target-table-input.empty-target-input { border-style: dashed; border-color: #e7bf58; background: #fffdf5; }
 .target-table-input:focus { border-color: #4a90e2; box-shadow: 0 0 0 2px rgba(74,144,226,0.12); }
 
 /* ── 页头区域 ──────────────────────────────────────────── */

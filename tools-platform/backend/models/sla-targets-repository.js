@@ -7,44 +7,48 @@ function normalizeTargets(items) {
     return items && typeof items === 'object' && !Array.isArray(items) ? items : {};
 }
 
+function buildTargetDbRow(targetKey, payload = {}) {
+    const autoFill = payload.autoFill === undefined ? null : (payload.autoFill ? 1 : 0);
+    const isPercent = payload.isPercent === undefined ? null : (payload.isPercent ? 1 : 0);
+    const exceedBy = payload.exceedBy === undefined ? null : payload.exceedBy;
+    const bonus = payload.bonus === undefined ? null : payload.bonus;
+    const weight = payload.weight === undefined ? null : payload.weight;
+    const type = payload.type === undefined ? null : payload.type;
+    const label = payload.label === undefined ? null : payload.label;
+
+    const extraConfig = {};
+    for (const [k, v] of Object.entries(payload || {})) {
+        if (!['label', 'type', 'weight', 'autoFill', 'isPercent', 'exceedBy', 'bonus'].includes(k)) {
+            extraConfig[k] = v;
+        }
+    }
+
+    return [
+        targetKey,
+        label,
+        type,
+        weight,
+        autoFill,
+        isPercent,
+        exceedBy,
+        bonus,
+        JSON.stringify(extraConfig)
+    ];
+}
+
 async function replaceTargetsInDbRaw(items) {
     const normalized = normalizeTargets(items);
     await run('BEGIN TRANSACTION');
     try {
         await run('DELETE FROM sla_targets');
         for (const [targetKey, payload] of Object.entries(normalized)) {
-            const autoFill = payload.autoFill === undefined ? null : (payload.autoFill ? 1 : 0);
-            const isPercent = payload.isPercent === undefined ? null : (payload.isPercent ? 1 : 0);
-            const exceedBy = payload.exceedBy === undefined ? null : payload.exceedBy;
-            const bonus = payload.bonus === undefined ? null : payload.bonus;
-            const weight = payload.weight === undefined ? null : payload.weight;
-            const type = payload.type === undefined ? null : payload.type;
-            const label = payload.label === undefined ? null : payload.label;
-            
-            const extraConfig = {};
-            for (const [k, v] of Object.entries(payload || {})) {
-                if (!['label', 'type', 'weight', 'autoFill', 'isPercent', 'exceedBy', 'bonus'].includes(k)) {
-                    extraConfig[k] = v;
-                }
-            }
-
             await run(
                 `INSERT OR REPLACE INTO sla_targets (
                     target_key, label, target_type, weight, 
                     auto_fill, is_percent, exceed_by, bonus, 
                     extra_config_json, updated_at
                  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-                [
-                    targetKey,
-                    label,
-                    type,
-                    weight,
-                    autoFill,
-                    isPercent,
-                    exceedBy,
-                    bonus,
-                    JSON.stringify(extraConfig)
-                ]
+                buildTargetDbRow(targetKey, payload)
             );
         }
         await run('COMMIT');
@@ -119,8 +123,44 @@ async function replaceTargets(items) {
     return normalized;
 }
 
+async function upsertTarget(targetKey, payload) {
+    if (!targetKey) throw new Error('targetKey is required');
+    const current = await readFromDb();
+    const next = {
+        ...(current[targetKey] || {}),
+        ...(payload || {})
+    };
+    await run(
+        `INSERT INTO sla_targets (
+            target_key, label, target_type, weight,
+            auto_fill, is_percent, exceed_by, bonus,
+            extra_config_json, updated_at
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+         ON CONFLICT(target_key) DO UPDATE SET
+            label = excluded.label,
+            target_type = excluded.target_type,
+            weight = excluded.weight,
+            auto_fill = excluded.auto_fill,
+            is_percent = excluded.is_percent,
+            exceed_by = excluded.exceed_by,
+            bonus = excluded.bonus,
+            extra_config_json = excluded.extra_config_json,
+            updated_at = CURRENT_TIMESTAMP`,
+        buildTargetDbRow(targetKey, next)
+    );
+    return next;
+}
+
+async function deleteTarget(targetKey) {
+    if (!targetKey) throw new Error('targetKey is required');
+    const result = await run('DELETE FROM sla_targets WHERE target_key = ?', [targetKey]);
+    return result.changes > 0;
+}
+
 module.exports = {
     ensureReady,
     getTargets,
-    replaceTargets
+    replaceTargets,
+    upsertTarget,
+    deleteTarget
 };

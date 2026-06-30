@@ -312,11 +312,19 @@ function buildManualAdjustDesc(unit, cap) {
     return cap === null ? `${unit}分/次, 上限无` : `${unit}分/次, 上限${cap}分`;
 }
 
+async function saveSlaPrefPatch(updates) {
+    await API.patch('/api/sla/config/prefs', { updates });
+}
+
+async function patchSlaTarget(targetKey, patch) {
+    await API.patch(`/api/sla/targets/${encodeURIComponent(targetKey)}`, patch);
+}
+
 async function saveManualAdjustItemsConfig(successMessage) {
     if (!globalConfig.prefs) globalConfig.prefs = {};
     globalConfig.prefs.manualAdjustItems = manualAdjustItems;
 
-    await API.post('/api/sla/config', globalConfig);
+    await saveSlaPrefPatch({ manualAdjustItems });
     showToast(successMessage, 'success');
     renderCurrentSnapshot();
 }
@@ -563,7 +571,7 @@ window.toggleAutoStdScore = async function () {
     if (!globalConfig.prefs) globalConfig.prefs = {};
     globalConfig.prefs.isAutoStandardTotalScore = cb.checked;
     try {
-        await API.post('/api/sla/config', globalConfig);
+        await saveSlaPrefPatch({ isAutoStandardTotalScore: cb.checked });
         showToast(rt('report.toast.autoFillOn') || '配置已保存', 'success');
         if (currentSnapshot) renderReport(currentSnapshot);
     } catch (e) {
@@ -582,7 +590,7 @@ window.updateCustomStdScore = async function () {
     if (!globalConfig.prefs) globalConfig.prefs = {};
     globalConfig.prefs.customStandardTotalScore = val;
     try {
-        await API.post('/api/sla/config', globalConfig);
+        await saveSlaPrefPatch({ customStandardTotalScore: val });
         showToast('配置已保存', 'success');
         if (currentSnapshot) renderReport(currentSnapshot);
     } catch (e) {
@@ -2018,6 +2026,8 @@ window.showSysScoreDetails = function (cat) {
 
     let passHtml = '';
     let failHtml = '';
+    let rawLostWeight = 0;
+    let bonusCredit = 0;
     // 排除项拆成两桶
     let onlyMissingHtml = '';  // ⚠️ 仅当前项缺考：其他客户群/代表处/区域有数据，当前项没有
     let allExcludedHtml = '';  // ⚪ 全员豁免：所有客户群/代表处/区域都无数据 / 未配置目标
@@ -2050,14 +2060,33 @@ window.showSysScoreDetails = function (cat) {
                 allExcludedHtml += `<li style="margin-bottom:8px; line-height:1.4;"><span style="color:#999; font-weight:600;">${getBilingual(mLabel)}</span> <span style="color:#ccc; font-size:11px;">(${rt('report.detail.globalNoData')})</span></li>`;
             }
         } else if (cell.isFailing) {
+            rawLostWeight += Math.max(0, weight - (Number(cell.earnedScore) || 0));
             const partialText = cell.proportionalScoring
                 ? `, ${rt('report.detail.partial')}: ${formatScoreValue(cell.earnedScore)} / ${weight}, ${rt('report.detail.completion')} ${(cell.completionRatio * 100).toFixed(1)}%`
                 : '';
             failHtml += `<li style="margin-bottom:8px; line-height:1.4;"><span style="color:#d32f2f; font-weight:600;">${getBilingual(mLabel)}</span> <span style="color:#888; font-size:11px;">(${rt('report.detail.weight')}: ${weight}, ${rt('report.detail.gap')}: ${cell.gapStr}${partialText})</span></li>`;
         } else {
+            bonusCredit += Math.max(0, (Number(cell.earnedScore) || 0) - weight);
             passHtml += `<li style="margin-bottom:8px; line-height:1.4;"><span style="color:#2e7d32; font-weight:600;">${getBilingual(mLabel)}</span> <span style="color:#888; font-size:11px;">(${rt('report.detail.weight')}: ${weight})</span></li>`;
         }
     });
+
+    const netLostWeight = rawLostWeight - bonusCredit;
+    const lostSummaryHtml = `
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(96px, 1fr)); gap:8px; margin-bottom:10px;">
+            <div style="background:#fff7ed; border:1px solid #fed7aa; border-radius:6px; padding:8px; text-align:center;">
+                <div style="font-size:11px; color:#9a3412; margin-bottom:2px;">${rt('report.detail.rawLostWeight')}</div>
+                <div style="font-weight:bold; color:#c2410c; font-size:16px;">${formatScoreValue(rawLostWeight)}</div>
+            </div>
+            <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:8px; text-align:center;">
+                <div style="font-size:11px; color:#166534; margin-bottom:2px;">${rt('report.detail.bonusCredit')}</div>
+                <div style="font-weight:bold; color:#15803d; font-size:16px;">+${formatScoreValue(bonusCredit)}</div>
+            </div>
+            <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:6px; padding:8px; text-align:center;">
+                <div style="font-size:11px; color:#991b1b; margin-bottom:2px;">${rt('report.detail.netLostWeight')}</div>
+                <div style="font-weight:bold; color:#b91c1c; font-size:16px;">${formatScoreValue(netLostWeight)}</div>
+            </div>
+        </div>`;
 
     // 拼接排除项区块：仅在有内容时才渲染对应子块
     const onlyMissingBlock = onlyMissingHtml ? `
@@ -2100,7 +2129,8 @@ window.showSysScoreDetails = function (cat) {
                 <ul style="margin:0; padding-left:15px; font-size:12px; color:#333;">${passHtml || `<li style="color:#999;">${rt('report.detail.none')}</li>`}</ul>
             </div>
             <div style="flex:1; background:#ffebee; padding:10px; border-radius:6px; border:1px solid #ffcdd2;">
-                <div style="color:#c62828; font-weight:bold; border-bottom:1px solid #ffcdd2; padding-bottom:5px; margin-bottom:8px;">${rt('report.detail.failed')} (${rt('report.detail.lostWeight')} ${formatScoreValue(d.validWeightSum - d.earnedScore)})</div>
+                <div style="color:#c62828; font-weight:bold; border-bottom:1px solid #ffcdd2; padding-bottom:5px; margin-bottom:8px;">${rt('report.detail.failed')} (${rt('report.detail.netLostWeight')} ${formatScoreValue(netLostWeight)})</div>
+                ${lostSummaryHtml}
                 <ul style="margin:0; padding-left:15px; font-size:12px; color:#333;">${failHtml || `<li style="color:#999;">${rt('report.detail.none')}</li>`}</ul>
             </div>
         </div>
@@ -2705,7 +2735,7 @@ window.toggleAutoFill = async function (label) {
     globalConfig.targets[targetKey].autoFill = !globalConfig.targets[targetKey].autoFill;
 
     try {
-        await API.put('/api/sla/targets', globalConfig.targets);
+        await patchSlaTarget(targetKey, globalConfig.targets[targetKey]);
         buildLabelTargetMap();
         showToast(globalConfig.targets[targetKey].autoFill ? rt('report.toast.autoFillOn') : rt('report.toast.autoFillOff'), 'success');
         renderReport(currentSnapshot);
@@ -2722,10 +2752,7 @@ window.toggleManualAdjustAutoFill = async function (idx) {
     prefs[key] = !prefs[key];
 
     try {
-        await API.post('/api/sla/config', {
-            targets: globalConfig.targets || {},
-            prefs: globalConfig.prefs || {}
-        });
+        await saveSlaPrefPatch({ manualAdjustAutoFill: prefs });
 
         let changed = false;
         if (prefs[key] && currentSnapshot) {
@@ -2760,7 +2787,7 @@ window.toggleProportionalScoring = async function (label) {
     globalConfig.targets[targetKey].proportionalScoring = !globalConfig.targets[targetKey].proportionalScoring;
 
     try {
-        await API.put('/api/sla/targets', globalConfig.targets);
+        await patchSlaTarget(targetKey, globalConfig.targets[targetKey]);
         buildLabelTargetMap();
         showToast(
             globalConfig.targets[targetKey].proportionalScoring
