@@ -1031,7 +1031,7 @@ function renderReport(snap) {
     // ── Arrange metricCols by group order ──────────────────────────────
 
     // Build ordered list: grouped metrics first (in group order, then metric order), then ungrouped
-    const orderedMetrics = [];
+    let orderedMetrics = [];
     metricGroups.forEach(g => {
         (g.metrics || []).forEach(label => {
             const m = metricCols.find(x => x.label === label);
@@ -1310,9 +1310,9 @@ function renderReport(snap) {
         adjustHtml += `<tr>
             <td style="color:${typeColor}; background:${typeBg}; font-weight:bold; text-align:center;">${getBilingual(item.type)}</td>
             <td style="text-align:left;">
-                <div style="display:flex; flex-direction:column; gap:5px;">
+                <div style="display:flex; flex-direction:row; align-items:center; flex-wrap:wrap; gap:8px;">
                     <span>${getBilingual(item.name)}</span>
-                    <span style="cursor:pointer; align-self:flex-start; font-size:10px; color:${autoColor}; background:${autoBg}; padding:1px 4px; border-radius:3px; border:1px solid ${autoBorder}; font-weight:500; line-height:1.35;" title="${escapeHTML(autoTitle)}" onclick="toggleManualAdjustAutoFill(${idx})">${escapeHTML(autoText)}</span>
+                    <span style="cursor:pointer; font-size:10px; color:${autoColor}; background:${autoBg}; padding:1px 4px; border-radius:3px; border:1px solid ${autoBorder}; font-weight:500; line-height:1.35; white-space:nowrap;" title="${escapeHTML(autoTitle)}" onclick="toggleManualAdjustAutoFill(${idx})">${escapeHTML(autoText)}</span>
                 </div>
             </td>
             <td style="color:#666;">${escapeHTML(item.desc)}</td>
@@ -1480,6 +1480,7 @@ window.setupMatrixFilters = function () {
     });
 
     populateFilterOptions();
+    filterMatrix();
 
     // Initialize summary row immediately
     if (typeof updateMatrixSummary === 'function') {
@@ -1526,6 +1527,10 @@ window.populateFilterOptions = function () {
         const optContainer = container.querySelector('.ms-options-container');
         optContainer.innerHTML = '';
 
+        const headerText = table.querySelector(`thead tr:first-child th:nth-child(${colIdx + 1})`).innerText || '';
+        const isTargetCol = headerText.includes('月目标值');
+        let allChecked = true;
+
         sorted.forEach(val => {
             const label = document.createElement('label');
             label.style.display = 'block';
@@ -1537,6 +1542,10 @@ window.populateFilterOptions = function () {
             const cb = document.createElement('input');
             cb.type = 'checkbox';
             cb.checked = true;
+            if (isTargetCol && val === '--') {
+                cb.checked = false;
+                allChecked = false;
+            }
             cb.value = val;
             cb.className = 'ms-opt-cb';
             cb.onchange = () => msCheckboxChange(colIdx);
@@ -1545,6 +1554,10 @@ window.populateFilterOptions = function () {
             label.appendChild(document.createTextNode(' ' + val));
             optContainer.appendChild(label);
         });
+
+        const allCb = container.querySelector('.ms-all-cb');
+        if (allCb) allCb.checked = allChecked;
+        updateMsBtnText(colIdx);
     });
 };
 
@@ -2075,16 +2088,16 @@ window.showSysScoreDetails = function (cat) {
     const lostSummaryHtml = `
         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(96px, 1fr)); gap:8px; margin-bottom:10px;">
             <div style="background:#fff7ed; border:1px solid #fed7aa; border-radius:6px; padding:8px; text-align:center;">
-                <div style="font-size:11px; color:#9a3412; margin-bottom:2px;">${rt('report.detail.rawLostWeight')}</div>
-                <div style="font-weight:bold; color:#c2410c; font-size:16px;">${formatScoreValue(rawLostWeight)}</div>
+                <div style="font-size:10px; color:#9a3412; margin-bottom:2px;">${rt('report.detail.rawLostWeight')}</div>
+                <div style="font-weight:bold; color:#c2410c; font-size:14px;">${formatScoreValue(rawLostWeight)}</div>
             </div>
             <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:8px; text-align:center;">
-                <div style="font-size:11px; color:#166534; margin-bottom:2px;">${rt('report.detail.bonusCredit')}</div>
-                <div style="font-weight:bold; color:#15803d; font-size:16px;">+${formatScoreValue(bonusCredit)}</div>
+                <div style="font-size:10px; color:#166534; margin-bottom:2px;">${rt('report.detail.bonusCredit')}</div>
+                <div style="font-weight:bold; color:#15803d; font-size:14px;">+${formatScoreValue(bonusCredit)}</div>
             </div>
             <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:6px; padding:8px; text-align:center;">
-                <div style="font-size:11px; color:#991b1b; margin-bottom:2px;">${rt('report.detail.netLostWeight')}</div>
-                <div style="font-weight:bold; color:#b91c1c; font-size:16px;">${formatScoreValue(netLostWeight)}</div>
+                <div style="font-size:10px; color:#991b1b; margin-bottom:2px;">${rt('report.detail.netLostWeight')}</div>
+                <div style="font-weight:bold; color:#b91c1c; font-size:14px;">${formatScoreValue(netLostWeight)}</div>
             </div>
         </div>`;
 

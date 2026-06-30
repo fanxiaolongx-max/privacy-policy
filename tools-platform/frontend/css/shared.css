@@ -1251,7 +1251,8 @@ body {
 
         .ranking-table th,
         .ranking-table td {
-            padding: 16px 12px;
+            padding: 8px 6px;
+            font-size: 13px;
             text-align: center;
             border-bottom: 1px solid #f0f0f0;
         }
@@ -1263,7 +1264,7 @@ body {
             position: sticky;
             top: 0;
             z-index: 10;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .ranking-table tr:hover td {
