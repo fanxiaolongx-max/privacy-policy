@@ -1148,22 +1148,23 @@ function renderReport(snap) {
                 const autoBg = isAuto ? '#e1f5fe' : '#f5f5f5';
                 const autoBorder = isAuto ? '#81d4fa' : '#e0e0e0';
                 const sourceText = m.autoFillSource && m.autoFillSource.label ? ` · ${rt('report.auto.source')}: ${getTranslatedLabel(m.autoFillSource.label)}` : '';
-                const autoText = isAuto ? `${rt('report.auto.on')}${sourceText}` : rt('report.auto.off');
-                const autoTitle = isAuto && sourceText ? rt('report.auto.sourceTitle', { label: getTranslatedLabel(m.autoFillSource.label) }) : rt('report.auto.title');
-                autoFillBtn = `<span style="cursor:pointer; margin-left:4px; font-size:10px; color:${autoColor}; background:${autoBg}; padding:1px 4px; border-radius:3px; border:1px solid ${autoBorder}; font-weight:500; line-height:1.35;" title="${escapeHTML(autoTitle)}" onclick='toggleAutoFill(${JSON.stringify(m.label)})'>${escapeHTML(autoText)}</span>`;
+                const autoTextFull = isAuto ? `${rt('report.auto.on')}${sourceText}` : rt('report.auto.off');
+                const autoTitle = isAuto && sourceText ? rt('report.auto.sourceTitle', { label: getTranslatedLabel(m.autoFillSource.label) }) : autoTextFull;
+                autoFillBtn = `<span style="cursor:pointer; margin-left:4px; font-size:14px; opacity:${isAuto ? '1' : '0.4'}; transition: opacity 0.2s;" title="${escapeHTML(autoTitle)}" onclick='toggleAutoFill(${JSON.stringify(m.label)})' onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='${isAuto ? '1' : '0.4'}'">🔄</span>`;
             }
             const manualActionButtons = m.isManual ? `
-                <span style="cursor:pointer; margin-left:4px; font-size:10px; color:#4f7d53; background:#f2faf3; padding:1px 4px; border-radius:3px; border:1px solid #d8ead9; font-weight:500; line-height:1.35;" onclick='editManualMetric(${JSON.stringify(m.label)})'>${rt('report.common.edit')}</span>
-                <span style="cursor:pointer; margin-left:4px; font-size:10px; color:#b42318; background:#fff1f0; padding:1px 4px; border-radius:3px; border:1px solid #ffd6d3; font-weight:500; line-height:1.35;" onclick='deleteManualMetric(${JSON.stringify(m.label)})'>${rt('report.common.delete')}</span>
+                <span style="cursor:pointer; margin-left:4px; font-size:14px; opacity:0.6; transition: opacity 0.2s;" title="${rt('report.common.edit')}" onclick='editManualMetric(${JSON.stringify(m.label)})' onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">✏️</span>
+                <span style="cursor:pointer; margin-left:4px; font-size:14px; opacity:0.6; transition: opacity 0.2s;" title="${rt('report.common.delete')}" onclick='deleteManualMetric(${JSON.stringify(m.label)})' onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">🗑️</span>
                 ${autoFillBtn}
             ` : '';
             const proportionalEnabled = isProportionalScoringEnabled(targetData);
             const proportionalBtn = m.hasTarget ? `
-                <button class="ratio-score-toggle ${proportionalEnabled ? 'active' : ''}"
+                <span style="cursor:pointer; margin-left:4px; font-size:14px; opacity:${proportionalEnabled ? '1' : '0.4'}; transition: opacity 0.2s;"
                     onclick="toggleProportionalScoring('${escapeHTML(m.label)}')"
-                    title="${proportionalEnabled ? rt('report.proportional.titleOn') : rt('report.proportional.titleOff')}">
-                    ${proportionalEnabled ? rt('report.proportional.on') : rt('report.proportional.off')}
-                </button>
+                    title="${proportionalEnabled ? rt('report.proportional.titleOn') : rt('report.proportional.titleOff')}"
+                    onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='${proportionalEnabled ? '1' : '0.4'}'">
+                    ⚖️
+                </span>
             ` : '';
 
             html += `<tr class="matrix-data-row" data-group="${escapeHTML(row.groupName || '未分组')}">`;
@@ -1312,7 +1313,7 @@ function renderReport(snap) {
             <td style="text-align:left;">
                 <div style="display:flex; flex-direction:row; align-items:center; flex-wrap:wrap; gap:8px;">
                     <span>${getBilingual(item.name)}</span>
-                    <span style="cursor:pointer; font-size:10px; color:${autoColor}; background:${autoBg}; padding:1px 4px; border-radius:3px; border:1px solid ${autoBorder}; font-weight:500; line-height:1.35; white-space:nowrap;" title="${escapeHTML(autoTitle)}" onclick="toggleManualAdjustAutoFill(${idx})">${escapeHTML(autoText)}</span>
+                    <span style="cursor:pointer; font-size:14px; opacity:${isAuto ? '1' : '0.4'}; transition: opacity 0.2s; padding:2px;" title="${escapeHTML(autoTitle)}" onclick="toggleManualAdjustAutoFill(${idx})" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='${isAuto ? '1' : '0.4'}'">🔄</span>
                 </div>
             </td>
             <td style="color:#666;">${escapeHTML(item.desc)}</td>
