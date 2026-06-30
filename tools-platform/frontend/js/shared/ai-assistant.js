@@ -28,11 +28,18 @@
             box-shadow: 0 4px 16px rgba(0,0,0,0.25);
             cursor: pointer;
             z-index: 100000;
-            transition: transform 0.3s, box-shadow 0.3s;
+            transition: transform 0.18s, box-shadow 0.18s;
+            user-select: none;
+            touch-action: none;
         }
         .ai-fab:hover {
             transform: scale(1.1);
             box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        .ai-fab.dragging {
+            transform: scale(1.04);
+            box-shadow: 0 10px 28px rgba(0,0,0,0.34);
+            cursor: grabbing;
         }
         .ai-panel {
             position: fixed;
@@ -217,7 +224,7 @@
     // 创建 DOM
     const fab = document.createElement('div');
     fab.className = 'ai-fab';
-    fab.innerHTML = '✨';
+    fab.innerHTML = '🤖';
     document.body.appendChild(fab);
 
     const panel = document.createElement('div');
@@ -252,9 +259,97 @@
     let messages = [];
     let cumulativeTokens = 0;
     let cumulativeCost = 0;
-    
-    // 打开/关闭面板
-    fab.onclick = () => {
+    const FAB_POSITION_KEY = 'tools_ai_fab_position_v1';
+    const FAB_MARGIN = 12;
+    let dragState = null;
+
+    function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    function getFabSize() {
+        return {
+            width: fab.offsetWidth || 56,
+            height: fab.offsetHeight || 56
+        };
+    }
+
+    function getStoredFabPosition() {
+        try {
+            const saved = JSON.parse(localStorage.getItem(FAB_POSITION_KEY) || '{}');
+            if (Number.isFinite(saved.left) && Number.isFinite(saved.top)) return saved;
+        } catch (e) { }
+        return null;
+    }
+
+    function setFabPosition(left, top, options = {}) {
+        const size = getFabSize();
+        const nextLeft = clamp(left, FAB_MARGIN, window.innerWidth - size.width - FAB_MARGIN);
+        const nextTop = clamp(top, FAB_MARGIN, window.innerHeight - size.height - FAB_MARGIN);
+        fab.style.left = `${Math.round(nextLeft)}px`;
+        fab.style.top = `${Math.round(nextTop)}px`;
+        fab.style.right = 'auto';
+        fab.style.bottom = 'auto';
+        if (options.persist) {
+            localStorage.setItem(FAB_POSITION_KEY, JSON.stringify({ left: nextLeft, top: nextTop }));
+        }
+        updatePanelPosition();
+        notifyFabPosition();
+    }
+
+    function initFabPosition() {
+        const size = getFabSize();
+        const saved = getStoredFabPosition();
+        if (saved) {
+            setFabPosition(saved.left, saved.top);
+            return;
+        }
+        setFabPosition(window.innerWidth - size.width - 40, window.innerHeight - size.height - 40);
+    }
+
+    function getFabRectData() {
+        const rect = fab.getBoundingClientRect();
+        return {
+            left: rect.left,
+            top: rect.top,
+            right: rect.right,
+            bottom: rect.bottom,
+            width: rect.width,
+            height: rect.height
+        };
+    }
+
+    function notifyFabPosition() {
+        window.dispatchEvent(new CustomEvent('tools:ai-fab-position', {
+            detail: { rect: getFabRectData() }
+        }));
+    }
+
+    function updatePanelPosition() {
+        const fabRect = fab.getBoundingClientRect();
+        const panelWidth = panel.classList.contains('expanded') ? Math.min(600, window.innerWidth * 0.9) : 360;
+        const panelHeight = panel.classList.contains('expanded') ? Math.min(window.innerHeight * 0.8, 800) : 550;
+        const gap = 14;
+        const preferLeft = fabRect.left + fabRect.width / 2 < window.innerWidth / 2;
+        const left = preferLeft
+            ? clamp(fabRect.left, FAB_MARGIN, window.innerWidth - panelWidth - FAB_MARGIN)
+            : clamp(fabRect.right - panelWidth, FAB_MARGIN, window.innerWidth - panelWidth - FAB_MARGIN);
+
+        const topAbove = fabRect.top - panelHeight - gap;
+        const topBelow = fabRect.bottom + gap;
+        const top = topAbove >= FAB_MARGIN
+            ? topAbove
+            : clamp(topBelow, FAB_MARGIN, window.innerHeight - panelHeight - FAB_MARGIN);
+
+        panel.style.left = `${Math.round(left)}px`;
+        panel.style.top = `${Math.round(top)}px`;
+        panel.style.right = 'auto';
+        panel.style.bottom = 'auto';
+        panel.style.transformOrigin = `${preferLeft ? 'left' : 'right'} ${topAbove >= FAB_MARGIN ? 'bottom' : 'top'}`;
+    }
+
+    function openOrClosePanel() {
+        updatePanelPosition();
         panel.classList.toggle('open');
         if (panel.classList.contains('open')) {
             if (isFirstOpen) {
@@ -263,10 +358,71 @@
             }
             setTimeout(() => input.focus(), 300);
         }
+    }
+
+    function onFabPointerDown(event) {
+        if (event.button !== undefined && event.button !== 0) return;
+        const rect = fab.getBoundingClientRect();
+        dragState = {
+            pointerId: event.pointerId,
+            startX: event.clientX,
+            startY: event.clientY,
+            startLeft: rect.left,
+            startTop: rect.top,
+            moved: false,
+            suppressClick: false
+        };
+        fab.setPointerCapture(event.pointerId);
+    }
+
+    function onFabPointerMove(event) {
+        if (!dragState || dragState.pointerId !== event.pointerId) return;
+        const dx = event.clientX - dragState.startX;
+        const dy = event.clientY - dragState.startY;
+        if (!dragState.moved && Math.hypot(dx, dy) < 4) return;
+        dragState.moved = true;
+        dragState.suppressClick = true;
+        fab.classList.add('dragging');
+        setFabPosition(dragState.startLeft + dx, dragState.startTop + dy);
+        event.preventDefault();
+    }
+
+    function onFabPointerUp(event) {
+        if (!dragState || dragState.pointerId !== event.pointerId) return;
+        const shouldSuppress = dragState.suppressClick;
+        if (dragState.moved) {
+            const rect = fab.getBoundingClientRect();
+            setFabPosition(rect.left, rect.top, { persist: true });
+        }
+        fab.classList.remove('dragging');
+        try { fab.releasePointerCapture(event.pointerId); } catch (e) { }
+        dragState = null;
+        if (shouldSuppress) {
+            fab.dataset.suppressNextClick = '1';
+            setTimeout(() => { delete fab.dataset.suppressNextClick; }, 0);
+        }
+    }
+    
+    // 打开/关闭面板
+    fab.addEventListener('pointerdown', onFabPointerDown);
+    fab.addEventListener('pointermove', onFabPointerMove);
+    fab.addEventListener('pointerup', onFabPointerUp);
+    fab.addEventListener('pointercancel', onFabPointerUp);
+    fab.onclick = () => {
+        if (fab.dataset.suppressNextClick === '1') return;
+        openOrClosePanel();
     };
     
     panel.querySelector('.ai-close').onclick = () => panel.classList.remove('open');
-    panel.querySelector('.ai-expand').onclick = () => panel.classList.toggle('expanded');
+    panel.querySelector('.ai-expand').onclick = () => {
+        panel.classList.toggle('expanded');
+        updatePanelPosition();
+    };
+    window.addEventListener('resize', () => {
+        const rect = fab.getBoundingClientRect();
+        setFabPosition(rect.left, rect.top, { persist: true });
+    }, { passive: true });
+    setTimeout(initFabPosition, 0);
 
     function renderMarkdownLike(text) {
         if (typeof marked !== 'undefined') {

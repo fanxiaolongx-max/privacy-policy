@@ -275,6 +275,31 @@ function buildTargetDraft(targetKeys, labelMap) {
     return draft;
 }
 
+function stableTargetStringify(value) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return JSON.stringify(value);
+    const sorted = {};
+    Object.keys(value).sort().forEach(key => {
+        sorted[key] = value[key];
+    });
+    return JSON.stringify(sorted);
+}
+
+function buildTargetFromDraft(existingTarget, draft) {
+    const next = { ...(existingTarget || {}) };
+    next.type = draft.type || 'gte';
+    next.isPercent = !!draft.isPercent;
+    for (let i = 1; i <= 12; i++) {
+        const month = String(i);
+        const val = String(draft[month] || '').trim();
+        if (val !== '') {
+            next[month] = parseFloat(val);
+        } else {
+            delete next[month];
+        }
+    }
+    return next;
+}
+
 function collectTargetDraftFromDom() {
     if (!targetModalState || !targetModalState.draft) return;
     document.querySelectorAll('#target-modal .condition-select').forEach(sel => {
@@ -306,14 +331,61 @@ function renderTargetViewToggle() {
     btn.title = SLAT(isTable ? 'sla.metric.cardModeTitle' : 'sla.metric.tableModeTitle');
 }
 
+function targetDraftHasAnyMonthlyValue(draft) {
+    if (!draft) return false;
+    for (let i = 1; i <= 12; i++) {
+        if (String(draft[String(i)] || '').trim() !== '') return true;
+    }
+    return false;
+}
+
+function getTargetModalStats() {
+    const total = targetModalState.items.length;
+    const filled = targetModalState.items.reduce((count, item) => {
+        return count + (targetDraftHasAnyMonthlyValue(targetModalState.draft[item.key]) ? 1 : 0);
+    }, 0);
+    return { total, filled, missing: Math.max(0, total - filled) };
+}
+
+function renderTargetModalTitleStats() {
+    const title = document.querySelector('#target-modal .modal-header h3');
+    if (!title) return;
+    const stats = getTargetModalStats();
+    const titleText = SLAT('sla.modal.targetTitle');
+    title.innerHTML = `${escapeHTML(titleText)} <span class="target-title-stats">${escapeHTML(SLAT('sla.metric.targetStats', stats))}</span>`;
+}
+
+function updateTargetInputEmptyState(input) {
+    if (!input) return;
+    const isEmpty = String(input.value || '').trim() === '';
+    input.classList.toggle('empty-target-input', isEmpty);
+    const group = input.closest('.month-input-group');
+    if (group) group.classList.toggle('empty-target-cell', isEmpty);
+    const cell = input.closest('td');
+    if (cell) cell.classList.toggle('empty-target-cell', isEmpty);
+}
+
+function bindTargetInputEmptyState() {
+    document.querySelectorAll('#target-modal .target-month-input').forEach(input => {
+        updateTargetInputEmptyState(input);
+        input.addEventListener('input', () => {
+            updateTargetInputEmptyState(input);
+            collectTargetDraftFromDom();
+            renderTargetModalTitleStats();
+        });
+    });
+}
+
 function renderTargetCards() {
     return targetModalState.items.map(item => {
         const draft = targetModalState.draft[item.key] || {};
         let inputsHtml = '';
         for (let i = 1; i <= 12; i++) {
-            inputsHtml += `<div class="month-input-group">
+            const value = draft[String(i)] || '';
+            const emptyClass = String(value).trim() === '' ? ' empty-target-cell' : '';
+            inputsHtml += `<div class="month-input-group${emptyClass}">
                 <label>${SLAT('sla.metric.monthLabel', { month: i })}</label>
-                <input class="target-month-input" type="number" step="0.01" data-key="${item.key}" data-month="${i}" value="${escapeHTML(draft[String(i)] || '')}" placeholder="${SLAT('sla.metric.targetPh')}">
+                <input class="target-month-input${emptyClass ? ' empty-target-input' : ''}" type="number" step="0.01" data-key="${item.key}" data-month="${i}" value="${escapeHTML(value)}" placeholder="${SLAT('sla.metric.targetPh')}">
             </div>`;
         }
         return `<div class="target-row">
@@ -342,7 +414,9 @@ function renderTargetTable() {
         const draft = targetModalState.draft[item.key] || {};
         const monthCells = Array.from({ length: 12 }, (_, index) => {
             const month = String(index + 1);
-            return `<td><input class="target-month-input target-table-input" type="number" step="0.01" data-key="${item.key}" data-month="${month}" value="${escapeHTML(draft[month] || '')}" placeholder="${SLAT('sla.metric.targetPh')}"></td>`;
+            const value = draft[month] || '';
+            const emptyClass = String(value).trim() === '' ? ' empty-target-cell' : '';
+            return `<td class="${emptyClass.trim()}"><input class="target-month-input target-table-input${emptyClass ? ' empty-target-input' : ''}" type="number" step="0.01" data-key="${item.key}" data-month="${month}" value="${escapeHTML(value)}" placeholder="${SLAT('sla.metric.targetPh')}"></td>`;
         }).join('');
         return `<tr>
             <th class="target-table-metric" title="${escapeHTML(item.label)}">🏷️ ${escapeHTML(item.displayLabel)}</th>
@@ -382,10 +456,13 @@ function renderTargetModalList() {
     if (modal) modal.classList.toggle('target-modal-table-mode', targetModalState.view === 'table');
     renderTargetViewToggle();
     if (!targetModalState.items.length) {
+        renderTargetModalTitleStats();
         modalList.innerHTML = `<div style="text-align:center;padding:30px;color:#888;font-size:16px;">${SLAT('sla.metric.noConfig')}</div>`;
         return;
     }
     modalList.innerHTML = targetModalState.view === 'table' ? renderTargetTable() : renderTargetCards();
+    bindTargetInputEmptyState();
+    renderTargetModalTitleStats();
 }
 
 window.toggleTargetViewMode = function() {
@@ -486,36 +563,42 @@ window.closeTargetModal = function() {
 
 window.saveTargets = async function() {
     collectTargetDraftFromDom();
-    
-    // We only update the targets that are currently shown in the modal, leaving others intact
-    let newTargets = JSON.parse(JSON.stringify(window.GlobalTargets || {}));
-    
+
+    const currentTargets = window.GlobalTargets || {};
+    const changedTargets = [];
     targetModalState.items.forEach(item => {
         const k = item.key;
         const draft = targetModalState.draft[k] || {};
-        if (!newTargets[k]) newTargets[k] = {};
-        newTargets[k].type = draft.type || 'gte';
-        newTargets[k].isPercent = !!draft.isPercent;
-        for (let i = 1; i <= 12; i++) {
-            const month = String(i);
-            const val = String(draft[month] || '').trim();
-            if (val !== '') {
-                newTargets[k][month] = parseFloat(val);
-            } else {
-                delete newTargets[k][month];
-            }
+        const before = currentTargets[k] || {};
+        const next = buildTargetFromDraft(before, draft);
+        if (stableTargetStringify(before) !== stableTargetStringify(next)) {
+            changedTargets.push({ key: k, target: next });
         }
     });
-    
-    window.GlobalTargets = newTargets;
+
+    if (!changedTargets.length) {
+        showToast(SLAT('sla.metric.noChanges') || '没有目标变更');
+        closeTargetModal();
+        return;
+    }
+
     try {
-        await API.put('/api/sla/targets', window.GlobalTargets);
+        const savedTargets = await Promise.all(changedTargets.map(item => {
+            return API.patch(`/api/sla/targets/${encodeURIComponent(item.key)}`, {
+                ...item.target,
+                __replace: true
+            }).then(res => ({ key: item.key, target: res && res.item ? res.item : item.target }));
+        }));
+        window.GlobalTargets = { ...currentTargets };
+        savedTargets.forEach(item => {
+            window.GlobalTargets[item.key] = item.target;
+        });
         if (window.renderSLASourcePanel) {
             await SLASection.initGlobalTargets();
             window.renderSLASourcePanel();
         }
         showToast(SLAT('sla.metric.saved'));
-        API.logHistory('sla', '保存预警目标');
+        API.logHistory('sla', '保存预警目标', `patched:${changedTargets.length}`);
     } catch (e) { showToast(SLAT('sla.metric.saveFail'), 'error'); }
     closeTargetModal();
     renderTopStickyBar();

@@ -20,6 +20,34 @@ async function exportConfig() {
     }
 }
 
+function formatConfigImportImpact(impact) {
+    const before = impact && impact.before ? impact.before : {};
+    const after = impact && impact.after ? impact.after : {};
+    const removed = Array.isArray(impact && impact.removedLabels) ? impact.removedLabels : [];
+    const added = Array.isArray(impact && impact.addedLabels) ? impact.addedLabels : [];
+    const lines = [
+        '本次导入会明显减少已保存的 SLA 指标规则：',
+        '',
+        `主指标：${before.mainMetricCount ?? '-'} -> ${after.mainMetricCount ?? '-'}`,
+        `子指标：${before.subMetricCount ?? '-'} -> ${after.subMetricCount ?? '-'}`,
+        `规则配置表：${before.schemaPrefCount ?? '-'} -> ${after.schemaPrefCount ?? '-'}`,
+        `目标配置：${before.targetCount ?? '-'} -> ${after.targetCount ?? '-'}`,
+        ''
+    ];
+    if (removed.length) {
+        lines.push(`将移除的规则（${removed.length}）：`);
+        removed.slice(0, 40).forEach(label => lines.push(`- ${label}`));
+        if (removed.length > 40) lines.push(`... 还有 ${removed.length - 40} 个`);
+        lines.push('');
+    }
+    if (added.length) {
+        lines.push(`将新增的规则（${added.length}）：${added.slice(0, 20).join('、')}${added.length > 20 ? ' ...' : ''}`);
+        lines.push('');
+    }
+    lines.push('确认继续导入并覆盖当前配置吗？');
+    return lines.join('\n');
+}
+
 async function importConfig(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -87,7 +115,23 @@ async function importConfig(event) {
 
     // 步骤4：发送到服务端
     try {
-        await API.post('/api/sla/config', normalized);
+        try {
+            await API.post('/api/sla/config', normalized);
+        } catch (apiErr) {
+            if (apiErr.status === 409 && apiErr.body && apiErr.body.requiresConfirmation) {
+                const ok = confirm(formatConfigImportImpact(apiErr.body.impact));
+                if (!ok) {
+                    event.target.value = '';
+                    return;
+                }
+                await API.post('/api/sla/config', {
+                    ...normalized,
+                    confirmImpact: true
+                });
+            } else {
+                throw apiErr;
+            }
+        }
         if (normalized.targets) window.GlobalTargets = normalized.targets;
         const prefsCount = Object.keys(normalized.prefs || {}).length;
         const targetsCount = Object.keys(normalized.targets || {}).length;

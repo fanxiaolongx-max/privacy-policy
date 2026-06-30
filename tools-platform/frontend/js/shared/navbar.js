@@ -1974,9 +1974,9 @@ window.openUserModal = async function () {
     if (window.location.pathname.startsWith('/tools/network_safety_meeting_summary')) return;
 
     // 确保不重复加载
-    if (!document.querySelector('script[src="/js/shared/ai-assistant.js"]')) {
+    if (!document.querySelector('script[src^="/js/shared/ai-assistant.js"]')) {
         const aiScript = document.createElement('script');
-        aiScript.src = '/js/shared/ai-assistant.js';
+        aiScript.src = '/js/shared/ai-assistant.js?v=20260630-02';
         document.body.appendChild(aiScript);
     }
 })();
@@ -2060,7 +2060,7 @@ function initBackToTopButton() {
             #globalBackToTop {
                 position: fixed;
                 right: 22px;
-                bottom: 24px;
+                bottom: var(--global-back-to-top-bottom, 112px);
                 z-index: 10050;
                 width: 40px;
                 height: 40px;
@@ -2098,7 +2098,7 @@ function initBackToTopButton() {
             @media (max-width: 720px) {
                 #globalBackToTop {
                     right: 14px;
-                    bottom: 16px;
+                    bottom: var(--global-back-to-top-bottom, 94px);
                     width: 38px;
                     height: 38px;
                 }
@@ -2120,7 +2120,10 @@ function initBackToTopButton() {
 
     let lastScrollElement = null;
     let rafPending = false;
+    let lastAiFabRect = null;
     const threshold = 360;
+    const defaultBottom = () => (window.innerWidth <= 720 ? 94 : 112);
+    const minimumBottom = () => (window.innerWidth <= 720 ? 16 : 24);
 
     function getWindowScrollTop() {
         return window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
@@ -2136,7 +2139,55 @@ function initBackToTopButton() {
 
     function updateVisibility() {
         rafPending = false;
+        updateBackToTopPlacement();
         button.classList.toggle('visible', getActiveScrollTop() > threshold);
+    }
+
+    function rectsOverlap(a, b, gap = 10) {
+        if (!a || !b) return false;
+        return !(
+            a.right + gap < b.left ||
+            a.left - gap > b.right ||
+            a.bottom + gap < b.top ||
+            a.top - gap > b.bottom
+        );
+    }
+
+    function updateBackToTopPlacement() {
+        if (!lastAiFabRect) {
+            const aiFab = document.querySelector('.ai-fab');
+            if (aiFab) {
+                const rect = aiFab.getBoundingClientRect();
+                lastAiFabRect = {
+                    left: rect.left,
+                    top: rect.top,
+                    right: rect.right,
+                    bottom: rect.bottom,
+                    width: rect.width,
+                    height: rect.height
+                };
+            }
+        }
+        const fallback = defaultBottom();
+        let nextBottom = fallback;
+        const buttonWidth = button.offsetWidth || 40;
+        const buttonHeight = button.offsetHeight || 40;
+        const right = window.innerWidth <= 720 ? 14 : 22;
+        const syntheticButtonRect = {
+            left: window.innerWidth - right - buttonWidth,
+            right: window.innerWidth - right,
+            top: window.innerHeight - nextBottom - buttonHeight,
+            bottom: window.innerHeight - nextBottom
+        };
+
+        if (rectsOverlap(syntheticButtonRect, lastAiFabRect)) {
+            const bottomAboveAi = Math.max(minimumBottom(), window.innerHeight - lastAiFabRect.top + 12);
+            const bottomBelowAi = Math.max(minimumBottom(), window.innerHeight - lastAiFabRect.bottom - buttonHeight - 12);
+            nextBottom = bottomAboveAi + buttonHeight < window.innerHeight
+                ? bottomAboveAi
+                : bottomBelowAi;
+        }
+        button.style.setProperty('--global-back-to-top-bottom', `${Math.round(nextBottom)}px`);
     }
 
     function queueVisibilityUpdate(event) {
@@ -2163,6 +2214,14 @@ function initBackToTopButton() {
 
     window.addEventListener('scroll', queueVisibilityUpdate, { passive: true });
     document.addEventListener('scroll', queueVisibilityUpdate, { passive: true, capture: true });
+    window.addEventListener('resize', () => {
+        updateBackToTopPlacement();
+        queueVisibilityUpdate();
+    }, { passive: true });
+    window.addEventListener('tools:ai-fab-position', (event) => {
+        lastAiFabRect = event.detail && event.detail.rect ? event.detail.rect : null;
+        updateBackToTopPlacement();
+    });
     setTimeout(updateVisibility, 300);
 }
 
