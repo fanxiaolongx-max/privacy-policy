@@ -89,7 +89,7 @@
   .fullscreen-btn .icon{font-size:14px;line-height:1}
 
   .submit-area{display:flex;justify-content:center;margin-top:16px}.submit-btn{min-width:220px;padding:12px 22px;border:0;border-radius:10px;background:linear-gradient(135deg,#c7000b,#9f0008);color:#fff;font-weight:850;font-size:14px;cursor:pointer;box-shadow:0 8px 18px rgba(199,0,11,.22)}.submit-btn:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(199,0,11,.28)}
-  .submit-modal{position:fixed;inset:0;z-index:10020;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(15,23,42,.52);backdrop-filter:blur(3px)}.submit-modal.show{display:flex}.submit-dialog{width:min(520px,100%);padding:24px;border-radius:16px;background:#fff;box-shadow:0 24px 60px rgba(15,23,42,.28);text-align:center}.submit-dialog .ok-icon{width:54px;height:54px;margin:0 auto 14px;display:grid;place-items:center;border-radius:50%;background:#ecfdf3;color:#14804a;font-size:28px;font-weight:900}.submit-dialog h3{margin:0 0 8px;font-size:20px}.submit-dialog p{margin:0 0 18px;color:#475467;line-height:1.6}.mail-link{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px 16px;border-radius:10px;background:#c7000b;color:#fff;text-decoration:none;font-weight:850}.mail-link:hover{background:#930008}.modal-close{margin-top:10px;border:0;background:transparent;color:#667085;font-weight:700;cursor:pointer}
+  .submit-modal{position:fixed;inset:0;z-index:10020;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(15,23,42,.52);backdrop-filter:blur(3px)}.submit-modal.show{display:flex}.submit-dialog{width:min(520px,100%);padding:24px;border-radius:16px;background:#fff;box-shadow:0 24px 60px rgba(15,23,42,.28);text-align:center}.submit-dialog .ok-icon{width:54px;height:54px;margin:0 auto 14px;display:grid;place-items:center;border-radius:50%;background:#ecfdf3;color:#14804a;font-size:28px;font-weight:900}.submit-dialog h3{margin:0 0 8px;font-size:20px}.submit-dialog p{margin:0 0 18px;color:#475467;line-height:1.6}.mail-link{display:inline-block;color:#175cd3;text-decoration:underline;font-weight:800;word-break:break-all}.mail-link:hover{color:#0b4db3}.modal-actions{display:flex;justify-content:center;margin-top:22px;padding-top:16px;border-top:1px solid #eaecf0}.modal-close{display:inline-flex;align-items:center;justify-content:center;min-width:110px;padding:10px 20px;border:1px solid #d0d5dd;border-radius:9px;background:#f2f4f7;color:#344054;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(16,24,40,.08)}.modal-close:hover{background:#e4e7ec;border-color:#c4c9d1}.modal-close:focus-visible{outline:3px solid rgba(199,0,11,.18);outline-offset:2px}
   #activity-records-section:fullscreen .submit-area,#activity-records-section.fullscreen-fallback .submit-area{flex:0 0 auto;margin-top:10px}
 </style>
 </head>
@@ -208,9 +208,9 @@
   <div class="submit-dialog">
     <div class="ok-icon">✓</div>
     <h3 id="submitModalTitle"><span data-lang="en">Information copied</span><span data-lang="zh">填报信息已复制</span></h3>
-    <p><span data-lang="en">The completed records have been copied in JSON format. Click the email button below, then paste directly into the email body and send.</span><span data-lang="zh">已将填写内容按 JSON 格式复制。请点击下方邮件按钮，然后直接粘贴到邮件正文并发送，无需调整格式。</span></p>
-    <a class="mail-link" id="submissionMailLink" href="mailto:?subject=Customer%20Activity%20Statistics%20Submission"><span>✉</span><span id="submissionRecipientName">范晓龙 / Xiaolong Fan</span></a>
-    <button class="modal-close" type="button" onclick="closeSubmitModal()"><span data-lang="en">Close</span><span data-lang="zh">关闭</span></button>
+    <p><span data-lang="en">The email subject and completed JSON data are ready. Click the email address below to open your local email client and send.</span><span data-lang="zh">邮件主题和已填写的 JSON 数据已自动准备好。点击下方邮箱，即可打开本地邮件客户端并发送。</span></p>
+    <a class="mail-link" id="submissionMailLink" href="mailto:fanxiaolong7@huawei-partners.com">fanxiaolong7@huawei-partners.com</a>
+    <div class="modal-actions"><button class="modal-close" id="submitModalCloseBtn" type="button"><span data-lang="en">Close</span><span data-lang="zh">关闭</span></button></div>
   </div>
 </div>
 
@@ -229,7 +229,7 @@
   <script>
   const STORAGE_KEY='customerActivityRecordsV2';
   const SUBMISSION_RECIPIENT_NAME='范晓龙 / Xiaolong Fan';
-  const SUBMISSION_EMAIL='fanxiaolong7@huawei-partners.com'; // Optional: fill in your email address before sharing this HTML
+  const SUBMISSION_EMAIL='fanxiaolong7@huawei-partners.com';
   const activityTypes=[
     ['Monthly Meeting','月度例会','Monthly','月度'],
     ['Service Magazine','维护杂志','Quarterly','季度'],
@@ -309,15 +309,33 @@
   }
   async function submitActivityData(){
     const json=JSON.stringify(exportRecordsForBuiltIn(),null,2);
-    try{await copyText(json);}catch(e){prompt(currentLang()==='zh'?'请手动复制以下 JSON：':'Please copy the JSON below:',json);}
-    const nameEl=document.getElementById('submissionRecipientName');if(nameEl)nameEl.textContent=SUBMISSION_RECIPIENT_NAME;
-    const link=document.getElementById('submissionMailLink');
-    const subject=currentLang()==='zh'?'客户活动统计填报':'Customer Activity Statistics Submission';
-    if(link)link.href=`mailto:${encodeURIComponent(SUBMISSION_EMAIL)}?subject=${encodeURIComponent(subject)}`;
-    document.getElementById('submitModal')?.classList.add('show');
+    try{await copyText(json);}catch(e){}
+    const lang=currentLang();
+    const subject=lang==='zh'?'客户活动统计填报':'Customer Activity Statistics Submission';
+    const intro=lang==='zh'?'您好，以下为本次客户活动统计填报信息：':'Hello, please find the completed customer activity statistics below:';
+    const body=intro+'\r\n\r\n'+json;
+    const mailLink=document.getElementById('submissionMailLink');
+    if(mailLink){
+      mailLink.href='mailto:'+SUBMISSION_EMAIL+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+    }
+    openSubmitModal();
   }
-  function closeSubmitModal(){document.getElementById('submitModal')?.classList.remove('show')}
-  document.addEventListener('click',e=>{const modal=document.getElementById('submitModal');if(e.target===modal)closeSubmitModal()});
+
+
+  function closeSubmitModal(){
+    const modal=document.getElementById('submitModal');
+    if(modal){modal.classList.remove('show');modal.setAttribute('aria-hidden','true');}
+  }
+  function openSubmitModal(){
+    const modal=document.getElementById('submitModal');
+    if(modal){modal.classList.add('show');modal.setAttribute('aria-hidden','false');setTimeout(()=>document.getElementById('submitModalCloseBtn')?.focus(),0);}
+  }
+  document.addEventListener('click',e=>{
+    const modal=document.getElementById('submitModal');
+    if(e.target===modal)closeSubmitModal();
+  });
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSubmitModal()});
+  document.addEventListener('DOMContentLoaded',()=>{document.getElementById('submitModalCloseBtn')?.addEventListener('click',closeSubmitModal)});
 
   function isRecordsFullscreen(){
     const section=document.getElementById('activity-records-section');
