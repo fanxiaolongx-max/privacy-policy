@@ -18,6 +18,7 @@ async function loadPrefs(secId) {
             state.sortKey = saved.sortKey || null;
             state.sortAsc = saved.sortAsc !== undefined ? saved.sortAsc : true;
             state.customMetrics = saved.customMetrics || [];
+            state.sourceMeta = saved._sourceMeta || null;
         }
         if (window.renderSLASourcePanel) window.renderSLASourcePanel();
     } catch (e) {
@@ -26,19 +27,54 @@ async function loadPrefs(secId) {
     }
 }
 
+function normalizeSourcePrefix(name) {
+    const baseName = String(name || '').trim().replace(/\.[^.]+$/, '');
+    if (!baseName) return '';
+    const latestIndex = baseName.indexOf('_Latest');
+    if (latestIndex >= 0) return `${baseName.slice(0, latestIndex + '_Latest'.length)}*`;
+    return baseName;
+}
+
+function buildSourceMeta(secId) {
+    const state = AppState[secId];
+    const sourceFiles = Array.from(new Set((state.sourceFiles || []).filter(Boolean).map(String)));
+    const prefixes = Array.from(new Set(sourceFiles.map(normalizeSourcePrefix).filter(Boolean)));
+    const matchedPrefix = prefixes.length ? prefixes.join(' / ') : (state.mode === 'other' ? (state.title || secId) : '');
+    return {
+        secId,
+        mode: state.mode || '',
+        title: state.title || '',
+        schemaHash: state.schemaHash || '',
+        baseName: state.baseName || '',
+        sourceFiles,
+        matchedPrefix,
+        updatedAt: new Date().toISOString()
+    };
+}
+
+function buildPrefsPayload(secId) {
+    const state = AppState[secId];
+    return {
+        visibleHeaders: state.visibleHeaders,
+        columnWidths: state.columnWidths,
+        sortKey: state.sortKey,
+        sortAsc: state.sortAsc,
+        customMetrics: state.customMetrics,
+        _sourceMeta: buildSourceMeta(secId)
+    };
+}
+
 async function savePrefs(secId) {
     const state = AppState[secId];
     try {
-        await API.put(`/api/sla/prefs/${encodeURIComponent(state.schemaHash)}`, {
-            visibleHeaders: state.visibleHeaders,
-            columnWidths: state.columnWidths,
-            sortKey: state.sortKey,
-            sortAsc: state.sortAsc,
-            customMetrics: state.customMetrics
-        });
+        await API.put(`/api/sla/prefs/${encodeURIComponent(state.schemaHash)}`, buildPrefsPayload(secId));
     } catch (e) {
         // 保存失败静默处理（不影响主流程）
     }
 }
 
-window.SLAPrefs = { loadPrefs, savePrefs };
+async function saveSourceMeta(secId) {
+    await savePrefs(secId);
+}
+
+window.SLAPrefs = { loadPrefs, savePrefs, saveSourceMeta };

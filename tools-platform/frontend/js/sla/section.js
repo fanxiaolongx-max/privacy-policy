@@ -177,6 +177,7 @@ async function initSection(secId, mode, title, rawData, themeColor, baseName = '
 
     AppState[secId] = {
         mode, title, schemaHash: schemaHashStr,
+        baseName: baseName || '',
         orderedHeaders: orderedHeadersLocal, visibleHeaders: [...orderedHeadersLocal],
         globalData: [], currentDisplayData: [],
         sortKey: null, sortAsc: true, currentFilter: 'all',
@@ -187,6 +188,9 @@ async function initSection(secId, mode, title, rawData, themeColor, baseName = '
     };
 
     await SLAPrefs.loadPrefs(secId);
+    if (window.SLAPrefs && typeof window.SLAPrefs.saveSourceMeta === 'function') {
+        await window.SLAPrefs.saveSourceMeta(secId);
+    }
     preprocessData(secId, rawData);
     buildDOM(secId, title, themeColor);
     bindEvents(secId);

@@ -309,6 +309,14 @@ const SLA_PREF_TITLE_MAP = {
     vulnerability: '漏洞预警详单'
 };
 
+const SLA_RULE_IMPORT_PREFIX_MAP = {
+    rectification: 'PBI_自动抓取-整改详单_整改_Latest',
+    risk: 'PBI_自动抓取-风险详单_Latest',
+    special: 'PBI_自动抓取-CPT风险详表_Latest',
+    sr: 'PBI_自动抓取-详单-SR_Latest',
+    vulnerability: 'PBI_自动抓取-详单漏洞_漏洞预警_Latest'
+};
+
 let cachedMetricRulePrefs = null;
 let cachedMetricRuleConfig = null;
 let latestMetricRuleRecords = [];
@@ -355,6 +363,71 @@ function getMetricRuleDisplayOrigin(origin) {
 
 function normalizeMetricPrefSecId(prefKey) {
     return String(prefKey || '').replace(/^sla_prefs_/, '');
+}
+
+function getMetricRuleKnownMode(secId, prefKey) {
+    const candidates = [secId, prefKey, normalizeMetricPrefSecId(secId), normalizeMetricPrefSecId(prefKey)]
+        .filter(Boolean)
+        .map(value => String(value));
+    return Object.keys(SLA_RULE_IMPORT_PREFIX_MAP).find(mode => candidates.some(value => value === mode || value.startsWith(`${mode}_`))) || '';
+}
+
+function normalizeMetricRuleSourceName(name) {
+    const baseName = String(name || '').trim().replace(/\.[^.]+$/, '');
+    if (!baseName) return '';
+    const knownPrefix = Object.values(SLA_RULE_IMPORT_PREFIX_MAP).find(prefix => baseName.startsWith(prefix));
+    if (knownPrefix) return `${knownPrefix}*`;
+    const latestIndex = baseName.indexOf('_Latest');
+    if (latestIndex >= 0) return `${baseName.slice(0, latestIndex + '_Latest'.length)}*`;
+    return baseName;
+}
+
+function getSavedMetricRuleSourceMeta(prefKey, sourceSecId) {
+    const prefs = cachedMetricRulePrefs || {};
+    const direct = prefKey && prefs[prefKey] && prefs[prefKey]._sourceMeta;
+    if (direct) return direct;
+    const normalized = normalizeMetricPrefSecId(sourceSecId || prefKey);
+    const inferredKey = normalized ? `sla_prefs_${normalized}` : '';
+    if (inferredKey && prefs[inferredKey] && prefs[inferredKey]._sourceMeta) return prefs[inferredKey]._sourceMeta;
+    return null;
+}
+
+function getMetricRuleMatchedPrefixInfo(sourceSecId, prefKey, tableTitle) {
+    const state = AppState && AppState[sourceSecId];
+    const sourceFiles = state && Array.isArray(state.sourceFiles) ? state.sourceFiles : [];
+    const prefixes = Array.from(new Set(sourceFiles.map(normalizeMetricRuleSourceName).filter(Boolean)));
+    if (prefixes.length) {
+        const text = prefixes.length > 2 ? `${prefixes.slice(0, 2).join(' / ')} +${prefixes.length - 2}` : prefixes.join(' / ');
+        return { text, title: prefixes.join('\n') };
+    }
+    const savedMeta = getSavedMetricRuleSourceMeta(prefKey, sourceSecId);
+    if (savedMeta) {
+        const savedFiles = Array.isArray(savedMeta.sourceFiles) ? savedMeta.sourceFiles : [];
+        const savedPrefixes = Array.from(new Set(savedFiles.map(normalizeMetricRuleSourceName).filter(Boolean)));
+        if (savedPrefixes.length) {
+            const text = savedPrefixes.length > 2 ? `${savedPrefixes.slice(0, 2).join(' / ')} +${savedPrefixes.length - 2}` : savedPrefixes.join(' / ');
+            return { text, title: savedPrefixes.join('\n') };
+        }
+        if (savedMeta.matchedPrefix) {
+            return { text: savedMeta.matchedPrefix, title: savedMeta.matchedPrefix };
+        }
+        if (savedMeta.baseName) {
+            return { text: savedMeta.baseName, title: savedMeta.baseName };
+        }
+    }
+    const mode = getMetricRuleKnownMode(sourceSecId, prefKey);
+    if (mode && SLA_RULE_IMPORT_PREFIX_MAP[mode]) {
+        const prefix = `${SLA_RULE_IMPORT_PREFIX_MAP[mode]}*`;
+        return { text: prefix, title: prefix };
+    }
+    const normalized = normalizeMetricPrefSecId(sourceSecId || prefKey);
+    if (String(normalized).startsWith('other_')) {
+        const text = SLAT('sla.rules.customFilePrefixMissing', { id: normalized });
+        const title = SLAT('sla.rules.customFilePrefixMissingTitle', { id: normalized });
+        return { text, title };
+    }
+    const fallback = tableTitle || getSectionDisplayTitle(sourceSecId, prefKey);
+    return { text: fallback, title: fallback };
 }
 
 function getMetricRuleTargetSecId(record) {
@@ -468,6 +541,8 @@ function getMetricRuleSearchText(record) {
         ruleType,
         modeAliases,
         record.tableTitle,
+        record.filePrefixText,
+        record.filePrefixTitle,
         record.parentTitle,
         record.sourceTitle,
         record.prefKey,
@@ -492,11 +567,15 @@ function makeMetricRuleRecord(base) {
     const subMetricName = base.kind === 'sub'
         ? getMetricRuleDisplayLabel(rule, parentRule)
         : '-';
+    const tableTitle = getSectionDisplayTitle(sourceSecId, base.prefKey);
+    const matchedPrefix = getMetricRuleMatchedPrefixInfo(sourceSecId, base.prefKey, tableTitle);
     const record = {
         ...base,
         sourceSecId,
         isCrossTable,
-        tableTitle: getSectionDisplayTitle(sourceSecId, base.prefKey),
+        tableTitle,
+        filePrefixText: matchedPrefix.text,
+        filePrefixTitle: matchedPrefix.title,
         parentTitle: getSectionDisplayTitle(base.parentSecId, base.prefKey),
         sourceTitle: getSectionDisplayTitle(sourceSecId, base.prefKey),
         parentMetricName,
@@ -1732,6 +1811,7 @@ window.renderAllMetricRules = function(justExpandedGroupKey = null) {
                     </div>
                 </td>
                 <td title="${escapeHTML(mainRecord.tableTitle)}">${escapeHTML(translateMetricRuleSectionTitle(mainRecord.tableTitle))}</td>
+                <td title="${escapeHTML(mainRecord.filePrefixTitle)}"><span class="metric-rule-prefix">${escapeHTML(mainRecord.filePrefixText)}</span></td>
                 <td><span class="metric-rule-badge ${mainRecord.origin === '当前导入' ? 'main' : 'saved'}">${escapeHTML(getMetricRuleDisplayOrigin(mainRecord.origin))}</span></td>
                 <td><span class="metric-rule-badge main">${SLAT('sla.rules.main')}</span>${totalSubCount ? `<span class="metric-rule-child-count">${matchedSubCount === totalSubCount ? totalSubCount : `${matchedSubCount}/${totalSubCount}`} ${SLAT('sla.rules.childUnit')}</span>` : ''}</td>
                 <td title="${escapeHTML(mainRecord.parentMetricName)}"><strong>${escapeHTML(translateMetricRuleLabel(mainRecord.parentMetricName))}</strong></td>
@@ -1758,6 +1838,7 @@ window.renderAllMetricRules = function(justExpandedGroupKey = null) {
                 <tr class="metric-rule-child-row ${record.isCrossTable ? 'metric-rule-cross-row' : ''} ${groupKey === justExpandedGroupKey ? 'metric-rule-just-expanded' : ''}">
                     <td>${renderMetricRuleLineage(record)}</td>
                     <td title="${escapeHTML(record.tableTitle)}">${escapeHTML(translateMetricRuleSectionTitle(record.tableTitle))}</td>
+                    <td title="${escapeHTML(record.filePrefixTitle)}"><span class="metric-rule-prefix">${escapeHTML(record.filePrefixText)}</span></td>
                     <td><span class="metric-rule-badge ${record.origin === '当前导入' ? 'main' : 'saved'}">${escapeHTML(getMetricRuleDisplayOrigin(record.origin))}</span></td>
                     <td><span class="metric-rule-badge sub">${record.isCrossTable ? SLAT('sla.rules.crossSub') : SLAT('sla.rules.sub')}</span></td>
                     <td title="${escapeHTML(record.parentMetricName)}"><strong>${escapeHTML(translateMetricRuleLabel(record.parentMetricName))}</strong></td>
@@ -1788,6 +1869,7 @@ window.renderAllMetricRules = function(justExpandedGroupKey = null) {
                     <tr>
                         <th>${SLAT('sla.rules.thLineage')}</th>
                         <th>${SLAT('sla.rules.thTable')}</th>
+                        <th>${SLAT('sla.rules.thFilePrefix')}</th>
                         <th>${SLAT('sla.rules.thSource')}</th>
                         <th>${SLAT('sla.rules.thRuleType')}</th>
                         <th>${SLAT('sla.rules.thMainMetric')}</th>

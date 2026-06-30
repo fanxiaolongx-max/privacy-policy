@@ -351,6 +351,14 @@ body.sla-page {
 .metric-rule-badge.main { background: #e3f2fd; color: #0d47a1; }
 .metric-rule-badge.sub { background: #f3e5f5; color: #6a1b9a; }
 .metric-rule-badge.saved { background: #eef2ff; color: #3730a3; }
+.metric-rule-prefix {
+    display: inline-block;
+    color: #334155;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: 10.5px;
+    line-height: 1.35;
+    word-break: break-all;
+}
 .metric-rule-category { color: #1565c0; font-weight: 900; margin-right: 4px; }
 .metric-rule-mini-danger { border: 0; border-radius: 999px; background: #ffebee; color: #b71c1c; font-size: 10px; font-weight: 900; padding: 3px 8px; cursor: pointer; white-space: nowrap; }
 .metric-rule-mini-danger:hover { background: #ffcdd2; }
@@ -406,17 +414,18 @@ body.sla-page {
     white-space: nowrap !important;
     cursor: default;
 }
-.metric-rules-table th:nth-child(1) { width: 13%; }
-.metric-rules-table th:nth-child(2) { width: 16%; }
-.metric-rules-table th:nth-child(3) { width: 8%; }
-.metric-rules-table th:nth-child(4) { width: 9%; }
-.metric-rules-table th:nth-child(5) { width: 11%; }
-.metric-rules-table th:nth-child(6) { width: 12%; }
-.metric-rules-table th:nth-child(7) { width: 6%; }
-.metric-rules-table th:nth-child(8) { width: 12%; }
-.metric-rules-table th:nth-child(9) { width: 12%; }
-.metric-rules-table th:nth-child(10) { width: 13%; }
-.metric-rules-table th:nth-child(11) { width: 7%; }
+.metric-rules-table th:nth-child(1) { width: 12%; }
+.metric-rules-table th:nth-child(2) { width: 11%; }
+.metric-rules-table th:nth-child(3) { width: 15%; }
+.metric-rules-table th:nth-child(4) { width: 7%; }
+.metric-rules-table th:nth-child(5) { width: 8%; }
+.metric-rules-table th:nth-child(6) { width: 10%; }
+.metric-rules-table th:nth-child(7) { width: 11%; }
+.metric-rules-table th:nth-child(8) { width: 6%; }
+.metric-rules-table th:nth-child(9) { width: 11%; }
+.metric-rules-table th:nth-child(10) { width: 11%; }
+.metric-rules-table th:nth-child(11) { width: 12%; }
+.metric-rules-table th:nth-child(12) { width: 7%; }
 .metric-rules-table td {
     max-width: none;
     padding: 8px;
