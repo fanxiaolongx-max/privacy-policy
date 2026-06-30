@@ -7,6 +7,7 @@ backend/data/*
 !backend/data/custom-tools/
 !backend/data/custom-tools/**
 backend/runtime/
+backend/tmp/
 /data/
 *.db
 *.sqlite
