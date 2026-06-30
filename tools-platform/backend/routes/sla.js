@@ -8,6 +8,7 @@ const zlib = require('zlib');
 const targetsRepo = require('../models/sla-targets-repository');
 const prefsRepo = require('../models/sla-prefs-repository');
 const categoriesRepo = require('../models/sla-categories-repository');
+const categoryCascadeRepo = require('../models/sla-category-cascade-repository');
 const groupsRepo = require('../models/sla-groups-repository');
 const snapshotsRepo = require('../models/sla-snapshots-repository');
 const ruleTemplatesRepo = require('../models/sla-rule-templates-repository');
@@ -76,6 +77,34 @@ router.put('/categories', async (req, res) => {
     } catch (err) {
         console.error('[PUT /api/sla/categories] failed:', err);
         res.status(500).json({ error: '保存分类失败' });
+    }
+});
+
+// GET /api/sla/categories/:name/cascade-impact
+// 删除全局分类前的级联影响预检，只统计不删除。
+router.get('/categories/:name/cascade-impact', async (req, res) => {
+    try {
+        const impact = await categoryCascadeRepo.collectImpact(req.params.name);
+        res.setHeader('X-Data-Source', 'sqlite');
+        res.json(impact);
+    } catch (err) {
+        console.error('[GET /api/sla/categories/:name/cascade-impact] failed:', err);
+        res.status(500).json({ error: err.message || '读取分类级联影响失败' });
+    }
+});
+
+// DELETE /api/sla/categories/:name/cascade
+// 级联删除分类及其规则、快照和报表入库关联数据。必须二次确认。
+router.delete('/categories/:name/cascade', async (req, res) => {
+    if (!req.body || req.body.confirm !== true) {
+        return res.status(400).json({ error: '需要显式确认后才能级联删除' });
+    }
+    try {
+        const result = await categoryCascadeRepo.deleteCascade(req.params.name);
+        res.json(result);
+    } catch (err) {
+        console.error('[DELETE /api/sla/categories/:name/cascade] failed:', err);
+        res.status(500).json({ error: err.message || '分类级联删除失败' });
     }
 });
 

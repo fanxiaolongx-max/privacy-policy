@@ -171,6 +171,14 @@ const API = {
         });
         return handleResponse(res, { method: 'DELETE', path });
     },
+    deleteWithBody: async function(path, body) {
+        const res = await fetch(`${API_BASE}${path}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(body)
+        });
+        return handleResponse(res, { method: 'DELETE', path });
+    },
     patch: async function(path, body) {
         const res = await fetch(`${API_BASE}${path}`, {
             method: 'PATCH',

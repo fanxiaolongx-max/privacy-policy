@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unified Customer Activity Upload Guide</title>
+  <style>
+    :root{--primary:#c7000b;--primary-dark:#930008;--ink:#172033;--muted:#667085;--line:#e4e7ec;--surface:#fff;--soft:#f7f8fa;--success:#14804a;--warning:#b54708;--blue:#175cd3;--purple:#6941c6;--shadow:0 12px 32px rgba(16,24,40,.08)}
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,"Segoe UI","Microsoft YaHei",Arial,sans-serif;color:var(--ink);background:radial-gradient(circle at top right,rgba(199,0,11,.08),transparent 28%),linear-gradient(180deg,#f5f6f8 0%,#eef0f3 100%);min-height:100vh}
+    .page{width:min(1180px,calc(100% - 32px));margin:28px auto 56px}.topbar{display:flex;justify-content:flex-end;margin-bottom:12px}.lang-switch{display:flex;background:#fff;border:1px solid var(--line);padding:4px;border-radius:12px;box-shadow:var(--shadow)}.lang-btn{border:0;background:transparent;padding:8px 14px;border-radius:8px;font-weight:750;color:var(--muted);cursor:pointer}.lang-btn.active{background:var(--primary);color:#fff}
+    .hero{position:relative;overflow:hidden;padding:34px 38px;border-radius:22px;color:#fff;background:linear-gradient(135deg,#a60009 0%,#d60012 58%,#ed3440 100%);box-shadow:0 18px 44px rgba(158,0,10,.22)}.hero:after{content:"";position:absolute;width:300px;height:300px;border:52px solid rgba(255,255,255,.09);border-radius:50%;right:-105px;top:-130px}.hero h1{margin:0 0 10px;font-size:clamp(28px,4vw,46px);line-height:1.08;letter-spacing:-.8px}.hero p{max-width:850px;margin:0;font-size:16px;line-height:1.7;color:rgba(255,255,255,.92)}.hero-note{display:inline-flex;align-items:center;gap:8px;margin-top:18px;padding:9px 13px;border-radius:999px;font-size:13px;font-weight:700;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25)}
+    .section{margin-top:24px;padding:28px;border-radius:18px;background:var(--surface);box-shadow:var(--shadow);border:1px solid rgba(228,231,236,.85)}.section-head{display:flex;justify-content:space-between;align-items:end;gap:18px;margin-bottom:20px}.section-head h2{margin:0 0 4px;font-size:22px}.section-head p{margin:0;color:var(--muted);font-size:14px}.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.step{padding:18px;border-radius:14px;background:var(--soft);border:1px solid var(--line)}.step-no{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;background:var(--primary);color:#fff;font-weight:800;margin-bottom:12px}.step h3{margin:0 0 7px;font-size:15px}.step p{margin:0;color:var(--muted);font-size:13px;line-height:1.55}
+    .cycle-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.cycle-card{padding:18px;border:1px solid var(--line);border-radius:15px;background:#fff;position:relative;overflow:hidden}.cycle-card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--primary)}.cycle-card.quarter:before{background:var(--blue)}.cycle-card.half:before{background:var(--purple)}.cycle-card.bonus:before{background:var(--warning)}.cycle-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.cycle-card h3{margin:0;font-size:16px}.period{display:inline-flex;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800;background:#fff0f1;color:var(--primary);white-space:nowrap}.quarter .period{background:#eff4ff;color:var(--blue)}.half .period{background:#f4f0ff;color:var(--purple)}.bonus .period{background:#fff8e7;color:var(--warning)}.cycle-card p{margin:10px 0 0;color:var(--muted);font-size:13px;line-height:1.6}.score-box{margin-top:12px;padding:10px 12px;border-radius:10px;background:#f8f9fb;font-size:12px;line-height:1.55;color:#344054}.importance{margin-top:16px;padding:16px 18px;border-radius:12px;background:linear-gradient(90deg,#fff3f3,#fff);border:1px solid #ffd1d4;color:#7a1118;font-weight:750;line-height:1.6}
+    .matrix-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:900px}th,td{padding:15px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;background:#fafafa}td:first-child{font-weight:750}tr:last-child td{border-bottom:0}.tag{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;margin:2px 3px 2px 0;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}.yes{color:var(--success);background:#ecfdf3;border:1px solid #abefc6}.no{color:#98a2b3;background:#f2f4f7;border:1px solid #e4e7ec}.tbd{color:var(--warning);background:#fff8e7;border:1px solid #fedf89}.examples{margin-top:10px;color:var(--muted);font-size:12px;line-height:1.6}
+    .checklist{display:grid;grid-template-columns:1.1fr .9fr;gap:24px}.panel{border:1px solid var(--line);border-radius:15px;overflow:hidden}.panel-title{padding:15px 18px;font-weight:800;background:#f8f9fb;border-bottom:1px solid var(--line)}.field-list{padding:8px 18px 14px}.check-row{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px dashed var(--line)}.check-row:last-child{border-bottom:0}input[type=checkbox]{width:18px;height:18px;margin-top:1px;accent-color:var(--primary);cursor:pointer}.check-row label{cursor:pointer;line-height:1.35}.check-row small{display:block;margin-top:4px;color:var(--muted)}.progress-box{margin-bottom:14px;padding:15px;border-radius:12px;background:#fff7f7;border:1px solid #ffd1d4}.progress-meta{display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:8px}.progress{height:9px;background:#f0d9db;border-radius:999px;overflow:hidden}.progress>span{display:block;height:100%;width:0;background:var(--primary);transition:width .25s ease}.action-bar{display:flex;justify-content:flex-end;margin-top:18px}.btn{display:inline-flex;align-items:center;justify-content:center;padding:9px 12px;border-radius:9px;border:0;font-weight:750;text-decoration:none;cursor:pointer;background:var(--primary);color:#fff;white-space:nowrap}.btn:hover{background:var(--primary-dark)}.btn.secondary{background:#f2f4f7;color:#344054}
+    .links{display:grid;gap:12px}.link-card{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:15px;border-radius:13px;border:1px solid var(--line);background:#fff}.link-no{width:36px;height:36px;display:grid;place-items:center;border-radius:10px;color:var(--primary);background:#fff0f1;font-weight:900}.link-card strong{display:block;margin-bottom:3px}.link-card span{display:block;color:var(--muted);font-size:12px;overflow-wrap:anywhere}.link-card .btn{min-width:88px;background:#c7000b;color:#fff;border:2px solid #c7000b;box-shadow:0 4px 10px rgba(199,0,11,.18)}.link-card .btn span{display:inline;color:#fff;font-size:13px;font-weight:800}.link-card .btn:hover{background:#930008;border-color:#930008;color:#fff;transform:translateY(-1px)}.link-card .btn:focus-visible{outline:3px solid rgba(199,0,11,.22);outline-offset:2px}.footer-note{margin-top:22px;padding:16px 18px;border-left:4px solid var(--warning);border-radius:10px;background:#fff9eb;color:#6d3b07;line-height:1.55;font-size:13px}
+    [data-lang]{display:none}html[data-language=en] [data-lang=en],html[data-language=zh] [data-lang=zh]{display:initial}.block[data-lang]{display:none}html[data-language=en] .block[data-lang=en],html[data-language=zh] .block[data-lang=zh]{display:block}
+
+    .upload-strip{margin-top:14px;padding:12px 14px;border-radius:15px;background:#fff;border:1px solid rgba(228,231,236,.95);box-shadow:0 8px 22px rgba(16,24,40,.07);display:flex;align-items:center;gap:16px}.upload-strip-head{flex:0 0 auto;padding-right:16px;border-right:1px solid var(--line)}.upload-strip-head strong{display:block;font-size:15px;color:var(--ink)}.upload-strip-head small{display:block;margin-top:3px;color:var(--muted);font-size:11px}.upload-links{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;flex:1}.upload-links a{min-width:0;display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:10px;background:#fff7f7;border:1px solid #ffd1d4;color:var(--ink);text-decoration:none;transition:.18s ease}.upload-links a:hover{background:#fff0f1;border-color:#f9a8ae;transform:translateY(-1px)}.upload-links b{display:grid;place-items:center;flex:0 0 24px;width:24px;height:24px;border-radius:7px;background:var(--primary);color:#fff;font-size:12px}.upload-links a>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:800}.upload-links em{margin-left:auto;padding:4px 7px;border-radius:6px;background:var(--primary);color:#fff;font-size:10px;font-style:normal;font-weight:800}.upload-links a:hover em{background:var(--primary-dark)}
+
+    .records-toolbar{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;margin-bottom:16px}.records-toolbar-left,.records-toolbar-right{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.record-summary{font-size:13px;color:var(--muted)}
+    .record-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 13px;border:1px solid var(--line);border-radius:9px;background:#fff;color:#344054;font-weight:750;cursor:pointer}.record-btn:hover{background:#f8f9fb}.record-btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}.record-btn.primary:hover{background:var(--primary-dark)}.record-btn.danger{color:#b42318}.record-btn.small{padding:7px 9px;font-size:12px}
+
+    .record-table tr.upload-missing{background:linear-gradient(90deg,rgba(254,226,226,.72),rgba(255,255,255,0) 45%)}
+    .record-table td.required-upload{position:relative;background:#fff7f7}
+    .record-table td.required-upload.missing-upload{background:#fee4e2;box-shadow:inset 0 0 0 2px #f04438;animation:missingPulse 1.15s ease-in-out infinite}
+    .record-table td.required-upload.missing-upload::after{content:"!";position:absolute;top:3px;right:4px;width:16px;height:16px;display:grid;place-items:center;border-radius:50%;background:#d92d20;color:#fff;font-size:11px;font-weight:900;box-shadow:0 2px 6px rgba(217,45,32,.3)}
+    .record-table td.required-upload input[type=checkbox]{outline:2px solid rgba(199,0,11,.16);outline-offset:2px}
+    .record-table td.missing-upload input[type=checkbox]{outline:3px solid #f04438;outline-offset:3px;transform:scale(1.08)}
+    .upload-alert{display:inline-flex;align-items:center;gap:5px;margin-top:5px;padding:3px 7px;border-radius:999px;background:#fef3f2;color:#b42318;border:1px solid #fecdca;font-size:10px;font-weight:800;white-space:nowrap}
+    @keyframes missingPulse{0%,100%{box-shadow:inset 0 0 0 2px #f04438,0 0 0 0 rgba(240,68,56,.28)}50%{box-shadow:inset 0 0 0 2px #f04438,0 0 0 6px rgba(240,68,56,0)}}
+    @media (prefers-reduced-motion:reduce){.record-table td.required-upload.missing-upload{animation:none}}
+    .record-table-wrap{position:relative;overflow:auto;height:430px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,#ffffff 0%,#fbfcfd 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}.record-table{min-width:2200px}.record-table th{position:sticky;top:0;z-index:2;background:#f8f9fb}.record-table td{padding:9px 8px}.record-table input[type=text],.record-table input[type=date],.record-table select,.record-table textarea{width:100%;min-width:120px;border:1px solid #d0d5dd;border-radius:8px;padding:8px 9px;background:#fff;color:var(--ink);font:inherit;font-size:12px}.record-table textarea{min-height:56px;resize:vertical}.record-table input:focus,.record-table select:focus,.record-table textarea:focus{outline:3px solid rgba(199,0,11,.10);border-color:#e26b72}.record-table .narrow{min-width:84px}.record-table .wide{min-width:210px}.record-table .check-cell{text-align:center}.record-table .check-cell input{width:18px;height:18px;accent-color:var(--primary)}.record-table .row-no{font-weight:800;color:var(--muted);text-align:center}.empty-state{padding:34px 20px;text-align:center;color:var(--muted)}
+    .built-in-note{margin-top:14px;padding:13px 15px;border-radius:11px;background:#f8f9fb;border:1px dashed #cfd4dc;color:#475467;font-size:12px;line-height:1.6}.built-in-note code{padding:2px 5px;border-radius:5px;background:#fff;border:1px solid var(--line)}
+    .save-status{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border-radius:999px;background:#ecfdf3;color:var(--success);font-size:12px;font-weight:750}.save-status:before{content:'●';font-size:9px}
+    @media(max-width:620px){.records-toolbar{align-items:stretch}.records-toolbar-left,.records-toolbar-right{width:100%}.record-btn{flex:1}.save-status{justify-content:center}}
+
+    @media(max-width:950px){.upload-strip{align-items:flex-start}.upload-links{grid-template-columns:1fr 1fr}.steps{grid-template-columns:1fr 1fr}.cycle-grid{grid-template-columns:1fr 1fr}.checklist{grid-template-columns:1fr}}@media(max-width:620px){.upload-strip{display:block;padding:12px}.upload-strip-head{padding:0 0 10px;border-right:0;border-bottom:1px solid var(--line);margin-bottom:10px}.upload-links{grid-template-columns:1fr 1fr}.upload-links a{padding:8px}.upload-links em{display:none}.page{width:min(100% - 18px,1180px);margin-top:10px}.hero,.section{padding:22px 18px;border-radius:15px}.steps,.cycle-grid{grid-template-columns:1fr}.section-head{align-items:flex-start;flex-direction:column}.link-card{grid-template-columns:auto 1fr}.link-card .btn{grid-column:1/-1;width:100%}}
+  
+  .record-table input[readonly]{background:#f3f4f6;color:#374151;font-weight:700;cursor:not-allowed}
+  .not-applicable{display:inline-flex;align-items:center;justify-content:center;min-width:72px;color:#9ca3af;font-weight:700}
+
+  /* Compact activity statistics table */
+  #activity-records-section{width:100%;margin-left:0;transform:none;padding:20px}
+  #activity-records-section .section-head{margin-bottom:12px}
+  #activity-records-section .section-head h2{font-size:20px}
+  #activity-records-section .section-head p{font-size:12px}
+  #activity-records-section .records-toolbar{margin-bottom:10px}
+  #activity-records-section .record-btn{padding:6px 9px;font-size:11px;border-radius:7px}
+  #activity-records-section .save-status{padding:4px 7px;font-size:10px}
+  #activity-records-section .record-summary{font-size:11px}
+  #activity-records-section .record-table{min-width:1160px;table-layout:fixed;font-size:9px}
+  #activity-records-section .record-table th{padding:5px 3px;font-size:8.5px;line-height:1.15;letter-spacing:.2px;text-transform:none;white-space:normal}
+  #activity-records-section .record-table td{padding:3px 2px;font-size:9px}
+  #activity-records-section .record-table input[type=text],#activity-records-section .record-table input[type=date],#activity-records-section .record-table select{min-width:0;padding:3px 4px;border-radius:5px;font-size:9px;height:25px}
+  #activity-records-section .record-table .wide,#activity-records-section .record-table .narrow{min-width:0}
+  #activity-records-section .record-table .check-cell input{width:13px;height:13px}
+  #activity-records-section .record-table .not-applicable{min-width:0;font-size:9px}
+  #activity-records-section .record-table .row-no{font-size:9px}
+  #activity-records-section .record-table th:nth-child(1){width:28px}
+  #activity-records-section .record-table th:nth-child(2){width:112px}
+  #activity-records-section .record-table th:nth-child(3){width:158px}
+  #activity-records-section .record-table th:nth-child(4){width:88px}
+  #activity-records-section .record-table th:nth-child(5){width:70px}
+  #activity-records-section .record-table th:nth-child(6),#activity-records-section .record-table th:nth-child(8){width:66px}
+  #activity-records-section .record-table th:nth-child(7),#activity-records-section .record-table th:nth-child(9){width:118px}
+  #activity-records-section .record-table th:nth-child(10){width:86px}
+  #activity-records-section .record-table th:nth-child(11),#activity-records-section .record-table th:nth-child(12),#activity-records-section .record-table th:nth-child(13),#activity-records-section .record-table th:nth-child(14){width:52px;text-align:center}
+  #activity-records-section .record-table th:nth-child(15){width:58px}
+  #activity-records-section .built-in-note{margin-top:10px;padding:9px 11px;font-size:10px}
+
+  #activity-records-section .record-table tbody tr:nth-child(even):not(.upload-missing):not(.placeholder-row){background:#fcfcfd}
+  #activity-records-section .record-table tbody tr:hover:not(.placeholder-row){background:#fff8f8}
+  #activity-records-section .record-table .placeholder-row td{height:34px;padding:0;border-bottom:1px solid #eef0f3;background:linear-gradient(90deg,rgba(248,249,251,.75),rgba(255,255,255,.96))}
+  #activity-records-section .record-table .placeholder-row:nth-child(even) td{background:#fcfcfd}
+  #activity-records-section .record-table .placeholder-row td::after{content:"";display:block;height:100%}
+  @media(max-width:900px){#activity-records-section{width:100%;padding:14px 10px}}
+
+  #activity-records-section:fullscreen{width:100vw;max-width:none;height:100vh;margin:0;transform:none;border-radius:0;padding:14px;display:flex;flex-direction:column;background:#fff;overflow:hidden}
+  #activity-records-section:fullscreen .section-head{flex:0 0 auto}
+  #activity-records-section:fullscreen .records-toolbar{flex:0 0 auto}
+  #activity-records-section:fullscreen .record-table-wrap{flex:1 1 auto;height:auto;min-height:0}
+  #activity-records-section:fullscreen .built-in-note{display:none}
+  #activity-records-section.fullscreen-fallback{position:fixed;inset:0;z-index:9999;width:100vw;max-width:none;height:100vh;margin:0;transform:none;border-radius:0;padding:14px;display:flex;flex-direction:column;background:#fff;overflow:hidden}
+  #activity-records-section.fullscreen-fallback .record-table-wrap{flex:1 1 auto;height:auto;min-height:0}
+  #activity-records-section.fullscreen-fallback .built-in-note{display:none}
+  body.fullscreen-lock{overflow:hidden}
+  .fullscreen-btn{display:inline-flex;align-items:center;gap:6px}
+  .fullscreen-btn .icon{font-size:14px;line-height:1}
+
+  .submit-area{display:flex;justify-content:center;margin-top:16px}.submit-btn{min-width:220px;padding:12px 22px;border:0;border-radius:10px;background:linear-gradient(135deg,#c7000b,#9f0008);color:#fff;font-weight:850;font-size:14px;cursor:pointer;box-shadow:0 8px 18px rgba(199,0,11,.22)}.submit-btn:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(199,0,11,.28)}
+  .submit-modal{position:fixed;inset:0;z-index:10020;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(15,23,42,.52);backdrop-filter:blur(3px)}.submit-modal.show{display:flex}.submit-dialog{width:min(520px,100%);padding:24px;border-radius:16px;background:#fff;box-shadow:0 24px 60px rgba(15,23,42,.28);text-align:center}.submit-dialog .ok-icon{width:54px;height:54px;margin:0 auto 14px;display:grid;place-items:center;border-radius:50%;background:#ecfdf3;color:#14804a;font-size:28px;font-weight:900}.submit-dialog h3{margin:0 0 8px;font-size:20px}.submit-dialog p{margin:0 0 18px;color:#475467;line-height:1.6}.mail-link{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px 16px;border-radius:10px;background:#c7000b;color:#fff;text-decoration:none;font-weight:850}.mail-link:hover{background:#930008}.modal-close{margin-top:10px;border:0;background:transparent;color:#667085;font-weight:700;cursor:pointer}
+  #activity-records-section:fullscreen .submit-area,#activity-records-section.fullscreen-fallback .submit-area{flex:0 0 auto;margin-top:10px}
+</style>
+</head>
+<body>
+<main class="page">
+  <div class="topbar"><div class="lang-switch"><button class="lang-btn active" data-set-lang="en">English</button><button class="lang-btn" data-set-lang="zh">中文</button></div></div>
+
+  <section class="hero">
+    <h1><span data-lang="en">Unified Customer Activity Upload Guide</span><span data-lang="zh">客户活动统一上传操作指南</span></h1>
+    <p><span data-lang="en">Please follow the unified upload locations and review cycles below to avoid missing records, duplicate work or scoring mistakes. This is not only for score collection, but also for protecting our maximum business value and customer engagement results.</span><span data-lang="zh">请按照以下统一上传位置和审视周期操作，避免遗漏、重复上传或计分错误。这不仅关系到得分，更关系到团队客户经营成果和业务价值的最大化。</span></p>
+    <div class="hero-note"><span data-lang="en">✓ Record and upload immediately after each activity</span><span data-lang="zh">✓ 每次活动结束后立即记录并上传</span></div>
+  </section>
+  <section class="upload-strip">
+    <div class="upload-strip-head">
+      <div>
+        <strong><span data-lang="en">Unified Upload Locations</span><span data-lang="zh">统一上传入口</span></strong>
+        <small><span data-lang="en">Official links only</span><span data-lang="zh">仅使用以下官方入口</span></small>
+      </div>
+    </div>
+    <div class="upload-links">
+      <a href="https://onebox.huawei.com/#eSpaceGroupFile/1/9022/7842710" target="_blank" rel="noopener"><b>1</b><span>OneBox</span><em><span data-lang="en">Open</span><span data-lang="zh">打开</span></em></a>
+      <a href="https://onebox.huawei.com/v/4ed069fc145868d8ccebc97c7a763ea0?type=0" target="_blank" rel="noopener"><b>2</b><span>Online Excel</span><em><span data-lang="en">Open</span><span data-lang="zh">打开</span></em></a>
+      <a href="https://3ms.huawei.com/km/groups/3362561/home?l=zh-cn&moduleId=471531231809400832&ctype=-1#category=8378837" target="_blank" rel="noopener"><b>3</b><span>JAM of 3MS</span><em><span data-lang="en">Open</span><span data-lang="zh">打开</span></em></a>
+      <a href="https://isales.huawei.com/isales/workspace/index/#/index" target="_blank" rel="noopener"><b>4</b><span>iSales</span><em><span data-lang="en">Open</span><span data-lang="zh">打开</span></em></a>
+    </div>
+  </section>
+
+
+  <section class="section">
+    <div class="section-head"><div><h2><span data-lang="en">How to Complete the Record</span><span data-lang="zh">标准操作流程</span></h2></div></div>
+    <div class="steps">
+      <div class="step"><div class="step-no">1</div><h3><span data-lang="en">Identify activity type</span><span data-lang="zh">确认活动类型</span></h3></div>
+      <div class="step"><div class="step-no">2</div><h3><span data-lang="en">Prepare key information</span><span data-lang="zh">准备关键信息</span></h3></div>
+      <div class="step"><div class="step-no">3</div><h3><span data-lang="en">Upload to all required systems</span><span data-lang="zh">上传至全部必需平台</span></h3></div>
+      <div class="step"><div class="step-no">4</div><h3><span data-lang="en">Verify and confirm</span><span data-lang="zh">检查并确认</span></h3></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><div><h2><span data-lang="en">Review Cycle</span><span data-lang="zh">审视周期</span></h2></div></div>
+    <div class="cycle-grid">
+      <div class="cycle-card"><div class="cycle-top"><h3><span data-lang="en">Monthly Meeting</span><span data-lang="zh">月度例会</span></h3><span class="period"><span data-lang="en">Monthly</span><span data-lang="zh">月度</span></span></div></div>
+      <div class="cycle-card quarter"><div class="cycle-top"><h3><span data-lang="en">Service Magazine</span><span data-lang="zh">维护杂志</span></h3><span class="period"><span data-lang="en">Quarterly</span><span data-lang="zh">季度</span></span></div></div>
+      <div class="cycle-card half"><div class="cycle-top"><h3><span data-lang="en">Service Summit</span><span data-lang="zh">客户恳谈会</span></h3><span class="period"><span data-lang="en">Half-yearly</span><span data-lang="zh">半年</span></span></div></div>
+      <div class="cycle-card bonus"><div class="cycle-top"><h3><span data-lang="en">Customer TAC / Spare Parts Center Visit</span><span data-lang="zh">客户TAC/备件中心参观</span></h3><span class="period"><span data-lang="en">Monthly</span><span data-lang="zh">月度</span></span></div></div>
+      <div class="cycle-card half"><div class="cycle-top"><h3><span data-lang="en">Customer Appreciation Letter</span><span data-lang="zh">客户感谢信</span></h3><span class="period"><span data-lang="en">Half-yearly</span><span data-lang="zh">半年</span></span></div></div>
+      <div class="cycle-card bonus"><div class="cycle-top"><h3><span data-lang="en">Systematic Maintenance Value Management – CROP</span><span data-lang="zh">维护价值系统化管理－CROP</span></h3><span class="period"><span data-lang="en">Monthly</span><span data-lang="zh">月度</span></span></div></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><div><h2><span data-lang="en">Required Upload Matrix</span><span data-lang="zh">必需上传位置矩阵</span></h2><p><span data-lang="en">Green = required. Grey = not required. Yellow = follow the latest team instruction.</span><span data-lang="zh">绿色＝必需；灰色＝不要求；黄色＝按团队最新要求确认。</span></p></div></div>
+    <div class="matrix-wrap"><table><thead><tr><th><span data-lang="en">Activity Type</span><span data-lang="zh">活动类型</span></th><th>OneBox</th><th>Online Excel</th><th>JAM of 3MS</th><th>iSales</th></tr></thead><tbody>
+      <tr><td><span data-lang="en">Monthly Meeting</span><span data-lang="zh">月度例会</span></td><td><span class="tag yes">✓ <span data-lang="en">Required</span><span data-lang="zh">必需</span></span></td><td><span class="tag yes">✓ <span data-lang="en">Required</span><span data-lang="zh">必需</span></span></td><td><span class="tag yes">✓ <span data-lang="en">Required</span><span data-lang="zh">必需</span></span></td><td><span class="tag no">— <span data-lang="en">Not required</span><span data-lang="zh">不要求</span></span></td></tr>
+      <tr><td><span data-lang="en">Service Magazine</span><span data-lang="zh">维护杂志</span></td><td><span class="tag yes">✓ <span data-lang="en">Required</span><span data-lang="zh">必需</span></span></td><td><span class="tag yes">✓ <span data-lang="en">Required</span><span data-lang="zh">必需</span></span></td><td><span class="tag yes">✓ <span data-lang="en">Required</span><span data-lang="zh">必需</span></span></td><td><span class="tag no">— <span data-lang="en">Not required</span><span data-lang="zh">不要求</span></span></td></tr>
+      <tr><td><span data-lang="en">Service Summit</span><span data-lang="zh">客户恳谈会</span></td><td><span class="tag no">— <span data-lang="en">Not required</span><span data-lang="zh">不要求</span></span></td><td><span class="tag yes">✓ <span data-lang="en">Required</span><span data-lang="zh">必需</span></span></td><td><span class="tag yes">✓ <span data-lang="en">Required</span><span data-lang="zh">必需</span></span></td><td><span class="tag yes">✓ <span data-lang="en">Required</span><span data-lang="zh">必需</span></span></td></tr>
+      <tr><td><span data-lang="en">Other Customer Activity</span><span data-lang="zh">其他客户活动</span><div class="examples"><span data-lang="en">Examples: Maintenance Activities with Customers; Face-to-face Communication with Staff; Network Fault Recovery Support; Major Changes Onsite Supervision; Emergency Drill with Customers.</span><span data-lang="zh">例如：与客户联合维护活动、员工面对面沟通、网络故障恢复支持、重大变更现场监督、客户联合应急演练。</span></div></td><td><span class="tag no">— <span data-lang="en">Not required</span><span data-lang="zh">不要求</span></span></td><td><span class="tag yes">✓ <span data-lang="en">Required</span><span data-lang="zh">必需</span></span></td><td><span class="tag yes">✓ <span data-lang="en">Required</span><span data-lang="zh">必需</span></span></td><td><span class="tag no">— <span data-lang="en">Not required</span><span data-lang="zh">不要求</span></span></td></tr>
+    </tbody></table></div>
+  </section>
+
+
+  <section class="section" id="activity-records-section">
+    <div class="section-head"><div>
+      <h2><span data-lang="en">Current Activity Statistics Details</span><span data-lang="zh">当前统计详表</span></h2>
+      <p><span data-lang="en">Enter and maintain all activity records here. Data is automatically stored in this browser.</span><span data-lang="zh">在此录入并维护所有活动信息，数据会自动保存在当前浏览器中。</span></p>
+    </div></div>
+
+    <div class="records-toolbar">
+      <div class="records-toolbar-left">
+        <button class="record-btn primary" type="button" onclick="addActivityRecord()"><span data-lang="en">＋ Add Record</span><span data-lang="zh">＋ 新增记录</span></button>
+        <button class="record-btn" type="button" onclick="addExampleRecord()"><span data-lang="en">Add Example</span><span data-lang="zh">添加样例</span></button>
+        <button class="record-btn" type="button" onclick="clearAllRecords()"><span data-lang="en">Clear All</span><span data-lang="zh">清空全部</span></button>
+        <button class="record-btn fullscreen-btn" id="fullscreenToggleBtn" type="button" onclick="toggleRecordsFullscreen()"><span class="icon">⛶</span><span data-lang="en" class="fullscreen-label-en">Full Screen</span><span data-lang="zh" class="fullscreen-label-zh">全屏</span></button>
+      </div>
+      <div class="records-toolbar-right">
+        <span class="record-summary" id="recordSummary"></span>
+        <span class="save-status"><span data-lang="en">Auto-saved locally</span><span data-lang="zh">已自动保存到本地</span></span>
+      </div>
+    </div>
+
+    <div class="record-table-wrap">
+      <table class="record-table">
+        <thead><tr>
+          <th>#</th>
+          <th><span data-lang="en">Activity Type</span><span data-lang="zh">活动类型</span></th>
+          <th><span data-lang="en">Title</span><span data-lang="zh">活动标题</span></th>
+          <th><span data-lang="en">Date</span><span data-lang="zh">发生日期</span></th>
+          <th><span data-lang="en">Review Cycle</span><span data-lang="zh">统计周期</span></th>
+          <th><span data-lang="en">Supervisor Joined?</span><span data-lang="zh">主管参加？</span></th>
+          <th><span data-lang="en">Supervisor Name / Role</span><span data-lang="zh">主管姓名/岗位</span></th>
+          <th><span data-lang="en">Customer Joined?</span><span data-lang="zh">客户参加？</span></th>
+          <th><span data-lang="en">Customer Name / Role</span><span data-lang="zh">客户姓名/岗位</span></th>
+          <th><span data-lang="en">JAM Link</span><span data-lang="zh">JAM链接</span></th>
+          <th>OneBox</th><th>Online Excel</th><th>JAM</th><th>iSales</th>
+          <th><span data-lang="en">Action</span><span data-lang="zh">操作</span></th>
+        </tr></thead>
+        <tbody id="activityTableBody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState" hidden>
+        <span data-lang="en">No records yet. Click “Add Record” to start.</span><span data-lang="zh">暂无记录，点击“新增记录”开始填写。</span>
+      </div>
+    </div>
+
+    <div class="built-in-note">
+      <strong><span data-lang="en">Reserved built-in data area:</span><span data-lang="zh">内置详表数据预留区域：</span></strong>
+      <span data-lang="en"> To pre-fill examples or collected records before sharing this HTML, edit the JSON inside <code>&lt;script id="builtInActivityData"&gt;</code> near the bottom of the file. When the recipient opens the file for the first time, those records will appear automatically.</span>
+      <span data-lang="zh"> 后续如需预先填入样例或已收集信息，可直接编辑文件底部 <code>&lt;script id="builtInActivityData"&gt;</code> 中的 JSON。接收人首次打开页面时，内置记录会自动显示。</span>
+    </div>
+    <div class="submit-area">
+      <button class="submit-btn" type="button" onclick="submitActivityData()"><span data-lang="en">Submit & Copy Filled Data</span><span data-lang="zh">提交并复制填报信息</span></button>
+    </div>
+  </section>
+
+
+<div class="submit-modal" id="submitModal" role="dialog" aria-modal="true" aria-labelledby="submitModalTitle">
+  <div class="submit-dialog">
+    <div class="ok-icon">✓</div>
+    <h3 id="submitModalTitle"><span data-lang="en">Information copied</span><span data-lang="zh">填报信息已复制</span></h3>
+    <p><span data-lang="en">The completed records have been copied in JSON format. Click the email button below, then paste directly into the email body and send.</span><span data-lang="zh">已将填写内容按 JSON 格式复制。请点击下方邮件按钮，然后直接粘贴到邮件正文并发送，无需调整格式。</span></p>
+    <a class="mail-link" id="submissionMailLink" href="mailto:?subject=Customer%20Activity%20Statistics%20Submission"><span>✉</span><span id="submissionRecipientName">范晓龙 / Xiaolong Fan</span></a>
+    <button class="modal-close" type="button" onclick="closeSubmitModal()"><span data-lang="en">Close</span><span data-lang="zh">关闭</span></button>
+  </div>
+</div>
+
+</main>
+<script>
+  const root=document.documentElement;const langButtons=[...document.querySelectorAll('[data-set-lang]')];
+  function setLanguage(lang){root.setAttribute('data-language',lang);root.setAttribute('lang',lang==='zh'?'zh-CN':'en');langButtons.forEach(b=>b.classList.toggle('active',b.dataset.setLang===lang));localStorage.setItem('uploadGuideLanguage',lang)}
+  setLanguage(localStorage.getItem('uploadGuideLanguage')||'en');langButtons.forEach(b=>b.addEventListener('click',()=>setLanguage(b.dataset.setLang)));
+</script>
+
+  <script id="builtInActivityData" type="application/json">
+  [
+    
+  ]
+  </script>
+  <script>
+  const STORAGE_KEY='customerActivityRecordsV2';
+  const SUBMISSION_RECIPIENT_NAME='范晓龙 / Xiaolong Fan';
+  const SUBMISSION_EMAIL='fanxiaolong7@huawei-partners.com'; // Optional: fill in your email address before sharing this HTML
+  const activityTypes=[
+    ['Monthly Meeting','月度例会','Monthly','月度'],
+    ['Service Magazine','维护杂志','Quarterly','季度'],
+    ['Service Summit','客户恳谈会','Half-yearly','半年'],
+    ['Other Customer Activity','其他客户活动','Monthly','月度']
+  ];
+  const requiredUploads={
+    'Monthly Meeting':['onebox','onlineExcel','jam'],
+    'Service Magazine':['onebox','onlineExcel','jam'],
+    'Service Summit':['onlineExcel','jam','isales'],
+    'Other Customer Activity':['onlineExcel','jam']
+  };
+  const uploadLabels={onebox:'OneBox',onlineExcel:'Online Excel',jam:'JAM',isales:'iSales'};
+  const blankRecord=()=>({id:(crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random()),type:'Monthly Meeting',title:'',date:'',supervisorJoined:false,supervisorInfo:'',customerJoined:false,customerInfo:'',jamLink:'',onebox:false,onlineExcel:false,jam:false,isales:false});
+  function getBuiltInRecords(){try{const el=document.getElementById('builtInActivityData');const data=JSON.parse(el.textContent||'[]');return Array.isArray(data)?data.map(r=>({...blankRecord(),...r,id:r.id||blankRecord().id})):[]}catch(e){console.warn('Invalid built-in activity data',e);return[]}}
+  function normalizeRecordType(record){
+    const legacyTypes=['TAC / Spare Parts Center Visit','Customer Appreciation Letter','CROP','Other'];
+    if(legacyTypes.includes(record.type)) return {...record,type:'Other Customer Activity'};
+    return record;
+  }
+  function loadRecords(){try{const saved=localStorage.getItem(STORAGE_KEY);if(saved!==null){const data=JSON.parse(saved);return Array.isArray(data)?data.map(normalizeRecordType):[]}const builtIn=getBuiltInRecords();return builtIn.length?builtIn.map(normalizeRecordType):[]}catch(e){return[]}}
+  let activityRecords=loadRecords();
+  function saveRecords(){localStorage.setItem(STORAGE_KEY,JSON.stringify(activityRecords));renderRecordSummary()}
+  function currentLang(){return document.documentElement.getAttribute('data-language')||'en'}
+  function escapeHtml(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+  function typeOptions(selected){const lang=currentLang();return activityTypes.map(([en,zh])=>`<option value="${escapeHtml(en)}" ${selected===en?'selected':''}>${escapeHtml(lang==='zh'?zh:en)}</option>`).join('')}
+  function yesNoOptions(value){const lang=currentLang();return `<option value="false" ${!value?'selected':''}>${lang==='zh'?'否':'No'}</option><option value="true" ${value?'selected':''}>${lang==='zh'?'是':'Yes'}</option>`}
+  function requiredFor(record,key){return (requiredUploads[record.type]||[]).includes(key)}
+  function missingFor(record,key){return requiredFor(record,key)&&!record[key]}
+  function uploadCell(record,key){
+    const required=requiredFor(record,key),missing=missingFor(record,key);
+    const cls=['check-cell',required?'required-upload':'',missing?'missing-upload':''].filter(Boolean).join(' ');
+    const tip=missing?(currentLang()==='zh'?`必需上传：${uploadLabels[key]}`:`Required upload: ${uploadLabels[key]}`):'';
+    return `<td class="${cls}" title="${escapeHtml(tip)}"><input type="checkbox" ${record[key]?'checked':''} onchange="updateRecord('${record.id}','${key}',this.checked,true)"></td>`
+  }
+  function renderRecords(){
+    const body=document.getElementById('activityTableBody'); const empty=document.getElementById('emptyState');
+    const recordRows=activityRecords.map((r,i)=>{const missing=(requiredUploads[r.type]||[]).filter(k=>!r[k]);return `<tr data-id="${r.id}" class="${missing.length?'upload-missing':''}">
+      <td class="row-no">${i+1}</td>
+      <td><select onchange="syncCycleFromType('${r.id}',this.value)">${typeOptions(r.type)}</select></td>
+      <td><input class="wide" type="text" value="${escapeHtml(r.title)}" oninput="updateRecord('${r.id}','title',this.value)"></td>
+      <td><input type="date" value="${escapeHtml(r.date)}" onchange="updateRecord('${r.id}','date',this.value)"></td>
+      <td><input class="narrow" type="text" value="${escapeHtml(cycleLabel(r.type))}" readonly aria-readonly="true"></td>
+      <td><select class="narrow" onchange="toggleJoined('${r.id}','supervisorJoined',this.value==='true')">${yesNoOptions(r.supervisorJoined)}</select></td>
+      <td>${r.supervisorJoined?`<input type="text" value="${escapeHtml(r.supervisorInfo)}" oninput="updateRecord('${r.id}','supervisorInfo',this.value)">`:`<span class="not-applicable">—</span>`}</td>
+      <td><select class="narrow" onchange="toggleJoined('${r.id}','customerJoined',this.value==='true')">${yesNoOptions(r.customerJoined)}</select></td>
+      <td>${r.customerJoined?`<input type="text" value="${escapeHtml(r.customerInfo)}" oninput="updateRecord('${r.id}','customerInfo',this.value)">`:`<span class="not-applicable">—</span>`}</td>
+      <td><input class="wide" type="text" value="${escapeHtml(r.jamLink)}" oninput="updateRecord('${r.id}','jamLink',this.value)"></td>
+      ${uploadCell(r,'onebox')}
+      ${uploadCell(r,'onlineExcel')}
+      ${uploadCell(r,'jam')}
+      ${uploadCell(r,'isales')}
+      <td><button class="record-btn danger small" type="button" onclick="deleteActivityRecord('${r.id}')">${currentLang()==='zh'?'删除':'Delete'}</button>${missing.length?`<div class="upload-alert">⚠ ${currentLang()==='zh'?`漏传 ${missing.length} 项`:`${missing.length} missing`}</div>`:''}</td>
+    </tr>`}).join('');
+    const reservedRowCount=Math.max(0,12-activityRecords.length);
+    const reservedRows=Array.from({length:reservedRowCount},()=>`<tr class="placeholder-row"><td colspan="15"></td></tr>`).join('');
+    body.innerHTML=recordRows+reservedRows;
+    empty.hidden=true; renderRecordSummary();
+  }
+  function cycleLabel(type){const item=activityTypes.find(x=>x[0]===type)||activityTypes[0];return currentLang()==='zh'?item[3]:item[2]}
+  function updateRecord(id,key,value,rerender=false){const r=activityRecords.find(x=>String(x.id)===String(id));if(!r)return;r[key]=value;saveRecords();if(rerender)renderRecords()}
+  function toggleJoined(id,key,value){const r=activityRecords.find(x=>String(x.id)===String(id));if(!r)return;r[key]=value;if(!value){if(key==='supervisorJoined')r.supervisorInfo='';if(key==='customerJoined')r.customerInfo=''}saveRecords();renderRecords()}
+  function syncCycleFromType(id,type){updateRecord(id,'type',type);renderRecords()}
+  function addActivityRecord(){activityRecords.push(blankRecord());saveRecords();renderRecords();setTimeout(()=>{const wrap=document.querySelector('.record-table-wrap');const row=document.querySelector(`#activityTableBody tr[data-id="${activityRecords[activityRecords.length-1].id}"]`);if(wrap&&row){wrap.scrollTo({top:Math.max(0,row.offsetTop-wrap.clientHeight/2),behavior:'smooth'})}},50)}
+  function addExampleRecord(){activityRecords.push({...blankRecord(),type:'Monthly Meeting',title:currentLang()==='zh'?'示例：客户月度维护例会':'Example: Customer Monthly Maintenance Meeting',date:new Date().toISOString().slice(0,10),supervisorJoined:true,supervisorInfo:currentLang()==='zh'?'张三 / SPM':'John / SPM',customerJoined:true,customerInfo:currentLang()==='zh'?'客户代表 / 运维主管':'Customer Representative / O&M Director',onebox:true,onlineExcel:true,jam:true});saveRecords();renderRecords()}
+  function deleteActivityRecord(id){activityRecords=activityRecords.filter(x=>String(x.id)!==String(id));saveRecords();renderRecords()}
+  function clearAllRecords(){const msg=currentLang()==='zh'?'确定清空当前浏览器中保存的全部活动记录吗？':'Clear all activity records saved in this browser?';if(confirm(msg)){activityRecords=[];saveRecords();renderRecords()}}
+  function renderRecordSummary(){const el=document.getElementById('recordSummary');if(!el)return;const uploaded=activityRecords.filter(r=>r.onebox||r.onlineExcel||r.jam||r.isales).length;el.textContent=currentLang()==='zh'?`共 ${activityRecords.length} 条记录，其中 ${uploaded} 条已有上传记录`:`${activityRecords.length} record(s), ${uploaded} with upload status`}
+
+
+  function exportRecordsForBuiltIn(){
+    return activityRecords.map(({id,...record})=>record);
+  }
+  async function copyText(text){
+    if(navigator.clipboard && window.isSecureContext){await navigator.clipboard.writeText(text);return;}
+    const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.focus();ta.select();document.execCommand('copy');ta.remove();
+  }
+  async function submitActivityData(){
+    const json=JSON.stringify(exportRecordsForBuiltIn(),null,2);
+    try{await copyText(json);}catch(e){prompt(currentLang()==='zh'?'请手动复制以下 JSON：':'Please copy the JSON below:',json);}
+    const nameEl=document.getElementById('submissionRecipientName');if(nameEl)nameEl.textContent=SUBMISSION_RECIPIENT_NAME;
+    const link=document.getElementById('submissionMailLink');
+    const subject=currentLang()==='zh'?'客户活动统计填报':'Customer Activity Statistics Submission';
+    if(link)link.href=`mailto:${encodeURIComponent(SUBMISSION_EMAIL)}?subject=${encodeURIComponent(subject)}`;
+    document.getElementById('submitModal')?.classList.add('show');
+  }
+  function closeSubmitModal(){document.getElementById('submitModal')?.classList.remove('show')}
+  document.addEventListener('click',e=>{const modal=document.getElementById('submitModal');if(e.target===modal)closeSubmitModal()});
+
+  function isRecordsFullscreen(){
+    const section=document.getElementById('activity-records-section');
+    return document.fullscreenElement===section || section.classList.contains('fullscreen-fallback');
+  }
+  function updateFullscreenButton(){
+    const btn=document.getElementById('fullscreenToggleBtn');
+    if(!btn)return;
+    const active=isRecordsFullscreen();
+    const en=btn.querySelector('.fullscreen-label-en');
+    const zh=btn.querySelector('.fullscreen-label-zh');
+    const icon=btn.querySelector('.icon');
+    if(en)en.textContent=active?'Exit Full Screen':'Full Screen';
+    if(zh)zh.textContent=active?'退出全屏':'全屏';
+    if(icon)icon.textContent=active?'⛶':'⛶';
+    btn.setAttribute('aria-pressed',active?'true':'false');
+  }
+  async function toggleRecordsFullscreen(){
+    const section=document.getElementById('activity-records-section');
+    if(!section)return;
+    try{
+      if(document.fullscreenElement===section){
+        await document.exitFullscreen();
+      }else if(!document.fullscreenElement && section.requestFullscreen){
+        await section.requestFullscreen();
+      }else{
+        section.classList.toggle('fullscreen-fallback');
+        document.body.classList.toggle('fullscreen-lock',section.classList.contains('fullscreen-fallback'));
+        updateFullscreenButton();
+      }
+    }catch(e){
+      section.classList.toggle('fullscreen-fallback');
+      document.body.classList.toggle('fullscreen-lock',section.classList.contains('fullscreen-fallback'));
+      updateFullscreenButton();
+    }
+  }
+  document.addEventListener('fullscreenchange',()=>{
+    const section=document.getElementById('activity-records-section');
+    if(section && document.fullscreenElement!==section){section.classList.remove('fullscreen-fallback')}
+    document.body.classList.toggle('fullscreen-lock',!!document.fullscreenElement || !!section?.classList.contains('fullscreen-fallback'));
+    updateFullscreenButton();
+  });
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){
+      const section=document.getElementById('activity-records-section');
+      if(section?.classList.contains('fullscreen-fallback')){
+        section.classList.remove('fullscreen-fallback');
+        document.body.classList.remove('fullscreen-lock');
+        updateFullscreenButton();
+      }
+    }
+  });
+  const originalSetLanguage=setLanguage;setLanguage=function(lang){originalSetLanguage(lang);if(document.getElementById('activityTableBody'))renderRecords()}
+  renderRecords();
+  updateFullscreenButton();
+  </script>
+
+</body>
+</html>
