@@ -96,22 +96,29 @@
             'sla.rule.specialTitle': '🛠️ 【专项风险表】引擎：',
             'sla.rule.srTitle': '📞 【SR详单】引擎：',
             'sla.rule.vulnTitle': '🧯 【漏洞预警】引擎：',
-            'sla.rule.strictPrefix': '严格前缀：',
-            'sla.rule.rectFile': 'PBI_自动抓取-整改详单_整改_Latest',
-            'sla.rule.rectChecking': 'Checking：创单+30天 (10天红/30天黄)',
-            'sla.rule.rectification': 'Rectification：期望完成时间 (10天红/82天黄)',
-            'sla.rule.riskFile': 'PBI_自动抓取-风险详单_Latest',
-            'sla.rule.confirming': 'Confirming：创单+30天 (10天红/30天紫)',
-            'sla.rule.openSuspend': 'Open/Suspend：期望关闭时间倒计时',
-            'sla.rule.specialFile': 'PBI_自动抓取-CPT风险详表_Latest',
-            'sla.rule.toConfirm': '待确认：创建+30天 (10天红/30天青)',
-            'sla.rule.processing': '处理中：要求完成日期倒计时',
-            'sla.rule.srFile': 'PBI_自动抓取-详单-SR_Latest',
-            'sla.rule.srMonitor': '在途监控：以 exp_close_date 为唯一截止基准',
-            'sla.rule.suspend': '挂起逻辑：挂起单忽略，上游会每天顺延期望关闭',
-            'sla.rule.vulnFile': 'PBI_自动抓取-详单漏洞_漏洞预警_Latest',
-            'sla.rule.vulnCreate': '建单基准：create_time + 30天',
+            'sla.rule.strictPrefix': '文件匹配：',
+            'sla.rule.rectFile': '仅自动分流 PBI_自动抓取-整改详单_整改_Latest 前缀文件',
+            'sla.rule.rectStatusField': '状态字段：task_status；只检查这一列',
+            'sla.rule.rectChecking': 'Checking：按 task_create_time + 30 天判断，剩余 ≤10 天红，<30 天黄',
+            'sla.rule.rectification': 'Rectification Implementation：按 rectify_plan_end_time 倒计时，剩余 ≤10 天红，<82 天黄',
+            'sla.rule.riskFile': '仅自动分流 PBI_自动抓取-风险详单_Latest 前缀文件',
+            'sla.rule.riskStatusField': '状态字段优先级：风险状态 → risk_status；取第一个非空值',
+            'sla.rule.confirming': 'Risk Confirming：按创单时间/create_time + 30 天判断，剩余 ≤10 天红，<30 天紫',
+            'sla.rule.open': 'Risk Open：按期望关闭时间倒计时，剩余 ≤10 天红，<30 天紫',
+            'sla.rule.suspended': 'Risk Suspended：按期望关闭时间-挂起倒计时，剩余 ≤10 天红，<30 天紫',
+            'sla.rule.specialFile': '仅自动分流 PBI_自动抓取-CPT风险详表_Latest 前缀文件',
+            'sla.rule.specialStatusField': '状态字段优先级：状态-Status → task_status_en → task_status → task_status_cn；取第一个非空值',
+            'sla.rule.toConfirm': '待确认/草稿/Draft/To Be Confirmed/Confirm/Confirming：按创建日期 + 30 天判断，剩余 ≤10 天红，<30 天青',
+            'sla.rule.processing': '处理中/评审中/Processing/Reviewing：按要求完成日期倒计时，剩余 ≤10 天红，<30 天青',
+            'sla.rule.srFile': '仅自动分流 PBI_自动抓取-详单-SR_Latest 前缀文件',
+            'sla.rule.srStatusField': '状态字段：sr_status_name；只检查这一列',
+            'sla.rule.srMonitor': '在途监控：以 exp_close_date 为基准；有 sus_exp_close_date 时按挂起后期望关闭时间判断',
+            'sla.rule.suspend': '挂起逻辑：Pending/Suspend/Hold/挂起 直接忽略预警',
+            'sla.rule.srOverdue': '超期/等级：读取 overdue 判断上游超期，读取 hw_sev_name/urgency 判断 Critical 阈值',
+            'sla.rule.vulnFile': '仅自动分流 PBI_自动抓取-详单漏洞_漏洞预警_Latest 前缀文件',
+            'sla.rule.vulnStatusField': '状态字段：task_status；只检查这一列',
             'sla.rule.vulnStatus': '状态范围：Checking / Communication Dept / Communication Customer',
+            'sla.rule.vulnCreate': '建单基准：create_time 或 task_create_time + 30 天，剩余 ≤10 天红，<30 天黄',
             'sla.upload.batch': '📦 一键批量导入所有表 (智能分流合并)',
             'sla.upload.rect': '指定导入 [整改]',
             'sla.upload.risk': '指定导入 [常规]',
@@ -125,8 +132,16 @@
             'sla.upload.cachedTitle': '📊 已恢复上次导入数据',
             'sla.upload.restoreLoading': '⏳ 正在恢复上次导入的数据...',
             'sla.upload.restoreSuccess': '✅ 已恢复上次导入的数据',
+            'sla.upload.restoreFailTitle': '上次导入数据恢复失败',
             'sla.upload.restoreFail': '上次导入数据恢复失败，请重新导入文件。',
             'sla.upload.cacheLarge': '⚠️ 本次表格较大，浏览器本地缓存空间不足，切换页面后可能需要重新导入',
+            'sla.upload.cacheTooLargeTitle': '上次导入数据过大，未能保存恢复缓存',
+            'sla.upload.cacheTooLargeBody': '本次导入已完成当前页面分析，但浏览器本地缓存空间不足，无法保存完整工作区。刷新或切换页面后，需要重新选择原始文件导入；历史快照、上传历史和服务端配置不受影响。',
+            'sla.upload.cacheTooLargeRows': '涉及 {rows} 行数据',
+            'sla.upload.cacheTooLargeFiles': '文件 {count} 个',
+            'sla.upload.cacheTooLargeTime': '发生时间 {time}',
+            'sla.upload.cacheTooLargeDismiss': '知道了',
+            'sla.upload.cacheTooLargeClear': '重新选择文件导入',
             'sla.upload.parseLoading': '⏳ 正在解析表格数据，请稍候...',
             'sla.upload.emptyFile': '读取失败或为空表！',
             'sla.upload.smartLoading': '⏳ 正在启动智能分拣引擎分析全部文件...',
@@ -399,22 +414,29 @@
             'sla.rule.specialTitle': '🛠️ Special Risk Engine:',
             'sla.rule.srTitle': '📞 SR Detail Engine:',
             'sla.rule.vulnTitle': '🧯 Vulnerability Alert Engine:',
-            'sla.rule.strictPrefix': 'Strict prefix: ',
-            'sla.rule.rectFile': 'PBI_自动抓取-整改详单_整改_Latest',
-            'sla.rule.rectChecking': 'Checking: created + 30 days (red within 10 / yellow within 30)',
-            'sla.rule.rectification': 'Rectification: expected completion time (red within 10 / yellow within 82)',
-            'sla.rule.riskFile': 'PBI_自动抓取-风险详单_Latest',
-            'sla.rule.confirming': 'Confirming: created + 30 days (red within 10 / purple within 30)',
-            'sla.rule.openSuspend': 'Open/Suspend: expected close-time countdown',
-            'sla.rule.specialFile': 'PBI_自动抓取-CPT风险详表_Latest',
-            'sla.rule.toConfirm': 'To be confirmed: created + 30 days (red within 10 / cyan within 30)',
-            'sla.rule.processing': 'Processing: required completion-date countdown',
-            'sla.rule.srFile': 'PBI_自动抓取-详单-SR_Latest',
-            'sla.rule.srMonitor': 'In-flight monitor: exp_close_date is the only deadline baseline',
-            'sla.rule.suspend': 'Suspend logic: suspended items are ignored; upstream extends expected close daily',
-            'sla.rule.vulnFile': 'PBI_自动抓取-详单漏洞_漏洞预警_Latest',
-            'sla.rule.vulnCreate': 'Creation baseline: create_time + 30 days',
+            'sla.rule.strictPrefix': 'File match: ',
+            'sla.rule.rectFile': 'auto-routes only files prefixed PBI_自动抓取-整改详单_整改_Latest',
+            'sla.rule.rectStatusField': 'Status field: task_status; this is the only status column checked',
+            'sla.rule.rectChecking': 'Checking: task_create_time + 30 days; red when ≤10 days left, yellow when <30',
+            'sla.rule.rectification': 'Rectification Implementation: countdown by rectify_plan_end_time; red when ≤10 days left, yellow when <82',
+            'sla.rule.riskFile': 'auto-routes only files prefixed PBI_自动抓取-风险详单_Latest',
+            'sla.rule.riskStatusField': 'Status field priority: 风险状态 → risk_status; first non-empty value wins',
+            'sla.rule.confirming': 'Risk Confirming: created/create_time + 30 days; red when ≤10 days left, purple when <30',
+            'sla.rule.open': 'Risk Open: countdown by expected close time; red when ≤10 days left, purple when <30',
+            'sla.rule.suspended': 'Risk Suspended: countdown by suspended expected close time; red when ≤10 days left, purple when <30',
+            'sla.rule.specialFile': 'auto-routes only files prefixed PBI_自动抓取-CPT风险详表_Latest',
+            'sla.rule.specialStatusField': 'Status field priority: 状态-Status → task_status_en → task_status → task_status_cn; first non-empty value wins',
+            'sla.rule.toConfirm': 'To be confirmed/Draft/Confirm/Confirming: create date + 30 days; red when ≤10 days left, cyan when <30',
+            'sla.rule.processing': 'Processing/Reviewing: countdown by required completion date; red when ≤10 days left, cyan when <30',
+            'sla.rule.srFile': 'auto-routes only files prefixed PBI_自动抓取-详单-SR_Latest',
+            'sla.rule.srStatusField': 'Status field: sr_status_name; this is the only status column checked',
+            'sla.rule.srMonitor': 'In-flight monitor: exp_close_date is the baseline; sus_exp_close_date overrides after suspension',
+            'sla.rule.suspend': 'Suspend logic: Pending/Suspend/Hold/挂起 are ignored for warning',
+            'sla.rule.srOverdue': 'Overdue/severity: overdue marks upstream overdue; hw_sev_name/urgency drives Critical thresholds',
+            'sla.rule.vulnFile': 'auto-routes only files prefixed PBI_自动抓取-详单漏洞_漏洞预警_Latest',
+            'sla.rule.vulnStatusField': 'Status field: task_status; this is the only status column checked',
             'sla.rule.vulnStatus': 'Status scope: Checking / Communication Dept / Communication Customer',
+            'sla.rule.vulnCreate': 'Creation baseline: create_time or task_create_time + 30 days; red when ≤10 days left, yellow when <30',
             'sla.upload.batch': '📦 Batch Import All Tables (Smart Routing & Merge)',
             'sla.upload.rect': 'Import [Rectification]',
             'sla.upload.risk': 'Import [Regular]',
@@ -428,8 +450,16 @@
             'sla.upload.cachedTitle': '📊 Restored Last Import',
             'sla.upload.restoreLoading': '⏳ Restoring last imported data...',
             'sla.upload.restoreSuccess': '✅ Restored last imported data',
+            'sla.upload.restoreFailTitle': 'Failed to Restore Last Import',
             'sla.upload.restoreFail': 'Failed to restore the last import. Please import files again.',
             'sla.upload.cacheLarge': '⚠️ This table is large and local browser cache is full. You may need to import again after switching pages.',
+            'sla.upload.cacheTooLargeTitle': 'The last import was too large to save as a restore cache',
+            'sla.upload.cacheTooLargeBody': 'The import completed for the current page, but the browser local cache did not have enough space to save the full workspace. After refresh or navigation, please import the original files again. Historical snapshots, upload history, and server settings are not affected.',
+            'sla.upload.cacheTooLargeRows': '{rows} rows involved',
+            'sla.upload.cacheTooLargeFiles': '{count} files',
+            'sla.upload.cacheTooLargeTime': 'Time {time}',
+            'sla.upload.cacheTooLargeDismiss': 'Got it',
+            'sla.upload.cacheTooLargeClear': 'Import files again',
             'sla.upload.parseLoading': '⏳ Parsing table data, please wait...',
             'sla.upload.emptyFile': 'Read failed or the table is empty.',
             'sla.upload.smartLoading': '⏳ Starting smart routing engine for all files...',
@@ -773,22 +803,24 @@
     function applyRuleBox() {
         const cols = document.querySelectorAll('.rule-box .rule-col');
         const data = [
-            ['sla.rule.rectTitle', ['sla.rule.rectFile', 'sla.rule.rectChecking', 'sla.rule.rectification']],
-            ['sla.rule.riskTitle', ['sla.rule.riskFile', 'sla.rule.confirming', 'sla.rule.openSuspend']],
-            ['sla.rule.specialTitle', ['sla.rule.specialFile', 'sla.rule.toConfirm', 'sla.rule.processing']],
-            ['sla.rule.srTitle', ['sla.rule.srFile', 'sla.rule.srMonitor', 'sla.rule.suspend']],
-            ['sla.rule.vulnTitle', ['sla.rule.vulnFile', 'sla.rule.vulnCreate', 'sla.rule.vulnStatus']]
+            ['sla.rule.rectTitle', ['sla.rule.rectFile', 'sla.rule.rectStatusField', 'sla.rule.rectChecking', 'sla.rule.rectification']],
+            ['sla.rule.riskTitle', ['sla.rule.riskFile', 'sla.rule.riskStatusField', 'sla.rule.confirming', 'sla.rule.open', 'sla.rule.suspended']],
+            ['sla.rule.specialTitle', ['sla.rule.specialFile', 'sla.rule.specialStatusField', 'sla.rule.toConfirm', 'sla.rule.processing']],
+            ['sla.rule.srTitle', ['sla.rule.srFile', 'sla.rule.srStatusField', 'sla.rule.srMonitor', 'sla.rule.suspend', 'sla.rule.srOverdue']],
+            ['sla.rule.vulnTitle', ['sla.rule.vulnFile', 'sla.rule.vulnStatusField', 'sla.rule.vulnStatus', 'sla.rule.vulnCreate']]
         ];
         cols.forEach((col, index) => {
             const [titleKey, itemKeys] = data[index] || [];
             const strong = col.querySelector('strong');
-            const lis = col.querySelectorAll('li');
             if (strong && titleKey) strong.textContent = t(titleKey);
-            itemKeys?.forEach((key, liIndex) => {
-                if (!lis[liIndex]) return;
-                if (liIndex === 0) lis[liIndex].innerHTML = `<b>${t('sla.rule.strictPrefix')}</b>${t(key)}`;
-                else lis[liIndex].innerHTML = t(key).replace(/^([^:：]+[:：])/, '<b>$1</b>');
-            });
+            const ul = col.querySelector('ul');
+            if (!ul || !itemKeys) return;
+            ul.innerHTML = itemKeys.map((key, liIndex) => {
+                const html = liIndex === 0
+                    ? `<b>${t('sla.rule.strictPrefix')}</b>${t(key)}`
+                    : t(key).replace(/^([^:：]+[:：])/, '<b>$1</b>');
+                return `<li>${html}</li>`;
+            }).join('');
         });
     }
 

@@ -7,7 +7,7 @@
     <meta name="description" content="Task SLA & 风险监控全局中台，整改/常规/专项三表合一，SLA预警呼吸灯">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="/css/shared.css?v=20260628-23">
-    <link rel="stylesheet" href="/css/sla.css?v=20260630-03">
+    <link rel="stylesheet" href="/css/sla.css?v=20260702-01">
     <style>
         .sla-source-wrapper {
             display: flex;
@@ -325,41 +325,48 @@
                 <div class="rule-col">
                     <strong style="color:#1976d2;">🔧 【整改表】引擎：</strong>
                     <ul>
-                        <li><b>严格前缀：</b>PBI_自动抓取-整改详单_整改_Latest</li>
-                        <li><b>Checking：</b>创单+30天 (10天红/30天黄)</li>
-                        <li><b>Rectification：</b>期望完成时间 (10天红/82天黄)</li>
+                        <li><b>文件匹配：</b>仅自动分流 PBI_自动抓取-整改详单_整改_Latest 前缀文件</li>
+                        <li><b>状态字段：</b>task_status；只检查这一列</li>
+                        <li><b>Checking：</b>按 task_create_time + 30 天判断，剩余 ≤10 天红，&lt;30 天黄</li>
+                        <li><b>Rectification Implementation：</b>按 rectify_plan_end_time 倒计时，剩余 ≤10 天红，&lt;82 天黄</li>
                     </ul>
                 </div>
                 <div class="rule-col rule-col-border">
                     <strong style="color:#7b1fa2;">⚠️ 【常规风险表】引擎：</strong>
                     <ul>
-                        <li><b>严格前缀：</b>PBI_自动抓取-风险详单_Latest</li>
-                        <li><b>Confirming：</b>创单+30天 (10天红/30天紫)</li>
-                        <li><b>Open/Suspend：</b>期望关闭时间倒计时</li>
+                        <li><b>文件匹配：</b>仅自动分流 PBI_自动抓取-风险详单_Latest 前缀文件</li>
+                        <li><b>状态字段优先级：</b>风险状态 → risk_status；取第一个非空值</li>
+                        <li><b>Risk Confirming：</b>按创单时间/create_time + 30 天判断，剩余 ≤10 天红，&lt;30 天紫</li>
+                        <li><b>Risk Open：</b>按期望关闭时间倒计时，剩余 ≤10 天红，&lt;30 天紫</li>
+                        <li><b>Risk Suspended：</b>按期望关闭时间-挂起倒计时，剩余 ≤10 天红，&lt;30 天紫</li>
                     </ul>
                 </div>
                 <div class="rule-col rule-col-border">
                     <strong style="color:#00796b;">🛠️ 【专项风险表】引擎：</strong>
                     <ul>
-                        <li><b>严格前缀：</b>PBI_自动抓取-CPT风险详表_Latest</li>
-                        <li><b>待确认：</b>创建+30天 (10天红/30天青)</li>
-                        <li><b>处理中：</b>要求完成日期倒计时</li>
+                        <li><b>文件匹配：</b>仅自动分流 PBI_自动抓取-CPT风险详表_Latest 前缀文件</li>
+                        <li><b>状态字段优先级：</b>状态-Status → task_status_en → task_status → task_status_cn；取第一个非空值</li>
+                        <li><b>待确认/草稿/Confirm：</b>按创建日期 + 30 天判断，剩余 ≤10 天红，&lt;30 天青</li>
+                        <li><b>处理中/评审中：</b>按要求完成日期倒计时，剩余 ≤10 天红，&lt;30 天青</li>
                     </ul>
                 </div>
                 <div class="rule-col rule-col-border">
                     <strong style="color:#d9480f;">📞 【SR详单】引擎：</strong>
                     <ul>
-                        <li><b>严格前缀：</b>PBI_自动抓取-详单-SR_Latest</li>
-                        <li><b>在途监控：</b>以 exp_close_date 为唯一截止基准</li>
-                        <li><b>挂起逻辑：</b>挂起单忽略，上游会每天顺延期望关闭</li>
+                        <li><b>文件匹配：</b>仅自动分流 PBI_自动抓取-详单-SR_Latest 前缀文件</li>
+                        <li><b>状态字段：</b>sr_status_name；只检查这一列</li>
+                        <li><b>在途监控：</b>以 exp_close_date 为基准；有 sus_exp_close_date 时按挂起后期望关闭时间判断</li>
+                        <li><b>挂起逻辑：</b>Pending/Suspend/Hold/挂起 直接忽略预警</li>
+                        <li><b>超期/等级：</b>读取 overdue 判断上游超期，读取 hw_sev_name/urgency 判断 Critical 阈值</li>
                     </ul>
                 </div>
                 <div class="rule-col rule-col-border">
                     <strong style="color:#c2410c;">🧯 【漏洞预警】引擎：</strong>
                     <ul>
-                        <li><b>严格前缀：</b>PBI_自动抓取-详单漏洞_漏洞预警_Latest</li>
-                        <li><b>建单基准：</b>create_time + 30天</li>
+                        <li><b>文件匹配：</b>仅自动分流 PBI_自动抓取-详单漏洞_漏洞预警_Latest 前缀文件</li>
+                        <li><b>状态字段：</b>task_status；只检查这一列</li>
                         <li><b>状态范围：</b>Checking / Communication Dept / Communication Customer</li>
+                        <li><b>建单基准：</b>create_time 或 task_create_time + 30 天，剩余 ≤10 天红，&lt;30 天黄</li>
                     </ul>
                 </div>
             </div>
@@ -394,11 +401,11 @@
     <script src="/js/shared/i18n.js?v=20260628-05"></script>
     <script src="/js/shared/navbar.js?v=20260630-04"></script>
     <!-- SLA 模块（注意加载顺序）-->
-    <script src="/js/sla/i18n.js?v=20260630-02"></script>
+    <script src="/js/sla/i18n.js?v=20260701-03"></script>
     <script src="/js/sla/config.js?v=20260630-01"></script>
     <script src="/js/sla/prefs.js?v=20260629-02"></script>
-    <script src="/js/sla/upload.js?v=20260628-06"></script>
-    <script src="/js/sla/section.js?v=20260629-02"></script>
+    <script src="/js/sla/upload.js?v=20260702-02"></script>
+    <script src="/js/sla/section.js?v=20260701-05"></script>
     <script src="/js/sla/table.js?v=20260628-06"></script>
     <script src="/js/sla/events.js?v=20260629-02"></script>
     <script src="/js/sla/metrics.js?v=20260630-02"></script>

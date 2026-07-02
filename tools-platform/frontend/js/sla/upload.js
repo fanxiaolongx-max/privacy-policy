@@ -9,6 +9,7 @@ const SPECIAL_PRIORITY_COLS = ['状态-Status', 'task_status_en', 'task_status',
 const SR_PRIORITY_COLS      = ['hw_sev_name', 'urgency', 'sr_status_name', 'open_date', 'exp_close_date', 'sus_exp_close_date', 'act_close_date', 'overdue', 'sr_num', 'sr_id', 'customer_name', 'country_name_cn', 'repoffice_name_cn'];
 const VULN_PRIORITY_COLS    = ['task_status', 'create_time', 'task_create_time', 'vuln_id', 'vulnerability_id', '漏洞编号', '漏洞名称', 'vulnerability_name', 'customer_name', 'network_name'];
 const SLA_WORKSPACE_CACHE_KEY = 'sla_last_import_workspace_v1';
+const SLA_WORKSPACE_CACHE_STATUS_KEY = 'sla_last_import_workspace_status_v1';
 
 function ensureLazyWorkspaceStyles() {
     if (document.getElementById('sla-lazy-workspace-style')) return;
@@ -25,6 +26,12 @@ function ensureLazyWorkspaceStyles() {
         .sla-section-tab.active { background:var(--tab-color, #334155); color:#fff; box-shadow:0 6px 14px rgba(15,23,42,.16); }
         .sla-section-tab .tab-count { opacity:.78; font-weight:700; margin-left:4px; }
         .sla-lazy-table-placeholder { margin: 14px; padding: 24px; text-align:center; color:#64748b; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:10px; font-size:13px; }
+        .sla-cache-notice { margin: 14px 0 16px; padding: 14px 16px; border-radius: 10px; border: 1px solid #f8c471; background: linear-gradient(135deg, #fff8e7, #fffdf7); color: #7a4b00; box-shadow: 0 3px 12px rgba(146, 64, 14, 0.06); }
+        .sla-cache-notice-title { font-size: 15px; font-weight: 900; margin-bottom: 6px; color: #92400e; }
+        .sla-cache-notice-body { font-size: 13px; line-height: 1.6; color: #7c5a1d; }
+        .sla-cache-notice-actions { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
+        .sla-cache-notice-actions button { border: 1px solid #f3c36b; background: #fff; color: #92400e; border-radius: 7px; padding: 6px 10px; font-size: 12px; font-weight: 800; cursor: pointer; }
+        .sla-cache-notice-actions button:hover { background: #fff7df; }
         @media (max-width: 760px) {
             .sla-section-tabs-head { align-items:flex-start; flex-direction:column; }
             .sla-section-tabs-hint { white-space:normal; }
@@ -61,6 +68,7 @@ function buildCachedSectionNav(sections, summaryTitle) {
 
 function persistWorkspaceCache(sections, meta = {}) {
     if (!Array.isArray(sections) || !sections.length) return;
+    const rows = sections.reduce((sum, section) => sum + (Array.isArray(section.data) ? section.data.length : 0), 0);
     const payload = {
         version: 1,
         savedAt: new Date().toISOString(),
@@ -77,14 +85,107 @@ function persistWorkspaceCache(sections, meta = {}) {
     };
     try {
         localStorage.setItem(SLA_WORKSPACE_CACHE_KEY, JSON.stringify(payload));
+        localStorage.removeItem(SLA_WORKSPACE_CACHE_STATUS_KEY);
         logSLAUploadStep('已缓存本次导入工作区', {
             sections: payload.sections.length,
-            rows: payload.sections.reduce((sum, section) => sum + section.data.length, 0)
+            rows
         });
     } catch (err) {
-        logSLAUploadError('缓存导入工作区', err, { rows: payload.sections.reduce((sum, section) => sum + section.data.length, 0) });
+        logSLAUploadError('缓存导入工作区', err, { rows });
+        try {
+            localStorage.removeItem(SLA_WORKSPACE_CACHE_KEY);
+            localStorage.setItem(SLA_WORKSPACE_CACHE_STATUS_KEY, JSON.stringify({
+                version: 1,
+                status: 'too_large',
+                savedAt: new Date().toISOString(),
+                rows,
+                sections: payload.sections.length,
+                files: Array.isArray(meta.files) ? meta.files : [],
+                errorName: err && err.name ? err.name : '',
+                message: err && err.message ? err.message : ''
+            }));
+        } catch (statusErr) {
+            logSLAUploadError('记录导入工作区缓存状态', statusErr);
+        }
+        renderWorkspaceCacheNotice({
+            status: 'too_large',
+            rows,
+            sections: payload.sections.length,
+            files: Array.isArray(meta.files) ? meta.files : []
+        }, { preserveWorkspace: true });
         if (typeof showToast === 'function') showToast(SLAT('sla.upload.cacheLarge'), 'warning');
     }
+}
+
+function readWorkspaceCacheStatus() {
+    try {
+        return JSON.parse(localStorage.getItem(SLA_WORKSPACE_CACHE_STATUS_KEY) || 'null');
+    } catch (err) {
+        localStorage.removeItem(SLA_WORKSPACE_CACHE_STATUS_KEY);
+        return null;
+    }
+}
+
+function clearWorkspaceCacheStatus() {
+    try {
+        localStorage.removeItem(SLA_WORKSPACE_CACHE_STATUS_KEY);
+    } catch (err) {
+        logSLAUploadError('清空导入工作区缓存状态', err);
+    }
+}
+
+function renderWorkspaceCacheNotice(status, options = {}) {
+    const noticeStatus = status || readWorkspaceCacheStatus();
+    if (!noticeStatus || noticeStatus.status !== 'too_large') return false;
+    ensureLazyWorkspaceStyles();
+
+    const rowsText = noticeStatus.rows ? `${noticeStatus.rows}` : '-';
+    const fileCount = Array.isArray(noticeStatus.files) ? noticeStatus.files.length : 0;
+    const savedAt = noticeStatus.savedAt ? new Date(noticeStatus.savedAt).toLocaleString() : '';
+    const detailParts = [
+        SLAT('sla.upload.cacheTooLargeRows', { rows: rowsText }),
+        fileCount ? SLAT('sla.upload.cacheTooLargeFiles', { count: fileCount }) : '',
+        savedAt ? SLAT('sla.upload.cacheTooLargeTime', { time: savedAt }) : ''
+    ].filter(Boolean);
+
+    const html = `<div class="sla-cache-notice" id="sla-cache-notice">
+        <div class="sla-cache-notice-title">${SLAT('sla.upload.cacheTooLargeTitle')}</div>
+        <div class="sla-cache-notice-body">
+            ${SLAT('sla.upload.cacheTooLargeBody')}
+            <div style="margin-top:6px;">${detailParts.map(escapeHTML).join(' · ')}</div>
+        </div>
+        <div class="sla-cache-notice-actions">
+            <button type="button" onclick="SLAUpload.dismissWorkspaceCacheNotice()">${SLAT('sla.upload.cacheTooLargeDismiss')}</button>
+            <button type="button" onclick="document.getElementById('batch-upload')?.click()">${SLAT('sla.upload.cacheTooLargeClear')}</button>
+        </div>
+    </div>`;
+
+    const summaryNav = document.getElementById('summary-nav-area');
+    const mainWrapper = document.getElementById('main-wrapper');
+    if (mainWrapper && options.preserveWorkspace) {
+        const existing = document.getElementById('sla-cache-notice');
+        if (existing) existing.remove();
+        mainWrapper.insertAdjacentHTML('afterbegin', html);
+        return true;
+    }
+    if (summaryNav) {
+        summaryNav.innerHTML = html;
+        summaryNav.style.display = 'block';
+        return true;
+    }
+    if (mainWrapper && !options.preserveWorkspace) {
+        mainWrapper.innerHTML = html;
+        return true;
+    }
+    return false;
+}
+
+function dismissWorkspaceCacheNotice() {
+    clearWorkspaceCacheStatus();
+    const notice = document.getElementById('sla-cache-notice');
+    if (notice) notice.remove();
+    const summaryNav = document.getElementById('summary-nav-area');
+    if (summaryNav && !summaryNav.innerHTML.trim()) summaryNav.style.display = 'none';
 }
 
 function resetRuntimeWorkspace() {
@@ -95,6 +196,7 @@ function resetRuntimeWorkspace() {
 }
 
 function renderEmptyWorkspace() {
+    setGlobalRuleBoxCollapsed(false);
     const summaryNav = document.getElementById('summary-nav-area');
     const mainWrapper = document.getElementById('main-wrapper');
     if (summaryNav) {
@@ -108,6 +210,12 @@ function renderEmptyWorkspace() {
     if (window.SLAMetrics && typeof window.SLAMetrics.renderTopStickyBar === 'function') {
         window.SLAMetrics.renderTopStickyBar();
     }
+}
+
+function setGlobalRuleBoxCollapsed(collapsed) {
+    const ruleBox = document.querySelector('.rule-box');
+    if (!ruleBox) return;
+    ruleBox.hidden = Boolean(collapsed);
 }
 
 function activateSectionTab(secId) {
@@ -139,6 +247,7 @@ function clearWorkspaceCache({ skipConfirm = false } = {}) {
     if (!skipConfirm && !confirm(SLAT('sla.upload.confirmClearCache'))) return false;
     try {
         localStorage.removeItem(SLA_WORKSPACE_CACHE_KEY);
+        localStorage.removeItem(SLA_WORKSPACE_CACHE_STATUS_KEY);
     } catch (err) {
         logSLAUploadError('清空导入工作区缓存', err);
         if (typeof showToast === 'function') showToast(SLAT('sla.upload.clearCacheFail'), 'error');
@@ -161,7 +270,9 @@ async function restoreCachedWorkspace() {
         return false;
     }
     const sections = payload && Array.isArray(payload.sections) ? payload.sections.filter(s => s && s.secId && Array.isArray(s.data) && s.data.length) : [];
-    if (!sections.length || !window.SLASection || typeof window.SLASection.initSection !== 'function') return false;
+    if (!sections.length || !window.SLASection || typeof window.SLASection.initSection !== 'function') {
+        return renderWorkspaceCacheNotice(readWorkspaceCacheStatus());
+    }
 
     const mainWrapper = document.getElementById('main-wrapper');
     const summaryNav = document.getElementById('summary-nav-area');
@@ -180,6 +291,7 @@ async function restoreCachedWorkspace() {
         }
         await Promise.all(initPromises);
         activateInitialSection(sections);
+        setGlobalRuleBoxCollapsed(true);
         logSLAUploadStep('已恢复上次导入工作区', {
             savedAt: payload.savedAt,
             sections: sections.length,
@@ -190,7 +302,10 @@ async function restoreCachedWorkspace() {
     } catch (err) {
         logSLAUploadError('恢复上次导入工作区', err);
         if (mainWrapper) {
-            mainWrapper.innerHTML = `<div style="text-align:center;color:#999;padding:50px 0;border:2px dashed #ddd;border-radius:10px;">${SLAT('sla.upload.restoreFail')}</div>`;
+            mainWrapper.innerHTML = `<div class="sla-cache-notice">
+                <div class="sla-cache-notice-title">${SLAT('sla.upload.restoreFailTitle')}</div>
+                <div class="sla-cache-notice-body">${SLAT('sla.upload.restoreFail')}</div>
+            </div>`;
         }
         return false;
     }
@@ -390,6 +505,7 @@ async function handleSpecificUpload(e, forceMode) {
     const colorMap = { rectification: '#1976d2', risk: '#7b1fa2', special: '#00796b', sr: '#d9480f', vulnerability: '#c2410c' };
     const sourceFiles = getSourceNames(files);
     await window.SLASection.initSection(forceMode, forceMode, titleMap[forceMode], rawData, colorMap[forceMode], '', sourceFiles);
+    setGlobalRuleBoxCollapsed(true);
     persistWorkspaceCache([{
         secId: forceMode,
         mode: forceMode,
@@ -496,6 +612,7 @@ async function processBatchFiles(files, meta = {}) {
     // 等待所有表格的数据预处理完成；只有当前标签页渲染明细表 DOM。
     await Promise.all(initPromises);
     activateInitialSection(cacheSections);
+    if (cacheSections.length) setGlobalRuleBoxCollapsed(true);
     persistWorkspaceCache(cacheSections, { type: meta.type || 'batch', summaryTitle: meta.summaryTitle || batchTitle, files: files.map(f => f.name), source: meta.source || '' });
     
     API.logHistory('sla', meta.historyAction || '批量导入', `${files.length} 个文件`);
@@ -623,8 +740,9 @@ async function captureAndUploadSnapshot(fileNames, meta = {}) {
     // 提取各个基础表格面板的数据
     document.querySelectorAll('.dashboard-panel').forEach(panel => {
         if (panel.style.display === 'none') return;
-        const header = panel.previousElementSibling;
-        const secTitle = header ? header.querySelector('.section-title').innerText.replace(/\s*\(展示.*\)/, '').trim() : '未知区块';
+        const section = panel.closest('.section-card');
+        const titleEl = section ? section.querySelector('.section-title') : null;
+        const secTitle = titleEl ? titleEl.innerText.replace(/\s*\(展示.*\)/, '').trim() : '未知区块';
         const metrics = [];
         panel.querySelectorAll('.metric-card, .metric-total-wrapper').forEach(card => {
             const title = card.querySelector('.metric-title')?.innerText || '';
@@ -726,4 +844,4 @@ async function captureAndUploadSnapshot(fileNames, meta = {}) {
     }
 }
 
-window.SLAUpload = { handleBatchUpload, handleSpecificUpload, processBatchFiles, importUivAutoSession, readFiles, generateSchemaHash, restoreCachedWorkspace, clearWorkspaceCache, activateSectionTab, RECT_PRIORITY_COLS, RISK_PRIORITY_COLS, SPECIAL_PRIORITY_COLS, SR_PRIORITY_COLS, VULN_PRIORITY_COLS };
+window.SLAUpload = { handleBatchUpload, handleSpecificUpload, processBatchFiles, importUivAutoSession, readFiles, generateSchemaHash, restoreCachedWorkspace, clearWorkspaceCache, dismissWorkspaceCacheNotice, activateSectionTab, RECT_PRIORITY_COLS, RISK_PRIORITY_COLS, SPECIAL_PRIORITY_COLS, SR_PRIORITY_COLS, VULN_PRIORITY_COLS };

@@ -116,11 +116,13 @@ body.sla-page {
 .sys-btn:hover { background: #f1f3f5; border-color: #ccc; }
 .sys-btn input[type="file"] { display: none; }
 
-.rule-box { background-color: #f8fbfd; border: 1px solid #e3f2fd; padding: 10px 12px; margin-bottom: 15px; border-radius: 6px; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; font-size: 11px; color: #555; width: 100%; box-sizing: border-box; }
+.rule-box { background-color: #f8fbfd; border: 1px solid #e3f2fd; padding: 12px 14px; margin-bottom: 15px; border-radius: 6px; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; font-size: 12px; color: #475569; width: 100%; box-sizing: border-box; }
+.rule-box[hidden] { display: none !important; }
 .rule-col { display: flex; flex-direction: column; }
-.rule-col strong { margin-bottom: 4px; font-size: 12px; line-height: 1.25; }
-.rule-col ul { margin: 0; padding-left: 14px; }
-.rule-col li { margin-bottom: 3px; line-height: 1.28; }
+.rule-col strong { margin-bottom: 6px; font-size: 13px; line-height: 1.3; }
+.rule-col ul { margin: 0; padding-left: 16px; }
+.rule-col li { margin-bottom: 5px; line-height: 1.45; }
+.rule-col li b { color: #334155; }
 .rule-col-border { border-left: 1px dashed #d0d7de; padding-left: 10px; }
 
 .upload-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
@@ -202,6 +204,31 @@ body.sla-page {
     background: #f8fafc;
     color: #94a3b8;
     font-weight: 700;
+}
+
+.section-rule-panel {
+    margin: 12px 20px 0;
+    padding: 10px 12px;
+    border: 1px solid color-mix(in srgb, var(--section-rule-color, #64748b) 28%, #e5e7eb);
+    border-left: 4px solid var(--section-rule-color, #64748b);
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #475569;
+}
+.section-rule-title {
+    color: var(--section-rule-color, #334155);
+    font-size: 12px;
+    font-weight: 900;
+    margin-bottom: 6px;
+}
+.section-rule-panel ul {
+    margin: 0;
+    padding-left: 18px;
+}
+.section-rule-panel li {
+    margin: 3px 0;
+    font-size: 12px;
+    line-height: 1.45;
 }
 
 .dashboard-panel { display: flex; align-items: center; gap: 20px; background-color: #fff; padding: 15px 20px; border-bottom: 1px dashed #eee; flex-wrap: wrap; }

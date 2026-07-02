@@ -1510,20 +1510,82 @@
         }
 
         @media (max-width: 760px) {
+            body {
+                overflow-x: hidden;
+            }
+
             .bigscreen {
                 height: auto;
+                min-height: 100vh;
                 overflow: visible;
-                padding-left: 14px;
-                padding-right: 14px;
+                padding: calc(var(--navbar-h) + 12px) 12px 18px;
+            }
+
+            .screen-header {
+                gap: 12px;
+                margin-bottom: 12px;
             }
 
             .title-block h1 {
-                font-size: 24px;
+                font-size: 22px;
+                line-height: 1.2;
+            }
+
+            .subtitle {
+                font-size: 12px;
+                line-height: 1.45;
+            }
+
+            .signal-bar {
+                width: 100%;
+                max-width: none;
+                min-height: 38px;
+                justify-content: flex-start;
+                padding: 0 12px;
+            }
+
+            .screen-actions {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                align-items: stretch;
+                gap: 8px;
+            }
+
+            .screen-select,
+            .screen-input,
+            .screen-btn,
+            .script-version {
+                width: 100%;
+                min-width: 0;
+                height: 38px;
+            }
+
+            .screen-btn {
+                padding: 0 8px;
+            }
+
+            #rangeSelect,
+            #exportHtmlBtn {
+                grid-column: 1 / -1;
+            }
+
+            .script-version {
+                justify-content: center;
             }
 
             .screen-grid,
             .kpi-row {
                 grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .screen-grid {
+                height: auto;
+                min-height: 0;
+            }
+
+            .kpi-row {
+                grid-column: auto;
             }
 
             .weak-scroll-track,
@@ -1540,14 +1602,305 @@
                 grid-column: auto;
             }
 
-            .screen-actions {
+            .panel {
+                min-height: 260px;
+            }
+
+            .panel-head {
+                padding: 12px 12px 6px;
+                align-items: flex-start;
+            }
+
+            .panel-title {
+                min-width: 0;
+                font-size: 14px;
+                line-height: 1.35;
+            }
+
+            .panel-sub {
+                white-space: normal;
+                text-align: right;
+                line-height: 1.35;
+            }
+
+            .panel-body {
+                height: auto;
+                min-height: 200px;
+                padding: 8px 12px 12px;
+            }
+
+            .kpi {
+                min-height: 104px;
+                padding: 10px 12px;
+            }
+
+            .kpi-title {
+                font-size: 12px;
+                line-height: 1.35;
+            }
+
+            .kpi-slider-wrap {
+                min-height: 58px;
+            }
+
+            .kpi-slide-row1,
+            .kpi-slide-row2 {
+                align-items: flex-start;
+            }
+
+            .kpi-ticket-id,
+            .kpi-metric-val {
+                min-width: 0;
+                font-size: 14px;
+                white-space: normal;
+                overflow-wrap: anywhere;
+            }
+
+            .kpi-network {
+                max-width: 100%;
+            }
+
+            .customer-focus,
+            .main-trend,
+            .failure-focus,
+            .metric-carousel-panel,
+            .pass-strip-panel {
+                min-height: 310px;
+            }
+
+            .main-trend .panel-body {
+                height: auto;
+            }
+
+            .chart {
+                min-height: 220px;
+            }
+
+            .rank-list-wrap {
+                min-height: 218px;
+            }
+
+            .rank-list {
+                display: grid;
+                grid-template-columns: 1fr !important;
+                grid-template-rows: none !important;
+                gap: 8px;
+                overflow: visible;
+            }
+
+            .rank-row {
+                grid-template-columns: 38px minmax(0, 1fr) auto;
+                padding: 10px;
+            }
+
+            .rank-no {
+                width: 34px;
+                height: 34px;
+                font-size: 15px;
+            }
+
+            .rank-row .row-name {
+                padding-left: 2px;
+                font-size: 15px;
+            }
+
+            .flap-char {
+                font-size: 17px;
+                min-width: 12px;
+                padding: 3px 4px;
+            }
+
+            .rank-summary {
+                font-size: 11px;
+            }
+
+            .weak-list,
+            .metric-list {
+                max-height: none;
+                overflow: visible;
+            }
+
+            .weak-scroll-track,
+            .pass-track.is-scrolling {
+                animation: none !important;
+                transform: none !important;
+            }
+
+            .weak-row {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .risk-main {
+                display: block;
+            }
+
+            .risk-metric-title,
+            .risk-detail,
+            .risk-owner {
+                grid-column: auto;
+                grid-row: auto;
+            }
+
+            .risk-card {
+                min-height: 0;
+                padding: 10px;
+            }
+
+            .risk-card .row-name {
+                font-size: 15px;
+                white-space: normal;
+                overflow-wrap: anywhere;
+            }
+
+            .risk-owner {
+                min-height: 44px;
+                border-left: 0;
+                border-top: 1px solid rgba(120, 190, 255, 0.13);
+                padding-top: 8px;
+            }
+
+            .owner-slider {
+                position: relative;
+                min-height: 36px;
+            }
+
+            .owner-slide-item {
+                flex-direction: row;
+                justify-content: flex-start;
+                height: 36px;
+                padding-left: 0;
+            }
+
+            .owner-name,
+            .owner-empid {
+                width: auto;
+                text-align: left;
+            }
+
+            .cat-chip {
+                white-space: normal;
+                overflow-wrap: anywhere;
+            }
+
+            .metric-carousel {
+                min-height: 230px;
+            }
+
+            .carousel-slide {
+                padding: 10px;
+            }
+
+            .carousel-metric-name {
+                font-size: 14px;
+                line-height: 1.35;
+            }
+
+            .carousel-cat-row {
+                grid-template-columns: 1fr;
+                gap: 4px;
+            }
+
+            .manual-items-strip-wrapper {
+                height: auto;
+                min-height: 56px;
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 6px;
+            }
+
+            .manual-title {
+                margin-right: 0;
+            }
+
+            .manual-title::after {
+                display: none;
+            }
+
+            .manual-items-strip {
+                width: 100%;
+                min-height: 24px;
+            }
+
+            .manual-item {
+                font-size: 12px;
+                white-space: normal;
+                overflow-wrap: anywhere;
+            }
+
+            .pass-track {
+                transform: none !important;
+            }
+
+            .pass-page {
+                gap: 8px;
+            }
+
+            .pass-item {
+                min-height: 0;
+            }
+
+            .pass-item strong {
+                white-space: normal;
+            }
+
+            .bottom-bar {
+                align-items: stretch;
+                flex-direction: column;
+                gap: 10px;
+                margin-top: 12px;
+            }
+
+            .source-strip {
+                gap: 6px;
+            }
+
+            .source-strip span,
+            .contact-info {
+                width: 100%;
+                font-size: 11px;
+                line-height: 1.45;
+            }
+
+            .contact-info {
+                display: block;
+                color: var(--text-muted);
+                padding: 8px 0 0;
+            }
+
+            .owner-modal {
+                align-items: stretch;
+                justify-content: stretch;
+            }
+
+            .owner-dialog {
+                width: 100vw;
+                max-height: 100vh;
+                height: 100vh;
+            }
+
+            .owner-dialog-head,
+            .owner-dialog-foot {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .owner-dialog-foot {
                 align-items: stretch;
             }
 
-            .screen-select,
-            .screen-input,
-            .screen-btn {
-                width: 100%;
+            .owner-form {
+                grid-template-columns: 1fr;
+            }
+
+            .owner-table {
+                min-width: 720px;
+            }
+
+            .contact-dialog {
+                width: 100vw;
+                height: 100vh;
+                max-height: 100vh;
             }
         }
     </style>
