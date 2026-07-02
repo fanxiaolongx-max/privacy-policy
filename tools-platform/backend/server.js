@@ -32,6 +32,7 @@ const customToolsRepo = require('./models/custom-tools-repository');
 const navSettingsRoutes = require('./routes/nav-settings');
 const aiSettingsRoutes = require('./routes/ai-settings');
 const globalBackupRoutes = require('./routes/global-backup');
+const globalBackupRepo = require('./models/global-backup-repository');
 const remoteBackupSyncRepo = require('./models/remote-backup-sync-repository');
 const legacyJsonMigration = require('./models/legacy-json-migration');
 const { checkAuth, requireAdmin, checkHtmlAuth } = require('./middleware/auth');
@@ -251,6 +252,11 @@ async function startServer() {
         setTimeout(() => {
             remoteBackupSyncRepo.runStartupRemoteSync();
         }, 1200);
+        setTimeout(() => {
+            globalBackupRepo.startAutoBackupScheduler().catch(err => {
+                console.error('[GLOBAL BACKUP] Failed to start scheduled backup:', err);
+            });
+        }, 1800);
     });
 
     server.on('error', (err) => {

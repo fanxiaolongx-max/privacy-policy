@@ -38,6 +38,8 @@ let navState = {
     aiSaveTimer: null,
     remoteBackupSettings: null,
     remoteBackupSaveTimer: null,
+    scheduleBackupSettings: null,
+    scheduleBackupSaveTimer: null,
     updaterStatus: null,
     updaterVersion: null,
     updaterUnsubscribe: null
@@ -204,6 +206,21 @@ function registerNavbarI18n() {
             'nav.bk.optCompare': '比较备份新旧，未更新则跳过',
             'nav.bk.optPull': '拉取前请求主站立即生成备份',
             'nav.bk.optAuto': '启动时自动恢复最新备份',
+            'nav.bk.scheduleTitle': '定时备份',
+            'nav.bk.scheduleDesc': '默认每天凌晨 2 点自动生成服务器备份，并仅清理超过保留天数的自动备份。',
+            'nav.bk.scheduleEnabled': '开启定时备份',
+            'nav.bk.scheduleTime': '执行时间',
+            'nav.bk.scheduleRetention': '保留天数',
+            'nav.bk.scheduleDays': '天',
+            'nav.bk.scheduleNext': '下次执行：',
+            'nav.bk.scheduleLast': '最近成功：',
+            'nav.bk.scheduleLastFile': '最近文件：',
+            'nav.bk.scheduleError': '最近错误：',
+            'nav.bk.scheduleNotRun': '尚未执行',
+            'nav.bk.scheduleDisabled': '已关闭',
+            'nav.bk.scheduleSaved': '定时备份设置已保存',
+            'nav.bk.scheduleSaving': '正在保存定时备份设置...',
+            'nav.bk.scheduleRun': '立即执行一次',
             'nav.bk.stLocal': '时间显示：浏览器本地时区（{tz}）',
             'nav.bk.stCheck': '最近检查：',
             'nav.bk.stSync': '最近恢复：',
@@ -221,6 +238,7 @@ function registerNavbarI18n() {
             'nav.bk.btnUp': '上传并恢复',
             'nav.bk.badgeSync': '外部同步触发',
             'nav.bk.badgeSafe': '恢复前安全备份',
+            'nav.bk.badgeAuto': '定时备份',
             'nav.bk.fail': '加载备份列表失败：',
             'nav.bk.dlTitle': '下载备份',
             'nav.bk.rsTitle': '从该备份恢复',
@@ -383,6 +401,21 @@ function registerNavbarI18n() {
             'nav.bk.optCompare': 'Compare before restore, skip if not updated',
             'nav.bk.optPull': 'Request immediate backup generation on main site before pulling',
             'nav.bk.optAuto': 'Auto-restore latest backup on startup',
+            'nav.bk.scheduleTitle': 'Scheduled Backup',
+            'nav.bk.scheduleDesc': 'By default, creates a server backup every day at 02:00 and only prunes scheduled backups older than the retention window.',
+            'nav.bk.scheduleEnabled': 'Enable scheduled backup',
+            'nav.bk.scheduleTime': 'Run Time',
+            'nav.bk.scheduleRetention': 'Retention',
+            'nav.bk.scheduleDays': 'days',
+            'nav.bk.scheduleNext': 'Next Run: ',
+            'nav.bk.scheduleLast': 'Last Success: ',
+            'nav.bk.scheduleLastFile': 'Last File: ',
+            'nav.bk.scheduleError': 'Last Error: ',
+            'nav.bk.scheduleNotRun': 'Not run yet',
+            'nav.bk.scheduleDisabled': 'Disabled',
+            'nav.bk.scheduleSaved': 'Scheduled backup settings saved',
+            'nav.bk.scheduleSaving': 'Saving scheduled backup settings...',
+            'nav.bk.scheduleRun': 'Run Once Now',
             'nav.bk.stLocal': 'Time displayed in local timezone ({tz})',
             'nav.bk.stCheck': 'Last Check: ',
             'nav.bk.stSync': 'Last Sync: ',
@@ -400,6 +433,7 @@ function registerNavbarI18n() {
             'nav.bk.btnUp': 'Upload & Restore',
             'nav.bk.badgeSync': 'Remote Sync',
             'nav.bk.badgeSafe': 'Safety Backup',
+            'nav.bk.badgeAuto': 'Scheduled',
             'nav.bk.fail': 'Failed to load backups: ',
             'nav.bk.dlTitle': 'Download Backup',
             'nav.bk.rsTitle': 'Restore from this backup',
@@ -1352,6 +1386,68 @@ async function fetchRemoteBackupSettings() {
     return res.json();
 }
 
+async function fetchScheduleBackupSettings() {
+    const res = await fetch('/api/global-backup/schedule-settings', { headers: getAuthHeaderForNav() });
+    if (res.status === 404) {
+        return {
+            enabled: true,
+            time: '02:00',
+            retentionDays: 90,
+            nextRunAt: null,
+            lastSuccessAt: null,
+            lastBackupName: '',
+            lastError: '定时备份接口未加载，请重启后端服务。'
+        };
+    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+}
+
+function renderScheduleBackupSettings(settings = {}) {
+    const nextRunText = settings.enabled
+        ? formatBackupTime(settings.nextRunAt)
+        : navT('nav.bk.scheduleDisabled');
+    const lastSuccessText = settings.lastSuccessAt
+        ? formatBackupTime(settings.lastSuccessAt)
+        : navT('nav.bk.scheduleNotRun');
+    return `
+        <div class="nav-schedule-backup-card">
+            <div class="nav-remote-backup-head">
+                <div>
+                    <div class="nav-backup-panel-title">${navEscape(navT('nav.bk.scheduleTitle'))}</div>
+                    <div class="nav-backup-panel-desc">${navEscape(navT('nav.bk.scheduleDesc'))}</div>
+                </div>
+                <label class="nav-remote-switch">
+                    <input id="scheduleBackupEnabled" type="checkbox" ${settings.enabled !== false ? 'checked' : ''} onchange="scheduleBackupSettingsSave()">
+                    ${navEscape(navT('nav.bk.scheduleEnabled'))}
+                </label>
+            </div>
+            <div class="nav-schedule-backup-grid">
+                <label>
+                    <span>${navEscape(navT('nav.bk.scheduleTime'))}</span>
+                    <input id="scheduleBackupTime" type="time" class="nav-settings-input" value="${navEscape(settings.time || '02:00')}" oninput="scheduleBackupSettingsSave()">
+                </label>
+                <label>
+                    <span>${navEscape(navT('nav.bk.scheduleRetention'))}</span>
+                    <div class="nav-schedule-retention-row">
+                        <input id="scheduleBackupRetentionDays" type="number" min="1" max="3650" step="1" class="nav-settings-input" value="${navEscape(settings.retentionDays || 90)}" oninput="scheduleBackupSettingsSave()">
+                        <em>${navEscape(navT('nav.bk.scheduleDays'))}</em>
+                    </div>
+                </label>
+                <div class="nav-backup-toolbar nav-remote-backup-actions">
+                    <button type="button" onclick="runScheduledBackupNow()">${navEscape(navT('nav.bk.scheduleRun'))}</button>
+                </div>
+            </div>
+            <div class="nav-remote-backup-status">
+                <span>${navEscape(navT('nav.bk.scheduleNext'))}${navEscape(nextRunText)}</span>
+                <span>${navEscape(navT('nav.bk.scheduleLast'))}${navEscape(lastSuccessText)}</span>
+                ${settings.lastBackupName ? `<span>${navEscape(navT('nav.bk.scheduleLastFile'))}${navEscape(settings.lastBackupName)}</span>` : ''}
+                ${settings.lastError ? `<span class="warning">${navEscape(navT('nav.bk.scheduleError'))}${navEscape(settings.lastError)}</span>` : ''}
+            </div>
+        </div>
+    `;
+}
+
 function renderRemoteBackupSyncSettings(settings = {}) {
     const lastSync = settings.lastSync || {};
     const lastRemote = lastSync.remoteBackup || {};
@@ -1413,11 +1509,13 @@ function renderRemoteBackupSyncSettings(settings = {}) {
 async function renderBackupSettings(content) {
     content.innerHTML = `<div class="nav-settings-empty">${navEscape(navT('nav.bk.empty'))}</div>`;
     try {
-        const [data, remoteSettings] = await Promise.all([
+        const [data, remoteSettings, scheduleSettings] = await Promise.all([
             fetchBackupList(),
-            fetchRemoteBackupSettings()
+            fetchRemoteBackupSettings(),
+            fetchScheduleBackupSettings()
         ]);
         navState.remoteBackupSettings = remoteSettings;
+        navState.scheduleBackupSettings = scheduleSettings;
         const targetText = (data.targets || []).map(item => item.relPath || item.path).join('、') || 'backend/data、data';
         const rows = (data.backups || []).map(item => `
             <tr>
@@ -1426,6 +1524,7 @@ async function renderBackupSettings(content) {
                         ${navEscape(item.name)}
                         ${item.triggerType === 'remote-sync-request' ? `<span class="nav-backup-badge remote">${navEscape(navT('nav.bk.badgeSync'))}</span>` : ''}
                         ${item.triggerType === 'pre-restore' ? `<span class="nav-backup-badge safety">${navEscape(navT('nav.bk.badgeSafe'))}</span>` : ''}
+                        ${item.triggerType === 'scheduled-auto' ? `<span class="nav-backup-badge automatic">${navEscape(navT('nav.bk.badgeAuto'))}</span>` : ''}
                     </div>
                     <div class="nav-backup-meta">${formatBackupTime(item.modifiedAt)} · ${formatBackupSize(item.size)}</div>
                     ${item.reason ? `<div class="nav-backup-meta">Reason: ${navEscape(item.reason)}</div>` : ''}
@@ -1440,6 +1539,7 @@ async function renderBackupSettings(content) {
 
         content.innerHTML = `
             <div class="nav-settings-help">${navEscape(navT('nav.bk.help', { target: targetText }))}</div>
+            ${renderScheduleBackupSettings(scheduleSettings)}
             ${renderRemoteBackupSyncSettings(remoteSettings)}
             <div class="nav-backup-panel">
                 <div>
@@ -1488,6 +1588,59 @@ function collectRemoteBackupSettings(options = {}) {
     }
     return payload;
 }
+
+function collectScheduleBackupSettings() {
+    return {
+        enabled: Boolean(document.getElementById('scheduleBackupEnabled')?.checked),
+        time: document.getElementById('scheduleBackupTime')?.value || '02:00',
+        retentionDays: parseInt(document.getElementById('scheduleBackupRetentionDays')?.value || '90', 10)
+    };
+}
+
+async function saveScheduleBackupSettingsNow() {
+    const res = await fetch('/api/global-backup/schedule-settings', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaderForNav()
+        },
+        body: JSON.stringify(collectScheduleBackupSettings())
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    navState.scheduleBackupSettings = data;
+    const indicator = document.getElementById('navSettingsSaveState');
+    if (indicator) indicator.textContent = navT('nav.bk.scheduleSaved');
+    return data;
+}
+
+window.scheduleBackupSettingsSave = function () {
+    const indicator = document.getElementById('navSettingsSaveState');
+    if (indicator) indicator.textContent = navT('nav.bk.scheduleSaving');
+    clearTimeout(navState.scheduleBackupSaveTimer);
+    navState.scheduleBackupSaveTimer = setTimeout(async () => {
+        try {
+            await saveScheduleBackupSettingsNow();
+        } catch (e) {
+            if (indicator) indicator.textContent = `${navT('nav.set.saveFail')}${e.message}`;
+        }
+    }, 650);
+};
+
+window.runScheduledBackupNow = async function () {
+    clearTimeout(navState.scheduleBackupSaveTimer);
+    await saveScheduleBackupSettingsNow();
+    await runGlobalBackupAction('正在执行定时备份...', async () => {
+        const res = await fetch('/api/global-backup/schedule-run', {
+            method: 'POST',
+            headers: getAuthHeaderForNav()
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+        return data;
+    });
+    renderNavSettingsContent();
+};
 
 async function saveRemoteBackupSettingsNow(options = {}) {
     const res = await fetch('/api/global-backup/remote-settings', {

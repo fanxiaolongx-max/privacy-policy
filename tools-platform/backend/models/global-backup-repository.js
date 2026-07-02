@@ -4,10 +4,26 @@ const crypto = require('crypto');
 const JSZip = require('jszip');
 
 const { DATA_DIR } = require('./store');
+const { readKV, writeKV } = require('./kv-store');
 
 const BACKUP_DIR = path.join(DATA_DIR, '../backups');
 const RESTORE_TMP_DIR = path.join(DATA_DIR, '../tmp/restores');
 const BACKUP_VERSION = 2; // bumped version for the new path structure
+const SCHEDULE_KV_CATEGORY = 'global_backup';
+const SCHEDULE_KV_KEY = 'auto_schedule';
+const AUTO_BACKUP_REASON = 'scheduled-auto';
+const DEFAULT_SCHEDULE_SETTINGS = {
+    enabled: true,
+    time: '02:00',
+    retentionDays: 90,
+    lastRunAt: null,
+    lastSuccessAt: null,
+    lastBackupName: '',
+    lastError: ''
+};
+
+let schedulerTimer = null;
+let schedulerRunning = false;
 
 const DATA_TARGETS = [
     { id: 'primary_data', absPath: DATA_DIR }
@@ -75,7 +91,25 @@ function getReasonFromBackupName(name) {
 function getBackupTriggerType(reason) {
     if (String(reason || '').startsWith('remote-sync-request')) return 'remote-sync-request';
     if (String(reason || '').startsWith('pre-restore')) return 'pre-restore';
+    if (String(reason || '').startsWith(AUTO_BACKUP_REASON)) return 'scheduled-auto';
     return 'manual';
+}
+
+function normalizeScheduleSettings(raw = {}) {
+    const timeRaw = String(raw.time || DEFAULT_SCHEDULE_SETTINGS.time).trim();
+    const time = /^([01]\d|2[0-3]):[0-5]\d$/.test(timeRaw) ? timeRaw : DEFAULT_SCHEDULE_SETTINGS.time;
+    const retentionDays = Math.max(1, Math.min(3650, parseInt(raw.retentionDays, 10) || DEFAULT_SCHEDULE_SETTINGS.retentionDays));
+    return {
+        ...DEFAULT_SCHEDULE_SETTINGS,
+        ...raw,
+        enabled: raw.enabled !== false,
+        time,
+        retentionDays,
+        lastRunAt: raw.lastRunAt || null,
+        lastSuccessAt: raw.lastSuccessAt || null,
+        lastBackupName: raw.lastBackupName || '',
+        lastError: raw.lastError || ''
+    };
 }
 
 function listBackups() {
@@ -237,6 +271,121 @@ async function createBackup(options = {}) {
     }
 }
 
+function pruneScheduledBackups(retentionDays = DEFAULT_SCHEDULE_SETTINGS.retentionDays) {
+    ensureDir(BACKUP_DIR);
+    const days = Math.max(1, Math.min(3650, parseInt(retentionDays, 10) || DEFAULT_SCHEDULE_SETTINGS.retentionDays));
+    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+    const removed = [];
+    listBackups().forEach(item => {
+        if (item.triggerType !== 'scheduled-auto') return;
+        const modifiedAt = new Date(item.modifiedAt || item.createdAt).getTime();
+        if (!Number.isFinite(modifiedAt) || modifiedAt >= cutoff) return;
+        try {
+            const filePath = getBackupPath(item.name);
+            fs.rmSync(filePath, { force: true });
+            removed.push(item.name);
+        } catch (err) {
+            console.warn('[GLOBAL BACKUP] Failed to prune scheduled backup:', item.name, err.message);
+        }
+    });
+    return { retentionDays: days, removedCount: removed.length, removed };
+}
+
+async function getScheduleSettings() {
+    return normalizeScheduleSettings(await readKV(SCHEDULE_KV_CATEGORY, SCHEDULE_KV_KEY, DEFAULT_SCHEDULE_SETTINGS));
+}
+
+async function saveScheduleSettings(nextSettings = {}) {
+    const current = await getScheduleSettings();
+    const normalized = normalizeScheduleSettings({ ...current, ...nextSettings });
+    await writeKV(SCHEDULE_KV_CATEGORY, SCHEDULE_KV_KEY, normalized);
+    scheduleNextAutoBackup(normalized);
+    return getScheduleStatus(normalized);
+}
+
+function getNextRunAt(settings = normalizeScheduleSettings()) {
+    const normalized = normalizeScheduleSettings(settings);
+    const [hour, minute] = normalized.time.split(':').map(Number);
+    const next = new Date();
+    next.setHours(hour, minute, 0, 0);
+    if (next.getTime() <= Date.now()) {
+        next.setDate(next.getDate() + 1);
+    }
+    return next;
+}
+
+function getScheduleStatus(settings = normalizeScheduleSettings()) {
+    const normalized = normalizeScheduleSettings(settings);
+    return {
+        ...normalized,
+        nextRunAt: normalized.enabled ? getNextRunAt(normalized).toISOString() : null,
+        running: schedulerRunning
+    };
+}
+
+function clearAutoBackupTimer() {
+    if (schedulerTimer) {
+        clearTimeout(schedulerTimer);
+        schedulerTimer = null;
+    }
+}
+
+function scheduleNextAutoBackup(settings = normalizeScheduleSettings()) {
+    clearAutoBackupTimer();
+    const normalized = normalizeScheduleSettings(settings);
+    if (!normalized.enabled) {
+        console.log('[GLOBAL BACKUP] Scheduled backup disabled.');
+        return;
+    }
+    const nextRunAt = getNextRunAt(normalized);
+    const delay = Math.max(1000, nextRunAt.getTime() - Date.now());
+    schedulerTimer = setTimeout(() => {
+        runScheduledBackup({ source: 'timer' }).catch(err => {
+            console.error('[GLOBAL BACKUP] Scheduled backup failed:', err);
+        });
+    }, delay);
+    if (schedulerTimer.unref) schedulerTimer.unref();
+    console.log(`[GLOBAL BACKUP] Next scheduled backup: ${nextRunAt.toLocaleString('zh-CN', { hour12: false })}`);
+}
+
+async function runScheduledBackup(options = {}) {
+    if (schedulerRunning) {
+        const settings = await getScheduleSettings();
+        return { skipped: true, reason: 'already-running', schedule: getScheduleStatus(settings) };
+    }
+    schedulerRunning = true;
+    const settings = await getScheduleSettings();
+    const startedAt = new Date().toISOString();
+    let nextSettings = { ...settings, lastRunAt: startedAt, lastError: '' };
+    try {
+        const backup = await createBackup({ reason: options.reason || AUTO_BACKUP_REASON });
+        const cleanup = pruneScheduledBackups(settings.retentionDays);
+        nextSettings = {
+            ...nextSettings,
+            lastSuccessAt: new Date().toISOString(),
+            lastBackupName: backup.name,
+            lastError: ''
+        };
+        await writeKV(SCHEDULE_KV_CATEGORY, SCHEDULE_KV_KEY, normalizeScheduleSettings(nextSettings));
+        return { success: true, backup, cleanup, schedule: getScheduleStatus(nextSettings) };
+    } catch (err) {
+        nextSettings = { ...nextSettings, lastError: err.message || String(err) };
+        await writeKV(SCHEDULE_KV_CATEGORY, SCHEDULE_KV_KEY, normalizeScheduleSettings(nextSettings));
+        throw err;
+    } finally {
+        schedulerRunning = false;
+        if (options.reschedule !== false) {
+            scheduleNextAutoBackup(await getScheduleSettings());
+        }
+    }
+}
+
+async function startAutoBackupScheduler() {
+    const settings = await getScheduleSettings();
+    scheduleNextAutoBackup(settings);
+    return getScheduleStatus(settings);
+}
+
 async function extractBackup(zipPath) {
     ensureDir(RESTORE_TMP_DIR);
     const extractId = `restore_${Date.now().toString(36)}_${crypto.randomBytes(4).toString('hex')}`;
@@ -324,5 +473,11 @@ module.exports = {
     listBackups,
     getBackupPath,
     restoreFromZip,
-    deleteBackup
+    deleteBackup,
+    getScheduleSettings,
+    saveScheduleSettings,
+    getScheduleStatus,
+    runScheduledBackup,
+    startAutoBackupScheduler,
+    pruneScheduledBackups
 };
