@@ -605,6 +605,57 @@ function parseNum(str) {
     return isNaN(n) ? NaN : n;
 }
 
+function getPreviousReportSnapshot(snap) {
+    if (!snap || !Array.isArray(snapshots) || snapshots.length < 2) return null;
+    const currentIndex = snapshots.findIndex(item => item && item.id === snap.id);
+    if (currentIndex >= 0 && currentIndex + 1 < snapshots.length) {
+        return snapshots[currentIndex + 1];
+    }
+
+    const currentTime = new Date(snap.timestamp || 0).getTime();
+    if (!Number.isFinite(currentTime) || currentTime <= 0) return null;
+    return snapshots
+        .filter(item => item && item.id !== snap.id && new Date(item.timestamp || 0).getTime() < currentTime)
+        .sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime())[0] || null;
+}
+
+function buildPreviousMetricValueMap(prevSnap) {
+    const map = {};
+    const metrics = Array.isArray(prevSnap && prevSnap.topMetrics) ? prevSnap.topMetrics : [];
+    metrics.forEach(metric => {
+        if (!metric || !metric.label) return;
+        map[`${metric.label}@@整体`] = metric.value;
+        (metric.subMetrics || []).forEach(sub => {
+            if (!sub || !sub.category) return;
+            map[`${metric.label}@@${sub.category}`] = sub.value;
+        });
+    });
+    return map;
+}
+
+function normalizeTrendNumber(value) {
+    if (value === undefined || value === null || value === '' || value === '--') return NaN;
+    const text = String(value).trim();
+    if (!/[0-9]/.test(text)) return NaN;
+    return parseNum(text);
+}
+
+function renderMetricTrend(currentValue, previousValue) {
+    const currentNum = normalizeTrendNumber(currentValue);
+    const previousNum = normalizeTrendNumber(previousValue);
+    if (!Number.isFinite(currentNum) || !Number.isFinite(previousNum)) return '';
+
+    const delta = currentNum - previousNum;
+    if (Math.abs(delta) < 0.000001) return '';
+
+    const direction = delta > 0 ? 'up' : 'down';
+    const arrow = delta > 0 ? '▲' : '▼';
+    const title = delta > 0
+        ? `较上次快照上升 ${formatScoreValue(Math.abs(delta))}`
+        : `较上次快照下降 ${formatScoreValue(Math.abs(delta))}`;
+    return `<span class="metric-trend ${direction}" title="${escapeHTML(title)}">${arrow}</span>`;
+}
+
 function isProportionalScoringEnabled(targetData) {
     return !!(targetData && targetData.proportionalScoring);
 }
@@ -825,6 +876,7 @@ function renderReport(snap) {
     const content = document.getElementById('report-content');
     const { topMetrics } = snap;
     const targetMonth = document.getElementById('target-month-select').value;
+    const previousMetricValues = buildPreviousMetricValueMap(getPreviousReportSnapshot(snap));
 
     let metricCols = [...(topMetrics || [])];
 
@@ -1185,7 +1237,7 @@ function renderReport(snap) {
                 </td>
                 <td data-col="${colIdx++}" style="color:#666; font-weight:bold; background:#fafafa;">${weight}</td>
                 <td data-col="${colIdx++}" style="color:#0277bd; font-weight:bold; background:#f5f8fa;">${targetStr}</td>
-                <td data-col="${colIdx++}" style="background:#fff8e1; border-right:2px solid #ffe082;"><span class="${globalDisplayClass}"${globalTitleAttr}>${escapeHTML(String(m.value || '--'))}</span></td>`;
+                <td data-col="${colIdx++}" style="background:#fff8e1; border-right:2px solid #ffe082;"><span class="${globalDisplayClass}"${globalTitleAttr}>${escapeHTML(String(m.value || '--'))}${renderMetricTrend(m.value, previousMetricValues[`${m.label}@@整体`])}</span></td>`;
 
             categories.forEach(cat => {
                 const cell = catData[cat].values[m.label];
@@ -1198,7 +1250,7 @@ function renderReport(snap) {
                         displayClass = cell.isFailing ? 'val-warn' : 'val-good';
                         titleAttr = cell.isFailing ? ` title="不达标，距离目标差 ${cell.gapStr}"` : ` title="达标"`;
                     }
-                    html += `<td data-col="${colIdx++}"><span class="${displayClass}"${titleAttr}>${escapeHTML(cell.raw)}</span></td>`;
+                    html += `<td data-col="${colIdx++}"><span class="${displayClass}"${titleAttr}>${escapeHTML(cell.raw)}${renderMetricTrend(cell.raw, previousMetricValues[`${m.label}@@${cat}`])}</span></td>`;
                 }
             });
 

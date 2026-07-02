@@ -107,6 +107,80 @@ function buildDateParseWarningHTML(secId) {
         </div>`;
 }
 
+function getSectionRuleDetails(mode) {
+    const rules = {
+        rectification: {
+            title: '整改详单规则',
+            tone: '#1976d2',
+            items: [
+                '文件前缀：PBI_自动抓取-整改详单_整改_Latest',
+                '检查状态字段：task_status；取值规则：只检查这一列',
+                'Checking：task_create_time + 30天，剩余 <= 10 天标红，剩余 < 30 天标黄',
+                'Rectification Implementation：按 rectify_plan_end_time 倒计时，剩余 <= 10 天标红，剩余 < 82 天标黄',
+                '关键列：task_status / task_create_time / rectify_plan_end_time'
+            ]
+        },
+        special: {
+            title: 'CPT专项风险规则',
+            tone: '#00796b',
+            items: [
+                '文件前缀：PBI_自动抓取-CPT风险详表_Latest',
+                '检查状态字段优先级：状态-Status -> task_status_en -> task_status -> task_status_cn；取值规则：按顺序取第一个非空值为准',
+                '待确认/草稿/Draft/To Be Confirmed/Confirm/Confirming：创建日期 + 30天，剩余 <= 10 天标红，剩余 < 30 天标青',
+                '处理中/评审中/Processing/Reviewing：按要求完成日期倒计时，剩余 <= 10 天标红，剩余 < 30 天标青',
+                '关键列：状态-Status / 创建日期-Create Date / 要求完成日期-Required Completion Date'
+            ]
+        },
+        risk: {
+            title: '常规风险规则',
+            tone: '#7b1fa2',
+            items: [
+                '文件前缀：PBI_自动抓取-风险详单_Latest',
+                '检查状态字段优先级：风险状态 -> risk_status；取值规则：按顺序取第一个非空值为准',
+                'Risk Confirming：创单时间 + 30天，剩余 <= 10 天标红，剩余 < 30 天标紫',
+                'Risk Open：按期望关闭时间倒计时，剩余 <= 10 天标红，剩余 < 30 天标紫',
+                'Risk Suspended：按期望关闭时间-挂起倒计时，剩余 <= 10 天标红，剩余 < 30 天标紫',
+                '关键列：风险状态 / 创单时间 / 期望关闭时间 / 期望关闭时间-挂起'
+            ]
+        },
+        sr: {
+            title: 'SR详单规则',
+            tone: '#d9480f',
+            items: [
+                '文件前缀：PBI_自动抓取-详单-SR_Latest',
+                '检查状态字段：sr_status_name；取值规则：只检查这一列；同时读取 hw_sev_name / urgency 判断 Critical 等级，读取 overdue 判断上游超期标识',
+                '在途单：以 exp_close_date 为唯一截止基准；有 sus_exp_close_date 时按挂起后期望关闭时间判断',
+                'Pending/Suspend/Hold/挂起：忽略预警，上游每天顺延期望关闭时间',
+                '已关闭单：act_close_date 晚于 exp_close_date 或上游 overdue=Y 计为历史超期；如挂起后未超期则单独标识',
+                'Critical：消耗 > 85% 或剩余 < 12小时标红；消耗 > 70% 且剩余 < 48小时标黄；其他在途单消耗 > 95% 标红，> 80% 标黄'
+            ]
+        },
+        vulnerability: {
+            title: '漏洞预警详单规则',
+            tone: '#c2410c',
+            items: [
+                '文件前缀：PBI_自动抓取-详单漏洞_漏洞预警_Latest',
+                '检查状态字段：task_status；取值规则：只检查这一列',
+                '状态范围：Checking / Communication Dept / Communication Customer',
+                '建单基准：create_time 或 task_create_time + 30天',
+                '剩余 <= 10 天标红，剩余 < 30 天标黄',
+                '关键列：task_status / create_time / task_create_time'
+            ]
+        }
+    };
+    return rules[mode] || null;
+}
+
+function buildSectionRuleHTML(mode) {
+    const rule = getSectionRuleDetails(mode);
+    if (!rule) return '';
+    const items = rule.items.map(item => `<li>${escapeHTML(item)}</li>`).join('');
+    return `<div class="section-rule-panel" style="--section-rule-color:${escapeHTML(rule.tone)}">
+        <div class="section-rule-title">${escapeHTML(rule.title)}</div>
+        <ul>${items}</ul>
+    </div>`;
+}
+
 function getSRStatus(row) {
     return getCompatibleVal(row, ['sr_status_name']).trim();
 }
@@ -272,7 +346,8 @@ function preprocessData(secId, rawData) {
             }
         } else if (mode === 'special') {
             const status = getCompatibleVal(row, ['状态-Status', 'task_status_en', 'task_status', 'task_status_cn']);
-            if (['待确认','草稿','Draft','To Be Confirmed'].includes(status)) {
+            const normalizedStatus = status.toLowerCase();
+            if (['待确认','草稿'].includes(status) || ['draft','to be confirmed','confirm','confirming'].includes(normalizedStatus)) {
                 const ctStr = getCompatibleVal(row, ['创建日期-Create Date', 'create_time']);
                 if (ctStr) {
                     const cd = parseDateForSLA(state, rowIndex, '创建日期-Create Date/create_time', ctStr, '专项风险创建日期');
@@ -461,6 +536,7 @@ function buildDOM(secId, title, themeColor) {
                 <span class="rule-summary-badge" id="rule-summary-badge-${secId}" title="${tt('sla.section.noRulesTitle')}">${tt('sla.section.ruleSummary', { main: 0, sub: 0 })}</span>
             </h3>
         </div>
+        ${buildSectionRuleHTML(AppState[secId].mode)}
         <div class="dashboard-panel" id="dashboard-${secId}" style="display:none;"></div>
         ${buildDateParseWarningHTML(secId)}
         <div class="toolbar" id="toolbar-${secId}">

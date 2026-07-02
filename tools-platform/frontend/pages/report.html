@@ -275,6 +275,33 @@
             color: #aaa;
         }
 
+        .metric-trend {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 15px;
+            height: 15px;
+            margin-left: 4px;
+            border-radius: 50%;
+            font-size: 10px;
+            line-height: 1;
+            font-weight: 800;
+            vertical-align: 1px;
+            border: 1px solid transparent;
+        }
+
+        .metric-trend.up {
+            color: #047857;
+            background: #ecfdf5;
+            border-color: #a7f3d0;
+        }
+
+        .metric-trend.down {
+            color: #b45309;
+            background: #fffbeb;
+            border-color: #fde68a;
+        }
+
         .ratio-score-toggle {
             padding: 1px 5px;
             border-radius: 999px;
@@ -811,7 +838,7 @@
         </div>
     </div>
 
-    <script src="/js/report/report.js?v=20260630-02"></script>
+    <script src="/js/report/report.js?v=20260701-01"></script>
 </body>
 
 </html>
