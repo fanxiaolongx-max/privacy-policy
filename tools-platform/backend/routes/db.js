@@ -307,7 +307,8 @@ router.get('/config/:key', (req, res) => {
 });
 
 router.post('/config/:key', (req, res) => {
-    if (req.params.key !== 'bigscreen_contact_info' && (!req.user || req.user.role !== 'admin')) {
+    const publicEditableKeys = new Set(['bigscreen_contact_info', 'bigscreen_title']);
+    if (!publicEditableKeys.has(req.params.key) && (!req.user || req.user.role !== 'admin')) {
         return res.status(403).json({ error: '没有权限，仅管理员可修改配置' });
     }
     const valueJson = JSON.stringify(req.body);

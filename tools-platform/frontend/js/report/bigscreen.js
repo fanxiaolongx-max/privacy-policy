@@ -15,7 +15,8 @@
         refreshStatus: '',
         refreshStatusKey: 'statusSynced',
         i18nMap: {},
-        contactInfo: null
+        contactInfo: null,
+        dashboardTitle: null
     };
 
     const BIGSCREEN_I18N = {
@@ -138,6 +139,14 @@
             contactEnLabel: '英文提示语',
             contactZhPlaceholder: '请输入中文联系提示',
             contactEnPlaceholder: '请输入英文联系提示',
+            titleModalTitle: '大标题配置',
+            titleModalSub: '点击大屏主标题可同时维护中文和英文标题。',
+            titleZhLabel: '中文大标题',
+            titleEnLabel: '英文大标题',
+            titleZhPlaceholder: '请输入中文大标题',
+            titleEnPlaceholder: 'Enter the English dashboard title',
+            titleSaved: '大标题已保存',
+            titleSaveFail: '保存失败: {message}',
             contactSaved: '联系信息已保存',
             contactSaveFail: '保存失败: {message}',
             noSnapshot: '-',
@@ -268,6 +277,14 @@
             contactEnLabel: 'English Message',
             contactZhPlaceholder: 'Enter the Chinese contact message',
             contactEnPlaceholder: 'Enter the English contact message',
+            titleModalTitle: 'Dashboard Title Config',
+            titleModalSub: 'Click the dashboard title to maintain Chinese and English titles together.',
+            titleZhLabel: 'Chinese Title',
+            titleEnLabel: 'English Title',
+            titleZhPlaceholder: 'Enter the Chinese dashboard title',
+            titleEnPlaceholder: 'Enter the English dashboard title',
+            titleSaved: 'Dashboard title saved',
+            titleSaveFail: 'Save failed: {message}',
             contactSaved: 'Contact information saved',
             contactSaveFail: 'Save failed: {message}',
             noSnapshot: '-',
@@ -321,6 +338,13 @@
         };
     }
 
+    function defaultDashboardTitle() {
+        return {
+            zh: BIGSCREEN_I18N['zh-CN'].title,
+            en: BIGSCREEN_I18N['en-US'].title
+        };
+    }
+
     function cleanContactText(value) {
         return String(value || '').trim().replace(/^[*•]\s*/, '');
     }
@@ -334,6 +358,32 @@
             zh: zh || defaults.zh,
             en: en || defaults.en
         };
+    }
+
+    function normalizeDashboardTitle(raw) {
+        const defaults = defaultDashboardTitle();
+        if (!raw || typeof raw !== 'object') return defaults;
+        const zh = String(raw.zh || raw.zhCN || raw['zh-CN'] || raw.title || '').trim();
+        const en = String(raw.en || raw.enUS || raw['en-US'] || '').trim();
+        return {
+            zh: zh || defaults.zh,
+            en: en || defaults.en
+        };
+    }
+
+    function getDashboardTitle() {
+        const titleInfo = normalizeDashboardTitle(state.dashboardTitle);
+        return isEn() ? titleInfo.en : titleInfo.zh;
+    }
+
+    function renderDashboardTitle() {
+        const titleText = getDashboardTitle();
+        const h1 = $('bigscreenTitle') || document.querySelector('.title-block h1');
+        if (h1) {
+            h1.textContent = titleText;
+            h1.title = isEn() ? 'Click to edit Chinese and English titles' : '点击编辑中文和英文大标题';
+        }
+        document.title = `${titleText} - Tools Platform`;
     }
 
     function renderContactInfo() {
@@ -372,9 +422,7 @@
     }
 
     function applyStaticI18n() {
-        const h1 = document.querySelector('.title-block h1');
-        if (h1) h1.textContent = tr('title');
-        document.title = `${tr('title')} - Tools Platform`;
+        renderDashboardTitle();
         if ($('bigscreenSubtitle') && !state.latest) {
             $('bigscreenSubtitle').textContent = tr('loadingSubtitle');
         }
@@ -440,6 +488,18 @@
         if (contactZhInput) contactZhInput.placeholder = tr('contactZhPlaceholder');
         const contactEnInput = $('contactEnInput');
         if (contactEnInput) contactEnInput.placeholder = tr('contactEnPlaceholder');
+        const titleDialogTitle = $('titleDialogTitle');
+        if (titleDialogTitle) titleDialogTitle.textContent = tr('titleModalTitle');
+        const titleDialogSub = $('titleDialogSub');
+        if (titleDialogSub) titleDialogSub.textContent = tr('titleModalSub');
+        const titleZhLabel = $('titleZhLabel');
+        if (titleZhLabel) titleZhLabel.textContent = tr('titleZhLabel');
+        const titleEnLabel = $('titleEnLabel');
+        if (titleEnLabel) titleEnLabel.textContent = tr('titleEnLabel');
+        const titleZhInput = $('titleZhInput');
+        if (titleZhInput) titleZhInput.placeholder = tr('titleZhPlaceholder');
+        const titleEnInput = $('titleEnInput');
+        if (titleEnInput) titleEnInput.placeholder = tr('titleEnPlaceholder');
         const ownerNameInput = $('ownerNameInput');
         if (ownerNameInput) ownerNameInput.placeholder = tr('ownerNamePlaceholder');
         const ownerEmpInput = $('ownerEmpIdInput');
@@ -469,6 +529,14 @@
             if (btn.getAttribute('onclick') === 'BigscreenContact.close()') {
                 btn.textContent = btn.closest('.owner-dialog-foot') ? tr('cancel') : tr('close');
             } else if (btn.getAttribute('onclick') === 'BigscreenContact.save()') {
+                btn.textContent = tr('saveServer');
+            }
+        });
+        const titleBtns = document.querySelectorAll('#titleModal button');
+        titleBtns.forEach(btn => {
+            if (btn.getAttribute('onclick') === 'BigscreenTitle.close()') {
+                btn.textContent = btn.closest('.owner-dialog-foot') ? tr('cancel') : tr('close');
+            } else if (btn.getAttribute('onclick') === 'BigscreenTitle.save()') {
                 btn.textContent = tr('saveServer');
             }
         });
@@ -724,6 +792,7 @@
             snapshots: state.snapshots || [],
             owners: state.owners || [],
             contactInfo: state.contactInfo || null,
+            dashboardTitle: state.dashboardTitle || null,
             i18nMap: state.i18nMap || {},
             metricOrder: state.metricOrder || [],
             refreshStatusKey: state.refreshStatusKey || '',
@@ -2298,6 +2367,15 @@
         if ($('ownerConfigBtn')) $('ownerConfigBtn').addEventListener('click', openOwnerModal);
         if ($('exportHtmlBtn')) $('exportHtmlBtn').addEventListener('click', exportStandaloneHtml);
         if ($('ownerAvatarInput')) $('ownerAvatarInput').addEventListener('change', handleOwnerAvatarChange);
+        const titleEl = $('bigscreenTitle');
+        if (titleEl) {
+            titleEl.addEventListener('keydown', event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    openTitleModal();
+                }
+            });
+        }
         document.addEventListener('fullscreenchange', syncFullscreenButton);
         syncFullscreenButton();
         window.addEventListener('tools:languagechange', () => {
@@ -2320,6 +2398,56 @@
         save: saveOwners,
         open: openOwnerModal,
         close: closeOwnerModal
+    };
+
+    function openTitleModal() {
+        const titleInfo = normalizeDashboardTitle(state.dashboardTitle);
+        const zhInput = $('titleZhInput');
+        const enInput = $('titleEnInput');
+        if (zhInput) zhInput.value = titleInfo.zh;
+        if (enInput) enInput.value = titleInfo.en;
+        const modal = $('titleModal');
+        if (modal) {
+            modal.classList.add('open');
+            modal.setAttribute('aria-hidden', 'false');
+        }
+        applyStaticI18n();
+        setTimeout(() => {
+            const focusInput = isEn() ? enInput : zhInput;
+            if (focusInput) focusInput.focus();
+        }, 0);
+    }
+
+    function closeTitleModal() {
+        const modal = $('titleModal');
+        if (modal) {
+            modal.classList.remove('open');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+    }
+
+    async function saveDashboardTitle() {
+        const defaults = defaultDashboardTitle();
+        const zh = String(($('titleZhInput') && $('titleZhInput').value) || '').trim() || defaults.zh;
+        const en = String(($('titleEnInput') && $('titleEnInput').value) || '').trim() || defaults.en;
+        const nextTitle = { zh, en };
+        state.dashboardTitle = nextTitle;
+        renderDashboardTitle();
+
+        try {
+            await window.API.post('/api/db/config/bigscreen_title', nextTitle);
+            closeTitleModal();
+            if (window.showToast) window.showToast(tr('titleSaved'));
+        } catch (err) {
+            console.error('保存大标题失败', err);
+            if (window.showToast) window.showToast(tr('titleSaveFail', { message: err.message }), 'error');
+        }
+    }
+
+    window.BigscreenTitle = {
+        open: openTitleModal,
+        close: closeTitleModal,
+        save: saveDashboardTitle
     };
 
     function openContactModal() {
@@ -2402,6 +2530,15 @@
     };
 
     document.addEventListener('DOMContentLoaded', () => {
+        window.API.get('/api/db/config/bigscreen_title').then(res => {
+            state.dashboardTitle = normalizeDashboardTitle(res);
+            renderDashboardTitle();
+        }).catch(err => {
+            console.error('Failed to load dashboard title', err);
+            state.dashboardTitle = defaultDashboardTitle();
+            renderDashboardTitle();
+        });
+
         window.API.get('/api/db/config/bigscreen_contact_info').then(res => {
             state.contactInfo = normalizeContactInfo(res);
             renderContactInfo();

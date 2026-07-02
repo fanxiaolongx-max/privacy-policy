@@ -78,6 +78,16 @@
             letter-spacing: 0;
             color: #fff;
             font-weight: 800;
+            cursor: pointer;
+            display: inline-block;
+            max-width: 100%;
+            line-height: 1.18;
+            overflow-wrap: anywhere;
+        }
+
+        .title-block h1:focus-visible {
+            outline: 2px solid rgba(57, 213, 255, 0.72);
+            outline-offset: 5px;
         }
 
         .subtitle {
@@ -1261,6 +1271,21 @@
             box-shadow: 0 0 0 2px rgba(57, 213, 255, 0.08);
         }
 
+        .contact-field input {
+            height: 38px;
+            border: 1px solid rgba(120, 190, 255, 0.24);
+            background: rgba(6, 16, 30, 0.78);
+            color: #dff6ff;
+            padding: 0 11px;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .contact-field input:focus {
+            border-color: rgba(57, 213, 255, 0.58);
+            box-shadow: 0 0 0 2px rgba(57, 213, 255, 0.08);
+        }
+
         .owner-modal {
             position: fixed;
             inset: 0;
@@ -1910,7 +1935,7 @@
     <main class="bigscreen">
         <header class="screen-header">
             <div class="title-block">
-                <h1>EG运营质量综合看板</h1>
+                <h1 id="bigscreenTitle" onclick="BigscreenTitle.open()" tabindex="0" role="button">EG运营质量综合看板</h1>
                 <div class="subtitle" id="bigscreenSubtitle">数据来自月报页面与报表看板入库结果，正在加载...</div>
             </div>
             <div class="signal-bar">
@@ -2017,6 +2042,32 @@
         </div>
     </main>
 
+    <div id="titleModal" class="owner-modal" aria-hidden="true">
+        <div class="owner-dialog contact-dialog" role="dialog" aria-modal="true" aria-labelledby="titleDialogTitle">
+            <div class="owner-dialog-head">
+                <div>
+                    <div id="titleDialogTitle" class="owner-dialog-title">大标题配置</div>
+                    <div id="titleDialogSub" class="panel-sub">点击大屏主标题可同时维护中文和英文标题。</div>
+                </div>
+                <button class="screen-btn secondary" onclick="BigscreenTitle.close()">关闭</button>
+            </div>
+            <div class="contact-form">
+                <label class="contact-field">
+                    <span id="titleZhLabel">中文大标题</span>
+                    <input id="titleZhInput" type="text" placeholder="请输入中文大标题">
+                </label>
+                <label class="contact-field">
+                    <span id="titleEnLabel">英文大标题</span>
+                    <input id="titleEnInput" type="text" placeholder="Enter the English dashboard title">
+                </label>
+            </div>
+            <div class="owner-dialog-foot">
+                <button class="screen-btn secondary" onclick="BigscreenTitle.close()">取消</button>
+                <button class="screen-btn" onclick="BigscreenTitle.save()">保存到服务器</button>
+            </div>
+        </div>
+    </div>
+
     <div id="contactModal" class="owner-modal" aria-hidden="true">
         <div class="owner-dialog contact-dialog" role="dialog" aria-modal="true" aria-labelledby="contactDialogTitle">
             <div class="owner-dialog-head">
@@ -2093,7 +2144,7 @@
     <script src="/js/shared/api.js?v=20260626-01"></script>
     <script src="/js/shared/i18n.js?v=20260610-01"></script>
     <script src="/js/shared/navbar.js?v=20260630-04"></script>
-    <script src="/js/report/bigscreen.js?v=20260629-02"></script>
+    <script src="/js/report/bigscreen.js?v=20260702-01"></script>
 </body>
 
 </html>
