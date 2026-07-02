@@ -36,6 +36,30 @@ router.get('/list', (req, res) => {
     }
 });
 
+router.get('/schedule-settings', async (req, res) => {
+    try {
+        res.json(repo.getScheduleStatus(await repo.getScheduleSettings()));
+    } catch (err) {
+        handleError(res, err, '获取定时备份设置失败');
+    }
+});
+
+router.put('/schedule-settings', async (req, res) => {
+    try {
+        res.json(await repo.saveScheduleSettings(req.body || {}));
+    } catch (err) {
+        handleError(res, err, '保存定时备份设置失败');
+    }
+});
+
+router.post('/schedule-run', async (req, res) => {
+    try {
+        res.json(await repo.runScheduledBackup({ source: 'manual-trigger', reason: 'scheduled-auto-manual-trigger' }));
+    } catch (err) {
+        handleError(res, err, '执行定时备份失败');
+    }
+});
+
 router.post('/create', async (req, res) => {
     try {
         const result = await repo.createBackup({ reason: req.body?.reason || 'manual' });

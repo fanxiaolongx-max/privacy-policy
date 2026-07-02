@@ -803,6 +803,50 @@ body {
     color: #92400e;
 }
 
+.nav-backup-badge.automatic {
+    background: #e0f2fe;
+    color: #075985;
+}
+
+.nav-schedule-backup-card {
+    margin-top: 14px;
+    padding: 14px;
+    border: 1px solid #bbf7d0;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 62%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.72);
+}
+
+.nav-schedule-backup-grid {
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: minmax(150px, 0.7fr) minmax(150px, 0.7fr) minmax(180px, auto);
+    gap: 10px;
+    align-items: end;
+}
+
+.nav-schedule-backup-grid label span {
+    display: block;
+    margin-bottom: 5px;
+    color: #334155;
+    font-size: 11px;
+    font-weight: 850;
+}
+
+.nav-schedule-retention-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+}
+
+.nav-schedule-retention-row em {
+    color: #64748b;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 800;
+}
+
 .nav-remote-backup-card {
     margin-top: 14px;
     padding: 14px;
@@ -1085,6 +1129,7 @@ body {
     }
     .nav-ai-grid,
     .nav-ai-token-row,
+    .nav-schedule-backup-grid,
     .nav-remote-backup-grid {
         grid-template-columns: 1fr;
     }
