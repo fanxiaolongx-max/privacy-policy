@@ -240,10 +240,12 @@ function closeSqliteDatabase(label, closeFn) {
 async function closeRuntimeDatabases() {
     const appDb = require('./app-db');
     const reportRoute = require('../routes/db');
+    const externalMetricsRepo = require('./external-metrics-repository');
     const requirementsRoute = require('../routes/requirements');
     const results = [];
     results.push(await closeSqliteDatabase('tools.db', appDb.closeDatabase));
     results.push(await closeSqliteDatabase('report.db', reportRoute.closeDatabase));
+    results.push(await closeSqliteDatabase('external metrics report.db', externalMetricsRepo.closeDatabase));
     results.push(await closeSqliteDatabase('requirements.db', requirementsRoute.closeDatabase));
     return results;
 }
