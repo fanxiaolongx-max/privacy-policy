@@ -273,14 +273,23 @@ function getMetricSchemaForRow(row, schema) {
 function normalizeMetric(row, schema) {
     const matchedSchema = getMetricSchemaForRow(row, schema);
     const labelTarget = schema && schema.targetByLabel ? schema.targetByLabel.get(row.metric_label) : null;
+    const effectiveTargetConfig = (matchedSchema && matchedSchema.target_config) || (labelTarget ? labelTarget.target_config : null);
+    const displayTargetValue = formatTargetText(effectiveTargetConfig, row.month, row.raw_val || row.raw_value);
+    const targetNumericValue = effectiveTargetConfig && effectiveTargetConfig.monthly_targets
+        ? effectiveTargetConfig.monthly_targets[String(row.month)]
+        : null;
     const out = {
         id: row.id,
         snapshot_id: row.snapshot_id,
         month: row.month,
         category: row.cat_name,
         metric_label: row.metric_label,
+        is_derived_overall: Boolean(row.is_derived_overall),
         weight: row.weight,
         target_value: row.target_val,
+        display_target_value: displayTargetValue === '--' ? row.target_val : displayTargetValue,
+        target_numeric_value: targetNumericValue === undefined ? null : targetNumericValue,
+        target_is_percent: effectiveTargetConfig && effectiveTargetConfig.is_percent === null ? null : Boolean(effectiveTargetConfig && effectiveTargetConfig.is_percent),
         raw_value: row.raw_val,
         numeric_value: row.num_val,
         is_failing: Boolean(row.is_failing),
@@ -309,7 +318,7 @@ function normalizeMetric(row, schema) {
             parent_rule_id: matchedSchema.parent_rule_id || null,
             rule_type: matchedSchema.rule_type,
             target_key: matchedSchema.target_key,
-            target_config: matchedSchema.target_config || (labelTarget ? labelTarget.target_config : null),
+            target_config: effectiveTargetConfig,
             source_columns: matchedSchema.source_columns
         };
     } else if (labelTarget) {
@@ -347,6 +356,75 @@ function normalizeCategoryScore(row) {
         base_score: row.base_score,
         manual_score: row.manual_score,
         final_score: row.final_score
+    };
+}
+
+function parseMetricNumber(value) {
+    if (value === undefined || value === null) return NaN;
+    const text = String(value).replace(/,/g, '').replace(/%/g, '').trim();
+    const matched = text.match(/-?\d+(?:\.\d+)?/);
+    return matched ? Number(matched[0]) : NaN;
+}
+
+function formatTargetText(targetConfig, month, rawValue) {
+    if (!targetConfig || !month) return '--';
+    const monthly = targetConfig.monthly_targets || {};
+    const target = monthly[String(month)];
+    if (target === undefined || target === null || target === '') return '--';
+    const condition = targetConfig.condition || 'gte';
+    const hasPercent = String(rawValue || '').includes('%') || targetConfig.is_percent;
+    return `${condition === 'lte' ? '≤' : '≥'} ${target}${hasPercent && !String(target).includes('%') ? '%' : ''}`;
+}
+
+function buildDerivedOverallMetricRow(snapshot, metric, schema) {
+    if (!snapshot || !metric || !metric.label) return null;
+    const schemaItem = schema && schema.byLabel ? schema.byLabel.get(metric.label) : null;
+    const targetConfig = (schemaItem && schemaItem.target_config)
+        || (schema && schema.targetByLabel && schema.targetByLabel.get(metric.label) && schema.targetByLabel.get(metric.label).target_config)
+        || null;
+    const rawValue = metric.value;
+    const numValue = parseMetricNumber(rawValue);
+    const month = snapshot.month;
+    const targetValue = targetConfig && month ? (targetConfig.monthly_targets || {})[String(month)] : undefined;
+    const targetNum = parseMetricNumber(targetValue);
+    const condition = (targetConfig && targetConfig.condition) || 'gte';
+    let isFailing = Boolean(metric.isWarn || metric.isFailing);
+    let gap = metric.gap || '';
+
+    if (Number.isFinite(numValue) && Number.isFinite(targetNum)) {
+        if (condition === 'lte' && numValue > targetNum) {
+            isFailing = true;
+            gap = `${Number((numValue - targetNum).toFixed(2))}${String(rawValue || '').includes('%') ? '%' : ''}`;
+        } else if (condition !== 'lte' && numValue < targetNum) {
+            isFailing = true;
+            gap = `${Number((targetNum - numValue).toFixed(2))}${String(rawValue || '').includes('%') ? '%' : ''}`;
+        } else {
+            isFailing = false;
+            gap = '';
+        }
+    }
+
+    return {
+        id: null,
+        is_derived_overall: true,
+        snapshot_sort_id: snapshot.id || snapshot.row_id || null,
+        snapshot_row_id: snapshot.id || snapshot.row_id || null,
+        snapshot_id: snapshot.snapshot_id,
+        month,
+        snapshot_created_at: snapshot.created_at || snapshot.snapshot_created_at || null,
+        stored_at: snapshot.stored_at || null,
+        standard_total_score: snapshot.standard_total_score === undefined ? null : snapshot.standard_total_score,
+        cat_name: '整体',
+        metric_label: metric.label,
+        weight: targetConfig && targetConfig.weight !== null && targetConfig.weight !== undefined ? targetConfig.weight : null,
+        target_val: formatTargetText(targetConfig, month, rawValue),
+        raw_val: rawValue === undefined || rawValue === null ? '' : String(rawValue),
+        num_val: Number.isFinite(numValue) ? numValue : null,
+        is_failing: isFailing ? 1 : 0,
+        gap,
+        earned_score: null,
+        proportional_scoring: false,
+        completion_ratio: null
     };
 }
 
@@ -745,23 +823,83 @@ async function listMetrics(filters = {}) {
         where.params
     );
 
+    let derivedRows = [];
+    if (filters.includeOverall || filters.category === '整体') {
+        derivedRows = await getDerivedOverallMetricRows(filters, schema);
+    }
+    const normalizedItems = rows
+        .concat(derivedRows)
+        .sort((a, b) => {
+            const aSort = a.snapshot_sort_id || 0;
+            const bSort = b.snapshot_sort_id || 0;
+            if (aSort !== bSort) return bSort - aSort;
+            return String(a.cat_name || '').localeCompare(String(b.cat_name || ''));
+        })
+        .map(row => normalizeMetric(row, schema));
+
     return {
-        items: rows.map(row => normalizeMetric(row, schema)),
+        items: normalizedItems,
         pagination: {
             limit,
             offset,
-            total: countRow ? countRow.count : 0
+            total: (countRow ? countRow.count : 0) + derivedRows.length
         }
     };
+}
+
+async function getDerivedOverallMetricRows(filters = {}, schema) {
+    if (filters.category && filters.category !== '整体') return [];
+    const month = normalizeMonth(filters.month);
+    const where = [];
+    const params = [];
+    if (filters.snapshotId) {
+        where.push('snapshot_id = ?');
+        params.push(String(filters.snapshotId));
+    }
+    if (month) {
+        where.push('month = ?');
+        params.push(month);
+    }
+    if (filters.startDate) {
+        where.push('DATE(created_at) >= ?');
+        params.push(String(filters.startDate));
+    }
+    if (filters.endDate) {
+        where.push('DATE(created_at) <= ?');
+        params.push(String(filters.endDate));
+    }
+    const rows = await all(
+        `SELECT id, snapshot_id, month, created_at, stored_at, raw_data_json
+         FROM ReportSnapshots
+         ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+         ORDER BY created_at DESC, id DESC
+         LIMIT ?`,
+        [...params, parsePositiveInt(filters.limit, 200, 2000)]
+    );
+    const labelFilter = filters.metricLabel ? String(filters.metricLabel) : '';
+    const out = [];
+    rows.forEach(snapshot => {
+        const raw = parseRawData(snapshot);
+        const metrics = Array.isArray(raw.topMetrics) ? raw.topMetrics : [];
+        metrics.forEach(metric => {
+            if (!metric || !metric.label) return;
+            if (labelFilter && !String(metric.label).includes(labelFilter)) return;
+            const row = buildDerivedOverallMetricRow(snapshot, metric, schema);
+            if (!row) return;
+            if (filters.failingOnly && !row.is_failing) return;
+            out.push(row);
+        });
+    });
+    return out;
 }
 
 function normalizeTrendPoint(row, schema) {
     const metric = normalizeMetric(row, schema);
     return {
         snapshot_id: row.snapshot_id,
-        snapshot_row_id: row.snapshot_row_id,
+        snapshot_row_id: row.snapshot_row_id || row.snapshot_sort_id || null,
         month: row.month,
-        snapshot_created_at: row.snapshot_created_at,
+        snapshot_created_at: row.snapshot_created_at || row.created_at || null,
         stored_at: row.stored_at || null,
         standard_total_score: row.standard_total_score,
         category: metric.category,
@@ -771,6 +909,9 @@ function normalizeTrendPoint(row, schema) {
         metric_label_i18n: metric.metric_label_i18n,
         display_metric_label: metric.display_metric_label,
         target_value: metric.target_value,
+        display_target_value: metric.display_target_value,
+        target_numeric_value: metric.target_numeric_value,
+        target_is_percent: metric.target_is_percent,
         raw_value: metric.raw_value,
         numeric_value: metric.numeric_value,
         is_failing: metric.is_failing,
@@ -779,6 +920,7 @@ function normalizeTrendPoint(row, schema) {
         earned_score: metric.earned_score,
         proportional_scoring: metric.proportional_scoring,
         completion_ratio: metric.completion_ratio,
+        is_derived_overall: metric.is_derived_overall,
         schema: metric.schema
     };
 }
@@ -817,8 +959,10 @@ async function getMetricTrend(filters = {}) {
     const month = normalizeMonth(filters.month);
     const where = ['m.metric_label = ?'];
     const params = [String(filters.metricLabel)];
+    const wantsOverall = !filters.category || filters.category === '整体' || filters.includeOverall;
+    const wantsDbRows = filters.category !== '整体';
 
-    if (filters.category) {
+    if (filters.category && filters.category !== '整体') {
         where.push('m.cat_name = ?');
         params.push(String(filters.category));
     }
@@ -839,23 +983,38 @@ async function getMetricTrend(filters = {}) {
     }
 
     const limit = parsePositiveInt(filters.limit, 1000, 5000);
-    const rows = await all(
-        `SELECT m.*,
-                s.id AS snapshot_row_id,
-                s.created_at AS snapshot_created_at,
-                s.stored_at AS stored_at,
-                s.standard_total_score AS standard_total_score
-         FROM ReportMetricData m
-         INNER JOIN ReportSnapshots s
-            ON s.snapshot_id = m.snapshot_id
-           AND (s.month = m.month OR m.month IS NULL)
-         WHERE ${where.join(' AND ')}
-         ORDER BY s.created_at ASC, s.id ASC, m.cat_name ASC, m.id ASC
-         LIMIT ?`,
-        [...params, limit]
-    );
-
-    const points = addTrendDeltas(rows.map(row => normalizeTrendPoint(row, schema)));
+    const rows = wantsDbRows
+        ? await all(
+            `SELECT m.*,
+                    s.id AS snapshot_row_id,
+                    s.created_at AS snapshot_created_at,
+                    s.stored_at AS stored_at,
+                    s.standard_total_score AS standard_total_score
+             FROM ReportMetricData m
+             INNER JOIN ReportSnapshots s
+                ON s.snapshot_id = m.snapshot_id
+               AND (s.month = m.month OR m.month IS NULL)
+             WHERE ${where.join(' AND ')}
+             ORDER BY s.created_at ASC, s.id ASC, m.cat_name ASC, m.id ASC
+             LIMIT ?`,
+            [...params, limit]
+        )
+        : [];
+    const derivedRows = wantsOverall
+        ? await getDerivedOverallTrendRows(filters, schema, { days, month, limit })
+        : [];
+    const points = addTrendDeltas(rows
+        .concat(derivedRows)
+        .sort((a, b) => {
+            const at = Date.parse(a.snapshot_created_at || a.created_at || '') || 0;
+            const bt = Date.parse(b.snapshot_created_at || b.created_at || '') || 0;
+            if (at !== bt) return at - bt;
+            const ai = a.snapshot_row_id || a.snapshot_sort_id || 0;
+            const bi = b.snapshot_row_id || b.snapshot_sort_id || 0;
+            if (ai !== bi) return ai - bi;
+            return String(a.cat_name || '').localeCompare(String(b.cat_name || ''));
+        })
+        .map(row => normalizeTrendPoint(row, schema)));
     const series = {};
     points.forEach(point => {
         const key = point.category || '整体';
@@ -895,6 +1054,51 @@ async function getMetricTrend(filters = {}) {
         series,
         points
     };
+}
+
+async function getDerivedOverallTrendRows(filters = {}, schema, options = {}) {
+    const month = options.month || normalizeMonth(filters.month);
+    const days = options.days || normalizeDays(filters.days);
+    const limit = options.limit || parsePositiveInt(filters.limit, 1000, 5000);
+    const where = [];
+    const params = [];
+    if (filters.snapshotId) {
+        where.push('snapshot_id = ?');
+        params.push(String(filters.snapshotId));
+    }
+    if (month) {
+        where.push('month = ?');
+        params.push(month);
+    }
+    if (filters.startDate) {
+        where.push('DATE(created_at) >= ?');
+        params.push(String(filters.startDate));
+    } else {
+        where.push('created_at >= ?');
+        params.push(getDateTimeCutoff(days));
+    }
+    if (filters.endDate) {
+        where.push('DATE(created_at) <= ?');
+        params.push(String(filters.endDate));
+    }
+    const snapshots = await all(
+        `SELECT id, snapshot_id, month, created_at, stored_at, standard_total_score, raw_data_json
+         FROM ReportSnapshots
+         ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+         ORDER BY created_at ASC, id ASC
+         LIMIT ?`,
+        [...params, limit]
+    );
+    const label = String(filters.metricLabel || '');
+    const out = [];
+    snapshots.forEach(snapshot => {
+        const raw = parseRawData(snapshot);
+        const metric = (Array.isArray(raw.topMetrics) ? raw.topMetrics : []).find(item => item && item.label === label);
+        if (!metric) return;
+        const row = buildDerivedOverallMetricRow(snapshot, metric, schema);
+        if (row) out.push(row);
+    });
+    return out;
 }
 
 async function getSummary(filters = {}) {

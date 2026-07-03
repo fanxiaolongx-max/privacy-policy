@@ -24,6 +24,7 @@ function getFilters(req) {
         metricLabel: req.query.metric_label || req.query.metricLabel,
         failingOnly: parseBool(req.query.failing_only || req.query.failingOnly),
         includeRaw: parseBool(req.query.include_raw || req.query.includeRaw),
+        includeOverall: parseBool(req.query.include_overall || req.query.includeOverall),
         collection: req.query.collection,
         urgency: req.query.urgency,
         lang: req.query.lang || req.query.language,
@@ -124,7 +125,8 @@ router.get('/failing', async (req, res, next) => {
     try {
         const data = await metricsRepo.listMetrics({
             ...getFilters(req),
-            failingOnly: true
+            failingOnly: true,
+            includeOverall: true
         });
         markSource(res, 'GET /api/external/metrics/failing');
         res.json(data);
