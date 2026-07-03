@@ -20,6 +20,7 @@ db.serialize(() => {
         snapshot_id TEXT,
         month INTEGER,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        stored_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         standard_total_score REAL,
         raw_data_json TEXT,
         image_path TEXT,
@@ -29,6 +30,7 @@ db.serialize(() => {
     // Add column if it didn't exist in older versions
     db.run("ALTER TABLE ReportSnapshots ADD COLUMN image_path TEXT", () => {});
     db.run("ALTER TABLE ReportSnapshots ADD COLUMN excel_path TEXT", () => {});
+    db.run("ALTER TABLE ReportSnapshots ADD COLUMN stored_at DATETIME", () => {});
     
     db.run(`CREATE TABLE IF NOT EXISTS ReportCategoryScores (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -190,8 +192,8 @@ router.post('/save', (req, res) => {
             createdAtStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
         }
 
-        db.run(`INSERT INTO ReportSnapshots (snapshot_id, month, created_at, standard_total_score, raw_data_json, image_path, excel_path)
-                VALUES (?, ?, ?, ?, ?, ?, ?)`, 
+        db.run(`INSERT INTO ReportSnapshots (snapshot_id, month, created_at, stored_at, standard_total_score, raw_data_json, image_path, excel_path)
+                VALUES (?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?)`, 
                 [snapshot_id, month, createdAtStr, standard_total_score, JSON.stringify(raw_data), image_path, excel_path], function(err) {
             if (err) {
                 db.run('ROLLBACK');
