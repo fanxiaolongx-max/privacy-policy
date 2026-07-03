@@ -28,6 +28,7 @@ const frtRoutes = require('./routes/frt');
 const prauditRoutes = require('./routes/praudit');
 const customToolsRoutes = require('./routes/custom-tools');
 const surveysRoutes = require('./routes/surveys');
+const externalMetricsRoutes = require('./routes/external-metrics');
 const customToolsRepo = require('./models/custom-tools-repository');
 const navSettingsRoutes = require('./routes/nav-settings');
 const aiSettingsRoutes = require('./routes/ai-settings');
@@ -165,6 +166,7 @@ app.use('/api/surveys', surveysRoutes); // 可配置调查模板与提交记录 
 app.use('/api/nav-settings', navSettingsRoutes); // 顶部导航全局设置 API
 app.use('/api/ai-settings', aiSettingsRoutes); // 智能客服助手模型配置 API
 app.use('/api/global-backup', globalBackupRoutes); // 全局数据备份与恢复 API
+app.use('/api/external/metrics', externalMetricsRoutes); // 外部/移动端只读指标 API
 
 // ============================================================
 // 前端路由回退（SPA）
