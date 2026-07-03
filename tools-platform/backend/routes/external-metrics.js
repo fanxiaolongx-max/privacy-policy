@@ -25,7 +25,9 @@ function getFilters(req) {
         failingOnly: parseBool(req.query.failing_only || req.query.failingOnly),
         includeRaw: parseBool(req.query.include_raw || req.query.includeRaw),
         collection: req.query.collection,
-        urgency: req.query.urgency
+        urgency: req.query.urgency,
+        lang: req.query.lang || req.query.language,
+        days: req.query.days
     };
 }
 
@@ -41,7 +43,7 @@ router.get('/summary', async (req, res, next) => {
 
 router.get('/schema', async (req, res, next) => {
     try {
-        const data = await metricsRepo.getSchema();
+        const data = await metricsRepo.getSchema(getFilters(req));
         markSource(res, 'GET /api/external/metrics/schema');
         res.json(data);
     } catch (err) {
@@ -56,6 +58,19 @@ router.get('/alerts', async (req, res, next) => {
         if (!data) return res.status(404).json({ error: 'Snapshot not found' });
         res.json(data);
     } catch (err) {
+        next(err);
+    }
+});
+
+router.get('/trend', async (req, res, next) => {
+    try {
+        const data = await metricsRepo.getMetricTrend(getFilters(req));
+        markSource(res, 'GET /api/external/metrics/trend');
+        res.json(data);
+    } catch (err) {
+        if (err && err.statusCode) {
+            return res.status(err.statusCode).json({ error: err.message });
+        }
         next(err);
     }
 });

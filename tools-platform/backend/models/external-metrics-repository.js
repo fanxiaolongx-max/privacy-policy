@@ -10,6 +10,10 @@ ensureReportDataDir();
 const dbPath = path.join(REPORT_DATA_DIR, 'report.db');
 const db = new sqlite3.Database(dbPath);
 
+db.serialize(() => {
+    db.run('ALTER TABLE ReportSnapshots ADD COLUMN stored_at DATETIME', () => {});
+});
+
 function all(sql, params = []) {
     return new Promise((resolve, reject) => {
         db.all(sql, params, (err, rows) => {
@@ -41,12 +45,64 @@ function normalizeMonth(value) {
     return month;
 }
 
+function normalizeLang(value) {
+    const lang = String(value || '').toLowerCase();
+    if (lang === 'en' || lang === 'en-us') return 'en-US';
+    if (lang === 'zh' || lang === 'zh-cn') return 'zh-CN';
+    return 'zh-CN';
+}
+
+function stripEmojiPrefix(value) {
+    return String(value || '').replace(/^[^\p{L}\p{N}\u4e00-\u9fff]+/u, '').trim();
+}
+
+const STATIC_TEXT_TRANSLATIONS = {
+    '整改详单合集': 'Rectification Details',
+    '常规风险合集': 'Regular Risk Details',
+    '常规风险详单合集': 'Regular Risk Details',
+    'CPT专项风险合集': 'CPT Special Risk Details',
+    'CPT专项': 'CPT Special',
+    '专项风险合集': 'Special Risk Details',
+    'SR详单分析': 'SR Details Analysis',
+    '漏洞预警详单': 'Vulnerability Warning Details',
+    '整改监控': 'Rectification Monitoring',
+    '常规风险监控': 'Regular Risk Monitoring',
+    '专项风险监控': 'Special Risk Monitoring',
+    '漏洞预警分析': 'Vulnerability Warning Analysis',
+    '特殊指标提醒': 'Special Metric Alerts',
+    '全局不达标但客户群/代表处/区域无值': 'Global metric failed but customer group / rep office / region has no value',
+    '其他临期数据': 'Other Expiring Items'
+};
+
+function getTranslatedText(text, i18nMap = {}) {
+    const zh = text === undefined || text === null ? '' : String(text);
+    const normalized = stripEmojiPrefix(zh);
+    const en = i18nMap[zh] || i18nMap[normalized] || STATIC_TEXT_TRANSLATIONS[zh] || STATIC_TEXT_TRANSLATIONS[normalized] || '';
+    return {
+        zh,
+        en: en || zh
+    };
+}
+
+function getDisplayText(text, i18nMap = {}, lang = 'zh-CN') {
+    const translated = getTranslatedText(text, i18nMap);
+    return normalizeLang(lang) === 'en-US' ? translated.en : translated.zh;
+}
+
+function decorateText(out, fieldName, value, schema) {
+    const i18n = getTranslatedText(value, schema && schema.i18nMap);
+    out[`${fieldName}_i18n`] = i18n;
+    out[`display_${fieldName}`] = normalizeLang(schema && schema.lang) === 'en-US' ? i18n.en : i18n.zh;
+}
+
 function normalizeSnapshot(row, { includeRaw = false } = {}) {
     if (!row) return null;
     const out = {
+        row_id: row.id || row.row_id || null,
         snapshot_id: row.snapshot_id,
         month: row.month,
         created_at: row.created_at,
+        stored_at: row.stored_at || null,
         standard_total_score: row.standard_total_score,
         image_path: row.image_path || null,
         excel_path: row.excel_path || null
@@ -67,7 +123,7 @@ function getSourceId(prefKey, pref) {
         || String(prefKey || '').replace(/^sla_prefs_/, '');
 }
 
-function normalizeTargetConfig(targetKey, targetConfig) {
+function normalizeTargetConfig(targetKey, targetConfig, i18nMap = {}, lang = 'zh-CN') {
     if (!targetConfig) return null;
     const monthlyTargets = {};
     Object.keys(targetConfig).forEach(key => {
@@ -78,6 +134,8 @@ function normalizeTargetConfig(targetKey, targetConfig) {
     return {
         target_key: targetKey || null,
         label: targetConfig.label || null,
+        label_i18n: getTranslatedText(targetConfig.label || null, i18nMap),
+        display_label: getDisplayText(targetConfig.label || null, i18nMap, lang),
         condition: targetConfig.type || null,
         weight: targetConfig.weight === undefined ? null : targetConfig.weight,
         auto_fill: targetConfig.autoFill === undefined ? null : Boolean(targetConfig.autoFill),
@@ -93,11 +151,13 @@ function getMetricDisplayLabel(rule, parentRule) {
     return (rule && rule.label) || (parentRule && parentRule.label) || '';
 }
 
-async function getMetricSchema() {
+async function getMetricSchema(filters = {}) {
     const [{ items: prefs }, { items: targets }] = await Promise.all([
         prefsRepo.getPrefsObject(),
         targetsRepo.getTargets()
     ]);
+    const i18nMap = (prefs && prefs.i18nMap) || {};
+    const lang = normalizeLang(filters.lang);
     const sources = [];
     const metrics = [];
     const byLabel = new Map();
@@ -108,7 +168,7 @@ async function getMetricSchema() {
         if (targetConfig && targetConfig.label && !targetByLabel.has(targetConfig.label)) {
             targetByLabel.set(targetConfig.label, {
                 target_key: targetKey,
-                target_config: normalizeTargetConfig(targetKey, targetConfig)
+                target_config: normalizeTargetConfig(targetKey, targetConfig, i18nMap, lang)
             });
         }
     });
@@ -122,6 +182,8 @@ async function getMetricSchema() {
             pref_key: prefKey,
             mode: sourceMeta.mode || null,
             title: sourceMeta.title || null,
+            title_i18n: getTranslatedText(sourceMeta.title || null, i18nMap),
+            display_title: getDisplayText(sourceMeta.title || null, i18nMap, lang),
             base_name: sourceMeta.baseName || null,
             source_files: Array.isArray(sourceMeta.sourceFiles) ? sourceMeta.sourceFiles : [],
             matched_prefix: sourceMeta.matchedPrefix || null,
@@ -138,7 +200,7 @@ async function getMetricSchema() {
                 rule_id: rule.id || null,
                 rule_type: rule.type || null,
                 target_key: targetKey,
-                target_config: normalizeTargetConfig(targetKey, targetConfig),
+                target_config: normalizeTargetConfig(targetKey, targetConfig, i18nMap, lang),
                 main_metric_label: rule.label,
                 metric_label: rule.label,
                 category: '整体',
@@ -167,7 +229,7 @@ async function getMetricSchema() {
                     parent_rule_id: rule.id || null,
                     rule_type: subRule.type || rule.type || null,
                     target_key: effectiveTargetKey,
-                    target_config: normalizeTargetConfig(effectiveTargetKey, effectiveTarget),
+                    target_config: normalizeTargetConfig(effectiveTargetKey, effectiveTarget, i18nMap, lang),
                     main_metric_label: rule.label,
                     metric_label: label,
                     category: subRule.category || null,
@@ -194,7 +256,9 @@ async function getMetricSchema() {
         metrics,
         byLabel,
         byLabelCategory,
-        targetByLabel
+        targetByLabel,
+        i18nMap,
+        lang
     };
 }
 
@@ -225,14 +289,22 @@ function normalizeMetric(row, schema) {
         proportional_scoring: row.proportional_scoring === null ? null : Boolean(row.proportional_scoring),
         completion_ratio: row.completion_ratio
     };
+    decorateText(out, 'metric_label', row.metric_label, schema);
+    decorateText(out, 'category', row.cat_name, schema);
     if (matchedSchema) {
         out.schema = {
             source_id: matchedSchema.source.source_id,
             source_title: matchedSchema.source.title,
+            source_title_i18n: matchedSchema.source.title_i18n,
+            display_source_title: matchedSchema.source.display_title,
             source_base_name: matchedSchema.source.base_name,
             main_metric_label: matchedSchema.main_metric_label,
+            main_metric_label_i18n: getTranslatedText(matchedSchema.main_metric_label, schema.i18nMap),
+            display_main_metric_label: getDisplayText(matchedSchema.main_metric_label, schema.i18nMap, schema.lang),
             is_sub_metric: matchedSchema.is_sub_metric,
             sub_metric_category: matchedSchema.is_sub_metric ? matchedSchema.category : null,
+            sub_metric_category_i18n: matchedSchema.is_sub_metric ? getTranslatedText(matchedSchema.category, schema.i18nMap) : null,
+            display_sub_metric_category: matchedSchema.is_sub_metric ? getDisplayText(matchedSchema.category, schema.i18nMap, schema.lang) : null,
             rule_id: matchedSchema.rule_id,
             parent_rule_id: matchedSchema.parent_rule_id || null,
             rule_type: matchedSchema.rule_type,
@@ -244,10 +316,16 @@ function normalizeMetric(row, schema) {
         out.schema = {
             source_id: null,
             source_title: null,
+            source_title_i18n: null,
+            display_source_title: null,
             source_base_name: null,
             main_metric_label: row.metric_label,
+            main_metric_label_i18n: getTranslatedText(row.metric_label, schema.i18nMap),
+            display_main_metric_label: getDisplayText(row.metric_label, schema.i18nMap, schema.lang),
             is_sub_metric: row.cat_name !== '整体',
             sub_metric_category: row.cat_name === '整体' ? null : row.cat_name,
+            sub_metric_category_i18n: row.cat_name === '整体' ? null : getTranslatedText(row.cat_name, schema.i18nMap),
+            display_sub_metric_category: row.cat_name === '整体' ? null : getDisplayText(row.cat_name, schema.i18nMap, schema.lang),
             rule_id: null,
             parent_rule_id: null,
             rule_type: null,
@@ -294,14 +372,115 @@ function getTicketId(data = {}) {
         || null;
 }
 
-function normalizeExpiringTicket(item, snapshot) {
+const ALERT_COLLECTION_LABELS = {
+    rectification: { zh: '整改预警', en: 'Rectification Alerts' },
+    vulnerability: { zh: '漏洞预警', en: 'Vulnerability Alerts' },
+    risk: { zh: '风险预警', en: 'Risk Alerts' },
+    special: { zh: '专项风险预警', en: 'Special Risk Alerts' },
+    sr: { zh: 'SR 工单预警', en: 'SR Ticket Alerts' },
+    other: { zh: '其他临期数据', en: 'Other Expiring Items' }
+};
+
+const SLA_STATUS_TRANSLATIONS = [
+    ['漏洞紧急', 'Vulnerability urgent'],
+    ['漏洞提醒', 'Vulnerability warning'],
+    ['Checking紧急', 'Checking urgent'],
+    ['Checking提醒', 'Checking warning'],
+    ['整改紧急', 'Rectification urgent'],
+    ['整改提醒', 'Rectification warning'],
+    ['Confirm紧急', 'Confirm urgent'],
+    ['Confirm提醒', 'Confirm warning'],
+    ['Open紧急', 'Open urgent'],
+    ['Open提醒', 'Open warning'],
+    ['Suspend紧急', 'Suspend urgent'],
+    ['Suspend提醒', 'Suspend warning'],
+    ['确认紧急', 'Confirmation urgent'],
+    ['确认提醒', 'Confirmation warning'],
+    ['处理紧急', 'Processing urgent'],
+    ['处理提醒', 'Processing warning'],
+    ['Critical高危', 'Critical high risk'],
+    ['Critical预警', 'Critical warning'],
+    ['SR高危', 'SR high risk'],
+    ['SR预警', 'SR warning'],
+    ['SR超期', 'SR overdue'],
+    ['挂起后未超期', 'Not overdue after suspension'],
+    ['挂起后超期', 'Overdue after suspension'],
+    ['历史超期', 'Historical overdue'],
+    ['挂起忽略', 'Pending ignored'],
+    ['已关单', 'Closed'],
+    ['缺少SLA关键时间', 'Missing SLA key time'],
+    ['解析失败', 'Parse failed'],
+    ['已触发上游超期标识', 'Upstream overdue flag triggered'],
+    ['剩余', 'remaining'],
+    ['消耗', 'consumed'],
+    ['已超', 'overdue by'],
+    ['小时', 'hours'],
+    ['天', 'days'],
+    ['周', 'weeks'],
+    ['月', 'months']
+];
+
+function getCollectionLabel(collection, lang = 'zh-CN') {
+    const label = ALERT_COLLECTION_LABELS[collection] || ALERT_COLLECTION_LABELS.other;
+    return normalizeLang(lang) === 'en-US' ? label.en : label.zh;
+}
+
+function translateSlaStatusText(text) {
+    let out = String(text || '');
+    out = out
+        .replace(/(\d+)\s*月\s*(\d+)\s*天/g, (_, months, days) => `${months} ${Number(months) === 1 ? 'month' : 'months'} ${days} ${Number(days) === 1 ? 'day' : 'days'}`)
+        .replace(/(\d+)\s*周\s*(\d+)\s*天/g, (_, weeks, days) => `${weeks} ${Number(weeks) === 1 ? 'week' : 'weeks'} ${days} ${Number(days) === 1 ? 'day' : 'days'}`)
+        .replace(/(\d+)\s*小时/g, (_, hours) => `${hours} ${Number(hours) === 1 ? 'hour' : 'hours'}`)
+        .replace(/(\d+)\s*天/g, (_, days) => `${days} ${Number(days) === 1 ? 'day' : 'days'}`)
+        .replace(/(\d+)\s*周/g, (_, weeks) => `${weeks} ${Number(weeks) === 1 ? 'week' : 'weeks'}`)
+        .replace(/(\d+)\s*月/g, (_, months) => `${months} ${Number(months) === 1 ? 'month' : 'months'}`);
+    SLA_STATUS_TRANSLATIONS.forEach(([zh, en]) => {
+        out = out.replace(new RegExp(zh, 'g'), en);
+    });
+    return out;
+}
+
+function parseSlaStatusText(text, item = {}) {
+    const raw = String(text || '').trim();
+    const days = Number(item && item._slaDays);
+    const statusMatch = raw.match(/^([^()（]+?)\s*[（(]/) || raw.match(/^([^/]+?)\s+剩余/);
+    const remainingMatch = raw.match(/剩余\s*([^/),，）]+)/);
+    const consumedMatch = raw.match(/消耗\s*(\d+(?:\.\d+)?)%/);
+    const overdueMatch = raw.match(/已超\s*([^/),，）]+)/) || raw.match(/超期\s*[（(]([^/),，）]+)/);
+    return {
+        raw_text: raw,
+        remaining_text: remainingMatch ? remainingMatch[1].trim() : null,
+        overdue_text: overdueMatch ? overdueMatch[1].trim() : null,
+        consume_percent: consumedMatch ? Number(consumedMatch[1]) : null,
+        sla_days: Number.isFinite(days) ? days : null,
+        status_label: statusMatch ? statusMatch[1].trim() : null,
+        is_overdue: Number.isFinite(days) ? days < 0 : /超期|已超/.test(raw)
+    };
+}
+
+function getSlaTextI18n(text) {
+    const zh = String(text || '');
+    return {
+        zh,
+        en: translateSlaStatusText(zh)
+    };
+}
+
+function normalizeExpiringTicket(item, snapshot, schema) {
     const data = item && typeof item.data === 'object' ? item.data : {};
     const days = Number(item && item._slaDays);
-    return {
+    const collection = item.collection || 'other';
+    const collectionLabel = ALERT_COLLECTION_LABELS[collection] || ALERT_COLLECTION_LABELS.other;
+    const slaText = item._slaCleanText || data._slaCleanText || '';
+    const slaTextI18n = getSlaTextI18n(slaText);
+    const out = {
         snapshot_id: snapshot ? snapshot.snapshot_id : null,
         month: snapshot ? snapshot.month : null,
         snapshot_created_at: snapshot ? snapshot.created_at : null,
-        collection: item.collection || 'other',
+        collection,
+        collection_label: collectionLabel.zh,
+        collection_label_i18n: collectionLabel,
+        display_collection_label: getCollectionLabel(collection, schema && schema.lang),
         title: item.title || '',
         ticket_id: getTicketId(data),
         network_name: data.network_name || data['网络名称'] || data.network || null,
@@ -313,13 +492,20 @@ function normalizeExpiringTicket(item, snapshot) {
         due_date: data.rectify_plan_end_time || data.exp_close_date || data.sus_exp_close_date || data.support_end_time || null,
         sla_days: Number.isFinite(days) ? days : null,
         urgency: Number.isFinite(days) && days < 0 ? 'overdue' : 'expiring',
-        sla_text: item._slaCleanText || data._slaCleanText || '',
+        sla_text: slaText,
+        sla_text_i18n: slaTextI18n,
+        display_sla_text: normalizeLang(schema && schema.lang) === 'en-US' ? slaTextI18n.en : slaTextI18n.zh,
+        sla_status: parseSlaStatusText(slaText, item),
         raw: item
     };
+    decorateText(out, 'title', out.title, schema);
+    decorateText(out, 'collection', out.collection, schema);
+    decorateText(out, 'status', out.status, schema);
+    return out;
 }
 
-function normalizeSpecialMetricAlert(item, snapshot) {
-    return {
+function normalizeSpecialMetricAlert(item, snapshot, schema) {
+    const out = {
         snapshot_id: snapshot ? snapshot.snapshot_id : null,
         month: snapshot ? snapshot.month : null,
         snapshot_created_at: snapshot ? snapshot.created_at : null,
@@ -336,15 +522,18 @@ function normalizeSpecialMetricAlert(item, snapshot) {
         created_at: item.created_at || null,
         raw: item
     };
+    decorateText(out, 'title', out.title, schema);
+    decorateText(out, 'metric_label', out.metric_label, schema);
+    return out;
 }
 
-function parseRawAlerts(snapshotRow) {
+function parseRawAlerts(snapshotRow, schema) {
     const raw = parseRawData(snapshotRow);
     const tickets = Array.isArray(raw.expiringTickets) ? raw.expiringTickets : [];
     const metricAlerts = Array.isArray(raw.specialMetricAlerts) ? raw.specialMetricAlerts : [];
     return {
-        expiring_tickets: tickets.map(item => normalizeExpiringTicket(item, snapshotRow)),
-        special_metric_alerts: metricAlerts.map(item => normalizeSpecialMetricAlert(item, snapshotRow))
+        expiring_tickets: tickets.map(item => normalizeExpiringTicket(item, snapshotRow, schema)),
+        special_metric_alerts: metricAlerts.map(item => normalizeSpecialMetricAlert(item, snapshotRow, schema))
     };
 }
 
@@ -425,12 +614,25 @@ function buildMetricWhere(filters = {}) {
     };
 }
 
+function normalizeDays(value) {
+    const parsed = parseInt(value, 10);
+    if (!Number.isFinite(parsed) || parsed <= 0) return 30;
+    return Math.min(parsed, 3650);
+}
+
+function getDateTimeCutoff(days) {
+    return new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .replace('T', ' ')
+        .substring(0, 19);
+}
+
 async function listSnapshots(filters = {}) {
     const limit = parsePositiveInt(filters.limit, 50, 500);
     const offset = Math.max(0, parseInt(filters.offset, 10) || 0);
     const where = buildSnapshotWhere(filters);
     const rows = await all(
-        `SELECT id, snapshot_id, month, created_at, standard_total_score, image_path, excel_path
+        `SELECT id, snapshot_id, month, created_at, stored_at, standard_total_score, image_path, excel_path
          FROM ReportSnapshots
          ${where.sql}
          ORDER BY created_at DESC, id DESC
@@ -478,7 +680,7 @@ async function getLatestSnapshotRow(filters = {}) {
 }
 
 async function getSnapshotDetail(snapshotId, filters = {}) {
-    const schema = await getMetricSchema();
+    const schema = await getMetricSchema(filters);
     const month = normalizeMonth(filters.month);
     const params = month ? [snapshotId, month] : [snapshotId];
     const monthClause = month ? 'AND month = ?' : '';
@@ -513,12 +715,12 @@ async function getSnapshotDetail(snapshotId, filters = {}) {
         snapshot: normalizeSnapshot(snapshot, { includeRaw: filters.includeRaw }),
         category_scores: categories.map(normalizeCategoryScore),
         metrics: metrics.map(row => normalizeMetric(row, schema)),
-        alerts: parseRawAlerts(snapshot)
+        alerts: parseRawAlerts(snapshot, schema)
     };
 }
 
 async function listMetrics(filters = {}) {
-    const schema = await getMetricSchema();
+    const schema = await getMetricSchema(filters);
     const limit = parsePositiveInt(filters.limit, 200, 2000);
     const offset = Math.max(0, parseInt(filters.offset, 10) || 0);
     const where = buildMetricWhere(filters);
@@ -553,8 +755,150 @@ async function listMetrics(filters = {}) {
     };
 }
 
+function normalizeTrendPoint(row, schema) {
+    const metric = normalizeMetric(row, schema);
+    return {
+        snapshot_id: row.snapshot_id,
+        snapshot_row_id: row.snapshot_row_id,
+        month: row.month,
+        snapshot_created_at: row.snapshot_created_at,
+        stored_at: row.stored_at || null,
+        standard_total_score: row.standard_total_score,
+        category: metric.category,
+        category_i18n: metric.category_i18n,
+        display_category: metric.display_category,
+        metric_label: metric.metric_label,
+        metric_label_i18n: metric.metric_label_i18n,
+        display_metric_label: metric.display_metric_label,
+        target_value: metric.target_value,
+        raw_value: metric.raw_value,
+        numeric_value: metric.numeric_value,
+        is_failing: metric.is_failing,
+        gap: metric.gap,
+        weight: metric.weight,
+        earned_score: metric.earned_score,
+        proportional_scoring: metric.proportional_scoring,
+        completion_ratio: metric.completion_ratio,
+        schema: metric.schema
+    };
+}
+
+function addTrendDeltas(points) {
+    const lastByCategory = new Map();
+    return points.map(point => {
+        const key = point.category || '整体';
+        const prev = lastByCategory.get(key);
+        const next = { ...point };
+        if (prev && Number.isFinite(point.numeric_value) && Number.isFinite(prev.numeric_value)) {
+            next.delta_numeric_value = Number((point.numeric_value - prev.numeric_value).toFixed(4));
+        } else {
+            next.delta_numeric_value = null;
+        }
+        if (prev && Number.isFinite(point.earned_score) && Number.isFinite(prev.earned_score)) {
+            next.delta_earned_score = Number((point.earned_score - prev.earned_score).toFixed(4));
+        } else {
+            next.delta_earned_score = null;
+        }
+        next.previous_snapshot_id = prev ? prev.snapshot_id : null;
+        lastByCategory.set(key, point);
+        return next;
+    });
+}
+
+async function getMetricTrend(filters = {}) {
+    if (!filters.metricLabel) {
+        const err = new Error('metric_label is required');
+        err.statusCode = 400;
+        throw err;
+    }
+
+    const schema = await getMetricSchema(filters);
+    const days = normalizeDays(filters.days);
+    const month = normalizeMonth(filters.month);
+    const where = ['m.metric_label = ?'];
+    const params = [String(filters.metricLabel)];
+
+    if (filters.category) {
+        where.push('m.cat_name = ?');
+        params.push(String(filters.category));
+    }
+    if (month) {
+        where.push('m.month = ?');
+        params.push(month);
+    }
+    if (filters.startDate) {
+        where.push('DATE(s.created_at) >= ?');
+        params.push(String(filters.startDate));
+    } else {
+        where.push('s.created_at >= ?');
+        params.push(getDateTimeCutoff(days));
+    }
+    if (filters.endDate) {
+        where.push('DATE(s.created_at) <= ?');
+        params.push(String(filters.endDate));
+    }
+
+    const limit = parsePositiveInt(filters.limit, 1000, 5000);
+    const rows = await all(
+        `SELECT m.*,
+                s.id AS snapshot_row_id,
+                s.created_at AS snapshot_created_at,
+                s.stored_at AS stored_at,
+                s.standard_total_score AS standard_total_score
+         FROM ReportMetricData m
+         INNER JOIN ReportSnapshots s
+            ON s.snapshot_id = m.snapshot_id
+           AND (s.month = m.month OR m.month IS NULL)
+         WHERE ${where.join(' AND ')}
+         ORDER BY s.created_at ASC, s.id ASC, m.cat_name ASC, m.id ASC
+         LIMIT ?`,
+        [...params, limit]
+    );
+
+    const points = addTrendDeltas(rows.map(row => normalizeTrendPoint(row, schema)));
+    const series = {};
+    points.forEach(point => {
+        const key = point.category || '整体';
+        if (!series[key]) {
+            series[key] = {
+                category: point.category,
+                category_i18n: point.category_i18n,
+                display_category: point.display_category,
+                points: []
+            };
+        }
+        series[key].points.push(point);
+    });
+
+    const firstSchema = points.find(point => point.schema)?.schema || null;
+    const metricLabelI18n = getTranslatedText(filters.metricLabel, schema.i18nMap);
+    return {
+        query: {
+            metric_label: String(filters.metricLabel),
+            metric_label_i18n: metricLabelI18n,
+            display_metric_label: normalizeLang(filters.lang) === 'en-US' ? metricLabelI18n.en : metricLabelI18n.zh,
+            category: filters.category || null,
+            days,
+            month: month || null,
+            startDate: filters.startDate || null,
+            endDate: filters.endDate || null,
+            limit
+        },
+        metric_schema: firstSchema,
+        point_count: points.length,
+        categories: Object.values(series).map(item => ({
+            category: item.category,
+            category_i18n: item.category_i18n,
+            display_category: item.display_category,
+            point_count: item.points.length
+        })),
+        series,
+        points
+    };
+}
+
 async function getSummary(filters = {}) {
-    const schema = await getMetricSchema();
+    const schema = await getMetricSchema(filters);
     const latestRow = await getLatestSnapshotRow(filters);
     const latest = normalizeSnapshot(latestRow);
     const snapshotWhere = buildSnapshotWhere(filters);
@@ -612,13 +956,14 @@ async function getSummary(filters = {}) {
         latest_category_scores: latestCategories.map(normalizeCategoryScore),
         latest_metrics_total: latestMetrics.length,
         latest_failing_metrics: latestMetrics.filter(row => row.is_failing).map(row => normalizeMetric(row, schema)),
-        latest_alerts: parseRawAlerts(latestRow),
-        latest_expiring_ticket_count: latestRow ? parseRawAlerts(latestRow).expiring_tickets.length : 0,
-        latest_special_metric_alert_count: latestRow ? parseRawAlerts(latestRow).special_metric_alerts.length : 0
+        latest_alerts: parseRawAlerts(latestRow, schema),
+        latest_expiring_ticket_count: latestRow ? parseRawAlerts(latestRow, schema).expiring_tickets.length : 0,
+        latest_special_metric_alert_count: latestRow ? parseRawAlerts(latestRow, schema).special_metric_alerts.length : 0
     };
 }
 
 async function getAlerts(filters = {}) {
+    const schema = await getMetricSchema(filters);
     const snapshotRow = filters.snapshotId
         ? await get(
             `SELECT *
@@ -630,7 +975,7 @@ async function getAlerts(filters = {}) {
         )
         : await getLatestSnapshotRow(filters);
     if (!snapshotRow) return null;
-    const alerts = parseRawAlerts(snapshotRow);
+    const alerts = parseRawAlerts(snapshotRow, schema);
     const expiringTickets = filterAlerts(alerts.expiring_tickets, filters);
     return {
         snapshot: normalizeSnapshot(snapshotRow),
@@ -641,17 +986,25 @@ async function getAlerts(filters = {}) {
     };
 }
 
-async function getSchema() {
-    const schema = await getMetricSchema();
+async function getSchema(filters = {}) {
+    const schema = await getMetricSchema(filters);
     return {
         sources: schema.sources,
         metrics: schema.metrics.map(item => ({
             source_id: item.source.source_id,
             source_title: item.source.title,
+            source_title_i18n: item.source.title_i18n,
+            display_source_title: item.source.display_title,
             source_base_name: item.source.base_name,
             main_metric_label: item.main_metric_label,
+            main_metric_label_i18n: getTranslatedText(item.main_metric_label, schema.i18nMap),
+            display_main_metric_label: getDisplayText(item.main_metric_label, schema.i18nMap, schema.lang),
             metric_label: item.metric_label,
+            metric_label_i18n: getTranslatedText(item.metric_label, schema.i18nMap),
+            display_metric_label: getDisplayText(item.metric_label, schema.i18nMap, schema.lang),
             category: item.category,
+            category_i18n: getTranslatedText(item.category, schema.i18nMap),
+            display_category: getDisplayText(item.category, schema.i18nMap, schema.lang),
             is_sub_metric: item.is_sub_metric,
             rule_id: item.rule_id,
             parent_rule_id: item.parent_rule_id || null,
@@ -678,6 +1031,7 @@ module.exports = {
     getLatestSnapshot,
     getSnapshotDetail,
     listMetrics,
+    getMetricTrend,
     getSchema,
     getAlerts,
     closeDatabase

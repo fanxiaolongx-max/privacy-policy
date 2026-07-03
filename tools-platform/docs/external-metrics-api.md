@@ -57,6 +57,24 @@ Authorization: Bearer xxxxxxxxxxxxxxxx
 | `endDate` | string | 快照创建日期上限，格式 `YYYY-MM-DD` |
 | `limit` | number | 分页条数，快照默认 50、最大 500；指标默认 200、最大 2000 |
 | `offset` | number | 分页偏移，默认 0 |
+| `lang` | string | 展示语言，支持 `zh-CN`、`en-US`、`zh`、`en`，默认 `zh-CN` |
+
+## 多语言字段
+
+外部 API 会尽量同时返回中英文，原始字段保持不变，避免破坏已有调用。
+
+- 原始字段：如 `metric_label`、`category`、`schema.main_metric_label`
+- 双语字段：如 `metric_label_i18n: { "zh": "任职率", "en": "C&Q Match Rate" }`
+- 展示字段：如 `display_metric_label`
+
+`lang` 参数只影响 `display_*` 字段，不会改变原始字段。例如：
+
+```bash
+curl -H "Authorization: Bearer <token>" \
+  "http://127.0.0.1:3030/api/external/metrics?month=6&metric_label=任职率&lang=en-US"
+```
+
+如果某个业务名称没有维护英文翻译，`en` 和 `display_*` 会回退为原文。
 
 ## 接口列表
 
@@ -216,6 +234,11 @@ curl -H "Authorization: Bearer <token>" \
         "rule_type": "extract",
         "target_key": "other_36ksoy_m_1781984663938",
         "target_config": {
+          "label_i18n": {
+            "zh": "重疾EOS预案覆盖率",
+            "en": "Critical EOS Contingency Plan Coverage Rate"
+          },
+          "display_label": "Critical EOS Contingency Plan Coverage Rate",
           "condition": "gte",
           "weight": 1,
           "monthly_targets": {
@@ -282,7 +305,89 @@ curl -H "Authorization: Bearer <token>" \
 | `target_config.monthly_targets` | 各月份目标值 |
 | `source_columns` | 指标规则使用的匹配列、匹配值和取数字段 |
 
-### 7. 临期任务预警
+### 7. 指标趋势
+
+`GET /api/external/metrics/trend`
+
+用于移动端点击某个主指标或子指标后，查看最近 N 天该指标在各次快照中的变化趋势，以及对应的快照时间/入库时间记录。
+
+查询参数：
+
+| 参数 | 类型 | 说明 |
+| --- | --- | --- |
+| `metric_label` | string | 必填，指标名称 |
+| `category` | string | 可选。传入时只返回该分类；不传时返回该指标所有分类的多条序列 |
+| `days` | number | 最近 N 天，默认 30，最大 3650 |
+| `month` | number | 可选，限定目标月份 |
+| `startDate` / `endDate` | string | 可选，按快照时间过滤，格式 `YYYY-MM-DD` |
+| `limit` | number | 最大点位数，默认 1000，最大 5000 |
+| `lang` | string | 可选，影响 `display_*` 字段 |
+
+示例：
+
+```bash
+curl -H "Authorization: Bearer <token>" \
+  "http://127.0.0.1:3030/api/external/metrics/trend?metric_label=重疾EOS预案覆盖率&category=TE&days=30&lang=en-US"
+```
+
+响应结构：
+
+```json
+{
+  "query": {
+    "metric_label": "重疾EOS预案覆盖率",
+    "display_metric_label": "Urgent EOS Contingency",
+    "category": "TE",
+    "days": 30,
+    "limit": 1000
+  },
+  "metric_schema": {},
+  "point_count": 16,
+  "categories": [
+    {
+      "category": "TE",
+      "display_category": "TE",
+      "point_count": 16
+    }
+  ],
+  "series": {
+    "TE": {
+      "category": "TE",
+      "display_category": "TE",
+      "points": []
+    }
+  },
+  "points": [
+    {
+      "snapshot_id": "mr3w2tl9",
+      "snapshot_row_id": 113,
+      "month": 6,
+      "snapshot_created_at": "2026-07-03 09:37:55",
+      "stored_at": "2026-07-03 09:38:02",
+      "category": "TE",
+      "metric_label": "重疾EOS预案覆盖率",
+      "display_metric_label": "Urgent EOS Contingency",
+      "target_value": "≥ 100%",
+      "raw_value": "100%",
+      "numeric_value": 100,
+      "is_failing": false,
+      "gap": "",
+      "earned_score": 1,
+      "delta_numeric_value": 1,
+      "delta_earned_score": 1,
+      "previous_snapshot_id": "mqmrxfqj"
+    }
+  ]
+}
+```
+
+说明：
+
+- `snapshot_created_at` 是报表快照时间，也就是入库 payload 中保存的快照时间。
+- `stored_at` 是服务端实际写入 `report.db` 的时间。旧历史数据在本接口上线前没有记录该字段，可能为 `null`。
+- App 画图建议优先使用 `series`；列表或表格可直接用 `points`。
+
+### 8. 临期任务预警
 
 `GET /api/external/metrics/alerts`
 
@@ -318,7 +423,18 @@ curl -H "Authorization: Bearer <token>" \
   "expiring_tickets": [
     {
       "collection": "rectification",
+      "collection_label": "整改预警",
+      "collection_label_i18n": {
+        "zh": "整改预警",
+        "en": "Rectification Alerts"
+      },
+      "display_collection_label": "整改预警",
       "title": "🔧 整改详单合集",
+      "title_i18n": {
+        "zh": "🔧 整改详单合集",
+        "en": "Rectification Details"
+      },
+      "display_title": "🔧 整改详单合集",
       "ticket_id": "RC20260629000014",
       "network_name": "EG-Egypt Orange",
       "status": "Checking",
@@ -330,6 +446,20 @@ curl -H "Authorization: Bearer <token>" \
       "sla_days": 27,
       "urgency": "expiring",
       "sla_text": "Checking提醒 (剩余 27 天)",
+      "sla_text_i18n": {
+        "zh": "Checking提醒 (剩余 27 天)",
+        "en": "Checking warning (remaining 27 days)"
+      },
+      "display_sla_text": "Checking提醒 (剩余 27 天)",
+      "sla_status": {
+        "raw_text": "Checking提醒 (剩余 27 天)",
+        "remaining_text": "27 天",
+        "overdue_text": null,
+        "consume_percent": null,
+        "sla_days": 27,
+        "status_label": "Checking提醒",
+        "is_overdue": false
+      },
       "raw": {}
     }
   ],
@@ -337,7 +467,7 @@ curl -H "Authorization: Bearer <token>" \
 }
 ```
 
-### 8. 不达标指标列表
+### 9. 不达标指标列表
 
 `GET /api/external/metrics/failing`
 
@@ -356,6 +486,7 @@ curl -H "Authorization: Bearer <token>" \
 - 历史记录页使用 `/snapshots?month=<目标月>&limit=20&offset=0`。
 - 指标列表页使用 `/api/external/metrics` 分页加载，不建议一次拉全量。
 - 指标字典/配置页使用 `/api/external/metrics/schema`。
+- 指标详情趋势图使用 `/api/external/metrics/trend?metric_label=<指标名>&days=30`。
 - 临期任务预警页使用 `/api/external/metrics/alerts?month=<目标月>`。
 - 异常提醒页使用 `/failing`。
 - 只有在需要复现 Web 端入库原始数据时，才使用 `includeRaw=1`。
