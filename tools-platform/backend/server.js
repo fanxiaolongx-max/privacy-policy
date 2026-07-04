@@ -39,6 +39,7 @@ const globalBackupRepo = require('./models/global-backup-repository');
 const remoteBackupSyncRepo = require('./models/remote-backup-sync-repository');
 const legacyJsonMigration = require('./models/legacy-json-migration');
 const configChangeMonitor = require('./models/config-change-monitor');
+const alertAiAnalyzer = require('./models/alert-ai-analyzer');
 const { checkAuth, requireAdmin, checkHtmlAuth } = require('./middleware/auth');
 
 const app = express();
@@ -273,6 +274,9 @@ async function startServer() {
         setTimeout(() => {
             configChangeMonitor.startConfigFingerprintMonitor();
         }, 2400);
+        setTimeout(() => {
+            alertAiAnalyzer.startAlertAiBackfill();
+        }, 3200);
     });
 
     server.on('error', (err) => {

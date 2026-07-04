@@ -36,6 +36,48 @@ function hashObject(value) {
     return crypto.createHash('sha256').update(stableStringify(value || {})).digest('hex').slice(0, 16);
 }
 
+function describeChangedTargetField(field) {
+    const monthMatch = String(field).match(/^([1-9]|1[0-2])$/);
+    if (monthMatch) return `${monthMatch[1]}月目标`;
+    const names = {
+        label: '指标名称',
+        type: '达标类型',
+        weight: '权重',
+        autoFill: '自动填充',
+        isPercent: '百分比口径',
+        exceedBy: '超额阈值',
+        bonus: '加分值'
+    };
+    return names[field] || field;
+}
+
+function summarizeChangedTargetItem(key, beforeItem = {}, afterItem = {}) {
+    const before = beforeItem && typeof beforeItem === 'object' ? beforeItem : {};
+    const after = afterItem && typeof afterItem === 'object' ? afterItem : {};
+    const fieldSet = new Set([...Object.keys(before), ...Object.keys(after)]);
+    const changedFields = [...fieldSet]
+        .filter(field => stableStringify(before[field]) !== stableStringify(after[field]))
+        .slice(0, 20);
+    return {
+        key,
+        label: after.label || before.label || key,
+        changedFields: changedFields.map(field => ({
+            field,
+            name: describeChangedTargetField(field),
+            before: before[field],
+            after: after[field]
+        }))
+    };
+}
+
+function summarizeChangedPrefItem(key, beforeValue, afterValue) {
+    return {
+        key,
+        before: beforeValue,
+        after: afterValue
+    };
+}
+
 function summarizeConfig({ targets = {}, prefs = {} } = {}) {
     const schemaPrefs = Object.entries(prefs || {})
         .filter(([, pref]) => pref && Array.isArray(pref.customMetrics));
@@ -297,11 +339,26 @@ router.put('/targets', async (req, res) => {
             groupsRepo.listGroups({ mode: 'auto' })
         ]);
         await targetsRepo.replaceTargets(targets);
+        const changedKeys = Object.keys(targets || {})
+            .filter(key => stableStringify(targets[key]) !== stableStringify(beforeTargets[key]))
+            .slice(0, 50);
+        const removedKeys = Object.keys(beforeTargets || {})
+            .filter(key => !Object.prototype.hasOwnProperty.call(targets, key))
+            .slice(0, 50);
+        const changedItems = changedKeys
+            .map(key => summarizeChangedTargetItem(key, beforeTargets[key], targets[key]))
+            .slice(0, 20);
+        const removedItems = removedKeys
+            .map(key => ({
+                key,
+                label: beforeTargets[key]?.label || key
+            }))
+            .slice(0, 20);
         const summary = {
             before: { targetCount: Object.keys(beforeTargets || {}).length, hash: hashObject(beforeTargets) },
             after: { targetCount: Object.keys(targets || {}).length, hash: hashObject(targets) },
-            changedKeys: Object.keys(targets || {}).filter(key => stableStringify(targets[key]) !== stableStringify(beforeTargets[key])).slice(0, 50),
-            removedKeys: Object.keys(beforeTargets || {}).filter(key => !Object.prototype.hasOwnProperty.call(targets, key)).slice(0, 50)
+            changedKeys,
+            removedKeys
         };
         await writeAudit(req, 'sla.targets.replace', summary);
         configChangeMonitor.recordSlaConfigChange({
@@ -315,7 +372,12 @@ router.put('/targets', async (req, res) => {
             afterGroups: beforeGroups,
             objectType: 'sla_targets',
             objectId: 'global',
-            detail: { changedKeys: summary.changedKeys, removedKeys: summary.removedKeys }
+            detail: {
+                changedKeys: summary.changedKeys,
+                removedKeys: summary.removedKeys,
+                changedItems,
+                removedItems
+            }
         });
         res.json({ success: true });
     } catch (err) {
@@ -639,6 +701,18 @@ router.post('/config', async (req, res) => {
         const afterTargetsNow = (await targetsRepo.getTargets({ mode: 'auto' })).items;
         const afterPrefsNow = (await prefsRepo.getPrefsObject({ mode: 'auto' })).items;
         const afterGroupsNow = (await groupsRepo.listGroups({ mode: 'auto' })).items;
+        const changedPrefKeys = Object.keys(afterPrefsNow || {})
+            .filter(key => stableStringify(afterPrefsNow[key]) !== stableStringify(beforePrefs[key]))
+            .slice(0, 50);
+        const removedPrefKeys = Object.keys(beforePrefs || {})
+            .filter(key => !Object.prototype.hasOwnProperty.call(afterPrefsNow, key))
+            .slice(0, 50);
+        const changedPrefs = changedPrefKeys
+            .map(key => summarizeChangedPrefItem(key, beforePrefs[key], afterPrefsNow[key]))
+            .slice(0, 20);
+        const removedPrefs = removedPrefKeys
+            .map(key => summarizeChangedPrefItem(key, beforePrefs[key], undefined))
+            .slice(0, 20);
         configChangeMonitor.recordSlaConfigChange({
             req,
             action: 'SLA 全量配置导入变化',
@@ -650,7 +724,13 @@ router.post('/config', async (req, res) => {
             afterGroups: afterGroupsNow,
             objectType: 'sla_config',
             objectId: 'import',
-            detail: { confirmed }
+            detail: {
+                confirmed,
+                changedPrefKeys,
+                removedPrefKeys,
+                changedPrefs,
+                removedPrefs
+            }
         });
         res.json({ success: true });
     } catch (e) {
