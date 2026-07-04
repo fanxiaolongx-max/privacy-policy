@@ -42,7 +42,13 @@ let navState = {
     scheduleBackupSaveTimer: null,
     updaterStatus: null,
     updaterVersion: null,
-    updaterUnsubscribe: null
+    updaterUnsubscribe: null,
+    alertCenter: {
+        events: [],
+        summary: null,
+        filter: 'all',
+        loading: false
+    }
 };
 
 function navT(key, params) {
@@ -81,6 +87,8 @@ function registerNavbarI18n() {
             'nav.dbExplorer': '数据探索',
             'nav.more': '更多工具',
             'nav.requirements': '需求',
+            'nav.alertCenter': '告警台',
+            'nav.alertCenterTitle': '打开系统告警台',
             'nav.settings': '全局导航设置',
             'nav.userPrefix': '👤 {user}',
             'nav.logout': '退出',
@@ -260,7 +268,29 @@ function registerNavbarI18n() {
             'nav.acc.noData': '暂无账号',
             'nav.acc.fail': '加载账号失败：',
             'nav.acc.btnDel': '删除',
-            'nav.acc.btnReset': '重置密码'
+            'nav.acc.btnReset': '重置密码',
+
+            'nav.alert.title': '告警台',
+            'nav.alert.subtitle': '集中查看系统告警、配置变化和用户关键行为。',
+            'nav.alert.loading': '正在加载告警...',
+            'nav.alert.empty': '暂无告警事件',
+            'nav.alert.all': '全部',
+            'nav.alert.unread': '未读',
+            'nav.alert.warn': '风险以上',
+            'nav.alert.config': '配置变化',
+            'nav.alert.userAction': '用户行为',
+            'nav.alert.system': '系统',
+            'nav.alert.summaryTotal': '事件',
+            'nav.alert.summaryUnread': '未读',
+            'nav.alert.summaryRisk': '风险',
+            'nav.alert.markAll': '全部已读',
+            'nav.alert.refresh': '刷新',
+            'nav.alert.archive': '归档',
+            'nav.alert.read': '已读',
+            'nav.alert.actor': '操作人',
+            'nav.alert.source': '来源',
+            'nav.alert.object': '对象',
+            'nav.alert.failLoad': '告警加载失败：'
         },
         'en-US': {
             'nav.home': 'Home',
@@ -276,6 +306,8 @@ function registerNavbarI18n() {
             'nav.dbExplorer': 'Data Explorer',
             'nav.more': 'More Tools',
             'nav.requirements': 'Requests',
+            'nav.alertCenter': 'Alerts',
+            'nav.alertCenterTitle': 'Open Alert Center',
             'nav.settings': 'Global navigation settings',
             'nav.userPrefix': '👤 {user}',
             'nav.logout': 'Logout',
@@ -455,7 +487,29 @@ function registerNavbarI18n() {
             'nav.acc.noData': 'No Accounts',
             'nav.acc.fail': 'Failed to load accounts: ',
             'nav.acc.btnDel': 'Delete',
-            'nav.acc.btnReset': 'Reset Password'
+            'nav.acc.btnReset': 'Reset Password',
+
+            'nav.alert.title': 'Alert Center',
+            'nav.alert.subtitle': 'Review system alerts, configuration changes, and key user actions in one place.',
+            'nav.alert.loading': 'Loading alerts...',
+            'nav.alert.empty': 'No alert events',
+            'nav.alert.all': 'All',
+            'nav.alert.unread': 'Unread',
+            'nav.alert.warn': 'Risk+',
+            'nav.alert.config': 'Config',
+            'nav.alert.userAction': 'User Actions',
+            'nav.alert.system': 'System',
+            'nav.alert.summaryTotal': 'Events',
+            'nav.alert.summaryUnread': 'Unread',
+            'nav.alert.summaryRisk': 'Risk',
+            'nav.alert.markAll': 'Mark all read',
+            'nav.alert.refresh': 'Refresh',
+            'nav.alert.archive': 'Archive',
+            'nav.alert.read': 'Read',
+            'nav.alert.actor': 'Actor',
+            'nav.alert.source': 'Source',
+            'nav.alert.object': 'Object',
+            'nav.alert.failLoad': 'Failed to load alerts: '
         }
     });
 }
@@ -680,6 +734,11 @@ function renderNavbar() {
                 <span class="nav-lang-current">${window.ToolsI18n?.getLanguage?.() === 'en-US' ? 'EN' : '中文'}</span>
             </button>
             <a href="/requirements" class="req-btn nav-action-link" title="${navEscape(navT('nav.requirements'))}"><span class="nav-action-icon">🎯</span><span class="nav-action-text">${navEscape(navT('nav.requirements'))}</span></a>
+            <button type="button" class="nav-alert-btn" onclick="openAlertCenter()" title="${navEscape(navT('nav.alertCenterTitle'))}" aria-label="${navEscape(navT('nav.alertCenterTitle'))}">
+                <span class="nav-action-icon">🔔</span>
+                <span class="nav-action-text">${navEscape(navT('nav.alertCenter'))}</span>
+                <span class="nav-alert-count" id="navAlertCount" hidden>0</span>
+            </button>
             ${role === 'admin' ? `<button type="button" class="nav-gear-btn" onclick="openNavSettingsModal()" title="${navEscape(navT('nav.settings'))}">⚙</button>` : ''}
             <span class="nav-user-chip" title="${navEscape(user || '未登录')}"><span class="nav-action-icon">👤</span><span class="nav-action-text">${navEscape(user || '未登录')}</span></span>
             <a href="#" class="nav-logout-link" onclick="doLogout()" title="${navEscape(navT('nav.logout'))}"><span class="nav-action-icon">↩</span><span class="nav-action-text">${navEscape(navT('nav.logout'))}</span></a>
@@ -1984,6 +2043,229 @@ window.runReportSnapshotCleanup = async function () {
     });
 };
 
+function formatAlertTime(value) {
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return value || '-';
+    const pad = n => String(n).padStart(2, '0');
+    return `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function alertTypeLabel(type) {
+    if (type === 'config') return navT('nav.alert.config');
+    if (type === 'user_action') return navT('nav.alert.userAction');
+    if (type === 'alert') return navT('nav.alertCenter');
+    return navT('nav.alert.system');
+}
+
+function severityLabel(severity) {
+    return ({ info: 'Info', warn: 'Warn', error: 'Error', critical: 'Critical' })[severity] || 'Info';
+}
+
+async function fetchAlertCenterSummary() {
+    const res = await fetch('/api/alert-center/summary', { headers: getAuthHeaderForNav() });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+}
+
+async function fetchAlertCenterEvents(filter = navState.alertCenter.filter) {
+    const params = new URLSearchParams({ limit: '120' });
+    if (filter === 'unread') params.set('status', 'unread');
+    if (filter === 'config') params.set('type', 'config');
+    if (filter === 'user_action') params.set('type', 'user_action');
+    if (filter === 'system') params.set('type', 'system');
+    const res = await fetch(`/api/alert-center/events?${params.toString()}`, { headers: getAuthHeaderForNav() });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    const events = data.events || [];
+    return filter === 'warn'
+        ? events.filter(event => ['warn', 'error', 'critical'].includes(event.severity))
+        : events;
+}
+
+function updateAlertCenterBadge(summary = navState.alertCenter.summary) {
+    const badge = document.getElementById('navAlertCount');
+    const button = document.querySelector('.nav-alert-btn');
+    if (!badge || !button) return;
+    const unread = Number(summary && summary.unread) || 0;
+    badge.textContent = unread > 99 ? '99+' : String(unread);
+    badge.hidden = unread <= 0;
+    button.classList.toggle('has-alerts', unread > 0);
+}
+
+async function refreshAlertCenterBadge() {
+    try {
+        navState.alertCenter.summary = await fetchAlertCenterSummary();
+        updateAlertCenterBadge();
+    } catch (e) {
+        console.warn('[AlertCenter] summary failed:', e);
+    }
+}
+
+function ensureAlertCenterModal() {
+    let modal = document.getElementById('alertCenterModal');
+    if (modal) return modal;
+    modal = document.createElement('div');
+    modal.id = 'alertCenterModal';
+    modal.className = 'alert-center-modal';
+    modal.innerHTML = `
+        <div class="alert-center-backdrop" onclick="closeAlertCenter()"></div>
+        <aside class="alert-center-panel" role="dialog" aria-modal="true" aria-labelledby="alertCenterTitle">
+            <div class="alert-center-head">
+                <div>
+                    <h2 id="alertCenterTitle">${navEscape(navT('nav.alert.title'))}</h2>
+                    <p>${navEscape(navT('nav.alert.subtitle'))}</p>
+                </div>
+                <button class="alert-center-close" type="button" onclick="closeAlertCenter()">×</button>
+            </div>
+            <div class="alert-center-summary" id="alertCenterSummary"></div>
+            <div class="alert-center-toolbar">
+                <div class="alert-center-filters" id="alertCenterFilters"></div>
+                <div class="alert-center-actions">
+                    <button type="button" onclick="markAllAlertCenterRead()">${navEscape(navT('nav.alert.markAll'))}</button>
+                    <button type="button" onclick="reloadAlertCenter()">${navEscape(navT('nav.alert.refresh'))}</button>
+                </div>
+            </div>
+            <div class="alert-center-list" id="alertCenterList">${navEscape(navT('nav.alert.loading'))}</div>
+        </aside>
+    `;
+    document.body.appendChild(modal);
+    return modal;
+}
+
+function renderAlertCenterFilters() {
+    const el = document.getElementById('alertCenterFilters');
+    if (!el) return;
+    const filters = [
+        ['all', navT('nav.alert.all')],
+        ['unread', navT('nav.alert.unread')],
+        ['warn', navT('nav.alert.warn')],
+        ['config', navT('nav.alert.config')],
+        ['user_action', navT('nav.alert.userAction')],
+        ['system', navT('nav.alert.system')]
+    ];
+    el.innerHTML = filters.map(([id, label]) => `
+        <button type="button" class="${navState.alertCenter.filter === id ? 'active' : ''}" onclick="setAlertCenterFilter('${id}')">${navEscape(label)}</button>
+    `).join('');
+}
+
+function renderAlertCenterSummary() {
+    const el = document.getElementById('alertCenterSummary');
+    if (!el) return;
+    const summary = navState.alertCenter.summary || {};
+    el.innerHTML = `
+        <div><span>${navEscape(navT('nav.alert.summaryTotal'))}</span><strong>${Number(summary.total) || 0}</strong></div>
+        <div><span>${navEscape(navT('nav.alert.summaryUnread'))}</span><strong>${Number(summary.unread) || 0}</strong></div>
+        <div><span>${navEscape(navT('nav.alert.summaryRisk'))}</span><strong>${Number(summary.warnOrAbove) || 0}</strong></div>
+    `;
+}
+
+function renderAlertCenterList() {
+    const list = document.getElementById('alertCenterList');
+    if (!list) return;
+    if (navState.alertCenter.loading) {
+        list.innerHTML = `<div class="alert-center-empty">${navEscape(navT('nav.alert.loading'))}</div>`;
+        return;
+    }
+    const events = navState.alertCenter.events || [];
+    if (!events.length) {
+        list.innerHTML = `<div class="alert-center-empty">${navEscape(navT('nav.alert.empty'))}</div>`;
+        return;
+    }
+    list.innerHTML = events.map(event => {
+        const meta = [
+            event.actor ? `${navT('nav.alert.actor')}: ${event.actor}` : '',
+            event.source ? `${navT('nav.alert.source')}: ${event.source}` : '',
+            event.object_type || event.object_id ? `${navT('nav.alert.object')}: ${event.object_type || '-'} ${event.object_id || ''}` : ''
+        ].filter(Boolean);
+        const detailEntries = event.detail && typeof event.detail === 'object'
+            ? Object.entries(event.detail).slice(0, 4)
+            : [];
+        return `
+            <article class="alert-center-item ${navEscape(event.severity)} ${event.status === 'unread' ? 'unread' : ''}">
+                <div class="alert-center-item-top">
+                    <div class="alert-center-title-wrap">
+                        <span class="alert-center-severity">${navEscape(severityLabel(event.severity))}</span>
+                        <span class="alert-center-type">${navEscape(alertTypeLabel(event.event_type))}</span>
+                        <strong>${navEscape(event.title)}</strong>
+                    </div>
+                    <time>${navEscape(formatAlertTime(event.created_at))}</time>
+                </div>
+                ${event.message ? `<div class="alert-center-message">${navEscape(event.message)}</div>` : ''}
+                ${meta.length ? `<div class="alert-center-meta">${meta.map(navEscape).join(' · ')}</div>` : ''}
+                ${detailEntries.length ? `<div class="alert-center-detail">${detailEntries.map(([k, v]) => `<span>${navEscape(k)}: ${navEscape(typeof v === 'object' ? JSON.stringify(v) : v)}</span>`).join('')}</div>` : ''}
+                <div class="alert-center-row-actions">
+                    ${event.status === 'unread' ? `<button type="button" onclick="markAlertCenterRead('${navEscape(event.id)}')">${navEscape(navT('nav.alert.read'))}</button>` : ''}
+                    <button type="button" onclick="archiveAlertCenterEvent('${navEscape(event.id)}')">${navEscape(navT('nav.alert.archive'))}</button>
+                </div>
+            </article>
+        `;
+    }).join('');
+}
+
+window.reloadAlertCenter = async function () {
+    navState.alertCenter.loading = true;
+    renderAlertCenterSummary();
+    renderAlertCenterFilters();
+    renderAlertCenterList();
+    try {
+        const [summary, events] = await Promise.all([
+            fetchAlertCenterSummary(),
+            fetchAlertCenterEvents()
+        ]);
+        navState.alertCenter.summary = summary;
+        navState.alertCenter.events = events;
+        updateAlertCenterBadge(summary);
+    } catch (e) {
+        const list = document.getElementById('alertCenterList');
+        if (list) list.innerHTML = `<div class="alert-center-empty warning">${navEscape(navT('nav.alert.failLoad'))}${navEscape(e.message)}</div>`;
+    } finally {
+        navState.alertCenter.loading = false;
+        renderAlertCenterSummary();
+        renderAlertCenterFilters();
+        renderAlertCenterList();
+    }
+};
+
+window.openAlertCenter = function () {
+    const modal = ensureAlertCenterModal();
+    modal.classList.add('open');
+    window.reloadAlertCenter();
+};
+
+window.closeAlertCenter = function () {
+    document.getElementById('alertCenterModal')?.classList.remove('open');
+};
+
+window.setAlertCenterFilter = function (filter) {
+    navState.alertCenter.filter = filter || 'all';
+    window.reloadAlertCenter();
+};
+
+window.markAlertCenterRead = async function (id) {
+    await fetch('/api/alert-center/events/read', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() },
+        body: JSON.stringify({ ids: [id] })
+    });
+    window.reloadAlertCenter();
+};
+
+window.markAllAlertCenterRead = async function () {
+    await fetch('/api/alert-center/events/read-all', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() }
+    });
+    window.reloadAlertCenter();
+};
+
+window.archiveAlertCenterEvent = async function (id) {
+    await fetch(`/api/alert-center/events/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: getAuthHeaderForNav()
+    });
+    window.reloadAlertCenter();
+};
+
 async function renderAccountSettings(content) {
     content.innerHTML = `<div class="nav-settings-empty">${navEscape(navT('nav.acc.empty'))}</div>`;
     try {
@@ -2129,7 +2411,7 @@ window.openUserModal = async function () {
     // 确保不重复加载
     if (!document.querySelector('script[src^="/js/shared/ai-assistant.js"]')) {
         const aiScript = document.createElement('script');
-        aiScript.src = '/js/shared/ai-assistant.js?v=20260630-02';
+        aiScript.src = '/js/shared/ai-assistant.js?v=20260704-01';
         document.body.appendChild(aiScript);
     }
 })();
@@ -2385,5 +2667,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderNavbar();
     initBackToTopButton();
     loadNavigationData();
+    refreshAlertCenterBadge();
+    setInterval(refreshAlertCenterBadge, 60000);
     setTimeout(checkServerStatus, 500);
 });

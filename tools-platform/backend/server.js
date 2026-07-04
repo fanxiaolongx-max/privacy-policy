@@ -33,6 +33,7 @@ const customToolsRepo = require('./models/custom-tools-repository');
 const navSettingsRoutes = require('./routes/nav-settings');
 const aiSettingsRoutes = require('./routes/ai-settings');
 const globalBackupRoutes = require('./routes/global-backup');
+const alertCenterRoutes = require('./routes/alert-center');
 const globalBackupRepo = require('./models/global-backup-repository');
 const remoteBackupSyncRepo = require('./models/remote-backup-sync-repository');
 const legacyJsonMigration = require('./models/legacy-json-migration');
@@ -167,6 +168,7 @@ app.use('/api/nav-settings', navSettingsRoutes); // 顶部导航全局设置 API
 app.use('/api/ai-settings', aiSettingsRoutes); // 智能客服助手模型配置 API
 app.use('/api/global-backup', globalBackupRoutes); // 全局数据备份与恢复 API
 app.use('/api/external/metrics', externalMetricsRoutes); // 外部/移动端只读指标 API
+app.use('/api/alert-center', alertCenterRoutes); // 系统告警台 API
 
 // ============================================================
 // 前端路由回退（SPA）
