@@ -16,8 +16,12 @@
         refreshStatusKey: 'statusSynced',
         i18nMap: {},
         contactInfo: null,
-        dashboardTitle: null
+        dashboardTitle: null,
+        rankScoreTheme: 'flap'
     };
+
+    const RANK_SCORE_THEME_KEY = 'tools.bigscreen.rankScoreTheme';
+    const RANK_SCORE_THEMES = ['flap', 'neon', 'plain'];
 
     const BIGSCREEN_I18N = {
         'zh-CN': {
@@ -40,6 +44,10 @@
             exitFullscreenTitle: '退出全屏显示',
             rankTitle: '未达标客户群',
             rankSub: '按当前分数',
+            rankThemeHint: '点击分数切换主题: {theme}',
+            rankThemeFlap: '翻牌',
+            rankThemeNeon: '霓虹',
+            rankThemePlain: '纯数字',
             trendTitle: '风险走势',
             trendSub: '未达标项 / 达标率',
             weakTitle: '整体未达标诊断',
@@ -178,6 +186,10 @@
             exitFullscreenTitle: 'Exit fullscreen',
             rankTitle: 'At-Risk Customer Groups',
             rankSub: 'By current score',
+            rankThemeHint: 'Click score to switch theme: {theme}',
+            rankThemeFlap: 'Flip',
+            rankThemeNeon: 'Neon',
+            rankThemePlain: 'Plain',
             trendTitle: 'Risk Trend',
             trendSub: 'Failed Items / Pass Rate',
             weakTitle: 'Overall Failure Diagnosis',
@@ -454,6 +466,7 @@
             if (sub && subKey) sub.textContent = tr(subKey);
         };
         setPanel('.customer-focus', 'rankTitle', 'rankSub');
+        renderRankThemeHint();
         setPanel('.main-trend', 'trendTitle', 'trendSub');
         setPanel('.metric-carousel-panel', 'carouselTitle', 'carouselSub');
         const passPanel = document.querySelector('.pass-strip-panel');
@@ -551,6 +564,59 @@
     function fmt(value, digits = 1) {
         const n = num(value, 0);
         return n.toFixed(digits);
+    }
+
+    function normalizeRankScoreTheme(value) {
+        return RANK_SCORE_THEMES.includes(value) ? value : 'flap';
+    }
+
+    function getRankScoreThemeLabel(theme = state.rankScoreTheme) {
+        const key = {
+            flap: 'rankThemeFlap',
+            neon: 'rankThemeNeon',
+            plain: 'rankThemePlain'
+        }[normalizeRankScoreTheme(theme)] || 'rankThemeFlap';
+        return tr(key);
+    }
+
+    function loadRankScoreTheme() {
+        try {
+            state.rankScoreTheme = normalizeRankScoreTheme(localStorage.getItem(RANK_SCORE_THEME_KEY));
+        } catch (e) {
+            state.rankScoreTheme = 'flap';
+        }
+    }
+
+    function saveRankScoreTheme(theme) {
+        state.rankScoreTheme = normalizeRankScoreTheme(theme);
+        try {
+            localStorage.setItem(RANK_SCORE_THEME_KEY, state.rankScoreTheme);
+        } catch (e) {
+            console.warn('[bigscreen] save score theme skipped:', e);
+        }
+    }
+
+    function renderRankThemeHint() {
+        const panel = document.querySelector('.customer-focus');
+        const sub = panel && panel.querySelector('.panel-sub');
+        if (!sub) return;
+        sub.textContent = tr('rankThemeHint', { theme: getRankScoreThemeLabel() });
+        sub.title = isEn()
+            ? 'Click any score in this panel to switch the display theme.'
+            : '点击本面板任意分数可切换显示主题。';
+    }
+
+    function cycleRankScoreTheme() {
+        const current = normalizeRankScoreTheme(state.rankScoreTheme);
+        const idx = RANK_SCORE_THEMES.indexOf(current);
+        const next = RANK_SCORE_THEMES[(idx + 1) % RANK_SCORE_THEMES.length];
+        saveRankScoreTheme(next);
+        renderRankList();
+        if (window.showToast) {
+            window.showToast(isEn()
+                ? `Score theme: ${getRankScoreThemeLabel(next)}`
+                : `分数显示主题：${getRankScoreThemeLabel(next)}`);
+        }
     }
 
     function fmtDate(date = new Date()) {
@@ -1029,6 +1095,39 @@
         return String(valueStr).split('').map(char => `<span class="flap-char">${char}</span>`).join('');
     }
 
+    function renderRankScore(score) {
+        const value = fmt(score, 1);
+        const theme = normalizeRankScoreTheme(state.rankScoreTheme);
+        const label = escapeHTML(tr('scoreUnit'));
+        const title = escapeHTML(isEn()
+            ? `Click to switch score theme. Current: ${getRankScoreThemeLabel(theme)}`
+            : `点击切换分数显示主题，当前: ${getRankScoreThemeLabel(theme)}`);
+        if (theme === 'plain') {
+            return `
+                <button class="rank-score rank-score-button rank-score-plain" type="button" data-score-theme-trigger="true" title="${title}">
+                    <span class="rank-score-number">${escapeHTML(value)}</span>
+                    <span class="rank-score-label">${label}</span>
+                </button>
+            `;
+        }
+        if (theme === 'neon') {
+            return `
+                <button class="rank-score rank-score-button rank-score-neon" type="button" data-score-theme-trigger="true" title="${title}">
+                    <span class="score-pill score-pill-neon">${escapeHTML(value)}</span>
+                    <span class="rank-score-label">${label}</span>
+                </button>
+            `;
+        }
+        return `
+            <button class="rank-score rank-score-button rank-score-flap" type="button" data-score-theme-trigger="true" title="${title}">
+                <span class="flap-board" data-val="${escapeHTML(value)}">
+                    ${renderFlapChars(value)}
+                </span>
+                <span class="rank-score-label">${label}</span>
+            </button>
+        `;
+    }
+
     function renderRankList() {
         const rows = getCustomerScoreRows();
         if (!rows.length) {
@@ -1038,6 +1137,7 @@
             if ($('rankSummary')) $('rankSummary').textContent = tr('rankStable');
             return;
         }
+        $('rankList').setAttribute('data-score-theme', normalizeRankScoreTheme(state.rankScoreTheme));
         $('rankList').style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
         $('rankList').style.gridTemplateRows = 'repeat(2, minmax(0, 1fr))';
         $('rankList').innerHTML = rows.slice(0, 4).map((item, index) => {
@@ -1047,17 +1147,13 @@
                 <div>
                     <div class="row-name" title="${escapeHTML(translated(item.cat))}">${escapeHTML(translated(item.cat))}</div>
                 </div>
-                <div class="rank-score">
-                    <div class="flap-board" data-val="${fmt(item.score, 1)}">
-                        ${renderFlapChars(fmt(item.score, 1))}
-                    </div>
-                    <span class="rank-score-label">${escapeHTML(tr('scoreUnit'))}</span>
-                </div>
+                ${renderRankScore(item.score)}
             </div>
         `;
         }).join('');
 
-        startScoreFlipAnimation();
+        renderRankThemeHint();
+        if (normalizeRankScoreTheme(state.rankScoreTheme) === 'flap') startScoreFlipAnimation();
         renderRankSummary(rows);
     }
 
@@ -1270,6 +1366,7 @@
     }
 
     function startScoreFlipAnimation() {
+        if (normalizeRankScoreTheme(state.rankScoreTheme) !== 'flap') return;
         const boards = document.querySelectorAll('.flap-board');
         if (!boards.length) return;
 
@@ -2367,6 +2464,13 @@
         if ($('ownerConfigBtn')) $('ownerConfigBtn').addEventListener('click', openOwnerModal);
         if ($('exportHtmlBtn')) $('exportHtmlBtn').addEventListener('click', exportStandaloneHtml);
         if ($('ownerAvatarInput')) $('ownerAvatarInput').addEventListener('change', handleOwnerAvatarChange);
+        if ($('rankList')) {
+            $('rankList').addEventListener('click', event => {
+                if (event.target && event.target.closest('[data-score-theme-trigger="true"]')) {
+                    cycleRankScoreTheme();
+                }
+            });
+        }
         const titleEl = $('bigscreenTitle');
         if (titleEl) {
             titleEl.addEventListener('keydown', event => {
@@ -2530,6 +2634,7 @@
     };
 
     document.addEventListener('DOMContentLoaded', () => {
+        loadRankScoreTheme();
         window.API.get('/api/db/config/bigscreen_title').then(res => {
             state.dashboardTitle = normalizeDashboardTitle(res);
             renderDashboardTitle();

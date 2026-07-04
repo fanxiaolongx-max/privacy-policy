@@ -166,7 +166,7 @@
         }
         .ai-input-area {
             display: flex;
-            padding: 16px;
+            padding: 12px 16px 16px;
             background: #fff;
             border-top: 1px solid #e2e8f0;
             gap: 10px;
@@ -219,17 +219,28 @@
             padding: 0 16px;
         }
         .ai-suggestions {
-            display: flex;
-            gap: 8px;
-            padding: 10px 16px 0;
+            display: grid;
+            grid-auto-flow: column;
+            grid-template-rows: repeat(2, 28px);
+            grid-auto-columns: 138px;
+            column-gap: 8px;
+            row-gap: 8px;
+            padding: 10px 16px 22px;
             background: #fff;
             border-top: 1px solid #e2e8f0;
+            height: 96px;
             overflow-x: auto;
+            overflow-y: hidden;
+            align-content: start;
+            flex: 0 0 auto;
             scrollbar-width: thin;
+            overscroll-behavior-x: contain;
+            -webkit-overflow-scrolling: touch;
         }
         .ai-suggestion-chip {
-            flex: 0 0 auto;
-            max-width: 190px;
+            width: 100%;
+            max-width: none;
+            min-width: 0;
             border: 1px solid #dbe4ff;
             background: #f5f7ff;
             color: #4f5fbf;
@@ -237,10 +248,20 @@
             padding: 7px 10px;
             font-size: 12px;
             line-height: 1.2;
+            height: 28px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             cursor: pointer;
+        }
+        .ai-panel:not(.expanded) .ai-suggestion-chip {
+            max-width: none;
+        }
+        .ai-panel.expanded .ai-suggestions {
+            grid-auto-columns: 168px;
+        }
+        .ai-suggestions:empty {
+            display: none;
         }
         .ai-suggestion-chip:hover {
             background: #eef2ff;

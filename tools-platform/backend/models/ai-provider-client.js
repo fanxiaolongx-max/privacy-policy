@@ -1,0 +1,195 @@
+const DEFAULT_BASE_URLS = {
+    gemini: 'https://generativelanguage.googleapis.com/v1beta',
+    openai: 'https://api.openai.com/v1',
+    anthropic: 'https://api.anthropic.com/v1',
+    'openai-compatible': 'https://api.openai.com/v1'
+};
+
+function normalizeProvider(provider) {
+    const value = String(provider || '').trim().toLowerCase();
+    if (['gemini', 'openai', 'anthropic', 'openai-compatible'].includes(value)) return value;
+    return 'gemini';
+}
+
+function trimSlash(value) {
+    return String(value || '').replace(/\/+$/, '');
+}
+
+function getBaseUrl(settings = {}) {
+    const provider = normalizeProvider(settings.provider);
+    return trimSlash(settings.apiBaseUrl || DEFAULT_BASE_URLS[provider]);
+}
+
+function normalizeMessages(messages = []) {
+    return (Array.isArray(messages) ? messages : [])
+        .map(msg => ({
+            role: msg.role === 'model' || msg.role === 'assistant' ? 'model' : 'user',
+            content: String(msg.content || '')
+        }))
+        .filter(msg => msg.content);
+}
+
+function extractGeminiText(data) {
+    const parts = data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts;
+    return Array.isArray(parts) ? parts.map(part => part.text || '').join('').trim() : '';
+}
+
+function extractAnthropicText(data) {
+    const parts = Array.isArray(data && data.content) ? data.content : [];
+    return parts.map(part => part && part.type === 'text' ? part.text || '' : '').join('').trim();
+}
+
+function isJsonMode(options = {}) {
+    return options.responseMimeType === 'application/json' || options.json === true;
+}
+
+async function parseErrorResponse(res) {
+    let body = '';
+    try {
+        body = await res.text();
+    } catch (_err) {}
+    const error = new Error(`AI provider request failed (${res.status}): ${body.slice(0, 500)}`);
+    error.status = res.status;
+    error.statusCode = res.status;
+    throw error;
+}
+
+class AiProviderClient {
+    constructor(settings = {}) {
+        this.settings = settings;
+        this.provider = normalizeProvider(settings.provider);
+        this.baseUrl = getBaseUrl(settings);
+        this.apiKey = settings.apiKey || '';
+        this.model = settings.model || (this.provider === 'anthropic' ? 'claude-3-5-sonnet-latest' : 'gemini-2.5-flash');
+    }
+
+    async generateText({ prompt, systemInstruction = '', messages = null, maxOutputTokens, temperature, responseMimeType, json } = {}) {
+        const finalMessages = messages ? normalizeMessages(messages) : [{ role: 'user', content: String(prompt || '') }];
+        if (this.provider === 'openai' || this.provider === 'openai-compatible') {
+            return this.generateOpenAi({ messages: finalMessages, systemInstruction, maxOutputTokens, temperature, responseMimeType, json });
+        }
+        if (this.provider === 'anthropic') {
+            return this.generateAnthropic({ messages: finalMessages, systemInstruction, maxOutputTokens, temperature });
+        }
+        return this.generateGemini({ messages: finalMessages, systemInstruction, maxOutputTokens, temperature, responseMimeType, json });
+    }
+
+    async generateChat({ messages, systemInstruction = '', maxOutputTokens, temperature, responseMimeType, json } = {}) {
+        return this.generateText({ messages, systemInstruction, maxOutputTokens, temperature, responseMimeType, json });
+    }
+
+    async generateGemini({ messages, systemInstruction, maxOutputTokens, temperature, responseMimeType, json }) {
+        const url = `${this.baseUrl}/models/${encodeURIComponent(this.model)}:generateContent?key=${encodeURIComponent(this.apiKey)}`;
+        const body = {
+            contents: normalizeMessages(messages).map(msg => ({
+                role: msg.role === 'model' ? 'model' : 'user',
+                parts: [{ text: msg.content }]
+            })),
+            generationConfig: {
+                maxOutputTokens: Math.round(Number(maxOutputTokens || this.settings.maxOutputTokens || 2048)),
+                temperature: Number(temperature ?? this.settings.temperature ?? 0.7)
+            }
+        };
+        if (systemInstruction) body.systemInstruction = { parts: [{ text: systemInstruction }] };
+        if (isJsonMode({ responseMimeType, json })) body.generationConfig.responseMimeType = 'application/json';
+
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        if (!res.ok) await parseErrorResponse(res);
+        const data = await res.json();
+        const usage = data.usageMetadata || {};
+        return {
+            text: extractGeminiText(data),
+            usage: {
+                promptTokens: usage.promptTokenCount || 0,
+                outputTokens: usage.candidatesTokenCount || 0,
+                totalTokens: usage.totalTokenCount || 0
+            },
+            raw: data
+        };
+    }
+
+    async generateOpenAi({ messages, systemInstruction, maxOutputTokens, temperature, responseMimeType, json }) {
+        const bodyMessages = [];
+        if (systemInstruction) bodyMessages.push({ role: 'system', content: systemInstruction });
+        normalizeMessages(messages).forEach(msg => {
+            bodyMessages.push({ role: msg.role === 'model' ? 'assistant' : 'user', content: msg.content });
+        });
+        const body = {
+            model: this.model,
+            messages: bodyMessages,
+            max_tokens: Math.round(Number(maxOutputTokens || this.settings.maxOutputTokens || 2048)),
+            temperature: Number(temperature ?? this.settings.temperature ?? 0.7)
+        };
+        if (isJsonMode({ responseMimeType, json })) body.response_format = { type: 'json_object' };
+
+        const res = await fetch(`${this.baseUrl}/chat/completions`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${this.apiKey}`
+            },
+            body: JSON.stringify(body)
+        });
+        if (!res.ok) await parseErrorResponse(res);
+        const data = await res.json();
+        const usage = data.usage || {};
+        return {
+            text: String(data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || '').trim(),
+            usage: {
+                promptTokens: usage.prompt_tokens || 0,
+                outputTokens: usage.completion_tokens || 0,
+                totalTokens: usage.total_tokens || 0
+            },
+            raw: data
+        };
+    }
+
+    async generateAnthropic({ messages, systemInstruction, maxOutputTokens, temperature }) {
+        const body = {
+            model: this.model,
+            max_tokens: Math.round(Number(maxOutputTokens || this.settings.maxOutputTokens || 2048)),
+            temperature: Number(temperature ?? this.settings.temperature ?? 0.7),
+            messages: normalizeMessages(messages).map(msg => ({
+                role: msg.role === 'model' ? 'assistant' : 'user',
+                content: msg.content
+            }))
+        };
+        if (systemInstruction) body.system = systemInstruction;
+
+        const res = await fetch(`${this.baseUrl}/messages`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': this.apiKey,
+                'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify(body)
+        });
+        if (!res.ok) await parseErrorResponse(res);
+        const data = await res.json();
+        const usage = data.usage || {};
+        return {
+            text: extractAnthropicText(data),
+            usage: {
+                promptTokens: usage.input_tokens || 0,
+                outputTokens: usage.output_tokens || 0,
+                totalTokens: (usage.input_tokens || 0) + (usage.output_tokens || 0)
+            },
+            raw: data
+        };
+    }
+}
+
+function createClient(settings = {}) {
+    return new AiProviderClient(settings);
+}
+
+module.exports = {
+    DEFAULT_BASE_URLS,
+    normalizeProvider,
+    createClient
+};

@@ -1,5 +1,6 @@
 const express = require('express');
 const repo = require('../models/alert-center-repository');
+const alertAiAnalyzer = require('../models/alert-ai-analyzer');
 
 const router = express.Router();
 
@@ -62,6 +63,18 @@ router.put('/events/read', async (req, res, next) => {
 router.put('/events/read-all', async (req, res, next) => {
     try {
         res.json(await repo.markAllRead());
+    } catch (err) {
+        next(err);
+    }
+});
+
+router.post('/ai/backfill', async (req, res, next) => {
+    try {
+        const limit = req.body && req.body.limit;
+        res.json(await alertAiAnalyzer.enqueuePendingAlertAnalyses({
+            limit: limit || 120,
+            force: Boolean(req.body && req.body.force)
+        }));
     } catch (err) {
         next(err);
     }

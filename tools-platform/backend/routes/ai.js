@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { checkAuth } = require('../middleware/auth');
 const aiSettingsRepo = require('../models/ai-settings-repository');
 const aiChatRepo = require('../models/ai-chat-repository');
+const aiProviderClient = require('../models/ai-provider-client');
 
-console.log('[AI] AI Assistant route loaded. Runtime config will be read from settings, with GEMINI_API_KEY as fallback.');
+console.log('[AI] AI Assistant route loaded. Runtime config will be read from settings, with provider-specific env fallback.');
 
 const RECENT_CONTEXT_MESSAGES = 8;
 const COMPRESS_TRIGGER_MESSAGES = 14;
@@ -23,16 +23,16 @@ function isTransientAiError(error) {
     return status === 503 || /Service Unavailable|high demand|temporar/i.test(msg);
 }
 
-async function sendMessageWithRetry(chat, content, maxAttempts = 3) {
+async function runAiWithRetry(fn, maxAttempts = 3) {
     let lastError;
     for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
         try {
-            return await chat.sendMessage(content);
+            return await fn();
         } catch (error) {
             lastError = error;
             if (!isTransientAiError(error) || attempt >= maxAttempts) throw error;
             const waitMs = 700 * attempt;
-            console.warn(`[AI] Gemini transient error, retrying ${attempt}/${maxAttempts - 1} after ${waitMs}ms: ${error.message}`);
+            console.warn(`[AI] provider transient error, retrying ${attempt}/${maxAttempts - 1} after ${waitMs}ms: ${error.message}`);
             await sleep(waitMs);
         }
     }
@@ -66,7 +66,7 @@ function formatMessagesForSummary(messages = []) {
     }).join('\n\n');
 }
 
-async function generateRollingSummary(model, { previousSummary, messages, pageTitle }) {
+async function generateRollingSummary(client, { previousSummary, messages, pageTitle }) {
     if (!messages.length) return previousSummary || '';
     const prompt = `请把下面 Tools Platform 智能客服的历史对话压缩成可继续对话的滚动摘要。
 
@@ -84,17 +84,15 @@ ${previousSummary || '无'}
 新增历史消息：
 ${formatMessagesForSummary(messages)}`;
 
-    const result = await model.generateContent({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: {
-            maxOutputTokens: 2048,
-            temperature: 0.2
-        }
+    const result = await client.generateText({
+        prompt,
+        maxOutputTokens: 2048,
+        temperature: 0.2
     });
-    return String(result.response.text() || '').trim().slice(0, SUMMARY_MAX_CHARS);
+    return String(result.text || '').trim().slice(0, SUMMARY_MAX_CHARS);
 }
 
-async function compressSessionIfNeeded({ model, sessionId, pageTitle }) {
+async function compressSessionIfNeeded({ client, sessionId, pageTitle }) {
     if (!sessionId) return null;
     const payload = await aiChatRepo.getMessagesForCompression(sessionId, RECENT_CONTEXT_MESSAGES);
     if (!payload.session || !payload.messages.length) return payload.session;
@@ -104,7 +102,7 @@ async function compressSessionIfNeeded({ model, sessionId, pageTitle }) {
     }
 
     try {
-        const summary = await generateRollingSummary(model, {
+        const summary = await generateRollingSummary(client, {
             previousSummary: payload.session.summary || '',
             messages: payload.messages,
             pageTitle
@@ -200,12 +198,12 @@ router.post('/chat', checkAuth, async (req, res) => {
         const aiSettings = await aiSettingsRepo.getRuntimeSettings();
         if (!aiSettings.hasApiKey) {
             return res.status(503).json({ 
-                error: '未配置 AI 助手 API Token，当前不可用。请管理员在全局设置中配置，或继续使用 GEMINI_API_KEY 环境变量兜底。'
+                error: '未配置 AI 助手 API Token，当前不可用。请管理员在全局设置中配置，或使用供应商对应环境变量兜底。'
             });
         }
         if (!aiSettings.keyLooksValid) {
             return res.status(503).json({
-                error: '当前 AI 助手 API Token 格式疑似无效。请在全局设置 > AI 助手中重新填写 Gemini API Key，通常以 AIza 开头。'
+                error: '当前 AI 助手 API Token 格式疑似无效。请在全局设置 > AI 助手中重新填写。'
             });
         }
 
@@ -230,12 +228,9 @@ router.post('/chat', checkAuth, async (req, res) => {
             });
         }
 
-        const genAI = new GoogleGenerativeAI(aiSettings.apiKey);
-        const model = genAI.getGenerativeModel({
-            model: aiSettings.model
-        });
+        const aiClient = aiProviderClient.createClient(aiSettings);
         const compressedSession = persist !== false
-            ? await compressSessionIfNeeded({ model, sessionId: savedSessionId, pageTitle })
+            ? await compressSessionIfNeeded({ client: aiClient, sessionId: savedSessionId, pageTitle })
             : null;
         const sessionSummary = compressedSession && compressedSession.summary ? compressedSession.summary : '';
         const effectiveMessages = await buildEffectiveMessages({
@@ -259,33 +254,20 @@ ${sessionSummary ? `\n历史会话滚动摘要：\n---\n${sessionSummary}\n---\n
 3. 如果用户的提问超出了系统功能范畴，请礼貌地告知你专注于协助使用本工具中台。
 ${aiSettings.systemPrompt ? `\n**管理员补充要求**：\n${aiSettings.systemPrompt}` : ''}`;
 
-        const answerModel = genAI.getGenerativeModel({
-            model: aiSettings.model,
-            systemInstruction: systemInstruction
-        });
-
-        // 转换历史记录为 Gemini SDK 格式
-        const chat = answerModel.startChat({
-            history: effectiveMessages.slice(0, -1).map(msg => ({
-                role: msg.role === 'user' ? 'user' : 'model',
-                parts: [{ text: msg.content }]
-            })),
-            generationConfig: {
-                maxOutputTokens: aiSettings.maxOutputTokens,
-                temperature: aiSettings.temperature,
-            },
-        });
-
-        // 发送消息
-        const result = await sendMessageWithRetry(chat, effectiveMessages[effectiveMessages.length - 1].content);
-        const responseText = result.response.text();
+        const result = await runAiWithRetry(() => aiClient.generateChat({
+            systemInstruction,
+            messages: effectiveMessages,
+            maxOutputTokens: aiSettings.maxOutputTokens,
+            temperature: aiSettings.temperature
+        }));
+        const responseText = result.text;
         
         let totalTokens = 0;
         let costMao = 0;
-        if (result.response.usageMetadata) {
-            totalTokens = result.response.usageMetadata.totalTokenCount;
-            const promptTokens = result.response.usageMetadata.promptTokenCount || 0;
-            const outputTokens = result.response.usageMetadata.candidatesTokenCount || 0;
+        if (result.usage) {
+            totalTokens = result.usage.totalTokens || 0;
+            const promptTokens = result.usage.promptTokens || 0;
+            const outputTokens = result.usage.outputTokens || 0;
             const costUSD = (
                 promptTokens * aiSettings.inputCostPerMillionUsd +
                 outputTokens * aiSettings.outputCostPerMillionUsd
@@ -411,16 +393,7 @@ color,fontFamily,fontSize,fontWeight,fontStyle,lineHeight,letterSpacing,textAlig
 - 不生成 HTML、脚本、URL 或事件处理器。
 - actions 最多 40 条，尽量合并相同目标的样式操作。`;
 
-        const genAI = new GoogleGenerativeAI(aiSettings.apiKey);
-        const model = genAI.getGenerativeModel({
-            model: aiSettings.model,
-            systemInstruction,
-            generationConfig: {
-                maxOutputTokens: Math.min(Math.max(aiSettings.maxOutputTokens, 4096), 8192),
-                temperature: 0.1,
-                responseMimeType: 'application/json'
-            }
-        });
+        const aiClient = aiProviderClient.createClient(aiSettings);
         const prompt = `用户要求：${instruction.slice(0, 2000)}
 操作范围：${operationContext.scope || 'single'}
 组件上下文：${JSON.stringify(operationContext).slice(0, 24000)}
@@ -428,8 +401,14 @@ color,fontFamily,fontSize,fontWeight,fontStyle,lineHeight,letterSpacing,textAlig
         let parsed;
         let firstRaw = '';
         try {
-            const result = await model.generateContent(prompt);
-            firstRaw = result.response.text();
+            const result = await runAiWithRetry(() => aiClient.generateText({
+                prompt,
+                systemInstruction,
+                maxOutputTokens: Math.min(Math.max(aiSettings.maxOutputTokens, 4096), 8192),
+                temperature: 0.1,
+                responseMimeType: 'application/json'
+            }));
+            firstRaw = result.text;
             parsed = parseAiJson(firstRaw);
         } catch (parseError) {
             console.warn('[AI Copilot Actions] invalid JSON, retrying:', parseError.message);
@@ -440,8 +419,14 @@ color,fontFamily,fontSize,fontWeight,fontStyle,lineHeight,letterSpacing,textAlig
 不要解释，不要 Markdown。每个 action 只保留必要字段。
 上次输出（可能被截断）：
 ${firstRaw.slice(0, 6000)}`;
-                const retryResult = await model.generateContent(retryPrompt);
-                parsed = parseAiJson(retryResult.response.text());
+                const retryResult = await runAiWithRetry(() => aiClient.generateText({
+                    prompt: retryPrompt,
+                    systemInstruction,
+                    maxOutputTokens: Math.min(Math.max(aiSettings.maxOutputTokens, 4096), 8192),
+                    temperature: 0.1,
+                    responseMimeType: 'application/json'
+                }));
+                parsed = parseAiJson(retryResult.text);
             } catch (retryError) {
                 const fallback = fallbackPptActions(instruction, operationContext);
                 if (fallback) return res.json(fallback);
@@ -502,31 +487,20 @@ router.post('/ppt-copilot', checkAuth, async (req, res) => {
 2. 只返回 JSON，不要解释说明文字，不要 \`\`\`json 包裹符。
 ${templates || ''}`;
 
-        const genAI = new GoogleGenerativeAI(aiSettings.apiKey);
-        const model = genAI.getGenerativeModel({ 
-            model: aiSettings.model,
-            systemInstruction: systemInstruction
-        });
-
-        const chat = model.startChat({
-            history: messages.slice(0, -1).map(msg => ({
-                role: msg.role === 'user' ? 'user' : 'model',
-                parts: [{ text: msg.content }]
-            })),
-            generationConfig: {
-                maxOutputTokens: 8192,
-                temperature: 0.2, // Lower temperature for more stable template generation
-                responseMimeType: "application/json",
-            },
-        });
-
         const lastMessage = messages[messages.length - 1];
         if (!lastMessage || lastMessage.role !== 'user') {
             return res.status(400).json({ error: '最后一条消息必须是用户发送的' });
         }
 
-        const result = await sendMessageWithRetry(chat, lastMessage.content);
-        const responseText = result.response.text();
+        const aiClient = aiProviderClient.createClient(aiSettings);
+        const result = await runAiWithRetry(() => aiClient.generateChat({
+            systemInstruction,
+            messages,
+            maxOutputTokens: 8192,
+            temperature: 0.2,
+            responseMimeType: 'application/json'
+        }));
+        const responseText = result.text;
 
         res.json({ reply: responseText });
     } catch (error) {

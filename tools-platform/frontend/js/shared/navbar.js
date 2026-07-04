@@ -156,18 +156,21 @@ function registerNavbarI18n() {
             'nav.page.report.res.more': '仅展示前 8 条，剩余 {remaining} 条未展开。',
 
             'nav.ai.empty': '正在加载 AI 助手配置...',
-            'nav.ai.help': '这里配置右下角智能客服助手。Token 会保存到服务端，前端只显示脱敏状态；环境变量 GEMINI_API_KEY 仍会作为兜底。',
+            'nav.ai.help': '这里配置右下角智能客服助手及后台 AI 分析。支持 Gemini、OpenAI、Anthropic 和 OpenAI 兼容网关；Token 会保存到服务端，前端只显示脱敏状态。',
             'nav.ai.sourcePrefix': '当前 Token 来源：',
             'nav.ai.srcStored': '设置中心保存的 Token',
-            'nav.ai.srcEnv': '环境变量 GEMINI_API_KEY',
+            'nav.ai.srcEnv': '供应商环境变量',
             'nav.ai.srcNone': '未配置',
             'nav.ai.keyNone': '尚未配置 Token',
             'nav.ai.keyInvalid': '格式疑似无效 ',
             'nav.ai.keyValid': '已配置 ',
             'nav.ai.lblToken': 'API Token',
-            'nav.ai.plhToken': '点击后粘贴 Gemini API Token',
+            'nav.ai.plhToken': '点击后粘贴当前供应商 API Token',
             'nav.ai.plhKeep': '留空则保持当前：',
             'nav.ai.btnClear': '清除 Token',
+            'nav.ai.lblProvider': '供应商协议',
+            'nav.ai.lblApiUrl': 'API URL',
+            'nav.ai.plhApiUrl': '留空使用供应商默认地址；兼容网关填 /v1 基地址',
             'nav.ai.lblModel': '模型名称',
             'nav.ai.lblMax': '最大输出 Tokens',
             'nav.ai.lblInputCost': '输入成本 USD / 1M Tokens',
@@ -376,18 +379,21 @@ function registerNavbarI18n() {
             'nav.page.report.res.more': 'Only showing the first 8 items, {remaining} items hidden.',
 
             'nav.ai.empty': 'Loading AI configuration...',
-            'nav.ai.help': 'Configure the AI Assistant (bottom right). The API token is stored on the server securely. GEMINI_API_KEY environment variable acts as a fallback.',
+            'nav.ai.help': 'Configure the AI Assistant and background AI analysis. Supports Gemini, OpenAI, Anthropic, and OpenAI-compatible gateways. The token is stored on the server and masked in the UI.',
             'nav.ai.sourcePrefix': 'Current Token Source: ',
             'nav.ai.srcStored': 'Stored in Settings',
-            'nav.ai.srcEnv': 'Environment Variable',
+            'nav.ai.srcEnv': 'Provider Environment Variable',
             'nav.ai.srcNone': 'Not Configured',
             'nav.ai.keyNone': 'No Token Configured',
             'nav.ai.keyInvalid': 'Format seems invalid ',
             'nav.ai.keyValid': 'Configured ',
             'nav.ai.lblToken': 'API Token',
-            'nav.ai.plhToken': 'Click to paste Gemini API Token',
+            'nav.ai.plhToken': 'Click to paste the current provider API token',
             'nav.ai.plhKeep': 'Leave empty to keep current: ',
             'nav.ai.btnClear': 'Clear Token',
+            'nav.ai.lblProvider': 'Provider Protocol',
+            'nav.ai.lblApiUrl': 'API URL',
+            'nav.ai.plhApiUrl': 'Leave empty for provider default; compatible gateways should use the /v1 base URL',
             'nav.ai.lblModel': 'Model Name',
             'nav.ai.lblMax': 'Max Output Tokens',
             'nav.ai.lblInputCost': 'Input Cost (USD / 1M)',
@@ -1138,6 +1144,19 @@ async function renderAiSettings(content) {
                 <span class="${settings.hasApiKey && !settings.keyLooksValid ? 'warning' : ''}">${navEscape(keyHealthLabelForAiSettings(settings))}</span>
             </div>
             <div class="nav-ai-grid">
+                <label class="nav-ai-field">
+                    <span>${navEscape(navT('nav.ai.lblProvider'))}</span>
+                    <select id="navAiProvider" class="nav-settings-input" onchange="handleAiProviderChange()">
+                        <option value="gemini" ${settings.provider === 'gemini' ? 'selected' : ''}>Gemini</option>
+                        <option value="openai" ${settings.provider === 'openai' ? 'selected' : ''}>OpenAI</option>
+                        <option value="anthropic" ${settings.provider === 'anthropic' ? 'selected' : ''}>Anthropic</option>
+                        <option value="openai-compatible" ${settings.provider === 'openai-compatible' ? 'selected' : ''}>OpenAI Compatible</option>
+                    </select>
+                </label>
+                <label class="nav-ai-field nav-ai-field-wide">
+                    <span>${navEscape(navT('nav.ai.lblApiUrl'))}</span>
+                    <input id="navAiApiBaseUrl" class="nav-settings-input" value="${navEscape(settings.apiBaseUrl || '')}" placeholder="${navEscape(navT('nav.ai.plhApiUrl'))}" oninput="scheduleAiSettingsSave()">
+                </label>
                 <label class="nav-ai-field nav-ai-field-wide">
                     <span>${navEscape(navT('nav.ai.lblToken'))}</span>
                     <div class="nav-ai-token-row">
@@ -1152,6 +1171,11 @@ async function renderAiSettings(content) {
                         <option value="gemini-2.5-flash"></option>
                         <option value="gemini-2.5-pro"></option>
                         <option value="gemini-1.5-flash"></option>
+                        <option value="gpt-4o-mini"></option>
+                        <option value="gpt-4o"></option>
+                        <option value="gpt-4.1-mini"></option>
+                        <option value="claude-3-5-sonnet-latest"></option>
+                        <option value="claude-3-5-haiku-latest"></option>
                     </datalist>
                 </label>
                 <label class="nav-ai-field">
@@ -1188,6 +1212,8 @@ async function renderAiSettings(content) {
 function collectAiSettingsPayload(options = {}) {
     const tokenInput = document.getElementById('navAiApiKey');
     const payload = {
+        provider: document.getElementById('navAiProvider')?.value || 'gemini',
+        apiBaseUrl: document.getElementById('navAiApiBaseUrl')?.value || '',
         model: document.getElementById('navAiModel')?.value || 'gemini-2.5-flash',
         temperature: document.getElementById('navAiTemperature')?.value || 0.7,
         maxOutputTokens: document.getElementById('navAiMaxTokens')?.value || 2048,
@@ -1201,6 +1227,21 @@ function collectAiSettingsPayload(options = {}) {
     if (options.clearApiKey) payload.clearApiKey = true;
     return payload;
 }
+
+window.handleAiProviderChange = function () {
+    const provider = document.getElementById('navAiProvider')?.value || 'gemini';
+    const modelInput = document.getElementById('navAiModel');
+    const defaults = {
+        gemini: 'gemini-2.5-flash',
+        openai: 'gpt-4o-mini',
+        anthropic: 'claude-3-5-sonnet-latest',
+        'openai-compatible': 'gpt-4o-mini'
+    };
+    if (modelInput && defaults[provider]) {
+        modelInput.value = defaults[provider];
+    }
+    scheduleAiSettingsSave();
+};
 
 async function saveAiSettingsNow(options = {}) {
     const indicator = document.getElementById('navSettingsSaveState');
@@ -2195,6 +2236,7 @@ function renderAlertCenterList() {
                     </div>
                     <time>${navEscape(formatAlertTime(event.created_at))}</time>
                 </div>
+                ${event.ai_summary ? `<div class="alert-center-ai-summary"><span>AI</span>${navEscape(event.ai_summary)}</div>` : ''}
                 ${event.message ? `<div class="alert-center-message" onclick="this.classList.toggle('expanded')" title="点击展开/收起">${navEscape(event.message)}</div>` : ''}
                 ${meta.length ? `<div class="alert-center-meta">${meta.map(navEscape).join(' · ')}</div>` : ''}
                 ${detailEntries.length ? `<div class="alert-center-detail">${detailEntries.map(([k, v]) => `<span onclick="this.classList.toggle('expanded')" title="点击展开/收起">${navEscape(k)}: ${navEscape(typeof v === 'object' ? JSON.stringify(v) : v)}</span>`).join('')}</div>` : ''}
@@ -2416,7 +2458,7 @@ window.openUserModal = async function () {
     // 确保不重复加载
     if (!document.querySelector('script[src^="/js/shared/ai-assistant.js"]')) {
         const aiScript = document.createElement('script');
-        aiScript.src = '/js/shared/ai-assistant.js?v=20260704-01';
+        aiScript.src = '/js/shared/ai-assistant.js?v=20260704-06';
         document.body.appendChild(aiScript);
     }
 })();

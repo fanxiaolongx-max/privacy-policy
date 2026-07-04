@@ -3,6 +3,7 @@ const { readKV, writeKV } = require('./kv-store');
 
 const DEFAULT_SETTINGS = {
     provider: 'gemini',
+    apiBaseUrl: '',
     model: 'gemini-2.5-flash',
     apiKey: '',
     maxOutputTokens: 2048,
@@ -14,6 +15,18 @@ const DEFAULT_SETTINGS = {
     pptCopilotRules: ''
 };
 
+const DEFAULT_MODELS = {
+    gemini: 'gemini-2.5-flash',
+    openai: 'gpt-4o-mini',
+    anthropic: 'claude-3-5-sonnet-latest',
+    'openai-compatible': 'gpt-4o-mini'
+};
+
+function normalizeProvider(value) {
+    const provider = String(value || DEFAULT_SETTINGS.provider).trim().toLowerCase();
+    return ['gemini', 'openai', 'anthropic', 'openai-compatible'].includes(provider) ? provider : 'gemini';
+}
+
 function clampNumber(value, fallback, min, max) {
     const num = Number(value);
     if (!Number.isFinite(num)) return fallback;
@@ -22,9 +35,11 @@ function clampNumber(value, fallback, min, max) {
 
 function normalizeSettings(input = {}, previous = {}) {
     const base = { ...DEFAULT_SETTINGS, ...previous, ...input };
+    const provider = normalizeProvider(base.provider);
     return {
-        provider: 'gemini',
-        model: String(base.model || DEFAULT_SETTINGS.model).trim() || DEFAULT_SETTINGS.model,
+        provider,
+        apiBaseUrl: String(base.apiBaseUrl || '').trim().slice(0, 500),
+        model: String(base.model || DEFAULT_MODELS[provider] || DEFAULT_SETTINGS.model).trim() || DEFAULT_MODELS[provider],
         apiKey: String(base.apiKey || '').trim(),
         maxOutputTokens: Math.round(clampNumber(base.maxOutputTokens, DEFAULT_SETTINGS.maxOutputTokens, 128, 8192)),
         temperature: clampNumber(base.temperature, DEFAULT_SETTINGS.temperature, 0, 2),
@@ -44,7 +59,13 @@ function maskApiKey(apiKey) {
 
 function isLikelyValidApiKey(apiKey) {
     if (!apiKey) return false;
-    return /^AIza[0-9A-Za-z_-]{20,}$/.test(String(apiKey).trim());
+    return String(apiKey).trim().length >= 12;
+}
+
+function getEnvKeyForProvider(provider) {
+    if (provider === 'openai' || provider === 'openai-compatible') return String(process.env.OPENAI_API_KEY || '').trim();
+    if (provider === 'anthropic') return String(process.env.ANTHROPIC_API_KEY || '').trim();
+    return String(process.env.GEMINI_API_KEY || '').trim();
 }
 
 async function getStoredSettings() {
@@ -53,7 +74,7 @@ async function getStoredSettings() {
 
 async function getRuntimeSettings() {
     const stored = await getStoredSettings();
-    const envKey = String(process.env.GEMINI_API_KEY || '').trim();
+    const envKey = getEnvKeyForProvider(stored.provider);
     const apiKey = stored.apiKey || envKey;
     return {
         ...stored,
@@ -68,6 +89,7 @@ async function getPublicSettings() {
     const runtime = await getRuntimeSettings();
     return {
         provider: runtime.provider,
+        apiBaseUrl: runtime.apiBaseUrl,
         model: runtime.model,
         maxOutputTokens: runtime.maxOutputTokens,
         temperature: runtime.temperature,

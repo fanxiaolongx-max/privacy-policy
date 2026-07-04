@@ -44,11 +44,17 @@ async function ensureReady() {
                     object_type TEXT DEFAULT '',
                     object_id TEXT DEFAULT '',
                     detail_json TEXT NOT NULL DEFAULT '{}',
+                    ai_summary TEXT DEFAULT '',
+                    ai_status TEXT DEFAULT 'pending',
+                    ai_analyzed_at DATETIME,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     read_at DATETIME,
                     archived_at DATETIME
                 )
             `);
+            await run("ALTER TABLE alert_center_events ADD COLUMN ai_summary TEXT DEFAULT ''", []).catch(() => {});
+            await run("ALTER TABLE alert_center_events ADD COLUMN ai_status TEXT DEFAULT 'pending'", []).catch(() => {});
+            await run("ALTER TABLE alert_center_events ADD COLUMN ai_analyzed_at DATETIME", []).catch(() => {});
             await run(`CREATE INDEX IF NOT EXISTS idx_alert_center_status_created ON alert_center_events(status, created_at DESC)`);
             await run(`CREATE INDEX IF NOT EXISTS idx_alert_center_type_created ON alert_center_events(event_type, created_at DESC)`);
             await ensureBootstrapEvent();
@@ -109,6 +115,9 @@ function mapEventRow(row) {
         object_type: row.object_type || '',
         object_id: row.object_id || '',
         detail: parseJson(row.detail_json, {}),
+        ai_summary: row.ai_summary || '',
+        ai_status: row.ai_status || 'pending',
+        ai_analyzed_at: row.ai_analyzed_at || null,
         created_at: row.created_at,
         read_at: row.read_at || null,
         archived_at: row.archived_at || null
@@ -161,6 +170,24 @@ async function addEvent({
         ]
     );
     await trimEvents();
+    setTimeout(() => {
+        try {
+            require('./alert-ai-analyzer').enqueueAlertAnalysis({
+                id: item.id,
+                event_type: item.eventType,
+                severity: item.severity,
+                title: item.title,
+                message: item.message,
+                actor: item.actor,
+                source: item.source,
+                object_type: item.objectType,
+                object_id: item.objectId,
+                detail: item.detail
+            });
+        } catch (err) {
+            console.warn('[alert-ai] enqueue failed:', err.message || err);
+        }
+    }, 0);
     return item;
 }
 
@@ -187,7 +214,7 @@ async function listEvents({ status, eventType, severity, limit = 80 } = {}) {
     params.push(safeLimit);
     const rows = await all(
         `SELECT id, event_type, severity, status, title, message, actor, source, object_type, object_id,
-                detail_json, created_at, read_at, archived_at
+                detail_json, ai_summary, ai_status, ai_analyzed_at, created_at, read_at, archived_at
          FROM alert_center_events
          ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
          ORDER BY datetime(created_at) DESC, rowid DESC
@@ -260,6 +287,17 @@ async function archiveEvent(id) {
     return { changed: result.changes || 0 };
 }
 
+async function updateAiSummary(id, { summary = '', status = 'done' } = {}) {
+    await ensureReady();
+    const result = await run(
+        `UPDATE alert_center_events
+         SET ai_summary = ?, ai_status = ?, ai_analyzed_at = CURRENT_TIMESTAMP
+         WHERE id = ?`,
+        [String(summary || '').slice(0, 500), String(status || 'done').slice(0, 40), String(id || '')]
+    );
+    return { changed: result.changes || 0 };
+}
+
 module.exports = {
     ensureReady,
     addEvent,
@@ -267,5 +305,6 @@ module.exports = {
     getSummary,
     markRead,
     markAllRead,
-    archiveEvent
+    archiveEvent,
+    updateAiSummary
 };

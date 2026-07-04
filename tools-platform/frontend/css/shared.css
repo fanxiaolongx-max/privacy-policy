@@ -594,6 +594,54 @@ body {
     color: #475569;
 }
 
+.alert-center-ai-summary {
+    position: relative;
+    margin-top: 10px;
+    padding: 9px 11px 9px 38px;
+    border-radius: 10px;
+    border: 1px solid rgba(99, 102, 241, 0.22);
+    background:
+        linear-gradient(135deg, rgba(238, 242, 255, 0.92), rgba(236, 253, 245, 0.82)),
+        #f8fafc;
+    color: #334155;
+    font-size: 12px;
+    line-height: 1.5;
+    overflow: hidden;
+}
+
+.alert-center-ai-summary::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 0%, rgba(255,255,255,0.78) 42%, transparent 72%);
+    transform: translateX(-100%);
+    animation: alertAiShimmer 3.6s ease-in-out infinite;
+    pointer-events: none;
+}
+
+.alert-center-ai-summary span {
+    position: absolute;
+    left: 10px;
+    top: 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 21px;
+    height: 21px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #6366f1, #14b8a6);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 900;
+    box-shadow: 0 6px 14px rgba(99, 102, 241, 0.24);
+}
+
+@keyframes alertAiShimmer {
+    0%, 48% { transform: translateX(-100%); opacity: 0; }
+    58% { opacity: 1; }
+    100% { transform: translateX(100%); opacity: 0; }
+}
+
 .alert-center-message {
     margin-top: 9px;
     color: #334155;
