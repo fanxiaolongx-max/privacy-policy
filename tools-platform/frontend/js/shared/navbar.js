@@ -294,6 +294,8 @@ function registerNavbarI18n() {
             'nav.alert.markAll': '全部已读',
             'nav.alert.refresh': '刷新',
             'nav.alert.archive': '归档',
+            'nav.alert.archiveAll': '全部归档',
+            'nav.alert.archiveAllConfirm': '确定要将所有告警归档吗？',
             'nav.alert.read': '已读',
             'nav.alert.actor': '操作人',
             'nav.alert.source': '来源',
@@ -521,6 +523,8 @@ function registerNavbarI18n() {
             'nav.alert.markAll': 'Mark all read',
             'nav.alert.refresh': 'Refresh',
             'nav.alert.archive': 'Archive',
+            'nav.alert.archiveAll': 'Archive all',
+            'nav.alert.archiveAllConfirm': 'Archive all alerts?',
             'nav.alert.read': 'Read',
             'nav.alert.actor': 'Actor',
             'nav.alert.source': 'Source',
@@ -2216,7 +2220,7 @@ function ensureAlertCenterModal() {
                 <div class="alert-center-filters" id="alertCenterFilters"></div>
                 <div class="alert-center-actions">
                     <button type="button" onclick="markAllAlertCenterRead()">${navEscape(navT('nav.alert.markAll'))}</button>
-                    <button type="button" onclick="archiveAllAlertCenter()">全部归档</button>
+                    <button type="button" onclick="archiveAllAlertCenter()">${navEscape(navT('nav.alert.archiveAll'))}</button>
                     <button type="button" onclick="reloadAlertCenter()">${navEscape(navT('nav.alert.refresh'))}</button>
                 </div>
             </div>
@@ -2356,7 +2360,7 @@ window.markAllAlertCenterRead = async function () {
 };
 
 window.archiveAllAlertCenter = async function () {
-    if (!confirm('确定要将所有告警归档吗？')) return;
+    if (!confirm(navT('nav.alert.archiveAllConfirm'))) return;
     await fetch('/api/alert-center/events/archive-all', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() }

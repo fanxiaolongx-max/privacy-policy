@@ -123,10 +123,10 @@ async function replaceTargets(items) {
     return normalized;
 }
 
-async function upsertTarget(targetKey, payload) {
+async function upsertTarget(targetKey, payload, { replace = false } = {}) {
     if (!targetKey) throw new Error('targetKey is required');
     const current = await readFromDb();
-    const next = {
+    const next = replace ? { ...(payload || {}) } : {
         ...(current[targetKey] || {}),
         ...(payload || {})
     };

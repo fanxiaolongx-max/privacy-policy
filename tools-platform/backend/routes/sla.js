@@ -406,7 +406,7 @@ router.patch('/targets/:targetKey', async (req, res) => {
             ...(before || {}),
             ...cleanPatch
         };
-        const saved = await targetsRepo.upsertTarget(req.params.targetKey, next);
+        const saved = await targetsRepo.upsertTarget(req.params.targetKey, next, { replace: shouldReplace });
         await writeAudit(req, 'sla.targets.patch', {
             targetKey: req.params.targetKey,
             mode: shouldReplace ? 'replace-one' : 'merge',

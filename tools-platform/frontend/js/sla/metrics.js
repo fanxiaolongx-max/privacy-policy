@@ -304,7 +304,8 @@ function buildTargetFromDraft(existingTarget, draft) {
     next.isPercent = !!draft.isPercent;
     for (let i = 1; i <= 12; i++) {
         const month = String(i);
-        const val = String(draft[month] || '').trim();
+        const raw = Object.prototype.hasOwnProperty.call(draft, month) ? draft[month] : '';
+        const val = String(raw ?? '').trim();
         if (val !== '') {
             next[month] = parseFloat(val);
         } else {
@@ -395,7 +396,8 @@ function renderTargetCards() {
         const draft = targetModalState.draft[item.key] || {};
         let inputsHtml = '';
         for (let i = 1; i <= 12; i++) {
-            const value = draft[String(i)] || '';
+            const rawValue = Object.prototype.hasOwnProperty.call(draft, String(i)) ? draft[String(i)] : '';
+            const value = rawValue ?? '';
             const emptyClass = String(value).trim() === '' ? ' empty-target-cell' : '';
             inputsHtml += `<div class="month-input-group${emptyClass}">
                 <label>${SLAT('sla.metric.monthLabel', { month: i })}</label>
@@ -428,7 +430,8 @@ function renderTargetTable() {
         const draft = targetModalState.draft[item.key] || {};
         const monthCells = Array.from({ length: 12 }, (_, index) => {
             const month = String(index + 1);
-            const value = draft[month] || '';
+            const rawValue = Object.prototype.hasOwnProperty.call(draft, month) ? draft[month] : '';
+            const value = rawValue ?? '';
             const emptyClass = String(value).trim() === '' ? ' empty-target-cell' : '';
             return `<td class="${emptyClass.trim()}"><input class="target-month-input target-table-input${emptyClass ? ' empty-target-input' : ''}" type="number" step="0.01" data-key="${item.key}" data-month="${month}" value="${escapeHTML(value)}" placeholder="${SLAT('sla.metric.targetPh')}"></td>`;
         }).join('');
