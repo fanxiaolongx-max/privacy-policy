@@ -2195,9 +2195,9 @@ function renderAlertCenterList() {
                     </div>
                     <time>${navEscape(formatAlertTime(event.created_at))}</time>
                 </div>
-                ${event.message ? `<div class="alert-center-message">${navEscape(event.message)}</div>` : ''}
+                ${event.message ? `<div class="alert-center-message" onclick="this.classList.toggle('expanded')" title="点击展开/收起">${navEscape(event.message)}</div>` : ''}
                 ${meta.length ? `<div class="alert-center-meta">${meta.map(navEscape).join(' · ')}</div>` : ''}
-                ${detailEntries.length ? `<div class="alert-center-detail">${detailEntries.map(([k, v]) => `<span>${navEscape(k)}: ${navEscape(typeof v === 'object' ? JSON.stringify(v) : v)}</span>`).join('')}</div>` : ''}
+                ${detailEntries.length ? `<div class="alert-center-detail">${detailEntries.map(([k, v]) => `<span onclick="this.classList.toggle('expanded')" title="点击展开/收起">${navEscape(k)}: ${navEscape(typeof v === 'object' ? JSON.stringify(v) : v)}</span>`).join('')}</div>` : ''}
                 <div class="alert-center-row-actions">
                     ${event.status === 'unread' ? `<button type="button" onclick="markAlertCenterRead('${navEscape(event.id)}')">${navEscape(navT('nav.alert.read'))}</button>` : ''}
                     <button type="button" onclick="archiveAlertCenterEvent('${navEscape(event.id)}')">${navEscape(navT('nav.alert.archive'))}</button>

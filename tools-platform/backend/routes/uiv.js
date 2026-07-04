@@ -13,6 +13,7 @@ const { execFile, execFileSync } = require('child_process');
 const categoriesRepo = require('../models/uiv-categories-repository');
 const scriptsRepo = require('../models/uiv-scripts-repository');
 const { DATA_DIR, ensureDataDir } = require('../models/store');
+const configChangeMonitor = require('../models/config-change-monitor');
 
 const DEFAULT_CATEGORIES = categoriesRepo.DEFAULT_CATEGORIES;
 const UIVISION_EXTENSION_ID = 'gcbalfbdmfieckjlnblleoemohcganoc';
@@ -296,6 +297,15 @@ router.post('/scripts', async (req, res) => {
             console.log(`[UIV COMPRESS] POST /api/uiv/scripts -> transport=${req.body.transport.compression}, items=${items.length}`);
         }
         const scripts = await scriptsRepo.saveScripts(items);
+        configChangeMonitor.recordConfigChangeAlert({
+            req,
+            scope: 'uiv',
+            action: '新增/更新抓取脚本',
+            before: {},
+            after: { count: scripts.length, names: items.map(s => s.name || s.id) },
+            objectType: 'uiv_scripts',
+            message: `成功保存了 ${scripts.length} 个抓取脚本`
+        });
         res.json({ success: true, count: scripts.length });
     } catch (err) {
         console.error('[POST /api/uiv/scripts] failed:', err);
@@ -376,6 +386,16 @@ router.post('/run-uivision-macro', async (req, res) => {
 router.delete('/scripts/:id', async (req, res) => {
     try {
         await scriptsRepo.deleteScriptById(req.params.id);
+        configChangeMonitor.recordConfigChangeAlert({
+            req,
+            scope: 'uiv',
+            action: '删除抓取脚本',
+            before: { script_id: req.params.id },
+            after: {},
+            objectType: 'uiv_scripts',
+            objectId: req.params.id,
+            message: `删除了抓取脚本 ${req.params.id}`
+        });
         res.json({ success: true });
     } catch (err) {
         console.error('[DELETE /api/uiv/scripts/:id] failed:', err);
@@ -389,6 +409,16 @@ router.patch('/scripts/:id/category', async (req, res) => {
     try {
         const script = await scriptsRepo.moveScriptCategory(req.params.id, category);
         if (!script) return res.status(404).json({ error: '脚本不存在' });
+        configChangeMonitor.recordConfigChangeAlert({
+            req,
+            scope: 'uiv',
+            action: '移动抓取脚本',
+            before: { script_id: req.params.id },
+            after: { category },
+            objectType: 'uiv_scripts',
+            objectId: req.params.id,
+            message: `将脚本 ${req.params.id} 移动到了分类 ${category}`
+        });
         res.json({ success: true });
     } catch (err) {
         console.error('[PATCH /api/uiv/scripts/:id/category] failed:', err);
@@ -406,6 +436,16 @@ router.post('/categories', async (req, res) => {
     if (!name || !name.trim()) return res.status(400).json({ error: '分类名不能为空' });
     try {
         const cats = await categoriesRepo.addCategory(name);
+        configChangeMonitor.recordConfigChangeAlert({
+            req,
+            scope: 'uiv',
+            action: '新增抓取分类',
+            before: {},
+            after: { category: name },
+            objectType: 'uiv_categories',
+            objectId: name,
+            message: `新增了抓取脚本分类 ${name}`
+        });
         res.json({ success: true, categories: cats });
     } catch (err) {
         console.error('[POST /api/uiv/categories] failed:', err);
@@ -419,6 +459,16 @@ router.delete('/categories/:name', async (req, res) => {
     try {
         await categoriesRepo.deleteCategory(catName);
         await scriptsRepo.deleteScriptsByCategory(catName);
+        configChangeMonitor.recordConfigChangeAlert({
+            req,
+            scope: 'uiv',
+            action: '删除抓取分类',
+            before: { category: catName },
+            after: {},
+            objectType: 'uiv_categories',
+            objectId: catName,
+            message: `删除了抓取脚本分类 ${catName}`
+        });
         res.json({ success: true });
     } catch (err) {
         console.error('[DELETE /api/uiv/categories/:name] failed:', err);
