@@ -278,6 +278,7 @@ function registerNavbarI18n() {
             'nav.alert.unread': '未读',
             'nav.alert.warn': '风险以上',
             'nav.alert.config': '配置变化',
+            'nav.alert.security': '安全',
             'nav.alert.userAction': '用户行为',
             'nav.alert.system': '系统',
             'nav.alert.summaryTotal': '事件',
@@ -497,6 +498,7 @@ function registerNavbarI18n() {
             'nav.alert.unread': 'Unread',
             'nav.alert.warn': 'Risk+',
             'nav.alert.config': 'Config',
+            'nav.alert.security': 'Security',
             'nav.alert.userAction': 'User Actions',
             'nav.alert.system': 'System',
             'nav.alert.summaryTotal': 'Events',
@@ -2052,6 +2054,7 @@ function formatAlertTime(value) {
 
 function alertTypeLabel(type) {
     if (type === 'config') return navT('nav.alert.config');
+    if (type === 'security') return navT('nav.alert.security');
     if (type === 'user_action') return navT('nav.alert.userAction');
     if (type === 'alert') return navT('nav.alertCenter');
     return navT('nav.alert.system');
@@ -2071,6 +2074,7 @@ async function fetchAlertCenterEvents(filter = navState.alertCenter.filter) {
     const params = new URLSearchParams({ limit: '120' });
     if (filter === 'unread') params.set('status', 'unread');
     if (filter === 'config') params.set('type', 'config');
+    if (filter === 'security') params.set('type', 'security');
     if (filter === 'user_action') params.set('type', 'user_action');
     if (filter === 'system') params.set('type', 'system');
     const res = await fetch(`/api/alert-center/events?${params.toString()}`, { headers: getAuthHeaderForNav() });
@@ -2140,6 +2144,7 @@ function renderAlertCenterFilters() {
         ['unread', navT('nav.alert.unread')],
         ['warn', navT('nav.alert.warn')],
         ['config', navT('nav.alert.config')],
+        ['security', navT('nav.alert.security')],
         ['user_action', navT('nav.alert.userAction')],
         ['system', navT('nav.alert.system')]
     ];

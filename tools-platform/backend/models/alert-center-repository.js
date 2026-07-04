@@ -13,7 +13,7 @@ function normalizeSeverity(value) {
 }
 
 function normalizeType(value) {
-    return ['config', 'alert', 'user_action', 'system'].includes(value) ? value : 'system';
+    return ['config', 'alert', 'security', 'user_action', 'system'].includes(value) ? value : 'system';
 }
 
 function normalizeStatus(value) {
