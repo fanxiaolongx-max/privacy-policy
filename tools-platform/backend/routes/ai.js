@@ -3,8 +3,15 @@ const router = express.Router();
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { checkAuth } = require('../middleware/auth');
 const aiSettingsRepo = require('../models/ai-settings-repository');
+const aiChatRepo = require('../models/ai-chat-repository');
 
 console.log('[AI] AI Assistant route loaded. Runtime config will be read from settings, with GEMINI_API_KEY as fallback.');
+
+const RECENT_CONTEXT_MESSAGES = 8;
+const COMPRESS_TRIGGER_MESSAGES = 14;
+const COMPRESS_TRIGGER_CHARS = 14000;
+const SUMMARY_MAX_CHARS = 6000;
+const PAGE_CONTEXT_MAX_CHARS = 12000;
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -46,6 +53,96 @@ function parseAiJson(value) {
         if (start >= 0 && end > start) return JSON.parse(raw.slice(start, end + 1));
         throw firstError;
     }
+}
+
+function estimateMessagesChars(messages = []) {
+    return messages.reduce((sum, msg) => sum + String(msg.content || '').length, 0);
+}
+
+function formatMessagesForSummary(messages = []) {
+    return messages.map(msg => {
+        const role = msg.role === 'model' ? 'AI' : '用户';
+        return `[${role}] ${String(msg.content || '').slice(0, 4000)}`;
+    }).join('\n\n');
+}
+
+async function generateRollingSummary(model, { previousSummary, messages, pageTitle }) {
+    if (!messages.length) return previousSummary || '';
+    const prompt = `请把下面 Tools Platform 智能客服的历史对话压缩成可继续对话的滚动摘要。
+
+要求：
+- 保留用户关注点、已确认事实、排除过的原因、关键数据口径、待跟进事项。
+- 如果已有旧摘要，请与新消息合并，避免重复。
+- 不要编造新事实，不要输出寒暄。
+- 控制在 ${SUMMARY_MAX_CHARS} 个中文字符以内。
+
+页面标题：${pageTitle || '未知'}
+
+旧摘要：
+${previousSummary || '无'}
+
+新增历史消息：
+${formatMessagesForSummary(messages)}`;
+
+    const result = await model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: {
+            maxOutputTokens: 2048,
+            temperature: 0.2
+        }
+    });
+    return String(result.response.text() || '').trim().slice(0, SUMMARY_MAX_CHARS);
+}
+
+async function compressSessionIfNeeded({ model, sessionId, pageTitle }) {
+    if (!sessionId) return null;
+    const payload = await aiChatRepo.getMessagesForCompression(sessionId, RECENT_CONTEXT_MESSAGES);
+    if (!payload.session || !payload.messages.length) return payload.session;
+    const chars = estimateMessagesChars(payload.messages);
+    if (payload.messages.length < COMPRESS_TRIGGER_MESSAGES && chars < COMPRESS_TRIGGER_CHARS) {
+        return payload.session;
+    }
+
+    try {
+        const summary = await generateRollingSummary(model, {
+            previousSummary: payload.session.summary || '',
+            messages: payload.messages,
+            pageTitle
+        });
+        if (summary && payload.cutoffMessageId) {
+            await aiChatRepo.updateSessionSummary(payload.session.id, {
+                summary,
+                summaryUntilMessageId: payload.cutoffMessageId
+            });
+            return {
+                ...payload.session,
+                summary,
+                summary_until_message_id: payload.cutoffMessageId
+            };
+        }
+    } catch (err) {
+        console.warn('[AI] session compression skipped:', err.message || err);
+    }
+    return payload.session;
+}
+
+async function buildEffectiveMessages({ sessionId, incomingMessages, lastMessage }) {
+    if (!sessionId) {
+        return incomingMessages.slice(-10);
+    }
+    const recent = await aiChatRepo.getRecentMessagesForContext(sessionId, RECENT_CONTEXT_MESSAGES);
+    const effective = recent.map(msg => ({
+        role: msg.role === 'model' ? 'model' : 'user',
+        content: msg.content || ''
+    }));
+    while (effective.length && effective[0].role !== 'user') {
+        effective.shift();
+    }
+    const lastRecent = effective[effective.length - 1];
+    if (!lastRecent || lastRecent.role !== 'user' || lastRecent.content !== lastMessage.content) {
+        effective.push(lastMessage);
+    }
+    return effective;
 }
 
 function fallbackPptActions(instruction, operationContext) {
@@ -112,11 +209,40 @@ router.post('/chat', checkAuth, async (req, res) => {
             });
         }
 
-        const { messages, context, pageTitle } = req.body;
+        const { messages, context, pageTitle, pagePath, sessionId, persist } = req.body;
         
         if (!messages || !Array.isArray(messages)) {
             return res.status(400).json({ error: '无效的 messages 参数' });
         }
+
+        const lastMessage = messages[messages.length - 1];
+        if (!lastMessage || lastMessage.role !== 'user') {
+            return res.status(400).json({ error: '最后一条消息必须是用户发送的' });
+        }
+
+        const normalizedPath = aiChatRepo.normalizePagePath(pagePath || req.get('referer') || '');
+        let savedSessionId = sessionId || null;
+        if (persist !== false) {
+            savedSessionId = await aiChatRepo.getOrCreateSession({
+                sessionId,
+                pagePath: normalizedPath,
+                pageTitle
+            });
+        }
+
+        const genAI = new GoogleGenerativeAI(aiSettings.apiKey);
+        const model = genAI.getGenerativeModel({
+            model: aiSettings.model
+        });
+        const compressedSession = persist !== false
+            ? await compressSessionIfNeeded({ model, sessionId: savedSessionId, pageTitle })
+            : null;
+        const sessionSummary = compressedSession && compressedSession.summary ? compressedSession.summary : '';
+        const effectiveMessages = await buildEffectiveMessages({
+            sessionId: savedSessionId,
+            incomingMessages: messages,
+            lastMessage
+        });
 
         // 构造 System Instruction
         const systemInstruction = `你是一个名为 "Tools Platform 智能助手" 的 AI，被集成在华为的一个工具中台中。
@@ -124,23 +250,23 @@ router.post('/chat', checkAuth, async (req, res) => {
 当前页面标题: ${pageTitle || '未知'}
 当前页面核心文本内容:
 ---
-${context ? context.substring(0, 15000) : '未提供'}
+${context ? context.substring(0, PAGE_CONTEXT_MAX_CHARS) : '未提供'}
 ---
+${sessionSummary ? `\n历史会话滚动摘要：\n---\n${sessionSummary}\n---\n` : ''}
 **核心要求**：
 1. 必须极其精简，直接切中要害。
 2. 拒绝长篇大论，务必使用 Markdown 列表（Bullet points）来组织信息。
 3. 如果用户的提问超出了系统功能范畴，请礼貌地告知你专注于协助使用本工具中台。
 ${aiSettings.systemPrompt ? `\n**管理员补充要求**：\n${aiSettings.systemPrompt}` : ''}`;
 
-        const genAI = new GoogleGenerativeAI(aiSettings.apiKey);
-        const model = genAI.getGenerativeModel({ 
+        const answerModel = genAI.getGenerativeModel({
             model: aiSettings.model,
             systemInstruction: systemInstruction
         });
 
         // 转换历史记录为 Gemini SDK 格式
-        const chat = model.startChat({
-            history: messages.slice(0, -1).map(msg => ({
+        const chat = answerModel.startChat({
+            history: effectiveMessages.slice(0, -1).map(msg => ({
                 role: msg.role === 'user' ? 'user' : 'model',
                 parts: [{ text: msg.content }]
             })),
@@ -150,14 +276,8 @@ ${aiSettings.systemPrompt ? `\n**管理员补充要求**：\n${aiSettings.system
             },
         });
 
-        // 获取最新一条用户消息
-        const lastMessage = messages[messages.length - 1];
-        if (!lastMessage || lastMessage.role !== 'user') {
-            return res.status(400).json({ error: '最后一条消息必须是用户发送的' });
-        }
-
         // 发送消息
-        const result = await sendMessageWithRetry(chat, lastMessage.content);
+        const result = await sendMessageWithRetry(chat, effectiveMessages[effectiveMessages.length - 1].content);
         const responseText = result.response.text();
         
         let totalTokens = 0;
@@ -173,7 +293,34 @@ ${aiSettings.systemPrompt ? `\n**管理员补充要求**：\n${aiSettings.system
             costMao = costUSD * aiSettings.usdToCny * 10;
         }
 
-        res.json({ reply: responseText, tokens: totalTokens, cost: costMao });
+        if (persist !== false) {
+            try {
+                await aiChatRepo.addMessage({
+                    sessionId: savedSessionId,
+                    pagePath: normalizedPath,
+                    pageTitle,
+                    role: 'user',
+                    content: lastMessage.content
+                });
+                await aiChatRepo.addMessage({
+                    sessionId: savedSessionId,
+                    pagePath: normalizedPath,
+                    pageTitle,
+                    role: 'model',
+                    content: responseText,
+                    tokens: totalTokens,
+                    cost: costMao
+                });
+                await aiChatRepo.recordQuestion({
+                    pagePath: normalizedPath,
+                    question: lastMessage.content
+                });
+            } catch (saveErr) {
+                console.warn('[AI] failed to persist chat history:', saveErr.message || saveErr);
+            }
+        }
+
+        res.json({ reply: responseText, tokens: totalTokens, cost: costMao, sessionId: savedSessionId });
     } catch (error) {
         console.error('[AI] Chat error:', error);
         if (isTransientAiError(error)) {
@@ -182,6 +329,42 @@ ${aiSettings.systemPrompt ? `\n**管理员补充要求**：\n${aiSettings.system
             });
         }
         res.status(500).json({ error: 'AI 思考时出现异常: ' + error.message });
+    }
+});
+
+router.get('/suggestions', checkAuth, async (req, res) => {
+    try {
+        const items = await aiChatRepo.listSuggestions({
+            pagePath: req.query.pagePath || req.get('referer') || '',
+            limit: req.query.limit
+        });
+        res.json({ items });
+    } catch (err) {
+        console.error('[AI] suggestions failed:', err);
+        res.status(500).json({ error: '读取推荐问题失败: ' + err.message });
+    }
+});
+
+router.get('/sessions', checkAuth, async (req, res) => {
+    try {
+        const items = await aiChatRepo.listSessions({
+            pagePath: req.query.pagePath || req.get('referer') || '',
+            limit: req.query.limit
+        });
+        res.json({ items });
+    } catch (err) {
+        console.error('[AI] sessions failed:', err);
+        res.status(500).json({ error: '读取历史问答失败: ' + err.message });
+    }
+});
+
+router.get('/sessions/:sessionId/messages', checkAuth, async (req, res) => {
+    try {
+        const items = await aiChatRepo.listMessages(req.params.sessionId);
+        res.json({ items });
+    } catch (err) {
+        console.error('[AI] session messages failed:', err);
+        res.status(500).json({ error: '读取历史消息失败: ' + err.message });
     }
 });
 

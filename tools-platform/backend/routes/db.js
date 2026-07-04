@@ -450,6 +450,379 @@ router.get('/monthly_report_data', (req, res) => {
     });
 });
 
+router.get('/metric_count_trends', (req, res) => {
+    const daysRaw = parseInt(req.query.days, 10);
+    const days = Number.isFinite(daysRaw) && daysRaw > 0 ? Math.min(daysRaw, 365) : 90;
+    const sinceModifier = `-${days} days`;
+
+    const trendSql = `
+        SELECT
+            s.id AS snapshot_row_id,
+            s.snapshot_id,
+            s.month,
+            s.created_at,
+            COUNT(m.id) AS sub_metric_count,
+            COUNT(DISTINCT m.metric_label) AS overall_metric_count
+        FROM ReportSnapshots s
+        LEFT JOIN ReportMetricData m
+            ON m.snapshot_id = s.snapshot_id
+           AND (m.month = s.month OR m.month IS NULL)
+        WHERE DATE(s.created_at) >= DATE('now', ?)
+        GROUP BY s.id
+        ORDER BY datetime(s.created_at) ASC, s.id ASC
+    `;
+
+    const recentSql = `
+        SELECT
+            s.id AS snapshot_row_id,
+            s.snapshot_id,
+            s.month,
+            s.created_at,
+            COUNT(m.id) AS sub_metric_count,
+            COUNT(DISTINCT m.metric_label) AS overall_metric_count
+        FROM ReportSnapshots s
+        LEFT JOIN ReportMetricData m
+            ON m.snapshot_id = s.snapshot_id
+           AND (m.month = s.month OR m.month IS NULL)
+        GROUP BY s.id
+        ORDER BY datetime(s.created_at) DESC, s.id DESC
+        LIMIT 3
+    `;
+
+    const categorySql = `
+        SELECT
+            s.id AS snapshot_row_id,
+            m.cat_name,
+            COUNT(m.id) AS sub_metric_count,
+            COUNT(DISTINCT m.metric_label) AS metric_count
+        FROM ReportSnapshots s
+        JOIN ReportMetricData m
+            ON m.snapshot_id = s.snapshot_id
+           AND (m.month = s.month OR m.month IS NULL)
+        WHERE DATE(s.created_at) >= DATE('now', ?)
+        GROUP BY s.id, m.cat_name
+        ORDER BY s.id ASC, m.cat_name ASC
+    `;
+
+    db.all(trendSql, [sinceModifier], (err, trendRows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        db.all(recentSql, [], (err, recentRows) => {
+            if (err) return res.status(500).json({ error: err.message });
+            db.all(categorySql, [sinceModifier], (err, categoryRows) => {
+                if (err) return res.status(500).json({ error: err.message });
+
+                const categoryMap = {};
+                categoryRows.forEach(row => {
+                    const key = String(row.snapshot_row_id);
+                    if (!categoryMap[key]) categoryMap[key] = {};
+                    categoryMap[key][row.cat_name || '未分组'] = {
+                        sub_metric_count: row.sub_metric_count || 0,
+                        metric_count: row.metric_count || 0
+                    };
+                });
+
+                const normalize = row => ({
+                    snapshot_row_id: row.snapshot_row_id,
+                    snapshot_id: row.snapshot_id,
+                    month: row.month,
+                    created_at: row.created_at,
+                    overall_metric_count: row.overall_metric_count || 0,
+                    sub_metric_count: row.sub_metric_count || 0,
+                    category_counts: categoryMap[String(row.snapshot_row_id)] || {}
+                });
+
+                markSqliteSource(res, 'GET /api/db/metric_count_trends');
+                res.json({
+                    days,
+                    trends: trendRows.map(normalize),
+                    recent: recentRows.map(normalize)
+                });
+            });
+        });
+    });
+});
+
+function parseSnapshotRaw(row) {
+    try {
+        return JSON.parse(row.raw_data_json || '{}') || {};
+    } catch (_err) {
+        return {};
+    }
+}
+
+function cleanAlertLabel(value, fallback = '未分类预警') {
+    const text = String(value || fallback)
+        .replace(/[^\S\r\n]+/g, ' ')
+        .replace(/^[\s🔧🧯📞⚠️⭐]+/u, '')
+        .trim();
+    return text || fallback;
+}
+
+function getTicketType(ticket) {
+    const collection = cleanAlertLabel(ticket && ticket.collection, '');
+    const title = cleanAlertLabel(ticket && ticket.title, '');
+    if (collection && title) return `${collection} / ${title}`;
+    return title || collection || '临期单据';
+}
+
+function getTicketNetwork(ticket) {
+    const data = ticket && ticket.data && typeof ticket.data === 'object' ? ticket.data : {};
+    return cleanAlertLabel(
+        ticket.network || ticket.cat_name || ticket.category || ticket.customer_group ||
+        data.customer_group || data.cat_name || data.network || data.network_name ||
+        data.repoffice_cn_name || data.repoffice_en_name ||
+        data.region_cn_name || data.region_en_name ||
+        data.country_cn_name || data.country_en_name ||
+        data.office || data.region,
+        '未识别网络'
+    );
+}
+
+function getSpecialAlertType(alert) {
+    const metric = alert && (alert.metric_label || alert.metricLabel);
+    const type = alert && alert.type;
+    if (metric) return `特殊指标 / ${cleanAlertLabel(metric)}`;
+    return `特殊指标 / ${cleanAlertLabel(type, '指标提醒')}`;
+}
+
+function incCount(map, key, amount = 1) {
+    const finalKey = cleanAlertLabel(key);
+    map[finalKey] = (map[finalKey] || 0) + amount;
+}
+
+function summarizeWarningSnapshot(row) {
+    const raw = parseSnapshotRaw(row);
+    const tickets = Array.isArray(raw.expiringTickets) ? raw.expiringTickets : [];
+    const alerts = Array.isArray(raw.specialMetricAlerts) ? raw.specialMetricAlerts : [];
+    const type_counts = {};
+    const network_counts = {};
+
+    tickets.forEach(ticket => {
+        incCount(type_counts, getTicketType(ticket));
+        incCount(network_counts, getTicketNetwork(ticket));
+    });
+    alerts.forEach(alert => {
+        incCount(type_counts, getSpecialAlertType(alert));
+        incCount(network_counts, '整体');
+    });
+
+    return {
+        snapshot_row_id: row.id,
+        snapshot_id: row.snapshot_id,
+        month: row.month,
+        created_at: row.created_at,
+        total_warning_count: tickets.length + alerts.length,
+        expiring_ticket_count: tickets.length,
+        special_metric_alert_count: alerts.length,
+        type_counts,
+        network_counts
+    };
+}
+
+router.get('/expiring_warning_trends', (req, res) => {
+    const daysRaw = parseInt(req.query.days, 10);
+    const days = Number.isFinite(daysRaw) && daysRaw > 0 ? Math.min(daysRaw, 365) : 90;
+    const sinceModifier = `-${days} days`;
+    const selectSql = `
+        SELECT id, snapshot_id, month, created_at, raw_data_json
+        FROM ReportSnapshots
+        WHERE DATE(created_at) >= DATE('now', ?)
+        ORDER BY datetime(created_at) ASC, id ASC
+    `;
+    const recentSql = `
+        SELECT id, snapshot_id, month, created_at, raw_data_json
+        FROM ReportSnapshots
+        ORDER BY datetime(created_at) DESC, id DESC
+        LIMIT 3
+    `;
+
+    db.all(selectSql, [sinceModifier], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        db.all(recentSql, [], (err, recentRows) => {
+            if (err) return res.status(500).json({ error: err.message });
+            markSqliteSource(res, 'GET /api/db/expiring_warning_trends');
+            res.json({
+                days,
+                trends: rows.map(summarizeWarningSnapshot),
+                recent: recentRows.map(summarizeWarningSnapshot)
+            });
+        });
+    });
+});
+
+function getDailySnapshotRows(days, callback) {
+    const sinceModifier = `-${days} days`;
+    const sql = `
+        SELECT s.id, s.snapshot_id, s.month, s.created_at, s.raw_data_json
+        FROM ReportSnapshots s
+        INNER JOIN (
+            SELECT DATE(created_at) AS d, MAX(id) AS max_id
+            FROM ReportSnapshots
+            WHERE DATE(created_at) >= DATE('now', ?)
+            GROUP BY DATE(created_at)
+        ) latest ON s.id = latest.max_id
+        ORDER BY datetime(s.created_at) ASC, s.id ASC
+    `;
+    db.all(sql, [sinceModifier], callback);
+}
+
+function calcManualAdjustScore(item, count) {
+    const unit = Number(item && item.unit) || 0;
+    const cap = item && item.cap !== null && item.cap !== undefined && item.cap !== '' ? Number(item.cap) : null;
+    const rawScore = Math.max(0, Number(count) || 0) * unit;
+    const capped = Number.isFinite(cap) && cap > 0 ? Math.min(rawScore, cap) : rawScore;
+    return item && item.type === '加分' ? capped : -capped;
+}
+
+function parseMetricTargetValue(value) {
+    const text = String(value || '').trim();
+    if (!text || text === '--') return null;
+    const match = text.match(/-?\d+(?:\.\d+)?/);
+    if (!match) return null;
+    const condition = /≤|<=|小于|不高于|低于/.test(text) ? 'lte' : 'gte';
+    return {
+        raw: text,
+        value: Number(match[0]),
+        condition
+    };
+}
+
+router.get('/metric_item_trend', (req, res) => {
+    const label = String(req.query.label || '').trim();
+    const kind = String(req.query.kind || 'metric');
+    const daysRaw = parseInt(req.query.days, 10);
+    const days = Number.isFinite(daysRaw) && daysRaw > 0 ? Math.min(daysRaw, 365) : 90;
+    if (!label) return res.status(400).json({ error: 'Missing label' });
+
+    getDailySnapshotRows(days, (err, snapshots) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!snapshots.length) {
+            markSqliteSource(res, 'GET /api/db/metric_item_trend');
+            return res.json({ label, kind, days, trends: [] });
+        }
+
+        if (kind === 'manual') {
+            const trends = snapshots.map(row => {
+                const raw = parseSnapshotRaw(row);
+                const items = Array.isArray(raw.manualAdjustItems) ? raw.manualAdjustItems : [];
+                const adjustData = raw.manualAdjustData && typeof raw.manualAdjustData === 'object' ? raw.manualAdjustData : {};
+                const matched = items
+                    .map((item, index) => ({ item, index }))
+                    .filter(entry => entry.item && !entry.item.deleted && entry.item.name === label);
+                const series = {};
+                let totalValue = 0;
+                let totalScore = 0;
+                Object.keys(adjustData).forEach(cat => {
+                    let count = 0;
+                    let score = 0;
+                    matched.forEach(({ item, index }) => {
+                        const val = Number(adjustData[cat] && adjustData[cat][index]) || 0;
+                        count += val;
+                        score += calcManualAdjustScore(item, val);
+                    });
+                    if (count !== 0 || score !== 0) {
+                        series[cat] = { value: count, score, raw: String(count) };
+                        totalValue += count;
+                        totalScore += score;
+                    }
+                });
+                return {
+                    snapshot_id: row.snapshot_id,
+                    month: row.month,
+                    created_at: row.created_at,
+                    total_value: totalValue,
+                    total_score: totalScore,
+                    series
+                };
+            });
+            markSqliteSource(res, 'GET /api/db/metric_item_trend');
+            return res.json({ label, kind, days, trends });
+        }
+
+        const snapshotIds = snapshots.map(row => row.snapshot_id);
+        const placeholders = snapshotIds.map(() => '?').join(',');
+        const sql = `
+            SELECT snapshot_id, month, cat_name, raw_val, num_val, target_val, is_failing, gap
+            FROM ReportMetricData
+            WHERE metric_label = ? AND snapshot_id IN (${placeholders})
+        `;
+        db.all(sql, [label, ...snapshotIds], (err, metricRows) => {
+            if (err) return res.status(500).json({ error: err.message });
+            const byKey = {};
+            metricRows.forEach(row => {
+                const key = `${row.snapshot_id}@@${row.month || ''}`;
+                if (!byKey[key]) byKey[key] = [];
+                byKey[key].push(row);
+            });
+            const trends = snapshots.map(row => {
+                const key = `${row.snapshot_id}@@${row.month || ''}`;
+                const rows = byKey[key] || byKey[`${row.snapshot_id}@@`] || [];
+                const series = {};
+                rows.forEach(item => {
+                    const cat = item.cat_name || '整体';
+                    series[cat] = {
+                        value: Number.isFinite(Number(item.num_val)) ? Number(item.num_val) : null,
+                        raw: item.raw_val,
+                        target_raw: item.target_val || '',
+                        target_value: parseMetricTargetValue(item.target_val)?.value ?? null,
+                        is_failing: !!item.is_failing,
+                        gap: item.gap || ''
+                    };
+                });
+                const overall = series['整体'];
+                const numericValues = Object.values(series)
+                    .map(item => Number(item.value))
+                    .filter(Number.isFinite);
+                const totalValue = overall && Number.isFinite(Number(overall.value))
+                    ? Number(overall.value)
+                    : (numericValues.length ? numericValues.reduce((a, b) => a + b, 0) / numericValues.length : null);
+                return {
+                    snapshot_id: row.snapshot_id,
+                    month: row.month,
+                    created_at: row.created_at,
+                    total_value: totalValue,
+                    total_score: null,
+                    series
+                };
+            });
+            const monthTargets = {};
+            metricRows.forEach(row => {
+                const month = Number(row.month);
+                if (!Number.isFinite(month)) return;
+                const parsed = parseMetricTargetValue(row.target_val);
+                if (!parsed || !Number.isFinite(parsed.value)) return;
+                if (!monthTargets[month]) {
+                    monthTargets[month] = {
+                        month,
+                        value: parsed.value,
+                        raw: parsed.raw,
+                        condition: parsed.condition
+                    };
+                }
+            });
+            const availableMonths = Object.keys(monthTargets).map(Number).filter(Number.isFinite).sort((a, b) => a - b);
+            const latestTrendMonth = trends.slice().reverse().map(row => Number(row.month)).find(Number.isFinite);
+            const currentMonth = Number.isFinite(latestTrendMonth) && monthTargets[latestTrendMonth]
+                ? latestTrendMonth
+                : availableMonths[availableMonths.length - 1];
+            const previousMonth = Number.isFinite(currentMonth)
+                ? (monthTargets[currentMonth - 1] ? currentMonth - 1 : availableMonths.filter(month => month < currentMonth).pop())
+                : null;
+            markSqliteSource(res, 'GET /api/db/metric_item_trend');
+            res.json({
+                label,
+                kind: 'metric',
+                days,
+                trends,
+                targets: {
+                    current: Number.isFinite(currentMonth) ? monthTargets[currentMonth] || null : null,
+                    previous: Number.isFinite(previousMonth) ? monthTargets[previousMonth] || null : null
+                }
+            });
+        });
+    });
+});
+
 router.get('/bigscreen_owners', (req, res) => {
     db.all(
         `SELECT id, cat_name, metric_label, owner_name, emp_id, avatar, updated_at

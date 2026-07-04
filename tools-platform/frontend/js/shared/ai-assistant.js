@@ -218,6 +218,69 @@
             display: none;
             padding: 0 16px;
         }
+        .ai-suggestions {
+            display: flex;
+            gap: 8px;
+            padding: 10px 16px 0;
+            background: #fff;
+            border-top: 1px solid #e2e8f0;
+            overflow-x: auto;
+            scrollbar-width: thin;
+        }
+        .ai-suggestion-chip {
+            flex: 0 0 auto;
+            max-width: 190px;
+            border: 1px solid #dbe4ff;
+            background: #f5f7ff;
+            color: #4f5fbf;
+            border-radius: 999px;
+            padding: 7px 10px;
+            font-size: 12px;
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+        }
+        .ai-suggestion-chip:hover {
+            background: #eef2ff;
+            border-color: #aebcff;
+        }
+        .ai-history-panel {
+            display: none;
+            background: #fff;
+            border-bottom: 1px solid #e2e8f0;
+            max-height: 210px;
+            overflow-y: auto;
+            padding: 10px 14px;
+        }
+        .ai-history-panel.open {
+            display: block;
+        }
+        .ai-history-item {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 9px 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            background: #f8fafc;
+        }
+        .ai-history-item:hover {
+            border-color: #aebcff;
+            background: #f5f7ff;
+        }
+        .ai-history-title {
+            font-size: 12px;
+            color: #334155;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .ai-history-meta {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
     `;
     document.head.appendChild(style);
 
@@ -233,14 +296,17 @@
         <div class="ai-header">
             <div>🤖 智能客服助手</div>
             <div style="display:flex; gap:8px;">
+                <button class="ai-action-btn ai-history" title="历史问答">↺</button>
                 <button class="ai-action-btn ai-expand" title="最大化/还原">⤢</button>
                 <button class="ai-action-btn ai-close" title="关闭">×</button>
             </div>
         </div>
+        <div class="ai-history-panel" id="aiHistoryPanel"></div>
         <div class="ai-chat-body" id="aiChatBody">
             <div class="ai-msg ai">👋 你好！我是您的专属智能助手，正在为您加载页面上下文...</div>
             <div class="ai-typing" id="aiTyping">AI 正在思考...</div>
         </div>
+        <div class="ai-suggestions" id="aiSuggestions"></div>
         <div class="ai-input-area">
             <input type="text" class="ai-input" id="aiInput" placeholder="向 AI 提问有关本页面的内容...">
             <button class="ai-send-btn" id="aiSendBtn">
@@ -254,9 +320,12 @@
     const input = document.getElementById('aiInput');
     const sendBtn = document.getElementById('aiSendBtn');
     const typing = document.getElementById('aiTyping');
+    const suggestionsEl = document.getElementById('aiSuggestions');
+    const historyPanel = document.getElementById('aiHistoryPanel');
     
     let isFirstOpen = true;
     let messages = [];
+    let currentSessionId = null;
     let cumulativeTokens = 0;
     let cumulativeCost = 0;
 
@@ -285,6 +354,7 @@
                 isFirstOpen = false;
                 initChat();
             }
+            loadSuggestions();
             setTimeout(() => input.focus(), 300);
         }
     }
@@ -296,6 +366,12 @@
     panel.querySelector('.ai-close').onclick = () => panel.classList.remove('open');
     panel.querySelector('.ai-expand').onclick = () => {
         panel.classList.toggle('expanded');
+    };
+    panel.querySelector('.ai-history').onclick = async () => {
+        historyPanel.classList.toggle('open');
+        if (historyPanel.classList.contains('open')) {
+            await loadHistorySessions();
+        }
     };
     
     window.addEventListener('resize', () => {
@@ -312,6 +388,15 @@
         html = html.replace(/`(.*?)`/g, '<code style="background:#f1f5f9;padding:2px 4px;border-radius:4px;color:#ef4444;">$1</code>');
         html = html.replace(/\n/g, '<br/>');
         return html;
+    }
+
+    function escapeHtml(text) {
+        return String(text || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     function appendMessage(text, role, tokens = 0, cost = 0) {
@@ -346,6 +431,98 @@
         return { pageTitle, context };
     }
 
+    function getPagePath() {
+        return window.location.pathname || '/';
+    }
+
+    function getAuthHeaders() {
+        const token = localStorage.getItem('tools_token') || sessionStorage.getItem('tools_token');
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': token ? ('Bearer ' + token) : ''
+        };
+    }
+
+    async function loadSuggestions() {
+        try {
+            const token = localStorage.getItem('tools_token') || sessionStorage.getItem('tools_token');
+            const res = await fetch(`/api/ai/suggestions?pagePath=${encodeURIComponent(getPagePath())}&limit=8`, {
+                headers: { 'Authorization': token ? ('Bearer ' + token) : '' }
+            });
+            const data = await res.json();
+            const items = Array.isArray(data.items) ? data.items : [];
+            suggestionsEl.innerHTML = items.map(item => {
+                const q = escapeHtml(item.question || '');
+                return `<button class="ai-suggestion-chip" title="${q}" data-question="${q}">${q}</button>`;
+            }).join('');
+            suggestionsEl.querySelectorAll('.ai-suggestion-chip').forEach(btn => {
+                btn.onclick = () => sendMessage(btn.getAttribute('data-question') || '');
+            });
+        } catch (e) {
+            suggestionsEl.innerHTML = '';
+        }
+    }
+
+    async function loadHistorySessions() {
+        historyPanel.innerHTML = '<div class="ai-history-meta">正在加载历史问答...</div>';
+        try {
+            const token = localStorage.getItem('tools_token') || sessionStorage.getItem('tools_token');
+            const res = await fetch(`/api/ai/sessions?pagePath=${encodeURIComponent(getPagePath())}&limit=20`, {
+                headers: { 'Authorization': token ? ('Bearer ' + token) : '' }
+            });
+            const data = await res.json();
+            const items = Array.isArray(data.items) ? data.items : [];
+            if (!items.length) {
+                historyPanel.innerHTML = '<div class="ai-history-meta">暂无历史问答</div>';
+                return;
+            }
+            historyPanel.innerHTML = items.map(item => {
+                const title = escapeHtml(item.last_question || '未命名对话');
+                const meta = escapeHtml(`${item.updated_at || ''} · ${item.message_count || 0} 条`);
+                return `
+                    <div class="ai-history-item" data-session-id="${item.id}">
+                        <div class="ai-history-title">${title}</div>
+                        <div class="ai-history-meta">${meta}</div>
+                    </div>
+                `;
+            }).join('');
+            historyPanel.querySelectorAll('.ai-history-item').forEach(item => {
+                item.onclick = () => restoreHistorySession(item.getAttribute('data-session-id'));
+            });
+        } catch (e) {
+            historyPanel.innerHTML = '<div class="ai-history-meta">历史问答加载失败：' + e.message + '</div>';
+        }
+    }
+
+    async function restoreHistorySession(sessionId) {
+        if (!sessionId) return;
+        try {
+            const token = localStorage.getItem('tools_token') || sessionStorage.getItem('tools_token');
+            const res = await fetch(`/api/ai/sessions/${encodeURIComponent(sessionId)}/messages`, {
+                headers: { 'Authorization': token ? ('Bearer ' + token) : '' }
+            });
+            const data = await res.json();
+            const items = Array.isArray(data.items) ? data.items : [];
+            currentSessionId = sessionId;
+            messages = items.map(item => ({
+                role: item.role === 'model' ? 'model' : 'user',
+                content: item.content || ''
+            }));
+            cumulativeTokens = 0;
+            cumulativeCost = 0;
+            Array.from(chatBody.querySelectorAll('.ai-msg')).forEach(node => node.remove());
+            items.forEach(item => appendMessage(
+                item.content || '',
+                item.role === 'model' ? 'ai' : 'user',
+                item.role === 'model' ? Number(item.tokens) || 0 : 0,
+                item.role === 'model' ? Number(item.cost) || 0 : 0
+            ));
+            historyPanel.classList.remove('open');
+        } catch (e) {
+            appendMessage('⚠️ 历史问答恢复失败: ' + e.message, 'ai');
+        }
+    }
+
     async function initChat() {
         typing.style.display = 'block';
         chatBody.scrollTop = chatBody.scrollHeight;
@@ -356,14 +533,10 @@
         messages.push({ role: 'user', content: '你好，请用简短的话总结一下这个页面的核心功能以及如何使用它。' });
         
         try {
-            const token = localStorage.getItem('tools_token') || sessionStorage.getItem('tools_token');
             const res = await fetch('/api/ai/chat', {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': token ? ('Bearer ' + token) : ''
-                },
-                body: JSON.stringify({ messages, context, pageTitle })
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ messages, context, pageTitle, pagePath: getPagePath(), persist: false })
             });
             const data = await res.json();
             
@@ -389,8 +562,8 @@
         }
     }
 
-    async function sendMessage() {
-        const text = input.value.trim();
+    async function sendMessage(presetText) {
+        const text = String(presetText || input.value || '').trim();
         if (!text) return;
         
         appendMessage(text, 'user');
@@ -403,21 +576,25 @@
         const { pageTitle, context } = getPageContext();
 
         try {
-            const token = localStorage.getItem('tools_token') || sessionStorage.getItem('tools_token');
             const res = await fetch('/api/ai/chat', {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': token ? ('Bearer ' + token) : ''
-                },
-                body: JSON.stringify({ messages, context, pageTitle })
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    messages,
+                    context,
+                    pageTitle,
+                    pagePath: getPagePath(),
+                    sessionId: currentSessionId
+                })
             });
             const data = await res.json();
             
             if (data.error) throw new Error(data.error);
             
+            if (data.sessionId) currentSessionId = data.sessionId;
             messages.push({ role: 'model', content: data.reply });
             appendMessage(data.reply, 'ai', data.tokens || 0, data.cost || 0);
+            loadSuggestions();
         } catch (e) {
             const last = messages[messages.length - 1];
             if (last && last.role === 'user' && last.content === text) {

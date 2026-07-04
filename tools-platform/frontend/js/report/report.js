@@ -8,6 +8,10 @@ let standardTotalScore = 0;
 let metricGroups = []; // [{id, name, metrics:[label,...]}]
 let editingManualMetricLabel = null;
 const REPORT_TARGET_MONTH_KEY = 'report_target_month';
+let metricCountTrendData = null;
+let metricCountTrendLoading = null;
+let expiringWarningTrendData = null;
+let expiringWarningTrendLoading = null;
 
 function isReportEligibleSnapshot(snapshot) {
     return Array.isArray(snapshot && snapshot.topMetrics) && snapshot.topMetrics.length > 0;
@@ -127,6 +131,882 @@ function getBilingual(text) {
 function escapeHTML(str) {
     return typeof str === 'string' ? str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)) : str;
 }
+
+function formatReportDateTime(value) {
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return String(value || '-');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mi = String(d.getMinutes()).padStart(2, '0');
+    return `${mm}-${dd} ${hh}:${mi}`;
+}
+
+function formatDelta(value) {
+    const num = Number(value) || 0;
+    if (num > 0) return `+${num}`;
+    return String(num);
+}
+
+async function loadMetricCountTrendData() {
+    if (metricCountTrendData) return metricCountTrendData;
+    if (metricCountTrendLoading) return metricCountTrendLoading;
+    metricCountTrendLoading = API.get('/api/db/metric_count_trends?days=90')
+        .then(data => {
+            metricCountTrendData = data || { trends: [], recent: [] };
+            return metricCountTrendData;
+        })
+        .finally(() => {
+            metricCountTrendLoading = null;
+        });
+    return metricCountTrendLoading;
+}
+
+async function loadExpiringWarningTrendData() {
+    if (expiringWarningTrendData) return expiringWarningTrendData;
+    if (expiringWarningTrendLoading) return expiringWarningTrendLoading;
+    expiringWarningTrendLoading = API.get('/api/db/expiring_warning_trends?days=90')
+        .then(data => {
+            expiringWarningTrendData = data || { trends: [], recent: [] };
+            return expiringWarningTrendData;
+        })
+        .finally(() => {
+            expiringWarningTrendLoading = null;
+        });
+    return expiringWarningTrendLoading;
+}
+
+function renderRankingCountInsight() {
+    const el = document.getElementById('ranking-count-insight');
+    if (!el) return;
+    el.classList.add('loading');
+    el.innerHTML = '指标数量趋势加载中...';
+    loadMetricCountTrendData().then(data => {
+        const recent = Array.isArray(data.recent) ? data.recent : [];
+        if (!recent.length) {
+            el.innerHTML = '暂无历史指标数量';
+            return;
+        }
+        const latest = recent[0];
+        const prev = recent[1] || null;
+        const overallDelta = prev ? latest.overall_metric_count - prev.overall_metric_count : 0;
+        const subDelta = prev ? latest.sub_metric_count - prev.sub_metric_count : 0;
+        const changed = overallDelta !== 0 || subDelta !== 0;
+        const sequence = recent.slice().reverse().map(item => `${item.overall_metric_count}/${item.sub_metric_count}`).join(' → ');
+        const title = recent.slice().reverse().map(item =>
+            `${formatReportDateTime(item.created_at)}：整体 ${item.overall_metric_count}，子指标 ${item.sub_metric_count}`
+        ).join('\n');
+        el.classList.remove('loading');
+        el.title = `${title}\n点击查看最近90天指标数量趋势`;
+        el.innerHTML = `
+            <span>近三次 ${escapeHTML(sequence)}</span>
+            <span class="ranking-count-pill">整体 ${latest.overall_metric_count}</span>
+            <span class="ranking-count-pill sub">子指标 ${latest.sub_metric_count}</span>
+            <span class="ranking-count-delta ${changed ? 'changed' : ''}">变化 ${formatDelta(overallDelta)} / ${formatDelta(subDelta)}</span>
+        `;
+    }).catch(err => {
+        el.classList.remove('loading');
+        el.innerHTML = '指标数量趋势加载失败';
+        el.title = err.message || String(err);
+    });
+}
+
+function renderExpiringWarningInsight() {
+    const el = document.getElementById('expiring-warning-insight');
+    if (!el) return;
+    el.classList.add('loading');
+    el.innerHTML = '临期预警趋势加载中...';
+    loadExpiringWarningTrendData().then(data => {
+        const recent = Array.isArray(data.recent) ? data.recent : [];
+        if (!recent.length) {
+            el.innerHTML = '暂无临期预警历史';
+            return;
+        }
+        const latest = recent[0];
+        const prev = recent[1] || null;
+        const totalDelta = prev ? latest.total_warning_count - prev.total_warning_count : 0;
+        const ticketDelta = prev ? latest.expiring_ticket_count - prev.expiring_ticket_count : 0;
+        const changed = totalDelta !== 0 || ticketDelta !== 0;
+        const sequence = recent.slice().reverse().map(item => item.total_warning_count).join(' → ');
+        const title = recent.slice().reverse().map(item =>
+            `${formatReportDateTime(item.created_at)}：总预警 ${item.total_warning_count}，临期单据 ${item.expiring_ticket_count}，特殊指标 ${item.special_metric_alert_count}`
+        ).join('\n');
+        el.classList.remove('loading');
+        el.title = `${title}\n点击查看最近90天临期预警趋势`;
+        el.innerHTML = `
+            <span>临期预警 ${escapeHTML(sequence)}</span>
+            <span class="ranking-count-pill">总 ${latest.total_warning_count}</span>
+            <span class="ranking-count-pill sub">单据 ${latest.expiring_ticket_count}</span>
+            <span class="ranking-count-delta ${changed ? 'changed' : ''}">变化 ${formatDelta(totalDelta)} / ${formatDelta(ticketDelta)}</span>
+        `;
+    }).catch(err => {
+        el.classList.remove('loading');
+        el.innerHTML = '临期预警趋势加载失败';
+        el.title = err.message || String(err);
+    });
+}
+
+function getTrendY(value, min, max, top, height) {
+    if (max === min) return top + height / 2;
+    return top + (max - value) / (max - min) * height;
+}
+
+function buildMetricLineChart(trends) {
+    const width = 760;
+    const height = 300;
+    const pad = { left: 54, right: 24, top: 26, bottom: 46 };
+    const plotW = width - pad.left - pad.right;
+    const plotH = height - pad.top - pad.bottom;
+    const rows = trends.length ? trends : [];
+    if (!rows.length) {
+        return `<svg class="metric-chart-svg" viewBox="0 0 ${width} ${height}"><text x="${width / 2}" y="${height / 2}" text-anchor="middle" fill="#94a3b8">暂无趋势数据</text></svg>`;
+    }
+    const values = rows.flatMap(item => [item.overall_metric_count || 0, item.sub_metric_count || 0]);
+    const min = Math.max(0, Math.min(...values) - 4);
+    const max = Math.max(...values) + 4;
+    const xOf = index => pad.left + (rows.length === 1 ? plotW / 2 : index * plotW / (rows.length - 1));
+    const linePath = key => rows.map((item, index) => {
+        const x = xOf(index);
+        const y = getTrendY(item[key] || 0, min, max, pad.top, plotH);
+        return `${index === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
+    }).join(' ');
+    const grid = [0, 1, 2, 3, 4].map(i => {
+        const y = pad.top + i * plotH / 4;
+        const label = Math.round(max - i * (max - min) / 4);
+        return `<line x1="${pad.left}" y1="${y}" x2="${width - pad.right}" y2="${y}" stroke="#e2e8f0"/><text x="${pad.left - 10}" y="${y + 4}" text-anchor="end" fill="#64748b" font-size="11">${label}</text>`;
+    }).join('');
+    const labels = rows.map((item, index) => {
+        if (rows.length > 12 && index % Math.ceil(rows.length / 8) !== 0 && index !== rows.length - 1) return '';
+        const x = xOf(index);
+        return `<text x="${x}" y="${height - 16}" text-anchor="middle" fill="#64748b" font-size="10">${escapeHTML(formatReportDateTime(item.created_at).slice(0, 5))}</text>`;
+    }).join('');
+    const points = key => rows.map((item, index) => {
+        const x = xOf(index);
+        const y = getTrendY(item[key] || 0, min, max, pad.top, plotH);
+        const delta = index > 0 ? (item[key] || 0) - (rows[index - 1][key] || 0) : 0;
+        const major = Math.abs(delta) >= 8;
+        return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${major ? 5 : 3}" fill="${major ? '#f97316' : '#fff'}" stroke="${key === 'overall_metric_count' ? '#2563eb' : '#059669'}" stroke-width="2"><title>${escapeHTML(formatReportDateTime(item.created_at))} ${key === 'overall_metric_count' ? '整体' : '子指标'}：${item[key] || 0}${delta ? ` (${formatDelta(delta)})` : ''}</title></circle>`;
+    }).join('');
+    return `
+        <svg class="metric-chart-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="最近90天指标数量趋势">
+            <rect x="0" y="0" width="${width}" height="${height}" rx="10" fill="#ffffff"/>
+            ${grid}
+            <line x1="${pad.left}" y1="${height - pad.bottom}" x2="${width - pad.right}" y2="${height - pad.bottom}" stroke="#cbd5e1"/>
+            <path d="${linePath('sub_metric_count')}" fill="none" stroke="#059669" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="${linePath('overall_metric_count')}" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            ${points('sub_metric_count')}
+            ${points('overall_metric_count')}
+            ${labels}
+            <g transform="translate(${pad.left}, 12)">
+                <circle cx="0" cy="0" r="4" fill="#2563eb"/><text x="10" y="4" fill="#334155" font-size="12">整体指标数</text>
+                <circle cx="92" cy="0" r="4" fill="#059669"/><text x="102" y="4" fill="#334155" font-size="12">子指标数</text>
+                <circle cx="178" cy="0" r="5" fill="#f97316"/><text x="190" y="4" fill="#334155" font-size="12">大变化点</text>
+            </g>
+        </svg>
+    `;
+}
+
+function buildWarningLineChart(trends) {
+    const width = 760;
+    const height = 300;
+    const pad = { left: 54, right: 24, top: 26, bottom: 46 };
+    const plotW = width - pad.left - pad.right;
+    const plotH = height - pad.top - pad.bottom;
+    const rows = trends.length ? trends : [];
+    if (!rows.length) {
+        return `<svg class="metric-chart-svg" viewBox="0 0 ${width} ${height}"><text x="${width / 2}" y="${height / 2}" text-anchor="middle" fill="#94a3b8">暂无临期预警趋势数据</text></svg>`;
+    }
+    const values = rows.flatMap(item => [
+        item.total_warning_count || 0,
+        item.expiring_ticket_count || 0,
+        item.special_metric_alert_count || 0
+    ]);
+    const min = 0;
+    const max = Math.max(...values, 4) + 4;
+    const xOf = index => pad.left + (rows.length === 1 ? plotW / 2 : index * plotW / (rows.length - 1));
+    const linePath = key => rows.map((item, index) => {
+        const x = xOf(index);
+        const y = getTrendY(item[key] || 0, min, max, pad.top, plotH);
+        return `${index === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
+    }).join(' ');
+    const grid = [0, 1, 2, 3, 4].map(i => {
+        const y = pad.top + i * plotH / 4;
+        const label = Math.round(max - i * (max - min) / 4);
+        return `<line x1="${pad.left}" y1="${y}" x2="${width - pad.right}" y2="${y}" stroke="#e2e8f0"/><text x="${pad.left - 10}" y="${y + 4}" text-anchor="end" fill="#64748b" font-size="11">${label}</text>`;
+    }).join('');
+    const labels = rows.map((item, index) => {
+        if (rows.length > 12 && index % Math.ceil(rows.length / 8) !== 0 && index !== rows.length - 1) return '';
+        const x = xOf(index);
+        return `<text x="${x}" y="${height - 16}" text-anchor="middle" fill="#64748b" font-size="10">${escapeHTML(formatReportDateTime(item.created_at).slice(0, 5))}</text>`;
+    }).join('');
+    const points = (key, color) => rows.map((item, index) => {
+        const x = xOf(index);
+        const y = getTrendY(item[key] || 0, min, max, pad.top, plotH);
+        const delta = index > 0 ? (item[key] || 0) - (rows[index - 1][key] || 0) : 0;
+        const major = Math.abs(delta) >= 5;
+        return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${major ? 5 : 3}" fill="${major ? '#ef4444' : '#fff'}" stroke="${color}" stroke-width="2"><title>${escapeHTML(formatReportDateTime(item.created_at))}：${item[key] || 0}${delta ? ` (${formatDelta(delta)})` : ''}</title></circle>`;
+    }).join('');
+    return `
+        <svg class="metric-chart-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="最近90天临期预警数量趋势">
+            <rect x="0" y="0" width="${width}" height="${height}" rx="10" fill="#ffffff"/>
+            ${grid}
+            <line x1="${pad.left}" y1="${height - pad.bottom}" x2="${width - pad.right}" y2="${height - pad.bottom}" stroke="#cbd5e1"/>
+            <path d="${linePath('total_warning_count')}" fill="none" stroke="#dc2626" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="${linePath('expiring_ticket_count')}" fill="none" stroke="#f97316" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="${linePath('special_metric_alert_count')}" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            ${points('total_warning_count', '#dc2626')}
+            ${points('expiring_ticket_count', '#f97316')}
+            ${points('special_metric_alert_count', '#7c3aed')}
+            ${labels}
+            <g transform="translate(${pad.left}, 12)">
+                <circle cx="0" cy="0" r="4" fill="#dc2626"/><text x="10" y="4" fill="#334155" font-size="12">总预警</text>
+                <circle cx="70" cy="0" r="4" fill="#f97316"/><text x="80" y="4" fill="#334155" font-size="12">临期单据</text>
+                <circle cx="158" cy="0" r="4" fill="#7c3aed"/><text x="168" y="4" fill="#334155" font-size="12">特殊指标</text>
+                <circle cx="258" cy="0" r="5" fill="#ef4444"/><text x="270" y="4" fill="#334155" font-size="12">大变化点</text>
+            </g>
+        </svg>
+    `;
+}
+
+function buildDimensionLineChart(trends, field, titleText) {
+    const width = 760;
+    const height = 260;
+    const pad = { left: 54, right: 24, top: 28, bottom: 42 };
+    const plotW = width - pad.left - pad.right;
+    const plotH = height - pad.top - pad.bottom;
+    const rows = trends.length ? trends : [];
+    if (!rows.length) {
+        return `<svg class="metric-chart-svg" viewBox="0 0 ${width} ${height}"><text x="${width / 2}" y="${height / 2}" text-anchor="middle" fill="#94a3b8">暂无${escapeHTML(titleText)}趋势数据</text></svg>`;
+    }
+    const dimensions = collectDimensionChanges(rows, field)
+        .filter(item => item.latestCount > 0 || item.range > 0)
+        .slice(0, 6);
+    if (!dimensions.length) {
+        return `<svg class="metric-chart-svg" viewBox="0 0 ${width} ${height}"><text x="${width / 2}" y="${height / 2}" text-anchor="middle" fill="#94a3b8">暂无${escapeHTML(titleText)}趋势数据</text></svg>`;
+    }
+    const palette = ['#2563eb', '#f97316', '#7c3aed', '#059669', '#dc2626', '#0891b2'];
+    const values = dimensions.flatMap(dim => rows.map(item => item[field]?.[dim.name] || 0));
+    const min = 0;
+    const max = Math.max(...values, 4) + 3;
+    const xOf = index => pad.left + (rows.length === 1 ? plotW / 2 : index * plotW / (rows.length - 1));
+    const pathFor = name => rows.map((item, index) => {
+        const x = xOf(index);
+        const y = getTrendY(item[field]?.[name] || 0, min, max, pad.top, plotH);
+        return `${index === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
+    }).join(' ');
+    const grid = [0, 1, 2, 3, 4].map(i => {
+        const y = pad.top + i * plotH / 4;
+        const label = Math.round(max - i * (max - min) / 4);
+        return `<line x1="${pad.left}" y1="${y}" x2="${width - pad.right}" y2="${y}" stroke="#e2e8f0"/><text x="${pad.left - 10}" y="${y + 4}" text-anchor="end" fill="#64748b" font-size="11">${label}</text>`;
+    }).join('');
+    const labels = rows.map((item, index) => {
+        if (rows.length > 12 && index % Math.ceil(rows.length / 8) !== 0 && index !== rows.length - 1) return '';
+        const x = xOf(index);
+        return `<text x="${x}" y="${height - 14}" text-anchor="middle" fill="#64748b" font-size="10">${escapeHTML(formatReportDateTime(item.created_at).slice(0, 5))}</text>`;
+    }).join('');
+    const lines = dimensions.map((dim, index) => {
+        const color = palette[index % palette.length];
+        const points = rows.map((item, rowIndex) => {
+            const value = item[field]?.[dim.name] || 0;
+            const prev = rowIndex > 0 ? (rows[rowIndex - 1][field]?.[dim.name] || 0) : value;
+            const delta = value - prev;
+            const major = Math.abs(delta) >= 3;
+            const x = xOf(rowIndex);
+            const y = getTrendY(value, min, max, pad.top, plotH);
+            return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${major ? 4.5 : 2.8}" fill="${major ? '#ef4444' : '#fff'}" stroke="${color}" stroke-width="2"><title>${escapeHTML(dim.name)} ${escapeHTML(formatReportDateTime(item.created_at))}：${value}${delta ? ` (${formatDelta(delta)})` : ''}</title></circle>`;
+        }).join('');
+        return `<path d="${pathFor(dim.name)}" fill="none" stroke="${color}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" opacity=".92"/>${points}`;
+    }).join('');
+    const legend = dimensions.map((dim, index) => {
+        const color = palette[index % palette.length];
+        const x = pad.left + (index % 3) * 210;
+        const y = 12 + Math.floor(index / 3) * 16;
+        const label = dim.name.length > 18 ? `${dim.name.slice(0, 18)}...` : dim.name;
+        return `<circle cx="${x}" cy="${y}" r="4" fill="${color}"/><text x="${x + 10}" y="${y + 4}" fill="#334155" font-size="11">${escapeHTML(label)}</text>`;
+    }).join('');
+    return `
+        <svg class="metric-chart-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHTML(titleText)}趋势">
+            <rect x="0" y="0" width="${width}" height="${height}" rx="10" fill="#ffffff"/>
+            ${grid}
+            <line x1="${pad.left}" y1="${height - pad.bottom}" x2="${width - pad.right}" y2="${height - pad.bottom}" stroke="#cbd5e1"/>
+            ${lines}
+            ${labels}
+            <g>${legend}</g>
+        </svg>
+    `;
+}
+
+function buildDisplayTargetLines(targets) {
+    const items = ['current', 'previous']
+        .map(key => {
+            const target = targets && targets[key];
+            if (!target || !Number.isFinite(Number(target.value))) return null;
+            return {
+                key,
+                keys: [key],
+                value: Number(target.value),
+                raw: target.raw || target.value,
+                month: target.month,
+                months: target.month ? [target.month] : [],
+                condition: target.condition || 'gte',
+                label: key === 'current' ? '本月目标' : '上月目标',
+                shortLabel: key === 'current' ? '本月' : '上月',
+                color: key === 'current' ? '#475569' : '#b45309'
+            };
+        })
+        .filter(Boolean);
+    if (items.length === 2) {
+        const [current, previous] = items;
+        const sameValue = Math.abs(current.value - previous.value) < 0.000001;
+        const sameCondition = current.condition === previous.condition;
+        const sameRaw = String(current.raw || '').replace(/\s+/g, '') === String(previous.raw || '').replace(/\s+/g, '');
+        if (sameValue && sameCondition && sameRaw) {
+            return [{
+                ...current,
+                key: 'merged',
+                keys: ['current', 'previous'],
+                months: [current.month, previous.month].filter(Boolean),
+                label: '本月/上月目标',
+                shortLabel: '本月/上月',
+                color: '#475569'
+            }];
+        }
+    }
+    return items;
+}
+
+function buildItemTrendChart(trends, options = {}) {
+    const width = 820;
+    const height = 310;
+    const pad = { left: 58, right: 28, top: 30, bottom: 48 };
+    const plotW = width - pad.left - pad.right;
+    const plotH = height - pad.top - pad.bottom;
+    const rows = Array.isArray(trends) ? trends : [];
+    if (!rows.length) {
+        return `<svg class="metric-chart-svg" viewBox="0 0 ${width} ${height}"><text x="${width / 2}" y="${height / 2}" text-anchor="middle" fill="#94a3b8">暂无趋势数据</text></svg>`;
+    }
+    const seriesNames = new Set(['整体']);
+    rows.forEach(row => Object.keys(row.series || {}).forEach(name => seriesNames.add(name)));
+    const allNames = Array.from(seriesNames);
+    const scored = allNames.map(name => {
+        const values = rows.map(row => name === '整体' ? row.total_value : row.series?.[name]?.value).filter(v => Number.isFinite(Number(v))).map(Number);
+        const latest = values.length ? values[values.length - 1] : 0;
+        const range = values.length ? Math.max(...values) - Math.min(...values) : 0;
+        return { name, latest, range };
+    }).sort((a, b) => (a.name === '整体' ? -1 : b.name === '整体' ? 1 : (b.range - a.range || b.latest - a.latest)));
+    const picked = scored.slice(0, 7).map(item => item.name);
+    const targetLines = buildDisplayTargetLines(options.targets);
+    const values = rows.flatMap(row => picked.map(name => name === '整体' ? row.total_value : row.series?.[name]?.value))
+        .concat(targetLines.map(item => item.value))
+        .filter(v => Number.isFinite(Number(v))).map(Number);
+    if (!values.length) {
+        return `<svg class="metric-chart-svg" viewBox="0 0 ${width} ${height}"><text x="${width / 2}" y="${height / 2}" text-anchor="middle" fill="#94a3b8">该指标最近没有可绘制的数值</text></svg>`;
+    }
+    const minValue = Math.min(...values);
+    const maxValue = Math.max(...values);
+    const min = Math.min(0, minValue - Math.max(1, Math.abs(minValue) * 0.08));
+    const max = maxValue + Math.max(1, Math.abs(maxValue) * 0.12);
+    const palette = ['#0f172a', '#2563eb', '#f97316', '#7c3aed', '#059669', '#dc2626', '#0891b2'];
+    const xOf = index => pad.left + (rows.length === 1 ? plotW / 2 : index * plotW / (rows.length - 1));
+    const yOf = value => getTrendY(Number(value), min, max, pad.top, plotH);
+    const occupiedBoxes = [
+        { x1: pad.left - 4, y1: 0, x2: width - pad.right + 4, y2: 28 }
+    ];
+    const boxesOverlap = (a, b, gap = 5) => !(a.x2 + gap < b.x1 || a.x1 - gap > b.x2 || a.y2 + gap < b.y1 || a.y1 - gap > b.y2);
+    const placeTargetLabel = (labelText, y) => {
+        const textW = Math.min(220, Math.max(72, String(labelText).length * 6.3 + 12));
+        const candidates = [
+            { x: width - pad.right - 8, anchor: 'end' },
+            { x: pad.left + plotW * 0.78, anchor: 'middle' },
+            { x: pad.left + plotW * 0.62, anchor: 'middle' },
+            { x: pad.left + plotW * 0.45, anchor: 'middle' },
+            { x: pad.left + plotW * 0.28, anchor: 'middle' },
+            { x: pad.left + 8, anchor: 'start' }
+        ];
+        const yCandidates = [y - 9, y + 17, y - 23, y + 31];
+        for (const baseline of yCandidates) {
+            if (baseline < pad.top + 14 || baseline > height - pad.bottom - 6) continue;
+            for (const candidate of candidates) {
+                let x1 = candidate.x;
+                if (candidate.anchor === 'end') x1 = candidate.x - textW;
+                if (candidate.anchor === 'middle') x1 = candidate.x - textW / 2;
+                const box = { x1, y1: baseline - 12, x2: x1 + textW, y2: baseline + 4 };
+                if (box.x1 < pad.left + 4 || box.x2 > width - pad.right - 4) continue;
+                if (occupiedBoxes.some(item => boxesOverlap(box, item))) continue;
+                occupiedBoxes.push(box);
+                return { x: candidate.x, y: baseline, anchor: candidate.anchor };
+            }
+        }
+        return null;
+    };
+    const grid = [0, 1, 2, 3, 4].map(i => {
+        const y = pad.top + i * plotH / 4;
+        const label = +(max - i * (max - min) / 4).toFixed(1);
+        return `<line x1="${pad.left}" y1="${y}" x2="${width - pad.right}" y2="${y}" stroke="#e2e8f0"/><text x="${pad.left - 10}" y="${y + 4}" text-anchor="end" fill="#64748b" font-size="11">${label}</text>`;
+    }).join('');
+    const labels = rows.map((item, index) => {
+        if (rows.length > 12 && index % Math.ceil(rows.length / 8) !== 0 && index !== rows.length - 1) return '';
+        const x = xOf(index);
+        return `<text x="${x}" y="${height - 16}" text-anchor="middle" fill="#64748b" font-size="10">${escapeHTML(formatReportDateTime(item.created_at).slice(0, 5))}</text>`;
+    }).join('');
+    const lines = picked.map((name, index) => {
+        const color = palette[index % palette.length];
+        const points = [];
+        const path = rows.map((row, rowIndex) => {
+            const value = name === '整体' ? row.total_value : row.series?.[name]?.value;
+            if (!Number.isFinite(Number(value))) return '';
+            const x = xOf(rowIndex);
+            const y = yOf(value);
+            points.push({ x, y, value: Number(value), row, rowIndex });
+            return `${points.length === 1 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
+        }).filter(Boolean).join(' ');
+        const circles = points.map(point => {
+            const prevPoint = points.find(p => p.rowIndex === point.rowIndex - 1);
+            const delta = prevPoint ? point.value - prevPoint.value : 0;
+            const major = Math.abs(delta) >= Math.max(1, Math.abs(max - min) * 0.12);
+            occupiedBoxes.push({ x1: point.x - 9, y1: point.y - 9, x2: point.x + 9, y2: point.y + 9 });
+            return `<circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="${major ? 5 : 3}" fill="${major ? '#ef4444' : '#fff'}" stroke="${color}" stroke-width="2"><title>${escapeHTML(name)} ${escapeHTML(formatReportDateTime(point.row.created_at))}：${point.value}${delta ? ` (${formatDelta(+delta.toFixed(2))})` : ''}</title></circle>`;
+        }).join('');
+        const dash = name === '整体' ? '' : ' stroke-dasharray="0"';
+        return path ? `<path d="${path}" fill="none" stroke="${color}" stroke-width="${name === '整体' ? 3.2 : 2.5}"${dash} stroke-linecap="round" stroke-linejoin="round" opacity=".92"/>${circles}` : '';
+    }).join('');
+    const placedTargetLabels = [];
+    const targetLineSvg = targetLines.map(target => {
+        if (target.value < min || target.value > max) return '';
+        const y = yOf(target.value);
+        const monthText = target.months && target.months.length > 1
+            ? `(${target.months.map(month => `${month}月`).join('/')})`
+            : (target.month ? `(${target.month}月)` : '');
+        const labelText = `${target.label}${monthText} ${target.raw}`;
+        const labelPos = placeTargetLabel(labelText, y);
+        if (labelPos) {
+            placedTargetLabels.push({ ...labelPos, labelText, color: target.color });
+        }
+        return `
+            <line x1="${pad.left}" y1="${y.toFixed(1)}" x2="${width - pad.right}" y2="${y.toFixed(1)}" stroke="${target.color}" stroke-width="1.4" stroke-dasharray="7 7" opacity=".46"/>
+        `;
+    }).join('');
+    const targetLabelSvg = placedTargetLabels.map(label => `
+        <text x="${label.x.toFixed(1)}" y="${label.y.toFixed(1)}" text-anchor="${label.anchor}" fill="${label.color}" font-size="11" opacity=".82">${escapeHTML(label.labelText)}</text>
+    `).join('');
+    const legend = picked.map((name, index) => {
+        const color = palette[index % palette.length];
+        const x = pad.left + (index % 3) * 220;
+        const y = 13 + Math.floor(index / 3) * 17;
+        const label = name.length > 20 ? `${name.slice(0, 20)}...` : name;
+        return `<circle cx="${x}" cy="${y}" r="4" fill="${color}"/><text x="${x + 10}" y="${y + 4}" fill="#334155" font-size="11">${escapeHTML(label)}</text>`;
+    }).join('');
+    return `
+        <svg class="metric-chart-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHTML(options.title || '指标趋势')}">
+            <rect x="0" y="0" width="${width}" height="${height}" rx="10" fill="#ffffff"/>
+            ${grid}
+            ${targetLineSvg}
+            <line x1="${pad.left}" y1="${height - pad.bottom}" x2="${width - pad.right}" y2="${height - pad.bottom}" stroke="#cbd5e1"/>
+            ${lines}
+            ${targetLabelSvg}
+            ${labels}
+            <g>${legend}</g>
+        </svg>
+    `;
+}
+
+function renderTargetSummaryInline(targets) {
+    const items = buildDisplayTargetLines(targets).map(target => {
+        const monthText = target.months && target.months.length > 1
+            ? target.months.map(month => `${month}月`).join('/')
+            : (target.month ? `${target.month}月` : '');
+        return `<span class="metric-target-chip ${target.key}">${target.shortLabel}${monthText ? `(${monthText})` : ''} ${escapeHTML(target.raw || target.value)}</span>`;
+    }).filter(Boolean);
+    return items.length ? `<span class="metric-target-summary">${items.join('')}</span>` : '';
+}
+
+function buildItemTrendTable(trends, kind) {
+    const latest = trends[trends.length - 1] || null;
+    const prev = trends[trends.length - 2] || null;
+    if (!latest) return '<div class="data-source-note">暂无明细</div>';
+    const names = new Set();
+    Object.keys(latest.series || {}).forEach(name => names.add(name));
+    if (prev) Object.keys(prev.series || {}).forEach(name => names.add(name));
+    const rows = Array.from(names).map(name => {
+        const now = latest.series?.[name]?.value;
+        const before = prev ? prev.series?.[name]?.value : null;
+        const delta = Number.isFinite(Number(now)) && Number.isFinite(Number(before)) ? Number(now) - Number(before) : 0;
+        return { name, now, delta, raw: latest.series?.[name]?.raw || '' };
+    }).sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta) || String(a.name).localeCompare(String(b.name), 'zh-Hans-CN'));
+    if (!rows.length) return '<div class="data-source-note">最新快照无客户群/网络明细</div>';
+    return rows.map(item => {
+        const changed = Math.abs(item.delta) > 0.000001;
+        const rawDisplay = item.raw || (item.now ?? '--');
+        return `
+            <div class="category-change-item ${changed ? 'major' : ''}">
+                <div>
+                    <div class="category-change-name" title="${escapeHTML(item.name)}">${escapeHTML(item.name)}</div>
+                    <div style="font-size:11px;color:#94a3b8;margin-top:4px;">${kind === 'manual' ? '次数' : '最新值'} ${escapeHTML(rawDisplay)}</div>
+                </div>
+                <div class="category-change-delta ${changed ? 'changed' : ''}">${Number.isFinite(Number(item.now)) ? +Number(item.now).toFixed(2) : '--'} (${formatDelta(+item.delta.toFixed(2))})</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderMetricTrendLink(label, kind = 'metric') {
+    const cleanLabel = String(label || '').trim();
+    if (!cleanLabel) return '';
+    const title = kind === 'manual' ? '查看最近90天手动项目趋势' : '查看最近90天指标趋势';
+    const manualClass = kind === 'manual' ? ' manual' : '';
+    return `<button type="button" class="metric-trend-link${manualClass}" data-trend-kind="${escapeHTML(kind)}" data-trend-label="${escapeHTML(cleanLabel)}" title="${title}">${getBilingual(cleanLabel)}</button>`;
+}
+
+function attachTrendModalToVisibleRoot(modal) {
+    const fullscreenRoot = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+    const targetRoot = fullscreenRoot || document.body;
+    if (modal && modal.parentElement !== targetRoot) {
+        targetRoot.appendChild(modal);
+    }
+}
+
+function openMetricItemTrendModal(label, kind = 'metric') {
+    const cleanLabel = String(label || '').trim();
+    if (!cleanLabel) return;
+    const titleKind = kind === 'manual' ? '手动加减分项目' : '考核指标';
+    const url = `/api/db/metric_item_trend?days=90&kind=${encodeURIComponent(kind)}&label=${encodeURIComponent(cleanLabel)}`;
+    API.get(url).then(data => {
+        const trends = Array.isArray(data.trends) ? data.trends : [];
+        const targets = data.targets || null;
+        const latest = trends[trends.length - 1] || null;
+        const prev = trends[trends.length - 2] || null;
+        const latestVal = latest && Number.isFinite(Number(latest.total_value)) ? +Number(latest.total_value).toFixed(2) : '--';
+        const delta = latest && prev && Number.isFinite(Number(latest.total_value)) && Number.isFinite(Number(prev.total_value))
+            ? latest.total_value - prev.total_value
+            : 0;
+        let modal = document.getElementById('metric-item-trend-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'metric-item-trend-modal';
+            modal.className = 'metric-trend-modal';
+            modal.addEventListener('click', e => {
+                if (e.target === modal) modal.classList.remove('open');
+            });
+        }
+        attachTrendModalToVisibleRoot(modal);
+        modal.innerHTML = `
+            <div class="metric-trend-dialog">
+                <div class="metric-trend-head" style="background:linear-gradient(135deg,#172554,#0f766e);">
+                    <div>
+                        <h3>${escapeHTML(titleKind)}趋势</h3>
+                        <p>${escapeHTML(cleanLabel)} · 最近 ${data.days || 90} 天已入库快照</p>
+                    </div>
+                    <button class="metric-trend-close" onclick="document.getElementById('metric-item-trend-modal').classList.remove('open')">&times;</button>
+                </div>
+                <div class="metric-trend-body">
+                    <div class="metric-trend-kpis">
+                        <div class="metric-trend-kpi">
+                            <div class="label">最新整体值</div>
+                            <div class="value">${latestVal}</div>
+                            <div class="data-source-note">较上次 ${formatDelta(+delta.toFixed(2))}</div>
+                        </div>
+                        <div class="metric-trend-kpi">
+                            <div class="label">快照覆盖</div>
+                            <div class="value">${trends.length}</div>
+                            <div class="data-source-note">${latest ? `最新 ${escapeHTML(formatReportDateTime(latest.created_at))}` : '暂无快照'}</div>
+                        </div>
+                        <div class="metric-trend-kpi">
+                            <div class="label">${kind === 'manual' ? '最新总分影响' : '明细维度数'}</div>
+                            <div class="value">${kind === 'manual' && latest ? +Number(latest.total_score || 0).toFixed(2) : Object.keys(latest?.series || {}).length}</div>
+                            <div class="data-source-note">${kind === 'manual' ? '加分为正，扣分为负' : '客户群/代表处/区域'}</div>
+                        </div>
+                    </div>
+                    <div class="metric-trend-grid">
+                        <div class="metric-chart-card">
+                            <div class="metric-chart-title">
+                                <strong>最近90天变化折线</strong>
+                                <span>${kind === 'manual' || !targets ? '整体 + 变化靠前的维度' : `整体 + 维度；虚线为目标 ${renderTargetSummaryInline(targets)}`}</span>
+                            </div>
+                            ${buildItemTrendChart(trends, { title: cleanLabel, targets })}
+                        </div>
+                        <div class="metric-chart-card">
+                            <div class="metric-chart-title">
+                                <strong>最新维度变化</strong>
+                                <span>最新值 / 较上次变化</span>
+                            </div>
+                            <div class="category-change-list">${buildItemTrendTable(trends, kind)}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        modal.classList.add('open');
+    }).catch(err => {
+        showToast(`指标趋势加载失败：${err.message || err}`, 'error');
+    });
+}
+
+window.openMetricItemTrendModal = openMetricItemTrendModal;
+
+document.addEventListener('click', e => {
+    const target = e.target && e.target.closest ? e.target.closest('.metric-trend-link') : null;
+    if (!target) return;
+    const label = target.dataset.trendLabel || '';
+    const kind = target.dataset.trendKind || 'metric';
+    if (!label) return;
+    e.preventDefault();
+    e.stopPropagation();
+    openMetricItemTrendModal(label, kind);
+});
+
+function collectDimensionChanges(trends, field) {
+    const latest = trends[trends.length - 1] || null;
+    const prev = trends[trends.length - 2] || null;
+    if (!latest) return [];
+    const keys = new Set();
+    Object.keys(latest[field] || {}).forEach(key => keys.add(key));
+    if (prev) Object.keys(prev[field] || {}).forEach(key => keys.add(key));
+    return Array.from(keys).map(key => {
+        const latestCount = latest[field]?.[key] || 0;
+        const prevCount = prev ? (prev[field]?.[key] || 0) : 0;
+        const values = trends.map(item => item[field]?.[key] || 0);
+        return {
+            name: key,
+            latestCount,
+            delta: prev ? latestCount - prevCount : 0,
+            range: Math.max(...values) - Math.min(...values)
+        };
+    }).sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta) || b.latestCount - a.latestCount);
+}
+
+function buildWarningDimensionList(trends, field, emptyText) {
+    const items = collectDimensionChanges(trends, field).slice(0, 12);
+    if (!items.length) return `<div class="data-source-note">${emptyText}</div>`;
+    const maxCount = Math.max(...items.map(item => item.latestCount), 1);
+    return items.map(item => {
+        const major = Math.abs(item.delta) >= 3 || item.range >= 5;
+        const width = Math.max(4, item.latestCount / maxCount * 100);
+        return `
+            <div class="category-change-item ${major ? 'major' : ''}">
+                <div>
+                    <div class="category-change-name" title="${escapeHTML(item.name)}">${escapeHTML(item.name)}</div>
+                    <div class="category-change-bar"><span style="width:${width.toFixed(1)}%"></span></div>
+                </div>
+                <div>
+                    <div class="category-change-delta ${item.delta ? 'changed' : ''}">${item.latestCount} (${formatDelta(item.delta)})</div>
+                    <div style="font-size:10px;color:#94a3b8;text-align:right;">90天波动 ${item.range}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function collectCategoryChanges(trends) {
+    const latest = trends[trends.length - 1] || null;
+    const prev = trends[trends.length - 2] || null;
+    if (!latest) return [];
+    const cats = new Set();
+    Object.keys(latest.category_counts || {}).forEach(cat => cats.add(cat));
+    if (prev) Object.keys(prev.category_counts || {}).forEach(cat => cats.add(cat));
+    return Array.from(cats).map(cat => {
+        const latestCount = latest.category_counts?.[cat]?.sub_metric_count || 0;
+        const prevCount = prev ? (prev.category_counts?.[cat]?.sub_metric_count || 0) : 0;
+        const values = trends.map(item => item.category_counts?.[cat]?.sub_metric_count || 0);
+        return {
+            cat,
+            latestCount,
+            delta: prev ? latestCount - prevCount : 0,
+            min: Math.min(...values),
+            max: Math.max(...values),
+            range: Math.max(...values) - Math.min(...values)
+        };
+    }).sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta) || b.latestCount - a.latestCount);
+}
+
+function buildCategoryChangeList(trends) {
+    const changes = collectCategoryChanges(trends);
+    if (!changes.length) return '<div class="data-source-note">暂无分类子指标数据</div>';
+    const maxCount = Math.max(...changes.map(item => item.latestCount), 1);
+    return changes.map(item => {
+        const major = Math.abs(item.delta) >= 5 || item.range >= 8;
+        const width = Math.max(4, item.latestCount / maxCount * 100);
+        return `
+            <div class="category-change-item ${major ? 'major' : ''}">
+                <div>
+                    <div class="category-change-name" title="${escapeHTML(item.cat)}">${escapeHTML(item.cat)}</div>
+                    <div class="category-change-bar"><span style="width:${width.toFixed(1)}%"></span></div>
+                </div>
+                <div>
+                    <div class="category-change-delta ${item.delta ? 'changed' : ''}">${item.latestCount} (${formatDelta(item.delta)})</div>
+                    <div style="font-size:10px;color:#94a3b8;text-align:right;">90天波动 ${item.range}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function openMetricCountTrendModal() {
+    loadMetricCountTrendData().then(data => {
+        const trends = Array.isArray(data.trends) ? data.trends : [];
+        const latest = trends[trends.length - 1] || null;
+        const prev = trends[trends.length - 2] || null;
+        const overallDelta = latest && prev ? latest.overall_metric_count - prev.overall_metric_count : 0;
+        const subDelta = latest && prev ? latest.sub_metric_count - prev.sub_metric_count : 0;
+        let modal = document.getElementById('metric-count-trend-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'metric-count-trend-modal';
+            modal.className = 'metric-trend-modal';
+            modal.addEventListener('click', e => {
+                if (e.target === modal) modal.classList.remove('open');
+            });
+        }
+        attachTrendModalToVisibleRoot(modal);
+        modal.innerHTML = `
+            <div class="metric-trend-dialog">
+                <div class="metric-trend-head">
+                    <div>
+                        <h3>指标数量健康趋势</h3>
+                        <p>基于 report.db 最近 ${data.days || 90} 天已入库快照；整体指标为去重指标名，子指标为分类明细行数。</p>
+                    </div>
+                    <button class="metric-trend-close" onclick="document.getElementById('metric-count-trend-modal').classList.remove('open')">&times;</button>
+                </div>
+                <div class="metric-trend-body">
+                    <div class="metric-trend-kpis">
+                        <div class="metric-trend-kpi">
+                            <div class="label">最新整体指标数量</div>
+                            <div class="value">${latest ? latest.overall_metric_count : '--'}</div>
+                            <div class="data-source-note">较上次 ${formatDelta(overallDelta)}</div>
+                        </div>
+                        <div class="metric-trend-kpi">
+                            <div class="label">最新子指标数量</div>
+                            <div class="value">${latest ? latest.sub_metric_count : '--'}</div>
+                            <div class="data-source-note">较上次 ${formatDelta(subDelta)}</div>
+                        </div>
+                        <div class="metric-trend-kpi">
+                            <div class="label">快照覆盖</div>
+                            <div class="value">${trends.length}</div>
+                            <div class="data-source-note">${latest ? `最新 ${escapeHTML(formatReportDateTime(latest.created_at))}` : '暂无快照'}</div>
+                        </div>
+                    </div>
+                    <div class="metric-trend-grid">
+                        <div class="metric-chart-card">
+                            <div class="metric-chart-title">
+                                <strong>最近90天整体/子指标数量变化</strong>
+                                <span>橙色点表示大变化</span>
+                            </div>
+                            ${buildMetricLineChart(trends)}
+                        </div>
+                        <div class="metric-chart-card">
+                            <div class="metric-chart-title">
+                                <strong>各分类子指标数量变化</strong>
+                                <span>最新值 / 较上次变化</span>
+                            </div>
+                            <div class="category-change-list">${buildCategoryChangeList(trends)}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        modal.classList.add('open');
+    }).catch(err => {
+        showToast(`指标趋势加载失败：${err.message || err}`, 'error');
+    });
+}
+
+window.openMetricCountTrendModal = openMetricCountTrendModal;
+
+function openExpiringWarningTrendModal() {
+    loadExpiringWarningTrendData().then(data => {
+        const trends = Array.isArray(data.trends) ? data.trends : [];
+        const latest = trends[trends.length - 1] || null;
+        const prev = trends[trends.length - 2] || null;
+        const totalDelta = latest && prev ? latest.total_warning_count - prev.total_warning_count : 0;
+        const ticketDelta = latest && prev ? latest.expiring_ticket_count - prev.expiring_ticket_count : 0;
+        const alertDelta = latest && prev ? latest.special_metric_alert_count - prev.special_metric_alert_count : 0;
+        let modal = document.getElementById('expiring-warning-trend-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'expiring-warning-trend-modal';
+            modal.className = 'metric-trend-modal';
+            modal.addEventListener('click', e => {
+                if (e.target === modal) modal.classList.remove('open');
+            });
+        }
+        attachTrendModalToVisibleRoot(modal);
+        modal.innerHTML = `
+            <div class="metric-trend-dialog">
+                <div class="metric-trend-head" style="background:linear-gradient(135deg,#451a03,#b91c1c);">
+                    <div>
+                        <h3>临期预警数量健康趋势</h3>
+                        <p>基于 report.db 最近 ${data.days || 90} 天已入库快照；按整体、预警类型、网络维度呈现。</p>
+                    </div>
+                    <button class="metric-trend-close" onclick="document.getElementById('expiring-warning-trend-modal').classList.remove('open')">&times;</button>
+                </div>
+                <div class="metric-trend-body">
+                    <div class="metric-trend-kpis">
+                        <div class="metric-trend-kpi">
+                            <div class="label">最新总预警</div>
+                            <div class="value">${latest ? latest.total_warning_count : '--'}</div>
+                            <div class="data-source-note">较上次 ${formatDelta(totalDelta)}</div>
+                        </div>
+                        <div class="metric-trend-kpi">
+                            <div class="label">临期单据</div>
+                            <div class="value">${latest ? latest.expiring_ticket_count : '--'}</div>
+                            <div class="data-source-note">较上次 ${formatDelta(ticketDelta)}</div>
+                        </div>
+                        <div class="metric-trend-kpi">
+                            <div class="label">特殊指标提醒</div>
+                            <div class="value">${latest ? latest.special_metric_alert_count : '--'}</div>
+                            <div class="data-source-note">较上次 ${formatDelta(alertDelta)}</div>
+                        </div>
+                    </div>
+                    <div class="metric-trend-grid">
+                        <div style="display:grid;gap:16px;min-width:0;">
+                            <div class="metric-chart-card">
+                                <div class="metric-chart-title">
+                                    <strong>最近90天临期预警数量变化</strong>
+                                    <span>总预警 / 临期单据 / 特殊指标</span>
+                                </div>
+                                ${buildWarningLineChart(trends)}
+                            </div>
+                            <div class="metric-chart-card">
+                                <div class="metric-chart-title">
+                                    <strong>按预警类型的数量变化</strong>
+                                    <span>展示最新/波动靠前的前6类</span>
+                                </div>
+                                ${buildDimensionLineChart(trends, 'type_counts', '预警类型')}
+                            </div>
+                            <div class="metric-chart-card">
+                                <div class="metric-chart-title">
+                                    <strong>按网络维度的数量变化</strong>
+                                    <span>展示最新/波动靠前的前6个网络</span>
+                                </div>
+                                ${buildDimensionLineChart(trends, 'network_counts', '网络维度')}
+                            </div>
+                        </div>
+                        <div style="display:grid;gap:16px;">
+                            <div class="metric-chart-card">
+                                <div class="metric-chart-title">
+                                    <strong>按预警类型</strong>
+                                    <span>最新值 / 较上次变化</span>
+                                </div>
+                                <div class="category-change-list">${buildWarningDimensionList(trends, 'type_counts', '暂无预警类型数据')}</div>
+                            </div>
+                            <div class="metric-chart-card">
+                                <div class="metric-chart-title">
+                                    <strong>按网络维度</strong>
+                                    <span>最新值 / 较上次变化</span>
+                                </div>
+                                <div class="category-change-list">${buildWarningDimensionList(trends, 'network_counts', '暂无网络维度数据')}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        modal.classList.add('open');
+    }).catch(err => {
+        showToast(`临期预警趋势加载失败：${err.message || err}`, 'error');
+    });
+}
+
+window.openExpiringWarningTrendModal = openExpiringWarningTrendModal;
 
 function getJSONBytes(value) {
     try {
@@ -1232,7 +2112,7 @@ function renderReport(snap) {
             html += `
                 <td data-col="${colIdx++}" style="text-align:left; font-weight:600; color:#2c3e50;">
                     <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                        <span>${getBilingual(m.label)}</span>${proportionalBtn}${manualActionButtons}
+                        ${renderMetricTrendLink(m.label, 'metric')}${proportionalBtn}${manualActionButtons}
                     </div>
                 </td>
                 <td data-col="${colIdx++}" style="color:#666; font-weight:bold; background:#fafafa;">${weight}</td>
@@ -1294,7 +2174,11 @@ function renderReport(snap) {
     // Generate Ranking Table
     let rankingHtml = `
         <div class="card">
-            <h3 class="card-title" style="color:#0277bd;"><span>${rt('report.card.rankingTitle')}</span> <span style="font-size:12px; font-weight:normal; color:#888; margin-left:10px;">(${rt('report.card.rankingSub')})</span></h3>
+            <h3 class="card-title" style="color:#0277bd;">
+                <span>${rt('report.card.rankingTitle')}</span>
+                <button id="ranking-count-insight" class="ranking-count-insight loading" type="button" onclick="openMetricCountTrendModal()" title="点击查看最近90天指标数量趋势">指标数量趋势加载中...</button>
+                <button id="expiring-warning-insight" class="ranking-count-insight loading" type="button" onclick="openExpiringWarningTrendModal()" title="点击查看最近90天临期预警数量趋势">临期预警趋势加载中...</button>
+            </h3>
             <table class="ranking-table">
                 <thead>
                     <tr>
@@ -1364,7 +2248,7 @@ function renderReport(snap) {
             <td style="color:${typeColor}; background:${typeBg}; font-weight:bold; text-align:center;">${getBilingual(item.type)}</td>
             <td style="text-align:left;">
                 <div style="display:flex; flex-direction:row; align-items:center; flex-wrap:wrap; gap:8px;">
-                    <span>${getBilingual(item.name)}</span>
+                    ${renderMetricTrendLink(item.name, 'manual')}
                     <span style="cursor:pointer; font-size:14px; opacity:${isAuto ? '1' : '0.4'}; transition: opacity 0.2s; padding:2px;" title="${escapeHTML(autoTitle)}" onclick="toggleManualAdjustAutoFill(${idx})" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='${isAuto ? '1' : '0.4'}'">🔄</span>
                 </div>
             </td>
@@ -1474,6 +2358,8 @@ function renderReport(snap) {
 
     // We must call calculateManualAdjustments first so the sum goes into ranking
     setTimeout(calculateManualAdjustments, 0);
+    setTimeout(renderRankingCountInsight, 0);
+    setTimeout(renderExpiringWarningInsight, 0);
 }
 
 window.setupMatrixFilters = function () {
