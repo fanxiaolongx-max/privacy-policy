@@ -127,15 +127,37 @@ function registerUivAutoImportBridge(autoImport) {
         if (current.length) chunks.push(current);
         return chunks;
     }
+    function wait(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    async function postJsonWithRetry(url, payload, options = {}) {
+        const attempts = options.attempts || 3;
+        let lastError = null;
+        for (let attempt = 0; attempt < attempts; attempt++) {
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json().catch(() => ({}));
+                if (res.ok) return result;
+                lastError = new Error(`HTTP ${res.status}: ${result.error || res.statusText || 'upload failed'}`);
+                if (![408, 429, 500, 502, 503, 504].includes(res.status)) throw lastError;
+            } catch (error) {
+                lastError = error;
+            }
+            if (attempt < attempts - 1) await wait(700 * (attempt + 1));
+        }
+        throw lastError || new Error('upload failed');
+    }
     async function postDatasetRows(session, uploadName, rows, meta) {
         const chunks = chunkRows(rows);
         const clientUploadId = makeBridgeUploadId();
         let latestResult = null;
         for (let index = 0; index < chunks.length; index++) {
-            const res = await fetch(session.uploadUrl, {
-                method: 'POST',
-                headers: { 'content-type': 'application/json' },
-                body: JSON.stringify({
+            try {
+                latestResult = await postJsonWithRetry(session.uploadUrl, {
                     name: uploadName,
                     rows: chunks[index],
                     append: true,
@@ -144,11 +166,10 @@ function registerUivAutoImportBridge(autoImport) {
                     chunkCount: chunks.length,
                     origin: meta.origin || '',
                     groupName: session.groupName || meta.groupName || ''
-                })
-            });
-            const result = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(`HTTP ${res.status}: ${result.error || res.statusText || 'upload failed'} (chunk ${index + 1}/${chunks.length})`);
-            latestResult = result;
+                });
+            } catch (error) {
+                throw new Error(`${error && error.message ? error.message : 'upload failed'} (chunk ${index + 1}/${chunks.length})`);
+            }
         }
         return latestResult || {};
     }

@@ -163,8 +163,22 @@ function renderTopStickyBar() {
     const content = document.getElementById('sticky-bar-content');
     const btnExpand = document.getElementById('btn-expand-metrics');
     const btnTarget = document.getElementById('btn-target-config');
-    const keys = Object.keys(window.GlobalMetrics);
+    const title = document.querySelector('.sticky-bar-title');
+    const collator = new Intl.Collator('zh-Hans-CN-u-co-pinyin', {
+        numeric: true,
+        sensitivity: 'base'
+    });
+    const keys = Object.keys(window.GlobalMetrics).sort((a, b) => {
+        const left = window.GlobalMetrics[a] || {};
+        const right = window.GlobalMetrics[b] || {};
+        const labelCompare = collator.compare(String(left.label || ''), String(right.label || ''));
+        return labelCompare || String(a).localeCompare(String(b), 'en', { numeric: true });
+    });
     const cm = getSLATargetMonth();
+    if (title) {
+        const baseTitle = SLAT('sla.sticky.title') || '⚡ 核心数据舱：';
+        title.textContent = `${baseTitle.replace(/：$/, '')}（${keys.length}个指标）：`;
+    }
     
     // Always show target config button so users can configure targets without importing files
     btnTarget.style.display = 'inline-block';

@@ -74,6 +74,11 @@ async function savePrefs(secId) {
 }
 
 async function saveSourceMeta(secId) {
+    const state = AppState[secId];
+    if (!state) return;
+    if (!Array.isArray(state.customMetrics) || state.customMetrics.length === 0) {
+        return;
+    }
     await savePrefs(secId);
 }
 
