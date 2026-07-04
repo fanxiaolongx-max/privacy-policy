@@ -385,7 +385,8 @@ body {
     position: absolute;
     top: 0;
     right: 0;
-    width: min(560px, 94vw);
+    width: min(920px, calc(100vw - 40px));
+    max-width: 100vw;
     height: 100%;
     background: #f8fafc;
     color: #0f172a;
@@ -393,6 +394,7 @@ body {
     display: flex;
     flex-direction: column;
     animation: alertPanelIn 0.22s ease-out;
+    overflow: hidden;
 }
 
 @keyframes alertPanelIn {
@@ -505,9 +507,11 @@ body {
 
 .alert-center-list {
     padding: 14px 16px 20px;
-    overflow: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
     display: grid;
     gap: 10px;
+    min-width: 0;
 }
 
 .alert-center-empty {
@@ -532,6 +536,8 @@ body {
     border-radius: 10px;
     padding: 12px 13px;
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+    min-width: 0;
+    max-width: 100%;
 }
 
 .alert-center-item.unread {
@@ -569,6 +575,8 @@ body {
 .alert-center-title-wrap strong {
     color: #0f172a;
     font-size: 14px;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .alert-center-item time {
@@ -607,6 +615,7 @@ body {
     font-size: 12px;
     line-height: 1.5;
     overflow: hidden;
+    overflow-wrap: anywhere;
 }
 
 .alert-center-ai-summary::before {
@@ -648,6 +657,7 @@ body {
     font-size: 13px;
     line-height: 1.55;
     word-break: break-all;
+    overflow-wrap: anywhere;
     white-space: pre-wrap;
     display: -webkit-box;
     -webkit-line-clamp: 3;
@@ -672,6 +682,9 @@ body {
     color: #64748b;
     font-size: 11px;
     line-height: 1.5;
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
 }
 
 .alert-center-detail {
@@ -685,6 +698,7 @@ body {
     border-radius: 6px;
     background: #f1f5f9;
     word-break: break-all;
+    overflow-wrap: anywhere;
     white-space: pre-wrap;
     display: -webkit-box;
     -webkit-line-clamp: 3;
@@ -692,6 +706,8 @@ body {
     overflow: hidden;
     cursor: pointer;
     border: 1px solid #e2e8f0;
+    min-width: 0;
+    max-width: 100%;
 }
 
 .alert-center-detail span:hover {

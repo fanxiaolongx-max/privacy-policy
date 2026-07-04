@@ -287,6 +287,16 @@ async function archiveEvent(id) {
     return { changed: result.changes || 0 };
 }
 
+async function archiveAllEvents() {
+    await ensureReady();
+    const result = await run(`
+        UPDATE alert_center_events
+        SET status = 'archived', archived_at = CURRENT_TIMESTAMP
+        WHERE status != 'archived'
+    `);
+    return { changed: result.changes || 0 };
+}
+
 async function updateAiSummary(id, { summary = '', status = 'done' } = {}) {
     await ensureReady();
     const result = await run(
@@ -306,5 +316,6 @@ module.exports = {
     markRead,
     markAllRead,
     archiveEvent,
+    archiveAllEvents,
     updateAiSummary
 };
