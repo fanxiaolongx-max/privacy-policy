@@ -39,6 +39,40 @@ function extractAnthropicText(data) {
     return parts.map(part => part && part.type === 'text' ? part.text || '' : '').join('').trim();
 }
 
+function stripReasoningText(value) {
+    let text = String(value || '');
+    if (!text) return '';
+
+    text = text.replace(/^\s*(AI|Assistant|助手)?\s*(?=<think\b)/i, '');
+    text = text.replace(/<think(?:ing)?\b[^>]*>[\s\S]*?<\/think(?:ing)?>/gi, '');
+    text = text.replace(/<reasoning\b[^>]*>[\s\S]*?<\/reasoning>/gi, '');
+
+    const openThink = text.search(/<think(?:ing)?\b[^>]*>/i);
+    if (openThink >= 0) {
+        const afterOpen = text.slice(openThink).replace(/^<think(?:ing)?\b[^>]*>/i, '');
+        const markers = [
+            /\n\s*(?:最终答案|答案|总结|结论|回复|输出)\s*[:：]\s*/i,
+            /\n\s*(?:Final Answer|Answer|Response|Summary)\s*[:：]\s*/i,
+            /\n\s*<\/think(?:ing)?>\s*/i
+        ];
+        let best = -1;
+        let bestLength = 0;
+        markers.forEach(marker => {
+            const match = afterOpen.match(marker);
+            if (match && (best === -1 || match.index < best)) {
+                best = match.index;
+                bestLength = match[0].length;
+            }
+        });
+        text = best >= 0 ? afterOpen.slice(best + bestLength) : '';
+    }
+
+    text = text
+        .replace(/^\s*(?:最终答案|答案|总结|结论|回复|输出|Final Answer|Answer|Response|Summary)\s*[:：]\s*/i, '')
+        .trim();
+    return text;
+}
+
 function isJsonMode(options = {}) {
     return options.responseMimeType === 'application/json' || options.json === true;
 }
@@ -131,7 +165,7 @@ class AiProviderClient {
         const data = await readProviderJson(res);
         const usage = data.usageMetadata || {};
         return {
-            text: extractGeminiText(data),
+            text: stripReasoningText(extractGeminiText(data)),
             usage: {
                 promptTokens: usage.promptTokenCount || 0,
                 outputTokens: usage.candidatesTokenCount || 0,
@@ -167,7 +201,7 @@ class AiProviderClient {
         const data = await readProviderJson(res);
         const usage = data.usage || {};
         return {
-            text: String(data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || '').trim(),
+            text: stripReasoningText(data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content),
             usage: {
                 promptTokens: usage.prompt_tokens || 0,
                 outputTokens: usage.completion_tokens || 0,
@@ -202,7 +236,7 @@ class AiProviderClient {
         const data = await readProviderJson(res);
         const usage = data.usage || {};
         return {
-            text: extractAnthropicText(data),
+            text: stripReasoningText(extractAnthropicText(data)),
             usage: {
                 promptTokens: usage.input_tokens || 0,
                 outputTokens: usage.output_tokens || 0,
@@ -220,5 +254,6 @@ function createClient(settings = {}) {
 module.exports = {
     DEFAULT_BASE_URLS,
     normalizeProvider,
+    stripReasoningText,
     createClient
 };
