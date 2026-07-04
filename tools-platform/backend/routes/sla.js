@@ -14,6 +14,7 @@ const groupsRepo = require('../models/sla-groups-repository');
 const snapshotsRepo = require('../models/sla-snapshots-repository');
 const ruleTemplatesRepo = require('../models/sla-rule-templates-repository');
 const auditLogRepo = require('../models/audit-log-repository');
+const configChangeMonitor = require('../models/config-change-monitor');
 
 function getRequestSource(req) {
     return req.get('x-tools-source') || req.get('referer') || req.originalUrl || '';
@@ -101,7 +102,10 @@ async function writeAudit(req, action, summary) {
             action,
             actor: getRequestActor(req),
             source: getRequestSource(req),
-            summary
+            summary: {
+                ...(summary || {}),
+                request: configChangeMonitor.buildRequestContext(req)
+            }
         });
     } catch (err) {
         console.error('[audit_log] write failed:', err.message);
@@ -167,7 +171,16 @@ router.put('/categories', async (req, res) => {
     const cats = req.body;
     if (!Array.isArray(cats)) return res.status(400).json({ error: '必须是数组' });
     try {
+        const beforeCats = (await categoriesRepo.listCategories({ mode: 'auto' })).items;
         await categoriesRepo.replaceCategories(cats);
+        configChangeMonitor.recordConfigChangeAlert({
+            req,
+            action: 'SLA 分类配置变化',
+            before: beforeCats,
+            after: cats,
+            objectType: 'sla_categories',
+            objectId: 'global'
+        });
         res.json({ success: true });
     } catch (err) {
         console.error('[PUT /api/sla/categories] failed:', err);
@@ -227,7 +240,24 @@ router.put('/groups', async (req, res) => {
     const groups = req.body;
     if (!Array.isArray(groups)) return res.status(400).json({ error: '必须是数组' });
     try {
+        const [{ items: beforeTargets }, { items: beforePrefs }, { items: beforeGroups }] = await Promise.all([
+            targetsRepo.getTargets({ mode: 'auto' }),
+            prefsRepo.getPrefsObject({ mode: 'auto' }),
+            groupsRepo.listGroups({ mode: 'auto' })
+        ]);
         await groupsRepo.replaceGroups(groups);
+        configChangeMonitor.recordSlaConfigChange({
+            req,
+            action: '指标分组配置变化',
+            beforeTargets,
+            beforePrefs,
+            beforeGroups,
+            afterTargets: beforeTargets,
+            afterPrefs: beforePrefs,
+            afterGroups: groups,
+            objectType: 'sla_metric_groups',
+            objectId: 'global'
+        });
         res.json({ success: true });
     } catch (err) {
         console.error('[PUT /api/sla/groups] failed:', err);
@@ -261,7 +291,11 @@ router.put('/targets', async (req, res) => {
         return res.status(400).json({ error: '无效数据格式' });
     }
     try {
-        const beforeTargets = (await targetsRepo.getTargets({ mode: 'auto' })).items;
+        const [{ items: beforeTargets }, { items: beforePrefs }, { items: beforeGroups }] = await Promise.all([
+            targetsRepo.getTargets({ mode: 'auto' }),
+            prefsRepo.getPrefsObject({ mode: 'auto' }),
+            groupsRepo.listGroups({ mode: 'auto' })
+        ]);
         await targetsRepo.replaceTargets(targets);
         const summary = {
             before: { targetCount: Object.keys(beforeTargets || {}).length, hash: hashObject(beforeTargets) },
@@ -270,6 +304,19 @@ router.put('/targets', async (req, res) => {
             removedKeys: Object.keys(beforeTargets || {}).filter(key => !Object.prototype.hasOwnProperty.call(targets, key)).slice(0, 50)
         };
         await writeAudit(req, 'sla.targets.replace', summary);
+        configChangeMonitor.recordSlaConfigChange({
+            req,
+            action: '指标目标/权重全量变化',
+            beforeTargets,
+            beforePrefs,
+            beforeGroups,
+            afterTargets: targets,
+            afterPrefs: beforePrefs,
+            afterGroups: beforeGroups,
+            objectType: 'sla_targets',
+            objectId: 'global',
+            detail: { changedKeys: summary.changedKeys, removedKeys: summary.removedKeys }
+        });
         res.json({ success: true });
     } catch (err) {
         console.error('[PUT /api/sla/targets] failed:', err);
@@ -284,7 +331,11 @@ router.patch('/targets/:targetKey', async (req, res) => {
         return res.status(400).json({ error: '无效数据格式' });
     }
     try {
-        const { items: targets } = await targetsRepo.getTargets({ mode: 'auto' });
+        const [{ items: targets }, { items: beforePrefs }, { items: beforeGroups }] = await Promise.all([
+            targetsRepo.getTargets({ mode: 'auto' }),
+            prefsRepo.getPrefsObject({ mode: 'auto' }),
+            groupsRepo.listGroups({ mode: 'auto' })
+        ]);
         const before = targets[req.params.targetKey] || null;
         const shouldReplace = patch.__replace === true;
         const cleanPatch = { ...patch };
@@ -299,6 +350,19 @@ router.patch('/targets/:targetKey', async (req, res) => {
             mode: shouldReplace ? 'replace-one' : 'merge',
             before,
             after: saved
+        });
+        configChangeMonitor.recordSlaConfigChange({
+            req,
+            action: '单个指标目标/权重变化',
+            beforeTargets: targets,
+            beforePrefs,
+            beforeGroups,
+            afterTargets: { ...targets, [req.params.targetKey]: saved },
+            afterPrefs: beforePrefs,
+            afterGroups: beforeGroups,
+            objectType: 'sla_target',
+            objectId: req.params.targetKey,
+            detail: { before, after: saved }
         });
         res.json({ success: true, item: saved });
     } catch (err) {
@@ -432,6 +496,9 @@ router.get('/prefs/:schemaHash', async (req, res) => {
 // PUT /api/sla/prefs/:schemaHash
 router.put('/prefs/:schemaHash', async (req, res) => {
     const prefs = (await prefsRepo.getPrefsObject({ mode: 'auto' })).items;
+    const beforePrefs = JSON.parse(JSON.stringify(prefs || {}));
+    const beforeTargets = (await targetsRepo.getTargets({ mode: 'auto' })).items;
+    const beforeGroups = (await groupsRepo.listGroups({ mode: 'auto' })).items;
     prefs[req.params.schemaHash] = req.body;
     await prefsRepo.upsertPrefItem(req.params.schemaHash, req.body);
 
@@ -476,6 +543,19 @@ router.put('/prefs/:schemaHash', async (req, res) => {
         console.error('Failed to clean up orphaned targets:', e);
     }
 
+    const afterTargets = (await targetsRepo.getTargets({ mode: 'auto' })).items;
+    configChangeMonitor.recordSlaConfigChange({
+        req,
+        action: req.params.schemaHash.startsWith('sla_prefs_other_') ? '额外监控规则配置变化' : '指标规则配置变化',
+        beforeTargets,
+        beforePrefs,
+        beforeGroups,
+        afterTargets,
+        afterPrefs: prefs,
+        afterGroups: beforeGroups,
+        objectType: 'sla_prefs',
+        objectId: req.params.schemaHash
+    });
     res.json({ success: true });
 });
 
@@ -512,6 +592,7 @@ router.post('/config', async (req, res) => {
     try {
         const beforeTargets = (await targetsRepo.getTargets({ mode: 'auto' })).items;
         const beforePrefs = (await prefsRepo.getPrefsObject({ mode: 'auto' })).items;
+        const beforeGroups = (await groupsRepo.listGroups({ mode: 'auto' })).items;
         const beforeSummary = summarizeConfig({ targets: beforeTargets, prefs: beforePrefs });
         const afterSummary = summarizeConfig({
             targets: targets || beforeTargets,
@@ -524,6 +605,17 @@ router.post('/config', async (req, res) => {
             await writeAudit(req, 'sla.config.replace.blocked', {
                 reason: 'destructive_config_change_requires_confirmation',
                 ...diff
+            });
+            configChangeMonitor.recordConfigChangeAlert({
+                req,
+                action: 'SLA 全量配置导入被拦截',
+                before: beforeSummary,
+                after: afterSummary,
+                objectType: 'sla_config_blocked',
+                objectId: 'import',
+                severity: 'warn',
+                message: '全量配置导入会明显减少指标规则，已被确认保护拦截。',
+                detail: { impact: diff }
             });
             return res.status(409).json({
                 error: '本次配置写入会明显减少已保存指标规则，需要确认后才能继续',
@@ -544,6 +636,22 @@ router.post('/config', async (req, res) => {
             confirmed,
             ...diff
         });
+        const afterTargetsNow = (await targetsRepo.getTargets({ mode: 'auto' })).items;
+        const afterPrefsNow = (await prefsRepo.getPrefsObject({ mode: 'auto' })).items;
+        const afterGroupsNow = (await groupsRepo.listGroups({ mode: 'auto' })).items;
+        configChangeMonitor.recordSlaConfigChange({
+            req,
+            action: 'SLA 全量配置导入变化',
+            beforeTargets,
+            beforePrefs,
+            beforeGroups,
+            afterTargets: afterTargetsNow,
+            afterPrefs: afterPrefsNow,
+            afterGroups: afterGroupsNow,
+            objectType: 'sla_config',
+            objectId: 'import',
+            detail: { confirmed }
+        });
         res.json({ success: true });
     } catch (e) {
         console.error(`[POST /config] Write failed:`, e);
@@ -559,10 +667,16 @@ router.patch('/config/prefs', async (req, res) => {
     }
 
     try {
-        const { items: beforePrefs } = await prefsRepo.getPrefsObject({ mode: 'auto' });
+        const [{ items: beforeTargets }, { items: beforePrefs }, { items: beforeGroups }] = await Promise.all([
+            targetsRepo.getTargets({ mode: 'auto' }),
+            prefsRepo.getPrefsObject({ mode: 'auto' }),
+            groupsRepo.listGroups({ mode: 'auto' })
+        ]);
+        const afterPrefs = { ...beforePrefs };
         const changed = {};
         for (const [prefKey, payload] of Object.entries(updates)) {
             await prefsRepo.upsertPrefItem(prefKey, payload);
+            afterPrefs[prefKey] = payload;
             changed[prefKey] = {
                 beforeHash: hashObject(beforePrefs[prefKey]),
                 afterHash: hashObject(payload)
@@ -571,6 +685,25 @@ router.patch('/config/prefs', async (req, res) => {
         await writeAudit(req, 'sla.config.prefs.patch', {
             keys: Object.keys(updates),
             changed
+        });
+        const keys = Object.keys(updates);
+        const action = keys.includes('manualAdjustItems')
+            ? '手动加减分项目配置变化'
+            : keys.some(key => key.startsWith('sla_prefs_other_'))
+                ? '额外监控规则配置变化'
+                : '偏好/指标相关配置变化';
+        configChangeMonitor.recordSlaConfigChange({
+            req,
+            action,
+            beforeTargets,
+            beforePrefs,
+            beforeGroups,
+            afterTargets: beforeTargets,
+            afterPrefs,
+            afterGroups: beforeGroups,
+            objectType: 'sla_prefs_patch',
+            objectId: keys.join(',').slice(0, 240),
+            detail: { keys, changed }
         });
         res.json({ success: true, keys: Object.keys(updates) });
     } catch (err) {
@@ -607,7 +740,17 @@ router.get('/rule-templates/fast-mapping', async (req, res) => {
 router.put('/rule-templates/fast-mapping', async (req, res) => {
     try {
         const text = req.body && typeof req.body.text === 'string' ? req.body.text : '';
-        res.json(await ruleTemplatesRepo.saveTemplate('fast_mapping', text));
+        const before = await ruleTemplatesRepo.getTemplate('fast_mapping');
+        const saved = await ruleTemplatesRepo.saveTemplate('fast_mapping', text);
+        configChangeMonitor.recordConfigChangeAlert({
+            req,
+            action: '指标规则速填模板变化',
+            before,
+            after: saved,
+            objectType: 'sla_rule_template',
+            objectId: 'fast_mapping'
+        });
+        res.json(saved);
     } catch (err) {
         console.error('[PUT /api/sla/rule-templates/fast-mapping] failed:', err);
         res.status(500).json({ error: '保存规则速填模板失败' });
@@ -626,8 +769,11 @@ router.post('/rename-metric', async (req, res) => {
     }
 
     try {
+        const beforeTargets = (await targetsRepo.getTargets({ mode: 'auto' })).items;
+        const beforePrefs = (await prefsRepo.getPrefsObject({ mode: 'auto' })).items;
+        const beforeGroups = (await groupsRepo.listGroups({ mode: 'auto' })).items;
         // 1. targets
-        let targets = (await targetsRepo.getTargets({ mode: 'auto' })).items;
+        let targets = JSON.parse(JSON.stringify(beforeTargets || {}));
         let targetsChanged = false;
         Object.keys(targets).forEach(k => {
             if (targets[k].label === oldName) {
@@ -638,7 +784,7 @@ router.post('/rename-metric', async (req, res) => {
         if (targetsChanged) await targetsRepo.replaceTargets(targets);
 
         // 2. prefs
-        let prefs = (await prefsRepo.getPrefsObject({ mode: 'auto' })).items;
+        let prefs = JSON.parse(JSON.stringify(beforePrefs || {}));
         let prefsChanged = false;
         Object.keys(prefs).forEach(k => {
             if (k.startsWith('sla_prefs_') && prefs[k].customMetrics) {
@@ -670,7 +816,7 @@ router.post('/rename-metric', async (req, res) => {
         if (prefsChanged) await prefsRepo.replacePrefs(prefs);
 
         // 3. groups
-        let groups = (await groupsRepo.listGroups({ mode: 'auto' })).items;
+        let groups = JSON.parse(JSON.stringify(beforeGroups || []));
         let groupsChanged = false;
         groups.forEach(g => {
             if (g.metrics) {
@@ -684,6 +830,19 @@ router.post('/rename-metric', async (req, res) => {
         if (groupsChanged) {
             await groupsRepo.replaceGroups(groups);
         }
+        configChangeMonitor.recordSlaConfigChange({
+            req,
+            action: '指标全局重命名配置变化',
+            beforeTargets,
+            beforePrefs,
+            beforeGroups,
+            afterTargets: targets,
+            afterPrefs: prefs,
+            afterGroups: groups,
+            objectType: 'sla_metric_rename',
+            objectId: `${oldName} -> ${newName}`,
+            detail: { oldName, newName, targetsChanged, prefsChanged, groupsChanged }
+        });
 
         // 4. snapshots
         let snapshots = (await snapshotsRepo.listSnapshots({ mode: 'auto' })).items;

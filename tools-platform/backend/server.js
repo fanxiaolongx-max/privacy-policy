@@ -14,6 +14,7 @@ if (!runPreflight({ port: PORT })) {
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const crypto = require('crypto');
 const appPackage = require('../package.json');
 
 const uivRoutes = require('./routes/uiv');
@@ -37,6 +38,7 @@ const alertCenterRoutes = require('./routes/alert-center');
 const globalBackupRepo = require('./models/global-backup-repository');
 const remoteBackupSyncRepo = require('./models/remote-backup-sync-repository');
 const legacyJsonMigration = require('./models/legacy-json-migration');
+const configChangeMonitor = require('./models/config-change-monitor');
 const { checkAuth, requireAdmin, checkHtmlAuth } = require('./middleware/auth');
 
 const app = express();
@@ -47,6 +49,13 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+app.use((req, res, next) => {
+    const incoming = req.get('x-request-id') || req.get('x-correlation-id');
+    req.requestId = incoming || `req_${Date.now().toString(36)}_${crypto.randomBytes(4).toString('hex')}`;
+    res.setHeader('X-Request-Id', req.requestId);
+    next();
+});
 
 // ── 请求日志（每次 API 请求都打印到控制台）
 app.use((req, res, next) => {
@@ -59,7 +68,7 @@ app.use((req, res, next) => {
         const color = status >= 500 ? '\x1b[31m' : status >= 400 ? '\x1b[33m' : '\x1b[32m';
         const reset = '\x1b[0m';
         const bodySize = req.headers['content-length'] ? `(body: ${req.headers['content-length']}B)` : '';
-        console.log(`${color}[${ts}] ${req.method} ${req.path} → ${status} (${dur}ms) ${bodySize}${reset}`);
+        console.log(`${color}[${ts}] ${req.method} ${req.path} #${req.requestId} → ${status} (${dur}ms) ${bodySize}${reset}`);
         if (status >= 400) {
             console.log(`  ↳ Body:`, JSON.stringify(req.body).substring(0, 300));
         }
@@ -261,6 +270,9 @@ async function startServer() {
                 console.error('[GLOBAL BACKUP] Failed to start scheduled backup:', err);
             });
         }, 1800);
+        setTimeout(() => {
+            configChangeMonitor.startConfigFingerprintMonitor();
+        }, 2400);
     });
 
     server.on('error', (err) => {

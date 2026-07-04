@@ -6,6 +6,7 @@ const fs = require('fs');
 const zlib = require('zlib');
 
 const { ensureReportDataDir, REPORT_DATA_DIR } = require('../models/report-store');
+const configChangeMonitor = require('../models/config-change-monitor');
 
 const dataDir = REPORT_DATA_DIR;
 ensureReportDataDir();
@@ -314,13 +315,30 @@ router.post('/config/:key', (req, res) => {
         return res.status(403).json({ error: '没有权限，仅管理员可修改配置' });
     }
     const valueJson = JSON.stringify(req.body);
-    db.run('INSERT INTO PlatformConfig (key_name, value_json) VALUES (?, ?) ON CONFLICT(key_name) DO UPDATE SET value_json = ?, updated_at = CURRENT_TIMESTAMP', 
-        [req.params.key, valueJson, valueJson], 
-        function(err) {
-            if (err) return res.status(500).json({ error: err.message });
-            res.json({ success: true });
+    db.get('SELECT value_json FROM PlatformConfig WHERE key_name = ?', [req.params.key], (beforeErr, beforeRow) => {
+        if (beforeErr) return res.status(500).json({ error: beforeErr.message });
+        let beforeValue = {};
+        try {
+            beforeValue = beforeRow ? JSON.parse(beforeRow.value_json || '{}') : {};
+        } catch (_err) {
+            beforeValue = {};
         }
-    );
+        db.run('INSERT INTO PlatformConfig (key_name, value_json) VALUES (?, ?) ON CONFLICT(key_name) DO UPDATE SET value_json = ?, updated_at = CURRENT_TIMESTAMP',
+            [req.params.key, valueJson, valueJson],
+            function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            configChangeMonitor.recordConfigChangeAlert({
+                req,
+                action: '报表/大屏平台配置变化',
+                before: beforeValue,
+                after: req.body,
+                objectType: 'report_platform_config',
+                objectId: req.params.key
+            });
+            res.json({ success: true });
+            }
+        );
+    });
 });
 
 router.get('/monthly_report_data', (req, res) => {

@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const { checkAuth, requireAdmin, hashPassword } = require('../middleware/auth');
 const authUsersRepo = require('../models/auth-users-repository');
 const authSessionsRepo = require('../models/auth-sessions-repository');
+const authSecurityMonitor = require('../models/auth-security-monitor');
 
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
@@ -13,6 +14,11 @@ router.post('/login', async (req, res) => {
         const user = await authUsersRepo.getUser(username);
 
         if (!user || user.passwordHash !== hashPassword(password)) {
+            authSecurityMonitor.recordLoginAttempt(req, {
+                username,
+                success: false,
+                reason: user ? 'bad_password' : 'unknown_user'
+            });
             return res.status(401).json({ error: '用户名或密码错误' });
         }
 
@@ -21,6 +27,11 @@ router.post('/login', async (req, res) => {
         // Set expiry to 7 days
         const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000;
         await authSessionsRepo.saveSession(token, username, user.role, expiresAt);
+        authSecurityMonitor.recordLoginAttempt(req, {
+            username,
+            success: true,
+            reason: 'success'
+        });
         
         res.cookie('tools_token', token, { maxAge: 7 * 24 * 60 * 60 * 1000, path: '/' });
         res.json({ success: true, token, role: user.role, username });
