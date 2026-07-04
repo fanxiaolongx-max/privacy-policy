@@ -616,7 +616,12 @@ router.put('/prefs/:schemaHash', async (req, res) => {
         afterPrefs: prefs,
         afterGroups: beforeGroups,
         objectType: 'sla_prefs',
-        objectId: req.params.schemaHash
+        objectId: req.params.schemaHash,
+        detail: {
+            changedPrefs: [
+                summarizeChangedPrefItem(req.params.schemaHash, beforePrefs[req.params.schemaHash], req.body)
+            ]
+        }
     });
     res.json({ success: true });
 });
@@ -754,6 +759,7 @@ router.patch('/config/prefs', async (req, res) => {
         ]);
         const afterPrefs = { ...beforePrefs };
         const changed = {};
+        const changedPrefs = [];
         for (const [prefKey, payload] of Object.entries(updates)) {
             await prefsRepo.upsertPrefItem(prefKey, payload);
             afterPrefs[prefKey] = payload;
@@ -761,6 +767,7 @@ router.patch('/config/prefs', async (req, res) => {
                 beforeHash: hashObject(beforePrefs[prefKey]),
                 afterHash: hashObject(payload)
             };
+            changedPrefs.push(summarizeChangedPrefItem(prefKey, beforePrefs[prefKey], payload));
         }
         await writeAudit(req, 'sla.config.prefs.patch', {
             keys: Object.keys(updates),
@@ -783,7 +790,7 @@ router.patch('/config/prefs', async (req, res) => {
             afterGroups: beforeGroups,
             objectType: 'sla_prefs_patch',
             objectId: keys.join(',').slice(0, 240),
-            detail: { keys, changed }
+            detail: { keys, changed, changedPrefs }
         });
         res.json({ success: true, keys: Object.keys(updates) });
     } catch (err) {
