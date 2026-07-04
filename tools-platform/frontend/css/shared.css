@@ -474,7 +474,7 @@ body {
 .alert-center-actions {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
+    gap: 5px;
     flex-wrap: wrap;
 }
 
@@ -485,9 +485,9 @@ body {
     background: #fff;
     color: #334155;
     border-radius: 999px;
-    padding: 6px 10px;
-    font-size: 12px;
-    font-weight: 750;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 700;
     cursor: pointer;
 }
 
@@ -599,6 +599,23 @@ body {
     color: #334155;
     font-size: 13px;
     line-height: 1.55;
+    word-break: break-all;
+    white-space: pre-wrap;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.alert-center-message:hover {
+    background: #f8fafc;
+}
+
+.alert-center-message.expanded {
+    -webkit-line-clamp: unset;
+    display: block;
 }
 
 .alert-center-meta,
@@ -611,14 +628,31 @@ body {
 
 .alert-center-detail {
     display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .alert-center-detail span {
-    padding: 3px 7px;
+    padding: 6px 10px;
     border-radius: 6px;
     background: #f1f5f9;
+    word-break: break-all;
+    white-space: pre-wrap;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid #e2e8f0;
+}
+
+.alert-center-detail span:hover {
+    background: #e2e8f0;
+}
+
+.alert-center-detail span.expanded {
+    -webkit-line-clamp: unset;
+    display: block;
 }
 
 .alert-center-row-actions {
