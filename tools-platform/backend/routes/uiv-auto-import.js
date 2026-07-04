@@ -77,6 +77,42 @@ function writeMeta(sessionDir, meta) {
     fs.writeFileSync(getMetaPath(sessionDir), JSON.stringify(meta, null, 2), 'utf8');
 }
 
+function getDatasetsDir(sessionDir) {
+    const dir = path.join(sessionDir, 'datasets');
+    fs.mkdirSync(dir, { recursive: true });
+    return dir;
+}
+
+function writeDatasetChunk(sessionDir, dataset, rows, chunkIndex) {
+    const chunkName = `${dataset.id}-${String((dataset.chunks || []).length).padStart(5, '0')}.json`;
+    const chunkPath = path.join(getDatasetsDir(sessionDir), chunkName);
+    fs.writeFileSync(chunkPath, JSON.stringify(rows), 'utf8');
+    dataset.chunks = Array.isArray(dataset.chunks) ? dataset.chunks : [];
+    dataset.chunks.push({
+        file: chunkName,
+        rowCount: rows.length,
+        chunkIndex: Number.isFinite(chunkIndex) ? chunkIndex : undefined
+    });
+}
+
+function readDatasetRows(sessionDir, dataset) {
+    if (Array.isArray(dataset && dataset.rows)) return dataset.rows;
+    const chunks = Array.isArray(dataset && dataset.chunks) ? dataset.chunks : [];
+    const rows = [];
+    chunks.forEach(chunk => {
+        const file = String(chunk && chunk.file || '');
+        if (!/^[a-f0-9]{16}-\d{5}\.json$/.test(file)) return;
+        const chunkPath = path.join(getDatasetsDir(sessionDir), file);
+        try {
+            const parsed = JSON.parse(fs.readFileSync(chunkPath, 'utf8'));
+            if (Array.isArray(parsed)) rows.push(...parsed);
+        } catch (e) {
+            console.warn('[UIV AUTO IMPORT] failed to read dataset chunk:', file, e.message);
+        }
+    });
+    return rows;
+}
+
 function timingSafeEqualText(a, b) {
     const left = Buffer.from(String(a || ''));
     const right = Buffer.from(String(b || ''));
@@ -107,9 +143,10 @@ function normalizeRows(rows) {
         .map(row => ({ ...row }));
 }
 
-function upsertDataset(meta, body, rows, now) {
+function upsertDataset(meta, body, rows, now, sessionDir) {
     const clientUploadId = String(body?.clientUploadId || '');
     const append = !!body?.append && clientUploadId;
+    const chunkIndex = Number(body?.chunkIndex);
     meta.datasets = Array.isArray(meta.datasets) ? meta.datasets : [];
 
     let dataset = append
@@ -120,16 +157,23 @@ function upsertDataset(meta, body, rows, now) {
             id: crypto.randomBytes(8).toString('hex'),
             clientUploadId: clientUploadId || undefined,
             name: safeName(body?.name),
-            rows: [],
+            chunks: [],
             rowCount: 0,
             uploadedAt: now
         };
         meta.datasets.push(dataset);
     }
 
-    dataset.rows = Array.isArray(dataset.rows) ? dataset.rows : [];
-    dataset.rows.push(...rows);
-    dataset.rowCount = dataset.rows.length;
+    if (Array.isArray(dataset.rows) && dataset.rows.length) {
+        writeDatasetChunk(sessionDir, dataset, dataset.rows);
+        delete dataset.rows;
+    }
+    dataset.chunks = Array.isArray(dataset.chunks) ? dataset.chunks : [];
+    const duplicateChunk = append && Number.isFinite(chunkIndex) && dataset.chunks.some(chunk => Number(chunk && chunk.chunkIndex) === chunkIndex);
+    if (!duplicateChunk) {
+        writeDatasetChunk(sessionDir, dataset, rows, chunkIndex);
+        dataset.rowCount = Number(dataset.rowCount || 0) + rows.length;
+    }
     dataset.uploadedAt = dataset.uploadedAt || now;
     dataset.updatedAt = now;
     return dataset;
@@ -154,7 +198,7 @@ router.post('/:sessionId/datasets', (req, res) => {
         meta.updatedAt = now;
         meta.origin = req.body?.origin || meta.origin || '';
         meta.groupName = req.body?.groupName || meta.groupName || '';
-        const dataset = upsertDataset(meta, req.body, rows, now);
+        const dataset = upsertDataset(meta, req.body, rows, now, sessionDir);
         writeMeta(sessionDir, meta);
 
         res.json({
@@ -185,7 +229,7 @@ router.get('/:sessionId', (req, res) => {
             name: dataset.name,
             rowCount: dataset.rowCount,
             uploadedAt: dataset.uploadedAt,
-            rows: dataset.rows || []
+            rows: readDatasetRows(access.sessionDir, dataset)
         }))
     });
 });
