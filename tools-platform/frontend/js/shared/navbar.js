@@ -2216,6 +2216,7 @@ function ensureAlertCenterModal() {
                 <div class="alert-center-filters" id="alertCenterFilters"></div>
                 <div class="alert-center-actions">
                     <button type="button" onclick="markAllAlertCenterRead()">${navEscape(navT('nav.alert.markAll'))}</button>
+                    <button type="button" onclick="archiveAllAlertCenter()">全部归档</button>
                     <button type="button" onclick="reloadAlertCenter()">${navEscape(navT('nav.alert.refresh'))}</button>
                 </div>
             </div>
@@ -2348,6 +2349,15 @@ window.markAlertCenterRead = async function (id) {
 
 window.markAllAlertCenterRead = async function () {
     await fetch('/api/alert-center/events/read-all', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() }
+    });
+    window.reloadAlertCenter();
+};
+
+window.archiveAllAlertCenter = async function () {
+    if (!confirm('确定要将所有告警归档吗？')) return;
+    await fetch('/api/alert-center/events/archive-all', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() }
     });

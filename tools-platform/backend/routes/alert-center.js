@@ -68,6 +68,14 @@ router.put('/events/read-all', async (req, res, next) => {
     }
 });
 
+router.put('/events/archive-all', async (req, res, next) => {
+    try {
+        res.json(await repo.archiveAllEvents());
+    } catch (err) {
+        next(err);
+    }
+});
+
 router.post('/ai/backfill', async (req, res, next) => {
     try {
         const limit = req.body && req.body.limit;
