@@ -168,6 +168,10 @@ function registerNavbarI18n() {
             'nav.ai.plhToken': '点击后粘贴当前供应商 API Token',
             'nav.ai.plhKeep': '留空则保持当前：',
             'nav.ai.btnClear': '清除 Token',
+            'nav.ai.btnTest': '测试模型',
+            'nav.ai.testing': '正在测试模型...',
+            'nav.ai.testOk': '测试通过',
+            'nav.ai.testFail': '测试失败：',
             'nav.ai.lblProvider': '供应商协议',
             'nav.ai.lblApiUrl': 'API URL',
             'nav.ai.plhApiUrl': '留空使用供应商默认地址；兼容网关填 /v1 基地址',
@@ -391,6 +395,10 @@ function registerNavbarI18n() {
             'nav.ai.plhToken': 'Click to paste the current provider API token',
             'nav.ai.plhKeep': 'Leave empty to keep current: ',
             'nav.ai.btnClear': 'Clear Token',
+            'nav.ai.btnTest': 'Test Model',
+            'nav.ai.testing': 'Testing model...',
+            'nav.ai.testOk': 'Test passed',
+            'nav.ai.testFail': 'Test failed: ',
             'nav.ai.lblProvider': 'Provider Protocol',
             'nav.ai.lblApiUrl': 'API URL',
             'nav.ai.plhApiUrl': 'Leave empty for provider default; compatible gateways should use the /v1 base URL',
@@ -1202,6 +1210,10 @@ async function renderAiSettings(content) {
                     <span>${navEscape(navT('nav.ai.lblPrompt'))}</span>
                     <textarea id="navAiSystemPrompt" class="nav-ai-textarea" maxlength="5000" placeholder="${navEscape(navT('nav.ai.plhPrompt'))}" oninput="scheduleAiSettingsSave()">${navEscape(settings.systemPrompt || '')}</textarea>
                 </label>
+                <div class="nav-ai-field nav-ai-field-wide">
+                    <button type="button" class="nav-settings-add" onclick="testAiSettingsNow()">${navEscape(navT('nav.ai.btnTest'))}</button>
+                    <div id="navAiTestResult" class="nav-ai-test-result"></div>
+                </div>
             </div>
         `;
     } catch (e) {
@@ -1241,6 +1253,43 @@ window.handleAiProviderChange = function () {
         modelInput.value = defaults[provider];
     }
     scheduleAiSettingsSave();
+};
+
+window.testAiSettingsNow = async function () {
+    const resultEl = document.getElementById('navAiTestResult');
+    const indicator = document.getElementById('navSettingsSaveState');
+    clearTimeout(navState.aiSaveTimer);
+    if (resultEl) {
+        resultEl.className = 'nav-ai-test-result testing';
+        resultEl.textContent = navT('nav.ai.testing');
+    }
+    if (indicator) indicator.textContent = navT('nav.ai.testing');
+    try {
+        const res = await fetch('/api/ai-settings/test', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeaderForNav()
+            },
+            body: JSON.stringify(collectAiSettingsPayload())
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) {
+            throw new Error(data.error || `HTTP ${res.status}`);
+        }
+        const reply = data.reply ? `：${data.reply}` : '';
+        if (resultEl) {
+            resultEl.className = 'nav-ai-test-result ok';
+            resultEl.textContent = `${navT('nav.ai.testOk')}${reply}`;
+        }
+        if (indicator) indicator.textContent = navT('nav.ai.testOk');
+    } catch (e) {
+        if (resultEl) {
+            resultEl.className = 'nav-ai-test-result fail';
+            resultEl.textContent = `${navT('nav.ai.testFail')}${e.message}`;
+        }
+        if (indicator) indicator.textContent = `${navT('nav.ai.testFail')}${e.message}`;
+    }
 };
 
 async function saveAiSettingsNow(options = {}) {

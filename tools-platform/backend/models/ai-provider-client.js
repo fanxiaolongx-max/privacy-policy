@@ -48,10 +48,39 @@ async function parseErrorResponse(res) {
     try {
         body = await res.text();
     } catch (_err) {}
-    const error = new Error(`AI provider request failed (${res.status}): ${body.slice(0, 500)}`);
+    const error = new Error(buildProviderErrorMessage(res, body));
     error.status = res.status;
     error.statusCode = res.status;
     throw error;
+}
+
+function buildProviderErrorMessage(res, body = '') {
+    const contentType = res && res.headers && res.headers.get ? String(res.headers.get('content-type') || '') : '';
+    const text = String(body || '').trim();
+    const preview = text.replace(/\s+/g, ' ').slice(0, 220);
+    if (/<!doctype|<html/i.test(text) || contentType.includes('text/html')) {
+        return `AI 接口返回了 HTML 页面，不是 JSON。通常是供应商协议或 API URL 配错：当前请求到 ${res.url || '未知地址'}，请检查是否应选择 OpenAI Compatible，并填写正确的 /v1 基地址。返回片段：${preview}`;
+    }
+    return `AI provider request failed (${res.status}): ${preview}`;
+}
+
+async function readProviderJson(res) {
+    const text = await res.text();
+    const contentType = String(res.headers.get('content-type') || '');
+    if (/<!doctype|<html/i.test(text) || contentType.includes('text/html')) {
+        const error = new Error(buildProviderErrorMessage(res, text));
+        error.status = res.status;
+        error.statusCode = res.status;
+        throw error;
+    }
+    try {
+        return JSON.parse(text);
+    } catch (err) {
+        const error = new Error(`AI 接口返回内容不是合法 JSON。请检查供应商协议/API URL/模型名称。返回片段：${text.replace(/\s+/g, ' ').slice(0, 220)}`);
+        error.status = res.status;
+        error.statusCode = res.status;
+        throw error;
+    }
 }
 
 class AiProviderClient {
@@ -99,7 +128,7 @@ class AiProviderClient {
             body: JSON.stringify(body)
         });
         if (!res.ok) await parseErrorResponse(res);
-        const data = await res.json();
+        const data = await readProviderJson(res);
         const usage = data.usageMetadata || {};
         return {
             text: extractGeminiText(data),
@@ -135,7 +164,7 @@ class AiProviderClient {
             body: JSON.stringify(body)
         });
         if (!res.ok) await parseErrorResponse(res);
-        const data = await res.json();
+        const data = await readProviderJson(res);
         const usage = data.usage || {};
         return {
             text: String(data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || '').trim(),
@@ -170,7 +199,7 @@ class AiProviderClient {
             body: JSON.stringify(body)
         });
         if (!res.ok) await parseErrorResponse(res);
-        const data = await res.json();
+        const data = await readProviderJson(res);
         const usage = data.usage || {};
         return {
             text: extractAnthropicText(data),

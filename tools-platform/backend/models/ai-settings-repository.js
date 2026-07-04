@@ -85,6 +85,24 @@ async function getRuntimeSettings() {
     };
 }
 
+async function buildRuntimeSettings(payload = {}) {
+    const current = await getStoredSettings();
+    const nextPayload = { ...payload };
+    if (!Object.prototype.hasOwnProperty.call(nextPayload, 'apiKey') || String(nextPayload.apiKey || '').trim() === '') {
+        nextPayload.apiKey = current.apiKey;
+    }
+    const normalized = normalizeSettings(nextPayload, current);
+    const envKey = getEnvKeyForProvider(normalized.provider);
+    const apiKey = normalized.apiKey || envKey;
+    return {
+        ...normalized,
+        apiKey,
+        apiKeySource: normalized.apiKey ? 'stored' : (envKey ? 'env' : 'none'),
+        hasApiKey: Boolean(apiKey),
+        keyLooksValid: isLikelyValidApiKey(apiKey)
+    };
+}
+
 async function getPublicSettings() {
     const runtime = await getRuntimeSettings();
     return {
@@ -127,6 +145,7 @@ module.exports = {
     DEFAULT_SETTINGS,
     getStoredSettings,
     getRuntimeSettings,
+    buildRuntimeSettings,
     getPublicSettings,
     saveSettings,
     isLikelyValidApiKey
