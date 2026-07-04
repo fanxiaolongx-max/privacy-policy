@@ -6,10 +6,12 @@ const prefsRepo = require('./sla-prefs-repository');
 const groupsRepo = require('./sla-groups-repository');
 
 const DEFAULT_SCAN_INTERVAL_MS = 5 * 60 * 1000;
+const BENIGN_PREF_BATCH_WINDOW_MS = 2500;
 
 let initPromise = null;
 let scanTimer = null;
 let scanRunning = false;
+const benignPrefBatches = new Map();
 
 function stableStringify(value) {
     if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
@@ -63,6 +65,31 @@ function collectMetricLabelsFromPrefs(prefs = {}) {
     return labels;
 }
 
+function pickSlaCorePrefs(prefs = {}) {
+    const core = {};
+    Object.entries(prefs || {}).forEach(([prefKey, pref]) => {
+        if (String(prefKey).startsWith('sla_prefs_')) {
+            if (pref && Array.isArray(pref.customMetrics)) {
+                core[prefKey] = {
+                    customMetrics: pref.customMetrics
+                };
+            }
+            return;
+        }
+        if ([
+            'manualAdjustItems',
+            'manualAdjustAutoFill',
+            'isAutoStandardTotalScore',
+            'expediteIgnoreKeywords',
+            'expediteTemplate',
+            'i18nMap'
+        ].includes(prefKey)) {
+            core[prefKey] = pref;
+        }
+    });
+    return core;
+}
+
 function summarizeConfigObject(value, kind = 'object') {
     const summary = { kind, hash: shortHash(value) };
     if (Array.isArray(value)) {
@@ -101,7 +128,7 @@ function summarizeSlaConfig({ targets = {}, prefs = {}, groups = [] } = {}) {
         groupCount: Array.isArray(groups) ? groups.length : 0,
         groupedMetricCount: Array.isArray(groups) ? groups.reduce((sum, group) => sum + (Array.isArray(group?.metrics) ? group.metrics.length : 0), 0) : 0,
         labels: Array.from(new Set(labels)).sort().slice(0, 200),
-        hash: shortHash({ targets, prefs, groups })
+        hash: shortHash({ targets, prefs: pickSlaCorePrefs(prefs), groups })
     };
 }
 
@@ -147,6 +174,91 @@ function buildConfigChangeTitle(action, diff) {
         return `${action}：数量 ${metricBefore} → ${metricAfter}`;
     }
     return `${action}：内容已变化`;
+}
+
+function diffTopLevelFields(beforeValue, afterValue) {
+    const before = beforeValue && typeof beforeValue === 'object' && !Array.isArray(beforeValue) ? beforeValue : {};
+    const after = afterValue && typeof afterValue === 'object' && !Array.isArray(afterValue) ? afterValue : {};
+    const fields = Array.from(new Set([...Object.keys(before), ...Object.keys(after)]));
+    return fields.filter(field => stableStringify(before[field]) !== stableStringify(after[field]));
+}
+
+function isCorePrefField(field) {
+    return ['customMetrics', 'manualAdjustItems', 'manualAdjustAutoFill', 'isAutoStandardTotalScore', 'expediteIgnoreKeywords', 'expediteTemplate', 'i18nMap'].includes(field);
+}
+
+function collectBenignPreferenceChanges(detail = {}) {
+    const changedPrefs = Array.isArray(detail.changedPrefs) ? detail.changedPrefs : [];
+    const changes = [];
+    changedPrefs.forEach(item => {
+        if (!item || !item.key) return;
+        const fields = diffTopLevelFields(item.before, item.after).filter(field => !isCorePrefField(field));
+        const coreFields = diffTopLevelFields(item.before, item.after).filter(isCorePrefField);
+        if (!fields.length || coreFields.length) return;
+        changes.push({
+            key: String(item.key),
+            fields: fields.slice(0, 12)
+        });
+    });
+    return changes;
+}
+
+async function flushBenignPreferenceBatch(batchKey) {
+    const batch = benignPrefBatches.get(batchKey);
+    if (!batch) return;
+    benignPrefBatches.delete(batchKey);
+    if (!batch.prefKeys.size) return;
+    const keyList = [...batch.prefKeys].sort();
+    const fieldList = [...batch.fields].sort();
+    const count = keyList.length;
+    await alertCenterRepo.addEvent({
+        eventType: 'config',
+        severity: 'info',
+        title: `批量表格偏好同步：${count} 个表`,
+        message: '批量导入/页面同步保存了表格显示类偏好，未检测到指标规则、目标、权重或分组变化。',
+        actor: batch.request.actor,
+        source: batch.request.source || `${batch.request.method} ${batch.request.path}`.trim(),
+        objectType: 'sla_prefs_batch',
+        objectId: keyList.slice(0, 6).join(',').slice(0, 240),
+        detail: {
+            scope: 'sla',
+            action: '批量表格偏好同步',
+            request: batch.request,
+            prefCount: count,
+            prefKeys: keyList.slice(0, 80),
+            changedFields: fieldList.slice(0, 20),
+            suppressedAlertCount: batch.eventCount,
+            windowMs: BENIGN_PREF_BATCH_WINDOW_MS
+        }
+    });
+}
+
+function enqueueBenignPreferenceBatch({ req, detail = {} }) {
+    const changes = collectBenignPreferenceChanges(detail);
+    if (!changes.length) return;
+    const requestContext = buildRequestContext(req);
+    const sourceKey = `${requestContext.actor || 'system'}|${requestContext.referer || requestContext.path || 'unknown'}|sla_prefs`;
+    let batch = benignPrefBatches.get(sourceKey);
+    if (!batch) {
+        batch = {
+            request: requestContext,
+            prefKeys: new Set(),
+            fields: new Set(),
+            eventCount: 0,
+            timer: null
+        };
+        benignPrefBatches.set(sourceKey, batch);
+        batch.timer = setTimeout(() => {
+            flushBenignPreferenceBatch(sourceKey).catch(err => {
+                console.error('[config-change-monitor] preference batch alert failed:', err.message);
+            });
+        }, BENIGN_PREF_BATCH_WINDOW_MS);
+    }
+    batch.eventCount += 1;
+    changes.forEach(change => {
+        batch.prefKeys.add(change.key);
+        change.fields.forEach(field => batch.fields.add(field));
+    });
 }
 
 async function ensureReady() {
@@ -207,7 +319,10 @@ async function recordSlaConfigChange({ req, action, beforeTargets, beforePrefs, 
         const beforeSummary = summarizeSlaConfig({ targets: beforeTargets, prefs: beforePrefs, groups: beforeGroups });
         const afterSummary = summarizeSlaConfig({ targets: afterTargets, prefs: afterPrefs, groups: afterGroups });
         const diff = diffSummaries(beforeSummary, afterSummary);
-        if (!diff.changed) return null;
+        if (!diff.changed) {
+            enqueueBenignPreferenceBatch({ req, detail });
+            return null;
+        }
         const requestContext = buildRequestContext(req);
         const severity = isRiskyConfigDiff(diff) ? 'warn' : 'info';
         const event = await alertCenterRepo.addEvent({

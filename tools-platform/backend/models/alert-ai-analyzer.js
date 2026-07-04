@@ -112,9 +112,38 @@ function describePrefKey(key) {
 }
 
 function compactValue(value) {
-    if (Array.isArray(value)) return `[${value.map(item => JSON.stringify(item)).join('、')}]`;
-    if (value && typeof value === 'object') return JSON.stringify(value).slice(0, 80);
+    if (Array.isArray(value)) {
+        const primitiveItems = value.filter(item => item === null || ['string', 'number', 'boolean'].includes(typeof item));
+        if (primitiveItems.length === value.length) {
+            const picked = primitiveItems.slice(0, 3).map(item => JSON.stringify(item)).join('、');
+            return value.length > 3 ? `[${picked}等${value.length}项]` : `[${picked}]`;
+        }
+        return `数组${value.length}项`;
+    }
+    if (value && typeof value === 'object') return `对象${Object.keys(value).length}项`;
     return JSON.stringify(value);
+}
+
+function describePrefField(field) {
+    const names = {
+        visibleHeaders: '显示列',
+        columnWidths: '列宽',
+        sortKey: '排序字段',
+        sortAsc: '排序方向',
+        customMetrics: '指标规则',
+        _sourceMeta: '来源信息'
+    };
+    return names[field] || field;
+}
+
+function compactChangedPrefFields(item = {}) {
+    const before = item.before && typeof item.before === 'object' && !Array.isArray(item.before) ? item.before : {};
+    const after = item.after && typeof item.after === 'object' && !Array.isArray(item.after) ? item.after : {};
+    const keys = Array.from(new Set([...Object.keys(before), ...Object.keys(after)]));
+    const changed = keys.filter(key => JSON.stringify(before[key]) !== JSON.stringify(after[key]));
+    if (!changed.length) return '';
+    const picked = changed.slice(0, 4).map(describePrefField).join('、');
+    return changed.length > 4 ? `${picked}等${changed.length}项` : picked;
 }
 
 function compactChangedPrefs(items = []) {
@@ -122,6 +151,10 @@ function compactChangedPrefs(items = []) {
     if (!safe.length) return '';
     return safe.slice(0, 2).map(item => {
         const name = describePrefKey(item.key);
+        if (String(item.key || '').startsWith('sla_prefs_')) {
+            const fields = compactChangedPrefFields(item);
+            return `${name}${fields ? `的${fields}` : '内容'}已变化`;
+        }
         return `${name}从${compactValue(item.before)}改为${compactValue(item.after)}`;
     }).join('、') + (safe.length > 2 ? `等${safe.length}项` : '');
 }
@@ -151,22 +184,22 @@ function buildFallbackSummary(event) {
         return `${actor}在${page}${method ? `通过${method}` : ''}调整${changedItems}。`;
     }
 
-    if (changedPrefs) {
-        return `${actor}在${page}${method ? `通过${method}` : ''}将${changedPrefs}。`;
-    }
-
-    if (removedItems) {
-        return `${actor}在${page}${method ? `通过${method}` : ''}删除${removedItems}。`;
-    }
-
     if (beforeCount !== null && afterCount !== null && beforeCount !== afterCount) {
         const action = afterCount > beforeCount ? '新增' : '移除';
         const labelText = added || removed;
         return `${actor}在${page}${method ? `通过${method}` : ''}${action}规则${beforeCount}→${afterCount}${labelText ? `，涉及${labelText}` : ''}。`;
     }
 
+    if (removedItems) {
+        return `${actor}在${page}${method ? `通过${method}` : ''}删除${removedItems}。`;
+    }
+
     if (detail.before && detail.after && detail.after.label) {
         return `${actor}在${page}${method ? `通过${method}` : ''}调整“${detail.after.label}”目标或权重。`;
+    }
+
+    if (changedPrefs) {
+        return `${actor}在${page}${method ? `通过${method}` : ''}调整${changedPrefs}。`;
     }
 
     if (diff.before && diff.after && Number.isFinite(Number(diff.before.keyCount)) && Number.isFinite(Number(diff.after.keyCount))) {
