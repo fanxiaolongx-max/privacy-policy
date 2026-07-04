@@ -1080,6 +1080,34 @@ body {
     letter-spacing: 0.02em;
 }
 
+.nav-ai-test-result {
+    min-height: 22px;
+    margin-top: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.nav-ai-test-result.ok {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.nav-ai-test-result.fail {
+    background: #fff1f2;
+    color: #be123c;
+}
+
+.nav-ai-test-result.testing {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
 .nav-ai-textarea {
     width: 100%;
     min-height: 92px;
