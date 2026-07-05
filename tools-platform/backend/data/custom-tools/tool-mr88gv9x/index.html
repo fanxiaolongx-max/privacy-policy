@@ -1,0 +1,1092 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CS质量运营工具平台介绍</title>
+  <style>
+    :root {
+      --bg: #070a12;
+      --panel: rgba(255,255,255,.075);
+      --panel-strong: rgba(255,255,255,.12);
+      --line: rgba(255,255,255,.14);
+      --text: #f8fbff;
+      --muted: #aab6cc;
+      --soft: #6d7890;
+      --cyan: #3ee6c2;
+      --blue: #70a5ff;
+      --amber: #ffcc66;
+      --rose: #ff758f;
+      --violet: #b89cff;
+      --green: #7ce38b;
+      --shadow: 0 28px 80px rgba(0,0,0,.42);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); }
+    body {
+      font-family: Inter, "SF Pro Display", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      overflow: hidden;
+      letter-spacing: 0;
+    }
+
+    .stage {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 12% 12%, rgba(62,230,194,.18), transparent 32%),
+        radial-gradient(circle at 82% 18%, rgba(112,165,255,.16), transparent 36%),
+        radial-gradient(circle at 72% 86%, rgba(255,204,102,.10), transparent 38%),
+        linear-gradient(145deg, #060913 0%, #0b1020 48%, #101827 100%);
+    }
+
+    #particleCanvas {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      opacity: .56;
+      mix-blend-mode: screen;
+    }
+
+    .stage::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,.75), transparent 88%);
+      pointer-events: none;
+    }
+
+    .stage::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background:
+        linear-gradient(90deg, rgba(7,10,18,.58), transparent 22%, transparent 78%, rgba(7,10,18,.56)),
+        linear-gradient(180deg, rgba(7,10,18,.20), transparent 35%, rgba(7,10,18,.46));
+      pointer-events: none;
+    }
+
+    .topbar {
+      position: fixed;
+      left: 34px;
+      right: 34px;
+      top: 22px;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: rgba(248,251,255,.74);
+      font-size: 13px;
+      font-weight: 700;
+      pointer-events: none;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      background: rgba(7,10,18,.44);
+      backdrop-filter: blur(18px);
+      border-radius: 999px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.2);
+    }
+
+    .brand-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 22px rgba(62,230,194,.95);
+    }
+
+    .pager {
+      min-width: 88px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      color: rgba(248,251,255,.58);
+    }
+
+    .demo-toggle {
+      position: fixed;
+      right: 142px;
+      bottom: 28px;
+      z-index: 70;
+      height: 46px;
+      padding: 0 18px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(7,10,18,.55);
+      color: rgba(248,251,255,.82);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 900;
+      backdrop-filter: blur(16px);
+      transition: transform .2s ease, border-color .2s ease, background .2s ease, opacity .2s ease;
+    }
+
+    .demo-toggle:hover {
+      transform: translateY(-2px);
+      border-color: rgba(62,230,194,.45);
+      background: rgba(62,230,194,.12);
+    }
+
+    body.demo-mode .topbar,
+    body.demo-mode .hint,
+    body.demo-mode .nav,
+    body.demo-mode .demo-toggle,
+    body.demo-mode .progress {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .progress {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 3px;
+      z-index: 60;
+      background: rgba(255,255,255,.08);
+    }
+
+    .progress span {
+      display: block;
+      width: 20%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--blue));
+      transition: width .45s cubic-bezier(.2,.8,.2,1);
+      box-shadow: 0 0 18px rgba(62,230,194,.65);
+    }
+
+    .slides {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      height: 100%;
+      transition: transform .7s cubic-bezier(.2,.8,.2,1);
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      padding: 92px min(6vw, 78px) 64px;
+      display: grid;
+      align-items: center;
+      opacity: 0;
+      transform: translateX(4vw) scale(.985);
+      pointer-events: none;
+      transition: opacity .5s ease, transform .65s cubic-bezier(.2,.8,.2,1);
+    }
+
+    .slide.active {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+      pointer-events: auto;
+    }
+
+    .grid-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.06fr) minmax(360px, .94fr);
+      gap: min(5vw, 70px);
+      align-items: center;
+      max-width: 1180px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      width: fit-content;
+      padding: 8px 12px;
+      border: 1px solid rgba(62,230,194,.32);
+      border-radius: 999px;
+      background: rgba(62,230,194,.10);
+      color: var(--cyan);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    h1, h2 {
+      margin: 0;
+      line-height: .98;
+      letter-spacing: 0;
+      text-wrap: balance;
+    }
+
+    h1 {
+      margin-top: 24px;
+      font-size: clamp(50px, 5.4vw, 86px);
+      max-width: 780px;
+      line-height: 1.04;
+    }
+
+    h2 {
+      margin-top: 22px;
+      font-size: clamp(44px, 5.4vw, 76px);
+      max-width: 980px;
+    }
+
+    .lead {
+      margin: 26px 0 0;
+      max-width: 760px;
+      color: var(--muted);
+      font-size: clamp(18px, 1.7vw, 24px);
+      line-height: 1.55;
+      text-wrap: balance;
+    }
+
+    .hero-line {
+      margin-top: 44px;
+      color: #fff;
+      font-size: clamp(22px, 2.3vw, 32px);
+      line-height: 1.35;
+      font-weight: 900;
+      text-wrap: balance;
+    }
+
+    .accent { color: var(--cyan); }
+    .blue { color: var(--blue); }
+    .amber { color: var(--amber); }
+    .rose { color: var(--rose); }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 42px;
+      max-width: 720px;
+    }
+
+    .stat {
+      min-height: 106px;
+      padding: 18px 18px 16px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(255,255,255,.105), rgba(255,255,255,.055));
+      box-shadow: 0 16px 44px rgba(0,0,0,.22);
+    }
+
+    .stat strong {
+      display: block;
+      font-size: clamp(30px, 3.2vw, 46px);
+      line-height: 1;
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 750;
+      line-height: 1.35;
+    }
+
+    .browser {
+      position: relative;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 30px;
+      background: linear-gradient(180deg, rgba(255,255,255,.13), rgba(255,255,255,.055));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      min-height: 390px;
+      backdrop-filter: blur(18px);
+    }
+
+    .browser::before {
+      content: "";
+      display: block;
+      height: 50px;
+      background: rgba(3,7,18,.55);
+      border-bottom: 1px solid rgba(255,255,255,.10);
+    }
+
+    .traffic {
+      position: absolute;
+      left: 24px;
+      top: 20px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .traffic i {
+      display: block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--rose);
+    }
+
+    .traffic i:nth-child(2) { background: var(--amber); }
+    .traffic i:nth-child(3) { background: var(--cyan); }
+
+    .window-title {
+      position: absolute;
+      left: 78px;
+      top: 15px;
+      color: rgba(248,251,255,.66);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .mock-content {
+      padding: 34px;
+      display: grid;
+      gap: 20px;
+    }
+
+    .mock-row {
+      height: 42px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.075);
+    }
+
+    .mock-row.short { width: 62%; }
+    .mock-row.mid { width: 78%; }
+    .mock-row.accent { width: 84%; background: linear-gradient(90deg, rgba(62,230,194,.95), rgba(112,165,255,.68)); }
+
+    .mini-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 12px;
+    }
+
+    .mini-card {
+      height: 100px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,.11);
+      background: rgba(255,255,255,.065);
+      padding: 18px;
+    }
+
+    .mini-card b {
+      display: block;
+      font-size: 23px;
+      color: var(--cyan);
+    }
+
+    .mini-card span {
+      display: block;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .flow-wrap {
+      max-width: 1160px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .flow {
+      margin-top: 64px;
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 13px;
+      position: relative;
+    }
+
+    .flow::before {
+      content: "";
+      position: absolute;
+      left: 66px;
+      right: 66px;
+      top: 104px;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(62,230,194,0), rgba(62,230,194,.34), rgba(112,165,255,.28), rgba(255,117,143,0));
+      box-shadow: 0 0 18px rgba(62,230,194,.13);
+      pointer-events: none;
+    }
+
+    .flow-step {
+      position: relative;
+      z-index: 1;
+      min-height: 130px;
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      padding: 22px 16px;
+      background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.055));
+      box-shadow: 0 18px 50px rgba(0,0,0,.22);
+      overflow: hidden;
+    }
+
+    .flow-step::after {
+      content: "";
+      position: absolute;
+      inset: auto -20px -50px auto;
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background: var(--glow);
+      filter: blur(12px);
+      opacity: .35;
+    }
+
+    .flow-step small {
+      color: var(--soft);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .flow-step b {
+      display: block;
+      margin-top: 14px;
+      font-size: 22px;
+      line-height: 1.18;
+    }
+
+    .statement {
+      margin-top: 50px;
+      padding: 26px 32px;
+      border: 1px solid rgba(62,230,194,.26);
+      border-radius: 30px;
+      background: rgba(62,230,194,.08);
+      color: #dffdf7;
+      font-size: clamp(20px, 2.2vw, 30px);
+      font-weight: 900;
+      line-height: 1.35;
+      text-align: center;
+      box-shadow: 0 22px 70px rgba(4,120,100,.16);
+    }
+
+    .feature-layout {
+      display: grid;
+      grid-template-columns: minmax(420px, .95fr) minmax(360px, .75fr);
+      gap: 58px;
+      align-items: center;
+      max-width: 1160px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .bullets {
+      display: grid;
+      gap: 24px;
+      margin-top: 38px;
+    }
+
+    .bullet {
+      display: grid;
+      grid-template-columns: 14px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .bullet i {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      margin-top: 10px;
+      background: var(--dot);
+      box-shadow: 0 0 20px var(--dot);
+    }
+
+    .bullet b {
+      display: block;
+      font-size: 25px;
+      line-height: 1.2;
+    }
+
+    .bullet span {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.55;
+      font-weight: 650;
+    }
+
+    .screens {
+      max-width: 1160px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .screen-grid {
+      margin-top: 34px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .screen-card {
+      min-height: 222px;
+      border: 1px solid var(--line);
+      border-radius: 30px;
+      background: rgba(255,255,255,.075);
+      overflow: hidden;
+      box-shadow: 0 18px 54px rgba(0,0,0,.22);
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      transition: transform .25s ease, border-color .25s ease, background .25s ease;
+    }
+
+    .screen-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(62,230,194,.40);
+      background: rgba(255,255,255,.10);
+    }
+
+    .screen-card .browser {
+      min-height: 154px;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      background: rgba(255,255,255,.035);
+    }
+
+    .screen-card .browser::before { height: 34px; }
+    .screen-card .traffic { top: 13px; left: 18px; }
+    .screen-card .traffic i { width: 7px; height: 7px; }
+    .screen-card .window-title { top: 9px; left: 58px; font-size: 11px; }
+    .screen-card .mock-content { padding: 20px; gap: 12px; }
+    .screen-card .mock-row { height: 24px; border-radius: 8px; }
+
+    .screen-note {
+      padding: 16px 20px 20px;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .screen-note b {
+      font-size: 22px;
+    }
+
+    .screen-note span {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 750;
+      line-height: 1.4;
+      text-align: right;
+    }
+
+    .screenshot-placeholder {
+      position: relative;
+      min-height: 154px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background:
+        radial-gradient(circle at 20% 20%, rgba(62,230,194,.13), transparent 34%),
+        radial-gradient(circle at 82% 24%, rgba(112,165,255,.13), transparent 38%),
+        linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.035));
+      overflow: hidden;
+    }
+
+    .screenshot-placeholder::before {
+      content: "";
+      position: absolute;
+      inset: 18px;
+      border-radius: 18px;
+      border: 1px dashed rgba(255,255,255,.22);
+      background: rgba(5,10,22,.22);
+    }
+
+    .screenshot-placeholder::after {
+      content: "真实截图预留位";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      padding: 8px 13px;
+      border-radius: 999px;
+      border: 1px solid rgba(62,230,194,.30);
+      color: rgba(220,255,248,.88);
+      background: rgba(7,10,18,.52);
+      font-size: 13px;
+      font-weight: 900;
+      backdrop-filter: blur(10px);
+      white-space: nowrap;
+    }
+
+    .close-grid {
+      max-width: 1120px;
+      margin: 0 auto;
+      width: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 390px;
+      gap: 62px;
+      align-items: center;
+    }
+
+    .actions {
+      margin-top: 48px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .action {
+      min-height: 168px;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 22px;
+      background: rgba(255,255,255,.075);
+    }
+
+    .action small {
+      color: var(--color);
+      font-weight: 950;
+      letter-spacing: .06em;
+    }
+
+    .action b {
+      display: block;
+      margin-top: 18px;
+      font-size: 22px;
+      line-height: 1.25;
+    }
+
+    .quote {
+      padding: 34px;
+      border-radius: 34px;
+      border: 1px solid rgba(62,230,194,.28);
+      background: linear-gradient(180deg, rgba(62,230,194,.14), rgba(112,165,255,.09));
+      box-shadow: var(--shadow);
+    }
+
+    .quote b {
+      display: block;
+      color: var(--cyan);
+      font-size: 20px;
+      margin-bottom: 20px;
+    }
+
+    .quote p {
+      margin: 0;
+      font-size: 31px;
+      line-height: 1.25;
+      font-weight: 950;
+      text-wrap: balance;
+    }
+
+    .nav {
+      position: fixed;
+      right: 34px;
+      bottom: 28px;
+      z-index: 70;
+      display: flex;
+      gap: 10px;
+    }
+
+    .nav button {
+      width: 46px;
+      height: 46px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(7,10,18,.55);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 22px;
+      backdrop-filter: blur(16px);
+      transition: transform .2s ease, border-color .2s ease, background .2s ease;
+    }
+
+    .nav button:hover {
+      transform: translateY(-2px);
+      border-color: rgba(62,230,194,.45);
+      background: rgba(62,230,194,.12);
+    }
+
+    .hint {
+      position: fixed;
+      left: 50%;
+      bottom: 34px;
+      transform: translateX(-50%);
+      z-index: 65;
+      color: rgba(248,251,255,.42);
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    @media (max-width: 920px) {
+      body { overflow: auto; }
+      .stage { height: auto; min-height: 100vh; overflow: visible; }
+      .slides { height: auto; transform: none !important; }
+      .slide {
+        position: relative;
+        min-height: 100vh;
+        opacity: 1;
+        transform: none;
+        pointer-events: auto;
+        padding: 86px 22px 70px;
+      }
+      .grid-hero, .feature-layout, .close-grid { grid-template-columns: 1fr; gap: 34px; }
+      .flow { grid-template-columns: repeat(2, 1fr); }
+      .flow::before { display: none; }
+      .screen-grid, .actions, .stats { grid-template-columns: 1fr; }
+      .topbar, .nav, .hint, .progress, .demo-toggle { display: none; }
+      .browser { min-height: 330px; }
+      #particleCanvas { opacity: .32; }
+    }
+
+    @media (max-height: 900px) and (min-width: 921px) {
+      .slide { padding-top: 76px; padding-bottom: 44px; }
+      .grid-hero { gap: 52px; max-width: 1120px; }
+      h1 { font-size: clamp(48px, 4.7vw, 78px); max-width: 700px; }
+      h2 { font-size: clamp(40px, 4.5vw, 66px); }
+      .lead { margin-top: 18px; font-size: clamp(17px, 1.45vw, 22px); line-height: 1.45; }
+      .hero-line { margin-top: 30px; font-size: clamp(21px, 2vw, 29px); line-height: 1.34; }
+      .stats { margin-top: 30px; gap: 12px; max-width: 620px; }
+      .stat { min-height: 92px; padding: 16px; border-radius: 20px; }
+      .stat strong { font-size: clamp(27px, 2.7vw, 38px); }
+      .stat span { margin-top: 8px; font-size: 12px; }
+      .browser { min-height: 350px; border-radius: 26px; }
+      .mock-content { padding: 28px; gap: 16px; }
+      .mock-row { height: 34px; }
+      .mini-card { height: 86px; padding: 15px; }
+      .mini-card b { font-size: 21px; }
+      .mini-card span { margin-top: 7px; font-size: 11px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #particleCanvas { display: none; }
+      .slides, .slide, .progress span, .nav button { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <canvas id="particleCanvas" aria-hidden="true"></canvas>
+    <div class="progress"><span id="progress"></span></div>
+    <div class="topbar">
+      <div class="brand"><span class="brand-dot"></span><span>CS质量运营工具平台</span></div>
+      <div class="pager"><span id="pageNow">01</span> / 05</div>
+    </div>
+
+    <main class="slides">
+      <section class="slide active">
+        <div class="grid-hero">
+          <div>
+            <div class="eyebrow">One Click Quality Ops</div>
+            <h1>点一下，跑完整个<br>质量运营闭环</h1>
+            <p class="lead">从自动抓取到自动判断，再到报表看板、催办、月报和大屏，让CSM把时间放在质量改进上。</p>
+            <div class="hero-line">运行脚本 → 抓取多表数据 → 自动导入 → 判断达标/GAP → 生成复盘页面</div>
+            <div class="stats">
+              <div class="stat"><strong class="accent" data-count="41" data-suffix="">41</strong><span>表与文件自动抓取</span></div>
+              <div class="stat"><strong class="blue" data-count="37" data-suffix="">37</strong><span>指标自动判断达标</span></div>
+              <div class="stat"><strong class="amber">一套</strong><span>看板、催办、月报、大屏</span></div>
+            </div>
+          </div>
+          <div class="browser">
+            <div class="traffic"><i></i><i></i><i></i></div>
+            <div class="window-title">Tools Platform</div>
+            <div class="mock-content">
+              <div class="mock-row accent"></div>
+              <div class="mock-row mid"></div>
+              <div class="mini-cards">
+                <div class="mini-card"><b>41</b><span>导入文件</span></div>
+                <div class="mini-card"><b>37</b><span>核心指标</span></div>
+                <div class="mini-card"><b>90d</b><span>趋势追踪</span></div>
+              </div>
+              <div class="mock-row"></div>
+              <div class="mock-row short"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide">
+        <div class="flow-wrap">
+          <div class="eyebrow">Automation Loop</div>
+          <h2>最强能力是一条自动化闭环</h2>
+          <p class="lead">以前要人工下载、合并、判断、截图、做报表；现在变成一条可重复执行的流程。</p>
+          <div class="flow">
+            <div class="flow-step" style="--glow: var(--cyan);"><small>01</small><b>运行脚本</b></div>
+            <div class="flow-step" style="--glow: var(--blue);"><small>02</small><b>自动抓表</b></div>
+            <div class="flow-step" style="--glow: var(--violet);"><small>03</small><b>智能分流</b></div>
+            <div class="flow-step" style="--glow: var(--amber);"><small>04</small><b>判断达标</b></div>
+            <div class="flow-step" style="--glow: var(--green);"><small>05</small><b>生成看板</b></div>
+            <div class="flow-step" style="--glow: var(--rose);"><small>06</small><b>催办复盘</b></div>
+          </div>
+          <div class="statement">真正节省时间的地方，是每日快速监控、提前发现问题、提前解决问题，减少后续追查和补救的管理成本。</div>
+        </div>
+      </section>
+
+      <section class="slide">
+        <div class="feature-layout">
+          <div class="browser">
+            <div class="traffic"><i></i><i></i><i></i></div>
+            <div class="window-title">数据导入页：一键批量导入所有表</div>
+            <div class="mock-content">
+              <div class="mock-row accent"></div>
+              <div class="mock-row"></div>
+              <div class="mock-row mid"></div>
+              <div class="mini-cards">
+                <div class="mini-card"><b>整改</b><span>自动识别</span></div>
+                <div class="mini-card"><b>风险</b><span>自动合并</span></div>
+                <div class="mini-card"><b>专项</b><span>自动分析</span></div>
+              </div>
+              <div class="mock-row short"></div>
+            </div>
+          </div>
+          <div>
+            <div class="eyebrow">Import & Judgement</div>
+            <h2>导入后系统自动判断是否达标</h2>
+            <p class="lead">现场演示可以从这里开始：选择文件夹或接收自动抓取数据，平台直接生成指标结果。</p>
+            <div class="bullets">
+              <div class="bullet" style="--dot: var(--cyan);"><i></i><div><b>智能分流合并</b><span>自动识别整改、风险、专项、SR、漏洞和额外监控表。</span></div></div>
+              <div class="bullet" style="--dot: var(--amber);"><i></i><div><b>统一规则判断</b><span>按目标、权重和预警方向判断达标、GAP和短板。</span></div></div>
+              <div class="bullet" style="--dot: var(--violet);"><i></i><div><b>沉淀历史快照</b><span>每次导入形成可追溯记录，支撑趋势和月报。</span></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide">
+        <div class="screens">
+          <div class="eyebrow">Output Pages</div>
+          <h2>结果直接变成可用页面</h2>
+          <p class="lead">核心结果会沉淀为可查看、可跟进、可复盘的页面，方便各代表处围绕同一套信息开展质量运营。</p>
+          <div class="screen-grid">
+            <a class="screen-card" href="/report" target="_blank" rel="noreferrer">
+              <div class="screenshot-placeholder"></div>
+              <div class="screen-note"><b>报表看板</b><span>整体健康、赛马排行、短板矩阵</span></div>
+            </a>
+            <a class="screen-card" href="/expedite" target="_blank" rel="noreferrer">
+              <div class="screenshot-placeholder"></div>
+              <div class="screen-note"><b>一键催办</b><span>临期/超期风险直接跟进</span></div>
+            </a>
+            <a class="screen-card" href="/monthly" target="_blank" rel="noreferrer">
+              <div class="screenshot-placeholder"></div>
+              <div class="screen-note"><b>月报页面</b><span>月度复盘自动沉淀</span></div>
+            </a>
+            <a class="screen-card" href="/bigscreen" target="_blank" rel="noreferrer">
+              <div class="screenshot-placeholder"></div>
+              <div class="screen-note"><b>大屏看板</b><span>适合会议室滚动展示</span></div>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide">
+        <div class="close-grid">
+          <div>
+            <div class="eyebrow">Work Together</div>
+            <h2>一起把质量运营做得更快、更准、更有经验沉淀</h2>
+            <p class="lead">这个工具的价值不是多一个系统，而是让每个代表处都能用同一套结果发现问题、分享经验、提升效率。</p>
+            <div class="actions">
+              <div class="action" style="--color: var(--cyan);"><small>STEP 01</small><b>运行脚本或导入文件，生成本次质量结果</b></div>
+              <div class="action" style="--color: var(--blue);"><small>STEP 02</small><b>看报表、短板和告警，确认需要跟进的问题</b></div>
+              <div class="action" style="--color: var(--amber);"><small>STEP 03</small><b>用催办、月报和大屏支撑日常复盘</b></div>
+            </div>
+          </div>
+          <div class="quote">
+            <b>我们希望形成的工作方式</b>
+            <p>让问题更早被看见，让经验更快被复用。</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="hint">使用 ← / → 切换，也可以点击右下角按钮</div>
+    <button class="demo-toggle" type="button" id="demoToggle">演示模式</button>
+    <div class="nav">
+      <button type="button" id="prev" aria-label="上一页">‹</button>
+      <button type="button" id="next" aria-label="下一页">›</button>
+    </div>
+  </div>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const progress = document.getElementById('progress');
+    const pageNow = document.getElementById('pageNow');
+    const demoToggle = document.getElementById('demoToggle');
+    let index = 0;
+    let slideMotion = 0;
+    let countersStarted = false;
+
+    function animateCounters() {
+      if (countersStarted) return;
+      countersStarted = true;
+      document.querySelectorAll('[data-count]').forEach(el => {
+        const target = Number(el.dataset.count || 0);
+        const suffix = el.dataset.suffix || '';
+        const start = performance.now();
+        const duration = 820;
+        function frame(now) {
+          const t = Math.min(1, (now - start) / duration);
+          const eased = 1 - Math.pow(1 - t, 3);
+          el.textContent = `${Math.round(target * eased)}${suffix}`;
+          if (t < 1) requestAnimationFrame(frame);
+        }
+        el.textContent = `0${suffix}`;
+        requestAnimationFrame(frame);
+      });
+    }
+
+    function show(next) {
+      const oldIndex = index;
+      index = Math.max(0, Math.min(slides.length - 1, next));
+      slides.forEach((slide, i) => slide.classList.toggle('active', i === index));
+      progress.style.width = `${((index + 1) / slides.length) * 100}%`;
+      pageNow.textContent = String(index + 1).padStart(2, '0');
+      history.replaceState(null, '', `#${index + 1}`);
+      slideMotion += (index - oldIndex) * 1.35;
+      if (index === 0) setTimeout(animateCounters, 180);
+    }
+
+    document.getElementById('prev').addEventListener('click', () => show(index - 1));
+    document.getElementById('next').addEventListener('click', () => show(index + 1));
+    demoToggle.addEventListener('click', () => {
+      document.body.classList.toggle('demo-mode');
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ') show(index + 1);
+      if (event.key === 'ArrowLeft' || event.key === 'PageUp') show(index - 1);
+      if (/^[1-5]$/.test(event.key)) show(Number(event.key) - 1);
+      if (event.key.toLowerCase() === 'd') document.body.classList.toggle('demo-mode');
+    });
+
+    const initial = Number(location.hash.replace('#', ''));
+    if (initial >= 1 && initial <= slides.length) show(initial - 1);
+    else show(0);
+
+    (() => {
+      const canvas = document.getElementById('particleCanvas');
+      if (!canvas || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const ctx = canvas.getContext('2d', { alpha: true });
+      const pointer = { x: innerWidth * .72, y: innerHeight * .36, active: false, vx: 0, vy: 0 };
+      const scroll = { value: 0, velocity: 0, last: 0 };
+      let dpr = 1;
+      let particles = [];
+      let lastTime = performance.now();
+
+      function resize() {
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.floor(innerWidth * dpr);
+        canvas.height = Math.floor(innerHeight * dpr);
+        canvas.style.width = `${innerWidth}px`;
+        canvas.style.height = `${innerHeight}px`;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        const count = Math.max(70, Math.min(150, Math.round((innerWidth * innerHeight) / 13500)));
+        particles = Array.from({ length: count }, (_, i) => {
+          const depth = .35 + Math.random() * .9;
+          return {
+            x: Math.random() * innerWidth,
+            y: Math.random() * innerHeight,
+            baseX: Math.random() * innerWidth,
+            baseY: Math.random() * innerHeight,
+            vx: (Math.random() - .5) * .18,
+            vy: (Math.random() - .5) * .18,
+            r: (.7 + Math.random() * 1.8) * depth,
+            depth,
+            hue: i % 7 === 0 ? '34,199,169' : (i % 5 === 0 ? '112,165,255' : '190,205,230'),
+            phase: Math.random() * Math.PI * 2
+          };
+        });
+      }
+
+      function movePointer(x, y) {
+        pointer.vx = x - pointer.x;
+        pointer.vy = y - pointer.y;
+        pointer.x = x;
+        pointer.y = y;
+        pointer.active = true;
+      }
+
+      window.addEventListener('resize', resize, { passive: true });
+      window.addEventListener('pointermove', event => movePointer(event.clientX, event.clientY), { passive: true });
+      window.addEventListener('pointerleave', () => { pointer.active = false; }, { passive: true });
+      window.addEventListener('wheel', event => {
+        scroll.velocity += Math.max(-2.4, Math.min(2.4, event.deltaY / 420));
+      }, { passive: true });
+      window.addEventListener('touchmove', () => {
+        scroll.velocity += .35;
+      }, { passive: true });
+
+      function line(a, b, alpha) {
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.strokeStyle = `rgba(120, 220, 255, ${alpha})`;
+        ctx.lineWidth = .75;
+        ctx.stroke();
+      }
+
+      function tick(now) {
+        const dt = Math.min(32, now - lastTime) / 16.67;
+        lastTime = now;
+        scroll.velocity += slideMotion * .035;
+        slideMotion *= .90;
+        scroll.value += scroll.velocity * dt;
+        scroll.velocity *= .925;
+        pointer.vx *= .86;
+        pointer.vy *= .86;
+
+        ctx.clearRect(0, 0, innerWidth, innerHeight);
+        const gradient = ctx.createRadialGradient(pointer.x, pointer.y, 20, pointer.x, pointer.y, Math.max(innerWidth, innerHeight) * .52);
+        gradient.addColorStop(0, pointer.active ? 'rgba(62,230,194,.12)' : 'rgba(62,230,194,.04)');
+        gradient.addColorStop(.45, 'rgba(112,165,255,.045)');
+        gradient.addColorStop(1, 'rgba(7,10,18,0)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, innerWidth, innerHeight);
+
+        for (const p of particles) {
+          const waveX = Math.sin(now * .00018 + p.phase + scroll.value * .16) * 18 * p.depth;
+          const waveY = Math.cos(now * .00016 + p.phase * 1.3 + scroll.value * .11) * 12 * p.depth;
+          const targetX = (p.baseX + waveX + scroll.value * 9 * p.depth + innerWidth * 2) % (innerWidth + 80) - 40;
+          const targetY = (p.baseY + waveY + Math.sin(scroll.value * .18) * 18 * p.depth + innerHeight * 2) % (innerHeight + 80) - 40;
+          p.vx += (targetX - p.x) * .0022 * dt;
+          p.vy += (targetY - p.y) * .0022 * dt;
+
+          const dx = pointer.x - p.x;
+          const dy = pointer.y - p.y;
+          const dist = Math.hypot(dx, dy) || 1;
+          if (dist < 210) {
+            const strength = (1 - dist / 210) * (pointer.active ? .19 : .055) * p.depth;
+            p.vx += (dx / dist) * strength * dt;
+            p.vy += (dy / dist) * strength * dt;
+            p.vx += pointer.vx * .0025 * strength;
+            p.vy += pointer.vy * .0025 * strength;
+          }
+
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          p.vx *= .965;
+          p.vy *= .965;
+
+          const pulse = .62 + Math.sin(now * .0012 + p.phase) * .22;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r * pulse, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${p.hue}, ${0.20 + p.depth * .24})`;
+          ctx.fill();
+        }
+
+        for (let i = 0; i < particles.length; i += 1) {
+          const a = particles[i];
+          for (let j = i + 1; j < particles.length; j += 11) {
+            const b = particles[j];
+            const dx = a.x - b.x;
+            const dy = a.y - b.y;
+            const dist = Math.hypot(dx, dy);
+            if (dist < 118) line(a, b, (1 - dist / 118) * .045);
+          }
+        }
+        requestAnimationFrame(tick);
+      }
+
+      resize();
+      requestAnimationFrame(tick);
+    })();
+  </script>
+</body>
+</html>
