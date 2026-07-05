@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>膳食秘书工作手册 - 餐厅全景</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #f0f2f5; color: #333; line-height: 1.6; padding: 20px; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        header { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; padding: 28px; border-radius: 16px; margin-bottom: 24px; text-align: center; }
+        header h1 { font-size: 1.8em; margin-bottom: 6px; }
+        header p { opacity: 0.9; font-size: 0.95em; }
+
+        /* 目录 */
+        .toc { background: white; border-radius: 16px; padding: 20px; margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+        .toc a { display: inline-block; background: #f8f9fa; padding: 8px 16px; border-radius: 20px; color: #333; text-decoration: none; font-size: 0.9em; transition: all 0.2s; border: 1px solid #e0e0e0; }
+        .toc a:hover { background: #e74c3c; color: white; border-color: #e74c3c; }
+
+        /* 模块 */
+        .module { background: white; border-radius: 16px; margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); overflow: hidden; }
+        .module-header { padding: 16px 24px; color: white; display: flex; align-items: center; gap: 12px; }
+        .module-header.data { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+        .module-header.equip-new { background: linear-gradient(135deg, #8e44ad, #9b59b6); }
+        .module-header.food { background: linear-gradient(135deg, #e67e22, #d35400); }
+        .module-header.clean { background: linear-gradient(135deg, #27ae60, #229954); }
+        .module-header.staff { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
+        .module-header.equip { background: linear-gradient(135deg, #3498db, #2980b9); }
+        .module-header.store { background: linear-gradient(135deg, #1abc9c, #16a085); }
+        .module-header.service { background: linear-gradient(135deg, #16a085, #1abc9c); }
+        .module-header.admin { background: linear-gradient(135deg, #34495e, #2c3e50); }
+        .module-header.emergency { background: linear-gradient(135deg, #f39c12, #d68910); }
+        .module-header.festival { background: linear-gradient(135deg, #e91e63, #c2185b); }
+        .module-header h2 { font-size: 1.15em; }
+        .module-header .count { margin-left: auto; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 15px; font-size: 0.85em; }
+        .module-content { padding: 20px 24px; overflow-x: auto; }
+
+        /* 数据卡片 */
+        .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+        .data-card { background: linear-gradient(135deg, #fff5f5, #fed7d7); border: 2px solid #feb2b2; border-radius: 12px; padding: 14px; }
+        .data-card h4 { color: #c53030; margin-bottom: 8px; font-size: 0.9em; }
+        .data-card .value { font-size: 1.6em; font-weight: 700; color: #e53e3e; margin-bottom: 2px; }
+        .data-card .unit { font-size: 0.85em; color: #718096; }
+        .data-card .note { font-size: 0.75em; color: #a0aec0; margin-top: 4px; }
+
+        /* 设备台账表格 */
+        .equip-table { width: 100%; min-width: 600px; border-collapse: collapse; margin-top: 16px; font-size: 0.9em; table-layout: fixed; }
+        .equip-table th { background: #f8f9fa; padding: 10px 12px; text-align: left; border-bottom: 2px solid #e0e0e0; color: #2c3e50; font-weight: 600; word-wrap: break-word; }
+        .equip-table td { padding: 10px 12px; border-bottom: 1px solid #ecf0f1; vertical-align: top; word-wrap: break-word; }
+        .equip-table tr:hover { background: #f8f9fa; }
+        .equip-table input { width: 100%; min-width: 50px; padding: 6px 8px; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 0.85em; box-sizing: border-box; }
+        .equip-table input:focus { outline: none; border-color: #3498db; }
+        .equip-table select { width: 100%; min-width: 60px; padding: 6px 8px; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 0.85em; box-sizing: border-box; }
+
+        /* 表格列宽固定 (默认6列) */
+        .equip-table th:nth-child(1), .equip-table td:nth-child(1) { width: 18%; }
+        .equip-table th:nth-child(2), .equip-table td:nth-child(2) { width: 12%; }
+        .equip-table th:nth-child(3), .equip-table td:nth-child(3) { width: 15%; }
+        .equip-table th:nth-child(4), .equip-table td:nth-child(4) { width: 15%; }
+        .equip-table th:nth-child(5), .equip-table td:nth-child(5) { width: 15%; }
+        .equip-table th:nth-child(6), .equip-table td:nth-child(6) { width: 25%; }
+
+        /* 运营数据表格 (7列) */
+        .data-table th:nth-child(1), .data-table td:nth-child(1) { width: 12%; }
+        .data-table th:nth-child(2), .data-table td:nth-child(2) { width: 12%; }
+        .data-table th:nth-child(3), .data-table td:nth-child(3) { width: 12%; }
+        .data-table th:nth-child(4), .data-table td:nth-child(4) { width: 16%; }
+        .data-table th:nth-child(5), .data-table td:nth-child(5) { width: 12%; }
+        .data-table th:nth-child(6), .data-table td:nth-child(6) { width: 12%; }
+        .data-table th:nth-child(7), .data-table td:nth-child(7) { width: 24%; }
+
+        /* 小标题 */
+        .sub-title { font-size: 1em; font-weight: 600; color: #2c3e50; margin: 20px 0 12px 0; padding-left: 12px; border-left: 4px solid #e74c3c; }
+
+        /* 检查项 */
+        .check-group { margin-bottom: 20px; }
+        .check-group:last-child { margin-bottom: 0; }
+        .check-group-title { font-weight: 600; color: #2c3e50; margin-bottom: 10px; padding-left: 12px; border-left: 3px solid #e74c3c; font-size: 0.95em; }
+        .check-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 8px; }
+        .check-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; background: #f8f9fa; border-radius: 8px; font-size: 0.9em; }
+        .check-item input { margin-top: 2px; accent-color: #27ae60; }
+        .check-item label { cursor: pointer; flex: 1; }
+        .check-item .sub { font-size: 0.85em; color: #7f8c8d; display: block; }
+
+        /* 高亮框 */
+        .highlight-box { background: #fff3cd; border: 1px solid #ffc107; border-radius: 12px; padding: 16px; margin-top: 20px; }
+        .highlight-box h4 { color: #856404; margin-bottom: 10px; }
+        .highlight-box ul { list-style: none; }
+        .highlight-box li { color: #856404; padding: 4px 0; font-size: 0.9em; }
+        .highlight-box li::before { content: "⚠️ "; }
+
+        /* 汇总 */
+        .summary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 16px; padding: 24px; margin-top: 24px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); }
+        .summary h3 { margin-bottom: 16px; text-align: center; }
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(85px, 1fr)); gap: 10px; text-align: center; }
+        .summary-item { background: rgba(255,255,255,0.15); padding: 12px 6px; border-radius: 10px; }
+        .summary-item .num { font-size: 1.5em; font-weight: 700; }
+        .summary-item .label { font-size: 0.7em; opacity: 0.9; margin-top: 4px; }
+
+        @media print {
+            body { background: white; padding: 10px; }
+            .module { break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍽️ 膳食秘书工作手册</h1>
+            <p>餐厅全景工作指南 - 所见之处皆是责任</p>
+        </header>
+
+        <!-- 快速导航 -->
+        <nav class="toc">
+            <a href="#data">📊 运营数据</a>
+            <a href="#equip-detail">🔥 厨房设备台账</a>
+            <a href="#food">🥘 食品安全</a>
+            <a href="#clean">🧹 厨房卫生</a>
+            <a href="#staff">👥 小工管理</a>
+            <a href="#equip">🔧 设备检查</a>
+            <a href="#store">📦 库房管理</a>
+            <a href="#service">💁 服务质量</a>
+            <a href="#admin">📋 行政事务</a>
+            <a href="#emergency">🚨 应急处理</a>
+            <a href="#festival">🎄 节日活动</a>
+        </nav>
+
+        <!-- ========== 运营数据 ========== -->
+        <div id="data" class="module">
+            <div class="module-header data">
+                <span>📊</span>
+                <h2>运营数据（必须背下来的数字！）</h2>
+                <span class="count">核心参数</span>
+            </div>
+            <div class="module-content">
+                <h3 class="sub-title">🍳 产能参数（明天填上）</h3>
+                <div class="data-grid">
+                    <div class="data-card">
+                        <h4>小炒一锅出多少份？</h4>
+                        <div class="value">__</div>
+                        <div class="unit">份/锅</div>
+                        <div class="note">需实地统计</div>
+                    </div>
+                    <div class="data-card">
+                        <h4>大锅米饭够多少人？</h4>
+                        <div class="value">__</div>
+                        <div class="unit">人/锅</div>
+                        <div class="note">需记录锅的规格</div>
+                    </div>
+                    <div class="data-card">
+                        <h4>包子一笼多少个？</h4>
+                        <div class="value">__</div>
+                        <div class="unit">个/笼</div>
+                        <div class="note">需实地统计</div>
+                    </div>
+                    <div class="data-card">
+                        <h4>汤锅一锅能出多少碗？</h4>
+                        <div class="value">__</div>
+                        <div class="unit">碗/锅</div>
+                        <div class="note">汤碗已换成中碗</div>
+                    </div>
+                    <div class="data-card">
+                        <h4>蒸笼一屉能蒸多少？</h4>
+                        <div class="value">__</div>
+                        <div class="unit">个/屉</div>
+                        <div class="note">馒头/包子</div>
+                    </div>
+                    <div class="data-card">
+                        <h4>铁板一次能出多少串？</h4>
+                        <div class="value">__</div>
+                        <div class="unit">串/次</div>
+                        <div class="note">牛肉串/羊肉串</div>
+                    </div>
+                    <div class="data-card">
+                        <h4>面档一分钟出几碗面？</h4>
+                        <div class="value">__</div>
+                        <div class="unit">碗/分钟</div>
+                        <div class="note">高峰期产能</div>
+                    </div>
+                    <div class="data-card">
+                        <h4>煎饼/手抓饼出餐速度？</h4>
+                        <div class="value">__</div>
+                        <div class="unit">个/分钟</div>
+                        <div class="note">单品效率</div>
+                    </div>
+                </div>
+
+                <h3 class="sub-title">🏠 容量参数</h3>
+                <div class="data-grid">
+                    <div class="data-card">
+                        <h4>餐厅一次能容纳多少人？</h4>
+                        <div class="value">__</div>
+                        <div class="unit">人</div>
+                        <div class="note">座位+站立</div>
+                    </div>
+                    <div class="data-card">
+                        <h4>固定座位数？</h4>
+                        <div class="value">__</div>
+                        <div class="unit">个</div>
+                        <div class="note">餐位</div>
+                    </div>
+                    <div class="data-card">
+                        <h4>餐线同时能排多少人？</h4>
+                        <div class="value">__</div>
+                        <div class="unit">人</div>
+                        <div class="note">高峰排队</div>
+                    </div>
+                    <div class="data-card">
+                        <h4>取餐柜有几个？</h4>
+                        <div class="value">__</div>
+                        <div class="unit">个</div>
+                        <div class="note">位置分布</div>
+                    </div>
+                </div>
+
+                <h3 class="sub-title">👥 人员参数</h3>
+                <div class="data-grid">
+                    <div class="data-card">
+                        <h4>厨师团队共多少人？</h4>
+                        <div class="value">__</div>
+                        <div class="unit">人</div>
+                        <div class="note">中方+本地</div>
+                    </div>
+                    <div class="data-card">
+                        <h4>小工/帮厨共多少人？</h4>
+                        <div class="value">__</div>
+                        <div class="unit">人</div>
+                        <div class="note">需关注是否够数</div>
+                    </div>
+                    <div class="data-card">
+                        <h4>服务范围内员工总数？</h4>
+                        <div class="value">__</div>
+                        <div class="unit">人</div>
+                        <div class="note">需了解</div>
+                    </div>
+                    <div class="data-card">
+                        <h4>灶台火眼数？</h4>
+                        <div class="value">__</div>
+                        <div class="unit">个</div>
+                        <div class="note">大锅灶+小炒灶</div>
+                    </div>
+                </div>
+
+                <h3 class="sub-title">📋 运营数据台账（建议每日记录）</h3>
+                <table class="equip-table data-table">
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>午餐人数</th>
+                            <th>晚餐人数</th>
+                            <th>高峰排队时长</th>
+                            <th>剩菜情况</th>
+                            <th>充值金额</th>
+                            <th>备注</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="text" placeholder="7月6日"></td>
+                            <td><input type="text" class="input-narrow" placeholder="__"></td>
+                            <td><input type="text" class="input-narrow" placeholder="__"></td>
+                            <td><input type="text" class="input-narrow" placeholder="__分钟"></td>
+                            <td><input type="text" class="input-narrow" placeholder="多/少"></td>
+                            <td><input type="text" class="input-narrow" placeholder="__元"></td>
+                            <td><input type="text" placeholder=""></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" placeholder="7月7日"></td>
+                            <td><input type="text" class="input-narrow"></td>
+                            <td><input type="text" class="input-narrow"></td>
+                            <td><input type="text" class="input-narrow"></td>
+                            <td><input type="text" class="input-narrow"></td>
+                            <td><input type="text" class="input-narrow"></td>
+                            <td><input type="text"></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" placeholder="7月8日"></td>
+                            <td><input type="text" class="input-narrow"></td>
+                            <td><input type="text" class="input-narrow"></td>
+                            <td><input type="text" class="input-narrow"></td>
+                            <td><input type="text" class="input-narrow"></td>
+                            <td><input type="text" class="input-narrow"></td>
+                            <td><input type="text"></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 class="sub-title">🎯 常见Q&A（必须能答上来）</h3>
+                <div class="check-list">
+                    <div class="check-item">
+                        <input type="checkbox" id="d1"><label for="d1">餐厅营业时间？<span class="sub">早餐__/__ 中餐__/__ 晚餐__/__</span></label>
+                    </div>
+                    <div class="check-item">
+                        <input type="checkbox" id="d2"><label for="d2">每月满意度目标？<span class="sub">97分以上</span></label>
+                    </div>
+                    <div class="check-item">
+                        <input type="checkbox" id="d3"><label for="d3">备用金额度？<span class="sub">5万埃镑/月</span></label>
+                    </div>
+                    <div class="check-item">
+                        <input type="checkbox" id="d4"><label for="d4">茶歇收费标准？<span class="sub">客户端15元/人，培训45元/人</span></label>
+                    </div>
+                    <div class="check-item">
+                        <input type="checkbox" id="d5"><label for="d5">沙拉区有多少种？<span class="sub">12种（已升级）</span></label>
+                    </div>
+                    <div class="check-item">
+                        <input type="checkbox" id="d6"><label for="d6">餐盘库存标准？<span class="sub">≥300个</span></label>
+                    </div>
+                    <div class="check-item">
+                        <input type="checkbox" id="d7"><label for="d7">碗库存标准？<span class="sub">≥1500个</span></label>
+                    </div>
+                    <div class="check-item">
+                        <input type="checkbox" id="d8"><label for="d8">创新菜达标标准？<span class="sub">4人打4.5分以上</span></label>
+                    </div>
+                    <div class="check-item">
+                        <input type="checkbox" id="d9"><label for="d9">鸭货是免费还是收费？<span class="sub">收费！</span></label>
+                    </div>
+                    <div class="check-item">
+                        <input type="checkbox" id="d10"><label for="d10">免费小食放哪里？<span class="sub">餐厅外围，有标识</span></label>
+                    </div>
+                </div>
+
+                <div class="highlight-box">
+                    <h4>💡 运营数据为什么重要？</h4>
+                    <ul>
+                        <li>领导问数据时答不上来 = 不专业</li>
+                        <li>不知道产能怎么排菜单？不知道容量怎么定座位？</li>
+                        <li>这些数字是管理的基础，必须亲自摸清</li>
+                        <li>建议：明天实地走一圈，数一数、记一记、背下来！</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== 厨房设备台账（新增！） ========== -->
+        <div id="equip-detail" class="module">
+            <div class="module-header equip-new">
+                <span>🔥</span>
+                <h2>厨房设备台账（熟悉每一台设备！）</h2>
+                <span class="count">台账</span>
+            </div>
+            <div class="module-content">
+                <p style="color: #7f8c8d; margin-bottom: 16px; font-size: 0.9em;">
+                    🎯 <strong>明天任务</strong>：走一遍厨房，把这些设备的名称、数量、位置、状态都记下来！<br>
+                    作为膳食秘书，你不需要会操作每台设备，但必须知道<strong>设备叫什么、在哪里、有没有坏</strong>。
+                </p>
+
+                <h3 class="sub-title">🔥 加热设备（灶台类）</h3>
+                <table class="equip-table">
+                    <thead>
+                        <tr>
+                            <th>设备名称</th>
+                            <th>数量</th>
+                            <th>位置</th>
+                            <th>单次产能</th>
+                            <th>状态</th>
+                            <th>备注</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>大锅灶（炒菜大锅）</td>
+                            <td><input type="text" class="input-narrow" placeholder="__个"></td>
+                            <td><input type="text" placeholder="灶台区"></td>
+                            <td><input type="text" class="input-narrow" placeholder="__份/锅"></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder=""></td>
+                        </tr>
+                        <tr>
+                            <td>小炒灶（小锅快炒）</td>
+                            <td><input type="text" class="input-narrow" placeholder="__个"></td>
+                            <td><input type="text" placeholder="小炒区"></td>
+                            <td><input type="text" class="input-narrow" placeholder="__份/锅"></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder=""></td>
+                        </tr>
+                        <tr>
+                            <td>煲仔饭灶</td>
+                            <td><input type="text" class="input-narrow" placeholder="__个"></td>
+                            <td><input type="text" placeholder=""></td>
+                            <td><input type="text" class="input-narrow" placeholder="__份/锅"></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder=""></td>
+                        </tr>
+                        <tr>
+                            <td>铁板烧（铁板）</td>
+                            <td><input type="text" class="input-narrow" placeholder="__台"></td>
+                            <td><input type="text" placeholder="明档区"></td>
+                            <td><input type="text" class="input-narrow" placeholder="__串/次"></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder="牛肉串/羊肉串"></td>
+                        </tr>
+                        <tr>
+                            <td>电饼铛/煎饼机</td>
+                            <td><input type="text" class="input-narrow" placeholder="__台"></td>
+                            <td><input type="text" placeholder=""></td>
+                            <td><input type="text" class="input-narrow" placeholder="__个/次"></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder="手抓饼/煎饼"></td>
+                        </tr>
+                        <tr>
+                            <td>煮面炉（面档）</td>
+                            <td><input type="text" class="input-narrow" placeholder="__台"></td>
+                            <td><input type="text" placeholder="面档区"></td>
+                            <td><input type="text" class="input-narrow" placeholder="__碗/分钟"></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder="拉面/刀削面"></td>
+                        </tr>
+                        <tr>
+                            <td>汤锅炉（煮汤）</td>
+                            <td><input type="text" class="input-narrow" placeholder="__个"></td>
+                            <td><input type="text" placeholder="汤档区"></td>
+                            <td><input type="text" class="input-narrow" placeholder="__升/锅"></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder=""></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 class="sub-title">♨️ 蒸煮设备</h3>
+                <table class="equip-table">
+                    <thead>
+                        <tr>
+                            <th>设备名称</th>
+                            <th>数量</th>
+                            <th>位置</th>
+                            <th>单次产能</th>
+                            <th>状态</th>
+                            <th>备注</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>蒸饭柜（蒸米饭）</td>
+                            <td><input type="text" class="input-narrow" placeholder="__台"></td>
+                            <td><input type="text" placeholder="蒸饭区"></td>
+                            <td><input type="text" class="input-narrow" placeholder="__人份/柜"></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder="">⚠️之前漏气报修</td>
+                        </tr>
+                        <tr>
+                            <td>蒸笼架（蒸包子馒头）</td>
+                            <td><input type="text" class="input-narrow" placeholder="__层"></td>
+                            <td><input type="text" placeholder="面点区"></td>
+                            <td><input type="text" class="input-narrow" placeholder="__个/屉"></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder="">每屉约__个</td>
+                        </tr>
+                        <tr>
+                            <td>蒸柜（多功能）</td>
+                            <td><input type="text" class="input-narrow" placeholder="__台"></td>
+                            <td><input type="text" placeholder=""></td>
+                            <td><input type="text" class="input-narrow" placeholder="__份/次"></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder=""></td>
+                        </tr>
+                        <tr>
+                            <td>饺子锅/煮水锅</td>
+                            <td><input type="text" class="input-narrow" placeholder="__口"></td>
+                            <td><input type="text" placeholder="面档区"></td>
+                            <td><input type="text" class="input-narrow" placeholder="__个/锅"></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder="">水饺/馄饨</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 class="sub-title">🧊 制冷设备</h3>
+                <table class="equip-table">
+                    <thead>
+                        <tr>
+                            <th>设备名称</th>
+                            <th>数量</th>
+                            <th>位置</th>
+                            <th>容量/温度</th>
+                            <th>状态</th>
+                            <th>备注</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>冷藏冰箱（4°C）</td>
+                            <td><input type="text" class="input-narrow" placeholder="__台"></td>
+                            <td><input type="text" placeholder="后厨"></td>
+                            <td><input type="text" class="input-narrow" placeholder="≤4°C"></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder=""></td>
+                        </tr>
+                        <tr>
+                            <td>冷冻冰箱（-18°C）</td>
+                            <td><input type="text" class="input-narrow" placeholder="__台"></td>
+                            <td><input type="text" placeholder="后厨/库房"></td>
+                            <td><input type="text" class="input-narrow" placeholder="≤-18°C"></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder="">⚠️之前报修</td>
+                        </tr>
+                        <tr>
+                            <td>展示冷藏柜（饮料/沙拉）</td>
+                            <td><input type="text" class="input-narrow" placeholder="__台"></td>
+                            <td><input type="text" placeholder="餐厅区"></td>
+                            <td><input type="text" class="input-narrow" placeholder=""></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder="">取饮料的柜子</td>
+                        </tr>
+                        <div class="check-item">
+                            <input type="checkbox" id=""><label for="">冰柜（制冰/冷冻）</label>
+                        </div>
+                        <tr>
+                            <td>制冰机</td>
+                            <td><input type="text" class="input-narrow" placeholder="__台"></td>
+                            <td><input type="text" placeholder=""></td>
+                            <td><input type="text" class="input-narrow" placeholder="__kg/天"></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder=""></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 class="sub-title">🍳 煎炒炸设备</h3>
+                <table class="equip-table">
+                    <thead>
+                        <tr>
+                            <th>设备名称</th>
+                            <th>数量</th>
+                            <th>位置</th>
+                            <th>单次产能</th>
+                            <th>状态</th>
+                            <th>备注</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>平底煎锅（煎蛋/煎饼）</td>
+                            <td><input type="text" class="input-narrow" placeholder="__台"></td>
+                            <td><input type="text" placeholder="早餐区"></td>
+                            <td><input type="text" class="input-narrow" placeholder="__个/次"></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder=""></td>
+                        </tr>
+                        <tr>
+                            <td>油炸锅（炸油条/炸鸡）</td>
+                            <td><input type="text" class="input-narrow" placeholder="__台"></td>
+                            <td><input type="text" placeholder="明档区"></td>
+                            <td><input type="text" class="input-narrow" placeholder="__份/锅"></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder="">油需定期更换</td>
+                        </tr>
+                        <tr>
+                            <td>烧烤架（烤串）</td>
+                            <td><input type="text" class="input-narrow" placeholder="__台"></td>
+                            <td><input type="text" placeholder="明档区"></td>
+                            <td><input type="text" class="input-narrow" placeholder="__串/次"></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder=""></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 class="sub-title">🧼 清洗消毒设备</h3>
+                <table class="equip-table">
+                    <thead>
+                        <tr>
+                            <th>设备名称</th>
+                            <th>数量</th>
+                            <th>位置</th>
+                            <th>容量</th>
+                            <th>状态</th>
+                            <th>备注</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>洗碗机</td>
+                            <td><input type="text" class="input-narrow" placeholder="__台"></td>
+                            <td><input type="text" placeholder="洗碗区"></td>
+                            <td><input type="text" class="input-narrow" placeholder="__件/小时"></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder=""></td>
+                        </tr>
+                        <tr>
+                            <td>消毒柜（碗筷消毒）</td>
+                            <td><input type="text" class="input-narrow" placeholder="__台"></td>
+                            <td><input type="text" placeholder="餐具区"></td>
+                            <td><input type="text" class="input-narrow" placeholder="__件/次"></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder="">⚠️之前报修过</td>
+                        </tr>
+                        <tr>
+                            <td>洗菜池/水槽</td>
+                            <td><input type="text" class="input-narrow" placeholder="__个"></td>
+                            <td><input type="text" placeholder="后厨"></td>
+                            <td><input type="text" class="input-narrow" placeholder=""></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder="">生菜/熟菜分开</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 class="sub-title">❄️ 保温设备</h3>
+                <table class="equip-table">
+                    <thead>
+                        <tr>
+                            <th>设备名称</th>
+                            <th>数量</th>
+                            <th>位置</th>
+                            <th>功能</th>
+                            <th>状态</th>
+                            <th>备注</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>保温灯（餐线上方）</td>
+                            <td><input type="text" class="input-narrow" placeholder="__盏"></td>
+                            <td><input type="text" placeholder="餐线上方"></td>
+                            <td><input type="text" class="input-narrow" placeholder="保温"></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder="">⚠️之前建议增设</td>
+                        </tr>
+                        <tr>
+                            <td>暖菜台/热菜台</td>
+                            <td><input type="text" class="input-narrow" placeholder="__台"></td>
+                            <td><input type="text" placeholder="餐线区"></td>
+                            <td><input type="text" class="input-narrow" placeholder="保温"></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder=""></td>
+                        </tr>
+                        <tr>
+                            <td>保温桶（汤/粥）</td>
+                            <td><input type="text" class="input-narrow" placeholder="__个"></td>
+                            <td><input type="text" placeholder="餐线区"></td>
+                            <td><input type="text" class="input-narrow" placeholder="保温"></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder="">汤/粥保温</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 class="sub-title">💡 其他设备</h3>
+                <table class="equip-table">
+                    <thead>
+                        <tr>
+                            <th>设备名称</th>
+                            <th>数量</th>
+                            <th>位置</th>
+                            <th>功能</th>
+                            <th>状态</th>
+                            <th>备注</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>微波炉</td>
+                            <td><input type="text" class="input-narrow" placeholder="__台"></td>
+                            <td><input type="text" placeholder=""></td>
+                            <td><input type="text" class="input-narrow" placeholder="加热"></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder=""></td>
+                        </tr>
+                        <tr>
+                            <td>绞肉机/切菜机</td>
+                            <td><input type="text" class="input-narrow" placeholder="__台"></td>
+                            <td><input type="text" placeholder="后厨"></td>
+                            <td><input type="text" class="input-narrow" placeholder="加工"></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder=""></td>
+                        </tr>
+                        <tr>
+                            <td>和面机</td>
+                            <td><input type="text" class="input-narrow" placeholder="__台"></td>
+                            <td><input type="text" placeholder="面点区"></td>
+                            <td><input type="text" class="input-narrow" placeholder="和面"></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder=""></td>
+                        </tr>
+                        <tr>
+                            <td>压面机</td>
+                            <td><input type="text" class="input-narrow" placeholder="__台"></td>
+                            <td><input type="text" placeholder="面点区"></td>
+                            <td><input type="text" class="input-narrow" placeholder="压面"></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder="">面条</td>
+                        </tr>
+                        <tr>
+                            <td>豆浆机/粥机</td>
+                            <td><input type="text" class="input-narrow" placeholder="__台"></td>
+                            <td><input type="text" placeholder="早餐区"></td>
+                            <td><input type="text" class="input-narrow" placeholder="制作"></td>
+                            <td><select style="width:100%;padding:6px;border:1px solid #e0e0e0;border-radius:4px;"><option>正常</option><option>故障</option><option>维修中</option></select></td>
+                            <td><input type="text" placeholder="">稀饭/豆浆</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="highlight-box">
+                    <h4>🔧 设备报修联系谁？</h4>
+                    <ul>
+                        <li>供应商邮箱：<strong>mahmoud.sayed@proservice.com.eg</strong></li>
+                        <li>报修流程：厨师提供需求 → 发邮件 → 供应商报价 → 同意后派人维修</li>
+                        <li>紧急维修（如煮面炉坏）需在上午11:30前修好！</li>
+                        <li>之前报修记录：蒸饭柜漏气、汤锅炉、铁板、电饼铛、消毒柜、水龙头等</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 食品安全 -->
+        <div id="food" class="module">
+            <div class="module-header food">
+                <span>🥘</span>
+                <h2>食品安全</h2>
+                <span class="count">15项</span>
+            </div>
+            <div class="module-content">
+                <div class="check-group">
+                    <div class="check-group-title">食材验收与新鲜度</div>
+                    <div class="check-list">
+                        <div class="check-item"><input type="checkbox" id="f1"><label for="f1">食材外观检查<span class="sub">颜色正常、无腐烂、无异味</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="f2"><label for="f2">食材有效期检查<span class="sub">标签清晰、在保质期内</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="f3"><label for="f3">冷链食材温度<span class="sub">冷藏≤4°C，冷冻≤-18°C</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="f4"><label for="f4">肉类检疫证明<span class="sub">索要票据、来源可追溯</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="f5"><label for="f5">蔬菜农残检查<span class="sub">浸泡清洗干净</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="f6"><label for="f6">水产海鲜新鲜度<span class="sub">无死蟹死虾、贝类闭壳</span></label></div>
+                    </div>
+                </div>
+                <div class="check-group">
+                    <div class="check-group-title">食品加工规范</div>
+                    <div class="check-list">
+                        <div class="check-item"><input type="checkbox" id="f7"><label for="f7">生熟分开<span class="sub">砧板、刀具、容器分开使用</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="f8"><label for="f8">操作前洗手消毒<span class="sub">小工必须严格执行</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="f9"><label for="f9">食品中心温度<span class="sub">肉类≥70°C彻底加热</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="f10"><label for="f10">包子馅料当天用完<span class="sub">不得隔夜</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="f11"><label for="f11">调味品规范使用<span class="sub">在保质期内、储存得当</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="f12"><label for="f12">添加剂管理<span class="sub">专人保管、详细记录</span></label></div>
+                    </div>
+                </div>
+                <div class="check-group">
+                    <div class="check-group-title">成品出品</div>
+                    <div class="check-list">
+                        <div class="check-item"><input type="checkbox" id="f13"><label for="f13">所有菜品自己品尝<span class="sub">有问题立即改善</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="f14"><label for="f14">成品防护<span class="sub">加盖防尘、防蝇虫</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="f15"><label for="f15">特殊饮食标注<span class="sub">过敏原、辣度等标识</span></label></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 厨房卫生 -->
+        <div id="clean" class="module">
+            <div class="module-header clean">
+                <span>🧹</span>
+                <h2>厨房环境卫生</h2>
+                <span class="count">20项</span>
+            </div>
+            <div class="module-content">
+                <div class="check-group">
+                    <div class="check-group-title">后厨区域（所见都是活儿）</div>
+                    <div class="check-list">
+                        <div class="check-item"><input type="checkbox" id="c1"><label for="c1">地面清洁干燥<span class="sub">无油污、无积水、防滑倒</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="c2"><label for="c2">墙面整洁<span class="sub">无油渍、无蛛网、无霉斑</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="c3"><label for="c3">天花板/排风扇<span class="sub">无积灰、无油垢</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="c4"><label for="c4">操作台面<span class="sub">干净无油渍、整洁有序</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="c5"><label for="c5">油烟机/灶台<span class="sub">每日清洁、无厚重油污</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="c6"><label for="c6">各类架子<span class="sub">整洁无杂物、无积灰</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="c7"><label for="c7">水槽/水池<span class="sub">无残渣、无异味</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="c8"><label for="c8">下水道<span class="sub">无堵塞、无异味</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="c9"><label for="c9">垃圾桶<span class="sub">带盖、及时清理、内外清洁</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="c10"><label for="c10">餐具消毒柜<span class="sub">消毒到位、无水渍</span></label></div>
+                    </div>
+                </div>
+                <div class="check-group">
+                    <div class="check-group-title">餐厅大厅</div>
+                    <div class="check-list">
+                        <div class="check-item"><input type="checkbox" id="c11"><label for="c11">餐桌椅清洁<span class="sub">无油渍、无残渣</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="c12"><label for="c12">地面清洁<span class="sub">无垃圾、无油污、干燥</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="c13"><label for="c13">放书包区域<span class="sub">每日擦拭、无异味</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="c14"><label for="c14">餐线区域<span class="sub">死角清洁、无积尘油渍</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="c15"><label for="c15">调料台<span class="sub">盐糖等标签清晰、整洁</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="c16"><label for="c16">纸巾盒/牙签<span class="sub">及时补充、位置合理</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="c17"><label for="c17">洗手设施<span class="sub">水龙头正常、洗手液充足</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="c18"><label for="c18">B1通道<span class="sub">非必要不长时间开启</span></label></div>
+                    </div>
+                </div>
+                <div class="check-group">
+                    <div class="check-group-title">害虫防治</div>
+                    <div class="check-list">
+                        <div class="check-item"><input type="checkbox" id="c19"><label for="c19">苍蝇消杀<span class="sub">增加消杀频次、重点区域</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="c20"><label for="c20">蟑螂/老鼠防治<span class="sub">定期检查、放置诱饵</span></label></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 小工管理 -->
+        <div id="staff" class="module">
+            <div class="module-header staff">
+                <span>👥</span>
+                <h2>小工/员工管理</h2>
+                <span class="count">12项</span>
+            </div>
+            <div class="module-content">
+                <div class="check-group">
+                    <div class="check-group-title">仪容仪表</div>
+                    <div class="check-list">
+                        <div class="check-item"><input type="checkbox" id="s1"><label for="s1">工作服干净整洁<span class="sub">无污渍、无破损</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="s2"><label for="s2">口罩佩戴<span class="sub">遮住口鼻、规范佩戴</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="s3"><label for="s3">帽子/头套<span class="sub">头发不外露</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="s4"><label for="s4">手套使用<span class="sub">接触食品必须戴手套</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="s5"><label for="s5">指甲修剪<span class="sub">不过长、不涂指甲油</span></label></div>
+                    </div>
+                </div>
+                <div class="check-group">
+                    <div class="check-group-title">操作规范</div>
+                    <div class="check-list">
+                        <div class="check-item"><input type="checkbox" id="s6"><label for="s6">轻拿轻放<span class="sub">禁止摔打碗碟</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="s7"><label for="s7">碗筷清洗<span class="sub">不用毛巾擦干，控干/烘干</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="s8"><label for="s8">禁止大声喧哗<span class="sub">保持工作区安静</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="s9"><label for="s9">不与员工争执<span class="sub">服务态度好</span></label></div>
+                    </div>
+                </div>
+                <div class="check-group">
+                    <div class="check-group-title">培训与管理</div>
+                    <div class="check-list">
+                        <div class="check-item"><input type="checkbox" id="s10"><label for="s10">EHS安全培训<span class="sub">定期组织</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="s11"><label for="s11">卫生培训<span class="sub">食品安全、操作规范</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="s12"><label for="s12">健康证管理<span class="sub">餐饮团队健康证有效</span></label></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 设备检查 -->
+        <div id="equip" class="module">
+            <div class="module-header equip">
+                <span>🔧</span>
+                <h2>设备日常检查</h2>
+                <span class="count">12项</span>
+            </div>
+            <div class="module-content">
+                <div class="check-group">
+                    <div class="check-group-title">日常检查</div>
+                    <div class="check-list">
+                        <div class="check-item"><input type="checkbox" id="e1"><label for="e1">灶台/炉具<span class="sub">点火正常、火焰正常</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="e2"><label for="e2">蒸柜/蒸饭柜<span class="sub">密封良好、无漏气</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="e3"><label for="e3">大锅/汤锅<span class="sub">无破损、运行正常</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="e4"><label for="e4">冰箱/冰柜<span class="sub">温度正常、除霜及时</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="e5"><label for="e5">消毒柜<span class="sub">正常消毒、无损坏</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="e6"><label for="e6">保温设备<span class="sub">保温灯、热菜台正常</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="e7"><label for="e7">铁板/烤炉<span class="sub">温度正常、无漏电</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="e8"><label for="e8">水龙头/水管<span class="sub">无漏水、无堵塞</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="e9"><label for="e9">抽油烟机<span class="sub">排风正常、噪音正常</span></label></div>
+                    </div>
+                </div>
+                <div class="check-group">
+                    <div class="check-group-title">计量器具</div>
+                    <div class="check-list">
+                        <div class="check-item"><input type="checkbox" id="e10"><label for="e10">电子秤<span class="sub">计量准确、定期校准</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="e11"><label for="e11">温度计<span class="sub">测温准确</span></label></div>
+                    </div>
+                </div>
+                <div class="check-group">
+                    <div class="check-group-title">维修报修</div>
+                    <div class="check-list">
+                        <div class="check-item"><input type="checkbox" id="e12"><label for="e12">故障报修<span class="sub">邮件联系mahmoud.sayed@proservice.com.eg</span></label></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 库房管理 -->
+        <div id="store" class="module">
+            <div class="module-header store">
+                <span>📦</span>
+                <h2>库房管理</h2>
+                <span class="count">10项</span>
+            </div>
+            <div class="module-content">
+                <div class="check-group">
+                    <div class="check-group-title">入库管理</div>
+                    <div class="check-list">
+                        <div class="check-item"><input type="checkbox" id="st1"><label for="st1">食材入库验收<span class="sub">与师傅一起验收</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="st2"><label for="st2">中超小票记录<span class="sub">登记在食材入库单</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="st3"><label for="st3">供应商票据<span class="sub">保留所有单据</span></label></div>
+                    </div>
+                </div>
+                <div class="check-group">
+                    <div class="check-group-title">库存管理</div>
+                    <div class="check-list">
+                        <div class="check-item"><input type="checkbox" id="st4"><label for="st4">先进先出<span class="sub">先入库先使用</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="st5"><label for="st5">分类储存<span class="sub">生熟分开、荤素分开</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="st6"><label for="st6">临期食材处理<span class="sub">提前预警、及时使用</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="st7"><label for="st7">库房盘点<span class="sub">定期盘点、数量准确</span></label></div>
+                    </div>
+                </div>
+                <div class="check-group">
+                    <div class="check-group-title">台账记录</div>
+                    <div class="check-list">
+                        <div class="check-item"><input type="checkbox" id="st8"><label for="st8">食材入库单<span class="sub">秘书登记</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="st9"><label for="st9">食材出库单<span class="sub">师傅登记</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="st10"><label for="st10">易耗品出库单<span class="sub">帮厨长登记</span></label></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 服务质量 -->
+        <div id="service" class="module">
+            <div class="module-header service">
+                <span>💁</span>
+                <h2>服务质量</h2>
+                <span class="count">14项</span>
+            </div>
+            <div class="module-content">
+                <div class="check-group">
+                    <div class="check-group-title">出品把控</div>
+                    <div class="check-list">
+                        <div class="check-item"><input type="checkbox" id="sv1"><label for="sv1">小炒检查<span class="sub">每天开餐前、操作规范</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="sv2"><label for="sv2">出品抽检<span class="sub">随机≥2人匿名评价</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="sv3"><label for="sv3">新品试吃<span class="sub">创新菜4人打4.5分合格</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="sv4"><label for="sv4">菜单搭配<span class="sub">营养均衡、荤素搭配</span></label></div>
+                    </div>
+                </div>
+                <div class="check-group">
+                    <div class="check-group-title">员工反馈</div>
+                    <div class="check-list">
+                        <div class="check-item"><input type="checkbox" id="sv5"><label for="sv5">心愿菜收集<span class="sub">星河平台导出汇总</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="sv6"><label for="sv6">心愿菜落实<span class="sub">与厨师沟通、排期出餐</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="sv7"><label for="sv7">心愿菜通知<span class="sub">出餐当天群内提醒</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="sv8"><label for="sv8">投诉处理<span class="sub">及时响应、闭环跟踪</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="sv9"><label for="sv9">满意度回访<span class="sub">定期收集意见</span></label></div>
+                    </div>
+                </div>
+                <div class="check-group">
+                    <div class="check-group-title">充值服务</div>
+                    <div class="check-list">
+                        <div class="check-item"><input type="checkbox" id="sv10"><label for="sv10">饭卡充值<span class="sub">日常配合玛丽</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="sv11"><label for="sv11">退款/抵扣/转移<span class="sub">一卡通平台操作</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="sv12"><label for="sv12">欠款追缴<span class="sub">每周跟进</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="sv13"><label for="sv13">周末值班<span class="sub">与玛丽轮流</span></label></div>
+                    </div>
+                </div>
+                <div class="check-group">
+                    <div class="check-group-title">宣传推广</div>
+                    <div class="check-list">
+                        <div class="check-item"><input type="checkbox" id="sv14"><label for="sv14">午餐拍照<span class="sub">发送微信群</span></label></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 行政事务 -->
+        <div id="admin" class="module">
+            <div class="module-header admin">
+                <span>📋</span>
+                <h2>行政事务</h2>
+                <span class="count">14项</span>
+            </div>
+            <div class="module-content">
+                <div class="check-group">
+                    <div class="check-group-title">备用金</div>
+                    <div class="check-list">
+                        <div class="check-item"><input type="checkbox" id="a1"><label for="a1">月初申请备用金<span class="sub">5万埃镑、与玛丽签字</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="a2"><label for="a2">单据保留<span class="sub">2名厨师签字</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="a3"><label for="a3">月底核销<span class="sub">扫描PDF归档</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="a4"><label for="a4">交CFC陶虹<span class="sub">剩余备用金+申请下月</span></label></div>
+                    </div>
+                </div>
+                <div class="check-group">
+                    <div class="check-group-title">报表与文档</div>
+                    <div class="check-list">
+                        <div class="check-item"><input type="checkbox" id="a5"><label for="a5">月度库房报表<span class="sub">每月15号前发邮件</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="a6"><label for="a6">满意度报告<span class="sub">目标97分以上</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="a7"><label for="a7">创新菜统计<span class="sub">发给CFC宛儿</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="a8"><label for="a8">星河通安全检查<span class="sub">手动公式结果</span></label></div>
+                    </div>
+                </div>
+                <div class="check-group">
+                    <div class="check-group-title">采购</div>
+                    <div class="check-list">
+                        <div class="check-item"><input type="checkbox" id="a9"><label for="a9">中超采购<span class="sub">猪肉、红酒</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="a10"><label for="a10">三家比价<span class="sub">选择最低价</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="a11"><label for="a11">餐厅用品采购<span class="sub">Mayar Ehab、RFQ流程</span></label></div>
+                    </div>
+                </div>
+                <div class="check-group">
+                    <div class="check-group-title">会议与沟通</div>
+                    <div class="check-list">
+                        <div class="check-item"><input type="checkbox" id="a12"><label for="a12">满意度复盘会<span class="sub">每月组织</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="a13"><label for="a13">VIP客餐跟进<span class="sub">W3审批、iplatform</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="a14"><label for="a14">邮件往来<span class="sub">及时回复、留痕归档</span></label></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 应急处理 -->
+        <div id="emergency" class="module">
+            <div class="module-header emergency">
+                <span>🚨</span>
+                <h2>应急处理</h2>
+                <span class="count">6项</span>
+            </div>
+            <div class="module-content">
+                <div class="check-group">
+                    <div class="check-group-title">食品安全事故</div>
+                    <div class="check-list">
+                        <div class="check-item"><input type="checkbox" id="em1"><label for="em1">食物中毒预案<span class="sub">立即上报、保留现场</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="em2"><label for="em2">疑似问题食品<span class="sub">立即封存、停止供应</span></label></div>
+                    </div>
+                </div>
+                <div class="check-group">
+                    <div class="check-group-title">设备/设施</div>
+                    <div class="check-list">
+                        <div class="check-item"><input type="checkbox" id="em3"><label for="em3">停水停电<span class="sub">启动备餐方案</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="em4"><label for="em4">火灾<span class="sub">灭火器位置、会使用</span></label></div>
+                        <div class="check-item"><input type="checkbox" id="em5"><label for="em5">燃气泄漏<span class="sub">立即关阀、通风</span></label></div>
+                    </div>
+                </div>
+                <div class="check-group">
+                    <div class="check-group-title">客诉升级</div>
+                    <div class="check-list">
+                        <div class="check-item"><input type="checkbox" id="em6"><label for="em6">重大投诉<span class="sub">上报管理层</span></label></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 节日活动 -->
+        <div id="festival" class="module">
+            <div class="module-header festival">
+                <span>🎄</span>
+                <h2>节日/活动</h2>
+                <span class="count">9项</span>
+            </div>
+            <div class="module-content">
+                <div class="check-list">
+                    <div class="check-item"><input type="checkbox" id="fe1"><label for="fe1">每周四美食节<span class="sub">小甜品采购+宣传海报</span></label></div>
+                    <div class="check-item"><input type="checkbox" id="fe2"><label for="fe2">圣诞节<span class="sub">美食节+主题布置+抽奖</span></label></div>
+                    <div class="check-item"><input type="checkbox" id="fe3"><label for="fe3">元旦/春节<span class="sub">美食节+礼包+发饺子</span></label></div>
+                    <div class="check-item"><input type="checkbox" id="fe4"><label for="fe4">端午节<span class="sub">大礼包采购分装发放</span></label></div>
+                    <div class="check-item"><input type="checkbox" id="fe5"><label for="fe5">中秋节<span class="sub">月饼+节日礼包</span></label></div>
+                    <div class="check-item"><input type="checkbox" id="fe6"><label for="fe6">冲刺月暖心活动<span class="sub">冬日暖心推车+平安果</span></label></div>
+                    <div class="check-item"><input type="checkbox" id="fe7"><label for="fe7">会务茶歇<span class="sub">提前一天报备、拒绝临时</span></label></div>
+                    <div class="check-item"><input type="checkbox" id="fe8"><label for="fe8">VIP客餐<span class="sub">预审+审批+收费闭环</span></label></div>
+                    <div class="check-item"><input type="checkbox" id="fe9"><label for="fe9">季节限定<span class="sub">冬季热饮、清明青团等</span></label></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 汇总 -->
+        <div class="summary">
+            <h3>📊 工作全覆盖 - 量化统计</h3>
+            <div class="summary-grid">
+                <div class="summary-item"><div class="num">📊</div><div class="label">运营数据</div></div>
+                <div class="summary-item"><div class="num">🔥</div><div class="label">设备台账</div></div>
+                <div class="summary-item"><div class="num">15</div><div class="label">食品安全</div></div>
+                <div class="summary-item"><div class="num">20</div><div class="label">环境卫生</div></div>
+                <div class="summary-item"><div class="num">12</div><div class="label">人员管理</div></div>
+                <div class="summary-item"><div class="num">12</div><div class="label">设备检查</div></div>
+                <div class="summary-item"><div class="num">10</div><div class="label">库房管理</div></div>
+                <div class="summary-item"><div class="num">14</div><div class="label">服务质量</div></div>
+                <div class="summary-item"><div class="num">14</div><div class="label">行政事务</div></div>
+                <div class="summary-item"><div class="num">6</div><div class="label">应急处理</div></div>
+                <div class="summary-item"><div class="num">9</div><div class="label">节日活动</div></div>
+            </div>
+            <p style="text-align:center; margin-top:16px; opacity:0.9;">运营数据 + 检查点 + 设备台账 | 所见之处皆是责任</p>
+        </div>
+    </div>
+</body>
+</html>
