@@ -51,6 +51,17 @@
     function patchLocalForageForWorkspace() {
         if (!window.localforage || window.localforage.__prauditOfflinePatched) return;
         const lf = window.localforage;
+        if (lf.LOCALSTORAGE && typeof lf.config === 'function') {
+            try {
+                lf.config({
+                    driver: lf.LOCALSTORAGE,
+                    name: 'tools-platform-praudit-offline',
+                    storeName: 'praudit_offline'
+                });
+            } catch (e) {
+                console.warn('离线 localforage 驱动切换失败，继续使用默认驱动:', e);
+            }
+        }
         const originalGetItem = lf.getItem.bind(lf);
         const originalSetItem = lf.setItem.bind(lf);
         const originalRemoveItem = lf.removeItem.bind(lf);
@@ -323,6 +334,9 @@
             return normalized;
         }
     };
+
+    patchLocalStorageForWorkspace();
+    patchLocalForageForWorkspace();
 
     document.addEventListener('DOMContentLoaded', () => {
         patchLocalStorageForWorkspace();
