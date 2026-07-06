@@ -12,7 +12,7 @@
     <script src="/js/shared/jspdf.umd.min.js"></script>
     <script src="/js/shared/jszip.min.js"></script>
     <link rel="stylesheet" href="/css/shared.css?v=20260704-04">
-    <link rel="stylesheet" href="/css/pages/praudit.css">
+    <link rel="stylesheet" href="/css/pages/praudit.css?v=20260706-01">
 </head>
 
 <body>
@@ -54,6 +54,7 @@
                     <div class="dropdown-content">
                         <button class="dropdown-item" onclick="exportPDF()"><span data-i18n="📄 导出全部为 PDF">📄 导出全部为 PDF</span></button>
                         <button class="dropdown-item" onclick="exportPDFByGroup(this)"><span data-i18n="📚 按分组导出 PDF">📚 按分组导出 PDF</span></button>
+                        <button class="dropdown-item" onclick="exportAuditSpreadsheet()"><span data-i18n="📊 导出为表格">📊 导出为表格</span></button>
                         <hr style="border:none; border-top:1px solid var(--border-color); margin:4px 0;">
                         <button class="dropdown-item" onclick="exportAuditSnapshot()"><span data-i18n="📦 导出快照包">📦 导出快照包</span></button>
                         <button class="dropdown-item" onclick="exportAuditSnapshotByGroup(this)"><span data-i18n="🧩 按分组导出快照">🧩 按分组导出快照</span></button>
@@ -313,7 +314,7 @@
         </div>
     </div>
 
-    <script src="/js/pages/praudit/main.js?v=20260706-01"></script>
+    <script src="/js/pages/praudit/main.js?v=20260706-02"></script>
     <script src="/js/shared/api.js?v=20260626-01"></script>
     <script src="/js/shared/toast.js"></script>
     <script src="/js/shared/navbar.js?v=20260705-01"></script>

@@ -1093,6 +1093,86 @@
             setTimeout(() => URL.revokeObjectURL(url), 1000);
         }
 
+        function getAuditRowStatus(row) {
+            let status = 'pass';
+            for (let i = 0; i < CHECK_POINTS.length; i++) {
+                const cKey = CHECK_POINTS[i].key;
+                if (row.checks && row.checks[cKey] === 'fail') return 'fail';
+                if (row.checks && row.checks[cKey] === 'none') status = 'wait';
+            }
+            return status;
+        }
+
+        function getAuditStatusLabel(status) {
+            const labels = {
+                pass: tText('合格', 'Pass'),
+                fail: tText('不合格', 'Fail'),
+                wait: tText('待检', 'Pending'),
+                none: tText('待检', 'Pending')
+            };
+            return labels[status] || status || '';
+        }
+
+        function exportAuditSpreadsheet() {
+            try {
+                if (!ordersData.length) {
+                    alert(tText('没有可导出的数据！', 'No data to export.'));
+                    return;
+                }
+                if (!window.XLSX) {
+                    alert(tText('缺少表格导出依赖 XLSX，请刷新页面后重试。', 'Missing XLSX export dependency. Please refresh and try again.'));
+                    return;
+                }
+
+                const baseFields = Array.from(new Set([
+                    ...((activeConfig && Array.isArray(activeConfig.allFields) && activeConfig.allFields.length) ? activeConfig.allFields : []),
+                    ...ALL_FIELDS
+                ])).filter(Boolean);
+                const exportTime = new Date().toLocaleString('zh-CN', { hour12: false });
+                const groupField = getActiveAuditGroupField();
+                const rows = ordersData.map((row, index) => {
+                    const item = {};
+                    item[tText('序号', 'No.')] = index + 1;
+                    baseFields.forEach(field => {
+                        item[field] = row.baseData && row.baseData[field] !== undefined ? row.baseData[field] : '';
+                    });
+                    if (groupField) {
+                        item[tText('分组', 'Group')] = row.baseData && row.baseData[groupField] ? row.baseData[groupField] : tText('未填写', 'Not filled');
+                    }
+                    item[tText('整体状态', 'Overall Status')] = getAuditStatusLabel(getAuditRowStatus(row));
+                    CHECK_POINTS.forEach(cp => {
+                        const cpName = cp.name || cp.key || '-';
+                        const cpNameEn = cp.nameEn && cp.nameEn !== cpName ? ` / ${cp.nameEn}` : '';
+                        const prefix = `${cpName}${cpNameEn}`;
+                        const state = row.checks && row.checks[cp.key] ? row.checks[cp.key] : 'none';
+                        item[`${prefix} - ${tText('结果', 'Result')}`] = getAuditStatusLabel(state);
+                        item[`${prefix} - ${tText('理由', 'Reason')}`] = row.reasons && row.reasons[cp.key] ? row.reasons[cp.key] : '';
+                        item[`${prefix} - ${tText('证据', 'Evidence')}`] = row.images && row.images[cp.key]
+                            ? tText('已附截图证据', 'Evidence attached')
+                            : tText('未附截图', 'No evidence');
+                    });
+                    item[tText('导出时间', 'Export Time')] = exportTime;
+                    return item;
+                });
+
+                const worksheet = XLSX.utils.json_to_sheet(rows);
+                const headers = rows.length ? Object.keys(rows[0]) : [];
+                worksheet['!cols'] = headers.map(header => ({
+                    wch: Math.min(Math.max(String(header).length + 4, 12), 36)
+                }));
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, tText('PR审计数据', 'PR Audit Data'));
+                const arrayBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+                const title = activeConfig && activeConfig.name ? activeConfig.name : tText('PR审计报告', 'PR Audit Report');
+                const filename = sanitizeFileName(`${title}_${tText('审计明细', 'Audit_Details')}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+                downloadBlob(new Blob([arrayBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), filename);
+                showToast(tText(`已导出 ${rows.length} 条审计明细`, `Exported ${rows.length} audit rows`));
+            } catch (err) {
+                console.error('导出表格失败', err);
+                alert(`${tText('导出表格失败', 'Spreadsheet export failed')}：${err.message}`);
+            }
+        }
+
         const PRAUDIT_OFFLINE_ASSET_PATHS = [
             '/css/shared.css',
             '/js/shared/xlsx.full.min.js',
@@ -3140,6 +3220,7 @@
     "⏳ 加载配置中...": "⏳ Loading templates...",
     "📄 导出全部为 PDF": "📄 Export All as PDF",
     "📚 按分组导出 PDF": "📚 Export PDF by Group",
+    "📊 导出为表格": "📊 Export Spreadsheet",
     "🗑️ 清空数据": "🗑️ Clear Data",
     "导入 Excel 单子数据": "Import Excel Ticket Data",
     "请选择一个或多个包含表头的标准 Excel 文件 (.xlsx 或 .xls) 进行导入分析。": "Please choose one or more standard Excel files with headers (.xlsx or .xls) for import analysis.",
