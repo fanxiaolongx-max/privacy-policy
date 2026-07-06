@@ -1155,15 +1155,17 @@
 
                 let html = rawHtml;
                 html = html.replace(/<title>.*?<\/title>/i, () => '<title>PR审计报告系统（离线版）</title>');
-                html = html.replace(/<link rel="stylesheet" href="\/css\/shared\.css">/i, () => `<style>\n${sharedCss}\n</style>`);
-                html = html.replace(/<link rel="stylesheet" href="\/css\/pages\/praudit\.css">/i, () => `<style>\n${prauditCss}\n</style>`);
-                html = html.replace(/<script src="\/js\/shared\/xlsx\.full\.min\.js"><\/script>/i, () => wrapInlineScript(xlsxJs));
-                html = html.replace(/<script src="\/js\/shared\/localforage\.min\.js"><\/script>/i, () => wrapInlineScript(localforageJs));
-                html = html.replace(/<script src="\/js\/shared\/html2canvas\.min\.js"><\/script>/i, () => wrapInlineScript(html2canvasJs));
-                html = html.replace(/<script src="\/js\/shared\/jspdf\.umd\.min\.js"><\/script>/i, () => wrapInlineScript(jspdfJs));
-                html = html.replace(/<script src="\/js\/shared\/jszip\.min\.js"><\/script>/i, () => wrapInlineScript(jszipJs));
-                html = html.replace(/\s*<script src="\/js\/shared\/api\.js"><\/script>\s*<script src="\/js\/shared\/toast\.js"><\/script>\s*<script src="\/js\/shared\/navbar\.js[^"]*"><\/script>/i, () => '');
-                html = html.replace(/<script src="\/js\/pages\/praudit\/main\.js"><\/script>/i, () => `${wrapInlineScript('__PRAUDIT_OFFLINE_BOOTSTRAP__')}\n${wrapInlineScript(prauditJs)}`);
+                html = html.replace(/<link rel="stylesheet" href="\/css\/shared\.css(?:\?[^"]*)?">/i, () => `<style>\n${sharedCss}\n</style>`);
+                html = html.replace(/<link rel="stylesheet" href="\/css\/pages\/praudit\.css(?:\?[^"]*)?">/i, () => `<style>\n${prauditCss}\n</style>`);
+                html = html.replace(/<script src="\/js\/shared\/xlsx\.full\.min\.js(?:\?[^"]*)?"><\/script>/i, () => wrapInlineScript(xlsxJs));
+                html = html.replace(/<script src="\/js\/shared\/localforage\.min\.js(?:\?[^"]*)?"><\/script>/i, () => wrapInlineScript(localforageJs));
+                html = html.replace(/<script src="\/js\/shared\/html2canvas\.min\.js(?:\?[^"]*)?"><\/script>/i, () => wrapInlineScript(html2canvasJs));
+                html = html.replace(/<script src="\/js\/shared\/jspdf\.umd\.min\.js(?:\?[^"]*)?"><\/script>/i, () => wrapInlineScript(jspdfJs));
+                html = html.replace(/<script src="\/js\/shared\/jszip\.min\.js(?:\?[^"]*)?"><\/script>/i, () => wrapInlineScript(jszipJs));
+                html = html.replace(/\s*<script src="\/js\/shared\/api\.js(?:\?[^"]*)?"><\/script>/i, () => '');
+                html = html.replace(/\s*<script src="\/js\/shared\/toast\.js(?:\?[^"]*)?"><\/script>/i, () => '');
+                html = html.replace(/\s*<script src="\/js\/shared\/navbar\.js(?:\?[^"]*)?"><\/script>/i, () => '');
+                html = html.replace(/<script src="\/js\/pages\/praudit\/main\.js(?:\?[^"]*)?"><\/script>/i, () => `${wrapInlineScript('__PRAUDIT_OFFLINE_BOOTSTRAP__')}\n${wrapInlineScript(prauditJs)}`);
                 cachedOfflineWorkbenchHtmlTemplate = html;
             }
             if (!cachedOfflineRuntimeJs) {
@@ -3325,4 +3327,3 @@
             renderTable();
             showToast("成功加载 6 条全场景测试数据！");
         }
-
