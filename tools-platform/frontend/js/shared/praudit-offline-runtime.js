@@ -146,6 +146,62 @@
         return badge;
     }
 
+    function getOfflineLanguage() {
+        const lang = localStorage.getItem('tools_lang') || navigator.language || 'zh-CN';
+        return String(lang).startsWith('en') ? 'en-US' : 'zh-CN';
+    }
+
+    function applyOfflineLanguage(lang) {
+        const normalized = String(lang || '').startsWith('en') ? 'en-US' : 'zh-CN';
+        if (window.ToolsI18n && typeof window.ToolsI18n.setLanguage === 'function') {
+            window.ToolsI18n.setLanguage(normalized);
+        } else {
+            localStorage.setItem('tools_lang', normalized);
+            document.documentElement.lang = normalized;
+            window.dispatchEvent(new CustomEvent('tools:languagechange', { detail: { lang: normalized } }));
+        }
+        updateOfflineLanguageToggle();
+    }
+
+    function updateOfflineLanguageToggle() {
+        const btn = document.getElementById('prauditOfflineLanguageToggle');
+        if (!btn) return;
+        const lang = getOfflineLanguage();
+        btn.textContent = lang === 'en-US' ? '🌐 EN' : '🌐 中文';
+        btn.title = lang === 'en-US' ? 'Switch language' : '切换语言';
+    }
+
+    function ensureOfflineLanguageToggle() {
+        if (document.getElementById('prauditOfflineLanguageToggle')) {
+            updateOfflineLanguageToggle();
+            return;
+        }
+        const btn = document.createElement('button');
+        btn.id = 'prauditOfflineLanguageToggle';
+        btn.type = 'button';
+        btn.style.cssText = [
+            'position:fixed',
+            'right:16px',
+            'bottom:76px',
+            'z-index:99999',
+            'padding:8px 11px',
+            'border-radius:12px',
+            'border:1px solid rgba(148,163,184,0.45)',
+            'background:rgba(255,255,255,0.96)',
+            'color:#1e293b',
+            'font-size:12px',
+            'font-weight:700',
+            'line-height:1.2',
+            'box-shadow:0 10px 24px rgba(15,23,42,0.18)',
+            'cursor:pointer'
+        ].join(';');
+        btn.addEventListener('click', () => {
+            applyOfflineLanguage(getOfflineLanguage() === 'en-US' ? 'zh-CN' : 'en-US');
+        });
+        document.body.appendChild(btn);
+        updateOfflineLanguageToggle();
+    }
+
     function showOfflineGuide(autoOpen = false) {
         if (document.getElementById('prauditOfflineGuide')) return;
         const guide = document.createElement('div');
@@ -343,6 +399,7 @@
         patchLocalForageForWorkspace();
         lockDownOfflineActions();
         ensureOfflineBadge();
+        ensureOfflineLanguageToggle();
         document.documentElement.style.setProperty('--navbar-h', '0px');
         setTimeout(() => {
             lockDownOfflineUi();

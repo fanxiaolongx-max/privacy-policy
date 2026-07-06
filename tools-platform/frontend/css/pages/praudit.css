@@ -356,21 +356,25 @@
         .dropdown {
             position: relative;
             display: inline-block;
+            padding-bottom: 4px;
+            margin-bottom: -4px;
         }
         .dropdown-content {
             display: none;
             position: absolute;
             right: 0;
+            top: 100%;
             background-color: #fff;
-            min-width: 160px;
+            min-width: 190px;
             box-shadow: 0 8px 16px rgba(0,0,0,0.1);
             border-radius: 6px;
             z-index: 100;
             border: 1px solid var(--border-color);
             padding: 4px 0;
-            margin-top: 4px;
+            margin-top: 0;
         }
-        .dropdown:hover .dropdown-content {
+        .dropdown:hover .dropdown-content,
+        .dropdown:focus-within .dropdown-content {
             display: block;
         }
         .dropdown-item {
