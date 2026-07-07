@@ -2521,7 +2521,7 @@ window.openUserModal = async function () {
     // 确保不重复加载
     if (!document.querySelector('script[src^="/js/shared/ai-assistant.js"]')) {
         const aiScript = document.createElement('script');
-        aiScript.src = '/js/shared/ai-assistant.js?v=20260704-06';
+        aiScript.src = '/js/shared/ai-assistant.js?v=20260707-01';
         document.body.appendChild(aiScript);
     }
 })();
