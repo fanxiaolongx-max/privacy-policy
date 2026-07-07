@@ -9,17 +9,24 @@ function normalizeSnapshots(items) {
 }
 
 async function replaceSnapshotsInDbRaw(items) {
-    await run('DELETE FROM sla_snapshots');
-    for (const item of items) {
-        await run(
-            `INSERT OR REPLACE INTO sla_snapshots (id, timestamp, payload_json, updated_at)
-             VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
-            [
-                item.id,
-                item.timestamp || '',
-                JSON.stringify(item)
-            ]
-        );
+    await run('BEGIN TRANSACTION');
+    try {
+        await run('DELETE FROM sla_snapshots');
+        for (const item of items) {
+            await run(
+                `INSERT OR REPLACE INTO sla_snapshots (id, timestamp, payload_json, updated_at)
+                 VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+                [
+                    item.id,
+                    item.timestamp || '',
+                    JSON.stringify(item)
+                ]
+            );
+        }
+        await run('COMMIT');
+    } catch (err) {
+        await run('ROLLBACK').catch(() => {});
+        throw err;
     }
 }
 
@@ -92,23 +99,15 @@ async function trimDbSnapshots() {
 async function addSnapshot(payload) {
     const item = { id: Date.now().toString(36), ...payload };
 
-    try {
-        await upsertSnapshotInDb(item);
-        await trimDbSnapshots();
-    } catch (err) {
-        console.error('[sla-snapshots] SQLite dual-write failed:', err.message);
-    }
+    await upsertSnapshotInDb(item);
+    await trimDbSnapshots();
 
     return item;
 }
 
 async function deleteSnapshot(id) {
-    try {
-        await ensureReady();
-        await run('DELETE FROM sla_snapshots WHERE id = ?', [id]);
-    } catch (err) {
-        console.error('[sla-snapshots] SQLite delete sync failed:', err.message);
-    }
+    await ensureReady();
+    await run('DELETE FROM sla_snapshots WHERE id = ?', [id]);
     return [];
 }
 

@@ -11,6 +11,11 @@ if (!runPreflight({ port: PORT })) {
     process.exit(1);
 }
 
+const { repairStartupDatabases } = require('./models/sqlite-integrity-repair');
+
+(async () => {
+    await repairStartupDatabases();
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -296,5 +301,9 @@ async function startServer() {
 
 startServer().catch(err => {
     console.error('\n❌ 启动失败：旧 JSON 自动迁移失败：', err);
+    process.exit(1);
+});
+})().catch(err => {
+    console.error('\n❌ 启动失败：SQLite 启动自检/修复失败：', err);
     process.exit(1);
 });
