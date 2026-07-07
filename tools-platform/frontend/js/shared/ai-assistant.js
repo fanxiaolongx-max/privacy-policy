@@ -3,11 +3,6 @@
  * 封装在 IIFE 中，避免污染全局变量
  */
 (function () {
-    // 注入 marked.js (用于解析 Markdown)
-    const markedScript = document.createElement('script');
-    markedScript.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
-    document.head.appendChild(markedScript);
-
     // 注入 CSS 样式
     const style = document.createElement('style');
     style.innerHTML = `
@@ -402,10 +397,12 @@
     setTimeout(notifyFabPosition, 0);
 
     function renderMarkdownLike(text) {
-        if (typeof marked !== 'undefined') {
+        if (typeof marked !== 'undefined' && marked && typeof marked.parse === 'function') {
             return marked.parse(text);
         }
-        let html = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        let html = escapeHtml(text);
+        html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         html = html.replace(/`(.*?)`/g, '<code style="background:#f1f5f9;padding:2px 4px;border-radius:4px;color:#ef4444;">$1</code>');
         html = html.replace(/\n/g, '<br/>');
         return html;
