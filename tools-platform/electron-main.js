@@ -16,15 +16,34 @@ if (process.env.TOOLS_DAILY_LOGS === undefined) {
     process.env.TOOLS_DAILY_LOGS = '0';
 }
 
-function getLogDay() {
-    return new Date().toISOString().slice(0, 10);
+function getLogDay(date = new Date()) {
+    return [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, '0'),
+        String(date.getDate()).padStart(2, '0')
+    ].join('-');
+}
+
+function getLocalLogTimestamp() {
+    const now = new Date();
+    const date = getLogDay(now);
+    const time = [
+        String(now.getHours()).padStart(2, '0'),
+        String(now.getMinutes()).padStart(2, '0'),
+        String(now.getSeconds()).padStart(2, '0')
+    ].join(':');
+    const offsetMinutes = -now.getTimezoneOffset();
+    const sign = offsetMinutes >= 0 ? '+' : '-';
+    const absOffset = Math.abs(offsetMinutes);
+    const offset = `${sign}${String(Math.floor(absOffset / 60)).padStart(2, '0')}:${String(absOffset % 60).padStart(2, '0')}`;
+    return `${date} ${time} ${offset}`;
 }
 
 function appendElectronLog(type, args) {
     try {
         const dayDir = path.join(electronLogRoot, getLogDay());
         fs.mkdirSync(dayDir, { recursive: true });
-        const line = `[${new Date().toISOString()}] ${args.map((arg) => {
+        const line = `[${getLocalLogTimestamp()}] ${args.map((arg) => {
             if (typeof arg === 'string') return arg;
             return util.inspect(arg, { depth: 5, breakLength: 160 });
         }).join(' ')}\n`;
