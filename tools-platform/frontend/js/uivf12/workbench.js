@@ -5,6 +5,7 @@
 
 let parsedPayloadObj = null;
 let currentScriptTitle = '';
+let currentScriptTitleInputName = '';
 
 // ──────────────────────────────────────────────────────────
 // JSON 格式化 & 高亮预览
@@ -50,6 +51,7 @@ function formatAndAnalyzeJSON() {
 }
 
 function clearAll() {
+    window.__uivAiAdapterCurrent = null;
     document.getElementById('jsonInput').value = '';
     document.getElementById('jsonInput').style.display = 'block';
     document.getElementById('payloadViewer').style.display = 'none';
@@ -59,12 +61,21 @@ function clearAll() {
     document.getElementById('errorMsg').innerText = '';
     parsedPayloadObj = null;
     currentScriptTitle = '';
+    currentScriptTitleInputName = '';
 }
 
 // ──────────────────────────────────────────────────────────
 // 回填脚本数据到工作台
 // ──────────────────────────────────────────────────────────
 function fillWorkbench(script) {
+    window.__uivAiAdapterCurrent = script.generatorType === 'ai-adapter'
+        ? {
+            generatorType: script.generatorType,
+            adapterConfig: script.adapterConfig || null,
+            openUrl: script.openUrl || '',
+            loginProbeConfig: script.loginProbeConfig || null
+        }
+        : null;
     document.getElementById('codeOutput').value = script.code || '';
     document.getElementById('consoleOutput').value = script.consoleCode || '';
     if (script.url) {
@@ -75,6 +86,8 @@ function fillWorkbench(script) {
     }
     if (script.originalFileName) document.getElementById('fileName').value = script.originalFileName;
     else document.getElementById('fileName').value = script.name.replace(/(_CN|_AE|_DE)$/, '');
+    currentScriptTitle = script.name ? script.name.replace(/(_CN|_AE|_DE)$/, '') : '';
+    currentScriptTitleInputName = document.getElementById('fileName').value.trim();
 
     if (script.payload) {
         const editor = document.getElementById('jsonInput');
@@ -119,6 +132,12 @@ window.UIVWorkbench = {
     findKeyDeep,
     getParsedPayload: () => parsedPayloadObj,
     getCurrentTitle: () => currentScriptTitle,
-    setCurrentTitle: t => { currentScriptTitle = t; },
+    getCurrentTitleInputName: () => currentScriptTitleInputName,
+    setCurrentTitle: (t, inputName) => {
+        currentScriptTitle = t;
+        currentScriptTitleInputName = inputName !== undefined
+            ? String(inputName || '').trim()
+            : document.getElementById('fileName').value.trim();
+    },
     setParsedPayload: p => { parsedPayloadObj = p; }
 };

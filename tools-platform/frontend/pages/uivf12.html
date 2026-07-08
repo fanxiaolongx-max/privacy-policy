@@ -7,7 +7,7 @@
     <title>UIVF12 抓取引擎 v6.6 - Tools Platform</title>
     <meta name="description" content="UI.Vision 全能抓取引擎，自动化脚本工程中心，脚本云端仓库管理">
     <link rel="stylesheet" href="/css/shared.css?v=20260704-04">
-    <link rel="stylesheet" href="/css/uivf12.css?v=20260628-19">
+    <link rel="stylesheet" href="/css/uivf12.css?v=20260708-04">
     <style>
         .repo-source-panel {
             margin-bottom: 10px;
@@ -100,6 +100,7 @@
                     <div class="btn-batch-run-row">
                         <button class="btn-batch-pkg btn-batch-uiv-run" onclick="UIVCopy.runAllUivScriptsDirect()">🚀 运行批脚本</button>
                         <button class="btn-batch-speed" onclick="UIVCopy.cycleUivBatchSpeed()" title="">1x</button>
+                        <button class="btn-batch-filter" onclick="UIVCopy.openUivBatchCategoryFilter()" title="设置批脚本执行分类范围">⚙️</button>
                     </div>
                     <button class="btn-batch-pkg btn-batch-uiv-run btn-batch-uiv-test" onclick="UIVCopy.runTestUivScriptsDirect()">🚀 运行测试批脚本</button>
                     <div style="display:flex; gap:8px;">
@@ -161,6 +162,7 @@
                     <button class="btn btn-danger" onclick="UIVWorkbench.clearAll()">🗑️ 清空</button>
                     <button class="btn btn-primary" onclick="UIVGenerator.generateScript()">⚡ 一键生成生产级脚本</button>
                 </div>
+                <button class="btn uiv-ai-adapter-entry" onclick="UIVAIAdapter.open()">✨ AI 适配其他网站（试验版）</button>
                 <div id="errorMsg" class="error-msg"></div>
             </div>
 
@@ -287,6 +289,112 @@
         </div>
     </div>
 
+    <div id="uivAiAdapterOverlay" class="uiv-ai-overlay" onclick="if(event.target===this) UIVAIAdapter.close()">
+        <div class="uiv-ai-dialog">
+            <div class="uiv-ai-header">
+                <div>
+                    <h3>AI 网站抓取适配器</h3>
+                    <p>AI 只识别请求、认证、分页和响应路径；最终脚本由平台固定模板生成。</p>
+                </div>
+                <button onclick="UIVAIAdapter.close()" aria-label="关闭">×</button>
+            </div>
+            <div class="uiv-ai-body">
+                <div class="uiv-ai-quick">
+                    <label><span>1. 粘贴 DevTools → Copy as fetch</span>
+                        <textarea id="uivAiFetchSource" placeholder='fetch("https://example.com/api/items", { headers: {...}, body: "...", method: "POST", credentials: "include" });'></textarea>
+                    </label>
+                    <div class="uiv-ai-parse-row">
+                        <button id="uivAiParseFetchBtn" class="btn btn-secondary" onclick="UIVAIAdapter.parseFetch()">解析并自动填充请求</button>
+                        <div id="uivAiFetchSummary">解析过程只读取静态 fetch 配置，不执行粘贴的代码。</div>
+                    </div>
+                    <label><span>2. 粘贴 DevTools → Copy response</span>
+                        <textarea id="uivAiResponse" placeholder='{"data":{"records":[],"total":0}}'></textarea>
+                    </label>
+                    <label><span>抓取关键词（可选，用于聚焦响应中的某一组数据）</span>
+                        <input id="uivAiResponseKeyword" type="text" placeholder="例如 c10_topN、records、风险列表">
+                        <input id="uivAiResponseFocusPath" type="hidden">
+                    </label>
+                    <div id="uivAiKeywordSummary" class="uiv-ai-keyword-summary">不填写关键词时，AI 会分析完整响应样本。</div>
+                </div>
+                <details class="uiv-ai-advanced">
+                    <summary>高级编辑：检查或修正自动解析结果</summary>
+                    <div class="uiv-ai-grid">
+                        <label class="uiv-ai-wide">请求 URL
+                            <input id="uivAiUrl" type="text" placeholder="https://example.com/api/items">
+                        </label>
+                        <label class="uiv-ai-wide">抓取前打开页面 URL（可选）
+                            <input id="uivAiOpenUrl" type="text" placeholder="https://example.com/dashboard">
+                        </label>
+                        <label>请求方法
+                            <select id="uivAiMethod">
+                                <option value="POST">POST</option>
+                                <option value="GET">GET</option>
+                            </select>
+                        </label>
+                        <label>凭据模式
+                            <select id="uivAiCredentials">
+                                <option value="include">include</option>
+                                <option value="omit">omit</option>
+                            </select>
+                        </label>
+                        <label>输出文件名
+                            <input id="uivAiFileName" type="text" value="AI_适配抓取_Latest" placeholder="AI_适配抓取_Latest">
+                        </label>
+                        <label>认证来源
+                            <select id="uivAiAuthStrategy">
+                                <option value="auto">让 AI 判断</option>
+                                <option value="cookie">浏览器 Cookie</option>
+                                <option value="localStorage">localStorage</option>
+                                <option value="sessionStorage">sessionStorage</option>
+                                <option value="none">无需认证</option>
+                            </select>
+                        </label>
+                        <label>Token 存储键（存储认证时必填）
+                            <input id="uivAiAuthSourceKey" type="text" placeholder="access_token">
+                        </label>
+                        <label>认证请求头
+                            <input id="uivAiAuthHeader" type="text" value="Authorization" placeholder="Authorization">
+                        </label>
+                        <label>认证前缀
+                            <input id="uivAiAuthPrefix" type="text" value="Bearer " placeholder="Bearer ">
+                        </label>
+                        <label class="uiv-ai-wide">请求头 JSON（敏感值发送给 AI 前会自动脱敏）
+                            <textarea id="uivAiHeaders" placeholder='{"content-type":"application/json","Authorization":"Bearer ..."}'>{}</textarea>
+                        </label>
+                        <label class="uiv-ai-wide">请求负载 JSON
+                            <textarea id="uivAiBody" placeholder='{"page":1,"pageSize":50}'>{}</textarea>
+                        </label>
+                        <label class="uiv-ai-wide">第二页或空页响应 JSON（可选，用于辅助判断分页）
+                            <textarea id="uivAiSecondResponse" placeholder='{"data":{"records":[],"total":0}}'></textarea>
+                        </label>
+                    </div>
+                </details>
+                <div class="uiv-ai-guardrail">
+                    第一版仅支持 JSON API、GET/POST、无分页/page number/offset。验证码、动态签名、GraphQL 和任意 AI 代码生成暂不开放。
+                </div>
+                <div id="uivAiAdapterPreview" class="uiv-ai-preview">填写请求和响应样本后，点击“AI 分析并验证”。</div>
+                <div id="uivAiAdapterLog" class="uiv-ai-log"></div>
+                <div id="uivAiAdapterStatus" class="uiv-ai-status"></div>
+            </div>
+            <div class="uiv-ai-footer">
+                <button class="btn btn-secondary" onclick="UIVAIAdapter.close()">取消</button>
+                <button id="uivAiAnalyzeBtn" class="btn btn-secondary" onclick="UIVAIAdapter.analyze()">AI 分析并验证</button>
+                <button id="uivAiGenerateBtn" class="btn btn-primary" onclick="UIVAIAdapter.generate()" disabled>生成受控脚本</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="uivAiKeywordChoiceOverlay" class="uiv-ai-choice-overlay" onclick="if(event.target===this) UIVAIAdapter.closeKeywordChoice()">
+        <div class="uiv-ai-choice-dialog">
+            <div class="uiv-ai-choice-header">
+                <h4>选择关键词所在的数据片段</h4>
+                <button onclick="UIVAIAdapter.closeKeywordChoice()" aria-label="关闭">×</button>
+            </div>
+            <p>响应里多处命中该关键词，请选择要抓取的那一组 JSON 链条。</p>
+            <div id="uivAiKeywordChoiceList" class="uiv-ai-choice-list"></div>
+        </div>
+    </div>
+
     <!-- 共享脚本 -->
     <script src="/js/shared/api.js?v=20260628-19"></script>
     <script src="/js/shared/toast.js?v=20260628-19"></script>
@@ -294,11 +402,12 @@
     <script src="/js/shared/navbar.js?v=20260705-01"></script>
     <!-- UIVF12 模块 -->
     <script src="/js/uivf12/i18n.js?v=20260628-19"></script>
-    <script src="/js/uivf12/workbench.js?v=20260628-19"></script>
-    <script src="/js/uivf12/copy.js?v=20260704-01"></script>
+    <script src="/js/uivf12/workbench.js?v=20260708-03"></script>
+    <script src="/js/uivf12/copy.js?v=20260708-03"></script>
     <script src="/js/uivf12/genlog.js?v=20260628-19"></script>
-    <script src="/js/uivf12/generator.js?v=20260628-19"></script>
-    <script src="/js/uivf12/save.js?v=20260628-19"></script>
+    <script src="/js/uivf12/generator.js?v=20260708-02"></script>
+    <script src="/js/uivf12/ai-adapter.js?v=20260708-09"></script>
+    <script src="/js/uivf12/save.js?v=20260708-03"></script>
     <script src="/js/uivf12/sidebar.js?v=20260628-19"></script>
     <script src="/js/uivf12/analysis.js?v=20260628-19"></script>
     <script>

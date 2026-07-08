@@ -7,6 +7,7 @@
 const TOOL_VERSION = 'v6.6';
 
 function generateScript() {
+    window.__uivAiAdapterCurrent = null;
     const errorDiv = document.getElementById('errorMsg');
     errorDiv.innerText = '';
     UIVGenLog.start();
@@ -98,7 +99,7 @@ function generateScript() {
     if (dynamicPageName) dynamicPageName = '_' + dynamicPageName.replace(/[<>:"/\\|?*]+/g, '');
     const finalFileName = fileNameBase + dynamicPageName + '_Latest.csv';
     const title = fileNameBase + dynamicPageName;
-    window.UIVWorkbench.setCurrentTitle(title + (!dynamicPageName && compId ? '_' + compId.substring(0, 6) : ''));
+    window.UIVWorkbench.setCurrentTitle(title + (!dynamicPageName && compId ? '_' + compId.substring(0, 6) : ''), fileNameBase);
 
     UIVGenLog.info(UIVT('uiv.generator.outputFile', { name: finalFileName }));
     UIVGenLog.section(UIVT('uiv.generator.switchSection'));
