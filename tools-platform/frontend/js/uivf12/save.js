@@ -101,6 +101,27 @@ function logSaveError(step, error, detail) {
     console.error(prefix, style, `${step} failed`, detail || '', error);
 }
 
+function rebaseSaveItemNames(items, oldBaseName, newBaseName) {
+    const oldBase = String(oldBaseName || '');
+    const nextBase = String(newBaseName || '').trim();
+    if (!nextBase) return items;
+    return items.map(item => {
+        const currentName = String(item.name || '');
+        const suffix = oldBase && currentName.startsWith(oldBase)
+            ? currentName.slice(oldBase.length)
+            : '';
+        return {
+            ...item,
+            name: nextBase + suffix,
+            originalFileName: nextBase
+        };
+    });
+}
+
+function findNameConflicts(items, existingScripts) {
+    return items.filter(item => existingScripts.some(s => s.name === item.name));
+}
+
 async function saveCurrentScript() {
     const codeUIV = document.getElementById('codeOutput').value;
     const codeConsole = document.getElementById('consoleOutput').value;
@@ -126,6 +147,13 @@ async function saveCurrentScript() {
     };
 
     const baseName = window.UIVWorkbench.getCurrentTitle() || originalFileName;
+    const generatedInputName = typeof window.UIVWorkbench.getCurrentTitleInputName === 'function'
+        ? window.UIVWorkbench.getCurrentTitleInputName()
+        : '';
+    const hasUserTypedNewName = Boolean(originalFileName && originalFileName !== baseName && originalFileName !== generatedInputName);
+    const aiAdapterMeta = window.__uivAiAdapterCurrent && typeof window.__uivAiAdapterCurrent === 'object'
+        ? window.__uivAiAdapterCurrent
+        : {};
     const isNetCare = url.toLowerCase().includes('netcare');
     let itemsToSave = [];
 
@@ -155,6 +183,7 @@ async function saveCurrentScript() {
     } else {
         itemsToSave.push({ name: baseName, code: codeUIV, consoleCode: codeConsole, category: window.UIVWorkbench.autoDetectCategory(url), url, payload: rawJson, originalFileName, configOptions });
     }
+    itemsToSave = itemsToSave.map(item => ({ ...item, ...aiAdapterMeta }));
 
     logSaveStep('已生成待保存脚本对象', {
         count: itemsToSave.length,
@@ -180,11 +209,38 @@ async function saveCurrentScript() {
         throw error;
     }
 
-    const conflicts = itemsToSave.filter(item => existingScripts.some(s => s.name === item.name));
+    let conflicts = findNameConflicts(itemsToSave, existingScripts);
     logSaveStep('冲突检查结果', {
         conflictCount: conflicts.length,
         conflictNames: conflicts.map(item => item.name)
     });
+
+    if (conflicts.length > 0 && hasUserTypedNewName) {
+        const renamedItems = rebaseSaveItemNames(itemsToSave, baseName, originalFileName);
+        const renamedConflicts = findNameConflicts(renamedItems, existingScripts);
+        logSaveStep('检测到重名，尝试使用脚本名称输入框的新名称', {
+            oldBaseName: baseName,
+            inputName: originalFileName,
+            generatedInputName,
+            renamedNames: renamedItems.map(item => item.name),
+            renamedConflictCount: renamedConflicts.length
+        });
+        if (renamedConflicts.length === 0) {
+            itemsToSave = renamedItems;
+            conflicts = [];
+            window.UIVWorkbench.setCurrentTitle(originalFileName);
+            logSaveStep('已自动改用脚本名称输入框的新名称保存', {
+                names: itemsToSave.map(item => item.name)
+            });
+        } else {
+            conflicts = renamedConflicts;
+            itemsToSave = renamedItems;
+            window.UIVWorkbench.setCurrentTitle(originalFileName);
+            logSaveStep('脚本名称输入框的新名称仍然冲突，将按新名称提示确认', {
+                conflictNames: conflicts.map(item => item.name)
+            });
+        }
+    }
 
     if (conflicts.length > 0) {
         const msg = conflicts.length > 1

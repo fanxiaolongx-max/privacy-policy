@@ -4,7 +4,18 @@
  */
 
 const UIV_BATCH_SPEED_KEY = 'uivf12_batch_speed';
+const UIV_BATCH_EXCLUDED_CATEGORIES_KEY = 'uivf12_batch_excluded_categories';
 const UIV_BATCH_SPEEDS = [1, 2, 4];
+
+function escapeUivHtml(value) {
+    return String(value === undefined || value === null ? '' : value).replace(/[&<>"']/g, ch => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[ch]));
+}
 
 function copyCodeText(textAreaId, btnId, typeName) {
     const codeEl = document.getElementById(textAreaId);
@@ -31,19 +42,171 @@ function copyFromMemory(codeStr, typeName) {
 async function copyAllConsoleScripts() {
     try {
         const { scripts } = await API.get('/api/uiv/scripts');
-        buildAndCopyMasterScript(scripts, UIVT('uiv.copy.allGroup'));
+        const scope = applyUivBatchCategoryFilter(scripts || []);
+        buildAndCopyMasterScript(scope.scripts, scope.groupName);
     } catch (e) {
-        showToast(UIVT('uiv.copy.fetchFail'), 'error');
+        showToast(e.message || UIVT('uiv.copy.fetchFail'), 'error');
     }
 }
 
 async function copyAllUivScripts() {
     try {
         const { scripts } = await API.get('/api/uiv/scripts');
-        buildAndCopyUivBatchMacro(scripts, UIVT('uiv.copy.allGroup'), getUivBatchSpeed());
+        const scope = applyUivBatchCategoryFilter(scripts || []);
+        buildAndCopyUivBatchMacro(scope.scripts, scope.groupName, getUivBatchSpeed());
     } catch (e) {
-        showToast(UIVT('uiv.copy.fetchFail'), 'error');
+        showToast(e.message || UIVT('uiv.copy.fetchFail'), 'error');
     }
+}
+
+function getUivScriptCategory(script) {
+    return String(script && script.category || '默认分类').trim() || '默认分类';
+}
+
+function readUivBatchExcludedCategories() {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(UIV_BATCH_EXCLUDED_CATEGORIES_KEY) || '[]');
+        return Array.isArray(parsed) ? parsed.map(String) : [];
+    } catch (error) {
+        return [];
+    }
+}
+
+function writeUivBatchExcludedCategories(categories) {
+    const unique = Array.from(new Set((categories || []).map(String).filter(Boolean))).sort();
+    localStorage.setItem(UIV_BATCH_EXCLUDED_CATEGORIES_KEY, JSON.stringify(unique));
+    return unique;
+}
+
+function getUivBatchCategoryStats(scripts = [], categories = []) {
+    const stats = new Map();
+    categories.forEach(category => stats.set(String(category), 0));
+    (scripts || []).forEach(script => {
+        const category = getUivScriptCategory(script);
+        stats.set(category, (stats.get(category) || 0) + 1);
+    });
+    return Array.from(stats.entries())
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
+}
+
+function applyUivBatchCategoryFilter(scripts = []) {
+    const excluded = new Set(readUivBatchExcludedCategories());
+    const filtered = (scripts || []).filter(script => !excluded.has(getUivScriptCategory(script)));
+    if (!filtered.length) {
+        throw new Error('当前批脚本执行范围没有可运行脚本，请在分类范围中至少勾选一个有脚本的分类。');
+    }
+    const allGroup = UIVT('uiv.copy.allGroup');
+    if (!excluded.size || filtered.length === scripts.length) {
+        return { scripts: filtered, groupName: allGroup, excluded: [] };
+    }
+    const selectedCategories = Array.from(new Set(filtered.map(getUivScriptCategory))).sort((a, b) => a.localeCompare(b, 'zh-CN'));
+    return {
+        scripts: filtered,
+        groupName: `选中分类-${selectedCategories.length}类`,
+        excluded: Array.from(excluded)
+    };
+}
+
+function getBatchFilterCheckedCategories() {
+    return Array.from(document.querySelectorAll('.uiv-batch-filter-check'))
+        .filter(input => input.checked)
+        .map(input => input.value);
+}
+
+function setBatchFilterChecks(checked) {
+    const checkedSet = new Set(checked);
+    document.querySelectorAll('.uiv-batch-filter-check').forEach(input => {
+        input.checked = checkedSet.has(input.value);
+    });
+}
+
+async function openUivBatchCategoryFilter() {
+    try {
+        const { scripts = [], categories = [] } = await API.get('/api/uiv/scripts');
+        const stats = getUivBatchCategoryStats(scripts, categories);
+        if (!stats.length) {
+            showToast('当前仓库还没有分类可配置。', 'error');
+            return;
+        }
+        const excluded = new Set(readUivBatchExcludedCategories());
+        const selectedCount = stats.filter(item => !excluded.has(item.name)).length;
+        let overlay = document.getElementById('uiv-batch-filter-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'uiv-batch-filter-overlay';
+            overlay.className = 'uiv-batch-filter-overlay';
+            overlay.addEventListener('click', event => {
+                if (event.target === overlay) closeUivBatchCategoryFilter();
+            });
+            document.body.appendChild(overlay);
+        }
+        overlay.innerHTML = `
+            <div class="uiv-batch-filter-dialog">
+                <div class="uiv-batch-filter-header">
+                    <div>
+                        <h3>批脚本执行范围</h3>
+                        <p>默认执行全部分类；取消勾选后，“运行批脚本”和“拷贝全部批量阵列”会跳过对应分类。</p>
+                    </div>
+                    <button class="uiv-batch-filter-close" onclick="UIVCopy.closeUivBatchCategoryFilter()">×</button>
+                </div>
+                <div class="uiv-batch-filter-body">
+                    <div class="uiv-batch-filter-tools">
+                        <button onclick="UIVCopy.selectAllUivBatchCategories()">全选</button>
+                        <button onclick="UIVCopy.clearAllUivBatchCategories()">全不选</button>
+                        <button onclick="UIVCopy.resetUivBatchCategoryFilter()">恢复默认全量</button>
+                    </div>
+                    <div class="uiv-batch-filter-list">
+                        ${stats.map(item => `
+                            <label class="uiv-batch-filter-item">
+                                <input class="uiv-batch-filter-check" type="checkbox" value="${escapeUivHtml(item.name)}" ${excluded.has(item.name) ? '' : 'checked'}>
+                                <span>${escapeUivHtml(window.UIVI18n ? UIVI18n.categoryLabel(item.name) : item.name)}</span>
+                                <small>${item.count} 个脚本</small>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="uiv-batch-filter-footer">
+                    <button onclick="UIVCopy.closeUivBatchCategoryFilter()">取消</button>
+                    <button class="primary" onclick="UIVCopy.saveUivBatchCategoryFilter()">保存范围</button>
+                </div>
+            </div>
+        `;
+        overlay.style.display = 'flex';
+        showToast(`当前批脚本范围：${selectedCount}/${stats.length} 个分类`, 'success');
+    } catch (error) {
+        showToast(`❌ 打开批脚本范围失败：${error.message}`, 'error');
+    }
+}
+
+function closeUivBatchCategoryFilter() {
+    const overlay = document.getElementById('uiv-batch-filter-overlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+function selectAllUivBatchCategories() {
+    document.querySelectorAll('.uiv-batch-filter-check').forEach(input => { input.checked = true; });
+}
+
+function clearAllUivBatchCategories() {
+    document.querySelectorAll('.uiv-batch-filter-check').forEach(input => { input.checked = false; });
+}
+
+function resetUivBatchCategoryFilter() {
+    writeUivBatchExcludedCategories([]);
+    selectAllUivBatchCategories();
+    showToast('✅ 已恢复默认：执行全部分类脚本', 'success');
+}
+
+function saveUivBatchCategoryFilter() {
+    const inputs = Array.from(document.querySelectorAll('.uiv-batch-filter-check'));
+    if (!inputs.length) return;
+    const checked = new Set(getBatchFilterCheckedCategories());
+    const excluded = inputs.filter(input => !checked.has(input.value)).map(input => input.value);
+    writeUivBatchExcludedCategories(excluded);
+    closeUivBatchCategoryFilter();
+    const selected = inputs.length - excluded.length;
+    showToast(`✅ 批脚本范围已保存：执行 ${selected}/${inputs.length} 个分类`, 'success');
 }
 
 function getUivBatchSpeed() {
@@ -226,6 +389,16 @@ function getUivOpenUrl(rawUrl) {
     }
 }
 
+function resolveUivOpenUrl(script, resolvedUrl) {
+    if (script && script.openUrl) {
+        try {
+            const parsed = new URL(script.openUrl);
+            if (['http:', 'https:'].includes(parsed.protocol)) return parsed.toString();
+        } catch (e) {}
+    }
+    return getUivOpenUrl(resolvedUrl);
+}
+
 function extractUrlFromCode(code) {
     const text = String(code || '');
     const commentMatch = text.match(/URL:\s*(https?:\/\/[^\s]+)/);
@@ -239,7 +412,30 @@ function resolveUivScriptUrl(script) {
     return script.url || extractUrlFromCode(script.code) || extractUrlFromCode(script.consoleCode);
 }
 
-function buildLoginProbeScript(rawUrl) {
+function buildLoginProbeScript(rawUrl, loginProbeConfig) {
+    const custom = loginProbeConfig && typeof loginProbeConfig === 'object' ? loginProbeConfig : null;
+    if (custom && (custom.strategy === 'localStorage' || custom.strategy === 'sessionStorage') && custom.sourceKey) {
+        return `return (function () {
+            const storage = ${custom.strategy === 'localStorage' ? 'localStorage' : 'sessionStorage'};
+            const key = ${JSON.stringify(String(custom.sourceKey))};
+            const value = storage.getItem(key) || "";
+            return JSON.stringify({
+                ok: Boolean(value),
+                reason: value ? "ok" : "adapter_auth_missing",
+                strategy: ${JSON.stringify(custom.strategy)},
+                sourceKey: key,
+                valueLen: value.length,
+                host: location.host,
+                href: location.href
+            });
+        })();`;
+    }
+    if (custom && custom.strategy === 'cookie') {
+        return `return JSON.stringify({ ok: String(document.cookie || "").length > 0, reason: document.cookie ? "ok" : "cookie_missing", cookieLen: String(document.cookie || "").length, host: location.host, href: location.href });`;
+    }
+    if (custom && custom.strategy === 'none') {
+        return `return JSON.stringify({ ok: true, reason: "adapter_no_auth", host: location.host, href: location.href });`;
+    }
     const lowerUrl = String(rawUrl || '').toLowerCase();
     if (lowerUrl.includes('datafab')) {
         return `return (function () {
@@ -371,7 +567,7 @@ function groupUivScriptsByOpenUrl(scripts) {
         if (!groupMap.has(script.openUrl)) {
             const group = {
                 openUrl: script.openUrl,
-                loginProbe: buildLoginProbeScript(script.url),
+                loginProbe: buildLoginProbeScript(script.url, script.loginProbeConfig),
                 scripts: []
             };
             groupMap.set(script.openUrl, group);
@@ -389,7 +585,7 @@ function sampleUivScriptsPerSite(scripts, perSite = 2) {
             return {
                 script,
                 index,
-                openUrl: getUivOpenUrl(resolvedUrl)
+                openUrl: resolveUivOpenUrl(script, resolvedUrl)
             };
         })
         .filter(item => item.openUrl && (item.script.code || item.script.consoleCode));
@@ -1251,8 +1447,9 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
                 index,
                 name: script.name || `Task ${index + 1}`,
                 url: resolvedUrl,
-                openUrl: getUivOpenUrl(resolvedUrl),
-                code: injectUivAutoImportCapture(script.code || '')
+                openUrl: resolveUivOpenUrl(script, resolvedUrl),
+                code: injectUivAutoImportCapture(script.code || ''),
+                loginProbeConfig: script.loginProbeConfig || null
             };
         })
         .filter(script => script.openUrl && script.code);
@@ -1525,23 +1722,26 @@ async function openLocalUivRunner(macro) {
 async function runAllUivScriptsDirect() {
     try {
         const { scripts } = await API.get('/api/uiv/scripts');
+        const scope = applyUivBatchCategoryFilter(scripts || []);
         const speed = getUivBatchSpeed();
         const autoImportSessionId = makeRunnerId();
         const autoImportToken = makeRunnerId();
         const autoImport = {
             sessionId: autoImportSessionId,
             token: autoImportToken,
-            groupName: UIVT('uiv.copy.allGroup'),
+            groupName: scope.groupName,
             uploadUrl: `${window.location.origin}/api/uiv-auto-import/${autoImportSessionId}/datasets?token=${autoImportToken}`
         };
         registerUivAutoImportBridge(autoImport);
-        const macro = buildUivBatchMacro(scripts, UIVT('uiv.copy.allGroup'), { speed, autoImportSessionId, autoImportToken });
+        const macro = buildUivBatchMacro(scope.scripts, scope.groupName, { speed, autoImportSessionId, autoImportToken });
         const runnerUrl = await openLocalUivRunner(macro);
-        showToast('✅ 已打开 UI.Vision 批量阵列启动页：当前浏览器', 'success');
-        console.info('[UIVF12 Direct Run]', { mode: 'local-runner', url: runnerUrl, commands: macro.Commands.length, speed });
+        showToast(`✅ 已打开 UI.Vision 批量阵列启动页：${scope.scripts.length} 个任务`, 'success');
+        console.info('[UIVF12 Direct Run]', { mode: 'local-runner', url: runnerUrl, commands: macro.Commands.length, speed, scripts: scope.scripts.length, excludedCategories: scope.excluded });
     } catch (error) {
         showToast(`❌ 直接运行失败：${error.message}`, 'error');
-        showUiVisionSetupDialog({ error: error.message });
+        if (!String(error.message || '').includes('批脚本执行范围')) {
+            showUiVisionSetupDialog({ error: error.message });
+        }
         console.error('[UIVF12 Direct Run] failed', error);
     }
 }
@@ -1621,13 +1821,16 @@ function buildAndCopyMasterScript(scriptsToRun, groupName) {
 
     const taskMeta = scriptsToRun.map((script, index) => {
         let origin = '';
+        const resolvedUrl = resolveUivScriptUrl(script);
+        const openUrl = resolveUivOpenUrl(script, resolvedUrl);
         try {
-            origin = new URL(script.url || '').origin;
+            origin = new URL(openUrl || resolvedUrl || '').origin;
         } catch (e) {}
         return {
             index,
             name: script.name || `Task ${index + 1}`,
-            url: script.url || '',
+            url: resolvedUrl || '',
+            openUrl,
             origin
         };
     });
@@ -1662,6 +1865,12 @@ window.UIVCopy = {
     copyAllUivScripts,
     runAllUivScriptsDirect,
     runTestUivScriptsDirect,
+    openUivBatchCategoryFilter,
+    closeUivBatchCategoryFilter,
+    selectAllUivBatchCategories,
+    clearAllUivBatchCategories,
+    resetUivBatchCategoryFilter,
+    saveUivBatchCategoryFilter,
     cycleUivBatchSpeed,
     updateUivBatchSpeedButton,
     buildAndCopyMasterScript,

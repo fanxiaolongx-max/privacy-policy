@@ -24,6 +24,7 @@ const appPackage = require('../package.json');
 
 const uivRoutes = require('./routes/uiv');
 const uivAutoImportRoutes = require('./routes/uiv-auto-import');
+const uivAiAdapterRoutes = require('./routes/uiv-ai-adapter');
 const slaRoutes = require('./routes/sla');
 const uploadRoutes = require('./routes/upload');
 const authRoutes = require('./routes/auth');
@@ -168,6 +169,7 @@ app.use('/api', (req, res, next) => {
     next();
 });
 app.use('/api/uiv', uivRoutes);         // UIV12 脚本仓库 API
+app.use('/api/uiv-ai-adapter', uivAiAdapterRoutes); // UIVF12 AI 网站适配器
 app.use('/api/sla', slaRoutes);         // SLA 配置持久化 API
 app.use('/api/upload', uploadRoutes);   // 文件上传历史 API
 app.use('/api/db', require('./routes/db')); // DB 保存 API
