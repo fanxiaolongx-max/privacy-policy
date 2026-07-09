@@ -1559,6 +1559,26 @@ function isProportionalScoringEnabled(targetData) {
     return !!(targetData && targetData.proportionalScoring);
 }
 
+function getCategoryTargetValue(targetData, month, category) {
+    if (!targetData || !month || !category) return undefined;
+    const monthTargets = targetData.categoryTargets && targetData.categoryTargets[String(month)];
+    if (!monthTargets || typeof monthTargets !== 'object' || Array.isArray(monthTargets)) return undefined;
+    const value = monthTargets[category];
+    return value === '' || value === null || value === undefined ? undefined : value;
+}
+
+function getEffectiveTargetValue(targetData, month, category) {
+    const categoryValue = getCategoryTargetValue(targetData, month, category);
+    if (categoryValue !== undefined) return categoryValue;
+    const globalValue = targetData && targetData[String(month)];
+    return globalValue === '' || globalValue === null || globalValue === undefined ? undefined : globalValue;
+}
+
+function hasCategoryTargets(targetData, month) {
+    const monthTargets = targetData && targetData.categoryTargets && targetData.categoryTargets[String(month)];
+    return !!(monthTargets && typeof monthTargets === 'object' && Object.values(monthTargets).some(value => value !== '' && value !== null && value !== undefined));
+}
+
 function clampScoreRatio(value) {
     const num = Number(value);
     if (!Number.isFinite(num)) return 0;
@@ -1894,7 +1914,10 @@ function renderReport(snap) {
         const isOthers = labelToGroup[m.label] === 'Others';
         const targetData = labelToTargetMap[m.label];
         const weight = (targetData && targetData.weight !== undefined) ? parseFloat(targetData.weight) : 1;
-        m.hasTarget = targetData && targetData[targetMonth] !== undefined && targetData[targetMonth] !== '' && weight > 0;
+        m.hasTarget = !!(targetData && (
+            getEffectiveTargetValue(targetData, targetMonth) !== undefined ||
+            hasCategoryTargets(targetData, targetMonth)
+        ) && weight > 0);
 
         if (!isOthers) {
             standardTotalScore += weight;
@@ -1914,12 +1937,13 @@ function renderReport(snap) {
             let bonusScore = 0;
 
             if (!isNaN(valNum)) {
-                if (m.hasTarget) {
+                const effectiveTargetValue = getEffectiveTargetValue(targetData, targetMonth, sm.category);
+                if (m.hasTarget && effectiveTargetValue !== undefined) {
                     if (!isOthers) {
                         catData[sm.category].validWeightSum += weight;
                     }
 
-                    const targetNum = parseFloat(targetData[targetMonth]);
+                    const targetNum = parseFloat(effectiveTargetValue);
                     const condition = targetData.type || 'gte';
                     const isPercent = String(sm.value).includes('%');
 
@@ -1949,6 +1973,7 @@ function renderReport(snap) {
                     catData[sm.category].values[m.label] = {
                         raw: sm.value,
                         num: valNum,
+                        targetValue: effectiveTargetValue,
                         isFailing: isFailing,
                         gapStr: gapStr,
                         bonusScore: bonusScore || 0,
@@ -2066,15 +2091,16 @@ function renderReport(snap) {
             const targetData = labelToTargetMap[m.label];
             const weight = (targetData && targetData.weight !== undefined) ? parseFloat(targetData.weight) : 1;
 
-            if (m.hasTarget) {
+            const globalTargetValue = getEffectiveTargetValue(targetData, targetMonth);
+            if (globalTargetValue !== undefined) {
                 const condition = targetData.type || 'gte';
-                targetStr = (condition === 'gte' ? '≥ ' : '≤ ') + targetData[targetMonth];
+                targetStr = (condition === 'gte' ? '≥ ' : '≤ ') + globalTargetValue;
                 const isPercent = m.value && String(m.value).includes('%');
                 if (isPercent) targetStr += '%';
 
                 const globalValNum = parseNum(m.value);
                 if (!isNaN(globalValNum)) {
-                    const targetNum = parseFloat(targetData[targetMonth]);
+                    const targetNum = parseFloat(globalTargetValue);
                     if (condition === 'gte' && globalValNum < targetNum) {
                         isGlobalFailing = true;
                         globalGapStr = +(targetNum - globalValNum).toFixed(2) + (isPercent ? '%' : '');
@@ -2083,11 +2109,13 @@ function renderReport(snap) {
                         globalGapStr = +(globalValNum - targetNum).toFixed(2) + (isPercent ? '%' : '');
                     }
                 }
+            } else if (hasCategoryTargets(targetData, targetMonth)) {
+                targetStr = rt('report.metric.categoryTargetsShort');
             }
 
             let globalDisplayClass = 'val-none';
             let globalTitleAttr = '';
-            if (m.hasTarget) {
+            if (globalTargetValue !== undefined) {
                 globalDisplayClass = isGlobalFailing ? 'val-warn' : 'val-good';
                 globalTitleAttr = isGlobalFailing ? ` title="整体不达标，距离目标差 ${globalGapStr}"` : '';
             }
@@ -2145,7 +2173,7 @@ function renderReport(snap) {
                 } else {
                     let displayClass = 'val-none';
                     let titleAttr = '';
-                    if (m.hasTarget) {
+                    if (cell && cell.targetValue !== undefined) {
                         displayClass = cell.isFailing ? 'val-warn' : 'val-good';
                         titleAttr = cell.isFailing ? ` title="不达标，距离目标差 ${cell.gapStr}"` : ` title="达标"`;
                     }
@@ -3480,8 +3508,24 @@ window.openAddMetricModal = function () {
                 </select>
             </div>
             <div style="flex:1;">
-                <label style="display:block; font-size:12px; color:#666; margin-bottom:4px;">${rt('report.metric.target', { month: targetMonth })}</label>
+                <label style="display:flex; align-items:center; justify-content:space-between; font-size:12px; color:#666; margin-bottom:4px;">
+                    <span>${rt('report.metric.target', { month: targetMonth })}</span>
+                    <button type="button" onclick="toggleManualCategoryTargets()" title="${rt('report.metric.categoryTargetsTitle')}" style="border:0; background:transparent; cursor:pointer; padding:0 2px; font-size:15px; line-height:1;">⚙️</button>
+                </label>
                 <input type="number" id="manual-metric-target" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;" placeholder="${rt('report.metric.targetPlaceholder')}">
+            </div>
+        </div>
+
+        <div id="manual-category-targets" style="display:none; margin:-2px 0 12px; padding:10px; border:1px solid #bbdefb; background:#f5fbff; border-radius:6px;">
+            <div style="font-size:12px; color:#1565c0; font-weight:bold; margin-bottom:4px;">${rt('report.metric.categoryTargetsTitle')}</div>
+            <div style="font-size:11px; color:#607d8b; margin-bottom:8px;">${rt('report.metric.categoryTargetsHint')}</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                ${categories.map(cat => `
+                    <label style="font-size:11px; color:#455a64;">
+                        <span style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHTML(cat)}">${escapeHTML(cat)}</span>
+                        <input type="number" class="manual-category-target-input" data-cat="${escapeHTML(cat)}" step="any" style="width:100%; padding:6px; border:1px solid #b0bec5; border-radius:4px; box-sizing:border-box;" placeholder="${rt('report.metric.inheritTarget')}">
+                    </label>
+                `).join('')}
             </div>
         </div>
         
@@ -3559,6 +3603,18 @@ window.editManualMetric = function (label) {
         if (targetData[targetMonth] !== undefined) document.getElementById('manual-metric-target').value = targetData[targetMonth];
         if (targetData.exceedBy !== undefined) document.getElementById('manual-metric-exceed-by').value = targetData.exceedBy;
         if (targetData.bonus !== undefined) document.getElementById('manual-metric-bonus').value = targetData.bonus;
+        const monthTargets = targetData.categoryTargets && targetData.categoryTargets[String(targetMonth)];
+        if (monthTargets && typeof monthTargets === 'object') {
+            let hasConfiguredTarget = false;
+            document.querySelectorAll('.manual-category-target-input').forEach(input => {
+                const value = monthTargets[input.dataset.cat];
+                if (value !== undefined && value !== null && value !== '') {
+                    input.value = value;
+                    hasConfiguredTarget = true;
+                }
+            });
+            if (hasConfiguredTarget) document.getElementById('manual-category-targets').style.display = 'block';
+        }
     }
 
     // Fill snapshot values if exist
@@ -3575,6 +3631,11 @@ window.editManualMetric = function (label) {
             }
         });
     }
+};
+
+window.toggleManualCategoryTargets = function () {
+    const panel = document.getElementById('manual-category-targets');
+    if (panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
 };
 
 window.closeAddMetricModal = function () {
@@ -3654,6 +3715,26 @@ window.saveManualMetric = async function () {
 
     if (targetVal) {
         updatedTargets[targetKey][targetMonth] = targetVal;
+    }
+
+    const categoryTargets = {};
+    document.querySelectorAll('.manual-category-target-input').forEach(input => {
+        const value = input.value.trim();
+        if (value !== '') categoryTargets[input.dataset.cat] = value;
+    });
+    const existingCategoryTargets = updatedTargets[targetKey].categoryTargets &&
+        typeof updatedTargets[targetKey].categoryTargets === 'object'
+        ? { ...updatedTargets[targetKey].categoryTargets }
+        : {};
+    if (Object.keys(categoryTargets).length) {
+        existingCategoryTargets[String(targetMonth)] = categoryTargets;
+    } else {
+        delete existingCategoryTargets[String(targetMonth)];
+    }
+    if (Object.keys(existingCategoryTargets).length) {
+        updatedTargets[targetKey].categoryTargets = existingCategoryTargets;
+    } else {
+        delete updatedTargets[targetKey].categoryTargets;
     }
 
     try {
@@ -4950,9 +5031,9 @@ window.saveDashboardToDB = async function (event) {
         const weight = targetData.weight !== undefined ? parseFloat(targetData.weight) : 1;
 
         let targetStr = '--';
-        if (targetData[month] !== undefined && targetData[month] !== '') {
+        if (getEffectiveTargetValue(targetData, month) !== undefined) {
             const condition = targetData.type || 'gte';
-            targetStr = (condition === 'gte' ? '≥ ' : '≤ ') + targetData[month];
+            targetStr = (condition === 'gte' ? '≥ ' : '≤ ') + getEffectiveTargetValue(targetData, month);
 
             // Check if any cat has % in this metric to append % to target
             let isPercent = false;
@@ -4968,11 +5049,18 @@ window.saveDashboardToDB = async function (event) {
             const cell = catData[catName].values[m.label];
             if (cell) {
                 hasAnyCustomerData = true;
+                const cellTarget = getEffectiveTargetValue(targetData, month, catName);
+                let cellTargetStr = '--';
+                if (cellTarget !== undefined) {
+                    const condition = targetData.type || 'gte';
+                    cellTargetStr = (condition === 'gte' ? '≥ ' : '≤ ') + cellTarget;
+                    if (String(cell.raw).includes('%')) cellTargetStr += '%';
+                }
                 metric_data.push({
                     cat_name: catName,
                     metric_label: m.label,
                     weight: weight,
-                    target_val: targetStr,
+                    target_val: cellTargetStr,
                     raw_val: String(cell.raw),
                     num_val: cell.num,
                     is_failing: cell.isFailing,
