@@ -83,6 +83,7 @@
             emptyMetricData: '暂无指标明细数据',
             emptyPassing: '暂无已达标指标',
             target: '目标',
+            byCategoryTarget: '按分类目标',
             actual: '实测',
             current: '当前',
             gap: '差距',
@@ -225,6 +226,7 @@
             emptyMetricData: 'No metric details available',
             emptyPassing: 'No passed metrics',
             target: 'Target',
+            byCategoryTarget: 'By-category targets',
             actual: 'Actual',
             current: 'Current',
             gap: 'Gap',
@@ -1204,21 +1206,28 @@
             if (!grouped[label]) {
                 grouped[label] = {
                     label,
-                    target: item.target_val || '-',
                     count: 0,
                     cats: [],
                     values: [],
+                    targets: [],
                     rows: []
                 };
             }
             grouped[label].count += 1;
             grouped[label].cats.push(item.cat_name || '-');
-            grouped[label].values.push(item.raw_val || item.num_val || '-');
+            grouped[label].values.push(item.raw_val ?? item.num_val ?? '-');
+            grouped[label].targets.push(item.target_val || '-');
             grouped[label].rows.push(item);
         });
         return Object.values(grouped).sort((a, b) => {
             return getMetricSortIndex(a.label) - getMetricSortIndex(b.label) || b.count - a.count || a.label.localeCompare(b.label);
         });
+    }
+
+    function getGroupedTargetText(item) {
+        const targets = [...new Set((item.targets || []).filter(value => value && value !== '-'))];
+        if (!targets.length) return '-';
+        return targets.length === 1 ? targets[0] : tr('byCategoryTarget');
     }
 
     function parseMetricNumber(value) {
@@ -1453,14 +1462,14 @@
                         <span class="risk-count-badge" title="${escapeHTML(tr('failedCustomerGroups'))}">${item.count}</span>
                     </div>
                     <div class="risk-detail">
-                        <div class="row-meta">${escapeHTML(tr('target'))} ${escapeHTML(item.target)}</div>
+                        <div class="row-meta">${escapeHTML(tr('target'))} ${escapeHTML(getGroupedTargetText(item))}</div>
                         <div class="risk-cats">
                             ${(() => {
                 const sortedRows = [...item.rows].sort((a, b) => failSeverityScore(b) - failSeverityScore(a));
                 const maxScore = sortedRows.length ? failSeverityScore(sortedRows[0]) : 0;
                 return sortedRows.map(row => `
                                 <span class="cat-chip ${severityClass(row, maxScore)}" data-cat="${escapeHTML(row.cat_name || '-')}" title="${escapeHTML(translated(row.cat_name || '-'))} | ${escapeHTML(tr('actual'))} ${escapeHTML(row.raw_val ?? row.num_val ?? '-')} | ${escapeHTML(tr('target'))} ${escapeHTML(row.target_val || '-')} | ${escapeHTML(tr('deviation'))} ${fmt(failSeverityScore(row) * 100, 1)}">
-                                    ${escapeHTML(translated(row.cat_name || '-'))}：${escapeHTML(row.raw_val ?? row.num_val ?? '-')}
+                                    ${escapeHTML(translated(row.cat_name || '-'))}：${escapeHTML(row.raw_val ?? row.num_val ?? '-')} / ${escapeHTML(tr('target'))} ${escapeHTML(row.target_val || '-')}
                                 </span>
                                 `).join('');
             })()}
