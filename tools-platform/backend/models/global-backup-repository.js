@@ -26,16 +26,23 @@ const DEFAULT_SCHEDULE_SETTINGS = {
 let schedulerTimer = null;
 let schedulerRunning = false;
 
+const REPORT_OWNED_FILES = ['report.db', 'report.db-wal', 'report.db-shm'];
+const HAS_SPLIT_REPORT_DATA = path.resolve(REPORT_DATA_DIR) !== path.resolve(DATA_DIR);
 const DATA_TARGETS = [
-    { id: 'primary_data', absPath: DATA_DIR, relPath: process.env.TOOLS_DATA_DIR ? 'data' : 'backend/data' }
+    {
+        id: 'primary_data',
+        absPath: DATA_DIR,
+        relPath: process.env.TOOLS_DATA_DIR ? 'data' : 'backend/data',
+        excludeTopLevel: ['images', ...(HAS_SPLIT_REPORT_DATA ? REPORT_OWNED_FILES : [])]
+    }
 ];
 
-if (path.resolve(REPORT_DATA_DIR) !== path.resolve(DATA_DIR)) {
+if (HAS_SPLIT_REPORT_DATA) {
     DATA_TARGETS.push({
         id: 'report_data',
         absPath: REPORT_DATA_DIR,
         relPath: 'data（不含 images）',
-        excludeTopLevel: ['images']
+        includeTopLevel: REPORT_OWNED_FILES
     });
 }
 
@@ -55,6 +62,7 @@ function countFilesAndBytes(dir, options = {}) {
     const result = { files: 0, bytes: 0 };
     if (!fs.existsSync(dir)) return result;
     const excludedNames = new Set(options.excludeNames || []);
+    const includedNames = options.includeNames ? new Set(options.includeNames) : null;
     const stack = [dir];
     while (stack.length) {
         const current = stack.pop();
@@ -62,7 +70,9 @@ function countFilesAndBytes(dir, options = {}) {
         entries.forEach(entry => {
             const fullPath = path.join(current, entry.name);
             const relative = path.relative(dir, fullPath);
-            if (excludedNames.has(relative.split(path.sep)[0])) return;
+            const topLevelName = relative.split(path.sep)[0];
+            if (excludedNames.has(topLevelName)) return;
+            if (includedNames && !includedNames.has(topLevelName)) return;
             if (entry.isDirectory()) {
                 stack.push(fullPath);
             } else if (entry.isFile()) {
@@ -83,8 +93,12 @@ function getManifest(reason = 'manual') {
             path: target.id,
             relPath: target.relPath || target.id,
             excluded: target.excludeTopLevel || [],
+            included: target.includeTopLevel || null,
             exists: fs.existsSync(absPath),
-            ...countFilesAndBytes(absPath, { excludeNames: target.excludeTopLevel || [] })
+            ...countFilesAndBytes(absPath, {
+                excludeNames: target.excludeTopLevel || [],
+                includeNames: target.includeTopLevel || null
+            })
         };
     });
     return {
@@ -198,10 +212,13 @@ function normalizeRestoreError(err, targetPath) {
 
 function isTargetPathExcluded(target, absPath) {
     const excluded = new Set(target.excludeTopLevel || []);
-    if (!excluded.size) return false;
+    const included = target.includeTopLevel ? new Set(target.includeTopLevel) : null;
+    if (!excluded.size && !included) return false;
     const relative = path.relative(target.absPath, absPath);
     if (!relative || relative.startsWith('..')) return false;
-    return excluded.has(relative.split(path.sep)[0]);
+    const topLevelName = relative.split(path.sep)[0];
+    if (excluded.has(topLevelName)) return true;
+    return !!(included && !included.has(topLevelName));
 }
 
 function addPathToZip(zip, absPath, relPath, target) {
@@ -466,6 +483,23 @@ function syncDirRecursive(src, dest, options = {}) {
     });
 }
 
+function syncOwnedFiles(src, dest, fileNames) {
+    ensureDir(dest);
+    fileNames.forEach(name => {
+        const srcPath = path.join(src, name);
+        const destPath = path.join(dest, name);
+        try {
+            if (fs.existsSync(srcPath) && fs.statSync(srcPath).isFile()) {
+                fs.copyFileSync(srcPath, destPath);
+            } else if (fs.existsSync(destPath)) {
+                fs.rmSync(destPath, { force: true });
+            }
+        } catch (err) {
+            throw normalizeRestoreError(err, destPath);
+        }
+    });
+}
+
 async function restoreFromZip(zipPath, options = {}) {
     const safetyBackup = options.skipSafetyBackup ? null : await createBackup({ reason: 'pre-restore' });
     const { extractDir, manifest } = await extractBackup(zipPath);
@@ -473,16 +507,37 @@ async function restoreFromZip(zipPath, options = {}) {
     try {
         const restoredTargets = [];
         const missingTargets = [];
-        DATA_TARGETS.forEach(target => {
-            const src = path.join(extractDir, target.id);
-            const dest = target.absPath;
-            if (fs.existsSync(src)) {
-                syncDirRecursive(src, dest, { excludeNames: target.excludeTopLevel || [] });
-                restoredTargets.push(target.id);
-            } else {
-                missingTargets.push(target.id);
+        const primarySrc = path.join(extractDir, 'primary_data');
+        const reportSrc = path.join(extractDir, 'report_data');
+        const hasPrimary = fs.existsSync(primarySrc);
+        const hasReport = fs.existsSync(reportSrc);
+        const manifestPrimary = (manifest.targets || []).find(target => target.id === 'primary_data') || {};
+        const packageUsesUnifiedData = manifestPrimary.relPath === 'data';
+
+        if (hasPrimary) {
+            const primaryExcludes = new Set(['images']);
+            if (HAS_SPLIT_REPORT_DATA || hasReport || !packageUsesUnifiedData) {
+                REPORT_OWNED_FILES.forEach(name => primaryExcludes.add(name));
             }
-        });
+            syncDirRecursive(primarySrc, DATA_DIR, { excludeNames: Array.from(primaryExcludes) });
+            restoredTargets.push('primary_data');
+        } else {
+            missingTargets.push('primary_data');
+        }
+
+        if (hasReport) {
+            syncOwnedFiles(reportSrc, REPORT_DATA_DIR, REPORT_OWNED_FILES);
+            restoredTargets.push('report_data');
+        } else if (HAS_SPLIT_REPORT_DATA && packageUsesUnifiedData && hasPrimary) {
+            // Windows backups store report.db inside primary_data. Split it back
+            // into the dedicated report directory when restoring on Mac/PM2.
+            syncOwnedFiles(primarySrc, REPORT_DATA_DIR, REPORT_OWNED_FILES);
+            restoredTargets.push('report_data:from-primary_data');
+        } else if (HAS_SPLIT_REPORT_DATA || !packageUsesUnifiedData) {
+            // Old Mac backups did not contain report_data. Preserve the current
+            // report database and make the partial restore explicit.
+            missingTargets.push('report_data');
+        }
         return {
             success: true,
             restoredAt: new Date().toISOString(),
