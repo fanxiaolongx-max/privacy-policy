@@ -460,8 +460,10 @@ textarea { flex: 1; resize: none; white-space: pre; overflow: auto; line-height:
     display: none;
     align-items: center;
     justify-content: center;
-    z-index: 10001;
+    z-index: 2147482100;
+    isolation: isolate;
     background: rgba(2,6,23,0.66);
+    backdrop-filter: blur(4px);
 }
 .uiv-ai-choice-dialog {
     width: min(760px, calc(100vw - 40px));
