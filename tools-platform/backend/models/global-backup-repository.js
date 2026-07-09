@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const JSZip = require('jszip');
 
 const { DATA_DIR } = require('./store');
+const { REPORT_DATA_DIR } = require('./report-store');
 const { readKV, writeKV } = require('./kv-store');
 
 const BACKUP_DIR = path.join(DATA_DIR, '../backups');
@@ -26,8 +27,17 @@ let schedulerTimer = null;
 let schedulerRunning = false;
 
 const DATA_TARGETS = [
-    { id: 'primary_data', absPath: DATA_DIR }
+    { id: 'primary_data', absPath: DATA_DIR, relPath: process.env.TOOLS_DATA_DIR ? 'data' : 'backend/data' }
 ];
+
+if (path.resolve(REPORT_DATA_DIR) !== path.resolve(DATA_DIR)) {
+    DATA_TARGETS.push({
+        id: 'report_data',
+        absPath: REPORT_DATA_DIR,
+        relPath: 'data（不含 images）',
+        excludeTopLevel: ['images']
+    });
+}
 
 function ensureDir(dir) {
     fs.mkdirSync(dir, { recursive: true });
@@ -41,15 +51,18 @@ function timestampForFile() {
     return new Date().toISOString().replace(/[:.]/g, '-');
 }
 
-function countFilesAndBytes(dir) {
+function countFilesAndBytes(dir, options = {}) {
     const result = { files: 0, bytes: 0 };
     if (!fs.existsSync(dir)) return result;
+    const excludedNames = new Set(options.excludeNames || []);
     const stack = [dir];
     while (stack.length) {
         const current = stack.pop();
         const entries = fs.readdirSync(current, { withFileTypes: true });
         entries.forEach(entry => {
             const fullPath = path.join(current, entry.name);
+            const relative = path.relative(dir, fullPath);
+            if (excludedNames.has(relative.split(path.sep)[0])) return;
             if (entry.isDirectory()) {
                 stack.push(fullPath);
             } else if (entry.isFile()) {
@@ -68,8 +81,10 @@ function getManifest(reason = 'manual') {
         return {
             id: target.id,
             path: target.id,
+            relPath: target.relPath || target.id,
+            excluded: target.excludeTopLevel || [],
             exists: fs.existsSync(absPath),
-            ...countFilesAndBytes(absPath)
+            ...countFilesAndBytes(absPath, { excludeNames: target.excludeTopLevel || [] })
         };
     });
     return {
@@ -181,13 +196,22 @@ function normalizeRestoreError(err, targetPath) {
     return err;
 }
 
-function addPathToZip(zip, absPath, relPath) {
+function isTargetPathExcluded(target, absPath) {
+    const excluded = new Set(target.excludeTopLevel || []);
+    if (!excluded.size) return false;
+    const relative = path.relative(target.absPath, absPath);
+    if (!relative || relative.startsWith('..')) return false;
+    return excluded.has(relative.split(path.sep)[0]);
+}
+
+function addPathToZip(zip, absPath, relPath, target) {
     if (!fs.existsSync(absPath)) return;
+    if (isTargetPathExcluded(target, absPath)) return;
     const stat = fs.statSync(absPath);
     if (stat.isDirectory()) {
         const entries = fs.readdirSync(absPath, { withFileTypes: true });
         entries.forEach(entry => {
-            addPathToZip(zip, path.join(absPath, entry.name), path.join(relPath, entry.name));
+            addPathToZip(zip, path.join(absPath, entry.name), path.join(relPath, entry.name), target);
         });
         return;
     }
@@ -201,7 +225,7 @@ async function writeZip(outputPath, manifest) {
     DATA_TARGETS.forEach(target => {
         const absPath = target.absPath;
         if (fs.existsSync(absPath)) {
-            addPathToZip(zip, absPath, target.id);
+            addPathToZip(zip, absPath, target.id, target);
         }
     });
     zip.file('manifest.json', JSON.stringify(manifest, null, 2));
@@ -407,10 +431,12 @@ async function extractBackup(zipPath) {
     return { extractDir, manifest };
 }
 
-function syncDirRecursive(src, dest) {
+function syncDirRecursive(src, dest, options = {}) {
     if (!fs.existsSync(src)) return;
     fs.mkdirSync(dest, { recursive: true });
-    const srcEntries = fs.readdirSync(src, { withFileTypes: true });
+    const excludedNames = new Set(options.excludeNames || []);
+    const srcEntries = fs.readdirSync(src, { withFileTypes: true })
+        .filter(entry => !excludedNames.has(entry.name));
     const srcNames = new Set(srcEntries.map(entry => entry.name));
 
     srcEntries.forEach(entry => {
@@ -429,6 +455,7 @@ function syncDirRecursive(src, dest) {
 
     if (!fs.existsSync(dest)) return;
     fs.readdirSync(dest, { withFileTypes: true }).forEach(entry => {
+        if (excludedNames.has(entry.name)) return;
         if (srcNames.has(entry.name)) return;
         const extraPath = path.join(dest, entry.name);
         try {
@@ -444,10 +471,17 @@ async function restoreFromZip(zipPath, options = {}) {
     const { extractDir, manifest } = await extractBackup(zipPath);
     const closedDatabases = await closeRuntimeDatabases();
     try {
+        const restoredTargets = [];
+        const missingTargets = [];
         DATA_TARGETS.forEach(target => {
             const src = path.join(extractDir, target.id);
             const dest = target.absPath;
-            if (fs.existsSync(src)) syncDirRecursive(src, dest);
+            if (fs.existsSync(src)) {
+                syncDirRecursive(src, dest, { excludeNames: target.excludeTopLevel || [] });
+                restoredTargets.push(target.id);
+            } else {
+                missingTargets.push(target.id);
+            }
         });
         return {
             success: true,
@@ -455,6 +489,9 @@ async function restoreFromZip(zipPath, options = {}) {
             manifest,
             safetyBackup,
             closedDatabases,
+            restoredTargets,
+            missingTargets,
+            partialRestore: missingTargets.length > 0,
             needsRestart: true
         };
     } finally {
