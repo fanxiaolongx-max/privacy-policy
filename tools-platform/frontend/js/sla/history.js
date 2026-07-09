@@ -65,6 +65,11 @@ function getHistoryMetricValue(label, value) {
     return String(value ?? '');
 }
 
+function getHistoryTargetMonth(item) {
+    const month = Number(item && (item.selectedTargetMonth ?? item.targetMonth ?? item.month));
+    return Number.isInteger(month) && month >= 1 && month <= 12 ? month : null;
+}
+
 async function openHistoryModal() {
     const modal = document.getElementById('history-modal');
     if(modal) modal.style.display = 'flex';
@@ -128,6 +133,8 @@ function renderHistory(data) {
         .summary-col { min-width: 350px; white-space: normal !important; word-wrap: break-word; }
         .history-import-cell { display:flex; flex-direction:column; align-items:flex-start; gap:8px; min-width:156px; padding:4px 0; }
         .history-import-time { color:#1976d2; font-weight:800; line-height:1.45; white-space:normal; word-break:break-word; }
+        .history-import-badges { display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+        .history-target-month-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:999px; background:linear-gradient(135deg,#fff7ed,#ffedd5); border:1px solid #fdba74; color:#c2410c; box-shadow:0 2px 6px rgba(234,88,12,.10); font-size:10px; font-weight:900; line-height:1.35; letter-spacing:.1px; }
         .history-auto-import-badge { display:inline-flex; align-items:center; padding:3px 8px; border-radius:999px; background:#ecfeff; border:1px solid #67e8f9; color:#0369a1; font-size:10px; font-weight:800; line-height:1.35; }
         .history-delete-btn { display:inline-flex; align-items:center; justify-content:center; min-height:24px; padding:3px 8px; font-size:11px; background:#fff; border:1px solid #fecaca; color:#dc2626; border-radius:6px; cursor:pointer; line-height:1.2; }
         .history-delete-btn:hover { background:#fff1f2; border-color:#fca5a5; }
@@ -149,6 +156,10 @@ function renderHistory(data) {
         const d = new Date(item.timestamp).toLocaleString('zh-CN', { hour12: false });
         const isAutoImport = item.importSource === 'uivf12' || item.source === 'uivf12';
         const autoImportBadge = isAutoImport ? '<span class="history-auto-import-badge">自动导入</span>' : '';
+        const targetMonth = getHistoryTargetMonth(item);
+        const targetMonthBadge = targetMonth
+            ? `<span class="history-target-month-badge">🎯 ${escapeHTML(SLAT('sla.history.targetMonth', { month: targetMonth }))}</span>`
+            : '';
         
         // 构建当前行的指标 map
         const mMap = {};
@@ -204,7 +215,7 @@ function renderHistory(data) {
                 <td class="sticky-col-td">
                     <div class="history-import-cell">
                         <div class="history-import-time">${escapeHTML(d)}</div>
-                        ${autoImportBadge}
+                        <div class="history-import-badges">${targetMonthBadge}${autoImportBadge}</div>
                         <button class="history-delete-btn" onclick="deleteHistorySnapshot('${item.id}')" title="${SLAT('sla.history.deleteTitle')}">${SLAT('sla.history.delete')}</button>
                     </div>
                 </td>
