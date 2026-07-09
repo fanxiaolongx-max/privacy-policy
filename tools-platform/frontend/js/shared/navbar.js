@@ -1968,6 +1968,14 @@ window.deleteGlobalBackup = async function (name) {
     renderNavSettingsContent();
 };
 
+function getGlobalRestoreCompletionMessage(data = {}) {
+    const missing = Array.isArray(data.missingTargets) ? data.missingTargets : [];
+    const partialText = data.partialRestore
+        ? `\n\n注意：这是旧版或不完整备份，未包含：${missing.join('、')}。对应的现有数据未被覆盖。`
+        : '';
+    return `恢复完成。恢复前安全备份：${data.safetyBackup?.name || '-'}${partialText}\n\n建议重启服务或刷新页面，确保 SQLite 连接重新加载。`;
+}
+
 window.restoreGlobalBackupFromServer = async function (name) {
     const ok = confirm(`确定要从服务器备份恢复吗？\n\n${name}\n\n此操作会覆盖当前全局配置和全部数据。系统会先自动生成恢复前安全备份。`);
     if (!ok) return;
@@ -1978,7 +1986,7 @@ window.restoreGlobalBackupFromServer = async function (name) {
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-        alert(`恢复完成。恢复前安全备份：${data.safetyBackup?.name || '-'}\n\n建议重启服务或刷新页面，确保 SQLite 连接重新加载。`);
+        alert(getGlobalRestoreCompletionMessage(data));
         return data;
     });
     renderNavSettingsContent();
@@ -2029,7 +2037,7 @@ window.restoreGlobalBackupFromUpload = async function () {
         });
 
         if (indicator) indicator.textContent = '操作完成';
-        alert(`恢复完成。恢复前安全备份：${data.safetyBackup?.name || '-'}\n\n建议重启服务或刷新页面，确保 SQLite 连接重新加载。`);
+        alert(getGlobalRestoreCompletionMessage(data));
     } catch (e) {
         if (indicator) indicator.textContent = `操作失败: ${e.message}`;
         alert(`操作失败：${e.message}`);

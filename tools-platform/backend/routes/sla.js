@@ -1021,8 +1021,12 @@ async function fillYuxiangWorkbook(body) {
         if (typeof val === 'string' && val.endsWith('%')) {
             cell.value = val;
         } else {
+            if (isScore && Number.isFinite(Number(val))) {
+                const score = Number(val);
+                val = Math.sign(score) * Math.round((Math.abs(score) + Number.EPSILON) * 100) / 100;
+            }
             cell.value = val;
-            cell.numFmt = 'General';
+            cell.numFmt = isScore && typeof val === 'number' ? '0.00' : 'General';
         }
         // Clone style to avoid mutating workbook default
         cell.style = Object.assign({}, cell.style);
@@ -1166,7 +1170,7 @@ async function fillYuxiangWorkbook(body) {
         const row = sheet.getRow(rIndex);
         fields.forEach((cat, idx) => {
             const cIndex = targetCol + idx;
-            setCell(row, cIndex, sourceObj[cat]);
+            setCell(row, cIndex, sourceObj[cat], targetCol === 15);
         });
     };
 
@@ -1209,8 +1213,9 @@ router.post('/preview-yuxiang', async (req, res) => {
                     else val = String(val);
                 }
                 
+                const isScoreCell = c >= 15 && c <= 18 && Number.isFinite(Number(val));
                 rowData.push({
-                    val: val === null || val === undefined ? '' : String(val),
+                    val: val === null || val === undefined ? '' : (isScoreCell ? Number(val).toFixed(2) : String(val)),
                     isMerged: cell.isMerged,
                     masterAddress: cell.isMerged ? cell.master.address : null,
                     address: cell.address,

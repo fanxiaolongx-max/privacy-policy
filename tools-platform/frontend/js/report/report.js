@@ -4708,6 +4708,12 @@ async function promptExpiringTickets(tickets, specialMetricAlerts = []) {
     });
 }
 
+function roundYuxiangScore(value) {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return 0;
+    return Math.sign(num) * Math.round((Math.abs(num) + Number.EPSILON) * 100) / 100;
+}
+
 window.buildYuxiangPayload = function () {
     const orderedMetrics = window._currentOrderedMetrics;
     if (!currentSnapshot || !orderedMetrics || !window._currentCatData) {
@@ -4755,7 +4761,7 @@ window.buildYuxiangPayload = function () {
                 score = cell.earnedScore !== undefined ? cell.earnedScore : (cell.isFailing ? 0 : (weight + (cell.bonusScore || 0)));
             }
 
-            metricData[cat] = { achv, score, isFailing: cell ? cell.isFailing : false };
+            metricData[cat] = { achv, score: roundYuxiangScore(score), isFailing: cell ? cell.isFailing : false };
         });
         payload.metrics.push(metricData);
     });
@@ -4780,8 +4786,9 @@ window.buildYuxiangPayload = function () {
                     score = calculateManualAdjustScore(item, count);
                 }
             }
-            adjData[cat] = { score, count: (currentSnapshot.manualAdjustData && currentSnapshot.manualAdjustData[cat]) ? (currentSnapshot.manualAdjustData[cat][idx] || 0) : 0 };
-            payload.totals.adjustTotal[cat] += score;
+            const roundedScore = roundYuxiangScore(score);
+            adjData[cat] = { score: roundedScore, count: (currentSnapshot.manualAdjustData && currentSnapshot.manualAdjustData[cat]) ? (currentSnapshot.manualAdjustData[cat][idx] || 0) : 0 };
+            payload.totals.adjustTotal[cat] = roundYuxiangScore(payload.totals.adjustTotal[cat] + roundedScore);
         });
         payload.adjustments.push(adjData);
     });
@@ -4820,7 +4827,7 @@ window.buildYuxiangPayload = function () {
 
             const s1 = parseFloatSafe(baseObj[cat].score);
             const s2 = parseFloatSafe(newObj[cat].score);
-            baseObj[cat].score = s1 + s2;
+            baseObj[cat].score = roundYuxiangScore(s1 + s2);
 
             baseObj[cat].isFailing = baseObj[cat].isFailing || newObj[cat].isFailing;
         });
@@ -4864,9 +4871,10 @@ window.buildYuxiangPayload = function () {
     targetCats.forEach(cat => {
         const d = window._currentCatData[cat];
         if (d) {
-            payload.totals.subTotal[cat] = d.earnedScore;
-            payload.totals.weightInMonth[cat] = d.validWeightSum;
-            payload.totals.finalResult[cat] = d.finalScore;
+            payload.totals.subTotal[cat] = roundYuxiangScore(d.earnedScore);
+            payload.totals.adjustTotal[cat] = roundYuxiangScore(payload.totals.adjustTotal[cat]);
+            payload.totals.weightInMonth[cat] = roundYuxiangScore(d.validWeightSum);
+            payload.totals.finalResult[cat] = roundYuxiangScore(d.finalScore);
         }
     });
 
@@ -4998,7 +5006,12 @@ window.renderYuxiangPreview = function () {
 
 window.updateYuxiangPreviewData = function (r, c, value, el) {
     const key = `${r}_${c}`;
-    window._yuxiangOverrides[key] = value;
+    let normalizedValue = value;
+    if (c >= 15 && c <= 18 && String(value).trim() !== '' && Number.isFinite(Number(value))) {
+        normalizedValue = roundYuxiangScore(value).toFixed(2);
+        if (el) el.innerText = normalizedValue;
+    }
+    window._yuxiangOverrides[key] = normalizedValue;
     if (el && el.parentElement) {
         el.parentElement.style.backgroundColor = '#fff3e0';
     }
