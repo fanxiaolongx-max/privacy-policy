@@ -6,6 +6,38 @@ function getMonthlyLang() {
 }
 window.currentLang = getMonthlyLang();
 
+function getOrderedManualAdjustEntries(items) {
+    return (Array.isArray(items) ? items : [])
+        .map((item, idx) => ({ item, idx }))
+        .filter(entry => entry.item && !entry.item.deleted)
+        .sort((a, b) => {
+            const aOrder = Number.isFinite(Number(a.item.sortOrder)) ? Number(a.item.sortOrder) : a.idx;
+            const bOrder = Number.isFinite(Number(b.item.sortOrder)) ? Number(b.item.sortOrder) : b.idx;
+            return aOrder - bOrder || a.idx - b.idx;
+        });
+}
+
+function getCategoryTargetValue(targetData, month, category) {
+    if (!targetData || !month || !category) return undefined;
+    const monthTargets = targetData.categoryTargets && targetData.categoryTargets[String(month)];
+    if (!monthTargets || typeof monthTargets !== 'object' || Array.isArray(monthTargets)) return undefined;
+    const value = monthTargets[category];
+    return value === '' || value === null || value === undefined ? undefined : value;
+}
+
+function getEffectiveTargetValue(targetData, month, category) {
+    const categoryValue = getCategoryTargetValue(targetData, month, category);
+    if (categoryValue !== undefined) return categoryValue;
+    const globalValue = targetData && targetData[String(month)];
+    return globalValue === '' || globalValue === null || globalValue === undefined ? undefined : globalValue;
+}
+
+function hasCategoryTargets(targetData, month) {
+    const monthTargets = targetData && targetData.categoryTargets && targetData.categoryTargets[String(month)];
+    return !!(monthTargets && typeof monthTargets === 'object' && !Array.isArray(monthTargets) &&
+        Object.values(monthTargets).some(value => value !== '' && value !== null && value !== undefined));
+}
+
 const i18n = {
     zh: {
         title: '月度运营质量与合规分析报告 <span id="monthlyFrontendVersion" style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v加载中</span>',
@@ -88,6 +120,7 @@ const i18n = {
         full_th_metric: '考核的指标名称',
         full_th_weight: '权重',
         full_th_month_target: '{month}月目标值',
+        full_category_targets: '按分类目标',
         full_th_global: '全局总体达标',
         full_th_score: '得分',
         full_others_badge: '监控项',
@@ -186,6 +219,7 @@ const i18n = {
         full_th_metric: 'Metric Name',
         full_th_weight: 'Weight',
         full_th_month_target: '{month} Target',
+        full_category_targets: 'By-category targets',
         full_th_global: 'Global Actual',
         full_th_score: 'Score',
         full_others_badge: 'Monitor',
@@ -765,7 +799,7 @@ function generateSummary(trends, latest, globalConfig) {
             let reasons = [];
             let catAdj = snapAdjData[c.cat_name] || {};
             if (window._manualAdjustItems) {
-                window._manualAdjustItems.forEach((item, idx) => {
+                getOrderedManualAdjustEntries(window._manualAdjustItems).forEach(({ item, idx }) => {
                     if (catAdj[idx] > 0) {
                         reasons.push(tVal(item.name));
                     }
@@ -1120,13 +1154,13 @@ function renderMatrix(latest) {
     failingMetrics.forEach(m => {
         if (!metricGroups[m.metric_label]) {
             metricGroups[m.metric_label] = {
-                target_val: m.target_val,
                 failures: []
             };
         }
         metricGroups[m.metric_label].failures.push({
             cat_name: m.cat_name,
-            raw_val: m.raw_val
+            raw_val: m.raw_val,
+            target_val: m.target_val
         });
     });
 
@@ -1139,7 +1173,15 @@ function renderMatrix(latest) {
                 ? 'display:inline-block; margin:2px 4px; padding:4px 8px; background:#f5f7f8; border:1px dashed #cfd8dc; border-radius:4px; font-size:13px; color:#607d8b;'
                 : 'display:inline-block; margin:2px 4px; padding:4px 8px; background:#ffebee; border:1px solid #ffcdd2; border-radius:4px; font-size:13px;';
             return `<span style="${chipStyle}">
-                <strong>${tVal(f.cat_name)}</strong>: ${f.raw_val}
+                <strong>${escapeHTML(tVal(f.cat_name))}</strong>: ${escapeHTML(String(f.raw_val ?? '--'))}
+            </span>`;
+        }).join(' ');
+        const targetsHtml = group.failures.map(f => {
+            const chipStyle = isOthers
+                ? 'display:inline-block; margin:2px 4px; padding:4px 8px; background:#f5f7f8; border:1px dashed #cfd8dc; border-radius:4px; font-size:13px; color:#607d8b;'
+                : 'display:inline-block; margin:2px 4px; padding:4px 8px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:4px; font-size:13px; color:#1d4ed8;';
+            return `<span style="${chipStyle}">
+                <strong>${escapeHTML(tVal(f.cat_name))}</strong>: ${escapeHTML(String(f.target_val || '--'))}
             </span>`;
         }).join(' ');
         const metricCellStyle = isOthers
@@ -1153,7 +1195,7 @@ function renderMatrix(latest) {
         html += `
             <tr id="matrix-row-${encodeURIComponent(label)}"${rowStyle}>
                 <td style="${metricCellStyle}">${escapeHTML(tVal(label))}${isOthers ? othersMetricBadgeHtml() : ''}</td>
-                <td style="${targetCellStyle}">${group.target_val || '-'}</td>
+                <td style="${targetCellStyle}">${targetsHtml}</td>
                 <td>${failuresHtml}</td>
             </tr>
         `;
@@ -1188,7 +1230,7 @@ function renderManualScores(latest) {
         let reasons = [];
         let catAdj = snapAdjData[c.cat_name] || {};
         if (window._manualAdjustItems) {
-            window._manualAdjustItems.forEach((item, idx) => {
+            getOrderedManualAdjustEntries(window._manualAdjustItems).forEach(({ item, idx }) => {
                 if (catAdj[idx] > 0) {
                     reasons.push(tVal(item.name));
                 }
@@ -1293,7 +1335,18 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
     metricCols.forEach(m => {
         const targetData = labelToTargetMap[m.label];
         const weight = (targetData && targetData.weight !== undefined) ? parseFloat(targetData.weight) : 1;
-        m.hasTarget = targetData && targetData[targetMonth] !== undefined && targetData[targetMonth] !== '' && weight > 0;
+        const hasSavedCategoryTarget = (latest.metrics || []).some(row =>
+            row.metric_label === m.label &&
+            row.target_val !== '' &&
+            row.target_val !== null &&
+            row.target_val !== undefined &&
+            row.target_val !== '--'
+        );
+        m.hasSavedCategoryTarget = hasSavedCategoryTarget;
+        m.hasTarget = !!(targetData && (
+            getEffectiveTargetValue(targetData, targetMonth) !== undefined ||
+            hasCategoryTargets(targetData, targetMonth)
+        ) && weight > 0) || (hasSavedCategoryTarget && weight > 0);
         const isOthersMetric = labelToGroup[m.label] === 'Others';
 
         const subs = m.subMetrics || [];
@@ -1310,20 +1363,31 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
             let proportionalScoring = false;
             let completionRatio = 0;
             const dbMetric = metricDbMap[`${sm.category}@@${m.label}`];
+            const effectiveTargetValue = getEffectiveTargetValue(targetData, targetMonth, sm.category);
+            const savedTargetValue = dbMetric && dbMetric.target_val !== '' &&
+                dbMetric.target_val !== null && dbMetric.target_val !== undefined &&
+                dbMetric.target_val !== '--'
+                ? dbMetric.target_val
+                : undefined;
+            const resolvedTargetValue = effectiveTargetValue !== undefined
+                ? effectiveTargetValue
+                : savedTargetValue;
 
-            if (!isNaN(valNum) && m.hasTarget) {
+            if (!isNaN(valNum) && m.hasTarget && resolvedTargetValue !== undefined) {
                 if (!isOthersMetric) {
                     catData[sm.category].validWeightSum += weight;
                 }
-                const targetNum = parseFloat(targetData[targetMonth]);
-                const condition = targetData.type || 'gte';
+                const targetNum = parseNum(resolvedTargetValue);
+                const condition = String(resolvedTargetValue).trim().startsWith('≤')
+                    ? 'lte'
+                    : ((targetData && targetData.type) || 'gte');
                 const isPercent = String(sm.value).includes('%');
 
-                if (condition === 'gte' && valNum < targetNum) {
+                if (!isNaN(targetNum) && condition === 'gte' && valNum < targetNum) {
                     isFailing = true; gapStr = +(targetNum - valNum).toFixed(2) + (isPercent ? '%' : '');
-                } else if (condition === 'lte' && valNum > targetNum) {
+                } else if (!isNaN(targetNum) && condition === 'lte' && valNum > targetNum) {
                     isFailing = true; gapStr = +(valNum - targetNum).toFixed(2) + (isPercent ? '%' : '');
-                } else if (targetData.exceedBy > 0 && targetData.bonus > 0) {
+                } else if (targetData && targetData.exceedBy > 0 && targetData.bonus > 0) {
                     if (condition === 'gte' && valNum > targetNum) {
                         bonusScore = Math.floor((valNum - targetNum) / targetData.exceedBy) * targetData.bonus;
                     } else if (condition === 'lte' && valNum < targetNum) {
@@ -1351,7 +1415,8 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
                 bonusScore: bonusScore || 0,
                 earnedScore,
                 proportionalScoring,
-                completionRatio
+                completionRatio,
+                targetValue: resolvedTargetValue
             };
         });
     });
@@ -1369,17 +1434,20 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
     let i = 0;
     while (i < orderedMetrics.length) {
         const m = orderedMetrics[i];
-        const hasTgt = labelToTargetMap[m.label] && labelToTargetMap[m.label][targetMonth] !== undefined && labelToTargetMap[m.label][targetMonth] !== '';
+        const hasTgt = getEffectiveTargetValue(labelToTargetMap[m.label], targetMonth) !== undefined ||
+            hasCategoryTargets(labelToTargetMap[m.label], targetMonth);
         const grpName = labelToGroup[m.label] || (m.isManual || hasTgt ? t('full_ungrouped') : null);
 
         if (grpName) {
             const grpMetrics = orderedMetrics.filter(x => {
-                const xHasTgt = labelToTargetMap[x.label] && labelToTargetMap[x.label][targetMonth] !== undefined && labelToTargetMap[x.label][targetMonth] !== '';
+                const xHasTgt = getEffectiveTargetValue(labelToTargetMap[x.label], targetMonth) !== undefined ||
+                    hasCategoryTargets(labelToTargetMap[x.label], targetMonth);
                 return (labelToGroup[x.label] || (x.isManual || xHasTgt ? t('full_ungrouped') : null)) === grpName;
             });
             const size = grpMetrics.length;
             const firstIdx = orderedMetrics.findIndex(x => {
-                const xHasTgt = labelToTargetMap[x.label] && labelToTargetMap[x.label][targetMonth] !== undefined && labelToTargetMap[x.label][targetMonth] !== '';
+                const xHasTgt = getEffectiveTargetValue(labelToTargetMap[x.label], targetMonth) !== undefined ||
+                    hasCategoryTargets(labelToTargetMap[x.label], targetMonth);
                 return (labelToGroup[x.label] || (x.isManual || xHasTgt ? t('full_ungrouped') : null)) === grpName && x.label === grpMetrics[0].label;
             });
             if (i === firstIdx) {
@@ -1421,26 +1489,31 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
 
         const targetData = labelToTargetMap[m.label];
         const weight = (targetData && targetData.weight !== undefined) ? parseFloat(targetData.weight) : 1;
+        const globalTargetValue = getEffectiveTargetValue(targetData, targetMonth);
 
-        if (m.hasTarget) {
+        if (globalTargetValue !== undefined) {
             const condition = targetData.type || 'gte';
-            targetStr = (condition === 'gte' ? '≥ ' : '≤ ') + targetData[targetMonth];
+            targetStr = (condition === 'gte' ? '≥ ' : '≤ ') + globalTargetValue;
             const isPercent = m.value && String(m.value).includes('%');
             if (isPercent) targetStr += '%';
 
             const globalValNum = parseNum(m.value);
             if (!isNaN(globalValNum)) {
-                const targetNum = parseFloat(targetData[targetMonth]);
+                const targetNum = parseFloat(globalTargetValue);
                 if (condition === 'gte' && globalValNum < targetNum) {
                     isGlobalFailing = true; globalGapStr = +(targetNum - globalValNum).toFixed(2) + (isPercent ? '%' : '');
                 } else if (condition === 'lte' && globalValNum > targetNum) {
                     isGlobalFailing = true; globalGapStr = +(globalValNum - targetNum).toFixed(2) + (isPercent ? '%' : '');
                 }
             }
+        } else if (hasCategoryTargets(targetData, targetMonth) || m.hasSavedCategoryTarget) {
+            targetStr = t('full_category_targets');
         }
 
         let globalDisplayClass = 'val-none';
-        if (m.hasTarget) globalDisplayClass = isGlobalFailing ? 'val-warn' : 'val-good';
+        if (globalTargetValue !== undefined && !isNaN(parseNum(m.value))) {
+            globalDisplayClass = isGlobalFailing ? 'val-warn' : 'val-good';
+        }
 
         matrixHtml += `<tr id="full-row-${encodeURIComponent(m.label)}"${rowStyle}>`;
         if (metricGroups.length > 0) {
@@ -1475,7 +1548,7 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
                 matrixHtml += `<td class="val-none" style="text-align:center;">--</td>`;
             } else {
                 let displayClass = 'val-none';
-                if (m.hasTarget) displayClass = cell.isFailing ? 'val-warn' : 'val-good';
+                if (cell.targetValue !== undefined) displayClass = cell.isFailing ? 'val-warn' : 'val-good';
                 matrixHtml += `<td style="text-align:center;"><span class="${displayClass}">${escapeHTML(String(cell.raw).trim())}</span></td>`;
             }
         });
@@ -1484,7 +1557,7 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
             const cell = catData[cat].values[m.label];
             if (!cell || cell.raw === '--') {
                 matrixHtml += `<td class="val-none" style="background:#f1f8e9;">--</td>`;
-            } else if (!m.hasTarget) {
+            } else if (cell.targetValue === undefined) {
                 matrixHtml += `<td class="val-none" style="background:#f1f8e9;">--</td>`;
             } else {
                 const earned = cell.earnedScore !== undefined ? cell.earnedScore : (cell.isFailing ? 0 : (weight + (cell.bonusScore || 0)));
@@ -1524,8 +1597,7 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
             <tbody>
     `;
 
-    manualAdjustItems.forEach((item, idx) => {
-        if (item.deleted) return;
+    getOrderedManualAdjustEntries(manualAdjustItems).forEach(({ item, idx }) => {
         const typeColor = item.type === '加分' ? '#2e7d32' : '#c62828';
         const typeBg = item.type === '加分' ? '#e8f5e9' : '#ffebee';
 
