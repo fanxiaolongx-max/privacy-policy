@@ -58,6 +58,15 @@ function timestampForFile() {
     return new Date().toISOString().replace(/[:.]/g, '-');
 }
 
+function reportProgress(options, stage, message, detail = null, level = 'info') {
+    if (!options || typeof options.onProgress !== 'function') return;
+    try {
+        options.onProgress({ stage, message, detail, level, timestamp: new Date().toISOString() });
+    } catch (err) {
+        console.warn('[GLOBAL BACKUP] Progress reporter failed:', err.message);
+    }
+}
+
 function countFilesAndBytes(dir, options = {}) {
     const result = { files: 0, bytes: 0 };
     if (!fs.existsSync(dir)) return result;
@@ -296,11 +305,17 @@ async function createBackup(options = {}) {
     const reason = options.reason || 'manual';
     const filename = `tools-platform-backup_${timestampForFile()}_${safeName(reason)}.zip`;
     const outputPath = path.join(BACKUP_DIR, filename);
+    reportProgress(options, 'scan', '正在扫描备份数据目录');
     const manifest = getManifest(reason);
+    reportProgress(options, 'manifest', `已生成清单：${manifest.totalFiles} 个文件，${manifest.totalBytes} 字节`, {
+        targets: manifest.targets.map(item => ({ id: item.id, files: item.files, bytes: item.bytes }))
+    });
 
     try {
+        reportProgress(options, 'compress', '正在压缩备份数据');
         await writeZip(outputPath, manifest);
         const stat = fs.statSync(outputPath);
+        reportProgress(options, 'backup-ready', `备份包生成完成：${filename}`, { size: stat.size }, 'success');
         return {
             name: filename,
             size: stat.size,
@@ -310,6 +325,7 @@ async function createBackup(options = {}) {
         };
     } catch (err) {
         fs.rmSync(outputPath, { force: true });
+        reportProgress(options, 'backup-error', `备份生成失败：${err.message}`, null, 'error');
         throw err;
     }
 }
@@ -429,23 +445,50 @@ async function startAutoBackupScheduler() {
     return getScheduleStatus(settings);
 }
 
+function removeRestoreDirBestEffort(extractDir, options = {}) {
+    if (!extractDir || !fs.existsSync(extractDir)) return true;
+    try {
+        fs.rmSync(extractDir, {
+            recursive: true,
+            force: true,
+            maxRetries: 8,
+            retryDelay: 150
+        });
+        return true;
+    } catch (err) {
+        console.warn(`[GLOBAL BACKUP] Restore data completed, but temporary directory cleanup was delayed: ${extractDir}`, err.message);
+        if (options.scheduleRetry !== false) {
+            const retryTimer = setTimeout(() => {
+                removeRestoreDirBestEffort(extractDir, { scheduleRetry: false });
+            }, 2000);
+            if (retryTimer.unref) retryTimer.unref();
+        }
+        return false;
+    }
+}
+
 async function extractBackup(zipPath) {
     ensureDir(RESTORE_TMP_DIR);
     const extractId = `restore_${Date.now().toString(36)}_${crypto.randomBytes(4).toString('hex')}`;
     const extractDir = path.join(RESTORE_TMP_DIR, extractId);
     ensureDir(extractDir);
 
-    await extractZip(zipPath, extractDir);
+    try {
+        await extractZip(zipPath, extractDir);
 
-    const manifestPath = path.join(extractDir, 'manifest.json');
-    if (!fs.existsSync(manifestPath)) {
-        throw new Error('备份包缺少 manifest.json，已拒绝恢复。');
+        const manifestPath = path.join(extractDir, 'manifest.json');
+        if (!fs.existsSync(manifestPath)) {
+            throw new Error('备份包缺少 manifest.json，已拒绝恢复。');
+        }
+        const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+        if (manifest.type !== 'tools-platform-global-backup' || manifest.version !== BACKUP_VERSION) {
+            throw new Error('备份包类型或版本不匹配，已拒绝恢复。');
+        }
+        return { extractDir, manifest };
+    } catch (err) {
+        removeRestoreDirBestEffort(extractDir);
+        throw err;
     }
-    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-    if (manifest.type !== 'tools-platform-global-backup' || manifest.version !== BACKUP_VERSION) {
-        throw new Error('备份包类型或版本不匹配，已拒绝恢复。');
-    }
-    return { extractDir, manifest };
 }
 
 function syncDirRecursive(src, dest, options = {}) {
@@ -501,9 +544,20 @@ function syncOwnedFiles(src, dest, fileNames) {
 }
 
 async function restoreFromZip(zipPath, options = {}) {
-    const safetyBackup = options.skipSafetyBackup ? null : await createBackup({ reason: 'pre-restore' });
+    reportProgress(options, 'restore-start', '开始恢复备份', { source: path.basename(zipPath) });
+    reportProgress(options, 'safety-backup', '正在生成恢复前安全备份');
+    const safetyBackup = options.skipSafetyBackup ? null : await createBackup({
+        reason: 'pre-restore',
+        onProgress: options.onProgress
+    });
+    reportProgress(options, 'extract', '正在校验并解压备份包');
     const { extractDir, manifest } = await extractBackup(zipPath);
+    reportProgress(options, 'manifest-verified', `备份清单校验通过（版本 ${manifest.version}）`, {
+        targets: (manifest.targets || []).map(item => item.id)
+    }, 'success');
+    reportProgress(options, 'database-close', '正在安全关闭 SQLite 数据库连接');
     const closedDatabases = await closeRuntimeDatabases();
+    reportProgress(options, 'database-closed', 'SQLite 数据库连接已关闭', { closedDatabases }, 'success');
     try {
         const restoredTargets = [];
         const missingTargets = [];
@@ -515,29 +569,40 @@ async function restoreFromZip(zipPath, options = {}) {
         const packageUsesUnifiedData = manifestPrimary.relPath === 'data';
 
         if (hasPrimary) {
+            reportProgress(options, 'primary-restore', '正在恢复主业务数据 primary_data');
             const primaryExcludes = new Set(['images']);
             if (HAS_SPLIT_REPORT_DATA || hasReport || !packageUsesUnifiedData) {
                 REPORT_OWNED_FILES.forEach(name => primaryExcludes.add(name));
             }
             syncDirRecursive(primarySrc, DATA_DIR, { excludeNames: Array.from(primaryExcludes) });
             restoredTargets.push('primary_data');
+            reportProgress(options, 'primary-restored', '主业务数据恢复完成', null, 'success');
         } else {
             missingTargets.push('primary_data');
+            reportProgress(options, 'primary-missing', '备份包缺少 primary_data，已保留现有主数据', null, 'warn');
         }
 
         if (hasReport) {
+            reportProgress(options, 'report-restore', '正在恢复报表数据库 report_data/report.db');
             syncOwnedFiles(reportSrc, REPORT_DATA_DIR, REPORT_OWNED_FILES);
             restoredTargets.push('report_data');
+            reportProgress(options, 'report-restored', '报表数据库恢复完成', null, 'success');
         } else if (HAS_SPLIT_REPORT_DATA && packageUsesUnifiedData && hasPrimary) {
             // Windows backups store report.db inside primary_data. Split it back
             // into the dedicated report directory when restoring on Mac/PM2.
             syncOwnedFiles(primarySrc, REPORT_DATA_DIR, REPORT_OWNED_FILES);
             restoredTargets.push('report_data:from-primary_data');
+            reportProgress(options, 'report-remapped', '已将 Windows 统一目录中的报表库映射到独立报表目录', null, 'success');
         } else if (HAS_SPLIT_REPORT_DATA || !packageUsesUnifiedData) {
             // Old Mac backups did not contain report_data. Preserve the current
             // report database and make the partial restore explicit.
             missingTargets.push('report_data');
+            reportProgress(options, 'report-missing', '备份包缺少可用报表库，已保留现有报表数据', null, 'warn');
         }
+        reportProgress(options, 'restore-complete', '全部数据恢复步骤已完成，等待服务重启', {
+            restoredTargets,
+            missingTargets
+        }, missingTargets.length ? 'warn' : 'success');
         return {
             success: true,
             restoredAt: new Date().toISOString(),
@@ -550,7 +615,11 @@ async function restoreFromZip(zipPath, options = {}) {
             needsRestart: true
         };
     } finally {
-        fs.rmSync(extractDir, { recursive: true, force: true });
+        // Cleanup is secondary to a successful restore. Windows Defender or
+        // indexing can briefly hold extracted files and cause ENOTEMPTY/EPERM.
+        // Retry without turning a completed restore into a failed operation.
+        const cleaned = removeRestoreDirBestEffort(extractDir);
+        reportProgress(options, 'cleanup', cleaned ? '临时解压目录清理完成' : '临时目录正在后台延迟清理', null, cleaned ? 'success' : 'warn');
     }
 }
 

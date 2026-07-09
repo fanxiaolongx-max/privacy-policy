@@ -1882,20 +1882,141 @@ async function runGlobalBackupAction(actionText, action) {
     try {
         const result = await action();
         if (indicator) indicator.textContent = '操作完成';
+        if (document.getElementById('backupOperationConsole')) {
+            appendBackupConsoleEntry('客户端已收到服务端完成响应', 'success');
+            setBackupConsoleProgress(100, 'COMPLETED');
+        }
         return result;
     } catch (e) {
         if (indicator) indicator.textContent = `操作失败: ${e.message}`;
+        if (document.getElementById('backupOperationConsole')) {
+            appendBackupConsoleEntry(`操作失败：${e.message}`, 'error');
+            setBackupConsoleProgress(100, 'FAILED');
+        }
         alert(`操作失败：${e.message}`);
         throw e;
     }
 }
 
+let backupConsolePollTimer = null;
+let backupConsoleSeenEntries = 0;
+
+function createBackupOperationId() {
+    return `backup_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function ensureBackupOperationConsole(title = '备份任务控制台') {
+    let panel = document.getElementById('backupOperationConsole');
+    if (!panel) {
+        panel = document.createElement('aside');
+        panel.id = 'backupOperationConsole';
+        panel.className = 'backup-operation-console';
+        panel.innerHTML = `
+            <div class="backup-console-head">
+                <div>
+                    <div class="backup-console-kicker">TOOLS PLATFORM · DATA OPS</div>
+                    <strong id="backupConsoleTitle"></strong>
+                </div>
+                <div class="backup-console-actions">
+                    <button type="button" onclick="toggleBackupOperationConsole()" title="折叠/展开">−</button>
+                    <button type="button" onclick="clearBackupOperationConsole()" title="关闭">×</button>
+                </div>
+            </div>
+            <div class="backup-console-progress"><span id="backupConsoleProgress"></span></div>
+            <div class="backup-console-body" id="backupConsoleBody"></div>
+            <div class="backup-console-foot"><span class="backup-console-pulse"></span><span id="backupConsoleStatus">READY</span></div>
+        `;
+        document.body.appendChild(panel);
+    }
+    panel.classList.remove('collapsed');
+    document.getElementById('backupConsoleTitle').textContent = title;
+    return panel;
+}
+
+function appendBackupConsoleEntry(message, level = 'info', detail = null, timestamp = null) {
+    ensureBackupOperationConsole();
+    const body = document.getElementById('backupConsoleBody');
+    const row = document.createElement('div');
+    row.className = `backup-console-entry ${level}`;
+    const time = timestamp ? new Date(timestamp) : new Date();
+    const timeText = Number.isNaN(time.getTime())
+        ? '--:--:--'
+        : time.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    row.innerHTML = `
+        <span class="backup-console-time">${navEscape(timeText)}</span>
+        <span class="backup-console-dot"></span>
+        <span class="backup-console-message">${navEscape(message)}</span>
+        ${detail ? `<code>${navEscape(typeof detail === 'string' ? detail : JSON.stringify(detail))}</code>` : ''}
+    `;
+    body.appendChild(row);
+    body.scrollTop = body.scrollHeight;
+}
+
+function setBackupConsoleProgress(percent, status) {
+    const bar = document.getElementById('backupConsoleProgress');
+    if (bar) bar.style.width = `${Math.max(0, Math.min(100, Number(percent) || 0))}%`;
+    const statusEl = document.getElementById('backupConsoleStatus');
+    if (statusEl && status) statusEl.textContent = status;
+}
+
+function stopBackupConsolePolling() {
+    if (backupConsolePollTimer) {
+        clearTimeout(backupConsolePollTimer);
+        backupConsolePollTimer = null;
+    }
+}
+
+async function pollBackupOperation(operationId) {
+    stopBackupConsolePolling();
+    try {
+        const res = await fetch(`/api/global-backup/operations/${encodeURIComponent(operationId)}`, {
+            headers: getAuthHeaderForNav()
+        });
+        if (res.ok) {
+            const operation = await res.json();
+            const entries = Array.isArray(operation.entries) ? operation.entries : [];
+            entries.slice(backupConsoleSeenEntries).forEach(entry => {
+                appendBackupConsoleEntry(entry.message, entry.level, entry.detail, entry.timestamp);
+            });
+            backupConsoleSeenEntries = entries.length;
+            setBackupConsoleProgress(operation.status === 'completed' ? 100 : operation.status === 'failed' ? 100 : 72, operation.status.toUpperCase());
+            if (operation.status === 'completed' || operation.status === 'failed') return;
+        }
+    } catch (e) {
+        // The service may be restarting after a successful restore.
+    }
+    backupConsolePollTimer = setTimeout(() => pollBackupOperation(operationId), 650);
+}
+
+function startBackupOperationConsole(title) {
+    stopBackupConsolePolling();
+    ensureBackupOperationConsole(title);
+    document.getElementById('backupConsoleBody').innerHTML = '';
+    backupConsoleSeenEntries = 0;
+    setBackupConsoleProgress(4, 'STARTING');
+    const operationId = createBackupOperationId();
+    appendBackupConsoleEntry('任务已创建，正在连接服务端', 'info');
+    pollBackupOperation(operationId);
+    return operationId;
+}
+
+window.toggleBackupOperationConsole = function () {
+    document.getElementById('backupOperationConsole')?.classList.toggle('collapsed');
+};
+
+window.clearBackupOperationConsole = function () {
+    stopBackupConsolePolling();
+    document.getElementById('backupOperationConsole')?.remove();
+};
+
 window.createGlobalBackup = async function (downloadAfterCreate) {
+    const operationId = startBackupOperationConsole('生成全局备份');
     const result = await runGlobalBackupAction('正在生成备份...', async () => {
         const res = await fetch('/api/global-backup/create', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-Backup-Operation-Id': operationId,
                 ...getAuthHeaderForNav()
             },
             body: JSON.stringify({ reason: 'manual' })
@@ -1910,6 +2031,8 @@ window.createGlobalBackup = async function (downloadAfterCreate) {
 };
 
 async function downloadGlobalBackupFile(name) {
+    ensureBackupOperationConsole('下载备份包');
+    appendBackupConsoleEntry(`开始下载：${name}`);
     const res = await fetch(`/api/global-backup/download/${encodeURIComponent(name)}`, {
         headers: getAuthHeaderForNav()
     });
@@ -1932,6 +2055,7 @@ async function downloadGlobalBackupFile(name) {
             if (total) {
                 const percent = Math.round((loaded / total) * 100);
                 indicator.textContent = `正在下载... ${percent}% (${formatBackupSize(loaded)} / ${formatBackupSize(total)})`;
+                setBackupConsoleProgress(percent, `DOWNLOADING ${percent}%`);
             } else {
                 indicator.textContent = `正在下载... 已接收 ${formatBackupSize(loaded)}`;
             }
@@ -1947,6 +2071,8 @@ async function downloadGlobalBackupFile(name) {
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+    appendBackupConsoleEntry(`下载完成：${formatBackupSize(loaded)}`, 'success');
+    setBackupConsoleProgress(100, 'COMPLETED');
 }
 
 window.downloadGlobalBackup = async function (name) {
@@ -1979,10 +2105,14 @@ function getGlobalRestoreCompletionMessage(data = {}) {
 window.restoreGlobalBackupFromServer = async function (name) {
     const ok = confirm(`确定要从服务器备份恢复吗？\n\n${name}\n\n此操作会覆盖当前全局配置和全部数据。系统会先自动生成恢复前安全备份。`);
     if (!ok) return;
+    const operationId = startBackupOperationConsole('恢复服务器备份');
     await runGlobalBackupAction('正在从服务器备份恢复...', async () => {
         const res = await fetch(`/api/global-backup/restore/server/${encodeURIComponent(name)}`, {
             method: 'POST',
-            headers: getAuthHeaderForNav()
+            headers: {
+                'X-Backup-Operation-Id': operationId,
+                ...getAuthHeaderForNav()
+            }
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
@@ -1998,6 +2128,8 @@ window.restoreGlobalBackupFromUpload = async function () {
     if (!file) return alert('请先选择备份 zip 包');
     const ok = confirm(`确定要上传并恢复这个备份包吗？\n\n${file.name}\n\n此操作会覆盖当前全局配置和全部数据。系统会先自动生成恢复前安全备份。`);
     if (!ok) return;
+    const operationId = startBackupOperationConsole('上传并恢复备份');
+    appendBackupConsoleEntry(`已选择文件：${file.name}`, 'info', { size: formatBackupSize(file.size) });
 
     const indicator = document.getElementById('navSettingsSaveState');
     if (indicator) indicator.textContent = '准备上传备份...';
@@ -2006,6 +2138,7 @@ window.restoreGlobalBackupFromUpload = async function () {
         const data = await new Promise((resolve, reject) => {
             const form = new FormData();
             form.append('backup', file);
+            let uploadCompleteLogged = false;
 
             const xhr = new XMLHttpRequest();
             xhr.open('POST', '/api/global-backup/restore/upload', true);
@@ -2014,11 +2147,17 @@ window.restoreGlobalBackupFromUpload = async function () {
             Object.keys(headers).forEach(key => {
                 xhr.setRequestHeader(key, headers[key]);
             });
+            xhr.setRequestHeader('X-Backup-Operation-Id', operationId);
 
             xhr.upload.onprogress = (e) => {
                 if (e.lengthComputable && indicator) {
                     const percent = Math.round((e.loaded / e.total) * 100);
                     indicator.textContent = `正在上传并解压... ${percent}% (${formatBackupSize(e.loaded)} / ${formatBackupSize(e.total)})`;
+                    setBackupConsoleProgress(Math.min(45, Math.round(percent * 0.45)), `UPLOADING ${percent}%`);
+                    if (percent === 100 && !uploadCompleteLogged) {
+                        uploadCompleteLogged = true;
+                        appendBackupConsoleEntry('上传完成，服务端开始校验和恢复', 'success');
+                    }
                 }
             };
 
@@ -2037,9 +2176,13 @@ window.restoreGlobalBackupFromUpload = async function () {
         });
 
         if (indicator) indicator.textContent = '操作完成';
+        appendBackupConsoleEntry('客户端已收到恢复完成响应', 'success');
+        setBackupConsoleProgress(100, 'COMPLETED');
         alert(getGlobalRestoreCompletionMessage(data));
     } catch (e) {
         if (indicator) indicator.textContent = `操作失败: ${e.message}`;
+        appendBackupConsoleEntry(`恢复失败：${e.message}`, 'error');
+        setBackupConsoleProgress(100, 'FAILED');
         alert(`操作失败：${e.message}`);
     }
     renderNavSettingsContent();

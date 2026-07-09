@@ -1196,6 +1196,158 @@ body {
     background: #dbeafe;
 }
 
+.backup-operation-console {
+    position: fixed;
+    z-index: 100000;
+    top: 18px;
+    left: 18px;
+    width: min(520px, calc(100vw - 36px));
+    border: 1px solid rgba(96, 165, 250, .28);
+    border-radius: 18px;
+    overflow: hidden;
+    color: #dbeafe;
+    background:
+        radial-gradient(circle at 12% 0%, rgba(37, 99, 235, .28), transparent 42%),
+        linear-gradient(145deg, rgba(8, 18, 38, .98), rgba(10, 24, 48, .96));
+    box-shadow: 0 24px 70px rgba(2, 8, 23, .42), inset 0 1px 0 rgba(255, 255, 255, .07);
+    backdrop-filter: blur(20px);
+    animation: backupConsoleEnter .28s cubic-bezier(.2, .8, .2, 1);
+}
+
+@keyframes backupConsoleEnter {
+    from { opacity: 0; transform: translateY(-12px) scale(.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.backup-console-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid rgba(148, 163, 184, .15);
+}
+
+.backup-console-head strong {
+    display: block;
+    margin-top: 3px;
+    color: #f8fafc;
+    font-size: 15px;
+    letter-spacing: .01em;
+}
+
+.backup-console-kicker {
+    color: #60a5fa;
+    font: 700 9px/1.2 ui-monospace, SFMono-Regular, Consolas, monospace;
+    letter-spacing: .18em;
+}
+
+.backup-console-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.backup-console-actions button {
+    width: 27px;
+    height: 27px;
+    border: 1px solid rgba(148, 163, 184, .22);
+    border-radius: 8px;
+    color: #cbd5e1;
+    background: rgba(15, 23, 42, .58);
+    cursor: pointer;
+}
+
+.backup-console-progress {
+    height: 3px;
+    background: rgba(30, 41, 59, .8);
+}
+
+.backup-console-progress span {
+    display: block;
+    width: 0;
+    height: 100%;
+    background: linear-gradient(90deg, #2563eb, #22d3ee, #34d399);
+    box-shadow: 0 0 16px rgba(34, 211, 238, .75);
+    transition: width .35s ease;
+}
+
+.backup-console-body {
+    max-height: min(390px, 55vh);
+    overflow: auto;
+    padding: 10px 14px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(96, 165, 250, .45) transparent;
+}
+
+.backup-console-entry {
+    display: grid;
+    grid-template-columns: 58px 10px minmax(0, 1fr);
+    gap: 7px;
+    align-items: start;
+    padding: 7px 0;
+    color: #cbd5e1;
+    font: 12px/1.45 ui-monospace, SFMono-Regular, Consolas, monospace;
+    border-bottom: 1px solid rgba(148, 163, 184, .08);
+    animation: backupLogEnter .2s ease;
+}
+
+@keyframes backupLogEnter {
+    from { opacity: 0; transform: translateX(-5px); }
+}
+
+.backup-console-time { color: #64748b; }
+.backup-console-dot {
+    width: 7px;
+    height: 7px;
+    margin-top: 5px;
+    border-radius: 50%;
+    background: #60a5fa;
+    box-shadow: 0 0 9px rgba(96, 165, 250, .65);
+}
+.backup-console-entry.success .backup-console-dot { background: #34d399; box-shadow: 0 0 9px rgba(52, 211, 153, .65); }
+.backup-console-entry.warn .backup-console-dot { background: #fbbf24; box-shadow: 0 0 9px rgba(251, 191, 36, .65); }
+.backup-console-entry.error .backup-console-dot { background: #fb7185; box-shadow: 0 0 9px rgba(251, 113, 133, .65); }
+.backup-console-entry.success .backup-console-message { color: #a7f3d0; }
+.backup-console-entry.warn .backup-console-message { color: #fde68a; }
+.backup-console-entry.error .backup-console-message { color: #fecdd3; }
+
+.backup-console-entry code {
+    grid-column: 3;
+    overflow-wrap: anywhere;
+    color: #7dd3fc;
+    font-size: 10px;
+    opacity: .8;
+}
+
+.backup-console-foot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 15px;
+    color: #94a3b8;
+    background: rgba(2, 6, 23, .38);
+    font: 700 10px/1 ui-monospace, SFMono-Regular, Consolas, monospace;
+    letter-spacing: .08em;
+}
+
+.backup-console-pulse {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #22d3ee;
+    animation: backupPulse 1.25s ease-in-out infinite;
+}
+
+@keyframes backupPulse {
+    50% { opacity: .35; transform: scale(.7); }
+}
+
+.backup-operation-console.collapsed .backup-console-body,
+.backup-operation-console.collapsed .backup-console-progress,
+.backup-operation-console.collapsed .backup-console-foot {
+    display: none;
+}
+
 .nav-backup-actions button.danger,
 .nav-backup-upload button.danger,
 .nav-backup-toolbar button.danger {
