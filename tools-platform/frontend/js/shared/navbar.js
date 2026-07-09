@@ -2140,7 +2140,15 @@ window.runReportSnapshotCleanup = async function () {
 };
 
 function formatAlertTime(value) {
-    const d = new Date(value);
+    if (!value) return '-';
+    const raw = String(value).trim();
+    // SQLite CURRENT_TIMESTAMP is UTC but omits the timezone suffix.
+    // Mark timezone-less database timestamps as UTC before formatting with
+    // local Date getters, so each browser sees its own local time.
+    const normalized = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?$/.test(raw)
+        ? `${raw.replace(' ', 'T')}Z`
+        : raw;
+    const d = new Date(normalized);
     if (Number.isNaN(d.getTime())) return value || '-';
     const pad = n => String(n).padStart(2, '0');
     return `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;

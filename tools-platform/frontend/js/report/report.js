@@ -1191,6 +1191,19 @@ const defaultManualAdjustItems = [
 ];
 let manualAdjustItems = [...defaultManualAdjustItems];
 let editingAdjustItemIndex = null;
+let manualAdjustSortDraft = [];
+let manualAdjustSortDragIdx = null;
+
+function getOrderedManualAdjustEntries() {
+    return manualAdjustItems
+        .map((item, idx) => ({ item, idx }))
+        .filter(entry => !entry.item.deleted)
+        .sort((a, b) => {
+            const aOrder = Number.isFinite(Number(a.item.sortOrder)) ? Number(a.item.sortOrder) : a.idx;
+            const bOrder = Number.isFinite(Number(b.item.sortOrder)) ? Number(b.item.sortOrder) : b.idx;
+            return aOrder - bOrder || a.idx - b.idx;
+        });
+}
 
 function calculateManualAdjustScore(item, count) {
     if (!item || item.deleted) return 0;
@@ -1209,6 +1222,13 @@ function calculateManualAdjustScore(item, count) {
 
 function buildManualAdjustDesc(unit, cap) {
     return cap === null ? `${unit}分/次, 上限无` : `${unit}分/次, 上限${cap}分`;
+}
+
+function formatManualAdjustDesc(item) {
+    const hasCap = item && item.cap !== null && item.cap !== undefined && item.cap !== '';
+    return hasCap
+        ? rt('report.adjust.ruleWithCap', { unit: item.unit, cap: item.cap })
+        : rt('report.adjust.ruleNoCap', { unit: item ? item.unit : 0 });
 }
 
 async function saveSlaPrefPatch(updates) {
@@ -1550,8 +1570,8 @@ function renderMetricTrend(currentValue, previousValue) {
     const direction = delta > 0 ? 'up' : 'down';
     const arrow = delta > 0 ? '▲' : '▼';
     const title = delta > 0
-        ? `较上次快照上升 ${formatScoreValue(Math.abs(delta))}`
-        : `较上次快照下降 ${formatScoreValue(Math.abs(delta))}`;
+        ? rt('report.tooltip.trendUp', { value: formatScoreValue(Math.abs(delta)) })
+        : rt('report.tooltip.trendDown', { value: formatScoreValue(Math.abs(delta)) });
     return `<span class="metric-trend ${direction}" title="${escapeHTML(title)}">${arrow}</span>`;
 }
 
@@ -1595,6 +1615,18 @@ function calculateTargetCompletionRatio(valNum, targetNum, condition) {
     if (valNum >= targetNum) return 1;
     if (targetNum <= 0) return valNum >= targetNum ? 1 : 0;
     return clampScoreRatio(valNum / targetNum);
+}
+
+function calculateOverachievementRatio(valNum, targetNum, condition) {
+    if (!Number.isFinite(valNum) || !Number.isFinite(targetNum)) return 1;
+    const targetBase = Math.abs(targetNum);
+    if (targetBase <= 0) return 1;
+    if (condition === 'lte') {
+        if (valNum >= targetNum) return 1;
+        return 1 + ((targetNum - valNum) / targetBase);
+    }
+    if (valNum <= targetNum) return 1;
+    return 1 + ((valNum - targetNum) / targetBase);
 }
 
 function formatScoreValue(value) {
@@ -1946,14 +1978,18 @@ function renderReport(snap) {
                     const targetNum = parseFloat(effectiveTargetValue);
                     const condition = targetData.type || 'gte';
                     const isPercent = String(sm.value).includes('%');
+                    const negativePercentageScoring = !!targetData.overachievementScoring && valNum < 0 && Math.abs(targetNum) > 0;
 
-                    if (condition === 'gte' && valNum < targetNum) {
+                    if (negativePercentageScoring) {
+                        isFailing = true;
+                        gapStr = `${Math.abs(valNum)}${isPercent ? '%' : ''}`;
+                    } else if (condition === 'gte' && valNum < targetNum) {
                         isFailing = true;
                         gapStr = +(targetNum - valNum).toFixed(2) + (isPercent ? '%' : '');
                     } else if (condition === 'lte' && valNum > targetNum) {
                         isFailing = true;
                         gapStr = +(valNum - targetNum).toFixed(2) + (isPercent ? '%' : '');
-                    } else if (targetData.exceedBy > 0 && targetData.bonus > 0) {
+                    } else if (!targetData.overachievementScoring && targetData.exceedBy > 0 && targetData.bonus > 0) {
                         if (condition === 'gte' && valNum > targetNum) {
                             bonusScore = Math.floor((valNum - targetNum) / targetData.exceedBy) * targetData.bonus;
                         } else if (condition === 'lte' && valNum < targetNum) {
@@ -1962,8 +1998,16 @@ function renderReport(snap) {
                     }
 
                     const proportionalScoring = isProportionalScoringEnabled(targetData);
-                    const completionRatio = calculateTargetCompletionRatio(valNum, targetNum, condition);
-                    const earnedBaseScore = isFailing && proportionalScoring ? +(weight * completionRatio).toFixed(4) : (isFailing ? 0 : weight);
+                    const completionRatio = negativePercentageScoring
+                        ? valNum / Math.abs(targetNum)
+                        : calculateTargetCompletionRatio(valNum, targetNum, condition);
+                    const earnedBaseScore = negativePercentageScoring
+                        ? +(weight * completionRatio).toFixed(4)
+                        : (isFailing && proportionalScoring ? +(weight * completionRatio).toFixed(4) : (isFailing ? 0 : weight));
+                    if (!negativePercentageScoring && !isFailing && targetData.overachievementScoring) {
+                        const overachievementRatio = calculateOverachievementRatio(valNum, targetNum, condition);
+                        bonusScore = +(weight * (overachievementRatio - 1)).toFixed(4);
+                    }
                     const earnedScore = earnedBaseScore + (!isFailing ? bonusScore : 0);
 
                     if (!isOthers) {
@@ -1979,7 +2023,8 @@ function renderReport(snap) {
                         bonusScore: bonusScore || 0,
                         earnedScore,
                         completionRatio,
-                        proportionalScoring
+                        proportionalScoring,
+                        negativePercentageScoring
                     };
                     return;
                 }
@@ -2065,7 +2110,7 @@ function renderReport(snap) {
                 <thead>
                     <tr>
                         ${hasGroups ? `<th style="min-width:40px; max-width:60px; white-space:normal; position:sticky; top:0; z-index:11; background:#e8eaf6; color:#283593;">${getBilingual('分组')}</th>
-                                       <th style="min-width:40px; position:sticky; top:0; z-index:11; background:#e8eaf6; color:#283593;" title="分组内所有指标权重之和">${getBilingual('总权重')}</th>` : ''}
+                                       <th style="min-width:40px; position:sticky; top:0; z-index:11; background:#e8eaf6; color:#283593;" title="${rt('report.tooltip.groupWeight')}">${getBilingual('总权重')}</th>` : ''}
                         <th style="min-width:180px; text-align:left;">${getBilingual('考核的指标名称')}</th>
                         <th style="min-width:60px;">${getBilingual('权重')}</th>
                         <th style="min-width:100px;">${rt('report.table.targetMonth', { month: targetMonth })}</th>
@@ -2117,7 +2162,7 @@ function renderReport(snap) {
             let globalTitleAttr = '';
             if (globalTargetValue !== undefined) {
                 globalDisplayClass = isGlobalFailing ? 'val-warn' : 'val-good';
-                globalTitleAttr = isGlobalFailing ? ` title="整体不达标，距离目标差 ${globalGapStr}"` : '';
+                globalTitleAttr = isGlobalFailing ? ` title="${escapeHTML(rt('report.tooltip.globalFailed', { gap: globalGapStr }))}"` : '';
             }
             let autoFillBtn = '';
             if (m.isManual) {
@@ -2175,7 +2220,9 @@ function renderReport(snap) {
                     let titleAttr = '';
                     if (cell && cell.targetValue !== undefined) {
                         displayClass = cell.isFailing ? 'val-warn' : 'val-good';
-                        titleAttr = cell.isFailing ? ` title="不达标，距离目标差 ${cell.gapStr}"` : ` title="达标"`;
+                        titleAttr = cell.isFailing
+                            ? ` title="${escapeHTML(rt('report.tooltip.failed', { gap: cell.gapStr }))}"`
+                            : ` title="${escapeHTML(rt('report.tooltip.passed'))}"`;
                     }
                     html += `<td data-col="${colIdx++}"><span class="${displayClass}"${titleAttr}>${escapeHTML(cell.raw)}${renderMetricTrend(cell.raw, previousMetricValues[`${m.label}@@${cat}`])}</span></td>`;
                 }
@@ -2186,16 +2233,18 @@ function renderReport(snap) {
                 if (!cell || cell.raw === '--') {
                     html += `<td data-col="${colIdx++}" class="val-none" style="background:#f1f8e9;">--</td>`;
                 } else if (!m.hasTarget) {
-                    html += `<td data-col="${colIdx++}" class="val-none" style="background:#f1f8e9;" title="未配置目标值或权重为0，不计分">--</td>`;
+                    html += `<td data-col="${colIdx++}" class="val-none" style="background:#f1f8e9;" title="${rt('report.tooltip.noScore')}">--</td>`;
                 } else {
                     const earned = cell.earnedScore !== undefined ? cell.earnedScore : (cell.isFailing ? 0 : (weight + (cell.bonusScore || 0)));
                     const scoreColor = cell.isFailing ? '#d32f2f' : '#2e7d32';
                     const bonusDisplay = cell.bonusScore ? ` <span style="font-size:10px; color:#e65100;">(+${cell.bonusScore.toFixed(2)})</span>` : '';
-                    const ratioText = cell.proportionalScoring && cell.isFailing ? `, 完成率: ${(cell.completionRatio * 100).toFixed(1)}%` : '';
+                    const ratioText = (cell.proportionalScoring || cell.negativePercentageScoring) && cell.isFailing
+                        ? rt('report.tooltip.completionSuffix', { value: (cell.completionRatio * 100).toFixed(1) })
+                        : '';
                     const scoreTitle = isOthersTable
-                        ? `额外监控指标，不计入总分；基础分: ${weight}, 实得: ${formatScoreValue(earned)}${ratioText}, 超额奖励: ${cell.bonusScore || 0}`
-                        : `基础分: ${weight}, 实得: ${formatScoreValue(earned)}${ratioText}, 超额奖励: ${cell.bonusScore || 0}`;
-                    const ratioBadge = cell.proportionalScoring && cell.isFailing ? `<div style="font-size:9px; color:#ef6c00; font-weight:600; line-height:1.2;">${(cell.completionRatio * 100).toFixed(0)}%</div>` : '';
+                        ? rt('report.tooltip.extraScoreDetail', { weight, earned: formatScoreValue(earned), ratio: ratioText, bonus: cell.bonusScore || 0 })
+                        : rt('report.tooltip.scoreDetail', { weight, earned: formatScoreValue(earned), ratio: ratioText, bonus: cell.bonusScore || 0 });
+                    const ratioBadge = (cell.proportionalScoring || cell.negativePercentageScoring) && cell.isFailing ? `<div style="font-size:9px; color:#ef6c00; font-weight:600; line-height:1.2;">${(cell.completionRatio * 100).toFixed(0)}%</div>` : '';
                     html += `<td data-col="${colIdx++}" style="font-weight:bold; color:${scoreColor}; background:#f1f8e9;" title="${scoreTitle}">${formatScoreValue(earned)}${bonusDisplay}${ratioBadge}</td>`;
                 }
             });
@@ -2250,6 +2299,9 @@ function renderReport(snap) {
                 <span style="color:#e65100;">${rt('report.card.adjustTitle')}</span>
                 <div style="display:flex; align-items:center; gap:10px;">
                     <span style="font-size:12px; font-weight:normal; color:#888; background:#f5f5f5; padding:4px 8px; border-radius:4px;">${rt('report.hint.autoSaved')}</span>
+                    <button onclick="openManualAdjustSortModal()" style="padding:4px 10px; font-size:12px; background:#fff8e1; border:1px solid #ffe082; border-radius:4px; cursor:pointer; color:#e65100; display:flex; align-items:center; gap:4px; font-weight:normal;" title="${rt('report.action.sortAdjustTitle')}">
+                        ↕️ ${rt('report.action.sortAdjust')}
+                    </button>
                     <button onclick="openAddAdjustModal()" style="padding:4px 10px; font-size:12px; background:#e8f5e9; border:1px solid #c8e6c9; border-radius:4px; cursor:pointer; color:#2e7d32; display:flex; align-items:center; gap:4px; font-weight:normal;" title="${rt('report.action.addAdjustTitle')}">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         ${rt('report.action.addAdjust')}
@@ -2279,8 +2331,7 @@ function renderReport(snap) {
     const manualAutoPrefs = getManualAdjustAutoFillPrefs();
     const manualAutoSources = currentSnapshot.manualAdjustAutoFillSources || {};
 
-    manualAdjustItems.forEach((item, idx) => {
-        if (item.deleted) return;
+    getOrderedManualAdjustEntries().forEach(({ item, idx }) => {
 
         const typeColor = item.type === '加分' ? '#2e7d32' : '#c62828';
         const typeBg = item.type === '加分' ? '#e8f5e9' : '#ffebee';
@@ -2299,7 +2350,7 @@ function renderReport(snap) {
                     <span style="cursor:pointer; font-size:14px; opacity:${isAuto ? '1' : '0.4'}; transition: opacity 0.2s; padding:2px;" title="${escapeHTML(autoTitle)}" onclick="toggleManualAdjustAutoFill(${idx})" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='${isAuto ? '1' : '0.4'}'">🔄</span>
                 </div>
             </td>
-            <td style="color:#666;">${escapeHTML(item.desc)}</td>
+            <td style="color:#666;">${escapeHTML(formatManualAdjustDesc(item))}</td>
         `;
 
         // Input fields for occurrences
@@ -2375,7 +2426,7 @@ function renderReport(snap) {
                 <thead>
                     <tr>
                         ${hasGroups ? `<th style="min-width:40px; max-width:60px; white-space:normal; position:sticky; top:0; z-index:11; background:#eceff1; color:#37474f;">${getBilingual('分组')}</th>
-                                       <th style="min-width:40px; position:sticky; top:0; z-index:11; background:#eceff1; color:#37474f;" title="分组内所有指标权重之和">${getBilingual('总权重')}</th>` : ''}
+                                       <th style="min-width:40px; position:sticky; top:0; z-index:11; background:#eceff1; color:#37474f;" title="${rt('report.tooltip.groupWeight')}">${getBilingual('总权重')}</th>` : ''}
                         <th style="min-width:180px; text-align:left;">${getBilingual('考核的指标名称')}</th>
                         <th style="min-width:60px;">${getBilingual('权重')}</th>
                         <th style="min-width:100px;">${rt('report.table.targetMonth', { month: targetMonth })}</th>
@@ -3077,7 +3128,7 @@ window.showSysScoreDetails = function (cat) {
         const cell = d.values[mLabel];
         const targetData = labelToTargetMap[mLabel];
         const weight = (targetData && targetData.weight !== undefined) ? parseFloat(targetData.weight) : 1;
-        const hasTarget = targetData && targetData[targetMonth] !== undefined && targetData[targetMonth] !== '' && weight > 0;
+        const hasTarget = getEffectiveTargetValue(targetData, targetMonth, cat) !== undefined && weight > 0;
 
         if (!hasTarget || !cell || cell.raw === '--') {
             const otherHasData = Object.keys(allCatData).some(otherCat => {
@@ -3095,7 +3146,7 @@ window.showSysScoreDetails = function (cat) {
             }
         } else if (cell.isFailing) {
             rawLostWeight += Math.max(0, weight - (Number(cell.earnedScore) || 0));
-            const partialText = cell.proportionalScoring
+            const partialText = (cell.proportionalScoring || cell.negativePercentageScoring)
                 ? `, ${rt('report.detail.partial')}: ${formatScoreValue(cell.earnedScore)} / ${weight}, ${rt('report.detail.completion')} ${(cell.completionRatio * 100).toFixed(1)}%`
                 : '';
             failHtml += `<li style="margin-bottom:8px; line-height:1.4;"><span style="color:#d32f2f; font-weight:600;">${getBilingual(mLabel)}</span> <span style="color:#888; font-size:11px;">(${rt('report.detail.weight')}: ${weight}, ${rt('report.detail.gap')}: ${cell.gapStr}${partialText})</span></li>`;
@@ -3182,7 +3233,7 @@ window.showAdjScoreDetails = function (cat) {
     let adjDetails = '';
     if (currentSnapshot && currentSnapshot.manualAdjustData && currentSnapshot.manualAdjustData[cat]) {
         const catAdj = currentSnapshot.manualAdjustData[cat];
-        manualAdjustItems.forEach((item, idx) => {
+        getOrderedManualAdjustEntries().forEach(({ item, idx }) => {
             const count = catAdj[idx] || 0;
             if (count > 0) {
                 const score = calculateManualAdjustScore(item, count);
@@ -3206,16 +3257,117 @@ window.showAdjScoreDetails = function (cat) {
     `);
 };
 
+function renderManualAdjustSortList() {
+    const list = document.getElementById('manual-adjust-sort-list');
+    if (!list) return;
+    list.innerHTML = manualAdjustSortDraft.map((idx, position) => {
+        const item = manualAdjustItems[idx];
+        return `
+            <div class="manual-adjust-sort-row" data-item-idx="${idx}" draggable="true"
+                ondragstart="startManualAdjustSortDrag(event, ${idx})"
+                ondragover="dragManualAdjustSortOver(event, ${idx})"
+                ondrop="event.preventDefault()"
+                ondragend="endManualAdjustSortDrag()"
+                style="display:flex; align-items:center; gap:8px; padding:9px 10px; border:1px solid #eee; border-radius:7px; background:#fff; cursor:grab; user-select:none; transition:transform .2s cubic-bezier(.2,.8,.2,1), box-shadow .2s, opacity .2s;">
+                <span style="color:#b0bec5; font-size:18px; letter-spacing:-4px; padding-right:4px;" title="${rt('report.sort.dragHint')}">⠿</span>
+                <span class="manual-adjust-sort-order" style="width:24px; color:#999; text-align:center;">${position + 1}</span>
+                <span style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHTML(getTranslatedLabel(item.name))}">${getBilingual(item.name)}</span>
+            </div>
+        `;
+    }).join('');
+}
+
+window.openManualAdjustSortModal = function () {
+    manualAdjustSortDraft = getOrderedManualAdjustEntries().map(entry => entry.idx);
+    let modal = document.getElementById('manual-adjust-sort-modal');
+    if (modal) modal.remove();
+    modal = document.createElement('div');
+    modal.id = 'manual-adjust-sort-modal';
+    modal.style.cssText = 'display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:99999; align-items:center; justify-content:center;';
+    modal.innerHTML = `
+            <div style="background:#fff; border-radius:12px; width:520px; max-width:90%; padding:22px; box-shadow:0 10px 30px rgba(0,0,0,.2);">
+                <h3 style="margin:0 0 14px; color:#e65100;">${rt('report.sort.title')}</h3>
+                <div style="font-size:12px; color:#78909c; margin:-6px 0 10px;">${rt('report.sort.dragHint')}</div>
+                <div id="manual-adjust-sort-list" style="display:flex; flex-direction:column; gap:6px; max-height:55vh; overflow:auto;"></div>
+                <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+                    <button type="button" onclick="document.getElementById('manual-adjust-sort-modal').style.display='none'" style="padding:8px 16px; border:1px solid #ccc; background:#fff; border-radius:6px; cursor:pointer;">${rt('report.button.cancel')}</button>
+                    <button type="button" onclick="saveManualAdjustSort()" style="padding:8px 16px; border:0; background:#e65100; color:#fff; border-radius:6px; cursor:pointer; font-weight:bold;">${rt('report.sort.save')}</button>
+                </div>
+            </div>
+        `;
+    document.body.appendChild(modal);
+    renderManualAdjustSortList();
+    modal.style.display = 'flex';
+};
+
+window.startManualAdjustSortDrag = function (event, itemIdx) {
+    manualAdjustSortDragIdx = itemIdx;
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', String(itemIdx));
+    event.currentTarget.style.opacity = '.55';
+    event.currentTarget.style.boxShadow = '0 8px 22px rgba(230,81,0,.22)';
+    event.currentTarget.style.cursor = 'grabbing';
+};
+
+window.dragManualAdjustSortOver = function (event, targetItemIdx) {
+    event.preventDefault();
+    if (manualAdjustSortDragIdx === null || manualAdjustSortDragIdx === targetItemIdx) return;
+    const from = manualAdjustSortDraft.indexOf(manualAdjustSortDragIdx);
+    const to = manualAdjustSortDraft.indexOf(targetItemIdx);
+    if (from < 0 || to < 0 || from === to) return;
+
+    const list = document.getElementById('manual-adjust-sort-list');
+    const rows = Array.from(list.querySelectorAll('.manual-adjust-sort-row'));
+    const before = new Map(rows.map(row => [row.dataset.itemIdx, row.getBoundingClientRect().top]));
+
+    manualAdjustSortDraft.splice(from, 1);
+    manualAdjustSortDraft.splice(to, 0, manualAdjustSortDragIdx);
+    const rowMap = new Map(rows.map(row => [Number(row.dataset.itemIdx), row]));
+    manualAdjustSortDraft.forEach(idx => list.appendChild(rowMap.get(idx)));
+
+    Array.from(list.querySelectorAll('.manual-adjust-sort-row')).forEach((row, position) => {
+        const delta = before.get(row.dataset.itemIdx) - row.getBoundingClientRect().top;
+        row.querySelector('.manual-adjust-sort-order').textContent = String(position + 1);
+        if (!delta) return;
+        row.style.transition = 'none';
+        row.style.transform = `translateY(${delta}px)`;
+        void row.offsetHeight;
+        row.style.transition = 'transform .2s cubic-bezier(.2,.8,.2,1), box-shadow .2s, opacity .2s';
+        row.style.transform = '';
+    });
+};
+
+window.endManualAdjustSortDrag = function () {
+    manualAdjustSortDragIdx = null;
+    document.querySelectorAll('#manual-adjust-sort-list .manual-adjust-sort-row').forEach(row => {
+        row.style.opacity = '1';
+        row.style.boxShadow = 'none';
+        row.style.cursor = 'grab';
+    });
+};
+
+window.saveManualAdjustSort = async function () {
+    manualAdjustSortDraft.forEach((itemIdx, order) => {
+        manualAdjustItems[itemIdx].sortOrder = order;
+    });
+    try {
+        document.getElementById('manual-adjust-sort-modal').style.display = 'none';
+        await saveManualAdjustItemsConfig(rt('report.toast.adjustSortSaved'));
+    } catch (e) {
+        showToast(rt('report.toast.saveFailed'), 'error');
+    }
+};
+
 window.openAddAdjustModal = function (idx = null) {
     const editIdx = Number.isInteger(idx) && manualAdjustItems[idx] && !manualAdjustItems[idx].deleted ? idx : null;
     editingAdjustItemIndex = editIdx;
 
     let modal = document.getElementById('add-adjust-modal');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'add-adjust-modal';
-        modal.style.cssText = 'display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:99999; align-items:center; justify-content:center;';
-        modal.innerHTML = `
+    if (modal) modal.remove();
+    modal = document.createElement('div');
+    modal.id = 'add-adjust-modal';
+    modal.style.cssText = 'display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:99999; align-items:center; justify-content:center;';
+    modal.innerHTML = `
             <div style="background:#fff; border-radius:12px; width:440px; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
                 <h3 style="margin-top:0; margin-bottom:20px; color:#e65100; display:flex; justify-content:space-between; align-items:center;">
                     <span id="adjust-modal-title">${rt('report.adjust.addTitle')}</span>
@@ -3248,7 +3400,6 @@ window.openAddAdjustModal = function (idx = null) {
                 </div>
             </div>
         `;
-    }
 
     const item = editIdx === null ? null : manualAdjustItems[editIdx];
     modal.querySelector('#adjust-modal-title').textContent = editIdx === null ? rt('report.adjust.addTitle') : rt('report.adjust.editTitle');
@@ -3531,7 +3682,11 @@ window.openAddMetricModal = function () {
         
         <div style="display:flex; gap:10px; margin-bottom:12px; background:#f5f8fa; padding:10px; border-radius:4px; border:1px solid #e1e8ed;">
             <div style="flex:1;">
-                <label style="display:block; font-size:12px; color:#0277bd; margin-bottom:4px; font-weight:bold;">${rt('report.metric.exceed')}</label>
+                <label style="display:flex; align-items:center; gap:4px; white-space:nowrap; font-size:12px; color:#0277bd; margin-bottom:4px; font-weight:bold;">
+                    <span style="white-space:nowrap;">${rt('report.metric.exceed')}</span>
+                    <button type="button" id="manual-overachievement-toggle" aria-pressed="false" onclick="toggleManualOverachievementScoring()" title="${rt('report.metric.overachievementTitle')}" style="flex:0 0 auto; border:1px solid #ffcc80; background:#fff; border-radius:5px; cursor:pointer; padding:0 4px; font-size:14px; line-height:18px; opacity:.45;">🎁</button>
+                    <input type="checkbox" id="manual-overachievement-scoring" hidden>
+                </label>
                 <input type="number" id="manual-metric-exceed-by" step="0.1" min="0" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;" placeholder="1">
             </div>
             <div style="flex:1;">
@@ -3539,7 +3694,7 @@ window.openAddMetricModal = function () {
                 <input type="number" id="manual-metric-bonus" step="0.1" min="0" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;" placeholder="0.1">
             </div>
             <div style="flex:1.5; display:flex; align-items:center;">
-                <span style="font-size:11px; color:#666; line-height:1.4;">${rt('report.metric.bonusHint')}</span>
+                <span id="manual-bonus-hint" style="font-size:11px; color:#666; line-height:1.4;">${rt('report.metric.bonusHint')}</span>
             </div>
         </div>
         
@@ -3603,6 +3758,8 @@ window.editManualMetric = function (label) {
         if (targetData[targetMonth] !== undefined) document.getElementById('manual-metric-target').value = targetData[targetMonth];
         if (targetData.exceedBy !== undefined) document.getElementById('manual-metric-exceed-by').value = targetData.exceedBy;
         if (targetData.bonus !== undefined) document.getElementById('manual-metric-bonus').value = targetData.bonus;
+        document.getElementById('manual-overachievement-scoring').checked = !!targetData.overachievementScoring;
+        updateManualOverachievementScoringUI();
         const monthTargets = targetData.categoryTargets && targetData.categoryTargets[String(targetMonth)];
         if (monthTargets && typeof monthTargets === 'object') {
             let hasConfiguredTarget = false;
@@ -3636,6 +3793,29 @@ window.editManualMetric = function (label) {
 window.toggleManualCategoryTargets = function () {
     const panel = document.getElementById('manual-category-targets');
     if (panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+};
+
+function updateManualOverachievementScoringUI() {
+    const checkbox = document.getElementById('manual-overachievement-scoring');
+    const button = document.getElementById('manual-overachievement-toggle');
+    const exceedInput = document.getElementById('manual-metric-exceed-by');
+    const bonusInput = document.getElementById('manual-metric-bonus');
+    const hint = document.getElementById('manual-bonus-hint');
+    if (!checkbox || !button) return;
+    const enabled = checkbox.checked;
+    button.setAttribute('aria-pressed', String(enabled));
+    button.style.opacity = enabled ? '1' : '.45';
+    button.style.background = enabled ? '#fff3e0' : '#fff';
+    if (exceedInput) exceedInput.disabled = enabled;
+    if (bonusInput) bonusInput.disabled = enabled;
+    if (hint) hint.textContent = enabled ? rt('report.metric.overachievementHint') : rt('report.metric.bonusHint');
+}
+
+window.toggleManualOverachievementScoring = function () {
+    const checkbox = document.getElementById('manual-overachievement-scoring');
+    if (!checkbox) return;
+    checkbox.checked = !checkbox.checked;
+    updateManualOverachievementScoringUI();
 };
 
 window.closeAddMetricModal = function () {
@@ -3712,6 +3892,7 @@ window.saveManualMetric = async function () {
     const bonus = parseFloat(document.getElementById('manual-metric-bonus').value);
     updatedTargets[targetKey].exceedBy = isNaN(exceedBy) ? '' : exceedBy;
     updatedTargets[targetKey].bonus = isNaN(bonus) ? '' : bonus;
+    updatedTargets[targetKey].overachievementScoring = !!document.getElementById('manual-overachievement-scoring').checked;
 
     if (targetVal) {
         updatedTargets[targetKey][targetMonth] = targetVal;
@@ -3944,21 +4125,21 @@ function renderGroupModal() {
             onclick="setFocusedGroup(${gi})">
             <div class="group-item-header">
                 <div style="display:flex; flex-direction:column; align-items:center; margin-right:8px; line-height:1;">
-                    <span onclick="event.stopPropagation(); moveGroupUp(${gi})" style="cursor:${gi === 0 ? 'not-allowed' : 'pointer'}; color:${gi === 0 ? '#ddd' : '#777'}; font-size:14px; padding:0 4px; user-select:none;" title="上移">▲</span>
-                    <span onclick="event.stopPropagation(); moveGroupDown(${gi})" style="cursor:${gi === _editGroups.length - 1 ? 'not-allowed' : 'pointer'}; color:${gi === _editGroups.length - 1 ? '#ddd' : '#777'}; font-size:14px; padding:0 4px; user-select:none;" title="下移">▼</span>
+                    <span onclick="event.stopPropagation(); moveGroupUp(${gi})" style="cursor:${gi === 0 ? 'not-allowed' : 'pointer'}; color:${gi === 0 ? '#ddd' : '#777'}; font-size:14px; padding:0 4px; user-select:none;" title="${rt('report.sort.moveUp')}">▲</span>
+                    <span onclick="event.stopPropagation(); moveGroupDown(${gi})" style="cursor:${gi === _editGroups.length - 1 ? 'not-allowed' : 'pointer'}; color:${gi === _editGroups.length - 1 ? '#ddd' : '#777'}; font-size:14px; padding:0 4px; user-select:none;" title="${rt('report.sort.moveDown')}">▼</span>
                 </div>
                 <input class="group-name-input" value="${escapeHTML(g.name)}" placeholder="${rt('report.modal.groupList')}"
                     onclick="event.stopPropagation()"
                     oninput="_editGroups[${gi}].name = this.value"
                     onblur="updatePoolHint()">
                 <span class="focus-badge" style="font-size:11px; background:#3949ab; color:#fff; border-radius:10px; padding:1px 7px; margin-left:4px; display:${isFocused ? 'inline' : 'none'};">${getReportLang() === 'en-US' ? 'Focused' : '聚焦'}</span>
-                <span onclick="event.stopPropagation(); removeGroup(${gi})" style="cursor:pointer; color:#e53935; font-size:18px; padding:0 4px;" title="删除分组">✕</span>
+                <span onclick="event.stopPropagation(); removeGroup(${gi})" style="cursor:pointer; color:#e53935; font-size:18px; padding:0 4px;" title="${rt('report.group.delete')}">✕</span>
             </div>
             <div class="group-metrics-list">
                 ${(g.metrics || []).map((label, mi) => `
                     <div class="group-metric-tag">
-                        <span onclick="event.stopPropagation(); moveMetricUp(${gi}, ${mi})" style="cursor:${mi === 0 ? 'not-allowed' : 'pointer'}; color:${mi === 0 ? '#ddd' : '#777'}; font-size:12px; padding:0 4px; user-select:none;" title="上移">▲</span>
-                        <span onclick="event.stopPropagation(); moveMetricDown(${gi}, ${mi})" style="cursor:${mi === g.metrics.length - 1 ? 'not-allowed' : 'pointer'}; color:${mi === g.metrics.length - 1 ? '#ddd' : '#777'}; font-size:12px; padding:0 4px; user-select:none;" title="下移">▼</span>
+                        <span onclick="event.stopPropagation(); moveMetricUp(${gi}, ${mi})" style="cursor:${mi === 0 ? 'not-allowed' : 'pointer'}; color:${mi === 0 ? '#ddd' : '#777'}; font-size:12px; padding:0 4px; user-select:none;" title="${rt('report.sort.moveUp')}">▲</span>
+                        <span onclick="event.stopPropagation(); moveMetricDown(${gi}, ${mi})" style="cursor:${mi === g.metrics.length - 1 ? 'not-allowed' : 'pointer'}; color:${mi === g.metrics.length - 1 ? '#ddd' : '#777'}; font-size:12px; padding:0 4px; user-select:none;" title="${rt('report.sort.moveDown')}">▼</span>
                         <span style="flex:1; margin-left:4px;">${getBilingual(label)}</span>
                         <span class="group-metric-remove" onclick="event.stopPropagation(); removeMetricFromGroup(${gi}, ${mi})">✕</span>
                     </div>`).join('')}
@@ -4580,8 +4761,7 @@ window.buildYuxiangPayload = function () {
     });
 
     // Add manual adjustments
-    manualAdjustItems.forEach((item, idx) => {
-        if (item.deleted) return;
+    getOrderedManualAdjustEntries().forEach(({ item, idx }) => {
         const labelEn = rt(item.name, true) || item.name;
         const adjData = {
             label: item.name,
@@ -4589,7 +4769,7 @@ window.buildYuxiangPayload = function () {
             type: item.type,
             unit: item.unit,
             cap: item.cap,
-            desc: item.desc
+            desc: formatManualAdjustDesc(item)
         };
 
         targetCats.forEach(cat => {
@@ -5351,7 +5531,9 @@ window.openTemplateMappingModal = async function () {
         if (!metrics.includes('拓扑与预案 (合并)')) metrics.push('拓扑与预案 (合并)');
 
         // manualAdjustItems is a global array in report.js
-        const adjs = (typeof manualAdjustItems !== 'undefined' ? manualAdjustItems : []).map(a => a.name);
+        const adjs = typeof getOrderedManualAdjustEntries === 'function'
+            ? getOrderedManualAdjustEntries().map(entry => entry.item.name)
+            : (typeof manualAdjustItems !== 'undefined' ? manualAdjustItems : []).filter(a => !a.deleted).map(a => a.name);
 
         const sys = ['SYS_SubTotal', 'SYS_AdjustTotal', 'SYS_WeightInMonth', 'SYS_FinalResult'];
         const allOptions = [...metrics, ...adjs, ...sys];
