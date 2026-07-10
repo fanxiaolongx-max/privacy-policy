@@ -64,20 +64,74 @@ app.use((req, res, next) => {
     next();
 });
 
+const SENSITIVE_LOG_KEYS = new Set([
+    'authorization',
+    'password',
+    'token',
+    'access_token',
+    'refresh_token',
+    'api_key',
+    'apikey',
+    'secret'
+]);
+
+function shouldRedactLogKey(key) {
+    const normalized = String(key || '').toLowerCase();
+    return SENSITIVE_LOG_KEYS.has(normalized) || normalized.includes('password') || normalized.includes('token');
+}
+
+function redactForLog(value) {
+    if (Array.isArray(value)) {
+        return value.map(item => redactForLog(item));
+    }
+    if (value && typeof value === 'object') {
+        return Object.fromEntries(Object.entries(value).map(([key, item]) => [
+            key,
+            shouldRedactLogKey(key) ? '[REDACTED]' : redactForLog(item)
+        ]));
+    }
+    return value;
+}
+
+function sanitizeOriginalUrl(originalUrl) {
+    try {
+        const parsed = new URL(originalUrl, 'http://tools-platform.local');
+        parsed.searchParams.forEach((value, key) => {
+            if (shouldRedactLogKey(key)) {
+                parsed.searchParams.set(key, '[REDACTED]');
+            }
+        });
+        return `${parsed.pathname}${parsed.search}`;
+    } catch (err) {
+        return String(originalUrl || '').replace(/([?&][^=]*(?:token|password|secret|api_?key)[^=]*=)[^&]*/gi, '$1[REDACTED]');
+    }
+}
+
+function getSanitizedQuery(req) {
+    return redactForLog(req.query || {});
+}
+
 // ── 请求日志（每次 API 请求都打印到控制台）
 app.use((req, res, next) => {
-    if (!req.path.startsWith('/api')) return next(); // 只记录 API 请求
+    const originalUrl = req.originalUrl || req.url || req.path;
+    if (!originalUrl.startsWith('/api')) return next(); // 只记录 API 请求
     const start = Date.now();
     const ts = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+    const safeUrl = sanitizeOriginalUrl(originalUrl);
+    const safeQuery = getSanitizedQuery(req);
+    const client = req.ip || req.socket?.remoteAddress || '';
+    const userAgent = req.get('user-agent') || '';
     res.on('finish', () => {
         const dur = Date.now() - start;
         const status = res.statusCode;
         const color = status >= 500 ? '\x1b[31m' : status >= 400 ? '\x1b[33m' : '\x1b[32m';
         const reset = '\x1b[0m';
         const bodySize = req.headers['content-length'] ? `(body: ${req.headers['content-length']}B)` : '';
-        console.log(`${color}[${ts}] ${req.method} ${req.path} #${req.requestId} → ${status} (${dur}ms) ${bodySize}${reset}`);
+        const querySummary = Object.keys(safeQuery).length ? ` query=${JSON.stringify(safeQuery)}` : '';
+        const externalTag = safeUrl.startsWith('/api/external/metrics') ? ' [external-metrics]' : '';
+        console.log(`${color}[${ts}] ${req.method} ${safeUrl} #${req.requestId}${externalTag} → ${status} (${dur}ms) ${bodySize}${querySummary} ip=${client} ua="${userAgent.substring(0, 120)}"${reset}`);
         if (status >= 400) {
-            console.log(`  ↳ Body:`, JSON.stringify(req.body).substring(0, 300));
+            console.log(`  ↳ Body:`, JSON.stringify(redactForLog(req.body)).substring(0, 300));
         }
     });
     next();

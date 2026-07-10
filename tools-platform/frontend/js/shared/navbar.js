@@ -36,6 +36,9 @@ let navState = {
     saveTimer: null,
     aiSettings: null,
     aiSaveTimer: null,
+    securitySettings: null,
+    securityLocks: [],
+    securitySaveTimer: null,
     remoteBackupSettings: null,
     remoteBackupSaveTimer: null,
     scheduleBackupSettings: null,
@@ -111,6 +114,7 @@ function registerNavbarI18n() {
             'nav.set.tab.update': '程序更新',
             'nav.set.tab.backup': '备份恢复',
             'nav.set.tab.accounts': '账号管理',
+            'nav.set.tab.security': '安全策略',
             'nav.set.tab.pages': '页面配置',
             'nav.set.saved': '已自动保存',
             'nav.set.saving': '正在自动保存...',
@@ -124,6 +128,7 @@ function registerNavbarI18n() {
             'nav.set.sub.update': '检查、下载并安装桌面客户端更新。',
             'nav.set.sub.backup': '备份和恢复会覆盖全局配置、数据库、上传附件与自定义工具数据。',
             'nav.set.sub.accounts': '修改后会自动保存，并立即影响账号权限。',
+            'nav.set.sub.security': '配置登录失败锁定、会话过期和安全告警策略。',
             'nav.set.sub.report': '报表看板相关维护能力，当前支持历史快照冗余清理。',
             'nav.set.sub.pageFallback': '该页面的配置预留位，后续可把页面内相关设置迁移到这里统一管理。',
             'nav.set.help.primary': '勾选后显示在顶部 bar；未勾选的菜单会进入“更多工具”。使用上下按钮调整顶部显示顺序。',
@@ -277,6 +282,32 @@ function registerNavbarI18n() {
             'nav.acc.btnDel': '删除',
             'nav.acc.btnReset': '重置密码',
 
+            'nav.sec.empty': '正在加载安全策略...',
+            'nav.sec.help': '登录失败后会按账号、来源 IP、同一 IP 多账号尝试三类规则递进锁定；触发锁定时会按配置级别上报告警台。',
+            'nav.sec.enabled': '启用登录失败递进锁定',
+            'nav.sec.alertOnLock': '锁定时上报告警台',
+            'nav.sec.sessionHours': '会话有效期（小时）',
+            'nav.sec.accountPolicy': '账号锁定策略',
+            'nav.sec.ipPolicy': 'IP 锁定策略',
+            'nav.sec.multiPolicy': '同 IP 多账号策略',
+            'nav.sec.thEnabled': '启用',
+            'nav.sec.thCount': '失败次数/账号数',
+            'nav.sec.thWindow': '统计窗口(分钟)',
+            'nav.sec.thLock': '锁定(分钟)',
+            'nav.sec.thSeverity': '告警级别',
+            'nav.sec.locksTitle': '当前锁定',
+            'nav.sec.btnRefresh': '刷新锁定',
+            'nav.sec.btnUnlock': '解锁',
+            'nav.sec.noLocks': '暂无账号或 IP 被锁定',
+            'nav.sec.thType': '类型',
+            'nav.sec.thTarget': '对象',
+            'nav.sec.thReason': '原因',
+            'nav.sec.thFailCount': '计数',
+            'nav.sec.thUntil': '锁定到',
+            'nav.sec.failLoad': '加载安全策略失败：',
+            'nav.sec.saving': '正在保存安全策略...',
+            'nav.sec.saved': '安全策略已自动保存',
+
             'nav.alert.title': '告警台',
             'nav.alert.subtitle': '集中查看系统告警、配置变化和用户关键行为。',
             'nav.alert.loading': '正在加载告警...',
@@ -340,6 +371,7 @@ function registerNavbarI18n() {
             'nav.set.tab.update': 'App Updates',
             'nav.set.tab.backup': 'Backup & Restore',
             'nav.set.tab.accounts': 'Accounts',
+            'nav.set.tab.security': 'Security',
             'nav.set.tab.pages': 'Page Settings',
             'nav.set.saved': 'Saved automatically',
             'nav.set.saving': 'Saving automatically...',
@@ -353,6 +385,7 @@ function registerNavbarI18n() {
             'nav.set.sub.update': 'Check, download, and install desktop client updates.',
             'nav.set.sub.backup': 'Backup and restore will overwrite global configuration, database, uploaded files, and custom tools data.',
             'nav.set.sub.accounts': 'Changes are saved automatically and immediately applied to account permissions.',
+            'nav.set.sub.security': 'Configure login lockouts, session expiry, and security alert severity.',
             'nav.set.sub.report': 'Report dashboard maintenance. Currently supports historical snapshot cleanup.',
             'nav.set.sub.pageFallback': "Placeholder for this page's configuration. Future page settings can be managed here.",
             'nav.set.help.primary': 'Checked items appear in the top bar; unchecked items move to "More Tools". Use up/down buttons to reorder.',
@@ -505,6 +538,32 @@ function registerNavbarI18n() {
             'nav.acc.fail': 'Failed to load accounts: ',
             'nav.acc.btnDel': 'Delete',
             'nav.acc.btnReset': 'Reset Password',
+
+            'nav.sec.empty': 'Loading security policy...',
+            'nav.sec.help': 'Failed logins are progressively locked by account, source IP, and multi-account attempts from the same IP. Lock events are reported to the alert center with the configured severity.',
+            'nav.sec.enabled': 'Enable progressive failed-login lockout',
+            'nav.sec.alertOnLock': 'Report lock events to alert center',
+            'nav.sec.sessionHours': 'Session lifetime (hours)',
+            'nav.sec.accountPolicy': 'Account Lock Policies',
+            'nav.sec.ipPolicy': 'IP Lock Policies',
+            'nav.sec.multiPolicy': 'Same-IP Multi-Account Policies',
+            'nav.sec.thEnabled': 'Enabled',
+            'nav.sec.thCount': 'Fail/User Count',
+            'nav.sec.thWindow': 'Window (min)',
+            'nav.sec.thLock': 'Lock (min)',
+            'nav.sec.thSeverity': 'Severity',
+            'nav.sec.locksTitle': 'Active Locks',
+            'nav.sec.btnRefresh': 'Refresh Locks',
+            'nav.sec.btnUnlock': 'Unlock',
+            'nav.sec.noLocks': 'No account or IP locks',
+            'nav.sec.thType': 'Type',
+            'nav.sec.thTarget': 'Target',
+            'nav.sec.thReason': 'Reason',
+            'nav.sec.thFailCount': 'Count',
+            'nav.sec.thUntil': 'Locked Until',
+            'nav.sec.failLoad': 'Failed to load security policy: ',
+            'nav.sec.saving': 'Saving security policy...',
+            'nav.sec.saved': 'Security policy saved',
 
             'nav.alert.title': 'Alert Center',
             'nav.alert.subtitle': 'Review system alerts, configuration changes, and key user actions in one place.',
@@ -879,6 +938,7 @@ function renderNavSettingsSidebar() {
         <button class="nav-settings-tab ${t === 'update' ? 'active' : ''}" data-tab="update" onclick="switchNavSettingsTab('update')">${navEscape(navT('nav.set.tab.update'))}</button>
         <button class="nav-settings-tab ${t === 'backup' ? 'active' : ''}" data-tab="backup" onclick="switchNavSettingsTab('backup')">${navEscape(navT('nav.set.tab.backup'))}</button>
         <button class="nav-settings-tab ${t === 'accounts' ? 'active' : ''}" data-tab="accounts" onclick="switchNavSettingsTab('accounts')">${navEscape(navT('nav.set.tab.accounts'))}</button>
+        <button class="nav-settings-tab ${t === 'security' ? 'active' : ''}" data-tab="security" onclick="switchNavSettingsTab('security')">${navEscape(navT('nav.set.tab.security'))}</button>
         <div class="nav-settings-title nav-settings-section-title">${navEscape(navT('nav.set.tab.pages'))}</div>
         ${renderPageSettingsTabs()}
     `;
@@ -937,6 +997,7 @@ function getNavSettingsTitle() {
         return item ? navT('nav.set.pageConfig', { page: getNavLabel(item) }) : navT('nav.set.tab.pages');
     }
     if (navState.settingsTab === 'accounts') return navT('nav.set.tab.accounts');
+    if (navState.settingsTab === 'security') return navT('nav.set.tab.security');
     if (navState.settingsTab === 'ai') return navT('nav.set.tab.ai');
     if (navState.settingsTab === 'update') return navT('nav.set.tab.update');
     if (navState.settingsTab === 'backup') return navT('nav.set.tab.backup');
@@ -952,6 +1013,7 @@ function getNavSettingsSubtitle() {
         return navT('nav.set.sub.pageFallback');
     }
     if (navState.settingsTab === 'accounts') return navT('nav.set.sub.accounts');
+    if (navState.settingsTab === 'security') return navT('nav.set.sub.security');
     if (navState.settingsTab === 'ai') return navT('nav.set.sub.ai');
     if (navState.settingsTab === 'update') return navT('nav.set.sub.update');
     if (navState.settingsTab === 'backup') return navT('nav.set.sub.backup');
@@ -975,6 +1037,7 @@ function renderNavSettingsContent() {
 
     if (navState.settingsTab.startsWith('page:')) return renderPageSettings(content, navState.settingsTab.slice(5));
     if (navState.settingsTab === 'accounts') return renderAccountSettings(content);
+    if (navState.settingsTab === 'security') return renderSecuritySettings(content);
     if (navState.settingsTab === 'ai') return renderAiSettings(content);
     if (navState.settingsTab === 'update') return renderUpdaterSettings(content);
     if (navState.settingsTab === 'backup') return renderBackupSettings(content);
@@ -2533,6 +2596,191 @@ window.archiveAlertCenterEvent = async function (id) {
         headers: getAuthHeaderForNav()
     });
     window.reloadAlertCenter();
+};
+
+async function fetchSecuritySettingsForNav() {
+    const [settings, locks] = await Promise.all([
+        API.get('/api/auth/security/settings'),
+        API.get('/api/auth/security/locks')
+    ]);
+    navState.securitySettings = settings;
+    navState.securityLocks = locks;
+    return settings;
+}
+
+function renderSecurityPolicyRows(kind, rows) {
+    return (rows || []).map((policy, index) => `
+        <tr>
+            <td><input type="checkbox" ${policy.enabled !== false ? 'checked' : ''} onchange="updateSecurityPolicy('${kind}', ${index}, 'enabled', this.checked)"></td>
+            <td><input class="nav-settings-input nav-security-number" type="number" min="1" max="1000" step="1" value="${navEscape(policy.count)}" oninput="updateSecurityPolicy('${kind}', ${index}, 'count', this.value)"></td>
+            <td><input class="nav-settings-input nav-security-number" type="number" min="1" max="10080" step="1" value="${navEscape(policy.windowMinutes)}" oninput="updateSecurityPolicy('${kind}', ${index}, 'windowMinutes', this.value)"></td>
+            <td><input class="nav-settings-input nav-security-number" type="number" min="1" max="10080" step="1" value="${navEscape(policy.lockMinutes)}" oninput="updateSecurityPolicy('${kind}', ${index}, 'lockMinutes', this.value)"></td>
+            <td>
+                <select class="nav-settings-input nav-security-severity" onchange="updateSecurityPolicy('${kind}', ${index}, 'severity', this.value)">
+                    ${['info', 'warn', 'error', 'critical'].map(level => `<option value="${level}" ${policy.severity === level ? 'selected' : ''}>${level}</option>`).join('')}
+                </select>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function renderSecurityPolicyTable(title, kind, rows) {
+    return `
+        <div class="nav-security-section">
+            <div class="nav-security-section-title">${navEscape(title)}</div>
+            <div class="nav-account-table-wrap">
+                <table class="nav-account-table nav-security-table">
+                    <thead>
+                        <tr>
+                            <th>${navEscape(navT('nav.sec.thEnabled'))}</th>
+                            <th>${navEscape(navT('nav.sec.thCount'))}</th>
+                            <th>${navEscape(navT('nav.sec.thWindow'))}</th>
+                            <th>${navEscape(navT('nav.sec.thLock'))}</th>
+                            <th>${navEscape(navT('nav.sec.thSeverity'))}</th>
+                        </tr>
+                    </thead>
+                    <tbody>${renderSecurityPolicyRows(kind, rows)}</tbody>
+                </table>
+            </div>
+        </div>
+    `;
+}
+
+function getSecurityLockTarget(lock) {
+    return lock.lock_type === 'account' ? lock.username : lock.ip;
+}
+
+function renderSecurityLocksTable() {
+    const locks = navState.securityLocks || [];
+    const rows = locks.map(lock => `
+        <tr>
+            <td>${navEscape(lock.lock_type)}</td>
+            <td>${navEscape(getSecurityLockTarget(lock))}</td>
+            <td>${navEscape(lock.reason || '')}</td>
+            <td>${navEscape(lock.fail_count || 0)}</td>
+            <td>${navEscape(lock.locked_until || '')}</td>
+            <td class="nav-account-actions">
+                <button onclick="unlockSecurityLock('${navEscape(lock.lock_key)}')">${navEscape(navT('nav.sec.btnUnlock'))}</button>
+            </td>
+        </tr>
+    `).join('');
+    return `
+        <div class="nav-security-section">
+            <div class="nav-security-lock-head">
+                <div class="nav-security-section-title">${navEscape(navT('nav.sec.locksTitle'))}</div>
+                <button class="nav-settings-add" onclick="reloadSecurityLocks()">${navEscape(navT('nav.sec.btnRefresh'))}</button>
+            </div>
+            <div class="nav-account-table-wrap">
+                <table class="nav-account-table">
+                    <thead>
+                        <tr>
+                            <th>${navEscape(navT('nav.sec.thType'))}</th>
+                            <th>${navEscape(navT('nav.sec.thTarget'))}</th>
+                            <th>${navEscape(navT('nav.sec.thReason'))}</th>
+                            <th>${navEscape(navT('nav.sec.thFailCount'))}</th>
+                            <th>${navEscape(navT('nav.sec.thUntil'))}</th>
+                            <th>${navEscape(navT('nav.acc.thAction'))}</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows || `<tr><td colspan="6">${navEscape(navT('nav.sec.noLocks'))}</td></tr>`}</tbody>
+                </table>
+            </div>
+        </div>
+    `;
+}
+
+async function renderSecuritySettings(content) {
+    content.innerHTML = `<div class="nav-settings-empty">${navEscape(navT('nav.sec.empty'))}</div>`;
+    try {
+        const settings = await fetchSecuritySettingsForNav();
+        content.innerHTML = `
+            <div class="nav-settings-help">${navEscape(navT('nav.sec.help'))}</div>
+            <div class="nav-security-grid">
+                <label class="nav-security-toggle">
+                    <input type="checkbox" id="navSecurityEnabled" ${settings.enabled !== false ? 'checked' : ''} onchange="scheduleSecuritySettingsSave()">
+                    <span>${navEscape(navT('nav.sec.enabled'))}</span>
+                </label>
+                <label class="nav-security-toggle">
+                    <input type="checkbox" id="navSecurityAlertOnLock" ${settings.alertOnLock !== false ? 'checked' : ''} onchange="scheduleSecuritySettingsSave()">
+                    <span>${navEscape(navT('nav.sec.alertOnLock'))}</span>
+                </label>
+                <label class="nav-ai-field">
+                    <span>${navEscape(navT('nav.sec.sessionHours'))}</span>
+                    <input id="navSecuritySessionHours" class="nav-settings-input" type="number" min="1" max="720" step="1" value="${navEscape(settings.sessionMaxAgeHours || 168)}" oninput="scheduleSecuritySettingsSave()">
+                </label>
+            </div>
+            ${renderSecurityPolicyTable(navT('nav.sec.accountPolicy'), 'accountLockPolicies', settings.accountLockPolicies)}
+            ${renderSecurityPolicyTable(navT('nav.sec.ipPolicy'), 'ipLockPolicies', settings.ipLockPolicies)}
+            ${renderSecurityPolicyTable(navT('nav.sec.multiPolicy'), 'ipMultiUserPolicies', settings.ipMultiUserPolicies)}
+            ${renderSecurityLocksTable()}
+        `;
+    } catch (e) {
+        content.innerHTML = `<div class="nav-settings-empty">${navEscape(navT('nav.sec.failLoad'))}${navEscape(e.message)}</div>`;
+    }
+}
+
+function collectSecuritySettingsPayload() {
+    const current = navState.securitySettings || {};
+    return {
+        enabled: document.getElementById('navSecurityEnabled')?.checked !== false,
+        alertOnLock: document.getElementById('navSecurityAlertOnLock')?.checked !== false,
+        sessionMaxAgeHours: Number(document.getElementById('navSecuritySessionHours')?.value || current.sessionMaxAgeHours || 168),
+        accountLockPolicies: current.accountLockPolicies || [],
+        ipLockPolicies: current.ipLockPolicies || [],
+        ipMultiUserPolicies: current.ipMultiUserPolicies || []
+    };
+}
+
+window.updateSecurityPolicy = function (kind, index, field, value) {
+    if (!navState.securitySettings || !Array.isArray(navState.securitySettings[kind])) return;
+    const policy = navState.securitySettings[kind][index];
+    if (!policy) return;
+    policy[field] = field === 'enabled' ? Boolean(value) : (field === 'severity' ? value : Number(value));
+    scheduleSecuritySettingsSave();
+};
+
+window.scheduleSecuritySettingsSave = function () {
+    if (!navState.securitySettings) return;
+    const indicator = document.getElementById('navSettingsSaveState');
+    if (indicator) indicator.textContent = navT('nav.sec.saving');
+    clearTimeout(navState.securitySaveTimer);
+    navState.securitySaveTimer = setTimeout(async () => {
+        try {
+            const res = await fetch('/api/auth/security/settings', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeaderForNav()
+                },
+                body: JSON.stringify(collectSecuritySettingsPayload())
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            navState.securitySettings = await res.json();
+            if (indicator) indicator.textContent = navT('nav.sec.saved');
+        } catch (e) {
+            if (indicator) indicator.textContent = navT('nav.set.saveFail') + e.message;
+        }
+    }, 420);
+};
+
+window.reloadSecurityLocks = async function () {
+    const content = document.getElementById('navSettingsContent');
+    try {
+        navState.securityLocks = await API.get('/api/auth/security/locks');
+        if (content && navState.settingsTab === 'security') renderSecuritySettings(content);
+    } catch (e) {
+        const indicator = document.getElementById('navSettingsSaveState');
+        if (indicator) indicator.textContent = navT('nav.sec.failLoad') + e.message;
+    }
+};
+
+window.unlockSecurityLock = async function (lockKey) {
+    const res = await fetch(`/api/auth/security/locks/${encodeURIComponent(lockKey)}`, {
+        method: 'DELETE',
+        headers: getAuthHeaderForNav()
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    await window.reloadSecurityLocks();
 };
 
 async function renderAccountSettings(content) {
