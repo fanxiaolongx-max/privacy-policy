@@ -95,9 +95,6 @@ function getAuthHeaders() {
     const token = localStorage.getItem('tools_token');
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
-        if (typeof document !== 'undefined' && !document.cookie.includes('tools_token=')) {
-            document.cookie = `tools_token=${token}; path=/; max-age=${7 * 24 * 60 * 60}`;
-        }
     }
     return headers;
 }

@@ -1,5 +1,6 @@
 const { run, all, get } = require('./app-db');
 const alertCenterRepo = require('./alert-center-repository');
+const securitySettingsRepo = require('./auth-security-settings-repository');
 
 const WINDOW_MINUTES = 15;
 const RETENTION_DAYS = 14;
@@ -48,6 +49,34 @@ function pickThreshold(count, thresholds) {
     return thresholds.slice().reverse().find(item => count >= item.count) || null;
 }
 
+async function pickLockPolicy(sql, params, policies) {
+    const sortedPolicies = (policies || [])
+        .filter(policy => policy?.enabled !== false)
+        .slice()
+        .sort((a, b) => Number(b.count) - Number(a.count));
+    for (const policy of sortedPolicies) {
+        const row = await get(sql, [...params, `-${policy.windowMinutes} minutes`]);
+        const count = Number(row?.count) || 0;
+        if (count >= policy.count) {
+            return { ...policy, observedCount: count };
+        }
+    }
+    return null;
+}
+
+function minutesFromNow(minutes) {
+    return new Date(Date.now() + minutes * 60 * 1000)
+        .toISOString()
+        .replace('T', ' ')
+        .substring(0, 19);
+}
+
+function secondsUntil(dateText) {
+    const ts = Date.parse(String(dateText || '').replace(' ', 'T') + 'Z');
+    if (!Number.isFinite(ts)) return 0;
+    return Math.max(0, Math.ceil((ts - Date.now()) / 1000));
+}
+
 async function ensureReady() {
     if (!initPromise) {
         initPromise = (async () => {
@@ -73,6 +102,22 @@ async function ensureReady() {
                     alerted_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             `);
+            await run(`
+                CREATE TABLE IF NOT EXISTS auth_security_locks (
+                    lock_key TEXT PRIMARY KEY,
+                    lock_type TEXT NOT NULL,
+                    username TEXT NOT NULL DEFAULT '',
+                    ip TEXT NOT NULL DEFAULT '',
+                    reason TEXT NOT NULL DEFAULT '',
+                    fail_count INTEGER NOT NULL DEFAULT 0,
+                    locked_until DATETIME NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            `);
+            await run(`CREATE INDEX IF NOT EXISTS idx_auth_security_locks_until ON auth_security_locks(locked_until)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_auth_security_locks_user_until ON auth_security_locks(username, locked_until)`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_auth_security_locks_ip_until ON auth_security_locks(ip, locked_until)`);
         })().catch(err => {
             initPromise = null;
             throw err;
@@ -83,6 +128,7 @@ async function ensureReady() {
 
 async function trimOldAttempts() {
     await run(`DELETE FROM auth_login_attempts WHERE datetime(created_at) < datetime('now', ?)`, [`-${RETENTION_DAYS} days`]);
+    await run(`DELETE FROM auth_security_locks WHERE datetime(locked_until) < datetime('now', '-1 day')`);
 }
 
 async function shouldAlert(alertKey, count, severity) {
@@ -139,6 +185,131 @@ async function addSecurityAlert({ req, severity, title, message, username, ip, o
         });
     } catch (err) {
         console.error('[auth-security-monitor] alert write failed:', err.message);
+    }
+}
+
+async function upsertLock({ req, lockType, username, ip, policy, reason, alertOnLock = true }) {
+    const normalizedUser = normalizeUsername(username);
+    const normalizedIp = ip || '(unknown)';
+    const lockKey = lockType === 'account'
+        ? `account:${normalizedUser}`
+        : `ip:${normalizedIp}`;
+    const lockedUntil = minutesFromNow(policy.lockMinutes);
+    const existing = await get(
+        `SELECT locked_until FROM auth_security_locks WHERE lock_key = ? AND datetime(locked_until) > datetime('now')`,
+        [lockKey]
+    );
+    if (existing && secondsUntil(existing.locked_until) >= policy.lockMinutes * 60 - 5) {
+        return;
+    }
+
+    await run(
+        `INSERT INTO auth_security_locks
+            (lock_key, lock_type, username, ip, reason, fail_count, locked_until, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+         ON CONFLICT(lock_key) DO UPDATE SET
+            lock_type = excluded.lock_type,
+            username = excluded.username,
+            ip = excluded.ip,
+            reason = excluded.reason,
+            fail_count = excluded.fail_count,
+            locked_until = excluded.locked_until,
+            updated_at = CURRENT_TIMESTAMP`,
+        [
+            lockKey,
+            lockType,
+            normalizedUser,
+            normalizedIp,
+            reason,
+            policy.observedCount,
+            lockedUntil
+        ]
+    );
+
+    if (alertOnLock) {
+        const target = lockType === 'account' ? `账号 ${normalizedUser}` : `IP ${normalizedIp}`;
+        await addSecurityAlert({
+            req,
+            severity: policy.severity,
+            title: `${target} 已被临时锁定`,
+            message: `${target} 登录失败达到 ${policy.observedCount} 次，已锁定 ${policy.lockMinutes} 分钟。`,
+            username: normalizedUser,
+            ip: normalizedIp,
+            objectType: lockType === 'account' ? 'auth_account_lock' : 'auth_ip_lock',
+            objectId: lockType === 'account' ? normalizedUser : normalizedIp,
+            detail: {
+                lock_type: lockType,
+                reason,
+                fail_count: policy.observedCount,
+                threshold: policy.count,
+                window_minutes: policy.windowMinutes,
+                lock_minutes: policy.lockMinutes,
+                locked_until: lockedUntil
+            }
+        });
+    }
+}
+
+async function enforceFailedLoginLocks(req, username, ip) {
+    const settings = await securitySettingsRepo.getSettings();
+    if (!settings.enabled) return;
+    const normalizedUser = normalizeUsername(username);
+    const normalizedIp = ip || '(unknown)';
+    const accountPolicy = await pickLockPolicy(
+        `SELECT COUNT(*) AS count
+         FROM auth_login_attempts
+         WHERE success = 0 AND username = ? AND datetime(created_at) >= datetime('now', ?)`,
+        [normalizedUser],
+        settings.accountLockPolicies
+    );
+    if (accountPolicy) {
+        await upsertLock({
+            req,
+            lockType: 'account',
+            username: normalizedUser,
+            ip: normalizedIp,
+            policy: accountPolicy,
+            reason: 'account_failed_login',
+            alertOnLock: settings.alertOnLock
+        });
+    }
+
+    const ipPolicy = await pickLockPolicy(
+        `SELECT COUNT(*) AS count
+         FROM auth_login_attempts
+         WHERE success = 0 AND ip = ? AND datetime(created_at) >= datetime('now', ?)`,
+        [normalizedIp],
+        settings.ipLockPolicies
+    );
+    if (ipPolicy) {
+        await upsertLock({
+            req,
+            lockType: 'ip',
+            username: normalizedUser,
+            ip: normalizedIp,
+            policy: ipPolicy,
+            reason: 'ip_failed_login',
+            alertOnLock: settings.alertOnLock
+        });
+    }
+
+    const multiUserPolicy = await pickLockPolicy(
+        `SELECT COUNT(DISTINCT username) AS count
+         FROM auth_login_attempts
+         WHERE success = 0 AND ip = ? AND datetime(created_at) >= datetime('now', ?)`,
+        [normalizedIp],
+        settings.ipMultiUserPolicies
+    );
+    if (multiUserPolicy) {
+        await upsertLock({
+            req,
+            lockType: 'ip',
+            username: normalizedUser,
+            ip: normalizedIp,
+            policy: multiUserPolicy,
+            reason: 'ip_multi_user_failed_login',
+            alertOnLock: settings.alertOnLock
+        });
     }
 }
 
@@ -269,13 +440,119 @@ async function recordLoginAttempt(req, { username, success, reason = '' }) {
         );
         trimOldAttempts().catch(err => console.error('[auth-security-monitor] trim failed:', err.message));
         if (success) await evaluateSuccessfulLogin(req, normalizedUser, ip);
-        else await evaluateFailedLogin(req, normalizedUser, ip);
+        else {
+            await evaluateFailedLogin(req, normalizedUser, ip);
+            await enforceFailedLoginLocks(req, normalizedUser, ip);
+        }
     } catch (err) {
         console.error('[auth-security-monitor] record failed:', err.message);
     }
 }
 
+async function getLoginBlock(req, username) {
+    try {
+        await ensureReady();
+        const settings = await securitySettingsRepo.getSettings();
+        if (!settings.enabled) return null;
+        const normalizedUser = normalizeUsername(username);
+        const ip = getClientIp(req) || '(unknown)';
+        const rows = await all(
+            `SELECT lock_key, lock_type, username, ip, reason, fail_count, locked_until
+             FROM auth_security_locks
+             WHERE datetime(locked_until) > datetime('now')
+               AND (
+                    (lock_type = 'account' AND username = ?)
+                    OR (lock_type = 'ip' AND ip = ?)
+               )
+             ORDER BY datetime(locked_until) DESC
+             LIMIT 1`,
+            [normalizedUser, ip]
+        );
+        const lock = rows[0];
+        if (!lock) return null;
+        return {
+            ...lock,
+            retry_after_seconds: secondsUntil(lock.locked_until)
+        };
+    } catch (err) {
+        console.error('[auth-security-monitor] block check failed:', err.message);
+        return null;
+    }
+}
+
+async function listActiveLocks() {
+    await ensureReady();
+    const rows = await all(
+        `SELECT lock_key, lock_type, username, ip, reason, fail_count, locked_until, created_at, updated_at
+         FROM auth_security_locks
+         WHERE datetime(locked_until) > datetime('now')
+         ORDER BY datetime(locked_until) DESC, updated_at DESC`
+    );
+    return rows.map(row => ({
+        ...row,
+        retry_after_seconds: secondsUntil(row.locked_until)
+    }));
+}
+
+async function unlockLock(lockKey, req) {
+    await ensureReady();
+    const normalizedKey = String(lockKey || '').trim();
+    const lock = await get(
+        `SELECT lock_key, lock_type, username, ip, reason, fail_count, locked_until
+         FROM auth_security_locks
+         WHERE lock_key = ?`,
+        [normalizedKey]
+    );
+    if (!lock) return null;
+    await run(`DELETE FROM auth_security_locks WHERE lock_key = ?`, [normalizedKey]);
+    await addSecurityAlert({
+        req,
+        severity: 'info',
+        title: '安全锁定已解除',
+        message: `${lock.lock_type === 'account' ? '账号' : 'IP'} ${lock.lock_type === 'account' ? lock.username : lock.ip} 的登录锁定已被管理员解除。`,
+        username: req?.user?.username || lock.username,
+        ip: getClientIp(req) || '',
+        objectType: lock.lock_type === 'account' ? 'auth_account_lock' : 'auth_ip_lock',
+        objectId: lock.lock_type === 'account' ? lock.username : lock.ip,
+        detail: {
+            lock_key: lock.lock_key,
+            lock_type: lock.lock_type,
+            locked_username: lock.username,
+            locked_ip: lock.ip,
+            reason: lock.reason,
+            fail_count: lock.fail_count,
+            locked_until: lock.locked_until,
+            action: 'unlock'
+        }
+    });
+    return lock;
+}
+
+async function clearSuccessfulLoginState(req, username) {
+    try {
+        await ensureReady();
+        const normalizedUser = normalizeUsername(username);
+        const ip = getClientIp(req) || '(unknown)';
+        await run(
+            `DELETE FROM auth_login_attempts
+             WHERE success = 0 AND username = ? AND ip = ?`,
+            [normalizedUser, ip]
+        );
+        await run(
+            `DELETE FROM auth_security_locks
+             WHERE lock_type = 'account' AND username = ?`,
+            [normalizedUser]
+        );
+    } catch (err) {
+        console.error('[auth-security-monitor] clear failed:', err.message);
+    }
+}
+
 module.exports = {
     ensureReady,
-    recordLoginAttempt
+    recordLoginAttempt,
+    getLoginBlock,
+    clearSuccessfulLoginState,
+    listActiveLocks,
+    unlockLock
 };

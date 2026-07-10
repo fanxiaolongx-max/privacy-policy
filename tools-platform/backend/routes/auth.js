@@ -5,12 +5,51 @@ const { checkAuth, requireAdmin, hashPassword } = require('../middleware/auth');
 const authUsersRepo = require('../models/auth-users-repository');
 const authSessionsRepo = require('../models/auth-sessions-repository');
 const authSecurityMonitor = require('../models/auth-security-monitor');
+const authSecuritySettingsRepo = require('../models/auth-security-settings-repository');
+
+const DEFAULT_SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+async function getSessionMaxAgeMs() {
+    try {
+        const settings = await authSecuritySettingsRepo.getSettings();
+        return Math.max(1, Number(settings.sessionMaxAgeHours) || 168) * 60 * 60 * 1000;
+    } catch (err) {
+        console.error('[auth] failed to load security settings:', err.message);
+        return DEFAULT_SESSION_MAX_AGE_MS;
+    }
+}
+
+function isSecureRequest(req) {
+    const forwardedProto = String(req.get('x-forwarded-proto') || '').split(',')[0].trim().toLowerCase();
+    return Boolean(req.secure || forwardedProto === 'https');
+}
+
+function getAuthCookieOptions(req, extra = {}) {
+    return {
+        path: '/',
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: isSecureRequest(req),
+        ...extra
+    };
+}
 
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
     const { username, password } = req.body;
     
     try {
+        const block = await authSecurityMonitor.getLoginBlock(req, username);
+        if (block) {
+            res.setHeader('Retry-After', String(block.retry_after_seconds || 60));
+            return res.status(429).json({
+                error: '登录失败次数过多，请稍后再试',
+                locked_until: block.locked_until,
+                retry_after_seconds: block.retry_after_seconds,
+                lock_type: block.lock_type
+            });
+        }
+
         const user = await authUsersRepo.getUser(username);
 
         if (!user || user.passwordHash !== hashPassword(password)) {
@@ -24,16 +63,17 @@ router.post('/login', async (req, res) => {
 
         const token = crypto.randomBytes(32).toString('hex');
         
-        // Set expiry to 7 days
-        const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000;
+        const sessionMaxAgeMs = await getSessionMaxAgeMs();
+        const expiresAt = Date.now() + sessionMaxAgeMs;
         await authSessionsRepo.saveSession(token, username, user.role, expiresAt);
         authSecurityMonitor.recordLoginAttempt(req, {
             username,
             success: true,
             reason: 'success'
         });
+        authSecurityMonitor.clearSuccessfulLoginState(req, username);
         
-        res.cookie('tools_token', token, { maxAge: 7 * 24 * 60 * 60 * 1000, path: '/' });
+        res.cookie('tools_token', token, getAuthCookieOptions(req, { maxAge: sessionMaxAgeMs }));
         res.json({ success: true, token, role: user.role, username });
     } catch (err) {
         console.error('Login error:', err);
@@ -46,7 +86,7 @@ router.post('/logout', checkAuth, async (req, res) => {
     try {
         const token = req.headers.authorization.split(' ')[1];
         await authSessionsRepo.deleteSession(token);
-        res.clearCookie('tools_token', { path: '/' });
+        res.clearCookie('tools_token', getAuthCookieOptions(req));
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: '注销失败' });
@@ -56,6 +96,46 @@ router.post('/logout', checkAuth, async (req, res) => {
 // GET /api/auth/me
 router.get('/me', checkAuth, (req, res) => {
     res.json(req.user);
+});
+
+// --- Security Settings & Lock Management (Admin Only) ---
+
+router.get('/security/settings', checkAuth, requireAdmin, async (req, res) => {
+    try {
+        res.json(await authSecuritySettingsRepo.getSettings());
+    } catch (err) {
+        console.error('[auth] get security settings failed:', err);
+        res.status(500).json({ error: '获取安全配置失败' });
+    }
+});
+
+router.put('/security/settings', checkAuth, requireAdmin, async (req, res) => {
+    try {
+        res.json(await authSecuritySettingsRepo.saveSettings(req.body || {}));
+    } catch (err) {
+        console.error('[auth] save security settings failed:', err);
+        res.status(err.statusCode || 500).json({ error: err.message || '保存安全配置失败' });
+    }
+});
+
+router.get('/security/locks', checkAuth, requireAdmin, async (req, res) => {
+    try {
+        res.json(await authSecurityMonitor.listActiveLocks());
+    } catch (err) {
+        console.error('[auth] list security locks failed:', err);
+        res.status(500).json({ error: '获取锁定状态失败' });
+    }
+});
+
+router.delete('/security/locks/:lockKey', checkAuth, requireAdmin, async (req, res) => {
+    try {
+        const lock = await authSecurityMonitor.unlockLock(req.params.lockKey, req);
+        if (!lock) return res.status(404).json({ error: '锁定记录不存在' });
+        res.json({ success: true, lock });
+    } catch (err) {
+        console.error('[auth] unlock security lock failed:', err);
+        res.status(500).json({ error: '解除锁定失败' });
+    }
 });
 
 // --- User Management (Admin Only) ---
