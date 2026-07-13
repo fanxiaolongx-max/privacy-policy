@@ -63,6 +63,30 @@ async function updateToolAccess(slug, publicAccess) {
     return tools[index];
 }
 
+async function updateToolName(slug, value) {
+    const name = String(value || '').trim();
+    if (!name) {
+        const err = new Error('工具名称不能为空');
+        err.status = 400;
+        throw err;
+    }
+    if (name.length > 80) {
+        const err = new Error('工具名称不能超过 80 个字符');
+        err.status = 400;
+        throw err;
+    }
+    const tools = await listTools();
+    const index = tools.findIndex(item => item.slug === slug);
+    if (index < 0) return null;
+    tools[index] = {
+        ...tools[index],
+        name,
+        updatedAt: new Date().toISOString()
+    };
+    await saveRegistry(tools);
+    return tools[index];
+}
+
 function normalizeToolState(value) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
     const result = {};
@@ -302,6 +326,7 @@ module.exports = {
     getTool,
     createTool,
     updateToolAccess,
+    updateToolName,
     getToolState,
     saveToolState,
     restoreToolState,

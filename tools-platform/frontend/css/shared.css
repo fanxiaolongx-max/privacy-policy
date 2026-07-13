@@ -198,13 +198,25 @@ body {
 .nav-gear-btn {
     width: 28px;
     height: 28px;
+    min-width: 28px;
+    padding: 0;
     border-radius: 7px;
     border: 1px solid rgba(255,255,255,0.16);
     background: rgba(255,255,255,0.08);
     color: #e2e8f0;
     cursor: pointer;
-    font-size: 13px;
-    line-height: 1;
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+    line-height: 0;
+    appearance: none;
+    -webkit-appearance: none;
+}
+.nav-gear-icon {
+    display: block;
+    width: 14px;
+    height: 14px;
+    pointer-events: none;
 }
 .nav-gear-btn:hover {
     background: rgba(125,211,252,0.16);
