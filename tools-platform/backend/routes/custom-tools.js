@@ -1,10 +1,74 @@
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
+const multer = require('multer');
 const router = express.Router();
 const repo = require('../models/custom-tools-repository');
+const backupRepo = require('../models/custom-tools-backup-repository');
 const historyRepo = require('../models/upload-history-repository');
+const { DATA_DIR } = require('../models/store');
+
+const backupUploadDir = path.join(DATA_DIR, '../tmp/custom-tool-backups');
+fs.mkdirSync(backupUploadDir, { recursive: true });
+const backupUpload = multer({
+    dest: backupUploadDir,
+    limits: { fileSize: 512 * 1024 * 1024, files: 1 }
+});
 
 router.get('/', async (req, res) => {
     res.json(await repo.listTools());
+});
+
+router.get('/backup/summary', async (req, res) => {
+    try {
+        res.json(await backupRepo.getBackupSummary());
+    } catch (err) {
+        res.status(500).json({ error: err.message || '读取自定义工具备份清单失败' });
+    }
+});
+
+router.post('/backup/export', (req, res, next) => {
+    // The request may contain a custom tool's browser-local data. Never print it
+    // through the generic error-body logger when an export fails.
+    req.suppressBodyLog = true;
+    next();
+}, async (req, res) => {
+    try {
+        const result = await backupRepo.createBackup({
+            slugs: req.body && req.body.slugs,
+            browserState: req.body && req.body.browserState
+        });
+        historyRepo.addHistory({
+            tool: 'custom',
+            action: '导出自定义工具备份',
+            detail: `${result.manifest.toolCount} 个工具 / ${result.manifest.totalFiles} 个文件`
+        }).catch(err => console.error('[custom-tools] log backup export failed:', err.message));
+        res.setHeader('Content-Type', 'application/zip');
+        res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
+        res.setHeader('Content-Length', result.buffer.length);
+        res.send(result.buffer);
+    } catch (err) {
+        res.status(err.status || 400).json({ error: err.message || '导出自定义工具备份失败' });
+    }
+});
+
+router.post('/backup/restore', backupUpload.single('backup'), async (req, res) => {
+    if (!req.file) return res.status(400).json({ error: '请上传自定义工具备份 ZIP' });
+    try {
+        const result = await backupRepo.restoreBackup(fs.readFileSync(req.file.path), {
+            conflictStrategy: req.body && req.body.conflictStrategy
+        });
+        historyRepo.addHistory({
+            tool: 'custom',
+            action: '恢复自定义工具备份',
+            detail: `恢复 ${result.restored.length} 个，跳过 ${result.skipped.length} 个`
+        }).catch(err => console.error('[custom-tools] log backup restore failed:', err.message));
+        res.json(result);
+    } catch (err) {
+        res.status(err.status || 400).json({ error: err.message || '恢复自定义工具备份失败' });
+    } finally {
+        fs.rmSync(req.file.path, { force: true });
+    }
 });
 
 router.get('/:slug/state', async (req, res) => {
