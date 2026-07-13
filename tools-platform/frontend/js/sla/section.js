@@ -341,7 +341,9 @@ async function initSection(secId, mode, title, rawData, themeColor, baseName = '
         ? await window.SLAOtherRules.loadConfig(mode)
         : null;
     let allHeadersSet = new Set();
-    rawData.forEach(row => Object.keys(row).forEach(k => allHeadersSet.add(k)));
+    rawData.forEach(row => Object.keys(row).forEach(k => {
+        if (!SLAUpload.isRuntimeField || !SLAUpload.isRuntimeField(k)) allHeadersSet.add(k);
+    }));
     const allHeaders = Array.from(allHeadersSet);
     const validHeaders = allHeaders.filter(col => rawData.some(row => row[col] !== undefined && row[col] !== null && row[col].toString().trim() !== ''));
 
@@ -704,7 +706,7 @@ function getRuleDataContext(mode, valueFields = []) {
         rowCount += rows.length;
         rows.forEach(row => {
             Object.entries(row || {}).forEach(([name, rawValue]) => {
-                if (!name || name.startsWith('_')) return;
+                if (!name || (SLAUpload.isRuntimeField && SLAUpload.isRuntimeField(name))) return;
                 if (!columnMap.has(name)) columnMap.set(name, { name, nonEmptyCount: 0, valueCounts: new Map() });
                 const column = columnMap.get(name);
                 if (rawValue === undefined || rawValue === null || String(rawValue).trim() === '') return;

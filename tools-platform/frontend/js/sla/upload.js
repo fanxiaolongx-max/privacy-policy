@@ -10,6 +10,24 @@ const SR_PRIORITY_COLS      = ['hw_sev_name', 'urgency', 'sr_status_name', 'open
 const VULN_PRIORITY_COLS    = ['task_status', 'create_time', 'task_create_time', 'vuln_id', 'vulnerability_id', '漏洞编号', '漏洞名称', 'vulnerability_name', 'customer_name', 'network_name'];
 const SLA_WORKSPACE_CACHE_KEY = 'sla_last_import_workspace_v1';
 const SLA_WORKSPACE_CACHE_STATUS_KEY = 'sla_last_import_workspace_status_v1';
+const SLA_RUNTIME_FIELDS = new Set([
+    '_slaRuleMatched', '_slaDays', '_slaText', '_slaCleanText', '_rowClass',
+    '_alertSeverity', '_rawStringForSearch', '_srDisposition', '_srStatus',
+    '_srSeverity', '_srConsumeRate', '_srRemainingHours', '_srRemainingDays'
+]);
+
+function isRuntimeField(name) {
+    return SLA_RUNTIME_FIELDS.has(String(name || ''));
+}
+
+function sanitizeWorkspaceRow(row) {
+    if (!row || typeof row !== 'object' || Array.isArray(row)) return row;
+    return Object.fromEntries(Object.entries(row).filter(([name]) => !isRuntimeField(name)));
+}
+
+function sanitizeWorkspaceRows(rows) {
+    return (Array.isArray(rows) ? rows : []).map(sanitizeWorkspaceRow);
+}
 
 function ensureLazyWorkspaceStyles() {
     if (document.getElementById('sla-lazy-workspace-style')) return;
@@ -80,7 +98,7 @@ function persistWorkspaceCache(sections, meta = {}) {
             themeColor: section.themeColor,
             baseName: section.baseName || '',
             sourceFiles: Array.isArray(section.sourceFiles) ? section.sourceFiles : [],
-            data: Array.isArray(section.data) ? section.data : []
+            data: sanitizeWorkspaceRows(section.data)
         }))
     };
     try {
@@ -269,7 +287,11 @@ async function restoreCachedWorkspace() {
         localStorage.removeItem(SLA_WORKSPACE_CACHE_KEY);
         return false;
     }
-    const sections = payload && Array.isArray(payload.sections) ? payload.sections.filter(s => s && s.secId && Array.isArray(s.data) && s.data.length) : [];
+    const sections = payload && Array.isArray(payload.sections)
+        ? payload.sections
+            .filter(s => s && s.secId && Array.isArray(s.data) && s.data.length)
+            .map(section => ({ ...section, data: sanitizeWorkspaceRows(section.data) }))
+        : [];
     if (!sections.length || !window.SLASection || typeof window.SLASection.initSection !== 'function') {
         return renderWorkspaceCacheNotice(readWorkspaceCacheStatus());
     }
@@ -844,4 +866,4 @@ async function captureAndUploadSnapshot(fileNames, meta = {}) {
     }
 }
 
-window.SLAUpload = { handleBatchUpload, handleSpecificUpload, processBatchFiles, importUivAutoSession, readFiles, generateSchemaHash, restoreCachedWorkspace, clearWorkspaceCache, dismissWorkspaceCacheNotice, activateSectionTab, RECT_PRIORITY_COLS, RISK_PRIORITY_COLS, SPECIAL_PRIORITY_COLS, SR_PRIORITY_COLS, VULN_PRIORITY_COLS };
+window.SLAUpload = { handleBatchUpload, handleSpecificUpload, processBatchFiles, importUivAutoSession, readFiles, generateSchemaHash, restoreCachedWorkspace, clearWorkspaceCache, dismissWorkspaceCacheNotice, activateSectionTab, isRuntimeField, sanitizeWorkspaceRow, sanitizeWorkspaceRows, RECT_PRIORITY_COLS, RISK_PRIORITY_COLS, SPECIAL_PRIORITY_COLS, SR_PRIORITY_COLS, VULN_PRIORITY_COLS };
