@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tools Platform - 工具中台</title>
     <meta name="description" content="统一工具平台入口：UIVF12 抓取引擎 & Task SLA 风险监控台">
-    <link rel="stylesheet" href="/css/shared.css?v=20260713-01">
+    <link rel="stylesheet" href="/css/shared.css?v=20260713-02">
     <style>
         body { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); min-height: 100vh; }
         .home-content { padding-top: calc(var(--navbar-h) + 60px); max-width: 1100px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
@@ -55,16 +55,67 @@
         .stats-bar {
             background: rgba(255,255,255,0.04);
             border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 12px;
-            padding: 24px 32px;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            gap: 20px;
+            border-radius: 18px;
+            padding: 24px 28px 20px;
+            display: block;
+            position: relative;
+            overflow: hidden;
         }
-        .stat-item { text-align: center; }
-        .stat-num { font-size: 32px; font-weight: 800; background: linear-gradient(90deg, #64ffda, #4a90e2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .stats-bar::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% -80%, rgba(74,144,226,0.2), transparent 55%);
+            pointer-events: none;
+        }
+        .stats-head { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:20px; position:relative; }
+        .stats-title { color:#fff; font-size:18px; font-weight:800; }
+        .stats-subtitle { color:#7dd3fc; font-size:11px; border:1px solid rgba(125,211,252,.24); background:rgba(56,189,248,.08); border-radius:999px; padding:5px 10px; }
+        .stats-grid { display:grid; grid-template-columns:repeat(6, minmax(0, 1fr)); position:relative; }
+        .stat-item { text-align: center; padding:8px 12px; border-right:1px solid rgba(255,255,255,.07); }
+        .stat-item:last-child { border-right:0; }
+        .stat-num { font-size: 30px; font-weight: 850; letter-spacing:-.5px; background: linear-gradient(90deg, #64ffda, #4a90e2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; white-space:nowrap; }
+        .stat-unit { font-size:14px; margin-left:2px; }
         .stat-label { font-size: 12px; color: #8892b0; margin-top: 4px; }
+        .stat-note { font-size:10px; color:#64748b; margin-top:5px; min-height:14px; }
+        .methodology { position:relative; margin-top:16px; padding-top:13px; border-top:1px solid rgba(255,255,255,.07); color:#7285a3; font-size:11px; }
+        .methodology summary { cursor:pointer; color:#8ba4c2; width:max-content; }
+        .methodology p { margin:9px 0 0; line-height:1.7; }
+        .ai-impact-row {
+            position:relative;
+            margin-top:20px;
+            padding:18px 18px 16px;
+            border:1px solid rgba(192,132,252,.24);
+            border-radius:14px;
+            background:linear-gradient(115deg, rgba(88,28,135,.22), rgba(30,64,175,.12) 52%, rgba(6,182,212,.08));
+            box-shadow:inset 0 1px 0 rgba(255,255,255,.035);
+        }
+        .ai-impact-head { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:15px; }
+        .ai-impact-title { color:#f3e8ff; font-size:15px; font-weight:850; letter-spacing:.2px; }
+        .ai-impact-badge { color:#d8b4fe; font-size:10px; font-weight:750; border:1px solid rgba(216,180,254,.25); background:rgba(168,85,247,.12); border-radius:999px; padding:4px 9px; }
+        .ai-impact-grid { display:grid; grid-template-columns:repeat(6, minmax(0, 1fr)); }
+        .ai-metric { text-align:center; padding:5px 10px; border-right:1px solid rgba(216,180,254,.1); }
+        .ai-metric:last-child { border-right:0; }
+        .ai-metric-value { color:#d8b4fe; font-size:25px; line-height:1.2; font-weight:900; letter-spacing:-.4px; white-space:nowrap; text-shadow:0 0 20px rgba(168,85,247,.2); }
+        .ai-metric-label { color:#c4b5d4; font-size:11px; margin-top:5px; }
+        .ai-metric-note { color:#756788; font-size:9px; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+        .card-impact {
+            display:flex;
+            align-items:center;
+            gap:8px;
+            min-height:34px;
+            margin-top:4px;
+            padding:8px 10px;
+            border-radius:10px;
+            border:1px solid color-mix(in srgb, var(--card-accent, #64ffda) 24%, transparent);
+            background:color-mix(in srgb, var(--card-accent, #64ffda) 9%, transparent);
+            color:#dbeafe;
+            font-size:11px;
+            font-weight:700;
+        }
+        .card-impact strong { color:var(--card-accent, #64ffda); font-size:15px; }
+        .card-impact-sep { color:#53657d; }
 
         .history-panel {
             margin-top: 28px;
@@ -281,6 +332,14 @@
 
         @media (max-width: 768px) {
             .tools-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+            .stat-item { border-right:0; border-bottom:1px solid rgba(255,255,255,.07); padding:14px 8px; }
+            .stat-item:nth-last-child(-n+2) { border-bottom:0; }
+            .stats-head { align-items:flex-start; flex-direction:column; }
+            .ai-impact-head { align-items:flex-start; flex-direction:column; }
+            .ai-impact-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+            .ai-metric { border-right:0; border-bottom:1px solid rgba(216,180,254,.1); padding:12px 6px; }
+            .ai-metric:nth-last-child(-n+2) { border-bottom:0; }
             .history-row { grid-template-columns: 1fr; }
             .history-time { text-align: left; }
             .custom-tools-panel { justify-content: flex-start; margin-top: 0; }
@@ -444,18 +503,84 @@
         </div>
 
         <div class="stats-bar" id="statsBar">
-            <div class="stat-item">
-                <div class="stat-num" id="stat-scripts">-</div>
-                <div class="stat-label">脚本仓库数量</div>
+            <div class="stats-head">
+                <div class="stats-title">🚀 平台效能总览</div>
+                <div class="stats-subtitle">基于真实业务数据动态计算</div>
             </div>
-            <div class="stat-item">
-                <div class="stat-num" id="stat-history">-</div>
-                <div class="stat-label">历史操作记录</div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-num" id="stat-checks">-</div>
+                    <div class="stat-label">已完成指标检查</div>
+                    <div class="stat-note">自动核对与评分</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-num" id="stat-service">-</div>
+                    <div class="stat-label">累计服务次数</div>
+                    <div class="stat-note">业务操作 + 工具访问</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-num" id="stat-manual">-</div>
+                    <div class="stat-label">等效人工工时</div>
+                    <div class="stat-note">按保守口径折算</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-num" id="stat-saved">-</div>
+                    <div class="stat-label">累计节约工时</div>
+                    <div class="stat-note" id="stat-efficiency">提效率 -</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-num" id="stat-tools">-</div>
+                    <div class="stat-label">在线工具模块</div>
+                    <div class="stat-note">统一入口稳定服务</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-num" id="stat-scripts">-</div>
+                    <div class="stat-label">自动化脚本沉淀</div>
+                    <div class="stat-note">可复用生产力资产</div>
+                </div>
             </div>
-            <div class="stat-item">
-                <div class="stat-num" id="stat-tools">-</div>
-                <div class="stat-label">在线工具模块</div>
+            <div class="ai-impact-row">
+                <div class="ai-impact-head">
+                    <div class="ai-impact-title">✨ AI 智能应用</div>
+                    <div class="ai-impact-badge">已融入核心业务流程</div>
+                </div>
+                <div class="ai-impact-grid">
+                    <div class="ai-metric">
+                        <div class="ai-metric-value" id="ai-scenarios">-</div>
+                        <div class="ai-metric-label">AI 应用场景</div>
+                        <div class="ai-metric-note">助手·适配·告警·PPT</div>
+                    </div>
+                    <div class="ai-metric">
+                        <div class="ai-metric-value" id="ai-tasks">-</div>
+                        <div class="ai-metric-label">智能任务完成</div>
+                        <div class="ai-metric-note" id="ai-task-note">含 AI 问答与告警研判</div>
+                    </div>
+                    <div class="ai-metric">
+                        <div class="ai-metric-value" id="ai-tokens">-</div>
+                        <div class="ai-metric-label">Token 处理量</div>
+                        <div class="ai-metric-note">大模型语义处理</div>
+                    </div>
+                    <div class="ai-metric">
+                        <div class="ai-metric-value" id="ai-alerts">-</div>
+                        <div class="ai-metric-label">告警智能研判</div>
+                        <div class="ai-metric-note">模型 + 智能规则兜底</div>
+                    </div>
+                    <div class="ai-metric">
+                        <div class="ai-metric-value" id="ai-pages">-</div>
+                        <div class="ai-metric-label">业务页面覆盖</div>
+                        <div class="ai-metric-note">已产生真实 AI 会话</div>
+                    </div>
+                    <div class="ai-metric">
+                        <div class="ai-metric-value" id="ai-saved">-</div>
+                        <div class="ai-metric-label">AI 节约分析时间</div>
+                        <div class="ai-metric-note">按保守人工分析口径</div>
+                    </div>
+                </div>
             </div>
+            <details class="methodology">
+                <summary>查看效能估算口径</summary>
+                <p id="methodologyText">指标检查 2 分钟/项、脚本手工编制 90 分钟/个、数据导入整理 30 分钟/次、报表整理 45 分钟/份；AI 问答 8 分钟/次、告警研判 3 分钟/次。节约工时已扣除平台操作和人工复核时间，属管理口径估算值。</p>
+            </details>
         </div>
 
         <section class="history-panel">
@@ -496,7 +621,7 @@
     <script src="/js/shared/migration-status.js?v=20260626-01"></script>
     <script src="/js/shared/toast.js?v=20260530-03"></script>
     <script src="/js/shared/i18n.js?v=20260610-01"></script>
-    <script src="/js/shared/navbar.js?v=20260713-01"></script>
+    <script src="/js/shared/navbar.js?v=20260713-03"></script>
     <script>
         const historyState = {
             items: [],
@@ -504,6 +629,7 @@
             pageSize: 10
         };
         let customToolsCount = 0;
+        let platformSummary = null;
 
         const HOME_I18N = {
             'zh-CN': {
@@ -517,6 +643,58 @@
                 'home.stats.scripts': '脚本仓库数量',
                 'home.stats.history': '历史操作记录',
                 'home.stats.tools': '在线工具模块',
+                'home.stats.title': '🚀 平台效能总览',
+                'home.stats.badge': '基于真实业务数据动态计算',
+                'home.stats.checks': '已完成指标检查',
+                'home.stats.service': '累计服务次数',
+                'home.stats.manual': '等效人工工时',
+                'home.stats.saved': '累计节约工时',
+                'home.stats.automation': '自动化脚本沉淀',
+                'home.stats.efficiency': '提效率约 {rate}%',
+                'home.stats.method': '查看效能估算口径',
+                'home.stats.note.checks': '自动核对与评分',
+                'home.stats.note.service': '业务操作 + 工具访问',
+                'home.stats.note.manual': '按保守口径折算',
+                'home.stats.note.tools': '统一入口稳定服务',
+                'home.stats.note.scripts': '可复用生产力资产',
+                'home.stats.methodology': '指标检查 2 分钟/项、脚本手工编制 90 分钟/个、数据导入整理 30 分钟/次、报表整理 45 分钟/份；AI 问答 8 分钟/次、告警研判 3 分钟/次。节约工时已扣除平台操作和人工复核时间，属管理口径估算值。',
+                'home.ai.title': '✨ AI 智能应用',
+                'home.ai.badge': '已融入核心业务流程',
+                'home.ai.scenarios': 'AI 应用场景',
+                'home.ai.tasks': '智能任务完成',
+                'home.ai.tokens': 'Token 处理量',
+                'home.ai.alerts': '告警智能研判',
+                'home.ai.pages': '业务页面覆盖',
+                'home.ai.saved': 'AI 节约分析时间',
+                'home.ai.taskNote': '含 {questions} 次 AI 问答',
+                'home.ai.note.scenarios': '助手·适配·告警·PPT',
+                'home.ai.note.tokens': '大模型语义处理',
+                'home.ai.note.alerts': '模型 + 智能规则兜底',
+                'home.ai.note.pages': '已产生真实 AI 会话',
+                'home.ai.note.saved': '按保守人工分析口径',
+                'home.impact.automationScripts': '自动化脚本',
+                'home.impact.hoursSaved': '已节约小时',
+                'home.impact.dataImports': '数据导入',
+                'home.impact.snapshotsStored': '快照沉淀',
+                'home.impact.metricChecks': '指标检查',
+                'home.impact.reportSnapshots': '报表快照',
+                'home.impact.weaknessesFound': '短板自动识别',
+                'home.impact.traceableSnapshots': '可追溯快照',
+                'home.impact.monthsStored': '个月数据沉淀',
+                'home.impact.historySnapshots': '历史快照',
+                'home.impact.customerGroups': '客户群覆盖',
+                'home.impact.metricResults': '指标结果',
+                'home.impact.autoCalculations': '自动核算',
+                'home.impact.requirementsManaged': '需求统一管理',
+                'home.impact.workflowTransitions': '流程流转',
+                'home.impact.auditRules': '稽查规则',
+                'home.impact.auditTemplates': '审计模板',
+                'home.impact.tablesProtected': '数据表守护',
+                'home.impact.databasesGoverned': '数据库统一治理',
+                'home.impact.tablesVisible': '数据表可视',
+                'home.impact.coreDatabases': '核心数据库',
+                'home.impact.totalOpens': '累计打开',
+                'home.impact.onlineTool': '在线工具',
                 'home.history.title': '最近操作历史',
                 'home.history.source': '来源: {source}',
                 'home.history.caption': '来自 `upload_history`，用于观察当前日志读取链路',
@@ -542,16 +720,22 @@
                 'home.prompt.name': '请输入工具名称：',
                 'home.prompt.icon': '请输入工具图标，可留空：',
                 'home.prompt.description': '请输入工具简介，可留空：',
+                'home.prompt.rename': '修改工具名称：',
                 'home.toast.imported': '自定义工具导入成功，入口已生成',
                 'home.alert.importFailed': '导入自定义工具失败：{message}',
                 'home.confirm.delete': '确定删除这个自定义工具入口和 HTML 文件吗？',
                 'home.toast.deleted': '自定义工具已删除',
+                'home.toast.renamed': '工具名称已更新',
                 'home.alert.deleteFailed': '删除失败：{message}',
+                'home.alert.renameFailed': '修改名称失败：{message}',
+                'home.validation.nameRequired': '工具名称不能为空',
+                'home.validation.nameTooLong': '工具名称不能超过 80 个字符',
                 'home.custom.defaultName': '自定义工具',
                 'home.custom.defaultDesc': '由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。',
                 'home.custom.defaultTag1': '自定义 HTML',
                 'home.custom.defaultTag2': '平台入口',
                 'home.custom.download': '下载 HTML',
+                'home.custom.rename': '修改工具名称',
                 'home.custom.delete': '删除自定义工具'
             },
             'en-US': {
@@ -565,6 +749,58 @@
                 'home.stats.scripts': 'Script Repository Items',
                 'home.stats.history': 'Operation History Items',
                 'home.stats.tools': 'Online Tool Modules',
+                'home.stats.title': '🚀 Platform Efficiency Overview',
+                'home.stats.badge': 'Calculated dynamically from real business data',
+                'home.stats.checks': 'Metric Checks Completed',
+                'home.stats.service': 'Cumulative Services',
+                'home.stats.manual': 'Manual-equivalent Hours',
+                'home.stats.saved': 'Hours Saved',
+                'home.stats.automation': 'Automation Scripts',
+                'home.stats.efficiency': 'Approx. {rate}% efficiency gain',
+                'home.stats.method': 'View estimation methodology',
+                'home.stats.note.checks': 'Automated validation and scoring',
+                'home.stats.note.service': 'Business actions + tool visits',
+                'home.stats.note.manual': 'Conservative workload estimate',
+                'home.stats.note.tools': 'Stable service through one hub',
+                'home.stats.note.scripts': 'Reusable productivity assets',
+                'home.stats.methodology': 'Estimates use 2 minutes per metric check, 90 minutes per manually built script, 30 minutes per data import, and 45 minutes per report; AI estimates use 8 minutes per Q&A request and 3 minutes per alert review. Saved time excludes platform operation and manual review time and is intended as a management estimate.',
+                'home.ai.title': '✨ AI Applications',
+                'home.ai.badge': 'Embedded into core workflows',
+                'home.ai.scenarios': 'AI Use Cases',
+                'home.ai.tasks': 'Intelligent Tasks',
+                'home.ai.tokens': 'Tokens Processed',
+                'home.ai.alerts': 'AI Alert Reviews',
+                'home.ai.pages': 'Business Pages Covered',
+                'home.ai.saved': 'Analysis Hours Saved',
+                'home.ai.taskNote': 'Includes {questions} AI Q&A requests',
+                'home.ai.note.scenarios': 'Assistant · Adaptation · Alerts · PPT',
+                'home.ai.note.tokens': 'LLM semantic processing',
+                'home.ai.note.alerts': 'Model + intelligent rule fallback',
+                'home.ai.note.pages': 'Pages with real AI conversations',
+                'home.ai.note.saved': 'Conservative manual-analysis estimate',
+                'home.impact.automationScripts': 'automation scripts',
+                'home.impact.hoursSaved': 'hours saved',
+                'home.impact.dataImports': 'data imports',
+                'home.impact.snapshotsStored': 'snapshots stored',
+                'home.impact.metricChecks': 'metric checks',
+                'home.impact.reportSnapshots': 'report snapshots',
+                'home.impact.weaknessesFound': 'weaknesses identified',
+                'home.impact.traceableSnapshots': 'traceable snapshots',
+                'home.impact.monthsStored': 'months of data',
+                'home.impact.historySnapshots': 'history snapshots',
+                'home.impact.customerGroups': 'customer groups covered',
+                'home.impact.metricResults': 'metric results',
+                'home.impact.autoCalculations': 'automated calculations',
+                'home.impact.requirementsManaged': 'requirements managed',
+                'home.impact.workflowTransitions': 'workflow transitions',
+                'home.impact.auditRules': 'audit rules',
+                'home.impact.auditTemplates': 'audit templates',
+                'home.impact.tablesProtected': 'data tables protected',
+                'home.impact.databasesGoverned': 'databases governed',
+                'home.impact.tablesVisible': 'data tables visible',
+                'home.impact.coreDatabases': 'core databases',
+                'home.impact.totalOpens': 'total opens',
+                'home.impact.onlineTool': 'online tool',
                 'home.history.title': 'Recent Operation History',
                 'home.history.source': 'Source: {source}',
                 'home.history.caption': 'Read from `upload_history` to verify the current log source.',
@@ -590,16 +826,22 @@
                 'home.prompt.name': 'Tool name:',
                 'home.prompt.icon': 'Tool icon, optional:',
                 'home.prompt.description': 'Tool description, optional:',
+                'home.prompt.rename': 'Rename tool:',
                 'home.toast.imported': 'Custom tool imported and entry created',
                 'home.alert.importFailed': 'Failed to import custom tool: {message}',
                 'home.confirm.delete': 'Delete this custom tool entry and HTML file?',
                 'home.toast.deleted': 'Custom tool deleted',
+                'home.toast.renamed': 'Tool name updated',
                 'home.alert.deleteFailed': 'Delete failed: {message}',
+                'home.alert.renameFailed': 'Rename failed: {message}',
+                'home.validation.nameRequired': 'Tool name cannot be empty',
+                'home.validation.nameTooLong': 'Tool name cannot exceed 80 characters',
                 'home.custom.defaultName': 'Custom Tool',
                 'home.custom.defaultDesc': 'A standalone HTML tool imported into the platform and available from the unified entry points.',
                 'home.custom.defaultTag1': 'Custom HTML',
                 'home.custom.defaultTag2': 'Platform Entry',
                 'home.custom.download': 'Download HTML',
+                'home.custom.rename': 'Rename tool',
                 'home.custom.delete': 'Delete custom tool'
             }
         };
@@ -709,10 +951,22 @@
                 if (!data) return;
                 setTextForCard(card, data, lang);
             });
+            setText('.stats-title', t('home.stats.title'));
+            setText('.stats-subtitle', t('home.stats.badge'));
             const statLabels = document.querySelectorAll('.stat-label');
-            if (statLabels[0]) statLabels[0].textContent = t('home.stats.scripts');
-            if (statLabels[1]) statLabels[1].textContent = t('home.stats.history');
-            if (statLabels[2]) statLabels[2].textContent = t('home.stats.tools');
+            const statLabelKeys = ['home.stats.checks', 'home.stats.service', 'home.stats.manual', 'home.stats.saved', 'home.stats.tools', 'home.stats.automation'];
+            statLabels.forEach((label, index) => { if (statLabelKeys[index]) label.textContent = t(statLabelKeys[index]); });
+            const statNoteKeys = ['home.stats.note.checks', 'home.stats.note.service', 'home.stats.note.manual', null, 'home.stats.note.tools', 'home.stats.note.scripts'];
+            document.querySelectorAll('.stat-note').forEach((note, index) => { if (statNoteKeys[index]) note.textContent = t(statNoteKeys[index]); });
+            setText('.methodology summary', t('home.stats.method'));
+            setText('#methodologyText', t('home.stats.methodology'));
+            setText('.ai-impact-title', t('home.ai.title'));
+            setText('.ai-impact-badge', t('home.ai.badge'));
+            const aiLabelKeys = ['home.ai.scenarios', 'home.ai.tasks', 'home.ai.tokens', 'home.ai.alerts', 'home.ai.pages', 'home.ai.saved'];
+            document.querySelectorAll('.ai-metric-label').forEach((label, index) => { if (aiLabelKeys[index]) label.textContent = t(aiLabelKeys[index]); });
+            const aiNoteKeys = ['home.ai.note.scenarios', null, 'home.ai.note.tokens', 'home.ai.note.alerts', 'home.ai.note.pages', 'home.ai.note.saved'];
+            document.querySelectorAll('.ai-metric-note').forEach((note, index) => { if (aiNoteKeys[index]) note.textContent = t(aiNoteKeys[index]); });
+            if (platformSummary) renderPlatformStats(platformSummary);
             setText('.history-title', t('home.history.title'));
             setText('.history-caption', t('home.history.caption'));
             const sourceEl = document.getElementById('history-source');
@@ -849,16 +1103,66 @@
             renderHistoryList(historyState.items);
         }
 
+        function formatStatNumber(value) {
+            return Number(value || 0).toLocaleString(window.ToolsI18n?.getLanguage?.() || 'zh-CN');
+        }
+
+        function formatCompactNumber(value) {
+            const number = Number(value || 0);
+            if (number < 10000) return formatStatNumber(number);
+            return new Intl.NumberFormat(window.ToolsI18n?.getLanguage?.() || 'zh-CN', {
+                notation: 'compact',
+                maximumFractionDigits: 1
+            }).format(number);
+        }
+
+        function renderToolImpact(card, stat) {
+            if (!card || !stat) return;
+            let impact = card.querySelector('.card-impact');
+            if (!impact) {
+                impact = document.createElement('div');
+                impact.className = 'card-impact';
+                card.querySelector('.card-features')?.insertAdjacentElement('afterend', impact);
+            }
+            const primaryLabel = stat.labelKey ? t(stat.labelKey) : (stat.label || '');
+            const secondaryLabel = stat.secondaryLabelKey ? t(stat.secondaryLabelKey) : (stat.secondaryLabel || '');
+            impact.innerHTML = `<strong>${escapeHtml(formatStatNumber(stat.primary))}</strong> ${escapeHtml(primaryLabel)} <span class="card-impact-sep">·</span> <strong>${escapeHtml(formatStatNumber(stat.secondary))}</strong> ${escapeHtml(secondaryLabel)}`;
+        }
+
+        function renderPlatformStats(summary) {
+            const totals = summary?.totals || {};
+            setText('#stat-checks', formatStatNumber(totals.metricChecks));
+            setText('#stat-service', formatStatNumber(totals.serviceCount));
+            setText('#stat-manual', `≈${formatStatNumber(totals.manualEquivalentHours)}h`);
+            setText('#stat-saved', `≈${formatStatNumber(totals.savedHours)}h`);
+            setText('#stat-tools', formatStatNumber(totals.onlineTools));
+            setText('#stat-scripts', formatStatNumber(totals.scripts));
+            setText('#stat-efficiency', t('home.stats.efficiency', { rate: totals.efficiencyRate || 0 }));
+            const ai = summary?.ai || {};
+            setText('#ai-scenarios', formatStatNumber(ai.applicationScenarios));
+            setText('#ai-tasks', formatStatNumber(ai.completedTasks));
+            setText('#ai-tokens', formatCompactNumber(ai.tokens));
+            setText('#ai-alerts', formatStatNumber(ai.analyzedAlerts));
+            setText('#ai-pages', formatStatNumber(ai.coveredPages));
+            setText('#ai-saved', `≈${formatStatNumber(ai.savedHours)}h`);
+            setText('#ai-task-note', t('home.ai.taskNote', { questions: ai.questions || 0 }));
+
+            document.querySelectorAll('#toolsGrid > a.tool-card:not([data-custom-tool-card="1"])').forEach(card => {
+                const key = card.getAttribute('href').replace(/^\//, '');
+                renderToolImpact(card, summary.toolStats?.[key]);
+            });
+            document.querySelectorAll('#toolsGrid > a[data-custom-tool-card="1"]').forEach(card => {
+                renderToolImpact(card, summary.customToolStats?.[card.dataset.toolSlug]);
+            });
+        }
+
         async function loadStats() {
             try {
-                const { scripts } = await API.get('/api/uiv/scripts');
-                document.getElementById('stat-scripts').textContent = scripts.length;
-            } catch (e) {}
-            try {
-                const history = await API.get('/api/upload/history');
-                document.getElementById('stat-history').textContent = history.length;
-            } catch (e) {}
-            document.getElementById('stat-tools').textContent = String(10 + customToolsCount);
+                platformSummary = await API.get('/api/platform-metrics/summary');
+                renderPlatformStats(platformSummary);
+            } catch (e) {
+                document.getElementById('stat-tools').textContent = String(11 + customToolsCount);
+            }
         }
 
         function renderCustomToolCards(tools) {
@@ -872,11 +1176,15 @@
                 card.href = tool.href;
                 card.className = 'tool-card custom-tool';
                 card.dataset.customToolCard = '1';
+                card.dataset.toolSlug = tool.slug;
                 card.style.setProperty('--card-accent', ['#38bdf8', '#34d399', '#f97316', '#e879f9'][index % 4]);
                 card.innerHTML = `
                     <div class="custom-tool-actions">
                         <button type="button" class="custom-tool-action" title="${escapeHtml(t('home.custom.download'))}" onclick="event.preventDefault(); event.stopPropagation(); downloadCustomTool('${escapeHtml(tool.slug)}')">↓</button>
-                        ${role === 'admin' ? `<button type="button" class="custom-tool-action delete" title="${escapeHtml(t('home.custom.delete'))}" onclick="event.preventDefault(); event.stopPropagation(); deleteCustomTool('${escapeHtml(tool.slug)}')">×</button>` : ''}
+                        ${role === 'admin' ? `
+                            <button type="button" class="custom-tool-action" title="${escapeHtml(t('home.custom.rename'))}" onclick="event.preventDefault(); event.stopPropagation(); renameCustomTool('${escapeHtml(tool.slug)}')">✎</button>
+                            <button type="button" class="custom-tool-action delete" title="${escapeHtml(t('home.custom.delete'))}" onclick="event.preventDefault(); event.stopPropagation(); deleteCustomTool('${escapeHtml(tool.slug)}')">×</button>
+                        ` : ''}
                     </div>
                     <div class="card-icon">${escapeHtml(tool.icon || '🧩')}</div>
                     <div class="card-title">${escapeHtml(tool.name || t('home.custom.defaultName'))}</div>
@@ -884,9 +1192,16 @@
                     <div class="card-features">
                         ${tags.map(tag => `<span class="feature-tag">${escapeHtml(tag)}</span>`).join('')}
                     </div>
+                    <div class="card-impact"></div>
                     <div class="card-arrow">${escapeHtml(t('home.arrow.module'))}</div>
                 `;
                 grid.appendChild(card);
+                renderToolImpact(card, platformSummary?.customToolStats?.[tool.slug] || {
+                    primary: 0,
+                    labelKey: 'home.impact.totalOpens',
+                    secondary: 1,
+                    secondaryLabelKey: 'home.impact.onlineTool'
+                });
             });
         }
 
@@ -895,10 +1210,10 @@
                 const tools = await API.get('/api/custom-tools');
                 customToolsCount = Array.isArray(tools) ? tools.length : 0;
                 renderCustomToolCards(tools);
-                document.getElementById('stat-tools').textContent = String(10 + customToolsCount);
+                document.getElementById('stat-tools').textContent = String(11 + customToolsCount);
             } catch (e) {
                 customToolsCount = 0;
-                document.getElementById('stat-tools').textContent = '10';
+                document.getElementById('stat-tools').textContent = '11';
             }
         }
 
@@ -953,6 +1268,29 @@
 
         function downloadCustomTool(slug) {
             window.location.href = `/custom-tools/${encodeURIComponent(slug)}/index.html?download=1`;
+        }
+
+        async function renameCustomTool(slug) {
+            const card = document.querySelector(`[data-custom-tool-card="1"][data-tool-slug="${CSS.escape(slug)}"]`);
+            const currentName = card?.querySelector('.card-title')?.textContent?.trim() || '';
+            const name = prompt(t('home.prompt.rename'), currentName);
+            if (name === null || name.trim() === currentName) return;
+            if (!name.trim()) {
+                alert(t('home.alert.renameFailed', { message: t('home.validation.nameRequired') }));
+                return;
+            }
+            if (name.trim().length > 80) {
+                alert(t('home.alert.renameFailed', { message: t('home.validation.nameTooLong') }));
+                return;
+            }
+            try {
+                await API.patch(`/api/custom-tools/${encodeURIComponent(slug)}/name`, { name: name.trim() });
+                showToast(t('home.toast.renamed'));
+                await loadCustomTools();
+                if (window.refreshCustomToolNavLinks) await window.refreshCustomToolNavLinks();
+            } catch (e) {
+                alert(t('home.alert.renameFailed', { message: e.message }));
+            }
         }
 
         async function deleteCustomTool(slug) {

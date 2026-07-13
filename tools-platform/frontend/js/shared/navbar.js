@@ -892,7 +892,12 @@ function renderNavbar() {
                 <span class="nav-action-text">${navEscape(navT('nav.alertCenter'))}</span>
                 <span class="nav-alert-count" id="navAlertCount" hidden>0</span>
             </button>
-            ${role === 'admin' ? `<button type="button" class="nav-gear-btn" onclick="openNavSettingsModal()" title="${navEscape(navT('nav.settings'))}">⚙</button>` : ''}
+            ${role === 'admin' ? `<button type="button" class="nav-gear-btn" onclick="openNavSettingsModal()" title="${navEscape(navT('nav.settings'))}" aria-label="${navEscape(navT('nav.settings'))}">
+                <svg class="nav-gear-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21h-4v-.09A1.7 1.7 0 0 0 9 19.36a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.64 15a1.7 1.7 0 0 0-1.55-1.03H3v-4h.09A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.64a1.7 1.7 0 0 0 1.03-1.55V3h4v.09A1.7 1.7 0 0 0 15 4.64a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.36 9a1.7 1.7 0 0 0 1.55 1.03H21v4h-.09A1.7 1.7 0 0 0 19.4 15z"></path>
+                </svg>
+            </button>` : ''}
             <span class="nav-user-chip" title="${navEscape(user || '未登录')}"><span class="nav-action-icon">👤</span><span class="nav-action-text">${navEscape(user || '未登录')}</span></span>
             <a href="#" class="nav-logout-link" onclick="doLogout()" title="${navEscape(navT('nav.logout'))}"><span class="nav-action-icon">↩</span><span class="nav-action-text">${navEscape(navT('nav.logout'))}</span></a>
         </div>
@@ -3312,6 +3317,30 @@ function ensureMigrationStatusLoaded() {
     document.head.appendChild(script);
 }
 
+function trackCurrentToolOpen() {
+    const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
+    const builtinTools = new Set([
+        'uivf12', 'sla', 'report', 'expedite', 'monthly', 'bigscreen',
+        'frt', 'requirements', 'praudit', 'storage', 'db-explorer'
+    ]);
+    let toolKey = pathname.replace(/^\//, '');
+    const customMatch = pathname.match(/^\/tools\/([^/]+)$/);
+    if (customMatch) toolKey = `custom:${decodeURIComponent(customMatch[1])}`;
+    if (!builtinTools.has(toolKey) && !toolKey.startsWith('custom:')) return;
+
+    const submit = window.API?.post
+        ? window.API.post('/api/platform-metrics/open', { toolKey })
+        : fetch('/api/platform-metrics/open', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(localStorage.getItem('tools_token') ? { Authorization: `Bearer ${localStorage.getItem('tools_token')}` } : {})
+            },
+            body: JSON.stringify({ toolKey })
+        });
+    Promise.resolve(submit).catch(() => {});
+}
+
 function initBackToTopButton() {
     if (document.getElementById('globalBackToTop')) return;
 
@@ -3495,6 +3524,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderNavbar();
     initBackToTopButton();
     loadNavigationData();
+    trackCurrentToolOpen();
     refreshAlertCenterBadge();
     setInterval(refreshAlertCenterBadge, 60000);
     setTimeout(checkServerStatus, 500);

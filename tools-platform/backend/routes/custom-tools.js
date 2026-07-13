@@ -127,6 +127,22 @@ router.patch('/:slug/access', async (req, res) => {
     }
 });
 
+router.patch('/:slug/name', async (req, res) => {
+    try {
+        const previous = await repo.getTool(req.params.slug);
+        const tool = await repo.updateToolName(req.params.slug, req.body && req.body.name);
+        if (!tool) return res.status(404).json({ error: '自定义工具不存在' });
+        historyRepo.addHistory({
+            tool: 'custom',
+            action: '修改工具名称',
+            detail: `${previous?.name || req.params.slug} → ${tool.name}`
+        }).catch(err => console.error('[custom-tools] log rename history failed:', err.message));
+        res.json({ success: true, tool });
+    } catch (err) {
+        res.status(err.status || 500).json({ error: err.message || '修改工具名称失败' });
+    }
+});
+
 router.delete('/:slug', async (req, res) => {
     try {
         const tool = await repo.getTool(req.params.slug);

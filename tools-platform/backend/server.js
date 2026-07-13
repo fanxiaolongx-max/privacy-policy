@@ -41,6 +41,7 @@ const navSettingsRoutes = require('./routes/nav-settings');
 const aiSettingsRoutes = require('./routes/ai-settings');
 const globalBackupRoutes = require('./routes/global-backup');
 const alertCenterRoutes = require('./routes/alert-center');
+const platformMetricsRoutes = require('./routes/platform-metrics');
 const globalBackupRepo = require('./models/global-backup-repository');
 const remoteBackupSyncRepo = require('./models/remote-backup-sync-repository');
 const legacyJsonMigration = require('./models/legacy-json-migration');
@@ -220,6 +221,7 @@ app.use('/api', (req, res, next) => {
     if (req.path.startsWith('/surveys')) return next(); // 调查模板和提交由模块内部控制权限
     if (/^\/custom-tools\/[^/]+\/state(?:\/restore)?$/.test(req.path)) return next(); // 登录用户可维护自定义工具业务数据
     if (req.method === 'POST' && req.path === '/uiv/run-uivision-macro') return next(); // 只生成临时 runner，不修改业务数据
+    if (req.method === 'POST' && req.path === '/platform-metrics/open') return next(); // 登录用户记录工具打开量
     if (req.method !== 'GET') {
         return requireAdmin(req, res, next);
     }
@@ -243,6 +245,7 @@ app.use('/api/ai-settings', aiSettingsRoutes); // 智能客服助手模型配置
 app.use('/api/global-backup', globalBackupRoutes); // 全局数据备份与恢复 API
 app.use('/api/external/metrics', externalMetricsRoutes); // 外部/移动端只读指标 API
 app.use('/api/alert-center', alertCenterRoutes); // 系统告警台 API
+app.use('/api/platform-metrics', platformMetricsRoutes); // 首页效能与使用量统计
 
 // ============================================================
 // 前端路由回退（SPA）
