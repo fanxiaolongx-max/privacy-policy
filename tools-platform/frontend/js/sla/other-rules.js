@@ -266,25 +266,38 @@
     function renderAlert(level, ruleIndex, alertIndex) {
         return `<div class="risk-alert-card compact" data-rule-index="${ruleIndex}" data-alert-index="${alertIndex}">
             <label class="risk-editor-toggle"><input type="checkbox" data-field="enabled" ${level.enabled ? 'checked' : ''}>启用</label>
-            <input class="risk-editor-input" data-field="name" value="${esc(level.name)}" placeholder="级别名称">
+            <label><span>级别名称</span><input class="risk-editor-input" data-field="name" value="${esc(level.name)}" placeholder="级别名称"></label>
             <label><span>剩余天数 ≤</span><input type="number" class="risk-editor-input" data-field="maxDays" value="${level.maxDays}"></label>
             <label><span>告警类型</span><select class="risk-editor-input" data-field="severity">${['danger','warning','info'].map(v => `<option value="${v}" ${level.severity === v ? 'selected' : ''}>${v === 'danger' ? '红色紧急' : v === 'warning' ? '提醒' : '蓝色提示'}</option>`).join('')}</select></label>
             <label><span>标签后缀</span><input class="risk-editor-input" data-field="badgeSuffix" value="${esc(level.badgeSuffix)}"></label>
-            <input type="color" data-field="color" value="${esc(level.color)}" title="标签颜色">
+            <label class="risk-editor-color-field"><span>标签颜色</span><input type="color" data-field="color" value="${esc(level.color)}" title="标签颜色"></label>
             <button type="button" class="risk-editor-icon-btn danger" data-action="remove-alert">删除</button>
         </div>`;
     }
     function renderRule(rule, index) {
         return `<article class="risk-rule-card" data-rule-index="${index}">
             <div class="risk-editor-card-head"><label class="risk-editor-toggle"><input type="checkbox" data-field="enabled" ${rule.enabled ? 'checked' : ''}> 启用</label><input class="risk-editor-input risk-rule-name" data-field="name" value="${esc(rule.name)}"><button type="button" class="risk-editor-icon-btn danger" data-action="remove-rule">删除规则</button></div>
-            <div class="risk-editor-grid">
-                <label><span>状态条件</span><select class="risk-editor-input" data-field="operator">${[['equals','精确等于'],['contains','包含关键字'],['regex','正则表达式']].map(([v,l]) => `<option value="${v}" ${rule.match.operator === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
-                <div class="risk-editor-wide">${window.SLARulePicker.renderPicker({ mode: editorMode, id: `other-rule-values-${index}`, kind: 'value', label: '匹配值（来自所选状态字段）', selected: rule.match.values, fields: workingConfig.statusFields })}</div>
-                <label class="risk-editor-check"><span>大小写</span><label><input type="checkbox" data-field="caseSensitive" ${rule.match.caseSensitive ? 'checked' : ''}>区分大小写</label></label>
-                <label><span>截止日期类型</span><select class="risk-editor-input" data-field="deadlineType"><option value="date_field" ${rule.deadline.type === 'date_field' ? 'selected' : ''}>直接使用日期字段</option><option value="field_plus_days" ${rule.deadline.type === 'field_plus_days' ? 'selected' : ''}>日期字段 + 固定天数</option></select></label>
-                <div class="risk-editor-wide">${window.SLARulePicker.renderPicker({ mode: editorMode, id: `other-rule-date-fields-${index}`, kind: 'field', label: '日期字段优先级', selected: rule.deadline.fields })}</div>
-                <label><span>追加天数</span><input type="number" class="risk-editor-input" data-field="offsetDays" value="${rule.deadline.offsetDays}"></label>
-                <label><span>告警标签前缀</span><input class="risk-editor-input" data-field="badgePrefix" value="${esc(rule.badgePrefix)}"></label>
+            <div class="risk-editor-rule-sections">
+                <section class="risk-editor-subsection">
+                    <div class="risk-editor-subsection-title"><b>状态识别</b><span>确定哪些数据进入本规则</span></div>
+                    <div class="risk-editor-grid risk-editor-grid-match">
+                        <label><span>状态条件</span><select class="risk-editor-input" data-field="operator">${[['equals','精确等于'],['contains','包含关键字'],['regex','正则表达式']].map(([v,l]) => `<option value="${v}" ${rule.match.operator === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+                        <div class="risk-editor-wide">${window.SLARulePicker.renderPicker({ mode: editorMode, id: `other-rule-values-${index}`, kind: 'value', label: '匹配值（来自所选状态字段）', selected: rule.match.values, fields: workingConfig.statusFields })}</div>
+                        <label class="risk-editor-check"><span>匹配方式</span><span class="risk-editor-checkbox-control"><input type="checkbox" data-field="caseSensitive" ${rule.match.caseSensitive ? 'checked' : ''}><span>区分大小写</span></span></label>
+                    </div>
+                </section>
+                <section class="risk-editor-subsection">
+                    <div class="risk-editor-subsection-title"><b>截止日期</b><span>设置日期来源和计算方式</span></div>
+                    <div class="risk-editor-grid risk-editor-grid-deadline">
+                        <label><span>截止日期类型</span><select class="risk-editor-input" data-field="deadlineType"><option value="date_field" ${rule.deadline.type === 'date_field' ? 'selected' : ''}>直接使用日期字段</option><option value="field_plus_days" ${rule.deadline.type === 'field_plus_days' ? 'selected' : ''}>日期字段 + 固定天数</option></select></label>
+                        <div class="risk-editor-wide">${window.SLARulePicker.renderPicker({ mode: editorMode, id: `other-rule-date-fields-${index}`, kind: 'field', label: '日期字段优先级', selected: rule.deadline.fields })}</div>
+                        <label><span>追加天数</span><input type="number" class="risk-editor-input" data-field="offsetDays" value="${rule.deadline.offsetDays}"></label>
+                    </div>
+                </section>
+                <section class="risk-editor-subsection risk-editor-subsection-compact">
+                    <div class="risk-editor-subsection-title"><b>标签展示</b><span>配置表格中的告警文字</span></div>
+                    <label><span>告警标签前缀</span><input class="risk-editor-input" data-field="badgePrefix" value="${esc(rule.badgePrefix)}"></label>
+                </section>
             </div>
             <div class="other-rule-alert-head"><b>本规则告警分级</b><button type="button" class="risk-editor-add-btn" data-action="add-alert">+新增级别</button></div>
             <div class="other-rule-alert-list">${rule.alertLevels.map((level, i) => renderAlert(level, index, i)).join('')}</div>
@@ -303,7 +316,7 @@
         const valueFieldMap = { pending: config.fields.status, closed: config.fields.status, critical: config.fields.severity, overdue: config.fields.overdue };
         const valueInputs = Object.keys(config.values).map(key => `<div>${window.SLARulePicker.renderPicker({ mode: 'sr', id: `sr-values-${key}`, kind: 'value', label: VALUE_LABELS[key], selected: config.values[key], fields: valueFieldMap[key] })}</div>`).join('');
         const thresholds = Object.keys(config.thresholds).map(key => `<label><span>${THRESHOLD_LABELS[key]}</span><input type="number" class="risk-editor-input" data-sr-group="thresholds" data-sr-key="${key}" value="${config.thresholds[key]}"></label>`).join('');
-        const alerts = Object.keys(config.alerts).map(key => { const item=config.alerts[key]; return `<div class="sr-alert-config"><label class="risk-editor-toggle"><input type="checkbox" data-sr-alert="${key}" data-field="enabled" ${item.enabled?'checked':''}>启用</label><b>${ALERT_LABELS[key]}</b><input class="risk-editor-input" data-sr-alert="${key}" data-field="label" value="${esc(item.label)}"><select class="risk-editor-input" data-sr-alert="${key}" data-field="severity">${[['danger','红色紧急'],['warning','提醒'],['info','蓝色提示'],['none','仅显示标签']].map(([v,l])=>`<option value="${v}" ${item.severity===v?'selected':''}>${l}</option>`).join('')}</select><input type="color" data-sr-alert="${key}" data-field="color" value="${item.color}"></div>`; }).join('');
+        const alerts = Object.keys(config.alerts).map(key => { const item=config.alerts[key]; return `<div class="sr-alert-config"><label class="risk-editor-toggle"><input type="checkbox" data-sr-alert="${key}" data-field="enabled" ${item.enabled?'checked':''}>启用</label><b>${ALERT_LABELS[key]}</b><label><span>展示标签</span><input class="risk-editor-input" data-sr-alert="${key}" data-field="label" value="${esc(item.label)}"></label><label><span>告警类型</span><select class="risk-editor-input" data-sr-alert="${key}" data-field="severity">${[['danger','红色紧急'],['warning','提醒'],['info','蓝色提示'],['none','仅显示标签']].map(([v,l])=>`<option value="${v}" ${item.severity===v?'selected':''}>${l}</option>`).join('')}</select></label><label class="risk-editor-color-field"><span>标签颜色</span><input type="color" data-sr-alert="${key}" data-field="color" value="${item.color}"></label></div>`; }).join('');
         return `<div class="risk-rule-editor sr-rule-editor"><div class="risk-editor-columns"><section class="risk-editor-pane"><h4>字段与状态条件</h4><p>字段和值均取自当前 SR 导入数据；表内存在的候选会显示实际行数。</p><div class="sr-editor-grid">${fieldInputs}${valueInputs}</div></section><section class="risk-editor-pane"><h4>预警阈值</h4><p>紧急条件使用“或”，Critical 提醒使用“且”，与当前默认规则一致。</p><div class="sr-editor-grid">${thresholds}</div><h4>告警类型与展示</h4><div class="sr-alert-list">${alerts}</div></section></div></div>`;
     }
 
@@ -311,7 +324,7 @@
     function collectStandard() {
         const rules = Array.from(document.querySelectorAll('#other-rule-list > .risk-rule-card')).map((card, index) => {
             const levels = Array.from(card.querySelectorAll('.other-rule-alert-list .risk-alert-card')).map((level, i) => ({ id: workingConfig.rules[index]?.alertLevels[i]?.id || `alert-${Date.now()}-${i}`, enabled: level.querySelector('[data-field="enabled"]').checked, name: level.querySelector('[data-field="name"]').value, maxDays: level.querySelector('[data-field="maxDays"]').value, severity: level.querySelector('[data-field="severity"]').value, badgeSuffix: level.querySelector('[data-field="badgeSuffix"]').value, color: level.querySelector('[data-field="color"]').value }));
-            return { id: workingConfig.rules[index]?.id || `rule-${Date.now()}-${index}`, enabled: card.querySelector(':scope > .risk-editor-card-head [data-field="enabled"]').checked, name: card.querySelector(':scope > .risk-editor-card-head [data-field="name"]').value, badgePrefix: card.querySelector('.risk-editor-grid [data-field="badgePrefix"]').value, match: { operator: card.querySelector('[data-field="operator"]').value, values: window.SLARulePicker.collect(`other-rule-values-${index}`), caseSensitive: card.querySelector('[data-field="caseSensitive"]').checked }, deadline: { type: card.querySelector('[data-field="deadlineType"]').value, fields: window.SLARulePicker.collect(`other-rule-date-fields-${index}`), offsetDays: card.querySelector('[data-field="offsetDays"]').value }, alertLevels: levels };
+            return { id: workingConfig.rules[index]?.id || `rule-${Date.now()}-${index}`, enabled: card.querySelector(':scope > .risk-editor-card-head [data-field="enabled"]').checked, name: card.querySelector(':scope > .risk-editor-card-head [data-field="name"]').value, badgePrefix: card.querySelector('[data-field="badgePrefix"]').value, match: { operator: card.querySelector('[data-field="operator"]').value, values: window.SLARulePicker.collect(`other-rule-values-${index}`), caseSensitive: card.querySelector('[data-field="caseSensitive"]').checked }, deadline: { type: card.querySelector('[data-field="deadlineType"]').value, fields: window.SLARulePicker.collect(`other-rule-date-fields-${index}`), offsetDays: card.querySelector('[data-field="offsetDays"]').value }, alertLevels: levels };
         });
         return normalizeStandard(editorMode, { statusFields: window.SLARulePicker.collect('other-status-fields'), rules });
     }
