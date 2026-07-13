@@ -160,6 +160,8 @@ function shouldProtectHtmlEntry(req) {
     if (req.method !== 'GET' && req.method !== 'HEAD') return false;
     if (req.path.startsWith('/api/')) return false;
     if (req.path.startsWith('/knight-dreams/')) return false;
+    // 自定义工具在下方按工具配置独立鉴权，避免静态资源绕过或重复鉴权。
+    if (req.path.startsWith('/custom-tools/')) return false;
     if (PUBLIC_HTML_PATHS.has(req.path)) return false;
     const ext = path.extname(req.path).toLowerCase();
     if (PUBLIC_ASSET_EXTS.has(ext)) return false;
@@ -216,6 +218,7 @@ app.use('/api', (req, res, next) => {
     if (req.path.startsWith('/auth/')) return next();
     if (req.path.startsWith('/requirements')) return next(); // 需求管理内部自行控制权限
     if (req.path.startsWith('/surveys')) return next(); // 调查模板和提交由模块内部控制权限
+    if (/^\/custom-tools\/[^/]+\/state(?:\/restore)?$/.test(req.path)) return next(); // 登录用户可维护自定义工具业务数据
     if (req.method === 'POST' && req.path === '/uiv/run-uivision-macro') return next(); // 只生成临时 runner，不修改业务数据
     if (req.method !== 'GET') {
         return requireAdmin(req, res, next);
@@ -292,7 +295,16 @@ app.get('/frt', (req, res) => {
 app.get('/tools/:slug', checkHtmlAuth, (req, res) => {
     res.sendFile(path.join(FRONTEND_DIR, 'pages/custom-tool.html'));
 });
-app.use('/custom-tools', checkHtmlAuth);
+app.use('/custom-tools', async (req, res, next) => {
+    try {
+        const slug = String(req.path || '').split('/').filter(Boolean)[0] || '';
+        const tool = slug ? await customToolsRepo.getTool(slug) : null;
+        if (tool && tool.publicAccess === true) return next();
+        return checkHtmlAuth(req, res, next);
+    } catch (err) {
+        next(err);
+    }
+});
 app.get('/custom-tools/:slug/index.html', async (req, res, next) => {
     try {
         const tool = await customToolsRepo.getTool(req.params.slug);

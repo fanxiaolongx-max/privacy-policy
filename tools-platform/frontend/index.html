@@ -296,9 +296,9 @@
         </div>
 
         <div class="custom-tools-panel" id="customToolsPanel" style="display:none;">
-            <span class="custom-tools-note">导入独立 HTML 后，会自动生成首页模块和顶部导航入口</span>
-            <button class="custom-tool-upload" id="customToolUploadBtn">导入 HTML 工具</button>
-            <input type="file" id="customToolFileInput" accept=".html,text/html" style="display:none;">
+            <span class="custom-tools-note">导入 HTML 或 ZIP 工具包后，会自动生成首页模块和顶部导航入口</span>
+            <button class="custom-tool-upload" id="customToolUploadBtn">导入 HTML / ZIP 工具</button>
+            <input type="file" id="customToolFileInput" accept=".html,.htm,.zip,text/html,application/zip" style="display:none;">
         </div>
 
         <div class="tools-grid" id="toolsGrid">
@@ -496,7 +496,7 @@
     <script src="/js/shared/migration-status.js?v=20260626-01"></script>
     <script src="/js/shared/toast.js?v=20260530-03"></script>
     <script src="/js/shared/i18n.js?v=20260610-01"></script>
-    <script src="/js/shared/navbar.js?v=20260710-02"></script>
+    <script src="/js/shared/navbar.js?v=20260712-01"></script>
     <script>
         const historyState = {
             items: [],
@@ -510,8 +510,8 @@
                 'home.title': 'Tools Platform - 工具中台',
                 'home.description': '统一工具平台入口：UIVF12 抓取引擎 & Task SLA 风险监控台',
                 'home.hero.desc': '统一工具中台 · 前后端分离架构 · 数据持久化存储<br>让每一个工具都更强大、更稳定、更易扩展',
-                'home.custom.note': '导入独立 HTML 后，会自动生成首页模块和顶部导航入口',
-                'home.custom.upload': '导入 HTML 工具',
+                'home.custom.note': '导入 HTML 或 ZIP 工具包后，会自动生成首页模块和顶部导航入口',
+                'home.custom.upload': '导入 HTML / ZIP 工具',
                 'home.arrow.tool': '进入工具 →',
                 'home.arrow.module': '进入模块 →',
                 'home.stats.scripts': '脚本仓库数量',
@@ -558,8 +558,8 @@
                 'home.title': 'Tools Platform',
                 'home.description': 'Unified tool hub for data capture, SLA import, reporting, and operations workflows.',
                 'home.hero.desc': 'A unified tool hub · Decoupled frontend/backend · Persistent data storage<br>Make every tool stronger, steadier, and easier to extend',
-                'home.custom.note': 'Import a standalone HTML file to generate a home card and top navigation entry automatically.',
-                'home.custom.upload': 'Import HTML Tool',
+                'home.custom.note': 'Import an HTML file or ZIP package to generate a home card and top navigation entry automatically.',
+                'home.custom.upload': 'Import HTML / ZIP Tool',
                 'home.arrow.tool': 'Open Tool →',
                 'home.arrow.module': 'Open Module →',
                 'home.stats.scripts': 'Script Repository Items',
@@ -914,18 +914,32 @@
                 const file = input.files && input.files[0];
                 if (!file) return;
                 try {
-                    const htmlContent = await file.text();
-                    const defaultName = file.name.replace(/\.html?$/i, '');
+                    const isZip = /\.zip$/i.test(file.name);
+                    if (!isZip && !/\.html?$/i.test(file.name)) throw new Error('仅支持 HTML 或 ZIP 文件');
+                    if (isZip && file.size > 35 * 1024 * 1024) throw new Error('ZIP 文件不能超过 35 MB');
+                    const defaultName = file.name.replace(/\.(html?|zip)$/i, '');
                     const name = prompt(t('home.prompt.name'), defaultName);
                     if (!name) return;
                     const icon = prompt(t('home.prompt.icon'), '🧩') || '🧩';
                     const description = prompt(t('home.prompt.description'), t('home.custom.defaultDesc')) || '';
-                    await API.post('/api/custom-tools', {
+                    const payload = {
                         name,
                         icon,
-                        description,
-                        htmlContent
-                    });
+                        description
+                    };
+                    if (isZip) {
+                        const bytes = new Uint8Array(await file.arrayBuffer());
+                        const chunkSize = 0x8000;
+                        let binary = '';
+                        for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+                            binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
+                        }
+                        payload.archiveBase64 = btoa(binary);
+                        payload.archiveName = file.name;
+                    } else {
+                        payload.htmlContent = await file.text();
+                    }
+                    await API.post('/api/custom-tools', payload);
                     showToast(t('home.toast.imported'));
                     await loadCustomTools();
                     if (window.refreshCustomToolNavLinks) await window.refreshCustomToolNavLinks();

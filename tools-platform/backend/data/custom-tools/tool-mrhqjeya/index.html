@@ -1,0 +1,2625 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Horizon - 旗舰版行政日程指挥中心</title>
+    <style>
+        /* --- 顶奢智感科技多态色彩系统 --- */
+        :root {
+            --primary: #6366f1;         /* 极光靛蓝 */
+            --primary-glow: rgba(99, 102, 241, 0.15);
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.12);
+
+            /* 闲忙度及状态色彩（亮色深沉色调） */
+            --busy-free: #10b981;       /* 空闲绿 */
+            --busy-light: #3b82f6;      /* 智慧蓝 */
+            --busy-heavy: #f59e0b;      /* 警示橙 */
+            --busy-critical: #ef4444;   /* 极度饱和红 */
+
+            /* 亮色模式变量（默认） */
+            --bg-base-gradient: radial-gradient(circle at 50% 0%, #f0f2fe 0%, #e2e8f0 70%);
+            --bg-canvas: rgba(255, 255, 255, 0.75);
+            --bg-sidebar: rgba(241, 245, 249, 0.5);
+            --bg-timeline: rgba(248, 250, 252, 0.4);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: rgba(15, 23, 42, 0.08);
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --card-hover: rgba(255, 255, 255, 1);
+            --modal-bg: #ffffff;
+            --input-bg: #f1f5f9;
+            --ctx-menu-bg: #ffffff;
+            --ctx-item-hover: rgba(15, 23, 42, 0.05);
+            --tag-urgent-bg: rgba(239, 68, 68, 0.12);
+            --tag-urgent-text: #dc2626;
+            --tag-work-bg: rgba(59, 130, 246, 0.12);
+            --tag-work-text: #2563eb;
+        }
+
+        /* 暗黑模式变量 */
+        [data-theme="dark"] {
+            --bg-base-gradient: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #0f172a 70%);
+            --bg-canvas: rgba(30, 41, 59, 0.7);
+            --bg-sidebar: rgba(15, 23, 42, 0.4);
+            --bg-timeline: rgba(10, 15, 30, 0.3);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.06);
+            --card-bg: rgba(30, 41, 59, 0.5);
+            --card-hover: rgba(30, 41, 59, 0.9);
+            --modal-bg: #1e293b;
+            --input-bg: rgba(0, 0, 0, 0.2);
+            --ctx-menu-bg: #1e293b;
+            --ctx-item-hover: rgba(255, 255, 255, 0.05);
+            --tag-urgent-bg: rgba(239, 68, 68, 0.15);
+            --tag-urgent-text: #fca5a5;
+            --tag-work-bg: rgba(59, 130, 246, 0.15);
+            --tag-work-text: #93c5fd;
+            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        /* --- 原生OS级别系统特性屏蔽（核心要求：禁止在页面选中文字复制粘贴，但表单输入框必须放行） --- */
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display","Segoe UI", Roboto, sans-serif;
+            user-select: text;
+            -webkit-user-select: text;
+        }
+        button, .cell-unit, .schedule-meta-card, .view-switcher, .custom-context-menu {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        /* 深度放行：允许模态框内的表单正常选中文本、打字与右键复制粘贴 */
+        input, select, textarea, [contenteditable="true"] {
+            user-select: text !important;
+            -webkit-user-select: text !important;
+        }
+
+        body {
+            background: var(--bg-base-gradient);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 30px;
+            overflow: hidden;
+        }
+
+        /* --- 巨幕画布主体 --- */
+        .dashboard-canvas {
+            display: flex;
+            background: var(--bg-canvas);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 24px;
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 1500px;
+            height: 88vh;
+            min-height: 750px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            animation: canvasIntro 0.8s var(--ease-out-expo) forwards;
+            position: relative;
+            contain: layout style;
+        }
+
+        /* ================= 左栏：控制面板与三级日历 ================= */
+        .sidebar {
+            width: 480px;
+            border-right: 1px solid var(--border);
+            padding: 40px 32px;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-sidebar);
+            transition: width 0.4s var(--ease-out-expo), padding 0.4s var(--ease-out-expo);
+        }
+        .sidebar.collapsed { width: 0; padding: 40px 0 40px 32px; overflow: hidden; }
+        .sidebar.collapsed .system-control-bar,
+        .sidebar.collapsed .view-switcher,
+        .sidebar.collapsed .cal-control-header,
+        .sidebar.collapsed .calendar-render-engine,
+        .sidebar.collapsed .conflict-btn-fixed { display: none; }
+
+        /* 侧边折叠箭头 */
+        .sidebar-collapse-btn { position: absolute; right: -16px; top: 50%; transform: translateY(-50%); width: 26px; height: 52px; background: var(--card-bg); border: 1px solid var(--border); border-left: none; border-radius: 0 14px 14px 0; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: var(--text-muted); transition: all 0.3s; z-index: 50; backdrop-filter: blur(4px); }
+        .sidebar-collapse-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .sidebar-collapse-btn .arrow { transition: transform 0.3s; }
+        .sidebar-collapse-btn:not(.expanded) .arrow { transform: rotate(180deg); }
+
+        /* 系统状态级顶部多功能控制中枢 */
+        .system-control-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+        .sys-toggle-group {
+            display: flex;
+            gap: 6px;
+        }
+        .sys-toggle-btn {
+            background: rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        [data-theme="light"] .sys-toggle-btn {
+            background: rgba(255,255,255,0.6);
+        }
+        .sys-toggle-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        #import-btn { letter-spacing: 0; }
+        [onclick="clearAllData()"]:hover, .sys-toggle-btn[onclick="clearAllData()"]:hover {
+            border-color: #ef4444 !important;
+            color: #ef4444 !important;
+            background: rgba(239,68,68,0.1) !important;
+        }
+
+        .view-switcher {
+            display: flex;
+            background: rgba(0, 0, 0, 0.1);
+            padding: 4px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+        }
+        [data-theme="light"] .view-switcher { background: rgba(0,0,0,0.04); }
+        .view-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            padding: 10px 0;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 9px;
+            transition: all 0.4s var(--ease-out-expo);
+        }
+        .view-btn.active {
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .cal-control-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .cal-display-title { 
+            font-size: 1.5rem; 
+            font-weight: 800; 
+            letter-spacing: -0.03em; 
+            background: linear-gradient(to right, var(--text-main), var(--text-muted)); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+        }
+        .nav-actions { display: flex; gap: 8px; align-items: center; }
+        .nav-btn { background: var(--card-bg); border: 1px solid var(--border); width: 34px; height: 34px; border-radius: 8px; color: var(--text-muted); cursor: pointer; transition: all 0.25s var(--ease-out-expo); display: flex; align-items: center; justify-content: center; }
+        [data-theme="light"] .nav-btn { background: rgba(255,255,255,0.7); }
+        .nav-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-glow); transform: translateY(-1px); box-shadow: 0 4px 12px var(--primary-glow); }
+        .nav-btn:active { transform: translateY(0) scale(0.92); }
+        
+        /* 核心追加：今日直达高光轻量化按钮 */
+        .btn-nav-today {
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 0 12px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: var(--primary);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-nav-today:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .calendar-render-engine { flex: 1; position: relative; overflow:hidden; min-height:0; touch-action:pan-y; will-change:transform,opacity; scrollbar-width:none; }
+        .calendar-render-engine::-webkit-scrollbar { display:none; width:0; height:0; }
+        @media (min-width:1001px) {
+            .calendar-render-engine > .month-calendar-wrapper { height:100%; min-height:0; display:flex; flex-direction:column; }
+            .calendar-render-engine .week-days-line { flex:0 0 auto; }
+            .calendar-render-engine .grid-month { flex:1; min-height:0; grid-template-rows:repeat(6,minmax(0,1fr)); }
+            .calendar-render-engine .grid-month .cell-unit { aspect-ratio:auto; min-height:0; }
+            .calendar-render-engine .grid-year { height:100%; min-height:0; grid-template-rows:repeat(4,minmax(0,1fr)); align-content:stretch; }
+            .calendar-render-engine .grid-year .cell-unit { min-height:0; padding:0; }
+            .calendar-render-engine .grid-week { height:100%; min-height:0; grid-template-rows:repeat(7,minmax(0,1fr)); }
+            .calendar-render-engine .grid-week .cell-unit { min-height:0; padding:6px 14px; }
+        }
+        .calendar-swipe-preview { position:absolute; inset:0; z-index:2; pointer-events:none; background:var(--bg-sidebar); will-change:transform,opacity; }
+        .conflict-btn-fixed { align-self: flex-start; padding: 6px 14px; font-size: 0.75rem; white-space: nowrap; margin-top: 8px; }
+        .conflict-btn-fixed.active { background: rgba(239, 68, 68, 0.15) !important; color: #ef4444 !important; border-color: #ef4444 !important; }
+        .grid-animate-wrapper { animation: gridFadeIn 0.6s var(--ease-out-expo) forwards; }
+        .week-days-line { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; margin-bottom: 14px; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); }
+        .universal-grid { display: grid; gap: 8px; }
+        .grid-month { grid-template-columns: repeat(7, 1fr); }
+        .grid-year { grid-template-columns: repeat(3, 1fr); gap: 16px; height: 100%; align-content: start; }
+        .grid-week { grid-template-columns: 1fr; gap: 12px; }
+
+        /* --- 日历物理网格单元 --- */
+        .cell-unit {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s var(--ease-out-expo),
+                        background-color 0.3s,
+                        border-color 0.3s,
+                        box-shadow 0.3s;
+            will-change: transform;
+        }
+        [data-theme="light"] .cell-unit { background: rgba(0,0,0,0.01); }
+        .grid-month .cell-unit { aspect-ratio: 1.1; font-size: 1rem; font-weight: 600; }
+        .grid-month .cell-unit.sibling { opacity: 0.15; cursor: default; }
+        .grid-year .cell-unit { padding: 24px 0; font-size: 1.1rem; font-weight: 700; }
+        .grid-year .cell-unit:hover { background: rgba(255,255,255,0.05); border-color: var(--text-muted); }
+        [data-theme="light"] .grid-year .cell-unit:hover { background: rgba(0,0,0,0.03); }
+
+        .grid-week .cell-unit { flex-direction: row; justify-content: space-between; padding: 16px 20px; font-size: 1rem; }
+        .week-left-desc { display: flex; align-items: center; gap: 12px; }
+        .week-left-desc .w-name { font-size: 0.8rem; color: var(--text-muted); background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px; }
+        [data-theme="light"] .week-left-desc .w-name { background: rgba(0,0,0,0.06); }
+
+        .cell-unit.selected { background: var(--primary) !important; color: #fff !important; border-color: var(--primary) !important; box-shadow: 0 0 0 3px var(--primary-glow), 0 0 20px var(--primary-glow); }
+        .cell-unit.selected .lunar-label { color:rgba(255,255,255,.82); }
+        .cell-unit.today { border: 2px solid var(--primary) !important; box-shadow: 0 0 0 2px var(--primary-glow), 0 0 12px var(--primary-glow); }
+        .cell-unit.today.selected { border-color: var(--primary) !important; }
+        .cell-unit.search-hit { background: rgba(245, 158, 11, 0.2) !important; border-color: #f59e0b !important; box-shadow: 0 0 10px rgba(245, 158, 11, 0.3); }
+        .cell-unit.conflict { background: rgba(239, 68, 68, 0.15) !important; border-color: #ef4444 !important; box-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
+        .schedule-meta-card.search-hit { border-color: #f59e0b !important; box-shadow: 0 0 10px rgba(245, 158, 11, 0.3); }
+
+        /* 日期悬停气泡 */
+        .cell-tooltip { position: absolute; z-index: 200; background: var(--modal-bg); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; min-width: 180px; max-width: 260px; box-shadow: var(--shadow-lg); pointer-events: none; opacity: 0; transform: translateY(4px); transition: opacity 0.2s, transform 0.2s; }
+        .cell-tooltip.show { opacity: 1; transform: translateY(0); }
+        .tooltip-date { font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; }
+        .tooltip-event { font-size: 0.75rem; color: var(--text-main); padding: 3px 0; display: flex; align-items: center; gap: 6px; }
+        .tooltip-event .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+        .tooltip-event.urgent .dot { background: #ef4444; }
+        .tooltip-event.work .dot { background: #3b82f6; }
+        .tooltip-empty { font-size: 0.72rem; color: var(--text-muted); font-style: italic; }
+        .tooltip-weeknum { position: absolute; top: -18px; right: 6px; font-size: 0.6rem; color: var(--primary); font-weight: 700; opacity: 0.6; }
+        .grid-month .cell-unit { position: relative; }
+        .grid-month .cell-unit .weeknum { display:none; }
+        .lunar-label { max-width:90%; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:.52rem; line-height:1; color:var(--text-muted); font-weight:500; }
+        .holiday-flags { position:absolute; left:3px; top:2px; display:flex; gap:1px; font-size:.52rem; line-height:1; }
+        .day-number { position:relative; z-index:1; }
+        .cell-unit.china-holiday { background:linear-gradient(145deg,rgba(239,68,68,.16),rgba(239,68,68,.045)); border-color:rgba(239,68,68,.5); box-shadow:inset 0 0 0 1px rgba(239,68,68,.08); }
+        .cell-unit.china-holiday .day-number { color:#dc2626; font-weight:850; }
+        .cell-unit.egypt-holiday { background:linear-gradient(145deg,rgba(245,158,11,.17),rgba(245,158,11,.045)); border-color:rgba(245,158,11,.55); box-shadow:inset 0 0 0 1px rgba(245,158,11,.1); }
+        .cell-unit.egypt-holiday .day-number { color:#d97706; font-weight:850; }
+        [data-theme="dark"] .cell-unit.china-holiday .day-number { color:#fca5a5; }
+        [data-theme="dark"] .cell-unit.egypt-holiday .day-number { color:#fcd34d; }
+        .cell-unit.selected .day-number { color:#fff !important; }
+        .cell-unit.makeup-workday { border-style:dashed; }
+        .holiday-legend { display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; margin-top:8px; font-size:.66rem; color:var(--text-muted); }
+        .holiday-legend span { display:inline-flex; align-items:center; gap:4px; }
+        .holiday-legend-source { opacity:.7; }
+        .holiday-label-list { width:100%; display:flex; gap:6px; overflow-x:auto; padding:3px 1px 2px; scrollbar-width:none; scroll-snap-type:x proximity; }
+        .holiday-label-list::-webkit-scrollbar { display:none; }
+        .holiday-chip { flex:0 0 auto; max-width:260px; padding:5px 8px; border-radius:8px; font-size:.64rem; font-weight:650; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; scroll-snap-align:start; border:1px solid var(--border); background:var(--card-bg); color:var(--text-main); }
+        .holiday-chip.cn { border-color:rgba(239,68,68,.28); background:rgba(239,68,68,.07); }
+        .holiday-chip.eg { border-color:rgba(245,158,11,.3); background:rgba(245,158,11,.08); }
+        .holiday-chip.workday { border-style:dashed; color:var(--text-muted); }
+        .holiday-chip-empty { color:var(--text-muted); opacity:.7; font-size:.62rem; padding:4px 0; }
+        
+        .busy-bar { position:absolute; bottom:2px; width:10px; height:1px; border-radius:1px; opacity:.55; transition:background-color .3s,opacity .3s; }
+        .status-free { background:var(--busy-free); box-shadow:none; }
+        .status-light { background:var(--busy-light); box-shadow:none; }
+        .status-heavy { background:var(--busy-heavy); box-shadow:none; }
+        .status-critical { background:var(--busy-critical); box-shadow:none; }
+        .cell-unit.selected .busy-bar { background:#fff !important; box-shadow:none; opacity:.62; }
+
+        /* 侧边折叠箭头 */
+        .sidebar-collapse-btn { position: absolute; left: 480px; top: 50%; transform: translateY(-50%); width: 22px; height: 48px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 0 10px 10px 0; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: var(--text-muted); transition: all 0.3s; z-index: 50; backdrop-filter: blur(4px); }
+        .sidebar-collapse-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .sidebar-collapse-btn .arrow { transition: transform 0.3s; }
+        .sidebar-collapse-btn:not(.expanded) .arrow { transform: rotate(180deg); }
+        .sidebar-collapse-btn:not(.expanded) { left: 0; }
+
+        /* ================= 右栏：立体物理高精时间轴 ================= */
+        .timeline-panel {
+            flex: 1;
+            padding: 40px 48px;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-timeline);
+        }
+        .panel-top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+        .panel-top-bar h2 { font-size: 1.6rem; font-weight: 800; }
+        .btn-trigger-add { background: linear-gradient(135deg, var(--primary) 0%, #4338ca 100%); color: #fff; border: none; padding: 12px 24px; border-radius: 12px; font-size: 0.9rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4); transition: all 0.3s; }
+        .btn-trigger-add:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6); }
+
+        .axis-scroll-container { flex: 1; overflow-y: auto; padding-right: 10px; position: relative; }
+
+        /* 导入数据表格区域 */
+        .import-table-panel { display: none; }
+        .import-table-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+        .import-table-tabs { display: flex; gap: 4px; margin-bottom: 20px; }
+        .import-tab-btn { padding: 6px 16px; border-radius: 8px; border: 1px solid var(--border); background: rgba(255,255,255,0.03); color: var(--text-muted); font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .import-tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .import-table-wrap { flex: 1; overflow-y: auto; padding-right: 4px; }
+        .import-table-wrap table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        .import-table-wrap thead { position: sticky; top: 0; z-index: 2; }
+        .import-table-wrap th { padding: 10px 14px; text-align: left; font-weight: 700; font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); background: var(--modal-bg); border-bottom: 2px solid var(--border); white-space: nowrap; }
+        .import-table-wrap td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--text-main); vertical-align: middle; max-width: 260px; }
+        .import-table-wrap tr:hover td { background: rgba(255,255,255,0.03); }
+        .import-table-wrap .col-title { font-weight: 600; }
+        .import-table-wrap .col-time { white-space: nowrap; color: var(--text-muted); font-weight: 600; }
+        .import-table-wrap .col-date { white-space: nowrap; color: var(--text-muted); font-size: 0.75rem; }
+        .import-table-wrap .type-badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+        .type-badge.work { background: rgba(59,130,246,0.15); color: #2563eb; }
+        .type-badge.urgent { background: rgba(239,68,68,0.15); color: #dc2626; }
+        .import-table-wrap .col-reporter, .import-table-wrap .col-attendees { font-size: 0.75rem; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .import-table-wrap .col-desc { font-size: 0.72rem; color: var(--text-muted); line-height: 1.4; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .import-table-wrap .col-expand { width: 32px; padding: 10px 8px; cursor: pointer; color: var(--text-muted); font-size: 0.9rem; text-align: center; user-select: none; transition: transform 0.3s; }
+        .import-table-wrap .col-expand.open { transform: rotate(90deg); }
+        .import-table-wrap .expand-row { display: none; }
+        .import-table-wrap .expand-row.open { display: table-row; }
+        .import-table-wrap .expand-row td { padding: 0; border-bottom: 1px solid var(--border); background: var(--card-bg); }
+        .import-table-wrap .expand-inner { padding: 14px 14px 14px 54px; font-size: 0.78rem; color: var(--text-muted); line-height: 1.6; }
+        .import-table-wrap .expand-inner strong { color: var(--text-main); font-weight: 700; }
+        .import-table-wrap .expand-desc-full { margin-bottom: 10px; background: rgba(255,255,255,0.03); padding: 10px 14px; border-radius: 8px; border-left: 3px solid var(--primary); line-height: 1.6; color: var(--text-main); font-size: 0.82rem; white-space: pre-wrap; word-break: break-all; }
+        [data-theme="light"] .import-table-wrap .expand-desc-full { background: rgba(0,0,0,0.04); }
+        .import-table-summary { margin-top: 16px; display: flex; gap: 16px; flex-wrap: wrap; }
+        .import-stat-chip { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); }
+        .import-stat-chip span { color: var(--primary); font-size: 1rem; }
+        .import-empty { text-align: center; padding: 40px; color: var(--text-muted); font-size: 0.9rem; }
+        .import-empty-icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.4; }
+        .import-actions { margin-bottom: 16px; display: flex; gap: 8px; align-items: center; }
+        .import-actions .btn-clear { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; padding: 6px 14px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .import-actions .btn-clear:hover { background: rgba(239,68,68,0.2); }
+        .import-actions .btn-export { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: #6ee7b7; padding: 6px 14px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .import-actions .btn-export:hover { background: rgba(16,185,129,0.2); }
+        .axis-scroll-container::-webkit-scrollbar { width: 6px; }
+        .axis-scroll-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        [data-theme="light"] .axis-scroll-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); }
+
+        .timeline-wrapper { position: relative; padding-left: 100px; min-height: 100%; }
+        .timeline-wrapper::before {
+            content: '';
+            position: absolute;
+            left: 80px;
+            top: 10px;
+            bottom: 10px;
+            width: 2px;
+            background: linear-gradient(to bottom, rgba(99,102,241,0.4) 0%, rgba(255,255,255,0.03) 100%);
+            border-radius: 1px;
+        }
+        [data-theme="light"] .timeline-wrapper::before {
+            background: linear-gradient(to bottom, rgba(99,102,241,0.4) 0%, rgba(0,0,0,0.03) 100%);
+        }
+
+        .axis-node-row { display: flex; position: relative; margin-bottom: 20px; animation: nodeSlideIn 0.5s var(--ease-out-expo) forwards; }
+        .axis-time-label { position: absolute; left: -100px; width: 70px; text-align: right; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); top: 14px; }
+        .axis-anchor-dot { position: absolute; left: -24px; top: 18px; width: 10px; height: 10px; border-radius: 50%; background: var(--modal-bg); border: 2px solid var(--text-muted); z-index: 5; transition: all 0.3s; }
+
+        .schedule-meta-card {
+            flex: 1;
+            padding: 16px 20px;
+            border-radius: 16px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-left: 5px solid transparent;
+            transition: all 0.4s var(--ease-out-expo);
+        }
+        .schedule-meta-card.is-real { cursor: pointer; }
+        .schedule-meta-card.is-real:hover {
+            transform: translateX(6px);
+            background: var(--card-hover);
+            border-top-color: rgba(255,255,255,0.1);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+        .schedule-meta-card.is-real:hover ~ .axis-anchor-dot { border-color: var(--primary); background: var(--primary); box-shadow: 0 0 10px var(--primary); }
+        .card-row-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+        .card-main-title { font-size: 1.05rem; font-weight: 700; color: var(--text-main); }
+        .card-time-span { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; }
+        .card-meta-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+        .meta-tag { font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: rgba(255,255,255,0.06); color: var(--text-muted); white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+        [data-theme="light"] .meta-tag { background: rgba(0,0,0,0.06); }
+
+        .node-urgent { border-left-color: #ef4444; background: linear-gradient(to right, rgba(239,68,68,0.06), transparent); }
+        .node-urgent .axis-anchor-dot { border-color: #ef4444; }
+        .node-work { border-left-color: #3b82f6; background: linear-gradient(to right, rgba(59,130,246,0.06), transparent); }
+        .node-work .axis-anchor-dot { border-color: #3b82f6; }
+        .node-free, .is-free { border: 1px dashed var(--border); border-left: 4px dashed rgba(16, 185, 129, 0.4); background: transparent; cursor: pointer; }
+        .node-free .card-main-title, .is-free .card-main-title { color: var(--text-muted); font-weight: 400; font-style: italic; font-size: 0.95rem; }
+        .node-free .axis-anchor-dot, .is-free .axis-anchor-dot { border-color: var(--border); background: transparent; }
+        .is-free:hover { background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.3); transform: translateX(3px); transition: all 0.3s; }
+        .is-free .card-main-title { color: var(--text-muted); font-weight: 400; font-style: italic; font-size: 0.9rem; }
+        .is-free .card-time-span { font-size: 0.75rem; }
+        .free-add-hint { font-size: 0.68rem; color: var(--text-muted); opacity: 0; margin-top: 4px; transition: opacity 0.2s; font-style: italic; }
+        .is-free:hover .free-add-hint { opacity: 0.7; }
+
+        /* ================= 高定系统级右键上下文菜单（Context Menu） ================= */
+        .custom-context-menu {
+            position: fixed;
+            background: var(--ctx-menu-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+            padding: 6px;
+            z-index: 1000;
+            display: none;
+            min-width: 160px;
+        }
+        .ctx-item {
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-main);
+            cursor: pointer;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+        .ctx-item:hover {
+            background: var(--ctx-item-hover);
+            color: var(--primary);
+        }
+        .ctx-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 4px 0;
+        }
+
+        /* ================= 浮层表单弹窗 ================= */
+        .glass-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 100; opacity: 0; transition: opacity 0.3s; }
+        .glass-overlay.show { display: flex; opacity: 1; }
+        .panel-modal { background: var(--modal-bg); padding: 32px; border-radius: 20px; width: 100%; max-width: 440px; border: 1px solid var(--border); box-shadow: var(--shadow-lg); transform: scale(0.85) translateY(20px); opacity: 0; transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s; }
+        .glass-overlay.show .panel-modal { transform: scale(1) translateY(0); opacity: 1; }
+        .m-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 20px; }
+        .m-group { margin-bottom: 18px; }
+        .m-group label { display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; }
+        .m-group input, .m-group select { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text-main); font-size: 0.95rem; outline: none; transition: border 0.3s; }
+        .m-group input:focus, .m-group select:focus, textarea:focus { border-color: var(--primary); }
+        .m-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+        .b-cancel { background: rgba(255,255,255,0.05); color: var(--text-muted); border: none; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+        [data-theme="light"] .b-cancel { background: rgba(0,0,0,0.05); }
+        .b-save { background: var(--primary); color: #fff; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+        .b-del { background: rgba(239,68,68,0.2); color: #fca5a5; border: none; padding: 10px 18px; border-radius: 10px; cursor: pointer; margin-right: auto; display: none; font-weight: 600; }
+        [data-theme="light"] .b-del { color: #dc2626; background: rgba(239,68,68,0.1); }
+
+        @keyframes canvasIntro { from { opacity: 0; transform: translateY(30px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes gridFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes nodeSlideIn { from { opacity: 0; transform: translateX(-15px); } to { opacity: 1; transform: translateX(0); } }
+
+        /* 按钮点击涟漪 */
+        .ripple-btn { position: relative; overflow: hidden; }
+        .ripple-btn .ripple-circle { position: absolute; border-radius: 50%; background: rgba(255,255,255,0.25); transform: scale(0); animation: rippleAnim 0.6s ease-out forwards; pointer-events: none; }
+
+        @keyframes rippleAnim {
+            to { transform: scale(4); opacity: 0; }
+        }
+
+        /* 空闲时段呼吸动画 */
+        @keyframes freeBreath {
+            0%, 100% { border-color: rgba(16, 185, 129, 0.2); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.1); }
+            50% { border-color: rgba(16, 185, 129, 0.5); box-shadow: 0 0 12px 2px rgba(16, 185, 129, 0.15); }
+        }
+        .is-free { animation: freeBreath 3s ease-in-out infinite; }
+        .is-free:hover { animation: none; }
+
+        /* 日历格子按压反馈 */
+        .cell-unit { cursor: pointer; transition: transform 0.15s var(--ease-out-expo), box-shadow 0.2s, border-color 0.2s; }
+        .cell-unit:active { transform: scale(0.92) !important; box-shadow: 0 0 0 3px var(--primary-glow) !important; }
+
+        /* Tab 滑动指示器 */
+        .view-switcher { position: relative; display: flex; }
+        .view-switcher::after { content: ''; position: absolute; bottom: -1px; height: 2px; background: var(--primary); border-radius: 2px; transition: left 0.35s var(--ease-out-expo), width 0.35s var(--ease-out-expo); }
+
+        /* 长期使用增强：响应式、键盘焦点、同步状态与筛选工具栏 */
+        :focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+        .sync-indicator { font-size: .7rem; color: var(--text-muted); padding: 5px 9px; border-radius: 8px; background: var(--input-bg); white-space: nowrap; }
+        .sync-indicator.ok { color: var(--busy-free); }
+        .sync-indicator.error { color: var(--busy-critical); }
+        .schedule-filter-bar { display: grid; grid-template-columns: minmax(130px,1fr) 110px 130px 130px auto; gap: 8px; margin-bottom: 12px; }
+        .schedule-filter-bar input, .schedule-filter-bar select { min-width: 0; padding: 7px 9px; background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border); border-radius: 8px; font-size: .75rem; }
+        .conflict-summary { display:none; margin-bottom:12px; padding:10px 12px; border:1px solid rgba(239,68,68,.35); background:rgba(239,68,68,.08); border-radius:10px; color:var(--text-main); font-size:.76rem; line-height:1.6; }
+        .conflict-summary.show { display:block; }
+        .conflict-link { color:var(--busy-critical); cursor:pointer; text-decoration:underline; margin-right:10px; }
+        .snapshot-panel { position:fixed; inset:0; z-index:1200; display:none; place-items:center; padding:20px; background:rgba(15,23,42,.6); backdrop-filter:blur(4px); }
+        .snapshot-panel.show { display:grid; }
+        .snapshot-card { width:min(560px,100%); max-height:min(650px,85vh); overflow:auto; padding:24px; background:var(--modal-bg); border:1px solid var(--border); border-radius:18px; box-shadow:var(--shadow-lg); }
+        .snapshot-row { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--border); }
+        .snapshot-row-main { flex:1; min-width:0; }
+        .snapshot-row button { padding:7px 12px; border:0; border-radius:8px; cursor:pointer; background:var(--primary); color:white; }
+        .import-preview-list { max-height:240px; overflow:auto; margin:12px 0; padding:10px; background:var(--input-bg); border-radius:10px; font-size:.78rem; line-height:1.7; }
+        .dragging { opacity:.45; }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
+        @media (max-height: 850px) and (min-width: 1001px) {
+            body { padding:16px; }
+            .dashboard-canvas { height:calc(100vh - 32px); min-height:0; }
+            .sidebar { padding-top:22px; padding-bottom:22px; }
+            .timeline-panel { padding-top:22px; padding-bottom:22px; }
+        }
+        @media (max-width: 1000px) {
+            body { padding:0; align-items:stretch; overflow:auto; }
+            .dashboard-canvas { height:auto; min-height:100vh; border-radius:0; flex-direction:column; overflow:visible; }
+            .sidebar { width:100%; padding:22px 18px; border-right:0; border-bottom:1px solid var(--border); max-height:none; }
+            .sidebar.collapsed { width:100%; height:0; padding:0 18px; }
+            .sidebar-collapse-btn { position:fixed; right:12px; top:12px; transform:none; border:1px solid var(--border); border-radius:10px; height:36px; width:36px; z-index:100; }
+            .timeline-panel { min-height:620px; padding:22px 18px; }
+            .schedule-filter-bar { grid-template-columns:1fr 1fr; }
+        }
+        @media (max-width: 600px) {
+            body { background:var(--bg-canvas); }
+            .dashboard-canvas { border:0; box-shadow:none; background:transparent; }
+            .sidebar { padding:12px 14px 16px; background:var(--bg-sidebar); }
+            .system-control-bar { display:block; margin-bottom:10px; }
+            .sys-toggle-group { width:100%; display:block; }
+            .mobile-quick-actions { display:flex; gap:6px; overflow-x:auto; padding:2px 1px 8px; scrollbar-width:none; scroll-snap-type:x proximity; }
+            .mobile-quick-actions::-webkit-scrollbar { display:none; }
+            .mobile-quick-actions .sys-toggle-btn { flex:0 0 auto; scroll-snap-align:start; min-height:36px; padding:7px 11px; font-size:.72rem; }
+            #global-search { width:100% !important; height:40px; font-size:.82rem !important; margin-top:2px; }
+            .sync-indicator { display:inline-flex; margin-top:7px; padding:4px 8px; font-size:.66rem; }
+            .view-switcher { margin:10px 0 14px; border-radius:10px; }
+            .view-btn { padding:9px 0; font-size:.82rem; }
+            .cal-control-header { margin-bottom:10px; }
+            .cal-display-title { font-size:1.25rem; }
+            .nav-actions { gap:5px; }
+            .nav-btn { width:32px; height:32px; }
+            .btn-nav-today { height:32px; padding:0 10px; }
+            .week-days-line { margin-bottom:6px; font-size:.72rem; }
+            .universal-grid { gap:4px; }
+            .grid-month .cell-unit { aspect-ratio:auto; height:42px; border-radius:9px; font-size:.86rem; box-shadow:none; }
+            .grid-month .cell-unit { height:48px; }
+            .grid-month .cell-unit .weeknum { display:none; }
+            .lunar-label { font-size:.43rem; margin-top:2px; }
+            .holiday-flags { font-size:.46rem; left:2px; top:2px; }
+            .holiday-legend { gap:5px 10px; font-size:.6rem; }
+            .holiday-label-list { margin-top:1px; }
+            .holiday-chip { max-width:220px; padding:5px 7px; font-size:.6rem; }
+            .busy-bar { bottom:2px; width:9px; height:1px; box-shadow:none; opacity:.5; }
+            .cell-unit.selected { box-shadow:0 4px 10px var(--primary-glow) !important; }
+            .cell-unit.today { border-width:1px !important; box-shadow:inset 0 0 0 1px var(--primary) !important; }
+            .conflict-btn-fixed { width:auto; margin-top:8px !important; padding:5px 9px !important; font-size:.68rem !important; }
+            .cell-tooltip { display:none !important; }
+            .sidebar-collapse-btn { display:none; }
+            .timeline-panel { min-height:auto; padding:18px 14px 28px; border-top:8px solid var(--border); }
+            .panel-top-bar { align-items:center; flex-direction:row; gap:10px; margin-bottom:14px; }
+            .panel-top-bar h2 { min-width:0; font-size:1.15rem; line-height:1.25; }
+            .btn-trigger-add { flex:0 0 auto; padding:9px 12px; font-size:.76rem; border-radius:9px; box-shadow:0 3px 10px rgba(99,102,241,.25); }
+            .import-table-tabs { margin-bottom:12px; }
+            .import-tab-btn { flex:1; padding:8px 6px; font-size:.72rem; }
+            .schedule-filter-bar { grid-template-columns:minmax(0,1fr) 112px; }
+            .schedule-filter-bar { gap:6px; margin-bottom:10px; }
+            .schedule-filter-bar input, .schedule-filter-bar select { min-height:38px; }
+            #filter-date-from, #filter-date-to, .schedule-filter-bar > button { display:none; }
+            .axis-scroll-container { overflow:visible; padding-right:0; }
+            .timeline-wrapper { padding-left:0; }
+            .timeline-wrapper::before, .axis-anchor-dot { display:none; }
+            .axis-node-row { margin-bottom:10px; }
+            .axis-time-label { position:static; width:48px; flex:0 0 48px; padding-top:12px; font-size:.7rem; text-align:left; }
+            .schedule-meta-card { padding:12px 13px; border-radius:12px; }
+            .card-main-title { font-size:.9rem; line-height:1.35; }
+            .card-time-span { font-size:.68rem; }
+            .meta-tag { max-width:150px; font-size:.65rem; }
+            .free-add-hint { opacity:.65; }
+            .grid-year { grid-template-columns:repeat(2,1fr); }
+            .panel-modal { max-height:92vh; overflow:auto; padding:20px; border-radius:14px; }
+            .import-table-wrap { overflow:auto; }
+            .import-table-wrap table { min-width:900px; }
+            .custom-context-menu { max-width:calc(100vw - 24px); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-canvas" id="main-canvas">
+        <div class="sidebar">
+            <div class="system-control-bar">
+                <div class="sys-toggle-group" style="gap:6px; flex-wrap:wrap;">
+                    <div class="mobile-quick-actions">
+                    <button class="sys-toggle-btn" onclick="toggleTheme()" id="theme-btn">☀️ LIGHT</button>
+                    <button class="sys-toggle-btn" onclick="toggleLang()" id="lang-btn">EN</button>
+                    <button class="sys-toggle-btn" id="import-btn" title="导入Excel日程">📥 导入</button>
+                    <button class="sys-toggle-btn" id="ics-import-btn" title="导入 ICS 日历">📆 ICS</button>
+                    <button class="sys-toggle-btn" onclick="exportICS()" title="导出 ICS 日历">⬇ ICS</button>
+                    <button class="sys-toggle-btn" onclick="openSnapshots()" title="备份与恢复">↶ 备份</button>
+                    <button class="sys-toggle-btn" onclick="clearAllData()" title="清空所有日程">🗑 清空</button>
+                    </div>
+                    <input type="text" id="global-search" placeholder="🔍 搜索日程" style="background:var(--input-bg);border:1px solid var(--border);border-radius:8px;padding:5px 10px;color:var(--text-main);font-size:0.75rem;outline:none;width:140px;transition:border 0.3s;" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
+                </div>
+                <input type="file" id="excel-import-input" accept=".xlsx,.csv" style="display:none">
+                <input type="file" id="ics-import-input" accept=".ics,text/calendar" style="display:none">
+                <span class="sync-indicator" id="sync-indicator" aria-live="polite">本地模式</span>
+            </div>
+
+            <div class="view-switcher" style="display:flex; align-items:center;">
+                <button class="view-btn" id="v-year" onclick="switchView('year')">年看板</button>
+                <button class="view-btn active" id="v-month" onclick="switchView('month')">月日程</button>
+                <button class="view-btn" id="v-week" onclick="switchView('week')">周编排</button>
+            </div>
+
+            <div class="cal-control-header">
+                <span class="cal-display-title" id="cal-headline">2026年 07月</span>
+                <div class="nav-actions">
+                    <button class="btn-nav-today" onclick="jumpToToday()" id="btn-today">今日</button>
+                    <button class="nav-btn" onclick="navigateCalendar(-1)" title="上一期">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <button class="nav-btn" onclick="navigateCalendar(1)" title="下一期">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="calendar-render-engine" id="cal-engine-container"></div>
+            <div class="holiday-legend" id="holiday-legend">
+                <div class="holiday-label-list" id="holiday-label-list"></div>
+            </div>
+            <button class="sys-toggle-btn conflict-btn-fixed" onclick="toggleConflictHighlight()" id="conflict-btn" title="冲突检测" style="margin-top:8px; align-self: flex-start; padding: 6px 12px; font-size: 0.75rem; white-space: nowrap;">⚠️ 冲突检测</button>
+        </div>
+
+        <button class="sidebar-collapse-btn expanded" id="collapse-btn" onclick="toggleSidebarCollapse()" title="折叠/展开日历">
+            <span class="arrow">‹</span>
+        </button>
+
+        <div class="timeline-panel">
+            <div class="panel-top-bar">
+                <h2 id="timeline-headline">本日日程架构线</h2>
+                <button class="btn-trigger-add" onclick="openAddModal()" id="btn-add-main">+ 编排新事务</button>
+            </div>
+
+            <div class="import-table-tabs">
+                <button class="import-tab-btn active" id="tab-timeline" onclick="switchRightPanel('timeline')">📅 日程时间轴</button>
+                <button class="import-tab-btn" id="tab-import" onclick="switchRightPanel('import')">📊 导入数据表</button>
+            </div>
+
+            <div class="schedule-filter-bar" aria-label="日程筛选">
+                <input id="filter-person" type="search" placeholder="筛选人员/主题" aria-label="筛选人员或主题">
+                <select id="filter-type" aria-label="筛选类型"><option value="">全部类型</option><option value="urgent">Urgent</option><option value="work">常规</option></select>
+                <input id="filter-date-from" type="date" aria-label="开始日期">
+                <input id="filter-date-to" type="date" aria-label="结束日期">
+                <button class="sys-toggle-btn" onclick="resetScheduleFilters()">重置筛选</button>
+            </div>
+            <div class="conflict-summary" id="conflict-summary" aria-live="polite"></div>
+
+            <div class="axis-scroll-container" id="timeline-scroll-zone">
+                <div class="timeline-wrapper" id="timeline-nodes-box"></div>
+            </div>
+
+            <div class="import-table-panel" id="import-panel">
+                <div class="import-actions">
+                    <button class="btn-export" id="btn-template" onclick="downloadImportTemplate()">📄 下载导入模板</button>
+                    <button class="btn-export" id="btn-export-data" onclick="exportImportedData()">⬇ 导出当前数据</button>
+                    <button class="btn-clear" onclick="clearAllData()">🗑 清空全部</button>
+                </div>
+                <div style="font-size:.74rem;color:var(--text-muted);line-height:1.6;margin:-6px 0 12px;">
+                    推荐使用模板中的字段：日期、开始时间、结束时间、会议主题、性质、汇报人、参会人、纪要人、议题背景/决策要点。支持 XLSX 与 CSV。
+                </div>
+                <div class="import-table-wrap" id="import-table-wrap">
+                    <div class="import-empty" id="import-empty-state">
+                        <div class="import-empty-icon">📋</div>
+                        <div>暂无处导入的日程数据</div>
+                        <div style="font-size:0.75rem;margin-top:6px;opacity:0.6;">点击左上角「📥 导入」按钮从 Excel 导入</div>
+                    </div>
+                    <table id="import-data-table" style="display:none;">
+                        <colgroup>
+                            <col style="width:32px;">
+                            <col style="width:90px;">
+                            <col style="width:90px;">
+                            <col>
+                            <col style="width:60px;">
+                            <col style="width:120px;">
+                            <col style="width:140px;">
+                            <col style="width:80px;">
+                            <col style="width:200px;">
+                        </colgroup>
+                        <thead><tr>
+                            <th></th><th>日期</th><th>时间</th><th>会议主题</th><th>性质</th><th>汇报人</th><th>参会人</th><th>纪要人</th><th>议题背景 / 决策要点</th>
+                        </tr></thead>
+                        <tbody id="import-tbody"></tbody>
+                    </table>
+                </div>
+                <div class="import-table-summary" id="import-summary" style="display:none;">
+                    <div class="import-stat-chip">共 <span id="stat-total">0</span> 条日程</div>
+                    <div class="import-stat-chip" style="color:#fca5a5;">紧急 <span id="stat-urgent">0</span> 条</div>
+                    <div class="import-stat-chip" style="color:#93c5fd;">常规 <span id="stat-work">0</span> 条</div>
+                    <div class="import-stat-chip">涉及 <span id="stat-dates">0</span> 个日期</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="custom-context-menu" id="sys-context-menu"></div>
+
+    <div class="glass-overlay" id="modal-overlay">
+        <div class="panel-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title-txt">
+            <div class="m-title" id="modal-title-txt">编排新事务</div>
+            <input type="hidden" id="entry-id">
+            <div class="m-group">
+                <label id="lbl-title">核心议题 / 事务主题</label>
+                <input type="text" id="entry-title" placeholder="输入会议或事务名称">
+            </div>
+            <div class="m-group" style="display: flex; gap: 12px;">
+                <div style="flex: 1;">
+                    <label id="lbl-start">起始时刻</label>                    <input type="time" id="entry-start" value="09:00">
+                </div>
+                <div style="flex: 1;">
+                    <label id="lbl-end">截止时刻</label>
+                    <input type="time" id="entry-end" value="10:00">
+                </div>
+            </div>
+            <div class="m-group">
+                <label id="lbl-type">性质分级</label>
+                <select id="entry-type">
+                    <option value="work" id="opt-work">常规经营管理事务</option>
+                    <option value="urgent" id="opt-urgent">Urgent（核心对齐/重大风险）</option>
+                </select>
+            </div>
+            <div class="m-group" style="display: flex; gap: 12px;">
+                <div style="flex: 1;">
+                    <label>汇报人 👤</label>
+                    <input type="text" id="entry-reporter" placeholder="汇报人">
+                </div>
+                <div style="flex: 1;">
+                    <label>纪要人 📝</label>
+                    <input type="text" id="entry-notetaker" placeholder="纪要人">
+                </div>
+            </div>
+            <div class="m-group">
+                <label>参会人 🏢</label>
+                <input type="text" id="entry-attendees" placeholder="参会人（多人用 & 分隔）">
+            </div>
+            <div class="m-group">
+                <label>议题背景 / 决策要点 📋</label>
+                <textarea id="entry-desc" rows="3" placeholder="议题背景或决策要点说明" style="width:100%;padding:12px;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;color:var(--text-main);font-size:0.9rem;outline:none;resize:vertical;font-family:inherit;transition:border 0.3s;box-sizing:border-box;"></textarea>
+            </div>
+            <div class="m-actions">
+                <button class="b-del" id="btn-delete" onclick="executeDelete()">放弃排班</button>
+                <button class="b-cancel" onclick="closeModal()" id="btn-cancel">关闭</button>
+                <button class="b-save" onclick="executeSave()" id="btn-save">确认写入</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="snapshot-panel" id="snapshot-panel" role="dialog" aria-modal="true" aria-labelledby="snapshot-title">
+        <div class="snapshot-card">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;"><h3 id="snapshot-title" style="flex:1;">备份与恢复</h3><button class="b-cancel" onclick="closeSnapshots()">关闭</button></div>
+            <div id="snapshot-list" class="nav-settings-empty">正在读取备份...</div>
+        </div>
+    </div>
+
+    <script src="./assets/lunar.js"></script>
+    <script>
+        // --- 国际化超脑多模字典 ---
+        const I18N_DICT = {
+            zh: {
+                title: "Executive Horizon - 旗舰版行政日程指挥中心",
+                yearView: "年看板", monthView: "月日程", weekView: "周编排",
+                today: "今日", addBtn: "+ 编排新事务", timelineTitle: "本日日程架构线",
+                timelineSub: "高管时间谱线", modalAdd: "编排新事务", modalEdit: "微调 / 放弃当前安排",
+                lblTitle: "核心议题 / 事务主题", lblStart: "起始时刻", lblEnd: "截止时刻", lblType: "性质分级",
+                optWork: "常规经营管理事务", optUrgent: "Urgent（核心对齐/重大风险）",
+                btnDel: "放弃排班", btnCancel: "关闭", btnSave: "确认写入",
+                placeholder: "输入会议或事务名称",
+                ctxAdd: "➕ 增添新事务", ctxEdit: "✏️ 修正此事务", ctxDel: "❌ 放弃此事务",
+                weekdays: ["日", "一", "二", "三", "四", "五", "六"],
+                months: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                weekTokens: ["周日", "周一", "周二", "周三", "周四", "周五", "周六"],
+                freeTime: "✨ 全天候高价值时间空挡 (可自由调度)",
+                noMeeting: "✨ 暂无会议安排 (空闲时段)",
+                errTime: "逻辑错误：截止时间不可早于起始时间",
+                yearHeadline: "年度 看板", weekHeadline: "重点编排周"
+            },
+            en: {
+                title: "Executive Horizon - Elite Command Center",
+                yearView: "Yearly", monthView: "Monthly", weekView: "Weekly",
+                today: "Today", addBtn: "+ Schedule Event", timelineTitle: "Timeline Structure",
+                timelineSub: "Executive Timeline", modalAdd: "Schedule New Event", modalEdit: "Adjust / Discard Event",
+                lblTitle: "Core Agenda / Subject", lblStart: "Start Time", lblEnd: "End Time", lblType: "Classification",
+                optWork: "Routine Management Business", optUrgent: "Urgent (Critical Alignment)",
+                btnDel: "Discard Task", btnCancel: "Close", btnSave: "Confirm Write",
+                placeholder: "Enter meeting or task description",
+                ctxAdd: "➕ Add New Event", ctxEdit: "✏️ Modify This Event", ctxDel: "❌ Discard This Event",
+                weekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+                months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+                weekTokens: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+                freeTime: "✨ All-day High-value Open Slot (Free to schedule)",
+                noMeeting: "✨ No Meetings Arranged (Idle period)",
+                errTime: "Logical Error: End time cannot be earlier than start time.",
+                yearHeadline: "Annual Horizon Dashboard", weekHeadline: "Priority Deployment Week"
+            }
+        };
+
+        let currentLang = localStorage.getItem('EXEC_HORIZON_LANG') || 'zh';
+        let currentTheme = localStorage.getItem('EXEC_HORIZON_THEME') || 'light';
+        document.documentElement.setAttribute('data-theme', currentTheme);
+
+        // --- 数据内核守护 ---
+        function readLocalSchedule() {
+            try { return JSON.parse(localStorage.getItem("EXEC_HORIZON_DATA")) || {}; }
+            catch (err) { console.warn('Local schedule is invalid:', err); return {}; }
+        }
+        let STORAGE_CORE = readLocalSchedule();
+        let remoteSyncEnabled = false;
+        let remoteSaveTimer = null;
+        let lastSaveReason = '自动保存';
+        const TOOL_SLUG = location.pathname.split('/').filter(Boolean)[1] || 'tool-mrhqjeya';
+        function authHeaders() {
+            const token = localStorage.getItem('tools_token');
+            return token ? { Authorization: `Bearer ${token}` } : {};
+        }
+        function setSyncState(text, kind = '') {
+            const el = document.getElementById('sync-indicator');
+            if (!el) return;
+            el.textContent = text;
+            el.className = `sync-indicator ${kind}`;
+        }
+        async function saveRemoteState(reason = '自动保存', createSnapshot = true) {
+            if (!remoteSyncEnabled) return;
+            setSyncState('正在同步...');
+            const res = await fetch(`/api/custom-tools/${encodeURIComponent(TOOL_SLUG)}/state`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', ...authHeaders() },
+                body: JSON.stringify({ data: STORAGE_CORE, reason, createSnapshot })
+            });
+            const body = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+            setSyncState('已同步', 'ok');
+        }
+        function persist(reason = '自动保存', createSnapshot = true) {
+            localStorage.setItem("EXEC_HORIZON_DATA", JSON.stringify(STORAGE_CORE));
+            lastSaveReason = reason;
+            clearTimeout(remoteSaveTimer);
+            remoteSaveTimer = setTimeout(() => saveRemoteState(lastSaveReason, createSnapshot).catch(err => {
+                console.error('Remote schedule sync failed:', err);
+                setSyncState('同步失败，已保存在本机', 'error');
+            }), 250);
+        }
+
+        let currentView = 'month';
+        function localDateString(date = new Date()) {
+            return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+        }
+        const HOLIDAY_DATA = {};
+        function addHolidayRange(country, start, end, name, nameEn, type = 'holiday') {
+            const cursor = new Date(`${start}T12:00:00`), last = new Date(`${end}T12:00:00`);
+            while (cursor <= last) {
+                const key = localDateString(cursor);
+                (HOLIDAY_DATA[key] ||= []).push({ country, name, nameEn, type });
+                cursor.setDate(cursor.getDate() + 1);
+            }
+        }
+        // 中国：国务院办公厅 2026 年部分节假日安排（含调休上班日）
+        addHolidayRange('CN','2026-01-01','2026-01-03','元旦','New Year');
+        addHolidayRange('CN','2026-01-04','2026-01-04','调休上班','Make-up workday','workday');
+        addHolidayRange('CN','2026-02-15','2026-02-23','春节','Spring Festival');
+        addHolidayRange('CN','2026-02-14','2026-02-14','调休上班','Make-up workday','workday');
+        addHolidayRange('CN','2026-02-28','2026-02-28','调休上班','Make-up workday','workday');
+        addHolidayRange('CN','2026-04-04','2026-04-06','清明节','Qingming Festival');
+        addHolidayRange('CN','2026-05-01','2026-05-05','劳动节','Labor Day');
+        addHolidayRange('CN','2026-05-09','2026-05-09','调休上班','Make-up workday','workday');
+        addHolidayRange('CN','2026-06-19','2026-06-21','端午节','Dragon Boat Festival');
+        addHolidayRange('CN','2026-09-25','2026-09-27','中秋节','Mid-Autumn Festival');
+        addHolidayRange('CN','2026-10-01','2026-10-07','国庆节','National Day');
+        addHolidayRange('CN','2026-09-20','2026-09-20','调休上班','Make-up workday','workday');
+        addHolidayRange('CN','2026-10-10','2026-10-10','调休上班','Make-up workday','workday');
+        // 埃及：埃及总统府 National Holidays 2026
+        addHolidayRange('EG','2026-01-07','2026-01-07','科普特圣诞节','Coptic Christmas');
+        addHolidayRange('EG','2026-01-29','2026-01-29','革命与警察节','Revolution & Police Day');
+        addHolidayRange('EG','2026-03-19','2026-03-23','开斋节','Eid Al-Fitr');
+        addHolidayRange('EG','2026-04-13','2026-04-13','闻风节','Sham El-Nessim');
+        addHolidayRange('EG','2026-04-25','2026-04-25','西奈解放日','Sinai Liberation Day');
+        addHolidayRange('EG','2026-05-07','2026-05-07','劳动节','Labor Day');
+        addHolidayRange('EG','2026-05-26','2026-05-26','阿拉法特日','Arafat Day');
+        addHolidayRange('EG','2026-05-27','2026-05-31','宰牲节','Eid Al-Adha');
+        addHolidayRange('EG','2026-06-18','2026-06-18','伊斯兰新年','Islamic New Year');
+        addHolidayRange('EG','2026-07-02','2026-07-02','六月三十日革命纪念','June 30 Revolution');
+        addHolidayRange('EG','2026-07-23','2026-07-23','七月革命纪念日','July 23 Revolution');
+        addHolidayRange('EG','2026-08-26','2026-08-26','先知诞辰','Mawlid Al-Nabi');
+        addHolidayRange('EG','2026-10-06','2026-10-06','武装部队日','Armed Forces Day');
+        function getHolidayInfo(dateStr) { return HOLIDAY_DATA[dateStr] || []; }
+        function getLunarLabel(date) {
+            try {
+                if (!window.Solar) return '';
+                const lunar = window.Solar.fromYmd(date.getFullYear(), date.getMonth()+1, date.getDate()).getLunar();
+                const festivals = lunar.getFestivals();
+                if (festivals && festivals.length) return festivals[0];
+                const day = lunar.getDayInChinese();
+                return day === '初一' ? `${lunar.getMonthInChinese()}月` : day;
+            } catch (err) { return ''; }
+        }
+        function getCalendarMeta(dateStr, date) {
+            const holidays = getHolidayInfo(dateStr);
+            return {
+                lunar: getLunarLabel(date),
+                holidays,
+                flags: [...new Set(holidays.map(item => item.country === 'CN' ? '🇨🇳' : '🇪🇬'))].join(''),
+                title: holidays.map(item => `${item.country === 'CN' ? '中国' : '埃及'}：${currentLang === 'zh' ? item.name : item.nameEn}`).join('；')
+            };
+        }
+        function getVisibleHolidayEntries() {
+            const year = anchorDate.getFullYear();
+            let from, to;
+            if (currentView === 'year') {
+                from = `${year}-01-01`; to = `${year}-12-31`;
+            } else if (currentView === 'month') {
+                const month = String(anchorDate.getMonth()+1).padStart(2,'0');
+                from = `${year}-${month}-01`;
+                to = localDateString(new Date(year, anchorDate.getMonth()+1, 0, 12));
+            } else {
+                const start = new Date(anchorDate); start.setHours(12,0,0,0); start.setDate(start.getDate()-start.getDay());
+                const end = new Date(start); end.setDate(start.getDate()+6);
+                from = localDateString(start); to = localDateString(end);
+            }
+            const rows = [];
+            Object.keys(HOLIDAY_DATA).sort().forEach(date => {
+                if (date < from || date > to) return;
+                HOLIDAY_DATA[date].forEach(item => rows.push({ date, ...item }));
+            });
+            return rows;
+        }
+        function groupVisibleHolidays(rows) {
+            const groups = [];
+            rows.forEach(row => {
+                const previous = groups[groups.length-1];
+                const previousDate = previous && new Date(`${previous.end}T12:00:00`);
+                const currentDate = new Date(`${row.date}T12:00:00`);
+                const consecutive = previousDate && Math.round((currentDate-previousDate)/86400000) === 1;
+                if (previous && consecutive && previous.country===row.country && previous.name===row.name && previous.type===row.type) {
+                    previous.end = row.date;
+                } else {
+                    groups.push({ ...row, start:row.date, end:row.date });
+                }
+            });
+            return groups;
+        }
+        function formatHolidayRange(start, end) {
+            const a = start.slice(5).replace('-','/'), b = end.slice(5).replace('-','/');
+            return start === end ? a : `${a}–${b}`;
+        }
+        function renderHolidayLegend() {
+            const list = document.getElementById('holiday-label-list');
+            if (!list) return;
+            const rows = groupVisibleHolidays(getVisibleHolidayEntries());
+            if (!rows.length) {
+                list.innerHTML = `<span class="holiday-chip-empty">${currentLang === 'zh' ? '当前视图暂无中埃官方假期' : 'No official China/Egypt holidays in this view'}</span>`;
+                return;
+            }
+            list.innerHTML = rows.map(item => `<span class="holiday-chip ${item.country === 'CN' ? 'cn' : 'eg'} ${item.type === 'workday' ? 'workday' : ''}" title="${escapeHtml(item.country === 'CN' ? '中国' : '埃及')} · ${escapeHtml(currentLang === 'zh' ? item.name : item.nameEn)}">${item.country === 'CN' ? '🇨🇳' : '🇪🇬'} ${formatHolidayRange(item.start,item.end)} · ${escapeHtml(currentLang === 'zh' ? item.name : item.nameEn)}</span>`).join('');
+        }
+        const savedDate = localStorage.getItem('EXEC_HORIZON_SELECTED_DATE');
+        let selectedDateStr = /^\d{4}-\d{2}-\d{2}$/.test(savedDate || '') ? savedDate : localDateString();
+        let anchorDate = new Date(`${selectedDateStr}T12:00:00`);
+        let currentFilters = { person: '', type: '', from: '', to: '' };
+
+        const container = document.getElementById("cal-engine-container");
+
+        // 滚轮切换日历（月/周视图前后月，年视图前后年）
+        container.addEventListener('wheel', function(e) {
+            if (e.target.closest('input, select, textarea')) return;
+            e.preventDefault();
+            const dir = e.deltaY > 0 ? 1 : -1;
+            if (currentView === 'month') anchorDate.setMonth(anchorDate.getMonth() + dir);
+            else if (currentView === 'year') anchorDate.setFullYear(anchorDate.getFullYear() + dir);
+            else if (currentView === 'week') anchorDate.setDate(anchorDate.getDate() + dir * 7);
+            renderCalendarPart();
+        }, { passive: false });
+
+        // --- 全局搜索 ---
+        document.getElementById('global-search').addEventListener('input', function(e) {
+            const q = e.target.value.trim().toLowerCase();
+            if (!q) { clearSearchHighlight(); return; }
+            applySearchHighlight(q);
+        });
+
+        function clearSearchHighlight() {
+            document.querySelectorAll('.cell-unit.search-hit, .schedule-meta-card.search-hit').forEach(el => el.classList.remove('search-hit'));
+        }
+
+        function applySearchHighlight(q) {
+            clearSearchHighlight();
+            // 搜索日程卡片
+            const allCards = document.querySelectorAll('.schedule-meta-card.is-real');
+            allCards.forEach(card => {
+                const title = (card.dataset.title || '').toLowerCase();
+                const reporter = (card.dataset.reporter || '').toLowerCase();
+                const attendees = (card.dataset.attendees || '').toLowerCase();
+                const desc = (card.dataset.desc || '').toLowerCase();
+                if (title.includes(q) || reporter.includes(q) || attendees.includes(q) || desc.includes(q)) {
+                    card.classList.add('search-hit');
+                }
+            });
+            // 搜索日历格子（按日期匹配）
+            document.querySelectorAll('.cell-unit[data-date]').forEach(cell => {
+                const dateStr = cell.dataset.date || '';
+                const d = new Date(dateStr);
+                const dateStrCN = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+                if (dateStr.includes(q) || dateStrCN.toLowerCase().includes(q)) {
+                    cell.classList.add('search-hit');
+                }
+            });
+        }
+
+        // --- 冲突检测 ---
+        let conflictMode = false;
+        function toggleConflictHighlight() {
+            conflictMode = !conflictMode;
+            const btn = document.getElementById('conflict-btn');
+            if (conflictMode) {
+                btn.classList.add('active');
+                applyConflictHighlight();
+            } else {
+                btn.classList.remove('active');
+                clearConflictHighlight();
+            }
+        }
+
+        function findConflicts() {
+            const conflictDates = new Set();
+            for (const [dateStr, events] of Object.entries(STORAGE_CORE)) {
+                const sorted = [...events].sort((a,b) => timeToMin(a.start) - timeToMin(b.start));
+                for (let i = 0; i < sorted.length; i++) {
+                    for (let j = i+1; j < sorted.length; j++) {
+                        if (timeToMin(sorted[j].start) < timeToMin(sorted[i].end)) {
+                            conflictDates.add(dateStr);
+                        }
+                    }
+                }
+            }
+            return [...conflictDates];
+        }
+
+        function applyConflictHighlight() {
+            clearConflictHighlight();
+            const conflictDates = findConflicts();
+            conflictDates.forEach(dateStr => {
+                document.querySelectorAll(`.cell-unit[data-date="${dateStr}"]`).forEach(cell => {
+                    cell.classList.add('conflict');
+                });
+            });
+            if (conflictDates.length > 0) {
+                showImportToast(`⚠️ 检测到 ${conflictDates.length} 个日期存在时间冲突`, 'error');
+            }
+        }
+
+        function clearConflictHighlight() {
+            document.querySelectorAll('.cell-unit.conflict').forEach(el => {
+                el.classList.remove('conflict');
+            });
+        }
+
+        // --- 悬停气泡 ---
+        const tooltipEl = document.createElement('div');
+        tooltipEl.className = 'cell-tooltip';
+        document.body.appendChild(tooltipEl);
+
+        function showCellTooltip(cell, dateStr) {
+            const rect = cell.getBoundingClientRect();
+            const events = STORAGE_CORE[dateStr] || [];
+            const date = new Date(`${dateStr}T12:00:00`);
+            const meta = getCalendarMeta(dateStr, date);
+            let html = `<div class="tooltip-date">${dateStr}${meta.lunar ? ` · 农历${escapeHtml(meta.lunar)}` : ''}</div>`;
+            if (meta.holidays.length) html += meta.holidays.map(item => `<div class="tooltip-event ${item.type === 'workday' ? 'work' : 'urgent'}"><span class="dot"></span>${item.country === 'CN' ? '🇨🇳' : '🇪🇬'} ${escapeHtml(currentLang === 'zh' ? item.name : item.nameEn)}</div>`).join('');
+            if (events.length === 0) {
+                html += `<div class="tooltip-empty">无日程</div>`;
+            } else {
+                events.sort((a,b) => timeToMin(a.start) - timeToMin(b.start)).forEach(ev => {
+                    const dotClass = ev.type === 'urgent' ? 'urgent' : 'work';
+                    html += `<div class="tooltip-event ${dotClass}"><span class="dot"></span>${escapeHtml(ev.start)} ${escapeHtml(ev.title)}</div>`;
+                });
+            }
+            tooltipEl.innerHTML = html;
+            tooltipEl.classList.add('show');
+
+            // 定位：优先下方，不够则上方，较大偏移量避免遮挡格子
+            let top = rect.bottom + 20;
+            let left = rect.left + rect.width / 2 - 90;
+            tooltipEl.style.top = top + 'px';
+            tooltipEl.style.left = Math.max(8, left) + 'px';
+            tooltipEl.style.transform = 'translateY(0)';
+            // 超出底部则翻转到上方
+            if (top + tooltipEl.offsetHeight > window.innerHeight - 8) {
+                tooltipEl.style.top = (rect.top - tooltipEl.offsetHeight - 20) + 'px';
+                tooltipEl.style.transform = 'translateY(0)';
+            }
+        }
+
+        function hideCellTooltip() {
+            tooltipEl.classList.remove('show');
+        }
+
+        // --- 工具函数 ---
+        function getWeekNumber(date) {
+            const d = new Date(date);
+            d.setHours(0, 0, 0, 0);
+            d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+            const yearStart = new Date(d.getFullYear(), 0, 1);
+            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        }
+
+        function getDayOfYear(date) {
+            const d = new Date(date);
+            const start = new Date(d.getFullYear(), 0, 0);
+            return Math.floor((d - start) / 86400000);
+        }
+        const headline = document.getElementById("cal-headline");
+        const timelineBox = document.getElementById("timeline-nodes-box");
+        const timelineHeadline = document.getElementById("timeline-headline");
+        const ctxMenu = document.getElementById("sys-context-menu");
+        let contextCardTarget = null;
+
+        function timeToMin(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
+        function minToTime(m) { return `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`; }
+
+        // --- 核心突破：多态主题与语言翻译渲染器 ---
+        function toggleTheme() {
+            currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            document.getElementById("theme-btn").innerText = currentTheme === 'dark' ? '☀️ LIGHT' : '🌙 DARK';
+            localStorage.setItem('EXEC_HORIZON_THEME', currentTheme);
+        }
+
+        function toggleLang() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            localStorage.setItem('EXEC_HORIZON_LANG', currentLang);
+            document.getElementById("lang-btn").innerText = currentLang === 'zh' ? 'EN' : '中文';
+            applyStaticLanguage();
+            renderCalendarPart();
+            renderTimelineBlock(selectedDateStr);
+        }
+
+        function applyStaticLanguage() {
+            const d = I18N_DICT[currentLang];
+            document.title = d.title;
+            document.getElementById("v-year").innerText = d.yearView;
+            document.getElementById("v-month").innerText = d.monthView;
+            document.getElementById("v-week").innerText = d.weekView;
+            document.getElementById("btn-today").innerText = d.today;
+            document.getElementById("btn-add-main").innerText = d.addBtn;
+            document.getElementById("lbl-title").innerText = d.lblTitle;
+            document.getElementById("entry-title").placeholder = d.placeholder;
+            document.getElementById("lbl-start").innerText = d.lblStart;
+            document.getElementById("lbl-end").innerText = d.lblEnd;
+            document.getElementById("lbl-type").innerText = d.lblType;
+            document.getElementById("opt-work").innerText = d.optWork;
+            document.getElementById("opt-urgent").innerText = d.optUrgent;
+            document.getElementById("btn-cancel").innerText = d.btnCancel;
+            document.getElementById("btn-save").innerText = d.btnSave;
+            const zh = currentLang === 'zh';
+            document.getElementById('import-btn').textContent = zh ? '📥 导入' : '📥 Import';
+            document.getElementById('global-search').placeholder = zh ? '🔍 搜索日程' : '🔍 Search schedules';
+            document.getElementById('filter-person').placeholder = zh ? '筛选人员/主题' : 'Filter people / subject';
+            document.querySelector('#filter-type option[value=""]').textContent = zh ? '全部类型' : 'All types';
+            document.querySelector('#filter-type option[value="work"]').textContent = zh ? '常规' : 'Routine';
+            document.querySelector('.schedule-filter-bar button').textContent = zh ? '重置筛选' : 'Reset filters';
+            document.getElementById('tab-timeline').textContent = zh ? '📅 日程时间轴' : '📅 Timeline';
+            document.getElementById('tab-import').textContent = zh ? '📊 导入数据表' : '📊 Imported data';
+            document.getElementById('snapshot-title').textContent = zh ? '备份与恢复' : 'Backup & restore';
+            renderHolidayLegend();
+            document.getElementById('btn-template').textContent = zh ? '📄 下载导入模板' : '📄 Download template';
+            document.getElementById('btn-export-data').textContent = zh ? '⬇ 导出当前数据' : '⬇ Export current data';
+            document.getElementById('theme-btn').innerText = currentTheme === 'dark' ? '☀️ LIGHT' : '🌙 DARK';
+        }
+
+        function jumpToToday() {
+            anchorDate = new Date();
+            selectedDateStr = localDateString(anchorDate);
+            localStorage.setItem('EXEC_HORIZON_SELECTED_DATE', selectedDateStr);
+            renderCalendarPart();
+            renderTimelineBlock(selectedDateStr);
+        }
+
+        function getBusynessClass(dateStr) {
+            const count = (STORAGE_CORE[dateStr] || []).length;
+            if (count === 0) return "status-free";
+            if (count <= 2) return "status-light";
+            if (count <= 4) return "status-heavy";
+            return "status-critical";
+        }
+
+        function switchView(viewMode) {
+            currentView = viewMode;
+            document.querySelectorAll(".view-btn").forEach(b => b.classList.remove("active"));
+            document.getElementById(`v-${viewMode}`).classList.add("active");
+            renderCalendarPart();
+        }
+
+        function navigateCalendar(dir) {
+            if (currentView === 'month') anchorDate.setMonth(anchorDate.getMonth() + dir);
+            else if (currentView === 'year') anchorDate.setFullYear(anchorDate.getFullYear() + dir);
+            else if (currentView === 'week') anchorDate.setDate(anchorDate.getDate() + dir * 7);
+            renderCalendarPart();
+        }
+
+        // --- 三级无缝数据渲染引擎 ---
+        function renderCalendarPart(targetContainer = container) {
+            const frag = document.createDocumentFragment();
+            const d = I18N_DICT[currentLang];
+
+            if (currentView === 'month') {
+                headline.innerText = currentLang === 'zh'
+                    ? `${anchorDate.getFullYear()}年 ${String(anchorDate.getMonth()+1).padStart(2,'0')}月`
+                    : `${d.months[anchorDate.getMonth()]} ${anchorDate.getFullYear()}`;
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'grid-animate-wrapper month-calendar-wrapper';
+
+                const weekRow = document.createElement('div');
+                weekRow.className = 'week-days-line';
+                d.weekdays.forEach(w => weekRow.appendChild(Object.assign(document.createElement('div'), {textContent: w})));
+                wrapper.appendChild(weekRow);
+
+                const grid = document.createElement('div');
+                grid.className = 'universal-grid grid-month';
+
+                let temp = new Date(anchorDate.getFullYear(), anchorDate.getMonth(), 1);
+                const firstDayIdx = temp.getDay();
+                const lastDay = new Date(anchorDate.getFullYear(), anchorDate.getMonth() + 1, 0).getDate();
+                const prevLastDay = new Date(anchorDate.getFullYear(), anchorDate.getMonth(), 0).getDate();
+
+                for (let x = firstDayIdx; x > 0; x--) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell-unit sibling';
+                    cell.textContent = prevLastDay - x + 1;
+                    grid.appendChild(cell);
+                }
+                for (let i = 1; i <= lastDay; i++) {
+                    const d = new Date(anchorDate.getFullYear(), anchorDate.getMonth(), i);
+                    const dStr = `${anchorDate.getFullYear()}-${String(anchorDate.getMonth()+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+                    const cell = document.createElement('div');
+                    let cls = 'cell-unit';
+                    if (dStr === selectedDateStr) cls += ' selected';
+                    if (dStr === localDateString()) cls += ' today';
+                    cell.className = cls;
+                    cell.dataset.date = dStr;
+                    cell.tabIndex = 0;
+                    cell.setAttribute('role', 'button');
+                    cell.setAttribute('aria-label', dStr);
+
+                    const meta = getCalendarMeta(dStr, d);
+                    if (meta.holidays.some(item => item.country === 'CN' && item.type === 'holiday')) cls += ' china-holiday';
+                    if (meta.holidays.some(item => item.country === 'EG')) cls += ' egypt-holiday';
+                    if (meta.holidays.some(item => item.type === 'workday')) cls += ' makeup-workday';
+                    cell.className = cls;
+                    if (meta.title) cell.title = meta.title;
+                    cell.addEventListener('mouseenter', function() { showCellTooltip(this, dStr); });
+                    cell.addEventListener('mouseleave', hideCellTooltip);
+                    cell.innerHTML = `<span class="holiday-flags">${meta.flags}</span><span class="day-number">${i}</span><span class="lunar-label">${escapeHtml(meta.lunar)}</span><span class="busy-bar ${getBusynessClass(dStr)}"></span>`;
+                    grid.appendChild(cell);
+                }
+                const renderedCells = firstDayIdx + lastDay;
+                for (let i = 1; i <= 42 - renderedCells; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell-unit sibling';
+                    cell.textContent = i;
+                    grid.appendChild(cell);
+                }
+                wrapper.appendChild(grid);
+                frag.appendChild(wrapper);
+
+            } else if (currentView === 'year') {
+                headline.innerText = currentLang === 'zh' ? `${anchorDate.getFullYear()}年度 看板` : `${d.yearHeadline} ${anchorDate.getFullYear()}`;
+                const grid = document.createElement('div');
+                grid.className = 'grid-animate-wrapper universal-grid grid-year';
+                for (let m = 0; m < 12; m++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell-unit';
+                    cell.textContent = d.months[m];
+                    cell.addEventListener('click', () => { anchorDate.setMonth(m); switchView('month'); });
+                    grid.appendChild(cell);
+                }
+                frag.appendChild(grid);
+
+            } else if (currentView === 'week') {
+                headline.innerText = currentLang === 'zh' ? `${anchorDate.getFullYear()}年 重点编排周` : `${d.weekHeadline}`;
+                const grid = document.createElement('div');
+                grid.className = 'grid-animate-wrapper universal-grid grid-week';
+
+                let currentDayOfWeek = anchorDate.getDay();
+                let startOfWeek = new Date(anchorDate);
+                startOfWeek.setDate(anchorDate.getDate() - currentDayOfWeek);
+
+                for (let dIdx = 0; dIdx < 7; dIdx++) {
+                    let nextDay = new Date(startOfWeek);
+                    nextDay.setDate(startOfWeek.getDate() + dIdx);
+                    const dStr = `${nextDay.getFullYear()}-${String(nextDay.getMonth()+1).padStart(2,'0')}-${String(nextDay.getDate()).padStart(2,'0')}`;
+                    let cls = 'cell-unit';
+                    if (dStr === selectedDateStr) cls += ' selected';
+                    if (dStr === localDateString()) cls += ' today';
+
+                    const cell = document.createElement('div');
+                    cell.className = cls;
+                    cell.dataset.date = dStr;
+                    cell.tabIndex = 0;
+                    cell.setAttribute('role', 'button');
+                    cell.setAttribute('aria-label', dStr);
+                    const meta = getCalendarMeta(dStr, nextDay);
+                    if (meta.holidays.some(item => item.country === 'CN' && item.type === 'holiday')) cell.classList.add('china-holiday');
+                    if (meta.holidays.some(item => item.country === 'EG')) cell.classList.add('egypt-holiday');
+                    if (meta.holidays.some(item => item.type === 'workday')) cell.classList.add('makeup-workday');
+                    if (meta.title) cell.title = meta.title;
+                    cell.addEventListener('mouseenter', function() { showCellTooltip(this, dStr); });
+                    cell.addEventListener('mouseleave', hideCellTooltip);
+                    cell.innerHTML = `<span class="holiday-flags">${meta.flags}</span><div class="week-left-desc"><span class="w-name">${d.weekTokens[dIdx]}</span><span class="day-number">${nextDay.getMonth()+1}/${nextDay.getDate()}</span><span class="lunar-label">${escapeHtml(meta.lunar)}</span></div><span class="busy-bar ${getBusynessClass(dStr)}"></span>`;
+                    grid.appendChild(cell);
+                }
+                frag.appendChild(grid);
+            }
+
+            targetContainer.innerHTML = '';
+            targetContainer.appendChild(frag);
+            if (targetContainer === container) renderHolidayLegend();
+        }
+
+        // 统一事件代理：日历格子点击
+        container.addEventListener('click', function(e) {
+            const cell = e.target.closest('.cell-unit[data-date]');
+            if (cell) selectDate(cell.dataset.date);
+        });
+        container.addEventListener('keydown', function(e) {
+            const cell = e.target.closest('.cell-unit[data-date]');
+            if (cell && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); selectDate(cell.dataset.date); }
+        });
+        container.addEventListener('dragover', function(e) {
+            if (e.target.closest('.cell-unit[data-date]')) e.preventDefault();
+        });
+        container.addEventListener('drop', function(e) {
+            const cell = e.target.closest('.cell-unit[data-date]');
+            if (!cell) return;
+            e.preventDefault();
+            try {
+                const info = JSON.parse(e.dataTransfer.getData('application/json'));
+                if (!info.id || !STORAGE_CORE[info.fromDate]) return;
+                const index = STORAGE_CORE[info.fromDate].findIndex(event => event.id === info.id);
+                if (index < 0) return;
+                const [event] = STORAGE_CORE[info.fromDate].splice(index, 1);
+                if (!STORAGE_CORE[cell.dataset.date]) STORAGE_CORE[cell.dataset.date] = [];
+                STORAGE_CORE[cell.dataset.date].push(event);
+                persist('拖拽调整日程');
+                selectDate(cell.dataset.date);
+                showImportToast('✅ 日程已移动', 'success');
+            } catch (err) { console.warn('Drop schedule failed:', err); }
+        });
+
+        // 手机端横向手势：月视图切月、周视图切周、年视图切年
+        let swipeStartX = 0, swipeStartY = 0, swipeStartedAt = 0;
+        let swipeDeltaX = 0, swipeTracking = false, swipeHorizontal = false;
+        let swipePreview = null, swipeCurrentLayer = null, swipePreviewDirection = 0;
+
+        function shiftAnchorForPreview(direction) {
+            if (currentView === 'month') anchorDate.setMonth(anchorDate.getMonth() + direction);
+            else if (currentView === 'year') anchorDate.setFullYear(anchorDate.getFullYear() + direction);
+            else anchorDate.setDate(anchorDate.getDate() + direction * 7);
+        }
+
+        function prepareSwipePreview(direction) {
+            if (swipePreview && swipePreviewDirection === direction) return;
+            if (swipePreview) swipePreview.remove();
+            const originalAnchor = new Date(anchorDate);
+            const originalHeadline = headline.textContent;
+            shiftAnchorForPreview(direction);
+            const detachedPreview = document.createElement('div');
+            renderCalendarPart(detachedPreview);
+            anchorDate = originalAnchor;
+            headline.textContent = originalHeadline;
+            swipeCurrentLayer = container.firstElementChild;
+            swipePreview = document.createElement('div');
+            swipePreview.className = 'calendar-swipe-preview';
+            swipePreview.innerHTML = detachedPreview.innerHTML;
+            swipePreviewDirection = direction;
+            container.appendChild(swipePreview);
+        }
+
+        function clearSwipeLayers() {
+            if (swipeCurrentLayer) { swipeCurrentLayer.style.transform=''; swipeCurrentLayer.style.opacity=''; }
+            if (swipePreview) swipePreview.remove();
+            swipePreview = null;
+            swipeCurrentLayer = null;
+            swipePreviewDirection = 0;
+        }
+        container.addEventListener('touchstart', e => {
+            if (e.touches.length !== 1) return;
+            swipeStartX = e.touches[0].clientX;
+            swipeStartY = e.touches[0].clientY;
+            swipeStartedAt = Date.now();
+            swipeDeltaX = 0;
+            swipeTracking = true;
+            swipeHorizontal = false;
+            container.getAnimations().forEach(animation => animation.cancel());
+            clearSwipeLayers();
+        }, { passive:true });
+
+        container.addEventListener('touchmove', e => {
+            if (!swipeTracking || e.touches.length !== 1) return;
+            const dx = e.touches[0].clientX - swipeStartX;
+            const dy = e.touches[0].clientY - swipeStartY;
+            if (!swipeHorizontal) {
+                if (Math.max(Math.abs(dx), Math.abs(dy)) < 12) return;
+                if (Math.abs(dy) > Math.abs(dx) * 1.35) { swipeTracking = false; return; }
+                if (Math.abs(dx) <= Math.abs(dy) * 1.05) return;
+                swipeHorizontal = true;
+            }
+            e.preventDefault();
+            const width = Math.max(container.clientWidth, 1);
+            const direction = dx < 0 ? 1 : -1;
+            prepareSwipePreview(direction);
+            const resistance = 1 - Math.min(Math.abs(dx) / width, .65) * .18;
+            swipeDeltaX = dx * resistance;
+            const progress = Math.min(Math.abs(swipeDeltaX) / width, 1);
+            if (swipeCurrentLayer) {
+                swipeCurrentLayer.style.transform = `translate3d(${swipeDeltaX}px,0,0) scale(${1 - progress * .018})`;
+                swipeCurrentLayer.style.opacity = String(1 - progress * .42);
+            }
+            if (swipePreview) {
+                swipePreview.style.transform = `translate3d(${swipeDeltaX + direction * width}px,0,0) scale(${.985 + progress * .015})`;
+                swipePreview.style.opacity = String(.18 + progress * .82);
+            }
+        }, { passive:false });
+
+        function settleCalendarSwipe(changePage) {
+            const width = Math.max(container.clientWidth, 1);
+            const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const currentLayer = swipeCurrentLayer;
+            const previewLayer = swipePreview;
+            if (reduced) {
+                const direction = swipeDeltaX < 0 ? 1 : -1;
+                clearSwipeLayers();
+                if (changePage) navigateCalendar(direction);
+                return;
+            }
+            if (!changePage) {
+                const back = currentLayer && currentLayer.animate([
+                    { transform:currentLayer.style.transform, opacity:currentLayer.style.opacity || 1 },
+                    { transform:'translate3d(0,0,0)', opacity:1 }
+                ], { duration:220, easing:'cubic-bezier(.2,.8,.2,1)', fill:'forwards' });
+                if (previewLayer) previewLayer.animate([
+                    { transform:previewLayer.style.transform, opacity:previewLayer.style.opacity || .2 },
+                    { transform:`translate3d(${swipePreviewDirection * width}px,0,0)`, opacity:0 }
+                ], { duration:220, easing:'cubic-bezier(.2,.8,.2,1)', fill:'forwards' });
+                if (back) back.onfinish = clearSwipeLayers; else clearSwipeLayers();
+                return;
+            }
+            const direction = swipeDeltaX < 0 ? 1 : -1;
+            const exitX = direction > 0 ? -width : width;
+            const remaining = Math.max(0, width - Math.abs(swipeDeltaX));
+            const duration = Math.max(110, Math.min(240, 110 + remaining / width * 100));
+            const outgoing = currentLayer.animate([
+                { transform:currentLayer.style.transform, opacity:currentLayer.style.opacity || 1 },
+                { transform:`translate3d(${exitX}px,0,0) scale(.97)`, opacity:.35 }
+            ], { duration, easing:'cubic-bezier(.22,.75,.25,1)', fill:'forwards' });
+            if (previewLayer) previewLayer.animate([
+                { transform:previewLayer.style.transform, opacity:previewLayer.style.opacity || .3 },
+                { transform:'translate3d(0,0,0) scale(1)', opacity:1 }
+            ], { duration, easing:'cubic-bezier(.22,.75,.25,1)', fill:'forwards' });
+            outgoing.onfinish = () => {
+                outgoing.cancel();
+                clearSwipeLayers();
+                navigateCalendar(direction);
+            };
+        }
+
+        container.addEventListener('touchend', e => {
+            const touch = e.changedTouches && e.changedTouches[0];
+            if (!touch || !swipeTracking || !swipeHorizontal) { swipeTracking=false; return; }
+            const elapsed = Math.max(Date.now() - swipeStartedAt, 1);
+            const velocity = Math.abs(swipeDeltaX) / elapsed;
+            const shouldChange = Math.abs(swipeDeltaX) >= Math.min(72, container.clientWidth * .2) || (velocity > .48 && Math.abs(swipeDeltaX) > 28);
+            settleCalendarSwipe(shouldChange);
+            swipeTracking = false;
+            swipeHorizontal = false;
+        }, { passive:true });
+        container.addEventListener('touchcancel', () => {
+            if (swipeHorizontal) settleCalendarSwipe(false);
+            swipeTracking=false; swipeHorizontal=false;
+        }, { passive:true });
+
+        function jumpToMonth(m) { anchorDate.setMonth(m); switchView('month'); }
+
+        function selectDate(dStr) {
+            selectedDateStr = dStr;
+            localStorage.setItem('EXEC_HORIZON_SELECTED_DATE', selectedDateStr);
+            renderCalendarPart();
+            renderTimelineBlock(dStr);
+        }
+
+        function eventMatchesFilters(event, dateStr) {
+            const q = currentFilters.person.toLowerCase();
+            if (currentFilters.type && event.type !== currentFilters.type) return false;
+            if (currentFilters.from && dateStr < currentFilters.from) return false;
+            if (currentFilters.to && dateStr > currentFilters.to) return false;
+            if (q) {
+                const haystack = [event.title, event.reporter, event.attendees, event.noteTaker, event.description].join(' ').toLowerCase();
+                if (!haystack.includes(q)) return false;
+            }
+            return true;
+        }
+
+        function getFilteredEvents(dateStr) {
+            return (STORAGE_CORE[dateStr] || []).filter(event => eventMatchesFilters(event, dateStr));
+        }
+
+        // --- 高精高管时间谱线架构引擎 ---
+        function renderTimelineBlock(dateStr) {
+            const [y, m, d] = dateStr.split('-');
+            const dict = I18N_DICT[currentLang];
+            timelineHeadline.innerText = currentLang === 'zh' ? `${m}月${d}日 ${dict.timelineTitle}` : `${dict.timelineTitle} (${m}/${d})`;
+                        
+            const rawEvents = getFilteredEvents(dateStr);
+            const dayStart = timeToMin("08:30");
+            const dayEnd = timeToMin("18:30");
+                        
+            let segments = [];
+            if (rawEvents.length === 0) {
+                segments.push({ start: "08:30", end: "18:30", title: dict.freeTime, type: "free", real: false });
+            } else {
+                const sorted = [...rawEvents].sort((a,b) => timeToMin(a.start) - timeToMin(b.start));
+                let ptr = dayStart;
+                sorted.forEach(ev => {
+                    const evStart = timeToMin(ev.start);
+                    const evEnd = timeToMin(ev.end);
+                    if (evStart > ptr) {
+                        segments.push({ start: minToTime(ptr), end: minToTime(evStart), title: dict.noMeeting, type: "free", real: false });
+                    }
+                    segments.push({ ...ev, real: true });
+                    ptr = Math.max(ptr, evEnd);
+                });
+                if (ptr < dayEnd) {
+                    segments.push({ start: minToTime(ptr), end: minToTime(dayEnd), title: dict.noMeeting, type: "free", real: false });
+                }
+            }
+
+            let html = "";
+            segments.forEach(seg => {
+                const isFree = !seg.real;
+                const cardAttrs = isFree
+                    ? `data-start="${seg.start}" data-end="${seg.end}"`
+                    : `data-id="${seg.id || ''}" data-title="${escapeHtml(seg.title || '')}" data-start="${seg.start || ''}" data-end="${seg.end || ''}" data-type="${seg.type || ''}" data-reporter="${escapeHtml(seg.reporter || '')}" data-attendees="${escapeHtml(seg.attendees || '')}" data-notetaker="${escapeHtml(seg.noteTaker || '')}" data-desc="${escapeHtml(seg.description || '')}" data-date="${dateStr || ''}"`;
+                const cardClass = `schedule-meta-card node-${seg.type} ${isFree ? 'is-free' : 'is-real'}`;
+                html += `
+                    <div class="axis-node-row">
+                        <div class="axis-time-label">${seg.start}</div>
+                        <div class="axis-anchor-dot"></div>
+                        <div class="${cardClass}" ${cardAttrs}>
+                            <div class="card-row-head">
+                                <div class="card-main-title">${escapeHtml(seg.title || '')}</div>
+                                <div class="card-time-span">${seg.start} - ${seg.end}</div>
+                            </div>
+                            ${seg.reporter || seg.attendees ? `
+                            <div class="card-meta-row">
+                                ${seg.reporter ? `<span class="meta-tag">👤 ${escapeHtml(seg.reporter)}</span>` : ''}
+                                ${seg.attendees ? `<span class="meta-tag">🏢 ${escapeHtml(seg.attendees)}</span>` : ''}
+                                ${seg.description ? `<span class="meta-tag" title="${escapeHtml(seg.description)}">📋 详情</span>` : ''}
+                            </div>` : ''}
+                            ${isFree ? `<div class="free-add-hint">双击或右键添加日程</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            timelineBox.innerHTML = html;
+
+            // 已存在日程双击查看详情
+            timelineBox.querySelectorAll('.is-real').forEach(card => {
+                card.draggable = true;
+                card.tabIndex = 0;
+                card.setAttribute('role', 'button');
+                card.setAttribute('aria-label', `${card.dataset.title || ''} ${card.dataset.start || ''}-${card.dataset.end || ''}`);
+                card.addEventListener('dblclick', () => {
+                    openEditModalFromCard(card);
+                });
+                card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEditModalFromCard(card); } });
+                card.addEventListener('dragstart', e => {
+                    card.classList.add('dragging');
+                    e.dataTransfer.setData('application/json', JSON.stringify({ id: card.dataset.id, fromDate: dateStr }));
+                });
+                card.addEventListener('dragend', () => card.classList.remove('dragging'));
+            });
+
+            // 空闲时段双击添加
+            timelineBox.querySelectorAll('.is-free').forEach(card => {
+                card.addEventListener('dblclick', () => {
+                    openAddModal(card.dataset.start, card.dataset.end);
+                });
+            });
+        }
+
+        function escapeHtml(str) {
+            return String(str == null ? '' : str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        // --- 模态架构控制中心 ---
+        const overlay = document.getElementById("modal-overlay");
+        function openAddModal(startTime, endTime) {
+            const d = I18N_DICT[currentLang];
+            document.getElementById("modal-title-txt").innerText = d.modalAdd;
+            document.getElementById("entry-id").value = "";
+            document.getElementById("entry-title").value = "";
+            document.getElementById("entry-start").value = startTime || "09:00";
+            document.getElementById("entry-end").value = endTime || "10:00";
+            document.getElementById("entry-type").value = "work";
+            document.getElementById("btn-delete").style.display = "none";
+            overlay.style.display = "flex";
+            requestAnimationFrame(() => overlay.classList.add('show'));
+            document.getElementById("entry-title").focus();
+        }
+
+        function openEditModal(id, title, start, end, type, reporter, attendees, noteTaker, description) {
+            const d = I18N_DICT[currentLang];
+            document.getElementById("modal-title-txt").innerText = d.modalEdit;
+            document.getElementById("entry-id").value = id;
+            document.getElementById("entry-title").value = title || '';
+            document.getElementById("entry-start").value = start;
+            document.getElementById("entry-end").value = end;
+            document.getElementById("entry-type").value = type;
+            document.getElementById("entry-reporter").value = reporter || '';
+            document.getElementById("entry-attendees").value = attendees || '';
+            document.getElementById("entry-notetaker").value = noteTaker || '';
+            document.getElementById("entry-desc").value = description || '';
+            document.getElementById("btn-delete").innerText = d.btnDel;
+            document.getElementById("btn-delete").style.display = "block";
+            overlay.style.display = "flex";
+            requestAnimationFrame(() => overlay.classList.add('show'));
+        }
+
+        // 从日程卡片 data 属性读取并打开编辑弹窗
+        function openEditModalFromCard(card) {
+            openEditModal(
+                card.getAttribute('data-id'),
+                card.getAttribute('data-title'),
+                card.getAttribute('data-start'),
+                card.getAttribute('data-end'),
+                card.getAttribute('data-type'),
+                card.getAttribute('data-reporter'),
+                card.getAttribute('data-attendees'),
+                card.getAttribute('data-notetaker'),
+                card.getAttribute('data-desc')
+            );
+            hideContextMenu();
+        }
+
+        function closeModal() {
+            overlay.classList.remove('show');
+            setTimeout(() => { overlay.style.display = "none"; }, 300);
+            hideContextMenu();
+        }
+
+        function executeSave() {
+            const title = document.getElementById("entry-title").value.trim();
+            const start = document.getElementById("entry-start").value;
+            const end = document.getElementById("entry-end").value;
+            const type = document.getElementById("entry-type").value;
+            const id = document.getElementById("entry-id").value;
+            const reporter = document.getElementById("entry-reporter").value.trim();
+            const attendees = document.getElementById("entry-attendees").value.trim();
+            const noteTaker = document.getElementById("entry-notetaker").value.trim();
+            const description = document.getElementById("entry-desc").value.trim();
+
+            if(!title) return;
+            if(timeToMin(start) >= timeToMin(end)) { alert(I18N_DICT[currentLang].errTime); return; }
+
+            if(!STORAGE_CORE[selectedDateStr]) STORAGE_CORE[selectedDateStr] = [];
+
+            if(id) {
+                const idx = STORAGE_CORE[selectedDateStr].findIndex(e => e.id === id);
+                if(idx !== -1) STORAGE_CORE[selectedDateStr][idx] = { id, start, end, title, type, reporter, attendees, noteTaker, description };
+            } else {
+                STORAGE_CORE[selectedDateStr].push({ id: Date.now().toString(), start, end, title, type, reporter, attendees, noteTaker, description });
+            }
+                        
+            persist(); closeModal(); renderCalendarPart(); renderTimelineBlock(selectedDateStr);
+        }
+
+        function executeDelete() {
+            const id = document.getElementById("entry-id").value;
+            if(id && STORAGE_CORE[selectedDateStr]) {
+                STORAGE_CORE[selectedDateStr] = STORAGE_CORE[selectedDateStr].filter(e => e.id !== id);
+                persist();
+            }
+            closeModal(); renderCalendarPart(); renderTimelineBlock(selectedDateStr);
+            if (document.getElementById('import-panel').classList.contains('active')) renderImportTable();
+        }
+
+        // ================= 核心升级：OS级全域右键高定上下文菜单引擎 =================
+        window.addEventListener('contextmenu', function(e) {
+            // 系统默认右键菜单在非放行区一律拦截
+            if (e.target.closest('input, select, textarea')) return;
+            e.preventDefault();
+
+            const d = I18N_DICT[currentLang];
+            let menuContent = "";
+            
+            // 场景1：右键命中左侧日历方格网
+            const cellTarget = e.target.closest('.cell-unit[data-date]');
+            // 场景2：右键命中右侧已有行程卡片
+            const cardTarget = e.target.closest('.schedule-meta-card.is-real');
+            // 场景4：右键命中空闲时段卡片
+            const freeCardTarget = e.target.closest('.schedule-meta-card.is-free');
+            // 场景3：右键命中右侧面板的任意非卡片区域
+            const timelineZone = e.target.closest('.timeline-panel');
+
+            if (cardTarget) {
+                contextCardTarget = cardTarget;
+                const id = cardTarget.getAttribute('data-id');
+                const title = cardTarget.getAttribute('data-title');
+                const start = cardTarget.getAttribute('data-start');
+                const end = cardTarget.getAttribute('data-end');
+                const type = cardTarget.getAttribute('data-type');
+                const reporter = cardTarget.getAttribute('data-reporter');
+                const attendees = cardTarget.getAttribute('data-attendees');
+                const noteTaker = cardTarget.getAttribute('data-notetaker');
+                const description = cardTarget.getAttribute('data-desc');
+
+                menuContent = `
+                    <div class="ctx-item" onclick="openEditModalFromCard(contextCardTarget)">${d.ctxEdit}</div>
+                    <div class="ctx-item" onclick="duplicateContextEvent()">📋 ${currentLang === 'zh' ? '复制此事务' : 'Duplicate event'}</div>
+                    <div class="ctx-divider"></div>
+                    <div class="ctx-item" style="color:#ef4444;" onclick="triggerDirectDelete('${id}')">${d.ctxDel}</div>
+                `;
+            } else if (freeCardTarget) {
+                const start = freeCardTarget.getAttribute('data-start');
+                const end = freeCardTarget.getAttribute('data-end');
+                menuContent = `
+                    <div class="ctx-item" onclick="triggerDirectAdd('${selectedDateStr}', '${start}', '${end}')">${d.ctxAdd}（${start} - ${end}）</div>
+                `;
+            } else if (cellTarget) {
+                const targetDate = cellTarget.getAttribute('data-date');
+                menuContent = `
+                    <div class="ctx-item" onclick="triggerDirectAdd('${targetDate}')">${d.ctxAdd}</div>
+                `;
+            } else if (timelineZone) {
+                menuContent = `
+                    <div class="ctx-item" onclick="triggerDirectAdd('${selectedDateStr}')">${d.ctxAdd}</div>
+                `;
+            }
+
+            if (menuContent) {
+                showContextMenu(e.clientX, e.clientY, menuContent);
+            } else {
+                hideContextMenu();
+            }
+        });
+
+        function showContextMenu(x, y, content) {
+            ctxMenu.innerHTML = content;
+            ctxMenu.style.display = "block";
+            
+            // 边缘溢出微调防护
+            const menuWidth = ctxMenu.offsetWidth || 160;
+            const menuHeight = ctxMenu.offsetHeight || 90;
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+
+            if ((x + menuWidth) > windowWidth) x = windowWidth - menuWidth - 10;
+            if ((y + menuHeight) > windowHeight) y = windowHeight - menuHeight - 10;
+
+            ctxMenu.style.left = `${x}px`;
+            ctxMenu.style.top = `${y}px`;
+        }
+
+        function duplicateContextEvent() {
+            if (!contextCardTarget) return;
+            const source = (STORAGE_CORE[selectedDateStr] || []).find(event => event.id === contextCardTarget.dataset.id);
+            if (!source) return;
+            (STORAGE_CORE[selectedDateStr] ||= []).push({ ...source, id: `${Date.now()}-copy`, title: `${source.title} (${currentLang === 'zh' ? '副本' : 'Copy'})` });
+            persist('复制日程'); hideContextMenu(); renderCalendarPart(); renderTimelineBlock(selectedDateStr); refreshConflictSummary();
+        }
+
+        function hideContextMenu() { ctxMenu.style.display = "none"; }
+        window.addEventListener('click', function() { hideContextMenu(); });
+
+        function triggerDirectAdd(dateStr, startTime, endTime) {
+            selectedDateStr = dateStr;
+            renderCalendarPart();
+            renderTimelineBlock(dateStr);
+            openAddModal(startTime, endTime);
+        }
+
+        function triggerDirectDelete(id) {
+            if(STORAGE_CORE[selectedDateStr]) {
+                STORAGE_CORE[selectedDateStr] = STORAGE_CORE[selectedDateStr].filter(e => e.id !== id);
+                persist();
+            }
+            renderCalendarPart(); 
+            renderTimelineBlock(selectedDateStr);
+            hideContextMenu();
+        }
+
+        // ================= Excel 导入引擎 =================
+        // ExcelJS 随工具包离线提供，避免外网依赖和旧 SheetJS 安全风险
+        const EXCELJS_LOCAL = './assets/exceljs.min.js';
+        let EXCELJS_LIB = null;
+
+        function loadExcelJS() {
+            return new Promise((resolve, reject) => {
+                if (window.ExcelJS) { resolve(window.ExcelJS); return; }
+                const s = document.createElement('script');
+                s.src = EXCELJS_LOCAL;
+                s.onload = () => resolve(window.ExcelJS);
+                s.onerror = () => reject(new Error('Excel 解析组件不可用，请检查工具包 assets'));
+                document.head.appendChild(s);
+            });
+        }
+
+        function parseCSVText(text) {
+            const rows=[]; let row=[], cell='', quoted=false;
+            for(let i=0;i<text.length;i++) { const ch=text[i], next=text[i+1];
+                if(ch==='"' && quoted && next==='"'){cell+='"';i++;}
+                else if(ch==='"'){quoted=!quoted;}
+                else if(ch===','&&!quoted){row.push(cell);cell='';}
+                else if((ch==='\n'||ch==='\r')&&!quoted){if(ch==='\r'&&next==='\n')i++;row.push(cell);if(row.some(v=>v!==''))rows.push(row);row=[];cell='';}
+                else cell+=ch;
+            }
+            row.push(cell); if(row.some(v=>v!==''))rows.push(row); return rows;
+        }
+
+        function eventIdentity(dateStr, event) {
+            return [dateStr, event.start, event.end, String(event.title || '').trim().toLowerCase()].join('|');
+        }
+
+        function collectScheduleConflicts(extraEvents = []) {
+            const byDate = {};
+            Object.entries(STORAGE_CORE).forEach(([dateStr, events]) => {
+                byDate[dateStr] = (events || []).map(event => ({ dateStr, ...event }));
+            });
+            extraEvents.forEach(event => {
+                if (!byDate[event.dateStr]) byDate[event.dateStr] = [];
+                byDate[event.dateStr].push(event);
+            });
+            const conflicts = [];
+            Object.entries(byDate).forEach(([dateStr, events]) => {
+                const sorted = events.slice().sort((a,b) => timeToMin(a.start) - timeToMin(b.start));
+                for (let i=0; i<sorted.length; i++) for (let j=i+1; j<sorted.length; j++) {
+                    if (timeToMin(sorted[j].start) >= timeToMin(sorted[i].end)) break;
+                    conflicts.push({ dateStr, first: sorted[i], second: sorted[j] });
+                }
+            });
+            return conflicts;
+        }
+
+        function showImportPreview(summary) {
+            return new Promise(resolve => {
+                const panel = document.createElement('div');
+                panel.className = 'snapshot-panel show';
+                panel.innerHTML = `<div class="snapshot-card" role="dialog" aria-modal="true">
+                    <h3>导入预览</h3>
+                    <div class="import-preview-list">新增 <b>${summary.added.length}</b> 条；重复 <b>${summary.duplicates.length}</b> 条；无效 <b>${summary.invalid}</b> 条；新增后冲突 <b>${summary.conflicts.length}</b> 组。<br>${summary.conflicts.slice(0,8).map(c => `${escapeHtml(c.dateStr)}：${escapeHtml(c.first.title)} ↔ ${escapeHtml(c.second.title)}`).join('<br>') || '未发现时间冲突'}</div>
+                    <div class="m-actions"><button class="b-cancel" data-action="cancel">取消</button><button class="b-save" data-action="confirm">确认导入并跳过重复项</button></div>
+                </div>`;
+                document.body.appendChild(panel);
+                panel.querySelector('[data-action="cancel"]').onclick = () => { panel.remove(); resolve(false); };
+                panel.querySelector('[data-action="confirm"]').onclick = () => { panel.remove(); resolve(true); };
+                panel.querySelector('[data-action="confirm"]').focus();
+            });
+        }
+
+        // 绑定导入按钮
+        document.getElementById('import-btn').addEventListener('click', () => {
+            document.getElementById('excel-import-input').click();
+        });
+
+        document.getElementById('excel-import-input').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            try {
+                let rows;
+                if (/\.csv$/i.test(file.name)) {
+                    rows = parseCSVText(await file.text());
+                } else {
+                    EXCELJS_LIB = await loadExcelJS();
+                    const workbook = new EXCELJS_LIB.Workbook();
+                    await workbook.xlsx.load(await file.arrayBuffer());
+                    const sheet = workbook.worksheets[0];
+                    if (!sheet) throw new Error('Excel 中没有工作表');
+                    rows = [];
+                    sheet.eachRow({ includeEmpty: false }, row => {
+                        const values = [];
+                        for (let i=1; i<=row.cellCount; i++) values.push(row.getCell(i).text || row.getCell(i).value || '');
+                        rows.push(values);
+                    });
+                }
+
+                if (rows.length < 2) {
+                    showImportToast('文件内容为空或格式不正确', 'error');
+                    return;
+                }
+
+                const headers = rows[0].map(h => String(h).trim());
+                const imported = parseExcelRows(headers, rows.slice(1));
+                if (imported.count === 0) {
+                    showImportToast('未识别到有效的日程数据', 'error');
+                    return;
+                }
+
+                const existingKeys = new Set();
+                Object.entries(STORAGE_CORE).forEach(([dateStr, events]) => events.forEach(event => existingKeys.add(eventIdentity(dateStr, event))));
+                const addedEvents = [];
+                const duplicates = [];
+                let skipped = 0;
+                imported.events.forEach(ev => {
+                    if (!ev.dateStr || !ev.title) { skipped++; return; }
+                    const key = eventIdentity(ev.dateStr, ev);
+                    if (existingKeys.has(key)) { duplicates.push(ev); return; }
+                    existingKeys.add(key);
+                    addedEvents.push(ev);
+                });
+                const preview = { added: addedEvents, duplicates, invalid: skipped, conflicts: collectScheduleConflicts(addedEvents) };
+                if (!await showImportPreview(preview)) { e.target.value = ''; return; }
+
+                let added = 0;
+                addedEvents.forEach(ev => {
+                    if (!STORAGE_CORE[ev.dateStr]) STORAGE_CORE[ev.dateStr] = [];
+                    STORAGE_CORE[ev.dateStr].push({
+                        id: Date.now().toString() + Math.random().toString(36).slice(2, 7),
+                        start: ev.start,
+                        end: ev.end,
+                        title: ev.title,
+                        type: ev.type,
+                        reporter: ev.reporter,
+                        attendees: ev.attendees,
+                        noteTaker: ev.noteTaker,
+                        description: ev.description
+                    });
+                    added++;
+                });
+
+                persist('Excel 导入前自动备份');
+                renderCalendarPart();
+                renderTimelineBlock(selectedDateStr);
+                if (document.getElementById('import-panel').classList.contains('active')) {
+                    renderImportTable();
+                }
+                e.target.value = '';
+                showImportToast(`✅ 成功导入 ${added} 条，跳过 ${duplicates.length} 条重复、${skipped} 条无效数据`, 'success');
+            } catch (err) {
+                console.error(err);
+                showImportToast(`导入失败：${err.message}`, 'error');
+            }
+        });
+
+        // 从 Excel 行数据中解析日程
+        function parseExcelRows(headers, rows) {
+            // 找列索引：尝试多别名匹配
+            const findCol = (aliases) => {
+                for (const a of aliases) {
+                    const idx = headers.findIndex(h =>
+                        h.includes(a) || a.includes(h) ||
+                        normalizeCN(h).includes(normalizeCN(a)) ||
+                        normalizeCN(a).includes(normalizeCN(h))
+                    );
+                    if (idx !== -1) return idx;
+                }
+                return -1;
+            };
+
+            const colTitle    = findCol(['主题', 'title', '会议主题', '关键任务', '议题']);
+            const colDate     = findCol(['日期', 'date', '预排汇报日期', '汇报日期', '会议日期']);
+            const colTime     = findCol(['时间', 'time', '预排汇报时间', '汇报时间', '会议时间']);
+            const colStart    = findCol(['开始时间', '起始时间', 'start time', 'start']);
+            const colEnd      = findCol(['结束时间', '截止时间', 'end time', 'end']);
+            const colDuration = findCol(['时长', 'duration', '预约时长', '会议时长', '小时']);
+            const colStatus   = findCol(['状态', 'status', '材料准备状态', '准备状态']);
+            const colType     = findCol(['类型', 'type', '性质', '级别', '紧急']);
+            const colReporter = findCol(['汇报人', '汇报人', '报告人', '报告人', 'reporter', 'presenter']);
+            const colAttendees = findCol(['参会人', '参会人', '参会', 'participants', 'attendees', 'invitees']);
+            const colNoteTaker = findCol(['纪要人', '纪要', '记要', 'notetaker', 'note', 'recorder']);
+            const colDesc     = findCol(['背景', '说明', '议题背景', '决策要点', 'description', 'detail', 'context']);
+
+            const events = [];
+            rows.forEach((row, rowIdx) => {
+                if (!row || row.length === 0 || !row.some(c => c !== '')) return;
+
+                // --- 标题 ---
+                let title = colTitle !== -1 ? String(row[colTitle] || '').trim() : '';
+                if (!title) return;
+
+                // --- 日期解析 ---
+                let dateStr = colDate !== -1 ? parseExcelDate(row[colDate]) : '';
+                if (!dateStr) return; // 无有效日期则跳过
+
+                // --- 时间解析 ---
+                let start = '09:00', end = '10:00';
+                if (colStart !== -1 || colEnd !== -1) {
+                    if (colStart !== -1) {
+                        const parsedStart = parseExcelTime(row[colStart]);
+                        if (parsedStart.start) start = parsedStart.start;
+                    }
+                    if (colEnd !== -1) {
+                        const parsedEnd = parseExcelTime(row[colEnd]);
+                        if (parsedEnd.start) end = parsedEnd.start;
+                    }
+                } else if (colTime !== -1) {
+                    const t = parseExcelTime(row[colTime]);
+                    if (t.start) start = t.start;
+                    if (t.end) end = t.end;
+                } else if (colDuration !== -1) {
+                    // 根据时长推算结束时间
+                    const dur = parseFloat(row[colDuration]) || 1;
+                    const startMin = timeToMin(start);
+                    const endMin = startMin + Math.round(dur * 60);
+                    end = minToTime(Math.min(endMin, 23 * 60));
+                }
+
+                // --- 类型判断 ---
+                let type = 'work';
+                if (colType !== -1) {
+                    const t = String(row[colType] || '');
+                    if (t.includes('urgent') || t.includes('紧急') || t.includes('重要') || t.includes('关键')) {
+                        type = 'urgent';
+                    }
+                }
+                // 如果标题含 Urgent 关键字也标记
+                if (title.toLowerCase().includes('urgent') || title.includes('【紧急】') || title.includes('【重要】')) {
+                    type = 'urgent';
+                }
+                // 状态列含"已发送"等 → work 类型
+                if (colStatus !== -1 && String(row[colStatus]).includes('已发')) {
+                    type = 'work';
+                }
+
+                const reporter = colReporter !== -1 ? String(row[colReporter] || '').trim() : '';
+                const attendees = colAttendees !== -1 ? String(row[colAttendees] || '').trim() : '';
+                const noteTaker = colNoteTaker !== -1 ? String(row[colNoteTaker] || '').trim() : '';
+                const description = colDesc !== -1 ? String(row[colDesc] || '').trim().replace(/\n/g, ' ') : '';
+
+                events.push({ dateStr, start, end, title, type, reporter, attendees, noteTaker, description });
+            });
+
+            return { events, count: events.length };
+        }
+
+        // 繁简统一
+        function normalizeCN(s) {
+            return String(s).replace(/[^一-龥a-z0-9]/gi, '').toLowerCase();
+        }
+
+        // Excel 日期序列号 → YYYY-MM-DD
+        function parseExcelDate(val) {
+            if (!val && val !== 0) return '';
+            // 已经是 Date 对象
+            if (val instanceof Date) {
+                if (isNaN(val.getTime())) return '';
+                return formatDateObj(val);
+            }
+            // 数字 → Excel 序列日 (1900基准，补偿1900-02-29错误)
+            if (typeof val === 'number' || !isNaN(Number(val))) {
+                const n = Number(val);
+                const d = new Date(Math.round((n - 25569) * 86400 * 1000));
+                if (isNaN(d.getTime())) return '';
+                return formatDateObj(d);
+            }
+            // 字符串格式
+            const s = String(val).trim();
+            if (!s) return '';
+            // YYYY-MM-DD
+            if (/^\d{4}-\d{1,2}-\d{1,2}/.test(s)) return s.slice(0, 10);
+            // YYYY/MM/DD
+            if (/^\d{4}\/\d{1,2}\/\d{1,2}/.test(s)) return s.slice(0, 10).replace(/\//g, '-');
+            // 中文日期: 2026年7月9日 / 2026/7/9 / 2026.7.9
+            const cnMatch = s.match(/(\d{4})[年\/\-\.](\d{1,2})[月\/\-\.](\d{1,2})/);
+            if (cnMatch) {
+                return `${cnMatch[1]}-${String(cnMatch[2]).padStart(2,'0')}-${String(cnMatch[3]).padStart(2,'0')}`;
+            }
+            // 其他尝试 Date.parse
+            const parsed = Date.parse(s);
+            if (!isNaN(parsed)) {
+                return formatDateObj(new Date(parsed));
+            }
+            return '';
+        }
+
+        function formatDateObj(d) {
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        }
+
+        // 时间字符串解析，返回 { start, end }
+        function parseExcelTime(val) {
+            if (!val) return {};
+            const s = String(val).trim();
+            if (!s) return {};
+
+            let start = '', end = '';
+
+            // 格式: HH:MM-HH:MM / HH:MM:SS-HH:MM:SS
+            const rangeMatch = s.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*[-~至]\s*(\d{1,2}):(\d{2})(?::\d{2})?/);
+            if (rangeMatch) {
+                start = `${String(rangeMatch[1]).padStart(2,'0')}:${rangeMatch[2]}`;
+                end   = `${String(rangeMatch[3]).padStart(2,'0')}:${rangeMatch[4]}`;
+                return { start, end };
+            }
+
+            // 格式: HH:MM
+            const singleMatch = s.match(/^(\d{1,2}):(\d{2})/);
+            if (singleMatch) {
+                start = `${String(singleMatch[1]).padStart(2,'0')}:${singleMatch[2]}`;
+                // 有时长字段时会自动推算，这里只设 start
+                return { start };
+            }
+
+            // 中文时间词: 下午2点 / 下午2:30 / 14:30
+            const cnTimeMatch = s.match(/(\d{1,2}):?(\d{2})?\s*(pm|am|上午|下午|早上|晚上|点|时)/i);
+            if (cnTimeMatch) {
+                let h = parseInt(cnTimeMatch[1], 10);
+                const m = cnTimeMatch[2] ? parseInt(cnTimeMatch[2], 10) : 0;
+                const isPM = /pm|下午|晚上/i.test(s);
+                const isAM = /am|上午|早上/i.test(s);
+                if (isPM && h < 12) h += 12;
+                if (isAM && h === 12) h = 0;
+                start = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+                return { start };
+            }
+
+            // 纯中文词: 4pm / 9点半 / 下午三点
+            const cnMatch = s.match(/(上午|下午|早上|晚上|中午|下午)?\s*(\d{1,2})\s*(点|时|点半)?(\d{1,2})?/);
+            if (cnMatch) {
+                let h = parseInt(cnMatch[2], 10);
+                const isPM = /下午|晚上/.test(cnMatch[1] || '');
+                if (isPM && h < 12) h += 12;
+                const m = cnMatch[4] ? parseInt(cnMatch[4], 10) : 0;
+                start = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+                return { start };
+            }
+
+            return {};
+        }
+
+        // 导入结果 toast 提示
+        function showImportToast(msg, type) {
+            let t = document.getElementById('import-toast');
+            if (!t) {
+                t = document.createElement('div');
+                t.id = 'import-toast';
+                t.style.cssText = `
+                    position:fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+                    padding: 12px 24px; border-radius: 12px; font-size: 0.9rem; font-weight: 600;
+                    z-index: 9999; transition: opacity 0.4s; pointer-events: none;
+                    max-width: 420px; text-align: center; line-height: 1.5;
+                    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+                `;
+                document.body.appendChild(t);
+            }
+            t.style.background = type === 'error' ? 'rgba(239,68,68,0.95)' : 'rgba(16,185,129,0.95)';
+            t.style.color = '#fff';
+            t.textContent = msg;
+            t.style.opacity = '1';
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => { t.style.opacity = '0'; }, 3500);
+        }
+
+        // ================= 右侧面板切换：时间轴 ↔ 导入数据表 =================
+        function switchRightPanel(panel) {
+            const timelineZone = document.getElementById('timeline-scroll-zone');
+            const importPanel = document.getElementById('import-panel');
+            const tabTimeline = document.getElementById('tab-timeline');
+            const tabImport = document.getElementById('tab-import');
+
+            if (panel === 'timeline') {
+                timelineZone.style.display = '';
+                importPanel.classList.remove('active');
+                tabTimeline.classList.add('active');
+                tabImport.classList.remove('active');
+                // 切回时间轴时恢复日历
+                const sidebar = document.getElementById('main-canvas').querySelector('.sidebar');
+                sidebar.classList.remove('collapsed');
+                sidebarCollapsed = false;
+                document.getElementById('collapse-btn').classList.add('expanded');
+            } else {
+                timelineZone.style.display = 'none';
+                importPanel.classList.add('active');
+                tabImport.classList.add('active');
+                tabTimeline.classList.remove('active');
+                // 自动折叠左侧日历，给数据表更多空间
+                document.getElementById('main-canvas').querySelector('.sidebar').classList.add('collapsed');
+                document.getElementById('collapse-btn').classList.remove('expanded');
+                renderImportTable();
+            }
+        }
+
+        // 手动折叠/展开日历侧边栏
+        let sidebarCollapsed = false;
+        function toggleSidebarCollapse() {
+            const sidebar = document.getElementById('main-canvas').querySelector('.sidebar');
+            const btn = document.getElementById('collapse-btn');
+            sidebarCollapsed = !sidebarCollapsed;
+            sidebar.classList.toggle('collapsed', sidebarCollapsed);
+            btn.classList.toggle('expanded', !sidebarCollapsed);
+        }
+
+        // 渲染导入数据表
+        function renderImportTable() {
+            const tbody = document.getElementById('import-tbody');
+            const table = document.getElementById('import-data-table');
+            const emptyState = document.getElementById('import-empty-state');
+            const summary = document.getElementById('import-summary');
+
+            // 收集所有日期的日程，按日期排序
+            const allEvents = [];
+            for (const [dateStr, events] of Object.entries(STORAGE_CORE)) {
+                events.filter(ev => eventMatchesFilters(ev, dateStr)).forEach(ev => allEvents.push({ dateStr, ...ev }));
+            }
+
+            if (allEvents.length === 0) {
+                table.style.display = 'none';
+                summary.style.display = 'none';
+                emptyState.style.display = '';
+                return;
+            }
+
+            allEvents.sort((a, b) => {
+                const dateCmp = a.dateStr.localeCompare(b.dateStr);
+                if (dateCmp !== 0) return dateCmp;
+                return timeToMin(a.start) - timeToMin(b.start);
+            });
+
+            // 统计
+            const urgentCount = allEvents.filter(e => e.type === 'urgent').length;
+            const workCount = allEvents.filter(e => e.type === 'work').length;
+            const dateSet = new Set(allEvents.map(e => e.dateStr));
+            document.getElementById('stat-total').textContent = allEvents.length;
+            document.getElementById('stat-urgent').textContent = urgentCount;
+            document.getElementById('stat-work').textContent = workCount;
+            document.getElementById('stat-dates').textContent = dateSet.size;
+            summary.style.display = '';
+            emptyState.style.display = 'none';
+            table.style.display = '';
+
+            tbody.innerHTML = '';
+
+            const allReporters = [...new Set(allEvents.map(e => e.reporter).filter(Boolean))];
+            const allAttendees = [...new Set(allEvents.map(e => e.attendees).filter(Boolean))];
+            const allNoteTakers = [...new Set(allEvents.map(e => e.noteTaker).filter(Boolean))];
+            const allPeople = [...new Set([...allReporters, ...allAttendees, ...allNoteTakers])];
+
+            const colorPalette = [
+                'rgba(99,102,241,1)',     /* 靛蓝 */
+                'rgba(16,185,129,1)',     /* 翠绿 */
+                'rgba(245,158,11,1)',     /* 琥珀 */
+                'rgba(239,68,68,1)',      /* 玫红 */
+                'rgba(139,92,246,1)',     /* 紫罗兰 */
+                'rgba(6,182,212,1)',      /* 青色 */
+                'rgba(249,115,22,1)',     /* 橙色 */
+                'rgba(236,72,153,1)',     /* 粉色 */
+            ];
+            const personColorMap = {};
+            allPeople.forEach((p, i) => {
+                personColorMap[p] = colorPalette[i % colorPalette.length];
+            });
+
+            allEvents.forEach((ev, idx) => {
+                const tr = document.createElement('tr');
+                const rowId = `row-${idx}`;
+                const dateFormatted = ev.dateStr
+                    ? ev.dateStr.replace(/^(\d{4})-(\d{2})-(\d{2})/, (m, y, mo, d) => `${y}年${parseInt(mo)}月${parseInt(d)}日`)
+                    : '';
+                const typeBadge = ev.type === 'urgent'
+                    ? '<span class="type-badge urgent">Urgent</span>'
+                    : '<span class="type-badge work">常规</span>';
+
+                // 人员格子同色字体
+                const repColor = ev.reporter && personColorMap[ev.reporter] ? personColorMap[ev.reporter] : '';
+                const attColor = ev.attendees && personColorMap[ev.attendees] ? personColorMap[ev.attendees] : '';
+                const noteColor = ev.noteTaker && personColorMap[ev.noteTaker] ? personColorMap[ev.noteTaker] : '';
+
+                tr.innerHTML = `
+                    <td class="col-expand" onclick="toggleExpandRow('${rowId}', this)" title="点击展开">▶</td>
+                    <td class="col-date">${dateFormatted}</td>
+                    <td class="col-time">${ev.start || ''} - ${ev.end || ''}</td>
+                    <td class="col-title">${escapeHtml(ev.title || '')}</td>
+                    <td>${typeBadge}</td>
+                    <td class="col-reporter" style="${repColor ? 'color:' + repColor + ';font-weight:600;' : 'color:var(--text-muted);'}" title="${escapeHtml(ev.reporter || '')}">${escapeHtml(ev.reporter || '—')}</td>
+                    <td class="col-attendees" style="${attColor ? 'color:' + attColor + ';font-weight:600;' : 'color:var(--text-muted);'}" title="${escapeHtml(ev.attendees || '')}">${escapeHtml(ev.attendees || '—')}</td>
+                    <td style="font-size:0.75rem;${noteColor ? 'color:' + noteColor + ';font-weight:600;' : 'color:var(--text-muted);'}">${escapeHtml(ev.noteTaker || '—')}</td>
+                    <td class="col-desc" title="${escapeHtml(ev.description || '')}">${escapeHtml(ev.description || '—')}</td>
+                `;
+                tr.dataset.rowId = rowId;
+                tbody.appendChild(tr);
+
+                // 展开详情行
+                const expandTr = document.createElement('tr');
+                expandTr.className = 'expand-row';
+                expandTr.id = rowId;
+                const hasDesc = ev.description && ev.description.trim() && ev.description !== '—';
+                const metaItems = [];
+                if (ev.reporter) metaItems.push(`<strong>汇报人</strong>：${escapeHtml(ev.reporter)}`);
+                if (ev.attendees) metaItems.push(`<strong>参会人</strong>：${escapeHtml(ev.attendees)}`);
+                if (ev.noteTaker) metaItems.push(`<strong>纪要人</strong>：${escapeHtml(ev.noteTaker)}`);
+                expandTr.innerHTML = `
+                    <td colspan="9" style="padding:0;border-bottom:1px solid var(--border);">
+                        <div class="expand-inner">
+                            ${hasDesc ? `<div class="expand-desc-full">📋 ${escapeHtml(ev.description)}</div>` : ''}
+                            ${metaItems.length ? `<div>${metaItems.join(' &nbsp;|&nbsp; ')}</div>` : ''}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(expandTr);
+            });
+        }
+
+        function toggleExpandRow(rowId, btnEl) {
+            const expandRow = document.getElementById(rowId);
+            if (!expandRow) return;
+            const isOpen = expandRow.classList.contains('open');
+            expandRow.classList.toggle('open');
+            if (btnEl) {
+                btnEl.classList.toggle('open', !isOpen);
+                btnEl.textContent = isOpen ? '▶' : '▼';
+            }
+        }
+
+        // 导出为 CSV 下载
+        function exportImportedData() {
+            const rows = [['日期', '开始时间', '结束时间', '会议主题', '性质', '汇报人', '参会人', '纪要人', '议题背景/决策要点']];
+            for (const [dateStr, events] of Object.entries(STORAGE_CORE)) {
+                events.forEach(ev => {
+                    rows.push([
+                        dateStr, ev.start || '', ev.end || '',
+                        (ev.title || '').replace(/"/g, '""'),
+                        ev.type || '',
+                        ev.reporter || '', ev.attendees || '', ev.noteTaker || '',
+                        (ev.description || '').replace(/"/g, '""')
+                    ]);
+                });
+            }
+            if (rows.length <= 1) { showImportToast('没有可导出的数据', 'error'); return; }
+
+            const csvContent = rows.map(r =>
+                r.map(c => `"${c}"`).join(',')
+            ).join('\n');
+            const BOM = '﻿';
+            const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `日程导入_${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showImportToast('✅ CSV 导出成功', 'success');
+        }
+
+        async function downloadImportTemplate() {
+            try {
+                const ExcelJS = await loadExcelJS();
+                const workbook = new ExcelJS.Workbook();
+                workbook.creator = 'Tools Platform';
+                workbook.created = new Date();
+                const sheet = workbook.addWorksheet('日程导入模板', { views: [{ state: 'frozen', ySplit: 1 }] });
+                sheet.columns = [
+                    { header:'日期', key:'date', width:14 }, { header:'开始时间', key:'start', width:12 },
+                    { header:'结束时间', key:'end', width:12 }, { header:'会议主题', key:'title', width:34 },
+                    { header:'性质', key:'type', width:14 }, { header:'汇报人', key:'reporter', width:16 },
+                    { header:'参会人', key:'attendees', width:30 }, { header:'纪要人', key:'noteTaker', width:16 },
+                    { header:'议题背景/决策要点', key:'description', width:42 }
+                ];
+                sheet.addRow({ date:localDateString(), start:'09:00', end:'10:00', title:'示例：周度经营例会', type:'常规', reporter:'张三', attendees:'李四 & 王五', noteTaker:'赵六', description:'回顾本周进展并确认下周关键行动。' });
+                sheet.addRow({ date:localDateString(new Date(Date.now()+86400000)), start:'14:00', end:'15:30', title:'示例：重大风险对齐会', type:'Urgent', reporter:'负责人', attendees:'相关责任人', noteTaker:'项目经理', description:'请在此填写议题背景、待决策事项和预期结论。' });
+                const header = sheet.getRow(1);
+                header.height = 26;
+                header.eachCell(cell => { cell.font={bold:true,color:{argb:'FFFFFFFF'}}; cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF6366F1'}}; cell.alignment={vertical:'middle',horizontal:'center'}; });
+                sheet.getColumn('date').numFmt='yyyy-mm-dd';
+                sheet.autoFilter={from:'A1',to:'I3'};
+                sheet.eachRow((row,index)=>{ if(index>1){row.alignment={vertical:'top',wrapText:true}; row.height=34;} });
+
+                const guide = workbook.addWorksheet('填写说明');
+                guide.columns=[{header:'字段',key:'field',width:22},{header:'是否必填',key:'required',width:12},{header:'格式与说明',key:'rule',width:70}];
+                [
+                    ['日期','是','YYYY-MM-DD，例如 2026-07-12'],['开始时间','否','HH:mm，例如 09:00；留空默认 09:00'],
+                    ['结束时间','否','HH:mm，例如 10:30；必须晚于开始时间'],['会议主题','是','会议或事务名称'],
+                    ['性质','否','填写 Urgent、紧急、重要或关键会识别为紧急，其他为常规'],['汇报人','否','主要汇报人姓名'],
+                    ['参会人','否','多人建议用 &、逗号或顿号分隔'],['纪要人','否','会议纪要责任人'],
+                    ['议题背景/决策要点','否','背景、待决策事项、结论或行动要求']
+                ].forEach(item=>guide.addRow({field:item[0],required:item[1],rule:item[2]}));
+                const guideHeader=guide.getRow(1); guideHeader.eachCell(cell=>{cell.font={bold:true,color:{argb:'FFFFFFFF'}};cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF334155'}};});
+                guide.eachRow(row=>{row.alignment={vertical:'top',wrapText:true};});
+
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+                const url=URL.createObjectURL(blob), a=document.createElement('a'); a.href=url; a.download='日程安排导入模板.xlsx'; a.click(); URL.revokeObjectURL(url);
+                showImportToast('✅ 导入模板已下载','success');
+            } catch(err) { showImportToast(`模板生成失败：${err.message}`,'error'); }
+        }
+
+        function refreshConflictSummary() {
+            const conflicts = collectScheduleConflicts();
+            const el = document.getElementById('conflict-summary');
+            if (!el) return;
+            if (!conflicts.length) { el.classList.remove('show'); el.innerHTML = ''; return; }
+            const dates = [...new Set(conflicts.map(item => item.dateStr))];
+            el.innerHTML = `<b>发现 ${conflicts.length} 组时间冲突：</b> ${dates.slice(0,12).map(date => `<span class="conflict-link" onclick="jumpToConflict('${date}')">${date}</span>`).join('')}`;
+            el.classList.add('show');
+        }
+
+        function jumpToConflict(dateStr) {
+            anchorDate = new Date(`${dateStr}T12:00:00`);
+            selectDate(dateStr);
+            document.getElementById('timeline-scroll-zone').scrollTop = 0;
+        }
+
+        function applyScheduleFilters() {
+            currentFilters = {
+                person: document.getElementById('filter-person').value.trim(),
+                type: document.getElementById('filter-type').value,
+                from: document.getElementById('filter-date-from').value,
+                to: document.getElementById('filter-date-to').value
+            };
+            renderTimelineBlock(selectedDateStr);
+            if (document.getElementById('import-panel').classList.contains('active')) renderImportTable();
+        }
+        ['filter-person','filter-type','filter-date-from','filter-date-to'].forEach(id => document.getElementById(id).addEventListener('input', applyScheduleFilters));
+        function resetScheduleFilters() {
+            ['filter-person','filter-type','filter-date-from','filter-date-to'].forEach(id => document.getElementById(id).value = '');
+            applyScheduleFilters();
+        }
+
+        function icsEscape(value) { return String(value || '').replace(/\\/g,'\\\\').replace(/\n/g,'\\n').replace(/,/g,'\\,').replace(/;/g,'\\;'); }
+        function icsTime(dateStr, time) { return `${dateStr.replace(/-/g,'')}T${String(time || '00:00').replace(':','')}00`; }
+        function exportICS() {
+            const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Tools Platform//Executive Horizon//CN','CALSCALE:GREGORIAN'];
+            Object.entries(STORAGE_CORE).forEach(([dateStr, events]) => events.forEach(event => lines.push(
+                'BEGIN:VEVENT', `UID:${icsEscape(event.id)}@tools-platform`, `DTSTART:${icsTime(dateStr,event.start)}`, `DTEND:${icsTime(dateStr,event.end)}`,
+                `SUMMARY:${icsEscape(event.title)}`, `DESCRIPTION:${icsEscape(event.description)}`, `ATTENDEE;CN=${icsEscape(event.attendees)}:mailto:unknown@local`, 'END:VEVENT'
+            )));
+            lines.push('END:VCALENDAR');
+            const blob = new Blob([lines.join('\r\n')], {type:'text/calendar;charset=utf-8'});
+            const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download=`日程_${localDateString()}.ics`; a.click(); URL.revokeObjectURL(url);
+        }
+        document.getElementById('ics-import-btn').onclick = () => document.getElementById('ics-import-input').click();
+        document.getElementById('ics-import-input').onchange = async e => {
+            const file = e.target.files[0]; if (!file) return;
+            const text = await file.text(); const added=[];
+            (text.match(/BEGIN:VEVENT[\s\S]*?END:VEVENT/g) || []).forEach((block, index) => {
+                const get = key => ((block.match(new RegExp(`^${key}[^:]*:(.*)$`, 'mi')) || [,''])[1] || '').trim().replace(/\\n/g,'\n').replace(/\\([,;\\])/g,'$1');
+                const start=get('DTSTART'), end=get('DTEND'), title=get('SUMMARY');
+                const dateStr=start.slice(0,8).replace(/^(\d{4})(\d{2})(\d{2})$/,'$1-$2-$3');
+                if (!dateStr || !title) return;
+                added.push({dateStr,id:get('UID') || `${Date.now()}-${index}`,start:`${start.slice(9,11)}:${start.slice(11,13)}`,end:`${end.slice(9,11)}:${end.slice(11,13)}`,title,type:'work',reporter:'',attendees:'',noteTaker:'',description:get('DESCRIPTION')});
+            });
+            const existing = new Set(); Object.entries(STORAGE_CORE).forEach(([d,es]) => es.forEach(ev => existing.add(eventIdentity(d,ev))));
+            const unique=added.filter(ev => !existing.has(eventIdentity(ev.dateStr,ev)));
+            if (!await showImportPreview({added:unique,duplicates:added.filter(ev => !unique.includes(ev)),invalid:0,conflicts:collectScheduleConflicts(unique)})) return;
+            unique.forEach(ev => { (STORAGE_CORE[ev.dateStr] ||= []).push(ev); }); persist('ICS 导入前自动备份'); renderCalendarPart(); renderTimelineBlock(selectedDateStr); refreshConflictSummary();
+            e.target.value=''; showImportToast(`✅ 已导入 ${unique.length} 条 ICS 日程`,'success');
+        };
+
+        async function openSnapshots() {
+            const panel=document.getElementById('snapshot-panel'), list=document.getElementById('snapshot-list'); panel.classList.add('show'); list.textContent='正在读取备份...';
+            if (!remoteSyncEnabled) { list.textContent='当前未登录，日程仅保存在本机，无法读取服务端备份。'; return; }
+            try { const res=await fetch(`/api/custom-tools/${encodeURIComponent(TOOL_SLUG)}/snapshots`,{headers:authHeaders()}); const items=await res.json();
+                list.innerHTML=items.length ? items.map(item=>`<div class="snapshot-row"><div class="snapshot-row-main"><b>${escapeHtml(item.reason||'自动备份')}</b><div style="font-size:.72rem;color:var(--text-muted);margin-top:4px;">${new Date(item.createdAt).toLocaleString()}</div></div><button onclick="restoreSnapshot('${escapeHtml(item.id)}')">恢复</button></div>`).join('') : '暂无备份快照。';
+            } catch(err) { list.textContent=`读取失败：${err.message}`; }
+        }
+        function closeSnapshots(){ document.getElementById('snapshot-panel').classList.remove('show'); }
+        async function restoreSnapshot(snapshotId){ if(!confirm('确定恢复此备份吗？当前数据也会先生成一份快照。'))return; const res=await fetch(`/api/custom-tools/${encodeURIComponent(TOOL_SLUG)}/state/restore`,{method:'POST',headers:{'Content-Type':'application/json',...authHeaders()},body:JSON.stringify({snapshotId})}); const body=await res.json(); if(!res.ok)return alert(body.error||'恢复失败'); STORAGE_CORE=body.data||{}; localStorage.setItem('EXEC_HORIZON_DATA',JSON.stringify(STORAGE_CORE)); closeSnapshots(); renderCalendarPart(); renderTimelineBlock(selectedDateStr); refreshConflictSummary(); showImportToast('✅ 已恢复备份','success'); }
+
+        // 清空全部数据
+        function clearAllData() {
+            if (!confirm('确定要清空全部日程数据吗？清空前会自动生成服务端备份。')) return;
+            STORAGE_CORE = {};
+            localStorage.removeItem('EXEC_HORIZON_DATA');
+            persist('清空前自动备份');
+            renderCalendarPart();
+            renderTimelineBlock(selectedDateStr);
+            // 如果当前在导入表视图，同步刷新
+            if (document.getElementById('import-panel').classList.contains('active')) {
+                renderImportTable();
+            }
+            showImportToast('🗑 全部数据已清空', 'success');
+        }
+
+        async function initializeScheduleApp() {
+            applyStaticLanguage();
+            const localData = STORAGE_CORE;
+            try {
+                const res = await fetch(`/api/custom-tools/${encodeURIComponent(TOOL_SLUG)}/state`, { headers: authHeaders() });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const state = await res.json();
+                remoteSyncEnabled = true;
+                const remoteData = state.data && Object.keys(state.data).length ? state.data : null;
+                if (remoteData) {
+                    STORAGE_CORE = remoteData;
+                    localStorage.setItem('EXEC_HORIZON_DATA', JSON.stringify(STORAGE_CORE));
+                    setSyncState('已从服务端同步', 'ok');
+                } else if (Object.keys(localData).length) {
+                    STORAGE_CORE = localData;
+                    await saveRemoteState('首次从浏览器迁移', false);
+                    setSyncState('本机数据已迁移', 'ok');
+                } else {
+                    setSyncState('服务端同步已启用', 'ok');
+                }
+            } catch (err) {
+                remoteSyncEnabled = false;
+                setSyncState(authHeaders().Authorization ? '服务端不可用，本机模式' : '公开访问·本机模式', authHeaders().Authorization ? 'error' : '');
+            }
+            renderCalendarPart();
+            renderTimelineBlock(selectedDateStr);
+            refreshConflictSummary();
+        }
+        initializeScheduleApp();
+
+        document.addEventListener('keydown', e => {
+            if (e.key !== 'Escape') return;
+            if (document.getElementById('snapshot-panel').classList.contains('show')) closeSnapshots();
+            else if (overlay.classList.contains('show')) closeModal();
+            else hideContextMenu();
+        });
+        overlay.addEventListener('mousedown', e => { if (e.target === overlay) closeModal(); });
+        document.getElementById('snapshot-panel').addEventListener('mousedown', e => { if (e.target.id === 'snapshot-panel') closeSnapshots(); });
+
+        // ========== 动画初始化 ==========
+
+        // 按钮涟漪效果
+        document.addEventListener('mousedown', function(e) {
+            const btn = e.target.closest('.ripple-btn, .view-btn, .sys-toggle-btn, .nav-btn, .btn-nav-today, .btn-trigger-add, .b-cancel, .b-save, .b-del, .import-tab-btn, .btn-export, .btn-clear');
+            if (!btn || btn.classList.contains('no-ripple')) return;
+            const circle = document.createElement('span');
+            circle.className = 'ripple-circle';
+            const rect = btn.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            circle.style.cssText = `position:absolute;border-radius:50%;background:rgba(255,255,255,0.25);width:${size}px;height:${size}px;left:${e.clientX - rect.left - size/2}px;top:${e.clientY - rect.top - size/2}px;pointer-events:none;`;
+            // 用绝对定位的wrapper包裹，避免修改原按钮样式
+            const wrap = document.createElement('span');
+            wrap.style.cssText = 'position:absolute;inset:0;overflow:hidden;border-radius:inherit;pointer-events:none;';
+            wrap.appendChild(circle);
+            btn.style.position = 'relative';
+            btn.appendChild(wrap);
+            circle.animate([{transform:'scale(0)',opacity:1},{transform:'scale(4)',opacity:0}], {duration:600,easing:'ease-out'}).onfinish = () => { wrap.remove(); };
+        });
+
+        // Tab 滑动指示器
+        const viewSwitcher = document.querySelector('.view-switcher');
+        if (viewSwitcher) {
+            viewSwitcher.dataset.activeIdx = '1'; // 默认月视图在第二位
+        }
+        function updateTabSlider() {
+            const switcher = document.querySelector('.view-switcher');
+            if (!switcher) return;
+            const btns = switcher.querySelectorAll('.view-btn');
+            const activeBtn = switcher.querySelector('.view-btn.active');
+            if (!activeBtn) return;
+            const switcherRect = switcher.getBoundingClientRect();
+            const activeRect = activeBtn.getBoundingClientRect();
+            const indicator = switcher._indicator || (switcher._indicator = document.createElement('div'));
+            indicator.style.cssText = `
+                position: absolute; bottom: 0; height: 2px;
+                background: var(--primary); border-radius: 2px;
+                transition: left 0.35s var(--ease-out-expo), width 0.35s var(--ease-out-expo);
+                pointer-events: none; z-index: 1;
+            `;
+            if (!switcher._indicator.parentNode) switcher.style.position = 'relative', switcher.appendChild(indicator);
+            indicator.style.left = (activeRect.left - switcherRect.left) + 'px';
+            indicator.style.width = activeRect.width + 'px';
+        }
+
+        const observer = new MutationObserver(updateTabSlider);
+        document.querySelectorAll('.view-switcher').forEach(sw => {
+            observer.observe(sw, { childList: true, subtree: true });
+        });
+        // 初始和每次切换都更新
+        const origSwitchView = window.switchView;
+        window.switchView = function(v) {
+            if (origSwitchView) origSwitchView.apply(this, arguments);
+            setTimeout(updateTabSlider, 50);
+        };
+        setTimeout(updateTabSlider, 100);
+        window.addEventListener('resize', updateTabSlider);
+    </script>
+</body>
+</html>

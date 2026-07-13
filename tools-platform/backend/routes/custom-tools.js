@@ -7,6 +7,38 @@ router.get('/', async (req, res) => {
     res.json(await repo.listTools());
 });
 
+router.get('/:slug/state', async (req, res) => {
+    const state = await repo.getToolState(req.params.slug);
+    if (!state) return res.status(404).json({ error: '自定义工具不存在' });
+    res.json(state);
+});
+
+router.put('/:slug/state', async (req, res) => {
+    try {
+        const state = await repo.saveToolState(req.params.slug, req.body && req.body.data, {
+            reason: req.body && req.body.reason,
+            createSnapshot: req.body && req.body.createSnapshot !== false
+        });
+        if (!state) return res.status(404).json({ error: '自定义工具不存在' });
+        res.json({ success: true, updatedAt: state.updatedAt, snapshots: state.snapshots.map(({ data, ...item }) => item) });
+    } catch (err) {
+        res.status(400).json({ error: err.message || '保存日程失败' });
+    }
+});
+
+router.get('/:slug/snapshots', async (req, res) => {
+    const state = await repo.getToolState(req.params.slug);
+    if (!state) return res.status(404).json({ error: '自定义工具不存在' });
+    res.json((state.snapshots || []).map(({ data, ...item }) => item));
+});
+
+router.post('/:slug/state/restore', async (req, res) => {
+    const restored = await repo.restoreToolState(req.params.slug, req.body && req.body.snapshotId);
+    if (restored === null) return res.status(404).json({ error: '自定义工具不存在' });
+    if (restored === false) return res.status(404).json({ error: '备份快照不存在' });
+    res.json({ success: true, data: restored.data, updatedAt: restored.updatedAt });
+});
+
 router.post('/', async (req, res) => {
     try {
         const tool = await repo.createTool(req.body || {});
@@ -18,6 +50,16 @@ router.post('/', async (req, res) => {
         res.json({ success: true, tool });
     } catch (err) {
         res.status(err.status || 500).json({ error: err.message || '保存自定义工具失败' });
+    }
+});
+
+router.patch('/:slug/access', async (req, res) => {
+    try {
+        const tool = await repo.updateToolAccess(req.params.slug, req.body && req.body.publicAccess);
+        if (!tool) return res.status(404).json({ error: '自定义工具不存在' });
+        res.json({ success: true, tool });
+    } catch (err) {
+        res.status(500).json({ error: err.message || '保存自定义工具访问权限失败' });
     }
 });
 

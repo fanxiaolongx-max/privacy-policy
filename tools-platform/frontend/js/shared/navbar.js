@@ -145,6 +145,11 @@ function registerNavbarI18n() {
 
             'nav.page.placeholderTitle': '{page}配置预留位',
             'nav.page.placeholderDesc': '当前暂无需要迁移到全局设置的配置项。后续如果该页面新增全局级设置，可以直接放在这里。',
+            'nav.page.home.help': '逐个控制自定义 HTML 工具的新窗口直达地址是否需要登录。默认关闭公开访问；开启后，任何获得链接的人都可以访问该工具及其静态资源。',
+            'nav.page.home.title': '自定义 HTML 访问鉴权',
+            'nav.page.home.public': '允许免登录新窗口访问',
+            'nav.page.home.private': '需要登录',
+            'nav.page.home.empty': '暂无自定义 HTML 工具。',
             'nav.page.report.help': '清理“历史快照 (Snapshot)”中最近 X 天内的同日冗余快照，仅保留每天最新一份。较早日期和每天最新快照都会保留，不影响月报、一键催办等按日读取最新快照的业务。',
             'nav.page.report.title': '历史快照冗余清理',
             'nav.page.report.desc': '建议先“预览影响”，确认要删除的数量后再执行清理。',
@@ -402,6 +407,11 @@ function registerNavbarI18n() {
 
             'nav.page.placeholderTitle': '{page} Configuration Placeholder',
             'nav.page.placeholderDesc': 'There are currently no configuration items to migrate to global settings. Future global settings for this page will be placed here.',
+            'nav.page.home.help': 'Control whether each custom HTML tool can be opened in a new window without signing in. Public access is off by default; when enabled, anyone with the link can access the tool and its static assets.',
+            'nav.page.home.title': 'Custom HTML Access Control',
+            'nav.page.home.public': 'Allow public new-window access',
+            'nav.page.home.private': 'Sign-in required',
+            'nav.page.home.empty': 'No custom HTML tools yet.',
             'nav.page.report.help': 'Clean up redundant same-day historical snapshots from the last X days, keeping only the latest snapshot per day. Older dates and daily latest snapshots are retained to ensure daily-read business metrics are unaffected.',
             'nav.page.report.title': 'Redundant Historical Snapshot Cleanup',
             'nav.page.report.desc': 'We recommend "Previewing Impact" to confirm the deletion count before executing cleanup.',
@@ -2252,6 +2262,7 @@ window.restoreGlobalBackupFromUpload = async function () {
 };
 
 function renderPageSettings(content, pageId) {
+    if (pageId === 'home') return renderHomePageSettings(content);
     if (pageId === 'report') return renderReportPageSettings(content);
     const item = NAV_BUILTIN_LINKS.find(link => link.id === pageId);
     content.innerHTML = `
@@ -2264,6 +2275,51 @@ function renderPageSettings(content, pageId) {
         </div>
     `;
 }
+
+function renderHomePageSettings(content) {
+    const tools = Array.isArray(navState.customTools) ? navState.customTools : [];
+    content.innerHTML = `
+        <div class="nav-settings-help">${navEscape(navT('nav.page.home.help'))}</div>
+        <div class="nav-settings-list">
+            ${tools.map(tool => `
+                <div class="nav-settings-row">
+                    <div class="nav-settings-item-name">
+                        ${navEscape(tool.icon || '🧩')} ${navEscape(tool.name || tool.slug)}
+                        <div style="font-size:11px;color:#7b8794;font-weight:500;margin-top:4px;">/custom-tools/${navEscape(tool.slug)}/index.html</div>
+                    </div>
+                    <label class="nav-settings-check" style="margin-left:auto;">
+                        <input type="checkbox" ${tool.publicAccess === true ? 'checked' : ''} onchange="setCustomToolPublicAccess('${navEscape(tool.slug)}', this.checked, this)">
+                        <span>${navEscape(tool.publicAccess === true ? navT('nav.page.home.public') : navT('nav.page.home.private'))}</span>
+                    </label>
+                </div>
+            `).join('') || `<div class="nav-settings-empty">${navEscape(navT('nav.page.home.empty'))}</div>`}
+        </div>
+    `;
+}
+
+window.setCustomToolPublicAccess = async function (slug, publicAccess, checkbox) {
+    const indicator = document.getElementById('navSettingsSaveState');
+    if (indicator) indicator.textContent = navT('nav.set.saving');
+    if (checkbox) checkbox.disabled = true;
+    try {
+        const res = await fetch(`/api/custom-tools/${encodeURIComponent(slug)}/access`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() },
+            body: JSON.stringify({ publicAccess })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+        const index = navState.customTools.findIndex(item => item.slug === slug);
+        if (index >= 0) navState.customTools[index] = data.tool;
+        if (indicator) indicator.textContent = navT('nav.set.saved');
+        renderHomePageSettings(document.getElementById('navSettingsContent'));
+    } catch (err) {
+        if (checkbox) checkbox.checked = !publicAccess;
+        if (indicator) indicator.textContent = navT('nav.set.saveFail') + err.message;
+    } finally {
+        if (checkbox) checkbox.disabled = false;
+    }
+};
 
 function renderReportPageSettings(content) {
     content.innerHTML = `
