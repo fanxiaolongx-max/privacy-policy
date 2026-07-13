@@ -276,25 +276,30 @@ body.sla-page {
 .section-rule-secondary-btn:hover { background: #f1f5f9; }
 .section-rule-config-save { padding: 8px 20px; background: #7b1fa2; }
 .section-rule-config-modal.risk-edit-mode .section-rule-config-content {
-    width: min(1380px, 97vw);
-    height: min(900px, 92vh);
+    width: min(1440px, 96vw);
+    height: min(920px, 92vh);
     max-width: none;
     max-height: 92vh;
+    border-radius: 14px;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, .28);
 }
-.section-rule-config-modal.risk-edit-mode .section-rule-config-body { padding: 14px; background: #f4f5f8; }
-.risk-rule-editor { display: flex; flex-direction: column; gap: 12px; min-height: 100%; color: #334155; }
+.section-rule-config-modal.risk-edit-mode .section-rule-config-header { padding: 15px 20px; }
+.section-rule-config-modal.risk-edit-mode .section-rule-config-body { padding: 18px; background: #f3f5f8; }
+.section-rule-config-modal.risk-edit-mode .section-rule-config-footer { padding: 12px 18px; background: #fff; border-top: 1px solid #e2e8f0; }
+.risk-rule-editor { display: flex; flex-direction: column; gap: 16px; min-height: 100%; color: #334155; }
 .risk-rule-editor h4 { margin: 0; color: #263444; font-size: 15px; }
-.risk-rule-editor p { margin: 4px 0 0; color: #64748b; font-size: 11px; line-height: 1.45; }
+.risk-rule-editor p { margin: 5px 0 0; color: #64748b; font-size: 12px; line-height: 1.5; }
 .risk-editor-global {
     display: grid;
-    grid-template-columns: minmax(240px, .72fr) minmax(420px, 1.6fr);
-    gap: 18px;
+    grid-template-columns: minmax(260px, .7fr) minmax(460px, 1.7fr);
+    gap: 24px;
     align-items: center;
-    padding: 13px 16px;
+    padding: 16px 18px;
     background: #fff;
     border: 1px solid #e2e8f0;
     border-left: 5px solid #7b1fa2;
-    border-radius: 9px;
+    border-radius: 12px;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, .04);
 }
 .risk-editor-global > label,
 .risk-editor-grid > label,
@@ -304,37 +309,39 @@ body.sla-page {
 .risk-alert-grid label > span { font-size: 11px; font-weight: 800; color: #475569; }
 .risk-editor-columns {
     display: grid;
-    grid-template-columns: minmax(0, 1.55fr) minmax(380px, .9fr);
-    gap: 12px;
+    grid-template-columns: minmax(0, 1.55fr) minmax(400px, .9fr);
+    gap: 16px;
     align-items: start;
 }
 .risk-editor-pane {
     min-width: 0;
-    padding: 12px;
+    padding: 16px;
     background: #fff;
     border: 1px solid #e2e8f0;
-    border-radius: 9px;
+    border-radius: 12px;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, .04);
 }
-.risk-editor-pane-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.risk-editor-pane-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid #edf0f4; }
 .risk-editor-add-btn {
     border: 1px solid #c4b5fd;
     background: #f5f3ff;
     color: #6d28d9;
     border-radius: 6px;
-    padding: 7px 10px;
-    font-size: 11px;
+    min-height: 34px;
+    padding: 7px 12px;
+    font-size: 12px;
     font-weight: 800;
     cursor: pointer;
     white-space: nowrap;
 }
 .risk-editor-add-btn:hover { background: #ede9fe; }
 #risk-rule-card-list,
-#risk-alert-card-list { display: flex; flex-direction: column; gap: 9px; }
+#risk-alert-card-list { display: flex; flex-direction: column; gap: 12px; }
 .risk-rule-card,
 .risk-alert-card {
-    padding: 11px;
+    padding: 14px;
     border: 1px solid #dbe2ea;
-    border-radius: 8px;
+    border-radius: 10px;
     background: #fbfcfe;
     box-shadow: 0 1px 2px rgba(15, 23, 42, .03);
 }
@@ -343,13 +350,34 @@ body.sla-page {
 .risk-editor-card-head {
     display: grid;
     grid-template-columns: auto minmax(140px, 1fr) auto;
-    gap: 8px;
+    gap: 10px;
     align-items: center;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
 }
-.risk-editor-toggle { display: inline-flex; align-items: center; gap: 5px; color: #475569; font-size: 11px; font-weight: 800; white-space: nowrap; }
+.risk-editor-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 34px;
+    box-sizing: border-box;
+    padding: 0 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #fff;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.risk-editor-toggle:has(input:checked) { border-color: #86efac; background: #f0fdf4; color: #166534; }
+.risk-editor-toggle input,
+.risk-editor-checkbox-control input,
+.rule-data-choice input { margin: 0; accent-color: #16a34a; }
 .risk-editor-input {
     width: 100%;
+    min-height: 34px;
     min-width: 0;
     box-sizing: border-box;
     border: 1px solid #cbd5e1;
@@ -369,7 +397,8 @@ textarea.risk-editor-input { resize: vertical; min-height: 48px; }
     border: 1px solid #e2e8f0;
     background: #fff;
     border-radius: 5px;
-    padding: 6px 8px;
+    min-height: 34px;
+    padding: 6px 10px;
     font-size: 10px;
     font-weight: 700;
     cursor: pointer;
@@ -378,13 +407,41 @@ textarea.risk-editor-input { resize: vertical; min-height: 48px; }
 .risk-editor-icon-btn.danger:hover { background: #fef2f2; }
 .risk-editor-grid {
     display: grid;
-    grid-template-columns: minmax(140px, .7fr) minmax(180px, 1fr) minmax(100px, .45fr);
-    gap: 9px;
-    align-items: end;
+    grid-template-columns: minmax(150px, .65fr) minmax(260px, 1.35fr) minmax(130px, .55fr);
+    gap: 12px;
+    align-items: stretch;
 }
 .risk-editor-grid .risk-editor-wide { min-width: 0; }
-.risk-editor-check > label { min-height: 32px; display: flex; align-items: center; gap: 5px; font-size: 11px; }
-.risk-alert-grid { display: grid; grid-template-columns: repeat(2, minmax(125px, 1fr)); gap: 9px; align-items: end; }
+.risk-editor-rule-sections { display: flex; flex-direction: column; gap: 10px; }
+.risk-editor-subsection {
+    padding: 12px;
+    border: 1px solid #e4e9f0;
+    border-radius: 9px;
+    background: #fff;
+}
+.risk-editor-subsection-title { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; }
+.risk-editor-subsection-title b { color: #334155; font-size: 12px; }
+.risk-editor-subsection-title span { color: #94a3b8; font-size: 10px; }
+.risk-editor-subsection-compact { display: grid; grid-template-columns: minmax(180px, .45fr) minmax(240px, 1fr); gap: 16px; align-items: end; }
+.risk-editor-subsection-compact .risk-editor-subsection-title { align-self: center; margin: 0; }
+.risk-editor-subsection-compact > label { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.risk-editor-check { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.risk-editor-checkbox-control {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 34px;
+    box-sizing: border-box;
+    padding: 0 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #fff;
+    color: #475569;
+    font-size: 11px;
+    cursor: pointer;
+}
+.risk-editor-check:has(input:checked) .risk-editor-checkbox-control { border-color: #86efac; background: #f0fdf4; color: #166534; }
+.risk-alert-grid { display: grid; grid-template-columns: repeat(2, minmax(125px, 1fr)); gap: 12px; align-items: end; }
 .risk-editor-color { width: 100%; height: 34px; padding: 3px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; }
 .risk-rule-preview {
     padding: 12px 15px;
@@ -412,52 +469,61 @@ textarea.risk-editor-input { resize: vertical; min-height: 48px; }
 .info-row .badge { background-color: #1976d2; color: #fff; }
 .risk-config-badge { border: none; }
 .section-rule-config-modal.risk-edit-mode .risk-editor-global { border-left-color: var(--section-rule-color, #7b1fa2); }
-#other-rule-list { display: flex; flex-direction: column; gap: 12px; }
-.other-rule-alert-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 12px 0 7px; color: #475569; font-size: 11px; }
-.other-rule-alert-list { display: flex; flex-direction: column; gap: 7px; }
+#other-rule-list { display: flex; flex-direction: column; gap: 14px; }
+.other-rule-alert-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 14px 0 9px; padding-top: 12px; border-top: 1px solid #e5e9ef; color: #475569; font-size: 12px; }
+.other-rule-alert-list { display: flex; flex-direction: column; gap: 9px; }
 .risk-alert-card.compact {
     display: grid;
-    grid-template-columns: auto minmax(100px, .8fr) minmax(110px, .8fr) minmax(120px, .8fr) minmax(100px, .7fr) 42px auto;
-    gap: 7px;
+    grid-template-columns: auto minmax(115px, .9fr) minmax(105px, .7fr) minmax(125px, .85fr) minmax(115px, .8fr) 58px auto;
+    gap: 9px;
     align-items: end;
-    padding: 8px;
+    padding: 10px;
 }
 .risk-alert-card.compact > label { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .risk-alert-card.compact > label > span { color: #64748b; font-size: 10px; font-weight: 800; }
+.risk-alert-card.compact > .risk-editor-toggle { align-self: end; }
 .risk-alert-card.compact input[type="color"],
-.sr-alert-config input[type="color"] { width: 38px; height: 33px; padding: 2px; border: 1px solid #cbd5e1; border-radius: 5px; background: #fff; }
-.sr-rule-editor .risk-editor-columns { grid-template-columns: minmax(420px, .9fr) minmax(600px, 1.25fr); }
-.sr-editor-grid { display: grid; grid-template-columns: repeat(2, minmax(180px, 1fr)); gap: 9px; margin-top: 10px; }
+.sr-alert-config input[type="color"] { width: 100%; height: 34px; box-sizing: border-box; padding: 2px; border: 1px solid #cbd5e1; border-radius: 5px; background: #fff; }
+.risk-editor-color-field { min-width: 0; }
+.sr-rule-editor .risk-editor-columns { grid-template-columns: minmax(420px, .9fr) minmax(620px, 1.25fr); }
+.sr-editor-grid { display: grid; grid-template-columns: repeat(2, minmax(180px, 1fr)); gap: 12px; margin-top: 12px; }
 .sr-editor-grid > label { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .sr-editor-grid > label > span { color: #475569; font-size: 11px; font-weight: 800; }
 .sr-alert-list { display: flex; flex-direction: column; gap: 7px; margin-top: 10px; }
 .sr-alert-config {
     display: grid;
-    grid-template-columns: auto minmax(95px, .65fr) minmax(115px, 1fr) 110px 42px;
-    gap: 7px;
-    align-items: center;
-    padding: 8px;
+    grid-template-columns: auto minmax(100px, .65fr) minmax(125px, 1fr) minmax(120px, .8fr) 62px;
+    gap: 9px;
+    align-items: end;
+    padding: 10px;
     border: 1px solid #e2e8f0;
     border-radius: 7px;
     background: #fbfcfe;
     font-size: 11px;
 }
+.sr-alert-config > b { align-self: center; color: #334155; }
+.sr-alert-config > label:not(.risk-editor-toggle) { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.sr-alert-config > label > span { color: #64748b; font-size: 10px; font-weight: 800; }
 .rule-data-picker {
     min-width: 0;
-    padding: 8px;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 10px;
     border: 1px solid #cbd5e1;
     border-radius: 7px;
     background: #fff;
 }
-.rule-data-picker-head { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 6px; color: #475569; font-size: 10px; font-weight: 800; }
+.rule-data-picker-head { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 8px; color: #475569; font-size: 10px; font-weight: 800; }
 .rule-data-picker-head span:last-child { color: #16803c; font-weight: 700; }
-.rule-data-choice-list { display: flex; flex-wrap: wrap; gap: 5px; max-height: 138px; overflow: auto; padding: 2px; }
+.rule-data-choice-list { display: flex; flex-wrap: wrap; gap: 6px; max-height: 138px; overflow: auto; padding: 2px; }
 .rule-data-choice {
     display: inline-flex;
     align-items: center;
     gap: 4px;
     max-width: 100%;
-    padding: 4px 7px;
+    min-height: 27px;
+    box-sizing: border-box;
+    padding: 4px 8px;
     border: 1px solid #bbf7d0;
     border-radius: 999px;
     background: #f0fdf4;
@@ -1419,8 +1485,9 @@ th.drag-over { border-left: 4px solid #ff9800 !important; background-color: #fff
 @media (max-width: 1400px) {
     .rule-box { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .rule-col:nth-child(odd) { border-left: none; padding-left: 0; }
-    .risk-editor-columns { grid-template-columns: minmax(0, 1.3fr) minmax(340px, .85fr); }
-    .risk-editor-grid { grid-template-columns: repeat(2, minmax(150px, 1fr)); }
+    .risk-editor-columns { grid-template-columns: minmax(0, 1.25fr) minmax(360px, .85fr); }
+    .risk-alert-card.compact { grid-template-columns: auto repeat(2, minmax(130px, 1fr)) repeat(2, minmax(120px, 1fr)) 58px auto; }
+    .sr-rule-editor .risk-editor-columns { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 900px) {
@@ -1435,6 +1502,12 @@ th.drag-over { border-left: 4px solid #ff9800 !important; background-color: #fff
     .risk-editor-grid,
     .risk-alert-grid,
     .risk-rule-preview ul { grid-template-columns: 1fr; }
+    .risk-editor-subsection-compact { grid-template-columns: 1fr; gap: 10px; }
+    .risk-alert-card.compact,
+    .sr-alert-config { grid-template-columns: 1fr 1fr; }
+    .risk-alert-card.compact > .risk-editor-toggle,
+    .sr-alert-config > .risk-editor-toggle { justify-self: start; }
+    .risk-alert-card.compact > .risk-editor-icon-btn { align-self: end; }
     .section-rule-config-footer { align-items: flex-start; flex-direction: column; }
     #section-rule-config-actions { width: 100%; flex-wrap: wrap; }
 }

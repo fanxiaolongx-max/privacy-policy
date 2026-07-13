@@ -258,14 +258,27 @@
                     <input class="risk-editor-input risk-rule-name" data-field="name" value="${escapeText(rule.name)}" placeholder="规则名称">
                     <button type="button" class="risk-editor-icon-btn danger" data-action="remove-rule" title="删除识别规则">删除</button>
                 </div>
-                <div class="risk-editor-grid">
-                    <label><span>状态条件</span><select class="risk-editor-input" data-field="operator">${operatorOptions}</select></label>
-                    <div class="risk-editor-wide">${window.SLARulePicker.renderPicker({ mode: 'risk', id: `risk-rule-values-${index}`, kind: 'value', label: '匹配值（来自所选状态字段）', selected: rule.match.values, fields: workingConfig.statusFields })}</div>
-                    <label class="risk-editor-check"><span>大小写</span><label><input type="checkbox" data-field="caseSensitive" ${rule.match.caseSensitive ? 'checked' : ''}> 区分大小写</label></label>
-                    <label><span>截止日期类型</span><select class="risk-editor-input" data-field="deadlineType">${deadlineOptions}</select></label>
-                    <div class="risk-editor-wide">${window.SLARulePicker.renderPicker({ mode: 'risk', id: `risk-rule-date-fields-${index}`, kind: 'field', label: '日期字段优先级', selected: rule.deadline.fields })}</div>
-                    <label><span>追加天数</span><input type="number" class="risk-editor-input" data-field="offsetDays" value="${rule.deadline.offsetDays}" ${rule.deadline.type === 'field_plus_days' ? '' : 'disabled'}></label>
-                    <label><span>告警标签前缀</span><input class="risk-editor-input" data-field="badgePrefix" value="${escapeText(rule.badgePrefix)}" placeholder="例如 Review"></label>
+                <div class="risk-editor-rule-sections">
+                    <section class="risk-editor-subsection">
+                        <div class="risk-editor-subsection-title"><b>状态识别</b><span>确定哪些数据进入本规则</span></div>
+                        <div class="risk-editor-grid risk-editor-grid-match">
+                            <label><span>状态条件</span><select class="risk-editor-input" data-field="operator">${operatorOptions}</select></label>
+                            <div class="risk-editor-wide">${window.SLARulePicker.renderPicker({ mode: 'risk', id: `risk-rule-values-${index}`, kind: 'value', label: '匹配值（来自所选状态字段）', selected: rule.match.values, fields: workingConfig.statusFields })}</div>
+                            <label class="risk-editor-check"><span>匹配方式</span><span class="risk-editor-checkbox-control"><input type="checkbox" data-field="caseSensitive" ${rule.match.caseSensitive ? 'checked' : ''}><span>区分大小写</span></span></label>
+                        </div>
+                    </section>
+                    <section class="risk-editor-subsection">
+                        <div class="risk-editor-subsection-title"><b>截止日期</b><span>设置日期来源和计算方式</span></div>
+                        <div class="risk-editor-grid risk-editor-grid-deadline">
+                            <label><span>截止日期类型</span><select class="risk-editor-input" data-field="deadlineType">${deadlineOptions}</select></label>
+                            <div class="risk-editor-wide">${window.SLARulePicker.renderPicker({ mode: 'risk', id: `risk-rule-date-fields-${index}`, kind: 'field', label: '日期字段优先级', selected: rule.deadline.fields })}</div>
+                            <label><span>追加天数</span><input type="number" class="risk-editor-input" data-field="offsetDays" value="${rule.deadline.offsetDays}" ${rule.deadline.type === 'field_plus_days' ? '' : 'disabled'}></label>
+                        </div>
+                    </section>
+                    <section class="risk-editor-subsection risk-editor-subsection-compact">
+                        <div class="risk-editor-subsection-title"><b>标签展示</b><span>配置表格中的告警文字</span></div>
+                        <label><span>告警标签前缀</span><input class="risk-editor-input" data-field="badgePrefix" value="${escapeText(rule.badgePrefix)}" placeholder="例如 Review"></label>
+                    </section>
                 </div>
             </article>`;
     }
