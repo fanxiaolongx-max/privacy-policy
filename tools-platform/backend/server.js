@@ -130,7 +130,7 @@ app.use((req, res, next) => {
         const querySummary = Object.keys(safeQuery).length ? ` query=${JSON.stringify(safeQuery)}` : '';
         const externalTag = safeUrl.startsWith('/api/external/metrics') ? ' [external-metrics]' : '';
         console.log(`${color}[${ts}] ${req.method} ${safeUrl} #${req.requestId}${externalTag} → ${status} (${dur}ms) ${bodySize}${querySummary} ip=${client} ua="${userAgent.substring(0, 120)}"${reset}`);
-        if (status >= 400) {
+        if (status >= 400 && !req.suppressBodyLog) {
             console.log(`  ↳ Body:`, JSON.stringify(redactForLog(req.body)).substring(0, 300));
         }
     });

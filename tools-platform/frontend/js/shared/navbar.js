@@ -113,6 +113,7 @@ function registerNavbarI18n() {
             'nav.set.tab.ai': 'AI 助手',
             'nav.set.tab.update': '程序更新',
             'nav.set.tab.backup': '备份恢复',
+            'nav.set.tab.customBackup': '自定义工具备份',
             'nav.set.tab.accounts': '账号管理',
             'nav.set.tab.security': '安全策略',
             'nav.set.tab.pages': '页面配置',
@@ -127,6 +128,7 @@ function registerNavbarI18n() {
             'nav.set.sub.ai': '修改后会自动保存，并立即影响智能客服助手配置。',
             'nav.set.sub.update': '检查、下载并安装桌面客户端更新。',
             'nav.set.sub.backup': '备份和恢复会覆盖全局配置、数据库、上传附件与自定义工具数据。',
+            'nav.set.sub.customBackup': '单独备份和恢复自定义工具文件、注册信息、服务端状态及可识别的浏览器本地数据。',
             'nav.set.sub.accounts': '修改后会自动保存，并立即影响账号权限。',
             'nav.set.sub.security': '配置登录失败锁定、会话过期和安全告警策略。',
             'nav.set.sub.report': '报表看板相关维护能力，当前支持历史快照冗余清理。',
@@ -221,6 +223,36 @@ function registerNavbarI18n() {
 
             'nav.bk.empty': '正在加载备份列表...',
             'nav.bk.help': '覆盖范围：{target}。包含全局配置、JSON 数据、SQLite 数据库、上传附件、自定义工具 HTML 等运行数据。',
+            'nav.ctbk.help': '独立备份不会覆盖其他业务模块。导出包包含工具全部文件、注册信息、服务端状态与快照、可识别的 localStorage 数据，以及逐文件 SHA-256 完整性清单。',
+            'nav.ctbk.loading': '正在扫描自定义工具依赖...',
+            'nav.ctbk.empty': '当前没有可备份的自定义工具。',
+            'nav.ctbk.exportTitle': '选择要导出的工具',
+            'nav.ctbk.exportDesc': '默认全选。工具调用的公共平台 API、外部服务、sessionStorage 和 IndexedDB 会记录为依赖，但不会复制共享数据或登录凭据。',
+            'nav.ctbk.files': '{count} 个文件',
+            'nav.ctbk.serverState': '服务端状态',
+            'nav.ctbk.localState': '本地状态 {count}',
+            'nav.ctbk.apiDeps': '平台 API {count}',
+            'nav.ctbk.externalDeps': '外部接口 {count}',
+            'nav.ctbk.indexedDb': 'IndexedDB {count}',
+            'nav.ctbk.btnAll': '全选',
+            'nav.ctbk.btnNone': '取消全选',
+            'nav.ctbk.btnExport': '导出所选工具备份',
+            'nav.ctbk.restoreTitle': '恢复自定义工具备份',
+            'nav.ctbk.restoreDesc': '上传后先校验包类型、清单、CRC 和所有文件 SHA-256；校验全部通过后才写入。发生错误会自动回滚文件、注册表和服务端状态。',
+            'nav.ctbk.strategyReplace': '同名工具：完整替换',
+            'nav.ctbk.strategySkip': '同名工具：跳过保留现有',
+            'nav.ctbk.btnRestore': '校验并恢复',
+            'nav.ctbk.portabilityTitle': '完整度与运行依赖',
+            'nav.ctbk.portability': '已包含：HTML/JS/CSS/附件、工具注册信息、访问权限、custom_tool_state 服务端状态与快照、可静态识别且不含凭据的 localStorage。未包含：公共平台 API 背后的共享数据库、外部系统数据、动态生成的本地键、sessionStorage、IndexedDB 和登录凭据。恢复后会列出这些运行依赖。',
+            'nav.ctbk.selected': '已选择 {selected}/{total} 个工具',
+            'nav.ctbk.exporting': '正在生成自定义工具备份...',
+            'nav.ctbk.restoring': '正在校验并恢复自定义工具...',
+            'nav.ctbk.noSelection': '请至少选择一个自定义工具。',
+            'nav.ctbk.noFile': '请先选择自定义工具备份 ZIP。',
+            'nav.ctbk.restoreConfirm': '确定恢复此自定义工具备份吗？\n\n文件：{file}\n策略：{strategy}\n\n恢复前会完整校验；如写入失败会自动回滚。',
+            'nav.ctbk.restoreDone': '恢复完成：{restored} 个；跳过：{skipped} 个。',
+            'nav.ctbk.dependencyWarn': '其中 {count} 个工具仍依赖公共平台 API、外部接口或 IndexedDB，请确保目标环境具备相同服务。',
+            'nav.ctbk.fail': '加载自定义工具备份功能失败：',
             'nav.bk.remoteTitle': '远端主站同步',
             'nav.bk.remoteDesc': '适合分站/Windows 本地启动时，从主站自动拉取最新全局备份并恢复。配置只保存在当前机器，不会被备份包覆盖。',
             'nav.bk.enable': '启用',
@@ -375,6 +407,7 @@ function registerNavbarI18n() {
             'nav.set.tab.ai': 'AI Assistant',
             'nav.set.tab.update': 'App Updates',
             'nav.set.tab.backup': 'Backup & Restore',
+            'nav.set.tab.customBackup': 'Custom Tool Backup',
             'nav.set.tab.accounts': 'Accounts',
             'nav.set.tab.security': 'Security',
             'nav.set.tab.pages': 'Page Settings',
@@ -389,6 +422,7 @@ function registerNavbarI18n() {
             'nav.set.sub.ai': 'Changes are saved automatically and immediately applied to the AI Assistant configuration.',
             'nav.set.sub.update': 'Check, download, and install desktop client updates.',
             'nav.set.sub.backup': 'Backup and restore will overwrite global configuration, database, uploaded files, and custom tools data.',
+            'nav.set.sub.customBackup': 'Back up and restore custom tool files, registry data, server state, and detectable browser-local data independently.',
             'nav.set.sub.accounts': 'Changes are saved automatically and immediately applied to account permissions.',
             'nav.set.sub.security': 'Configure login lockouts, session expiry, and security alert severity.',
             'nav.set.sub.report': 'Report dashboard maintenance. Currently supports historical snapshot cleanup.',
@@ -483,6 +517,36 @@ function registerNavbarI18n() {
 
             'nav.bk.empty': 'Loading backup list...',
             'nav.bk.help': 'Scope: {target}. Includes global configuration, JSON data, SQLite databases, uploaded files, and custom tool HTML.',
+            'nav.ctbk.help': 'Independent backups do not overwrite other business modules. Packages include all tool files, registry metadata, server state and snapshots, detectable localStorage data, and per-file SHA-256 integrity records.',
+            'nav.ctbk.loading': 'Scanning custom tool dependencies...',
+            'nav.ctbk.empty': 'There are no custom tools to back up.',
+            'nav.ctbk.exportTitle': 'Select tools to export',
+            'nav.ctbk.exportDesc': 'All tools are selected by default. Shared platform APIs, external services, sessionStorage, and IndexedDB are recorded as dependencies but shared data and credentials are not copied.',
+            'nav.ctbk.files': '{count} files',
+            'nav.ctbk.serverState': 'Server state',
+            'nav.ctbk.localState': 'Local state {count}',
+            'nav.ctbk.apiDeps': 'Platform APIs {count}',
+            'nav.ctbk.externalDeps': 'External {count}',
+            'nav.ctbk.indexedDb': 'IndexedDB {count}',
+            'nav.ctbk.btnAll': 'Select all',
+            'nav.ctbk.btnNone': 'Clear selection',
+            'nav.ctbk.btnExport': 'Export selected tools',
+            'nav.ctbk.restoreTitle': 'Restore custom tool backup',
+            'nav.ctbk.restoreDesc': 'The package type, manifest, CRC, and every SHA-256 file hash are validated before writing. Files, registry data, and server state are rolled back automatically on failure.',
+            'nav.ctbk.strategyReplace': 'Same slug: replace completely',
+            'nav.ctbk.strategySkip': 'Same slug: keep existing',
+            'nav.ctbk.btnRestore': 'Validate and restore',
+            'nav.ctbk.portabilityTitle': 'Completeness and runtime dependencies',
+            'nav.ctbk.portability': 'Included: HTML/JS/CSS/assets, registry metadata, access settings, custom_tool_state server data and snapshots, and statically detectable credential-free localStorage. Not included: shared databases behind platform APIs, external system data, dynamic local keys, sessionStorage, IndexedDB, or login credentials. Runtime dependencies are reported after restore.',
+            'nav.ctbk.selected': '{selected}/{total} tools selected',
+            'nav.ctbk.exporting': 'Generating custom tool backup...',
+            'nav.ctbk.restoring': 'Validating and restoring custom tools...',
+            'nav.ctbk.noSelection': 'Select at least one custom tool.',
+            'nav.ctbk.noFile': 'Choose a custom tool backup ZIP first.',
+            'nav.ctbk.restoreConfirm': 'Restore this custom tool backup?\n\nFile: {file}\nStrategy: {strategy}\n\nThe package is fully validated first and any failed write is rolled back.',
+            'nav.ctbk.restoreDone': 'Restore complete: {restored}; skipped: {skipped}.',
+            'nav.ctbk.dependencyWarn': '{count} restored tools still depend on platform APIs, external endpoints, or IndexedDB. Ensure the target environment provides the same services.',
+            'nav.ctbk.fail': 'Failed to load custom tool backup: ',
             'nav.bk.remoteTitle': 'Remote Main Site Sync',
             'nav.bk.remoteDesc': 'Suitable for local branch syncs from the main site. Settings are saved locally and not overwritten by backups.',
             'nav.bk.enable': 'Enable',
@@ -947,6 +1011,7 @@ function renderNavSettingsSidebar() {
         <button class="nav-settings-tab ${t === 'ai' ? 'active' : ''}" data-tab="ai" onclick="switchNavSettingsTab('ai')">${navEscape(navT('nav.set.tab.ai'))}</button>
         <button class="nav-settings-tab ${t === 'update' ? 'active' : ''}" data-tab="update" onclick="switchNavSettingsTab('update')">${navEscape(navT('nav.set.tab.update'))}</button>
         <button class="nav-settings-tab ${t === 'backup' ? 'active' : ''}" data-tab="backup" onclick="switchNavSettingsTab('backup')">${navEscape(navT('nav.set.tab.backup'))}</button>
+        <button class="nav-settings-tab ${t === 'customBackup' ? 'active' : ''}" data-tab="customBackup" onclick="switchNavSettingsTab('customBackup')">${navEscape(navT('nav.set.tab.customBackup'))}</button>
         <button class="nav-settings-tab ${t === 'accounts' ? 'active' : ''}" data-tab="accounts" onclick="switchNavSettingsTab('accounts')">${navEscape(navT('nav.set.tab.accounts'))}</button>
         <button class="nav-settings-tab ${t === 'security' ? 'active' : ''}" data-tab="security" onclick="switchNavSettingsTab('security')">${navEscape(navT('nav.set.tab.security'))}</button>
         <div class="nav-settings-title nav-settings-section-title">${navEscape(navT('nav.set.tab.pages'))}</div>
@@ -1011,6 +1076,7 @@ function getNavSettingsTitle() {
     if (navState.settingsTab === 'ai') return navT('nav.set.tab.ai');
     if (navState.settingsTab === 'update') return navT('nav.set.tab.update');
     if (navState.settingsTab === 'backup') return navT('nav.set.tab.backup');
+    if (navState.settingsTab === 'customBackup') return navT('nav.set.tab.customBackup');
     if (navState.settingsTab === 'categories') return navT('nav.set.tab.categories');
     if (navState.settingsTab === 'items') return navT('nav.set.tab.items');
     return navT('nav.set.tab.primary');
@@ -1027,6 +1093,7 @@ function getNavSettingsSubtitle() {
     if (navState.settingsTab === 'ai') return navT('nav.set.sub.ai');
     if (navState.settingsTab === 'update') return navT('nav.set.sub.update');
     if (navState.settingsTab === 'backup') return navT('nav.set.sub.backup');
+    if (navState.settingsTab === 'customBackup') return navT('nav.set.sub.customBackup');
     if (navState.settingsTab === 'categories') return navT('nav.set.sub.categories');
     if (navState.settingsTab === 'items') return navT('nav.set.sub.items');
     return navT('nav.set.sub.primary');
@@ -1051,6 +1118,7 @@ function renderNavSettingsContent() {
     if (navState.settingsTab === 'ai') return renderAiSettings(content);
     if (navState.settingsTab === 'update') return renderUpdaterSettings(content);
     if (navState.settingsTab === 'backup') return renderBackupSettings(content);
+    if (navState.settingsTab === 'customBackup') return renderCustomToolBackupSettings(content);
     if (navState.settingsTab === 'categories') return renderCategorySettings(content);
     if (navState.settingsTab === 'items') return renderItemCategorySettings(content);
     renderPrimarySettings(content);
@@ -1798,6 +1866,193 @@ async function renderBackupSettings(content) {
         content.innerHTML = `<div class="nav-settings-empty">${navEscape(navT('nav.bk.fail'))}${navEscape(e.message)}</div>`;
     }
 }
+
+function customToolBackupText(key, values = {}) {
+    let text = navT(key);
+    Object.entries(values).forEach(([name, value]) => {
+        text = text.replaceAll(`{${name}}`, String(value));
+    });
+    return text;
+}
+
+function customToolDependencyBadges(tool) {
+    const dependencies = tool.dependencies || {};
+    const badges = [
+        `<span class="nav-custom-backup-badge files">${navEscape(customToolBackupText('nav.ctbk.files', { count: tool.fileCount || 0 }))}</span>`,
+        `<span class="nav-custom-backup-badge state">${navEscape(navT('nav.ctbk.serverState'))}</span>`
+    ];
+    const mappings = [
+        ['localStorageKeys', 'nav.ctbk.localState', 'local'],
+        ['platformApiPaths', 'nav.ctbk.apiDeps', 'api'],
+        ['externalUrls', 'nav.ctbk.externalDeps', 'external'],
+        ['indexedDbNames', 'nav.ctbk.indexedDb', 'warning']
+    ];
+    mappings.forEach(([field, key, tone]) => {
+        const count = Array.isArray(dependencies[field]) ? dependencies[field].length : 0;
+        if (count) badges.push(`<span class="nav-custom-backup-badge ${tone}">${navEscape(customToolBackupText(key, { count }))}</span>`);
+    });
+    return badges.join('');
+}
+
+function updateCustomToolBackupSelectionSummary() {
+    const boxes = Array.from(document.querySelectorAll('[data-custom-backup-slug]'));
+    const selected = boxes.filter(box => box.checked).length;
+    const summary = document.getElementById('customToolBackupSelectionSummary');
+    if (summary) summary.textContent = customToolBackupText('nav.ctbk.selected', { selected, total: boxes.length });
+}
+
+async function renderCustomToolBackupSettings(content) {
+    content.innerHTML = `<div class="nav-settings-empty">${navEscape(navT('nav.ctbk.loading'))}</div>`;
+    try {
+        const res = await fetch('/api/custom-tools/backup/summary', { headers: getAuthHeaderForNav() });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+        navState.customToolBackupSummary = data;
+        const tools = Array.isArray(data.tools) ? data.tools : [];
+        content.innerHTML = `
+            <div class="nav-settings-help">${navEscape(navT('nav.ctbk.help'))}</div>
+            <div class="nav-custom-backup-portability">
+                <div class="nav-custom-backup-portability-icon">🧭</div>
+                <div><strong>${navEscape(navT('nav.ctbk.portabilityTitle'))}</strong><p>${navEscape(navT('nav.ctbk.portability'))}</p></div>
+            </div>
+            <section class="nav-custom-backup-card">
+                <div class="nav-custom-backup-head">
+                    <div><div class="nav-backup-panel-title">${navEscape(navT('nav.ctbk.exportTitle'))}</div><div class="nav-backup-panel-desc">${navEscape(navT('nav.ctbk.exportDesc'))}</div></div>
+                    <div id="customToolBackupSelectionSummary" class="nav-custom-backup-selection"></div>
+                </div>
+                <div class="nav-custom-backup-list">
+                    ${tools.map(tool => `
+                        <label class="nav-custom-backup-tool">
+                            <input type="checkbox" data-custom-backup-slug="${navEscape(tool.slug)}" checked onchange="updateCustomToolBackupSelectionSummary()">
+                            <span class="nav-custom-backup-tool-icon">${navEscape(tool.icon || '🧩')}</span>
+                            <span class="nav-custom-backup-tool-main">
+                                <strong>${navEscape(tool.name || tool.slug)}</strong>
+                                <code>${navEscape(tool.slug)}</code>
+                                <span class="nav-custom-backup-badges">${customToolDependencyBadges(tool)}</span>
+                            </span>
+                            <span class="nav-custom-backup-size">${navEscape(formatBackupSize(tool.totalBytes || 0))}</span>
+                        </label>
+                    `).join('') || `<div class="nav-settings-empty">${navEscape(navT('nav.ctbk.empty'))}</div>`}
+                </div>
+                ${tools.length ? `<div class="nav-backup-toolbar nav-custom-backup-actions">
+                    <button type="button" onclick="setAllCustomToolBackupSelections(true)">${navEscape(navT('nav.ctbk.btnAll'))}</button>
+                    <button type="button" onclick="setAllCustomToolBackupSelections(false)">${navEscape(navT('nav.ctbk.btnNone'))}</button>
+                    <button type="button" class="primary" onclick="exportCustomToolBackup()">${navEscape(navT('nav.ctbk.btnExport'))}</button>
+                </div>` : ''}
+            </section>
+            <section class="nav-custom-backup-card restore">
+                <div><div class="nav-backup-panel-title">${navEscape(navT('nav.ctbk.restoreTitle'))}</div><div class="nav-backup-panel-desc">${navEscape(navT('nav.ctbk.restoreDesc'))}</div></div>
+                <div class="nav-custom-backup-restore-row">
+                    <input id="customToolBackupRestoreInput" type="file" accept=".zip,application/zip">
+                    <select id="customToolBackupConflictStrategy" class="nav-settings-input">
+                        <option value="replace">${navEscape(navT('nav.ctbk.strategyReplace'))}</option>
+                        <option value="skip">${navEscape(navT('nav.ctbk.strategySkip'))}</option>
+                    </select>
+                    <button type="button" class="danger" onclick="restoreCustomToolBackup()">${navEscape(navT('nav.ctbk.btnRestore'))}</button>
+                </div>
+            </section>
+        `;
+        updateCustomToolBackupSelectionSummary();
+    } catch (e) {
+        content.innerHTML = `<div class="nav-settings-empty">${navEscape(navT('nav.ctbk.fail'))}${navEscape(e.message)}</div>`;
+    }
+}
+
+window.updateCustomToolBackupSelectionSummary = updateCustomToolBackupSelectionSummary;
+
+window.setAllCustomToolBackupSelections = function (checked) {
+    document.querySelectorAll('[data-custom-backup-slug]').forEach(box => { box.checked = checked; });
+    updateCustomToolBackupSelectionSummary();
+};
+
+function collectCustomToolBrowserState(selectedSlugs) {
+    const summary = navState.customToolBackupSummary || {};
+    const selected = new Set(selectedSlugs);
+    const keys = new Set();
+    const reservedPlatformKeys = new Set(['tools_token', 'tools_role', 'tools_user', 'tools_language']);
+    (summary.tools || []).filter(tool => selected.has(tool.slug)).forEach(tool => {
+        (tool.dependencies?.localStorageKeys || []).forEach(key => {
+            if (!reservedPlatformKeys.has(key) && !/(?:token|password|passwd|secret|authorization|session|credential)/i.test(key)) keys.add(key);
+        });
+    });
+    const state = {};
+    keys.forEach(key => {
+        try {
+            const value = localStorage.getItem(key);
+            if (value !== null) state[key] = value;
+        } catch (_) { }
+    });
+    return state;
+}
+
+window.exportCustomToolBackup = async function () {
+    const slugs = Array.from(document.querySelectorAll('[data-custom-backup-slug]:checked')).map(box => box.dataset.customBackupSlug);
+    if (!slugs.length) return alert(navT('nav.ctbk.noSelection'));
+    await runGlobalBackupAction(navT('nav.ctbk.exporting'), async () => {
+        const res = await fetch('/api/custom-tools/backup/export', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() },
+            body: JSON.stringify({ slugs, browserState: collectCustomToolBrowserState(slugs) })
+        });
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data.error || `HTTP ${res.status}`);
+        }
+        const blob = await res.blob();
+        const disposition = res.headers.get('content-disposition') || '';
+        const match = disposition.match(/filename="?([^";]+)"?/i);
+        const filename = match ? match[1] : `tools-platform-custom-tools_${Date.now()}.zip`;
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        return { filename, size: blob.size };
+    });
+};
+
+window.restoreCustomToolBackup = async function () {
+    const input = document.getElementById('customToolBackupRestoreInput');
+    const file = input?.files?.[0];
+    if (!file) return alert(navT('nav.ctbk.noFile'));
+    const strategy = document.getElementById('customToolBackupConflictStrategy')?.value === 'skip' ? 'skip' : 'replace';
+    const strategyLabel = strategy === 'skip' ? navT('nav.ctbk.strategySkip') : navT('nav.ctbk.strategyReplace');
+    const message = customToolBackupText('nav.ctbk.restoreConfirm', { file: file.name, strategy: strategyLabel });
+    if (!confirm(message)) return;
+    const result = await runGlobalBackupAction(navT('nav.ctbk.restoring'), async () => {
+        const form = new FormData();
+        form.append('backup', file);
+        form.append('conflictStrategy', strategy);
+        const res = await fetch('/api/custom-tools/backup/restore', {
+            method: 'POST',
+            headers: getAuthHeaderForNav(),
+            body: form
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+        Object.entries(data.browserState || {}).forEach(([key, value]) => {
+            try { localStorage.setItem(key, value); } catch (_) { }
+        });
+        const dependencyCount = Array.isArray(data.dependencyWarnings) ? data.dependencyWarnings.length : 0;
+        let done = customToolBackupText('nav.ctbk.restoreDone', {
+            restored: data.restored?.length || 0,
+            skipped: data.skipped?.length || 0
+        });
+        if (dependencyCount) done += `\n\n${customToolBackupText('nav.ctbk.dependencyWarn', { count: dependencyCount })}`;
+        alert(done);
+        return data;
+    });
+    if (result) {
+        try {
+            const toolsRes = await fetch('/api/custom-tools', { headers: getAuthHeaderForNav() });
+            if (toolsRes.ok) navState.customTools = await toolsRes.json();
+        } catch (_) { }
+        renderCustomToolBackupSettings(document.getElementById('navSettingsContent'));
+    }
+};
 
 function collectRemoteBackupSettings(options = {}) {
     const passwordInput = document.getElementById('remoteBackupPassword');

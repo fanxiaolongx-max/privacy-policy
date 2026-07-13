@@ -1462,6 +1462,127 @@ body {
     color: #075985;
 }
 
+.nav-custom-backup-portability {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+    margin-bottom: 14px;
+    padding: 13px 14px;
+    border: 1px solid #c7d2fe;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #eef2ff, #fff);
+    color: #3730a3;
+}
+
+.nav-custom-backup-portability-icon { font-size: 24px; line-height: 1; }
+.nav-custom-backup-portability strong { font-size: 12px; }
+.nav-custom-backup-portability p { margin: 5px 0 0; color: #4f5f78; font-size: 11px; line-height: 1.55; }
+
+.nav-custom-backup-card {
+    margin-top: 14px;
+    padding: 14px;
+    border: 1px solid #dbe4ee;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, .04);
+}
+
+.nav-custom-backup-card.restore {
+    border-color: #fed7aa;
+    background: linear-gradient(135deg, #fff7ed, #fff 62%);
+}
+
+.nav-custom-backup-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 12px;
+}
+
+.nav-custom-backup-selection {
+    flex: 0 0 auto;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #4338ca;
+    font-size: 10px;
+    font-weight: 850;
+}
+
+.nav-custom-backup-list {
+    display: grid;
+    gap: 7px;
+    max-height: 285px;
+    overflow: auto;
+    padding: 2px;
+}
+
+.nav-custom-backup-tool {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 11px;
+    background: #fbfcfe;
+    cursor: pointer;
+    transition: border-color .16s ease, background .16s ease, box-shadow .16s ease;
+}
+
+.nav-custom-backup-tool:hover { border-color: #a5b4fc; background: #f8faff; }
+.nav-custom-backup-tool:has(input:checked) { border-color: #a5b4fc; background: #f5f7ff; box-shadow: inset 3px 0 #6366f1; }
+.nav-custom-backup-tool > input { margin: 0; accent-color: #4f46e5; }
+.nav-custom-backup-tool-icon { font-size: 22px; }
+.nav-custom-backup-tool-main { min-width: 0; display: grid; gap: 3px; }
+.nav-custom-backup-tool-main strong { overflow: hidden; color: #1e293b; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.nav-custom-backup-tool-main code { color: #64748b; font-size: 9px; }
+.nav-custom-backup-size { color: #64748b; font-size: 10px; font-weight: 750; white-space: nowrap; }
+
+.nav-custom-backup-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+.nav-custom-backup-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 9px;
+    font-weight: 800;
+}
+.nav-custom-backup-badge.state,
+.nav-custom-backup-badge.local { background: #dcfce7; color: #166534; }
+.nav-custom-backup-badge.api { background: #dbeafe; color: #1d4ed8; }
+.nav-custom-backup-badge.external { background: #f3e8ff; color: #7e22ce; }
+.nav-custom-backup-badge.warning { background: #fef3c7; color: #92400e; }
+
+.nav-custom-backup-actions { margin-top: 12px; justify-content: flex-end; }
+.nav-custom-backup-actions button.primary { border-color: #4f46e5; background: #4f46e5; color: #fff; }
+.nav-custom-backup-actions button.primary:hover { background: #4338ca; }
+
+.nav-custom-backup-restore-row {
+    display: grid;
+    grid-template-columns: minmax(190px, 1fr) minmax(180px, .7fr) auto;
+    gap: 10px;
+    align-items: center;
+    margin-top: 12px;
+}
+.nav-custom-backup-restore-row input[type="file"] { min-width: 0; color: #475569; font-size: 11px; }
+.nav-custom-backup-restore-row button {
+    min-height: 36px;
+    padding: 0 13px;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    background: #fff1f2;
+    color: #be123c;
+    font-size: 11px;
+    font-weight: 850;
+    cursor: pointer;
+}
+.nav-custom-backup-restore-row button:hover { background: #ffe4e6; }
+
 .nav-schedule-backup-card {
     margin-top: 14px;
     padding: 14px;
@@ -1791,9 +1912,14 @@ body {
         display: grid;
     }
     .nav-backup-panel,
-    .nav-backup-upload {
+    .nav-backup-upload,
+    .nav-custom-backup-restore-row {
         grid-template-columns: 1fr;
     }
+    .nav-custom-backup-head { display: grid; }
+    .nav-custom-backup-selection { justify-self: start; }
+    .nav-custom-backup-tool { grid-template-columns: auto auto minmax(0, 1fr); }
+    .nav-custom-backup-size { grid-column: 3; }
     .nav-backup-toolbar,
     .nav-backup-actions {
         justify-content: flex-start;

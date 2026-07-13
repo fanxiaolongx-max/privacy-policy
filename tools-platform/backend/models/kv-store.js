@@ -23,4 +23,9 @@ async function writeKV(category, key, val) {
     await run('INSERT OR REPLACE INTO sys_kv_store (category, key, value) VALUES (?, ?, ?)', [category, key, JSON.stringify(val)]);
 }
 
-module.exports = { readKV, writeKV };
+async function deleteKV(category, key) {
+    await initKV();
+    await run('DELETE FROM sys_kv_store WHERE category = ? AND key = ?', [category, key]);
+}
+
+module.exports = { readKV, writeKV, deleteKV };
