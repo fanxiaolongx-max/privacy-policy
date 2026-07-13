@@ -12,8 +12,10 @@ async function loadPrefs(secId) {
         const saved = await API.get(path);
         window.__lastSLAPrefsPath = path;
         if (saved) {
+            const hasVisibleHeaders = Object.prototype.hasOwnProperty.call(saved, 'visibleHeaders')
+                && Array.isArray(saved.visibleHeaders);
             const validV = (saved.visibleHeaders || []).filter(h => state.orderedHeaders.includes(h));
-            state.visibleHeaders = validV.length > 0 ? validV : [...state.orderedHeaders];
+            state.visibleHeaders = hasVisibleHeaders ? validV : [...state.orderedHeaders];
             state.columnWidths = saved.columnWidths || {};
             state.sortKey = saved.sortKey || null;
             state.sortAsc = saved.sortAsc !== undefined ? saved.sortAsc : true;
