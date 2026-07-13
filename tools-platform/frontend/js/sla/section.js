@@ -3,6 +3,7 @@
  */
 
 const AppState = {};
+const RuleDataContextCache = new Map();
 window.GlobalMetrics = {};
 window.GlobalTargets = {};
 
@@ -108,6 +109,18 @@ function buildDateParseWarningHTML(secId) {
 }
 
 function getSectionRuleDetails(mode) {
+    const configuredRiskItems = window.SLARiskRules && typeof window.SLARiskRules.describeConfig === 'function'
+        ? [
+            '文件前缀：PBI_自动抓取-风险详单_Latest',
+            ...window.SLARiskRules.describeConfig()
+        ]
+        : [
+            '文件前缀：PBI_自动抓取-风险详单_Latest',
+            '检查状态字段优先级：风险状态 -> risk_status',
+            'Risk Confirming：创单时间 + 30天',
+            'Risk Open / Risk Suspended / Complete Reviewing：按 ticket_close_due_date 倒计时',
+            '告警分级：剩余 <= 10 天标红，剩余 < 30 天标紫'
+        ];
     const rules = {
         rectification: {
             title: '整改详单规则',
@@ -134,14 +147,7 @@ function getSectionRuleDetails(mode) {
         risk: {
             title: '常规风险规则',
             tone: '#7b1fa2',
-            items: [
-                '文件前缀：PBI_自动抓取-风险详单_Latest',
-                '检查状态字段优先级：风险状态 -> risk_status；取值规则：按顺序取第一个非空值为准',
-                'Risk Confirming：创单时间 + 30天，剩余 <= 10 天标红，剩余 < 30 天标紫',
-                'Risk Open / Risk Suspended / Complete Reviewing：按 ticket_close_due_date 倒计时，剩余 <= 10 天标红，剩余 < 30 天标紫',
-                '兼容逻辑：ticket_close_due_date 为空时，再尝试 due_time / 期望关闭时间-挂起 / suspend_due_date',
-                '关键列：风险状态 / risk_status / 创单时间 / create_time / ticket_close_due_date'
-            ]
+            items: configuredRiskItems
         },
         sr: {
             title: 'SR详单规则',
@@ -168,6 +174,15 @@ function getSectionRuleDetails(mode) {
             ]
         }
     };
+    if (mode !== 'risk' && window.SLAOtherRules && window.SLAOtherRules.SUPPORTED_MODES.includes(mode)) {
+        const prefixes = {
+            rectification: 'PBI_自动抓取-整改详单_整改_Latest',
+            special: 'PBI_自动抓取-CPT风险详表_Latest',
+            sr: 'PBI_自动抓取-详单-SR_Latest',
+            vulnerability: 'PBI_自动抓取-详单漏洞_漏洞预警_Latest'
+        };
+        rules[mode].items = [`文件前缀：${prefixes[mode]}`, ...window.SLAOtherRules.describeConfig(mode)];
+    }
     return rules[mode] || null;
 }
 
@@ -192,14 +207,14 @@ function ensureSectionRuleModal() {
             <div class="modal-header section-rule-config-header">
                 <div>
                     <h3 id="section-rule-config-title">规则配置</h3>
-                    <div class="section-rule-config-subtitle">当前为只读配置，已预留后续可编辑入口</div>
+                    <div class="section-rule-config-subtitle" id="section-rule-config-subtitle">当前为只读配置</div>
                 </div>
                 <button class="modal-close" type="button" aria-label="关闭" onclick="closeSectionRuleModal()">✖</button>
             </div>
             <div class="modal-body section-rule-config-body" id="section-rule-config-body"></div>
             <div class="modal-footer section-rule-config-footer">
-                <span>规则修改功能将在后续版本开放</span>
-                <button class="btn-save section-rule-config-close" type="button" onclick="closeSectionRuleModal()">关闭</button>
+                <span id="section-rule-config-status">规则修改功能将在后续版本开放</span>
+                <div id="section-rule-config-actions"><button class="btn-save section-rule-config-close" type="button" onclick="closeSectionRuleModal()">关闭</button></div>
             </div>
         </div>`;
     modal.addEventListener('click', event => {
@@ -209,16 +224,59 @@ function ensureSectionRuleModal() {
     return modal;
 }
 
-function openSectionRuleModal(mode) {
+async function openSectionRuleModal(mode) {
     const rule = getSectionRuleDetails(mode);
     if (!rule) return;
     const modal = ensureSectionRuleModal();
     const title = document.getElementById('section-rule-config-title');
     const body = document.getElementById('section-rule-config-body');
+    const subtitle = document.getElementById('section-rule-config-subtitle');
+    const status = document.getElementById('section-rule-config-status');
+    const actions = document.getElementById('section-rule-config-actions');
     if (title) title.textContent = `⚙️ ${rule.title}`;
-    if (body) body.innerHTML = buildSectionRuleHTML(mode);
     modal.style.setProperty('--section-rule-color', rule.tone);
-    modal.style.display = 'flex';
+    const isOtherEditable = window.SLAOtherRules && window.SLAOtherRules.SUPPORTED_MODES.includes(mode);
+    modal.classList.toggle('risk-edit-mode', mode === 'risk' || isOtherEditable);
+    if (mode === 'risk' && window.SLARiskRules) {
+        if (subtitle) subtitle.textContent = '可编辑状态识别条件、截止日期算法和分级告警类型';
+        if (status) {
+            status.textContent = '正在读取已保存配置…';
+            status.classList.remove('error');
+        }
+        if (actions) actions.innerHTML = `
+            <button class="section-rule-secondary-btn" type="button" onclick="SLARiskRules.resetEditor()">恢复默认</button>
+            <button class="section-rule-secondary-btn" type="button" onclick="closeSectionRuleModal()">关闭</button>
+            <button class="btn-save section-rule-config-save" type="button" onclick="SLARiskRules.saveFromEditor()">保存并应用</button>`;
+        modal.style.display = 'flex';
+        const config = await window.SLARiskRules.loadConfig();
+        window.SLARiskRules.prepareEditor(config);
+        if (status) status.textContent = '修改后点击“保存并应用”，当前已导入数据会立即重算';
+    } else if (isOtherEditable) {
+        if (subtitle) subtitle.textContent = mode === 'sr'
+            ? '可编辑字段来源、状态条件、消耗率阈值和所有告警展示类型'
+            : '可编辑状态识别条件、截止日期算法，以及每条规则自己的告警分级';
+        if (status) {
+            status.textContent = '正在读取已保存配置…';
+            status.classList.remove('error');
+        }
+        if (actions) actions.innerHTML = `
+            <button class="section-rule-secondary-btn" type="button" onclick="SLAOtherRules.resetEditor()">恢复默认</button>
+            <button class="section-rule-secondary-btn" type="button" onclick="closeSectionRuleModal()">关闭</button>
+            <button class="btn-save section-rule-config-save" type="button" onclick="SLAOtherRules.saveFromEditor()">保存并应用</button>`;
+        modal.style.display = 'flex';
+        const config = await window.SLAOtherRules.loadConfig(mode);
+        window.SLAOtherRules.prepareEditor(mode, config);
+        if (status) status.textContent = '修改后点击“保存并应用”，当前已导入数据会立即重算';
+    } else {
+        if (subtitle) subtitle.textContent = '当前为只读配置';
+        if (status) {
+            status.textContent = '这一类规则的可编辑功能将在后续步骤开放';
+            status.classList.remove('error');
+        }
+        if (actions) actions.innerHTML = '<button class="btn-save section-rule-config-close" type="button" onclick="closeSectionRuleModal()">关闭</button>';
+        if (body) body.innerHTML = buildSectionRuleHTML(mode);
+        modal.style.display = 'flex';
+    }
 }
 
 function closeSectionRuleModal() {
@@ -276,17 +334,34 @@ function formatSRDuration(hours) {
 
 async function initSection(secId, mode, title, rawData, themeColor, baseName = '', sourceFiles = [], options = {}) {
     const RECT_P = SLAUpload.RECT_PRIORITY_COLS, RISK_P = SLAUpload.RISK_PRIORITY_COLS, SPEC_P = SLAUpload.SPECIAL_PRIORITY_COLS, SR_P = SLAUpload.SR_PRIORITY_COLS, VULN_P = SLAUpload.VULN_PRIORITY_COLS;
+    const riskRuleConfig = mode === 'risk' && window.SLARiskRules
+        ? await window.SLARiskRules.loadConfig()
+        : null;
+    const sectionRuleConfig = mode !== 'risk' && window.SLAOtherRules && window.SLAOtherRules.SUPPORTED_MODES.includes(mode)
+        ? await window.SLAOtherRules.loadConfig(mode)
+        : null;
     let allHeadersSet = new Set();
     rawData.forEach(row => Object.keys(row).forEach(k => allHeadersSet.add(k)));
     const allHeaders = Array.from(allHeadersSet);
     const validHeaders = allHeaders.filter(col => rawData.some(row => row[col] !== undefined && row[col] !== null && row[col].toString().trim() !== ''));
 
-    if (mode === 'rectification' && !validHeaders.includes('task_status')) { alert(`区块 [${title}] 未找到 task_status，跳过渲染。`); return; }
-    if (mode === 'risk' && !(validHeaders.includes('风险状态') || validHeaders.includes('risk_status'))) { alert(`区块 [${title}] 未找到风险状态，跳过渲染。`); return; }
-    if (mode === 'special' && !(validHeaders.includes('状态-Status') || validHeaders.includes('task_status_en') || validHeaders.includes('task_status') || validHeaders.includes('task_status_cn'))) { alert(`区块 [${title}] 未找到状态列，跳过渲染。`); return; }
-    if (mode === 'sr' && !validHeaders.includes('sr_status_name')) { alert(`区块 [${title}] 未找到 sr_status_name，跳过渲染。`); return; }
-    if (mode === 'vulnerability' && !validHeaders.includes('task_status')) { alert(`区块 [${title}] 未找到 task_status，跳过渲染。`); return; }
-    if (mode === 'vulnerability' && !validHeaders.includes('create_time')) { alert(`区块 [${title}] 未找到 create_time，跳过渲染。`); return; }
+    if (sectionRuleConfig) {
+        const statusFields = mode === 'sr' ? sectionRuleConfig.fields.status : sectionRuleConfig.statusFields;
+        if (!statusFields.some(field => validHeaders.includes(field))) {
+            alert(`区块 [${title}] 未找到已配置的状态字段（${statusFields.join(' / ')}），跳过渲染。`);
+            return;
+        }
+    } else if (mode === 'rectification' && !validHeaders.includes('task_status')) { alert(`区块 [${title}] 未找到 task_status，跳过渲染。`); return; }
+    if (mode === 'risk') {
+        const statusFields = (riskRuleConfig && riskRuleConfig.statusFields) || ['风险状态', 'risk_status'];
+        if (!statusFields.some(field => validHeaders.includes(field))) {
+            alert(`区块 [${title}] 未找到已配置的状态字段（${statusFields.join(' / ')}），跳过渲染。`);
+            return;
+        }
+    }
+    if (!sectionRuleConfig && mode === 'special' && !(validHeaders.includes('状态-Status') || validHeaders.includes('task_status_en') || validHeaders.includes('task_status') || validHeaders.includes('task_status_cn'))) { alert(`区块 [${title}] 未找到状态列，跳过渲染。`); return; }
+    if (!sectionRuleConfig && mode === 'sr' && !validHeaders.includes('sr_status_name')) { alert(`区块 [${title}] 未找到 sr_status_name，跳过渲染。`); return; }
+    if (!sectionRuleConfig && mode === 'vulnerability' && !validHeaders.includes('task_status')) { alert(`区块 [${title}] 未找到 task_status，跳过渲染。`); return; }
 
     const targetPriorityCols = mode === 'rectification' ? RECT_P : (mode === 'risk' ? RISK_P : (mode === 'special' ? SPEC_P : (mode === 'sr' ? SR_P : (mode === 'vulnerability' ? VULN_P : []))));
     const foundPriorityCols = targetPriorityCols.filter(col => validHeaders.includes(col));
@@ -301,6 +376,9 @@ async function initSection(secId, mode, title, rawData, themeColor, baseName = '
     AppState[secId] = {
         mode, title, schemaHash: schemaHashStr,
         baseName: baseName || '',
+        sourceData: rawData,
+        riskRuleConfig,
+        sectionRuleConfig,
         orderedHeaders: orderedHeadersLocal, visibleHeaders: [...orderedHeadersLocal],
         globalData: [], currentDisplayData: [],
         sortKey: null, sortAsc: true, currentFilter: 'all',
@@ -328,9 +406,38 @@ function preprocessData(secId, rawData) {
     state.dateParseIssues = [];
     state._dateParseIssueKeys = new Set();
     state.globalData = rawData.map((row, rowIndex) => {
-        let _slaDays = 999999, _slaText = '-', _slaCleanText = '-', _rowClass = '';
+        let _slaDays = 999999, _slaText = '-', _slaCleanText = '-', _rowClass = '', _alertSeverity = '';
+        row._slaRuleMatched = false;
+        delete row._srDisposition;
+        delete row._srStatus;
+        delete row._srSeverity;
+        delete row._srConsumeRate;
+        delete row._srRemainingHours;
+        delete row._srRemainingDays;
         inspectDateLikeCells(state, row, rowIndex);
-        if (mode === 'rectification') {
+        if (mode !== 'risk' && state.sectionRuleConfig && window.SLAOtherRules) {
+            const configuredResult = window.SLAOtherRules.evaluate(mode, row, {
+                config: state.sectionRuleConfig,
+                now,
+                parseDate: (value, field, rule) => parseDateForSLA(state, rowIndex, field, value, `${rule.name} 截止日期`)
+            });
+            if (configuredResult) {
+                _slaDays = configuredResult.slaDays;
+                _slaText = configuredResult.text;
+                _slaCleanText = configuredResult.cleanText;
+                _rowClass = configuredResult.rowClass;
+                _alertSeverity = configuredResult.alertSeverity;
+                row._slaRuleMatched = configuredResult.matched === true;
+                if (configuredResult.srMeta) {
+                    row._srStatus = configuredResult.srMeta.status;
+                    row._srSeverity = configuredResult.srMeta.severity;
+                    row._srConsumeRate = configuredResult.srMeta.consumeRate;
+                    row._srRemainingHours = configuredResult.srMeta.remainingHours;
+                    row._srRemainingDays = configuredResult.srMeta.remainingDays;
+                    row._srDisposition = configuredResult.srMeta.disposition;
+                }
+            }
+        } else if (mode === 'rectification') {
             const status = row['task_status'] ? row['task_status'].toString().trim() : '';
             if (status === 'Checking') {
                 const ct = row['task_create_time'];
@@ -357,38 +464,23 @@ function preprocessData(secId, rawData) {
                 }
             }
         } else if (mode === 'risk') {
-            const status = getCompatibleVal(row, ['风险状态', 'risk_status']);
-            if (status === 'Risk Confirming') {
-                const ctStr = getCompatibleVal(row, ['创单时间', 'create_time_new', 'create_time']);
-                if (ctStr) {
-                    const cd = parseDateForSLA(state, rowIndex, '创单时间/create_time', ctStr, '风险确认创单时间');
-                    if (cd) {
-                        const dl = new Date(cd); dl.setDate(dl.getDate() + 30);
-                        _slaDays = Math.ceil((dl - now) / 86400000);
-                        const base = `剩余 ${_slaDays} 天`; _slaText = base; _slaCleanText = base;
-                        if (_slaDays <= 10) { _rowClass = 'danger-row'; _slaText = `<span class="badge">Confirm紧急</span> ${_slaText}`; _slaCleanText = `Confirm紧急 (${base})`; }
-                        else if (_slaDays < 30) { _rowClass = 'warning-row'; _slaText = `<span class="badge badge-risk">Confirm提醒</span> ${_slaText}`; _slaCleanText = `Confirm提醒 (${base})`; }
-                    } else { _slaText = '<span style="color:red">解析失败</span>'; }
-                }
-            } else if (['Risk Open', 'Risk Suspended', 'Complete Reviewing'].includes(status)) {
-                const ecStr = getCompatibleVal(row, ['ticket_close_due_date', '期望关闭时间', 'due_time', '期望关闭时间-挂起', 'suspend_due_date']);
-                if (ecStr) {
-                    const dl = parseDateForSLA(state, rowIndex, '期望关闭时间/ticket_close_due_date', ecStr, `${status} 期望关闭时间`);
-                    if (dl) {
-                        _slaDays = Math.ceil((dl - now) / 86400000);
-                        const base = `剩余 ${_slaDays} 天`; _slaText = base; _slaCleanText = base;
-                        const label = status === 'Risk Open' ? 'Open' : (status === 'Risk Suspended' ? 'Suspend' : 'Review');
-                        if (_slaDays <= 10) {
-                            _rowClass = 'danger-row';
-                            _slaText = `<span class="badge">${label}紧急</span> ${_slaText}`;
-                            _slaCleanText = `${label}紧急 (${base})`;
-                        } else if (_slaDays < 30) {
-                            _rowClass = 'warning-row';
-                            _slaText = `<span class="badge badge-risk">${label}提醒</span> ${_slaText}`;
-                            _slaCleanText = `${label}提醒 (${base})`;
-                        }
-                    } else { _slaText = '<span style="color:red">解析失败</span>'; }
-                }
+            const riskResult = window.SLARiskRules && window.SLARiskRules.evaluate(row, {
+                config: state.riskRuleConfig,
+                now,
+                parseDate: (value, field, rule) => parseDateForSLA(
+                    state,
+                    rowIndex,
+                    field,
+                    value,
+                    `${rule.name} 截止日期`
+                )
+            });
+            if (riskResult) {
+                _slaDays = riskResult.slaDays;
+                _slaText = riskResult.text;
+                _slaCleanText = riskResult.cleanText;
+                _rowClass = riskResult.rowClass;
+                _alertSeverity = riskResult.alertSeverity;
             }
         } else if (mode === 'special') {
             const status = getCompatibleVal(row, ['状态-Status', 'task_status_en', 'task_status', 'task_status_cn']);
@@ -560,10 +652,77 @@ function preprocessData(secId, rawData) {
             }
         }
         if (_slaText.includes('解析失败')) _slaDays = -999999;
+        if (!_alertSeverity) {
+            if (_rowClass === 'danger-row') _alertSeverity = 'danger';
+            else if (_rowClass === 'warning-row') _alertSeverity = 'warning';
+            else if (_rowClass === 'info-row') _alertSeverity = 'info';
+        }
         const cleanValuesArr = Object.values(row).map(v => v != null ? v.toString().replace(/[\r\n]+/g, ' ') : '');
-        return { ...row, _slaDays, _slaText, _slaCleanText, _rowClass, _rawStringForSearch: cleanValuesArr.join('|||').toLowerCase() };
+        return { ...row, _slaDays, _slaText, _slaCleanText, _rowClass, _alertSeverity, _rawStringForSearch: cleanValuesArr.join('|||').toLowerCase() };
     });
     delete state._dateParseIssueKeys;
+}
+
+function applyRiskRuleConfig(config) {
+    Object.entries(AppState).forEach(([secId, state]) => {
+        if (!state || state.mode !== 'risk') return;
+        state.riskRuleConfig = window.SLARiskRules
+            ? window.SLARiskRules.normalizeConfig(config)
+            : config;
+        preprocessData(secId, state.sourceData || state.globalData || []);
+        if (typeof window.updateView === 'function') window.updateView(secId);
+    });
+    if (typeof window.evaluateAllMetrics === 'function') window.evaluateAllMetrics();
+}
+
+function applySectionRuleConfig(mode, config) {
+    Object.entries(AppState).forEach(([secId, state]) => {
+        if (!state || state.mode !== mode) return;
+        state.sectionRuleConfig = window.SLAOtherRules
+            ? window.SLAOtherRules.normalizeConfig(mode, config)
+            : config;
+        preprocessData(secId, state.sourceData || state.globalData || []);
+        if (typeof window.updateView === 'function') window.updateView(secId);
+    });
+    if (typeof window.evaluateAllMetrics === 'function') window.evaluateAllMetrics();
+}
+
+function getRuleDataContext(mode, valueFields = []) {
+    const requestedValueFields = Array.from(new Set((valueFields || []).map(String))).sort();
+    const states = Object.values(AppState).filter(state => state && state.mode === mode);
+    const sourceRefs = states.map(state => state.sourceData);
+    const cacheKey = `${mode}@@${requestedValueFields.join('|')}`;
+    const cached = RuleDataContextCache.get(cacheKey);
+    if (cached && cached.sourceRefs.length === sourceRefs.length && cached.sourceRefs.every((ref, index) => ref === sourceRefs[index])) {
+        return cached.result;
+    }
+    const requestedSet = new Set(requestedValueFields);
+    const columnMap = new Map();
+    let rowCount = 0;
+    states.forEach(state => {
+        const rows = Array.isArray(state.sourceData) ? state.sourceData : [];
+        rowCount += rows.length;
+        rows.forEach(row => {
+            Object.entries(row || {}).forEach(([name, rawValue]) => {
+                if (!name || name.startsWith('_')) return;
+                if (!columnMap.has(name)) columnMap.set(name, { name, nonEmptyCount: 0, valueCounts: new Map() });
+                const column = columnMap.get(name);
+                if (rawValue === undefined || rawValue === null || String(rawValue).trim() === '') return;
+                const value = String(rawValue).trim();
+                column.nonEmptyCount += 1;
+                if (requestedSet.has(name)) column.valueCounts.set(value, (column.valueCounts.get(value) || 0) + 1);
+            });
+        });
+    });
+    const columns = Array.from(columnMap.values()).map(column => ({
+        name: column.name,
+        nonEmptyCount: column.nonEmptyCount,
+        values: Array.from(column.valueCounts, ([value, count]) => ({ value, count }))
+            .sort((a, b) => b.count - a.count || a.value.localeCompare(b.value, 'zh-CN'))
+    })).sort((a, b) => b.nonEmptyCount - a.nonEmptyCount || a.name.localeCompare(b.name, 'zh-CN'));
+    const result = { rowCount, columns };
+    RuleDataContextCache.set(cacheKey, { sourceRefs, result });
+    return result;
 }
 
 function buildDOM(secId, title, themeColor) {
@@ -670,7 +829,7 @@ function buildDOM(secId, title, themeColor) {
     document.getElementById('main-wrapper').insertAdjacentHTML('beforeend', html);
 }
 
-window.SLASection = { initSection, preprocessData, buildDOM, AppState, initGlobalTargets, getSectionRuleDetails, openSectionRuleModal, closeSectionRuleModal };
+window.SLASection = { initSection, preprocessData, buildDOM, AppState, initGlobalTargets, getSectionRuleDetails, openSectionRuleModal, closeSectionRuleModal, applyRiskRuleConfig, applySectionRuleConfig, getRuleDataContext };
 window.AppState = AppState;
 window.openSectionRuleModal = openSectionRuleModal;
 window.closeSectionRuleModal = closeSectionRuleModal;

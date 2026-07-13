@@ -6,9 +6,9 @@ function updateView(secId) {
     const state = AppState[secId];
     if (!state.globalData.length) return;
     let displayData = state.globalData;
-    if (state.currentFilter === 'danger') displayData = displayData.filter(r => r._rowClass === 'danger-row');
-    else if (state.currentFilter === 'warning') displayData = displayData.filter(r => r._rowClass === 'warning-row');
-    else if (state.currentFilter === 'focus') displayData = displayData.filter(r => r._rowClass === 'danger-row' || r._rowClass === 'warning-row');
+    if (state.currentFilter === 'danger') displayData = displayData.filter(r => r._alertSeverity === 'danger' || r._rowClass === 'danger-row');
+    else if (state.currentFilter === 'warning') displayData = displayData.filter(r => r._alertSeverity === 'warning' || r._rowClass === 'warning-row');
+    else if (state.currentFilter === 'focus') displayData = displayData.filter(r => Boolean(r._alertSeverity) || r._rowClass === 'danger-row' || r._rowClass === 'warning-row');
     const sterm = document.getElementById(`search-${secId}`).value.trim().toLowerCase();
     if (sterm) displayData = displayData.filter(r => r._rawStringForSearch.includes(sterm) || (r._slaText && r._slaText.toLowerCase().includes(sterm)));
     if (state.sortKey) {
@@ -126,7 +126,12 @@ function getHighlightColumnMeta(secId, targetPriorityCols) {
     return meta;
 }
 
-function getBuiltInRuleColumns(mode) {
+function getBuiltInRuleColumns(mode, config) {
+    if (config && mode === 'sr') return Array.from(new Set(Object.values(config.fields || {}).flat()));
+    if (config && mode !== 'risk') return Array.from(new Set([
+        ...(config.statusFields || []),
+        ...(config.rules || []).flatMap(rule => rule.deadline?.fields || [])
+    ]));
     if (mode === 'rectification') return ['task_status', 'task_create_time', 'rectify_plan_end_time'];
     if (mode === 'risk') return ['风险状态', 'risk_status', '创单时间', 'create_time_new', 'create_time', '期望关闭时间', 'ticket_close_due_date', 'due_time', '期望关闭时间-挂起', 'suspend_due_date'];
     if (mode === 'special') return ['状态-Status', 'task_status_en', 'task_status', 'task_status_cn', '创建日期-Create Date', 'create_time', '要求完成日期-Required Completion Date', 'required_completion_time', 'plan_complete_date'];
@@ -215,8 +220,8 @@ function updateDashboard(secId) {
             <div class="metric-total-wrapper"><div class="metric-title">🌟 2026总完成率</div>${thtml}</div>`;
     } else if (state.mode === 'sr') {
         const total = data.length;
-        const active = data.filter(r => !isSRClosedStatus(r.sr_status_name) && !isSRPendingStatus(r.sr_status_name)).length;
-        const pendingIgnored = data.filter(r => isSRPendingStatus(r.sr_status_name)).length;
+        const active = data.filter(r => r._srDisposition ? r._srDisposition === 'active' : (!isSRClosedStatus(r.sr_status_name) && !isSRPendingStatus(r.sr_status_name))).length;
+        const pendingIgnored = data.filter(r => r._srDisposition ? r._srDisposition === 'pending' : isSRPendingStatus(r.sr_status_name)).length;
         const overdue = data.filter(r => r._slaCleanText && r._slaCleanText.includes('超期')).length;
         const danger = data.filter(r => r._rowClass === 'danger-row').length;
         const warning = data.filter(r => r._rowClass === 'warning-row').length;
@@ -235,7 +240,7 @@ function updateDashboard(secId) {
     } else if (state.mode === 'vulnerability') {
         const total = data.length;
         const activeStatuses = ['Checking', 'Communication Dept', 'Communication Customer'];
-        const active = data.filter(r => activeStatuses.includes(getCompatibleVal(r, ['task_status']))).length;
+        const active = data.filter(r => state.sectionRuleConfig ? r._slaRuleMatched === true : activeStatuses.includes(getCompatibleVal(r, ['task_status']))).length;
         const danger = data.filter(r => r._rowClass === 'danger-row').length;
         const warning = data.filter(r => r._rowClass === 'warning-row').length;
         const counts = {};
@@ -279,7 +284,7 @@ function renderTable(secId) {
     const RECT_P = SLAUpload.RECT_PRIORITY_COLS, RISK_P = SLAUpload.RISK_PRIORITY_COLS, SPEC_P = SLAUpload.SPECIAL_PRIORITY_COLS, SR_P = SLAUpload.SR_PRIORITY_COLS, VULN_P = SLAUpload.VULN_PRIORITY_COLS;
     const getIcon = k => state.sortKey !== k ? '<span class="sort-icon">⇅</span>' : (state.sortAsc ? '<span class="sort-icon sort-active">▲</span>' : '<span class="sort-icon sort-active">▼</span>');
     const targetP = state.mode==='rectification'?RECT_P:(state.mode==='risk'?RISK_P:(state.mode==='special'?SPEC_P:(state.mode==='sr'?SR_P:(state.mode==='vulnerability'?VULN_P:[]))));
-    const highlightColumnMeta = getHighlightColumnMeta(secId, getBuiltInRuleColumns(state.mode));
+    const highlightColumnMeta = getHighlightColumnMeta(secId, getBuiltInRuleColumns(state.mode, state.sectionRuleConfig));
     const metricCellMeta = buildMetricCellHighlightMeta(secId);
     let html = `<table id="table-${secId}"><thead><tr>`;
     if (state.mode !== 'other') {
