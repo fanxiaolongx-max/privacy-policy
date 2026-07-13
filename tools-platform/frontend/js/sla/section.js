@@ -138,9 +138,9 @@ function getSectionRuleDetails(mode) {
                 '文件前缀：PBI_自动抓取-风险详单_Latest',
                 '检查状态字段优先级：风险状态 -> risk_status；取值规则：按顺序取第一个非空值为准',
                 'Risk Confirming：创单时间 + 30天，剩余 <= 10 天标红，剩余 < 30 天标紫',
-                'Risk Open：按期望关闭时间倒计时，剩余 <= 10 天标红，剩余 < 30 天标紫',
-                'Risk Suspended：按期望关闭时间-挂起倒计时，剩余 <= 10 天标红，剩余 < 30 天标紫',
-                '关键列：风险状态 / 创单时间 / 期望关闭时间 / 期望关闭时间-挂起'
+                'Risk Open / Risk Suspended / Complete Reviewing：按 ticket_close_due_date 倒计时，剩余 <= 10 天标红，剩余 < 30 天标紫',
+                '兼容逻辑：ticket_close_due_date 为空时，再尝试 due_time / 期望关闭时间-挂起 / suspend_due_date',
+                '关键列：风险状态 / risk_status / 创单时间 / create_time / ticket_close_due_date'
             ]
         },
         sr: {
@@ -180,6 +180,55 @@ function buildSectionRuleHTML(mode) {
         <ul>${items}</ul>
     </div>`;
 }
+
+function ensureSectionRuleModal() {
+    let modal = document.getElementById('section-rule-config-modal');
+    if (modal) return modal;
+    modal = document.createElement('div');
+    modal.id = 'section-rule-config-modal';
+    modal.className = 'modal-overlay section-rule-config-modal';
+    modal.innerHTML = `
+        <div class="modal-content section-rule-config-content" role="dialog" aria-modal="true" aria-labelledby="section-rule-config-title">
+            <div class="modal-header section-rule-config-header">
+                <div>
+                    <h3 id="section-rule-config-title">规则配置</h3>
+                    <div class="section-rule-config-subtitle">当前为只读配置，已预留后续可编辑入口</div>
+                </div>
+                <button class="modal-close" type="button" aria-label="关闭" onclick="closeSectionRuleModal()">✖</button>
+            </div>
+            <div class="modal-body section-rule-config-body" id="section-rule-config-body"></div>
+            <div class="modal-footer section-rule-config-footer">
+                <span>规则修改功能将在后续版本开放</span>
+                <button class="btn-save section-rule-config-close" type="button" onclick="closeSectionRuleModal()">关闭</button>
+            </div>
+        </div>`;
+    modal.addEventListener('click', event => {
+        if (event.target === modal) closeSectionRuleModal();
+    });
+    document.body.appendChild(modal);
+    return modal;
+}
+
+function openSectionRuleModal(mode) {
+    const rule = getSectionRuleDetails(mode);
+    if (!rule) return;
+    const modal = ensureSectionRuleModal();
+    const title = document.getElementById('section-rule-config-title');
+    const body = document.getElementById('section-rule-config-body');
+    if (title) title.textContent = `⚙️ ${rule.title}`;
+    if (body) body.innerHTML = buildSectionRuleHTML(mode);
+    modal.style.setProperty('--section-rule-color', rule.tone);
+    modal.style.display = 'flex';
+}
+
+function closeSectionRuleModal() {
+    const modal = document.getElementById('section-rule-config-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') closeSectionRuleModal();
+});
 
 function getSRStatus(row) {
     return getCompatibleVal(row, ['sr_status_name']).trim();
@@ -321,26 +370,23 @@ function preprocessData(secId, rawData) {
                         else if (_slaDays < 30) { _rowClass = 'warning-row'; _slaText = `<span class="badge badge-risk">Confirm提醒</span> ${_slaText}`; _slaCleanText = `Confirm提醒 (${base})`; }
                     } else { _slaText = '<span style="color:red">解析失败</span>'; }
                 }
-            } else if (status === 'Risk Open') {
-                const ecStr = getCompatibleVal(row, ['期望关闭时间', 'ticket_close_due_date', 'due_time']);
+            } else if (['Risk Open', 'Risk Suspended', 'Complete Reviewing'].includes(status)) {
+                const ecStr = getCompatibleVal(row, ['ticket_close_due_date', '期望关闭时间', 'due_time', '期望关闭时间-挂起', 'suspend_due_date']);
                 if (ecStr) {
-                    const dl = parseDateForSLA(state, rowIndex, '期望关闭时间/ticket_close_due_date', ecStr, '风险期望关闭时间');
+                    const dl = parseDateForSLA(state, rowIndex, '期望关闭时间/ticket_close_due_date', ecStr, `${status} 期望关闭时间`);
                     if (dl) {
                         _slaDays = Math.ceil((dl - now) / 86400000);
                         const base = `剩余 ${_slaDays} 天`; _slaText = base; _slaCleanText = base;
-                        if (_slaDays <= 10) { _rowClass = 'danger-row'; _slaText = `<span class="badge">Open紧急</span> ${_slaText}`; }
-                        else if (_slaDays < 30) { _rowClass = 'warning-row'; _slaText = `<span class="badge badge-risk">Open提醒</span> ${_slaText}`; }
-                    } else { _slaText = '<span style="color:red">解析失败</span>'; }
-                }
-            } else if (status === 'Risk Suspended') {
-                const ssStr = getCompatibleVal(row, ['期望关闭时间-挂起', 'suspend_due_date']);
-                if (ssStr) {
-                    const dl = parseDateForSLA(state, rowIndex, '期望关闭时间-挂起/suspend_due_date', ssStr, '挂起期望关闭时间');
-                    if (dl) {
-                        _slaDays = Math.ceil((dl - now) / 86400000);
-                        const base = `剩余 ${_slaDays} 天`; _slaText = base; _slaCleanText = base;
-                        if (_slaDays <= 10) { _rowClass = 'danger-row'; _slaText = `<span class="badge">Suspend紧急</span> ${_slaText}`; }
-                        else if (_slaDays < 30) { _rowClass = 'warning-row'; _slaText = `<span class="badge badge-risk">Suspend提醒</span> ${_slaText}`; }
+                        const label = status === 'Risk Open' ? 'Open' : (status === 'Risk Suspended' ? 'Suspend' : 'Review');
+                        if (_slaDays <= 10) {
+                            _rowClass = 'danger-row';
+                            _slaText = `<span class="badge">${label}紧急</span> ${_slaText}`;
+                            _slaCleanText = `${label}紧急 (${base})`;
+                        } else if (_slaDays < 30) {
+                            _rowClass = 'warning-row';
+                            _slaText = `<span class="badge badge-risk">${label}提醒</span> ${_slaText}`;
+                            _slaCleanText = `${label}提醒 (${base})`;
+                        }
                     } else { _slaText = '<span style="color:red">解析失败</span>'; }
                 }
             }
@@ -527,6 +573,10 @@ function buildDOM(secId, title, themeColor) {
     const sourceFileHtml = sourceFiles.length
         ? `<span class="section-source-files" title="${escapeHTML(sourceFileText)}">导入文件：${escapeHTML(sourceFileText)}</span>`
         : '';
+    const sectionRule = getSectionRuleDetails(AppState[secId].mode);
+    const ruleButtonHtml = sectionRule
+        ? `<button type="button" class="section-rule-config-btn" style="--section-rule-color:${escapeHTML(sectionRule.tone)}" onclick="openSectionRuleModal('${escapeHTML(AppState[secId].mode)}')">⚙️ 查看规则配置</button>`
+        : '';
     const html = `
     <div class="section-card" id="section-${secId}">
         <div class="section-header">
@@ -535,8 +585,8 @@ function buildDOM(secId, title, themeColor) {
                 ${sourceFileHtml}
                 <span class="rule-summary-badge" id="rule-summary-badge-${secId}" title="${tt('sla.section.noRulesTitle')}">${tt('sla.section.ruleSummary', { main: 0, sub: 0 })}</span>
             </h3>
+            <div class="section-header-actions">${ruleButtonHtml}</div>
         </div>
-        ${buildSectionRuleHTML(AppState[secId].mode)}
         <div class="dashboard-panel" id="dashboard-${secId}" style="display:none;"></div>
         ${buildDateParseWarningHTML(secId)}
         <div class="toolbar" id="toolbar-${secId}">
@@ -620,5 +670,7 @@ function buildDOM(secId, title, themeColor) {
     document.getElementById('main-wrapper').insertAdjacentHTML('beforeend', html);
 }
 
-window.SLASection = { initSection, preprocessData, buildDOM, AppState, initGlobalTargets };
+window.SLASection = { initSection, preprocessData, buildDOM, AppState, initGlobalTargets, getSectionRuleDetails, openSectionRuleModal, closeSectionRuleModal };
 window.AppState = AppState;
+window.openSectionRuleModal = openSectionRuleModal;
+window.closeSectionRuleModal = closeSectionRuleModal;

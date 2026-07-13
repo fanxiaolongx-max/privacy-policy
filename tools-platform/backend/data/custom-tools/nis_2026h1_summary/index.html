@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>北部非洲NIS 2026年H1经营总结</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: "Huawei Sans", "Microsoft YaHei", sans-serif;
+            background: #2a2a2a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .slide {
+            width: 1280px;
+            height: 720px;
+            background: #fff;
+            display: grid;
+            grid-template-rows: 60px 36px 1fr 50px;
+            font-size: 12px;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(90deg, #C8102E, #A00D24);
+            display: flex;
+            align-items: center;
+            padding: 0 30px;
+            justify-content: space-between;
+        }
+        .header h1 { color: #fff; font-size: 22px; letter-spacing: 2px; }
+        .header .tag { color: #FFD700; font-size: 16px; font-weight: bold; }
+
+        /* Subtitle bar */
+        .sub-bar {
+            background: #FFF5F5;
+            border-bottom: 2px solid #C8102E;
+            display: flex;
+            align-items: center;
+            padding: 0 30px;
+            gap: 30px;
+            font-size: 11px;
+            color: #666;
+        }
+        .sub-bar span { color: #C8102E; font-weight: bold; }
+
+        /* Body */
+        .body {
+            display: grid;
+            grid-template-columns: 340px 1fr 260px;
+            gap: 0;
+            overflow: hidden;
+        }
+
+        /* Left: NIS Overview */
+        .col-left {
+            border-right: 1px solid #EEE;
+            padding: 10px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .col-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: #C8102E;
+            border-left: 3px solid #C8102E;
+            padding-left: 8px;
+        }
+        .metric-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+        .m-box {
+            background: #FDF8F8;
+            border: 1px solid #F0D8D8;
+            border-radius: 3px;
+            padding: 5px 6px;
+            text-align: center;
+        }
+        .m-box .lbl { font-size: 9px; color: #888; }
+        .m-box .val { font-size: 16px; font-weight: bold; color: #C8102E; }
+        .m-box .sub { font-size: 8px; color: #AAA; }
+
+        /* Seg & Green */
+        .seg-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+        .seg-box {
+            background: #F9F9F9;
+            border: 1px solid #E8E8E8;
+            border-radius: 3px;
+            padding: 5px 6px;
+            font-size: 9px;
+        }
+        .seg-box .seg-tit { font-weight: bold; color: #C8102E; margin-bottom: 3px; font-size: 10px; }
+        .seg-box .seg-r { display: flex; justify-content: space-between; margin-bottom: 1px; }
+        .seg-box .seg-l { color: #888; }
+        .seg-box .seg-v { font-weight: bold; color: #333; }
+        .seg-box .seg-h { color: #C8102E; }
+
+        /* Sub-metrics in left bottom */
+        .sub-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-top: auto;
+        }
+        .sub-m-box {
+            background: #FDF8F8;
+            border: 1px solid #F0D8D8;
+            border-radius: 3px;
+            padding: 6px 8px;
+            text-align: center;
+        }
+        .sub-m-box .lbl { font-size: 9px; color: #888; }
+        .sub-m-box .val { font-size: 14px; font-weight: bold; color: #C8102E; }
+        .sub-m-box .sub { font-size: 8px; color: #AAA; }
+
+        /* Left highlights */
+        .left-hl {
+            background: #F9F9F9;
+            border: 1px solid #E8E8E8;
+            border-radius: 3px;
+            padding: 6px 8px;
+        }
+        .left-hl .hl-tit {
+            font-size: 10px;
+            font-weight: bold;
+            color: #C8102E;
+            margin-bottom: 4px;
+        }
+        .left-hl .hl-item {
+            font-size: 9px;
+            color: #666;
+            margin-bottom: 2px;
+            display: flex;
+            gap: 6px;
+        }
+        .left-hl .hl-dot {
+            color: #C8102E;
+            font-weight: bold;
+        }
+        .left-hl .hl-val { color: #C8102E; font-weight: bold; }
+
+        /* Middle: Industries */
+        .col-mid {
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .ind-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            flex: 1;
+        }
+        .ind-card {
+            background: #FAFAFA;
+            border: 1px solid #E8E8E8;
+            border-top: 2px solid #C8102E;
+            border-radius: 3px;
+            padding: 8px 10px;
+        }
+        .ind-card .ind-nm { font-size: 12px; font-weight: bold; color: #333; margin-bottom: 6px; }
+        .ind-card .ind-r { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 3px; }
+        .ind-card .ind-l { color: #888; }
+        .ind-card .ind-v { font-weight: bold; color: #C8102E; }
+        .ind-card .ind-tag {
+            margin-top: 6px;
+            padding-top: 4px;
+            border-top: 1px dashed #DDD;
+            font-size: 9px;
+            color: #C8102E;
+            text-align: center;
+            background: #FFF5F5;
+        }
+
+        /* Key Results in middle */
+        .key-section { flex: 1.2; }
+        .key-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-top: 4px;
+        }
+        .k-item {
+            background: #F9F9F9;
+            border: 1px solid #E8E8E8;
+            border-radius: 3px;
+            padding: 6px 8px;
+            font-size: 9px;
+        }
+        .k-item .k-h {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 3px;
+        }
+        .k-item .k-n {
+            width: 14px; height: 14px;
+            background: #C8102E;
+            color: #fff;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 14px;
+            font-size: 8px;
+            font-weight: bold;
+        }
+        .k-item .k-t { font-weight: bold; color: #333; font-size: 10px; }
+        .k-item .k-c { color: #666; line-height: 1.4; }
+        .k-item .k-hi { color: #C8102E; font-weight: bold; }
+
+        /* Right: Summary */
+        .col-right {
+            border-left: 1px solid #EEE;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .rank-list {
+            background: #FDF8F8;
+            border: 1px solid #F0D8D8;
+            border-radius: 3px;
+            padding: 10px;
+        }
+        .rank-list .rank-tit {
+            font-size: 12px;
+            font-weight: bold;
+            color: #C8102E;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        .rank-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            padding: 4px 0;
+            border-bottom: 1px dashed #EEE;
+        }
+        .rank-item .rank-l { color: #666; }
+        .rank-item .rank-v { font-weight: bold; color: #C8102E; }
+
+        .breakthrough {
+            background: #F9F9F9;
+            border: 1px solid #E8E8E8;
+            border-radius: 3px;
+            padding: 10px;
+            flex: 1;
+        }
+        .breakthrough .bt-tit {
+            font-size: 12px;
+            font-weight: bold;
+            color: #C8102E;
+            margin-bottom: 8px;
+        }
+        .breakthrough .bt-item {
+            font-size: 9px;
+            color: #666;
+            margin-bottom: 5px;
+            padding-left: 10px;
+            position: relative;
+            line-height: 1.4;
+        }
+        .breakthrough .bt-item::before {
+            content: '▶';
+            position: absolute;
+            left: 0;
+            color: #C8102E;
+            font-size: 7px;
+        }
+
+        /* Footer */
+        .footer {
+            background: #F5F5F5;
+            border-top: 1px solid #E8E8E8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            font-size: 10px;
+            color: #999;
+        }
+        .footer .sum-row {
+            display: flex;
+            gap: 30px;
+        }
+        .footer .sum-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .footer .sum-val { font-size: 16px; font-weight: bold; color: #C8102E; }
+        .footer .sum-lbl { font-size: 10px; color: #888; }
+
+        @media print {
+            body { background: #fff; padding: 0; }
+            .slide { margin: 0; border: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="slide">
+    <!-- Header -->
+    <div class="header">
+        <h1>北部非洲NIS 2026年H1经营总结</h1>
+        <div class="tag">收入同比增长16% · 销毛额全球第一</div>
+    </div>
+
+    <!-- Sub bar -->
+    <div class="sub-bar">
+        核心指标：收入216.4M(<span>+17%</span>) | 销毛额80M(<span>+11.5%</span>) | 销毛率37.2%全球第一 | 运营商订货完成率66.5%海外第一
+    </div>
+
+    <!-- Body -->
+    <div class="body">
+
+        <!-- Left Column -->
+        <div class="col-left">
+            <div class="col-title">NIS整体</div>
+            <div class="metric-row">
+                <div class="m-box">
+                    <div class="lbl">H1订货</div>
+                    <div class="val">284M</div>
+                    <div class="sub">同比+1%</div>
+                </div>
+                <div class="m-box">
+                    <div class="lbl">H1收入</div>
+                    <div class="val">216.4M</div>
+                    <div class="sub">同比+17%</div>
+                </div>
+                <div class="m-box">
+                    <div class="lbl">P口销毛额</div>
+                    <div class="val">80M</div>
+                    <div class="sub">同比+11.5%</div>
+                </div>
+                <div class="m-box">
+                    <div class="lbl">销毛率</div>
+                    <div class="val">37.2%</div>
+                    <div class="sub">全球第一</div>
+                </div>
+            </div>
+
+            <div class="col-title" style="color:#FF6600;">企业NIS & 绿色目标网</div>
+            <div class="seg-grid">
+                <div class="seg-box">
+                    <div class="seg-tit">企业NIS</div>
+                    <div class="seg-r"><span class="seg-l">订货</span><span class="seg-v seg-h">36.5M</span></div>
+                    <div class="seg-r"><span class="seg-l">同比</span><span class="seg-v seg-h">+154%</span></div>
+                    <div class="seg-r"><span class="seg-l">收入</span><span class="seg-v seg-h">32.6M</span></div>
+                    <div class="seg-r"><span class="seg-l">收入增长</span><span class="seg-v seg-h">+81%全球第一</span></div>
+                </div>
+                <div class="seg-box">
+                    <div class="seg-tit">绿色目标网</div>
+                    <div class="seg-r"><span class="seg-l">订货</span><span class="seg-v seg-h">52.4M</span></div>
+                    <div class="seg-r"><span class="seg-l">同比</span><span class="seg-v seg-h">+4.2%</span></div>
+                    <div class="seg-r"><span class="seg-l">收入</span><span class="seg-v seg-h">34.6M</span></div>
+                    <div class="seg-r"><span class="seg-l">收入增长</span><span class="seg-v seg-h">+109%</span></div>
+                </div>
+            </div>
+
+            <div class="col-title" style="color:#0066CC;">埃塞加回</div>
+            <div class="metric-row">
+                <div class="m-box">
+                    <div class="lbl">目标加回</div>
+                    <div class="val">15.8M</div>
+                </div>
+                <div class="m-box">
+                    <div class="lbl">实际加回</div>
+                    <div class="val">19.8M</div>
+                </div>
+            </div>
+
+            <div class="left-hl">
+                <div class="hl-tit">埃塞其他亮点</div>
+                <div class="hl-item"><span class="hl-dot">●</span><span>运商订货完成率</span><span class="hl-val">66.5% 海外第一</span></div>
+                <div class="hl-item"><span class="hl-dot">●</span><span>销毛率</span><span class="hl-val">37.2% 全球第一</span></div>
+                <div class="hl-item"><span class="hl-dot">●</span><span>企业订货增长</span><span class="hl-val">+154%</span></div>
+                <div class="hl-item"><span class="hl-dot">●</span><span>绿色订货完成率</span><span class="hl-val">57% 全球第二</span></div>
+                <div class="hl-item"><span class="hl-dot">●</span><span>绿色收入增长</span><span class="hl-val">+109%</span></div>
+            </div>
+        </div>
+
+        <!-- Middle Column -->
+        <div class="col-mid">
+            <div class="col-title">四大产业</div>
+            <div class="ind-grid">
+                <div class="ind-card">
+                    <div class="ind-nm">MBB产业</div>
+                    <div class="ind-r"><span class="ind-l">订货</span><span class="ind-v">156M</span></div>
+                    <div class="ind-r"><span class="ind-l">收入</span><span class="ind-v">103.8M</span></div>
+                    <div class="ind-r"><span class="ind-l">销毛率</span><span class="ind-v">41.5%</span></div>
+                    <div class="ind-r"><span class="ind-l">销毛额</span><span class="ind-v">43M</span></div>
+                    <div class="ind-tag">订货规模全球第一 | 跑赢设备14PCT</div>
+                </div>
+                <div class="ind-card">
+                    <div class="ind-nm">站点产业</div>
+                    <div class="ind-r"><span class="ind-l">订货</span><span class="ind-v">61M</span></div>
+                    <div class="ind-r"><span class="ind-l">收入</span><span class="ind-v">72.8M</span></div>
+                    <div class="ind-r"><span class="ind-l">销毛率</span><span class="ind-v">37.7%</span></div>
+                    <div class="ind-r"><span class="ind-l">销毛额</span><span class="ind-v">30.6M</span></div>
+                    <div class="ind-tag">收入全球第一 | 销毛率销毛额均全球第一</div>
+                </div>
+                <div class="ind-card">
+                    <div class="ind-nm">FBB产业</div>
+                    <div class="ind-r"><span class="ind-l">订货</span><span class="ind-v">28.7M</span></div>
+                    <div class="ind-r"><span class="ind-l">收入</span><span class="ind-v">19.5M</span></div>
+                    <div class="ind-r"><span class="ind-l">销毛率</span><span class="ind-v">14.4%</span></div>
+                    <div class="ind-r"><span class="ind-l">销毛额</span><span class="ind-v">2.8M</span></div>
+                    <div class="ind-tag">销毛率同比+5.9PCT | 销毛额+84%</div>
+                </div>
+                <div class="ind-card">
+                    <div class="ind-nm">NFV产业</div>
+                    <div class="ind-r"><span class="ind-l">订货</span><span class="ind-v">35.2M</span></div>
+                    <div class="ind-r"><span class="ind-l">收入</span><span class="ind-v">20.3M</span></div>
+                    <div class="ind-r"><span class="ind-l">销毛率</span><span class="ind-v">29%</span></div>
+                    <div class="ind-r"><span class="ind-l">销毛额</span><span class="ind-v">5.9M</span></div>
+                    <div class="ind-tag">跑赢设备33PCT | 销毛率+2.6PCT</div>
+                </div>
+            </div>
+
+            <div class="col-title key-section">关键结果</div>
+            <div class="key-grid">
+                <div class="k-item">
+                    <div class="k-h"><span class="k-n">1</span><span class="k-t">站点·涨价回谈</span></div>
+                    <div class="k-c">刚金FTTH单线<span class="k-hi">88→155刀涨幅76%</span>，全球首个完成涨价回谈子网</div>
+                </div>
+                <div class="k-item">
+                    <div class="k-h"><span class="k-n">2</span><span class="k-t">站点·光储首突破</span></div>
+                    <div class="k-c">首次突破塞内加尔光储电站PO；获取农网站点<span class="k-hi">1341站</span>+34%</div>
+                </div>
+                <div class="k-item">
+                    <div class="k-h"><span class="k-n">3</span><span class="k-t">MBB·无线赢标</span></div>
+                    <div class="k-c">布基纳/科特/尼日尔Airtel赢标，<span class="k-hi">无线格局+3%</span></div>
+                </div>
+                <div class="k-item">
+                    <div class="k-h"><span class="k-n">4</span><span class="k-t">MBB·5G引导</span></div>
+                    <div class="k-c">阿尔及利亚ATM 5G PO <span class="k-hi">27M</span>、OTA 5G <span class="k-hi">12M</span></div>
+                </div>
+                <div class="k-item">
+                    <div class="k-h"><span class="k-n">5</span><span class="k-t">FBB·最大规模DPI</span></div>
+                    <div class="k-c">阿尔及利亚DPI 7月签单，<span class="k-hi">全球最大规模</span>，NIS订货<span class="k-hi">12M</span></div>
+                </div>
+                <div class="k-item">
+                    <div class="k-h"><span class="k-n">6</span><span class="k-t">FBB·IP&WDM</span></div>
+                    <div class="k-c">ATM IP+WDM服务PO <span class="k-hi">6.8M</span>，报价提升<span class="k-hi">3倍</span></div>
+                </div>
+                <div class="k-item">
+                    <div class="k-h"><span class="k-n">7</span><span class="k-t">NFV·BPO</span></div>
+                    <div class="k-c">摩洛哥INWI BPO落地，订货<span class="k-hi">2M</span></div>
+                </div>
+                <div class="k-item">
+                    <div class="k-h"><span class="k-n">8</span><span class="k-t">NFV·韧性改造</span></div>
+                    <div class="k-c">科特MTN/南苏丹/贝宁韧性改造，订货<span class="k-hi">7.1M</span>+100%</div>
+                </div>
+                <div class="k-item">
+                    <div class="k-h"><span class="k-n">9</span><span class="k-t">安全产业·0-1</span></div>
+                    <div class="k-c">喀麦隆智慧城市II期PartII，安全产业<span class="k-hi">0-1突破</span> 1.2M</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-right">
+            <div class="rank-list">
+                <div class="rank-tit">全球排名</div>
+                <div class="rank-item"><span class="rank-l">销毛率</span><span class="rank-v">全球第一</span></div>
+                <div class="rank-item"><span class="rank-l">销毛额</span><span class="rank-v">全球第一</span></div>
+                <div class="rank-item"><span class="rank-l">MBB订货规模</span><span class="rank-v">全球第一</span></div>
+                <div class="rank-item"><span class="rank-l">MBB收入增长</span><span class="rank-v">全球第一</span></div>
+                <div class="rank-item"><span class="rank-l">MBB销毛率/额</span><span class="rank-v">全球第一</span></div>
+                <div class="rank-item"><span class="rank-l">站点收入规模</span><span class="rank-v">全球第一</span></div>
+                <div class="rank-item"><span class="rank-l">站点销毛率/额</span><span class="rank-v">全球第一</span></div>
+                <div class="rank-item"><span class="rank-l">企业收入增长</span><span class="rank-v">全球第一</span></div>
+                <div class="rank-item"><span class="rank-l">运商订货完成率</span><span class="rank-v">海外第一</span></div>
+                <div class="rank-item"><span class="rank-l">绿色订货完成率</span><span class="rank-v">全球第二</span></div>
+            </div>
+
+            <div class="breakthrough">
+                <div class="bt-tit">关键突破</div>
+                <div class="bt-item">全球首个涨价回谈子网</div>
+                <div class="bt-item">全球最大规模DPI项目</div>
+                <div class="bt-item">首次LCC辅助运营突破</div>
+                <div class="bt-item">塞内加尔光储电站首突破</div>
+                <div class="bt-item">阿尔及利亚5G规模建网引导</div>
+                <div class="bt-item">安全产业0-1突破</div>
+                <div class="bt-item">韧性改造订货同比翻番</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div>北部非洲NIS | Northern Africa NIS | 2026年H1</div>
+        <div class="sum-row">
+            <div class="sum-item"><span class="sum-val">+16%</span><span class="sum-lbl">收入增长</span></div>
+            <div class="sum-item"><span class="sum-val">全球第一</span><span class="sum-lbl">销毛额</span></div>
+            <div class="sum-item"><span class="sum-val">9项</span><span class="sum-lbl">关键突破</span></div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
