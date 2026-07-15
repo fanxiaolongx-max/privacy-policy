@@ -162,7 +162,12 @@ npm install
 npm run build:win
 ```
 
-GitHub Actions 当前只构建 Windows 安装包，不再构建 macOS `.dmg`。推送到 `main` 后会自动递增 patch 版本、创建 `vX.Y.Z` tag，并发布 `.exe`、`latest.yml` 和 `.blockmap` 到 GitHub Releases。
+GitHub Actions 当前会同时构建两种 Windows 版本，不再构建 macOS `.dmg`：
+
+- `Tools-Platform-Setup-X.Y.Z.exe`：NSIS 安装版，支持快捷方式、卸载和应用内更新。
+- `Tools-Platform-Portable-X.Y.Z.exe`：绿色免安装版，双击即用，不创建安装/卸载注册表项、快捷方式或开机自启动；更新时需从 GitHub Releases 手动下载新 EXE。
+
+两种版本共用 Windows 当前用户数据目录，因此更换绿色版 EXE 不会丢失原有数据。推送到 `main` 后会自动递增 patch 版本、创建 `vX.Y.Z` tag，并发布两个 `.exe` 以及安装版所需的 `latest.yml` 和 `.blockmap` 到 GitHub Releases。
 
 ## 数据存储
 

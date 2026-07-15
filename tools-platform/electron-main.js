@@ -11,6 +11,8 @@ process.env.TOOLS_DATA_DIR = path.join(userDataPath, 'data');
 const electronLogRoot = path.join(userDataPath, 'logs');
 const runtimeStatusPath = path.join(electronLogRoot, 'runtime-status.json');
 const runtimeCommandPath = path.join(electronLogRoot, 'runtime-command.json');
+const isPortableWindows = process.platform === 'win32' && Boolean(process.env.PORTABLE_EXECUTABLE_FILE);
+const latestReleaseUrl = 'https://github.com/fanxiaolongx-max/privacy-policy/releases/latest';
 process.env.TOOLS_LOG_DIR = electronLogRoot;
 if (process.env.TOOLS_DAILY_LOGS === undefined) {
     process.env.TOOLS_DAILY_LOGS = '0';
@@ -103,9 +105,9 @@ let downloadHandlerRegistered = false;
 let updateInfo = null;
 let updateDownloaded = false;
 let updateStatus = {
-    state: 'idle',
+    state: isPortableWindows ? 'portable-manual' : 'idle',
     version: app.getVersion(),
-    message: '等待检查更新',
+    message: isPortableWindows ? '绿色版请手动下载更新' : '等待检查更新',
     progress: 0
 };
 let latestDownloadProgress = null;
@@ -356,15 +358,40 @@ function setupAutoUpdater() {
     });
 }
 
+function getPortableUpdateStatus() {
+    return broadcastUpdateStatus({
+        state: 'portable-manual',
+        message: '绿色版不自动安装更新，请从 GitHub Releases 下载新版 EXE',
+        detail: latestReleaseUrl,
+        progress: 0
+    });
+}
+
+function openLatestReleasePage() {
+    return shell.openExternal(latestReleaseUrl).catch((err) => {
+        const message = err && err.message ? err.message : String(err);
+        broadcastUpdateStatus({
+            state: 'error',
+            message: '无法打开 GitHub Releases',
+            detail: message,
+            progress: 0
+        });
+    });
+}
+
 function registerUpdaterIpcHandlers() {
     ipcMain.handle('updater:get-version', () => ({
         version: app.getVersion(),
-        packaged: app.isPackaged
+        packaged: app.isPackaged,
+        portable: isPortableWindows
     }));
 
     ipcMain.handle('updater:get-status', () => updateStatus);
 
     ipcMain.handle('updater:check', async () => {
+        if (isPortableWindows) {
+            return getPortableUpdateStatus();
+        }
         if (!app.isPackaged) {
             return broadcastUpdateStatus({
                 state: 'dev-unavailable',
@@ -388,6 +415,10 @@ function registerUpdaterIpcHandlers() {
     });
 
     ipcMain.handle('updater:download', async () => {
+        if (isPortableWindows) {
+            await openLatestReleasePage();
+            return getPortableUpdateStatus();
+        }
         if (!app.isPackaged) {
             return broadcastUpdateStatus({
                 state: 'dev-unavailable',
@@ -423,6 +454,10 @@ function registerUpdaterIpcHandlers() {
     });
 
     ipcMain.handle('updater:install', () => {
+        if (isPortableWindows) {
+            openLatestReleasePage();
+            return getPortableUpdateStatus();
+        }
         if (!updateDownloaded) {
             return broadcastUpdateStatus({
                 message: '更新尚未下载完成'
@@ -458,7 +493,7 @@ function registerDesktopIpcHandlers() {
 }
 
 function scheduleStartupUpdateCheck() {
-    if (!app.isPackaged) return;
+    if (!app.isPackaged || isPortableWindows) return;
     setTimeout(() => {
         autoUpdater.checkForUpdates().catch((err) => {
             broadcastUpdateStatus({
@@ -1215,6 +1250,11 @@ function openLogsFolder() {
 
 async function checkForUpdatesFromTray(options = {}) {
     const showDialog = options.showDialog !== false;
+    if (isPortableWindows) {
+        getPortableUpdateStatus();
+        if (showDialog) await openLatestReleasePage();
+        return;
+    }
     if (!app.isPackaged) {
         broadcastUpdateStatus({
             state: 'dev-unavailable',
@@ -1262,6 +1302,11 @@ async function checkForUpdatesFromTray(options = {}) {
 
 async function downloadUpdateFromTray(options = {}) {
     const showDialog = options.showDialog !== false;
+    if (isPortableWindows) {
+        getPortableUpdateStatus();
+        if (showDialog) await openLatestReleasePage();
+        return;
+    }
     if (!app.isPackaged) {
         broadcastUpdateStatus({
             state: 'dev-unavailable',
@@ -1305,6 +1350,10 @@ async function downloadUpdateFromTray(options = {}) {
 }
 
 function installUpdateFromTray() {
+    if (isPortableWindows) {
+        openLatestReleasePage();
+        return;
+    }
     if (!updateDownloaded) return;
     isQuitting = true;
     autoUpdater.quitAndInstall(false, true);
@@ -1340,11 +1389,13 @@ function refreshTrayMenu() {
         { label: '打开日志文件夹', click: openLogsFolder },
         { type: 'separator' },
         { label: `更新状态：${updateStatus.message || '等待检查更新'}`, enabled: false },
-        { label: '检查更新', click: checkForUpdatesFromTray },
-        ...(updateStatus.state === 'available' ? [{ label: '下载更新', click: downloadUpdateFromTray }] : []),
-        ...(updateStatus.state === 'downloaded' ? [{ label: '重启并安装更新', click: installUpdateFromTray }] : []),
+        ...(isPortableWindows
+            ? [{ label: '打开 GitHub 绿色版下载页', click: openLatestReleasePage }]
+            : [{ label: '检查更新', click: checkForUpdatesFromTray }]),
+        ...(!isPortableWindows && updateStatus.state === 'available' ? [{ label: '下载更新', click: downloadUpdateFromTray }] : []),
+        ...(!isPortableWindows && updateStatus.state === 'downloaded' ? [{ label: '重启并安装更新', click: installUpdateFromTray }] : []),
         { type: 'separator' },
-        { label: '开机自启动', type: 'checkbox', checked: !!loginSettings.openAtLogin, click: toggleOpenAtLogin },
+        ...(!isPortableWindows ? [{ label: '开机自启动', type: 'checkbox', checked: !!loginSettings.openAtLogin, click: toggleOpenAtLogin }] : []),
         { label: '重启本地服务', click: restartApp },
         { label: '完全退出程序', click: () => {
             isQuitting = true;
@@ -1396,7 +1447,7 @@ app.on('before-quit', () => {
 });
 
 app.whenReady().then(() => {
-    setupAutoUpdater();
+    if (!isPortableWindows) setupAutoUpdater();
     registerUpdaterIpcHandlers();
     registerDesktopIpcHandlers();
     startTrayApp();

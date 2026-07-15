@@ -52,6 +52,12 @@
           "arch": [
             "x64"
           ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },
@@ -62,6 +68,10 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Tools Platform"
+    },
+    "portable": {
+      "artifactName": "Tools-Platform-Portable-${version}.${ext}",
+      "requestExecutionLevel": "user"
     }
   },
   "dependencies": {
