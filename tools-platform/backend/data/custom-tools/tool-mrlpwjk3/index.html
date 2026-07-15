@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>欠款分析工具 (Top Debtors Analysis) - 终极完美版</title>
+    <!-- 引入 SheetJS 用于解析和生成 Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #ff8fb3; /* 换成更可爱柔和的粉/蓝色调作为强调，或者保留专业蓝加点灵动 */
+            --primary-color: #5c7cfa; 
+            --hover-color: #4c6ef5;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #343a40;
+            --border-color: #e9ecef;
+            --success-color: #40c057;
+            --danger-color: #fa5252;
+            --warning-color: #fab005;
+            --gray-color: #adb5bd;
+            --export-color: #20c997;
+            --export-hover: #12b886;
+        }
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 25px 35px;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.04);
+            position: relative;
+        }
+        
+        /* 标题和功能按钮区 */
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px dashed #dbe4ff;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        h1 {
+            font-size: 26px;
+            color: var(--primary-color);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .help-btn {
+            background-color: #edf2ff;
+            color: var(--primary-color);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .help-btn:hover {
+            background-color: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(92, 124, 250, 0.2);
+        }
+
+        .control-panel {
+            background: #fbfbff;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #edf2ff;
+            margin-bottom: 25px;
+        }
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .form-row:last-child {
+            margin-bottom: 0;
+        }
+        .form-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        input[type="file"], select {
+            font-size: 14px;
+            padding: 5px;
+        }
+        select {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: white;
+            min-width: 150px;
+            padding: 6px;
+        }
+        input[type="number"] {
+            width: 80px;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            outline: none;
+        }
+        input[type="number"]:focus {
+            border-color: var(--primary-color);
+        }
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background-color: var(--hover-color);
+            transform: translateY(-1px);
+        }
+        .btn-export {
+            background-color: var(--export-color);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-export:hover {
+            background-color: var(--export-hover);
+        }
+        
+        .dynamic-filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px dashed #dbe4ff;
+        }
+        .filter-box {
+            background: #fff;
+            border: 1px solid #edf2ff;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .filter-box h4 {
+            margin: 0 0 12px 0;
+            color: #495057;
+            font-size: 15px;
+            border-bottom: 2px solid #f1f3f5;
+            padding-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .filter-box h4 span {
+            font-size: 12px;
+            color: var(--primary-color);
+            cursor: pointer;
+            font-weight: bold;
+            background: #edf2ff;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        .checkbox-list {
+            max-height: 150px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 13px;
+            padding-right: 5px;
+        }
+        /* 自定义滚动条 */
+        .checkbox-list::-webkit-scrollbar { width: 6px; }
+        .checkbox-list::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        .checkbox-list::-webkit-scrollbar-thumb { background: #d0d0d0; border-radius: 10px; }
+        .checkbox-list::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
+            color: #495057;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: #fff;
+            border: 1px solid #edf2ff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+        .stat-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 15px;
+            color: #868e96;
+        }
+        .stat-card .value {
+            font-size: 26px;
+            font-weight: 800;
+        }
+        .val-active { color: var(--danger-color); }
+        .val-filtered { color: var(--gray-color); }
+        .val-total { color: var(--primary-color); }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 10px;
+        }
+        th, td {
+            border-bottom: 1px solid #f1f3f5;
+            padding: 14px 15px;
+            text-align: center;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #495057;
+            position: sticky;
+            top: 0;
+            border-top: 1px solid #f1f3f5;
+        }
+        th:first-child { border-top-left-radius: 8px; border-left: 1px solid #f1f3f5; }
+        th:last-child { border-top-right-radius: 8px; border-right: 1px solid #f1f3f5;}
+        td:first-child { border-left: 1px solid #f1f3f5; }
+        td:last-child { border-right: 1px solid #f1f3f5; }
+        tr:last-child td:first-child { border-bottom-left-radius: 8px; }
+        tr:last-child td:last-child { border-bottom-right-radius: 8px; }
+        
+        tr:hover td {
+            background-color: #fbfbff;
+        }
+        .debt-amount {
+            color: var(--danger-color);
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .hidden {
+            display: none !important;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            color: #343a40;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .section-title span.title-text {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-title span.title-text::before {
+            content: '';
+            display: block;
+            width: 6px;
+            height: 20px;
+            background-color: var(--primary-color);
+            border-radius: 4px;
+        }
+        
+        /* 特殊标记样式 */
+        .old-id-badge {
+            display: inline-block;
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 6px;
+            font-weight: bold;
+            border: 1px solid #ffeeba;
+        }
+
+        .blank-name-badge {
+            display: inline-block;
+            background-color: #f8f9fa;
+            color: #868e96;
+            border: 1px dashed #dee2e6;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 6px;
+        }
+        
+        /* 详细流水明细区域样式 */
+        .detail-summary-box {
+            background: #fff;
+            border: 1px solid #edf2ff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            max-height: 400px;
+            overflow-y: auto;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.01);
+        }
+        .detail-summary-box::-webkit-scrollbar { width: 8px; }
+        .detail-summary-box::-webkit-scrollbar-track { background: #f8f9fa; border-radius: 10px;}
+        .detail-summary-box::-webkit-scrollbar-thumb { background: #ced4da; border-radius: 10px;}
+        
+        .user-detail-item {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px dashed #e9ecef;
+        }
+        .user-detail-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .user-detail-title {
+            font-weight: bold;
+            color: #343a40;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            background: #fbfbff;
+            padding: 8px 15px;
+            border-radius: 8px;
+            border-left: 3px solid var(--primary-color);
+        }
+        .user-detail-title .count-badge {
+            background: #4c6ef5;
+            color: white;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+        .record-tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding-left: 10px;
+        }
+        .record-tag {
+            background: #f8f9fa;
+            color: #495057;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            border: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .record-tag b { color: var(--danger-color); }
+
+        /* --- 可爱美观的模态弹窗样式 --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 680px;
+            border-radius: 20px;
+            padding: 35px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            position: relative;
+            transform: translateY(0);
+            transition: transform 0.3s;
+        }
+        .modal-content h2 {
+            margin-top: 0;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 24px;
+            margin-bottom: 25px;
+        }
+        .intro-desc {
+            text-align: center;
+            color: #868e96;
+            margin-bottom: 25px;
+            font-size: 15px;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .feature-card {
+            background: #fbfbff;
+            border: 1px solid #edf2ff;
+            padding: 20px;
+            border-radius: 16px;
+            transition: transform 0.2s;
+        }
+        .feature-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(92, 124, 250, 0.08);
+        }
+        .feature-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+        .feature-title {
+            font-weight: 800;
+            color: #343a40;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        .feature-text {
+            font-size: 13px;
+            color: #495057;
+            line-height: 1.6;
+        }
+        .feature-text code {
+            background: #ffe3e3;
+            color: #c92a2a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .modal-close-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px 25px;
+            border-radius: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(92, 124, 250, 0.3);
+        }
+        .modal-close-btn:hover {
+            background: var(--hover-color);
+            box-shadow: 0 6px 20px rgba(92, 124, 250, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+<!-- ✨ 可爱美观的介绍弹窗 ✨ -->
+<div id="welcomeModal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <h2>✨ 智能欠款对账助手 ✨</h2>
+        <div class="intro-desc">为了拯救财务与行政的头发，本工具内置了超强的极客魔法：</div>
+        
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🕵️‍♂️</div>
+                <div class="feature-title">工号无限追踪术</div>
+                <div class="feature-text">一个人有2个、3个甚至无数个工号？新旧填反了？填错列了？统统没关系！系统底层自带<b>关联雷达</b>，无论怎么填，都能顺藤摸瓜把同一个人的账单死死锁定，绝不漏算！</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🪄</div>
+                <div class="feature-title">姓名魔法包容</div>
+                <div class="feature-text">张三换成了 ZHANG SAN？大小写混用？不小心打错字？系统<b>认工号不认名字</b>，自动统一格式合并！如果遇上漏填名字的坏习惯，还会贴心打上 <code>[含无名记录]</code> 警报哦~</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <div class="feature-title">随心所欲动态筛选</div>
+                <div class="feature-text">摆脱死板规则！系统会自动抓取表格里的所有状态生成面板。<b>你勾选什么，系统就只计算什么</b>。灵活分析“扣掉时间”或“离职”状态，资金流向全听你的指挥。</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🖨️</div>
+                <div class="feature-title">一键专业对账单导出</div>
+                <div class="feature-text">网页看不够？一键即可导出包含 3 个 Sheet 页的正规 Excel！连<b>单笔刷卡流水明细</b>都给你按人头排得明明白白，直接发给当事人进行终极对账，稳！</div>
+            </div>
+        </div>
+        
+        <button class="modal-close-btn" onclick="closeModal()">🚀 我准备好了，开始使用！</button>
+    </div>
+</div>
+
+<div class="container">
+    <div class="header-section">
+        <h1>💳 欠款分析与对账生成器</h1>
+        <button class="help-btn" onclick="openModal()">💡 查看神奇功能说明</button>
+    </div>
+    
+    <div class="control-panel">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="fileInput"><b>📂 1. 导入数据:</b></label>
+                <input type="file" id="fileInput" accept=".xlsx, .xls, .csv">
+            </div>
+            
+            <div class="form-group hidden" id="sheetGroup">
+                <label for="sheetSelect"><b>📑 2. 选择工作表:</b></label>
+                <select id="sheetSelect"></select>
+            </div>
+
+            <div class="form-group">
+                <label for="topNInput"><b>🏆 3. 显示 Top:</b></label>
+                <input type="number" id="topNInput" min="0" placeholder="全量" value="">
+                <span style="color: #adb5bd; font-size: 13px;">(留空或0代表全部)</span>
+            </div>
+        </div>
+
+        <div id="dynamicFiltersArea" class="dynamic-filters hidden">
+            <div class="filter-box">
+                <h4>扣掉时间 <span onclick="selectAll('filter-deduction')">反选/全选</span></h4>
+                <div id="filter-deduction" class="checkbox-list"></div>
+            </div>
+            <div class="filter-box">
+                <h4>是否离职 <span onclick="selectAll('filter-resigned')">反选/全选</span></h4>
+                <div id="filter-resigned" class="checkbox-list"></div>
+            </div>
+            <div class="filter-box">
+                <h4>是否离职0708 <span onclick="selectAll('filter-resigned0708')">反选/全选</span></h4>
+                <div id="filter-resigned0708" class="checkbox-list"></div>
+            </div>
+        </div>
+        
+        <div class="form-row hidden" id="btnGroup" style="margin-top: 15px; justify-content: flex-end;">
+            <button id="analyzeBtn">✨ 魔法合并，开始分析 ✨</button>
+        </div>
+    </div>
+
+    <div id="resultsArea" class="hidden">
+        
+        <div class="section-title">
+            <span class="title-text">资金流向数据看板</span>
+            <button class="btn-export" id="exportBtn" onclick="exportToExcel()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                导出完整对账报告 (Excel)
+            </button>
+        </div>
+        
+        <div class="dashboard">
+            <div class="stat-card">
+                <h3>💰 符合条件的有效欠款</h3>
+                <div class="value val-active">¥ <span id="statActiveDebt">0.00</span></div>
+                <div style="font-size: 12px; color: #adb5bd; margin-top: 8px;">共涉及 <span id="statActivePeople">0</span> 人</div>
+            </div>
+            <div class="stat-card">
+                <h3>🛡️ 被过滤掉的金额</h3>
+                <div class="value val-filtered">¥ <span id="statFilteredDebt">0.00</span></div>
+                <div style="font-size: 12px; color: #adb5bd; margin-top: 8px;">(未勾选的状态产生的数据)</div>
+            </div>
+            <div class="stat-card">
+                <h3>📦 表格原始总金额</h3>
+                <div class="value val-total">¥ <span id="statTotalDebt">0.00</span></div>
+                <div style="font-size: 12px; color: #adb5bd; margin-top: 8px;">(本工作表所有行加总)</div>
+            </div>
+        </div>
+
+        <div class="section-title">
+            <span class="title-text">📝 人员刷卡明细流水追溯</span>
+        </div>
+        <div id="detailSummaryBox" class="detail-summary-box">
+            <!-- 动态填充 -->
+        </div>
+
+        <div class="section-title">
+            <span class="title-text">🏆 符合条件人员欠款排行</span>
+        </div>
+        <table id="resultTable">
+            <thead>
+                <tr>
+                    <th>排 名</th>
+                    <th>唯一标识 (主工号)</th>
+                    <th>人员姓名 (智能归集)</th>
+                    <th>待催收欠款 (RMB)</th>
+                    <th>涉及订单数</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 数据由 JS 动态生成 -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // 弹窗控制逻辑
+    function openModal() {
+        const modal = document.getElementById('welcomeModal');
+        modal.classList.remove('hidden');
+        // 简单动效处理
+        setTimeout(() => { modal.style.opacity = '1'; }, 10);
+    }
+    function closeModal() {
+        const modal = document.getElementById('welcomeModal');
+        modal.style.opacity = '0';
+        setTimeout(() => { 
+            modal.classList.add('hidden'); 
+        }, 300);
+        localStorage.setItem('debtTool_hasSeenIntroV11', 'true');
+    }
+
+    // 全局数据存储，用于供 Excel 导出时调用
+    window.exportContext = {
+        topUsers: [],
+        stats: {},
+        historyMap: {}
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // 判断是否首次打开 (用了新 Key 确保更新后大家都能看到新弹窗)
+        if (localStorage.getItem('debtTool_hasSeenIntroV11') !== 'true') {
+            openModal();
+        }
+
+        const savedTopN = localStorage.getItem('debtTool_topN');
+        if (savedTopN !== null) {
+            document.getElementById('topNInput').value = savedTopN;
+        }
+    });
+
+    document.getElementById('topNInput').addEventListener('change', (e) => {
+        localStorage.setItem('debtTool_topN', e.target.value);
+    });
+
+    let currentWorkbook = null;
+    let currentRawData = [];
+
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const data = new Uint8Array(e.target.result);
+            currentWorkbook = XLSX.read(data, {type: 'array'});
+            
+            const sheetSelect = document.getElementById('sheetSelect');
+            sheetSelect.innerHTML = ''; 
+            
+            let targetSheetIndex = 0;
+            
+            currentWorkbook.SheetNames.forEach((sheetName, index) => {
+                const option = document.createElement('option');
+                option.value = sheetName;
+                option.innerText = sheetName;
+                sheetSelect.appendChild(option);
+                
+                if (sheetName === 'NIS key legacy tasks') {
+                    targetSheetIndex = index;
+                }
+            });
+            
+            sheetSelect.selectedIndex = targetSheetIndex;
+            document.getElementById('sheetGroup').classList.remove('hidden');
+            
+            loadSheetDataAndFilters();
+            alert("文件加载成功！请在下方勾选你需要统计的字段内容，然后点击「开始分析」");
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    document.getElementById('sheetSelect').addEventListener('change', function() {
+        loadSheetDataAndFilters();
+    });
+
+    function loadSheetDataAndFilters() {
+        const selectedSheetName = document.getElementById('sheetSelect').value;
+        const worksheet = currentWorkbook.Sheets[selectedSheetName];
+        currentRawData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+        
+        if (currentRawData.length === 0) {
+            alert(`工作表 "${selectedSheetName}" 没有数据！`);
+            document.getElementById('dynamicFiltersArea').classList.add('hidden');
+            document.getElementById('btnGroup').classList.add('hidden');
+            return;
+        }
+
+        const deducSet = new Set();
+        const resigSet = new Set();
+        const resig0708Set = new Set();
+
+        currentRawData.forEach(row => {
+            deducSet.add(String(row['扣掉时间'] || '').trim());
+            resigSet.add(String(row['是否离职'] || '').trim());
+            resig0708Set.add(String(row['是否离职0708'] || '').trim());
+        });
+
+        renderCheckboxes('filter-deduction', Array.from(deducSet));
+        renderCheckboxes('filter-resigned', Array.from(resigSet));
+        renderCheckboxes('filter-resigned0708', Array.from(resig0708Set));
+
+        document.getElementById('dynamicFiltersArea').classList.remove('hidden');
+        document.getElementById('btnGroup').classList.remove('hidden');
+    }
+
+    function renderCheckboxes(containerId, valuesArray) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        
+        valuesArray = valuesArray.map(v => v === '' ? '(空白)' : v);
+        valuesArray.sort();
+
+        const blankIndex = valuesArray.indexOf('(空白)');
+        if (blankIndex > -1) {
+            valuesArray.splice(blankIndex, 1);
+            valuesArray.unshift('(空白)');
+        }
+
+        valuesArray.forEach(val => {
+            const label = document.createElement('label');
+            label.className = 'checkbox-label';
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = val;
+            
+            if (val === '(空白)') {
+                checkbox.checked = true;
+            }
+
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(val));
+            container.appendChild(label);
+        });
+    }
+
+    function selectAll(containerId) {
+        const container = document.getElementById(containerId);
+        const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+        let allChecked = true;
+        
+        checkboxes.forEach(cb => { if (!cb.checked) allChecked = false; });
+        checkboxes.forEach(cb => { cb.checked = !allChecked; });
+    }
+
+    function getCheckedValues(containerId) {
+        const container = document.getElementById(containerId);
+        const checkboxes = container.querySelectorAll('input[type="checkbox"]:checked');
+        return Array.from(checkboxes).map(cb => cb.value);
+    }
+
+    document.getElementById('analyzeBtn').addEventListener('click', function() {
+        let topN = parseInt(document.getElementById('topNInput').value, 10);
+        if (isNaN(topN) || topN <= 0) {
+            topN = 999999;
+        }
+        
+        const selectedDeduc = getCheckedValues('filter-deduction');
+        const selectedResig = getCheckedValues('filter-resigned');
+        const selectedResig0708 = getCheckedValues('filter-resigned0708');
+
+        if (selectedDeduc.length === 0 || selectedResig.length === 0 || selectedResig0708.length === 0) {
+            alert("请确保每列筛选条件中至少勾选了一项！");
+            return;
+        }
+
+        analyzeData(currentRawData, topN, selectedDeduc, selectedResig, selectedResig0708);
+    });
+
+    function analyzeData(data, topN, selectedDeduc, selectedResig, selectedResig0708) {
+        // --- 并查集 (Union-Find) 算法处理无限个工号互绑问题 ---
+        const unionFind = {};
+        function find(i) {
+            if (unionFind[i] === undefined) {
+                unionFind[i] = i;
+            }
+            if (unionFind[i] === i) return i;
+            let root = find(unionFind[i]);
+            unionFind[i] = root; // 路径压缩
+            return root;
+        }
+        function union(i, j) {
+            let rootI = find(i);
+            let rootJ = find(j);
+            if (rootI !== rootJ) {
+                unionFind[rootJ] = rootI; 
+            }
+        }
+
+        // 第一次扫描：将同一行出现的所有非空工号互相连结
+        data.forEach(row => {
+            const id1 = String(row['工号'] || '').trim().toUpperCase();
+            const id2 = String(row['新工号'] || '').trim().toUpperCase();
+            const id3 = String(row['您替哪位伙伴打包？请填写他的工号及名字'] || '').trim().toUpperCase(); 
+            
+            if (id1 && id2 && id1 !== id2) union(id1, id2);
+        });
+
+        // 第二次扫描：构建完整的关联族谱 (用于展示：主工号 -> [关联工号1, 关联工号2...])
+        const reverseHistoryMap = {}; 
+        Object.keys(unionFind).forEach(id => {
+            let root = find(id);
+            if (id !== root) {
+                if (!reverseHistoryMap[root]) reverseHistoryMap[root] = new Set();
+                reverseHistoryMap[root].add(id);
+            }
+        });
+
+        let totalSystemDebt = 0;
+        let activeTargetDebt = 0; 
+        const activeUserStats = {};
+
+        // 第三次扫描：正式算账
+        data.forEach(row => {
+            const rmbStr = String(row['转RMB后']).replace(/[^0-9.-]+/g,"");
+            const debtAmount = parseFloat(rmbStr) || 0;
+            totalSystemDebt += debtAmount;
+
+            let valDeduc = String(row['扣掉时间'] || '').trim();
+            if (valDeduc === '') valDeduc = '(空白)';
+
+            let valResig = String(row['是否离职'] || '').trim();
+            if (valResig === '') valResig = '(空白)';
+
+            let valResig0708 = String(row['是否离职0708'] || '').trim();
+            if (valResig0708 === '') valResig0708 = '(空白)';
+
+            const isMatch = selectedDeduc.includes(valDeduc) && 
+                            selectedResig.includes(valResig) && 
+                            selectedResig0708.includes(valResig0708);
+
+            if (isMatch) {
+                activeTargetDebt += debtAmount;
+
+                const oldIdRaw = String(row['工号'] || '').trim().toUpperCase();
+                const newIdRaw = String(row['新工号'] || '').trim().toUpperCase();
+                // 姓名包容魔法：自动去空格大写
+                const name = String(row['姓名'] || '').trim().toUpperCase();
+                const signTime = String(row['签到时间'] || '未知时间').trim();
+                
+                // 获取当前行可用的任意一个非空工号
+                let effectiveId = newIdRaw || oldIdRaw || "未知工号";
+                
+                // 归集到家族族长 (root) 头上
+                if (effectiveId !== "未知工号") {
+                    effectiveId = find(effectiveId);
+                }
+                
+                const userKey = effectiveId;
+                
+                if (!activeUserStats[userKey]) {
+                    activeUserStats[userKey] = {
+                        id: effectiveId,
+                        names: new Set(),
+                        hasBlankName: false,
+                        totalDebt: 0,
+                        orderCount: 0,
+                        records: []
+                    };
+                }
+                
+                if (name === '') {
+                    activeUserStats[userKey].hasBlankName = true;
+                } else {
+                    activeUserStats[userKey].names.add(name);
+                }
+
+                activeUserStats[userKey].totalDebt += debtAmount;
+                activeUserStats[userKey].orderCount += 1;
+                activeUserStats[userKey].records.push({
+                    date: signTime,
+                    amount: debtAmount
+                });
+            }
+        });
+
+        const filteredOutDebt = totalSystemDebt - activeTargetDebt;
+        const sortedActiveUsers = Object.values(activeUserStats).sort((a, b) => b.totalDebt - a.totalDebt);
+        const topNUsers = sortedActiveUsers.slice(0, topN);
+
+        // 缓存供导出使用
+        window.exportContext = {
+            topUsers: topNUsers,
+            historyMap: reverseHistoryMap,
+            stats: {
+                activeDebt: activeTargetDebt.toFixed(2),
+                filteredDebt: filteredOutDebt.toFixed(2),
+                totalDebt: totalSystemDebt.toFixed(2),
+                activePeople: sortedActiveUsers.length
+            }
+        };
+
+        renderDashboard(activeTargetDebt, filteredOutDebt, totalSystemDebt, sortedActiveUsers.length);
+        renderDetailsAndTable(topNUsers, reverseHistoryMap);
+    }
+
+    function renderDashboard(activeDebt, filteredDebt, totalDebt, activePeopleCount) {
+        document.getElementById('resultsArea').classList.remove('hidden');
+        document.getElementById('statActiveDebt').innerText = activeDebt.toFixed(2);
+        document.getElementById('statActivePeople').innerText = activePeopleCount;
+        document.getElementById('statFilteredDebt').innerText = filteredDebt.toFixed(2);
+        document.getElementById('statTotalDebt').innerText = totalDebt.toFixed(2);
+    }
+
+    function renderDetailsAndTable(topUsers, reverseHistoryMap) {
+        const detailBox = document.getElementById('detailSummaryBox');
+        detailBox.innerHTML = '';
+
+        if (topUsers.length === 0) {
+            detailBox.innerHTML = '<span style="color:#adb5bd; font-size:14px; display:block; text-align:center; padding:20px;">当前筛选条件下没有匹配的欠款记录。</span>';
+        }
+
+        const tbody = document.querySelector('#resultTable tbody');
+        tbody.innerHTML = ''; 
+
+        topUsers.forEach((user, index) => {
+            let oldIdsText = "";
+            let hasOldId = false;
+            // 只要他的名下有任何关联的工号，全都列出来
+            if (reverseHistoryMap[user.id] && reverseHistoryMap[user.id].size > 0) {
+                hasOldId = true;
+                oldIdsText = " (关联曾用号: " + Array.from(reverseHistoryMap[user.id]).join(', ') + ")";
+            }
+
+            let finalName = Array.from(user.names).join(' / ');
+            if (finalName === '') finalName = '【未知姓名】';
+            let nameHTML = finalName;
+            if (user.hasBlankName) {
+                nameHTML += ` <span class="blank-name-badge" title="此工号下存在未填姓名的订单">⚠️ 含无名记录</span>`;
+            }
+
+            // 流水渲染
+            const userDetailDiv = document.createElement('div');
+            userDetailDiv.className = 'user-detail-item';
+            
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'user-detail-title';
+            
+            let titleHTML = `<span><span style="color:#adb5bd">TOP ${index + 1} |</span> 姓名: ${nameHTML} <span style="color:#adb5bd">|</span> 主工号: ${user.id}</span>`;
+            if (hasOldId) titleHTML += ` <span class="old-id-badge">${oldIdsText}</span>`;
+            titleHTML += ` <span style="margin-left:auto; font-weight:normal;">累计待催款: <span style="color:var(--danger-color); font-weight:bold; font-size:16px;">¥${user.totalDebt.toFixed(2)}</span></span>`;
+            titleHTML += ` <span class="count-badge">共 ${user.orderCount} 笔</span>`;
+            
+            titleDiv.innerHTML = titleHTML;
+            userDetailDiv.appendChild(titleDiv);
+
+            const tagContainer = document.createElement('div');
+            tagContainer.className = 'record-tag-container';
+            user.records.forEach(rec => {
+                const tag = document.createElement('span');
+                tag.className = 'record-tag';
+                tag.innerHTML = `📅 ${rec.date} <span style="color:#adb5bd; margin:0 4px;">➔</span> <b>¥${rec.amount.toFixed(2)}</b>`;
+                tagContainer.appendChild(tag);
+            });
+            userDetailDiv.appendChild(tagContainer);
+            detailBox.appendChild(userDetailDiv);
+
+            // 表格渲染
+            const tr = document.createElement('tr');
+            
+            const tdRank = document.createElement('td');
+            tdRank.innerText = index + 1;
+            
+            const tdId = document.createElement('td');
+            tdId.innerText = user.id;
+            if (hasOldId) {
+                const spanBadge = document.createElement('span');
+                spanBadge.className = 'old-id-badge';
+                spanBadge.innerText = oldIdsText;
+                tdId.appendChild(spanBadge);
+            }
+            
+            const tdName = document.createElement('td');
+            tdName.innerHTML = nameHTML; 
+            
+            const tdDebt = document.createElement('td');
+            tdDebt.className = 'debt-amount';
+            tdDebt.innerText = "¥" + user.totalDebt.toFixed(2);
+            
+            const tdOrder = document.createElement('td');
+            tdOrder.innerText = user.orderCount;
+
+            tr.appendChild(tdRank);
+            tr.appendChild(tdId);
+            tr.appendChild(tdName);
+            tr.appendChild(tdDebt);
+            tr.appendChild(tdOrder);
+            tbody.appendChild(tr);
+        });
+    }
+
+    // --- 导出 Excel 核心功能 ---
+    function exportToExcel() {
+        const context = window.exportContext;
+        if (!context || context.topUsers.length === 0) {
+            alert("目前没有可导出的数据，请先进行分析！");
+            return;
+        }
+
+        const wb = XLSX.utils.book_new();
+
+        // 【1. 生成：统计看板 Sheet】
+        const wsDashboardData = [
+            ["分析指标", "金额数值 (RMB)", "人数/说明"],
+            ["符合所选条件的有效欠款", context.stats.activeDebt, `共涉及 ${context.stats.activePeople} 人`],
+            ["被过滤掉的非目标金额", context.stats.filteredDebt, "未勾选的项产生的数据"],
+            ["当前表格原始总金额", context.stats.totalDebt, "所有行加总"]
+        ];
+        const wsDashboard = XLSX.utils.aoa_to_sheet(wsDashboardData);
+        wsDashboard['!cols'] = [{wch: 30}, {wch: 20}, {wch: 30}];
+        XLSX.utils.book_append_sheet(wb, wsDashboard, "1_统计看板");
+
+        // 【2. 生成：欠款排行 Sheet】
+        const rankHeader = ["排名", "主工号标识", "关联过的曾用工号", "姓名(自动合并)", "是否漏填姓名", "符合条件的欠款总额(RMB)", "涉及订单笔数"];
+        const rankData = context.topUsers.map((u, i) => {
+            const oldIds = context.historyMap[u.id] ? Array.from(context.historyMap[u.id]).join(', ') : '';
+            const names = Array.from(u.names).join(' / ') || '【未知姓名】';
+            return [
+                i + 1, 
+                u.id, 
+                oldIds, 
+                names, 
+                u.hasBlankName ? '是' : '否', 
+                parseFloat(u.totalDebt.toFixed(2)), 
+                u.orderCount
+            ];
+        });
+        const wsRank = XLSX.utils.aoa_to_sheet([rankHeader, ...rankData]);
+        wsRank['!cols'] = [{wch: 8}, {wch: 18}, {wch: 25}, {wch: 30}, {wch: 15}, {wch: 25}, {wch: 15}];
+        XLSX.utils.book_append_sheet(wb, wsRank, "2_欠款排行汇总");
+
+        // 【3. 生成：刷卡流水明细 Sheet】
+        const recordHeader = ["排行榜排名", "主归集工号", "人员姓名", "单笔刷卡/签到时间", "扣款金额(RMB)"];
+        const recordData = [];
+        context.topUsers.forEach((u, i) => {
+            const names = Array.from(u.names).join(' / ') || '【未知姓名】';
+            u.records.forEach(rec => {
+                recordData.push([
+                    i + 1,
+                    u.id,
+                    names,
+                    rec.date,
+                    parseFloat(rec.amount.toFixed(2))
+                ]);
+            });
+        });
+        const wsRecords = XLSX.utils.aoa_to_sheet([recordHeader, ...recordData]);
+        wsRecords['!cols'] = [{wch: 12}, {wch: 18}, {wch: 30}, {wch: 25}, {wch: 20}];
+        XLSX.utils.book_append_sheet(wb, wsRecords, "3_详细刷卡流水明细");
+
+        // 导出下载
+        XLSX.writeFile(wb, "智能欠款对账报告_极客版.xlsx");
+    }
+</script>
+</body>
+</html>
