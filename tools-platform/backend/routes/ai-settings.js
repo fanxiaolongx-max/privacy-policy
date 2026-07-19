@@ -2,9 +2,18 @@ const express = require('express');
 const router = express.Router();
 const repo = require('../models/ai-settings-repository');
 const aiProviderClient = require('../models/ai-provider-client');
+const aiUsageRepo = require('../models/ai-usage-repository');
 
 router.get('/', async (req, res) => {
     res.json(await repo.getPublicSettings());
+});
+
+router.get('/usage', async (req, res) => {
+    try {
+        res.json(await aiUsageRepo.getUsageStats({ dimension: req.query.dimension }));
+    } catch (err) {
+        res.status(500).json({ error: err.message || '读取 AI 用量失败' });
+    }
 });
 
 router.put('/', async (req, res) => {

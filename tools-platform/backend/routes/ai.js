@@ -263,12 +263,15 @@ ${aiSettings.systemPrompt ? `\n**管理员补充要求**：\n${aiSettings.system
         const responseText = result.text;
         
         let totalTokens = 0;
+        let promptTokens = 0;
+        let outputTokens = 0;
+        let costUSD = 0;
         let costMao = 0;
         if (result.usage) {
             totalTokens = result.usage.totalTokens || 0;
-            const promptTokens = result.usage.promptTokens || 0;
-            const outputTokens = result.usage.outputTokens || 0;
-            const costUSD = (
+            promptTokens = result.usage.promptTokens || 0;
+            outputTokens = result.usage.outputTokens || 0;
+            costUSD = (
                 promptTokens * aiSettings.inputCostPerMillionUsd +
                 outputTokens * aiSettings.outputCostPerMillionUsd
             ) / 1000000;

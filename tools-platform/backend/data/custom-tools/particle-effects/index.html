@@ -1,0 +1,2318 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; worker-src 'self' blob:; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<title>粒子特效</title>
+<style>
+  :root{--bg:#07080c;--panel:rgba(255,255,255,.045);--line:rgba(255,255,255,.10);--ink:#eef1f7;--muted:#8b93a8;--node:#f4b23c;--hot:#83a2ff;--accent:#f4b23c;--amber:#f4b23c;--blue:#83a2ff;--blue2:#a9c0ff;--grad:linear-gradient(120deg,#f4b23c,#83a2ff);--accent-ink:#0a0a0f;--glasshi:rgba(255,255,255,.07)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font:15px/1.6 "Helvetica Neue","PingFang SC","Noto Sans SC",Arial,sans-serif;-webkit-font-smoothing:antialiased;padding:48px 28px 80px}
+  .wrap{max-width:1280px;margin:0 auto}
+  header{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:26px}
+  header h1{font-size:20px;font-weight:700;letter-spacing:-.015em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  header .sub{color:var(--muted);font-size:12px;letter-spacing:.14em;text-transform:uppercase}
+  .hero{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:16px;-webkit-backdrop-filter:blur(26px) saturate(1.3);backdrop-filter:blur(26px) saturate(1.3);box-shadow:0 26px 60px -28px rgba(0,0,0,.7),inset 0 1px 0 var(--glasshi)}
+  .inputs{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+  .seg{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+  .seg button{border:none;border-radius:0;padding:8px 16px;background:transparent;color:var(--muted);font:inherit;font-size:13px;cursor:pointer}
+  .seg button.on{background:rgba(255,255,255,.12);color:var(--ink)}
+  #style button.on,#rotmode button.on{background:rgba(255,255,255,.12);color:var(--ink);border-color:var(--amber)}
+  input[type=file]{font:inherit;font-size:12.5px;color:var(--muted);max-width:220px}
+  .spacer{flex:1}
+  .plate-frame{position:relative;border-radius:16px;overflow:hidden;background:#050608;border:1px solid var(--line);height:74vh;max-height:1000px;min-height:440px;box-shadow:0 26px 60px -30px rgba(0,0,0,.75)}
+  .plate-frame canvas{display:block;width:100%;height:100%;position:absolute;inset:0;transition:opacity .18s}
+  .plate-frame canvas.hidden{opacity:0;pointer-events:none}
+  .plate-frame:fullscreen{height:100vh;max-height:none;border-radius:0;border:0}
+  .plate-frame:-webkit-full-screen{height:100vh;max-height:none;border-radius:0;border:0}
+  #hero-3d{cursor:grab}#hero-3d:active{cursor:grabbing}
+  .fsbtn{position:absolute;bottom:12px;left:14px;z-index:3;background:rgba(12,14,19,.6);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:5px 10px;font-size:14px;cursor:pointer;line-height:1}
+  .fsbtn:hover{border-color:var(--blue2);color:#fff}
+  .badge{position:absolute;top:12px;left:14px;font:600 11px/1 "SF Mono",ui-monospace,monospace;color:var(--muted);letter-spacing:.06em;pointer-events:none;z-index:2}
+  .badge b{color:var(--node)}
+  .viewtag{position:absolute;top:12px;right:14px;font:600 11px/1 "SF Mono",ui-monospace,monospace;color:var(--node);letter-spacing:.1em;pointer-events:none;z-index:2}
+  .hint{position:absolute;bottom:12px;right:14px;font-size:11px;color:var(--muted);pointer-events:none;z-index:2}
+  .transport{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--line);padding-top:16px;margin-top:16px}
+  .transport .meta{font-size:13px;color:var(--muted)}
+  .ctrls{display:flex;gap:10px;align-items:center}
+  button.pill{font:inherit;font-size:13px;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 20px;cursor:pointer;transition:background .2s,color .2s,box-shadow .2s,border-color .2s}
+  button.pill:hover{border-color:var(--blue2);color:#fff}
+  button.pill.go{border:0;background:var(--grad);color:var(--accent-ink);font-weight:700;box-shadow:0 .6rem 1.5rem -.6rem var(--amber)}button.pill.go:hover{box-shadow:0 .75rem 1.9rem -.5rem var(--amber);color:var(--accent-ink)}
+  .tuners{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:14px}
+  .tuners .tlab{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);white-space:nowrap}
+  .tuners input[type=range]{width:140px;accent-color:var(--node);cursor:pointer}
+  .tuners input[type=range].wide{width:220px}
+  .tuners input[type=number]{width:68px;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:5px 8px}
+  .tuners .seg button{font-size:12.5px}
+  .tuners .val{color:var(--node);font:600 11px/1 "SF Mono",ui-monospace,monospace;min-width:46px}
+  .tuners .mini{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:6px 14px;font:inherit;font-size:12.5px;cursor:pointer}
+  .tuners .mini:hover{border-color:var(--node);color:var(--node)}
+  .tuners .mini.on{background:rgba(255,255,255,.14);color:var(--ink);border-color:var(--amber)}
+  .tuners .mini:disabled{opacity:.42;cursor:default;border-color:var(--line);color:var(--muted)}
+  h2{font-size:15px;font-weight:600;margin:34px 0 6px}
+  .lede{color:var(--muted);font-size:13px;margin-bottom:16px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .cell{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;cursor:pointer;-webkit-backdrop-filter:blur(20px) saturate(1.2);backdrop-filter:blur(20px) saturate(1.2);transition:transform .25s cubic-bezier(.22,1,.36,1),border-color .25s}
+  .cell:hover{transform:translateY(-3px);border-color:rgba(255,255,255,.22)}
+  .cell .cv{position:relative;height:150px}
+  .cell canvas{display:block;width:100%;height:150px;border-radius:8px;background:#050608;position:absolute;inset:0;transition:opacity .18s}
+  .cell canvas.hidden{opacity:0;pointer-events:none}
+  .cell .num{font:600 11px/1 "SF Mono",ui-monospace,monospace;color:var(--muted)}
+  .cell .name{font-weight:600;font-size:13.5px;margin-top:10px}
+  .cell .rule{color:var(--muted);font-size:11.5px;margin-top:3px}
+  footer{color:var(--muted);font-size:12px;margin-top:38px;border-top:1px solid var(--line);padding-top:16px}
+  kbd{font:inherit;font-size:11px;background:#1a1f25;border:1px solid var(--line);border-radius:4px;padding:1px 6px;color:var(--ink)}
+  @media (max-width:780px){.grid{grid-template-columns:repeat(2,1fr)}.plate-frame{height:56vh;min-height:320px}}
+  @media (max-width:520px){.grid{grid-template-columns:1fr}body{padding:28px 14px 60px}}
+  body.native-overlay,body.parity-test{padding:0;background:transparent;overflow:hidden}
+  body.native-overlay .wrap,body.parity-test .wrap{max-width:none;width:100vw;height:100vh;margin:0}
+  body.native-overlay header,body.native-overlay .inputs,body.native-overlay .tuners,body.native-overlay .transport,body.native-overlay h2,body.native-overlay .lede,body.native-overlay .grid,body.native-overlay footer,
+  body.parity-test header,body.parity-test .inputs,body.parity-test .tuners,body.parity-test .transport,body.parity-test h2,body.parity-test .lede,body.parity-test .grid,body.parity-test footer{display:none}
+  body.native-overlay .hero,body.parity-test .hero{height:100vh;margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
+  body.native-overlay .plate-frame,body.parity-test .plate-frame{height:100vh;max-height:none;min-height:0;border:0;border-radius:0;background:#050608;box-shadow:none;-webkit-app-region:drag}
+  body.native-overlay.transparent-visualizer .plate-frame{background:transparent}
+  body.native-overlay .plate-frame canvas{cursor:default}
+  body.native-overlay.circle .plate-frame{border-radius:50%}
+  body.native-overlay .badge,body.native-overlay .viewtag,body.native-overlay .hint,body.native-overlay .fsbtn,
+  body.parity-test .badge,body.parity-test .viewtag,body.parity-test .hint,body.parity-test .fsbtn{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>粒子特效</h1><span class="sub">sound → motion</span></header>
+
+  <section class="hero">
+    <div class="inputs">
+      <div class="seg" id="src">
+        <button data-src="system" class="on">系统音频</button>
+        <button data-src="file">音频文件</button>
+        <button data-src="mic">麦克风</button>
+      </div>
+      <span id="file-slot" style="display:none"><input type="file" id="audio-file" accept="audio/*"></span>
+      <span id="mic-slot" style="display:none"><select id="mic-device" title="选择麦克风输入设备" style="font:inherit;font-size:12.5px;color:var(--ink);background:#11151b;border:1px solid var(--line);border-radius:8px;padding:6px 10px;max-width:220px"></select></span>
+      <div class="spacer"></div>
+    </div>
+
+    <div class="plate-frame" id="stage">
+      <canvas id="hero-3d"></canvas>
+      <div class="badge">mode <b id="badge-mode">—</b> · energy <b id="badge-energy">—</b> · 节奏 <b id="badge-bpm">—</b></div>
+      <div class="viewtag" id="viewtag">3D · 正8面体</div>
+      <div class="hint" id="hint">按住左 Command 拖拽旋转</div>
+      <button class="fsbtn" id="fsBtn" title="全屏 (Esc 退出)">⛶ 全屏</button>
+    </div>
+
+    <div class="tuners">
+      <span class="tlab" style="color:var(--node)">视觉</span>
+      <div class="seg" id="style"><button data-style="sand" class="on">动态声沙</button><button data-style="msand">模态声沙</button><button data-style="cosmic">宇宙网</button><button data-style="dcosmic">动态宇宙网</button></div>
+      <div class="seg" id="sample"><button data-sm="beat" class="on">按拍采样</button><button data-sm="time">定时采样</button></div>
+      <div class="tlab" id="timeIntervalCtrl" style="display:none">
+        <span>定时</span>
+        <div class="seg" id="timePreset"><button data-ti="1">1秒</button><button data-ti="2" class="on">2秒</button></div>
+        <input type="number" id="patternInterval" min="0.25" max="30" step="0.25" value="2" aria-label="pattern 更新秒数">
+        <span class="val" id="patternIntervalVal">2.00s</span>
+      </div>
+      <button id="diceBtn" class="mini" title="随机换一个静态图形(无需音乐)">🎲 随机图形</button>
+      <button id="symToggle" class="mini">中心对称: 关</button>
+      <label class="tlab">演化 <input type="range" id="evolve" min="0.12" max="1" step="0.04" value="0.5"></label>
+      <label class="tlab">截止/细节 <input type="range" id="detail" class="wide" min="0.55" max="3" step="0.01" value="1.5"><span class="val" id="detailval"></span></label>
+      <label class="tlab">粒子 <input type="range" id="pcount" min="0.05" max="1" step="0.01" value="0.15"><span class="val" id="pval"></span></label>
+      <label class="tlab">缩放 <input type="range" id="zoom" class="wide" min="0.25" max="8" step="0.05" value="1"><span class="val" id="zval"></span></label>
+    </div>
+
+    <div class="tuners">
+      <span class="tlab" style="color:var(--node)">收藏</span>
+      <button id="saveBtn" class="mini" title="把当前图形存进收藏">★ 收藏当前</button>
+      <span id="faveChips" style="display:flex;gap:6px;flex-wrap:wrap"></span>
+    </div>
+
+    <div class="tuners">
+      <span class="tlab" style="color:var(--node)">旋转(3D)</span>
+      <button id="rotToggle" class="mini">暂停自转</button>
+      <button id="rotReset" class="mini">复位视角</button>
+      <button id="frameToggle" class="mini">边框: 关</button>
+      <div class="seg" id="rotmode"><button data-rm="single">绕轴</button><button data-rm="tumble">翻滚</button><button data-rm="precess">进动</button></div>
+      <label class="tlab">转速 <input type="range" id="rotspeed" min="0" max="4" step="0.05" value="1"><span class="val" id="rval"></span></label>
+      <label class="tlab">打光(3D) <select id="light" title="3D 打光模型" style="font:inherit;font-size:12.5px;color:var(--ink);background:#11151b;border:1px solid var(--line);border-radius:8px;padding:6px 10px">
+        <option value="0">景深</option><option value="1">弱光</option><option value="2">顶光(平面光)</option><option value="3">底光</option><option value="4">左侧光</option><option value="5">右侧光</option><option value="6">点光源</option><option value="7">轮廓光</option><option value="8">核心光</option><option value="9" selected>旋转扫光(默认)</option>
+      </select></label>
+    </div>
+
+    <div class="tuners">
+      <span class="tlab" style="color:var(--node)">立体</span>
+      <div class="seg" id="solidshape"><button data-shape="regular" class="on">正 N 面体</button><button data-shape="random">不规则 N 面体</button></div>
+      <button id="polyRefresh" class="mini" disabled>刷新随机</button>
+      <label class="tlab">N <input type="range" id="polyfaces" min="4" max="32" step="1" value="8"><span class="val" id="polyval">8</span></label>
+    </div>
+
+    <div class="transport">
+      <span class="meta" id="hero-meta">系统音频 · 未接入</span>
+      <div class="ctrls">
+        <button class="pill go" id="play">▶ 播放</button>
+      </div>
+    </div>
+  </section>
+
+  <h2>声音 → 运动 · 9 个映射原子</h2>
+  <p class="lede">每张卡片用合成输入单独演示一条映射规则。点击重播。</p>
+  <main class="grid" id="atom-grid"></main>
+
+  <footer>点击播放才开始、与声音同步；停止即静音定格。按住左 Command 拖拽可旋转视角。每个鼓点都会扰动图形，加入乐器/过门会激起新纹理，低频鼓贝改变大结构。视觉引擎改编自 3D Chladni（Apache-2.0）；内置示例音乐 “Lofi Production” 由 PulseBox 提供。</footer>
+</div>
+
+<script>
+(function(){
+'use strict';
+/* ════════════════════════════════════════════════════════════════════════
+   SOUND → MOTION · CHLADNI 3D — physical engine
+   • One FEATURE FRAME {bands[16], energy, sharpness, flat} drives the 3D
+     solid's nodal surfaces.
+   • PULSE tracks tempo / beat phase / bar / SWING / slow vibe on that same
+     frame stream (source-agnostic) and rides along as frame.rhythm.
+   • FIELD = driven modal RESONATORS: audio excites eigenmodes by frequency
+     match × excitation-point coupling; each mode rings out at its own τ∝1/f
+     → transitions are timed, never snapped.
+   • PARTICLES are inertial bodies (3 mass classes): Gor'kov-style force
+     F=-∇(Ψ²) drifts them to the nodal set, beats are velocity kicks, novelty
+     a finite-speed shockwave — migration takes real, mechanical time.
+   • Sound: system audio, microphone, or an uploaded audio file.
+   ════════════════════════════════════════════════════════════════════════ */
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const URL_PARAMS = new URLSearchParams(location.search);
+const PAGE_ALPHA = URL_PARAMS.get('alpha')==='1' || URL_PARAMS.get('transparent')==='1';
+const ELECTRON_HOST = !!(window.soundMotionElectron && typeof window.soundMotionElectron.postNative==='function');
+const NATIVE_HOST = ELECTRON_HOST || !!(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.soundMotionNative);
+const NATIVE_OVERLAY = URL_PARAMS.get('overlay')==='1' || URL_PARAMS.get('nativeOverlay')==='1';
+const PARITY_TEST = URL_PARAMS.get('parity')==='1';
+const CANVAS_ALPHA = PAGE_ALPHA || NATIVE_OVERLAY;
+let HOST_VISIBLE=true;
+function renderSurfaceVisible(){ return HOST_VISIBLE && document.visibilityState!=='hidden'; }
+if(NATIVE_OVERLAY) document.body.classList.add('native-overlay');
+if(PARITY_TEST) document.body.classList.add('parity-test');
+if(PAGE_ALPHA) document.body.classList.add('transparent-visualizer');
+const SEED_PARAM = URL_PARAMS.get('seed');
+let reseedRandom=null;
+function setDeterministicRandomSeed(value){
+  const base=(Number(value)>>>0)||1; let state=base;
+  Math.random=function(){ state=(state*1664525+1013904223)>>>0; return state/4294967296; };
+  reseedRandom=function(){ state=base; };                         // parity/build stills reset the stream → independent of prior live frames
+}
+if(SEED_PARAM!==null) setDeterministicRandomSeed(SEED_PARAM);
+const DPR_CAP=3, MAX_VISIBLE_RENDER_FPS=60, MIN_RENDER_INTERVAL=1000/MAX_VISIBLE_RENDER_FPS;
+const PHYS = true;          // Fable = pulse-tracked inertial physics
+let SPEED=1, NBANDS=16, QUALITY=1, FPS=0, RENDER_COUNT=0;
+let VIBE_WARM=0.5;   // slow "vibe" warmth (0 cool … 1 warm) from PULSE — drifts the palette over tens of seconds
+let ROTWARP=1;       // swing-clock warp factor applied to auto-rotation (slow-fast alternation inside each beat)
+let BREATH=1;        // bar-downbeat focal breath (≈1; tiny pulse on the "1" when the bar is confidently tracked)
+let EVOLVE=0.5;             // pattern-evolution pace (0..1): smaller = each figure is held longer before it morphs to the next
+let SAMPLE_MODE='beat';     // when a NEW pattern is sampled: 'beat' (snap to the music's hits) | 'time' (a fixed clock)
+let TIME_SAMPLE_INTERVAL=2;  // fixed-clock pattern refresh interval, in seconds, used only when SAMPLE_MODE === 'time'
+let PCT=0.15;               // particle-count scale (0..1); initial default only — the slider is fully user-owned after that
+let NODE_FOCUS=0.55;         // macro bias: 0 = diffuse through the volume, 1 = concentrate near resonant nodes
+const STYLE_PARAM=URL_PARAMS.get('style');
+let STYLE=['sand','msand','cosmic','dcosmic'].includes(STYLE_PARAM)?STYLE_PARAM:'sand';   // the showcase can boot directly into its captured engine, avoiding an immediate expensive handoff
+const STYLE_DETAIL_DEFAULTS=Object.freeze({sand:1.5,msand:1,cosmic:1,dcosmic:1.5});
+const WEB_DEFAULT_PATTERN=Object.freeze({
+  goal:10.69808181085723,
+  ex:Object.freeze([0.8314424852873101,0.3722374639108269,0.7994605376770149]),
+  shape:'regular',polyN:8,polySeed:1,sym:false
+});
+const STYLE_DETAIL_VALUES={...STYLE_DETAIL_DEFAULTS};
+let DETAIL_SCALE=STYLE_DETAIL_VALUES[STYLE];   // per-style cutoff-frequency/detail macro; it must not change projection size
+const MOTION_PARAM=URL_PARAMS.get('motion');
+let ROT_MODE=['single','tumble','precess'].includes(MOTION_PARAM)?MOTION_PARAM:'single';
+let ROT_SPEED=1;            // rotation speed (rad/s-ish); 0 = stopped
+let ZOOM_3D=3;              // projection zoom; redraws vectors/particles instead of scaling the bitmap canvas
+let SOLID_SHAPE='regular';  // 3D boundary: regular or random N-face convex solid; N>16 becomes round
+let POLY_N=8;               // adjustable face-count target; 4..16 = polyhedron, >16 = round
+let POLY_SEED=1;            // refreshable seed for the random polyhedron option
+let FRAME=false;            // draw the green frame lines (cube wireframe / sheet border) — user-toggleable
+document.getElementById('detail').value=String(DETAIL_SCALE);
+document.querySelectorAll('#style button').forEach(b=>b.classList.toggle('on',b.dataset.style===STYLE));
+document.querySelectorAll('#rotmode button').forEach(b=>b.classList.toggle('on',b.dataset.rm===ROT_MODE));
+let SYMMETRIC=false;        // force point-symmetry: keep only ONE mode-parity active → every superposition is invariant under the centre inversion (x,y)→(1-x,1-y)
+let LIGHT=9;                // 3D lighting model (default 9=旋转扫光/sweep); modulates per-particle brightness by view position / depth / radius
+const MODE3_MAX=10, MODE3_LEGACY_MAX=4;
+/* ── fullscreen / big-canvas clarity (both styles, both views) ──
+   Keep the canvas at the display's physical pixel ratio: supersampling then compositing back down
+   softens one-pixel particles. Particle density retains its existing large-stage compensation on
+   a separate scale, so this changes sampling sharpness without changing the figure's population. */
+const BASE_RENDER_AREA=1280*1280, FS_DPR_CAP=4, FULLSCREEN_DENSITY_SCALE=1.28;
+const DPR_FORCE=Number(URL_PARAMS.get('dpr'))||0;   // ?dpr=1 → target pixels map 1:1 to canvas pixels during export
+function fullscreenLike(){ return Boolean(document.fullscreenElement||document.webkitFullscreenElement) || (NATIVE_OVERLAY && Math.max(window.innerWidth,window.innerHeight)>=900 && Math.min(window.innerWidth,window.innerHeight)>=600); }
+function displayDpr(){ if(DPR_FORCE) return DPR_FORCE;
+  if(!PHYS) return Math.min(DPR_CAP, Math.max(1, window.devicePixelRatio||1));
+  const fs=fullscreenLike(), raw=window.devicePixelRatio||1;
+  return Math.min(fs?FS_DPR_CAP:DPR_CAP, Math.max(1, raw)); }
+function particleDensityDpr(){ if(DPR_FORCE) return DPR_FORCE;
+  if(!PHYS) return Math.min(DPR_CAP, Math.max(1,window.devicePixelRatio||1));
+  const fs=fullscreenLike(), raw=(window.devicePixelRatio||1)*(fs?FULLSCREEN_DENSITY_SCALE:1);
+  return Math.min(fs?FS_DPR_CAP:DPR_CAP,Math.max(1,raw)); }
+function screenBoost(o){ if(!o.w || !fullscreenLike()) return 1;
+  const renderDpr=Math.max(0.01,o.dpr||1), densityDpr=particleDensityDpr();
+  const densityArea=(o.w/renderDpr)*(o.h/renderDpr)*densityDpr*densityDpr;
+  return Math.max(1,Math.min(o.pz?1.5:1.8,Math.pow(densityArea/BASE_RENDER_AREA,0.45))); }   // capped: draw-call cost is the fullscreen bottleneck
+function particleCount(o){
+  const base=o.baseN||o.N;   // baseN = windowed budget (look unchanged); N above it is headroom the fullscreen boost can use
+  if(!PHYS) return Math.max(60,Math.min(o.N,Math.round(base*PCT*QUALITY)));
+  return Math.max(60,Math.min(o.N,Math.round(base*PCT*QUALITY*screenBoost(o))));
+}
+function clampPolyN(v){ return Math.max(4,Math.min(32,Math.round(v))); }
+function clampPatternInterval(v){ const n=Number(v); return Math.max(0.25,Math.min(30,Number.isFinite(n)?n:2)); }
+function drawSharpParticle(ctx,x,y,raw,dpr,maxCss){
+  const maxPx=Math.max(1,Math.round(maxCss*dpr));
+  const size=Math.max(1,Math.min(maxPx,Math.round(raw)));
+  ctx.fillRect(Math.round(x),Math.round(y),size,size);
+}
+function focusAmount(){ return Math.max(0,Math.min(1,NODE_FOCUS)); }
+/* At high zoom, confine particles to the on-screen window (centred, half-width in [0,1] coords) so the WHOLE
+   budget packs into what's visible → density stays high and small/sharp particles still form solid lines
+   (genuine high-zoom crispness, instead of magnifying a sparse field). 0.5 = whole plate (no confinement). */
+function winHalf(z){ return z>1.3 ? Math.min(0.5, 0.8/z) : 0.5; }
+/* ── 3D lighting (Cube only) ── returns a per-particle brightness factor from view-space position (vx,vy,
+   centred ~[-0.6,0.6]), camera depth (0 back … 1 front), local radius rr (0 centre … ~1 shell) and time.
+   10 models; 0 = the original depth cue (default), so behaviour is unchanged until the user picks another. */
+function light3(vx,vy,depth,rr,sweepX,sweepY){
+  let L;
+  switch(LIGHT){
+    case 1: L=0.18+0.22*depth; break;                                              // 弱光 — dim, low-contrast illumination
+    case 2: L=0.2+0.45*(1-vy/0.55); break;                                         // 顶光 — lit from the top
+    case 3: L=0.2+0.45*(1+vy/0.55); break;                                         // 底光 — lit from below
+    case 4: L=0.2+0.45*(1-vx/0.55); break;                                         // 左侧光
+    case 5: L=0.2+0.45*(1+vx/0.55); break;                                         // 右侧光
+    case 6: { const nx=vx/0.55,ny=vy/0.55,dx=nx-0.65,dy=ny+0.65,d2=dx*dx+dy*dy; L=(0.22+1.0*Math.exp(-1.1*d2))*(0.55+0.6*depth); break; }  // 点光源 (upper-right, front)
+    case 7: L=0.15+1.05*Math.max(0,Math.min(1,(rr-0.55)*2.0)); break;              // 轮廓光 — bright outer shell
+    case 8: L=0.18+1.0*Math.max(0,Math.min(1,1-rr*0.95)); break;                   // 核心光 — glowing core
+    case 9: L=0.2+0.9*Math.max(0,(vx/0.55)*sweepX+(vy/0.55)*sweepY); break;          // 旋转扫光 — sweeping beam
+    default: L=0.2+0.58*depth;                                                     // 0 景深 — original front-bright depth cue
+  }
+  return L<0.1?0.1:L>1.3?1.3:L;
+}
+/* ── SAND visual style ── the raw Houdini/Chladni salt-plate look: pale cream grains that pile into
+   crisp, thick ridges along the nodal set over a clean black void. Unlike the additive cosmic glow,
+   sand paints with source-over so overlapping grains read as MATTE piled salt (not light), and the
+   diffuse off-node powder is nearly killed so the voids stay black and the ridges pop. */
+/* Perceptual loudness: energy (≈RMS·4.5, see bytesToFrame) → dB → 0..1 over a −52…−6 dB window.
+   Brightness rides on THIS, not raw energy: log response is uniform across quiet and loud music,
+   and a whisper still lands around 0.3–0.5 instead of black. */
+function loud01(energy){ const db=20*Math.log10(Math.max(2e-5,energy/4.5));
+  const v=(db+72)/63; return v<0?0:v>1?1:v; }   // −72 dB floor: even 0.025-gain music sits ~0.45, never near black
+function sandColor(energy){ const b=Math.min(1,0.94+loud01(energy)*0.06), wm=(VIBE_WARM-0.5);   // near-constant cream, dB-mapped; vibe drifts warm/cool
+  return `rgb(${(Math.min(255,(244+wm*12)*b))|0},${(235*b)|0},${(Math.max(0,(204-wm*16))*b)|0})`; }
+/* `sharpen` (0 at zoom≤1.3, growing with zoom) is RENDER-ONLY: it steepens the on-node exponent and drains the
+   off-node floor so at high zoom / fullscreen the ridge tightens to a crisp line and the voids go fully black —
+   极致清晰. It changes how grains are PAINTED, never where they sit (particle choreography is untouched). */
+function sandSharpen(zoom){ return zoom>1.3 ? Math.min(2.4,(zoom-1.3)*0.42) : 0; }
+/* Two-tier alpha: BASE (gentle exponent, loudness-independent) keeps the ENTIRE modal figure
+   readable at any volume; HOT (crisp exponent, scaled by the music via `hot`) flares the ridge
+   cores — so quiet passages show the full structure and loud/hit moments give it highlights. */
+function sandAlphaTerms(sharpen){ const focus=focusAmount(), s=sharpen>0?sharpen:0;
+  return [0.006*(1-0.85*Math.min(1,s/2.2)),0.99+0.01*Math.min(1,s),2.0+0.8*focus+s]; }
+function sandAlpha(onNode,terms,hot){ const floor=terms[0],coreScale=terms[1],coreExp=terms[2];
+  if(!PHYS) return floor+coreScale*Math.pow(onNode,coreExp);
+  const base=0.34*Math.pow(onNode,1.35);
+  const core=coreScale*Math.pow(onNode,coreExp);   // higher exponent → tighter, crisper ridge
+  const a=floor+base+core*(hot==null?1:hot);
+  return a>1?1:a; }
+/* ── unique round grains ── a pre-baked set of K=64 distinct irregular pebbles, each with its own jittered
+   outline + off-centre shading, so every sand particle reads as a one-off ROUND grain instead of a hard square.
+   Cost is unchanged vs fillRect: selection is a free bitmask on the particle index (i & 63) and drawing is a
+   single cached-canvas blit (one textured quad per particle) — no per-particle paths/arcs, no extra math.
+   Sand only; cosmic keeps its additive coloured dots. Baked once at load. */
+/* Three MASS-CLASS tints (particle index i%3): 0 = heavy grains (a hair warmer/deeper), 1 = the
+   original cream, 2 = light dust (a hair paler/cooler). Kept subtle — the classes read mainly
+   through how they MOVE (mass/mobility in the physics step), the tint just separates them up close. */
+const GRAIN_TINTS=[[1.0,0.955,0.88],[1,1,1],[0.965,0.995,1.045]];
+const GRAIN_SETS=GRAIN_TINTS.map(tint=>{ const K=64, GS=16, out=[];
+  const tc=(c)=>c.map((v,j)=>Math.max(0,Math.min(255,Math.round(v*tint[j]))));
+  const c0=tc([253,248,231]), c1=tc([245,236,206]), c2=tc([240,229,197]), c3=tc([236,224,188]);
+  for(let k=0;k<K;k++){ const cv=document.createElement('canvas'); cv.width=cv.height=GS; const g=cv.getContext('2d');
+    const cx=GS/2, cy=GS/2, base=GS*0.42, N=7+((Math.random()*5)|0), rot=Math.random()*6.283;
+    g.beginPath();
+    for(let v=0;v<=N;v++){ const a=rot+(v/N)*6.283+(Math.random()-0.5)*0.30, r=base*(0.72+Math.random()*0.28);
+      const x=cx+Math.cos(a)*r, y=cy+Math.sin(a)*r; v?g.lineTo(x,y):g.moveTo(x,y); }
+    g.closePath();
+    const hx=cx+(Math.random()-0.5)*base*0.6, hy=cy+(Math.random()-0.5)*base*0.6;
+    const grad=g.createRadialGradient(hx,hy,0,cx,cy,base*1.12);
+    grad.addColorStop(0,`rgba(${c0[0]},${c0[1]},${c0[2]},1)`); grad.addColorStop(0.55,`rgba(${c1[0]},${c1[1]},${c1[2]},1)`);
+    grad.addColorStop(0.86,`rgba(${c2[0]},${c2[1]},${c2[2]},0.95)`); grad.addColorStop(1,`rgba(${c3[0]},${c3[1]},${c3[2]},0)`);   // solid core + thin AA rim → crisp round, not fuzzy
+    g.fillStyle=grad; g.fill(); out.push(cv); }
+  return out; });
+const GRAIN_MASK=63;
+/* ONE ATLAS holding every grain (3 classes × sizes 1..8 × 64 shapes), pre-scaled per pixel size.
+   Every draw is a same-source unscaled blit → the GPU batches them. (Cycling through hundreds of
+   separate sprite bitmaps defeated batching and made sand render ~8× slower than cosmic's rects.) */
+const GRAIN_ROW_Y=[];   // GRAIN_ROW_Y[cls][size-1] = atlas row y
+let GRAIN_ATLAS=(()=>{ const cv=document.createElement('canvas'); cv.width=512; let y=0;
+  for(let cls=0;cls<3;cls++){ GRAIN_ROW_Y.push([]); for(let s=1;s<=8;s++){ GRAIN_ROW_Y[cls].push(y); y+=s; } }
+  cv.height=y; const g=cv.getContext('2d'); g.imageSmoothingEnabled=true;
+  for(let cls=0;cls<3;cls++) for(let s=1;s<=8;s++){ const ry=GRAIN_ROW_Y[cls][s-1];
+    for(let k=0;k<64;k++) g.drawImage(GRAIN_SETS[cls][k],k*s,ry,s,s); }
+  return cv; })();
+if(typeof createImageBitmap==='function') createImageBitmap(GRAIN_ATLAS).then(bm=>{ GRAIN_ATLAS=bm; }).catch(()=>{});
+const MASS_SIZE=[1.22,1,0.76];   // heavy grains render a touch bigger, light dust finer
+function drawGrain(ctx,cls,i,x,y,raw,dpr,maxCss){
+  const maxPx=Math.max(1,Math.round(maxCss*dpr));
+  let size=Math.round(raw); if(size<1)size=1; if(size>maxPx)size=maxPx; if(size>8)size=8;
+  ctx.drawImage(GRAIN_ATLAS,(i&GRAIN_MASK)*size,GRAIN_ROW_Y[cls][size-1],size,size,Math.round(x),Math.round(y),size,size);
+}
+function drawSandParticleForMode(ctx,i,x,y,raw,dpr,maxCss,fsC){
+  if(PHYS && fsC) { drawSharpParticle(ctx,x,y,raw,dpr,maxCss); return; }
+  const cls=PHYS ? i%3 : 1;
+  drawGrain(ctx,cls,i,x,y,raw,dpr,maxCss);
+}
+/* ── COSMIC visual style ── astrophysical "star-map" colour. Colour is 2-D: an EMISSION family chosen by a
+   smooth spatial field (different regions glow with different lines — green airglow/OIII, cyan, blue
+   reflection, neutral, gold supercluster, Hα red-magenta) crossed with a HEAT level from density that
+   brightens and washes the dense filament cores toward white. The EMI×HEAT grid is pre-baked into one LUT;
+   particles are counting-sorted into its buckets so ctx.fillStyle changes only ~EMIK*HEATK times/frame.
+   Additive 'lighter' blending is order-independent, so re-ordering by colour is visually identical. */
+const EMI_BASE=[[40,150,118],[46,190,200],[70,120,235],[182,206,255],[236,182,92],[230,72,96]];  // airglow → OIII → reflection → neutral → gold → Hα
+const EMIK=EMI_BASE.length, HEATK=8, COSMIC_K=EMIK*HEATK;
+const COSMIC_PAL=(()=>{ const out=[];
+  for(let e=0;e<EMIK;e++){ const c=EMI_BASE[e];
+    for(let hh=0;hh<HEATK;hh++){ const heat=hh/(HEATK-1), wm=heat*heat*0.72, br=0.32+0.68*heat;   // dense cores wash toward white & brighten
+      const r=Math.min(255,(c[0]*(1-wm)+255*wm)*br)|0, g=Math.min(255,(c[1]*(1-wm)+255*wm)*br)|0, b=Math.min(255,(c[2]*(1-wm)+255*wm)*br)|0;
+      out.push(`rgb(${r},${g},${b})`); } }
+  return out; })();
+function cosmicEmission(x,y,t43,t31,t02){          // 0=cool airglow/OIII .. 1=warm Hα; smooth drifting zones → different regions glow different lines
+  const a=Math.sin(x*2.3-0.4+t43)*Math.cos(y*2.0+0.6-t31), b=Math.sin((x+y)*1.6+t02);
+  const v=0.5+0.33*a+0.22*b; return v<0?0:v>1?1:v;
+}
+const _cb=new Uint8Array(262144), _order=new Uint32Array(262144), _ccnt=new Int32Array(COSMIC_K+1);
+function cosmicBuckets(px,py,fv,N,t,energy){     // assign an EMI×HEAT colour bucket per particle, then counting-sort → _order
+  const loudTerm=loud01(energy)*0.1, t43=t*0.043, t31=t*0.031, t02=t*0.02;
+  for(let i=0;i<N;i++){ const onNode=Math.max(0,1-fv[i]*1.7);
+    let heat=onNode*0.85+loudTerm; heat=heat<0?0:heat>1?1:heat;   // dB-mapped loudness term
+    let emi=cosmicEmission(px[i],py[i],t43,t31,t02)*0.78+heat*0.22; emi=emi<0?0:emi>1?1:emi;   // denser knots lean warmer (star-forming)
+    _cb[i]=Math.min(EMIK-1,(emi*EMIK)|0)*HEATK+Math.min(HEATK-1,(heat*HEATK)|0); }
+  _ccnt.fill(0);
+  for(let i=0;i<N;i++) _ccnt[_cb[i]+1]++;
+  for(let k=0;k<COSMIC_K;k++) _ccnt[k+1]+=_ccnt[k];
+  for(let i=0;i<N;i++){ const b=_cb[i]; _order[_ccnt[b]++]=i; }
+}
+/* ── COSMIC void mask ── a 2-scale Worley/cellular field carves organic voids of varying size into the
+   figure: particles dim and slowly evict inside Voronoi cells (the voids) and survive on cell boundaries
+   (the filaments). Baked to a grid and bilinearly sampled per particle (cheap); the feature points drift
+   so voids slowly breathe. Cosmic style only. web≈1 = filament (keep & bright), web≈0 = void (dark). */
+const WEB_GRID=160;
+function webEdge(pts,x,y,eHi){          // 1 on Voronoi boundaries (filament) → 0 deep inside a cell (void)
+  let f1=1e9,f2=1e9;
+  for(let i=0;i<pts.length;i++){ const dx=x-pts[i].x, dy=y-pts[i].y, d=dx*dx+dy*dy; if(d<f1){f2=f1;f1=d;} else if(d<f2) f2=d; }
+  let s=(Math.sqrt(f2)-Math.sqrt(f1))/eHi; if(s<0)s=0; else if(s>1)s=1;
+  return 1-s*s*(3-2*s);
+}
+const WebMask={
+  grid:new Float32Array(WEB_GRID*WEB_GRID), coarse:null, fine:null, built:-99,
+  init(){ const rnd=seededRand(20260627);
+    const mk=n=>{ const a=[]; for(let i=0;i<n;i++) a.push({x:rnd(),y:rnd(),ph:rnd()*6.283,r:0.015+rnd()*0.05,sp:0.25+rnd()*0.8}); return a; };
+    this.coarse=mk(7); this.fine=mk(22); },                       // 7 big cells (big voids) + 22 small cells (fine cells)
+  ensure(t){ if(!this.coarse) this.init(); if(this.built<-90 || Math.abs(t-this.built)>0.25) this.rebuild(t); },
+  rebuild(t){ const G=WEB_GRID, g=this.grid;
+    const place=arr=>arr.map(p=>({x:p.x+Math.cos(p.ph+t*p.sp)*p.r, y:p.y+Math.sin(p.ph+t*p.sp)*p.r}));
+    const C=place(this.coarse), F=place(this.fine);
+    for(let yi=0;yi<G;yi++){ const y=(yi+0.5)/G, row=yi*G;
+      for(let xi=0;xi<G;xi++){ const x=(xi+0.5)/G;
+        g[row+xi]=Math.max(webEdge(C,x,y,0.12), webEdge(F,x,y,0.06)*0.9); } }   // union of both scales → varied void sizes
+    this.built=t; },
+  sample(x,y){ const G=WEB_GRID; let fx=x*G-0.5, fy=y*G-0.5;
+    if(fx<0)fx=0; else if(fx>G-1)fx=G-1; if(fy<0)fy=0; else if(fy>G-1)fy=G-1;
+    const x0=fx|0,y0=fy|0,x1=x0<G-1?x0+1:x0,y1=y0<G-1?y0+1:y0,tx=fx-x0,ty=fy-y0,g=this.grid;
+    const a=g[y0*G+x0],b=g[y0*G+x1],c=g[y1*G+x0],d=g[y1*G+x1];
+    return (a*(1-tx)+b*tx)*(1-ty)+(c*(1-tx)+d*tx)*ty; },
+  visAt(x,y){ const w=this.sample(x,y); return w<=0?0:w>=1?1:w*w*(3-2*w); }   // punchy void→filament alpha factor
+};
+/* ── COSMIC stars + bloom ── a sparse, stable, twinkling set of bright points sits on the strongest filament
+   cores (white-blue soft sprite), and a cheap full-frame bloom adds a halo around the bright web. Cosmic only. */
+const STAR_TINTS=[[200,214,255],[226,236,255],[255,255,255],[255,246,226],[255,216,170],[255,182,140],[255,150,120]]; // O/B→A→F/G→K→M, hot→cool
+function makeStarSprite(c){ const cv=document.createElement('canvas'); cv.width=cv.height=32; const x=cv.getContext('2d');
+  const g=x.createRadialGradient(16,16,0,16,16,15);
+  g.addColorStop(0,'rgba(255,255,255,1)');                                  // every star keeps a hot white core
+  g.addColorStop(0.30,`rgba(${c[0]},${c[1]},${c[2]},0.72)`);
+  g.addColorStop(1,`rgba(${c[0]},${c[1]},${c[2]},0)`);                        // tinted halo = the star's blackbody colour
+  x.fillStyle=g; x.fillRect(0,0,32,32); return cv; }
+const STAR_SPRITES=STAR_TINTS.map(makeStarSprite);
+/* Cosmic clarity is RENDER-ONLY and fully zoom-gated, so the deep-space vibe at normal view (zoom 1) is byte-identical
+   to before; it only tightens the filament cores as you zoom in / go fullscreen — gentler than sand so the additive
+   glow survives. sharpen=0 → original behaviour exactly. */
+function cosmicSharpen(zoom){ return zoom>1.3 ? Math.min(1.6,(zoom-1.3)*0.30) : 0; }
+function cosmicGlowAlpha(onNode,sharpen){ const s=sharpen>0?sharpen:0;   // the ORIGINAL cosmic curve — 深空氛围 as it was
+  const floor=0.024*(1-0.65*Math.min(1,s/1.6));                       // high zoom → cleaner voids between filaments
+  return floor+(0.48+0.16*Math.min(1,s))*Math.pow(onNode,1.7+s); }    // brighter, tighter cores when zoomed; unchanged at zoom 1
+function cosmicLightFactor(light){ return Math.max(0.08,Math.min(0.82,(light==null?1:light)*0.68)); }
+function drawStar(ctx,i,x,y,sz,onNode,vf,t,light=1){     // strongest ~5% of on-node particles → twinkling stars, coloured by "temperature"
+  if(onNode<0.82 || vf<0.4) return;
+  const h=(Math.imul(i^0x9e37,2654435761)>>>0)/4294967296; if(h>0.05) return;
+  const h2=(Math.imul(i^0x5bd1,2246822519)>>>0)/4294967296;
+  const spr=STAR_SPRITES[Math.min(STAR_SPRITES.length-1,(Math.pow(h2,1.7)*STAR_SPRITES.length)|0)];   // skew toward hot blue-white, a few red
+  const tw=0.3+0.7*(0.5+0.5*Math.sin(t*3+h*62)), r=sz*(1.9+onNode*2.1);
+  ctx.globalAlpha=tw*vf*cosmicLightFactor(light)*0.62; ctx.drawImage(spr, x-r, y-r, r*2, r*2);
+}
+function cosmicBloom(o){                          // add a blurred copy of the frame back over itself → soft halo
+  if(QUALITY<0.6 || (FPS&&FPS<40)) return;        // under load the full-frame blur is the first thing to go
+  const zf=Math.max(0,1-(((o.zoom||1)-1)/3.5));   // fade the soft halo out as you zoom in → crisp filaments up close, full glow at normal view (also drops the costly full-frame blur at high zoom)
+  if(zf<=0.02) return; const ctx=o.ctx;
+  ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=0.14*zf; ctx.filter=`blur(${(2.2*o.dpr).toFixed(1)}px)`;
+  ctx.drawImage(o.c,0,0,o.w,o.h); ctx.restore();
+}
+function detailAmount(){ return Math.max(0.55,Math.min(3,DETAIL_SCALE)); }
+function detailNorm(){ const d=detailAmount(); return d<=1.65 ? (d-0.55)/1.1 : 1+(d-1.65)/1.35*0.65; }
+function cutoffIndex(modes){
+  const K=modes.length, d=detailAmount(), maxF=modes[K-1].f, legacyF=modes.legacyMaxF||maxF;
+  const t=d<=1 ? Math.max(0,Math.min(1,(d-0.55)/0.45)) : Math.max(0,Math.min(1,(d-1)/2));
+  const targetF=d<=1 ? legacyF*(0.42+0.58*t) : legacyF+(maxF-legacyF)*Math.pow(t,0.85);
+  let idx=0;
+  while(idx<K-1 && modes[idx].f<=targetF) idx++;
+  return Math.max(2,Math.min(K-1,idx));
+}
+function clearRender(ctx,w,h,alpha,fillStyle){
+  ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=1;
+  if(alpha){
+    const m=/rgba\(.+,\s*([0-9.]+)\)\s*$/.exec(fillStyle||'');   // semi-transparent fade → keep TRAILS on transparent canvases too
+    if(!m || parseFloat(m[1])>=1) ctx.clearRect(0,0,w,h);        // (cosmic's glow is built by frame-to-frame accumulation; a hard
+    else { ctx.globalCompositeOperation='destination-out';       //  clearRect starved it in overlay/export transparency)
+      ctx.fillStyle=`rgba(0,0,0,${m[1]})`; ctx.fillRect(0,0,w,h);
+      ctx.globalCompositeOperation='source-over'; }
+  }
+  else { ctx.fillStyle=fillStyle; ctx.fillRect(0,0,w,h); }
+}
+function circleClipEnabled(){ return NATIVE_OVERLAY && document.body.classList.contains('circle'); }
+function outsideCircle(x,y,cx,cy,r2){ const dx=x-cx, dy=y-cy; return dx*dx+dy*dy>r2; }
+function pathPoly(ctx,pts){
+  ctx.beginPath(); ctx.moveTo(pts[0].sx,pts[0].sy);
+  for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i].sx,pts[i].sy);
+  ctx.closePath();
+}
+function setRendererBackingSize(o,w,h,dpr=1){
+  o.dpr=dpr; o.c.width=w; o.c.height=h; o.w=w; o.h=h;
+  o.ctx.imageSmoothingEnabled=false;
+  clearRender(o.ctx,w,h,o.alpha,'#050608');
+}
+
+/* ── feature-frame helpers (shared by both renderers + all sources) ── */
+function bandPeak(pos,width){ const b=new Float64Array(NBANDS), c=pos*(NBANDS-1);
+  for(let i=0;i<NBANDS;i++) b[i]=Math.exp(-Math.pow((i-c)/(width*NBANDS),2)); return b; }
+const REST_BANDS_50=bandPeak(0.5,0.12), REST_BANDS_55=bandPeak(0.55,0.12);
+const SYSTEM_REST_FRAME={bands:REST_BANDS_50, energy:0.12, sharpness:0.4};
+const STILL_FRAME_3D={bands:REST_BANDS_55, energy:0.5, sharpness:0.45};
+const IDLE_TIME_FRAME_3D={bands:REST_BANDS_55, energy:0.4, sharpness:0.45};
+function bytesToFrame(freq){
+  const N=freq.length, bands=new Float64Array(NBANDS), per=N/NBANDS;
+  let sum=0,cen=0,tot=0;
+  for(let i=0;i<N;i++){ const v=freq[i]/255; sum+=v*v; cen+=i*v; tot+=v; bands[Math.min(NBANDS-1,(i/per)|0)]+=v; }
+  let mx=1e-6; for(let i=0;i<NBANDS;i++) mx=Math.max(mx,bands[i]); for(let i=0;i<NBANDS;i++) bands[i]/=mx;
+  let gm=0,am=0; for(let i=0;i<NBANDS;i++){ const v=bands[i]+1e-4; gm+=Math.log(v); am+=v; }
+  const flat=Math.exp(gm/NBANDS)/(am/NBANDS);   // spectral flatness on the bands: →1 noisy/percussive, →0 tonal peaks (scale-invariant)
+  const energy=Math.min(2.0,Math.sqrt(sum/N)*4.5), sharp=tot>1e-6?Math.min(1,(cen/tot)/N*1.6):0.3;
+  return {bands, energy:Math.max(0.12,energy), sharpness:sharp, flat};
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   1b · PULSE — rhythm tracker (tempo · beat phase · bar · SWING · vibe)
+   Source-agnostic: listens to the same feature-frame stream every source
+   produces (file / mic / native system audio), so it needs no capture changes.
+   • onset envelope = positive spectral flux, resampled to a fixed 60 Hz ring
+     (peak-hold per tick → frame-rate independent).
+   • tempo: autocorrelation of the last ~4.8 s, lags 60–180 BPM, mild pop prior,
+     octave-stabilised against the current estimate.
+   • beat phase: recency-weighted comb over the envelope at the found period.
+   • bar: strongest of the 4 beat slots = downbeat (4/4 assumption).
+   • swing: where the off-beat onset cluster sits inside the beat —
+     0.5 = straight eighths, ~0.62–0.67 = shuffle/triplet swing.
+   • vibe: ~18 s EMAs of loudness/brightness/flatness → a slow mood vector.
+   ════════════════════════════════════════════════════════════════════════ */
+const PULSE_LIN=new Float32Array(288);
+const PULSE={
+  SR:60, buf:new Float32Array(512), w:0, n:0, acc:0, accT:0,
+  prev:new Float64Array(NBANDS), have:false,
+  period:0.5, bpm:0, conf:0, phase:0, lastAC:-9, t:0,
+  beatCount:0, down:0, slot:new Float64Array(4),
+  swing:0.5, hist:new Float64Array(12),
+  vibe:{intensity:0.3,bright:0.42,rough:0.4,warm:0.5},
+  reset(){ this.buf.fill(0); this.w=0; this.n=0; this.acc=0; this.accT=0; this.have=false;
+    this.bpm=0; this.conf=0; this.phase=0; this.lastAC=-9; this.t=0; this.beatCount=0; this.down=0;
+    this.slot.fill(0); this.swing=0.5; this.hist.fill(0); },
+  ingest(fr,dt){
+    this.t+=dt; const B=fr.bands, NB=B.length;
+    let fx=0;
+    if(this.have) for(let i=0;i<NB;i++){ const d=B[i]-this.prev[i]; if(d>0) fx+=d; }
+    for(let i=0;i<NB;i++) this.prev[i]=B[i];
+    this.have=true;
+    fx*=(1/Math.max(1e-3,dt))/60;                       // per-60Hz-frame units, whatever the real frame rate
+    // fixed-rate envelope ring (peak-hold per tick keeps onsets at low fps)
+    this.accT+=dt; if(fx>this.acc) this.acc=fx; const T=1/this.SR;
+    while(this.accT>=T){ this.buf[this.w]=this.acc; this.w=(this.w+1)&511; if(this.n<512)this.n++; this.acc=0; this.accT-=T; }
+    // advance the predicted beat phase; wrap = a beat boundary
+    if(this.period>0){ this.phase+=dt/this.period;
+      while(this.phase>=1){ this.phase-=1; this.beatCount++; } }
+    // beat-slot (bar) + in-beat (swing) onset bookkeeping
+    const dk=Math.exp(-dt/16);
+    for(let i=0;i<4;i++) this.slot[i]*=dk;
+    this.slot[this.beatCount&3]+=fx*dt;
+    const hk=Math.exp(-dt/12);
+    for(let i=0;i<12;i++) this.hist[i]*=hk;
+    this.hist[Math.min(11,(this.phase*12)|0)]+=fx*dt;
+    // slow vibe EMAs
+    const v=this.vibe, k=1-Math.exp(-dt/18);
+    v.intensity+=(Math.min(1,fr.energy*0.55)-v.intensity)*k;
+    v.bright+=(fr.sharpness-v.bright)*k;
+    v.rough+=((fr.flat!=null?fr.flat:0.4)-v.rough)*k;
+    v.warm=Math.max(0,Math.min(1,0.5+(v.bright-0.45)*0.9+(v.intensity-0.38)*0.5));
+    if(this.t-this.lastAC>0.6 && this.n>=300) this.retrack();
+  },
+  retrack(){
+    this.lastAC=this.t;
+    const W=288, lin=PULSE_LIN, buf=this.buf;
+    for(let k=0;k<W;k++) lin[k]=buf[(this.w-W+k+512)&511];   // oldest → newest
+    let best=0,bestL=0,sum=0,cnt=0;
+    for(let L=20;L<=60;L++){                                  // 60–180 BPM
+      let s=0; for(let k=0;k<W-L;k++) s+=lin[k]*lin[k+L];
+      s=(s/(W-L))*(1+0.15*Math.exp(-Math.pow((L-33)/14,2)));  // mild ~110 BPM prior
+      sum+=s; cnt++;
+      if(s>best){best=s;bestL=L;}
+    }
+    const mean=sum/Math.max(1,cnt);
+    const c=mean>1e-9?Math.max(0,Math.min(1,(best/mean-1)*0.9)):0;
+    this.conf+=(c-this.conf)*0.3;
+    if(c<=0.2||!bestL) return;
+    let p=bestL/60;                                           // octave-stabilise vs current estimate
+    if(this.bpm>0){ if(Math.abs(p*2-this.period)<0.08*this.period) p*=2; else if(Math.abs(p*0.5-this.period)<0.08*this.period) p*=0.5; }
+    this.period+=(p-this.period)*0.35; this.bpm=60/this.period;
+    const P=Math.max(1,Math.round(this.period*60));           // comb: which offset (samples back) beats land on
+    let bo=0,bsv=-1;
+    for(let off=0;off<P;off++){ let s=0,wgt=1;
+      for(let k=off;k<W;k+=P){ s+=lin[W-1-k]*wgt; wgt*=0.9; }
+      if(s>bsv){bsv=s;bo=off;} }
+    const measured=((bo/60)/this.period)%1;                   // a beat happened bo samples ago → phase now
+    let err=measured-this.phase; err-=Math.round(err);
+    this.phase+=err*0.35; if(this.phase<0)this.phase+=1; else if(this.phase>=1)this.phase-=1;
+    let ds=0,di=0; for(let i=0;i<4;i++) if(this.slot[i]>ds){ds=this.slot[i];di=i;}   // loudest beat slot = downbeat
+    this.down=di;
+    let swS=0,swW=0;                                          // off-beat cluster centre inside [0.42,0.75] of the beat
+    for(let i=5;i<=8;i++){ const cph=(i+0.5)/12; swS+=this.hist[i]*cph; swW+=this.hist[i]; }
+    if(swW>1e-6){ const sw=Math.max(0.5,Math.min(0.72,swS/swW)); this.swing+=(sw-this.swing)*0.2; }
+  },
+  snap(){
+    const rel=((this.beatCount-this.down)%4+4)%4;
+    return {conf:this.conf, period:this.period, phase:this.phase, bpm:this.bpm,
+            barPhase:(rel+this.phase)/4, barCount:((this.beatCount-this.down)/4)|0,
+            swing:this.swing, vibe:this.vibe};
+  }
+};
+
+/* ════════════════════════════════════════════════════════════════════════
+   1 · MODE CATALOGUES + FIELDS
+   ════════════════════════════════════════════════════════════════════════ */
+const PI=Math.PI, FREQ_PI=Float64Array.from({length:MODE3_MAX+1},(_,i)=>i*PI), sn=(a,x)=>Math.sin(a*PI*x);
+// 3D cube: (l,m,n) cyclic 3-term, nodal SURFACES
+const MODES3=(()=>{const o=[];for(let l=1;l<=MODE3_MAX;l++)for(let m=l;m<=MODE3_MAX;m++)for(let n=m;n<=MODE3_MAX;n++)o.push({l,m,n,par:(l+m+n)&1,f:Math.sqrt(l*l+m*m+n*n)});o.sort((a,b)=>a.f-b.f);o.legacyMaxF=Math.sqrt(MODE3_LEGACY_MAX*MODE3_LEGACY_MAX*3);return o;})();
+const phi3=(md,x,y,z)=> sn(md.l,x)*sn(md.m,y)*sn(md.n,z)+sn(md.m,x)*sn(md.n,y)*sn(md.l,z)+sn(md.n,x)*sn(md.l,y)*sn(md.m,z);
+
+/* ── three MASS classes (particle index i%3): heavy grains ride the LOW modes and bass kicks,
+   light dust rides the HIGH modes and hats; mid is the bridge. mob = 1/mass (acceleration scale).
+   ONE nodal figure is rendered (fv uses the FULL field, so the beloved look is untouched) —
+   mass only changes how each population MOVES: heavy = slow, momentum-carrying; light = darty. ── */
+const MASS_MOB=[0.6,1.0,1.75], MASS_LO=[1,0.72,0.34], MASS_HI=[0.34,0.72,1];
+function modeResFreq(md){ return md.f; }   // resonance frequency: 3D air cavity ω∝√(l²+m²+n²)
+/* ── FIELD GRIDS ── the particle step used to burn ~40 trig calls + a 9-product analytic gradient
+   per particle per frame (hundreds of MFLOPs at fullscreen). Instead: bake the LOW/HIGH sub-fields
+   onto a grid that covers the current CONFINEMENT WINDOW (so resolution tracks zoom), take the
+   gradient by central differences, and let particles LERP-sample — ZERO trig in the hot loop.
+   3D rebuilds 12 z-slabs per frame (full refresh ~4 frames; the resonator field morphs over ≥0.4 s,
+   so slab staleness is invisible). The grid max is also the render brightness normaliser. */
+function ensureGrids(o){
+  const G=48, wh=winHalf(o.zoom), lo=0.5-wh, span=2*wh;
+  if(o._gG===G && o._gLo===lo && o._gSpan===span) return false;
+  if(o._gG!==G){ const n=G*G*G;
+    o._gL=new Float32Array(n); o._gHf=new Float32Array(n);
+    o._ggx=new Float32Array(n); o._ggy=new Float32Array(n); o._ggz=new Float32Array(n);
+    o._slabMax=new Float64Array(G);
+    o._gTab=new Float64Array((MODE3_MAX+1)*G); }
+  o._gG=G; o._gLo=lo; o._gSpan=span; o._slab=0;
+  return true;                                           // window changed → caller does a FULL rebuild
+}
+function buildFieldGrid(o,full){
+  const G=o._gG, lo=o._gLo, span=o._gSpan, active=o.active, modes=o.MODES, W=o.W, hiF=o._hiF, na=active.length;
+  if(!na) return 0;
+  const freqs=o.prepareFreqs(), tab=o._gTab;
+  for(let f=0;f<freqs.length;f++){ const q=freqs[f], qp=q*PI, base=q*G;
+    for(let g=0;g<G;g++) tab[base+g]=Math.sin(qp*(lo+(g+0.5)*span/G)); }
+  const gL=o._gL, gH=o._gHf, gx=o._ggx, gy=o._ggy, H=G/(2*span);
+  {
+    const gz=o._ggz, S=full?G:12, z0=o._slab;
+    for(let s=0;s<S;s++){ const c=(z0+s)%G; let mx=0;
+      for(let b=0;b<G;b++){ const row=(c*G+b)*G;
+        for(let a=0;a<G;a++){ let sl=0,sh=0;
+          for(let k=0;k<na;k++){ const md=modes[active[k]], w=W[active[k]];
+            const t=w*(tab[md.l*G+a]*tab[md.m*G+b]*tab[md.n*G+c]
+                      +tab[md.m*G+a]*tab[md.n*G+b]*tab[md.l*G+c]
+                      +tab[md.n*G+a]*tab[md.l*G+b]*tab[md.m*G+c]);
+            if(hiF[k]) sh+=t; else sl+=t; }
+          gL[row+a]=sl; gH[row+a]=sh; const t2=sl+sh, at=t2<0?-t2:t2; if(at>mx)mx=at; } }
+      o._slabMax[c]=mx; }
+    for(let s=0;s<S;s++){ const c=(z0+s)%G, cc=c*G, cm=(c>0?c-1:c)*G, cp=(c<G-1?c+1:c)*G;
+      for(let b=0;b<G;b++){ const bm=b>0?b-1:b, bp=b<G-1?b+1:b;
+        for(let a=0;a<G;a++){ const am=a>0?a-1:a, ap=a<G-1?a+1:a, i=(cc+b)*G+a;
+          const ixp=(cc+b)*G+ap, ixm=(cc+b)*G+am, iyp=(cc+bp)*G+a, iym=(cc+bm)*G+a, izp=(cp+b)*G+a, izm=(cm+b)*G+a;
+          gx[i]=((gL[ixp]+gH[ixp])-(gL[ixm]+gH[ixm]))*H;
+          gy[i]=((gL[iyp]+gH[iyp])-(gL[iym]+gH[iym]))*H;
+          gz[i]=((gL[izp]+gH[izp])-(gL[izm]+gH[izm]))*H; } } }
+    o._slab=(z0+S)%G;
+    let pk=1e-9; const sm=o._slabMax; for(let c=0;c<G;c++) if(sm[c]>pk) pk=sm[c];
+    return pk;
+  }
+}
+function buildResKernel(o,cutoff){          // band→mode resonance rows (Gaussian in band space), rebuilt when the cutoff/detail changes
+  if(!o._kern) o._kern=new Float32Array(o.K*NBANDS);
+  const kern=o._kern, fLo=modeResFreq(o.MODES[0]), fHi=Math.max(fLo*1.01,modeResFreq(o.MODES[cutoff]));
+  for(let i=0;i<=cutoff;i++){ const bp=(modeResFreq(o.MODES[i])-fLo)/(fHi-fLo)*(NBANDS-1), base=i*NBANDS; let s=0;
+    for(let b=0;b<NBANDS;b++){ const d=(b-bp)/1.25, v=Math.exp(-d*d); kern[base+b]=v; s+=v; }
+    const nn=1/(s||1); for(let b=0;b<NBANDS;b++) kern[base+b]*=nn; }
+  o._kernCut=cutoff;
+}
+const DYNAMIC_LOW_MODE_MAX=0.30;
+const DYNAMIC_LOW_MODE_SUPPORT=[0.5,0.3,0.2];
+function protectDynamicLowMode(weights,enabled){
+  // (1,1,1) has no interior zero surface. Live low-frequency audio may keep it, but never let it erase every visible node.
+  if(!enabled || weights.length<2 || weights[0]<=DYNAMIC_LOW_MODE_MAX) return false;
+  const excess=weights[0]-DYNAMIC_LOW_MODE_MAX, support=DYNAMIC_LOW_MODE_SUPPORT;
+  weights[0]=DYNAMIC_LOW_MODE_MAX;
+  let available=Math.min(support.length,weights.length-1), supportSum=0;
+  for(let i=0;i<available;i++) supportSum+=support[i];
+  for(let i=0;i<available;i++) weights[i+1]+=excess*support[i]/supportSum;
+  return true;
+}
+/* Field update — DRIVEN MODAL RESONATORS.
+   Every eigenmode is a damped driven oscillator: the audio spectrum feeds the modes whose
+   EIGENFREQUENCY matches (resonance kernel), scaled by how strongly the virtual EXCITATION POINT
+   couples to the mode shape (|φ_i(x₀)| — bow a node and that mode stays silent, like a real plate).
+   Attack is fast; decay is each mode's own ring-out τ_i ∝ 1/f_i (high modes die fast, bass modes
+   linger), scaled by the 演化 slider. A pattern change = the bow sliding to a new spot: the old
+   figure RINGS OUT while the new one grows in, so every transition takes real, physical time —
+   and when PULSE tracks the bar confidently, the slide is scheduled so the sand ARRIVES on the
+   next downbeat. Beats become velocity KICKS and novelty a finite-speed SHOCKWAVE (applied in the
+   particle step) — nothing teleports any more. */
+function updateField(o, fr, dt){
+  const K=o.K, B=fr.bands, NB=B.length, boost=o._boost||1;
+  const detail=detailNorm(), cutoff=cutoffIndex(o.MODES);
+  o._t=(o._t||0)+dt;
+  if(!o._avg){ o._avg=new Float64Array(NB); o._pb=new Float64Array(NB); for(let i=0;i<NB;i++){ o._avg[i]=B[i]; o._pb[i]=B[i]; } }
+  /* Two flux measures: ONSET flux (vs previous frame — a hit fires exactly once, whatever the
+     frame rate → drives the beat KICKS) and NOVELTY flux (vs a slow EMA — sustained new content
+     → fires the shockwave). */
+  const idt=1/Math.max(1e-3,dt), hcut=(NB*0.6)|0, mcut=3, pb=o._pb;
+  let fxB=0,fxM=0,fxH=0,fluxE=0,bass=0,hi=0;
+  for(let i=0;i<NB;i++){ const dP=B[i]-pb[i];
+    if(dP>0){ if(i<mcut)fxB+=dP; else if(i<hcut)fxM+=dP; else fxH+=dP; }
+    pb[i]=B[i];
+    const dE=B[i]-o._avg[i]; if(dE>0) fluxE+=dE;
+    o._avg[i]+=(B[i]-o._avg[i])*Math.min(1,dt*1.6); }
+  for(let i=0;i<mcut;i++) bass+=B[i]; bass/=mcut;
+  for(let i=hcut;i<NB;i++) hi+=B[i]; hi/=Math.max(1,NB-hcut);
+  const fluxRate=fluxE*idt;
+  const pe=(o._pe==null?fr.energy:o._pe); o._pe=fr.energy; const riseRate=(fr.energy-pe)*idt;
+  o._beat=Math.max((o._beat||0)*Math.exp(-dt*14.9), riseRate>1.2?Math.min(1,riseRate*0.075):0);
+  const beatFired = riseRate>1.9 && (o._t-(o._lastBeat||-9))>0.11;
+  if(beatFired) o._lastBeat=o._t;
+  const novel = fluxRate>54 || (hi>0.62 && riseRate>3);                        // instrument enters / fill
+  let novelNow=false;
+  if(novel && (o._t-(o._lastReset||-9))>0.5){ o._lastReset=o._t; o._nov=Math.min(1,0.5+fluxRate*0.007); novelNow=true;
+    if(!o._shocks) o._shocks=[];                                               // → SHOCKWAVE from the bow point, not a teleport
+    const e=o._ex||[0.5,0.5,0.5];
+    o._shocks.push({t0:o._t, x:e[0], y:e[1], z:e[2]!=null?e[2]:0.5, a0:2.4+3.2*Math.min(1,fluxRate/110)});
+    if(o._shocks.length>3) o._shocks.shift(); }
+  o._nov=(o._nov||0)*Math.exp(-dt*5);
+  // live shock fronts for this frame: radius grows at finite speed, amplitude rings down
+  const shocks=o._shockOut||(o._shockOut=[]); shocks.length=0;
+  if(o._shocks && o._shocks.length){
+    for(let s=o._shocks.length-1;s>=0;s--){ const S=o._shocks[s], age=o._t-S.t0, r=0.1+1.2*age, a=S.a0*Math.exp(-age*2.4)*boost;
+      if(a<0.18 || r>1.8){ o._shocks.splice(s,1); continue; }
+      shocks.push({x:S.x,y:S.y,z:S.z,r,w:0.15,a}); } }
+  // ── the virtual BOW (excitation point): jumps re-picked on beat/timer/novelty; bar-scheduled when rhythm is confident ──
+  const dims=3, staticSlow=STYLE==='msand'||STYLE==='cosmic';   // 静态展示风格: patterns change every 4 BARS, never faster than 3 s (动态宇宙网 stays lively)
+  let HOLD = SAMPLE_MODE==='time' ? TIME_SAMPLE_INTERVAL : (0.5 + (1-EVOLVE)*2.4)*(staticSlow?3:1);
+  if(staticSlow && HOLD<3) HOLD=3;
+  const jump=()=>{ for(let j=0;j<dims;j++) o._exGoal[j]=0.16+0.68*Math.random();
+    o._sampleCount=(o._sampleCount||0)+1; o._lastSample=o._t; };
+  const R=fr.rhythm, conf=R?R.conf:0, since=o._t-(o._lastSample==null?-9:o._lastSample);
+  if(!o._ex){ o._ex=[0.68,0.42,0.58]; o._exGoal=o._ex.slice(); jump(); }
+  else if(novel) jump();
+  else if(SAMPLE_MODE==='time'){ if(since>=HOLD) jump(); }
+  else if(conf>0.4 && R.period>0){                       // 预排程: fire ~τ_mig before the downbeat so the sand ARRIVES on the "1"
+    const barDur=R.period*4, tLeft=(1-R.barPhase)*barDur;
+    const barGap=staticSlow?4:1;                       // static styles wait a full 4-bar phrase
+    if(tLeft<=0.65 && since>=(staticSlow?3:HOLD*0.85) && R.barCount-(o._barTag==null?-99:o._barTag)>=barGap){ o._barTag=R.barCount; jump(); } }
+  else if(beatFired && since>=HOLD) jump();
+  for(let j=0;j<dims;j++) o._ex[j]+=(o._exGoal[j]-o._ex[j])*Math.min(1,dt*(staticSlow?1.2:3.2));
+  // ── driven resonator bank → modal amplitudes A ──
+  if(o._kernCut!==cutoff || !o._kern) buildResKernel(o,cutoff);
+  if(!o._A) o._A=new Float64Array(K);
+  const kern=o._kern, A=o._A, exx=o._ex[0], exy=o._ex[1], exz=o._ex[2];
+  const tau0=(0.7+3.2*(1-EVOLVE))*(staticSlow?2.5:1), frLo=modeResFreq(o.MODES[0]);
+  o._bassE=bass; o._hiE=hi;                              // per-band-group loudness → the render's selective highlights
+  /* energy gate: near silence the normalised spectrum is mostly noise — slow the resonators down
+     so the figure HOLDS its shape gracefully instead of being reshaped into mush by noise */
+  const eg=0.15+0.85*Math.min(1,Math.max(0,(fr.energy-0.14)/0.3));
+  const attK=(1-Math.exp(-dt*boost/0.045))*eg;
+  for(let i=0;i<K;i++){
+    if(i>cutoff){ if(A[i]>1e-5) A[i]*=Math.exp(-dt*boost/0.12); continue; }
+    const md=o.MODES[i], base=i*NBANDS; let drv=0;
+    for(let b=0;b<NB;b++) drv+=kern[base+b]*B[b];
+    const cp=Math.abs(phi3(md,exx,exy,exz));
+    drv*=(0.35+0.65*Math.min(1,cp*0.9))*(0.38+0.62*Math.min(1,i/3));
+    if(SYMMETRIC && md.par) drv=0;                       // symmetric: odd-parity modes get no drive → they RING OUT instead of snapping off
+    if(drv>A[i]) A[i]+=(drv-A[i])*attK;
+    else A[i]+=(drv-A[i])*(1-Math.exp(-dt*boost*eg/(tau0*Math.pow(frLo/modeResFreq(md),0.55))));
+  }
+  let ts=0; for(let i=0;i<K;i++) ts+=A[i];
+  if(SYMMETRIC && ts<1e-6){ for(let i=0;i<=cutoff && i<K;i++){ if(!o.MODES[i].par){ A[i]=1; ts=1; break; } } }   // safety: never blank
+  const W=o.W;
+  if(ts>1e-6){ let ws=0;                                  // contrast-sharpen the resonator amplitudes (A^1.5) → a broad music
+    for(let i=0;i<K;i++){ const w=Math.pow(A[i],1.5); W[i]=w; ws+=w; }   // spectrum still keeps a PROTAGONIST mode instead of a flat mush
+    const nn=1/(ws||1); for(let i=0;i<K;i++) W[i]*=nn; }
+  protectDynamicLowMode(W,!staticSlow);
+  let mx=1e-6; o.active.length=0;
+  for(let i=0;i<K;i++){ const a=W[i]; if(a>mx)mx=a; if(a>0.02)o.active.push(i); }
+  const activeMax=3+Math.round(detail*5);
+  if(o.active.length>activeMax){ o.active.sort((a,b)=>W[b]-W[a]); o.active.length=activeMax; }  // keep a few → the blend shows
+  // per-active-mode LOW/HIGH split (median of active eigenfrequencies) for the mass-class force blend
+  const hiF=o._hiF||(o._hiF=new Uint8Array(64)), na=o.active.length;
+  if(na){ let fmin=1e9,fmax=-1e9;
+    for(let k=0;k<na;k++){ const f=o.MODES[o.active[k]].f; if(f<fmin)fmin=f; if(f>fmax)fmax=f; }
+    const fmid=(fmin+fmax)*0.5;
+    for(let k=0;k<na;k++) hiF[k]=o.MODES[o.active[k]].f>fmid?1:0; }
+  // ── beat KICKS per mass class (Δv, event-sized → frame-rate independent in total) + thermal jitter ──
+  const pump=(R&&conf>0.3)?1+0.22*Math.min(1,conf)*Math.exp(-Math.pow(Math.min(R.phase,1-R.phase)/0.09,2)):1;   // pre/on-beat agitation swell
+  const eK=0.22*Math.min(0.5,Math.max(0,riseRate*0.016));
+  const kick=o._kickOut||(o._kickOut=[0,0,0]), kG=x=>x>0.07?(x-0.07)*0.8:0;   // soft floor: real HITS kick, dense-mix simmer doesn't keep dust airborne
+  kick[0]=Math.min(0.6,kG(1.25*fxB+0.2*fxM)+eK);         // heavy grains ← bass hits
+  kick[1]=Math.min(0.6,kG(0.35*fxB+0.9*fxM+0.25*fxH)+eK);
+  kick[2]=Math.min(0.6,kG(0.15*fxM+1.15*fxH)+eK);        // light dust ← hats/snap
+  const ve=0.95+0.7*fr.sharpness;
+  const bs=0.026 + 0.013*fr.sharpness + 0.16*o._beat + 0.05*o._nov + 0.035*bass + 0.012*Math.min(1.2,Math.max(0,fr.energy-0.4));
+  const damp=o._dampOut||(o._dampOut=[0,0,0]);           // ballistic-channel drag: heavy carries momentum longer (lower γ)
+  damp[0]=Math.exp(-4.6*boost*dt); damp[1]=Math.exp(-5.6*boost*dt); damp[2]=Math.exp(-6.8*boost*dt);
+  const gridReset=ensureGrids(o);
+  const pk=buildFieldGrid(o,gridReset);
+  if(pk>1e-9) o._pk=o._pk==null?pk:o._pk+(pk-o._pk)*Math.min(1,dt*8);   // smoothed true peak → flicker-free brightness scale
+  return {inv:1/mx, invR:1/Math.max(1e-9,o._pk||1e-9), ve, bs, floor:0, respawn:0.0006,
+          jit:bs*0.45*pump*Math.sqrt(boost), kick, shocks, damp,
+          scatter:(beatFired?0.04+0.05*Math.min(1,riseRate*0.05):0)+(novelNow?Math.min(0.6,0.2+fluxRate*0.005):0),   // the ORIGINAL beat/novelty dust churn (cosmic's random-walk path uses it)
+          mob:MASS_MOB, loW:MASS_LO, hiW:MASS_HI,
+          mu:0.028*boost, dmax:0.22*boost, vmax:0.85*boost};   // creep tops out ~0.22 u/s → crossing to the next ridge takes ~1 s of real, visible flow
+}
+/* Pre-condense a still pattern WITHOUT animating on screen — used so the stage shows a settled
+   figure at rest (nothing moves until the user hits play / clicks an atom), then draws it once. */
+let initialPrimeJob=null;
+function cancelInitialPrime(){
+  const job=initialPrimeJob; if(!job)return false;
+  cancelAnimationFrame(job.raf); job.renderer._boost=1; job.renderer.autoRot=job.autoRot; initialPrimeJob=null; return true;
+}
+function prime(o, fr, steps){
+  cancelInitialPrime();
+  o.scatter(); o._t=0; o._onset=0; o._pe=null; const wr=o.autoRot; o.autoRot=false;
+  o._boost=2.6;                                  // overdamped fast-settle: same physics, sped up, so a resting figure forms within `steps` frames
+  for(let k=0;k<steps;k++) o.step(fr,0.016,false);
+  o._boost=1;
+  o.autoRot=wr; clearRender(o.ctx,o.w,o.h,o.alpha,'#050608'); o.render(fr.energy);   // full clear first → no stale ghost when framing changes (e.g. zoom)
+}
+/* The first still uses the same settle simulation, but advances one physics step per display frame.
+   Keeping the work bounded prevents startup from monopolising the main thread. */
+function primeIncrementally(o,fr,steps,onDone){
+  cancelInitialPrime();
+  o.scatter(); o._t=0; o._onset=0; o._pe=null; const wr=o.autoRot; o.autoRot=false; o._boost=2.6; o._heroPrimed=true;
+  const job={renderer:o,autoRot:wr,remaining:Math.max(1,Math.round(steps)),raf:0}; initialPrimeJob=job;
+  const tick=()=>{
+    if(initialPrimeJob!==job)return;
+    o.step(fr,0.016,false); job.remaining--;
+    if(!reduced || job.remaining===0) o.render(fr.energy);
+    if(job.remaining>0){ job.raf=requestAnimationFrame(tick); return; }
+    o._boost=1; o.autoRot=wr; initialPrimeJob=null; if(onDone)onDone(o);
+  };
+  tick();
+}
+
+/* ---- 3D orientation as a rotation matrix R[9] (row-major), so the spin AXIS can be anything
+        and can change direction over time (precession / tumble), not just a single fixed circle. ---- */
+function rotAxis(x,y,z,a){ const c=Math.cos(a),s=Math.sin(a),t=1-c;
+  return [t*x*x+c, t*x*y-s*z, t*x*z+s*y,  t*x*y+s*z, t*y*y+c, t*y*z-s*x,  t*x*z-s*y, t*y*z+s*x, t*z*z+c]; }
+function mMul(A,B){ const C=new Array(9);
+  for(let r=0;r<3;r++) for(let cc=0;cc<3;cc++){ let s=0; for(let k=0;k<3;k++) s+=A[r*3+k]*B[k*3+cc]; C[r*3+cc]=s; } return C; }
+function randAxis(){ let x=Math.random()*2-1,y=Math.random()*2-1,z=Math.random()*2-1; const m=Math.hypot(x,y,z)||1; return [x/m,y/m,z/m]; }
+// advance a renderer's orientation by one frame according to the current rotation MODE + SPEED
+function applySpin(o, dt){
+  if(!o.autoRot || ROT_SPEED<=0){ o._motionZoom=1; o._cameraDepth=0; return; }
+  o._motionZoom=1; o._cameraDepth=0;
+  if(ROT_MODE==='single'){ o._axis=[0,1,0]; o._spin=1; }                                    // one fixed circle
+  else if(ROT_MODE==='tumble'){ o._rt=(o._rt||0)-dt;                                         // random axis, occasional flip
+    if(o._rt<=0 || o._spin==null){ o._rt=0.5+Math.random()*1.4; o._axis=randAxis(); o._spin=0.5+Math.random()*1.5+(Math.random()<0.25?1.8:0); } }
+  else { o._prec=(o._prec||0)+dt*0.5*ROT_SPEED; const tl=0.95;                               // precession: the spin axis itself sweeps a cone
+    o._axis=[Math.sin(tl)*Math.cos(o._prec), Math.cos(tl), Math.sin(tl)*Math.sin(o._prec)]; o._spin=1; }
+  const ang=ROT_SPEED*(o._spin||1)*dt*ROTWARP, a=o._axis;   // ROTWARP = swing-clock: rotation runs the swung-eighth grid, slow-fast inside each beat
+  o.R=mMul(rotAxis(a[0],a[1],a[2],ang), o.R);
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   2 · RENDERERS — identical interface: scatter / resize / step(frame,dt,draw) / domMode()
+   ════════════════════════════════════════════════════════════════════════ */
+const POLY_GEOM_CACHE=new Map();
+const dot3=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const cross3=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+function norm3(v){ const m=Math.hypot(v[0],v[1],v[2])||1; return [v[0]/m,v[1]/m,v[2]/m]; }
+function seededRand(seed){ let s=(seed>>>0)||1; return ()=>{ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+function polyNormals(n,shape,seed){
+  if(shape==='random'){
+    const rnd=seededRand(seed), out=[];
+    for(let i=0;i<n;i++){ const z=1-2*(i+rnd()*0.82)/n, r=Math.sqrt(Math.max(0,1-z*z)), a=(i+rnd()*0.9)*PI*(3-Math.sqrt(5));
+      out.push(norm3([r*Math.cos(a),z,r*Math.sin(a)])); }
+    return out;
+  }
+  if(n===4) return [[1,1,1],[1,-1,-1],[-1,1,-1],[-1,-1,1]].map(norm3);
+  if(n===6) return [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+  if(n===8){ const out=[]; for(const x of [-1,1])for(const y of [-1,1])for(const z of [-1,1])out.push(norm3([x,y,z])); return out; }
+  if(n===12){ const p=(1+Math.sqrt(5))/2, out=[];
+    for(const y of [-1,1])for(const z of [-p,p])out.push(norm3([0,y,z]));
+    for(const x of [-1,1])for(const y of [-p,p])out.push(norm3([x,y,0]));
+    for(const x of [-p,p])for(const z of [-1,1])out.push(norm3([x,0,z]));
+    return out; }
+  const out=[], ga=PI*(3-Math.sqrt(5));
+  for(let i=0;i<n;i++){ const z=1-2*(i+0.5)/n, r=Math.sqrt(Math.max(0,1-z*z)), a=i*ga; out.push([r*Math.cos(a),z,r*Math.sin(a)]); }
+  return out;
+}
+function solvePlanes(a,b,c,da,db,dc){
+  const bc=cross3(b,c), ca=cross3(c,a), ab=cross3(a,b), det=dot3(a,bc);
+  if(Math.abs(det)<1e-5) return null;
+  return [(bc[0]*da+ca[0]*db+ab[0]*dc)/det,(bc[1]*da+ca[1]*db+ab[1]*dc)/det,(bc[2]*da+ca[2]*db+ab[2]*dc)/det];
+}
+function makePolyGeometry(n,shape='regular',seed=1){
+  n=clampPolyN(n); const round=n>16, key=(round?'round':shape)+':'+n+':'+(shape==='random'?seed:0);
+  if(POLY_GEOM_CACHE.has(key)) return POLY_GEOM_CACHE.get(key);
+  if(round){ const geom={round:true,r:0.48,verts:[],edges:[],normals:[],ds:[]}; POLY_GEOM_CACHE.set(key,geom); return geom; }
+  const normals=polyNormals(n,shape,seed), rnd=seededRand(seed+97), ds=normals.map(()=>shape==='random'?0.255+rnd()*0.075:0.29), verts=[], ids=new Map(), eps=1e-4;
+  const add=p=>{ const key=p.map(v=>v.toFixed(5)).join(',');
+    if(ids.has(key)) return ids.get(key); const id=verts.length; ids.set(key,id); verts.push(p); return id; };
+  for(let i=0;i<normals.length-2;i++)for(let j=i+1;j<normals.length-1;j++)for(let k=j+1;k<normals.length;k++){
+    const p=solvePlanes(normals[i],normals[j],normals[k],ds[i],ds[j],ds[k]);
+    if(!p) continue;
+    let inside=true; for(let pi=0;pi<normals.length;pi++){ if(dot3(normals[pi],p)>ds[pi]+eps){ inside=false; break; } }
+    if(inside) add(p);
+  }
+  const edges=[], seen=new Set();
+  for(let i=0;i<normals.length;i++){
+    const nm=normals[i], face=[];
+    for(let v=0;v<verts.length;v++) if(Math.abs(dot3(nm,verts[v])-ds[i])<1e-3) face.push(v);
+    if(face.length<3) continue;
+    const cen=[0,0,0]; for(const id of face){ const p=verts[id]; cen[0]+=p[0]; cen[1]+=p[1]; cen[2]+=p[2]; }
+    cen[0]/=face.length; cen[1]/=face.length; cen[2]/=face.length;
+    let u=cross3(nm,[0,1,0]); if(Math.hypot(u[0],u[1],u[2])<1e-5) u=cross3(nm,[1,0,0]); u=norm3(u);
+    const vaxis=norm3(cross3(nm,u));
+    face.sort((a,b)=>Math.atan2(dot3([verts[a][0]-cen[0],verts[a][1]-cen[1],verts[a][2]-cen[2]],vaxis),dot3([verts[a][0]-cen[0],verts[a][1]-cen[1],verts[a][2]-cen[2]],u))-
+      Math.atan2(dot3([verts[b][0]-cen[0],verts[b][1]-cen[1],verts[b][2]-cen[2]],vaxis),dot3([verts[b][0]-cen[0],verts[b][1]-cen[1],verts[b][2]-cen[2]],u)));
+    for(let a=0;a<face.length;a++){ const A=face[a],B=face[(a+1)%face.length], key=A<B?A+','+B:B+','+A; if(!seen.has(key)){ seen.add(key); edges.push([A,B]); } }
+  }
+  const geom={round:false,normals,ds,verts,edges}; POLY_GEOM_CACHE.set(key,geom); return geom;
+}
+class Cube{                                    // 3D
+  constructor(c,n,alpha=CANVAS_ALPHA){ this.c=c; this.alpha=alpha; this.ctx=c.getContext('2d',{alpha}); this.N=n;
+    this.MODES=MODES3; this.K=MODES3.length; this.W=new Float64Array(this.K); this.active=[];
+    this.shape='regular'; this.polyN=8; this.polySeed=POLY_SEED; this.polyGeom=makePolyGeometry(this.polyN,this.shape,this.polySeed);
+    this.px=new Float64Array(n); this.py=new Float64Array(n); this.pz=new Float64Array(n); this.vx=new Float64Array(n); this.vy=new Float64Array(n); this.vz=new Float64Array(n); this.fval=new Float64Array(n); this.hval=new Float64Array(n).fill(0.5); this.gval=new Float64Array(n); this._seededN=0;
+    this._sinX=new Float64Array(MODE3_MAX+1); this._sinY=new Float64Array(MODE3_MAX+1); this._sinZ=new Float64Array(MODE3_MAX+1); this._cosX=new Float64Array(MODE3_MAX+1); this._cosY=new Float64Array(MODE3_MAX+1); this._cosZ=new Float64Array(MODE3_MAX+1); this._freqSeen=new Uint8Array(MODE3_MAX+1); this._freqs=[]; this._confined=new Float64Array(3);
+    this.R0=mMul(rotAxis(1,0,0,0.5), rotAxis(0,1,0,0.6)); this.R=this.R0.slice();   // 3/4 starting view
+    this._axis=[0,1,0]; this._spin=1; this.autoRot=true; this.zoom=1; this.dpr=displayDpr(); this.resize(); }
+  setShape(shape,n,seed){ const nn=clampPolyN(n), ss=seed||1;
+    if(this.shape===shape && this.polyN===nn && this.polySeed===ss) return false;
+    this.shape=shape; this.polyN=nn; this.polySeed=ss; this.polyGeom=makePolyGeometry(nn,shape,ss); this.scatter(); return true; }
+  insideLocal(x,y,z){ const g=this.polyGeom;
+    if(g.round) return x*x+y*y+z*z<=g.r*g.r+1e-5;
+    for(let i=0;i<g.normals.length;i++){ const nm=g.normals[i]; if(nm[0]*x+nm[1]*y+nm[2]*z>g.ds[i]+1e-5) return false; } return true; }
+  wallFrac(x,y,z){ const g=this.polyGeom;                 // 0 at the centre → 1 on the solid's wall
+    if(g.round) return Math.sqrt(x*x+y*y+z*z)/g.r;
+    let mx=0; for(let i=0;i<g.normals.length;i++){ const nm=g.normals[i], v=(nm[0]*x+nm[1]*y+nm[2]*z)/g.ds[i]; if(v>mx)mx=v; }
+    return mx; }
+  randomPoint(){ const g=this.polyGeom;
+    if(g.round){ for(let k=0;k<80;k++){ const x=Math.random()*2-1,y=Math.random()*2-1,z=Math.random()*2-1;
+        if(x*x+y*y+z*z<=1){ return [0.5+x*g.r,0.5+y*g.r,0.5+z*g.r]; } } return [0.5,0.5,0.5]; }
+    for(let k=0;k<120;k++){ const x=Math.random()-0.5,y=Math.random()-0.5,z=Math.random()-0.5;
+      if(this.insideLocal(x,y,z)) return [x+0.5,y+0.5,z+0.5]; }
+    return [0.5,0.5,0.5]; }
+  winPoint(wh){ if(wh>=0.5) return this.randomPoint();                       // random point inside the zoom box ∩ solid (high zoom → dense, crisp)
+    const lo=0.5-wh, span=2*wh;
+    for(let k=0;k<16;k++){ const x=lo+Math.random()*span,y=lo+Math.random()*span,z=lo+Math.random()*span;
+      if(this.insideLocal(x-0.5,y-0.5,z-0.5)) return [x,y,z]; }
+    return this.randomPoint(); }
+  ensureParticles(count){ const N=Math.max(0,Math.min(this.N,count|0)); if(N<=this._seededN)return;
+    const wh=winHalf(this.zoom); for(let i=this._seededN;i<N;i++){ const p=this.winPoint(wh); this.px[i]=p[0]; this.py[i]=p[1]; this.pz[i]=p[2]; this.vx[i]=0; this.vy[i]=0; this.vz[i]=0; }
+    this._seededN=N; }
+  scatter(count=particleCount(this)){ const N=Math.max(0,Math.min(this.N,count|0)), wh=winHalf(this.zoom);
+    for(let i=0;i<N;i++){ const p=this.winPoint(wh); this.px[i]=p[0]; this.py[i]=p[1]; this.pz[i]=p[2]; }
+    this.vx.fill(0,0,N); this.vy.fill(0,0,N); this.vz.fill(0,0,N); this._seededN=N; }
+  confineInto(nx,ny,nz,ox,oy,oz,out){
+    let x=nx-0.5,y=ny-0.5,z=nz-0.5;
+    if(this.insideLocal(x,y,z)){ out[0]=nx; out[1]=ny; out[2]=nz; return; }
+    const g=this.polyGeom;
+    if(g.round){ const m=Math.hypot(x,y,z)||1, r=g.r*0.998; out[0]=0.5+x/m*r; out[1]=0.5+y/m*r; out[2]=0.5+z/m*r; return; }
+    for(let k=0;k<4;k++){
+      let worst=0, wn=null;
+      for(let i=0;i<g.normals.length;i++){ const nm=g.normals[i], over=nm[0]*x+nm[1]*y+nm[2]*z-g.ds[i]; if(over>worst){ worst=over; wn=nm; } }
+      if(!wn || worst<=1e-5){ out[0]=x+0.5; out[1]=y+0.5; out[2]=z+0.5; return; }
+      x-=wn[0]*(worst*1.85); y-=wn[1]*(worst*1.85); z-=wn[2]*(worst*1.85); // reflect off the face instead of respawning
+      if(this.insideLocal(x,y,z)){ out[0]=x+0.5; out[1]=y+0.5; out[2]=z+0.5; return; }
+    }
+    for(let k=0;k<4;k++){ x=(x+ox-0.5)*0.5; y=(y+oy-0.5)*0.5; z=(z+oz-0.5)*0.5;
+      if(this.insideLocal(x,y,z)){ out[0]=x+0.5; out[1]=y+0.5; out[2]=z+0.5; return; } }
+    const p=this.randomPoint(); out[0]=p[0]; out[1]=p[1]; out[2]=p[2];
+  }
+	  resize(){ const r=this.c.getBoundingClientRect(); this.c.width=Math.max(1,Math.ceil(r.width*this.dpr)); this.c.height=Math.max(1,Math.ceil(r.height*this.dpr));
+	    this.w=this.c.width; this.h=this.c.height; this.ctx.imageSmoothingEnabled=false; clearRender(this.ctx,this.w,this.h,this.alpha,'#050608'); }
+	  field(x,y,z){ let s=0; for(let k=0;k<this.active.length;k++){const i=this.active[k]; s+=this.W[i]*phi3(this.MODES[i],x,y,z);} return s; }
+  prepareFreqs(){ const freqs=this._freqs, seen=this._freqSeen; freqs.length=0;
+    for(let k=0;k<this.active.length;k++){ const md=this.MODES[this.active[k]], l=md.l, m=md.m, n=md.n;
+      if(!seen[l]){ seen[l]=1; freqs.push(l); }
+      if(!seen[m]){ seen[m]=1; freqs.push(m); }
+      if(!seen[n]){ seen[n]=1; freqs.push(n); }
+    }
+    for(let i=0;i<freqs.length;i++) seen[freqs[i]]=0;
+    return freqs;
+  }
+	  step(fr,dt,draw){
+	    const D=updateField(this,fr,dt), inv=D.inv, ve=D.ve, respawn=D.respawn;
+	    const N=particleCount(this); this.ensureParticles(N);
+	    const px=this.px,py=this.py,pz=this.pz,fv=this.fval,vx=this.vx,vy=this.vy,vz=this.vz;
+	    const cosmic=STYLE==='dcosmic'||STYLE==='cosmic'; if(cosmic) WebMask.ensure(this._t||0);
+	    const wh=winHalf(this.zoom), lo=0.5-wh, hi=0.5+wh, box=wh<0.5;   // high zoom → also keep particles inside the visible box
+	    const active=this.active, modes=this.MODES, W=this.W, sx=this._sinX, sy=this._sinY, sz=this._sinZ, cX=this._cosX, cY=this._cosY, cZ=this._cosZ, freqs=this.prepareFreqs(), confined=this._confined;
+	    const invR=D.invR;                                             // brightness scale = the field's true grid-sampled peak (see Plate.step)
+	    if(!PHYS){                                                     // inactive fallback branch; Fable physical motion stays enabled
+	      const bs=D.bs, floor=D.floor;
+	      for(let i=0;i<N;i++){ const x=px[i], y=py[i], z=pz[i];
+	        for(let f=0;f<freqs.length;f++){ const q=FREQ_PI[freqs[f]]; sx[freqs[f]]=Math.sin(q*x); sy[freqs[f]]=Math.sin(q*y); sz[freqs[f]]=Math.sin(q*z); }
+	        let field=0;
+	        for(let k=0;k<active.length;k++){ const mi=active[k], md=modes[mi];
+	          field+=W[mi]*(sx[md.l]*sy[md.m]*sz[md.n]+sx[md.m]*sy[md.n]*sz[md.l]+sx[md.n]*sy[md.l]*sz[md.m]); }
+	        const af=field<0?-field:field;
+	        let m=af*invR; if(m>1)m=1; fv[i]=m; const sc=bs*(Math.pow(m,ve)+floor);
+	        let nx=px[i]+(Math.random()-0.5)*sc, ny=py[i]+(Math.random()-0.5)*sc, nz=pz[i]+(Math.random()-0.5)*sc;
+	        this.confineInto(nx,ny,nz,px[i],py[i],pz[i],confined); nx=confined[0]; ny=confined[1]; nz=confined[2];
+	        if(box){ let bx=nx<lo?lo+(lo-nx):nx>hi?hi-(nx-hi):nx, by=ny<lo?lo+(lo-ny):ny>hi?hi-(ny-hi):ny, bz=nz<lo?lo+(lo-nz):nz>hi?hi-(nz-hi):nz;
+	          if(bx<lo)bx=lo;else if(bx>hi)bx=hi; if(by<lo)by=lo;else if(by>hi)by=hi; if(bz<lo)bz=lo;else if(bz>hi)bz=hi;
+	          if(this.insideLocal(bx-0.5,by-0.5,bz-0.5)){ nx=bx;ny=by;nz=bz; } }
+	        if(Math.random()<respawn){ const p=this.winPoint(wh); nx=p[0]; ny=p[1]; nz=p[2]; }
+	        else if(cosmic){ const wv=WebMask.sample(nx,ny); if(wv<0.16 && Math.random()<0.04+0.16*(0.16-wv)){ const p=this.winPoint(wh); nx=p[0]; ny=p[1]; nz=p[2]; } }
+	        px[i]=nx;py[i]=ny;pz[i]=nz; }
+	      applySpin(this,dt); if(draw) this.render(fr.energy); return;
+	    }
+	    if(STYLE!=='sand'){   /* ── non-dynamic-sand styles = modal random-walk annealing (grid-accelerated) ── */
+	      const bs=D.bs, floor=D.floor, scatter=D.scatter, rsp=D.respawn;
+	      const G=this._gG, G1=G-1, gLg=this._gL, gHg=this._gHf, gk0=G/this._gSpan, gLo=this._gLo;
+	      for(let i=0;i<N;i++){ const x=px[i], y=py[i], z=pz[i];
+	        let fxg=(x-gLo)*gk0-0.5; if(fxg<0)fxg=0; else if(fxg>G1)fxg=G1;
+	        let fyg=(y-gLo)*gk0-0.5; if(fyg<0)fyg=0; else if(fyg>G1)fyg=G1;
+	        let fzg=(z-gLo)*gk0-0.5; if(fzg<0)fzg=0; else if(fzg>G1)fzg=G1;
+	        const x0=fxg|0, y0=fyg|0, z0=fzg|0, x1c=x0<G1?x0+1:x0, y1c=y0<G1?y0+1:y0, z1c=z0<G1?z0+1:z0;
+	        const tx=fxg-x0, ty=fyg-y0, tz=fzg-z0;
+	        const p000=(z0*G+y0)*G+x0, p100=p000+(x1c-x0), p010=(z0*G+y1c)*G+x0, p110=p010+(x1c-x0);
+	        const p001=(z1c*G+y0)*G+x0, p101=p001+(x1c-x0), p011=(z1c*G+y1c)*G+x0, p111=p011+(x1c-x0);
+	        const u=1-tx, v=1-ty, w0=1-tz;
+	        const w000=u*v*w0, w100=tx*v*w0, w010=u*ty*w0, w110=tx*ty*w0, w001=u*v*tz, w101=tx*v*tz, w011=u*ty*tz, w111=tx*ty*tz;
+	        const fraw=(gLg[p000]+gHg[p000])*w000+(gLg[p100]+gHg[p100])*w100+(gLg[p010]+gHg[p010])*w010+(gLg[p110]+gHg[p110])*w110
+	                  +(gLg[p001]+gHg[p001])*w001+(gLg[p101]+gHg[p101])*w101+(gLg[p011]+gHg[p011])*w011+(gLg[p111]+gHg[p111])*w111;
+	        let m=(fraw<0?-fraw:fraw)*invR; if(m>1)m=1; fv[i]=m;
+	        const sc=bs*(Math.pow(m,ve)+floor);
+	        let nx=x+(Math.random()-0.5)*sc, ny=y+(Math.random()-0.5)*sc, nz=z+(Math.random()-0.5)*sc;
+	        this.confineInto(nx,ny,nz,x,y,z,confined); nx=confined[0]; ny=confined[1]; nz=confined[2];
+	        if(box){ let bx=nx<lo?lo+(lo-nx):nx>hi?hi-(nx-hi):nx, by=ny<lo?lo+(lo-ny):ny>hi?hi-(ny-hi):ny, bz=nz<lo?lo+(lo-nz):nz>hi?hi-(nz-hi):nz;
+	          if(bx<lo)bx=lo;else if(bx>hi)bx=hi; if(by<lo)by=lo;else if(by>hi)by=hi; if(bz<lo)bz=lo;else if(bz>hi)bz=hi;
+	          if(this.insideLocal(bx-0.5,by-0.5,bz-0.5)){ nx=bx;ny=by;nz=bz; } }
+	        if(Math.random()<scatter+rsp){ const p=this.winPoint(wh); nx=p[0]; ny=p[1]; nz=p[2]; }
+	        else { const wv=WebMask.sample(nx,ny); if(wv<0.16 && Math.random()<0.04+0.16*(0.16-wv)){ const p=this.winPoint(wh); nx=p[0]; ny=p[1]; nz=p[2]; } }   // evict from deep voids
+	        px[i]=nx;py[i]=ny;pz[i]=nz; }
+	      applySpin(this,dt); if(draw) this.render(fr.energy); return;
+	    }
+	    /* PHYSICAL DYNAMICS (sand, see Plate.step): CREEP = overdamped Gor'kov drift v=-μ∇(Ψ²);
+	       BALLISTIC velocity buffers carry only kicks + finite-speed shockwaves. */
+	    const jit=D.jit, kick=D.kick, sh=D.shocks, nsh=sh.length, damp=D.damp, mob=D.mob, hv=this.hval;
+	    const loW=D.loW, hiW=D.hiW, hiF=this._hiF, na=active.length;
+	    const MUc=D.mu, DMAX=D.dmax, DMAX2=DMAX*DMAX, VMAX=D.vmax, VMAX2=VMAX*VMAX;
+	    const jFloor=0, jScale=1, kScale=1;
+	    const gl=this.gval, gk=Math.min(1,dt*1.4);   // ember memory (see Plate.step)
+	    /* hot loop = 8-corner TRILINEAR grid fetches, zero trig (see buildFieldGrid) */
+	    const G=this._gG, G1=G-1, gLg=this._gL, gHg=this._gHf, ggx=this._ggx, ggy=this._ggy, ggz=this._ggz, gk0=G/this._gSpan, gLo=this._gLo;
+	    for(let i=0;i<N;i++){ const x=px[i], y=py[i], z=pz[i];
+	      let fxg=(x-gLo)*gk0-0.5; if(fxg<0)fxg=0; else if(fxg>G1)fxg=G1;
+	      let fyg=(y-gLo)*gk0-0.5; if(fyg<0)fyg=0; else if(fyg>G1)fyg=G1;
+	      let fzg=(z-gLo)*gk0-0.5; if(fzg<0)fzg=0; else if(fzg>G1)fzg=G1;
+	      const x0=fxg|0, y0=fyg|0, z0=fzg|0, x1c=x0<G1?x0+1:x0, y1c=y0<G1?y0+1:y0, z1c=z0<G1?z0+1:z0;
+	      const tx=fxg-x0, ty=fyg-y0, tz=fzg-z0;
+	      const p000=(z0*G+y0)*G+x0, p100=p000+(x1c-x0), p010=(z0*G+y1c)*G+x0, p110=p010+(x1c-x0);
+	      const p001=(z1c*G+y0)*G+x0, p101=p001+(x1c-x0), p011=(z1c*G+y1c)*G+x0, p111=p011+(x1c-x0);
+	      const u=1-tx, v=1-ty, w0=1-tz;
+	      const w000=u*v*w0, w100=tx*v*w0, w010=u*ty*w0, w110=tx*ty*w0, w001=u*v*tz, w101=tx*v*tz, w011=u*ty*tz, w111=tx*ty*tz;
+	      const fL=gLg[p000]*w000+gLg[p100]*w100+gLg[p010]*w010+gLg[p110]*w110+gLg[p001]*w001+gLg[p101]*w101+gLg[p011]*w011+gLg[p111]*w111;
+	      const fH=gHg[p000]*w000+gHg[p100]*w100+gHg[p010]*w010+gHg[p110]*w110+gHg[p001]*w001+gHg[p101]*w101+gHg[p011]*w011+gHg[p111]*w111;
+	      const gxs=(ggx[p000]*w000+ggx[p100]*w100+ggx[p010]*w010+ggx[p110]*w110+ggx[p001]*w001+ggx[p101]*w101+ggx[p011]*w011+ggx[p111]*w111)*inv;
+	      const gys=(ggy[p000]*w000+ggy[p100]*w100+ggy[p010]*w010+ggy[p110]*w110+ggy[p001]*w001+ggy[p101]*w101+ggy[p011]*w011+ggy[p111]*w111)*inv;
+	      const gzs=(ggz[p000]*w000+ggz[p100]*w100+ggz[p010]*w010+ggz[p110]*w110+ggz[p001]*w001+ggz[p101]*w101+ggz[p011]*w011+ggz[p111]*w111)*inv;
+	      const cls=i%3, lw=loW[cls], hw=hiW[cls];
+	      const fraw=fL+fH, af=fraw<0?-fraw:fraw;
+	      let m=af*invR; if(m>1)m=1; fv[i]=m;                            // render/condense on the FULL field → one shared figure
+	      const onc=1-m*1.7, oc=onc<0?0:onc, g0=gl[i]; gl[i]=oc>g0?oc:g0+(oc-g0)*gk;   // ember: instant ignite, slow fade
+	      const aL=fL<0?-fL:fL, aHH=fH<0?-fH:fH; hv[i]=aHH/(aL+aHH+1e-9);   // low/high-mode ridge membership → selective highlight
+	      const fb=(fL*lw+fH*hw)*inv;
+	      let dvx=-MUc*fb*gxs*mob[cls], dvy=-MUc*fb*gys*mob[cls], dvz=-MUc*fb*gzs*mob[cls];   // creep channel
+	      const dm2=dvx*dvx+dvy*dvy+dvz*dvz; if(dm2>DMAX2){ const f=DMAX/Math.sqrt(dm2); dvx*=f; dvy*=f; dvz*=f; }
+	      /* WALL treatment (like the 2D border): low modes have no interior zero surface, so the
+	         solid's walls are the global minima of Ψ² — an artificial trap that HOLLOWS the centre.
+	         Fade the pull near the wall, push gently inward → the population lives on the INTERIOR
+	         nodal surfaces of the superposition, like a true 3D Chladni volume. */
+	      const wf=this.wallFrac(x-0.5,y-0.5,z-0.5);
+	      if(wf>0.85){ const fd=wf>=1?0:(1-wf)*6.667; dvx*=fd; dvy*=fd; dvz*=fd;
+	        if(wf>0.92){ const p=(wf-0.92)*4; dvx+=(0.5-x)*p; dvy+=(0.5-y)*p; dvz+=(0.5-z)*p; } }
+	      let vxi=vx[i]*damp[cls], vyi=vy[i]*damp[cls], vzi=vz[i]*damp[cls];            // ballistic channel: shocks + kicks only
+	      for(let s=0;s<nsh;s++){ const S=sh[s], dx=x-S.x, dy=y-S.y, dz=z-S.z, d=Math.sqrt(dx*dx+dy*dy+dz*dz)+1e-4, u=(d-S.r)/S.w;
+	        if(u>-1&&u<1){ const g=S.a*(1-u*u)/(d*(1+2.5*d))*dt; vxi+=dx*g; vyi+=dy*g; vzi+=dz*g; } }   // spherical spreading falloff
+	      const kk=kick[cls]*kScale;
+	      if(kk>0.004 && Math.random()<0.6){ const a=Math.random()*6.283, zr=Math.random()*2-1, rxy=Math.sqrt(1-zr*zr), im=kk*(0.25+0.75*(m<1?m:1))*(0.4+0.6*Math.random());
+	        vxi+=Math.cos(a)*rxy*im; vyi+=Math.sin(a)*rxy*im; vzi+=zr*im; }
+	      const s2=vxi*vxi+vyi*vyi+vzi*vzi; if(s2>VMAX2){ const f=VMAX/Math.sqrt(s2); vxi*=f; vyi*=f; vzi*=f; }
+	      const jr=jit*(Math.pow(m,ve)*jScale+jFloor);
+	      let nx=x+(vxi+dvx)*dt+(Math.random()-0.5)*jr, ny=y+(vyi+dvy)*dt+(Math.random()-0.5)*jr, nz=z+(vzi+dvz)*dt+(Math.random()-0.5)*jr;
+	      const ix=nx, iy=ny, iz=nz;
+	      this.confineInto(nx,ny,nz,x,y,z,confined); nx=confined[0]; ny=confined[1]; nz=confined[2];
+	      if(nx!==ix||ny!==iy||nz!==iz){ vxi*=0.3; vyi*=0.3; vzi*=0.3; }  // hit the solid wall → shed momentum
+	      if(box){ let bx=nx<lo?lo+(lo-nx):nx>hi?hi-(nx-hi):nx, by=ny<lo?lo+(lo-ny):ny>hi?hi-(ny-hi):ny, bz=nz<lo?lo+(lo-nz):nz>hi?hi-(nz-hi):nz;
+	        if(bx<lo)bx=lo;else if(bx>hi)bx=hi; if(by<lo)by=lo;else if(by>hi)by=hi; if(bz<lo)bz=lo;else if(bz>hi)bz=hi;
+	        if(this.insideLocal(bx-0.5,by-0.5,bz-0.5)){ if(bx!==nx)vxi=-vxi*0.55; if(by!==ny)vyi=-vyi*0.55; if(bz!==nz)vzi=-vzi*0.55; nx=bx;ny=by;nz=bz; } }
+      if(wf>0.985 && Math.random()<0.03){ const p=this.winPoint(wh); nx=p[0]; ny=p[1]; nz=p[2]; vxi=0; vyi=0; vzi=0; }   // wall sand slides off & is re-poured inside
+      else if(Math.random()<respawn){ const p=this.winPoint(wh); nx=p[0]; ny=p[1]; nz=p[2]; vxi=0; vyi=0; vzi=0; }
+      px[i]=nx;py[i]=ny;pz[i]=nz;vx[i]=vxi;vy[i]=vyi;vz[i]=vzi; }
+    applySpin(this,dt);
+    if(draw) this.render(fr.energy);
+  }
+  project(X,Y,Z){ const R=this.R, x1=R[0]*X+R[1]*Y+R[2]*Z, y2=R[3]*X+R[4]*Y+R[5]*Z, z2=R[6]*X+R[7]*Y+R[8]*Z;
+    const ez=(this.zoom||1)*(this._motionZoom||1), s=(this._focal*ez)/(2.4-(this._cameraDepth||0)+z2); return {sx:this._hw+x1*s,sy:this._hh+y2*s,z2,s,vx:x1,vy:y2}; }   // vx,vy = view-space coords for lighting
+  drawFrame(ctx){
+    ctx.strokeStyle='rgba(70,184,165,0.18)'; ctx.lineWidth=this.dpr; ctx.beginPath();
+    const g=this.polyGeom;
+    if(g.round){
+      const circle=(axis)=>{ const steps=96; for(let i=0;i<=steps;i++){ const a=i/steps*PI*2, r=g.r, ca=Math.cos(a)*r, sa=Math.sin(a)*r;
+          const x=axis===0?0:ca, y=axis===1?0:(axis===0?ca:sa), z=axis===2?0:sa, p=this.project(x,y,z); i?ctx.lineTo(p.sx,p.sy):ctx.moveTo(p.sx,p.sy); } };
+      circle(0); circle(1); circle(2);
+    } else {
+      for(const e of g.edges){ const A=g.verts[e[0]],B=g.verts[e[1]], pa=this.project(A[0],A[1],A[2]), pb=this.project(B[0],B[1],B[2]); ctx.moveTo(pa.sx,pa.sy); ctx.lineTo(pb.sx,pb.sy); }
+    }
+    ctx.stroke();
+  }
+	  render(energy){ this._lastEnergy=energy;
+	    if(!renderSurfaceVisible()){ this._renderPending=true; return; }
+	    this._renderPending=false; RENDER_COUNT++; const ctx=this.ctx,w=this.w,h=this.h;
+	    this._focal=Math.min(w,h)*0.92*BREATH;this._hw=w/2;this._hh=h/2;
+	    const cosmic=STYLE==='dcosmic'||STYLE==='cosmic', sand=!cosmic, fsC=fullscreenLike();
+	    clearRender(ctx,w,h,this.alpha, sand?(this.zoom>3?'#040405':(PHYS&&fsC?'rgba(4,4,5,0.66)':'rgba(4,4,5,0.6)')):(this.zoom>3?'#050608':this.zoom>1.6?'rgba(5,6,8,0.55)':'rgba(5,6,8,0.42)'));
+	    ctx.imageSmoothingEnabled=false;   // grains are pre-scaled per pixel size → 1:1 blits, no resampling
+	    if(FRAME) this.drawFrame(ctx);
+	    const N=particleCount(this); this.ensureParticles(N);
+	    const px=this.px,py=this.py,pz=this.pz,fv=this.fval,t=this._t||0;
+	    ctx.globalCompositeOperation=sand?'source-over':'lighter';
+	    let cur=-1; if(cosmic){ WebMask.ensure(t); cosmicBuckets(px,py,fv,N,t,energy); } else ctx.fillStyle=sandColor(energy);
+	    const effectiveZoom=this.zoom*(this._motionZoom||1), shp=sandSharpen(effectiveZoom)+(PHYS&&fsC?0.35:0), shpC=cosmicSharpen(effectiveZoom), sandTerms=sand?sandAlphaTerms(shp):null;   // fullscreen base sharpen is Fable-only; cosmic stays original
+	    const hvv=this.hval, gl=this.gval, bE=this._bassE==null?0.4:this._bassE, hE=this._hiE==null?0.35:this._hiE;
+	    const hglob=sand?Math.min(1.6,0.35+0.75*loud01(energy)+0.9*(this._beat||0)):0;   // dB-mapped: quiet music keeps a solid base, loudness adds highlight uniformly
+	    const clipCircle=circleClipEnabled(), ccx=w*0.5, ccy=h*0.5, cr=Math.min(w,h)*0.5, cr2=cr*cr;
+	    const R=this.R, focal=this._focal*effectiveZoom, cameraDepth=this._cameraDepth||0, hw=this._hw, hh=this._hh, radialLight=LIGHT===7||LIGHT===8;
+	    const sweepAngle=LIGHT===9?t*0.9:0, sweepX=LIGHT===9?Math.cos(sweepAngle):0, sweepY=LIGHT===9?Math.sin(sweepAngle):0, maxCss=this.zoom>1.3?2.4:2.8;
+	    for(let oi=0;oi<N;oi++){ const i=cosmic?_order[oi]:oi;          // keep diffuse off-surface dust; nodal surfaces are brighter, not exclusive
+	      if(cosmic && _cb[i]!==cur){ cur=_cb[i]; ctx.fillStyle=COSMIC_PAL[cur]; }
+	      const lx=px[i]-0.5,ly=py[i]-0.5,lz=pz[i]-0.5;
+	      const x1=R[0]*lx+R[1]*ly+R[2]*lz, y2=R[3]*lx+R[4]*ly+R[5]*lz, z2=R[6]*lx+R[7]*ly+R[8]*lz;
+	      const ps=focal/(2.4-cameraDepth+z2), sxp=hw+x1*ps, syp=hh+y2*ps;
+	      if(clipCircle && outsideCircle(sxp,syp,ccx,ccy,cr2)) continue;
+	      let onNode=Math.max(0,1-fv[i]*1.7); if(sand&&PHYS){ const ge=gl[i]; if(ge>onNode) onNode=ge; }   // Fable embers only
+	      const vf=cosmic?WebMask.visAt(px[i],py[i]):1, depth=(z2+1.2)/2.4, sz=Math.max(0.7,ps*0.0017*(0.6+depth))*(sand&&PHYS?MASS_SIZE[i%3]:1);
+	      const rr=radialLight?Math.sqrt(lx*lx+ly*ly+lz*lz)*2:0, L=light3(x1,y2,depth,rr,sweepX,sweepY);   // 3D lighting model (default = depth cue)
+	      if(sand){ const hot=PHYS?hglob*(0.5+0.7*(bE*(1-hvv[i])+hE*hvv[i])):null;
+	        ctx.globalAlpha=Math.min(1,sandAlpha(onNode,sandTerms,hot)*L*vf);
+	        drawSandParticleForMode(ctx,i,sxp,syp,sz,this.dpr,maxCss,fsC); }
+	      else { const CL=cosmicLightFactor(L); ctx.globalAlpha=Math.min(1,cosmicGlowAlpha(onNode,shpC)*CL*vf); drawSharpParticle(ctx,sxp,syp,sz,this.dpr,maxCss); }   // fullscreen sand = rect fast path; cosmic = original look
+	      if(cosmic) drawStar(ctx,i,sxp,syp,sz,onNode,vf,t,L); }
+    if(cosmic) cosmicBloom(this);
+    ctx.globalAlpha=1; ctx.globalCompositeOperation='source-over'; }
+  freeze(){ this.autoRot=false; this.render(0.2); }
+  domMode(){ let d=0,dv=0; for(let i=0;i<this.K;i++){const a=Math.abs(this.W[i]); if(a>dv){dv=a;d=i;}} const m=this.MODES[d]; return `(${m.l},${m.m},${m.n})`; }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   3 · SOUND SOURCES → feature frame
+   ════════════════════════════════════════════════════════════════════════ */
+function postNative(message){
+  if(ELECTRON_HOST){
+    try{ window.soundMotionElectron.postNative(message); return true; }catch(e){ return false; }
+  }
+  if(!NATIVE_HOST) return false;
+  try{ window.webkit.messageHandlers.soundMotionNative.postMessage(message); return true; }catch(e){ return false; }
+}
+// Any uploaded audio — fully offline
+class AudioSource{
+  constructor(){ this.ctx=null; this.an=null; this.freq=null; this.el=null; this.node=null; this.url=null; this.loaded=false; this.builtIn=false; this.onended=null; }
+  ensureElement(){
+    if(this.el) return;
+    this.el=new Audio();
+    this.el.preload='auto';
+    this.el.addEventListener('ended',()=>{ if(this.onended) this.onended(); });
+  }
+  ensureGraph(){
+    if(this.node) return;
+    this.ctx=new (window.AudioContext||window.webkitAudioContext)();
+    this.node=this.ctx.createMediaElementSource(this.el);
+    this.an=this.ctx.createAnalyser(); this.an.fftSize=2048; this.an.smoothingTimeConstant=0.35; this.freq=new Uint8Array(this.an.frequencyBinCount);
+    this.node.connect(this.an); this.an.connect(this.ctx.destination);
+  }
+  async load(file){ return this.loadInput(file,false); }
+  async loadURL(url){ return this.loadInput(url,true); }
+  async loadInput(input,builtIn){
+    this.ensureElement();
+    this.stop();
+    if(this.url) URL.revokeObjectURL(this.url);
+    this.url=null; this.loaded=false; this.builtIn=!!builtIn; this.el.loop=!!builtIn;
+    await new Promise((resolve,reject)=>{
+      let done=false, timer=0;
+      const finish=()=>{ if(done)return; done=true; cleanup(); this.loaded=true; resolve(); };
+      const fail=()=>{ if(done)return; done=true; cleanup(); reject(new Error('audio-load-failed')); };
+      const cleanup=()=>{ clearTimeout(timer); this.el.removeEventListener('loadedmetadata',finish); this.el.removeEventListener('canplay',finish); this.el.removeEventListener('error',fail); };
+      timer=setTimeout(finish,2500);
+      this.el.addEventListener('loadedmetadata',finish);
+      this.el.addEventListener('canplay',finish);
+      this.el.addEventListener('error',fail);
+      if(builtIn) this.el.src=String(input);
+      else { this.url=URL.createObjectURL(input); this.el.src=this.url; }
+      this.el.load();
+    });
+  }
+  async play(){
+    if((!this.loaded && !this.builtIn) || !this.el) return false;
+    this.ensureGraph();
+    if(this.ctx.state==='suspended') this.ctx.resume().catch(()=>{});
+    this.el.pause();
+    try{ this.el.currentTime=0; }catch(e){}
+    await this.el.play();
+    return true;
+  }
+  stop(){ if(this.el){ this.el.pause(); try{ this.el.currentTime=0; }catch(e){} } }
+	  frame(){ if(!this.an||!this.freq) return SYSTEM_REST_FRAME;
+	    this.an.getByteFrequencyData(this.freq); return bytesToFrame(this.freq); }
+  duration(){ return this.el && Number.isFinite(this.el.duration) ? this.el.duration : 0; }
+}
+// Live microphone input — analyser only, never routed to speakers.
+class MicSource{
+  constructor(){ this.ctx=null; this.an=null; this.freq=null; this.time=null; this.node=null; this.sink=null; this.stream=null; this.onended=null; this.noise=0.004; this.level=0; this.phase=0; this.deviceId=null; }
+  async listDevices(){
+    if(!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return [];
+    try{ return (await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='audioinput'); }catch(e){ return []; }
+  }
+  async play(){
+    if(!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia!=='function') return {ok:false,reason:'no-mic-api'};
+    // Create the context INSIDE the user gesture so it starts running (Chrome autoplay policy).
+    this.ctx=this.ctx||new (window.AudioContext||window.webkitAudioContext)();
+    try{ if(this.ctx.state!=='running') await this.ctx.resume(); }catch(e){}
+    if(!this.stream){
+      const audioReq={echoCancellation:false,noiseSuppression:false,autoGainControl:false};
+      if(this.deviceId) audioReq.deviceId={exact:this.deviceId};            // honour the in-app device picker
+      try{
+        this.stream=await navigator.mediaDevices.getUserMedia({audio:audioReq});
+      }catch(e){ return {ok:false,reason:e&&e.name?e.name:'permission-denied'}; }
+      this.node=this.ctx.createMediaStreamSource(this.stream);
+      this.an=this.ctx.createAnalyser(); this.an.fftSize=2048; this.an.smoothingTimeConstant=0.3; this.freq=new Uint8Array(this.an.frequencyBinCount);
+      this.time=new Uint8Array(this.an.fftSize); this.noise=0.004; this.level=0; this.phase=0;
+      this.node.connect(this.an);
+      // A dead-end analyser is NOT pulled in many browsers → its buffers stay flat and nothing reacts.
+      // Tap it through a muted gain to the destination so the graph runs; gain 0 = silent, no feedback.
+      this.sink=this.ctx.createGain(); this.sink.gain.value=0;
+      this.an.connect(this.sink); this.sink.connect(this.ctx.destination);
+      this.stream.getAudioTracks().forEach(t=>{ t.enabled=true; t.addEventListener('ended',()=>{ if(this.onended) this.onended(); }); });
+    }
+    // Acquiring the stream can leave the context suspended → analyser reads pure zeros. Resume again and verify.
+    for(let i=0;i<5 && this.ctx.state!=='running';i++){ try{ await this.ctx.resume(); }catch(e){} await new Promise(r=>setTimeout(r,40)); }
+    return {ok:true, ctxState:this.ctx.state};
+  }
+  stop(){
+    try{ this.node&&this.node.disconnect&&this.node.disconnect(); }catch(e){}
+    try{ this.sink&&this.sink.disconnect&&this.sink.disconnect(); }catch(e){}
+    this.node=null; this.sink=null;
+    if(this.stream){ this.stream.getTracks().forEach(t=>t.stop()); this.stream=null; }
+    this.an=null; this.freq=null; this.time=null; this.noise=0.004; this.level=0;
+  }
+	  frame(){
+	    if(!this.an||!this.freq||!this.time) return SYSTEM_REST_FRAME;
+    this.an.getByteFrequencyData(this.freq);
+    this.an.getByteTimeDomainData(this.time);
+    let sum=0, peak=0, freqSum=0;
+    for(let i=0;i<this.time.length;i++){ const v=(this.time[i]-128)/128, a=Math.abs(v); sum+=v*v; if(a>peak) peak=a; }
+    for(let i=0;i<this.freq.length;i++) freqSum+=this.freq[i];
+    const rms=Math.sqrt(sum/this.time.length);
+    // Adaptive room-noise floor: learns fast while quiet, barely creeps while sound is present.
+    const quiet=rms<this.noise*1.6;
+    this.noise=Math.max(0.0015,Math.min(0.06,this.noise+(rms-this.noise)*(quiet?0.05:0.004)));
+    // Loudness above the floor → drive. Generous gain so normal speech / clapping saturates clearly.
+    const loud=Math.max(0,rms-this.noise-0.0015), transient=Math.max(0,peak-this.noise*4);
+    const drive=Math.min(1,loud*26+transient*1.4);
+    this.level+=(drive-this.level)*(drive>this.level?0.5:0.12);   // snappy attack, soft release
+    const fr=bytesToFrame(this.freq);
+	    if(this.level<0.02) return SYSTEM_REST_FRAME;   // truly silent → rest
+    if(freqSum<24){                                                // spectrum empty (rare browser quirk) → drift a band from level
+      this.phase+=0.04+this.level*0.16;
+      fr.bands=bandPeak(0.22+0.6*(0.5+0.5*Math.sin(this.phase)),0.14);
+      fr.sharpness=0.32+0.4*this.level;
+    }
+    fr.energy=Math.min(2,0.16+this.level*1.9);
+    fr.sharpness=Math.max(0.3,Math.min(1,fr.sharpness+this.level*0.2));
+    return fr;
+  }
+}
+// Native macOS system-output audio. The AppKit host captures system audio with ScreenCaptureKit,
+// converts it to the same feature frame shape as bytesToFrame(), then pushes frames through
+// window.soundMotionNative.receiveAudioFrame(...). Rendering remains 100% in this Web core.
+class NativeSystemSource{
+  constructor(){ this.latest={bands:new Float64Array(NBANDS), energy:0.12, sharpness:0.4, t:-Infinity}; this.active=false; this.status='系统音频 · 等待接入'; }
+  fallback(){ return SYSTEM_REST_FRAME; }
+  ingest(data){
+    if(!data || !data.bands) return;
+    const b=this.latest.bands, src=data.bands;
+    let maxv=1e-6;
+    for(let i=0;i<NBANDS;i++){
+      const v=Number(src[Math.min(src.length-1,i)])||0;
+      b[i]=Math.max(0,Math.min(1.5,v)); if(b[i]>maxv) maxv=b[i];
+    }
+    if(maxv>1) for(let i=0;i<NBANDS;i++) b[i]/=maxv;
+    this.latest.energy=Math.max(0.12,Math.min(2,Number(data.energy)||0.12));
+    this.latest.sharpness=Math.max(0.2,Math.min(1,Number(data.sharpness)||0.4));
+    this.latest.t=performance.now();
+    this.active=true;
+  }
+  play(){ this.active=true; this.status='系统音频 · 正在捕获'; postNative({type:'systemAudioStart'}); return {ok:true}; }
+  stop(){ this.active=false; postNative({type:'systemAudioStop'}); }
+  frame(){
+    if(this.latest && performance.now()-this.latest.t<1500) return this.latest;
+    return this.fallback();
+  }
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════
+   CLASSIC ENGINE (codex 原版直接移植 — verbatim port, namespaced)
+   模态声沙 + 宇宙网 run THIS engine: the original Gaussian-bell modal field,
+   the original random-walk annealing, and the original render pipeline.
+   Only two sanctioned deviations, both explicitly requested:
+   • brightness terms ride loud01() (log-dB) so 0.025-gain music stays clear;
+   • pattern HOLD = 4 bars when PULSE is confident, never shorter than 3 s.
+   ════════════════════════════════════════════════════════════════════════ */
+function classicSandColor(energy){ const b=Math.min(1,0.92+loud01(energy)*0.08);
+  return `rgb(${(244*b)|0},${(235*b)|0},${(204*b)|0})`; }
+function classicSandAlpha(onNode,terms){ return terms[0]+terms[1]*Math.pow(onNode,terms[2]); }
+const CLASSIC_GRAINS=(()=>{ const K=64, GS=16, out=[];
+  for(let k=0;k<K;k++){ const cv=document.createElement('canvas'); cv.width=cv.height=GS; const g=cv.getContext('2d');
+    const cx=GS/2, cy=GS/2, base=GS*0.42, N=7+((Math.random()*5)|0), rot=Math.random()*6.283;
+    g.beginPath();
+    for(let v=0;v<=N;v++){ const a=rot+(v/N)*6.283+(Math.random()-0.5)*0.30, r=base*(0.72+Math.random()*0.28);
+      const x=cx+Math.cos(a)*r, y=cy+Math.sin(a)*r; v?g.lineTo(x,y):g.moveTo(x,y); }
+    g.closePath();
+    const hx=cx+(Math.random()-0.5)*base*0.6, hy=cy+(Math.random()-0.5)*base*0.6;
+    const grad=g.createRadialGradient(hx,hy,0,cx,cy,base*1.12);
+    grad.addColorStop(0,'rgba(253,248,231,1)'); grad.addColorStop(0.55,'rgba(245,236,206,1)');
+    grad.addColorStop(0.86,'rgba(240,229,197,0.95)'); grad.addColorStop(1,'rgba(236,224,188,0)');
+    g.fillStyle=grad; g.fill(); out.push(cv); }
+  return out; })();
+const CLASSIC_GRAIN_ATLAS=(()=>{ const cv=document.createElement('canvas'); cv.width=cv.height=128; const g=cv.getContext('2d');
+  for(let i=0;i<CLASSIC_GRAINS.length;i++) g.drawImage(CLASSIC_GRAINS[i],(i&7)*16,(i>>3)*16,16,16);
+  return cv; })();
+function classicDrawGrain(ctx,i,x,y,raw,dpr,maxCss){
+  const maxPx=Math.max(1,Math.round(maxCss*dpr)), size=Math.max(1,Math.min(maxPx,Math.round(raw)));
+  ctx.drawImage(CLASSIC_GRAINS[i&GRAIN_MASK],Math.round(x),Math.round(y),size,size);
+}
+function classicCosmicGlowAlpha(onNode,sharpen){ const s=sharpen>0?sharpen:0;
+  const floor=0.024*(1-0.65*Math.min(1,s/1.6));
+  return floor+(0.48+0.16*Math.min(1,s))*Math.pow(onNode,1.7+s); }
+function classicCosmicBuckets(px,py,fv,N,t,energy){
+  const loudTerm=loud01(energy)*0.1, t43=t*0.043, t31=t*0.031, t02=t*0.02;
+  for(let i=0;i<N;i++){ const onNode=Math.max(0,1-fv[i]*1.7);
+    let heat=onNode*0.85+loudTerm; heat=heat<0?0:heat>1?1:heat;
+    let emi=cosmicEmission(px[i],py[i],t43,t31,t02)*0.78+heat*0.22; emi=emi<0?0:emi>1?1:emi;
+    _cb[i]=Math.min(EMIK-1,(emi*EMIK)|0)*HEATK+Math.min(HEATK-1,(heat*HEATK)|0); }
+  _ccnt.fill(0);
+  for(let i=0;i<N;i++) _ccnt[_cb[i]+1]++;
+  for(let k=0;k<COSMIC_K;k++) _ccnt[k+1]+=_ccnt[k];
+  for(let i=0;i<N;i++){ const b=_cb[i]; _order[_ccnt[b]++]=i; }
+}
+function classicCosmicBloom(o){
+  if(QUALITY<0.6) return;
+  const zf=Math.max(0,1-(((o.zoom||1)-1)/3.5));
+  if(zf<=0.02) return; const ctx=o.ctx;
+  ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=0.14*zf; ctx.filter=`blur(${(2.2*o.dpr).toFixed(1)}px)`;
+  ctx.drawImage(o.c,0,0,o.w,o.h); ctx.restore();
+}
+function classicUpdateField(o, fr, dt){
+  const K=o.K, B=fr.bands, NB=B.length;
+  const detail=detailNorm(), cutoff=cutoffIndex(o.MODES), span=Math.max(3,cutoff);
+  o._t=(o._t||0)+dt;
+  if(!o._avg){ o._avg=new Float64Array(NB); for(let i=0;i<NB;i++) o._avg[i]=B[i]; }
+  let flux=0, bass=0, hi=0; const hcut=(NB*0.6)|0;
+  for(let i=0;i<NB;i++){ const d=B[i]-o._avg[i]; if(d>0) flux+=d; o._avg[i]+=(B[i]-o._avg[i])*Math.min(1,dt*1.6); }
+  for(let i=0;i<3;i++) bass+=B[i]; bass/=3;
+  for(let i=hcut;i<NB;i++) hi+=B[i]; hi/=Math.max(1,NB-hcut);
+  const pe=(o._pe==null?fr.energy:o._pe); o._pe=fr.energy; const rise=fr.energy-pe;
+  o._beat=Math.max((o._beat||0)*0.78, rise>0.02 ? Math.min(1,rise*4.5):0);
+  const Neff=particleCount(o);
+  const beatFired = rise>0.03 && (o._t-(o._lastBeat||-9))>0.11;
+  if(beatFired){ o._lastBeat=o._t; const f=0.04+0.05*Math.min(1,rise*3);       // each beat churns a little fresh dust
+    for(let i=0;i<Neff;i++) if(Math.random()<f){ o.px[i]=Math.random(); o.py[i]=Math.random(); if(o.pz)o.pz[i]=Math.random(); } }
+  const novel = flux>0.9 || (hi>0.62 && rise>0.05);                            // instrument enters / fill → reset
+  if(novel && (o._t-(o._lastReset||-9))>0.5){ o._lastReset=o._t; o._nov=Math.min(1,0.5+flux*0.4);
+    const frac=Math.min(0.6,0.2+flux*0.3);
+    for(let i=0;i<Neff;i++) if(Math.random()<frac){ o.px[i]=Math.random(); o.py[i]=Math.random(); if(o.pz)o.pz[i]=Math.random(); } }
+  o._nov=(o._nov||0)*0.92;
+  // ---- GOAL centre — original logic; HOLD stretched to the 静态展示 clock: 4 bars when the
+  //      rhythm tracker is confident, and never shorter than 3 s (user spec) ----
+  let HOLD = SAMPLE_MODE==='time' ? TIME_SAMPLE_INTERVAL : 0.5 + (1-EVOLVE)*2.4;
+  if(PULSE.conf>0.4 && PULSE.period>0) HOLD=Math.max(HOLD, Math.min(20, PULSE.period*16));   // ≈4 bars of 4/4
+  if(HOLD<3) HOLD=3;
+  let newGoal = (o._goal==null) || novel;
+  if(SAMPLE_MODE==='time'){ if(o._t-(o._lastSample||-9) >= HOLD) newGoal=true; }
+  else { if(beatFired && (o._t-(o._lastSample||-9)) >= HOLD) newGoal=true; }
+  if(newGoal){ o._sampleCount=(o._sampleCount||0)+1; o._lastSample=o._t; o._goal=(o._goal==null?span*0.45:o._goal)+(Math.random()-0.5)*span*(0.42+0.25*detail);
+    o._goal=Math.max(span*0.08, Math.min(cutoff, o._goal)); }
+  let goal=o._goal - bass*span*0.18 + (fr.sharpness-0.4)*span*0.5 + (detail-0.4)*span*0.55;
+  goal=Math.max(span*0.05, Math.min(cutoff, goal));
+  if(o._c==null) o._c=goal;
+  const speed=span*0.42/HOLD, dg=goal-o._c;
+  o._c += Math.sign(dg)*Math.min(Math.abs(dg), speed*dt);
+  const c=o._c, wdth=1.05+1.55*detail, tw=o._tw||(o._tw=new Float64Array(K)); let ts=0;
+  for(let i=0;i<K;i++){ if(i>cutoff || (SYMMETRIC && o.MODES[i].par)){ tw[i]=0; continue; } const struct=0.38+0.62*Math.min(1,i/3), dd=(i-c)/wdth; tw[i]=Math.exp(-0.5*dd*dd)*struct; ts+=tw[i]; }
+  if(SYMMETRIC && ts<1e-6) for(let i=0;i<=cutoff && i<K;i++){ if(!o.MODES[i].par){ tw[i]=1; ts=1; break; } }
+  if(ts>1e-6) for(let i=0;i<K;i++) tw[i]/=ts;
+  const kf=Math.min(1, dt*4.5); let mx=1e-6; o.active.length=0;
+  for(let i=0;i<K;i++){ o.W[i]+=(tw[i]-o.W[i])*kf; const a=Math.abs(o.W[i]); if(a>mx)mx=a; if(a>0.02)o.active.push(i); }
+  const activeMax=3+Math.round(detail*5);
+  if(o.active.length>activeMax){ o.active.sort((a,b)=>Math.abs(o.W[b])-Math.abs(o.W[a])); o.active.length=activeMax; }
+  const ve=0.95+0.7*fr.sharpness;
+  const bs=0.026 + 0.013*fr.sharpness + 0.16*o._beat + 0.05*o._nov + 0.035*bass + 0.012*Math.min(1.2,Math.max(0,fr.energy-0.4));
+  return {inv:1/mx, ve, bs, floor:0, respawn:0.0006};
+}
+class ClassicCube{                             // codex 原版 Cube — verbatim
+  constructor(c,n,alpha=CANVAS_ALPHA){ this.c=c; this.alpha=alpha; this.ctx=c.getContext('2d',{alpha}); this.N=n;
+    this.MODES=MODES3; this.K=MODES3.length; this.W=new Float64Array(this.K); this.active=[];
+    this.shape='regular'; this.polyN=8; this.polySeed=POLY_SEED; this.polyGeom=makePolyGeometry(this.polyN,this.shape,this.polySeed);
+    this.px=new Float64Array(n); this.py=new Float64Array(n); this.pz=new Float64Array(n); this.fval=new Float64Array(n); this._seededN=0; this._particleVersion=1;
+    this._sinX=new Float64Array(MODE3_MAX+1); this._sinY=new Float64Array(MODE3_MAX+1); this._sinZ=new Float64Array(MODE3_MAX+1); this._freqSeen=new Uint8Array(MODE3_MAX+1); this._freqs=[]; this._confined=new Float64Array(3);
+    this.R0=mMul(rotAxis(1,0,0,0.5), rotAxis(0,1,0,0.6)); this.R=this.R0.slice();
+    this._axis=[0,1,0]; this._spin=1; this.autoRot=true; this.zoom=1; this.dpr=displayDpr(); this.resize(); }
+  setShape(shape,n,seed){ const nn=clampPolyN(n), ss=seed||1;
+    if(this.shape===shape && this.polyN===nn && this.polySeed===ss) return false;
+    this.shape=shape; this.polyN=nn; this.polySeed=ss; this.polyGeom=makePolyGeometry(nn,shape,ss); this.scatter(); return true; }
+  insideLocal(x,y,z){ const g=this.polyGeom;
+    if(g.round) return x*x+y*y+z*z<=g.r*g.r+1e-5;
+    for(let i=0;i<g.normals.length;i++){ const nm=g.normals[i]; if(nm[0]*x+nm[1]*y+nm[2]*z>g.ds[i]+1e-5) return false; } return true; }
+  randomPoint(){ const g=this.polyGeom;
+    if(g.round){ for(let k=0;k<80;k++){ const x=Math.random()*2-1,y=Math.random()*2-1,z=Math.random()*2-1;
+        if(x*x+y*y+z*z<=1){ return [0.5+x*g.r,0.5+y*g.r,0.5+z*g.r]; } } return [0.5,0.5,0.5]; }
+    for(let k=0;k<120;k++){ const x=Math.random()-0.5,y=Math.random()-0.5,z=Math.random()-0.5;
+      if(this.insideLocal(x,y,z)) return [x+0.5,y+0.5,z+0.5]; }
+    return [0.5,0.5,0.5]; }
+  winPoint(wh){ if(wh>=0.5) return this.randomPoint();
+    const lo=0.5-wh, span=2*wh;
+    for(let k=0;k<16;k++){ const x=lo+Math.random()*span,y=lo+Math.random()*span,z=lo+Math.random()*span;
+      if(this.insideLocal(x-0.5,y-0.5,z-0.5)) return [x,y,z]; }
+    return this.randomPoint(); }
+  ensureParticles(count){ const N=Math.max(0,Math.min(this.N,count|0)); if(N<=this._seededN)return;
+    const wh=winHalf(this.zoom); for(let i=this._seededN;i<N;i++){ const p=this.winPoint(wh); this.px[i]=p[0]; this.py[i]=p[1]; this.pz[i]=p[2]; }
+    this._seededN=N; this._particleVersion++; }
+  scatter(count=particleCount(this)){ const N=Math.max(0,Math.min(this.N,count|0)), wh=winHalf(this.zoom);
+    for(let i=0;i<N;i++){ const p=this.winPoint(wh); this.px[i]=p[0]; this.py[i]=p[1]; this.pz[i]=p[2]; }
+    this._seededN=N; this._particleVersion++; }
+  confineInto(nx,ny,nz,ox,oy,oz,out){
+    let x=nx-0.5,y=ny-0.5,z=nz-0.5;
+    if(this.insideLocal(x,y,z)){ out[0]=nx; out[1]=ny; out[2]=nz; return; }
+    const g=this.polyGeom;
+    if(g.round){ const m=Math.hypot(x,y,z)||1, r=g.r*0.998; out[0]=0.5+x/m*r; out[1]=0.5+y/m*r; out[2]=0.5+z/m*r; return; }
+    for(let k=0;k<4;k++){
+      let worst=0, wn=null;
+      for(let i=0;i<g.normals.length;i++){ const nm=g.normals[i], over=nm[0]*x+nm[1]*y+nm[2]*z-g.ds[i]; if(over>worst){ worst=over; wn=nm; } }
+      if(!wn || worst<=1e-5){ out[0]=x+0.5; out[1]=y+0.5; out[2]=z+0.5; return; }
+      x-=wn[0]*(worst*1.85); y-=wn[1]*(worst*1.85); z-=wn[2]*(worst*1.85);
+      if(this.insideLocal(x,y,z)){ out[0]=x+0.5; out[1]=y+0.5; out[2]=z+0.5; return; }
+    }
+    for(let k=0;k<4;k++){ x=(x+ox-0.5)*0.5; y=(y+oy-0.5)*0.5; z=(z+oz-0.5)*0.5;
+      if(this.insideLocal(x,y,z)){ out[0]=x+0.5; out[1]=y+0.5; out[2]=z+0.5; return; } }
+    const p=this.randomPoint(); out[0]=p[0]; out[1]=p[1]; out[2]=p[2];
+  }
+  resize(){ const r=this.c.getBoundingClientRect(); this.c.width=Math.max(1,Math.ceil(r.width*this.dpr)); this.c.height=Math.max(1,Math.ceil(r.height*this.dpr));
+    this.w=this.c.width; this.h=this.c.height; this.ctx.imageSmoothingEnabled=false; clearRender(this.ctx,this.w,this.h,this.alpha,'#050608'); }
+  field(x,y,z){ let s=0; for(let k=0;k<this.active.length;k++){const i=this.active[k]; s+=this.W[i]*phi3(this.MODES[i],x,y,z);} return s; }
+  prepareFreqs(){ const freqs=this._freqs, seen=this._freqSeen; freqs.length=0;
+    for(let k=0;k<this.active.length;k++){ const md=this.MODES[this.active[k]], l=md.l, m=md.m, n=md.n;
+      if(!seen[l]){ seen[l]=1; freqs.push(l); }
+      if(!seen[m]){ seen[m]=1; freqs.push(m); }
+      if(!seen[n]){ seen[n]=1; freqs.push(n); }
+    }
+    for(let i=0;i<freqs.length;i++) seen[freqs[i]]=0;
+    return freqs;
+  }
+  step(fr,dt,draw){
+    const {inv,ve,bs,floor,respawn}=classicUpdateField(this,fr,dt);
+    const N=particleCount(this); this.ensureParticles(N);
+    const px=this.px,py=this.py,pz=this.pz,fv=this.fval;
+    const cosmic=STYLE==='cosmic'; if(cosmic) WebMask.ensure(this._t||0);
+    const wh=winHalf(this.zoom), lo=0.5-wh, hi=0.5+wh, box=wh<0.5;
+    const active=this.active, modes=this.MODES, W=this.W, sx=this._sinX, sy=this._sinY, sz=this._sinZ, freqs=this.prepareFreqs(), confined=this._confined;
+    for(let i=0;i<N;i++){ const x=px[i], y=py[i], z=pz[i];
+      for(let f=0;f<freqs.length;f++){ const q=FREQ_PI[freqs[f]]; sx[freqs[f]]=Math.sin(q*x); sy[freqs[f]]=Math.sin(q*y); sz[freqs[f]]=Math.sin(q*z); }
+      let field=0;
+      for(let k=0;k<active.length;k++){ const mi=active[k], md=modes[mi];
+        field+=W[mi]*(sx[md.l]*sy[md.m]*sz[md.n]+sx[md.m]*sy[md.n]*sz[md.l]+sx[md.n]*sy[md.l]*sz[md.m]); }
+      const m=Math.abs(field*inv); fv[i]=m; const sc=bs*(Math.pow(m,ve)+floor);
+      let nx=px[i]+(Math.random()-0.5)*sc, ny=py[i]+(Math.random()-0.5)*sc, nz=pz[i]+(Math.random()-0.5)*sc;
+      this.confineInto(nx,ny,nz,px[i],py[i],pz[i],confined); nx=confined[0]; ny=confined[1]; nz=confined[2];
+      if(box){ let bx=nx<lo?lo+(lo-nx):nx>hi?hi-(nx-hi):nx, by=ny<lo?lo+(lo-ny):ny>hi?hi-(ny-hi):ny, bz=nz<lo?lo+(lo-nz):nz>hi?hi-(nz-hi):nz;
+        if(bx<lo)bx=lo;else if(bx>hi)bx=hi; if(by<lo)by=lo;else if(by>hi)by=hi; if(bz<lo)bz=lo;else if(bz>hi)bz=hi;
+        if(this.insideLocal(bx-0.5,by-0.5,bz-0.5)){ nx=bx;ny=by;nz=bz; } }
+      if(Math.random()<respawn){ const p=this.winPoint(wh); nx=p[0]; ny=p[1]; nz=p[2]; }
+      else if(cosmic){ const wv=WebMask.sample(nx,ny); if(wv<0.16 && Math.random()<0.04+0.16*(0.16-wv)){ const p=this.winPoint(wh); nx=p[0]; ny=p[1]; nz=p[2]; } }
+      px[i]=nx;py[i]=ny;pz[i]=nz; }
+    this._particleVersion++;
+    applySpin(this,dt);
+    if(draw) this.render(fr.energy);
+  }
+  project(X,Y,Z){ const R=this.R, x1=R[0]*X+R[1]*Y+R[2]*Z, y2=R[3]*X+R[4]*Y+R[5]*Z, z2=R[6]*X+R[7]*Y+R[8]*Z;
+    const ez=(this.zoom||1)*(this._motionZoom||1), s=(this._focal*ez)/(2.4-(this._cameraDepth||0)+z2); return {sx:this._hw+x1*s,sy:this._hh+y2*s,z2,s,vx:x1,vy:y2}; }
+  drawFrame(ctx){
+    ctx.strokeStyle='rgba(70,184,165,0.18)'; ctx.lineWidth=this.dpr; ctx.beginPath();
+    const g=this.polyGeom;
+    if(g.round){
+      const circle=(axis)=>{ const steps=96; for(let i=0;i<=steps;i++){ const a=i/steps*PI*2, r=g.r, ca=Math.cos(a)*r, sa=Math.sin(a)*r;
+          const x=axis===0?0:ca, y=axis===1?0:(axis===0?ca:sa), z=axis===2?0:sa, p=this.project(x,y,z); i?ctx.lineTo(p.sx,p.sy):ctx.moveTo(p.sx,p.sy); } };
+      circle(0); circle(1); circle(2);
+    } else {
+      for(const e of g.edges){ const A=g.verts[e[0]],B=g.verts[e[1]], pa=this.project(A[0],A[1],A[2]), pb=this.project(B[0],B[1],B[2]); ctx.moveTo(pa.sx,pa.sy); ctx.lineTo(pb.sx,pb.sy); }
+    }
+    ctx.stroke();
+  }
+  render(energy){ this._lastEnergy=energy;
+    if(!renderSurfaceVisible()){ this._renderPending=true; return; }
+    this._renderPending=false; RENDER_COUNT++; const ctx=this.ctx,w=this.w,h=this.h;
+    this._focal=Math.min(w,h)*0.92;this._hw=w/2;this._hh=h/2;
+    const cosmic=STYLE==='cosmic', sand=!cosmic;
+    clearRender(ctx,w,h,this.alpha, sand?(this.zoom>3?'#040405':'rgba(4,4,5,0.6)'):(this.zoom>3?'#050608':this.zoom>1.6?'rgba(5,6,8,0.55)':'rgba(5,6,8,0.42)'));
+    ctx.imageSmoothingEnabled=sand;
+    if(FRAME) this.drawFrame(ctx);
+    const N=particleCount(this); this.ensureParticles(N);
+    const px=this.px,py=this.py,pz=this.pz,fv=this.fval,t=this._t||0;
+    ctx.globalCompositeOperation=sand?'source-over':'lighter';
+    let cur=-1; if(cosmic){ WebMask.ensure(t); classicCosmicBuckets(px,py,fv,N,t,energy); } else ctx.fillStyle=classicSandColor(energy);
+    const effectiveZoom=this.zoom*(this._motionZoom||1), shp=sandSharpen(effectiveZoom), shpC=cosmicSharpen(effectiveZoom), sandTerms=sand?sandAlphaTerms(shp):null;
+    const clipCircle=circleClipEnabled(), ccx=w*0.5, ccy=h*0.5, cr=Math.min(w,h)*0.5, cr2=cr*cr;
+    const R=this.R, focal=this._focal*effectiveZoom, cameraDepth=this._cameraDepth||0, hw=this._hw, hh=this._hh, radialLight=LIGHT===7||LIGHT===8;
+    const sweepAngle=LIGHT===9?t*0.9:0, sweepX=LIGHT===9?Math.cos(sweepAngle):0, sweepY=LIGHT===9?Math.sin(sweepAngle):0, maxCss=this.zoom>1.3?2.4:2.8;
+    for(let oi=0;oi<N;oi++){ const i=cosmic?_order[oi]:oi;
+      if(cosmic && _cb[i]!==cur){ cur=_cb[i]; ctx.fillStyle=COSMIC_PAL[cur]; }
+      const lx=px[i]-0.5,ly=py[i]-0.5,lz=pz[i]-0.5;
+      const x1=R[0]*lx+R[1]*ly+R[2]*lz, y2=R[3]*lx+R[4]*ly+R[5]*lz, z2=R[6]*lx+R[7]*ly+R[8]*lz;
+      const ps=focal/(2.4-cameraDepth+z2), sxp=hw+x1*ps, syp=hh+y2*ps;
+      if(clipCircle && outsideCircle(sxp,syp,ccx,ccy,cr2)) continue;
+      const onNode=Math.max(0,1-fv[i]*1.7), vf=cosmic?WebMask.visAt(px[i],py[i]):1, depth=(z2+1.2)/2.4, sz=Math.max(0.7,ps*0.0017*(0.6+depth));
+      const rr=radialLight?Math.sqrt(lx*lx+ly*ly+lz*lz)*2:0, L=light3(x1,y2,depth,rr,sweepX,sweepY);
+      if(sand){ ctx.globalAlpha=classicSandAlpha(onNode,sandTerms)*L*vf; classicDrawGrain(ctx,i,sxp,syp,sz,this.dpr,maxCss); }
+      else { const CL=cosmicLightFactor(L); ctx.globalAlpha=classicCosmicGlowAlpha(onNode,shpC)*CL*vf; drawSharpParticle(ctx,sxp,syp,sz,this.dpr,maxCss); }
+      if(cosmic) drawStar(ctx,i,sxp,syp,sz,onNode,vf,t,L); }
+    if(cosmic) classicCosmicBloom(this);
+    ctx.globalAlpha=1; ctx.globalCompositeOperation='source-over'; }
+  freeze(){ this.autoRot=false; this.render(0.2); }
+  domMode(){ let d=0,dv=0; for(let i=0;i<this.K;i++){const a=Math.abs(this.W[i]); if(a>dv){dv=a;d=i;}} const m=this.MODES[d]; return `(${m.l},${m.m},${m.n})`; }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   4 · ATOMS — 9 synthetic feature-frame generators (drive whichever view is active)
+   ════════════════════════════════════════════════════════════════════════ */
+const ATOM_DUR=2.4, lerp=(a,b,t)=>a+(b-a)*t, bell=u=>Math.exp(-Math.pow((u-0.5)/0.22,2));
+const ATOMS=[
+ {n:1,id:'onset-scatter',name:'瞬态散开',rule:'包络→缓动 · 击打甩开再落定',frame:u=>({bands:bandPeak(0.35,0.12),energy:0.2+1.6*(u<0.06?1:Math.exp(-(u-0.06)*6)),sharpness:0.5})},
+ {n:2,id:'pitch-climb',name:'音高攀升',rule:'音高→模阶 · 越高越细密',frame:u=>({bands:bandPeak(lerp(0.12,0.92,u),0.09),energy:0.9,sharpness:0.3+0.5*u})},
+ {n:3,id:'mode-morph',name:'频谱漂移',rule:'频谱位移→图形连续 morph',frame:u=>{const b=new Float64Array(NBANDS);const ph=u*2*PI;const add=(p,w)=>{const k=bandPeak(p,0.09);for(let i=0;i<NBANDS;i++)b[i]+=Math.max(0,w)*k[i];};add(0.25,Math.cos(ph));add(0.55,Math.cos(ph-2.1));add(0.82,Math.cos(ph-4.2));return {bands:b,energy:0.85,sharpness:0.45};}},
+ {n:4,id:'energy-bloom',name:'能量涨落',rule:'RMS→振幅呼吸',frame:u=>({bands:bandPeak(0.4,0.12),energy:0.15+1.5*bell(u),sharpness:0.4})},
+ {n:5,id:'centroid-sharpen',name:'明暗锐化',rule:'质心→线条/面锐利度',frame:u=>{const b=new Float64Array(NBANDS);const lo=bandPeak(0.3,0.12),hi=bandPeak(0.85,0.08);for(let i=0;i<NBANDS;i++)b[i]=(1-0.6*u)*lo[i]+0.6*u*hi[i];return {bands:b,energy:0.9,sharpness:0.15+0.8*u};}},
+ {n:6,id:'bass-pulse',name:'低频脉动',rule:'低频→整体呼吸',frame:u=>({bands:bandPeak(0.04,0.08),energy:0.3+1.3*(0.5+0.5*Math.sin(u*2*PI*4)),sharpness:0.2})},
+ {n:7,id:'decay-settle',name:'余响结晶',rule:'音尾 Q→缓慢结晶',frame:u=>({bands:bandPeak(0.5,0.12),energy:0.2+1.7*Math.exp(-u*4),sharpness:0.55})},
+ {n:8,id:'stereo-split',name:'左右分离',rule:'声像→两组结构偏置',frame:u=>{const b=new Float64Array(NBANDS);const l=0.5+0.5*Math.sin(u*2*PI*2);const A=bandPeak(0.32,0.09),B=bandPeak(0.72,0.09);for(let i=0;i<NBANDS;i++)b[i]=l*A[i]+(1-l)*B[i];return {bands:b,energy:0.9,sharpness:0.4};}},
+ {n:9,id:'silence-collapse',name:'静默消散',rule:'留白→图形溶解归位',frame:u=>{const on=u<0.55?1:Math.max(0,1-(u-0.55)*4);const k=bandPeak(0.45,0.12),b=new Float64Array(NBANDS);for(let i=0;i<NBANDS;i++)b[i]=on*k[i];return {bands:b,energy:0.2+1.0*on,sharpness:0.4};}},
+];
+
+/* ════════════════════════════════════════════════════════════════════════
+   5 · VIEW STATE + WIRING
+   ════════════════════════════════════════════════════════════════════════ */
+const VIEW='3d';   // 3D only — the 2D plate view was removed
+const viewtag=document.getElementById('viewtag');
+
+/* gallery: each cell is a 3D cube demo */
+const grid=document.getElementById('atom-grid');
+const cubeRenderers=[];
+const SHOW_ATOM_GRID=!(NATIVE_OVERLAY||PARITY_TEST);
+const cells=SHOW_ATOM_GRID ? ATOMS.map(atom=>{
+  const cell=document.createElement('article'); cell.className='cell';
+  cell.innerHTML=`<span class="num">${String(atom.n).padStart(2,'0')}</span>
+    <div class="cv"><canvas class="c3"></canvas></div>
+    <div class="name">${atom.name}</div><div class="rule">${atom.rule}</div>`;
+  grid.appendChild(cell);
+  const c3=cell.querySelector('.c3');
+  const cube=new Cube(c3,2600);  cube.dpr=1;  cube.resize();
+  cubeRenderers.push(cube);
+  let raf=null,start=0;
+  function loop(ts){ if(!start)start=ts; const u=(ts-start)/1000*SPEED/ATOM_DUR;
+    if(u>=1||reduced){ cube.autoRot=false; cube.step(atom.frame(0.999),0.016,true); cube.freeze(); raf=null; return; }
+    cube.autoRot=true; cube.step(atom.frame(u),0.016,true); raf=requestAnimationFrame(loop); }
+  function play(){ if(raf)cancelAnimationFrame(raf); cube.scatter(); start=0; raf=requestAnimationFrame(loop); }
+  function still(){ if(raf){cancelAnimationFrame(raf);raf=null;} cube.autoRot=false; prime(cube, atom.frame(0.55), 55); }  // settled, no motion
+  cell.addEventListener('click', play);                 // each atom animates only when clicked
+  return {play,still};
+}) : [];
+if(SHOW_ATOM_GRID) cells.forEach(c=>c.still());         // gallery sits still until a card is clicked
+
+/* hero: the 3D solid */
+const h3=document.getElementById('hero-3d');
+function buildScreenSaverParticleData(r,energy,forceCosmic=false){
+  const N=particleCount(r), cosmic=forceCosmic||STYLE==='cosmic', t=r._t||0;
+  if(cosmic){ WebMask.ensure(t); classicCosmicBuckets(r.px,r.py,r.fval,N,t,energy); }
+  const data=new Float32Array(N*6), px=r.px,py=r.py,pz=r.pz,fv=r.fval;
+  for(let i=0,o=0;i<N;i++,o+=6){
+    const onNode=Math.max(0,1-fv[i]*1.7), web=cosmic?WebMask.visAt(px[i],py[i]):1;
+    data[o]=px[i]-0.5; data[o+1]=py[i]-0.5; data[o+2]=pz[i]-0.5; data[o+3]=onNode; data[o+4]=web;
+    data[o+5]=cosmic?_cb[i]:0;                                   // palette bucket; native reconstructs the exact Web colour
+  }
+  return {data,count:N};
+}
+function floatDataToBase64(data){
+  const bytes=new Uint8Array(data.buffer,data.byteOffset,data.byteLength), chunk=32768; let binary='';
+  for(let i=0;i<bytes.length;i+=chunk) binary+=String.fromCharCode.apply(null,bytes.subarray(i,Math.min(bytes.length,i+chunk)));
+  return btoa(binary);
+}
+const cube=new Cube(h3,240000); // ARRAY capacity; windowed budget = baseN below, the rest is fullscreen-boost headroom
+cube.baseN=180000;
+const classic=new ClassicCube(h3,180000);                  // codex 原版引擎 — shares the hero canvas; only the active engine draws
+cubeRenderers.push(cube); cubeRenderers.push(classic);
+/* Hidden SCRATCH engines (one per engine type) settle a diced/recalled figure OFF-SCREEN, spread
+   over rAF frames, while the visible figure keeps rotating — then we swap the particle arrays in
+   for an INSTANT, hitch-free cut. Never drawn to the display. */
+const prepCube=new Cube(document.createElement('canvas'),240000); prepCube.baseN=180000;
+const prepClassic=new ClassicCube(document.createElement('canvas'),180000);
+function activeCube(){ return (STYLE==='sand'||STYLE==='dcosmic') ? cube : classic; }   // 动态声沙/动态宇宙网 = fable engine; 模态声沙/宇宙网 = classic (codex verbatim)
+function scratchFor(a){ return a===cube ? prepCube : prepClassic; }
+const PATTERN_ARRS=['px','py','pz','vx','vy','vz','fval','hval','gval','W','_A','_tw','_avg','_pb'];
+const PATTERN_SCALARS=['active','_goal','_c','_ex','_exGoal','_t','_pe','_beat','_nov','_pk','_sampleCount','_lastSample','_lastBeat','_lastReset','_barTag','_seededN','_particleVersion'];
+function swapPattern(a,b){                                  // O(1) reference swap of the pattern-carrying state (a,b same class)
+  for(const k of PATTERN_ARRS){ const t=a[k]; a[k]=b[k]; b[k]=t; }
+  for(const k of PATTERN_SCALARS){ const t=a[k]; a[k]=b[k]; b[k]=t; }
+}
+cube.zoom=ZOOM_3D; classic.zoom=ZOOM_3D;
+cube.dpr=displayDpr(); cube.resize();                      // redraw at device resolution; zoom never scales an old bitmap
+classic.dpr=displayDpr();
+const badgeMode=document.getElementById('badge-mode'), badgeEnergy=document.getElementById('badge-energy'), badgeBpm=document.getElementById('badge-bpm');
+const BUILT_IN_AUDIO_NAME='pulsebox-lofi-production-522875.mp3';
+const BUILT_IN_AUDIO_URL=new URL(`assets/${BUILT_IN_AUDIO_NAME}`,document.baseURI).href;
+const BUILT_IN_AUDIO_ENABLED=!NATIVE_HOST&&!PARITY_TEST;
+let srcKind=NATIVE_HOST?'system':'file', audio=new AudioSource(), mic=new MicSource(), system=new NativeSystemSource(), playing=false, frozen=false, heroRaf=null, last=0, lastPaint=0;
+let builtInAudioReady=Promise.resolve(false);
+function showBuiltInAudioMeta(){ const duration=audio.duration();
+  document.getElementById('hero-meta').textContent=BUILT_IN_AUDIO_NAME+(duration?` · ${fmtTime(Math.round(duration))}`:''); }
+function syncSourceControls(){
+  document.querySelectorAll('#src button').forEach(b=>b.classList.toggle('on',b.dataset.src===srcKind));
+  document.getElementById('file-slot').style.display=srcKind==='file'?'inline':'none';
+  document.getElementById('mic-slot').style.display=srcKind==='mic'?'inline':'none';
+}
+if(BUILT_IN_AUDIO_ENABLED){
+  showBuiltInAudioMeta();
+  builtInAudioReady=audio.loadURL(BUILT_IN_AUDIO_URL).then(()=>{ showBuiltInAudioMeta(); return true; }).catch(()=>{
+    document.getElementById('hero-meta').textContent='内置驱动音频加载失败'; return false;
+  });
+}
+syncSourceControls();
+function stillFrameForView(){ return STILL_FRAME_3D; }
+function idleTimeFrameForView(){ return IDLE_TIME_FRAME_3D; }
+function markHeroPrimed(){ activeCube()._heroPrimed=true; }
+function ensureHeroPrimed(steps=80){
+  const r=activeCube();
+  if(!r._heroPrimed){ prime(r, STILL_FRAME_3D, steps); r._heroPrimed=true; }
+  return r;
+}
+
+function curFrame(){ return srcKind==='file' ? audio.frame() : (srcKind==='mic' ? mic.frame() : system.frame()); }   // only called while playing
+function fmtTime(sec){ sec=Math.max(0,sec||0); const h=(sec/3600)|0, m=((sec%3600)/60)|0, s=(sec%60)|0;
+  return h ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}` : `${m}:${String(s).padStart(2,'0')}`; }
+function relaxMotionWarp(dt){
+  ROTWARP+=(1-ROTWARP)*Math.min(1,dt*3);
+  BREATH+=(1-BREATH)*Math.min(1,dt*3);
+}
+function shouldPaintHero(ts){
+  if(!renderSurfaceVisible())return false;
+  if(!lastPaint){ lastPaint=ts; return true; }
+  const due=lastPaint+MIN_RENDER_INTERVAL;
+  if(ts+0.5<due)return false;
+  lastPaint=ts-due>MIN_RENDER_INTERVAL*2?ts:due;
+  return true;
+}
+function cancelHeroFrame(){
+  if(heroRaf) cancelAnimationFrame(heroRaf);
+  heroRaf=null;
+}
+function scheduleHeroFrame(){
+  heroRaf=requestAnimationFrame(heroLoop);
+}
+function stepDrivenFrame(r,fr,dt,draw){
+  if(PHYS){ PULSE.ingest(fr,dt*SPEED); const rs=PULSE.snap(); fr.rhythm=rs;
+    VIBE_WARM+=(rs.vibe.warm-VIBE_WARM)*Math.min(1,dt*0.4);
+    if(rs.conf>0.35){ const sw=Math.max(0.5,Math.min(0.72,rs.swing)), dphi=rs.phase<sw?0.5/sw:0.5/(1-sw);
+      ROTWARP+=((1+(dphi-1)*Math.min(1,rs.conf)*0.55)-ROTWARP)*Math.min(1,dt*8);
+      BREATH+=((1+0.012*Math.min(1,rs.conf)*Math.exp(-rs.barPhase*5))-BREATH)*Math.min(1,dt*6); }
+    else relaxMotionWarp(dt);
+    badgeBpm.textContent=rs.conf>0.4?(Math.round(rs.bpm)+'bpm'+(rs.swing>0.545?(' · sw'+Math.round(rs.swing*100)+'%'):'')):'—';
+  } else { fr.rhythm=null; relaxMotionWarp(dt); badgeBpm.textContent='—'; }
+  r.step(fr,dt*SPEED,draw);
+  if(draw){ badgeMode.textContent=r.domMode(); badgeEnergy.textContent=fr.energy.toFixed(2); }
+}
+function heroLoop(ts){
+	  heroRaf=null;
+  const rawDt=(ts-last)/1000; const dt=Math.min(0.05,rawDt)||0.016;
+  if(last>0){ const fps=1/Math.min(0.2,Math.max(0.001,rawDt)); FPS=FPS?FPS*0.9+fps*0.1:fps;
+    if(!PARITY_TEST){   // parity runs must stay deterministic: adaptive quality would fork the RNG streams
+      if(FPS<32&&QUALITY>0.5) QUALITY-=0.05; else if(FPS<48&&QUALITY>0.62) QUALITY-=0.015; else if(FPS>55&&QUALITY<1) QUALITY=Math.min(1,QUALITY+0.02); } }  // fast down, hysteretic up; floor 0.5 keeps density decent
+	  last=ts;
+	  const r=activeCube(), draw=shouldPaintHero(ts);
+	  if(playing) stepDrivenFrame(r,curFrame(),dt,draw);
+	  else if(SAMPLE_MODE==='time' && !frozen){ relaxMotionWarp(dt);
+	    r.step(idleTimeFrameForView(),dt*SPEED,draw); if(draw)badgeMode.textContent=r.domMode(); }   // 定时 = autonomous clock: morph the pattern on its timer even without audio (step() also keeps any auto-rotate)
+	  else { relaxMotionWarp(dt);
+	    applySpin(r,dt); if(draw)r.render(0.25); }                  // beat-mode idle / paused: just auto-rotate the frozen figure (no stepping); rhythm warps relax to neutral
+	  if(renderSurfaceVisible() && (playing || r.autoRot || (SAMPLE_MODE==='time' && !frozen)) && !reduced) scheduleHeroFrame(); else heroRaf=null;
+	}
+function ensureLoop(){ if(renderSurfaceVisible() && !reduced && !heroRaf && (playing || activeCube().autoRot || (SAMPLE_MODE==='time' && !frozen))){ last=0; lastPaint=0; scheduleHeroFrame(); } }
+function syncRenderSurface(){
+  if(!renderSurfaceVisible()){
+	    if(heroRaf) cancelHeroFrame();
+    return;
+  }
+  const r=activeCube(); if(r._renderPending)r.render(r._lastEnergy==null?0.3:r._lastEnergy); ensureLoop();
+}
+function setHostVisibility(visible){ HOST_VISIBLE=visible!==false; syncRenderSurface(); }
+document.addEventListener('visibilitychange',syncRenderSurface);
+function startHero(){ cancelInitialPrime(); frozen=false; PULSE.reset(); badgeBpm.textContent='—'; ensureHeroPrimed(); if(reduced){ activeCube().render(0.4); return; } last=0; ensureLoop(); }   // motion (audio) begins; rotation is independent; rhythm tracker relearns per session
+function freezeHero(){ const r=activeCube();
+  if(r.autoRot && !reduced){ last=0; ensureLoop(); }         // stopped audio but still auto-rotating → keep the spin loop
+	  else { if(heroRaf) cancelHeroFrame(); r.render(0.25); } }
+let stillRenderRaf=0, stillRenderRuns=0, zoomSettleTimer=0;
+function scheduleStillRender(energy=0.3){
+  if(playing || heroRaf || stillRenderRaf) return;
+  stillRenderRaf=requestAnimationFrame(()=>{
+    stillRenderRaf=0;
+    stillRenderRuns++;
+    activeCube().render(energy);
+  });
+}
+function scheduleZoomSettle(){
+  if(playing || PARITY_TEST) return;
+  clearTimeout(zoomSettleTimer);
+  zoomSettleTimer=setTimeout(()=>{
+    zoomSettleTimer=0;
+    if(playing || heroRaf) return;
+	    const r=activeCube();
+	    prime(r,stillFrameForView(),80); markHeroPrimed();
+	    scheduleStillRender(0.3);
+	  },90);
+	}
+
+// Settle the first figure progressively; parity/export keeps the synchronous path for deterministic output.
+if(PARITY_TEST){
+  const r=ensureHeroPrimed(80); r.render(0.3); badgeMode.textContent=r.domMode(); badgeEnergy.textContent='0.00';
+  if(!reduced) ensureLoop();
+} else {
+  const r=activeCube();
+  primeIncrementally(r,STILL_FRAME_3D,80,()=>{ badgeMode.textContent=r.domMode(); if(!reduced)ensureLoop(); });
+  badgeMode.textContent=r.domMode(); badgeEnergy.textContent='0.00';
+}
+
+function solidLabel(){
+  if(POLY_N>16) return '圆形';
+  return SOLID_SHAPE==='random' ? `不规则${POLY_N}面体` : `正${POLY_N}面体`;
+}
+function updateViewTag(){ viewtag.textContent = `3D · ${solidLabel()}`; }
+let leftCommandDown=false;
+window.addEventListener('keydown',e=>{
+  if(e.code==='MetaLeft') leftCommandDown=true;
+});
+window.addEventListener('keyup',e=>{ if(e.code==='MetaLeft') leftCommandDown=false; });
+window.addEventListener('blur',()=>{ leftCommandDown=false; });
+
+const playBtn=document.getElementById('play'); let loading=false;
+audio.onended=()=>{ if(srcKind==='file' && playing){ playing=false; playBtn.textContent='▶ 播放'; freezeHero(); } };
+mic.onended=()=>{ if(srcKind==='mic' && playing){ playing=false; playBtn.textContent='▶ 播放'; freezeHero(); } };
+playBtn.onclick=async ()=>{
+  if(loading) return;                                   // ignore clicks while the engine/audio is starting
+  if(playing){ playing=false; playBtn.textContent='▶ 播放'; audio.stop(); mic.stop(); system.stop(); freezeHero(); return; }   // stop → silence + hold still
+  if(srcKind==='file'){
+    if(!audio.loaded && BUILT_IN_AUDIO_ENABLED && audio.builtIn){
+      audio.ensureGraph();                              // create/resume inside the real click before awaiting preload
+      if(audio.ctx.state==='suspended') audio.ctx.resume().catch(()=>{});
+      loading=true; playBtn.textContent='加载中…'; await builtInAudioReady; loading=false;
+    }
+    if(!audio.loaded){ playBtn.textContent='▶ 播放'; alert('先选择一个音频文件'); return; }
+    try{ const ok=await audio.play(); if(!ok) throw new Error('not-loaded'); }
+    catch(e){ alert('音频播放失败。请换一个浏览器支持的音频文件,或重新选择文件后再试。'); return; }
+    playing=true;
+    playBtn.textContent='■ 停止'; playBtn.blur(); startHero(); return; }
+  if(srcKind==='system'){
+    system.play();
+    document.getElementById('hero-meta').textContent='系统音频 · 正在捕获';
+    playing=true;
+    playBtn.textContent='■ 停止'; playBtn.blur(); startHero(); return; }
+  if(srcKind==='mic'){
+    loading=true; playBtn.textContent='授权中…';
+    const res=await mic.play();
+    loading=false;
+    if(!res.ok){ playBtn.textContent='▶ 播放'; alert('麦克风开启失败。请确认浏览器允许当前页面使用麦克风。'); return; }
+    document.getElementById('hero-meta').textContent='麦克风 · 实时输入';
+    refreshMicDevices();                                  // labels are available now that permission is granted
+    playing=true;
+    playBtn.textContent='■ 停止'; playBtn.blur(); startHero(); return; }
+};
+document.getElementById('audio-file').addEventListener('change',async e=>{ const f=e.target.files[0]; if(!f)return;
+  if(srcKind==='file' && playing){ playing=false; playBtn.textContent='▶ 播放'; freezeHero(); }
+  try{ await audio.load(f); const dur=audio.duration(); document.getElementById('hero-meta').textContent=f.name+(dur?` · ${fmtTime(dur)}`:''); }
+  catch(err){ document.getElementById('hero-meta').textContent='音频加载失败'; alert('音频加载失败。请换一个浏览器支持的音频格式。'); }
+});
+document.getElementById('src').addEventListener('click',e=>{ const k=e.target.dataset.src; if(!k)return; srcKind=k;
+  syncSourceControls();
+  if(k==='mic') refreshMicDevices();                         // show available inputs (labels appear after permission)
+  if(k==='system') document.getElementById('hero-meta').textContent=system.status;
+  else if(k==='file' && audio.builtIn) showBuiltInAudioMeta();
+  else if(k==='file' && !audio.loaded) document.getElementById('hero-meta').textContent='音频文件 · 选择文件';
+  else if(k==='mic') document.getElementById('hero-meta').textContent='麦克风 · 授权中';
+  if(playing) playBtn.click();                               // stop whatever is currently playing (synchronous → playing=false)
+  // Start the mic INSIDE this real click so the AudioContext keeps user activation and actually runs.
+  if(k==='mic' && !playing && !loading) playBtn.click(); });
+// ── microphone input-device picker ──────────────────────────────────────
+const micDeviceSel=document.getElementById('mic-device');
+async function refreshMicDevices(){
+  const devs=await mic.listDevices();
+  const cur=mic.stream && mic.stream.getAudioTracks && mic.stream.getAudioTracks()[0];
+  const curId=(cur && cur.getSettings && cur.getSettings().deviceId) || mic.deviceId || '';
+  micDeviceSel.innerHTML='';
+  if(!devs.length){ const o=document.createElement('option'); o.value=''; o.textContent='(无可用麦克风 — 先授权)'; micDeviceSel.appendChild(o); return; }
+  devs.forEach((d,i)=>{ const o=document.createElement('option'); o.value=d.deviceId;
+    o.textContent=d.label||('麦克风 '+(i+1)); if(d.deviceId===curId) o.selected=true; micDeviceSel.appendChild(o); });
+}
+micDeviceSel.addEventListener('change', async ()=>{
+  mic.deviceId=micDeviceSel.value||null;
+  if(!(srcKind==='mic' && playing)) return;                 // not live yet → just remember the choice; it's used on next play
+  mic.stop();                                               // drop old stream so play() re-acquires with the new deviceId
+  const res=await mic.play();
+  if(!res.ok){ alert('切换麦克风失败,请重试或换一个设备。'); return; }
+  refreshMicDevices();
+});
+// keep the list fresh if the user plugs/unplugs a device
+if(navigator.mediaDevices) navigator.mediaDevices.addEventListener&&navigator.mediaDevices.addEventListener('devicechange',()=>{ if(srcKind==='mic') refreshMicDevices(); });
+document.getElementById('style').addEventListener('click',e=>{ const s=e.target.dataset.style; if(!s)return;
+  const prev=activeCube(); STYLE=s; syncStyleDetail(); const a=activeCube();
+  document.querySelectorAll('#style button').forEach(b=>b.classList.toggle('on',b===e.target));
+  if(a!==prev){                                          // engine handoff: keep orientation/rotation continuous on the shared canvas
+    a.R=prev.R.slice(); a._prec=prev._prec; a.autoRot=prev.autoRot; a.zoom=ZOOM_3D; a.dpr=displayDpr(); a.alpha=prev.alpha; a.resize();
+    a.setShape(SOLID_SHAPE,POLY_N,POLY_SEED);
+    cube.vx.fill(0); cube.vy.fill(0); cube.vz.fill(0);   // the physics engine must not keep stale momentum across a swap
+    if(!playing){ prime(a,STILL_FRAME_3D,80); a._heroPrimed=true; }
+    updRotBtn(); updPval(); ensureLoop(); }
+  if(!heroRaf) activeCube().render(playing?0.5:0.3); });   // repaint resting hero immediately; live loop picks it up next frame
+/* sampling mode (beat / fixed-time), evolution pace, particle count — all user-adjustable */
+const pval=document.getElementById('pval');
+function updPval(){ pval.textContent=Math.round(PCT*100)+'%'; }
+function resetPatternClock(){
+  [cube,classic].forEach(o=>{ o._ex=null; o._exGoal=null; o._barTag=null; o._goal=null; o._c=null; o._lastSample=-9; o._lastBeat=-9; o._lastReset=-9; });
+}
+function updTimeIntervalControls(normalizeInput=true){
+  const ctrl=document.getElementById('timeIntervalCtrl');
+  ctrl.style.display=SAMPLE_MODE==='time'?'flex':'none';
+  if(normalizeInput) document.getElementById('patternInterval').value=String(TIME_SAMPLE_INTERVAL);
+  document.getElementById('patternIntervalVal').textContent=TIME_SAMPLE_INTERVAL.toFixed(2)+'s';
+  document.querySelectorAll('#timePreset button').forEach(b=>b.classList.toggle('on',Math.abs(Number(b.dataset.ti)-TIME_SAMPLE_INTERVAL)<1e-6));
+}
+function setPatternInterval(value,normalizeInput=true){
+  TIME_SAMPLE_INTERVAL=clampPatternInterval(value);
+  resetPatternClock();
+  updTimeIntervalControls(normalizeInput);
+  if(!playing && !PARITY_TEST) ensureLoop();   // keep the 定时 clock ticking when the interval changes while idle
+}
+document.getElementById('sample').addEventListener('click',e=>{ const m=e.target.dataset.sm; if(!m)return; SAMPLE_MODE=m; frozen=false; resetPatternClock();
+  document.querySelectorAll('#sample button').forEach(b=>b.classList.toggle('on',b===e.target)); updTimeIntervalControls(); if(!PARITY_TEST) ensureLoop(); });
+/* 🎲 / recall a static pattern — usable with no audio and WITHOUT freezing the picture.
+   The new figure settles on a HIDDEN scratch engine, spread across rAF frames (the visible figure
+   keeps rotating), then its particle arrays are swapped in for an instant, hitch-free cut.
+   While music plays we skip the prep and just nudge the live figure toward the new target. */
+let dicePrep=null;
+function patternTargetFor(r,spec){                                   // resolve {goal,ex} — explicit (recall) or random (dice)
+  const cutoff=cutoffIndex(r.MODES), span=Math.max(3,cutoff);
+  const goal = (spec&&spec.goal!=null) ? spec.goal : span*(0.12+0.8*Math.random());
+  const ex = (spec&&spec.ex) ? spec.ex.slice() : [0.16+0.68*Math.random(),0.16+0.68*Math.random(),0.16+0.68*Math.random()];
+  return {goal:Math.max(span*0.08,Math.min(cutoff,goal)), ex};
+}
+function preparePattern(spec){
+  cancelInitialPrime();
+  const active=activeCube();
+  if(playing){                                                       // live: just retarget, the loop glides there (no freeze anyway)
+    const t=patternTargetFor(active,spec);
+    active._goal=t.goal; active._exGoal=t.ex; active._barTag=null; active._lastSample=active._t||0; active._lastReset=-9;
+    ensureLoop(); return;
+  }
+  const scratch=scratchFor(active), t=patternTargetFor(scratch,spec);
+  scratch.zoom=active.zoom; scratch.w=active.w; scratch.h=active.h;   // match particleCount (screenBoost reads w/h) so the swap is 1:1
+  scratch.setShape(SOLID_SHAPE,POLY_N,POLY_SEED);
+  scratch.R=active.R.slice(); scratch._prec=active._prec; scratch.autoRot=active.autoRot;
+  scratch._goal=t.goal; scratch._c=t.goal; scratch._ex=t.ex.slice(); scratch._exGoal=t.ex.slice();
+  scratch._barTag=null; scratch._lastSample=1e9; scratch._lastBeat=1e9; scratch._lastReset=1e9; scratch._sampleCount=0;   // freeze re-sampling during the off-screen settle → the prepared figure is exactly the target
+  scratch._t=0; scratch._pe=null; scratch._avg=null; scratch._pb=null;
+  if(scratch._A) scratch._A.fill(0); if(scratch._tw) scratch._tw.fill(0); scratch.W.fill(0);
+  scratch._gLo=null; scratch._slab=0; scratch.scatter(); scratch._boost=2.6;
+  if(dicePrep) cancelAnimationFrame(dicePrep.raf);
+  let done=0; const TOTAL=90;                                        // one settle step per frame keeps pattern refresh inside the frame budget
+  const finish=()=>{ scratch._boost=1; swapPattern(active,scratch); active._gLo=null;
+    active._lastSample=active._t||0; active._lastBeat=-9; active._lastReset=-9; markHeroPrimed();   // restart the pattern clock cleanly after the swap
+    badgeMode.textContent=active.domMode(); dicePrep=null;
+    if(active.autoRot && !reduced){ last=0; ensureLoop(); } else if(!heroRaf) active.render(0.3); };
+  const tick=()=>{ scratch.step(STILL_FRAME_3D,0.016,false); done++;
+    if(done<TOTAL){ dicePrep.raf=requestAnimationFrame(tick); } else finish(); };
+  dicePrep={raf:requestAnimationFrame(tick)};
+}
+function diceStill(){ preparePattern(null); }
+document.getElementById('diceBtn').addEventListener('click',diceStill);
+
+/* ── favourites: save a liked pattern (localStorage), recall/delete it later ── */
+function loadFaves(){ try{ return JSON.parse(localStorage.getItem('soundMotionFaves')||'[]'); }catch(e){ return []; } }
+function saveFaves(a){ try{ localStorage.setItem('soundMotionFaves',JSON.stringify(a)); }catch(e){} }
+function capturePattern(){ const r=activeCube();
+  return {style:STYLE, goal:r._goal, ex:r._ex?r._ex.slice():null, shape:SOLID_SHAPE, polyN:POLY_N, polySeed:POLY_SEED, detail:DETAIL_SCALE, sym:SYMMETRIC}; }
+function webDefaultPatternForStyle(style=STYLE){
+  const s=Object.prototype.hasOwnProperty.call(STYLE_DETAIL_DEFAULTS,style)?style:STYLE;
+  return {style:s,goal:WEB_DEFAULT_PATTERN.goal,ex:WEB_DEFAULT_PATTERN.ex.slice(),shape:WEB_DEFAULT_PATTERN.shape,
+    polyN:WEB_DEFAULT_PATTERN.polyN,polySeed:WEB_DEFAULT_PATTERN.polySeed,detail:STYLE_DETAIL_DEFAULTS[s],sym:WEB_DEFAULT_PATTERN.sym};
+}
+function applyPattern(p){ if(!p) return;
+  if(p.style && p.style!==STYLE) nativeClickSeg('#style','data-style',p.style);   // switch engine (+ all wiring) first
+  if(p.shape) setSolidShape(p.shape, p.polyN!=null?p.polyN:POLY_N, false);
+  if(p.polySeed!=null && p.polySeed!==POLY_SEED){ POLY_SEED=p.polySeed; for(const c of cubeRenderers) c.setShape(SOLID_SHAPE,POLY_N,POLY_SEED); }
+  if(p.detail!=null) nativeSetInput('detail',p.detail,false);
+  if(typeof p.sym==='boolean' && p.sym!==SYMMETRIC) symBtn.click();
+  preparePattern({goal:p.goal, ex:p.ex});
+}
+let faveCursor=-1;
+function savePattern(){ const a=loadFaves(); a.push(capturePattern()); saveFaves(a); faveCursor=a.length-1; renderFaves(); postNative({type:'faves',count:a.length}); }
+function deletePattern(i){ const a=loadFaves(); if(i<0||i>=a.length) return; a.splice(i,1); saveFaves(a); if(faveCursor>=a.length) faveCursor=a.length-1; renderFaves(); postNative({type:'faves',count:a.length}); }
+function cyclePattern(dir){ const a=loadFaves(); if(!a.length) return; faveCursor=(faveCursor+(dir||1)+a.length)%a.length; applyPattern(a[faveCursor]); }
+const STYLE_GLYPH={sand:'沙',dcosmic:'动宙',msand:'模沙',cosmic:'宙'};
+function renderFaves(){ const box=document.getElementById('faveChips'); if(!box) return; const a=loadFaves(); box.innerHTML='';
+  a.forEach((p,i)=>{ const chip=document.createElement('button'); chip.className='mini'; chip.textContent=(STYLE_GLYPH[p.style]||'?')+(i+1);
+    chip.title='点击载入 · 右键删除';
+    chip.addEventListener('click',()=>{ faveCursor=i; applyPattern(p); });
+    chip.addEventListener('contextmenu',e=>{ e.preventDefault(); deletePattern(i); });
+    box.appendChild(chip); }); }
+const saveBtnEl=document.getElementById('saveBtn'); if(saveBtnEl) saveBtnEl.addEventListener('click',savePattern);
+renderFaves();
+document.getElementById('timePreset').addEventListener('click',e=>{ if(!e.target.dataset.ti)return; setPatternInterval(e.target.dataset.ti); });
+document.getElementById('patternInterval').addEventListener('change',e=>{ setPatternInterval(e.target.value); });
+document.getElementById('patternInterval').addEventListener('input',e=>{ if(e.target.value!=='') setPatternInterval(e.target.value,false); });
+document.getElementById('evolve').addEventListener('input',e=>{ EVOLVE=parseFloat(e.target.value); });
+updTimeIntervalControls();
+const detailval=document.getElementById('detailval');
+function updDetailVal(){ detailval.textContent=detailAmount().toFixed(2)+'×'; }
+function syncStyleDetail(){
+  DETAIL_SCALE=STYLE_DETAIL_VALUES[STYLE];
+  document.getElementById('detail').value=String(DETAIL_SCALE);
+  updDetailVal();
+}
+function settleDetailStill(){
+  if(playing) return;
+  const r=activeCube();
+  prime(r,stillFrameForView(),Math.round(45+55*detailNorm())); markHeroPrimed();
+  if(r.autoRot && !reduced){ last=0; ensureLoop(); }
+}
+document.getElementById('detail').addEventListener('input',e=>{ DETAIL_SCALE=parseFloat(e.target.value); STYLE_DETAIL_VALUES[STYLE]=DETAIL_SCALE; updDetailVal(); if(!playing)activeCube().render(0.25); });
+document.getElementById('detail').addEventListener('change',settleDetailStill);
+updDetailVal();
+document.getElementById('pcount').addEventListener('input',e=>{ PCT=parseFloat(e.target.value); updPval(); if(!playing)activeCube().render(0.25); });
+document.getElementById('pcount').addEventListener('change',()=>{ if(!playing && !heroRaf){ const r=activeCube(); prime(r,stillFrameForView(),55); markHeroPrimed(); } });
+updPval();
+const zval=document.getElementById('zval');
+const zoomInput=document.getElementById('zoom');
+function currentZoom(){ return ZOOM_3D; }
+function updZval(){ const z=currentZoom(); zval.textContent=(z<1?z.toFixed(2):z.toFixed(1))+'×'; }
+function syncZoomInput(){ const z=currentZoom(); zoomInput.value=String(z); updZval(); }
+function setZoom(v){
+  ZOOM_3D=v; cube.zoom=v; classic.zoom=v;
+  updZval();
+  scheduleStillRender(0.3);
+}
+zoomInput.addEventListener('input',e=>{ setZoom(parseFloat(e.target.value)); });
+// re-settle particles into the new zoom window when at rest (so confinement → crisp figure shows immediately)
+zoomInput.addEventListener('change',scheduleZoomSettle);
+syncZoomInput();
+/* 3D rotation: start/stop, reset, and camera/orientation choreography. */
+const rotBtn=document.getElementById('rotToggle');
+function updRotBtn(){ rotBtn.textContent=activeCube().autoRot?'暂停自转':'开始自转'; }
+rotBtn.addEventListener('click',()=>{ const r=activeCube(); r.autoRot=!r.autoRot; updRotBtn();
+  if(r.autoRot){ last=0; ensureLoop(); } else if(!playing && heroRaf){ /* loop self-stops next frame */ } });
+document.getElementById('rotReset').addEventListener('click',()=>{ const r=activeCube(); r.R=r.R0.slice(); r._prec=0; r._motionZoom=1; r._cameraDepth=0; if(!playing && !heroRaf) r.render(0.3); });
+document.getElementById('rotmode').addEventListener('click',e=>{ const m=e.target.dataset.rm; if(!m)return; ROT_MODE=m;
+  document.querySelectorAll('#rotmode button').forEach(b=>b.classList.toggle('on',b===e.target)); });
+const rval=document.getElementById('rval');
+function updRval(){ rval.textContent=ROT_SPEED.toFixed(2); }
+document.getElementById('rotspeed').addEventListener('input',e=>{ ROT_SPEED=parseFloat(e.target.value); updRval(); });
+updRval();
+const shapeSeg=document.getElementById('solidshape'), polyInput=document.getElementById('polyfaces'), polyVal=document.getElementById('polyval'), polyRefresh=document.getElementById('polyRefresh');
+function refreshSolidControls(){
+  document.querySelectorAll('#solidshape button').forEach(b=>b.classList.toggle('on',b.dataset.shape===SOLID_SHAPE));
+  polyInput.value=String(POLY_N); polyVal.textContent=POLY_N>16?'圆形':String(POLY_N);
+  polyRefresh.disabled=SOLID_SHAPE!=='random'||POLY_N>16;
+  updateViewTag();
+}
+function redrawSolidStill(){
+  if(VIEW!=='3d') return;
+  if(!playing){
+    cells.forEach(c=>c.still());
+    if(!heroRaf){ prime(activeCube(),STILL_FRAME_3D,70); markHeroPrimed(); }
+  }
+}
+function setSolidShape(shape,n,refresh){
+  SOLID_SHAPE=shape; POLY_N=clampPolyN(n);
+  if(refresh && SOLID_SHAPE==='random' && POLY_N<=16) POLY_SEED++;
+  for(const r of cubeRenderers) r.setShape(SOLID_SHAPE,POLY_N,POLY_SEED);
+  refreshSolidControls(); redrawSolidStill();
+}
+shapeSeg.addEventListener('click',e=>{ const shape=e.target.dataset.shape; if(!shape)return; setSolidShape(shape,POLY_N); });
+polyInput.addEventListener('input',e=>{ setSolidShape(SOLID_SHAPE,e.target.value); });
+polyRefresh.addEventListener('click',()=>{ setSolidShape('random',POLY_N,true); });
+refreshSolidControls();
+const frameBtn=document.getElementById('frameToggle');
+frameBtn.addEventListener('click',()=>{ FRAME=!FRAME; frameBtn.textContent='边框: '+(FRAME?'开':'关'); if(!playing && !heroRaf)activeCube().render(0.3); });
+document.getElementById('light').addEventListener('change',e=>{ LIGHT=parseInt(e.target.value)||0; if(!playing && !heroRaf) activeCube().render(0.3); });   // 3D-only lighting model
+const symBtn=document.getElementById('symToggle');
+symBtn.addEventListener('click',()=>{ SYMMETRIC=!SYMMETRIC; symBtn.textContent='中心对称: '+(SYMMETRIC?'开':'关'); symBtn.classList.toggle('on',SYMMETRIC);
+  cells.forEach(c=>c.still());                                  // gallery re-settles into the new symmetry
+  if(!playing){ const r=activeCube();
+    prime(r,stillFrameForView(),80); markHeroPrimed();
+    if(r.autoRot && !reduced){ last=0; ensureLoop(); } } });
+updRotBtn();
+
+function nativeClickSeg(selector, attr, value){
+  let btn=document.querySelector(`${selector} button[${attr}="${value}"]`);
+  if(!btn){
+    const want=Number(value);
+    document.querySelectorAll(`${selector} button[${attr}]`).forEach(b=>{ if(!btn && Number(b.getAttribute(attr))===want) btn=b; });
+  }
+  if(btn) btn.click();
+}
+function nativeSetInput(id,value,commit){
+  const el=document.getElementById(id); if(!el) return;
+  el.value=String(value);
+  el.dispatchEvent(new Event('input',{bubbles:true}));
+  if(commit) el.dispatchEvent(new Event('change',{bubbles:true}));
+}
+function nativeSetBool(name,value){
+  const on=!!value;
+  if(name==='symmetry' && SYMMETRIC!==on) symBtn.click();
+  else if(name==='frame' && FRAME!==on) frameBtn.click();
+  else if(name==='physics'||name==='motion') return;
+  else if(name==='rotation'){
+    if(activeCube().autoRot!==on) rotBtn.click();
+  }
+}
+function applyNativeCommand(command){
+  if(!command || typeof command!=='object') return;
+  if(command.type==='audioFrame'){ system.ingest(command.frame); return; }
+  if(command.type==='hostVisibility'){ setHostVisibility(command.visible); return; }
+  if(command.type==='call'){
+    const args=Array.isArray(command.args)?command.args:[];
+    const fn=window.soundMotionNative && window.soundMotionNative[command.method];
+    if(typeof fn==='function') fn.apply(window.soundMotionNative,args);
+  }
+}
+function setTransparentMode(value){
+  const on=!!value;
+  document.body.classList.toggle('transparent-visualizer',on);
+  cube.alpha=on; classic.alpha=on;
+  if(!playing){
+    if(heroRaf) return;
+    activeCube().render(0.3);
+  }
+}
+function playBuiltInAudio(){
+  if(!BUILT_IN_AUDIO_ENABLED) return false;
+  if(playing && srcKind==='file' && audio.builtIn) return true;
+  if(playing) playBtn.click();
+  srcKind='file'; syncSourceControls();
+  showBuiltInAudioMeta();
+  if(!audio.builtIn){
+    builtInAudioReady=audio.loadURL(BUILT_IN_AUDIO_URL).then(()=>{ showBuiltInAudioMeta(); return true; }).catch(()=>false);
+  }
+  playBtn.click();
+  return true;
+}
+window.soundMotionNative={
+  receiveAudioFrame(frame){ system.ingest(frame); },
+  setSystemAudioState(active,label){
+    system.active=!!active;
+    system.status=label || (active?'系统音频 · 正在捕获':'系统音频 · 已停止');
+    if(srcKind==='system') document.getElementById('hero-meta').textContent=system.status;
+  },
+  selectSource(kind){ nativeClickSeg('#src','data-src',kind); },
+  play(){ frozen=false; if(!playing) playBtn.click(); else ensureLoop(); },
+  playBuiltIn(){ return playBuiltInAudio(); },
+  stop(){ frozen=true; if(playing) playBtn.click(); else freezeHero(); },
+  setView(){ /* 2D view removed — kept as a no-op for older hosts */ },
+  setStyle(value){ nativeClickSeg('#style','data-style',value); },
+  setSampleMode(value){ nativeClickSeg('#sample','data-sm',value); },
+  setRotationMode(value){ nativeClickSeg('#rotmode','data-rm',value); },
+  setSolidShape(shape,n,refresh){ setSolidShape(shape||SOLID_SHAPE,n==null?POLY_N:n,!!refresh); },
+  setParam(name,value){
+    if(name==='evolve') nativeSetInput('evolve',value,false);
+    else if(name==='detail') nativeSetInput('detail',value,true);
+    else if(name==='particles') nativeSetInput('pcount',value,true);
+    else if(name==='zoom'){ nativeSetInput('zoom',value,false); scheduleZoomSettle(); }
+    else if(name==='rotationSpeed') nativeSetInput('rotspeed',value,false);
+    else if(name==='faces') nativeSetInput('polyfaces',value,false);
+    else if(name==='light') nativeSetInput('light',value,true);
+    else if(name==='patternInterval') setPatternInterval(value);
+    else if(name==='physics') return;
+  },
+  setTransparent(value){ setTransparentMode(value); },
+  setBoolean(name,value){ nativeSetBool(name,value); },
+  setToggle(name,value){ nativeSetBool(name,value); },
+  randomizePattern(){ diceStill(); },
+  applyWebDefaultPattern(style){ applyPattern(webDefaultPatternForStyle(style)); },
+  savePattern(){ savePattern(); },
+  cyclePattern(dir){ cyclePattern(dir==null?1:dir); },
+  applyPatternIndex(i){ const a=loadFaves(); if(a[i]) applyPattern(a[i]); },
+  listPatterns(){ return loadFaves(); },
+  setOverlayShape(){
+    document.body.classList.add('circle');   // square overlay removed — the window is always a circle
+    setTimeout(relayout,40);
+  },
+  exportPatternJSON(){ return JSON.stringify(capturePattern(), null, 2); },
+  applyPatternSpec(spec){ applyPattern(spec); },
+  dragRotate(dx,dy){   // same trackball math as the in-app Cmd+drag, driven by a parent-page pointer capture
+    const r=activeCube();
+    if(r.autoRot){ r.autoRot=false; updRotBtn(); }
+    r.R=mMul(rotAxis(0,1,0,dx*0.01), r.R);
+    r.R=mMul(rotAxis(1,0,0,dy*0.01), r.R);
+    if(!playing) r.render(0.3);
+  },
+  applyCommand:applyNativeCommand
+};
+window.soundMotionTest={
+		  renderStill(randomPattern=false){
+	    if(heroRaf) cancelHeroFrame();
+	    if(dicePrep){ cancelAnimationFrame(dicePrep.raf); dicePrep=null; }
+	    if(stillRenderRaf){ cancelAnimationFrame(stillRenderRaf); stillRenderRaf=0; }
+	    clearTimeout(zoomSettleTimer); zoomSettleTimer=0;
+	    QUALITY=1; ROTWARP=1; BREATH=1; FPS=0;   // FPS=0 → frame-rate-gated effects (bloom) are deterministic in test stills
+	    if(reseedRandom) reseedRandom();         // deterministic still regardless of wall-clock frames consumed earlier
+	    [cube,classic].forEach(o=>{              // reset BOTH engines' field state — it evolves during timed idle
+	      if(o._A) o._A.fill(0); if(o._tw) o._tw.fill(0); o.W.fill(0);   // stepping, whose frame count is wall-clock dependent
+	      o._avg=null; o._pb=null; o._pe=null; o._nov=0; o._beat=0; o._pk=null; o._t=0;
+	      if(o._shocks) o._shocks.length=0;
+	      o._gLo=null; o._slab=0; });            // force a FULL grid rebuild — the slab-interleave phase is frame-count dependent
+		    resetPatternClock();
+		    playing=false; loading=false; playBtn.textContent='▶ 播放';
+		    const r=activeCube(); let target=null;
+		    if(randomPattern){
+		      target=patternTargetFor(r,null);
+		      r._goal=target.goal; r._c=target.goal; r._ex=target.ex.slice(); r._exGoal=target.ex.slice();
+		      r._lastSample=1e9; r._lastBeat=1e9; r._lastReset=1e9; r._sampleCount=0;
+		    }
+		    r.autoRot=false;
+		    r.R=r.R0.slice();
+		    r._prec=0;
+		    prime(r,stillFrameForView(),randomPattern?90:80); markHeroPrimed();
+		    r.render(0.3);
+		    badgeMode.textContent=r.domMode();
+    badgeEnergy.textContent='0.00';
+		    return target;
+  },
+		  state(){
+		    const c=h3;
+		    return {view:VIEW,style:STYLE,physics:PHYS,sampleMode:SAMPLE_MODE,patternInterval:TIME_SAMPLE_INTERVAL,detail:DETAIL_SCALE,particles:PCT,zoom:currentZoom(),zoom3d:ZOOM_3D,symmetric:SYMMETRIC,frame:FRAME,transparent:document.body.classList.contains('transparent-visualizer'),playing,audioSource:srcKind,builtInAudio:audio.builtIn,builtInAudioLoaded:audio.loaded,audioLoop:Boolean(audio.el&&audio.el.loop),audioTime:audio.el?audio.el.currentTime:0,audioContextState:audio.ctx?audio.ctx.state:'uninitialized',rotation:activeCube().autoRot,rotationMode:ROT_MODE,rotationSpeed:ROT_SPEED,solidShape:SOLID_SHAPE,faces:POLY_N,light:LIGHT,hostVisible:HOST_VISIBLE,renderVisible:renderSurfaceVisible(),maxRenderFps:MAX_VISIBLE_RENDER_FPS,renderCount:RENDER_COUNT,canvasWidth:c.width,canvasHeight:c.height,devicePixelRatio:window.devicePixelRatio||1,dpr:{cube:activeCube().dpr,density:particleDensityDpr()},particlesEffective:{cube:particleCount(activeCube())},fps:FPS,quality:QUALITY};
+		  },
+		  detailDefaults(){ return {...STYLE_DETAIL_DEFAULTS}; },
+		  webDefaultPattern(style){ return webDefaultPatternForStyle(style); },
+		  lowFrequencyProtectionForTest(){
+	    const dynamic=Float64Array.from([0.95,0.05,0,0]), still=Float64Array.from(dynamic);
+	    const applied=protectDynamicLowMode(dynamic,true), stillApplied=protectDynamicLowMode(still,false);
+	    return {applied,stillApplied,limit:DYNAMIC_LOW_MODE_MAX,dynamic:Array.from(dynamic),still:Array.from(still)};
+	  },
+		  screenSaverSnapshotForBuild(seed,includeAtlas=false){
+		    if(seed!=null) setDeterministicRandomSeed(seed);
+		    const target=this.renderStill(true);
+		    const snapshot=buildScreenSaverParticleData(classic,0.3,STYLE==='cosmic');
+		    return {style:STYLE,time:classic._t||0,goal:target?target.goal:null,count:snapshot.count,stride:6,data:floatDataToBase64(snapshot.data),atlas:includeAtlas?CLASSIC_GRAIN_ATLAS.toDataURL('image/png'):null};
+		  },
+  setHostVisibilityForTest(value){ setHostVisibility(value); return {hostVisible:HOST_VISIBLE,renderVisible:renderSurfaceVisible()}; },
+  zoomBurstForTest(){
+    this.renderStill();
+    const beforeRuns=stillRenderRuns, beforeZoom=currentZoom();
+    for(let i=0;i<80;i++) setZoom(0.8+(i%50)*0.08);
+    const queued=Boolean(stillRenderRaf);
+    setZoom(beforeZoom);
+    return new Promise(resolve=>requestAnimationFrame(()=>resolve({
+      queued,
+      runs:stillRenderRuns-beforeRuns,
+      zoom:currentZoom()
+    })));
+  },
+  commandDragForTest(withLeftCommand){
+    this.renderStill();
+    const r=cube, before=r.R.join(',');
+    leftCommandDown=!!withLeftCommand;
+    dragStart({button:0,clientX:10,clientY:10,preventDefault(){}});
+    dragMove({clientX:36,clientY:24});
+    drag=false;
+    leftCommandDown=false;
+    return before!==r.R.join(',');
+  },
+	  patternAdvanceForTest(mode){
+	    this.renderStill();
+	    const r=activeCube();
+    const prevMode=SAMPLE_MODE, prevInterval=TIME_SAMPLE_INTERVAL, prevEvolve=EVOLVE;
+    SAMPLE_MODE=mode;
+    TIME_SAMPLE_INTERVAL=mode==='time'?0.25:prevInterval;
+    EVOLVE=mode==='beat'?1:prevEvolve;
+    resetPatternClock();
+    r._sampleCount=0;
+	    const low={bands:bandPeak(0.35,0.08),energy:0.12,sharpness:0.35};
+    const high={bands:bandPeak(0.72,0.12),energy:0.92,sharpness:0.72};
+    for(let i=0;i<36;i++){
+      const fr=mode==='beat' ? (i%6===1?high:low) : low;
+      r.step(fr,0.05,false);
+    }
+    const count=r._sampleCount||0, t=r._t||0;
+    SAMPLE_MODE=prevMode; TIME_SAMPLE_INTERVAL=prevInterval; EVOLVE=prevEvolve;
+    resetPatternClock();
+    return {mode,count,t};
+  },
+  forcePlayingForTest(){
+    playing=true;
+    playBtn.textContent='■ 停止';
+    startHero();
+  },
+  /* Verifies the INERTIAL engine: (a) a bass hit raises mean particle speed (kicks work),
+     (b) no NaNs, (c) after the drive jumps to a new spectrum the sand MIGRATES over time —
+     early displacement must be a small fraction of the final displacement (no teleports). */
+  physicsProbeForTest(){
+    this.renderStill();
+    const r=cube, N=Math.min(2000,particleCount(r));
+    const low={bands:bandPeak(0.2,0.08),energy:0.5,sharpness:0.4};
+    const hit={bands:bandPeak(0.05,0.1),energy:1.5,sharpness:0.3};
+    for(let k=0;k<40;k++) r.step(low,0.016,false);
+    const spd=()=>{ let s=0; for(let i=0;i<N;i++){ s+=Math.abs(r.vx[i])+Math.abs(r.vy[i])+(r.vz?Math.abs(r.vz[i]):0); } return s/N; };
+    const v0=spd(); r.step(hit,0.016,false); const v1=spd();
+    for(let k=0;k<70;k++) r.step(low,0.016,false);   // let the ballistic channel ring down → measure CREEP from quiescence
+    const sx=r.px.slice(0,N), sy=r.py.slice(0,N);
+    const disp=[];   // GENTLE spectral glide (no onset/novelty fires) → isolates the slow CREEP migration channel
+    for(let k=0;k<90;k++){ const u=Math.min(1,k/40);
+      r.step({bands:bandPeak(0.2+0.65*u,0.08),energy:0.9,sharpness:0.4+0.2*u},0.016,false);
+      if(k%15===14){ let d=0; for(let i=0;i<N;i++){ const dx=r.px[i]-sx[i], dy=r.py[i]-sy[i]; d+=Math.sqrt(dx*dx+dy*dy); } disp.push(d/N); } }
+    let bad=0; for(let i=0;i<N;i++) if(!Number.isFinite(r.px[i])||!Number.isFinite(r.py[i])||!Number.isFinite(r.vx[i])) bad++;
+    return {phys:PHYS, v0, v1, disp, bad};
+  },
+  /* Deterministic offline export: take over the live loop and advance EXACTLY dt per call —
+     every video frame is a unique simulation step, independent of wall-clock/display rate.
+     idle=true reproduces the app's resting state (settled figure + auto-rotation, no stepping). */
+  beginAudioExportForTest(){ PULSE.reset(); ROTWARP=1; BREATH=1; VIBE_WARM=0.5; return true; },
+  exportTickForTest(dt,idle,featureFrame){
+    if(heroRaf) cancelHeroFrame();
+    if(stillRenderRaf){ cancelAnimationFrame(stillRenderRaf); stillRenderRaf=0; }
+    QUALITY=1; FPS=0;                          // full density; frame-rate-gated effects (bloom) stay ON
+    const r=activeCube();
+    if(idle){ applySpin(r,dt); r.render(0.25); }
+    else if(featureFrame&&featureFrame.bands){
+      const bands=new Float64Array(NBANDS), src=featureFrame.bands;
+      for(let i=0;i<NBANDS;i++) bands[i]=Math.max(0,Math.min(1.5,Number(src[i])||0));
+      const fr={bands,energy:Math.max(0.12,Math.min(2,Number(featureFrame.energy)||0.12)),
+        sharpness:Math.max(0.2,Math.min(1,Number(featureFrame.sharpness)||0.4)),flat:Number(featureFrame.flat)||0.4};
+      stepDrivenFrame(r,fr,dt,true);
+    } else stepDrivenFrame(r,curFrame(),dt,true);
+    return true;
+  },
+  /* Wall-clock cost of one physics step / one render at the CURRENT canvas size & view. */
+  perfProbeForTest(n){
+    this.renderStill();
+    const r=activeCube();
+    const fr={bands:bandPeak(0.4,0.1),energy:0.9,sharpness:0.5};
+    r.step(fr,0.016,false);                                   // warm the grids
+    const t0=performance.now();
+    for(let k=0;k<n;k++) r.step(fr,0.016,false);
+    const stepMs=(performance.now()-t0)/n;
+    const t1=performance.now();
+    for(let k=0;k<10;k++) r.render(0.6);
+    return {stepMs, renderMs:(performance.now()-t1)/10, particles:particleCount(r)};
+  },
+  /* Verifies PULSE on a synthetic click track: `bpm` beats/min with an off-beat hit at `sw`
+     of the beat (0.5 = straight eighths). Expects bpm≈input, conf up, swing→sw. */
+  pulseProbeForTest(bpm,sw){
+    PULSE.reset();
+    const period=60/bpm, dt=1/60, base=bandPeak(0.5,0.12), b=new Float64Array(NBANDS);
+    let t=0;
+    for(let k=0;k<Math.round(16/dt);k++){ t+=dt; const tb=t%period;
+      const on=(tb<0.03)?1:(Math.abs(tb-period*sw)<0.017?0.6:0);
+      for(let i=0;i<NBANDS;i++) b[i]=base[i]*(0.2+0.8*on);
+      PULSE.ingest({bands:b,energy:0.3+on*1.2,sharpness:0.4},dt); }
+    const out={bpm:PULSE.bpm, conf:PULSE.conf, swing:PULSE.swing};
+    PULSE.reset();
+    return out;
+  }
+};
+if(ELECTRON_HOST && typeof window.soundMotionElectron.onControl==='function') window.soundMotionElectron.onControl(applyNativeCommand);
+postNative({type:'ready'});
+/* Generic postMessage bridge — lets any parent frame (e.g. a marketing page embedding this
+   file in an <iframe>) drive the visualizer with the same {type:'call', method, args} shape
+   as the native bridges above. Only ever invokes the fixed, pre-declared soundMotionNative
+   methods — no eval, no arbitrary code execution — so accepting any origin is safe here. */
+if(window.parent && window.parent!==window){
+  window.addEventListener('message',function(e){ applyNativeCommand(e && e.data); });
+}
+
+/* Left Command + drag to orbit — works on BOTH the 3D cube and the 2D sheet (tilt the paper in space) */
+let drag=false,lx=0,ly=0;
+function dragStart(e){
+  if(!leftCommandDown || (e.button!=null && e.button!==0)) return;
+  e.preventDefault&&e.preventDefault();
+  drag=true; activeCube().autoRot=false; updRotBtn(); lx=e.clientX; ly=e.clientY;
+}
+function dragMove(e){ if(!drag)return; const r=activeCube();
+  r.R=mMul(rotAxis(0,1,0,(e.clientX-lx)*0.01), r.R);          // trackball: drag rotates the orientation matrix
+  r.R=mMul(rotAxis(1,0,0,(e.clientY-ly)*0.01), r.R);
+  lx=e.clientX; ly=e.clientY; if(!playing) r.render(0.3); }
+h3.addEventListener('pointerdown',dragStart);
+window.addEventListener('pointerup',()=>{ drag=false; });
+window.addEventListener('pointermove',dragMove);
+function relayout(){ const a=activeCube(); a.dpr=displayDpr(); a.zoom=ZOOM_3D; a.resize();
+  const b=a===cube?classic:cube; b.dpr=a.dpr; b.zoom=ZOOM_3D;   // the idle engine re-syncs fully on the next style swap
+  if(!playing && !heroRaf)a.render(0.3); }  // a running loop redraws itself
+window.addEventListener('resize', relayout);
+let dprMediaQuery=null;
+function watchDevicePixelRatio(){
+  if(dprMediaQuery) dprMediaQuery.removeEventListener('change',handleDevicePixelRatioChange);
+  dprMediaQuery=matchMedia(`(resolution: ${window.devicePixelRatio||1}dppx)`);
+  dprMediaQuery.addEventListener('change',handleDevicePixelRatioChange,{once:true});
+}
+function handleDevicePixelRatioChange(){ relayout(); watchDevicePixelRatio(); }
+watchDevicePixelRatio();
+/* fullscreen the stage → the cube / sheet fill the entire screen */
+const stage=document.getElementById('stage'), fsBtn=document.getElementById('fsBtn');
+fsBtn.addEventListener('click',()=>{ const fs=document.fullscreenElement||document.webkitFullscreenElement;
+  try{ if(!fs){ (stage.requestFullscreen||stage.webkitRequestFullscreen).call(stage); } else { (document.exitFullscreen||document.webkitExitFullscreen).call(document); } }catch(e){} });
+function onFs(){ const fs=document.fullscreenElement||document.webkitFullscreenElement; fsBtn.textContent=fs?'⛶ 退出':'⛶ 全屏';
+  setTimeout(()=>{ relayout(); scheduleZoomSettle(); },80); }   // idle → re-settle at the new size/density so the still figure is immediately crisp
+document.addEventListener('fullscreenchange',onFs); document.addEventListener('webkitfullscreenchange',onFs);
+})();
+</script>
+</body>
+</html>
