@@ -106,11 +106,6 @@ router.post('/:slug/state/restore', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         const tool = await repo.createTool(req.body || {});
-        historyRepo.addHistory({
-            tool: 'custom',
-            action: '导入自定义工具',
-            detail: `${tool.name} (${tool.slug})`
-        }).catch(err => console.error('[custom-tools] log import history failed:', err.message));
         res.json({ success: true, tool });
     } catch (err) {
         res.status(err.status || 500).json({ error: err.message || '保存自定义工具失败' });

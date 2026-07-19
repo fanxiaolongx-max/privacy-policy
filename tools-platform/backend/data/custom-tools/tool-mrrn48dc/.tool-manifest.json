@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "tool": {
+    "slug": "tool-mrrn48dc",
+    "name": "旅游计时",
+    "icon": "🏖️",
+    "description": "土耳其海边旅行倒计时页面。",
+    "tags": [
+      "倒计时",
+      "旅行"
+    ],
+    "href": "/tools/tool-mrrn48dc",
+    "filePath": "/custom-tools/tool-mrrn48dc/index.html",
+    "publicAccess": true,
+    "createdAt": "2026-07-19T10:15:48.000Z",
+    "updatedAt": "2026-07-19T18:12:58.244Z"
+  },
+  "history": {
+    "id": "custom-recover-tool-mrrn48dc",
+    "tool": "custom",
+    "action": "恢复自定义工具",
+    "detail": "去土耳其海边旅游倒计时 (tool-mrrn48dc) - 根据磁盘清单恢复注册",
+    "time": "2026-07-19T10:15:48.000Z"
+  }
+}

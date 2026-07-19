@@ -3,8 +3,17 @@ const fs = require('fs');
 const path = require('path');
 const JSZip = require('jszip');
 const { DATA_DIR, ensureDataDir } = require('./store');
+const historyRepo = require('./upload-history-repository');
 
 const CUSTOM_TOOLS_DIR = path.join(DATA_DIR, 'custom-tools');
+const TOOL_MANIFEST_FILE = '.tool-manifest.json';
+let registryMutationQueue = Promise.resolve();
+
+function withRegistryMutation(task) {
+    const operation = registryMutationQueue.then(task, task);
+    registryMutationQueue = operation.catch(() => {});
+    return operation;
+}
 
 function ensureCustomToolsDir() {
     ensureDataDir();
@@ -46,21 +55,70 @@ async function saveRegistry(items) {
     await writeKV('sys', 'custom_tools', items);
 }
 
+function normalizeToolRecord(raw, slug) {
+    const indexPath = path.join(CUSTOM_TOOLS_DIR, slug, 'index.html');
+    const stat = fs.statSync(indexPath);
+    const createdAt = raw.createdAt || stat.birthtime.toISOString();
+    return {
+        slug,
+        name: String(raw.name || slug).trim().slice(0, 80) || slug,
+        icon: String(raw.icon || '🧩').trim().slice(0, 8) || '🧩',
+        description: String(raw.description || '').trim(),
+        tags: Array.isArray(raw.tags) ? raw.tags.map(String).filter(Boolean).slice(0, 8) : [],
+        href: `/tools/${slug}`,
+        filePath: `/custom-tools/${slug}/index.html`,
+        publicAccess: raw.publicAccess === true,
+        createdAt,
+        updatedAt: raw.updatedAt || createdAt
+    };
+}
+
+function manifestPath(slug) {
+    return path.join(CUSTOM_TOOLS_DIR, slug, TOOL_MANIFEST_FILE);
+}
+
+function writeToolManifest(tool, options = {}) {
+    const target = manifestPath(tool.slug);
+    const temp = `${target}.${process.pid}.tmp`;
+    const manifest = {
+        version: 1,
+        tool: normalizeToolRecord(tool, tool.slug),
+        history: options.history || null
+    };
+    fs.writeFileSync(temp, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+    fs.renameSync(temp, target);
+    return manifest;
+}
+
+function readToolManifest(slug) {
+    try {
+        const parsed = JSON.parse(fs.readFileSync(manifestPath(slug), 'utf8'));
+        if (parsed.version !== 1 || !parsed.tool || parsed.tool.slug !== slug) return null;
+        return parsed;
+    } catch (_) {
+        return null;
+    }
+}
+
 async function getTool(slug) {
     return (await listTools()).find(item => item.slug === slug) || null;
 }
 
 async function updateToolAccess(slug, publicAccess) {
-    const tools = await listTools();
-    const index = tools.findIndex(item => item.slug === slug);
-    if (index < 0) return null;
-    tools[index] = {
-        ...tools[index],
-        publicAccess: Boolean(publicAccess),
-        updatedAt: new Date().toISOString()
-    };
-    await saveRegistry(tools);
-    return tools[index];
+    return withRegistryMutation(async () => {
+        const tools = await listTools();
+        const index = tools.findIndex(item => item.slug === slug);
+        if (index < 0) return null;
+        tools[index] = {
+            ...tools[index],
+            publicAccess: Boolean(publicAccess),
+            updatedAt: new Date().toISOString()
+        };
+        await saveRegistry(tools);
+        const previousManifest = readToolManifest(slug);
+        writeToolManifest(tools[index], { history: previousManifest && previousManifest.history });
+        return tools[index];
+    });
 }
 
 async function updateToolName(slug, value) {
@@ -75,16 +133,20 @@ async function updateToolName(slug, value) {
         err.status = 400;
         throw err;
     }
-    const tools = await listTools();
-    const index = tools.findIndex(item => item.slug === slug);
-    if (index < 0) return null;
-    tools[index] = {
-        ...tools[index],
-        name,
-        updatedAt: new Date().toISOString()
-    };
-    await saveRegistry(tools);
-    return tools[index];
+    return withRegistryMutation(async () => {
+        const tools = await listTools();
+        const index = tools.findIndex(item => item.slug === slug);
+        if (index < 0) return null;
+        tools[index] = {
+            ...tools[index],
+            name,
+            updatedAt: new Date().toISOString()
+        };
+        await saveRegistry(tools);
+        const previousManifest = readToolManifest(slug);
+        writeToolManifest(tools[index], { history: previousManifest && previousManifest.history });
+        return tools[index];
+    });
 }
 
 function normalizeToolState(value) {
@@ -258,61 +320,164 @@ async function createTool(payload) {
         throw err;
     }
 
-    const tools = await listTools();
-    const existingSlugs = new Set([
-        ...tools.map(item => item.slug),
-        ...listToolDirs()
-    ]);
-    const slug = createSlug(payload.slug || name, existingSlugs);
-    const now = new Date().toISOString();
-    const tool = {
-        slug,
-        name,
-        icon: String(payload.icon || '🧩').trim().slice(0, 8) || '🧩',
-        description: String(payload.description || '').trim(),
-        tags: Array.isArray(payload.tags) ? payload.tags.map(String).filter(Boolean).slice(0, 8) : [],
-        href: `/tools/${slug}`,
-        filePath: `/custom-tools/${slug}/index.html`,
-        publicAccess: false,
-        createdAt: now,
-        updatedAt: now
-    };
-
-    const previousTools = tools.slice();
+    let files;
     try {
-        let files;
-        try {
-            files = isZip
-                ? await readZipFiles(payload.archiveBase64)
-                : [['index.html', Buffer.from(htmlContent, 'utf8')]];
-        } catch (err) {
-            err.status = err.status || 400;
-            throw err;
-        }
-        saveToolFiles(slug, files);
-        tools.push(tool);
-        await saveRegistry(tools);
-        const expectedIndex = files.find(([filePath]) => filePath.toLowerCase() === 'index.html');
-        await verifyCreatedTool(tool, expectedIndex ? expectedIndex[1].toString('utf8') : '');
-        return tool;
+        files = isZip
+            ? await readZipFiles(payload.archiveBase64)
+            : [['index.html', Buffer.from(htmlContent, 'utf8')]];
     } catch (err) {
-        removeToolDir(slug);
-        try {
-            await saveRegistry(previousTools);
-        } catch (rollbackErr) {
-            console.error('[custom-tools] registry rollback failed:', rollbackErr.message);
-        }
+        err.status = err.status || 400;
         throw err;
     }
+
+    return withRegistryMutation(async () => {
+        const tools = await listTools();
+        const existingSlugs = new Set([
+            ...tools.map(item => item.slug),
+            ...listToolDirs()
+        ]);
+        const slug = createSlug(payload.slug || name, existingSlugs);
+        const now = new Date().toISOString();
+        const history = {
+            id: `custom-import-${slug}`,
+            tool: 'custom',
+            action: '导入自定义工具',
+            detail: `${name} (${slug})`,
+            time: now
+        };
+        const tool = {
+            slug,
+            name,
+            icon: String(payload.icon || '🧩').trim().slice(0, 8) || '🧩',
+            description: String(payload.description || '').trim(),
+            tags: Array.isArray(payload.tags) ? payload.tags.map(String).filter(Boolean).slice(0, 8) : [],
+            href: `/tools/${slug}`,
+            filePath: `/custom-tools/${slug}/index.html`,
+            publicAccess: false,
+            createdAt: now,
+            updatedAt: now
+        };
+
+        const previousTools = tools.slice();
+        try {
+            saveToolFiles(slug, files);
+            writeToolManifest(tool, { history });
+            tools.push(tool);
+            await saveRegistry(tools);
+            const expectedIndex = files.find(([filePath]) => filePath.toLowerCase() === 'index.html');
+            await verifyCreatedTool(tool, expectedIndex ? expectedIndex[1].toString('utf8') : '');
+            await historyRepo.addHistory(history);
+            return tool;
+        } catch (err) {
+            removeToolDir(slug);
+            try {
+                await saveRegistry(previousTools);
+            } catch (rollbackErr) {
+                console.error('[custom-tools] registry rollback failed:', rollbackErr.message);
+            }
+            throw err;
+        }
+    });
 }
 
 async function deleteTool(slug) {
-    const tools = await listTools();
-    const next = tools.filter(item => item.slug !== slug);
-    if (next.length === tools.length) return false;
-    await saveRegistry(next);
-    removeToolDir(slug);
-    return true;
+    return withRegistryMutation(async () => {
+        const tools = await listTools();
+        const next = tools.filter(item => item.slug !== slug);
+        if (next.length === tools.length) return false;
+        await saveRegistry(next);
+        removeToolDir(slug);
+        return true;
+    });
+}
+
+async function recoverToolFromDisk(slugValue, metadata = {}) {
+    const slug = normalizeSlug(slugValue);
+    if (!slug || slug !== slugValue) throw new Error('自定义工具标识不合法');
+    return withRegistryMutation(async () => {
+        const indexPath = path.join(CUSTOM_TOOLS_DIR, slug, 'index.html');
+        if (!fs.existsSync(indexPath) || !fs.statSync(indexPath).isFile()) {
+            throw new Error(`自定义工具入口文件不存在：${slug}`);
+        }
+        const tools = await listTools();
+        const existing = tools.find(item => item.slug === slug);
+        if (existing) return { tool: existing, recovered: false };
+
+        const tool = normalizeToolRecord(metadata, slug);
+        const history = {
+            id: `custom-recover-${slug}`,
+            tool: 'custom',
+            action: '恢复自定义工具',
+            detail: `${tool.name} (${slug}) - 根据磁盘清单恢复注册`,
+            time: metadata.createdAt || tool.createdAt
+        };
+        const previousTools = tools.slice();
+        try {
+            tools.push(tool);
+            await saveRegistry(tools);
+            writeToolManifest(tool, { history });
+            await historyRepo.addHistory(history);
+            return { tool, recovered: true };
+        } catch (err) {
+            await saveRegistry(previousTools);
+            throw err;
+        }
+    });
+}
+
+async function ensureToolHistory(slugValue, historyInput) {
+    const slug = normalizeSlug(slugValue);
+    if (!slug || slug !== slugValue) throw new Error('自定义工具标识不合法');
+    return withRegistryMutation(async () => {
+        const tools = await listTools();
+        const tool = tools.find(item => item.slug === slug);
+        if (!tool) throw new Error(`自定义工具未注册：${slug}`);
+        const history = {
+            id: String(historyInput.id || `custom-import-${slug}`),
+            tool: 'custom',
+            action: String(historyInput.action || '导入自定义工具'),
+            detail: String(historyInput.detail || `${tool.name} (${slug})`),
+            time: historyInput.time || tool.createdAt
+        };
+        writeToolManifest(tool, { history });
+        if (!await historyRepo.hasHistory(history.id)) await historyRepo.addHistory(history);
+        return history;
+    });
+}
+
+async function reconcileToolsFromDisk() {
+    return withRegistryMutation(async () => {
+        const tools = await listTools();
+        const registered = new Set(tools.map(item => item.slug));
+        const recovered = [];
+        const unregistered = [];
+
+        for (const tool of tools) {
+            const indexPath = path.join(CUSTOM_TOOLS_DIR, tool.slug, 'index.html');
+            if (!fs.existsSync(indexPath)) continue;
+            if (!readToolManifest(tool.slug)) writeToolManifest(tool);
+        }
+
+        for (const slug of listToolDirs()) {
+            if (registered.has(slug)) continue;
+            const manifest = readToolManifest(slug);
+            const indexPath = path.join(CUSTOM_TOOLS_DIR, slug, 'index.html');
+            if (!manifest || !fs.existsSync(indexPath)) {
+                unregistered.push(slug);
+                continue;
+            }
+            const tool = normalizeToolRecord(manifest.tool, slug);
+            tools.push(tool);
+            registered.add(slug);
+            recovered.push(slug);
+            if (manifest.history && !await historyRepo.hasHistory(manifest.history.id)) {
+                await historyRepo.addHistory(manifest.history);
+            }
+        }
+
+        if (recovered.length) await saveRegistry(tools);
+        return { recovered, unregistered };
+    });
 }
 
 async function getToolFilePath(slug) {
@@ -331,6 +496,10 @@ module.exports = {
     saveToolState,
     restoreToolState,
     deleteTool,
+    recoverToolFromDisk,
+    ensureToolHistory,
+    reconcileToolsFromDisk,
     getToolFilePath,
-    CUSTOM_TOOLS_DIR
+    CUSTOM_TOOLS_DIR,
+    TOOL_MANIFEST_FILE
 };

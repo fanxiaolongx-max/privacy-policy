@@ -333,6 +333,13 @@ app.use((err, req, res, next) => {
 
 async function startServer() {
     await legacyJsonMigration.runStartupLegacyJsonMigration();
+    const customToolReconcile = await customToolsRepo.reconcileToolsFromDisk();
+    if (customToolReconcile.recovered.length) {
+        console.warn(`[custom-tools] 已根据磁盘清单恢复注册：${customToolReconcile.recovered.join('、')}`);
+    }
+    if (customToolReconcile.unregistered.length) {
+        console.warn(`[custom-tools] 发现未注册且无可信清单的目录：${customToolReconcile.unregistered.join('、')}`);
+    }
 
     const server = app.listen(PORT, () => {
         console.log(`\n✅ Tools Platform 已启动`);

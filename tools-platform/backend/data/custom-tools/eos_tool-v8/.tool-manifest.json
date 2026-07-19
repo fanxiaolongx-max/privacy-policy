@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "tool": {
+    "slug": "eos_tool-v8",
+    "name": "重急收编",
+    "icon": "🧩",
+    "description": "重急EOS收编统计工具",
+    "tags": [],
+    "href": "/tools/eos_tool-v8",
+    "filePath": "/custom-tools/eos_tool-v8/index.html",
+    "publicAccess": false,
+    "createdAt": "2026-06-05T18:58:42.884Z",
+    "updatedAt": "2026-07-13T17:07:30.643Z"
+  },
+  "history": null
+}

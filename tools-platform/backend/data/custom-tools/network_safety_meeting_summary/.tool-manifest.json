@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "tool": {
+    "slug": "network_safety_meeting_summary",
+    "name": "胶片设计",
+    "icon": "🛡️",
+    "description": "专业华为风格胶片编辑器，模板内所有组件均可增删、修改、拖拽与缩放，并支持导出 PDF/PPT。",
+    "tags": [
+      "模板",
+      "PDF",
+      "华子胶片"
+    ],
+    "href": "/tools/network_safety_meeting_summary",
+    "filePath": "/custom-tools/network_safety_meeting_summary/index.html",
+    "publicAccess": false,
+    "createdAt": "2026-06-16T13:49:05.303Z",
+    "updatedAt": "2026-07-13T17:08:27.152Z"
+  },
+  "history": null
+}

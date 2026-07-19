@@ -27,13 +27,14 @@ let schedulerTimer = null;
 let schedulerRunning = false;
 
 const REPORT_OWNED_FILES = ['report.db', 'report.db-wal', 'report.db-shm'];
+const PRIMARY_SQLITE_SIDECARS = ['tools.db-wal', 'tools.db-shm'];
 const HAS_SPLIT_REPORT_DATA = path.resolve(REPORT_DATA_DIR) !== path.resolve(DATA_DIR);
 const DATA_TARGETS = [
     {
         id: 'primary_data',
         absPath: DATA_DIR,
         relPath: process.env.TOOLS_DATA_DIR ? 'data' : 'backend/data',
-        excludeTopLevel: ['images', ...(HAS_SPLIT_REPORT_DATA ? REPORT_OWNED_FILES : [])]
+        excludeTopLevel: ['images', ...PRIMARY_SQLITE_SIDECARS, ...(HAS_SPLIT_REPORT_DATA ? REPORT_OWNED_FILES : [])]
     }
 ];
 
@@ -305,6 +306,14 @@ async function createBackup(options = {}) {
     const reason = options.reason || 'manual';
     const filename = `tools-platform-backup_${timestampForFile()}_${safeName(reason)}.zip`;
     const outputPath = path.join(BACKUP_DIR, filename);
+    reportProgress(options, 'checkpoint', '正在固化 SQLite WAL 数据');
+    const appDb = require('./app-db');
+    const checkpoint = await appDb.all('PRAGMA wal_checkpoint(TRUNCATE)');
+    const checkpointState = checkpoint && checkpoint[0];
+    if (checkpointState && Number(checkpointState.busy || 0) > 0) {
+        throw new Error('SQLite WAL 正在被占用，已取消本次备份以避免生成不完整快照');
+    }
+    reportProgress(options, 'checkpoint-ready', 'SQLite WAL 已安全写入主数据库', checkpointState || null, 'success');
     reportProgress(options, 'scan', '正在扫描备份数据目录');
     const manifest = getManifest(reason);
     reportProgress(options, 'manifest', `已生成清单：${manifest.totalFiles} 个文件，${manifest.totalBytes} 字节`, {

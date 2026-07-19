@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "tool": {
+    "slug": "tool-mrlpwjk3",
+    "name": "欠款对账",
+    "icon": "🧩",
+    "description": "由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。",
+    "tags": [],
+    "href": "/tools/tool-mrlpwjk3",
+    "filePath": "/custom-tools/tool-mrlpwjk3/index.html",
+    "publicAccess": false,
+    "createdAt": "2026-07-15T06:47:11.619Z",
+    "updatedAt": "2026-07-15T06:47:11.619Z"
+  },
+  "history": null
+}

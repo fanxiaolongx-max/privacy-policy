@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "tool": {
+    "slug": "tool-mrhqjeya",
+    "name": "日程安排",
+    "icon": "🧩",
+    "description": "由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。",
+    "tags": [],
+    "href": "/tools/tool-mrhqjeya",
+    "filePath": "/custom-tools/tool-mrhqjeya/index.html",
+    "publicAccess": false,
+    "createdAt": "2026-07-12T11:53:54.034Z",
+    "updatedAt": "2026-07-13T16:31:12.566Z"
+  },
+  "history": null
+}

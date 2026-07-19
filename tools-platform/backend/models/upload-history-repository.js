@@ -4,13 +4,13 @@ const MAX_HISTORY = 200;
 
 let initPromise = null;
 
-function buildHistoryItem({ tool, action, detail = '' }) {
+function buildHistoryItem({ id, tool, action, detail = '', time }) {
     return {
-        id: Date.now().toString(36),
+        id: String(id || Date.now().toString(36)),
         tool,
         action,
         detail,
-        time: new Date().toISOString()
+        time: time ? new Date(time).toISOString() : new Date().toISOString()
     };
 }
 
@@ -91,10 +91,15 @@ async function deleteFromDb(tool) {
     }
 }
 
-async function addHistory({ tool, action, detail = '' }) {
-    const item = buildHistoryItem({ tool, action, detail });
+async function addHistory(input) {
+    const item = buildHistoryItem(input || {});
     await appendToDb(item);
     return item;
+}
+
+async function hasHistory(id) {
+    await ensureReady();
+    return Boolean(await get('SELECT 1 AS found FROM upload_history WHERE id = ? LIMIT 1', [String(id || '')]));
 }
 
 async function clearHistory({ tool } = {}) {
@@ -106,5 +111,6 @@ module.exports = {
     ensureReady,
     listHistory,
     addHistory,
+    hasHistory,
     clearHistory
 };

@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "tool": {
+    "slug": "tool-mro1gt5o",
+    "name": "刷卡统计",
+    "icon": "🧩",
+    "description": "由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。",
+    "tags": [],
+    "href": "/tools/tool-mro1gt5o",
+    "filePath": "/custom-tools/tool-mro1gt5o/index.html",
+    "publicAccess": false,
+    "createdAt": "2026-07-16T21:46:25.308Z",
+    "updatedAt": "2026-07-16T21:46:25.308Z"
+  },
+  "history": null
+}
