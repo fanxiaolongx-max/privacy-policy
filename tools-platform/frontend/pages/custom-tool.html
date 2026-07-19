@@ -124,7 +124,7 @@
                 document.getElementById('toolName').textContent = tool.name || '自定义工具';
                 document.getElementById('openRawTool').href = tool.filePath;
                 host.className = '';
-                host.innerHTML = `<iframe class="custom-tool-frame" src="${tool.filePath}" title="${tool.name || 'Custom Tool'}" allow="fullscreen"></iframe>`;
+                host.innerHTML = `<iframe class="custom-tool-frame" src="${tool.filePath}" title="${tool.name || 'Custom Tool'}" allow="autoplay; fullscreen; microphone; display-capture"></iframe>`;
             } catch (err) {
                 host.textContent = `加载自定义工具失败：${err.message}`;
             }

@@ -36,6 +36,7 @@ let navState = {
     saveTimer: null,
     aiSettings: null,
     aiSaveTimer: null,
+    aiUsageDimension: 'day',
     securitySettings: null,
     securityLocks: [],
     securitySaveTimer: null,
@@ -198,6 +199,19 @@ function registerNavbarI18n() {
             'nav.ai.saving': '正在保存 AI 设置...',
             'nav.ai.saved': 'AI 设置已自动保存',
             'nav.ai.waitSave': 'AI 设置待保存...',
+            'nav.ai.usageTitle': 'Token 与成本趋势',
+            'nav.ai.usageHelp': '统计 AI 助手、后台分析与模型测试的成功请求；费用按请求发生时的单价估算。',
+            'nav.ai.usageTokens': '累计 Tokens',
+            'nav.ai.usageCostCny': '累计费用',
+            'nav.ai.usageCostUsd': '美元估算',
+            'nav.ai.usageRequests': '成功请求',
+            'nav.ai.usageDay': '日',
+            'nav.ai.usageWeek': '周',
+            'nav.ai.usageMonth': '月',
+            'nav.ai.usageYear': '年',
+            'nav.ai.usageLoading': '正在读取用量...',
+            'nav.ai.usageFail': '用量读取失败：',
+            'nav.ai.usagePeriod': '当前区间',
 
             'nav.up.help': '更新来源为 GitHub Releases。下载完成后可立即重启安装，也可以稍后手动重启。',
             'nav.up.current': '当前版本',
@@ -492,6 +506,19 @@ function registerNavbarI18n() {
             'nav.ai.saving': 'Saving AI settings...',
             'nav.ai.saved': 'AI settings saved automatically',
             'nav.ai.waitSave': 'AI settings waiting to save...',
+            'nav.ai.usageTitle': 'Token & Cost Trend',
+            'nav.ai.usageHelp': 'Tracks successful Assistant, background analysis, and model-test requests. Cost uses prices configured at request time.',
+            'nav.ai.usageTokens': 'Lifetime Tokens',
+            'nav.ai.usageCostCny': 'Lifetime Cost',
+            'nav.ai.usageCostUsd': 'USD Estimate',
+            'nav.ai.usageRequests': 'Successful Requests',
+            'nav.ai.usageDay': 'Day',
+            'nav.ai.usageWeek': 'Week',
+            'nav.ai.usageMonth': 'Month',
+            'nav.ai.usageYear': 'Year',
+            'nav.ai.usageLoading': 'Loading usage...',
+            'nav.ai.usageFail': 'Failed to load usage: ',
+            'nav.ai.usagePeriod': 'Selected range',
 
             'nav.up.help': 'Updates are delivered from GitHub Releases. After download, restart now to install or restart later manually.',
             'nav.up.current': 'Current Version',
@@ -1291,6 +1318,85 @@ async function fetchAiSettingsForNav() {
     return navState.aiSettings;
 }
 
+function formatAiUsageNumber(value) {
+    const number = Number(value || 0);
+    if (number >= 1000000) return `${(number / 1000000).toFixed(number >= 10000000 ? 1 : 2)}M`;
+    if (number >= 1000) return `${(number / 1000).toFixed(number >= 100000 ? 1 : 2)}K`;
+    return Math.round(number).toLocaleString();
+}
+
+function buildAiUsageChart(series) {
+    const rows = Array.isArray(series) ? series : [];
+    const width = 720, height = 260, left = 62, right = 24;
+    const plotWidth = width - left - right;
+    const tokenBand = { top: 24, height: 78 };
+    const costBand = { top: 132, height: 78 };
+    const maxTokens = Math.max(1, ...rows.map(item => Number(item.tokens || 0)));
+    const maxCost = Math.max(0.000001, ...rows.map(item => Number(item.costCny || 0)));
+    const x = index => rows.length <= 1 ? left + plotWidth / 2 : left + index * plotWidth / (rows.length - 1);
+    const bandY = (value, max, band) => band.top + band.height - Number(value || 0) / max * band.height;
+    const tokenY = value => bandY(value, maxTokens, tokenBand);
+    const costY = value => bandY(value, maxCost, costBand);
+    const tokenPoints = rows.map((item, index) => `${x(index).toFixed(1)},${tokenY(item.tokens).toFixed(1)}`).join(' ');
+    const costPoints = rows.map((item, index) => `${x(index).toFixed(1)},${costY(item.costCny).toFixed(1)}`).join(' ');
+    const labelStep = Math.max(1, Math.ceil(rows.length / 7));
+    const grid = [tokenBand, costBand].map(band => [0, .5, 1].map(rate => {
+        const y = band.top + band.height * rate;
+        return `<line x1="${left}" y1="${y}" x2="${width - right}" y2="${y}" class="nav-ai-chart-grid"/>`;
+    }).join('')).join('');
+    const labels = rows.map((item, index) => (index % labelStep === 0 || index === rows.length - 1)
+        ? `<text x="${x(index)}" y="${height - 9}" text-anchor="middle" class="nav-ai-chart-label">${navEscape(item.label)}</text>`
+        : '').join('');
+    const tokenDots = rows.map((item, index) => `<circle cx="${x(index)}" cy="${tokenY(item.tokens)}" r="3" class="nav-ai-chart-token-dot"><title>${navEscape(item.label)} · ${Number(item.tokens || 0).toLocaleString()} Tokens</title></circle>`).join('');
+    const costDots = rows.map((item, index) => `<circle cx="${x(index)}" cy="${costY(item.costCny)}" r="3" class="nav-ai-chart-cost-dot"><title>${navEscape(item.label)} · ¥${Number(item.costCny || 0).toFixed(4)}</title></circle>`).join('');
+    return `<svg class="nav-ai-usage-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Token and cost trend">
+        ${grid}
+        <text x="8" y="${tokenBand.top + 10}" class="nav-ai-chart-band-title token">Token</text>
+        <text x="8" y="${tokenBand.top + 24}" class="nav-ai-chart-band-max">${navEscape(formatAiUsageNumber(maxTokens))}</text>
+        <polyline points="${tokenPoints}" class="nav-ai-chart-token-line"/>${tokenDots}
+        <text x="8" y="${costBand.top + 10}" class="nav-ai-chart-band-title cost">费用</text>
+        <text x="8" y="${costBand.top + 24}" class="nav-ai-chart-band-max">¥${Number(maxCost).toFixed(4)}</text>
+        <polyline points="${costPoints}" class="nav-ai-chart-cost-line"/>${costDots}${labels}
+    </svg>`;
+}
+
+function renderAiUsageDashboard(data) {
+    const host = document.getElementById('navAiUsageBody');
+    if (!host) return;
+    const totals = data?.totals || {}, series = Array.isArray(data?.series) ? data.series : [];
+    const period = series.reduce((sum, item) => ({ tokens: sum.tokens + Number(item.tokens || 0), costCny: sum.costCny + Number(item.costCny || 0) }), { tokens: 0, costCny: 0 });
+    host.innerHTML = `
+        <div class="nav-ai-usage-kpis">
+            <div><span>${navEscape(navT('nav.ai.usageTokens'))}</span><strong>${formatAiUsageNumber(totals.tokens)}</strong><small>${Number(totals.tokens || 0).toLocaleString()} tokens</small></div>
+            <div><span>${navEscape(navT('nav.ai.usageCostCny'))}</span><strong>¥${Number(totals.costCny || 0).toFixed(4)}</strong><small>${navEscape(navT('nav.ai.usageCostUsd'))} $${Number(totals.costUsd || 0).toFixed(4)}</small></div>
+            <div><span>${navEscape(navT('nav.ai.usageRequests'))}</span><strong>${Number(totals.requests || 0).toLocaleString()}</strong><small>${navEscape(navT('nav.ai.usagePeriod'))} ${formatAiUsageNumber(period.tokens)} tokens</small></div>
+        </div>
+        <div class="nav-ai-usage-legend"><span class="tokens">Token</span><span class="cost">费用 CNY</span><b>${navEscape(navT('nav.ai.usagePeriod'))}：${formatAiUsageNumber(period.tokens)} Tokens · ¥${period.costCny.toFixed(4)}</b></div>
+        <div class="nav-ai-chart-wrap">${buildAiUsageChart(series)}</div>
+    `;
+}
+
+async function loadAiUsageDashboard(dimension = navState.aiUsageDimension || 'day') {
+    navState.aiUsageDimension = ['day', 'week', 'month', 'year'].includes(dimension) ? dimension : 'day';
+    document.querySelectorAll('[data-ai-usage-dimension]').forEach(button => button.classList.toggle('active', button.dataset.aiUsageDimension === navState.aiUsageDimension));
+    const host = document.getElementById('navAiUsageBody');
+    if (host) host.innerHTML = `<div class="nav-settings-empty">${navEscape(navT('nav.ai.usageLoading'))}</div>`;
+    try {
+        const expectedDimension = navState.aiUsageDimension;
+        const res = await fetch(`/api/ai-settings/usage?dimension=${encodeURIComponent(expectedDimension)}`, { headers: getAuthHeaderForNav() });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (expectedDimension !== navState.aiUsageDimension) return;
+        renderAiUsageDashboard(data);
+    } catch (err) {
+        if (host) host.innerHTML = `<div class="nav-settings-empty">${navEscape(navT('nav.ai.usageFail'))}${navEscape(err.message)}</div>`;
+    }
+}
+
+window.setAiUsageDimension = function (dimension) {
+    loadAiUsageDashboard(dimension);
+};
+
 async function renderAiSettings(content) {
     content.innerHTML = `<div class="nav-settings-empty">${navEscape(navT('nav.ai.empty'))}</div>`;
     try {
@@ -1301,8 +1407,20 @@ async function renderAiSettings(content) {
                 <span>${navEscape(navT('nav.ai.sourcePrefix'))}${navEscape(sourceLabelForAiSettings(settings.apiKeySource))}</span>
                 <span class="${settings.hasApiKey && !settings.keyLooksValid ? 'warning' : ''}">${navEscape(keyHealthLabelForAiSettings(settings))}</span>
             </div>
+            <section class="nav-ai-usage-panel">
+                <div class="nav-ai-usage-head">
+                    <div><strong>${navEscape(navT('nav.ai.usageTitle'))}</strong><span>${navEscape(navT('nav.ai.usageHelp'))}</span></div>
+                    <div class="nav-ai-usage-dimensions">
+                        <button type="button" data-ai-usage-dimension="day" onclick="setAiUsageDimension('day')">${navEscape(navT('nav.ai.usageDay'))}</button>
+                        <button type="button" data-ai-usage-dimension="week" onclick="setAiUsageDimension('week')">${navEscape(navT('nav.ai.usageWeek'))}</button>
+                        <button type="button" data-ai-usage-dimension="month" onclick="setAiUsageDimension('month')">${navEscape(navT('nav.ai.usageMonth'))}</button>
+                        <button type="button" data-ai-usage-dimension="year" onclick="setAiUsageDimension('year')">${navEscape(navT('nav.ai.usageYear'))}</button>
+                    </div>
+                </div>
+                <div id="navAiUsageBody"><div class="nav-settings-empty">${navEscape(navT('nav.ai.usageLoading'))}</div></div>
+            </section>
             <div class="nav-ai-grid">
-                <label class="nav-ai-field">
+                <label class="nav-ai-field nav-ai-field-wide">
                     <span>${navEscape(navT('nav.ai.lblProvider'))}</span>
                     <select id="navAiProvider" class="nav-settings-input" onchange="handleAiProviderChange()">
                         <option value="gemini" ${settings.provider === 'gemini' ? 'selected' : ''}>Gemini</option>
@@ -1366,6 +1484,7 @@ async function renderAiSettings(content) {
                 </div>
             </div>
         `;
+        loadAiUsageDashboard(navState.aiUsageDimension);
     } catch (e) {
         content.innerHTML = `<div class="nav-settings-empty">${navEscape(navT('nav.ai.failLoad'))}${navEscape(e.message)}</div>`;
     }

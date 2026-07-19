@@ -4,6 +4,7 @@ const DEFAULT_BASE_URLS = {
     anthropic: 'https://api.anthropic.com/v1',
     'openai-compatible': 'https://api.openai.com/v1'
 };
+const aiUsageRepo = require('./ai-usage-repository');
 
 function normalizeProvider(provider) {
     const value = String(provider || '').trim().toLowerCase();
@@ -128,13 +129,34 @@ class AiProviderClient {
 
     async generateText({ prompt, systemInstruction = '', messages = null, maxOutputTokens, temperature, responseMimeType, json } = {}) {
         const finalMessages = messages ? normalizeMessages(messages) : [{ role: 'user', content: String(prompt || '') }];
+        let result;
         if (this.provider === 'openai' || this.provider === 'openai-compatible') {
-            return this.generateOpenAi({ messages: finalMessages, systemInstruction, maxOutputTokens, temperature, responseMimeType, json });
+            result = await this.generateOpenAi({ messages: finalMessages, systemInstruction, maxOutputTokens, temperature, responseMimeType, json });
+        } else if (this.provider === 'anthropic') {
+            result = await this.generateAnthropic({ messages: finalMessages, systemInstruction, maxOutputTokens, temperature });
+        } else {
+            result = await this.generateGemini({ messages: finalMessages, systemInstruction, maxOutputTokens, temperature, responseMimeType, json });
         }
-        if (this.provider === 'anthropic') {
-            return this.generateAnthropic({ messages: finalMessages, systemInstruction, maxOutputTokens, temperature });
+        try {
+            const usage = result?.usage || {};
+            const promptTokens = Number(usage.promptTokens || 0);
+            const outputTokens = Number(usage.outputTokens || 0);
+            const totalTokens = Number(usage.totalTokens || 0) || promptTokens + outputTokens;
+            const costUsd = (
+                promptTokens * Number(this.settings.inputCostPerMillionUsd || 0) +
+                outputTokens * Number(this.settings.outputCostPerMillionUsd || 0)
+            ) / 1000000;
+            await aiUsageRepo.recordUsage({
+                promptTokens,
+                outputTokens,
+                totalTokens,
+                costUsd,
+                costCny: costUsd * Number(this.settings.usdToCny || 0)
+            });
+        } catch (usageErr) {
+            console.warn('[AI] failed to record provider usage:', usageErr.message || usageErr);
         }
-        return this.generateGemini({ messages: finalMessages, systemInstruction, maxOutputTokens, temperature, responseMimeType, json });
+        return result;
     }
 
     async generateChat({ messages, systemInstruction = '', maxOutputTokens, temperature, responseMimeType, json } = {}) {
