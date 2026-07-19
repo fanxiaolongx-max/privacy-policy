@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "tool": {
+    "slug": "tool-mrrgpqy4",
+    "name": "人数计数",
+    "icon": "👥",
+    "description": "轻量、适合移动端使用的现场人数计数器。",
+    "tags": [
+      "人数统计",
+      "计数器"
+    ],
+    "href": "/tools/tool-mrrgpqy4",
+    "filePath": "/custom-tools/tool-mrrgpqy4/index.html",
+    "publicAccess": true,
+    "createdAt": "2026-07-19T07:16:35.000Z",
+    "updatedAt": "2026-07-19T18:13:04.220Z"
+  },
+  "history": {
+    "id": "custom-recover-tool-mrrgpqy4",
+    "tool": "custom",
+    "action": "恢复自定义工具",
+    "detail": "人数计数器 (tool-mrrgpqy4) - 根据磁盘清单恢复注册",
+    "time": "2026-07-19T07:16:35.000Z"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "tool": {
+    "slug": "particle-effects",
+    "name": "粒子特效",
+    "icon": "✨",
+    "description": "可跟随内置音乐、音频文件或麦克风实时变化的 3D Chladni 粒子视觉特效。",
+    "tags": [
+      "3D 粒子",
+      "音乐可视化",
+      "互动特效"
+    ],
+    "href": "/tools/particle-effects",
+    "filePath": "/custom-tools/particle-effects/index.html",
+    "publicAccess": false,
+    "createdAt": "2026-07-18T19:40:17.738Z",
+    "updatedAt": "2026-07-18T19:40:17.738Z"
+  },
+  "history": {
+    "id": "custom-import-particle-effects",
+    "tool": "custom",
+    "action": "导入自定义工具",
+    "detail": "粒子特效 (particle-effects)",
+    "time": "2026-07-18T19:40:17.738Z"
+  }
+}

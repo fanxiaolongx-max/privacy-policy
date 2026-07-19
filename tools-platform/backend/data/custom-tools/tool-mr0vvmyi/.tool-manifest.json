@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "tool": {
+    "slug": "tool-mr0vvmyi",
+    "name": "上传指南",
+    "icon": "🧩",
+    "description": "由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。",
+    "tags": [],
+    "href": "/tools/tool-mr0vvmyi",
+    "filePath": "/custom-tools/tool-mr0vvmyi/index.html",
+    "publicAccess": false,
+    "createdAt": "2026-06-30T16:51:17.370Z",
+    "updatedAt": "2026-07-13T17:09:01.832Z"
+  },
+  "history": null
+}
