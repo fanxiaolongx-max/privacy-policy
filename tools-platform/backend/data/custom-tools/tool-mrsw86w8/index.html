@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>网络安全与质量管理事项通知</title>
+  <style>
+    :root{
+      --huawei-red:#c7000b;
+      --deep-red:#9f0008;
+      --ink:#1f2329;
+      --muted:#5f6670;
+      --line:#b8bec6;
+      --paper:#ffffff;
+      --bg:#eef1f4;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--ink);
+      font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",Arial,sans-serif;
+      line-height:1.85;
+    }
+
+    .toolbar{
+      position:sticky;
+      top:0;
+      z-index:20;
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      padding:12px;
+      background:rgba(255,255,255,.96);
+      border-bottom:1px solid #d9dde2;
+      box-shadow:0 2px 10px rgba(0,0,0,.05);
+    }
+
+    button{
+      border:1px solid #c9ced5;
+      background:#fff;
+      color:#30343b;
+      border-radius:4px;
+      padding:8px 16px;
+      font-size:14px;
+      cursor:pointer;
+    }
+    button.primary{
+      background:var(--huawei-red);
+      border-color:var(--huawei-red);
+      color:#fff;
+    }
+    button:hover{filter:brightness(.97)}
+
+    .page{
+      width:210mm;
+      min-height:297mm;
+      margin:24px auto;
+      padding:20mm 18mm 18mm;
+      background:var(--paper);
+      box-shadow:0 6px 28px rgba(0,0,0,.12);
+      position:relative;
+    }
+
+    .top-meta{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      font-family:"SimSun","宋体",serif;
+      font-size:14px;
+      color:#333;
+    }
+
+    .company-mark{
+      color:var(--huawei-red);
+      font-weight:700;
+      letter-spacing:1.2px;
+      font-size:18px;
+    }
+
+    .doc-type{
+      margin-top:24px;
+      text-align:center;
+      color:var(--huawei-red);
+      font-family:"SimSun","宋体",serif;
+      font-size:34px;
+      font-weight:700;
+      letter-spacing:10px;
+    }
+
+    .red-rule{
+      height:3px;
+      background:var(--huawei-red);
+      margin:14px 0 4px;
+    }
+
+    .doc-no{
+      text-align:center;
+      font-family:"SimSun","宋体",serif;
+      font-size:14px;
+      color:#444;
+      padding:4px 0 14px;
+      border-bottom:1px solid var(--huawei-red);
+    }
+
+    h1{
+      margin:30px 0 24px;
+      text-align:center;
+      font-family:"SimHei","黑体","Microsoft YaHei",sans-serif;
+      font-size:25px;
+      line-height:1.5;
+      font-weight:700;
+      letter-spacing:1px;
+    }
+
+    .recipient{
+      font-family:"FangSong","仿宋","SimSun",serif;
+      font-size:17px;
+      margin:0 0 12px;
+    }
+
+    .body-text{
+      font-family:"FangSong","仿宋","SimSun",serif;
+      font-size:17px;
+      text-align:justify;
+    }
+
+    .body-text p{
+      margin:10px 0;
+      text-indent:2em;
+    }
+
+    .key-emphasis{
+      color:var(--deep-red);
+      font-weight:700;
+    }
+
+    .body-text .lead{
+      font-family:"SimHei","黑体","Microsoft YaHei",sans-serif;
+      font-weight:700;
+      text-indent:0;
+      border-left:4px solid var(--huawei-red);
+      padding:8px 12px;
+      background:#faf7f7;
+      margin:18px 0;
+    }
+
+    .section-title{
+      margin:24px 0 12px;
+      font-family:"SimHei","黑体","Microsoft YaHei",sans-serif;
+      font-size:18px;
+      font-weight:700;
+    }
+
+    .notice-box{
+      border:1px solid #b8bec6;
+      border-left:4px solid var(--huawei-red);
+      background:#fafbfc;
+      padding:12px 16px;
+      margin:14px 0 20px;
+      font-family:"FangSong","仿宋","SimSun",serif;
+      font-size:16px;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      table-layout:fixed;
+      margin-top:10px;
+      font-family:"Microsoft YaHei","PingFang SC",sans-serif;
+      font-size:13px;
+    }
+
+    th,td{
+      border:1px solid #727983;
+      padding:8px 6px;
+      text-align:center;
+      vertical-align:middle;
+      min-height:38px;
+      word-break:break-word;
+    }
+
+    th{
+      background:#f0f1f3;
+      font-weight:700;
+    }
+
+    td:nth-child(5){
+      text-align:left;
+    }
+
+    .editable,
+    [contenteditable="true"]{
+      outline:none;
+    }
+
+    [contenteditable="true"]:focus{
+      background:#fffbea;
+      box-shadow:inset 0 0 0 1px #e4b923;
+    }
+
+    .hint{
+      color:#8b929b;
+    }
+
+    .requirements{
+      font-family:"FangSong","仿宋","SimSun",serif;
+      font-size:16px;
+      margin-top:18px;
+    }
+
+    .requirements p{
+      margin:7px 0;
+      padding-left:2em;
+      text-indent:-2em;
+    }
+
+    .signature{
+      margin-top:38px;
+      display:flex;
+      justify-content:flex-end;
+    }
+
+    .signature-inner{
+      width:260px;
+      text-align:center;
+      font-family:"FangSong","仿宋","SimSun",serif;
+      font-size:16px;
+      line-height:2.1;
+    }
+
+    .footer-line{
+      margin-top:28px;
+      padding-top:8px;
+      border-top:1px solid #50555c;
+      display:flex;
+      justify-content:space-between;
+      font-family:"SimSun","宋体",serif;
+      font-size:13px;
+      color:#444;
+    }
+
+    .top-right{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      gap:8px;
+    }
+
+    .is-hidden{
+      display:none !important;
+    }
+
+    .confidential{
+      color:var(--huawei-red);
+      border:1px solid var(--huawei-red);
+      padding:1px 8px;
+      font-size:12px;
+      line-height:1.6;
+      letter-spacing:2px;
+      white-space:nowrap;
+    }
+
+    @media print{
+      body{background:#fff}
+      .toolbar{display:none}
+      .page{
+        margin:0;
+        box-shadow:none;
+        width:auto;
+        min-height:auto;
+        padding:17mm 16mm 15mm;
+      }
+      @page{
+        size:A4;
+        margin:0;
+      }
+    }
+
+    @media(max-width:850px){
+      .page{
+        width:calc(100% - 20px);
+        margin:10px;
+        padding:30px 22px;
+      }
+      .doc-type{font-size:27px;letter-spacing:6px}
+      h1{font-size:21px}
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head>
+<body>
+
+  <div class="toolbar">
+    <button class="primary" onclick="window.print()">打印 / 另存为 PDF</button>
+    <button class="primary" onclick="exportImage()">一键导出图片</button>
+    <button onclick="addRow()">新增一行</button>
+    <button onclick="deleteRow()">删除末行</button>
+    <button onclick="toggleConfidential()">隐藏/显示“内部公开”</button>
+    <button onclick="toggleSigner()">隐藏/显示“签发人”</button>
+    <button onclick="saveLocal()">保存本地内容</button>
+    <button onclick="resetContent()">恢复初始内容</button>
+  </div>
+
+  <main class="page" id="documentPage">
+    <div class="top-meta">
+      <div class="company-mark" contenteditable="true">埃及网络保障与运维服务部</div>
+      <div class="top-right">
+        <div id="confidentialLabel" class="confidential" contenteditable="true">内部公开</div>
+        <div id="signerLabel" contenteditable="true">签发人：________</div>
+      </div>
+    </div>
+
+    <div class="doc-type" contenteditable="true">通　知</div>
+    <div class="red-rule"></div>
+    <div class="doc-no" contenteditable="true">埃及AMS〔2026〕XX号</div>
+
+    <h1 contenteditable="true">关于网络安全及工作质量问题的通知</h1>
+
+    <div class="recipient" contenteditable="true">各部门：</div>
+
+    <section class="body-text">
+      <p contenteditable="true">
+        <span class="key-emphasis">网络安全是公司的生命线</span>，是公司持续经营和发展的基本保障。各部门须将网络安全、合规及质量要求<span class="key-emphasis">传递到每一名员工</span>，并落实到具体岗位和日常工作中。
+      </p>
+
+      <p contenteditable="true">
+        现将部分人员在工作中存在的违规、质量及流程问题整理如下，请相关部门查收、核实，并作为<span class="key-emphasis">H1绩效考核</span>及后续管理的参考依据。
+      </p>
+    </section>
+
+    <div class="section-title" contenteditable="true">问题清单</div>
+
+    <table id="issueTable">
+      <thead>
+        <tr>
+          <th style="width:5%">#</th>
+          <th style="width:13%" contenteditable="true">人员姓名id</th>
+          <th style="width:24%" contenteditable="true">问题描述</th>
+          <th style="width:16%" contenteditable="true">违规内容</th>
+          <th style="width:10%" contenteditable="true">系统部</th>
+          <th style="width:14%" contenteditable="true">项目（含属性）</th>
+          <th style="width:10%" contenteditable="true">项目经理</th>
+          <th style="width:8%" contenteditable="true">FR</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td contenteditable="true" class="hint">姓名 / ID</td>
+          <td contenteditable="true" class="hint">填写具体问题描述</td>
+          <td contenteditable="true" class="hint">填写违规内容</td>
+          <td contenteditable="true"></td>
+          <td contenteditable="true"></td>
+          <td contenteditable="true"></td>
+          <td contenteditable="true"></td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td contenteditable="true"></td>
+          <td contenteditable="true"></td>
+          <td contenteditable="true"></td>
+          <td contenteditable="true"></td>
+          <td contenteditable="true"></td>
+          <td contenteditable="true"></td>
+          <td contenteditable="true"></td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td contenteditable="true"></td>
+          <td contenteditable="true"></td>
+          <td contenteditable="true"></td>
+          <td contenteditable="true"></td>
+          <td contenteditable="true"></td>
+          <td contenteditable="true"></td>
+          <td contenteditable="true"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <section class="body-text" style="margin-top:20px">
+      <p contenteditable="true">
+        请各部门认真核实并做好相关问题整改，同时结合实际情况在<span class="key-emphasis">H1绩效考核</span>中予以应用参考。
+      </p>
+      <p contenteditable="true">特此通知。</p>
+    </section>
+
+    <div class="signature">
+      <div class="signature-inner">
+        <div contenteditable="true">网络安全与质量管理工作组</div>
+        <div contenteditable="true">2026年　月　日</div>
+      </div>
+    </div>
+
+    <div class="footer-line">
+      <span contenteditable="true">抄送：相关部门负责人、BU主管、项目管理团队</span>
+      <span contenteditable="true">内部文件　注意保存</span>
+    </div>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "formal_cybersecurity_notice_v1";
+    const page = document.getElementById("documentPage");
+    const initialHTML = page.innerHTML;
+
+    function renumberRows(){
+      const rows = document.querySelectorAll("#issueTable tbody tr");
+      rows.forEach((row, index) => row.cells[0].textContent = index + 1);
+    }
+
+    function addRow(){
+      const tbody = document.querySelector("#issueTable tbody");
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td></td>
+        <td contenteditable="true"></td>
+        <td contenteditable="true"></td>
+        <td contenteditable="true"></td>
+        <td contenteditable="true"></td>
+        <td contenteditable="true"></td>
+        <td contenteditable="true"></td>
+        <td contenteditable="true"></td>`;
+      tbody.appendChild(row);
+      renumberRows();
+    }
+
+    function deleteRow(){
+      const tbody = document.querySelector("#issueTable tbody");
+      if(tbody.rows.length > 1){
+        tbody.deleteRow(tbody.rows.length - 1);
+        renumberRows();
+      }else{
+        alert("至少保留一行。");
+      }
+    }
+
+    async function exportImage(){
+      const page = document.getElementById("documentPage");
+      if(typeof html2canvas === "undefined"){
+        alert("图片导出组件加载失败，请检查网络后重试。");
+        return;
+      }
+
+      try{
+        const canvas = await html2canvas(page, {
+          scale: 2,
+          backgroundColor: "#ffffff",
+          useCORS: true,
+          logging: false,
+          windowWidth: page.scrollWidth,
+          windowHeight: page.scrollHeight
+        });
+
+        const link = document.createElement("a");
+        link.download = "埃及AMS网络安全及工作质量问题通知.png";
+        link.href = canvas.toDataURL("image/png", 1.0);
+        link.click();
+      }catch(error){
+        console.error(error);
+        alert("图片导出失败，请稍后重试。");
+      }
+    }
+
+    function toggleConfidential(){
+      const el = document.getElementById("confidentialLabel");
+      if(el) el.classList.toggle("is-hidden");
+    }
+
+    function toggleSigner(){
+      const el = document.getElementById("signerLabel");
+      if(el) el.classList.toggle("is-hidden");
+    }
+
+    function saveLocal(){
+      localStorage.setItem(STORAGE_KEY, page.innerHTML);
+      alert("内容已保存到当前浏览器。");
+    }
+
+    function resetContent(){
+      if(confirm("确定恢复初始内容吗？当前未保存的修改将丢失。")){
+        localStorage.removeItem(STORAGE_KEY);
+        page.innerHTML = initialHTML;
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if(saved){
+        page.innerHTML = saved;
+      }
+    });
+  </script>
+</body>
+</html>

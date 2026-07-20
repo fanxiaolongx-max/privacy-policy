@@ -605,6 +605,124 @@ function sampleUivScriptsPerSite(scripts, perSite = 2) {
     return sampled;
 }
 
+function buildUivBatchControlResetScript() {
+    return `return (function () {
+        try {
+            const bag = window.name ? JSON.parse(window.name) : {};
+            bag.uivf12BatchControl = {};
+            window.name = JSON.stringify(bag);
+        } catch (e) {
+            window.name = JSON.stringify({ uivf12BatchControl: {} });
+        }
+        return 'ready';
+    })();`;
+}
+
+function buildUivBatchControlReadScript() {
+    return `return (function () {
+        try {
+            const bag = window.name ? JSON.parse(window.name) : {};
+            return bag && bag.uivf12BatchControl && bag.uivf12BatchControl.stopRequested ? 'stop' : 'continue';
+        } catch (e) {
+            return 'continue';
+        }
+    })();`;
+}
+
+function buildUivControlledTaskScript(code, taskId, taskName) {
+    const prefix = `return (async function () {
+        const taskId = ${JSON.stringify(taskId)};
+        const taskName = ${JSON.stringify(taskName)};
+        const controlKey = 'uivf12BatchControl';
+        function readControl() {
+            try {
+                const bag = window.name ? JSON.parse(window.name) : {};
+                return bag && bag[controlKey] ? bag[controlKey] : {};
+            } catch (e) {
+                return {};
+            }
+        }
+        const initialControl = readControl();
+        if (initialControl.stopRequested) return '__UIVF12_STOPPED__';
+        if (initialControl.skipTaskId === taskId) return '__UIVF12_SKIPPED__';
+
+        const controller = typeof AbortController === 'function' ? new AbortController() : null;
+        const previousFetch = window.fetch;
+        const taskTimeouts = new Set();
+        const taskIntervals = new Set();
+        const taskSetTimeout = function (callback, delay) {
+            const args = Array.prototype.slice.call(arguments, 2);
+            const id = window.setTimeout(function () {
+                taskTimeouts.delete(id);
+                if (!controller || !controller.signal.aborted) callback.apply(window, args);
+            }, delay);
+            taskTimeouts.add(id);
+            return id;
+        };
+        const taskClearTimeout = function (id) {
+            taskTimeouts.delete(id);
+            window.clearTimeout(id);
+        };
+        const taskSetInterval = function (callback, delay) {
+            const args = Array.prototype.slice.call(arguments, 2);
+            const id = window.setInterval(function () {
+                if (!controller || !controller.signal.aborted) callback.apply(window, args);
+            }, delay);
+            taskIntervals.add(id);
+            return id;
+        };
+        const taskClearInterval = function (id) {
+            taskIntervals.delete(id);
+            window.clearInterval(id);
+        };
+        const cancelTaskTimers = function () {
+            taskTimeouts.forEach(function (id) { window.clearTimeout(id); });
+            taskIntervals.forEach(function (id) { window.clearInterval(id); });
+            taskTimeouts.clear();
+            taskIntervals.clear();
+        };
+        if (controller) controller.signal.addEventListener('abort', cancelTaskTimers, { once: true });
+        let taskFetch = null;
+        if (controller && typeof previousFetch === 'function') {
+            taskFetch = function (input, init) {
+                const nextInit = Object.assign({}, init || {});
+                const callerSignal = nextInit.signal;
+                if (callerSignal && typeof callerSignal.addEventListener === 'function') {
+                    if (callerSignal.aborted) controller.abort();
+                    else callerSignal.addEventListener('abort', function () { controller.abort(); }, { once: true });
+                }
+                nextInit.signal = controller.signal;
+                return previousFetch.call(this, input, nextInit);
+            };
+        }
+
+        let pollTimer = null;
+        const controlPromise = new Promise(function (resolve) {
+            pollTimer = setInterval(function () {
+                const control = readControl();
+                if (!control.stopRequested && control.skipTaskId !== taskId) return;
+                if (controller) {
+                    try { controller.abort(); } catch (e) {}
+                }
+                resolve(control.stopRequested ? '__UIVF12_STOPPED__' : '__UIVF12_SKIPPED__');
+            }, 250);
+        });
+
+        const taskPromise = (async function (setTimeout, clearTimeout, setInterval, clearInterval, fetch) {
+`;
+    const suffix = `
+        }).call(window, taskSetTimeout, taskClearTimeout, taskSetInterval, taskClearInterval, taskFetch || previousFetch);
+        try {
+            return await Promise.race([Promise.resolve(taskPromise), controlPromise]);
+        } finally {
+            if (pollTimer) clearInterval(pollTimer);
+            cancelTaskTimers();
+            console.info('[UIVF12 Batch Control] task settled:', taskName);
+        }
+    })();`;
+    return prefix + String(code || '') + suffix;
+}
+
 function buildUivProgressPanelScript(state) {
     return `(() => {
         const state = ${JSON.stringify(state)};
@@ -625,6 +743,20 @@ function buildUivProgressPanelScript(state) {
             const bag = readWindowState();
             bag[controlKey] = Object.assign({}, bag[controlKey] || {}, nextControl);
             window.name = JSON.stringify(bag);
+        }
+        function appendControlLog(message) {
+            const latest = readControl();
+            const logs = Array.isArray(latest.logs) ? latest.logs.slice(-39) : [];
+            logs.push(new Date().toLocaleTimeString('zh-CN', { hour12: false }) + ' ' + message);
+            writeControl({ logs });
+        }
+        const control = readControl();
+        if (control.closed) {
+            ['uivf12-batch-progress-panel', 'uivf12-control-aura', 'uivf12-control-scanline', 'uivf12-control-hint'].forEach(function (id) {
+                const node = document.getElementById(id);
+                if (node) node.remove();
+            });
+            return 'panel-closed';
         }
         let auraStyle = document.getElementById('uivf12-control-aura-style');
         if (!auraStyle) {
@@ -690,9 +822,10 @@ function buildUivProgressPanelScript(state) {
             'backdrop-filter:blur(10px)'
         ].join(';');
         controlHint.innerHTML = 'UIVF12 CONTROL ACTIVE<br><span style="color:#93c5fd;">页面自动化接管中 · 右下角面板显示进度</span>';
-        const control = readControl();
         const pct = (done, total) => total ? Math.round((done / total) * 100) : 0;
-        const clampLogs = Array.isArray(state.logs) ? state.logs.slice(-80) : [];
+        const generatedLogs = Array.isArray(state.logs) ? state.logs : [];
+        const controlLogs = Array.isArray(control.logs) ? control.logs : [];
+        const clampLogs = generatedLogs.concat(controlLogs).slice(-80);
         let panel = document.getElementById('uivf12-batch-progress-panel');
         if (!panel) {
             panel = document.createElement('div');
@@ -750,8 +883,9 @@ function buildUivProgressPanelScript(state) {
                     '<div style="font-size:14px;font-weight:800;letter-spacing:.2px;color:#f8fafc;">UIVF12 批量阵列控制台</div>' +
                     '<div style="font-size:10px;color:#93c5fd;margin-top:2px;">' + state.groupName + ' · 可拖动 / 可缩放</div>' +
                 '</div>' +
-                '<div style="display:flex;align-items:center;gap:8px;">' +
+                '<div style="display:flex;align-items:center;gap:6px;">' +
                     '<div style="font-size:11px;color:#67e8f9;border:1px solid rgba(103,232,249,.28);border-radius:999px;padding:4px 8px;background:rgba(8,145,178,.14);">' + state.phase + '</div>' +
+                    '<button id="uivf12-batch-close" type="button" title="关闭浮窗（任务继续运行）" style="width:26px;height:26px;border-radius:7px;border:1px solid rgba(148,163,184,.28);background:rgba(15,23,42,.72);color:#cbd5e1;cursor:pointer;font-size:17px;line-height:1;">×</button>' +
                 '</div>' +
             '</div>' +
             '<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px;">' +
@@ -759,11 +893,71 @@ function buildUivProgressPanelScript(state) {
                 '<div style="font-size:12px;color:#bae6fd;">总进度 ' + state.done + '/' + state.total + '</div>' +
             '</div>' +
             bar(state.done, state.total, 'linear-gradient(90deg,#06b6d4,#3b82f6,#8b5cf6)') +
+            '<div style="display:flex;gap:8px;margin-top:11px;">' +
+                '<button id="uivf12-batch-skip" type="button" style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid rgba(251,191,36,.4);background:rgba(180,83,9,.2);color:#fde68a;font-weight:700;cursor:pointer;">跳过当前任务</button>' +
+                '<button id="uivf12-batch-stop" type="button" style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid rgba(248,113,113,.42);background:rgba(153,27,27,.24);color:#fecaca;font-weight:700;cursor:pointer;">停止全部任务</button>' +
+            '</div>' +
             '<div style="margin-top:10px;">' + siteRows + '</div>' +
             '<div style="margin-top:10px;border-top:1px solid rgba(148,163,184,.16);padding-top:9px;">' +
                 '<div style="font-size:10px;color:#7dd3fc;text-transform:uppercase;letter-spacing:.12em;margin-bottom:5px;">Live Log</div>' +
                 '<div id="uivf12-batch-log-scroll" style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px;line-height:1.55;color:#cbd5e1;height:96px;overflow-y:auto;overflow-x:hidden;padding-right:4px;">' + logRows + '</div>' +
             '</div>';
+        const appendLocalLog = function (message, color) {
+            const target = panel.querySelector('#uivf12-batch-log-scroll');
+            if (!target) return;
+            const line = document.createElement('div');
+            line.style.cssText = 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:' + (color || '#cbd5e1') + ';';
+            line.textContent = new Date().toLocaleTimeString('zh-CN', { hour12: false }) + ' ' + message;
+            target.appendChild(line);
+            target.scrollTop = target.scrollHeight;
+        };
+        const skipButton = panel.querySelector('#uivf12-batch-skip');
+        if (skipButton) {
+            const canSkip = Boolean(state.activeTaskId) && !control.stopRequested;
+            skipButton.disabled = !canSkip;
+            if (!canSkip) {
+                skipButton.style.opacity = '.45';
+                skipButton.style.cursor = 'not-allowed';
+                skipButton.title = '当前没有正在执行的可跳过任务';
+            }
+            skipButton.onclick = function () {
+                if (!state.activeTaskId) return;
+                writeControl({ skipTaskId: state.activeTaskId, skipRequestedAt: Date.now() });
+                appendControlLog('已请求跳过：' + (state.activeTaskName || '当前任务'));
+                skipButton.disabled = true;
+                skipButton.style.opacity = '.55';
+                skipButton.textContent = '正在跳过…';
+                appendLocalLog('已请求跳过：' + (state.activeTaskName || '当前任务'), '#fde68a');
+            };
+        }
+        const stopButton = panel.querySelector('#uivf12-batch-stop');
+        if (stopButton) {
+            if (control.stopRequested) {
+                stopButton.disabled = true;
+                stopButton.textContent = '全部任务已停止';
+                stopButton.style.opacity = '.6';
+            }
+            stopButton.onclick = function () {
+                if (!window.confirm('确定停止全部批量任务？未执行的任务将不再运行。')) return;
+                writeControl({ stopRequested: true, stoppedAt: Date.now() });
+                appendControlLog('已请求停止全部任务');
+                stopButton.disabled = true;
+                stopButton.textContent = '正在停止全部任务…';
+                stopButton.style.opacity = '.65';
+                if (skipButton) skipButton.disabled = true;
+                appendLocalLog('已请求停止全部任务', '#fecaca');
+            };
+        }
+        const closeButton = panel.querySelector('#uivf12-batch-close');
+        if (closeButton) {
+            closeButton.onclick = function () {
+                writeControl({ closed: true, closedAt: Date.now() });
+                ['uivf12-batch-progress-panel', 'uivf12-control-aura', 'uivf12-control-scanline', 'uivf12-control-hint'].forEach(function (id) {
+                    const node = document.getElementById(id);
+                    if (node) node.remove();
+                });
+            };
+        }
         const handle = panel.querySelector('#uivf12-batch-panel-handle');
         if (handle && !panel.__uivf12DragBound) {
             panel.__uivf12DragBound = true;
@@ -1467,7 +1661,7 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
     }));
     const panelLogs = [];
 
-    function pushPanelCommand(phase, description) {
+    function pushPanelCommand(phase, description, activeTask = null) {
         if (description) {
             const stamp = new Date().toLocaleTimeString('zh-CN', { hour12: false });
             panelLogs.push(`${stamp} ${description}`);
@@ -1480,7 +1674,9 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
                 total: usableScripts.length,
                 done: runIndex,
                 sites: siteStates,
-                logs: panelLogs
+                logs: panelLogs,
+                activeTaskId: activeTask ? activeTask.id : '',
+                activeTaskName: activeTask ? activeTask.name : ''
             }),
             Value: '',
             Description: 'Render UIVF12 floating progress panel.'
@@ -1492,6 +1688,11 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
         Target: `UIVF12 ${groupName} UI.Vision batch started. Total executable tasks: ${usableScripts.length}. Sites: ${groupedScripts.length}. Speed: ${speed}x. Cooldown: ${cooldownMs}ms`,
         Value: '',
         Description: ''
+    }, {
+        Command: 'executeScript',
+        Target: buildUivBatchControlResetScript(),
+        Value: '',
+        Description: 'Reset UIVF12 batch control state.'
     }, {
         Command: 'executeScript',
         Target: buildUivDownloadRecorderScript({ reset: true, autoImport }),
@@ -1533,11 +1734,14 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
         const compatVar = `uivLoginCompat_site_${groupIndex + 1}`;
         const isNetcareSite = String(group.openUrl || '').toLowerCase().includes('netcare');
         const siteWarmupMs = String(group.openUrl || '').toLowerCase().includes('netcare') ? 10000 : 5000;
+        const siteControlVar = `uivBatchControl_site_${groupIndex + 1}`;
         siteStates[groupIndex].status = 'running';
         if (groupIndex > 0) {
             pushPanelCommand('切换站点', `准备打开 ${group.openUrl}`);
         }
         commands.push(
+            { Command: 'executeScript', Target: buildUivBatchControlReadScript(), Value: siteControlVar, Description: 'Check whether the whole UIVF12 batch was stopped.' },
+            { Command: 'gotoIf_v2', Target: '${' + siteControlVar + '} == "stop"', Value: 'UIVF12_BATCH_STOPPED', Description: '' },
             { Command: 'echo', Target: `[Site ${groupProgress}] Open ${group.openUrl} and run ${group.scripts.length} task(s)`, Value: '', Description: '' },
             { Command: 'store', Target: 'true', Value: '!ERRORIGNORE', Description: 'Do not fail the batch if a site keeps loading beyond UI.Vision page-load timeout.' },
             { Command: 'open', Target: group.openUrl, Value: '', Description: '' },
@@ -1557,14 +1761,16 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
             { Command: 'executeScript', Target: buildLoginProbeStatusScript(loginVar, group.openUrl), Value: loginStatusVar, Description: 'Normalize login probe result.' },
             { Command: 'executeScript', Target: buildAppendPanelLogScript(loginVar, group.openUrl), Value: loginDetailVar, Description: 'Append login probe detail to floating panel.' },
             { Command: 'echo', Target: `[Site ${groupProgress}] Login probe: ${'${' + loginDetailVar + '}'}`, Value: '', Description: '' },
-            { Command: 'while_v2', Target: '${' + loginStatusVar + '} != "true"', Value: '', Description: '' },
+            { Command: 'while_v2', Target: '${' + loginStatusVar + '} != "true" && ${' + siteControlVar + '} != "stop"', Value: '', Description: '' },
             { Command: 'executeScript', Target: `alert("UIVF12 批量任务等待登录：${group.openUrl}\\n\\n该站点共有 ${group.scripts.length} 个任务等待执行。请在当前页面完成登录。UI.Vision 会每 10 秒自动检测一次，检测到登录后继续执行。"); return "waiting-login";`, Value: '', Description: '' },
             { Command: 'pause', Target: '10000', Value: '', Description: '' },
+            { Command: 'executeScript', Target: buildUivBatchControlReadScript(), Value: siteControlVar, Description: 'Allow Stop All to leave the login wait loop.' },
             { Command: 'executeScript', Target: group.loginProbe, Value: loginVar, Description: 'Re-check login token.' },
             { Command: 'executeScript', Target: buildLoginProbeStatusScript(loginVar, group.openUrl), Value: loginStatusVar, Description: 'Normalize login probe result.' },
             { Command: 'executeScript', Target: buildAppendPanelLogScript(loginVar, group.openUrl), Value: loginDetailVar, Description: 'Append login probe detail to floating panel.' },
             { Command: 'echo', Target: `[Site ${groupProgress}] Login probe: ${'${' + loginDetailVar + '}'}`, Value: '', Description: '' },
             { Command: 'endWhile', Target: '', Value: '', Description: '' },
+            { Command: 'gotoIf_v2', Target: '${' + siteControlVar + '} == "stop"', Value: 'UIVF12_BATCH_STOPPED', Description: '' },
             { Command: 'echo', Target: `[Site ${groupProgress}] Login detected for ${group.openUrl}`, Value: '', Description: '' }
         );
         pushPanelCommand('站点执行中', `${group.openUrl} 已登录，开始执行 ${group.scripts.length} 个任务`);
@@ -1575,11 +1781,16 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
             const resultVar = `uivResult_${nextRunIndex}`;
             const beforeCaptureVar = `uivCaptureBefore_${nextRunIndex}`;
             const auditVar = `uivDownloadAudit_${nextRunIndex}`;
-            pushPanelCommand('任务执行中', `开始 ${script.name}`);
+            const taskId = `task-${nextRunIndex}`;
+            const taskControlVar = `uivBatchControl_task_${nextRunIndex}`;
+            pushPanelCommand('任务执行中', `开始 ${script.name}`, { id: taskId, name: script.name });
             commands.push(
+                { Command: 'executeScript', Target: buildUivBatchControlReadScript(), Value: taskControlVar, Description: 'Check UIVF12 batch control before task.' },
+                { Command: 'gotoIf_v2', Target: '${' + taskControlVar + '} == "stop"', Value: 'UIVF12_BATCH_STOPPED', Description: '' },
                 { Command: 'echo', Target: `[${progress}] Run ${script.name}`, Value: '', Description: '' },
                 { Command: 'executeScript', Target: buildUivCaptureCountScript(), Value: beforeCaptureVar, Description: `Record capture count before: ${script.name}` },
-                { Command: 'executeScript', Target: script.code, Value: resultVar, Description: `Run UIVF12 script: ${script.name}` },
+                { Command: 'executeScript', Target: buildUivControlledTaskScript(script.code, taskId, script.name), Value: resultVar, Description: `Run controllable UIVF12 script: ${script.name}` },
+                { Command: 'gotoIf_v2', Target: '${' + resultVar + '} == "__UIVF12_STOPPED__"', Value: 'UIVF12_BATCH_STOPPED', Description: '' },
                 { Command: 'pause', Target: '500', Value: '', Description: 'Let download click/import state settle before auditing.' },
                 { Command: 'executeScript', Target: buildUivAutoImportFlushScript(), Value: '', Description: 'Wait for UIVF12 auto-import file upload.' },
                 { Command: 'executeScript', Target: buildUivTaskDownloadAuditScript(script.name, beforeCaptureVar, resultVar), Value: auditVar, Description: `Audit download result: ${script.name}` },
@@ -1589,7 +1800,7 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
             );
             runIndex = nextRunIndex;
             siteStates[groupIndex].done += 1;
-            pushPanelCommand('任务完成', `完成 ${script.name}`);
+            pushPanelCommand('任务已处理', `已处理 ${script.name}`);
         });
         siteStates[groupIndex].status = 'done';
         pushPanelCommand('站点完成', `${group.openUrl} 站点任务完成`);
@@ -1617,6 +1828,26 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
         }),
         Value: '',
         Description: 'Show UIVF12 completion summary dialog.'
+    }, {
+        Command: 'gotoLabel',
+        Target: 'UIVF12_BATCH_END',
+        Value: '',
+        Description: ''
+    }, {
+        Command: 'label',
+        Target: 'UIVF12_BATCH_STOPPED',
+        Value: '',
+        Description: ''
+    }, {
+        Command: 'echo',
+        Target: 'UIVF12 batch stopped by user. Remaining tasks were skipped.',
+        Value: '',
+        Description: ''
+    }, {
+        Command: 'label',
+        Target: 'UIVF12_BATCH_END',
+        Value: '',
+        Description: ''
     });
 
     return {

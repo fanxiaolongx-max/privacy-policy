@@ -3,11 +3,13 @@ const fs = require('fs');
 const path = require('path');
 const JSZip = require('jszip');
 const { DATA_DIR, ensureDataDir } = require('./store');
+const { run, get, all } = require('./app-db');
 const historyRepo = require('./upload-history-repository');
 
 const CUSTOM_TOOLS_DIR = path.join(DATA_DIR, 'custom-tools');
 const TOOL_MANIFEST_FILE = '.tool-manifest.json';
 let registryMutationQueue = Promise.resolve();
+let registryReadyPromise = null;
 
 function withRegistryMutation(task) {
     const operation = registryMutationQueue.then(task, task);
@@ -46,13 +48,135 @@ function listToolDirs() {
         .map(item => item.name);
 }
 
+function rowToTool(row) {
+    let tags = [];
+    try {
+        const parsed = JSON.parse(row.tags_json || '[]');
+        if (Array.isArray(parsed)) tags = parsed;
+    } catch (_) {}
+    return {
+        slug: row.slug,
+        name: row.name,
+        icon: row.icon,
+        description: row.description || '',
+        tags,
+        href: row.href,
+        filePath: row.file_path,
+        publicAccess: Number(row.public_access || 0) === 1,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+    };
+}
+
+function toolRowParams(tool, sortOrder = 0) {
+    return [
+        tool.slug,
+        tool.name,
+        tool.icon || '🧩',
+        tool.description || '',
+        JSON.stringify(Array.isArray(tool.tags) ? tool.tags : []),
+        tool.href || `/tools/${tool.slug}`,
+        tool.filePath || `/custom-tools/${tool.slug}/index.html`,
+        tool.publicAccess === true ? 1 : 0,
+        tool.createdAt,
+        tool.updatedAt || tool.createdAt,
+        sortOrder
+    ];
+}
+
+async function insertOrReplaceToolRow(tool, sortOrder = 0) {
+    await run(
+        `INSERT INTO custom_tools (
+            slug, name, icon, description, tags_json, href, file_path,
+            public_access, created_at, updated_at, sort_order
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(slug) DO UPDATE SET
+            name = excluded.name,
+            icon = excluded.icon,
+            description = excluded.description,
+            tags_json = excluded.tags_json,
+            href = excluded.href,
+            file_path = excluded.file_path,
+            public_access = excluded.public_access,
+            created_at = excluded.created_at,
+            updated_at = excluded.updated_at,
+            sort_order = excluded.sort_order`,
+        toolRowParams(tool, sortOrder)
+    );
+}
+
+async function listToolRows() {
+    return all(`SELECT slug, name, icon, description, tags_json, href, file_path,
+                       public_access, created_at, updated_at, sort_order
+                FROM custom_tools
+                ORDER BY sort_order ASC, created_at ASC, slug ASC`);
+}
+
+async function syncLegacyRegistryMirror() {
+    const tools = (await listToolRows()).map(rowToTool);
+    await writeKV('sys', 'custom_tools', tools);
+}
+
+async function ensureRegistryReady() {
+    if (!registryReadyPromise) {
+        registryReadyPromise = (async () => {
+            await run(`CREATE TABLE IF NOT EXISTS custom_tools (
+                slug TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                icon TEXT NOT NULL DEFAULT '🧩',
+                description TEXT NOT NULL DEFAULT '',
+                tags_json TEXT NOT NULL DEFAULT '[]',
+                href TEXT NOT NULL,
+                file_path TEXT NOT NULL,
+                public_access INTEGER NOT NULL DEFAULT 0 CHECK(public_access IN (0, 1)),
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                sort_order INTEGER NOT NULL DEFAULT 0
+            )`);
+            await run('CREATE INDEX IF NOT EXISTS idx_custom_tools_sort_order ON custom_tools(sort_order, created_at, slug)');
+            const countRow = await get('SELECT COUNT(*) AS count FROM custom_tools');
+            if (Number(countRow && countRow.count || 0) === 0) {
+                const legacy = await readKV('sys', 'custom_tools', []);
+                if (Array.isArray(legacy)) {
+                    for (let index = 0; index < legacy.length; index += 1) {
+                        const item = legacy[index];
+                        if (!item || !item.slug) continue;
+                        await insertOrReplaceToolRow(item, index);
+                    }
+                }
+            }
+            await syncLegacyRegistryMirror();
+        })().catch(err => {
+            registryReadyPromise = null;
+            throw err;
+        });
+    }
+    return registryReadyPromise;
+}
+
 async function listTools() {
-    const items = await readKV('sys', 'custom_tools', []);
-    return Array.isArray(items) ? items : [];
+    await ensureRegistryReady();
+    return (await listToolRows()).map(rowToTool);
 }
 
 async function saveRegistry(items) {
-    await writeKV('sys', 'custom_tools', items);
+    await ensureRegistryReady();
+    const normalizedItems = Array.isArray(items) ? items : [];
+    for (let index = 0; index < normalizedItems.length; index += 1) {
+        await insertOrReplaceToolRow(normalizedItems[index], index);
+    }
+    const slugs = normalizedItems.map(item => item.slug).filter(Boolean);
+    if (slugs.length) {
+        const placeholders = slugs.map(() => '?').join(',');
+        await run(`DELETE FROM custom_tools WHERE slug NOT IN (${placeholders})`, slugs);
+    } else {
+        await run('DELETE FROM custom_tools');
+    }
+    await syncLegacyRegistryMirror();
+}
+
+async function replaceAllTools(items) {
+    return withRegistryMutation(() => saveRegistry(items));
 }
 
 function normalizeToolRecord(raw, slug) {
@@ -101,23 +225,29 @@ function readToolManifest(slug) {
 }
 
 async function getTool(slug) {
-    return (await listTools()).find(item => item.slug === slug) || null;
+    await ensureRegistryReady();
+    const row = await get(
+        `SELECT slug, name, icon, description, tags_json, href, file_path,
+                public_access, created_at, updated_at, sort_order
+         FROM custom_tools WHERE slug = ?`,
+        [slug]
+    );
+    return row ? rowToTool(row) : null;
 }
 
 async function updateToolAccess(slug, publicAccess) {
     return withRegistryMutation(async () => {
-        const tools = await listTools();
-        const index = tools.findIndex(item => item.slug === slug);
-        if (index < 0) return null;
-        tools[index] = {
-            ...tools[index],
-            publicAccess: Boolean(publicAccess),
-            updatedAt: new Date().toISOString()
-        };
-        await saveRegistry(tools);
+        await ensureRegistryReady();
+        const result = await run(
+            'UPDATE custom_tools SET public_access = ?, updated_at = ? WHERE slug = ?',
+            [publicAccess ? 1 : 0, new Date().toISOString(), slug]
+        );
+        if (!result.changes) return null;
+        await syncLegacyRegistryMirror();
+        const tool = await getTool(slug);
         const previousManifest = readToolManifest(slug);
-        writeToolManifest(tools[index], { history: previousManifest && previousManifest.history });
-        return tools[index];
+        writeToolManifest(tool, { history: previousManifest && previousManifest.history });
+        return tool;
     });
 }
 
@@ -134,18 +264,17 @@ async function updateToolName(slug, value) {
         throw err;
     }
     return withRegistryMutation(async () => {
-        const tools = await listTools();
-        const index = tools.findIndex(item => item.slug === slug);
-        if (index < 0) return null;
-        tools[index] = {
-            ...tools[index],
-            name,
-            updatedAt: new Date().toISOString()
-        };
-        await saveRegistry(tools);
+        await ensureRegistryReady();
+        const result = await run(
+            'UPDATE custom_tools SET name = ?, updated_at = ? WHERE slug = ?',
+            [name, new Date().toISOString(), slug]
+        );
+        if (!result.changes) return null;
+        await syncLegacyRegistryMirror();
+        const tool = await getTool(slug);
         const previousManifest = readToolManifest(slug);
-        writeToolManifest(tools[index], { history: previousManifest && previousManifest.history });
-        return tools[index];
+        writeToolManifest(tool, { history: previousManifest && previousManifest.history });
+        return tool;
     });
 }
 
@@ -358,12 +487,11 @@ async function createTool(payload) {
             updatedAt: now
         };
 
-        const previousTools = tools.slice();
         try {
             saveToolFiles(slug, files);
             writeToolManifest(tool, { history });
-            tools.push(tool);
-            await saveRegistry(tools);
+            await insertOrReplaceToolRow(tool, tools.length);
+            await syncLegacyRegistryMirror();
             const expectedIndex = files.find(([filePath]) => filePath.toLowerCase() === 'index.html');
             await verifyCreatedTool(tool, expectedIndex ? expectedIndex[1].toString('utf8') : '');
             await historyRepo.addHistory(history);
@@ -371,7 +499,8 @@ async function createTool(payload) {
         } catch (err) {
             removeToolDir(slug);
             try {
-                await saveRegistry(previousTools);
+                await run('DELETE FROM custom_tools WHERE slug = ?', [slug]);
+                await syncLegacyRegistryMirror();
             } catch (rollbackErr) {
                 console.error('[custom-tools] registry rollback failed:', rollbackErr.message);
             }
@@ -382,10 +511,10 @@ async function createTool(payload) {
 
 async function deleteTool(slug) {
     return withRegistryMutation(async () => {
-        const tools = await listTools();
-        const next = tools.filter(item => item.slug !== slug);
-        if (next.length === tools.length) return false;
-        await saveRegistry(next);
+        await ensureRegistryReady();
+        const result = await run('DELETE FROM custom_tools WHERE slug = ?', [slug]);
+        if (!result.changes) return false;
+        await syncLegacyRegistryMirror();
         removeToolDir(slug);
         return true;
     });
@@ -411,15 +540,15 @@ async function recoverToolFromDisk(slugValue, metadata = {}) {
             detail: `${tool.name} (${slug}) - 根据磁盘清单恢复注册`,
             time: metadata.createdAt || tool.createdAt
         };
-        const previousTools = tools.slice();
         try {
-            tools.push(tool);
-            await saveRegistry(tools);
+            await insertOrReplaceToolRow(tool, tools.length);
+            await syncLegacyRegistryMirror();
             writeToolManifest(tool, { history });
             await historyRepo.addHistory(history);
             return { tool, recovered: true };
         } catch (err) {
-            await saveRegistry(previousTools);
+            await run('DELETE FROM custom_tools WHERE slug = ?', [slug]);
+            await syncLegacyRegistryMirror();
             throw err;
         }
     });
@@ -475,7 +604,13 @@ async function reconcileToolsFromDisk() {
             }
         }
 
-        if (recovered.length) await saveRegistry(tools);
+        if (recovered.length) {
+            for (const slug of recovered) {
+                const tool = tools.find(item => item.slug === slug);
+                await insertOrReplaceToolRow(tool, tools.indexOf(tool));
+            }
+            await syncLegacyRegistryMirror();
+        }
         return { recovered, unregistered };
     });
 }
@@ -499,6 +634,7 @@ module.exports = {
     recoverToolFromDisk,
     ensureToolHistory,
     reconcileToolsFromDisk,
+    replaceAllTools,
     getToolFilePath,
     CUSTOM_TOOLS_DIR,
     TOOL_MANIFEST_FILE

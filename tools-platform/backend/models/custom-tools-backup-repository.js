@@ -393,7 +393,7 @@ async function restoreBackup(buffer, options = {}) {
         const restoredSlugs = new Set(selectedTools.map(tool => tool.slug));
         const nextRegistry = originalRegistry.filter(tool => !restoredSlugs.has(tool.slug));
         selectedTools.forEach(tool => nextRegistry.push({ ...tool.metadata, slug: tool.slug }));
-        await writeKV('sys', 'custom_tools', nextRegistry);
+        await customToolsRepo.replaceAllTools(nextRegistry);
         for (const tool of selectedTools) {
             if (tool.state === null || tool.state === undefined) await deleteKV('custom_tool_state', tool.slug);
             else await writeKV('custom_tool_state', tool.slug, tool.state);
@@ -415,7 +415,7 @@ async function restoreBackup(buffer, options = {}) {
         };
     } catch (err) {
         try {
-            await writeKV('sys', 'custom_tools', originalRegistry);
+            await customToolsRepo.replaceAllTools(originalRegistry);
             for (const [slug, state] of originalStates.entries()) {
                 if (state === undefined) await deleteKV('custom_tool_state', slug);
                 else await writeKV('custom_tool_state', slug, state);
