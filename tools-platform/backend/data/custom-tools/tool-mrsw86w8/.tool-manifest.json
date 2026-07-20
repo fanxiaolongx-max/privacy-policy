@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "tool": {
+    "slug": "tool-mrsw86w8",
+    "name": "重点通知",
+    "icon": "🧩",
+    "description": "由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。",
+    "tags": [],
+    "href": "/tools/tool-mrsw86w8",
+    "filePath": "/custom-tools/tool-mrsw86w8/index.html",
+    "publicAccess": false,
+    "createdAt": "2026-07-20T07:18:36.008Z",
+    "updatedAt": "2026-07-20T07:18:36.008Z"
+  },
+  "history": {
+    "id": "custom-import-tool-mrsw86w8",
+    "tool": "custom",
+    "action": "导入自定义工具",
+    "detail": "重点通知 (tool-mrsw86w8)",
+    "time": "2026-07-20T07:18:36.008Z"
+  }
+}

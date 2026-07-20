@@ -298,7 +298,7 @@ async function exportBackup() {
         a.download = UIVT('uiv.export.filename', { date: dateStr });
         a.click();
         showToast(UIVT('uiv.toast.exported'));
-        API.logHistory('uiv', '导出备份', `共 ${data.scripts.length} 个脚本`);
+        API.logHistory('uiv', '导出脚本', `共 ${data.scripts.length} 个脚本`);
     } catch (e) {
         showToast(UIVT('uiv.toast.exportFail'), 'error');
     }
