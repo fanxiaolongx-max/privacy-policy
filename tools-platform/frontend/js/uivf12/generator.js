@@ -6,7 +6,18 @@
 
 const TOOL_VERSION = 'v6.6';
 
-function generateScript() {
+function generateScript(options = {}) {
+    const serializeForScript = (value) => JSON.stringify(value)
+        .replace(/\u2028/g, '\\u2028')
+        .replace(/\u2029/g, '\\u2029');
+    const stringLiteral = (value) => serializeForScript(String(value));
+    const generatorOptions = options && typeof options === 'object' ? options : {};
+    const requestedProfile = String(generatorOptions.platformOverride || '').toUpperCase();
+    const aiAdapterConfig = generatorOptions.aiAdapter && typeof generatorOptions.aiAdapter === 'object'
+        ? generatorOptions.aiAdapter
+        : null;
+    const allowNativeSpecialEndpoints = generatorOptions.allowNativeSpecialEndpoints !== false;
+    const allowNativeRequestExtensions = generatorOptions.allowNativeRequestExtensions !== false;
     window.__uivAiAdapterCurrent = null;
     const errorDiv = document.getElementById('errorMsg');
     errorDiv.innerText = '';
@@ -18,22 +29,35 @@ function generateScript() {
     }
 
     const url = document.getElementById('requestUrl').value.trim();
+    const urlLiteral = stringLiteral(url);
+    const urlComment = url.replace(/[\r\n\u2028\u2029]+/g, ' ');
     const fileNameBase = document.getElementById('fileName').value.trim() || 'PBI_Data';
     const useGlobalVars = document.getElementById('useGlobalVars').checked;
     const isPagination = document.getElementById('isPagination').checked;
-    const forceSumData = document.getElementById('forceSumData').checked;
-    const autoFetchCPC = document.getElementById('autoFetchCPC').checked;
+    const forceSumData = document.getElementById('forceSumData').checked && allowNativeSpecialEndpoints;
+    const autoFetchCPC = document.getElementById('autoFetchCPC').checked && allowNativeSpecialEndpoints;
     const autoRuntimeMonth = document.getElementById('autoRuntimeMonth').checked;
 
     const parsedPayloadObj = window.UIVWorkbench.getParsedPayload();
     if (!parsedPayloadObj) { errorDiv.innerText = UIVT('uiv.generator.needPayload'); UIVGenLog.error(UIVT('uiv.generator.needPayloadLog')); UIVGenLog.done(false); return; }
 
-    const platform = url.includes('datafab') ? 'DATAFAB' : (url.includes('netcare') ? 'NETCARE' : 'CUSTOM');
+    let detectedPlatform = 'CUSTOM';
+    try {
+        const requestUrl = new URL(url);
+        const requestHost = requestUrl.hostname.toLowerCase();
+        const isTrustedOrigin = requestUrl.protocol === 'https:' && (!requestUrl.port || requestUrl.port === '443');
+        if (isTrustedOrigin && requestHost === 'datafab-pro.gtsdata.huawei.com') detectedPlatform = 'DATAFAB';
+        if (isTrustedOrigin && ['netcare.huawei.com', 'netcare-ae.gts.huawei.com', 'netcare-de.gts.huawei.com'].includes(requestHost)) detectedPlatform = 'NETCARE';
+    } catch (_) {}
+    const platform = ['DATAFAB', 'NETCARE'].includes(requestedProfile) ? requestedProfile : detectedPlatform;
     UIVGenLog.info(UIVT('uiv.generator.targetPlatform', { platform, url: url.substring(0, 60) + (url.length > 60 ? '...' : '') }));
     UIVGenLog.section(UIVT('uiv.generator.payloadSection'));
     let payloadClone = JSON.parse(JSON.stringify(parsedPayloadObj));
 
-    if (platform === 'NETCARE') { payloadClone.need_summary = true; UIVGenLog.dim(UIVT('uiv.generator.netcareSummary')); }
+    if (platform === 'NETCARE' && allowNativeRequestExtensions) {
+        payloadClone.need_summary = true;
+        UIVGenLog.dim(UIVT('uiv.generator.netcareSummary'));
+    }
 
     let hasCPC = false, hasNID = false, hasMonthFilter = false;
 
@@ -87,6 +111,10 @@ function generateScript() {
     const tenantIdStr = window.UIVWorkbench.findKeyDeep(payloadClone, 'srcTenantId') || '';
     let dynamicPageName = window.UIVWorkbench.findKeyDeep(payloadClone, 'pageName') || '';
     const compId = window.UIVWorkbench.findKeyDeep(payloadClone, 'id') || '';
+    const pageIdLiteral = stringLiteral(pageId);
+    const boardIdLiteral = stringLiteral(boardId);
+    const tenantIdLiteral = stringLiteral(tenantIdStr);
+    const compIdLiteral = stringLiteral(compId);
 
     UIVGenLog.dim('pageId: '   + (pageId   || UIVT('uiv.generator.notFound')));
     UIVGenLog.dim('boardId: '  + (boardId  || UIVT('uiv.generator.notFound')));
@@ -98,6 +126,7 @@ function generateScript() {
     }
     if (dynamicPageName) dynamicPageName = '_' + dynamicPageName.replace(/[<>:"/\\|?*]+/g, '');
     const finalFileName = fileNameBase + dynamicPageName + '_Latest.csv';
+    const finalFileNameLiteral = stringLiteral(finalFileName);
     const title = fileNameBase + dynamicPageName;
     window.UIVWorkbench.setCurrentTitle(title + (!dynamicPageName && compId ? '_' + compId.substring(0, 6) : ''), fileNameBase);
 
@@ -119,17 +148,40 @@ function generateScript() {
         paramsStr = paramsStr.replace(/"北部非洲地区部"/g, 'targetRegion').replace(/"埃及代表处"/g, 'targetOffice');
     }
     if (hasCPC) paramsStr = paramsStr.replace(/"__CPC_IDS_PLACEHOLDER__"/g, 'cpcIds');
+    paramsStr = paramsStr.replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
 
-    const authCode = platform === 'DATAFAB'
-        ? `        function getCookie(n){let m=document.cookie.match(new RegExp('(^| )'+n+'=([^;]+)'));return m?decodeURIComponent(m[2]):null;}\n        let csrfToken = getCookie("XSRF-TOKEN") || getCookie("NETLIVE-XSRF-TOKEN") || "";`
-        : `        const cStr=localStorage.getItem('globalConfig'); let csrfToken="";\n        if(cStr){const m=cStr.match(/([A-Fa-f0-9]{64})/); if(m)csrfToken=m[0]; else try{let o=JSON.parse(cStr);csrfToken=o.csrfToken||(o.configData&&o.configData.csrfToken)||""}catch(e){} }`;
-    const headerCode = platform === 'DATAFAB'
-        ? `        const fetchHeaders = { "accept": "application/json, text/plain, */*", "content-type": "application/json;charset=UTF-8", "x-xsrf-token": csrfToken, "x-requested-with": "XMLHttpRequest", "tenantId": "${tenantIdStr}", "project-id": "${tenantIdStr}", "SESSION-AFFINITY-KEY": "${boardId}", "language": "zh_CN" };`
-        : `        const fetchHeaders = { "accept": "application/json, text/plain, */*", "content-type": "application/json;charset=UTF-8", "x-gde-csrf-token": csrfToken, "x-requested-with": "XMLHttpRequest" };`;
+    const useNativeAuth = generatorOptions.useNativeAuth !== false;
+    const requestCredentials = aiAdapterConfig && aiAdapterConfig.request && aiAdapterConfig.request.credentials === 'omit'
+        ? 'omit'
+        : 'include';
+    let authCode;
+    let headerCode;
+    if (useNativeAuth) {
+        authCode = platform === 'DATAFAB'
+            ? `        function getCookie(n){let m=document.cookie.match(new RegExp('(^| )'+n+'=([^;]+)'));return m?decodeURIComponent(m[2]):null;}\n        let csrfToken = getCookie("XSRF-TOKEN") || getCookie("NETLIVE-XSRF-TOKEN") || "";`
+            : `        const cStr=localStorage.getItem('globalConfig'); let csrfToken="";\n        if(cStr){const m=cStr.match(/([A-Fa-f0-9]{64})/); if(m)csrfToken=m[0]; else try{let o=JSON.parse(cStr);csrfToken=o.csrfToken||(o.configData&&o.configData.csrfToken)||""}catch(e){} }`;
+        headerCode = platform === 'DATAFAB'
+            ? `        const fetchHeaders = { "accept": "application/json, text/plain, */*", "content-type": "application/json;charset=UTF-8", "x-xsrf-token": csrfToken, "x-requested-with": "XMLHttpRequest", "tenantId": ${tenantIdLiteral}, "project-id": ${tenantIdLiteral}, "SESSION-AFFINITY-KEY": ${boardIdLiteral}, "language": "zh_CN" };`
+            : `        const fetchHeaders = { "accept": "application/json, text/plain, */*", "content-type": "application/json;charset=UTF-8", "x-gde-csrf-token": csrfToken, "x-requested-with": "XMLHttpRequest" };`;
+    } else {
+        const adapterAuth = aiAdapterConfig && aiAdapterConfig.auth ? aiAdapterConfig.auth : { strategy: 'none' };
+        const safeHeaders = generatorOptions.headersOverride && typeof generatorOptions.headersOverride === 'object'
+            ? generatorOptions.headersOverride
+            : {};
+        const authProbeRuntime = String(generatorOptions.authProbeRuntime || '');
+        if (!authProbeRuntime && !['none', 'cookie'].includes(adapterAuth.strategy)) {
+            errorDiv.innerText = '认证来源探测模块未加载，请刷新页面后重新生成';
+            UIVGenLog.error('认证来源探测模块未加载');
+            UIVGenLog.done(false);
+            return;
+        }
+        authCode = `${authProbeRuntime}\n        const adapterAuth = ${serializeForScript(adapterAuth)};\n        const resolvedAdapterAuth = typeof uivResolveAdapterAuth === "function" ? uivResolveAdapterAuth(adapterAuth) : null;`;
+        headerCode = `        const fetchHeaders = ${serializeForScript(safeHeaders)};\n        if (resolvedAdapterAuth) fetchHeaders[resolvedAdapterAuth.header] = resolvedAdapterAuth.value;`;
+    }
 
     // 核心函数体
     const genTime = new Date().toLocaleString('zh-CN', { hour12: false });
-    let coreBody = `        // ╔══════════════════════════════════════════════════╗\n        // ║  🚀 UIVF12 自动化抓取引擎  ${TOOL_VERSION}                 ║\n        // ║  生成时间: ${genTime}\n        // ║  URL: ${url}\n        // ╚══════════════════════════════════════════════════╝\n${varDefBlock}\n        // ==========================================\n\n${authCode}\n${headerCode}\n
+    let coreBody = `        // ╔══════════════════════════════════════════════════╗\n        // ║  🚀 UIVF12 自动化抓取引擎  ${TOOL_VERSION}                 ║\n        // ║  生成时间: ${genTime}\n        // ║  URL: ${urlComment}\n        // ╚══════════════════════════════════════════════════╝\n${varDefBlock}\n        // ==========================================\n\n${authCode}\n${headerCode}\n
         function getSmartValue(cell, colName, isTotal = false) {
             if (cell === null || cell === undefined) return "";
             if (typeof cell !== 'object') return cell;
@@ -199,6 +251,25 @@ function generateScript() {
         }
 
          function extractRows(obj) {
+             const adaptedConfig = ${serializeForScript(aiAdapterConfig)};
+             if (adaptedConfig && adaptedConfig.response) {
+                 const adaptedPath = String(adaptedConfig.response.rowsPath || "").replace(/^\\$\\.?/, "").replace(/\\[(\\d+)\\]/g, ".$1");
+                 const adaptedKeys = adaptedPath.split(".").filter(Boolean);
+                 if (adaptedKeys.some(key => ["__proto__", "prototype", "constructor"].includes(String(key).toLowerCase()))) {
+                     throw new Error("数据路径包含不安全字段");
+                 }
+                 const adaptedRows = adaptedKeys.length
+                     ? adaptedKeys.reduce((current, key) => current == null || !Object.prototype.hasOwnProperty.call(Object(current), key) ? undefined : current[key], obj)
+                     : obj;
+                 if (Array.isArray(adaptedRows)) {
+                     const adaptedRowMode = String(adaptedConfig.response.rowMode || "object");
+                     if (adaptedRowMode === "value") return adaptedRows.map(value => ({ value }));
+                     if (adaptedRowMode === "array") return adaptedRows.map(row => Array.isArray(row)
+                         ? Object.fromEntries(row.map((value, index) => ["column_" + (index + 1), value]))
+                         : row);
+                     return adaptedRows;
+                 }
+             }
              // Case 1: DataFab answerParamList 标准格式: { data: [{ data: [...], totalsData: {...} }] }
              if (obj && obj.data && Array.isArray(obj.data) && obj.data[0] && Array.isArray(obj.data[0].data)) return obj.data[0].data;
              // Case 2: ADMS/NetCare 嵌套格式: { data: { data: [...], total: N } }
@@ -233,7 +304,7 @@ function generateScript() {
     if (hasCPC) {
         coreBody += `
         // 🚀 阶段零：动态嗅探 CPC
-        let d_pageId = "${pageId}"; let d_boardId = "${boardId}";
+        let d_pageId = ${pageIdLiteral}; let d_boardId = ${boardIdLiteral};
         if ((!d_pageId || !d_boardId) && typeof window !== 'undefined' && window.location.href.indexOf('/board/') !== -1) {
             const urlParts = window.location.href.split('?')[0].split('/');
             const bIdx = urlParts.indexOf('board');
@@ -243,8 +314,9 @@ function generateScript() {
             }
         }
         if (!d_pageId) throw new Error("未能获取 pageId！");
-        const pvPayload = { "pageId": d_pageId, "boardId": d_boardId, "srcTenantId": "${tenantIdStr}", "behavior": "VIEW", "needTheme": 1 };
+        const pvPayload = { "pageId": d_pageId, "boardId": d_boardId, "srcTenantId": ${tenantIdLiteral}, "behavior": "VIEW", "needTheme": 1 };
         const pvRes = await fetch("https://datafab-pro.gtsdata.huawei.com/DataFabKernelCn/v1/board/pageView", { headers: fetchHeaders, body: JSON.stringify(pvPayload), method: "POST", credentials: "include" });
+        if (!pvRes.ok) throw new Error("CPC 页面信息请求失败：HTTP " + pvRes.status);
         const pvData = await pvRes.json();
         const cpcIds = [...new Set(JSON.stringify(pvData).match(/CPC[0-9]+/g) || [])];
         if (cpcIds.length === 0) throw new Error("未能提取到任何 CPC 单号。");\n`;
@@ -258,8 +330,9 @@ function generateScript() {
         // 🚀 阶段零扩展：动态嗅探 NetCare NID
         let fetchedNids = [];
         try {
-            const nidUrl = "${url}".substring(0, "${url}".lastIndexOf('/')) + "/op_ex_rectify_check_special_nid";
+            const nidUrl = ${urlLiteral}.substring(0, ${urlLiteral}.lastIndexOf('/')) + "/op_ex_rectify_check_special_nid";
             const nidRes = await fetch(nidUrl, { headers: fetchHeaders, body: "{}", method: "POST", credentials: "include" });
+            if (!nidRes.ok) throw new Error("NID 请求失败：HTTP " + nidRes.status);
             const nidData = await nidRes.json();
             let pLines = baseDetailPayload.product_line || (baseDetailPayload.params && baseDetailPayload.params.product_line) || [];
             if (Array.isArray(pLines) && pLines.length > 0) {
@@ -303,10 +376,41 @@ ${hasMonthFilter ? `        runConfigs = [
 ${hasNID ? `            currentPayloadStr = currentPayloadStr.replace(/"__NID_PLACEHOLDER__"/g, JSON.stringify(fetchedNids));` : ''}
 
             const detailPayload = JSON.parse(currentPayloadStr);
-            let limitVal = parseInt(detailPayload.limit || (detailPayload.answerParamList && detailPayload.answerParamList[0] && detailPayload.answerParamList[0].pageSize) || 50, 10);
-             let allDataResults = []; let globalSumData = null; let aggFields = []; let currentPage = 1; let isFetching = true;
+            const adaptedPagination = ${serializeForScript(aiAdapterConfig && aiAdapterConfig.pagination || null)};
+            const adaptedResponse = ${serializeForScript(aiAdapterConfig && aiAdapterConfig.response || null)};
+            const normalizeAdapterPath = (path) => String(path || "").replace(/^\\$\\.?/, "").replace(/\\[(\\d+)\\]/g, ".$1");
+            const getAdapterPathKeys = (path) => {
+                const keys = normalizeAdapterPath(path).split(".").filter(Boolean);
+                const blocked = new Set(["__proto__", "prototype", "constructor"]);
+                if (keys.some(key => blocked.has(String(key).toLowerCase()))) throw new Error("数据路径包含不安全字段");
+                return keys;
+            };
+            const getAdapterValue = (value, path) => {
+                const keys = getAdapterPathKeys(path);
+                return keys.length ? keys.reduce((current, key) => current == null || !Object.prototype.hasOwnProperty.call(Object(current), key) ? undefined : current[key], value) : value;
+            };
+            const setAdapterValue = (value, path, nextValue) => {
+                const keys = getAdapterPathKeys(path);
+                if (!keys.length) return;
+                let current = value;
+                keys.slice(0, -1).forEach(key => {
+                    if (!Object.prototype.hasOwnProperty.call(Object(current), key) || !current[key] || typeof current[key] !== "object") current[key] = {};
+                    current = current[key];
+                });
+                current[keys[keys.length - 1]] = nextValue;
+            };
+            const adaptedPageSize = adaptedPagination && adaptedPagination.pageSizePath
+                ? Number(getAdapterValue(detailPayload, adaptedPagination.pageSizePath))
+                : NaN;
+            let limitVal = parseInt(detailPayload.limit || (detailPayload.answerParamList && detailPayload.answerParamList[0] && detailPayload.answerParamList[0].pageSize) || (Number.isFinite(adaptedPageSize) ? adaptedPageSize : 50), 10);
+             let allDataResults = []; let globalSumData = null; let aggFields = []; let currentPage = 1; let isFetching = true; let safetyPageCount = 0;
+             let adapterCursor = adaptedPagination && adaptedPagination.type === "cursor"
+                 ? String(adaptedPagination.start || "")
+                 : Number(adaptedPagination && adaptedPagination.start);
+             if (adaptedPagination && adaptedPagination.type !== "cursor" && !Number.isFinite(adapterCursor)) adapterCursor = adaptedPagination.type === "offset" ? 0 : 1;
 
             while (isFetching) {
+                if (++safetyPageCount > 500) throw new Error("分页超过 500 页，已触发安全停止；请检查分页参数。");
 ${isPagination ? `                if (detailPayload.answerParamList && detailPayload.answerParamList[0]) {
                     detailPayload.answerParamList[0].pageNum = currentPage;
                     detailPayload.answerParamList[0].requestTime = Date.now();
@@ -314,8 +418,12 @@ ${isPagination ? `                if (detailPayload.answerParamList && detailPay
                 if (detailPayload.start !== undefined) detailPayload.start = (currentPage - 1) * limitVal;
                 if (detailPayload.pageNum !== undefined && !detailPayload.answerParamList) detailPayload.pageNum = currentPage;
                 if (detailPayload.pageIndex !== undefined) detailPayload.pageIndex = currentPage;
-                if (detailPayload.page !== undefined) detailPayload.page = currentPage;` : ''}
-                const response = await fetch("${url}", { headers: fetchHeaders, body: JSON.stringify(detailPayload), method: "POST", credentials: "include" });
+                if (detailPayload.page !== undefined) detailPayload.page = currentPage;
+                if (adaptedPagination && adaptedPagination.type !== "none" && adaptedPagination.requestPath && (adaptedPagination.type !== "cursor" || adapterCursor !== "")) {
+                    setAdapterValue(detailPayload, adaptedPagination.requestPath, adapterCursor);
+                }` : ''}
+                const response = await fetch(${urlLiteral}, { headers: fetchHeaders, body: JSON.stringify(detailPayload), method: "POST", credentials: ${stringLiteral(requestCredentials)} });
+                if (!response.ok) throw new Error("HTTP " + response.status + " " + response.statusText);
                 const data = await response.json();
                 if (data.status === 9999 || data.errorCode === "9999") throw new Error("请求报错 (9999)：请检查登录状态。");
                 if (!globalSumData) globalSumData = extractSmartSumData(data);
@@ -323,8 +431,27 @@ ${isPagination ? `                if (detailPayload.answerParamList && detailPay
                 let pageItems = extractRows(data);
                 if (!pageItems || pageItems.length === 0) break;
                 allDataResults = allDataResults.concat(pageItems);
+${!isPagination ? '                break;' : ''}
+                const adaptedTotal = adaptedResponse && adaptedResponse.totalPath
+                    ? Number(getAdapterValue(data, adaptedResponse.totalPath))
+                    : NaN;
+                if (Number.isFinite(adaptedTotal) && allDataResults.length >= adaptedTotal) break;
+                const adaptedHasMore = adaptedPagination && adaptedPagination.hasMorePath
+                    ? getAdapterValue(data, adaptedPagination.hasMorePath)
+                    : undefined;
+                if (adaptedHasMore === false || adaptedHasMore === 0 || String(adaptedHasMore).toLowerCase() === "false") break;
+                if (adaptedPagination && adaptedPagination.type === "cursor") {
+                    const nextAdapterCursor = getAdapterValue(data, adaptedPagination.nextCursorPath);
+                    if (nextAdapterCursor === undefined || nextAdapterCursor === null || nextAdapterCursor === "" || String(nextAdapterCursor) === String(adapterCursor)) break;
+                    adapterCursor = String(nextAdapterCursor);
+                    currentPage++;
+                    await new Promise(r => setTimeout(r, 300));
+                    continue;
+                }
                 if (pageItems.length < limitVal) break;
-                currentPage++; await new Promise(r => setTimeout(r, 300));
+                currentPage++;
+                adapterCursor += Number(adaptedPagination && adaptedPagination.step || 1);
+                await new Promise(r => setTimeout(r, 300));
             }
 
             if (allDataResults.length === 0) { console.warn("⚠️ " + branchName + " 未提取到数据，跳过。"); continue; }
@@ -336,9 +463,10 @@ ${forceSumData && platform === 'DATAFAB' && compId ? `
             const sumPayload = JSON.parse(JSON.stringify(detailPayload.answerParamList[0]));
             sumPayload.pageNum = 1; sumPayload.answerSource = 2;
             if (aggFields.length > 0) console.log("%c     🔬 [aggFields] 检测到 " + aggFields.length + " 个 formulaId 列: " + aggFields.map(f=>f.columnName).join('、'), "color: #fd79a8; font-size: 11px;");
-            const sumReqPayload = { "id": "${compId}", "srcTenantId": detailPayload.srcTenantId, "behavior": "VIEW", "boardId": "${boardId}", "maxRows": 1000, "pageNum": 1, "pageSize": 50, "calStatistic": true, "params": sumPayload.params, "chartType": "table", "answerSource": 2, ...(aggFields.length > 0 ? { aggFields } : {}) };
+            const sumReqPayload = { "id": ${compIdLiteral}, "srcTenantId": detailPayload.srcTenantId, "behavior": "VIEW", "boardId": ${boardIdLiteral}, "maxRows": 1000, "pageNum": 1, "pageSize": 50, "calStatistic": true, "params": sumPayload.params, "chartType": "table", "answerSource": 2, ...(aggFields.length > 0 ? { aggFields } : {}) };
             try {
                 const sumRes = await fetch("https://datafab-pro.gtsdata.huawei.com/DataFabKernelCn/v1/answer/getValueTableSumData", { headers: fetchHeaders, body: JSON.stringify(sumReqPayload), method: "POST", credentials: "include" });
+                if (!sumRes.ok) throw new Error("汇总请求失败：HTTP " + sumRes.status);
                 const sumDataRes = await sumRes.json();
                 const authSumData = extractSmartSumData(sumDataRes);
                 if (authSumData) {
@@ -371,7 +499,7 @@ ${forceSumData && platform === 'DATAFAB' && compId ? `
                 csvContent += rowArray.join(",") + String.fromCharCode(10);
             });
 
-            let finalOutputName = "${finalFileName}";
+            let finalOutputName = ${finalFileNameLiteral};
             if (config.month) finalOutputName = finalOutputName.replace(".csv", "_" + config.year + "年" + config.month + "月.csv");
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a"); link.href = URL.createObjectURL(blob);
@@ -386,11 +514,28 @@ ${forceSumData && platform === 'DATAFAB' && compId ? `
     const uivTemplate = `return (async function() {\n    try {\n${coreBody}\n        return "✅ 导出成功！子任务: " + finalSummary.join(" | ");\n    } catch (error) {\n        return "❌ 报错: " + error.message;\n    }\n})();`;
     const consoleTemplate = `(async function() {\n    try {\n        console.log("%c🚀 [UIVF12 ${TOOL_VERSION}] 任务列车启动，请保持页面开启并耐心等待...", "color: #e67e22; font-size: 14px; font-weight: bold;");\n${coreBody}\n        console.log("%c🎉 [UIVF12 ${TOOL_VERSION}] 任务圆满成功！提取报告: " + finalSummary.join(" | "), "color: #4CAF50; font-size: 14px; font-weight: bold;");\n    } catch (error) {\n        console.error("%c❌ [UIVF12 ${TOOL_VERSION}] 内部报错: " + error.message, "color: #c53030; font-size: 13px; font-weight: bold;");\n    }\n})();`;
 
+    try {
+        new Function(uivTemplate);
+        new Function(consoleTemplate);
+    } catch (syntaxError) {
+        const message = UIVT('uiv.generator.syntaxFail', { message: syntaxError.message });
+        errorDiv.innerText = message;
+        UIVGenLog.error(message);
+        UIVGenLog.done(false);
+        return;
+    }
+
     UIVGenLog.section(UIVT('uiv.generator.buildSection'));
     UIVGenLog.info(UIVT('uiv.generator.scriptTitle', { title }));
-    UIVGenLog.info(UIVT('uiv.generator.auth', { auth: platform === 'DATAFAB' ? UIVT('uiv.generator.cookieAuth') : UIVT('uiv.generator.localAuth') }));
+    const authLabel = useNativeAuth
+        ? (platform === 'DATAFAB' ? UIVT('uiv.generator.cookieAuth') : UIVT('uiv.generator.localAuth'))
+        : UIVT('uiv.generator.aiAuth', { strategy: aiAdapterConfig && aiAdapterConfig.auth ? aiAdapterConfig.auth.strategy : 'none' });
+    UIVGenLog.info(UIVT('uiv.generator.auth', { auth: authLabel }));
     document.getElementById('codeOutput').value = uivTemplate;
     document.getElementById('consoleOutput').value = consoleTemplate;
+    if (generatorOptions.aiAdapterMeta && typeof generatorOptions.aiAdapterMeta === 'object') {
+        window.__uivAiAdapterCurrent = generatorOptions.aiAdapterMeta;
+    }
     UIVGenLog.success(UIVT('uiv.generator.outputReady'));
     UIVGenLog.done(true, title);
 }
