@@ -414,6 +414,56 @@ function resolveUivScriptUrl(script) {
 
 function buildLoginProbeScript(rawUrl, loginProbeConfig) {
     const custom = loginProbeConfig && typeof loginProbeConfig === 'object' ? loginProbeConfig : null;
+    if (custom && custom.strategy === 'autoProbe' && custom.header) {
+        return `return (function () {
+            const header = ${JSON.stringify(String(custom.header))};
+            const lower = header.toLowerCase();
+            const kind = /csrf|xsrf|anti[-_]?forgery/.test(lower) ? "csrf"
+                : (lower === "authorization" || lower === "proxy-authorization" ? "authorization"
+                    : (/api[-_]?key/.test(lower) ? "apiKey" : "token"));
+            const normalize = value => String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+            const matches = value => {
+                const key = normalize(value);
+                if (kind === "csrf") return /csrf|xsrf|antiforgery|requestverification/.test(key);
+                if (kind === "authorization") return /token|authorization|jwt|bearer/.test(key);
+                if (kind === "apiKey") return /apikey/.test(key);
+                return /token|secret/.test(key);
+            };
+            let source = "";
+            try {
+                const cookieParts = String(document.cookie || "").split(";");
+                if (cookieParts.some(part => matches(part.split("=")[0]) && String(part.split("=").slice(1).join("=") || "").length >= 4)) source = "cookie";
+            } catch (e) {}
+            const probeStorage = (storage, name) => {
+                try {
+                    for (let index = 0; index < Math.min(storage.length, 240); index++) {
+                        const key = storage.key(index) || "";
+                        const value = storage.getItem(key) || "";
+                        if ((matches(key) && value.length >= 4)
+                            || (value.charAt(0) === "{" && new RegExp('"[^"}]*(?:csrf|xsrf|token|apiKey)[^"}]*"', "i").test(value))) return name;
+                    }
+                } catch (e) {}
+                return "";
+            };
+            if (!source) source = probeStorage(localStorage, "localStorage");
+            if (!source) source = probeStorage(sessionStorage, "sessionStorage");
+            if (!source) {
+                try {
+                    source = Array.from(document.querySelectorAll("meta[name],input[name],input[id]"))
+                        .some(node => matches(node.getAttribute("name") || node.getAttribute("id"))) ? "document" : "";
+                } catch (e) {}
+            }
+            return JSON.stringify({
+                ok: Boolean(source),
+                reason: source ? "ok" : "auto_auth_source_missing",
+                strategy: "autoProbe",
+                header,
+                source,
+                host: location.host,
+                href: location.href
+            });
+        })();`;
+    }
     if (custom && (custom.strategy === 'localStorage' || custom.strategy === 'sessionStorage') && custom.sourceKey) {
         return `return (function () {
             const storage = ${custom.strategy === 'localStorage' ? 'localStorage' : 'sessionStorage'};
@@ -425,6 +475,21 @@ function buildLoginProbeScript(rawUrl, loginProbeConfig) {
                 strategy: ${JSON.stringify(custom.strategy)},
                 sourceKey: key,
                 valueLen: value.length,
+                host: location.host,
+                href: location.href
+            });
+        })();`;
+    }
+    if (custom && custom.strategy === 'cookieHeader' && custom.sourceKey) {
+        return `return (function () {
+            const name = ${JSON.stringify(String(custom.sourceKey))};
+            const escaped = name.replace(/[.*+?^\${}()|[\]\\]/g, "\\\\$&");
+            const match = document.cookie.match(new RegExp("(?:^|;\\s*)" + escaped + "=([^;]*)"));
+            return JSON.stringify({
+                ok: Boolean(match && match[1]),
+                reason: match && match[1] ? "ok" : "cookie_header_source_missing",
+                strategy: "cookieHeader",
+                sourceKey: name,
                 host: location.host,
                 href: location.href
             });

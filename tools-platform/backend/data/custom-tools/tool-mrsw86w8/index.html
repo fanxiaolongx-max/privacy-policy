@@ -35,6 +35,38 @@
       background:rgba(255,255,255,.96);
       border-bottom:1px solid #d9dde2;
       box-shadow:0 2px 10px rgba(0,0,0,.05);
+      flex-wrap:wrap;
+    }
+
+    .template-switcher{
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+      padding:3px;
+      border:1px solid #d6dbe2;
+      border-radius:7px;
+      background:#f3f5f7;
+    }
+
+    .template-switcher-label{
+      padding:0 7px;
+      color:#68707b;
+      font-size:13px;
+      white-space:nowrap;
+    }
+
+    .template-button{
+      border:0;
+      border-radius:5px;
+      padding:6px 12px;
+      background:transparent;
+      color:#4f5661;
+    }
+
+    .template-button.active{
+      color:#fff;
+      background:var(--huawei-red);
+      box-shadow:0 2px 6px rgba(199,0,11,.2);
     }
 
     button{
@@ -262,6 +294,175 @@
       white-space:nowrap;
     }
 
+    /* 参考风险警告函设计的横版模板。内容与表格仍使用同一份 DOM 数据。 */
+    .page.template-warning{
+      width:297mm;
+      min-height:210mm;
+      padding:16mm 18mm 13mm;
+      overflow:hidden;
+      background:
+        radial-gradient(circle at 88% 8%, rgba(255,191,72,.18), transparent 25%),
+        radial-gradient(circle at 8% 92%, rgba(255,215,130,.12), transparent 25%),
+        linear-gradient(135deg,#fffdf8 0%,#fffaf0 55%,#fffdf9 100%);
+      box-shadow:0 10px 36px rgba(74,53,20,.16);
+    }
+
+    .template-warning::after{
+      content:"";
+      position:absolute;
+      inset:8mm;
+      pointer-events:none;
+      border:1px solid rgba(176,139,75,.14);
+    }
+
+    .template-warning .top-meta{
+      min-height:18px;
+      position:relative;
+      z-index:1;
+    }
+
+    .template-warning .company-mark{
+      color:#8c7450;
+      font-size:12px;
+      font-weight:500;
+      letter-spacing:.5px;
+    }
+
+    .template-warning .top-right{
+      position:absolute;
+      top:-4mm;
+      right:0;
+      min-width:42mm;
+      min-height:12mm;
+      align-items:center;
+      justify-content:center;
+      border-radius:2px;
+      background:linear-gradient(135deg,#ffcc63,#f2a437);
+      box-shadow:0 4px 12px rgba(205,137,27,.17);
+    }
+
+    .template-warning .confidential{
+      border:0;
+      color:#7d4b00;
+      font-weight:700;
+      letter-spacing:1px;
+    }
+
+    .template-warning #signerLabel{
+      color:#7d4b00;
+      font-size:10px;
+      line-height:1.2;
+    }
+
+    .template-warning .doc-type,
+    .template-warning .red-rule,
+    .template-warning .doc-no{
+      display:none;
+    }
+
+    .template-warning h1{
+      margin:3mm 0 3mm;
+      color:#24231f;
+      font-size:25px;
+      letter-spacing:1px;
+      line-height:1.35;
+    }
+
+    .template-warning h1::before{
+      content:"!";
+      display:block;
+      width:0;
+      height:0;
+      margin:0 auto 5px;
+      border-left:17px solid transparent;
+      border-right:17px solid transparent;
+      border-bottom:30px solid #e31d1a;
+      color:#fff;
+      font:700 21px/35px Arial,sans-serif;
+      text-indent:-6px;
+      filter:drop-shadow(0 3px 4px rgba(173,24,20,.18));
+    }
+
+    .template-warning .recipient{
+      margin:0;
+      font-size:15px;
+      font-weight:700;
+    }
+
+    .template-warning .body-text{
+      font-family:"Microsoft YaHei","PingFang SC",sans-serif;
+      font-size:14px;
+      line-height:1.65;
+    }
+
+    .template-warning .body-text p{
+      margin:3px 0;
+    }
+
+    .template-warning .section-title{
+      margin:9px 0 5px;
+      padding-left:9px;
+      border-left:4px solid #e31d1a;
+      color:#312f2a;
+      font-size:15px;
+    }
+
+    .template-warning table{
+      margin-top:5px;
+      font-size:11px;
+      background:rgba(255,255,255,.72);
+    }
+
+    .template-warning th,
+    .template-warning td{
+      border-color:#a48c6b;
+      padding:5px 4px;
+      min-height:30px;
+    }
+
+    .template-warning th{
+      color:#4c321d;
+      background:#f6dfb9;
+    }
+
+    .template-warning table + .body-text{
+      margin-top:10px !important;
+      padding:8px 14px;
+      color:#ad201e;
+      border-top:1px solid rgba(199,0,11,.16);
+      border-bottom:1px solid rgba(199,0,11,.16);
+      background:rgba(255,247,235,.75);
+      font-weight:700;
+      text-align:center;
+    }
+
+    .template-warning table + .body-text p{
+      display:inline;
+      text-indent:0;
+    }
+
+    .template-warning table + .body-text p + p{
+      margin-left:8px;
+    }
+
+    .template-warning .signature{
+      margin-top:10px;
+    }
+
+    .template-warning .signature-inner{
+      width:230px;
+      font-size:13px;
+      line-height:1.65;
+    }
+
+    .template-warning .footer-line{
+      margin-top:8px;
+      padding-top:5px;
+      border-color:#a48c6b;
+      color:#71624f;
+      font-size:10px;
+    }
+
     @media print{
       body{background:#fff}
       .toolbar{display:none}
@@ -272,8 +473,19 @@
         min-height:auto;
         padding:17mm 16mm 15mm;
       }
+      .page.template-warning{
+        page:warning-landscape;
+        width:auto;
+        min-height:auto;
+        padding:13mm 16mm 11mm;
+        box-shadow:none;
+      }
       @page{
         size:A4;
+        margin:0;
+      }
+      @page warning-landscape{
+        size:A4 landscape;
         margin:0;
       }
     }
@@ -286,6 +498,16 @@
       }
       .doc-type{font-size:27px;letter-spacing:6px}
       h1{font-size:21px}
+      .page.template-warning{
+        width:calc(100% - 20px);
+        min-height:0;
+        padding:30px 22px;
+      }
+      .template-warning .top-right{
+        position:static;
+        min-width:110px;
+      }
+      .template-switcher-label{display:none}
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -293,7 +515,12 @@
 <body>
 
   <div class="toolbar">
-    <button class="primary" onclick="window.print()">打印 / 另存为 PDF</button>
+    <div class="template-switcher" aria-label="通知模板">
+      <span class="template-switcher-label">版式</span>
+      <button type="button" class="template-button active" data-template="classic" onclick="setTemplate('classic')">正式通知</button>
+      <button type="button" class="template-button" data-template="warning" onclick="setTemplate('warning')">风险警告函</button>
+    </div>
+    <button class="primary" onclick="printDocument()">打印 / 另存为 PDF</button>
     <button class="primary" onclick="exportImage()">一键导出图片</button>
     <button onclick="addRow()">新增一行</button>
     <button onclick="deleteRow()">删除末行</button>
@@ -401,8 +628,33 @@
 
   <script>
     const STORAGE_KEY = "formal_cybersecurity_notice_v1";
+    const TEMPLATE_STORAGE_KEY = "formal_cybersecurity_notice_template_v1";
     const page = document.getElementById("documentPage");
     const initialHTML = page.innerHTML;
+
+    function setTemplate(template, options = {}){
+      const selected = template === "warning" ? "warning" : "classic";
+      page.classList.toggle("template-warning", selected === "warning");
+      page.dataset.template = selected;
+
+      document.querySelectorAll(".template-button").forEach(button => {
+        const active = button.dataset.template === selected;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", String(active));
+      });
+
+      document.title = selected === "warning"
+        ? "网络安全重大风险隐患警告函"
+        : "网络安全与质量管理事项通知";
+
+      if(!options.skipSave){
+        localStorage.setItem(TEMPLATE_STORAGE_KEY, selected);
+      }
+    }
+
+    function printDocument(){
+      window.print();
+    }
 
     function renumberRows(){
       const rows = document.querySelectorAll("#issueTable tbody tr");
@@ -445,7 +697,7 @@
       try{
         const canvas = await html2canvas(page, {
           scale: 2,
-          backgroundColor: "#ffffff",
+          backgroundColor: page.classList.contains("template-warning") ? "#fffaf0" : "#ffffff",
           useCORS: true,
           logging: false,
           windowWidth: page.scrollWidth,
@@ -453,7 +705,9 @@
         });
 
         const link = document.createElement("a");
-        link.download = "埃及AMS网络安全及工作质量问题通知.png";
+        link.download = page.classList.contains("template-warning")
+          ? "埃及AMS网络安全重大风险隐患警告函.png"
+          : "埃及AMS网络安全及工作质量问题通知.png";
         link.href = canvas.toDataURL("image/png", 1.0);
         link.click();
       }catch(error){
@@ -474,13 +728,16 @@
 
     function saveLocal(){
       localStorage.setItem(STORAGE_KEY, page.innerHTML);
+      localStorage.setItem(TEMPLATE_STORAGE_KEY, page.dataset.template || "classic");
       alert("内容已保存到当前浏览器。");
     }
 
     function resetContent(){
       if(confirm("确定恢复初始内容吗？当前未保存的修改将丢失。")){
         localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(TEMPLATE_STORAGE_KEY);
         page.innerHTML = initialHTML;
+        setTemplate("classic");
       }
     }
 
@@ -489,6 +746,8 @@
       if(saved){
         page.innerHTML = saved;
       }
+      const previewTemplate = new URLSearchParams(window.location.search).get("template");
+      setTemplate(previewTemplate || localStorage.getItem(TEMPLATE_STORAGE_KEY) || "classic", {skipSave:true});
     });
   </script>
 </body>

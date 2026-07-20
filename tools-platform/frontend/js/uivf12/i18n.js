@@ -50,6 +50,7 @@
             'uiv.action.format': '🔍 格式化',
             'uiv.action.clear': '🗑️ 清空',
             'uiv.action.generate': '⚡ 一键生成生产级脚本',
+            'uiv.action.aiAdaptAll': '✨ AI抓取数据脚本生成器(测试版)',
             'uiv.output.uivLabel': '🤖 生产级 UI.Vision 宏代码:',
             'uiv.output.save': '💾 加入侧边栏',
             'uiv.output.copyUiv': '📋 复制 UIV',
@@ -72,6 +73,13 @@
             'uiv.category.copyTitle': '仅打包提取此组脚本',
             'uiv.category.deleteTitle': '删除此分类',
             'uiv.script.itemTitle': '双击回填配置至工作台',
+            'uiv.script.deleteAction': '删除',
+            'uiv.script.deleteTitle': '删除脚本：{name}',
+            'uiv.deleteDialog.eyebrow': '危险操作',
+            'uiv.deleteDialog.title': '确认删除这个脚本？',
+            'uiv.deleteDialog.message': '删除后，该脚本将从智能调度仓库中移除，并且无法恢复。',
+            'uiv.deleteDialog.cancel': '先不删除',
+            'uiv.deleteDialog.confirm': '确认删除',
             'uiv.toast.serverFail': '❌ 无法连接服务器，脚本仓库加载失败',
             'uiv.toast.moveFail': '❌ 移动分类失败',
             'uiv.toast.filled': '✅ [{name}] 配置已回填！',
@@ -81,6 +89,17 @@
             'uiv.toast.scriptDeleted': '✅ 脚本已删除',
             'uiv.toast.deleteFail': '❌ 删除失败',
             'uiv.prompt.newCategory': '请输入新分类名称：',
+            'uiv.categoryDialog.eyebrow': '智能调度仓库',
+            'uiv.categoryDialog.title': '新建自定义分类',
+            'uiv.categoryDialog.message': '给这组脚本起一个清楚、好记的名字，后续可以直接拖拽脚本进行整理。',
+            'uiv.categoryDialog.label': '分类名称',
+            'uiv.categoryDialog.placeholder': '例如：月报自动化、区域专项',
+            'uiv.categoryDialog.hint': '支持中文、英文和数字',
+            'uiv.categoryDialog.count': '{count}/{max}',
+            'uiv.categoryDialog.cancel': '取消',
+            'uiv.categoryDialog.confirm': '✨ 创建分类',
+            'uiv.categoryDialog.required': '请先输入分类名称',
+            'uiv.categoryDialog.duplicate': '这个分类已经存在，请换一个名称',
             'uiv.toast.categoryCreated': '✅ 分类已创建',
             'uiv.toast.createFail': '❌ 创建失败',
             'uiv.confirm.deleteCategory': '确定要删除分类 [{name}] 吗？\n注意：该分类下的所有脚本也会被一并删除！',
@@ -150,6 +169,8 @@
             'uiv.generator.auth': '平台认证: {auth}',
             'uiv.generator.cookieAuth': 'CSRF-Token (Cookie 自动提取)',
             'uiv.generator.localAuth': '本地存储 globalConfig CSRF',
+            'uiv.generator.aiAuth': 'AI 适配认证 ({strategy})',
+            'uiv.generator.syntaxFail': '生成脚本语法校验失败：{message}',
             'uiv.generator.outputReady': '脚本内容已写入输出区！UIV + F12 Console 双版均就绪'
         },
         'en-US': {
@@ -199,6 +220,7 @@
             'uiv.action.format': '🔍 Format',
             'uiv.action.clear': '🗑️ Clear',
             'uiv.action.generate': '⚡ Generate Production Script',
+            'uiv.action.aiAdaptAll': '✨ AI Adapt Any Website',
             'uiv.output.uivLabel': '🤖 Production UI.Vision macro:',
             'uiv.output.save': '💾 Add to Sidebar',
             'uiv.output.copyUiv': '📋 Copy UIV',
@@ -221,6 +243,13 @@
             'uiv.category.copyTitle': 'Package only this category',
             'uiv.category.deleteTitle': 'Delete this category',
             'uiv.script.itemTitle': 'Double-click to refill the workbench',
+            'uiv.script.deleteAction': 'Delete',
+            'uiv.script.deleteTitle': 'Delete script: {name}',
+            'uiv.deleteDialog.eyebrow': 'Destructive action',
+            'uiv.deleteDialog.title': 'Delete this script?',
+            'uiv.deleteDialog.message': 'This script will be permanently removed from the repository and cannot be recovered.',
+            'uiv.deleteDialog.cancel': 'Keep script',
+            'uiv.deleteDialog.confirm': 'Delete script',
             'uiv.toast.serverFail': '❌ Cannot connect to the server; script repository failed to load',
             'uiv.toast.moveFail': '❌ Failed to move category',
             'uiv.toast.filled': '✅ [{name}] configuration refilled!',
@@ -230,6 +259,17 @@
             'uiv.toast.scriptDeleted': '✅ Script deleted',
             'uiv.toast.deleteFail': '❌ Delete failed',
             'uiv.prompt.newCategory': 'New category name:',
+            'uiv.categoryDialog.eyebrow': 'Smart repository',
+            'uiv.categoryDialog.title': 'Create custom category',
+            'uiv.categoryDialog.message': 'Choose a clear name for this script group. You can drag scripts into it later.',
+            'uiv.categoryDialog.label': 'Category name',
+            'uiv.categoryDialog.placeholder': 'For example: Monthly automation',
+            'uiv.categoryDialog.hint': 'Letters, numbers, and Chinese characters are supported',
+            'uiv.categoryDialog.count': '{count}/{max}',
+            'uiv.categoryDialog.cancel': 'Cancel',
+            'uiv.categoryDialog.confirm': '✨ Create category',
+            'uiv.categoryDialog.required': 'Enter a category name first',
+            'uiv.categoryDialog.duplicate': 'This category already exists. Choose another name.',
             'uiv.toast.categoryCreated': '✅ Category created',
             'uiv.toast.createFail': '❌ Create failed',
             'uiv.confirm.deleteCategory': 'Delete category [{name}]?\nAll scripts under this category will also be deleted.',
@@ -299,6 +339,8 @@
             'uiv.generator.auth': 'Platform auth: {auth}',
             'uiv.generator.cookieAuth': 'CSRF-Token (auto from cookie)',
             'uiv.generator.localAuth': 'localStorage globalConfig CSRF',
+            'uiv.generator.aiAuth': 'AI adapter auth ({strategy})',
+            'uiv.generator.syntaxFail': 'Generated script syntax validation failed: {message}',
             'uiv.generator.outputReady': 'Script content written to output areas. UIV + F12 Console are ready.'
         }
     };
@@ -427,6 +469,7 @@
         if (actionButtons[0]) actionButtons[0].textContent = t('uiv.action.format');
         if (actionButtons[1]) actionButtons[1].textContent = t('uiv.action.clear');
         if (actionButtons[2]) actionButtons[2].textContent = t('uiv.action.generate');
+        setText('.uiv-ai-adapter-entry', t('uiv.action.aiAdaptAll'));
         setText('.right-panel .output-label', t('uiv.output.uivLabel'));
         setText('#saveBtn', t('uiv.output.save'));
         setText('#btnCopyUIV', t('uiv.output.copyUiv'));
@@ -444,6 +487,19 @@
             if (logBadge) logTitle.appendChild(logBadge);
         }
         setText('.gen-log-clear', t('uiv.log.clear'));
+        setText('.uiv-delete-confirm-eyebrow', t('uiv.deleteDialog.eyebrow'));
+        setText('#uivDeleteConfirmTitle', t('uiv.deleteDialog.title'));
+        setText('#uivDeleteConfirmMessage', t('uiv.deleteDialog.message'));
+        setText('#uivDeleteConfirmCancel', t('uiv.deleteDialog.cancel'));
+        setText('#uivDeleteConfirmSubmit', t('uiv.deleteDialog.confirm'));
+        setText('.uiv-category-create-eyebrow', t('uiv.categoryDialog.eyebrow'));
+        setText('#uivCategoryCreateTitle', t('uiv.categoryDialog.title'));
+        setText('#uivCategoryCreateMessage', t('uiv.categoryDialog.message'));
+        setText('.uiv-category-create-label', t('uiv.categoryDialog.label'));
+        setPlaceholder('#uivCategoryCreateInput', t('uiv.categoryDialog.placeholder'));
+        setText('.uiv-category-create-hint', t('uiv.categoryDialog.hint'));
+        setText('#uivCategoryCreateCancel', t('uiv.categoryDialog.cancel'));
+        setText('#uivCategoryCreateSubmit', t('uiv.categoryDialog.confirm'));
     }
 
     if (window.ToolsI18n) {

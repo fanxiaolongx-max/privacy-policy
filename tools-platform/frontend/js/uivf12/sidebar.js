@@ -31,6 +31,160 @@ function formatSourceLabel(source) {
     return window.UIVI18n ? UIVI18n.sourceLabel(source) : (source || '-');
 }
 
+function showScriptDeleteConfirm(scriptName) {
+    const overlay = document.getElementById('uivDeleteConfirmOverlay');
+    const dialog = overlay && overlay.querySelector('.uiv-delete-confirm-dialog');
+    const nameEl = document.getElementById('uivDeleteConfirmName');
+    const cancelBtn = document.getElementById('uivDeleteConfirmCancel');
+    const confirmBtn = document.getElementById('uivDeleteConfirmSubmit');
+    if (!overlay || !dialog || !nameEl || !cancelBtn || !confirmBtn) {
+        return Promise.resolve(false);
+    }
+
+    nameEl.textContent = scriptName;
+    const previousFocus = document.activeElement;
+    overlay.classList.add('open');
+    overlay.setAttribute('aria-hidden', 'false');
+
+    return new Promise(resolve => {
+        let settled = false;
+        const finish = confirmed => {
+            if (settled) return;
+            settled = true;
+            overlay.classList.remove('open');
+            overlay.setAttribute('aria-hidden', 'true');
+            overlay.removeEventListener('click', handleOverlayClick);
+            document.removeEventListener('keydown', handleKeydown);
+            cancelBtn.onclick = null;
+            confirmBtn.onclick = null;
+            if (previousFocus && typeof previousFocus.focus === 'function') previousFocus.focus();
+            resolve(confirmed);
+        };
+        const handleOverlayClick = event => {
+            if (event.target === overlay) finish(false);
+        };
+        const handleKeydown = event => {
+            if (event.key === 'Escape') finish(false);
+            if (event.key !== 'Tab') return;
+            if (event.shiftKey && document.activeElement === cancelBtn) {
+                event.preventDefault();
+                confirmBtn.focus();
+            } else if (!event.shiftKey && document.activeElement === confirmBtn) {
+                event.preventDefault();
+                cancelBtn.focus();
+            }
+        };
+
+        cancelBtn.onclick = () => finish(false);
+        confirmBtn.onclick = () => finish(true);
+        overlay.addEventListener('click', handleOverlayClick);
+        document.addEventListener('keydown', handleKeydown);
+        setTimeout(() => {
+            if (!settled) cancelBtn.focus({ preventScroll: true });
+        }, 0);
+    });
+}
+
+function showCategoryCreateDialog() {
+    const overlay = document.getElementById('uivCategoryCreateOverlay');
+    const input = document.getElementById('uivCategoryCreateInput');
+    const countEl = document.getElementById('uivCategoryCreateCount');
+    const errorEl = document.getElementById('uivCategoryCreateError');
+    const cancelBtn = document.getElementById('uivCategoryCreateCancel');
+    const confirmBtn = document.getElementById('uivCategoryCreateSubmit');
+    if (!overlay || !input || !countEl || !errorEl || !cancelBtn || !confirmBtn) {
+        return Promise.resolve(null);
+    }
+
+    const maxLength = Number(input.maxLength) || 30;
+    const previousFocus = document.activeElement;
+    input.value = '';
+    countEl.textContent = UIVT('uiv.categoryDialog.count', { count: 0, max: maxLength });
+    errorEl.textContent = '';
+    errorEl.classList.remove('visible');
+    input.setAttribute('aria-invalid', 'false');
+    overlay.classList.add('open');
+    overlay.setAttribute('aria-hidden', 'false');
+
+    return new Promise(resolve => {
+        let settled = false;
+        const setError = message => {
+            errorEl.textContent = message || '';
+            errorEl.classList.toggle('visible', Boolean(message));
+            input.setAttribute('aria-invalid', message ? 'true' : 'false');
+        };
+        const validate = () => {
+            const name = input.value.trim();
+            if (!name) {
+                setError(UIVT('uiv.categoryDialog.required'));
+                return null;
+            }
+            const duplicate = lastCategories.some(category =>
+                String(category || '').trim().toLocaleLowerCase() === name.toLocaleLowerCase()
+            );
+            if (duplicate) {
+                setError(UIVT('uiv.categoryDialog.duplicate'));
+                return null;
+            }
+            setError('');
+            return name;
+        };
+        const finish = name => {
+            if (settled) return;
+            settled = true;
+            overlay.classList.remove('open');
+            overlay.setAttribute('aria-hidden', 'true');
+            overlay.removeEventListener('click', handleOverlayClick);
+            document.removeEventListener('keydown', handleKeydown);
+            input.removeEventListener('input', handleInput);
+            cancelBtn.onclick = null;
+            confirmBtn.onclick = null;
+            if (previousFocus && typeof previousFocus.focus === 'function') previousFocus.focus();
+            resolve(name);
+        };
+        const submit = () => {
+            const name = validate();
+            if (name) finish(name);
+            else input.focus({ preventScroll: true });
+        };
+        const handleInput = () => {
+            countEl.textContent = UIVT('uiv.categoryDialog.count', {
+                count: input.value.length,
+                max: maxLength
+            });
+            if (errorEl.classList.contains('visible')) validate();
+        };
+        const handleOverlayClick = event => {
+            if (event.target === overlay) finish(null);
+        };
+        const handleKeydown = event => {
+            if (event.key === 'Escape') finish(null);
+            if (event.key === 'Enter' && document.activeElement === input) {
+                event.preventDefault();
+                submit();
+                return;
+            }
+            if (event.key !== 'Tab') return;
+            if (event.shiftKey && document.activeElement === input) {
+                event.preventDefault();
+                confirmBtn.focus();
+            } else if (!event.shiftKey && document.activeElement === confirmBtn) {
+                event.preventDefault();
+                input.focus();
+            }
+        };
+
+        cancelBtn.onclick = () => finish(null);
+        confirmBtn.onclick = submit;
+        input.addEventListener('input', handleInput);
+        overlay.addEventListener('click', handleOverlayClick);
+        document.addEventListener('keydown', handleKeydown);
+        setTimeout(() => {
+            if (!settled) input.focus({ preventScroll: true });
+        }, 0);
+    });
+}
+
 function renderRepositorySource() {
     const panel = document.getElementById('repoSourcePanel');
     if (!panel) return;
@@ -231,17 +385,23 @@ function buildScriptItem(script) {
 
     const delBtn = document.createElement('button');
     delBtn.className = 'mini-btn del';
-    delBtn.innerHTML = '✖';
-    delBtn.onclick = async () => {
-        if (confirm(UIVT('uiv.confirm.deleteScript', { name: script.name }))) {
-            try {
-                await API.delete(`/api/uiv/scripts/${script.id}`);
-                await loadSavedScripts();
-                showToast(UIVT('uiv.toast.scriptDeleted'));
-                API.logHistory('uiv', '删除脚本', script.name);
-            } catch (err) {
-                showToast(UIVT('uiv.toast.deleteFail'), 'error');
-            }
+    delBtn.type = 'button';
+    delBtn.innerText = `🗑 ${UIVT('uiv.script.deleteAction')}`;
+    delBtn.title = UIVT('uiv.script.deleteTitle', { name: script.name });
+    delBtn.setAttribute('aria-label', delBtn.title);
+    delBtn.draggable = false;
+    delBtn.addEventListener('mousedown', event => event.stopPropagation());
+    delBtn.onclick = async event => {
+        event.stopPropagation();
+        const confirmed = await showScriptDeleteConfirm(script.name);
+        if (!confirmed) return;
+        try {
+            await API.delete(`/api/uiv/scripts/${script.id}`);
+            await loadSavedScripts();
+            showToast(UIVT('uiv.toast.scriptDeleted'));
+            API.logHistory('uiv', '删除脚本', script.name);
+        } catch (err) {
+            showToast(UIVT('uiv.toast.deleteFail'), 'error');
         }
     };
 
@@ -258,11 +418,11 @@ function buildScriptItem(script) {
 // 分类操作
 // ──────────────────────────────────────────────────────────
 async function createNewCategory() {
-    const newCat = prompt(UIVT('uiv.prompt.newCategory'));
-    if (!newCat || !newCat.trim()) return;
+    const newCat = await showCategoryCreateDialog();
+    if (!newCat) return;
     try {
-        await API.post('/api/uiv/categories', { name: newCat.trim() });
-        if (!expandedCategories.includes(newCat.trim())) expandedCategories.push(newCat.trim());
+        await API.post('/api/uiv/categories', { name: newCat });
+        if (!expandedCategories.includes(newCat)) expandedCategories.push(newCat);
         await loadSavedScripts();
         showToast(UIVT('uiv.toast.categoryCreated'));
     } catch (e) {

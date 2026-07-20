@@ -72,6 +72,7 @@ function fillWorkbench(script) {
         ? {
             generatorType: script.generatorType,
             adapterConfig: script.adapterConfig || null,
+            generationPlan: script.generationPlan || null,
             openUrl: script.openUrl || '',
             loginProbeConfig: script.loginProbeConfig || null
         }
