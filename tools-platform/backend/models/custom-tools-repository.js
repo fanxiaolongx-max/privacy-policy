@@ -329,6 +329,70 @@ async function restoreToolState(slug, snapshotId) {
     return await saveToolState(slug, snapshot.data, { reason: '恢复前自动快照' });
 }
 
+const TOOL_HISTORY_LIMIT = 30;
+const TOOL_HISTORY_HTML_LIMIT = 512 * 1024;
+const toolHistoryMutationQueues = new Map();
+
+function withToolHistoryMutation(slug, task) {
+    const previous = toolHistoryMutationQueues.get(slug) || Promise.resolve();
+    const operation = previous.then(task, task);
+    const tracked = operation.catch(() => {});
+    toolHistoryMutationQueues.set(slug, tracked);
+    return operation.finally(() => {
+        if (toolHistoryMutationQueues.get(slug) === tracked) toolHistoryMutationQueues.delete(slug);
+    });
+}
+
+function normalizeToolHistoryRecord(value, existing = null) {
+    const html = String(value && value.html || '');
+    if (!html.trim()) {
+        const err = new Error('保存内容不能为空');
+        err.status = 400;
+        throw err;
+    }
+    if (Buffer.byteLength(html, 'utf8') > TOOL_HISTORY_HTML_LIMIT) {
+        const err = new Error('保存内容超过 512KB 限制');
+        err.status = 413;
+        throw err;
+    }
+    const now = new Date().toISOString();
+    return {
+        id: existing && existing.id || `history-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+        name: String(value && value.name || '未命名记录').trim().slice(0, 80) || '未命名记录',
+        html,
+        template: value && value.template === 'warning' ? 'warning' : 'classic',
+        createdAt: existing && existing.createdAt || now,
+        updatedAt: now
+    };
+}
+
+async function listToolHistory(slug) {
+    if (!await getTool(slug)) return null;
+    const records = await readKV('custom_tool_history', slug, []);
+    return Array.isArray(records) ? records : [];
+}
+
+async function addToolHistory(slug, value) {
+    if (!await getTool(slug)) return null;
+    return withToolHistoryMutation(slug, async () => {
+        const records = await listToolHistory(slug) || [];
+        const record = normalizeToolHistoryRecord(value);
+        await writeKV('custom_tool_history', slug, [record, ...records].slice(0, TOOL_HISTORY_LIMIT));
+        return record;
+    });
+}
+
+async function deleteToolHistory(slug, historyId) {
+    if (!await getTool(slug)) return null;
+    return withToolHistoryMutation(slug, async () => {
+        const records = await listToolHistory(slug) || [];
+        const next = records.filter(item => item && item.id !== historyId);
+        if (next.length === records.length) return false;
+        await writeKV('custom_tool_history', slug, next);
+        return true;
+    });
+}
+
 function saveToolFiles(slug, files) {
     ensureCustomToolsDir();
     const toolDir = path.join(CUSTOM_TOOLS_DIR, slug);
@@ -630,6 +694,9 @@ module.exports = {
     getToolState,
     saveToolState,
     restoreToolState,
+    listToolHistory,
+    addToolHistory,
+    deleteToolHistory,
     deleteTool,
     recoverToolFromDisk,
     ensureToolHistory,

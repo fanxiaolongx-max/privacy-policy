@@ -103,6 +103,37 @@ router.post('/:slug/state/restore', async (req, res) => {
     res.json({ success: true, data: restored.data, updatedAt: restored.updatedAt });
 });
 
+router.get('/:slug/history', async (req, res) => {
+    try {
+        const records = await repo.listToolHistory(req.params.slug);
+        if (!records) return res.status(404).json({ error: '自定义工具不存在' });
+        res.json(records);
+    } catch (err) {
+        res.status(500).json({ error: err.message || '读取历史记录失败' });
+    }
+});
+
+router.post('/:slug/history', async (req, res) => {
+    try {
+        const record = await repo.addToolHistory(req.params.slug, req.body || {});
+        if (!record) return res.status(404).json({ error: '自定义工具不存在' });
+        res.status(201).json({ success: true, record });
+    } catch (err) {
+        res.status(err.status || 400).json({ error: err.message || '保存历史记录失败' });
+    }
+});
+
+router.delete('/:slug/history/:historyId', async (req, res) => {
+    try {
+        const deleted = await repo.deleteToolHistory(req.params.slug, req.params.historyId);
+        if (deleted === null) return res.status(404).json({ error: '自定义工具不存在' });
+        if (!deleted) return res.status(404).json({ error: '历史记录不存在' });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message || '删除历史记录失败' });
+    }
+});
+
 router.post('/', async (req, res) => {
     try {
         const tool = await repo.createTool(req.body || {});
