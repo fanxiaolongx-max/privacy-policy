@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="需求管理 - Tools Platform">需求管理 - Tools Platform</title>
     <link rel="stylesheet" href="/css/shared.css?v=20260713-02">
-    <link rel="stylesheet" href="/css/requirements.css">
+    <link rel="stylesheet" href="/css/requirements.css?v=20260721-04">
 </head>
 <body>
     <div id="navbar-placeholder"></div>
@@ -13,11 +13,11 @@
     <div class="req-container">
         <header class="req-header">
             <div>
-                <h1><span data-i18n="🎯 需求管理广场">🎯 需求管理广场</span> <span style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v1.1.0</span></h1>
+                <h1><span data-i18n="🎯 需求管理广场">🎯 需求管理广场</span> <span style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v1.3.0</span></h1>
                 <p data-i18n="提交、追踪和管理平台新功能与优化需求">提交、追踪和管理平台新功能与优化需求</p>
             </div>
             <div style="display: flex; gap: 12px; align-items: center;">
-                <select id="reqSortSelect" class="form-control" style="width: auto; background: rgba(15, 23, 42, 0.8);" onchange="ReqApp.renderBoard()">
+                <select id="reqSortSelect" class="form-control" style="width: auto; background: rgba(15, 23, 42, 0.8);" onchange="ReqApp.changeSort()">
                     <option value="progress" data-i18n="默认排序：按进度优先">默认排序：按进度优先</option>
                     <option value="updated" data-i18n="排序：最近更新时间">排序：最近更新时间</option>
                     <option value="created" data-i18n="排序：最近创建时间">排序：最近创建时间</option>
@@ -26,9 +26,16 @@
             </div>
         </header>
 
+        <section class="req-stats-top" id="reqStatsTop" aria-label="需求概览统计"></section>
+        <div class="req-stats-rail-row">
+            <aside class="req-stats-rail req-stats-left" id="reqStatsLeft" aria-label="需求流程统计"></aside>
+            <aside class="req-stats-rail req-stats-right" id="reqStatsRight" aria-label="需求分类统计"></aside>
+        </div>
+
         <div class="req-board" id="reqBoard">
             <!-- 需求卡片会动态渲染在这里 -->
         </div>
+        <nav class="req-pagination" id="reqPagination" aria-label="需求列表分页"></nav>
     </div>
 
     <!-- 需求详情/编辑/流转 Modal -->
@@ -101,6 +108,15 @@
                     <textarea id="reqDescInput" class="form-control" rows="4" data-i18n-ph="详细说明背景、期望效果等" placeholder="详细说明背景、期望效果等"></textarea>
                 </div>
 
+                <label class="urgent-toggle" for="reqUrgentInput">
+                    <input type="checkbox" id="reqUrgentInput">
+                    <span class="urgent-toggle-icon">⚡</span>
+                    <span>
+                        <strong data-i18n="紧急需求">紧急需求</strong>
+                        <small data-i18n="在需求广场中优先展示并高亮提醒">在需求广场中优先展示并高亮提醒</small>
+                    </span>
+                </label>
+
                 <div class="form-row" id="manageRow" style="display: none;">
                     <div class="form-group half">
                         <label data-i18n="当前状态">当前状态</label>
@@ -143,6 +159,6 @@
     <script src="/js/shared/api.js?v=20260710-01"></script>
     <script src="/js/shared/toast.js"></script>
     <script src="/js/shared/navbar.js?v=20260713-03"></script>
-    <script src="/js/requirements.js"></script>
+    <script src="/js/requirements.js?v=20260721-02"></script>
 </body>
 </html>

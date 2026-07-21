@@ -34,6 +34,7 @@ const storageRoutes = require('./routes/storage');
 const frtRoutes = require('./routes/frt');
 const prauditRoutes = require('./routes/praudit');
 const customToolsRoutes = require('./routes/custom-tools');
+const slideDesignRoutes = require('./routes/slide-design');
 const surveysRoutes = require('./routes/surveys');
 const externalMetricsRoutes = require('./routes/external-metrics');
 const customToolsRepo = require('./models/custom-tools-repository');
@@ -239,6 +240,7 @@ app.use('/api/db-explorer', require('./routes/db-explorer')); // 数据库浏览
 app.use('/api/frt', frtRoutes); // FRT 历史快照 API
 app.use('/api/praudit', prauditRoutes); // PR审计配置 API
 app.use('/api/custom-tools', customToolsRoutes); // 自定义 HTML 工具注册 API
+app.use('/api/slide-design', slideDesignRoutes); // 胶片设计项目与 PPT 素材库
 app.use('/api/surveys', surveysRoutes); // 可配置调查模板与提交记录 API
 app.use('/api/nav-settings', navSettingsRoutes); // 顶部导航全局设置 API
 app.use('/api/ai-settings', aiSettingsRoutes); // 智能客服助手模型配置 API
