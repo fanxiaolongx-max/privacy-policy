@@ -218,24 +218,24 @@ async function getAssetThumbnail(id) {
     return { asset: rowToAsset(row), absolutePath };
 }
 
-async function listAssets({ query = '', tag = '', date = '', period = '', uploader = '', usageScenario = '', pageType = '', limit = 200 } = {}) {
-    await ensureReady();
+function buildAssetFilter({ query = '', tag = '', date = '', period = '', uploader = '', usageScenario = '', pageType = '', sourceFilename = '' } = {}, exclude = []) {
     const clauses = [];
     const params = [];
+    const excluded = new Set(Array.isArray(exclude) ? exclude : [exclude]);
     if (query) {
         clauses.push('(source_filename LIKE ? OR extracted_text LIKE ? OR summary LIKE ? OR tag LIKE ? OR tags_json LIKE ? OR page_type LIKE ? OR intent LIKE ?)');
         const pattern = `%${String(query).slice(0, 100)}%`;
         params.push(pattern, pattern, pattern, pattern, pattern, pattern, pattern);
     }
-    if (tag) {
+    if (tag && !excluded.has('tag')) {
         clauses.push('tag = ?');
         params.push(String(tag).slice(0, 20));
     }
-    if (date) {
+    if (date && !excluded.has('date') && !excluded.has('period')) {
         clauses.push('substr(imported_at, 1, 10) = ?');
         params.push(String(date).slice(0, 10));
     }
-    if (period && /^(\d{4})-Q([1-4])$/.test(String(period))) {
+    if (period && !excluded.has('period') && /^(\d{4})-Q([1-4])$/.test(String(period))) {
         const [, yearText, quarterText] = String(period).match(/^(\d{4})-Q([1-4])$/);
         const year = Number(yearText);
         const startMonth = ((Number(quarterText) - 1) * 3) + 1;
@@ -247,44 +247,75 @@ async function listAssets({ query = '', tag = '', date = '', period = '', upload
         clauses.push('imported_at >= ? AND imported_at < ?');
         params.push(start, end);
     }
-    if (uploader) {
+    if (uploader && !excluded.has('uploader')) {
         clauses.push('uploader = ?');
         params.push(String(uploader).slice(0, 120));
     }
-    if (usageScenario) {
+    if (usageScenario && !excluded.has('usageScenario')) {
         clauses.push('usage_scenario = ?');
         params.push(String(usageScenario).slice(0, 120));
     }
-    if (pageType) {
+    if (pageType && !excluded.has('pageType')) {
         clauses.push('page_type = ?');
         params.push(String(pageType).slice(0, 120));
     }
+    if (sourceFilename && !excluded.has('sourceFilename')) {
+        clauses.push('source_filename = ?');
+        params.push(String(sourceFilename).slice(0, 240));
+    }
+    return { where: clauses.length ? `WHERE ${clauses.join(' AND ')}` : '', params };
+}
+
+async function listAssets({ limit = 200, offset = 0, ...filters } = {}) {
+    await ensureReady();
+    const { where, params } = buildAssetFilter(filters);
     params.push(Math.min(500, Math.max(1, Number(limit || 200))));
-    const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
-    return (await all(`SELECT * FROM slide_library_assets ${where} ORDER BY imported_at DESC, page_number ASC LIMIT ?`, params)).map(rowToAsset);
+    params.push(Math.max(0, Number(offset || 0)));
+    return (await all(`SELECT * FROM slide_library_assets ${where} ORDER BY imported_at DESC, page_number ASC LIMIT ? OFFSET ?`, params)).map(rowToAsset);
+}
+
+async function countAssets(filters = {}) {
+    await ensureReady();
+    const { where, params } = buildAssetFilter(filters);
+    const row = await get(`SELECT COUNT(*) AS count FROM slide_library_assets ${where}`, params);
+    return Number(row?.count || 0);
 }
 
 
-async function getAssetFilters() {
+async function facetRows(column, filters, exclude, { orderBy = 'count DESC, value' } = {}) {
+    const { where, params } = buildAssetFilter(filters, exclude);
+    const scopedWhere = where ? `${where} AND ${column} <> ''` : `WHERE ${column} <> ''`;
+    return all(`SELECT ${column} AS value, COUNT(*) AS count, MAX(imported_at) AS latest
+                FROM slide_library_assets ${scopedWhere}
+                GROUP BY ${column} ORDER BY ${orderBy}`, params);
+}
+
+async function getAssetFilters(filters = {}) {
     await ensureReady();
-    const [uploaders, scenarios, pageTypes, tags, importedMonths] = await Promise.all([
-        all("SELECT DISTINCT uploader AS value FROM slide_library_assets WHERE uploader <> '' ORDER BY uploader"),
-        all("SELECT DISTINCT usage_scenario AS value FROM slide_library_assets WHERE usage_scenario <> '' ORDER BY usage_scenario"),
-        all("SELECT page_type AS value, COUNT(*) AS count FROM slide_library_assets WHERE page_type <> '' GROUP BY page_type ORDER BY count DESC, page_type"),
-        all("SELECT tag AS value, COUNT(*) AS count FROM slide_library_assets WHERE tag <> '' GROUP BY tag ORDER BY count DESC, tag"),
-        all("SELECT DISTINCT substr(imported_at, 1, 7) AS value FROM slide_library_assets WHERE imported_at <> '' ORDER BY value DESC")
+    const [uploaders, scenarios, pageTypes, tags, importedMonths, sourceFiles] = await Promise.all([
+        facetRows('uploader', filters, 'uploader', { orderBy: 'value' }),
+        facetRows('usage_scenario', filters, 'usageScenario', { orderBy: 'count DESC, value' }),
+        facetRows('page_type', filters, 'pageType'),
+        facetRows('tag', filters, 'tag'),
+        facetRows("substr(imported_at, 1, 7)", filters, ['period', 'date'], { orderBy: 'value DESC' }),
+        facetRows('source_filename', filters, 'sourceFilename', { orderBy: 'latest DESC, value' })
     ]);
-    const periods = [...new Set(importedMonths.map(item => {
+    const periodCounts = new Map();
+    importedMonths.forEach(item => {
         const match = String(item.value || '').match(/^(\d{4})-(\d{2})$/);
-        if (!match) return '';
-        return `${match[1]}-Q${Math.floor((Number(match[2]) - 1) / 3) + 1}`;
-    }).filter(Boolean))];
+        if (!match) return;
+        const value = `${match[1]}-Q${Math.floor((Number(match[2]) - 1) / 3) + 1}`;
+        periodCounts.set(value, (periodCounts.get(value) || 0) + Number(item.count || 0));
+    });
+    const periods = [...periodCounts.entries()].sort((a, b) => b[0].localeCompare(a[0]));
     return {
-        uploaders: uploaders.map(item => item.value),
-        scenarios: scenarios.map(item => item.value),
+        uploaders: uploaders.map(item => ({ value: item.value, count: Number(item.count || 0) })),
+        scenarios: scenarios.map(item => ({ value: item.value, count: Number(item.count || 0) })),
         pageTypes: pageTypes.map(item => ({ value: item.value, count: Number(item.count || 0) })),
-        periods: periods.map(value => ({ value, label: value.replace('-', ' ') })),
-        tags: tags.map(item => ({ value: item.value, count: Number(item.count || 0) }))
+        periods: periods.map(([value, count]) => ({ value, label: value.replace('-', ' '), count })),
+        sourceFiles: sourceFiles.map(item => ({ value: item.value, count: Number(item.count || 0) })),
+        tags: tags.map(item => ({ value: item.value, count: Number(item.count || 0) })),
+        filteredTotal: await countAssets(filters)
     };
 }
 
@@ -304,5 +335,6 @@ module.exports = {
     getAssetFile,
     getAssetThumbnail,
     listAssets,
+    countAssets,
     getAssetFilters
 };

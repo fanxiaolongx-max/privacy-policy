@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "tool": {
+    "slug": "tool-mr88gv9x",
+    "name": "平台介绍",
+    "icon": "🧭",
+    "description": "CS质量运营工具平台的能力、流程与应用场景介绍。",
+    "tags": [
+      "平台介绍",
+      "质量运营"
+    ],
+    "href": "/tools/tool-mr88gv9x",
+    "filePath": "/custom-tools/tool-mr88gv9x/index.html",
+    "publicAccess": false,
+    "createdAt": "2026-07-05T20:18:06.000Z",
+    "updatedAt": "2026-07-05T20:18:06.000Z"
+  },
+  "history": {
+    "id": "custom-recover-tool-mr88gv9x",
+    "tool": "custom",
+    "action": "恢复自定义工具",
+    "detail": "平台介绍 (tool-mr88gv9x) - 根据磁盘清单恢复注册",
+    "time": "2026-07-05T20:18:06.000Z"
+  }
+}

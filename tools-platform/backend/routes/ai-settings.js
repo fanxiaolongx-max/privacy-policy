@@ -24,6 +24,38 @@ router.put('/', async (req, res) => {
     }
 });
 
+router.post('/profiles', async (req, res) => {
+    try {
+        res.status(201).json(await repo.createProfile(req.body || {}));
+    } catch (err) {
+        res.status(err.statusCode || 500).json({ error: err.message || '创建 AI 配置失败' });
+    }
+});
+
+router.put('/profiles/:profileId', async (req, res) => {
+    try {
+        res.json(await repo.saveSettings({ ...(req.body || {}), profileId: req.params.profileId }));
+    } catch (err) {
+        res.status(err.statusCode || 500).json({ error: err.message || '保存 AI 配置失败' });
+    }
+});
+
+router.post('/profiles/:profileId/activate', async (req, res) => {
+    try {
+        res.json(await repo.activateProfile(req.params.profileId));
+    } catch (err) {
+        res.status(err.statusCode || 500).json({ error: err.message || '激活 AI 配置失败' });
+    }
+});
+
+router.delete('/profiles/:profileId', async (req, res) => {
+    try {
+        res.json(await repo.deleteProfile(req.params.profileId));
+    } catch (err) {
+        res.status(err.statusCode || 500).json({ error: err.message || '删除 AI 配置失败' });
+    }
+});
+
 router.post('/test', async (req, res) => {
     try {
         const settings = await repo.buildRuntimeSettings(req.body || {});
@@ -53,6 +85,32 @@ router.post('/test', async (req, res) => {
             success: false,
             error: err.message || '模型测试失败'
         });
+    }
+});
+
+router.post('/profiles/:profileId/test', async (req, res) => {
+    try {
+        const settings = await repo.buildRuntimeSettings({ ...(req.body || {}), profileId: req.params.profileId });
+        if (!settings.hasApiKey || !settings.keyLooksValid) {
+            return res.status(400).json({ success: false, error: 'API Token 未配置或格式疑似无效。' });
+        }
+        const client = aiProviderClient.createClient(settings);
+        const result = await client.generateText({
+            systemInstruction: '你是模型连通性测试助手。请只回复 OK 和模型名称，不要解释。',
+            prompt: '请回复：OK',
+            maxOutputTokens: 64,
+            temperature: 0
+        });
+        res.json({
+            success: true,
+            provider: settings.provider,
+            apiBaseUrl: settings.apiBaseUrl,
+            model: settings.model,
+            reply: String(result.text || '').slice(0, 300),
+            usage: result.usage || {}
+        });
+    } catch (err) {
+        res.status(err.statusCode || err.status || 500).json({ success: false, error: err.message || '模型测试失败' });
     }
 });
 

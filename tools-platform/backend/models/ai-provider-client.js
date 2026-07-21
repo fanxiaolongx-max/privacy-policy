@@ -2,13 +2,14 @@ const DEFAULT_BASE_URLS = {
     gemini: 'https://generativelanguage.googleapis.com/v1beta',
     openai: 'https://api.openai.com/v1',
     anthropic: 'https://api.anthropic.com/v1',
+    minimax: 'https://api.minimax.io/v1',
     'openai-compatible': 'https://api.openai.com/v1'
 };
 const aiUsageRepo = require('./ai-usage-repository');
 
 function normalizeProvider(provider) {
     const value = String(provider || '').trim().toLowerCase();
-    if (['gemini', 'openai', 'anthropic', 'openai-compatible'].includes(value)) return value;
+    if (['gemini', 'openai', 'anthropic', 'minimax', 'openai-compatible'].includes(value)) return value;
     return 'gemini';
 }
 
@@ -124,13 +125,24 @@ class AiProviderClient {
         this.provider = normalizeProvider(settings.provider);
         this.baseUrl = getBaseUrl(settings);
         this.apiKey = settings.apiKey || '';
-        this.model = settings.model || (this.provider === 'anthropic' ? 'claude-3-5-sonnet-latest' : 'gemini-2.5-flash');
+        const defaultModels = {
+            gemini: 'gemini-2.5-flash',
+            openai: 'gpt-4o-mini',
+            anthropic: 'claude-3-5-sonnet-latest',
+            minimax: 'MiniMax-M2.7-highspeed',
+            'openai-compatible': 'gpt-4o-mini'
+        };
+        this.model = settings.model || defaultModels[this.provider];
+        this.usesMiniMaxProtocol = this.provider === 'minimax'
+            || (this.provider === 'openai-compatible' && (/minimax/i.test(this.baseUrl) || /^MiniMax-/i.test(this.model)));
     }
 
-    async generateText({ prompt, systemInstruction = '', messages = null, maxOutputTokens, temperature, responseMimeType, json, thinkingBudget } = {}) {
+    async generateText({ prompt, systemInstruction = '', messages = null, maxOutputTokens, temperature, responseMimeType, json, thinkingBudget, onRetry } = {}) {
         const finalMessages = messages ? normalizeMessages(messages) : [{ role: 'user', content: String(prompt || '') }];
         let result;
-        if (this.provider === 'openai' || this.provider === 'openai-compatible') {
+        if (this.usesMiniMaxProtocol) {
+            result = await this.generateMiniMax({ messages: finalMessages, systemInstruction, maxOutputTokens, temperature, onRetry });
+        } else if (this.provider === 'openai' || this.provider === 'openai-compatible') {
             result = await this.generateOpenAi({ messages: finalMessages, systemInstruction, maxOutputTokens, temperature, responseMimeType, json });
         } else if (this.provider === 'anthropic') {
             result = await this.generateAnthropic({ messages: finalMessages, systemInstruction, maxOutputTokens, temperature });
@@ -234,6 +246,86 @@ class AiProviderClient {
             },
             raw: data
         };
+    }
+
+    async generateMiniMax({ messages, systemInstruction, maxOutputTokens, temperature, onRetry }) {
+        const bodyMessages = [];
+        if (systemInstruction) bodyMessages.push({ role: 'system', content: systemInstruction });
+        normalizeMessages(messages).forEach(msg => {
+            bodyMessages.push({ role: msg.role === 'model' ? 'assistant' : 'user', content: msg.content });
+        });
+
+        // M2.x 的思考内容会占 completion token。首轮给足空间；若仍被截断，
+        // 自动把额度扩到 2 倍，并通过 reasoning_split 只向上层返回最终答案。
+        const configuredLimit = Math.round(Number(maxOutputTokens || this.settings.maxOutputTokens || 2048));
+        const firstLimit = Math.min(Math.max(configuredLimit, 8192), 16384);
+        const limits = [firstLimit, Math.min(Math.max(firstLimit * 2, 16384), 32768)];
+        const aggregateUsage = { promptTokens: 0, outputTokens: 0, totalTokens: 0, reasoningTokens: 0 };
+        let lastData = null;
+        let lastFinishReason = '';
+
+        for (let attempt = 0; attempt < limits.length; attempt += 1) {
+            const body = {
+                model: this.model,
+                messages: bodyMessages,
+                max_completion_tokens: limits[attempt],
+                temperature: Number(temperature ?? this.settings.temperature ?? 0.7),
+                reasoning_split: true
+            };
+            const res = await fetch(`${this.baseUrl}/chat/completions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${this.apiKey}`
+                },
+                body: JSON.stringify(body)
+            });
+            if (!res.ok) await parseErrorResponse(res);
+            const data = await readProviderJson(res);
+            const choice = data.choices && data.choices[0];
+            const message = choice && choice.message;
+            const usage = data.usage || {};
+            const reasoningTokens = Number(usage.completion_tokens_details && usage.completion_tokens_details.reasoning_tokens || 0);
+            aggregateUsage.promptTokens += Number(usage.prompt_tokens || 0);
+            aggregateUsage.outputTokens += Number(usage.completion_tokens || 0);
+            aggregateUsage.totalTokens += Number(usage.total_tokens || 0);
+            aggregateUsage.reasoningTokens += reasoningTokens;
+            lastData = data;
+            lastFinishReason = String(choice && choice.finish_reason || '');
+            const text = stripReasoningText(message && message.content);
+            const truncated = lastFinishReason === 'length' || !text;
+
+            if (!truncated) {
+                return {
+                    text,
+                    usage: aggregateUsage,
+                    finishReason: lastFinishReason,
+                    reasoningTokens: aggregateUsage.reasoningTokens,
+                    raw: data
+                };
+            }
+            if (attempt < limits.length - 1 && typeof onRetry === 'function') {
+                try {
+                    onRetry({
+                        reason: lastFinishReason === 'length' ? 'output_truncated' : 'empty_output',
+                        previousLimit: limits[attempt],
+                        nextLimit: limits[attempt + 1],
+                        message: lastFinishReason === 'length'
+                            ? `MiniMax 输出被截断，输出额度从 ${limits[attempt]} 调整为 ${limits[attempt + 1]} tokens 后重试`
+                            : `MiniMax 未返回最终答案，输出额度调整为 ${limits[attempt + 1]} tokens 后重试`
+                    });
+                } catch (reportError) {
+                    console.warn('[AI] MiniMax retry reporter failed:', reportError.message || reportError);
+                }
+            }
+        }
+
+        const error = new Error(`MiniMax 输出在 ${limits[1]} tokens 后仍被截断，已交由上层拆分任务重试`);
+        error.code = 'AI_OUTPUT_TRUNCATED';
+        error.finishReason = lastFinishReason;
+        error.usage = aggregateUsage;
+        error.raw = lastData;
+        throw error;
     }
 
     async generateAnthropic({ messages, systemInstruction, maxOutputTokens, temperature }) {

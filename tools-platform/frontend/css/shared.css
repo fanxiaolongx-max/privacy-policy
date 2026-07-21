@@ -1043,6 +1043,169 @@ body {
     color: #b91c1c;
 }
 
+.nav-ai-profile-panel {
+    margin-top: 14px;
+    padding: 14px;
+    border: 1px solid #c7d2fe;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #eef2ff 0%, #fff 56%, #f5f3ff 100%);
+    box-shadow: 0 12px 30px rgba(79,70,229,0.08);
+}
+
+.nav-ai-profile-head,
+.nav-ai-profile-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.nav-ai-profile-head > div:first-child {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+}
+
+.nav-ai-profile-head strong {
+    color: #172033;
+    font-size: 14px;
+    font-weight: 900;
+}
+
+.nav-ai-profile-head span {
+    color: #64748b;
+    font-size: 11px;
+}
+
+.nav-ai-profile-head-actions,
+.nav-ai-profile-toolbar > div {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 7px;
+}
+
+.nav-ai-profile-head-actions .nav-settings-add,
+.nav-ai-profile-toolbar .nav-settings-add {
+    margin-top: 0;
+    white-space: nowrap;
+}
+
+.nav-ai-profile-list {
+    margin-top: 12px;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(190px, 0.72fr);
+    gap: 9px;
+    overflow-x: auto;
+    padding: 2px 2px 7px;
+    scrollbar-width: thin;
+}
+
+.nav-ai-profile-card {
+    min-width: 0;
+    min-height: 88px;
+    display: grid;
+    align-content: center;
+    gap: 7px;
+    padding: 11px 12px;
+    border: 1px solid #dbe4f0;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.88);
+    color: #64748b;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.nav-ai-profile-card:hover {
+    transform: translateY(-1px);
+    border-color: #a5b4fc;
+    box-shadow: 0 8px 18px rgba(79,70,229,0.10);
+}
+
+.nav-ai-profile-card.selected {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 2px rgba(99,102,241,0.13);
+}
+
+.nav-ai-profile-card.active {
+    background: linear-gradient(145deg, #fff 0%, #eef2ff 100%);
+}
+
+.nav-ai-profile-card-top {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.nav-ai-profile-card b {
+    min-width: 0;
+    overflow: hidden;
+    color: #1e293b;
+    font-size: 13px;
+    font-weight: 900;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nav-ai-profile-card em {
+    flex: 0 0 auto;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: #dcfce7;
+    color: #15803d;
+    font-size: 9px;
+    font-style: normal;
+    font-weight: 900;
+}
+
+.nav-ai-profile-card > span:not(.nav-ai-profile-card-top) {
+    overflow: hidden;
+    font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nav-ai-profile-card small {
+    color: #94a3b8;
+    font-size: 10px;
+}
+
+.nav-ai-profile-card small.ready { color: #059669; }
+
+.nav-ai-profile-toolbar {
+    margin-top: 8px;
+    padding-top: 11px;
+    border-top: 1px solid rgba(165,180,252,0.38);
+}
+
+.nav-ai-profile-toolbar label {
+    min-width: 180px;
+    flex: 1 1 280px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 9px;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 850;
+}
+
+.nav-ai-profile-toolbar .activate {
+    border-color: #818cf8;
+    background: #4f46e5;
+    color: #fff;
+}
+
+.nav-ai-profile-toolbar .danger { color: #be123c; }
+.nav-ai-profile-toolbar .nav-settings-add:disabled {
+    opacity: .48;
+    pointer-events: none;
+}
+
 .nav-ai-usage-panel {
     margin-top: 14px;
     padding: 14px;
@@ -2059,6 +2222,11 @@ body {
         grid-template-columns: 1fr;
     }
     .nav-ai-usage-head { display: grid; }
+    .nav-ai-profile-head,
+    .nav-ai-profile-toolbar { display: grid; }
+    .nav-ai-profile-head-actions,
+    .nav-ai-profile-toolbar > div { flex-wrap: wrap; }
+    .nav-ai-profile-toolbar label { grid-template-columns: 1fr; }
     .nav-ai-usage-dimensions { justify-self: start; }
     .nav-ai-usage-kpis { grid-template-columns: 1fr; }
     .nav-ai-usage-legend { flex-wrap: wrap; }

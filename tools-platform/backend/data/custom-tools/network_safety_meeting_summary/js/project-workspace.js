@@ -30,6 +30,21 @@ function formatTime(value) {
     return date.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
+function formatExtractedText(value) {
+    const source = String(value || '')
+        .replace(/\[版式结构提示\][\s\S]*$/i, '')
+        .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, ' ');
+    const parts = source.split(/[\r\n]+/)
+        .map(item => item.replace(/^[\s•·▪●◆■□]+|[\s•·▪●◆■□]+$/g, '').replace(/\s+/g, ' ').trim())
+        .filter(item => item && item !== '/')
+        .filter((item, index, items) => index === 0 || item !== items[index - 1]);
+    return parts.reduce((result, item) => !result ? item : /[\/／-]$/.test(result) ? `${result}${item}` : `${result}、${item}`, '')
+        .replace(/、{2,}/g, '、')
+        .replace(/\s*([,，。；;：:])\s*/g, '$1')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
 export function initProjectWorkspace(callbacks) {
     const hub = document.getElementById('projectHub');
     const projectList = document.getElementById('projectList');
@@ -44,6 +59,9 @@ export function initProjectWorkspace(callbacks) {
     const taskProgressText = document.getElementById('pptImportProgressText');
     const taskProgressBar = document.getElementById('pptTaskProgressBar');
     const taskProgressPercent = document.getElementById('pptTaskProgressPercent');
+    const importDetailLog = document.getElementById('pptImportDetailLog');
+    const importLogList = document.getElementById('pptImportLogList');
+    const importLogCount = document.getElementById('pptImportLogCount');
     const hubImportStatus = document.getElementById('hubPptImportStatus');
     const library = document.getElementById('materialLibrary');
     const materialGrid = document.getElementById('materialGrid');
@@ -53,6 +71,8 @@ export function initProjectWorkspace(callbacks) {
     const uploaderSelect = document.getElementById('libraryUploaderSelect');
     const scenarioSelect = document.getElementById('libraryScenarioSelect');
     const pageTypeFilters = document.getElementById('libraryPageTypeFilters');
+    const expandTagsButton = document.getElementById('expandLibraryTagsBtn');
+    const expandPageTypesButton = document.getElementById('expandLibraryPageTypesBtn');
     const shelfList = document.getElementById('materialShelfList');
     const shelfCount = document.getElementById('materialShelfCount');
     const combineButton = document.getElementById('downloadCombinedPptBtn');
@@ -60,6 +80,14 @@ export function initProjectWorkspace(callbacks) {
     const previewImage = document.getElementById('materialPreviewImage');
     const previewTitle = document.getElementById('materialPreviewTitle');
     const previewMeta = document.getElementById('materialPreviewMeta');
+    const paginationSummary = document.getElementById('materialPaginationSummary');
+    const paginationPages = document.getElementById('materialPaginationPages');
+    const pageSizeSelect = document.getElementById('materialPageSizeSelect');
+    const fileFilter = document.getElementById('libraryFileFilter');
+    const fileFilterButton = document.getElementById('libraryFileFilterButton');
+    const fileFilterMenu = document.getElementById('libraryFileFilterMenu');
+    const fileFilterSearch = document.getElementById('libraryFileFilterSearch');
+    const fileFilterOptions = document.getElementById('libraryFileFilterOptions');
 
     let currentProject = null;
     let saveTimer = null;
@@ -75,6 +103,18 @@ export function initProjectWorkspace(callbacks) {
     let availableTags = [];
     let availablePageTypes = [];
     let materialViewPreference = localStorage.getItem('slide_material_view') || 'grid';
+    let currentPage = 1;
+    let pageSize = Number(localStorage.getItem('slide_material_page_size') || 12);
+    let pagination = { page: 1, pageSize, total: 0, totalPages: 1 };
+    let selectedSourceFilename = '';
+    let availableSourceFiles = [];
+    let tagsExpanded = localStorage.getItem('slide_material_tags_expanded') === '1';
+    let pageTypesExpanded = localStorage.getItem('slide_material_page_types_expanded') === '1';
+    let activeImportTaskId = '';
+    let importProgressTimer = null;
+    let lastImportLogSequence = 0;
+    if (![12, 24, 48, 96].includes(pageSize)) pageSize = 12;
+    pageSizeSelect.value = String(pageSize);
 
     function applyMaterialView() {
         if (!['grid', 'table'].includes(materialViewPreference)) materialViewPreference = 'grid';
@@ -108,9 +148,35 @@ export function initProjectWorkspace(callbacks) {
         if (text) taskProgressText.textContent = text;
     }
 
-    function showTaskProgress(title, text, percent = 0) {
+    function resetTaskLog(visible = false) {
+        importDetailLog.classList.toggle('hidden', !visible);
+        importLogList.innerHTML = '';
+        importLogCount.textContent = '0';
+        lastImportLogSequence = 0;
+    }
+
+    function appendTaskLog(entry) {
+        const sequence = Number(entry?.sequence);
+        const hasServerSequence = Number.isFinite(sequence) && sequence > 0;
+        if (hasServerSequence && sequence <= lastImportLogSequence) return;
+        if (hasServerSequence) lastImportLogSequence = sequence;
+        const timestamp = entry?.time ? new Date(entry.time) : new Date();
+        const time = Number.isNaN(timestamp.getTime())
+            ? '--:--:--'
+            : timestamp.toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const item = document.createElement('li');
+        item.className = ['success', 'warning', 'error'].includes(entry?.level) ? entry.level : 'info';
+        item.innerHTML = `<time>${escapeHtml(time)}</time><i></i><span>${escapeHtml(entry?.message || '')}</span>`;
+        importLogList.appendChild(item);
+        while (importLogList.children.length > 180) importLogList.firstElementChild.remove();
+        importLogCount.textContent = String(importLogList.children.length);
+        importLogList.scrollTop = importLogList.scrollHeight;
+    }
+
+    function showTaskProgress(title, text, percent = 0, showDetails = false) {
         taskProgressTitle.textContent = title;
         importProgress.classList.remove('hidden');
+        resetTaskLog(showDetails);
         setTaskProgress(percent, text);
     }
 
@@ -125,6 +191,28 @@ export function initProjectWorkspace(callbacks) {
             value += value < 25 ? 3 : value < 45 ? 2 : 1;
             setTaskProgress(Math.min(value, maximum));
         }, 280);
+    }
+
+    function stopImportProgressPolling() {
+        clearTimeout(importProgressTimer);
+        importProgressTimer = null;
+    }
+
+    async function fetchImportProgress(taskId, scheduleNext = true) {
+        if (!taskId || activeImportTaskId !== taskId) return;
+        try {
+            const progress = await request(`/import-progress/${encodeURIComponent(taskId)}`);
+            if (activeImportTaskId !== taskId) return;
+            setTaskProgress(progress.percent, progress.message);
+            (progress.logs || []).forEach(appendTaskLog);
+            if (scheduleNext && !['completed', 'failed'].includes(progress.status)) {
+                importProgressTimer = window.setTimeout(() => fetchImportProgress(taskId, true), 420);
+            }
+        } catch (error) {
+            if (scheduleNext && activeImportTaskId === taskId) {
+                importProgressTimer = window.setTimeout(() => fetchImportProgress(taskId, true), 700);
+            }
+        }
     }
 
     async function responseBlobWithProgress(response, start = 62, end = 94) {
@@ -273,25 +361,34 @@ export function initProjectWorkspace(callbacks) {
 
     async function importPptx(file) {
         if (!file) return;
+        const taskId = window.crypto?.randomUUID ? window.crypto.randomUUID() : `import_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
         const form = new FormData();
         form.append('pptx', file);
-        showTaskProgress('正在构建 PPT 素材库', '正在拆分页面、提取文字并生成 AI 摘要…', 8);
-        const waitingProgress = beginWaitingProgress(72);
+        form.append('taskId', taskId);
+        activeImportTaskId = taskId;
+        showTaskProgress('正在构建 PPT 素材库', '正在上传 PPT 文件…', 2, true);
+        appendTaskLog({ level: 'info', message: `准备上传 ${file.name}，大小 ${(file.size / 1024 / 1024).toFixed(2)} MB` });
+        fetchImportProgress(taskId, true);
         importInput.disabled = true;
         hubImportStatus.textContent = `正在导入 ${file.name}…`;
         try {
             const result = await request('/import-pptx', { method: 'POST', body: form });
-            window.clearInterval(waitingProgress);
+            await fetchImportProgress(taskId, false);
             setTaskProgress(100, `已完成 ${result.slideCount} 页素材的处理`);
+            appendTaskLog({ level: 'success', message: `前端已收到完成响应，${result.slideCount} 页素材可以检索` });
             hubImportStatus.textContent = `已建立 ${result.slideCount} 页素材${result.usedAi ? '，AI 编目完成' : '，使用本地编目'}`;
             callbacks.setStatus(`素材库新增 ${result.slideCount} 页 PPT`);
-            await loadLibrary();
+            appendTaskLog({ level: 'success', message: `正在打开素材库，并筛选本次导入文件：${result.sourceFilename || file.name}` });
+            await openLibraryForImportedFile(result.sourceFilename || file.name);
         } catch (error) {
+            await fetchImportProgress(taskId, false);
+            appendTaskLog({ level: 'error', message: error.message });
             hubImportStatus.textContent = '导入失败，请重新选择 PPT 文件';
             alert(error.message);
         } finally {
-            window.clearInterval(waitingProgress);
-            hideTaskProgress();
+            stopImportProgressPolling();
+            activeImportTaskId = '';
+            hideTaskProgress(1200);
             importInput.disabled = false;
             importInput.value = '';
         }
@@ -301,18 +398,82 @@ export function initProjectWorkspace(callbacks) {
         const tags = availableTags.length
             ? availableTags
             : [...new Set(libraryItems.map(item => item.tag).filter(Boolean))].map(value => ({ value, count: 0 }));
-        tagFilters.innerHTML = [`<button class="${activeTag ? '' : 'active'}" data-library-tag="">全部</button>`]
-            .concat(tags.map(tag => `<button class="${activeTag === tag.value ? 'active' : ''}" data-library-tag="${escapeHtml(tag.value)}">${escapeHtml(tag.value)}${tag.count ? `<small>${tag.count}</small>` : ''}</button>`))
+        const allCount = tags.reduce((sum, item) => sum + Number(item.count || 0), 0);
+        tagFilters.innerHTML = [`<button class="${activeTag ? '' : 'active'}" data-library-tag="">全部${allCount ? `<small>${allCount}</small>` : ''}</button>`]
+            .concat(tags.map(tag => `<button class="${activeTag === tag.value ? 'active' : ''}" data-library-tag="${escapeHtml(tag.value)}">${escapeHtml(tag.value)}${Number.isFinite(Number(tag.count)) ? `<small>${Number(tag.count)}</small>` : ''}</button>`))
             .join('');
+        syncExpandableFilter(tagFilters, expandTagsButton, tagsExpanded);
     }
 
     function renderPageTypeFilters() {
         const types = availablePageTypes.length
             ? availablePageTypes
             : [...new Set(libraryItems.map(item => item.pageType).filter(Boolean))].map(value => ({ value, count: 0 }));
-        pageTypeFilters.innerHTML = [`<button class="${activePageType ? '' : 'active'}" data-library-page-type="">全部页型</button>`]
-            .concat(types.map(item => `<button class="${activePageType === item.value ? 'active' : ''}" data-library-page-type="${escapeHtml(item.value)}">${escapeHtml(item.value)}${item.count ? `<small>${item.count}</small>` : ''}</button>`))
+        const allCount = types.reduce((sum, item) => sum + Number(item.count || 0), 0);
+        pageTypeFilters.innerHTML = [`<button class="${activePageType ? '' : 'active'}" data-library-page-type="">全部页型${allCount ? `<small>${allCount}</small>` : ''}</button>`]
+            .concat(types.map(item => `<button class="${activePageType === item.value ? 'active' : ''}" data-library-page-type="${escapeHtml(item.value)}">${escapeHtml(item.value)}${Number.isFinite(Number(item.count)) ? `<small>${Number(item.count)}</small>` : ''}</button>`))
             .join('');
+        syncExpandableFilter(pageTypeFilters, expandPageTypesButton, pageTypesExpanded);
+    }
+
+    function syncExpandableFilter(container, button, expanded) {
+        container.classList.toggle('expanded', expanded);
+        button.textContent = expanded ? '收起' : '展开';
+        requestAnimationFrame(() => {
+            const needsExpansion = container.scrollHeight > 40;
+            button.classList.toggle('hidden', !needsExpansion);
+            if (!needsExpansion) container.classList.remove('expanded');
+        });
+    }
+
+    function toggleExpandableFilter(container, button, kind) {
+        if (kind === 'tags') {
+            tagsExpanded = !tagsExpanded;
+            localStorage.setItem('slide_material_tags_expanded', tagsExpanded ? '1' : '0');
+            syncExpandableFilter(container, button, tagsExpanded);
+        } else {
+            pageTypesExpanded = !pageTypesExpanded;
+            localStorage.setItem('slide_material_page_types_expanded', pageTypesExpanded ? '1' : '0');
+            syncExpandableFilter(container, button, pageTypesExpanded);
+        }
+    }
+
+    function renderFileFilterOptions() {
+        const keyword = fileFilterSearch.value.trim().toLocaleLowerCase('zh-CN');
+        const visible = availableSourceFiles.filter(item => !keyword || item.value.toLocaleLowerCase('zh-CN').includes(keyword));
+        const allOption = keyword ? [] : [{ value: '', count: availableSourceFiles.reduce((sum, item) => sum + item.count, 0), all: true }];
+        const options = allOption.concat(visible);
+        fileFilterOptions.innerHTML = options.length ? options.map(item => `
+            <button type="button" class="${selectedSourceFilename === item.value ? 'active' : ''}" data-source-filename="${escapeHtml(item.value)}" title="${escapeHtml(item.value || '全部文件')}">
+                <span>${escapeHtml(item.all ? '全部文件' : item.value)}</span><small>${item.count} 页</small>
+            </button>`).join('') : '<div class="material-file-filter-empty">没有匹配的原始文件</div>';
+        const label = selectedSourceFilename || '全部文件';
+        fileFilterButton.querySelector('span').textContent = label;
+        fileFilterButton.title = selectedSourceFilename ? `当前文件：${selectedSourceFilename}` : '按上传的原始文件名筛选';
+    }
+
+    function renderPagination() {
+        const { page, total, totalPages } = pagination;
+        const first = total ? ((page - 1) * pageSize) + 1 : 0;
+        const last = Math.min(total, page * pageSize);
+        paginationSummary.textContent = total ? `第 ${first}-${last} 条 · 共 ${total} 条` : '共 0 条';
+        const candidates = new Set([1, totalPages, page - 2, page - 1, page, page + 1, page + 2]);
+        const pages = [...candidates].filter(value => value >= 1 && value <= totalPages).sort((a, b) => a - b);
+        const controls = [`<button data-material-page="${page - 1}" ${page <= 1 ? 'disabled' : ''} title="上一页"><i class="ph ph-caret-left"></i></button>`];
+        let previous = 0;
+        pages.forEach(value => {
+            if (previous && value - previous > 1) controls.push('<span>…</span>');
+            controls.push(`<button class="${value === page ? 'active' : ''}" data-material-page="${value}">${value}</button>`);
+            previous = value;
+        });
+        controls.push(`<button data-material-page="${page + 1}" ${page >= totalPages ? 'disabled' : ''} title="下一页"><i class="ph ph-caret-right"></i></button>`);
+        paginationPages.innerHTML = controls.join('');
+        pageSizeSelect.value = String(pageSize);
+    }
+
+    function loadLibraryFromFirstPage() {
+        currentPage = 1;
+        return loadLibrary();
     }
 
     function renderLibrary() {
@@ -322,8 +483,8 @@ export function initProjectWorkspace(callbacks) {
                 <div class="material-card-content">
                     <div class="material-card-top"><span class="material-card-tag">${escapeHtml(asset.pageType || asset.usageScenario || asset.tag)}</span><span class="material-card-page">PAGE ${asset.pageNumber}</span></div>
                     <h3>${escapeHtml(asset.summary || '未生成摘要')}</h3>
-                    <p title="${escapeHtml(asset.intent || asset.extractedText)}">${escapeHtml(asset.intent || asset.extractedText || '本页未提取到可识别文字')}</p>
-                    <div class="material-card-extract" title="${escapeHtml(asset.extractedText)}">${escapeHtml(asset.extractedText || '本页未提取到可识别文字')}</div>
+                    <p title="${escapeHtml(formatExtractedText(asset.intent || asset.extractedText))}">${escapeHtml(formatExtractedText(asset.intent || asset.extractedText) || '本页未提取到可识别文字')}</p>
+                    <div class="material-card-extract" title="${escapeHtml(formatExtractedText(asset.extractedText))}">${escapeHtml(formatExtractedText(asset.extractedText) || '本页未提取到可识别文字')}</div>
                     <div class="material-card-tags">${(asset.tags || [asset.tag]).map(tag => `<span>${escapeHtml(tag)}</span>`).join('')}</div>
                     <div class="material-card-meta" title="${escapeHtml(asset.sourceFilename)}">${escapeHtml(asset.uploader || '未知用户')} · ${formatTime(asset.importedAt)} · ${escapeHtml(asset.sourceFilename)}</div>
                     <div class="material-card-actions">
@@ -378,26 +539,29 @@ export function initProjectWorkspace(callbacks) {
         callbacks.setStatus(`已加入暂存架：第 ${shelfItems.length} 页`);
     }
 
-    async function loadFilterOptions() {
-        try {
-            const { uploaders = [], scenarios = [], pageTypes = [], tags = [], periods = [] } = await request('/asset-filters');
-            const selectedUploader = uploaderSelect.value;
-            const selectedScenario = scenarioSelect.value;
-            const selectedPeriod = periodSelect.value;
-            uploaderSelect.innerHTML = '<option value="">全部上传人</option>' + uploaders.map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join('');
-            scenarioSelect.innerHTML = '<option value="">全部场景</option>' + scenarios.map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join('');
-            periodSelect.innerHTML = '<option value="">全部时间</option>' + periods.map(item => `<option value="${escapeHtml(item.value)}">${escapeHtml(item.label)}</option>`).join('');
-            uploaderSelect.value = selectedUploader;
-            scenarioSelect.value = selectedScenario;
-            periodSelect.value = selectedPeriod;
-            availableTags = tags;
-            availablePageTypes = pageTypes;
-            renderTagFilters();
-            renderPageTypeFilters();
-        } catch (_) { /* 筛选项失败不影响素材检索 */ }
+    function normalizedFacetItems(items = []) {
+        return items.map(item => typeof item === 'string'
+            ? { value: item, label: item, count: 0 }
+            : { value: String(item.value || ''), label: String(item.label || item.value || ''), count: Number(item.count || 0) }
+        ).filter(item => item.value);
     }
 
-    async function loadLibrary() {
+    function retainSelectedFacet(items, selectedValue, selectedLabel = selectedValue) {
+        const normalized = normalizedFacetItems(items);
+        if (selectedValue && !normalized.some(item => item.value === selectedValue)) {
+            normalized.unshift({ value: selectedValue, label: selectedLabel || selectedValue, count: 0, retained: true });
+        }
+        return normalized;
+    }
+
+    function renderFacetSelect(select, allLabel, items, selectedValue) {
+        const total = items.reduce((sum, item) => sum + Number(item.count || 0), 0);
+        select.innerHTML = `<option value="">${escapeHtml(allLabel)}${total ? ` (${total})` : ''}</option>`
+            + items.map(item => `<option value="${escapeHtml(item.value)}">${escapeHtml(item.label)} (${item.count})${item.retained ? ' · 已选' : ''}</option>`).join('');
+        select.value = selectedValue;
+    }
+
+    function currentLibraryFilterParams() {
         const params = new URLSearchParams();
         if (searchInput.value.trim()) params.set('q', searchInput.value.trim());
         if (periodSelect.value) params.set('period', periodSelect.value);
@@ -405,17 +569,68 @@ export function initProjectWorkspace(callbacks) {
         if (uploaderSelect.value) params.set('uploader', uploaderSelect.value);
         if (scenarioSelect.value) params.set('scenario', scenarioSelect.value);
         if (activePageType) params.set('pageType', activePageType);
-        materialGrid.innerHTML = '<div class="project-empty">正在检索素材库…</div>';
+        if (selectedSourceFilename) params.set('sourceFilename', selectedSourceFilename);
+        return params;
+    }
+
+    async function loadFilterOptions() {
         try {
-            const { items } = await request(`/assets?${params}`);
-            libraryItems = items;
+            const filterParams = currentLibraryFilterParams();
+            const { uploaders = [], scenarios = [], pageTypes = [], tags = [], periods = [], sourceFiles = [] } = await request(`/asset-filters?${filterParams}`);
+            const selectedUploader = uploaderSelect.value;
+            const selectedScenario = scenarioSelect.value;
+            const selectedPeriod = periodSelect.value;
+            const uploaderItems = retainSelectedFacet(uploaders, selectedUploader);
+            const scenarioItems = retainSelectedFacet(scenarios, selectedScenario);
+            const periodItems = retainSelectedFacet(periods, selectedPeriod, selectedPeriod.replace('-', ' '));
+            renderFacetSelect(uploaderSelect, '全部上传人', uploaderItems, selectedUploader);
+            renderFacetSelect(scenarioSelect, '全部用途', scenarioItems, selectedScenario);
+            renderFacetSelect(periodSelect, '全部时间', periodItems, selectedPeriod);
+            availableTags = retainSelectedFacet(tags, activeTag);
+            availablePageTypes = retainSelectedFacet(pageTypes, activePageType);
+            availableSourceFiles = retainSelectedFacet(sourceFiles, selectedSourceFilename);
             renderTagFilters();
             renderPageTypeFilters();
-            renderLibrary();
+            renderFileFilterOptions();
+        } catch (_) { /* 筛选项失败不影响素材检索 */ }
+    }
+
+    async function loadLibrary() {
+        const params = currentLibraryFilterParams();
+        params.set('page', String(currentPage));
+        params.set('pageSize', String(pageSize));
+        materialGrid.innerHTML = '<div class="project-empty">正在检索素材库…</div>';
+        try {
+            const result = await request(`/assets?${params}`);
+            const { items } = result;
+            libraryItems = items;
+            pagination = result.pagination || { page: 1, pageSize, total: items.length, totalPages: 1 };
+            currentPage = pagination.page;
             await loadFilterOptions();
+            renderLibrary();
+            renderPagination();
         } catch (error) {
             materialGrid.innerHTML = `<div class="project-empty">读取失败：${escapeHtml(error.message)}</div>`;
+            pagination = { page: 1, pageSize, total: 0, totalPages: 1 };
+            renderPagination();
         }
+    }
+
+    async function openLibraryForImportedFile(sourceFilename) {
+        searchInput.value = '';
+        periodSelect.value = '';
+        uploaderSelect.value = '';
+        scenarioSelect.value = '';
+        activeTag = '';
+        activePageType = '';
+        selectedSourceFilename = String(sourceFilename || '').trim();
+        fileFilterSearch.value = '';
+        fileFilterMenu.classList.add('hidden');
+        currentPage = 1;
+        library.classList.remove('hidden');
+        library.setAttribute('aria-hidden', 'false');
+        renderFileFilterOptions();
+        await loadLibrary();
     }
 
     async function downloadCombinedPpt() {
@@ -508,10 +723,32 @@ export function initProjectWorkspace(callbacks) {
         library.setAttribute('aria-hidden', 'true');
     });
     document.getElementById('refreshLibraryBtn').addEventListener('click', loadLibrary);
-    searchInput.addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(loadLibrary, 320); });
-    periodSelect.addEventListener('change', loadLibrary);
-    uploaderSelect.addEventListener('change', loadLibrary);
-    scenarioSelect.addEventListener('change', loadLibrary);
+    searchInput.addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(loadLibraryFromFirstPage, 320); });
+    periodSelect.addEventListener('change', loadLibraryFromFirstPage);
+    uploaderSelect.addEventListener('change', loadLibraryFromFirstPage);
+    scenarioSelect.addEventListener('change', loadLibraryFromFirstPage);
+    fileFilterButton.addEventListener('click', () => {
+        const opening = fileFilterMenu.classList.contains('hidden');
+        fileFilterMenu.classList.toggle('hidden', !opening);
+        if (opening) {
+            fileFilterSearch.value = '';
+            renderFileFilterOptions();
+            setTimeout(() => fileFilterSearch.focus(), 0);
+        }
+    });
+    fileFilterSearch.addEventListener('input', renderFileFilterOptions);
+    fileFilterOptions.addEventListener('click', event => {
+        const button = event.target.closest('[data-source-filename]');
+        if (!button) return;
+        selectedSourceFilename = button.dataset.sourceFilename;
+        fileFilterMenu.classList.add('hidden');
+        fileFilterSearch.value = '';
+        renderFileFilterOptions();
+        loadLibraryFromFirstPage();
+    });
+    document.addEventListener('click', event => {
+        if (!fileFilter.contains(event.target)) fileFilterMenu.classList.add('hidden');
+    });
     document.getElementById('resetLibraryFiltersBtn').addEventListener('click', () => {
         searchInput.value = '';
         periodSelect.value = '';
@@ -519,19 +756,35 @@ export function initProjectWorkspace(callbacks) {
         scenarioSelect.value = '';
         activeTag = '';
         activePageType = '';
-        loadLibrary();
+        selectedSourceFilename = '';
+        fileFilterSearch.value = '';
+        renderFileFilterOptions();
+        loadLibraryFromFirstPage();
     });
     tagFilters.addEventListener('click', event => {
         const button = event.target.closest('[data-library-tag]');
         if (!button) return;
         activeTag = button.dataset.libraryTag;
-        loadLibrary();
+        loadLibraryFromFirstPage();
     });
     pageTypeFilters.addEventListener('click', event => {
         const button = event.target.closest('[data-library-page-type]');
         if (!button) return;
         activePageType = button.dataset.libraryPageType;
+        loadLibraryFromFirstPage();
+    });
+    expandTagsButton.addEventListener('click', () => toggleExpandableFilter(tagFilters, expandTagsButton, 'tags'));
+    expandPageTypesButton.addEventListener('click', () => toggleExpandableFilter(pageTypeFilters, expandPageTypesButton, 'pageTypes'));
+    paginationPages.addEventListener('click', event => {
+        const button = event.target.closest('[data-material-page]');
+        if (!button || button.disabled) return;
+        currentPage = Number(button.dataset.materialPage);
         loadLibrary();
+    });
+    pageSizeSelect.addEventListener('change', () => {
+        pageSize = Number(pageSizeSelect.value);
+        localStorage.setItem('slide_material_page_size', String(pageSize));
+        loadLibraryFromFirstPage();
     });
     materialGrid.addEventListener('click', async event => {
         const insertButton = event.target.closest('[data-insert-asset]');
