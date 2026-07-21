@@ -518,20 +518,48 @@ body.presentation-mode .presentation-overlay {
 .material-view-switch { display: flex; padding: 3px; border: 1px solid #3f3f46; border-radius: 10px; background: #09090b; }
 .material-view-switch button { display: flex; width: auto; height: 30px; align-items: center; gap: 5px; padding: 0 9px; border: 0; border-radius: 7px; color: #71717a; font-size: 9px; background: transparent; }
 .material-view-switch button.active { color: #e0e7ff; background: #3730a3; }
-.material-library-filters { display: grid; grid-template-columns: minmax(220px, 1fr) 145px 135px 135px 135px auto; gap: 10px; padding: 18px 28px 10px; }
+.material-library-filters { display: grid; grid-template-columns: minmax(220px, 1fr) 190px 150px 165px 170px 90px auto; gap: 10px; padding: 18px 28px 10px; }
 .material-library-filters label { display: flex; align-items: center; gap: 9px; padding: 0 13px; border: 1px solid #3f3f46; border-radius: 10px; color: #71717a; background: #09090b; }
-.material-library-filters input, .material-library-filters select { min-width: 0; height: 40px; border: 1px solid #3f3f46; border-radius: 10px; padding: 0 12px; outline: none; color: #e4e4e7; color-scheme: dark; background: #09090b; }
+.material-library-filters input, .material-library-filters select { min-width: 0; height: 40px; border: 1px solid #3f3f46; border-radius: 10px; padding: 0 30px 0 12px; outline: none; color: #e4e4e7; color-scheme: dark; font-variant-numeric: tabular-nums; background: #09090b; }
 .material-library-filters label input { width: 100%; border: 0; padding: 0; }
 .material-library-filters button { padding: 0 15px; border: 1px solid #3f3f46; border-radius: 10px; color: #d4d4d8; cursor: pointer; background: #27272a; }
-.material-filter-strip { display: flex; min-height: 38px; align-items: center; gap: 10px; padding: 0 28px; }
-.material-filter-strip > span { width: 56px; flex: none; color: #71717a; font-size: 9px; letter-spacing: .08em; }
-.material-tag-filters { display: flex; min-width: 0; gap: 7px; padding: 4px 0 7px; overflow-x: auto; }
+.filter-select-with-help { position: relative; min-width: 0; }
+.filter-select-with-help::after { position: absolute; z-index: 1; top: 12px; right: 11px; color: #a1a1aa; font-size: 11px; content: "⌄"; pointer-events: none; }
+.filter-select-with-help select { width: 100%; padding-right: 55px; appearance: none; -webkit-appearance: none; }
+.filter-select-with-help .dimension-help { position: absolute; z-index: 2; top: 11px; right: 30px; }
+.material-file-filter { position: relative; min-width: 0; }
+.material-file-filter > button { display: flex; width: 100%; height: 40px; align-items: center; gap: 7px; padding: 0 10px; background: #09090b; }
+.material-file-filter > button span { min-width: 0; flex: 1; overflow: hidden; text-align: left; white-space: nowrap; text-overflow: ellipsis; }
+.material-file-filter-menu { position: absolute; z-index: 30; top: calc(100% + 7px); left: 0; width: min(430px, calc(100vw - 48px)); padding: 9px; border: 1px solid #52525b; border-radius: 12px; background: #18181b; box-shadow: 0 18px 55px rgba(0,0,0,.58); }
+.material-file-filter-menu.hidden { display: none; }
+.material-file-filter-menu > label { height: 36px; padding: 0 10px; }
+.material-file-filter-options { display: flex; max-height: 270px; margin-top: 8px; flex-direction: column; gap: 4px; overflow-y: auto; }
+.material-file-filter-options button { display: grid; width: 100%; min-height: 38px; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 10px; padding: 7px 9px; border: 0; border-radius: 8px; text-align: left; background: transparent; }
+.material-file-filter-options button:hover, .material-file-filter-options button.active { color: #eef2ff; background: rgba(79,70,229,.24); }
+.material-file-filter-options button span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.material-file-filter-options button small { color: #71717a; font-size: 8px; }
+.material-file-filter-empty { padding: 18px 10px; color: #71717a; font-size: 9px; text-align: center; }
+.material-filter-strip { display: flex; min-height: 38px; align-items: flex-start; gap: 10px; padding: 0 28px; }
+.material-filter-strip:has(.dimension-help:hover), .material-filter-strip:has(.dimension-help:focus-visible) { position: relative; z-index: 60; }
+.material-filter-strip > span { display: flex; width: 64px; flex: none; align-items: center; gap: 4px; padding-top: 9px; color: #71717a; font-size: 9px; letter-spacing: .05em; }
+.material-tag-filters { display: flex; min-width: 0; max-height: 37px; flex: 1; flex-wrap: wrap; gap: 7px; padding: 4px 0 7px; overflow: hidden; transition: max-height .22s ease; }
+.material-tag-filters.expanded { max-height: 116px; overflow-y: auto; }
 .material-tag-filters button { flex: none; padding: 5px 10px; border: 1px solid #3f3f46; border-radius: 999px; color: #a1a1aa; font-size: 10px; cursor: pointer; background: #27272a; }
 .material-tag-filters button.active { border-color: #6366f1; color: #c7d2fe; background: rgba(79,70,229,.2); }
 .material-tag-filters button small { margin-left: 5px; color: #71717a; font-size: 8px; }
 .material-tag-filters button.active small { color: #a5b4fc; }
+.material-filter-expand { flex: none; margin-top: 4px; padding: 5px 9px; border: 1px solid #3f3f46; border-radius: 999px; color: #a5b4fc; font-size: 9px; cursor: pointer; background: rgba(79,70,229,.16); }
+.material-filter-expand.hidden { display: none; }
+.dimension-help { position: relative; display: inline-grid; width: 16px; height: 16px; flex: none; padding: 0 !important; place-items: center; border: 1px solid #52525b !important; border-radius: 50% !important; color: #a1a1aa !important; font-size: 9px; font-weight: 700; line-height: 1; cursor: help !important; background: #27272a !important; }
+.dimension-help::after { position: absolute; z-index: 80; top: calc(100% + 9px); left: 50%; width: max-content; max-width: 280px; padding: 8px 10px; transform: translate(-50%, -3px); border: 1px solid #52525b; border-radius: 8px; color: #e4e4e7; font-size: 10px; font-weight: 400; line-height: 1.55; letter-spacing: 0; text-align: left; white-space: normal; content: attr(data-tooltip); opacity: 0; visibility: hidden; pointer-events: none; background: rgba(24,24,27,.98); box-shadow: 0 12px 35px rgba(0,0,0,.5); transition: opacity .15s ease, transform .15s ease, visibility .15s ease; }
+.dimension-help:hover::after, .dimension-help:focus-visible::after { transform: translate(-50%, 0); opacity: 1; visibility: visible; }
+.material-filter-strip .dimension-help::after { left: -8px; transform: translate(0, -3px); }
+.material-filter-strip .dimension-help:hover::after, .material-filter-strip .dimension-help:focus-visible::after { transform: translate(0, 0); }
+.filter-select-with-help .dimension-help::after { right: -22px; left: auto; transform: translate(0, -3px); }
+.filter-select-with-help .dimension-help:hover::after, .filter-select-with-help .dimension-help:focus-visible::after { transform: translate(0, 0); }
 .material-library-body { display: grid; min-height: 0; flex: 1; grid-template-columns: minmax(0, 1fr) 280px; border-top: 1px solid rgba(63,63,70,.45); }
-.material-grid { display: grid; align-content: start; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; padding: 18px 20px 28px 28px; overflow-y: auto; }
+.material-list-pane { display: flex; min-width: 0; min-height: 0; flex-direction: column; }
+.material-grid { display: grid; min-height: 0; flex: 1; align-content: start; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; padding: 18px 20px 28px 28px; overflow-y: auto; }
 .material-card { display: flex; min-height: 350px; overflow: hidden; flex-direction: column; border: 1px solid #3f3f46; border-radius: 14px; background: linear-gradient(145deg, #27272a, #202023); transition: border-color .2s ease, transform .2s ease; }
 .material-card:hover { transform: translateY(-2px); border-color: #52525b; }
 .material-card-preview { position: relative; display: grid; aspect-ratio: 16 / 9; place-items: center; overflow: hidden; color: #71717a; cursor: zoom-in; background: radial-gradient(circle at 30% 25%, rgba(99,102,241,.2), transparent 55%), #111113; }
@@ -566,6 +594,13 @@ body.presentation-mode .presentation-overlay {
 .material-grid.view-table .material-card-meta { grid-column: 3; grid-row: 1 / 3; margin: 0; padding: 3px 0 0; white-space: normal; line-height: 1.6; }
 .material-grid.view-table .material-card-actions { grid-column: 3; grid-row: 3 / 5; align-self: end; margin-top: 8px; }
 .material-grid.view-table .material-card-page { margin-left: auto; }
+.material-pagination { display: flex; min-height: 54px; flex: none; align-items: center; justify-content: space-between; gap: 14px; padding: 8px 20px 8px 28px; border-top: 1px solid #3f3f46; color: #71717a; font-size: 9px; background: rgba(24,24,27,.96); }
+.material-pagination-pages { display: flex; align-items: center; justify-content: center; gap: 5px; }
+.material-pagination-pages button { display: grid; min-width: 30px; height: 30px; padding: 0 8px; place-items: center; border: 1px solid #3f3f46; border-radius: 8px; color: #a1a1aa; cursor: pointer; background: #27272a; }
+.material-pagination-pages button.active { border-color: #6366f1; color: #eef2ff; background: #4338ca; }
+.material-pagination-pages button:disabled { opacity: .35; cursor: not-allowed; }
+.material-pagination label { display: flex; flex: none; align-items: center; gap: 6px; }
+.material-pagination select { height: 30px; border: 1px solid #3f3f46; border-radius: 8px; padding: 0 7px; color: #e4e4e7; color-scheme: dark; background: #09090b; }
 
 .material-preview-modal { position: fixed; z-index: 100020; inset: 0; display: grid; padding: 34px; place-items: center; background: rgba(0,0,0,.82); backdrop-filter: blur(14px); }
 .material-preview-modal.hidden { display: none; }
@@ -604,6 +639,21 @@ body.presentation-mode .presentation-overlay {
 .ppt-import-progress small { margin-top: 7px; color: #a5b4fc; font-size: 10px; font-variant-numeric: tabular-nums; }
 .ppt-task-progress-track { width: 100%; height: 7px; margin-top: 18px; overflow: hidden; border-radius: 999px; background: #27272a; box-shadow: inset 0 0 0 1px #3f3f46; }
 .ppt-task-progress-track i { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #4f46e5, #818cf8, #22d3ee); box-shadow: 0 0 14px rgba(99,102,241,.65); transition: width .25s ease; }
+.ppt-import-detail-log { width: 100%; margin-top: 12px; padding: 7px 8px 8px; border: 1px solid #3f3f46; border-radius: 8px; text-align: left; background: rgba(9,9,11,.68); }
+.ppt-import-detail-log.hidden { display: none; }
+.ppt-import-detail-log > div { display: flex; align-items: center; justify-content: space-between; padding: 0 2px 5px; color: #52525b; font-size: 7px; font-weight: 800; letter-spacing: .13em; }
+.ppt-import-detail-log > div b { display: grid; min-width: 17px; height: 15px; padding: 0 4px; place-items: center; border-radius: 999px; color: #71717a; font-size: 7px; letter-spacing: 0; background: #27272a; }
+.ppt-import-detail-log ol { height: 88px; margin: 0; padding: 0 2px; overflow-y: auto; list-style: none; scrollbar-width: thin; scrollbar-color: #3f3f46 transparent; }
+.ppt-import-detail-log li { display: grid; grid-template-columns: 37px 7px minmax(0,1fr); gap: 5px; align-items: baseline; padding: 2px 0; color: #71717a; font: 7.5px/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
+.ppt-import-detail-log span { margin-top: 0; color: inherit; font-size: inherit; line-height: inherit; }
+.ppt-import-detail-log li time { color: #52525b; font-size: 7px; }
+.ppt-import-detail-log li i { width: 4px; height: 4px; border-radius: 50%; background: #6366f1; }
+.ppt-import-detail-log li.success { color: #86efac; }
+.ppt-import-detail-log li.success i { background: #22c55e; }
+.ppt-import-detail-log li.warning { color: #fcd34d; }
+.ppt-import-detail-log li.warning i { background: #f59e0b; }
+.ppt-import-detail-log li.error { color: #fda4af; }
+.ppt-import-detail-log li.error i { background: #f43f5e; }
 .ppt-import-spinner { width: 34px; height: 34px; border: 3px solid #3f3f46; border-top-color: #818cf8; border-radius: 50%; animation: ppt-spin .8s linear infinite; }
 @keyframes ppt-spin { to { transform: rotate(360deg); } }
 
@@ -633,7 +683,9 @@ body.presentation-mode .presentation-overlay {
     .material-grid { padding-left: 16px; padding-right: 16px; }
     .material-filter-strip { padding-left: 16px; padding-right: 16px; }
     .material-library-body { grid-template-columns: 1fr; overflow-y: auto; }
+    .material-list-pane { overflow: visible; }
     .material-grid { overflow: visible; }
+    .material-pagination { position: sticky; bottom: 0; padding-left: 16px; }
     .material-shelf { min-height: 260px; border-top: 1px solid #27272a; border-left: 0; }
 }
 

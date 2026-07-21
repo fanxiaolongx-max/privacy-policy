@@ -34,7 +34,7 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 
     <!-- Custom CSS for Slide Content -->
-    <link rel="stylesheet" href="css/app.css?v=20260721-10">
+    <link rel="stylesheet" href="css/app.css?v=20260721-17">
 </head>
 
 <body class="bg-zinc-950 text-zinc-100 font-sans h-screen w-screen overflow-hidden flex flex-col">
@@ -415,16 +415,33 @@
             </div>
             <div class="material-library-filters">
                 <label><i class="ph ph-magnifying-glass"></i><input id="librarySearchInput" placeholder="搜索描述、原文或标签"></label>
+                <div id="libraryFileFilter" class="material-file-filter">
+                    <button id="libraryFileFilterButton" type="button" title="按上传的原始文件名筛选"><i class="ph ph-file-ppt"></i><span>全部文件</span><i class="ph ph-caret-down"></i></button>
+                    <div id="libraryFileFilterMenu" class="material-file-filter-menu hidden">
+                        <label><i class="ph ph-magnifying-glass"></i><input id="libraryFileFilterSearch" placeholder="搜索原始文件名"></label>
+                        <div id="libraryFileFilterOptions" class="material-file-filter-options"></div>
+                    </div>
+                </div>
                 <select id="libraryPeriodSelect" title="按导入年份和季度筛选"><option value="">全部时间</option></select>
                 <select id="libraryUploaderSelect" title="按上传人筛选"><option value="">全部上传人</option></select>
-                <select id="libraryScenarioSelect" title="按使用场景筛选"><option value="">全部场景</option></select>
+                <div class="filter-select-with-help">
+                    <select id="libraryScenarioSelect" title="按素材用途筛选"><option value="">全部用途</option></select>
+                    <button class="dimension-help" type="button" aria-label="了解用途维度" data-tooltip="用途：说明这页素材适合怎么使用，如课程培训或方案讲解。">?</button>
+                </div>
                 <button id="resetLibraryFiltersBtn" type="button" title="清空搜索和所有筛选"><i class="ph ph-funnel-x"></i> 重置</button>
                 <button id="refreshLibraryBtn"><i class="ph ph-arrows-clockwise"></i> 刷新</button>
             </div>
-            <div class="material-filter-strip"><span>主题分类</span><div id="libraryTagFilters" class="material-tag-filters"></div></div>
-            <div class="material-filter-strip"><span>页面类型</span><div id="libraryPageTypeFilters" class="material-tag-filters"></div></div>
+            <div class="material-filter-strip"><span>主题分类<button class="dimension-help" type="button" aria-label="了解主题分类维度" data-tooltip="主题分类：说明页面主要讲什么，如方案架构或智能翻译。">?</button></span><div id="libraryTagFilters" class="material-tag-filters"></div><button id="expandLibraryTagsBtn" class="material-filter-expand hidden" type="button">展开</button></div>
+            <div class="material-filter-strip"><span>页面类型<button class="dimension-help" type="button" aria-label="了解页面类型维度" data-tooltip="页面类型：说明这页在 PPT 中的结构作用，如封面、目录或内容页。">?</button></span><div id="libraryPageTypeFilters" class="material-tag-filters"></div><button id="expandLibraryPageTypesBtn" class="material-filter-expand hidden" type="button">展开</button></div>
             <div class="material-library-body">
-                <div id="materialGrid" class="material-grid custom-scrollbar"></div>
+                <div class="material-list-pane">
+                    <div id="materialGrid" class="material-grid custom-scrollbar"></div>
+                    <div class="material-pagination" aria-label="素材库分页">
+                        <span id="materialPaginationSummary">共 0 条</span>
+                        <div id="materialPaginationPages" class="material-pagination-pages"></div>
+                        <label>每页 <select id="materialPageSizeSelect"><option value="12">12</option><option value="24">24</option><option value="48">48</option><option value="96">96</option></select> 条</label>
+                    </div>
+                </div>
                 <aside class="material-shelf">
                     <div class="material-shelf-head"><div><span>COMPOSE DECK</span><strong>素材暂存架</strong></div><b id="materialShelfCount">0</b></div>
                     <p>加入页面后可拖拽调整顺序，并合成为一份保留原始版式的 PPT。</p>
@@ -451,6 +468,10 @@
         <span id="pptImportProgressText">正在拆分页面、提取文字并生成 AI 摘要…</span>
         <div class="ppt-task-progress-track"><i id="pptTaskProgressBar"></i></div>
         <small id="pptTaskProgressPercent">0%</small>
+        <div id="pptImportDetailLog" class="ppt-import-detail-log hidden" aria-label="PPT 导入详细日志">
+            <div><span>PROCESS LOG</span><b id="pptImportLogCount">0</b></div>
+            <ol id="pptImportLogList"></ol>
+        </div>
     </div>
 
     <div id="presentationOverlay" class="presentation-overlay" aria-hidden="true">
@@ -698,7 +719,7 @@
     </template>
 
     <!-- App Logic -->
-    <script type="module" src="js/app.js?v=20260721-12"></script>
+    <script type="module" src="js/app.js?v=20260722-01"></script>
 </body>
 
 </html>

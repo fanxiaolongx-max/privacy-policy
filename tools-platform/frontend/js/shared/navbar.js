@@ -38,6 +38,7 @@ let navState = {
     settingsTab: 'primary',
     saveTimer: null,
     aiSettings: null,
+    aiSelectedProfileId: null,
     aiSaveTimer: null,
     aiUsageDimension: 'day',
     securitySettings: null,
@@ -204,7 +205,7 @@ function registerNavbarI18n() {
             'nav.page.report.res.more': '仅展示前 8 条，剩余 {remaining} 条未展开。',
 
             'nav.ai.empty': '正在加载 AI 助手配置...',
-            'nav.ai.help': '这里配置右下角智能客服助手及后台 AI 分析。支持 Gemini、OpenAI、Anthropic 和 OpenAI 兼容网关；Token 会保存到服务端，前端只显示脱敏状态。',
+            'nav.ai.help': '这里管理智能客服与后台 AI 分析使用的模型方案。支持 Gemini、OpenAI、Anthropic、MiniMax 和 OpenAI 兼容网关；Token 保存于服务端，前端只显示脱敏状态。',
             'nav.ai.sourcePrefix': '当前 Token 来源：',
             'nav.ai.srcStored': '设置中心保存的 Token',
             'nav.ai.srcEnv': '供应商环境变量',
@@ -511,7 +512,7 @@ function registerNavbarI18n() {
             'nav.page.report.res.more': 'Only showing the first 8 items, {remaining} items hidden.',
 
             'nav.ai.empty': 'Loading AI configuration...',
-            'nav.ai.help': 'Configure the AI Assistant and background AI analysis. Supports Gemini, OpenAI, Anthropic, and OpenAI-compatible gateways. The token is stored on the server and masked in the UI.',
+            'nav.ai.help': 'Manage model profiles for the AI Assistant and background analysis. Supports Gemini, OpenAI, Anthropic, MiniMax, and OpenAI-compatible gateways. Tokens are stored on the server and masked in the UI.',
             'nav.ai.sourcePrefix': 'Current Token Source: ',
             'nav.ai.srcStored': 'Stored in Settings',
             'nav.ai.srcEnv': 'Provider Environment Variable',
@@ -1353,6 +1354,10 @@ async function fetchAiSettingsForNav() {
     const res = await fetch('/api/ai-settings', { headers: getAuthHeaderForNav() });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     navState.aiSettings = await res.json();
+    const profiles = Array.isArray(navState.aiSettings.profiles) ? navState.aiSettings.profiles : [];
+    if (!profiles.some(item => item.id === navState.aiSelectedProfileId)) {
+        navState.aiSelectedProfileId = navState.aiSettings.activeProfileId || profiles[0]?.id || null;
+    }
     return navState.aiSettings;
 }
 
@@ -1438,10 +1443,46 @@ window.setAiUsageDimension = function (dimension) {
 async function renderAiSettings(content) {
     content.innerHTML = `<div class="nav-settings-empty">${navEscape(navT('nav.ai.empty'))}</div>`;
     try {
-        const settings = await fetchAiSettingsForNav();
+        const settingsStore = await fetchAiSettingsForNav();
+        const profiles = Array.isArray(settingsStore.profiles) ? settingsStore.profiles : [];
+        const settings = profiles.find(item => item.id === navState.aiSelectedProfileId) || profiles[0] || settingsStore;
+        const isActiveProfile = settings.id === settingsStore.activeProfileId;
         content.innerHTML = `
             <div class="nav-settings-help">${navEscape(navT('nav.ai.help'))}</div>
+            <section class="nav-ai-profile-panel">
+                <div class="nav-ai-profile-head">
+                    <div>
+                        <strong>AI 配置方案</strong>
+                        <span>可保存多套供应商与模型参数；只有已激活方案会用于实际业务。</span>
+                    </div>
+                    <div class="nav-ai-profile-head-actions">
+                        <button type="button" class="nav-settings-add" onclick="createAiProfile()">＋ 新建</button>
+                        <button type="button" class="nav-settings-add secondary" onclick="cloneAiProfile()">⧉ 复制当前</button>
+                    </div>
+                </div>
+                <div class="nav-ai-profile-list">
+                    ${profiles.map(profile => `
+                        <button type="button" class="nav-ai-profile-card ${profile.id === settings.id ? 'selected' : ''} ${profile.isActive ? 'active' : ''}" onclick="selectAiProfile('${navEscape(profile.id)}')">
+                            <span class="nav-ai-profile-card-top"><b>${navEscape(profile.name)}</b>${profile.isActive ? '<em>使用中</em>' : ''}</span>
+                            <span>${navEscape(profile.provider)} · ${navEscape(profile.model)}</span>
+                            <small class="${profile.keyLooksValid ? 'ready' : ''}">${profile.keyLooksValid ? '● Token 可用' : '○ Token 未就绪'}</small>
+                        </button>
+                    `).join('')}
+                </div>
+                <div class="nav-ai-profile-toolbar">
+                    <label>
+                        <span>方案名称</span>
+                        <input id="navAiProfileName" class="nav-settings-input" maxlength="60" value="${navEscape(settings.name || 'AI 配置')}" oninput="scheduleAiSettingsSave()">
+                    </label>
+                    <div>
+                        <button type="button" class="nav-settings-add" onclick="testAiSettingsNow()">⌁ 测试连接</button>
+                        <button type="button" class="nav-settings-add activate" onclick="activateAiProfile()" ${isActiveProfile ? 'disabled' : ''}>${isActiveProfile ? '✓ 当前已激活' : '⚡ 激活此方案'}</button>
+                        <button type="button" class="nav-settings-add danger" onclick="deleteAiProfile()" ${profiles.length <= 1 ? 'disabled' : ''}>删除</button>
+                    </div>
+                </div>
+            </section>
             <div class="nav-ai-status">
+                <span>${isActiveProfile ? '当前业务正在使用此方案' : '正在编辑未激活方案'}</span>
                 <span>${navEscape(navT('nav.ai.sourcePrefix'))}${navEscape(sourceLabelForAiSettings(settings.apiKeySource))}</span>
                 <span class="${settings.hasApiKey && !settings.keyLooksValid ? 'warning' : ''}">${navEscape(keyHealthLabelForAiSettings(settings))}</span>
             </div>
@@ -1464,6 +1505,7 @@ async function renderAiSettings(content) {
                         <option value="gemini" ${settings.provider === 'gemini' ? 'selected' : ''}>Gemini</option>
                         <option value="openai" ${settings.provider === 'openai' ? 'selected' : ''}>OpenAI</option>
                         <option value="anthropic" ${settings.provider === 'anthropic' ? 'selected' : ''}>Anthropic</option>
+                        <option value="minimax" ${settings.provider === 'minimax' ? 'selected' : ''}>MiniMax</option>
                         <option value="openai-compatible" ${settings.provider === 'openai-compatible' ? 'selected' : ''}>OpenAI Compatible</option>
                     </select>
                 </label>
@@ -1490,6 +1532,9 @@ async function renderAiSettings(content) {
                         <option value="gpt-4.1-mini"></option>
                         <option value="claude-3-5-sonnet-latest"></option>
                         <option value="claude-3-5-haiku-latest"></option>
+                        <option value="MiniMax-M2.7-highspeed"></option>
+                        <option value="MiniMax-M2.7"></option>
+                        <option value="MiniMax-M3"></option>
                     </datalist>
                 </label>
                 <label class="nav-ai-field">
@@ -1517,7 +1562,7 @@ async function renderAiSettings(content) {
                     <textarea id="navAiSystemPrompt" class="nav-ai-textarea" maxlength="5000" placeholder="${navEscape(navT('nav.ai.plhPrompt'))}" oninput="scheduleAiSettingsSave()">${navEscape(settings.systemPrompt || '')}</textarea>
                 </label>
                 <div class="nav-ai-field nav-ai-field-wide">
-                    <button type="button" class="nav-settings-add" onclick="testAiSettingsNow()">${navEscape(navT('nav.ai.btnTest'))}</button>
+                    <span>连接测试结果</span>
                     <div id="navAiTestResult" class="nav-ai-test-result"></div>
                 </div>
             </div>
@@ -1531,6 +1576,8 @@ async function renderAiSettings(content) {
 function collectAiSettingsPayload(options = {}) {
     const tokenInput = document.getElementById('navAiApiKey');
     const payload = {
+        profileId: navState.aiSelectedProfileId,
+        name: document.getElementById('navAiProfileName')?.value || 'AI 配置',
         provider: document.getElementById('navAiProvider')?.value || 'gemini',
         apiBaseUrl: document.getElementById('navAiApiBaseUrl')?.value || '',
         model: document.getElementById('navAiModel')?.value || 'gemini-2.5-flash',
@@ -1547,6 +1594,110 @@ function collectAiSettingsPayload(options = {}) {
     return payload;
 }
 
+function currentAiProfile() {
+    const profiles = Array.isArray(navState.aiSettings?.profiles) ? navState.aiSettings.profiles : [];
+    return profiles.find(item => item.id === navState.aiSelectedProfileId) || profiles[0] || null;
+}
+
+async function requestAiProfile(url, options = {}) {
+    const res = await fetch(url, {
+        ...options,
+        headers: {
+            ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+            ...getAuthHeaderForNav(),
+            ...(options.headers || {})
+        }
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    return data;
+}
+
+window.selectAiProfile = async function (profileId) {
+    if (profileId === navState.aiSelectedProfileId) return;
+    const indicator = document.getElementById('navSettingsSaveState');
+    try {
+        clearTimeout(navState.aiSaveTimer);
+        await saveAiSettingsNow();
+        navState.aiSelectedProfileId = profileId;
+        renderAiSettings(document.getElementById('navSettingsContent'));
+    } catch (error) {
+        if (indicator) indicator.textContent = `切换前保存失败：${error.message}`;
+    }
+};
+
+window.createAiProfile = async function () {
+    const indicator = document.getElementById('navSettingsSaveState');
+    try {
+        clearTimeout(navState.aiSaveTimer);
+        await saveAiSettingsNow();
+        if (indicator) indicator.textContent = '正在创建…';
+        const data = await requestAiProfile('/api/ai-settings/profiles', {
+            method: 'POST',
+            body: JSON.stringify({ name: '新 AI 配置' })
+        });
+        navState.aiSettings = data;
+        navState.aiSelectedProfileId = data.createdProfileId;
+        if (indicator) indicator.textContent = '已创建，尚未激活';
+        renderAiSettings(document.getElementById('navSettingsContent'));
+    } catch (error) {
+        if (indicator) indicator.textContent = `创建失败：${error.message}`;
+    }
+};
+
+window.cloneAiProfile = async function () {
+    const profile = currentAiProfile();
+    if (!profile) return;
+    const indicator = document.getElementById('navSettingsSaveState');
+    try {
+        clearTimeout(navState.aiSaveTimer);
+        await saveAiSettingsNow();
+        const sourceName = document.getElementById('navAiProfileName')?.value.trim() || profile.name;
+        const data = await requestAiProfile('/api/ai-settings/profiles', {
+            method: 'POST',
+            body: JSON.stringify({ sourceProfileId: profile.id, name: `${sourceName} 副本` })
+        });
+        navState.aiSettings = data;
+        navState.aiSelectedProfileId = data.createdProfileId;
+        if (indicator) indicator.textContent = '副本已创建，尚未激活';
+        renderAiSettings(document.getElementById('navSettingsContent'));
+    } catch (error) {
+        if (indicator) indicator.textContent = `复制失败：${error.message}`;
+    }
+};
+
+window.activateAiProfile = async function () {
+    const profileId = navState.aiSelectedProfileId;
+    if (!profileId) return;
+    const indicator = document.getElementById('navSettingsSaveState');
+    try {
+        clearTimeout(navState.aiSaveTimer);
+        await saveAiSettingsNow();
+        if (indicator) indicator.textContent = '正在切换模型…';
+        navState.aiSettings = await requestAiProfile(`/api/ai-settings/profiles/${encodeURIComponent(profileId)}/activate`, { method: 'POST' });
+        if (indicator) indicator.textContent = '已激活，业务调用已切换';
+        renderAiSettings(document.getElementById('navSettingsContent'));
+    } catch (error) {
+        if (indicator) indicator.textContent = `激活失败：${error.message}`;
+    }
+};
+
+window.deleteAiProfile = async function () {
+    const profile = currentAiProfile();
+    if (!profile || !window.confirm(`确定删除 AI 配置“${profile.name}”吗？`)) return;
+    const indicator = document.getElementById('navSettingsSaveState');
+    try {
+        clearTimeout(navState.aiSaveTimer);
+        const data = await requestAiProfile(`/api/ai-settings/profiles/${encodeURIComponent(profile.id)}`, { method: 'DELETE' });
+        navState.aiSettings = data;
+        navState.aiSelectedProfileId = data.activeProfileId;
+        if (indicator) indicator.textContent = '配置已删除';
+        renderAiSettings(document.getElementById('navSettingsContent'));
+    } catch (error) {
+        if (indicator) indicator.textContent = `删除失败：${error.message}`;
+    }
+};
+
 window.handleAiProviderChange = function () {
     const provider = document.getElementById('navAiProvider')?.value || 'gemini';
     const modelInput = document.getElementById('navAiModel');
@@ -1554,10 +1705,16 @@ window.handleAiProviderChange = function () {
         gemini: 'gemini-2.5-flash',
         openai: 'gpt-4o-mini',
         anthropic: 'claude-3-5-sonnet-latest',
+        minimax: 'MiniMax-M2.7-highspeed',
         'openai-compatible': 'gpt-4o-mini'
     };
     if (modelInput && defaults[provider]) {
         modelInput.value = defaults[provider];
+    }
+    const apiBaseUrlInput = document.getElementById('navAiApiBaseUrl');
+    if (apiBaseUrlInput) {
+        if (provider === 'minimax') apiBaseUrlInput.value = 'https://api.minimax.io/v1';
+        if (['gemini', 'openai', 'anthropic'].includes(provider)) apiBaseUrlInput.value = '';
     }
     scheduleAiSettingsSave();
 };
@@ -1572,7 +1729,8 @@ window.testAiSettingsNow = async function () {
     }
     if (indicator) indicator.textContent = navT('nav.ai.testing');
     try {
-        const res = await fetch('/api/ai-settings/test', {
+        const profileId = navState.aiSelectedProfileId;
+        const res = await fetch(`/api/ai-settings/profiles/${encodeURIComponent(profileId)}/test`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1602,7 +1760,9 @@ window.testAiSettingsNow = async function () {
 async function saveAiSettingsNow(options = {}) {
     const indicator = document.getElementById('navSettingsSaveState');
     if (indicator) indicator.textContent = navT('nav.ai.saving');
-    const res = await fetch('/api/ai-settings', {
+    const profileId = navState.aiSelectedProfileId;
+    if (!profileId) throw new Error('未选择 AI 配置');
+    const res = await fetch(`/api/ai-settings/profiles/${encodeURIComponent(profileId)}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -1619,18 +1779,20 @@ async function saveAiSettingsNow(options = {}) {
         throw new Error(message);
     }
     navState.aiSettings = await res.json();
+    const savedProfile = currentAiProfile();
     const tokenInput = document.getElementById('navAiApiKey');
     if (tokenInput) {
         tokenInput.value = '';
-        tokenInput.placeholder = navState.aiSettings.hasApiKey
-            ? `${navT('nav.ai.plhKeep')}${navState.aiSettings.maskedApiKey}`
+        tokenInput.placeholder = savedProfile?.hasApiKey
+            ? `${navT('nav.ai.plhKeep')}${savedProfile.maskedApiKey}`
             : navT('nav.ai.plhToken');
     }
     const status = document.querySelector('.nav-ai-status');
     if (status) {
         status.innerHTML = `
-            <span>${navEscape(navT('nav.ai.sourcePrefix'))}${navEscape(sourceLabelForAiSettings(navState.aiSettings.apiKeySource))}</span>
-            <span class="${navState.aiSettings.hasApiKey && !navState.aiSettings.keyLooksValid ? 'warning' : ''}">${navEscape(keyHealthLabelForAiSettings(navState.aiSettings))}</span>
+            <span>${savedProfile?.isActive ? '当前业务正在使用此方案' : '正在编辑未激活方案'}</span>
+            <span>${navEscape(navT('nav.ai.sourcePrefix'))}${navEscape(sourceLabelForAiSettings(savedProfile?.apiKeySource))}</span>
+            <span class="${savedProfile?.hasApiKey && !savedProfile?.keyLooksValid ? 'warning' : ''}">${navEscape(keyHealthLabelForAiSettings(savedProfile || {}))}</span>
         `;
     }
     if (indicator) indicator.textContent = navT('nav.ai.saved');
