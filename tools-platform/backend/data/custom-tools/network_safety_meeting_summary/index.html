@@ -34,10 +34,58 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 
     <!-- Custom CSS for Slide Content -->
-    <link rel="stylesheet" href="css/app.css?v=20260623-4">
+    <link rel="stylesheet" href="css/app.css?v=20260721-4">
 </head>
 
 <body class="bg-zinc-950 text-zinc-100 font-sans h-screen w-screen overflow-hidden flex flex-col">
+
+    <!-- Project Center: the editor stays behind this screen until a project is opened. -->
+    <section id="projectHub" class="project-hub" aria-label="胶片项目中心">
+        <div class="project-hub-shell">
+            <div class="project-hub-hero">
+                <div class="project-hub-logo"><i class="ph-fill ph-presentation-chart"></i></div>
+                <span class="project-hub-kicker">PRESENTATION WORKSPACE</span>
+                <h2>先选择一个项目</h2>
+                <p>每份胶片都独立保存，可随时打开继续设计，也可导入 PPT 建立可检索的页面素材库。</p>
+                <div class="project-hub-features">
+                    <span><i class="ph ph-cloud-check"></i> 自动 + 手动保存</span>
+                    <span><i class="ph ph-file-ppt"></i> PPT 逐页拆分</span>
+                    <span><i class="ph ph-magic-wand"></i> AI 摘要与标签</span>
+                </div>
+            </div>
+            <div class="project-hub-panel">
+                <div class="project-library-entry">
+                    <div class="project-library-entry-icon"><i class="ph ph-file-ppt"></i></div>
+                    <div class="project-library-entry-copy">
+                        <span>SHARED MATERIAL LIBRARY</span>
+                        <strong>导入 PPT，建立公共素材库</strong>
+                        <small id="hubPptImportStatus">自动拆页、生成缩略图并完成 AI 编目</small>
+                    </div>
+                    <label class="project-library-import-btn">
+                        <i class="ph ph-upload-simple"></i> 导入 PPT
+                        <input id="pptImportInput" type="file" accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation" hidden>
+                    </label>
+                    <button id="openHubLibraryBtn" class="project-library-open-btn" type="button"><i class="ph ph-books"></i> 浏览素材库</button>
+                </div>
+                <div class="project-create-row">
+                    <input id="newProjectNameInput" type="text" maxlength="120" placeholder="输入新项目名称">
+                    <button id="createProjectBtn"><i class="ph ph-plus"></i> 创建项目</button>
+                </div>
+                <div class="project-list-head">
+                    <div><strong>最近项目</strong><small id="projectCountLabel">正在读取…</small></div>
+                    <div class="project-list-actions">
+                        <div class="project-view-switch" role="group" aria-label="项目显示模式">
+                            <button type="button" data-project-view="auto" title="根据项目数量自动切换"><i class="ph ph-magic-wand"></i></button>
+                            <button type="button" data-project-view="grid" title="网格显示"><i class="ph ph-squares-four"></i></button>
+                            <button type="button" data-project-view="list" title="列表显示"><i class="ph ph-list-bullets"></i></button>
+                        </div>
+                        <button id="refreshProjectsBtn" title="刷新项目"><i class="ph ph-arrows-clockwise"></i></button>
+                    </div>
+                </div>
+                <div id="projectList" class="project-list custom-scrollbar"></div>
+            </div>
+        </div>
+    </section>
 
     <!-- Premium Top Navigation -->
     <header
@@ -48,11 +96,20 @@
                 <i class="ph-fill ph-presentation-chart text-white text-lg"></i>
             </div>
             <h1 class="text-[15px] font-semibold text-zinc-100 tracking-wide">华子胶片设计</h1>
-            <span
+            <button id="openProjectHubBtn" class="project-name-chip" title="切换项目">未打开项目 <i class="ph ph-caret-down"></i></button>
+            <span id="autoSaveBadge"
                 class="px-2 py-0.5 rounded text-[10px] font-medium bg-zinc-800 text-zinc-400 border border-zinc-700 ml-2 shadow-sm">自动保存</span>
         </div>
 
         <div class="flex items-center gap-3">
+            <button id="manualSaveBtn"
+                class="h-8 px-3 rounded-md bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 flex items-center gap-2 transition shadow-sm" title="立即保存 (Ctrl+S)">
+                <i class="ph ph-floppy-disk"></i><span class="text-xs font-medium">保存</span>
+            </button>
+            <button id="openLibraryBtn"
+                class="h-8 px-3 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white flex items-center gap-2 transition shadow-sm">
+                <i class="ph ph-books"></i><span class="text-xs font-medium">素材库</span>
+            </button>
             <button id="toggleAiBtn"
                 class="h-8 px-3 rounded-md bg-purple-600 hover:bg-purple-500 text-white flex items-center gap-2 transition shadow-lg shadow-purple-900/20 mr-2">
                 <i class="ph-fill ph-magic-wand"></i>
@@ -343,6 +400,42 @@
         </aside>
     </main>
 
+    <!-- Searchable single-slide PPT library -->
+    <section id="materialLibrary" class="material-library hidden" aria-hidden="true">
+        <div class="material-library-shell">
+            <div class="material-library-head">
+                <div><span>MATERIAL KNOWLEDGE BASE</span><h2>PPT 页面素材库</h2></div>
+                <button id="closeLibraryBtn" aria-label="关闭素材库"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="material-library-filters">
+                <label><i class="ph ph-magnifying-glass"></i><input id="librarySearchInput" placeholder="搜索描述、原文或标签"></label>
+                <input id="libraryDateInput" type="date" title="按导入日期筛选">
+                <select id="libraryUploaderSelect" title="按上传人筛选"><option value="">全部上传人</option></select>
+                <select id="libraryScenarioSelect" title="按使用场景筛选"><option value="">全部场景</option></select>
+                <button id="refreshLibraryBtn"><i class="ph ph-arrows-clockwise"></i> 刷新</button>
+            </div>
+            <div id="libraryTagFilters" class="material-tag-filters"></div>
+            <div class="material-library-body">
+                <div id="materialGrid" class="material-grid custom-scrollbar"></div>
+                <aside class="material-shelf">
+                    <div class="material-shelf-head"><div><span>COMPOSE DECK</span><strong>素材暂存架</strong></div><b id="materialShelfCount">0</b></div>
+                    <p>加入页面后可拖拽调整顺序，并合成为一份保留原始版式的 PPT。</p>
+                    <div id="materialShelfList" class="material-shelf-list custom-scrollbar"></div>
+                    <div class="material-shelf-actions">
+                        <button id="clearMaterialShelfBtn" type="button">清空</button>
+                        <button id="downloadCombinedPptBtn" type="button" disabled><i class="ph ph-download-simple"></i> 合并下载</button>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </section>
+
+    <div id="pptImportProgress" class="ppt-import-progress hidden" role="status" aria-live="polite">
+        <div class="ppt-import-spinner"></div>
+        <strong>正在构建 PPT 素材库</strong>
+        <span id="pptImportProgressText">正在拆分页面、提取文字并生成 AI 摘要…</span>
+    </div>
+
     <div id="presentationOverlay" class="presentation-overlay" aria-hidden="true">
         <canvas id="presentationInkCanvas"></canvas>
         <div id="presentationLaser" class="presentation-laser"></div>
@@ -588,7 +681,7 @@
     </template>
 
     <!-- App Logic -->
-    <script type="module" src="js/app.js?v=20260625-1"></script>
+    <script type="module" src="js/app.js?v=20260721-5"></script>
 </body>
 
 </html>

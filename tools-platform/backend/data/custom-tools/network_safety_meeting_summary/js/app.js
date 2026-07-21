@@ -5,6 +5,7 @@ import { createComponentEditor } from './component-editor.js?v=20260623-4';
 import { initContextMenu } from './context-menu.js?v=20260623-1';
 import { defaultSlides } from './default-slides.js?v=20260623-1';
 import { renderSlide, slideToJson } from './slide-factory.js?v=20260623-2';
+import { initProjectWorkspace } from './project-workspace.js?v=20260721-5';
 
 const deck = document.getElementById('deck');
 const deckWrapper = document.getElementById('deckWrapper');
@@ -45,6 +46,7 @@ let canvasPanX = 0;
 let canvasPanY = 0;
 let canvasPanState = null;
 let selectedSlideIndices = new Set();
+let projectWorkspace = null;
 
 function applyCanvasPan() {
     deck.style.translate = `${canvasPanX}px ${canvasPanY}px`;
@@ -290,7 +292,79 @@ function saveDeck() {
         store.saveState(html);
         pushHistory(html);
         setStatus('已自动保存');
+        projectWorkspace?.scheduleAutoSave();
     }, 500);
+}
+
+function loadProjectDeck(html, requestedActiveSlide = 0) {
+    componentEditor?.clearSelection();
+    if (html && String(html).trim()) deck.innerHTML = html;
+    deck.querySelectorAll('.slide-wrap').forEach(wrap => {
+        if (!wrap.querySelector('.slide')) wrap.remove();
+    });
+    if (!getSlideWraps().length) {
+        const template = document.getElementById('blankSlideTemplate');
+        if (template) deck.appendChild(template.content.firstElementChild.cloneNode(true));
+    }
+    activeSlideIndex = Math.max(0, Math.min(Number(requestedActiveSlide || 0), getSlideWraps().length - 1));
+    renumberSlides();
+    componentEditor?.refresh();
+    setActiveSlide(activeSlideIndex);
+    pushHistory(editor.serializeDeck(deck));
+    scheduleThumbnails();
+    setTimeout(() => document.getElementById('zoomFitBtn')?.click(), 80);
+}
+
+function escapeImportedText(value) {
+    return String(value || '').replace(/[&<>'"]/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    }[char]));
+}
+
+function insertLibraryAsset(asset) {
+    const rawLines = String(asset.extractedText || '').split(/\n+/).map(item => item.trim()).filter(Boolean);
+    const lines = rawLines.slice(0, 14);
+    const summary = escapeImportedText(asset.summary || lines.join(' ').slice(0, 160) || '未生成页面摘要');
+    const tag = escapeImportedText(asset.tag || '综合材料');
+    const source = escapeImportedText(asset.sourceFilename || 'PPT 素材');
+    const body = lines.length
+        ? `<ul>${lines.map(line => `<li>${escapeImportedText(line)}</li>`).join('')}</ul>`
+        : '<p>本页未提取到可识别文字，可在此继续编辑。</p>';
+    const slide = renderSlide({
+        id: asset.id,
+        layout: 'custom',
+        html: `<div class="huawei-template imported-material-slide" data-material-id="${escapeImportedText(asset.id)}">
+            <div class="template-component imported-material-header" data-component-name="素材页标题">
+                <div><div class="ht-kicker template-editable editable" contenteditable="true">MATERIAL KNOWLEDGE BASE · PAGE ${Number(asset.pageNumber || 1)}</div>
+                <h1 class="template-editable editable" contenteditable="true">${tag}</h1></div>
+                <div class="ht-tag template-editable editable" contenteditable="true">${source}</div>
+            </div>
+            <div class="template-component imported-material-summary" data-component-name="AI 页面摘要">
+                <span>AI SUMMARY</span><h2 class="template-editable editable" contenteditable="true">${summary}</h2>
+            </div>
+            <div class="template-component imported-material-content" data-component-name="PPT 提取文字">
+                <div class="template-editable editable" contenteditable="true">${body}</div>
+            </div>
+            <div class="template-component ht-footer" data-component-name="素材来源"><span class="template-editable editable" contenteditable="true">${source}</span><i></i><b class="template-editable editable" contenteditable="true">${tag}</b></div>
+        </div>`
+    });
+    deck.appendChild(slide);
+    renumberSlides();
+    componentEditor?.refresh();
+    setActiveSlide(getSlideWraps().length - 1);
+    saveDeck();
+    scheduleThumbnails();
+    setTimeout(() => window.autoFitSlide?.(slide.querySelector('.slide')), 0);
+}
+
+function createDefaultProjectDeckHtml() {
+    const host = document.createElement('div');
+    defaultSlides.forEach((data, index) => {
+        const slide = renderSlide(data);
+        if (index === 0) slide.classList.add('is-active');
+        host.appendChild(slide);
+    });
+    return host.innerHTML;
 }
 
 function deleteActiveSlide() {
@@ -1565,6 +1639,14 @@ componentEditor = createComponentEditor({
     }
 });
 bootstrap();
+projectWorkspace = initProjectWorkspace({
+    getDeckHtml: () => editor.serializeDeck(deck),
+    getNewProjectDeckHtml: createDefaultProjectDeckHtml,
+    getActiveSlide: () => activeSlideIndex,
+    loadDeck: loadProjectDeck,
+    insertAsset: insertLibraryAsset,
+    setStatus
+});
 
 // --- Context Menu ---
 initContextMenu(deckWrapper, thumbDeck, {

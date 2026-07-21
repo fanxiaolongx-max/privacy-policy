@@ -27,6 +27,7 @@ db.serialize(() => {
 
     // Add category column dynamically if it doesn't exist
     db.run("ALTER TABLE Requirements ADD COLUMN category TEXT", () => {});
+    db.run("ALTER TABLE Requirements ADD COLUMN urgent INTEGER NOT NULL DEFAULT 0", () => {});
 
     db.run(`CREATE TABLE IF NOT EXISTS RequirementLogs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -64,15 +65,17 @@ router.get('/:id', (req, res) => {
 
 // 提交新需求
 router.post('/', (req, res) => {
-    const { title, description, category } = req.body;
+    const { title, description, category, urgent } = req.body;
     if (!title) return res.status(400).json({ error: '标题为必填项' });
     if (!category) return res.status(400).json({ error: '页面分类为必选项' });
 
     const status = '提交';
     const creator = req.user ? req.user.username : 'Guest';
     
-    db.run(`INSERT INTO Requirements (title, description, category, status, creator) VALUES (?, ?, ?, ?, ?)`,
-        [title, description || '', category, status, creator],
+    const isUrgent = urgent === true || urgent === 1 || urgent === '1';
+
+    db.run(`INSERT INTO Requirements (title, description, category, status, creator, urgent) VALUES (?, ?, ?, ?, ?, ?)`,
+        [title, description || '', category, status, creator, isUrgent ? 1 : 0],
         function(err) {
             if (err) return res.status(500).json({ error: err.message });
             const reqId = this.lastID;
@@ -91,7 +94,7 @@ router.post('/', (req, res) => {
 // 更新需求 (可以只更新信息，或者推进流程状态)
 router.put('/:id', (req, res) => {
     const id = req.params.id;
-    const { title, description, category, status, assignee, remark } = req.body;
+    const { title, description, category, status, assignee, remark, urgent } = req.body;
     const operator = req.user ? req.user.username : 'Guest';
     const userRole = req.user ? req.user.role : 'guest';
 
@@ -108,6 +111,9 @@ router.put('/:id', (req, res) => {
         const newDesc = description !== undefined ? description : row.description;
         const newCategory = category !== undefined ? category : (row.category || '未分类');
         const newAssignee = assignee !== undefined ? assignee : row.assignee;
+        const newUrgent = urgent !== undefined
+            ? (urgent === true || urgent === 1 || urgent === '1' ? 1 : 0)
+            : (row.urgent ? 1 : 0);
         let newStatus = status !== undefined ? status : row.status;
         
         // 如果是从客户端发起的更新并且没有状态变更
@@ -135,8 +141,8 @@ router.put('/:id', (req, res) => {
             return res.status(400).json({ error: '已拒绝的需求无法再流转' });
         }
 
-        db.run(`UPDATE Requirements SET title = ?, description = ?, category = ?, status = ?, assignee = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-            [newTitle, newDesc, newCategory, newStatus, newAssignee, id],
+        db.run(`UPDATE Requirements SET title = ?, description = ?, category = ?, status = ?, assignee = ?, urgent = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+            [newTitle, newDesc, newCategory, newStatus, newAssignee, newUrgent, id],
             function(err) {
                 if (err) return res.status(500).json({ error: err.message });
                 

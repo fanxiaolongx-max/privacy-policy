@@ -58,7 +58,9 @@ const REQ_I18N_DICT = {
     "更新了信息": "Updated info",
     "未分类": "Uncategorized",
     "无详细描述": "No description",
-    "未分配": "Unassigned"
+    "未分配": "Unassigned",
+    "紧急需求": "Urgent request",
+    "在需求广场中优先展示并高亮提醒": "Show first in the plaza with a highlighted alert"
 };
 
 let currentReqLang = 'zh';
@@ -96,6 +98,8 @@ window.addEventListener('tools:languagechange', (e) => {
 const ReqApp = {
     requirements: [],
     currentReqId: null,
+    currentPage: 1,
+    pageSize: 8,
 
     init: async function() {
         await this.loadRequirements();
@@ -104,6 +108,7 @@ const ReqApp = {
     loadRequirements: async function() {
         try {
             this.requirements = await API.get('/api/requirements');
+            this.currentPage = 1;
             this.renderBoard();
         } catch (e) {
             console.error('Failed to load requirements', e);
@@ -112,10 +117,13 @@ const ReqApp = {
 
     renderBoard: function() {
         const board = document.getElementById('reqBoard');
+        const pagination = document.getElementById('reqPagination');
         board.innerHTML = '';
+        this.renderStats();
 
         if (this.requirements.length === 0) {
             board.innerHTML = `<div style="color: #64748b; grid-column: 1 / -1; text-align: center; padding: 40px;">${tText('暂无需求，点击右上角提交一个吧！', 'No requests, click top right to submit one!')}</div>`;
+            pagination.innerHTML = '';
             return;
         }
 
@@ -136,9 +144,17 @@ const ReqApp = {
             sortedReqs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         }
 
-        sortedReqs.forEach(req => {
+        // 紧急需求始终优先，同一优先级内保留用户选择的排序。
+        sortedReqs.sort((a, b) => Number(Boolean(b.urgent)) - Number(Boolean(a.urgent)));
+
+        const totalPages = Math.max(1, Math.ceil(sortedReqs.length / this.pageSize));
+        this.currentPage = Math.min(Math.max(1, this.currentPage), totalPages);
+        const pageStart = (this.currentPage - 1) * this.pageSize;
+        const pageReqs = sortedReqs.slice(pageStart, pageStart + this.pageSize);
+
+        pageReqs.forEach(req => {
             const card = document.createElement('div');
-            card.className = 'req-card';
+            card.className = `req-card${req.urgent ? ' req-card-urgent' : ''}`;
             card.onclick = () => this.openEditModal(req.id);
 
             const timeStr = new Date(req.created_at).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
@@ -179,6 +195,7 @@ const ReqApp = {
             card.innerHTML = `
                 <div style="flex: 1; min-width: 0;">
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                        ${req.urgent ? `<span class="urgent-badge">⚡ ${tText('紧急', 'Urgent')}</span>` : ''}
                         <h3 class="req-title" style="margin:0; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${this.escapeHTML(req.title)}">${this.escapeHTML(req.title)}</h3>
                         <span class="req-status-badge" style="background:rgba(255,255,255,0.1); color:#cbd5e1; margin:0;">${this.escapeHTML(req.category || tText('未分类', 'Uncategorized'))}</span>
                     </div>
@@ -201,6 +218,128 @@ const ReqApp = {
             `;
             board.appendChild(card);
         });
+
+        this.renderPagination(sortedReqs.length, totalPages);
+    },
+
+    renderStats: function() {
+        const requirements = this.requirements || [];
+        const total = requirements.length;
+        const countByStatus = requirements.reduce((result, item) => {
+            result[item.status] = (result[item.status] || 0) + 1;
+            return result;
+        }, {});
+        const submitted = countByStatus['提交'] || 0;
+        const accepted = countByStatus['需求接受'] || 0;
+        const implementing = countByStatus['需求实现中'] || 0;
+        const completed = (countByStatus['需求完成'] || 0)
+            + (countByStatus['验收完成'] || 0)
+            + (countByStatus['需求评价'] || 0);
+        const rejected = countByStatus['已拒绝'] || 0;
+        const urgent = requirements.filter(item => Boolean(item.urgent)).length;
+        const activeTotal = Math.max(0, total - rejected);
+        const completionRate = activeTotal ? Math.round((completed / activeTotal) * 100) : 0;
+        const now = Date.now();
+        const recent = requirements.filter(item => {
+            const createdAt = new Date(item.created_at).getTime();
+            return Number.isFinite(createdAt) && now - createdAt <= 7 * 24 * 60 * 60 * 1000;
+        }).length;
+
+        const topStats = [
+            { icon: '◈', value: total, label: tText('全部需求', 'All requests'), tone: 'blue' },
+            { icon: '⌕', value: submitted, label: tText('Codex 待确认', 'Codex review'), tone: 'violet' },
+            { icon: '◐', value: accepted + implementing, label: tText('实现队列', 'Build queue'), tone: 'cyan' },
+            { icon: '⚡', value: urgent, label: tText('紧急需求', 'Urgent'), tone: 'orange' },
+            { icon: '✓', value: `${completionRate}%`, label: tText('完成率', 'Completion'), tone: 'green' }
+        ];
+        document.getElementById('reqStatsTop').innerHTML = topStats.map(stat => `
+            <article class="req-stat-card stat-tone-${stat.tone}">
+                <span class="stat-card-icon">${stat.icon}</span>
+                <span class="stat-card-copy"><strong>${stat.value}</strong><small>${stat.label}</small></span>
+                <span class="stat-card-glow"></span>
+            </article>
+        `).join('');
+
+        const flowGroups = [
+            { label: tText('待评估', 'Awaiting'), value: submitted, color: '#a78bfa' },
+            { label: tText('已接受', 'Accepted'), value: accepted, color: '#60a5fa' },
+            { label: tText('实现中', 'Building'), value: implementing, color: '#22d3ee' },
+            { label: tText('已完成', 'Completed'), value: completed, color: '#34d399' }
+        ];
+        document.getElementById('reqStatsLeft').innerHTML = `
+            <div class="stat-rail-heading"><span class="stat-live-dot"></span><div><small>${tText('实时流程', 'LIVE FLOW')}</small><strong>${tText('交付雷达', 'Delivery radar')}</strong></div></div>
+            <div class="stat-flow-list">
+                ${flowGroups.map(group => {
+                    const ratio = total ? Math.max(group.value ? 7 : 0, Math.round((group.value / total) * 100)) : 0;
+                    return `<div class="stat-flow-item"><span><em>${group.label}</em><b>${group.value}</b></span><i><u style="width:${ratio}%;background:${group.color}"></u></i></div>`;
+                }).join('')}
+            </div>
+            <div class="stat-rail-foot"><strong>+${recent}</strong><span>${tText('近 7 天新增', 'new in 7 days')}</span></div>
+        `;
+
+        const categoryCounts = requirements.reduce((result, item) => {
+            const category = item.category || tText('未分类', 'Uncategorized');
+            result[category] = (result[category] || 0) + 1;
+            return result;
+        }, {});
+        const topCategories = Object.entries(categoryCounts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 4);
+        const maxCategoryCount = topCategories[0]?.[1] || 1;
+        document.getElementById('reqStatsRight').innerHTML = `
+            <div class="stat-rail-heading"><span class="stat-orbit-icon">◎</span><div><small>${tText('需求分布', 'REQUEST MAP')}</small><strong>${tText('热门领域', 'Top categories')}</strong></div></div>
+            <div class="stat-category-list">
+                ${topCategories.map(([category, count], index) => `
+                    <div class="stat-category-item">
+                        <span><em>0${index + 1}</em><b title="${this.escapeHTML(category)}">${this.escapeHTML(category)}</b><strong>${count}</strong></span>
+                        <i><u style="width:${Math.round((count / maxCategoryCount) * 100)}%"></u></i>
+                    </div>
+                `).join('') || `<div class="stat-empty">${tText('暂无数据', 'No data')}</div>`}
+            </div>
+            <div class="stat-rail-foot stat-rail-foot-orange"><strong>${urgent}</strong><span>${tText('紧急通道', 'urgent lane')}</span></div>
+        `;
+    },
+
+    changeSort: function() {
+        this.currentPage = 1;
+        this.renderBoard();
+    },
+
+    goToPage: function(page) {
+        const totalPages = Math.max(1, Math.ceil(this.requirements.length / this.pageSize));
+        const nextPage = Math.min(Math.max(1, page), totalPages);
+        if (nextPage === this.currentPage) return;
+        this.currentPage = nextPage;
+        this.renderBoard();
+        document.getElementById('reqBoard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    },
+
+    renderPagination: function(totalItems, totalPages) {
+        const pagination = document.getElementById('reqPagination');
+        if (totalPages <= 1) {
+            pagination.innerHTML = `<span class="pagination-summary">${tText(`共 ${totalItems} 条需求`, `${totalItems} requests`)}</span>`;
+            return;
+        }
+
+        const startItem = (this.currentPage - 1) * this.pageSize + 1;
+        const endItem = Math.min(this.currentPage * this.pageSize, totalItems);
+        const pageButtons = [];
+        for (let page = 1; page <= totalPages; page++) {
+            if (page === 1 || page === totalPages || Math.abs(page - this.currentPage) <= 1) {
+                pageButtons.push(`<button type="button" class="pagination-btn${page === this.currentPage ? ' active' : ''}" onclick="ReqApp.goToPage(${page})" ${page === this.currentPage ? 'aria-current="page"' : ''}>${page}</button>`);
+            } else if (pageButtons[pageButtons.length - 1] !== '<span class="pagination-ellipsis">…</span>') {
+                pageButtons.push('<span class="pagination-ellipsis">…</span>');
+            }
+        }
+
+        pagination.innerHTML = `
+            <span class="pagination-summary">${tText(`第 ${startItem}–${endItem} 条，共 ${totalItems} 条`, `${startItem}–${endItem} of ${totalItems}`)}</span>
+            <div class="pagination-controls">
+                <button type="button" class="pagination-btn pagination-nav" onclick="ReqApp.goToPage(${this.currentPage - 1})" ${this.currentPage === 1 ? 'disabled' : ''}>${tText('上一页', 'Previous')}</button>
+                ${pageButtons.join('')}
+                <button type="button" class="pagination-btn pagination-nav" onclick="ReqApp.goToPage(${this.currentPage + 1})" ${this.currentPage === totalPages ? 'disabled' : ''}>${tText('下一页', 'Next')}</button>
+            </div>
+        `;
     },
 
     openCreateModal: function() {
@@ -214,6 +353,7 @@ const ReqApp = {
             document.getElementById(id).disabled = false;
         });
         document.getElementById('reqStatusSelect').value = '提交';
+        document.getElementById('reqUrgentInput').checked = false;
         
         // UI visibility
         document.getElementById('manageRow').style.display = 'none';
@@ -248,6 +388,7 @@ const ReqApp = {
             }
             
             document.getElementById('reqDescInput').value = req.description;
+            document.getElementById('reqUrgentInput').checked = Boolean(req.urgent);
             document.getElementById('reqStatusSelect').value = req.status;
             document.getElementById('reqAssigneeInput').value = req.assignee || '';
             document.getElementById('reqRemarkInput').value = '';
@@ -289,7 +430,7 @@ const ReqApp = {
             
             // Set inputs state based on admin role
             const isAdmin = localStorage.getItem('tools_role') === 'admin';
-            const inputs = ['reqTitleInput', 'reqCategorySelect', 'reqDescInput', 'reqStatusSelect', 'reqAssigneeInput', 'reqRemarkInput'];
+            const inputs = ['reqTitleInput', 'reqCategorySelect', 'reqDescInput', 'reqUrgentInput', 'reqStatusSelect', 'reqAssigneeInput', 'reqRemarkInput'];
             inputs.forEach(id => {
                 document.getElementById(id).disabled = !isAdmin;
             });
@@ -327,7 +468,8 @@ const ReqApp = {
             return;
         }
 
-        const payload = { title, description, category };
+        const urgent = document.getElementById('reqUrgentInput').checked;
+        const payload = { title, description, category, urgent };
 
         if (this.currentReqId) {
             payload.status = document.getElementById('reqStatusSelect').value;
