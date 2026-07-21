@@ -127,7 +127,7 @@ class AiProviderClient {
         this.model = settings.model || (this.provider === 'anthropic' ? 'claude-3-5-sonnet-latest' : 'gemini-2.5-flash');
     }
 
-    async generateText({ prompt, systemInstruction = '', messages = null, maxOutputTokens, temperature, responseMimeType, json } = {}) {
+    async generateText({ prompt, systemInstruction = '', messages = null, maxOutputTokens, temperature, responseMimeType, json, thinkingBudget } = {}) {
         const finalMessages = messages ? normalizeMessages(messages) : [{ role: 'user', content: String(prompt || '') }];
         let result;
         if (this.provider === 'openai' || this.provider === 'openai-compatible') {
@@ -135,7 +135,7 @@ class AiProviderClient {
         } else if (this.provider === 'anthropic') {
             result = await this.generateAnthropic({ messages: finalMessages, systemInstruction, maxOutputTokens, temperature });
         } else {
-            result = await this.generateGemini({ messages: finalMessages, systemInstruction, maxOutputTokens, temperature, responseMimeType, json });
+            result = await this.generateGemini({ messages: finalMessages, systemInstruction, maxOutputTokens, temperature, responseMimeType, json, thinkingBudget });
         }
         try {
             const usage = result?.usage || {};
@@ -159,11 +159,11 @@ class AiProviderClient {
         return result;
     }
 
-    async generateChat({ messages, systemInstruction = '', maxOutputTokens, temperature, responseMimeType, json } = {}) {
-        return this.generateText({ messages, systemInstruction, maxOutputTokens, temperature, responseMimeType, json });
+    async generateChat({ messages, systemInstruction = '', maxOutputTokens, temperature, responseMimeType, json, thinkingBudget } = {}) {
+        return this.generateText({ messages, systemInstruction, maxOutputTokens, temperature, responseMimeType, json, thinkingBudget });
     }
 
-    async generateGemini({ messages, systemInstruction, maxOutputTokens, temperature, responseMimeType, json }) {
+    async generateGemini({ messages, systemInstruction, maxOutputTokens, temperature, responseMimeType, json, thinkingBudget }) {
         const url = `${this.baseUrl}/models/${encodeURIComponent(this.model)}:generateContent?key=${encodeURIComponent(this.apiKey)}`;
         const body = {
             contents: normalizeMessages(messages).map(msg => ({
@@ -175,6 +175,9 @@ class AiProviderClient {
                 temperature: Number(temperature ?? this.settings.temperature ?? 0.7)
             }
         };
+        if (Number.isFinite(Number(thinkingBudget)) && /gemini-2\.5/i.test(this.model)) {
+            body.generationConfig.thinkingConfig = { thinkingBudget: Math.max(0, Math.round(Number(thinkingBudget))) };
+        }
         if (systemInstruction) body.systemInstruction = { parts: [{ text: systemInstruction }] };
         if (isJsonMode({ responseMimeType, json })) body.generationConfig.responseMimeType = 'application/json';
 

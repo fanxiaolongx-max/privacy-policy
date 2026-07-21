@@ -108,6 +108,55 @@ function nextSlideId(xml) {
     return Math.max(255, ...ids) + 1;
 }
 
+function removePresentationSections(xml) {
+    return String(xml || '')
+        .replace(/<p14:sectionLst\b[^>]*>[\s\S]*?<\/p14:sectionLst>/gi, '')
+        .replace(/<p:ext\b[^>]*>\s*<\/p:ext>/gi, '');
+}
+
+function removeLayoutMarkerShapes(xml, { removeRevisionTitle = false } = {}) {
+    return String(xml || '').replace(/<p:sp\b[\s\S]*?<\/p:sp>/gi, shape => {
+        if (shape.includes('本页不打印')) return '';
+        if (removeRevisionTitle && shape.includes('修订记录')) return '';
+        return shape;
+    });
+}
+
+async function directlyUsedSlideLayouts(zip) {
+    const used = new Set();
+    const slides = Object.keys(zip.files).filter(name => /^ppt\/slides\/slide\d+\.xml$/i.test(name));
+    for (const slide of slides) {
+        const rels = zip.file(relationshipPartName(slide));
+        if (!rels) continue;
+        const relsXml = await rels.async('string');
+        for (const tag of relationshipTags(relsXml)) {
+            if (!/\bType="[^"]*\/slideLayout"/i.test(tag)) continue;
+            const target = tag.match(/\bTarget="([^"]+)"/i)?.[1];
+            if (target) used.add(resolveRelationshipTarget(slide, target));
+        }
+    }
+    return used;
+}
+
+async function sanitizeZip(zip) {
+    const presentation = zip.file('ppt/presentation.xml');
+    if (presentation) {
+        zip.file('ppt/presentation.xml', removePresentationSections(await presentation.async('string')));
+    }
+    const usedLayouts = await directlyUsedSlideLayouts(zip);
+    const layouts = Object.keys(zip.files).filter(name => /^ppt\/slideLayouts\/slideLayout\d+(?:_[^/]*)?\.xml$/i.test(name));
+    for (const layout of layouts) {
+        const xml = await zip.file(layout).async('string');
+        zip.file(layout, removeLayoutMarkerShapes(xml, { removeRevisionTitle: !usedLayouts.has(layout) }));
+    }
+}
+
+async function sanitizePptxPackage(buffer) {
+    const zip = await JSZip.loadAsync(buffer);
+    await sanitizeZip(zip);
+    return zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+}
+
 async function appendSlideToPresentation(zip, slidePart) {
     const relsName = 'ppt/_rels/presentation.xml.rels';
     const presentationName = 'ppt/presentation.xml';
@@ -146,7 +195,8 @@ async function combineSingleSlidePptx(buffers) {
         const appXml = await appFile.async('string');
         outputZip.file('docProps/app.xml', appXml.replace(/<Slides>\d+<\/Slides>/i, `<Slides>${buffers.length}</Slides>`));
     }
+    await sanitizeZip(outputZip);
     return outputZip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE', compressionOptions: { level: 6 } });
 }
 
-module.exports = { combineSingleSlidePptx };
+module.exports = { combineSingleSlidePptx, removePresentationSections, sanitizePptxPackage };

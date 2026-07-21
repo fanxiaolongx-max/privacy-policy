@@ -70,10 +70,12 @@ async function ensureReady() {
             await ensureColumn('slide_library_assets', 'tags_json', "TEXT NOT NULL DEFAULT '[]'");
             await ensureColumn('slide_library_assets', 'uploader', "TEXT NOT NULL DEFAULT ''");
             await ensureColumn('slide_library_assets', 'usage_scenario', "TEXT NOT NULL DEFAULT ''");
+            await ensureColumn('slide_library_assets', 'page_type', "TEXT NOT NULL DEFAULT '内容页'");
             await ensureColumn('slide_library_assets', 'intent', "TEXT NOT NULL DEFAULT ''");
             await ensureColumn('slide_library_assets', 'thumbnail_path', "TEXT NOT NULL DEFAULT ''");
             await run('CREATE INDEX IF NOT EXISTS idx_slide_library_assets_uploader ON slide_library_assets(uploader)');
             await run('CREATE INDEX IF NOT EXISTS idx_slide_library_assets_scenario ON slide_library_assets(usage_scenario)');
+            await run('CREATE INDEX IF NOT EXISTS idx_slide_library_assets_page_type ON slide_library_assets(page_type)');
         })().catch(error => {
             readyPromise = null;
             throw error;
@@ -111,10 +113,13 @@ function rowToAsset(row) {
         tags,
         uploader: row.uploader || '',
         usageScenario: row.usage_scenario || '',
+        pageType: row.page_type || '内容页',
         intent: row.intent || '',
         importedAt: row.imported_at,
         downloadUrl: `/api/slide-design/assets/${encodeURIComponent(row.id)}/download`,
-        thumbnailUrl: row.thumbnail_path ? `/api/slide-design/assets/${encodeURIComponent(row.id)}/thumbnail` : ''
+        thumbnailUrl: row.thumbnail_path
+            ? `/api/slide-design/assets/${encodeURIComponent(row.id)}/thumbnail?v=${encodeURIComponent(path.basename(row.thumbnail_path))}`
+            : ''
     };
 }
 
@@ -160,18 +165,30 @@ async function saveProject(id, { name, deckHtml, activeSlide } = {}) {
     return getProject(id);
 }
 
-async function createAsset({ id: providedId, projectId, sourceFilename, pageNumber, fileName, relativePath, extractedText, summary, tag, tags, uploader, usageScenario, intent, thumbnailPath, importedAt }) {
+async function createAsset({ id: providedId, projectId, sourceFilename, pageNumber, fileName, relativePath, extractedText, summary, tag, tags, uploader, usageScenario, pageType, intent, thumbnailPath, importedAt }) {
     await ensureReady();
     const id = providedId || makeId('sld');
     await run(
         `INSERT INTO slide_library_assets(
             id, project_id, source_filename, page_number, file_name, relative_path,
-            extracted_text, summary, tag, tags_json, uploader, usage_scenario, intent, thumbnail_path, imported_at
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            extracted_text, summary, tag, tags_json, uploader, usage_scenario, page_type, intent, thumbnail_path, imported_at
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [id, projectId || null, cleanName(sourceFilename, 'import.pptx'), Number(pageNumber), fileName, relativePath,
             String(extractedText || ''), String(summary || ''), cleanTag(tag), JSON.stringify(cleanTags(tags, tag)),
-            cleanName(uploader, '未知用户'), cleanName(usageScenario, '通用展示'), String(intent || '').trim().slice(0, 160),
+            cleanName(uploader, '未知用户'), cleanName(usageScenario, '通用展示'), cleanName(pageType, '内容页'), String(intent || '').trim().slice(0, 160),
             String(thumbnailPath || ''), importedAt || new Date().toISOString()]
+    );
+    return getAsset(id);
+}
+
+async function updateAssetAnalysis(id, { summary, tag, tags, usageScenario, pageType, intent }) {
+    await ensureReady();
+    await run(
+        `UPDATE slide_library_assets
+         SET summary = ?, tag = ?, tags_json = ?, usage_scenario = ?, page_type = ?, intent = ?
+         WHERE id = ?`,
+        [String(summary || '').trim().slice(0, 300), cleanTag(tag), JSON.stringify(cleanTags(tags, tag)),
+            cleanName(usageScenario, '方案讲解'), cleanName(pageType, '内容页'), String(intent || '').trim().slice(0, 160), id]
     );
     return getAsset(id);
 }
@@ -201,14 +218,14 @@ async function getAssetThumbnail(id) {
     return { asset: rowToAsset(row), absolutePath };
 }
 
-async function listAssets({ query = '', tag = '', date = '', uploader = '', usageScenario = '', limit = 200 } = {}) {
+async function listAssets({ query = '', tag = '', date = '', period = '', uploader = '', usageScenario = '', pageType = '', limit = 200 } = {}) {
     await ensureReady();
     const clauses = [];
     const params = [];
     if (query) {
-        clauses.push('(source_filename LIKE ? OR extracted_text LIKE ? OR summary LIKE ? OR tag LIKE ? OR tags_json LIKE ? OR intent LIKE ?)');
+        clauses.push('(source_filename LIKE ? OR extracted_text LIKE ? OR summary LIKE ? OR tag LIKE ? OR tags_json LIKE ? OR page_type LIKE ? OR intent LIKE ?)');
         const pattern = `%${String(query).slice(0, 100)}%`;
-        params.push(pattern, pattern, pattern, pattern, pattern, pattern);
+        params.push(pattern, pattern, pattern, pattern, pattern, pattern, pattern);
     }
     if (tag) {
         clauses.push('tag = ?');
@@ -218,6 +235,18 @@ async function listAssets({ query = '', tag = '', date = '', uploader = '', usag
         clauses.push('substr(imported_at, 1, 10) = ?');
         params.push(String(date).slice(0, 10));
     }
+    if (period && /^(\d{4})-Q([1-4])$/.test(String(period))) {
+        const [, yearText, quarterText] = String(period).match(/^(\d{4})-Q([1-4])$/);
+        const year = Number(yearText);
+        const startMonth = ((Number(quarterText) - 1) * 3) + 1;
+        const nextMonth = startMonth + 3;
+        const start = `${year}-${String(startMonth).padStart(2, '0')}-01`;
+        const end = nextMonth > 12
+            ? `${year + 1}-01-01`
+            : `${year}-${String(nextMonth).padStart(2, '0')}-01`;
+        clauses.push('imported_at >= ? AND imported_at < ?');
+        params.push(start, end);
+    }
     if (uploader) {
         clauses.push('uploader = ?');
         params.push(String(uploader).slice(0, 120));
@@ -225,6 +254,10 @@ async function listAssets({ query = '', tag = '', date = '', uploader = '', usag
     if (usageScenario) {
         clauses.push('usage_scenario = ?');
         params.push(String(usageScenario).slice(0, 120));
+    }
+    if (pageType) {
+        clauses.push('page_type = ?');
+        params.push(String(pageType).slice(0, 120));
     }
     params.push(Math.min(500, Math.max(1, Number(limit || 200))));
     const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
@@ -234,11 +267,25 @@ async function listAssets({ query = '', tag = '', date = '', uploader = '', usag
 
 async function getAssetFilters() {
     await ensureReady();
-    const [uploaders, scenarios] = await Promise.all([
+    const [uploaders, scenarios, pageTypes, tags, importedMonths] = await Promise.all([
         all("SELECT DISTINCT uploader AS value FROM slide_library_assets WHERE uploader <> '' ORDER BY uploader"),
-        all("SELECT DISTINCT usage_scenario AS value FROM slide_library_assets WHERE usage_scenario <> '' ORDER BY usage_scenario")
+        all("SELECT DISTINCT usage_scenario AS value FROM slide_library_assets WHERE usage_scenario <> '' ORDER BY usage_scenario"),
+        all("SELECT page_type AS value, COUNT(*) AS count FROM slide_library_assets WHERE page_type <> '' GROUP BY page_type ORDER BY count DESC, page_type"),
+        all("SELECT tag AS value, COUNT(*) AS count FROM slide_library_assets WHERE tag <> '' GROUP BY tag ORDER BY count DESC, tag"),
+        all("SELECT DISTINCT substr(imported_at, 1, 7) AS value FROM slide_library_assets WHERE imported_at <> '' ORDER BY value DESC")
     ]);
-    return { uploaders: uploaders.map(item => item.value), scenarios: scenarios.map(item => item.value) };
+    const periods = [...new Set(importedMonths.map(item => {
+        const match = String(item.value || '').match(/^(\d{4})-(\d{2})$/);
+        if (!match) return '';
+        return `${match[1]}-Q${Math.floor((Number(match[2]) - 1) / 3) + 1}`;
+    }).filter(Boolean))];
+    return {
+        uploaders: uploaders.map(item => item.value),
+        scenarios: scenarios.map(item => item.value),
+        pageTypes: pageTypes.map(item => ({ value: item.value, count: Number(item.count || 0) })),
+        periods: periods.map(value => ({ value, label: value.replace('-', ' ') })),
+        tags: tags.map(item => ({ value: item.value, count: Number(item.count || 0) }))
+    };
 }
 
 module.exports = {
@@ -252,6 +299,7 @@ module.exports = {
     createProject,
     saveProject,
     createAsset,
+    updateAssetAnalysis,
     getAsset,
     getAssetFile,
     getAssetThumbnail,

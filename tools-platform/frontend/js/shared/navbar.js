@@ -28,6 +28,9 @@ const NAV_DEFAULT_SETTINGS = {
     itemOrder: ['frt', 'praudit', 'storage', 'db-explorer']
 };
 
+const NAV_BOOTSTRAP_CACHE_KEY = 'tools_nav_bootstrap_v1';
+const NAV_BOOTSTRAP_CACHE_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+
 let navState = {
     settings: JSON.parse(JSON.stringify(NAV_DEFAULT_SETTINGS)),
     customTools: [],
@@ -54,6 +57,38 @@ let navState = {
         loading: false
     }
 };
+
+function readNavigationBootstrapCache() {
+    try {
+        const cached = JSON.parse(localStorage.getItem(NAV_BOOTSTRAP_CACHE_KEY) || 'null');
+        if (!cached || typeof cached !== 'object') return null;
+        if (!Number.isFinite(cached.savedAt) || Date.now() - cached.savedAt > NAV_BOOTSTRAP_CACHE_MAX_AGE) return null;
+        if (!cached.settings || !Array.isArray(cached.customTools)) return null;
+        return cached;
+    } catch (_) {
+        return null;
+    }
+}
+
+function writeNavigationBootstrapCache() {
+    try {
+        localStorage.setItem(NAV_BOOTSTRAP_CACHE_KEY, JSON.stringify({
+            settings: navState.settings,
+            customTools: navState.customTools,
+            savedAt: Date.now()
+        }));
+    } catch (_) {
+        // 缓存不可用时继续使用服务端数据，不影响导航功能。
+    }
+}
+
+function hydrateNavigationFromCache() {
+    const cached = readNavigationBootstrapCache();
+    if (!cached) return false;
+    navState.settings = normalizeNavSettings(cached.settings);
+    navState.customTools = cached.customTools;
+    return true;
+}
 
 function navT(key, params) {
     return window.ToolsI18n ? window.ToolsI18n.t(key, params) : key;
@@ -869,6 +904,7 @@ async function loadNavigationData() {
         ]);
         if (settingsRes.ok) navState.settings = normalizeNavSettings(await settingsRes.json());
         if (toolsRes.ok) navState.customTools = await toolsRes.json();
+        if (settingsRes.ok || toolsRes.ok) writeNavigationBootstrapCache();
     } catch (e) {
         console.warn('[Navbar] load navigation data failed:', e);
     }
@@ -994,6 +1030,7 @@ document.addEventListener('click', (event) => {
 
 function scheduleNavSettingsSave() {
     renderNavLinksFromState();
+    writeNavigationBootstrapCache();
     const indicator = document.getElementById('navSettingsSaveState');
     if (indicator) indicator.textContent = navT('nav.set.saving');
     clearTimeout(navState.saveTimer);
@@ -1009,6 +1046,7 @@ function scheduleNavSettingsSave() {
             });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             navState.settings = normalizeNavSettings(await res.json());
+            writeNavigationBootstrapCache();
             if (indicator) indicator.textContent = navT('nav.set.saved');
         } catch (e) {
             if (indicator) indicator.textContent = navT('nav.set.saveFail') + e.message;
@@ -2172,7 +2210,10 @@ window.restoreCustomToolBackup = async function () {
     if (result) {
         try {
             const toolsRes = await fetch('/api/custom-tools', { headers: getAuthHeaderForNav() });
-            if (toolsRes.ok) navState.customTools = await toolsRes.json();
+            if (toolsRes.ok) {
+                navState.customTools = await toolsRes.json();
+                writeNavigationBootstrapCache();
+            }
         } catch (_) { }
         renderCustomToolBackupSettings(document.getElementById('navSettingsContent'));
     }
@@ -2690,6 +2731,7 @@ window.setCustomToolPublicAccess = async function (slug, publicAccess, checkbox)
         if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
         const index = navState.customTools.findIndex(item => item.slug === slug);
         if (index >= 0) navState.customTools[index] = data.tool;
+        writeNavigationBootstrapCache();
         if (indicator) indicator.textContent = navT('nav.set.saved');
         renderHomePageSettings(document.getElementById('navSettingsContent'));
     } catch (err) {
@@ -3273,6 +3315,7 @@ window.doLogout = async function () {
     localStorage.removeItem('tools_token');
     localStorage.removeItem('tools_user');
     localStorage.removeItem('tools_role');
+    localStorage.removeItem(NAV_BOOTSTRAP_CACHE_KEY);
     document.cookie = 'tools_token=; path=/; max-age=0';
     window.location.href = '/login.html';
 };
@@ -3640,9 +3683,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     ensureMigrationStatusLoaded();
     await ensureToolsI18nLoaded();
     registerNavbarI18n();
+    const navigationCacheReady = hydrateNavigationFromCache();
+    if (!navigationCacheReady) await loadNavigationData();
     renderNavbar();
     initBackToTopButton();
-    loadNavigationData();
+    if (navigationCacheReady) loadNavigationData();
     trackCurrentToolOpen();
     refreshAlertCenterBadge();
     setInterval(refreshAlertCenterBadge, 60000);
