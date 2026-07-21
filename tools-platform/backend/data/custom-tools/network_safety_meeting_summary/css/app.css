@@ -514,34 +514,69 @@ body.presentation-mode .presentation-overlay {
 .material-library-shell { display: flex; width: min(1460px, 100%); height: min(880px, calc(100vh - 56px)); flex-direction: column; overflow: hidden; border: 1px solid #3f3f46; border-radius: 20px; background: #18181b; box-shadow: 0 38px 90px rgba(0,0,0,.58); }
 .material-library-head { display: flex; align-items: center; justify-content: space-between; padding: 24px 28px 18px; border-bottom: 1px solid #27272a; }
 .material-library-head h2 { margin: 5px 0 0; font-size: 20px; }
-.material-library-filters { display: grid; grid-template-columns: minmax(220px, 1fr) 155px 145px 145px auto; gap: 10px; padding: 18px 28px 10px; }
+.material-library-head-actions { display: flex; align-items: center; gap: 10px; }
+.material-view-switch { display: flex; padding: 3px; border: 1px solid #3f3f46; border-radius: 10px; background: #09090b; }
+.material-view-switch button { display: flex; width: auto; height: 30px; align-items: center; gap: 5px; padding: 0 9px; border: 0; border-radius: 7px; color: #71717a; font-size: 9px; background: transparent; }
+.material-view-switch button.active { color: #e0e7ff; background: #3730a3; }
+.material-library-filters { display: grid; grid-template-columns: minmax(220px, 1fr) 145px 135px 135px 135px auto; gap: 10px; padding: 18px 28px 10px; }
 .material-library-filters label { display: flex; align-items: center; gap: 9px; padding: 0 13px; border: 1px solid #3f3f46; border-radius: 10px; color: #71717a; background: #09090b; }
 .material-library-filters input, .material-library-filters select { min-width: 0; height: 40px; border: 1px solid #3f3f46; border-radius: 10px; padding: 0 12px; outline: none; color: #e4e4e7; color-scheme: dark; background: #09090b; }
 .material-library-filters label input { width: 100%; border: 0; padding: 0; }
 .material-library-filters button { padding: 0 15px; border: 1px solid #3f3f46; border-radius: 10px; color: #d4d4d8; cursor: pointer; background: #27272a; }
-.material-tag-filters { display: flex; gap: 7px; padding: 4px 28px 12px; overflow-x: auto; }
+.material-filter-strip { display: flex; min-height: 38px; align-items: center; gap: 10px; padding: 0 28px; }
+.material-filter-strip > span { width: 56px; flex: none; color: #71717a; font-size: 9px; letter-spacing: .08em; }
+.material-tag-filters { display: flex; min-width: 0; gap: 7px; padding: 4px 0 7px; overflow-x: auto; }
 .material-tag-filters button { flex: none; padding: 5px 10px; border: 1px solid #3f3f46; border-radius: 999px; color: #a1a1aa; font-size: 10px; cursor: pointer; background: #27272a; }
 .material-tag-filters button.active { border-color: #6366f1; color: #c7d2fe; background: rgba(79,70,229,.2); }
+.material-tag-filters button small { margin-left: 5px; color: #71717a; font-size: 8px; }
+.material-tag-filters button.active small { color: #a5b4fc; }
 .material-library-body { display: grid; min-height: 0; flex: 1; grid-template-columns: minmax(0, 1fr) 280px; border-top: 1px solid rgba(63,63,70,.45); }
 .material-grid { display: grid; align-content: start; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; padding: 18px 20px 28px 28px; overflow-y: auto; }
-.material-card { display: flex; min-height: 310px; overflow: hidden; flex-direction: column; border: 1px solid #3f3f46; border-radius: 14px; background: linear-gradient(145deg, #27272a, #202023); transition: border-color .2s ease, transform .2s ease; }
+.material-card { display: flex; min-height: 350px; overflow: hidden; flex-direction: column; border: 1px solid #3f3f46; border-radius: 14px; background: linear-gradient(145deg, #27272a, #202023); transition: border-color .2s ease, transform .2s ease; }
 .material-card:hover { transform: translateY(-2px); border-color: #52525b; }
-.material-card-preview { position: relative; display: grid; aspect-ratio: 16 / 9; place-items: center; overflow: hidden; color: #71717a; background: radial-gradient(circle at 30% 25%, rgba(99,102,241,.2), transparent 55%), #111113; }
+.material-card-preview { position: relative; display: grid; aspect-ratio: 16 / 9; place-items: center; overflow: hidden; color: #71717a; cursor: zoom-in; background: radial-gradient(circle at 30% 25%, rgba(99,102,241,.2), transparent 55%), #111113; }
+.material-card-preview:has(img)::after { position: absolute; right: 8px; bottom: 8px; display: grid; width: 26px; height: 26px; place-items: center; border: 1px solid rgba(255,255,255,.18); border-radius: 8px; color: #fff; content: "⤢"; opacity: 0; background: rgba(9,9,11,.72); transition: opacity .18s ease; }
+.material-card-preview:hover::after { opacity: 1; }
 .material-card-preview img { width: 100%; height: 100%; object-fit: cover; }
 .material-card-preview i { font-size: 30px; }
-.material-card-content { display: flex; min-height: 0; flex: 1; flex-direction: column; padding: 14px; }
+.material-card-content { display: flex; min-height: 174px; flex: 1; flex-direction: column; padding: 14px; }
 .material-card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .material-card-tag { padding: 4px 8px; border-radius: 999px; color: #c7d2fe; font-size: 9px; background: rgba(79,70,229,.2); }
 .material-card-page { color: #71717a; font-size: 9px; }
-.material-card h3 { margin: 12px 0 7px; color: #f4f4f5; font-size: 13px; line-height: 1.45; }
+.material-card h3 { display: -webkit-box; min-height: 38px; margin: 12px 0 7px; overflow: hidden; color: #f4f4f5; font-size: 13px; line-height: 1.45; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .material-card p { display: -webkit-box; margin: 0; overflow: hidden; color: #a1a1aa; font-size: 10px; line-height: 1.55; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.material-card-extract { display: none; }
 .material-card-tags { display: flex; gap: 5px; margin-top: 9px; overflow: hidden; }
 .material-card-tags span { padding: 3px 6px; border-radius: 5px; color: #a5b4fc; font-size: 8px; white-space: nowrap; background: rgba(79,70,229,.14); }
 .material-card-meta { margin-top: auto; padding-top: 14px; overflow: hidden; color: #71717a; font-size: 9px; white-space: nowrap; text-overflow: ellipsis; }
-.material-card-actions { display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; margin-top: 12px; }
+.material-card-actions { display: grid; flex: none; grid-template-columns: 1fr 1fr auto; gap: 6px; margin-top: 12px; }
 .material-card-actions button, .material-card-actions a { display: flex; align-items: center; justify-content: center; height: 32px; border: 0; border-radius: 8px; color: #fff; font-size: 10px; text-decoration: none; cursor: pointer; background: #4f46e5; }
 .material-card-actions button:nth-child(2) { color: #c7d2fe; background: rgba(79,70,229,.2); }
 .material-card-actions button:last-child { width: 34px; color: #d4d4d8; background: #3f3f46; }
+.material-grid.view-table { display: flex; flex-direction: column; gap: 8px; }
+.material-grid.view-table .material-card { display: grid; min-height: 132px; grid-template-columns: 190px minmax(0, 1fr); border-radius: 11px; }
+.material-grid.view-table .material-card:hover { transform: translateX(2px); }
+.material-grid.view-table .material-card-preview { width: 190px; height: 107px; align-self: center; aspect-ratio: auto; margin-left: 12px; border: 1px solid #3f3f46; border-radius: 8px; }
+.material-grid.view-table .material-card-content { display: grid; min-height: 132px; grid-template-columns: minmax(190px, 1.1fr) minmax(180px, 1fr) minmax(150px, .8fr); grid-template-rows: auto auto 1fr auto; column-gap: 16px; padding: 13px 14px 12px 24px; }
+.material-grid.view-table .material-card-top { grid-column: 1; grid-row: 1; justify-content: flex-start; }
+.material-grid.view-table .material-card h3 { min-height: 0; margin: 8px 0 3px; grid-column: 1; grid-row: 2; -webkit-line-clamp: 2; }
+.material-grid.view-table .material-card p { grid-column: 1; grid-row: 3; -webkit-line-clamp: 2; }
+.material-grid.view-table .material-card-extract { display: -webkit-box; margin: 0; overflow: hidden; grid-column: 2; grid-row: 1 / 4; align-self: stretch; padding: 8px 12px; border-left: 1px solid #3f3f46; color: #a1a1aa; font-size: 9px; line-height: 1.55; white-space: pre-line; -webkit-line-clamp: 6; -webkit-box-orient: vertical; }
+.material-grid.view-table .material-card-tags { grid-column: 1 / 3; grid-row: 4; margin-top: 6px; }
+.material-grid.view-table .material-card-meta { grid-column: 3; grid-row: 1 / 3; margin: 0; padding: 3px 0 0; white-space: normal; line-height: 1.6; }
+.material-grid.view-table .material-card-actions { grid-column: 3; grid-row: 3 / 5; align-self: end; margin-top: 8px; }
+.material-grid.view-table .material-card-page { margin-left: auto; }
+
+.material-preview-modal { position: fixed; z-index: 100020; inset: 0; display: grid; padding: 34px; place-items: center; background: rgba(0,0,0,.82); backdrop-filter: blur(14px); }
+.material-preview-modal.hidden { display: none; }
+.material-preview-dialog { display: flex; width: min(1280px, calc(100vw - 40px)); max-height: calc(100vh - 50px); flex-direction: column; overflow: hidden; border: 1px solid #52525b; border-radius: 16px; background: #18181b; box-shadow: 0 35px 100px rgba(0,0,0,.75); }
+.material-preview-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid #3f3f46; }
+.material-preview-head > div { display: flex; min-width: 0; flex-direction: column; gap: 4px; }
+.material-preview-head strong { overflow: hidden; color: #f4f4f5; font-size: 13px; white-space: nowrap; text-overflow: ellipsis; }
+.material-preview-head span { color: #71717a; font-size: 9px; }
+.material-preview-head button { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid #3f3f46; border-radius: 9px; color: #d4d4d8; cursor: pointer; background: #27272a; }
+.material-preview-stage { display: grid; min-height: 0; flex: 1; padding: 18px; place-items: center; overflow: auto; background: #09090b; }
+.material-preview-stage img { display: block; max-width: 100%; max-height: calc(100vh - 145px); object-fit: contain; box-shadow: 0 15px 55px rgba(0,0,0,.55); }
 .material-shelf { display: flex; min-height: 0; flex-direction: column; padding: 20px; border-left: 1px solid #27272a; background: linear-gradient(180deg, rgba(30,41,59,.34), rgba(9,9,11,.5)); }
 .material-shelf-head { display: flex; align-items: center; justify-content: space-between; }
 .material-shelf-head > div { display: flex; flex-direction: column; gap: 3px; }
@@ -566,6 +601,9 @@ body.presentation-mode .presentation-overlay {
 .ppt-import-progress.hidden { display: none; }
 .ppt-import-progress strong { margin-top: 17px; font-size: 15px; }
 .ppt-import-progress span { margin-top: 8px; color: #a1a1aa; font-size: 11px; line-height: 1.6; }
+.ppt-import-progress small { margin-top: 7px; color: #a5b4fc; font-size: 10px; font-variant-numeric: tabular-nums; }
+.ppt-task-progress-track { width: 100%; height: 7px; margin-top: 18px; overflow: hidden; border-radius: 999px; background: #27272a; box-shadow: inset 0 0 0 1px #3f3f46; }
+.ppt-task-progress-track i { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #4f46e5, #818cf8, #22d3ee); box-shadow: 0 0 14px rgba(99,102,241,.65); transition: width .25s ease; }
 .ppt-import-spinner { width: 34px; height: 34px; border: 3px solid #3f3f46; border-top-color: #818cf8; border-radius: 50%; animation: ppt-spin .8s linear infinite; }
 @keyframes ppt-spin { to { transform: rotate(360deg); } }
 
@@ -578,6 +616,9 @@ body.presentation-mode .presentation-overlay {
     .material-library-filters { grid-template-columns: 1fr 1fr; }
     .material-library-body { grid-template-columns: minmax(0, 1fr) 230px; }
     .material-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .material-grid.view-table .material-card-content { grid-template-columns: minmax(0, 1fr) minmax(150px, .8fr); }
+    .material-grid.view-table .material-card-extract { display: none; }
+    .material-grid.view-table .material-card-meta, .material-grid.view-table .material-card-actions { grid-column: 2; }
 }
 
 @media (max-width: 620px) {
@@ -589,7 +630,8 @@ body.presentation-mode .presentation-overlay {
     .material-library { padding: 8px; }
     .material-library-shell { height: calc(100vh - 16px); }
     .material-library-filters { grid-template-columns: 1fr; padding-left: 16px; padding-right: 16px; }
-    .material-grid, .material-tag-filters { padding-left: 16px; padding-right: 16px; }
+    .material-grid { padding-left: 16px; padding-right: 16px; }
+    .material-filter-strip { padding-left: 16px; padding-right: 16px; }
     .material-library-body { grid-template-columns: 1fr; overflow-y: auto; }
     .material-grid { overflow: visible; }
     .material-shelf { min-height: 260px; border-top: 1px solid #27272a; border-left: 0; }
@@ -659,6 +701,42 @@ body.presentation-mode .presentation-overlay {
 }
 
 .imported-material-content li::marker { color: #6366f1; }
+
+/* Fidelity-first PPT material pages. The original page remains a locked full-
+   canvas layer; users can add editable components above it without reflowing
+   or losing pictures, charts, fonts and master-layout details. */
+.slide:has(.ppt-original-page) {
+    background: #fff;
+}
+
+.slide:has(.ppt-original-page)::before {
+    display: none;
+}
+
+.slide:has(.ppt-original-page) > .slide-pad {
+    inset: 0;
+}
+
+.ppt-original-page {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #fff;
+}
+
+.ppt-original-page-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    object-fit: fill;
+    user-select: none;
+    -webkit-user-drag: none;
+}
 .thumb-shell {
     width: calc(var(--slide-w) * var(--thumb-scale));
     height: calc(var(--slide-h) * var(--thumb-scale));

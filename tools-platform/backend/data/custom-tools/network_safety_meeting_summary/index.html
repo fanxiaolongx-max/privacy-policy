@@ -34,7 +34,7 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 
     <!-- Custom CSS for Slide Content -->
-    <link rel="stylesheet" href="css/app.css?v=20260721-4">
+    <link rel="stylesheet" href="css/app.css?v=20260721-10">
 </head>
 
 <body class="bg-zinc-950 text-zinc-100 font-sans h-screen w-screen overflow-hidden flex flex-col">
@@ -405,16 +405,24 @@
         <div class="material-library-shell">
             <div class="material-library-head">
                 <div><span>MATERIAL KNOWLEDGE BASE</span><h2>PPT 页面素材库</h2></div>
-                <button id="closeLibraryBtn" aria-label="关闭素材库"><i class="ph ph-x"></i></button>
+                <div class="material-library-head-actions">
+                    <div class="material-view-switch" aria-label="素材视图模式">
+                        <button type="button" data-material-view="grid" title="卡片视图"><i class="ph ph-squares-four"></i><span>卡片</span></button>
+                        <button type="button" data-material-view="table" title="表格视图"><i class="ph ph-list-bullets"></i><span>表格</span></button>
+                    </div>
+                    <button id="closeLibraryBtn" aria-label="关闭素材库"><i class="ph ph-x"></i></button>
+                </div>
             </div>
             <div class="material-library-filters">
                 <label><i class="ph ph-magnifying-glass"></i><input id="librarySearchInput" placeholder="搜索描述、原文或标签"></label>
-                <input id="libraryDateInput" type="date" title="按导入日期筛选">
+                <select id="libraryPeriodSelect" title="按导入年份和季度筛选"><option value="">全部时间</option></select>
                 <select id="libraryUploaderSelect" title="按上传人筛选"><option value="">全部上传人</option></select>
                 <select id="libraryScenarioSelect" title="按使用场景筛选"><option value="">全部场景</option></select>
+                <button id="resetLibraryFiltersBtn" type="button" title="清空搜索和所有筛选"><i class="ph ph-funnel-x"></i> 重置</button>
                 <button id="refreshLibraryBtn"><i class="ph ph-arrows-clockwise"></i> 刷新</button>
             </div>
-            <div id="libraryTagFilters" class="material-tag-filters"></div>
+            <div class="material-filter-strip"><span>主题分类</span><div id="libraryTagFilters" class="material-tag-filters"></div></div>
+            <div class="material-filter-strip"><span>页面类型</span><div id="libraryPageTypeFilters" class="material-tag-filters"></div></div>
             <div class="material-library-body">
                 <div id="materialGrid" class="material-grid custom-scrollbar"></div>
                 <aside class="material-shelf">
@@ -430,10 +438,19 @@
         </div>
     </section>
 
+    <section id="materialPreviewModal" class="material-preview-modal hidden" aria-hidden="true">
+        <div class="material-preview-dialog">
+            <div class="material-preview-head"><div><strong id="materialPreviewTitle">PPT 页面预览</strong><span id="materialPreviewMeta"></span></div><button id="closeMaterialPreviewBtn" type="button" aria-label="关闭大图"><i class="ph ph-x"></i></button></div>
+            <div class="material-preview-stage"><img id="materialPreviewImage" alt="PPT 页面大图预览"></div>
+        </div>
+    </section>
+
     <div id="pptImportProgress" class="ppt-import-progress hidden" role="status" aria-live="polite">
         <div class="ppt-import-spinner"></div>
-        <strong>正在构建 PPT 素材库</strong>
+        <strong id="pptTaskProgressTitle">正在构建 PPT 素材库</strong>
         <span id="pptImportProgressText">正在拆分页面、提取文字并生成 AI 摘要…</span>
+        <div class="ppt-task-progress-track"><i id="pptTaskProgressBar"></i></div>
+        <small id="pptTaskProgressPercent">0%</small>
     </div>
 
     <div id="presentationOverlay" class="presentation-overlay" aria-hidden="true">
@@ -681,7 +698,7 @@
     </template>
 
     <!-- App Logic -->
-    <script type="module" src="js/app.js?v=20260721-5"></script>
+    <script type="module" src="js/app.js?v=20260721-12"></script>
 </body>
 
 </html>

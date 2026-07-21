@@ -5,7 +5,7 @@ import { createComponentEditor } from './component-editor.js?v=20260623-4';
 import { initContextMenu } from './context-menu.js?v=20260623-1';
 import { defaultSlides } from './default-slides.js?v=20260623-1';
 import { renderSlide, slideToJson } from './slide-factory.js?v=20260623-2';
-import { initProjectWorkspace } from './project-workspace.js?v=20260721-5';
+import { initProjectWorkspace } from './project-workspace.js?v=20260721-11';
 
 const deck = document.getElementById('deck');
 const deckWrapper = document.getElementById('deckWrapper');
@@ -313,6 +313,7 @@ function loadProjectDeck(html, requestedActiveSlide = 0) {
     pushHistory(editor.serializeDeck(deck));
     scheduleThumbnails();
     setTimeout(() => document.getElementById('zoomFitBtn')?.click(), 80);
+    setTimeout(upgradeLegacyImportedSlides, 120);
 }
 
 function escapeImportedText(value) {
@@ -321,32 +322,41 @@ function escapeImportedText(value) {
     }[char]));
 }
 
-function insertLibraryAsset(asset) {
-    const rawLines = String(asset.extractedText || '').split(/\n+/).map(item => item.trim()).filter(Boolean);
-    const lines = rawLines.slice(0, 14);
-    const summary = escapeImportedText(asset.summary || lines.join(' ').slice(0, 160) || '未生成页面摘要');
-    const tag = escapeImportedText(asset.tag || '综合材料');
-    const source = escapeImportedText(asset.sourceFilename || 'PPT 素材');
-    const body = lines.length
-        ? `<ul>${lines.map(line => `<li>${escapeImportedText(line)}</li>`).join('')}</ul>`
-        : '<p>本页未提取到可识别文字，可在此继续编辑。</p>';
+function authorizedHeaders() {
+    const token = localStorage.getItem('tools_token');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+function blobToDataUrl(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error || new Error('读取页面预览失败'));
+        reader.readAsDataURL(blob);
+    });
+}
+
+async function loadAssetPreviewDataUrl(asset) {
+    if (!asset?.thumbnailUrl) throw new Error('该素材还没有可用的页面预览');
+    const response = await fetch(asset.thumbnailUrl, { headers: authorizedHeaders() });
+    if (!response.ok) throw new Error(`读取原始页面失败（HTTP ${response.status}）`);
+    return blobToDataUrl(await response.blob());
+}
+
+function originalPageHtml(asset, previewDataUrl) {
+    return `<div class="ppt-original-page" data-material-id="${escapeImportedText(asset.id)}" data-source-file="${escapeImportedText(asset.fileName || '')}">
+        <img class="ppt-original-page-image ppt-locked" data-ppt-lock-set="true" data-component-name="原始 PPT 页面（保真底图）"
+             src="${previewDataUrl}" alt="${escapeImportedText(asset.summary || `PPT 第 ${asset.pageNumber || 1} 页`)}" draggable="false">
+    </div>`;
+}
+
+async function insertLibraryAsset(asset) {
+    setStatus('正在读取原始 PPT 页面…');
+    const previewDataUrl = await loadAssetPreviewDataUrl(asset);
     const slide = renderSlide({
         id: asset.id,
         layout: 'custom',
-        html: `<div class="huawei-template imported-material-slide" data-material-id="${escapeImportedText(asset.id)}">
-            <div class="template-component imported-material-header" data-component-name="素材页标题">
-                <div><div class="ht-kicker template-editable editable" contenteditable="true">MATERIAL KNOWLEDGE BASE · PAGE ${Number(asset.pageNumber || 1)}</div>
-                <h1 class="template-editable editable" contenteditable="true">${tag}</h1></div>
-                <div class="ht-tag template-editable editable" contenteditable="true">${source}</div>
-            </div>
-            <div class="template-component imported-material-summary" data-component-name="AI 页面摘要">
-                <span>AI SUMMARY</span><h2 class="template-editable editable" contenteditable="true">${summary}</h2>
-            </div>
-            <div class="template-component imported-material-content" data-component-name="PPT 提取文字">
-                <div class="template-editable editable" contenteditable="true">${body}</div>
-            </div>
-            <div class="template-component ht-footer" data-component-name="素材来源"><span class="template-editable editable" contenteditable="true">${source}</span><i></i><b class="template-editable editable" contenteditable="true">${tag}</b></div>
-        </div>`
+        html: originalPageHtml(asset, previewDataUrl)
     });
     deck.appendChild(slide);
     renumberSlides();
@@ -354,7 +364,32 @@ function insertLibraryAsset(asset) {
     setActiveSlide(getSlideWraps().length - 1);
     saveDeck();
     scheduleThumbnails();
-    setTimeout(() => window.autoFitSlide?.(slide.querySelector('.slide')), 0);
+    setStatus(`已保真插入原始页面：${asset.tag || `第 ${asset.pageNumber || 1} 页`}`);
+}
+
+async function upgradeLegacyImportedSlides() {
+    const legacySlides = Array.from(deck.querySelectorAll('.imported-material-slide[data-material-id]'));
+    if (!legacySlides.length) return;
+    let upgraded = 0;
+    for (const legacy of legacySlides) {
+        try {
+            const id = legacy.dataset.materialId;
+            const assetResponse = await fetch(`/api/slide-design/assets/${encodeURIComponent(id)}`, { headers: authorizedHeaders() });
+            if (!assetResponse.ok) continue;
+            const { asset } = await assetResponse.json();
+            const previewDataUrl = await loadAssetPreviewDataUrl(asset);
+            legacy.outerHTML = originalPageHtml(asset, previewDataUrl);
+            upgraded += 1;
+        } catch (error) {
+            console.warn('[slide-design] legacy page upgrade skipped:', error);
+        }
+    }
+    if (upgraded) {
+        componentEditor?.refresh();
+        saveDeck();
+        scheduleThumbnails();
+        setStatus(`已将 ${upgraded} 页旧素材升级为原稿保真页面`);
+    }
 }
 
 function createDefaultProjectDeckHtml() {
@@ -430,6 +465,7 @@ function bootstrap() {
     setTimeout(() => {
         document.getElementById('zoomFitBtn')?.click();
     }, 100);
+    setTimeout(upgradeLegacyImportedSlides, 140);
 }
 
 // Event Listeners
