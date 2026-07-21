@@ -84,6 +84,44 @@
       color:#fff;
     }
     button:hover{filter:brightness(.97)}
+    button:disabled{opacity:.55;cursor:not-allowed}
+
+    .history-dialog{
+      width:min(680px,calc(100vw - 32px));
+      max-height:min(720px,calc(100vh - 32px));
+      padding:0;
+      border:0;
+      border-radius:12px;
+      background:#fff;
+      box-shadow:0 20px 70px rgba(0,0,0,.28);
+    }
+    .history-dialog::backdrop{background:rgba(20,24,30,.48)}
+    .history-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      padding:18px 20px;
+      border-bottom:1px solid #e3e6ea;
+    }
+    .history-head h2{margin:0;font-size:19px}
+    .history-body{padding:16px 20px 20px;overflow:auto;max-height:620px}
+    .history-tip{margin:0 0 14px;color:var(--muted);font-size:13px;line-height:1.6}
+    .history-status{padding:22px;text-align:center;color:var(--muted)}
+    .history-row{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:13px 0;
+      border-bottom:1px solid #eceef1;
+    }
+    .history-row:last-child{border-bottom:0}
+    .history-main{min-width:0;flex:1}
+    .history-name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .history-meta{margin-top:3px;color:#7a818b;font-size:12px}
+    .history-actions{display:flex;gap:8px;flex:none}
+    .history-actions button{padding:6px 12px}
+    .history-actions .danger{color:#a00008;border-color:#e2b7ba}
 
     .page{
       width:210mm;
@@ -527,8 +565,22 @@
     <button onclick="toggleConfidential()">隐藏/显示“内部公开”</button>
     <button onclick="toggleSigner()">隐藏/显示“签发人”</button>
     <button onclick="saveLocal()">保存本地内容</button>
+    <button class="primary" id="saveHistoryButton" onclick="saveServerHistory()">保存到历史</button>
+    <button onclick="openServerHistory()">历史记录</button>
     <button onclick="resetContent()">恢复初始内容</button>
   </div>
+
+  <dialog class="history-dialog" id="historyDialog">
+    <div class="history-head">
+      <h2>服务器历史记录</h2>
+      <button type="button" onclick="closeServerHistory()">关闭</button>
+    </div>
+    <div class="history-body">
+      <p class="history-tip">每次“保存到历史”都会新建一条记录，服务器最多保留最近 30 条。点击“填入”可快速恢复当时的通知内容和版式。
+      </p>
+      <div id="historyList" class="history-status">正在读取...</div>
+    </div>
+  </dialog>
 
   <main class="page" id="documentPage">
     <div class="top-meta">
@@ -631,6 +683,34 @@
     const TEMPLATE_STORAGE_KEY = "formal_cybersecurity_notice_template_v1";
     const page = document.getElementById("documentPage");
     const initialHTML = page.innerHTML;
+    const TOOL_SLUG = location.pathname.split("/").filter(Boolean)[1] || "tool-mrsw86w8";
+
+    function authHeaders(){
+      const token = localStorage.getItem("tools_token");
+      return token ? {Authorization:`Bearer ${token}`} : {};
+    }
+
+    function sanitizeDocumentHTML(html){
+      const template = document.createElement("template");
+      template.innerHTML = String(html || "");
+      template.content.querySelectorAll("script,iframe,object,embed,form,input,textarea,select,button,link,meta").forEach(el => el.remove());
+      template.content.querySelectorAll("*").forEach(el => {
+        [...el.attributes].forEach(attr => {
+          const name = attr.name.toLowerCase();
+          const value = attr.value.trim().toLowerCase();
+          if(name.startsWith("on") || ((name === "href" || name === "src" || name === "xlink:href") && value.startsWith("javascript:"))){
+            el.removeAttribute(attr.name);
+          }
+        });
+      });
+      return template.innerHTML;
+    }
+
+    async function readResponse(response){
+      const body = await response.json().catch(() => ({}));
+      if(!response.ok) throw new Error(response.status === 401 ? "请先登录后使用服务器历史记录。" : (body.error || `HTTP ${response.status}`));
+      return body;
+    }
 
     function setTemplate(template, options = {}){
       const selected = template === "warning" ? "warning" : "classic";
@@ -727,9 +807,122 @@
     }
 
     function saveLocal(){
-      localStorage.setItem(STORAGE_KEY, page.innerHTML);
+      localStorage.setItem(STORAGE_KEY, sanitizeDocumentHTML(page.innerHTML));
       localStorage.setItem(TEMPLATE_STORAGE_KEY, page.dataset.template || "classic");
       alert("内容已保存到当前浏览器。");
+    }
+
+    async function saveServerHistory(){
+      const headline = page.querySelector("h1")?.textContent.trim() || "重点通知";
+      const stamp = new Date().toLocaleString("zh-CN", {month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});
+      const name = prompt("请输入这条历史记录的名称：", `${headline} ${stamp}`);
+      if(name === null) return;
+      if(!name.trim()) return alert("记录名称不能为空。");
+
+      const button = document.getElementById("saveHistoryButton");
+      button.disabled = true;
+      button.textContent = "正在保存...";
+      try{
+        const response = await fetch(`/api/custom-tools/${encodeURIComponent(TOOL_SLUG)}/history`, {
+          method:"POST",
+          headers:{"Content-Type":"application/json", ...authHeaders()},
+          body:JSON.stringify({
+            name:name.trim(),
+            html:sanitizeDocumentHTML(page.innerHTML),
+            template:page.dataset.template || "classic"
+          })
+        });
+        await readResponse(response);
+        localStorage.setItem(STORAGE_KEY, sanitizeDocumentHTML(page.innerHTML));
+        localStorage.setItem(TEMPLATE_STORAGE_KEY, page.dataset.template || "classic");
+        alert("已保存到服务器历史记录。");
+      }catch(error){
+        alert(`保存失败：${error.message}`);
+      }finally{
+        button.disabled = false;
+        button.textContent = "保存到历史";
+      }
+    }
+
+    async function openServerHistory(){
+      const dialog = document.getElementById("historyDialog");
+      const list = document.getElementById("historyList");
+      if(!dialog.open) dialog.showModal();
+      list.className = "history-status";
+      list.textContent = "正在读取...";
+      try{
+        const response = await fetch(`/api/custom-tools/${encodeURIComponent(TOOL_SLUG)}/history`, {headers:authHeaders()});
+        const records = await readResponse(response);
+        renderServerHistory(records);
+      }catch(error){
+        list.className = "history-status";
+        list.textContent = `读取失败：${error.message}`;
+      }
+    }
+
+    function renderServerHistory(records){
+      const list = document.getElementById("historyList");
+      list.innerHTML = "";
+      list.className = records.length ? "" : "history-status";
+      if(!records.length){
+        list.textContent = "暂无历史记录。";
+        return;
+      }
+      records.forEach(record => {
+        const row = document.createElement("div");
+        row.className = "history-row";
+        const main = document.createElement("div");
+        main.className = "history-main";
+        const name = document.createElement("div");
+        name.className = "history-name";
+        name.textContent = record.name || "未命名记录";
+        const meta = document.createElement("div");
+        meta.className = "history-meta";
+        meta.textContent = `${record.template === "warning" ? "风险警告函" : "正式通知"} · ${new Date(record.createdAt).toLocaleString("zh-CN")}`;
+        main.append(name, meta);
+
+        const actions = document.createElement("div");
+        actions.className = "history-actions";
+        const restoreButton = document.createElement("button");
+        restoreButton.type = "button";
+        restoreButton.textContent = "填入";
+        restoreButton.addEventListener("click", () => restoreServerHistory(record));
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.className = "danger";
+        deleteButton.textContent = "删除";
+        deleteButton.addEventListener("click", () => deleteServerHistory(record));
+        actions.append(restoreButton, deleteButton);
+        row.append(main, actions);
+        list.appendChild(row);
+      });
+    }
+
+    function restoreServerHistory(record){
+      if(!confirm(`确定填入“${record.name || "未命名记录"}”吗？当前未保存的修改将被覆盖。`)) return;
+      page.innerHTML = sanitizeDocumentHTML(record.html);
+      setTemplate(record.template || "classic");
+      localStorage.setItem(STORAGE_KEY, page.innerHTML);
+      localStorage.setItem(TEMPLATE_STORAGE_KEY, page.dataset.template || "classic");
+      closeServerHistory();
+    }
+
+    async function deleteServerHistory(record){
+      if(!confirm(`确定删除历史记录“${record.name || "未命名记录"}”吗？`)) return;
+      try{
+        const response = await fetch(`/api/custom-tools/${encodeURIComponent(TOOL_SLUG)}/history/${encodeURIComponent(record.id)}`, {
+          method:"DELETE",
+          headers:authHeaders()
+        });
+        await readResponse(response);
+        await openServerHistory();
+      }catch(error){
+        alert(`删除失败：${error.message}`);
+      }
+    }
+
+    function closeServerHistory(){
+      document.getElementById("historyDialog").close();
     }
 
     function resetContent(){
@@ -744,7 +937,7 @@
     window.addEventListener("DOMContentLoaded", () => {
       const saved = localStorage.getItem(STORAGE_KEY);
       if(saved){
-        page.innerHTML = saved;
+        page.innerHTML = sanitizeDocumentHTML(saved);
       }
       const previewTemplate = new URLSearchParams(window.location.search).get("template");
       setTemplate(previewTemplate || localStorage.getItem(TEMPLATE_STORAGE_KEY) || "classic", {skipSave:true});
