@@ -18,8 +18,8 @@ function cleanName(value, fallback = '未命名项目') {
 
 function cleanTag(value) {
     const cleaned = String(value || '综合材料').trim().replace(/[\\/:*?"<>|\s]+/g, '');
-    const shortened = Array.from(cleaned).slice(0, 5).join('');
-    return Array.from(shortened).length >= 3 ? shortened : '综合材料';
+    const shortened = Array.from(cleaned).slice(0, 20).join('');
+    return shortened || '综合材料';
 }
 
 function cleanTags(value, fallback = '综合材料') {
@@ -181,16 +181,35 @@ async function createAsset({ id: providedId, projectId, sourceFilename, pageNumb
     return getAsset(id);
 }
 
-async function updateAssetAnalysis(id, { summary, tag, tags, usageScenario, pageType, intent }) {
+async function updateAssetAnalysis(id, { summary, tag, tags, usageScenario, pageType, intent } = {}) {
     await ensureReady();
+    const existing = await getAsset(id);
+    if (!existing) return null;
+    const nextTag = tag === undefined ? existing.tag : cleanTag(tag);
     await run(
         `UPDATE slide_library_assets
          SET summary = ?, tag = ?, tags_json = ?, usage_scenario = ?, page_type = ?, intent = ?
          WHERE id = ?`,
-        [String(summary || '').trim().slice(0, 300), cleanTag(tag), JSON.stringify(cleanTags(tags, tag)),
-            cleanName(usageScenario, '方案讲解'), cleanName(pageType, '内容页'), String(intent || '').trim().slice(0, 160), id]
+        [
+            summary === undefined ? existing.summary : String(summary || '').trim().slice(0, 300),
+            nextTag,
+            JSON.stringify(tags === undefined ? existing.tags : cleanTags(tags, nextTag)),
+            usageScenario === undefined ? existing.usageScenario : cleanName(usageScenario, '通用展示'),
+            pageType === undefined ? existing.pageType : cleanName(pageType, '内容页'),
+            intent === undefined ? existing.intent : String(intent || '').trim().slice(0, 160),
+            id
+        ]
     );
     return getAsset(id);
+}
+
+async function updateAssetThumbnail(id, thumbnailPath) {
+    await ensureReady();
+    const result = await run(
+        'UPDATE slide_library_assets SET thumbnail_path = ? WHERE id = ?',
+        [String(thumbnailPath || ''), id]
+    );
+    return result.changes ? getAsset(id) : null;
 }
 
 async function getAsset(id) {
@@ -216,6 +235,26 @@ async function getAssetThumbnail(id) {
     const root = `${path.resolve(LIBRARY_DIR)}${path.sep}`;
     if (!absolutePath.startsWith(root)) throw new Error('缩略图路径非法');
     return { asset: rowToAsset(row), absolutePath };
+}
+
+function resolveLibraryFile(relativePath, label) {
+    if (!relativePath) return null;
+    const absolutePath = path.resolve(LIBRARY_DIR, relativePath);
+    const root = `${path.resolve(LIBRARY_DIR)}${path.sep}`;
+    if (!absolutePath.startsWith(root)) throw new Error(`${label}路径非法`);
+    return absolutePath;
+}
+
+async function deleteAsset(id) {
+    await ensureReady();
+    const row = await get('SELECT * FROM slide_library_assets WHERE id = ?', [id]);
+    if (!row) return null;
+    const asset = rowToAsset(row);
+    const assetPath = resolveLibraryFile(row.relative_path, '素材文件');
+    const thumbnailPath = resolveLibraryFile(row.thumbnail_path, '缩略图');
+    await run('DELETE FROM slide_library_assets WHERE id = ?', [id]);
+    [assetPath, thumbnailPath].filter(Boolean).forEach(filePath => fs.rmSync(filePath, { force: true }));
+    return asset;
 }
 
 function buildAssetFilter({ query = '', tag = '', date = '', period = '', uploader = '', usageScenario = '', pageType = '', sourceFilename = '' } = {}, exclude = []) {
@@ -331,9 +370,11 @@ module.exports = {
     saveProject,
     createAsset,
     updateAssetAnalysis,
+    updateAssetThumbnail,
     getAsset,
     getAssetFile,
     getAssetThumbnail,
+    deleteAsset,
     listAssets,
     countAssets,
     getAssetFilters

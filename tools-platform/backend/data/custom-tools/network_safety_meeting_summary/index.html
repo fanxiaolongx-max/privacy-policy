@@ -34,7 +34,7 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 
     <!-- Custom CSS for Slide Content -->
-    <link rel="stylesheet" href="css/app.css?v=20260721-17">
+    <link rel="stylesheet" href="css/app.css?v=20260722-02">
 </head>
 
 <body class="bg-zinc-950 text-zinc-100 font-sans h-screen w-screen overflow-hidden flex flex-col">
@@ -406,6 +406,8 @@
             <div class="material-library-head">
                 <div><span>MATERIAL KNOWLEDGE BASE</span><h2>PPT 页面素材库</h2></div>
                 <div class="material-library-head-actions">
+                    <input id="materialAssetImportInput" type="file" accept=".pptx" hidden>
+                    <button id="addMaterialAssetBtn" class="material-library-primary-action" type="button" title="上传一个仅包含单页的 PPTX"><i class="ph ph-plus-circle"></i><span>新增单页素材</span></button>
                     <div class="material-view-switch" aria-label="素材视图模式">
                         <button type="button" data-material-view="grid" title="卡片视图"><i class="ph ph-squares-four"></i><span>卡片</span></button>
                         <button type="button" data-material-view="table" title="表格视图"><i class="ph ph-list-bullets"></i><span>表格</span></button>
@@ -460,6 +462,22 @@
             <div class="material-preview-head"><div><strong id="materialPreviewTitle">PPT 页面预览</strong><span id="materialPreviewMeta"></span></div><button id="closeMaterialPreviewBtn" type="button" aria-label="关闭大图"><i class="ph ph-x"></i></button></div>
             <div class="material-preview-stage"><img id="materialPreviewImage" alt="PPT 页面大图预览"></div>
         </div>
+    </section>
+
+    <section id="materialEditModal" class="material-edit-modal hidden" aria-hidden="true">
+        <form id="materialEditForm" class="material-edit-dialog">
+            <div class="material-edit-head"><div><span>MANUAL CORRECTION</span><strong>人工更正素材信息</strong></div><button id="closeMaterialEditBtn" type="button" aria-label="关闭"><i class="ph ph-x"></i></button></div>
+            <input id="materialEditAssetId" type="hidden">
+            <div class="material-edit-grid">
+                <label class="material-edit-wide"><span>摘要</span><textarea id="materialEditSummary" maxlength="300" rows="3"></textarea></label>
+                <label><span>主题分类</span><input id="materialEditTag" maxlength="20" required></label>
+                <label><span>页面类型</span><input id="materialEditPageType" maxlength="120"></label>
+                <label><span>用途</span><input id="materialEditScenario" maxlength="120"></label>
+                <label><span>内容标签</span><input id="materialEditTags" maxlength="160" placeholder="用逗号分隔，最多 6 个"></label>
+                <label class="material-edit-wide"><span>页面意图</span><textarea id="materialEditIntent" maxlength="160" rows="2"></textarea></label>
+            </div>
+            <div class="material-edit-actions"><button id="cancelMaterialEditBtn" type="button">取消</button><button type="submit"><i class="ph ph-check"></i> 保存更正</button></div>
+        </form>
     </section>
 
     <div id="pptImportProgress" class="ppt-import-progress hidden" role="status" aria-live="polite">
@@ -719,7 +737,7 @@
     </template>
 
     <!-- App Logic -->
-    <script type="module" src="js/app.js?v=20260722-01"></script>
+    <script type="module" src="js/app.js?v=20260722-02"></script>
 </body>
 
 </html>
