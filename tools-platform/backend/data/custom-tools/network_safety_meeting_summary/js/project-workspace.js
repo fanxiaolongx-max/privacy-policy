@@ -14,7 +14,13 @@ async function request(path, options = {}) {
         headers: { ...authHeaders(!(options.body instanceof FormData)), ...(options.headers || {}) }
     });
     const body = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
+    if (!response.ok) {
+        const error = new Error(body.error || `HTTP ${response.status}`);
+        error.status = response.status;
+        error.code = body.code || '';
+        error.body = body;
+        throw error;
+    }
     return body;
 }
 
@@ -54,6 +60,8 @@ export function initProjectWorkspace(callbacks) {
     const projectNameChip = document.getElementById('openProjectHubBtn');
     const autoSaveBadge = document.getElementById('autoSaveBadge');
     const importInput = document.getElementById('pptImportInput');
+    const materialAssetImportInput = document.getElementById('materialAssetImportInput');
+    const addMaterialAssetButton = document.getElementById('addMaterialAssetBtn');
     const importProgress = document.getElementById('pptImportProgress');
     const taskProgressTitle = document.getElementById('pptTaskProgressTitle');
     const taskProgressText = document.getElementById('pptImportProgressText');
@@ -80,6 +88,15 @@ export function initProjectWorkspace(callbacks) {
     const previewImage = document.getElementById('materialPreviewImage');
     const previewTitle = document.getElementById('materialPreviewTitle');
     const previewMeta = document.getElementById('materialPreviewMeta');
+    const editModal = document.getElementById('materialEditModal');
+    const editForm = document.getElementById('materialEditForm');
+    const editAssetId = document.getElementById('materialEditAssetId');
+    const editSummary = document.getElementById('materialEditSummary');
+    const editTag = document.getElementById('materialEditTag');
+    const editTags = document.getElementById('materialEditTags');
+    const editPageType = document.getElementById('materialEditPageType');
+    const editScenario = document.getElementById('materialEditScenario');
+    const editIntent = document.getElementById('materialEditIntent');
     const paginationSummary = document.getElementById('materialPaginationSummary');
     const paginationPages = document.getElementById('materialPaginationPages');
     const pageSizeSelect = document.getElementById('materialPageSizeSelect');
@@ -113,6 +130,7 @@ export function initProjectWorkspace(callbacks) {
     let activeImportTaskId = '';
     let importProgressTimer = null;
     let lastImportLogSequence = 0;
+    let importCapabilities = { maxFileSizeMb: 200, maxSlides: 100, platform: '', preferredThumbnailEngine: '' };
     if (![12, 24, 48, 96].includes(pageSize)) pageSize = 12;
     pageSizeSelect.value = String(pageSize);
 
@@ -359,23 +377,54 @@ export function initProjectWorkspace(callbacks) {
         saveTimer = setTimeout(() => saveNow(false), 1200);
     }
 
-    async function importPptx(file) {
+    async function loadImportCapabilities() {
+        try {
+            importCapabilities = { ...importCapabilities, ...(await request('/capabilities')) };
+        } catch (_) { /* 使用前端默认限制，服务端仍会执行权威校验 */ }
+        addMaterialAssetButton.classList.toggle('hidden', importCapabilities.canManageAssets === false);
+        return importCapabilities;
+    }
+
+    async function importPptx(file, { singlePageOnly = false } = {}) {
         if (!file) return;
+        const capabilities = await loadImportCapabilities();
+        const maxBytes = Number(capabilities.maxFileSizeMb || 200) * 1024 * 1024;
+        if (file.size > maxBytes) {
+            const message = `文件大小 ${(file.size / 1024 / 1024).toFixed(2)} MB，超过当前 ${capabilities.maxFileSizeMb} MB 上限。请先压缩 PPT 媒体文件，或由管理员调整 SLIDE_IMPORT_MAX_MB。`;
+            showTaskProgress('PPT 上传校验未通过', message, 100, true);
+            appendTaskLog({ level: 'error', message });
+            alert(message);
+            hideTaskProgress(2500);
+            importInput.value = '';
+            materialAssetImportInput.value = '';
+            return;
+        }
         const taskId = window.crypto?.randomUUID ? window.crypto.randomUUID() : `import_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
         const form = new FormData();
-        form.append('pptx', file);
         form.append('taskId', taskId);
+        form.append('singlePageOnly', singlePageOnly ? '1' : '0');
+        form.append('pptx', file);
         activeImportTaskId = taskId;
-        showTaskProgress('正在构建 PPT 素材库', '正在上传 PPT 文件…', 2, true);
-        appendTaskLog({ level: 'info', message: `准备上传 ${file.name}，大小 ${(file.size / 1024 / 1024).toFixed(2)} MB` });
+        showTaskProgress(singlePageOnly ? '正在新增单页 PPT 素材' : '正在构建 PPT 素材库', '正在上传 PPT 文件…', 2, true);
+        appendTaskLog({ level: 'info', message: `准备上传 ${file.name}，大小 ${(file.size / 1024 / 1024).toFixed(2)} MB；服务端上限 ${capabilities.maxFileSizeMb} MB` });
+        appendTaskLog({ level: 'info', message: `当前平台 ${capabilities.platform || 'unknown'}，首选缩略图引擎 ${capabilities.preferredThumbnailEngine || '自动检测'}` });
         fetchImportProgress(taskId, true);
         importInput.disabled = true;
+        materialAssetImportInput.disabled = true;
         hubImportStatus.textContent = `正在导入 ${file.name}…`;
         try {
-            const result = await request('/import-pptx', { method: 'POST', body: form });
+            const result = await request('/import-pptx', {
+                method: 'POST',
+                body: form,
+                headers: { 'X-Slide-Import-Task-Id': taskId }
+            });
             await fetchImportProgress(taskId, false);
             setTaskProgress(100, `已完成 ${result.slideCount} 页素材的处理`);
             appendTaskLog({ level: 'success', message: `前端已收到完成响应，${result.slideCount} 页素材可以检索` });
+            appendTaskLog({
+                level: result.thumbnailCount === result.slideCount ? 'success' : 'warning',
+                message: `缩略图结果：${result.thumbnailCount || 0}/${result.slideCount}，引擎 ${result.thumbnailEngine || '不可用'}`
+            });
             hubImportStatus.textContent = `已建立 ${result.slideCount} 页素材${result.usedAi ? '，AI 编目完成' : '，使用本地编目'}`;
             callbacks.setStatus(`素材库新增 ${result.slideCount} 页 PPT`);
             appendTaskLog({ level: 'success', message: `正在打开素材库，并筛选本次导入文件：${result.sourceFilename || file.name}` });
@@ -390,7 +439,9 @@ export function initProjectWorkspace(callbacks) {
             activeImportTaskId = '';
             hideTaskProgress(1200);
             importInput.disabled = false;
+            materialAssetImportInput.disabled = false;
             importInput.value = '';
+            materialAssetImportInput.value = '';
         }
     }
 
@@ -476,6 +527,92 @@ export function initProjectWorkspace(callbacks) {
         return loadLibrary();
     }
 
+    function closeMaterialEdit() {
+        editModal.classList.add('hidden');
+        editModal.setAttribute('aria-hidden', 'true');
+        editForm.reset();
+        editAssetId.value = '';
+    }
+
+    function openMaterialEdit(asset) {
+        if (!asset || !asset.canEdit) return;
+        editAssetId.value = asset.id;
+        editSummary.value = asset.summary || '';
+        editTag.value = asset.tag || '';
+        editTags.value = (asset.tags || []).join('，');
+        editPageType.value = asset.pageType || '';
+        editScenario.value = asset.usageScenario || '';
+        editIntent.value = asset.intent || '';
+        editModal.classList.remove('hidden');
+        editModal.setAttribute('aria-hidden', 'false');
+        setTimeout(() => editSummary.focus(), 0);
+    }
+
+    async function saveMaterialEdit() {
+        const id = editAssetId.value;
+        if (!id) return;
+        const submitButton = editForm.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        try {
+            await request(`/assets/${encodeURIComponent(id)}`, {
+                method: 'PATCH',
+                body: JSON.stringify({
+                    summary: editSummary.value,
+                    tag: editTag.value,
+                    tags: editTags.value.split(/[,，、|]/).map(item => item.trim()).filter(Boolean),
+                    pageType: editPageType.value,
+                    usageScenario: editScenario.value,
+                    intent: editIntent.value
+                })
+            });
+            closeMaterialEdit();
+            callbacks.setStatus('素材标签与分类已人工更正');
+            await loadLibrary();
+        } catch (error) {
+            alert(error.message);
+        } finally {
+            submitButton.disabled = false;
+        }
+    }
+
+    async function deleteMaterialAsset(asset) {
+        if (!asset?.canDelete) return;
+        if (!confirm(`确定删除“${asset.summary || `第 ${asset.pageNumber} 页素材`}”吗？\n单页 PPT 与缩略图文件也会删除，此操作不可恢复。`)) return;
+        try {
+            await request(`/assets/${encodeURIComponent(asset.id)}`, { method: 'DELETE' });
+            shelfItems = shelfItems.filter(item => item.id !== asset.id);
+            renderShelf();
+            callbacks.setStatus('素材已删除');
+            await loadLibrary();
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+
+    async function regenerateMaterialThumbnail(asset) {
+        if (!asset?.canEdit) return;
+        showTaskProgress('正在重新生成缩略图', `正在检测 ${navigator.platform || '当前平台'} 可用的渲染引擎…`, 5, true);
+        appendTaskLog({ level: 'info', message: `开始重新生成素材 ${asset.id} 的缩略图` });
+        const waitingProgress = beginWaitingProgress(64);
+        try {
+            const result = await request(`/assets/${encodeURIComponent(asset.id)}/regenerate-thumbnail`, { method: 'POST', body: '{}' });
+            window.clearInterval(waitingProgress);
+            (result.logs || []).forEach(appendTaskLog);
+            setTaskProgress(100, `缩略图已通过 ${result.engine || '可用引擎'} 重新生成`);
+            appendTaskLog({ level: 'success', message: 'PNG 文件与数据库缩略图路径均已写入成功' });
+            callbacks.setStatus('缩略图重新生成成功');
+            await loadLibrary();
+        } catch (error) {
+            window.clearInterval(waitingProgress);
+            appendTaskLog({ level: 'error', message: error.message });
+            setTaskProgress(100, '缩略图重新生成失败');
+            alert(error.message);
+        } finally {
+            window.clearInterval(waitingProgress);
+            hideTaskProgress(1800);
+        }
+    }
+
     function renderLibrary() {
         materialGrid.innerHTML = libraryItems.length ? libraryItems.map(asset => `
             <article class="material-card">
@@ -490,7 +627,10 @@ export function initProjectWorkspace(callbacks) {
                     <div class="material-card-actions">
                         <button data-insert-asset="${escapeHtml(asset.id)}"><i class="ph ph-plus-circle"></i>&nbsp; 插入项目</button>
                         <button data-shelf-asset="${escapeHtml(asset.id)}"><i class="ph ph-stack-plus"></i>&nbsp; 加入暂存架</button>
-                        <button data-download-asset="${escapeHtml(asset.id)}" title="下载单页 PPT"><i class="ph ph-download-simple"></i></button>
+                        <button class="material-icon-action" data-download-asset="${escapeHtml(asset.id)}" title="下载单页 PPT"><i class="ph ph-download-simple"></i></button>
+                        ${asset.canEdit ? `<button class="material-icon-action" data-edit-asset="${escapeHtml(asset.id)}" title="人工更正标签与分类"><i class="ph ph-pencil-simple"></i></button>` : ''}
+                        ${asset.canEdit ? `<button class="material-icon-action" data-regenerate-thumbnail="${escapeHtml(asset.id)}" title="重新生成缩略图"><i class="ph ph-image-square"></i></button>` : ''}
+                        ${asset.canDelete ? `<button class="material-icon-action danger" data-delete-asset="${escapeHtml(asset.id)}" title="删除素材"><i class="ph ph-trash"></i></button>` : ''}
                     </div>
                 </div>
             </article>
@@ -708,6 +848,8 @@ export function initProjectWorkspace(callbacks) {
     projectNameChip.addEventListener('click', () => { hub.classList.remove('is-hidden'); loadProjects(); });
     document.getElementById('manualSaveBtn').addEventListener('click', () => saveNow(true));
     importInput.addEventListener('change', () => importPptx(importInput.files[0]));
+    addMaterialAssetButton.addEventListener('click', () => materialAssetImportInput.click());
+    materialAssetImportInput.addEventListener('change', () => importPptx(materialAssetImportInput.files[0], { singlePageOnly: true }));
     document.getElementById('openLibraryBtn').addEventListener('click', () => {
         library.classList.remove('hidden');
         library.setAttribute('aria-hidden', 'false');
@@ -790,6 +932,9 @@ export function initProjectWorkspace(callbacks) {
         const insertButton = event.target.closest('[data-insert-asset]');
         const downloadButton = event.target.closest('[data-download-asset]');
         const shelfButton = event.target.closest('[data-shelf-asset]');
+        const editButton = event.target.closest('[data-edit-asset]');
+        const deleteButton = event.target.closest('[data-delete-asset]');
+        const regenerateButton = event.target.closest('[data-regenerate-thumbnail]');
         const previewTarget = event.target.closest('[data-thumbnail]');
         if (previewTarget && !insertButton && !downloadButton && !shelfButton) {
             const asset = libraryItems.find(item => item.id === previewTarget.dataset.thumbnail);
@@ -815,10 +960,23 @@ export function initProjectWorkspace(callbacks) {
         } else if (downloadButton) {
             const asset = libraryItems.find(item => item.id === downloadButton.dataset.downloadAsset);
             if (asset) downloadAsset(asset);
+        } else if (editButton) {
+            const asset = libraryItems.find(item => item.id === editButton.dataset.editAsset);
+            if (asset) openMaterialEdit(asset);
+        } else if (regenerateButton) {
+            const asset = libraryItems.find(item => item.id === regenerateButton.dataset.regenerateThumbnail);
+            if (asset) regenerateMaterialThumbnail(asset);
+        } else if (deleteButton) {
+            const asset = libraryItems.find(item => item.id === deleteButton.dataset.deleteAsset);
+            if (asset) deleteMaterialAsset(asset);
         }
     });
     document.getElementById('closeMaterialPreviewBtn').addEventListener('click', closeMaterialPreview);
     previewModal.addEventListener('click', event => { if (event.target === previewModal) closeMaterialPreview(); });
+    document.getElementById('closeMaterialEditBtn').addEventListener('click', closeMaterialEdit);
+    document.getElementById('cancelMaterialEditBtn').addEventListener('click', closeMaterialEdit);
+    editModal.addEventListener('click', event => { if (event.target === editModal) closeMaterialEdit(); });
+    editForm.addEventListener('submit', event => { event.preventDefault(); saveMaterialEdit(); });
     shelfList.addEventListener('click', event => {
         const button = event.target.closest('[data-remove-shelf]');
         if (!button) return;
@@ -848,6 +1006,10 @@ export function initProjectWorkspace(callbacks) {
     document.getElementById('clearMaterialShelfBtn').addEventListener('click', () => { shelfItems = []; renderShelf(); });
     combineButton.addEventListener('click', downloadCombinedPpt);
     document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && !editModal.classList.contains('hidden')) {
+            closeMaterialEdit();
+            return;
+        }
         if (event.key === 'Escape' && !previewModal.classList.contains('hidden')) {
             closeMaterialPreview();
             return;
@@ -859,6 +1021,7 @@ export function initProjectWorkspace(callbacks) {
     });
 
     loadProjects();
+    loadImportCapabilities();
     renderShelf();
     return {
         scheduleAutoSave,

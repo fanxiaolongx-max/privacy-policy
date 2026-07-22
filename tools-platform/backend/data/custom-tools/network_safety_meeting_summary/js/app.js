@@ -5,7 +5,7 @@ import { createComponentEditor } from './component-editor.js?v=20260623-4';
 import { initContextMenu } from './context-menu.js?v=20260623-1';
 import { defaultSlides } from './default-slides.js?v=20260623-1';
 import { renderSlide, slideToJson } from './slide-factory.js?v=20260623-2';
-import { initProjectWorkspace } from './project-workspace.js?v=20260722-01';
+import { initProjectWorkspace } from './project-workspace.js?v=20260722-02';
 
 const deck = document.getElementById('deck');
 const deckWrapper = document.getElementById('deckWrapper');

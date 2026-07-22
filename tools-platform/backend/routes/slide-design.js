@@ -13,12 +13,18 @@ const slideAnalyzer = require('../models/slide-content-analyzer');
 const router = express.Router();
 const uploadDir = path.join(DATA_DIR, 'tmp', 'slide-imports');
 const importTasks = new Map();
+const configuredUploadMb = Number.parseInt(process.env.SLIDE_IMPORT_MAX_MB || '200', 10);
+const MAX_PPTX_UPLOAD_MB = Number.isInteger(configuredUploadMb) && configuredUploadMb >= 10 && configuredUploadMb <= 2048
+    ? configuredUploadMb
+    : 200;
+const MAX_PPTX_UPLOAD_BYTES = MAX_PPTX_UPLOAD_MB * 1024 * 1024;
+const MAX_PPTX_SLIDES = 100;
 ensureDataDir();
 fs.mkdirSync(uploadDir, { recursive: true });
 
 const pptUpload = multer({
     dest: uploadDir,
-    limits: { fileSize: 120 * 1024 * 1024, files: 1 }
+    limits: { fileSize: MAX_PPTX_UPLOAD_BYTES, files: 1 }
 });
 
 function normalizeImportTaskId(value) {
@@ -64,6 +70,37 @@ function finishImportTask(taskId, status, message, level = 'success') {
     const cleanup = setTimeout(() => importTasks.delete(taskId), 10 * 60 * 1000);
     if (cleanup.unref) cleanup.unref();
     return task;
+}
+
+function handlePptUpload(req, res, next) {
+    pptUpload.single('pptx')(req, res, error => {
+        if (!error) return next();
+        const taskId = normalizeImportTaskId(req.headers['x-slide-import-task-id'] || (req.body && req.body.taskId));
+        const isFileTooLarge = error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE';
+        const message = isFileTooLarge
+            ? `PPT 文件超过 ${MAX_PPTX_UPLOAD_MB} MB 上限，请压缩媒体文件或调整服务端 SLIDE_IMPORT_MAX_MB 配置`
+            : `PPT 上传失败：${error.message}`;
+        finishImportTask(taskId, 'failed', message, 'error');
+        return res.status(isFileTooLarge ? 413 : 400).json({
+            error: message,
+            code: error.code || 'PPT_UPLOAD_FAILED',
+            taskId,
+            maxFileSizeMb: MAX_PPTX_UPLOAD_MB
+        });
+    });
+}
+
+function canDeleteAsset(asset, user) {
+    if (!asset || !user) return false;
+    return user.role === 'admin' || String(asset.uploader || '') === String(user.username || '');
+}
+
+function decorateAssetPermissions(asset, user) {
+    return asset && {
+        ...asset,
+        canEdit: Boolean(user && user.role === 'admin'),
+        canDelete: canDeleteAsset(asset, user)
+    };
 }
 
 function assetFiltersFromQuery(query = {}) {
@@ -220,8 +257,20 @@ router.get('/assets', async (req, res) => {
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
     const requestedPage = Number(req.query.page || 1);
     const page = Math.min(totalPages, Math.max(1, Number.isFinite(requestedPage) ? Math.floor(requestedPage) : 1));
-    const items = await slideRepo.listAssets({ ...filters, limit: pageSize, offset: (page - 1) * pageSize });
+    const items = (await slideRepo.listAssets({ ...filters, limit: pageSize, offset: (page - 1) * pageSize }))
+        .map(asset => decorateAssetPermissions(asset, req.user));
     res.json({ items, pagination: { page, pageSize, total, totalPages } });
+});
+
+router.get('/capabilities', (req, res) => {
+    res.json({
+        maxFileSizeMb: MAX_PPTX_UPLOAD_MB,
+        maxSlides: MAX_PPTX_SLIDES,
+        platform: process.platform,
+        preferredThumbnailEngine: process.platform === 'win32' ? 'powerpoint' : 'libreoffice',
+        thumbnailFallbackEngine: process.platform === 'win32' ? 'libreoffice' : null,
+        canManageAssets: Boolean(req.user && req.user.role === 'admin')
+    });
 });
 
 router.get('/asset-filters', async (req, res) => {
@@ -246,7 +295,63 @@ router.get('/import-progress/:taskId', (req, res) => {
 router.get('/assets/:id', async (req, res) => {
     const asset = await slideRepo.getAsset(req.params.id);
     if (!asset) return res.status(404).json({ error: '素材不存在' });
-    res.json({ asset });
+    res.json({ asset: decorateAssetPermissions(asset, req.user) });
+});
+
+router.patch('/assets/:id', async (req, res) => {
+    try {
+        if (!req.user || req.user.role !== 'admin') {
+            return res.status(403).json({ error: '仅管理员可以更正素材标签与分类' });
+        }
+        const asset = await slideRepo.getAsset(req.params.id);
+        if (!asset) return res.status(404).json({ error: '素材不存在' });
+        const updated = await slideRepo.updateAssetAnalysis(req.params.id, req.body || {});
+        res.json({ asset: decorateAssetPermissions(updated, req.user) });
+    } catch (error) {
+        res.status(400).json({ error: `素材信息更新失败：${error.message}` });
+    }
+});
+
+router.delete('/assets/:id', async (req, res) => {
+    try {
+        const asset = await slideRepo.getAsset(req.params.id);
+        if (!asset) return res.status(404).json({ error: '素材不存在' });
+        if (!canDeleteAsset(asset, req.user)) {
+            return res.status(403).json({ error: '仅管理员或该素材上传者可以删除' });
+        }
+        await slideRepo.deleteAsset(req.params.id);
+        res.json({ success: true, id: req.params.id });
+    } catch (error) {
+        res.status(400).json({ error: `素材删除失败：${error.message}` });
+    }
+});
+
+router.post('/assets/:id/regenerate-thumbnail', async (req, res) => {
+    let rendered = null;
+    try {
+        if (!req.user || req.user.role !== 'admin') {
+            return res.status(403).json({ error: '仅管理员可以重新生成缩略图' });
+        }
+        const result = await slideRepo.getAssetFile(req.params.id);
+        if (!result || !fs.existsSync(result.absolutePath)) return res.status(404).json({ error: '素材文件不存在' });
+        const logs = [];
+        rendered = await renderSingleSlideThumbnails([{ sourcePath: result.absolutePath, hidden: false }], {
+            onProgress(event) {
+                logs.push({ level: event.level || 'info', message: event.message, engine: event.engine || '' });
+            }
+        });
+        const renderedPreview = rendered.files[0];
+        if (!renderedPreview || !fs.existsSync(renderedPreview)) throw new Error('渲染引擎没有返回缩略图文件');
+        const previewAbsolutePath = path.join(path.dirname(result.absolutePath), `${result.asset.id}_preview.png`);
+        fs.copyFileSync(renderedPreview, previewAbsolutePath);
+        const thumbnailPath = path.relative(slideRepo.LIBRARY_DIR, previewAbsolutePath).split(path.sep).join('/');
+        const asset = await slideRepo.updateAssetThumbnail(result.asset.id, thumbnailPath);
+        res.json({ asset: decorateAssetPermissions(asset, req.user), engine: rendered.engine, logs });
+    } catch (error) {
+        res.status(400).json({ error: `缩略图重新生成失败：${error.message}` });
+    } finally {
+        if (rendered) fs.rmSync(rendered.renderDir, { recursive: true, force: true });
+    }
 });
 
 router.post('/combine', async (req, res) => {
@@ -291,9 +396,9 @@ router.get('/assets/:id/thumbnail', async (req, res) => {
     res.sendFile(result.absolutePath);
 });
 
-router.post('/import-pptx', pptUpload.single('pptx'), async (req, res) => {
+router.post('/import-pptx', handlePptUpload, async (req, res) => {
     const createdFiles = [];
-    let taskId = normalizeImportTaskId(req.body && req.body.taskId);
+    let taskId = normalizeImportTaskId(req.headers['x-slide-import-task-id'] || (req.body && req.body.taskId));
     try {
         ensureImportTask(taskId);
         if (!req.file) {
@@ -314,9 +419,14 @@ router.post('/import-pptx', pptUpload.single('pptx'), async (req, res) => {
             finishImportTask(taskId, 'failed', '未在 PPTX 中找到可导入页面', 'error');
             return res.status(400).json({ error: '未在 PPTX 中找到可导入页面', taskId });
         }
-        if (slideEntries.length > 100) {
-            finishImportTask(taskId, 'failed', `检测到 ${slideEntries.length} 页，超过单次 100 页限制`, 'error');
-            return res.status(400).json({ error: '单次最多导入 100 页 PPT', taskId });
+        if (slideEntries.length > MAX_PPTX_SLIDES) {
+            finishImportTask(taskId, 'failed', `检测到 ${slideEntries.length} 页，超过单次 ${MAX_PPTX_SLIDES} 页限制`, 'error');
+            return res.status(400).json({ error: `单次最多导入 ${MAX_PPTX_SLIDES} 页 PPT`, taskId });
+        }
+        const singlePageOnly = ['1', 'true'].includes(String(req.body && req.body.singlePageOnly).toLowerCase());
+        if (singlePageOnly && slideEntries.length !== 1) {
+            finishImportTask(taskId, 'failed', `手动新增单页素材要求 PPT 恰好为 1 页，当前文件有 ${slideEntries.length} 页`, 'error');
+            return res.status(400).json({ error: `请选择仅包含 1 页的 PPTX，当前文件有 ${slideEntries.length} 页`, taskId });
         }
         updateImportTask(taskId, 13, `已识别 ${slideEntries.length} 页，正在提取文字…`, `页面顺序解析完成，共 ${slideEntries.length} 页；开始逐页读取正文、版式提示及隐藏状态`);
 
@@ -393,8 +503,25 @@ router.post('/import-pptx', pptUpload.single('pptx'), async (req, res) => {
             rendered = await renderSingleSlideThumbnails(pendingAssets.map(item => ({
                 sourcePath: item.absolutePath,
                 hidden: item.slide.hidden
-            })));
-            updateImportTask(taskId, 89, '缩略图渲染完成，正在写入素材库…', `渲染引擎返回 ${rendered.files.filter(Boolean).length}/${pendingAssets.length} 张缩略图`, 'success');
+            })), {
+                onProgress(event) {
+                    updateImportTask(
+                        taskId,
+                        77 + ((Number(event.progress) || 0) * 12),
+                        '正在生成跨平台页面缩略图…',
+                        event.message,
+                        event.level || 'info'
+                    );
+                }
+            });
+            const renderedCount = rendered.files.filter(Boolean).length;
+            updateImportTask(
+                taskId,
+                89,
+                '缩略图渲染完成，正在写入素材库…',
+                `${rendered.engine === 'powerpoint' ? 'PowerPoint' : 'LibreOffice/Poppler'} 返回 ${renderedCount}/${pendingAssets.length} 张缩略图`,
+                renderedCount === pendingAssets.length ? 'success' : 'warning'
+            );
         } catch (error) {
             console.warn('[slide-design] thumbnail fallback:', error.message);
             updateImportTask(taskId, 89, '部分缩略图未生成，继续写入素材库…', `缩略图渲染降级：${error.message}`, 'warning');
@@ -434,11 +561,19 @@ router.post('/import-pptx', pptUpload.single('pptx'), async (req, res) => {
                 taskId,
                 90 + ((index + 1) / pendingAssets.length * 9),
                 `正在入库第 ${index + 1}/${pendingAssets.length} 页…`,
-                `第 ${slide.pageNumber} 页：素材记录、检索全文、分类标签${thumbnailPath ? '及缩略图' : ''}已写入数据库`
+                thumbnailPath
+                    ? `第 ${slide.pageNumber} 页：缩略图文件已复制，素材记录、检索全文、分类标签及缩略图路径已写入数据库`
+                    : `第 ${slide.pageNumber} 页：未生成缩略图；素材记录、检索全文和分类标签已写入数据库`
             );
         }
         if (rendered) fs.rmSync(rendered.renderDir, { recursive: true, force: true });
-        finishImportTask(taskId, 'completed', `导入完成：${assets.length} 页素材已可检索`, 'success');
+        const savedThumbnailCount = assets.filter(asset => asset.thumbnailUrl).length;
+        finishImportTask(
+            taskId,
+            'completed',
+            `导入完成：${assets.length} 页素材已可检索，缩略图 ${savedThumbnailCount}/${assets.length}`,
+            savedThumbnailCount === assets.length ? 'success' : 'warning'
+        );
         res.status(201).json({
             success: true,
             taskId,
@@ -446,6 +581,8 @@ router.post('/import-pptx', pptUpload.single('pptx'), async (req, res) => {
             slideCount: assets.length,
             usedAi: analysis.usedAi,
             aiWarning: analysis.aiError || null,
+            thumbnailEngine: rendered && rendered.engine,
+            thumbnailCount: savedThumbnailCount,
             assets
         });
     } catch (error) {
