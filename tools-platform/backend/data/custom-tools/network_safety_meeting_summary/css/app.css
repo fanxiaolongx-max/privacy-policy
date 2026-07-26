@@ -320,7 +320,7 @@ body.presentation-mode .presentation-overlay {
 }
 
 .project-hub-kicker,
-.material-library-head span {
+.material-library-head > div:first-child > span {
     color: #60a5fa;
     font-size: 10px;
     font-weight: 800;
@@ -515,7 +515,7 @@ body.presentation-mode .presentation-overlay {
 .material-library-head { display: flex; align-items: center; justify-content: space-between; padding: 24px 28px 18px; border-bottom: 1px solid #27272a; }
 .material-library-head h2 { margin: 5px 0 0; font-size: 20px; }
 .material-library-head-actions { display: flex; align-items: center; gap: 10px; }
-.material-library-primary-action { display: flex; height: 34px; padding: 0 13px; align-items: center; gap: 6px; border: 0; border-radius: 9px; color: #fff; font-size: 10px; font-weight: 700; cursor: pointer; background: linear-gradient(135deg, #4f46e5, #7c3aed); box-shadow: 0 8px 22px rgba(79,70,229,.25); }
+.material-library-head .material-library-primary-action { display: flex; width: auto; min-width: 118px; height: 34px; flex: none; padding: 0 13px; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 9px; color: #fff; font-size: 10px; font-weight: 700; white-space: nowrap; cursor: pointer; background: linear-gradient(135deg, #4f46e5, #7c3aed); box-shadow: 0 8px 22px rgba(79,70,229,.25); }
 .material-library-primary-action.hidden { display: none; }
 .material-view-switch { display: flex; padding: 3px; border: 1px solid #3f3f46; border-radius: 10px; background: #09090b; }
 .material-view-switch button { display: flex; width: auto; height: 30px; align-items: center; gap: 5px; padding: 0 9px; border: 0; border-radius: 7px; color: #71717a; font-size: 9px; background: transparent; }
@@ -579,10 +579,11 @@ body.presentation-mode .presentation-overlay {
 .material-card-tags { display: flex; gap: 5px; margin-top: 9px; overflow: hidden; }
 .material-card-tags span { padding: 3px 6px; border-radius: 5px; color: #a5b4fc; font-size: 8px; white-space: nowrap; background: rgba(79,70,229,.14); }
 .material-card-meta { margin-top: auto; padding-top: 14px; overflow: hidden; color: #71717a; font-size: 9px; white-space: nowrap; text-overflow: ellipsis; }
-.material-card-actions { display: grid; flex: none; grid-template-columns: 1fr 1fr repeat(4, 34px); gap: 6px; margin-top: 12px; }
-.material-card-actions button, .material-card-actions a { display: flex; align-items: center; justify-content: center; height: 32px; border: 0; border-radius: 8px; color: #fff; font-size: 10px; text-decoration: none; cursor: pointer; background: #4f46e5; }
+.material-card-actions { display: grid; flex: none; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 12px; }
+.material-card-actions button, .material-card-actions a { display: flex; min-width: 0; height: 32px; padding: 0 6px; align-items: center; justify-content: center; gap: 4px; overflow: hidden; border: 0; border-radius: 8px; color: #fff; font-size: 10px; line-height: 1; white-space: nowrap; text-decoration: none; cursor: pointer; background: #4f46e5; }
+.material-card-actions button:not(.material-icon-action), .material-card-actions a:not(.material-icon-action) { grid-column: span 2; padding: 0 3px; gap: 3px; }
 .material-card-actions button:nth-child(2) { color: #c7d2fe; background: rgba(79,70,229,.2); }
-.material-card-actions .material-icon-action { width: 34px; color: #d4d4d8; background: #3f3f46; }
+.material-card-actions .material-icon-action { width: auto; padding: 0; color: #d4d4d8; background: #3f3f46; }
 .material-card-actions .material-icon-action.danger { color: #fda4af; background: rgba(190,24,93,.18); }
 .material-card-actions .material-icon-action:disabled { opacity: .3; cursor: not-allowed; }
 .material-grid.view-table { display: flex; flex-direction: column; gap: 8px; }

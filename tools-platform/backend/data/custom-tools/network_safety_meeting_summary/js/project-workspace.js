@@ -604,6 +604,7 @@ export function initProjectWorkspace(callbacks) {
             await loadLibrary();
         } catch (error) {
             window.clearInterval(waitingProgress);
+            (error.body?.logs || []).forEach(appendTaskLog);
             appendTaskLog({ level: 'error', message: error.message });
             setTaskProgress(100, '缩略图重新生成失败');
             alert(error.message);
@@ -625,8 +626,8 @@ export function initProjectWorkspace(callbacks) {
                     <div class="material-card-tags">${(asset.tags || [asset.tag]).map(tag => `<span>${escapeHtml(tag)}</span>`).join('')}</div>
                     <div class="material-card-meta" title="${escapeHtml(asset.sourceFilename)}">${escapeHtml(asset.uploader || '未知用户')} · ${formatTime(asset.importedAt)} · ${escapeHtml(asset.sourceFilename)}</div>
                     <div class="material-card-actions">
-                        <button data-insert-asset="${escapeHtml(asset.id)}"><i class="ph ph-plus-circle"></i>&nbsp; 插入项目</button>
-                        <button data-shelf-asset="${escapeHtml(asset.id)}"><i class="ph ph-stack-plus"></i>&nbsp; 加入暂存架</button>
+                        <button data-insert-asset="${escapeHtml(asset.id)}"><i class="ph ph-plus-circle"></i><span>插入项目</span></button>
+                        <button data-shelf-asset="${escapeHtml(asset.id)}"><i class="ph ph-stack-plus"></i><span>加入暂存架</span></button>
                         <button class="material-icon-action" data-download-asset="${escapeHtml(asset.id)}" title="下载单页 PPT"><i class="ph ph-download-simple"></i></button>
                         ${asset.canEdit ? `<button class="material-icon-action" data-edit-asset="${escapeHtml(asset.id)}" title="人工更正标签与分类"><i class="ph ph-pencil-simple"></i></button>` : ''}
                         ${asset.canEdit ? `<button class="material-icon-action" data-regenerate-thumbnail="${escapeHtml(asset.id)}" title="重新生成缩略图"><i class="ph ph-image-square"></i></button>` : ''}

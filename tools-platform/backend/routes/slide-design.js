@@ -328,13 +328,13 @@ router.delete('/assets/:id', async (req, res) => {
 
 router.post('/assets/:id/regenerate-thumbnail', async (req, res) => {
     let rendered = null;
+    const logs = [];
     try {
         if (!req.user || req.user.role !== 'admin') {
             return res.status(403).json({ error: '仅管理员可以重新生成缩略图' });
         }
         const result = await slideRepo.getAssetFile(req.params.id);
         if (!result || !fs.existsSync(result.absolutePath)) return res.status(404).json({ error: '素材文件不存在' });
-        const logs = [];
         rendered = await renderSingleSlideThumbnails([{ sourcePath: result.absolutePath, hidden: false }], {
             onProgress(event) {
                 logs.push({ level: event.level || 'info', message: event.message, engine: event.engine || '' });
@@ -348,7 +348,8 @@ router.post('/assets/:id/regenerate-thumbnail', async (req, res) => {
         const asset = await slideRepo.updateAssetThumbnail(result.asset.id, thumbnailPath);
         res.json({ asset: decorateAssetPermissions(asset, req.user), engine: rendered.engine, logs });
     } catch (error) {
-        res.status(400).json({ error: `缩略图重新生成失败：${error.message}` });
+        console.warn(`[slide-design] thumbnail regeneration failed for ${req.params.id}:`, error.message, logs);
+        res.status(400).json({ error: `缩略图重新生成失败：${error.message}`, logs });
     } finally {
         if (rendered) fs.rmSync(rendered.renderDir, { recursive: true, force: true });
     }

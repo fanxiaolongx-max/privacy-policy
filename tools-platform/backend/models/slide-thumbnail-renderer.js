@@ -191,6 +191,17 @@ async function renderWithLibreOffice(sources, renderDir, onProgress) {
     const officeProfileDir = path.join(renderDir, 'libreoffice-profile');
     fs.mkdirSync(officeProfileDir, { recursive: true });
     const officeProfileArg = `-env:UserInstallation=${pathToFileURL(officeProfileDir).href}`;
+    const libreOfficeEnv = { ...process.env, FONTCONFIG_FILE: fontConfigPath };
+    const convertWithLibreOffice = (format, inputs) => execFileAsync(
+        soffice,
+        [officeProfileArg, '--headless', '--convert-to', format, '--outdir', renderDir, ...inputs],
+        {
+            timeout: 120000,
+            maxBuffer: 4 * 1024 * 1024,
+            windowsHide: true,
+            env: libreOfficeEnv
+        }
+    );
     emitProgress(onProgress, {
         progress: 0.08,
         message: `正在使用 LibreOffice/Poppler 渲染（soffice: ${soffice}；pdftoppm: ${pdftoppm}）`,
@@ -199,18 +210,8 @@ async function renderWithLibreOffice(sources, renderDir, onProgress) {
 
     for (let offset = 0; offset < sources.length; offset += 12) {
         const batch = sources.slice(offset, offset + 12);
-        const convert = inputs => execFileAsync(
-            soffice,
-            [officeProfileArg, '--headless', '--convert-to', 'pdf', '--outdir', renderDir, ...inputs],
-            {
-                timeout: 120000,
-                maxBuffer: 4 * 1024 * 1024,
-                windowsHide: true,
-                env: { ...process.env, FONTCONFIG_FILE: fontConfigPath }
-            }
-        );
         try {
-            await convert(batch);
+            await convertWithLibreOffice('pdf', batch);
         } catch (error) {
             emitProgress(onProgress, {
                 level: 'warning',
@@ -220,7 +221,7 @@ async function renderWithLibreOffice(sources, renderDir, onProgress) {
             });
             for (const source of batch) {
                 try {
-                    await convert([source]);
+                    await convertWithLibreOffice('pdf', [source]);
                 } catch (pageError) {
                     emitProgress(onProgress, {
                         level: 'warning',
@@ -263,7 +264,54 @@ async function renderWithLibreOffice(sources, renderDir, onProgress) {
             return null;
         }
     });
-    if (!files.some(Boolean)) throw new Error('LibreOffice/Poppler 已运行，但没有生成任何缩略图');
+
+    const missingIndexes = files.map((file, index) => file ? -1 : index).filter(index => index >= 0);
+    if (missingIndexes.length) {
+        emitProgress(onProgress, {
+            level: 'warning',
+            progress: 0.94,
+            message: `PDF/Poppler 路径有 ${missingIndexes.length} 页未生成缩略图，正在通过 LibreOffice 直接导出 PNG`,
+            engine: 'libreoffice-direct-png'
+        });
+        const missingSources = missingIndexes.map(index => sources[index]);
+        try {
+            await convertWithLibreOffice('png', missingSources);
+        } catch (error) {
+            emitProgress(onProgress, {
+                level: 'warning',
+                progress: 0.95,
+                message: `LibreOffice 批量直接导出 PNG 失败，正在逐页重试：${error.message}`,
+                engine: 'libreoffice-direct-png'
+            });
+            for (const source of missingSources) {
+                const stem = path.basename(source, '.pptx');
+                if (fs.existsSync(path.join(renderDir, `${stem}.png`))) continue;
+                try {
+                    await convertWithLibreOffice('png', [source]);
+                } catch (pageError) {
+                    emitProgress(onProgress, {
+                        level: 'warning',
+                        progress: 0.96,
+                        message: `${stem} 直接导出 PNG 失败：${pageError.message}`,
+                        engine: 'libreoffice-direct-png'
+                    });
+                }
+            }
+        }
+        missingIndexes.forEach(index => {
+            const directPngPath = path.join(renderDir, `${path.basename(sources[index], '.pptx')}.png`);
+            if (fs.existsSync(directPngPath)) files[index] = directPngPath;
+        });
+        const recoveredCount = missingIndexes.filter(index => files[index]).length;
+        emitProgress(onProgress, {
+            level: recoveredCount === missingIndexes.length ? 'success' : 'warning',
+            progress: 0.98,
+            message: `LibreOffice 直接 PNG 回退完成：补充生成 ${recoveredCount}/${missingIndexes.length} 张缩略图`,
+            engine: 'libreoffice-direct-png'
+        });
+    }
+
+    if (!files.some(Boolean)) throw new Error('LibreOffice 的 PDF/Poppler 与直接 PNG 两条路径均未生成任何缩略图');
     return { files, engine: 'libreoffice' };
 }
 

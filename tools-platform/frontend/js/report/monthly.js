@@ -50,6 +50,7 @@ const i18n = {
         filter: '筛选',
         export_image: '🖼️ 导出为长图',
         export_pdf: '📄 导出为 PDF',
+        export_daily_bundle: '📦 按天导出 PDF 与完整 HTML 日报',
         loading_report: '正在分析历史数据，生成月报...',
         section1_title: '一、整体状况与关键结论',
         section2_title: '二、历史趋势与波动分析',
@@ -137,7 +138,11 @@ const i18n = {
         msg_export_img_fail: '导出图片失败: ',
         msg_exporting_pdf: '⏳ 正在生成 PDF，请稍候...',
         msg_export_pdf_success: '✅ PDF 已成功导出！',
-        msg_export_pdf_fail: '导出 PDF 失败: '
+        msg_export_pdf_fail: '导出 PDF 失败: ',
+        msg_export_daily_progress: '⏳ 正在生成日报 {current}/{total}：{date}',
+        msg_export_daily_success: '✅ 已按月份打包导出 {count} 份 PDF 与完整 HTML 日报！',
+        msg_export_daily_fail: '批量导出日报失败: ',
+        daily_report_title: '运营质量与合规日报'
     },
     en: {
         title: 'Monthly Quality & Compliance Analysis <span id="monthlyFrontendVersion" style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">vLoading</span>',
@@ -150,6 +155,7 @@ const i18n = {
         filter: 'Filter',
         export_image: '🖼️ Export Image',
         export_pdf: '📄 Export PDF',
+        export_daily_bundle: '📦 Export Daily PDF & Full HTML Reports',
         loading_report: 'Analyzing historical data, generating report...',
         section1_title: 'I. Overall Status & Key Conclusions',
         section2_title: 'II. Historical Trends & Volatility',
@@ -237,6 +243,10 @@ const i18n = {
         msg_exporting_pdf: '⏳ Generating PDF, please wait...',
         msg_export_pdf_success: '✅ PDF exported successfully!',
         msg_export_pdf_fail: 'Failed to export PDF: ',
+        msg_export_daily_progress: '⏳ Generating daily report {current}/{total}: {date}',
+        msg_export_daily_success: '✅ Exported {count} daily PDF and full HTML reports by month!',
+        msg_export_daily_fail: 'Failed to export daily reports: ',
+        daily_report_title: 'Daily Quality & Compliance Report',
 
         // Metric and Category mappings
         "TE": "TE",
@@ -420,8 +430,14 @@ function getMonthlyDateFilters() {
 
 async function loadData(startDate, endDate) {
     try {
-        document.getElementById('loader').style.display = 'block';
-        document.getElementById('report-content').style.display = 'none';
+        const loader = document.getElementById('loader');
+        const reportContent = document.getElementById('report-content');
+        const emptyState = document.getElementById('report-empty-state');
+        const errorState = document.getElementById('report-error-state');
+        loader.style.display = 'block';
+        reportContent.style.display = 'none';
+        if (emptyState) emptyState.style.display = 'none';
+        if (errorState) errorState.style.display = 'none';
         const exportBtnContainer = document.getElementById('export-actions');
         if (exportBtnContainer) exportBtnContainer.style.display = 'none';
 
@@ -484,17 +500,24 @@ async function loadData(startDate, endDate) {
         }
         window._manualAdjustItems = manualAdjustItems;
 
-        document.getElementById('loader').style.display = 'none';
+        loader.style.display = 'none';
         if (window.renderMonthlySourcePanel) window.renderMonthlySourcePanel();
 
         if (!data || !data.trends || data.trends.length === 0) {
+            currentTrends = null;
+            currentLatest = null;
             document.getElementById('report-date-range').innerText = t('no_data');
-            document.getElementById('report-content').style.display = 'block';
-            document.getElementById('report-content').innerHTML = `<div style="text-align:center; padding:40px;">${t('no_data')}</div>`;
+            reportContent.style.display = 'none';
+            if (emptyState) {
+                emptyState.style.display = 'block';
+                const emptyText = emptyState.querySelector('p');
+                if (emptyText) emptyText.innerText = t('no_data');
+            }
             return;
         }
 
-        document.getElementById('report-content').style.display = 'block';
+        if (emptyState) emptyState.style.display = 'none';
+        reportContent.style.display = 'block';
         if (exportBtnContainer) exportBtnContainer.style.display = 'flex';
 
         currentTrends = data.trends;
@@ -505,7 +528,20 @@ async function loadData(startDate, endDate) {
     } catch (error) {
         console.error('Failed to load monthly data:', error);
         if (window.renderMonthlySourcePanel) window.renderMonthlySourcePanel();
-        document.getElementById('loader').innerHTML = `<p style="color:red;">Failed to load data: ${error.message}</p>`;
+        const loader = document.getElementById('loader');
+        const reportContent = document.getElementById('report-content');
+        const emptyState = document.getElementById('report-empty-state');
+        const errorState = document.getElementById('report-error-state');
+        if (loader) loader.style.display = 'none';
+        if (reportContent) reportContent.style.display = 'none';
+        if (emptyState) emptyState.style.display = 'none';
+        const exportBtnContainer = document.getElementById('export-actions');
+        if (exportBtnContainer) exportBtnContainer.style.display = 'none';
+        if (errorState) {
+            errorState.style.display = 'block';
+            const errorText = errorState.querySelector('p');
+            if (errorText) errorText.innerText = `Failed to load data: ${error.message}`;
+        }
     }
 }
 
@@ -1094,10 +1130,15 @@ function drawCharts(trends) {
         series: seriesData.map(s => ({ ...s, name: tVal(s.name) }))
     }, true);
 
-    window.addEventListener('resize', () => {
-        if (chartOverall) chartOverall.resize();
-        if (chartGroups) chartGroups.resize();
-    });
+    if (!window._monthlyChartResizeBound) {
+        window._monthlyChartResizeBound = true;
+        window.addEventListener('resize', () => {
+            const overallChart = echarts.getInstanceByDom(document.getElementById('chart-overall'));
+            const groupsChart = echarts.getInstanceByDom(document.getElementById('chart-groups'));
+            if (overallChart) overallChart.resize();
+            if (groupsChart) groupsChart.resize();
+        });
+    }
 }
 
 function renderRanking(latest) {
@@ -1635,6 +1676,458 @@ function renderFullSnapshot(latest, categories, globalConfig, metricGroups, manu
 
     document.getElementById('full-report-content').innerHTML = matrixHtml + adjustHtml;
 }
+
+function waitForMonthlyReportPaint() {
+    return new Promise(resolve => {
+        requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(resolve, 120)));
+    });
+}
+
+function downloadBlob(blob, fileName) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function captureMonthlyReportCanvas() {
+    const element = document.querySelector('.page-container');
+    const filterContainer = document.getElementById('date-filter-container');
+    const btnContainer = document.getElementById('export-actions');
+    const previous = {
+        filterDisplay: filterContainer ? filterContainer.style.display : '',
+        buttonDisplay: btnContainer ? btnContainer.style.display : '',
+        paddingBottom: element.style.paddingBottom,
+        scrollY: window.scrollY
+    };
+
+    try {
+        if (filterContainer) filterContainer.style.display = 'none';
+        if (btnContainer) btnContainer.style.display = 'none';
+        window.scrollTo(0, 0);
+        element.style.paddingBottom = '100px';
+        await waitForMonthlyReportPaint();
+        return await html2canvas(element, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#f0f2f5'
+        });
+    } finally {
+        element.style.paddingBottom = previous.paddingBottom;
+        if (filterContainer) filterContainer.style.display = previous.filterDisplay || 'flex';
+        if (btnContainer) btnContainer.style.display = previous.buttonDisplay || 'flex';
+        window.scrollTo(0, previous.scrollY);
+    }
+}
+
+function createPdfBlobFromCanvas(canvas) {
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    const { jsPDF } = window.jspdf;
+    const pdfWidth = 595.28;
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+    const pdf = new jsPDF({
+        orientation: 'p',
+        unit: 'pt',
+        format: [pdfWidth, pdfHeight]
+    });
+    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+    return pdf.output('blob');
+}
+
+function buildConfiguredTargetMap(globalConfig) {
+    const labelToTargetMap = {};
+    const targets = globalConfig && globalConfig.targets;
+    const prefs = globalConfig && globalConfig.prefs;
+    if (prefs) {
+        Object.keys(prefs).forEach(secId => {
+            const pref = prefs[secId];
+            const cleanSecId = secId.startsWith('sla_prefs_') ? secId.substring(10) : secId;
+            (pref && Array.isArray(pref.customMetrics) ? pref.customMetrics : []).forEach(rule => {
+                const key = `${cleanSecId}_${rule.id}`;
+                if (targets && targets[key]) labelToTargetMap[rule.label] = targets[key];
+            });
+        });
+    }
+    if (targets) {
+        Object.keys(targets).forEach(key => {
+            if (key.startsWith('manual_') && targets[key] && targets[key].label) {
+                labelToTargetMap[targets[key].label] = targets[key];
+            }
+        });
+    }
+    return labelToTargetMap;
+}
+
+function buildDailyTargetReferenceHtml(date, dailyData) {
+    const latest = dailyData.latest_snapshot || {};
+    const targetMonth = parseInt(latest.month, 10) || parseInt(getMonthlyTargetMonth(), 10) || new Date(`${date}T00:00:00`).getMonth() + 1;
+    const targetMap = buildConfiguredTargetMap(window._globalConfig || {});
+    const metricRowsByLabel = {};
+    (latest.metrics || []).forEach(row => {
+        const label = row.metric_label || (window.currentLang === 'en' ? 'Unknown metric' : '未知指标');
+        if (!metricRowsByLabel[label]) metricRowsByLabel[label] = [];
+        metricRowsByLabel[label].push(row);
+    });
+
+    let rawSnapshot = {};
+    try {
+        rawSnapshot = latest.raw_data_json ? JSON.parse(latest.raw_data_json) : {};
+    } catch (error) {
+        rawSnapshot = {};
+    }
+    const rawLabels = (rawSnapshot.topMetrics || []).map(item => item && item.label).filter(Boolean);
+    const labels = [...new Set([
+        ...Object.keys(metricRowsByLabel),
+        ...rawLabels,
+        ...Object.keys(targetMap)
+    ])];
+    const groupOrder = new Map((window._metricGroups || []).map((group, index) => [group.name, index]));
+    const labelToGroup = {};
+    (window._metricGroups || []).forEach(group => {
+        (group.metrics || []).forEach(label => { labelToGroup[label] = group.name; });
+    });
+    labels.sort((a, b) => {
+        const groupA = labelToGroup[a] || '';
+        const groupB = labelToGroup[b] || '';
+        const orderA = groupOrder.has(groupA) ? groupOrder.get(groupA) : 9999;
+        const orderB = groupOrder.has(groupB) ? groupOrder.get(groupB) : 9999;
+        return orderA - orderB || groupA.localeCompare(groupB) || a.localeCompare(b);
+    });
+
+    const renderTargetBadges = (savedRows, targetData) => {
+        const savedTargets = savedRows
+            .filter(row => row.target_val !== null && row.target_val !== undefined && row.target_val !== '' && row.target_val !== '--')
+            .map(row => ({ category: row.cat_name, value: row.target_val }));
+        if (savedTargets.length) {
+            const uniqueValues = [...new Set(savedTargets.map(item => String(item.value)))];
+            if (uniqueValues.length === 1) {
+                return `<span class="target-value">${escapeHTML(uniqueValues[0])}</span>`;
+            }
+            return savedTargets.map(item =>
+                `<span class="target-chip"><strong>${escapeHTML(tVal(item.category))}</strong>：${escapeHTML(String(item.value))}</span>`
+            ).join('');
+        }
+
+        const categoryTargets = targetData && targetData.categoryTargets && targetData.categoryTargets[String(targetMonth)];
+        if (categoryTargets && typeof categoryTargets === 'object' && !Array.isArray(categoryTargets)) {
+            const entries = Object.entries(categoryTargets).filter(([, value]) => value !== '' && value !== null && value !== undefined);
+            if (entries.length) {
+                return entries.map(([category, value]) =>
+                    `<span class="target-chip config-reference"><strong>${escapeHTML(tVal(category))}</strong>：${escapeHTML(String(value))}</span>`
+                ).join('');
+            }
+        }
+        const globalTarget = getEffectiveTargetValue(targetData, targetMonth);
+        return globalTarget === undefined
+            ? '<span class="no-value">--</span>'
+            : `<span class="target-value config-reference">${escapeHTML(String(globalTarget))}</span>`;
+    };
+
+    const rowsHtml = labels.map(label => {
+        const savedRows = metricRowsByLabel[label] || [];
+        const targetData = targetMap[label];
+        const failingRows = savedRows.filter(row => Number(row.is_failing) === 1);
+        const groupName = labelToGroup[label] || (window.currentLang === 'en' ? 'Ungrouped' : '未分组');
+        const condition = targetData && targetData.type === 'lte'
+            ? (window.currentLang === 'en' ? '≤ target' : '不高于目标')
+            : (window.currentLang === 'en' ? '≥ target' : '不低于目标');
+        const savedWeight = savedRows.find(row => row.weight !== null && row.weight !== undefined);
+        const weight = savedWeight ? savedWeight.weight : (targetData && targetData.weight !== undefined ? targetData.weight : '--');
+        const sourceText = savedRows.some(row => row.target_val !== null && row.target_val !== undefined && row.target_val !== '' && row.target_val !== '--')
+            ? (window.currentLang === 'en' ? 'Saved snapshot' : '入库快照')
+            : (targetData ? (window.currentLang === 'en' ? 'Current config reference' : '当前配置参考') : '--');
+        const statusText = savedRows.length
+            ? (failingRows.length
+                ? (window.currentLang === 'en' ? `${failingRows.length} failing` : `${failingRows.length} 项不达标`)
+                : (window.currentLang === 'en' ? 'All compliant' : '全部达标'))
+            : (window.currentLang === 'en' ? 'No saved result' : '无入库结果');
+        const actualHtml = savedRows.length
+            ? savedRows.map(row => {
+                const failing = Number(row.is_failing) === 1;
+                const value = row.raw_val ?? row.num_val ?? '--';
+                const score = row.earned_score === null || row.earned_score === undefined ? '' : ` · ${window.currentLang === 'en' ? 'Score' : '得分'} ${row.earned_score}`;
+                const gap = row.gap === null || row.gap === undefined || row.gap === '' ? '' : ` · ${window.currentLang === 'en' ? 'Gap' : '差距'} ${row.gap}`;
+                return `<span class="actual-chip ${failing ? 'is-failing' : 'is-passing'}"><strong>${escapeHTML(tVal(row.cat_name))}</strong>：${escapeHTML(String(value))}${escapeHTML(score)}${escapeHTML(gap)}</span>`;
+            }).join('')
+            : '<span class="no-value">--</span>';
+
+        return `
+            <tr class="${failingRows.length ? 'target-row-failing' : ''}">
+                <td>${escapeHTML(tVal(groupName))}</td>
+                <td class="metric-name-cell">${escapeHTML(tVal(label))}${isOthersMetricLabel(label) ? othersMetricBadgeHtml() : ''}</td>
+                <td>${escapeHTML(String(weight))}</td>
+                <td>${escapeHTML(condition)}</td>
+                <td>${renderTargetBadges(savedRows, targetData)}</td>
+                <td><span class="status-badge ${failingRows.length ? 'status-failing' : (savedRows.length ? 'status-passing' : 'status-empty')}">${escapeHTML(statusText)}</span></td>
+                <td>${actualHtml}</td>
+                <td>${escapeHTML(sourceText)}</td>
+            </tr>
+        `;
+    }).join('');
+
+    const title = window.currentLang === 'en'
+        ? `Month ${targetMonth} Metric Targets & Daily Results`
+        : `${targetMonth}月各指标目标与当日达标明细`;
+    const note = window.currentLang === 'en'
+        ? 'Saved targets, results, scores, and failure states are preferred. “Current config reference” fills display gaps only and does not recalculate or overwrite the saved historical result.'
+        : '优先展示入库时保存的目标、结果、得分和达标状态。“当前配置参考”仅用于补充缺失的目标展示，不会重新计算或覆盖历史入库结果。';
+    const emptyRow = `<tr><td colspan="8" class="empty-target-row">${window.currentLang === 'en' ? 'No metric target data' : '暂无指标目标数据'}</td></tr>`;
+
+    return `
+        <section class="section-card report-export-target-section">
+            <div class="section-title">${escapeHTML(title)}</div>
+            <div class="target-reference-note">${escapeHTML(note)}</div>
+            <div class="target-legend">
+                <span><i class="legend-dot passing"></i>${window.currentLang === 'en' ? 'Compliant' : '达标'}</span>
+                <span><i class="legend-dot failing"></i>${window.currentLang === 'en' ? 'Non-compliant' : '不达标'}</span>
+                <span><i class="legend-dot reference"></i>${window.currentLang === 'en' ? 'Current config reference' : '当前配置参考'}</span>
+            </div>
+            <div class="target-table-scroll">
+                <table class="matrix-table target-reference-table">
+                    <thead>
+                        <tr>
+                            <th>${window.currentLang === 'en' ? 'Group' : '分组'}</th>
+                            <th>${window.currentLang === 'en' ? 'Metric' : '指标名称'}</th>
+                            <th>${window.currentLang === 'en' ? 'Weight' : '权重'}</th>
+                            <th>${window.currentLang === 'en' ? 'Rule' : '达标规则'}</th>
+                            <th>${window.currentLang === 'en' ? 'Month Target' : '当月目标'}</th>
+                            <th>${window.currentLang === 'en' ? 'Status' : '达标状态'}</th>
+                            <th>${window.currentLang === 'en' ? 'Daily Results by Group' : '各客户群当日实测/得分/差距'}</th>
+                            <th>${window.currentLang === 'en' ? 'Target Source' : '目标来源'}</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rowsHtml || emptyRow}</tbody>
+                </table>
+            </div>
+        </section>
+    `;
+}
+
+function collectMonthlyStandaloneCss() {
+    const cssParts = [];
+    Array.from(document.styleSheets || []).forEach(sheet => {
+        try {
+            cssParts.push(Array.from(sheet.cssRules || []).map(rule => rule.cssText).join('\n'));
+        } catch (error) {
+            // Cross-origin styles cannot be read; the report-specific fallback below keeps the export usable.
+        }
+    });
+    cssParts.push(`
+        html { scroll-behavior: smooth; }
+        body { margin: 0; background: #f0f2f5; color: #333; }
+        .page-container { padding-top: 28px !important; }
+        .source-info-wrapper, #date-filter-container, #export-actions, #loader, #report-empty-state, #report-error-state { display: none !important; }
+        .chart-container { height: auto !important; min-width: 0 !important; padding: 12px; box-sizing: border-box; }
+        .standalone-chart-image { display: block; width: 100%; height: auto; }
+        .report-export-target-section { page-break-before: always; }
+        .target-reference-note { margin: -4px 0 12px; padding: 10px 12px; border-left: 4px solid #0284c7; background: #eff6ff; color: #334155; font-size: 13px; line-height: 1.7; }
+        .target-legend { display: flex; flex-wrap: wrap; gap: 16px; margin: 0 0 12px; color: #475569; font-size: 12px; }
+        .target-legend span { display: inline-flex; align-items: center; gap: 6px; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+        .legend-dot.passing { background: #16a34a; }
+        .legend-dot.failing { background: #dc2626; }
+        .legend-dot.reference { background: #f59e0b; }
+        .target-table-scroll { overflow-x: auto; }
+        .target-reference-table { min-width: 1180px; font-size: 12px; }
+        .target-reference-table th { position: sticky; top: 0; z-index: 1; white-space: nowrap; }
+        .target-reference-table td { vertical-align: top; line-height: 1.55; }
+        .target-reference-table .metric-name-cell { min-width: 160px; font-weight: 700; color: #0f172a; }
+        .target-row-failing > td { background: #fff7f7; border-color: #fecaca; }
+        .target-chip, .actual-chip { display: inline-block; margin: 2px 4px 2px 0; padding: 3px 7px; border-radius: 5px; white-space: normal; }
+        .target-chip { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; }
+        .target-value { display: inline-block; padding: 3px 8px; border-radius: 5px; background: #eff6ff; color: #1d4ed8; font-weight: 700; }
+        .config-reference { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+        .actual-chip.is-passing { background: #ecfdf5; border: 1px solid #bbf7d0; color: #166534; }
+        .actual-chip.is-failing { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; font-weight: 700; }
+        .status-badge { display: inline-block; padding: 3px 8px; border-radius: 999px; font-weight: 700; white-space: nowrap; }
+        .status-passing { background: #dcfce7; color: #166534; }
+        .status-failing { background: #fee2e2; color: #b91c1c; }
+        .status-empty { background: #f1f5f9; color: #64748b; }
+        .no-value, .empty-target-row { color: #94a3b8; }
+        .empty-target-row { text-align: center !important; padding: 24px !important; }
+        .standalone-footer { margin: 18px 0 0; text-align: center; color: #64748b; font-size: 11px; }
+        @media print {
+            @page { size: A4 landscape; margin: 10mm; }
+            body { background: #fff; }
+            .page-container { max-width: none !important; padding: 0 !important; }
+            .section-card { box-shadow: none !important; break-inside: auto; }
+            .target-reference-table { min-width: 0; font-size: 9px; }
+            .target-reference-table th { position: static; }
+            tr { break-inside: avoid; }
+        }
+    `);
+    return cssParts.join('\n');
+}
+
+function replaceStandaloneChartWithImage(clone, chartId) {
+    const source = document.getElementById(chartId);
+    const target = clone.querySelector(`#${chartId}`);
+    if (!source || !target) return;
+    let imageUrl = '';
+    const chart = window.echarts && window.echarts.getInstanceByDom(source);
+    try {
+        imageUrl = chart
+            ? chart.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#fafafa' })
+            : (source.querySelector('canvas') ? source.querySelector('canvas').toDataURL('image/png') : '');
+    } catch (error) {
+        imageUrl = '';
+    }
+    if (imageUrl) {
+        target.innerHTML = `<img class="standalone-chart-image" src="${imageUrl}" alt="${escapeHTML(chartId)}">`;
+    }
+}
+
+function createDailyHtmlBlob(date, dailyData) {
+    const source = document.querySelector('.page-container');
+    if (!source) throw new Error('Report content is not available');
+    const clone = source.cloneNode(true);
+
+    clone.querySelectorAll('.source-info-wrapper, #date-filter-container, #export-actions, #loader, #report-empty-state, #report-error-state').forEach(node => node.remove());
+    const reportContent = clone.querySelector('#report-content');
+    if (reportContent) reportContent.style.display = 'block';
+    const explanation = clone.querySelector('#monthly-explanation-section');
+    const targetReference = buildDailyTargetReferenceHtml(date, dailyData);
+    if (explanation) explanation.insertAdjacentHTML('beforebegin', targetReference);
+    else if (reportContent) reportContent.insertAdjacentHTML('beforeend', targetReference);
+
+    replaceStandaloneChartWithImage(clone, 'chart-overall');
+    replaceStandaloneChartWithImage(clone, 'chart-groups');
+    clone.insertAdjacentHTML(
+        'beforeend',
+        `<div class="standalone-footer">${window.currentLang === 'en' ? 'Generated from the saved Tools Platform daily snapshot' : '基于 Tools Platform 当日入库快照生成'} · ${escapeHTML(date)}</div>`
+    );
+
+    const lang = window.currentLang === 'en' ? 'en' : 'zh-CN';
+    const title = `${date}_${window.currentLang === 'en' ? 'Daily Report' : '日报'}`;
+    const html = `<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${escapeHTML(title)}</title>
+    <style>${collectMonthlyStandaloneCss()}</style>
+</head>
+<body>${clone.outerHTML}</body>
+</html>`;
+    return new Blob(['\uFEFF', html], { type: 'text/html;charset=utf-8' });
+}
+
+async function fetchDailyReportData(date) {
+    const params = new URLSearchParams({ startDate: date, endDate: date });
+    return window.API.get(`/api/db/monthly_report_data?${params.toString()}`);
+}
+
+function setDailyExportHeading(date) {
+    const title = document.querySelector('.report-header h2');
+    if (title) {
+        title.innerHTML = `${escapeHTML(t('daily_report_title'))} <span style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">${escapeHTML(date)}</span>`;
+    }
+    const dateRange = document.getElementById('report-date-range');
+    if (dateRange) {
+        dateRange.innerText = window.currentLang === 'en' ? `Report Date: ${date}` : `日报日期：${date}`;
+    }
+}
+
+window.exportDailyBundle = async function () {
+    const button = document.getElementById('export-daily-bundle-btn');
+    const originalButtonHtml = button ? button.innerHTML : '';
+    const selectedRange = getMonthlyDateFilters();
+    const originalState = {
+        trends: currentTrends,
+        latest: currentLatest,
+        targetMonth: document.getElementById('monthlyTargetMonth')?.value || ''
+    };
+    let dates = [...new Set((currentTrends || []).map(item => item.date).filter(Boolean))].sort();
+
+    if ((selectedRange.startDate && !selectedRange.endDate) || (!selectedRange.startDate && selectedRange.endDate)) {
+        showToast(window.currentLang === 'en' ? 'Please select both start and end dates' : '请选择完整的开始日期和结束日期', 'warn');
+        return;
+    }
+    if (selectedRange.startDate && selectedRange.startDate > selectedRange.endDate) {
+        showToast(window.currentLang === 'en' ? 'Start date cannot be after end date' : '开始日期不能晚于结束日期', 'warn');
+        return;
+    }
+    if (!window.JSZip || !window.jspdf || !window.html2canvas) {
+        showToast(t('msg_export_daily_fail') + 'export library is not available', 'error');
+        return;
+    }
+
+    try {
+        if (button) button.disabled = true;
+        if (selectedRange.startDate && selectedRange.endDate) {
+            const selectedData = await window.API.get(
+                `/api/db/monthly_report_data?${new URLSearchParams({
+                    startDate: selectedRange.startDate,
+                    endDate: selectedRange.endDate
+                }).toString()}`
+            );
+            dates = [...new Set((selectedData.trends || []).map(item => item.date).filter(Boolean))].sort();
+        }
+        if (!dates.length) throw new Error(t('no_data'));
+
+        const zip = new JSZip();
+        let exportedCount = 0;
+
+        for (let index = 0; index < dates.length; index++) {
+            const date = dates[index];
+            const progress = t('msg_export_daily_progress', {
+                current: index + 1,
+                total: dates.length,
+                date
+            });
+            if (button) button.textContent = progress;
+            showToast(progress, 'info');
+
+            const dailyData = await fetchDailyReportData(date);
+            if (!dailyData || !dailyData.latest_snapshot || !dailyData.trends || !dailyData.trends.length) continue;
+
+            currentTrends = dailyData.trends;
+            currentLatest = dailyData.latest_snapshot;
+            const monthSelect = document.getElementById('monthlyTargetMonth');
+            const reportMonth = parseInt(dailyData.latest_snapshot.month, 10);
+            if (monthSelect && reportMonth >= 1 && reportMonth <= 12) monthSelect.value = String(reportMonth);
+
+            renderAll();
+            setDailyExportHeading(date);
+            await waitForMonthlyReportPaint();
+
+            const canvas = await captureMonthlyReportCanvas();
+            const pdfBlob = createPdfBlobFromCanvas(canvas);
+            const htmlBlob = createDailyHtmlBlob(date, dailyData);
+            const monthFolder = date.slice(0, 7);
+            const dailyBaseName = `${date}_日报`;
+            zip.file(`${monthFolder}/${dailyBaseName}.pdf`, pdfBlob);
+            zip.file(`${monthFolder}/${dailyBaseName}.html`, htmlBlob);
+            exportedCount++;
+        }
+
+        if (!exportedCount) throw new Error(t('no_data'));
+        const zipBlob = await zip.generateAsync({
+            type: 'blob',
+            compression: 'DEFLATE',
+            compressionOptions: { level: 6 }
+        });
+        downloadBlob(zipBlob, `日报批量导出_${dates[0]}_至_${dates[dates.length - 1]}.zip`);
+        showToast(t('msg_export_daily_success', { count: exportedCount }), 'success');
+    } catch (error) {
+        console.error('Failed to export daily report bundle:', error);
+        showToast(t('msg_export_daily_fail') + error.message, 'error');
+    } finally {
+        currentTrends = originalState.trends;
+        currentLatest = originalState.latest;
+        const monthSelect = document.getElementById('monthlyTargetMonth');
+        if (monthSelect && originalState.targetMonth) monthSelect.value = originalState.targetMonth;
+        if (currentTrends && currentLatest) renderAll();
+        if (button) {
+            button.disabled = false;
+            button.innerHTML = originalButtonHtml;
+        }
+    }
+};
 
 window.exportToImage = async function () {
     try {

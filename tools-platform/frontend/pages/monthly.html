@@ -261,14 +261,23 @@
                     <button id="custom-filter-btn" style="padding: 6px 12px; background: #00285e; color: #fff; border: none; border-radius: 4px; cursor: pointer;" data-i18n="filter">筛选</button>
                 </div>
             </div>
-            <div id="export-actions" style="margin-top: 15px; display: none; gap: 10px; justify-content: center;">
+            <div id="export-actions" style="margin-top: 15px; display: none; gap: 10px; justify-content: center; flex-wrap: wrap;">
                 <button onclick="exportToImage()" style="padding: 8px 16px; background: #00285e; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;" data-i18n="export_image">🖼️ 导出为长图</button>
                 <button onclick="exportToPDF()" style="padding: 8px 16px; background: #e31837; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;" data-i18n="export_pdf">📄 导出为 PDF</button>
+                <button id="export-daily-bundle-btn" onclick="exportDailyBundle()" style="padding: 8px 16px; background: #0f766e; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;" data-i18n="export_daily_bundle">📦 按天导出 PDF 与完整 HTML 日报</button>
             </div>
         </div>
 
         <div id="loader" class="loader">
             <p data-i18n="loading_report">正在分析历史数据，生成月报...</p>
+        </div>
+
+        <div id="report-empty-state" class="loader" style="display: none;">
+            <p data-i18n="no_data">当前时间范围内没有入库数据。</p>
+        </div>
+
+        <div id="report-error-state" class="loader" style="display: none;">
+            <p style="color:red;"></p>
         </div>
 
         <div id="report-content" style="display: none;">
@@ -362,6 +371,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="/js/shared/jszip.min.js?v=20260723-01"></script>
     <script src="/js/shared/toast.js?v=20260530-01"></script>
     <script src="/js/shared/api.js?v=20260710-01"></script>
     <script src="/js/shared/i18n.js?v=20260610-01"></script>
@@ -395,7 +405,7 @@
 
         window.renderMonthlySourcePanel = renderMonthlySourcePanel;
     </script>
-    <script src="/js/report/monthly.js?v=20260709-03"></script>
+    <script src="/js/report/monthly.js?v=20260724-01"></script>
 </body>
 
 </html>
