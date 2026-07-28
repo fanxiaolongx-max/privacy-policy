@@ -210,6 +210,43 @@
   .blacklist-example{margin-top:8px;padding:9px 11px;border-radius:8px;background:#f7f8fa;color:#667085;
     font-size:9.5px;line-height:1.55}
   .blacklist-count{font-size:10px;color:#475467;font-weight:700;margin-top:9px}
+  .identity-alert{margin-top:7px;padding:6px 9px;border:1px dashed rgba(102,112,133,.22);
+    border-radius:7px;background:rgba(255,255,255,.36);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    color:#7a8492;font-size:9.5px;line-height:1.5}
+  .identity-alert[hidden]{display:none}
+  .identity-alert strong{color:#667085;font-weight:700;margin-right:4px}
+  .identity-detail-btn{display:inline;padding:0 2px;border:0;border-radius:3px;background:transparent;color:#506b8d;
+    font-size:9.5px;font-weight:700;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+  .identity-detail-btn:hover{color:#263f5e;background:rgba(80,107,141,.08)}
+  .identity-detail-btn[hidden]{display:none}
+  .identity-detail-body{padding:16px 18px 18px}
+  .identity-detail-summary{font-size:10.5px;color:#667085;line-height:1.55;margin-bottom:10px}
+  .identity-detail-table{max-height:58vh}
+  .identity-detail-table table{min-width:760px}
+
+  body{
+    background:
+      radial-gradient(circle at 8% 4%,rgba(200,16,46,.10),transparent 28%),
+      radial-gradient(circle at 92% 12%,rgba(63,111,159,.12),transparent 30%),
+      linear-gradient(145deg,#eef1f5 0%,#f7f8fa 52%,#edf1f5 100%);
+    background-attachment:fixed;
+  }
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;
+    background:linear-gradient(120deg,rgba(255,255,255,.24),rgba(255,255,255,0) 42%,rgba(255,255,255,.18));
+    z-index:-1}
+  .page{position:relative}
+  .hero,.card,.stat,.chart-card{
+    background:rgba(255,255,255,.76);
+    border-color:rgba(255,255,255,.72);
+    backdrop-filter:blur(17px) saturate(125%);
+    -webkit-backdrop-filter:blur(17px) saturate(125%);
+    box-shadow:0 12px 34px rgba(16,24,40,.075),inset 0 1px 0 rgba(255,255,255,.82);
+  }
+  .hero{border-top:4px solid var(--red)}
+  .filter-card,.table-wrap{background:rgba(255,255,255,.62)}
+  input,select,.setting-box,.cross-controls{background-color:rgba(255,255,255,.72)}
+  .table-wrap{border-color:rgba(207,214,223,.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  th{background:rgba(241,244,247,.94);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
 
 </style>
 </head>
@@ -283,7 +320,7 @@
       <div><label>客户名称</label><select id="filterCustomer"><option value="">全部</option></select></div>
       <div><label>人员属性</label><select id="filterAttr"><option value="">全部</option></select></div>
       <div><label>操作等级</label><select id="filterLevel"><option value="">全部</option></select></div>
-      <div><label>人员工号</label><input id="filterPerson" type="text" placeholder="输入完整或部分工号"><div class="filter-help">支持包含匹配</div></div>
+      <div><label>操作人姓名 / 工号</label><input id="filterPerson" type="text" placeholder="输入姓名或完整/部分工号"><div class="filter-help">支持包含匹配</div></div>
       <div><label>维度统计</label>
         <select id="chartDimension">
           <option value="person">操作人</option>
@@ -305,6 +342,11 @@
     <div class="stat"><div class="k">涉及人员 <span class="scope-note dynamic">随筛选</span></div><div class="v" id="sPeople">0</div></div>
     <div class="stat"><div class="k">激励合计 <span style="font-size:9px;color:#98a2b3">（元）</span> <span class="scope-note dynamic">随筛选</span></div><div class="v warn" id="sMoney">0</div></div>
   </section>
+  <div class="identity-alert" id="identityAlert" hidden>
+    <strong id="identityAlertTitle">姓名工号校验提示：</strong><span id="identityAlertText"></span>
+    <button type="button" class="identity-detail-btn" id="identityDetailsBtn" hidden></button>
+    <span>。仅作核查提示，不影响原有计算。</span>
+  </div>
 
   <section class="card" style="margin-top:14px">
     <div class="toolbar">
@@ -351,7 +393,7 @@
       <div class="chart-head">
         <div>
           <div class="chart-title" id="rankTitle">操作人激励金额排行</div>
-          <div class="chart-desc">显示当前维度激励金额前 10 项，单位为元。</div>
+          <div class="chart-desc" id="rankDesc">默认显示姓名，点击姓名可切换显示对应工号。</div>
         </div>
       </div>
       <div class="chart-box"><canvas id="rankChart"></canvas></div>
@@ -391,6 +433,15 @@
         </div>
       </div>
       <div class="chart-box"><canvas id="calcStatusChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head">
+        <div>
+          <div class="chart-title">黑名单拦截统计</div>
+          <div class="chart-desc">按操作人展示当前筛选条件下被黑名单拦截的候选记录，单位为条。</div>
+        </div>
+      </div>
+      <div class="chart-box"><canvas id="blacklistChart"></canvas></div>
     </div>
 
     <div class="chart-card">
@@ -553,6 +604,22 @@ m00961966"></textarea>
   </div>
 </div>
 
+<div class="rule-modal" id="identityDetailsModal">
+  <div class="rule-modal-card" style="width:min(980px,94vw)">
+    <div class="rule-modal-head">
+      <div>
+        <div class="rule-modal-title">姓名工号校验不通过清单</div>
+        <div class="section-note">展示操作人工号与 fme_fullname 工号无法匹配的有效候选记录，仅供核查。</div>
+      </div>
+      <button class="icon-btn" id="closeIdentityDetailsModal" aria-label="关闭">×</button>
+    </div>
+    <div class="identity-detail-body">
+      <div class="identity-detail-summary" id="identityDetailsSummary"></div>
+      <div class="table-wrap identity-detail-table" id="identityDetailsTable"></div>
+    </div>
+  </div>
+</div>
+
 <div class="progress-mask" id="mask">
   <div class="progress-card">
     <div style="font-weight:800;font-size:18px">正在分析数据</div>
@@ -564,6 +631,7 @@ m00961966"></textarea>
 <script>
 const $=id=>document.getElementById(id);
 let rawRows=[], validRows=[], dedupRows=[], calcDetailRows=[], excludedRows=[], currentView='dimension', activeDimension='person', activeCrossDimension='bu', quickRange=null;
+let rankPersonShowIds=false,rankPersonHitRows=[];
 let sourceWorkbook=null, sourceSheetName='', sourceWorksheet=null, sourceFileName='';
 const levelRank={fatal:4,high:3,medium:2,low:1};
 const aliases={
@@ -581,7 +649,8 @@ const aliases={
   task:['task_id','icare_task_number'],
   summary:['problem_summary','title'],
   region:['region_name_cn_mp'],
-  rep:['rep_name_cn_mp']
+  rep:['rep_name_cn_mp'],
+  full_name:['fme_fullname']
 };
 
 const BLACKLIST_STORAGE_KEY='nightAllowanceBlacklistV1';
@@ -659,6 +728,38 @@ function resetRules(){
 
 function val(row, keys){for(const k of keys||[]){if(row[k]!==undefined&&row[k]!==null&&String(row[k]).trim()!=='')return row[k]}return ''}
 function clean(v){return String(v??'').trim()}
+function personIdsMatch(operatorId,fullnameId){
+  const operator=clean(operatorId).toLowerCase(),reported=clean(fullnameId).toLowerCase();
+  if(!operator||!reported)return false;
+  if(operator===reported)return true;
+  return /^[a-z]/.test(operator)&&operator.slice(1)===reported;
+}
+function parseFmeFullname(value,person){
+  const raw=clean(value),personId=clean(person);
+  if(!raw)return {raw:'',name:'',reportedPerson:'',status:'missing'};
+  const parts=raw.split(/\s+/).filter(Boolean);
+  const matchedIndex=parts.findIndex(part=>personIdsMatch(personId,part));
+  if(personId&&matchedIndex>=0){
+    return {
+      raw,
+      name:parts.filter((_,index)=>index!==matchedIndex).join(' '),
+      reportedPerson:parts[matchedIndex],
+      status:'matched'
+    };
+  }
+  return {
+    raw,
+    name:parts.length>1?parts.slice(0,-1).join(' '):'',
+    reportedPerson:parts.length>1?parts.at(-1):raw,
+    status:personId?'mismatch':'missing'
+  };
+}
+function displayPersonName(r){return clean(r?.__name)||'—'}
+function identityCheckCell(r){
+  if(r.__identityStatus==='matched')return '<span class="tag ok">一致</span>';
+  if(r.__identityStatus==='mismatch')return `<span class="tag bad">不一致：${esc(r.__fmePerson||'未识别')}</span>`;
+  return '<span class="tag mid">未提供</span>';
+}
 function parseDate(v){
   if(v instanceof Date&&!isNaN(v))return v;
   if(typeof v==='number'&&window.XLSX){const d=XLSX.SSF.parse_date_code(v);if(d)return new Date(d.y,d.m-1,d.d,d.H||0,d.M||0,d.S||0)}
@@ -734,6 +835,7 @@ function setProgress(p,t){$('mask').style.display='flex';$('progressBar').style.
 function hideProgress(){setTimeout(()=>$('mask').style.display='none',180)}
 function resetAllFiltersForNewFile(){
   quickRange=null;
+  rankPersonShowIds=false;
   ['filterYear','filterMonth','filterBU','filterCustomer','filterAttr','filterLevel'].forEach(id=>{
     if($(id))$(id).value='';
   });
@@ -782,6 +884,7 @@ function recalculate(){
     const byTime=isNightByTime(start,end);
     const completed=isCompleted(status);
     const person=clean(r[pf]??val(r,[pf,'complete_operator','方案实施人工号','solution_develop_name']));
+    const identity=parseFmeFullname(val(r,aliases.full_name),person);
     let nightOk=mode==='strict'?(byField&&byTime):mode==='time'?byTime:byField;
     let reasons=[];
     if(!completed)reasons.push('任务未完成');
@@ -791,7 +894,8 @@ function recalculate(){
     const base={...r,__row:i+2,__person:person,__start:start,__end:end,__date:dateKey(start),__sourceYear:normalizeSourceYear(val(r,aliases.source_year)),__sourceMonth:normalizeSourceMonth(val(r,aliases.source_month)),__level:clean(val(r,aliases.operate_level)),
       __rank:rank(val(r,aliases.operate_level)),__fee:fee(val(r,aliases.operate_level)),__byField:byField,__byTime:byTime,
       __bu:clean(val(r,aliases.bu)),__customer:clean(val(r,aliases.customer)),__attr:clean(val(r,aliases.attr)),
-      __task:clean(val(r,aliases.task)),__summary:clean(val(r,aliases.summary)),__status:clean(status)};
+      __task:clean(val(r,aliases.task)),__summary:clean(val(r,aliases.summary)),__status:clean(status),
+      __name:identity.status==='matched'?identity.name:'',__fmeName:identity.name,__fmeFullname:identity.raw,__fmePerson:identity.reportedPerson,__identityStatus:identity.status};
     if(completed&&nightOk&&person&&start)validRows.push(base); else excludedRows.push({...base,__reason:reasons.join('；')||'规则未满足'});
   });
   const best=new Map();
@@ -810,6 +914,7 @@ function recalculate(){
     return {
       ...r,
       __counted:counted,
+      __blacklisted:Boolean(blockedReason),
       __calcFee:counted?r.__fee:0,
       __calcStatus:counted?'计发':'忽略',
       __ignoreReason:counted?'':blockedReason?`激励黑名单：${blockedReason}`:'同日多单，已由更高等级记录计发',
@@ -845,7 +950,7 @@ function rowMatchesFilters(r){
     (!$('filterCustomer').value||r.__customer===$('filterCustomer').value)&&
     (!$('filterAttr').value||r.__attr===$('filterAttr').value)&&
     (!$('filterLevel').value||r.__level===$('filterLevel').value)&&
-    (!personText||clean(r.__person).toLowerCase().includes(personText));
+    (!personText||clean(r.__person).toLowerCase().includes(personText)||clean(r.__name).toLowerCase().includes(personText));
 }
 function filtered(){
   return dedupRows.filter(rowMatchesFilters);
@@ -863,6 +968,7 @@ function render(){
   const rows=filtered();
   $('sRaw').textContent=rawRows.length;$('sValid').textContent=validRows.length;$('sDedup').textContent=rows.length;
   $('sPeople').textContent=new Set(rows.map(r=>r.__person)).size;$('sMoney').textContent=money(rows.reduce((s,r)=>s+r.__fee,0));
+  renderIdentityValidation();
   $('crossControls').classList.toggle('show',currentView==='summary');
   drawCharts(rows);
   if(currentView==='dimension')renderDimension(rows);
@@ -871,6 +977,41 @@ function render(){
   else if(currentView==='person')renderPerson(rows);
   else if(currentView==='detail')renderDetail(filteredCalcDetails());
   else renderExcluded(filteredExcludedRows());
+}
+function renderIdentityValidation(){
+  const checked=validRows.filter(r=>r.__identityStatus!=='missing');
+  const mismatches=checked.filter(r=>r.__identityStatus==='mismatch');
+  const alertBox=$('identityAlert'),detailsBtn=$('identityDetailsBtn');
+  if(mismatches.length){
+    $('identityAlertTitle').textContent='姓名工号校验提示：';
+    const samples=mismatches.slice(0,5).map(r=>`${r.__person||'空工号'} ↔ ${r.__fmePerson||r.__fmeFullname||'未识别'}`);
+    const remaining=Math.max(0,mismatches.length-samples.length);
+    $('identityAlertText').textContent=`发现 ${mismatches.length} 条不一致记录：${samples.join('；')}${remaining?'；':''}`;
+    detailsBtn.textContent=remaining?`另有 ${remaining} 条，查看完整清单`:`查看不通过清单（${mismatches.length}）`;
+    detailsBtn.hidden=false;
+    alertBox.hidden=false;
+  }else{
+    detailsBtn.hidden=true;
+    alertBox.hidden=true;
+  }
+}
+function openIdentityDetails(){
+  const mismatches=validRows
+    .filter(r=>r.__identityStatus==='mismatch')
+    .sort((a,b)=>a.__row-b.__row);
+  $('identityDetailsSummary').textContent=`共 ${mismatches.length} 条校验不通过记录；列表按原始 Excel 行号排列。`;
+  $('identityDetailsTable').innerHTML=mismatches.length?`
+    <table>
+      <thead><tr><th>Excel 行号</th><th>姓名（fme）</th><th>操作人工号</th><th>fme 工号</th><th>原始 fme_fullname</th></tr></thead>
+      <tbody>${mismatches.map(r=>`<tr>
+        <td>${r.__row}</td>
+        <td>${esc(r.__fmeName||'—')}</td>
+        <td>${esc(r.__person||'—')}</td>
+        <td>${esc(r.__fmePerson||'—')}</td>
+        <td>${esc(r.__fmeFullname||'—')}</td>
+      </tr>`).join('')}</tbody>
+    </table>`:'<div class="empty">当前没有校验不通过记录</div>';
+  $('identityDetailsModal').classList.add('show');
 }
 function table(headers,rows){
   if(!rows.length){$('tableWrap').innerHTML='<div class="empty">当前条件下暂无数据</div>';return}
@@ -893,19 +1034,27 @@ function aggregateDimension(rows){
   const meta=dimensionMeta(),m=new Map();
   rows.forEach(r=>{
     const k=meta.get(r);
-    if(!m.has(k))m.set(k,{name:k,count:0,money:0,people:new Set(),days:new Set(),levels:{}});
+    if(!m.has(k))m.set(k,{name:k,count:0,money:0,people:new Set(),names:new Set(),days:new Set(),levels:{}});
     const x=m.get(k);x.count++;x.money+=r.__fee;x.people.add(r.__person);x.days.add(r.__date);
+    if(r.__name)x.names.add(r.__name);
     x.levels[r.__level||'未识别']=(x.levels[r.__level||'未识别']||0)+1;
   });
   return [...m.values()].sort((a,b)=>b.money-a.money||b.count-a.count||a.name.localeCompare(b.name,'zh-CN'));
 }
 function renderDimension(rows){
-  const meta=dimensionMeta(),data=aggregateDimension(rows).map((x,i)=>[
-    i+1,esc(x.name),x.count,x.days.size,x.people.size,
-    esc(Object.entries(x.levels).map(([k,v])=>`${k}:${v}`).join(' / ')),
-    `<span class="money">${money(x.money)}</span>`
-  ]);
-  table(['排名',meta.label,'计费记录','操作天数','涉及人员','等级分布','激励合计（元）'],data);
+  const meta=dimensionMeta(),isPerson=activeDimension==='person';
+  const data=aggregateDimension(rows).map((x,i)=>{
+    const row=[i+1,esc(x.name)];
+    if(isPerson)row.push(esc([...x.names].join(' / ')||'—'));
+    row.push(x.count,x.days.size,x.people.size,
+      esc(Object.entries(x.levels).map(([k,v])=>`${k}:${v}`).join(' / ')),
+      `<span class="money">${money(x.money)}</span>`);
+    return row;
+  });
+  const headers=['排名',meta.label];
+  if(isPerson)headers.push('姓名');
+  headers.push('计费记录','操作天数','涉及人员','等级分布','激励合计（元）');
+  table(headers,data);
 }
 
 function canvasSetup(canvas){
@@ -1006,34 +1155,6 @@ function drawValueBadge(ctx,text,x,y,opt={}){
   ctx.restore();
   return {w,h,x:xx};
 }
-function dimensionMeta(){
-  const map={
-    person:{label:'操作人',get:r=>r.__person||'未填写'},
-    bu:{label:'BU1 / 部门',get:r=>r.__bu||'未填写'},
-    customer:{label:'客户名称',get:r=>r.__customer||'未填写'},
-    attr:{label:'人员属性',get:r=>r.__attr||'未填写'},
-    level:{label:'操作等级',get:r=>r.__level||'未识别'}
-  };
-  return map[activeDimension]||map.person;
-}
-function aggregateDimension(rows){
-  const meta=dimensionMeta(),m=new Map();
-  rows.forEach(r=>{
-    const k=meta.get(r);
-    if(!m.has(k))m.set(k,{name:k,count:0,money:0,people:new Set(),days:new Set(),levels:{}});
-    const x=m.get(k);x.count++;x.money+=r.__fee;x.people.add(r.__person);x.days.add(r.__date);
-    x.levels[r.__level||'未识别']=(x.levels[r.__level||'未识别']||0)+1;
-  });
-  return [...m.values()].sort((a,b)=>b.money-a.money||b.count-a.count||a.name.localeCompare(b.name,'zh-CN'));
-}
-function renderDimension(rows){
-  const meta=dimensionMeta(),data=aggregateDimension(rows).map((x,i)=>[
-    i+1,esc(x.name),x.count,x.days.size,x.people.size,
-    esc(Object.entries(x.levels).map(([k,v])=>`${k}:${v}`).join(' / ')),
-    `<span class="money">${money(x.money)}</span>`
-  ]);
-  table(['排名',meta.label,'计费记录','操作天数','涉及人员','等级分布','激励合计（元）'],data);
-}
 function drawTrend(rows){
   const {ctx,w,h}=canvasSetup($('trendChart'));
   ctx.clearRect(0,0,w,h);
@@ -1071,8 +1192,8 @@ function drawHorizontalBars(canvasId,data,emptyText,opt={}){
     const y=pad.t+i*rowH+rowH*.23,bh=Math.max(15,Math.min(22,rowH*.5)),bw=cw*d.value/max;
     ctx.fillStyle=chartTheme.track;roundRect(ctx,pad.l,y,cw,bh,7,true,false);
     ctx.fillStyle=colors[i%colors.length];roundRect(ctx,pad.l,y,Math.max(6,bw),bh,7,true,false);
-    ctx.fillStyle=chartTheme.text;ctx.textAlign='right';ctx.textBaseline='middle';
-    ctx.fillText(fitText(ctx,d.name,pad.l-18),pad.l-10,y+bh/2);
+    ctx.fillStyle=chartTheme.text;ctx.textAlign=opt.labelAlign==='left'?'left':'right';ctx.textBaseline='middle';
+    ctx.fillText(fitText(ctx,d.name,pad.l-18),opt.labelAlign==='left'?8:pad.l-10,y+bh/2);
     const text=d.display??String(d.value),tw=ctx.measureText(text).width;
     if(bw>tw+22){
       ctx.fillStyle='#fff';ctx.textAlign='right';ctx.fillText(text,pad.l+bw-8,y+bh/2);
@@ -1084,8 +1205,25 @@ function drawHorizontalBars(canvasId,data,emptyText,opt={}){
 function drawRank(rows){
   const meta=dimensionMeta(),data=aggregateDimension(rows).slice(0,8);
   $('rankTitle').textContent=`${meta.label}激励金额排行（元）`;
-  drawHorizontalBars('rankChart',data.map((d,i)=>({name:`${i+1}. ${d.name}`,value:d.money,display:`${Math.round(d.money).toLocaleString('zh-CN')}元`})),'暂无排行数据',
-    {colors:[chartTheme.red,'#d84962','#e16c7f','#8b95a5']});
+  $('rankDesc').textContent=activeDimension==='person'
+    ? rankPersonShowIds
+      ? '当前统一显示工号，点击左侧任意工号可全部切回姓名。'
+      : '当前统一显示姓名，点击左侧任意姓名可全部切换为工号。'
+    : '显示当前维度的激励金额排行，单位为元。';
+  drawHorizontalBars('rankChart',data.map((d,i)=>{
+    const personName=activeDimension==='person'&&d.names.size?[...d.names][0]:'';
+    const label=!rankPersonShowIds&&personName?personName:d.name;
+    return {name:`${i+1}. ${label}`,value:d.money,display:`${Math.round(d.money).toLocaleString('zh-CN')}元`};
+  }),'暂无排行数据',
+    {colors:[chartTheme.red,'#d84962','#e16c7f','#8b95a5'],labelAlign:activeDimension==='person'?'left':'right'});
+  const rect=$('rankChart').getBoundingClientRect();
+  const left=Math.min(145,Math.max(95,rect.width*.34)),top=14,bottom=12;
+  const rowH=data.length?(rect.height-top-bottom)/data.length:0;
+  rankPersonHitRows=activeDimension==='person'?data.map((d,index)=>({
+    left,
+    top:top+index*rowH,
+    bottom:top+(index+1)*rowH
+  })):[];
 }
 function drawVolume(rows){
   const {ctx,w,h}=canvasSetup($('volumeChart'));ctx.clearRect(0,0,w,h);
@@ -1161,19 +1299,34 @@ function drawBUMoney(rows){
     {colors:[chartTheme.red,chartTheme.red2,chartTheme.orange,chartTheme.slate]});
 }
 function drawCalcStatus(){
-  const details=filteredCalcDetails(),counted=details.filter(r=>r.__counted).length,ignored=details.filter(r=>!r.__counted).length;
-  drawDonut('calcStatusChart',[{name:'最终计发',value:counted},{name:'同日忽略',value:ignored}],'暂无计算明细数据',
+  const details=filteredCalcDetails(),counted=details.filter(r=>r.__counted).length;
+  const ignored=details.filter(r=>!r.__counted&&!r.__blacklisted).length;
+  drawDonut('calcStatusChart',[{name:'最终计发',value:counted},{name:'同日多单忽略',value:ignored}],'暂无计发或同日忽略数据',
     {colors:[chartTheme.green,chartTheme.slate],centerLabel:'候选记录（条）',valueUnit:'条'});
+}
+function drawBlacklistStats(){
+  const m=new Map();
+  filteredCalcDetails().filter(r=>r.__blacklisted).forEach(r=>{
+    if(!m.has(r.__person))m.set(r.__person,{count:0,name:r.__name||''});
+    const item=m.get(r.__person);item.count++;
+    if(!item.name&&r.__name)item.name=r.__name;
+  });
+  const data=[...m.entries()]
+    .map(([person,item])=>({name:item.name?`${item.name} · ${person}`:person,value:item.count,display:`${item.count}条`}))
+    .sort((a,b)=>b.value-a.value||a.name.localeCompare(b.name,'zh-CN'))
+    .slice(0,12);
+  drawHorizontalBars('blacklistChart',data,'当前筛选条件下无黑名单拦截记录',
+    {colors:[chartTheme.navy,chartTheme.slate,chartTheme.red2,chartTheme.orange]});
 }
 function drawCharts(rows){
   requestAnimationFrame(()=>{
-    drawTrend(rows);drawRank(rows);drawVolume(rows);drawLevel(rows);drawAttr(rows);drawCalcStatus();drawBUCount(rows);drawBUMoney(rows);
+    drawTrend(rows);drawRank(rows);drawVolume(rows);drawLevel(rows);drawAttr(rows);drawCalcStatus();drawBlacklistStats();drawBUCount(rows);drawBUMoney(rows);
   });
 }
 
 function setQuickRange(type){
-  const dates=dedupRows.map(r=>r.__start).filter(Boolean).sort((a,b)=>b-a);
-  const base=dates[0]||new Date(),y=base.getFullYear(),m=base.getMonth(),now=new Date(y,m,1);
+  const dates=dedupRows.map(filterDateForRow).filter(Boolean).sort((a,b)=>b-a);
+  const base=dates[0]||new Date(),y=base.getFullYear(),m=base.getMonth();
   let start=null,end=null;
   if(type==='currentMonth'){start=new Date(y,m,1);end=new Date(y,m+1,1)}
   if(type==='lastMonth'){start=new Date(y,m-1,1);end=new Date(y,m,1)}
@@ -1220,29 +1373,36 @@ function renderSummary(rows){
   const meta=metaMap[activeCrossDimension]||metaMap.bu,m=new Map();
   rows.forEach(r=>{
     const p=periodKey(filterDateForRow(r),type),d=meta.get(r),k=p+'|'+d;
-    if(!m.has(k))m.set(k,{p,d,count:0,people:new Set(),days:new Set(),money:0,levels:{}});
+    if(!m.has(k))m.set(k,{p,d,name:'',count:0,people:new Set(),days:new Set(),money:0,levels:{}});
     const x=m.get(k);x.count++;x.people.add(r.__person);x.days.add(r.__date);x.money+=r.__fee;
+    if(activeCrossDimension==='person'&&!x.name&&r.__name)x.name=r.__name;
     x.levels[r.__level||'未识别']=(x.levels[r.__level||'未识别']||0)+1;
   });
   const data=[...m.values()]
     .sort((a,b)=>b.p.localeCompare(a.p)||b.money-a.money||b.count-a.count)
-    .map(x=>[
-      esc(x.p),esc(x.d),x.count,x.days.size,x.people.size,
-      esc(Object.entries(x.levels).map(([k,v])=>`${k}:${v}`).join(' / ')),
-      `<span class="money">${money(x.money)}</span>`
-    ]);
-  table(['周期',meta.label,'计费记录','操作天数','涉及人员','等级分布','激励合计（元）'],data);
+    .map(x=>{
+      const row=[esc(x.p),esc(x.d)];
+      if(activeCrossDimension==='person')row.push(esc(x.name||'—'));
+      row.push(x.count,x.days.size,x.people.size,
+        esc(Object.entries(x.levels).map(([k,v])=>`${k}:${v}`).join(' / ')),
+        `<span class="money">${money(x.money)}</span>`);
+      return row;
+    });
+  const headers=['周期',meta.label];
+  if(activeCrossDimension==='person')headers.push('姓名');
+  headers.push('计费记录','操作天数','涉及人员','等级分布','激励合计（元）');
+  table(headers,data);
 }
 function renderPerson(rows){
   const type=$('periodType').value,m=new Map();
-  rows.forEach(r=>{const p=periodKey(filterDateForRow(r),type),k=p+'|'+r.__person;if(!m.has(k))m.set(k,{p,person:r.__person,bu:new Set(),c:new Set(),a:new Set(),days:0,money:0,levels:{}});
-    const x=m.get(k);x.days++;x.money+=r.__fee;x.bu.add(r.__bu);x.c.add(r.__customer);x.a.add(r.__attr);x.levels[r.__level]=(x.levels[r.__level]||0)+1;
+  rows.forEach(r=>{const p=periodKey(filterDateForRow(r),type),k=p+'|'+r.__person;if(!m.has(k))m.set(k,{p,person:r.__person,name:'',bu:new Set(),c:new Set(),a:new Set(),days:0,money:0,levels:{}});
+    const x=m.get(k);x.days++;x.money+=r.__fee;if(!x.name&&r.__name)x.name=r.__name;x.bu.add(r.__bu);x.c.add(r.__customer);x.a.add(r.__attr);x.levels[r.__level]=(x.levels[r.__level]||0)+1;
   });
   const data=[...m.values()].sort((a,b)=>b.p.localeCompare(a.p)||b.money-a.money||a.person.localeCompare(b.person,'zh-CN')).map(x=>[
-    esc(x.p),esc(x.person),esc([...x.bu].filter(Boolean).join(' / ')),esc([...x.c].filter(Boolean).join(' / ')),
+    esc(x.p),esc(x.person),esc(x.name||'—'),esc([...x.bu].filter(Boolean).join(' / ')),esc([...x.c].filter(Boolean).join(' / ')),
     esc([...x.a].filter(Boolean).join(' / ')),x.days,esc(Object.entries(x.levels).map(([k,v])=>`${k}:${v}`).join(' / ')),`<span class="money">${money(x.money)}</span>`
   ]);
-  table(['周期','操作人','BU1 / 部门','客户','人员属性','计费天数','等级分布','激励合计（元）'],data);
+  table(['周期','操作人','姓名','BU1 / 部门','客户','人员属性','计费天数','等级分布','激励合计（元）'],data);
 }
 function renderDetail(rows){
   const sorted=[...rows].sort((a,b)=>
@@ -1255,6 +1415,8 @@ function renderDetail(rows){
   const data=sorted.map(r=>[
     esc(r.__date),
     esc(r.__person),
+    esc(displayPersonName(r)),
+    identityCheckCell(r),
     r.__counted?'<span class="tag ok">计发</span>':'<span class="tag mid">忽略</span>',
     esc(r.__level||'未识别'),
     `<span class="money">${money(r.__calcFee)}</span>`,
@@ -1266,12 +1428,12 @@ function renderDetail(rows){
     r.__byTime?'<span class="tag ok">时间确认</span>':'<span class="tag mid">时间未确认</span>',
     esc(r.__start?r.__start.toLocaleString('zh-CN'):'')
   ]);
-  table(['操作日期','操作人','计算状态','操作等级','本行激励（元）','忽略原因','当日计发等级','当日计发任务号','BU1','客户','人员属性','任务号','操作摘要','操作时间段校验','当地时间校验','当地开始时间'],data);
+  table(['操作日期','操作人','姓名','姓名工号校验','计算状态','操作等级','本行激励（元）','忽略原因','当日计发等级','当日计发任务号','BU1','客户','人员属性','任务号','操作摘要','操作时间段校验','当地时间校验','当地开始时间'],data);
 }
 function renderExcluded(rows=filteredExcludedRows()){
-  const data=[...rows].sort((a,b)=>(b.__date||'').localeCompare(a.__date||'')||a.__row-b.__row).map(r=>[r.__row,esc(r.__reason),esc(r.__person),esc(r.__status),esc(r.__level),esc(r.__task),esc(r.__summary),
+  const data=[...rows].sort((a,b)=>(b.__date||'').localeCompare(a.__date||'')||a.__row-b.__row).map(r=>[r.__row,esc(r.__reason),esc(r.__person),esc(displayPersonName(r)),identityCheckCell(r),esc(r.__status),esc(r.__level),esc(r.__task),esc(r.__summary),
     r.__byField?'是':'否',r.__byTime?'是':'否',esc(r.__start?r.__start.toLocaleString('zh-CN'):'')]);
-  table(['Excel行号','排除/异常原因','操作人','任务状态','等级','任务号','摘要','字段判定夜间','时间判定夜间','当地开始时间'],data);
+  table(['Excel行号','排除/异常原因','操作人','姓名','姓名工号校验','任务状态','等级','任务号','摘要','字段判定夜间','时间判定夜间','当地开始时间'],data);
 }
 
 function baseFilteredForCompare(){
@@ -1280,7 +1442,9 @@ function baseFilteredForCompare(){
     (!$('filterCustomer').value||r.__customer===$('filterCustomer').value)&&
     (!$('filterAttr').value||r.__attr===$('filterAttr').value)&&
     (!$('filterLevel').value||r.__level===$('filterLevel').value)&&
-    (!clean($('filterPerson').value)||r.__person.toLowerCase().includes(clean($('filterPerson').value).toLowerCase()))
+    (!clean($('filterPerson').value)||
+      r.__person.toLowerCase().includes(clean($('filterPerson').value).toLowerCase())||
+      clean(r.__name).toLowerCase().includes(clean($('filterPerson').value).toLowerCase()))
   );
 }
 function periodLabelFromDate(d,type){
@@ -1545,6 +1709,20 @@ $('chartDimension').onchange=()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.view==='dimension'));
   render();
 };
+function rankPersonHit(event){
+  if(activeDimension!=='person')return null;
+  return rankPersonHitRows.find(row=>event.offsetX<=row.left&&event.offsetY>=row.top&&event.offsetY<row.bottom)||null;
+}
+$('rankChart').addEventListener('mousemove',event=>{
+  $('rankChart').style.cursor=rankPersonHit(event)?'pointer':'default';
+});
+$('rankChart').addEventListener('mouseleave',()=>{$('rankChart').style.cursor='default'});
+$('rankChart').addEventListener('click',event=>{
+  const hit=rankPersonHit(event);
+  if(!hit)return;
+  rankPersonShowIds=!rankPersonShowIds;
+  drawRank(filtered());
+});
 document.querySelectorAll('.quick-btn').forEach(b=>b.onclick=()=>setQuickRange(b.dataset.quick));
 window.addEventListener('resize',()=>{if(rawRows.length)drawCharts(filtered())});
 ['feeLow','feeMedium','feeHigh','feeFatal','nightStart','nightEnd','verifyMode','personField'].forEach(id=>$(id).onchange=()=>{
@@ -1577,6 +1755,12 @@ $('clearBlacklistBtn').onclick=()=>{
   $('blacklistInput').value='';
   updateBlacklistCount();
 };
+const identityDetailsModal=$('identityDetailsModal');
+$('identityDetailsBtn').onclick=openIdentityDetails;
+$('closeIdentityDetailsModal').onclick=()=>identityDetailsModal.classList.remove('show');
+identityDetailsModal.addEventListener('click',event=>{
+  if(event.target===identityDetailsModal)identityDetailsModal.classList.remove('show');
+});
 
 $('closeRuleModal').onclick=()=>ruleModal.classList.remove('show');
 ruleModal.addEventListener('click',e=>{if(e.target===ruleModal)ruleModal.classList.remove('show')});
