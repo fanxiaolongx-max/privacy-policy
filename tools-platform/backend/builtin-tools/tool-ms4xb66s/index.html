@@ -223,6 +223,27 @@
   .identity-detail-summary{font-size:10.5px;color:#667085;line-height:1.55;margin-bottom:10px}
   .identity-detail-table{max-height:58vh}
   .identity-detail-table table{min-width:760px}
+  .analytics-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:18px}
+  .analytics-mode{display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding:3px;border:1px solid rgba(102,112,133,.16);
+    border-radius:8px;background:rgba(255,255,255,.5)}
+  .analytics-mode-label{padding:0 5px;color:#7a8492;font-size:9.5px;font-weight:700}
+  .analytics-mode-btn{padding:5px 9px;border-radius:6px;background:transparent;color:#667085;font-size:10px}
+  .analytics-mode-btn.active{background:#344054;color:#fff}
+  .chart-card.wide{grid-column:1/-1}
+  .chart-card[hidden]{display:none}
+  .chart-box.heatmap-box{height:360px}
+  .rank-insight{min-height:17px;margin-top:6px;color:#667085;font-size:9.5px;line-height:1.4}
+  .quality-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding-top:8px}
+  .quality-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px;border:1px solid rgba(102,112,133,.14);
+    border-radius:9px;background:rgba(255,255,255,.48);color:#475467;text-align:left}
+  .quality-item:hover{background:rgba(255,255,255,.82);border-color:rgba(102,112,133,.25)}
+  .quality-item span{font-size:10px}.quality-item strong{font-size:17px;color:#344054}
+  .quality-item.warn strong{color:#b54708}.quality-item.bad strong{color:#b42318}
+  .table-focus-notice{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;padding:7px 9px;
+    border-radius:7px;background:#f7f8fa;color:#667085;font-size:10px}
+  .table-focus-notice[hidden]{display:none}
+  .table-focus-notice button{padding:4px 7px;background:#fff;color:#475467;border:1px solid #dfe3e8;font-size:9.5px}
+  @media(max-width:720px){.analytics-heading{align-items:flex-start;flex-direction:column}.quality-grid{grid-template-columns:1fr 1fr}}
 
   body{
     background:
@@ -320,6 +341,18 @@
       <div><label>客户名称</label><select id="filterCustomer"><option value="">全部</option></select></div>
       <div><label>人员属性</label><select id="filterAttr"><option value="">全部</option></select></div>
       <div><label>操作等级</label><select id="filterLevel"><option value="">全部</option></select></div>
+      <div><label>剔重规则</label>
+        <select id="dedupMode" title="选择同人同天多单的统计方式">
+          <option value="highest" selected>同人同天按最高等级剔重</option>
+          <option value="none">不剔重</option>
+        </select>
+      </div>
+      <div><label>黑名单规则</label>
+        <select id="blacklistMode" title="选择当前统计是否应用激励黑名单">
+          <option value="enabled" selected>启用黑名单</option>
+          <option value="disabled">不启用黑名单</option>
+        </select>
+      </div>
       <div><label>操作人姓名 / 工号</label><input id="filterPerson" type="text" placeholder="输入姓名或完整/部分工号"><div class="filter-help">支持包含匹配</div></div>
       <div><label>维度统计</label>
         <select id="chartDimension">
@@ -338,7 +371,7 @@
   <section class="stats">
     <div class="stat"><div class="k">原始记录 <span class="scope-note fixed">不随筛选</span></div><div class="v" id="sRaw">0</div></div>
     <div class="stat"><div class="k">夜间且已完成 <span class="scope-note fixed">不随筛选</span></div><div class="v ok" id="sValid">0</div></div>
-    <div class="stat"><div class="k">同人同日去重后 <span class="scope-note dynamic">随筛选</span></div><div class="v red" id="sDedup">0</div></div>
+    <div class="stat"><div class="k"><span id="sDedupLabel">同人同日去重后</span> <span class="scope-note dynamic">随筛选</span></div><div class="v red" id="sDedup">0</div></div>
     <div class="stat"><div class="k">涉及人员 <span class="scope-note dynamic">随筛选</span></div><div class="v" id="sPeople">0</div></div>
     <div class="stat"><div class="k">激励合计 <span style="font-size:9px;color:#98a2b3">（元）</span> <span class="scope-note dynamic">随筛选</span></div><div class="v warn" id="sMoney">0</div></div>
   </section>
@@ -373,18 +406,31 @@
       <button class="cross-btn" data-cross="level">操作等级</button>
       <button class="cross-btn" data-cross="person">操作人</button>
     </div>
+    <div class="table-focus-notice" id="tableFocusNotice" hidden>
+      <span id="tableFocusText"></span>
+      <button type="button" id="clearTableFocus">返回当前视图全部数据</button>
+    </div>
     <div class="table-wrap" id="tableWrap"><div class="empty">请先导入 Excel 文件</div></div>
   </section>
-  <div style="margin-top:18px">
-    <div class="chart-title" style="font-size:15px">数据分析图表</div>
-    <div class="chart-desc">图表随当前筛选条件和统计周期自动更新。</div>
+  <div class="analytics-heading">
+    <div>
+      <div class="chart-title" style="font-size:15px">数据分析图表</div>
+      <div class="chart-desc">图表只读取已生成的有效记录，并按所选剔重口径展示；点击图形可下钻筛选，不改变计算规则。</div>
+    </div>
+    <div class="analytics-mode" aria-label="图表指标口径">
+      <span class="analytics-mode-label">图表口径</span>
+      <button type="button" class="analytics-mode-btn active" data-analytics-metric="money">激励金额（剔重）</button>
+      <button type="button" class="analytics-mode-btn" data-analytics-metric="count">计发次数（剔重）</button>
+      <button type="button" class="analytics-mode-btn" data-analytics-metric="moneyRaw">激励金额（不剔重）</button>
+      <button type="button" class="analytics-mode-btn" data-analytics-metric="countRaw">计发次数（不剔重）</button>
+    </div>
   </div>
   <section class="analytics" id="analyticsSection">
     <div class="chart-card">
       <div class="chart-head">
         <div>
-          <div class="chart-title">激励金额趋势</div>
-          <div class="chart-desc">根据当前汇总周期及筛选条件展示激励金额变化，单位为元。</div>
+          <div class="chart-title" id="trendTitle">激励金额趋势</div>
+          <div class="chart-desc" id="trendDesc">点击周期节点可下钻到对应周期。</div>
         </div>
       </div>
       <div class="chart-box"><canvas id="trendChart"></canvas></div>
@@ -394,6 +440,7 @@
         <div>
           <div class="chart-title" id="rankTitle">操作人激励金额排行</div>
           <div class="chart-desc" id="rankDesc">默认显示姓名，点击姓名可切换显示对应工号。</div>
+          <div class="rank-insight" id="rankInsight"></div>
         </div>
       </div>
       <div class="chart-box"><canvas id="rankChart"></canvas></div>
@@ -401,8 +448,8 @@
     <div class="chart-card">
       <div class="chart-head">
         <div>
-          <div class="chart-title">周期操作量与涉及人数</div>
-          <div class="chart-desc">同时观察每个周期的计费记录（单）和涉及人员（人）。</div>
+          <div class="chart-title" id="volumeTitle">周期操作量与涉及人数</div>
+          <div class="chart-desc" id="volumeDesc">同时观察每个周期的计费记录（单）和涉及人员（人）。</div>
         </div>
       </div>
       <div class="chart-box"><canvas id="volumeChart"></canvas></div>
@@ -410,8 +457,8 @@
     <div class="chart-card">
       <div class="chart-head">
         <div>
-          <div class="chart-title">操作等级结构</div>
-          <div class="chart-desc">查看 Fatal、High、Medium、Low 的计费记录构成，单位为单。</div>
+          <div class="chart-title" id="levelTitle">操作等级结构</div>
+          <div class="chart-desc" id="levelDesc">查看 Fatal、High、Medium、Low 的计费记录构成，单位为单。</div>
         </div>
       </div>
       <div class="chart-box"><canvas id="levelChart"></canvas></div>
@@ -419,8 +466,8 @@
     <div class="chart-card">
       <div class="chart-head">
         <div>
-          <div class="chart-title">人员属性激励金额结构</div>
-          <div class="chart-desc">按自有、租赁等人员属性展示激励金额分布，单位为元。</div>
+          <div class="chart-title" id="attrTitle">人员属性激励金额结构</div>
+          <div class="chart-desc" id="attrDesc">点击条形可下钻筛选人员属性。</div>
         </div>
       </div>
       <div class="chart-box"><canvas id="attrChart"></canvas></div>
@@ -434,7 +481,7 @@
       </div>
       <div class="chart-box"><canvas id="calcStatusChart"></canvas></div>
     </div>
-    <div class="chart-card">
+    <div class="chart-card" id="blacklistChartCard">
       <div class="chart-head">
         <div>
           <div class="chart-title">黑名单拦截统计</div>
@@ -447,8 +494,8 @@
     <div class="chart-card">
       <div class="chart-head">
         <div>
-          <div class="chart-title">BU 激励操作数量</div>
-          <div class="chart-desc">按 BU 统计当前筛选条件下最终计发的操作数量，单位为单。</div>
+          <div class="chart-title" id="buCountTitle">BU 激励操作数量</div>
+          <div class="chart-desc" id="buCountDesc">按 BU 统计当前筛选条件下最终计发的操作数量，单位为单。</div>
         </div>
       </div>
       <div class="chart-box"><canvas id="buCountChart"></canvas></div>
@@ -456,11 +503,38 @@
     <div class="chart-card">
       <div class="chart-head">
         <div>
-          <div class="chart-title">BU 激励金额</div>
-          <div class="chart-desc">按 BU 统计当前筛选条件下最终计发的激励金额，单位为元。</div>
+          <div class="chart-title" id="buMoneyTitle">BU 激励金额</div>
+          <div class="chart-desc" id="buMoneyDesc">按 BU 统计当前筛选条件下最终计发的激励金额，单位为元。</div>
         </div>
       </div>
       <div class="chart-box"><canvas id="buMoneyChart"></canvas></div>
+    </div>
+    <div class="chart-card wide">
+      <div class="chart-head">
+        <div>
+          <div class="chart-title" id="heatmapTitle">月份 × BU 激励金额热力图</div>
+          <div class="chart-desc">颜色越深代表数值越高；点击单元格可同时筛选月份和 BU。</div>
+        </div>
+      </div>
+      <div class="chart-box heatmap-box"><canvas id="heatmapChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head">
+        <div>
+          <div class="chart-title" id="personDistributionTitle">人员激励金额分布</div>
+          <div class="chart-desc" id="personDistributionDesc">按人员累计激励金额分组，观察激励集中区间。</div>
+        </div>
+      </div>
+      <div class="chart-box"><canvas id="personDistributionChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head">
+        <div>
+          <div class="chart-title">数据质量核查</div>
+          <div class="chart-desc">仅作辅助核查，点击项目查看对应明细，不改变任何计算结果。</div>
+        </div>
+      </div>
+      <div class="quality-grid" id="qualityGrid"></div>
     </div>
   </section>
 
@@ -540,7 +614,7 @@
           <div class="compare-table" id="compareLevelTable"></div>
         </div>
       </div>
-      <div class="compare-note">说明：同比按上年同周期比较；环比按上一自然周期比较。比较结果沿用当前 BU、客户、人员属性、操作等级及人员工号过滤，但不受当前年份、月份和快捷周期限制。</div>
+      <div class="compare-note">说明：同比按上年同周期比较；环比按上一自然周期比较。比较结果沿用当前剔重规则、黑名单规则、BU、客户、人员属性、操作等级及人员工号过滤，但不受当前年份、月份和快捷周期限制。</div>
     </div>
   </div>
 </div>
@@ -632,6 +706,8 @@ m00961966"></textarea>
 const $=id=>document.getElementById(id);
 let rawRows=[], validRows=[], dedupRows=[], calcDetailRows=[], excludedRows=[], currentView='dimension', activeDimension='person', activeCrossDimension='bu', quickRange=null;
 let rankPersonShowIds=false,rankPersonHitRows=[];
+let analyticsMetric='money',trendHitPoints=[],heatmapHitCells=[];
+const barChartHitRows=new Map();
 let sourceWorkbook=null, sourceSheetName='', sourceWorksheet=null, sourceFileName='';
 const levelRank={fatal:4,high:3,medium:2,low:1};
 const aliases={
@@ -836,6 +912,8 @@ function hideProgress(){setTimeout(()=>$('mask').style.display='none',180)}
 function resetAllFiltersForNewFile(){
   quickRange=null;
   rankPersonShowIds=false;
+  analyticsMetric='money';
+  document.querySelectorAll('.analytics-mode-btn').forEach(button=>button.classList.toggle('active',button.dataset.analyticsMetric==='money'));
   ['filterYear','filterMonth','filterBU','filterCustomer','filterAttr','filterLevel'].forEach(id=>{
     if($(id))$(id).value='';
   });
@@ -843,6 +921,8 @@ function resetAllFiltersForNewFile(){
   if($('periodType'))$('periodType').value='month';
   if($('chartDimension'))$('chartDimension').value='person';
   if($('periodSourceMode'))$('periodSourceMode').value='imported';
+  if($('dedupMode'))$('dedupMode').value='highest';
+  if($('blacklistMode'))$('blacklistMode').value='enabled';
   activeDimension='person';
   activeCrossDimension='bu';
   currentView='dimension';
@@ -930,14 +1010,15 @@ function fillSelect(id,vals){
   if(vals.includes(old))el.value=old;
 }
 function refreshFilters(){
-  fillSelect('filterYear',uniq(dedupRows.map(r=>{
+  const source=rowsForSelectedDedupMode();
+  fillSelect('filterYear',uniq(source.map(r=>{
     const d=filterDateForRow(r);return d?String(d.getFullYear()):''
   })));
-  fillSelect('filterMonth',uniq(dedupRows.map(r=>{
+  fillSelect('filterMonth',uniq(source.map(r=>{
     const d=filterDateForRow(r);return d?String(d.getMonth()+1).padStart(2,'0'):''
   })));
-  fillSelect('filterBU',uniq(dedupRows.map(r=>r.__bu)));fillSelect('filterCustomer',uniq(dedupRows.map(r=>r.__customer)));
-  fillSelect('filterAttr',uniq(dedupRows.map(r=>r.__attr)));fillSelect('filterLevel',uniq(dedupRows.map(r=>r.__level)));
+  fillSelect('filterBU',uniq(source.map(r=>r.__bu)));fillSelect('filterCustomer',uniq(source.map(r=>r.__customer)));
+  fillSelect('filterAttr',uniq(source.map(r=>r.__attr)));fillSelect('filterLevel',uniq(source.map(r=>r.__level)));
 }
 function rowMatchesFilters(r){
   const d=filterDateForRow(r);
@@ -952,11 +1033,64 @@ function rowMatchesFilters(r){
     (!$('filterLevel').value||r.__level===$('filterLevel').value)&&
     (!personText||clean(r.__person).toLowerCase().includes(personText)||clean(r.__name).toLowerCase().includes(personText));
 }
+function isNoDedupMode(){
+  return $('dedupMode')?.value==='none';
+}
+function isBlacklistEnabled(){
+  return $('blacklistMode')?.value!=='disabled';
+}
+function rowsForRuleMode({dedup=true,blacklist=true}={}){
+  const candidates=blacklist?validRows.filter(r=>!blacklistReason(r.__person)):validRows.slice();
+  if(!dedup)return candidates;
+  const best=new Map();
+  candidates.forEach(r=>{
+    const key=r.__person+'|'+r.__date;
+    const selected=best.get(key);
+    if(!selected||r.__rank>selected.__rank||(r.__rank===selected.__rank&&r.__fee>selected.__fee))best.set(key,r);
+  });
+  return [...best.values()].sort((a,b)=>(a.__date||'').localeCompare(b.__date||''));
+}
+function rowsForSelectedDedupMode(){
+  return rowsForRuleMode({dedup:!isNoDedupMode(),blacklist:isBlacklistEnabled()});
+}
+function analyticsUsesRawRows(){
+  return analyticsMetric.endsWith('Raw');
+}
+function analyticsUsesMoney(){
+  return analyticsMetric.startsWith('money');
+}
+function analyticsDedupText(){
+  return analyticsUsesRawRows()?'不剔重':'剔重';
+}
+function filteredAnalyticsRows(){
+  const source=rowsForRuleMode({dedup:!analyticsUsesRawRows(),blacklist:isBlacklistEnabled()});
+  return source.filter(rowMatchesFilters);
+}
 function filtered(){
-  return dedupRows.filter(rowMatchesFilters);
+  return rowsForSelectedDedupMode().filter(rowMatchesFilters);
 }
 function filteredCalcDetails(){
-  return calcDetailRows.filter(rowMatchesFilters);
+  const selectedRows=rowsForSelectedDedupMode();
+  const selectedIds=new Set(selectedRows.map(r=>r.__row));
+  const selectedByKey=new Map(selectedRows.map(r=>[r.__person+'|'+r.__date,r]));
+  const blacklistEnabled=isBlacklistEnabled();
+  return calcDetailRows.filter(rowMatchesFilters).map(r=>{
+    const blockedByBlacklist=blacklistEnabled&&r.__blacklisted;
+    const counted=!blockedByBlacklist&&selectedIds.has(r.__row);
+    const noDedupView=isNoDedupMode()&&counted;
+    const selected=selectedByKey.get(r.__person+'|'+r.__date);
+    return {
+      ...r,
+      __counted:counted,
+      __blockedByBlacklist:blockedByBlacklist,
+      __noDedupView:noDedupView,
+      __calcFee:counted?r.__fee:0,
+      __calcStatus:counted?(noDedupView?'计发（不剔重）':'计发'):'忽略',
+      __ignoreReason:counted?'':blockedByBlacklist?`激励黑名单：${blacklistReason(r.__person)}`:'同日多单，已由更高等级记录计发',
+      __selectedLevel:counted||blockedByBlacklist?'':selected?.__level||'',
+      __selectedTask:counted||blockedByBlacklist?'':selected?.__task||''
+    };
+  });
 }
 function filteredExcludedRows(){
   return excludedRows.filter(rowMatchesFilters);
@@ -965,8 +1099,10 @@ function filteredExcludedRows(){
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function money(n){return Math.round(Number(n)||0).toLocaleString('zh-CN')}
 function render(){
+  hideTableFocus();
   const rows=filtered();
   $('sRaw').textContent=rawRows.length;$('sValid').textContent=validRows.length;$('sDedup').textContent=rows.length;
+  $('sDedupLabel').textContent=isNoDedupMode()?'不剔重有效记录':'同人同日去重后';
   $('sPeople').textContent=new Set(rows.map(r=>r.__person)).size;$('sMoney').textContent=money(rows.reduce((s,r)=>s+r.__fee,0));
   renderIdentityValidation();
   $('crossControls').classList.toggle('show',currentView==='summary');
@@ -1159,12 +1295,16 @@ function drawTrend(rows){
   const {ctx,w,h}=canvasSetup($('trendChart'));
   ctx.clearRect(0,0,w,h);
   const type=$('periodType').value,m=new Map();
-  rows.forEach(r=>{const k=periodKey(filterDateForRow(r),type);m.set(k,(m.get(k)||0)+r.__fee)});
+  rows.forEach(r=>{const k=periodKey(filterDateForRow(r),type);m.set(k,(m.get(k)||0)+(analyticsUsesMoney()?r.__fee:1))});
   const data=[...m.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
-  if(!data.length){drawEmpty(ctx,w,h,'暂无趋势数据');return}
+  const unit=analyticsUsesMoney()?'元':'次';
+  $('trendTitle').textContent=`${analyticsUsesMoney()?'激励金额':'计发次数'}趋势（${analyticsDedupText()}）`;
+  $('trendDesc').textContent=`当前按${analyticsUsesMoney()?'金额':'次数'}、${analyticsDedupText()}口径展示；点击周期节点可下钻到对应周期。`;
+  if(!data.length){trendHitPoints=[];drawEmpty(ctx,w,h,'暂无趋势数据');return}
   const max=Math.max(...data.map(x=>x[1]),1),pad={l:66,r:24,t:28,b:48};
-  const {cw,ch}=drawGridY(ctx,pad,w,h,max,4,v=>fmtAxis(v,'元'));
+  const {cw,ch}=drawGridY(ctx,pad,w,h,max,4,v=>fmtAxis(v,unit));
   const pts=data.map((d,i)=>({x:pad.l+(data.length===1?cw/2:cw*i/(data.length-1)),y:pad.t+ch-d[1]/max*ch,label:d[0],value:d[1]}));
+  trendHitPoints=pts.map(point=>({...point,radius:14,type}));
   const grad=ctx.createLinearGradient(0,pad.t,0,pad.t+ch);
   grad.addColorStop(0,'rgba(200,16,46,.18)');grad.addColorStop(1,'rgba(200,16,46,0)');
   ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
@@ -1175,7 +1315,7 @@ function drawTrend(rows){
   const maxIndex=data.findIndex(x=>x[1]===max),labels=[0,maxIndex,data.length-1].filter((v,i,a)=>a.indexOf(v)===i);
   labels.forEach(i=>{
     const p=pts[i],badgeY=p.y<44?p.y+10:p.y-28;
-    drawValueBadge(ctx,fmtAxis(p.value,'元'),p.x-28,badgeY,{color:chartTheme.text});
+    drawValueBadge(ctx,fmtAxis(p.value,unit),p.x-28,badgeY,{color:chartTheme.text});
   });
   ctx.font='600 10px Microsoft YaHei';ctx.fillStyle=chartTheme.sub;ctx.textAlign='center';ctx.textBaseline='alphabetic';
   const step=Math.max(1,Math.ceil(data.length/6));
@@ -1183,11 +1323,17 @@ function drawTrend(rows){
 }
 function drawHorizontalBars(canvasId,data,emptyText,opt={}){
   const {ctx,w,h}=canvasSetup($(canvasId));ctx.clearRect(0,0,w,h);
-  if(!data.length){drawEmpty(ctx,w,h,emptyText);return}
+  if(!data.length){barChartHitRows.delete(canvasId);drawEmpty(ctx,w,h,emptyText);return}
   const left=Math.min(145,Math.max(95,w*.34)),pad={l:left,r:24,t:14,b:12};
   const cw=w-pad.l-pad.r,ch=h-pad.t-pad.b,rowH=ch/data.length,max=Math.max(...data.map(x=>x.value),1);
   const colors=opt.colors||[chartTheme.red,chartTheme.red2,chartTheme.orange,chartTheme.slate];
   ctx.font='600 10.5px Microsoft YaHei';
+  barChartHitRows.set(canvasId,data.map((d,index)=>({
+    value:d.filterValue??d.name,
+    left:0,right:w,
+    top:pad.t+index*rowH,bottom:pad.t+(index+1)*rowH,
+    labelRight:pad.l
+  })));
   data.forEach((d,i)=>{
     const y=pad.t+i*rowH+rowH*.23,bh=Math.max(15,Math.min(22,rowH*.5)),bw=cw*d.value/max;
     ctx.fillStyle=chartTheme.track;roundRect(ctx,pad.l,y,cw,bh,7,true,false);
@@ -1203,17 +1349,22 @@ function drawHorizontalBars(canvasId,data,emptyText,opt={}){
   });
 }
 function drawRank(rows){
-  const meta=dimensionMeta(),data=aggregateDimension(rows).slice(0,8);
-  $('rankTitle').textContent=`${meta.label}激励金额排行（元）`;
+  const meta=dimensionMeta();
+  const data=aggregateDimension(rows)
+    .sort((a,b)=>analyticsUsesMoney()?b.money-a.money||b.count-a.count:b.count-a.count||b.money-a.money)
+    .slice(0,8);
+  const metricLabel=analyticsUsesMoney()?'激励金额':'计发次数',unit=analyticsUsesMoney()?'元':'次';
+  $('rankTitle').textContent=`${meta.label}${metricLabel}排行（${analyticsDedupText()}，${unit}）`;
   $('rankDesc').textContent=activeDimension==='person'
     ? rankPersonShowIds
       ? '当前统一显示工号，点击左侧任意工号可全部切回姓名。'
       : '当前统一显示姓名，点击左侧任意姓名可全部切换为工号。'
-    : '显示当前维度的激励金额排行，单位为元。';
+    : `显示当前维度的${metricLabel}排行，单位为${unit}；点击条形可下钻筛选。`;
   drawHorizontalBars('rankChart',data.map((d,i)=>{
     const personName=activeDimension==='person'&&d.names.size?[...d.names][0]:'';
     const label=!rankPersonShowIds&&personName?personName:d.name;
-    return {name:`${i+1}. ${label}`,value:d.money,display:`${Math.round(d.money).toLocaleString('zh-CN')}元`};
+    const value=analyticsUsesMoney()?d.money:d.count;
+    return {name:`${i+1}. ${label}`,value,filterValue:d.name,display:`${Math.round(value).toLocaleString('zh-CN')}${unit}`};
   }),'暂无排行数据',
     {colors:[chartTheme.red,'#d84962','#e16c7f','#8b95a5'],labelAlign:activeDimension==='person'?'left':'right'});
   const rect=$('rankChart').getBoundingClientRect();
@@ -1224,9 +1375,17 @@ function drawRank(rows){
     top:top+index*rowH,
     bottom:top+(index+1)*rowH
   })):[];
+  const all=aggregateDimension(rows),total=all.reduce((sum,item)=>sum+item.money,0);
+  if(activeDimension==='person'&&total){
+    const sorted=[...all].sort((a,b)=>b.money-a.money),top5=sorted.slice(0,5).reduce((sum,item)=>sum+item.money,0);
+    const top10=sorted.slice(0,10).reduce((sum,item)=>sum+item.money,0);
+    $('rankInsight').textContent=`金额集中度：Top 5 占 ${Math.round(top5/total*100)}%，Top 10 占 ${Math.round(top10/total*100)}%。`;
+  }else $('rankInsight').textContent='';
 }
 function drawVolume(rows){
   const {ctx,w,h}=canvasSetup($('volumeChart'));ctx.clearRect(0,0,w,h);
+  $('volumeTitle').textContent=`周期操作量与涉及人数（${analyticsDedupText()}）`;
+  $('volumeDesc').textContent=`按${analyticsDedupText()}口径观察每个周期的记录数和涉及人员数。`;
   const type=$('periodType').value,m=new Map();
   rows.forEach(r=>{const k=periodKey(filterDateForRow(r),type);if(!m.has(k))m.set(k,{count:0,people:new Set()});const x=m.get(k);x.count++;x.people.add(r.__person)});
   const data=[...m.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([label,x])=>({label,count:x.count,people:x.people.size}));
@@ -1272,60 +1431,152 @@ function drawDonut(canvasId,data,emptyText,opt={}){
   });
 }
 function drawLevel(rows){
+  $('levelTitle').textContent=`操作等级结构（${analyticsDedupText()}）`;
+  $('levelDesc').textContent=`按${analyticsDedupText()}口径查看 Fatal、High、Medium、Low 的记录构成。`;
   const order=['Fatal','High','Medium','Low','未识别'],m=new Map(order.map(x=>[x,0]));
   rows.forEach(r=>m.set(r.__level||'未识别',(m.get(r.__level||'未识别')||0)+1));
   drawDonut('levelChart',order.map(name=>({name,value:m.get(name)||0})),'暂无等级结构数据',
     {colors:['#83152f',chartTheme.red,'#df633d','#d6a12a',chartTheme.slate],centerLabel:'记录（单）',valueUnit:'单'});
 }
 function drawAttr(rows){
-  const m=new Map();rows.forEach(r=>m.set(r.__attr||'未填写',(m.get(r.__attr||'未填写')||0)+r.__fee));
-  const data=[...m.entries()].map(([name,value])=>({name,value,display:`${Math.round(value).toLocaleString('zh-CN')}元`})).sort((a,b)=>b.value-a.value).slice(0,8);
+  const m=new Map();rows.forEach(r=>m.set(r.__attr||'未填写',(m.get(r.__attr||'未填写')||0)+(analyticsUsesMoney()?r.__fee:1)));
+  const unit=analyticsUsesMoney()?'元':'次';
+  $('attrTitle').textContent=`人员属性${analyticsUsesMoney()?'激励金额':'计发次数'}结构（${analyticsDedupText()}）`;
+  $('attrDesc').textContent=`当前按${analyticsUsesMoney()?'金额':'次数'}、${analyticsDedupText()}口径展示；点击条形可下钻筛选人员属性。`;
+  const data=[...m.entries()].map(([name,value])=>({name,value,filterValue:name,display:`${Math.round(value).toLocaleString('zh-CN')}${unit}`})).sort((a,b)=>b.value-a.value).slice(0,8);
   drawHorizontalBars('attrChart',data,'暂无人员属性数据',{colors:[chartTheme.red,'#d84962',chartTheme.blue,chartTheme.slate]});
 }
 function drawBUCount(rows){
+  $('buCountTitle').textContent=`BU 激励操作数量（${analyticsDedupText()}）`;
+  $('buCountDesc').textContent=`按 BU 统计${analyticsDedupText()}口径下的操作数量，单位为次。`;
   const m=new Map();
   rows.forEach(r=>m.set(r.__bu||'未填写',(m.get(r.__bu||'未填写')||0)+1));
-  const data=[...m.entries()].map(([name,value])=>({name,value,display:`${value}单`}))
+  const data=[...m.entries()].map(([name,value])=>({name,value,filterValue:name,display:`${value}单`}))
     .sort((a,b)=>b.value-a.value).slice(0,12);
   drawHorizontalBars('buCountChart',data,'暂无 BU 操作数量数据',
     {colors:[chartTheme.red,chartTheme.red2,chartTheme.orange,chartTheme.slate]});
 }
 function drawBUMoney(rows){
+  $('buMoneyTitle').textContent=`BU 激励金额（${analyticsDedupText()}）`;
+  $('buMoneyDesc').textContent=`按 BU 统计${analyticsDedupText()}口径下的激励金额，单位为元。`;
   const m=new Map();
   rows.forEach(r=>m.set(r.__bu||'未填写',(m.get(r.__bu||'未填写')||0)+r.__fee));
-  const data=[...m.entries()].map(([name,value])=>({name,value,display:`${Math.round(value).toLocaleString('zh-CN')}元`}))
+  const data=[...m.entries()].map(([name,value])=>({name,value,filterValue:name,display:`${Math.round(value).toLocaleString('zh-CN')}元`}))
     .sort((a,b)=>b.value-a.value).slice(0,12);
   drawHorizontalBars('buMoneyChart',data,'暂无 BU 激励金额数据',
     {colors:[chartTheme.red,chartTheme.red2,chartTheme.orange,chartTheme.slate]});
 }
 function drawCalcStatus(){
   const details=filteredCalcDetails(),counted=details.filter(r=>r.__counted).length;
-  const ignored=details.filter(r=>!r.__counted&&!r.__blacklisted).length;
+  const ignored=details.filter(r=>!r.__counted&&!r.__blockedByBlacklist).length;
   drawDonut('calcStatusChart',[{name:'最终计发',value:counted},{name:'同日多单忽略',value:ignored}],'暂无计发或同日忽略数据',
     {colors:[chartTheme.green,chartTheme.slate],centerLabel:'候选记录（条）',valueUnit:'条'});
 }
 function drawBlacklistStats(){
+  const card=$('blacklistChartCard');
+  const visible=isBlacklistEnabled()&&incentiveBlacklist.size>0;
+  if(card)card.hidden=!visible;
+  if(!visible){
+    chartHits.blacklistChart=[];
+    const canvas=$('blacklistChart');
+    if(canvas){
+      const {ctx,w,h}=canvasSetup(canvas);
+      ctx.clearRect(0,0,w,h);
+    }
+    return;
+  }
   const m=new Map();
-  filteredCalcDetails().filter(r=>r.__blacklisted).forEach(r=>{
+  filteredCalcDetails().filter(r=>r.__blockedByBlacklist).forEach(r=>{
     if(!m.has(r.__person))m.set(r.__person,{count:0,name:r.__name||''});
     const item=m.get(r.__person);item.count++;
     if(!item.name&&r.__name)item.name=r.__name;
   });
   const data=[...m.entries()]
-    .map(([person,item])=>({name:item.name?`${item.name} · ${person}`:person,value:item.count,display:`${item.count}条`}))
+    .map(([person,item])=>({name:item.name?`${item.name} · ${person}`:person,filterValue:person,value:item.count,display:`${item.count}条`}))
     .sort((a,b)=>b.value-a.value||a.name.localeCompare(b.name,'zh-CN'))
     .slice(0,12);
   drawHorizontalBars('blacklistChart',data,'当前筛选条件下无黑名单拦截记录',
     {colors:[chartTheme.navy,chartTheme.slate,chartTheme.red2,chartTheme.orange]});
 }
+function drawHeatmap(rows){
+  const {ctx,w,h}=canvasSetup($('heatmapChart'));ctx.clearRect(0,0,w,h);
+  const unit=analyticsUsesMoney()?'元':'次';
+  $('heatmapTitle').textContent=`月份 × BU ${analyticsUsesMoney()?'激励金额':'计发次数'}热力图（${analyticsDedupText()}）`;
+  const monthSet=new Set(),buTotals=new Map(),values=new Map();
+  rows.forEach(r=>{
+    const d=filterDateForRow(r);if(!d)return;
+    const month=periodKey(d,'month'),bu=r.__bu||'未填写',value=analyticsUsesMoney()?r.__fee:1;
+    monthSet.add(month);buTotals.set(bu,(buTotals.get(bu)||0)+value);
+    values.set(`${month}\u0000${bu}`,(values.get(`${month}\u0000${bu}`)||0)+value);
+  });
+  const months=[...monthSet].sort().slice(-12);
+  const bus=[...buTotals.entries()].sort((a,b)=>b[1]-a[1]).slice(0,10).map(item=>item[0]);
+  if(!months.length||!bus.length){heatmapHitCells=[];drawEmpty(ctx,w,h,'暂无月份与 BU 数据');return}
+  const pad={l:Math.min(160,Math.max(105,w*.18)),r:18,t:42,b:18};
+  const cellW=(w-pad.l-pad.r)/months.length,cellH=(h-pad.t-pad.b)/bus.length;
+  const max=Math.max(...[...values.values()],1);
+  ctx.font='600 10px Microsoft YaHei';ctx.textBaseline='middle';
+  ctx.fillStyle=chartTheme.sub;ctx.textAlign='center';
+  months.forEach((month,index)=>ctx.fillText(month,pad.l+cellW*(index+.5),22));
+  heatmapHitCells=[];
+  bus.forEach((bu,rowIndex)=>{
+    ctx.fillStyle=chartTheme.text;ctx.textAlign='right';
+    ctx.fillText(fitText(ctx,bu,pad.l-16),pad.l-8,pad.t+cellH*(rowIndex+.5));
+    months.forEach((month,colIndex)=>{
+      const value=values.get(`${month}\u0000${bu}`)||0,ratio=value/max;
+      const x=pad.l+cellW*colIndex,y=pad.t+cellH*rowIndex;
+      ctx.fillStyle=`rgba(200,16,46,${.06+ratio*.78})`;
+      roundRect(ctx,x+2,y+2,Math.max(2,cellW-4),Math.max(2,cellH-4),5,true,false);
+      if(value&&cellW>=46){
+        ctx.fillStyle=ratio>.55?'#fff':chartTheme.text;ctx.textAlign='center';
+        ctx.fillText(fmtAxis(value,unit),x+cellW/2,y+cellH/2);
+      }
+      heatmapHitCells.push({x1:x,x2:x+cellW,y1:y,y2:y+cellH,month,bu,value});
+    });
+  });
+}
+function drawPersonDistribution(rows){
+  $('personDistributionTitle').textContent=`人员激励金额分布（${analyticsDedupText()}）`;
+  $('personDistributionDesc').textContent=`按${analyticsDedupText()}口径汇总人员金额并分组。`;
+  const people=new Map();
+  rows.forEach(r=>people.set(r.__person,(people.get(r.__person)||0)+r.__fee));
+  const buckets=[
+    {name:'0–500 元',min:0,max:500,value:0},
+    {name:'501–1,000 元',min:500,max:1000,value:0},
+    {name:'1,001–2,000 元',min:1000,max:2000,value:0},
+    {name:'2,000 元以上',min:2000,max:Infinity,value:0}
+  ];
+  people.forEach(amount=>{
+    const bucket=buckets.find(item=>amount>item.min&&amount<=item.max)||buckets[0];
+    bucket.value++;
+  });
+  drawHorizontalBars('personDistributionChart',buckets.map(item=>({...item,display:`${item.value}人`})),
+    '暂无人员激励分布数据',{colors:[chartTheme.blue,chartTheme.slate,chartTheme.orange,chartTheme.red]});
+}
+function drawQualityPanel(){
+  const details=filteredCalcDetails(),excluded=filteredExcludedRows();
+  const items=[
+    {type:'identity',label:'姓名工号不一致',value:details.filter(r=>r.__identityStatus==='mismatch').length,cls:'warn'},
+    {type:'level',label:'未识别操作等级',value:details.filter(r=>!r.__rank).length,cls:'bad'},
+    {type:'time',label:'夜间字段与时间不一致',value:details.filter(r=>r.__byField!==r.__byTime).length,cls:'warn'},
+    {type:'month',label:'原始年月与当地时间跨月',value:details.filter(r=>r.__sourceYear&&r.__sourceMonth&&r.__start&&(r.__sourceYear!==r.__start.getFullYear()||r.__sourceMonth!==r.__start.getMonth()+1)).length,cls:'warn'},
+    {type:'blacklist',label:'黑名单拦截候选记录',value:details.filter(r=>r.__blockedByBlacklist).length,cls:''},
+    {type:'excluded',label:'排除／异常记录',value:excluded.length,cls:''}
+  ];
+  $('qualityGrid').innerHTML=items.map(item=>`<button type="button" class="quality-item ${item.value?item.cls:''}" data-quality-type="${item.type}">
+    <span>${item.label}</span><strong>${item.value}</strong>
+  </button>`).join('');
+}
 function drawCharts(rows){
   requestAnimationFrame(()=>{
-    drawTrend(rows);drawRank(rows);drawVolume(rows);drawLevel(rows);drawAttr(rows);drawCalcStatus();drawBlacklistStats();drawBUCount(rows);drawBUMoney(rows);
+    const analysisRows=filteredAnalyticsRows();
+    drawTrend(analysisRows);drawRank(analysisRows);drawVolume(analysisRows);drawLevel(analysisRows);drawAttr(analysisRows);drawCalcStatus();drawBlacklistStats();drawBUCount(analysisRows);drawBUMoney(analysisRows);
+    drawHeatmap(analysisRows);drawPersonDistribution(analysisRows);drawQualityPanel();
   });
 }
 
 function setQuickRange(type){
-  const dates=dedupRows.map(filterDateForRow).filter(Boolean).sort((a,b)=>b-a);
+  const dates=rowsForSelectedDedupMode().map(filterDateForRow).filter(Boolean).sort((a,b)=>b-a);
   const base=dates[0]||new Date(),y=base.getFullYear(),m=base.getMonth();
   let start=null,end=null;
   if(type==='currentMonth'){start=new Date(y,m,1);end=new Date(y,m+1,1)}
@@ -1395,12 +1646,12 @@ function renderSummary(rows){
 }
 function renderPerson(rows){
   const type=$('periodType').value,m=new Map();
-  rows.forEach(r=>{const p=periodKey(filterDateForRow(r),type),k=p+'|'+r.__person;if(!m.has(k))m.set(k,{p,person:r.__person,name:'',bu:new Set(),c:new Set(),a:new Set(),days:0,money:0,levels:{}});
-    const x=m.get(k);x.days++;x.money+=r.__fee;if(!x.name&&r.__name)x.name=r.__name;x.bu.add(r.__bu);x.c.add(r.__customer);x.a.add(r.__attr);x.levels[r.__level]=(x.levels[r.__level]||0)+1;
+  rows.forEach(r=>{const p=periodKey(filterDateForRow(r),type),k=p+'|'+r.__person;if(!m.has(k))m.set(k,{p,person:r.__person,name:'',bu:new Set(),c:new Set(),a:new Set(),days:new Set(),money:0,levels:{}});
+    const x=m.get(k);x.days.add(r.__date);x.money+=r.__fee;if(!x.name&&r.__name)x.name=r.__name;x.bu.add(r.__bu);x.c.add(r.__customer);x.a.add(r.__attr);x.levels[r.__level]=(x.levels[r.__level]||0)+1;
   });
   const data=[...m.values()].sort((a,b)=>b.p.localeCompare(a.p)||b.money-a.money||a.person.localeCompare(b.person,'zh-CN')).map(x=>[
     esc(x.p),esc(x.person),esc(x.name||'—'),esc([...x.bu].filter(Boolean).join(' / ')),esc([...x.c].filter(Boolean).join(' / ')),
-    esc([...x.a].filter(Boolean).join(' / ')),x.days,esc(Object.entries(x.levels).map(([k,v])=>`${k}:${v}`).join(' / ')),`<span class="money">${money(x.money)}</span>`
+    esc([...x.a].filter(Boolean).join(' / ')),x.days.size,esc(Object.entries(x.levels).map(([k,v])=>`${k}:${v}`).join(' / ')),`<span class="money">${money(x.money)}</span>`
   ]);
   table(['周期','操作人','姓名','BU1 / 部门','客户','人员属性','计费天数','等级分布','激励合计（元）'],data);
 }
@@ -1417,7 +1668,7 @@ function renderDetail(rows){
     esc(r.__person),
     esc(displayPersonName(r)),
     identityCheckCell(r),
-    r.__counted?'<span class="tag ok">计发</span>':'<span class="tag mid">忽略</span>',
+    r.__counted?`<span class="tag ok">${r.__noDedupView?'计发（不剔重）':'计发'}</span>`:'<span class="tag mid">忽略</span>',
     esc(r.__level||'未识别'),
     `<span class="money">${money(r.__calcFee)}</span>`,
     esc(r.__ignoreReason),
@@ -1435,9 +1686,34 @@ function renderExcluded(rows=filteredExcludedRows()){
     r.__byField?'是':'否',r.__byTime?'是':'否',esc(r.__start?r.__start.toLocaleString('zh-CN'):'')]);
   table(['Excel行号','排除/异常原因','操作人','姓名','姓名工号校验','任务状态','等级','任务号','摘要','字段判定夜间','时间判定夜间','当地开始时间'],data);
 }
+function hideTableFocus(){
+  if($('tableFocusNotice'))$('tableFocusNotice').hidden=true;
+}
+function showFocusedRows(view,rows,label){
+  currentView=view;
+  document.querySelectorAll('.tab').forEach(tab=>tab.classList.toggle('active',tab.dataset.view===view));
+  $('crossControls').classList.remove('show');
+  $('tableFocusText').textContent=`图表下钻：${label}（${rows.length} 条）`;
+  $('tableFocusNotice').hidden=false;
+  if(view==='excluded')renderExcluded(rows);else renderDetail(rows);
+  $('tableWrap').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function openQualityFocus(type){
+  const details=filteredCalcDetails();
+  if(type==='identity'){openIdentityDetails();return}
+  if(type==='excluded'){showFocusedRows('excluded',filteredExcludedRows(),'排除／异常记录');return}
+  const configs={
+    level:{label:'未识别操作等级',filter:r=>!r.__rank},
+    time:{label:'夜间字段与时间不一致',filter:r=>r.__byField!==r.__byTime},
+    month:{label:'原始年月与当地时间跨月',filter:r=>r.__sourceYear&&r.__sourceMonth&&r.__start&&(r.__sourceYear!==r.__start.getFullYear()||r.__sourceMonth!==r.__start.getMonth()+1)},
+    blacklist:{label:'黑名单拦截候选记录',filter:r=>r.__blockedByBlacklist}
+  };
+  const config=configs[type];if(!config)return;
+  showFocusedRows('detail',details.filter(config.filter),config.label);
+}
 
 function baseFilteredForCompare(){
-  return dedupRows.filter(r=>
+  return rowsForSelectedDedupMode().filter(r=>
     (!$('filterBU').value||r.__bu===$('filterBU').value)&&
     (!$('filterCustomer').value||r.__customer===$('filterCustomer').value)&&
     (!$('filterAttr').value||r.__attr===$('filterAttr').value)&&
@@ -1540,6 +1816,9 @@ function resetFilters(){
     setTimeout(()=>{
       ['filterYear','filterMonth','filterBU','filterCustomer','filterAttr','filterLevel'].forEach(id=>$(id).value='');
       $('filterPerson').value='';
+      $('dedupMode').value='highest';
+      $('blacklistMode').value='enabled';
+      refreshFilters();
       bar.style.width='46%';step.textContent='46%';text.textContent='正在恢复全部周期';
       setTimeout(()=>{
         quickRange=null;
@@ -1643,7 +1922,7 @@ function exportCurrent(){
   XLSX.utils.book_append_sheet(wb,outWs,sourceSheetName||'当前计算结果');
   XLSX.writeFile(
     wb,
-    `埃及代表处夜间操作激励统计结果_${new Date().toISOString().slice(0,10)}.xlsx`,
+    `埃及代表处夜间操作激励统计结果_${isNoDedupMode()?'不剔重':'同人同日最高等级'}_${isBlacklistEnabled()?'启用黑名单':'不启用黑名单'}_${new Date().toISOString().slice(0,10)}.xlsx`,
     {cellStyles:true}
   );
 }
@@ -1694,6 +1973,14 @@ $('periodSourceMode').onchange=()=>{
   refreshFilters();
   render();
 };
+$('dedupMode').onchange=()=>{
+  refreshFilters();
+  render();
+};
+$('blacklistMode').onchange=()=>{
+  refreshFilters();
+  render();
+};
 ['periodType','filterYear','filterMonth','filterBU','filterCustomer','filterAttr','filterLevel'].forEach(id=>$(id).onchange=()=>{
   if(id==='filterYear'||id==='filterMonth'){quickRange=null;document.querySelectorAll('.quick-btn').forEach(b=>b.classList.toggle('active',b.dataset.quick==='all'))}
   render();
@@ -1709,20 +1996,105 @@ $('chartDimension').onchange=()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.view==='dimension'));
   render();
 };
+function barChartHit(canvasId,event){
+  return (barChartHitRows.get(canvasId)||[]).find(row=>event.offsetY>=row.top&&event.offsetY<row.bottom)||null;
+}
+function applySelectDrilldown(id,value){
+  const select=$(id);
+  if(!select||![...select.options].some(option=>option.value===value))return false;
+  select.value=value;
+  render();
+  return true;
+}
+function applyRankDrilldown(value){
+  if(activeDimension==='person'){$('filterPerson').value=value;render();return}
+  const map={bu:'filterBU',customer:'filterCustomer',attr:'filterAttr',level:'filterLevel'};
+  if(map[activeDimension])applySelectDrilldown(map[activeDimension],value);
+}
+function periodRangeFromLabel(label,type){
+  if(type==='month'){
+    const [year,month]=label.split('-').map(Number);
+    return {start:new Date(year,month-1,1),end:new Date(year,month,1)};
+  }
+  if(type==='quarter'){
+    const match=label.match(/^(\d{4}) Q([1-4])$/);if(!match)return null;
+    const startMonth=(Number(match[2])-1)*3;
+    return {start:new Date(Number(match[1]),startMonth,1),end:new Date(Number(match[1]),startMonth+3,1)};
+  }
+  if(type==='half'){
+    const match=label.match(/^(\d{4}) H([12])$/);if(!match)return null;
+    const startMonth=Number(match[2])===1?0:6;
+    return {start:new Date(Number(match[1]),startMonth,1),end:new Date(Number(match[1]),startMonth+6,1)};
+  }
+  const year=Number(label);return Number.isFinite(year)?{start:new Date(year,0,1),end:new Date(year+1,0,1)}:null;
+}
+function applyPeriodDrilldown(label,type){
+  const range=periodRangeFromLabel(label,type);if(!range)return;
+  quickRange=range;$('filterYear').value='';$('filterMonth').value='';
+  document.querySelectorAll('.quick-btn').forEach(button=>button.classList.remove('active'));
+  render();
+}
 function rankPersonHit(event){
   if(activeDimension!=='person')return null;
   return rankPersonHitRows.find(row=>event.offsetX<=row.left&&event.offsetY>=row.top&&event.offsetY<row.bottom)||null;
 }
 $('rankChart').addEventListener('mousemove',event=>{
-  $('rankChart').style.cursor=rankPersonHit(event)?'pointer':'default';
+  $('rankChart').style.cursor=rankPersonHit(event)||barChartHit('rankChart',event)?'pointer':'default';
 });
 $('rankChart').addEventListener('mouseleave',()=>{$('rankChart').style.cursor='default'});
 $('rankChart').addEventListener('click',event=>{
   const hit=rankPersonHit(event);
-  if(!hit)return;
-  rankPersonShowIds=!rankPersonShowIds;
-  drawRank(filtered());
+  if(hit){
+    rankPersonShowIds=!rankPersonShowIds;
+    drawRank(filtered());
+    return;
+  }
+  const barHit=barChartHit('rankChart',event);
+  if(barHit)applyRankDrilldown(barHit.value);
 });
+['attrChart','buCountChart','buMoneyChart','blacklistChart'].forEach(canvasId=>{
+  $(canvasId).addEventListener('mousemove',event=>{$(canvasId).style.cursor=barChartHit(canvasId,event)?'pointer':'default'});
+  $(canvasId).addEventListener('mouseleave',()=>{$(canvasId).style.cursor='default'});
+  $(canvasId).addEventListener('click',event=>{
+    const hit=barChartHit(canvasId,event);if(!hit)return;
+    if(canvasId==='attrChart')applySelectDrilldown('filterAttr',hit.value);
+    else if(canvasId==='blacklistChart'){$('filterPerson').value=hit.value;render()}
+    else applySelectDrilldown('filterBU',hit.value);
+  });
+});
+$('trendChart').addEventListener('mousemove',event=>{
+  const hit=trendHitPoints.find(point=>Math.hypot(event.offsetX-point.x,event.offsetY-point.y)<=point.radius);
+  $('trendChart').style.cursor=hit?'pointer':'default';
+});
+$('trendChart').addEventListener('mouseleave',()=>{$('trendChart').style.cursor='default'});
+$('trendChart').addEventListener('click',event=>{
+  const hit=trendHitPoints.find(point=>Math.hypot(event.offsetX-point.x,event.offsetY-point.y)<=point.radius);
+  if(hit)applyPeriodDrilldown(hit.label,hit.type);
+});
+$('heatmapChart').addEventListener('mousemove',event=>{
+  const hit=heatmapHitCells.find(cell=>event.offsetX>=cell.x1&&event.offsetX<cell.x2&&event.offsetY>=cell.y1&&event.offsetY<cell.y2);
+  $('heatmapChart').style.cursor=hit?'pointer':'default';
+});
+$('heatmapChart').addEventListener('mouseleave',()=>{$('heatmapChart').style.cursor='default'});
+$('heatmapChart').addEventListener('click',event=>{
+  const hit=heatmapHitCells.find(cell=>event.offsetX>=cell.x1&&event.offsetX<cell.x2&&event.offsetY>=cell.y1&&event.offsetY<cell.y2);
+  if(!hit)return;
+  const [year,month]=hit.month.split('-');
+  if(!applySelectDrilldown('filterBU',hit.bu))return;
+  $('filterYear').value=year;$('filterMonth').value=month;quickRange=null;
+  document.querySelectorAll('.quick-btn').forEach(button=>button.classList.toggle('active',button.dataset.quick==='all'));
+  render();
+});
+$('qualityGrid').addEventListener('click',event=>{
+  const button=event.target.closest('[data-quality-type]');
+  if(button)openQualityFocus(button.dataset.qualityType);
+});
+document.querySelectorAll('.analytics-mode-btn').forEach(button=>button.onclick=()=>{
+  analyticsMetric=button.dataset.analyticsMetric;
+  document.querySelectorAll('.analytics-mode-btn').forEach(item=>item.classList.toggle('active',item===button));
+  drawCharts(filtered());
+});
+$('clearTableFocus').onclick=render;
 document.querySelectorAll('.quick-btn').forEach(b=>b.onclick=()=>setQuickRange(b.dataset.quick));
 window.addEventListener('resize',()=>{if(rawRows.length)drawCharts(filtered())});
 ['feeLow','feeMedium','feeHigh','feeFatal','nightStart','nightEnd','verifyMode','personField'].forEach(id=>$(id).onchange=()=>{
