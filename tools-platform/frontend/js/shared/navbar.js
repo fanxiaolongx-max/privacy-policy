@@ -126,6 +126,11 @@ function registerNavbarI18n() {
             'nav.storage': '迁移状态',
             'nav.dbExplorer': '数据探索',
             'nav.more': '更多工具',
+            'nav.moreSearch': '搜索工具...',
+            'nav.moreSearchLabel': '搜索更多工具',
+            'nav.moreAll': '全部',
+            'nav.moreRecent': '最近使用',
+            'nav.moreNoResults': '没有找到匹配的工具',
             'nav.requirements': '需求',
             'nav.alertCenter': '告警台',
             'nav.alertCenterTitle': '打开系统告警台',
@@ -433,6 +438,11 @@ function registerNavbarI18n() {
             'nav.storage': 'Migration',
             'nav.dbExplorer': 'Data Explorer',
             'nav.more': 'More Tools',
+            'nav.moreSearch': 'Search tools...',
+            'nav.moreSearchLabel': 'Search more tools',
+            'nav.moreAll': 'All',
+            'nav.moreRecent': 'Recently used',
+            'nav.moreNoResults': 'No matching tools',
             'nav.requirements': 'Requests',
             'nav.alertCenter': 'Alerts',
             'nav.alertCenterTitle': 'Open Alert Center',
@@ -784,7 +794,11 @@ function sortNavItems(items, orderIds) {
 
 function renderNavItem(item, className) {
     const path = window.location.pathname;
-    return `<a href="${item.href}" class="${className} ${item.match(path) ? 'active' : ''}" data-nav-item-id="${navEscape(item.id)}">${item.icon} ${navEscape(getNavLabel(item))}</a>`;
+    const label = navEscape(getNavLabel(item));
+    const content = className.includes('nav-more-item')
+        ? `<span class="nav-more-item-icon">${item.icon}</span><span class="nav-more-item-label">${label}</span>`
+        : `${item.icon} ${label}`;
+    return `<a href="${item.href}" class="${className} ${item.match(path) ? 'active' : ''}" data-nav-item-id="${navEscape(item.id)}" data-nav-search="${navEscape(getNavLabel(item).toLocaleLowerCase())}">${content}</a>`;
 }
 
 function renderNavLinksFromState() {
@@ -812,16 +826,74 @@ function renderNavLinksFromState() {
         categoryMap.get(catId).items.push(item);
     });
 
-    const menuHtml = Array.from(categoryMap.values())
-        .filter(cat => cat.items.length)
+    const visibleCategories = Array.from(categoryMap.values()).filter(cat => cat.items.length);
+    const categoryButtons = visibleCategories
+        .map((cat, index) => `<button type="button" class="nav-more-category-btn ${index === 0 ? 'active' : ''}" data-nav-category-target="${navEscape(cat.id)}">${navEscape(getNavCategoryName(cat))}<span>${cat.items.length}</span></button>`)
+        .join('');
+    const menuHtml = visibleCategories
         .map(cat => `
-            <div class="nav-more-category">
-                <div class="nav-more-section-label">${navEscape(getNavCategoryName(cat))}</div>
-                ${cat.items.map(item => renderNavItem(item, 'nav-more-item')).join('')}
-            </div>
+            <section class="nav-more-category" data-nav-category="${navEscape(cat.id)}">
+                <div class="nav-more-section-label">${navEscape(getNavCategoryName(cat))}<span>${cat.items.length}</span></div>
+                <div class="nav-more-items">${cat.items.map(item => renderNavItem(item, 'nav-more-item')).join('')}</div>
+            </section>
         `).join('');
-    menuEl.innerHTML = menuHtml || `<div class="nav-more-empty">${navEscape(navT('nav.empty'))}</div>`;
+    menuEl.innerHTML = `
+        <div class="nav-more-toolbar">
+            <span class="nav-more-search-icon" aria-hidden="true">⌕</span>
+            <input class="nav-more-search" id="navMoreSearch" type="search" autocomplete="off"
+                placeholder="${navEscape(navT('nav.moreSearch'))}" aria-label="${navEscape(navT('nav.moreSearchLabel'))}">
+            <kbd>Esc</kbd>
+        </div>
+        <div class="nav-more-layout">
+            <aside class="nav-more-sidebar" aria-label="${navEscape(navT('nav.more'))}">
+                ${categoryButtons}
+            </aside>
+            <div class="nav-more-content">
+                ${menuHtml || `<div class="nav-more-empty">${navEscape(navT('nav.empty'))}</div>`}
+                <div class="nav-more-no-results" hidden>${navEscape(navT('nav.moreNoResults'))}</div>
+            </div>
+        </div>
+    `;
+    bindNavMoreInteractions();
     queueResponsiveNavbarUpdate();
+}
+
+function filterNavMoreItems(query = '') {
+    const menu = document.getElementById('navMoreMenu');
+    if (!menu) return;
+    const normalizedQuery = query.trim().toLocaleLowerCase();
+    let visibleItemCount = 0;
+    menu.querySelectorAll('.nav-more-category').forEach(category => {
+        let categoryCount = 0;
+        category.querySelectorAll('.nav-more-item').forEach(item => {
+            const matches = !normalizedQuery || (item.dataset.navSearch || '').includes(normalizedQuery);
+            item.hidden = !matches;
+            if (matches) categoryCount += 1;
+        });
+        category.hidden = categoryCount === 0;
+        visibleItemCount += categoryCount;
+        const categoryId = category.dataset.navCategory;
+        const sidebarButton = menu.querySelector(`[data-nav-category-target="${CSS.escape(categoryId)}"]`);
+        if (sidebarButton) sidebarButton.hidden = categoryCount === 0;
+    });
+    const noResults = menu.querySelector('.nav-more-no-results');
+    if (noResults) noResults.hidden = visibleItemCount !== 0;
+}
+
+function bindNavMoreInteractions() {
+    const menu = document.getElementById('navMoreMenu');
+    if (!menu) return;
+    menu.querySelector('.nav-more-search')?.addEventListener('input', event => {
+        filterNavMoreItems(event.target.value);
+    });
+    menu.querySelectorAll('.nav-more-category-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            menu.querySelectorAll('.nav-more-category-btn').forEach(item => item.classList.toggle('active', item === button));
+            const target = menu.querySelector(`[data-nav-category="${CSS.escape(button.dataset.navCategoryTarget)}"]`);
+            const content = menu.querySelector('.nav-more-content');
+            if (target && content) content.scrollTo({ top: target.offsetTop - 8, behavior: 'smooth' });
+        });
+    });
 }
 
 let navResponsiveRaf = null;
@@ -856,10 +928,6 @@ function updateResponsiveNavbar() {
         link.classList.remove('nav-responsive-hidden');
     });
     document.getElementById('navResponsiveCategory')?.remove();
-    if (!menuEl.children.length) {
-        menuEl.innerHTML = `<div class="nav-more-empty">${navEscape(navT('nav.empty'))}</div>`;
-    }
-
     const links = Array.from(primaryEl.querySelectorAll('.nav-link'));
     if (!links.length || !isNavbarOverflowing(nav)) return;
 
@@ -884,17 +952,14 @@ function updateResponsiveNavbar() {
         .reverse();
     if (!collapsedItems.length) return;
 
-    const emptyEl = menuEl.querySelector(':scope > .nav-more-empty');
-    if (emptyEl && menuEl.children.length === 1) emptyEl.remove();
-
     const category = document.createElement('div');
     category.className = 'nav-more-category nav-responsive-category';
     category.id = 'navResponsiveCategory';
     category.innerHTML = `
         <div class="nav-more-section-label">${navEscape(navT('nav.more'))}</div>
-        ${collapsedItems.map(item => renderNavItem(item, 'nav-more-item nav-responsive-more-item')).join('')}
+        <div class="nav-more-items">${collapsedItems.map(item => renderNavItem(item, 'nav-more-item nav-responsive-more-item')).join('')}</div>
     `;
-    menuEl.prepend(category);
+    menuEl.querySelector('.nav-more-content')?.prepend(category);
 }
 
 async function loadNavigationData() {
@@ -1021,8 +1086,34 @@ window.addEventListener('resize', queueResponsiveNavbarUpdate);
 window.toggleNavMore = function (event) {
     event.preventDefault();
     event.stopPropagation();
-    document.getElementById('navMore')?.classList.toggle('open');
+    const more = document.getElementById('navMore');
+    if (!more) return;
+    const isOpening = !more.classList.contains('open');
+    more.classList.toggle('open', isOpening);
+    if (isOpening) {
+        const menu = document.getElementById('navMoreMenu');
+        const buttonRect = document.getElementById('navMoreBtn')?.getBoundingClientRect();
+        if (menu && buttonRect) {
+            const panelWidth = menu.getBoundingClientRect().width;
+            const left = Math.max(12, Math.min(buttonRect.left, window.innerWidth - panelWidth - 12));
+            menu.style.left = `${left}px`;
+        }
+        const search = document.getElementById('navMoreSearch');
+        if (search) {
+            search.value = '';
+            filterNavMoreItems('');
+            setTimeout(() => search.focus(), 0);
+        }
+    }
 };
+
+document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape') return;
+    const more = document.getElementById('navMore');
+    if (!more?.classList.contains('open')) return;
+    more.classList.remove('open');
+    document.getElementById('navMoreBtn')?.focus();
+});
 
 document.addEventListener('click', (event) => {
     const more = document.getElementById('navMore');
@@ -3842,6 +3933,29 @@ function initBackToTopButton() {
 }
 
 let builtinToolsSyncChecking = false;
+const BUILTIN_TOOLS_SYNC_SNOOZE_KEY = 'builtin_tools_sync_snooze_date_v1';
+
+function getBuiltinToolsSyncLocalDate() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function isBuiltinToolsSyncSnoozedToday() {
+    try {
+        return localStorage.getItem(BUILTIN_TOOLS_SYNC_SNOOZE_KEY) === getBuiltinToolsSyncLocalDate();
+    } catch (_) {
+        return false;
+    }
+}
+
+function snoozeBuiltinToolsSyncForToday() {
+    try {
+        localStorage.setItem(BUILTIN_TOOLS_SYNC_SNOOZE_KEY, getBuiltinToolsSyncLocalDate());
+    } catch (_) { /* 隐私模式或存储受限时仍允许关闭当前弹窗 */ }
+}
 
 function formatBuiltinToolBytes(bytes) {
     const value = Number(bytes) || 0;
@@ -3872,7 +3986,14 @@ function builtinToolChangeLabel(type) {
 function renderBuiltinToolDiff(tool) {
     const visibleChanges = (tool.changes || []).filter(item => item.type !== 'unchanged');
     const unchangedCount = tool.counts && tool.counts.unchanged || 0;
-    if (!visibleChanges.length && !unchangedCount) {
+    const metadataRow = tool.metadataChanged
+        ? `<div class="builtin-sync-file-row is-metadata">
+            <span class="builtin-sync-change is-modified">版本</span>
+            <code title="系统工具版本标识">系统工具版本标识</code>
+            <span class="builtin-sync-file-size">需要同步</span>
+        </div>`
+        : '';
+    if (!visibleChanges.length && !unchangedCount && !metadataRow) {
         return '<div class="builtin-sync-empty-diff">仅更新系统工具标识，不改动工具文件。</div>';
     }
     const rows = visibleChanges.map(item => `
@@ -3885,7 +4006,7 @@ function renderBuiltinToolDiff(tool) {
     const unchanged = unchangedCount
         ? `<div class="builtin-sync-unchanged">${unchangedCount} 个相同文件不会重复说明</div>`
         : '';
-    return rows + unchanged;
+    return rows + metadataRow + unchanged;
 }
 
 function closeBuiltinToolsSyncModal() {
@@ -3908,6 +4029,9 @@ function openBuiltinToolsSyncModal(preview) {
         const status = builtinToolStatusMeta(tool.status);
         const counts = tool.counts || {};
         const diffCount = (counts.added || 0) + (counts.modified || 0) + (counts.removed || 0) + (counts.preserved || 0);
+        const diffSummary = diffCount
+            ? `${diffCount} 项文件差异`
+            : tool.metadataChanged ? '仅版本标识不同' : '无文件差异';
         const conflictNotice = tool.status === 'conflict'
             ? '<div class="builtin-sync-conflict-note">此目录不是系统管理版本，可能是您的同名自定义工具，已默认不覆盖。</div>'
             : '';
@@ -3938,7 +4062,7 @@ function openBuiltinToolsSyncModal(preview) {
                     <span class="builtin-sync-counts">+${counts.added || 0} / ~${counts.modified || 0} / −${counts.removed || 0} / 保留 ${counts.preserved || 0}</span>
                 </div>
                 <details class="builtin-sync-details" ${tool.status === 'conflict' ? 'open' : ''}>
-                    <summary>查看旧版与新版文件比对（${diffCount} 项差异）</summary>
+                    <summary>查看旧版与新版比对（${diffSummary}）</summary>
                     <div class="builtin-sync-file-list">${renderBuiltinToolDiff(tool)}</div>
                 </details>
             </article>
@@ -3968,6 +4092,7 @@ function openBuiltinToolsSyncModal(preview) {
             <footer class="builtin-sync-footer">
                 <span class="builtin-sync-result" aria-live="polite">冲突项默认保留旧版，您仍可手动勾选覆盖。</span>
                 <button type="button" class="builtin-sync-later">稍后提醒</button>
+                <button type="button" class="builtin-sync-today">今天不再提醒</button>
                 <button type="button" class="builtin-sync-apply">按选择处理</button>
             </footer>
         </div>
@@ -3977,6 +4102,10 @@ function openBuiltinToolsSyncModal(preview) {
     const close = () => closeBuiltinToolsSyncModal();
     modal.querySelector('.builtin-sync-close').addEventListener('click', close);
     modal.querySelector('.builtin-sync-later').addEventListener('click', close);
+    modal.querySelector('.builtin-sync-today').addEventListener('click', () => {
+        snoozeBuiltinToolsSyncForToday();
+        close();
+    });
     modal.addEventListener('click', event => {
         if (event.target === modal) close();
     });
@@ -4001,6 +4130,7 @@ function openBuiltinToolsSyncModal(preview) {
         const expectedFingerprints = Object.fromEntries(tools.map(tool => [tool.slug, tool.fingerprint]));
         button.disabled = true;
         modal.querySelector('.builtin-sync-later').disabled = true;
+        modal.querySelector('.builtin-sync-today').disabled = true;
         resultNode.textContent = '正在备份旧版并按选择处理…';
         try {
             const result = await API.post('/api/custom-tools/builtin-sync/apply', {
@@ -4018,6 +4148,7 @@ function openBuiltinToolsSyncModal(preview) {
             } else if (failed.length) {
                 button.disabled = false;
                 modal.querySelector('.builtin-sync-later').disabled = false;
+                modal.querySelector('.builtin-sync-today').disabled = false;
             } else {
                 setTimeout(close, 650);
             }
@@ -4025,6 +4156,7 @@ function openBuiltinToolsSyncModal(preview) {
             resultNode.textContent = `处理失败：${error.message || '未知错误'}`;
             button.disabled = false;
             modal.querySelector('.builtin-sync-later').disabled = false;
+            modal.querySelector('.builtin-sync-today').disabled = false;
         }
     });
     setTimeout(() => modal.querySelector('.builtin-sync-choice')?.focus(), 0);
@@ -4034,6 +4166,7 @@ async function checkBuiltinToolsSync() {
     if (
         builtinToolsSyncChecking
         || localStorage.getItem('tools_role') !== 'admin'
+        || isBuiltinToolsSyncSnoozedToday()
         || typeof API === 'undefined'
         || document.getElementById('builtinToolsSyncModal')
     ) return;

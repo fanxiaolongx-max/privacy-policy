@@ -249,6 +249,16 @@ router.put('/projects/:id', async (req, res) => {
     }
 });
 
+router.delete('/projects/:id', async (req, res) => {
+    try {
+        const project = await slideRepo.deleteProject(req.params.id);
+        if (!project) return res.status(404).json({ error: '项目不存在或已被删除' });
+        res.json({ success: true, project });
+    } catch (error) {
+        res.status(400).json({ error: `项目删除失败：${error.message}` });
+    }
+});
+
 router.get('/assets', async (req, res) => {
     const filters = assetFiltersFromQuery(req.query);
     const requestedPageSize = Number(req.query.pageSize || req.query.limit || 12);
@@ -275,6 +285,13 @@ router.get('/capabilities', (req, res) => {
 
 router.get('/asset-filters', async (req, res) => {
     res.json(await slideRepo.getAssetFilters(assetFiltersFromQuery(req.query)));
+});
+
+router.get('/asset-import-batches', async (req, res) => {
+    if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: '仅管理员可以按导入文件批量管理素材' });
+    }
+    res.json({ items: await slideRepo.listAssetImportBatches() });
 });
 
 router.get('/import-progress/:taskId', (req, res) => {
@@ -309,6 +326,21 @@ router.patch('/assets/:id', async (req, res) => {
         res.json({ asset: decorateAssetPermissions(updated, req.user) });
     } catch (error) {
         res.status(400).json({ error: `素材信息更新失败：${error.message}` });
+    }
+});
+
+router.delete('/assets/by-import-batches', async (req, res) => {
+    try {
+        if (!req.user || req.user.role !== 'admin') {
+            return res.status(403).json({ error: '仅管理员可以按导入文件批量删除素材' });
+        }
+        const batches = Array.isArray(req.body && req.body.batches) ? req.body.batches : [];
+        if (!batches.length) return res.status(400).json({ error: '请至少选择一个导入文件' });
+        if (batches.length > 100) return res.status(400).json({ error: '单次最多选择 100 个导入文件' });
+        const result = await slideRepo.deleteAssetsByImportBatches(batches);
+        res.json({ success: true, ...result });
+    } catch (error) {
+        res.status(400).json({ error: `批量删除素材失败：${error.message}` });
     }
 });
 

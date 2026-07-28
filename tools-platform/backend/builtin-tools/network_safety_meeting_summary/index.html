@@ -34,7 +34,7 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 
     <!-- Custom CSS for Slide Content -->
-    <link rel="stylesheet" href="css/app.css?v=20260722-04">
+    <link rel="stylesheet" href="css/app.css?v=20260728-03">
 </head>
 
 <body class="bg-zinc-950 text-zinc-100 font-sans h-screen w-screen overflow-hidden flex flex-col">
@@ -408,6 +408,7 @@
                 <div class="material-library-head-actions">
                     <input id="materialAssetImportInput" type="file" accept=".pptx" hidden>
                     <button id="addMaterialAssetBtn" class="material-library-primary-action" type="button" title="上传一个仅包含单页的 PPTX"><i class="ph ph-plus-circle"></i><span>新增单页素材</span></button>
+                    <button id="batchDeleteMaterialsBtn" class="material-library-danger-action hidden" type="button" title="按每次导入的 PPT 文件批量删除素材"><i class="ph ph-trash"></i><span>批量删除</span></button>
                     <div class="material-view-switch" aria-label="素材视图模式">
                         <button type="button" data-material-view="grid" title="卡片视图"><i class="ph ph-squares-four"></i><span>卡片</span></button>
                         <button type="button" data-material-view="table" title="表格视图"><i class="ph ph-list-bullets"></i><span>表格</span></button>
@@ -478,6 +479,72 @@
             </div>
             <div class="material-edit-actions"><button id="cancelMaterialEditBtn" type="button">取消</button><button type="submit"><i class="ph ph-check"></i> 保存更正</button></div>
         </form>
+    </section>
+
+    <section id="materialDeleteModal" class="material-danger-modal hidden" aria-hidden="true">
+        <div class="material-danger-dialog" role="dialog" aria-modal="true" aria-labelledby="materialDeleteTitle">
+            <div class="material-danger-icon"><i class="ph ph-trash"></i></div>
+            <span class="material-danger-eyebrow">DELETE MATERIAL</span>
+            <h3 id="materialDeleteTitle">删除这页素材？</h3>
+            <p>对应的单页 PPT 与缩略图也会一并删除，此操作无法恢复。</p>
+            <div class="material-delete-asset-card">
+                <strong id="materialDeleteAssetName">PPT 页面素材</strong>
+                <span id="materialDeleteAssetMeta"></span>
+            </div>
+            <div id="materialDeleteError" class="material-danger-error" aria-live="polite"></div>
+            <div class="material-danger-actions">
+                <button id="cancelMaterialDeleteBtn" type="button">保留素材</button>
+                <button id="confirmMaterialDeleteBtn" class="danger" type="button"><i class="ph ph-trash"></i> 确认删除</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="projectDeleteModal" class="material-danger-modal hidden" aria-hidden="true">
+        <div class="material-danger-dialog" role="dialog" aria-modal="true" aria-labelledby="projectDeleteTitle">
+            <div class="material-danger-icon"><i class="ph ph-folder-minus"></i></div>
+            <span class="material-danger-eyebrow">DELETE PROJECT</span>
+            <h3 id="projectDeleteTitle">删除这个项目？</h3>
+            <p>项目设计稿和编辑记录将被删除，公共素材库中的 PPT 页面素材不会受到影响。</p>
+            <div class="material-delete-asset-card">
+                <strong id="projectDeleteName">胶片设计项目</strong>
+                <span id="projectDeleteMeta"></span>
+            </div>
+            <label class="project-delete-confirm-check">
+                <input id="projectDeleteAcknowledgement" type="checkbox">
+                <span>我确认删除该项目设计稿</span>
+            </label>
+            <div id="projectDeleteError" class="material-danger-error" aria-live="polite"></div>
+            <div class="material-danger-actions">
+                <button id="cancelProjectDeleteBtn" type="button">保留项目</button>
+                <button id="confirmProjectDeleteBtn" class="danger" type="button" disabled><i class="ph ph-trash"></i> 确认删除</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="materialBatchDeleteModal" class="material-danger-modal hidden" aria-hidden="true">
+        <div class="material-danger-dialog material-batch-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="materialBatchDeleteTitle">
+            <div class="material-batch-delete-head">
+                <div>
+                    <span class="material-danger-eyebrow">DELETE IMPORT BATCHES</span>
+                    <h3 id="materialBatchDeleteTitle">按导入文件批量删除</h3>
+                    <p>每一项代表一次 PPT 导入记录；同名文件的不同导入批次会分别显示。</p>
+                </div>
+                <button id="closeMaterialBatchDeleteBtn" type="button" aria-label="关闭"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="material-batch-delete-tools">
+                <label><i class="ph ph-magnifying-glass"></i><input id="materialBatchDeleteSearch" placeholder="搜索导入文件名或上传人"></label>
+                <button id="toggleMaterialBatchSelectionBtn" type="button">全选当前结果</button>
+            </div>
+            <div id="materialBatchDeleteList" class="material-batch-delete-list custom-scrollbar"></div>
+            <div id="materialBatchDeleteError" class="material-danger-error" aria-live="polite"></div>
+            <div class="material-batch-delete-footer">
+                <div><span id="materialBatchDeleteSummary">尚未选择导入文件</span><small>将同时删除对应的单页 PPT 和缩略图</small></div>
+                <div class="material-danger-actions">
+                    <button id="cancelMaterialBatchDeleteBtn" type="button">取消</button>
+                    <button id="confirmMaterialBatchDeleteBtn" class="danger" type="button" disabled><i class="ph ph-trash"></i> 删除所选素材</button>
+                </div>
+            </div>
+        </div>
     </section>
 
     <div id="pptImportProgress" class="ppt-import-progress hidden" role="status" aria-live="polite">
@@ -737,7 +804,7 @@
     </template>
 
     <!-- App Logic -->
-    <script type="module" src="js/app.js?v=20260722-04"></script>
+    <script type="module" src="js/app.js?v=20260728-04"></script>
 </body>
 
 </html>

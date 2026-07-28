@@ -165,6 +165,14 @@ async function saveProject(id, { name, deckHtml, activeSlide } = {}) {
     return getProject(id);
 }
 
+async function deleteProject(id) {
+    await ensureReady();
+    const project = await getProject(id);
+    if (!project) return null;
+    await run('DELETE FROM slide_design_projects WHERE id = ?', [id]);
+    return project;
+}
+
 async function createAsset({ id: providedId, projectId, sourceFilename, pageNumber, fileName, relativePath, extractedText, summary, tag, tags, uploader, usageScenario, pageType, intent, thumbnailPath, importedAt }) {
     await ensureReady();
     const id = providedId || makeId('sld');
@@ -255,6 +263,68 @@ async function deleteAsset(id) {
     await run('DELETE FROM slide_library_assets WHERE id = ?', [id]);
     [assetPath, thumbnailPath].filter(Boolean).forEach(filePath => fs.rmSync(filePath, { force: true }));
     return asset;
+}
+
+function normalizeImportBatches(batches) {
+    if (!Array.isArray(batches)) return [];
+    const seen = new Set();
+    return batches.map(item => ({
+        sourceFilename: String(item && item.sourceFilename || '').trim().slice(0, 240),
+        importedAt: String(item && item.importedAt || '').trim().slice(0, 40),
+        uploader: String(item && item.uploader || '').trim().slice(0, 120)
+    })).filter(item => {
+        if (!item.sourceFilename || !item.importedAt) return false;
+        const key = `${item.sourceFilename}\u0000${item.importedAt}\u0000${item.uploader}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    }).slice(0, 100);
+}
+
+async function listAssetImportBatches() {
+    await ensureReady();
+    const rows = await all(`
+        SELECT source_filename, imported_at, uploader, COUNT(*) AS asset_count,
+               MIN(page_number) AS first_page, MAX(page_number) AS last_page
+        FROM slide_library_assets
+        GROUP BY source_filename, imported_at, uploader
+        ORDER BY imported_at DESC, source_filename
+    `);
+    return rows.map(row => ({
+        sourceFilename: row.source_filename,
+        importedAt: row.imported_at,
+        uploader: row.uploader || '',
+        assetCount: Number(row.asset_count || 0),
+        firstPage: Number(row.first_page || 0),
+        lastPage: Number(row.last_page || 0)
+    }));
+}
+
+async function deleteAssetsByImportBatches(batches) {
+    await ensureReady();
+    const normalized = normalizeImportBatches(batches);
+    if (!normalized.length) return { deletedCount: 0, batches: [] };
+    const clauses = normalized.map(() => '(source_filename = ? AND imported_at = ? AND uploader = ?)');
+    const params = normalized.flatMap(item => [item.sourceFilename, item.importedAt, item.uploader]);
+    const rows = await all(
+        `SELECT * FROM slide_library_assets WHERE ${clauses.join(' OR ')}`,
+        params
+    );
+    if (!rows.length) return { deletedCount: 0, batches: normalized };
+    const filesToDelete = rows.flatMap(row => [
+        resolveLibraryFile(row.relative_path, '素材文件'),
+        resolveLibraryFile(row.thumbnail_path, '缩略图')
+    ]).filter(Boolean);
+    await run(
+        `DELETE FROM slide_library_assets WHERE ${clauses.join(' OR ')}`,
+        params
+    );
+    filesToDelete.forEach(filePath => fs.rmSync(filePath, { force: true }));
+    return {
+        deletedCount: rows.length,
+        deletedIds: rows.map(row => row.id),
+        batches: normalized
+    };
 }
 
 function buildAssetFilter({ query = '', tag = '', date = '', period = '', uploader = '', usageScenario = '', pageType = '', sourceFilename = '' } = {}, exclude = []) {
@@ -368,6 +438,7 @@ module.exports = {
     getProject,
     createProject,
     saveProject,
+    deleteProject,
     createAsset,
     updateAssetAnalysis,
     updateAssetThumbnail,
@@ -375,6 +446,8 @@ module.exports = {
     getAssetFile,
     getAssetThumbnail,
     deleteAsset,
+    listAssetImportBatches,
+    deleteAssetsByImportBatches,
     listAssets,
     countAssets,
     getAssetFilters

@@ -105,8 +105,28 @@ export function initProjectWorkspace(callbacks) {
     const fileFilterMenu = document.getElementById('libraryFileFilterMenu');
     const fileFilterSearch = document.getElementById('libraryFileFilterSearch');
     const fileFilterOptions = document.getElementById('libraryFileFilterOptions');
+    const batchDeleteMaterialsButton = document.getElementById('batchDeleteMaterialsBtn');
+    const deleteModal = document.getElementById('materialDeleteModal');
+    const deleteAssetName = document.getElementById('materialDeleteAssetName');
+    const deleteAssetMeta = document.getElementById('materialDeleteAssetMeta');
+    const deleteError = document.getElementById('materialDeleteError');
+    const confirmDeleteButton = document.getElementById('confirmMaterialDeleteBtn');
+    const batchDeleteModal = document.getElementById('materialBatchDeleteModal');
+    const batchDeleteSearch = document.getElementById('materialBatchDeleteSearch');
+    const batchDeleteList = document.getElementById('materialBatchDeleteList');
+    const batchDeleteSummary = document.getElementById('materialBatchDeleteSummary');
+    const batchDeleteError = document.getElementById('materialBatchDeleteError');
+    const confirmBatchDeleteButton = document.getElementById('confirmMaterialBatchDeleteBtn');
+    const toggleBatchSelectionButton = document.getElementById('toggleMaterialBatchSelectionBtn');
+    const projectDeleteModal = document.getElementById('projectDeleteModal');
+    const projectDeleteName = document.getElementById('projectDeleteName');
+    const projectDeleteMeta = document.getElementById('projectDeleteMeta');
+    const projectDeleteError = document.getElementById('projectDeleteError');
+    const projectDeleteAcknowledgement = document.getElementById('projectDeleteAcknowledgement');
+    const confirmProjectDeleteButton = document.getElementById('confirmProjectDeleteBtn');
 
     let currentProject = null;
+    let recentProjects = [];
     let saveTimer = null;
     let saveInFlight = false;
     let saveQueued = false;
@@ -131,6 +151,10 @@ export function initProjectWorkspace(callbacks) {
     let importProgressTimer = null;
     let lastImportLogSequence = 0;
     let importCapabilities = { maxFileSizeMb: 200, maxSlides: 100, platform: '', preferredThumbnailEngine: '' };
+    let pendingDeleteAsset = null;
+    let pendingDeleteProject = null;
+    let importBatches = [];
+    let selectedImportBatchKeys = new Set();
     if (![12, 24, 48, 96].includes(pageSize)) pageSize = 12;
     pageSizeSelect.value = String(pageSize);
 
@@ -283,17 +307,71 @@ export function initProjectWorkspace(callbacks) {
         projectList.innerHTML = '<div class="project-empty">正在读取项目…</div>';
         try {
             const { items } = await request('/projects');
-            applyProjectView(items.length);
-            projectList.innerHTML = items.length ? items.map(project => `
-                <button class="project-card" data-project-id="${escapeHtml(project.id)}">
-                    <span class="project-source">${project.source === 'ppt-import' ? 'PPT IMPORT' : 'DESIGN'}</span>
-                    <span class="project-card-icon"><i class="ph ph-presentation"></i></span>
-                    <strong title="${escapeHtml(project.name)}">${escapeHtml(project.name)}</strong>
-                    <small>最近保存 ${formatTime(project.updatedAt)}</small>
-                </button>
+            recentProjects = Array.isArray(items) ? items : [];
+            applyProjectView(recentProjects.length);
+            projectList.innerHTML = recentProjects.length ? recentProjects.map(project => `
+                <article class="project-card" data-project-id="${escapeHtml(project.id)}">
+                    <button class="project-card-open" type="button" data-open-project="${escapeHtml(project.id)}">
+                        <span class="project-source">${project.source === 'ppt-import' ? 'PPT IMPORT' : 'DESIGN'}</span>
+                        <span class="project-card-icon"><i class="ph ph-presentation"></i></span>
+                        <strong title="${escapeHtml(project.name)}">${escapeHtml(project.name)}</strong>
+                        <small>最近保存 ${formatTime(project.updatedAt)}</small>
+                    </button>
+                    <button class="project-card-delete" type="button" data-delete-project="${escapeHtml(project.id)}" aria-label="删除项目 ${escapeHtml(project.name)}" title="删除项目"><i class="ph ph-trash"></i></button>
+                </article>
             `).join('') : '<div class="project-empty">还没有项目，输入名称创建第一份胶片吧。</div>';
         } catch (error) {
+            recentProjects = [];
             projectList.innerHTML = `<div class="project-empty">读取失败：${escapeHtml(error.message)}</div>`;
+        }
+    }
+
+    function closeProjectDelete() {
+        projectDeleteModal.classList.add('hidden');
+        projectDeleteModal.setAttribute('aria-hidden', 'true');
+        projectDeleteError.textContent = '';
+        projectDeleteAcknowledgement.checked = false;
+        confirmProjectDeleteButton.disabled = true;
+        confirmProjectDeleteButton.innerHTML = '<i class="ph ph-trash"></i> 确认删除';
+        pendingDeleteProject = null;
+    }
+
+    function openProjectDelete(project) {
+        if (!project?.id) return;
+        pendingDeleteProject = project;
+        projectDeleteName.textContent = project.name || '未命名项目';
+        projectDeleteMeta.textContent = `${project.source === 'ppt-import' ? 'PPT 导入项目' : '设计项目'} · 最近保存 ${formatTime(project.updatedAt)}`;
+        projectDeleteError.textContent = '';
+        projectDeleteAcknowledgement.checked = false;
+        confirmProjectDeleteButton.disabled = true;
+        projectDeleteModal.classList.remove('hidden');
+        projectDeleteModal.setAttribute('aria-hidden', 'false');
+        setTimeout(() => confirmProjectDeleteButton.focus(), 0);
+    }
+
+    async function confirmProjectDelete() {
+        const project = pendingDeleteProject;
+        if (!project?.id || !projectDeleteAcknowledgement.checked) return;
+        confirmProjectDeleteButton.disabled = true;
+        confirmProjectDeleteButton.innerHTML = '<i class="ph ph-spinner"></i> 正在删除…';
+        projectDeleteError.textContent = '';
+        try {
+            await request(`/projects/${encodeURIComponent(project.id)}`, { method: 'DELETE' });
+            if (currentProject?.id === project.id) {
+                clearTimeout(saveTimer);
+                saveQueued = false;
+                currentProject = null;
+                projectNameChip.innerHTML = '未打开项目 <i class="ph ph-caret-down"></i>';
+                projectNameChip.title = '切换项目';
+                setSaveBadge('未打开项目', 'idle');
+            }
+            closeProjectDelete();
+            callbacks.setStatus(`项目“${project.name || '未命名项目'}”已删除`);
+            await loadProjects();
+        } catch (error) {
+            projectDeleteError.textContent = error.message;
+            confirmProjectDeleteButton.disabled = !projectDeleteAcknowledgement.checked;
+            confirmProjectDeleteButton.innerHTML = '<i class="ph ph-trash"></i> 重新删除';
         }
     }
 
@@ -344,22 +422,27 @@ export function initProjectWorkspace(callbacks) {
             return false;
         }
         saveInFlight = true;
+        const savingProjectId = currentProject.id;
         setSaveBadge(manual ? '正在手动保存…' : '正在同步…', 'saving');
         try {
-            const { project } = await request(`/projects/${encodeURIComponent(currentProject.id)}`, {
+            const { project } = await request(`/projects/${encodeURIComponent(savingProjectId)}`, {
                 method: 'PUT',
                 body: JSON.stringify({
                     deckHtml: callbacks.getDeckHtml(),
                     activeSlide: callbacks.getActiveSlide()
                 })
             });
-            currentProject = project;
-            setSaveBadge(manual ? '已手动保存' : '已自动保存', 'saved');
-            if (manual) callbacks.setStatus('项目已手动保存');
+            if (currentProject?.id === savingProjectId) {
+                currentProject = project;
+                setSaveBadge(manual ? '已手动保存' : '已自动保存', 'saved');
+                if (manual) callbacks.setStatus('项目已手动保存');
+            }
             return true;
         } catch (error) {
-            setSaveBadge('保存失败', 'error');
-            callbacks.setStatus(`保存失败：${error.message}`);
+            if (currentProject?.id === savingProjectId) {
+                setSaveBadge('保存失败', 'error');
+                callbacks.setStatus(`保存失败：${error.message}`);
+            }
             return false;
         } finally {
             saveInFlight = false;
@@ -382,6 +465,7 @@ export function initProjectWorkspace(callbacks) {
             importCapabilities = { ...importCapabilities, ...(await request('/capabilities')) };
         } catch (_) { /* 使用前端默认限制，服务端仍会执行权威校验 */ }
         addMaterialAssetButton.classList.toggle('hidden', importCapabilities.canManageAssets === false);
+        batchDeleteMaterialsButton.classList.toggle('hidden', importCapabilities.canManageAssets !== true);
         return importCapabilities;
     }
 
@@ -575,17 +659,146 @@ export function initProjectWorkspace(callbacks) {
         }
     }
 
-    async function deleteMaterialAsset(asset) {
+    function closeMaterialDelete() {
+        deleteModal.classList.add('hidden');
+        deleteModal.setAttribute('aria-hidden', 'true');
+        deleteError.textContent = '';
+        confirmDeleteButton.disabled = false;
+        confirmDeleteButton.innerHTML = '<i class="ph ph-trash"></i> 确认删除';
+        pendingDeleteAsset = null;
+    }
+
+    function deleteMaterialAsset(asset) {
         if (!asset?.canDelete) return;
-        if (!confirm(`确定删除“${asset.summary || `第 ${asset.pageNumber} 页素材`}”吗？\n单页 PPT 与缩略图文件也会删除，此操作不可恢复。`)) return;
+        pendingDeleteAsset = asset;
+        deleteAssetName.textContent = asset.summary || `第 ${asset.pageNumber} 页素材`;
+        deleteAssetMeta.textContent = `PAGE ${asset.pageNumber} · ${asset.sourceFilename || '未知文件'} · ${asset.uploader || '未知用户'}`;
+        deleteError.textContent = '';
+        deleteModal.classList.remove('hidden');
+        deleteModal.setAttribute('aria-hidden', 'false');
+        setTimeout(() => confirmDeleteButton.focus(), 0);
+    }
+
+    async function confirmMaterialDelete() {
+        const asset = pendingDeleteAsset;
+        if (!asset?.canDelete) return;
+        confirmDeleteButton.disabled = true;
+        confirmDeleteButton.innerHTML = '<i class="ph ph-spinner"></i> 正在删除…';
+        deleteError.textContent = '';
         try {
             await request(`/assets/${encodeURIComponent(asset.id)}`, { method: 'DELETE' });
             shelfItems = shelfItems.filter(item => item.id !== asset.id);
             renderShelf();
+            closeMaterialDelete();
             callbacks.setStatus('素材已删除');
             await loadLibrary();
         } catch (error) {
-            alert(error.message);
+            deleteError.textContent = error.message;
+            confirmDeleteButton.disabled = false;
+            confirmDeleteButton.innerHTML = '<i class="ph ph-trash"></i> 重新删除';
+        }
+    }
+
+    function importBatchKey(batch) {
+        return JSON.stringify([String(batch?.sourceFilename || ''), String(batch?.importedAt || '')]);
+    }
+
+    function filteredImportBatches() {
+        const keyword = batchDeleteSearch.value.trim().toLocaleLowerCase('zh-CN');
+        return importBatches.filter(item => !keyword
+            || item.sourceFilename.toLocaleLowerCase('zh-CN').includes(keyword)
+            || String(item.uploader || '').toLocaleLowerCase('zh-CN').includes(keyword));
+    }
+
+    function updateBatchDeleteSummary() {
+        const selected = importBatches.filter(item => selectedImportBatchKeys.has(importBatchKey(item)));
+        const assetCount = selected.reduce((sum, item) => sum + Number(item.assetCount || 0), 0);
+        batchDeleteSummary.textContent = selected.length
+            ? `已选择 ${selected.length} 个导入文件，共 ${assetCount} 页素材`
+            : '尚未选择导入文件';
+        confirmBatchDeleteButton.disabled = !selected.length;
+        const visible = filteredImportBatches();
+        toggleBatchSelectionButton.textContent = visible.length
+            && visible.every(item => selectedImportBatchKeys.has(importBatchKey(item)))
+            ? '取消选择当前结果'
+            : '全选当前结果';
+    }
+
+    function renderBatchDeleteList() {
+        const visible = filteredImportBatches();
+        batchDeleteList.innerHTML = visible.length ? visible.map(item => {
+            const key = importBatchKey(item);
+            const selected = selectedImportBatchKeys.has(key);
+            return `
+                <label class="material-batch-delete-item ${selected ? 'selected' : ''}">
+                    <input type="checkbox" data-import-batch-key="${escapeHtml(key)}" ${selected ? 'checked' : ''}>
+                    <span><strong title="${escapeHtml(item.sourceFilename)}">${escapeHtml(item.sourceFilename)}</strong><small>${escapeHtml(item.uploader || '未知用户')} · ${formatTime(item.importedAt)} · 第 ${item.firstPage}-${item.lastPage} 页</small></span>
+                    <b>${Number(item.assetCount || 0)} 页</b>
+                </label>`;
+        }).join('') : '<div class="material-batch-delete-empty">没有匹配的导入文件</div>';
+        updateBatchDeleteSummary();
+    }
+
+    function closeBatchDelete() {
+        batchDeleteModal.classList.add('hidden');
+        batchDeleteModal.setAttribute('aria-hidden', 'true');
+        batchDeleteError.textContent = '';
+        batchDeleteSearch.value = '';
+        importBatches = [];
+        selectedImportBatchKeys = new Set();
+        confirmBatchDeleteButton.disabled = true;
+        confirmBatchDeleteButton.innerHTML = '<i class="ph ph-trash"></i> 删除所选素材';
+    }
+
+    async function openBatchDelete() {
+        if (importCapabilities.canManageAssets !== true) return;
+        batchDeleteModal.classList.remove('hidden');
+        batchDeleteModal.setAttribute('aria-hidden', 'false');
+        batchDeleteSearch.value = '';
+        batchDeleteError.textContent = '';
+        selectedImportBatchKeys = new Set();
+        batchDeleteList.innerHTML = '<div class="material-batch-delete-empty">正在读取导入文件…</div>';
+        updateBatchDeleteSummary();
+        try {
+            const result = await request('/asset-import-batches');
+            importBatches = Array.isArray(result.items) ? result.items : [];
+            renderBatchDeleteList();
+            setTimeout(() => batchDeleteSearch.focus(), 0);
+        } catch (error) {
+            batchDeleteError.textContent = error.message;
+            batchDeleteList.innerHTML = '<div class="material-batch-delete-empty">导入文件读取失败</div>';
+        }
+    }
+
+    async function confirmBatchDelete() {
+        const selected = importBatches.filter(item => selectedImportBatchKeys.has(importBatchKey(item)));
+        if (!selected.length) return;
+        confirmBatchDeleteButton.disabled = true;
+        confirmBatchDeleteButton.innerHTML = '<i class="ph ph-spinner"></i> 正在删除…';
+        batchDeleteError.textContent = '';
+        try {
+            const result = await request('/assets/by-import-batches', {
+                method: 'DELETE',
+                body: JSON.stringify({
+                    batches: selected.map(item => ({
+                        sourceFilename: item.sourceFilename,
+                        importedAt: item.importedAt,
+                        uploader: item.uploader || ''
+                    }))
+                })
+            });
+            const selectedKeys = new Set(selected.map(importBatchKey));
+            shelfItems = shelfItems.filter(item => !selectedKeys.has(importBatchKey(item)));
+            renderShelf();
+            if (selected.some(item => item.sourceFilename === selectedSourceFilename)) selectedSourceFilename = '';
+            closeBatchDelete();
+            callbacks.setStatus(`已按导入文件删除 ${Number(result.deletedCount || 0)} 页素材`);
+            currentPage = 1;
+            await loadLibrary();
+        } catch (error) {
+            batchDeleteError.textContent = error.message;
+            confirmBatchDeleteButton.disabled = false;
+            confirmBatchDeleteButton.innerHTML = '<i class="ph ph-trash"></i> 重新删除';
         }
     }
 
@@ -843,13 +1056,19 @@ export function initProjectWorkspace(callbacks) {
         applyMaterialView();
     });
     projectList.addEventListener('click', event => {
-        const card = event.target.closest('[data-project-id]');
-        if (card) openProject(card.dataset.projectId).catch(error => alert(error.message));
+        const deleteButton = event.target.closest('[data-delete-project]');
+        if (deleteButton) {
+            openProjectDelete(recentProjects.find(project => project.id === deleteButton.dataset.deleteProject));
+            return;
+        }
+        const openButton = event.target.closest('[data-open-project]');
+        if (openButton) openProject(openButton.dataset.openProject).catch(error => alert(error.message));
     });
     projectNameChip.addEventListener('click', () => { hub.classList.remove('is-hidden'); loadProjects(); });
     document.getElementById('manualSaveBtn').addEventListener('click', () => saveNow(true));
     importInput.addEventListener('change', () => importPptx(importInput.files[0]));
     addMaterialAssetButton.addEventListener('click', () => materialAssetImportInput.click());
+    batchDeleteMaterialsButton.addEventListener('click', openBatchDelete);
     materialAssetImportInput.addEventListener('change', () => importPptx(materialAssetImportInput.files[0], { singlePageOnly: true }));
     document.getElementById('openLibraryBtn').addEventListener('click', () => {
         library.classList.remove('hidden');
@@ -978,6 +1197,37 @@ export function initProjectWorkspace(callbacks) {
     document.getElementById('cancelMaterialEditBtn').addEventListener('click', closeMaterialEdit);
     editModal.addEventListener('click', event => { if (event.target === editModal) closeMaterialEdit(); });
     editForm.addEventListener('submit', event => { event.preventDefault(); saveMaterialEdit(); });
+    document.getElementById('cancelMaterialDeleteBtn').addEventListener('click', closeMaterialDelete);
+    confirmDeleteButton.addEventListener('click', confirmMaterialDelete);
+    deleteModal.addEventListener('click', event => { if (event.target === deleteModal) closeMaterialDelete(); });
+    document.getElementById('cancelProjectDeleteBtn').addEventListener('click', closeProjectDelete);
+    confirmProjectDeleteButton.addEventListener('click', confirmProjectDelete);
+    projectDeleteAcknowledgement.addEventListener('change', () => {
+        confirmProjectDeleteButton.disabled = !projectDeleteAcknowledgement.checked;
+    });
+    projectDeleteModal.addEventListener('click', event => { if (event.target === projectDeleteModal) closeProjectDelete(); });
+    document.getElementById('closeMaterialBatchDeleteBtn').addEventListener('click', closeBatchDelete);
+    document.getElementById('cancelMaterialBatchDeleteBtn').addEventListener('click', closeBatchDelete);
+    confirmBatchDeleteButton.addEventListener('click', confirmBatchDelete);
+    batchDeleteModal.addEventListener('click', event => { if (event.target === batchDeleteModal) closeBatchDelete(); });
+    batchDeleteSearch.addEventListener('input', renderBatchDeleteList);
+    batchDeleteList.addEventListener('change', event => {
+        const checkbox = event.target.closest('[data-import-batch-key]');
+        if (!checkbox) return;
+        if (checkbox.checked) selectedImportBatchKeys.add(checkbox.dataset.importBatchKey);
+        else selectedImportBatchKeys.delete(checkbox.dataset.importBatchKey);
+        renderBatchDeleteList();
+    });
+    toggleBatchSelectionButton.addEventListener('click', () => {
+        const visible = filteredImportBatches();
+        const shouldClear = visible.length && visible.every(item => selectedImportBatchKeys.has(importBatchKey(item)));
+        visible.forEach(item => {
+            const key = importBatchKey(item);
+            if (shouldClear) selectedImportBatchKeys.delete(key);
+            else selectedImportBatchKeys.add(key);
+        });
+        renderBatchDeleteList();
+    });
     shelfList.addEventListener('click', event => {
         const button = event.target.closest('[data-remove-shelf]');
         if (!button) return;
@@ -1007,6 +1257,18 @@ export function initProjectWorkspace(callbacks) {
     document.getElementById('clearMaterialShelfBtn').addEventListener('click', () => { shelfItems = []; renderShelf(); });
     combineButton.addEventListener('click', downloadCombinedPpt);
     document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && !batchDeleteModal.classList.contains('hidden')) {
+            closeBatchDelete();
+            return;
+        }
+        if (event.key === 'Escape' && !deleteModal.classList.contains('hidden')) {
+            closeMaterialDelete();
+            return;
+        }
+        if (event.key === 'Escape' && !projectDeleteModal.classList.contains('hidden')) {
+            closeProjectDelete();
+            return;
+        }
         if (event.key === 'Escape' && !editModal.classList.contains('hidden')) {
             closeMaterialEdit();
             return;
