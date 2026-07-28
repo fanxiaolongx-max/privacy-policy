@@ -11,25 +11,68 @@
             position: fixed;
             bottom: 40px;
             right: 40px;
-            width: 56px;
-            height: 56px;
+            width: 64px;
+            height: 64px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: transparent;
+            border: 1px solid rgba(126,151,222,0.58);
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+            box-shadow:
+                0 8px 22px rgba(13,18,46,0.16),
+                0 0 0 1px rgba(20,31,82,0.18),
+                0 0 20px rgba(104,118,255,0.14),
+                inset 0 0 0 1px rgba(236,245,255,0.12);
             cursor: pointer;
             z-index: 100000;
-            transition: transform 0.18s, box-shadow 0.18s;
+            transition: transform 0.22s cubic-bezier(.2,.8,.2,1), box-shadow 0.22s, border-color 0.22s;
             user-select: none;
             touch-action: none;
+            isolation: isolate;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .ai-fab::before {
+            content: "";
+            position: absolute;
+            inset: -5px;
+            z-index: -1;
+            border-radius: inherit;
+            background: radial-gradient(circle, rgba(118,138,255,0.18), rgba(97,232,255,0.05) 52%, transparent 72%);
+            opacity: 0.72;
+            transition: opacity 0.22s, transform 0.22s;
+            pointer-events: none;
+        }
+        .ai-fab-particles {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            border-radius: inherit;
+            pointer-events: none;
         }
         .ai-fab:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            transform: translateY(-2px) scale(1.06);
+            border-color: rgba(211,225,255,0.56);
+            box-shadow:
+                0 12px 30px rgba(13,18,46,0.22),
+                0 0 0 1px rgba(20,31,82,0.2),
+                0 0 28px rgba(104,150,255,0.24),
+                inset 0 0 0 1px rgba(236,245,255,0.2);
+        }
+        .ai-fab:hover::before,
+        .ai-fab:focus-visible::before {
+            opacity: 1;
+            transform: scale(1.08);
+        }
+        .ai-fab:focus-visible {
+            box-shadow:
+                0 14px 34px rgba(13,18,46,0.3),
+                0 0 0 3px rgba(255,255,255,0.72),
+                0 0 0 6px rgba(103,121,255,0.36);
         }
         .ai-fab.dragging {
             transform: scale(1.04);
@@ -42,10 +85,17 @@
             right: 40px;
             width: 360px;
             height: 550px;
-            background: #fff !important;
+            background:
+                linear-gradient(155deg, rgba(255,255,255,0.32), rgba(207,219,248,0.18)) !important;
             color: #334155 !important;
             border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.72);
+            -webkit-backdrop-filter: blur(36px) saturate(1.55);
+            backdrop-filter: blur(36px) saturate(1.55);
+            box-shadow:
+                0 18px 54px rgba(15,23,42,0.24),
+                0 0 0 1px rgba(92,110,175,0.12),
+                inset 0 1px 0 rgba(255,255,255,0.72);
             z-index: 100000;
             display: flex;
             flex-direction: column;
@@ -68,7 +118,9 @@
             max-height: 800px;
         }
         .ai-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, rgba(82,103,218,0.66), rgba(110,59,153,0.58));
+            -webkit-backdrop-filter: blur(18px) saturate(1.2);
+            backdrop-filter: blur(18px) saturate(1.2);
             color: #fff;
             padding: 16px 20px;
             font-size: 16px;
@@ -102,7 +154,8 @@
             flex: 1;
             padding: 20px;
             overflow-y: auto;
-            background: #f8fafc;
+            background:
+                linear-gradient(180deg, rgba(248,250,252,0.12), rgba(226,232,240,0.04));
             display: flex;
             flex-direction: column;
             gap: 16px;
@@ -117,18 +170,18 @@
             word-wrap: break-word;
         }
         .ai-msg.user {
-            background: #667eea;
+            background: rgba(89,108,220,0.92);
             color: #fff;
             align-self: flex-end;
             border-bottom-right-radius: 4px;
         }
         .ai-msg.ai {
-            background: #fff;
-            color: #334155;
+            background: rgba(255,255,255,0.84);
+            color: #243247;
             align-self: flex-start;
             border-bottom-left-radius: 4px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 14px rgba(30,41,59,0.08);
+            border: 1px solid rgba(255,255,255,0.82);
         }
         .ai-msg p { margin: 0 0 8px 0; }
         .ai-msg p:last-child { margin: 0; }
@@ -138,14 +191,14 @@
         }
         .ai-msg li { margin-bottom: 4px; }
         .ai-msg pre {
-            background: #f1f5f9;
+            background: rgba(226,232,240,0.72);
             padding: 8px;
             border-radius: 6px;
             overflow-x: auto;
             font-size: 13px;
         }
         .ai-msg code {
-            background: #f1f5f9;
+            background: rgba(226,232,240,0.76);
             padding: 2px 4px;
             border-radius: 4px;
             color: #ef4444;
@@ -162,20 +215,22 @@
         .ai-input-area {
             display: flex;
             padding: 12px 16px 16px;
-            background: #fff;
-            border-top: 1px solid #e2e8f0;
+            background: rgba(255,255,255,0.22);
+            border-top: 1px solid rgba(148,163,184,0.24);
+            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(16px);
             gap: 10px;
             align-items: center;
         }
         .ai-input {
             flex: 1;
             padding: 12px 16px;
-            border: 1px solid #cbd5e1;
+            border: 1px solid rgba(148,163,184,0.54);
             border-radius: 24px;
             outline: none;
             font-size: 14px;
             transition: all 0.2s;
-            background: #f1f5f9;
+            background: rgba(248,250,252,0.84);
             color: #1e293b !important;
         }
         .ai-input::placeholder {
@@ -183,7 +238,7 @@
         }
         .ai-input:focus {
             border-color: #667eea;
-            background: #fff;
+            background: rgba(255,255,255,0.9);
             box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
         }
         .ai-send-btn {
@@ -221,8 +276,8 @@
             column-gap: 8px;
             row-gap: 8px;
             padding: 10px 16px 22px;
-            background: #fff;
-            border-top: 1px solid #e2e8f0;
+            background: rgba(255,255,255,0.18);
+            border-top: 1px solid rgba(148,163,184,0.22);
             height: 96px;
             overflow-x: auto;
             overflow-y: hidden;
@@ -236,8 +291,8 @@
             width: 100%;
             max-width: none;
             min-width: 0;
-            border: 1px solid #dbe4ff;
-            background: #f5f7ff;
+            border: 1px solid rgba(174,188,255,0.66);
+            background: rgba(245,247,255,0.74);
             color: #4f5fbf;
             border-radius: 999px;
             padding: 7px 10px;
@@ -259,13 +314,13 @@
             display: none;
         }
         .ai-suggestion-chip:hover {
-            background: #eef2ff;
+            background: rgba(238,242,255,0.92);
             border-color: #aebcff;
         }
         .ai-history-panel {
             display: none;
-            background: #fff;
-            border-bottom: 1px solid #e2e8f0;
+            background: rgba(255,255,255,0.24);
+            border-bottom: 1px solid rgba(148,163,184,0.24);
             max-height: 210px;
             overflow-y: auto;
             padding: 10px 14px;
@@ -274,16 +329,16 @@
             display: block;
         }
         .ai-history-item {
-            border: 1px solid #e2e8f0;
+            border: 1px solid rgba(148,163,184,0.32);
             border-radius: 10px;
             padding: 9px 10px;
             margin-bottom: 8px;
             cursor: pointer;
-            background: #f8fafc;
+            background: rgba(248,250,252,0.72);
         }
         .ai-history-item:hover {
             border-color: #aebcff;
-            background: #f5f7ff;
+            background: rgba(245,247,255,0.9);
         }
         .ai-history-title {
             font-size: 12px;
@@ -297,13 +352,41 @@
             color: #94a3b8;
             margin-top: 4px;
         }
+        @media (max-width: 520px) {
+            .ai-fab {
+                right: 18px;
+                bottom: 20px;
+                width: 60px;
+                height: 60px;
+            }
+            .ai-panel,
+            .ai-panel.expanded {
+                right: 12px;
+                bottom: 92px;
+                width: calc(100vw - 24px);
+                height: min(70vh, 550px);
+                max-width: none;
+            }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .ai-fab,
+            .ai-fab::before,
+            .ai-panel {
+                transition-duration: 0.01ms !important;
+            }
+        }
     `;
     document.head.appendChild(style);
 
     // 创建 DOM
     const fab = document.createElement('div');
     fab.className = 'ai-fab';
-    fab.innerHTML = '🤖';
+    fab.setAttribute('role', 'button');
+    fab.setAttribute('tabindex', '0');
+    fab.setAttribute('aria-label', '打开智能客服助手');
+    fab.setAttribute('aria-expanded', 'false');
+    fab.setAttribute('title', '智能客服助手');
+    fab.innerHTML = '<canvas class="ai-fab-particles" aria-hidden="true"></canvas>';
     document.body.appendChild(fab);
 
     const panel = document.createElement('div');
@@ -344,6 +427,179 @@
     let currentSessionId = null;
     let cumulativeTokens = 0;
     let cumulativeCost = 0;
+    const particleFab = createParticleFab(fab);
+
+    function createParticleFab(root) {
+        const canvas = root.querySelector('.ai-fab-particles');
+        const ctx = canvas.getContext('2d', { alpha: true });
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+        const pointCount = 180;
+        const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+        const points = Array.from({ length: pointCount }, (_, index) => {
+            const y = 1 - (index / (pointCount - 1)) * 2;
+            const radius = Math.sqrt(Math.max(0, 1 - y * y));
+            const angle = goldenAngle * index;
+            const hash = (index * 73) % 97;
+            return {
+                x: Math.cos(angle) * radius,
+                y,
+                z: Math.sin(angle) * radius,
+                size: 0.52 + (hash / 97) * 0.74,
+                phase: (hash / 97) * Math.PI * 2
+            };
+        });
+        let width = 0;
+        let height = 0;
+        let dpr = 1;
+        let raf = 0;
+        let lastPaint = 0;
+        let startTime = performance.now();
+        let hoverAmount = 0;
+        let hoverTarget = 0;
+        let pulse = 0;
+
+        function resize() {
+            const rect = root.getBoundingClientRect();
+            const nextDpr = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+            const nextWidth = Math.max(1, Math.round(rect.width * nextDpr));
+            const nextHeight = Math.max(1, Math.round(rect.height * nextDpr));
+            if (canvas.width === nextWidth && canvas.height === nextHeight && dpr === nextDpr) return;
+            dpr = nextDpr;
+            width = rect.width;
+            height = rect.height;
+            canvas.width = nextWidth;
+            canvas.height = nextHeight;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+
+        function draw(now) {
+            resize();
+            ctx.clearRect(0, 0, width, height);
+            const cx = width / 2;
+            const cy = height / 2 - 0.5;
+            const elapsed = (now - startTime) / 1000;
+            hoverAmount += (hoverTarget - hoverAmount) * 0.08;
+            pulse *= 0.92;
+            const speed = 0.28 + hoverAmount * 0.46;
+            const rotation = elapsed * speed;
+            const tilt = -0.32 + Math.sin(elapsed * 0.22) * 0.07;
+            const cosR = Math.cos(rotation);
+            const sinR = Math.sin(rotation);
+            const cosT = Math.cos(tilt);
+            const sinT = Math.sin(tilt);
+            const orbRadius = Math.min(width, height) * (0.31 + pulse * 0.015);
+            const projected = [];
+
+            const glow = ctx.createRadialGradient(cx - orbRadius * 0.2, cy - orbRadius * 0.24, 0, cx, cy, orbRadius * 1.35);
+            glow.addColorStop(0, `rgba(211, 245, 255, ${0.13 + hoverAmount * 0.05})`);
+            glow.addColorStop(0.42, `rgba(100, 126, 255, ${0.1 + hoverAmount * 0.05})`);
+            glow.addColorStop(1, 'rgba(50, 48, 143, 0)');
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(cx, cy, orbRadius * 1.36, 0, Math.PI * 2);
+            ctx.fill();
+
+            for (let index = 0; index < points.length; index += 1) {
+                const point = points[index];
+                const wave = 1 + Math.sin(point.phase + elapsed * 1.15) * (0.035 + hoverAmount * 0.016);
+                const x1 = (point.x * cosR + point.z * sinR) * wave;
+                const z1 = (-point.x * sinR + point.z * cosR) * wave;
+                const y1 = point.y * wave;
+                const y2 = y1 * cosT - z1 * sinT;
+                const z2 = y1 * sinT + z1 * cosT;
+                const perspective = 0.84 + (z2 + 1) * 0.13;
+                projected.push({
+                    x: cx + x1 * orbRadius * perspective,
+                    y: cy + y2 * orbRadius * perspective,
+                    z: z2,
+                    size: point.size * perspective
+                });
+            }
+
+            projected.sort((a, b) => a.z - b.z);
+            for (let index = 0; index < projected.length; index += 1) {
+                const point = projected[index];
+                const depth = (point.z + 1) / 2;
+                const radius = point.size * (1.18 + depth * 0.72 + hoverAmount * 0.12);
+                ctx.fillStyle = `rgba(22, 34, 92, ${0.22 + depth * 0.28})`;
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            for (let index = 0; index < projected.length; index += 1) {
+                const point = projected[index];
+                const depth = (point.z + 1) / 2;
+                const warm = Math.max(0, depth - 0.68) / 0.32;
+                const alpha = 0.2 + depth * 0.68;
+                const red = Math.round(104 + depth * 88 + warm * 30);
+                const green = Math.round(130 + depth * 94 + warm * 14);
+                const blue = Math.round(255 - warm * 38);
+                const radius = point.size * (0.72 + depth * 0.62 + hoverAmount * 0.12);
+                ctx.fillStyle = `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            const core = ctx.createRadialGradient(cx - 1.5, cy - 2, 0, cx, cy, orbRadius * 0.58);
+            core.addColorStop(0, `rgba(244, 252, 255, ${0.72 + hoverAmount * 0.12})`);
+            core.addColorStop(0.18, 'rgba(139, 229, 255, 0.2)');
+            core.addColorStop(1, 'rgba(91, 72, 220, 0)');
+            ctx.fillStyle = core;
+            ctx.beginPath();
+            ctx.arc(cx, cy, orbRadius * 0.6, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function loop(now) {
+            raf = 0;
+            if (document.hidden) return;
+            if (now - lastPaint >= 1000 / 30) {
+                draw(now);
+                lastPaint = now;
+            }
+            raf = window.requestAnimationFrame(loop);
+        }
+
+        function start() {
+            if (raf || document.hidden) return;
+            if (reducedMotion.matches) {
+                draw(performance.now());
+                return;
+            }
+            raf = window.requestAnimationFrame(loop);
+        }
+
+        function stop() {
+            if (raf) window.cancelAnimationFrame(raf);
+            raf = 0;
+        }
+
+        root.addEventListener('pointerenter', () => {
+            hoverTarget = 1;
+        });
+        root.addEventListener('pointerleave', () => {
+            hoverTarget = 0;
+        });
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) stop();
+            else start();
+        });
+        reducedMotion.addEventListener?.('change', () => {
+            stop();
+            startTime = performance.now();
+            start();
+        });
+        window.addEventListener('resize', resize, { passive: true });
+        start();
+
+        return {
+            pulse() {
+                pulse = 1;
+                if (reducedMotion.matches) draw(performance.now());
+            }
+        };
+    }
 
     function getFabRectData() {
         const rect = fab.getBoundingClientRect();
@@ -365,6 +621,7 @@
 
     function openOrClosePanel() {
         panel.classList.toggle('open');
+        fab.setAttribute('aria-expanded', panel.classList.contains('open') ? 'true' : 'false');
         if (panel.classList.contains('open')) {
             if (isFirstOpen) {
                 isFirstOpen = false;
@@ -376,10 +633,22 @@
     }
     
     fab.onclick = () => {
+        particleFab.pulse();
+        openOrClosePanel();
+    };
+
+    fab.onkeydown = (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        particleFab.pulse();
         openOrClosePanel();
     };
     
-    panel.querySelector('.ai-close').onclick = () => panel.classList.remove('open');
+    panel.querySelector('.ai-close').onclick = () => {
+        panel.classList.remove('open');
+        fab.setAttribute('aria-expanded', 'false');
+        fab.focus();
+    };
     panel.querySelector('.ai-expand').onclick = () => {
         panel.classList.toggle('expanded');
     };
