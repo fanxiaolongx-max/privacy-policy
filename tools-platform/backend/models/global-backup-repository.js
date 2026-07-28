@@ -28,13 +28,18 @@ let schedulerRunning = false;
 
 const REPORT_OWNED_FILES = ['report.db', 'report.db-wal', 'report.db-shm'];
 const PRIMARY_SQLITE_SIDECARS = ['tools.db-wal', 'tools.db-shm'];
+const PRIMARY_PRESERVED_DIRS = ['images', 'slide-library'];
 const HAS_SPLIT_REPORT_DATA = path.resolve(REPORT_DATA_DIR) !== path.resolve(DATA_DIR);
 const DATA_TARGETS = [
     {
         id: 'primary_data',
         absPath: DATA_DIR,
         relPath: process.env.TOOLS_DATA_DIR ? 'data' : 'backend/data',
-        excludeTopLevel: ['images', ...PRIMARY_SQLITE_SIDECARS, ...(HAS_SPLIT_REPORT_DATA ? REPORT_OWNED_FILES : [])]
+        excludeTopLevel: [
+            ...PRIMARY_PRESERVED_DIRS,
+            ...PRIMARY_SQLITE_SIDECARS,
+            ...(HAS_SPLIT_REPORT_DATA ? REPORT_OWNED_FILES : [])
+        ]
     }
 ];
 
@@ -579,7 +584,10 @@ async function restoreFromZip(zipPath, options = {}) {
 
         if (hasPrimary) {
             reportProgress(options, 'primary-restore', '正在恢复主业务数据 primary_data');
-            const primaryExcludes = new Set(['images']);
+            // These directories are intentionally outside global backups.
+            // Preserve the server's current copies instead of deleting them
+            // while synchronizing a restored primary_data snapshot.
+            const primaryExcludes = new Set(PRIMARY_PRESERVED_DIRS);
             if (HAS_SPLIT_REPORT_DATA || hasReport || !packageUsesUnifiedData) {
                 REPORT_OWNED_FILES.forEach(name => primaryExcludes.add(name));
             }

@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const util = require('util');
 const { spawn } = require('child_process');
+const http = require('http');
 
 // IMPORTANT: Set the data directory to the OS's native user data path BEFORE requiring server.js
 const userDataPath = app.getPath('userData');
@@ -16,6 +17,14 @@ const latestReleaseUrl = 'https://github.com/fanxiaolongx-max/privacy-policy/rel
 process.env.TOOLS_LOG_DIR = electronLogRoot;
 if (process.env.TOOLS_DAILY_LOGS === undefined) {
     process.env.TOOLS_DAILY_LOGS = '0';
+}
+
+function getAppIconPath() {
+    if (process.platform !== 'win32') {
+        return path.join(__dirname, 'frontend/assets/icon.ico');
+    }
+    const filename = isPortableWindows ? 'icon-windows-portable.ico' : 'icon-windows.ico';
+    return path.join(__dirname, 'frontend/assets', filename);
 }
 
 function getLogDay(date = new Date()) {
@@ -97,6 +106,16 @@ function getFreePort(startingPort) {
 }
 
 let utilityWindow = null;
+let startupWindow = null;
+let startupWindowLoaded = false;
+let startupWindowCreatedAt = 0;
+let startupProgressState = {
+    percent: 8,
+    title: '正在准备工作空间',
+    detail: '加载本地组件与用户数据，请稍候…',
+    stage: '启动初始化',
+    finished: false
+};
 let localPort = null;
 let localServerStarted = false;
 let tray = null;
@@ -550,7 +569,7 @@ function registerDownloadHandler() {
 }
 
 function createTray() {
-    const iconPath = path.join(__dirname, 'frontend/assets/icon.ico');
+    const iconPath = getAppIconPath();
     try {
         tray = new Tray(iconPath);
         tray.setToolTip('Tools Platform 本地服务');
@@ -580,6 +599,132 @@ function openAppPath(pathname = '/') {
     shell.openExternal(target).catch((err) => {
         dialog.showErrorBox('打开失败', err.message || String(err));
     });
+}
+
+function shouldShowStartupWindow() {
+    return isPortableWindows || process.env.TOOLS_SHOW_STARTUP_WINDOW === '1';
+}
+
+function createStartupWindow() {
+    if (!shouldShowStartupWindow() || startupWindow && !startupWindow.isDestroyed()) return startupWindow;
+    startupWindowLoaded = false;
+    startupWindowCreatedAt = Date.now();
+    startupWindow = new BrowserWindow({
+        width: 560,
+        height: 338,
+        minWidth: 560,
+        minHeight: 338,
+        frame: false,
+        transparent: true,
+        resizable: false,
+        maximizable: false,
+        minimizable: false,
+        alwaysOnTop: true,
+        skipTaskbar: true,
+        show: false,
+        center: true,
+        backgroundColor: '#00000000',
+        backgroundMaterial: process.platform === 'win32' ? 'acrylic' : undefined,
+        icon: getAppIconPath(),
+        webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+            sandbox: true
+        }
+    });
+    startupWindow.once('ready-to-show', () => {
+        if (startupWindow && !startupWindow.isDestroyed()) startupWindow.show();
+    });
+    startupWindow.webContents.once('did-finish-load', () => {
+        startupWindowLoaded = true;
+        renderStartupProgress();
+    });
+    startupWindow.on('closed', () => {
+        startupWindow = null;
+        startupWindowLoaded = false;
+    });
+    startupWindow.loadFile(path.join(__dirname, 'frontend/pages/startup.html')).catch((err) => {
+        console.warn('[Electron] Failed to load startup window:', err.message || err);
+    });
+    return startupWindow;
+}
+
+function renderStartupProgress() {
+    const win = startupWindow;
+    if (!startupWindowLoaded || !win || win.isDestroyed() || win.webContents.isDestroyed()) return;
+    const payload = JSON.stringify(startupProgressState).replace(/</g, '\\u003c');
+    win.webContents.executeJavaScript(`window.setStartupProgress && window.setStartupProgress(${payload})`)
+        .catch(() => {});
+}
+
+function updateStartupProgress(percent, title, detail, stage, finished = false) {
+    startupProgressState = { percent, title, detail, stage, finished };
+    renderStartupProgress();
+}
+
+function closeStartupWindow(success = true) {
+    const win = startupWindow;
+    if (!win || win.isDestroyed()) return;
+    if (success) {
+        updateStartupProgress(100, '工作空间已就绪', '正在打开 Tools Platform 主页面…', '启动完成', true);
+    } else {
+        win.webContents.executeJavaScript('document.body.classList.add("is-finished")').catch(() => {});
+    }
+    const minimumVisibleMs = 1200;
+    const closeDelay = Math.max(360, minimumVisibleMs - (Date.now() - startupWindowCreatedAt));
+    setTimeout(() => {
+        if (win && !win.isDestroyed()) win.close();
+    }, closeDelay);
+}
+
+function probeLocalHealth(port) {
+    return new Promise((resolve) => {
+        const request = http.get({
+            hostname: '127.0.0.1',
+            port,
+            path: '/api/health',
+            timeout: 1200
+        }, (response) => {
+            response.resume();
+            resolve(response.statusCode === 200);
+        });
+        request.on('timeout', () => {
+            request.destroy();
+            resolve(false);
+        });
+        request.on('error', () => resolve(false));
+    });
+}
+
+async function waitForLocalServer(port, timeoutMs = 45000) {
+    const startedAt = Date.now();
+    let attempt = 0;
+    while (Date.now() - startedAt < timeoutMs) {
+        attempt += 1;
+        if (await probeLocalHealth(port)) return;
+        const elapsed = Date.now() - startedAt;
+        const progress = Math.min(88, 42 + attempt * 4);
+        const phase = elapsed < 2500
+            ? {
+                title: '正在初始化数据存储',
+                detail: '检查配置、数据库与历史数据迁移…',
+                stage: '数据初始化'
+            }
+            : elapsed < 8000
+                ? {
+                    title: '正在同步系统工具',
+                    detail: '核对内置工具、注册信息与用户数据…',
+                    stage: '工具同步'
+                }
+                : {
+                    title: '正在等待本地服务',
+                    detail: '服务即将就绪，请保持当前窗口开启…',
+                    stage: '健康检查'
+                };
+        updateStartupProgress(progress, phase.title, phase.detail, phase.stage);
+        await new Promise(resolve => setTimeout(resolve, 260));
+    }
+    throw new Error(`本地服务在 ${Math.round(timeoutMs / 1000)} 秒内未就绪`);
 }
 
 function escapeHtml(value) {
@@ -713,7 +858,7 @@ function createLogWindow() {
             minHeight: 520,
             title: 'Tools Platform 运行日志',
             autoHideMenuBar: true,
-            icon: path.join(__dirname, 'frontend/assets/icon.ico'),
+            icon: getAppIconPath(),
             webPreferences: {
                 nodeIntegration: false,
                 contextIsolation: true,
@@ -1408,14 +1553,18 @@ function refreshTrayMenu() {
 async function startTrayApp() {
     const launchExperience = prepareLaunchExperience();
     registerDownloadHandler();
+    createStartupWindow();
+    updateStartupProgress(10, '正在准备工作空间', '加载绿色版运行环境与本地配置…', '启动初始化');
 
     try {
+        updateStartupProgress(18, '正在分配本地服务', '选择可用端口并准备安全的本地访问地址…', '网络准备');
         const PORT = await getFreePort(3030);
         process.env.PORT = PORT;
         localPort = PORT;
         writeRuntimeStatusSnapshot();
 
         if (!localServerStarted) {
+            updateStartupProgress(32, '正在加载核心服务', '启动数据库、备份恢复与系统工具模块…', '服务加载');
             localServerStarted = true;
             require('./backend/server.js');
         }
@@ -1427,17 +1576,17 @@ async function startTrayApp() {
         }
 
         startRuntimeCommandWatcher();
-
-        setTimeout(() => {
-            const launchUrl = buildLaunchUrl(PORT, launchExperience);
-            if (launchExperience.shouldOpenSystemBrowser) {
-                shell.openExternal(launchUrl).catch((err) => {
-                    console.warn('[Electron] Failed to open system browser:', err.message);
-                });
-            }
-            scheduleStartupUpdateCheck();
-        }, 1000);
+        await waitForLocalServer(PORT);
+        updateStartupProgress(94, '本地服务已经就绪', '正在连接浏览器并打开主页面…', '打开主页面');
+        const launchUrl = buildLaunchUrl(PORT, launchExperience);
+        if (launchExperience.shouldOpenSystemBrowser) {
+            await shell.openExternal(launchUrl);
+        }
+        closeStartupWindow();
+        scheduleStartupUpdateCheck();
     } catch (err) {
+        updateStartupProgress(100, '启动未完成', err.message || String(err), '启动失败');
+        setTimeout(() => closeStartupWindow(false), 1600);
         dialog.showErrorBox('Server Startup Failed', `Failed to start the local server: ${err.message}`);
     }
 }

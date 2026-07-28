@@ -152,8 +152,8 @@ async function getBackupSummary() {
         version: BACKUP_VERSION,
         tools: tools.map(tool => {
             const slug = assertSafeSlug(tool.slug);
-            const rootDir = path.join(customToolsRepo.CUSTOM_TOOLS_DIR, slug);
-            const files = fs.existsSync(rootDir) ? walkToolFiles(rootDir) : [];
+            const rootDir = customToolsRepo.getToolRootDir(slug);
+            const files = rootDir ? walkToolFiles(rootDir) : [];
             const dependencies = extractDependencies(files);
             return {
                 slug,
@@ -208,8 +208,8 @@ async function createBackup(options = {}) {
 
     for (const tool of tools) {
         const slug = assertSafeSlug(tool.slug);
-        const rootDir = path.join(customToolsRepo.CUSTOM_TOOLS_DIR, slug);
-        if (!fs.existsSync(rootDir)) throw new Error(`工具目录不存在：${slug}`);
+        const rootDir = customToolsRepo.getToolRootDir(slug);
+        if (!rootDir) throw new Error(`工具目录不存在：${slug}`);
         const files = walkToolFiles(rootDir);
         if (!files.some(file => file.relativePath.toLowerCase() === 'index.html')) {
             throw new Error(`工具缺少入口文件 index.html：${slug}`);

@@ -8,8 +8,10 @@
     "start": "node backend/server.js",
     "start:desktop": "electron .",
     "postinstall": "electron-builder install-app-deps",
-    "build:win": "electron-builder --win -p never",
-    "build:win:publish": "electron-builder --win --publish always",
+    "build:win": "npm run build:win:setup && npm run build:win:portable",
+    "build:win:setup": "electron-builder --win nsis --x64 -p never",
+    "build:win:portable": "electron-builder --win portable --x64 -p never --config.win.icon=frontend/assets/icon-windows-portable.ico",
+    "build:win:publish": "electron-builder --win nsis --x64 --publish always && electron-builder --win portable --x64 --publish always --config.win.icon=frontend/assets/icon-windows-portable.ico",
     "build:mac": "electron-builder --mac -p never"
   },
   "build": {
@@ -46,6 +48,7 @@
       ]
     },
     "win": {
+      "icon": "frontend/assets/icon-windows.ico",
       "target": [
         {
           "target": "nsis",
@@ -71,7 +74,8 @@
     },
     "portable": {
       "artifactName": "Tools-Platform-Portable-${version}.${ext}",
-      "requestExecutionLevel": "user"
+      "requestExecutionLevel": "user",
+      "splashImage": "frontend/assets/portable-splash.bmp"
     }
   },
   "dependencies": {

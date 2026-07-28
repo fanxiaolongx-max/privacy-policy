@@ -1,0 +1,1703 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>埃及代表处夜间操作激励统计工具</title>
+<script src="/js/shared/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --red:#c8102e; --red-dark:#9f1026; --navy:#182230; --ink:#29313d; --muted:#7a8492;
+    --line:#dfe3e8; --soft:#f4f6f8; --card:#ffffff; --ok:#16845b; --warn:#c87518;
+    --shadow:0 8px 24px rgba(16,24,40,.055);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#f2f4f6;color:var(--ink);font-family:Inter,"Microsoft YaHei",Arial,sans-serif}
+  .page{max-width:1540px;margin:auto;padding:20px}
+  .hero{background:#fff;border-top:4px solid var(--red);border-radius:4px 4px 14px 14px;padding:22px 24px;
+    box-shadow:var(--shadow);display:flex;justify-content:space-between;gap:20px;align-items:center}
+  h1{margin:0;font-size:25px;letter-spacing:.2px;color:var(--navy)}
+  .sub{margin-top:7px;color:var(--muted);font-size:12px;line-height:1.65;max-width:980px}
+  .badge{white-space:nowrap;background:#f7f8fa;border:1px solid var(--line);color:#475467;padding:8px 12px;border-radius:6px;font-size:12px;font-weight:700}
+  .grid{display:grid;grid-template-columns:1.12fr .88fr;gap:14px;margin-top:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:var(--shadow)}
+  .card h2{font-size:15px;margin:0 0 12px;color:var(--navy);letter-spacing:.1px}
+  .section-note{font-size:11px;color:var(--muted);line-height:1.55}
+  .drop{border:1px dashed #c8ced7;border-radius:10px;padding:19px;text-align:center;background:#fafbfc;transition:.2s}
+  .drop.drag{border-color:var(--red);background:#fff6f7}.drop input{display:none}
+  button,.btn{border:0;border-radius:7px;padding:9px 14px;font-weight:700;cursor:pointer;transition:.16s;font-size:12px}
+  .primary{background:var(--red);color:#fff}.primary:hover{background:var(--red-dark)}
+  .secondary{background:#eef1f4;color:#344054;border:1px solid #e0e4e9}.danger{background:#fff0f2;color:#b42318}
+  .mini{font-size:11px;padding:7px 10px}.file-name{margin-top:9px;color:var(--muted);font-size:11px}
+  .settings{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  label{font-size:11px;color:#667085;font-weight:700;display:block;margin-bottom:4px}
+  input,select{width:100%;border:1px solid #d7dce3;border-radius:7px;padding:8px 9px;background:#fff;color:var(--ink);font-size:12px}
+  .setting-box{background:#f7f8fa;border:1px solid #eceff2;border-radius:8px;padding:9px}
+  .hint{font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:8px}
+  .filters{display:grid;grid-template-columns:repeat(6,minmax(130px,1fr));gap:9px}
+  .quick-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:0 0 12px}
+  .quick-label{font-size:11px;color:var(--muted);font-weight:700;margin-right:2px}
+  .quick-btn{background:#f3f5f7;color:#475467;border:1px solid #e0e4e9;padding:6px 10px;border-radius:6px;font-size:11px}
+  .quick-btn:hover,.quick-btn.active{background:#263140;color:#fff;border-color:#263140}
+  .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:14px}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px}
+  .stat .v{font-size:23px;font-weight:800;margin-top:5px;color:var(--navy)}.stat .k{font-size:10.5px;color:var(--muted)}
+  .v.red{color:var(--red)!important}.v.ok{color:var(--ok)!important}.v.warn{color:var(--warn)!important}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap}
+  .tab{background:#eef1f4;color:#475467;border:1px solid #e0e4e9}
+  .tab.active{background:var(--navy);border-color:var(--navy);color:#fff}
+  .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:8px;background:#fff;max-height:650px}
+  table{border-collapse:collapse;width:100%;font-size:11px;min-width:1080px}
+  th{position:sticky;top:0;z-index:2;background:#f3f5f7;color:#344054;text-align:left;padding:9px;border-bottom:1px solid var(--line);white-space:nowrap}
+  td{padding:8px 9px;border-bottom:1px solid #edf0f3;white-space:nowrap}
+  tr:hover td{background:#fafbfc}.money{font-weight:800;color:var(--red)}
+  .tag{display:inline-block;padding:3px 7px;border-radius:999px;font-size:10px;font-weight:700}
+  .tag.ok{background:#eaf7f1;color:#087a4f}.tag.bad{background:#fff0f0;color:#b42318}.tag.mid{background:#fff5e7;color:#9a5900}
+  .toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+  .toolbar-left,.toolbar-right{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .empty{padding:42px;text-align:center;color:var(--muted);font-size:12px}
+  .progress-mask{position:fixed;inset:0;background:rgba(17,24,39,.35);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:99}
+  .progress-card{width:min(420px,88vw);background:#fff;border-radius:12px;padding:22px;box-shadow:var(--shadow)}
+  .bar{height:7px;border-radius:999px;background:#edf0f4;overflow:hidden;margin-top:13px}.bar>i{display:block;height:100%;width:0;background:var(--red);transition:.25s}
+  .warnbox{background:#fffaf0;border-left:3px solid #d69b35;color:#76501b;border-radius:6px;padding:9px 11px;font-size:10.5px;line-height:1.55;margin-top:10px}
+  .analytics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:14px}
+  .chart-card{background:#fff;border:1px solid #e2e7ed;border-radius:15px;padding:17px 17px 14px;
+    box-shadow:0 8px 24px rgba(16,24,40,.05);transition:border-color .2s ease,box-shadow .2s ease}
+  .chart-card:hover{border-color:#ccd3dc;box-shadow:0 12px 30px rgba(16,24,40,.075)}
+  .chart-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px;padding-bottom:11px;border-bottom:1px solid #edf0f3}
+  .chart-title{font-size:14px;font-weight:800;color:#17202c;letter-spacing:.1px}
+  .chart-desc{font-size:10.5px;color:#667085;line-height:1.5;margin-top:4px}
+  .chart-box{height:300px;position:relative;background:linear-gradient(180deg,#fff 0%,#fdfefe 100%);border-radius:10px}
+  canvas{width:100%;height:100%}
+  .cross-controls{display:none;align-items:center;gap:7px;flex-wrap:wrap;margin:0 0 10px;padding:9px 10px;background:#f7f8fa;border:1px solid #e3e6ea;border-radius:8px}
+  .cross-controls.show{display:flex}
+  .cross-label{font-size:10.5px;color:var(--muted);font-weight:700;margin-right:3px}
+  .cross-btn{background:#fff;color:#475467;border:1px solid #dfe3e8;padding:6px 10px;border-radius:6px;font-size:10.5px}
+  .cross-btn.active{background:var(--navy);border-color:var(--navy);color:#fff}
+  .content-stage{position:relative}
+  .content-stage.locked .protected-content{filter:blur(7px);opacity:.58;pointer-events:none;user-select:none}
+  .content-stage.locked .protected-content::after{content:"";position:absolute;inset:0;background:rgba(242,244,246,.34)}
+  .protected-content{transition:filter .28s ease,opacity .28s ease}
+  .import-gate{position:absolute;inset:0;z-index:30;display:flex;align-items:flex-start;justify-content:center;padding-top:72px;pointer-events:none}
+  .import-gate-card{position:relative;width:min(520px,calc(100% - 34px));background:rgba(255,255,255,.9);backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.9);border-radius:16px;padding:28px;
+    box-shadow:0 24px 60px rgba(16,24,40,.18);text-align:center;pointer-events:auto}
+  .import-gate-icon{font-size:42px;line-height:1;margin-bottom:10px}
+  .import-gate-title{font-size:20px;font-weight:800;color:var(--navy)}
+  .import-gate-desc{font-size:11.5px;color:var(--muted);line-height:1.65;margin:8px auto 18px;max-width:390px}
+  .gate-actions{display:flex;justify-content:center;gap:9px;flex-wrap:wrap}
+  .rule-modal{position:fixed;inset:0;z-index:120;display:none;align-items:center;justify-content:center;background:rgba(17,24,39,.38);backdrop-filter:blur(6px)}
+  .rule-modal.show{display:flex}
+  .rule-modal-card{width:min(760px,92vw);max-height:82vh;overflow:auto;background:#fff;border-radius:14px;border:1px solid var(--line);box-shadow:0 24px 70px rgba(16,24,40,.22)}
+  .rule-modal-head{display:flex;align-items:center;justify-content:space-between;padding:15px 17px;border-bottom:1px solid var(--line)}
+  .rule-modal-title{font-size:15px;font-weight:800;color:var(--navy)}
+  .rule-modal-body{padding:16px}
+  .icon-btn{width:30px;height:30px;border-radius:6px;background:#f0f2f5;border:1px solid #e1e5ea;color:#475467;padding:0}
+  .gate-hidden{display:none!important}
+  .top-actions{display:none;align-items:center;justify-content:flex-end;gap:8px;margin-top:10px}
+  .top-actions{min-height:34px}
+  .top-actions .btn,.top-actions button{height:32px;display:inline-flex;align-items:center;justify-content:center;
+    box-sizing:border-box;line-height:1;padding:0 12px;margin:0;border-radius:6px;font-size:11px}
+  .top-actions label.btn{cursor:pointer}
+  .tab-loading-mask{position:fixed;inset:0;z-index:140;display:none;align-items:center;justify-content:center;
+    background:rgba(24,32,43,.18);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+  .tab-loading-mask.show{display:flex}
+  .tab-loading-card{width:min(330px,86vw);background:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.92);
+    border-radius:15px;padding:20px 22px;box-shadow:0 22px 64px rgba(16,24,40,.18);text-align:center}
+  .tab-loading-title{font-size:14px;font-weight:800;color:#17202c}
+  .tab-loading-sub{font-size:10.5px;color:#667085;margin-top:5px}
+  .tab-loading-track{height:7px;background:rgba(152,162,179,.2);border-radius:999px;overflow:hidden;margin-top:15px}
+  .tab-loading-bar{height:100%;width:18%;background:linear-gradient(90deg,#c8102e,#dc5268);border-radius:999px;
+    animation:tabLoadingMove 1s ease-in-out infinite}
+  @keyframes tabLoadingMove{0%{transform:translateX(-120%);width:18%}50%{width:48%}100%{transform:translateX(520%);width:18%}}
+  .tour-mask{position:fixed;inset:0;z-index:160;display:none;pointer-events:none}
+  .tour-mask.show{display:block}
+  .tour-dim{position:absolute;inset:0;background:rgba(17,24,39,.22);backdrop-filter:none;-webkit-backdrop-filter:none}
+  .tour-spotlight{position:fixed;border:2px solid rgba(255,255,255,.96);border-radius:12px;
+    box-shadow:0 0 0 9999px rgba(17,24,39,.58),0 12px 36px rgba(0,0,0,.24);
+    transition:all .28s ease;pointer-events:none}
+  .tour-card{position:fixed;width:min(340px,calc(100vw - 28px));background:rgba(255,255,255,.96);
+    border:1px solid rgba(255,255,255,.98);border-radius:15px;padding:17px 18px;
+    box-shadow:0 22px 70px rgba(16,24,40,.28);pointer-events:auto;transition:all .28s ease}
+  .tour-step{font-size:10px;font-weight:700;color:#c8102e;letter-spacing:.5px}
+  .tour-title{font-size:16px;font-weight:800;color:#17202c;margin-top:5px}
+  .tour-text{font-size:11px;color:#475467;line-height:1.65;margin-top:7px}
+  .tour-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:15px}
+  .tour-actions-left,.tour-actions-right{display:flex;gap:7px}
+  .tour-btn{height:31px;padding:0 11px;border-radius:6px;font-size:10.5px;display:inline-flex;align-items:center;justify-content:center}
+  .tour-dots{display:flex;gap:5px;margin-top:12px}
+  .tour-dot{width:6px;height:6px;border-radius:50%;background:#d0d5dd}
+  .tour-dot.active{width:18px;border-radius:999px;background:#c8102e}
+  .import-help-btn{position:absolute;top:12px;right:12px;width:28px;height:28px;border-radius:50%;
+    border:1px solid rgba(200,16,46,.22);background:rgba(255,255,255,.82);color:#c8102e;
+    font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 14px rgba(16,24,40,.08);cursor:pointer;transition:.2s ease;z-index:3}
+  .import-help-btn:hover{background:#fff;transform:translateY(-1px);box-shadow:0 7px 18px rgba(16,24,40,.12)}
+  body.tour-preview #importGate{display:none!important}
+  body.tour-preview #contentStage{min-height:420px}
+  body.tour-preview #contentStage .protected-content{
+    filter:none!important;
+    opacity:1!important;
+    pointer-events:auto!important;
+    user-select:auto!important
+  }
+  body.tour-preview #contentStage .protected-content::after{display:none!important;content:none!important}
+  body.tour-preview #topActions{display:flex}
+  .top-actions.show{display:flex}
+  .top-file{font-size:10.5px;color:var(--muted);max-width:420px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:4px}
+  .top-action-btn{background:#fff;border:1px solid #dfe3e8;color:#344054;padding:7px 11px;border-radius:6px;font-size:11px}
+  .top-action-btn:hover{background:#f7f8fa}
+  .rule-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+  .reset-btn{background:#fff;color:#b42318;border:1px solid #efc8ce}
+  .filter-help{font-size:9.5px;color:var(--muted);margin-top:3px}
+  .filter-actions{display:flex;align-items:flex-end}
+  .filter-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+  .filter-card-head h2{margin:0}
+  .filter-head-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .filter-head-actions button{white-space:nowrap}
+  .reset-filter-btn{width:100%;background:#fff;color:#475467;border:1px solid #dfe3e8}
+  .reset-filter-btn:hover{background:#f7f8fa}
+  .compare-modal{position:fixed;inset:0;z-index:130;display:none;align-items:center;justify-content:center;background:rgba(17,24,39,.42);backdrop-filter:blur(7px)}
+  .compare-modal.show{display:flex}
+  .compare-card{width:min(1120px,94vw);max-height:88vh;overflow:auto;background:#fff;border-radius:14px;border:1px solid var(--line);box-shadow:0 28px 80px rgba(16,24,40,.24)}
+  .compare-head{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line)}
+  .compare-title{font-size:16px;font-weight:800;color:var(--navy)}
+  .compare-sub{font-size:10.5px;color:var(--muted);margin-top:3px}
+  .compare-body{padding:16px}
+  .compare-controls{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:9px;margin-bottom:14px}
+  .compare-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+  .compare-metric{border:1px solid var(--line);border-radius:10px;padding:12px;background:#fafbfc}
+  .compare-metric .label{font-size:10px;color:var(--muted)}
+  .compare-metric .value{font-size:20px;font-weight:800;color:var(--navy);margin-top:4px}
+  .compare-metric .delta{font-size:11px;font-weight:700;margin-top:5px}
+  .delta.up{color:#b42318}.delta.down{color:#087a4f}.delta.flat{color:#667085}
+  .compare-grid{display:grid;grid-template-columns:1fr;gap:12px}
+  .compare-panel{border:1px solid var(--line);border-radius:10px;padding:12px}
+  .compare-panel-title{font-size:12px;font-weight:800;color:var(--navy);margin-bottom:8px}
+  .compare-table{max-height:none;overflow:visible}
+  .compare-note{font-size:10px;color:var(--muted);line-height:1.55;margin-top:10px}
+  .reset-mask{position:fixed;inset:0;z-index:145;display:none;align-items:center;justify-content:center;
+    background:rgba(20,27,38,.24);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  .reset-mask.show{display:flex}
+  .reset-progress-card{width:min(360px,88vw);background:rgba(255,255,255,.88);border:1px solid rgba(255,255,255,.92);
+    border-radius:16px;padding:22px 24px;box-shadow:0 24px 70px rgba(16,24,40,.2);text-align:center}
+  .reset-progress-title{font-size:15px;font-weight:800;color:var(--navy)}
+  .reset-progress-text{font-size:10.5px;color:var(--muted);margin-top:6px}
+  .reset-progress-track{height:8px;background:rgba(152,162,179,.18);border-radius:999px;overflow:hidden;margin-top:16px}
+  .reset-progress-bar{height:100%;width:0;background:linear-gradient(90deg,var(--red),#d95b70);border-radius:999px;transition:width .26s ease}
+  .reset-progress-step{font-size:9.5px;color:#667085;margin-top:8px}
+  .compare-table table{min-width:0;width:100%;table-layout:fixed}
+  .compare-table th,.compare-table td{white-space:normal;word-break:break-word}
+  @media(max-width:900px){.compare-controls,.compare-summary{grid-template-columns:repeat(2,1fr)}.compare-grid{grid-template-columns:1fr}.analytics{grid-template-columns:1fr}}
+  @media(max-width:1080px){
+    .grid,.analytics{grid-template-columns:1fr}.filters{grid-template-columns:repeat(2,1fr)}
+    .stats{grid-template-columns:repeat(2,1fr)}.settings{grid-template-columns:repeat(2,1fr)}
+  }
+  .export-caution{max-width:560px;font-size:9.5px;line-height:1.45;color:#667085;text-align:right}
+  .export-caution strong{color:#b54708;font-weight:800}
+  @media(max-width:980px){
+    .toolbar{align-items:flex-start}
+    .toolbar-right{flex-direction:column;align-items:flex-end}
+    .export-caution{max-width:360px}
+  }
+
+
+  .blacklist-body{padding:18px 20px 20px}
+  .blacklist-help{font-size:10.5px;color:#667085;line-height:1.6;margin-bottom:10px}
+  .blacklist-input{width:100%;min-height:190px;resize:vertical;border:1px solid #d9dfe7;border-radius:9px;
+    padding:11px 12px;font:11px/1.65 Consolas,"Microsoft YaHei",monospace;color:#344054;background:#fff}
+  .blacklist-input:focus{outline:none;border-color:#c8102e;box-shadow:0 0 0 3px rgba(200,16,46,.08)}
+  .blacklist-example{margin-top:8px;padding:9px 11px;border-radius:8px;background:#f7f8fa;color:#667085;
+    font-size:9.5px;line-height:1.55}
+  .blacklist-count{font-size:10px;color:#475467;font-weight:700;margin-top:9px}
+
+</style>
+</head>
+<body>
+<div class="page">
+  <section class="hero">
+    <div>
+      <h1>埃及代表处夜间操作激励统计工具</h1>
+      <div class="sub">用于埃及代表处夜间操作激励核算与管理分析。系统自动筛选已完成的有效夜间操作，同一操作人同一天多单仅按最高操作等级计发，并支持周期趋势、维度排行、人员汇总及异常明细核查。<span style="margin-left:8px;font-size:11px;color:#667085">金额单位：人民币元</span></div>
+    </div>
+    <div class="badge">Local Excel Analyzer</div>
+  </section>
+
+  <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" hidden />
+  <div class="top-actions" id="topActions">
+    <div class="top-file" id="topFileName"></div>
+    <label class="btn top-action-btn" for="fileInput">重新导入</label>
+    <button class="top-action-btn" id="topRuleBtn">规则配置</button>
+    <button class="top-action-btn" id="topBlacklistBtn">激励黑名单配置</button>
+  </div>
+
+  <div class="content-stage locked" id="contentStage">
+    <div class="import-gate" id="importGate">
+      <div class="import-gate-card">
+      <button class="import-help-btn" id="restartTourBtn" type="button" title="查看使用引导" aria-label="查看使用引导">?</button>
+        <div class="import-gate-icon">📊</div>
+        <div class="import-gate-title">导入夜间操作 Excel</div>
+        <div class="import-gate-desc">导入后将自动校验夜间操作、完成状态，并按同人同日最高操作等级计算津贴。</div>
+        <div class="gate-actions">
+          <label class="btn primary" for="fileInput">选择 Excel 文件</label>
+          <button class="secondary" id="openRuleModal">设置规则</button>
+        </div>
+        <div class="file-name" id="gateFileName">尚未选择文件</div>
+      </div>
+    </div>
+
+    <div class="protected-content">
+
+  <section class="card" style="margin-top:14px">
+    <div class="filter-card-head">
+      <h2>查询条件与快捷周期</h2>
+      <div class="filter-head-actions">
+        <button class="secondary" id="resetFiltersBtn">重置过滤</button>
+        <button class="primary" id="openCompareBtn">同比 / 环比分析</button>
+      </div>
+    </div>
+    <div class="quick-row">
+      <span class="quick-label">快速筛选</span>
+      <button class="quick-btn active" data-quick="all">全部</button>
+      <button class="quick-btn" data-quick="currentMonth">本月</button>
+      <button class="quick-btn" data-quick="lastMonth">上月</button>
+      <button class="quick-btn" data-quick="currentQuarter">本季度</button>
+      <button class="quick-btn" data-quick="lastQuarter">上季度</button>
+      <button class="quick-btn" data-quick="currentHalf">本半年</button>
+      <button class="quick-btn" data-quick="lastHalf">上半年</button>
+      <button class="quick-btn" data-quick="currentYear">本年度</button>
+      <button class="quick-btn" data-quick="lastYear">上年度</button>
+    </div>
+    <div class="filters">
+      <div><label>汇总周期</label><select id="periodType"><option value="month">月度</option><option value="quarter">季度</option><option value="half">半年度</option><option value="year">年度</option></select></div>
+      <div><label>年份</label><select id="filterYear"><option value="">全部</option></select></div>
+      <div><label>月份</label><select id="filterMonth"><option value="">全部</option></select></div>
+      <div class="period-source-wrap">
+        <label>年月筛选依据</label>
+        <select id="periodSourceMode" title="选择年份、月份和快捷周期所依据的字段">
+          <option value="start">当地开始时间</option>
+          <option value="imported" selected>原始表年月列</option>
+        </select>
+      </div>
+      <div><label>BU1 / 部门</label><select id="filterBU"><option value="">全部</option></select></div>
+      <div><label>客户名称</label><select id="filterCustomer"><option value="">全部</option></select></div>
+      <div><label>人员属性</label><select id="filterAttr"><option value="">全部</option></select></div>
+      <div><label>操作等级</label><select id="filterLevel"><option value="">全部</option></select></div>
+      <div><label>人员工号</label><input id="filterPerson" type="text" placeholder="输入完整或部分工号"><div class="filter-help">支持包含匹配</div></div>
+      <div><label>维度统计</label>
+        <select id="chartDimension">
+          <option value="person">操作人</option>
+          <option value="bu">BU1 / 部门</option>
+          <option value="customer">客户名称</option>
+          <option value="attr">人员属性</option>
+          <option value="level">操作等级</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+
+
+  <section class="stats">
+    <div class="stat"><div class="k">原始记录 <span class="scope-note fixed">不随筛选</span></div><div class="v" id="sRaw">0</div></div>
+    <div class="stat"><div class="k">夜间且已完成 <span class="scope-note fixed">不随筛选</span></div><div class="v ok" id="sValid">0</div></div>
+    <div class="stat"><div class="k">同人同日去重后 <span class="scope-note dynamic">随筛选</span></div><div class="v red" id="sDedup">0</div></div>
+    <div class="stat"><div class="k">涉及人员 <span class="scope-note dynamic">随筛选</span></div><div class="v" id="sPeople">0</div></div>
+    <div class="stat"><div class="k">激励合计 <span style="font-size:9px;color:#98a2b3">（元）</span> <span class="scope-note dynamic">随筛选</span></div><div class="v warn" id="sMoney">0</div></div>
+  </section>
+
+  <section class="card" style="margin-top:14px">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <button class="tab active" data-view="dimension">维度汇总</button>
+        <button class="tab" data-view="period">周期汇总</button>
+        <button class="tab" data-view="summary">周期交叉</button>
+        <button class="tab" data-view="person">人员周期汇总</button>
+        <button class="tab" data-view="detail">计算明细</button>
+        <button class="tab" data-view="excluded">排除/异常记录</button>
+      </div>
+      <div class="toolbar-right">
+        <div class="export-caution">
+          <strong>注意筛选依据：</strong>跨月操作按“当地开始时间”或“原始表年月列”归属可能不同，导出前请确认口径，避免漏统或影响激励金额。
+        </div>
+        <button class="primary mini" id="exportBtn">导出当前结果</button>
+      </div>
+    </div>
+    <div class="cross-controls" id="crossControls">
+      <span class="cross-label">选择交叉维度</span>
+      <button class="cross-btn active" data-cross="bu">BU1 / 部门</button>
+      <button class="cross-btn" data-cross="customer">客户名称</button>
+      <button class="cross-btn" data-cross="attr">人员属性</button>
+      <button class="cross-btn" data-cross="level">操作等级</button>
+      <button class="cross-btn" data-cross="person">操作人</button>
+    </div>
+    <div class="table-wrap" id="tableWrap"><div class="empty">请先导入 Excel 文件</div></div>
+  </section>
+  <div style="margin-top:18px">
+    <div class="chart-title" style="font-size:15px">数据分析图表</div>
+    <div class="chart-desc">图表随当前筛选条件和统计周期自动更新。</div>
+  </div>
+  <section class="analytics" id="analyticsSection">
+    <div class="chart-card">
+      <div class="chart-head">
+        <div>
+          <div class="chart-title">激励金额趋势</div>
+          <div class="chart-desc">根据当前汇总周期及筛选条件展示激励金额变化，单位为元。</div>
+        </div>
+      </div>
+      <div class="chart-box"><canvas id="trendChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head">
+        <div>
+          <div class="chart-title" id="rankTitle">操作人激励金额排行</div>
+          <div class="chart-desc">显示当前维度激励金额前 10 项，单位为元。</div>
+        </div>
+      </div>
+      <div class="chart-box"><canvas id="rankChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head">
+        <div>
+          <div class="chart-title">周期操作量与涉及人数</div>
+          <div class="chart-desc">同时观察每个周期的计费记录（单）和涉及人员（人）。</div>
+        </div>
+      </div>
+      <div class="chart-box"><canvas id="volumeChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head">
+        <div>
+          <div class="chart-title">操作等级结构</div>
+          <div class="chart-desc">查看 Fatal、High、Medium、Low 的计费记录构成，单位为单。</div>
+        </div>
+      </div>
+      <div class="chart-box"><canvas id="levelChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head">
+        <div>
+          <div class="chart-title">人员属性激励金额结构</div>
+          <div class="chart-desc">按自有、租赁等人员属性展示激励金额分布，单位为元。</div>
+        </div>
+      </div>
+      <div class="chart-box"><canvas id="attrChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head">
+        <div>
+          <div class="chart-title">计发与同日忽略情况</div>
+          <div class="chart-desc">展示最终计发与同人同日多单忽略记录，单位为条。</div>
+        </div>
+      </div>
+      <div class="chart-box"><canvas id="calcStatusChart"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-head">
+        <div>
+          <div class="chart-title">BU 激励操作数量</div>
+          <div class="chart-desc">按 BU 统计当前筛选条件下最终计发的操作数量，单位为单。</div>
+        </div>
+      </div>
+      <div class="chart-box"><canvas id="buCountChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head">
+        <div>
+          <div class="chart-title">BU 激励金额</div>
+          <div class="chart-desc">按 BU 统计当前筛选条件下最终计发的激励金额，单位为元。</div>
+        </div>
+      </div>
+      <div class="chart-box"><canvas id="buMoneyChart"></canvas></div>
+    </div>
+  </section>
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+<div class="tour-mask" id="tourMask">
+  <div class="tour-dim"></div>
+  <div class="tour-spotlight" id="tourSpotlight"></div>
+  <div class="tour-card" id="tourCard">
+    <div class="tour-step" id="tourStep">步骤 1 / 6</div>
+    <div class="tour-title" id="tourTitle">导入 Excel</div>
+    <div class="tour-text" id="tourText"></div>
+    <div class="tour-dots" id="tourDots"></div>
+    <div class="tour-actions">
+      <div class="tour-actions-left"><button class="tour-btn secondary" id="tourSkip">跳过引导</button></div>
+      <div class="tour-actions-right">
+        <button class="tour-btn secondary" id="tourPrev">上一步</button>
+        <button class="tour-btn primary" id="tourNext">下一步</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tab-loading-mask" id="tabLoadingMask">
+  <div class="tab-loading-card">
+    <div class="tab-loading-title" id="tabLoadingTitle">正在加载数据</div>
+    <div class="tab-loading-sub">请稍候，正在生成当前视图</div>
+    <div class="tab-loading-track"><div class="tab-loading-bar"></div></div>
+  </div>
+</div>
+
+<div class="reset-mask" id="resetMask">
+  <div class="reset-progress-card">
+    <div class="reset-progress-title">正在重置过滤条件</div>
+    <div class="reset-progress-text" id="resetProgressText">准备清空当前筛选</div>
+    <div class="reset-progress-track"><div class="reset-progress-bar" id="resetProgressBar"></div></div>
+    <div class="reset-progress-step" id="resetProgressStep">0%</div>
+  </div>
+</div>
+
+<div class="compare-modal" id="compareModal">
+  <div class="compare-card">
+    <div class="compare-head">
+      <div>
+        <div class="compare-title">同比 / 环比分析</div>
+        <div class="compare-sub">基于当前业务筛选条件，对激励金额、计费记录、操作天数和涉及人员进行周期比较。</div>
+      </div>
+      <button class="icon-btn" id="closeCompareModal">×</button>
+    </div>
+    <div class="compare-body">
+      <div class="compare-controls">
+        <div><label>比较周期</label><select id="comparePeriod"><option value="month">月度</option><option value="quarter">季度</option><option value="half">半年度</option><option value="year">年度</option></select></div>
+        <div><label>比较方式</label><select id="compareMode"><option value="mom">环比</option><option value="yoy">同比</option></select></div>
+        <div><label>当前周期</label><select id="compareCurrent"></select></div>
+        <div><label>对比周期</label><select id="comparePrevious"></select></div>
+      </div>
+      <div class="compare-summary">
+        <div class="compare-metric"><div class="label">激励金额（元）</div><div class="value" id="cmpMoney">0</div><div class="delta flat" id="cmpMoneyDelta">—</div></div>
+        <div class="compare-metric"><div class="label">计费记录</div><div class="value" id="cmpCount">0</div><div class="delta flat" id="cmpCountDelta">—</div></div>
+        <div class="compare-metric"><div class="label">操作天数</div><div class="value" id="cmpDays">0</div><div class="delta flat" id="cmpDaysDelta">—</div></div>
+        <div class="compare-metric"><div class="label">涉及人员</div><div class="value" id="cmpPeople">0</div><div class="delta flat" id="cmpPeopleDelta">—</div></div>
+      </div>
+      <div class="compare-grid">
+        <div class="compare-panel">
+          <div class="compare-panel-title">指标对比</div>
+          <div class="compare-table" id="compareMetricTable"></div>
+        </div>
+        <div class="compare-panel">
+          <div class="compare-panel-title">操作等级变化</div>
+          <div class="compare-table" id="compareLevelTable"></div>
+        </div>
+      </div>
+      <div class="compare-note">说明：同比按上年同周期比较；环比按上一自然周期比较。比较结果沿用当前 BU、客户、人员属性、操作等级及人员工号过滤，但不受当前年份、月份和快捷周期限制。</div>
+    </div>
+  </div>
+</div>
+
+<div class="rule-modal" id="ruleModal">
+  <div class="rule-modal-card">
+    <div class="rule-modal-head">
+      <div>
+        <div class="rule-modal-title">激励与夜间规则设置</div>
+        <div class="section-note">设置内容会直接用于本次导入后的计算。</div>
+      </div>
+      <button class="icon-btn" id="closeRuleModal">×</button>
+    </div>
+    <div class="rule-modal-body" id="ruleModalBody">
+      <div class="settings">
+        <div class="setting-box"><label>Low 激励（元）</label><input id="feeLow" type="number" value="100" min="0"></div>
+        <div class="setting-box"><label>Medium 激励（元）</label><input id="feeMedium" type="number" value="200" min="0"></div>
+        <div class="setting-box"><label>High 激励（元）</label><input id="feeHigh" type="number" value="300" min="0"></div>
+        <div class="setting-box"><label>Fatal 激励（元）</label><input id="feeFatal" type="number" value="400" min="0"></div>
+        <div class="setting-box"><label>夜间开始</label><input id="nightStart" type="time" value="22:00"></div>
+        <div class="setting-box"><label>夜间结束</label><input id="nightEnd" type="time" value="06:00"></div>
+        <div class="setting-box"><label>二次校验模式</label>
+          <select id="verifyMode"><option value="warn">字段为主，时间异常仅提示</option><option value="strict">字段与时间均须满足</option><option value="time">仅按当地时间判断</option></select>
+        </div>
+        <div class="setting-box"><label>人员识别字段</label>
+          <select id="personField"><option value="complete_operator">complete_operator 操作人工号</option><option value="方案实施人工号">方案实施人工号</option><option value="solution_develop_name">solution_develop_name</option></select>
+        </div>
+      </div>
+      <div class="hint">等级优先级：Fatal ＞ High ＞ Medium ＞ Low。未识别等级按 0 元处理。</div>
+      <div class="rule-actions">
+        <button class="reset-btn" id="resetRulesBtn">重置默认规则</button>
+        <button class="primary" id="saveRulesBtn">保存并应用</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="rule-modal" id="blacklistModal">
+  <div class="rule-modal-card">
+    <div class="rule-modal-head">
+      <div>
+        <div class="rule-modal-title">激励黑名单配置</div>
+        <div class="section-note">名单内工号仍保留在计算明细中，但禁止计发激励。</div>
+      </div>
+      <button class="icon-btn" id="closeBlacklistModal">×</button>
+    </div>
+    <div class="blacklist-body">
+      <div class="blacklist-help">每行填写一个工号，可在工号后用逗号或制表符填写原因；原因可不填。</div>
+      <textarea class="blacklist-input" id="blacklistInput" placeholder="例如：
+f84300033, 管理岗位不参与激励
+a00938814, 特殊约定
+m00961966"></textarea>
+      <div class="blacklist-example">支持格式：<b>工号</b>　或　<b>工号, 原因</b>。匹配时忽略工号前后空格及英文大小写。</div>
+      <div class="blacklist-count" id="blacklistCount">当前 0 人</div>
+      <div class="rule-actions">
+        <button class="reset-btn" id="clearBlacklistBtn">清空名单</button>
+        <button class="primary" id="saveBlacklistBtn">保存并应用</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="progress-mask" id="mask">
+  <div class="progress-card">
+    <div style="font-weight:800;font-size:18px">正在分析数据</div>
+    <div id="progressText" style="margin-top:6px;color:var(--muted);font-size:13px">读取工作表...</div>
+    <div class="bar"><i id="progressBar"></i></div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let rawRows=[], validRows=[], dedupRows=[], calcDetailRows=[], excludedRows=[], currentView='dimension', activeDimension='person', activeCrossDimension='bu', quickRange=null;
+let sourceWorkbook=null, sourceSheetName='', sourceWorksheet=null, sourceFileName='';
+const levelRank={fatal:4,high:3,medium:2,low:1};
+const aliases={
+  task_status:['task_status','任务状态'],
+  operate_level:['operate_level','操作等级','变更等级'],
+  operation_period:['操作时间段','operation_period'],
+  local_start:['当地开始时间','local_start_time'],
+  local_end:['当地完成时间','local_end_time'],
+  source_year:['年份','年度','year','Year','YEAR'],
+  source_month:['月份','月度','month','Month','MONTH'],
+  person:['complete_operator'],
+  bu:['BU1','部门'],
+  customer:['customer_office','客户名称'],
+  attr:['方案实施人属性','人员属性'],
+  task:['task_id','icare_task_number'],
+  summary:['problem_summary','title'],
+  region:['region_name_cn_mp'],
+  rep:['rep_name_cn_mp']
+};
+
+const BLACKLIST_STORAGE_KEY='nightAllowanceBlacklistV1';
+let incentiveBlacklist=new Map();
+
+function parseBlacklist(text){
+  const map=new Map();
+  String(text||'').split(/\r?\n/).forEach(line=>{
+    const raw=line.trim();
+    if(!raw)return;
+    const parts=raw.split(/\t|，|,/);
+    const id=clean(parts.shift()).toLowerCase();
+    const reason=clean(parts.join('，'));
+    if(id)map.set(id,reason);
+  });
+  return map;
+}
+function serializeBlacklist(map){
+  return [...map.entries()].map(([id,reason])=>reason?`${id}, ${reason}`:id).join('\n');
+}
+function loadBlacklist(){
+  try{
+    incentiveBlacklist=parseBlacklist(localStorage.getItem(BLACKLIST_STORAGE_KEY)||'');
+  }catch(e){incentiveBlacklist=new Map()}
+}
+function saveBlacklist(){
+  incentiveBlacklist=parseBlacklist($('blacklistInput').value);
+  try{localStorage.setItem(BLACKLIST_STORAGE_KEY,serializeBlacklist(incentiveBlacklist))}catch(e){}
+}
+function blacklistReason(person){
+  const id=clean(person).toLowerCase();
+  if(!id||!incentiveBlacklist.has(id))return '';
+  return incentiveBlacklist.get(id)||'该员工在激励黑名单中';
+}
+function updateBlacklistCount(){
+  const count=parseBlacklist($('blacklistInput')?.value||'').size;
+  if($('blacklistCount'))$('blacklistCount').textContent=`当前 ${count} 人`;
+}
+const RULE_STORAGE_KEY='nightAllowanceRulesV1';
+const defaultRules={
+  feeLow:100,feeMedium:200,feeHigh:300,feeFatal:400,
+  nightStart:'22:00',nightEnd:'06:00',
+  verifyMode:'warn',personField:'complete_operator'
+};
+function getRuleValues(){
+  return {
+    feeLow:+$('feeLow').value||0,
+    feeMedium:+$('feeMedium').value||0,
+    feeHigh:+$('feeHigh').value||0,
+    feeFatal:+$('feeFatal').value||0,
+    nightStart:$('nightStart').value||defaultRules.nightStart,
+    nightEnd:$('nightEnd').value||defaultRules.nightEnd,
+    verifyMode:$('verifyMode').value||defaultRules.verifyMode,
+    personField:$('personField').value||defaultRules.personField
+  };
+}
+function applyRuleValues(values){
+  const v={...defaultRules,...(values||{})};
+  Object.entries(v).forEach(([k,val])=>{if($(k))$(k).value=val});
+}
+function saveRules(){
+  try{localStorage.setItem(RULE_STORAGE_KEY,JSON.stringify(getRuleValues()))}catch(e){}
+}
+function loadRules(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(RULE_STORAGE_KEY)||'null');
+    applyRuleValues(saved||defaultRules);
+  }catch(e){applyRuleValues(defaultRules)}
+}
+function resetRules(){
+  applyRuleValues(defaultRules);
+  try{localStorage.removeItem(RULE_STORAGE_KEY)}catch(e){}
+  if(rawRows.length)recalculate();
+}
+
+function val(row, keys){for(const k of keys||[]){if(row[k]!==undefined&&row[k]!==null&&String(row[k]).trim()!=='')return row[k]}return ''}
+function clean(v){return String(v??'').trim()}
+function parseDate(v){
+  if(v instanceof Date&&!isNaN(v))return v;
+  if(typeof v==='number'&&window.XLSX){const d=XLSX.SSF.parse_date_code(v);if(d)return new Date(d.y,d.m-1,d.d,d.H||0,d.M||0,d.S||0)}
+  const s=clean(v).replace(/\//g,'-');
+  if(!s)return null;
+  const d=new Date(s.replace(' ','T'));
+  return isNaN(d)?null:d;
+}
+function dateKey(d){return d?`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`:''}
+function timeMin(d){return d?d.getHours()*60+d.getMinutes():null}
+function isNightByTime(start,end){
+  if(!start&&!end)return false;
+  const ns=$('nightStart').value.split(':').map(Number), ne=$('nightEnd').value.split(':').map(Number);
+  const a=ns[0]*60+ns[1], b=ne[0]*60+ne[1];
+  const check=d=>{const m=timeMin(d);return a>b?(m>=a||m<b):(m>=a&&m<b)};
+  if(check(start)||check(end))return true;
+  if(start&&end){
+    let dur=(end-start)/60000;if(dur<0)dur+=1440;
+    for(let x=0;x<=Math.min(dur,1440);x+=30){const d=new Date(start.getTime()+x*60000);if(check(d))return true}
+  }
+  return false;
+}
+function fee(level){
+  const key=clean(level).toLowerCase();
+  if(key.includes('fatal')||key.includes('critical'))return +$('feeFatal').value||0;
+  if(key.includes('high'))return +$('feeHigh').value||0;
+  if(key.includes('medium')||key.includes('middle'))return +$('feeMedium').value||0;
+  if(key.includes('low'))return +$('feeLow').value||0;
+  return 0;
+}
+function rank(level){
+  const s=clean(level).toLowerCase();
+  if(s.includes('fatal')||s.includes('critical'))return 4;
+  if(s.includes('high'))return 3;
+  if(s.includes('medium')||s.includes('middle'))return 2;
+  if(s.includes('low'))return 1;
+  return 0;
+}
+function isCompleted(v){const s=clean(v).toLowerCase();return ['completed','complete','完成','已完成','closed'].some(x=>s===x||s.includes(x))}
+function normalizeSourceYear(v){
+  const text=clean(v);
+  const m=text.match(/(?:19|20)\d{2}/);
+  return m?Number(m[0]):null;
+}
+function normalizeSourceMonth(v){
+  if(v instanceof Date&&!isNaN(v))return v.getMonth()+1;
+  const text=clean(v).toLowerCase();
+  const num=text.match(/\d{1,2}/);
+  if(num){
+    const n=Number(num[0]);
+    if(n>=1&&n<=12)return n;
+  }
+  const names={jan:1,january:1,feb:2,february:2,mar:3,march:3,apr:4,april:4,may:5,
+    jun:6,june:6,jul:7,july:7,aug:8,august:8,sep:9,september:9,sept:9,
+    oct:10,october:10,nov:11,november:11,dec:12,december:12};
+  return names[text]||null;
+}
+function filterDateForRow(r){
+  if($('periodSourceMode')?.value==='imported'&&r.__sourceYear&&r.__sourceMonth){
+    return new Date(r.__sourceYear,r.__sourceMonth-1,1);
+  }
+  return r.__start;
+}
+function periodKey(d,type){
+  if(!d)return '未知日期';
+  const y=d.getFullYear(),m=d.getMonth()+1;
+  if(type==='month')return `${y}-${String(m).padStart(2,'0')}`;
+  if(type==='quarter')return `${y} Q${Math.ceil(m/3)}`;
+  if(type==='half')return `${y} H${m<=6?1:2}`;
+  return String(y);
+}
+function setProgress(p,t){$('mask').style.display='flex';$('progressBar').style.width=p+'%';$('progressText').textContent=t}
+function hideProgress(){setTimeout(()=>$('mask').style.display='none',180)}
+function resetAllFiltersForNewFile(){
+  quickRange=null;
+  ['filterYear','filterMonth','filterBU','filterCustomer','filterAttr','filterLevel'].forEach(id=>{
+    if($(id))$(id).value='';
+  });
+  if($('filterPerson'))$('filterPerson').value='';
+  if($('periodType'))$('periodType').value='month';
+  if($('chartDimension'))$('chartDimension').value='person';
+  if($('periodSourceMode'))$('periodSourceMode').value='imported';
+  activeDimension='person';
+  activeCrossDimension='bu';
+  currentView='dimension';
+
+  document.querySelectorAll('.quick-btn').forEach(b=>b.classList.toggle('active',b.dataset.quick==='all'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.view==='dimension'));
+  document.querySelectorAll('.cross-btn').forEach(b=>b.classList.toggle('active',b.dataset.cross==='bu'));
+  if($('crossControls'))$('crossControls').classList.remove('show');
+}
+async function loadFile(file){
+  if(!file)return;
+  if(!window.XLSX){alert('Excel 解析组件未加载，请刷新页面后重试。');return}
+  resetAllFiltersForNewFile();
+  $('gateFileName').textContent=`已选择：${file.name}`;
+  setProgress(12,'读取 Excel 文件...');
+  const buf=await file.arrayBuffer(); setProgress(38,'解析工作表...');
+  const wb=XLSX.read(buf,{type:'array',cellDates:true,cellStyles:true,cellNF:true,cellText:true});
+  const ws=wb.Sheets[wb.SheetNames[0]];
+  sourceWorkbook=wb;
+  sourceSheetName=wb.SheetNames[0];
+  sourceWorksheet=ws;
+  sourceFileName=file.name;
+  rawRows=XLSX.utils.sheet_to_json(ws,{defval:'',raw:true});
+  setProgress(70,`已读取 ${rawRows.length} 行，正在应用计算规则...`);
+  recalculate();
+  $('contentStage').classList.remove('locked');
+  $('importGate').classList.add('gate-hidden');
+  $('topFileName').textContent=`当前文件：${file.name} · ${rawRows.length} 条记录`;
+  $('topActions').classList.add('show');
+  setProgress(100,'分析完成'); hideProgress();
+}
+function recalculate(){
+  validRows=[];excludedRows=[];
+  const pf=$('personField').value,mode=$('verifyMode').value;
+  rawRows.forEach((r,i)=>{
+    const status=val(r,aliases.task_status), opField=clean(val(r,aliases.operation_period));
+    const start=parseDate(val(r,aliases.local_start)),end=parseDate(val(r,aliases.local_end));
+    const byField=opField.includes('夜间')||opField.toLowerCase().includes('night');
+    const byTime=isNightByTime(start,end);
+    const completed=isCompleted(status);
+    const person=clean(r[pf]??val(r,[pf,'complete_operator','方案实施人工号','solution_develop_name']));
+    let nightOk=mode==='strict'?(byField&&byTime):mode==='time'?byTime:byField;
+    let reasons=[];
+    if(!completed)reasons.push('任务未完成');
+    if(!nightOk)reasons.push(mode==='strict'?'夜间字段或当地时间不满足':'非夜间操作');
+    if(!person)reasons.push('缺少操作人');
+    if(!start)reasons.push('缺少/无法识别当地开始时间');
+    const base={...r,__row:i+2,__person:person,__start:start,__end:end,__date:dateKey(start),__sourceYear:normalizeSourceYear(val(r,aliases.source_year)),__sourceMonth:normalizeSourceMonth(val(r,aliases.source_month)),__level:clean(val(r,aliases.operate_level)),
+      __rank:rank(val(r,aliases.operate_level)),__fee:fee(val(r,aliases.operate_level)),__byField:byField,__byTime:byTime,
+      __bu:clean(val(r,aliases.bu)),__customer:clean(val(r,aliases.customer)),__attr:clean(val(r,aliases.attr)),
+      __task:clean(val(r,aliases.task)),__summary:clean(val(r,aliases.summary)),__status:clean(status)};
+    if(completed&&nightOk&&person&&start)validRows.push(base); else excludedRows.push({...base,__reason:reasons.join('；')||'规则未满足'});
+  });
+  const best=new Map();
+  validRows.forEach(r=>{
+    if(blacklistReason(r.__person))return;
+    const key=r.__person+'|'+r.__date;
+    const selected=best.get(key);
+    if(!selected||r.__rank>selected.__rank||(r.__rank===selected.__rank&&r.__fee>selected.__fee))best.set(key,r);
+  });
+  dedupRows=[...best.values()].sort((a,b)=>(a.__date||'').localeCompare(b.__date||''));
+  calcDetailRows=validRows.map(r=>{
+    const key=r.__person+'|'+r.__date;
+    const selected=best.get(key);
+    const blockedReason=blacklistReason(r.__person);
+    const counted=!blockedReason&&selected===r;
+    return {
+      ...r,
+      __counted:counted,
+      __calcFee:counted?r.__fee:0,
+      __calcStatus:counted?'计发':'忽略',
+      __ignoreReason:counted?'':blockedReason?`激励黑名单：${blockedReason}`:'同日多单，已由更高等级记录计发',
+      __selectedLevel:blockedReason?'':selected?.__level||'',
+      __selectedTask:blockedReason?'':selected?.__task||''
+    };
+  });
+  refreshFilters(); render();
+}
+function uniq(arr){return [...new Set(arr.filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'zh-CN'))}
+function fillSelect(id,vals){
+  const el=$(id),old=el.value;el.innerHTML='<option value="">全部</option>'+vals.map(v=>`<option>${esc(v)}</option>`).join('');
+  if(vals.includes(old))el.value=old;
+}
+function refreshFilters(){
+  fillSelect('filterYear',uniq(dedupRows.map(r=>{
+    const d=filterDateForRow(r);return d?String(d.getFullYear()):''
+  })));
+  fillSelect('filterMonth',uniq(dedupRows.map(r=>{
+    const d=filterDateForRow(r);return d?String(d.getMonth()+1).padStart(2,'0'):''
+  })));
+  fillSelect('filterBU',uniq(dedupRows.map(r=>r.__bu)));fillSelect('filterCustomer',uniq(dedupRows.map(r=>r.__customer)));
+  fillSelect('filterAttr',uniq(dedupRows.map(r=>r.__attr)));fillSelect('filterLevel',uniq(dedupRows.map(r=>r.__level)));
+}
+function rowMatchesFilters(r){
+  const d=filterDateForRow(r);
+  const inQuick=!quickRange||!d||(d>=quickRange.start&&d<quickRange.end);
+  const personText=clean($('filterPerson').value).toLowerCase();
+  return inQuick&&
+    (!$('filterYear').value||String(d?.getFullYear())===$('filterYear').value)&&
+    (!$('filterMonth').value||String((d?.getMonth()||0)+1).padStart(2,'0')===$('filterMonth').value)&&
+    (!$('filterBU').value||r.__bu===$('filterBU').value)&&
+    (!$('filterCustomer').value||r.__customer===$('filterCustomer').value)&&
+    (!$('filterAttr').value||r.__attr===$('filterAttr').value)&&
+    (!$('filterLevel').value||r.__level===$('filterLevel').value)&&
+    (!personText||clean(r.__person).toLowerCase().includes(personText));
+}
+function filtered(){
+  return dedupRows.filter(rowMatchesFilters);
+}
+function filteredCalcDetails(){
+  return calcDetailRows.filter(rowMatchesFilters);
+}
+function filteredExcludedRows(){
+  return excludedRows.filter(rowMatchesFilters);
+}
+
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function money(n){return Math.round(Number(n)||0).toLocaleString('zh-CN')}
+function render(){
+  const rows=filtered();
+  $('sRaw').textContent=rawRows.length;$('sValid').textContent=validRows.length;$('sDedup').textContent=rows.length;
+  $('sPeople').textContent=new Set(rows.map(r=>r.__person)).size;$('sMoney').textContent=money(rows.reduce((s,r)=>s+r.__fee,0));
+  $('crossControls').classList.toggle('show',currentView==='summary');
+  drawCharts(rows);
+  if(currentView==='dimension')renderDimension(rows);
+  else if(currentView==='period')renderPeriod(rows);
+  else if(currentView==='summary')renderSummary(rows);
+  else if(currentView==='person')renderPerson(rows);
+  else if(currentView==='detail')renderDetail(filteredCalcDetails());
+  else renderExcluded(filteredExcludedRows());
+}
+function table(headers,rows){
+  if(!rows.length){$('tableWrap').innerHTML='<div class="empty">当前条件下暂无数据</div>';return}
+  $('tableWrap').innerHTML=`<table><thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${
+    rows.map(r=>`<tr>${r.map((c,i)=>`<td>${c}</td>`).join('')}</tr>`).join('')
+  }</tbody></table>`;
+}
+
+function dimensionMeta(){
+  const map={
+    person:{label:'操作人',get:r=>r.__person||'未填写'},
+    bu:{label:'BU1 / 部门',get:r=>r.__bu||'未填写'},
+    customer:{label:'客户名称',get:r=>r.__customer||'未填写'},
+    attr:{label:'人员属性',get:r=>r.__attr||'未填写'},
+    level:{label:'操作等级',get:r=>r.__level||'未识别'}
+  };
+  return map[activeDimension]||map.person;
+}
+function aggregateDimension(rows){
+  const meta=dimensionMeta(),m=new Map();
+  rows.forEach(r=>{
+    const k=meta.get(r);
+    if(!m.has(k))m.set(k,{name:k,count:0,money:0,people:new Set(),days:new Set(),levels:{}});
+    const x=m.get(k);x.count++;x.money+=r.__fee;x.people.add(r.__person);x.days.add(r.__date);
+    x.levels[r.__level||'未识别']=(x.levels[r.__level||'未识别']||0)+1;
+  });
+  return [...m.values()].sort((a,b)=>b.money-a.money||b.count-a.count||a.name.localeCompare(b.name,'zh-CN'));
+}
+function renderDimension(rows){
+  const meta=dimensionMeta(),data=aggregateDimension(rows).map((x,i)=>[
+    i+1,esc(x.name),x.count,x.days.size,x.people.size,
+    esc(Object.entries(x.levels).map(([k,v])=>`${k}:${v}`).join(' / ')),
+    `<span class="money">${money(x.money)}</span>`
+  ]);
+  table(['排名',meta.label,'计费记录','操作天数','涉及人员','等级分布','激励合计（元）'],data);
+}
+
+function canvasSetup(canvas){
+  const rect=canvas.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+  canvas.width=Math.max(300,Math.floor(rect.width*dpr));
+  canvas.height=Math.max(220,Math.floor(rect.height*dpr));
+  const ctx=canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.textBaseline='alphabetic';
+  ctx.lineJoin='round';
+  ctx.lineCap='round';
+  return {ctx,w:rect.width,h:rect.height};
+}
+const chartTheme={
+  text:'#17202c',sub:'#475467',muted:'#667085',grid:'#e8edf2',track:'#f0f3f6',
+  red:'#c8102e',red2:'#dc5268',orange:'#d97706',gold:'#d69b20',
+  navy:'#344054',slate:'#778295',green:'#16835d',blue:'#3f6f9f'
+};
+function drawEmpty(ctx,w,h,text){
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle='#f7f9fb';
+  roundRect(ctx,w/2-105,h/2-28,210,56,12,true,false);
+  ctx.fillStyle=chartTheme.sub;
+  ctx.font='600 12px Microsoft YaHei';
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillText(text,w/2,h/2);
+}
+function roundRect(ctx,x,y,w,h,r,fill=true,stroke=false){
+  if(w<=0||h<=0)return;
+  const rr=Math.min(r,w/2,h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+rr,y);
+  ctx.arcTo(x+w,y,x+w,y+h,rr);
+  ctx.arcTo(x+w,y+h,x,y+h,rr);
+  ctx.arcTo(x,y+h,x,y,rr);
+  ctx.arcTo(x,y,x+w,y,rr);
+  if(fill)ctx.fill();
+  if(stroke)ctx.stroke();
+}
+function fmtAxis(v,unit=''){
+  const n=Math.round(Number(v)||0);
+  if(Math.abs(n)>=10000)return `${Math.round(n/10000)}万${unit}`;
+  if(Math.abs(n)>=1000)return `${Math.round(n/1000)}千${unit}`;
+  return `${n}${unit}`;
+}
+function fitText(ctx,text,maxWidth){
+  const raw=String(text??'');
+  if(ctx.measureText(raw).width<=maxWidth)return raw;
+  let out=raw;
+  while(out.length>1&&ctx.measureText(out+'…').width>maxWidth)out=out.slice(0,-1);
+  return out+'…';
+}
+function drawLegend(ctx,items,x,y){
+  ctx.save();
+  ctx.font='600 10px Microsoft YaHei';
+  ctx.textBaseline='middle';
+  let px=x;
+  items.forEach(item=>{
+    ctx.fillStyle=item.color;
+    roundRect(ctx,px,y-5,10,10,3,true,false);
+    ctx.fillStyle=chartTheme.sub;
+    ctx.textAlign='left';
+    ctx.fillText(item.label,px+15,y);
+    px+=15+ctx.measureText(item.label).width+20;
+  });
+  ctx.restore();
+}
+function drawGridY(ctx,pad,w,h,max,steps=4,formatter=v=>String(Math.round(v))){
+  const cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
+  ctx.save();
+  ctx.font='10px Microsoft YaHei';
+  ctx.textAlign='right';
+  ctx.textBaseline='middle';
+  for(let i=0;i<=steps;i++){
+    const y=pad.t+ch*i/steps,val=max*(1-i/steps);
+    ctx.strokeStyle=chartTheme.grid;
+    ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(w-pad.r,y);ctx.stroke();
+    ctx.fillStyle=chartTheme.sub;
+    ctx.fillText(formatter(val),pad.l-9,y);
+  }
+  ctx.restore();
+  return {cw,ch};
+}
+function drawValueBadge(ctx,text,x,y,opt={}){
+  ctx.save();
+  ctx.font=opt.font||'600 10px Microsoft YaHei';
+  const tw=ctx.measureText(text).width,w=tw+16,h=21;
+  const xx=Math.max(3,Math.min(x,w?ctx.canvas.width/(window.devicePixelRatio||1)-w-3:x));
+  ctx.fillStyle=opt.bg||'#fff';
+  ctx.strokeStyle=opt.stroke||'#dce2e8';
+  ctx.lineWidth=1;
+  roundRect(ctx,xx,y,w,h,8,true,true);
+  ctx.fillStyle=opt.color||chartTheme.text;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(text,xx+w/2,y+h/2);
+  ctx.restore();
+  return {w,h,x:xx};
+}
+function dimensionMeta(){
+  const map={
+    person:{label:'操作人',get:r=>r.__person||'未填写'},
+    bu:{label:'BU1 / 部门',get:r=>r.__bu||'未填写'},
+    customer:{label:'客户名称',get:r=>r.__customer||'未填写'},
+    attr:{label:'人员属性',get:r=>r.__attr||'未填写'},
+    level:{label:'操作等级',get:r=>r.__level||'未识别'}
+  };
+  return map[activeDimension]||map.person;
+}
+function aggregateDimension(rows){
+  const meta=dimensionMeta(),m=new Map();
+  rows.forEach(r=>{
+    const k=meta.get(r);
+    if(!m.has(k))m.set(k,{name:k,count:0,money:0,people:new Set(),days:new Set(),levels:{}});
+    const x=m.get(k);x.count++;x.money+=r.__fee;x.people.add(r.__person);x.days.add(r.__date);
+    x.levels[r.__level||'未识别']=(x.levels[r.__level||'未识别']||0)+1;
+  });
+  return [...m.values()].sort((a,b)=>b.money-a.money||b.count-a.count||a.name.localeCompare(b.name,'zh-CN'));
+}
+function renderDimension(rows){
+  const meta=dimensionMeta(),data=aggregateDimension(rows).map((x,i)=>[
+    i+1,esc(x.name),x.count,x.days.size,x.people.size,
+    esc(Object.entries(x.levels).map(([k,v])=>`${k}:${v}`).join(' / ')),
+    `<span class="money">${money(x.money)}</span>`
+  ]);
+  table(['排名',meta.label,'计费记录','操作天数','涉及人员','等级分布','激励合计（元）'],data);
+}
+function drawTrend(rows){
+  const {ctx,w,h}=canvasSetup($('trendChart'));
+  ctx.clearRect(0,0,w,h);
+  const type=$('periodType').value,m=new Map();
+  rows.forEach(r=>{const k=periodKey(filterDateForRow(r),type);m.set(k,(m.get(k)||0)+r.__fee)});
+  const data=[...m.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
+  if(!data.length){drawEmpty(ctx,w,h,'暂无趋势数据');return}
+  const max=Math.max(...data.map(x=>x[1]),1),pad={l:66,r:24,t:28,b:48};
+  const {cw,ch}=drawGridY(ctx,pad,w,h,max,4,v=>fmtAxis(v,'元'));
+  const pts=data.map((d,i)=>({x:pad.l+(data.length===1?cw/2:cw*i/(data.length-1)),y:pad.t+ch-d[1]/max*ch,label:d[0],value:d[1]}));
+  const grad=ctx.createLinearGradient(0,pad.t,0,pad.t+ch);
+  grad.addColorStop(0,'rgba(200,16,46,.18)');grad.addColorStop(1,'rgba(200,16,46,0)');
+  ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+  ctx.lineTo(pts.at(-1).x,pad.t+ch);ctx.lineTo(pts[0].x,pad.t+ch);ctx.closePath();ctx.fillStyle=grad;ctx.fill();
+  ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+  ctx.strokeStyle=chartTheme.red;ctx.lineWidth=3;ctx.stroke();
+  pts.forEach(p=>{ctx.fillStyle='#fff';ctx.strokeStyle=chartTheme.red;ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fill();ctx.stroke()});
+  const maxIndex=data.findIndex(x=>x[1]===max),labels=[0,maxIndex,data.length-1].filter((v,i,a)=>a.indexOf(v)===i);
+  labels.forEach(i=>{
+    const p=pts[i],badgeY=p.y<44?p.y+10:p.y-28;
+    drawValueBadge(ctx,fmtAxis(p.value,'元'),p.x-28,badgeY,{color:chartTheme.text});
+  });
+  ctx.font='600 10px Microsoft YaHei';ctx.fillStyle=chartTheme.sub;ctx.textAlign='center';ctx.textBaseline='alphabetic';
+  const step=Math.max(1,Math.ceil(data.length/6));
+  pts.forEach((p,i)=>{if(i%step===0||i===pts.length-1)ctx.fillText(p.label,p.x,h-17)});
+}
+function drawHorizontalBars(canvasId,data,emptyText,opt={}){
+  const {ctx,w,h}=canvasSetup($(canvasId));ctx.clearRect(0,0,w,h);
+  if(!data.length){drawEmpty(ctx,w,h,emptyText);return}
+  const left=Math.min(145,Math.max(95,w*.34)),pad={l:left,r:24,t:14,b:12};
+  const cw=w-pad.l-pad.r,ch=h-pad.t-pad.b,rowH=ch/data.length,max=Math.max(...data.map(x=>x.value),1);
+  const colors=opt.colors||[chartTheme.red,chartTheme.red2,chartTheme.orange,chartTheme.slate];
+  ctx.font='600 10.5px Microsoft YaHei';
+  data.forEach((d,i)=>{
+    const y=pad.t+i*rowH+rowH*.23,bh=Math.max(15,Math.min(22,rowH*.5)),bw=cw*d.value/max;
+    ctx.fillStyle=chartTheme.track;roundRect(ctx,pad.l,y,cw,bh,7,true,false);
+    ctx.fillStyle=colors[i%colors.length];roundRect(ctx,pad.l,y,Math.max(6,bw),bh,7,true,false);
+    ctx.fillStyle=chartTheme.text;ctx.textAlign='right';ctx.textBaseline='middle';
+    ctx.fillText(fitText(ctx,d.name,pad.l-18),pad.l-10,y+bh/2);
+    const text=d.display??String(d.value),tw=ctx.measureText(text).width;
+    if(bw>tw+22){
+      ctx.fillStyle='#fff';ctx.textAlign='right';ctx.fillText(text,pad.l+bw-8,y+bh/2);
+    }else{
+      ctx.fillStyle=chartTheme.text;ctx.textAlign='left';ctx.fillText(text,Math.min(pad.l+bw+8,w-tw-4),y+bh/2);
+    }
+  });
+}
+function drawRank(rows){
+  const meta=dimensionMeta(),data=aggregateDimension(rows).slice(0,8);
+  $('rankTitle').textContent=`${meta.label}激励金额排行（元）`;
+  drawHorizontalBars('rankChart',data.map((d,i)=>({name:`${i+1}. ${d.name}`,value:d.money,display:`${Math.round(d.money).toLocaleString('zh-CN')}元`})),'暂无排行数据',
+    {colors:[chartTheme.red,'#d84962','#e16c7f','#8b95a5']});
+}
+function drawVolume(rows){
+  const {ctx,w,h}=canvasSetup($('volumeChart'));ctx.clearRect(0,0,w,h);
+  const type=$('periodType').value,m=new Map();
+  rows.forEach(r=>{const k=periodKey(filterDateForRow(r),type);if(!m.has(k))m.set(k,{count:0,people:new Set()});const x=m.get(k);x.count++;x.people.add(r.__person)});
+  const data=[...m.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([label,x])=>({label,count:x.count,people:x.people.size}));
+  if(!data.length){drawEmpty(ctx,w,h,'暂无操作量数据');return}
+  const max=Math.max(...data.map(x=>x.count),1),peopleMax=Math.max(...data.map(x=>x.people),1),pad={l:48,r:22,t:34,b:48};
+  const {cw,ch}=drawGridY(ctx,pad,w,h,max,4,v=>fmtAxis(v,'单'));
+  drawLegend(ctx,[{label:'计费记录（单）',color:chartTheme.red},{label:'涉及人数（人）',color:chartTheme.blue}],pad.l,13);
+  const stepX=cw/data.length,barW=Math.max(8,Math.min(24,stepX*.38));
+  const peoplePts=[];
+  data.forEach((d,i)=>{
+    const cx=pad.l+stepX*i+stepX/2,bh=ch*d.count/max;
+    ctx.fillStyle='rgba(200,16,46,.86)';roundRect(ctx,cx-barW/2,pad.t+ch-bh,barW,bh,6,true,false);
+    peoplePts.push({x:cx,y:pad.t+ch-d.people/peopleMax*ch,label:d.label,value:d.people});
+  });
+  ctx.beginPath();peoplePts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+  ctx.strokeStyle=chartTheme.blue;ctx.lineWidth=2.4;ctx.stroke();
+  peoplePts.forEach(p=>{ctx.fillStyle='#fff';ctx.strokeStyle=chartTheme.blue;ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,3.6,0,Math.PI*2);ctx.fill();ctx.stroke()});
+  ctx.font='600 10px Microsoft YaHei';ctx.fillStyle=chartTheme.sub;ctx.textAlign='center';
+  const labelStep=Math.max(1,Math.ceil(data.length/6));
+  data.forEach((d,i)=>{if(i%labelStep===0||i===data.length-1)ctx.fillText(d.label,pad.l+stepX*i+stepX/2,h-17)});
+}
+function drawDonut(canvasId,data,emptyText,opt={}){
+  const {ctx,w,h}=canvasSetup($(canvasId));ctx.clearRect(0,0,w,h);
+  const valid=data.filter(x=>x.value>0),total=valid.reduce((s,x)=>s+x.value,0);
+  if(!valid.length||!total){drawEmpty(ctx,w,h,emptyText);return}
+  const colors=opt.colors||[chartTheme.red,chartTheme.red2,chartTheme.orange,chartTheme.gold,chartTheme.slate];
+  const cx=w*.34,cy=h*.52,r=Math.min(w*.22,h*.31),inner=r*.62;
+  let angle=-Math.PI/2;
+  valid.forEach((d,i)=>{
+    const next=angle+Math.PI*2*d.value/total;
+    ctx.beginPath();ctx.arc(cx,cy,r,angle,next);ctx.arc(cx,cy,inner,next,angle,true);ctx.closePath();
+    ctx.fillStyle=colors[i%colors.length];ctx.fill();angle=next;
+  });
+  ctx.fillStyle=chartTheme.text;ctx.font='800 22px Microsoft YaHei';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(total,cx,cy-5);
+  ctx.fillStyle=chartTheme.muted;ctx.font='10px Microsoft YaHei';ctx.fillText(opt.centerLabel||'合计',cx,cy+17);
+  ctx.font='600 10.5px Microsoft YaHei';ctx.textAlign='left';
+  const lx=w*.61,ly=Math.max(28,cy-valid.length*15);
+  valid.forEach((d,i)=>{
+    const y=ly+i*30,pct=d.value/total*100;
+    ctx.fillStyle=colors[i%colors.length];roundRect(ctx,lx,y-7,10,10,3,true,false);
+    ctx.fillStyle=chartTheme.text;ctx.fillText(fitText(ctx,d.name,w-lx-74),lx+16,y);
+    ctx.fillStyle=chartTheme.sub;ctx.textAlign='right';ctx.fillText(`${Math.round(d.value)}${opt.valueUnit||''} · ${Math.round(pct)}%`,w-8,y);ctx.textAlign='left';
+  });
+}
+function drawLevel(rows){
+  const order=['Fatal','High','Medium','Low','未识别'],m=new Map(order.map(x=>[x,0]));
+  rows.forEach(r=>m.set(r.__level||'未识别',(m.get(r.__level||'未识别')||0)+1));
+  drawDonut('levelChart',order.map(name=>({name,value:m.get(name)||0})),'暂无等级结构数据',
+    {colors:['#83152f',chartTheme.red,'#df633d','#d6a12a',chartTheme.slate],centerLabel:'记录（单）',valueUnit:'单'});
+}
+function drawAttr(rows){
+  const m=new Map();rows.forEach(r=>m.set(r.__attr||'未填写',(m.get(r.__attr||'未填写')||0)+r.__fee));
+  const data=[...m.entries()].map(([name,value])=>({name,value,display:`${Math.round(value).toLocaleString('zh-CN')}元`})).sort((a,b)=>b.value-a.value).slice(0,8);
+  drawHorizontalBars('attrChart',data,'暂无人员属性数据',{colors:[chartTheme.red,'#d84962',chartTheme.blue,chartTheme.slate]});
+}
+function drawBUCount(rows){
+  const m=new Map();
+  rows.forEach(r=>m.set(r.__bu||'未填写',(m.get(r.__bu||'未填写')||0)+1));
+  const data=[...m.entries()].map(([name,value])=>({name,value,display:`${value}单`}))
+    .sort((a,b)=>b.value-a.value).slice(0,12);
+  drawHorizontalBars('buCountChart',data,'暂无 BU 操作数量数据',
+    {colors:[chartTheme.red,chartTheme.red2,chartTheme.orange,chartTheme.slate]});
+}
+function drawBUMoney(rows){
+  const m=new Map();
+  rows.forEach(r=>m.set(r.__bu||'未填写',(m.get(r.__bu||'未填写')||0)+r.__fee));
+  const data=[...m.entries()].map(([name,value])=>({name,value,display:`${Math.round(value).toLocaleString('zh-CN')}元`}))
+    .sort((a,b)=>b.value-a.value).slice(0,12);
+  drawHorizontalBars('buMoneyChart',data,'暂无 BU 激励金额数据',
+    {colors:[chartTheme.red,chartTheme.red2,chartTheme.orange,chartTheme.slate]});
+}
+function drawCalcStatus(){
+  const details=filteredCalcDetails(),counted=details.filter(r=>r.__counted).length,ignored=details.filter(r=>!r.__counted).length;
+  drawDonut('calcStatusChart',[{name:'最终计发',value:counted},{name:'同日忽略',value:ignored}],'暂无计算明细数据',
+    {colors:[chartTheme.green,chartTheme.slate],centerLabel:'候选记录（条）',valueUnit:'条'});
+}
+function drawCharts(rows){
+  requestAnimationFrame(()=>{
+    drawTrend(rows);drawRank(rows);drawVolume(rows);drawLevel(rows);drawAttr(rows);drawCalcStatus();drawBUCount(rows);drawBUMoney(rows);
+  });
+}
+
+function setQuickRange(type){
+  const dates=dedupRows.map(r=>r.__start).filter(Boolean).sort((a,b)=>b-a);
+  const base=dates[0]||new Date(),y=base.getFullYear(),m=base.getMonth(),now=new Date(y,m,1);
+  let start=null,end=null;
+  if(type==='currentMonth'){start=new Date(y,m,1);end=new Date(y,m+1,1)}
+  if(type==='lastMonth'){start=new Date(y,m-1,1);end=new Date(y,m,1)}
+  if(type==='currentQuarter'){const q=Math.floor(m/3)*3;start=new Date(y,q,1);end=new Date(y,q+3,1)}
+  if(type==='lastQuarter'){const q=Math.floor(m/3)*3;start=new Date(y,q-3,1);end=new Date(y,q,1)}
+  if(type==='currentHalf'){const hm=m<6?0:6;start=new Date(y,hm,1);end=new Date(y,hm+6,1)}
+  if(type==='lastHalf'){const hm=m<6?0:6;start=new Date(y,hm-6,1);end=new Date(y,hm,1)}
+  if(type==='currentYear'){start=new Date(y,0,1);end=new Date(y+1,0,1)}
+  if(type==='lastYear'){start=new Date(y-1,0,1);end=new Date(y,0,1)}
+  quickRange=start?{start,end}:null;
+  $('filterYear').value='';$('filterMonth').value='';
+  document.querySelectorAll('.quick-btn').forEach(b=>b.classList.toggle('active',b.dataset.quick===type));
+  render();
+}
+
+
+function renderPeriod(rows){
+  const type=$('periodType').value,m=new Map();
+  rows.forEach(r=>{
+    const p=periodKey(filterDateForRow(r),type);
+    if(!m.has(p))m.set(p,{p,count:0,people:new Set(),days:new Set(),money:0,levels:{}});
+    const x=m.get(p);x.count++;x.people.add(r.__person);x.days.add(r.__date);x.money+=r.__fee;
+    x.levels[r.__level||'未识别']=(x.levels[r.__level||'未识别']||0)+1;
+  });
+  const data=[...m.values()]
+    .sort((a,b)=>b.p.localeCompare(a.p))
+    .map(x=>[
+      esc(x.p),x.count,x.days.size,x.people.size,
+      esc(Object.entries(x.levels).map(([k,v])=>`${k}:${v}`).join(' / ')),
+      `<span class="money">${money(x.money)}</span>`
+    ]);
+  table(['周期','计费记录','操作天数','涉及人员','等级分布','激励合计（元）'],data);
+}
+
+function renderSummary(rows){
+  const type=$('periodType').value;
+  const metaMap={
+    bu:{label:'BU1 / 部门',get:r=>r.__bu||'未填写'},
+    customer:{label:'客户名称',get:r=>r.__customer||'未填写'},
+    attr:{label:'人员属性',get:r=>r.__attr||'未填写'},
+    level:{label:'操作等级',get:r=>r.__level||'未识别'},
+    person:{label:'操作人',get:r=>r.__person||'未填写'}
+  };
+  const meta=metaMap[activeCrossDimension]||metaMap.bu,m=new Map();
+  rows.forEach(r=>{
+    const p=periodKey(filterDateForRow(r),type),d=meta.get(r),k=p+'|'+d;
+    if(!m.has(k))m.set(k,{p,d,count:0,people:new Set(),days:new Set(),money:0,levels:{}});
+    const x=m.get(k);x.count++;x.people.add(r.__person);x.days.add(r.__date);x.money+=r.__fee;
+    x.levels[r.__level||'未识别']=(x.levels[r.__level||'未识别']||0)+1;
+  });
+  const data=[...m.values()]
+    .sort((a,b)=>b.p.localeCompare(a.p)||b.money-a.money||b.count-a.count)
+    .map(x=>[
+      esc(x.p),esc(x.d),x.count,x.days.size,x.people.size,
+      esc(Object.entries(x.levels).map(([k,v])=>`${k}:${v}`).join(' / ')),
+      `<span class="money">${money(x.money)}</span>`
+    ]);
+  table(['周期',meta.label,'计费记录','操作天数','涉及人员','等级分布','激励合计（元）'],data);
+}
+function renderPerson(rows){
+  const type=$('periodType').value,m=new Map();
+  rows.forEach(r=>{const p=periodKey(filterDateForRow(r),type),k=p+'|'+r.__person;if(!m.has(k))m.set(k,{p,person:r.__person,bu:new Set(),c:new Set(),a:new Set(),days:0,money:0,levels:{}});
+    const x=m.get(k);x.days++;x.money+=r.__fee;x.bu.add(r.__bu);x.c.add(r.__customer);x.a.add(r.__attr);x.levels[r.__level]=(x.levels[r.__level]||0)+1;
+  });
+  const data=[...m.values()].sort((a,b)=>b.p.localeCompare(a.p)||b.money-a.money||a.person.localeCompare(b.person,'zh-CN')).map(x=>[
+    esc(x.p),esc(x.person),esc([...x.bu].filter(Boolean).join(' / ')),esc([...x.c].filter(Boolean).join(' / ')),
+    esc([...x.a].filter(Boolean).join(' / ')),x.days,esc(Object.entries(x.levels).map(([k,v])=>`${k}:${v}`).join(' / ')),`<span class="money">${money(x.money)}</span>`
+  ]);
+  table(['周期','操作人','BU1 / 部门','客户','人员属性','计费天数','等级分布','激励合计（元）'],data);
+}
+function renderDetail(rows){
+  const sorted=[...rows].sort((a,b)=>
+    (b.__date||'').localeCompare(a.__date||'')||
+    a.__person.localeCompare(b.__person,'zh-CN')||
+    Number(b.__counted)-Number(a.__counted)||
+    b.__rank-a.__rank||
+    b.__fee-a.__fee
+  );
+  const data=sorted.map(r=>[
+    esc(r.__date),
+    esc(r.__person),
+    r.__counted?'<span class="tag ok">计发</span>':'<span class="tag mid">忽略</span>',
+    esc(r.__level||'未识别'),
+    `<span class="money">${money(r.__calcFee)}</span>`,
+    esc(r.__ignoreReason),
+    !r.__counted?(esc(r.__selectedLevel)||'—'):'—',
+    !r.__counted?(esc(r.__selectedTask)||'—'):'—',
+    esc(r.__bu),esc(r.__customer),esc(r.__attr),esc(r.__task),esc(r.__summary),
+    r.__byField?'<span class="tag ok">字段夜间</span>':'<span class="tag bad">字段非夜间</span>',
+    r.__byTime?'<span class="tag ok">时间确认</span>':'<span class="tag mid">时间未确认</span>',
+    esc(r.__start?r.__start.toLocaleString('zh-CN'):'')
+  ]);
+  table(['操作日期','操作人','计算状态','操作等级','本行激励（元）','忽略原因','当日计发等级','当日计发任务号','BU1','客户','人员属性','任务号','操作摘要','操作时间段校验','当地时间校验','当地开始时间'],data);
+}
+function renderExcluded(rows=filteredExcludedRows()){
+  const data=[...rows].sort((a,b)=>(b.__date||'').localeCompare(a.__date||'')||a.__row-b.__row).map(r=>[r.__row,esc(r.__reason),esc(r.__person),esc(r.__status),esc(r.__level),esc(r.__task),esc(r.__summary),
+    r.__byField?'是':'否',r.__byTime?'是':'否',esc(r.__start?r.__start.toLocaleString('zh-CN'):'')]);
+  table(['Excel行号','排除/异常原因','操作人','任务状态','等级','任务号','摘要','字段判定夜间','时间判定夜间','当地开始时间'],data);
+}
+
+function baseFilteredForCompare(){
+  return dedupRows.filter(r=>
+    (!$('filterBU').value||r.__bu===$('filterBU').value)&&
+    (!$('filterCustomer').value||r.__customer===$('filterCustomer').value)&&
+    (!$('filterAttr').value||r.__attr===$('filterAttr').value)&&
+    (!$('filterLevel').value||r.__level===$('filterLevel').value)&&
+    (!clean($('filterPerson').value)||r.__person.toLowerCase().includes(clean($('filterPerson').value).toLowerCase()))
+  );
+}
+function periodLabelFromDate(d,type){
+  const y=d.getFullYear(),m=d.getMonth()+1;
+  if(type==='month')return `${y}-${String(m).padStart(2,'0')}`;
+  if(type==='quarter')return `${y} Q${Math.ceil(m/3)}`;
+  if(type==='half')return `${y} H${m<=6?1:2}`;
+  return String(y);
+}
+function previousPeriodLabel(label,type,mode){
+  if(type==='month'){
+    const [y,m]=label.split('-').map(Number);
+    const d=mode==='yoy'?new Date(y-1,m-1,1):new Date(y,m-2,1);
+    return periodLabelFromDate(d,type);
+  }
+  if(type==='quarter'){
+    const [y,q]=label.replace(' Q','-').split('-').map(Number);
+    if(mode==='yoy')return `${y-1} Q${q}`;
+    const d=new Date(y,(q-1)*3-3,1);return periodLabelFromDate(d,type);
+  }
+  if(type==='half'){
+    const [y,h]=label.replace(' H','-').split('-').map(Number);
+    if(mode==='yoy')return `${y-1} H${h}`;
+    return h===2?`${y} H1`:`${y-1} H2`;
+  }
+  return String(Number(label)-1);
+}
+function summarizePeriod(rows,label,type){
+  const subset=rows.filter(r=>periodKey(filterDateForRow(r),type)===label);
+  const levels={Fatal:0,High:0,Medium:0,Low:0,'未识别':0};
+  subset.forEach(r=>{const k=r.__level||'未识别';levels[k]=(levels[k]||0)+1});
+  return {
+    label,count:subset.length,money:subset.reduce((s,r)=>s+r.__fee,0),
+    days:new Set(subset.map(r=>r.__date)).size,
+    people:new Set(subset.map(r=>r.__person)).size,
+    avg:subset.length?subset.reduce((s,r)=>s+r.__fee,0)/subset.length:0,
+    levels
+  };
+}
+function deltaText(cur,prev){
+  if(prev===0)return cur===0?{text:'无变化',cls:'flat'}:{text:'基期为 0',cls:'up'};
+  const pct=(cur-prev)/prev*100;
+  return {text:`${pct>=0?'+':''}${Math.round(pct)}%`,cls:pct>0?'up':pct<0?'down':'flat'};
+}
+function setDelta(id,cur,prev){
+  const d=deltaText(cur,prev),el=$(id);el.textContent=d.text;el.className='delta '+d.cls;
+}
+function populateComparePeriods(){
+  const type=$('comparePeriod').value,rows=baseFilteredForCompare();
+  const periods=uniq(rows.map(r=>periodKey(filterDateForRow(r),type))).sort((a,b)=>b.localeCompare(a));
+  $('compareCurrent').innerHTML=periods.map(p=>`<option>${esc(p)}</option>`).join('');
+  updateComparePreviousOptions(true);
+}
+function updateComparePreviousOptions(useRecommended=true){
+  const type=$('comparePeriod').value,mode=$('compareMode').value,current=$('compareCurrent').value;
+  const rows=baseFilteredForCompare();
+  const periods=uniq(rows.map(r=>periodKey(filterDateForRow(r),type))).sort((a,b)=>b.localeCompare(a));
+  const recommended=current?previousPeriodLabel(current,type,mode):'';
+  const options=[...periods];
+  if(recommended&&!options.includes(recommended))options.push(recommended);
+  options.sort((a,b)=>b.localeCompare(a));
+  const old=$('comparePrevious').value;
+  $('comparePrevious').innerHTML=options
+    .filter(p=>p!==current)
+    .map(p=>`<option value="${esc(p)}">${esc(p)}${p===recommended?'（推荐）':''}</option>`)
+    .join('');
+  if(useRecommended&&recommended&&recommended!==current)$('comparePrevious').value=recommended;
+  else if(old&&old!==current&&options.includes(old))$('comparePrevious').value=old;
+  renderComparison();
+}
+function renderComparison(){
+  const type=$('comparePeriod').value,current=$('compareCurrent').value,previous=$('comparePrevious').value;
+  if(!current||!previous)return;
+  const rows=baseFilteredForCompare(),cur=summarizePeriod(rows,current,type),prev=summarizePeriod(rows,previous,type);
+  $('cmpMoney').textContent=money(Math.round(cur.money));$('cmpCount').textContent=cur.count;$('cmpDays').textContent=cur.days;$('cmpPeople').textContent=cur.people;
+  setDelta('cmpMoneyDelta',cur.money,prev.money);setDelta('cmpCountDelta',cur.count,prev.count);setDelta('cmpDaysDelta',cur.days,prev.days);setDelta('cmpPeopleDelta',cur.people,prev.people);
+  const metrics=[
+    ['激励金额（元）',money(cur.money),money(prev.money),deltaText(cur.money,prev.money)],
+    ['计费记录',cur.count,prev.count,deltaText(cur.count,prev.count)],
+    ['操作天数',cur.days,prev.days,deltaText(cur.days,prev.days)],
+    ['涉及人员',cur.people,prev.people,deltaText(cur.people,prev.people)],
+    ['单次平均激励（元）',money(Math.round(cur.avg)),money(Math.round(prev.avg)),deltaText(cur.avg,prev.avg)]
+  ];
+  $('compareMetricTable').innerHTML=`<table><thead><tr><th>指标</th><th>${esc(current)}</th><th>${esc(previous)}</th><th>变化</th></tr></thead><tbody>${metrics.map(x=>`<tr><td>${x[0]}</td><td>${x[1]}</td><td>${x[2]}</td><td><span class="delta ${x[3].cls}">${x[3].text}</span></td></tr>`).join('')}</tbody></table>`;
+  const levelNames=uniq([...Object.keys(cur.levels),...Object.keys(prev.levels)]);
+  $('compareLevelTable').innerHTML=`<table><thead><tr><th>等级</th><th>${esc(current)}</th><th>${esc(previous)}</th><th>变化</th></tr></thead><tbody>${levelNames.map(k=>{const d=deltaText(cur.levels[k]||0,prev.levels[k]||0);return `<tr><td>${esc(k)}</td><td>${cur.levels[k]||0}</td><td>${prev.levels[k]||0}</td><td><span class="delta ${d.cls}">${d.text}</span></td></tr>`}).join('')}</tbody></table>`;
+}
+function resetFilters(){
+  const mask=$('resetMask'),bar=$('resetProgressBar'),text=$('resetProgressText'),step=$('resetProgressStep');
+  mask.classList.add('show');
+  bar.style.width='12%';step.textContent='12%';text.textContent='正在清空查询条件';
+  requestAnimationFrame(()=>{
+    setTimeout(()=>{
+      ['filterYear','filterMonth','filterBU','filterCustomer','filterAttr','filterLevel'].forEach(id=>$(id).value='');
+      $('filterPerson').value='';
+      bar.style.width='46%';step.textContent='46%';text.textContent='正在恢复全部周期';
+      setTimeout(()=>{
+        quickRange=null;
+        document.querySelectorAll('.quick-btn').forEach(b=>b.classList.toggle('active',b.dataset.quick==='all'));
+        bar.style.width='76%';step.textContent='76%';text.textContent='正在刷新统计结果';
+        setTimeout(()=>{
+          render();
+          bar.style.width='100%';step.textContent='100%';text.textContent='重置完成';
+          setTimeout(()=>{
+            mask.classList.remove('show');
+            bar.style.width='0';step.textContent='0%';text.textContent='准备清空当前筛选';
+          },260);
+        },180);
+      },180);
+    },100);
+  });
+}
+
+function cloneCell(cell){
+  if(!cell)return null;
+  const out={};
+  ['t','v','w','z','f','F','s','l','c'].forEach(k=>{
+    if(cell[k]!==undefined){
+      try{out[k]=typeof structuredClone==='function'?structuredClone(cell[k]):JSON.parse(JSON.stringify(cell[k]))}
+      catch(e){out[k]=cell[k]}
+    }
+  });
+  return out;
+}
+function exportCurrent(){
+  if(!window.XLSX){alert('Excel 组件未加载');return}
+  if(!sourceWorksheet){alert('请先导入 Excel 文件');return}
+
+  const details=filteredCalcDetails().filter(r=>r.__counted&&Number(r.__fee||0)>0);
+  if(!details.length){alert('当前筛选条件下没有可本行激励（元）的记录');return}
+
+  const detailByRow=new Map(details.map(r=>[r.__row,r]));
+  const sourceRange=XLSX.utils.decode_range(sourceWorksheet['!ref']||'A1:A1');
+  const headerRow=sourceRange.s.r;
+  const keepSourceRows=[headerRow,...[...detailByRow.keys()].map(n=>n-1).filter(r=>r>headerRow).sort((a,b)=>a-b)];
+  const outputLastCol=sourceRange.e.c+1;
+  const outWs={};
+
+  keepSourceRows.forEach((srcRow,outRow)=>{
+    for(let c=sourceRange.s.c;c<=sourceRange.e.c;c++){
+      const srcAddr=XLSX.utils.encode_cell({r:srcRow,c});
+      const outAddr=XLSX.utils.encode_cell({r:outRow,c});
+      const copied=cloneCell(sourceWorksheet[srcAddr]);
+      if(copied)outWs[outAddr]=copied;
+    }
+    const extraAddr=XLSX.utils.encode_cell({r:outRow,c:outputLastCol});
+    if(outRow===0){
+      outWs[extraAddr]={t:'s',v:'本行激励（元）'};
+      const firstHeader=sourceWorksheet[XLSX.utils.encode_cell({r:headerRow,c:sourceRange.s.c})];
+      if(firstHeader?.s)outWs[extraAddr].s=cloneCell({s:firstHeader.s}).s;
+    }else{
+      const detail=detailByRow.get(srcRow+1);
+      outWs[extraAddr]={t:'n',v:detail&&detail.__counted?Math.round(Number(detail.__fee||0)):0,z:'#,##0'};
+      const sourceCell=sourceWorksheet[XLSX.utils.encode_cell({r:srcRow,c:sourceRange.e.c})];
+      if(sourceCell?.s)outWs[extraAddr].s=cloneCell({s:sourceCell.s}).s;
+    }
+  });
+
+  outWs['!ref']=XLSX.utils.encode_range({
+    s:{r:0,c:sourceRange.s.c},
+    e:{r:keepSourceRows.length-1,c:outputLastCol}
+  });
+
+  if(sourceWorksheet['!cols']){
+    outWs['!cols']=sourceWorksheet['!cols'].map(x=>{
+      try{return typeof structuredClone==='function'?structuredClone(x):JSON.parse(JSON.stringify(x))}
+      catch(e){return {...x}}
+    });
+  }else outWs['!cols']=[];
+  outWs['!cols'][outputLastCol]={wch:14};
+
+  if(sourceWorksheet['!rows']){
+    outWs['!rows']=keepSourceRows.map(r=>{
+      const x=sourceWorksheet['!rows'][r];
+      if(!x)return undefined;
+      try{return typeof structuredClone==='function'?structuredClone(x):JSON.parse(JSON.stringify(x))}
+      catch(e){return {...x}}
+    });
+  }
+
+  if(sourceWorksheet['!merges']){
+    const rowMap=new Map(keepSourceRows.map((src,i)=>[src,i]));
+    outWs['!merges']=sourceWorksheet['!merges']
+      .filter(m=>rowMap.has(m.s.r)&&rowMap.has(m.e.r))
+      .map(m=>({s:{r:rowMap.get(m.s.r),c:m.s.c},e:{r:rowMap.get(m.e.r),c:m.e.c}}));
+  }
+
+  if(sourceWorksheet['!autofilter']){
+    outWs['!autofilter']={ref:XLSX.utils.encode_range({
+      s:{r:0,c:sourceRange.s.c},
+      e:{r:keepSourceRows.length-1,c:outputLastCol}
+    })};
+  }
+
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,outWs,sourceSheetName||'当前计算结果');
+  XLSX.writeFile(
+    wb,
+    `埃及代表处夜间操作激励统计结果_${new Date().toISOString().slice(0,10)}.xlsx`,
+    {cellStyles:true}
+  );
+}
+const fileInput=$('fileInput');
+if(fileInput){
+  fileInput.addEventListener('change',e=>{
+    const file=e.target.files&&e.target.files[0];
+    if(file) loadFile(file);
+    e.target.value='';
+  });
+}
+const dz=$('dropZone');
+if(dz){
+  ['dragenter','dragover'].forEach(n=>dz.addEventListener(n,e=>{e.preventDefault();dz.classList.add('drag')}));
+  ['dragleave','drop'].forEach(n=>dz.addEventListener(n,e=>{e.preventDefault();dz.classList.remove('drag')}));
+  dz.addEventListener('drop',e=>{const file=e.dataTransfer.files&&e.dataTransfer.files[0];if(file)loadFile(file)});
+}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
+  if(b.classList.contains('active'))return;
+  const mask=$('tabLoadingMask');
+  $('tabLoadingTitle').textContent=`正在加载${b.textContent.trim()}`;
+  mask.classList.add('show');
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));
+  currentView=b.dataset.view;
+  requestAnimationFrame(()=>{
+    setTimeout(()=>{
+      render();
+      requestAnimationFrame(()=>setTimeout(()=>mask.classList.remove('show'),120));
+    },60);
+  });
+});
+document.querySelectorAll('.cross-btn').forEach(b=>b.onclick=()=>{
+  activeCrossDimension=b.dataset.cross;
+  document.querySelectorAll('.cross-btn').forEach(x=>x.classList.toggle('active',x===b));
+  render();
+});
+$('periodSourceMode').onchange=()=>{
+  const usingImported=$('periodSourceMode').value==='imported';
+  const hasYear=rawRows.some(r=>normalizeSourceYear(val(r,aliases.source_year)));
+  const hasMonth=rawRows.some(r=>normalizeSourceMonth(val(r,aliases.source_month)));
+  if(usingImported&&rawRows.length&&(!hasYear||!hasMonth)){
+    alert(`导入表中${!hasYear&&!hasMonth?'未识别到“年份”和“月份”列':!hasYear?'未识别到“年份”列':'未识别到“月份”列'}，缺失行将继续按当地开始时间筛选。`);
+  }
+  $('filterYear').value='';
+  $('filterMonth').value='';
+  quickRange=null;
+  document.querySelectorAll('.quick-btn').forEach(b=>b.classList.toggle('active',b.dataset.quick==='all'));
+  refreshFilters();
+  render();
+};
+['periodType','filterYear','filterMonth','filterBU','filterCustomer','filterAttr','filterLevel'].forEach(id=>$(id).onchange=()=>{
+  if(id==='filterYear'||id==='filterMonth'){quickRange=null;document.querySelectorAll('.quick-btn').forEach(b=>b.classList.toggle('active',b.dataset.quick==='all'))}
+  render();
+});
+let personFilterTimer=null;
+$('filterPerson').addEventListener('input',()=>{
+  clearTimeout(personFilterTimer);
+  personFilterTimer=setTimeout(render,180);
+});
+$('chartDimension').onchange=()=>{
+  activeDimension=$('chartDimension').value;
+  currentView='dimension';
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.view==='dimension'));
+  render();
+};
+document.querySelectorAll('.quick-btn').forEach(b=>b.onclick=()=>setQuickRange(b.dataset.quick));
+window.addEventListener('resize',()=>{if(rawRows.length)drawCharts(filtered())});
+['feeLow','feeMedium','feeHigh','feeFatal','nightStart','nightEnd','verifyMode','personField'].forEach(id=>$(id).onchange=()=>{
+  saveRules();
+  if(rawRows.length)recalculate();
+});
+
+
+
+const ruleModal=$('ruleModal');
+function openRuleConfig(){ruleModal.classList.add('show')}
+$('openRuleModal').onclick=openRuleConfig;
+$('topRuleBtn').onclick=openRuleConfig;
+const blacklistModal=$('blacklistModal');
+function openBlacklistConfig(){
+  $('blacklistInput').value=serializeBlacklist(incentiveBlacklist);
+  updateBlacklistCount();
+  blacklistModal.classList.add('show');
+}
+$('topBlacklistBtn').onclick=openBlacklistConfig;
+$('closeBlacklistModal').onclick=()=>blacklistModal.classList.remove('show');
+blacklistModal.addEventListener('click',e=>{if(e.target===blacklistModal)blacklistModal.classList.remove('show')});
+$('blacklistInput').addEventListener('input',updateBlacklistCount);
+$('saveBlacklistBtn').onclick=()=>{
+  saveBlacklist();
+  if(rawRows.length)recalculate();
+  blacklistModal.classList.remove('show');
+};
+$('clearBlacklistBtn').onclick=()=>{
+  $('blacklistInput').value='';
+  updateBlacklistCount();
+};
+
+$('closeRuleModal').onclick=()=>ruleModal.classList.remove('show');
+ruleModal.addEventListener('click',e=>{if(e.target===ruleModal)ruleModal.classList.remove('show')});
+
+
+$('saveRulesBtn').onclick=()=>{
+  saveRules();
+  if(rawRows.length)recalculate();
+  ruleModal.classList.remove('show');
+};
+$('resetRulesBtn').onclick=()=>{
+  resetRules();
+};
+loadBlacklist();
+loadRules();
+
+const TOUR_STORAGE_KEY='nightAllowanceTourDoneV1';
+const tourSteps=[
+  {selector:'#importGate .import-gate-card',title:'先导入 Excel',text:'点击“选择 Excel 文件”导入夜间操作数据。导入完成后，页面会自动计算激励金额并解除毛玻璃遮罩。'},
+  {selector:'#openRuleModal',title:'设置津贴规则',text:'导入前也可以先配置 Low、Medium、High、Fatal 激励金额，以及夜间时间和校验模式。规则会自动保存。'},
+  {selector:'.filter-card-head',title:'筛选与快捷周期',text:'这里可以按年份、月份、BU、客户、人员属性、等级和人员工号过滤，也可以一键选择本月、上季度、上半年等周期。'},
+  {selector:'.tabs',title:'切换统计视图',text:'维度汇总、周期汇总、周期交叉、人员周期汇总、计算明细和异常记录都在这里切换。数据量大时会显示毛玻璃加载提示。'},
+  {selector:'#openCompareBtn',title:'同比 / 环比分析',text:'点击这里比较月度、季度、半年度或年度数据。系统会推荐对比周期，也支持手动修改。'},
+  {selector:'#analyticsSection',title:'查看数据图表',text:'页面底部提供激励金额趋势、维度排行、操作量、等级结构、人员属性和计发/忽略情况图表。'}
+];
+let tourIndex=0;
+function tourVisibleTarget(step){
+  const el=document.querySelector(step.selector);
+  if(!el)return null;
+  const r=el.getBoundingClientRect();
+  return r.width&&r.height?el:null;
+}
+function syncTourPreviewState(){
+  const preview=tourIndex>=2;
+  if(preview){
+    document.body.classList.add('tour-preview');
+    $('contentStage').classList.remove('locked');
+  }else{
+    document.body.classList.remove('tour-preview');
+    if(!rawRows.length){
+      $('contentStage').classList.add('locked');
+      $('importGate').classList.remove('gate-hidden');
+    }
+  }
+}
+function positionTour(){
+  syncTourPreviewState();
+  const step=tourSteps[tourIndex],el=tourVisibleTarget(step);
+  if(!el){tourIndex=Math.min(tourIndex+1,tourSteps.length-1);return positionTour()}
+  el.scrollIntoView({behavior:'smooth',block:'center'});
+  setTimeout(()=>{
+    const r=el.getBoundingClientRect(),pad=8,spot=$('tourSpotlight'),card=$('tourCard');
+    spot.style.left=`${Math.max(6,r.left-pad)}px`;
+    spot.style.top=`${Math.max(6,r.top-pad)}px`;
+    spot.style.width=`${Math.min(innerWidth-12,r.width+pad*2)}px`;
+    spot.style.height=`${Math.min(innerHeight-12,r.height+pad*2)}px`;
+    $('tourStep').textContent=`步骤 ${tourIndex+1} / ${tourSteps.length}`;
+    $('tourTitle').textContent=step.title;$('tourText').textContent=step.text;
+    $('tourDots').innerHTML=tourSteps.map((_,i)=>`<span class="tour-dot ${i===tourIndex?'active':''}"></span>`).join('');
+    $('tourPrev').style.visibility=tourIndex===0?'hidden':'visible';
+    $('tourNext').textContent=tourIndex===tourSteps.length-1?'完成':'下一步';
+    const below=r.bottom+14,above=r.top-card.offsetHeight-14;
+    let top=below+card.offsetHeight<innerHeight?below:Math.max(12,above);
+    let left=Math.min(Math.max(12,r.left),innerWidth-card.offsetWidth-12);
+    card.style.top=`${top}px`;card.style.left=`${left}px`;
+  },260);
+}
+function startTour(){
+  tourIndex=0;
+  document.body.classList.remove('tour-preview');
+  if(!rawRows.length){
+    $('contentStage').classList.add('locked');
+    $('importGate').classList.remove('gate-hidden');
+  }
+  $('tourMask').classList.add('show');
+  positionTour();
+}
+function endTour(){
+  $('tourMask').classList.remove('show');
+  document.body.classList.remove('tour-preview');
+  if(!rawRows.length){
+    $('contentStage').classList.add('locked');
+    $('importGate').classList.remove('gate-hidden');
+    $('topActions').classList.remove('show');
+    window.scrollTo({top:0,left:0,behavior:'auto'});
+    requestAnimationFrame(()=>{
+      window.scrollTo({top:0,left:0,behavior:'auto'});
+      setTimeout(()=>window.scrollTo({top:0,left:0,behavior:'auto'}),180);
+    });
+  }
+  try{localStorage.setItem(TOUR_STORAGE_KEY,'1')}catch(e){}
+}
+$('tourNext').onclick=()=>{if(tourIndex>=tourSteps.length-1)endTour();else{tourIndex++;positionTour()}};
+$('tourPrev').onclick=()=>{if(tourIndex>0){tourIndex--;positionTour()}};
+$('tourSkip').onclick=endTour;
+$('restartTourBtn').onclick=()=>{
+  try{localStorage.removeItem(TOUR_STORAGE_KEY)}catch(e){}
+  startTour();
+};
+window.addEventListener('resize',()=>{if($('tourMask').classList.contains('show'))positionTour()});
+setTimeout(()=>{
+  try{if(!localStorage.getItem(TOUR_STORAGE_KEY))startTour()}catch(e){startTour()}
+},350);
+
+
+
+$('resetFiltersBtn').onclick=resetFilters;
+const compareModal=$('compareModal');
+$('openCompareBtn').onclick=()=>{
+  if(!rawRows.length){alert('请先导入 Excel 文件');return}
+  compareModal.classList.add('show');
+  populateComparePeriods();
+};
+$('closeCompareModal').onclick=()=>compareModal.classList.remove('show');
+compareModal.addEventListener('click',e=>{if(e.target===compareModal)compareModal.classList.remove('show')});
+$('comparePeriod').onchange=populateComparePeriods;
+$('compareMode').onchange=()=>updateComparePreviousOptions(true);
+$('compareCurrent').onchange=()=>updateComparePreviousOptions(true);
+$('comparePrevious').onchange=renderComparison;
+
+$('exportBtn').onclick=()=>rawRows.length?exportCurrent():alert('请先导入 Excel 文件');
+</script>
+</body>
+</html>

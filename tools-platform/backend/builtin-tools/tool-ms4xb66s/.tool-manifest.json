@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "tool": {
+    "slug": "tool-ms4xb66s",
+    "name": "激励统计",
+    "icon": "📊",
+    "description": "导入夜间操作 Excel，按人员、周期和操作等级核算激励并生成分析与导出结果。",
+    "tags": [
+      "激励核算",
+      "Excel",
+      "数据分析"
+    ],
+    "href": "/tools/tool-ms4xb66s",
+    "filePath": "/custom-tools/tool-ms4xb66s/index.html",
+    "publicAccess": false,
+    "createdAt": "2026-07-28T17:22:08.788Z",
+    "updatedAt": "2026-07-28T17:22:08.788Z"
+  },
+  "history": {
+    "id": "custom-import-tool-ms4xb66s",
+    "tool": "custom",
+    "action": "导入自定义工具",
+    "detail": "激励统计 (tool-ms4xb66s)",
+    "time": "2026-07-28T17:22:08.788Z"
+  }
+}

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tools Platform 正在启动</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            font-family: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+        }
+        * { box-sizing: border-box; }
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            background: transparent;
+        }
+        body {
+            display: grid;
+            place-items: center;
+            padding: 18px;
+            opacity: 1;
+            transition: opacity .28s ease, transform .28s ease;
+        }
+        body.is-finished {
+            opacity: 0;
+            transform: scale(.985);
+        }
+        .glass {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, .28);
+            border-radius: 28px;
+            background:
+                radial-gradient(circle at 16% 5%, rgba(45, 212, 191, .24), transparent 35%),
+                radial-gradient(circle at 92% 95%, rgba(99, 102, 241, .22), transparent 38%),
+                linear-gradient(145deg, rgba(15, 23, 42, .78), rgba(30, 41, 59, .64));
+            box-shadow: 0 28px 80px rgba(2, 8, 23, .42), inset 0 1px 0 rgba(255, 255, 255, .18);
+            backdrop-filter: blur(28px) saturate(145%);
+            -webkit-backdrop-filter: blur(28px) saturate(145%);
+        }
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(5px);
+            opacity: .48;
+            animation: drift 5s ease-in-out infinite alternate;
+        }
+        .orb.one {
+            top: -42px;
+            right: 54px;
+            width: 150px;
+            height: 150px;
+            background: rgba(56, 189, 248, .16);
+        }
+        .orb.two {
+            bottom: -58px;
+            left: 54px;
+            width: 180px;
+            height: 180px;
+            background: rgba(139, 92, 246, .14);
+            animation-delay: -2s;
+        }
+        @keyframes drift {
+            to { transform: translate3d(18px, -10px, 0) scale(1.08); }
+        }
+        main {
+            position: relative;
+            z-index: 1;
+            height: 100%;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            padding: 28px 30px 25px;
+        }
+        header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .app-icon {
+            width: 48px;
+            height: 48px;
+            filter: drop-shadow(0 9px 18px rgba(0, 0, 0, .28));
+        }
+        .brand {
+            min-width: 0;
+        }
+        .brand strong {
+            display: block;
+            color: #f8fafc;
+            font-size: 18px;
+            letter-spacing: .01em;
+        }
+        .brand span {
+            display: block;
+            margin-top: 3px;
+            color: rgba(203, 213, 225, .74);
+            font-size: 10px;
+            letter-spacing: .13em;
+        }
+        .portable {
+            margin-left: auto;
+            padding: 5px 9px;
+            border: 1px solid rgba(52, 211, 153, .28);
+            border-radius: 999px;
+            color: #6ee7b7;
+            background: rgba(16, 185, 129, .12);
+            font-size: 10px;
+            font-weight: 800;
+        }
+        .status {
+            align-self: center;
+            padding-top: 12px;
+        }
+        .status h1 {
+            margin: 0;
+            color: #f8fafc;
+            font-size: 22px;
+            font-weight: 760;
+        }
+        .status p {
+            min-height: 22px;
+            margin: 8px 0 0;
+            color: rgba(203, 213, 225, .78);
+            font-size: 12px;
+            line-height: 1.7;
+        }
+        .progress-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 9px;
+            color: rgba(226, 232, 240, .72);
+            font-size: 10px;
+        }
+        #percent {
+            color: #99f6e4;
+            font: 800 11px/1 ui-monospace, SFMono-Regular, Consolas, monospace;
+        }
+        .track {
+            height: 8px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, .12);
+            border-radius: 999px;
+            background: rgba(2, 8, 23, .34);
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, .28);
+        }
+        #bar {
+            position: relative;
+            width: 8%;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #2dd4bf, #60a5fa 58%, #a78bfa);
+            box-shadow: 0 0 18px rgba(45, 212, 191, .48);
+            transition: width .36s cubic-bezier(.2, .8, .2, 1);
+        }
+        #bar::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(110deg, transparent 25%, rgba(255,255,255,.5) 50%, transparent 75%);
+            transform: translateX(-100%);
+            animation: shimmer 1.25s linear infinite;
+        }
+        @keyframes shimmer { to { transform: translateX(100%); } }
+        .foot {
+            margin-top: 10px;
+            color: rgba(148, 163, 184, .64);
+            font-size: 9px;
+        }
+    </style>
+</head>
+<body>
+    <section class="glass">
+        <span class="orb one"></span>
+        <span class="orb two"></span>
+        <main>
+            <header>
+                <img class="app-icon" src="../assets/icon-windows-portable.png" alt="">
+                <div class="brand">
+                    <strong>Tools Platform</strong>
+                    <span>LOCAL PRODUCTIVITY WORKSPACE</span>
+                </div>
+                <span class="portable">绿色便携版</span>
+            </header>
+            <div class="status">
+                <h1 id="title">正在准备工作空间</h1>
+                <p id="detail">加载本地组件与用户数据，请稍候…</p>
+            </div>
+            <footer>
+                <div class="progress-meta">
+                    <span id="stage">启动初始化</span>
+                    <span id="percent">8%</span>
+                </div>
+                <div class="track"><div id="bar"></div></div>
+                <div class="foot">首次启动或版本更新时，系统工具同步可能需要更长时间。</div>
+            </footer>
+        </main>
+    </section>
+    <script>
+        window.setStartupProgress = function (payload) {
+            const percent = Math.max(0, Math.min(100, Number(payload && payload.percent) || 0));
+            document.getElementById('bar').style.width = percent + '%';
+            document.getElementById('percent').textContent = Math.round(percent) + '%';
+            if (payload && payload.title) document.getElementById('title').textContent = payload.title;
+            if (payload && payload.detail) document.getElementById('detail').textContent = payload.detail;
+            if (payload && payload.stage) document.getElementById('stage').textContent = payload.stage;
+            if (payload && payload.finished) document.body.classList.add('is-finished');
+        };
+    </script>
+</body>
+</html>

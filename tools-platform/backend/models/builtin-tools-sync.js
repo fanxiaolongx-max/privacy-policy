@@ -1,0 +1,537 @@
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
+
+const TOOL_MANIFEST_FILE = '.tool-manifest.json';
+const SYSTEM_MARKER = 'tools-platform';
+const DECISION_STATE_VERSION = 1;
+
+function normalizeSlug(value) {
+    return String(value || '')
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 48);
+}
+
+function readJson(filePath) {
+    try {
+        return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    } catch (_) {
+        return null;
+    }
+}
+
+function listFiles(rootDir, relativeDir = '') {
+    const absoluteDir = path.join(rootDir, relativeDir);
+    const files = [];
+    for (const entry of fs.readdirSync(absoluteDir, { withFileTypes: true })) {
+        const relativePath = path.posix.join(relativeDir.split(path.sep).join('/'), entry.name);
+        if (entry.isSymbolicLink()) {
+            throw new Error(`系统工具不允许包含符号链接：${relativePath}`);
+        }
+        if (entry.isDirectory()) {
+            files.push(...listFiles(rootDir, relativePath));
+        } else if (entry.isFile()) {
+            files.push(relativePath);
+        }
+    }
+    return files.sort();
+}
+
+function fingerprintFiles(rootDir, files) {
+    const hash = crypto.createHash('sha256');
+    for (const relativePath of files) {
+        hash.update(relativePath);
+        hash.update('\0');
+        hash.update(fs.readFileSync(path.join(rootDir, relativePath)));
+        hash.update('\0');
+    }
+    return hash.digest('hex');
+}
+
+function fileDigest(filePath) {
+    return crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
+}
+
+function fileRecord(rootDir, relativePath) {
+    const absolutePath = path.join(rootDir, relativePath);
+    if (!fs.existsSync(absolutePath) || !fs.statSync(absolutePath).isFile()) return null;
+    const stat = fs.statSync(absolutePath);
+    return {
+        path: relativePath,
+        size: stat.size,
+        digest: fileDigest(absolutePath)
+    };
+}
+
+function sumBytes(records) {
+    return records.reduce((sum, item) => sum + Number(item && item.size || 0), 0);
+}
+
+function validateBundledTool(sourceDir, slug) {
+    const toolDir = path.join(sourceDir, slug);
+    const manifestPath = path.join(toolDir, TOOL_MANIFEST_FILE);
+    const indexPath = path.join(toolDir, 'index.html');
+    const manifest = readJson(manifestPath);
+    if (!manifest || manifest.version !== 1 || !manifest.tool) {
+        throw new Error('系统工具清单无效');
+    }
+    if (normalizeSlug(manifest.tool.slug) !== slug || manifest.tool.slug !== slug) {
+        throw new Error('系统工具清单 slug 与目录不一致');
+    }
+    if (!fs.existsSync(indexPath) || !fs.statSync(indexPath).isFile()) {
+        throw new Error('系统工具缺少 index.html');
+    }
+    const files = listFiles(toolDir);
+    return {
+        slug,
+        toolDir,
+        manifest,
+        files,
+        managedFiles: files.filter(file => file !== TOOL_MANIFEST_FILE),
+        fingerprint: fingerprintFiles(toolDir, files)
+    };
+}
+
+function listBundledTools(sourceDir) {
+    if (!fs.existsSync(sourceDir) || !fs.statSync(sourceDir).isDirectory()) return [];
+    return fs.readdirSync(sourceDir, { withFileTypes: true })
+        .filter(entry => entry.isDirectory() && normalizeSlug(entry.name) === entry.name)
+        .map(entry => validateBundledTool(sourceDir, entry.name))
+        .sort((a, b) => a.slug.localeCompare(b.slug));
+}
+
+function isManagedTargetManifest(manifest, slug) {
+    return Boolean(
+        manifest
+        && manifest.version === 1
+        && manifest.tool
+        && manifest.tool.slug === slug
+        && manifest.builtIn === true
+        && manifest.system
+        && manifest.system.managedBy === SYSTEM_MARKER
+    );
+}
+
+function matchesLegacyBundledTool(source, targetToolDir, targetManifest) {
+    if (
+        !targetManifest
+        || targetManifest.version !== 1
+        || !targetManifest.tool
+        || targetManifest.tool.slug !== source.slug
+    ) {
+        return false;
+    }
+    for (const relativePath of source.managedFiles) {
+        const sourcePath = path.join(source.toolDir, relativePath);
+        const targetPath = path.join(targetToolDir, relativePath);
+        if (!fs.existsSync(targetPath) || !fs.statSync(targetPath).isFile()) return false;
+        if (!fs.readFileSync(sourcePath).equals(fs.readFileSync(targetPath))) return false;
+    }
+    return true;
+}
+
+function buildTargetManifest(source, existingManifest) {
+    return {
+        ...source.manifest,
+        builtIn: true,
+        system: {
+            managedBy: SYSTEM_MARKER,
+            fingerprint: source.fingerprint,
+            files: source.managedFiles
+        },
+        history: existingManifest && existingManifest.history !== undefined
+            ? existingManifest.history
+            : source.manifest.history || null
+    };
+}
+
+function readDecisionState(stateFile) {
+    if (!stateFile) return { version: DECISION_STATE_VERSION, skipped: {} };
+    const state = readJson(stateFile);
+    if (!state || state.version !== DECISION_STATE_VERSION || !state.skipped || typeof state.skipped !== 'object') {
+        return { version: DECISION_STATE_VERSION, skipped: {} };
+    }
+    return state;
+}
+
+function writeDecisionState(stateFile, state) {
+    if (!stateFile) return;
+    fs.mkdirSync(path.dirname(stateFile), { recursive: true });
+    const tempFile = `${stateFile}.${process.pid}.${Date.now().toString(36)}.tmp`;
+    fs.writeFileSync(tempFile, `${JSON.stringify(state, null, 2)}\n`, 'utf8');
+    fs.rmSync(stateFile, { force: true });
+    fs.renameSync(tempFile, stateFile);
+}
+
+function compareBundledTool(source, targetDir) {
+    const targetToolDir = path.join(targetDir, source.slug);
+    const targetExists = fs.existsSync(targetToolDir) && fs.statSync(targetToolDir).isDirectory();
+    const targetManifest = targetExists ? readJson(path.join(targetToolDir, TOOL_MANIFEST_FILE)) : null;
+    const managed = isManagedTargetManifest(targetManifest, source.slug);
+    const legacyMatch = targetExists && !managed
+        ? matchesLegacyBundledTool(source, targetToolDir, targetManifest)
+        : false;
+    const previousManagedFiles = managed
+        && targetManifest.system
+        && Array.isArray(targetManifest.system.files)
+        ? targetManifest.system.files.filter(file => file !== TOOL_MANIFEST_FILE)
+        : [];
+    const targetFiles = targetExists
+        ? listFiles(targetToolDir).filter(file => file !== TOOL_MANIFEST_FILE)
+        : [];
+    const sourceFiles = source.managedFiles;
+    const paths = new Set([...sourceFiles, ...targetFiles]);
+    const previousManagedSet = new Set(previousManagedFiles);
+    const sourceSet = new Set(sourceFiles);
+    const changes = [];
+
+    for (const relativePath of [...paths].sort()) {
+        const oldFile = targetExists ? fileRecord(targetToolDir, relativePath) : null;
+        const newFile = sourceSet.has(relativePath) ? fileRecord(source.toolDir, relativePath) : null;
+        let type;
+        if (!oldFile && newFile) type = 'added';
+        else if (oldFile && newFile && oldFile.digest !== newFile.digest) type = 'modified';
+        else if (oldFile && newFile) type = 'unchanged';
+        else if (oldFile && managed && previousManagedSet.has(relativePath)) type = 'removed';
+        else if (oldFile) type = 'preserved';
+        else continue;
+        changes.push({
+            path: relativePath,
+            type,
+            oldSize: oldFile ? oldFile.size : 0,
+            newSize: newFile ? newFile.size : 0
+        });
+    }
+
+    const counts = changes.reduce((result, item) => {
+        result[item.type] = (result[item.type] || 0) + 1;
+        return result;
+    }, { added: 0, modified: 0, removed: 0, unchanged: 0, preserved: 0 });
+    const oldTool = targetManifest && targetManifest.tool ? {
+        name: targetManifest.tool.name || source.slug,
+        icon: targetManifest.tool.icon || '🧩',
+        description: targetManifest.tool.description || ''
+    } : null;
+    const newTool = {
+        name: source.manifest.tool.name || source.slug,
+        icon: source.manifest.tool.icon || '🧩',
+        description: source.manifest.tool.description || ''
+    };
+    const toolInfoChanged = Boolean(oldTool && (
+        oldTool.name !== newTool.name
+        || oldTool.icon !== newTool.icon
+        || oldTool.description !== newTool.description
+    ));
+    const metadataChanged = managed
+        ? targetManifest.system.fingerprint !== source.fingerprint
+        : targetExists;
+    let status = 'unchanged';
+    if (!targetExists) status = 'missing';
+    else if (!managed && legacyMatch) status = 'adopt';
+    else if (!managed) status = 'conflict';
+    else if (counts.added || counts.modified || counts.removed || metadataChanged) status = 'update';
+
+    return {
+        slug: source.slug,
+        name: source.manifest.tool.name || source.slug,
+        icon: source.manifest.tool.icon || '🧩',
+        description: source.manifest.tool.description || '',
+        oldTool,
+        newTool,
+        toolInfoChanged,
+        status,
+        fingerprint: source.fingerprint,
+        targetExists,
+        managed,
+        legacyMatch,
+        metadataChanged,
+        oldBytes: sumBytes(changes.filter(item => item.type !== 'added').map(item => ({ size: item.oldSize }))),
+        newBytes: sumBytes(changes.filter(item => item.type !== 'removed' && item.type !== 'preserved').map(item => ({ size: item.newSize }))),
+        counts,
+        changes
+    };
+}
+
+function removeEmptyParents(startPath, stopDir) {
+    let current = path.dirname(startPath);
+    const stop = path.resolve(stopDir);
+    while (path.resolve(current).startsWith(`${stop}${path.sep}`)) {
+        try {
+            if (fs.readdirSync(current).length) return;
+            fs.rmdirSync(current);
+        } catch (_) {
+            return;
+        }
+        current = path.dirname(current);
+    }
+}
+
+function copyManagedTool(source, targetDir, existingManifest, { backupBatchDir } = {}) {
+    const slug = source.slug;
+    const targetToolDir = path.join(targetDir, slug);
+    const nonce = `${process.pid}-${Date.now().toString(36)}-${crypto.randomBytes(3).toString('hex')}`;
+    const stagingDir = path.join(targetDir, `.builtin-${slug}-${nonce}.tmp`);
+    const backupDir = path.join(targetDir, `.builtin-${slug}-${nonce}.bak`);
+    const targetExists = fs.existsSync(targetToolDir);
+
+    fs.mkdirSync(stagingDir, { recursive: true });
+    try {
+        if (targetExists) fs.cpSync(targetToolDir, stagingDir, { recursive: true, force: true });
+
+        const previousFiles = existingManifest
+            && existingManifest.system
+            && Array.isArray(existingManifest.system.files)
+            ? existingManifest.system.files
+            : [];
+        const nextFiles = new Set(source.managedFiles);
+        for (const relativePath of previousFiles) {
+            if (nextFiles.has(relativePath)) continue;
+            const obsoletePath = path.join(stagingDir, relativePath);
+            if (fs.existsSync(obsoletePath) && fs.statSync(obsoletePath).isFile()) {
+                fs.rmSync(obsoletePath, { force: true });
+                removeEmptyParents(obsoletePath, stagingDir);
+            }
+        }
+
+        for (const relativePath of source.managedFiles) {
+            const sourcePath = path.join(source.toolDir, relativePath);
+            const targetPath = path.join(stagingDir, relativePath);
+            fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+            fs.copyFileSync(sourcePath, targetPath);
+        }
+        fs.writeFileSync(
+            path.join(stagingDir, TOOL_MANIFEST_FILE),
+            `${JSON.stringify(buildTargetManifest(source, existingManifest), null, 2)}\n`,
+            'utf8'
+        );
+
+        if (targetExists) fs.renameSync(targetToolDir, backupDir);
+        try {
+            fs.renameSync(stagingDir, targetToolDir);
+        } catch (error) {
+            if (targetExists && fs.existsSync(backupDir) && !fs.existsSync(targetToolDir)) {
+                fs.renameSync(backupDir, targetToolDir);
+            }
+            throw error;
+        }
+        let persistentBackup = null;
+        if (fs.existsSync(backupDir)) {
+            if (backupBatchDir) {
+                try {
+                    fs.mkdirSync(backupBatchDir, { recursive: true });
+                    persistentBackup = path.join(backupBatchDir, slug);
+                    fs.renameSync(backupDir, persistentBackup);
+                } catch (error) {
+                    fs.rmSync(targetToolDir, { recursive: true, force: true });
+                    if (fs.existsSync(backupDir)) fs.renameSync(backupDir, targetToolDir);
+                    throw error;
+                }
+            } else {
+                fs.rmSync(backupDir, { recursive: true, force: true });
+            }
+        }
+        return persistentBackup;
+    } catch (error) {
+        if (fs.existsSync(stagingDir)) fs.rmSync(stagingDir, { recursive: true, force: true });
+        if (fs.existsSync(backupDir) && !fs.existsSync(targetToolDir)) {
+            fs.renameSync(backupDir, targetToolDir);
+        }
+        throw error;
+    }
+}
+
+function previewBuiltinTools({ sourceDir, targetDir, stateFile, includeSkipped = false }) {
+    const sourcePath = path.resolve(sourceDir);
+    const targetPath = path.resolve(targetDir);
+    const result = {
+        sourceDir: sourcePath,
+        targetDir: targetPath,
+        samePath: sourcePath === targetPath,
+        tools: [],
+        pending: [],
+        skipped: [],
+        unchanged: [],
+        invalid: []
+    };
+    if (result.samePath) return result;
+
+    fs.mkdirSync(targetPath, { recursive: true });
+    const decisionState = readDecisionState(stateFile);
+    let bundledTools = [];
+    try {
+        bundledTools = listBundledTools(sourcePath);
+    } catch (error) {
+        error.message = `读取系统工具失败：${error.message}`;
+        throw error;
+    }
+
+    for (const source of bundledTools) {
+        try {
+            const comparison = compareBundledTool(source, targetPath);
+            const skippedDecision = decisionState.skipped[source.slug];
+            comparison.skipped = Boolean(
+                skippedDecision
+                && skippedDecision.fingerprint === source.fingerprint
+            );
+            comparison.recommended = comparison.status !== 'conflict';
+            result.tools.push(comparison);
+            if (comparison.status === 'unchanged') result.unchanged.push(comparison.slug);
+            else if (comparison.skipped) result.skipped.push(comparison);
+            else result.pending.push(comparison);
+        } catch (error) {
+            result.invalid.push({ slug: source.slug, error: error.message });
+        }
+    }
+    if (!includeSkipped) result.tools = result.pending;
+    return result;
+}
+
+function applyBuiltinToolDecisions({
+    sourceDir,
+    targetDir,
+    stateFile,
+    backupRoot,
+    applySlugs = [],
+    skipSlugs = [],
+    expectedFingerprints = {}
+}) {
+    const sourcePath = path.resolve(sourceDir);
+    const targetPath = path.resolve(targetDir);
+    if (sourcePath === targetPath) {
+        return { samePath: true, installed: [], adopted: [], updated: [], skipped: [], backups: [], invalid: [] };
+    }
+    const requestedApply = [...new Set(applySlugs.map(normalizeSlug).filter(Boolean))];
+    const requestedSkip = [...new Set(skipSlugs.map(normalizeSlug).filter(Boolean))]
+        .filter(slug => !requestedApply.includes(slug));
+    const preview = previewBuiltinTools({
+        sourceDir: sourcePath,
+        targetDir: targetPath,
+        stateFile,
+        includeSkipped: true
+    });
+    const candidates = new Map(
+        preview.tools
+            .filter(tool => tool.status !== 'unchanged')
+            .map(tool => [tool.slug, tool])
+    );
+    const sources = new Map(listBundledTools(sourcePath).map(source => [source.slug, source]));
+    const decisionState = readDecisionState(stateFile);
+    const result = {
+        samePath: false,
+        installed: [],
+        adopted: [],
+        updated: [],
+        skipped: [],
+        backups: [],
+        invalid: []
+    };
+    const allRequested = [...requestedApply, ...requestedSkip];
+    for (const slug of allRequested) {
+        const candidate = candidates.get(slug);
+        if (!candidate) throw new Error(`系统工具 ${slug} 当前没有待处理差异`);
+        const expected = expectedFingerprints && expectedFingerprints[slug];
+        if (!expected) {
+            const error = new Error(`系统工具 ${slug} 缺少比对版本标识，请重新查看比对结果`);
+            error.status = 400;
+            throw error;
+        }
+        if (expected !== candidate.fingerprint) {
+            const error = new Error(`系统工具 ${slug} 已发生变化，请重新查看比对结果`);
+            error.status = 409;
+            throw error;
+        }
+    }
+
+    const timestamp = `${new Date().toISOString().replace(/[:.]/g, '-')}-${crypto.randomBytes(3).toString('hex')}`;
+    const backupBatchDir = backupRoot ? path.join(path.resolve(backupRoot), timestamp) : null;
+    for (const slug of requestedApply) {
+        const candidate = candidates.get(slug);
+        const source = sources.get(slug);
+        const targetManifest = readJson(path.join(targetPath, slug, TOOL_MANIFEST_FILE));
+        try {
+            const backupPath = copyManagedTool(source, targetPath, targetManifest, { backupBatchDir });
+            if (backupPath) result.backups.push({ slug, path: backupPath });
+            if (candidate.status === 'missing') result.installed.push(slug);
+            else if (candidate.status === 'adopt') result.adopted.push(slug);
+            else result.updated.push(slug);
+            delete decisionState.skipped[slug];
+        } catch (error) {
+            result.invalid.push({ slug, error: error.message });
+        }
+    }
+    for (const slug of requestedSkip) {
+        const candidate = candidates.get(slug);
+        decisionState.skipped[slug] = {
+            fingerprint: candidate.fingerprint,
+            skippedAt: new Date().toISOString()
+        };
+        result.skipped.push(slug);
+    }
+    writeDecisionState(stateFile, decisionState);
+    result.preview = previewBuiltinTools({
+        sourceDir: sourcePath,
+        targetDir: targetPath,
+        stateFile
+    });
+    return result;
+}
+
+function syncBuiltinTools({ sourceDir, targetDir, backupRoot }) {
+    const preview = previewBuiltinTools({ sourceDir, targetDir, includeSkipped: true });
+    if (preview.samePath) {
+        return { samePath: true, installed: [], adopted: [], updated: [], unchanged: [], conflicts: [], invalid: [] };
+    }
+    const safeTools = preview.tools.filter(tool => tool.status !== 'unchanged' && tool.status !== 'conflict');
+    const result = applyBuiltinToolDecisions({
+        sourceDir,
+        targetDir,
+        backupRoot,
+        applySlugs: safeTools.map(tool => tool.slug),
+        expectedFingerprints: Object.fromEntries(safeTools.map(tool => [tool.slug, tool.fingerprint]))
+    });
+    return {
+        ...result,
+        unchanged: preview.unchanged,
+        conflicts: preview.tools.filter(tool => tool.status === 'conflict').map(tool => tool.slug)
+    };
+}
+
+function initializeBuiltinTools({ sourceDir, targetDir, stateFile, backupRoot }) {
+    const preview = previewBuiltinTools({
+        sourceDir,
+        targetDir,
+        stateFile,
+        includeSkipped: true
+    });
+    if (preview.samePath) {
+        return { samePath: true, installed: [], adopted: [], updated: [], skipped: [], backups: [], invalid: [], pending: [] };
+    }
+    const safeTools = preview.tools.filter(tool => tool.status === 'missing' || tool.status === 'adopt');
+    const result = applyBuiltinToolDecisions({
+        sourceDir,
+        targetDir,
+        stateFile,
+        backupRoot,
+        applySlugs: safeTools.map(tool => tool.slug),
+        expectedFingerprints: Object.fromEntries(safeTools.map(tool => [tool.slug, tool.fingerprint]))
+    });
+    result.pending = preview.tools
+        .filter(tool => tool.status === 'update' || tool.status === 'conflict')
+        .map(tool => tool.slug);
+    return result;
+}
+
+module.exports = {
+    DECISION_STATE_VERSION,
+    SYSTEM_MARKER,
+    TOOL_MANIFEST_FILE,
+    applyBuiltinToolDecisions,
+    compareBundledTool,
+    initializeBuiltinTools,
+    listBundledTools,
+    previewBuiltinTools,
+    syncBuiltinTools
+};

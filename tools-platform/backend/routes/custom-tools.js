@@ -6,9 +6,14 @@ const router = express.Router();
 const repo = require('../models/custom-tools-repository');
 const backupRepo = require('../models/custom-tools-backup-repository');
 const historyRepo = require('../models/upload-history-repository');
+const builtinToolsSync = require('../models/builtin-tools-sync');
 const { DATA_DIR } = require('../models/store');
+const { requireAdmin } = require('../middleware/auth');
 
 const backupUploadDir = path.join(DATA_DIR, '../tmp/custom-tool-backups');
+const builtinToolsSourceDir = path.join(__dirname, '../builtin-tools');
+const builtinToolsStateFile = path.join(DATA_DIR, 'builtin-tools-sync-decisions.json');
+const builtinToolsBackupRoot = path.join(DATA_DIR, 'backups/builtin-tools');
 fs.mkdirSync(backupUploadDir, { recursive: true });
 const backupUpload = multer({
     dest: backupUploadDir,
@@ -17,6 +22,43 @@ const backupUpload = multer({
 
 router.get('/', async (req, res) => {
     res.json(await repo.listTools());
+});
+
+router.get('/builtin-sync/preview', requireAdmin, (req, res) => {
+    try {
+        const preview = builtinToolsSync.previewBuiltinTools({
+            sourceDir: builtinToolsSourceDir,
+            targetDir: repo.CUSTOM_TOOLS_DIR,
+            stateFile: builtinToolsStateFile,
+            includeSkipped: req.query.includeSkipped === '1'
+        });
+        res.setHeader('Cache-Control', 'no-store');
+        res.json(preview);
+    } catch (err) {
+        res.status(err.status || 500).json({ error: err.message || '读取系统工具差异失败' });
+    }
+});
+
+router.post('/builtin-sync/apply', requireAdmin, async (req, res) => {
+    try {
+        const body = req.body || {};
+        const result = builtinToolsSync.applyBuiltinToolDecisions({
+            sourceDir: builtinToolsSourceDir,
+            targetDir: repo.CUSTOM_TOOLS_DIR,
+            stateFile: builtinToolsStateFile,
+            backupRoot: builtinToolsBackupRoot,
+            applySlugs: Array.isArray(body.applySlugs) ? body.applySlugs : [],
+            skipSlugs: Array.isArray(body.skipSlugs) ? body.skipSlugs : [],
+            expectedFingerprints: body.expectedFingerprints && typeof body.expectedFingerprints === 'object'
+                ? body.expectedFingerprints
+                : {}
+        });
+        const changedCount = result.installed.length + result.adopted.length + result.updated.length;
+        const reconcile = changedCount ? await repo.reconcileToolsFromDisk() : null;
+        res.json({ success: result.invalid.length === 0, ...result, reconcile });
+    } catch (err) {
+        res.status(err.status || 500).json({ error: err.message || '处理系统工具更新失败' });
+    }
 });
 
 router.get('/backup/summary', async (req, res) => {

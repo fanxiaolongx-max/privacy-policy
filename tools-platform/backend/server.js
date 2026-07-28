@@ -38,6 +38,8 @@ const slideDesignRoutes = require('./routes/slide-design');
 const surveysRoutes = require('./routes/surveys');
 const externalMetricsRoutes = require('./routes/external-metrics');
 const customToolsRepo = require('./models/custom-tools-repository');
+const { initializeBuiltinTools } = require('./models/builtin-tools-sync');
+const { DATA_DIR } = require('./models/store');
 const navSettingsRoutes = require('./routes/nav-settings');
 const aiSettingsRoutes = require('./routes/ai-settings');
 const globalBackupRoutes = require('./routes/global-backup');
@@ -325,6 +327,11 @@ app.get('/custom-tools/:slug/index.html', async (req, res, next) => {
         next(err);
     }
 });
+app.use('/custom-tools/:slug', (req, res, next) => {
+    const assetPath = customToolsRepo.getToolAssetPath(req.params.slug, req.path);
+    if (!assetPath) return next();
+    res.sendFile(assetPath);
+});
 app.use('/custom-tools', express.static(customToolsRepo.CUSTOM_TOOLS_DIR));
 
 
@@ -336,6 +343,28 @@ app.use((err, req, res, next) => {
 
 async function startServer() {
     await legacyJsonMigration.runStartupLegacyJsonMigration();
+    try {
+        const initialized = initializeBuiltinTools({
+            sourceDir: path.join(__dirname, 'builtin-tools'),
+            targetDir: customToolsRepo.CUSTOM_TOOLS_DIR,
+            stateFile: path.join(DATA_DIR, 'builtin-tools-sync-decisions.json'),
+            backupRoot: path.join(DATA_DIR, 'backups/builtin-tools')
+        });
+        if (initialized.installed.length) {
+            console.warn(`[custom-tools] 已自动安装缺失的系统工具：${initialized.installed.join('、')}`);
+        }
+        if (initialized.adopted.length) {
+            console.warn(`[custom-tools] 已登记内容一致的旧版系统工具：${initialized.adopted.join('、')}`);
+        }
+        if (initialized.pending.length) {
+            console.warn(`[custom-tools] 检测到 ${initialized.pending.length} 个系统工具差异，等待管理员确认`);
+        }
+        if (initialized.invalid.length) {
+            console.warn(`[custom-tools] 部分系统工具初始化失败：${initialized.invalid.map(item => `${item.slug} (${item.error})`).join('、')}`);
+        }
+    } catch (error) {
+        console.warn(`[custom-tools] 系统工具初始化失败，继续使用现有用户工具：${error.message}`);
+    }
     const customToolReconcile = await customToolsRepo.reconcileToolsFromDisk();
     if (customToolReconcile.recovered.length) {
         console.warn(`[custom-tools] 已根据磁盘清单恢复注册：${customToolReconcile.recovered.join('、')}`);

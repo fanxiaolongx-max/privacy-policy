@@ -3,9 +3,6 @@ node_modules/
 
 # Runtime data and local databases
 backend/data/*
-!backend/data/custom_tools.json
-!backend/data/custom-tools/
-!backend/data/custom-tools/**
 backend/wal_strings.txt
 backend/runtime/
 backend/tmp/

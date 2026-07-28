@@ -7,6 +7,7 @@ const { run, get, all } = require('./app-db');
 const historyRepo = require('./upload-history-repository');
 
 const CUSTOM_TOOLS_DIR = path.join(DATA_DIR, 'custom-tools');
+const BUILTIN_TOOLS_DIR = path.join(__dirname, '../builtin-tools');
 const TOOL_MANIFEST_FILE = '.tool-manifest.json';
 let registryMutationQueue = Promise.resolve();
 let registryReadyPromise = null;
@@ -682,7 +683,52 @@ async function reconcileToolsFromDisk() {
 async function getToolFilePath(slug) {
     const safeSlug = normalizeSlug(slug);
     if (!safeSlug || safeSlug !== slug) return null;
-    return path.join(CUSTOM_TOOLS_DIR, safeSlug, 'index.html');
+    const rootDir = getToolRootDir(safeSlug);
+    return rootDir ? path.join(rootDir, 'index.html') : null;
+}
+
+function getToolRootDir(slug) {
+    const safeSlug = normalizeSlug(slug);
+    if (!safeSlug || safeSlug !== slug) return null;
+    const runtimeRoot = path.join(CUSTOM_TOOLS_DIR, safeSlug);
+    const runtimeIndex = path.join(runtimeRoot, 'index.html');
+    if (fs.existsSync(runtimeIndex) && fs.statSync(runtimeIndex).isFile()) return runtimeRoot;
+
+    const bundledRoot = path.join(BUILTIN_TOOLS_DIR, safeSlug);
+    const bundledIndex = path.join(bundledRoot, 'index.html');
+    const bundledManifest = path.join(bundledRoot, TOOL_MANIFEST_FILE);
+    try {
+        const manifest = JSON.parse(fs.readFileSync(bundledManifest, 'utf8'));
+        if (
+            manifest
+            && manifest.version === 1
+            && manifest.tool
+            && manifest.tool.slug === safeSlug
+            && fs.existsSync(bundledIndex)
+            && fs.statSync(bundledIndex).isFile()
+        ) {
+            return bundledRoot;
+        }
+    } catch (_) {}
+    return null;
+}
+
+function getToolAssetPath(slug, relativePath) {
+    const rootDir = getToolRootDir(slug);
+    if (!rootDir) return null;
+    const normalized = String(relativePath || '')
+        .replace(/\\/g, '/')
+        .replace(/^\/+/, '');
+    const parts = normalized.split('/').filter(Boolean);
+    if (!parts.length || parts.some(part => part === '.' || part === '..')) return null;
+    const candidate = path.resolve(rootDir, ...parts);
+    const resolvedRoot = path.resolve(rootDir);
+    if (!candidate.startsWith(`${resolvedRoot}${path.sep}`)) return null;
+    try {
+        return fs.statSync(candidate).isFile() ? candidate : null;
+    } catch (_) {
+        return null;
+    }
 }
 
 module.exports = {
@@ -703,6 +749,9 @@ module.exports = {
     reconcileToolsFromDisk,
     replaceAllTools,
     getToolFilePath,
+    getToolRootDir,
+    getToolAssetPath,
+    BUILTIN_TOOLS_DIR,
     CUSTOM_TOOLS_DIR,
     TOOL_MANIFEST_FILE
 };

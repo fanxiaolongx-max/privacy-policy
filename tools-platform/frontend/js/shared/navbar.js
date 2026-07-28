@@ -3841,6 +3841,215 @@ function initBackToTopButton() {
     setTimeout(updateVisibility, 300);
 }
 
+let builtinToolsSyncChecking = false;
+
+function formatBuiltinToolBytes(bytes) {
+    const value = Number(bytes) || 0;
+    if (value < 1024) return `${value} B`;
+    if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+    return `${(value / 1024 / 1024).toFixed(2)} MB`;
+}
+
+function builtinToolStatusMeta(status) {
+    return {
+        missing: { label: '新增系统工具', tone: 'new' },
+        adopt: { label: '接管同版工具', tone: 'adopt' },
+        update: { label: '发现新版本', tone: 'update' },
+        conflict: { label: '同名工具冲突', tone: 'conflict' }
+    }[status] || { label: '存在差异', tone: 'update' };
+}
+
+function builtinToolChangeLabel(type) {
+    return {
+        added: '新增',
+        modified: '修改',
+        removed: '删除',
+        preserved: '保留',
+        unchanged: '未变'
+    }[type] || type;
+}
+
+function renderBuiltinToolDiff(tool) {
+    const visibleChanges = (tool.changes || []).filter(item => item.type !== 'unchanged');
+    const unchangedCount = tool.counts && tool.counts.unchanged || 0;
+    if (!visibleChanges.length && !unchangedCount) {
+        return '<div class="builtin-sync-empty-diff">仅更新系统工具标识，不改动工具文件。</div>';
+    }
+    const rows = visibleChanges.map(item => `
+        <div class="builtin-sync-file-row">
+            <span class="builtin-sync-change is-${navEscape(item.type)}">${navEscape(builtinToolChangeLabel(item.type))}</span>
+            <code title="${navEscape(item.path)}">${navEscape(item.path)}</code>
+            <span class="builtin-sync-file-size">${formatBuiltinToolBytes(item.oldSize)} → ${formatBuiltinToolBytes(item.newSize)}</span>
+        </div>
+    `).join('');
+    const unchanged = unchangedCount
+        ? `<div class="builtin-sync-unchanged">${unchangedCount} 个相同文件不会重复说明</div>`
+        : '';
+    return rows + unchanged;
+}
+
+function closeBuiltinToolsSyncModal() {
+    const modal = document.getElementById('builtinToolsSyncModal');
+    if (modal) modal.remove();
+}
+
+function openBuiltinToolsSyncModal(preview) {
+    closeBuiltinToolsSyncModal();
+    const tools = Array.isArray(preview.pending) ? preview.pending : [];
+    if (!tools.length) return;
+
+    const modal = document.createElement('div');
+    modal.id = 'builtinToolsSyncModal';
+    modal.className = 'builtin-sync-modal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-labelledby', 'builtinToolsSyncTitle');
+    const toolCards = tools.map(tool => {
+        const status = builtinToolStatusMeta(tool.status);
+        const counts = tool.counts || {};
+        const diffCount = (counts.added || 0) + (counts.modified || 0) + (counts.removed || 0) + (counts.preserved || 0);
+        const conflictNotice = tool.status === 'conflict'
+            ? '<div class="builtin-sync-conflict-note">此目录不是系统管理版本，可能是您的同名自定义工具，已默认不覆盖。</div>'
+            : '';
+        const toolInfoDiff = tool.toolInfoChanged && tool.oldTool && tool.newTool
+            ? `<div class="builtin-sync-info-diff">
+                <span>旧信息：${navEscape(tool.oldTool.icon)} ${navEscape(tool.oldTool.name)}</span>
+                <span>→</span>
+                <span>新信息：${navEscape(tool.newTool.icon)} ${navEscape(tool.newTool.name)}</span>
+            </div>`
+            : '';
+        return `
+            <article class="builtin-sync-card ${tool.status === 'conflict' ? 'is-conflict' : ''}" data-sync-slug="${navEscape(tool.slug)}">
+                <label class="builtin-sync-tool-head">
+                    <input type="checkbox" class="builtin-sync-choice" data-sync-slug="${navEscape(tool.slug)}" ${tool.recommended ? 'checked' : ''}>
+                    <span class="builtin-sync-icon">${navEscape(tool.icon)}</span>
+                    <span class="builtin-sync-tool-copy">
+                        <strong>${navEscape(tool.name)}</strong>
+                        <small>${navEscape(tool.slug)}</small>
+                    </span>
+                    <span class="builtin-sync-status is-${status.tone}">${status.label}</span>
+                </label>
+                ${conflictNotice}
+                ${toolInfoDiff}
+                <div class="builtin-sync-metrics">
+                    <span>旧版 <b>${formatBuiltinToolBytes(tool.oldBytes)}</b></span>
+                    <span class="builtin-sync-arrow">→</span>
+                    <span>内置新版 <b>${formatBuiltinToolBytes(tool.newBytes)}</b></span>
+                    <span class="builtin-sync-counts">+${counts.added || 0} / ~${counts.modified || 0} / −${counts.removed || 0} / 保留 ${counts.preserved || 0}</span>
+                </div>
+                <details class="builtin-sync-details" ${tool.status === 'conflict' ? 'open' : ''}>
+                    <summary>查看旧版与新版文件比对（${diffCount} 项差异）</summary>
+                    <div class="builtin-sync-file-list">${renderBuiltinToolDiff(tool)}</div>
+                </details>
+            </article>
+        `;
+    }).join('');
+
+    modal.innerHTML = `
+        <div class="builtin-sync-window">
+            <header class="builtin-sync-head">
+                <div>
+                    <div class="builtin-sync-kicker">SYSTEM TOOLS UPDATE</div>
+                    <h2 id="builtinToolsSyncTitle">发现系统内置工具差异</h2>
+                    <p>请选择要覆盖或安装的工具。未勾选项会保留现状，并在该内置版本不变时不再提醒。</p>
+                </div>
+                <button type="button" class="builtin-sync-close" aria-label="稍后处理">×</button>
+            </header>
+            <div class="builtin-sync-safe-note">
+                <span>🛡️</span>
+                <div><strong>工具业务数据不会被覆盖</strong><br>仅同步工具程序文件；用户额外文件会保留，被替换的旧目录也会备份到数据目录。</div>
+            </div>
+            <div class="builtin-sync-toolbar">
+                <span>共 ${tools.length} 个待处理工具</span>
+                <button type="button" data-sync-select="recommended">选择建议项</button>
+                <button type="button" data-sync-select="none">全部取消</button>
+            </div>
+            <div class="builtin-sync-list">${toolCards}</div>
+            <footer class="builtin-sync-footer">
+                <span class="builtin-sync-result" aria-live="polite">冲突项默认保留旧版，您仍可手动勾选覆盖。</span>
+                <button type="button" class="builtin-sync-later">稍后提醒</button>
+                <button type="button" class="builtin-sync-apply">按选择处理</button>
+            </footer>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    const close = () => closeBuiltinToolsSyncModal();
+    modal.querySelector('.builtin-sync-close').addEventListener('click', close);
+    modal.querySelector('.builtin-sync-later').addEventListener('click', close);
+    modal.addEventListener('click', event => {
+        if (event.target === modal) close();
+    });
+    modal.querySelector('[data-sync-select="recommended"]').addEventListener('click', () => {
+        modal.querySelectorAll('.builtin-sync-choice').forEach((input, index) => {
+            input.checked = Boolean(tools[index] && tools[index].recommended);
+        });
+    });
+    modal.querySelector('[data-sync-select="none"]').addEventListener('click', () => {
+        modal.querySelectorAll('.builtin-sync-choice').forEach(input => {
+            input.checked = false;
+        });
+    });
+    modal.querySelector('.builtin-sync-apply').addEventListener('click', async event => {
+        const button = event.currentTarget;
+        const resultNode = modal.querySelector('.builtin-sync-result');
+        const selected = new Set(
+            [...modal.querySelectorAll('.builtin-sync-choice:checked')].map(input => input.dataset.syncSlug)
+        );
+        const applySlugs = tools.filter(tool => selected.has(tool.slug)).map(tool => tool.slug);
+        const skipSlugs = tools.filter(tool => !selected.has(tool.slug)).map(tool => tool.slug);
+        const expectedFingerprints = Object.fromEntries(tools.map(tool => [tool.slug, tool.fingerprint]));
+        button.disabled = true;
+        modal.querySelector('.builtin-sync-later').disabled = true;
+        resultNode.textContent = '正在备份旧版并按选择处理…';
+        try {
+            const result = await API.post('/api/custom-tools/builtin-sync/apply', {
+                applySlugs,
+                skipSlugs,
+                expectedFingerprints
+            });
+            const changed = result.installed.length + result.adopted.length + result.updated.length;
+            const failed = Array.isArray(result.invalid) ? result.invalid : [];
+            resultNode.textContent = failed.length
+                ? `部分处理失败：${failed.map(item => `${item.slug}（${item.error}）`).join('；')}。成功 ${changed} 个，保留 ${result.skipped.length} 个。`
+                : `处理完成：更新/安装 ${changed} 个，保留 ${result.skipped.length} 个。`;
+            if (changed) {
+                setTimeout(() => window.location.reload(), failed.length ? 1800 : 650);
+            } else if (failed.length) {
+                button.disabled = false;
+                modal.querySelector('.builtin-sync-later').disabled = false;
+            } else {
+                setTimeout(close, 650);
+            }
+        } catch (error) {
+            resultNode.textContent = `处理失败：${error.message || '未知错误'}`;
+            button.disabled = false;
+            modal.querySelector('.builtin-sync-later').disabled = false;
+        }
+    });
+    setTimeout(() => modal.querySelector('.builtin-sync-choice')?.focus(), 0);
+}
+
+async function checkBuiltinToolsSync() {
+    if (
+        builtinToolsSyncChecking
+        || localStorage.getItem('tools_role') !== 'admin'
+        || typeof API === 'undefined'
+        || document.getElementById('builtinToolsSyncModal')
+    ) return;
+    builtinToolsSyncChecking = true;
+    try {
+        const preview = await API.get('/api/custom-tools/builtin-sync/preview');
+        if (preview && Array.isArray(preview.pending) && preview.pending.length) {
+            openBuiltinToolsSyncModal(preview);
+        }
+    } catch (error) {
+        console.warn('[custom-tools] 读取系统工具更新失败：', error.message);
+    } finally {
+        builtinToolsSyncChecking = false;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     ensureMigrationStatusLoaded();
     await ensureToolsI18nLoaded();
@@ -3854,4 +4063,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     refreshAlertCenterBadge();
     setInterval(refreshAlertCenterBadge, 60000);
     setTimeout(checkServerStatus, 500);
+    setTimeout(checkBuiltinToolsSync, 900);
 });
