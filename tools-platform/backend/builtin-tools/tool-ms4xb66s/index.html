@@ -1477,12 +1477,7 @@ function drawBlacklistStats(){
   const visible=isBlacklistEnabled()&&incentiveBlacklist.size>0;
   if(card)card.hidden=!visible;
   if(!visible){
-    chartHits.blacklistChart=[];
-    const canvas=$('blacklistChart');
-    if(canvas){
-      const {ctx,w,h}=canvasSetup(canvas);
-      ctx.clearRect(0,0,w,h);
-    }
+    barChartHitRows.delete('blacklistChart');
     return;
   }
   const m=new Map();
