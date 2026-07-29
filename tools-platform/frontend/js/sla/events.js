@@ -57,7 +57,11 @@ function bindEvents(secId) {
     const mPicker = wrapper.querySelector(`#metrics-picker-${secId}`);
     mBtn.addEventListener('click', e => {
         e.stopPropagation(); elevateZ(mPicker);
-        if (mPicker.classList.contains('show')) { populateMetricSelects(secId); renderMetricList(secId); }
+        if (mPicker.classList.contains('show')) {
+            populateMetricSelects(secId);
+            resetMetricForm(secId);
+            renderMetricList(secId);
+        }
     });
     wrapper.querySelector(`#add-metric-btn-${secId}`).addEventListener('click', () => addMetricRule(secId));
 
@@ -179,9 +183,6 @@ function populateMetricSelects(secId) {
     const parentSel = document.getElementById(`m-parent-${secId}`);
     if (parentSel) {
         parentSel.innerHTML = parentHtml;
-        parentSel.value = '';
-        const catSel = document.getElementById(`m-cat-${secId}`);
-        if (catSel) catSel.style.display = 'none';
     }
 
     // Populate Categories
@@ -190,6 +191,32 @@ function populateMetricSelects(secId) {
     cats.forEach(c => { catHtml += `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`; });
     const catSel = document.getElementById(`m-cat-${secId}`);
     if (catSel) catSel.innerHTML = catHtml;
+}
+
+function resetMetricForm(secId) {
+    const setValue = (id, value = '') => {
+        const el = document.getElementById(`${id}-${secId}`);
+        if (el) el.value = value;
+    };
+
+    const extractType = document.querySelector(`input[name="m-type-${secId}"][value="extract"]`);
+    if (extractType) extractType.checked = true;
+
+    const extractConfig = document.getElementById(`m-extract-config-${secId}`);
+    const countConfig = document.getElementById(`m-count-config-${secId}`);
+    if (extractConfig) extractConfig.style.display = 'block';
+    if (countConfig) countConfig.style.display = 'none';
+
+    [
+        'm-colx', 'm-valy', 'm-colz',
+        'm-c-colx', 'm-c-valy', 'm-c-colz', 'm-c-valk',
+        'm-label', 'm-color', 'm-parent', 'm-cat'
+    ].forEach(id => setValue(id));
+
+    const labelContainer = document.getElementById(`m-label-container-${secId}`);
+    const categorySelect = document.getElementById(`m-cat-${secId}`);
+    if (labelContainer) labelContainer.style.display = 'flex';
+    if (categorySelect) categorySelect.style.display = 'none';
 }
 
 function addMetricRule(secId) {
@@ -263,9 +290,7 @@ function addMetricRule(secId) {
 
     renderMetricList(secId); evaluateAllMetrics(); updateAllMetricRuleSummaries();
     if (window.refreshSLAHighlightViews) window.refreshSLAHighlightViews(Object.keys(AppState || {}));
-    document.getElementById(`m-label-${secId}`).value = '';
-    const cy = document.getElementById(`m-c-valy-${secId}`); if(cy) cy.value = '';
-    const ck = document.getElementById(`m-c-valk-${secId}`); if(ck) ck.value = '';
+    resetMetricForm(secId);
 }
 
 window.deleteMetricRule = async function(secId, ruleId) {

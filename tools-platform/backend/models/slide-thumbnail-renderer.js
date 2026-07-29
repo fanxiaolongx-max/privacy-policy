@@ -25,6 +25,28 @@ function emitProgress(onProgress, event) {
     onProgress({ level: 'info', progress: 0, ...event });
 }
 
+function removeRenderDirectoryBestEffort(renderDir, options = {}) {
+    if (!renderDir || !fs.existsSync(renderDir)) return true;
+    try {
+        fs.rmSync(renderDir, {
+            recursive: true,
+            force: true,
+            maxRetries: 8,
+            retryDelay: 150
+        });
+        return true;
+    } catch (error) {
+        console.warn(`[slide-design] temporary preview cleanup delayed: ${renderDir}`, error.message);
+        if (options.scheduleRetry !== false) {
+            const retryTimer = setTimeout(() => {
+                removeRenderDirectoryBestEffort(renderDir, { scheduleRetry: false });
+            }, 2000);
+            if (retryTimer.unref) retryTimer.unref();
+        }
+        return false;
+    }
+}
+
 function substitutePreviewFonts(xml) {
     return String(xml).replace(/typeface="([^"]+)"/g, (match, typeface) => {
         const replacement = PREVIEW_FONT_SUBSTITUTIONS.get(typeface);
@@ -370,13 +392,14 @@ async function renderSingleSlideThumbnails(entries, { onProgress } = {}) {
             throw new Error(`未找到可用的缩略图渲染引擎（${diagnostics.join('；')}）`);
         }
     } catch (error) {
-        fs.rmSync(renderDir, { recursive: true, force: true });
+        removeRenderDirectoryBestEffort(renderDir);
         throw error;
     }
 }
 
 module.exports = {
     renderSingleSlideThumbnails,
+    removeRenderDirectoryBestEffort,
     resolveLibreOfficeCommand,
     resolvePdfToPngCommand
 };

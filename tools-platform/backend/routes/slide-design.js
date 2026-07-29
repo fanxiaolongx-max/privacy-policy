@@ -7,7 +7,10 @@ const JSZip = require('jszip');
 const { DATA_DIR, ensureDataDir } = require('../models/store');
 const slideRepo = require('../models/slide-design-repository');
 const { combineSingleSlidePptx, removePresentationSections, sanitizePptxPackage } = require('../models/pptx-package');
-const { renderSingleSlideThumbnails } = require('../models/slide-thumbnail-renderer');
+const {
+    renderSingleSlideThumbnails,
+    removeRenderDirectoryBestEffort
+} = require('../models/slide-thumbnail-renderer');
 const slideAnalyzer = require('../models/slide-content-analyzer');
 
 const router = express.Router();
@@ -383,7 +386,7 @@ router.post('/assets/:id/regenerate-thumbnail', async (req, res) => {
         console.warn(`[slide-design] thumbnail regeneration failed for ${req.params.id}:`, error.message, logs);
         res.status(400).json({ error: `缩略图重新生成失败：${error.message}`, logs });
     } finally {
-        if (rendered) fs.rmSync(rendered.renderDir, { recursive: true, force: true });
+        if (rendered) removeRenderDirectoryBestEffort(rendered.renderDir);
     }
 });
 
@@ -599,7 +602,15 @@ router.post('/import-pptx', handlePptUpload, async (req, res) => {
                     : `第 ${slide.pageNumber} 页：未生成缩略图；素材记录、检索全文和分类标签已写入数据库`
             );
         }
-        if (rendered) fs.rmSync(rendered.renderDir, { recursive: true, force: true });
+        if (rendered && !removeRenderDirectoryBestEffort(rendered.renderDir)) {
+            updateImportTask(
+                taskId,
+                99,
+                '素材已入库，临时预览文件将在后台清理…',
+                'Windows 暂时占用预览目录，已安排延迟清理；不影响本次导入结果',
+                'warning'
+            );
+        }
         const savedThumbnailCount = assets.filter(asset => asset.thumbnailUrl).length;
         finishImportTask(
             taskId,
