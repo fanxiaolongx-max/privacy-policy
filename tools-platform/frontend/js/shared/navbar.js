@@ -58,6 +58,7 @@ let navState = {
         loading: false
     }
 };
+let navConfirmResolver = null;
 
 function readNavigationBootstrapCache() {
     try {
@@ -419,6 +420,10 @@ function registerNavbarI18n() {
             'nav.alert.archive': '归档',
             'nav.alert.archiveAll': '全部归档',
             'nav.alert.archiveAllConfirm': '确定要将所有告警归档吗？',
+            'nav.alert.archiveConfirmTitle': '归档全部告警？',
+            'nav.alert.archiveConfirmHint': '归档后，当前告警会从告警台列表中移除，但不会影响已经产生的系统记录。',
+            'nav.alert.archiveConfirmCancel': '暂不归档',
+            'nav.alert.archiveConfirmAction': '确认归档',
             'nav.alert.read': '已读',
             'nav.alert.actor': '操作人',
             'nav.alert.source': '来源',
@@ -731,6 +736,10 @@ function registerNavbarI18n() {
             'nav.alert.archive': 'Archive',
             'nav.alert.archiveAll': 'Archive all',
             'nav.alert.archiveAllConfirm': 'Archive all alerts?',
+            'nav.alert.archiveConfirmTitle': 'Archive all alerts?',
+            'nav.alert.archiveConfirmHint': 'Archived alerts are removed from this list without affecting existing system records.',
+            'nav.alert.archiveConfirmCancel': 'Keep alerts',
+            'nav.alert.archiveConfirmAction': 'Archive all',
             'nav.alert.read': 'Read',
             'nav.alert.actor': 'Actor',
             'nav.alert.source': 'Source',
@@ -3142,6 +3151,67 @@ function updateAlertCenterBadge(summary = navState.alertCenter.summary) {
     button.classList.toggle('has-alerts', unread > 0);
 }
 
+function ensureNavbarConfirmDialog() {
+    let modal = document.getElementById('navbarConfirmModal');
+    if (modal) return modal;
+    modal = document.createElement('div');
+    modal.id = 'navbarConfirmModal';
+    modal.className = 'nav-confirm-modal';
+    modal.setAttribute('aria-hidden', 'true');
+    modal.innerHTML = `
+        <div class="nav-confirm-backdrop" onclick="resolveNavbarConfirm(false)"></div>
+        <section class="nav-confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="navbarConfirmTitle" aria-describedby="navbarConfirmMessage navbarConfirmHint">
+            <div class="nav-confirm-icon" aria-hidden="true">⇣</div>
+            <div class="nav-confirm-copy">
+                <span class="nav-confirm-eyebrow">${navEscape(navT('nav.alert.title'))}</span>
+                <h3 id="navbarConfirmTitle"></h3>
+                <p id="navbarConfirmMessage"></p>
+                <div class="nav-confirm-hint" id="navbarConfirmHint"></div>
+            </div>
+            <div class="nav-confirm-actions">
+                <button type="button" class="nav-confirm-cancel" onclick="resolveNavbarConfirm(false)"></button>
+                <button type="button" class="nav-confirm-submit" onclick="resolveNavbarConfirm(true)"></button>
+            </div>
+        </section>
+    `;
+    modal.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            window.resolveNavbarConfirm(false);
+        }
+    });
+    document.body.appendChild(modal);
+    return modal;
+}
+
+function showNavbarConfirm({ title, message, hint, cancelText, confirmText }) {
+    const modal = ensureNavbarConfirmDialog();
+    if (navConfirmResolver) {
+        navConfirmResolver(false);
+        navConfirmResolver = null;
+    }
+    modal.querySelector('#navbarConfirmTitle').textContent = title || '';
+    modal.querySelector('#navbarConfirmMessage').textContent = message || '';
+    modal.querySelector('#navbarConfirmHint').textContent = hint || '';
+    modal.querySelector('.nav-confirm-cancel').textContent = cancelText || 'Cancel';
+    modal.querySelector('.nav-confirm-submit').textContent = confirmText || 'Confirm';
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    requestAnimationFrame(() => modal.querySelector('.nav-confirm-cancel')?.focus());
+    return new Promise(resolve => {
+        navConfirmResolver = resolve;
+    });
+}
+
+window.resolveNavbarConfirm = function (confirmed) {
+    const modal = document.getElementById('navbarConfirmModal');
+    modal?.classList.remove('open');
+    modal?.setAttribute('aria-hidden', 'true');
+    const resolve = navConfirmResolver;
+    navConfirmResolver = null;
+    if (resolve) resolve(Boolean(confirmed));
+};
+
 async function refreshAlertCenterBadge() {
     try {
         navState.alertCenter.summary = await fetchAlertCenterSummary();
@@ -3312,7 +3382,14 @@ window.markAllAlertCenterRead = async function () {
 };
 
 window.archiveAllAlertCenter = async function () {
-    if (!confirm(navT('nav.alert.archiveAllConfirm'))) return;
+    const confirmed = await showNavbarConfirm({
+        title: navT('nav.alert.archiveConfirmTitle'),
+        message: navT('nav.alert.archiveAllConfirm'),
+        hint: navT('nav.alert.archiveConfirmHint'),
+        cancelText: navT('nav.alert.archiveConfirmCancel'),
+        confirmText: navT('nav.alert.archiveConfirmAction')
+    });
+    if (!confirmed) return;
     await fetch('/api/alert-center/events/archive-all', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() }

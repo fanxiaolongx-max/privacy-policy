@@ -834,9 +834,9 @@ textarea { flex: 1; resize: none; white-space: pre; overflow: auto; line-height:
 }
 .script-analysis-table tbody tr:hover td { background: #1d2530; }
 .script-analysis-table tbody tr.new-saved-row td {
-    animation: scriptAnalysisNewRow 2.2s ease-out;
+    animation: scriptAnalysisNewRowDark 2.2s ease-out;
 }
-@keyframes scriptAnalysisNewRow {
+@keyframes scriptAnalysisNewRowDark {
     0% {
         background: rgba(34,197,94,0.36);
         box-shadow: inset 0 0 0 1px rgba(134,239,172,0.8);
@@ -2362,7 +2362,10 @@ textarea { flex: 1; resize: none; white-space: pre; overflow: auto; line-height:
 }
 
 #uiv-page.uiv-light-theme .script-analysis-table tbody tr:hover td { background: #f3f7ff; }
-@keyframes scriptAnalysisNewRow {
+#uiv-page.uiv-light-theme .script-analysis-table tbody tr.new-saved-row td {
+    animation-name: scriptAnalysisNewRowLight;
+}
+@keyframes scriptAnalysisNewRowLight {
     0% {
         background: #dff7ec;
         box-shadow: inset 0 0 0 1px #78c6a6;
