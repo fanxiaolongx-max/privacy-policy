@@ -210,6 +210,42 @@ function parseAiJson(value) {
     throw new Error(`AI 返回的适配器 JSON 格式异常：${lastError && lastError.message || '无法解析'}。输出预览：${preview}`);
 }
 
+function cleanGeneratedChineseName(value) {
+    return String(value || '')
+        .replace(/[“”"'`<>[\]{}()（）【】]/g, '')
+        .replace(/[，。！？、,:：;；/\\|]+/g, '')
+        .replace(/\s+/g, '')
+        .slice(0, 16);
+}
+
+function cleanGeneratedEnglishName(value) {
+    const raw = String(value || '')
+        .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+        .replace(/[^A-Za-z0-9]+/g, ' ')
+        .trim();
+    return raw
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 5)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join('')
+        .slice(0, 32);
+}
+
+function buildScriptNamingPrompt(input) {
+    return `你是自动化脚本命名助手。根据下面经过脱敏和裁剪的脚本摘要，为脚本生成准确、简短、可搜索的中英文名称。
+
+要求：
+1. 只返回严格 JSON：{"zhName":"...","enName":"..."}。
+2. zhName 使用 4-10 个中文字符，准确描述业务对象或数据用途，不要出现“脚本”“自动抓取”“数据导出”等泛词。
+3. enName 使用 2-5 个英文单词的 PascalCase，总长度不超过 28 个字符，不要使用 Script、AutoFetch、DataExport 等泛词。
+4. 中英文语义必须一致；优先使用页面名、业务对象、接口资源和关键筛选字段。
+5. 不要包含日期、地区、用户名、环境名、文件后缀或解释文字。
+
+脚本摘要：
+${JSON.stringify(input, null, 2)}`;
+}
+
 function normalizePath(value) {
     const path = String(value || '')
         .trim()
@@ -829,6 +865,54 @@ router.post('/parse-fetch', (req, res) => {
         });
     } catch (error) {
         res.status(400).json({ error: error.message || 'Copy as fetch 解析失败' });
+    }
+});
+
+router.post('/name-script', async (req, res) => {
+    try {
+        const source = req.body && typeof req.body === 'object' ? req.body : {};
+        const namingInput = {
+            currentTitle: String(source.currentTitle || '').slice(0, 160),
+            inputName: String(source.inputName || '').slice(0, 160),
+            source: String(source.source || '').slice(0, 40),
+            platform: String(source.platform || '').slice(0, 40),
+            endpoint: String(source.endpoint || '').slice(0, 500),
+            payloadKeys: Array.isArray(source.payloadKeys)
+                ? source.payloadKeys.map(value => String(value).slice(0, 80)).slice(0, 80)
+                : [],
+            semanticValues: Array.isArray(source.semanticValues)
+                ? source.semanticValues.map(value => String(value).slice(0, 160)).slice(0, 30)
+                : []
+        };
+        if (!namingInput.currentTitle && !namingInput.endpoint && namingInput.payloadKeys.length === 0) {
+            return res.status(400).json({ error: '缺少可用于命名的脚本摘要' });
+        }
+
+        const settings = await aiSettingsRepo.getRuntimeSettings();
+        if (!settings.hasApiKey || !settings.keyLooksValid) {
+            return res.status(503).json({ error: 'AI API Token 未配置或格式无效，请先在全局设置中配置。' });
+        }
+
+        const client = aiProviderClient.createClient(settings);
+        const result = await client.generateText({
+            prompt: buildScriptNamingPrompt(namingInput),
+            maxOutputTokens: 256,
+            temperature: 0.2,
+            responseMimeType: 'application/json',
+            json: true
+        });
+        const parsed = parseAiJson(result.text);
+        const zhName = cleanGeneratedChineseName(parsed.zhName);
+        const enName = cleanGeneratedEnglishName(parsed.enName);
+        if (!zhName || !enName) {
+            return res.status(502).json({ error: 'AI 未返回有效的中英文脚本名称' });
+        }
+        res.json({ zhName, enName, usage: result.usage || null });
+    } catch (error) {
+        console.error('[UIVF12 AI Naming] failed:', error);
+        res.status(error.statusCode || error.status || 500).json({
+            error: error.message || 'AI 脚本命名失败'
+        });
     }
 });
 

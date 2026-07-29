@@ -51,6 +51,7 @@ function formatAndAnalyzeJSON() {
 }
 
 function clearAll() {
+    window.UIVAINaming?.reset?.();
     window.__uivAiAdapterCurrent = null;
     document.getElementById('jsonInput').value = '';
     document.getElementById('jsonInput').style.display = 'block';
@@ -58,6 +59,7 @@ function clearAll() {
     document.getElementById('payloadViewer').innerHTML = '';
     document.getElementById('codeOutput').value = '';
     document.getElementById('consoleOutput').value = '';
+    document.getElementById('fileName').value = '';
     document.getElementById('errorMsg').innerText = '';
     parsedPayloadObj = null;
     currentScriptTitle = '';
@@ -81,9 +83,7 @@ function fillWorkbench(script) {
     document.getElementById('consoleOutput').value = script.consoleCode || '';
     if (script.url) {
         document.getElementById('requestUrl').value = script.url;
-        const preset = document.getElementById('urlPreset');
-        const matched = Array.from(preset.options).find(opt => opt.value === script.url);
-        preset.value = matched ? script.url : '';
+        window.UIVUrlAssist?.syncPreset(script.url);
     }
     if (script.originalFileName) document.getElementById('fileName').value = script.originalFileName;
     else document.getElementById('fileName').value = script.name.replace(/(_CN|_AE|_DE)$/, '');

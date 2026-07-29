@@ -538,6 +538,9 @@ ${forceSumData && platform === 'DATAFAB' && compId ? `
     }
     UIVGenLog.success(UIVT('uiv.generator.outputReady'));
     UIVGenLog.done(true, title);
+    window.UIVAINaming?.generateForCurrentScript({
+        source: aiAdapterConfig ? 'ai-hybrid' : 'one-click'
+    });
 }
 
 window.UIVGenerator = { generateScript };

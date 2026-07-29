@@ -118,15 +118,46 @@ function rebaseSaveItemNames(items, oldBaseName, newBaseName) {
     });
 }
 
+function buildRenamedOutputFileName(baseName) {
+    const normalized = String(baseName || '').trim().replace(/\.csv$/i, '');
+    if (!normalized) return '';
+    return /_Latest$/i.test(normalized) ? `${normalized}.csv` : `${normalized}_Latest.csv`;
+}
+
+function replaceGeneratedOutputFileName(code, baseName) {
+    const outputFileName = buildRenamedOutputFileName(baseName);
+    if (!outputFileName || typeof code !== 'string') return code;
+    return code.replace(
+        /((?:let|const|var)\s+finalOutputName\s*=\s*)("(?:\\.|[^"\\])*")/g,
+        (match, assignment) => `${assignment}${JSON.stringify(outputFileName)}`
+    );
+}
+
+function syncGeneratedOutputFileName() {
+    const input = document.getElementById('fileName');
+    const codeOutput = document.getElementById('codeOutput');
+    const consoleOutput = document.getElementById('consoleOutput');
+    const baseName = input?.value.trim() || '';
+    if (!baseName || !codeOutput?.value || !consoleOutput?.value) return false;
+    codeOutput.value = replaceGeneratedOutputFileName(codeOutput.value, baseName);
+    consoleOutput.value = replaceGeneratedOutputFileName(consoleOutput.value, baseName);
+    return true;
+}
+
 function findNameConflicts(items, existingScripts) {
     return items.filter(item => existingScripts.some(s => s.name === item.name));
 }
 
 async function saveCurrentScript() {
-    const codeUIV = document.getElementById('codeOutput').value;
-    const codeConsole = document.getElementById('consoleOutput').value;
+    let codeUIV = document.getElementById('codeOutput').value;
+    let codeConsole = document.getElementById('consoleOutput').value;
     const url = document.getElementById('requestUrl').value.trim();
     if (!codeUIV || !codeConsole) { alert(UIVT('uiv.save.needGenerate')); return; }
+    if (window.UIVAINaming?.waitForPending) {
+        await window.UIVAINaming.waitForPending();
+        codeUIV = document.getElementById('codeOutput').value;
+        codeConsole = document.getElementById('consoleOutput').value;
+    }
 
     logSaveStep('开始保存脚本到侧边栏', {
         url,
@@ -185,6 +216,24 @@ async function saveCurrentScript() {
     }
     itemsToSave = itemsToSave.map(item => ({ ...item, ...aiAdapterMeta }));
 
+    if (hasUserTypedNewName) {
+        itemsToSave = rebaseSaveItemNames(itemsToSave, baseName, originalFileName).map(item => ({
+            ...item,
+            code: replaceGeneratedOutputFileName(item.code, originalFileName),
+            consoleCode: replaceGeneratedOutputFileName(item.consoleCode, originalFileName)
+        }));
+        document.getElementById('codeOutput').value = replaceGeneratedOutputFileName(codeUIV, originalFileName);
+        document.getElementById('consoleOutput').value = replaceGeneratedOutputFileName(codeConsole, originalFileName);
+        window.UIVWorkbench.setCurrentTitle(originalFileName, originalFileName);
+        logSaveStep('已采用生成后输入的新名称', {
+            generatedTitle: baseName,
+            generatedInputName,
+            inputName: originalFileName,
+            savedNames: itemsToSave.map(item => item.name),
+            outputFileName: buildRenamedOutputFileName(originalFileName)
+        });
+    }
+
     logSaveStep('已生成待保存脚本对象', {
         count: itemsToSave.length,
         items: itemsToSave.map(item => ({
@@ -214,33 +263,6 @@ async function saveCurrentScript() {
         conflictCount: conflicts.length,
         conflictNames: conflicts.map(item => item.name)
     });
-
-    if (conflicts.length > 0 && hasUserTypedNewName) {
-        const renamedItems = rebaseSaveItemNames(itemsToSave, baseName, originalFileName);
-        const renamedConflicts = findNameConflicts(renamedItems, existingScripts);
-        logSaveStep('检测到重名，尝试使用脚本名称输入框的新名称', {
-            oldBaseName: baseName,
-            inputName: originalFileName,
-            generatedInputName,
-            renamedNames: renamedItems.map(item => item.name),
-            renamedConflictCount: renamedConflicts.length
-        });
-        if (renamedConflicts.length === 0) {
-            itemsToSave = renamedItems;
-            conflicts = [];
-            window.UIVWorkbench.setCurrentTitle(originalFileName);
-            logSaveStep('已自动改用脚本名称输入框的新名称保存', {
-                names: itemsToSave.map(item => item.name)
-            });
-        } else {
-            conflicts = renamedConflicts;
-            itemsToSave = renamedItems;
-            window.UIVWorkbench.setCurrentTitle(originalFileName);
-            logSaveStep('脚本名称输入框的新名称仍然冲突，将按新名称提示确认', {
-                conflictNames: conflicts.map(item => item.name)
-            });
-        }
-    }
 
     if (conflicts.length > 0) {
         const msg = conflicts.length > 1
@@ -312,4 +334,6 @@ async function saveCurrentScript() {
     }
 }
 
-window.UIVSave = { saveCurrentScript };
+document.getElementById('fileName')?.addEventListener('input', syncGeneratedOutputFileName);
+
+window.UIVSave = { saveCurrentScript, syncGeneratedOutputFileName };

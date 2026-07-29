@@ -38,9 +38,26 @@
             'uiv.preset.netcareAe': '🔵 NetCare - 中东节点',
             'uiv.preset.netcareDe': '🟠 NetCare - 德国节点',
             'uiv.preset.custom': '⚙️ 自定义新地址...',
+            'uiv.urlAssist.custom': '自定义地址',
+            'uiv.urlAssist.detected': '已自动识别：{category}',
+            'uiv.urlAssist.matches': '仓库匹配 {count} 个地址',
             'uiv.input.payloadLabel': '2. 请求负载 Payload (JSON):',
             'uiv.input.payloadHint': '粘贴后可点击格式化',
             'uiv.input.filePlaceholder': '文件名前缀 (例如：PBI_代表处数据)',
+            'uiv.input.fileGuideBadge': 'AI 命名',
+            'uiv.input.fileGuideTitle': '生成前后均可修改',
+            'uiv.input.fileGuideText': '保存时同步侧边栏脚本名与导出 CSV 名',
+            'uiv.input.fileAiBadge': 'AI 双语命名',
+            'uiv.input.fileAiBadgeLoading': 'AI 命名中',
+            'uiv.input.fileAiAnalyzing': '正在分析脚本用途',
+            'uiv.input.fileAiAnalyzingHint': '生成简短的中文名与 English name...',
+            'uiv.input.fileAiApplied': '已自动回填中英文名称',
+            'uiv.input.fileAiSuggestionsReady': 'AI 候选已生成',
+            'uiv.input.fileAiKeptManual': '检测到手动修改，已保留；可点击候选替换',
+            'uiv.input.fileAiUnavailable': 'AI 自动命名暂不可用',
+            'uiv.input.fileAiUnavailableHint': '可继续手动命名，不影响生成与保存',
+            'uiv.input.fileAiUseZh': '使用中文名称',
+            'uiv.input.fileAiUseEn': 'Use English name',
             'uiv.option.globalVars': '全局变量注入',
             'uiv.option.pagination': '循环翻页',
             'uiv.option.forceSum': '强制获取汇总数据-兜底',
@@ -208,9 +225,26 @@
             'uiv.preset.netcareAe': '🔵 NetCare - Middle East Node',
             'uiv.preset.netcareDe': '🟠 NetCare - Germany Node',
             'uiv.preset.custom': '⚙️ Custom URL...',
+            'uiv.urlAssist.custom': 'Custom URL',
+            'uiv.urlAssist.detected': 'Auto-detected: {category}',
+            'uiv.urlAssist.matches': '{count} repository URL matches',
             'uiv.input.payloadLabel': '2. Request Payload (JSON):',
             'uiv.input.payloadHint': 'Paste, then format when ready',
             'uiv.input.filePlaceholder': 'File prefix, for example: PBI_Office_Data',
+            'uiv.input.fileGuideBadge': 'AI Naming',
+            'uiv.input.fileGuideTitle': 'Editable before or after generation',
+            'uiv.input.fileGuideText': 'Saving syncs the repository script and exported CSV names',
+            'uiv.input.fileAiBadge': 'AI Bilingual Names',
+            'uiv.input.fileAiBadgeLoading': 'AI Naming',
+            'uiv.input.fileAiAnalyzing': 'Analyzing script purpose',
+            'uiv.input.fileAiAnalyzingHint': 'Creating concise Chinese and English names...',
+            'uiv.input.fileAiApplied': 'Bilingual name applied',
+            'uiv.input.fileAiSuggestionsReady': 'AI suggestions are ready',
+            'uiv.input.fileAiKeptManual': 'Your manual edit was kept; click a suggestion to replace it',
+            'uiv.input.fileAiUnavailable': 'AI naming is unavailable',
+            'uiv.input.fileAiUnavailableHint': 'Manual naming still works and saving is unaffected',
+            'uiv.input.fileAiUseZh': 'Use Chinese name',
+            'uiv.input.fileAiUseEn': 'Use English name',
             'uiv.option.globalVars': 'Inject global variables',
             'uiv.option.pagination': 'Loop pagination',
             'uiv.option.forceSum': 'Force summary fallback',
@@ -448,6 +482,9 @@
         setText('#urlPreset option:nth-child(4)', t('uiv.preset.netcareDe'));
         setText('#urlPreset option:nth-child(5)', t('uiv.preset.custom'));
         setPlaceholder('#fileName', t('uiv.input.filePlaceholder'));
+        setText('.file-name-guide-badge', t('uiv.input.fileGuideBadge'));
+        setText('.file-name-guide-title', t('uiv.input.fileGuideTitle'));
+        setText('.file-name-guide-text', t('uiv.input.fileGuideText'));
 
         const optionLabels = document.querySelectorAll('.controls label');
         [

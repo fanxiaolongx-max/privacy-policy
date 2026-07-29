@@ -218,6 +218,7 @@ async function loadSavedScripts(options = {}) {
         const { scripts, categories } = await API.get(`/api/uiv/scripts${query}`);
         lastScripts = scripts || [];
         lastCategories = categories || [];
+        window.UIVUrlAssist?.setRepositoryScripts(lastScripts);
         logSidebarStep('脚本仓库接口返回成功', {
             scriptCount: scripts.length,
             categoryCount: categories.length,

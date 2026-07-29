@@ -792,6 +792,7 @@ ${getAuthProbeRuntimeSource()}
         el('consoleOutput').value = consoleCode;
         window.UIVWorkbench.setCurrentTitle(rawTitle, rawTitle);
         window.__uivAiAdapterCurrent = adapterMeta;
+        window.UIVAINaming?.generateForCurrentScript({ source: 'ai-generic' });
         close();
         showToast('✅ 通用 AI 适配脚本已生成，请先单脚本验证后再加入批量仓库。', 'success');
     }
