@@ -61,6 +61,7 @@ function fallbackCategory(text) {
 }
 
 const PAGE_TYPES = ['封面', '文档信息', '目录导航', '学习目标', '章节过渡', '内容页', '总结页', '术语附录', '结束页'];
+const USAGE_SCENARIOS = ['课程培训', '方案讲解', '架构评审', '流程说明', '业务汇报', '术语查阅'];
 
 function detectPageType(text, summary = '', category = '') {
     const rawText = String(text || '');
@@ -131,19 +132,49 @@ function defaultTaxonomy() {
     ];
 }
 
-async function buildDeckTaxonomy(client, slides, settings, reporter) {
+function normalizeLibraryVocabulary(value = {}) {
+    const topics = Array.isArray(value.topics) ? value.topics : [];
+    const normalizeCounts = (items, allowedValues) => (Array.isArray(items) ? items : [])
+        .map(item => ({
+            name: normalizeText(item && item.name),
+            count: Math.max(0, Number(item && item.count) || 0)
+        }))
+        .filter(item => allowedValues.includes(item.name));
+    return {
+        totalAssets: Math.max(0, Number(value.totalAssets) || 0),
+        topics: topics.map(item => ({
+            name: slideRepo.cleanTag(item && item.name),
+            count: Math.max(0, Number(item && item.count) || 0),
+            sampleSummary: normalizeText(item && item.sampleSummary).slice(0, 120)
+        })).filter(item => item.name && item.name !== '综合材料').slice(0, 30),
+        pageTypes: normalizeCounts(value.pageTypes, PAGE_TYPES),
+        usageScenarios: normalizeCounts(value.usageScenarios, USAGE_SCENARIOS)
+    };
+}
+
+async function buildDeckTaxonomy(client, slides, settings, reporter, vocabulary = {}) {
+    const libraryVocabulary = normalizeLibraryVocabulary(vocabulary);
+    const existingTopics = libraryVocabulary.topics;
+    const existingTopicNames = new Map(existingTopics.map(item => [slideRepo.cleanTag(item.name), item.name]));
     const outline = slides.map(item => ({
         pageNumber: item.pageNumber,
         text: normalizeText(item.text).slice(0, 900)
     }));
     const prompt = `你是企业培训与解决方案 PPT 的资深内容架构师。请通读整套页面提纲，先为这份 PPT 建立一套专属主题分类。
 
+素材库已有 ${libraryVocabulary.totalAssets} 页素材，已有主题分类如下：
+${JSON.stringify(existingTopics)}
+已有页面类型分布：${JSON.stringify(libraryVocabulary.pageTypes)}
+已有用途分布：${JSON.stringify(libraryVocabulary.usageScenarios)}
+
 分类要求：
-1. 输出 6-10 个互斥、可复用的主题分类，每个名称 4-5 个中文字。
-2. 分类必须反映页面真正讨论的业务主题，例如“方案架构、组网接口、业务发放、智能翻译”，不要仅因出现“网络、数据、AI、市场、计划”等词就归入泛化类别。
-3. 应包含能容纳封面、目录、课程目标、总结、术语页的类别。
-4. 禁止使用“综合材料、其他、通用内容”等兜底名称。
-5. 返回严格 JSON 对象：{"deckTopic":"...","categories":[{"name":"...","description":"..."}]}。
+1. 优先复用语义相同或高度相近的已有主题，复用时 name 必须与已有名称完全一致；不得仅为换一种说法而创建近义分类。
+2. 只有新 PPT 出现已有主题无法准确容纳的新业务概念时，才允许创建新分类。
+3. 输出 6-10 个互斥、可复用的主题分类；新建名称应为 4-5 个中文字。
+4. 分类必须反映页面真正讨论的业务主题，例如“方案架构、组网接口、业务发放、智能翻译”，不要仅因出现“网络、数据、AI、市场、计划”等词就归入泛化类别。
+5. 应包含能容纳封面、目录、课程目标、总结、术语页的类别。
+6. 禁止使用“综合材料、其他、通用内容”等兜底名称。
+7. 返回严格 JSON 对象：{"deckTopic":"...","categories":[{"name":"...","description":"..."}]}。
 
     页面提纲：
 ${JSON.stringify(outline)}`;
@@ -165,19 +196,26 @@ ${JSON.stringify(outline)}`;
             const parsed = parseJson(result.text);
             const categories = (parsed.categories || [])
                 .map(item => ({
-                    name: slideRepo.cleanTag(item.name),
+                    name: existingTopicNames.get(slideRepo.cleanTag(item.name)) || slideRepo.cleanTag(item.name),
                     description: normalizeText(item.description).slice(0, 100)
                 }))
                 .filter(item => !/综合材料|其他|通用内容/.test(item.name));
             const unique = [...new Map(categories.map(item => [item.name, item])).values()];
             if (unique.length >= 5) {
+                const reusedCount = unique.filter(item => existingTopicNames.has(slideRepo.cleanTag(item.name))).length;
                 reportProgress(reporter, {
                     progress: 0.08,
                     level: 'success',
                     status: '主题分类体系已建立…',
-                    message: `主题分类：AI 已生成 ${unique.slice(0, 10).length} 个专属分类`
+                    message: `主题分类：AI 已生成 ${unique.slice(0, 10).length} 个分类，其中复用素材库已有分类 ${reusedCount} 个`
                 });
-                return { deckTopic: normalizeText(parsed.deckTopic).slice(0, 100), categories: unique.slice(0, 10) };
+                return {
+                    deckTopic: normalizeText(parsed.deckTopic).slice(0, 100),
+                    categories: unique.slice(0, 10),
+                    reusedCount,
+                    libraryPageTypes: libraryVocabulary.pageTypes,
+                    libraryUsageScenarios: libraryVocabulary.usageScenarios
+                };
             }
             throw new Error(`有效分类不足（${unique.length} 个）`);
         } catch (error) {
@@ -211,6 +249,8 @@ async function analyzeChunk(client, chunk, taxonomy, settings, retryNote = '', o
 
 整套主题：${taxonomy.deckTopic || '未命名演示文稿'}
 允许的分类及定义：${JSON.stringify(taxonomy.categories)}
+素材库已有页面类型分布：${JSON.stringify(taxonomy.libraryPageTypes || [])}
+素材库已有用途分布：${JSON.stringify(taxonomy.libraryUsageScenarios || [])}
 
 每页必须输出：
 - pageNumber：原页码。
@@ -353,7 +393,7 @@ function normalizeAiItem(aiItem, fallback, allowedCategories) {
         summary: summary || fallback.summary,
         tag,
         tags: slideRepo.cleanTags([pageType, ...(Array.isArray(aiItem.tags) ? aiItem.tags : [])], tag),
-        usageScenario: ['课程培训', '方案讲解', '架构评审', '流程说明', '业务汇报', '术语查阅'].includes(aiItem.usageScenario)
+        usageScenario: USAGE_SCENARIOS.includes(aiItem.usageScenario)
             ? aiItem.usageScenario
             : fallback.usageScenario,
         pageType,
@@ -450,6 +490,19 @@ async function refineSummaries(client, slides, items, settings, reporter) {
 async function analyzeSlides(slides, { onProgress } = {}) {
     const fallback = slides.map(item => fallbackAnalysis(item.text, item.pageNumber));
     try {
+        let libraryVocabulary = {};
+        try {
+            libraryVocabulary = await slideRepo.getClassificationVocabulary();
+            if (libraryVocabulary.totalAssets > 0) {
+                reportProgress(onProgress, {
+                    progress: 0.01,
+                    status: '正在读取素材库已有分类…',
+                    message: `分类复用：已读取 ${libraryVocabulary.totalAssets} 页历史素材、${libraryVocabulary.topics.length} 个主题分类、${libraryVocabulary.pageTypes.length} 个页面类型和 ${libraryVocabulary.usageScenarios.length} 个用途`
+                });
+            }
+        } catch (error) {
+            console.warn('[slide-design] existing taxonomy lookup skipped:', error.message);
+        }
         const settings = await aiSettingsRepo.getRuntimeSettings();
         if (!settings.hasApiKey || !settings.keyLooksValid) {
             reportProgress(onProgress, {
@@ -461,7 +514,7 @@ async function analyzeSlides(slides, { onProgress } = {}) {
             return { items: fallback, usedAi: false, taxonomy: defaultTaxonomy() };
         }
         const client = aiProviderClient.createClient(settings);
-        const taxonomy = await buildDeckTaxonomy(client, slides, settings, onProgress);
+        const taxonomy = await buildDeckTaxonomy(client, slides, settings, onProgress, libraryVocabulary);
         const allowedCategories = taxonomy.categories.map(item => item.name);
         const analyzed = [];
         const warnings = [];
@@ -529,4 +582,12 @@ async function refineExistingSummaries(slides, items) {
     return refineSummaries(aiProviderClient.createClient(settings), slides, items, settings);
 }
 
-module.exports = { extractSlideText, detectPageType, fallbackAnalysis, analyzeSlides, refineExistingSummaries };
+module.exports = {
+    extractSlideText,
+    detectPageType,
+    fallbackAnalysis,
+    analyzeSlides,
+    refineExistingSummaries,
+    buildDeckTaxonomy,
+    normalizeLibraryVocabulary
+};

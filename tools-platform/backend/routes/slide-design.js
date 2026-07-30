@@ -502,7 +502,7 @@ router.post('/import-pptx', handlePptUpload, async (req, res) => {
             55,
             analysis.usedAi ? 'AI 编目完成，正在拆分原始页面…' : '本地编目完成，正在拆分原始页面…',
             analysis.usedAi
-                ? `AI 编目完成${analysis.aiError ? `；部分页面已降级处理：${analysis.aiError}` : '，全部页面返回有效分类结果'}`
+                ? `AI 编目完成，复用素材库已有主题分类 ${Number(analysis.taxonomy?.reusedCount || 0)} 个${analysis.aiError ? `；部分页面已降级处理：${analysis.aiError}` : '，全部页面返回有效分类结果'}`
                 : `AI 未启用或不可用，已使用本地规则完成 ${slides.length} 页编目`,
             analysis.aiError ? 'warning' : 'success'
         );

@@ -428,6 +428,55 @@ async function getAssetFilters(filters = {}) {
     };
 }
 
+async function getClassificationVocabulary({ topicLimit = 30 } = {}) {
+    await ensureReady();
+    const safeTopicLimit = Math.min(100, Math.max(1, Number.parseInt(topicLimit, 10) || 30));
+    const [totalRow, topics, pageTypes, usageScenarios] = await Promise.all([
+        get('SELECT COUNT(*) AS count FROM slide_library_assets'),
+        all(`SELECT assets.tag AS name,
+                    COUNT(*) AS count,
+                    MAX(assets.imported_at) AS latest,
+                    (
+                        SELECT sample.summary
+                        FROM slide_library_assets sample
+                        WHERE sample.tag = assets.tag AND sample.summary <> ''
+                        ORDER BY sample.imported_at DESC
+                        LIMIT 1
+                    ) AS sample_summary
+             FROM slide_library_assets assets
+             WHERE assets.tag <> ''
+             GROUP BY assets.tag
+             ORDER BY count DESC, latest DESC, name
+             LIMIT ?`, [safeTopicLimit]),
+        all(`SELECT page_type AS name, COUNT(*) AS count
+             FROM slide_library_assets
+             WHERE page_type <> ''
+             GROUP BY page_type
+             ORDER BY count DESC, name`),
+        all(`SELECT usage_scenario AS name, COUNT(*) AS count
+             FROM slide_library_assets
+             WHERE usage_scenario <> ''
+             GROUP BY usage_scenario
+             ORDER BY count DESC, name`)
+    ]);
+    return {
+        totalAssets: Number(totalRow?.count || 0),
+        topics: topics.map(item => ({
+            name: cleanTag(item.name),
+            count: Number(item.count || 0),
+            sampleSummary: String(item.sample_summary || '').trim().slice(0, 120)
+        })),
+        pageTypes: pageTypes.map(item => ({
+            name: cleanName(item.name, '内容页'),
+            count: Number(item.count || 0)
+        })),
+        usageScenarios: usageScenarios.map(item => ({
+            name: cleanName(item.name, '方案讲解'),
+            count: Number(item.count || 0)
+        }))
+    };
+}
+
 module.exports = {
     LIBRARY_DIR,
     makeId,
@@ -450,5 +499,6 @@ module.exports = {
     deleteAssetsByImportBatches,
     listAssets,
     countAssets,
-    getAssetFilters
+    getAssetFilters,
+    getClassificationVocabulary
 };
