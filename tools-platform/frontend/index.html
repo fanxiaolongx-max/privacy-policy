@@ -1187,7 +1187,10 @@
                         ` : ''}
                     </div>
                     <div class="card-icon">${escapeHtml(tool.icon || '🧩')}</div>
-                    <div class="card-title">${escapeHtml(tool.name || t('home.custom.defaultName'))}</div>
+                    <div class="card-title">
+                        ${escapeHtml(tool.name || t('home.custom.defaultName'))}
+                        ${tool.createdAt && (Date.now() - new Date(tool.createdAt).getTime() < 3 * 24 * 3600 * 1000) ? '<span class="new-badge">NEW!</span>' : ''}
+                    </div>
                     <div class="card-desc">${escapeHtml(tool.description || t('home.custom.defaultDesc'))}</div>
                     <div class="card-features">
                         ${tags.map(tag => `<span class="feature-tag">${escapeHtml(tag)}</span>`).join('')}

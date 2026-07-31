@@ -17,7 +17,7 @@ const NAV_BUILTIN_LINKS = [
 ];
 
 const NAV_DEFAULT_SETTINGS = {
-    primaryIds: ['home', 'uivf12', 'sla', 'report', 'expedite', 'monthly', 'bigscreen'],
+    primaryIds: ['home', 'uivf12', 'sla', 'report', 'expedite', 'monthly', 'bigscreen', 'custom:f12-to-extension'],
     categories: [
         { id: 'business', name: '业务工具', nameEn: 'Business Tools', nameKey: 'nav.category.business' },
         { id: 'audit', name: '审计与核算', nameEn: 'Audit & KPI', nameKey: 'nav.category.audit' },
@@ -126,6 +126,7 @@ function registerNavbarI18n() {
             'nav.praudit': 'PR稽查',
             'nav.storage': '迁移状态',
             'nav.dbExplorer': '数据探索',
+            'nav.f12packer': 'F12扩展打包',
             'nav.more': '更多工具',
             'nav.moreSearch': '搜索工具...',
             'nav.moreSearchLabel': '搜索更多工具',
@@ -442,6 +443,7 @@ function registerNavbarI18n() {
             'nav.praudit': 'PR Audit',
             'nav.storage': 'Migration',
             'nav.dbExplorer': 'Data Explorer',
+            'nav.f12packer': 'F12 Packer',
             'nav.more': 'More Tools',
             'nav.moreSearch': 'Search tools...',
             'nav.moreSearchLabel': 'Search more tools',
@@ -785,7 +787,8 @@ function getAllNavItems() {
         icon: tool.icon || '🧩',
         label: tool.name || navT('nav.customTool'),
         defaultCategory: 'custom',
-        match: p => p === tool.href || p.startsWith(`${tool.href}/`)
+        match: p => p === tool.href || p.startsWith(`${tool.href}/`),
+        createdAt: tool.createdAt
     }));
     return [...NAV_BUILTIN_LINKS, ...customItems];
 }
@@ -804,9 +807,14 @@ function sortNavItems(items, orderIds) {
 function renderNavItem(item, className) {
     const path = window.location.pathname;
     const label = navEscape(getNavLabel(item));
-    const content = className.includes('nav-more-item')
+    let content = className.includes('nav-more-item')
         ? `<span class="nav-more-item-icon">${item.icon}</span><span class="nav-more-item-label">${label}</span>`
         : `${item.icon} ${label}`;
+    
+    if (item.createdAt && (Date.now() - new Date(item.createdAt).getTime() < 3 * 24 * 3600 * 1000)) {
+        content += `<span class="new-badge">NEW!</span>`;
+    }
+        
     return `<a href="${item.href}" class="${className} ${item.match(path) ? 'active' : ''}" data-nav-item-id="${navEscape(item.id)}" data-nav-search="${navEscape(getNavLabel(item).toLocaleLowerCase())}">${content}</a>`;
 }
 

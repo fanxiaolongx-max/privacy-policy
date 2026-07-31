@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "tool": {
+    "slug": "f12-to-extension",
+    "name": "F12扩展打包",
+    "icon": "📦",
+    "description": "纯前端的 F12 控制台脚本扩展打包器，支持一键将业务脚本转换为标准的 Manifest V3 Edge 扩展。",
+    "tags": ["浏览器扩展", "纯前端打包", "F12脚本"],
+    "href": "/tools/f12-to-extension",
+    "filePath": "/custom-tools/f12-to-extension/index.html",
+    "publicAccess": true,
+    "createdAt": "2026-07-31T21:00:00.000Z",
+    "updatedAt": "2026-07-31T21:00:00.000Z"
+  },
+  "history": null
+}
