@@ -39,7 +39,9 @@
     const DEFAULT_SETTINGS = {
         excludedEmployeePrefixes: ["WX", "84"],
         targetScore: 97,
-        refreshIntervalSeconds: 5
+        refreshIntervalSeconds: 5,
+        criticalThreshold: 3.5,
+        secondaryThreshold: 5
     };
 
     const CONFIG = {
@@ -164,13 +166,23 @@
                 ? saved.refreshIntervalSeconds 
                 : DEFAULT_SETTINGS.refreshIntervalSeconds;
 
+            const criticalThreshold = typeof saved.criticalThreshold === "number"
+                ? saved.criticalThreshold
+                : DEFAULT_SETTINGS.criticalThreshold;
+
+            const secondaryThreshold = typeof saved.secondaryThreshold === "number"
+                ? saved.secondaryThreshold
+                : DEFAULT_SETTINGS.secondaryThreshold;
+
             return {
                 excludedEmployeePrefixes:
                     prefixes.length > 0
                         ? prefixes
                         : DEFAULT_SETTINGS.excludedEmployeePrefixes.slice(),
                 targetScore,
-                refreshIntervalSeconds
+                refreshIntervalSeconds,
+                criticalThreshold,
+                secondaryThreshold
             };
         } catch (error) {
             console.warn("读取设置失败，使用默认值：", error);
@@ -179,7 +191,9 @@
                 excludedEmployeePrefixes:
                     DEFAULT_SETTINGS.excludedEmployeePrefixes.slice(),
                 targetScore: DEFAULT_SETTINGS.targetScore,
-                refreshIntervalSeconds: DEFAULT_SETTINGS.refreshIntervalSeconds
+                refreshIntervalSeconds: DEFAULT_SETTINGS.refreshIntervalSeconds,
+                criticalThreshold: DEFAULT_SETTINGS.criticalThreshold,
+                secondaryThreshold: DEFAULT_SETTINGS.secondaryThreshold
             };
         }
     }
@@ -1332,6 +1346,7 @@
 
                 scores,
                 scoreArray,
+                numericScores,
 
                 validScoreCount,
 
@@ -1345,7 +1360,10 @@
                     validScoreCount < 5,
 
                 hasCriticalScore:
-                    numericScores.some(score => score <= 3),
+                    numericScores.some(score => score <= state.settings.criticalThreshold),
+
+                hasSecondaryScore:
+                    numericScores.some(score => score < state.settings.secondaryThreshold && score > state.settings.criticalThreshold),
 
                 isComplete,
                 isPerfect,
@@ -1494,7 +1512,7 @@
 
         const secondaryRows =
             validRows.filter(
-                row => !row.isPerfect && !row.hasCriticalScore
+                row => !row.isPerfect && !row.hasCriticalScore && row.hasSecondaryScore
             );
 
         const totalActualScore =
@@ -1806,9 +1824,13 @@
                 continue;
             }
 
-            detailState.rows.forEach(
-                applyExclusionToRow
-            );
+            detailState.rows.forEach(row => {
+                if (row.numericScores) {
+                    row.hasCriticalScore = row.numericScores.some(score => score <= state.settings.criticalThreshold);
+                    row.hasSecondaryScore = row.numericScores.some(score => score < state.settings.secondaryThreshold && score > state.settings.criticalThreshold);
+                }
+                applyExclusionToRow(row);
+            });
 
             detailState.audit =
                 calculateAudit(
@@ -1816,9 +1838,13 @@
                     state.lastData?.[name]?.score
                 );
 
-            detailState.displayedRows.forEach(
-                applyExclusionToRow
-            );
+            detailState.displayedRows.forEach(row => {
+                if (row.numericScores) {
+                    row.hasCriticalScore = row.numericScores.some(score => score <= state.settings.criticalThreshold);
+                    row.hasSecondaryScore = row.numericScores.some(score => score < state.settings.secondaryThreshold && score > state.settings.criticalThreshold);
+                }
+                applyExclusionToRow(row);
+            });
 
             if (
                 detailState.displayedRows.length
@@ -2530,6 +2556,17 @@
               style="width:100%; padding:8px; margin-bottom:16px; border:1px solid #ccc; border-radius:4px;"
             >
 
+            <div style="display:flex; gap:12px; margin-bottom:16px;">
+              <div style="flex:1;">
+                <label class="settings-label">重点关注分数 (小于)</label>
+                <input type="number" class="settings-input" id="criticalThresholdInput" min="0" max="5" step="0.1" value="${state.settings.criticalThreshold}" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+              </div>
+              <div style="flex:1;">
+                <label class="settings-label">次重点关注分数 (小于)</label>
+                <input type="number" class="settings-input" id="secondaryThresholdInput" min="0" max="5" step="0.1" value="${state.settings.secondaryThreshold}" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+              </div>
+            </div>
+
             <label class="settings-label">
               排除反馈人工号前缀
             </label>
@@ -2606,6 +2643,9 @@
 
       .settings-dialog {
         width: min(420px, 100%);
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
         overflow: hidden;
         border:
           1px solid rgba(
@@ -2658,6 +2698,8 @@
 
       .settings-body {
         padding: 15px 16px;
+        flex: 1;
+        overflow-y: auto;
       }
 
       .settings-label {
@@ -2780,6 +2822,14 @@
                     if (refreshInput) {
                         refreshInput.value = DEFAULT_SETTINGS.refreshIntervalSeconds;
                     }
+                    const criticalInput = doc.getElementById("criticalThresholdInput");
+                    if (criticalInput) {
+                        criticalInput.value = DEFAULT_SETTINGS.criticalThreshold;
+                    }
+                    const secondaryInput = doc.getElementById("secondaryThresholdInput");
+                    if (secondaryInput) {
+                        secondaryInput.value = DEFAULT_SETTINGS.secondaryThreshold;
+                    }
                 }
             );
 
@@ -2793,6 +2843,8 @@
                     const input = doc.getElementById("excludedPrefixInput");
                     const targetInput = doc.getElementById("targetScoreInput");
                     const refreshInput = doc.getElementById("refreshIntervalInput");
+                    const criticalInput = doc.getElementById("criticalThresholdInput");
+                    const secondaryInput = doc.getElementById("secondaryThresholdInput");
 
                     const prefixes = parsePrefixText(input?.value);
                     
@@ -2806,9 +2858,21 @@
                         refreshInterval = DEFAULT_SETTINGS.refreshIntervalSeconds;
                     }
 
+                    let criticalThreshold = parseFloat(criticalInput?.value);
+                    if (isNaN(criticalThreshold)) {
+                        criticalThreshold = DEFAULT_SETTINGS.criticalThreshold;
+                    }
+
+                    let secondaryThreshold = parseFloat(secondaryInput?.value);
+                    if (isNaN(secondaryThreshold)) {
+                        secondaryThreshold = DEFAULT_SETTINGS.secondaryThreshold;
+                    }
+
                     state.settings.excludedEmployeePrefixes = prefixes;
                     state.settings.targetScore = targetScore;
                     state.settings.refreshIntervalSeconds = refreshInterval;
+                    state.settings.criticalThreshold = criticalThreshold;
+                    state.settings.secondaryThreshold = secondaryThreshold;
 
                     saveSettings();
                     recalculateAllAudits();
@@ -3967,6 +4031,7 @@
                             !row.isExcluded &&
                             !row.isPerfect &&
                             !row.hasCriticalScore &&
+                            row.hasSecondaryScore &&
                             !row.hasInvalid &&
                             row.validScoreCount > 0
                     );
@@ -5321,7 +5386,7 @@
                   data-filter="critical"
                   type="button"
                 >
-                  重点关注 (≤3分)
+                  重点关注 (≤${state.settings.criticalThreshold}分)
                   ${audit
                 ?.criticalCount ??
             0
@@ -5333,7 +5398,7 @@
                   data-filter="secondary"
                   type="button"
                 >
-                  次重点 (4分)
+                  次重点 (<${state.settings.secondaryThreshold}分)
                   ${audit
                 ?.secondaryCount ??
             0
