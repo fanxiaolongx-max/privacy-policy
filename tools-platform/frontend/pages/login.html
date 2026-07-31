@@ -32,6 +32,16 @@
             z-index: 1;
         }
 
+        /* 登录成功时承载高斯泼溅粒子；独立画布避免影响星空帧率 */
+        #dissolveCanvas {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
+            pointer-events: none;
+        }
+
         /* 登录容器，浮在画布上 */
         .login-wrapper {
             position: absolute;
@@ -159,6 +169,81 @@
 
         button.btn-login:active {
             transform: translateY(0);
+        }
+
+        .glass-panel.login-success {
+            pointer-events: none;
+            animation: panel-dissolve 980ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            transform-origin: center;
+        }
+
+        .login-success .input-group,
+        .login-success .btn-login {
+            pointer-events: none;
+            animation: control-dissolve 760ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .login-success .input-group + .input-group {
+            animation-delay: 45ms;
+        }
+
+        .login-success .btn-login {
+            animation-delay: 90ms;
+        }
+
+        @keyframes control-dissolve {
+            0% {
+                opacity: 1;
+                filter: blur(0);
+                transform: scale(1);
+                clip-path: inset(0 0 0 0 round 12px);
+            }
+            42% {
+                opacity: 0.72;
+                filter: blur(1.5px);
+                transform: scale(1.015);
+            }
+            100% {
+                opacity: 0;
+                filter: blur(13px);
+                transform: scale(1.045) translateY(-4px);
+                clip-path: inset(0 0 0 100% round 12px);
+            }
+        }
+
+        @keyframes panel-dissolve {
+            0% {
+                opacity: 1;
+                filter: blur(0) saturate(1);
+                transform: scale(0.95);
+            }
+            35% {
+                opacity: 0.9;
+                filter: blur(1px) saturate(1.18);
+                transform: scale(0.965);
+                box-shadow: 0 25px 70px -12px rgba(79, 70, 229, 0.5);
+            }
+            72% {
+                opacity: 0.42;
+                filter: blur(7px) saturate(0.85);
+                transform: scale(1.015) translateY(-3px);
+            }
+            100% {
+                opacity: 0;
+                filter: blur(22px) saturate(0.55);
+                transform: scale(1.07) translateY(-8px);
+                box-shadow: 0 0 110px rgba(99, 102, 241, 0);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .glass-panel.login-success,
+            .login-success .input-group,
+            .login-success .btn-login {
+                animation: none;
+                opacity: 0;
+                transition: opacity 180ms ease;
+            }
         }
 
         /* 辅助按钮 */
@@ -401,6 +486,7 @@
 
 <body>
     <canvas id="spaceCanvas"></canvas>
+    <canvas id="dissolveCanvas" aria-hidden="true"></canvas>
 
     <div class="login-wrapper">
         <div class="glass-panel" id="loginPanel">
@@ -670,12 +756,143 @@
             if (e.key === 'Enter') doLogin();
         }
 
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+        function gaussianRandom() {
+            let u = 0;
+            let v = 0;
+            while (u === 0) u = Math.random();
+            while (v === 0) v = Math.random();
+            return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+        }
+
+        function roundedRectParticlePoint(rect) {
+            const edgeBias = Math.random();
+            if (edgeBias < 0.38) {
+                const side = Math.floor(Math.random() * 4);
+                if (side === 0) return { x: rect.left + Math.random() * rect.width, y: rect.top };
+                if (side === 1) return { x: rect.right, y: rect.top + Math.random() * rect.height };
+                if (side === 2) return { x: rect.left + Math.random() * rect.width, y: rect.bottom };
+                return { x: rect.left, y: rect.top + Math.random() * rect.height };
+            }
+            return {
+                x: rect.left + Math.random() * rect.width,
+                y: rect.top + Math.random() * rect.height
+            };
+        }
+
+        function playGaussianDissolve() {
+            const panel = document.getElementById('loginPanel');
+            if (!panel) return;
+
+            panel.classList.add('login-success');
+            if (prefersReducedMotion.matches) return;
+
+            const fxCanvas = document.getElementById('dissolveCanvas');
+            const fx = fxCanvas.getContext('2d');
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            fxCanvas.width = Math.round(window.innerWidth * dpr);
+            fxCanvas.height = Math.round(window.innerHeight * dpr);
+            fxCanvas.style.width = `${window.innerWidth}px`;
+            fxCanvas.style.height = `${window.innerHeight}px`;
+            fx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            const controls = [
+                panel,
+                ...panel.querySelectorAll('.input-group'),
+                document.getElementById('loginBtn')
+            ].filter(Boolean);
+            const panelRect = panel.getBoundingClientRect();
+            const originX = panelRect.left + panelRect.width / 2;
+            const originY = panelRect.top + panelRect.height / 2;
+            const particles = [];
+
+            controls.forEach((control, controlIndex) => {
+                const rect = control.getBoundingClientRect();
+                const isPanel = control === panel;
+                const isButton = control === document.getElementById('loginBtn');
+                const areaCount = isPanel
+                    ? 440
+                    : Math.round(Math.min(320, Math.max(140, rect.width * rect.height / 85)));
+                for (let i = 0; i < areaCount; i++) {
+                    const point = roundedRectParticlePoint(rect);
+                    const dx = point.x - originX;
+                    const dy = point.y - originY;
+                    const distance = Math.max(1, Math.hypot(dx, dy));
+                    const spread = (isPanel ? 0.95 : 0.7) + Math.random() * 1.2;
+                    const palette = isPanel
+                        ? ['15, 23, 42', '51, 65, 85', '99, 102, 241', '165, 180, 252']
+                        : isButton
+                            ? ['99, 102, 241', '59, 130, 246', '96, 165, 250', '255, 255, 255']
+                            : ['165, 180, 252', '148, 163, 184', '226, 232, 240', '99, 102, 241'];
+
+                    particles.push({
+                        x: point.x + gaussianRandom() * 1.2,
+                        y: point.y + gaussianRandom() * 1.2,
+                        vx: (dx / distance) * spread + gaussianRandom() * 0.8 + 0.65,
+                        vy: (dy / distance) * spread + gaussianRandom() * 0.65 - 0.28,
+                        size: Math.max(0.8, 2.4 + gaussianRandom() * 1.15),
+                        blur: 3 + Math.random() * 9,
+                        alpha: 0.38 + Math.random() * 0.58,
+                        drag: 0.965 + Math.random() * 0.018,
+                        color: palette[Math.floor(Math.random() * palette.length)],
+                        phase: Math.random() * Math.PI * 2,
+                        delay: (isPanel ? 0 : controlIndex * 2) + Math.random() * 7
+                    });
+                }
+            });
+
+            const startedAt = performance.now();
+            const duration = 1050;
+
+            function renderDissolve(now) {
+                const elapsed = now - startedAt;
+                const progress = Math.min(1, elapsed / duration);
+                fx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+                fx.globalCompositeOperation = 'lighter';
+
+                particles.forEach(particle => {
+                    if (elapsed < particle.delay * 12) return;
+                    particle.vx += Math.sin(particle.phase + progress * 8) * 0.012;
+                    particle.vy += Math.cos(particle.phase + progress * 7) * 0.01;
+                    particle.x += particle.vx * (1 + progress * 2.8);
+                    particle.y += particle.vy * (1 + progress * 2.2);
+                    particle.vx *= particle.drag;
+                    particle.vy *= particle.drag;
+
+                    const life = Math.pow(1 - progress, 1.35);
+                    const radius = Math.max(0.2, particle.size * (1 + progress * 0.7));
+                    const gradient = fx.createRadialGradient(
+                        particle.x, particle.y, 0,
+                        particle.x, particle.y, radius + particle.blur
+                    );
+                    gradient.addColorStop(0, `rgba(${particle.color}, ${particle.alpha * life})`);
+                    gradient.addColorStop(0.28, `rgba(${particle.color}, ${particle.alpha * life * 0.55})`);
+                    gradient.addColorStop(1, `rgba(${particle.color}, 0)`);
+                    fx.fillStyle = gradient;
+                    fx.beginPath();
+                    fx.arc(particle.x, particle.y, radius + particle.blur, 0, Math.PI * 2);
+                    fx.fill();
+                });
+
+                if (progress < 1) {
+                    requestAnimationFrame(renderDissolve);
+                } else {
+                    fx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+                }
+            }
+
+            requestAnimationFrame(renderDissolve);
+        }
+
         async function doLogin() {
             const u = document.getElementById('username').value.trim();
             const p = document.getElementById('password').value;
             const errDiv = document.getElementById('error-msg');
             const btn = document.getElementById('loginBtn');
             const panel = document.getElementById('loginPanel');
+
+            if (btn.disabled) return;
 
             if (!u || !p) {
                 errDiv.textContent = '用户名和密码不能为空';
@@ -686,6 +903,8 @@
 
             // 触发跃迁动画
             const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.setAttribute('aria-busy', 'true');
             btn.innerHTML = '正在登录 <span class="loader"></span>';
             btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
             btn.style.boxShadow = '0 10px 25px -5px rgba(16, 185, 129, 0.5)';
@@ -708,16 +927,22 @@
                 localStorage.setItem('tools_user', data.username);
                 localStorage.setItem('tools_role', data.role);
 
-                // 稍微等待动画展示一下爽感
+                btn.innerHTML = '登录成功';
+                btn.removeAttribute('aria-busy');
+                playGaussianDissolve();
+
+                // 让粒子完整融入星空后再进入平台
                 setTimeout(() => {
                     window.location.href = '/';
-                }, 800);
+                }, prefersReducedMotion.matches ? 220 : 1080);
 
             } catch (e) {
                 // 恢复原状
                 setTimeout(() => {
                     targetSpeed = baseSpeed;
-                    btn.innerHTML = '登 录';
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    btn.removeAttribute('aria-busy');
                     btn.style.background = '';
                     btn.style.boxShadow = '';
                     panel.style.transform = 'scale(1)';
