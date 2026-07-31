@@ -37,7 +37,9 @@
     const SETTINGS_KEY = "satisfaction-monitor-settings-v2";
 
     const DEFAULT_SETTINGS = {
-        excludedEmployeePrefixes: ["WX", "84"]
+        excludedEmployeePrefixes: ["WX", "84"],
+        targetScore: 97,
+        refreshIntervalSeconds: 5
     };
 
     const CONFIG = {
@@ -154,18 +156,30 @@
                     : DEFAULT_SETTINGS.excludedEmployeePrefixes
             );
 
+            const targetScore = typeof saved.targetScore === "number" && saved.targetScore >= 0 && saved.targetScore <= 100 
+                ? saved.targetScore 
+                : DEFAULT_SETTINGS.targetScore;
+
+            const refreshIntervalSeconds = typeof saved.refreshIntervalSeconds === "number" && saved.refreshIntervalSeconds >= 1 
+                ? saved.refreshIntervalSeconds 
+                : DEFAULT_SETTINGS.refreshIntervalSeconds;
+
             return {
                 excludedEmployeePrefixes:
                     prefixes.length > 0
                         ? prefixes
-                        : DEFAULT_SETTINGS.excludedEmployeePrefixes.slice()
+                        : DEFAULT_SETTINGS.excludedEmployeePrefixes.slice(),
+                targetScore,
+                refreshIntervalSeconds
             };
         } catch (error) {
             console.warn("读取设置失败，使用默认值：", error);
 
             return {
                 excludedEmployeePrefixes:
-                    DEFAULT_SETTINGS.excludedEmployeePrefixes.slice()
+                    DEFAULT_SETTINGS.excludedEmployeePrefixes.slice(),
+                targetScore: DEFAULT_SETTINGS.targetScore,
+                refreshIntervalSeconds: DEFAULT_SETTINGS.refreshIntervalSeconds
             };
         }
     }
@@ -288,11 +302,10 @@
     }
 
     function getRandomDelay() {
-        return Math.round(
-            CONFIG.minInterval +
-            Math.random() *
-            (CONFIG.maxInterval - CONFIG.minInterval)
-        );
+        let interval = state.settings?.refreshIntervalSeconds * 1000;
+        if (!interval || interval < 1000) interval = 5000;
+        // add a small random jitter (0-200ms) so it's not exactly on the second
+        return interval + Math.random() * 200;
     }
 
     function calculateChange(current, previous) {
@@ -398,6 +411,7 @@
         view: {
             mode: "monitor",
             restaurant: null,
+            month: null,
 
             filter: "critical",
             sort: "impact",
@@ -691,6 +705,7 @@
         const result = {
             latestMonth,
             previousMonth,
+            months,
 
             latestRows:
                 rows.filter(
@@ -1500,6 +1515,14 @@
         const totalMaximumScore =
             totalValidItems * 5;
 
+        let gapToTarget = 0;
+        const avgMax = validRows.length > 0 ? (totalMaximumScore / validRows.length) : 25;
+
+        if (totalMaximumScore > 0 && totalActualScore / totalMaximumScore < (state.settings.targetScore / 100)) {
+            const targetRatio = state.settings.targetScore / 100;
+            gapToTarget = Math.ceil((targetRatio * totalMaximumScore - totalActualScore) / ((1 - targetRatio) * avgMax));
+        }
+
         const itemWeighted =
             totalMaximumScore > 0
                 ? (
@@ -1507,13 +1530,6 @@
                     totalMaximumScore
                 ) * 100
                 : null;
-
-        let gapTo97 = 0;
-        if (totalMaximumScore > 0 && itemWeighted !== null && itemWeighted < 97) {
-            const avgMax = validRows.length > 0 ? (totalMaximumScore / validRows.length) : 25;
-            // Needed points: x = (0.97 * M - V) / (0.03 * avgMax)
-            gapTo97 = Math.ceil((0.97 * totalMaximumScore - totalActualScore) / (0.03 * avgMax));
-        }
 
         const personPercentages =
             validRows
@@ -1761,7 +1777,7 @@
             totalValidItems,
             totalMaximumScore,
 
-            gapTo97,
+            gapToTarget,
 
             itemWeighted,
             personAverage,
@@ -1931,7 +1947,7 @@
                 .canteenCode;
 
         const month =
-            state.lastData?.latestMonth;
+            state.view.month || state.lastData?.latestMonth;
 
         if (!canteenCode || !month) {
             detailState.lastError =
@@ -2491,6 +2507,30 @@
 
           <div class="settings-body">
             <label class="settings-label">
+              目标达标分数 (0-100)
+            </label>
+            <input
+              type="number"
+              class="settings-input"
+              id="targetScoreInput"
+              min="0" max="100" step="0.1"
+              value="${state.settings.targetScore}"
+              style="width:100%; padding:8px; margin-bottom:16px; border:1px solid #ccc; border-radius:4px;"
+            >
+
+            <label class="settings-label">
+              后台刷新周期 (秒)
+            </label>
+            <input
+              type="number"
+              class="settings-input"
+              id="refreshIntervalInput"
+              min="1" max="3600" step="1"
+              value="${state.settings.refreshIntervalSeconds}"
+              style="width:100%; padding:8px; margin-bottom:16px; border:1px solid #ccc; border-radius:4px;"
+            >
+
+            <label class="settings-label">
               排除反馈人工号前缀
             </label>
 
@@ -2728,16 +2768,17 @@
             ?.addEventListener(
                 "click",
                 () => {
-                    const input =
-                        doc.getElementById(
-                            "excludedPrefixInput"
-                        );
-
+                    const input = doc.getElementById("excludedPrefixInput");
                     if (input) {
-                        input.value =
-                            DEFAULT_SETTINGS
-                                .excludedEmployeePrefixes
-                                .join("\n");
+                        input.value = DEFAULT_SETTINGS.excludedEmployeePrefixes.join("\n");
+                    }
+                    const targetInput = doc.getElementById("targetScoreInput");
+                    if (targetInput) {
+                        targetInput.value = DEFAULT_SETTINGS.targetScore;
+                    }
+                    const refreshInput = doc.getElementById("refreshIntervalInput");
+                    if (refreshInput) {
+                        refreshInput.value = DEFAULT_SETTINGS.refreshIntervalSeconds;
                     }
                 }
             );
@@ -2749,19 +2790,25 @@
             ?.addEventListener(
                 "click",
                 () => {
-                    const input =
-                        doc.getElementById(
-                            "excludedPrefixInput"
-                        );
+                    const input = doc.getElementById("excludedPrefixInput");
+                    const targetInput = doc.getElementById("targetScoreInput");
+                    const refreshInput = doc.getElementById("refreshIntervalInput");
 
-                    const prefixes =
-                        parsePrefixText(
-                            input?.value
-                        );
+                    const prefixes = parsePrefixText(input?.value);
+                    
+                    let targetScore = parseFloat(targetInput?.value);
+                    if (isNaN(targetScore) || targetScore < 0 || targetScore > 100) {
+                        targetScore = DEFAULT_SETTINGS.targetScore;
+                    }
 
-                    state.settings
-                        .excludedEmployeePrefixes =
-                        prefixes;
+                    let refreshInterval = parseInt(refreshInput?.value, 10);
+                    if (isNaN(refreshInterval) || refreshInterval < 1) {
+                        refreshInterval = DEFAULT_SETTINGS.refreshIntervalSeconds;
+                    }
+
+                    state.settings.excludedEmployeePrefixes = prefixes;
+                    state.settings.targetScore = targetScore;
+                    state.settings.refreshIntervalSeconds = refreshInterval;
 
                     saveSettings();
                     recalculateAllAudits();
@@ -3394,7 +3441,7 @@
 
         if (Number.isFinite(score)) {
             card?.classList.add(
-                score >= CONFIG.passScore
+                score >= state.settings.targetScore
                     ? "pass"
                     : "fail"
             );
@@ -3419,10 +3466,10 @@
             statusElement.textContent =
                 !Number.isFinite(score)
                     ? "暂无数据"
-                    : score >= CONFIG.passScore
+                    : score >= state.settings.targetScore
                         ? "达标"
                         : `未达标，差 ${(
-                            CONFIG.passScore -
+                            state.settings.targetScore -
                             score
                         ).toFixed(2)} 分`;
         }
@@ -5057,16 +5104,17 @@
                 ← 返回监控
               </button>
 
-              <div>
-                <div class="detail-title">
-                  ${restaurantName} 餐厅 · 满意度复核
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <div class="detail-title">
+                    ${restaurantName} 餐厅 · 满意度复核
+                  </div>
+                  <select id="detailMonthSelect" style="padding: 2px 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; outline: none; background: white;">
+                    ${(state.lastData?.months || [state.view.month || state.lastData?.latestMonth]).filter(Boolean).map(m => `<option value="${m}" ${m === (state.view.month || state.lastData?.latestMonth) ? 'selected' : ''}>${m}</option>`).join('')}
+                  </select>
                 </div>
 
                 <div class="detail-subtitle">
-                  ${state.lastData
-                ?.latestMonth ||
-            "--"
-            }
                   · 当前展示快照：
                   ${formatDateTime(
                 detailState
@@ -5174,7 +5222,7 @@
                   ${formatScore(
                 audit?.reviewedScore
             )}
-                  ${audit?.gapTo97 > 0 ? `<span style="color: #ff4d4f; font-size: 13px; font-weight: normal; font-family: sans-serif;">(距97分差 ${audit.gapTo97} 个全5)</span>` : ''}
+                  ${audit?.gapToTarget > 0 ? `<span style="color: #ff4d4f; font-size: 13px; font-weight: normal; font-family: sans-serif;">(距${state.settings.targetScore}分差 ${audit.gapToTarget} 个全5)</span>` : ''}
                 </div>
 
                 <div class="audit-note">
@@ -5230,7 +5278,147 @@
               </div>
             </div>
 
-            <div class="calculation-grid">
+            <div class="data-controls">
+              <div class="filter-tabs">
+                <button
+                  class="filter-button"
+                  data-filter="all"
+                  type="button"
+                >
+                  全部
+                  ${audit
+                ?.originalRowCount ??
+            0
+            }
+                </button>
+
+                <button
+                  class="filter-button"
+                  data-filter="included"
+                  type="button"
+                >
+                  计入复核
+                  ${audit
+                ?.includedRowCount ??
+            0
+            }
+                </button>
+
+                <button
+                  class="filter-button"
+                  data-filter="perfect"
+                  type="button"
+                >
+                  全五分
+                  ${audit
+                ?.perfectCount ??
+            0
+            }
+                </button>
+
+                <button
+                  class="filter-button"
+                  data-filter="critical"
+                  type="button"
+                >
+                  重点关注 (≤3分)
+                  ${audit
+                ?.criticalCount ??
+            0
+            }
+                </button>
+
+                <button
+                  class="filter-button"
+                  data-filter="secondary"
+                  type="button"
+                >
+                  次重点 (4分)
+                  ${audit
+                ?.secondaryCount ??
+            0
+            }
+                </button>
+
+                <button
+                  class="filter-button"
+                  data-filter="excluded"
+                  type="button"
+                >
+                  已排除
+                  ${audit
+                ?.excludedRowCount ??
+            0
+            }
+                </button>
+              </div>
+
+              <div class="control-right">
+                <input
+                  class="search-input"
+                  id="detailSearch"
+                  type="search"
+                  placeholder="搜索反馈人/类型/意见"
+                  value="${escapeHtml(
+                state.view.search
+            )}"
+                >
+
+                <select
+                  class="sort-select"
+                  id="detailSort"
+                >
+                  <option value="impact">
+                    按影响从高到低
+                  </option>
+
+                  <option value="time">
+                    按反馈时间
+                  </option>
+
+                  <option value="averageAsc">
+                    按平均分升序
+                  </option>
+
+                  <option value="averageDesc">
+                    按平均分降序
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <div
+              class="table-wrap"
+              id="detailTableWrap"
+            >
+              <table>
+                <thead>
+                  <tr>
+                    <th>反馈人</th>
+                    <th>类型</th>
+                    <th>反馈时间</th>
+                    <th>安全</th>
+                    <th>服务</th>
+                    <th>活动</th>
+                    <th>环境</th>
+                    <th>菜品</th>
+                    <th>平均分</th>
+                    <th>折算百分</th>
+                    <th>拉低总分</th>
+                    <th>复核状态</th>
+                    <th>意见 / 心愿美食</th>
+                  </tr>
+                </thead>
+
+                <tbody id="detailTableBody">
+                  ${renderDetailTableRows(
+                restaurantName
+            )}
+                </tbody>
+              </table>
+            </div>
+
+            <div class="calculation-grid" style="margin-top: 16px;">
               <div class="calculation-panel">
                 <div class="panel-title">
                   计算过程
@@ -5421,146 +5609,6 @@
               </div>
             </div>
 
-            <div class="data-controls">
-              <div class="filter-tabs">
-                <button
-                  class="filter-button"
-                  data-filter="all"
-                  type="button"
-                >
-                  全部
-                  ${audit
-                ?.originalRowCount ??
-            0
-            }
-                </button>
-
-                <button
-                  class="filter-button"
-                  data-filter="included"
-                  type="button"
-                >
-                  计入复核
-                  ${audit
-                ?.includedRowCount ??
-            0
-            }
-                </button>
-
-                <button
-                  class="filter-button"
-                  data-filter="perfect"
-                  type="button"
-                >
-                  全五分
-                  ${audit
-                ?.perfectCount ??
-            0
-            }
-                </button>
-
-                <button
-                  class="filter-button"
-                  data-filter="critical"
-                  type="button"
-                >
-                  重点关注 (≤3分)
-                  ${audit
-                ?.criticalCount ??
-            0
-            }
-                </button>
-
-                <button
-                  class="filter-button"
-                  data-filter="secondary"
-                  type="button"
-                >
-                  次重点 (4分)
-                  ${audit
-                ?.secondaryCount ??
-            0
-            }
-                </button>
-
-                <button
-                  class="filter-button"
-                  data-filter="excluded"
-                  type="button"
-                >
-                  已排除
-                  ${audit
-                ?.excludedRowCount ??
-            0
-            }
-                </button>
-              </div>
-
-              <div class="control-right">
-                <input
-                  class="search-input"
-                  id="detailSearch"
-                  type="search"
-                  placeholder="搜索反馈人/类型/意见"
-                  value="${escapeHtml(
-                state.view.search
-            )}"
-                >
-
-                <select
-                  class="sort-select"
-                  id="detailSort"
-                >
-                  <option value="impact">
-                    按影响从高到低
-                  </option>
-
-                  <option value="time">
-                    按反馈时间
-                  </option>
-
-                  <option value="averageAsc">
-                    按平均分升序
-                  </option>
-
-                  <option value="averageDesc">
-                    按平均分降序
-                  </option>
-                </select>
-              </div>
-            </div>
-
-            <div
-              class="table-wrap"
-              id="detailTableWrap"
-            >
-              <table>
-                <thead>
-                  <tr>
-                    <th>反馈人</th>
-                    <th>类型</th>
-                    <th>反馈时间</th>
-                    <th>安全</th>
-                    <th>服务</th>
-                    <th>活动</th>
-                    <th>环境</th>
-                    <th>菜品</th>
-                    <th>平均分</th>
-                    <th>折算百分</th>
-                    <th>拉低总分</th>
-                    <th>复核状态</th>
-                    <th>意见 / 心愿美食</th>
-                  </tr>
-                </thead>
-
-                <tbody id="detailTableBody">
-                  ${renderDetailTableRows(
-                restaurantName
-            )}
-                </tbody>
-              </table>
-            </div>
-
             <div
               class="detail-subtitle"
               id="detailBackgroundTime"
@@ -5575,6 +5623,24 @@
         </div>
       </div>
     `;
+
+        doc
+            .getElementById(
+                "detailMonthSelect"
+            )
+            ?.addEventListener(
+                "change",
+                async (event) => {
+                    const selectedMonth = event.target.value;
+                    const detailState = state.detail[restaurantName];
+                    const restaurant = state.lastData?.[restaurantName];
+
+                    // Reset initialized so it forces a fetch for the new month
+                    detailState.initialized = false;
+                    
+                    await openDetailView(restaurantName, selectedMonth);
+                }
+            );
 
         doc
             .getElementById(
@@ -5830,14 +5896,15 @@
     }
 
     async function openDetailView(
-        restaurantName
+        restaurantName,
+        targetMonth = null
     ) {
         state.view.mode = "detail";
-        state.view.restaurant =
-            restaurantName;
+        state.view.restaurant = restaurantName;
+        state.view.month = targetMonth || state.view.month || state.lastData?.latestMonth;
 
         state.view.filter =
-            "nonPerfect";
+            "critical";
 
         state.view.sort =
             "impact";
