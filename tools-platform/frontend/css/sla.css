@@ -1107,6 +1107,23 @@ textarea.risk-editor-input { resize: vertical; min-height: 48px; }
     font-size: 12px;
     line-height: 1.55;
 }
+.metric-advanced-filter { margin: 2px 0 8px; }
+.metric-advanced-toggle, .metric-condition-add {
+    width: 100%; border: 1px dashed #c4b5fd; border-radius: 8px; padding: 7px 9px;
+    background: #faf5ff; color: #6d28d9; font-size: 11px; font-weight: 800; cursor: pointer;
+}
+.metric-advanced-toggle span { display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin-left: 4px; border-radius: 999px; background: #7c3aed; color: #fff; }
+.metric-advanced-panel { margin-top: 6px; padding: 8px; border: 1px solid #ede9fe; border-radius: 9px; background: #fff; }
+.metric-advanced-panel p { margin: 0 0 7px; color: #64748b; font-size: 10px; }
+.metric-condition-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 26px; gap: 5px; margin-bottom: 6px; align-items: center; }
+.metric-condition-row select, .metric-condition-row input { width: 100%; min-width: 0; height: 30px; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 7px; padding: 0 7px; font-size: 11px; }
+.metric-condition-row button { width: 26px; height: 26px; border: 0; border-radius: 7px; background: #fee2e2; color: #b91c1c; cursor: pointer; }
+.metric-rule-edit-conditions { margin-top: 12px; padding: 12px; border: 1px solid #ddd6fe; border-radius: 12px; background: #fff; }
+.metric-rule-edit-conditions-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 9px; }
+.metric-rule-edit-conditions-head b { display: block; color: #4c1d95; font-size: 12px; }
+.metric-rule-edit-conditions-head span { color: #64748b; font-size: 10px; }
+.metric-rule-edit-conditions-head button { border: 0; border-radius: 8px; padding: 7px 10px; background: #ede9fe; color: #6d28d9; font-weight: 800; cursor: pointer; }
+#metric-rule-edit-conditions-list .metric-condition-row { grid-template-columns: minmax(160px, 1fr) minmax(160px, 1fr) 30px; }
 .metric-rule-edit-footer {
     display: flex;
     justify-content: flex-end;

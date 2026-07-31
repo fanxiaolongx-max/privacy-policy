@@ -148,6 +148,83 @@ function exportData(secId) {
 
 // ── 指标配置 ──────────────────────────────────────────────
 
+function getMetricRuleConditions(rule) {
+    return Array.isArray(rule && rule.conditions)
+        ? rule.conditions.filter(item => item && item.column && item.value !== undefined && String(item.value).trim() !== '')
+        : [];
+}
+
+function metricRuleCellMatches(cellVal, pattern) {
+    const str = cellVal !== undefined && cellVal !== null ? String(cellVal).trim() : '';
+    const expected = String(pattern === undefined || pattern === null ? '' : pattern).trim();
+    if (expected === '[空]') return str === '';
+    if (expected === '[非空]') return str !== '';
+    return str.includes(expected);
+}
+
+function metricRuleRowMatches(row, rule, includePrimary = true) {
+    if (includePrimary && rule && rule.colX && !metricRuleCellMatches(row && row[rule.colX], rule.valY)) return false;
+    return getMetricRuleConditions(rule).every(item => metricRuleCellMatches(row && row[item.column], item.value));
+}
+
+function buildMetricConditionFieldOptions(fields, selected = '') {
+    return `<option value="">请选择条件列</option>` + (fields || []).map(field =>
+        `<option value="${escapeHTML(field)}" ${field === selected ? 'selected' : ''}>${escapeHTML(field)}</option>`
+    ).join('');
+}
+
+function renderMetricConditionRows(container, fields, conditions, mode) {
+    if (!container) return;
+    container.innerHTML = (conditions || []).map((condition, index) => `
+        <div class="metric-condition-row" data-condition-index="${index}">
+            <select data-field="column" onchange="renderMetricRuleEditorPreview()">${buildMetricConditionFieldOptions(fields, condition.column || '')}</select>
+            <input data-field="value" value="${escapeHTML(condition.value || '')}" placeholder="包含内容（支持 [空]/[非空]）" oninput="renderMetricRuleEditorPreview()">
+            <button type="button" title="删除此条件" onclick="${mode === 'editor' ? `removeMetricRuleEditorCondition(${index})` : `removeMetricConditionRow('${mode}', ${index})`}">×</button>
+        </div>
+    `).join('');
+}
+
+function readMetricConditionRows(container) {
+    if (!container) return [];
+    return Array.from(container.querySelectorAll('.metric-condition-row')).map(row => ({
+        column: row.querySelector('[data-field="column"]')?.value || '',
+        value: row.querySelector('[data-field="value"]')?.value.trim() || ''
+    })).filter(item => item.column && item.value);
+}
+
+function readMetricConditionDraftRows(container) {
+    if (!container) return [];
+    return Array.from(container.querySelectorAll('.metric-condition-row')).map(row => ({
+        column: row.querySelector('[data-field="column"]')?.value || '',
+        value: row.querySelector('[data-field="value"]')?.value || ''
+    }));
+}
+
+window.toggleMetricAdvancedConditions = function(secId) {
+    const panel = document.getElementById(`m-conditions-panel-${secId}`);
+    if (panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+};
+
+window.addMetricConditionRow = function(secId) {
+    const container = document.getElementById(`m-conditions-${secId}`);
+    const conditions = readMetricConditionDraftRows(container);
+    conditions.push({ column: '', value: '' });
+    renderMetricConditionRows(container, AppState[secId]?.orderedHeaders || [], conditions, secId);
+    const panel = document.getElementById(`m-conditions-panel-${secId}`);
+    if (panel) panel.style.display = 'block';
+    const count = document.getElementById(`m-conditions-count-${secId}`);
+    if (count) count.textContent = String(conditions.length);
+};
+
+window.removeMetricConditionRow = function(secId, index) {
+    const container = document.getElementById(`m-conditions-${secId}`);
+    const conditions = readMetricConditionDraftRows(container);
+    conditions.splice(index, 1);
+    renderMetricConditionRows(container, AppState[secId]?.orderedHeaders || [], conditions, secId);
+    const count = document.getElementById(`m-conditions-count-${secId}`);
+    if (count) count.textContent = String(conditions.length);
+};
+
 function populateMetricSelects(secId) {
     const state = AppState[secId];
     let htmlX = `<option value="">${SLAT('sla.section.colXOption')}</option>`;
@@ -191,6 +268,8 @@ function populateMetricSelects(secId) {
     cats.forEach(c => { catHtml += `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`; });
     const catSel = document.getElementById(`m-cat-${secId}`);
     if (catSel) catSel.innerHTML = catHtml;
+    const conditions = readMetricConditionRows(document.getElementById(`m-conditions-${secId}`));
+    renderMetricConditionRows(document.getElementById(`m-conditions-${secId}`), state.orderedHeaders, conditions, secId);
 }
 
 function resetMetricForm(secId) {
@@ -217,6 +296,12 @@ function resetMetricForm(secId) {
     const categorySelect = document.getElementById(`m-cat-${secId}`);
     if (labelContainer) labelContainer.style.display = 'flex';
     if (categorySelect) categorySelect.style.display = 'none';
+    const conditionsContainer = document.getElementById(`m-conditions-${secId}`);
+    if (conditionsContainer) conditionsContainer.innerHTML = '';
+    const conditionsPanel = document.getElementById(`m-conditions-panel-${secId}`);
+    if (conditionsPanel) conditionsPanel.style.display = 'none';
+    const conditionsCount = document.getElementById(`m-conditions-count-${secId}`);
+    if (conditionsCount) conditionsCount.textContent = '0';
 }
 
 function addMetricRule(secId) {
@@ -261,9 +346,10 @@ function addMetricRule(secId) {
         }
     }
 
+    const conditions = readMetricConditionRows(document.getElementById(`m-conditions-${secId}`));
     const rule = {
         id: 'm_' + new Date().getTime(),
-        type, colX, valY, colZ, valK, label, color,
+        type, colX, valY, colZ, valK, label, color, conditions,
         sourceSecId: secId
     };
 
@@ -505,11 +591,16 @@ function describeMetricRule(rule) {
 
 function describeMetricCondition(rule) {
     if (!rule) return '-';
+    const parts = [];
     if (rule.type === 'count' || rule.type === 'ratio') {
-        if (!rule.colX || !rule.valY) return SLAT('sla.rules.allRows');
-        return `[${escapeHTML(rule.colX)}] ${SLAT('sla.rules.contains')} '${escapeHTML(rule.valY)}'`;
+        if (rule.colX && rule.valY) parts.push(`[${escapeHTML(rule.colX)}] ${SLAT('sla.rules.contains')} '${escapeHTML(rule.valY)}'`);
+    } else if (rule.colX && rule.valY) {
+        parts.push(`[${escapeHTML(rule.colX)}] ${SLAT('sla.rules.contains')} '${escapeHTML(rule.valY)}'`);
     }
-    return `[${escapeHTML(rule.colX)}] ${SLAT('sla.rules.contains')} '${escapeHTML(rule.valY)}'`;
+    getMetricRuleConditions(rule).forEach(item => {
+        parts.push(`[${escapeHTML(item.column)}] ${SLAT('sla.rules.contains')} '${escapeHTML(item.value)}'`);
+    });
+    return parts.length ? parts.join(` ${SLAT('sla.rules.and')} `) : SLAT('sla.rules.allRows');
 }
 
 function getMetricRuleModeFieldLabels(type) {
@@ -575,6 +666,7 @@ function getMetricRuleSearchText(record) {
         record.rule && record.rule.valY,
         record.rule && record.rule.colZ,
         record.rule && record.rule.valK,
+        ...getMetricRuleConditions(record.rule).flatMap(item => [item.column, item.value]),
         translateMetricRuleLabel(record.parentMetricName),
         translateMetricRuleLabel(record.subMetricName),
         translateMetricRuleSectionTitle(record.tableTitle),
@@ -901,7 +993,8 @@ function renderMetricRuleEditorPreview() {
     const category = document.getElementById('metric-rule-edit-category')?.value || '';
     const parentSel = document.getElementById('metric-rule-edit-parent');
     const parentText = parentSel && parentSel.selectedOptions[0] ? parentSel.selectedOptions[0].textContent : SLAT('sla.rules.independent');
-    const rule = { type, colX, valY, colZ, valK };
+    const conditions = readMetricConditionRows(document.getElementById('metric-rule-edit-conditions-list'));
+    const rule = { type, colX, valY, colZ, valK, conditions };
     const preview = document.getElementById('metric-rule-edit-preview');
     if (!preview) return;
     preview.innerHTML = `
@@ -916,6 +1009,24 @@ window.refreshMetricRuleEditorMode = function() {
     document.querySelectorAll('.metric-rule-edit-stat-only').forEach(el => {
         el.style.display = type === 'extract' ? 'none' : 'flex';
     });
+    renderMetricRuleEditorPreview();
+};
+
+window.addMetricRuleEditorCondition = function() {
+    if (!editingMetricRuleRecord) return;
+    const container = document.getElementById('metric-rule-edit-conditions-list');
+    const conditions = readMetricConditionDraftRows(container);
+    conditions.push({ column: '', value: '' });
+    renderMetricConditionRows(container, getMetricRuleFieldCandidates(editingMetricRuleRecord), conditions, 'editor');
+    renderMetricRuleEditorPreview();
+};
+
+window.removeMetricRuleEditorCondition = function(index) {
+    if (!editingMetricRuleRecord) return;
+    const container = document.getElementById('metric-rule-edit-conditions-list');
+    const conditions = readMetricConditionDraftRows(container);
+    conditions.splice(index, 1);
+    renderMetricConditionRows(container, getMetricRuleFieldCandidates(editingMetricRuleRecord), conditions, 'editor');
     renderMetricRuleEditorPreview();
 };
 
@@ -968,6 +1079,12 @@ window.openMetricRuleEditor = function(index) {
     document.getElementById('metric-rule-edit-colz').value = rule.colZ || '';
     document.getElementById('metric-rule-edit-valy').value = rule.valY || '';
     document.getElementById('metric-rule-edit-valk').value = rule.valK || '';
+    renderMetricConditionRows(
+        document.getElementById('metric-rule-edit-conditions-list'),
+        candidates,
+        getMetricRuleConditions(rule),
+        'editor'
+    );
 
     const cats = window.GlobalCategories || ['TE', 'ORG', 'ET', 'VDF'];
     document.getElementById('metric-rule-edit-category').innerHTML = cats
@@ -1061,6 +1178,7 @@ window.saveMetricRuleEditor = async function() {
     const colZ = document.getElementById('metric-rule-edit-colz').value.trim();
     const valK = document.getElementById('metric-rule-edit-valk').value.trim();
     const label = document.getElementById('metric-rule-edit-label').value.trim();
+    const conditions = readMetricConditionRows(document.getElementById('metric-rule-edit-conditions-list'));
 
     if (!label) { showToast(SLAT('sla.rules.needName'), 'warning'); return; }
     if (!colZ) { showToast(SLAT('sla.rules.needColZ'), 'warning'); return; }
@@ -1073,6 +1191,7 @@ window.saveMetricRuleEditor = async function() {
     rule.valY = valY;
     rule.colZ = colZ;
     rule.valK = type === 'extract' ? '' : valK;
+    rule.conditions = conditions;
     rule.label = label;
     if (record.kind === 'sub') {
         rule.category = document.getElementById('metric-rule-edit-category').value || rule.category || '未分类';

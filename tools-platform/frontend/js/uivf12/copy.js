@@ -5,7 +5,10 @@
 
 const UIV_BATCH_SPEED_KEY = 'uivf12_batch_speed';
 const UIV_BATCH_EXCLUDED_CATEGORIES_KEY = 'uivf12_batch_excluded_categories';
+const UIV_BATCH_SCHEDULE_KEY = 'uivf12_batch_schedule';
 const UIV_BATCH_SPEEDS = [1, 2, 4];
+let uivBatchScheduleTimer = null;
+let uivBatchScheduledRunActive = false;
 
 function escapeUivHtml(value) {
     return String(value === undefined || value === null ? '' : value).replace(/[&<>"']/g, ch => ({
@@ -76,6 +79,34 @@ function writeUivBatchExcludedCategories(categories) {
     const unique = Array.from(new Set((categories || []).map(String).filter(Boolean))).sort();
     localStorage.setItem(UIV_BATCH_EXCLUDED_CATEGORIES_KEY, JSON.stringify(unique));
     return unique;
+}
+
+function readUivBatchSchedule() {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(UIV_BATCH_SCHEDULE_KEY) || '{}');
+        const intervalMinutes = Math.max(5, Number(parsed.intervalMinutes) || 60);
+        return { enabled: parsed.enabled === true, intervalMinutes, lastRunAt: Number(parsed.lastRunAt) || 0 };
+    } catch (error) {
+        return { enabled: false, intervalMinutes: 60, lastRunAt: 0 };
+    }
+}
+
+function writeUivBatchSchedule(schedule) {
+    const normalized = {
+        enabled: schedule && schedule.enabled === true,
+        intervalMinutes: Math.max(5, Number(schedule && schedule.intervalMinutes) || 60),
+        lastRunAt: Number(schedule && schedule.lastRunAt) || 0
+    };
+    localStorage.setItem(UIV_BATCH_SCHEDULE_KEY, JSON.stringify(normalized));
+    return normalized;
+}
+
+function renderUivBatchScheduleSettings() {
+    const schedule = readUivBatchSchedule();
+    const enabled = document.getElementById('uiv-batch-schedule-enabled');
+    const interval = document.getElementById('uiv-batch-schedule-interval');
+    if (enabled) enabled.checked = schedule.enabled;
+    if (interval) interval.value = String(schedule.intervalMinutes);
 }
 
 function getUivBatchCategoryStats(scripts = [], categories = []) {
@@ -165,6 +196,17 @@ async function openUivBatchCategoryFilter() {
                             </label>
                         `).join('')}
                     </div>
+                    <div style="margin-top:14px;padding:12px;border:1px solid rgba(103,232,249,.28);border-radius:10px;background:rgba(8,47,73,.24);">
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+                            <div><strong style="color:#cffafe;">⏱️ 运行周期</strong><p style="margin:4px 0 0;color:#94a3b8;font-size:11px;">默认关闭。开启后需保持数据抓取页打开；每轮复用同一个启动页，避免窗口累积。</p></div>
+                            <label style="display:flex;align-items:center;gap:6px;color:#e2e8f0;font-size:12px;white-space:nowrap;"><input id="uiv-batch-schedule-enabled" type="checkbox"> 开启</label>
+                        </div>
+                        <label style="display:flex;align-items:center;gap:8px;margin-top:10px;color:#cbd5e1;font-size:12px;">每隔
+                            <select id="uiv-batch-schedule-interval" style="flex:1;padding:6px;border-radius:7px;border:1px solid #475569;background:#0f172a;color:#e2e8f0;">
+                                <option value="30">30 分钟</option><option value="60">1 小时</option><option value="120">2 小时</option><option value="240">4 小时</option><option value="480">8 小时</option><option value="720">12 小时</option><option value="1440">24 小时</option>
+                            </select>运行一次
+                        </label>
+                    </div>
                 </div>
                 <div class="uiv-batch-filter-footer">
                     <button onclick="UIVCopy.closeUivBatchCategoryFilter()">取消</button>
@@ -173,6 +215,7 @@ async function openUivBatchCategoryFilter() {
             </div>
         `;
         overlay.style.display = 'flex';
+        renderUivBatchScheduleSettings();
         showToast(`当前批脚本范围：${selectedCount}/${stats.length} 个分类`, 'success');
     } catch (error) {
         showToast(`❌ 打开批脚本范围失败：${error.message}`, 'error');
@@ -204,9 +247,49 @@ function saveUivBatchCategoryFilter() {
     const checked = new Set(getBatchFilterCheckedCategories());
     const excluded = inputs.filter(input => !checked.has(input.value)).map(input => input.value);
     writeUivBatchExcludedCategories(excluded);
+    const previousSchedule = readUivBatchSchedule();
+    const scheduleEnabled = document.getElementById('uiv-batch-schedule-enabled')?.checked === true;
+    if (scheduleEnabled && !previousSchedule.enabled) {
+        const scheduledWindow = window.open('about:blank', 'uivf12-scheduled-runner');
+        if (scheduledWindow) {
+            scheduledWindow.document.title = 'UIVF12 定时运行等待页';
+            scheduledWindow.document.body.innerHTML = '<div style="font-family:Arial,sans-serif;padding:24px;color:#334155"><h2>UIVF12 定时运行已开启</h2><p>此窗口会在到达运行周期时复用，请勿手动关闭。</p></div>';
+        } else {
+            showToast('⚠️ 浏览器拦截了定时启动页，请允许本站弹窗后重新开启定时运行。', 'error');
+        }
+    }
+    const schedule = writeUivBatchSchedule({
+        enabled: scheduleEnabled,
+        intervalMinutes: Number(document.getElementById('uiv-batch-schedule-interval')?.value) || 60,
+        lastRunAt: scheduleEnabled && !previousSchedule.enabled ? Date.now() : previousSchedule.lastRunAt
+    });
+    startUivBatchSchedule();
     closeUivBatchCategoryFilter();
     const selected = inputs.length - excluded.length;
-    showToast(`✅ 批脚本范围已保存：执行 ${selected}/${inputs.length} 个分类`, 'success');
+    showToast(`✅ 批脚本范围已保存：执行 ${selected}/${inputs.length} 个分类；定时运行${schedule.enabled ? `每 ${schedule.intervalMinutes} 分钟` : '已关闭'}`, 'success');
+}
+
+function startUivBatchSchedule() {
+    if (uivBatchScheduleTimer) clearInterval(uivBatchScheduleTimer);
+    uivBatchScheduleTimer = null;
+    const schedule = readUivBatchSchedule();
+    if (!schedule.enabled) return;
+    if (!schedule.lastRunAt) writeUivBatchSchedule({ ...schedule, lastRunAt: Date.now() });
+    const check = async () => {
+        const current = readUivBatchSchedule();
+        if (!current.enabled || uivBatchScheduledRunActive) return;
+        const dueAt = (current.lastRunAt || 0) + current.intervalMinutes * 60 * 1000;
+        if (Date.now() < dueAt) return;
+        uivBatchScheduledRunActive = true;
+        try {
+            const started = await runAllUivScriptsDirect({ scheduled: true });
+            if (started) writeUivBatchSchedule({ ...current, lastRunAt: Date.now() });
+        } finally {
+            uivBatchScheduledRunActive = false;
+        }
+    };
+    uivBatchScheduleTimer = setInterval(check, 30000);
+    check();
 }
 
 function getUivBatchSpeed() {
@@ -2004,18 +2087,18 @@ async function saveLocalUivRun(runId, macro) {
     db.close();
 }
 
-async function openLocalUivRunner(macro) {
+async function openLocalUivRunner(macro, options = {}) {
     const runId = makeRunnerId();
     await saveLocalUivRun(runId, macro);
     const runnerUrl = `${window.location.origin}/pages/uivision-runner-local.html#${runId}`;
-    const opened = window.open(runnerUrl, '_blank');
+    const opened = window.open(runnerUrl, options.scheduled ? 'uivf12-scheduled-runner' : '_blank');
     if (!opened) {
         showToast('⚠️ 浏览器拦截了启动页弹窗，请允许本站弹窗后重试。', 'error');
     }
-    return runnerUrl;
+    return opened ? runnerUrl : '';
 }
 
-async function runAllUivScriptsDirect() {
+async function runAllUivScriptsDirect(options = {}) {
     try {
         const { scripts } = await API.get('/api/uiv/scripts');
         const scope = applyUivBatchCategoryFilter(scripts || []);
@@ -2030,15 +2113,21 @@ async function runAllUivScriptsDirect() {
         };
         registerUivAutoImportBridge(autoImport);
         const macro = buildUivBatchMacro(scope.scripts, scope.groupName, { speed, autoImportSessionId, autoImportToken });
-        const runnerUrl = await openLocalUivRunner(macro);
+        const runnerUrl = await openLocalUivRunner(macro, options);
+        if (!runnerUrl) {
+            if (options.scheduled) showToast('⚠️ 定时运行被浏览器拦截，请先手动点击一次“运行批脚本”并允许弹窗。', 'error');
+            return false;
+        }
         showToast(`✅ 已打开 UI.Vision 批量阵列启动页：${scope.scripts.length} 个任务`, 'success');
         console.info('[UIVF12 Direct Run]', { mode: 'local-runner', url: runnerUrl, commands: macro.Commands.length, speed, scripts: scope.scripts.length, excludedCategories: scope.excluded });
+        return true;
     } catch (error) {
         showToast(`❌ 直接运行失败：${error.message}`, 'error');
         if (!String(error.message || '').includes('批脚本执行范围')) {
             showUiVisionSetupDialog({ error: error.message });
         }
         console.error('[UIVF12 Direct Run] failed', error);
+        return false;
     }
 }
 
@@ -2175,4 +2264,7 @@ window.UIVCopy = {
 };
 window.UIVBatch = window.UIVCopy; // alias
 
-document.addEventListener('DOMContentLoaded', updateUivBatchSpeedButton);
+document.addEventListener('DOMContentLoaded', () => {
+    updateUivBatchSpeedButton();
+    startUivBatchSchedule();
+});

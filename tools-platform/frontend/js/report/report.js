@@ -8,6 +8,7 @@ let standardTotalScore = 0;
 let metricGroups = []; // [{id, name, metrics:[label,...]}]
 let editingManualMetricLabel = null;
 const REPORT_TARGET_MONTH_KEY = 'report_target_month';
+const REPORT_ALL_SNAPSHOT_TREND_KEY = 'report_all_snapshot_trends';
 let metricCountTrendData = null;
 let metricCountTrendLoading = null;
 let expiringWarningTrendData = null;
@@ -686,7 +687,8 @@ function openMetricItemTrendModal(label, kind = 'metric') {
     const cleanLabel = String(label || '').trim();
     if (!cleanLabel) return;
     const titleKind = kind === 'manual' ? rt('report.trend.manualItem') : rt('report.trend.assessmentMetric');
-    const url = `/api/db/metric_item_trend?days=90&kind=${encodeURIComponent(kind)}&label=${encodeURIComponent(cleanLabel)}`;
+    const includeAllSnapshots = localStorage.getItem(REPORT_ALL_SNAPSHOT_TREND_KEY) === 'true';
+    const url = `/api/db/metric_item_trend?days=90&all_snapshots=${includeAllSnapshots ? '1' : '0'}&kind=${encodeURIComponent(kind)}&label=${encodeURIComponent(cleanLabel)}`;
     API.get(url).then(data => {
         const trends = Array.isArray(data.trends) ? data.trends : [];
         const targets = data.targets || null;
@@ -713,7 +715,7 @@ function openMetricItemTrendModal(label, kind = 'metric') {
                 <div class="metric-trend-head" style="background:linear-gradient(135deg,#172554,#0f766e);">
                     <div>
                         <h3>${escapeHTML(rt('report.trend.itemModalTitle', { kind: titleKind }))}</h3>
-                        <p>${escapeHTML(cleanLabel)} · ${escapeHTML(rt('report.trend.savedSnapshotsDays', { days: data.days || 90 }))}</p>
+                        <p>${escapeHTML(cleanLabel)} · 最近 ${escapeHTML(String(data.days || 90))} 天 · ${data.all_snapshots ? '全部导入快照' : '每天最新快照'}</p>
                     </div>
                     <button class="metric-trend-close" onclick="document.getElementById('metric-item-trend-modal').classList.remove('open')">&times;</button>
                 </div>
@@ -4423,6 +4425,18 @@ document.addEventListener('DOMContentLoaded', () => {
         modeSelect.addEventListener('change', () => {
             API.setSourceMode('report_sla_data', modeSelect.value);
             initReport();
+        });
+    }
+    const allSnapshotToggle = document.getElementById('allSnapshotTrendToggle');
+    if (allSnapshotToggle) {
+        allSnapshotToggle.checked = localStorage.getItem(REPORT_ALL_SNAPSHOT_TREND_KEY) === 'true';
+        allSnapshotToggle.addEventListener('change', () => {
+            localStorage.setItem(REPORT_ALL_SNAPSHOT_TREND_KEY, String(allSnapshotToggle.checked));
+            showToast(allSnapshotToggle.checked ? '指标趋势已切换为全部导入快照' : '指标趋势已切换为每天最新快照', 'success');
+            const openModal = document.getElementById('metric-item-trend-modal');
+            if (openModal?.classList.contains('open')) {
+                openMetricItemTrendModal(openModal.dataset.trendLabel, openModal.dataset.trendKind || 'metric');
+            }
         });
     }
     if (window.renderReportSourcePanel) window.renderReportSourcePanel();

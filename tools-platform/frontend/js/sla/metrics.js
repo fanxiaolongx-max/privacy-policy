@@ -33,14 +33,17 @@ function evaluateAllMetrics() {
                     if (pattern === '[非空]') return str !== '';
                     return str.includes(pattern);
                 };
+                const rowMatches = row => {
+                    if (typeof metricRuleRowMatches === 'function') return metricRuleRowMatches(row, r, true);
+                    if (r.colX && !checkMatch(row[r.colX], r.valY)) return false;
+                    return (Array.isArray(r.conditions) ? r.conditions : []).every(item => item && item.column && checkMatch(row[item.column], item.value));
+                };
 
                 if (r.type === 'count') {
                     let count = 0;
                     for (let i = 0; i < dataRows.length; i++) {
                         const row = dataRows[i];
-                        let passX = true;
-                        if (r.colX) passX = checkMatch(row[r.colX], r.valY);
-                        if (passX && checkMatch(row[r.colZ], r.valK)) count++;
+                        if (rowMatches(row) && checkMatch(row[r.colZ], r.valK)) count++;
                     }
                     return count;
                 } else if (r.type === 'ratio') {
@@ -48,9 +51,7 @@ function evaluateAllMetrics() {
                     let matched = 0;
                     for (let i = 0; i < dataRows.length; i++) {
                         const row = dataRows[i];
-                        let passX = true;
-                        if (r.colX) passX = checkMatch(row[r.colX], r.valY);
-                        if (passX) {
+                        if (rowMatches(row)) {
                             total++;
                             if (checkMatch(row[r.colZ], r.valK)) matched++;
                         }
@@ -59,7 +60,7 @@ function evaluateAllMetrics() {
                 } else {
                     for (let i = 0; i < dataRows.length; i++) {
                         const row = dataRows[i];
-                        if (checkMatch(row[r.colX], r.valY)) {
+                        if (rowMatches(row)) {
                             return row[r.colZ] !== undefined && row[r.colZ] !== null ? row[r.colZ] : '--';
                         }
                     }

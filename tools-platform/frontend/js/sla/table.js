@@ -64,6 +64,7 @@ function getMetricRulesUsingSection(secId) {
             rule.valY || '',
             rule.colZ || '',
             rule.valK || '',
+            ...(Array.isArray(rule.conditions) ? rule.conditions.flatMap(item => [item && item.column || '', item && item.value || '']) : []),
             rule.type || ''
         ].join('|');
         if (seen.has(dedupeKey)) return;
@@ -120,6 +121,9 @@ function getHighlightColumnMeta(secId, targetPriorityCols) {
     getMetricRulesUsingSection(secId).forEach(({ rule, parentRule, kind }) => {
         const label = getMetricHighlightLabel(rule, parentRule);
         if (rule.colX) addColumn(rule.colX, `${kind}「${label}」条件列`);
+        (Array.isArray(rule.conditions) ? rule.conditions : []).forEach(item => {
+            if (item && item.column) addColumn(item.column, `${kind}「${label}」高级条件列`);
+        });
         if (rule.colZ) addColumn(rule.colZ, `${kind}「${label}」取值/统计列`);
     });
 
@@ -162,19 +166,29 @@ function buildMetricCellHighlightMeta(secId) {
         const rows = state.globalData || [];
 
         if (type === 'extract') {
-            const matchedRow = rows.find(row => rule.colX && metricCellMatches(row[rule.colX], rule.valY));
+            const matchedRow = rows.find(row => typeof metricRuleRowMatches === 'function'
+                ? metricRuleRowMatches(row, rule, true)
+                : (rule.colX && metricCellMatches(row[rule.colX], rule.valY)));
             if (matchedRow) {
                 addCell(matchedRow, rule.colX, 'metric-condition-cell', `${ruleName} 条件命中：${rule.colX} 包含 ${rule.valY}`);
+                (Array.isArray(rule.conditions) ? rule.conditions : []).forEach(item => {
+                    if (item && item.column) addCell(matchedRow, item.column, 'metric-condition-cell', `${ruleName} 高级条件命中：${item.column} 包含 ${item.value}`);
+                });
                 addCell(matchedRow, rule.colZ, 'metric-value-cell', `${ruleName} 实际取值单元格`);
             }
             return;
         }
 
         rows.forEach(row => {
-            const passX = rule.colX ? metricCellMatches(row[rule.colX], rule.valY) : true;
+            const passX = typeof metricRuleRowMatches === 'function'
+                ? metricRuleRowMatches(row, rule, true)
+                : (rule.colX ? metricCellMatches(row[rule.colX], rule.valY) : true);
             if (rule.colX && passX) {
                 addCell(row, rule.colX, 'metric-condition-cell', `${ruleName} 统计范围命中：${rule.colX} 包含 ${rule.valY || '(空条件)'}`);
             }
+            if (passX) (Array.isArray(rule.conditions) ? rule.conditions : []).forEach(item => {
+                if (item && item.column) addCell(row, item.column, 'metric-condition-cell', `${ruleName} 高级条件命中：${item.column} 包含 ${item.value}`);
+            });
             if (passX && metricCellMatches(row[rule.colZ], rule.valK)) {
                 addCell(row, rule.colZ, 'metric-value-cell', `${ruleName} ${type === 'ratio' ? '分子' : '计数'}命中：${rule.colZ} 包含 ${rule.valK}`);
             }

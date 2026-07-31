@@ -804,6 +804,15 @@ function buildDOM(secId, title, themeColor) {
                         <input type="text" id="m-c-valk-${secId}" class="picker-search" placeholder="${tt('sla.section.countKPh')}" style="margin-bottom:6px;">
                     </div>
 
+                    <div class="metric-advanced-filter">
+                        <button type="button" class="metric-advanced-toggle" onclick="toggleMetricAdvancedConditions('${secId}')">⚙️ 高级多重过滤 <span id="m-conditions-count-${secId}">0</span></button>
+                        <div id="m-conditions-panel-${secId}" class="metric-advanced-panel" style="display:none;">
+                            <p>以下条件与上方主条件同时满足（AND），可不断增加。</p>
+                            <div id="m-conditions-${secId}"></div>
+                            <button type="button" class="metric-condition-add" onclick="addMetricConditionRow('${secId}')">＋ 增加列条件</button>
+                        </div>
+                    </div>
+
                     <div id="m-label-container-${secId}" style="display:flex;gap:6px;margin-bottom:8px;">
                         <input type="text" id="m-label-${secId}" class="picker-search" placeholder="${tt('sla.section.metricNamePh')}" style="margin-bottom:0;flex:1;">
                         <select id="m-color-${secId}" class="picker-search" style="margin-bottom:0;width:80px;cursor:pointer;">

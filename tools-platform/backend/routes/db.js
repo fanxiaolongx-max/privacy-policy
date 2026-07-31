@@ -668,9 +668,14 @@ router.get('/expiring_warning_trends', (req, res) => {
     });
 });
 
-function getDailySnapshotRows(days, callback) {
+function getMetricTrendSnapshotRows(days, includeAll, callback) {
     const sinceModifier = `-${days} days`;
-    const sql = `
+    const sql = includeAll ? `
+        SELECT id, snapshot_id, month, created_at, raw_data_json
+        FROM ReportSnapshots
+        WHERE DATE(created_at) >= DATE('now', ?)
+        ORDER BY datetime(created_at) ASC, id ASC
+    ` : `
         SELECT s.id, s.snapshot_id, s.month, s.created_at, s.raw_data_json
         FROM ReportSnapshots s
         INNER JOIN (
@@ -710,13 +715,14 @@ router.get('/metric_item_trend', (req, res) => {
     const kind = String(req.query.kind || 'metric');
     const daysRaw = parseInt(req.query.days, 10);
     const days = Number.isFinite(daysRaw) && daysRaw > 0 ? Math.min(daysRaw, 365) : 90;
+    const includeAllSnapshots = ['1', 'true', 'all'].includes(String(req.query.all_snapshots || '').toLowerCase());
     if (!label) return res.status(400).json({ error: 'Missing label' });
 
-    getDailySnapshotRows(days, (err, snapshots) => {
+    getMetricTrendSnapshotRows(days, includeAllSnapshots, (err, snapshots) => {
         if (err) return res.status(500).json({ error: err.message });
         if (!snapshots.length) {
             markSqliteSource(res, 'GET /api/db/metric_item_trend');
-            return res.json({ label, kind, days, trends: [] });
+            return res.json({ label, kind, days, all_snapshots: includeAllSnapshots, trends: [] });
         }
 
         if (kind === 'manual') {
@@ -754,7 +760,7 @@ router.get('/metric_item_trend', (req, res) => {
                 };
             });
             markSqliteSource(res, 'GET /api/db/metric_item_trend');
-            return res.json({ label, kind, days, trends });
+            return res.json({ label, kind, days, all_snapshots: includeAllSnapshots, trends });
         }
 
         const snapshotIds = snapshots.map(row => row.snapshot_id);
@@ -831,6 +837,7 @@ router.get('/metric_item_trend', (req, res) => {
                 label,
                 kind: 'metric',
                 days,
+                all_snapshots: includeAllSnapshots,
                 trends,
                 targets: {
                     current: Number.isFinite(currentMonth) ? monthTargets[currentMonth] || null : null,
