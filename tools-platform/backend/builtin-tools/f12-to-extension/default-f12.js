@@ -1825,9 +1825,10 @@
             }
 
             detailState.rows.forEach(row => {
-                if (row.numericScores) {
-                    row.hasCriticalScore = row.numericScores.some(score => score <= state.settings.criticalThreshold);
-                    row.hasSecondaryScore = row.numericScores.some(score => score < state.settings.secondaryThreshold && score > state.settings.criticalThreshold);
+                const numScores = row.numericScores || row.scoreArray?.filter(Number.isFinite);
+                if (numScores) {
+                    row.hasCriticalScore = numScores.some(score => score <= state.settings.criticalThreshold);
+                    row.hasSecondaryScore = numScores.some(score => score < state.settings.secondaryThreshold && score > state.settings.criticalThreshold);
                 }
                 applyExclusionToRow(row);
             });
@@ -1839,9 +1840,10 @@
                 );
 
             detailState.displayedRows.forEach(row => {
-                if (row.numericScores) {
-                    row.hasCriticalScore = row.numericScores.some(score => score <= state.settings.criticalThreshold);
-                    row.hasSecondaryScore = row.numericScores.some(score => score < state.settings.secondaryThreshold && score > state.settings.criticalThreshold);
+                const numScores = row.numericScores || row.scoreArray?.filter(Number.isFinite);
+                if (numScores) {
+                    row.hasCriticalScore = numScores.some(score => score <= state.settings.criticalThreshold);
+                    row.hasSecondaryScore = numScores.some(score => score < state.settings.secondaryThreshold && score > state.settings.criticalThreshold);
                 }
                 applyExclusionToRow(row);
             });
@@ -2247,10 +2249,12 @@
                     screen;
 
                 const availableWidth =
+                    window.innerWidth ||
                     screenObject?.availWidth ||
                     1200;
 
                 const availableHeight =
+                    window.innerHeight ||
                     screenObject?.availHeight ||
                     800;
 
@@ -2269,6 +2273,8 @@
                         availableHeight - 100
                     )
                 );
+                
+                targetHeight = Math.min(targetHeight, Math.max(300, availableHeight - 40));
             } else {
                 targetWidth = CONFIG.monitorWindow.width;
                 targetHeight = CONFIG.monitorWindow.height;
