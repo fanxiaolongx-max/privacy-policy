@@ -118,6 +118,31 @@ export function initProjectWorkspace(callbacks) {
     const batchDeleteError = document.getElementById('materialBatchDeleteError');
     const confirmBatchDeleteButton = document.getElementById('confirmMaterialBatchDeleteBtn');
     const toggleBatchSelectionButton = document.getElementById('toggleMaterialBatchSelectionBtn');
+    const organizeMaterialCategoriesButton = document.getElementById('organizeMaterialCategoriesBtn');
+    const classificationModal = document.getElementById('materialClassificationModal');
+    const classificationScopeStep = document.getElementById('materialClassificationScopeStep');
+    const classificationPreviewStep = document.getElementById('materialClassificationPreviewStep');
+    const classificationBatchArea = document.getElementById('materialClassificationBatchArea');
+    const classificationSearch = document.getElementById('materialClassificationSearch');
+    const classificationBatchList = document.getElementById('materialClassificationBatchList');
+    const classificationScopeSummary = document.getElementById('materialClassificationScopeSummary');
+    const classificationError = document.getElementById('materialClassificationError');
+    const classificationProgress = document.getElementById('materialClassificationProgress');
+    const classificationProgressText = document.getElementById('materialClassificationProgressText');
+    const classificationProgressPercent = document.getElementById('materialClassificationProgressPercent');
+    const classificationProgressBar = document.getElementById('materialClassificationProgressBar');
+    const classificationLogList = document.getElementById('materialClassificationLogList');
+    const classificationLogCount = document.getElementById('materialClassificationLogCount');
+    const analyzeClassificationButton = document.getElementById('analyzeMaterialClassificationBtn');
+    const toggleClassificationSelectionButton = document.getElementById('toggleMaterialClassificationSelectionBtn');
+    const classificationChangeCount = document.getElementById('materialClassificationChangeCount');
+    const classificationPreviewSummary = document.getElementById('materialClassificationPreviewSummary');
+    const classificationAliases = document.getElementById('materialClassificationAliases');
+    const classificationChangeList = document.getElementById('materialClassificationChangeList');
+    const toggleAllClassificationChanges = document.getElementById('toggleAllClassificationChanges');
+    const classificationApplySummary = document.getElementById('materialClassificationApplySummary');
+    const classificationApplyError = document.getElementById('materialClassificationApplyError');
+    const applyClassificationButton = document.getElementById('applyMaterialClassificationBtn');
     const projectDeleteModal = document.getElementById('projectDeleteModal');
     const projectDeleteName = document.getElementById('projectDeleteName');
     const projectDeleteMeta = document.getElementById('projectDeleteMeta');
@@ -155,6 +180,14 @@ export function initProjectWorkspace(callbacks) {
     let pendingDeleteProject = null;
     let importBatches = [];
     let selectedImportBatchKeys = new Set();
+    let classificationBatches = [];
+    let selectedClassificationBatchKeys = new Set();
+    let classificationPreview = null;
+    let selectedClassificationChangeIds = new Set();
+    let classificationBusy = false;
+    let activeClassificationTaskId = '';
+    let classificationProgressTimer = null;
+    let lastClassificationLogSequence = 0;
     if (![12, 24, 48, 96].includes(pageSize)) pageSize = 12;
     pageSizeSelect.value = String(pageSize);
 
@@ -466,6 +499,7 @@ export function initProjectWorkspace(callbacks) {
         } catch (_) { /* 使用前端默认限制，服务端仍会执行权威校验 */ }
         addMaterialAssetButton.classList.toggle('hidden', importCapabilities.canManageAssets === false);
         batchDeleteMaterialsButton.classList.toggle('hidden', importCapabilities.canManageAssets !== true);
+        organizeMaterialCategoriesButton.classList.toggle('hidden', importCapabilities.canManageAssets !== true);
         return importCapabilities;
     }
 
@@ -799,6 +833,258 @@ export function initProjectWorkspace(callbacks) {
             batchDeleteError.textContent = error.message;
             confirmBatchDeleteButton.disabled = false;
             confirmBatchDeleteButton.innerHTML = '<i class="ph ph-trash"></i> 重新删除';
+        }
+    }
+
+    function classificationScope() {
+        return document.querySelector('input[name="materialClassificationScope"]:checked')?.value || 'all';
+    }
+
+    function setClassificationProgress(percent, message) {
+        const value = Math.min(100, Math.max(0, Math.round(Number(percent) || 0)));
+        classificationProgressBar.style.width = `${value}%`;
+        classificationProgressPercent.textContent = `${value}%`;
+        if (message) classificationProgressText.textContent = message;
+    }
+
+    function resetClassificationProgress() {
+        clearTimeout(classificationProgressTimer);
+        classificationProgressTimer = null;
+        activeClassificationTaskId = '';
+        lastClassificationLogSequence = 0;
+        classificationLogList.innerHTML = '';
+        classificationLogCount.textContent = '0';
+        setClassificationProgress(0, '正在准备分析…');
+        classificationProgress.classList.add('hidden');
+    }
+
+    function appendClassificationLog(entry) {
+        const sequence = Number(entry?.sequence);
+        if (Number.isFinite(sequence) && sequence > 0) {
+            if (sequence <= lastClassificationLogSequence) return;
+            lastClassificationLogSequence = sequence;
+        }
+        const timestamp = entry?.time ? new Date(entry.time) : new Date();
+        const time = Number.isNaN(timestamp.getTime())
+            ? '--:--:--'
+            : timestamp.toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const item = document.createElement('li');
+        item.className = ['success', 'warning', 'error'].includes(entry?.level) ? entry.level : 'info';
+        item.innerHTML = `<time>${escapeHtml(time)}</time><i></i><span>${escapeHtml(entry?.message || '')}</span>`;
+        classificationLogList.appendChild(item);
+        while (classificationLogList.children.length > 180) classificationLogList.firstElementChild.remove();
+        classificationLogCount.textContent = String(classificationLogList.children.length);
+        classificationLogList.scrollTop = classificationLogList.scrollHeight;
+    }
+
+    async function fetchClassificationProgress(taskId, scheduleNext = true) {
+        if (!taskId || activeClassificationTaskId !== taskId) return;
+        try {
+            const progress = await request(`/classification-reorganization/progress/${encodeURIComponent(taskId)}`);
+            if (activeClassificationTaskId !== taskId) return;
+            setClassificationProgress(progress.percent, progress.message);
+            (progress.logs || []).forEach(appendClassificationLog);
+            if (scheduleNext && !['completed', 'failed'].includes(progress.status)) {
+                classificationProgressTimer = window.setTimeout(() => fetchClassificationProgress(taskId, true), 450);
+            }
+        } catch (_) {
+            if (scheduleNext && activeClassificationTaskId === taskId) {
+                classificationProgressTimer = window.setTimeout(() => fetchClassificationProgress(taskId, true), 750);
+            }
+        }
+    }
+
+    function filteredClassificationBatches() {
+        const keyword = classificationSearch.value.trim().toLocaleLowerCase('zh-CN');
+        return classificationBatches.filter(item => !keyword
+            || item.sourceFilename.toLocaleLowerCase('zh-CN').includes(keyword)
+            || String(item.uploader || '').toLocaleLowerCase('zh-CN').includes(keyword));
+    }
+
+    function updateClassificationScopeSummary() {
+        const allAssetsCount = classificationBatches.reduce((sum, item) => sum + Number(item.assetCount || 0), 0);
+        const selected = classificationBatches.filter(item => selectedClassificationBatchKeys.has(importBatchKey(item)));
+        const selectedAssetsCount = selected.reduce((sum, item) => sum + Number(item.assetCount || 0), 0);
+        const byBatch = classificationScope() === 'batches';
+        classificationBatchArea.classList.toggle('hidden', !byBatch);
+        classificationScopeSummary.textContent = byBatch
+            ? selected.length ? `将分析 ${selected.length} 个导入文件，共 ${selectedAssetsCount} 页` : '请选择至少一个导入文件'
+            : `将分析全部 ${allAssetsCount || pagination.total || 0} 页素材`;
+        analyzeClassificationButton.disabled = classificationBusy || (byBatch && !selected.length);
+        const visible = filteredClassificationBatches();
+        toggleClassificationSelectionButton.textContent = visible.length
+            && visible.every(item => selectedClassificationBatchKeys.has(importBatchKey(item)))
+            ? '取消选择当前结果'
+            : '全选当前结果';
+    }
+
+    function renderClassificationBatchList() {
+        const visible = filteredClassificationBatches();
+        classificationBatchList.innerHTML = visible.length ? visible.map(item => {
+            const key = importBatchKey(item);
+            const selected = selectedClassificationBatchKeys.has(key);
+            return `
+                <label class="material-batch-delete-item ${selected ? 'selected' : ''}">
+                    <input type="checkbox" data-classification-batch-key="${escapeHtml(key)}" ${selected ? 'checked' : ''}>
+                    <span><strong title="${escapeHtml(item.sourceFilename)}">${escapeHtml(item.sourceFilename)}</strong><small>${escapeHtml(item.uploader || '未知用户')} · ${formatTime(item.importedAt)} · 第 ${item.firstPage}-${item.lastPage} 页</small></span>
+                    <b>${Number(item.assetCount || 0)} 页</b>
+                </label>`;
+        }).join('') : '<div class="material-batch-delete-empty">没有匹配的导入文件</div>';
+        updateClassificationScopeSummary();
+    }
+
+    function closeClassificationOrganizer() {
+        if (classificationBusy) return;
+        resetClassificationProgress();
+        classificationModal.classList.add('hidden');
+        classificationModal.setAttribute('aria-hidden', 'true');
+        classificationError.textContent = '';
+        classificationApplyError.textContent = '';
+        classificationPreview = null;
+        selectedClassificationChangeIds = new Set();
+    }
+
+    async function openClassificationOrganizer() {
+        if (importCapabilities.canManageAssets !== true) return;
+        classificationModal.classList.remove('hidden');
+        classificationModal.setAttribute('aria-hidden', 'false');
+        classificationScopeStep.classList.remove('hidden');
+        classificationPreviewStep.classList.add('hidden');
+        document.querySelector('input[name="materialClassificationScope"][value="all"]').checked = true;
+        classificationSearch.value = '';
+        classificationError.textContent = '';
+        classificationApplyError.textContent = '';
+        classificationPreview = null;
+        selectedClassificationBatchKeys = new Set();
+        resetClassificationProgress();
+        classificationBatchList.innerHTML = '<div class="material-batch-delete-empty">正在读取导入文件…</div>';
+        updateClassificationScopeSummary();
+        try {
+            const result = await request('/asset-import-batches');
+            classificationBatches = Array.isArray(result.items) ? result.items : [];
+            renderClassificationBatchList();
+        } catch (error) {
+            classificationError.textContent = error.message;
+            classificationBatchList.innerHTML = '<div class="material-batch-delete-empty">导入文件读取失败</div>';
+        }
+    }
+
+    function changedDimension(label, before, after) {
+        if (before === after) return '';
+        return `<div class="material-classification-dimension"><span>${escapeHtml(label)}</span><div><del title="${escapeHtml(before)}">${escapeHtml(before || '未设置')}</del><i class="ph ph-arrow-right"></i><ins title="${escapeHtml(after)}">${escapeHtml(after || '未设置')}</ins></div></div>`;
+    }
+
+    function updateClassificationApplySummary() {
+        const count = selectedClassificationChangeIds.size;
+        classificationApplySummary.textContent = count ? `将应用 ${count} 页修改` : '尚未选择修改';
+        applyClassificationButton.disabled = classificationBusy || !count;
+        const total = classificationPreview?.changes?.length || 0;
+        toggleAllClassificationChanges.checked = total > 0 && count === total;
+        toggleAllClassificationChanges.indeterminate = count > 0 && count < total;
+    }
+
+    function renderClassificationPreview() {
+        const changes = classificationPreview?.changes || [];
+        classificationScopeStep.classList.add('hidden');
+        classificationPreviewStep.classList.remove('hidden');
+        classificationChangeCount.textContent = String(changes.length);
+        classificationPreviewSummary.textContent = `共分析 ${Number(classificationPreview?.totalAssets || 0)} 页；${Number(classificationPreview?.unchangedCount || 0)} 页无需调整。请逐项核对后再确认写入。`;
+        const aliases = classificationPreview?.aliases || [];
+        classificationAliases.classList.toggle('hidden', !aliases.length);
+        classificationAliases.innerHTML = aliases.map(item => `<span>${escapeHtml(item.from)} → ${escapeHtml(item.to)}</span>`).join('');
+        selectedClassificationChangeIds = new Set(changes.map(item => item.id));
+        classificationChangeList.innerHTML = changes.length ? changes.map(change => `
+            <label class="material-classification-change">
+                <input type="checkbox" data-classification-change-id="${escapeHtml(change.id)}" checked>
+                <span class="material-classification-change-info">
+                    <strong title="${escapeHtml(change.summary)}">${escapeHtml(change.summary || '未生成摘要')}</strong>
+                    <span title="${escapeHtml(change.sourceFilename)}">${escapeHtml(change.sourceFilename)} · 第 ${Number(change.pageNumber || 0)} 页</span>
+                    <small>${escapeHtml(change.reason || '根据已保存页面文字重新判断')}</small>
+                </span>
+                <span class="material-classification-dimensions">
+                    ${changedDimension('主题分类', change.before.tag, change.after.tag)}
+                    ${changedDimension('页面类型', change.before.pageType, change.after.pageType)}
+                    ${changedDimension('用途', change.before.usageScenario, change.after.usageScenario)}
+                </span>
+            </label>`).join('') : '<div class="material-classification-change-empty">分析完成，所选页面的主题分类、页面类型和用途均无需修改。</div>';
+        updateClassificationApplySummary();
+    }
+
+    async function analyzeClassification() {
+        if (classificationBusy) return;
+        const byBatch = classificationScope() === 'batches';
+        const selected = classificationBatches.filter(item => selectedClassificationBatchKeys.has(importBatchKey(item)));
+        if (byBatch && !selected.length) return;
+        classificationBusy = true;
+        analyzeClassificationButton.disabled = true;
+        analyzeClassificationButton.innerHTML = '<i class="ph ph-spinner"></i> 分析中…';
+        classificationError.textContent = '';
+        resetClassificationProgress();
+        classificationProgress.classList.remove('hidden');
+        setClassificationProgress(1, '正在提交分类整理任务…');
+        activeClassificationTaskId = `clstask_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+        const taskId = activeClassificationTaskId;
+        appendClassificationLog({ level: 'info', message: byBatch ? `开始分析 ${selected.length} 个导入文件` : '开始分析素材库全部页面' });
+        appendClassificationLog({ level: 'info', message: '仅重新识别主题分类、页面类型和用途；摘要、原文、PPT 与缩略图保持不变' });
+        try {
+            const previewRequest = request('/classification-reorganization/preview', {
+                method: 'POST',
+                body: JSON.stringify({
+                    taskId,
+                    allAssets: !byBatch,
+                    batches: selected.map(item => ({
+                        sourceFilename: item.sourceFilename,
+                        importedAt: item.importedAt,
+                        uploader: item.uploader || ''
+                    }))
+                })
+            });
+            fetchClassificationProgress(taskId, true);
+            classificationPreview = await previewRequest;
+            clearTimeout(classificationProgressTimer);
+            await fetchClassificationProgress(taskId, false);
+            setClassificationProgress(100, `分析完成，发现 ${classificationPreview.changes.length} 页建议修改`);
+            renderClassificationPreview();
+        } catch (error) {
+            clearTimeout(classificationProgressTimer);
+            await fetchClassificationProgress(taskId, false);
+            setClassificationProgress(Number.parseInt(classificationProgressPercent.textContent, 10) || 1, '分类整理分析失败');
+            appendClassificationLog({ level: 'error', message: error.message });
+            classificationError.textContent = error.message;
+        } finally {
+            classificationBusy = false;
+            analyzeClassificationButton.innerHTML = '<i class="ph ph-sparkle"></i> 开始分析';
+            updateClassificationScopeSummary();
+            updateClassificationApplySummary();
+        }
+    }
+
+    async function applyClassificationChanges() {
+        if (classificationBusy || !classificationPreview || !selectedClassificationChangeIds.size) return;
+        classificationBusy = true;
+        applyClassificationButton.disabled = true;
+        classificationApplyError.textContent = '';
+        applyClassificationButton.innerHTML = '<i class="ph ph-spinner"></i> 正在写入…';
+        try {
+            const result = await request('/classification-reorganization/apply', {
+                method: 'POST',
+                body: JSON.stringify({
+                    previewId: classificationPreview.previewId,
+                    changeIds: [...selectedClassificationChangeIds]
+                })
+            });
+            classificationBusy = false;
+            closeClassificationOrganizer();
+            callbacks.setStatus(`分类整理完成：已更新 ${Number(result.appliedCount || 0)} 页`);
+            if (result.skippedIds?.length) alert(`已更新 ${result.appliedCount} 页；另有 ${result.skippedIds.length} 页在预览后发生变化，已安全跳过。`);
+            currentPage = 1;
+            await loadLibrary();
+        } catch (error) {
+            classificationApplyError.textContent = error.message;
+        } finally {
+            classificationBusy = false;
+            applyClassificationButton.innerHTML = '<i class="ph ph-check-circle"></i> 应用所选修改';
+            updateClassificationApplySummary();
         }
     }
 
@@ -1228,6 +1514,56 @@ export function initProjectWorkspace(callbacks) {
         });
         renderBatchDeleteList();
     });
+    organizeMaterialCategoriesButton.addEventListener('click', openClassificationOrganizer);
+    document.getElementById('closeMaterialClassificationBtn').addEventListener('click', closeClassificationOrganizer);
+    document.getElementById('cancelMaterialClassificationBtn').addEventListener('click', closeClassificationOrganizer);
+    classificationModal.addEventListener('click', event => { if (event.target === classificationModal) closeClassificationOrganizer(); });
+    document.querySelectorAll('input[name="materialClassificationScope"]').forEach(input => {
+        input.addEventListener('change', updateClassificationScopeSummary);
+    });
+    classificationSearch.addEventListener('input', renderClassificationBatchList);
+    classificationBatchList.addEventListener('change', event => {
+        const checkbox = event.target.closest('[data-classification-batch-key]');
+        if (!checkbox) return;
+        if (checkbox.checked) selectedClassificationBatchKeys.add(checkbox.dataset.classificationBatchKey);
+        else selectedClassificationBatchKeys.delete(checkbox.dataset.classificationBatchKey);
+        renderClassificationBatchList();
+    });
+    toggleClassificationSelectionButton.addEventListener('click', () => {
+        const visible = filteredClassificationBatches();
+        const shouldClear = visible.length && visible.every(item => selectedClassificationBatchKeys.has(importBatchKey(item)));
+        visible.forEach(item => {
+            const key = importBatchKey(item);
+            if (shouldClear) selectedClassificationBatchKeys.delete(key);
+            else selectedClassificationBatchKeys.add(key);
+        });
+        renderClassificationBatchList();
+    });
+    analyzeClassificationButton.addEventListener('click', analyzeClassification);
+    classificationChangeList.addEventListener('change', event => {
+        const checkbox = event.target.closest('[data-classification-change-id]');
+        if (!checkbox) return;
+        if (checkbox.checked) selectedClassificationChangeIds.add(checkbox.dataset.classificationChangeId);
+        else selectedClassificationChangeIds.delete(checkbox.dataset.classificationChangeId);
+        updateClassificationApplySummary();
+    });
+    toggleAllClassificationChanges.addEventListener('change', () => {
+        const changes = classificationPreview?.changes || [];
+        selectedClassificationChangeIds = toggleAllClassificationChanges.checked
+            ? new Set(changes.map(item => item.id))
+            : new Set();
+        classificationChangeList.querySelectorAll('[data-classification-change-id]').forEach(checkbox => {
+            checkbox.checked = toggleAllClassificationChanges.checked;
+        });
+        updateClassificationApplySummary();
+    });
+    document.getElementById('backMaterialClassificationBtn').addEventListener('click', () => {
+        if (classificationBusy) return;
+        classificationPreviewStep.classList.add('hidden');
+        classificationScopeStep.classList.remove('hidden');
+        classificationApplyError.textContent = '';
+    });
+    applyClassificationButton.addEventListener('click', applyClassificationChanges);
     shelfList.addEventListener('click', event => {
         const button = event.target.closest('[data-remove-shelf]');
         if (!button) return;
@@ -1257,6 +1593,10 @@ export function initProjectWorkspace(callbacks) {
     document.getElementById('clearMaterialShelfBtn').addEventListener('click', () => { shelfItems = []; renderShelf(); });
     combineButton.addEventListener('click', downloadCombinedPpt);
     document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && !classificationModal.classList.contains('hidden')) {
+            closeClassificationOrganizer();
+            return;
+        }
         if (event.key === 'Escape' && !batchDeleteModal.classList.contains('hidden')) {
             closeBatchDelete();
             return;

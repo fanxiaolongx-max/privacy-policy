@@ -1,4 +1,5 @@
 const express = require('express');
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
@@ -16,6 +17,9 @@ const slideAnalyzer = require('../models/slide-content-analyzer');
 const router = express.Router();
 const uploadDir = path.join(DATA_DIR, 'tmp', 'slide-imports');
 const importTasks = new Map();
+const classificationPreviewSessions = new Map();
+const classificationTasks = new Map();
+const CLASSIFICATION_PREVIEW_TTL_MS = 30 * 60 * 1000;
 const configuredUploadMb = Number.parseInt(process.env.SLIDE_IMPORT_MAX_MB || '200', 10);
 const MAX_PPTX_UPLOAD_MB = Number.isInteger(configuredUploadMb) && configuredUploadMb >= 10 && configuredUploadMb <= 2048
     ? configuredUploadMb
@@ -104,6 +108,70 @@ function decorateAssetPermissions(asset, user) {
         canEdit: Boolean(user && user.role === 'admin'),
         canDelete: canDeleteAsset(asset, user)
     };
+}
+
+function cleanupClassificationPreviews() {
+    const now = Date.now();
+    classificationPreviewSessions.forEach((session, id) => {
+        if (session.expiresAt <= now) classificationPreviewSessions.delete(id);
+    });
+}
+
+function classificationOwner(user) {
+    return `${String(user && user.username || '')}\u0000${String(user && user.role || '')}`;
+}
+
+function normalizeClassificationTaskId(value) {
+    const id = String(value || '').trim();
+    return /^[a-zA-Z0-9_-]{8,100}$/.test(id) ? id : slideRepo.makeId('clstask');
+}
+
+function ensureClassificationTask(taskId, user) {
+    if (!classificationTasks.has(taskId)) {
+        classificationTasks.set(taskId, {
+            taskId,
+            owner: classificationOwner(user),
+            status: 'running',
+            percent: 1,
+            message: '等待开始分类整理…',
+            logs: [],
+            nextSequence: 1,
+            updatedAt: new Date().toISOString()
+        });
+    }
+    return classificationTasks.get(taskId);
+}
+
+function updateClassificationTask(taskId, user, percent, message, detail = message, level = 'info') {
+    const task = ensureClassificationTask(taskId, user);
+    task.percent = Math.min(100, Math.max(task.percent || 0, Math.round(Number(percent) || 0)));
+    task.message = String(message || task.message || '处理中…').slice(0, 240);
+    task.updatedAt = new Date().toISOString();
+    if (detail) {
+        task.logs.push({
+            sequence: task.nextSequence++,
+            time: task.updatedAt,
+            level,
+            message: String(detail).replace(/[\r\n]+/g, ' ').slice(0, 500)
+        });
+        if (task.logs.length > 400) task.logs.splice(0, task.logs.length - 400);
+    }
+    return task;
+}
+
+function finishClassificationTask(taskId, user, status, message, level = 'success') {
+    const task = updateClassificationTask(
+        taskId,
+        user,
+        status === 'completed' ? 100 : ensureClassificationTask(taskId, user).percent,
+        message,
+        message,
+        level
+    );
+    task.status = status;
+    const cleanup = setTimeout(() => classificationTasks.delete(taskId), 10 * 60 * 1000);
+    if (cleanup.unref) cleanup.unref();
+    return task;
 }
 
 function assetFiltersFromQuery(query = {}) {
@@ -295,6 +363,125 @@ router.get('/asset-import-batches', async (req, res) => {
         return res.status(403).json({ error: '仅管理员可以按导入文件批量管理素材' });
     }
     res.json({ items: await slideRepo.listAssetImportBatches() });
+});
+
+router.get('/classification-reorganization/progress/:taskId', (req, res) => {
+    if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: '仅管理员可以查看分类整理进度' });
+    }
+    const taskId = normalizeClassificationTaskId(req.params.taskId);
+    const task = classificationTasks.get(taskId);
+    if (!task) {
+        return res.json({
+            taskId,
+            status: 'waiting',
+            percent: 1,
+            message: '等待分类任务启动…',
+            logs: []
+        });
+    }
+    if (task.owner !== classificationOwner(req.user)) {
+        return res.status(404).json({ error: '分类整理任务不存在或已过期' });
+    }
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(task);
+});
+
+router.post('/classification-reorganization/preview', async (req, res) => {
+    const taskId = normalizeClassificationTaskId(req.body && req.body.taskId);
+    try {
+        if (!req.user || req.user.role !== 'admin') {
+            return res.status(403).json({ error: '仅管理员可以整理素材分类' });
+        }
+        updateClassificationTask(taskId, req.user, 2, '正在确定分析范围…', '已收到分类整理请求，正在校验所选导入文件和管理员权限');
+        cleanupClassificationPreviews();
+        const allAssets = req.body && req.body.allAssets === true;
+        const batches = Array.isArray(req.body && req.body.batches) ? req.body.batches : [];
+        if (!allAssets && !batches.length) {
+            finishClassificationTask(taskId, req.user, 'failed', '请选择全部素材或至少一个导入文件', 'error');
+            return res.status(400).json({ error: '请选择全部素材或至少一个导入文件', taskId });
+        }
+        if (batches.length > 100) {
+            finishClassificationTask(taskId, req.user, 'failed', '单次最多选择 100 个导入文件', 'error');
+            return res.status(400).json({ error: '单次最多选择 100 个导入文件', taskId });
+        }
+        const assets = await slideRepo.listAssetsForReclassification({ allAssets, batches });
+        if (!assets.length) {
+            finishClassificationTask(taskId, req.user, 'failed', '所选范围内没有可整理的 PPT 页面素材', 'error');
+            return res.status(404).json({ error: '所选范围内没有可整理的 PPT 页面素材', taskId });
+        }
+        updateClassificationTask(
+            taskId,
+            req.user,
+            6,
+            `已载入 ${assets.length} 页，准备调用 AI…`,
+            `数据库读取完成：共 ${assets.length} 页；仅使用已保存文字，不会重新解析 PPT、生成缩略图或改写摘要`
+        );
+        const analysis = await slideAnalyzer.reclassifyExistingAssets(assets, {
+            onProgress(event) {
+                updateClassificationTask(
+                    taskId,
+                    req.user,
+                    7 + (Number(event.progress) || 0) * 91,
+                    event.status || '正在整理素材分类…',
+                    event.message || event.status,
+                    event.level || 'info'
+                );
+            }
+        });
+        const previewId = `cls_${Date.now().toString(36)}${crypto.randomBytes(8).toString('hex')}`;
+        classificationPreviewSessions.set(previewId, {
+            owner: classificationOwner(req.user),
+            changes: analysis.changes,
+            createdAt: Date.now(),
+            expiresAt: Date.now() + CLASSIFICATION_PREVIEW_TTL_MS
+        });
+        finishClassificationTask(
+            taskId,
+            req.user,
+            'completed',
+            `分析完成：${analysis.totalAssets} 页中 ${analysis.changes.length} 页建议修改`,
+            'success'
+        );
+        res.json({
+            taskId,
+            previewId,
+            expiresInMinutes: CLASSIFICATION_PREVIEW_TTL_MS / 60000,
+            totalAssets: analysis.totalAssets,
+            unchangedCount: analysis.unchangedCount,
+            changes: analysis.changes,
+            aliases: analysis.aliases
+        });
+    } catch (error) {
+        console.error('[slide-design] classification reorganization preview failed:', error);
+        if (req.user) finishClassificationTask(taskId, req.user, 'failed', `分类整理分析失败：${error.message}`, 'error');
+        res.status(400).json({ error: `分类整理分析失败：${error.message}`, taskId });
+    }
+});
+
+router.post('/classification-reorganization/apply', async (req, res) => {
+    try {
+        if (!req.user || req.user.role !== 'admin') {
+            return res.status(403).json({ error: '仅管理员可以确认素材分类修改' });
+        }
+        cleanupClassificationPreviews();
+        const previewId = String(req.body && req.body.previewId || '');
+        const session = classificationPreviewSessions.get(previewId);
+        if (!session || session.owner !== classificationOwner(req.user)) {
+            return res.status(404).json({ error: '分类整理预览已过期，请重新分析' });
+        }
+        const selectedIds = new Set((Array.isArray(req.body && req.body.changeIds) ? req.body.changeIds : [])
+            .map(String));
+        if (!selectedIds.size) return res.status(400).json({ error: '请至少勾选一项建议修改' });
+        const selectedChanges = session.changes.filter(change => selectedIds.has(change.id));
+        if (!selectedChanges.length) return res.status(400).json({ error: '所选修改不属于当前预览' });
+        const result = await slideRepo.applyAssetClassificationChanges(selectedChanges);
+        classificationPreviewSessions.delete(previewId);
+        res.json({ success: true, requestedCount: selectedChanges.length, ...result });
+    } catch (error) {
+        console.error('[slide-design] classification reorganization apply failed:', error);
+        res.status(400).json({ error: `分类整理写入失败：${error.message}` });
+    }
 });
 
 router.get('/import-progress/:taskId', (req, res) => {

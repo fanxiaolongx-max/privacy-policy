@@ -327,6 +327,89 @@ async function deleteAssetsByImportBatches(batches) {
     };
 }
 
+async function listAssetsForReclassification({ allAssets = false, batches = [] } = {}) {
+    await ensureReady();
+    if (allAssets) {
+        return (await all(`SELECT * FROM slide_library_assets
+            ORDER BY source_filename, imported_at, page_number, id`)).map(rowToAsset);
+    }
+    const normalized = normalizeImportBatches(batches);
+    if (!normalized.length) return [];
+    const clauses = normalized.map(() => '(source_filename = ? AND imported_at = ? AND uploader = ?)');
+    const params = normalized.flatMap(item => [item.sourceFilename, item.importedAt, item.uploader]);
+    return (await all(
+        `SELECT * FROM slide_library_assets WHERE ${clauses.join(' OR ')}
+         ORDER BY source_filename, imported_at, page_number, id`,
+        params
+    )).map(rowToAsset);
+}
+
+function migratedClassificationTags(asset, change) {
+    const previousTag = cleanTag(asset.tag);
+    const previousPageType = cleanName(asset.pageType, '内容页');
+    const nextTag = cleanTag(change.tag);
+    const nextPageType = cleanName(change.pageType, '内容页');
+    const tags = (Array.isArray(asset.tags) ? asset.tags : []).map(item => {
+        const cleaned = cleanTag(item);
+        if (cleaned === previousTag) return nextTag;
+        if (cleaned === cleanTag(previousPageType)) return nextPageType;
+        return cleaned;
+    });
+    if ((asset.tags || []).some(item => cleanTag(item) === cleanTag(previousPageType)) && !tags.includes(nextPageType)) {
+        tags.unshift(nextPageType);
+    }
+    return cleanTags(tags, nextTag);
+}
+
+async function applyAssetClassificationChanges(changes = []) {
+    await ensureReady();
+    const normalized = Array.isArray(changes) ? changes : [];
+    if (!normalized.length) return { appliedCount: 0, appliedIds: [], skippedIds: [] };
+    const appliedIds = [];
+    const skippedIds = [];
+    await run('BEGIN IMMEDIATE');
+    try {
+        for (const change of normalized) {
+            const asset = rowToAsset(await get('SELECT * FROM slide_library_assets WHERE id = ?', [String(change.id || '')]));
+            if (!asset
+                || asset.tag !== change.before.tag
+                || asset.pageType !== change.before.pageType
+                || asset.usageScenario !== change.before.usageScenario) {
+                skippedIds.push(String(change.id || ''));
+                continue;
+            }
+            const nextTag = cleanTag(change.after.tag);
+            const nextPageType = cleanName(change.after.pageType, '内容页');
+            const nextUsageScenario = cleanName(change.after.usageScenario, '方案讲解');
+            const result = await run(
+                `UPDATE slide_library_assets
+                 SET tag = ?, tags_json = ?, page_type = ?, usage_scenario = ?
+                 WHERE id = ? AND tag = ? AND page_type = ? AND usage_scenario = ?`,
+                [
+                    nextTag,
+                    JSON.stringify(migratedClassificationTags(asset, {
+                        tag: nextTag,
+                        pageType: nextPageType
+                    })),
+                    nextPageType,
+                    nextUsageScenario,
+                    asset.id,
+                    change.before.tag,
+                    change.before.pageType,
+                    change.before.usageScenario
+                ]
+            );
+            if (result.changes) appliedIds.push(asset.id);
+            else skippedIds.push(asset.id);
+        }
+        await run('COMMIT');
+    } catch (error) {
+        try { await run('ROLLBACK'); } catch (_) { /* preserve original error */ }
+        throw error;
+    }
+    return { appliedCount: appliedIds.length, appliedIds, skippedIds };
+}
+
 function buildAssetFilter({ query = '', tag = '', date = '', period = '', uploader = '', usageScenario = '', pageType = '', sourceFilename = '' } = {}, exclude = []) {
     const clauses = [];
     const params = [];
@@ -497,6 +580,8 @@ module.exports = {
     deleteAsset,
     listAssetImportBatches,
     deleteAssetsByImportBatches,
+    listAssetsForReclassification,
+    applyAssetClassificationChanges,
     listAssets,
     countAssets,
     getAssetFilters,

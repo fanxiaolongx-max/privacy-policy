@@ -582,12 +582,214 @@ async function refineExistingSummaries(slides, items) {
     return refineSummaries(aiProviderClient.createClient(settings), slides, items, settings);
 }
 
+function mergeReclassificationVocabulary(vocabulary, assets) {
+    const base = normalizeLibraryVocabulary(vocabulary);
+    const selectedCounts = new Map();
+    const selectedSamples = new Map();
+    (Array.isArray(assets) ? assets : []).forEach(asset => {
+        const name = slideRepo.cleanTag(asset.tag);
+        selectedCounts.set(name, (selectedCounts.get(name) || 0) + 1);
+        if (!selectedSamples.has(name)) selectedSamples.set(name, normalizeText(asset.summary).slice(0, 120));
+    });
+    const topics = new Map(base.topics.map(item => [item.name, { ...item }]));
+    selectedCounts.forEach((count, name) => {
+        if (!topics.has(name)) topics.set(name, { name, count, sampleSummary: selectedSamples.get(name) || '' });
+    });
+    const sortedTopics = [...topics.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'zh-CN'));
+    const specificTopics = sortedTopics.filter(item => !/^(综合材料|其他|通用内容)$/.test(item.name));
+    return {
+        ...base,
+        topics: (specificTopics.length ? specificTopics : sortedTopics).slice(0, 120)
+    };
+}
+
+async function harmonizeExistingTopics(client, vocabulary, settings) {
+    const topics = vocabulary.topics || [];
+    if (!topics.length) return { aliases: new Map(), topics: [] };
+    const prompt = `你是企业 PPT 素材库的信息架构师。请整理已有主题分类名称，把语义相同或高度近似的名字合并。
+
+规则：
+1. canonical 必须原样选自输入 name，优先保留使用次数 count 更高、含义更清晰、可复用性更强的名称。
+2. 只有可相互替代的近义名称才能合并；上下位概念、不同业务对象、不同流程阶段不得强行合并。
+3. aliases 只列出需要改名的其他现有名称，不包含 canonical。
+4. 没有近义项的分类不需要输出。
+5. 返回严格 JSON：{"groups":[{"canonical":"方案架构","aliases":["解决方案架构"],"reason":"语义相同，保留高频名称"}]}。
+
+现有主题分类：${JSON.stringify(topics)}`;
+    const result = await client.generateText({
+        prompt,
+        systemInstruction: '只输出严格合法 JSON，不创建输入中不存在的分类名称。',
+        maxOutputTokens: Math.min(Math.max(Number(settings.maxOutputTokens || 2048), 2048), 4096),
+        temperature: 0,
+        responseMimeType: 'application/json',
+        thinkingBudget: 0
+    });
+    const parsed = parseJson(result.text);
+    const names = new Set(topics.map(item => item.name));
+    const groups = (Array.isArray(parsed.groups) ? parsed.groups : []).map(group => ({
+        canonical: slideRepo.cleanTag(group && group.canonical),
+        aliases: Array.isArray(group && group.aliases) ? group.aliases : []
+    })).filter(group => names.has(group.canonical));
+    const canonicalNamesFromGroups = new Set(groups.map(group => group.canonical));
+    const aliases = new Map();
+    groups.forEach(group => {
+        const canonical = group.canonical;
+        group.aliases.forEach(value => {
+            const alias = slideRepo.cleanTag(value);
+            if (alias !== canonical && names.has(alias) && !canonicalNamesFromGroups.has(alias) && !aliases.has(alias)) {
+                aliases.set(alias, canonical);
+            }
+        });
+    });
+    const canonicalNames = new Set(topics.map(item => aliases.get(item.name) || item.name));
+    return {
+        aliases,
+        topics: topics.filter(item => canonicalNames.has(item.name) && !aliases.has(item.name))
+    };
+}
+
+function normalizeReclassificationItem(raw, asset, allowedTopics, aliases) {
+    const requestedTopic = raw ? slideRepo.cleanTag(raw.topic || raw.category || raw.tag) : '';
+    const mappedCurrentTopic = aliases.get(asset.tag) || asset.tag;
+    const tag = allowedTopics.has(requestedTopic) ? requestedTopic : mappedCurrentTopic;
+    const requestedPageType = normalizeText(raw && raw.pageType);
+    const requestedUsageScenario = normalizeText(raw && raw.usageScenario);
+    return {
+        id: asset.id,
+        before: {
+            tag: asset.tag,
+            pageType: asset.pageType,
+            usageScenario: asset.usageScenario
+        },
+        after: {
+            tag,
+            pageType: PAGE_TYPES.includes(requestedPageType) ? requestedPageType : asset.pageType,
+            usageScenario: USAGE_SCENARIOS.includes(requestedUsageScenario) ? requestedUsageScenario : asset.usageScenario
+        },
+        reason: normalizeText(raw && raw.reason).slice(0, 180),
+        sourceFilename: asset.sourceFilename,
+        pageNumber: asset.pageNumber,
+        summary: asset.summary
+    };
+}
+
+function hasClassificationChange(change) {
+    return change.before.tag !== change.after.tag
+        || change.before.pageType !== change.after.pageType
+        || change.before.usageScenario !== change.after.usageScenario;
+}
+
+async function classifyExistingAssetChunk(client, assets, canonicalTopics, aliases, settings) {
+    const allowedNames = canonicalTopics.map(item => item.name);
+    const compactAssets = assets.map(asset => ({
+        id: asset.id,
+        file: asset.sourceFilename,
+        pageNumber: asset.pageNumber,
+        current: {
+            topic: asset.tag,
+            pageType: asset.pageType,
+            usageScenario: asset.usageScenario
+        },
+        summary: normalizeText(asset.summary).slice(0, 180),
+        intent: normalizeText(asset.intent).slice(0, 160),
+        extractedText: String(asset.extractedText || '').slice(0, 3500)
+    }));
+    const prompt = `请利用素材库中已经提取保存的文字，对这些历史 PPT 页面重新编目。不要生成摘要，不要改写内容。
+
+允许的主题分类：${JSON.stringify(canonicalTopics)}
+页面类型只能选择：${PAGE_TYPES.join('、')}
+用途只能选择：${USAGE_SCENARIOS.join('、')}
+
+要求：
+1. topic 必须从允许的主题分类 name 中原样选择，优先复用已有名称。
+2. 根据页面主要讨论对象判断主题，不能只看偶然关键词；语义近似页面必须归入同一主题。
+3. pageType 反映页面在演示文稿中的结构作用；usageScenario 反映最适合的复用场景。
+4. 即使建议保持不变，也必须返回该页。
+5. reason 用一句简短中文说明变更依据。
+6. 返回严格 JSON：{"items":[{"id":"...","topic":"...","pageType":"内容页","usageScenario":"方案讲解","reason":"..."}]}。
+
+页面：${JSON.stringify(compactAssets)}`;
+    const result = await client.generateText({
+        prompt,
+        systemInstruction: `你是 PPT 素材编目专家。主题只能使用：${allowedNames.join('、')}。只输出严格合法 JSON。`,
+        maxOutputTokens: Math.min(Math.max(Number(settings.maxOutputTokens || 2048), 2048), 4096),
+        temperature: 0,
+        responseMimeType: 'application/json',
+        thinkingBudget: 0
+    });
+    const returned = new Map(parsedItems(parseJson(result.text)).map(item => [String(item.id || ''), item]));
+    if (!returned.size) throw new Error('AI 未返回历史素材分类结果');
+    const allowedTopics = new Set(allowedNames);
+    return assets.map(asset => normalizeReclassificationItem(returned.get(asset.id), asset, allowedTopics, aliases));
+}
+
+async function reclassifyExistingAssets(assets, { onProgress, client: providedClient, settings: providedSettings, vocabulary: providedVocabulary } = {}) {
+    const input = Array.isArray(assets) ? assets.filter(asset => asset && asset.id) : [];
+    if (!input.length) return { totalAssets: 0, changes: [], unchangedCount: 0, aliases: [] };
+    const settings = providedSettings || await aiSettingsRepo.getRuntimeSettings();
+    if (!providedClient && (!settings.hasApiKey || !settings.keyLooksValid)) {
+        throw new Error('AI 配置不可用，无法进行语义分类整理');
+    }
+    const client = providedClient || aiProviderClient.createClient(settings);
+    const libraryVocabulary = mergeReclassificationVocabulary(
+        providedVocabulary || await slideRepo.getClassificationVocabulary({ topicLimit: 100 }),
+        input
+    );
+    reportProgress(onProgress, {
+        progress: 0.03,
+        status: '正在归并历史分类名称…',
+        message: `已读取 ${input.length} 页已有文字和 ${libraryVocabulary.topics.length} 个主题名称，不会重新解析 PPT 文件`
+    });
+    const harmonized = await harmonizeExistingTopics(client, libraryVocabulary, settings);
+    const canonicalTopics = harmonized.topics.length ? harmonized.topics : libraryVocabulary.topics;
+    const changes = [];
+    const chunkSize = 5;
+    const totalChunks = Math.ceil(input.length / chunkSize);
+    for (let offset = 0; offset < input.length; offset += chunkSize) {
+        const chunk = input.slice(offset, offset + chunkSize);
+        const chunkIndex = Math.floor(offset / chunkSize) + 1;
+        reportProgress(onProgress, {
+            progress: 0.08 + ((chunkIndex - 1) / totalChunks * 0.9),
+            status: `正在重新识别第 ${chunkIndex}/${totalChunks} 组…`,
+            message: `使用已保存文字重新判断 ${chunk[0].sourceFilename} 第 ${chunk[0].pageNumber} 页起的主题、页面类型和用途`
+        });
+        let classified;
+        try {
+            classified = await classifyExistingAssetChunk(client, chunk, canonicalTopics, harmonized.aliases, settings);
+        } catch (firstError) {
+            classified = await classifyExistingAssetChunk(client, chunk, canonicalTopics, harmonized.aliases, {
+                ...settings,
+                maxOutputTokens: Math.max(Number(settings.maxOutputTokens || 2048), 3072)
+            }).catch(secondError => {
+                throw new Error(`第 ${chunkIndex}/${totalChunks} 组分类失败：${secondError.message || firstError.message}`);
+            });
+        }
+        changes.push(...classified.filter(hasClassificationChange));
+    }
+    reportProgress(onProgress, {
+        progress: 1,
+        level: 'success',
+        status: '分类整理预览已生成',
+        message: `${input.length} 页分析完成，发现 ${changes.length} 页建议修改，等待用户确认后才会写入`
+    });
+    return {
+        totalAssets: input.length,
+        changes,
+        unchangedCount: input.length - changes.length,
+        aliases: [...harmonized.aliases.entries()].map(([from, to]) => ({ from, to }))
+    };
+}
+
 module.exports = {
     extractSlideText,
     detectPageType,
     fallbackAnalysis,
     analyzeSlides,
     refineExistingSummaries,
+    reclassifyExistingAssets,
+    mergeReclassificationVocabulary,
+    normalizeReclassificationItem,
+    hasClassificationChange,
     buildDeckTaxonomy,
     normalizeLibraryVocabulary
 };

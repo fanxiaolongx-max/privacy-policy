@@ -7,7 +7,7 @@
     <meta name="description" content="Task SLA & 风险监控全局中台，整改/常规/专项三表合一，SLA预警呼吸灯">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="/css/shared.css?v=20260729-01">
-    <link rel="stylesheet" href="/css/sla.css?v=20260731-01">
+    <link rel="stylesheet" href="/css/sla.css?v=20260802-01">
     <style>
         .sla-source-wrapper {
             display: flex;
@@ -177,6 +177,7 @@
                                 <th>条件值 Y</th>
                                 <th>展示/统计列 Z</th>
                                 <th>统计值 K</th>
+                                <th>高级多重过滤</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
@@ -187,6 +188,29 @@
             <div class="modal-footer metric-rule-edit-footer">
                 <button class="metric-rule-edit-cancel" onclick="closeMetricRuleCopyModal()">取消</button>
                 <button class="metric-rule-edit-save" onclick="saveMetricRuleCopies()">保存复制</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 复制规则：逐行高级条件编辑弹窗 -->
+    <div id="metric-rule-copy-conditions-modal" class="modal-overlay" style="z-index:100002;">
+        <div class="modal-content metric-rule-copy-conditions-modal-content">
+            <div class="modal-header metric-rule-edit-header">
+                <div>
+                    <h3>⚙️ 高级多重过滤</h3>
+                    <p id="metric-rule-copy-conditions-subtitle">配置当前复制规则的附加列条件</p>
+                </div>
+                <button class="modal-close" onclick="closeMetricRuleCopyConditionsEditor()">✖</button>
+            </div>
+            <div class="modal-body metric-rule-edit-body">
+                <input type="hidden" id="metric-rule-copy-conditions-row-index">
+                <div class="metric-rule-copy-conditions-note">以下条件与主条件 X/Y 同时满足（AND）。修改只应用到当前这一条复制规则。</div>
+                <div id="metric-rule-copy-conditions-list"></div>
+                <button type="button" class="metric-condition-add" onclick="addMetricRuleCopyCondition()">＋ 增加列条件</button>
+            </div>
+            <div class="modal-footer metric-rule-edit-footer">
+                <button class="metric-rule-edit-cancel" onclick="closeMetricRuleCopyConditionsEditor()">取消</button>
+                <button class="metric-rule-edit-save" onclick="applyMetricRuleCopyConditionsEditor()">应用到当前复制规则</button>
             </div>
         </div>
     </div>
@@ -416,10 +440,10 @@
     <script src="/js/sla/other-rules.js?v=20260713-03"></script>
     <script src="/js/sla/section.js?v=20260731-01"></script>
     <script src="/js/sla/table.js?v=20260731-01"></script>
-    <script src="/js/sla/events.js?v=20260731-01"></script>
+    <script src="/js/sla/events.js?v=20260802-01"></script>
     <script src="/js/sla/metrics.js?v=20260731-01"></script>
     <script src="/js/sla/history.js?v=20260709-01"></script>
-    <script src="/js/sla/categories.js?v=20260630-01"></script>
+    <script src="/js/sla/categories.js?v=20260802-01"></script>
     <script>
         function formatSLASourceLabel(source) {
             if (window.SLAI18n && typeof window.SLAI18n.sourceLabel === 'function') return window.SLAI18n.sourceLabel(source);

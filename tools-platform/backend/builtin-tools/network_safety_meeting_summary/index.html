@@ -34,7 +34,7 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 
     <!-- Custom CSS for Slide Content -->
-    <link rel="stylesheet" href="css/app.css?v=20260801-01">
+    <link rel="stylesheet" href="css/app.css?v=20260801-03">
 </head>
 
 <body class="bg-zinc-950 text-zinc-100 font-sans h-screen w-screen overflow-hidden flex flex-col">
@@ -408,6 +408,7 @@
                 <div class="material-library-head-actions">
                     <input id="materialAssetImportInput" type="file" accept=".pptx" hidden>
                     <button id="addMaterialAssetBtn" class="material-library-primary-action" type="button" title="上传一个仅包含单页的 PPTX"><i class="ph ph-plus-circle"></i><span>新增单页素材</span></button>
+                    <button id="organizeMaterialCategoriesBtn" class="material-library-organize-action hidden" type="button" title="使用已提取文字统一整理主题分类、页面类型和用途"><i class="ph ph-broom"></i><span>一键整理分类</span></button>
                     <button id="batchDeleteMaterialsBtn" class="material-library-danger-action hidden" type="button" title="按每次导入的 PPT 文件批量删除素材"><i class="ph ph-trash"></i><span>批量删除</span></button>
                     <div class="material-view-switch" aria-label="素材视图模式">
                         <button type="button" data-material-view="grid" title="卡片视图"><i class="ph ph-squares-four"></i><span>卡片</span></button>
@@ -543,6 +544,41 @@
                     <button id="cancelMaterialBatchDeleteBtn" type="button">取消</button>
                     <button id="confirmMaterialBatchDeleteBtn" class="danger" type="button" disabled><i class="ph ph-trash"></i> 删除所选素材</button>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="materialClassificationModal" class="material-classification-modal hidden" aria-hidden="true">
+        <div class="material-classification-dialog" role="dialog" aria-modal="true" aria-labelledby="materialClassificationTitle">
+            <div class="material-classification-head">
+                <div><span>AI TAXONOMY CLEANUP</span><h3 id="materialClassificationTitle">一键整理素材分类</h3><p>仅使用导入时已经提取的文字，统一整理主题分类、页面类型和用途；确认前不会修改任何数据。</p></div>
+                <button id="closeMaterialClassificationBtn" type="button" aria-label="关闭"><i class="ph ph-x"></i></button>
+            </div>
+            <div id="materialClassificationScopeStep">
+                <div class="material-classification-scope">
+                    <label><input type="radio" name="materialClassificationScope" value="all" checked><span><strong>整理全部素材</strong><small>重新识别当前素材库的所有 PPT 页面</small></span></label>
+                    <label><input type="radio" name="materialClassificationScope" value="batches"><span><strong>按导入文件选择</strong><small>只整理所选导入批次中的页面</small></span></label>
+                </div>
+                <div id="materialClassificationBatchArea" class="material-classification-batch-area hidden">
+                    <div class="material-batch-delete-tools"><label><i class="ph ph-magnifying-glass"></i><input id="materialClassificationSearch" placeholder="搜索导入文件名或上传人"></label><button id="toggleMaterialClassificationSelectionBtn" type="button">全选当前结果</button></div>
+                    <div id="materialClassificationBatchList" class="material-batch-delete-list custom-scrollbar"></div>
+                </div>
+                <div id="materialClassificationError" class="material-classification-error" aria-live="polite"></div>
+                <div id="materialClassificationProgress" class="material-classification-progress hidden" role="status" aria-live="polite">
+                    <div class="material-classification-progress-head"><strong id="materialClassificationProgressText">正在准备分析…</strong><b id="materialClassificationProgressPercent">0%</b></div>
+                    <div class="material-classification-progress-track"><i id="materialClassificationProgressBar"></i></div>
+                    <div class="material-classification-log-head"><span>ANALYSIS LOG</span><b id="materialClassificationLogCount">0</b></div>
+                    <ol id="materialClassificationLogList" class="custom-scrollbar"></ol>
+                </div>
+                <div class="material-classification-footer"><div><span id="materialClassificationScopeSummary">将分析全部素材</span><small>不会重新提取 PPT、生成缩略图或改写摘要</small></div><div class="material-classification-actions"><button id="cancelMaterialClassificationBtn" type="button">取消</button><button id="analyzeMaterialClassificationBtn" class="primary" type="button"><i class="ph ph-sparkle"></i> 开始分析</button></div></div>
+            </div>
+            <div id="materialClassificationPreviewStep" class="hidden">
+                <div class="material-classification-preview-summary"><div><b id="materialClassificationChangeCount">0</b><span>页建议修改</span></div><p id="materialClassificationPreviewSummary"></p></div>
+                <div id="materialClassificationAliases" class="material-classification-aliases hidden"></div>
+                <div class="material-classification-preview-tools"><label><input id="toggleAllClassificationChanges" type="checkbox" checked> 选择全部建议</label><span>可取消不希望应用的页面</span></div>
+                <div id="materialClassificationChangeList" class="material-classification-change-list custom-scrollbar"></div>
+                <div id="materialClassificationApplyError" class="material-classification-error" aria-live="polite"></div>
+                <div class="material-classification-footer"><div><span id="materialClassificationApplySummary">尚未选择修改</span><small>写入前会再次检查页面是否被他人更改</small></div><div class="material-classification-actions"><button id="backMaterialClassificationBtn" type="button">返回选择范围</button><button id="applyMaterialClassificationBtn" class="primary" type="button" disabled><i class="ph ph-check-circle"></i> 应用所选修改</button></div></div>
             </div>
         </div>
     </section>
@@ -804,7 +840,7 @@
     </template>
 
     <!-- App Logic -->
-    <script type="module" src="js/app.js?v=20260728-04"></script>
+    <script type="module" src="js/app.js?v=20260801-02"></script>
 </body>
 
 </html>

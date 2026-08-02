@@ -175,11 +175,12 @@ function buildMetricConditionFieldOptions(fields, selected = '') {
 
 function renderMetricConditionRows(container, fields, conditions, mode) {
     if (!container) return;
+    const changeHandler = mode === 'editor' ? 'renderMetricRuleEditorPreview()' : '';
     container.innerHTML = (conditions || []).map((condition, index) => `
         <div class="metric-condition-row" data-condition-index="${index}">
-            <select data-field="column" onchange="renderMetricRuleEditorPreview()">${buildMetricConditionFieldOptions(fields, condition.column || '')}</select>
-            <input data-field="value" value="${escapeHTML(condition.value || '')}" placeholder="包含内容（支持 [空]/[非空]）" oninput="renderMetricRuleEditorPreview()">
-            <button type="button" title="删除此条件" onclick="${mode === 'editor' ? `removeMetricRuleEditorCondition(${index})` : `removeMetricConditionRow('${mode}', ${index})`}">×</button>
+            <select data-field="column" ${changeHandler ? `onchange="${changeHandler}"` : ''}>${buildMetricConditionFieldOptions(fields, condition.column || '')}</select>
+            <input data-field="value" value="${escapeHTML(condition.value || '')}" placeholder="包含内容（支持 [空]/[非空]）" ${changeHandler ? `oninput="${changeHandler}"` : ''}>
+            <button type="button" title="删除此条件" onclick="${mode === 'editor' ? `removeMetricRuleEditorCondition(${index})` : (mode === 'copy-editor' ? `removeMetricRuleCopyCondition(${index})` : `removeMetricConditionRow('${mode}', ${index})`)}">×</button>
         </div>
     `).join('');
 }
@@ -1238,6 +1239,7 @@ function cloneMetricRuleForCopy(sourceRule, record, rowData) {
     cloned.valY = rowData.valY;
     cloned.colZ = rowData.colZ;
     cloned.valK = rowData.type === 'extract' ? '' : rowData.valK;
+    cloned.conditions = getMetricRuleConditions({ conditions: rowData.conditions }).map(item => ({ ...item }));
     cloned.label = rowData.label;
     cloned.sourceSecId = sourceRule.sourceSecId || record.sourceSecId;
     if (record.kind === 'main') {
@@ -1253,8 +1255,28 @@ function getMetricRuleCopyFieldOptions(record, rule) {
     return Array.from(new Set([
         ...getMetricRuleFieldCandidates(record),
         rule.colX,
-        rule.colZ
+        rule.colZ,
+        ...getMetricRuleConditions(rule).map(item => item.column)
     ].filter(Boolean)));
+}
+
+function parseMetricRuleCopyConditions(value) {
+    try {
+        const parsed = JSON.parse(String(value || '[]'));
+        return getMetricRuleConditions({ conditions: parsed }).map(item => ({ column: item.column, value: String(item.value) }));
+    } catch (e) {
+        return [];
+    }
+}
+
+function canonicalMetricRuleConditions(conditions) {
+    return getMetricRuleConditions({ conditions })
+        .map(item => ({ column: String(item.column), value: String(item.value).trim() }))
+        .sort((a, b) => `${a.column}\u0000${a.value}`.localeCompare(`${b.column}\u0000${b.value}`, 'zh-CN'));
+}
+
+function metricRuleConditionsSignature(conditions) {
+    return JSON.stringify(canonicalMetricRuleConditions(conditions));
 }
 
 function readMetricRuleCopyRows() {
@@ -1267,7 +1289,8 @@ function readMetricRuleCopyRows() {
         colX: row.querySelector('[data-field="colX"]')?.value.trim() || '',
         valY: row.querySelector('[data-field="valY"]')?.value.trim() || '',
         colZ: row.querySelector('[data-field="colZ"]')?.value.trim() || '',
-        valK: row.querySelector('[data-field="valK"]')?.value.trim() || ''
+        valK: row.querySelector('[data-field="valK"]')?.value.trim() || '',
+        conditions: parseMetricRuleCopyConditions(row.querySelector('[data-field="conditions"]')?.value || '[]')
     }));
 }
 
@@ -1299,6 +1322,7 @@ function updateMetricRuleCopyHeaders(type) {
         labels.valY,
         labels.colZ,
         labels.valK,
+        '高级多重过滤',
         SLAT('sla.rules.thAction')
     ];
     headerKeys.forEach((text, index) => {
@@ -1354,8 +1378,13 @@ window.renderMetricRuleCopyRows = function() {
             colX: existing.colX || rule.colX || '',
             valY: mapping && rowType === 'extract' ? mapping.conditionValue : (existing.valY || rule.valY || ''),
             colZ: existing.colZ || rule.colZ || '',
-            valK: mapping && rowType !== 'extract' ? mapping.conditionValue : (existing.valK || rule.valK || '')
+            valK: mapping && rowType !== 'extract' ? mapping.conditionValue : (existing.valK || rule.valK || ''),
+            conditions: Object.prototype.hasOwnProperty.call(existing, 'conditions')
+                ? existing.conditions
+                : getMetricRuleConditions(rule).map(item => ({ ...item }))
         };
+        const conditionsJson = JSON.stringify(row.conditions || []);
+        const conditionsCount = (row.conditions || []).length;
         rows.push(`
             <tr>
                 <td class="metric-rule-copy-index">${i + 1}</td>
@@ -1371,6 +1400,10 @@ window.renderMetricRuleCopyRows = function() {
                 <td><input data-field="valY" value="${escapeHTML(row.valY)}"></td>
                 <td>${renderMetricRuleCopySelect(fieldOptions, row.colZ, 'colZ')}</td>
                 <td class="metric-rule-copy-valk-col" style="${copyLabels.showValK ? '' : 'display:none;'}"><input data-field="valK" value="${escapeHTML(row.valK)}"></td>
+                <td>
+                    <textarea data-field="conditions" hidden>${escapeHTML(conditionsJson)}</textarea>
+                    <button type="button" class="metric-rule-copy-conditions-btn ${conditionsCount ? 'has-conditions' : ''}" onclick="openMetricRuleCopyConditionsEditor(${i})">⚙️ ${conditionsCount} 条</button>
+                </td>
                 <td><button type="button" class="metric-rule-copy-row-delete" onclick="deleteMetricRuleCopyRow(${i})">${SLAT('sla.rules.delete')}</button></td>
             </tr>
         `);
@@ -1402,6 +1435,67 @@ window.deleteMetricRuleCopyRow = function(index) {
     });
     const countInput = document.getElementById('metric-rule-copy-count');
     if (countInput) countInput.value = String(remainingRows.length);
+};
+
+function getMetricRuleCopyConditionsDraft() {
+    return readMetricConditionDraftRows(document.getElementById('metric-rule-copy-conditions-list'));
+}
+
+window.openMetricRuleCopyConditionsEditor = function(index) {
+    if (!copyingMetricRuleRecord) return;
+    const row = document.querySelectorAll('#metric-rule-copy-rows tr')[index];
+    if (!row) return;
+    const conditions = parseMetricRuleCopyConditions(row.querySelector('[data-field="conditions"]')?.value || '[]');
+    const ref = findMetricRuleRef(copyingMetricRuleRecord);
+    const fields = ref?.rule ? getMetricRuleCopyFieldOptions(copyingMetricRuleRecord, ref.rule) : [];
+    document.getElementById('metric-rule-copy-conditions-row-index').value = String(index);
+    document.getElementById('metric-rule-copy-conditions-subtitle').textContent = `第 ${index + 1} 条复制规则 · 已配置 ${conditions.length} 条高级条件`;
+    renderMetricConditionRows(document.getElementById('metric-rule-copy-conditions-list'), fields, conditions, 'copy-editor');
+    document.getElementById('metric-rule-copy-conditions-modal').style.display = 'flex';
+};
+
+window.closeMetricRuleCopyConditionsEditor = function() {
+    const modal = document.getElementById('metric-rule-copy-conditions-modal');
+    if (modal) modal.style.display = 'none';
+};
+
+window.addMetricRuleCopyCondition = function() {
+    if (!copyingMetricRuleRecord) return;
+    const ref = findMetricRuleRef(copyingMetricRuleRecord);
+    const fields = ref?.rule ? getMetricRuleCopyFieldOptions(copyingMetricRuleRecord, ref.rule) : [];
+    const conditions = getMetricRuleCopyConditionsDraft();
+    conditions.push({ column: '', value: '' });
+    renderMetricConditionRows(document.getElementById('metric-rule-copy-conditions-list'), fields, conditions, 'copy-editor');
+};
+
+window.removeMetricRuleCopyCondition = function(index) {
+    if (!copyingMetricRuleRecord) return;
+    const ref = findMetricRuleRef(copyingMetricRuleRecord);
+    const fields = ref?.rule ? getMetricRuleCopyFieldOptions(copyingMetricRuleRecord, ref.rule) : [];
+    const conditions = getMetricRuleCopyConditionsDraft();
+    conditions.splice(index, 1);
+    renderMetricConditionRows(document.getElementById('metric-rule-copy-conditions-list'), fields, conditions, 'copy-editor');
+};
+
+window.applyMetricRuleCopyConditionsEditor = function() {
+    const index = Number(document.getElementById('metric-rule-copy-conditions-row-index')?.value);
+    const row = document.querySelectorAll('#metric-rule-copy-rows tr')[index];
+    if (!row) return;
+    const drafts = getMetricRuleCopyConditionsDraft();
+    const incompleteIndex = drafts.findIndex(item => !item.column || !String(item.value || '').trim());
+    if (incompleteIndex >= 0) {
+        showToast(`第 ${incompleteIndex + 1} 条高级条件请完整选择列并填写条件值`, 'warning');
+        return;
+    }
+    const conditions = getMetricRuleConditions({ conditions: drafts });
+    const storage = row.querySelector('[data-field="conditions"]');
+    if (storage) storage.value = JSON.stringify(conditions);
+    const button = row.querySelector('.metric-rule-copy-conditions-btn');
+    if (button) {
+        button.textContent = `⚙️ ${conditions.length} 条`;
+        button.classList.toggle('has-conditions', conditions.length > 0);
+    }
+    closeMetricRuleCopyConditionsEditor();
 };
 
 function setMetricRuleFastMappingControlsEnabled(enabled) {
@@ -1446,6 +1540,7 @@ window.openMetricRuleCopyModal = function(index) {
 };
 
 window.closeMetricRuleCopyModal = function() {
+    closeMetricRuleCopyConditionsEditor();
     const modal = document.getElementById('metric-rule-copy-modal');
     if (modal) modal.style.display = 'none';
     copyingMetricRuleRecord = null;
@@ -1685,7 +1780,8 @@ window.saveMetricRuleCopies = async function() {
                     ref.rule.colX || '',
                     ref.rule.valY || '',
                     ref.rule.colZ || '',
-                    rType === 'extract' ? '' : (ref.rule.valK || '')
+                    rType === 'extract' ? '' : (ref.rule.valK || ''),
+                    metricRuleConditionsSignature(ref.rule.conditions)
                 ].join('||');
                 existingSignatures.add(sig);
             }
@@ -1712,7 +1808,8 @@ window.saveMetricRuleCopies = async function() {
                 row.colX || '',
                 row.valY || '',
                 row.colZ || '',
-                rowType === 'extract' ? '' : (row.valK || '')
+                rowType === 'extract' ? '' : (row.valK || ''),
+                metricRuleConditionsSignature(row.conditions)
             ].join('||');
 
             if (existingSignatures.has(sig)) {

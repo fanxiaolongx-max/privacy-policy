@@ -1124,6 +1124,12 @@ textarea.risk-editor-input { resize: vertical; min-height: 48px; }
 .metric-rule-edit-conditions-head span { color: #64748b; font-size: 10px; }
 .metric-rule-edit-conditions-head button { border: 0; border-radius: 8px; padding: 7px 10px; background: #ede9fe; color: #6d28d9; font-weight: 800; cursor: pointer; }
 #metric-rule-edit-conditions-list .metric-condition-row { grid-template-columns: minmax(160px, 1fr) minmax(160px, 1fr) 30px; }
+.metric-rule-copy-conditions-modal-content { width: min(720px, 92vw); max-height: 82vh; border-radius: 16px; }
+.metric-rule-copy-conditions-note { margin-bottom: 10px; padding: 9px 11px; border: 1px solid #ddd6fe; border-radius: 9px; background: #faf5ff; color: #5b21b6; font-size: 11px; }
+#metric-rule-copy-conditions-list { max-height: 46vh; overflow-y: auto; margin-bottom: 10px; }
+#metric-rule-copy-conditions-list .metric-condition-row { grid-template-columns: minmax(160px, 1fr) minmax(160px, 1fr) 30px; }
+.metric-rule-copy-conditions-btn { white-space: nowrap; border: 1px solid #c4b5fd; border-radius: 8px; padding: 6px 9px; background: #faf5ff; color: #6d28d9; font-size: 11px; font-weight: 800; cursor: pointer; }
+.metric-rule-copy-conditions-btn.has-conditions { background: #ede9fe; border-color: #8b5cf6; }
 .metric-rule-edit-footer {
     display: flex;
     justify-content: flex-end;

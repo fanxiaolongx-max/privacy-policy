@@ -136,7 +136,13 @@ function renderCategoryCascadeImpact(impact) {
             <div style="padding:8px; border:1px solid #e2e8f0; border-radius:6px;">
                 <strong>${escapeHTML(item.metric_label || '(未命名指标)')}</strong>
                 <span style="color:#64748b;"> · ${escapeHTML(item.pref_key)} · ${escapeHTML(item.rule_id)} · ${item.removed_count} 项</span>
-                <div style="margin-top:4px; color:#475569;">${(item.sub_metrics || []).map(sm => `${escapeHTML(sm.colX)}=${escapeHTML(sm.valY)} / ${escapeHTML(sm.colZ)}`).join('<br>')}</div>
+                <div style="margin-top:4px; color:#475569;">${(item.sub_metrics || []).map(sm => {
+                    const primary = `${escapeHTML(sm.colX)}=${escapeHTML(sm.valY)}`;
+                    const advanced = (Array.isArray(sm.conditions) ? sm.conditions : [])
+                        .filter(condition => condition && condition.column && condition.value !== undefined)
+                        .map(condition => `${escapeHTML(condition.column)}=${escapeHTML(condition.value)}`);
+                    return `${[primary, ...advanced].join(' AND ')} / ${escapeHTML(sm.colZ)}`;
+                }).join('<br>')}</div>
             </div>
         `)) +
         renderImpactSection('规则速填模板 sla_rule_templates.template_text', totals.rule_template_lines || 0, renderCompactList(ruleTemplates, item => `
