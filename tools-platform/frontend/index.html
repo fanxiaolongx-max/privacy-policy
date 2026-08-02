@@ -287,6 +287,144 @@
             background: rgba(100,255,218,0.18);
             border-color: rgba(100,255,218,0.42);
         }
+        .tool-import-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 12000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: rgba(2, 6, 23, 0.78);
+            backdrop-filter: blur(12px);
+        }
+        .tool-import-overlay.open { display: flex; }
+        .tool-import-dialog {
+            width: min(680px, 100%);
+            max-height: min(820px, calc(100vh - 48px));
+            overflow-y: auto;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 22px;
+            background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(17, 32, 58, 0.98));
+            box-shadow: 0 32px 90px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255,255,255,.05);
+            color: #e2e8f0;
+        }
+        .tool-import-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 26px 28px 20px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+        }
+        .tool-import-title { margin: 0; color: #f8fafc; font-size: 22px; font-weight: 850; }
+        .tool-import-subtitle { margin: 8px 0 0; color: #8ba4c2; font-size: 13px; line-height: 1.6; }
+        .tool-import-close {
+            flex: 0 0 auto;
+            width: 34px;
+            height: 34px;
+            border: 1px solid rgba(255,255,255,.1);
+            border-radius: 10px;
+            background: rgba(255,255,255,.05);
+            color: #94a3b8;
+            font-size: 22px;
+            cursor: pointer;
+        }
+        .tool-import-close:hover { color: #fff; background: rgba(255,255,255,.1); }
+        .tool-import-form { padding: 24px 28px 28px; }
+        .tool-import-file {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 18px;
+            margin-bottom: 22px;
+            border: 1px dashed rgba(100,255,218,.35);
+            border-radius: 15px;
+            background: rgba(100,255,218,.055);
+            cursor: pointer;
+            transition: .2s ease;
+        }
+        .tool-import-file:hover, .tool-import-file.has-file {
+            border-color: rgba(100,255,218,.65);
+            background: rgba(100,255,218,.09);
+        }
+        .tool-import-file-icon { font-size: 30px; }
+        .tool-import-file-main { min-width: 0; flex: 1; }
+        .tool-import-file-title { display: block; color: #dffdf7; font-size: 14px; font-weight: 800; }
+        .tool-import-file-hint { display: block; margin-top: 5px; color: #7187a4; font-size: 11px; }
+        .tool-import-file-name { display: block; margin-top: 5px; color: #64ffda; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .tool-import-ai-status {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            margin: -8px 2px 20px;
+            color: #93c5fd;
+            font-size: 12px;
+        }
+        .tool-import-ai-status.visible { display: flex; }
+        .tool-import-ai-status.success { color: #6ee7b7; }
+        .tool-import-ai-status.warning { color: #fbbf24; }
+        .tool-import-ai-status.loading::before {
+            content: '';
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(147,197,253,.25);
+            border-top-color: #93c5fd;
+            border-radius: 50%;
+            animation: tool-import-spin .75s linear infinite;
+        }
+        @keyframes tool-import-spin { to { transform: rotate(360deg); } }
+        .tool-import-fields { display: grid; grid-template-columns: 92px 1fr; gap: 18px; }
+        .tool-import-field { display: flex; flex-direction: column; gap: 8px; }
+        .tool-import-field.full { grid-column: 1 / -1; }
+        .tool-import-field label { color: #cbd5e1; font-size: 12px; font-weight: 750; }
+        .tool-import-field label span { color: #fb7185; }
+        .tool-import-input, .tool-import-textarea {
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid rgba(148,163,184,.2);
+            border-radius: 11px;
+            outline: none;
+            background: rgba(2,6,23,.34);
+            color: #f1f5f9;
+            font: inherit;
+            font-size: 13px;
+            padding: 11px 12px;
+            transition: .2s ease;
+        }
+        .tool-import-input:focus, .tool-import-textarea:focus {
+            border-color: rgba(100,255,218,.55);
+            box-shadow: 0 0 0 3px rgba(100,255,218,.08);
+        }
+        .tool-import-textarea { min-height: 86px; resize: vertical; line-height: 1.6; }
+        .tool-import-error {
+            display: none;
+            margin-top: 18px;
+            padding: 11px 13px;
+            border: 1px solid rgba(248,113,113,.28);
+            border-radius: 10px;
+            background: rgba(127,29,29,.18);
+            color: #fecaca;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .tool-import-error.visible { display: block; }
+        .tool-import-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+        .tool-import-btn {
+            min-width: 96px;
+            height: 40px;
+            padding: 0 16px;
+            border-radius: 11px;
+            border: 1px solid rgba(148,163,184,.18);
+            background: rgba(255,255,255,.055);
+            color: #cbd5e1;
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+        .tool-import-btn.primary { border-color: rgba(100,255,218,.36); background: linear-gradient(135deg, rgba(16,185,129,.3), rgba(14,165,233,.25)); color: #cafff4; }
+        .tool-import-btn:hover:not(:disabled) { filter: brightness(1.18); }
+        .tool-import-btn:disabled { opacity: .55; cursor: wait; }
         .custom-tool-actions {
             position: absolute;
             top: 14px;
@@ -343,6 +481,10 @@
             .history-row { grid-template-columns: 1fr; }
             .history-time { text-align: left; }
             .custom-tools-panel { justify-content: flex-start; margin-top: 0; }
+            .tool-import-overlay { padding: 12px; align-items: flex-end; }
+            .tool-import-dialog { max-height: calc(100vh - 24px); border-radius: 20px 20px 12px 12px; }
+            .tool-import-head, .tool-import-form { padding-left: 20px; padding-right: 20px; }
+            .tool-import-fields { grid-template-columns: 76px 1fr; }
         }
     </style>
 </head>
@@ -357,7 +499,6 @@
         <div class="custom-tools-panel" id="customToolsPanel" style="display:none;">
             <span class="custom-tools-note">导入 HTML 或 ZIP 工具包后，会自动生成首页模块和顶部导航入口</span>
             <button class="custom-tool-upload" id="customToolUploadBtn">导入 HTML / ZIP 工具</button>
-            <input type="file" id="customToolFileInput" accept=".html,.htm,.zip,text/html,application/zip" style="display:none;">
         </div>
 
         <div class="tools-grid" id="toolsGrid">
@@ -617,11 +758,59 @@
         </section>
     </div>
 
+    <div class="tool-import-overlay" id="customToolImportModal" role="dialog" aria-modal="true" aria-labelledby="customToolImportTitle">
+        <div class="tool-import-dialog">
+            <div class="tool-import-head">
+                <div>
+                    <h2 class="tool-import-title" id="customToolImportTitle">导入自定义工具</h2>
+                    <p class="tool-import-subtitle" id="customToolImportSubtitle">一次填写工具信息并上传 HTML 或 ZIP 工具包。</p>
+                </div>
+                <button type="button" class="tool-import-close" id="customToolImportClose" aria-label="关闭">×</button>
+            </div>
+            <form class="tool-import-form" id="customToolImportForm" novalidate>
+                <label class="tool-import-file" id="customToolFilePicker">
+                    <input type="file" id="customToolFileInput" accept=".html,.htm,.zip,text/html,application/zip" hidden>
+                    <span class="tool-import-file-icon">📦</span>
+                    <span class="tool-import-file-main">
+                        <span class="tool-import-file-title" id="customToolFileTitle">选择 HTML / ZIP 文件</span>
+                        <span class="tool-import-file-hint" id="customToolFileHint">HTML 或 ZIP，ZIP 最大 35 MB</span>
+                        <span class="tool-import-file-name" id="customToolFileName"></span>
+                    </span>
+                </label>
+                <div class="tool-import-ai-status" id="customToolAiStatus" aria-live="polite"></div>
+                <div class="tool-import-fields">
+                    <div class="tool-import-field">
+                        <label for="customToolIcon" id="customToolIconLabel">图标</label>
+                        <input class="tool-import-input" id="customToolIcon" name="icon" value="🧩" maxlength="8">
+                    </div>
+                    <div class="tool-import-field">
+                        <label for="customToolName" id="customToolNameLabel">工具名称 <span>*</span></label>
+                        <input class="tool-import-input" id="customToolName" name="name" maxlength="80" autocomplete="off" required>
+                    </div>
+                    <div class="tool-import-field full">
+                        <label for="customToolDescription" id="customToolDescriptionLabel">工具简介</label>
+                        <textarea class="tool-import-textarea" id="customToolDescription" name="description" maxlength="500"></textarea>
+                    </div>
+                    <div class="tool-import-field full">
+                        <label for="customToolTags" id="customToolTagsLabel">标签</label>
+                        <input class="tool-import-input" id="customToolTags" name="tags" autocomplete="off">
+                    </div>
+                </div>
+                <div class="tool-import-error" id="customToolImportError" role="alert"></div>
+                <div class="tool-import-actions">
+                    <button type="button" class="tool-import-btn" id="customToolImportCancel">取消</button>
+                    <button type="submit" class="tool-import-btn primary" id="customToolImportSubmit">导入工具</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="/js/shared/api.js?v=20260710-01"></script>
     <script src="/js/shared/migration-status.js?v=20260626-01"></script>
     <script src="/js/shared/toast.js?v=20260530-03"></script>
     <script src="/js/shared/i18n.js?v=20260610-01"></script>
     <script src="/js/shared/navbar.js?v=20260729-01"></script>
+    <script src="/js/shared/jszip.min.js?v=3.10.1"></script>
     <script>
         const historyState = {
             items: [],
@@ -638,6 +827,24 @@
                 'home.hero.desc': '统一工具中台 · 前后端分离架构 · 数据持久化存储<br>让每一个工具都更强大、更稳定、更易扩展',
                 'home.custom.note': '导入 HTML 或 ZIP 工具包后，会自动生成首页模块和顶部导航入口',
                 'home.custom.upload': '导入 HTML / ZIP 工具',
+                'home.import.title': '导入自定义工具',
+                'home.import.subtitle': '一次填写工具信息并上传 HTML 或 ZIP 工具包。',
+                'home.import.fileTitle': '选择 HTML / ZIP 文件',
+                'home.import.fileHint': 'HTML 或 ZIP，ZIP 最大 35 MB',
+                'home.import.icon': '图标',
+                'home.import.name': '工具名称',
+                'home.import.description': '工具简介',
+                'home.import.tags': '标签',
+                'home.import.tagsPlaceholder': '用逗号分隔，最多 8 个',
+                'home.import.cancel': '取消',
+                'home.import.submit': '导入工具',
+                'home.import.submitting': '正在导入…',
+                'home.import.fileRequired': '请先选择 HTML 或 ZIP 文件',
+                'home.import.fileSelected': '已选择：{name} · {size}',
+                'home.import.aiAnalyzing': '正在用 AI 分析工具用途并生成信息…',
+                'home.import.aiComplete': 'AI 已自动生成名称、简介和标签，你可以继续修改',
+                'home.import.aiUnavailable': 'AI 自动生成不可用，已保留默认信息，可手动修改',
+                'home.import.zipHtmlMissing': 'ZIP 中没有找到 HTML 入口文件',
                 'home.arrow.tool': '进入工具 →',
                 'home.arrow.module': '进入模块 →',
                 'home.stats.scripts': '脚本仓库数量',
@@ -744,6 +951,24 @@
                 'home.hero.desc': 'A unified tool hub · Decoupled frontend/backend · Persistent data storage<br>Make every tool stronger, steadier, and easier to extend',
                 'home.custom.note': 'Import an HTML file or ZIP package to generate a home card and top navigation entry automatically.',
                 'home.custom.upload': 'Import HTML / ZIP Tool',
+                'home.import.title': 'Import Custom Tool',
+                'home.import.subtitle': 'Enter all tool details and select an HTML or ZIP package in one place.',
+                'home.import.fileTitle': 'Choose HTML / ZIP file',
+                'home.import.fileHint': 'HTML or ZIP; ZIP up to 35 MB',
+                'home.import.icon': 'Icon',
+                'home.import.name': 'Tool name',
+                'home.import.description': 'Description',
+                'home.import.tags': 'Tags',
+                'home.import.tagsPlaceholder': 'Comma-separated, up to 8 tags',
+                'home.import.cancel': 'Cancel',
+                'home.import.submit': 'Import Tool',
+                'home.import.submitting': 'Importing…',
+                'home.import.fileRequired': 'Choose an HTML or ZIP file first',
+                'home.import.fileSelected': 'Selected: {name} · {size}',
+                'home.import.aiAnalyzing': 'AI is analyzing the tool and generating its details…',
+                'home.import.aiComplete': 'AI generated the name, description, and tags. You can still edit them.',
+                'home.import.aiUnavailable': 'AI generation is unavailable. Default details were kept for manual editing.',
+                'home.import.zipHtmlMissing': 'No HTML entry file was found in the ZIP package',
                 'home.arrow.tool': 'Open Tool →',
                 'home.arrow.module': 'Open Module →',
                 'home.stats.scripts': 'Script Repository Items',
@@ -946,6 +1171,20 @@
             if (heroDesc) heroDesc.innerHTML = t('home.hero.desc');
             setText('.custom-tools-note', t('home.custom.note'));
             setText('#customToolUploadBtn', t('home.custom.upload'));
+            setText('#customToolImportTitle', t('home.import.title'));
+            setText('#customToolImportSubtitle', t('home.import.subtitle'));
+            setText('#customToolFileTitle', t('home.import.fileTitle'));
+            setText('#customToolFileHint', t('home.import.fileHint'));
+            setText('#customToolIconLabel', t('home.import.icon'));
+            const importNameLabel = document.getElementById('customToolNameLabel');
+            if (importNameLabel) importNameLabel.innerHTML = `${escapeHtml(t('home.import.name'))} <span>*</span>`;
+            setText('#customToolDescriptionLabel', t('home.import.description'));
+            setText('#customToolTagsLabel', t('home.import.tags'));
+            setText('#customToolImportCancel', t('home.import.cancel'));
+            const importSubmit = document.getElementById('customToolImportSubmit');
+            if (importSubmit && !importSubmit.disabled) importSubmit.textContent = t('home.import.submit');
+            const importTags = document.getElementById('customToolTags');
+            if (importTags) importTags.placeholder = t('home.import.tagsPlaceholder');
             document.querySelectorAll('#toolsGrid > a.tool-card:not([data-custom-tool-card="1"])').forEach(card => {
                 const data = HOME_CARDS[card.getAttribute('href')];
                 if (!data) return;
@@ -1224,26 +1463,166 @@
             const role = localStorage.getItem('tools_role');
             const panel = document.getElementById('customToolsPanel');
             const btn = document.getElementById('customToolUploadBtn');
+            const modal = document.getElementById('customToolImportModal');
+            const form = document.getElementById('customToolImportForm');
             const input = document.getElementById('customToolFileInput');
-            if (!panel || !btn || !input) return;
+            const filePicker = document.getElementById('customToolFilePicker');
+            const fileName = document.getElementById('customToolFileName');
+            const nameInput = document.getElementById('customToolName');
+            const iconInput = document.getElementById('customToolIcon');
+            const descriptionInput = document.getElementById('customToolDescription');
+            const tagsInput = document.getElementById('customToolTags');
+            const errorBox = document.getElementById('customToolImportError');
+            const submitBtn = document.getElementById('customToolImportSubmit');
+            const aiStatus = document.getElementById('customToolAiStatus');
+            if (!panel || !btn || !modal || !form || !input) return;
             panel.style.display = role === 'admin' ? 'flex' : 'none';
-            btn.addEventListener('click', () => input.click());
-            input.addEventListener('change', async () => {
-                const file = input.files && input.files[0];
-                if (!file) return;
+            let metadataGeneration = 0;
+
+            const formatFileSize = bytes => {
+                if (bytes < 1024) return `${bytes} B`;
+                if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+                return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+            };
+            const showImportError = message => {
+                errorBox.textContent = message;
+                errorBox.classList.add('visible');
+            };
+            const clearImportError = () => {
+                errorBox.textContent = '';
+                errorBox.classList.remove('visible');
+            };
+            const setAiStatus = (message = '', state = '') => {
+                aiStatus.textContent = message;
+                aiStatus.title = '';
+                aiStatus.className = `tool-import-ai-status${message ? ' visible' : ''}${state ? ` ${state}` : ''}`;
+            };
+            const encodeTextBase64 = text => {
+                const bytes = new TextEncoder().encode(text);
+                const chunkSize = 0x8000;
+                let binary = '';
+                for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+                    binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
+                }
+                return btoa(binary);
+            };
+            const readToolHtml = async file => {
+                if (!/\.zip$/i.test(file.name)) return file.text();
+                if (!window.JSZip) throw new Error('ZIP 解析组件未加载');
+                const zip = await window.JSZip.loadAsync(await file.arrayBuffer());
+                const htmlEntries = Object.values(zip.files)
+                    .filter(entry => !entry.dir && /\.html?$/i.test(entry.name))
+                    .sort((a, b) => {
+                        const aIndex = /(^|\/)index\.html?$/i.test(a.name) ? 0 : 1;
+                        const bIndex = /(^|\/)index\.html?$/i.test(b.name) ? 0 : 1;
+                        return aIndex - bIndex || a.name.length - b.name.length;
+                    });
+                if (!htmlEntries.length) throw new Error(t('home.import.zipHtmlMissing'));
+                return htmlEntries[0].async('string');
+            };
+            const generateAiMetadata = async file => {
+                const generation = ++metadataGeneration;
+                const baseline = {
+                    name: nameInput.value,
+                    description: descriptionInput.value,
+                    tags: tagsInput.value
+                };
+                setAiStatus(t('home.import.aiAnalyzing'), 'loading');
                 try {
+                    const html = await readToolHtml(file);
+                    const excerpt = html.length > 90000
+                        ? `${html.slice(0, 70000)}\n<!-- middle omitted -->\n${html.slice(-20000)}`
+                        : html;
+                    const metadata = await API.post('/api/custom-tools/ai-metadata', {
+                        fileName: file.name,
+                        contentBase64: encodeTextBase64(excerpt)
+                    });
+                    if (generation !== metadataGeneration) return;
+                    if (nameInput.value === baseline.name && metadata.name) nameInput.value = metadata.name;
+                    if (descriptionInput.value === baseline.description && metadata.description) descriptionInput.value = metadata.description;
+                    if (tagsInput.value === baseline.tags && Array.isArray(metadata.tags)) tagsInput.value = metadata.tags.join(', ');
+                    setAiStatus(t('home.import.aiComplete'), 'success');
+                } catch (error) {
+                    if (generation !== metadataGeneration) return;
+                    setAiStatus(t('home.import.aiUnavailable'), 'warning');
+                    aiStatus.title = error.message || '';
+                }
+            };
+            const resetImportForm = () => {
+                metadataGeneration += 1;
+                form.reset();
+                input.value = '';
+                iconInput.value = '🧩';
+                descriptionInput.value = t('home.custom.defaultDesc');
+                tagsInput.value = `${t('home.custom.defaultTag1')}, ${t('home.custom.defaultTag2')}`;
+                nameInput.dataset.autoValue = '';
+                fileName.textContent = '';
+                filePicker.classList.remove('has-file');
+                setAiStatus();
+                clearImportError();
+            };
+            const openImportModal = () => {
+                resetImportForm();
+                modal.classList.add('open');
+                document.body.style.overflow = 'hidden';
+                window.setTimeout(() => input.focus(), 0);
+            };
+            const closeImportModal = () => {
+                if (submitBtn.disabled) return;
+                modal.classList.remove('open');
+                document.body.style.overflow = '';
+                resetImportForm();
+                btn.focus();
+            };
+            const updateSelectedFile = () => {
+                const file = input.files && input.files[0];
+                if (!file) {
+                    metadataGeneration += 1;
+                    fileName.textContent = '';
+                    filePicker.classList.remove('has-file');
+                    setAiStatus();
+                    return;
+                }
+                clearImportError();
+                filePicker.classList.add('has-file');
+                fileName.textContent = t('home.import.fileSelected', { name: file.name, size: formatFileSize(file.size) });
+                const defaultName = file.name.replace(/\.(html?|zip)$/i, '');
+                const previousAutoValue = nameInput.dataset.autoValue || '';
+                if (!nameInput.value.trim() || nameInput.value === previousAutoValue) nameInput.value = defaultName;
+                nameInput.dataset.autoValue = defaultName;
+                void generateAiMetadata(file);
+            };
+
+            btn.addEventListener('click', openImportModal);
+            input.addEventListener('change', updateSelectedFile);
+            document.getElementById('customToolImportClose')?.addEventListener('click', closeImportModal);
+            document.getElementById('customToolImportCancel')?.addEventListener('click', closeImportModal);
+            modal.addEventListener('click', event => {
+                if (event.target === modal) closeImportModal();
+            });
+            document.addEventListener('keydown', event => {
+                if (event.key === 'Escape' && modal.classList.contains('open')) closeImportModal();
+            });
+
+            form.addEventListener('submit', async event => {
+                event.preventDefault();
+                clearImportError();
+                const file = input.files && input.files[0];
+                try {
+                    if (!file) throw new Error(t('home.import.fileRequired'));
                     const isZip = /\.zip$/i.test(file.name);
                     if (!isZip && !/\.html?$/i.test(file.name)) throw new Error('仅支持 HTML 或 ZIP 文件');
                     if (isZip && file.size > 35 * 1024 * 1024) throw new Error('ZIP 文件不能超过 35 MB');
-                    const defaultName = file.name.replace(/\.(html?|zip)$/i, '');
-                    const name = prompt(t('home.prompt.name'), defaultName);
-                    if (!name) return;
-                    const icon = prompt(t('home.prompt.icon'), '🧩') || '🧩';
-                    const description = prompt(t('home.prompt.description'), t('home.custom.defaultDesc')) || '';
+                    const name = nameInput.value.trim();
+                    if (!name) throw new Error(t('home.validation.nameRequired'));
+                    if (name.length > 80) throw new Error(t('home.validation.nameTooLong'));
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = t('home.import.submitting');
                     const payload = {
                         name,
-                        icon,
-                        description
+                        icon: iconInput.value.trim() || '🧩',
+                        description: descriptionInput.value.trim(),
+                        tags: tagsInput.value.split(/[,，]/).map(tag => tag.trim()).filter(Boolean).slice(0, 8)
                     };
                     if (isZip) {
                         const bytes = new Uint8Array(await file.arrayBuffer());
@@ -1258,13 +1637,17 @@
                         payload.htmlContent = await file.text();
                     }
                     await API.post('/api/custom-tools', payload);
+                    modal.classList.remove('open');
+                    document.body.style.overflow = '';
                     showToast(t('home.toast.imported'));
                     await loadCustomTools();
                     if (window.refreshCustomToolNavLinks) await window.refreshCustomToolNavLinks();
+                    resetImportForm();
                 } catch (e) {
-                    alert(t('home.alert.importFailed', { message: e.message }));
+                    showImportError(t('home.alert.importFailed', { message: e.message }));
                 } finally {
-                    input.value = '';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = t('home.import.submit');
                 }
             });
         }
