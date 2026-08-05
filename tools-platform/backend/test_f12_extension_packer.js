@@ -135,6 +135,7 @@ function testExamAssistantBuiltinCompatibility() {
     assert.ok(indexHtml.includes('载入内置脚本'), '必须提供内置脚本载入按钮');
     assert.ok(indexHtml.includes('id="extObfuscate" type="checkbox" checked'));
     assert.ok(indexHtml.includes('id="extLicense" type="checkbox" checked'));
+    assert.ok(indexHtml.includes('可完全离线验证'), 'License 说明必须明确支持完全离线验签');
     assert.ok(indexHtml.includes('id="manageLicensesBtn"'), '必须提供 License 管理入口');
     assert.ok(indexHtml.includes('License ID：${record.licenseId}'), '危险操作确认必须显示 License ID');
     assert.ok(indexHtml.includes('完整输入扩展名称确认'), '归档前必须输入扩展名称二次确认');
@@ -173,6 +174,10 @@ function testManualLaunchAndLicensePackage() {
     assert.ok(result.files['popup.js'].includes('template.replace(/\\{(\\w+)\\}/g'), '日期和倒计时占位符必须能够替换');
     assert.ok(result.files['popup.js'].includes('F12T1'), 'Popup 必须验证服务端可信时间签名');
     assert.ok(result.files['popup.js'].includes('requestOnlineValidation'), '启动前必须执行在线 License 校验');
+    assert.ok(result.files['popup.js'].includes('readSignedOfflineValidation'), '无网络时必须支持本地签名有效期验证');
+    assert.ok(result.files['popup.js'].includes('f12LocalLicenseClock'), '必须记录本地最大可信时间');
+    assert.ok(result.files['popup.js'].includes('localSignature: true'), '本地验签结果必须明确标记');
+    assert.ok(result.files['popup.js'].includes('if (verified.attestationPayload)'), '服务器签名的撤销结果必须覆盖旧离线成功缓存');
     assert.ok(result.files['popup.js'].includes('clockRollback'), '离线宽限必须检测系统时间回拨');
     assert.ok(result.files['popup.js'].includes('expiresSoonDays'), '必须提供临近到期提醒');
     assert.ok(result.files['popup.css'].includes('.expiry-warning.urgent'), '24 小时内必须凸显到期提醒');

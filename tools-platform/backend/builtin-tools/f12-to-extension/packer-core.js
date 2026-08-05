@@ -274,9 +274,9 @@ const I18N = {
     verificationFailed: "验证失败",
     onlineRequired: "无法连接授权服务器，请联网后重试",
     clockRollback: "检测到系统时间回拨，请联网重新校验",
-    checkingOnline: "正在通过可信时间服务器校验…",
+    checkingOnline: "正在验证 License 签名与有效期…",
     validUntil: "授权有效至 {date}",
-    validUntilOffline: "离线授权有效至 {date}，请尽快联网复核",
+    validUntilOffline: "本地签名验证通过，授权有效至 {date}",
     expiresSoonDays: "⚠ License 即将过期：还剩 {count} 天，请提前获取新密钥",
     expiresSoonHours: "❗ License 即将过期：还剩 {count} 小时，请立即获取新密钥",
     authorizationRequired: "需要授权：{reason}",
@@ -305,9 +305,9 @@ const I18N = {
     verificationFailed: "Verification failed",
     onlineRequired: "Unable to reach the authorization server. Connect to the internet and try again",
     clockRollback: "A system clock rollback was detected. Reconnect to verify the License",
-    checkingOnline: "Checking with the trusted time server…",
+    checkingOnline: "Verifying the License signature and validity period…",
     validUntil: "License valid until {date}",
-    validUntilOffline: "Offline authorization valid until {date}. Reconnect soon to verify",
+    validUntilOffline: "Local signature verified. License valid until {date}",
     expiresSoonDays: "⚠ License expires soon: {count} day(s) remaining. Obtain a new key in advance",
     expiresSoonHours: "❗ License expires soon: {count} hour(s) remaining. Obtain a new key now",
     authorizationRequired: "Authorization required: {reason}",
@@ -452,13 +452,35 @@ async function requestOnlineValidation(token) {
     const body = await response.json().catch(() => ({}));
     if (!response.ok || !body.attestation) throw new Error(body.error || "online validation failed");
     const verified = await verifyAttestation(body.attestation, token, nonce);
-    if (!verified.valid) return verified;
     const localCheckedAt = Date.now();
+    const digest = await tokenDigest(token);
+    if (!verified.valid) {
+      if (verified.attestationPayload) {
+        await chrome.storage.local.set({
+          f12TrustedLicenseCache: {
+            attestation: body.attestation,
+            localCheckedAt,
+            lastObservedLocalTime: localCheckedAt
+          },
+          f12LocalLicenseClock: {
+            tokenDigest: digest,
+            lastObservedLocalTime: localCheckedAt,
+            lastTrustedTime: verified.attestationPayload.checkedAt
+          }
+        });
+      }
+      return verified;
+    }
     await chrome.storage.local.set({
       f12TrustedLicenseCache: {
         attestation: body.attestation,
         localCheckedAt,
         lastObservedLocalTime: localCheckedAt
+      },
+      f12LocalLicenseClock: {
+        tokenDigest: digest,
+        lastObservedLocalTime: localCheckedAt,
+        lastTrustedTime: verified.attestationPayload.checkedAt
       }
     });
     return {
@@ -495,12 +517,64 @@ async function readOfflineValidation(token) {
   };
 }
 
+async function readSignedOfflineValidation(token, tokenPayload) {
+  const stored = await chrome.storage.local.get(["f12TrustedLicenseCache", "f12LocalLicenseClock"]);
+  const cache = stored.f12TrustedLicenseCache;
+  const digest = await tokenDigest(token);
+  const savedClock = stored.f12LocalLicenseClock && stored.f12LocalLicenseClock.tokenDigest === digest
+    ? stored.f12LocalLicenseClock
+    : {};
+  const localNow = Date.now();
+  const localFloor = Math.max(
+    Number(savedClock.lastObservedLocalTime) || 0,
+    Number(savedClock.lastTrustedTime) || 0
+  );
+  if (localNow < localFloor - 2 * 60 * 1000) {
+    return { valid: false, reasonKey: "clockRollback" };
+  }
+
+  let trustedNow = Math.max(localNow, localFloor);
+  if (cache && cache.attestation) {
+    const serverState = await verifyAttestation(cache.attestation, token);
+    if (!serverState.valid && serverState.attestationPayload) {
+      return serverState;
+    }
+    if (serverState.valid) {
+      trustedNow = Math.max(
+        trustedNow,
+        Number(serverState.attestationPayload.checkedAt)
+          + Math.max(0, localNow - (Number(cache.localCheckedAt) || localNow))
+      );
+    }
+  }
+
+  if (trustedNow < Number(tokenPayload.notBefore)) return { valid: false, reasonKey: "notYetValid" };
+  if (trustedNow >= Number(tokenPayload.expiresAt)) return { valid: false, reasonKey: "expired" };
+  await chrome.storage.local.set({
+    f12LocalLicenseClock: {
+      tokenDigest: digest,
+      lastObservedLocalTime: localNow,
+      lastTrustedTime: trustedNow
+    }
+  });
+  return {
+    valid: true,
+    trustedNow,
+    tokenExpiresAt: tokenPayload.expiresAt,
+    online: false,
+    localSignature: true
+  };
+}
+
 async function validateLicense(token, requireOnline) {
   const inspected = await inspectLicenseToken(token);
   if (!inspected.valid) return inspected;
   try {
     return await requestOnlineValidation(token);
   } catch (_) {
+    if (Number.isFinite(inspected.payload.notBefore) && Number.isFinite(inspected.payload.expiresAt)) {
+      return readSignedOfflineValidation(token, inspected.payload);
+    }
     return requireOnline ? { valid: false, reasonKey: "onlineRequired" } : readOfflineValidation(token);
   }
 }

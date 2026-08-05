@@ -4,7 +4,7 @@
     "slug": "f12-to-extension",
     "name": "F12扩展打包",
     "icon": "📦",
-    "description": "F12 控制台脚本扩展打包器，支持内置脚本、默认代码混淆、月度签名 License、Popup 手动启动、兼容性检查和 Manifest V3 Edge/Chrome 扩展生成。",
+    "description": "F12 控制台脚本扩展打包器，支持内置脚本、默认代码混淆、可完全离线验签的月度 License、Popup 手动启动、兼容性检查和 Manifest V3 Edge/Chrome 扩展生成。",
     "tags": ["浏览器扩展", "纯前端打包", "F12脚本"],
     "href": "/tools/f12-to-extension",
     "filePath": "/custom-tools/f12-to-extension/index.html",
