@@ -36,13 +36,15 @@ router.post('/validate', async (req, res) => {
             verification = { valid: false, reasonCode: 'PRODUCT_MISMATCH', payload: verification.payload };
         }
         let record = null;
+        let tokenExpiresAt = 0;
         if (verification.valid) {
             const checked = registry.checkPayload(verification.payload, clock.now, token);
             record = checked.record || null;
+            tokenExpiresAt = Number(checked.tokenExpiresAt) || 0;
             if (!checked.valid) verification = { valid: false, reasonCode: checked.reasonCode, payload: verification.payload };
         }
 
-        const expiresAt = record ? Number(record.expiresAt) : 0;
+        const expiresAt = tokenExpiresAt || (record ? Number(record.expiresAt) : 0);
         const payload = {
             version: 1,
             productId: registry.PRODUCT_ID,

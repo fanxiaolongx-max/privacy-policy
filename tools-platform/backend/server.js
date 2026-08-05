@@ -245,6 +245,7 @@ app.use('/api', (req, res, next) => {
     if (req.path.startsWith('/auth/')) return next();
     if (req.path.startsWith('/requirements')) return next(); // 需求管理内部自行控制权限
     if (req.path.startsWith('/surveys')) return next(); // 调查模板和提交由模块内部控制权限
+    if (req.method === 'POST' && req.path === '/db/config/monthly_report_titles') return next(); // 登录用户可编辑月报中英文标题，路由内继续校验数据
     if (/^\/custom-tools\/[^/]+\/(?:state(?:\/restore)?|history(?:\/[^/]+)?)$/.test(req.path)) return next(); // 登录用户可维护自定义工具业务数据
     if (req.method === 'DELETE' && /^\/slide-design\/assets\/[^/]+$/.test(req.path)) return next(); // 素材上传者或管理员可删除，路由内校验归属
     if (req.method === 'POST' && req.path === '/uiv/run-uivision-macro') return next(); // 只生成临时 runner，不修改业务数据

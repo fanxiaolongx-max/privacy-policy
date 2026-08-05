@@ -11,7 +11,7 @@ const config = {
     validationUrl: process.env.DESKTOP_LICENSE_VALIDATION_URL
         || 'https://cs.fanxiaolong.uk/api/public/desktop-license/validate',
     publicKeyJwk: authority.getPublicKeyJwk(),
-    offlineGraceHours: 24
+    offlineMode: 'signed-token-validity'
 };
 
 fs.writeFileSync(target, `${JSON.stringify(config, null, 2)}\n`, 'utf8');

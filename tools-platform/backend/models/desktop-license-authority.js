@@ -58,6 +58,11 @@ function verifyToken(token) {
             || typeof payload.licenseId !== 'string' || !Number.isFinite(payload.issuedAt)) {
             return { valid: false, reasonCode: 'INVALID_FORMAT' };
         }
+        const hasEmbeddedValidity = payload.notBefore !== undefined || payload.expiresAt !== undefined;
+        if (hasEmbeddedValidity && (!Number.isFinite(payload.notBefore)
+            || !Number.isFinite(payload.expiresAt) || payload.expiresAt <= payload.notBefore)) {
+            return { valid: false, reasonCode: 'INVALID_FORMAT' };
+        }
         return { valid: true, payload };
     } catch (_) {
         return { valid: false, reasonCode: 'VERIFICATION_FAILED' };
@@ -74,9 +79,35 @@ function issue({ label, days = 30, expiresAt } = {}) {
     }
     if (finalExpiresAt <= issuedAt) throw new Error('到期时间必须晚于当前时间');
     const licenseId = crypto.randomUUID();
-    const payload = { version: 1, licenseId, productId: registry.PRODUCT_ID, issuedAt };
+    const payload = {
+        version: 1,
+        licenseId,
+        productId: registry.PRODUCT_ID,
+        issuedAt,
+        notBefore,
+        expiresAt: finalExpiresAt
+    };
     const token = sign(TOKEN_PREFIX, payload);
     const record = registry.createRecord({ licenseId, label, token, notBefore, expiresAt: finalExpiresAt });
+    return { token, payload, record, publicKeyJwk: getPublicKeyJwk() };
+}
+
+function renew(licenseId, options = {}) {
+    const current = registry.getRecord(licenseId);
+    if (!current) throw new Error('未找到 License 记录');
+    const issuedAt = Date.now();
+    const notBefore = issuedAt - 60000;
+    const expiresAt = registry.calculateRenewedExpiry(current, options);
+    const payload = {
+        version: 1,
+        licenseId: current.licenseId,
+        productId: registry.PRODUCT_ID,
+        issuedAt,
+        notBefore,
+        expiresAt
+    };
+    const token = sign(TOKEN_PREFIX, payload);
+    const record = registry.replaceTokenForRenewal(licenseId, { token, notBefore, expiresAt });
     return { token, payload, record, publicKeyJwk: getPublicKeyJwk() };
 }
 
@@ -91,6 +122,7 @@ module.exports = {
     ensureSigningKeys,
     getPublicKeyJwk,
     issue,
+    renew,
     signAttestation,
     verifyToken
 };

@@ -172,8 +172,10 @@ GitHub Actions 当前会同时构建两种 Windows 版本，不再构建 macOS `
 ### EXE License
 
 - 首次启动安装版或绿色版时，Electron 会在启动本地服务前要求输入 `DSKL1` License。
-- 两种版本共用系统用户数据目录中的授权缓存，续期不需更换密钥，下次联网验证自动更新到期时间。
-- 在线验证响应使用 ECDSA P-256 签名、每次请求的随机 nonce、License 摘要和可信时间；离线缓存最长 24 小时。
+- License 为公司通用授权，不绑定设备；安装版与绿色版共用系统用户数据目录中的授权状态。
+- 新版 License 内含经 ECDSA P-256 签名的生效和到期时间；无网络时可直接在本地验签，不再受 24 小时离线缓存限制。
+- 有网络时依然通过随机 nonce、License 摘要、可信时间和服务器签名检查是否被提前失效。
+- 续期会换发包含新到期时间的密钥；旧密钥保留至原到期时间，用户需输入新密钥获得延长后的离线有效期。
 - 服务器管理员在 `/desktop-license-admin` 签发、续期、失效、恢复和归档 License。
 - `desktop-license-authority.js`、服务器管理路由、管理页、台账与私钥均由 electron-builder 排除，不进入安装版或绿色版。
 - `backend/data/desktop-license-signing-key.json` 是长期签发私钥，必须纳入加密备份；遗失或替换后，已发布客户端将无法验证新响应。

@@ -142,7 +142,17 @@ const i18n = {
         msg_export_daily_progress: '⏳ 正在生成日报 {current}/{total}：{date}',
         msg_export_daily_success: '✅ 已按月份打包导出 {count} 份 PDF 与完整 HTML 日报！',
         msg_export_daily_fail: '批量导出日报失败: ',
-        daily_report_title: '运营质量与合规日报'
+        daily_report_title: '运营质量与合规日报',
+        title_dialog_heading: '修改月报标题',
+        title_dialog_note: '中英文标题将同时保存到服务器，并跟随页面语言切换。',
+        title_zh_label: '中文月报标题',
+        title_en_label: '英文月报标题',
+        title_cancel: '取消',
+        title_save: '保存到服务器',
+        title_click_hint: '点击修改中英文月报标题',
+        title_saved: '✅ 月报中英文标题已保存到服务器',
+        title_save_fail: '月报标题保存失败: ',
+        title_required: '中英文月报标题均不能为空'
     },
     en: {
         title: 'Monthly Quality & Compliance Analysis <span id="monthlyFrontendVersion" style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">vLoading</span>',
@@ -247,6 +257,16 @@ const i18n = {
         msg_export_daily_success: '✅ Exported {count} daily PDF and full HTML reports by month!',
         msg_export_daily_fail: 'Failed to export daily reports: ',
         daily_report_title: 'Daily Quality & Compliance Report',
+        title_dialog_heading: 'Edit Monthly Report Titles',
+        title_dialog_note: 'Both titles are saved to the server and switch with the page language.',
+        title_zh_label: 'Chinese monthly report title',
+        title_en_label: 'English monthly report title',
+        title_cancel: 'Cancel',
+        title_save: 'Save to Server',
+        title_click_hint: 'Click to edit the Chinese and English monthly report titles',
+        title_saved: '✅ Chinese and English monthly report titles saved to the server',
+        title_save_fail: 'Failed to save monthly report titles: ',
+        title_required: 'Both Chinese and English monthly report titles are required',
 
         // Metric and Category mappings
         "TE": "TE",
@@ -290,6 +310,116 @@ function othersMetricBadgeHtml() {
 
 function escapeHTML(str) {
     return typeof str === 'string' ? str.replace(/[&<>'"]/g, tag => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'": '&#39;','"':'&quot;'}[tag] || tag)) : str;
+}
+
+const DEFAULT_MONTHLY_REPORT_TITLES = {
+    zh: '月度运营质量与合规分析报告',
+    en: 'Monthly Quality & Compliance Analysis'
+};
+let monthlyReportTitles = { ...DEFAULT_MONTHLY_REPORT_TITLES };
+
+function normalizeMonthlyReportTitles(value) {
+    const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+    return {
+        zh: typeof source.zh === 'string' && source.zh.trim() ? source.zh.trim() : DEFAULT_MONTHLY_REPORT_TITLES.zh,
+        en: typeof source.en === 'string' && source.en.trim() ? source.en.trim() : DEFAULT_MONTHLY_REPORT_TITLES.en
+    };
+}
+
+function monthlyTitleHtml(text) {
+    return `${escapeHTML(text)} <span id="monthlyFrontendVersion" style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v加载中</span>`;
+}
+
+function applyMonthlyReportTitles(value) {
+    monthlyReportTitles = normalizeMonthlyReportTitles(value);
+    i18n.zh.title = monthlyTitleHtml(monthlyReportTitles.zh);
+    i18n.en.title = monthlyTitleHtml(monthlyReportTitles.en);
+    const titleEl = document.getElementById('monthlyReportTitle');
+    if (titleEl) {
+        titleEl.innerHTML = i18n[window.currentLang].title;
+        titleEl.title = t('title_click_hint');
+        titleEl.setAttribute('aria-label', t('title_click_hint'));
+    }
+    document.title = `${window.currentLang === 'en' ? monthlyReportTitles.en : monthlyReportTitles.zh} - Tools Platform`;
+    renderMonthlyFrontendVersion();
+}
+
+function openMonthlyTitleModal() {
+    const modal = document.getElementById('monthlyTitleModal');
+    const zhInput = document.getElementById('monthlyTitleZhInput');
+    const enInput = document.getElementById('monthlyTitleEnInput');
+    if (!modal || !zhInput || !enInput) return;
+    zhInput.value = monthlyReportTitles.zh;
+    enInput.value = monthlyReportTitles.en;
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    setTimeout(() => (window.currentLang === 'en' ? enInput : zhInput).focus(), 0);
+}
+
+function closeMonthlyTitleModal() {
+    const modal = document.getElementById('monthlyTitleModal');
+    if (!modal) return;
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+    document.getElementById('monthlyReportTitle')?.focus();
+}
+
+async function saveMonthlyReportTitles(event) {
+    event.preventDefault();
+    const zh = String(document.getElementById('monthlyTitleZhInput')?.value || '').trim();
+    const en = String(document.getElementById('monthlyTitleEnInput')?.value || '').trim();
+    if (!zh || !en) {
+        showToast(t('title_required'), 'warn');
+        return;
+    }
+
+    const saveButton = document.getElementById('monthlyTitleSaveButton');
+    if (saveButton) saveButton.disabled = true;
+    try {
+        const nextTitles = { zh, en };
+        await window.API.post('/api/db/config/monthly_report_titles', nextTitles);
+        applyMonthlyReportTitles(nextTitles);
+        closeMonthlyTitleModal();
+        showToast(t('title_saved'), 'success');
+    } catch (error) {
+        console.error('Failed to save monthly report titles:', error);
+        showToast(t('title_save_fail') + error.message, 'error');
+    } finally {
+        if (saveButton) saveButton.disabled = false;
+    }
+}
+
+function initMonthlyTitleEditor() {
+    const titleEl = document.getElementById('monthlyReportTitle');
+    const modal = document.getElementById('monthlyTitleModal');
+    const form = document.getElementById('monthlyTitleForm');
+    const cancelButton = document.getElementById('monthlyTitleCancelButton');
+    if (titleEl) {
+        titleEl.addEventListener('click', openMonthlyTitleModal);
+        titleEl.addEventListener('keydown', event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                openMonthlyTitleModal();
+            }
+        });
+    }
+    if (form) form.addEventListener('submit', saveMonthlyReportTitles);
+    if (cancelButton) cancelButton.addEventListener('click', closeMonthlyTitleModal);
+    if (modal) {
+        modal.addEventListener('click', event => {
+            if (event.target === modal) closeMonthlyTitleModal();
+        });
+    }
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && modal?.classList.contains('open')) closeMonthlyTitleModal();
+    });
+
+    window.API.get('/api/db/config/monthly_report_titles')
+        .then(applyMonthlyReportTitles)
+        .catch(error => {
+            console.error('Failed to load monthly report titles:', error);
+            applyMonthlyReportTitles(DEFAULT_MONTHLY_REPORT_TITLES);
+        });
 }
 
 function translateTicketTitle(title) {
@@ -625,6 +755,7 @@ function renderMonthlyExplanation() {
 
 document.addEventListener('DOMContentLoaded', () => {
     updateStaticI18n();
+    initMonthlyTitleEditor();
     const modeSelect = document.getElementById('monthlySourceMode');
     if (modeSelect) {
         modeSelect.value = window.API.getSourceMode('monthly_sla_data');
@@ -655,6 +786,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('tools:languagechange', () => {
         window.currentLang = getMonthlyLang();
+        applyMonthlyReportTitles(monthlyReportTitles);
         
         const monthSelect = document.getElementById('monthlyTargetMonth');
         if (monthSelect) {

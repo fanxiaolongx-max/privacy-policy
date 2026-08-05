@@ -26,6 +26,7 @@ const { createDesktopLicenseClient } = require('../desktop-license-client');
                 ? registry.checkPayload(verified.payload, Date.now(), input.token)
                 : verified;
             const record = checked.record || null;
+            const tokenExpiresAt = Number(checked.tokenExpiresAt) || (record ? record.expiresAt : 0);
             const now = Date.now();
             const payload = {
                 version: 1,
@@ -35,8 +36,8 @@ const { createDesktopLicenseClient } = require('../desktop-license-client');
                 tokenDigest: crypto.createHash('sha256').update(input.token).digest('base64url'),
                 checkedAt: now,
                 attestationExpiresAt: now + 600000,
-                offlineUntil: checked.valid ? Math.min(record.expiresAt, now + 86400000) : now,
-                expiresAt: record ? record.expiresAt : 0,
+                offlineUntil: checked.valid ? Math.min(tokenExpiresAt, now + 86400000) : now,
+                expiresAt: tokenExpiresAt,
                 valid: checked.valid,
                 reasonCode: checked.reasonCode || null
             };
@@ -63,10 +64,13 @@ const { createDesktopLicenseClient } = require('../desktop-license-client');
     assert.strictEqual(first.valid, true);
     assert.strictEqual(first.online, true);
 
-    const renewed = registry.renew(issued.payload.licenseId, { days: 90 });
-    const afterRenewal = await client.validateStored();
+    const renewed = authority.renew(issued.payload.licenseId, { days: 90 });
+    const oldAfterRenewal = await client.validateStored();
+    assert.strictEqual(oldAfterRenewal.valid, true);
+    assert.strictEqual(oldAfterRenewal.expiresAt, issued.payload.expiresAt, '旧密钥只保留原有到期时间');
+    const afterRenewal = await client.validate(renewed.token, { requireOnline: true });
     assert.strictEqual(afterRenewal.valid, true);
-    assert.strictEqual(afterRenewal.expiresAt, renewed.expiresAt);
+    assert.strictEqual(afterRenewal.expiresAt, renewed.payload.expiresAt);
 
     registry.setStatus(issued.payload.licenseId, 'revoked', '测试');
     const revoked = await client.validateStored();
@@ -85,6 +89,16 @@ const { createDesktopLicenseClient } = require('../desktop-license-client');
     const offline = await client.validateStored();
     assert.strictEqual(offline.valid, true);
     assert.strictEqual(offline.online, false);
+    assert.strictEqual(offline.expiresAt, renewed.payload.expiresAt);
+
+    const freshOfflineClient = createDesktopLicenseClient({
+        configPath,
+        statePath: path.join(temp, 'fresh-offline-state.json'),
+        publicStatusPath: path.join(temp, 'fresh-offline-public-status.json')
+    });
+    const firstActivationWithoutNetwork = await freshOfflineClient.validate(renewed.token, { requireOnline: true });
+    assert.strictEqual(firstActivationWithoutNetwork.valid, true, '新版签名 License 应支持完全离线首次激活');
+    assert.strictEqual(firstActivationWithoutNetwork.online, false);
     console.log('Desktop License client tests passed.');
 })().catch(error => {
     console.error(error);

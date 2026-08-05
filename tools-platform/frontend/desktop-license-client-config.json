@@ -8,5 +8,5 @@
     "y": "IDXvRmp5lc90udlt5f3A3ZU90w4bCee9HopFT37JiII",
     "crv": "P-256"
   },
-  "offlineGraceHours": 24
+  "offlineMode": "signed-token-validity"
 }

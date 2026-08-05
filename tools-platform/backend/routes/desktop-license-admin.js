@@ -23,7 +23,7 @@ router.post('/issue', (req, res) => {
 
 router.post('/:licenseId/renew', (req, res) => {
     try {
-        res.json({ success: true, record: registry.renew(req.params.licenseId, req.body || {}) });
+        res.json({ success: true, ...authority.renew(req.params.licenseId, req.body || {}) });
     } catch (error) {
         res.status(400).json({ error: error.message || '续期失败' });
     }

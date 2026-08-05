@@ -63,7 +63,8 @@ function createRecord({ licenseId, label, token, notBefore, expiresAt }) {
         revokedAt: null,
         revokeReason: '',
         archivedAt: null,
-        renewalHistory: []
+        renewalHistory: [],
+        previousTokens: []
     };
     state.licenses.unshift(record);
     writeState(state);
@@ -75,7 +76,11 @@ function updateRecord(licenseId, updater) {
     const index = state.licenses.findIndex(item => item.licenseId === String(licenseId || ''));
     if (index < 0) throw new Error('未找到 License 记录');
     const current = state.licenses[index];
-    const next = updater({ ...current, renewalHistory: [...(current.renewalHistory || [])] });
+    const next = updater({
+        ...current,
+        renewalHistory: [...(current.renewalHistory || [])],
+        previousTokens: [...(current.previousTokens || [])]
+    });
     if (!next || next.licenseId !== current.licenseId) throw new Error('License 更新结果无效');
     next.updatedAt = new Date().toISOString();
     state.licenses[index] = next;
@@ -101,16 +106,34 @@ function setStatus(licenseId, status, reason = '') {
     });
 }
 
-function renew(licenseId, { days, expiresAt } = {}) {
+function calculateRenewedExpiry(record, { days, expiresAt } = {}) {
+    const previousExpiresAt = Number(record && record.expiresAt);
+    let nextExpiresAt = Number(expiresAt);
+    if (!Number.isFinite(nextExpiresAt)) {
+        const safeDays = Math.max(1, Math.min(3650, Number.parseInt(days, 10) || 30));
+        nextExpiresAt = Math.max(Date.now(), previousExpiresAt) + safeDays * 86400000;
+    }
+    if (!Number.isFinite(nextExpiresAt) || nextExpiresAt <= Date.now()) {
+        throw new Error('新到期时间必须晚于当前时间');
+    }
+    return nextExpiresAt;
+}
+
+function replaceTokenForRenewal(licenseId, { token, notBefore, expiresAt }) {
     return updateRecord(licenseId, record => {
         const previousExpiresAt = Number(record.expiresAt);
-        let nextExpiresAt = Number(expiresAt);
-        if (!Number.isFinite(nextExpiresAt)) {
-            const safeDays = Math.max(1, Math.min(3650, Number.parseInt(days, 10) || 30));
-            nextExpiresAt = Math.max(Date.now(), previousExpiresAt) + safeDays * 86400000;
+        if (record.tokenDigest) {
+            record.previousTokens.push({
+                tokenDigest: record.tokenDigest,
+                notBefore: Number(record.notBefore),
+                expiresAt: previousExpiresAt,
+                replacedAt: new Date().toISOString()
+            });
         }
-        if (!Number.isFinite(nextExpiresAt) || nextExpiresAt <= Date.now()) throw new Error('新到期时间必须晚于当前时间');
-        record.expiresAt = nextExpiresAt;
+        record.token = String(token || '');
+        record.tokenDigest = crypto.createHash('sha256').update(record.token).digest('base64url');
+        record.notBefore = Number(notBefore);
+        record.expiresAt = Number(expiresAt);
         record.status = 'active';
         record.revokedAt = null;
         record.revokeReason = '';
@@ -118,7 +141,8 @@ function renew(licenseId, { days, expiresAt } = {}) {
         record.renewalHistory.push({
             renewedAt: new Date().toISOString(),
             previousExpiresAt,
-            expiresAt: nextExpiresAt
+            expiresAt: Number(expiresAt),
+            replacementTokenIssued: true
         });
         return record;
     });
@@ -131,24 +155,32 @@ function checkPayload(payload, now = Date.now(), token = '') {
     const record = getRecord(payload.licenseId);
     if (!record) return { valid: false, reasonCode: 'LICENSE_NOT_FOUND' };
     const digest = crypto.createHash('sha256').update(String(token || '')).digest('base64url');
-    if (record.productId !== payload.productId || record.tokenDigest !== digest) {
+    const previousToken = (record.previousTokens || []).find(item => item.tokenDigest === digest) || null;
+    if (record.productId !== payload.productId || (record.tokenDigest !== digest && !previousToken)) {
         return { valid: false, reasonCode: 'REGISTRY_MISMATCH', record };
     }
     if (record.status === 'revoked') return { valid: false, reasonCode: 'REVOKED', record };
     if (record.status === 'archived') return { valid: false, reasonCode: 'ARCHIVED', record };
-    if (Number(now) < record.notBefore) return { valid: false, reasonCode: 'NOT_YET_VALID', record };
-    if (Number(now) >= record.expiresAt) return { valid: false, reasonCode: 'EXPIRED', record };
-    return { valid: true, record };
+    const tokenNotBefore = Number.isFinite(payload.notBefore)
+        ? Number(payload.notBefore)
+        : Number(previousToken ? previousToken.notBefore : record.notBefore);
+    const tokenExpiresAt = Number.isFinite(payload.expiresAt)
+        ? Number(payload.expiresAt)
+        : Number(previousToken ? previousToken.expiresAt : record.expiresAt);
+    if (Number(now) < tokenNotBefore) return { valid: false, reasonCode: 'NOT_YET_VALID', record, tokenExpiresAt };
+    if (Number(now) >= tokenExpiresAt) return { valid: false, reasonCode: 'EXPIRED', record, tokenExpiresAt };
+    return { valid: true, record, tokenExpiresAt };
 }
 
 module.exports = {
     PRODUCT_ID,
     REGISTRY_FILE,
+    calculateRenewedExpiry,
     checkPayload,
     createRecord,
     getRecord,
     listRecords,
     normalizeLabel,
-    renew,
+    replaceTokenForRenewal,
     setStatus
 };

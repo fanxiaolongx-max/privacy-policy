@@ -52,10 +52,16 @@ function createDesktopLicenseClient({ configPath, statePath, publicStatusPath })
         const checked = verifySigned(token, TOKEN_PREFIX);
         if (!checked.valid) return checked;
         const payload = checked.payload;
-        if (!payload || payload.version !== 1 || payload.productId !== config.productId || !payload.licenseId) {
+        if (!payload || payload.version !== 1 || payload.productId !== config.productId
+            || !payload.licenseId || !Number.isFinite(payload.issuedAt)) {
             return { valid: false, reasonCode: 'PRODUCT_MISMATCH' };
         }
-        return checked;
+        const hasEmbeddedValidity = payload.notBefore !== undefined || payload.expiresAt !== undefined;
+        if (hasEmbeddedValidity && (!Number.isFinite(payload.notBefore)
+            || !Number.isFinite(payload.expiresAt) || payload.expiresAt <= payload.notBefore)) {
+            return { valid: false, reasonCode: 'INVALID_FORMAT' };
+        }
+        return { ...checked, locallyVerifiable: hasEmbeddedValidity };
     }
 
     function verifyAttestation(attestation, token, expectedNonce) {
@@ -114,12 +120,19 @@ function createDesktopLicenseClient({ configPath, statePath, publicStatusPath })
                         token,
                         attestation: body.attestation,
                         localCheckedAt,
-                        lastObservedLocalTime: localCheckedAt
+                        lastObservedLocalTime: localCheckedAt,
+                        lastTrustedTime: checked.payload.checkedAt
                     }, true);
                 }
                 return publish({ valid: false, reasonCode: checked.reasonCode, online: true });
             }
-            const state = { token, attestation: body.attestation, localCheckedAt, lastObservedLocalTime: localCheckedAt };
+            const state = {
+                token,
+                attestation: body.attestation,
+                localCheckedAt,
+                lastObservedLocalTime: localCheckedAt,
+                lastTrustedTime: checked.payload.checkedAt
+            };
             writeJson(statePath, state, true);
             return publish({
                 valid: true,
@@ -133,7 +146,7 @@ function createDesktopLicenseClient({ configPath, statePath, publicStatusPath })
         }
     }
 
-    function offline(token) {
+    function offlineAttestation(token) {
         const state = readState();
         if (!state.attestation || state.token !== token) return publish({ valid: false, reasonCode: 'ONLINE_REQUIRED' });
         const checked = verifyAttestation(state.attestation, token);
@@ -156,13 +169,74 @@ function createDesktopLicenseClient({ configPath, statePath, publicStatusPath })
         });
     }
 
+    function offlineSignedToken(token, tokenPayload) {
+        const state = readState();
+        const localNow = Date.now();
+        const sameTokenState = state.token === token ? state : {};
+        const floor = Math.max(
+            Number(sameTokenState.lastObservedLocalTime) || 0,
+            Number(sameTokenState.lastTrustedTime) || 0
+        );
+        if (localNow < floor - 120000) {
+            return publish({ valid: false, reasonCode: 'CLOCK_ROLLBACK', trustedNow: floor });
+        }
+
+        // 如果这把密钥曾收到服务器签名的撤销/归档结果，断网后也不回退到本地成功。
+        if (sameTokenState.attestation) {
+            const serverState = verifyAttestation(sameTokenState.attestation, token);
+            if (!serverState.valid && serverState.payload) {
+                return publish({
+                    valid: false,
+                    reasonCode: serverState.reasonCode,
+                    trustedNow: Math.max(localNow, floor)
+                });
+            }
+        }
+
+        let trustedNow = Math.max(localNow, floor);
+        if (sameTokenState.attestation && Number.isFinite(sameTokenState.localCheckedAt)) {
+            const serverState = verifyAttestation(sameTokenState.attestation, token);
+            if (serverState.valid) {
+                trustedNow = Math.max(
+                    trustedNow,
+                    Number(serverState.payload.checkedAt)
+                        + Math.max(0, localNow - Number(sameTokenState.localCheckedAt))
+                );
+            }
+        }
+        if (trustedNow < Number(tokenPayload.notBefore)) {
+            return publish({ valid: false, reasonCode: 'NOT_YET_VALID', trustedNow });
+        }
+        if (trustedNow >= Number(tokenPayload.expiresAt)) {
+            return publish({ valid: false, reasonCode: 'EXPIRED', trustedNow });
+        }
+
+        writeJson(statePath, {
+            ...sameTokenState,
+            token,
+            lastObservedLocalTime: localNow,
+            lastTrustedTime: trustedNow
+        }, true);
+        return publish({
+            valid: true,
+            licenseId: tokenPayload.licenseId,
+            expiresAt: tokenPayload.expiresAt,
+            trustedNow,
+            online: false,
+            localSignature: true
+        });
+    }
+
     async function validate(token, { requireOnline = false } = {}) {
         const inspected = inspectToken(token);
         if (!inspected.valid) return publish({ valid: false, reasonCode: inspected.reasonCode });
         try {
             return await online(token);
         } catch (_) {
-            return requireOnline ? publish({ valid: false, reasonCode: 'ONLINE_REQUIRED' }) : offline(token);
+            if (inspected.locallyVerifiable) return offlineSignedToken(token, inspected.payload);
+            return requireOnline
+                ? publish({ valid: false, reasonCode: 'ONLINE_REQUIRED' })
+                : offlineAttestation(token);
         }
     }
 

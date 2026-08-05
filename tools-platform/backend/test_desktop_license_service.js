@@ -14,17 +14,21 @@ const registry = require('./models/desktop-license-registry');
 const issued = authority.issue({ label: '测试电脑', days: 30 });
 assert.ok(issued.token.startsWith('DSKL1.'));
 assert.strictEqual(authority.verifyToken(issued.token).valid, true);
+assert.ok(Number.isFinite(issued.payload.notBefore));
+assert.ok(issued.payload.expiresAt > issued.payload.notBefore);
 assert.strictEqual(registry.checkPayload(issued.payload, Date.now(), issued.token).valid, true);
 
 const originalExpiry = issued.record.expiresAt;
-const renewed = registry.renew(issued.payload.licenseId, { days: 30 });
-assert.ok(renewed.expiresAt > originalExpiry);
-assert.strictEqual(renewed.token, issued.token, '续期不应更换客户端密钥');
+const renewed = authority.renew(issued.payload.licenseId, { days: 30 });
+assert.ok(renewed.payload.expiresAt > originalExpiry);
+assert.notStrictEqual(renewed.token, issued.token, '离线 License 续期必须重新签名新的到期时间');
+assert.strictEqual(registry.checkPayload(issued.payload, Date.now(), issued.token).valid, true, '旧密钥应保留到原到期时间');
+assert.strictEqual(registry.checkPayload(renewed.payload, Date.now(), renewed.token).valid, true);
 
 registry.setStatus(issued.payload.licenseId, 'revoked', '测试失效');
-assert.strictEqual(registry.checkPayload(issued.payload, Date.now(), issued.token).reasonCode, 'REVOKED');
+assert.strictEqual(registry.checkPayload(renewed.payload, Date.now(), renewed.token).reasonCode, 'REVOKED');
 registry.setStatus(issued.payload.licenseId, 'active');
-assert.strictEqual(registry.checkPayload(issued.payload, Date.now(), issued.token).valid, true);
+assert.strictEqual(registry.checkPayload(renewed.payload, Date.now(), renewed.token).valid, true);
 
 const attestation = authority.signAttestation({ version: 1, valid: true });
 assert.ok(attestation.startsWith('DSKT1.'));

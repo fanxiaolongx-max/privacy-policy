@@ -12,14 +12,14 @@
   <main class="card">
     <div class="top"><div class="brand">Tools Platform</div><select id="lang" class="lang"><option value="zh">中文</option><option value="en">English</option></select></div>
     <h1 id="title" style="font-size:20px;margin:22px 0 0">首次启动授权</h1>
-    <p id="sub" class="sub">请输入服务器授权页面签发的 EXE License。验证成功后，安装版和绿色版会共用本机授权。</p>
+    <p id="sub" class="sub">请输入服务器授权页面签发的 EXE License。有效期已由数字签名保护，无网络也可在本地验证。</p>
     <div id="status" class="status"></div>
     <textarea id="token" spellcheck="false" placeholder="DSKL1..."></textarea>
-    <div class="actions"><button id="activate" class="activate">联网验证并启动</button><button id="quit" class="quit">退出</button></div>
-    <div id="meta" class="meta">验证响应包含数字签名、随机 nonce 与可信时间。</div>
+    <div class="actions"><button id="activate" class="activate">验证并启动（支持离线）</button><button id="quit" class="quit">退出</button></div>
+    <div id="meta" class="meta">有网络时检查服务器失效状态；无网络时在本地验证数字签名和到期时间。</div>
   </main>
   <script>
-    const words={zh:{title:'首次启动授权',sub:'请输入服务器授权页面签发的 EXE License。验证成功后，安装版和绿色版会共用本机授权。',activate:'联网验证并启动',quit:'退出',meta:'验证响应包含数字签名、随机 nonce 与可信时间。',required:'请输入 License 密钥',checking:'正在连接授权服务器并验证…',failed:'授权失败：'},en:{title:'First-run activation',sub:'Enter the EXE License issued by the server. The installed and portable editions share this device authorization.',activate:'Verify online and start',quit:'Quit',meta:'The response is protected by a digital signature, random nonce, and trusted time.',required:'Enter a License key',checking:'Connecting to the License server…',failed:'Activation failed: '}};
+    const words={zh:{title:'首次启动授权',sub:'请输入服务器授权页面签发的 EXE License。有效期已由数字签名保护，无网络也可在本地验证。',activate:'验证并启动（支持离线）',quit:'退出',meta:'有网络时检查服务器失效状态；无网络时在本地验数字签名和到期时间。',required:'请输入 License 密钥',checking:'正在验证 License…',failed:'授权失败：'},en:{title:'First-run activation',sub:'Enter the EXE License issued by the server. Its signed validity period can also be verified locally without a network connection.',activate:'Verify and start (offline supported)',quit:'Quit',meta:'Online checks revocation status; offline verifies the digital signature and expiration locally.',required:'Enter a License key',checking:'Verifying License…',failed:'Activation failed: '}};
     const reason={LICENSE_REQUIRED:'需要 License / License required',INVALID_FORMAT:'密钥格式无效 / Invalid key format',INVALID_SIGNATURE:'签名无效 / Invalid signature',PRODUCT_MISMATCH:'产品不匹配 / Wrong product',LICENSE_NOT_FOUND:'服务器无此 License / License not found',REVOKED:'License 已失效 / License revoked',ARCHIVED:'License 已归档 / License archived',EXPIRED:'License 已过期 / License expired',NOT_YET_VALID:'License 尚未生效 / License not active yet',ONLINE_REQUIRED:'需要联网验证 / Online validation required',CLOCK_ROLLBACK:'检测到本机时间回拨 / System clock rollback detected'};
     let lang=/^zh/i.test(navigator.language)?'zh':'en';const $=id=>document.getElementById(id);$('lang').value=lang;
     function render(){const w=words[lang];['title','sub','activate','quit','meta'].forEach(id=>$(id).textContent=w[id])}

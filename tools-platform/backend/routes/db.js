@@ -310,11 +310,28 @@ router.get('/config/:key', (req, res) => {
 });
 
 router.post('/config/:key', (req, res) => {
-    const publicEditableKeys = new Set(['bigscreen_contact_info', 'bigscreen_title']);
+    const publicEditableKeys = new Set(['bigscreen_contact_info', 'bigscreen_title', 'monthly_report_titles']);
     if (!publicEditableKeys.has(req.params.key) && (!req.user || req.user.role !== 'admin')) {
         return res.status(403).json({ error: '没有权限，仅管理员可修改配置' });
     }
-    const valueJson = JSON.stringify(req.body);
+
+    let configValue = req.body;
+    if (req.params.key === 'monthly_report_titles') {
+        if (!configValue || typeof configValue !== 'object' || Array.isArray(configValue)) {
+            return res.status(400).json({ error: '月报标题格式无效' });
+        }
+        const zh = typeof configValue.zh === 'string' ? configValue.zh.trim() : '';
+        const en = typeof configValue.en === 'string' ? configValue.en.trim() : '';
+        if (!zh || !en) {
+            return res.status(400).json({ error: '中英文月报标题均不能为空' });
+        }
+        if (zh.length > 120 || en.length > 120) {
+            return res.status(400).json({ error: '月报标题不能超过 120 个字符' });
+        }
+        configValue = { zh, en };
+    }
+
+    const valueJson = JSON.stringify(configValue);
     db.get('SELECT value_json FROM PlatformConfig WHERE key_name = ?', [req.params.key], (beforeErr, beforeRow) => {
         if (beforeErr) return res.status(500).json({ error: beforeErr.message });
         let beforeValue = {};
@@ -331,7 +348,7 @@ router.post('/config/:key', (req, res) => {
                 req,
                 action: '报表/大屏平台配置变化',
                 before: beforeValue,
-                after: req.body,
+                after: configValue,
                 objectType: 'report_platform_config',
                 objectId: req.params.key
             });
