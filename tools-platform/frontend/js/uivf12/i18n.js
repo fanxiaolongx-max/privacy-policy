@@ -28,6 +28,9 @@
             'uiv.repo.copyBatch': '📦 拷贝全部为批量阵列 (F12)',
             'uiv.repo.copyBatchUiv': '📦 拷贝全部为批量阵列 (UI.V)',
             'uiv.repo.runBatchUiv': '🚀 运行批脚本',
+            'uiv.repo.runTestBatchUiv': '🚀 测试批脚本',
+            'uiv.repo.siteConsolePlaceholder': '📋 浮窗脚本',
+            'uiv.repo.siteConsoleTitle': '选择目标站点并复制该站点的 F12 控制台脚本',
             'uiv.repo.batchSpeedTitle': '当前 {speed} 倍速：脚本间隔约 {seconds} 秒。点击切换 1x / 2x / 4x。',
             'uiv.repo.batchSpeedToast': 'UI.Vision 批量速度已切换为 {speed}x，脚本间隔约 {seconds} 秒',
             'uiv.repo.export': '📤 导出脚本',
@@ -215,6 +218,9 @@
             'uiv.repo.copyBatch': '📦 Copy All as Batch Array (F12)',
             'uiv.repo.copyBatchUiv': '📦 Copy All as Batch Array (UI.V)',
             'uiv.repo.runBatchUiv': '🚀 Run Batch',
+            'uiv.repo.runTestBatchUiv': '🚀 Test Batch',
+            'uiv.repo.siteConsolePlaceholder': '📋 Floating Panel Script',
+            'uiv.repo.siteConsoleTitle': 'Choose a target site and copy its F12 console script',
             'uiv.repo.batchSpeedTitle': 'Current {speed}x speed: script interval is about {seconds}s. Click to switch 1x / 2x / 4x.',
             'uiv.repo.batchSpeedToast': 'UI.Vision batch speed switched to {speed}x, script interval about {seconds}s',
             'uiv.repo.export': '📤 Export Scripts',
@@ -453,9 +459,11 @@
             `;
         }
         setText('.btn-add-cat', t('uiv.repo.newCategory'));
-        setText('.btn-batch-pkg:not(.btn-batch-uiv):not(.btn-batch-uiv-run)', t('uiv.repo.copyBatch'));
         setText('.btn-batch-uiv', t('uiv.repo.copyBatchUiv'));
-        setText('.btn-batch-uiv-run', t('uiv.repo.runBatchUiv'));
+        setText('.btn-batch-uiv-run:not(.btn-batch-uiv-test)', t('uiv.repo.runBatchUiv'));
+        setText('.btn-batch-uiv-test', t('uiv.repo.runTestBatchUiv'));
+        setText('.btn-batch-site-console', t('uiv.repo.siteConsolePlaceholder'));
+        setTitle('.btn-batch-site-console', t('uiv.repo.siteConsoleTitle'));
         if (window.UIVCopy && typeof window.UIVCopy.updateUivBatchSpeedButton === 'function') {
             window.UIVCopy.updateUivBatchSpeedButton();
         }

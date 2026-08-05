@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tools Platform License</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;font-family:Segoe UI,"Microsoft YaHei",sans-serif;color:#e5eefc;background:radial-gradient(circle at 20% 0,#243b67 0,transparent 42%),#09111f}.card{width:min(560px,calc(100vw - 32px));padding:28px;border:1px solid rgba(148,163,184,.25);border-radius:20px;background:rgba(15,23,42,.94);box-shadow:0 24px 70px #0009}.top{display:flex;align-items:center;justify-content:space-between;gap:16px}.brand{font-size:24px;font-weight:800}.lang{border:1px solid #475569;border-radius:8px;background:#111c30;color:#dbeafe;padding:7px 10px}.sub{margin:10px 0 20px;color:#9fb0c9;font-size:13px;line-height:1.6}.status{display:none;margin:0 0 14px;padding:10px 12px;border-radius:10px;font-size:13px;line-height:1.45}.status.show{display:block}.status.error{color:#fecaca;background:#451a1a;border:1px solid #7f1d1d}.status.info{color:#bae6fd;background:#0c4a6e55;border:1px solid #075985}textarea{width:100%;min-height:118px;resize:vertical;border:1px solid #42526b;border-radius:12px;padding:12px;background:#07101e;color:#dbeafe;font:12px Consolas,monospace;outline:none}textarea:focus{border-color:#38bdf8;box-shadow:0 0 0 3px #0ea5e933}.actions{display:flex;gap:10px;margin-top:16px}button{border:0;border-radius:10px;padding:11px 18px;font-weight:700;cursor:pointer}.activate{flex:1;color:white;background:linear-gradient(135deg,#2563eb,#0891b2)}.quit{color:#cbd5e1;background:#263348}.meta{margin-top:16px;color:#718198;font-size:11px;text-align:center}.busy{opacity:.6;pointer-events:none}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="top"><div class="brand">Tools Platform</div><select id="lang" class="lang"><option value="zh">中文</option><option value="en">English</option></select></div>
+    <h1 id="title" style="font-size:20px;margin:22px 0 0">首次启动授权</h1>
+    <p id="sub" class="sub">请输入服务器授权页面签发的 EXE License。验证成功后，安装版和绿色版会共用本机授权。</p>
+    <div id="status" class="status"></div>
+    <textarea id="token" spellcheck="false" placeholder="DSKL1..."></textarea>
+    <div class="actions"><button id="activate" class="activate">联网验证并启动</button><button id="quit" class="quit">退出</button></div>
+    <div id="meta" class="meta">验证响应包含数字签名、随机 nonce 与可信时间。</div>
+  </main>
+  <script>
+    const words={zh:{title:'首次启动授权',sub:'请输入服务器授权页面签发的 EXE License。验证成功后，安装版和绿色版会共用本机授权。',activate:'联网验证并启动',quit:'退出',meta:'验证响应包含数字签名、随机 nonce 与可信时间。',required:'请输入 License 密钥',checking:'正在连接授权服务器并验证…',failed:'授权失败：'},en:{title:'First-run activation',sub:'Enter the EXE License issued by the server. The installed and portable editions share this device authorization.',activate:'Verify online and start',quit:'Quit',meta:'The response is protected by a digital signature, random nonce, and trusted time.',required:'Enter a License key',checking:'Connecting to the License server…',failed:'Activation failed: '}};
+    const reason={LICENSE_REQUIRED:'需要 License / License required',INVALID_FORMAT:'密钥格式无效 / Invalid key format',INVALID_SIGNATURE:'签名无效 / Invalid signature',PRODUCT_MISMATCH:'产品不匹配 / Wrong product',LICENSE_NOT_FOUND:'服务器无此 License / License not found',REVOKED:'License 已失效 / License revoked',ARCHIVED:'License 已归档 / License archived',EXPIRED:'License 已过期 / License expired',NOT_YET_VALID:'License 尚未生效 / License not active yet',ONLINE_REQUIRED:'需要联网验证 / Online validation required',CLOCK_ROLLBACK:'检测到本机时间回拨 / System clock rollback detected'};
+    let lang=/^zh/i.test(navigator.language)?'zh':'en';const $=id=>document.getElementById(id);$('lang').value=lang;
+    function render(){const w=words[lang];['title','sub','activate','quit','meta'].forEach(id=>$(id).textContent=w[id])}
+    function show(text,type='error'){$('status').textContent=text;$('status').className=`status show ${type}`}
+    $('lang').onchange=()=>{lang=$('lang').value;render()};$('quit').onclick=()=>window.DesktopLicense.quit();
+    $('activate').onclick=async()=>{const token=$('token').value.trim();if(!token)return show(words[lang].required);document.body.classList.add('busy');show(words[lang].checking,'info');try{const result=await window.DesktopLicense.activate(token);if(!result.valid)show(words[lang].failed+(reason[result.reasonCode]||result.reasonCode||'验证失败'));}catch(e){show(words[lang].failed+(e.message||e))}finally{document.body.classList.remove('busy')}};
+    window.DesktopLicense.getState().then(state=>{if(state&&state.reasonCode&&state.reasonCode!=='LICENSE_REQUIRED')show((reason[state.reasonCode]||state.reasonCode));});render();
+  </script>
+</body>
+</html>

@@ -13,6 +13,9 @@
   
   <!-- FileSaver for triggering the download -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+  <!-- Runs locally in the browser; source code is not uploaded during obfuscation. -->
+  <script src="https://cdn.jsdelivr.net/npm/javascript-obfuscator@4.1.1/dist/index.browser.js"></script>
   
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -128,15 +131,53 @@
             <label><input type="checkbox" data-extra-permission="alarms" class="mr-1.5 accent-indigo-500">定时任务</label>
           </div>
         </div>
+        <div class="mt-4 border-t border-white/10 pt-4">
+          <span class="block text-xs font-semibold text-slate-300 mb-2">代码保护与启动</span>
+          <div class="space-y-2 text-xs text-slate-300">
+            <label class="flex items-start gap-2">
+              <input id="extObfuscate" type="checkbox" checked class="mt-0.5 accent-indigo-500">
+              <span>默认混淆代码 <small class="block text-slate-500">提高阅读和复制难度，但不能保证源码绝对不可见。</small></span>
+            </label>
+            <label class="flex items-start gap-2">
+              <input id="extLicense" type="checkbox" checked class="mt-0.5 accent-indigo-500">
+              <span>启用每月 License <small class="block text-slate-500">首次启动及每月到期后要求输入平台签发的密钥。</small></span>
+            </label>
+            <input id="licenseLabel" type="text" maxlength="120" class="input-field w-full rounded-lg px-3 py-2 text-xs" placeholder="授权对象/备注（例如：张三的办公电脑）">
+            <div class="grid grid-cols-2 gap-2">
+              <button id="issueLicenseBtn" type="button" class="rounded-lg border border-amber-400/40 bg-amber-500/15 px-3 py-2 text-xs font-semibold text-amber-100 hover:bg-amber-500/25">
+                单独签发本月 License
+              </button>
+              <button id="manageLicensesBtn" type="button" class="rounded-lg border border-cyan-400/40 bg-cyan-500/15 px-3 py-2 text-xs font-semibold text-cyan-100 hover:bg-cyan-500/25">
+                管理 License
+              </button>
+            </div>
+            <label class="flex items-start gap-2">
+              <input id="extManualLaunch" type="checkbox" checked class="mt-0.5 accent-indigo-500">
+              <span>点击 Popup 按钮后启动 <small class="block text-slate-500">关闭后将在匹配网页中自动注入；启用 License 时强制手动启动。</small></span>
+            </label>
+          </div>
+        </div>
       </details>
     </div>
 
     <!-- Right Column: Code Editor & Action -->
     <div class="w-full lg:w-7/12 flex flex-col gap-5">
       <div class="flex-grow flex flex-col h-full relative">
-        <label class="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wide flex justify-between">
-          <span>F12 控制台脚本 (content.js)</span>
-        </label>
+        <div class="mb-2 flex flex-wrap items-end justify-between gap-2">
+          <label for="extCode" class="block text-xs font-semibold text-slate-300 uppercase tracking-wide">
+            F12 控制台脚本 (content.js)
+          </label>
+          <div class="flex items-center gap-2">
+            <label for="builtinScriptSelect" class="sr-only">选择内置脚本</label>
+            <select id="builtinScriptSelect" class="input-field max-w-[220px] rounded-lg px-2.5 py-2 text-xs">
+              <option value="sv-cfc-monitor">SV/CFC 满意度监控（原内置）</option>
+              <option value="exam-question-bank">题库与答题助手</option>
+            </select>
+            <button id="loadBuiltinBtn" type="button" class="rounded-lg border border-indigo-400/40 bg-indigo-500/15 px-3 py-2 text-xs font-semibold text-indigo-100 transition hover:bg-indigo-500/30">
+              载入内置脚本
+            </button>
+          </div>
+        </div>
         
         <!-- Editor Wrapper -->
         <div class="relative flex-grow h-[350px] lg:h-[450px]">
@@ -158,23 +199,106 @@
         </svg>
         <span>打包为 Edge/Chrome 扩展 (.zip)</span>
       </button>
+      <div id="licenseResult" class="hidden rounded-xl border border-amber-500/40 bg-amber-950/30 p-3 text-xs text-amber-100">
+        <div class="mb-2 font-semibold">本月 License 密钥（请单独提供给扩展使用者）</div>
+        <textarea id="licenseToken" readonly rows="4" class="input-field w-full rounded-lg p-2 font-mono text-[10px]"></textarea>
+        <div class="mt-2 flex items-center justify-between gap-2">
+          <span id="licenseExpiry" class="text-amber-200/80"></span>
+          <button id="copyLicenseBtn" type="button" class="rounded-lg bg-amber-500 px-3 py-1.5 font-semibold text-slate-950">复制密钥</button>
+        </div>
+      </div>
     </div>
 
   </div>
 
+  <div id="licenseManager" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/85 p-4 backdrop-blur-sm">
+    <section class="glass-panel flex max-h-[88vh] w-full max-w-5xl flex-col rounded-2xl p-5">
+      <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="text-xl font-bold text-white">License 管理</h2>
+          <p class="mt-1 text-xs text-slate-400">每把新版 License 均可单独撤销、恢复、续期或归档。旧版无 ID 密钥不在此列表中。</p>
+        </div>
+        <div class="flex gap-2">
+          <button id="refreshLicensesBtn" type="button" class="rounded-lg bg-cyan-600 px-3 py-2 text-xs font-semibold text-white hover:bg-cyan-500">刷新</button>
+          <button id="closeLicenseManagerBtn" type="button" class="rounded-lg bg-slate-700 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-600">关闭</button>
+        </div>
+      </div>
+      <div class="mb-3 grid gap-2 md:grid-cols-[1fr_auto]">
+        <input id="licenseSearchInput" type="search" class="input-field rounded-lg px-3 py-2 text-sm" placeholder="搜索扩展名称、备注、License ID 或月份">
+        <label class="flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs text-slate-300">
+          <input id="showArchivedLicenses" type="checkbox" checked class="accent-indigo-500">显示已归档
+        </label>
+      </div>
+      <div id="licenseManagerStatus" class="mb-2 text-xs text-slate-400"></div>
+      <div id="licenseList" class="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1"></div>
+    </section>
+  </div>
+
   <script src="./packer-core.js"></script>
   <script>
+    const BUILTIN_SCRIPTS = {
+      'sv-cfc-monitor': {
+        file: './default-f12.js',
+        name: 'SV/CFC 满意度监控',
+        description: '监控 SV/CFC 餐厅满意度，分析问卷明细并复核评分。',
+        matches: 'https://w3.huawei.com/*',
+        world: 'MAIN',
+        includePopup: true
+      },
+      'exam-question-bank': {
+        file: './exam-question-bank-assistant.js',
+        name: '题库与答题助手',
+        description: '抓取考试题目、维护本地题库并辅助自动答题。',
+        matches: 'https://w3.huawei.com/*\nhttps://ilearning.huawei.com/*',
+        world: 'MAIN',
+        includePopup: true,
+        manualLaunch: true
+      }
+    };
+
+    async function loadBuiltinScript(scriptId, applyPreset = true) {
+      const preset = BUILTIN_SCRIPTS[scriptId];
+      if (!preset) throw new Error('未找到所选内置脚本。');
+      const button = document.getElementById('loadBuiltinBtn');
+      const originalText = button.textContent;
+      button.disabled = true;
+      button.textContent = '载入中…';
+      try {
+        const res = await fetch(preset.file + '?t=' + Date.now());
+        if (!res.ok) throw new Error(`脚本读取失败（HTTP ${res.status}）`);
+        const code = await res.text();
+        if (!code.trim()) throw new Error('内置脚本内容为空。');
+        document.getElementById('extCode').value = code;
+        if (applyPreset) {
+          document.getElementById('extName').value = preset.name;
+          document.getElementById('extDesc').value = preset.description;
+          document.getElementById('extMatch').value = preset.matches;
+          document.getElementById('extWorld').value = preset.world;
+          document.getElementById('extPopup').value = preset.includePopup ? 'yes' : 'no';
+          document.getElementById('extManualLaunch').checked = preset.manualLaunch === true;
+        }
+        const validation = F12ExtensionPacker.validateOptions(collectOptions());
+        renderReport(validation);
+        button.textContent = '已载入';
+      } finally {
+        button.disabled = false;
+        setTimeout(() => { button.textContent = originalText; }, 1200);
+      }
+    }
+
     window.addEventListener('DOMContentLoaded', async () => {
       try {
-        const res = await fetch('./default-f12.js?t=' + Date.now());
-        if (res.ok) {
-          const text = await res.text();
-          if (text) {
-            document.getElementById('extCode').value = text;
-          }
-        }
+        await loadBuiltinScript('sv-cfc-monitor', false);
       } catch (e) {
         console.log('No default F12 script found, using placeholder.');
+      }
+    });
+
+    document.getElementById('loadBuiltinBtn').addEventListener('click', async () => {
+      try {
+        await loadBuiltinScript(document.getElementById('builtinScriptSelect').value);
+      } catch (error) {
+        alert('载入内置脚本失败: ' + error.message);
       }
     });
 
@@ -186,6 +310,10 @@
         matches: document.getElementById('extMatch').value,
         world: document.getElementById('extWorld').value,
         includePopup: document.getElementById('extPopup').value === 'yes',
+        manualLaunch: document.getElementById('extManualLaunch').checked,
+        obfuscateRequested: document.getElementById('extObfuscate').checked,
+        licenseRequested: document.getElementById('extLicense').checked,
+        licenseLabel: document.getElementById('licenseLabel').value.trim(),
         runAt: document.getElementById('extRunAt').value,
         allFrames: document.getElementById('extAllFrames').checked,
         optionalPermissions: [...document.querySelectorAll('[data-extra-permission]:checked')]
@@ -193,6 +321,236 @@
         code: document.getElementById('extCode').value
       };
     }
+
+    async function issueMonthlyLicense(productId, label = '') {
+      const token = localStorage.getItem('tools_token');
+      const params = new URLSearchParams({ productId });
+      if (label) params.set('label', label);
+      const res = await fetch(`/api/custom-tools/f12-to-extension/monthly-license?${params.toString()}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload.error || `License 签发失败（HTTP ${res.status}）`);
+      return payload;
+    }
+
+    function obfuscateCode(code) {
+      if (!window.JavaScriptObfuscator) throw new Error('混淆引擎加载失败，请检查网络后重试或关闭混淆。');
+      return window.JavaScriptObfuscator.obfuscate(code, {
+        compact: true,
+        controlFlowFlattening: false,
+        deadCodeInjection: false,
+        identifierNamesGenerator: 'hexadecimal',
+        renameGlobals: false,
+        selfDefending: false,
+        simplify: true,
+        splitStrings: true,
+        splitStringsChunkLength: 8,
+        stringArray: true,
+        stringArrayEncoding: ['base64'],
+        stringArrayThreshold: 0.75,
+        transformObjectKeys: false,
+        unicodeEscapeSequence: false
+      }).getObfuscatedCode();
+    }
+
+    function showLicenseResult(issued) {
+      const result = document.getElementById('licenseResult');
+      document.getElementById('licenseToken').value = issued.token;
+      document.getElementById('licenseExpiry').textContent = `License ID：${issued.payload.licenseId || '旧版'}｜有效月份：${issued.payload.month}｜到期：${new Date(issued.payload.expiresAt).toLocaleString()}`;
+      result.classList.remove('hidden');
+    }
+
+    const licenseManager = document.getElementById('licenseManager');
+    const licenseList = document.getElementById('licenseList');
+    const licenseManagerStatus = document.getElementById('licenseManagerStatus');
+    let managedLicenses = [];
+
+    function escapeLicenseHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+      })[char]);
+    }
+
+    function licenseIdentity(record) {
+      return [
+        `扩展名称：${record.productId}`,
+        `授权对象/备注：${record.label || '未填写'}`,
+        `License ID：${record.licenseId}`,
+        `有效月份：${record.month}`,
+        `到期时间：${new Date(record.expiresAt).toLocaleString()}`
+      ].join('\n');
+    }
+
+    async function licenseAdminRequest(path, options = {}) {
+      const authToken = localStorage.getItem('tools_token');
+      const response = await fetch(path, {
+        ...options,
+        headers: {
+          ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          ...(options.headers || {})
+        }
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.error || `请求失败（HTTP ${response.status}）`);
+      return body;
+    }
+
+    function displayedLicenseStatus(record) {
+      if (record.status === 'revoked') return { text: '已撤销', css: 'border-red-500/40 bg-red-500/15 text-red-200' };
+      if (record.status === 'archived') return { text: '已归档', css: 'border-slate-500/40 bg-slate-500/15 text-slate-300' };
+      if (Date.now() >= Number(record.expiresAt)) return { text: '已过期', css: 'border-amber-500/40 bg-amber-500/15 text-amber-200' };
+      if (Date.now() < Number(record.notBefore)) return { text: '待生效', css: 'border-cyan-500/40 bg-cyan-500/15 text-cyan-200' };
+      return { text: '有效', css: 'border-emerald-500/40 bg-emerald-500/15 text-emerald-200' };
+    }
+
+    function renderLicenseManager() {
+      const keyword = document.getElementById('licenseSearchInput').value.trim().toLowerCase();
+      const showArchived = document.getElementById('showArchivedLicenses').checked;
+      const records = managedLicenses.filter(record => {
+        if (!showArchived && record.status === 'archived') return false;
+        if (!keyword) return true;
+        return [record.productId, record.label, record.licenseId, record.month, record.status]
+          .some(value => String(value || '').toLowerCase().includes(keyword));
+      });
+      if (!records.length) {
+        licenseList.innerHTML = '<div class="rounded-xl border border-white/10 p-8 text-center text-sm text-slate-400">没有符合条件的 License 记录</div>';
+        return;
+      }
+      licenseList.innerHTML = records.map(record => {
+        const status = displayedLicenseStatus(record);
+        return `<article class="rounded-xl border border-white/10 bg-slate-950/45 p-4" data-license-card="${escapeLicenseHtml(record.licenseId)}">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <strong class="text-base text-white">${escapeLicenseHtml(record.productId)}</strong>
+                <span class="rounded-full border px-2 py-0.5 text-[10px] font-bold ${status.css}">${status.text}</span>
+              </div>
+              <div class="mt-1 text-xs text-cyan-200">${escapeLicenseHtml(record.label || '未填写授权对象/备注')}</div>
+            </div>
+            <div class="flex flex-wrap justify-end gap-1.5">
+              <button data-license-action="copy" data-license-id="${escapeLicenseHtml(record.licenseId)}" class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-[11px] font-semibold text-white">复制密钥</button>
+              <button data-license-action="renew" data-license-id="${escapeLicenseHtml(record.licenseId)}" class="rounded-md bg-cyan-600 px-2.5 py-1.5 text-[11px] font-semibold text-white">续期</button>
+              ${record.status === 'active'
+                ? `<button data-license-action="revoke" data-license-id="${escapeLicenseHtml(record.licenseId)}" class="rounded-md bg-red-600 px-2.5 py-1.5 text-[11px] font-semibold text-white">撤销</button>`
+                : `<button data-license-action="restore" data-license-id="${escapeLicenseHtml(record.licenseId)}" class="rounded-md bg-emerald-600 px-2.5 py-1.5 text-[11px] font-semibold text-white">恢复</button>`}
+              ${record.status !== 'archived' ? `<button data-license-action="archive" data-license-id="${escapeLicenseHtml(record.licenseId)}" class="rounded-md bg-slate-700 px-2.5 py-1.5 text-[11px] font-semibold text-white">归档/清除</button>` : ''}
+            </div>
+          </div>
+          <dl class="mt-3 grid gap-x-4 gap-y-1 text-[11px] text-slate-400 md:grid-cols-2">
+            <div><dt class="inline text-slate-500">License ID：</dt><dd class="inline break-all font-mono text-slate-300">${escapeLicenseHtml(record.licenseId)}</dd></div>
+            <div><dt class="inline text-slate-500">有效月份：</dt><dd class="inline text-slate-300">${escapeLicenseHtml(record.month)}</dd></div>
+            <div><dt class="inline text-slate-500">签发时间：</dt><dd class="inline text-slate-300">${escapeLicenseHtml(new Date(record.issuedAt).toLocaleString())}</dd></div>
+            <div><dt class="inline text-slate-500">到期时间：</dt><dd class="inline text-slate-300">${escapeLicenseHtml(new Date(record.expiresAt).toLocaleString())}</dd></div>
+            ${record.revokeReason ? `<div class="md:col-span-2"><dt class="inline text-red-300">撤销原因：</dt><dd class="inline text-red-200">${escapeLicenseHtml(record.revokeReason)}</dd></div>` : ''}
+          </dl>
+        </article>`;
+      }).join('');
+    }
+
+    async function refreshLicenseManager() {
+      licenseManagerStatus.textContent = '正在读取 License 台账…';
+      try {
+        const body = await licenseAdminRequest('/api/custom-tools/f12-to-extension/licenses?includeArchived=1');
+        managedLicenses = body.licenses || [];
+        licenseManagerStatus.textContent = `共 ${managedLicenses.length} 条新版 License 记录`;
+        renderLicenseManager();
+      } catch (error) {
+        licenseManagerStatus.textContent = `读取失败：${error.message}`;
+        licenseList.innerHTML = '';
+      }
+    }
+
+    document.getElementById('manageLicensesBtn').addEventListener('click', async () => {
+      licenseManager.classList.remove('hidden');
+      licenseManager.classList.add('flex');
+      await refreshLicenseManager();
+    });
+    document.getElementById('closeLicenseManagerBtn').addEventListener('click', () => {
+      licenseManager.classList.add('hidden');
+      licenseManager.classList.remove('flex');
+    });
+    document.getElementById('refreshLicensesBtn').addEventListener('click', refreshLicenseManager);
+    document.getElementById('licenseSearchInput').addEventListener('input', renderLicenseManager);
+    document.getElementById('showArchivedLicenses').addEventListener('change', renderLicenseManager);
+
+    licenseList.addEventListener('click', async event => {
+      const button = event.target.closest('[data-license-action]');
+      if (!button) return;
+      const record = managedLicenses.find(item => item.licenseId === button.dataset.licenseId);
+      if (!record) return;
+      const action = button.dataset.licenseAction;
+      button.disabled = true;
+      try {
+        if (action === 'copy') {
+          await navigator.clipboard.writeText(record.token);
+          button.textContent = '已复制';
+          setTimeout(() => { button.textContent = '复制密钥'; button.disabled = false; }, 1200);
+          return;
+        }
+        if (action === 'revoke') {
+          if (!confirm(`确认立即撤销以下 License？\n\n${licenseIdentity(record)}\n\n撤销后，扩展下次在线校验即会失效；此操作可以恢复。`)) return;
+          const reason = prompt('可填写撤销原因（可留空）：', record.revokeReason || '') ?? '';
+          await licenseAdminRequest(`/api/custom-tools/f12-to-extension/licenses/${encodeURIComponent(record.licenseId)}/revoke`, {
+            method: 'POST', body: JSON.stringify({ reason })
+          });
+        } else if (action === 'restore') {
+          if (!confirm(`确认恢复以下 License？\n\n${licenseIdentity(record)}\n\n若密钥本身已过期，恢复状态后仍不会重新生效，需要续期。`)) return;
+          await licenseAdminRequest(`/api/custom-tools/f12-to-extension/licenses/${encodeURIComponent(record.licenseId)}/restore`, { method: 'POST' });
+        } else if (action === 'renew') {
+          if (!confirm(`确认为以下 License 续期并生成一把新密钥？\n\n${licenseIdentity(record)}\n\n旧密钥不会自动撤销。`)) return;
+          const month = prompt('目标月份（YYYY-MM）；留空则自动选择下一有效月份：', '') ?? null;
+          if (month === null) return;
+          const body = await licenseAdminRequest(`/api/custom-tools/f12-to-extension/licenses/${encodeURIComponent(record.licenseId)}/renew`, {
+            method: 'POST', body: JSON.stringify({ month: month.trim() || undefined })
+          });
+          showLicenseResult(body);
+          alert(`续期成功。\n\n新 License ID：${body.payload.licenseId}\n有效月份：${body.payload.month}\n请复制并提供新密钥。`);
+        } else if (action === 'archive') {
+          const typedName = prompt(`归档/清除以下 License 记录：\n\n${licenseIdentity(record)}\n\n归档会让密钥失效，但记录仍可恢复。\n为避免误操作，请完整输入扩展名称确认：`, '');
+          if (typedName === null) return;
+          if (typedName !== record.productId) throw new Error('输入的扩展名称不一致，已取消归档');
+          await licenseAdminRequest(`/api/custom-tools/f12-to-extension/licenses/${encodeURIComponent(record.licenseId)}/archive`, { method: 'POST' });
+        }
+        await refreshLicenseManager();
+      } catch (error) {
+        alert(`License 操作失败：${error.message}`);
+      } finally {
+        if (action !== 'copy') button.disabled = false;
+      }
+    });
+
+    document.getElementById('copyLicenseBtn').addEventListener('click', async () => {
+      await navigator.clipboard.writeText(document.getElementById('licenseToken').value);
+      document.getElementById('copyLicenseBtn').textContent = '已复制';
+      setTimeout(() => { document.getElementById('copyLicenseBtn').textContent = '复制密钥'; }, 1200);
+    });
+
+    document.getElementById('issueLicenseBtn').addEventListener('click', async () => {
+      const button = document.getElementById('issueLicenseBtn');
+      button.disabled = true;
+      button.textContent = '签发中…';
+      try {
+        const productId = document.getElementById('extName').value.trim() || 'My Extension';
+        showLicenseResult(await issueMonthlyLicense(productId, document.getElementById('licenseLabel').value.trim()));
+      } catch (error) {
+        alert('License 签发失败: ' + error.message);
+      } finally {
+        button.disabled = false;
+        button.textContent = '单独签发本月 License';
+      }
+    });
+
+    document.getElementById('extLicense').addEventListener('change', event => {
+      if (event.target.checked) {
+        document.getElementById('extManualLaunch').checked = true;
+        document.getElementById('extPopup').value = 'yes';
+      }
+    });
+    document.getElementById('extManualLaunch').addEventListener('change', event => {
+      if (event.target.checked) document.getElementById('extPopup').value = 'yes';
+    });
 
     function renderReport(validation) {
       const report = document.getElementById('compatReport');
@@ -214,17 +572,32 @@
 
     document.getElementById('packBtn').addEventListener('click', async () => {
       const options = collectOptions();
-      const validation = F12ExtensionPacker.validateOptions(options);
-      renderReport(validation);
-      if (validation.errors.length) return;
-
+      document.getElementById('licenseResult').classList.add('hidden');
+      let issuedLicense = null;
       try {
+        if (options.licenseRequested) {
+          issuedLicense = await issueMonthlyLicense(options.name, options.licenseLabel);
+          options.license = {
+            enabled: true,
+            productId: options.name,
+            validationUrl: new URL('/api/public/f12-license/validate', window.location.origin).href,
+            publicKeyJwk: issuedLicense.publicKeyJwk
+          };
+          options.manualLaunch = true;
+          options.includePopup = true;
+        }
+        if (options.obfuscateRequested) options.code = obfuscateCode(options.code);
+
+        const validation = F12ExtensionPacker.validateOptions(options);
+        renderReport(validation);
+        if (validation.errors.length) return;
         const generated = F12ExtensionPacker.buildPackage(options);
         const zip = new JSZip();
         Object.entries(generated.files).forEach(([fileName, content]) => zip.file(fileName, content));
         const content = await zip.generateAsync({ type: "blob" });
         const fileName = "extension-" + options.name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase() + ".zip";
         saveAs(content, fileName);
+        if (issuedLicense) showLicenseResult(issuedLicense);
         
         // Show success state on button
         const btn = document.getElementById('packBtn');

@@ -495,6 +495,328 @@ function resolveUivScriptUrl(script) {
     return script.url || extractUrlFromCode(script.code) || extractUrlFromCode(script.consoleCode);
 }
 
+function getUivSiteDisplayName(origin) {
+    let host = '';
+    try { host = new URL(origin).hostname.toLowerCase(); } catch (e) {}
+    if (host === 'netcare.huawei.com') return 'NetCare 中国';
+    if (host === 'netcare-ae.gts.huawei.com') return 'NetCare 中东';
+    if (host === 'netcare-de.gts.huawei.com') return 'NetCare 德国';
+    if (host.includes('datafab')) return 'DataFab';
+    return host || '未识别站点';
+}
+
+function groupConsoleScriptsBySite(scripts) {
+    const siteMap = new Map();
+    const unresolved = [];
+    (scripts || []).forEach(script => {
+        const resolvedUrl = resolveUivScriptUrl(script);
+        const openUrl = resolveUivOpenUrl(script, resolvedUrl);
+        let origin = '';
+        try { origin = new URL(openUrl || resolvedUrl || '').origin; } catch (e) {}
+        if (!origin) {
+            unresolved.push(script);
+            return;
+        }
+        if (!siteMap.has(origin)) siteMap.set(origin, []);
+        siteMap.get(origin).push(script);
+    });
+    return {
+        sites: Array.from(siteMap.entries())
+            .map(([origin, siteScripts]) => ({
+                origin,
+                name: getUivSiteDisplayName(origin),
+                scripts: siteScripts
+            }))
+            .sort((a, b) => a.name.localeCompare(b.name, 'zh-CN')),
+        unresolved
+    };
+}
+
+function closeSiteConsoleScriptPicker() {
+    const overlay = document.getElementById('uiv-site-script-overlay');
+    if (overlay) overlay.remove();
+}
+
+function getFloatingSlaRuleDefaults() {
+    const standardRule = (id, name, values, fields, type, offsetDays, prefix, warningDays, warningColor) => ({
+        id, enabled: true, name, badgePrefix: prefix,
+        match: { operator: 'equals', values, caseSensitive: false },
+        deadline: { type, fields, offsetDays },
+        alertLevels: [
+            { id: `${id}-danger`, enabled: true, name: '紧急', maxDays: 10, severity: 'danger', badgeSuffix: '紧急', color: '#d32f2f' },
+            { id: `${id}-warning`, enabled: true, name: '提醒', maxDays: warningDays, severity: 'warning', badgeSuffix: '提醒', color: warningColor }
+        ]
+    });
+    return {
+        risk: {
+            version: 1,
+            statusFields: ['风险状态', 'risk_status'],
+            rules: [
+                { id: 'risk-confirming', enabled: true, name: 'Risk Confirming', badgePrefix: 'Confirm', match: { operator: 'equals', values: ['Risk Confirming'], caseSensitive: false }, deadline: { type: 'field_plus_days', fields: ['创单时间', 'create_time_new', 'create_time'], offsetDays: 30 } },
+                { id: 'risk-open', enabled: true, name: 'Risk Open', badgePrefix: 'Open', match: { operator: 'equals', values: ['Risk Open'], caseSensitive: false }, deadline: { type: 'date_field', fields: ['ticket_close_due_date', '期望关闭时间', 'due_time'], offsetDays: 0 } },
+                { id: 'risk-suspended', enabled: true, name: 'Risk Suspended', badgePrefix: 'Suspend', match: { operator: 'equals', values: ['Risk Suspended'], caseSensitive: false }, deadline: { type: 'date_field', fields: ['ticket_close_due_date', '期望关闭时间', 'due_time', '期望关闭时间-挂起', 'suspend_due_date'], offsetDays: 0 } },
+                { id: 'complete-reviewing', enabled: true, name: 'Complete Reviewing', badgePrefix: 'Review', match: { operator: 'equals', values: ['Complete Reviewing'], caseSensitive: false }, deadline: { type: 'date_field', fields: ['ticket_close_due_date', '期望关闭时间', 'due_time'], offsetDays: 0 } }
+            ],
+            alertLevels: [
+                { id: 'danger', enabled: true, name: '红色紧急', maxDays: 10, severity: 'danger', badgeSuffix: '紧急', color: '#d32f2f' },
+                { id: 'warning', enabled: true, name: '紫色提醒', maxDays: 29, severity: 'warning', badgeSuffix: '提醒', color: '#673ab7' }
+            ]
+        },
+        rectification: {
+            version: 1,
+            statusFields: ['task_status'],
+            rules: [
+                standardRule('rect-checking', 'Checking', ['Checking'], ['task_create_time'], 'field_plus_days', 30, 'Checking', 29, '#f9a825'),
+                standardRule('rect-implementation', 'Rectification Implementation', ['Rectification Implementation'], ['rectify_plan_end_time'], 'date_field', 0, '整改', 81, '#f9a825')
+            ]
+        },
+        special: {
+            version: 1,
+            statusFields: ['状态-Status', 'task_status_en', 'task_status', 'task_status_cn'],
+            rules: [
+                standardRule('special-confirm', '待确认', ['待确认', '草稿', 'Draft', 'To Be Confirmed', 'Confirm', 'Confirming'], ['创建日期-Create Date', 'create_time'], 'field_plus_days', 30, '确认', 29, '#00897b'),
+                standardRule('special-processing', '处理中', ['处理中', '评审中', 'Processing', 'Reviewing'], ['要求完成日期-Required Completion Date', 'required_completion_time', 'plan_complete_date'], 'date_field', 0, '处理', 29, '#00897b')
+            ]
+        },
+        vulnerability: {
+            version: 1,
+            statusFields: ['task_status'],
+            rules: [
+                standardRule('vuln-active', '漏洞处理中', ['Checking', 'Communication Dept', 'Communication Customer'], ['create_time', 'task_create_time'], 'field_plus_days', 30, '漏洞', 29, '#ff9800')
+            ]
+        },
+        sr: {
+            version: 1,
+            fields: {
+                status: ['sr_status_name'], severity: ['hw_sev_name', 'urgency'], overdue: ['overdue'],
+                openDate: ['open_date'], expectedClose: ['exp_close_date'], suspendedClose: ['sus_exp_close_date', '期望关闭时间-挂起'], actualClose: ['act_close_date']
+            },
+            values: {
+                pending: ['pending', 'suspend', 'suspended', 'hold', '挂起'],
+                closed: ['closed', 'resolved', 'canceled', 'cancelled'],
+                critical: ['critical', 'schedule action', 'immediate action'],
+                overdue: ['y', 'yes', 'true', '1']
+            },
+            thresholds: { criticalDangerConsume: 85, criticalDangerHours: 12, criticalWarningConsume: 70, criticalWarningHours: 48, normalDangerConsume: 95, normalWarningConsume: 80 },
+            alerts: {
+                overdue: { enabled: true, label: 'SR超期', severity: 'danger', color: '#d32f2f' },
+                criticalDanger: { enabled: true, label: 'Critical高危', severity: 'danger', color: '#d32f2f' },
+                criticalWarning: { enabled: true, label: 'Critical预警', severity: 'warning', color: '#7b1fa2' },
+                normalDanger: { enabled: true, label: 'SR高危', severity: 'danger', color: '#d32f2f' },
+                normalWarning: { enabled: true, label: 'SR预警', severity: 'warning', color: '#7b1fa2' },
+                pending: { enabled: true, label: '挂起忽略', severity: 'none', color: '#00897b' },
+                closed: { enabled: true, label: '已关单', severity: 'none', color: '#00897b' },
+                suspendedGood: { enabled: true, label: '挂起后未超期', severity: 'none', color: '#0288d1' },
+                suspendedOverdue: { enabled: true, label: '挂起后超期', severity: 'danger', color: '#d32f2f' },
+                historicalOverdue: { enabled: true, label: '历史超期', severity: 'danger', color: '#d32f2f' }
+            }
+        }
+    };
+}
+
+async function loadFloatingSlaRuleBundle() {
+    const builtinKeys = {
+        risk: 'sla_builtin_rule_risk_v1',
+        rectification: 'sla_builtin_rule_rectification_v1',
+        special: 'sla_builtin_rule_special_v1',
+        sr: 'sla_builtin_rule_sr_v1',
+        vulnerability: 'sla_builtin_rule_vulnerability_v1'
+    };
+    try {
+        const [configData, groups] = await Promise.all([
+            API.get('/api/sla/config'),
+            API.get('/api/sla/groups').catch(() => [])
+        ]);
+        const prefs = configData && configData.prefs && typeof configData.prefs === 'object'
+            ? configData.prefs
+            : {};
+        const defaults = getFloatingSlaRuleDefaults();
+        const builtin = {};
+        Object.entries(builtinKeys).forEach(([mode, key]) => {
+            const value = prefs[key];
+            const saved = value && value.prefs && typeof value.prefs === 'object' ? value.prefs : value;
+            builtin[mode] = saved && typeof saved === 'object' && Object.keys(saved).length ? saved : defaults[mode];
+        });
+        const metricSchemas = Object.entries(prefs)
+            .filter(([, value]) => value && value._sourceMeta)
+            .map(([key, value]) => ({
+                key,
+                sourceMeta: value._sourceMeta || null,
+                customMetrics: Array.isArray(value.customMetrics) ? value.customMetrics : []
+            }));
+        return {
+            schema: 'uivf12-sla-rule-bundle-v1',
+            exportedAt: configData.exportDate || new Date().toISOString(),
+            builtin,
+            targets: configData.targets && typeof configData.targets === 'object' && !Array.isArray(configData.targets)
+                ? configData.targets
+                : {},
+            groups: Array.isArray(groups) ? groups : [],
+            metricSchemas
+        };
+    } catch (error) {
+        console.warn('[UIVF12] SLA 规则快照读取失败，浮窗仍可抓取数据，但不会执行规则判断。', error);
+        return {
+            schema: 'uivf12-sla-rule-bundle-v1',
+            exportedAt: new Date().toISOString(),
+            builtin: getFloatingSlaRuleDefaults(),
+            targets: {},
+            groups: [],
+            metricSchemas: [],
+            unavailable: true
+        };
+    }
+}
+
+function normalizeFloatingSourceName(value) {
+    return String(value || '')
+        .replace(/^.*[\\/]/, '')
+        .replace(/\.csv$/i, '')
+        .replace(/\s*\(\d+\)$/i, '')
+        .replace(/_?\d{4}年\d{1,2}月(?:\d{1,2}日)?$/i, '')
+        .trim()
+        .toLowerCase();
+}
+
+function scriptMatchesFloatingSource(script, sourceMeta) {
+    if (!script || !sourceMeta) return false;
+    const haystack = normalizeFloatingSourceName(`${script.name || ''} ${script.consoleCode || ''}`);
+    const candidates = []
+        .concat(sourceMeta.sourceFiles || [])
+        .concat([sourceMeta.baseName, String(sourceMeta.matchedPrefix || '').replace(/\*+$/, '')])
+        .map(normalizeFloatingSourceName)
+        .filter(Boolean);
+    return candidates.some(candidate => haystack.includes(candidate));
+}
+
+function expandFloatingMetricDependencies(selectedScripts, allScripts, ruleBundle, origin) {
+    const schemas = Array.isArray(ruleBundle && ruleBundle.metricSchemas) ? ruleBundle.metricSchemas : [];
+    const bySecId = new Map(schemas
+        .filter(schema => schema && schema.sourceMeta && schema.sourceMeta.secId)
+        .map(schema => [schema.sourceMeta.secId, schema]));
+    const expanded = [...selectedScripts];
+    const selectedIds = new Set(expanded.map(script => script.id || script.name));
+    const added = [];
+    const queue = schemas.filter(schema =>
+        schema && schema.sourceMeta && expanded.some(script => scriptMatchesFloatingSource(script, schema.sourceMeta))
+    );
+    const visited = new Set();
+    while (queue.length) {
+        const schema = queue.shift();
+        const secId = schema && schema.sourceMeta && schema.sourceMeta.secId;
+        if (!secId || visited.has(secId)) continue;
+        visited.add(secId);
+        const dependencyIds = new Set();
+        (schema.customMetrics || []).forEach(metric => {
+            if (metric.sourceSecId && metric.sourceSecId !== secId) dependencyIds.add(metric.sourceSecId);
+            (metric.subMetrics || []).forEach(subMetric => {
+                if (subMetric.sourceSecId && subMetric.sourceSecId !== secId) dependencyIds.add(subMetric.sourceSecId);
+            });
+        });
+        dependencyIds.forEach(dependencyId => {
+            const dependencySchema = bySecId.get(dependencyId);
+            if (!dependencySchema) return;
+            const matchingScripts = (allScripts || []).filter(script => {
+                let scriptOrigin = '';
+                try { scriptOrigin = new URL(resolveUivOpenUrl(script, resolveUivScriptUrl(script)) || resolveUivScriptUrl(script) || '').origin; } catch (e) {}
+                return scriptOrigin === origin && scriptMatchesFloatingSource(script, dependencySchema.sourceMeta);
+            });
+            matchingScripts.forEach(script => {
+                const identity = script.id || script.name;
+                if (selectedIds.has(identity)) return;
+                selectedIds.add(identity);
+                expanded.push(script);
+                added.push(script);
+            });
+            queue.push(dependencySchema);
+        });
+    }
+    return { scripts: expanded, added };
+}
+
+async function copySiteConsoleScripts(origin) {
+    try {
+        const { scripts = [] } = await API.get('/api/uiv/scripts');
+        const ruleBundle = await loadFloatingSlaRuleBundle();
+        const scope = applyUivBatchCategoryFilter(scripts);
+        const grouped = groupConsoleScriptsBySite(scope.scripts);
+        const site = grouped.sites.find(item => item.origin === origin);
+        if (!site || !site.scripts.length) throw new Error('所选站点当前没有可复制的脚本，请刷新后重试。');
+        const expanded = expandFloatingMetricDependencies(site.scripts, scripts, ruleBundle, site.origin);
+        buildAndCopyMasterScript(expanded.scripts, `${site.name}-浮窗工具预备版`, {
+            floatingLauncher: true,
+            siteName: site.name,
+            expectedOrigin: site.origin,
+            ruleBundle
+        });
+        closeSiteConsoleScriptPicker();
+        const dependencyText = expanded.added.length ? `，自动补入 ${expanded.added.length} 个跨表依赖` : '';
+        showToast(`✅ 已复制 ${site.name} 的 F12 脚本（${expanded.scripts.length} 个任务${dependencyText}）`, 'success');
+    } catch (error) {
+        showToast(`❌ 复制站点脚本失败：${error.message}`, 'error');
+    }
+}
+
+async function openSiteConsoleScriptPicker() {
+    try {
+        const { scripts = [] } = await API.get('/api/uiv/scripts');
+        const scope = applyUivBatchCategoryFilter(scripts);
+        const grouped = groupConsoleScriptsBySite(scope.scripts);
+        closeSiteConsoleScriptPicker();
+
+        const overlay = document.createElement('div');
+        overlay.id = 'uiv-site-script-overlay';
+        overlay.className = 'uiv-site-script-overlay';
+        overlay.setAttribute('role', 'presentation');
+        const siteRows = grouped.sites.map(site => `
+            <div class="uiv-site-script-item">
+                <div style="min-width:0;">
+                    <div class="uiv-site-script-name">${escapeUivHtml(site.name)}</div>
+                    <div class="uiv-site-script-origin" title="${escapeUivHtml(site.origin)}">${escapeUivHtml(site.origin)}</div>
+                    <div class="uiv-site-script-count">${site.scripts.length} 个可执行脚本</div>
+                </div>
+                <button type="button" class="uiv-site-script-copy" data-site-origin="${escapeUivHtml(site.origin)}">复制此站点</button>
+            </div>
+        `).join('');
+        const unresolvedNote = grouped.unresolved.length
+            ? `<div class="uiv-site-script-notice">另有 ${grouped.unresolved.length} 个脚本无法识别站点，暂未列出。请先在脚本中补充请求 URL。</div>`
+            : '';
+        overlay.innerHTML = `
+            <div class="uiv-site-script-dialog" role="dialog" aria-modal="true" aria-labelledby="uiv-site-script-title">
+                <div class="uiv-site-script-header">
+                    <div>
+                        <h3 id="uiv-site-script-title">选择要复制脚本的站点</h3>
+                        <p>受浏览器同源策略限制，请选择你稍后要打开并粘贴脚本的站点。</p>
+                    </div>
+                    <button type="button" class="uiv-site-script-close" aria-label="关闭">×</button>
+                </div>
+                <div class="uiv-site-script-notice">浮窗模式不会逐个下载 CSV。抓取完成后可按指标查看详表，并将全部 CSV 一次打包下载为 ZIP。</div>
+                ${unresolvedNote}
+                <div class="uiv-site-script-list">
+                    ${siteRows || '<div class="uiv-site-script-empty">当前执行范围内没有识别到可用站点。<br>请检查仓库脚本的请求 URL 或分类范围设置。</div>'}
+                </div>
+            </div>
+        `;
+        overlay.addEventListener('click', event => {
+            if (event.target === overlay || event.target.closest('.uiv-site-script-close')) {
+                closeSiteConsoleScriptPicker();
+                return;
+            }
+            const copyButton = event.target.closest('.uiv-site-script-copy');
+            if (copyButton) copySiteConsoleScripts(copyButton.dataset.siteOrigin || '');
+        });
+        overlay.addEventListener('keydown', event => {
+            if (event.key === 'Escape') closeSiteConsoleScriptPicker();
+        });
+        document.body.appendChild(overlay);
+        overlay.style.display = 'flex';
+        const firstButton = overlay.querySelector('.uiv-site-script-copy, .uiv-site-script-close');
+        if (firstButton) firstButton.focus();
+    } catch (error) {
+        showToast(`❌ 读取站点脚本失败：${error.message}`, 'error');
+    }
+}
+
 function buildLoginProbeScript(rawUrl, loginProbeConfig) {
     const custom = loginProbeConfig && typeof loginProbeConfig === 'object' ? loginProbeConfig : null;
     if (custom && custom.strategy === 'autoProbe' && custom.header) {
@@ -2201,7 +2523,1436 @@ function showUiVisionSetupDialog(detail = {}) {
     document.body.appendChild(overlay);
 }
 
-function buildAndCopyMasterScript(scriptsToRun, groupName) {
+function wrapMasterScriptWithFloatingLauncher(masterCode, options = {}) {
+    const siteName = String(options.siteName || '当前站点');
+    const expectedOrigin = String(options.expectedOrigin || '');
+    const taskCount = Math.max(0, Number(options.taskCount) || 0);
+    const taskMeta = Array.isArray(options.taskMeta) ? options.taskMeta : [];
+    const ruleBundle = options.ruleBundle && typeof options.ruleBundle === 'object' ? options.ruleBundle : {};
+    const netCareRuntimeSource = expectedOrigin === 'https://netcare.huawei.com' && (options.netCareRuntimeSource
+        || (window.UIVNetCareAnalysis && typeof window.UIVNetCareAnalysis.getRuntimeSource === 'function'
+            ? window.UIVNetCareAnalysis.getRuntimeSource()
+            : ''));
+    return `(function () {
+    const TOOL_ID = 'uivf12-floating-capture-tool';
+    const oldTool = document.getElementById(TOOL_ID);
+    if (oldTool) {
+        oldTool.style.display = 'block';
+        return;
+    }
+
+    const expectedOrigin = ${JSON.stringify(expectedOrigin)};
+    const taskMeta = ${JSON.stringify(taskMeta)};
+    const ruleBundle = ${JSON.stringify(ruleBundle)};
+    const installNetCareAnalysisRuntime = ${netCareRuntimeSource || 'null'};
+    const originMatched = !expectedOrigin || window.location.origin === expectedOrigin;
+    const capturedFiles = [];
+    const taskStates = new Map(taskMeta.map(function (task) { return [task.index, 'pending']; }));
+    const taskRunners = new Map();
+    let currentTask = null;
+    let captureActive = false;
+    let minimized = false;
+    let terminated = false;
+    let selectedTaskIndex = null;
+    let selectedFileIndex = 0;
+    let currentPage = 1;
+    let selectedRiskFilter = 'all';
+    let detailSortKey = 'auto';
+    let detailSortDirection = 'asc';
+    let selectedTargetMonth = defaultTargetMonth();
+    let resultMode = false;
+    let fullscreen = false;
+    let controlShieldHost = null;
+    let shieldToastTimer = null;
+    const pageSize = 100;
+    const host = document.createElement('div');
+    host.id = TOOL_ID;
+    host.style.cssText = 'position:fixed;top:18px;right:18px;z-index:2147483647;width:min(420px,calc(100vw - 36px));min-width:0;max-width:calc(100vw - 36px);box-sizing:border-box;contain:layout style;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;transition:width .22s ease;';
+    const root = host.attachShadow ? host.attachShadow({ mode: 'open' }) : host;
+    root.innerHTML = \`
+        <style>
+            *{box-sizing:border-box}
+            .panel{position:relative;width:100%;min-width:0;max-width:100%;overflow:hidden;max-height:calc(100vh - 36px);display:flex;flex-direction:column;border:1px solid rgba(103,232,249,.42);border-radius:15px;background:rgba(15,23,42,.97);color:#e2e8f0;box-shadow:0 24px 80px rgba(0,0,0,.46);backdrop-filter:blur(12px)}
+            .head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:15px 16px 12px;border-bottom:1px solid rgba(148,163,184,.18)}
+            .eyebrow{color:#67e8f9;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.title{margin-top:4px;color:#f8fafc;font-size:16px;font-weight:850}.meta{margin-top:5px;color:#94a3b8;font-size:11px;line-height:1.5}
+            .close{border:0;background:transparent;color:#94a3b8;font-size:22px;line-height:1;cursor:pointer}.body{width:100%;min-width:0;max-width:100%;padding:14px 16px 16px;overflow-x:hidden;overflow-y:auto}.notice{padding:10px 11px;border:1px solid rgba(167,139,250,.28);border-radius:9px;background:rgba(76,29,149,.16);color:#ddd6fe;font-size:11px;line-height:1.55}.notice.running{border-color:rgba(34,211,238,.34);background:rgba(14,116,144,.17);color:#a5f3fc}.notice.done{border-color:rgba(74,222,128,.34);background:rgba(21,128,61,.16);color:#bbf7d0}.notice.bad{border-color:rgba(248,113,113,.34);background:rgba(153,27,27,.16);color:#fecaca}
+            .status{margin:11px 0;padding:9px 10px;border-radius:8px;background:rgba(30,41,59,.72);color:#cbd5e1;font-size:11px;line-height:1.5}.status.bad{border:1px solid rgba(248,113,113,.3);color:#fecaca}.status.running{border:1px solid rgba(34,211,238,.3);color:#a5f3fc}.status.done{border:1px solid rgba(74,222,128,.3);color:#bbf7d0}
+            .actions{display:flex;gap:8px}.start,.zip{flex:1;padding:10px 12px;border:1px solid #67e8f9;border-radius:9px;background:linear-gradient(135deg,#0e7490,#4f46e5);color:#fff;font-size:12px;font-weight:850;cursor:pointer}.start:hover,.zip:hover{filter:brightness(1.12)}.start:disabled,.zip:disabled{cursor:not-allowed;filter:grayscale(.55);opacity:.58}.zip{display:none;border-color:#86efac;background:linear-gradient(135deg,#15803d,#0f766e)}
+            .results{display:none;width:100%;min-width:0;max-width:100%;margin-top:13px}.section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;color:#e2e8f0;font-size:12px;font-weight:850}.section-title small{color:#94a3b8;font-size:10px;font-weight:600}.rule-snapshot{margin:-3px 0 9px;color:#64748b;font-size:9px}.metrics{width:100%;min-width:0;max-width:100%;display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:7px}.metric{width:100%;min-width:0;max-width:100%;padding:8px 9px;border:1px solid rgba(148,163,184,.24);border-radius:8px;background:rgba(30,41,59,.76);color:#cbd5e1;text-align:left;cursor:pointer}.metric:hover,.metric.active{border-color:#67e8f9;background:rgba(14,116,144,.24);color:#fff}.metric.has-danger{border-color:rgba(248,113,113,.58);background:rgba(127,29,29,.22)}.metric.has-warning:not(.has-danger){border-color:rgba(192,132,252,.5);background:rgba(88,28,135,.19)}.metric.has-kpi-warning{box-shadow:inset 0 0 0 1px rgba(251,146,60,.2),0 0 14px rgba(249,115,22,.12)}.metric.has-kpi-warning:not(.has-danger){border-color:rgba(251,146,60,.72);background-image:linear-gradient(135deg,rgba(154,52,18,.2),rgba(30,41,59,.3))}.metric.empty{opacity:.58}.metric-name{display:block;width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:800}.metric-meta{display:block;margin-top:4px;color:#94a3b8;font-size:9px}.metric-risk{display:block;margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#cbd5e1;font-size:9px;font-weight:750}.metric-risk .danger{color:#fca5a5}.metric-risk .warning{color:#d8b4fe}.metric-risk .info{color:#7dd3fc}.metric-risk .normal{color:#86efac}
+            .detail{display:none;width:100%;min-width:0;max-width:100%;margin-top:12px;border:1px solid rgba(148,163,184,.2);border-radius:10px;overflow:hidden;background:rgba(2,6,23,.46)}.detail-head{width:100%;min-width:0;max-width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 11px;border-bottom:1px solid rgba(148,163,184,.18)}.detail-title{min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f8fafc;font-size:12px;font-weight:850}.rerun-one{flex:0 0 auto;padding:6px 9px;border:1px solid rgba(103,232,249,.42);border-radius:7px;background:rgba(14,116,144,.2);color:#a5f3fc;font-size:9px;font-weight:800;cursor:pointer}.rerun-one:hover{background:rgba(14,116,144,.38)}.rerun-one:disabled{cursor:not-allowed;opacity:.5}.file-tabs{width:100%;min-width:0;max-width:100%;display:flex;flex-wrap:nowrap;gap:5px;padding:8px 10px;border-bottom:1px solid rgba(148,163,184,.14);overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain}.file-tab{flex:0 0 auto;width:min(210px,70%);min-width:0;max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:5px 7px;border:1px solid rgba(148,163,184,.24);border-radius:6px;background:#1e293b;color:#cbd5e1;font-size:9px;cursor:pointer}.file-tab.active{border-color:#a78bfa;color:#fff;background:#4c1d95}.derived-metrics{display:none;flex-wrap:wrap;align-items:flex-start;gap:7px;padding:8px 10px;border-bottom:1px solid rgba(148,163,184,.14);background:rgba(15,23,42,.48)}.derived-chip{flex:1 1 180px;min-width:150px;max-width:340px;padding:8px;border:1px solid rgba(74,222,128,.28);border-radius:8px;background:rgba(21,128,61,.12)}.derived-chip.warn{border-color:rgba(251,146,60,.72);background:linear-gradient(135deg,rgba(154,52,18,.26),rgba(127,29,29,.16));box-shadow:0 0 15px rgba(249,115,22,.12)}.derived-label{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#94a3b8;font-size:8px}.derived-period{display:block;margin-top:2px;color:#7dd3fc;font-size:7px;font-weight:750}.derived-value{display:block;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f8fafc;font-size:13px;font-weight:850}.derived-gap{display:block;margin-top:2px;color:#fca5a5;font-size:8px}.derived-subs{display:grid;grid-template-columns:repeat(auto-fit,minmax(62px,1fr));gap:4px;margin-top:7px;padding-top:6px;border-top:1px solid rgba(148,163,184,.14)}.derived-sub{min-width:0;padding:4px 5px;border-radius:5px;background:rgba(15,23,42,.58);text-align:center}.derived-sub.warn{box-shadow:inset 0 0 0 1px rgba(251,146,60,.65);background:rgba(154,52,18,.3)}.derived-sub-label,.derived-sub-value,.derived-sub-gap{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.derived-sub-label{color:#94a3b8;font-size:7px}.derived-sub-value{margin-top:2px;color:#e0f2fe;font-size:9px;font-weight:800}.derived-sub-gap{margin-top:2px;color:#fdba74;font-size:6px}.analysis-filters{display:none;flex-wrap:wrap;gap:5px;padding:7px 10px;border-bottom:1px solid rgba(148,163,184,.14)}.analysis-filter{padding:5px 8px;border:1px solid rgba(148,163,184,.23);border-radius:999px;background:#1e293b;color:#94a3b8;font-size:9px;cursor:pointer}.analysis-filter.active{border-color:#67e8f9;color:#fff;background:#0e7490}.table-wrap{width:100%;min-width:0;max-width:100%;max-height:330px;overflow:auto;overscroll-behavior:contain}.data-table{width:max-content;min-width:100%;max-width:none;border-collapse:collapse;font-size:10px}.data-table th{position:sticky;top:0;z-index:1;background:#172033;color:#bae6fd}.data-table th,.data-table td{max-width:300px;padding:6px 8px;border-right:1px solid rgba(148,163,184,.13);border-bottom:1px solid rgba(148,163,184,.13);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}.data-table td{color:#cbd5e1}.data-table tr.risk-danger td{background:rgba(127,29,29,.22)}.data-table tr.risk-warning td{background:rgba(88,28,135,.18)}.data-table tr.risk-info td{background:rgba(14,116,144,.14)}.judgment-danger{color:#fca5a5!important;font-weight:800}.judgment-warning{color:#d8b4fe!important;font-weight:800}.judgment-info{color:#7dd3fc!important;font-weight:800}.judgment-normal{color:#86efac!important}.empty-detail{padding:22px;color:#94a3b8;text-align:center;font-size:11px}.pager{display:flex;align-items:center;justify-content:flex-end;gap:7px;padding:8px 10px}.pager button{padding:4px 8px;border:1px solid rgba(148,163,184,.25);border-radius:6px;background:#1e293b;color:#cbd5e1;font-size:9px;cursor:pointer}.page-info{color:#94a3b8;font-size:9px}
+            .mini-launch{display:none;width:54px;height:54px;align-items:center;justify-content:center;border:1px solid rgba(103,232,249,.55);border-radius:50%;background:linear-gradient(135deg,#0e7490,#4f46e5);color:#fff;box-shadow:0 12px 38px rgba(0,0,0,.42);font-size:23px;cursor:pointer}.mini-launch.running{animation:miniPulse 1.4s ease-in-out infinite}@keyframes miniPulse{0%,100%{box-shadow:0 12px 38px rgba(0,0,0,.42),0 0 0 0 rgba(34,211,238,.45)}50%{box-shadow:0 12px 38px rgba(0,0,0,.42),0 0 0 9px rgba(34,211,238,0)}}
+            .close-choice{position:absolute;inset:0;z-index:10;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(2,6,23,.78);backdrop-filter:blur(7px)}.close-choice-card{width:min(390px,100%);padding:17px;border:1px solid rgba(167,139,250,.38);border-radius:12px;background:#111827;box-shadow:0 18px 55px rgba(0,0,0,.4)}.close-choice-title{color:#f8fafc;font-size:14px;font-weight:850}.close-choice-text{margin-top:6px;color:#94a3b8;font-size:10px;line-height:1.55}.close-choice-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:14px}.close-choice-actions button{padding:9px 8px;border-radius:8px;font-size:10px;font-weight:800;cursor:pointer}.minimize-choice{border:1px solid #67e8f9;background:#0e7490;color:#fff}.terminate-choice{border:1px solid #f87171;background:#991b1b;color:#fff}.cancel-choice{grid-column:1/-1;border:1px solid #475569;background:#1e293b;color:#cbd5e1}
+            .derived-sub.missing{background:rgba(127,29,29,.28)}.derived-sub.missing .derived-sub-value{color:#fca5a5}
+            .head-actions{display:flex;align-items:center;gap:5px}.fullscreen{width:30px;height:28px;border:1px solid rgba(148,163,184,.24);border-radius:7px;background:rgba(30,41,59,.7);color:#cbd5e1;font-size:14px;cursor:pointer}.fullscreen:hover{border-color:#67e8f9;color:#fff}
+            .panel>.body{flex:1;min-height:0}
+            .target-month-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 9px;padding:7px 9px;border:1px solid rgba(103,232,249,.2);border-radius:8px;background:rgba(14,116,144,.1);color:#cbd5e1;font-size:9px}.target-month-bar label{display:flex;align-items:center;gap:6px;font-weight:800}.target-month-select{padding:4px 22px 4px 7px;border:1px solid rgba(103,232,249,.35);border-radius:6px;background:#172033;color:#e0f2fe;font-size:9px;font-weight:800;cursor:pointer}.target-month-hint{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#67e8f9}.metric-target-window{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin-top:7px}.metric-target-item{min-width:0;padding:4px;border:1px solid rgba(148,163,184,.14);border-radius:5px;background:rgba(2,6,23,.34);text-align:center}.metric-target-item.current{border-color:rgba(103,232,249,.35);background:rgba(14,116,144,.18)}.metric-target-label,.metric-target-value{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.metric-target-label{color:#64748b;font-size:7px}.metric-target-value{margin-top:2px;color:#cbd5e1;font-size:8px;font-weight:800}.metric-target-item.current .metric-target-value{color:#a5f3fc}
+            .data-table th.column-analysis{background:#123044;color:#a5f3fc;box-shadow:inset 3px 0 0 #22d3ee}.data-table td.column-analysis{background:rgba(14,116,144,.16);box-shadow:inset 3px 0 0 rgba(34,211,238,.42)}.data-table th.column-association{background:#30204b;color:#ddd6fe;box-shadow:inset 3px 0 0 #a78bfa}.data-table td.column-association{max-width:360px;background:rgba(88,28,135,.16);color:#ddd6fe;font-weight:700;box-shadow:inset 3px 0 0 rgba(167,139,250,.4)}.data-table th.column-output{background:#123b32;color:#bbf7d0;box-shadow:inset 3px 0 0 #4ade80}.data-table td.column-output{background:rgba(21,128,61,.14);color:#bbf7d0;font-weight:800;box-shadow:inset 3px 0 0 rgba(74,222,128,.36)}.data-table th.column-rule{background:#292342;color:#ddd6fe}.data-table td.column-rule{background:rgba(76,29,149,.1);color:#ddd6fe}.data-table th.sortable{cursor:pointer;user-select:none;padding-right:22px}.data-table th.sortable:hover{filter:brightness(1.16);color:#fff}.data-table th.sortable::after{content:'↕';position:absolute;right:7px;color:#64748b;font-size:9px}.data-table th.sortable.sort-asc::after{content:'↑';color:#67e8f9}.data-table th.sortable.sort-desc::after{content:'↓';color:#67e8f9}.data-table th.sortable:focus-visible{outline:2px solid #67e8f9;outline-offset:-2px}
+            @media(max-width:680px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.detail-head{align-items:flex-start;flex-direction:column}.table-wrap{max-height:280px}}
+        </style>
+        <button class="mini-launch" type="button" title="恢复数据抓取浮窗">📊</button>
+        <section class="panel">
+            <header class="head">
+                <div><div class="eyebrow">UIVF12 Capture Panel</div><div class="title"></div><div class="meta"></div></div>
+                <div class="head-actions"><button class="fullscreen" type="button" title="全屏查看">⛶</button><button class="close" type="button" title="关闭浮窗">×</button></div>
+            </header>
+            <div class="body">
+                <div class="notice">脚本已载入，但尚未开始抓取。确认当前站点与登录状态后，再点击下方按钮。</div>
+                <div class="status"></div>
+                <div class="actions"><button class="start" type="button">开始抓取 ${taskCount} 个任务</button><button class="zip" type="button">下载全部 CSV（ZIP）</button></div>
+                <section class="results">
+                    <div class="section-title"><span>指标数据</span><small class="result-summary"></small></div>
+                    <div class="rule-snapshot"></div>
+                    <div class="target-month-bar"><label>目标月份 <select class="target-month-select"></select></label><span class="target-month-hint"></span></div>
+                    <div class="metrics"></div>
+                    <div class="detail">
+                        <div class="detail-head"><div class="detail-title"></div><button class="rerun-one" type="button">重新抓取当前指标</button></div>
+                        <div class="file-tabs"></div>
+                        <div class="derived-metrics"></div>
+                        <div class="analysis-filters"></div>
+                        <div class="table-wrap"></div>
+                        <div class="pager"><button class="prev" type="button">上一页</button><span class="page-info"></span><button class="next" type="button">下一页</button></div>
+                    </div>
+                </section>
+            </div>
+            <div class="close-choice">
+                <div class="close-choice-card">
+                    <div class="close-choice-title">关闭数据抓取浮窗？</div>
+                    <div class="close-choice-text">可以缩小到右下角继续保留数据，也可以彻底结束本次浮窗脚本。</div>
+                    <div class="close-choice-actions">
+                        <button class="minimize-choice" type="button">缩小到右下角</button>
+                        <button class="terminate-choice" type="button">彻底关闭</button>
+                        <button class="cancel-choice" type="button">取消</button>
+                    </div>
+                </div>
+            </div>
+        </section>\`;
+    const title = root.querySelector('.title');
+    const meta = root.querySelector('.meta');
+    const notice = root.querySelector('.notice');
+    const status = root.querySelector('.status');
+    const startButton = root.querySelector('.start');
+    const zipButton = root.querySelector('.zip');
+    const fullscreenButton = root.querySelector('.fullscreen');
+    const closeButton = root.querySelector('.close');
+    const panel = root.querySelector('.panel');
+    const miniButton = root.querySelector('.mini-launch');
+    const closeChoice = root.querySelector('.close-choice');
+    const minimizeChoice = root.querySelector('.minimize-choice');
+    const terminateChoice = root.querySelector('.terminate-choice');
+    const cancelChoice = root.querySelector('.cancel-choice');
+    const results = root.querySelector('.results');
+    const metrics = root.querySelector('.metrics');
+    const resultSummary = root.querySelector('.result-summary');
+    const ruleSnapshot = root.querySelector('.rule-snapshot');
+    const targetMonthSelect = root.querySelector('.target-month-select');
+    const targetMonthHint = root.querySelector('.target-month-hint');
+    const detail = root.querySelector('.detail');
+    const detailTitle = root.querySelector('.detail-title');
+    const rerunOneButton = root.querySelector('.rerun-one');
+    const fileTabs = root.querySelector('.file-tabs');
+    const derivedMetrics = root.querySelector('.derived-metrics');
+    const analysisFilters = root.querySelector('.analysis-filters');
+    const tableWrap = root.querySelector('.table-wrap');
+    const prevButton = root.querySelector('.prev');
+    const nextButton = root.querySelector('.next');
+    const pageInfo = root.querySelector('.page-info');
+    let netCareController = null;
+    if (typeof installNetCareAnalysisRuntime === 'function') {
+        try {
+            netCareController = installNetCareAnalysisRuntime(root, { isCaptureActive: function () { return captureActive; } });
+        } catch (error) {
+            console.error('[UIVF12] NetCare 专题模块初始化失败', error);
+        }
+    }
+    title.textContent = ${JSON.stringify(siteName)} + ' · 数据抓取浮窗';
+    meta.textContent = ${JSON.stringify(`${taskCount} 个仓库脚本 · ${expectedOrigin || '当前站点'}`)};
+    ruleSnapshot.textContent = ruleBundle.unavailable
+        ? '规则快照不可用：本次仅展示原始数据'
+        : 'SLA 规则快照 · ' + (ruleBundle.exportedAt ? new Date(ruleBundle.exportedAt).toLocaleString() : '复制时生成');
+    for (let month = 1; month <= 12; month++) {
+        const option = document.createElement('option');
+        option.value = String(month);
+        option.textContent = month + '月';
+        targetMonthSelect.appendChild(option);
+    }
+    targetMonthSelect.value = String(selectedTargetMonth);
+    function syncTargetMonthHint() {
+        targetMonthHint.textContent = '指标与子指标已切换至 ' + selectedTargetMonth + '月数据，同时展示上月 / 本月 / 下月目标';
+    }
+    syncTargetMonthHint();
+    targetMonthSelect.addEventListener('change', async function () {
+        const nextMonth = Number(targetMonthSelect.value);
+        if (!Number.isInteger(nextMonth) || nextMonth < 1 || nextMonth > 12) return;
+        selectedTargetMonth = nextMonth;
+        syncTargetMonthHint();
+        if (!capturedFiles.length) return;
+        if (selectedTaskIndex !== null) {
+            const selectedFiles = filesForTask(selectedTaskIndex);
+            const monthFileIndex = preferredMetricFileIndex(selectedFiles, selectedTargetMonth);
+            if (monthFileIndex >= 0) selectedFileIndex = monthFileIndex;
+        }
+        await renderMetrics();
+        if (selectedTaskIndex !== null) await renderDetail();
+    });
+    status.textContent = originMatched
+        ? '准备就绪：当前页面站点匹配。'
+        : '站点不匹配：请在 ' + expectedOrigin + ' 页面运行此脚本。当前为 ' + window.location.origin;
+    if (!originMatched) {
+        notice.className = 'notice bad';
+        notice.textContent = '当前页面与所选站点不匹配，无法开始抓取。';
+        status.className = 'status bad';
+        startButton.disabled = true;
+    }
+
+    function syncHostWidth() {
+        const viewportWidth = Math.max(280, Number(document.documentElement.clientWidth) || Number(window.innerWidth) || 1200);
+        const viewportHeight = Math.max(320, Number(document.documentElement.clientHeight) || Number(window.innerHeight) || 800);
+        const gutter = viewportWidth <= 520 ? 16 : 36;
+        const targetWidth = minimized ? 54 : (fullscreen ? viewportWidth - 16 : Math.max(240, Math.min(resultMode ? 1100 : 420, viewportWidth - gutter)));
+        const lockedWidth = Math.floor(targetWidth) + 'px';
+        host.style.width = lockedWidth;
+        host.style.minWidth = lockedWidth;
+        host.style.maxWidth = lockedWidth;
+        host.style.flexBasis = lockedWidth;
+        if (minimized) {
+            host.style.top = 'auto'; host.style.right = '18px'; host.style.bottom = '18px'; host.style.left = 'auto';
+        } else if (fullscreen) {
+            host.style.top = '8px'; host.style.right = '8px'; host.style.bottom = '8px'; host.style.left = '8px';
+            panel.style.maxHeight = Math.floor(viewportHeight - 16) + 'px';
+            panel.style.height = Math.floor(viewportHeight - 16) + 'px';
+            panel.style.borderRadius = '10px';
+        } else {
+            host.style.top = '18px'; host.style.right = '18px'; host.style.bottom = 'auto'; host.style.left = 'auto';
+            panel.style.maxHeight = 'calc(100vh - 36px)';
+            panel.style.height = 'auto';
+            panel.style.borderRadius = '15px';
+        }
+    }
+    syncHostWidth();
+    window.addEventListener('resize', syncHostWidth, { passive: true });
+
+    function parseCsv(text) {
+        const rows = [];
+        let row = [];
+        let cell = '';
+        let quoted = false;
+        const source = String(text || '').replace(/^\uFEFF/, '');
+        for (let index = 0; index < source.length; index++) {
+            const char = source[index];
+            if (quoted) {
+                if (char === '"' && source[index + 1] === '"') { cell += '"'; index++; }
+                else if (char === '"') quoted = false;
+                else cell += char;
+            } else if (char === '"') quoted = true;
+            else if (char === ',') { row.push(cell); cell = ''; }
+            else if (char === '\\n') { row.push(cell.replace(/\\r$/, '')); rows.push(row); row = []; cell = ''; }
+            else cell += char;
+        }
+        if (cell || row.length) { row.push(cell.replace(/\\r$/, '')); rows.push(row); }
+        return rows.filter(function (item) { return item.some(function (value) { return value !== ''; }); });
+    }
+
+    function firstRowValue(row, fields) {
+        for (const field of fields || []) {
+            const value = row && row[field];
+            if (value !== undefined && value !== null && String(value).trim() !== '') {
+                return { field: field, value: String(value).trim() };
+            }
+        }
+        return { field: '', value: '' };
+    }
+
+    function parseRuleDate(value) {
+        if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
+        if (typeof value === 'number' && Number.isFinite(value)) {
+            const numericDate = new Date(value < 100000000000 ? value * 1000 : value);
+            return isNaN(numericDate.getTime()) ? null : numericDate;
+        }
+        const text = String(value || '').trim();
+        if (!text) return null;
+        if (/^\\d{10,13}$/.test(text)) {
+            const timestamp = Number(text);
+            const timestampDate = new Date(text.length === 10 ? timestamp * 1000 : timestamp);
+            if (!isNaN(timestampDate.getTime())) return timestampDate;
+        }
+        const normalized = text
+            .replace(/[年/]/g, '-')
+            .replace(/月/g, '-')
+            .replace(/日/g, '')
+            .replace(/\\s+/g, ' ');
+        const parsed = new Date(normalized);
+        return isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    function detectRuleMode(file) {
+        const source = String((file && file.taskName) || '') + ' ' + String((file && file.originalName) || (file && file.name) || '');
+        const lower = source.toLowerCase();
+        if (source.includes('整改详单') || lower.includes('rectification')) return 'rectification';
+        if (source.includes('CPT风险详表') || lower.includes('cpt') || lower.includes('special')) return 'special';
+        if (source.includes('详单-SR') || source.includes('SR详单') || /(^|[^a-z])sr([^a-z]|$)/i.test(source)) return 'sr';
+        if (source.includes('详单漏洞') || source.includes('漏洞预警') || lower.includes('vulnerability')) return 'vulnerability';
+        if (source.includes('风险详单') || lower.includes('risk detail')) return 'risk';
+        return '';
+    }
+
+    function matchRuleValue(actualValue, match) {
+        const actual = String(actualValue || '');
+        const values = Array.isArray(match && match.values) ? match.values : [];
+        const caseSensitive = match && match.caseSensitive === true;
+        const candidate = caseSensitive ? actual : actual.toLowerCase();
+        return values.some(function (rawValue) {
+            const raw = String(rawValue || '');
+            const expected = caseSensitive ? raw : raw.toLowerCase();
+            if (match && match.operator === 'contains') return candidate.includes(expected);
+            if (match && match.operator === 'regex') {
+                try { return new RegExp(raw, caseSensitive ? '' : 'i').test(actual); } catch (error) { return false; }
+            }
+            return candidate === expected;
+        });
+    }
+
+    function makeAnalysis(severity, judgment, days, reason, matched) {
+        return {
+            severity: severity || 'normal',
+            judgment: judgment || '正常',
+            days: Number.isFinite(days) ? days : null,
+            reason: reason || '',
+            matched: matched !== false
+        };
+    }
+
+    function evaluateStandardRule(mode, row, config) {
+        if (!config || !Array.isArray(config.rules)) return makeAnalysis('normal', '未配置规则', null, '规则快照中没有此类详表配置', false);
+        const status = firstRowValue(row, config.statusFields || []).value;
+        const rule = config.rules.find(function (item) {
+            return item && item.enabled !== false && matchRuleValue(status, item.match || {});
+        });
+        if (!rule) return makeAnalysis('normal', '正常/未命中', null, status ? '状态未命中启用规则：' + status : '未找到可识别的状态字段', false);
+        const dateValue = firstRowValue(row, rule.deadline && rule.deadline.fields || []);
+        if (!dateValue.value) return makeAnalysis('info', '缺少截止日期', null, rule.name + ' · 缺少 ' + ((rule.deadline && rule.deadline.fields || []).join(' / ')), true);
+        const parsed = parseRuleDate(dateValue.value);
+        if (!parsed) return makeAnalysis('info', '日期解析失败', null, dateValue.field + '：' + dateValue.value, true);
+        const deadline = new Date(parsed.getTime());
+        if (rule.deadline && rule.deadline.type === 'field_plus_days') deadline.setDate(deadline.getDate() + Number(rule.deadline.offsetDays || 0));
+        const days = Math.ceil((deadline.getTime() - Date.now()) / 86400000);
+        const levels = mode === 'risk' ? config.alertLevels : rule.alertLevels;
+        const level = (Array.isArray(levels) ? levels : [])
+            .filter(function (item) { return item && item.enabled !== false; })
+            .slice()
+            .sort(function (a, b) { return Number(a.maxDays) - Number(b.maxDays); })
+            .find(function (item) { return days <= Number(item.maxDays); });
+        if (!level) return makeAnalysis('normal', '正常', days, rule.name + ' · 距截止还有 ' + days + ' 天', true);
+        const severity = ['danger', 'warning', 'info'].includes(level.severity) ? level.severity : 'warning';
+        const label = String(rule.badgePrefix || rule.name || '') + String(level.badgeSuffix || level.name || '提醒');
+        return makeAnalysis(severity, label, days, rule.name + ' · 距截止还有 ' + days + ' 天', true);
+    }
+
+    function containsConfiguredValue(actual, values) {
+        const text = String(actual || '').toLowerCase();
+        return (Array.isArray(values) ? values : []).some(function (value) { return text.includes(String(value || '').toLowerCase()); });
+    }
+
+    function srStyleAnalysis(style, fallbackLabel, days, reason) {
+        const enabled = !style || style.enabled !== false;
+        const severity = enabled && style && ['danger', 'warning', 'info'].includes(style.severity) ? style.severity : 'normal';
+        return makeAnalysis(severity, enabled && style && style.label ? style.label : fallbackLabel, days, reason, true);
+    }
+
+    function evaluateSrRule(row, config) {
+        if (!config || !config.fields || !config.values) return makeAnalysis('normal', '未配置规则', null, '规则快照中没有 SR 配置', false);
+        const value = function (key) { return firstRowValue(row, config.fields[key] || []).value; };
+        const status = value('status');
+        const severityValue = value('severity');
+        const overdueFlag = value('overdue');
+        const parse = function (key) { const raw = value(key); return raw ? parseRuleDate(raw) : null; };
+        const open = parse('openDate');
+        const expected = parse('expectedClose');
+        const suspended = parse('suspendedClose');
+        const actual = parse('actualClose');
+        const isPending = containsConfiguredValue(status, config.values.pending);
+        const isClosed = containsConfiguredValue(status, config.values.closed);
+        const isCritical = containsConfiguredValue(severityValue, config.values.critical);
+        const upstreamOverdue = (config.values.overdue || []).some(function (item) { return String(item).toLowerCase() === String(overdueFlag).toLowerCase(); });
+        const alerts = config.alerts || {};
+        const thresholds = config.thresholds || {};
+        if (isPending) return srStyleAnalysis(alerts.pending, '挂起忽略', null, 'SR 当前为挂起状态：' + status);
+        if (isClosed) {
+            if ((actual && expected && actual > expected) || upstreamOverdue) {
+                if (suspended && actual && actual <= suspended) return srStyleAnalysis(alerts.suspendedGood, '挂起后未超期', null, '实际关单未超过挂起后期限');
+                const reference = suspended || expected;
+                const overdueHours = actual && reference ? Math.ceil((actual - reference) / 3600000) : null;
+                return srStyleAnalysis(suspended ? alerts.suspendedOverdue : alerts.historicalOverdue, suspended ? '挂起后超期' : '历史超期', -1, overdueHours && overdueHours > 0 ? '实际关单超期 ' + overdueHours + ' 小时' : '已触发上游超期标识');
+            }
+            return srStyleAnalysis(alerts.closed, '已关单', null, 'SR 已正常关闭');
+        }
+        if (!open || !expected) return makeAnalysis('info', '缺少 SLA 关键时间', null, '缺少开单时间或期望关单时间', true);
+        const deadline = suspended || expected;
+        const total = deadline.getTime() - open.getTime();
+        const remaining = deadline.getTime() - Date.now();
+        const remainingHours = Math.ceil(remaining / 3600000);
+        const remainingDays = Math.ceil(remaining / 86400000);
+        const consume = total > 0 ? ((Date.now() - open.getTime()) / total) * 100 : 100;
+        const reason = '剩余 ' + remainingHours + ' 小时 · 已消耗 ' + (Number.isFinite(consume) ? consume.toFixed(0) : 100) + '%';
+        if (remaining < 0 || upstreamOverdue) return srStyleAnalysis(alerts.overdue, 'SR超期', remainingDays, reason);
+        if (isCritical && (consume > Number(thresholds.criticalDangerConsume) || remainingHours < Number(thresholds.criticalDangerHours))) return srStyleAnalysis(alerts.criticalDanger, 'Critical高危', remainingDays, reason);
+        if (isCritical && consume > Number(thresholds.criticalWarningConsume) && remainingHours < Number(thresholds.criticalWarningHours)) return srStyleAnalysis(alerts.criticalWarning, 'Critical预警', remainingDays, reason);
+        if (!isCritical && consume > Number(thresholds.normalDangerConsume)) return srStyleAnalysis(alerts.normalDanger, 'SR高危', remainingDays, reason);
+        if (!isCritical && consume > Number(thresholds.normalWarningConsume)) return srStyleAnalysis(alerts.normalWarning, 'SR预警', remainingDays, reason);
+        return makeAnalysis('normal', '正常', remainingDays, reason, true);
+    }
+
+    function normalizeMetricFileName(value) {
+        return String(value || '')
+            .replace(/^.*[\\\\/]/, '')
+            .replace(/\\.csv$/i, '')
+            .replace(/\\s*\\(\\d+\\)$/i, '')
+            .replace(/_?\\d{4}年\\d{1,2}月(?:\\d{1,2}日)?$/i, '')
+            .trim()
+            .toLowerCase();
+    }
+
+    function findMetricSchema(file) {
+        const fileNames = [file.originalName, file.name, file.taskName].map(normalizeMetricFileName).filter(Boolean);
+        let best = null;
+        let bestScore = 0;
+        (ruleBundle.metricSchemas || []).forEach(function (schema) {
+            const meta = schema && schema.sourceMeta || {};
+            const candidates = []
+                .concat(meta.sourceFiles || [])
+                .concat([meta.baseName, String(meta.matchedPrefix || '').replace(/\\*+$/, '')])
+                .map(normalizeMetricFileName)
+                .filter(Boolean);
+            candidates.forEach(function (candidate) {
+                fileNames.forEach(function (fileName) {
+                    const exact = fileName === candidate;
+                    const partial = fileName.includes(candidate) || candidate.includes(fileName);
+                    const score = exact ? 10000 + candidate.length : (partial ? candidate.length : 0);
+                    if (score > bestScore) { best = schema; bestScore = score; }
+                });
+            });
+        });
+        return best;
+    }
+
+    function metricCellMatches(value, pattern) {
+        const text = value === undefined || value === null ? '' : String(value).trim();
+        const expected = pattern === undefined || pattern === null ? '' : String(pattern);
+        if (expected === '[空]') return text === '';
+        if (expected === '[非空]') return text !== '';
+        return text.includes(expected);
+    }
+
+    function metricRowMatches(row, rule) {
+        if (rule.colX && !metricCellMatches(row[rule.colX], rule.valY)) return false;
+        return (Array.isArray(rule.conditions) ? rule.conditions : []).every(function (condition) {
+            return condition && condition.column && metricCellMatches(row[condition.column], condition.value);
+        });
+    }
+
+    function evaluateMetricRule(rule, rows) {
+        const matchedRows = rows.filter(function (row) { return metricRowMatches(row, rule); });
+        if (rule.type === 'count') {
+            return matchedRows.filter(function (row) { return metricCellMatches(row[rule.colZ], rule.valK); }).length;
+        }
+        if (rule.type === 'ratio') {
+            const matched = matchedRows.filter(function (row) { return metricCellMatches(row[rule.colZ], rule.valK); }).length;
+            return matchedRows.length ? Math.round((matched / matchedRows.length) * 100) + '%' : '0%';
+        }
+        const row = matchedRows[0];
+        return row && row[rule.colZ] !== undefined && row[rule.colZ] !== null ? row[rule.colZ] : '--';
+    }
+
+    function defaultTargetMonth() {
+        const now = new Date();
+        if (now.getDate() >= 10) return now.getMonth() + 1;
+        return now.getMonth() === 0 ? 12 : now.getMonth();
+    }
+
+    function offsetTargetMonth(month, offset) {
+        return ((Number(month) - 1 + Number(offset) + 120) % 12) + 1;
+    }
+
+    function formatTargetValue(target, month) {
+        if (!target || target[month] === undefined || target[month] === null || target[month] === '') return '—';
+        const raw = String(target[month]);
+        const value = target.isPercent === true && !raw.endsWith('%') ? raw + '%' : raw;
+        return (target.type || 'gte') === 'lte' ? '≤ ' + value : '≥ ' + value;
+    }
+
+    function buildTargetWindow(target) {
+        return [
+            { key: 'previous', label: '上月', month: offsetTargetMonth(selectedTargetMonth, -1) },
+            { key: 'current', label: '本月', month: selectedTargetMonth },
+            { key: 'next', label: '下月', month: offsetTargetMonth(selectedTargetMonth, 1) }
+        ].map(function (item) {
+            return { key: item.key, label: item.label, month: item.month, value: formatTargetValue(target, item.month) };
+        });
+    }
+
+    function metricTargetDefinition(schema, rule, fallbackRule) {
+        const secId = schema && schema.sourceMeta && schema.sourceMeta.secId;
+        if (!secId || !ruleBundle.targets) return null;
+        return (rule && rule.id && ruleBundle.targets[secId + '_' + rule.id])
+            || (fallbackRule && fallbackRule.id && ruleBundle.targets[secId + '_' + fallbackRule.id])
+            || null;
+    }
+
+    function shouldAutoPercentMetric(label, column) {
+        const text = (String(label || '') + ' ' + String(column || '')).toLowerCase();
+        return text.includes('率')
+            || text.includes('占比')
+            || /(^|[_\\s-])(rate|ratio|percent|percentage|pct)($|[_\\s-])/.test(text)
+            || /(rate|ratio|percent|percentage|pct)$/i.test(String(column || ''));
+    }
+
+    function formatMetricValue(value, target, autoPercent, ruleType) {
+        if (value === '--' || ruleType === 'count' || ruleType === 'ratio') return value;
+        const text = String(value).trim();
+        if (target && target.isPercent === false && text.endsWith('%')) return text.replace(/%$/, '');
+        const usePercent = target && target.isPercent !== undefined ? target.isPercent : autoPercent;
+        if (!usePercent) return value;
+        const alreadyPercent = text.endsWith('%');
+        const number = parseFloat(text);
+        if (!Number.isFinite(number)) return value;
+        return Math.round(alreadyPercent ? number : number * 100) + '%';
+    }
+
+    function judgeMetricTarget(target, value) {
+        if (!target) return { warning: false, gap: '' };
+        const targetValue = Number(target[selectedTargetMonth]);
+        const valueText = String(value).trim();
+        if (!valueText || valueText === '--' || valueText.includes('缺少')) return { warning: false, gap: '' };
+        const actualText = valueText.replace(/[^0-9.-]/g, '');
+        const actual = actualText ? Number(actualText) : NaN;
+        if (!Number.isFinite(targetValue) || !Number.isFinite(actual)) return { warning: false, gap: '' };
+        const isLessThanTarget = (target.type || 'gte') === 'gte' && actual < targetValue;
+        const isGreaterThanTarget = target.type === 'lte' && actual > targetValue;
+        if (!isLessThanTarget && !isGreaterThanTarget) return { warning: false, gap: '' };
+        const gap = Math.abs(targetValue - actual).toFixed(2).replace(/\\.00$/, '');
+        return { warning: true, gap: (isLessThanTarget ? '距目标差 ' : '超过目标 ') + gap + (String(value).includes('%') ? '%' : '') };
+    }
+
+    function metricFilePeriod(file) {
+        const names = [file && file.originalName, file && file.name].filter(Boolean);
+        for (const name of names) {
+            const match = String(name).match(/(?:_|-)\\s*(\\d{4})年(\\d{1,2})月(?:\\d{1,2}日)?(?:\\.csv)?$/i);
+            if (match) return { year: Number(match[1]), month: Number(match[2]), label: match[1] + '年' + Number(match[2]) + '月' };
+        }
+        return null;
+    }
+
+    function selectMetricFilesForMonth(files, month) {
+        const candidates = (files || []).map(function (file) { return { file: file, period: metricFilePeriod(file) }; });
+        const periodCandidates = candidates.filter(function (item) { return !!item.period; });
+        if (periodCandidates.length) {
+            const matching = periodCandidates.filter(function (item) { return item.period.month === Number(month); });
+            if (!matching.length) return { files: [], found: false, monthMissing: true, periodLabel: Number(month) + '月数据缺失' };
+            const latestYear = Math.max.apply(null, matching.map(function (item) { return item.period.year; }));
+            const selected = matching.filter(function (item) { return item.period.year === latestYear; });
+            return { files: selected.map(function (item) { return item.file; }), found: true, monthMissing: false, periodLabel: latestYear + '年' + Number(month) + '月' };
+        }
+        return { files: candidates.map(function (item) { return item.file; }), found: candidates.length > 0, monthMissing: false, periodLabel: candidates.length ? 'Latest 数据' : '' };
+    }
+
+    function preferredMetricFileIndex(files, month) {
+        let bestIndex = -1;
+        let bestYear = -1;
+        (files || []).forEach(function (file, index) {
+            const period = metricFilePeriod(file);
+            if (period && period.month === Number(month) && period.year > bestYear) { bestIndex = index; bestYear = period.year; }
+        });
+        return bestIndex;
+    }
+
+    function dataForMetricSource(sourceSecId, currentSchema, currentRows, currentFile) {
+        const currentSecId = currentSchema && currentSchema.sourceMeta && currentSchema.sourceMeta.secId;
+        const targetSecId = sourceSecId || currentSecId;
+        if (!targetSecId) return { rows: currentRows, found: true, monthMissing: false, periodLabel: 'Latest 数据' };
+        const sourceFiles = capturedFiles.filter(function (candidate) {
+            const schema = candidate.metricSchema || findMetricSchema(candidate);
+            return schema && schema.sourceMeta && schema.sourceMeta.secId === targetSecId && Array.isArray(candidate.rowObjects);
+        });
+        if (!sourceFiles.length && targetSecId === currentSecId) {
+            const fallbackSelection = selectMetricFilesForMonth(currentFile ? [currentFile] : [], selectedTargetMonth);
+            if (fallbackSelection.found) return { rows: currentRows, found: true, monthMissing: false, periodLabel: fallbackSelection.periodLabel };
+            return { rows: [], found: false, monthMissing: fallbackSelection.monthMissing, periodLabel: fallbackSelection.periodLabel };
+        }
+        const selection = selectMetricFilesForMonth(sourceFiles, selectedTargetMonth);
+        return {
+            rows: selection.files.flatMap(function (sourceFile) { return sourceFile.rowObjects || []; }),
+            found: selection.found,
+            monthMissing: selection.monthMissing,
+            periodLabel: selection.periodLabel
+        };
+    }
+
+    function evaluateDerivedMetrics(file) {
+        const schema = file.metricSchema || findMetricSchema(file);
+        file.metricSchema = schema || null;
+        const rowObjects = file.rowObjects || [];
+        file.derivedMetrics = !schema ? [] : (schema.customMetrics || []).map(function (rule) {
+            const parentTarget = metricTargetDefinition(schema, rule);
+            const mainSource = dataForMetricSource(rule.sourceSecId, schema, rowObjects, file);
+            let value = mainSource.found ? evaluateMetricRule(rule, mainSource.rows) : (mainSource.monthMissing ? '缺少 ' + selectedTargetMonth + ' 月来源表' : '--');
+            value = formatMetricValue(value, parentTarget, shouldAutoPercentMetric(rule.label, rule.colZ), rule.type);
+            const target = judgeMetricTarget(parentTarget, value);
+            const subMetrics = (rule.subMetrics || []).map(function (subRule) {
+                const subTarget = metricTargetDefinition(schema, subRule, rule);
+                const sourceData = dataForMetricSource(subRule.sourceSecId, schema, rowObjects, file);
+                let subValue = sourceData.found ? evaluateMetricRule(subRule, sourceData.rows) : (sourceData.monthMissing ? '缺少 ' + selectedTargetMonth + ' 月来源表' : '缺少来源表');
+                subValue = formatMetricValue(
+                    subValue,
+                    subTarget,
+                    shouldAutoPercentMetric(subRule.label || rule.label, subRule.colZ || rule.colZ),
+                    subRule.type
+                );
+                const subJudgment = judgeMetricTarget(subTarget, subValue);
+                return { label: subRule.category || subRule.label || '子指标', value: subValue, warning: subJudgment.warning, gap: subJudgment.gap, sourceMissing: !sourceData.found, sourceLabel: sourceData.periodLabel };
+            });
+            return {
+                id: rule.id,
+                label: rule.label || rule.colZ || '未命名指标',
+                value: value,
+                warning: target.warning,
+                gap: target.gap,
+                sourceMissing: !mainSource.found,
+                sourceLabel: mainSource.periodLabel,
+                targetMonth: selectedTargetMonth,
+                targetWindow: buildTargetWindow(parentTarget),
+                subMetrics: subMetrics
+            };
+        });
+    }
+
+    function analyzeRows(file) {
+        const rows = file.rows || [];
+        const headers = rows[0] || [];
+        file.ruleMode = detectRuleMode(file);
+        file.ruleLabel = { risk: '常规风险', rectification: '整改详单', special: 'CPT专项风险', sr: 'SR详单', vulnerability: '漏洞预警' }[file.ruleMode] || '';
+        const rowObjects = rows.slice(1).map(function (values) {
+            const row = {};
+            headers.forEach(function (header, index) { row[header] = values[index]; });
+            return row;
+        });
+        file.rowObjects = rowObjects;
+        file.analyses = rowObjects.map(function (row) {
+            if (!file.ruleMode) return makeAnalysis('normal', '未识别规则类型', null, '保留原始数据，未执行 SLA 判断', false);
+            const config = ruleBundle.builtin && ruleBundle.builtin[file.ruleMode];
+            return file.ruleMode === 'sr' ? evaluateSrRule(row, config) : evaluateStandardRule(file.ruleMode, row, config);
+        });
+        file.analysisCounts = file.analyses.reduce(function (counts, item) {
+            const key = ['danger', 'warning', 'info'].includes(item.severity) ? item.severity : 'normal';
+            counts[key]++;
+            return counts;
+        }, { danger: 0, warning: 0, info: 0, normal: 0 });
+        evaluateDerivedMetrics(file);
+    }
+
+    async function prepareFile(file) {
+        if (!file.parsedPromise) {
+            file.parsedPromise = file.blob.text().then(function (text) {
+                file.rows = parseCsv(text);
+                file.rowCount = Math.max(0, file.rows.length - 1);
+                analyzeRows(file);
+                return file;
+            });
+        }
+        return file.parsedPromise;
+    }
+
+    function filesForTask(taskIndex) {
+        return capturedFiles.filter(function (file) { return file.taskIndex === taskIndex; });
+    }
+
+    function makeCell(tag, text) {
+        const cell = document.createElement(tag);
+        cell.textContent = text === undefined || text === null ? '' : String(text);
+        cell.title = cell.textContent;
+        return cell;
+    }
+
+    function detailMetricRules(file) {
+        const schema = file.metricSchema || findMetricSchema(file);
+        const secId = schema && schema.sourceMeta && schema.sourceMeta.secId;
+        if (!secId) return [];
+        const collected = [];
+        const identities = new Set();
+        function add(rule, label) {
+            if (!rule || typeof rule !== 'object') return;
+            const identity = [rule.id || '', label || '', rule.colX || '', rule.colZ || '', rule.sourceSecId || ''].join('|');
+            if (identities.has(identity)) return;
+            identities.add(identity);
+            collected.push({ rule: rule, label: label || rule.label || rule.colZ || '关联指标' });
+        }
+        (ruleBundle.metricSchemas || []).forEach(function (ownerSchema) {
+            const ownerSecId = ownerSchema && ownerSchema.sourceMeta && ownerSchema.sourceMeta.secId;
+            (ownerSchema.customMetrics || []).forEach(function (metric) {
+                const metricLabel = metric.label || metric.colZ || '未命名指标';
+                if ((!metric.sourceSecId && ownerSecId === secId) || metric.sourceSecId === secId) add(metric, metricLabel);
+                (metric.subMetrics || []).forEach(function (subMetric) {
+                    const sourceSecId = subMetric.sourceSecId || ownerSecId;
+                    if (sourceSecId === secId) add(subMetric, metricLabel + ' / ' + (subMetric.category || subMetric.label || '子指标'));
+                });
+            });
+        });
+        return collected;
+    }
+
+    function detailColumnLayout(file, headers) {
+        const outputFields = new Set();
+        const ruleFields = new Set();
+        const metricRules = detailMetricRules(file);
+        metricRules.forEach(function (item) {
+            const rule = item.rule;
+            if (rule.colZ) outputFields.add(rule.colZ);
+            if (rule.colX) ruleFields.add(rule.colX);
+            (rule.conditions || []).forEach(function (condition) { if (condition && condition.column) ruleFields.add(condition.column); });
+        });
+        const builtin = ruleBundle.builtin && ruleBundle.builtin[file.ruleMode];
+        if (builtin) {
+            if (file.ruleMode === 'sr') {
+                Object.values(builtin.fields || {}).forEach(function (fields) { (fields || []).forEach(function (field) { ruleFields.add(field); }); });
+            } else {
+                (builtin.statusFields || []).forEach(function (field) { ruleFields.add(field); });
+                (builtin.rules || []).forEach(function (rule) {
+                    (rule.deadline && rule.deadline.fields || []).forEach(function (field) { ruleFields.add(field); });
+                });
+            }
+        }
+        outputFields.forEach(function (field) { ruleFields.delete(field); });
+        const columns = headers.map(function (header, index) {
+            return { header: header, index: index, role: outputFields.has(header) ? 'output' : (ruleFields.has(header) ? 'rule' : 'normal') };
+        }).sort(function (left, right) {
+            const rank = { output: 0, rule: 1, normal: 2 };
+            return rank[left.role] - rank[right.role] || left.index - right.index;
+        });
+        return { columns: columns, metricRules: metricRules };
+    }
+
+    function matchedDetailMetrics(row, metricRules) {
+        return Array.from(new Set((metricRules || [])
+            .filter(function (item) { return metricRowMatches(row, item.rule); })
+            .map(function (item) { return item.label; })))
+            .join(' · ');
+    }
+
+    function resetDetailSort() {
+        detailSortKey = 'auto';
+        detailSortDirection = 'asc';
+    }
+
+    function detailComparableValue(value) {
+        if (value === undefined || value === null || String(value).trim() === '') return { empty: true, value: '' };
+        const text = String(value).trim();
+        const numericText = text.replace(/,/g, '').replace(/%$/, '');
+        if (/^-?\\d+(?:\\.\\d+)?%?$/.test(numericText)) return { empty: false, value: Number(numericText) };
+        if (/\\d{4}[\\-/年]\\d{1,2}/.test(text)) {
+            const date = parseRuleDate(text);
+            if (date) return { empty: false, value: date.getTime() };
+        }
+        return { empty: false, value: text.toLocaleLowerCase() };
+    }
+
+    function compareDetailValues(leftValue, rightValue, direction) {
+        const left = detailComparableValue(leftValue);
+        const right = detailComparableValue(rightValue);
+        if (left.empty !== right.empty) return left.empty ? 1 : -1;
+        if (left.empty) return 0;
+        let result = 0;
+        if (typeof left.value === 'number' && typeof right.value === 'number') result = left.value - right.value;
+        else result = String(left.value).localeCompare(String(right.value), 'zh-CN', { numeric: true, sensitivity: 'base' });
+        return direction === 'desc' ? -result : result;
+    }
+
+    function autoDetailRowCompare(left, right) {
+        const leftRelated = left.association || (left.analysis && left.analysis.matched) ? 0 : 1;
+        const rightRelated = right.association || (right.analysis && right.analysis.matched) ? 0 : 1;
+        if (leftRelated !== rightRelated) return leftRelated - rightRelated;
+        const severityRank = { danger: 0, warning: 1, info: 2, normal: 3 };
+        const leftSeverity = severityRank[left.analysis && left.analysis.severity] === undefined ? 3 : severityRank[left.analysis.severity];
+        const rightSeverity = severityRank[right.analysis && right.analysis.severity] === undefined ? 3 : severityRank[right.analysis.severity];
+        if (leftSeverity !== rightSeverity) return leftSeverity - rightSeverity;
+        const leftDays = left.analysis && Number.isFinite(left.analysis.days) ? left.analysis.days : Number.POSITIVE_INFINITY;
+        const rightDays = right.analysis && Number.isFinite(right.analysis.days) ? right.analysis.days : Number.POSITIVE_INFINITY;
+        if (leftDays !== rightDays) return leftDays - rightDays;
+        return left.originalIndex - right.originalIndex;
+    }
+
+    function detailRowSortValue(item, key) {
+        if (key === 'judgment') {
+            const rank = { danger: 0, warning: 1, info: 2, normal: 3 };
+            return rank[item.analysis && item.analysis.severity] === undefined ? 3 : rank[item.analysis.severity];
+        }
+        if (key === 'days') return item.analysis && item.analysis.days;
+        if (key === 'reason') return item.analysis && item.analysis.reason;
+        if (key === 'association') return item.association;
+        if (key.startsWith('column:')) return item.values[Number(key.slice(7))];
+        return '';
+    }
+
+    function sortDetailRows(rows) {
+        const sorted = rows.slice();
+        if (detailSortKey === 'auto') return sorted.sort(autoDetailRowCompare);
+        return sorted.sort(function (left, right) {
+            const compared = compareDetailValues(detailRowSortValue(left, detailSortKey), detailRowSortValue(right, detailSortKey), detailSortDirection);
+            return compared || left.originalIndex - right.originalIndex;
+        });
+    }
+
+    function makeSortableDetailHeader(cell, key, label) {
+        cell.classList.add('sortable');
+        cell.tabIndex = 0;
+        cell.setAttribute('role', 'button');
+        cell.setAttribute('aria-sort', detailSortKey === key ? (detailSortDirection === 'asc' ? 'ascending' : 'descending') : 'none');
+        if (detailSortKey === key) cell.classList.add(detailSortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
+        const activate = function () {
+            if (detailSortKey === key) detailSortDirection = detailSortDirection === 'asc' ? 'desc' : 'asc';
+            else { detailSortKey = key; detailSortDirection = 'asc'; }
+            currentPage = 1;
+            renderDetail();
+        };
+        cell.title = label + '：点击' + (detailSortKey === key ? '切换为' + (detailSortDirection === 'asc' ? '降序' : '升序') : '升序排列');
+        cell.addEventListener('click', activate);
+        cell.addEventListener('keydown', function (event) {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            activate();
+        });
+    }
+
+    async function renderDetail() {
+        const task = taskMeta.find(function (item) { return item.index === selectedTaskIndex; });
+        const files = filesForTask(selectedTaskIndex);
+        detail.style.display = 'block';
+        detailTitle.textContent = task ? task.name : '指标详表';
+        rerunOneButton.disabled = !task || !taskRunners.has(task.index) || captureActive;
+        fileTabs.innerHTML = '';
+        derivedMetrics.innerHTML = '';
+        derivedMetrics.style.display = 'none';
+        analysisFilters.innerHTML = '';
+        analysisFilters.style.display = 'none';
+        tableWrap.innerHTML = '';
+        if (!files.length) {
+            const empty = document.createElement('div');
+            empty.className = 'empty-detail';
+            empty.textContent = '该指标本次未生成 CSV 数据。';
+            tableWrap.appendChild(empty);
+            pageInfo.textContent = '';
+            prevButton.disabled = true;
+            nextButton.disabled = true;
+            return;
+        }
+        selectedFileIndex = Math.min(selectedFileIndex, files.length - 1);
+        files.forEach(function (file, index) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'file-tab' + (index === selectedFileIndex ? ' active' : '');
+            button.textContent = file.name;
+            button.title = file.name;
+            button.addEventListener('click', function () { selectedFileIndex = index; selectedRiskFilter = 'all'; resetDetailSort(); currentPage = 1; renderDetail(); });
+            fileTabs.appendChild(button);
+        });
+        const file = await prepareFile(files[selectedFileIndex]);
+        evaluateDerivedMetrics(file);
+        if (file.derivedMetrics && file.derivedMetrics.length) {
+            derivedMetrics.style.display = 'flex';
+            file.derivedMetrics.forEach(function (metric) {
+                const chip = document.createElement('div');
+                const hasSubWarning = (metric.subMetrics || []).some(function (item) { return item.warning || item.sourceMissing; });
+                chip.className = 'derived-chip' + (metric.warning || metric.sourceMissing || hasSubWarning ? ' warn' : '');
+                const label = document.createElement('span');
+                label.className = 'derived-label';
+                label.textContent = metric.label;
+                label.title = metric.label;
+                const period = document.createElement('span');
+                period.className = 'derived-period';
+                period.textContent = '数据口径：' + (metric.sourceLabel || selectedTargetMonth + '月');
+                const value = document.createElement('span');
+                value.className = 'derived-value';
+                value.textContent = metric.value;
+                value.title = String(metric.value);
+                chip.appendChild(label);
+                chip.appendChild(period);
+                chip.appendChild(value);
+                if (metric.gap) {
+                    const gap = document.createElement('span');
+                    gap.className = 'derived-gap';
+                    gap.textContent = metric.gap;
+                    chip.appendChild(gap);
+                }
+                if (metric.targetWindow && metric.targetWindow.length) {
+                    const targetWindow = document.createElement('div');
+                    targetWindow.className = 'metric-target-window';
+                    metric.targetWindow.forEach(function (targetItem) {
+                        const item = document.createElement('div');
+                        item.className = 'metric-target-item' + (targetItem.key === 'current' ? ' current' : '');
+                        const targetLabel = document.createElement('span');
+                        targetLabel.className = 'metric-target-label';
+                        targetLabel.textContent = targetItem.label + ' ' + targetItem.month + '月';
+                        const targetValue = document.createElement('span');
+                        targetValue.className = 'metric-target-value';
+                        targetValue.textContent = targetItem.value;
+                        item.appendChild(targetLabel);
+                        item.appendChild(targetValue);
+                        targetWindow.appendChild(item);
+                    });
+                    chip.appendChild(targetWindow);
+                }
+                if (metric.subMetrics && metric.subMetrics.length) {
+                    const subList = document.createElement('div');
+                    subList.className = 'derived-subs';
+                    metric.subMetrics.forEach(function (item) {
+                        const sub = document.createElement('div');
+                        sub.className = 'derived-sub' + (item.sourceMissing ? ' missing' : '') + (item.warning ? ' warn' : '');
+                        sub.title = (item.sourceLabel ? '数据口径：' + item.sourceLabel : '') + (item.gap ? ' · ' + item.gap : '');
+                        const subLabel = document.createElement('span');
+                        subLabel.className = 'derived-sub-label';
+                        subLabel.textContent = item.label;
+                        subLabel.title = item.label;
+                        const subValue = document.createElement('span');
+                        subValue.className = 'derived-sub-value';
+                        subValue.textContent = item.value;
+                        subValue.title = String(item.value);
+                        sub.appendChild(subLabel);
+                        sub.appendChild(subValue);
+                        if (item.gap) {
+                            const subGap = document.createElement('span');
+                            subGap.className = 'derived-sub-gap';
+                            subGap.textContent = item.gap;
+                            sub.appendChild(subGap);
+                        }
+                        subList.appendChild(sub);
+                    });
+                    chip.appendChild(subList);
+                }
+                derivedMetrics.appendChild(chip);
+            });
+        }
+        const rows = file.rows || [];
+        if (!rows.length) {
+            const empty = document.createElement('div');
+            empty.className = 'empty-detail';
+            empty.textContent = 'CSV 文件为空。';
+            tableWrap.appendChild(empty);
+            return;
+        }
+        const headers = rows[0];
+        const dataRows = rows.slice(1);
+        const columnLayout = detailColumnLayout(file, headers);
+        const showMetricAssociations = columnLayout.metricRules.length > 0;
+        const analyses = file.analyses || [];
+        const counts = file.analysisCounts || { danger: 0, warning: 0, info: 0, normal: dataRows.length };
+        if (file.ruleMode) {
+            analysisFilters.style.display = 'flex';
+            [
+                ['all', '全部 ' + dataRows.length],
+                ['danger', '红色 ' + counts.danger],
+                ['warning', '提醒 ' + counts.warning],
+                ['info', '提示 ' + counts.info],
+                ['normal', '正常 ' + counts.normal]
+            ].forEach(function (filter) {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'analysis-filter' + (selectedRiskFilter === filter[0] ? ' active' : '');
+                button.textContent = filter[1];
+                button.addEventListener('click', function () {
+                    selectedRiskFilter = filter[0];
+                    currentPage = 1;
+                    renderDetail();
+                });
+                analysisFilters.appendChild(button);
+            });
+        }
+        const indexedRows = dataRows.map(function (values, index) {
+            const rowObject = file.rowObjects && file.rowObjects[index] || {};
+            return {
+                originalIndex: index,
+                values: values,
+                rowObject: rowObject,
+                association: showMetricAssociations ? matchedDetailMetrics(rowObject, columnLayout.metricRules) : '',
+                analysis: analyses[index] || makeAnalysis('normal', '正常', null, '', false)
+            };
+        });
+        const filteredRows = selectedRiskFilter === 'all' || !file.ruleMode
+            ? indexedRows
+            : indexedRows.filter(function (item) { return item.analysis.severity === selectedRiskFilter; });
+        const sortedRows = sortDetailRows(filteredRows);
+        const totalPages = Math.max(1, Math.ceil(sortedRows.length / pageSize));
+        currentPage = Math.min(Math.max(1, currentPage), totalPages);
+        const start = (currentPage - 1) * pageSize;
+        const table = document.createElement('table');
+        table.className = 'data-table';
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        if (file.ruleMode) [['规则判断', 'judgment'], ['剩余天数', 'days'], ['判断原因', 'reason']].forEach(function (header) {
+            const cell = makeCell('th', header[0]);
+            cell.className = 'column-analysis';
+            makeSortableDetailHeader(cell, header[1], header[0]);
+            headerRow.appendChild(cell);
+        });
+        if (showMetricAssociations) {
+            const associationHeader = makeCell('th', '关联指标');
+            associationHeader.className = 'column-association';
+            associationHeader.title = '该行命中的主指标或客户群子指标';
+            makeSortableDetailHeader(associationHeader, 'association', '关联指标');
+            headerRow.appendChild(associationHeader);
+        }
+        columnLayout.columns.forEach(function (column) {
+            const cell = makeCell('th', column.header);
+            if (column.role === 'output') { cell.className = 'column-output'; cell.title = '指标输出字段：' + column.header; }
+            else if (column.role === 'rule') { cell.className = 'column-rule'; cell.title = '规则匹配字段：' + column.header; }
+            makeSortableDetailHeader(cell, 'column:' + column.index, column.header);
+            headerRow.appendChild(cell);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+        const tbody = document.createElement('tbody');
+        sortedRows.slice(start, start + pageSize).forEach(function (item) {
+            const values = item.values;
+            const analysis = item.analysis;
+            const tr = document.createElement('tr');
+            if (file.ruleMode) {
+                tr.className = 'risk-' + analysis.severity;
+                const judgmentCell = makeCell('td', analysis.judgment);
+                judgmentCell.className = 'column-analysis judgment-' + analysis.severity;
+                tr.appendChild(judgmentCell);
+                const daysCell = makeCell('td', analysis.days === null ? '—' : analysis.days);
+                daysCell.className = 'column-analysis';
+                const reasonCell = makeCell('td', analysis.reason);
+                reasonCell.className = 'column-analysis';
+                tr.appendChild(daysCell);
+                tr.appendChild(reasonCell);
+            }
+            if (showMetricAssociations) {
+                const associationCell = makeCell('td', item.association || '—');
+                associationCell.className = 'column-association';
+                tr.appendChild(associationCell);
+            }
+            columnLayout.columns.forEach(function (column) {
+                const cell = makeCell('td', values[column.index]);
+                if (column.role === 'output') cell.className = 'column-output';
+                else if (column.role === 'rule') cell.className = 'column-rule';
+                tr.appendChild(cell);
+            });
+            tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        tableWrap.appendChild(table);
+        const sortText = detailSortKey === 'auto' ? '自动：相关/紧急优先' : '手动：' + (detailSortDirection === 'asc' ? '升序' : '降序');
+        pageInfo.textContent = sortText + ' · 第 ' + currentPage + '/' + totalPages + ' 页 · 当前 ' + sortedRows.length + ' / 全部 ' + dataRows.length + ' 行';
+        prevButton.disabled = currentPage <= 1;
+        nextButton.disabled = currentPage >= totalPages;
+    }
+
+    function uniqueTaskDerivedMetrics(files) {
+        const unique = new Map();
+        (files || []).forEach(function (file) {
+            const schema = file.metricSchema || findMetricSchema(file);
+            const secId = schema && schema.sourceMeta && schema.sourceMeta.secId || normalizeMetricFileName(file.taskName || file.originalName || file.name);
+            (file.derivedMetrics || []).forEach(function (metric) {
+                const key = secId + '|' + (metric.id || metric.label);
+                if (!unique.has(key)) unique.set(key, metric);
+            });
+        });
+        return Array.from(unique.values());
+    }
+
+    async function renderMetrics() {
+        resultMode = true;
+        syncHostWidth();
+        results.style.display = 'block';
+        metrics.innerHTML = '';
+        await Promise.all(capturedFiles.map(prepareFile));
+        capturedFiles.forEach(evaluateDerivedMetrics);
+        const totalRows = capturedFiles.reduce(function (sum, file) { return sum + (file.rowCount || 0); }, 0);
+        resultSummary.textContent = capturedFiles.length + ' 个 CSV · ' + totalRows + ' 行数据';
+        taskMeta.forEach(function (task) {
+            const files = filesForTask(task.index);
+            const rows = files.reduce(function (sum, file) { return sum + (file.rowCount || 0); }, 0);
+            const counts = files.reduce(function (total, file) {
+                const item = file.analysisCounts || {};
+                total.danger += item.danger || 0;
+                total.warning += item.warning || 0;
+                total.info += item.info || 0;
+                total.normal += item.normal || 0;
+                return total;
+            }, { danger: 0, warning: 0, info: 0, normal: 0 });
+            const hasRecognizedRules = files.some(function (file) { return !!file.ruleMode; });
+            const taskDerivedMetrics = uniqueTaskDerivedMetrics(files);
+            const derivedCount = taskDerivedMetrics.length;
+            const derivedWarnings = taskDerivedMetrics.reduce(function (sum, metric) {
+                return sum + (metric.warning ? 1 : 0) + (metric.subMetrics || []).filter(function (subMetric) { return subMetric.warning; }).length;
+            }, 0);
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'metric' + (files.length ? '' : ' empty') + (counts.danger ? ' has-danger' : '') + (!counts.danger && counts.warning ? ' has-warning' : '') + (derivedWarnings ? ' has-kpi-warning' : '') + (selectedTaskIndex === task.index ? ' active' : '');
+            const name = document.createElement('span');
+            name.className = 'metric-name';
+            name.textContent = task.name;
+            name.title = task.name;
+            const meta = document.createElement('span');
+            meta.className = 'metric-meta';
+            meta.textContent = files.length ? (rows + ' 行 · ' + files.length + ' 文件') : (taskStates.get(task.index) === 'done' ? '无 CSV 数据' : '未完成');
+            button.appendChild(name);
+            button.appendChild(meta);
+            if (files.length) {
+                const risk = document.createElement('span');
+                risk.className = 'metric-risk';
+                if (hasRecognizedRules) {
+                    risk.innerHTML = '<span class="danger">红 ' + counts.danger + '</span> · <span class="warning">提醒 ' + counts.warning + '</span> · <span class="info">提示 ' + counts.info + '</span> · <span class="normal">正常 ' + counts.normal + '</span>';
+                    if (derivedCount) risk.innerHTML += ' · KPI ' + derivedCount + (derivedWarnings ? ' / 未达标 ' + derivedWarnings : '');
+                } else if (derivedCount) {
+                    risk.textContent = '规则指标 ' + derivedCount + (derivedWarnings ? ' · 未达标 ' + derivedWarnings : ' · 当前达标');
+                } else {
+                    risk.textContent = '未识别对应的内置规则';
+                }
+                button.appendChild(risk);
+            }
+            button.addEventListener('click', function () {
+                selectedTaskIndex = task.index;
+                selectedFileIndex = 0;
+                selectedRiskFilter = 'all';
+                resetDetailSort();
+                currentPage = 1;
+                renderMetrics().then(renderDetail);
+            });
+            metrics.appendChild(button);
+        });
+        zipButton.style.display = capturedFiles.length ? 'block' : 'none';
+    }
+
+    function setTaskState(task, nextState) {
+        if (!task) return;
+        taskStates.set(task.index, nextState);
+        const finished = Array.from(taskStates.values()).filter(function (value) { return value === 'done'; }).length;
+        status.textContent = '正在抓取：' + task.name + ' · 已完成 ' + finished + '/' + taskMeta.length;
+    }
+
+    const nativeCreateObjectURL = URL.createObjectURL.bind(URL);
+    const nativeRevokeObjectURL = URL.revokeObjectURL.bind(URL);
+    const nativeAnchorClick = HTMLAnchorElement.prototype.click;
+    const blobByUrl = new Map();
+
+    function blockPageKeyboard(event) {
+        if (!captureActive) return;
+        const path = typeof event.composedPath === 'function' ? event.composedPath() : [];
+        if (path.includes(host)) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+    }
+
+    function showShieldMessage() {
+        if (!controlShieldHost || !controlShieldHost.shadowRoot) return;
+        const message = controlShieldHost.shadowRoot.querySelector('.shield-message');
+        if (!message) return;
+        message.classList.remove('show');
+        void message.offsetWidth;
+        message.classList.add('show');
+        clearTimeout(shieldToastTimer);
+        shieldToastTimer = setTimeout(function () { message.classList.remove('show'); }, 2200);
+    }
+
+    function installControlShield() {
+        if (controlShieldHost && controlShieldHost.isConnected) return;
+        controlShieldHost = document.createElement('div');
+        controlShieldHost.id = 'uivf12-page-control-shield';
+        controlShieldHost.style.cssText = 'position:fixed;inset:0;z-index:2147483646;display:block;pointer-events:auto;cursor:not-allowed;touch-action:none;';
+        const shieldRoot = controlShieldHost.attachShadow ? controlShieldHost.attachShadow({ mode: 'open' }) : controlShieldHost;
+        shieldRoot.innerHTML = \`
+            <style>
+                *{box-sizing:border-box}.shield{position:fixed;inset:0;overflow:hidden;background:rgba(2,6,23,.08);border:2px solid rgba(103,232,249,.72);box-shadow:inset 0 0 75px rgba(34,211,238,.18),inset 0 0 150px rgba(139,92,246,.12);animation:aura 1.8s ease-in-out infinite;pointer-events:auto}
+                .edge{position:absolute;z-index:2;pointer-events:none;background-size:320% 320%;filter:saturate(1.35) brightness(1.3);box-shadow:0 0 18px currentColor}.top,.bottom{left:0;width:100%;height:7px;background-image:linear-gradient(90deg,#22d3ee,#3b82f6,#8b5cf6,#ec4899,#f59e0b,#22d3ee);animation:flowX 2.2s linear infinite}.top{top:0}.bottom{bottom:0;animation-direction:reverse}.left,.right{top:0;height:100%;width:7px;background-image:linear-gradient(180deg,#22d3ee,#3b82f6,#8b5cf6,#ec4899,#f59e0b,#22d3ee);animation:flowY 2.2s linear infinite}.left{left:0;animation-direction:reverse}.right{right:0}
+                .scan{position:absolute;left:0;right:0;top:-12%;height:12%;pointer-events:none;background:linear-gradient(180deg,transparent,rgba(103,232,249,.10),rgba(167,139,250,.16),transparent);filter:blur(1px);animation:scan 3.2s linear infinite}.badge{position:absolute;top:12px;left:50%;transform:translateX(-50%);padding:7px 13px;border:1px solid rgba(103,232,249,.48);border-radius:999px;background:rgba(15,23,42,.9);box-shadow:0 8px 28px rgba(0,0,0,.3),0 0 24px rgba(34,211,238,.18);color:#a5f3fc;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-size:11px;font-weight:850;letter-spacing:.08em;white-space:nowrap;pointer-events:none}.shield-message{position:absolute;left:50%;bottom:34px;transform:translate(-50%,18px);max-width:calc(100vw - 40px);padding:11px 16px;border:1px solid rgba(251,191,36,.52);border-radius:10px;background:rgba(15,23,42,.96);box-shadow:0 16px 44px rgba(0,0,0,.42),0 0 26px rgba(245,158,11,.18);color:#fde68a;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-size:12px;font-weight:800;text-align:center;opacity:0;transition:opacity .18s ease,transform .18s ease;pointer-events:none}.shield-message.show{opacity:1;transform:translate(-50%,0)}
+                @keyframes flowX{to{background-position:320% 0}}@keyframes flowY{to{background-position:0 320%}}@keyframes scan{to{top:100%}}@keyframes aura{0%,100%{box-shadow:inset 0 0 65px rgba(34,211,238,.15),inset 0 0 135px rgba(139,92,246,.10)}50%{box-shadow:inset 0 0 95px rgba(34,211,238,.28),inset 0 0 190px rgba(236,72,153,.16)}}
+                @media(prefers-reduced-motion:reduce){.edge,.scan,.shield{animation:none}}
+            </style>
+            <div class="shield">
+                <div class="edge top"></div><div class="edge right"></div><div class="edge bottom"></div><div class="edge left"></div><div class="scan"></div>
+                <div class="badge">⚡ 数据抓取控制中 · 页面已锁定</div>
+                <div class="shield-message">数据抓取正在控制页面，请暂时不要操作；可使用右上角浮窗查看进度。</div>
+            </div>\`;
+        const shield = shieldRoot.querySelector('.shield');
+        shield.addEventListener('pointerdown', function (event) { event.preventDefault(); event.stopPropagation(); showShieldMessage(); });
+        shield.addEventListener('click', function (event) { event.preventDefault(); event.stopPropagation(); });
+        shield.addEventListener('contextmenu', function (event) { event.preventDefault(); showShieldMessage(); });
+        shield.addEventListener('wheel', function (event) { event.preventDefault(); showShieldMessage(); }, { passive: false });
+        document.documentElement.appendChild(controlShieldHost);
+        window.addEventListener('keydown', blockPageKeyboard, true);
+        showShieldMessage();
+    }
+
+    function removeControlShield() {
+        clearTimeout(shieldToastTimer);
+        window.removeEventListener('keydown', blockPageKeyboard, true);
+        if (controlShieldHost) controlShieldHost.remove();
+        controlShieldHost = null;
+    }
+
+    function installCaptureBridge() {
+        captureActive = true;
+        installControlShield();
+        URL.createObjectURL = function (blob) {
+            const url = nativeCreateObjectURL(blob);
+            if (blob instanceof Blob) blobByUrl.set(url, blob);
+            return url;
+        };
+        URL.revokeObjectURL = function (url) { nativeRevokeObjectURL(url); };
+        HTMLAnchorElement.prototype.click = function () {
+            const blob = blobByUrl.get(this.href);
+            if (captureActive && this.download && blob) {
+                const originalName = String(this.download || ('capture-' + (capturedFiles.length + 1) + '.csv'));
+                let name = originalName
+                    .replace(/[\\/\\\\:*?"<>|]/g, '_')
+                    .replace(/[. ]+$/g, '');
+                if (!name) name = 'capture-' + (capturedFiles.length + 1) + '.csv';
+                const duplicates = capturedFiles.filter(function (file) { return file.baseName === name; }).length;
+                const finalName = duplicates ? name.replace(/(\\.csv)?$/i, '-' + (duplicates + 1) + '$1') : name;
+                capturedFiles.push({
+                    name: finalName,
+                    originalName: originalName,
+                    baseName: name,
+                    blob: blob,
+                    taskIndex: currentTask ? currentTask.index : -1,
+                    taskName: currentTask ? currentTask.name : '未归类指标'
+                });
+                return;
+            }
+            return nativeAnchorClick.apply(this, arguments);
+        };
+        window.__uivf12FloatingCaptureBridge = {
+            taskStart: function (task) { currentTask = task; setTaskState(task, 'running'); },
+            taskEnd: function (task) { setTaskState(task, 'done'); currentTask = null; },
+            executeTask: async function (task, runner) {
+                taskRunners.set(task.index, runner);
+                currentTask = task;
+                setTaskState(task, 'running');
+                try {
+                    await runner();
+                    setTaskState(task, 'done');
+                } catch (error) {
+                    setTaskState(task, 'failed');
+                    throw error;
+                } finally {
+                    currentTask = null;
+                }
+            }
+        };
+    }
+
+    function restoreCaptureBridge() {
+        captureActive = false;
+        removeControlShield();
+        URL.createObjectURL = nativeCreateObjectURL;
+        URL.revokeObjectURL = nativeRevokeObjectURL;
+        HTMLAnchorElement.prototype.click = nativeAnchorClick;
+        try { delete window.__uivf12FloatingCaptureBridge; } catch (error) { window.__uivf12FloatingCaptureBridge = null; }
+    }
+
+    function crc32(bytes) {
+        let crc = -1;
+        for (let index = 0; index < bytes.length; index++) {
+            crc ^= bytes[index];
+            for (let bit = 0; bit < 8; bit++) crc = (crc >>> 1) ^ (crc & 1 ? 0xEDB88320 : 0);
+        }
+        return (crc ^ -1) >>> 0;
+    }
+
+    function zipHeader(size) { return new Uint8Array(size); }
+    function set16(view, offset, value) { view.setUint16(offset, value, true); }
+    function set32(view, offset, value) { view.setUint32(offset, value >>> 0, true); }
+    async function buildZipBlob(files) {
+        const encoder = new TextEncoder();
+        const chunks = [];
+        const central = [];
+        let offset = 0;
+        for (const file of files) {
+            const nameBytes = encoder.encode(file.name);
+            const data = new Uint8Array(await file.blob.arrayBuffer());
+            const crc = crc32(data);
+            const local = zipHeader(30 + nameBytes.length);
+            const localView = new DataView(local.buffer);
+            set32(localView, 0, 0x04034b50); set16(localView, 4, 20); set16(localView, 6, 0x0800); set16(localView, 8, 0);
+            set32(localView, 14, crc); set32(localView, 18, data.length); set32(localView, 22, data.length); set16(localView, 26, nameBytes.length);
+            local.set(nameBytes, 30);
+            chunks.push(local, data);
+            const entry = zipHeader(46 + nameBytes.length);
+            const entryView = new DataView(entry.buffer);
+            set32(entryView, 0, 0x02014b50); set16(entryView, 4, 20); set16(entryView, 6, 20); set16(entryView, 8, 0x0800); set16(entryView, 10, 0);
+            set32(entryView, 16, crc); set32(entryView, 20, data.length); set32(entryView, 24, data.length); set16(entryView, 28, nameBytes.length); set32(entryView, 42, offset);
+            entry.set(nameBytes, 46);
+            central.push(entry);
+            offset += local.length + data.length;
+        }
+        const centralSize = central.reduce(function (sum, item) { return sum + item.length; }, 0);
+        const end = zipHeader(22);
+        const endView = new DataView(end.buffer);
+        set32(endView, 0, 0x06054b50); set16(endView, 8, files.length); set16(endView, 10, files.length); set32(endView, 12, centralSize); set32(endView, 16, offset);
+        return new Blob(chunks.concat(central, [end]), { type: 'application/zip' });
+    }
+
+    function minimizeTool() {
+        minimized = true;
+        closeChoice.style.display = 'none';
+        panel.style.display = 'none';
+        miniButton.style.display = 'flex';
+        miniButton.className = 'mini-launch' + (captureActive ? ' running' : '');
+        syncHostWidth();
+    }
+
+    function restoreTool() {
+        minimized = false;
+        miniButton.style.display = 'none';
+        panel.style.display = 'flex';
+        syncHostWidth();
+    }
+
+    function toggleFullscreen() {
+        if (minimized) return;
+        fullscreen = !fullscreen;
+        fullscreenButton.textContent = fullscreen ? '🗗' : '⛶';
+        fullscreenButton.title = fullscreen ? '退出全屏' : '全屏查看';
+        syncHostWidth();
+    }
+
+    function terminateTool() {
+        terminated = true;
+        window.__uivf12FloatingCaptureStopRequested = true;
+        closeChoice.style.display = 'none';
+        window.removeEventListener('resize', syncHostWidth);
+        if (netCareController && typeof netCareController.destroy === 'function') netCareController.destroy();
+        host.remove();
+        if (!captureActive) {
+            try { delete window.__uivf12FloatingCaptureBridge; } catch (error) { window.__uivf12FloatingCaptureBridge = null; }
+        }
+    }
+
+    fullscreenButton.addEventListener('click', toggleFullscreen);
+    closeButton.addEventListener('click', function () { closeChoice.style.display = 'flex'; });
+    minimizeChoice.addEventListener('click', minimizeTool);
+    terminateChoice.addEventListener('click', terminateTool);
+    cancelChoice.addEventListener('click', function () { closeChoice.style.display = 'none'; });
+    miniButton.addEventListener('click', restoreTool);
+    prevButton.addEventListener('click', function () { if (currentPage > 1) { currentPage--; renderDetail(); } });
+    nextButton.addEventListener('click', function () { currentPage++; renderDetail(); });
+    zipButton.addEventListener('click', async function () {
+        if (!capturedFiles.length) return;
+        zipButton.disabled = true;
+        zipButton.textContent = '正在生成 ZIP…';
+        try {
+            const zipBlob = await buildZipBlob(capturedFiles);
+            const url = nativeCreateObjectURL(zipBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = ${JSON.stringify(siteName.replace(/[^\w\u4e00-\u9fff-]+/g, '_'))} + '_全部CSV_' + new Date().toISOString().slice(0, 10) + '.zip';
+            document.body.appendChild(link);
+            nativeAnchorClick.call(link);
+            link.remove();
+            setTimeout(function () { nativeRevokeObjectURL(url); }, 1500);
+        } finally {
+            zipButton.disabled = false;
+            zipButton.textContent = '下载全部 CSV（ZIP）';
+        }
+    });
+
+    rerunOneButton.addEventListener('click', async function () {
+        const task = taskMeta.find(function (item) { return item.index === selectedTaskIndex; });
+        const runner = task && taskRunners.get(task.index);
+        if (!task || !runner || captureActive) return;
+        for (let index = capturedFiles.length - 1; index >= 0; index--) {
+            if (capturedFiles[index].taskIndex === task.index) capturedFiles.splice(index, 1);
+        }
+        window.__uivf12FloatingCaptureStopRequested = false;
+        startButton.disabled = true;
+        rerunOneButton.disabled = true;
+        zipButton.disabled = true;
+        notice.className = 'notice running';
+        notice.textContent = '正在重新抓取当前指标：' + task.name;
+        status.className = 'status running';
+        status.textContent = '当前指标旧数据已清除，新 CSV 将继续由浮窗接管。';
+        installCaptureBridge();
+        try {
+            await window.__uivf12FloatingCaptureBridge.executeTask(task, runner);
+            restoreCaptureBridge();
+            if (terminated) return;
+            await renderMetrics();
+            await renderDetail();
+            notice.className = 'notice done';
+            notice.textContent = '当前指标已重新抓取完成：' + task.name;
+            status.className = 'status done';
+            status.textContent = '当前指标数据已更新，其他指标数据保持不变。';
+        } catch (error) {
+            restoreCaptureBridge();
+            if (terminated) return;
+            await renderMetrics();
+            await renderDetail();
+            notice.className = 'notice bad';
+            notice.textContent = '当前指标重新抓取失败，其他指标数据未受影响。';
+            status.className = 'status bad';
+            status.textContent = '重新抓取失败：' + (error && error.message ? error.message : String(error));
+            console.error('[UIVF12 Floating Capture] single task rerun failed', error);
+        } finally {
+            startButton.disabled = false;
+            startButton.textContent = '重新抓取全部数据';
+            rerunOneButton.disabled = false;
+            zipButton.disabled = false;
+            miniButton.className = 'mini-launch';
+        }
+    });
+
+    startButton.addEventListener('click', async function () {
+        if (startButton.disabled) return;
+        if (netCareController && typeof netCareController.isLoading === 'function' && netCareController.isLoading()) {
+            notice.className = 'notice bad';
+            notice.textContent = 'NetCare 专题数据仍在获取中，请等待专题刷新完成后再启动 CSV 抓取。';
+            return;
+        }
+        if (netCareController && typeof netCareController.showCsv === 'function') netCareController.showCsv();
+        terminated = false;
+        window.__uivf12FloatingCaptureStopRequested = false;
+        startButton.disabled = true;
+        startButton.textContent = '抓取运行中…';
+        miniButton.className = 'mini-launch running';
+        notice.className = 'notice running';
+        notice.textContent = '抓取进行中：CSV 正在由浮窗接管，请保持当前页面打开。';
+        status.className = 'status running';
+        status.textContent = '正在准备数据接管，CSV 将保留在浮窗中，不会逐个下载。';
+        capturedFiles.length = 0;
+        taskStates.forEach(function (_, key) { taskStates.set(key, 'pending'); });
+        selectedTaskIndex = null;
+        detail.style.display = 'none';
+        results.style.display = 'none';
+        installCaptureBridge();
+        try {
+            await ${masterCode}
+            restoreCaptureBridge();
+            miniButton.className = 'mini-launch';
+            if (terminated) return;
+            await renderMetrics();
+            notice.className = 'notice done';
+            notice.textContent = '抓取已完成。点击下方指标查看详表，或一次下载全部 CSV 压缩包。';
+            status.className = 'status done';
+            status.textContent = '抓取完成：已接管 ' + capturedFiles.length + ' 个 CSV。点击指标查看详表，或下载全部 ZIP。';
+            startButton.disabled = false;
+            startButton.textContent = '重新抓取全部数据';
+        } catch (error) {
+            restoreCaptureBridge();
+            miniButton.className = 'mini-launch';
+            if (terminated) return;
+            await renderMetrics();
+            notice.className = 'notice bad';
+            notice.textContent = '抓取已中断。已成功获得的数据仍可继续查看和下载。';
+            status.className = 'status bad';
+            status.textContent = '抓取中断：' + (error && error.message ? error.message : String(error)) + '；已保留成功获得的数据。';
+            startButton.disabled = false;
+            startButton.textContent = '重新开始抓取';
+            console.error('[UIVF12 Floating Capture] failed', error);
+        }
+    });
+    document.documentElement.appendChild(host);
+})();`;
+}
+
+function buildAndCopyMasterScript(scriptsToRun, groupName, options = {}) {
     if (scriptsToRun.length === 0) { alert(UIVT('uiv.copy.emptyGroup')); return; }
 
     const taskMeta = scriptsToRun.map((script, index) => {
@@ -2226,7 +3977,7 @@ function buildAndCopyMasterScript(scriptsToRun, groupName) {
         const rawName = script.name || `Task ${index + 1}`;
         const safeCommentName = rawName.replace(/[\r\n]+/g, ' ');
         const safeNameLiteral = JSON.stringify(rawName);
-        masterCode += `    if (runnableTasks.some(task => task.index === ${index})) {\n        const currentTaskNo = ++completedCount;\n        // ========================================================\n        // 📦 队列 [${index + 1}/${scriptsToRun.length}]: ${safeCommentName}\n        // ========================================================\n        console.log("%c\\n▶️ [调度进度: " + currentTaskNo + "/" + runnableTasks.length + "] 开始注入执行: " + ${safeNameLiteral}, "font-size: 14px; font-weight: bold; color: #feca57; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);")\n\n`;
+        masterCode += `    if (runnableTasks.some(task => task.index === ${index}) && !(window.__uivf12FloatingCaptureBridge && window.__uivf12FloatingCaptureStopRequested)) {\n        const currentTaskNo = ++completedCount;\n        const floatingBridge_${index} = window.__uivf12FloatingCaptureBridge;\n        // ========================================================\n        // 📦 队列 [${index + 1}/${scriptsToRun.length}]: ${safeCommentName}\n        // ========================================================\n        console.log("%c\\n▶️ [调度进度: " + currentTaskNo + "/" + runnableTasks.length + "] 开始注入执行: " + ${safeNameLiteral}, "font-size: 14px; font-weight: bold; color: #feca57; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);")\n        const taskRunner_${index} = async function () {\n\n`;
 
         let cCode = script.consoleCode || '';
         if (!cCode) masterCode += `        console.error("⚠️ [警告] 该脚本缺少控制台版本的代码，自动跳过！");\n`;
@@ -2235,12 +3986,24 @@ function buildAndCopyMasterScript(scriptsToRun, groupName) {
             masterCode += (cCode.startsWith('(async') ? `        await ${cCode}\n` : `        ${cCode}\n`);
         }
 
-        masterCode += `\n        if (completedCount < runnableTasks.length) {\n            let delay_${index} = Math.floor(Math.random() * 3000) + 3000;\n            console.log("%c⏳ [调度防刷机制] 正在执行系统冷却... 随机阻断 " + (delay_${index}/1000).toFixed(1) + " 秒...", "color: #95a5a6; font-style: italic; font-size: 12px;");\n            await new Promise(r => setTimeout(r, delay_${index}));\n        }\n    }\n\n`;
+        masterCode += `\n        };\n        if (floatingBridge_${index} && typeof floatingBridge_${index}.executeTask === 'function') {\n            await floatingBridge_${index}.executeTask({ index: ${index}, name: ${safeNameLiteral} }, taskRunner_${index});\n        } else {\n            await taskRunner_${index}();\n        }\n        if (completedCount < runnableTasks.length && !(window.__uivf12FloatingCaptureBridge && window.__uivf12FloatingCaptureStopRequested)) {\n            let delay_${index} = Math.floor(Math.random() * 3000) + 3000;\n            console.log("%c⏳ [调度防刷机制] 正在执行系统冷却... 随机阻断 " + (delay_${index}/1000).toFixed(1) + " 秒...", "color: #95a5a6; font-style: italic; font-size: 12px;");\n            await new Promise(r => setTimeout(r, delay_${index}));\n        }\n    }\n\n`;
     });
 
     masterCode += `\n    console.log("%c\\n🎉 [批量调度·${groupName}] 当前站点 " + runnableTasks.length + " 个任务执行完毕！如需执行其他站点任务，请打开对应站点后重新粘贴本脚本。", "font-size: 16px; font-weight: bold; color: #1dd1a1; background: #222f3e; padding: 8px 12px; border-radius: 6px; border-left: 5px solid #1dd1a1;");\n})();`;
 
-    copyFromMemory(masterCode, UIVT('uiv.copy.batchType', { group: groupName }));
+    const copyCode = options.floatingLauncher
+        ? wrapMasterScriptWithFloatingLauncher(masterCode, {
+            siteName: options.siteName,
+            expectedOrigin: options.expectedOrigin,
+            taskCount: scriptsToRun.length,
+            taskMeta,
+            ruleBundle: options.ruleBundle,
+            netCareRuntimeSource: options.netCareRuntimeSource
+        })
+        : masterCode;
+    copyFromMemory(copyCode, options.floatingLauncher
+        ? `${groupName} 浮窗启动脚本`
+        : UIVT('uiv.copy.batchType', { group: groupName }));
 }
 
 window.UIVCopy = {
@@ -2250,6 +4013,9 @@ window.UIVCopy = {
     copyAllUivScripts,
     runAllUivScriptsDirect,
     runTestUivScriptsDirect,
+    openSiteConsoleScriptPicker,
+    closeSiteConsoleScriptPicker,
+    copySiteConsoleScripts,
     openUivBatchCategoryFilter,
     closeUivBatchCategoryFilter,
     selectAllUivBatchCategories,

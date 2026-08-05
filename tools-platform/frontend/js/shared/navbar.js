@@ -4283,3 +4283,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTimeout(checkServerStatus, 500);
     setTimeout(checkBuiltinToolsSync, 900);
 });
+
+// EXE 授权角标在普通 Web 部署中会自动隐藏，仅桌面版本地服务显示。
+if (!document.querySelector('script[data-desktop-license-badge]')) {
+    const desktopLicenseBadgeScript = document.createElement('script');
+    desktopLicenseBadgeScript.src = '/js/shared/desktop-license-badge.js?v=20260805-01';
+    desktopLicenseBadgeScript.dataset.desktopLicenseBadge = '1';
+    document.head.appendChild(desktopLicenseBadgeScript);
+}

@@ -59,6 +59,74 @@ function estimateMessagesChars(messages = []) {
     return messages.reduce((sum, msg) => sum + String(msg.content || '').length, 0);
 }
 
+function summarizePptCopilotOutput(value) {
+    const text = String(value || '');
+    const jsonText = stripJsonFence(text);
+    const summary = {
+        responseChars: text.length,
+        responseBytes: Buffer.byteLength(text, 'utf8'),
+        jsonShape: 'invalid',
+        slideCount: 0
+    };
+    try {
+        const parsed = JSON.parse(jsonText);
+        if (Array.isArray(parsed)) {
+            summary.jsonShape = 'array';
+            summary.slideCount = parsed.length;
+        } else if (parsed && typeof parsed === 'object') {
+            const arrayFields = Object.entries(parsed)
+                .filter(([, item]) => Array.isArray(item))
+                .slice(0, 8);
+            summary.jsonShape = 'object';
+            summary.arrayFields = arrayFields.map(([key]) => key);
+            summary.nestedArrayItems = arrayFields.reduce((count, [, item]) => count + item.length, 0);
+        } else {
+            summary.jsonShape = typeof parsed;
+        }
+    } catch (error) {
+        summary.parseError = String(error && error.message || 'JSON parse failed').slice(0, 180);
+    }
+    return summary;
+}
+
+function normalizePptCopilotOutput(value) {
+    const originalText = String(value || '');
+    const jsonText = stripJsonFence(originalText);
+    try {
+        const parsed = JSON.parse(jsonText);
+        if (Array.isArray(parsed)) {
+            return { text: jsonText, normalization: 'none' };
+        }
+        if (!parsed || typeof parsed !== 'object') {
+            return { text: originalText, normalization: 'unsupported-json-type' };
+        }
+
+        const wrapperField = ['slides', 'pages', 'items', 'data', 'results']
+            .find(key => Array.isArray(parsed[key]));
+        if (wrapperField) {
+            return {
+                text: JSON.stringify(parsed[wrapperField]),
+                normalization: `unwrapped-${wrapperField}`
+            };
+        }
+
+        const looksLikeSingleSlide = typeof parsed.layout === 'string'
+            || typeof parsed.html === 'string'
+            || typeof parsed.title === 'string'
+            || Array.isArray(parsed.rows)
+            || Array.isArray(parsed.elements);
+        if (looksLikeSingleSlide) {
+            return {
+                text: JSON.stringify([parsed]),
+                normalization: 'wrapped-single-slide'
+            };
+        }
+        return { text: originalText, normalization: 'unknown-object' };
+    } catch (_error) {
+        return { text: originalText, normalization: 'invalid-json' };
+    }
+}
+
 function formatMessagesForSummary(messages = []) {
     return messages.map(msg => {
         const role = msg.role === 'model' ? 'AI' : '用户';
@@ -503,7 +571,25 @@ ${templates || ''}`;
             temperature: 0.2,
             responseMimeType: 'application/json'
         }));
-        const responseText = result.text;
+        const originalResponseText = result.text;
+        const normalizedResponse = normalizePptCopilotOutput(originalResponseText);
+        const responseText = normalizedResponse.text;
+
+        console.log('[AI Copilot] response:', JSON.stringify({
+            requestId: req.requestId || '',
+            provider: aiSettings.provider,
+            model: aiSettings.model,
+            messageCount: messages.length,
+            messageChars: estimateMessagesChars(messages),
+            templateChars: String(templates || '').length,
+            finishReason: String(result.finishReason || ''),
+            promptTokens: Number(result.usage?.promptTokens || 0),
+            outputTokens: Number(result.usage?.outputTokens || 0),
+            totalTokens: Number(result.usage?.totalTokens || 0),
+            normalization: normalizedResponse.normalization,
+            originalJsonShape: summarizePptCopilotOutput(originalResponseText).jsonShape,
+            ...summarizePptCopilotOutput(responseText)
+        }));
 
         res.json({ reply: responseText });
     } catch (error) {

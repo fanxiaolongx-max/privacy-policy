@@ -169,6 +169,16 @@ GitHub Actions 当前会同时构建两种 Windows 版本，不再构建 macOS `
 
 两种版本共用 Windows 当前用户数据目录，因此更换绿色版 EXE 不会丢失原有数据。推送到 `main` 后会自动递增 patch 版本、创建 `vX.Y.Z` tag，并发布两个 `.exe` 以及安装版所需的 `latest.yml` 和 `.blockmap` 到 GitHub Releases。
 
+### EXE License
+
+- 首次启动安装版或绿色版时，Electron 会在启动本地服务前要求输入 `DSKL1` License。
+- 两种版本共用系统用户数据目录中的授权缓存，续期不需更换密钥，下次联网验证自动更新到期时间。
+- 在线验证响应使用 ECDSA P-256 签名、每次请求的随机 nonce、License 摘要和可信时间；离线缓存最长 24 小时。
+- 服务器管理员在 `/desktop-license-admin` 签发、续期、失效、恢复和归档 License。
+- `desktop-license-authority.js`、服务器管理路由、管理页、台账与私钥均由 electron-builder 排除，不进入安装版或绿色版。
+- `backend/data/desktop-license-signing-key.json` 是长期签发私钥，必须纳入加密备份；遗失或替换后，已发布客户端将无法验证新响应。
+- `frontend/desktop-license-client-config.json` 是可公开的验签配置。仅在授权服务器上明确初始化/轮换密钥时执行 `npm run license:sync-desktop-key`；CI 打包不会自动生成新密钥。
+
 ## 数据存储
 
 项目正在从历史 JSON 文件存储逐步迁移到 SQLite。现在原则是：

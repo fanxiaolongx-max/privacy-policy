@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "productId": "tools-platform-desktop",
+  "validationUrl": "https://cs.fanxiaolong.uk/api/public/desktop-license/validate",
+  "publicKeyJwk": {
+    "kty": "EC",
+    "x": "tvba6QON8i5PLGinrB5IUNHvZN5ky-l7Wkw1GgF17Go",
+    "y": "IDXvRmp5lc90udlt5f3A3ZU90w4bCee9HopFT37JiII",
+    "crv": "P-256"
+  },
+  "offlineGraceHours": 24
+}

@@ -8,11 +8,13 @@
     "start": "node backend/server.js",
     "start:desktop": "electron .",
     "postinstall": "electron-builder install-app-deps",
-    "build:win": "npm run build:win:setup && npm run build:win:portable",
+    "license:sync-desktop-key": "node scripts/sync-desktop-license-public-key.js",
+    "license:verify-desktop-config": "node scripts/verify-desktop-license-client-config.js",
+    "build:win": "npm run license:verify-desktop-config && npm run build:win:setup && npm run build:win:portable",
     "build:win:setup": "electron-builder --win nsis --x64 -p never",
     "build:win:portable": "electron-builder --win portable --x64 -p never --config.win.icon=frontend/assets/icon-windows-portable.ico",
-    "build:win:publish": "electron-builder --win nsis --x64 --publish always && electron-builder --win portable --x64 --publish always --config.win.icon=frontend/assets/icon-windows-portable.ico",
-    "build:mac": "electron-builder --mac -p never"
+    "build:win:publish": "npm run license:verify-desktop-config && electron-builder --win nsis --x64 --publish always && electron-builder --win portable --x64 --publish always --config.win.icon=frontend/assets/icon-windows-portable.ico",
+    "build:mac": "npm run license:verify-desktop-config && electron-builder --mac -p never"
   },
   "build": {
     "appId": "com.toolsplatform.app",
@@ -25,6 +27,15 @@
       "frontend/**/*",
       "electron-main.js",
       "electron-preload.js",
+      "desktop-license-client.js",
+      "desktop-license-preload.js",
+      "!backend/models/desktop-license-authority.js",
+      "!backend/models/desktop-license-registry.js",
+      "!backend/routes/desktop-license-admin.js",
+      "!backend/routes/desktop-license-public.js",
+      "!backend/data/desktop-license-signing-key.json",
+      "!backend/data/desktop-license-registry.json",
+      "!frontend/pages/desktop-license-admin.html",
       "package.json"
     ],
     "publish": [

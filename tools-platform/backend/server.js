@@ -34,6 +34,11 @@ const storageRoutes = require('./routes/storage');
 const frtRoutes = require('./routes/frt');
 const prauditRoutes = require('./routes/praudit');
 const customToolsRoutes = require('./routes/custom-tools');
+const f12LicensePublicRoutes = require('./routes/f12-license-public');
+const desktopLicenseLocal = require('./routes/desktop-license-local');
+const isDesktopRuntime = process.env.TOOLS_DESKTOP_RUNTIME === '1';
+const desktopLicensePublicRoutes = !isDesktopRuntime ? require('./routes/desktop-license-public') : null;
+const desktopLicenseAdminRoutes = !isDesktopRuntime ? require('./routes/desktop-license-admin') : null;
 const slideDesignRoutes = require('./routes/slide-design');
 const surveysRoutes = require('./routes/surveys');
 const externalMetricsRoutes = require('./routes/external-metrics');
@@ -66,6 +71,23 @@ app.use((req, res, next) => {
     req.requestId = incoming || `req_${Date.now().toString(36)}_${crypto.randomBytes(4).toString('hex')}`;
     res.setHeader('X-Request-Id', req.requestId);
     next();
+});
+
+app.use('/api/desktop-license', desktopLicenseLocal.router);
+if (desktopLicensePublicRoutes) app.use('/api/public/desktop-license', desktopLicensePublicRoutes);
+
+// EXE 运行时由 Electron 维护授权状态。授权失效后阻止业务页面和 API，但保留健康检查与静态资源。
+app.use((req, res, next) => {
+    if (!isDesktopRuntime) return next();
+    if (req.path === '/api/desktop-license/status' || req.path === '/api/health') return next();
+    const ext = path.extname(req.path).toLowerCase();
+    if (ext && ext !== '.html') return next();
+    const status = desktopLicenseLocal.getStatus();
+    if (status.valid) return next();
+    if (req.path.startsWith('/api/')) {
+        return res.status(403).json({ error: 'EXE License 已失效', reasonCode: status.reasonCode });
+    }
+    return res.status(403).send(`<!doctype html><meta charset="utf-8"><title>License</title><style>body{font-family:Segoe UI,"Microsoft YaHei";background:#0f172a;color:#e2e8f0;display:grid;place-items:center;min-height:100vh;margin:0}main{max-width:560px;padding:32px;border:1px solid #334155;border-radius:18px;background:#111827;text-align:center}</style><main><h1>Tools Platform License 已失效</h1><p>请联系管理员续期或恢复授权，然后重新启动 EXE。</p><small>${String(status.reasonCode || 'LICENSE_REQUIRED')}</small></main>`);
 });
 
 const SENSITIVE_LOG_KEYS = new Set([
@@ -214,6 +236,7 @@ app.get('/api/migration-status', (req, res) => {
 const { REPORT_DATA_DIR } = require('./models/report-store');
 app.use('/api/db/images', express.static(path.join(REPORT_DATA_DIR, 'images')));
 app.use('/api/uiv-auto-import', uivAutoImportRoutes);
+app.use('/api/public/f12-license', f12LicensePublicRoutes);
 
 app.use('/api', checkAuth); // Protect all /api/* (except login, which is handled inside checkAuth)
 
@@ -251,6 +274,7 @@ app.use('/api/global-backup', globalBackupRoutes); // 全局数据备份与恢�
 app.use('/api/external/metrics', externalMetricsRoutes); // 外部/移动端只读指标 API
 app.use('/api/alert-center', alertCenterRoutes); // 系统告警台 API
 app.use('/api/platform-metrics', platformMetricsRoutes); // 首页效能与使用量统计
+if (desktopLicenseAdminRoutes) app.use('/api/desktop-licenses', requireAdmin, desktopLicenseAdminRoutes);
 
 // ============================================================
 // 前端路由回退（SPA）
@@ -299,6 +323,9 @@ app.get('/terms', (req, res) => {
 });
 app.get('/frt', (req, res) => {
     res.sendFile(path.join(FRONTEND_DIR, 'pages/frt.html'));
+});
+if (!isDesktopRuntime) app.get('/desktop-license-admin', checkHtmlAuth, (req, res) => {
+    res.sendFile(path.join(FRONTEND_DIR, 'pages/desktop-license-admin.html'));
 });
 app.get('/tools/:slug', checkHtmlAuth, (req, res) => {
     res.sendFile(path.join(FRONTEND_DIR, 'pages/custom-tool.html'));

@@ -201,6 +201,7 @@ class AiProviderClient {
         if (!res.ok) await parseErrorResponse(res);
         const data = await readProviderJson(res);
         const usage = data.usageMetadata || {};
+        const candidate = data.candidates && data.candidates[0];
         return {
             text: stripReasoningText(extractGeminiText(data)),
             usage: {
@@ -208,6 +209,7 @@ class AiProviderClient {
                 outputTokens: usage.candidatesTokenCount || 0,
                 totalTokens: usage.totalTokenCount || 0
             },
+            finishReason: String(candidate && candidate.finishReason || ''),
             raw: data
         };
     }
@@ -237,13 +239,15 @@ class AiProviderClient {
         if (!res.ok) await parseErrorResponse(res);
         const data = await readProviderJson(res);
         const usage = data.usage || {};
+        const choice = data.choices && data.choices[0];
         return {
-            text: stripReasoningText(data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content),
+            text: stripReasoningText(choice && choice.message && choice.message.content),
             usage: {
                 promptTokens: usage.prompt_tokens || 0,
                 outputTokens: usage.completion_tokens || 0,
                 totalTokens: usage.total_tokens || 0
             },
+            finishReason: String(choice && choice.finish_reason || ''),
             raw: data
         };
     }
@@ -359,6 +363,7 @@ class AiProviderClient {
                 outputTokens: usage.output_tokens || 0,
                 totalTokens: (usage.input_tokens || 0) + (usage.output_tokens || 0)
             },
+            finishReason: String(data.stop_reason || ''),
             raw: data
         };
     }

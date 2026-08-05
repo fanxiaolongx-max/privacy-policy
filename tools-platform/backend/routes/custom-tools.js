@@ -9,6 +9,8 @@ const historyRepo = require('../models/upload-history-repository');
 const builtinToolsSync = require('../models/builtin-tools-sync');
 const aiSettingsRepo = require('../models/ai-settings-repository');
 const aiProviderClient = require('../models/ai-provider-client');
+const f12LicenseService = require('../models/f12-license-service');
+const f12LicenseRegistry = require('../models/f12-license-registry');
 const { DATA_DIR } = require('../models/store');
 const { requireAdmin } = require('../middleware/auth');
 
@@ -63,6 +65,87 @@ function normalizeAiMetadata(payload = {}) {
 
 router.get('/', async (req, res) => {
     res.json(await repo.listTools());
+});
+
+router.get('/f12-to-extension/monthly-license', requireAdmin, (req, res) => {
+    try {
+        const issued = f12LicenseService.issueMonthlyLicense({
+            productId: req.query.productId,
+            month: req.query.month,
+            label: req.query.label
+        });
+        res.setHeader('Cache-Control', 'no-store');
+        res.json({ success: true, ...issued });
+    } catch (error) {
+        res.status(400).json({ error: error.message || 'License 签发失败' });
+    }
+});
+
+router.get('/f12-to-extension/licenses', requireAdmin, (req, res) => {
+    try {
+        const licenses = f12LicenseRegistry.listRecords({
+            includeArchived: req.query.includeArchived !== '0',
+            productId: req.query.productId
+        });
+        res.setHeader('Cache-Control', 'no-store');
+        res.json({ success: true, licenses });
+    } catch (error) {
+        res.status(500).json({ error: error.message || '读取 License 台账失败' });
+    }
+});
+
+router.post('/f12-to-extension/licenses/:licenseId/revoke', requireAdmin, (req, res) => {
+    try {
+        const record = f12LicenseRegistry.setStatus(req.params.licenseId, 'revoked', {
+            reason: req.body && req.body.reason
+        });
+        res.json({ success: true, record });
+    } catch (error) {
+        res.status(400).json({ error: error.message || '撤销 License 失败' });
+    }
+});
+
+router.post('/f12-to-extension/licenses/:licenseId/restore', requireAdmin, (req, res) => {
+    try {
+        const record = f12LicenseRegistry.setStatus(req.params.licenseId, 'active');
+        res.json({ success: true, record });
+    } catch (error) {
+        res.status(400).json({ error: error.message || '恢复 License 失败' });
+    }
+});
+
+function nextLicenseMonth(month) {
+    const [year, monthNumber] = String(month).split('-').map(Number);
+    const next = new Date(Date.UTC(year, monthNumber, 1));
+    return `${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+router.post('/f12-to-extension/licenses/:licenseId/renew', requireAdmin, (req, res) => {
+    try {
+        const previous = f12LicenseRegistry.getRecord(req.params.licenseId);
+        if (!previous) return res.status(404).json({ error: '未找到 License 记录' });
+        const currentMonth = f12LicenseService.normalizeMonth();
+        const defaultMonth = previous.month >= currentMonth ? nextLicenseMonth(previous.month) : currentMonth;
+        const issued = f12LicenseService.issueMonthlyLicense({
+            productId: previous.productId,
+            month: req.body && req.body.month || defaultMonth,
+            label: req.body && req.body.label !== undefined ? req.body.label : previous.label,
+            renewedFrom: previous.licenseId
+        });
+        f12LicenseRegistry.linkRenewal(previous.licenseId, issued.payload.licenseId);
+        res.json({ success: true, ...issued });
+    } catch (error) {
+        res.status(400).json({ error: error.message || '续期 License 失败' });
+    }
+});
+
+router.post('/f12-to-extension/licenses/:licenseId/archive', requireAdmin, (req, res) => {
+    try {
+        const record = f12LicenseRegistry.setStatus(req.params.licenseId, 'archived');
+        res.json({ success: true, record });
+    } catch (error) {
+        res.status(400).json({ error: error.message || '归档 License 失败' });
+    }
 });
 
 router.post('/ai-metadata', requireAdmin, async (req, res) => {

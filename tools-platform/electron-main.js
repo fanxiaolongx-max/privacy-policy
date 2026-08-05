@@ -9,7 +9,17 @@ const http = require('http');
 // IMPORTANT: Set the data directory to the OS's native user data path BEFORE requiring server.js
 const userDataPath = app.getPath('userData');
 process.env.TOOLS_DATA_DIR = path.join(userDataPath, 'data');
+process.env.TOOLS_DESKTOP_RUNTIME = '1';
 const electronLogRoot = path.join(userDataPath, 'logs');
+const desktopLicenseStatePath = path.join(userDataPath, 'desktop-license.json');
+const desktopLicensePublicStatusPath = path.join(userDataPath, 'desktop-license-public-status.json');
+process.env.TOOLS_DESKTOP_LICENSE_STATUS_PATH = desktopLicensePublicStatusPath;
+const { createDesktopLicenseClient } = require('./desktop-license-client');
+const desktopLicenseClient = createDesktopLicenseClient({
+    configPath: path.join(__dirname, 'frontend/desktop-license-client-config.json'),
+    statePath: desktopLicenseStatePath,
+    publicStatusPath: desktopLicensePublicStatusPath
+});
 const runtimeStatusPath = path.join(electronLogRoot, 'runtime-status.json');
 const runtimeCommandPath = path.join(electronLogRoot, 'runtime-command.json');
 const isPortableWindows = process.platform === 'win32' && Boolean(process.env.PORTABLE_EXECUTABLE_FILE);
@@ -107,6 +117,10 @@ function getFreePort(startingPort) {
 
 let utilityWindow = null;
 let startupWindow = null;
+let licenseWindow = null;
+let licenseActivationResolve = null;
+let desktopLicenseStatus = { valid: false, reasonCode: 'LICENSE_REQUIRED' };
+let desktopLicenseRefreshTimer = null;
 let startupWindowLoaded = false;
 let startupWindowCreatedAt = 0;
 let startupProgressState = {
@@ -133,6 +147,89 @@ let latestDownloadProgress = null;
 let updateBalloonMilestonesShown = new Set();
 let runtimeCommandTimer = null;
 let lastRuntimeCommandId = '';
+
+function createLicenseWindow() {
+    if (licenseWindow && !licenseWindow.isDestroyed()) {
+        licenseWindow.focus();
+        return licenseWindow;
+    }
+    licenseWindow = new BrowserWindow({
+        width: 640,
+        height: 540,
+        minWidth: 560,
+        minHeight: 480,
+        show: false,
+        center: true,
+        autoHideMenuBar: true,
+        title: 'Tools Platform License',
+        icon: getAppIconPath(),
+        webPreferences: {
+            preload: path.join(__dirname, 'desktop-license-preload.js'),
+            nodeIntegration: false,
+            contextIsolation: true,
+            sandbox: true
+        }
+    });
+    licenseWindow.once('ready-to-show', () => licenseWindow && licenseWindow.show());
+    licenseWindow.on('closed', () => {
+        licenseWindow = null;
+        if (licenseActivationResolve) {
+            licenseActivationResolve(false);
+            licenseActivationResolve = null;
+        }
+    });
+    licenseWindow.loadFile(path.join(__dirname, 'frontend/pages/desktop-license-activation.html'));
+    return licenseWindow;
+}
+
+function waitForLicenseActivation() {
+    createLicenseWindow();
+    return new Promise(resolve => { licenseActivationResolve = resolve; });
+}
+
+async function ensureDesktopLicense() {
+    desktopLicenseStatus = await desktopLicenseClient.validateStored();
+    if (desktopLicenseStatus.valid) return true;
+    return waitForLicenseActivation();
+}
+
+function registerDesktopLicenseIpcHandlers() {
+    ipcMain.handle('desktop-license:get-state', () => desktopLicenseStatus);
+    ipcMain.handle('desktop-license:activate', async (_event, rawToken) => {
+        const token = String(rawToken || '').trim();
+        desktopLicenseStatus = await desktopLicenseClient.validate(token, { requireOnline: true });
+        if (desktopLicenseStatus.valid) {
+            const resolve = licenseActivationResolve;
+            licenseActivationResolve = null;
+            if (licenseWindow && !licenseWindow.isDestroyed()) licenseWindow.close();
+            if (resolve) resolve(true);
+        }
+        return desktopLicenseStatus;
+    });
+    ipcMain.handle('desktop-license:quit', () => {
+        isQuitting = true;
+        app.quit();
+        return true;
+    });
+}
+
+function startDesktopLicenseRefresh() {
+    if (desktopLicenseRefreshTimer) clearInterval(desktopLicenseRefreshTimer);
+    desktopLicenseRefreshTimer = setInterval(async () => {
+        const previousValid = desktopLicenseStatus.valid;
+        desktopLicenseStatus = await desktopLicenseClient.validateStored();
+        refreshTrayMenu();
+        if (previousValid && !desktopLicenseStatus.valid) {
+            dialog.showMessageBox({
+                type: 'warning',
+                title: 'Tools Platform License',
+                message: '当前 License 已失效',
+                detail: '请联系管理员续期或恢复授权，然后重新启动程序。'
+            });
+        }
+    }, 10 * 60 * 1000);
+    desktopLicenseRefreshTimer.unref?.();
+}
 
 function readLaunchState() {
     try {
@@ -1524,6 +1621,9 @@ function refreshTrayMenu() {
     const menuTemplate = [
         { label: `Tools Platform v${app.getVersion()}`, enabled: false },
         { label: baseUrl || '本地服务启动中...', enabled: false },
+        { label: desktopLicenseStatus.valid
+            ? `License：已授权至 ${new Date(desktopLicenseStatus.expiresAt).toLocaleDateString()}`
+            : `License：已失效 (${desktopLicenseStatus.reasonCode || 'UNKNOWN'})`, enabled: false },
         { type: 'separator' },
         { label: '打开 Tools Platform', click: () => openAppPath('/') },
         { label: '打开数据抓取', click: () => openAppPath('/uivf12') },
@@ -1551,6 +1651,12 @@ function refreshTrayMenu() {
 }
 
 async function startTrayApp() {
+    const licensed = await ensureDesktopLicense();
+    if (!licensed) {
+        isQuitting = true;
+        app.quit();
+        return;
+    }
     const launchExperience = prepareLaunchExperience();
     registerDownloadHandler();
     createStartupWindow();
@@ -1583,6 +1689,7 @@ async function startTrayApp() {
             await shell.openExternal(launchUrl);
         }
         closeStartupWindow();
+        startDesktopLicenseRefresh();
         scheduleStartupUpdateCheck();
     } catch (err) {
         updateStartupProgress(100, '启动未完成', err.message || String(err), '启动失败');
@@ -1599,6 +1706,7 @@ app.whenReady().then(() => {
     if (!isPortableWindows) setupAutoUpdater();
     registerUpdaterIpcHandlers();
     registerDesktopIpcHandlers();
+    registerDesktopLicenseIpcHandlers();
     startTrayApp();
 });
 
