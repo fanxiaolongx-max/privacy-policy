@@ -105,6 +105,15 @@ function testExamAssistantBuiltinCompatibility() {
     assert.ok(result.files['content.js'].includes("exam-scraper-widget"));
     assert.ok(result.files['content.js'].includes('async function applyAnswerSelection(answerTexts)'));
     assert.ok(result.files['content.js'].includes('const finalOptions = getCurrentOptionEls()'));
+    assert.ok(result.files['content.js'].includes('dispatchOptionMouseSequence'), '点击未保持时必须尝试鼠标事件序列');
+    assert.ok(result.files['content.js'].includes('dispatchOptionKeyboardSequence'), '点击未保持时必须尝试键盘事件序列');
+    assert.ok(result.files['content.js'].includes('for (let pass = 1; pass <= 3; pass++)'), '多选答案必须按整组重试');
+    assert.ok(result.files['content.js'].includes('[答案映射失败]'), '必须区分答案映射失败与点击未保持');
+    assert.ok(result.files['content.js'].includes('const saveGuessSuggestion ='), '猜答成功后必须保存独立的疑似答案');
+    assert.ok(result.files['content.js'].includes('[答题录入新题]'), '自动答题遇到新题时必须直接录入题库');
+    assert.ok(result.files['content.js'].includes('[采用疑似答案]'), '无准确答案时必须优先复用疑似答案');
+    assert.ok(result.files['content.js'].includes('[疑似答案已否定]'), '复盘证实错误后必须停止复用疑似答案');
+    assert.ok(result.files['content.js'].includes('suggestedAnswers: q.猜测答案'), '导出题库必须包含疑似答案');
     assert.ok(result.files['content.js'].includes('selection.success && selection.expectedCount === expectedCount'));
     assert.ok(!result.files['content.js'].includes('[class*="checked"]'), '不得用宽泛类名判断复盘选中项');
     assert.ok(result.files['content.js'].includes('existingQ.正确答案 = sortedAnswers'), '权威答案必须替换旧答案以修复污染数据');

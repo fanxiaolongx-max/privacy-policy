@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Privacy Policy for the Question Bank & Answer Assistant browser extension.">
+  <meta name="robots" content="index,follow">
+  <title>Privacy Policy · Question Bank & Answer Assistant</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172235;
+      --muted: #64748b;
+      --line: #dce6f1;
+      --paper: #ffffff;
+      --wash: #f3f7fb;
+      --navy: #102a43;
+      --blue: #1769e0;
+      --blue-soft: #eaf3ff;
+      --green: #087f5b;
+      --green-soft: #e8f8f1;
+      --amber: #9a5b00;
+      --amber-soft: #fff5df;
+      --radius: 20px;
+      --shadow: 0 22px 70px rgba(32, 59, 94, .13);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 0%, rgba(23, 105, 224, .12), transparent 25rem),
+        linear-gradient(180deg, #edf4fb 0, #f7f9fc 420px, #f3f7fb 100%);
+      font: 16px/1.75 Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    a { color: var(--blue); }
+    button { font: inherit; }
+    .shell { width: min(1120px, calc(100% - 36px)); margin: 0 auto; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid rgba(220, 230, 241, .85);
+      background: rgba(255, 255, 255, .88);
+      backdrop-filter: blur(16px);
+    }
+    .topbar-inner {
+      min-height: 66px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+    .brand { display: flex; align-items: center; gap: 11px; color: var(--navy); font-weight: 800; letter-spacing: -.02em; text-decoration: none; }
+    .brand-mark { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 11px; color: white; background: linear-gradient(145deg, #1769e0, #6c63e8); box-shadow: 0 9px 24px rgba(23,105,224,.23); }
+    .brand small { display: block; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    .actions { display: flex; align-items: center; gap: 9px; }
+    .segmented { display: inline-flex; padding: 3px; border: 1px solid var(--line); border-radius: 11px; background: var(--wash); }
+    .segmented button { border: 0; border-radius: 8px; padding: 6px 10px; color: var(--muted); background: transparent; cursor: pointer; }
+    .segmented button.active { color: white; background: var(--navy); font-weight: 750; }
+    .print-btn { border: 1px solid var(--line); border-radius: 10px; padding: 7px 10px; color: var(--navy); background: white; cursor: pointer; }
+
+    .hero { padding: 72px 0 38px; }
+    .hero-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(270px, .65fr); gap: 42px; align-items: end; }
+    .kicker { color: var(--blue); font-size: 12px; font-weight: 850; letter-spacing: .16em; text-transform: uppercase; }
+    h1 { max-width: 780px; margin: 14px 0 17px; color: var(--navy); font-size: clamp(38px, 6vw, 66px); line-height: 1.04; letter-spacing: -.055em; }
+    .lead { max-width: 780px; margin: 0; color: #4f6278; font-size: 18px; }
+    .meta-card { padding: 21px; border: 1px solid rgba(23,105,224,.18); border-radius: 18px; background: rgba(255,255,255,.68); box-shadow: var(--shadow); }
+    .meta-card dl { display: grid; grid-template-columns: 92px 1fr; gap: 7px 10px; margin: 0; }
+    .meta-card dt { color: var(--muted); }
+    .meta-card dd { margin: 0; color: var(--navy); font-weight: 700; }
+
+    .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; margin: 24px auto 42px; }
+    .summary-card { min-height: 150px; padding: 21px; border: 1px solid var(--line); border-radius: 18px; background: rgba(255,255,255,.82); box-shadow: 0 10px 30px rgba(32,59,94,.07); }
+    .summary-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 11px; background: var(--blue-soft); }
+    .summary-card h2 { margin: 14px 0 4px; color: var(--navy); font-size: 16px; }
+    .summary-card p { margin: 0; color: var(--muted); font-size: 13px; }
+
+    .layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 28px; align-items: start; padding-bottom: 64px; }
+    .toc { position: sticky; top: 90px; padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,.72); }
+    .toc b { display: block; margin-bottom: 9px; color: var(--navy); font-size: 13px; }
+    .toc a { display: block; padding: 6px 8px; border-radius: 7px; color: var(--muted); font-size: 13px; text-decoration: none; }
+    .toc a:hover { color: var(--blue); background: var(--blue-soft); }
+    .policy { overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); box-shadow: var(--shadow); }
+    .policy-section { padding: 30px clamp(22px, 5vw, 48px); border-bottom: 1px solid var(--line); scroll-margin-top: 88px; }
+    .policy-section:last-child { border-bottom: 0; }
+    .section-num { color: var(--blue); font-size: 11px; font-weight: 850; letter-spacing: .14em; text-transform: uppercase; }
+    .policy h2 { margin: 5px 0 14px; color: var(--navy); font-size: 25px; line-height: 1.25; letter-spacing: -.025em; }
+    .policy h3 { margin: 22px 0 8px; color: var(--navy); font-size: 17px; }
+    .policy p { margin: 0 0 13px; color: #4f6278; }
+    .policy ul { margin: 10px 0 15px; padding-left: 21px; color: #4f6278; }
+    .policy li { margin: 8px 0; padding-left: 4px; }
+    .policy strong { color: var(--navy); }
+    .callout { margin: 18px 0 4px; padding: 16px 18px; border-radius: 13px; color: #28516f; background: var(--blue-soft); }
+    .callout.green { color: #17674e; background: var(--green-soft); }
+    .callout.amber { color: #765018; background: var(--amber-soft); }
+    .data-table { width: 100%; margin: 15px 0; border-spacing: 0; border-collapse: separate; overflow: hidden; border: 1px solid var(--line); border-radius: 13px; font-size: 14px; }
+    .data-table th, .data-table td { padding: 13px 14px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .data-table th { color: var(--navy); background: var(--wash); }
+    code { padding: 2px 6px; border-radius: 5px; color: #344968; background: #eef2f7; font-size: .9em; }
+    .contact { display: inline-flex; align-items: center; gap: 8px; padding: 11px 14px; border: 1px solid rgba(23,105,224,.2); border-radius: 11px; color: var(--blue); background: var(--blue-soft); font-weight: 750; text-decoration: none; }
+    footer { padding: 24px 0 42px; color: var(--muted); font-size: 13px; text-align: center; }
+
+    [data-lang="zh"] .en { display: none !important; }
+    [data-lang="en"] .zh { display: none !important; }
+    [data-lang="en"] .brand .zh, [data-lang="zh"] .brand .en { display: none; }
+
+    @media (max-width: 840px) {
+      .hero-grid { grid-template-columns: 1fr; gap: 22px; }
+      .layout { grid-template-columns: 1fr; }
+      .toc { position: static; display: grid; grid-template-columns: repeat(2, 1fr); }
+      .toc b { grid-column: 1 / -1; }
+    }
+    @media (max-width: 650px) {
+      .shell { width: min(100% - 22px, 1120px); }
+      .brand small, .print-btn { display: none; }
+      .hero { padding-top: 45px; }
+      h1 { font-size: 39px; }
+      .summary { grid-template-columns: 1fr; }
+      .summary-card { min-height: auto; }
+      .meta-card dl { grid-template-columns: 1fr; }
+      .meta-card dd { margin-bottom: 8px; }
+      .data-table { display: block; overflow-x: auto; }
+      .policy-section { padding: 24px 20px; }
+    }
+    @media print {
+      .topbar, .toc, .print-btn { display: none !important; }
+      body { background: white; }
+      .hero { padding-top: 20px; }
+      .layout { display: block; }
+      .policy, .meta-card, .summary-card { box-shadow: none; }
+      .policy-section { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body data-lang="both">
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="#top" aria-label="Question Bank and Answer Assistant Privacy Policy">
+        <span class="brand-mark">Q</span>
+        <span><span class="zh">题库与答题助手</span><span class="en">Question Bank & Answer Assistant</span><small>Privacy Center</small></span>
+      </a>
+      <div class="actions">
+        <div class="segmented" role="group" aria-label="Language display mode">
+          <button type="button" data-lang-btn="zh">中文</button>
+          <button type="button" data-lang-btn="both" class="active">双语</button>
+          <button type="button" data-lang-btn="en">EN</button>
+        </div>
+        <button class="print-btn" type="button" onclick="window.print()"><span class="zh">打印</span><span class="en">Print</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="shell hero-grid">
+        <div>
+          <div class="kicker">Privacy · Transparency · Local First</div>
+          <h1><span class="zh">隐私政策</span><span class="en">Privacy Policy</span></h1>
+          <p class="lead zh">本政策说明“题库与答题助手”浏览器扩展如何访问考试页面内容、在您的浏览器中保存题库，以及如何执行 License 授权校验。</p>
+          <p class="lead en">This policy explains how the Question Bank & Answer Assistant browser extension accesses exam-page content, stores question banks in your browser, and validates its License.</p>
+        </div>
+        <aside class="meta-card" aria-label="Policy metadata">
+          <dl>
+            <dt><span class="zh">适用产品</span><span class="en">Product</span></dt><dd><span class="zh">题库与答题助手</span><span class="en">Question Bank & Answer Assistant</span></dd>
+            <dt><span class="zh">生效日期</span><span class="en">Effective</span></dt><dd>August 6, 2026</dd>
+            <dt><span class="zh">更新日期</span><span class="en">Updated</span></dt><dd>August 6, 2026</dd>
+            <dt><span class="zh">运营方</span><span class="en">Operator</span></dt><dd>Tools Platform Administrator</dd>
+          </dl>
+        </aside>
+      </div>
+    </section>
+
+    <section class="shell summary" aria-label="Privacy summary">
+      <article class="summary-card"><div class="summary-icon">⌂</div><h2><span class="zh">题库本地保存</span><span class="en">Question banks stay local</span></h2><p class="zh">题目、选项和答案不会由扩展上传到平台服务器。</p><p class="en">Questions, options, and answers are not uploaded by the extension.</p></article>
+      <article class="summary-card"><div class="summary-icon">◎</div><h2><span class="zh">仅处理当前页面</span><span class="en">Current page only</span></h2><p class="zh">用户主动启动后，扩展仅处理当前活动标签页中的考试内容。</p><p class="en">The extension processes the active tab only after the user starts it.</p></article>
+      <article class="summary-card"><div class="summary-icon">◇</div><h2><span class="zh">无广告与出售</span><span class="en">No ads or data sale</span></h2><p class="zh">数据不会用于广告画像，也不会被出售。</p><p class="en">Data is not used for advertising profiles and is never sold.</p></article>
+    </section>
+
+    <div class="shell layout">
+      <nav class="toc" aria-label="Table of contents">
+        <b><span class="zh">目录</span><span class="en">Contents</span></b>
+        <a href="#scope"><span class="zh">1. 适用范围</span><span class="en">1. Scope</span></a>
+        <a href="#data"><span class="zh">2. 处理的数据</span><span class="en">2. Data processed</span></a>
+        <a href="#use"><span class="zh">3. 数据用途</span><span class="en">3. How data is used</span></a>
+        <a href="#permissions"><span class="zh">4. 权限说明</span><span class="en">4. Permissions</span></a>
+        <a href="#sharing"><span class="zh">5. 共享与出售</span><span class="en">5. Sharing and sale</span></a>
+        <a href="#retention"><span class="zh">6. 保存与删除</span><span class="en">6. Retention and deletion</span></a>
+        <a href="#security"><span class="zh">7. 安全措施</span><span class="en">7. Security</span></a>
+        <a href="#rights"><span class="zh">8. 用户控制</span><span class="en">8. User controls</span></a>
+        <a href="#changes"><span class="zh">9. 政策更新</span><span class="en">9. Changes</span></a>
+        <a href="#contact"><span class="zh">10. 联系我们</span><span class="en">10. Contact</span></a>
+      </nav>
+
+      <article class="policy">
+        <section class="policy-section" id="scope">
+          <div class="section-num">01 · Scope</div>
+          <h2><span class="zh">适用范围</span><span class="en">Scope</span></h2>
+          <p class="zh">本隐私政策仅适用于由 Tools Platform 提供的“题库与答题助手”浏览器扩展。目标考试网站、浏览器商店、浏览器厂商以及您访问的其他网站均有各自的隐私政策，我们不控制这些第三方的处理行为。</p>
+          <p class="en">This Privacy Policy applies only to the Question Bank & Answer Assistant browser extension provided through Tools Platform. Exam websites, extension stores, browser vendors, and other websites you visit have their own privacy practices, which we do not control.</p>
+          <div class="callout green"><strong><span class="zh">核心原则：</span><span class="en">Core principle: </span></strong><span class="zh">考试内容和题库在本地处理，扩展不会将其发送到 Tools Platform 或其他第三方。</span><span class="en">Exam content and question banks are processed locally and are not sent by the extension to Tools Platform or third parties.</span></div>
+        </section>
+
+        <section class="policy-section" id="data">
+          <div class="section-num">02 · Data</div>
+          <h2><span class="zh">我们处理的数据</span><span class="en">Data we process</span></h2>
+          <table class="data-table">
+            <thead><tr><th><span class="zh">数据类别</span><span class="en">Category</span></th><th><span class="zh">具体内容</span><span class="en">Details</span></th><th><span class="zh">位置</span><span class="en">Location</span></th></tr></thead>
+            <tbody>
+              <tr><td><strong><span class="zh">网站内容</span><span class="en">Website content</span></strong></td><td><span class="zh">当前考试页面中的题目、题型、题号、选项、正确/错误反馈和答题结果。</span><span class="en">Questions, types, numbers, options, correctness feedback, and answer results on the current exam page.</span></td><td><span class="zh">仅在当前标签页本地处理</span><span class="en">Processed locally in the active tab</span></td></tr>
+              <tr><td><strong><span class="zh">本地题库</span><span class="en">Local question bank</span></strong></td><td><span class="zh">题库名称、题目、选项、已知答案、错误答案/组合、出现次数和本地标注。</span><span class="en">Bank names, questions, options, known answers, incorrect answers/combinations, occurrence counts, and local labels.</span></td><td><span class="zh">目标网站对应的浏览器本地存储</span><span class="en">Browser local storage associated with the target website</span></td></tr>
+              <tr><td><strong><span class="zh">扩展设置</span><span class="en">Extension settings</span></strong></td><td><span class="zh">界面语言、关闭行为、本地 License、可信时间缓存和校验状态。</span><span class="en">Interface language, close behavior, local License, trusted-time cache, and validation state.</span></td><td><span class="zh">浏览器本地存储 / 扩展存储</span><span class="en">Browser local storage / extension storage</span></td></tr>
+              <tr><td><strong><span class="zh">授权校验数据</span><span class="en">License validation data</span></strong></td><td><span class="zh">License 密钥、产品标识、随机 nonce；授权服务还会接收常规网络信息，如 IP 地址、User-Agent、请求时间和校验结果。</span><span class="en">License key, product identifier, and random nonce. The authorization service also receives standard network information such as IP address, User-Agent, request time, and validation result.</span></td><td><span class="zh">Tools Platform 授权服务器</span><span class="en">Tools Platform authorization server</span></td></tr>
+            </tbody>
+          </table>
+          <h3><span class="zh">我们不收集的内容</span><span class="en">What we do not collect</span></h3>
+          <ul>
+            <li><span class="zh">扩展不会将题目、选项、答案或完整题库上传至授权服务器。</span><span class="en">The extension does not upload questions, options, answers, or complete question banks to the authorization server.</span></li>
+            <li><span class="zh">扩展不会收集姓名、邮箱、电话号码、支付信息、精确位置或通讯录。</span><span class="en">The extension does not collect names, email addresses, phone numbers, payment information, precise location, or contacts.</span></li>
+            <li><span class="zh">扩展不会读取浏览器历史记录，也不会持续跟踪您访问的网页。</span><span class="en">The extension does not read browser history or continuously track the pages you visit.</span></li>
+            <li><span class="zh">默认版本不读取 Cookie，也不使用数据投放广告或建立广告画像。</span><span class="en">The default version does not read cookies and does not use data for advertising or ad profiles.</span></li>
+          </ul>
+        </section>
+
+        <section class="policy-section" id="use">
+          <div class="section-num">03 · Purpose</div>
+          <h2><span class="zh">我们如何使用数据</span><span class="en">How we use data</span></h2>
+          <ul>
+            <li><strong><span class="zh">建立本地题库：</span><span class="en">Build a local bank: </span></strong><span class="zh">识别考试页中的题目、选项和答题反馈，整理成可搜索、可标注的本地题库。</span><span class="en">Recognize questions, options, and feedback on an exam page and organize them into a searchable, editable local bank.</span></li>
+            <li><strong><span class="zh">辅助答题：</span><span class="en">Assist answering: </span></strong><span class="zh">在用户主动启动后，将当前题目与本地题库匹配，并在当前页面选择相应答案。</span><span class="en">After the user starts the tool, match current questions against the local bank and select corresponding answers on the current page.</span></li>
+            <li><strong><span class="zh">导入与导出：</span><span class="en">Import and export: </span></strong><span class="zh">由用户主动将题库导出为 JSON，或从用户选择的 JSON 文件导入。</span><span class="en">Allow the user to export a bank as JSON or import a user-selected JSON file.</span></li>
+            <li><strong><span class="zh">授权和防滥用：</span><span class="en">Authorization and abuse prevention: </span></strong><span class="zh">验证 License 有效期和状态、提供可信时间、限制异常频繁请求并协助安全排障。</span><span class="en">Validate License validity and status, provide trusted time, rate-limit abnormal requests, and support security troubleshooting.</span></li>
+          </ul>
+          <p class="zh">我们不会将收集或处理的数据用于与上述功能无关的目的。</p>
+          <p class="en">We do not use collected or processed data for purposes unrelated to the functions described above.</p>
+        </section>
+
+        <section class="policy-section" id="permissions">
+          <div class="section-num">04 · Permissions</div>
+          <h2><span class="zh">扩展权限说明</span><span class="en">Extension permissions</span></h2>
+          <ul>
+            <li><strong><code>storage</code></strong> — <span class="zh">保存界面语言、License、可信时间和授权校验状态。</span><span class="en">Stores interface language, License, trusted time, and authorization status.</span></li>
+            <li><strong><code>activeTab</code></strong> — <span class="zh">在用户点击扩展并主动启动时访问当前标签页。</span><span class="en">Accesses the current tab when the user opens and starts the extension.</span></li>
+            <li><strong><code>scripting</code></strong> — <span class="zh">将题库与答题功能注入当前目标考试页面。</span><span class="en">Injects question-bank and answer-assistance functions into the current target exam page.</span></li>
+            <li><strong><span class="zh">网站访问权限：</span><span class="en">Host access: </span></strong><span class="zh">用于在配置的目标考试网站运行，以及连接指定的 Tools Platform License 校验地址。扩展不会基于该权限建立浏览历史。</span><span class="en">Used to run on configured exam websites and connect to the specified Tools Platform License endpoint. This access is not used to build browsing history.</span></li>
+          </ul>
+          <div class="callout amber"><span class="zh">题库当前保存在目标网站对应的本地存储空间。清除该网站的浏览数据可能删除题库；反之，仅卸载扩展不一定会清除该网站已有的本地存储。</span><span class="en">Question banks are currently stored in browser storage associated with the target website. Clearing that site's browsing data may remove them; conversely, uninstalling the extension alone may not remove storage already held for that website.</span></div>
+        </section>
+
+        <section class="policy-section" id="sharing">
+          <div class="section-num">05 · Disclosure</div>
+          <h2><span class="zh">数据共享、出售和广告</span><span class="en">Data sharing, sale, and advertising</span></h2>
+          <p class="zh">我们不会出售用户数据，不会向数据经纪商提供数据，也不会使用数据进行个性化广告、信用评估或跨网站跟踪。</p>
+          <p class="en">We do not sell user data, provide it to data brokers, or use it for personalized advertising, credit evaluation, or cross-site tracking.</p>
+          <p class="zh">授权校验数据仅由 Tools Platform 授权基础设施及其管理员处理。除非为遵守适用法律、保护用户或平台安全，或在用户明确要求下，我们不会向其他第三方披露这些数据。</p>
+          <p class="en">License-validation data is processed only by the Tools Platform authorization infrastructure and its administrators. We do not disclose it to other parties unless required by applicable law, necessary to protect users or platform security, or explicitly requested by the user.</p>
+        </section>
+
+        <section class="policy-section" id="retention">
+          <div class="section-num">06 · Retention</div>
+          <h2><span class="zh">数据保存与删除</span><span class="en">Data retention and deletion</span></h2>
+          <ul>
+            <li><strong><span class="zh">本地题库：</span><span class="en">Local banks: </span></strong><span class="zh">保留在浏览器中，直到用户点击“清空当前题库”、覆盖导入，或清除目标网站的本地浏览数据。</span><span class="en">Remain in the browser until the user clears the current bank, replaces it through import, or clears local browsing data for the target website.</span></li>
+            <li><strong><span class="zh">扩展设置和 License：</span><span class="en">Extension settings and License: </span></strong><span class="zh">保留在扩展本地存储中，直到用户清除扩展数据或卸载扩展。</span><span class="en">Remain in extension storage until the user clears extension data or uninstalls the extension.</span></li>
+            <li><strong><span class="zh">授权记录：</span><span class="en">Authorization records: </span></strong><span class="zh">License 的产品、签发、有效期和状态记录，以及必要的安全日志，按平台管理员的安全和运维保留策略保存。</span><span class="en">License product, issuance, validity, and status records, together with necessary security logs, are retained according to the platform administrator's security and operational retention policy.</span></li>
+          </ul>
+          <p class="zh">如需查询或删除与 License 相关的服务器记录，请通过本政策末尾的联系方式联系管理员。依法必须保留或为安全审计所需的数据可能无法立即删除。</p>
+          <p class="en">To request access to or deletion of server-side License records, contact the administrator using the details below. Records required by law or necessary for security audits may not be immediately deletable.</p>
+        </section>
+
+        <section class="policy-section" id="security">
+          <div class="section-num">07 · Security</div>
+          <h2><span class="zh">数据安全</span><span class="en">Data security</span></h2>
+          <p class="zh">我们通过本地优先处理、最小化联网数据、HTTPS 授权校验、随机 nonce、防重放签名校验、ECDSA P-256 离线验签、请求限流及访问控制等措施降低数据风险。</p>
+          <p class="en">We reduce data risk through local-first processing, minimal network data, HTTPS License validation, random nonces, signed anti-replay attestations, offline ECDSA P-256 verification, rate limiting, and access controls.</p>
+          <p class="zh">任何网络或存储系统都无法保证绝对安全。用户应妥善保管 License 和导出的题库文件，并只在可信设备和网站上运行扩展。</p>
+          <p class="en">No network or storage system can guarantee absolute security. Users should protect License keys and exported question-bank files and run the extension only on trusted devices and websites.</p>
+        </section>
+
+        <section class="policy-section" id="rights">
+          <div class="section-num">08 · Controls</div>
+          <h2><span class="zh">您的选择与控制</span><span class="en">Your choices and controls</span></h2>
+          <ul>
+            <li><span class="zh">扩展仅在您主动打开并启动时处理当前页面。</span><span class="en">The extension processes the current page only after you explicitly open and start it.</span></li>
+            <li><span class="zh">您可以查看、搜索、标注、导出、导入或清空本地题库。</span><span class="en">You can view, search, label, export, import, or clear local question banks.</span></li>
+            <li><span class="zh">您可以在浏览器扩展设置中关闭网站权限、停用或卸载扩展。</span><span class="en">You can revoke site access, disable, or uninstall the extension through browser settings.</span></li>
+            <li><span class="zh">您可以联系管理员申请查询、更正或删除服务器端 License 记录，但须遵守适用法律及安全保留要求。</span><span class="en">You may contact the administrator to request access, correction, or deletion of server-side License records, subject to applicable law and security-retention requirements.</span></li>
+          </ul>
+          <h3><span class="zh">未成年人</span><span class="en">Children</span></h3>
+          <p class="zh">本扩展面向获授权的业务或培训场景，并非面向儿童设计。我们不会故意收集儿童的个人信息。</p>
+          <p class="en">This extension is intended for authorized business or training use and is not directed to children. We do not knowingly collect children's personal information.</p>
+        </section>
+
+        <section class="policy-section" id="changes">
+          <div class="section-num">09 · Updates</div>
+          <h2><span class="zh">政策更新</span><span class="en">Changes to this policy</span></h2>
+          <p class="zh">扩展功能、数据处理方式或适用法律发生变化时，我们可能更新本政策。更新后的版本将在本页面发布，并在页面顶部标明新的“更新日期”。重大变化会通过合理方式另行提示。</p>
+          <p class="en">We may update this policy when extension functionality, data practices, or applicable law changes. The revised version will be published on this page with a new “Updated” date. Material changes will be communicated through reasonable additional notice.</p>
+        </section>
+
+        <section class="policy-section" id="contact">
+          <div class="section-num">10 · Contact</div>
+          <h2><span class="zh">联系我们</span><span class="en">Contact us</span></h2>
+          <p class="zh">如果您对本隐私政策、扩展的数据处理方式或数据请求有疑问，请联系 Tools Platform 管理员：</p>
+          <p class="en">For questions about this policy, the extension's data practices, or a data request, contact the Tools Platform administrator:</p>
+          <a class="contact" href="mailto:fanxiaolongx@gmail.com">✉ fanxiaolongx@gmail.com</a>
+        </section>
+      </article>
+    </div>
+  </main>
+
+  <footer>
+    <div class="shell">© 2026 Tools Platform · Question Bank & Answer Assistant · <span class="zh">隐私优先，本地处理</span><span class="en">Local-first privacy</span></div>
+  </footer>
+
+  <script>
+    const buttons = document.querySelectorAll("[data-lang-btn]");
+    function setLanguage(mode) {
+      document.body.dataset.lang = mode;
+      document.documentElement.lang = mode === "zh" ? "zh-CN" : "en";
+      buttons.forEach(button => button.classList.toggle("active", button.dataset.langBtn === mode));
+      try { localStorage.setItem("question-bank-privacy-language", mode); } catch (_) {}
+    }
+    buttons.forEach(button => button.addEventListener("click", () => setLanguage(button.dataset.langBtn)));
+    try {
+      const saved = localStorage.getItem("question-bank-privacy-language");
+      if (["zh", "both", "en"].includes(saved)) setLanguage(saved);
+    } catch (_) {}
+  </script>
+</body>
+</html>

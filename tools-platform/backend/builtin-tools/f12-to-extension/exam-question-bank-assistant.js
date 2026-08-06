@@ -19,7 +19,7 @@ const I18N = {
         start: '▶ 开始抓取', autoAnswer: '🤖 自动答题', stop: '⏸ 停止', view: '📊 查看题库与标注',
         exportJson: '📥 导出JSON', importJson: '📤 导入JSON', clear: '🗑 清空当前题库', language: 'EN',
         modalTitle: '📚 题库详情中心', correctHint: '(勾选即为正确答案)', search: '🔍 输入题目、选项或ID搜索...',
-        type: '题型', question: '题目', options: '选项 (单选错项/多选明确错项标红，错误组合仅在下方展示)', count: '次数',
+        type: '题型', question: '题目', options: '选项 (绿色=准确答案，紫色=疑似答案，红色=明确错项)', count: '次数', guessBadge: '疑似',
         combo: '组合', excludedCombos: n => `❌ 已排除的错误组合 (${n}种):`,
         emptyBank: '当前题库为空，请先抓取！', needName: '请填写题库名称！',
         scrapingReview: '复盘抓取中...', scrapingExam: '答题抓取中...', stopped: '已停止', answering: '自动答题中...',
@@ -39,7 +39,7 @@ const I18N = {
         start: '▶ Start scraping', autoAnswer: '🤖 Auto answer', stop: '⏸ Stop', view: '📊 View & label bank',
         exportJson: '📥 Export JSON', importJson: '📤 Import JSON', clear: '🗑 Clear current bank', language: '中',
         modalTitle: '📚 Question Bank Details', correctHint: '(checked = correct answer)', search: '🔍 Search question, option, or ID...',
-        type: 'Type', question: 'Question', options: 'Options (red = confirmed wrong only; invalid combinations shown below)', count: 'Count',
+        type: 'Type', question: 'Question', options: 'Options (green = confirmed, purple = suggested, red = confirmed wrong)', count: 'Count', guessBadge: 'Suggested',
         combo: 'Combo', excludedCombos: n => `❌ Eliminated invalid combinations (${n}):`,
         emptyBank: 'The current question bank is empty. Scrape questions first.', needName: 'Please enter a question bank name.',
         scrapingReview: 'Scraping review...', scrapingExam: 'Scraping exam...', stopped: 'Stopped', answering: 'Auto answering...',
@@ -103,11 +103,50 @@ const isOptionSelected = (optionEl) => {
     return optionEl.matches(selectedSelector) || Boolean(optionEl.querySelector(selectedSelector));
 };
 
-const clickOption = (optionEl) => {
-    if (!optionEl) return false;
-    const clickable = optionEl.querySelector('input[type="checkbox"], input[type="radio"]') ||
-        optionEl.querySelector('label') || optionEl;
-    clickable.click();
+const getOptionClickTargets = (optionEl) => {
+    if (!optionEl) return [];
+    const selectors = [
+        'input[type="checkbox"]',
+        'input[type="radio"]',
+        'label',
+        '.ant-checkbox-wrapper',
+        '.ant-radio-wrapper',
+        '.ant-checkbox',
+        '.ant-radio'
+    ];
+    const targets = selectors.map(selector => optionEl.matches(selector) ? optionEl : optionEl.querySelector(selector));
+    targets.push(optionEl);
+    return targets.filter((target, index, all) => target && all.indexOf(target) === index);
+};
+
+const dispatchOptionMouseSequence = (target) => {
+    if (!target) return false;
+    const rect = target.getBoundingClientRect();
+    const eventOptions = {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        button: 0,
+        buttons: 1,
+        clientX: rect.left + Math.max(1, rect.width / 2),
+        clientY: rect.top + Math.max(1, rect.height / 2)
+    };
+    if (typeof PointerEvent === 'function') {
+        target.dispatchEvent(new PointerEvent('pointerdown', { ...eventOptions, pointerId: 1, pointerType: 'mouse', isPrimary: true }));
+        target.dispatchEvent(new PointerEvent('pointerup', { ...eventOptions, buttons: 0, pointerId: 1, pointerType: 'mouse', isPrimary: true }));
+    }
+    target.dispatchEvent(new MouseEvent('mousedown', eventOptions));
+    target.dispatchEvent(new MouseEvent('mouseup', { ...eventOptions, buttons: 0 }));
+    target.dispatchEvent(new MouseEvent('click', { ...eventOptions, buttons: 0 }));
+    return true;
+};
+
+const dispatchOptionKeyboardSequence = (target) => {
+    if (!target) return false;
+    if (typeof target.focus === 'function') target.focus({ preventScroll: true });
+    const eventOptions = { key: ' ', code: 'Space', keyCode: 32, which: 32, bubbles: true, cancelable: true, composed: true };
+    target.dispatchEvent(new KeyboardEvent('keydown', eventOptions));
+    target.dispatchEvent(new KeyboardEvent('keyup', eventOptions));
     return true;
 };
 
@@ -122,48 +161,97 @@ async function waitForOptionState(normalizedText, shouldBeSelected, timeout = 12
 }
 
 async function setOptionState(normalizedText, shouldBeSelected) {
-    for (let attempt = 0; attempt < 3; attempt++) {
-        const currentOptions = getCurrentOptionEls();
-        const option = currentOptions.find(opt => normalizeForCompare(opt.innerText) === normalizedText);
-        if (!option) return false;
-        if (isOptionSelected(option) === shouldBeSelected) return true;
-        clickOption(option);
-        if (await waitForOptionState(normalizedText, shouldBeSelected)) return true;
+    const strategies = [
+        {
+            run: target => { target.click(); return true; },
+            pick: targets => targets.find(target => target.matches('input[type="checkbox"], input[type="radio"]')) || targets[0]
+        },
+        {
+            run: target => { target.click(); return true; },
+            pick: targets => targets.find(target => target.matches('label, .ant-checkbox-wrapper, .ant-radio-wrapper')) || targets[targets.length - 1]
+        },
+        {
+            run: dispatchOptionMouseSequence,
+            pick: targets => targets.find(target => target.matches('label, .ant-checkbox-wrapper, .ant-radio-wrapper')) || targets[targets.length - 1]
+        },
+        {
+            run: dispatchOptionKeyboardSequence,
+            pick: targets => targets.find(target => target.matches('input[type="checkbox"], input[type="radio"]')) || targets[targets.length - 1]
+        }
+    ];
+    let attempts = 0;
+    for (let strategyIndex = 0; strategyIndex < strategies.length; strategyIndex++) {
+        const option = getCurrentOptionEls().find(opt => normalizeForCompare(opt.innerText) === normalizedText);
+        if (!option) return { success: false, attempts, reason: 'option-missing' };
+        if (isOptionSelected(option) === shouldBeSelected) return { success: true, attempts };
+        // 每种策略执行前重新取得元素，兼容点击后 React/Ant Design 重建 DOM。
+        const latestOption = getCurrentOptionEls().find(opt => normalizeForCompare(opt.innerText) === normalizedText);
+        if (!latestOption) return { success: false, attempts, reason: 'option-missing' };
+        const target = strategies[strategyIndex].pick(getOptionClickTargets(latestOption));
+        if (!target) continue;
+        attempts++;
+        strategies[strategyIndex].run(target);
+        if (await waitForOptionState(normalizedText, shouldBeSelected, 500)) return { success: true, attempts };
     }
-    return false;
+    return { success: false, attempts, reason: 'state-not-retained' };
 }
 
 async function applyAnswerSelection(answerTexts) {
     const targetNorms = [...new Set((answerTexts || []).map(normalizeForCompare).filter(Boolean))];
     const targetSet = new Set(targetNorms);
+    let totalAttempts = 0;
+    let selectedNorms = [];
+    let missing = [...targetNorms];
+    let extra = [];
 
-    // 先取消不属于目标答案的旧选项，避免重复运行时 click() 把正确项反向取消。
-    for (const option of getCurrentOptionEls()) {
-        const norm = normalizeForCompare(option.innerText);
-        if (norm && !targetSet.has(norm) && isOptionSelected(option)) {
-            await setOptionState(norm, false);
+    // 对整组答案最多执行三轮。部分站点点击一个多选项后会重建整组选项，
+    // 因此每轮、每个选项都重新查询 DOM，不能复用旧节点。
+    for (let pass = 1; pass <= 3; pass++) {
+        for (const option of getCurrentOptionEls()) {
+            const norm = normalizeForCompare(option.innerText);
+            if (norm && !targetSet.has(norm) && isOptionSelected(option)) {
+                const result = await setOptionState(norm, false);
+                totalAttempts += result.attempts;
+            }
+        }
+
+        for (const norm of targetNorms) {
+            const result = await setOptionState(norm, true);
+            totalAttempts += result.attempts;
+            // 多选组件可能在一次点击后异步重建整个列表，稍作等待再处理下一项。
+            await sleep(80);
+        }
+
+        await sleep(pass * 120);
+        const finalOptions = getCurrentOptionEls();
+        selectedNorms = [...new Set(finalOptions
+            .filter(isOptionSelected)
+            .map(opt => normalizeForCompare(opt.innerText))
+            .filter(Boolean))];
+        const selectedSet = new Set(selectedNorms);
+        missing = targetNorms.filter(norm => !selectedSet.has(norm));
+        extra = selectedNorms.filter(norm => !targetSet.has(norm));
+        if (missing.length === 0 && extra.length === 0) {
+            return {
+                success: true,
+                expectedCount: targetNorms.length,
+                selectedCount: selectedNorms.length,
+                missing,
+                extra,
+                passes: pass,
+                attempts: totalAttempts
+            };
         }
     }
 
-    // 每次操作都重新查询 DOM，兼容 React/Ant Design 点击后的节点重建。
-    for (const norm of targetNorms) {
-        await setOptionState(norm, true);
-    }
-
-    const finalOptions = getCurrentOptionEls();
-    const selectedNorms = [...new Set(finalOptions
-        .filter(isOptionSelected)
-        .map(opt => normalizeForCompare(opt.innerText))
-        .filter(Boolean))];
-    const selectedSet = new Set(selectedNorms);
-    const missing = targetNorms.filter(norm => !selectedSet.has(norm));
-    const extra = selectedNorms.filter(norm => !targetSet.has(norm));
     return {
-        success: missing.length === 0 && extra.length === 0,
+        success: false,
         expectedCount: targetNorms.length,
         selectedCount: selectedNorms.length,
         missing,
-        extra
+        extra,
+        passes: 3,
+        attempts: totalAttempts
     };
 }
 
@@ -227,6 +315,43 @@ const findQuestionVariantAcrossTypes = (questions, titleText, optionsText) => qu
     && getOptionSignature(question.选项) === getOptionSignature(optionsText)
 );
 
+const normalizeGuessSuggestion = (question) => {
+    if (!question || typeof question !== 'object') return false;
+    const before = JSON.stringify(question.猜测答案 || []);
+    const optionNorms = new Set((question.选项 || []).map(normalizeForCompare).filter(Boolean));
+    let guesses = uniqueAnswerTexts(Array.isArray(question.猜测答案) ? question.猜测答案 : [])
+        .filter(answer => optionNorms.has(normalizeForCompare(answer)))
+        .sort((a, b) => normalizeForCompare(a).localeCompare(normalizeForCompare(b)));
+
+    // 准确答案一旦存在，疑似答案即失去用途，避免界面和答题逻辑混淆。
+    if ((question.正确答案 || []).length > 0) guesses = [];
+    if ((question.题型 === '单选题' || question.题型 === '判断题') && guesses.length !== 1) guesses = [];
+
+    if (guesses.length > 0 && (question.题型 === '单选题' || question.题型 === '判断题')) {
+        const wrongNorms = new Set((question.错误答案 || []).map(normalizeForCompare));
+        if (guesses.some(answer => wrongNorms.has(normalizeForCompare(answer)))) guesses = [];
+    }
+    if (guesses.length > 0 && question.题型 === '多选题') {
+        const guessKey = getNormComboStr(guesses);
+        const isRejectedCombo = (question.错误组合 || []).some(combo => getNormComboStr(combo) === guessKey);
+        const definiteWrongNorms = new Set((question.明确错误答案 || []).map(normalizeForCompare));
+        if (isRejectedCombo || guesses.some(answer => definiteWrongNorms.has(normalizeForCompare(answer)))) guesses = [];
+    }
+
+    question.猜测答案 = guesses;
+    return before !== JSON.stringify(guesses);
+};
+
+const saveGuessSuggestion = (question, answers) => {
+    if (!question || (question.正确答案 || []).length > 0) return false;
+    question.猜测答案 = uniqueAnswerTexts(answers)
+        .sort((a, b) => normalizeForCompare(a).localeCompare(normalizeForCompare(b)));
+    question.猜测次数 = Math.max(0, Number(question.猜测次数) || 0) + 1;
+    question.猜测更新时间 = new Date().toISOString();
+    normalizeGuessSuggestion(question);
+    return question.猜测答案.length > 0;
+};
+
 const reclassifyQuestionVariant = (question, typeName, titleText, optionsText, questionNumber) => {
     if (!question || question.题型 === typeName) return '';
     const previousType = question.题型 || '未知题型';
@@ -242,6 +367,7 @@ const reclassifyQuestionVariant = (question, typeName, titleText, optionsText, q
     } else {
         question.明确错误答案 = [];
     }
+    normalizeGuessSuggestion(question);
     return previousType;
 };
 
@@ -402,7 +528,9 @@ style.innerHTML = `
     .ans-label { display: flex; align-items: flex-start; gap: 6px; margin-bottom: 6px; cursor: pointer; padding: 6px 8px; border-radius: 6px; transition: all 0.15s ease; border: 1px solid transparent; }
     .ans-label:hover { background: #f1f5f9; }
     .ans-label.selected { background: #dcfce7; border-color: #86efac; color: #15803d; font-weight: bold; }
+    .ans-label.guess-opt { background: #f3e8ff; border-color: #c084fc; color: #7e22ce; border-style: dashed; }
     .ans-label.wrong-opt { background: #fee2e2; border-color: #fca5a5; color: #b91c1c; text-decoration: line-through; }
+    .guess-answer-badge { margin-left: 6px; padding: 1px 5px; border-radius: 8px; background: #9333ea; color: #fff; font-size: 10px; font-style: normal; white-space: nowrap; }
     .count-badge { background: #ef4444; color: white; padding: 2px 6px; border-radius: 12px; font-size: 12px; font-weight: bold; }
     .id-badge { font-family: monospace; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 11px; color: #475569; }
     .wrong-combos-box { margin-top: 8px; padding: 6px 8px; background: #fff1f2; border: 1px solid #fecdd3; border-radius: 6px; font-size: 11px; color: #9f1239; }
@@ -617,12 +745,14 @@ function loadLocalData() {
             if (!Array.isArray(q.错误答案)) { q.错误答案 = []; hasModified = true; }
             if (!Array.isArray(q.明确错误答案)) { q.明确错误答案 = []; hasModified = true; }
             if (!Array.isArray(q.错误组合)) { q.错误组合 = []; hasModified = true; }
+            if (!Array.isArray(q.猜测答案)) { q.猜测答案 = []; hasModified = true; }
+            if (!Number.isFinite(Number(q.猜测次数))) { q.猜测次数 = 0; hasModified = true; }
             const variantKey = getQuestionVariantKey(q.题型, q.题目, q.选项);
             if (q.variantKey !== variantKey) { q.variantKey = variantKey; hasModified = true; }
 
             // 清理旧版按题干误合并后遗留的跨选项答案与错误组合。
             const optionNorms = new Set(q.选项.map(normalizeForCompare).filter(Boolean));
-            const oldLearningState = JSON.stringify([q.正确答案, q.错误答案, q.明确错误答案, q.错误组合]);
+            const oldLearningState = JSON.stringify([q.正确答案, q.错误答案, q.明确错误答案, q.错误组合, q.猜测答案]);
             q.正确答案 = uniqueAnswerTexts(q.正确答案).filter(answer => optionNorms.has(normalizeForCompare(answer)));
             q.错误答案 = uniqueAnswerTexts(q.错误答案).filter(answer => optionNorms.has(normalizeForCompare(answer)));
             q.明确错误答案 = uniqueAnswerTexts(q.明确错误答案).filter(answer => optionNorms.has(normalizeForCompare(answer)));
@@ -648,7 +778,8 @@ function loadLocalData() {
                     q.明确错误答案 = [];
                 }
             }
-            if (oldLearningState !== JSON.stringify([q.正确答案, q.错误答案, q.明确错误答案, q.错误组合])) {
+            normalizeGuessSuggestion(q);
+            if (oldLearningState !== JSON.stringify([q.正确答案, q.错误答案, q.明确错误答案, q.错误组合, q.猜测答案])) {
                 hasModified = true;
                 repairedLearningCount++;
             }
@@ -697,13 +828,14 @@ function renderTable() {
 
             const wrongOptionsForDisplay = q.题型 === '多选题' ? q.明确错误答案 : q.错误答案;
             let isWrongOpt = wrongOptionsForDisplay && wrongOptionsForDisplay.some(w => normalizeForCompare(w) === normOpt);
+            let isGuessed = !isChecked && !isWrongOpt && (q.猜测答案 || []).some(answer => normalizeForCompare(answer) === normOpt);
 
-            let selectedClass = isChecked ? 'selected' : (isWrongOpt ? 'wrong-opt' : '');
+            let selectedClass = isChecked ? 'selected' : (isWrongOpt ? 'wrong-opt' : (isGuessed ? 'guess-opt' : ''));
             let safeOpt = cleanOpt.replace(/"/g, '&quot;');
 
             return `<label class="ans-label ${selectedClass}">
                         <input type="checkbox" class="ans-check" data-idx="${index}" value="${safeOpt}" ${isChecked ? 'checked' : ''}>
-                        <span><b>${String.fromCharCode(65+i)}.</b> ${cleanOpt}</span>
+                        <span><b>${String.fromCharCode(65+i)}.</b> ${cleanOpt}${isGuessed ? `<em class="guess-answer-badge">${t('guessBadge')}</em>` : ''}</span>
                     </label>`;
         }).join('');
 
@@ -753,6 +885,7 @@ tbody.addEventListener('change', (e) => {
                 siblings.forEach(cb => { if(cb !== e.target) { cb.checked = false; cb.closest('.ans-label').classList.remove('selected'); } });
             } else { if(!q.正确答案.includes(val)) q.正确答案.push(val); }
             e.target.closest('.ans-label').classList.add('selected');
+            e.target.closest('.ans-label').classList.remove('guess-opt');
             e.target.closest('.ans-label').classList.remove('wrong-opt');
         } else {
             q.正确答案 = q.正确答案.filter(v => v !== val); e.target.closest('.ans-label').classList.remove('selected');
@@ -761,6 +894,7 @@ tbody.addEventListener('change', (e) => {
         if (q.题型 === '多选题') {
             q.正确答案.sort((a, b) => normalizeForCompare(a).localeCompare(normalizeForCompare(b)));
         }
+        if (q.正确答案.length > 0) q.猜测答案 = [];
 
         localStorage.setItem(getStorageKey(), JSON.stringify(scrapedData));
     }
@@ -915,7 +1049,7 @@ document.getElementById('btn-start').onclick = async () => {
                 }
                 if (!existingQ) {
                     const hasOtherVariant = scrapedData.some(q => q.题型 === typeName && normalizeQuestionText(q.题目) === normalizeQuestionText(titleText));
-                    existingQ = { id: generateQID(), variantKey: getQuestionVariantKey(typeName, titleText, optionsText), 题型: typeName, 题号: questionNumber, 题目: titleText, 选项: optionsText, 出现次数: 0, 正确答案: [], 错误答案: [], 明确错误答案: [], 错误组合: [] };
+                    existingQ = { id: generateQID(), variantKey: getQuestionVariantKey(typeName, titleText, optionsText), 题型: typeName, 题号: questionNumber, 题目: titleText, 选项: optionsText, 出现次数: 0, 正确答案: [], 猜测答案: [], 猜测次数: 0, 错误答案: [], 明确错误答案: [], 错误组合: [] };
                     scrapedData.push(existingQ);
                     isNew = true;
                     newCount++;
@@ -928,6 +1062,8 @@ document.getElementById('btn-start').onclick = async () => {
                 if (!existingQ.错误答案) existingQ.错误答案 = [];
                 if (!existingQ.明确错误答案) existingQ.明确错误答案 = [];
                 if (!existingQ.错误组合) existingQ.错误组合 = [];
+                if (!Array.isArray(existingQ.猜测答案)) existingQ.猜测答案 = [];
+                if (!Number.isFinite(Number(existingQ.猜测次数))) existingQ.猜测次数 = 0;
 
                 if (!Array.isArray(existingQ.正确答案)) existingQ.正确答案 = [];
                 if ((typeName === '单选题' || typeName === '判断题') && existingQ.正确答案.length > 1) {
@@ -954,6 +1090,7 @@ document.getElementById('btn-start').onclick = async () => {
                             const oldCorrect = getNormComboStr(existingQ.正确答案);
                             const sortedAnswers = [...authoritativeAnswers].sort((a, b) => normalizeForCompare(a).localeCompare(normalizeForCompare(b)));
                             existingQ.正确答案 = sortedAnswers;
+                            existingQ.猜测答案 = [];
                             if (typeName === '多选题') {
                                 const correctNorms = new Set(sortedAnswers.map(normalizeForCompare));
                                 existingQ.错误答案 = [];
@@ -971,12 +1108,14 @@ document.getElementById('btn-start').onclick = async () => {
                     }
 
                     if (isWrongAnswer && checkedOptionsText.length > 0) {
+                        const previousGuessKey = getNormComboStr(existingQ.猜测答案 || []);
                         if (typeName === '判断题' && officialAnswers.length === 0 && checkedOptionsText.length === 1) {
                             const wrongAnsNorm = normalizeForCompare(checkedOptionsText[0]);
                             const correctOne = optionsText.find(option => normalizeForCompare(option) !== wrongAnsNorm);
                             if (correctOne) {
                                 const changed = getNormComboStr(existingQ.正确答案) !== getNormComboStr([correctOne]);
                                 existingQ.正确答案 = [correctOne];
+                                existingQ.猜测答案 = [];
                                 logMsg(currentLang === 'zh'
                                     ? `🧠 [反向推断正确答案] 判断题 第${questionNumber}题：排除 ${describeAnswers(checkedOptionsText, optionsText)} -> 正确为 ${describeAnswers([correctOne], optionsText)}`
                                     : `🧠 [Deduced answer] True/False question ${questionNumber}: excluded ${describeAnswers(checkedOptionsText, optionsText)} -> ${describeAnswers([correctOne], optionsText)}.`, 'success');
@@ -1017,6 +1156,12 @@ document.getElementById('btn-start').onclick = async () => {
                                 learnedSomething = true;
                             }
                         }
+                        normalizeGuessSuggestion(existingQ);
+                        if (previousGuessKey && !existingQ.正确答案.length && !(existingQ.猜测答案 || []).length) {
+                            logMsg(currentLang === 'zh'
+                                ? `🧹 [疑似答案已否定] ${typeName} 第${questionNumber}题：已停止复用本次错误选项`
+                                : `🧹 [Suggested answer rejected] ${typeLabel(typeName)} question ${questionNumber}: this incorrect selection will no longer be reused.`, 'warn');
+                        }
                     }
                 }
 
@@ -1038,6 +1183,28 @@ document.getElementById('btn-start').onclick = async () => {
 async function guessByType(typeName, qIndex, optionEls, currentOptionsCleaned, existingQ) {
     const sourceZh = existingQ ? '题库内无正确答案' : '新题未入库';
     const sourceEn = existingQ ? 'bank question without a correct answer' : 'new question not in bank';
+
+    if (existingQ) {
+        normalizeGuessSuggestion(existingQ);
+        const suggestedAnswers = (existingQ.猜测答案 || []).map(saved =>
+            currentOptionsCleaned.find(option => normalizeForCompare(option) === normalizeForCompare(saved))
+        ).filter(Boolean);
+        if (suggestedAnswers.length > 0 && suggestedAnswers.length === existingQ.猜测答案.length) {
+            const selection = await applyAnswerSelection(suggestedAnswers);
+            if (selection.success) {
+                existingQ.猜测采用次数 = Math.max(0, Number(existingQ.猜测采用次数) || 0) + 1;
+                localStorage.setItem(getStorageKey(), JSON.stringify(scrapedData));
+                logMsg(currentLang === 'zh'
+                    ? `💡 [采用疑似答案] ${typeName} 第${qIndex}题 -> ${describeAnswers(suggestedAnswers, currentOptionsCleaned)}（尚未证实，下次继续作为建议）`
+                    : `💡 [Suggested answer reused] ${typeLabel(typeName)} question ${qIndex}: ${describeAnswers(suggestedAnswers, currentOptionsCleaned)} (unconfirmed; kept as the next suggestion).`, 'guess');
+                return true;
+            }
+            logMsg(currentLang === 'zh'
+                ? `⚠️ [疑似答案未保持] ${typeName} 第${qIndex}题最终仅保持 ${selection.selectedCount}/${selection.expectedCount} 项`
+                : `⚠️ [Suggested answer not retained] ${typeLabel(typeName)} question ${qIndex}: retained ${selection.selectedCount}/${selection.expectedCount}.`, 'warn');
+            return false;
+        }
+    }
 
     if (typeName === '单选题' || typeName === '判断题') {
         let knownWrongs = existingQ ? (existingQ.错误答案 || []) : [];
@@ -1079,6 +1246,12 @@ async function guessByType(typeName, qIndex, optionEls, currentOptionsCleaned, e
                 ? `⚠️ [猜答失败] ${typeName} 第${qIndex}题页面未保持目标选项`
                 : `⚠️ [Guess failed] ${typeLabel(typeName)} question ${qIndex}: the page did not retain the target option.`, 'warn');
             return false;
+        }
+        if (existingQ && saveGuessSuggestion(existingQ, [currentOptionsCleaned[guessIdx]])) {
+            localStorage.setItem(getStorageKey(), JSON.stringify(scrapedData));
+            logMsg(currentLang === 'zh'
+                ? `📝 [记录疑似答案] ${typeName} 第${qIndex}题 -> ${describeAnswers(existingQ.猜测答案, currentOptionsCleaned)}（等待后续复盘验证）`
+                : `📝 [Suggested answer saved] ${typeLabel(typeName)} question ${qIndex}: ${describeAnswers(existingQ.猜测答案, currentOptionsCleaned)} (awaiting later review).`, 'guess');
         }
         logMsg(currentLang === 'zh'
             ? `🔮 [策略猜答·${sourceZh}] ${typeName} 第${qIndex}题 -> ${strategyName}（选定${String.fromCharCode(65 + guessIdx)}）`
@@ -1127,6 +1300,12 @@ async function guessByType(typeName, qIndex, optionEls, currentOptionsCleaned, e
                 ? `⚠️ [猜答失败] ${typeName} 第${qIndex}题最终仅保持 ${selection.selectedCount}/${selection.expectedCount} 项`
                 : `⚠️ [Guess failed] ${typeLabel(typeName)} question ${qIndex}: retained ${selection.selectedCount}/${selection.expectedCount} options.`, 'warn');
             return false;
+        }
+        if (existingQ && saveGuessSuggestion(existingQ, chosenComboIndices.map(idx => currentOptionsCleaned[idx]))) {
+            localStorage.setItem(getStorageKey(), JSON.stringify(scrapedData));
+            logMsg(currentLang === 'zh'
+                ? `📝 [记录疑似答案] ${typeName} 第${qIndex}题 -> ${describeAnswers(existingQ.猜测答案, currentOptionsCleaned)}（等待后续复盘验证）`
+                : `📝 [Suggested answer saved] ${typeLabel(typeName)} question ${qIndex}: ${describeAnswers(existingQ.猜测答案, currentOptionsCleaned)} (awaiting later review).`, 'guess');
         }
         logMsg(currentLang === 'zh'
             ? `🔮 [策略猜答·${sourceZh}] ${typeName} 第${qIndex}题 -> 选择${chosenLevel}项，优先长选项${knownWrongCombos.length ? '并排除已知错误组合' : ''}`
@@ -1228,8 +1407,38 @@ document.getElementById('btn-auto-answer').onclick = async () => {
                 }
             }
 
+            // 自动答题也负责建题：有些复盘页只展示错题，因此不能等到复盘时才收录。
+            if (!existingQ) {
+                existingQ = {
+                    id: generateQID(),
+                    variantKey: getQuestionVariantKey(typeName, titleText, currentOptionsCleaned),
+                    题型: typeName,
+                    题号: questionNumber,
+                    题目: titleText,
+                    选项: currentOptionsCleaned,
+                    出现次数: 1,
+                    正确答案: [],
+                    猜测答案: [],
+                    猜测次数: 0,
+                    错误答案: [],
+                    明确错误答案: [],
+                    错误组合: []
+                };
+                scrapedData.push(existingQ);
+                localStorage.setItem(getStorageKey(), JSON.stringify(scrapedData));
+                totalEl.innerText = scrapedData.length;
+                logMsg(currentLang === 'zh'
+                    ? `🆕 [答题录入新题] ${typeName} 第${questionNumber}题：已建立题库记录，等待保存疑似答案`
+                    : `🆕 [Question captured while answering] ${typeLabel(typeName)} question ${questionNumber}: bank record created; waiting to save a suggested answer.`, 'info');
+            } else {
+                if (!Array.isArray(existingQ.猜测答案)) existingQ.猜测答案 = [];
+                if (!Number.isFinite(Number(existingQ.猜测次数))) existingQ.猜测次数 = 0;
+                existingQ.题号 = questionNumber;
+            }
+
             if (existingQ && existingQ.正确答案 && existingQ.正确答案.length > 0) {
                 const answersOnPage = [];
+                const unmappedAnswers = [];
                 for (const answer of existingQ.正确答案) {
                     const normalizedAnswer = normalizeForCompare(answer);
                     const matchedOption = currentOptionsCleaned.find(option => {
@@ -1239,21 +1448,41 @@ document.getElementById('btn-auto-answer').onclick = async () => {
                         if (falseEquivs.includes(normalizedAnswer) && falseEquivs.includes(normalizedOption)) return true;
                         return false;
                     });
-                    if (matchedOption) answersOnPage.push(matchedOption);
+                    if (matchedOption) {
+                        if (!answersOnPage.some(item => normalizeForCompare(item) === normalizeForCompare(matchedOption))) answersOnPage.push(matchedOption);
+                    } else {
+                        unmappedAnswers.push(answer);
+                    }
+                }
+
+                const expectedCount = [...new Set(existingQ.正确答案.map(normalizeForCompare).filter(Boolean))].length;
+                if (unmappedAnswers.length > 0 || answersOnPage.length !== expectedCount) {
+                    const unmappedText = uniqueAnswerTexts(unmappedAnswers).join(' / ') || `${answersOnPage.length}/${expectedCount}`;
+                    logMsg(currentLang === 'zh'
+                        ? `⚠️ [答案映射失败] ${typeName} 第${questionNumber}题：题库答案无法对应当前页面选项（${unmappedText}），已跳过以避免错选`
+                        : `⚠️ [Answer mapping failed] ${typeLabel(typeName)} question ${questionNumber}: bank answers could not be mapped to the current options (${unmappedText}); skipped to avoid a wrong selection.`, 'warn');
+                    missedCount++;
+                    qIndex++;
+                    continue;
                 }
 
                 const selection = await applyAnswerSelection(answersOnPage);
-                const expectedCount = [...new Set(existingQ.正确答案.map(normalizeForCompare).filter(Boolean))].length;
                 const isComplete = answersOnPage.length === expectedCount && selection.success && selection.expectedCount === expectedCount;
                 if (isComplete) {
+                    const recovered = selection.passes > 1 || selection.attempts > expectedCount;
                     logMsg(currentLang === 'zh'
-                        ? `✅ [题库答案] ${typeName} 第${questionNumber}题最终选中 ${selection.selectedCount}/${expectedCount} 项`
-                        : `✅ [Bank answer] ${typeLabel(typeName)} question ${questionNumber}: finally selected ${selection.selectedCount}/${expectedCount}.`, 'success');
+                        ? `✅ [题库答案${recovered ? '·重试恢复' : ''}] ${typeName} 第${questionNumber}题最终选中 ${selection.selectedCount}/${expectedCount} 项${recovered ? `（${selection.passes}轮，${selection.attempts}次点击）` : ''}`
+                        : `✅ [Bank answer${recovered ? ' · recovered by retry' : ''}] ${typeLabel(typeName)} question ${questionNumber}: finally selected ${selection.selectedCount}/${expectedCount}${recovered ? ` (${selection.passes} rounds, ${selection.attempts} clicks)` : ''}.`, 'success');
                     answeredCount++;
                 } else {
+                    const currentNormOptions = currentOptionsCleaned.map(normalizeForCompare);
+                    const missingLabels = selection.missing.map(norm => {
+                        const index = currentNormOptions.indexOf(norm);
+                        return index >= 0 ? String.fromCharCode(65 + index) : norm;
+                    });
                     logMsg(currentLang === 'zh'
-                        ? `⚠️ [答案未保持] ${typeName} 第${questionNumber}题最终选中 ${selection.selectedCount}/${expectedCount} 项，不计为成功`
-                        : `⚠️ [Answer not retained] ${typeLabel(typeName)} question ${questionNumber}: finally selected ${selection.selectedCount}/${expectedCount}; not counted as answered.`, 'warn');
+                        ? `⚠️ [答案未保持] ${typeName} 第${questionNumber}题已用多种方式重试${selection.passes}轮，最终选中 ${selection.selectedCount}/${expectedCount} 项${missingLabels.length ? `，未保持：${missingLabels.join('、')}` : ''}，不计为成功`
+                        : `⚠️ [Answer not retained] ${typeLabel(typeName)} question ${questionNumber}: retried ${selection.passes} rounds with multiple methods; finally retained ${selection.selectedCount}/${expectedCount}${missingLabels.length ? `; missing: ${missingLabels.join(', ')}` : ''}. Not counted as answered.`, 'warn');
                     missedCount++;
                 }
             } else {
@@ -1289,6 +1518,10 @@ const exportQuestionBank = () => currentLang === 'zh' ? scrapedData : scrapedDat
     options: q.选项,
     occurrenceCount: q.出现次数,
     correctAnswers: q.正确答案,
+    suggestedAnswers: q.猜测答案,
+    suggestionCount: q.猜测次数,
+    suggestionUseCount: q.猜测采用次数,
+    suggestionUpdatedAt: q.猜测更新时间,
     wrongAnswers: q.错误答案,
     definiteWrongAnswers: q.明确错误答案,
     wrongCombinations: q.错误组合
@@ -1330,6 +1563,10 @@ importFileInput.onchange = async () => {
             const occurrenceCount = q.出现次数 ?? q.occurrenceCount;
             const options = q.选项 ?? q.options;
             const correctAnswers = q.正确答案 ?? q.correctAnswers;
+            const suggestedAnswers = q.猜测答案 ?? q.suggestedAnswers;
+            const suggestionCount = q.猜测次数 ?? q.suggestionCount;
+            const suggestionUseCount = q.猜测采用次数 ?? q.suggestionUseCount;
+            const suggestionUpdatedAt = q.猜测更新时间 ?? q.suggestionUpdatedAt;
             const wrongAnswers = q.错误答案 ?? q.wrongAnswers;
             const definiteWrongAnswers = q.明确错误答案 ?? q.definiteWrongAnswers;
             const wrongCombinations = q.错误组合 ?? q.wrongCombinations;
@@ -1345,6 +1582,10 @@ importFileInput.onchange = async () => {
                 选项: normalizedOptions,
                 出现次数: Number.isFinite(Number(occurrenceCount)) ? Number(occurrenceCount) : 1,
                 正确答案: Array.isArray(correctAnswers) ? correctAnswers.map(v => String(v)) : [],
+                猜测答案: Array.isArray(suggestedAnswers) ? suggestedAnswers.map(v => String(v)) : [],
+                猜测次数: Number.isFinite(Number(suggestionCount)) ? Number(suggestionCount) : 0,
+                猜测采用次数: Number.isFinite(Number(suggestionUseCount)) ? Number(suggestionUseCount) : 0,
+                猜测更新时间: typeof suggestionUpdatedAt === 'string' ? suggestionUpdatedAt : '',
                 错误答案: Array.isArray(wrongAnswers) ? wrongAnswers.map(v => String(v)) : [],
                 明确错误答案: Array.isArray(definiteWrongAnswers) ? definiteWrongAnswers.map(v => String(v)) : [],
                 错误组合: Array.isArray(wrongCombinations) ? wrongCombinations.filter(Array.isArray).map(arr => arr.map(v => String(v))) : []
