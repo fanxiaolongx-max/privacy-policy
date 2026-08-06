@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "tool": {
+    "slug": "optical-transfer",
+    "name": "光码传文件",
+    "icon": "📲",
+    "description": "电脑屏幕播放动态二维码，手机摄像头连续扫码接收小文件或文本；文件内容不经过平台服务器。",
+    "tags": ["文件传输", "动态二维码", "离线传输", "手机接收"],
+    "href": "/tools/optical-transfer",
+    "filePath": "/custom-tools/optical-transfer/index.html",
+    "publicAccess": true,
+    "createdAt": "2026-08-05T00:00:00.000Z",
+    "updatedAt": "2026-08-05T00:00:00.000Z"
+  },
+  "history": {
+    "id": "builtin-optical-transfer-v0.3.0",
+    "tool": "custom",
+    "action": "安装系统工具",
+    "detail": "光码传文件 (Decimen Optical Transfer v0.3.0)",
+    "time": "2026-08-05T00:00:00.000Z"
+  }
+}
