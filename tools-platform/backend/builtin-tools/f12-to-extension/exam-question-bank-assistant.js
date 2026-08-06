@@ -255,15 +255,18 @@ async function applyAnswerSelection(answerTexts) {
     };
 }
 
-// 🌟 核心升级：强力前缀剥离器。确保彻底剥离 A. B、 C: [D] 等选项前缀
-// 保证 "A. 2" 和 "B. 2" 提取出的纯文本都是 "2"，从而完美兼容乱序
+// 🌟 核心升级：幂等前缀剥离器。兼容页面生成的 "A. A、内容" 等重复编号。
+// 同一文本无论清理一次还是多次，结果都必须一致，确保题库匹配和点击定位使用同一键值。
 const cleanOptionText = (text) => {
     if (!text) return '';
     let txt = text.trim().replace(/\n/g, ' ');
-    // 剔除带标点符号的前缀如 A. A、 A: (A) [A]
-    txt = txt.replace(/^[(（\[【]?[A-Za-z][)）\]】]?[\.\、\:\-．]\s*/, '');
-    // 剔除仅带空格的前缀如 A 选项内容
-    txt = txt.replace(/^[A-Za-z]\s+/, '');
+    const optionPrefix = /^(?:[(（\[【]?[A-Za-z][)）\]】]?[\.、:：．]\s*|[A-Za-z]-\s+|[(（\[【][A-Za-z][)）\]】]\s+|[A-Za-z]\s+)/;
+    // 设置上限防御异常文本；正常选项最多只会出现一到两层编号。
+    for (let removedPrefixCount = 0; removedPrefixCount < 4; removedPrefixCount++) {
+        const cleaned = txt.replace(optionPrefix, '').trimStart();
+        if (cleaned === txt) break;
+        txt = cleaned;
+    }
     return txt;
 };
 

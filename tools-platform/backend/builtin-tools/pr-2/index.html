@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>84转业务外包PR/PO下单及跟进流程交接说明</title>
+<style>
+    :root{
+      --primary:#0b5cab;
+      --primary-2:#eaf3fb;
+      --text:#1f2937;
+      --muted:#667085;
+      --line:#d9e2ec;
+      --bg:#f5f8fb;
+      --card:#ffffff;
+      --warn:#fff7e6;
+      --warn-line:#f3c969;
+      --ok:#ecf8f2;
+      --ok-line:#8bd3b1;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      line-height:1.6;
+    }
+    .page{
+      max-width:1180px;
+      margin:0 auto;
+      padding:32px 20px 48px;
+    }
+    .hero{
+      background:linear-gradient(135deg,#0b5cab,#174ea6);
+      color:#fff;
+      padding:30px 34px;
+      border-radius:18px;
+      box-shadow:0 10px 30px rgba(11,92,171,.18);
+      margin-bottom:22px;
+    }
+    .hero h1{
+      margin:0 0 8px;
+      font-size:30px;
+      line-height:1.25;
+    }
+    .hero p{margin:0;opacity:.9}
+
+    .lang-switch{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:18px;
+    }
+    .lang-btn{
+      border:1px solid rgba(255,255,255,.45);
+      background:rgba(255,255,255,.12);
+      color:#fff;
+      border-radius:999px;
+      padding:7px 13px;
+      font-size:13px;
+      cursor:pointer;
+      transition:.2s ease;
+    }
+    .lang-btn:hover,
+    .lang-btn.active{
+      background:#fff;
+      color:var(--primary);
+      border-color:#fff;
+    }
+    html[dir="rtl"] body{
+      direction:rtl;
+      text-align:right;
+    }
+    html[dir="rtl"] .hero,
+    html[dir="rtl"] .hero h1,
+    html[dir="rtl"] .hero p,
+    html[dir="rtl"] .card,
+    html[dir="rtl"] .card h2,
+    html[dir="rtl"] .card h3,
+    html[dir="rtl"] .sample-head,
+    html[dir="rtl"] .sample-tip{
+      text-align:right;
+    }
+    html[dir="rtl"] .lang-switch{
+      justify-content:flex-start;
+    }
+    html[dir="rtl"] .step{
+      flex-direction:row;
+      text-align:right;
+    }
+    html[dir="rtl"] ul{
+      margin:8px 20px 0 0;
+      padding:0;
+    }
+    html[dir="rtl"] th,
+    html[dir="rtl"] td{
+      text-align:right;
+    }
+    html[dir="rtl"] .sample-head{
+      flex-direction:row;
+    }
+    html[dir="rtl"] .note,
+    html[dir="rtl"] .ok{
+      border-left:0;
+      border-right:4px solid var(--warn-line);
+    }
+    html[dir="rtl"] .ok{
+      border-right-color:var(--ok-line);
+    }
+    html[dir="rtl"] .box,
+    html[dir="rtl"] .mini,
+    html[dir="rtl"] .branch h4,
+    html[dir="rtl"] .placeholder,
+    html[dir="rtl"] .footer{
+      text-align:center;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:minmax(0,1fr);
+      gap:18px;
+      width:100%;
+    }
+    .grid > div{
+      min-width:0;
+      width:100%;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:22px;
+      box-shadow:0 6px 18px rgba(15,23,42,.05);
+      margin-bottom:18px;
+    }
+    .card h2{
+      font-size:20px;
+      margin:0 0 14px;
+      color:var(--primary);
+    }
+    .card h3{
+      font-size:16px;
+      margin:18px 0 8px;
+    }
+    .step{
+      display:flex;
+      gap:12px;
+      margin-bottom:14px;
+      align-items:flex-start;
+    }
+    .num{
+      width:28px;
+      height:28px;
+      border-radius:50%;
+      background:var(--primary);
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
+      flex:none;
+      margin-top:1px;
+    }
+    .step strong{display:block;margin-bottom:2px}
+    ul{margin:8px 0 0 20px;padding:0}
+    li{margin:4px 0}
+    .tag{
+      display:inline-block;
+      padding:3px 9px;
+      border-radius:999px;
+      background:var(--primary-2);
+      color:var(--primary);
+      font-size:13px;
+      margin:2px 6px 2px 0;
+    }
+    .note{
+      padding:14px 16px;
+      border-left:4px solid var(--warn-line);
+      background:var(--warn);
+      border-radius:10px;
+      margin-top:12px;
+    }
+    .ok{
+      padding:14px 16px;
+      border-left:4px solid var(--ok-line);
+      background:var(--ok);
+      border-radius:10px;
+      margin-top:12px;
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:14px;
+    }
+    th,td{
+      padding:10px 9px;
+      border-bottom:1px solid var(--line);
+      text-align:left;
+      vertical-align:top;
+    }
+    th{background:#f8fafc;color:#344054}
+    .flow{
+      overflow-x:auto;
+      padding-bottom:4px;
+    }
+    .flow-inner{
+      width:100%;
+      min-width:760px;
+    }
+    .flow-top,.flow-bottom{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      flex-direction:column;
+    }
+    .box{
+      background:#fff;
+      border:1.5px solid #8fb9df;
+      border-radius:12px;
+      padding:10px 16px;
+      text-align:center;
+      min-width:180px;
+      font-weight:600;
+    }
+    .box.main{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .arrow{
+      text-align:center;
+      color:#6b8fb3;
+      font-size:24px;
+      line-height:1.2;
+      margin:4px 0;
+    }
+    .branches{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:14px;
+      margin:8px 0;
+      position:relative;
+    }
+    .branch{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:14px;
+      background:#fbfdff;
+    }
+    .branch h4{
+      margin:0 0 10px;
+      text-align:center;
+      color:var(--primary);
+      font-size:16px;
+    }
+    .mini{
+      border:1px solid #b9d0e5;
+      background:#fff;
+      border-radius:10px;
+      padding:8px 10px;
+      text-align:center;
+      font-size:14px;
+    }
+    .contacts td:first-child{font-weight:700}
+
+    .middle-stack{
+      margin-top:2px;
+    }
+    .middle-stack .card{
+      width:100%;
+    }
+    .sample-upload{
+      margin-top:20px;
+      border:1px dashed #8fb9df;
+      border-radius:14px;
+      background:#f8fbff;
+      padding:16px;
+    }
+    .sample-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      margin-bottom:14px;
+    }
+    .sample-tip{
+      font-size:13px;
+      color:var(--muted);
+      margin-top:2px;
+    }
+    .sample-preview{
+      width:100%;
+      min-height:260px;
+      max-height:680px;
+      overflow:auto;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:12px;
+    }
+    .sample-preview img{
+      display:block;
+      width:auto;
+      max-width:none;
+      min-width:min(100%, 1100px);
+      height:auto;
+      object-fit:contain;
+      cursor:zoom-in;
+    }
+    .placeholder{
+      text-align:center;
+      color:var(--muted);
+      padding:40px 20px;
+    }
+    .placeholder-icon{
+      font-size:42px;
+      line-height:1;
+      color:#8fb9df;
+      margin-bottom:10px;
+    }
+    .placeholder small{
+      display:block;
+      margin-top:6px;
+    }
+
+    .bottom-grid{
+      display:grid;
+      grid-template-columns:1.35fr .65fr;
+      gap:18px;
+      margin-top:2px;
+    }
+    .bottom-grid .card{
+      margin-bottom:0;
+    }
+    .footer{
+      text-align:center;
+      color:var(--muted);
+      font-size:13px;
+      margin-top:10px;
+    }
+    @media(max-width:850px){
+      .grid,.bottom-grid{grid-template-columns:1fr}
+      .hero h1{font-size:24px}
+      .sample-head{align-items:flex-start;flex-direction:column}
+      .sample-preview{min-height:200px}
+    }
+    @media print{
+      body{background:#fff}
+      .page{max-width:none;padding:0}
+      .hero,.card{box-shadow:none}
+      .card{break-inside:avoid}
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+<section class="hero">
+<h1 data-i18n="title">84转业务外包PR/PO下单及跟进流程交接说明</h1>
+<p data-i18n="subtitle">适用于下一位人员涉及 TE、ET、VDF、ORG 四个项目的PR/PO办理与跟进。</p>
+<div aria-label="Language switch" class="lang-switch">
+<button class="lang-btn active" data-lang="zh">中文</button>
+<button class="lang-btn" data-lang="en">English</button>
+<button class="lang-btn" data-lang="ar">العربية</button>
+</div>
+</section>
+<div class="grid">
+<div>
+<section class="card">
+<h2 data-i18n="section1">一、整体流程</h2>
+<div class="step">
+<div class="num">1</div>
+<div>
+<strong data-i18n="s1_step1_title">准备PR表格</strong><span data-i18n="s1_step1_text">收集人员、项目、合同、BPA、Requester、Approver等信息。</span></div>
+</div>
+<div class="step">
+<div class="num">2</div>
+<div>
+<strong data-i18n="s1_step2_title">确认关键信息</strong><span data-i18n="s1_step2_text">各项目SPM确认项目编码、合同编号、Sub-Project Code、Requester和Approver。</span></div>
+</div>
+<div class="step">
+<div class="num">3</div>
+<div>
+<strong data-i18n="s1_step3_title">确认Service Product Code</strong><span data-i18n="s1_step3_text">SPM先确认；不确定时让Irfan给选项；最终发Haitham复核。</span></div>
+</div>
+<div class="step">
+<div class="num">4</div>
+<div>
+<strong data-i18n="s1_step4_title">确定Cost Share</strong><span data-i18n="s1_step4_text">TE、ET、VDF、ORG四个项目的分担比例由经办人直接确定，合计必须为100%。</span></div>
+</div>
+<div class="step">
+<div class="num">5</div>
+<div>
+<strong data-i18n="s1_step5_title">提交PR并跟进审批</strong><span data-i18n="s1_step5_text">Irfan协助下发PR和提供审批链；PR提交后，分别联系四个项目SPM，由SPM催各自Approver。</span></div>
+</div>
+<div class="step">
+<div class="num">6</div>
+<div>
+<strong data-i18n="s1_step6_title">PR完成后联系采购（CEG）跟进PO</strong><span data-i18n="s1_step6_text">确认PO创建、审批和下发时间；PO下发后人员才能正式进场。</span></div>
+</div>
+</section>
+<section class="card">
+<h2 data-i18n="section2">二、四项目催办流程</h2>
+<div class="flow">
+<div class="flow-inner">
+<div class="flow-top">
+<div class="box main" data-i18n="flow_start">准备下一位人员PR</div>
+<div class="arrow">↓</div>
+<div class="box" data-i18n="flow_cost">确定四项目Cost Share，合计100%</div>
+<div class="arrow">↓</div>
+<div class="box" data-i18n="flow_collect">收集四个项目资料，并由SPM提前沟通Requester与Approver</div>
+</div>
+<div class="arrow">↓</div>
+<div class="branches">
+<div class="branch">
+<h4>TE</h4>
+<div class="mini" data-i18n="flow_te_1">TE SPM确认资料并提前沟通Requester、Approver</div>
+<div class="arrow">↓</div>
+<div class="mini" data-i18n="flow_te_2">PR提交后请 TE SPM 催 TE Approver</div>
+</div>
+<div class="branch">
+<h4>ET</h4>
+<div class="mini" data-i18n="flow_et_1">ET SPM确认资料并提前沟通Requester、Approver</div>
+<div class="arrow">↓</div>
+<div class="mini" data-i18n="flow_et_2">PR提交后请 ET SPM 催 ET Approver</div>
+</div>
+<div class="branch">
+<h4>VDF</h4>
+<div class="mini" data-i18n="flow_vdf_1">VDF SPM确认资料并提前沟通Requester、Approver</div>
+<div class="arrow">↓</div>
+<div class="mini" data-i18n="flow_vdf_2">PR提交后请 VDF SPM 催 VDF Approver</div>
+</div>
+<div class="branch">
+<h4>ORG</h4>
+<div class="mini" data-i18n="flow_org_1">ORG SPM确认资料并提前沟通Requester、Approver</div>
+<div class="arrow">↓</div>
+<div class="mini" data-i18n="flow_org_2">PR提交后请 ORG SPM 催 ORG Approver</div>
+</div>
+</div>
+<div class="flow-bottom">
+<div class="arrow">↓</div>
+<div class="box" data-i18n="flow_all_done">四条审批路径全部完成</div>
+<div class="arrow">↓</div>
+<div class="box" data-i18n="flow_unified">汇总至统一审批人</div>
+<div class="arrow">↓</div>
+<div class="box main" data-i18n="flow_finish">PR完成 → 联系采购（CEG）跟进PO → 人员进场</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+<div class="middle-stack">
+<section class="card">
+<h2 data-i18n="section3">三、PR表格重点字段</h2>
+<div>
+<span class="tag">Project-A Code</span>
+<span class="tag">Contract No.</span>
+<span class="tag">Service Product Code</span>
+<span class="tag">Requester</span>
+<span class="tag">Approver</span>
+<span class="tag">Sub-Project Code</span>
+<span class="tag">BPA</span>
+<span class="tag">Cost Share</span>
+<span class="tag">Start / End Date</span>
+<span class="tag">Name / Level / BU</span>
+</div>
+<div class="note">
+<strong data-i18n="attention">注意：</strong><span data-i18n="attention_text">Requester和Approver必须由SPM提前沟通好，否则对方可能因不了解背景直接拒绝PR。</span></div>
+<div class="sample-upload">
+<div class="sample-head">
+<div>
+<strong data-i18n="sample_title">PR示例表格图片</strong>
+<div class="sample-tip" data-i18n="sample_tip">图片通过HTML源码中的Base64变量加载。</div>
+</div>
+</div>
+<div class="sample-preview" id="prSamplePreview">
+<div class="placeholder">
+<div class="placeholder-icon">▧</div>
+<div data-i18n="sample_empty">尚未配置示例图片</div>
+<small data-i18n="sample_empty_hint">请在HTML源码底部的 PR_SAMPLE_IMAGE_BASE64 变量中粘贴Base64内容</small>
+</div>
+</div>
+</div>
+</section>
+<section class="card">
+<h2 data-i18n="section4">四、BPA与审批问题</h2>
+<div class="note" style="border-left-width:6px;font-size:15px;">
+<strong data-i18n="bpa_alert_title">重点提醒：BPA通常会在每月1日凌晨过期。</strong><br/><span data-i18n="bpa_alert_text">月底才提交PR风险很高，可能还未完成下单，BPA就已失效。建议提前检查有效期并尽量提前办理。</span></div>
+<h3 data-i18n="bpa_expired">BPA过期后的处理</h3>
+<ul>
+<li data-i18n="bpa_li1">BPA一旦过期，系统无法继续下单。</li>
+<li data-i18n="bpa_li2">需要联系采购（CEG）刷新BPA，并获取新的BPA信息。</li>
+<li data-i18n="bpa_li3">不知道对应采购是谁时，联系傅强。</li>
+</ul>
+<h3 data-i18n="approval_questions">审批人有疑问时</h3>
+<ul>
+<li data-i18n="approval_li1">项目背景、人员安排：找SPM或业务主管。</li>
+<li data-i18n="approval_li2">合同、供应商框架、BPA：找采购。</li>
+<li data-i18n="approval_li3">Service Product Code：找SPM、Irfan、Haitham。</li>
+<li data-i18n="approval_li4">审批链或系统状态：找Irfan。</li>
+<li data-i18n="approval_li5">系统操作或下单支持：找马哲军，并提前提供完整信息。</li>
+</ul>
+<div class="ok"><span data-i18n="communication_prefix">找任何人时都要说明：</span><strong data-i18n="communication_text">背景、当前问题、需要对方做什么、希望何时完成。</strong>
+</div>
+</section>
+</div>
+<div class="bottom-grid">
+<section class="card">
+<h2 data-i18n="section5">五、主要联系人</h2>
+<table class="contacts">
+<tr>
+<td>Irfan Haider</td>
+<td>84445104</td>
+<td data-i18n="contact_irfan">PR表格、Service Product Code选项、PR下发、审批链</td>
+</tr>
+<tr>
+<td>Haitham Mosaad Abd Elrasheed Elbadawy</td>
+<td>00089094</td>
+<td data-i18n="contact_haitham">Service Product Code专业复核</td>
+</tr>
+<tr>
+<td data-i18n="name_fu">傅强</td>
+<td>00541117</td>
+<td data-i18n="contact_fu">采购联系人、合同、供应商框架、BPA</td>
+</tr>
+<tr>
+<td data-i18n="name_ma">马哲军</td>
+<td>00660833</td>
+<td data-i18n="contact_ma">协助系统操作和下单；需要提前提供清晰、完整的信息。业务背景、项目分摊等需由业务侧自行确认</td>
+</tr>
+</table>
+</section>
+<section class="card">
+<h2 data-i18n="section6">六、最终检查</h2>
+<ul>
+<li data-i18n="check1">四个项目Cost Share合计为100%。</li>
+<li data-i18n="check2">四个项目的Requester和Approver均已在下PR前提前沟通。</li>
+<li data-i18n="check3">Service Product Code已由SPM确认并由Haitham复核。</li>
+<li data-i18n="check4">所有BPA均在有效期内。</li>
+<li data-i18n="check5">PR下发后，分别联系四个项目SPM，由SPM催各自Approver。</li>
+<li data-i18n="check6">PR完成后联系采购（CEG）跟进PO，PO下发后再安排进场。</li>
+</ul>
+</section>
+</div>
+<div class="footer" data-i18n="footer">PR/PO流程交接材料 · 精简版</div>
+</div>
+
+<script>
+/*
+  PR示例表格图片 Base64 放置区
+  只粘贴 Base64 正文，不要包含 data:image/png;base64, 前缀。
+
+  示例：
+  const PR_SAMPLE_IMAGE_BASE64 = "iVBORw0KGgoAAAANSUhEUgAA...";
+*/
+const PR_SAMPLE_IMAGE_BASE64 = "";
+
+function renderPrSampleImage() {
+  if (!PR_SAMPLE_IMAGE_BASE64.trim()) return;
+
+  const preview = document.getElementById("prSamplePreview");
+  if (!preview) return;
+
+  const img = document.createElement("img");
+  img.src = `data:image/png;base64,${PR_SAMPLE_IMAGE_BASE64.trim()}`;
+  img.alt = "PR sample form";
+  img.title = "Click to view the original image";
+  img.addEventListener("click", () => window.open(img.src, "_blank"));
+
+  preview.innerHTML = "";
+  preview.appendChild(img);
+}
+
+renderPrSampleImage();
+</script>
+
+<script>
+    const translations = {
+      zh: {
+        title: "84转业务外包PR/PO下单及跟进流程交接说明",
+        subtitle: "适用于下一位人员涉及 TE、ET、VDF、ORG 四个项目的PR/PO办理与跟进。",
+        section1: "一、整体流程",
+        s1_step1_title: "准备PR表格",
+        s1_step1_text: "收集人员、项目、合同、BPA、Requester、Approver等信息。",
+        s1_step2_title: "确认关键信息",
+        s1_step2_text: "各项目SPM确认项目编码、合同编号、Sub-Project Code、Requester和Approver。",
+        s1_step3_title: "确认Service Product Code",
+        s1_step3_text: "SPM先确认；不确定时让Irfan给选项；最终发Haitham复核。",
+        s1_step4_title: "确定Cost Share",
+        s1_step4_text: "TE、ET、VDF、ORG四个项目的分担比例由经办人直接确定，合计必须为100%。",
+        s1_step5_title: "提交PR并跟进审批",
+        s1_step5_text: "Irfan协助下发PR和提供审批链；PR提交后，分别联系四个项目SPM，由SPM催各自Approver。",
+        s1_step6_title: "PR完成后联系采购（CEG）跟进PO",
+        s1_step6_text: "确认PO创建、审批和下发时间；PO下发后人员才能正式进场。",
+        section2: "二、四项目催办流程",
+        flow_start: "准备下一位人员PR",
+        flow_cost: "确定四项目Cost Share，合计100%",
+        flow_collect: "收集四个项目资料，并由SPM提前沟通Requester与Approver",
+        flow_te_1: "TE SPM确认资料并提前沟通Requester、Approver",
+        flow_te_2: "PR提交后请 TE SPM 催 TE Approver",
+        flow_et_1: "ET SPM确认资料并提前沟通Requester、Approver",
+        flow_et_2: "PR提交后请 ET SPM 催 ET Approver",
+        flow_vdf_1: "VDF SPM确认资料并提前沟通Requester、Approver",
+        flow_vdf_2: "PR提交后请 VDF SPM 催 VDF Approver",
+        flow_org_1: "ORG SPM确认资料并提前沟通Requester、Approver",
+        flow_org_2: "PR提交后请 ORG SPM 催 ORG Approver",
+        flow_all_done: "四条审批路径全部完成",
+        flow_unified: "汇总至统一审批人",
+        flow_finish: "PR完成 → 联系采购（CEG）跟进PO → 人员进场",
+        section3: "三、PR表格重点字段",
+        attention: "注意：",
+        attention_text: "Requester和Approver必须由SPM提前沟通好，否则对方可能因不了解背景直接拒绝PR。",
+        sample_title: "PR示例表格图片",
+        sample_tip: "图片通过HTML源码中的Base64变量加载。",
+        sample_empty: "尚未配置示例图片",
+        sample_empty_hint: "请在HTML源码底部的 PR_SAMPLE_IMAGE_BASE64 变量中粘贴Base64内容",
+        section4: "四、BPA与审批问题",
+        bpa_alert_title: "重点提醒：BPA通常会在每月1日凌晨过期。",
+        bpa_alert_text: "月底才提交PR风险很高，可能还未完成下单，BPA就已失效。建议提前检查有效期并尽量提前办理。",
+        bpa_expired: "BPA过期后的处理",
+        bpa_li1: "BPA一旦过期，系统无法继续下单。",
+        bpa_li2: "需要联系采购（CEG）刷新BPA，并获取新的BPA信息。",
+        bpa_li3: "不知道对应采购是谁时，联系傅强。",
+        approval_questions: "审批人有疑问时",
+        approval_li1: "项目背景、人员安排：找SPM或业务主管。",
+        approval_li2: "合同、供应商框架、BPA：找采购。",
+        approval_li3: "Service Product Code：找SPM、Irfan、Haitham。",
+        approval_li4: "审批链或系统状态：找Irfan。",
+        approval_li5: "系统操作或下单支持：找马哲军，并提前提供完整信息。",
+        communication_prefix: "找任何人时都要说明：",
+        communication_text: "背景、当前问题、需要对方做什么、希望何时完成。",
+        section5: "五、主要联系人",
+        contact_irfan: "PR表格、Service Product Code选项、PR下发、审批链",
+        contact_haitham: "Service Product Code专业复核",
+        contact_fu: "采购联系人、合同、供应商框架、BPA",
+        contact_ma: "协助系统操作和下单；需要提前提供清晰、完整的信息。业务背景、项目分摊等需由业务侧自行确认",
+        name_fu: "傅强",
+        name_ma: "马哲军",
+        section6: "六、最终检查",
+        check1: "四个项目Cost Share合计为100%。",
+        check2: "四个项目的Requester和Approver均已在下PR前提前沟通。",
+        check3: "Service Product Code已由SPM确认并由Haitham复核。",
+        check4: "所有BPA均在有效期内。",
+        check5: "PR下发后，分别联系四个项目SPM，由SPM催各自Approver。",
+        check6: "PR完成后联系采购（CEG）跟进PO，PO下发后再安排进场。",
+        footer: "PR/PO流程交接材料 · 精简版"
+      },
+      en: {
+        title: "Handover Guide for 84-to-Outsourcing PR/PO Ordering and Follow-up",
+        subtitle: "For the next resource covering four projects: TE, ET, VDF and ORG.",
+        section1: "1. Overall Process",
+        s1_step1_title: "Prepare the PR form",
+        s1_step1_text: "Collect resource, project, contract, BPA, Requester and Approver information.",
+        s1_step2_title: "Confirm key information",
+        s1_step2_text: "Each project SPM confirms the project code, contract number, Sub-Project Code, Requester and Approver.",
+        s1_step3_title: "Confirm Service Product Code",
+        s1_step3_text: "The SPM confirms first; if unclear, ask Irfan for options; then send the final choice to Haitham for review.",
+        s1_step4_title: "Set Cost Share",
+        s1_step4_text: "The operator directly sets the TE, ET, VDF and ORG cost-share percentages. The total must equal 100%.",
+        s1_step5_title: "Submit PR and follow approval",
+        s1_step5_text: "Irfan supports PR submission and provides the approval chain. After submission, contact each project SPM and ask the SPM to follow up with the relevant Approver.",
+        s1_step6_title: "After PR completion, contact Procurement (CEG) for PO follow-up",
+        s1_step6_text: "Confirm PO creation, approval and issuance timing. The resource can enter only after the PO is issued.",
+        section2: "2. Four-Project Follow-up Flow",
+        flow_start: "Prepare the PR for the next resource",
+        flow_cost: "Set four-project Cost Share; total = 100%",
+        flow_collect: "Collect information for all four projects and ask each SPM to pre-align with the Requester and Approver",
+        flow_te_1: "TE SPM confirms data and pre-aligns with Requester and Approver",
+        flow_te_2: "After PR submission, ask TE SPM to follow up with TE Approver",
+        flow_et_1: "ET SPM confirms data and pre-aligns with Requester and Approver",
+        flow_et_2: "After PR submission, ask ET SPM to follow up with ET Approver",
+        flow_vdf_1: "VDF SPM confirms data and pre-aligns with Requester and Approver",
+        flow_vdf_2: "After PR submission, ask VDF SPM to follow up with VDF Approver",
+        flow_org_1: "ORG SPM confirms data and pre-aligns with Requester and Approver",
+        flow_org_2: "After PR submission, ask ORG SPM to follow up with ORG Approver",
+        flow_all_done: "All four approval paths completed",
+        flow_unified: "Consolidate to the common final approver",
+        flow_finish: "PR completed → Contact Procurement (CEG) for PO → Resource entry",
+        section3: "3. Key Fields in the PR Form",
+        attention: "Important:",
+        attention_text: "The SPM must communicate with the Requester and Approver in advance; otherwise, they may reject the PR because they do not understand the background.",
+        sample_title: "Sample PR Form Image",
+        sample_tip: "The image is loaded from a Base64 variable in the HTML source.",
+        sample_empty: "No sample image configured",
+        sample_empty_hint: "Paste the Base64 content into the PR_SAMPLE_IMAGE_BASE64 variable near the bottom of the HTML source.",
+        section4: "4. BPA and Approval Issues",
+        bpa_alert_title: "Key reminder: BPA usually expires at 00:00 on the first day of each month.",
+        bpa_alert_text: "Submitting near month-end is risky because the BPA may expire before ordering is completed. Check validity in advance and process early.",
+        bpa_expired: "What to do after BPA expiry",
+        bpa_li1: "Once the BPA expires, the system cannot continue the ordering process.",
+        bpa_li2: "Contact Procurement (CEG) to refresh the BPA and obtain the new BPA information.",
+        bpa_li3: "If the responsible buyer is unknown, contact Fu Qiang.",
+        approval_questions: "When an approver raises questions",
+        approval_li1: "Project background or resource arrangement: contact the SPM or business manager.",
+        approval_li2: "Contract, supplier framework or BPA: contact Procurement.",
+        approval_li3: "Service Product Code: contact the SPM, Irfan and Haitham.",
+        approval_li4: "Approval chain or system status: contact Irfan.",
+        approval_li5: "System operation or ordering support: contact Ma Zhejun and provide complete information in advance.",
+        communication_prefix: "Whenever contacting someone, explain:",
+        communication_text: "the background, current issue, requested action and expected completion time.",
+        section5: "5. Key Contacts",
+        contact_irfan: "PR form review, Service Product Code options, PR submission and approval chain",
+        contact_haitham: "Professional review of Service Product Code",
+        contact_fu: "Buyer identification, contracts, supplier framework and BPA",
+        contact_ma: "Supports system operation and ordering. Clear and complete information must be provided; business background and project allocation must be confirmed by the business side.",
+        name_fu: "Fu Qiang",
+        name_ma: "Ma Zhejun",
+        section6: "6. Final Check",
+        check1: "The four-project Cost Share totals 100%.",
+        check2: "Requester and Approver for all four projects were contacted before PR submission.",
+        check3: "Service Product Code was confirmed by the SPM and reviewed by Haitham.",
+        check4: "All BPAs are still valid.",
+        check5: "After PR submission, contact each project SPM and ask the SPM to follow up with the relevant Approver.",
+        check6: "After PR completion, contact Procurement (CEG) for PO follow-up, and arrange entry only after PO issuance.",
+        footer: "PR/PO Handover Guide · Condensed Version"
+      },
+      ar: {
+        title: "دليل تسليم متابعة وإصدار طلبات PR/PO لتحويل 84 إلى التعهيد الخارجي",
+        subtitle: "مخصص للموظف التالي الذي سيغطي أربعة مشاريع: TE وET وVDF وORG.",
+        section1: "١. العملية العامة",
+        s1_step1_title: "إعداد نموذج PR",
+        s1_step1_text: "جمع معلومات الموظف والمشروع والعقد وBPA وRequester وApprover.",
+        s1_step2_title: "تأكيد المعلومات الأساسية",
+        s1_step2_text: "يقوم SPM لكل مشروع بتأكيد رمز المشروع ورقم العقد وSub-Project Code وRequester وApprover.",
+        s1_step3_title: "تأكيد Service Product Code",
+        s1_step3_text: "يؤكد SPM أولاً؛ وإذا لم يكن واضحاً، يطلب خيارات من Irfan؛ ثم يرسل الاختيار النهائي إلى Haitham للمراجعة.",
+        s1_step4_title: "تحديد Cost Share",
+        s1_step4_text: "يقوم مسؤول التنفيذ بتحديد نسب توزيع التكلفة لمشاريع TE وET وVDF وORG مباشرة، ويجب أن يكون الإجمالي 100٪.",
+        s1_step5_title: "إرسال PR ومتابعة الموافقات",
+        s1_step5_text: "يساعد Irfan في إصدار PR وتوفير مسار الموافقات. بعد الإرسال، يتم التواصل مع SPM لكل مشروع ليقوم بمتابعة Approver الخاص به.",
+        s1_step6_title: "بعد اكتمال PR يتم التواصل مع المشتريات (CEG) لمتابعة PO",
+        s1_step6_text: "يتم تأكيد إنشاء PO واعتماده وموعد إصداره. لا يمكن دخول الموظف قبل إصدار PO.",
+        section2: "٢. مسار المتابعة للمشاريع الأربعة",
+        flow_start: "إعداد PR للموظف التالي",
+        flow_cost: "تحديد Cost Share للمشاريع الأربعة، الإجمالي 100٪",
+        flow_collect: "جمع بيانات المشاريع الأربعة وطلب قيام كل SPM بالتنسيق المسبق مع Requester وApprover",
+        flow_te_1: "يقوم TE SPM بتأكيد البيانات والتنسيق مسبقاً مع Requester وApprover",
+        flow_te_2: "بعد إرسال PR، يُطلب من TE SPM متابعة TE Approver",
+        flow_et_1: "يقوم ET SPM بتأكيد البيانات والتنسيق مسبقاً مع Requester وApprover",
+        flow_et_2: "بعد إرسال PR، يُطلب من ET SPM متابعة ET Approver",
+        flow_vdf_1: "يقوم VDF SPM بتأكيد البيانات والتنسيق مسبقاً مع Requester وApprover",
+        flow_vdf_2: "بعد إرسال PR، يُطلب من VDF SPM متابعة VDF Approver",
+        flow_org_1: "يقوم ORG SPM بتأكيد البيانات والتنسيق مسبقاً مع Requester وApprover",
+        flow_org_2: "بعد إرسال PR، يُطلب من ORG SPM متابعة ORG Approver",
+        flow_all_done: "اكتمال مسارات الموافقة الأربعة",
+        flow_unified: "التجميع لدى صاحب الموافقة النهائية الموحد",
+        flow_finish: "اكتمال PR ← التواصل مع المشتريات (CEG) لمتابعة PO ← دخول الموظف",
+        section3: "٣. الحقول الأساسية في نموذج PR",
+        attention: "تنبيه:",
+        attention_text: "يجب أن يقوم SPM بالتواصل مسبقاً مع Requester وApprover، وإلا فقد يتم رفض PR بسبب عدم وضوح الخلفية.",
+        sample_title: "صورة نموذج PR",
+        sample_tip: "يتم تحميل الصورة من متغير Base64 داخل مصدر HTML.",
+        sample_empty: "لم يتم إعداد صورة نموذجية",
+        sample_empty_hint: "الصق محتوى Base64 في متغير PR_SAMPLE_IMAGE_BASE64 قرب نهاية مصدر HTML.",
+        section4: "٤. مشكلات BPA والموافقات",
+        bpa_alert_title: "تنبيه مهم: تنتهي صلاحية BPA عادة عند منتصف ليل اليوم الأول من كل شهر.",
+        bpa_alert_text: "الإرسال في نهاية الشهر يحمل مخاطرة عالية، فقد تنتهي صلاحية BPA قبل اكتمال الطلب. يجب فحص الصلاحية مسبقاً والبدء مبكراً.",
+        bpa_expired: "الإجراء بعد انتهاء BPA",
+        bpa_li1: "بعد انتهاء BPA لا يمكن للنظام متابعة عملية الطلب.",
+        bpa_li2: "يجب التواصل مع المشتريات (CEG) لتجديد BPA والحصول على معلومات BPA الجديدة.",
+        bpa_li3: "إذا لم يكن مسؤول المشتريات معروفاً، يتم التواصل مع Fu Qiang.",
+        approval_questions: "عند وجود استفسارات من Approver",
+        approval_li1: "خلفية المشروع أو ترتيبات الموظف: التواصل مع SPM أو مدير الأعمال.",
+        approval_li2: "العقد أو إطار المورد أو BPA: التواصل مع المشتريات.",
+        approval_li3: "Service Product Code: التواصل مع SPM وIrfan وHaitham.",
+        approval_li4: "مسار الموافقات أو حالة النظام: التواصل مع Irfan.",
+        approval_li5: "دعم تشغيل النظام أو إصدار الطلب: التواصل مع Ma Zhejun مع تزويده بالمعلومات الكاملة مسبقاً.",
+        communication_prefix: "عند التواصل مع أي شخص يجب توضيح:",
+        communication_text: "الخلفية والمشكلة الحالية والإجراء المطلوب والموعد المتوقع للإنجاز.",
+        section5: "٥. جهات الاتصال الرئيسية",
+        contact_irfan: "مراجعة نموذج PR وخيارات Service Product Code وإصدار PR ومسار الموافقات",
+        contact_haitham: "المراجعة المهنية لـ Service Product Code",
+        contact_fu: "تحديد مسؤول المشتريات والعقود وإطار المورد وBPA",
+        contact_ma: "دعم تشغيل النظام وإصدار الطلب. يجب توفير معلومات واضحة وكاملة، بينما تؤكد جهة الأعمال الخلفية وتوزيع المشاريع.",
+        name_fu: "Fu Qiang",
+        name_ma: "Ma Zhejun",
+        section6: "٦. الفحص النهائي",
+        check1: "إجمالي Cost Share للمشاريع الأربعة يساوي 100٪.",
+        check2: "تم التواصل مسبقاً مع Requester وApprover لكل المشاريع الأربعة قبل إرسال PR.",
+        check3: "تم تأكيد Service Product Code بواسطة SPM ومراجعته بواسطة Haitham.",
+        check4: "جميع BPAs ما زالت سارية.",
+        check5: "بعد إرسال PR يتم التواصل مع SPM لكل مشروع ليقوم بمتابعة Approver الخاص به.",
+        check6: "بعد اكتمال PR يتم التواصل مع المشتريات (CEG) لمتابعة PO، ولا يتم ترتيب الدخول إلا بعد إصدار PO.",
+        footer: "دليل تسليم PR/PO · نسخة مختصرة"
+      }
+    };
+
+    function setLanguage(lang){
+      const dict = translations[lang] || translations.zh;
+      document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.dataset.i18n;
+        if (dict[key] !== undefined) el.textContent = dict[key];
+      });
+
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === lang);
+      });
+
+      localStorage.setItem('prpo_lang', lang);
+    }
+
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.addEventListener('click', () => setLanguage(btn.dataset.lang));
+    });
+
+    setLanguage(localStorage.getItem('prpo_lang') || 'zh');
+  </script>
+</body>
+</html>

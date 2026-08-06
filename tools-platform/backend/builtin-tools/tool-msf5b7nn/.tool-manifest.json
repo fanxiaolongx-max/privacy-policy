@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "tool": {
+    "slug": "tool-msf5b7nn",
+    "name": "会议考勤",
+    "icon": "🧩",
+    "description": "批量导入QR、RFC、WFM名单及线上线下签到表，合并去重参会人员，按最早签到时间判定准时、迟到、虚假签到或缺席，并支持检索与导出。",
+    "tags": [
+      "表格导入",
+      "名单去重",
+      "签到匹配",
+      "人员检索",
+      "结果导出"
+    ],
+    "href": "/tools/tool-msf5b7nn",
+    "filePath": "/custom-tools/tool-msf5b7nn/index.html",
+    "publicAccess": false,
+    "createdAt": "2026-08-04T21:03:49.379Z",
+    "updatedAt": "2026-08-04T21:03:49.379Z"
+  },
+  "history": {
+    "id": "custom-import-tool-msf5b7nn",
+    "tool": "custom",
+    "action": "导入自定义工具",
+    "detail": "会议考勤 (tool-msf5b7nn)",
+    "time": "2026-08-04T21:03:49.379Z"
+  }
+}

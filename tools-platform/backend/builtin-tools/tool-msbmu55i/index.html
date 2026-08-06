@@ -1,0 +1,498 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>iDesk Third-Party Tools Action Plan</title><style>
+:root{--primary:#c8102e;--primary2:#c7000b;--deep:#78000f;--darkred:#9f0001;--salmon:#ea5a4f;--peach:#e98c80;--orange:#eb5c01;--amber:#f08500;--gold:#f8b53c;--yellow:#f5dc57;--ink:#231815;--muted:#595757;--gray:#898989;--line:#dddddd;--bg:#f5f5f5;--white:#ffffff;--red:#c8102e;--green:#9f0001}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:Arial,"Microsoft YaHei","PingFang SC",sans-serif}body{padding:22px 0}.slide{width:1600px;height:900px;margin:auto;background:#fff;position:relative;overflow:hidden;box-shadow:0 18px 50px rgba(35,24,21,.16)}.slide:before{content:"";position:absolute;inset:0 0 auto;height:11px;background:linear-gradient(90deg,var(--deep),var(--primary),var(--primary2))}.header{position:absolute;left:52px;right:52px;top:34px;height:100px;display:flex;align-items:flex-start;justify-content:space-between}.brand{font-size:20px;font-weight:900;color:var(--primary)}.brand span{color:var(--salmon)}h1{margin:8px 0 0;font-size:38px;line-height:1.15}.head-note{margin-top:10px;font-size:15px;color:var(--muted);max-width:960px}.deadline{margin-top:7px;padding:11px 16px;border-radius:14px;background:#edf4ff;border:1px solid #cfe0fa;color:var(--primary);font-size:15px;font-weight:800;text-align:right}.divider{position:absolute;left:52px;right:52px;top:148px;height:1px;background:var(--line)}
+.main{position:absolute;left:52px;right:52px;top:172px;bottom:42px;display:grid;grid-template-columns:1.12fr .88fr;gap:22px}.panel{border:1px solid var(--line);border-radius:22px;background:#fff;box-shadow:0 8px 22px rgba(35,24,21,.07);overflow:hidden}.panel-head{height:58px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;background:#fff;border-bottom:1px solid var(--line)}.panel-title{font-size:22px;font-weight:900}.panel-sub{font-size:13px;color:var(--muted)}
+.left-body{height:calc(100% - 58px);padding:17px;display:grid;grid-template-rows:148px 390px;align-content:start;gap:14px}.req-step{display:grid;grid-template-columns:.9fr 1.35fr;gap:14px}.box{border:1px solid var(--line);border-radius:16px;background:#fff;padding:14px 16px}.box h3{margin:0 0 9px;font-size:17px}.req-line{display:flex;gap:9px;align-items:flex-start;font-size:14px;line-height:1.45;margin:6px 0}.dot{width:9px;height:9px;border-radius:50%;background:var(--primary);margin-top:6px;flex:0 0 auto}.flow{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.flow-item{border-radius:13px;background:#fff5f5;padding:11px 10px;position:relative}.flow-num{font-weight:900;color:var(--primary);font-size:13px}.flow-title{font-weight:900;margin:3px 0 2px;font-size:14px}.flow-desc{font-size:12px;color:var(--muted);line-height:1.35}
+.shots{display:grid;grid-template-columns:1fr 1fr;gap:14px}.shot{border:1px solid var(--line);border-radius:17px;background:#fafafa;overflow:hidden;display:flex;flex-direction:column}.shot-h{height:48px;padding:10px 13px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px}.badge{width:31px;height:31px;border-radius:10px;background:#e6efff;color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:900}.shot-h strong{font-size:14px}.shot-h span{display:block;color:var(--muted);font-size:11px;margin-top:2px}.upload-zone{position:relative;flex:1;margin:8px 10px 10px;border:2px dashed #d8a6ad;border-radius:14px;background:linear-gradient(135deg,#fff,#fff4f4);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer}.placeholder{text-align:center;color:#777;padding:18px;pointer-events:none}.upload-icon{font-size:28px;color:var(--primary);font-weight:900}.placeholder strong{display:block;color:#3d3030;margin:7px 0 4px;font-size:14px}.placeholder span{font-size:11px;line-height:1.45}.preview{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:white;display:none}.image-tools{position:absolute;right:8px;top:8px;display:flex;gap:6px;z-index:3;opacity:0;visibility:hidden;pointer-events:none;transform:translateY(-4px);transition:opacity .18s ease,transform .18s ease,visibility .18s}.upload-zone:hover .image-tools,.upload-zone:focus-within .image-tools,.upload-zone.show-tools .image-tools{opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0)}.tool-btn{border:0;border-radius:8px;background:rgba(35,24,21,.78);color:#fff;padding:6px 9px;font-size:11px;cursor:pointer;backdrop-filter:blur(4px)}.tool-btn:hover{background:rgba(200,16,46,.92)}input[type=file]{display:none}
+.right-body{height:calc(100% - 58px);padding:16px;display:grid;grid-template-rows:94px 144px 161px 161px;gap:12px;overflow:hidden}.target{border-radius:17px;background:linear-gradient(135deg,var(--deep),var(--primary));color:#fff;padding:15px 17px;display:grid;grid-template-columns:1fr auto;align-items:center}.target .label{font-size:12px;opacity:.8;text-transform:uppercase;letter-spacing:.8px}.target .big{font-size:25px;font-weight:900;margin-top:4px}.cycle{font-size:13px;text-align:right;line-height:1.5}.overall{border:1px solid var(--line);border-radius:17px;background:#fff;padding:12px 14px;overflow:hidden}.section-label{font-size:12px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.7px}.progress-row{display:grid;grid-template-columns:minmax(0,1fr);gap:0;align-items:center;margin-top:7px}.progress-value{min-width:0}.progress-input{width:100%;height:34px;border:1px solid #d9b9be;border-radius:9px;padding:3px 9px;font:900 23px Arial,"Microsoft YaHei",sans-serif;color:var(--primary);background:#fff;outline:none}.progress-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(200,16,46,.10)}.percent-wrap{display:flex;align-items:center;justify-content:flex-end;gap:5px;font-size:12px;color:var(--muted)}.percent-input{width:58px;height:30px;border:1px solid var(--line);border-radius:8px;padding:3px 6px;text-align:center;font-weight:800;color:var(--ink);outline:none}.bar{height:10px;background:#f2e6e7;border-radius:99px;overflow:hidden;margin-top:8px;display:flex}.bar-seg{display:block;height:100%;width:0;transition:width .2s ease}.bar-done{background:var(--deep)}.bar-doing{background:var(--amber)}.bar-support{background:var(--salmon)}.status-tags{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px}.tag{min-height:42px;padding:6px 7px;border-radius:9px;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:space-between;gap:6px;white-space:nowrap}.tag input{width:44px;height:27px;border:1px solid rgba(35,24,21,.14);border-radius:7px;background:#fff;text-align:center;font-weight:900;color:inherit;outline:none}.tag input:focus{border-color:currentColor;box-shadow:0 0 0 2px rgba(200,16,46,.09)}.tag-unit{font-size:10px}.g{background:#f4e7e8;color:#78000f}.o{background:#fff0e3;color:#9b3d00}.r{background:#fdebed;color:#c8102e}.total-hint{margin-top:5px;text-align:right;font-size:10px;color:var(--muted)}.total-hint.warn{color:var(--primary);font-weight:800}
+.info-card{border:1px solid var(--line);border-radius:17px;background:#fff;padding:13px 15px;overflow:hidden}.info-card h3{margin:0 0 7px;font-size:16px}.info-card ul{margin:0;padding-left:18px}.info-card li{font-size:12.5px;line-height:1.38;margin:5px 0;color:#3c4a5f}.issue{border-left:5px solid var(--orange)}.next{border-left:5px solid var(--primary)}.footer-note{position:absolute;left:54px;right:54px;bottom:10px;font-size:10.5px;color:#6f6f6f;display:flex;align-items:center;gap:12px;white-space:nowrap}.footer-note b{color:var(--deep)}.footer-note span{display:inline-flex;align-items:center;gap:5px}.footer-note i{width:4px;height:4px;border-radius:50%;background:var(--primary);display:inline-block;flex:0 0 auto}
+.utility-btn{position:fixed;right:24px;bottom:24px;z-index:50;height:38px;width:38px;border:1px solid rgba(120,0,15,.28);border-radius:12px;background:rgba(255,255,255,.72);color:rgba(120,0,15,.62);padding:0 10px;font:700 13px inherit;box-shadow:0 4px 14px rgba(35,24,21,.08);cursor:pointer;display:flex;align-items:center;justify-content:flex-start;gap:8px;overflow:hidden;white-space:nowrap;backdrop-filter:blur(5px);transition:width .22s ease,background .2s ease,color .2s ease,border-color .2s ease,box-shadow .2s ease}.utility-btn .utility-icon{flex:0 0 auto;width:17px;text-align:center;font-size:11px;font-weight:900;letter-spacing:-.5px}.utility-btn .utility-label{opacity:0;transform:translateX(5px);transition:opacity .16s ease,transform .16s ease}.utility-btn:hover,.utility-btn:focus-visible,.utility-btn.panel-open{width:205px;background:rgba(120,0,15,.95);color:#fff;border-color:rgba(120,0,15,.95);box-shadow:0 10px 28px rgba(120,0,15,.20)}.utility-btn:hover .utility-label,.utility-btn:focus-visible .utility-label,.utility-btn.panel-open .utility-label{opacity:1;transform:translateX(0)}.utility-btn:before{content:"";position:absolute;inset:-10px}.utility-panel{position:fixed;right:24px;bottom:82px;z-index:60;width:430px;max-height:78vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 18px 50px rgba(35,24,21,.22);padding:18px;display:none}.utility-panel.open{display:block}.utility-panel h3{margin:0 0 8px}.utility-panel p{font-size:13px;color:var(--muted);line-height:1.5}.converter-row{display:grid;grid-template-columns:1fr auto;gap:8px}.converter-row input[type=file]{display:block}.mini-btn{border:0;border-radius:10px;background:var(--primary);color:#fff;padding:9px 12px;font-weight:700;cursor:pointer}.mini-btn.secondary{background:#fdebed;color:var(--deep)}.mini-btn.dark{background:var(--ink)}.base64-box{width:100%;height:100px;margin-top:10px;border:1px solid #ccc;border-radius:10px;padding:9px;font:11px Consolas,monospace}.utility-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.utility-note{margin-top:10px;padding:10px;background:#f7f7f7;border-radius:10px;font-size:12px;color:#666;line-height:1.5}
+
+.lang-switch{position:absolute;right:52px;top:122px;z-index:20;display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;box-shadow:0 4px 12px rgba(35,24,21,.08)}.lang-switch button{border:0;background:#fff;color:var(--muted);padding:7px 12px;font:800 12px inherit;cursor:pointer}.lang-switch button.active{background:var(--primary);color:#fff}.lang-switch button+button{border-left:1px solid var(--line)}
+@media print{body{padding:0;background:#fff}.slide{margin:0;box-shadow:none;width:13.333in;height:7.5in}.utility-btn,.utility-panel,.image-tools,.lang-switch{display:none!important}@page{size:13.333in 7.5in;margin:0}}
+
+/* Screen-fit and English layout refinements */
+body{padding:12px 0;overflow:auto}.stage{position:relative;margin:0 auto}.header>div:first-child{flex:1;min-width:0;padding-right:22px}.deadline{flex:0 0 auto;max-width:420px;white-space:nowrap}.target .big{line-height:1.15}.cycle{min-width:150px;white-space:nowrap}.panel-title,.panel-sub{white-space:nowrap}.shot-h>div{min-width:0}.shot-h strong,.shot-h span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.info-card li{margin:4px 0}.footer-note{overflow:hidden;text-overflow:ellipsis}
+html.en-ui h1{font-size:34px;line-height:1.08;white-space:nowrap;letter-spacing:-.5px}html.en-ui .head-note{font-size:14px;white-space:nowrap}html.en-ui .deadline{font-size:13px;padding:10px 13px}html.en-ui .panel-title{font-size:20px}html.en-ui .panel-sub{font-size:12px}html.en-ui .req-line{font-size:13px;line-height:1.35}html.en-ui .flow-title{font-size:13px}html.en-ui .flow-desc{font-size:11px;line-height:1.25}html.en-ui .shot-h strong{font-size:12.5px}html.en-ui .shot-h span{font-size:10px}html.en-ui .placeholder strong{font-size:13px}html.en-ui .target{grid-template-columns:minmax(0,1fr) 158px;padding:13px 15px}html.en-ui .target .big{font-size:21px;white-space:nowrap}html.en-ui .cycle{font-size:11.5px;line-height:1.35}html.en-ui .section-label{font-size:11px}html.en-ui .progress-input{font-size:20px}html.en-ui .tag{font-size:9.8px;padding:6px 6px;gap:3px}html.en-ui .tag input{width:38px}html.en-ui .info-card h3{font-size:14.5px;margin-bottom:5px}html.en-ui .info-card li{font-size:11.3px;line-height:1.28;margin:3px 0}html.en-ui .footer-note{font-size:9.4px;gap:8px}html.en-ui .right-body{grid-template-rows:94px 144px 151px 151px;gap:10px}html.en-ui .left-body{grid-template-rows:142px 396px}
+@media screen and (max-aspect-ratio: 4/3){.utility-panel{max-width:calc(100vw - 28px);right:14px}.utility-btn{right:14px;bottom:14px}}
+@media print{.stage{width:13.333in!important;height:7.5in!important}.slide{transform:none!important}}
+
+/* Huawei-style flat reporting layout */
+.slide{box-shadow:none;background:#fff}
+.header{height:108px}
+h1{font-size:44px;line-height:1.08;letter-spacing:-.4px}
+.head-note{font-size:17px;line-height:1.4}
+.deadline{background:transparent;border:0;border-radius:0;padding:8px 0;font-size:17px;color:var(--deep)}
+.divider{background:linear-gradient(90deg,var(--primary) 0 120px,var(--line) 120px 100%);height:2px}
+.main{gap:34px;top:178px}
+.panel{border:0;border-radius:0;box-shadow:none;overflow:visible}
+.panel-head{height:54px;padding:0;border-bottom:2px solid var(--line);background:transparent}
+.panel-title{font-size:27px}
+.panel-sub{font-size:15px}
+.left-body{height:calc(100% - 54px);padding:18px 0 0;grid-template-rows:150px 390px;gap:18px}
+.req-step{gap:28px}
+.box{border:0;border-radius:0;padding:0;background:transparent}
+.box h3{font-size:21px;margin-bottom:12px;color:var(--deep)}
+.req-line{font-size:17px;line-height:1.48;margin:8px 0}
+.dot{width:7px;height:7px;margin-top:9px}
+.flow{gap:18px}
+.flow-item{border-radius:0;background:transparent;padding:0 10px 0 0;border-right:1px solid var(--line)}
+.flow-item:last-child{border-right:0}
+.flow-num{font-size:15px}
+.flow-title{font-size:18px;margin:5px 0 4px}
+.flow-desc{font-size:14px;line-height:1.4}
+.shots{gap:20px}
+.shot{border:0;border-radius:0;background:transparent;overflow:visible}
+.shot-h{height:52px;padding:0 0 10px;background:transparent;border-bottom:1px solid var(--line)}
+.badge{width:30px;height:30px;border-radius:0;background:var(--primary);color:#fff}
+.shot-h strong{font-size:16px}
+.shot-h span{font-size:12px}
+.upload-zone{margin:12px 0 0;border:1.5px dashed #c9a3a8;border-radius:4px;background:#fafafa}
+.placeholder strong{font-size:16px}
+.placeholder span{font-size:12px}
+.right-body{height:calc(100% - 54px);padding:18px 0 0;grid-template-rows:88px 150px 146px 146px;gap:15px}
+.target{border-radius:0;padding:16px 20px;background:linear-gradient(90deg,var(--deep),var(--primary))}
+.target .label{font-size:13px}
+.target .big{font-size:27px;line-height:1.15}
+.cycle{font-size:14px}
+.overall{border:0;border-radius:0;padding:0 0 14px;background:transparent;border-bottom:1px solid var(--line)}
+.section-label{font-size:13px}
+.progress-input{height:40px;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:0;font-size:26px;background:transparent}
+.progress-input:focus{box-shadow:none;border-color:var(--primary)}
+.bar{height:12px;border-radius:0;margin-top:10px}
+.status-tags{gap:16px;margin-top:12px}
+.tag{min-height:46px;padding:0;border-radius:0;background:transparent!important;border-bottom:2px solid currentColor;font-size:13px}
+.tag input{height:32px;width:52px;border:0;border-bottom:1px solid currentColor;border-radius:0;background:transparent;font-size:16px}
+.total-hint{font-size:11px;margin-top:6px}
+.info-card{border:0;border-radius:0;background:transparent;padding:4px 0 0 16px;overflow:visible}
+.info-card h3{font-size:20px;margin-bottom:9px}
+.info-card li{font-size:15px;line-height:1.45;margin:5px 0;color:#3b3b3b}
+.issue{border-left:4px solid var(--orange)}
+.next{border-left:4px solid var(--primary)}
+.footer-note{font-size:11.5px;bottom:12px}
+.lang-switch{border-radius:0!important;box-shadow:none!important}
+.utility-panel{border-radius:4px}
+.en-ui h1{font-size:38px}
+.en-ui .target .big{font-size:24px}
+.en-ui .panel-title{font-size:25px}
+.en-ui .req-line{font-size:16px}
+.en-ui .flow-title{font-size:17px}
+.en-ui .info-card li{font-size:14px}
+</style>
+<style id="english-legibility-fix">
+/* English layout: larger, readable typography with controlled wrapping */
+html.en-ui h1{
+  font-size:42px!important;
+  line-height:1.08!important;
+  white-space:normal!important;
+  max-width:980px;
+  letter-spacing:-.35px;
+  text-wrap:balance;
+}
+html.en-ui .head-note{
+  font-size:17px!important;
+  line-height:1.35!important;
+  white-space:normal!important;
+  max-width:920px;
+}
+html.en-ui .deadline{
+  width:330px;
+  font-size:16px!important;
+  line-height:1.3;
+  padding:11px 14px;
+  white-space:normal;
+  text-wrap:balance;
+}
+html.en-ui .panel-title{font-size:27px!important;line-height:1.15}
+html.en-ui .panel-sub{font-size:15px!important;line-height:1.25;max-width:250px;text-align:right}
+html.en-ui .box h3{font-size:20px}
+html.en-ui .req-line{font-size:17px!important;line-height:1.42!important;margin:7px 0}
+html.en-ui .flow-title{font-size:18px!important;line-height:1.2}
+html.en-ui .flow-desc{font-size:14px!important;line-height:1.32!important}
+html.en-ui .flow-num{font-size:15px}
+html.en-ui .shot-h{height:58px}
+html.en-ui .shot-h strong{font-size:16px!important;line-height:1.15;display:block}
+html.en-ui .shot-h span{font-size:12.5px!important;line-height:1.2}
+html.en-ui .placeholder strong{font-size:15px!important}
+html.en-ui .placeholder span{font-size:12px}
+html.en-ui .target{grid-template-columns:minmax(0,1fr) 150px!important;gap:14px;padding:14px 16px}
+html.en-ui .target .label{font-size:13px}
+html.en-ui .target .big{
+  font-size:26px!important;
+  line-height:1.12!important;
+  white-space:normal!important;
+  text-wrap:balance;
+}
+html.en-ui .cycle{font-size:13.5px!important;line-height:1.35!important}
+html.en-ui .section-label{font-size:13px!important}
+html.en-ui .progress-input{font-size:25px!important}
+html.en-ui .tag{font-size:12.5px!important;line-height:1.15;white-space:normal!important;min-width:0}
+html.en-ui .tag input{font-size:16px;width:48px}
+html.en-ui .tag-unit{font-size:11px}
+html.en-ui .info-card h3{font-size:19px!important;line-height:1.2;margin-bottom:7px}
+html.en-ui .info-card li{font-size:15px!important;line-height:1.36!important;margin:4px 0}
+html.en-ui .footer-note{font-size:10.8px!important;gap:9px;white-space:normal;line-height:1.25}
+/* Give English content enough vertical room without overlap */
+html.en-ui .left-body{grid-template-rows:158px 380px!important;gap:14px}
+html.en-ui .right-body{grid-template-rows:104px 146px 154px 154px!important;gap:10px}
+html.en-ui .req-step{grid-template-columns:.88fr 1.42fr}
+html.en-ui .flow{gap:7px}
+html.en-ui .flow-item{padding:10px 8px}
+</style>
+
+<style id="inline-editor-style">
+.edit-toolbar{position:absolute;right:150px;top:122px;z-index:24;display:flex;align-items:center;gap:6px}
+.edit-toolbar button{height:30px;border:1px solid rgba(137,137,137,.35);background:rgba(255,255,255,.86);color:#595757;padding:0 10px;font:700 12px Arial,"Microsoft YaHei",sans-serif;cursor:pointer;transition:.18s ease}
+.edit-toolbar button:hover{border-color:#c8102e;color:#c8102e;background:#fff}
+.edit-toolbar button.active{background:#c8102e;border-color:#c8102e;color:#fff}
+.edit-toolbar .restore-btn{color:#898989}
+.editable-copy{outline:none;transition:background .15s ease,box-shadow .15s ease}
+.edit-mode .editable-copy{cursor:text;background:rgba(245,220,87,.14);box-shadow:inset 0 -1px 0 rgba(200,16,46,.35)}
+.edit-mode .editable-copy:hover,.edit-mode .editable-copy:focus{background:rgba(245,220,87,.28);box-shadow:inset 0 -2px 0 #c8102e}
+.edit-save-tip{position:absolute;right:150px;top:155px;z-index:23;font-size:10px;color:#898989;opacity:0;transition:opacity .2s ease;pointer-events:none}
+.edit-save-tip.show{opacity:1}
+@media print{.edit-toolbar,.edit-save-tip{display:none!important}.editable-copy{background:transparent!important;box-shadow:none!important}}
+</style>
+
+<style id="focus-step-enhancement">
+/* Step 02 is the key engineer action */
+.flow-item.focus-step{position:relative;padding:9px 17px 10px 15px;border-right:0;z-index:2}
+.flow-item.focus-step::before{content:"";position:absolute;inset:-8px -10px -7px -12px;border:3px solid var(--primary);border-radius:50% 46% 52% 48% / 48% 53% 47% 52%;transform:rotate(-1.5deg);pointer-events:none;opacity:.95}
+.flow-item.focus-step::after{content:"KEY";position:absolute;right:-5px;top:-15px;background:#fff;color:var(--primary);font-size:10px;font-weight:900;letter-spacing:.7px;padding:0 5px}
+.focus-step .flow-num{color:var(--primary);font-size:27px}
+.focus-step .flow-title{color:var(--primary);font-weight:900}
+.action-lines{display:grid;gap:5px;margin-top:7px;line-height:1.3}
+.action-lines span{position:relative;padding-left:12px;font-weight:700;color:var(--ink)}
+.action-lines span::before{content:"";position:absolute;left:0;top:.52em;width:5px;height:5px;border-radius:50%;background:var(--primary)}
+html.en-ui .flow-item.focus-step{padding:8px 13px 9px 12px}
+html.en-ui .focus-step .flow-title{font-size:16px}
+html.en-ui .action-lines{font-size:13px;gap:4px}
+html.en-ui .flow-item.focus-step::after{content:"KEY"}
+@media screen and (max-width:1100px){.action-lines{font-size:12px}.flow-item.focus-step::before{inset:-6px -7px}}
+</style>
+
+<style id="focus-step-layout-fix">
+/* Keep the key Step 02 prominent without overlapping screenshots */
+.left-body{grid-template-rows:172px 366px!important;gap:14px!important}
+.req-step{grid-template-columns:.78fr 1.52fr!important;gap:24px!important}
+.flow{grid-template-columns:.82fr 1.5fr .82fr!important;gap:14px!important;align-items:stretch}
+.flow-item{min-width:0;padding:7px 12px 6px 0!important;display:flex;flex-direction:column;justify-content:flex-start}
+.flow-item.focus-step{
+  padding:10px 18px!important;
+  border:2px solid var(--primary)!important;
+  border-radius:28px!important;
+  background:rgba(200,16,46,.035)!important;
+  overflow:hidden;
+  z-index:1;
+}
+.flow-item.focus-step::before{display:none!important}
+.flow-item.focus-step::after{
+  right:16px!important;top:10px!important;
+  background:transparent!important;
+  font-size:10px!important;padding:0!important
+}
+.focus-step .flow-num{font-size:18px!important;line-height:1!important}
+.focus-step .flow-title{font-size:18px!important;line-height:1.12!important;margin:5px 44px 5px 0!important}
+.action-lines{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;margin-top:5px!important}
+.action-lines span{
+  min-width:0;padding:7px 8px 7px 20px!important;
+  font-size:12.5px!important;line-height:1.25!important;font-weight:700!important;
+  background:rgba(255,255,255,.78);border-radius:8px
+}
+.action-lines span::before{left:9px!important;top:13px!important;width:5px!important;height:5px!important}
+.shot-h{position:relative;z-index:2}
+html.en-ui .left-body{grid-template-rows:184px 354px!important;gap:14px!important}
+html.en-ui .req-step{grid-template-columns:.72fr 1.58fr!important}
+html.en-ui .flow{grid-template-columns:.78fr 1.58fr .78fr!important;gap:12px!important}
+html.en-ui .flow-item{padding:8px 9px 6px 0!important}
+html.en-ui .flow-item.focus-step{padding:10px 14px!important}
+html.en-ui .focus-step .flow-title{font-size:17px!important;margin-right:40px!important}
+html.en-ui .action-lines{grid-template-columns:1fr 1fr!important;gap:7px!important}
+html.en-ui .action-lines span{font-size:12px!important;line-height:1.22!important;padding:7px 7px 7px 18px!important}
+html.en-ui .action-lines span::before{left:8px!important;top:12px!important}
+@media screen and (max-width:1100px){
+  .action-lines span,html.en-ui .action-lines span{font-size:11px!important}
+  .flow-item.focus-step{border-radius:22px!important;padding:9px 12px!important}
+}
+</style>
+
+<style id="right-focus-table-layout">
+/* Right-side action focus and editable BU tracking table */
+.left-body{grid-template-rows:128px 410px!important}
+.req-step{grid-template-columns:.82fr 1.48fr!important}
+.flow{grid-template-columns:repeat(3,1fr)!important;gap:18px!important}
+.flow-item{border-right:1px solid var(--line)!important;padding:2px 14px 2px 0!important;background:transparent!important;border-radius:0!important}
+.flow-item:last-child{border-right:0!important}
+.flow-title{font-size:18px!important}.flow-desc{font-size:13.5px!important}
+.right-body{height:calc(100% - 54px)!important;padding:14px 0 0!important;display:grid!important;grid-template-rows:78px 124px 98px 218px 66px!important;gap:9px!important;overflow:visible!important}
+.target{border-radius:10px!important;padding:11px 15px!important}.target .big{font-size:22px!important}.cycle{font-size:12px!important}
+.overall{border:0!important;border-radius:0!important;padding:5px 0 0!important}.progress-input{height:31px!important;font-size:21px!important}.bar{margin-top:6px!important}.status-tags{margin-top:6px!important}.tag{min-height:35px!important;padding:4px 7px!important}.tag input{height:24px!important}
+.key-action{border:3px solid var(--primary);border-radius:16px;padding:10px 14px;background:rgba(200,16,46,.025);display:grid;grid-template-columns:190px 1fr;align-items:center;gap:15px;overflow:hidden}
+.key-action-title{display:flex;align-items:center;gap:10px;color:var(--primary)}.key-action-title span{font-size:27px;font-weight:900}.key-action-title b{font-size:18px;line-height:1.15}
+.key-action-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.key-action-grid>div{padding-left:12px;border-left:4px solid var(--primary)}.key-action-grid strong{display:block;font-size:15px;color:var(--ink)}.key-action-grid em{display:block;margin-top:4px;font-style:normal;font-size:14px;font-weight:800;color:var(--primary)}
+.bu-table-area{min-height:0;display:flex;flex-direction:column;border-top:1px solid var(--line);padding-top:7px}.bu-table-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}.bu-table-head b{font-size:17px}.bu-table-head span{font-size:11px;color:var(--muted);margin-left:10px}.table-tools{display:flex;gap:5px}.table-tools button{height:25px;min-width:42px;border:1px solid rgba(137,137,137,.35);background:rgba(255,255,255,.82);color:var(--muted);border-radius:5px;font-size:11px;font-weight:800;cursor:pointer}.table-tools button:hover{border-color:var(--primary);color:var(--primary)}
+.bu-table-wrap{flex:1;min-height:0;overflow:auto;border-bottom:1px solid var(--line)}#buTable{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12.5px}#buTable th,#buTable td{border-bottom:1px solid #e8e8e8;border-right:1px solid #eeeeee;padding:6px 8px;text-align:left;line-height:1.2;outline:none;word-break:break-word}#buTable th:last-child,#buTable td:last-child{border-right:0}#buTable th{background:#f4f4f4;color:var(--ink);font-weight:900;position:sticky;top:0;z-index:1}#buTable th:nth-child(2),#buTable td:nth-child(2){width:94px;text-align:center;font-weight:900;color:var(--primary)}#buTable [contenteditable=true]:focus{background:#fff6d8;box-shadow:inset 0 -2px var(--primary)}
+.compact-actions{display:grid;grid-template-columns:1fr 1fr;gap:18px;border-top:1px solid var(--line);padding-top:8px}.compact-actions>div{display:grid;grid-template-columns:auto 1fr;gap:9px;align-items:start}.compact-actions b{font-size:13px;color:var(--primary)}.compact-actions span{font-size:12px;line-height:1.28;color:var(--muted)}
+html.en-ui .left-body{grid-template-rows:132px 406px!important}html.en-ui .flow-title{font-size:17px!important}html.en-ui .flow-desc{font-size:13px!important}
+html.en-ui .right-body{grid-template-rows:80px 124px 102px 214px 66px!important}html.en-ui .target .big{font-size:20px!important}html.en-ui .key-action{grid-template-columns:190px 1fr;gap:12px}html.en-ui .key-action-title b{font-size:17px}html.en-ui .key-action-grid strong{font-size:14px}html.en-ui .key-action-grid em{font-size:13px}html.en-ui .bu-table-head b{font-size:16px}html.en-ui #buTable{font-size:12px}html.en-ui .compact-actions span{font-size:11.5px}
+@media print{.table-tools{display:none!important}}
+</style>
+
+<style id="compact-screenshot-spacing-fix">
+/* More breathing room above screenshot titles; shorter screenshot area */
+.left-body{grid-template-rows:128px 350px!important;gap:28px!important;align-content:start!important}
+.shots{height:350px!important;align-self:start!important}
+.shot-h{height:54px!important;padding:0 0 12px!important}
+.upload-zone{margin-top:10px!important;min-height:0!important}
+html.en-ui .left-body{grid-template-rows:132px 346px!important;gap:30px!important}
+html.en-ui .shots{height:346px!important}
+html.en-ui .shot-h{height:56px!important;padding-bottom:12px!important}
+</style>
+</head><body>
+<section class="slide"><div class="lang-switch"><button id="langZh" class="active">中文</button><button id="langEn">EN</button></div><div class="edit-toolbar" aria-label="Text editing controls"><button id="editToggle" type="button">编辑文字</button><button id="restoreText" class="restore-btn" type="button">复原</button></div><div id="editSaveTip" class="edit-save-tip">已自动保存到本地</div><header class="header"><div><h1>三方工具处理：要求与推进计划</h1></div><div class="deadline">目标：8月第1周完成第一轮闭环</div></header><div class="divider"></div>
+<div class="main"><section class="panel"><div class="panel-head"><div class="panel-title">员工要求与操作步骤</div><div class="panel-sub">完成处理后必须重新检测</div></div><div class="left-body"><div class="req-step"><div class="box"><h3>我们的要求</h3><div class="req-line"><i class="dot"></i><span>根据《华为公司第三方工具应用管理指引》，员工须合规下载和使用软件。</span></div></div><div class="box"><h3>操作步骤</h3><div class="flow"><div class="flow-item"><div class="flow-num">01</div><div class="flow-title">进入 iDesk</div><div class="flow-desc">打开“软件检测”</div></div><div class="flow-item"><div class="flow-num">02</div><div class="flow-title">按提示处理</div><div class="flow-desc">升级、卸载或申请例外</div></div><div class="flow-item"><div class="flow-num">03</div><div class="flow-title">重新检测</div><div class="flow-desc">确认风险项清零</div></div></div></div></div>
+<div class="shots"><article class="shot"><div class="shot-h"><div class="badge">1</div><div><strong>截图 1：从哪里进入？</strong><span>标注“软件检测”入口</span></div></div><label class="upload-zone" id="zone1" for="file1"><div class="placeholder" id="placeholder1"><div class="upload-icon">＋</div><strong>上传 iDesk 入口截图</strong><span>JPG / PNG / WEBP</span></div><img class="preview" id="preview1"><div class="image-tools" id="tools1"><button class="tool-btn" type="button" data-change="1">更换</button><button class="tool-btn" type="button" data-clear="1">清除</button></div></label><input id="file1" type="file" accept="image/*"></article>
+<article class="shot"><div class="shot-h"><div class="badge">2</div><div><strong>截图 2：如何处理？</strong><span>标注处理按钮和重新检测</span></div></div><label class="upload-zone" id="zone2" for="file2"><div class="placeholder" id="placeholder2"><div class="upload-icon">＋</div><strong>上传风险处理截图</strong><span>JPG / PNG / WEBP</span></div><img class="preview" id="preview2"><div class="image-tools" id="tools2"><button class="tool-btn" type="button" data-change="2">更换</button><button class="tool-btn" type="button" data-clear="2">清除</button></div></label><input id="file2" type="file" accept="image/*"></article></div></div></section>
+<section class="panel"><div class="panel-head"><div class="panel-title">整体进展与下一步</div><div class="panel-sub">用于持续跟踪第一轮闭环</div></div><div class="right-body">
+<div class="target"><div><div class="label">TARGET / 目标</div><div class="big">第一轮三方工具问题全部闭环</div></div><div class="cycle">Finish Process<br><b>1st week of August</b><br>Cycle 1</div></div>
+<div class="overall"><div class="section-label">OVERALL PICTURE / 整体进度</div><div class="progress-row"><div class="progress-value"><input class="progress-input" id="progressText" value="待更新" aria-label="进度状态"></div></div><div class="bar"><i class="bar-seg bar-done" id="barDone"></i><i class="bar-seg bar-doing" id="barDoing"></i><i class="bar-seg bar-support" id="barSupport"></i></div><div class="status-tags"><label class="tag g"><span>已完成</span><span><input id="pctDone" type="number" min="0" max="100" value="0"><b class="tag-unit">%</b></span></label><label class="tag o"><span>处理中</span><span><input id="pctDoing" type="number" min="0" max="100" value="0"><b class="tag-unit">%</b></span></label><label class="tag r"><span>需支持</span><span><input id="pctSupport" type="number" min="0" max="100" value="0"><b class="tag-unit">%</b></span></label></div><div class="total-hint" id="totalHint">合计：0%</div></div>
+<div class="key-action"><div class="key-action-title"><span>02</span><b>工程师重点操作</b></div><div class="key-action-grid"><div><strong>版本不一致</strong><em>升级至合规版本</em></div><div><strong>工具不合规</strong><em>卸载或提交例外申请</em></div></div></div>
+<div class="bu-table-area"><div class="bu-table-head"><div><b>各 BU / 系统部未完成情况</b><span>请更新剩余人数</span></div><div class="table-tools"><button type="button" id="addRow">＋行</button><button type="button" id="addCol">＋列</button><button type="button" id="delRow">－行</button><button type="button" id="delCol">－列</button></div></div><div class="bu-table-wrap"><table id="buTable"><thead><tr><th contenteditable="true">BU / 系统部</th><th contenteditable="true">未完成人数</th><th contenteditable="true">主要问题</th></tr></thead><tbody><tr><td contenteditable="true">埃及交付与服务业务部</td><td contenteditable="true">38</td><td contenteditable="true">未上架 / 未例外配置</td></tr><tr><td contenteditable="true">埃及代表处平台 CFO</td><td contenteditable="true">2</td><td contenteditable="true">待处理</td></tr><tr><td contenteditable="true">埃及云业务部</td><td contenteditable="true">1</td><td contenteditable="true">待处理</td></tr></tbody></table></div></div>
+<div class="compact-actions"><div><b>Current Issues</b><span>未处理、未复检或需例外审批。</span></div><div><b>Next Actions</b><span>按 BU 定向跟进，完成后复检闭环。</span></div></div>
+</div></section></div><div class="footer-note"><b>重要说明</b><span><i></i>iDesk 数据每日同步一次，处理结果可能延迟显示</span><span><i></i>审批通过的例外工具不计入风险清单</span><span><i></i>页面时间均为北京时间</span></div></section>
+<button class="utility-btn" id="utilityBtn" aria-label="图片转 Base64 / 内置图片" title="图片转 Base64 / 内置图片"><span class="utility-icon">B64</span><span class="utility-label">图片转 Base64 / 内置图片</span></button><aside class="utility-panel" id="utilityPanel"><h3>图片转 Base64 工具</h3><p>选择图片生成 Data URL，或上传两张截图后直接下载内置图片版 HTML。</p><div class="converter-row"><input id="convertFile" type="file" accept="image/*"><button class="mini-btn" id="convertBtn">转换</button></div><textarea class="base64-box" id="base64Output" placeholder="Base64 Data URL 将显示在这里"></textarea><div class="utility-actions"><button class="mini-btn secondary" id="copyBase64">复制 Base64</button><button class="mini-btn dark" id="downloadEmbedded">下载内置图片版 HTML</button><button class="mini-btn secondary" id="closeUtility">关闭</button></div><div class="utility-note">代码预留位置：搜索 EMBEDDED_IMAGES，将完整的 data:image/... 字符串粘贴到 image1 或 image2。</div></aside>
+<script>
+const I18N={"三方工具处理：要求与推进计划": "Third-Party Tools Remediation: Action Plan", "目标：8月第1周完成第一轮闭环": "Cycle 1 target: Complete by 1st week of Aug", "员工要求与操作步骤": "Requirements & Steps", "完成处理后必须重新检测": "Re-scan after remediation", "我们的要求": "Requirements", "根据《华为公司第三方工具应用管理指引》，员工须合规下载和使用软件。": "Employees must download and use software in compliance with the Huawei Third-Party Tool Application Management Guide.", "操作步骤": "How to Do", "进入 iDesk": "Open iDesk", "找到“软件检测”入口": "Open “Software Detection”", "处理风险项": "Handle Risk Items", "版本不一致：升级至合规版本": "Version mismatch: Upgrade to the compliant version", "工具不合规：卸载或申请例外": "Non-compliant tool: Uninstall or request an exception", "重新检测": "Re-scan", "确认风险提示消失": "Confirm risks are cleared", "截图 1：从哪里进入？": "Screenshot 1: Entry", "标注“软件检测”入口": "Mark “Software Detection”", "上传 iDesk 入口截图": "Upload entry screenshot", "截图 2：如何处理？": "Screenshot 2: Remediation", "标注处理按钮和重新检测": "Mark action and re-scan", "上传风险处理截图": "Upload handling screenshot", "整体进展与下一步": "Progress & Next Action", "用于持续跟踪第一轮闭环": "Cycle 1 tracking", "TARGET / 目标": "TARGET", "第一轮风险软件全部闭环": "Close all Cycle 1 risk items", "OVERALL PICTURE / 整体进度": "OVERALL PICTURE", "已完成": "Completed", "处理中": "In Progress", "需支持": "Need Support", "合计：0%": "Total: 0%", "当前问题与进展": "Current Issues", "仍有员工未处理或未重新检测。": "Some cases remain open or not re-scanned.", "部分工具需授权、替代或版本升级。": "Some tools need approval, replacement, or upgrade.", "根据问卷及 iDesk 结果持续更新进度。": "Progress follows survey and iDesk results.", "埃及交付与服务业务部：合规安装人员占比仅 52.61%，另有 6 款工具未上架且未完成例外配置，涉及 38 人。": "Egypt Delivery & Service: only 52.61% of users installed tools from compliant sources; 6 tools remain unlisted and without approved exceptions, affecting 38 users.", "下一步要求": "Next Actions", "收集“已完成 / 未完成及原因”反馈。": "Collect completion status and reasons.", "定向提醒未完成人员并提供支持。": "Follow up open cases and provide support.", "第一轮结束后汇总问题并启动复查。": "Review issues and start the next re-check.", "确需使用 HIS Mall 未正式发布的工具时，须提交例外配置申请，并提供客户指定或外部遵从要求的书面证明；经业务主管审批后方可剔除。": "For tools not officially released in HIS Mall, submit an exception request with written evidence of customer designation or external compliance requirements. Exclusion applies only after business owner approval.", "重要说明": "Important Notes", "iDesk 数据每日同步一次，处理结果可能延迟显示": "iDesk syncs daily; updates may be delayed", "审批通过的例外工具不计入风险清单": "Approved exceptions are excluded", "页面时间均为北京时间": "Times use Beijing Time", "图片转 Base64 / 内置图片": "Image to Base64 / Embed Images", "图片转 Base64 工具": "Image to Base64 Tool", "选择图片生成 Data URL，或上传两张截图后直接下载内置图片版 HTML。": "Generate a Data URL from an image, or upload two screenshots and download an HTML with embedded images.", "转换": "Convert", "复制 Base64": "Copy Base64", "下载内置图片版 HTML": "Download Embedded HTML", "关闭": "Close", "代码预留位置：搜索 EMBEDDED_IMAGES，将完整的 data:image/... 字符串粘贴到 image1 或 image2。": "Code placeholder: search for EMBEDDED_IMAGES and paste the full data:image/... string into image1 or image2.", "更换": "Replace", "清除": "Clear", "待更新": "To be updated", "全部完成": "Completed", "推进中": "In progress", '打开“软件检测”': 'Open “Software Detection”', '按提示处理': 'Handle as prompted', '升级、卸载或申请例外': 'Upgrade, uninstall, or request exception', '确认风险项清零': 'Confirm all items are cleared', '第一轮三方工具问题全部闭环': 'Close all Cycle 1 third-party tool items', '工程师重点操作': 'Key Actions for Engineers', '版本不一致': 'Version mismatch', '升级至合规版本': 'Upgrade to compliant version', '工具不合规': 'Non-compliant tool', '卸载或提交例外申请': 'Uninstall or submit exception request', '各 BU / 系统部未完成情况': 'Open Cases by BU / System Dept.', '请更新剩余人数': 'Update remaining headcount', '＋行': '+ Row', '＋列': '+ Col', '－行': '− Row', '－列': '− Col', 'BU / 系统部': 'BU / System Dept.', '未完成人数': 'Open Cases', '主要问题': 'Main Issue', '埃及交付与服务业务部': 'Egypt Delivery & Service', '未上架 / 未例外配置': 'Unlisted / no approved exception', '埃及代表处平台 CFO': 'Egypt Rep. Office Platform CFO', '待处理': 'Pending', '埃及云业务部': 'Egypt Cloud BU', '未处理、未复检或需例外审批。': 'Open, not re-scanned, or pending exception approval.', '按 BU 定向跟进，完成后复检闭环。': 'Follow up by BU and re-scan to close all items.'};
+const ZH_TEXT={};
+document.addEventListener('DOMContentLoaded',()=>{
+  const nodes=[];
+  const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+  while(walker.nextNode()){const n=walker.currentNode;const t=n.nodeValue.trim();if(t&&I18N[t]){ZH_TEXT[nodes.length]=n.nodeValue;nodes.push(n)}}
+  const placeholders=[];document.querySelectorAll('[placeholder]').forEach(el=>{const z=el.getAttribute('placeholder');placeholders.push([el,z,I18N[z]||z])});
+  const setLang=lang=>{
+    nodes.forEach((n,i)=>{const z=ZH_TEXT[i];const trim=z.trim();const lead=z.slice(0,z.indexOf(trim));const trail=z.slice(z.indexOf(trim)+trim.length);n.nodeValue=lead+(lang==='en'?(I18N[trim]||trim):trim)+trail});
+    placeholders.forEach(([el,z,e])=>el.setAttribute('placeholder',lang==='en'?e:z));
+    document.documentElement.lang=lang==='en'?'en':'zh-CN';document.documentElement.classList.toggle('en-ui',lang==='en');
+    document.getElementById('langZh').classList.toggle('active',lang==='zh');
+    document.getElementById('langEn').classList.toggle('active',lang==='en');
+    localStorage.setItem('ideskGuideLang',lang);document.dispatchEvent(new CustomEvent('languagechange'));
+  };
+  document.getElementById('langZh').onclick=()=>setLang('zh');
+  document.getElementById('langEn').onclick=()=>setLang('en');
+  setLang(localStorage.getItem('ideskGuideLang')||'zh');
+});
+</script>
+<script>const MSG_SELECT='请先选择图片',MSG_COPIED='已复制',DOWNLOAD_NAME='idesk_risk_software_guide_bilingual_embedded.html';
+const EMBEDDED_IMAGES={image1:"",image2:""};
+(()=>{const pctDone=document.getElementById('pctDone'),pctDoing=document.getElementById('pctDoing'),pctSupport=document.getElementById('pctSupport'),barDone=document.getElementById('barDone'),barDoing=document.getElementById('barDoing'),barSupport=document.getElementById('barSupport'),totalHint=document.getElementById('totalHint'),progressText=document.getElementById('progressText');function clamp(el){const v=Math.max(0,Math.min(100,Number(el.value)||0));el.value=v;return v}function updateProgress(source){const d=clamp(pctDone),g=clamp(pctDoing),r=clamp(pctSupport),total=d+g+r;barDone.style.width=d+'%';barDoing.style.width=g+'%';barSupport.style.width=r+'%';totalHint.textContent=(document.documentElement.lang==='en'?'Total: ':'合计: ')+total+'%';totalHint.classList.toggle('warn',total!==100&&total!==0);if(source!=='main'){progressText.value=d===100?(document.documentElement.lang==='en'?'Completed':'全部完成'):d>0?(document.documentElement.lang==='en'?'In progress':'推进中'):(document.documentElement.lang==='en'?'To be updated':'待更新')}}[pctDone,pctDoing,pctSupport].forEach(el=>el.addEventListener('input',()=>updateProgress('status')));document.addEventListener('languagechange',()=>updateProgress('status'));updateProgress();function setImage(n,d){if(!d)return;const i=document.getElementById('preview'+n),p=document.getElementById('placeholder'+n),t=document.getElementById('tools'+n);i.src=d;i.style.display='block';p.style.display='none';t.removeAttribute('style')}function setup(n){const input=document.getElementById('file'+n),z=document.getElementById('zone'+n);const show=f=>{if(!f||!f.type.startsWith('image/'))return;const r=new FileReader();r.onload=e=>setImage(n,e.target.result);r.readAsDataURL(f)};input.onchange=e=>show(e.target.files[0]);['dragenter','dragover'].forEach(x=>z.addEventListener(x,e=>{e.preventDefault();z.style.borderColor='#c8102e'}));['dragleave','drop'].forEach(x=>z.addEventListener(x,e=>{e.preventDefault();z.style.borderColor=''}));z.addEventListener('drop',e=>show(e.dataTransfer.files[0]));z.addEventListener('click',e=>{if(e.target.closest('.tool-btn')){e.preventDefault();return}if(window.matchMedia('(hover: none)').matches&&document.getElementById('preview'+n).style.display==='block'&&!z.classList.contains('show-tools')){e.preventDefault();z.classList.add('show-tools')}})}setup(1);setup(2);setImage(1,EMBEDDED_IMAGES.image1);setImage(2,EMBEDDED_IMAGES.image2);document.addEventListener('click',e=>{const c=e.target.closest('[data-change]'),x=e.target.closest('[data-clear]');if(c)document.getElementById('file'+c.dataset.change).click();if(x){const n=x.dataset.clear;document.getElementById('file'+n).value='';const i=document.getElementById('preview'+n),p=document.getElementById('placeholder'+n),t=document.getElementById('tools'+n);i.removeAttribute('src');i.style.display='none';p.style.display='block';z=document.getElementById('zone'+n);z.classList.remove('show-tools')}});const panel=document.getElementById('utilityPanel'),out=document.getElementById('base64Output'),cf=document.getElementById('convertFile');const utilityBtn=document.getElementById('utilityBtn');utilityBtn.onclick=()=>{panel.classList.toggle('open');utilityBtn.classList.toggle('panel-open',panel.classList.contains('open'))};document.getElementById('closeUtility').onclick=()=>{panel.classList.remove('open');utilityBtn.classList.remove('panel-open')};document.getElementById('convertBtn').onclick=()=>{const f=cf.files[0];if(!f){alert(MSG_SELECT);return}const r=new FileReader();r.onload=e=>out.value=e.target.result;r.readAsDataURL(f)};document.getElementById('copyBase64').onclick=async()=>{if(!out.value){alert(MSG_SELECT);return}try{await navigator.clipboard.writeText(out.value);alert(MSG_COPIED)}catch{out.select();document.execCommand('copy');alert(MSG_COPIED)}};document.getElementById('downloadEmbedded').onclick=()=>{const clone=document.documentElement.cloneNode(true);clone.querySelectorAll('.utility-panel').forEach(e=>e.classList.remove('open'));const html='<!DOCTYPE html>\n'+clone.outerHTML,b=new Blob([html],{type:'text/html;charset=utf-8'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=DOWNLOAD_NAME;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u)}})();
+</script>
+<script>
+(()=>{
+ const slide=document.querySelector('.slide');
+ if(!slide)return;
+ const stage=document.createElement('div');stage.className='stage';
+ slide.parentNode.insertBefore(stage,slide);stage.appendChild(slide);
+ const fit=()=>{if(window.matchMedia('print').matches)return;const pad=20;const scale=Math.min((innerWidth-pad)/1600,(innerHeight-pad)/900,1);stage.style.width=(1600*scale)+'px';stage.style.height=(900*scale)+'px';slide.style.transform='scale('+scale+')';slide.style.transformOrigin='top left';};
+ addEventListener('resize',fit);addEventListener('load',fit);fit();
+ addEventListener('beforeprint',()=>{slide.style.transform='none';stage.style.width='1600px';stage.style.height='900px'});
+ addEventListener('afterprint',fit);
+})();
+</script>
+
+<script id="inline-editor-script">
+(()=>{
+  const STORAGE_KEY='ideskGuideEditableTextV1';
+  const LANG_KEY='ideskGuideLang';
+  const reverseI18N=Object.fromEntries(Object.entries(I18N).map(([zh,en])=>[en,zh]));
+  const state={lang:'zh',edit:false,defaults:{zh:{},en:{}},saved:{zh:{},en:{}}};
+  try{const raw=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');state.saved.zh=raw.zh||{};state.saved.en=raw.en||{}}catch(e){}
+
+  const excluded=(el)=>el.closest('button,input,textarea,select,script,style,.utility-panel,.utility-btn,.image-tools,.lang-switch,.edit-toolbar,.edit-save-tip,.bu-table-area');
+  const isLeafTextElement=(el)=>{
+    if(excluded(el))return false;
+    const meaningful=[...el.childNodes].filter(n=>n.nodeType===Node.ELEMENT_NODE || (n.nodeType===Node.TEXT_NODE&&n.nodeValue.trim()));
+    return meaningful.length>0 && ![...el.children].some(c=>c.textContent.trim());
+  };
+  const normalize=t=>t.replace(/\s+/g,' ').trim();
+  const elements=[];
+
+  function discover(){
+    document.querySelectorAll('.slide *').forEach(el=>{
+      if(!isLeafTextElement(el))return;
+      const text=normalize(el.textContent);
+      if(!text)return;
+      const id='txt-'+elements.length;
+      el.dataset.editId=id;
+      el.classList.add('editable-copy');
+      let zh=text,en=text;
+      if(I18N[text]){zh=text;en=I18N[text]}
+      else if(reverseI18N[text]){zh=reverseI18N[text];en=text}
+      else {
+        const match=Object.entries(I18N).find(([z,e])=>normalize(z)===text||normalize(e)===text);
+        if(match){zh=match[0];en=match[1]}
+      }
+      state.defaults.zh[id]=zh;state.defaults.en[id]=en;
+      elements.push(el);
+      el.addEventListener('input',()=>{
+        if(!state.edit)return;
+        state.saved[state.lang][id]=el.innerText;
+        persist();flashSaved();
+      });
+      el.addEventListener('keydown',e=>{
+        if(e.key==='Enter' && !e.shiftKey && ['H1','H2','H3'].includes(el.tagName)){e.preventDefault();el.blur()}
+      });
+    });
+  }
+  function persist(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state.saved))}
+  let tipTimer;
+  function flashSaved(){const tip=document.getElementById('editSaveTip');tip.textContent=state.lang==='en'?'Saved locally':'已自动保存到本地';tip.classList.add('show');clearTimeout(tipTimer);tipTimer=setTimeout(()=>tip.classList.remove('show'),1100)}
+  function render(lang){
+    state.lang=lang;
+    elements.forEach(el=>{const id=el.dataset.editId;el.innerText=Object.prototype.hasOwnProperty.call(state.saved[lang],id)?state.saved[lang][id]:state.defaults[lang][id]});
+    document.documentElement.lang=lang==='en'?'en':'zh-CN';document.documentElement.classList.toggle('en-ui',lang==='en');
+    document.getElementById('langZh').classList.toggle('active',lang==='zh');
+    document.getElementById('langEn').classList.toggle('active',lang==='en');
+    document.getElementById('editToggle').textContent=lang==='en'?(state.edit?'Finish Editing':'Edit Text'):(state.edit?'完成编辑':'编辑文字');
+    document.getElementById('restoreText').textContent=lang==='en'?'Restore':'复原';
+    localStorage.setItem(LANG_KEY,lang);
+    document.dispatchEvent(new CustomEvent('languagechange'));
+  }
+  function setEdit(on){state.edit=on;document.querySelector('.slide').classList.toggle('edit-mode',on);elements.forEach(el=>el.contentEditable=on?'true':'false');const b=document.getElementById('editToggle');b.classList.toggle('active',on);b.textContent=state.lang==='en'?(on?'Finish Editing':'Edit Text'):(on?'完成编辑':'编辑文字')}
+  function restore(){
+    const msg=state.lang==='en'?'Restore all text in the current language to the default content?':'确认将当前语言的全部文字恢复为默认内容吗？';
+    if(!confirm(msg))return;
+    state.saved[state.lang]={};persist();render(state.lang);document.dispatchEvent(new CustomEvent('idesk-restore',{detail:{lang:state.lang}}));flashSaved();
+  }
+  document.addEventListener('DOMContentLoaded',()=>{
+    discover();
+    document.getElementById('langZh').onclick=()=>render('zh');
+    document.getElementById('langEn').onclick=()=>render('en');
+    document.getElementById('editToggle').onclick=()=>setEdit(!state.edit);
+    document.getElementById('restoreText').onclick=restore;
+    const preferred=localStorage.getItem(LANG_KEY);render(preferred==='en'||preferred==='zh'?preferred:(document.documentElement.lang.startsWith('en')?'en':'zh'));
+  });
+})();
+</script>
+
+<script id="bu-table-editor">
+(()=>{
+ const KEY='ideskBuOpenCasesTableV1';
+ const DEFAULTS={
+  zh:[['BU / 系统部','未完成人数','主要问题'],['埃及交付与服务业务部','38','未上架 / 未例外配置'],['埃及代表处平台 CFO','2','待处理'],['埃及云业务部','1','待处理']],
+  en:[['BU / System Dept.','Open Cases','Main Issue'],['Egypt Delivery & Service','38','Unlisted / no approved exception'],['Egypt Rep. Office Platform CFO','2','Pending'],['Egypt Cloud BU','1','Pending']]
+ };
+ const table=()=>document.getElementById('buTable');
+ function renderTable(data){const t=table(),thead=t.tHead||t.createTHead(),tbody=t.tBodies[0]||t.createTBody();thead.innerHTML='';tbody.innerHTML='';data.forEach((row,ri)=>{const tr=(ri===0?thead:tbody).insertRow();row.forEach(v=>{const c=ri===0?document.createElement('th'):document.createElement('td');c.contentEditable='true';c.innerText=v;tr.appendChild(c)})})}
+ function save(){const t=table();if(!t)return;const data=[...t.rows].map(r=>[...r.cells].map(c=>c.innerText));localStorage.setItem(KEY,JSON.stringify(data))}
+ function load(){const raw=localStorage.getItem(KEY);if(!raw)return;try{const data=JSON.parse(raw);if(!Array.isArray(data)||!data.length)return;renderTable(data)}catch(e){}}
+ function reset(lang){localStorage.removeItem(KEY);renderTable(DEFAULTS[lang==='en'?'en':'zh']);const head=document.querySelector('.bu-table-head b'),sub=document.querySelector('.bu-table-head span');if(head)head.textContent=lang==='en'?'Open Cases by BU / System Dept.':'各 BU / 系统部未完成情况';if(sub)sub.textContent=lang==='en'?'Update remaining headcount':'请更新剩余人数'}
+ function addRow(){const t=table(),cols=t.rows[0]?.cells.length||3,tr=t.tBodies[0].insertRow();for(let i=0;i<cols;i++){const c=tr.insertCell();c.contentEditable='true';c.innerText=i===0?'新增部门':i===1?'0':''}save()}
+ function addCol(){const t=table();[...t.rows].forEach((r,i)=>{const c=i===0?document.createElement('th'):document.createElement('td');c.contentEditable='true';c.innerText=i===0?'新增字段':'';r.appendChild(c)});save()}
+ function delRow(){const t=table(),b=t.tBodies[0];if(b.rows.length>1){b.deleteRow(-1);save()}}
+ function delCol(){const t=table(),cols=t.rows[0]?.cells.length||0;if(cols<=2)return;[...t.rows].forEach(r=>r.deleteCell(-1));save()}
+ document.addEventListener('DOMContentLoaded',()=>{load();table().addEventListener('input',save);document.getElementById('addRow').onclick=addRow;document.getElementById('addCol').onclick=addCol;document.getElementById('delRow').onclick=delRow;document.getElementById('delCol').onclick=delCol});document.addEventListener('idesk-restore',e=>reset(e.detail?.lang||document.documentElement.lang));
+})();
+</script>
+</body></html><style id="compact-top-controls">
+/* Compact unified top controls */
+.lang-switch,
+.edit-toolbar{
+  top:122px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+}
+.lang-switch{right:52px}
+.edit-toolbar{right:226px}
+.lang-switch button,
+.edit-toolbar button{
+  width:78px;
+  height:28px;
+  min-width:78px;
+  padding:0 6px!important;
+  border:1px solid rgba(89,87,87,.22)!important;
+  border-radius:5px!important;
+  background:rgba(255,255,255,.56)!important;
+  color:rgba(35,24,21,.58)!important;
+  box-shadow:none!important;
+  backdrop-filter:blur(4px);
+  font:700 11px/1 Arial,"Microsoft YaHei","PingFang SC",sans-serif!important;
+  white-space:nowrap;
+  overflow:visible;
+  transition:background .16s ease,border-color .16s ease,color .16s ease,opacity .16s ease;
+}
+.lang-switch button+button{border-left:1px solid rgba(89,87,87,.22)!important}
+.lang-switch button:hover,
+.edit-toolbar button:hover{
+  background:rgba(255,255,255,.88)!important;
+  border-color:rgba(200,16,46,.48)!important;
+  color:rgba(120,0,15,.9)!important;
+}
+.lang-switch button.active,
+.edit-toolbar button.active{
+  background:rgba(200,16,46,.78)!important;
+  border-color:rgba(200,16,46,.78)!important;
+  color:#fff!important;
+}
+.edit-toolbar .restore-btn{color:rgba(89,87,87,.58)!important}
+@media print{.lang-switch,.edit-toolbar{display:none!important}}
+</style>
+
+<style id="ghost-controls">
+/* Screenshot-friendly ghost controls: almost invisible until hover/focus */
+.lang-switch,
+.edit-toolbar,
+.table-tools{
+  opacity:.16;
+  transition:opacity .18s ease;
+}
+.lang-switch:hover,
+.edit-toolbar:hover,
+.table-tools:hover,
+.lang-switch:focus-within,
+.edit-toolbar:focus-within,
+.table-tools:focus-within{
+  opacity:1;
+}
+.lang-switch button,
+.edit-toolbar button,
+.table-tools button{
+  background:rgba(255,255,255,.18)!important;
+  border-color:rgba(89,87,87,.16)!important;
+  color:rgba(35,24,21,.34)!important;
+  box-shadow:none!important;
+}
+.lang-switch button.active,
+.edit-toolbar button.active{
+  background:rgba(200,16,46,.18)!important;
+  border-color:rgba(200,16,46,.24)!important;
+  color:rgba(120,0,15,.55)!important;
+}
+.lang-switch:hover button,
+.edit-toolbar:hover button,
+.table-tools:hover button,
+.lang-switch:focus-within button,
+.edit-toolbar:focus-within button,
+.table-tools:focus-within button{
+  background:rgba(255,255,255,.88)!important;
+  border-color:rgba(89,87,87,.28)!important;
+  color:rgba(35,24,21,.72)!important;
+}
+.lang-switch:hover button.active,
+.edit-toolbar:hover button.active,
+.lang-switch:focus-within button.active,
+.edit-toolbar:focus-within button.active{
+  background:rgba(200,16,46,.82)!important;
+  border-color:rgba(200,16,46,.82)!important;
+  color:#fff!important;
+}
+.table-tools button:hover{
+  border-color:rgba(200,16,46,.65)!important;
+  color:rgb(120,0,15)!important;
+}
+@media print{.lang-switch,.edit-toolbar,.table-tools{display:none!important}}
+</style>

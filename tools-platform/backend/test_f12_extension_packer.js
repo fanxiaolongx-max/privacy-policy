@@ -42,11 +42,13 @@ function testDefaultCompatibility() {
 }
 
 function testAdvancedOptionsAreOptIn() {
+    const extensionKey = Buffer.alloc(162, 7).toString('base64');
     const result = packer.buildPackage(baseOptions({
         matches: 'https://one.example/*\nhttps://two.example/*',
         runAt: 'document_start',
         allFrames: true,
-        optionalPermissions: ['downloads', 'cookies', 'downloads']
+        optionalPermissions: ['downloads', 'cookies', 'downloads'],
+        extensionKey
     }));
     assert.deepStrictEqual(result.manifest.host_permissions, [
         'https://one.example/*',
@@ -54,6 +56,7 @@ function testAdvancedOptionsAreOptIn() {
     ]);
     assert.strictEqual(result.manifest.content_scripts[0].run_at, 'document_start');
     assert.strictEqual(result.manifest.content_scripts[0].all_frames, true);
+    assert.strictEqual(result.manifest.key, extensionKey, '固定 Manifest Key 必须写入扩展清单');
     assert.deepStrictEqual(result.manifest.permissions, [
         'storage', 'activeTab', 'scripting', 'downloads', 'cookies'
     ]);
@@ -62,6 +65,11 @@ function testAdvancedOptionsAreOptIn() {
 function testValidationAndDiagnostics() {
     assert.strictEqual(packer.isValidVersion('1.0.0'), true);
     assert.strictEqual(packer.isValidVersion('1.01'), false);
+    assert.strictEqual(packer.incrementVersion('1.0.0'), '1.0.1');
+    assert.strictEqual(packer.incrementVersion('1.2'), '1.2.1');
+    assert.strictEqual(packer.incrementVersion('1.0.65535'), '1.1.0');
+    assert.strictEqual(packer.incrementVersion('1.2.3.65535'), '1.2.4.0');
+    assert.throws(() => packer.incrementVersion('65535.65535.65535'), /最大值/);
     assert.strictEqual(packer.isValidMatchPattern('<all_urls>'), true);
     assert.strictEqual(packer.isValidMatchPattern('https://*.example.com/*'), true);
     assert.strictEqual(packer.isValidMatchPattern('https://*.example.com:8443/*'), true);
@@ -98,6 +106,15 @@ function testExamAssistantBuiltinCompatibility() {
     }));
     assert.deepStrictEqual(validation.errors, [], '题库与答题助手应通过 content.js 语法检查');
     assert.deepStrictEqual(validation.warnings, [], '题库与答题助手不应依赖 F12/油猴专用 API');
+
+    const cleanHelperStart = examAssistantCode.indexOf('const cleanOptionText =');
+    const cleanHelperEnd = examAssistantCode.indexOf('// 用于对比时消除空格和大小写差异');
+    assert.ok(cleanHelperStart >= 0 && cleanHelperEnd > cleanHelperStart, '必须能定位选项前缀清理函数');
+    const cleanOptionText = new Function(`${examAssistantCode.slice(cleanHelperStart, cleanHelperEnd)}; return cleanOptionText;`)();
+    assert.strictEqual(cleanOptionText('A. A、 未经批准'), '未经批准', '必须剥离重复的 A. A、 前缀');
+    assert.strictEqual(cleanOptionText('D. D、 员工组织活动'), '员工组织活动', '必须剥离重复的 D. D、 前缀');
+    assert.strictEqual(cleanOptionText(cleanOptionText('B. B、 打印文件')), '打印文件', '前缀清理必须幂等');
+    assert.strictEqual(cleanOptionText('A. A-level security'), 'A-level security', '不得误删正文中的 A-level');
 
     const result = packer.buildPackage(validation.options);
     assert.strictEqual(result.files['content.js'], examAssistantCode, '新内置脚本必须原样写入');
@@ -146,12 +163,25 @@ function testExamAssistantBuiltinCompatibility() {
     assert.ok(indexHtml.includes('id="extLicense" type="checkbox" checked'));
     assert.ok(indexHtml.includes('可完全离线验证'), 'License 说明必须明确支持完全离线验签');
     assert.ok(indexHtml.includes('id="manageLicensesBtn"'), '必须提供 License 管理入口');
+    assert.ok(indexHtml.includes('/f12-to-extension/license-config'), '打包必须单独读取公开验签配置');
+    assert.ok(indexHtml.includes('const licenseConfig = await getLicensePackagingConfig(options.name)'), '打包必须按扩展名称读取固定身份');
+    assert.ok(indexHtml.includes('options.extensionKey = licenseConfig.manifestKey'), '打包必须写入稳定 Manifest Key');
+    assert.ok(!indexHtml.includes('issuedLicense = await issueMonthlyLicense(options.name'), '点击打包不得自动签发新 License');
     assert.ok(indexHtml.includes('License ID：${record.licenseId}'), '危险操作确认必须显示 License ID');
     assert.ok(indexHtml.includes('完整输入扩展名称确认'), '归档前必须输入扩展名称二次确认');
     assert.ok(indexHtml.includes("data-license-action=\"revoke\""), '必须支持单独撤销');
     assert.ok(indexHtml.includes("data-license-action=\"renew\""), '必须支持续期');
     assert.ok(indexHtml.includes('https://ilearning.huawei.com/*'));
     assert.ok(indexHtml.includes('includePopup: true'));
+    assert.ok(indexHtml.includes('id="previousVersion"'), '界面必须显示上一个版本');
+    assert.ok(indexHtml.includes('id="nextVersion"'), '界面必须显示本次新版本');
+    assert.ok(indexHtml.includes('f12ExtensionPackerVersionHistoryV1'), '必须按扩展名称持久化版本历史');
+    assert.ok(indexHtml.includes('function incrementExtensionVersion(version)'), '页面必须提供版本递增缓存兼容回退');
+    assert.ok(indexHtml.includes('typeof F12ExtensionPacker.incrementVersion === \'function\''), '新版核心可用时必须使用统一版本递增函数');
+    assert.ok(indexHtml.includes('incrementExtensionVersion(previousVersion)'), '每次打包前必须生成递增版本');
+    assert.ok(indexHtml.includes('packer-core.js?v='), '核心脚本必须带缓存失效版本参数');
+    assert.ok(indexHtml.includes('rememberPackedVersion(options.name, options.version)'), '成功打包后必须推进版本记录');
+    assert.ok(indexHtml.includes('"-v" + options.version + ".zip"'), 'ZIP 文件名必须包含扩展版本');
 }
 
 function testManualLaunchAndLicensePackage() {

@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PC 三方软件全景分析</title>
+<style>
+  :root{
+    --bg:#eef2f7;
+    --panel:rgba(255,255,255,.72);
+    --panel-strong:rgba(255,255,255,.9);
+    --line:rgba(15,23,42,.09);
+    --text:#172033;
+    --muted:#6b7485;
+    --primary:#c8102e;
+    --primary-soft:rgba(200,16,46,.09);
+    --blue:#2f6fed;
+    --green:#16835b;
+    --amber:#b46a00;
+    --danger:#c42b3b;
+    --shadow:0 18px 55px rgba(28,39,60,.10);
+    --radius:22px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    min-height:100vh;
+    color:var(--text);
+    font-family:Inter,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif;
+    background:
+      radial-gradient(circle at 8% 8%,rgba(200,16,46,.08),transparent 28%),
+      radial-gradient(circle at 86% 6%,rgba(47,111,237,.11),transparent 30%),
+      linear-gradient(150deg,#f7f9fc 0%,#eaf0f6 55%,#f4f7fb 100%);
+  }
+  button,input,select{font:inherit}
+  button{cursor:pointer}
+  .hidden{display:none!important}
+  .app{width:min(1680px,calc(100% - 34px));margin:0 auto;padding:24px 0 50px}
+  .glass{
+    background:var(--panel);
+    border:1px solid rgba(255,255,255,.78);
+    box-shadow:var(--shadow);
+    backdrop-filter:blur(20px) saturate(135%);
+    -webkit-backdrop-filter:blur(20px) saturate(135%);
+  }
+  .topbar{
+    position:sticky;top:12px;z-index:30;
+    display:flex;align-items:center;justify-content:space-between;gap:18px;
+    padding:15px 18px;border-radius:20px;
+  }
+  .brand{display:flex;align-items:center;gap:13px;min-width:0}
+  .brand-mark{
+    width:42px;height:42px;border-radius:15px;display:grid;place-items:center;color:#fff;
+    background:linear-gradient(145deg,#da1638,#8f071f);box-shadow:0 10px 25px rgba(200,16,46,.25);
+  }
+  .brand-mark svg{width:23px;height:23px}
+  .brand-title{font-size:18px;font-weight:800;letter-spacing:.2px;white-space:nowrap}
+  .brand-sub{font-size:12px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .top-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;justify-content:flex-end}
+  .btn{
+    border:0;border-radius:13px;padding:10px 14px;font-weight:700;color:var(--text);
+    background:rgba(255,255,255,.73);box-shadow:inset 0 0 0 1px var(--line);
+    transition:.2s ease;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .btn:hover{transform:translateY(-1px);background:#fff;box-shadow:0 8px 22px rgba(31,45,70,.11)}
+  .btn.primary{background:linear-gradient(145deg,#d31638,#ae0b28);color:#fff;box-shadow:0 11px 25px rgba(200,16,46,.23)}
+  .btn.ghost{background:rgba(255,255,255,.45)}
+  .btn.small{padding:8px 11px;border-radius:11px;font-size:13px}
+  .btn svg{width:17px;height:17px}
+
+  .hero{
+    margin-top:22px;padding:25px;border-radius:28px;display:grid;grid-template-columns:1.25fr .75fr;gap:24px;align-items:stretch;
+  }
+  .hero-copy{padding:10px 8px 8px}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--primary);font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+  .hero h1{font-size:clamp(29px,4vw,52px);line-height:1.08;margin:14px 0 13px;letter-spacing:-1.4px;max-width:820px}
+  .hero p{margin:0;color:var(--muted);line-height:1.75;max-width:780px;font-size:15px}
+  .hero-pills{display:flex;flex-wrap:wrap;gap:9px;margin-top:21px}
+  .pill{padding:7px 11px;border-radius:999px;background:rgba(255,255,255,.66);box-shadow:inset 0 0 0 1px var(--line);font-size:12px;color:#4f5b6d}
+  .drop-zone{
+    min-height:250px;border:1.5px dashed rgba(200,16,46,.27);border-radius:23px;padding:25px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    background:linear-gradient(145deg,rgba(255,255,255,.75),rgba(255,255,255,.40));transition:.2s ease;outline:none;
+  }
+  .drop-zone.drag{border-color:var(--primary);background:rgba(255,255,255,.92);transform:scale(1.01)}
+  .upload-icon{width:58px;height:58px;border-radius:20px;display:grid;place-items:center;background:var(--primary-soft);color:var(--primary);margin-bottom:14px}
+  .upload-icon svg{width:29px;height:29px}
+  .drop-title{font-size:18px;font-weight:800}
+  .drop-sub{font-size:13px;color:var(--muted);line-height:1.6;margin:7px 0 15px}
+  .file-note{font-size:11px;color:#8992a1;margin-top:12px}
+
+  .data-banner{margin-top:18px;padding:14px 17px;border-radius:18px;display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}
+  .source-meta{display:flex;align-items:center;gap:12px;min-width:0}
+  .source-dot{width:10px;height:10px;border-radius:50%;background:#17a673;box-shadow:0 0 0 6px rgba(23,166,115,.11)}
+  .source-name{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:520px}
+  .source-desc{font-size:12px;color:var(--muted);margin-top:3px}
+  .source-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+  .filter-wrap{margin-top:14px;border-radius:18px;padding:11px 12px}
+  .filter-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .filter-title{display:flex;align-items:center;gap:7px;font-weight:800;font-size:13px}
+  .filter-count{font-size:11px;color:var(--muted);font-weight:600}
+  .filter-grid{display:grid;grid-template-columns:1.45fr repeat(5,minmax(112px,1fr));gap:7px;margin-top:9px}
+  .field{position:relative;min-width:0}
+  .field label{display:block;font-size:10px;color:var(--muted);margin:0 0 3px 2px;font-weight:700;line-height:1.2}
+  .control{
+    width:100%;border:0;outline:0;border-radius:12px;padding:7px 9px;color:var(--text);font-size:12px;
+    background:rgba(255,255,255,.72);box-shadow:inset 0 0 0 1px var(--line);min-height:32px;
+  }
+  .control:focus{box-shadow:inset 0 0 0 1.5px rgba(47,111,237,.55),0 0 0 4px rgba(47,111,237,.07)}
+  .date-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;min-width:0}
+  .date-row .control{min-width:0;max-width:100%;box-sizing:border-box}
+  .quick-filters{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;align-items:center}
+  .chip{
+    border:0;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:700;color:#536074;
+    background:rgba(255,255,255,.58);box-shadow:inset 0 0 0 1px var(--line);transition:.18s ease;
+  }
+  .chip:hover,.chip.active{background:var(--primary-soft);color:var(--primary);box-shadow:inset 0 0 0 1px rgba(200,16,46,.18)}
+  .active-filter-summary{margin-left:auto;font-size:10px;color:var(--muted);max-width:48%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  .tabs{margin-top:18px;display:flex;gap:8px;overflow:auto;padding:5px;border-radius:16px;width:max-content;max-width:100%}
+  .tab-btn{border:0;padding:10px 15px;border-radius:12px;font-weight:800;color:#657083;background:transparent;white-space:nowrap}
+  .tab-btn.active{background:rgba(255,255,255,.86);color:var(--text);box-shadow:0 7px 18px rgba(31,45,70,.09)}
+
+  .section{margin-top:17px}
+  .kpi-grid{display:grid;grid-template-columns:repeat(8,minmax(135px,1fr));gap:12px}
+  .kpi{padding:18px 17px;border-radius:19px;min-height:132px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+  .kpi:after{content:"";position:absolute;width:85px;height:85px;border-radius:50%;right:-32px;top:-34px;background:var(--accent,rgba(47,111,237,.08))}
+  .kpi-label{font-size:12px;color:var(--muted);font-weight:700;position:relative;z-index:1}
+  .kpi-value{font-size:28px;font-weight:850;letter-spacing:-.7px;position:relative;z-index:1;margin-top:8px}
+  .kpi-foot{font-size:11px;color:#7d8797;position:relative;z-index:1;line-height:1.35}
+  .kpi.warn{--accent:rgba(180,106,0,.11)}
+  .kpi.danger{--accent:rgba(196,43,59,.11)}
+  .kpi.green{--accent:rgba(22,131,91,.10)}
+
+  .chart-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:14px;margin-top:14px}
+  .chart-grid.equal{grid-template-columns:1fr 1fr}
+  .panel{border-radius:22px;padding:18px;min-width:0}
+  .panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+  .panel-title{font-size:15px;font-weight:850}
+  .panel-sub{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5}
+  .chart-box{height:300px;position:relative}
+  .chart-box.tall{height:340px}
+  .priority-panel{position:relative;overflow:hidden}
+  .priority-panel:before{content:"重点";position:absolute;right:17px;top:16px;padding:4px 8px;border-radius:999px;background:var(--primary-soft);color:var(--primary);font-size:10px;font-weight:850;letter-spacing:.08em}
+  .custom-panel{margin-top:14px}
+  .custom-controls{display:grid;grid-template-columns:repeat(4,minmax(145px,1fr));gap:10px;margin:4px 0 13px}
+  .custom-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:9px;color:var(--muted);font-size:11px}
+  .custom-meta strong{color:var(--text)}
+  canvas{width:100%;height:100%;display:block}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--muted)}
+  .legend-item{display:flex;align-items:center;gap:6px}
+  .legend-dot{width:8px;height:8px;border-radius:50%}
+  .empty-state{height:100%;display:grid;place-items:center;text-align:center;color:var(--muted);font-size:13px;line-height:1.7;padding:25px}
+
+  .table-panel{margin-top:14px;border-radius:22px;padding:17px;overflow:hidden}
+  .table-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+  .table-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .table-wrap{overflow:auto;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.43);max-height:620px}
+  table{border-collapse:separate;border-spacing:0;width:100%;min-width:1050px;font-size:12px}
+  th,td{padding:11px 12px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;vertical-align:middle}
+  th{position:sticky;top:0;background:rgba(246,248,252,.96);z-index:2;color:#5c6677;font-size:11px;letter-spacing:.02em;cursor:pointer;user-select:none}
+  tbody tr{transition:.15s ease}
+  tbody tr:hover{background:rgba(255,255,255,.68)}
+  tbody tr:last-child td{border-bottom:0}
+  td.wrap{white-space:normal;min-width:220px;line-height:1.5}
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border-radius:999px;font-size:11px;font-weight:800;background:rgba(99,111,131,.09);color:#566175}
+  .badge.good{background:rgba(22,131,91,.10);color:var(--green)}
+  .badge.warn{background:rgba(180,106,0,.11);color:var(--amber)}
+  .badge.danger{background:rgba(196,43,59,.10);color:var(--danger)}
+  .badge.primary{background:var(--primary-soft);color:var(--primary)}
+  .muted{color:var(--muted)}
+  .pager{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+  .pager-actions{display:flex;gap:7px;align-items:center}
+
+  .quality-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:14px}
+  .quality-list{display:grid;gap:10px}
+  .quality-item{padding:14px;border-radius:15px;background:rgba(255,255,255,.53);box-shadow:inset 0 0 0 1px var(--line)}
+  .quality-row{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:12px;font-weight:800}
+  .quality-bar{height:8px;border-radius:999px;background:rgba(31,45,70,.07);overflow:hidden;margin-top:10px}
+  .quality-fill{height:100%;border-radius:inherit;background:linear-gradient(90deg,#2f6fed,#6a96f2)}
+  .quality-detail{font-size:11px;color:var(--muted);margin-top:7px}
+
+  .overlay{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:rgba(233,239,247,.55);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px)}
+  .loader-card{width:min(410px,calc(100% - 34px));padding:25px;border-radius:25px;text-align:center}
+  .spinner{width:48px;height:48px;border-radius:50%;border:4px solid rgba(200,16,46,.12);border-top-color:var(--primary);margin:0 auto 16px;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .progress{height:8px;border-radius:999px;background:rgba(31,45,70,.08);overflow:hidden;margin-top:16px}
+  .progress span{display:block;height:100%;width:35%;border-radius:inherit;background:linear-gradient(90deg,#bd0b2b,#e54460);animation:loading 1.15s ease-in-out infinite}
+  @keyframes loading{0%{transform:translateX(-120%)}100%{transform:translateX(340%)}}
+
+  .modal-shell{position:fixed;inset:0;z-index:110;display:grid;place-items:center;padding:18px;background:rgba(22,31,47,.24);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  .modal{width:min(720px,100%);max-height:84vh;overflow:auto;border-radius:25px;padding:22px}
+  .modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:14px}
+  .modal-title{font-size:20px;font-weight:850}
+  .modal-sub{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.6}
+  .close-btn{border:0;width:35px;height:35px;border-radius:11px;background:rgba(255,255,255,.65);font-size:20px;color:#5f6877}
+  .modal-body{font-size:13px;line-height:1.75;color:#465166}
+  .rule-box{padding:13px 14px;border-radius:14px;background:rgba(255,255,255,.56);box-shadow:inset 0 0 0 1px var(--line);margin:9px 0}
+  .sheet-list{display:grid;gap:9px}
+  .sheet-option{width:100%;text-align:left;border:0;border-radius:14px;padding:14px;background:rgba(255,255,255,.62);box-shadow:inset 0 0 0 1px var(--line)}
+  .sheet-option:hover{background:#fff}
+
+  .toast-wrap{position:fixed;right:20px;bottom:20px;z-index:130;display:grid;gap:9px;pointer-events:none}
+  .toast{min-width:260px;max-width:390px;padding:13px 15px;border-radius:15px;background:rgba(28,37,54,.92);color:#fff;box-shadow:0 15px 40px rgba(17,24,39,.25);backdrop-filter:blur(12px);font-size:13px;line-height:1.5;animation:toastIn .2s ease}
+  .toast.success{background:rgba(18,115,82,.94)}
+  .toast.error{background:rgba(173,31,49,.95)}
+  @keyframes toastIn{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+
+  .menu{position:relative}
+  .menu-pop{position:absolute;right:0;top:calc(100% + 8px);z-index:40;width:210px;padding:7px;border-radius:15px;background:rgba(255,255,255,.94);box-shadow:0 16px 40px rgba(31,45,70,.17);border:1px solid var(--line);backdrop-filter:blur(14px)}
+  .menu-pop button{width:100%;text-align:left;border:0;background:transparent;border-radius:10px;padding:10px 11px;color:var(--text);font-weight:700}
+  .menu-pop button:hover{background:rgba(47,111,237,.07)}
+
+  .footer-note{text-align:center;color:#8a93a2;font-size:11px;margin-top:18px;line-height:1.7}
+
+  @media(max-width:1300px){
+    .kpi-grid{grid-template-columns:repeat(4,1fr)}
+    .filter-grid{grid-template-columns:repeat(4,1fr)}
+    .filter-grid .wide{grid-column:span 2}
+  }
+  @media(max-width:900px){
+    .app{width:min(100% - 20px,1680px);padding-top:10px}
+    .topbar{top:6px;padding:12px}
+    .brand-sub{display:none}
+    .hero{grid-template-columns:1fr;padding:18px}
+    .chart-grid,.chart-grid.equal,.quality-grid{grid-template-columns:1fr}
+    .custom-controls{grid-template-columns:repeat(2,1fr)}
+    .filter-grid{grid-template-columns:repeat(2,1fr)}
+    .filter-grid .wide{grid-column:span 2}
+    .kpi-grid{grid-template-columns:repeat(2,1fr)}
+    .top-actions .label{display:none}
+  }
+  @media(max-width:560px){
+    .brand-title{font-size:15px}
+    .top-actions{gap:6px}
+    .btn{padding:9px 10px}
+    .hero h1{font-size:34px}
+    .filter-grid{grid-template-columns:1fr}
+    .filter-grid .wide{grid-column:auto}
+    .date-row{grid-template-columns:1fr}
+    .custom-controls{grid-template-columns:1fr}
+    .kpi-grid{grid-template-columns:1fr 1fr;gap:9px}
+    .kpi{min-height:116px;padding:15px}
+    .kpi-value{font-size:24px}
+    .panel,.table-panel{padding:14px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar glass">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="4" width="18" height="14" rx="2.5"/><path d="M8 21h8M12 18v3M7 9h3v5H7zM14 7h3v7h-3z"/></svg>
+      </div>
+      <div>
+        <div class="brand-title">PC 三方软件全景分析</div>
+        <div class="brand-sub">Third-Party Software Compliance & Inventory Dashboard</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="btn ghost lang-toggle" id="langBtn" title="Switch language">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg><span class="label" id="langBtnLabel">EN</span>
+      </button>
+      <button class="btn ghost" id="helpBtn" title="统计口径说明">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.8 9a2.5 2.5 0 1 1 3.6 2.25c-.85.42-1.4 1-1.4 2V14M12 18h.01"/></svg><span class="label">口径说明</span>
+      </button>
+      <div class="menu">
+        <button class="btn ghost" id="exportBtn" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M5 19h14"/></svg><span class="label">导出</span>
+        </button>
+        <div class="menu-pop hidden" id="exportMenu">
+          <button data-export="detail">导出当前筛选明细 CSV</button>
+          <button data-export="employee">导出员工汇总 CSV</button>
+          <button data-export="employeeId">导出工号汇总 CSV</button>
+          <button data-export="device">导出设备汇总 CSV</button>
+          <button data-export="software">导出软件汇总 CSV</button>
+        </div>
+      </div>
+      <button class="btn primary" id="topImportBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4m0 0-4 4m4-4 4 4"/><path d="M5 20h14"/></svg><span class="label">批量导入</span>
+      </button>
+    </div>
+  </header>
+
+  <section class="hero glass" id="heroSection">
+    <div class="hero-copy">
+      <div class="eyebrow">PC SOFTWARE GOVERNANCE</div>
+      <h1>从员工、设备、软件与部门<br>看清三方工具安装全貌</h1>
+      <p>可一次选择或拖入多个 Excel，自动识别每个文件的有效工作表并合并分析。页面不上传数据，所有解析和统计均在当前浏览器本地完成。</p>
+      <div class="hero-pills">
+        <span class="pill">员工 / 设备 / 软件三维汇总</span>
+        <span class="pill">版本一致性与例外配置</span>
+        <span class="pill">部门分布与时间趋势</span>
+        <span class="pill">数据完整性检查</span>
+      </div>
+    </div>
+    <div class="drop-zone" id="dropZone" tabindex="0" role="button" aria-label="批量导入 Excel 文件">
+      <div class="upload-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V5m0 0-4 4m4-4 4 4"/><path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/></svg>
+      </div>
+      <div class="drop-title">拖入一个或多个 Excel 文件开始分析</div>
+      <div class="drop-sub">也可以点击批量选择文件<br>支持 .xlsx / .csv / .tsv，可混合导入</div>
+      <button class="btn primary" id="chooseFileBtn">选择多个文件</button>
+      <button class="btn small ghost" id="sampleBtn" style="margin-top:9px">加载示例数据</button>
+      <div class="file-note">支持多选与批量拖入；旧版 .xls 请先另存为 .xlsx；每个文件自动识别前 30 行中的表头</div>
+    </div>
+  </section>
+
+  <input id="fileInput" type="file" accept=".xlsx,.csv,.tsv" multiple hidden />
+
+  <section class="data-banner glass hidden" id="dataBanner">
+    <div class="source-meta">
+      <div class="source-dot"></div>
+      <div style="min-width:0">
+        <div class="source-name" id="sourceName">-</div>
+        <div class="source-desc" id="sourceDesc">-</div>
+      </div>
+    </div>
+    <div class="source-actions">
+      <button class="btn small ghost hidden" id="switchSheetBtn">查看导入文件</button>
+      <button class="btn small ghost" id="replaceFileBtn">重新导入</button>
+    </div>
+  </section>
+
+  <section class="filter-wrap glass hidden" id="filterSection">
+    <div class="filter-head">
+      <div class="filter-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M7 12h10M10 19h4"/></svg>
+        全局筛选 <span class="filter-count" id="filterCount">0 / 0 条</span>
+      </div>
+      <button class="btn small ghost" id="resetFilterBtn">重置筛选</button>
+    </div>
+    <div class="filter-grid">
+      <div class="field wide">
+        <label>关键词</label>
+        <input class="control" id="keywordFilter" placeholder="工号、工具、设备、资产编码、备注、来源文件……" />
+      </div>
+      <div class="field"><label>来源文件</label><select class="control" id="sourceFileFilter"></select></div>
+      <div class="field"><label>一级部门</label><select class="control" id="dept1Filter"></select></div>
+      <div class="field"><label>二级部门</label><select class="control" id="dept2Filter"></select></div>
+      <div class="field"><label>三级部门</label><select class="control" id="dept3Filter"></select></div>
+      <div class="field"><label>四级部门</label><select class="control" id="dept4Filter"></select></div>
+      <div class="field"><label>工具名称</label><select class="control" id="toolFilter"></select></div>
+      <div class="field"><label>问题类</label><select class="control" id="issueFilter"></select></div>
+      <div class="field"><label>分析状态</label><select class="control" id="statusFilter"></select></div>
+      <div class="field"><label>例外配置</label><select class="control" id="exceptionFilter"><option value="">全部</option><option value="yes">已配置</option><option value="no">未配置/未说明</option></select></div>
+      <div class="field"><label>时间口径</label><select class="control" id="dateFieldFilter"><option value="安装时间">安装时间</option><option value="iDesk信息上报时间">iDesk 信息上报时间</option></select></div>
+      <div class="field wide"><label>日期范围</label><div class="date-row"><input type="date" class="control" id="dateStartFilter"/><input type="date" class="control" id="dateEndFilter"/></div></div>
+    </div>
+    <div class="quick-filters">
+      <button class="chip active" data-quick="all">全部记录</button>
+      <button class="chip" data-quick="attention">仅看需关注</button>
+      <button class="chip" data-quick="mismatch">版本不一致</button>
+      <button class="chip" data-quick="exception">例外配置</button>
+      <button class="chip" data-quick="incomplete">关键信息缺失</button>
+      <button class="chip" data-quick="recent30">近 30 天安装</button>
+      <span class="active-filter-summary" id="activeFilterSummary">当前未启用筛选</span>
+    </div>
+  </section>
+
+  <nav class="tabs glass hidden" id="tabs">
+    <button class="tab-btn active" data-tab="overview">全景概览</button>
+    <button class="tab-btn" data-tab="employee">员工维度</button>
+    <button class="tab-btn" data-tab="device">设备维度</button>
+    <button class="tab-btn" data-tab="software">软件维度</button>
+    <button class="tab-btn" data-tab="quality">数据质量</button>
+    <button class="tab-btn" data-tab="detail">安装明细</button>
+  </nav>
+
+  <main id="dashboard" class="hidden">
+    <section class="tab-page section" data-page="overview">
+      <div class="kpi-grid" id="kpiGrid"></div>
+
+      <div class="chart-grid equal">
+        <div class="panel glass priority-panel">
+          <div class="panel-head"><div><div class="panel-title">四级部门安装统计</div><div class="panel-sub">优先展示四级部门，按当前筛选范围统计安装记录 TOP 15</div></div></div>
+          <div class="chart-box tall"><canvas id="dept4Chart"></canvas></div>
+        </div>
+        <div class="panel glass priority-panel">
+          <div class="panel-head"><div><div class="panel-title">三级部门安装统计</div><div class="panel-sub">其次展示三级部门，便于从上级组织定位集中分布</div></div></div>
+          <div class="chart-box tall"><canvas id="dept3Chart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="panel glass custom-panel">
+        <div class="panel-head">
+          <div><div class="panel-title">自定义统计图表</div><div class="panel-sub">选择任意常用字段和统计指标，结果会跟随页面全部筛选条件实时联动</div></div>
+          <button class="btn small ghost" id="resetCustomChartBtn">恢复默认</button>
+        </div>
+        <div class="custom-controls">
+          <div class="field"><label>统计字段</label><select class="control" id="customDimension"></select></div>
+          <div class="field"><label>统计指标</label><select class="control" id="customMetric">
+            <option value="records">安装记录数</option>
+            <option value="employees">涉及员工数</option>
+            <option value="devices">涉及设备数</option>
+            <option value="tools">涉及软件数</option>
+            <option value="attention">需关注记录数</option>
+            <option value="mismatch">版本不一致数</option>
+            <option value="exceptions">例外配置数</option>
+          </select></div>
+          <div class="field"><label>图表类型</label><select class="control" id="customChartType">
+            <option value="horizontal">横向柱状图</option>
+            <option value="vertical">纵向柱状图</option>
+            <option value="donut">环形图</option>
+          </select></div>
+          <div class="field"><label>显示数量</label><select class="control" id="customTopN">
+            <option value="5">TOP 5</option><option value="10" selected>TOP 10</option><option value="15">TOP 15</option><option value="20">TOP 20</option>
+          </select></div>
+        </div>
+        <div class="chart-box tall"><canvas id="customChart"></canvas></div>
+        <div class="legend" id="customLegend"></div>
+        <div class="custom-meta"><span id="customChartSummary">当前：四级部门 × 安装记录数</span><span>空字段统一归入“未填写”</span></div>
+      </div>
+
+      <div class="chart-grid">
+        <div class="panel glass">
+          <div class="panel-head"><div><div class="panel-title">软件安装数量 TOP 10</div><div class="panel-sub">按工具名称优先，空值使用注册表软件名称补充</div></div></div>
+          <div class="chart-box"><canvas id="toolChart"></canvas></div>
+        </div>
+        <div class="panel glass">
+          <div class="panel-head"><div><div class="panel-title">分析状态分布</div><div class="panel-sub">按例外配置、版本与上架信息自动归类</div></div></div>
+          <div class="chart-box"><canvas id="statusChart"></canvas></div>
+          <div class="legend" id="statusLegend"></div>
+        </div>
+      </div>
+      <div class="chart-grid equal">
+        <div class="panel glass">
+          <div class="panel-head"><div><div class="panel-title">一级部门安装分布</div><div class="panel-sub">作为高层组织视角，显示记录量最高的 10 个一级部门</div></div></div>
+          <div class="chart-box"><canvas id="deptChart"></canvas></div>
+        </div>
+        <div class="panel glass">
+          <div class="panel-head"><div><div class="panel-title">安装时间趋势</div><div class="panel-sub">按月份统计已识别的安装记录</div></div></div>
+          <div class="chart-box"><canvas id="trendChart"></canvas></div>
+        </div>
+      </div>
+      <div class="chart-grid equal">
+        <div class="panel glass">
+          <div class="panel-head"><div><div class="panel-title">问题类型分布</div><div class="panel-sub">显示问题类字段中记录量最高的类别</div></div></div>
+          <div class="chart-box"><canvas id="issueChart"></canvas></div>
+        </div>
+        <div class="panel glass">
+          <div class="panel-head"><div><div class="panel-title">上报时效</div><div class="panel-sub">以最新一条 iDesk 上报日期为基准，衡量记录距最新上报日期的间隔</div></div></div>
+          <div class="chart-box"><canvas id="freshnessChart"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tab-page section hidden" data-page="employee">
+      <div class="table-panel glass">
+        <div class="table-head"><div><div class="panel-title">员工安装汇总</div><div class="panel-sub">聚合员工涉及的软件、设备、部门及需关注记录</div></div><div class="table-actions"><button class="btn small ghost" data-inline-export="employee">导出员工汇总</button><button class="btn small ghost" data-inline-export="employeeId">导出工号汇总</button></div></div>
+        <div class="table-wrap"><table><thead id="employeeHead"></thead><tbody id="employeeBody"></tbody></table></div>
+        <div class="pager" id="employeePager"></div>
+      </div>
+    </section>
+
+    <section class="tab-page section hidden" data-page="device">
+      <div class="table-panel glass">
+        <div class="table-head"><div><div class="panel-title">设备安装汇总</div><div class="panel-sub">按设备名称与资产编码聚合，定位高安装量或高风险终端</div></div><div class="table-actions"><button class="btn small ghost" data-inline-export="device">导出设备汇总</button></div></div>
+        <div class="table-wrap"><table><thead id="deviceHead"></thead><tbody id="deviceBody"></tbody></table></div>
+        <div class="pager" id="devicePager"></div>
+      </div>
+    </section>
+
+    <section class="tab-page section hidden" data-page="software">
+      <div class="table-panel glass">
+        <div class="table-head"><div><div class="panel-title">软件安装汇总</div><div class="panel-sub">比较安装版本、上架版本、涉及员工与设备范围</div></div><div class="table-actions"><button class="btn small ghost" data-inline-export="software">导出软件汇总</button></div></div>
+        <div class="table-wrap"><table><thead id="softwareHead"></thead><tbody id="softwareBody"></tbody></table></div>
+        <div class="pager" id="softwarePager"></div>
+      </div>
+    </section>
+
+    <section class="tab-page section hidden" data-page="quality">
+      <div class="quality-grid">
+        <div class="panel glass">
+          <div class="panel-head"><div><div class="panel-title">关键信息完整度</div><div class="panel-sub">逐字段检查缺失情况，帮助判断统计结果的可信度</div></div></div>
+          <div class="quality-list" id="qualityList"></div>
+        </div>
+        <div class="table-panel glass" style="margin-top:0">
+          <div class="table-head"><div><div class="panel-title">缺失 / 异常记录</div><div class="panel-sub">仅展示存在关键信息缺失、无效日期或版本异常的记录</div></div></div>
+          <div class="table-wrap"><table><thead id="qualityHead"></thead><tbody id="qualityBody"></tbody></table></div>
+          <div class="pager" id="qualityPager"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tab-page section hidden" data-page="detail">
+      <div class="table-panel glass">
+        <div class="table-head"><div><div class="panel-title">当前筛选安装明细</div><div class="panel-sub" id="detailSub">-</div></div><div class="table-actions"><select class="control" id="pageSizeSelect" style="width:auto;min-height:35px;padding:7px 9px"><option value="25">25 条/页</option><option value="50" selected>50 条/页</option><option value="100">100 条/页</option></select><button class="btn small ghost" data-inline-export="detail">导出当前明细</button></div></div>
+        <div class="table-wrap"><table><thead id="detailHead"></thead><tbody id="detailBody"></tbody></table></div>
+        <div class="pager" id="detailPager"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="footer-note">本工具为本地离线分析页面，不会主动上传所导入的数据。统计结论取决于原始 Excel 字段质量，请结合“数据质量”页核查。</div>
+</div>
+
+<div class="overlay hidden" id="loadingOverlay">
+  <div class="loader-card glass">
+    <div class="spinner"></div>
+    <div style="font-size:18px;font-weight:850" id="loadingTitle">正在读取文件</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:7px" id="loadingText">请勿关闭当前页面</div>
+    <div class="progress"><span></span></div>
+  </div>
+</div>
+
+<div class="modal-shell hidden" id="modalShell">
+  <div class="modal glass">
+    <div class="modal-head">
+      <div><div class="modal-title" id="modalTitle">提示</div><div class="modal-sub" id="modalSub"></div></div>
+      <button class="close-btn" id="modalClose" aria-label="关闭">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const HEADERS = [
+    '问题类','安装人工号','工具名称','注册表软件名称','工具安装版本','安装时间','安装位置','上架版本','上架地址','备注说明','是否例外配置','例外版本','设备名称','资产编码','一级部门','二级部门','三级部门','四级部门','五级部门','六级部门','iDesk信息上报时间'
+  ];
+  const KEY_FIELDS = ['安装人工号','工具名称','设备名称','资产编码','一级部门','iDesk信息上报时间'];
+  const DATE_FIELDS = ['安装时间','iDesk信息上报时间'];
+  const STATUS_ORDER = ['版本一致','例外配置','版本不一致','未提供上架信息','需处理','待确认'];
+  const STATUS_COLORS = {
+    '版本一致':'#16835b','例外配置':'#2f6fed','版本不一致':'#c42b3b','未提供上架信息':'#b46a00','需处理':'#d05c27','待确认':'#7f8998'
+  };
+
+  const CUSTOM_DIMENSIONS = [
+    ['四级部门','四级部门'],['三级部门','三级部门'],['二级部门','二级部门'],['一级部门','一级部门'],['五级部门','五级部门'],['六级部门','六级部门'],
+    ['工具名称','工具名称（工具名称优先）'],['注册表软件名称','注册表软件名称'],['工具安装版本','工具安装版本'],['上架版本','上架版本'],
+    ['问题类','问题类'],['_status','分析状态'],['_exceptionLabel','例外配置状态'],['安装人工号','安装人工号'],['设备名称','设备名称'],['资产编码','资产编码'],
+    ['安装位置','安装位置'],['_sourceFile','来源文件'],['_sourceSheet','来源工作表'],['_installMonth','安装月份'],['_reportMonth','iDesk 上报月份']
+  ];
+  const CUSTOM_METRIC_LABELS = {records:'安装记录数',employees:'涉及员工数',devices:'涉及设备数',tools:'涉及软件数',attention:'需关注记录数',mismatch:'版本不一致数',exceptions:'例外配置数'};
+
+  const state = {
+    all:[], filtered:[], sourceName:'', importedAt:null, currentTab:'overview', quick:'all',
+    workbook:null, sheets:[], currentSheetIndex:0, imports:[], rejectedFiles:[],
+    page:{detail:1,employee:1,device:1,software:1,quality:1},
+    pageSize:{detail:50,employee:50,device:50,software:50,quality:50},
+    sort:{
+      detail:{key:'_row',dir:1}, employee:{key:'安装记录数',dir:-1}, device:{key:'安装记录数',dir:-1}, software:{key:'安装记录数',dir:-1}, quality:{key:'异常项数',dir:-1}
+    },
+    aggregates:{employee:[],device:[],software:[],quality:[]},
+    customChart:{dimension:'四级部门',metric:'records',type:'horizontal',topN:10},
+    lang:'zh'
+  };
+
+  const $ = (s, root=document) => root.querySelector(s);
+  const $$ = (s, root=document) => [...root.querySelectorAll(s)];
+  const el = id => document.getElementById(id);
+  const nfmt = new Intl.NumberFormat('zh-CN');
+  const pctfmt = new Intl.NumberFormat('zh-CN',{style:'percent',maximumFractionDigits:1});
+  const DEPT4_EN = {
+    '埃及网络保障与运维服务部':'AMS',
+    '埃及ICT咨询与系统集成部':'NIS',
+    '埃及软件业务部':'Software',
+    '埃及政企大客户服务部':'EBG',
+    '业务体验咨询与系统集成部':'SEC',
+    '埃及交付管理部':'PMO',
+    '埃及服务伙伴使能部':'EBG'
+  };
+  const UI_EN = {
+    '口径说明':'Methodology','导出':'Export','批量导入':'Import Files','导出当前筛选明细 CSV':'Export Filtered Details CSV','导出员工汇总 CSV':'Export Employee Summary CSV','导出工号汇总 CSV':'Export Employee ID Summary CSV','导出设备汇总 CSV':'Export Device Summary CSV','导出软件汇总 CSV':'Export Software Summary CSV',
+    '从员工、设备、软件与部门':'Understand third-party software across','看清三方工具安装全貌':'employees, devices, software and departments','可一次选择或拖入多个 Excel，自动识别每个文件的有效工作表并合并分析。页面不上传数据，所有解析和统计均在当前浏览器本地完成。':'Select or drop multiple Excel files. Valid worksheets are detected and merged automatically. All processing stays in your browser and no data is uploaded.',
+    '员工 / 设备 / 软件三维汇总':'Employee / device / software summaries','版本一致性与例外配置':'Version compliance and exceptions','部门分布与时间趋势':'Department distribution and trends','数据完整性检查':'Data completeness checks',
+    '拖入一个或多个 Excel 文件开始分析':'Drop one or more Excel files to start','也可以点击批量选择文件':'Or select multiple files','支持 .xlsx / .csv / .tsv，可混合导入':'Supports mixed .xlsx / .csv / .tsv files','选择多个文件':'Select Files','加载示例数据':'Load Sample Data','支持多选与批量拖入；旧版 .xls 请先另存为 .xlsx；每个文件自动识别前 30 行中的表头':'Multiple selection and batch drop are supported. Save legacy .xls files as .xlsx first. Headers are detected within the first 30 rows.',
+    '查看导入文件':'View Imported Files','重新导入':'Re-import','全局筛选':'Global Filters','重置筛选':'Reset Filters','关键词':'Keyword','来源文件':'Source File','一级部门':'Level 1 Dept.','二级部门':'Level 2 Dept.','三级部门':'Level 3 Dept.','四级部门':'Level 4 Dept.','工具名称':'Tool Name','问题类':'Issue Type','分析状态':'Analysis Status','例外配置':'Exception','时间口径':'Date Basis','安装时间':'Install Time','iDesk 信息上报时间':'iDesk Report Time','日期范围':'Date Range',
+    '全部记录':'All Records','仅看需关注':'Attention Only','版本不一致':'Version Mismatch','关键信息缺失':'Missing Key Data','近 30 天安装':'Installed in Last 30 Days','当前未启用筛选':'No active filters',
+    '全景概览':'Overview','员工维度':'Employees','设备维度':'Devices','软件维度':'Software','数据质量':'Data Quality','安装明细':'Installation Details',
+    '四级部门安装统计':'Level 4 Department Statistics','优先展示四级部门，按当前筛选范围统计安装记录 TOP 15':'Priority view of Level 4 departments, ranked by filtered installation records','三级部门安装统计':'Level 3 Department Statistics','其次展示三级部门，便于从上级组织定位集中分布':'Secondary view by Level 3 department for higher-level distribution analysis',
+    '自定义统计图表':'Custom Chart','选择任意常用字段和统计指标，结果会跟随页面全部筛选条件实时联动':'Choose a dimension and metric. Results follow all active filters in real time.','恢复默认':'Reset Default','统计字段':'Dimension','统计指标':'Metric','图表类型':'Chart Type','显示数量':'Top N','安装记录数':'Installation Records','涉及员工数':'Employees','涉及设备数':'Devices','涉及软件数':'Software Items','需关注记录数':'Attention Records','版本不一致数':'Version Mismatches','例外配置数':'Exceptions','横向柱状图':'Horizontal Bar','纵向柱状图':'Vertical Bar','环形图':'Donut','空字段统一归入“未填写”':'Blank values are grouped as “Not provided”',
+    '软件安装数量 TOP 10':'Top 10 Software Installations','按工具名称优先，空值使用注册表软件名称补充':'Tool name is preferred; registry name is used when blank','分析状态分布':'Analysis Status Distribution','按例外配置、版本与上架信息自动归类':'Automatically classified by exception, version and catalog information','一级部门分布':'Level 1 Department Distribution','安装趋势':'Installation Trend','问题类型分布':'Issue Type Distribution','iDesk 上报时效':'iDesk Reporting Freshness',
+    '当前筛选安装明细':'Filtered Installation Details','导出当前明细':'Export Details','条/页':'rows/page','全部':'All','已配置':'Configured','未配置/未说明':'Not Configured / Unspecified','未填写':'Not Provided','暂无数据':'No Data','当前筛选范围内暂无数据':'No data in the current filter range',
+    '安装记录':'Installation Records','涉及员工':'Employees','涉及设备':'Devices','软件种类':'Software Types','需关注记录':'Attention Records','关键信息完整率':'Key Data Completeness','当前筛选范围内的明细行数':'Detail rows in the current filter range','按安装人工号去重':'Unique by installer field','设备名称 + 资产编码去重':'Unique by device name + asset code','工具名称优先，注册表名称补充':'Tool name preferred; registry name used as fallback','无记录':'No records','工号、工具、设备、资产、部门、上报时间':'Employee ID, tool, device, asset, department and report time'
+  };
+  const UI_ZH = Object.fromEntries(Object.entries(UI_EN).map(([k,v])=>[v,k]));
+  function tr(v){ return state.lang==='en' ? (UI_EN[v]||v) : (UI_ZH[v]||v); }
+  function displayDept4(v){
+    const raw=clean(v); if(state.lang!=='en'||!raw)return raw;
+    return raw.split(/\s*\/\s*/).map(x=>DEPT4_EN[x]||x).join(' / ');
+  }
+  function displayDimensionValue(dimension,v){ return dimension==='四级部门' ? displayDept4(v) : v; }
+
+  function escapeHtml(v){
+    return String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+  }
+  function norm(v){ return String(v ?? '').replace(/^\uFEFF/,'').replace(/\s+/g,'').trim(); }
+  function clean(v){ return String(v ?? '').trim(); }
+  function unique(arr){ return [...new Set(arr.filter(v => clean(v) !== '').map(clean))]; }
+  function canonicalTool(r){ return clean(r['工具名称']) || clean(r['注册表软件名称']) || '未填写软件名称'; }
+  function canonicalDevice(r){ return clean(r['设备名称']) || clean(r['资产编码']) || '未识别设备'; }
+  function yes(v){ return /^(是|yes|y|true|1|已配置|例外配置|有)$/i.test(norm(v)); }
+  function normalizeVersion(v){ return clean(v).toLowerCase().replace(/^v(?=\d)/,'').replace(/\s+/g,''); }
+  function parseDate(v){
+    if(v instanceof Date && !isNaN(v)) return v;
+    const s = clean(v);
+    if(!s) return null;
+    const normalized = s.replace(/[年/.]/g,'-').replace(/月/g,'-').replace(/日/g,'').replace(/\s+/g,' ');
+    const d = new Date(normalized);
+    if(!isNaN(d)) return d;
+    const m = normalized.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/);
+    if(m){
+      const x = new Date(+m[1],+m[2]-1,+m[3],+(m[4]||0),+(m[5]||0),+(m[6]||0));
+      return isNaN(x) ? null : x;
+    }
+    return null;
+  }
+  function dateKey(v){ const d=parseDate(v); return d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` : ''; }
+  function dateOnly(v){ const d=parseDate(v); return d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : ''; }
+  function formatDate(v){
+    const d=parseDate(v); if(!d) return clean(v) || '-';
+    return new Intl.DateTimeFormat('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:d.getHours()||d.getMinutes()?'2-digit':undefined,minute:d.getHours()||d.getMinutes()?'2-digit':undefined,hour12:false}).format(d).replace(/\//g,'-');
+  }
+  function excelSerialToDate(serial){
+    const n = Number(serial); if(!isFinite(n)) return null;
+    const whole = Math.floor(n), frac = n - whole;
+    const epoch = Date.UTC(1899,11,30);
+    return new Date(epoch + whole*86400000 + Math.round(frac*86400000));
+  }
+  function versionEqual(a,b){
+    const x=normalizeVersion(a), y=normalizeVersion(b);
+    return !!x && !!y && x===y;
+  }
+  function issueIsNormal(v){ const s=norm(v); return !s || /^(正常|无|无问题|ok|pass|合规)$/i.test(s); }
+  function statusOf(r){
+    if(yes(r['是否例外配置'])) return '例外配置';
+    const installed=clean(r['工具安装版本']), listed=clean(r['上架版本']);
+    if(installed && listed) return versionEqual(installed,listed) ? '版本一致' : '版本不一致';
+    if(installed && !listed && !clean(r['上架地址'])) return '未提供上架信息';
+    if(!issueIsNormal(r['问题类'])) return '需处理';
+    return '待确认';
+  }
+  function missingFields(r){ return KEY_FIELDS.filter(f => !clean(r[f])); }
+  function invalidDateFields(r){ return DATE_FIELDS.filter(f => clean(r[f]) && !parseDate(r[f])); }
+  function attentionOf(r){
+    const st=statusOf(r);
+    return st==='版本不一致' || st==='未提供上架信息' || st==='需处理';
+  }
+  function enrichRecord(r,index,meta={}){
+    const out={}; HEADERS.forEach(h => out[h]=clean(r[h]));
+    out._row=index+1;
+    out._sourceFile=clean(meta.sourceFile);
+    out._sourceSheet=clean(meta.sourceSheet);
+    out._sourceRow=Number(meta.sourceRow)||index+1;
+    out._tool=canonicalTool(out);
+    out._device=canonicalDevice(out);
+    out._exception=yes(out['是否例外配置']);
+    out._status=statusOf(out);
+    out._missing=missingFields(out);
+    out._invalidDates=invalidDateFields(out);
+    out._attention=attentionOf(out);
+    out._qualityIssues=[...out._missing.map(x=>`缺少${x}`),...out._invalidDates.map(x=>`${x}格式无效`)];
+    if(out._status==='版本不一致') out._qualityIssues.push('安装版本与上架版本不一致');
+    out._qualityIssueCount=out._qualityIssues.length;
+    return out;
+  }
+  function groupCount(records,keyFn){
+    const m=new Map();
+    records.forEach(r=>{const k=clean(keyFn(r))||'未填写';m.set(k,(m.get(k)||0)+1)});
+    return [...m.entries()].map(([label,value])=>({label,value})).sort((a,b)=>b.value-a.value);
+  }
+
+  function customDimensionValue(r,dimension){
+    if(dimension==='工具名称') return canonicalTool(r);
+    if(dimension==='_status') return r._status;
+    if(dimension==='_exceptionLabel') return r._exception?'已配置':'未配置/未说明';
+    if(dimension==='_sourceFile') return r._sourceFile;
+    if(dimension==='_sourceSheet') return r._sourceSheet;
+    if(dimension==='_installMonth') return dateKey(r['安装时间']);
+    if(dimension==='_reportMonth') return dateKey(r['iDesk信息上报时间']);
+    return r[dimension];
+  }
+  function customChartData(records,dimension,metric){
+    const groups=new Map();
+    records.forEach(r=>{
+      const label=clean(customDimensionValue(r,dimension))||'未填写';
+      if(!groups.has(label)) groups.set(label,{count:0,employees:new Set(),devices:new Set(),tools:new Set(),attention:0,mismatch:0,exceptions:0});
+      const g=groups.get(label); g.count++;
+      if(clean(r['安装人工号']))g.employees.add(clean(r['安装人工号']));
+      g.devices.add(canonicalDevice(r)); g.tools.add(canonicalTool(r));
+      if(r._attention)g.attention++; if(r._status==='版本不一致')g.mismatch++; if(r._exception)g.exceptions++;
+    });
+    return [...groups.entries()].map(([label,g])=>({label,value:metric==='employees'?g.employees.size:metric==='devices'?g.devices.size:metric==='tools'?g.tools.size:metric==='attention'?g.attention:metric==='mismatch'?g.mismatch:metric==='exceptions'?g.exceptions:g.count})).sort((a,b)=>b.value-a.value||a.label.localeCompare(b.label,'zh-CN'));
+  }
+  function customDimensionLabel(value){return CUSTOM_DIMENSIONS.find(x=>x[0]===value)?.[1]||value}
+  function getFilteredRecords(){ return state.filtered; }
+
+  function showLoading(title='正在处理数据',text='请勿关闭当前页面'){
+    el('loadingTitle').textContent=title; el('loadingText').textContent=text; el('loadingOverlay').classList.remove('hidden');
+  }
+  function hideLoading(){ el('loadingOverlay').classList.add('hidden'); }
+  function toast(message,type=''){
+    const t=document.createElement('div'); t.className=`toast ${type}`; t.textContent=message; el('toastWrap').appendChild(t);
+    setTimeout(()=>{t.style.opacity='0';t.style.transform='translateY(8px)';setTimeout(()=>t.remove(),220)},3300);
+  }
+  function showModal(title,html,sub=''){
+    el('modalTitle').textContent=title; el('modalSub').textContent=sub; el('modalBody').innerHTML=html; el('modalShell').classList.remove('hidden');
+  }
+  function closeModal(){ el('modalShell').classList.add('hidden'); }
+
+  class ZipReader {
+    constructor(buffer){ this.buffer=buffer; this.view=new DataView(buffer); this.entries=new Map(); this.parse(); }
+    parse(){
+      const v=this.view; let eocd=-1; const min=Math.max(0,v.byteLength-65557);
+      for(let i=v.byteLength-22;i>=min;i--){ if(v.getUint32(i,true)===0x06054b50){eocd=i;break;} }
+      if(eocd<0) throw new Error('无法识别 XLSX 压缩结构');
+      const count=v.getUint16(eocd+10,true), cdOffset=v.getUint32(eocd+16,true);
+      let p=cdOffset;
+      for(let i=0;i<count;i++){
+        if(v.getUint32(p,true)!==0x02014b50) throw new Error('XLSX 中央目录损坏');
+        const method=v.getUint16(p+10,true), compSize=v.getUint32(p+20,true), uncompSize=v.getUint32(p+24,true);
+        const nameLen=v.getUint16(p+28,true), extraLen=v.getUint16(p+30,true), commentLen=v.getUint16(p+32,true), localOffset=v.getUint32(p+42,true);
+        const nameBytes=new Uint8Array(this.buffer,p+46,nameLen); const name=new TextDecoder().decode(nameBytes);
+        this.entries.set(name,{name,method,compSize,uncompSize,localOffset});
+        p+=46+nameLen+extraLen+commentLen;
+      }
+    }
+    has(name){ return this.entries.has(name); }
+    async bytes(name){
+      const e=this.entries.get(name); if(!e) throw new Error(`缺少文件：${name}`);
+      const v=this.view, p=e.localOffset;
+      if(v.getUint32(p,true)!==0x04034b50) throw new Error(`文件头损坏：${name}`);
+      const nameLen=v.getUint16(p+26,true), extraLen=v.getUint16(p+28,true), start=p+30+nameLen+extraLen;
+      const raw=new Uint8Array(this.buffer,start,e.compSize);
+      if(e.method===0) return raw.slice();
+      if(e.method===8){
+        if(typeof DecompressionStream==='undefined') throw new Error('当前浏览器不支持离线解压，请使用新版 Edge 或 Chrome');
+        const ds=new DecompressionStream('deflate-raw');
+        const ab=await new Response(new Blob([raw]).stream().pipeThrough(ds)).arrayBuffer();
+        return new Uint8Array(ab);
+      }
+      throw new Error(`不支持的 XLSX 压缩方式：${e.method}`);
+    }
+    async text(name){ return new TextDecoder('utf-8').decode(await this.bytes(name)); }
+  }
+
+  function xml(text){
+    const doc=new DOMParser().parseFromString(text,'application/xml');
+    if(doc.querySelector('parsererror')) throw new Error('Excel XML 解析失败');
+    return doc;
+  }
+  function relTarget(base,target){
+    if(target.startsWith('/')) return target.replace(/^\//,'');
+    const parts=base.split('/'); parts.pop();
+    target.split('/').forEach(p=>{ if(p==='..') parts.pop(); else if(p!=='.') parts.push(p); });
+    return parts.join('/');
+  }
+  async function openWorkbook(file){
+    const buffer=await file.arrayBuffer(); const zip=new ZipReader(buffer);
+    const wbDoc=xml(await zip.text('xl/workbook.xml'));
+    const relDoc=xml(await zip.text('xl/_rels/workbook.xml.rels'));
+    const relMap=new Map($$('Relationship',relDoc).map(r=>[r.getAttribute('Id'),r.getAttribute('Target')]));
+    const sheets=$$('sheet',wbDoc).map((s,i)=>({
+      name:s.getAttribute('name')||`Sheet${i+1}`,
+      id:s.getAttribute('r:id')||s.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','id'),
+      index:i
+    })).map(s=>({...s,path:relTarget('xl/workbook.xml',relMap.get(s.id)||`worksheets/sheet${s.index+1}.xml`)}));
+    let shared=[];
+    if(zip.has('xl/sharedStrings.xml')){
+      const ssDoc=xml(await zip.text('xl/sharedStrings.xml'));
+      shared=$$('si',ssDoc).map(si=>$$('t',si).map(t=>t.textContent||'').join(''));
+    }
+    let dateStyles=new Set();
+    if(zip.has('xl/styles.xml')) dateStyles=parseDateStyles(xml(await zip.text('xl/styles.xml')));
+    const parsed=[];
+    for(const sheet of sheets){
+      const rows=parseSheet(xml(await zip.text(sheet.path)),shared,dateStyles);
+      parsed.push({...sheet,rows,header:detectHeader(rows)});
+    }
+    return {zip,sheets:parsed};
+  }
+  function parseDateStyles(doc){
+    const builtins=new Set([14,15,16,17,18,19,20,21,22,27,28,29,30,31,32,33,34,35,36,45,46,47,50,51,52,53,54,55,56,57,58]);
+    const custom=new Map();
+    $$('numFmt',doc).forEach(n=>custom.set(+n.getAttribute('numFmtId'),n.getAttribute('formatCode')||''));
+    const result=new Set();
+    const xfs=$$('cellXfs > xf',doc);
+    xfs.forEach((xf,i)=>{
+      const id=+xf.getAttribute('numFmtId'); const code=(custom.get(id)||'').replace(/\[[^\]]*\]/g,'').replace(/"[^"]*"/g,'');
+      if(builtins.has(id)||/[ymdhis]/i.test(code)) result.add(i);
+    });
+    return result;
+  }
+  function colIndex(ref){
+    const m=String(ref||'').match(/[A-Z]+/i); if(!m) return 0;
+    let n=0; for(const c of m[0].toUpperCase()) n=n*26+c.charCodeAt(0)-64; return n-1;
+  }
+  function parseSheet(doc,shared,dateStyles){
+    const rows=[];
+    $$('sheetData > row',doc).forEach(row=>{
+      const arr=[];
+      $$('c',row).forEach(c=>{
+        const idx=colIndex(c.getAttribute('r')); const t=c.getAttribute('t')||''; const s=+c.getAttribute('s');
+        let val=''; const v=c.querySelector('v');
+        if(t==='inlineStr') val=$$('is t',c).map(x=>x.textContent||'').join('');
+        else if(t==='s') val=shared[+(v?.textContent||0)] ?? '';
+        else if(t==='b') val=(v?.textContent==='1')?'TRUE':'FALSE';
+        else if(t==='d') val=v?.textContent||'';
+        else if(t==='e') val=`#${v?.textContent||'ERROR'}`;
+        else {
+          const raw=v?.textContent??'';
+          if(raw!=='' && dateStyles.has(s)){
+            const d=excelSerialToDate(raw);
+            val=d ? `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')} ${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}`.replace(/ 00:00$/,'') : raw;
+          } else val=raw;
+        }
+        arr[idx]=val;
+      });
+      rows.push(arr);
+    });
+    return rows;
+  }
+  function detectHeader(rows){
+    let best={row:-1,score:0,map:new Map(),values:[]};
+    rows.slice(0,30).forEach((row,i)=>{
+      const map=new Map(); const values=row.map(v=>norm(v));
+      HEADERS.forEach(h=>{const idx=values.indexOf(norm(h)); if(idx>=0) map.set(h,idx);});
+      if(map.size>best.score) best={row:i,score:map.size,map,values};
+    });
+    return best;
+  }
+  function recordsFromRows(rows,header,meta={}){
+    if(!header || header.score<5) throw new Error(`未识别到有效表头，仅匹配 ${header?.score||0}/${HEADERS.length} 个字段`);
+    const records=[];
+    for(let i=header.row+1;i<rows.length;i++){
+      const row=rows[i]||[]; const obj={};
+      HEADERS.forEach(h=>obj[h]=header.map.has(h)?(row[header.map.get(h)]??''):'');
+      if(HEADERS.some(h=>clean(obj[h])!=='')) records.push(enrichRecord(obj,records.length,{...meta,sourceRow:i+1}));
+    }
+    return records;
+  }
+  async function parseDelimited(file){
+    const text=await file.text(); const first=text.split(/\r?\n/,1)[0]||'';
+    const delimiter=file.name.toLowerCase().endsWith('.tsv')?'\t':(first.split('\t').length>first.split(',').length?'\t':',');
+    const rows=parseCSV(text,delimiter); return {sheets:[{name:'数据',rows,header:detectHeader(rows),index:0}]};
+  }
+  function parseCSV(text,delimiter=','){
+    const rows=[]; let row=[],field='',quoted=false;
+    for(let i=0;i<text.length;i++){
+      const c=text[i];
+      if(quoted){
+        if(c==='"'&&text[i+1]==='"'){field+='"';i++;}
+        else if(c==='"') quoted=false; else field+=c;
+      }else{
+        if(c==='"') quoted=true;
+        else if(c===delimiter){row.push(field);field='';}
+        else if(c==='\n'){row.push(field.replace(/\r$/,''));rows.push(row);row=[];field='';}
+        else field+=c;
+      }
+    }
+    row.push(field.replace(/\r$/,'')); if(row.some(x=>x!=='')) rows.push(row);
+    return rows;
+  }
+
+  async function importFiles(fileList){
+    const selected=[...(fileList||[])];
+    if(!selected.length) return;
+    const supported=[], rejected=[];
+    selected.forEach(file=>{
+      const ext=file.name.toLowerCase().split('.').pop();
+      if(['xlsx','csv','tsv'].includes(ext)) supported.push(file);
+      else rejected.push({fileName:file.name,error:'不支持的文件格式'});
+    });
+    if(!supported.length){ toast('没有可导入的 .xlsx、.csv 或 .tsv 文件','error'); return; }
+
+    showLoading(`正在读取 ${supported.length} 个文件`,'正在逐个识别工作表、表头并合并记录');
+    const merged=[], imports=[], failures=[...rejected];
+    for(let fileIndex=0;fileIndex<supported.length;fileIndex++){
+      const file=supported[fileIndex];
+      const ext=file.name.toLowerCase().split('.').pop();
+      el('loadingTitle').textContent=`正在读取 ${fileIndex+1} / ${supported.length}`;
+      el('loadingText').textContent=file.name;
+      try{
+        await wait(35);
+        const wb=ext==='xlsx'?await openWorkbook(file):await parseDelimited(file);
+        const ranked=[...wb.sheets].sort((a,b)=>b.header.score-a.header.score);
+        if(!ranked.length||ranked[0].header.score<5){
+          throw new Error(`未找到有效表头，最高仅匹配 ${ranked[0]?.header.score||0}/${HEADERS.length} 个字段`);
+        }
+        const best=ranked[0];
+        const records=recordsFromRows(best.rows,best.header,{sourceFile:file.name,sourceSheet:best.name});
+        records.forEach(r=>{r._row=merged.length+1;merged.push(r)});
+        imports.push({
+          fileName:file.name,
+          sheetName:best.name,
+          sheetCount:wb.sheets.length,
+          headerRow:best.header.row+1,
+          headerScore:best.header.score,
+          recordCount:records.length
+        });
+      }catch(err){
+        console.error(file.name,err);
+        failures.push({fileName:file.name,error:err.message||String(err)});
+      }
+    }
+
+    if(!merged.length){
+      hideLoading();
+      showModal('批量导入失败',`<div class="sheet-list">${failures.map(x=>`<div class="sheet-option"><b>${escapeHtml(x.fileName)}</b><div class="modal-sub">${escapeHtml(x.error)}</div></div>`).join('')}</div><p>请确认文件为标准 .xlsx / .csv / .tsv 格式，并包含至少 5 个可识别字段。</p>`,'没有文件生成有效安装记录');
+      return;
+    }
+
+    state.workbook=null;
+    state.sheets=[];
+    state.currentSheetIndex=0;
+    state.imports=imports;
+    state.rejectedFiles=failures;
+    state.sourceName=imports.length===1?imports[0].fileName:`${imports.length} 个文件合并数据`;
+    state.importedAt=new Date();
+    state.all=merged;
+    state.filtered=[...merged];
+    state.page={detail:1,employee:1,device:1,software:1,quality:1};
+    resetFilterControls(false);
+    initializeDashboard();
+    hideLoading();
+    toast(`批量导入完成：${nfmt.format(imports.length)} 个文件，${nfmt.format(merged.length)} 条记录`,'success');
+    if(failures.length){
+      setTimeout(()=>showModal('部分文件未导入',`<div class="sheet-list">${failures.map(x=>`<div class="sheet-option"><b>${escapeHtml(x.fileName)}</b><div class="modal-sub">${escapeHtml(x.error)}</div></div>`).join('')}</div><p>其余 ${nfmt.format(imports.length)} 个文件已正常合并，失败文件未影响已导入数据。</p>`,'请检查失败文件的格式或表头'),120);
+    }
+  }
+
+  async function importFile(file){ return importFiles(file?[file]:[]); }
+  async function loadSheet(index,fromSwitch=true){
+    if(!state.sheets[index]) return;
+    showLoading('正在生成分析结果','正在计算员工、设备、软件与部门维度'); await wait(40);
+    const sheet=state.sheets[index];
+    const records=recordsFromRows(sheet.rows,sheet.header,{sourceFile:state.sourceName,sourceSheet:sheet.name});
+    state.currentSheetIndex=index; state.all=records; state.filtered=[...records];
+    state.page={detail:1,employee:1,device:1,software:1,quality:1};
+    resetFilterControls(false);
+    initializeDashboard();
+    hideLoading();
+    toast(`${fromSwitch?'已切换':'导入完成'}：${nfmt.format(records.length)} 条安装记录`,'success');
+  }
+  function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+  function initializeDashboard(){
+    el('heroSection').classList.add('hidden'); el('dataBanner').classList.remove('hidden'); el('filterSection').classList.remove('hidden'); el('tabs').classList.remove('hidden'); el('dashboard').classList.remove('hidden');
+    const importedCount=state.imports.length;
+    el('sourceName').textContent=importedCount>1?`${nfmt.format(importedCount)} 个文件已合并`:(state.imports[0]?.fileName||state.sourceName||'当前数据');
+    const sheetText=importedCount?`自动选取 ${nfmt.format(importedCount)} 个有效工作表`:'示例数据';
+    const rejectedText=state.rejectedFiles.length?` · ${nfmt.format(state.rejectedFiles.length)} 个文件未导入`:'';
+    el('sourceDesc').textContent=`${nfmt.format(state.all.length)} 条记录 · ${sheetText}${rejectedText} · 导入于 ${new Intl.DateTimeFormat('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(state.importedAt)}`;
+    el('switchSheetBtn').classList.toggle('hidden',!importedCount); el('exportBtn').disabled=false;
+    populateCustomChartControls(); populateFilters(); applyFilters();
+  }
+  function populateSelect(selectId,values,label='全部',displayFn=v=>v){
+    const s=el(selectId), current=s.value; s.innerHTML=`<option value="">${escapeHtml(tr(label))}</option>`+values.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(displayFn(v))}</option>`).join('');
+    if(values.includes(current)) s.value=current;
+  }
+  function populateCustomChartControls(){
+    const dimension=el('customDimension');
+    if(dimension){
+      dimension.innerHTML=CUSTOM_DIMENSIONS.map(([value,label])=>`<option value="${escapeHtml(value)}">${escapeHtml(state.lang==='en'?(UI_EN[label]||({
+        '工具名称（工具名称优先）':'Tool Name (preferred)','注册表软件名称':'Registry Software Name','工具安装版本':'Installed Version','上架版本':'Catalog Version','例外配置状态':'Exception Status','安装人工号':'Installer / Employee ID','设备名称':'Device Name','资产编码':'Asset Code','安装位置':'Install Location','来源工作表':'Source Worksheet','安装月份':'Install Month','iDesk 上报月份':'iDesk Report Month','五级部门':'Level 5 Dept.','六级部门':'Level 6 Dept.'
+      }[label]||label)):label)}</option>`).join('');
+      dimension.value=state.customChart.dimension;
+    }
+    if(el('customMetric'))el('customMetric').value=state.customChart.metric;
+    if(el('customChartType'))el('customChartType').value=state.customChart.type;
+    if(el('customTopN'))el('customTopN').value=String(state.customChart.topN);
+  }
+  function populateFilters(){
+    populateSelect('sourceFileFilter',unique(state.all.map(r=>r._sourceFile)).sort((a,b)=>a.localeCompare(b,'zh-CN')));
+    populateSelect('dept1Filter',unique(state.all.map(r=>r['一级部门'])).sort((a,b)=>a.localeCompare(b,'zh-CN')));
+    populateSelect('dept2Filter',unique(state.all.map(r=>r['二级部门'])).sort((a,b)=>a.localeCompare(b,'zh-CN')));
+    populateSelect('dept3Filter',unique(state.all.map(r=>r['三级部门'])).sort((a,b)=>a.localeCompare(b,'zh-CN')));
+    populateSelect('dept4Filter',unique(state.all.map(r=>r['四级部门'])).sort((a,b)=>a.localeCompare(b,'zh-CN')),'全部',displayDept4);
+    populateSelect('toolFilter',unique(state.all.map(canonicalTool)).sort((a,b)=>a.localeCompare(b,'zh-CN')));
+    populateSelect('issueFilter',unique(state.all.map(r=>r['问题类'])).sort((a,b)=>a.localeCompare(b,'zh-CN')));
+    populateSelect('statusFilter',STATUS_ORDER.filter(x=>state.all.some(r=>r._status===x)));
+  }
+  function resetFilterControls(apply=true){
+    ['keywordFilter','sourceFileFilter','dept1Filter','dept2Filter','dept3Filter','dept4Filter','toolFilter','issueFilter','statusFilter','exceptionFilter','dateStartFilter','dateEndFilter'].forEach(id=>{if(el(id))el(id).value=''});
+    if(el('dateFieldFilter')) el('dateFieldFilter').value='安装时间';
+    state.quick='all'; $$('.chip').forEach(c=>c.classList.toggle('active',c.dataset.quick==='all'));
+    if(apply) applyFilters();
+  }
+  function applyFilters(){
+    const keyword=clean(el('keywordFilter').value).toLowerCase();
+    const sourceFile=el('sourceFileFilter').value, dept1=el('dept1Filter').value, dept2=el('dept2Filter').value, dept3=el('dept3Filter').value, dept4=el('dept4Filter').value, tool=el('toolFilter').value, issue=el('issueFilter').value, status=el('statusFilter').value, ex=el('exceptionFilter').value;
+    const dateField=el('dateFieldFilter').value, start=el('dateStartFilter').value?new Date(el('dateStartFilter').value+'T00:00:00'):null, end=el('dateEndFilter').value?new Date(el('dateEndFilter').value+'T23:59:59'):null;
+    state.filtered=state.all.filter(r=>{
+      if(keyword && ![...HEADERS.map(h=>r[h]),r._sourceFile,r._sourceSheet].some(v=>clean(v).toLowerCase().includes(keyword))) return false;
+      if(sourceFile && r._sourceFile!==sourceFile) return false;
+      if(dept1 && clean(r['一级部门'])!==clean(dept1)) return false;
+      if(dept2 && clean(r['二级部门'])!==clean(dept2)) return false;
+      if(dept3 && clean(r['三级部门'])!==clean(dept3)) return false;
+      if(dept4 && clean(r['四级部门'])!==clean(dept4)) return false;
+      if(tool && canonicalTool(r)!==tool) return false;
+      if(issue && r['问题类']!==issue) return false;
+      if(status && r._status!==status) return false;
+      if(ex==='yes'&&!r._exception) return false;
+      if(ex==='no'&&r._exception) return false;
+      const d=parseDate(r[dateField]);
+      if(start && (!d||d<start)) return false;
+      if(end && (!d||d>end)) return false;
+      if(state.quick==='attention'&&!r._attention) return false;
+      if(state.quick==='mismatch'&&r._status!=='版本不一致') return false;
+      if(state.quick==='exception'&&!r._exception) return false;
+      if(state.quick==='incomplete'&&r._missing.length===0) return false;
+      if(state.quick==='recent30'){
+        const inst=parseDate(r['安装时间']); const max=maxDate(state.all.map(x=>parseDate(x['安装时间'])));
+        if(!inst||!max||((max-inst)/86400000)>30) return false;
+      }
+      return true;
+    });
+    Object.keys(state.page).forEach(k=>state.page[k]=1);
+    computeAggregates(); updateActiveFilterSummary(); renderAll();
+  }
+  function updateActiveFilterSummary(){
+    const pairs=[
+      ['来源',el('sourceFileFilter').value],['一级',el('dept1Filter').value],['二级',el('dept2Filter').value],['三级',el('dept3Filter').value],['四级',el('dept4Filter').value],
+      ['工具',el('toolFilter').value],['问题类',el('issueFilter').value],['状态',el('statusFilter').value],['例外',el('exceptionFilter').value==='yes'?'已配置':el('exceptionFilter').value==='no'?'未配置/未说明':'']
+    ].filter(x=>clean(x[1]));
+    const keyword=clean(el('keywordFilter').value); if(keyword)pairs.unshift(['关键词',keyword]);
+    const start=el('dateStartFilter').value,end=el('dateEndFilter').value;if(start||end)pairs.push(['日期',`${start||'不限'}～${end||'不限'}`]);
+    if(state.quick!=='all')pairs.push(['快捷',document.querySelector(`.chip[data-quick="${state.quick}"]`)?.textContent||state.quick]);
+    el('activeFilterSummary').textContent=pairs.length?`已启用：${pairs.map(x=>`${x[0]}=${x[1]}`).join(' · ')}`:'当前未启用筛选';
+  }
+  function maxDate(dates){ const valid=dates.filter(Boolean); return valid.length?new Date(Math.max(...valid.map(d=>d.getTime()))):null; }
+  function computeAggregates(){
+    const records=getFilteredRecords();
+    state.aggregates.employee=aggregateEmployees(records);
+    state.aggregates.device=aggregateDevices(records);
+    state.aggregates.software=aggregateSoftware(records);
+    state.aggregates.quality=records.filter(r=>r._qualityIssueCount>0).map(r=>({
+      来源文件:r._sourceFile||'-',来源工作表:r._sourceSheet||'-',来源行:r._sourceRow||'-',工号:r['安装人工号']||'-',工具:r._tool,设备:r._device,问题类:r['问题类']||'-',分析状态:r._status,异常项数:r._qualityIssueCount,异常说明:r._qualityIssues.join('；'),合并序号:r._row
+    }));
+  }
+  function aggregateEmployees(records){
+    const m=new Map();
+    records.forEach(r=>{
+      const key=r['安装人工号']||'未填写工号';
+      if(!m.has(key)) m.set(key,{工号:key,安装记录数:0,软件:new Set(),设备:new Set(),来源文件:new Set(),一级部门:new Set(),二级部门:new Set(),三级部门:new Set(),四级部门:new Set(),需关注:0,例外配置:0,版本不一致:0,最近安装:null,最近上报:null});
+      const x=m.get(key); x.安装记录数++; x.软件.add(r._tool); x.设备.add(r._device); if(r._sourceFile)x.来源文件.add(r._sourceFile); if(r['一级部门'])x.一级部门.add(r['一级部门']); if(r['二级部门'])x.二级部门.add(r['二级部门']); if(r['三级部门'])x.三级部门.add(r['三级部门']); if(r['四级部门'])x.四级部门.add(r['四级部门']); if(r._attention)x.需关注++; if(r._exception)x.例外配置++; if(r._status==='版本不一致')x.版本不一致++;
+      const i=parseDate(r['安装时间']), p=parseDate(r['iDesk信息上报时间']); if(i&&(!x.最近安装||i>x.最近安装))x.最近安装=i; if(p&&(!x.最近上报||p>x.最近上报))x.最近上报=p;
+    });
+    return [...m.values()].map(x=>({
+      工号:x.工号,安装记录数:x.安装记录数,软件数:x.软件.size,设备数:x.设备.size,来源文件数:x.来源文件.size,需关注记录:x.需关注,版本不一致:x.版本不一致,例外配置:x.例外配置,
+      一级部门:[...x.一级部门].join(' / ')||'-',二级部门:[...x.二级部门].join(' / ')||'-',三级部门:[...x.三级部门].join(' / ')||'-',四级部门:[...x.四级部门].join(' / ')||'-',最近安装:x.最近安装?dateOnly(x.最近安装):'-',最近上报:x.最近上报?dateOnly(x.最近上报):'-'
+    }));
+  }
+  function aggregateDevices(records){
+    const m=new Map();
+    records.forEach(r=>{
+      const key=`${r['设备名称']||''}||${r['资产编码']||''}`;
+      if(!m.has(key)) m.set(key,{设备名称:r['设备名称']||'未填写',资产编码:r['资产编码']||'未填写',安装记录数:0,软件:new Set(),员工:new Set(),来源文件:new Set(),需关注:0,版本不一致:0,例外配置:0,部门:new Set(),最近上报:null});
+      const x=m.get(key); x.安装记录数++; x.软件.add(r._tool); if(r['安装人工号'])x.员工.add(r['安装人工号']); if(r._sourceFile)x.来源文件.add(r._sourceFile); if(r._attention)x.需关注++; if(r._status==='版本不一致')x.版本不一致++; if(r._exception)x.例外配置++; if(r['一级部门'])x.部门.add(r['一级部门']); const p=parseDate(r['iDesk信息上报时间']); if(p&&(!x.最近上报||p>x.最近上报))x.最近上报=p;
+    });
+    return [...m.values()].map(x=>({设备名称:x.设备名称,资产编码:x.资产编码,安装记录数:x.安装记录数,软件数:x.软件.size,涉及员工:x.员工.size,来源文件数:x.来源文件.size,需关注记录:x.需关注,版本不一致:x.版本不一致,例外配置:x.例外配置,一级部门:[...x.部门].join(' / ')||'-',最近上报:x.最近上报?dateOnly(x.最近上报):'-'}));
+  }
+  function aggregateSoftware(records){
+    const m=new Map();
+    records.forEach(r=>{
+      const key=r._tool;
+      if(!m.has(key))m.set(key,{软件名称:key,注册表名称:new Set(),安装记录数:0,员工:new Set(),设备:new Set(),来源文件:new Set(),安装版本:new Set(),上架版本:new Set(),需关注:0,版本不一致:0,例外配置:0,部门:new Set()});
+      const x=m.get(key); x.安装记录数++; if(r['注册表软件名称'])x.注册表名称.add(r['注册表软件名称']); if(r['安装人工号'])x.员工.add(r['安装人工号']); x.设备.add(r._device); if(r._sourceFile)x.来源文件.add(r._sourceFile); if(r['工具安装版本'])x.安装版本.add(r['工具安装版本']); if(r['上架版本'])x.上架版本.add(r['上架版本']); if(r._attention)x.需关注++; if(r._status==='版本不一致')x.版本不一致++; if(r._exception)x.例外配置++; if(r['一级部门'])x.部门.add(r['一级部门']);
+    });
+    return [...m.values()].map(x=>({软件名称:x.软件名称,注册表名称:[...x.注册表名称].slice(0,5).join(' / ')||'-',安装记录数:x.安装记录数,涉及员工:x.员工.size,涉及设备:x.设备.size,来源文件数:x.来源文件.size,安装版本数:x.安装版本.size,上架版本:[...x.上架版本].slice(0,5).join(' / ')||'-',需关注记录:x.需关注,版本不一致:x.版本不一致,例外配置:x.例外配置,一级部门数:x.部门.size}));
+  }
+
+  function renderAll(){
+    el('filterCount').textContent=`${nfmt.format(state.filtered.length)} / ${nfmt.format(state.all.length)} 条`;
+    renderOverview(); renderEmployeeTable(); renderDeviceTable(); renderSoftwareTable(); renderQuality(); renderDetailTable(); applyLanguageToDOM();
+  }
+  function renderOverview(){
+    const r=state.filtered, employees=unique(r.map(x=>x['安装人工号'])).length, devices=unique(r.map(x=>`${x['设备名称']}|${x['资产编码']}`)).filter(x=>x!=='|').length, tools=unique(r.map(canonicalTool)).length;
+    const attention=r.filter(x=>x._attention).length, exceptions=r.filter(x=>x._exception).length, mismatches=r.filter(x=>x._status==='版本不一致').length;
+    const completeTotal=r.length*KEY_FIELDS.length, filled=r.reduce((sum,x)=>sum+KEY_FIELDS.filter(f=>clean(x[f])).length,0), completeness=completeTotal?filled/completeTotal:0;
+    const kpis=[
+      ['安装记录',nfmt.format(r.length),'当前筛选范围内的明细行数',''],
+      ['涉及员工',nfmt.format(employees),'按安装人工号去重',''],
+      ['涉及设备',nfmt.format(devices),'设备名称 + 资产编码去重',''],
+      ['软件种类',nfmt.format(tools),'工具名称优先，注册表名称补充',''],
+      ['需关注记录',nfmt.format(attention),r.length?`${pctfmt.format(attention/r.length)} 的记录需要进一步核查`:'无记录','danger'],
+      ['版本不一致',nfmt.format(mismatches),'安装版本与上架版本均存在且不一致','warn'],
+      ['例外配置',nfmt.format(exceptions),r.length?`${pctfmt.format(exceptions/r.length)} 已标记例外配置`:'无记录','green'],
+      ['关键信息完整率',pctfmt.format(completeness),'工号、工具、设备、资产、部门、上报时间','green']
+    ];
+    el('kpiGrid').innerHTML=kpis.map(([label,value,foot,cls])=>`<div class="kpi glass ${cls}"><div class="kpi-label">${label}</div><div class="kpi-value">${value}</div><div class="kpi-foot">${foot}</div></div>`).join('');
+    drawBarChart(el('dept4Chart'),groupCount(r,x=>displayDept4(x['四级部门'])).slice(0,15),{horizontal:true});
+    drawBarChart(el('dept3Chart'),groupCount(r,x=>x['三级部门']).slice(0,15),{horizontal:true});
+    renderCustomChart();
+    drawBarChart(el('toolChart'),groupCount(r,canonicalTool).slice(0,10),{horizontal:true});
+    const statusData=STATUS_ORDER.map(s=>({label:s,value:r.filter(x=>x._status===s).length,color:STATUS_COLORS[s]})).filter(x=>x.value>0);
+    drawDonutChart(el('statusChart'),statusData);
+    el('statusLegend').innerHTML=statusData.map(x=>`<span class="legend-item"><i class="legend-dot" style="background:${x.color}"></i>${escapeHtml(x.label)} ${nfmt.format(x.value)}</span>`).join('')||'<span class="muted">暂无数据</span>';
+    drawBarChart(el('deptChart'),groupCount(r,x=>x['一级部门']).slice(0,10),{horizontal:true});
+    drawLineChart(el('trendChart'),groupCount(r,x=>dateKey(x['安装时间'])).filter(x=>x.label!=='未填写').sort((a,b)=>a.label.localeCompare(b.label)).slice(-18));
+    drawBarChart(el('issueChart'),groupCount(r,x=>x['问题类']).slice(0,10),{horizontal:true});
+    drawBarChart(el('freshnessChart'),freshnessData(r),{horizontal:false});
+  }
+  function renderCustomChart(){
+    const canvas=el('customChart'); if(!canvas)return;
+    const cfg=state.customChart;
+    const allData=customChartData(state.filtered,cfg.dimension,cfg.metric);
+    const data=allData.slice(0,cfg.topN).map(x=>({...x,label:displayDimensionValue(cfg.dimension,x.label)}));
+    const dimLabel=customDimensionLabel(cfg.dimension), metricLabel=CUSTOM_METRIC_LABELS[cfg.metric]||cfg.metric;
+    el('customChartSummary').innerHTML=`当前：<strong>${escapeHtml(dimLabel)}</strong> × <strong>${escapeHtml(metricLabel)}</strong> · 显示 ${nfmt.format(data.length)} / ${nfmt.format(allData.length)} 个类别`;
+    if(cfg.type==='donut'){
+      const colors=['#c8102e','#2f6fed','#16835b','#b46a00','#7b61d1','#d05c27','#0f8b9d','#7f8998','#9d4edd','#4f772d','#bc6c25','#3a86ff','#8d6e63','#607d8b','#c44569','#457b9d','#6a994e','#f28482','#5e548e','#0081a7'];
+      const pieData=data.map((x,i)=>({...x,color:colors[i%colors.length]})); drawDonutChart(canvas,pieData);
+      el('customLegend').innerHTML=pieData.map(x=>`<span class="legend-item"><i class="legend-dot" style="background:${x.color}"></i>${escapeHtml(truncate(x.label,24))} ${nfmt.format(x.value)}</span>`).join('')||'<span class="muted">暂无数据</span>';
+    }else{
+      drawBarChart(canvas,data,{horizontal:cfg.type==='horizontal'}); el('customLegend').innerHTML='';
+    }
+  }
+  function freshnessData(records){
+    const dates=records.map(r=>parseDate(r['iDesk信息上报时间'])).filter(Boolean); const max=maxDate(dates);
+    const bins=[{label:'0–7天',value:0},{label:'8–30天',value:0},{label:'31–90天',value:0},{label:'90天以上',value:0},{label:'无有效日期',value:0}];
+    records.forEach(r=>{const d=parseDate(r['iDesk信息上报时间']); if(!d||!max){bins[4].value++;return;} const gap=(max-d)/86400000; if(gap<=7)bins[0].value++;else if(gap<=30)bins[1].value++;else if(gap<=90)bins[2].value++;else bins[3].value++;});
+    return bins;
+  }
+
+  function setupCanvas(canvas){
+    const rect=canvas.getBoundingClientRect(); const dpr=Math.min(devicePixelRatio||1,2); canvas.width=Math.max(1,Math.round(rect.width*dpr)); canvas.height=Math.max(1,Math.round(rect.height*dpr)); const ctx=canvas.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); return {ctx,w:rect.width,h:rect.height};
+  }
+  function emptyCanvas(canvas,text='暂无可展示数据'){
+    const {ctx,w,h}=setupCanvas(canvas); ctx.clearRect(0,0,w,h); ctx.fillStyle='#7d8797'; ctx.font='13px Segoe UI, Microsoft YaHei'; ctx.textAlign='center'; ctx.fillText(text,w/2,h/2);
+  }
+  function roundRect(ctx,x,y,w,h,r){ const rr=Math.min(r,w/2,h/2);ctx.beginPath();ctx.moveTo(x+rr,y);ctx.arcTo(x+w,y,x+w,y+h,rr);ctx.arcTo(x+w,y+h,x,y+h,rr);ctx.arcTo(x,y+h,x,y,rr);ctx.arcTo(x,y,x+w,y,rr);ctx.closePath(); }
+  function drawBarChart(canvas,data,{horizontal=false}={}){
+    if(!canvas||!data.length){ if(canvas)emptyCanvas(canvas); return; }
+    const {ctx,w,h}=setupCanvas(canvas); ctx.clearRect(0,0,w,h); const max=Math.max(...data.map(x=>x.value),1);
+    ctx.font='11px Segoe UI, Microsoft YaHei'; ctx.textBaseline='middle';
+    if(horizontal){
+      const left=Math.min(145,w*.36), right=44, top=12, gap=9, bh=Math.max(12,(h-top*2-gap*(data.length-1))/data.length);
+      data.forEach((d,i)=>{const y=top+i*(bh+gap);ctx.fillStyle='#647083';ctx.textAlign='right';ctx.fillText(truncate(d.label,16),left-10,y+bh/2);ctx.fillStyle='rgba(47,111,237,.10)';roundRect(ctx,left,y,w-left-right,bh,7);ctx.fill();const bw=(w-left-right)*(d.value/max);ctx.fillStyle=i===0?'#c8102e':'#2f6fed';roundRect(ctx,left,y,Math.max(4,bw),bh,7);ctx.fill();ctx.fillStyle='#465166';ctx.textAlign='left';ctx.fillText(nfmt.format(d.value),Math.min(w-right+5,left+bw+7),y+bh/2);});
+    }else{
+      const left=37,right=12,top=20,bottom=43,gap=10; const cw=(w-left-right)/data.length; const bw=Math.max(10,cw-gap);
+      ctx.strokeStyle='rgba(31,45,70,.08)';ctx.lineWidth=1; for(let i=0;i<=4;i++){const y=top+(h-top-bottom)*i/4;ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(w-right,y);ctx.stroke();}
+      data.forEach((d,i)=>{const x=left+i*cw+(cw-bw)/2, bh=(h-top-bottom)*(d.value/max), y=h-bottom-bh;ctx.fillStyle=i===0?'#c8102e':'#2f6fed';roundRect(ctx,x,y,bw,bh,7);ctx.fill();ctx.fillStyle='#647083';ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(truncate(d.label,8),x+bw/2,h-bottom+9);ctx.fillStyle='#465166';ctx.textBaseline='bottom';ctx.fillText(nfmt.format(d.value),x+bw/2,y-5);});
+    }
+  }
+  function drawDonutChart(canvas,data){
+    if(!canvas||!data.length){ if(canvas)emptyCanvas(canvas); return; }
+    const {ctx,w,h}=setupCanvas(canvas); ctx.clearRect(0,0,w,h); const total=data.reduce((a,b)=>a+b.value,0), cx=w/2,cy=h/2,r=Math.min(w,h)*.34,inner=r*.62; let a=-Math.PI/2;
+    data.forEach(d=>{const ang=d.value/total*Math.PI*2;ctx.beginPath();ctx.arc(cx,cy,r,a,a+ang);ctx.arc(cx,cy,inner,a+ang,a,true);ctx.closePath();ctx.fillStyle=d.color||'#2f6fed';ctx.fill();a+=ang;});
+    ctx.fillStyle='#172033';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='800 27px Segoe UI, Microsoft YaHei';ctx.fillText(nfmt.format(total),cx,cy-5);ctx.fillStyle='#7d8797';ctx.font='11px Segoe UI, Microsoft YaHei';ctx.fillText('安装记录',cx,cy+20);
+  }
+  function drawLineChart(canvas,data){
+    if(!canvas||!data.length){ if(canvas)emptyCanvas(canvas); return; }
+    const {ctx,w,h}=setupCanvas(canvas); ctx.clearRect(0,0,w,h); const left=38,right=14,top=23,bottom=43,max=Math.max(...data.map(x=>x.value),1), iw=w-left-right, ih=h-top-bottom;
+    ctx.strokeStyle='rgba(31,45,70,.08)'; for(let i=0;i<=4;i++){const y=top+ih*i/4;ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(w-right,y);ctx.stroke();}
+    const pts=data.map((d,i)=>({x:left+(data.length===1?iw/2:iw*i/(data.length-1)),y:top+ih-(d.value/max)*ih,d}));
+    const grad=ctx.createLinearGradient(0,top,0,h-bottom);grad.addColorStop(0,'rgba(47,111,237,.22)');grad.addColorStop(1,'rgba(47,111,237,0)');ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.lineTo(pts[pts.length-1].x,h-bottom);ctx.lineTo(pts[0].x,h-bottom);ctx.closePath();ctx.fillStyle=grad;ctx.fill();
+    ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.strokeStyle='#2f6fed';ctx.lineWidth=2.5;ctx.stroke();
+    ctx.font='10px Segoe UI, Microsoft YaHei';ctx.textAlign='center';pts.forEach((p,i)=>{ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fillStyle=i===pts.length-1?'#c8102e':'#2f6fed';ctx.fill();if(data.length<=12||i%2===0){ctx.fillStyle='#687386';ctx.textBaseline='top';ctx.fillText(p.d.label,p.x,h-bottom+10);ctx.textBaseline='bottom';ctx.fillStyle='#465166';ctx.fillText(nfmt.format(p.d.value),p.x,p.y-7);}});
+  }
+  function truncate(s,n){s=String(s);return s.length>n?s.slice(0,n-1)+'…':s}
+
+  const tableConfigs={
+    employee:[['工号','工号'],['安装记录数','安装记录数'],['软件数','软件数'],['设备数','设备数'],['来源文件数','来源文件数'],['需关注记录','需关注记录'],['版本不一致','版本不一致'],['例外配置','例外配置'],['一级部门','一级部门'],['二级部门','二级部门'],['三级部门','三级部门'],['四级部门','四级部门'],['最近安装','最近安装'],['最近上报','最近上报']],
+    device:[['设备名称','设备名称'],['资产编码','资产编码'],['安装记录数','安装记录数'],['软件数','软件数'],['涉及员工','涉及员工'],['来源文件数','来源文件数'],['需关注记录','需关注记录'],['版本不一致','版本不一致'],['例外配置','例外配置'],['一级部门','一级部门'],['最近上报','最近上报']],
+    software:[['软件名称','软件名称'],['注册表名称','注册表名称'],['安装记录数','安装记录数'],['涉及员工','涉及员工'],['涉及设备','涉及设备'],['来源文件数','来源文件数'],['安装版本数','安装版本数'],['上架版本','上架版本'],['需关注记录','需关注记录'],['版本不一致','版本不一致'],['例外配置','例外配置'],['一级部门数','一级部门数']],
+    quality:[['来源文件','来源文件'],['来源工作表','来源工作表'],['来源行','来源行'],['工号','工号'],['工具','工具'],['设备','设备'],['问题类','问题类'],['分析状态','分析状态'],['异常项数','异常项数'],['异常说明','异常说明'],['合并序号','合并序号']],
+    detail:[['来源文件','_sourceFile'],['来源工作表','_sourceSheet'],['来源行','_sourceRow'],['合并序号','_row'],['分析状态','_status'],['问题类','问题类'],['安装人工号','安装人工号'],['工具名称','工具名称'],['注册表软件名称','注册表软件名称'],['工具安装版本','工具安装版本'],['上架版本','上架版本'],['是否例外配置','是否例外配置'],['例外版本','例外版本'],['设备名称','设备名称'],['资产编码','资产编码'],['一级部门','一级部门'],['二级部门','二级部门'],['三级部门','三级部门'],['安装时间','安装时间'],['iDesk上报时间','iDesk信息上报时间'],['安装位置','安装位置'],['上架地址','上架地址'],['备注说明','备注说明']]
+  };
+  function sortRows(rows,type){
+    const s=state.sort[type]; return [...rows].sort((a,b)=>{
+      const av=a[s.key],bv=b[s.key]; if(typeof av==='number'&&typeof bv==='number')return (av-bv)*s.dir;
+      const ad=parseDate(av),bd=parseDate(bv); if(ad&&bd)return (ad-bd)*s.dir;
+      return String(av??'').localeCompare(String(bv??''),'zh-CN',{numeric:true})*s.dir;
+    });
+  }
+  function renderGenericTable(type,rows){
+    const cfg=tableConfigs[type], head=el(`${type}Head`),body=el(`${type}Body`),pager=el(`${type}Pager`); if(!head||!body)return;
+    const sort=state.sort[type];
+    head.innerHTML='<tr>'+cfg.map(([label,key])=>`<th data-sort-type="${type}" data-sort-key="${escapeHtml(key)}">${escapeHtml(label)}${sort.key===key?(sort.dir===1?' ↑':' ↓'):''}</th>`).join('')+'</tr>';
+    const sorted=sortRows(rows,type), size=state.pageSize[type], pages=Math.max(1,Math.ceil(sorted.length/size)); if(state.page[type]>pages)state.page[type]=pages; const start=(state.page[type]-1)*size, pageRows=sorted.slice(start,start+size);
+    body.innerHTML=pageRows.length?pageRows.map(r=>'<tr>'+cfg.map(([label,key])=>`<td class="${['异常说明','备注说明','上架地址','安装位置','一级部门','二级部门','三级部门','四级部门','注册表名称','上架版本'].includes(label)?'wrap':''}">${cellHtml(type,key,r[key],r)}</td>`).join('')+'</tr>').join(''):`<tr><td colspan="${cfg.length}" style="text-align:center;padding:38px;color:var(--muted)">当前筛选范围内暂无数据</td></tr>`;
+    pager.innerHTML=`<div>第 ${state.page[type]} / ${pages} 页，共 ${nfmt.format(sorted.length)} 条</div><div class="pager-actions"><button class="btn small ghost" data-page-type="${type}" data-page-dir="-1" ${state.page[type]<=1?'disabled':''}>上一页</button><button class="btn small ghost" data-page-type="${type}" data-page-dir="1" ${state.page[type]>=pages?'disabled':''}>下一页</button></div>`;
+  }
+  function cellHtml(type,key,value,row){
+    const v=clean(value)||'-';
+    if(key==='_status'||key==='分析状态') return badge(v);
+    if(key==='需关注记录'||key==='版本不一致'||key==='异常项数') return Number(value)>0?`<span class="badge danger">${nfmt.format(value)}</span>`:`<span class="muted">0</span>`;
+    if(key==='例外配置') return Number(value)>0?`<span class="badge primary">${nfmt.format(value)}</span>`:`<span class="muted">0</span>`;
+    if(key==='是否例外配置') return row._exception?`<span class="badge primary">${escapeHtml(tr('已配置'))}</span>`:`<span class="muted">${escapeHtml(tr('未配置/未说明'))}</span>`;
+    if(key==='四级部门') return escapeHtml(displayDept4(v));
+    if(DATE_FIELDS.includes(key)) return escapeHtml(formatDate(value));
+    return escapeHtml(v);
+  }
+  function badge(status){
+    const cls=status==='版本一致'?'good':status==='例外配置'?'primary':status==='版本不一致'?'danger':(status==='未提供上架信息'||status==='需处理')?'warn':'';
+    return `<span class="badge ${cls}">${escapeHtml(tr(status))}</span>`;
+  }
+  function renderEmployeeTable(){renderGenericTable('employee',state.aggregates.employee)}
+  function renderDeviceTable(){renderGenericTable('device',state.aggregates.device)}
+  function renderSoftwareTable(){renderGenericTable('software',state.aggregates.software)}
+  function renderQuality(){
+    const records=state.filtered;
+    const fields=[...KEY_FIELDS,...DATE_FIELDS.filter(x=>!KEY_FIELDS.includes(x))];
+    el('qualityList').innerHTML=fields.map(f=>{const valid=records.filter(r=>clean(r[f])&&(DATE_FIELDS.includes(f)?!!parseDate(r[f]):true)).length,rate=records.length?valid/records.length:0;return `<div class="quality-item"><div class="quality-row"><span>${escapeHtml(f)}</span><span>${pctfmt.format(rate)}</span></div><div class="quality-bar"><div class="quality-fill" style="width:${Math.max(0,Math.min(100,rate*100))}%"></div></div><div class="quality-detail">完整 ${nfmt.format(valid)} 条，缺失/无效 ${nfmt.format(records.length-valid)} 条</div></div>`}).join('')||'<div class="empty-state">暂无数据</div>';
+    renderGenericTable('quality',state.aggregates.quality);
+  }
+  function renderDetailTable(){
+    el('detailSub').textContent=`当前显示 ${nfmt.format(state.filtered.length)} 条，合并数据共 ${nfmt.format(state.all.length)} 条，来源 ${nfmt.format(state.imports.length||1)} 个文件`;
+    renderGenericTable('detail',state.filtered);
+  }
+
+  function extractEmployeeId(value){
+    const raw=clean(value); if(!raw) return '';
+    const tail=raw.replace(/[，,；;、|/\\]+\s*$/g,'').match(/([A-Za-z][A-Za-z0-9_-]*\d[A-Za-z0-9_-]*)\s*$/);
+    return tail ? tail[1] : '';
+  }
+  function aggregateEmployeeIds(records){
+    const grouped=new Map(); let unresolved=0;
+    records.forEach(r=>{
+      const raw=clean(r['安装人工号']), id=extractEmployeeId(raw);
+      if(!id){unresolved++;return;}
+      const key=id.toLowerCase();
+      if(!grouped.has(key)) grouped.set(key,{工号:id,安装记录数:0,原始员工字段:new Set(),软件:new Set(),设备:new Set(),来源文件:new Set(),一级部门:new Set(),需关注记录:0});
+      const x=grouped.get(key); x.安装记录数++; if(raw)x.原始员工字段.add(raw); x.软件.add(r._tool); x.设备.add(r._device); if(r._sourceFile)x.来源文件.add(r._sourceFile); if(r['一级部门'])x.一级部门.add(r['一级部门']); if(r._attention)x.需关注记录++;
+    });
+    const rows=[...grouped.values()].map(x=>({
+      工号:x.工号,
+      安装记录数:x.安装记录数,
+      软件数:x.软件.size,
+      设备数:x.设备.size,
+      来源文件数:x.来源文件.size,
+      需关注记录:x.需关注记录,
+      一级部门:[...x.一级部门].join(' / ')||'-',
+      原始安装人工号:[...x.原始员工字段].join(' / ')
+    })).sort((a,b)=>a.工号.localeCompare(b.工号,'en',{numeric:true,sensitivity:'base'}));
+    return {rows,unresolved};
+  }
+
+  function downloadCSV(rows,columns,filename){
+    if(!rows.length){toast('当前没有可导出的数据','error');return;}
+    const lines=[columns.map(c=>csvCell(c.label)).join(',')];
+    rows.forEach(r=>lines.push(columns.map(c=>csvCell(typeof c.value==='function'?c.value(r):(r[c.key]??''))).join(',')));
+    const blob=new Blob(['\uFEFF'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}); const url=URL.createObjectURL(blob); const a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),500);
+    toast('导出文件已生成','success');
+  }
+  function csvCell(v){const s=String(v??'').replace(/"/g,'""');return `"${s}"`}
+  function exportType(type){
+    const stamp=new Date().toISOString().slice(0,10).replace(/-/g,'');
+    if(type==='detail') downloadCSV(state.filtered,[{label:'来源文件',value:r=>r._sourceFile},{label:'来源工作表',value:r=>r._sourceSheet},{label:'来源行',value:r=>r._sourceRow},{label:'合并序号',value:r=>r._row}].concat(HEADERS.map(h=>({label:h,key:h})),[{label:'分析状态',value:r=>r._status},{label:'需关注',value:r=>r._attention?'是':'否'},{label:'数据异常说明',value:r=>r._qualityIssues.join('；')}]),`PC三方软件_筛选明细_${stamp}.csv`);
+    else if(type==='employee') downloadCSV(state.aggregates.employee,tableConfigs.employee.map(([label,key])=>({label,key})),`PC三方软件_员工汇总_${stamp}.csv`);
+    else if(type==='employeeId'){
+      const result=aggregateEmployeeIds(state.filtered);
+      downloadCSV(result.rows,[{label:'工号',key:'工号'},{label:'安装记录数',key:'安装记录数'},{label:'软件数',key:'软件数'},{label:'设备数',key:'设备数'},{label:'来源文件数',key:'来源文件数'},{label:'需关注记录',key:'需关注记录'},{label:'一级部门',key:'一级部门'},{label:'原始安装人工号',key:'原始安装人工号'}],`PC三方软件_工号汇总_${stamp}.csv`);
+      if(result.rows.length&&result.unresolved) setTimeout(()=>toast(`已提取 ${nfmt.format(result.rows.length)} 个唯一工号；${nfmt.format(result.unresolved)} 条记录未识别，未纳入导出`,'error'),80);
+    }
+    else if(type==='device') downloadCSV(state.aggregates.device,tableConfigs.device.map(([label,key])=>({label,key})),`PC三方软件_设备汇总_${stamp}.csv`);
+    else if(type==='software') downloadCSV(state.aggregates.software,tableConfigs.software.map(([label,key])=>({label,key})),`PC三方软件_软件汇总_${stamp}.csv`);
+  }
+
+  function sampleRecords(){
+    const now=new Date(); const d=n=>{const x=new Date(now);x.setDate(x.getDate()-n);return dateOnly(x)};
+    const samples=[
+      ['版本问题','f84300033','Wireshark','Wireshark 4.2.5','4.2.2',d(90),'C:\\Program Files\\Wireshark','4.2.5','iDesk Store','版本较旧','否','','PC-EG-001','A10001','CNBG','Cloud Core Network','Delivery','','','',d(2)],
+      ['正常','m00960399','VS Code','Microsoft Visual Studio Code','1.92.0',d(25),'C:\\Users\\AppData','1.92.0','iDesk Store','','否','','PC-EG-002','A10002','CNBG','Wireless','Engineering','','','',d(1)],
+      ['例外软件','r84057699','Notepad++','Notepad++','8.6.7',d(180),'D:\\Tools','8.6.7','内部软件中心','客户指定插件','是','8.6.7','PC-EG-003','A10003','EBG','Enterprise Service','Project A','','','',d(5)],
+      ['未上架','a00971773','MobaXterm','MobaXterm','24.1',d(10),'C:\\Tools','','','未找到上架信息','否','','PC-EG-004','A10004','CNBG','Datacom','NOC','','','',d(3)],
+      ['正常','f84300033','Python','Python 3.12.4','3.12.4',d(35),'C:\\Python312','3.12.4','iDesk Store','','否','','PC-EG-001','A10001','CNBG','Cloud Core Network','Delivery','','','',d(2)],
+      ['版本问题','y00956566','7-Zip','7-Zip 23.01','22.01',d(210),'C:\\Program Files\\7-Zip','23.01','iDesk Store','','否','','PC-EG-005','A10005','EBG','Enterprise Service','Project B','','','',d(35)],
+      ['正常','m00961966','PuTTY','PuTTY release 0.81','0.81',d(8),'C:\\Program Files\\PuTTY','0.81','iDesk Store','','否','','PC-EG-006','A10006','CNBG','Optical','Support','','','',d(1)],
+      ['待确认','z00494440','WinSCP','WinSCP 6.3.4','6.3.4',d(15),'C:\\Program Files\\WinSCP','','软件中心','','否','','PC-EG-007','','CNBG','Cloud Core Network','Delivery','','','',d(1)],
+      ['风险软件','a00938814','AnyDesk','AnyDesk','8.0.8',d(60),'C:\\Program Files\\AnyDesk','','','远程控制工具需核查','否','','PC-EG-008','A10008','GTS','Regional Delivery','PMO','','','',d(12)],
+      ['正常','j84345579','Git','Git 2.45.2','2.45.2',d(6),'C:\\Program Files\\Git','2.45.2','iDesk Store','','否','','PC-EG-009','A10009','CNBG','Datacom','Engineering','','','',d(0)]
+    ];
+    return samples.map((row,i)=>{const obj={};HEADERS.forEach((h,j)=>obj[h]=row[j]??'');return enrichRecord(obj,i)});
+  }
+  function loadSample(){
+    showLoading('正在载入示例数据','用于预览多维分析与筛选效果');
+    setTimeout(()=>{
+      state.sourceName='示例数据（未导入文件）';state.importedAt=new Date();state.sheets=[];state.currentSheetIndex=0;state.imports=[{fileName:'示例数据',sheetName:'示例数据',sheetCount:1,headerRow:1,headerScore:HEADERS.length,recordCount:10}];state.rejectedFiles=[];state.all=sampleRecords().map((r,i)=>({...r,_sourceFile:'示例数据',_sourceSheet:'示例数据',_sourceRow:i+2,_row:i+1}));state.filtered=[...state.all];state.workbook=null;resetFilterControls(false);initializeDashboard();hideLoading();toast('示例数据已载入','success');
+    },180);
+  }
+
+  function switchSheetModal(){
+    const items=state.imports.map((x,i)=>`<div class="sheet-option"><b>${i+1}. ${escapeHtml(x.fileName)}</b><div class="modal-sub">工作表：${escapeHtml(x.sheetName)} · ${nfmt.format(x.recordCount)} 条记录 · 表头第 ${x.headerRow} 行 · 匹配 ${x.headerScore}/${HEADERS.length} 个字段${x.sheetCount>1?` · 已从 ${x.sheetCount} 个工作表中自动选择`:''}</div></div>`).join('');
+    const failed=state.rejectedFiles.length?`<div class="rule-box"><b>${nfmt.format(state.rejectedFiles.length)} 个文件未导入</b><br>${state.rejectedFiles.map(x=>`${escapeHtml(x.fileName)}：${escapeHtml(x.error)}`).join('<br>')}</div>`:'';
+    showModal('导入文件清单',`<div class="sheet-list">${items||'<div class="empty-state">暂无文件信息</div>'}</div>${failed}<p>不同文件的记录按原样合并，系统不会自动删除重复行；可使用“来源文件”筛选追溯数据。</p>`,'每个文件自动选择表头匹配度最高的工作表');
+  }
+  function showHelp(){
+    showModal('统计口径说明',`
+      <div class="rule-box"><b>版本一致</b><br>“工具安装版本”和“上架版本”均有值，去除首字母 v 与空格后完全一致。</div>
+      <div class="rule-box"><b>版本不一致</b><br>两个版本字段均有值，但比较结果不同。</div>
+      <div class="rule-box"><b>例外配置</b><br>“是否例外配置”为“是 / Yes / 已配置”等肯定值。例外配置优先于版本判断。</div>
+      <div class="rule-box"><b>未提供上架信息</b><br>存在安装版本，但上架版本与上架地址均为空。</div>
+      <div class="rule-box"><b>需处理</b><br>未满足以上规则，且“问题类”不为空，也不是“正常 / 无问题 / 合规”。</div>
+      <div class="rule-box"><b>需关注记录</b><br>包含“版本不一致、未提供上架信息、需处理”三类；例外配置不计入需关注。</div>
+      <div class="rule-box"><b>关键信息完整率</b><br>检查安装人工号、工具名称、设备名称、资产编码、一级部门、iDesk 信息上报时间六个字段。</div>
+      <div class="rule-box"><b>批量导入规则</b><br>一次可选择或拖入多个 .xlsx / .csv / .tsv 文件。每个文件自动选择表头匹配度最高的工作表后合并，原始记录不会自动去重，并保留来源文件、工作表和原始行号。</div>
+      <div class="rule-box"><b>部门与自定义图表</b><br>全景概览优先展示四级部门，其次展示三级部门。自定义图表可选择组织、软件、员工、设备、版本、来源文件、月份等字段，并按记录数、去重员工数、去重设备数、去重软件数或风险状态统计；所有结果均随全局筛选联动。</div>
+      <div class="rule-box"><b>工号提取规则</b><br>“导出工号汇总”会从安装人工号字段末尾提取以英文字母开头、且包含数字的工号，例如“Ramy Adel ... r84057699”提取为“r84057699”；纯工号字段也可直接识别。结果按工号去重并保留记录数等汇总信息。</div>
+      <p>上述规则仅用于快速统计，不替代正式的软件合规结论。可结合“问题类、备注说明、例外版本、上架地址”进一步核查。</p>
+    `,'自动归类规则透明可追溯');
+  }
+
+  function replaceLeafText(root=document){
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+    const nodes=[]; while(walker.nextNode())nodes.push(walker.currentNode);
+    nodes.forEach(node=>{
+      if(['SCRIPT','STYLE'].includes(node.parentElement?.tagName))return;
+      const raw=node.nodeValue, trimmed=raw.trim(); if(!trimmed)return;
+      const mapped=state.lang==='en'?UI_EN[trimmed]:UI_ZH[trimmed];
+      if(mapped)node.nodeValue=raw.replace(trimmed,mapped);
+    });
+  }
+  function applyLanguageToDOM(){
+    document.documentElement.lang=state.lang==='en'?'en':'zh-CN';
+    el('langBtnLabel').textContent=state.lang==='en'?'中':'EN';
+    el('langBtn').title=state.lang==='en'?'切换中文':'Switch to English';
+    const kw=el('keywordFilter'); if(kw)kw.placeholder=state.lang==='en'?'Employee ID, tool, device, asset code, notes, source file…':'工号、工具、设备、资产编码、备注、来源文件……';
+    replaceLeafText(document.body);
+    // Dynamic select options
+    populateFilters(); populateCustomChartControls();
+    if(el('exceptionFilter')){
+      const vals=[['',tr('全部')],['yes',tr('已配置')],['no',tr('未配置/未说明')]];
+      const cur=el('exceptionFilter').value;el('exceptionFilter').innerHTML=vals.map(([v,l])=>`<option value="${v}">${escapeHtml(l)}</option>`).join('');el('exceptionFilter').value=cur;
+    }
+    if(el('dateFieldFilter')){
+      const cur=el('dateFieldFilter').value;el('dateFieldFilter').innerHTML=`<option value="安装时间">${escapeHtml(tr('安装时间'))}</option><option value="iDesk信息上报时间">${escapeHtml(tr('iDesk 信息上报时间'))}</option>`;el('dateFieldFilter').value=cur;
+    }
+    if(el('customMetric')) [...el('customMetric').options].forEach(o=>o.textContent=tr(CUSTOM_METRIC_LABELS[o.value]||o.textContent));
+    if(el('customChartType')) {const map={horizontal:'横向柱状图',vertical:'纵向柱状图',donut:'环形图'};[...el('customChartType').options].forEach(o=>o.textContent=tr(map[o.value]||o.textContent));}
+  }
+  function toggleLanguage(){
+    state.lang=state.lang==='zh'?'en':'zh';
+    localStorage.setItem('pcSoftwareDashboardLang',state.lang);
+    renderAll();
+    toast(state.lang==='en'?'Switched to English':'已切换为中文','success');
+  }
+
+  function bindEvents(){
+    el('langBtn').addEventListener('click',toggleLanguage);
+    ['chooseFileBtn','topImportBtn','replaceFileBtn'].forEach(id=>el(id).addEventListener('click',()=>el('fileInput').click()));
+    el('fileInput').addEventListener('change',e=>{const files=[...e.target.files];e.target.value='';importFiles(files)});
+    el('sampleBtn').addEventListener('click',loadSample);
+    const dz=el('dropZone'); ['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('drag')})); ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('drag')})); dz.addEventListener('drop',e=>importFiles([...e.dataTransfer.files])); dz.addEventListener('click',e=>{if(!e.target.closest('button'))el('fileInput').click()}); dz.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();el('fileInput').click()}});
+    el('helpBtn').addEventListener('click',showHelp); el('modalClose').addEventListener('click',closeModal); el('modalShell').addEventListener('click',e=>{if(e.target===el('modalShell'))closeModal()});
+    el('switchSheetBtn').addEventListener('click',switchSheetModal);
+    el('modalBody').addEventListener('click',e=>{const b=e.target.closest('[data-sheet-index]');if(b&&state.sheets.length){closeModal();loadSheet(+b.dataset.sheetIndex)}});
+    el('resetFilterBtn').addEventListener('click',()=>resetFilterControls(true));
+    el('keywordFilter').addEventListener('input',debounce(applyFilters,100));
+    ['sourceFileFilter','dept1Filter','dept2Filter','dept3Filter','dept4Filter','toolFilter','issueFilter','statusFilter','exceptionFilter','dateFieldFilter','dateStartFilter','dateEndFilter'].forEach(id=>el(id).addEventListener('change',applyFilters));
+    $$('.chip').forEach(c=>c.addEventListener('click',()=>{state.quick=c.dataset.quick;$$('.chip').forEach(x=>x.classList.toggle('active',x===c));applyFilters()}));
+    ['customDimension','customMetric','customChartType','customTopN'].forEach(id=>el(id).addEventListener('change',()=>{
+      state.customChart.dimension=el('customDimension').value; state.customChart.metric=el('customMetric').value; state.customChart.type=el('customChartType').value; state.customChart.topN=+el('customTopN').value||10; renderCustomChart();
+    }));
+    el('resetCustomChartBtn').addEventListener('click',()=>{state.customChart={dimension:'四级部门',metric:'records',type:'horizontal',topN:10};populateCustomChartControls();renderCustomChart();toast('自定义图表已恢复默认','success')});
+    $$('.tab-btn').forEach(b=>b.addEventListener('click',()=>{state.currentTab=b.dataset.tab;$$('.tab-btn').forEach(x=>x.classList.toggle('active',x===b));$$('.tab-page').forEach(p=>p.classList.toggle('hidden',p.dataset.page!==state.currentTab));if(state.currentTab==='overview')setTimeout(renderOverview,30)}));
+    document.addEventListener('click',e=>{
+      const th=e.target.closest('[data-sort-type]'); if(th){const type=th.dataset.sortType,key=th.dataset.sortKey;if(state.sort[type].key===key)state.sort[type].dir*=-1;else state.sort[type]={key,dir:1};renderType(type);return;}
+      const p=e.target.closest('[data-page-type]'); if(p){const type=p.dataset.pageType;state.page[type]+=+p.dataset.pageDir;renderType(type);return;}
+      const ie=e.target.closest('[data-inline-export]'); if(ie){exportType(ie.dataset.inlineExport);return;}
+      const ex=e.target.closest('[data-export]'); if(ex){exportType(ex.dataset.export);el('exportMenu').classList.add('hidden');return;}
+      if(!e.target.closest('.menu'))el('exportMenu').classList.add('hidden');
+    });
+    el('pageSizeSelect').addEventListener('change',()=>{state.pageSize.detail=+el('pageSizeSelect').value;state.page.detail=1;renderDetailTable()});
+    el('exportBtn').addEventListener('click',e=>{e.stopPropagation();if(!el('exportBtn').disabled)el('exportMenu').classList.toggle('hidden')});
+    window.addEventListener('resize',debounce(()=>{if(!el('dashboard').classList.contains('hidden')&&state.currentTab==='overview')renderOverview()},180));
+  }
+  function renderType(type){ if(type==='employee')renderEmployeeTable();else if(type==='device')renderDeviceTable();else if(type==='software')renderSoftwareTable();else if(type==='quality')renderQuality();else if(type==='detail')renderDetailTable(); }
+  function debounce(fn,ms){let t;return(...args)=>{clearTimeout(t);t=setTimeout(()=>fn(...args),ms)}}
+
+  state.lang=localStorage.getItem('pcSoftwareDashboardLang')==='en'?'en':'zh';
+  bindEvents();
+  applyLanguageToDOM();
+})();
+</script>
+</body>
+</html>

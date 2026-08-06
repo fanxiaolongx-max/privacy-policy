@@ -62,6 +62,11 @@ function encodeBase64Url(value) {
     return Buffer.from(value).toString('base64url');
 }
 
+function getPublicKeyJwk() {
+    const keys = ensureSigningKeys();
+    return crypto.createPublicKey(keys.publicKeyPem).export({ format: 'jwk' });
+}
+
 function issueMonthlyLicense({ productId, month, now = new Date(), label = '', renewedFrom = null }) {
     const safeProductId = normalizeProductId(productId);
     const safeMonth = normalizeMonth(month, now);
@@ -81,7 +86,7 @@ function issueMonthlyLicense({ productId, month, now = new Date(), label = '', r
         key: keys.privateKeyPem,
         dsaEncoding: 'ieee-p1363'
     }).toString('base64url');
-    const publicKeyJwk = crypto.createPublicKey(keys.publicKeyPem).export({ format: 'jwk' });
+    const publicKeyJwk = getPublicKeyJwk();
     const token = `${TOKEN_PREFIX}.${payloadPart}.${signature}`;
     const record = licenseRegistry.createRecord({
         licenseId,
@@ -148,6 +153,7 @@ module.exports = {
     KEY_FILE,
     TOKEN_PREFIX,
     ensureSigningKeys,
+    getPublicKeyJwk,
     getMonthWindow,
     issueMonthlyLicense,
     normalizeMonth,

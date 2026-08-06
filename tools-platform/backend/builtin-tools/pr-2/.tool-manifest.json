@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "tool": {
+    "slug": "pr-2",
+    "name": "外包 PR",
+    "icon": "🧩",
+    "description": "由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。",
+    "tags": [],
+    "href": "/tools/pr-2",
+    "filePath": "/custom-tools/pr-2/index.html",
+    "publicAccess": false,
+    "createdAt": "2026-08-02T09:58:27.909Z",
+    "updatedAt": "2026-08-02T09:58:27.909Z"
+  },
+  "history": {
+    "id": "custom-import-pr-2",
+    "tool": "custom",
+    "action": "导入自定义工具",
+    "detail": "外包 PR (pr-2)",
+    "time": "2026-08-02T09:58:27.909Z"
+  }
+}

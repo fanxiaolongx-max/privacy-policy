@@ -11,6 +11,7 @@ const aiSettingsRepo = require('../models/ai-settings-repository');
 const aiProviderClient = require('../models/ai-provider-client');
 const f12LicenseService = require('../models/f12-license-service');
 const f12LicenseRegistry = require('../models/f12-license-registry');
+const f12ExtensionIdentityService = require('../models/f12-extension-identity-service');
 const { DATA_DIR } = require('../models/store');
 const { requireAdmin } = require('../middleware/auth');
 
@@ -78,6 +79,24 @@ router.get('/f12-to-extension/monthly-license', requireAdmin, (req, res) => {
         res.json({ success: true, ...issued });
     } catch (error) {
         res.status(400).json({ error: error.message || 'License 签发失败' });
+    }
+});
+
+router.get('/f12-to-extension/license-config', requireAdmin, (req, res) => {
+    try {
+        const requestedProductId = String(req.query.productId || '').trim();
+        const identity = requestedProductId
+            ? f12ExtensionIdentityService.getOrCreateIdentity(requestedProductId)
+            : null;
+        res.setHeader('Cache-Control', 'no-store');
+        res.json({
+            success: true,
+            algorithm: 'ECDSA_P256_SHA256',
+            publicKeyJwk: f12LicenseService.getPublicKeyJwk(),
+            ...(identity ? { productId: identity.productId, manifestKey: identity.manifestKey } : {})
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message || '读取 License 打包配置失败' });
     }
 });
 

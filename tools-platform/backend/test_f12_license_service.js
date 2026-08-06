@@ -23,6 +23,7 @@ async function main() {
     assert.strictEqual(registry.getRecord(issued.payload.licenseId).productId, productId);
     assert.strictEqual(service.verifyLicenseToken(issued.token, { productId }).valid, true);
     assert.strictEqual(service.verifyLicenseToken(issued.token, { productId: '其他扩展' }).valid, false);
+    assert.deepStrictEqual(service.getPublicKeyJwk(), issued.publicKeyJwk, '打包配置公钥必须与签发公钥一致');
     registry.setStatus(issued.payload.licenseId, 'revoked', { reason: 'test revoke' });
     assert.strictEqual(registry.checkPayload(issued.payload).valid, false, '单把 License 必须可以撤销');
     assert.strictEqual(registry.checkPayload(issued.payload).reasonCode, 'REVOKED');

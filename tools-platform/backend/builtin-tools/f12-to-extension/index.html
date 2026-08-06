@@ -71,8 +71,13 @@
           <input type="text" id="extName" value="SV/CFC 满意度监控" class="input-field w-full rounded-lg px-3 py-2.5 text-sm">
         </div>
         <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wide">版本</label>
-          <input type="text" id="extVersion" value="1.0.0" class="input-field w-full rounded-lg px-3 py-2.5 text-sm">
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wide">本次新版本</label>
+          <input type="text" id="extVersion" value="1.0.1" readonly class="input-field w-full rounded-lg px-3 py-2.5 text-sm cursor-not-allowed">
+          <p class="mt-1.5 text-[11px] leading-relaxed text-slate-500">
+            上一个版本：<span id="previousVersion" class="text-slate-300">1.0.0（默认基线）</span><br>
+            本次新版本：<span id="nextVersion" class="font-semibold text-cyan-300">1.0.1</span><br>
+            <span class="text-violet-300">固定扩展 ID：按扩展名称永久复用 Manifest Key</span>
+          </p>
         </div>
       </div>
 
@@ -234,7 +239,7 @@
     </section>
   </div>
 
-  <script src="./packer-core.js"></script>
+  <script src="./packer-core.js?v=20260806-auto-version-1"></script>
   <script>
     const BUILTIN_SCRIPTS = {
       'sv-cfc-monitor': {
@@ -255,6 +260,64 @@
         manualLaunch: true
       }
     };
+
+    const VERSION_HISTORY_STORAGE_KEY = 'f12ExtensionPackerVersionHistoryV1';
+    const DEFAULT_VERSION_BASELINE = '1.0.0';
+
+    function getVersionHistoryKey(name) {
+      return String(name || 'My Extension').trim().normalize('NFKC').toLowerCase();
+    }
+
+    function readVersionHistory() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(VERSION_HISTORY_STORAGE_KEY) || '{}');
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+      } catch (error) {
+        console.warn('读取扩展版本历史失败，使用默认基线。', error);
+        return {};
+      }
+    }
+
+    function incrementExtensionVersion(version) {
+      if (typeof F12ExtensionPacker.incrementVersion === 'function') {
+        return F12ExtensionPacker.incrementVersion(version);
+      }
+      // 兼容浏览器短时间仍命中旧版 packer-core.js 缓存的情况。
+      const parts = String(version || '').split('.');
+      if (parts.length < 1 || parts.length > 4 || parts.some(part => !/^\d+$/.test(part) || Number(part) > 65535)) {
+        throw new Error('无法递增无效版本号。');
+      }
+      const numbers = parts.map(Number);
+      while (numbers.length < 3) numbers.push(0);
+      for (let index = numbers.length - 1; index >= 0; index--) {
+        if (numbers[index] < 65535) {
+          numbers[index] += 1;
+          for (let resetIndex = index + 1; resetIndex < numbers.length; resetIndex++) numbers[resetIndex] = 0;
+          return numbers.join('.');
+        }
+      }
+      throw new Error('版本号已达到浏览器允许的最大值。');
+    }
+
+    function refreshVersionPreview() {
+      const name = document.getElementById('extName').value.trim() || 'My Extension';
+      const history = readVersionHistory();
+      const savedVersion = history[getVersionHistoryKey(name)];
+      const hasSavedVersion = F12ExtensionPacker.isValidVersion(savedVersion);
+      const previousVersion = hasSavedVersion ? savedVersion : DEFAULT_VERSION_BASELINE;
+      const nextVersion = incrementExtensionVersion(previousVersion);
+      document.getElementById('extVersion').value = nextVersion;
+      document.getElementById('previousVersion').textContent = `${previousVersion}${hasSavedVersion ? '' : '（默认基线）'}`;
+      document.getElementById('nextVersion').textContent = nextVersion;
+      return { previousVersion, nextVersion, hasSavedVersion };
+    }
+
+    function rememberPackedVersion(name, version) {
+      if (!F12ExtensionPacker.isValidVersion(version)) throw new Error('无法保存无效的扩展版本号。');
+      const history = readVersionHistory();
+      history[getVersionHistoryKey(name)] = version;
+      localStorage.setItem(VERSION_HISTORY_STORAGE_KEY, JSON.stringify(history));
+    }
 
     async function loadBuiltinScript(scriptId, applyPreset = true) {
       const preset = BUILTIN_SCRIPTS[scriptId];
@@ -277,6 +340,7 @@
           document.getElementById('extPopup').value = preset.includePopup ? 'yes' : 'no';
           document.getElementById('extManualLaunch').checked = preset.manualLaunch === true;
         }
+        refreshVersionPreview();
         const validation = F12ExtensionPacker.validateOptions(collectOptions());
         renderReport(validation);
         button.textContent = '已载入';
@@ -287,6 +351,7 @@
     }
 
     window.addEventListener('DOMContentLoaded', async () => {
+      refreshVersionPreview();
       try {
         await loadBuiltinScript('sv-cfc-monitor', false);
       } catch (e) {
@@ -301,6 +366,8 @@
         alert('载入内置脚本失败: ' + error.message);
       }
     });
+
+    document.getElementById('extName').addEventListener('input', refreshVersionPreview);
 
     function collectOptions() {
       return {
@@ -331,6 +398,22 @@
       });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(payload.error || `License 签发失败（HTTP ${res.status}）`);
+      return payload;
+    }
+
+    const cachedLicensePackagingConfigs = new Map();
+    async function getLicensePackagingConfig(productId) {
+      const cacheKey = String(productId || '').trim();
+      const cached = cachedLicensePackagingConfigs.get(cacheKey);
+      if (cached && cached.publicKeyJwk && cached.manifestKey) return cached;
+      const token = localStorage.getItem('tools_token');
+      const params = new URLSearchParams({ productId: cacheKey });
+      const res = await fetch(`/api/custom-tools/f12-to-extension/license-config?${params.toString()}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok || !payload.publicKeyJwk || !payload.manifestKey) throw new Error(payload.error || `读取扩展身份配置失败（HTTP ${res.status}）`);
+      cachedLicensePackagingConfigs.set(cacheKey, payload);
       return payload;
     }
 
@@ -571,17 +654,20 @@
     }
 
     document.getElementById('packBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('packBtn');
+      if (btn.disabled) return;
+      btn.disabled = true;
       const options = collectOptions();
-      document.getElementById('licenseResult').classList.add('hidden');
-      let issuedLicense = null;
+      let packedSuccessfully = false;
       try {
+        const licenseConfig = await getLicensePackagingConfig(options.name);
+        options.extensionKey = licenseConfig.manifestKey;
         if (options.licenseRequested) {
-          issuedLicense = await issueMonthlyLicense(options.name, options.licenseLabel);
           options.license = {
             enabled: true,
             productId: options.name,
             validationUrl: new URL('/api/public/f12-license/validate', window.location.origin).href,
-            publicKeyJwk: issuedLicense.publicKeyJwk
+            publicKeyJwk: licenseConfig.publicKeyJwk
           };
           options.manualLaunch = true;
           options.includePopup = true;
@@ -595,14 +681,15 @@
         const zip = new JSZip();
         Object.entries(generated.files).forEach(([fileName, content]) => zip.file(fileName, content));
         const content = await zip.generateAsync({ type: "blob" });
-        const fileName = "extension-" + options.name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase() + ".zip";
+        const fileName = "extension-" + options.name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase() + "-v" + options.version + ".zip";
         saveAs(content, fileName);
-        if (issuedLicense) showLicenseResult(issuedLicense);
+        rememberPackedVersion(options.name, options.version);
+        refreshVersionPreview();
+        packedSuccessfully = true;
         
         // Show success state on button
-        const btn = document.getElementById('packBtn');
         const originalHtml = btn.innerHTML;
-        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> <span>打包成功！</span>`;
+        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> <span>打包成功 v${options.version}！</span>`;
         btn.classList.replace('from-indigo-500', 'from-emerald-500');
         btn.classList.replace('to-cyan-500', 'to-teal-500');
         
@@ -610,9 +697,12 @@
           btn.innerHTML = originalHtml;
           btn.classList.replace('from-emerald-500', 'from-indigo-500');
           btn.classList.replace('to-teal-500', 'to-cyan-500');
+          btn.disabled = false;
         }, 3000);
       } catch (err) {
         alert("打包失败: " + err.message);
+      } finally {
+        if (!packedSuccessfully) btn.disabled = false;
       }
     });
   </script>
