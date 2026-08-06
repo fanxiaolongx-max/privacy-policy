@@ -29,6 +29,7 @@ const NAV_DEFAULT_SETTINGS = {
         { id: 'cat_mq0nny3v', name: '五个端到端', nameEn: '“5” E2E' },
         { id: 'cat_msbmuup1', name: '实用工具', nameEn: 'Useful' },
         { id: 'cat_msbmvd5l', name: '网络安全', nameEn: 'Safety' },
+        { id: 'cat_mshv1h0m', name: '汇报呈现', nameEn: 'Report' },
         { id: 'custom', name: '自定义工具', nameEn: 'Custom Tools', nameKey: 'nav.category.custom' },
         { id: 'cat_ms2192c7', name: '行政餐饮', nameEn: 'Admin' },
         { id: 'cat_mshua5iu', name: '休闲娱乐', nameEn: 'Play' }
@@ -42,10 +43,12 @@ const NAV_DEFAULT_SETTINGS = {
         'custom:tool-mrlpwjk3': 'cat_ms2192c7', 'custom:tool-ms1saxuh': 'cat_ms2192c7',
         'custom:tool-msbmscxd': 'audit', 'custom:tool-msbmu55i': 'audit',
         'custom:tool-ms4xb66s': 'cat_msbmuup1', 'custom:tool-mrhqjeya': 'cat_msbmuup1',
-        'custom:tool-mrsw86w8': 'cat_msbmuup1', 'custom:pr-2': 'cat_msbmuup1',
+        'custom:tool-mrsw86w8': 'cat_mshv1h0m', 'custom:pr-2': 'cat_msbmuup1',
         'custom:f12-to-extension': 'cat_msbmuup1', 'custom:tool-mrrgpqy4': 'cat_ms2192c7',
         'custom:particle-effects': 'cat_mshua5iu', 'custom:tool-mrrn48dc': 'cat_mshua5iu',
-        'custom:optical-transfer': 'cat_mshua5iu', 'custom:tool-msf5b7nn': 'audit'
+        'custom:optical-transfer': 'cat_mshua5iu', 'custom:tool-msf5b7nn': 'audit',
+        'custom:nis_2026h1_summary': 'cat_mshv1h0m', 'custom:tool-msh8aro4': 'cat_mshv1h0m',
+        'custom:question-bank-assistant-privacy': 'cat_mshv1h0m', 'custom:tool-mr88gv9x': 'cat_mshv1h0m'
     },
     itemOrder: [
         'praudit', 'custom:pr', 'frt', 'storage', 'db-explorer', 'custom:eos_tool-v8',
@@ -1080,10 +1083,10 @@ function renderNavbar() {
 
         <div class="nav-status" style="margin-left:20px; display:flex; align-items:center; gap:12px;">
             <div style="font-size:11px; color:#64748b; background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; font-family:monospace; letter-spacing:0.5px;" id="nav-resource-version-display"></div>
-            <div style="display:flex; align-items:center; gap:6px;">
+            <button type="button" class="nav-server-status" onclick="openServiceStatusModal()" title="${navEscape(window.ToolsI18n?.getLanguage?.() === 'en-US' ? 'View service status history' : '查看服务状态历史')}">
                 <div class="status-dot"></div>
                 <span id="server-status-text">${navEscape(navT('nav.online'))}</span>
-            </div>
+            </button>
         </div>
     `;
     document.body.prepend(nav);
@@ -3812,8 +3815,11 @@ window.resetPwd = async function (u) {
 async function checkServerStatus() {
     try {
         const r = await fetch('/api/health');
-        const data = await r.json();
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        await r.json();
+        const dot = document.querySelector('.status-dot');
         const el = document.getElementById('server-status-text');
+        if (dot) dot.style.background = '#4CAF50';
         if (el) el.textContent = navT('nav.online');
     } catch (e) {
         const dot = document.querySelector('.status-dot');
@@ -3822,6 +3828,188 @@ async function checkServerStatus() {
         if (el) el.textContent = navT('nav.offline');
     }
 }
+
+let serviceStatusDays = 90;
+
+function serviceStatusBi(zh, en) {
+    return window.ToolsI18n?.getLanguage?.() === 'en-US' ? en : zh;
+}
+
+function serviceStateMeta(state) {
+    const states = {
+        operational: { icon: '✓', label: serviceStatusBi('正常', 'Operational') },
+        degraded: { icon: '!', label: serviceStatusBi('部分请求失败', 'Degraded') },
+        incident: { icon: '!', label: serviceStatusBi('服务异常', 'Incident') },
+        'no-data': { icon: '·', label: serviceStatusBi('暂无数据', 'No data') }
+    };
+    return states[state] || states['no-data'];
+}
+
+function licenseStatusMeta(license = {}) {
+    if (!license.enabled) {
+        return {
+            state: 'no-data',
+            icon: '—',
+            label: serviceStatusBi('Web 部署', 'Web deployment'),
+            detail: serviceStatusBi('无需桌面 License', 'Desktop License not required')
+        };
+    }
+    const state = ['operational', 'degraded', 'incident'].includes(license.state) ? license.state : 'incident';
+    const expiresAt = Number(license.expiresAt);
+    const expiryText = Number.isFinite(expiresAt) && expiresAt > 0
+        ? new Date(expiresAt).toLocaleString(window.ToolsI18n?.getLanguage?.() === 'en-US' ? 'en-US' : 'zh-CN')
+        : serviceStatusBi('未知', 'Unknown');
+    if (!license.valid) {
+        return {
+            state: 'incident',
+            icon: '!',
+            label: serviceStatusBi('License 已失效', 'License invalid'),
+            detail: `${license.reasonCode || 'EXPIRED'} · ${serviceStatusBi('到期', 'Expires')} ${expiryText}`
+        };
+    }
+    if (state === 'incident') {
+        return {
+            state,
+            icon: '!',
+            label: serviceStatusBi('License 即将到期', 'License expires imminently'),
+            detail: `${serviceStatusBi('剩余', 'Remaining')} ${Number(license.hoursRemaining || 0)} ${serviceStatusBi('小时', 'hours')} · ${expiryText}`
+        };
+    }
+    if (state === 'degraded') {
+        return {
+            state,
+            icon: '!',
+            label: serviceStatusBi('License 临近到期', 'License expires soon'),
+            detail: `${serviceStatusBi('剩余', 'Remaining')} ${Number(license.daysRemaining || 0)} ${serviceStatusBi('天', 'days')} · ${expiryText}`
+        };
+    }
+    return {
+        state,
+        icon: '✓',
+        label: serviceStatusBi('License 可用', 'License active'),
+        detail: `${serviceStatusBi('剩余', 'Remaining')} ${Number(license.daysRemaining || 0)} ${serviceStatusBi('天', 'days')} · ${expiryText}`
+    };
+}
+
+function ensureServiceStatusModal() {
+    let modal = document.getElementById('serviceStatusModal');
+    if (modal) return modal;
+    modal = document.createElement('div');
+    modal.id = 'serviceStatusModal';
+    modal.className = 'service-status-modal';
+    modal.style.display = 'none';
+    modal.innerHTML = `
+        <div class="service-status-dialog" role="dialog" aria-modal="true" aria-labelledby="serviceStatusTitle">
+            <div class="service-status-head">
+                <div>
+                    <div class="service-status-kicker">TOOLS PLATFORM STATUS</div>
+                    <h2 id="serviceStatusTitle"></h2>
+                    <p id="serviceStatusSubtitle"></p>
+                </div>
+                <button type="button" class="service-status-close" onclick="closeServiceStatusModal()" aria-label="Close">×</button>
+            </div>
+            <div class="service-status-toolbar">
+                <div class="service-status-range" id="serviceStatusRange"></div>
+                <button type="button" class="service-status-refresh" onclick="loadServiceStatusHistory()">↻ <span>${serviceStatusBi('刷新', 'Refresh')}</span></button>
+            </div>
+            <div class="service-status-content" id="serviceStatusContent"></div>
+        </div>`;
+    modal.addEventListener('click', event => { if (event.target === modal) window.closeServiceStatusModal(); });
+    document.body.appendChild(modal);
+    return modal;
+}
+
+window.openServiceStatusModal = function () {
+    const modal = ensureServiceStatusModal();
+    modal.style.display = 'flex';
+    document.body.classList.add('service-status-open');
+    document.getElementById('serviceStatusTitle').textContent = serviceStatusBi('服务状态中心', 'Service Status Center');
+    document.getElementById('serviceStatusSubtitle').textContent = serviceStatusBi('基于平台真实 API 请求返回结果生成', 'Generated from actual platform API responses');
+    window.loadServiceStatusHistory();
+};
+
+window.closeServiceStatusModal = function () {
+    const modal = document.getElementById('serviceStatusModal');
+    if (modal) modal.style.display = 'none';
+    document.body.classList.remove('service-status-open');
+};
+
+window.setServiceStatusDays = function (days) {
+    serviceStatusDays = [30, 90, 180].includes(Number(days)) ? Number(days) : 90;
+    window.loadServiceStatusHistory();
+};
+
+function serviceStatusRequest(url) {
+    if (window.API?.get) return window.API.get(url);
+    return fetch(url, {
+        headers: localStorage.getItem('tools_token') ? { Authorization: `Bearer ${localStorage.getItem('tools_token')}` } : {}
+    }).then(async response => {
+        const body = await response.json();
+        if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
+        return body;
+    });
+}
+
+function renderServiceStatusHistory(data) {
+    const content = document.getElementById('serviceStatusContent');
+    const range = document.getElementById('serviceStatusRange');
+    if (!content || !range) return;
+    range.innerHTML = [30, 90, 180].map(days => `<button type="button" class="${days === data.days ? 'active' : ''}" onclick="setServiceStatusDays(${days})">${days} ${serviceStatusBi('天', 'days')}</button>`).join('');
+    const overall = data.overall || {};
+    const overallMeta = serviceStateMeta(overall.currentState);
+    const licenseMeta = licenseStatusMeta(data.license || {});
+    const availability = overall.availability == null ? '—' : `${Number(overall.availability).toFixed(2)}%`;
+    const cards = (data.services || []).map(service => {
+        const meta = serviceStateMeta(service.currentState);
+        const serviceAvailability = service.summary?.availability == null ? '—' : `${Number(service.summary.availability).toFixed(2)}%`;
+        const bars = (service.history || []).map(day => {
+            const title = `${day.date} · ${serviceStateMeta(day.state).label}\n${serviceStatusBi('请求', 'Requests')}: ${day.requests} · ${serviceStatusBi('成功', 'Success')}: ${day.successes} · 4xx: ${day.clientErrors} · 5xx: ${day.serverErrors}\n${serviceStatusBi('平均响应', 'Avg response')}: ${day.averageDurationMs}ms`;
+            return `<span class="service-day-bar ${navEscape(day.state)}" title="${navEscape(title)}"></span>`;
+        }).join('');
+        const name = window.ToolsI18n?.getLanguage?.() === 'en-US' ? service.nameEn : service.name;
+        const description = window.ToolsI18n?.getLanguage?.() === 'en-US' ? service.descriptionEn : service.description;
+        return `
+            <article class="service-status-card">
+                <div class="service-status-card-head">
+                    <div><h3>${navEscape(name)}</h3><p>${navEscape(description)}</p></div>
+                    <span class="service-state-icon ${navEscape(service.currentState)}" title="${navEscape(meta.label)}">${meta.icon}</span>
+                </div>
+                <div class="service-status-bars" style="--status-days:${data.days}">${bars}</div>
+                <div class="service-status-axis"><span>${navEscape(data.startDate)}</span><b>${serviceAvailability} ${serviceStatusBi('可用率', 'availability')}</b><span>${navEscape(data.endDate)}</span></div>
+                <div class="service-status-card-foot"><span class="service-state-label ${navEscape(service.currentState)}">${navEscape(meta.label)}</span><span>${Number(service.summary?.requests || 0).toLocaleString()} ${serviceStatusBi('次请求', 'requests')}</span><span>${Number(service.summary?.averageDurationMs || 0)}ms ${serviceStatusBi('平均', 'avg')}</span></div>
+            </article>`;
+    }).join('');
+    content.innerHTML = `
+        <section class="service-status-overview">
+            <div class="service-status-current ${navEscape(overall.currentState)}"><span class="service-state-icon ${navEscape(overall.currentState)}">${overallMeta.icon}</span><div><small>${serviceStatusBi('当前状态', 'Current status')}</small><strong>${navEscape(overallMeta.label)}</strong></div></div>
+            <div class="service-status-license ${navEscape(licenseMeta.state)}"><span class="service-state-icon ${navEscape(licenseMeta.state)}">${licenseMeta.icon}</span><div><small>${serviceStatusBi('License 可用状态', 'License availability')}</small><strong>${navEscape(licenseMeta.label)}</strong><em title="${navEscape(licenseMeta.detail)}">${navEscape(licenseMeta.detail)}</em></div></div>
+            <div class="service-status-stat"><small>${serviceStatusBi('可用率', 'Availability')}</small><strong>${availability}</strong></div>
+            <div class="service-status-stat"><small>${serviceStatusBi('成功返回', 'Successful')}</small><strong>${Number(overall.successes || 0).toLocaleString()}</strong></div>
+            <div class="service-status-stat warning"><small>${serviceStatusBi('客户端失败 4xx', 'Client errors 4xx')}</small><strong>${Number(overall.clientErrors || 0).toLocaleString()}</strong></div>
+            <div class="service-status-stat danger"><small>${serviceStatusBi('服务端失败 5xx', 'Server errors 5xx')}</small><strong>${Number(overall.serverErrors || 0).toLocaleString()}</strong></div>
+        </section>
+        ${Number(overall.requests || 0) ? '' : `<div class="service-status-notice">${serviceStatusBi('状态历史从本功能启用后开始累计；暂无历史请求时显示为灰色。', 'History starts accumulating after this feature is enabled; days without requests are gray.')}</div>`}
+        <section class="service-status-grid">${cards}</section>
+        <div class="service-status-legend"><span><i class="operational"></i>${serviceStatusBi('正常', 'Operational')}</span><span><i class="degraded"></i>${serviceStatusBi('存在 4xx', 'Has 4xx')}</span><span><i class="incident"></i>${serviceStatusBi('存在 5xx', 'Has 5xx')}</span><span><i class="no-data"></i>${serviceStatusBi('无请求数据', 'No requests')}</span><em>${serviceStatusBi('可用率按“非 5xx 请求 ÷ 全部请求”计算。', 'Availability is calculated as non-5xx requests divided by all requests.')}</em></div>`;
+}
+
+window.loadServiceStatusHistory = async function () {
+    const modal = ensureServiceStatusModal();
+    const content = document.getElementById('serviceStatusContent');
+    const range = document.getElementById('serviceStatusRange');
+    range.innerHTML = [30, 90, 180].map(days => `<button type="button" class="${days === serviceStatusDays ? 'active' : ''}" onclick="setServiceStatusDays(${days})">${days} ${serviceStatusBi('天', 'days')}</button>`).join('');
+    content.innerHTML = `<div class="service-status-loading"><span></span>${serviceStatusBi('正在读取服务状态…', 'Loading service status…')}</div>`;
+    try {
+        const data = await serviceStatusRequest(`/api/platform-metrics/service-status?days=${serviceStatusDays}`);
+        if (modal.style.display !== 'none') renderServiceStatusHistory(data);
+    } catch (error) {
+        content.innerHTML = `<div class="service-status-error"><strong>${serviceStatusBi('服务状态读取失败', 'Unable to load service status')}</strong><p>${navEscape(error.message)}</p><button type="button" onclick="loadServiceStatusHistory()">${serviceStatusBi('重试', 'Retry')}</button></div>`;
+    }
+};
+
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && document.getElementById('serviceStatusModal')?.style.display === 'flex') window.closeServiceStatusModal();
+});
 
 function ensureToolsI18nLoaded() {
     if (window.ToolsI18n) return Promise.resolve();

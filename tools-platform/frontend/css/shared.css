@@ -2607,10 +2607,227 @@ body {
     margin-left: auto;
     flex-shrink: 0;
 }
+.nav-server-status {
+    border: 0;
+    background: transparent;
+    color: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 7px;
+    border-radius: 7px;
+    font: inherit;
+    cursor: pointer;
+    transition: color .16s ease, background .16s ease;
+}
+.nav-server-status:hover { color: var(--text-main); background: rgba(148, 163, 184, .12); }
+.nav-server-status:focus-visible { outline: 2px solid rgba(100, 255, 218, .55); outline-offset: 2px; }
 .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #4CAF50; animation: pulse-green 2s infinite; }
 @keyframes pulse-green {
     0%, 100% { box-shadow: 0 0 0 0 rgba(76,175,80,0.6); }
     50% { box-shadow: 0 0 0 4px rgba(76,175,80,0); }
+}
+
+body.service-status-open { overflow: hidden; }
+.service-status-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2147482500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 22px;
+    background: rgba(15, 23, 42, .66);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+.service-status-dialog {
+    width: min(1180px, 96vw);
+    max-height: min(900px, 94vh);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    color: #202630;
+    background: #f7f9fb;
+    border: 1px solid #dce2e8;
+    border-radius: 18px;
+    box-shadow: 0 28px 90px rgba(2, 8, 23, .38);
+}
+.service-status-head {
+    flex: none;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 22px 26px 16px;
+    background: #fff;
+    border-bottom: 1px solid #e1e6eb;
+}
+.service-status-kicker { color: #16865d; font-size: 10px; font-weight: 800; letter-spacing: .15em; }
+.service-status-head h2 { margin: 3px 0 2px; color: #202630; font-size: 25px; line-height: 1.25; }
+.service-status-head p { margin: 0; color: #667085; font-size: 12px; }
+.service-status-close {
+    width: 34px;
+    height: 34px;
+    flex: none;
+    border: 1px solid #dce2e8;
+    border-radius: 9px;
+    background: #f7f9fb;
+    color: #667085;
+    font-size: 23px;
+    line-height: 1;
+    cursor: pointer;
+}
+.service-status-close:hover { color: #b4232d; border-color: #efb9be; background: #fff2f3; }
+.service-status-toolbar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 12px 26px;
+    background: #fff;
+    border-bottom: 1px solid #e1e6eb;
+}
+.service-status-range { display: flex; gap: 6px; }
+.service-status-range button,
+.service-status-refresh {
+    border: 1px solid #d8dee6;
+    border-radius: 8px;
+    background: #fff;
+    color: #475467;
+    padding: 7px 11px;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+.service-status-range button:hover,
+.service-status-refresh:hover { border-color: #90a2b7; background: #f7f9fb; }
+.service-status-range button.active { color: #fff; border-color: #16865d; background: #16865d; font-weight: 700; }
+.service-status-content { min-height: 260px; overflow: auto; padding: 18px 22px 22px; }
+.service-status-overview {
+    display: grid;
+    grid-template-columns: 1.2fr 1.35fr repeat(4, 1fr);
+    gap: 9px;
+    margin-bottom: 14px;
+}
+.service-status-current,
+.service-status-license,
+.service-status-stat {
+    min-width: 0;
+    min-height: 72px;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 11px 13px;
+    border: 1px solid #e0e5ea;
+    border-radius: 11px;
+    background: #fff;
+}
+.service-status-stat { display: grid; gap: 2px; }
+.service-status-license > div { min-width: 0; display: grid; gap: 1px; }
+.service-status-license em { overflow: hidden; color: #748091; font-size: 9px; font-style: normal; text-overflow: ellipsis; white-space: nowrap; }
+.service-status-license.operational { border-color: #b9e4c4; background: #f3fbf5; }
+.service-status-license.degraded { border-color: #efd49b; background: #fff9e9; }
+.service-status-license.incident { border-color: #f0b6bc; background: #fff3f4; }
+.service-status-current small,
+.service-status-license small,
+.service-status-stat small { color: #7a8493; font-size: 10px; white-space: nowrap; }
+.service-status-current strong,
+.service-status-license strong,
+.service-status-stat strong { color: #26303c; font-size: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.service-status-license strong { font-size: 14px; }
+.service-status-license.operational strong { color: #21833e; }
+.service-status-license.degraded strong { color: #a86400; }
+.service-status-license.incident strong { color: #c62e3a; }
+.service-status-stat.warning strong { color: #b86e08; }
+.service-status-stat.danger strong { color: #cf3340; }
+.service-status-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    overflow: hidden;
+    border: 1px solid #dce2e8;
+    border-radius: 13px;
+    background: #e1e6eb;
+}
+.service-status-card { min-width: 0; padding: 17px 19px 15px; background: #fff; }
+.service-status-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.service-status-card-head h3 { margin: 0; color: #242b35; font-size: 15px; }
+.service-status-card-head p { margin: 2px 0 0; color: #7a8493; font-size: 10px; }
+.service-state-icon {
+    width: 22px;
+    height: 22px;
+    flex: none;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 50%;
+    color: #fff;
+    background: #9aa4b2;
+    font-size: 13px;
+    font-weight: 900;
+}
+.service-state-icon.operational { background: #2da44e; }
+.service-state-icon.degraded { background: #d88a12; }
+.service-state-icon.incident { background: #df3f4d; }
+.service-state-icon.no-data { background: #aab2bd; }
+.service-status-bars {
+    height: 36px;
+    display: grid;
+    grid-template-columns: repeat(var(--status-days), minmax(1px, 1fr));
+    align-items: stretch;
+    gap: 1px;
+    overflow: hidden;
+}
+.service-day-bar { min-width: 1px; border-radius: 1px; background: #d8dee6; }
+.service-day-bar.operational { background: #75d18d; }
+.service-day-bar.degraded { background: #f2b84b; }
+.service-day-bar.incident { background: #ed5966; }
+.service-day-bar.no-data { background: #e4e8ed; }
+.service-day-bar:hover { filter: brightness(.8); transform: scaleY(1.08); transform-origin: center; }
+.service-status-axis { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; margin-top: 7px; color: #697586; font-size: 10px; }
+.service-status-axis span:last-child { text-align: right; }
+.service-status-axis b { color: #546173; font-weight: 650; }
+.service-status-card-foot { display: flex; gap: 12px; margin-top: 7px; color: #7a8493; font-size: 10px; }
+.service-status-card-foot span:not(:first-child) { margin-left: auto; }
+.service-state-label { font-weight: 700; }
+.service-state-label.operational { color: #21833e; }
+.service-state-label.degraded { color: #a86400; }
+.service-state-label.incident { color: #c62e3a; }
+.service-state-label.no-data { color: #7a8493; }
+.service-status-legend { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 12px; color: #667085; font-size: 10px; }
+.service-status-legend span { display: flex; align-items: center; gap: 5px; }
+.service-status-legend i { width: 9px; height: 9px; border-radius: 2px; background: #d8dee6; }
+.service-status-legend i.operational { background: #75d18d; }
+.service-status-legend i.degraded { background: #f2b84b; }
+.service-status-legend i.incident { background: #ed5966; }
+.service-status-legend i.no-data { background: #e4e8ed; border: 1px solid #d8dee6; }
+.service-status-legend em { margin-left: auto; color: #8a93a3; font-style: normal; }
+.service-status-notice { margin-bottom: 12px; padding: 9px 12px; color: #795c16; border: 1px solid #ecd79a; border-radius: 8px; background: #fff9e8; font-size: 11px; }
+.service-status-loading,
+.service-status-error { min-height: 260px; display: grid; place-items: center; align-content: center; gap: 10px; color: #667085; text-align: center; }
+.service-status-loading span { width: 26px; height: 26px; border: 3px solid #dce2e8; border-top-color: #16865d; border-radius: 50%; animation: service-status-spin .7s linear infinite; }
+.service-status-error strong { color: #b4232d; font-size: 15px; }
+.service-status-error p { margin: 0; }
+.service-status-error button { padding: 7px 13px; border: 1px solid #d8dee6; border-radius: 8px; background: #fff; cursor: pointer; }
+@keyframes service-status-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 900px) {
+    .service-status-overview { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .service-status-current { grid-column: 1 / -1; }
+}
+@media (max-width: 720px) {
+    .service-status-modal { padding: 0; align-items: stretch; }
+    .service-status-dialog { width: 100vw; max-height: 100vh; border-radius: 0; }
+    .service-status-head { padding: 18px 16px 13px; }
+    .service-status-head h2 { font-size: 21px; }
+    .service-status-toolbar { padding: 10px 16px; }
+    .service-status-content { padding: 14px 12px 18px; }
+    .service-status-grid { grid-template-columns: 1fr; }
+    .service-status-overview { grid-template-columns: 1fr 1fr; }
+    .service-status-stat strong { font-size: 17px; }
+    .service-status-refresh span { display: none; }
+    .service-status-legend em { width: 100%; margin-left: 0; }
 }
 
 @media (max-width: 980px) {

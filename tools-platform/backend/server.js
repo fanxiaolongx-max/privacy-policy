@@ -50,6 +50,7 @@ const aiSettingsRoutes = require('./routes/ai-settings');
 const globalBackupRoutes = require('./routes/global-backup');
 const alertCenterRoutes = require('./routes/alert-center');
 const platformMetricsRoutes = require('./routes/platform-metrics');
+const serviceStatusRepo = require('./models/service-status-repository');
 const globalBackupRepo = require('./models/global-backup-repository');
 const remoteBackupSyncRepo = require('./models/remote-backup-sync-repository');
 const legacyJsonMigration = require('./models/legacy-json-migration');
@@ -79,7 +80,11 @@ if (desktopLicensePublicRoutes) app.use('/api/public/desktop-license', desktopLi
 // EXE 运行时由 Electron 维护授权状态。授权失效后阻止业务页面和 API，但保留健康检查与静态资源。
 app.use((req, res, next) => {
     if (!isDesktopRuntime) return next();
-    if (req.path === '/api/desktop-license/status' || req.path === '/api/health') return next();
+    if (
+        req.path === '/api/desktop-license/status'
+        || req.path === '/api/platform-metrics/service-status'
+        || req.path === '/api/health'
+    ) return next();
     const ext = path.extname(req.path).toLowerCase();
     if (ext && ext !== '.html') return next();
     const status = desktopLicenseLocal.getStatus();
@@ -156,6 +161,12 @@ app.use((req, res, next) => {
         const querySummary = Object.keys(safeQuery).length ? ` query=${JSON.stringify(safeQuery)}` : '';
         const externalTag = safeUrl.startsWith('/api/external/metrics') ? ' [external-metrics]' : '';
         console.log(`${color}[${ts}] ${req.method} ${safeUrl} #${req.requestId}${externalTag} → ${status} (${dur}ms) ${bodySize}${querySummary} ip=${client} ua="${userAgent.substring(0, 120)}"${reset}`);
+        serviceStatusRepo.trackRequest({
+            method: req.method,
+            pathname: originalUrl,
+            statusCode: status,
+            durationMs: dur
+        }).catch(error => console.warn(`[service-status] 请求指标记录失败：${error.message}`));
         if (status >= 400 && !req.suppressBodyLog) {
             console.log(`  ↳ Body:`, JSON.stringify(redactForLog(req.body)).substring(0, 300));
         }

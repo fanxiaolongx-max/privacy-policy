@@ -21,6 +21,7 @@ const DEFAULT_SETTINGS = {
         { id: 'cat_mq0nny3v', name: '五个端到端', nameEn: '“5” E2E' },
         { id: 'cat_msbmuup1', name: '实用工具', nameEn: 'Useful' },
         { id: 'cat_msbmvd5l', name: '网络安全', nameEn: 'Safety' },
+        { id: 'cat_mshv1h0m', name: '汇报呈现', nameEn: 'Report' },
         { id: 'custom', name: '自定义工具', nameEn: 'Custom Tools' },
         { id: 'cat_ms2192c7', name: '行政餐饮', nameEn: 'Admin' },
         { id: 'cat_mshua5iu', name: '休闲娱乐', nameEn: 'Play' }
@@ -44,14 +45,18 @@ const DEFAULT_SETTINGS = {
         'custom:tool-msbmu55i': 'audit',
         'custom:tool-ms4xb66s': 'cat_msbmuup1',
         'custom:tool-mrhqjeya': 'cat_msbmuup1',
-        'custom:tool-mrsw86w8': 'cat_msbmuup1',
+        'custom:tool-mrsw86w8': 'cat_mshv1h0m',
         'custom:pr-2': 'cat_msbmuup1',
         'custom:f12-to-extension': 'cat_msbmuup1',
         'custom:tool-mrrgpqy4': 'cat_ms2192c7',
         'custom:particle-effects': 'cat_mshua5iu',
         'custom:tool-mrrn48dc': 'cat_mshua5iu',
         'custom:optical-transfer': 'cat_mshua5iu',
-        'custom:tool-msf5b7nn': 'audit'
+        'custom:tool-msf5b7nn': 'audit',
+        'custom:nis_2026h1_summary': 'cat_mshv1h0m',
+        'custom:tool-msh8aro4': 'cat_mshv1h0m',
+        'custom:question-bank-assistant-privacy': 'cat_mshv1h0m',
+        'custom:tool-mr88gv9x': 'cat_mshv1h0m'
     },
     itemOrder: [
         'praudit',
