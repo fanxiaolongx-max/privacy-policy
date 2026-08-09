@@ -111,6 +111,57 @@ function normalizeSettings(input = {}) {
     };
 }
 
+function collectDefaultItemIds() {
+    return new Set([
+        ...DEFAULT_SETTINGS.primaryIds,
+        ...Object.keys(DEFAULT_SETTINGS.categoryByItem),
+        ...DEFAULT_SETTINGS.itemOrder
+    ].map(String));
+}
+
+function mergeDefaultSettingsPreservingCustomTools(currentInput, customToolIds = []) {
+    const current = normalizeSettings(currentInput || {});
+    const defaults = normalizeSettings(DEFAULT_SETTINGS);
+    const defaultItemIds = collectDefaultItemIds();
+    const registeredCustomIds = [...new Set((customToolIds || []).map(String).filter(id => id.startsWith('custom:')))];
+    const preservedCustomIds = registeredCustomIds.filter(id => !defaultItemIds.has(id));
+    const preservedSet = new Set(preservedCustomIds);
+
+    const defaultCategoryIds = new Set(defaults.categories.map(category => category.id));
+    const preservedCategories = current.categories
+        .filter(category => !defaultCategoryIds.has(category.id))
+        .map(category => ({ ...category }));
+    const categories = [...defaults.categories.map(category => ({ ...category })), ...preservedCategories];
+    const availableCategoryIds = new Set(categories.map(category => category.id));
+
+    const preservedPrimaryIds = current.primaryIds.filter(id => preservedSet.has(id));
+    const primaryIds = [...defaults.primaryIds, ...preservedPrimaryIds.filter(id => !defaults.primaryIds.includes(id))];
+    const primarySet = new Set(primaryIds);
+
+    const categoryByItem = { ...defaults.categoryByItem };
+    preservedCustomIds.forEach(id => {
+        const currentCategory = current.categoryByItem[id];
+        categoryByItem[id] = availableCategoryIds.has(currentCategory) ? currentCategory : 'custom';
+    });
+
+    const itemOrder = defaults.itemOrder.slice();
+    const itemOrderSet = new Set(itemOrder);
+    current.itemOrder.forEach(id => {
+        if (preservedSet.has(id) && !primarySet.has(id) && !itemOrderSet.has(id)) {
+            itemOrder.push(id);
+            itemOrderSet.add(id);
+        }
+    });
+    preservedCustomIds.forEach(id => {
+        if (!primarySet.has(id) && !itemOrderSet.has(id)) {
+            itemOrder.push(id);
+            itemOrderSet.add(id);
+        }
+    });
+
+    return normalizeSettings({ primaryIds, categories, categoryByItem, itemOrder });
+}
+
 async function getSettings() {
     return normalizeSettings(await readKV('sys', 'nav_settings', DEFAULT_SETTINGS));
 }
@@ -121,8 +172,23 @@ async function saveSettings(settings) {
     return normalized;
 }
 
+async function restoreDefaultsPreservingCustomTools(customToolIds = []) {
+    const current = await getSettings();
+    const restored = mergeDefaultSettingsPreservingCustomTools(current, customToolIds);
+    await writeKV('sys', 'nav_settings', restored);
+    return {
+        settings: restored,
+        preservedCustomToolCount: customToolIds.filter(id => !collectDefaultItemIds().has(String(id))).length,
+        preservedCustomCategoryCount: restored.categories.filter(category =>
+            !DEFAULT_SETTINGS.categories.some(defaultCategory => defaultCategory.id === category.id)
+        ).length
+    };
+}
+
 module.exports = {
     DEFAULT_SETTINGS,
+    mergeDefaultSettingsPreservingCustomTools,
     getSettings,
-    saveSettings
+    saveSettings,
+    restoreDefaultsPreservingCustomTools
 };

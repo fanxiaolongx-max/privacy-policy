@@ -1307,6 +1307,49 @@ body {
     font-size: 13px;
 }
 
+.nav-settings-restore-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+    padding: 13px 14px;
+    border: 1px solid #bfdbfe;
+    border-radius: 11px;
+    background: linear-gradient(135deg, #eff6ff, #f8fafc);
+}
+
+.nav-settings-restore-card strong {
+    display: block;
+    color: #1e3a8a;
+    font-size: 13px;
+}
+
+.nav-settings-restore-card p {
+    margin: 4px 0 0;
+    color: #64748b;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.nav-settings-restore-card button {
+    flex: 0 0 auto;
+    min-height: 34px;
+    padding: 0 13px;
+    border: 1px solid #60a5fa;
+    border-radius: 8px;
+    color: #1d4ed8;
+    background: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.nav-settings-restore-card button:hover {
+    color: #fff;
+    background: #2563eb;
+}
+
 .nav-security-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));

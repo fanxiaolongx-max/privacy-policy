@@ -217,6 +217,17 @@ function registerNavbarI18n() {
             'nav.set.btn.down': '下移',
             'nav.set.btn.delete': '删除',
             'nav.set.btn.addCategory': '新增分类',
+            'nav.set.restore.title': '恢复系统默认布局',
+            'nav.set.restore.desc': '恢复顶部菜单、系统分类和系统工具顺序。非系统自带工具、自建分类及其当前位置会保留。',
+            'nav.set.restore.button': '恢复系统默认',
+            'nav.set.restore.confirmTitle': '恢复系统导航默认布局？',
+            'nav.set.restore.confirmMessage': '系统自带菜单、分类和工具顺序将恢复默认。',
+            'nav.set.restore.confirmHint': '不会删除或覆盖非系统自带工具；它们当前所在的顶部菜单、分类和相对顺序会尽量保留。',
+            'nav.set.restore.cancel': '取消',
+            'nav.set.restore.action': '确认恢复',
+            'nav.set.restore.restoring': '正在恢复系统默认...',
+            'nav.set.restore.success': '已恢复系统默认，并保留 {tools} 个非系统工具、{categories} 个自建分类',
+            'nav.set.restore.fail': '恢复失败: ',
             'nav.set.emptyItems': '暂无更多工具菜单。',
             'nav.set.placeholder.zh': '中文名称',
             'nav.set.placeholder.en': 'English Name',
@@ -534,6 +545,17 @@ function registerNavbarI18n() {
             'nav.set.btn.down': 'Down',
             'nav.set.btn.delete': 'Delete',
             'nav.set.btn.addCategory': 'Add Category',
+            'nav.set.restore.title': 'Restore system defaults',
+            'nav.set.restore.desc': 'Restore the top menu, system categories, and system-tool order. Non-system tools, custom categories, and their placements are preserved.',
+            'nav.set.restore.button': 'Restore defaults',
+            'nav.set.restore.confirmTitle': 'Restore the default navigation layout?',
+            'nav.set.restore.confirmMessage': 'Built-in menus, categories, and tool order will be restored to system defaults.',
+            'nav.set.restore.confirmHint': 'Non-system tools will not be deleted or overwritten. Their top-menu placement, category, and relative order will be preserved where possible.',
+            'nav.set.restore.cancel': 'Cancel',
+            'nav.set.restore.action': 'Restore',
+            'nav.set.restore.restoring': 'Restoring system defaults...',
+            'nav.set.restore.success': 'Defaults restored; preserved {tools} non-system tool(s) and {categories} custom category/categories',
+            'nav.set.restore.fail': 'Restore failed: ',
             'nav.set.emptyItems': 'No more tools available.',
             'nav.set.placeholder.zh': 'Chinese Name',
             'nav.set.placeholder.en': 'English Name',
@@ -1336,10 +1358,61 @@ function renderNavSettingsContent() {
     renderPrimarySettings(content);
 }
 
+function renderNavigationRestorePanel() {
+    return `
+        <section class="nav-settings-restore-card">
+            <div>
+                <strong>${navEscape(navT('nav.set.restore.title'))}</strong>
+                <p>${navEscape(navT('nav.set.restore.desc'))}</p>
+            </div>
+            <button type="button" onclick="restoreSystemNavigationDefaults()">${navEscape(navT('nav.set.restore.button'))}</button>
+        </section>
+    `;
+}
+
+window.restoreSystemNavigationDefaults = async function () {
+    const confirmed = await showNavbarConfirm({
+        title: navT('nav.set.restore.confirmTitle'),
+        message: navT('nav.set.restore.confirmMessage'),
+        hint: navT('nav.set.restore.confirmHint'),
+        cancelText: navT('nav.set.restore.cancel'),
+        confirmText: navT('nav.set.restore.action')
+    });
+    if (!confirmed) return;
+
+    clearTimeout(navState.saveTimer);
+    const indicator = document.getElementById('navSettingsSaveState');
+    if (indicator) indicator.textContent = navT('nav.set.restore.restoring');
+    try {
+        const res = await fetch('/api/nav-settings/restore-defaults', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() },
+            body: '{}'
+        });
+        const payload = await res.json().catch(() => ({}));
+        if (!res.ok || !payload.settings) throw new Error(payload.error || `HTTP ${res.status}`);
+        navState.settings = normalizeNavSettings(payload.settings);
+        writeNavigationBootstrapCache();
+        renderNavLinksFromState();
+        renderNavSettingsContent();
+        const nextIndicator = document.getElementById('navSettingsSaveState');
+        if (nextIndicator) {
+            nextIndicator.textContent = navT('nav.set.restore.success', {
+                tools: Number(payload.preservedCustomToolCount || 0),
+                categories: Number(payload.preservedCustomCategoryCount || 0)
+            });
+        }
+    } catch (error) {
+        const nextIndicator = document.getElementById('navSettingsSaveState');
+        if (nextIndicator) nextIndicator.textContent = navT('nav.set.restore.fail') + error.message;
+    }
+};
+
 function renderPrimarySettings(content) {
     const items = sortNavItems(getAllNavItems(), navState.settings.primaryIds);
     const primaryIds = new Set(navState.settings.primaryIds || []);
     content.innerHTML = `
+        ${renderNavigationRestorePanel()}
         <div class="nav-settings-help">${navEscape(navT('nav.set.help.primary'))}</div>
         <div class="nav-settings-list">
             ${items.map(item => {
@@ -1381,6 +1454,7 @@ window.movePrimaryNavItem = function (id, delta) {
 function renderCategorySettings(content) {
     const categories = navState.settings.categories || [];
     content.innerHTML = `
+        ${renderNavigationRestorePanel()}
         <div class="nav-settings-help">${navEscape(navT('nav.set.help.categories'))}</div>
         <div class="nav-settings-list">
             ${categories.map((cat, index) => `
@@ -1442,6 +1516,7 @@ function renderItemCategorySettings(content) {
     const items = sortNavItems(getAllNavItems().filter(item => !primaryIds.has(item.id)), settings.itemOrder);
     const categories = settings.categories || [];
     content.innerHTML = `
+        ${renderNavigationRestorePanel()}
         <div class="nav-settings-help">${navEscape(navT('nav.set.help.items'))}</div>
         <div class="nav-settings-list">
             ${items.map((item, index) => {
