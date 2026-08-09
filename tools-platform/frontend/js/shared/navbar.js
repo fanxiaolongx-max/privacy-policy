@@ -816,8 +816,12 @@ function navEscape(value) {
 }
 
 function getAuthHeaderForNav() {
-    const token = localStorage.getItem('tools_token');
+    const token = localStorage.getItem('tools_token') || sessionStorage.getItem('tools_token');
     return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
+function hasNavAuthToken() {
+    return Boolean(localStorage.getItem('tools_token') || sessionStorage.getItem('tools_token'));
 }
 
 function normalizeNavSettings(settings = {}) {
@@ -1035,6 +1039,10 @@ function updateResponsiveNavbar() {
 }
 
 async function loadNavigationData() {
+    if (!hasNavAuthToken()) {
+        renderNavLinksFromState();
+        return;
+    }
     try {
         const [settingsRes, toolsRes] = await Promise.all([
             fetch('/api/nav-settings', { headers: getAuthHeaderForNav() }),
@@ -3329,6 +3337,7 @@ window.resolveNavbarConfirm = function (confirmed) {
 };
 
 async function refreshAlertCenterBadge() {
+    if (!hasNavAuthToken()) return;
     try {
         navState.alertCenter.summary = await fetchAlertCenterSummary();
         updateAlertCenterBadge();
@@ -3845,14 +3854,45 @@ window.openUserModal = async function () {
 // ==========================================
 // 全局注入 AI 客服助手
 // ==========================================
+let toolsKnowledgeGraphLoader = null;
+window.openToolsKnowledgeGraph = function () {
+    if (window.AIKnowledgeGraph?.open) {
+        window.AIKnowledgeGraph.open();
+        return Promise.resolve();
+    }
+    if (!toolsKnowledgeGraphLoader) {
+        toolsKnowledgeGraphLoader = new Promise((resolve, reject) => {
+            const existing = document.querySelector('script[src^="/js/shared/ai-knowledge-graph.js"]');
+            const script = existing || document.createElement('script');
+            const handleLoad = () => resolve();
+            const handleError = () => reject(new Error('知识图谱组件加载失败'));
+            script.addEventListener('load', handleLoad, { once: true });
+            script.addEventListener('error', handleError, { once: true });
+            if (!existing) {
+                script.src = '/js/shared/ai-knowledge-graph.js?v=20260809-10';
+                document.body.appendChild(script);
+            }
+        }).catch(error => {
+            toolsKnowledgeGraphLoader = null;
+            throw error;
+        });
+    }
+    return toolsKnowledgeGraphLoader.then(() => {
+        if (!window.AIKnowledgeGraph?.open) throw new Error('知识图谱组件初始化失败');
+        window.AIKnowledgeGraph.open();
+    });
+};
+
 (function () {
     // 华子胶片设计工具内置了自己的 AI 助手，避免重复显示全局悬浮入口。
     if (window.location.pathname.startsWith('/tools/network_safety_meeting_summary')) return;
+    // 公开的隐私/条款页在未登录时不请求受保护的 AI 接口，避免无效 401 日志。
+    if (!hasNavAuthToken()) return;
 
     // 确保不重复加载
     if (!document.querySelector('script[src^="/js/shared/ai-assistant.js"]')) {
         const aiScript = document.createElement('script');
-        aiScript.src = '/js/shared/ai-assistant.js?v=20260707-01';
+        aiScript.src = '/js/shared/ai-assistant.js?v=20260809-15';
         document.body.appendChild(aiScript);
     }
 })();

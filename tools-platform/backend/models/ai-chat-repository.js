@@ -108,6 +108,10 @@ function cleanQuestion(value) {
     return String(value || '').trim().replace(/\s+/g, ' ').slice(0, 120);
 }
 
+function isInvalidQuestion(value) {
+    return /^\[object\s+\w+Event\]$/i.test(String(value || '').trim());
+}
+
 async function getOrCreateSession({ sessionId, pagePath, pageTitle }) {
     await ensureReady();
     const normalizedPath = normalizePagePath(pagePath);
@@ -162,7 +166,7 @@ async function recordQuestion({ pagePath, question }) {
     const normalizedPath = normalizePagePath(pagePath);
     const clean = cleanQuestion(question);
     const key = normalizeQuestion(clean);
-    if (!clean || key.length < 2) return null;
+    if (!clean || isInvalidQuestion(clean) || key.length < 2) return null;
     const existing = await get(
         `SELECT id, question, hit_count
          FROM ai_question_suggestions
@@ -225,6 +229,7 @@ async function listSuggestions({ pagePath, limit = 8 } = {}) {
     const seen = new Set();
     const items = [];
     rows.forEach(row => {
+        if (isInvalidQuestion(row.question)) return;
         const key = normalizeQuestion(row.question);
         if (seen.has(key)) return;
         seen.add(key);

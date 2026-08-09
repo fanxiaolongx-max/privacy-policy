@@ -1,0 +1,1461 @@
+(function () {
+    if (window.AIKnowledgeGraph) return;
+
+    const style = document.createElement('style');
+    style.textContent = `
+        .ai-kg-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 100200;
+            display: none;
+            flex-direction: column;
+            color: #e8edf8;
+            background:
+                radial-gradient(circle at 18% 15%, rgba(81,99,211,0.16), transparent 30%),
+                radial-gradient(circle at 78% 76%, rgba(117,71,175,0.12), transparent 34%),
+                #090e19;
+            font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+        }
+        .ai-kg-overlay.open { display: flex; }
+        body.ai-kg-open { overflow: hidden !important; }
+        .ai-kg-header {
+            min-height: 66px;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            padding: 10px 16px 10px 20px;
+            border-bottom: 1px solid rgba(148,163,184,0.15);
+            background: rgba(9,14,25,0.8);
+            -webkit-backdrop-filter: blur(18px);
+            backdrop-filter: blur(18px);
+        }
+        .ai-kg-brand { min-width: 210px; }
+        .ai-kg-title { font-size: 16px; font-weight: 750; letter-spacing: .02em; }
+        .ai-kg-subtitle { margin-top: 3px; font-size: 10px; color: #8390aa; }
+        .ai-kg-view-switch { display:flex; padding:3px; border-radius:11px; background:rgba(31,40,66,.72); border:1px solid rgba(143,157,207,.16); }
+        .ai-kg-view-btn { height:30px; padding:0 10px; border:0; border-radius:8px; background:transparent; color:#8491aa; font-size:11px; cursor:pointer; white-space:nowrap; }
+        .ai-kg-view-btn.active { color:#fff; background:linear-gradient(135deg,rgba(83,105,217,.86),rgba(118,83,189,.82)); box-shadow:0 5px 14px rgba(34,43,93,.28); }
+        .ai-kg-month-wrap { display:none; align-items:center; gap:6px; color:#8290aa; font-size:10px; white-space:nowrap; }
+        .ai-kg-month-wrap.visible { display:flex; }
+        .ai-kg-month { height:34px; padding:0 25px 0 9px; border-radius:9px; border:1px solid rgba(143,157,207,.2); outline:none; background:#1a2238; color:#e4e9f5; font-size:11px; }
+        .ai-kg-statuses { display: flex; gap: 7px; flex-wrap: wrap; }
+        .ai-kg-status {
+            padding: 5px 9px;
+            border-radius: 999px;
+            border: 1px solid rgba(127,141,190,0.2);
+            background: rgba(74,86,132,0.16);
+            color: #aeb8cf;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+        .ai-kg-status strong { color: #f4f6fb; font-weight: 700; }
+        .ai-kg-search-wrap { position: relative; flex: 1; max-width: 430px; margin-left: auto; }
+        .ai-kg-search {
+            width: 100%; height: 38px; box-sizing: border-box;
+            padding: 0 76px 0 36px; border-radius: 11px;
+            border: 1px solid rgba(143,157,207,.22); outline: none;
+            background: rgba(31,40,66,.76); color: #f5f7ff; font-size: 12px;
+        }
+        .ai-kg-search:focus { border-color: #7081e4; box-shadow: 0 0 0 3px rgba(99,102,241,.14); }
+        .ai-kg-search-icon { position:absolute; left:12px; top:10px; color:#7886a4; pointer-events:none; }
+        .ai-kg-search-count { position:absolute; right:10px; top:11px; color:#8290ad; font-size:10px; }
+        .ai-kg-actions { display:flex; gap:6px; }
+        .ai-kg-btn {
+            height: 36px; min-width: 36px; padding: 0 10px; border-radius: 10px;
+            border: 1px solid rgba(144,158,207,.2); background: rgba(52,63,98,.54);
+            color: #dce2f1; cursor: pointer; font-size: 12px;
+            transition: background .16s, border-color .16s, transform .16s;
+        }
+        .ai-kg-btn:hover { background: rgba(76,90,141,.65); border-color: rgba(150,163,222,.42); transform: translateY(-1px); }
+        .ai-kg-btn.primary { color:#fff; background:linear-gradient(135deg,#5369d9,#7653bd); border-color:transparent; }
+        .ai-kg-btn.motion[aria-pressed="true"] { color:#fff; border-color:rgba(125,145,255,.42); background:rgba(82,101,190,.42); }
+        .ai-kg-btn.motion[aria-pressed="true"]::before {
+            content:""; display:inline-block; width:6px; height:6px; margin-right:6px; border-radius:50%;
+            background:#8fa3ff; box-shadow:0 0 10px rgba(143,163,255,.9); vertical-align:1px;
+            animation:ai-kg-pulse 1.4s ease-in-out infinite;
+        }
+        @keyframes ai-kg-pulse { 50% { opacity:.42; transform:scale(.76); } }
+        .ai-kg-btn.icon { width:36px; padding:0; font-size:17px; }
+        .ai-kg-main { position:relative; flex:1; min-height:0; display:flex; }
+        .ai-kg-stage { position:relative; flex:1; min-width:0; overflow:hidden; }
+        .ai-kg-canvas { width:100%; height:100%; display:block; cursor:grab; touch-action:none; }
+        .ai-kg-canvas.dragging { cursor:grabbing; }
+        .ai-kg-hint {
+            position:absolute; left:18px; bottom:17px; display:flex; gap:7px; flex-wrap:wrap;
+            color:#6f7b94; font-size:10px; pointer-events:none;
+        }
+        .ai-kg-hint span { padding:4px 7px; border-radius:7px; background:rgba(17,24,40,.7); border:1px solid rgba(120,135,180,.12); }
+        .ai-kg-legend {
+            position:absolute; top:16px; left:18px; display:flex; gap:12px; color:#7f8ba3; font-size:10px;
+            padding:8px 10px; border-radius:10px; background:rgba(10,15,27,.72); border:1px solid rgba(126,141,184,.13);
+        }
+        .ai-kg-legend i { width:7px; height:7px; display:inline-block; border-radius:50%; margin-right:5px; }
+        .ai-kg-control-panel {
+            position:absolute; z-index:4; top:16px; right:16px; width:292px; max-height:calc(100% - 32px);
+            overflow:auto; box-sizing:border-box; padding:14px; border-radius:15px;
+            border:1px solid rgba(141,155,202,.2); background:rgba(15,21,35,.94);
+            box-shadow:0 22px 58px rgba(0,0,0,.36); backdrop-filter:blur(18px);
+            transform:translateX(18px); opacity:0; pointer-events:none;
+            transition:transform .2s ease,opacity .18s ease; scrollbar-width:thin;
+        }
+        .ai-kg-control-panel.open { transform:translateX(0); opacity:1; pointer-events:auto; }
+        .ai-kg-control-head { display:flex; align-items:center; justify-content:space-between; gap:10px; color:#eef2fb; font-size:13px; font-weight:720; }
+        .ai-kg-control-close { border:0; background:transparent; color:#7f8ca7; font-size:18px; cursor:pointer; }
+        .ai-kg-control-section { margin-top:14px; padding-top:12px; border-top:1px solid rgba(124,139,182,.13); }
+        .ai-kg-control-section-title { margin-bottom:10px; color:#aeb9d0; font-size:11px; font-weight:700; letter-spacing:.04em; }
+        .ai-kg-control-row { display:grid; grid-template-columns:minmax(0,1fr) 42px; gap:8px; align-items:center; margin:9px 0; color:#929fb9; font-size:10px; }
+        .ai-kg-control-row input[type="range"] { grid-column:1 / -1; width:100%; accent-color:#806ee8; cursor:pointer; }
+        .ai-kg-control-row output { color:#d8def0; text-align:right; font-variant-numeric:tabular-nums; }
+        .ai-kg-control-select { grid-column:1 / -1; width:100%; height:34px; padding:0 9px; border-radius:9px; border:1px solid rgba(135,150,198,.2); background:#1b2338; color:#dce3f2; outline:none; font-size:11px; }
+        .ai-kg-grow-btn { width:100%; height:38px; margin-top:10px; border:0; border-radius:10px; color:#fff; cursor:pointer; font-size:12px; font-weight:680; background:linear-gradient(135deg,#586fdc,#7d57c3); box-shadow:0 8px 20px rgba(74,76,178,.22); }
+        .ai-kg-grow-btn.playing { background:linear-gradient(135deg,#794f98,#515b94); }
+        .ai-kg-reset-controls { width:100%; height:32px; margin-top:8px; border-radius:9px; border:1px solid rgba(135,150,198,.18); background:rgba(43,53,83,.46); color:#aeb9d0; cursor:pointer; font-size:10px; }
+        .ai-kg-overlay[data-palette="obsidian"] { background:#111; }
+        .ai-kg-overlay[data-palette="aurora"] { background:radial-gradient(circle at 18% 18%,rgba(27,141,148,.18),transparent 34%),radial-gradient(circle at 78% 74%,rgba(118,62,168,.2),transparent 38%),#081116; }
+        .ai-kg-sidebar {
+            width: 350px; flex: 0 0 350px; overflow:auto; box-sizing:border-box;
+            border-left:1px solid rgba(134,148,189,.14); padding:18px;
+            background:rgba(12,18,31,.8); scrollbar-width:thin;
+        }
+        .ai-kg-side-empty { color:#758199; font-size:12px; line-height:1.7; padding:20px 4px; }
+        .ai-kg-node-type { color:#8491ac; font-size:10px; text-transform:uppercase; letter-spacing:.1em; }
+        .ai-kg-node-title { margin-top:6px; color:#f4f6fb; font-size:17px; font-weight:720; word-break:break-word; }
+        .ai-kg-node-path { margin-top:7px; color:#8fa0c6; font-size:11px; line-height:1.5; word-break:break-all; }
+        .ai-kg-node-stats { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:15px; }
+        .ai-kg-stat-card { padding:10px; border-radius:10px; background:rgba(42,52,81,.46); border:1px solid rgba(120,135,180,.13); }
+        .ai-kg-stat-card b { display:block; color:#edf1fb; font-size:15px; }
+        .ai-kg-stat-card span { display:block; margin-top:3px; color:#78859e; font-size:10px; }
+        .ai-kg-section-title { margin:19px 0 9px; color:#aeb8ce; font-size:11px; font-weight:700; }
+        .ai-kg-chunk { margin-bottom:8px; padding:10px; border-radius:10px; background:rgba(31,40,64,.55); border:1px solid rgba(116,130,174,.13); cursor:pointer; }
+        .ai-kg-chunk:hover { border-color:rgba(117,134,214,.42); }
+        .ai-kg-chunk-title { color:#dfe5f2; font-size:11px; font-weight:650; }
+        .ai-kg-chunk-lines { color:#71809e; font-size:9px; margin-top:3px; }
+        .ai-kg-chunk-preview { color:#8e9ab1; font-size:10px; line-height:1.55; margin-top:7px; white-space:pre-wrap; max-height:76px; overflow:hidden; }
+        .ai-kg-rule { margin-top:10px; padding:10px; border-radius:10px; background:rgba(42,52,81,.42); border:1px solid rgba(120,135,180,.14); }
+        .ai-kg-rule-main { color:#edf1fb; font-size:13px; font-weight:700; }
+        .ai-kg-rule-meta { margin-top:5px; color:#8492ae; font-size:10px; line-height:1.55; }
+        .ai-kg-month-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:5px; }
+        .ai-kg-month-cell { min-height:38px; padding:6px; box-sizing:border-box; border-radius:8px; background:rgba(31,40,64,.5); border:1px solid rgba(116,130,174,.12); }
+        .ai-kg-month-cell.active { border-color:rgba(123,143,238,.5); background:rgba(76,91,169,.3); }
+        .ai-kg-month-cell span { display:block; color:#74819a; font-size:8px; }
+        .ai-kg-month-cell b { display:block; margin-top:3px; color:#dce3f2; font-size:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .ai-kg-trend { width:100%; height:126px; display:block; margin-top:4px; border-radius:10px; background:rgba(18,25,43,.56); border:1px solid rgba(116,130,174,.12); }
+        .ai-kg-series-legend { display:flex; gap:8px; flex-wrap:wrap; margin-top:7px; color:#8290a9; font-size:9px; }
+        .ai-kg-series-legend i { display:inline-block; width:7px; height:7px; margin-right:4px; border-radius:50%; }
+        .ai-kg-history-list { margin-top:8px; }
+        .ai-kg-history-row { display:grid; grid-template-columns:72px minmax(0,1fr) auto; gap:7px; align-items:center; padding:7px 3px; border-bottom:1px solid rgba(123,137,177,.1); font-size:10px; }
+        .ai-kg-history-time { color:#71809b; }
+        .ai-kg-history-value { color:#dfe5f2; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .ai-kg-history-state { padding:2px 5px; border-radius:5px; color:#80d7ad; background:rgba(37,138,96,.14); }
+        .ai-kg-history-state.fail { color:#ff9a9a; background:rgba(190,57,72,.14); }
+        .ai-kg-history-state.unknown { color:#8290aa; background:rgba(109,122,157,.12); }
+        .ai-kg-loading { position:absolute; inset:0; display:grid; place-items:center; background:rgba(9,14,25,.72); z-index:3; }
+        .ai-kg-loading-card { padding:14px 18px; border-radius:12px; background:#151d31; border:1px solid #273452; color:#b9c3d8; font-size:12px; box-shadow:0 16px 44px rgba(0,0,0,.25); }
+        .ai-kg-loading[hidden] { display:none; }
+        @media (max-width: 820px) {
+            .ai-kg-header { gap:8px; flex-wrap:wrap; }
+            .ai-kg-brand { min-width:170px; }
+            .ai-kg-statuses { display:none; }
+            .ai-kg-view-switch { margin-left:auto; }
+            .ai-kg-month-wrap { order:2; }
+            .ai-kg-search-wrap { order:3; max-width:none; flex-basis:100%; }
+            .ai-kg-sidebar { position:absolute; right:0; bottom:0; width:min(88vw,350px); height:48%; border-top:1px solid rgba(134,148,189,.14); }
+            .ai-kg-sidebar.compact { display:none; }
+        }
+    `;
+    document.head.appendChild(style);
+
+    const overlay = document.createElement('div');
+    overlay.className = 'ai-kg-overlay';
+    overlay.innerHTML = `
+        <div class="ai-kg-header">
+            <div class="ai-kg-brand">
+                <div class="ai-kg-title" id="aiKgTitle">✦ 项目知识关系图谱</div>
+                <div class="ai-kg-subtitle" id="aiKgSubtitle">项目 → 模块 → 文件 · 实线为归属，细线为代码依赖</div>
+            </div>
+            <div class="ai-kg-view-switch" id="aiKgViewSwitch" aria-label="图谱视图">
+                <button class="ai-kg-view-btn active" type="button" data-kg-mode="knowledge">项目知识</button>
+                <button class="ai-kg-view-btn" type="button" data-kg-mode="metrics">指标体系</button>
+            </div>
+            <label class="ai-kg-month-wrap" id="aiKgMonthWrap">规则月份<select class="ai-kg-month" id="aiKgMonth"></select></label>
+            <div class="ai-kg-statuses" id="aiKgStatuses"></div>
+            <div class="ai-kg-search-wrap">
+                <span class="ai-kg-search-icon">⌕</span>
+                <input class="ai-kg-search" id="aiKgSearch" placeholder="搜索 README、接口、报表、AI 助手…">
+                <span class="ai-kg-search-count" id="aiKgSearchCount"></span>
+            </div>
+            <div class="ai-kg-actions">
+                <button class="ai-kg-btn" id="aiKgRefresh" title="重建变化的知识文件">刷新知识库</button>
+                <button class="ai-kg-btn motion" id="aiKgMotion" type="button" aria-pressed="true" title="开启或暂停力导向仿真">动态仿真</button>
+                <button class="ai-kg-btn icon" id="aiKgControls" type="button" aria-pressed="false" title="外观与力度">☷</button>
+                <button class="ai-kg-btn icon" id="aiKgFit" title="重置视图">◎</button>
+                <button class="ai-kg-btn icon" id="aiKgClose" title="关闭">×</button>
+            </div>
+        </div>
+        <div class="ai-kg-main">
+            <div class="ai-kg-stage" id="aiKgStage">
+                <canvas class="ai-kg-canvas" id="aiKgCanvas"></canvas>
+                <div class="ai-kg-legend" id="aiKgLegend"><span><i style="background:#f5f7ff"></i>项目</span><span><i style="background:#8b9cff"></i>模块</span><span><i style="background:#64739a"></i>知识文件</span></div>
+                <div class="ai-kg-control-panel" id="aiKgControlPanel">
+                    <div class="ai-kg-control-head"><span data-kg-control-title>外观与力度</span><button class="ai-kg-control-close" type="button" aria-label="关闭">×</button></div>
+                    <div class="ai-kg-control-section">
+                        <div class="ai-kg-control-section-title" data-kg-appearance-title>外观</div>
+                        <label class="ai-kg-control-row"><span data-kg-palette-label>颜色主题</span><select class="ai-kg-control-select" data-setting="palette"><option value="cosmic">星云</option><option value="obsidian">Obsidian</option><option value="aurora">极光</option></select></label>
+                        <label class="ai-kg-control-row"><span data-kg-node-size-label>节点大小</span><output data-output="nodeScale"></output><input type="range" min="0.45" max="1.15" step="0.05" data-setting="nodeScale"></label>
+                        <label class="ai-kg-control-row"><span data-kg-line-width-label>连线粗细</span><output data-output="lineScale"></output><input type="range" min="0.5" max="2" step="0.1" data-setting="lineScale"></label>
+                        <label class="ai-kg-control-row"><span data-kg-label-density-label>标签密度</span><output data-output="labelDensity"></output><input type="range" min="0.3" max="1.5" step="0.1" data-setting="labelDensity"></label>
+                        <label class="ai-kg-control-row"><span data-kg-label-opacity-label>文本透明度</span><output data-output="labelOpacity"></output><input type="range" min="0.2" max="1" step="0.05" data-setting="labelOpacity"></label>
+                        <label class="ai-kg-control-row"><span data-kg-growth-speed-label>生长速度</span><output data-output="growthSpeed"></output><input type="range" min="0.5" max="2" step="0.1" data-setting="growthSpeed"></label>
+                        <button class="ai-kg-grow-btn" id="aiKgGrow" type="button">播放生长动画</button>
+                    </div>
+                    <div class="ai-kg-control-section">
+                        <div class="ai-kg-control-section-title" data-kg-force-title>力度</div>
+                        <label class="ai-kg-control-row"><span data-kg-center-label>图谱向心力</span><output data-output="centerForce"></output><input type="range" min="0.2" max="2" step="0.1" data-setting="centerForce"></label>
+                        <label class="ai-kg-control-row"><span data-kg-repulsion-label>节点排斥力</span><output data-output="repulsion"></output><input type="range" min="0.3" max="2.5" step="0.1" data-setting="repulsion"></label>
+                        <label class="ai-kg-control-row"><span data-kg-attraction-label>相连节点吸引力</span><output data-output="attraction"></output><input type="range" min="0.3" max="2" step="0.1" data-setting="attraction"></label>
+                        <label class="ai-kg-control-row"><span data-kg-link-length-label>连线长度</span><output data-output="linkLength"></output><input type="range" min="0.6" max="1.6" step="0.1" data-setting="linkLength"></label>
+                        <label class="ai-kg-control-row"><span data-kg-drift-label>漂浮力度</span><output data-output="drift"></output><input type="range" min="0" max="2" step="0.1" data-setting="drift"></label>
+                        <button class="ai-kg-reset-controls" id="aiKgResetControls" type="button">恢复默认参数</button>
+                    </div>
+                </div>
+                <div class="ai-kg-hint" id="aiKgHint"><span>拖动画布</span><span>滚轮缩放</span><span>放大显示文件名</span><span>点击节点查看</span><span>拖动节点可拉扯关系</span><span>松手保留惯性</span></div>
+                <div class="ai-kg-loading" id="aiKgLoading"><div class="ai-kg-loading-card">正在构建知识关系…</div></div>
+            </div>
+            <aside class="ai-kg-sidebar" id="aiKgSidebar"><div class="ai-kg-side-empty">点击图谱中的模块或文件，可查看索引时间、知识片段和文件关系。</div></aside>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const canvas = overlay.querySelector('#aiKgCanvas');
+    const stage = overlay.querySelector('#aiKgStage');
+    const sidebar = overlay.querySelector('#aiKgSidebar');
+    const loading = overlay.querySelector('#aiKgLoading');
+    const statuses = overlay.querySelector('#aiKgStatuses');
+    const searchInput = overlay.querySelector('#aiKgSearch');
+    const searchCount = overlay.querySelector('#aiKgSearchCount');
+    const titleEl = overlay.querySelector('#aiKgTitle');
+    const subtitleEl = overlay.querySelector('#aiKgSubtitle');
+    const legendEl = overlay.querySelector('#aiKgLegend');
+    const monthWrap = overlay.querySelector('#aiKgMonthWrap');
+    const monthSelect = overlay.querySelector('#aiKgMonth');
+    const refreshButton = overlay.querySelector('#aiKgRefresh');
+    const motionButton = overlay.querySelector('#aiKgMotion');
+    const controlsButton = overlay.querySelector('#aiKgControls');
+    const controlPanel = overlay.querySelector('#aiKgControlPanel');
+    const growButton = overlay.querySelector('#aiKgGrow');
+    const ctx = canvas.getContext('2d');
+    const DEFAULT_SETTINGS = Object.freeze({ palette:'cosmic', nodeScale:0.72, lineScale:1, labelDensity:1, labelOpacity:1, growthSpeed:1, centerForce:1, repulsion:1, attraction:1, linkLength:1, drift:1 });
+    function loadSettings() {
+        try { return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem('ai_kg_preferences') || '{}') }; }
+        catch (_error) { return { ...DEFAULT_SETTINGS }; }
+    }
+    const state = {
+        data: null,
+        mode: 'knowledge',
+        month: null,
+        nodes: [],
+        nodeMap: new Map(),
+        edges: [],
+        width: 1,
+        height: 1,
+        dpr: 1,
+        scale: 0.82,
+        panX: 0,
+        panY: 0,
+        hovered: null,
+        hoverCandidate: null,
+        hoverTimer: 0,
+        hoverIntensity: 0,
+        hoverTransition: null,
+        selected: null,
+        pointer: null,
+        running: false,
+        motionEnabled: true,
+        alpha: 1,
+        alphaTarget: 0.035,
+        lastFrameTime: 0,
+        searchMatches: new Set(),
+        settings: loadSettings(),
+        growth: { active:false, startedAt:0, duration:0, nodeOrder:new Map() }
+    };
+
+    const KG_TEXT = {
+        zh: {
+            view: '图谱视图', knowledge: '项目知识', metrics: '指标体系', ruleMonth: '规则月份', refreshKnowledge: '刷新知识库', refreshMetrics: '刷新指标',
+            refreshKnowledgeTitle: '重建变化的知识文件', refreshMetricsTitle: '重新读取指标规则与历史快照', motion: '动态仿真', motionPaused: '仿真已暂停', motionTitle: '开启或暂停力导向仿真', fit: '重置视图', close: '关闭',
+            knowledgeTitle: '✦ 项目知识关系图谱', metricTitle: '◈ 运营指标体系图谱', knowledgeSubtitle: '项目 → 模块 / 工具 / 数据库 → 文件 / 表 · 细线为代码、查询和资源依赖', metricSubtitle: '月份规则 → 指标分类 → 指标 → 子指标 · 点击查看历史入库值',
+            searchKnowledge: '搜索 README、工具、数据库表、接口、AI 助手…', searchMetrics: '搜索分类、指标、子指标…',
+            hints: ['拖动画布','滚轮缩放','放大显示文件名','点击节点查看','拖动节点可拉扯关系','松手保留惯性'],
+            project: '项目', module: '模块', knowledgeFile: '知识文件', toolData: '工具/数据资产', monthRules: '月份规则', category: '指标分类', metric: '指标', submetric: '子指标',
+            files: '文件', chunks: '片段', dependencies: '依赖', recentUpdated: '最近更新', tools: '工具', databases: '数据库', tables: '数据表', snapshots: '历史快照',
+            loadingKnowledge: '正在读取项目知识库…', loadingMetrics: '正在读取指标规则与历史快照…', refreshLoading: '正在刷新…', count: n => `${n} 个`, unknown: '未知',
+            rootType: '项目根节点', businessModules: '业务模块', codeDependencies: '代码依赖', assetFiles: '资产文件', builtInTools: '自带工具', customTools: '自定义工具',
+            assetCategory: '资产分类', htmlTool: 'HTML 工具', database: '数据库', table: '数据表', toolFile: '工具目录文件', related: '关联节点', contained: '下级节点', fileSize: '文件大小', updatedAt: '更新时间', publicAccess: '公开访问', yes: '是', no: '否', columns: '字段', schema: '表结构',
+            empty: '点击图谱中的模块、工具、文件、数据库或表，可查看详细关系。', moduleFiles: '模块文件', indexTime: '索引时间', viewChunks: '可点击查看的知识片段', readingFile: '正在读取文件节点', unnamedChunk: '未命名片段',
+            graphLoadFailed: '知识图谱加载失败', metricLoadFailed: '指标图谱加载失败', refreshFailed: '刷新失败',
+            controls: '外观与力度', appearance: '外观', force: '力度', palette: '颜色主题', cosmic: '星云', obsidian: 'Obsidian', aurora: '极光', nodeSize: '节点大小', lineWidth: '连线粗细', labelDensity: '标签密度', labelOpacity: '文本透明度', growthSpeed: '生长速度', playGrowth: '播放生长动画', stopGrowth: '停止动画', centerForce: '图谱向心力', repulsion: '节点排斥力', attraction: '相连节点吸引力', linkLength: '连线长度', drift: '漂浮力度', resetControls: '恢复默认参数'
+        },
+        en: {
+            view: 'Graph view', knowledge: 'Project Knowledge', metrics: 'Metric System', ruleMonth: 'Rule month', refreshKnowledge: 'Refresh Knowledge', refreshMetrics: 'Refresh Metrics',
+            refreshKnowledgeTitle: 'Re-index changed knowledge files', refreshMetricsTitle: 'Reload metric rules and snapshots', motion: 'Live Simulation', motionPaused: 'Simulation Paused', motionTitle: 'Start or pause force simulation', fit: 'Reset view', close: 'Close',
+            knowledgeTitle: '✦ Project Knowledge Graph', metricTitle: '◈ Operations Metric Graph', knowledgeSubtitle: 'Project → modules / tools / databases → files / tables · thin lines show code, query, and asset dependencies', metricSubtitle: 'Monthly rules → categories → metrics → submetrics · click to inspect historical values',
+            searchKnowledge: 'Search README, tools, database tables, APIs, AI assistant…', searchMetrics: 'Search categories, metrics, submetrics…',
+            hints: ['Drag canvas','Wheel to zoom','Zoom in for filenames','Click a node for details','Drag nodes to pull relations','Release to keep inertia'],
+            project: 'Project', module: 'Module', knowledgeFile: 'Knowledge File', toolData: 'Tool/Data Asset', monthRules: 'Monthly Rules', category: 'Metric Category', metric: 'Metric', submetric: 'Submetric',
+            files: 'files', chunks: 'chunks', dependencies: 'dependencies', recentUpdated: 'Recently updated', tools: 'tools', databases: 'databases', tables: 'tables', snapshots: 'snapshots',
+            loadingKnowledge: 'Loading project knowledge…', loadingMetrics: 'Loading metric rules and snapshots…', refreshLoading: 'Refreshing…', count: n => `${n}`, unknown: 'Unknown',
+            rootType: 'Project Root', businessModules: 'Business Modules', codeDependencies: 'Code Dependencies', assetFiles: 'asset files', builtInTools: 'built-in tools', customTools: 'custom tools',
+            assetCategory: 'Asset Category', htmlTool: 'HTML Tool', database: 'Database', table: 'Table', toolFile: 'Tool Directory File', related: 'Related Nodes', contained: 'Child Nodes', fileSize: 'File Size', updatedAt: 'Updated', publicAccess: 'Public Access', yes: 'Yes', no: 'No', columns: 'Columns', schema: 'Table Schema',
+            empty: 'Click a module, tool, file, database, or table to inspect its relationships.', moduleFiles: 'Module Files', indexTime: 'Indexed At', viewChunks: 'Indexed Knowledge Chunks', readingFile: 'Loading File Node', unnamedChunk: 'Untitled Chunk',
+            graphLoadFailed: 'Failed to load the knowledge graph', metricLoadFailed: 'Failed to load the metric graph', refreshFailed: 'Refresh failed',
+            controls: 'Appearance & Forces', appearance: 'Appearance', force: 'Forces', palette: 'Color Theme', cosmic: 'Cosmic', obsidian: 'Obsidian', aurora: 'Aurora', nodeSize: 'Node Size', lineWidth: 'Line Width', labelDensity: 'Label Density', labelOpacity: 'Text Opacity', growthSpeed: 'Growth Speed', playGrowth: 'Play Growth Animation', stopGrowth: 'Stop Animation', centerForce: 'Center Force', repulsion: 'Node Repulsion', attraction: 'Linked Attraction', linkLength: 'Link Length', drift: 'Drift Force', resetControls: 'Reset Defaults'
+        }
+    };
+    function kgLang() {
+        const raw = window.ToolsI18n?.getLanguage?.() || localStorage.getItem('tools_lang') || document.documentElement.lang || 'zh-CN';
+        return String(raw).toLowerCase().startsWith('en') ? 'en' : 'zh';
+    }
+    function kgT(key, ...args) {
+        const value = KG_TEXT[kgLang()][key] ?? KG_TEXT.zh[key] ?? key;
+        return typeof value === 'function' ? value(...args) : value;
+    }
+    function nodeLabel(node) { return kgLang() === 'en' && node?.labelEn ? node.labelEn : (node?.label || ''); }
+
+    function saveSettings() {
+        try { localStorage.setItem('ai_kg_preferences', JSON.stringify(state.settings)); } catch (_error) {}
+    }
+
+    function syncControlPanel() {
+        overlay.dataset.palette = state.settings.palette;
+        controlPanel.querySelectorAll('[data-setting]').forEach(input => {
+            input.value = state.settings[input.dataset.setting];
+        });
+        controlPanel.querySelectorAll('[data-output]').forEach(output => {
+            const value = Number(state.settings[output.dataset.output]);
+            output.textContent = Number.isFinite(value) ? value.toFixed(value % 1 ? 1 : 0) : '';
+        });
+    }
+
+    function authHeaders(extra = {}) {
+        const token = localStorage.getItem('tools_token') || sessionStorage.getItem('tools_token');
+        return { ...extra, 'Authorization': token ? `Bearer ${token}` : '' };
+    }
+
+    function escapeHtml(value) {
+        return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function colorForGroup(group, alpha = 1) {
+        let hash = 0;
+        for (const char of String(group || 'other')) hash = ((hash << 5) - hash + char.charCodeAt(0)) | 0;
+        const palette = state.settings.palette;
+        if (palette === 'obsidian') return `hsla(0, 0%, ${52 + Math.abs(hash) % 28}%, ${alpha})`;
+        const hue = palette === 'aurora'
+            ? ((Math.abs(hash) % 155) + 128) % 360
+            : ((Math.abs(hash) % 170) + 205) % 360;
+        return `hsla(${hue}, ${palette === 'aurora' ? 70 : 64}%, ${palette === 'aurora' ? 62 : 67}%, ${alpha})`;
+    }
+
+    function accentColor(alpha = 1) {
+        if (state.settings.palette === 'obsidian') return `rgba(226,226,226,${alpha})`;
+        if (state.settings.palette === 'aurora') return `rgba(57,218,188,${alpha})`;
+        return `rgba(139,92,246,${alpha})`;
+    }
+
+    function formatBytes(value) {
+        const bytes = Number(value) || 0;
+        if (bytes < 1024) return `${bytes} B`;
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+        return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+    }
+
+    function formatTime(value) {
+        if (!value) return kgT('unknown');
+        const date = new Date(String(value).replace(' ', 'T') + (String(value).includes('T') ? '' : 'Z'));
+        return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString(kgLang() === 'en' ? 'en-US' : 'zh-CN');
+    }
+
+    function isRootNode(node) {
+        return node?.type === 'root' || node?.type === 'metricRoot';
+    }
+
+    function isGroupNode(node) {
+        return node?.type === 'group' || node?.type === 'metricCategory';
+    }
+
+    function isLeafNode(node) {
+        return ['document', 'submetric', 'assetFile', 'table'].includes(node?.type);
+    }
+
+    function isMetricMode() {
+        return state.mode === 'metrics';
+    }
+
+    function formatRuleTarget(rule, category = '') {
+        if (!rule) return '未配置';
+        const categoryValue = category ? rule.categoryTargets?.[String(state.month)]?.[category] : undefined;
+        const value = categoryValue ?? rule.monthTarget;
+        if (value === null || value === undefined || value === '') return category ? '未配置' : '按子指标配置';
+        const sign = rule.condition === 'lte' ? '≤' : '≥';
+        const suffix = rule.isPercent && !String(value).includes('%') ? '%' : '';
+        return `${sign} ${value}${suffix}`;
+    }
+
+    function setLoading(text, visible = true) {
+        loading.hidden = !visible;
+        loading.querySelector('.ai-kg-loading-card').textContent = text;
+    }
+
+    function showError(message) {
+        setLoading('', false);
+        sidebar.innerHTML = `<div class="ai-kg-side-empty">⚠️ ${escapeHtml(message)}</div>`;
+    }
+
+    function renderStatuses(data) {
+        if (data.mode === 'metrics') {
+            statuses.innerHTML = `
+                <span class="ai-kg-status"><strong>${Number(data.stats?.categories) || 0}</strong> ${kgT('category')}</span>
+                <span class="ai-kg-status"><strong>${Number(data.stats?.metrics) || 0}</strong> ${kgT('metric')}</span>
+                <span class="ai-kg-status"><strong>${Number(data.stats?.subMetrics) || 0}</strong> ${kgT('submetric')}</span>
+                <span class="ai-kg-status"><strong>${Number(data.stats?.snapshots) || 0}</strong> ${kgT('snapshots')}</span>
+                <span class="ai-kg-status">${kgLang() === 'en' ? `Month ${Number(data.month) || '-'}` : `${Number(data.month) || '-'} 月规则`}</span>
+            `;
+            return;
+        }
+        const refresh = data.status?.lastRefresh;
+        const changed = refresh ? Number(refresh.indexedFiles) || 0 : 0;
+        statuses.innerHTML = `
+            <span class="ai-kg-status"><strong>${Number(data.stats?.documents) || 0}</strong> ${kgT('files')}</span>
+            <span class="ai-kg-status"><strong>${Number(data.stats?.chunks) || 0}</strong> ${kgT('chunks')}</span>
+            <span class="ai-kg-status"><strong>${Number(data.stats?.builtInTools || 0) + Number(data.stats?.customTools || 0)}</strong> ${kgT('tools')}</span>
+            <span class="ai-kg-status"><strong>${Number(data.stats?.tables) || 0}</strong> ${kgT('tables')}</span>
+            <span class="ai-kg-status">${kgT('recentUpdated')} <strong>${changed}</strong> ${kgT('files')}</span>
+            <span class="ai-kg-status">${escapeHtml(formatTime(data.status?.lastIndexedAt))}</span>
+        `;
+    }
+
+    function initializeLayout(data) {
+        state.data = data;
+        state.nodes = data.nodes.map(item => ({
+            ...item,
+            x: 0,
+            y: 0,
+            vx: 0,
+            vy: 0,
+            motionPhase: [...String(item.id || '')].reduce((sum, char) => sum + char.charCodeAt(0), 0) * 0.73
+        }));
+        state.nodeMap = new Map(state.nodes.map(item => [item.id, item]));
+        state.edges = data.edges.map(edge => ({ ...edge, sourceNode: state.nodeMap.get(edge.source), targetNode: state.nodeMap.get(edge.target) }))
+            .filter(edge => edge.sourceNode && edge.targetNode);
+        const placeDescendants = (parent, baseAngle, depth = 1, visited = new Set()) => {
+            if (depth > 3 || visited.has(parent.id)) return;
+            visited.add(parent.id);
+            const children = state.edges.filter(edge => edge.type === 'contains' && edge.source === parent.id).map(edge => edge.targetNode).filter(Boolean);
+            const ringSize = parent.type === 'tool' || parent.type === 'database' ? 14 : 9;
+            children.forEach((child, index) => {
+                const ring = Math.floor(index / ringSize);
+                const slot = index % ringSize;
+                const count = Math.min(ringSize, children.length - ring * ringSize || 1);
+                const angle = baseAngle + Math.PI * 2 * slot / count;
+                const radius = 58 + ring * 34 + depth * 13;
+                child.x = parent.x + Math.cos(angle) * radius;
+                child.y = parent.y + Math.sin(angle) * radius;
+                placeDescendants(child, angle, depth + 1, visited);
+            });
+        };
+        const groups = state.nodes.filter(isGroupNode);
+        groups.forEach((group, groupIndex) => {
+            const angle = (Math.PI * 2 * groupIndex / Math.max(1, groups.length)) - Math.PI / 2;
+            const groupRadiusX = isMetricMode() ? 330 : 285;
+            const groupRadiusY = isMetricMode() ? 270 : 235;
+            group.x = Math.cos(angle) * groupRadiusX;
+            group.y = Math.sin(angle) * groupRadiusY;
+            const children = state.edges
+                .filter(edge => edge.source === group.id)
+                .map(edge => edge.targetNode)
+                .filter(Boolean);
+            children.forEach((child, childIndex) => {
+                const ringSize = isMetricMode() ? 9 : 12;
+                const ring = Math.floor(childIndex / ringSize);
+                const slot = childIndex % ringSize;
+                const countInRing = Math.min(ringSize, children.length - ring * ringSize || 1);
+                const localAngle = angle + (Math.PI * 2 * slot / countInRing);
+                const radius = (isMetricMode() ? 94 : 74) + ring * (isMetricMode() ? 56 : 42);
+                child.x = group.x + Math.cos(localAngle) * radius;
+                child.y = group.y + Math.sin(localAngle) * radius;
+                if (child.type === 'metric') {
+                    const subMetrics = state.edges
+                        .filter(edge => edge.source === child.id)
+                        .map(edge => edge.targetNode)
+                        .filter(Boolean);
+                    subMetrics.forEach((subMetric, subIndex) => {
+                        const subAngle = localAngle + (Math.PI * 2 * subIndex / Math.max(1, subMetrics.length));
+                        const subRadius = 48 + Math.floor(subIndex / 8) * 24;
+                        subMetric.x = child.x + Math.cos(subAngle) * subRadius;
+                        subMetric.y = child.y + Math.sin(subAngle) * subRadius;
+                    });
+                } else if (!isMetricMode()) {
+                    placeDescendants(child, localAngle, 1, new Set());
+                }
+            });
+        });
+        const root = state.nodeMap.get(isMetricMode() ? 'metric-root' : 'root');
+        if (root) { root.x = 0; root.y = 0; root.fixed = true; }
+        state.alpha = 1;
+        state.running = state.motionEnabled;
+        resetView();
+        scheduleFrame();
+    }
+
+    function resize() {
+        const rect = stage.getBoundingClientRect();
+        state.dpr = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+        state.width = Math.max(1, rect.width);
+        state.height = Math.max(1, rect.height);
+        canvas.width = Math.round(state.width * state.dpr);
+        canvas.height = Math.round(state.height * state.dpr);
+        canvas.style.width = `${state.width}px`;
+        canvas.style.height = `${state.height}px`;
+        ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+        render();
+    }
+
+    function resetView() {
+        const contentWidth = isMetricMode() ? 1340 : 1080;
+        const contentHeight = isMetricMode() ? 900 : 760;
+        state.scale = Math.max(0.32, Math.min(1, Math.min(state.width / contentWidth, state.height / contentHeight)));
+        state.panX = 0;
+        state.panY = 0;
+        render();
+    }
+
+    function nodePhysicsRadius(node) {
+        const scale = state.settings.nodeScale / DEFAULT_SETTINGS.nodeScale;
+        if (isRootNode(node)) return 29 * scale;
+        if (isGroupNode(node)) return Math.max(14, (Number(node.size || 12) * 0.78 + 9) * scale);
+        if (node.type === 'metric') return Math.max(10, (Number(node.size || 10) * 0.78 + 5) * scale);
+        return Math.max(4.5, (Number(node.size || 5) * 0.76 + 2.5) * scale);
+    }
+
+    function reheat(amount = 0.55) {
+        if (!state.motionEnabled) return;
+        state.alpha = Math.max(state.alpha, amount);
+        state.running = true;
+        scheduleFrame();
+    }
+
+    function simulate(elapsed = 1) {
+        const nodes = state.nodes;
+        const alpha = state.alpha;
+        const time = performance.now();
+        for (const edge of state.edges) {
+            const a = edge.sourceNode;
+            const b = edge.targetNode;
+            const dx = b.x - a.x;
+            const dy = b.y - a.y;
+            const distance = Math.max(1, Math.hypot(dx, dy));
+            const desiredBase = edge.type === 'contains'
+                ? (isRootNode(a) ? (isMetricMode() ? 305 : 250) : a.type === 'metricCategory' ? 112 : a.type === 'metric' ? 56 : a.type === 'tool' || a.type === 'database' ? 72 : a.type === 'assetCategory' ? 108 : 86)
+                : 145;
+            const desired = desiredBase * state.settings.linkLength;
+            const strength = (edge.type === 'contains' ? 0.014 : 0.0022) * state.settings.attraction;
+            const force = (distance - desired) * strength * alpha * elapsed;
+            const fx = dx / distance * force;
+            const fy = dy / distance * force;
+            if (!a.fixed) { a.vx += fx; a.vy += fy; }
+            if (!b.fixed) { b.vx -= fx; b.vy -= fy; }
+        }
+        for (let i = 0; i < nodes.length; i += 1) {
+            const a = nodes[i];
+            for (let j = i + 1; j < nodes.length; j += 1) {
+                const b = nodes[j];
+                const dx = b.x - a.x;
+                const dy = b.y - a.y;
+                const distanceSq = dx * dx + dy * dy + 0.01;
+                if (distanceSq > 25600) continue;
+                const distance = Math.sqrt(distanceSq);
+                const minDistance = nodePhysicsRadius(a) + nodePhysicsRadius(b) + (isLeafNode(a) && isLeafNode(b) ? 3 : 8);
+                const overlap = Math.max(0, minDistance - distance);
+                const repel = ((isGroupNode(a) || isGroupNode(b) ? 120 : a.type === 'metric' || b.type === 'metric' ? 72 : 38) / distanceSq) * alpha * state.settings.repulsion;
+                const collision = overlap * 0.075 * alpha;
+                const fx = dx / distance * (repel + collision) * elapsed;
+                const fy = dy / distance * (repel + collision) * elapsed;
+                if (!a.fixed) { a.vx -= fx; a.vy -= fy; }
+                if (!b.fixed) { b.vx += fx; b.vy += fy; }
+            }
+        }
+        for (const node of nodes) {
+            if (node.fixed || node.dragging) continue;
+            node.vx += -node.x * 0.000045 * state.settings.centerForce * alpha * elapsed;
+            node.vy += -node.y * 0.000045 * state.settings.centerForce * alpha * elapsed;
+            if (state.motionEnabled && isLeafNode(node)) {
+                const phase = Number(node.motionPhase || 0);
+                node.vx += Math.sin(time * 0.00072 + phase) * 0.002 * state.settings.drift * elapsed;
+                node.vy += Math.cos(time * 0.00061 + phase * 1.37) * 0.002 * state.settings.drift * elapsed;
+            }
+            const damping = Math.pow(0.89, elapsed);
+            node.vx *= damping;
+            node.vy *= damping;
+            node.x += node.vx * elapsed;
+            node.y += node.vy * elapsed;
+        }
+        state.alpha += (state.alphaTarget - state.alpha) * 0.035 * elapsed;
+    }
+
+    function worldToScreen(node) {
+        return {
+            x: state.width / 2 + state.panX + node.x * state.scale,
+            y: state.height / 2 + state.panY + node.y * state.scale
+        };
+    }
+
+    function shortenFileLabel(value, limit) {
+        const label = String(value || '未命名文件');
+        if (label.length <= limit) return label;
+        const dotIndex = label.lastIndexOf('.');
+        const extension = dotIndex > 0 && label.length - dotIndex <= 8 ? label.slice(dotIndex) : '';
+        const headLength = Math.max(6, limit - extension.length - 1);
+        return `${label.slice(0, headLength)}…${extension}`;
+    }
+
+    function labelsOverlap(a, b) {
+        return a.left < b.right + 4 && a.right + 4 > b.left && a.top < b.bottom + 3 && a.bottom + 3 > b.top;
+    }
+
+    function roundedRectPath(x, y, width, height, radius) {
+        const r = Math.min(radius, width / 2, height / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + width, y, x + width, y + height, r);
+        ctx.arcTo(x + width, y + height, x, y + height, r);
+        ctx.arcTo(x, y + height, x, y, r);
+        ctx.arcTo(x, y, x + width, y, r);
+        ctx.closePath();
+    }
+
+    function prepareGrowthOrder() {
+        const rootId = isMetricMode() ? 'metric-root' : 'root';
+        const depth = new Map([[rootId, 0]]);
+        const queue = [rootId];
+        while (queue.length) {
+            const source = queue.shift();
+            const nextDepth = (depth.get(source) || 0) + 1;
+            state.edges
+                .filter(edge => edge.type === 'contains' && edge.source === source)
+                .map(edge => edge.target)
+                .sort()
+                .forEach(target => {
+                    if (depth.has(target)) return;
+                    depth.set(target, nextDepth);
+                    queue.push(target);
+                });
+        }
+        const ordered = [...state.nodes].sort((a, b) => {
+            const depthDelta = (depth.get(a.id) ?? 99) - (depth.get(b.id) ?? 99);
+            if (depthDelta) return depthDelta;
+            const tierDelta = nodeLabelTier(a) - nodeLabelTier(b);
+            if (tierDelta) return tierDelta;
+            return String(nodeLabel(a)).localeCompare(String(nodeLabel(b)));
+        });
+        return new Map(ordered.map((node, index) => [node.id, index]));
+    }
+
+    function setGrowthButtonState() {
+        growButton.textContent = state.growth.active ? kgT('stopGrowth') : kgT('playGrowth');
+        growButton.classList.toggle('playing', state.growth.active);
+    }
+
+    function startGrowthAnimation() {
+        if (!state.nodes.length) return;
+        if (state.growth.active) {
+            state.growth.active = false;
+            setGrowthButtonState();
+            render();
+            return;
+        }
+        state.selected = null;
+        clearHoverIntent({ immediate: true });
+        state.growth = {
+            active: true,
+            startedAt: performance.now(),
+            duration: Math.min(12000, Math.max(4200, state.nodes.length * 28)) / state.settings.growthSpeed,
+            nodeOrder: prepareGrowthOrder()
+        };
+        resetView();
+        reheat(0.92);
+        state.running = true;
+        setGrowthButtonState();
+        scheduleFrame();
+    }
+
+    function growthNodeProgress(node, now = performance.now()) {
+        if (!state.growth.active) return 1;
+        const order = state.growth.nodeOrder.get(node.id) ?? state.nodes.length;
+        const total = Math.max(1, state.nodes.length - 1);
+        const start = order / total * state.growth.duration * 0.82;
+        const enterDuration = Math.max(160, Math.min(420, state.growth.duration * 0.08));
+        return Math.max(0, Math.min(1, (now - state.growth.startedAt - start) / enterDuration));
+    }
+
+    function growthEdgeProgress(edge, now = performance.now()) {
+        if (!state.growth.active) return 1;
+        const sourceOrder = state.growth.nodeOrder.get(edge.source) ?? 0;
+        const targetOrder = state.growth.nodeOrder.get(edge.target) ?? 0;
+        const total = Math.max(1, state.nodes.length - 1);
+        const start = Math.max(sourceOrder, targetOrder) / total * state.growth.duration * 0.82 + (edge.type === 'contains' ? 30 : 110);
+        const drawDuration = edge.type === 'contains' ? 260 : 340;
+        const progress = Math.max(0, Math.min(1, (now - state.growth.startedAt - start) / drawDuration));
+        return 1 - Math.pow(1 - progress, 3);
+    }
+
+    function growthNodeScale(progress) {
+        if (progress <= 0 || progress >= 1) return progress;
+        const c1 = 1.28;
+        const c3 = c1 + 1;
+        return 1 + c3 * Math.pow(progress - 1, 3) + c1 * Math.pow(progress - 1, 2);
+    }
+
+    function nodeLabelTier(node) {
+        if (isRootNode(node)) return 0;
+        if (isGroupNode(node) || node?.type === 'assetCategory') return 1;
+        if (['metric', 'tool', 'database'].includes(node?.type)) return 2;
+        return 3;
+    }
+
+    function selectedContainsNode(node) {
+        if (!state.selected || !node || state.selected.id === node.id) return false;
+        const visited = new Set([node.id]);
+        let frontier = [node.id];
+        while (frontier.length) {
+            const parents = [];
+            for (const childId of frontier) {
+                for (const edge of state.edges) {
+                    if (edge.type !== 'contains' || edge.target !== childId || visited.has(edge.source)) continue;
+                    if (edge.source === state.selected.id) return true;
+                    visited.add(edge.source);
+                    parents.push(edge.source);
+                }
+            }
+            frontier = parents;
+        }
+        return false;
+    }
+
+    function hoverIntentDelay(node) {
+        const tier = nodeLabelTier(node);
+        if (tier === 0) return 70;
+        if (tier === 1) return 105;
+        if (tier === 2) return selectedContainsNode(node) ? 115 : 165;
+        return selectedContainsNode(node) ? 150 : 310;
+    }
+
+    function beginHoverTransition(target, duration) {
+        state.hoverTransition = {
+            from: state.hoverIntensity,
+            to: target,
+            startedAt: performance.now(),
+            duration
+        };
+        scheduleFrame();
+    }
+
+    function updateHoverTransition(now) {
+        const transition = state.hoverTransition;
+        if (!transition) return;
+        const raw = Math.max(0, Math.min(1, (now - transition.startedAt) / transition.duration));
+        const eased = raw < 0.5 ? 4 * raw * raw * raw : 1 - Math.pow(-2 * raw + 2, 3) / 2;
+        state.hoverIntensity = transition.from + (transition.to - transition.from) * eased;
+        if (raw < 1) return;
+        state.hoverIntensity = transition.to;
+        state.hoverTransition = null;
+        if (transition.to === 0) state.hovered = null;
+    }
+
+    function clearHoverIntent({ immediate = false } = {}) {
+        if (state.hoverTimer) window.clearTimeout(state.hoverTimer);
+        state.hoverTimer = 0;
+        state.hoverCandidate = null;
+        if (immediate) {
+            state.hovered = null;
+            state.hoverIntensity = 0;
+            state.hoverTransition = null;
+            return;
+        }
+        if (state.hovered) beginHoverTransition(0, 240);
+    }
+
+    function queueHoverIntent(node) {
+        if (!node) {
+            if (!state.hoverCandidate && !state.hovered) return;
+            if (state.hoverTimer) window.clearTimeout(state.hoverTimer);
+            state.hoverTimer = 0;
+            state.hoverCandidate = null;
+            if (state.hovered && state.hoverTransition?.to !== 0) beginHoverTransition(0, 240);
+            return;
+        }
+        if (node.id === state.hovered?.id) {
+            if (state.hoverTimer) window.clearTimeout(state.hoverTimer);
+            state.hoverTimer = 0;
+            state.hoverCandidate = node;
+            if (state.hoverTransition?.to === 0) beginHoverTransition(1, 150);
+            return;
+        }
+        if (node.id === state.hoverCandidate?.id) return;
+        if (state.hoverTimer) window.clearTimeout(state.hoverTimer);
+        state.hoverTimer = 0;
+        state.hoverCandidate = node;
+        const delay = hoverIntentDelay(node);
+        if (state.hovered) beginHoverTransition(0, Math.max(70, Math.min(150, delay)));
+        const candidateId = node.id;
+        state.hoverTimer = window.setTimeout(() => {
+            state.hoverTimer = 0;
+            if (state.hoverCandidate?.id !== candidateId || state.pointer) return;
+            state.hoverIntensity = 0;
+            state.hoverTransition = null;
+            state.hovered = node;
+            beginHoverTransition(1, 180);
+        }, delay);
+    }
+
+    function renderHierarchyLabels(highlighted, focusNode, focusStrength, selectedNextLevel) {
+        const zoomThreshold = [0, 0.42, 0.92, 1.42];
+        const maxLabels = Math.round((state.scale < 0.7 ? 12 : state.scale < 1.05 ? 20 : state.scale < 1.45 ? 38 : state.scale < 2 ? 72 : 120) * state.settings.labelDensity);
+        const now = performance.now();
+        const candidates = state.nodes.map(node => {
+            const tier = nodeLabelTier(node);
+            const isNextLevel = selectedNextLevel.has(node.id);
+            const forced = node.id === focusNode?.id || state.searchMatches.has(node.id) || isNextLevel;
+            const visibleByFocus = highlighted.has(node.id) && (tier <= 2 || state.scale >= 1.1);
+            const priority = (node.id === focusNode?.id ? 50000 : 0)
+                + (isNextLevel ? 42000 : 0)
+                + (highlighted.has(node.id) ? 30000 : 0)
+                + (state.searchMatches.has(node.id) ? 24000 : 0)
+                + (tier === 0 ? 16000 : tier === 1 ? 9000 : tier === 2 ? 3500 : 0)
+                + Number(node.size || 0);
+            return { node, tier, forced, isNextLevel, visibleByFocus, priority, point: worldToScreen(node), growthProgress: growthNodeProgress(node, now) };
+        })
+            .filter(item => item.growthProgress >= 0.82)
+            .filter(item => item.point.x > -100 && item.point.x < state.width + 100 && item.point.y > -50 && item.point.y < state.height + 50)
+            .filter(item => focusNode
+                ? item.forced || item.visibleByFocus
+                : item.forced || state.scale >= zoomThreshold[item.tier])
+            .sort((a, b) => b.priority - a.priority);
+        const occupied = state.nodes.filter(node => growthNodeProgress(node, now) > 0.2).map(node => {
+            const point = worldToScreen(node);
+            const radius = Math.max(2.2, Number(node.size || 5) * Math.sqrt(state.scale) * state.settings.nodeScale);
+            return { nodeId: node.id, left: point.x - radius - 2, right: point.x + radius + 2, top: point.y - radius - 2, bottom: point.y + radius + 2 };
+        });
+        const charLimit = state.scale >= 2 ? 34 : state.scale >= 1.45 ? 24 : state.scale >= 1 ? 18 : 15;
+        let rendered = 0;
+        for (const { node, tier, forced, isNextLevel, point } of candidates) {
+            if (rendered >= maxLabels && !forced) continue;
+            const label = shortenFileLabel(nodeLabel(node), tier <= 1 ? Math.max(20, charLimit) : charLimit);
+            const fontSize = tier === 0 ? 12 : tier === 1 ? 10 : 9;
+            const fontWeight = tier <= 1 || node.id === focusNode?.id || isNextLevel ? 650 : 450;
+            ctx.font = `${fontWeight} ${fontSize}px system-ui`;
+            const pill = tier >= 2;
+            const width = Math.ceil(ctx.measureText(label).width) + (pill ? 12 : 4);
+            const height = pill ? 18 : 16;
+            const radius = Math.max(2.2, Number(node.size || 5) * Math.sqrt(state.scale) * state.settings.nodeScale);
+            const placements = [
+                { x: point.x - width / 2, y: point.y + radius + 5 },
+                { x: point.x + radius + 5, y: point.y - height / 2 },
+                { x: point.x - radius - width - 5, y: point.y - height / 2 },
+                { x: point.x - width / 2, y: point.y - radius - height - 5 },
+                { x: point.x + radius + 4, y: point.y + radius + 2 },
+                { x: point.x - radius - width - 4, y: point.y + radius + 2 },
+                { x: point.x + radius + 4, y: point.y - radius - height - 2 },
+                { x: point.x - radius - width - 4, y: point.y - radius - height - 2 }
+            ];
+            const inBounds = item => item.x >= 4 && item.x + width <= state.width - 4 && item.y >= 4 && item.y + height <= state.height - 4;
+            const placement = placements.find(item => {
+                const rect = { left: item.x, right: item.x + width, top: item.y, bottom: item.y + height };
+                return inBounds(item) && !occupied.some(other => other.nodeId !== node.id && labelsOverlap(rect, other));
+            }) || (forced ? placements.find(inBounds) : null);
+            if (!placement) continue;
+            const rect = { nodeId: `label:${node.id}`, left: placement.x, right: placement.x + width, top: placement.y, bottom: placement.y + height };
+            occupied.push(rect);
+            const dimmed = focusNode && !highlighted.has(node.id);
+            const normalAlpha = forced ? 1 : tier === 3 ? 0.72 : 0.9;
+            ctx.globalAlpha = (dimmed ? normalAlpha * (1 - .88 * focusStrength) : normalAlpha) * state.settings.labelOpacity;
+            if (pill) {
+                roundedRectPath(placement.x, placement.y, width, height, 6);
+                ctx.fillStyle = node.id === focusNode?.id ? 'rgba(72,54,130,.94)' : 'rgba(10,16,29,.82)';
+                ctx.fill();
+                ctx.strokeStyle = node.id === focusNode?.id ? 'rgba(156,112,255,.85)' : colorForGroup(node.group, .24);
+                ctx.lineWidth = node.id === focusNode?.id ? 1 : 0.65;
+                ctx.stroke();
+            }
+            ctx.fillStyle = '#e8edf8';
+            ctx.shadowColor = 'rgba(4,8,18,.9)';
+            ctx.shadowBlur = pill ? 0 : 4;
+            ctx.textAlign = pill ? 'left' : 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, pill ? placement.x + 6 : placement.x + width / 2, placement.y + height / 2 + 0.5);
+            ctx.shadowBlur = 0;
+            ctx.globalAlpha = 1;
+            rendered += 1;
+        }
+        ctx.textBaseline = 'alphabetic';
+    }
+
+    function render() {
+        ctx.clearRect(0, 0, state.width, state.height);
+        if (!state.nodes.length) return;
+        const now = performance.now();
+        const hoverStrength = state.hovered ? state.hoverIntensity : 0;
+        const focusNode = hoverStrength > 0.015 ? state.hovered : state.selected;
+        const focusStrength = focusNode === state.hovered ? hoverStrength : (focusNode ? 1 : 0);
+        const selectedNextLevel = new Set(state.selected
+            ? state.edges.filter(edge => edge.type === 'contains' && edge.source === state.selected.id).map(edge => edge.target)
+            : []);
+        const highlighted = new Set();
+        if (focusNode) {
+            highlighted.add(focusNode.id);
+            state.edges.forEach(edge => {
+                if (edge.source === focusNode.id) highlighted.add(edge.target);
+                if (edge.target === focusNode.id) highlighted.add(edge.source);
+            });
+        }
+        ctx.lineCap = 'round';
+        const orderedEdges = [...state.edges].sort((a, b) => {
+            const aActive = focusNode && (a.source === focusNode.id || a.target === focusNode.id);
+            const bActive = focusNode && (b.source === focusNode.id || b.target === focusNode.id);
+            return Number(aActive) - Number(bActive);
+        });
+        for (const edge of orderedEdges) {
+            const a = worldToScreen(edge.sourceNode);
+            const b = worldToScreen(edge.targetNode);
+            const growthProgress = growthEdgeProgress(edge, now);
+            if (growthProgress <= 0) continue;
+            const drawX = a.x + (b.x - a.x) * growthProgress;
+            const drawY = a.y + (b.y - a.y) * growthProgress;
+            const active = Boolean(focusNode && (edge.source === focusNode.id || edge.target === focusNode.id));
+            if (focusNode) {
+                const baseAlpha = edge.type !== 'contains' ? .11 : .22;
+                const activeAlpha = baseAlpha + (.88 - baseAlpha) * focusStrength;
+                const inactiveAlpha = baseAlpha + (.025 - baseAlpha) * focusStrength;
+                ctx.strokeStyle = active ? accentColor(activeAlpha) : `rgba(94,108,145,${inactiveAlpha})`;
+                ctx.lineWidth = (active ? .9 + .55 * focusStrength : .9 - .35 * focusStrength) * state.settings.lineScale;
+                ctx.shadowColor = active ? accentColor(.72 * focusStrength) : 'transparent';
+                ctx.shadowBlur = active ? 5 * focusStrength : 0;
+            } else {
+                ctx.strokeStyle = edge.type !== 'contains' ? 'rgba(117,132,173,.11)' : 'rgba(133,147,187,.22)';
+                ctx.lineWidth = (edge.type !== 'contains' ? 0.65 : 0.9) * state.settings.lineScale;
+                ctx.shadowBlur = 0;
+            }
+            ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(drawX, drawY); ctx.stroke();
+        }
+        ctx.shadowBlur = 0;
+        const ordered = [...state.nodes].sort((a, b) => (isLeafNode(a) ? 0 : 1) - (isLeafNode(b) ? 0 : 1));
+        for (const node of ordered) {
+            const growthProgress = growthNodeProgress(node, now);
+            if (growthProgress <= 0) continue;
+            const point = worldToScreen(node);
+            const isSelected = state.selected?.id === node.id;
+            const isHovered = state.hovered?.id === node.id;
+            const isSearch = state.searchMatches.has(node.id);
+            const dimmed = focusNode && !highlighted.has(node.id);
+            const radius = Math.max(1.5, Number(node.size || 5) * Math.sqrt(state.scale) * state.settings.nodeScale * growthNodeScale(growthProgress));
+            ctx.globalAlpha = (dimmed ? 1 - .88 * focusStrength : 1) * Math.min(1, growthProgress * 1.5);
+            ctx.fillStyle = isRootNode(node)
+                ? '#f7f8ff'
+                : isGroupNode(node)
+                    ? colorForGroup(node.group)
+                    : node.type === 'metric'
+                        ? colorForGroup(node.group, 0.96)
+                        : colorForGroup(node.group, 0.72);
+            if (isSelected || isHovered || isSearch || focusNode && highlighted.has(node.id)) {
+                ctx.shadowColor = isRootNode(node) ? '#fff' : colorForGroup(node.group, .85);
+                ctx.shadowBlur = isSelected || isHovered ? 18 : 8;
+            }
+            ctx.beginPath(); ctx.arc(point.x, point.y, radius + (isSelected || isHovered ? 1.4 : 0), 0, Math.PI * 2); ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.globalAlpha = 1;
+        }
+        renderHierarchyLabels(highlighted, focusNode, focusStrength, selectedNextLevel);
+    }
+
+    function scheduleFrame() {
+        if (state.frame) return;
+        state.frame = requestAnimationFrame(timestamp => {
+            state.frame = 0;
+            updateHoverTransition(timestamp);
+            const elapsed = state.lastFrameTime ? Math.min(2, Math.max(0.5, (timestamp - state.lastFrameTime) / 16.67)) : 1;
+            state.lastFrameTime = timestamp;
+            if (state.growth.active && timestamp - state.growth.startedAt > state.growth.duration + 520) {
+                state.growth.active = false;
+                setGrowthButtonState();
+            }
+            if (state.running && state.motionEnabled && overlay.classList.contains('open')) {
+                simulate(elapsed);
+            }
+            render();
+            if ((state.growth.active || state.hoverTransition || state.running && state.motionEnabled) && overlay.classList.contains('open')) scheduleFrame();
+        });
+    }
+
+    function nodeAt(clientX, clientY) {
+        const rect = canvas.getBoundingClientRect();
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+        let found = null;
+        let best = Infinity;
+        for (const node of state.nodes) {
+            if (growthNodeProgress(node) < 0.28) continue;
+            const point = worldToScreen(node);
+            const distance = Math.hypot(point.x - x, point.y - y);
+            const threshold = Math.max(7, Number(node.size || 5) * Math.sqrt(state.scale) * state.settings.nodeScale + 4);
+            if (distance <= threshold && distance < best) { found = node; best = distance; }
+        }
+        return found;
+    }
+
+    function formatShortTime(value) {
+        const date = new Date(String(value || '').replace(' ', 'T'));
+        if (Number.isNaN(date.getTime())) return String(value || '未知');
+        return `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    }
+
+    function renderHistoryTrend(data) {
+        const colors = ['#8fa3ff', '#eb7c78', '#6fc4ee', '#b28af1', '#76d4ad'];
+        const hasNumericValue = point => point.numericValue !== null && point.numericValue !== undefined && point.numericValue !== '' && Number.isFinite(Number(point.numericValue));
+        const series = (data.series || []).filter(item => item.points.some(hasNumericValue));
+        const values = series.flatMap(item => item.points.filter(hasNumericValue).map(point => Number(point.numericValue)));
+        if (!values.length) return '<div class="ai-kg-side-empty">历史值不是连续数值，已在下方按快照列出。</div>';
+        let min = Math.min(...values);
+        let max = Math.max(...values);
+        const padding = Math.max(1, (max - min) * 0.16);
+        if (min === max) { min -= padding; max += padding; }
+        else { min -= padding; max += padding; }
+        const left = 28;
+        const right = 306;
+        const top = 14;
+        const bottom = 104;
+        const y = value => bottom - ((value - min) / Math.max(0.0001, max - min)) * (bottom - top);
+        const paths = series.map((item, seriesIndex) => {
+            const numericPoints = item.points.filter(hasNumericValue);
+            const path = numericPoints.map((point, index) => {
+                const x = numericPoints.length <= 1 ? (left + right) / 2 : left + index * (right - left) / (numericPoints.length - 1);
+                return `${index ? 'L' : 'M'}${x.toFixed(1)},${y(Number(point.numericValue)).toFixed(1)}`;
+            }).join(' ');
+            const last = numericPoints[numericPoints.length - 1];
+            const lastX = numericPoints.length <= 1 ? (left + right) / 2 : right;
+            return `<path d="${path}" fill="none" stroke="${colors[seriesIndex % colors.length]}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${lastX}" cy="${y(Number(last.numericValue)).toFixed(1)}" r="3" fill="${colors[seriesIndex % colors.length]}"/>`;
+        }).join('');
+        const legend = series.map((item, index) => `<span><i style="background:${colors[index % colors.length]}"></i>${escapeHtml(item.category)}</span>`).join('');
+        return `<svg class="ai-kg-trend" viewBox="0 0 320 126" role="img" aria-label="历史快照趋势"><line x1="28" y1="104" x2="306" y2="104" stroke="rgba(132,148,190,.2)"/><line x1="28" y1="14" x2="28" y2="104" stroke="rgba(132,148,190,.2)"/><text x="5" y="18" fill="#73819d" font-size="8">${escapeHtml(Number(max.toFixed(2)))}</text><text x="5" y="104" fill="#73819d" font-size="8">${escapeHtml(Number(min.toFixed(2)))}</text>${paths}</svg><div class="ai-kg-series-legend">${legend}</div>`;
+    }
+
+    function renderHistoryRows(data) {
+        const rows = (data.series || []).flatMap(item => item.points.map(point => ({ ...point, category: item.category })))
+            .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))
+            .slice(0, 24);
+        if (!rows.length) return '<div class="ai-kg-side-empty">这个月份还没有已保存的历史录入快照。</div>';
+        return `<div class="ai-kg-history-list">${rows.map(item => {
+            const missingValue = item.value === null || item.value === undefined || ['', '--', '-'].includes(String(item.value).trim());
+            const stateClass = missingValue || item.isFailing === null ? 'unknown' : item.isFailing === true ? 'fail' : '';
+            const stateText = missingValue ? '无值' : item.isFailing === true ? '未达标' : item.isFailing === false ? '达标' : '未判定';
+            return `<div class="ai-kg-history-row" title="${escapeHtml(item.snapshotId)}"><span class="ai-kg-history-time">${escapeHtml(formatShortTime(item.createdAt))}</span><span class="ai-kg-history-value">${escapeHtml(item.category)} · ${escapeHtml(item.value ?? '--')}</span><span class="ai-kg-history-state ${stateClass}">${stateText}</span></div>`;
+        }).join('')}</div>`;
+    }
+
+    function renderMonthlyRules(rule) {
+        if (!rule) return '<div class="ai-kg-side-empty">当前指标尚未配置月份目标规则。</div>';
+        return `<div class="ai-kg-month-grid">${Array.from({ length: 12 }, (_, index) => index + 1).map(month => {
+            const value = rule.monthlyTargets?.[month];
+            const categoryValues = rule.categoryTargets?.[String(month)];
+            const text = value !== undefined ? value : categoryValues && Object.keys(categoryValues).length ? '分子指标' : '--';
+            return `<div class="ai-kg-month-cell ${month === state.month ? 'active' : ''}" title="${escapeHtml(month)}月规则"><span>${month}月</span><b>${escapeHtml(text)}</b></div>`;
+        }).join('')}</div>`;
+    }
+
+    async function selectMetricNode(node) {
+        if (!node) {
+            sidebar.innerHTML = '<div class="ai-kg-side-empty">点击分类、指标或子指标，可查看月份规则和历史录入快照。</div>';
+            return;
+        }
+        const stats = state.data?.stats || {};
+        if (node.type === 'metricRoot') {
+            sidebar.innerHTML = `<div class="ai-kg-node-type">指标体系根节点</div><div class="ai-kg-node-title">${state.month}月指标规则</div><div class="ai-kg-node-stats"><div class="ai-kg-stat-card"><b>${stats.categories || 0}</b><span>指标分类</span></div><div class="ai-kg-stat-card"><b>${stats.metrics || 0}</b><span>指标</span></div><div class="ai-kg-stat-card"><b>${stats.subMetrics || 0}</b><span>子指标</span></div><div class="ai-kg-stat-card"><b>${stats.snapshots || 0}</b><span>历史快照</span></div></div><div class="ai-kg-section-title">数据口径</div><div class="ai-kg-node-path">${escapeHtml(state.data?.historicalRule || '')}</div>`;
+            return;
+        }
+        if (node.type === 'metricCategory') {
+            const metrics = state.nodes.filter(item => item.type === 'metric' && item.group === node.group);
+            sidebar.innerHTML = `<div class="ai-kg-node-type">指标分类</div><div class="ai-kg-node-title">${escapeHtml(node.label)}</div><div class="ai-kg-node-stats"><div class="ai-kg-stat-card"><b>${metrics.length}</b><span>指标</span></div><div class="ai-kg-stat-card"><b>${metrics.reduce((sum, item) => sum + Number(item.subMetricCount || 0), 0)}</b><span>子指标</span></div></div><div class="ai-kg-section-title">分类指标</div>${metrics.map(item => `<div class="ai-kg-chunk" data-node-id="${escapeHtml(item.id)}"><div class="ai-kg-chunk-title">${escapeHtml(item.label)}</div><div class="ai-kg-chunk-lines">${escapeHtml(formatRuleTarget(item.rule))} · 权重 ${escapeHtml(item.rule?.weight ?? '--')}</div></div>`).join('')}`;
+            return;
+        }
+        const metricNode = node.type === 'metric'
+            ? node
+            : state.nodes.find(item => item.type === 'metric' && item.label === node.metricLabel);
+        if (!metricNode) return;
+        const category = node.type === 'submetric' ? node.category : '';
+        const rule = metricNode.rule;
+        const childNodes = state.edges.filter(edge => edge.source === metricNode.id && edge.targetNode?.type === 'submetric').map(edge => edge.targetNode);
+        const subMetricHtml = node.type === 'metric' && childNodes.length
+            ? `<div class="ai-kg-section-title">子指标</div>${childNodes.map(item => `<div class="ai-kg-chunk" data-node-id="${escapeHtml(item.id)}"><div class="ai-kg-chunk-title">${escapeHtml(item.label)}</div><div class="ai-kg-chunk-lines">${escapeHtml(formatRuleTarget(rule, item.category))} · 最新 ${escapeHtml(item.latestValue ?? '--')} · ${Number(item.historySnapshotCount) || 0} 个快照</div></div>`).join('')}`
+            : '';
+        sidebar.innerHTML = `<div class="ai-kg-node-type">${node.type === 'submetric' ? '子指标' : '指标'}</div><div class="ai-kg-node-title">${escapeHtml(node.label)}</div><div class="ai-kg-node-path">${escapeHtml(metricNode.group)} · ${state.month}月规则</div><div class="ai-kg-rule"><div class="ai-kg-rule-main">${escapeHtml(formatRuleTarget(rule, category))}</div><div class="ai-kg-rule-meta">指标：${escapeHtml(metricNode.label)} · 权重 ${escapeHtml(rule?.weight ?? '--')} · ${rule?.proportionalScoring ? '比例计分' : '标准计分'}${category ? ` · 子指标 ${escapeHtml(category)}` : ''}</div></div>${subMetricHtml}<div class="ai-kg-section-title">12个月规则</div>${renderMonthlyRules(rule)}<div class="ai-kg-section-title">历史录入快照</div><div class="ai-kg-side-empty ai-kg-history-loading">正在读取已保存历史值…</div>`;
+        try {
+            const query = new URLSearchParams({ metric: metricNode.label, month: String(state.month) });
+            if (category) query.set('category', category);
+            const response = await fetch(`/api/ai/knowledge/metric-history?${query}`, { headers: authHeaders() });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || '历史快照读取失败');
+            if (state.selected?.id !== node.id) return;
+            const loadingText = sidebar.querySelector('.ai-kg-history-loading');
+            if (loadingText) loadingText.remove();
+            const hasHistory = (data.series || []).some(item => item.points?.length);
+            sidebar.insertAdjacentHTML('beforeend', `${hasHistory ? renderHistoryTrend(data) : ''}${renderHistoryRows(data)}<div class="ai-kg-node-path" style="margin-top:10px">${escapeHtml(data.historicalRule || '')}</div>`);
+        } catch (error) {
+            if (state.selected?.id === node.id) sidebar.insertAdjacentHTML('beforeend', `<div class="ai-kg-side-empty">⚠️ ${escapeHtml(error.message)}</div>`);
+        }
+    }
+
+    async function selectNode(node) {
+        state.selected = node;
+        render();
+        if (isMetricMode()) {
+            await selectMetricNode(node);
+            return;
+        }
+        if (!node) {
+            sidebar.innerHTML = `<div class="ai-kg-side-empty">${escapeHtml(kgT('empty'))}</div>`;
+            return;
+        }
+        if (node.type === 'root') {
+            const stats = state.data?.stats || {};
+            sidebar.innerHTML = `<div class="ai-kg-node-type">${kgT('rootType')}</div><div class="ai-kg-node-title">Tools Platform</div><div class="ai-kg-node-stats"><div class="ai-kg-stat-card"><b>${stats.documents || 0}</b><span>${kgT('knowledgeFile')}</span></div><div class="ai-kg-stat-card"><b>${stats.chunks || 0}</b><span>${kgT('chunks')}</span></div><div class="ai-kg-stat-card"><b>${Number(stats.builtInTools || 0) + Number(stats.customTools || 0)}</b><span>${kgT('tools')}</span></div><div class="ai-kg-stat-card"><b>${stats.tables || 0}</b><span>${kgT('tables')}</span></div></div>`;
+            return;
+        }
+        if (['assetCategory', 'tool', 'database', 'assetFile', 'table'].includes(node.type)) {
+            const childEdges = state.edges.filter(edge => edge.type === 'contains' && edge.source === node.id);
+            const relationEdges = state.edges.filter(edge => edge.source === node.id || edge.target === node.id);
+            const related = relationEdges.map(edge => edge.source === node.id ? edge.targetNode : edge.sourceNode).filter(item => item && !childEdges.some(edge => edge.target === item.id));
+            const typeLabel = node.type === 'assetCategory' ? kgT('assetCategory') : node.type === 'tool' ? kgT('htmlTool') : node.type === 'database' ? kgT('database') : node.type === 'table' ? kgT('table') : kgT('toolFile');
+            const statCards = [];
+            if (node.type === 'assetCategory') statCards.push([childEdges.length, kgT('contained')]);
+            if (node.type === 'tool') statCards.push([node.fileCount || childEdges.length, kgT('assetFiles')], [node.builtIn ? kgT('builtInTools') : kgT('customTools'), kgT('htmlTool')]);
+            if (node.type === 'database') statCards.push([node.tableCount || childEdges.length, kgT('tables')], [formatBytes(node.bytes), kgT('fileSize')]);
+            if (node.type === 'assetFile') statCards.push([formatBytes(node.bytes), kgT('fileSize')], [String(node.extension || '—').replace('.', '').toUpperCase() || '—', 'TYPE']);
+            if (node.type === 'table') statCards.push([node.columns?.length || 0, kgT('columns')], [node.database || '—', kgT('database')]);
+            const childrenHtml = childEdges.slice(0, 80).map(edge => `<div class="ai-kg-chunk" data-node-id="${escapeHtml(edge.targetNode.id)}"><div class="ai-kg-chunk-title">${escapeHtml(nodeLabel(edge.targetNode))}</div><div class="ai-kg-chunk-lines">${escapeHtml(edge.targetNode.path || edge.targetNode.type || '')}</div></div>`).join('');
+            const relatedHtml = related.slice(0, 40).map(item => `<div class="ai-kg-chunk" data-node-id="${escapeHtml(item.id)}"><div class="ai-kg-chunk-title">${escapeHtml(nodeLabel(item))}</div><div class="ai-kg-chunk-lines">${escapeHtml(item.path || item.type || '')}</div></div>`).join('');
+            sidebar.innerHTML = `<div class="ai-kg-node-type">${escapeHtml(typeLabel)}</div><div class="ai-kg-node-title">${escapeHtml(nodeLabel(node))}</div>${node.path ? `<div class="ai-kg-node-path">${escapeHtml(node.path)}</div>` : ''}${node.description ? `<div class="ai-kg-node-path">${escapeHtml(node.description)}</div>` : ''}<div class="ai-kg-node-stats">${statCards.map(([value,label]) => `<div class="ai-kg-stat-card"><b>${escapeHtml(value)}</b><span>${escapeHtml(label)}</span></div>`).join('')}</div>${node.updatedAt ? `<div class="ai-kg-section-title">${kgT('updatedAt')}</div><div class="ai-kg-node-path">${escapeHtml(formatTime(node.updatedAt))}</div>` : ''}${node.type === 'tool' ? `<div class="ai-kg-section-title">${kgT('publicAccess')}</div><div class="ai-kg-node-path">${node.publicAccess ? kgT('yes') : kgT('no')}</div>` : ''}${node.columns?.length ? `<div class="ai-kg-section-title">${kgT('columns')}</div><div class="ai-kg-node-path">${escapeHtml(node.columns.join(' · '))}</div>` : ''}${node.schema ? `<div class="ai-kg-section-title">${kgT('schema')}</div><div class="ai-kg-chunk-preview">${escapeHtml(node.schema)}</div>` : ''}${childrenHtml ? `<div class="ai-kg-section-title">${kgT('contained')}</div>${childrenHtml}` : ''}${relatedHtml ? `<div class="ai-kg-section-title">${kgT('related')}</div>${relatedHtml}` : ''}`;
+            return;
+        }
+        if (node.type === 'group') {
+            if (node.group === 'tool-data-assets') {
+                const children = state.edges.filter(edge => edge.type === 'contains' && edge.source === node.id).map(edge => edge.targetNode).filter(Boolean);
+                sidebar.innerHTML = `<div class="ai-kg-node-type">${kgT('toolData')}</div><div class="ai-kg-node-title">${escapeHtml(nodeLabel(node))}</div><div class="ai-kg-node-stats"><div class="ai-kg-stat-card"><b>${state.data?.stats?.builtInTools || 0}</b><span>${kgT('builtInTools')}</span></div><div class="ai-kg-stat-card"><b>${state.data?.stats?.customTools || 0}</b><span>${kgT('customTools')}</span></div><div class="ai-kg-stat-card"><b>${state.data?.stats?.databases || 0}</b><span>${kgT('databases')}</span></div><div class="ai-kg-stat-card"><b>${state.data?.stats?.tables || 0}</b><span>${kgT('tables')}</span></div></div><div class="ai-kg-section-title">${kgT('contained')}</div>${children.map(item => `<div class="ai-kg-chunk" data-node-id="${escapeHtml(item.id)}"><div class="ai-kg-chunk-title">${escapeHtml(nodeLabel(item))}</div></div>`).join('')}`;
+                return;
+            }
+            const docs = state.nodes.filter(item => item.type === 'document' && item.group === node.group);
+            sidebar.innerHTML = `<div class="ai-kg-node-type">${kgT('businessModules')}</div><div class="ai-kg-node-title">${escapeHtml(nodeLabel(node))}</div><div class="ai-kg-node-stats"><div class="ai-kg-stat-card"><b>${docs.length}</b><span>${kgT('files')}</span></div><div class="ai-kg-stat-card"><b>${docs.reduce((sum,item)=>sum+(item.chunks||0),0)}</b><span>${kgT('chunks')}</span></div></div><div class="ai-kg-section-title">${kgT('moduleFiles')}</div>${docs.slice(0,30).map(item=>`<div class="ai-kg-chunk" data-node-id="${escapeHtml(item.id)}"><div class="ai-kg-chunk-title">${escapeHtml(nodeLabel(item))}</div><div class="ai-kg-chunk-lines">${escapeHtml(item.path)}</div></div>`).join('')}`;
+            return;
+        }
+        sidebar.innerHTML = `<div class="ai-kg-node-type">${kgT('readingFile')}</div><div class="ai-kg-node-title">${escapeHtml(nodeLabel(node))}</div><div class="ai-kg-node-path">${escapeHtml(node.path)}</div>`;
+        try {
+            const response = await fetch(`/api/ai/knowledge/document?path=${encodeURIComponent(node.path)}`, { headers: authHeaders() });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || '读取失败');
+            if (state.selected?.id !== node.id) return;
+            sidebar.innerHTML = `
+                <div class="ai-kg-node-type">${escapeHtml(data.group?.label || '知识文件')}</div>
+                <div class="ai-kg-node-title">${escapeHtml(nodeLabel(node))}</div>
+                <div class="ai-kg-node-path">${escapeHtml(data.path)}</div>
+                <div class="ai-kg-node-stats"><div class="ai-kg-stat-card"><b>${data.chunk_count || 0}</b><span>${kgT('chunks')}</span></div><div class="ai-kg-stat-card"><b>${formatBytes(data.size_bytes)}</b><span>${kgT('fileSize')}</span></div></div>
+                <div class="ai-kg-section-title">${kgT('indexTime')}</div><div class="ai-kg-node-path">${escapeHtml(formatTime(data.indexed_at))}</div>
+                <div class="ai-kg-section-title">${kgT('viewChunks')}</div>
+                ${(data.chunks || []).map(chunk => `<div class="ai-kg-chunk"><div class="ai-kg-chunk-title">${escapeHtml(chunk.title || kgT('unnamedChunk'))}</div><div class="ai-kg-chunk-lines">${data.path}:${chunk.start_line}-${chunk.end_line}</div><div class="ai-kg-chunk-preview">${escapeHtml(chunk.content)}</div></div>`).join('')}
+            `;
+        } catch (error) {
+            sidebar.innerHTML += `<div class="ai-kg-side-empty">⚠️ ${escapeHtml(error.message)}</div>`;
+        }
+    }
+
+    function focusNode(node) {
+        if (!node) return;
+        state.panX = -node.x * state.scale;
+        state.panY = -node.y * state.scale;
+        selectNode(node);
+        render();
+    }
+
+    function updateModeChrome(data) {
+        const metrics = data.mode === 'metrics';
+        titleEl.textContent = metrics ? kgT('metricTitle') : kgT('knowledgeTitle');
+        subtitleEl.textContent = metrics ? kgT('metricSubtitle') : kgT('knowledgeSubtitle');
+        legendEl.innerHTML = metrics
+            ? `<span><i style="background:#f5f7ff"></i>${kgT('monthRules')}</span><span><i style="background:#8b9cff"></i>${kgT('category')}</span><span><i style="background:#cf7e9d"></i>${kgT('metric')}</span><span><i style="background:#64739a"></i>${kgT('submetric')}</span>`
+            : `<span><i style="background:#f5f7ff"></i>${kgT('project')}</span><span><i style="background:#8b9cff"></i>${kgT('module')}</span><span><i style="background:#6fc4ee"></i>${kgT('toolData')}</span><span><i style="background:#64739a"></i>${kgT('knowledgeFile')}</span>`;
+        monthWrap.classList.toggle('visible', metrics);
+        refreshButton.textContent = metrics ? kgT('refreshMetrics') : kgT('refreshKnowledge');
+        refreshButton.title = metrics ? kgT('refreshMetricsTitle') : kgT('refreshKnowledgeTitle');
+        searchInput.placeholder = metrics ? kgT('searchMetrics') : kgT('searchKnowledge');
+        overlay.querySelectorAll('[data-kg-mode]').forEach(button => button.classList.toggle('active', button.dataset.kgMode === state.mode));
+        if (metrics) {
+            state.month = Number(data.month);
+            monthSelect.innerHTML = (data.availableMonths || []).map(month => `<option value="${month}" ${Number(month) === state.month ? 'selected' : ''}>${kgLang() === 'en' ? `Month ${month}` : `${month}月`}</option>`).join('');
+        }
+    }
+
+    function applyGraphLanguage() {
+        overlay.querySelector('#aiKgViewSwitch').setAttribute('aria-label', kgT('view'));
+        overlay.querySelector('[data-kg-mode="knowledge"]').textContent = kgT('knowledge');
+        overlay.querySelector('[data-kg-mode="metrics"]').textContent = kgT('metrics');
+        monthWrap.childNodes[0].nodeValue = kgT('ruleMonth');
+        motionButton.textContent = state.motionEnabled ? kgT('motion') : kgT('motionPaused');
+        motionButton.title = kgT('motionTitle');
+        controlsButton.title = kgT('controls');
+        controlsButton.setAttribute('aria-label', kgT('controls'));
+        controlPanel.querySelector('[data-kg-control-title]').textContent = kgT('controls');
+        controlPanel.querySelector('[data-kg-appearance-title]').textContent = kgT('appearance');
+        controlPanel.querySelector('[data-kg-force-title]').textContent = kgT('force');
+        controlPanel.querySelector('[data-kg-palette-label]').textContent = kgT('palette');
+        controlPanel.querySelector('[data-kg-node-size-label]').textContent = kgT('nodeSize');
+        controlPanel.querySelector('[data-kg-line-width-label]').textContent = kgT('lineWidth');
+        controlPanel.querySelector('[data-kg-label-density-label]').textContent = kgT('labelDensity');
+        controlPanel.querySelector('[data-kg-label-opacity-label]').textContent = kgT('labelOpacity');
+        controlPanel.querySelector('[data-kg-growth-speed-label]').textContent = kgT('growthSpeed');
+        controlPanel.querySelector('[data-kg-center-label]').textContent = kgT('centerForce');
+        controlPanel.querySelector('[data-kg-repulsion-label]').textContent = kgT('repulsion');
+        controlPanel.querySelector('[data-kg-attraction-label]').textContent = kgT('attraction');
+        controlPanel.querySelector('[data-kg-link-length-label]').textContent = kgT('linkLength');
+        controlPanel.querySelector('[data-kg-drift-label]').textContent = kgT('drift');
+        controlPanel.querySelector('option[value="cosmic"]').textContent = kgT('cosmic');
+        controlPanel.querySelector('option[value="obsidian"]').textContent = kgT('obsidian');
+        controlPanel.querySelector('option[value="aurora"]').textContent = kgT('aurora');
+        controlPanel.querySelector('#aiKgResetControls').textContent = kgT('resetControls');
+        controlPanel.querySelector('.ai-kg-control-close').setAttribute('aria-label', kgT('close'));
+        setGrowthButtonState();
+        overlay.querySelector('#aiKgFit').title = kgT('fit');
+        overlay.querySelector('#aiKgClose').title = kgT('close');
+        overlay.querySelector('#aiKgHint').innerHTML = kgT('hints').map(item => `<span>${escapeHtml(item)}</span>`).join('');
+        if (state.data) {
+            updateModeChrome(state.data);
+            renderStatuses(state.data);
+            if (state.selected) selectNode(state.selected);
+            else {
+                selectNode(state.nodeMap.get(isMetricMode() ? 'metric-root' : 'root'));
+                state.selected = null;
+            }
+        }
+        render();
+    }
+
+    async function loadGraph() {
+        setLoading(isMetricMode() ? kgT('loadingMetrics') : kgT('loadingKnowledge'), true);
+        try {
+            const endpoint = isMetricMode()
+                ? `/api/ai/knowledge/metric-graph${state.month ? `?month=${state.month}` : ''}`
+                : '/api/ai/knowledge/graph';
+            const response = await fetch(endpoint, { headers: authHeaders() });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || (isMetricMode() ? kgT('metricLoadFailed') : kgT('graphLoadFailed')));
+            updateModeChrome(data);
+            renderStatuses(data);
+            state.selected = null;
+            clearHoverIntent({ immediate: true });
+            state.searchMatches = new Set();
+            state.growth.active = false;
+            setGrowthButtonState();
+            searchInput.value = '';
+            searchCount.textContent = '';
+            initializeLayout(data);
+            setLoading('', false);
+            const rootNode = state.nodeMap.get(isMetricMode() ? 'metric-root' : 'root');
+            await selectNode(rootNode);
+            state.selected = null;
+            render();
+        } catch (error) {
+            showError(error.message);
+        }
+    }
+
+    async function switchMode(mode) {
+        if (!['knowledge', 'metrics'].includes(mode) || mode === state.mode) return;
+        state.mode = mode;
+        state.month = mode === 'metrics' ? state.month : null;
+        await loadGraph();
+    }
+
+    canvas.addEventListener('pointerdown', event => {
+        const node = nodeAt(event.clientX, event.clientY);
+        clearHoverIntent({ immediate: true });
+        state.pointer = { x: event.clientX, y: event.clientY, panX: state.panX, panY: state.panY, node, moved: false, lastTime: performance.now(), velocityX: 0, velocityY: 0 };
+        if (node && !node.fixed) node.dragging = true;
+        if (node) reheat(0.82);
+        canvas.setPointerCapture(event.pointerId);
+        canvas.classList.add('dragging');
+    });
+    canvas.addEventListener('pointermove', event => {
+        if (state.pointer) {
+            const dx = event.clientX - state.pointer.x;
+            const dy = event.clientY - state.pointer.y;
+            if (Math.hypot(dx, dy) > 3) state.pointer.moved = true;
+            if (state.pointer.node && state.pointer.moved) {
+                const now = performance.now();
+                const elapsedMs = Math.max(8, now - state.pointer.lastTime);
+                state.pointer.node.x += dx / state.scale;
+                state.pointer.node.y += dy / state.scale;
+                state.pointer.velocityX = (dx / state.scale) * (16.67 / elapsedMs);
+                state.pointer.velocityY = (dy / state.scale) * (16.67 / elapsedMs);
+                state.pointer.x = event.clientX; state.pointer.y = event.clientY;
+                state.pointer.lastTime = now;
+                state.pointer.node.vx = 0; state.pointer.node.vy = 0;
+                reheat(0.78);
+            } else if (!state.pointer.node) {
+                state.panX = state.pointer.panX + dx;
+                state.panY = state.pointer.panY + dy;
+            }
+            render();
+            return;
+        }
+        const hovered = nodeAt(event.clientX, event.clientY);
+        canvas.style.cursor = hovered ? 'pointer' : 'grab';
+        queueHoverIntent(hovered);
+    });
+    canvas.addEventListener('pointerup', event => {
+        const pointer = state.pointer;
+        state.pointer = null;
+        canvas.classList.remove('dragging');
+        if (pointer?.node && !pointer.node.fixed) {
+            pointer.node.dragging = false;
+            if (pointer.moved) {
+                pointer.node.vx = Math.max(-12, Math.min(12, pointer.velocityX || 0));
+                pointer.node.vy = Math.max(-12, Math.min(12, pointer.velocityY || 0));
+                reheat(0.68);
+            }
+        }
+        if (pointer && pointer.node && !pointer.moved) selectNode(pointer.node);
+        else if (pointer && !pointer.node && !pointer.moved) {
+            state.selected = null;
+            render();
+        }
+        try { canvas.releasePointerCapture(event.pointerId); } catch (_error) {}
+    });
+    canvas.addEventListener('pointerleave', () => { if (!state.pointer) clearHoverIntent(); });
+    canvas.addEventListener('wheel', event => {
+        event.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = event.clientX - rect.left - state.width / 2;
+        const mouseY = event.clientY - rect.top - state.height / 2;
+        const oldScale = state.scale;
+        const nextScale = Math.max(0.22, Math.min(2.8, oldScale * Math.exp(-event.deltaY * 0.0012)));
+        const ratio = nextScale / oldScale;
+        state.panX = mouseX - (mouseX - state.panX) * ratio;
+        state.panY = mouseY - (mouseY - state.panY) * ratio;
+        state.scale = nextScale;
+        render();
+    }, { passive: false });
+
+    searchInput.addEventListener('input', () => {
+        const query = searchInput.value.trim().toLowerCase();
+        const matches = query ? state.nodes.filter(node => `${node.label || ''} ${node.labelEn || ''} ${node.path || ''} ${node.group || ''} ${node.category || ''} ${node.metricLabel || ''} ${node.database || ''} ${node.slug || ''} ${node.rule?.monthTarget || ''}`.toLowerCase().includes(query)) : [];
+        state.searchMatches = new Set(matches.map(node => node.id));
+        searchCount.textContent = query ? kgT('count', matches.length) : '';
+        if (matches.length === 1) focusNode(matches[0]);
+        render();
+    });
+    searchInput.addEventListener('keydown', event => {
+        if (event.key !== 'Enter') return;
+        const first = state.nodes.find(node => state.searchMatches.has(node.id));
+        if (first) focusNode(first);
+    });
+    sidebar.addEventListener('click', event => {
+        const item = event.target.closest('[data-node-id]');
+        if (item) focusNode(state.nodeMap.get(item.getAttribute('data-node-id')));
+    });
+    overlay.querySelectorAll('[data-kg-mode]').forEach(button => {
+        button.onclick = () => switchMode(button.dataset.kgMode);
+    });
+    monthSelect.onchange = async () => {
+        state.month = Number(monthSelect.value);
+        await loadGraph();
+    };
+    overlay.querySelector('#aiKgFit').onclick = resetView;
+    controlsButton.onclick = () => {
+        const open = controlPanel.classList.toggle('open');
+        controlsButton.setAttribute('aria-pressed', String(open));
+    };
+    controlPanel.querySelector('.ai-kg-control-close').onclick = () => {
+        controlPanel.classList.remove('open');
+        controlsButton.setAttribute('aria-pressed', 'false');
+    };
+    controlPanel.addEventListener('input', event => {
+        const input = event.target.closest('[data-setting]');
+        if (!input) return;
+        state.settings[input.dataset.setting] = input.tagName === 'SELECT' ? input.value : Number(input.value);
+        saveSettings();
+        syncControlPanel();
+        if (['centerForce','repulsion','attraction','linkLength','drift','nodeScale'].includes(input.dataset.setting)) reheat(0.62);
+        render();
+    });
+    growButton.onclick = startGrowthAnimation;
+    controlPanel.querySelector('#aiKgResetControls').onclick = () => {
+        state.settings = { ...DEFAULT_SETTINGS };
+        saveSettings();
+        syncControlPanel();
+        reheat(0.72);
+        render();
+    };
+    motionButton.onclick = () => {
+        state.motionEnabled = !state.motionEnabled;
+        motionButton.setAttribute('aria-pressed', String(state.motionEnabled));
+        motionButton.textContent = state.motionEnabled ? kgT('motion') : kgT('motionPaused');
+        if (state.motionEnabled) reheat(0.45);
+        else {
+            state.running = false;
+            state.nodes.forEach(node => { node.vx = 0; node.vy = 0; });
+            render();
+        }
+    };
+    overlay.querySelector('#aiKgClose').onclick = () => window.AIKnowledgeGraph.close();
+    refreshButton.onclick = async event => {
+        const button = event.currentTarget;
+        button.disabled = true;
+        button.textContent = kgT('refreshLoading');
+        try {
+            if (!isMetricMode()) {
+                const response = await fetch('/api/ai/knowledge/refresh', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }) });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || kgT('refreshFailed'));
+            }
+            await loadGraph();
+        } catch (error) {
+            sidebar.innerHTML = `<div class="ai-kg-side-empty">⚠️ ${escapeHtml(error.message)}</div>`;
+        } finally {
+            button.disabled = false;
+            button.textContent = isMetricMode() ? kgT('refreshMetrics') : kgT('refreshKnowledge');
+        }
+    };
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && overlay.classList.contains('open')) window.AIKnowledgeGraph.close();
+    });
+    new ResizeObserver(resize).observe(stage);
+    window.addEventListener('tools:languagechange', applyGraphLanguage);
+    syncControlPanel();
+    applyGraphLanguage();
+
+    window.AIKnowledgeGraph = {
+        open() {
+            overlay.classList.add('open');
+            document.body.classList.add('ai-kg-open');
+            resize();
+            state.running = state.motionEnabled;
+            state.lastFrameTime = 0;
+            loadGraph();
+            setTimeout(() => searchInput.focus(), 100);
+        },
+        close() {
+            overlay.classList.remove('open');
+            document.body.classList.remove('ai-kg-open');
+            state.running = false;
+            if (state.frame) cancelAnimationFrame(state.frame);
+            state.frame = 0;
+            state.lastFrameTime = 0;
+        }
+    };
+})();

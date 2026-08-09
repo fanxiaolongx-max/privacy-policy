@@ -15,12 +15,69 @@
         .hero h1 { font-size: 42px; font-weight: 800; background: linear-gradient(90deg, #64ffda, #4a90e2, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 12px; }
         .hero p { font-size: 16px; color: #8892b0; max-width: 600px; margin: 0 auto; line-height: 1.7; }
 
+        .home-graph-entry {
+            position: relative;
+            isolation: isolate;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 44px;
+            margin: 18px auto 0;
+            padding: 5px 13px 5px 7px;
+            overflow: hidden;
+            border: 1px solid rgba(129,140,248,.25);
+            border-radius: 999px;
+            background: linear-gradient(135deg, rgba(30,41,76,.76), rgba(43,33,79,.68));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 8px 26px rgba(4,9,25,.2);
+            color: #dce6f8;
+            font-family: inherit;
+            cursor: pointer;
+            transition: transform .22s ease, border-color .22s ease, background .22s ease, box-shadow .22s ease;
+        }
+        .home-graph-entry::before {
+            content: '';
+            position: absolute;
+            z-index: -1;
+            inset: -20px 45% -20px -20px;
+            background: radial-gradient(circle, rgba(100,255,218,.15), transparent 68%);
+            opacity: .72;
+            transition: opacity .22s ease, transform .22s ease;
+        }
+        .home-graph-entry:hover,
+        .home-graph-entry:focus-visible {
+            outline: none;
+            transform: translateY(-2px);
+            border-color: rgba(125,211,252,.46);
+            background: linear-gradient(135deg, rgba(35,52,94,.88), rgba(61,40,104,.8));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 12px 30px rgba(4,9,25,.32), 0 0 20px rgba(99,102,241,.08);
+        }
+        .home-graph-entry:hover::before { opacity: 1; transform: translateX(8px); }
+        .home-graph-mark {
+            width: 32px;
+            height: 32px;
+            display: grid;
+            place-items: center;
+            flex: 0 0 auto;
+            border: 1px solid rgba(165,180,252,.2);
+            border-radius: 50%;
+            background: rgba(15,23,42,.58);
+            color: #9deee0;
+            box-shadow: inset 0 0 12px rgba(99,102,241,.12);
+        }
+        .home-graph-mark svg { width: 18px; height: 18px; }
+        .home-graph-copy { display: flex; align-items: baseline; gap: 9px; white-space: nowrap; }
+        .home-graph-title { color: #f3f7ff; font-size: 12px; font-weight: 800; letter-spacing: .015em; }
+        .home-graph-divider { width: 1px; height: 11px; background: rgba(148,163,184,.22); }
+        .home-graph-subtitle { color: #8292ae; font-size: 10px; font-weight: 550; }
+        .home-graph-arrow { color: #91a4c4; font-size: 14px; transition: transform .22s ease, color .22s ease; }
+        .home-graph-entry:hover .home-graph-arrow { color: #b8fff0; transform: translateX(2px); }
+
         .friend-links {
             display: flex;
             align-items: flex-start;
             gap: 10px;
             width: min(100%, 1040px);
-            margin: 18px auto 0;
+            margin: 14px auto 0;
             color: #7187a4;
             text-align: left;
         }
@@ -768,6 +825,8 @@
 
         @media (max-width: 768px) {
             .home-content { padding-left: 16px; padding-right: 16px; }
+            .home-graph-entry { min-height: 42px; margin-top: 15px; padding-right: 11px; }
+            .home-graph-subtitle, .home-graph-divider { display: none; }
             .friend-links { gap: 8px; }
             .friend-links-label { font-size: 0; }
             .friend-links-label::before { content: '🔗'; font-size: 13px; }
@@ -807,6 +866,20 @@
             <div class="hero-icon">⚡</div>
             <h1>Tools Platform</h1>
             <p>统一工具中台 · 前后端分离架构 · 数据持久化存储<br>让每一个工具都更强大、更稳定、更易扩展</p>
+            <button type="button" class="home-graph-entry" id="homeKnowledgeGraphEntry" data-open-knowledge-graph>
+                <span class="home-graph-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="2.4"></circle><circle cx="5" cy="6" r="1.7"></circle><circle cx="19" cy="7" r="1.7"></circle><circle cx="6" cy="18" r="1.7"></circle><circle cx="18" cy="18" r="1.7"></circle>
+                        <path d="M10.2 10.4 6.3 7.2M13.9 10.6l3.7-2.4M10.1 13.5l-2.8 3M13.9 13.5l2.8 3M7.6 6.3l9.7.5"></path>
+                    </svg>
+                </span>
+                <span class="home-graph-copy">
+                    <span class="home-graph-title" data-home-i18n="home.graph.title">项目知识图谱</span>
+                    <span class="home-graph-divider" aria-hidden="true"></span>
+                    <span class="home-graph-subtitle" data-home-i18n="home.graph.subtitle">探索模块、工具、代码与数据关系</span>
+                </span>
+                <span class="home-graph-arrow" aria-hidden="true">›</span>
+            </button>
             <nav class="friend-links" aria-label="友情链接">
                 <button type="button" class="friend-links-label" id="friendLinksManageBtn" data-home-i18n="home.links.title">🔗 友情链接</button>
                 <div class="friend-links-list">
@@ -1255,7 +1328,7 @@
     <script src="/js/shared/migration-status.js?v=20260626-01"></script>
     <script src="/js/shared/toast.js?v=20260530-03"></script>
     <script src="/js/shared/i18n.js?v=20260610-01"></script>
-    <script src="/js/shared/navbar.js?v=20260809-01"></script>
+    <script src="/js/shared/navbar.js?v=20260809-14"></script>
     <script src="/js/shared/jszip.min.js?v=3.10.1"></script>
     <script>
         const historyState = {
@@ -1280,6 +1353,8 @@
                 'home.title': 'Tools Platform - 工具中台',
                 'home.description': '统一工具平台入口：UIVF12 抓取引擎 & Task SLA 风险监控台',
                 'home.hero.desc': '统一工具中台 · 前后端分离架构 · 数据持久化存储<br>让每一个工具都更强大、更稳定、更易扩展',
+                'home.graph.title': '项目知识图谱',
+                'home.graph.subtitle': '探索模块、工具、代码与数据关系',
                 'home.links.title': '🔗 友情链接',
                 'home.links.wise': '财务管理',
                 'home.links.app': '手机控制',
@@ -1466,6 +1541,8 @@
                 'home.title': 'Tools Platform',
                 'home.description': 'Unified tool hub for data capture, SLA import, reporting, and operations workflows.',
                 'home.hero.desc': 'A unified tool hub · Decoupled frontend/backend · Persistent data storage<br>Make every tool stronger, steadier, and easier to extend',
+                'home.graph.title': 'Project Knowledge Graph',
+                'home.graph.subtitle': 'Explore modules, tools, code, and data relationships',
                 'home.links.title': '🔗 Links',
                 'home.links.wise': 'Finance',
                 'home.links.app': 'Phone Control',
@@ -2771,6 +2848,23 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             applyHomeI18n();
+            document.getElementById('homeKnowledgeGraphEntry')?.addEventListener('click', async event => {
+                event.stopPropagation();
+                const button = event.currentTarget;
+                if (button.disabled) return;
+                button.disabled = true;
+                button.setAttribute('aria-busy', 'true');
+                try {
+                    if (!window.openToolsKnowledgeGraph) throw new Error('知识图谱入口尚未加载，请刷新页面后重试');
+                    await window.openToolsKnowledgeGraph();
+                } catch (error) {
+                    if (typeof showToast === 'function') showToast(error.message || '知识图谱打开失败', 'error');
+                    else alert(error.message || '知识图谱打开失败');
+                } finally {
+                    button.disabled = false;
+                    button.removeAttribute('aria-busy');
+                }
+            });
             setupFriendLinks();
             setupApiRelay();
             setupCustomToolUpload();
