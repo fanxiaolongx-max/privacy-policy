@@ -23,6 +23,7 @@ async function main() {
     assert.strictEqual(repo.resolveService('/api/ai/chat').id, 'ai');
     assert.strictEqual(repo.shouldTrackRequest('OPTIONS', '/api/health'), false);
     assert.strictEqual(repo.shouldTrackRequest('GET', '/api/platform-metrics/service-status?days=90'), false);
+    assert.strictEqual(repo.shouldTrackRequest('GET', '/api/platform-metrics/service-status/failures'), false);
 
     const now = Date.now();
     assert.strictEqual(repo.summarizeLicenseStatus({ enabled: false }, now).state, 'not-applicable');
@@ -32,8 +33,14 @@ async function main() {
     assert.strictEqual(repo.summarizeLicenseStatus({ enabled: true, valid: false, reasonCode: 'REVOKED', trustedNow: now, expiresAt: now + 30 * 86400000 }, now).state, 'incident');
 
     await repo.trackRequest({ method: 'GET', pathname: '/api/health', statusCode: 200, durationMs: 12, timestamp: dateAt(2) });
-    await repo.trackRequest({ method: 'GET', pathname: '/api/health', statusCode: 404, durationMs: 18, timestamp: dateAt(1) });
-    await repo.trackRequest({ method: 'POST', pathname: '/api/ai/chat', statusCode: 503, durationMs: 140, timestamp: dateAt(0) });
+    await repo.trackRequest({
+        method: 'GET', pathname: '/api/health?probe=missing', statusCode: 404, durationMs: 18, timestamp: dateAt(1),
+        requestId: 'req_client_error', requestBody: {}, responseBody: { error: 'not found' }
+    });
+    await repo.trackRequest({
+        method: 'POST', pathname: '/api/ai/chat', statusCode: 503, durationMs: 140, timestamp: dateAt(0),
+        requestId: 'req_server_error', requestBody: { prompt: 'hello' }, responseBody: { error: 'provider unavailable' }
+    });
     await repo.trackRequest({ method: 'GET', pathname: '/api/custom-tools', statusCode: 200, durationMs: 22, timestamp: dateAt(0) });
 
     const history = await repo.getHistory(30);
@@ -51,6 +58,15 @@ async function main() {
     assert.strictEqual(history.overall.clientErrors, 1);
     assert.strictEqual(history.overall.serverErrors, 1);
     assert.strictEqual(history.overall.availability, 75);
+
+    const failures = await repo.getFailures({ limit: 10 });
+    assert.strictEqual(failures.failures.length, 2);
+    assert.strictEqual(failures.failures[0].requestId, 'req_server_error');
+    assert.strictEqual(failures.failures[0].statusCode, 503);
+    assert.strictEqual(JSON.parse(failures.failures[0].responseBody).error, 'provider unavailable');
+    const clientFailures = await repo.getFailures({ serviceKey: 'core', date: dayKey(1), statusClass: '4xx' });
+    assert.strictEqual(clientFailures.failures.length, 1);
+    assert.strictEqual(clientFailures.failures[0].path, '/api/health?probe=missing');
 
     const fallback = await repo.getHistory(365);
     assert.strictEqual(fallback.days, 90);

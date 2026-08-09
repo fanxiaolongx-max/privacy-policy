@@ -2725,6 +2725,9 @@ body.service-status-open { overflow: hidden; }
     background: #fff;
 }
 .service-status-stat { display: grid; gap: 2px; }
+.service-status-clickable { position: relative; appearance: none; width: 100%; font: inherit; text-align: left; cursor: pointer; }
+.service-status-clickable:hover { border-color: #aab7c5; box-shadow: 0 4px 14px rgba(15, 23, 42, .07); transform: translateY(-1px); }
+.service-status-clickable em { color: #8a93a3; font-size: 9px; font-style: normal; }
 .service-status-license > div { min-width: 0; display: grid; gap: 1px; }
 .service-status-license em { overflow: hidden; color: #748091; font-size: 9px; font-style: normal; text-overflow: ellipsis; white-space: nowrap; }
 .service-status-license.operational { border-color: #b9e4c4; background: #f3fbf5; }
@@ -2779,12 +2782,13 @@ body.service-status-open { overflow: hidden; }
     gap: 1px;
     overflow: hidden;
 }
-.service-day-bar { min-width: 1px; border-radius: 1px; background: #d8dee6; }
+.service-day-bar { min-width: 1px; padding: 0; border: 0; border-radius: 1px; background: #d8dee6; }
 .service-day-bar.operational { background: #75d18d; }
 .service-day-bar.degraded { background: #f2b84b; }
 .service-day-bar.incident { background: #ed5966; }
 .service-day-bar.no-data { background: #e4e8ed; }
-.service-day-bar:hover { filter: brightness(.8); transform: scaleY(1.08); transform-origin: center; }
+.service-day-bar.clickable { cursor: pointer; }
+.service-day-bar.clickable:hover { filter: brightness(.8); transform: scaleY(1.08); transform-origin: center; }
 .service-status-axis { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; margin-top: 7px; color: #697586; font-size: 10px; }
 .service-status-axis span:last-child { text-align: right; }
 .service-status-axis b { color: #546173; font-weight: 650; }
@@ -2810,6 +2814,50 @@ body.service-status-open { overflow: hidden; }
 .service-status-error strong { color: #b4232d; font-size: 15px; }
 .service-status-error p { margin: 0; }
 .service-status-error button { padding: 7px 13px; border: 1px solid #d8dee6; border-radius: 8px; background: #fff; cursor: pointer; }
+.service-failure-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2147482600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    background: rgba(15, 23, 42, .72);
+}
+.service-failure-dialog {
+    width: min(1050px, 94vw);
+    max-height: min(820px, 92vh);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #d8dee6;
+    border-radius: 16px;
+    background: #f7f9fb;
+    box-shadow: 0 30px 100px rgba(2, 8, 23, .48);
+}
+.service-failure-head { display: flex; justify-content: space-between; gap: 20px; padding: 19px 22px 15px; border-bottom: 1px solid #dfe5eb; background: #fff; }
+.service-failure-head small { color: #b4232d; font-size: 9px; font-weight: 800; letter-spacing: .14em; }
+.service-failure-head h3 { margin: 3px 0 2px; color: #202630; font-size: 20px; }
+.service-failure-head p { margin: 0; color: #667085; font-size: 11px; }
+.service-failure-head button { width: 34px; height: 34px; flex: none; border: 1px solid #dce2e8; border-radius: 9px; background: #f7f9fb; color: #667085; font-size: 22px; cursor: pointer; }
+.service-failure-content { min-height: 240px; overflow: auto; padding: 16px; }
+.service-failure-item { margin-bottom: 9px; overflow: hidden; border: 1px solid #dce2e8; border-radius: 10px; background: #fff; }
+.service-failure-item summary { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 10px; padding: 11px 13px; cursor: pointer; list-style: none; }
+.service-failure-item summary::-webkit-details-marker { display: none; }
+.service-failure-item summary b { overflow: hidden; color: #344054; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.service-failure-item summary time, .service-failure-item summary em { color: #7a8493; font-size: 10px; font-style: normal; }
+.service-failure-code { min-width: 38px; padding: 3px 6px; border-radius: 5px; color: #fff; font-size: 11px; font-weight: 800; text-align: center; }
+.service-failure-code.client { background: #d88a12; }
+.service-failure-code.server { background: #df3f4d; }
+.service-failure-meta { display: flex; gap: 10px; padding: 8px 13px; border-top: 1px solid #edf0f3; color: #7a8493; font-size: 10px; }
+.service-failure-meta code { color: #475467; }
+.service-failure-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #e3e8ed; border-top: 1px solid #e3e8ed; }
+.service-failure-columns section { min-width: 0; padding: 12px; background: #fbfcfd; }
+.service-failure-columns h4 { margin: 0 0 7px; color: #596579; font-size: 10px; }
+.service-failure-columns pre { min-height: 90px; max-height: 280px; margin: 0; overflow: auto; padding: 10px; border-radius: 7px; background: #111827; color: #d9e2ef; font: 10px/1.55 ui-monospace, SFMono-Regular, Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
+.service-failure-empty { min-height: 230px; display: grid; place-items: center; align-content: center; gap: 7px; color: #667085; text-align: center; }
+.service-failure-empty strong { color: #344054; }
+.service-failure-empty p { max-width: 520px; margin: 0; font-size: 11px; }
 @keyframes service-status-spin { to { transform: rotate(360deg); } }
 
 @media (max-width: 900px) {
@@ -2828,6 +2876,11 @@ body.service-status-open { overflow: hidden; }
     .service-status-stat strong { font-size: 17px; }
     .service-status-refresh span { display: none; }
     .service-status-legend em { width: 100%; margin-left: 0; }
+    .service-failure-modal { padding: 0; }
+    .service-failure-dialog { width: 100vw; max-height: 100vh; border-radius: 0; }
+    .service-failure-item summary { grid-template-columns: auto minmax(0, 1fr) auto; }
+    .service-failure-item summary time { display: none; }
+    .service-failure-columns { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 980px) {

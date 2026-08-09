@@ -3835,6 +3835,10 @@ function serviceStatusBi(zh, en) {
     return window.ToolsI18n?.getLanguage?.() === 'en-US' ? en : zh;
 }
 
+function canInspectServiceFailures() {
+    return localStorage.getItem('tools_role') === 'admin';
+}
+
 function serviceStateMeta(state) {
     const states = {
         operational: { icon: '✓', label: serviceStatusBi('正常', 'Operational') },
@@ -3919,6 +3923,76 @@ function ensureServiceStatusModal() {
     return modal;
 }
 
+function ensureServiceFailureModal() {
+    let modal = document.getElementById('serviceFailureModal');
+    if (modal) return modal;
+    modal = document.createElement('div');
+    modal.id = 'serviceFailureModal';
+    modal.className = 'service-failure-modal';
+    modal.style.display = 'none';
+    modal.innerHTML = `
+        <div class="service-failure-dialog" role="dialog" aria-modal="true" aria-labelledby="serviceFailureTitle">
+            <div class="service-failure-head">
+                <div><small>REQUEST DIAGNOSTICS</small><h3 id="serviceFailureTitle"></h3><p id="serviceFailureSubtitle"></p></div>
+                <button type="button" onclick="closeServiceFailureModal()" aria-label="Close">×</button>
+            </div>
+            <div class="service-failure-content" id="serviceFailureContent"></div>
+        </div>`;
+    modal.addEventListener('click', event => { if (event.target === modal) window.closeServiceFailureModal(); });
+    document.body.appendChild(modal);
+    return modal;
+}
+
+function formatServiceFailureBody(value) {
+    if (!value) return serviceStatusBi('（无内容）', '(empty)');
+    try { return JSON.stringify(JSON.parse(value), null, 2); } catch (_) { return value; }
+}
+
+window.openServiceFailureModal = async function (serviceKey = '', date = '', statusClass = '') {
+    const modal = ensureServiceFailureModal();
+    const serviceName = serviceKey
+        ? document.querySelector(`[data-service-status-key="${serviceKey}"]`)?.dataset.serviceStatusName || serviceKey
+        : serviceStatusBi('全部服务', 'All services');
+    modal.style.display = 'flex';
+    document.getElementById('serviceFailureTitle').textContent = serviceStatusBi('失败请求明细', 'Failed request details');
+    document.getElementById('serviceFailureSubtitle').textContent = [serviceName, date, statusClass].filter(Boolean).join(' · ');
+    const content = document.getElementById('serviceFailureContent');
+    content.innerHTML = `<div class="service-status-loading"><span></span>${serviceStatusBi('正在读取失败记录…', 'Loading failed requests…')}</div>`;
+    const query = new URLSearchParams({ limit: '100' });
+    if (serviceKey) query.set('serviceKey', serviceKey);
+    if (date) query.set('date', date);
+    if (statusClass) query.set('statusClass', statusClass);
+    try {
+        const data = await serviceStatusRequest(`/api/platform-metrics/service-status/failures?${query}`);
+        const failures = data.failures || [];
+        if (!failures.length) {
+            content.innerHTML = `<div class="service-failure-empty"><strong>${serviceStatusBi('暂无可查看的失败明细', 'No failure details available')}</strong><p>${serviceStatusBi('失败明细从本功能启用后开始记录，历史统计仍会保留。', 'Failure details are recorded after this feature is enabled; historical totals remain available.')}</p></div>`;
+            return;
+        }
+        content.innerHTML = failures.map((failure, index) => `
+            <details class="service-failure-item" ${index === 0 ? 'open' : ''}>
+                <summary>
+                    <span class="service-failure-code ${failure.statusCode >= 500 ? 'server' : 'client'}">${Number(failure.statusCode)}</span>
+                    <b>${navEscape(failure.method)} ${navEscape(failure.path)}</b>
+                    <time>${navEscape(new Date(failure.requestAt).toLocaleString())}</time>
+                    <em>${Number(failure.durationMs)}ms</em>
+                </summary>
+                <div class="service-failure-meta"><span>Request ID</span><code>${navEscape(failure.requestId || '—')}</code></div>
+                <div class="service-failure-columns">
+                    <section><h4>${serviceStatusBi('请求内容（已脱敏）', 'Request (redacted)')}</h4><pre>${navEscape(formatServiceFailureBody(failure.requestBody))}</pre></section>
+                    <section><h4>${serviceStatusBi('失败返回（已脱敏）', 'Failure response (redacted)')}</h4><pre>${navEscape(formatServiceFailureBody(failure.responseBody))}</pre></section>
+                </div>
+            </details>`).join('');
+    } catch (error) {
+        content.innerHTML = `<div class="service-status-error"><strong>${serviceStatusBi('失败明细读取失败', 'Unable to load failure details')}</strong><p>${navEscape(error.message)}</p></div>`;
+    }
+};
+
+window.closeServiceFailureModal = function () {
+    const modal = document.getElementById('serviceFailureModal');
+    if (modal) modal.style.display = 'none';
+};
+
 window.openServiceStatusModal = function () {
     const modal = ensureServiceStatusModal();
     modal.style.display = 'flex';
@@ -3959,17 +4033,23 @@ function renderServiceStatusHistory(data) {
     const overallMeta = serviceStateMeta(overall.currentState);
     const licenseMeta = licenseStatusMeta(data.license || {});
     const availability = overall.availability == null ? '—' : `${Number(overall.availability).toFixed(2)}%`;
+    const canInspectFailures = canInspectServiceFailures();
+    const failureStat = (kind, label, count, statusClass) => canInspectFailures
+        ? `<button type="button" class="service-status-stat ${kind} service-status-clickable" onclick="openServiceFailureModal('','','${statusClass}')"><small>${label}</small><strong>${Number(count || 0).toLocaleString()}</strong><em>${serviceStatusBi('点击查看明细', 'View details')}</em></button>`
+        : `<div class="service-status-stat ${kind}"><small>${label}</small><strong>${Number(count || 0).toLocaleString()}</strong></div>`;
     const cards = (data.services || []).map(service => {
         const meta = serviceStateMeta(service.currentState);
         const serviceAvailability = service.summary?.availability == null ? '—' : `${Number(service.summary.availability).toFixed(2)}%`;
         const bars = (service.history || []).map(day => {
             const title = `${day.date} · ${serviceStateMeta(day.state).label}\n${serviceStatusBi('请求', 'Requests')}: ${day.requests} · ${serviceStatusBi('成功', 'Success')}: ${day.successes} · 4xx: ${day.clientErrors} · 5xx: ${day.serverErrors}\n${serviceStatusBi('平均响应', 'Avg response')}: ${day.averageDurationMs}ms`;
-            return `<span class="service-day-bar ${navEscape(day.state)}" title="${navEscape(title)}"></span>`;
+            const clickable = canInspectFailures && (day.clientErrors || day.serverErrors);
+            const action = clickable ? ` onclick="openServiceFailureModal('${navEscape(service.id)}','${navEscape(day.date)}','')"` : '';
+            return `<button type="button" class="service-day-bar ${navEscape(day.state)} ${clickable ? 'clickable' : ''}" title="${navEscape(title)}" aria-label="${navEscape(title)}"${action}></button>`;
         }).join('');
         const name = window.ToolsI18n?.getLanguage?.() === 'en-US' ? service.nameEn : service.name;
         const description = window.ToolsI18n?.getLanguage?.() === 'en-US' ? service.descriptionEn : service.description;
         return `
-            <article class="service-status-card">
+            <article class="service-status-card" data-service-status-key="${navEscape(service.id)}" data-service-status-name="${navEscape(name)}">
                 <div class="service-status-card-head">
                     <div><h3>${navEscape(name)}</h3><p>${navEscape(description)}</p></div>
                     <span class="service-state-icon ${navEscape(service.currentState)}" title="${navEscape(meta.label)}">${meta.icon}</span>
@@ -3985,8 +4065,8 @@ function renderServiceStatusHistory(data) {
             <div class="service-status-license ${navEscape(licenseMeta.state)}"><span class="service-state-icon ${navEscape(licenseMeta.state)}">${licenseMeta.icon}</span><div><small>${serviceStatusBi('License 可用状态', 'License availability')}</small><strong>${navEscape(licenseMeta.label)}</strong><em title="${navEscape(licenseMeta.detail)}">${navEscape(licenseMeta.detail)}</em></div></div>
             <div class="service-status-stat"><small>${serviceStatusBi('可用率', 'Availability')}</small><strong>${availability}</strong></div>
             <div class="service-status-stat"><small>${serviceStatusBi('成功返回', 'Successful')}</small><strong>${Number(overall.successes || 0).toLocaleString()}</strong></div>
-            <div class="service-status-stat warning"><small>${serviceStatusBi('客户端失败 4xx', 'Client errors 4xx')}</small><strong>${Number(overall.clientErrors || 0).toLocaleString()}</strong></div>
-            <div class="service-status-stat danger"><small>${serviceStatusBi('服务端失败 5xx', 'Server errors 5xx')}</small><strong>${Number(overall.serverErrors || 0).toLocaleString()}</strong></div>
+            ${failureStat('warning', serviceStatusBi('客户端失败 4xx', 'Client errors 4xx'), overall.clientErrors, '4xx')}
+            ${failureStat('danger', serviceStatusBi('服务端失败 5xx', 'Server errors 5xx'), overall.serverErrors, '5xx')}
         </section>
         ${Number(overall.requests || 0) ? '' : `<div class="service-status-notice">${serviceStatusBi('状态历史从本功能启用后开始累计；暂无历史请求时显示为灰色。', 'History starts accumulating after this feature is enabled; days without requests are gray.')}</div>`}
         <section class="service-status-grid">${cards}</section>
@@ -4008,7 +4088,9 @@ window.loadServiceStatusHistory = async function () {
 };
 
 document.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && document.getElementById('serviceStatusModal')?.style.display === 'flex') window.closeServiceStatusModal();
+    if (event.key !== 'Escape') return;
+    if (document.getElementById('serviceFailureModal')?.style.display === 'flex') window.closeServiceFailureModal();
+    else if (document.getElementById('serviceStatusModal')?.style.display === 'flex') window.closeServiceStatusModal();
 });
 
 function ensureToolsI18nLoaded() {

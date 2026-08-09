@@ -10,10 +10,308 @@
         body { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); min-height: 100vh; }
         .home-content { padding-top: calc(var(--navbar-h) + 60px); max-width: 1100px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
 
-        .hero { text-align: center; margin-bottom: 60px; }
+        .hero { text-align: center; margin-bottom: 18px; }
         .hero-icon { font-size: 56px; margin-bottom: 16px; }
         .hero h1 { font-size: 42px; font-weight: 800; background: linear-gradient(90deg, #64ffda, #4a90e2, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 12px; }
         .hero p { font-size: 16px; color: #8892b0; max-width: 600px; margin: 0 auto; line-height: 1.7; }
+
+        .friend-links {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            width: min(100%, 1040px);
+            margin: 18px auto 0;
+            color: #7187a4;
+            text-align: left;
+        }
+        .friend-links-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            flex: 0 0 auto;
+            padding: 0;
+            border: 0;
+            outline: 0;
+            background: transparent;
+            color: inherit;
+            font-family: inherit;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .04em;
+            line-height: 28px;
+            white-space: nowrap;
+        }
+        .friend-links-label.can-manage { cursor: pointer; }
+        .friend-links-label.can-manage:hover,
+        .friend-links-label.can-manage:focus-visible { color: #a8b9d2; }
+        .friend-links-list {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 7px;
+            min-width: 0;
+            flex: 1;
+        }
+        .friend-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            flex: 0 0 auto;
+            height: 28px;
+            padding: 0 10px;
+            border: 1px solid rgba(148,163,184,.14);
+            border-radius: 999px;
+            background: rgba(255,255,255,.035);
+            color: #9fb0ca;
+            font-size: 11px;
+            font-weight: 650;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: color .18s ease, border-color .18s ease, background .18s ease, transform .18s ease;
+        }
+        .friend-link:hover,
+        .friend-link:focus-visible {
+            color: #dffdf7;
+            border-color: rgba(100,255,218,.32);
+            background: rgba(100,255,218,.09);
+            transform: translateY(-1px);
+            outline: none;
+        }
+        .friend-link-icon { font-size: 12px; }
+        .friend-link.status-online {
+            border-color: rgba(52,211,153,.22);
+            box-shadow: inset 0 0 7px rgba(52,211,153,.055), 0 0 6px rgba(52,211,153,.04);
+        }
+        .friend-link.status-warning {
+            border-color: rgba(251,191,36,.3);
+            box-shadow: inset 0 0 8px rgba(251,191,36,.075), 0 0 7px rgba(251,191,36,.055);
+        }
+        .friend-link.status-offline {
+            border-color: rgba(248,113,113,.27);
+            box-shadow: inset 0 0 8px rgba(248,113,113,.065), 0 0 7px rgba(248,113,113,.045);
+            color: #8f9bb0;
+        }
+        .friend-link.status-unknown { border-color: rgba(148,163,184,.14); }
+
+        .friend-links-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 13000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: rgba(2,6,23,.76);
+            backdrop-filter: blur(12px);
+        }
+        .friend-links-overlay.open { display: flex; }
+        .friend-links-dialog {
+            width: min(880px, 100%);
+            max-height: min(820px, calc(100vh - 48px));
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid rgba(148,163,184,.2);
+            border-radius: 20px;
+            background: linear-gradient(145deg, rgba(15,23,42,.99), rgba(17,32,58,.99));
+            box-shadow: 0 30px 90px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.045);
+        }
+        .friend-links-dialog-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 22px 24px 18px;
+            border-bottom: 1px solid rgba(148,163,184,.12);
+        }
+        .friend-links-dialog-title { margin: 0; color: #f8fafc; font-size: 20px; font-weight: 850; }
+        .friend-links-dialog-subtitle { margin: 7px 0 0; color: #8093ae; font-size: 12px; line-height: 1.55; }
+        .friend-links-close {
+            flex: 0 0 auto;
+            width: 34px;
+            height: 34px;
+            border: 1px solid rgba(255,255,255,.1);
+            border-radius: 10px;
+            background: rgba(255,255,255,.05);
+            color: #94a3b8;
+            font-size: 21px;
+            cursor: pointer;
+        }
+        .friend-links-close:hover { color: #fff; background: rgba(255,255,255,.1); }
+        .friend-links-dialog-body { min-height: 0; overflow-y: auto; padding: 18px 24px 20px; }
+        .friend-links-monitor-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 14px;
+            padding: 12px 14px;
+            border: 1px solid rgba(125,211,252,.16);
+            border-radius: 12px;
+            background: rgba(14,165,233,.055);
+        }
+        .friend-links-interval-wrap { display: flex; align-items: center; gap: 8px; color: #b7c5d8; font-size: 12px; }
+        .friend-links-interval {
+            width: 72px;
+            height: 32px;
+            padding: 0 9px;
+            border: 1px solid rgba(148,163,184,.22);
+            border-radius: 8px;
+            outline: none;
+            background: rgba(2,6,23,.35);
+            color: #e2e8f0;
+            font: inherit;
+        }
+        .friend-links-monitor-meta { margin-top: 5px; color: #64748b; font-size: 10px; }
+        .friend-links-probe-all,
+        .friend-links-add,
+        .friend-links-footer-btn,
+        .friend-row-btn {
+            border: 1px solid rgba(148,163,184,.18);
+            border-radius: 9px;
+            background: rgba(255,255,255,.055);
+            color: #cbd5e1;
+            font-size: 11px;
+            font-weight: 750;
+            cursor: pointer;
+        }
+        .friend-links-probe-all { height: 34px; padding: 0 12px; white-space: nowrap; }
+        .friend-links-probe-all:hover:not(:disabled), .friend-row-btn:hover:not(:disabled) { color: #dffdf7; border-color: rgba(100,255,218,.3); background: rgba(100,255,218,.09); }
+        .friend-links-probe-all:disabled, .friend-row-btn:disabled, .friend-links-footer-btn:disabled { opacity: .5; cursor: wait; }
+        .friend-link-editor-list { display: grid; gap: 9px; }
+        .friend-link-editor-row {
+            padding: 11px;
+            border: 1px solid rgba(148,163,184,.13);
+            border-radius: 12px;
+            background: rgba(255,255,255,.025);
+        }
+        .friend-link-editor-fields { display: grid; grid-template-columns: 54px minmax(120px, .8fr) minmax(140px, 1fr); gap: 8px; }
+        .friend-link-editor-bottom { display: grid; grid-template-columns: minmax(180px, 1fr) auto auto; gap: 8px; align-items: center; margin-top: 8px; }
+        .friend-link-editor-input {
+            min-width: 0;
+            width: 100%;
+            height: 34px;
+            padding: 0 10px;
+            border: 1px solid rgba(148,163,184,.17);
+            border-radius: 8px;
+            outline: none;
+            background: rgba(2,6,23,.32);
+            color: #e2e8f0;
+            font: inherit;
+            font-size: 12px;
+        }
+        .friend-link-editor-input:focus { border-color: rgba(100,255,218,.45); box-shadow: 0 0 0 3px rgba(100,255,218,.06); }
+        .friend-link-editor-state { min-width: 116px; color: #70839d; font-size: 10px; text-align: right; white-space: nowrap; }
+        .friend-link-editor-state strong { font-weight: 800; }
+        .friend-link-editor-state.online strong { color: #6ee7b7; }
+        .friend-link-editor-state.warning strong { color: #fcd34d; }
+        .friend-link-editor-state.offline strong { color: #fca5a5; }
+        .friend-link-editor-actions { display: flex; gap: 5px; }
+        .friend-row-btn { min-width: 30px; height: 30px; padding: 0 8px; }
+        .friend-row-btn.delete { color: #fca5a5; }
+        .friend-links-add { width: 100%; height: 36px; margin-top: 10px; border-style: dashed; color: #7dd3fc; }
+        .friend-links-editor-message { display: none; margin-top: 10px; padding: 9px 11px; border-radius: 9px; font-size: 11px; line-height: 1.5; }
+        .friend-links-editor-message.visible { display: block; }
+        .friend-links-editor-message.error { border: 1px solid rgba(248,113,113,.25); background: rgba(127,29,29,.16); color: #fecaca; }
+        .friend-links-editor-message.info { border: 1px solid rgba(125,211,252,.2); background: rgba(14,165,233,.08); color: #bae6fd; }
+        .friend-links-dialog-footer { display: flex; justify-content: flex-end; gap: 9px; padding: 15px 24px; border-top: 1px solid rgba(148,163,184,.12); }
+        .friend-links-footer-btn { min-width: 90px; height: 38px; padding: 0 14px; font-size: 12px; }
+        .friend-links-footer-btn.primary { border-color: rgba(100,255,218,.32); background: linear-gradient(135deg, rgba(16,185,129,.26), rgba(14,165,233,.22)); color: #dffdf7; }
+
+        .api-relay-dialog { width: min(920px, 100%); }
+        .api-relay-config {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .api-relay-field { min-width: 0; }
+        .api-relay-field label { display: block; margin: 0 0 6px 2px; color: #8294ad; font-size: 10px; font-weight: 750; }
+        .api-relay-input-wrap { display: flex; align-items: center; gap: 6px; }
+        .api-relay-input {
+            min-width: 0;
+            width: 100%;
+            height: 38px;
+            padding: 0 11px;
+            border: 1px solid rgba(148,163,184,.18);
+            border-radius: 9px;
+            outline: none;
+            background: rgba(2,6,23,.34);
+            color: #e2e8f0;
+            font: 12px/1.3 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        }
+        .api-relay-input:read-only { color: #aebdd0; cursor: default; }
+        .api-relay-input:not(:read-only):focus { border-color: rgba(99,102,241,.55); box-shadow: 0 0 0 3px rgba(99,102,241,.08); }
+        .api-relay-icon-btn {
+            flex: 0 0 auto;
+            width: 36px;
+            height: 36px;
+            border: 1px solid rgba(148,163,184,.17);
+            border-radius: 9px;
+            background: rgba(255,255,255,.05);
+            color: #a9bad0;
+            cursor: pointer;
+        }
+        .api-relay-icon-btn:hover { color: #fff; border-color: rgba(99,102,241,.4); background: rgba(99,102,241,.12); }
+        .api-relay-models { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+        .api-relay-protocols {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 9px;
+            margin-bottom: 14px;
+        }
+        .api-protocol-card {
+            min-width: 0;
+            padding: 12px;
+            border: 1px solid rgba(148,163,184,.14);
+            border-radius: 12px;
+            background: rgba(255,255,255,.025);
+        }
+        .api-protocol-card.openai { --protocol-color:#60a5fa; }
+        .api-protocol-card.anthropic { --protocol-color:#c084fc; }
+        .api-protocol-card.gemini { --protocol-color:#4ade80; }
+        .api-protocol-title { display: flex; justify-content: space-between; gap: 8px; color: var(--protocol-color); font-size: 12px; font-weight: 850; }
+        .api-protocol-copy { border: 0; background: transparent; color: #9aaac0; font-size: 10px; cursor: pointer; }
+        .api-protocol-copy:hover { color: #fff; }
+        .api-protocol-paths { display: grid; gap: 6px; margin-top: 10px; color: #8d9bb0; font: 10px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+        .api-protocol-paths code { padding: 5px 7px; border-radius: 6px; background: rgba(148,163,184,.09); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .api-relay-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+        .api-relay-tab {
+            flex: 0 0 auto;
+            height: 31px;
+            padding: 0 11px;
+            border: 1px solid rgba(148,163,184,.16);
+            border-radius: 8px;
+            background: rgba(255,255,255,.035);
+            color: #8ea0b8;
+            font-size: 10px;
+            font-weight: 750;
+            cursor: pointer;
+        }
+        .api-relay-tab.active { color: #dbeafe; border-color: rgba(96,165,250,.38); background: rgba(37,99,235,.16); }
+        .api-relay-code-wrap { position: relative; border: 1px solid rgba(96,165,250,.18); border-radius: 12px; overflow: hidden; background: rgba(8,15,29,.72); }
+        .api-relay-code-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; height: 38px; padding: 0 12px; border-bottom: 1px solid rgba(148,163,184,.11); color: #8393aa; font-size: 10px; font-weight: 800; letter-spacing: .04em; }
+        .api-relay-code-copy { border: 0; background: transparent; color: #60a5fa; font-size: 10px; cursor: pointer; }
+        .api-relay-code { min-height: 190px; max-height: 270px; margin: 0; padding: 14px; overflow-x: hidden; overflow-y: auto; color: #dbeafe; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; font: 11px/1.65 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+        .api-relay-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+        .api-relay-action-group { display: flex; gap: 8px; flex-wrap: wrap; }
+        .api-relay-action {
+            min-height: 36px;
+            padding: 0 12px;
+            border: 1px solid rgba(148,163,184,.18);
+            border-radius: 9px;
+            background: rgba(255,255,255,.05);
+            color: #cbd5e1;
+            font-size: 11px;
+            font-weight: 780;
+            cursor: pointer;
+        }
+        .api-relay-action.primary { border-color: rgba(96,165,250,.38); background: linear-gradient(135deg, rgba(37,99,235,.28), rgba(124,58,237,.22)); color: #eff6ff; }
+        .api-relay-action.success { border-color: rgba(52,211,153,.34); background: rgba(16,185,129,.13); color: #d1fae5; }
+        .api-relay-action:hover:not(:disabled) { filter: brightness(1.16); }
+        .api-relay-action:disabled { opacity: .45; cursor: not-allowed; }
+        .api-relay-note { margin-top: 9px; color: #687b95; font-size: 10px; line-height: 1.55; }
 
         .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 50px; }
 
@@ -258,7 +556,7 @@
             font-size:12px;
         }
         .custom-tools-panel {
-            margin: -24px 0 28px;
+            margin: 16px 0 28px;
             display: flex;
             justify-content: flex-end;
             gap: 10px;
@@ -469,6 +767,21 @@
         }
 
         @media (max-width: 768px) {
+            .home-content { padding-left: 16px; padding-right: 16px; }
+            .friend-links { gap: 8px; }
+            .friend-links-label { font-size: 0; }
+            .friend-links-label::before { content: '🔗'; font-size: 13px; }
+            .friend-links-overlay { padding: 10px; align-items: flex-end; }
+            .friend-links-dialog { max-height: calc(100vh - 20px); border-radius: 18px 18px 10px 10px; }
+            .friend-links-dialog-head, .friend-links-dialog-body, .friend-links-dialog-footer { padding-left: 16px; padding-right: 16px; }
+            .friend-links-monitor-bar { align-items: flex-start; flex-direction: column; }
+            .friend-link-editor-fields { grid-template-columns: 48px 1fr; }
+            .friend-link-editor-fields .friend-name-en { grid-column: 1 / -1; }
+            .friend-link-editor-bottom { grid-template-columns: 1fr; }
+            .friend-link-editor-state { min-width: 0; text-align: left; }
+            .friend-link-editor-actions { justify-content: flex-end; }
+            .api-relay-config, .api-relay-models, .api-relay-protocols { grid-template-columns: 1fr; }
+            .api-relay-code { min-height: 220px; font-size: 10px; }
             .tools-grid { grid-template-columns: 1fr; }
             .stats-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
             .stat-item { border-right:0; border-bottom:1px solid rgba(255,255,255,.07); padding:14px 8px; }
@@ -480,7 +793,7 @@
             .ai-metric:nth-last-child(-n+2) { border-bottom:0; }
             .history-row { grid-template-columns: 1fr; }
             .history-time { text-align: left; }
-            .custom-tools-panel { justify-content: flex-start; margin-top: 0; }
+            .custom-tools-panel { justify-content: flex-start; margin-top: 14px; }
             .tool-import-overlay { padding: 12px; align-items: flex-end; }
             .tool-import-dialog { max-height: calc(100vh - 24px); border-radius: 20px 20px 12px 12px; }
             .tool-import-head, .tool-import-form { padding-left: 20px; padding-right: 20px; }
@@ -494,6 +807,30 @@
             <div class="hero-icon">⚡</div>
             <h1>Tools Platform</h1>
             <p>统一工具中台 · 前后端分离架构 · 数据持久化存储<br>让每一个工具都更强大、更稳定、更易扩展</p>
+            <nav class="friend-links" aria-label="友情链接">
+                <button type="button" class="friend-links-label" id="friendLinksManageBtn" data-home-i18n="home.links.title">🔗 友情链接</button>
+                <div class="friend-links-list">
+                    <a class="friend-link" href="https://wise.fanxiaolong.uk/" target="_blank" rel="noopener noreferrer" title="wise.fanxiaolong.uk"><span class="friend-link-icon">💰</span><span data-home-i18n="home.links.wise">财务管理</span></a>
+                    <a class="friend-link" href="https://app.fanxiaolong.uk/" target="_blank" rel="noopener noreferrer" title="app.fanxiaolong.uk"><span class="friend-link-icon">📱</span><span data-home-i18n="home.links.app">手机控制</span></a>
+                    <a class="friend-link" href="https://yutang.fanxiaolong.uk/" target="_blank" rel="noopener noreferrer" title="yutang.fanxiaolong.uk"><span class="friend-link-icon">🤖</span><span data-home-i18n="home.links.yutang">AI 远程控机</span></a>
+                    <a class="friend-link" data-friend-link-id="api" href="https://api.fanxiaolong.uk/" target="_blank" rel="noopener noreferrer" title="api.fanxiaolong.uk"><span class="friend-link-icon">⚡</span><span data-home-i18n="home.links.api">API 中转</span></a>
+                    <a class="friend-link" href="https://api2.fanxiaolong.uk/" target="_blank" rel="noopener noreferrer" title="api2.fanxiaolong.uk"><span class="friend-link-icon">🔁</span><span data-home-i18n="home.links.api2">API 中转二站</span></a>
+                    <a class="friend-link" href="https://cs2.fanxiaolong.uk/" target="_blank" rel="noopener noreferrer" title="cs2.fanxiaolong.uk"><span class="friend-link-icon">🛟</span><span data-home-i18n="home.links.cs2">工具中台备用</span></a>
+                    <a class="friend-link" href="https://cs.fanxiaolong.uk/" target="_blank" rel="noopener noreferrer" title="cs.fanxiaolong.uk"><span class="friend-link-icon">🏠</span><span data-home-i18n="home.links.csMain">工具中台主站</span></a>
+                    <a class="friend-link" href="https://cs.fanxiaolong.uk/desktop-license-admin" target="_blank" rel="noopener noreferrer" title="cs.fanxiaolong.uk/desktop-license-admin"><span class="friend-link-icon">🔑</span><span data-home-i18n="home.links.license">License 发放</span></a>
+                    <a class="friend-link" href="https://ssh.fanxiaolong.uk/" target="_blank" rel="noopener noreferrer" title="ssh.fanxiaolong.uk"><span class="friend-link-icon">☁️</span><span data-home-i18n="home.links.ssh">移动终端云</span></a>
+                    <a class="friend-link" href="https://pcap.fanxiaolong.uk/" target="_blank" rel="noopener noreferrer" title="pcap.fanxiaolong.uk"><span class="friend-link-icon">📡</span><span data-home-i18n="home.links.pcap">网络分析</span></a>
+                    <a class="friend-link" href="https://openclaw3.fanxiaolong.uk/" target="_blank" rel="noopener noreferrer" title="openclaw3.fanxiaolong.uk"><span class="friend-link-icon">🦞</span><span>OpenClaw</span></a>
+                    <a class="friend-link" href="https://bobapro.life/" target="_blank" rel="noopener noreferrer" title="bobapro.life"><span class="friend-link-icon">🧋</span><span>BobaPro</span></a>
+                    <a class="friend-link" href="https://canting.fanxiaolong.uk/" target="_blank" rel="noopener noreferrer" title="canting.fanxiaolong.uk"><span class="friend-link-icon">🍽️</span><span data-home-i18n="home.links.canting">餐厅服务</span></a>
+                    <a class="friend-link" href="https://ims.fanxiaolong.uk/" target="_blank" rel="noopener noreferrer" title="ims.fanxiaolong.uk"><span class="friend-link-icon">🗂️</span><span>IMS</span></a>
+                    <a class="friend-link" href="https://boda-3xyulq.fly.dev/" target="_blank" rel="noopener noreferrer" title="boda-3xyulq.fly.dev"><span class="friend-link-icon">🏪</span><span>线上中超</span></a>
+                    <a class="friend-link" href="https://canting-demo.fly.dev/" target="_blank" rel="noopener noreferrer" title="canting-demo.fly.dev"><span class="friend-link-icon">🧪</span><span>餐厅 Demo</span></a>
+                    <a class="friend-link" href="https://boda-t0amgq.fly.dev/" target="_blank" rel="noopener noreferrer" title="boda-t0amgq.fly.dev"><span class="friend-link-icon">🍜</span><span>家家乐点餐</span></a>
+                    <a class="friend-link" href="https://boda-0mqtrq.fly.dev/" target="_blank" rel="noopener noreferrer" title="boda-0mqtrq.fly.dev"><span class="friend-link-icon">🧋</span><span>Neferdidi 奶茶店</span></a>
+                    <a class="friend-link" href="https://grok-api2.fanxiaolong.uk/" target="_blank" rel="noopener noreferrer" title="grok-api2.fanxiaolong.uk"><span class="friend-link-icon">✦</span><span>Grok API 二站</span></a>
+                </div>
+            </nav>
         </div>
 
         <div class="custom-tools-panel" id="customToolsPanel" style="display:none;">
@@ -758,6 +1095,115 @@
         </section>
     </div>
 
+    <div class="friend-links-overlay" id="friendLinksModal" role="dialog" aria-modal="true" aria-labelledby="friendLinksModalTitle">
+        <div class="friend-links-dialog">
+            <div class="friend-links-dialog-head">
+                <div>
+                    <h2 class="friend-links-dialog-title" id="friendLinksModalTitle" data-home-i18n="home.links.manageTitle">友情链接管理</h2>
+                    <p class="friend-links-dialog-subtitle" data-home-i18n="home.links.manageSubtitle">修改后全平台首页立即生效；状态探测由服务端低频执行并复用缓存。</p>
+                </div>
+                <button type="button" class="friend-links-close" id="friendLinksCloseBtn" aria-label="关闭">×</button>
+            </div>
+            <div class="friend-links-dialog-body">
+                <div class="friend-links-monitor-bar">
+                    <div>
+                        <label class="friend-links-interval-wrap">
+                            <span data-home-i18n="home.links.interval">自动探测间隔</span>
+                            <input class="friend-links-interval" id="friendLinksInterval" type="number" min="10" max="1440" step="5" value="30">
+                            <span data-home-i18n="home.links.minutes">分钟</span>
+                        </label>
+                        <div class="friend-links-monitor-meta" id="friendLinksMonitorMeta">尚未探测</div>
+                    </div>
+                    <button type="button" class="friend-links-probe-all" id="friendLinksProbeAllBtn" data-home-i18n="home.links.probeAll">立即检测全部</button>
+                </div>
+                <div class="friend-link-editor-list" id="friendLinkEditorList"></div>
+                <button type="button" class="friend-links-add" id="friendLinksAddBtn" data-home-i18n="home.links.add">＋ 添加友情链接</button>
+                <div class="friend-links-editor-message" id="friendLinksEditorMessage"></div>
+            </div>
+            <div class="friend-links-dialog-footer">
+                <button type="button" class="friend-links-footer-btn" id="friendLinksCancelBtn" data-home-i18n="home.links.cancel">取消</button>
+                <button type="button" class="friend-links-footer-btn primary" id="friendLinksSaveBtn" data-home-i18n="home.links.save">保存修改</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="friend-links-overlay api-relay-overlay" id="apiRelayModal" role="dialog" aria-modal="true" aria-labelledby="apiRelayModalTitle">
+        <div class="friend-links-dialog api-relay-dialog">
+            <div class="friend-links-dialog-head">
+                <div>
+                    <h2 class="friend-links-dialog-title" id="apiRelayModalTitle">⚡ AI API 中转配置</h2>
+                    <p class="friend-links-dialog-subtitle">一个公网地址兼容 OpenAI、Anthropic 和 Gemini 协议，可复制到各类 AI 客户端。</p>
+                </div>
+                <button type="button" class="friend-links-close" id="apiRelayCloseBtn" aria-label="关闭">×</button>
+            </div>
+            <div class="friend-links-dialog-body">
+                <div class="api-relay-config">
+                    <div class="api-relay-field">
+                        <label for="apiRelayBaseUrl">公网 BASE URL</label>
+                        <div class="api-relay-input-wrap">
+                            <input class="api-relay-input" id="apiRelayBaseUrl" type="url" value="https://api.fanxiaolong.uk" spellcheck="false">
+                            <button type="button" class="api-relay-icon-btn" id="apiRelayCopyBaseBtn" title="复制 BASE URL">⧉</button>
+                        </div>
+                    </div>
+                    <div class="api-relay-field">
+                        <label for="apiRelayApiKey">API 密钥</label>
+                        <div class="api-relay-input-wrap">
+                            <input class="api-relay-input" id="apiRelayApiKey" type="password" value="xxxx" autocomplete="off" spellcheck="false">
+                            <button type="button" class="api-relay-icon-btn" id="apiRelayToggleKeyBtn" title="显示或隐藏密钥">◉</button>
+                            <button type="button" class="api-relay-icon-btn" id="apiRelayCopyKeyBtn" title="复制 API 密钥">⧉</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="api-relay-models">
+                    <div class="api-relay-field">
+                        <label for="apiRelayDefaultModel">默认模型</label>
+                        <input class="api-relay-input" id="apiRelayDefaultModel" value="gemini-3-1-flash" spellcheck="false">
+                    </div>
+                    <div class="api-relay-field">
+                        <label for="apiRelayFastModel">快速模型</label>
+                        <input class="api-relay-input" id="apiRelayFastModel" value="gemini-2-5-flash" spellcheck="false">
+                    </div>
+                </div>
+                <div class="api-relay-protocols">
+                    <section class="api-protocol-card openai">
+                        <div class="api-protocol-title"><span>OpenAI 协议</span><button type="button" class="api-protocol-copy" data-api-copy-protocol="openai">⧉ 复制 BASE</button></div>
+                        <div class="api-protocol-paths"><code>/v1/chat/completions</code><code>/v1/completions</code><code>/v1/responses</code></div>
+                    </section>
+                    <section class="api-protocol-card anthropic">
+                        <div class="api-protocol-title"><span>Anthropic 协议</span><button type="button" class="api-protocol-copy" data-api-copy-protocol="anthropic">⧉ 复制 BASE</button></div>
+                        <div class="api-protocol-paths"><code>/v1/messages</code><code>ANTHROPIC_BASE_URL</code><code>ANTHROPIC_AUTH_TOKEN</code></div>
+                    </section>
+                    <section class="api-protocol-card gemini">
+                        <div class="api-protocol-title"><span>Gemini 协议</span><button type="button" class="api-protocol-copy" data-api-copy-protocol="gemini">⧉ 复制 BASE</button></div>
+                        <div class="api-protocol-paths"><code>/v1beta/models/...</code><code>:generateContent</code><code>x-goog-api-key</code></div>
+                    </section>
+                </div>
+                <div class="api-relay-tabs" role="tablist" aria-label="集成示例">
+                    <button type="button" class="api-relay-tab active" data-api-tab="openai">Python · OpenAI</button>
+                    <button type="button" class="api-relay-tab" data-api-tab="anthropic">Python · Anthropic</button>
+                    <button type="button" class="api-relay-tab" data-api-tab="gemini">Gemini REST</button>
+                    <button type="button" class="api-relay-tab" data-api-tab="claude">Claude Code</button>
+                </div>
+                <div class="api-relay-code-wrap">
+                    <div class="api-relay-code-head"><span id="apiRelayCodeTitle">QUICK INTEGRATION</span><button type="button" class="api-relay-code-copy" id="apiRelayCopyCodeBtn">⧉ 复制当前示例</button></div>
+                    <pre class="api-relay-code" id="apiRelayCode"></pre>
+                </div>
+                <div class="api-relay-actions">
+                    <div class="api-relay-action-group">
+                        <button type="button" class="api-relay-action primary" id="apiRelayCopyAllBtn">⧉ 一键复制全部对接信息</button>
+                        <button type="button" class="api-relay-action success" id="apiRelayInstallClaudeBtn">＋ 自动添加到 Claude Code</button>
+                    </div>
+                    <div class="api-relay-action-group">
+                        <a class="api-relay-action" id="apiRelayOpenSiteBtn" href="https://api.fanxiaolong.uk/" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;text-decoration:none;">打开中转站 ↗</a>
+                        <button type="button" class="api-relay-action" id="apiRelaySaveBtn">保存配置</button>
+                    </div>
+                </div>
+                <div class="api-relay-note" id="apiRelayRuntimeNote">网页版可一键复制；“自动添加”仅在本地 EXE 中可用，并会先备份现有 Claude Code 配置。</div>
+                <div class="friend-links-editor-message" id="apiRelayMessage"></div>
+            </div>
+        </div>
+    </div>
+
     <div class="tool-import-overlay" id="customToolImportModal" role="dialog" aria-modal="true" aria-labelledby="customToolImportTitle">
         <div class="tool-import-dialog">
             <div class="tool-import-head">
@@ -819,12 +1265,83 @@
         };
         let customToolsCount = 0;
         let platformSummary = null;
+        const friendLinksState = {
+            snapshot: null,
+            editorLinks: [],
+            editorDirty: false,
+            refreshTimer: null,
+            probing: false,
+            apiRelayTab: 'openai',
+            apiRelayDirty: false
+        };
 
         const HOME_I18N = {
             'zh-CN': {
                 'home.title': 'Tools Platform - 工具中台',
                 'home.description': '统一工具平台入口：UIVF12 抓取引擎 & Task SLA 风险监控台',
                 'home.hero.desc': '统一工具中台 · 前后端分离架构 · 数据持久化存储<br>让每一个工具都更强大、更稳定、更易扩展',
+                'home.links.title': '🔗 友情链接',
+                'home.links.wise': '财务管理',
+                'home.links.app': '手机控制',
+                'home.links.yutang': 'AI 远程控机',
+                'home.links.api': 'API 中转',
+                'home.links.api2': 'API 中转二站',
+                'home.links.cs2': '工具中台备用',
+                'home.links.csMain': '工具中台主站',
+                'home.links.license': 'License 发放',
+                'home.links.ssh': '移动终端云',
+                'home.links.pcap': '网络分析',
+                'home.links.canting': '餐厅服务',
+                'home.links.manageTitle': '友情链接管理',
+                'home.links.manageSubtitle': '修改后全平台首页立即生效；状态探测由服务端低频执行并复用缓存。',
+                'home.links.manageHint': '点击管理友情链接',
+                'home.links.adminOnly': '只有超级管理员可以修改友情链接',
+                'home.links.interval': '自动探测间隔',
+                'home.links.minutes': '分钟',
+                'home.links.probeAll': '立即检测全部',
+                'home.links.probing': '正在检测…',
+                'home.links.add': '＋ 添加友情链接',
+                'home.links.cancel': '取消',
+                'home.links.save': '保存修改',
+                'home.links.saving': '正在保存…',
+                'home.links.icon': '图标',
+                'home.links.name': '中文名称',
+                'home.links.nameEn': '英文名称（可选）',
+                'home.links.url': 'https://example.com/',
+                'home.links.probeOne': '检测',
+                'home.links.delete': '删除',
+                'home.links.up': '上移',
+                'home.links.down': '下移',
+                'home.links.lastProbe': '上次检测：{time}',
+                'home.links.neverProbed': '尚未检测 · 默认每 30 分钟低频执行',
+                'home.links.unsavedProbe': '有未保存的修改，请先保存后再检测。',
+                'home.links.saved': '友情链接已保存',
+                'home.links.saveFailed': '保存失败：{message}',
+                'home.links.probeFailed': '检测失败：{message}',
+                'home.links.status.online': '正常',
+                'home.links.status.warning': '安全提示',
+                'home.links.status.offline': '不可达',
+                'home.links.status.unknown': '未检测',
+                'home.apiRelay.title': '⚡ AI API 中转配置',
+                'home.apiRelay.subtitle': '一个公网地址兼容 OpenAI、Anthropic 和 Gemini 协议，可复制到各类 AI 客户端。',
+                'home.apiRelay.publicBase': '公网 BASE URL',
+                'home.apiRelay.apiKey': 'API 密钥',
+                'home.apiRelay.defaultModel': '默认模型',
+                'home.apiRelay.fastModel': '快速模型',
+                'home.apiRelay.copyCurrent': '⧉ 复制当前示例',
+                'home.apiRelay.copyAll': '⧉ 一键复制全部对接信息',
+                'home.apiRelay.installClaude': '＋ 自动添加到 Claude Code',
+                'home.apiRelay.openSite': '打开中转站 ↗',
+                'home.apiRelay.save': '保存配置',
+                'home.apiRelay.runtimeWeb': '网页版可一键复制；“自动添加”仅在本地 EXE 中可用。',
+                'home.apiRelay.runtimeDesktop': '本地 EXE 可自动合并到 Claude Code，并会先备份现有配置。',
+                'home.apiRelay.copied': '已复制到剪贴板',
+                'home.apiRelay.copyFailed': '复制失败，请手动选择内容复制',
+                'home.apiRelay.saved': 'API 中转配置已保存',
+                'home.apiRelay.saveFailed': '保存失败：{message}',
+                'home.apiRelay.installed': '已添加到 Claude Code：{path}',
+                'home.apiRelay.installFailed': '自动添加失败：{message}',
+                'home.apiRelay.saveBeforeInstall': '配置已修改，请先保存后再自动添加。',
                 'home.custom.note': '导入 HTML 或 ZIP 工具包后，会自动生成首页模块和顶部导航入口',
                 'home.custom.upload': '导入 HTML / ZIP 工具',
                 'home.import.title': '导入自定义工具',
@@ -949,6 +1466,68 @@
                 'home.title': 'Tools Platform',
                 'home.description': 'Unified tool hub for data capture, SLA import, reporting, and operations workflows.',
                 'home.hero.desc': 'A unified tool hub · Decoupled frontend/backend · Persistent data storage<br>Make every tool stronger, steadier, and easier to extend',
+                'home.links.title': '🔗 Links',
+                'home.links.wise': 'Finance',
+                'home.links.app': 'Phone Control',
+                'home.links.yutang': 'AI Phone Control',
+                'home.links.api': 'API Relay',
+                'home.links.api2': 'API Relay 2',
+                'home.links.cs2': 'Backup Hub',
+                'home.links.csMain': 'Tools Platform',
+                'home.links.license': 'Issue Licenses',
+                'home.links.ssh': 'Mobile Terminal Cloud',
+                'home.links.pcap': 'Network Analysis',
+                'home.links.canting': 'Dining Service',
+                'home.links.manageTitle': 'Manage Links',
+                'home.links.manageSubtitle': 'Changes apply to the home page immediately. Probes run infrequently on the server and reuse cached results.',
+                'home.links.manageHint': 'Click to manage links',
+                'home.links.adminOnly': 'Only super administrators can edit links',
+                'home.links.interval': 'Automatic probe interval',
+                'home.links.minutes': 'minutes',
+                'home.links.probeAll': 'Check All Now',
+                'home.links.probing': 'Checking…',
+                'home.links.add': '＋ Add Link',
+                'home.links.cancel': 'Cancel',
+                'home.links.save': 'Save Changes',
+                'home.links.saving': 'Saving…',
+                'home.links.icon': 'Icon',
+                'home.links.name': 'Chinese name',
+                'home.links.nameEn': 'English name (optional)',
+                'home.links.url': 'https://example.com/',
+                'home.links.probeOne': 'Check',
+                'home.links.delete': 'Delete',
+                'home.links.up': 'Move up',
+                'home.links.down': 'Move down',
+                'home.links.lastProbe': 'Last checked: {time}',
+                'home.links.neverProbed': 'Not checked yet · low-frequency check every 30 minutes by default',
+                'home.links.unsavedProbe': 'Save your changes before running a check.',
+                'home.links.saved': 'Links saved',
+                'home.links.saveFailed': 'Save failed: {message}',
+                'home.links.probeFailed': 'Check failed: {message}',
+                'home.links.status.online': 'Online',
+                'home.links.status.warning': 'Security notice',
+                'home.links.status.offline': 'Unavailable',
+                'home.links.status.unknown': 'Unchecked',
+                'home.apiRelay.title': '⚡ AI API Relay Setup',
+                'home.apiRelay.subtitle': 'One public endpoint compatible with OpenAI, Anthropic, and Gemini protocols.',
+                'home.apiRelay.publicBase': 'Public BASE URL',
+                'home.apiRelay.apiKey': 'API key',
+                'home.apiRelay.defaultModel': 'Default model',
+                'home.apiRelay.fastModel': 'Fast model',
+                'home.apiRelay.copyCurrent': '⧉ Copy Current Example',
+                'home.apiRelay.copyAll': '⧉ Copy All Integration Details',
+                'home.apiRelay.installClaude': '＋ Add to Claude Code',
+                'home.apiRelay.openSite': 'Open Relay ↗',
+                'home.apiRelay.save': 'Save Setup',
+                'home.apiRelay.runtimeWeb': 'The web version can copy details; automatic setup is available only in the local EXE.',
+                'home.apiRelay.runtimeDesktop': 'The local EXE can merge this setup into Claude Code after backing up the current settings.',
+                'home.apiRelay.copied': 'Copied to clipboard',
+                'home.apiRelay.copyFailed': 'Copy failed. Select and copy the content manually.',
+                'home.apiRelay.saved': 'API relay setup saved',
+                'home.apiRelay.saveFailed': 'Save failed: {message}',
+                'home.apiRelay.installed': 'Added to Claude Code: {path}',
+                'home.apiRelay.installFailed': 'Automatic setup failed: {message}',
+                'home.apiRelay.saveBeforeInstall': 'Save the modified setup before installing it.',
                 'home.custom.note': 'Import an HTML file or ZIP package to generate a home card and top navigation entry automatically.',
                 'home.custom.upload': 'Import HTML / ZIP Tool',
                 'home.import.title': 'Import Custom Tool',
@@ -1162,6 +1741,476 @@
             if (el) el.textContent = value;
         }
 
+        function getFriendStatus(status) {
+            return ['online', 'warning', 'offline'].includes(status) ? status : 'unknown';
+        }
+
+        function getFriendStatusLabel(status) {
+            return t(`home.links.status.${getFriendStatus(status)}`);
+        }
+
+        function formatFriendProbeTime(value) {
+            if (!value) return '';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return '';
+            return new Intl.DateTimeFormat(window.ToolsI18n?.getLanguage?.() || 'zh-CN', {
+                month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+            }).format(date);
+        }
+
+        function updateFriendLinksMonitorMeta() {
+            const meta = document.getElementById('friendLinksMonitorMeta');
+            if (!meta) return;
+            const lastProbeAt = friendLinksState.snapshot?.lastProbeAt;
+            meta.textContent = lastProbeAt
+                ? t('home.links.lastProbe', { time: formatFriendProbeTime(lastProbeAt) })
+                : t('home.links.neverProbed');
+        }
+
+        function renderFriendLinks(snapshot = friendLinksState.snapshot) {
+            const list = document.querySelector('.friend-links-list');
+            if (!list || !snapshot || !Array.isArray(snapshot.links)) return;
+            const lang = window.ToolsI18n?.getLanguage?.() || 'zh-CN';
+            list.innerHTML = snapshot.links.map(link => {
+                const statusInfo = snapshot.statuses?.[link.id] || {};
+                const status = getFriendStatus(statusInfo.status);
+                const name = lang === 'en-US' && link.nameEn ? link.nameEn : link.name;
+                const detail = [getFriendStatusLabel(status), statusInfo.message, statusInfo.checkedAt ? formatFriendProbeTime(statusInfo.checkedAt) : ''].filter(Boolean).join(' · ');
+                return `<a class="friend-link status-${status}" data-friend-link-id="${escapeHtml(link.id)}" href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(`${name} · ${detail}`)}"><span class="friend-link-icon">${escapeHtml(link.icon || '🔗')}</span><span>${escapeHtml(name)}</span></a>`;
+            }).join('');
+        }
+
+        function scheduleFriendLinksRefresh(snapshot) {
+            clearTimeout(friendLinksState.refreshTimer);
+            const nextTime = snapshot?.nextProbeAt ? new Date(snapshot.nextProbeAt).getTime() : 0;
+            const untilNext = nextTime > Date.now() ? nextTime - Date.now() + 3000 : 30 * 60 * 1000;
+            const jitter = Math.floor(Math.random() * 15000);
+            const delay = Math.min(30 * 60 * 1000, Math.max(60000, untilNext)) + jitter;
+            friendLinksState.refreshTimer = setTimeout(() => loadFriendLinks(true), delay);
+        }
+
+        function applyFriendLinksSnapshot(snapshot) {
+            if (!snapshot || !Array.isArray(snapshot.links)) return;
+            friendLinksState.snapshot = snapshot;
+            renderFriendLinks(snapshot);
+            updateFriendLinksMonitorMeta();
+            scheduleFriendLinksRefresh(snapshot);
+        }
+
+        async function loadFriendLinks(silent = false) {
+            try {
+                const snapshot = await API.get('/api/friend-links');
+                applyFriendLinksSnapshot(snapshot);
+                return snapshot;
+            } catch (error) {
+                if (!silent) console.warn('[friend-links] load failed:', error.message);
+                return null;
+            }
+        }
+
+        function setFriendLinksEditorMessage(message = '', type = 'error') {
+            const box = document.getElementById('friendLinksEditorMessage');
+            if (!box) return;
+            box.textContent = message;
+            box.className = `friend-links-editor-message${message ? ` visible ${type}` : ''}`;
+        }
+
+        function renderFriendLinkEditorRows() {
+            const list = document.getElementById('friendLinkEditorList');
+            if (!list) return;
+            const statuses = friendLinksState.snapshot?.statuses || {};
+            list.innerHTML = friendLinksState.editorLinks.map((link, index) => {
+                const info = statuses[link.id] || {};
+                const status = getFriendStatus(info.status);
+                const time = formatFriendProbeTime(info.checkedAt);
+                const statusDetail = [getFriendStatusLabel(status), info.message, time].filter(Boolean).join(' · ');
+                return `
+                    <div class="friend-link-editor-row" data-friend-editor-index="${index}">
+                        <div class="friend-link-editor-fields">
+                            <input class="friend-link-editor-input friend-icon" maxlength="8" value="${escapeHtml(link.icon || '🔗')}" placeholder="${escapeHtml(t('home.links.icon'))}" aria-label="${escapeHtml(t('home.links.icon'))}">
+                            <input class="friend-link-editor-input friend-name" maxlength="40" value="${escapeHtml(link.name || '')}" placeholder="${escapeHtml(t('home.links.name'))}" aria-label="${escapeHtml(t('home.links.name'))}">
+                            <input class="friend-link-editor-input friend-name-en" maxlength="60" value="${escapeHtml(link.nameEn || '')}" placeholder="${escapeHtml(t('home.links.nameEn'))}" aria-label="${escapeHtml(t('home.links.nameEn'))}">
+                        </div>
+                        <div class="friend-link-editor-bottom">
+                            <input class="friend-link-editor-input friend-url" maxlength="2048" value="${escapeHtml(link.url || '')}" placeholder="${escapeHtml(t('home.links.url'))}" aria-label="URL">
+                            <div class="friend-link-editor-state ${status}" title="${escapeHtml(statusDetail)}"><strong>${escapeHtml(getFriendStatusLabel(status))}</strong>${time ? ` · ${escapeHtml(time)}` : ''}</div>
+                            <div class="friend-link-editor-actions">
+                                <button type="button" class="friend-row-btn" data-friend-action="up" title="${escapeHtml(t('home.links.up'))}" ${index === 0 ? 'disabled' : ''}>↑</button>
+                                <button type="button" class="friend-row-btn" data-friend-action="down" title="${escapeHtml(t('home.links.down'))}" ${index === friendLinksState.editorLinks.length - 1 ? 'disabled' : ''}>↓</button>
+                                <button type="button" class="friend-row-btn" data-friend-action="probe" title="${escapeHtml(t('home.links.probeOne'))}">⌁</button>
+                                <button type="button" class="friend-row-btn delete" data-friend-action="delete" title="${escapeHtml(t('home.links.delete'))}">×</button>
+                            </div>
+                        </div>
+                    </div>`;
+            }).join('');
+
+            list.querySelectorAll('.friend-link-editor-input').forEach(input => {
+                input.addEventListener('input', () => { friendLinksState.editorDirty = true; });
+            });
+            list.querySelectorAll('[data-friend-action]').forEach(button => {
+                button.addEventListener('click', async () => {
+                    const row = button.closest('[data-friend-editor-index]');
+                    const index = Number(row?.dataset.friendEditorIndex);
+                    if (!Number.isInteger(index)) return;
+                    const action = button.dataset.friendAction;
+                    friendLinksState.editorLinks = collectFriendLinkEditorValues();
+                    if (action === 'delete') {
+                        friendLinksState.editorLinks.splice(index, 1);
+                        friendLinksState.editorDirty = true;
+                        renderFriendLinkEditorRows();
+                    } else if (action === 'up' || action === 'down') {
+                        const target = index + (action === 'up' ? -1 : 1);
+                        if (target < 0 || target >= friendLinksState.editorLinks.length) return;
+                        [friendLinksState.editorLinks[index], friendLinksState.editorLinks[target]] = [friendLinksState.editorLinks[target], friendLinksState.editorLinks[index]];
+                        friendLinksState.editorDirty = true;
+                        renderFriendLinkEditorRows();
+                    } else if (action === 'probe') {
+                        await probeSingleFriendLink(friendLinksState.editorLinks[index].id, button);
+                    }
+                });
+            });
+        }
+
+        function collectFriendLinkEditorValues() {
+            return Array.from(document.querySelectorAll('#friendLinkEditorList [data-friend-editor-index]')).map((row, index) => ({
+                id: friendLinksState.editorLinks[index]?.id || `link_${Date.now().toString(36)}_${index}`,
+                icon: row.querySelector('.friend-icon')?.value.trim() || '🔗',
+                name: row.querySelector('.friend-name')?.value.trim() || '',
+                nameEn: row.querySelector('.friend-name-en')?.value.trim() || '',
+                url: row.querySelector('.friend-url')?.value.trim() || ''
+            }));
+        }
+
+        function closeFriendLinksEditor() {
+            document.getElementById('friendLinksModal')?.classList.remove('open');
+            document.body.style.overflow = '';
+            setFriendLinksEditorMessage('');
+        }
+
+        async function openFriendLinksEditor() {
+            if (localStorage.getItem('tools_role') !== 'admin') {
+                showToast(t('home.links.adminOnly'));
+                return;
+            }
+            if (!friendLinksState.snapshot) await loadFriendLinks();
+            if (!friendLinksState.snapshot) return;
+            friendLinksState.editorLinks = friendLinksState.snapshot.links.map(link => ({ ...link }));
+            friendLinksState.editorDirty = false;
+            const interval = document.getElementById('friendLinksInterval');
+            if (interval) interval.value = friendLinksState.snapshot.probeIntervalMinutes || 30;
+            renderFriendLinkEditorRows();
+            updateFriendLinksMonitorMeta();
+            setFriendLinksEditorMessage('');
+            document.getElementById('friendLinksModal')?.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        async function saveFriendLinks() {
+            const saveBtn = document.getElementById('friendLinksSaveBtn');
+            try {
+                saveBtn.disabled = true;
+                saveBtn.textContent = t('home.links.saving');
+                const links = collectFriendLinkEditorValues();
+                const probeIntervalMinutes = Number(document.getElementById('friendLinksInterval')?.value || 30);
+                const snapshot = await API.put('/api/friend-links', { links, probeIntervalMinutes });
+                friendLinksState.editorDirty = false;
+                applyFriendLinksSnapshot(snapshot);
+                closeFriendLinksEditor();
+                showToast(t('home.links.saved'));
+            } catch (error) {
+                setFriendLinksEditorMessage(t('home.links.saveFailed', { message: error.message }));
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = t('home.links.save');
+            }
+        }
+
+        async function probeAllFriendLinks() {
+            if (friendLinksState.editorDirty) {
+                setFriendLinksEditorMessage(t('home.links.unsavedProbe'));
+                return;
+            }
+            const button = document.getElementById('friendLinksProbeAllBtn');
+            try {
+                friendLinksState.probing = true;
+                button.disabled = true;
+                button.textContent = t('home.links.probing');
+                document.querySelectorAll('[data-friend-action="probe"]').forEach(item => { item.disabled = true; });
+                setFriendLinksEditorMessage(t('home.links.probing'), 'info');
+                const snapshot = await API.post('/api/friend-links/probe', {});
+                applyFriendLinksSnapshot(snapshot);
+                renderFriendLinkEditorRows();
+                setFriendLinksEditorMessage('');
+            } catch (error) {
+                setFriendLinksEditorMessage(t('home.links.probeFailed', { message: error.message }));
+            } finally {
+                friendLinksState.probing = false;
+                button.disabled = false;
+                button.textContent = t('home.links.probeAll');
+                document.querySelectorAll('[data-friend-action="probe"]').forEach(item => { item.disabled = false; });
+            }
+        }
+
+        async function probeSingleFriendLink(linkId, button) {
+            if (friendLinksState.editorDirty) {
+                setFriendLinksEditorMessage(t('home.links.unsavedProbe'));
+                return;
+            }
+            try {
+                button.disabled = true;
+                const payload = await API.post(`/api/friend-links/${encodeURIComponent(linkId)}/probe`, {});
+                friendLinksState.snapshot.statuses = { ...(friendLinksState.snapshot.statuses || {}), [linkId]: payload.result };
+                renderFriendLinks();
+                renderFriendLinkEditorRows();
+                setFriendLinksEditorMessage('');
+            } catch (error) {
+                setFriendLinksEditorMessage(t('home.links.probeFailed', { message: error.message }));
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        function setupFriendLinks() {
+            const manageBtn = document.getElementById('friendLinksManageBtn');
+            const modal = document.getElementById('friendLinksModal');
+            const isAdmin = localStorage.getItem('tools_role') === 'admin';
+            manageBtn?.classList.toggle('can-manage', isAdmin);
+            manageBtn?.setAttribute('title', t(isAdmin ? 'home.links.manageHint' : 'home.links.adminOnly'));
+            manageBtn?.addEventListener('click', openFriendLinksEditor);
+            document.getElementById('friendLinksCloseBtn')?.addEventListener('click', closeFriendLinksEditor);
+            document.getElementById('friendLinksCancelBtn')?.addEventListener('click', closeFriendLinksEditor);
+            document.getElementById('friendLinksSaveBtn')?.addEventListener('click', saveFriendLinks);
+            document.getElementById('friendLinksProbeAllBtn')?.addEventListener('click', probeAllFriendLinks);
+            document.getElementById('friendLinksAddBtn')?.addEventListener('click', () => {
+                friendLinksState.editorLinks = collectFriendLinkEditorValues();
+                friendLinksState.editorLinks.push({ id: `link_${Date.now().toString(36)}`, icon: '🔗', name: '', nameEn: '', url: 'https://' });
+                friendLinksState.editorDirty = true;
+                renderFriendLinkEditorRows();
+                document.getElementById('friendLinkEditorList')?.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            });
+            document.getElementById('friendLinksInterval')?.addEventListener('input', () => { friendLinksState.editorDirty = true; });
+            modal?.addEventListener('click', event => { if (event.target === modal) closeFriendLinksEditor(); });
+            document.addEventListener('keydown', event => {
+                if (event.key === 'Escape' && modal?.classList.contains('open')) closeFriendLinksEditor();
+            });
+            loadFriendLinks();
+        }
+
+        function getApiRelayValues() {
+            const fallback = friendLinksState.snapshot?.apiRelay || {};
+            return {
+                baseUrl: String(document.getElementById('apiRelayBaseUrl')?.value || fallback.baseUrl || 'https://api.fanxiaolong.uk').trim().replace(/\/+$/, ''),
+                apiKey: String(document.getElementById('apiRelayApiKey')?.value || fallback.apiKey || 'xxxx').trim(),
+                defaultModel: String(document.getElementById('apiRelayDefaultModel')?.value || fallback.defaultModel || 'gemini-3-1-flash').trim(),
+                fastModel: String(document.getElementById('apiRelayFastModel')?.value || fallback.fastModel || 'gemini-2-5-flash').trim()
+            };
+        }
+
+        function buildApiRelayExamples(config = getApiRelayValues()) {
+            const base = config.baseUrl.replace(/\/+$/, '');
+            const openAiBase = `${base}/v1`;
+            return {
+                openai: `from openai import OpenAI\n\nclient = OpenAI(\n    base_url="${openAiBase}",\n    api_key="${config.apiKey}"\n)\n\nresponse = client.chat.completions.create(\n    model="${config.defaultModel}",\n    messages=[{"role": "user", "content": "Hello!"}]\n)\n\nprint(response.choices[0].message.content)`,
+                anthropic: `from anthropic import Anthropic\n\nclient = Anthropic(\n    base_url="${base}",\n    api_key="${config.apiKey}"\n)\n\nresponse = client.messages.create(\n    model="${config.defaultModel}",\n    max_tokens=1024,\n    messages=[{"role": "user", "content": "Hello!"}]\n)\n\nprint(response.content[0].text)`,
+                gemini: `curl -X POST \\\n  "${base}/v1beta/models/${config.defaultModel}:generateContent" \\\n  -H "Content-Type: application/json" \\\n  -H "x-goog-api-key: ${config.apiKey}" \\\n  -d '{\n    "contents": [{\n      "parts": [{"text": "Hello!"}]\n    }]\n  }'`,
+                claude: `// ~/.claude/settings.json\n${JSON.stringify({
+                    env: {
+                        ANTHROPIC_BASE_URL: base,
+                        ANTHROPIC_AUTH_TOKEN: config.apiKey,
+                        ANTHROPIC_MODEL: config.defaultModel,
+                        ANTHROPIC_SMALL_FAST_MODEL: config.fastModel
+                    }
+                }, null, 2)}`
+            };
+        }
+
+        function renderApiRelayExample() {
+            const examples = buildApiRelayExamples();
+            const tab = examples[friendLinksState.apiRelayTab] ? friendLinksState.apiRelayTab : 'openai';
+            const code = document.getElementById('apiRelayCode');
+            if (code) code.textContent = examples[tab];
+            document.querySelectorAll('[data-api-tab]').forEach(button => button.classList.toggle('active', button.dataset.apiTab === tab));
+        }
+
+        function buildAllApiRelayInfo(config = getApiRelayValues()) {
+            const base = config.baseUrl.replace(/\/+$/, '');
+            const examples = buildApiRelayExamples(config);
+            return [
+                'Tools Platform · AI API 中转对接信息',
+                '',
+                `公网地址: ${base}`,
+                `API 密钥: ${config.apiKey}`,
+                `默认模型: ${config.defaultModel}`,
+                `快速模型: ${config.fastModel}`,
+                '',
+                `OpenAI BASE: ${base}/v1`,
+                `OpenAI: ${base}/v1/chat/completions`,
+                `OpenAI Responses: ${base}/v1/responses`,
+                `Anthropic BASE: ${base}`,
+                `Anthropic Messages: ${base}/v1/messages`,
+                `Gemini BASE: ${base}/v1beta`,
+                '',
+                '--- Python / OpenAI ---', examples.openai,
+                '',
+                '--- Python / Anthropic ---', examples.anthropic,
+                '',
+                '--- Gemini REST ---', examples.gemini,
+                '',
+                '--- Claude Code settings.json ---', examples.claude
+            ].join('\n');
+        }
+
+        async function copyApiRelayText(value) {
+            try {
+                if (navigator.clipboard?.writeText) {
+                    await navigator.clipboard.writeText(String(value));
+                } else {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = String(value);
+                    textarea.style.position = 'fixed';
+                    textarea.style.opacity = '0';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    textarea.remove();
+                }
+                showToast(t('home.apiRelay.copied'));
+                return true;
+            } catch (_) {
+                setApiRelayMessage(t('home.apiRelay.copyFailed'));
+                return false;
+            }
+        }
+
+        function setApiRelayMessage(message = '', type = 'error') {
+            const box = document.getElementById('apiRelayMessage');
+            if (!box) return;
+            box.textContent = message;
+            box.className = `friend-links-editor-message${message ? ` visible ${type}` : ''}`;
+        }
+
+        function updateApiRelayRuntimeState() {
+            const available = friendLinksState.snapshot?.desktopAutoInstallAvailable === true;
+            const installBtn = document.getElementById('apiRelayInstallClaudeBtn');
+            if (installBtn) {
+                installBtn.disabled = !available;
+                installBtn.title = t(available ? 'home.apiRelay.runtimeDesktop' : 'home.apiRelay.runtimeWeb');
+            }
+            setText('#apiRelayRuntimeNote', t(available ? 'home.apiRelay.runtimeDesktop' : 'home.apiRelay.runtimeWeb'));
+        }
+
+        async function openApiRelayModal() {
+            if (!friendLinksState.snapshot) await loadFriendLinks();
+            const config = friendLinksState.snapshot?.apiRelay || {
+                baseUrl: 'https://api.fanxiaolong.uk', apiKey: 'xxxx', defaultModel: 'gemini-3-1-flash', fastModel: 'gemini-2-5-flash'
+            };
+            const isAdmin = localStorage.getItem('tools_role') === 'admin';
+            const fields = {
+                apiRelayBaseUrl: config.baseUrl,
+                apiRelayApiKey: config.apiKey,
+                apiRelayDefaultModel: config.defaultModel,
+                apiRelayFastModel: config.fastModel
+            };
+            Object.entries(fields).forEach(([id, value]) => {
+                const input = document.getElementById(id);
+                if (!input) return;
+                input.value = value || '';
+                input.readOnly = !isAdmin;
+            });
+            const keyInput = document.getElementById('apiRelayApiKey');
+            if (keyInput) keyInput.type = 'password';
+            const saveBtn = document.getElementById('apiRelaySaveBtn');
+            if (saveBtn) saveBtn.style.display = isAdmin ? '' : 'none';
+            const siteBtn = document.getElementById('apiRelayOpenSiteBtn');
+            if (siteBtn) siteBtn.href = config.baseUrl || 'https://api.fanxiaolong.uk/';
+            friendLinksState.apiRelayDirty = false;
+            renderApiRelayExample();
+            updateApiRelayRuntimeState();
+            setApiRelayMessage('');
+            document.getElementById('apiRelayModal')?.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeApiRelayModal() {
+            document.getElementById('apiRelayModal')?.classList.remove('open');
+            document.body.style.overflow = '';
+            setApiRelayMessage('');
+        }
+
+        async function saveApiRelayConfig() {
+            const button = document.getElementById('apiRelaySaveBtn');
+            try {
+                button.disabled = true;
+                const snapshot = await API.put('/api/friend-links/api-relay', getApiRelayValues());
+                applyFriendLinksSnapshot(snapshot);
+                friendLinksState.apiRelayDirty = false;
+                setApiRelayMessage(t('home.apiRelay.saved'), 'info');
+                showToast(t('home.apiRelay.saved'));
+            } catch (error) {
+                setApiRelayMessage(t('home.apiRelay.saveFailed', { message: error.message }));
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        async function installApiRelayToClaudeCode() {
+            if (friendLinksState.apiRelayDirty) {
+                setApiRelayMessage(t('home.apiRelay.saveBeforeInstall'));
+                return;
+            }
+            const button = document.getElementById('apiRelayInstallClaudeBtn');
+            try {
+                button.disabled = true;
+                const result = await API.post('/api/friend-links/api-relay/install-claude-code', {});
+                setApiRelayMessage(t('home.apiRelay.installed', { path: result.settingsPath }), 'info');
+            } catch (error) {
+                setApiRelayMessage(t('home.apiRelay.installFailed', { message: error.message }));
+            } finally {
+                button.disabled = friendLinksState.snapshot?.desktopAutoInstallAvailable !== true;
+            }
+        }
+
+        function setupApiRelay() {
+            const list = document.querySelector('.friend-links-list');
+            const modal = document.getElementById('apiRelayModal');
+            list?.addEventListener('click', event => {
+                const apiLink = event.target.closest('[data-friend-link-id="api"]');
+                if (!apiLink) return;
+                event.preventDefault();
+                openApiRelayModal();
+            });
+            document.getElementById('apiRelayCloseBtn')?.addEventListener('click', closeApiRelayModal);
+            modal?.addEventListener('click', event => { if (event.target === modal) closeApiRelayModal(); });
+            document.querySelectorAll('[data-api-tab]').forEach(button => button.addEventListener('click', () => {
+                friendLinksState.apiRelayTab = button.dataset.apiTab;
+                renderApiRelayExample();
+            }));
+            ['apiRelayBaseUrl', 'apiRelayApiKey', 'apiRelayDefaultModel', 'apiRelayFastModel'].forEach(id => {
+                document.getElementById(id)?.addEventListener('input', () => {
+                    friendLinksState.apiRelayDirty = true;
+                    renderApiRelayExample();
+                });
+            });
+            document.getElementById('apiRelayToggleKeyBtn')?.addEventListener('click', () => {
+                const input = document.getElementById('apiRelayApiKey');
+                if (input) input.type = input.type === 'password' ? 'text' : 'password';
+            });
+            document.getElementById('apiRelayCopyBaseBtn')?.addEventListener('click', () => copyApiRelayText(getApiRelayValues().baseUrl));
+            document.getElementById('apiRelayCopyKeyBtn')?.addEventListener('click', () => copyApiRelayText(getApiRelayValues().apiKey));
+            document.getElementById('apiRelayCopyCodeBtn')?.addEventListener('click', () => copyApiRelayText(buildApiRelayExamples()[friendLinksState.apiRelayTab]));
+            document.getElementById('apiRelayCopyAllBtn')?.addEventListener('click', () => copyApiRelayText(buildAllApiRelayInfo()));
+            document.querySelectorAll('[data-api-copy-protocol]').forEach(button => button.addEventListener('click', () => {
+                const config = getApiRelayValues();
+                const bases = { openai: `${config.baseUrl}/v1`, anthropic: config.baseUrl, gemini: `${config.baseUrl}/v1beta` };
+                copyApiRelayText(bases[button.dataset.apiCopyProtocol]);
+            }));
+            document.getElementById('apiRelaySaveBtn')?.addEventListener('click', saveApiRelayConfig);
+            document.getElementById('apiRelayInstallClaudeBtn')?.addEventListener('click', installApiRelayToClaudeCode);
+            document.addEventListener('keydown', event => {
+                if (event.key === 'Escape' && modal?.classList.contains('open')) closeApiRelayModal();
+            });
+        }
+
         function applyHomeI18n() {
             const lang = window.ToolsI18n?.getLanguage?.() || 'zh-CN';
             document.title = t('home.title');
@@ -1169,6 +2218,29 @@
             if (metaDesc) metaDesc.setAttribute('content', t('home.description'));
             const heroDesc = document.querySelector('.hero p');
             if (heroDesc) heroDesc.innerHTML = t('home.hero.desc');
+            document.querySelectorAll('[data-home-i18n]').forEach(el => {
+                el.textContent = t(el.dataset.homeI18n);
+            });
+            const friendLinks = document.querySelector('.friend-links');
+            if (friendLinks) friendLinks.setAttribute('aria-label', t('home.links.title').replace(/^🔗\s*/, ''));
+            const manageBtn = document.getElementById('friendLinksManageBtn');
+            if (manageBtn) manageBtn.title = t(localStorage.getItem('tools_role') === 'admin' ? 'home.links.manageHint' : 'home.links.adminOnly');
+            renderFriendLinks();
+            updateFriendLinksMonitorMeta();
+            if (document.getElementById('friendLinksModal')?.classList.contains('open')) renderFriendLinkEditorRows();
+            setText('#apiRelayModalTitle', t('home.apiRelay.title'));
+            setText('#apiRelayModalTitle + .friend-links-dialog-subtitle', t('home.apiRelay.subtitle'));
+            setText('label[for="apiRelayBaseUrl"]', t('home.apiRelay.publicBase'));
+            setText('label[for="apiRelayApiKey"]', t('home.apiRelay.apiKey'));
+            setText('label[for="apiRelayDefaultModel"]', t('home.apiRelay.defaultModel'));
+            setText('label[for="apiRelayFastModel"]', t('home.apiRelay.fastModel'));
+            setText('#apiRelayCopyCodeBtn', t('home.apiRelay.copyCurrent'));
+            setText('#apiRelayCopyAllBtn', t('home.apiRelay.copyAll'));
+            setText('#apiRelayInstallClaudeBtn', t('home.apiRelay.installClaude'));
+            setText('#apiRelayOpenSiteBtn', t('home.apiRelay.openSite'));
+            setText('#apiRelaySaveBtn', t('home.apiRelay.save'));
+            renderApiRelayExample();
+            updateApiRelayRuntimeState();
             setText('.custom-tools-note', t('home.custom.note'));
             setText('#customToolUploadBtn', t('home.custom.upload'));
             setText('#customToolImportTitle', t('home.import.title'));
@@ -1699,6 +2771,8 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             applyHomeI18n();
+            setupFriendLinks();
+            setupApiRelay();
             setupCustomToolUpload();
             loadCustomTools();
             loadStats();

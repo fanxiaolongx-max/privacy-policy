@@ -3,6 +3,9 @@ const { run, all } = require('./app-db');
 const ALLOWED_WINDOWS = new Set([30, 90, 180]);
 const LICENSE_WARNING_MS = 7 * 24 * 60 * 60 * 1000;
 const LICENSE_CRITICAL_MS = 24 * 60 * 60 * 1000;
+const FAILURE_RETENTION_DAYS = 180;
+const FAILURE_DETAIL_LIMIT = 16000;
+const MAX_FAILURE_RECORDS = 5000;
 
 const SERVICE_DEFINITIONS = [
     {
@@ -67,8 +70,8 @@ let initPromise = null;
 
 async function ensureReady() {
     if (!initPromise) {
-        initPromise = run(`
-            CREATE TABLE IF NOT EXISTS service_status_daily (
+        initPromise = (async () => {
+            await run(`CREATE TABLE IF NOT EXISTS service_status_daily (
                 service_key TEXT NOT NULL,
                 status_date TEXT NOT NULL,
                 request_count INTEGER NOT NULL DEFAULT 0,
@@ -80,8 +83,22 @@ async function ensureReady() {
                 last_status_code INTEGER,
                 last_request_at TEXT NOT NULL,
                 PRIMARY KEY (service_key, status_date)
-            )
-        `).catch(error => {
+            )`);
+            await run(`CREATE TABLE IF NOT EXISTS service_status_failures (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                service_key TEXT NOT NULL,
+                request_at TEXT NOT NULL,
+                request_id TEXT,
+                method TEXT NOT NULL,
+                request_path TEXT NOT NULL,
+                status_code INTEGER NOT NULL,
+                duration_ms INTEGER NOT NULL DEFAULT 0,
+                request_body TEXT,
+                response_body TEXT
+            )`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_service_status_failures_lookup
+                ON service_status_failures (request_at DESC, service_key, status_code)`);
+        })().catch(error => {
             initPromise = null;
             throw error;
         });
@@ -105,10 +122,18 @@ function resolveService(pathname) {
 function shouldTrackRequest(method, pathname) {
     const safePath = pathnameOf(pathname);
     if (String(method || '').toUpperCase() === 'OPTIONS') return false;
-    return safePath.startsWith('/api/') && safePath !== '/api/platform-metrics/service-status';
+    return safePath.startsWith('/api/') && !safePath.startsWith('/api/platform-metrics/service-status');
 }
 
-async function trackRequest({ method, pathname, statusCode, durationMs, timestamp = new Date() }) {
+function normalizeFailureDetail(value) {
+    if (value == null || value === '') return null;
+    const text = typeof value === 'string' ? value : JSON.stringify(value);
+    return text.length > FAILURE_DETAIL_LIMIT
+        ? `${text.slice(0, FAILURE_DETAIL_LIMIT)}\n… [truncated]`
+        : text;
+}
+
+async function trackRequest({ method, pathname, statusCode, durationMs, timestamp = new Date(), requestId, requestBody, responseBody }) {
     if (!shouldTrackRequest(method, pathname)) return { tracked: false };
     await ensureReady();
     const service = resolveService(pathname);
@@ -138,7 +163,74 @@ async function trackRequest({ method, pathname, statusCode, durationMs, timestam
             last_status_code = excluded.last_status_code,
             last_request_at = excluded.last_request_at
     `, [service.id, date, success, clientError, serverError, duration, duration, status, iso]);
+    if (clientError || serverError) {
+        await run(`
+            INSERT INTO service_status_failures (
+                service_key, request_at, request_id, method, request_path,
+                status_code, duration_ms, request_body, response_body
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+            service.id,
+            iso,
+            String(requestId || ''),
+            String(method || 'GET').toUpperCase(),
+            String(pathname || ''),
+            status,
+            duration,
+            normalizeFailureDetail(requestBody),
+            normalizeFailureDetail(responseBody)
+        ]);
+        const cutoff = new Date(safeTime.getTime() - FAILURE_RETENTION_DAYS * 86400000).toISOString();
+        await run('DELETE FROM service_status_failures WHERE request_at < ?', [cutoff]);
+        await run(`DELETE FROM service_status_failures WHERE id IN (
+            SELECT id FROM service_status_failures
+            ORDER BY request_at DESC, id DESC
+            LIMIT -1 OFFSET ?
+        )`, [MAX_FAILURE_RECORDS]);
+    }
     return { tracked: true, serviceKey: service.id, date };
+}
+
+async function getFailures(filters = {}) {
+    await ensureReady();
+    const where = ['status_code >= 400', 'request_at >= ?'];
+    const params = [new Date(Date.now() - FAILURE_RETENTION_DAYS * 86400000).toISOString()];
+    const serviceKey = String(filters.serviceKey || '');
+    if (serviceKey && SERVICE_DEFINITIONS.some(service => service.id === serviceKey)) {
+        where.push('service_key = ?');
+        params.push(serviceKey);
+    }
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(String(filters.date || '')) ? String(filters.date) : '';
+    if (date) {
+        where.push('request_at >= ? AND request_at < ?');
+        params.push(`${date}T00:00:00.000Z`, `${date}T23:59:59.999Z`);
+    }
+    if (String(filters.statusClass) === '4xx') where.push('status_code BETWEEN 400 AND 499');
+    if (String(filters.statusClass) === '5xx') where.push('status_code >= 500');
+    const limit = Math.min(100, Math.max(1, Number(filters.limit) || 50));
+    params.push(limit);
+    const rows = await all(`
+        SELECT id, service_key, request_at, request_id, method, request_path,
+               status_code, duration_ms, request_body, response_body
+        FROM service_status_failures
+        WHERE ${where.join(' AND ')}
+        ORDER BY request_at DESC, id DESC
+        LIMIT ?
+    `, params);
+    return {
+        failures: rows.map(row => ({
+            id: Number(row.id),
+            serviceKey: row.service_key,
+            requestAt: row.request_at,
+            requestId: row.request_id || '',
+            method: row.method,
+            path: row.request_path,
+            statusCode: Number(row.status_code),
+            durationMs: Number(row.duration_ms || 0),
+            requestBody: row.request_body || '',
+            responseBody: row.response_body || ''
+        }))
+    };
 }
 
 function isoDateOffset(daysAgo) {
@@ -284,5 +376,6 @@ module.exports = {
     classifyDay,
     summarizeRows,
     summarizeLicenseStatus,
-    getHistory
+    getHistory,
+    getFailures
 };

@@ -50,6 +50,8 @@ const aiSettingsRoutes = require('./routes/ai-settings');
 const globalBackupRoutes = require('./routes/global-backup');
 const alertCenterRoutes = require('./routes/alert-center');
 const platformMetricsRoutes = require('./routes/platform-metrics');
+const friendLinksRoutes = require('./routes/friend-links');
+const friendLinksService = require('./models/friend-links-service');
 const serviceStatusRepo = require('./models/service-status-repository');
 const globalBackupRepo = require('./models/global-backup-repository');
 const remoteBackupSyncRepo = require('./models/remote-backup-sync-repository');
@@ -142,6 +144,18 @@ function getSanitizedQuery(req) {
     return redactForLog(req.query || {});
 }
 
+function sanitizeResponseForStatus(body) {
+    if (body == null || Buffer.isBuffer(body)) return '';
+    const text = typeof body === 'string' ? body : JSON.stringify(body);
+    try {
+        return JSON.stringify(redactForLog(JSON.parse(text)));
+    } catch (_) {
+        return text
+            .replace(/((?:password|token|secret|api[_-]?key|authorization)\s*[=:]\s*)[^\s,;&]+/gi, '$1[REDACTED]')
+            .slice(0, 16000);
+    }
+}
+
 // ── 请求日志（每次 API 请求都打印到控制台）
 app.use((req, res, next) => {
     const originalUrl = req.originalUrl || req.url || req.path;
@@ -152,6 +166,11 @@ app.use((req, res, next) => {
     const safeQuery = getSanitizedQuery(req);
     const client = req.ip || req.socket?.remoteAddress || '';
     const userAgent = req.get('user-agent') || '';
+    const originalSend = res.send;
+    res.send = function serviceStatusCaptureSend(body) {
+        res.locals.serviceStatusResponseBody = sanitizeResponseForStatus(body);
+        return originalSend.call(this, body);
+    };
     res.on('finish', () => {
         const dur = Date.now() - start;
         const status = res.statusCode;
@@ -163,9 +182,12 @@ app.use((req, res, next) => {
         console.log(`${color}[${ts}] ${req.method} ${safeUrl} #${req.requestId}${externalTag} → ${status} (${dur}ms) ${bodySize}${querySummary} ip=${client} ua="${userAgent.substring(0, 120)}"${reset}`);
         serviceStatusRepo.trackRequest({
             method: req.method,
-            pathname: originalUrl,
+            pathname: safeUrl,
             statusCode: status,
-            durationMs: dur
+            durationMs: dur,
+            requestId: req.requestId,
+            requestBody: JSON.stringify(redactForLog(req.body || {})).slice(0, 16000),
+            responseBody: res.locals.serviceStatusResponseBody || ''
         }).catch(error => console.warn(`[service-status] 请求指标记录失败：${error.message}`));
         if (status >= 400 && !req.suppressBodyLog) {
             console.log(`  ↳ Body:`, JSON.stringify(redactForLog(req.body)).substring(0, 300));
@@ -286,6 +308,7 @@ app.use('/api/global-backup', globalBackupRoutes); // 全局数据备份与恢�
 app.use('/api/external/metrics', externalMetricsRoutes); // 外部/移动端只读指标 API
 app.use('/api/alert-center', alertCenterRoutes); // 系统告警台 API
 app.use('/api/platform-metrics', platformMetricsRoutes); // 首页效能与使用量统计
+app.use('/api/friend-links', friendLinksRoutes); // 首页友情链接配置与轻量可用性探测
 if (desktopLicenseAdminRoutes) app.use('/api/desktop-licenses', requireAdmin, desktopLicenseAdminRoutes);
 
 // ============================================================
@@ -431,6 +454,11 @@ async function startServer() {
         setTimeout(() => {
             alertAiAnalyzer.startAlertAiBackfill();
         }, 3200);
+        setTimeout(() => {
+            friendLinksService.start().catch(err => {
+                console.error('[friend-links] 启动自动探测调度失败：', err);
+            });
+        }, 4000);
     });
 
     server.on('error', (err) => {
