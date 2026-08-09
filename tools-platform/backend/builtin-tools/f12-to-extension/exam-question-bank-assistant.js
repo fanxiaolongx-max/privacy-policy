@@ -20,6 +20,8 @@ const I18N = {
         exportJson: '📥 导出JSON', importJson: '📤 导入JSON', clear: '🗑 清空当前题库', language: 'EN',
         modalTitle: '📚 题库详情中心', correctHint: '(勾选即为正确答案)', search: '🔍 输入题目、选项或ID搜索...',
         type: '题型', question: '题目', options: '选项 (绿色=准确答案，紫色=疑似答案，红色=明确错项)', count: '次数', guessBadge: '疑似',
+        statsTotal: '总题数', statsTrueFalse: '判断题', statsSingle: '单选题', statsMultiple: '多选题',
+        statsConfirmed: '准确答案', statsSuggested: '仅疑似', statsPending: '待学习', statsErrors: '含错误记录',
         combo: '组合', excludedCombos: n => `❌ 已排除的错误组合 (${n}种):`,
         emptyBank: '当前题库为空，请先抓取！', needName: '请填写题库名称！',
         scrapingReview: '复盘抓取中...', scrapingExam: '答题抓取中...', stopped: '已停止', answering: '自动答题中...',
@@ -28,6 +30,11 @@ const I18N = {
         cannotAnswerEmpty: '当前题库为空，将对全部题目按题型策略猜答。', noData: '没有数据！',
         clearConfirm: name => `确定清空题库 [${name}] 的所有缓存吗？`, cleared: '🗑 已清空。', forceStop: '⚠️ 正在强制停止...',
         importConfirm: name => `导入后将覆盖题库 [${name}]，是否继续？`, importSuccess: n => `📤 导入成功：${n}题。`,
+        exportSelectTitle: '选择要导出的题库', selectAllBanks: '全选', exportSelected: '导出所选题库',
+        cancelTransfer: '取消', exportNeedSelect: '请至少选择一个题库。',
+        backupBankCount: n => `${n} 个题库`,
+        importBackupConfirm: (banks, questions) => `即将导入 ${banks} 个题库，共 ${questions} 题。同名题库会被覆盖，是否继续？`,
+        importBackupSuccess: (banks, questions) => `📤 多题库导入成功：${banks} 个题库，共 ${questions} 题。`,
         importInvalid: '导入失败：不是有效的本脚本JSON题库文件。', localDataBroken: '⚠️ 当前题库缓存损坏，已安全切换为空题库；原缓存未被覆盖。'
     },
     en: {
@@ -40,6 +47,8 @@ const I18N = {
         exportJson: '📥 Export JSON', importJson: '📤 Import JSON', clear: '🗑 Clear current bank', language: '中',
         modalTitle: '📚 Question Bank Details', correctHint: '(checked = correct answer)', search: '🔍 Search question, option, or ID...',
         type: 'Type', question: 'Question', options: 'Options (green = confirmed, purple = suggested, red = confirmed wrong)', count: 'Count', guessBadge: 'Suggested',
+        statsTotal: 'Total', statsTrueFalse: 'True/False', statsSingle: 'Single', statsMultiple: 'Multiple',
+        statsConfirmed: 'Confirmed', statsSuggested: 'Suggested only', statsPending: 'Pending', statsErrors: 'With error evidence',
         combo: 'Combo', excludedCombos: n => `❌ Eliminated invalid combinations (${n}):`,
         emptyBank: 'The current question bank is empty. Scrape questions first.', needName: 'Please enter a question bank name.',
         scrapingReview: 'Scraping review...', scrapingExam: 'Scraping exam...', stopped: 'Stopped', answering: 'Auto answering...',
@@ -48,6 +57,11 @@ const I18N = {
         cannotAnswerEmpty: 'The question bank is empty. Every question will be guessed by question-type strategy.', noData: 'No data to export.',
         clearConfirm: name => `Clear all cached data for question bank [${name}]?`, cleared: '🗑 Cleared.', forceStop: '⚠️ Force stopping...',
         importConfirm: name => `Importing will replace question bank [${name}]. Continue?`, importSuccess: n => `📤 Import successful: ${n} questions.`,
+        exportSelectTitle: 'Select question banks to export', selectAllBanks: 'Select all', exportSelected: 'Export selected banks',
+        cancelTransfer: 'Cancel', exportNeedSelect: 'Select at least one question bank.',
+        backupBankCount: n => `${n} question bank(s)`,
+        importBackupConfirm: (banks, questions) => `Import ${banks} question bank(s), ${questions} questions total? Banks with the same name will be replaced.`,
+        importBackupSuccess: (banks, questions) => `📤 Multi-bank import successful: ${banks} bank(s), ${questions} questions.`,
         importInvalid: 'Import failed: this is not a valid question-bank JSON file.', localDataBroken: '⚠️ The current local cache is corrupted. Switched safely to an empty bank without overwriting the original cache.'
     }
 };
@@ -101,6 +115,26 @@ const isOptionSelected = (optionEl) => {
         '.ant-checkbox-wrapper-checked'
     ].join(', ');
     return optionEl.matches(selectedSelector) || Boolean(optionEl.querySelector(selectedSelector));
+};
+
+// 部分复盘页会把作答结果还原成纯展示状态：页面上能看到勾选图标，
+// 但控件的 checked/aria-checked 状态可能没有及时同步。该站点会在
+// 已选选项的 label 上保留精确的 option-list-active 类，作为复盘兜底。
+// 不使用模糊的 checked 类名通配或颜色判断，避免把说明区和其他组件误当成答案。
+const isReviewOptionSelected = (optionEl) => {
+    if (!optionEl) return false;
+    if (isOptionSelected(optionEl)) return true;
+
+    const optionRow = optionEl.matches('.option-list-item')
+        ? optionEl
+        : optionEl.closest('.option-list-item');
+    if (!optionRow) return false;
+
+    const activeOptionLabel = optionRow.querySelector('label.option-list.option-list-active');
+    if (!activeOptionLabel) return false;
+
+    // 限定为考试选项的图标结构；仅有同名 active 类不足以判定为已选答案。
+    return Boolean(activeOptionLabel.querySelector('.chosen-item .exam-icon, .chosen-item .icon-inner'));
 };
 
 const getOptionClickTargets = (optionEl) => {
@@ -374,11 +408,48 @@ const reclassifyQuestionVariant = (question, typeName, titleText, optionsText, q
     return previousType;
 };
 
-const findShortestVisibleTextElement = (pattern) => {
-    const scope = document.getElementById('app') || document.body;
-    return [...scope.querySelectorAll('*')]
+const findShortestVisibleTextElement = (pattern, searchScope) => {
+    const scope = searchScope || document.getElementById('app') || document.body;
+    return [scope, ...scope.querySelectorAll('*')]
         .filter(node => isVisible(node) && pattern.test(node.innerText || ''))
         .sort((a, b) => (a.innerText || '').length - (b.innerText || '').length)[0] || null;
+};
+
+const reviewResultPattern = /答对了|答错了|遗憾|Congratulations|Wrong answer|Wrong Question|Incorrect/i;
+const reviewBlockPath = `//*[@id="app"]/div/div/div[1]/div/div[1]/div[2]/div[2]/div/div/div[2]/div[4]`;
+
+// 从题目标题向上寻找“同时包含当前选项和答题反馈”的最近容器。
+// 不能直接搜索整个 #app，否则页面上的 Wrong Question Feedback 等全局文案
+// 会串到当前题目，导致所有题都被误判为答错。
+const findCurrentQuestionReviewScope = (titleEl, optionEls) => {
+    const visibleOptions = (optionEls || []).filter(Boolean);
+    let scope = titleEl && titleEl.parentElement;
+    const appRoot = document.getElementById('app');
+    while (scope && scope !== appRoot && scope !== document.body) {
+        const containsOptions = visibleOptions.length > 0 && visibleOptions.every(option => scope.contains(option));
+        if (containsOptions && findShortestVisibleTextElement(reviewResultPattern, scope)) return scope;
+        scope = scope.parentElement;
+    }
+    return null;
+};
+
+const detectCurrentReviewResult = (titleEl, optionEls) => {
+    const exactReviewBlock = getEl(reviewBlockPath);
+    const reviewScope = exactReviewBlock || findCurrentQuestionReviewScope(titleEl, optionEls);
+    if (!reviewScope) return { status: '', element: null, scope: null, text: '' };
+
+    // 正确和错误分开查找；不再用“整个页面里最短的反馈文本”决定当前题结果。
+    const correctEl = findShortestVisibleTextElement(/答对了|Congratulations/i, reviewScope)
+        || reviewScope.querySelector('.pass');
+    const wrongEl = findShortestVisibleTextElement(/答错了|遗憾|Wrong answer|Wrong Question|Incorrect/i, reviewScope)
+        || reviewScope.querySelector('.fail');
+    const resultEl = correctEl || wrongEl;
+    return {
+        status: correctEl ? 'correct' : (wrongEl ? 'wrong' : ''),
+        element: resultEl,
+        scope: reviewScope,
+        text: resultEl ? resultEl.innerText || '' : ''
+    };
 };
 
 const trueEquivs = ['true', '正确', '对', 'yes', 't'];
@@ -523,6 +594,17 @@ style.innerHTML = `
     #modal-close { cursor: pointer; font-size: 24px; color: #cbd5e1; line-height: 1; } #modal-close:hover { color: #fff; }
     #modal-info { padding: 12px 20px; background: #f8fafc; font-size: 13px; color: #475569; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
     #modal-search-input { padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; width: 260px; font-size: 13px; }
+    #modal-stats { padding: 10px 20px; background: #fff; border-bottom: 1px solid #e2e8f0; display: flex; flex-wrap: wrap; gap: 8px; }
+    .bank-stat-card { min-width: 96px; padding: 7px 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; color: #64748b; font-size: 11px; line-height: 1.2; }
+    .bank-stat-card strong { display: block; margin-top: 3px; color: #0f172a; font-size: 16px; }
+    .bank-stat-card.stat-confirmed { border-color: #86efac; background: #f0fdf4; }
+    .bank-stat-card.stat-confirmed strong { color: #15803d; }
+    .bank-stat-card.stat-suggested { border-color: #d8b4fe; background: #faf5ff; }
+    .bank-stat-card.stat-suggested strong { color: #7e22ce; }
+    .bank-stat-card.stat-pending { border-color: #fde68a; background: #fffbeb; }
+    .bank-stat-card.stat-pending strong { color: #b45309; }
+    .bank-stat-card.stat-errors { border-color: #fecaca; background: #fff1f2; }
+    .bank-stat-card.stat-errors strong { color: #be123c; }
     #modal-content { flex: 1; overflow: auto; padding: 0; background: #f1f5f9; }
     #exam-table { width: 100%; border-collapse: collapse; background: #fff; font-size: 13px; }
     #exam-table th { background: #e2e8f0; padding: 12px 16px; text-align: left; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid #cbd5e1; }
@@ -538,10 +620,27 @@ style.innerHTML = `
     .id-badge { font-family: monospace; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 11px; color: #475569; }
     .wrong-combos-box { margin-top: 8px; padding: 6px 8px; background: #fff1f2; border: 1px solid #fecdd3; border-radius: 6px; font-size: 11px; color: #9f1239; }
     .wrong-combo-item { display: inline-block; background: #ffe4e6; padding: 2px 6px; border-radius: 4px; margin: 2px; border: 1px solid #f43f5e; color: #881337; }
+    #bank-transfer-dialog { display: none; position: fixed; inset: 0; z-index: 1000002; align-items: center; justify-content: center; padding: 16px; background: rgba(15, 23, 42, .55); font-family: sans-serif; }
+    .bank-transfer-panel { width: min(520px, calc(100vw - 32px)); max-height: min(680px, calc(100vh - 32px)); display: flex; flex-direction: column; overflow: hidden; border-radius: 12px; background: #fff; box-shadow: 0 18px 50px rgba(0,0,0,.35); }
+    .bank-transfer-header { padding: 16px 18px; color: #fff; background: #0f172a; font-size: 16px; font-weight: bold; }
+    .bank-transfer-toolbar { padding: 12px 18px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
+    .bank-transfer-toolbar label, .bank-transfer-item { cursor: pointer; }
+    #bank-transfer-list { min-height: 80px; overflow: auto; padding: 8px 18px; }
+    .bank-transfer-item { display: flex; align-items: center; gap: 10px; margin: 6px 0; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; }
+    .bank-transfer-item:hover { border-color: #93c5fd; background: #eff6ff; }
+    .bank-transfer-item strong { flex: 1; min-width: 0; overflow-wrap: anywhere; color: #0f172a; }
+    .bank-transfer-item small { flex: 0 0 auto; color: #64748b; }
+    .bank-transfer-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 12px 18px; border-top: 1px solid #e2e8f0; background: #f8fafc; }
+    .bank-transfer-actions button { padding: 8px 14px; border: 0; border-radius: 7px; cursor: pointer; font-weight: bold; }
+    #bank-transfer-cancel { color: #475569; background: #e2e8f0; }
+    #bank-transfer-confirm { color: #fff; background: #2563eb; }
+    #bank-transfer-confirm:disabled { cursor: not-allowed; opacity: .45; }
     @media (max-width: 640px) {
         #scraper-data-modal { top: 8px; left: 8px; width: calc(100vw - 16px); height: calc(100vh - 16px); min-width: 0; min-height: 0; resize: none; }
         #modal-info { align-items: stretch; flex-direction: column; gap: 8px; }
         #modal-search-input { width: 100%; }
+        #modal-stats { padding: 8px; gap: 6px; }
+        .bank-stat-card { min-width: calc(50% - 3px); flex: 1; }
     }
 `;
 document.head.appendChild(style);
@@ -600,9 +699,24 @@ modal.innerHTML = `
         <div>Key: <strong id="modal-key-display"></strong> <span id="ui-correct-hint" style="margin-left: 10px; color:#10b981;">${t('correctHint')}</span></div>
         <input type="text" id="modal-search-input" placeholder="${t('search')}">
     </div>
+    <div id="modal-stats"></div>
     <div id="modal-content"><table id="exam-table"><thead><tr><th width="10%">ID</th><th id="ui-th-type" width="8%">${t('type')}</th><th id="ui-th-question" width="32%">${t('question')}</th><th id="ui-th-options" width="42%">${t('options')}</th><th id="ui-th-count" width="8%">${t('count')}</th></tr></thead><tbody id="exam-table-body"></tbody></table></div>
 `;
 document.body.appendChild(modal);
+
+const bankTransferDialog = document.createElement('div');
+bankTransferDialog.id = 'bank-transfer-dialog';
+bankTransferDialog.innerHTML = `
+    <div class="bank-transfer-panel" role="dialog" aria-modal="true" aria-labelledby="bank-transfer-title">
+        <div class="bank-transfer-header" id="bank-transfer-title">${t('exportSelectTitle')}</div>
+        <div class="bank-transfer-toolbar"><label><input type="checkbox" id="bank-transfer-select-all"> <span id="bank-transfer-select-all-label">${t('selectAllBanks')}</span></label></div>
+        <div id="bank-transfer-list"></div>
+        <div class="bank-transfer-actions">
+            <button id="bank-transfer-cancel">${t('cancelTransfer')}</button>
+            <button id="bank-transfer-confirm">${t('exportSelected')}</button>
+        </div>
+    </div>`;
+document.body.appendChild(bankTransferDialog);
 
 const header = document.getElementById('scraper-header');
 let isDragging = false, startX, startY, initialX, initialY;
@@ -656,7 +770,7 @@ window.addEventListener('resize', () => {
 });
 
 const dialogOverlay = document.getElementById('scraper-close-dialog'); const chkRemember = document.getElementById('chk-remember');
-function executeCloseAction(action) { if(action === 'minimize') { widget.style.display = 'none'; modal.style.display = 'none'; minIcon.style.display = 'flex'; } else if(action === 'quit') { window.removeEventListener('message', handleExtensionPopupMessage); widget.remove(); modal.remove(); minIcon.remove(); style.remove(); } }
+function executeCloseAction(action) { if(action === 'minimize') { widget.style.display = 'none'; modal.style.display = 'none'; bankTransferDialog.style.display = 'none'; minIcon.style.display = 'flex'; } else if(action === 'quit') { window.removeEventListener('message', handleExtensionPopupMessage); widget.remove(); modal.remove(); bankTransferDialog.remove(); minIcon.remove(); style.remove(); } }
 function handleExtensionPopupMessage(event) {
     if (event.source !== window || event.data?.source !== 'EXTENSION_POPUP') return;
     if (event.data.action === 'START') {
@@ -679,6 +793,63 @@ let isRunning = false; let scrapedData = [];
 const logEl = document.getElementById('scraper-log'); const totalEl = document.getElementById('stat-total'); const statusEl = document.getElementById('stat-status');
 const examNameInput = document.getElementById('scraper-exam-name'); const datalist = document.getElementById('exam-name-list'); const tbody = document.getElementById('exam-table-body');
 const getStorageKey = () => `ScraperData_${examNameInput.value.trim()}`;
+
+const mapSavedAnswersToOptions = (savedAnswers, currentOptions) => {
+    const mappedAnswers = [];
+    const unmappedAnswers = [];
+    for (const answer of uniqueAnswerTexts(savedAnswers)) {
+        const normalizedAnswer = normalizeForCompare(answer);
+        const matchedOption = currentOptions.find(option => {
+            const normalizedOption = normalizeForCompare(option);
+            if (normalizedAnswer === normalizedOption) return true;
+            if (trueEquivs.includes(normalizedAnswer) && trueEquivs.includes(normalizedOption)) return true;
+            if (falseEquivs.includes(normalizedAnswer) && falseEquivs.includes(normalizedOption)) return true;
+            return false;
+        });
+        if (matchedOption) {
+            if (!mappedAnswers.some(item => normalizeForCompare(item) === normalizeForCompare(matchedOption))) mappedAnswers.push(matchedOption);
+        } else {
+            unmappedAnswers.push(answer);
+        }
+    }
+    return { mappedAnswers, unmappedAnswers };
+};
+
+// 当前题库没有已确认答案时，从其他本地题库寻找完全相同的题目版本。
+// 多个题库只有在答案一致时才采用；存在冲突则宁可不答，避免跨库污染。
+const findConfirmedAnswerAcrossBanks = (typeName, titleText, currentOptions, currentStorageKey) => {
+    const candidates = [];
+    for (let index = 0; index < localStorage.length; index++) {
+        const storageKey = localStorage.key(index);
+        if (!storageKey || !storageKey.startsWith('ScraperData_') || storageKey === currentStorageKey) continue;
+        try {
+            const questions = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            if (!Array.isArray(questions)) continue;
+            const matchedQuestion = findQuestionVariant(questions, typeName, titleText, currentOptions);
+            if (!matchedQuestion || !Array.isArray(matchedQuestion.正确答案) || matchedQuestion.正确答案.length === 0) continue;
+            const mapping = mapSavedAnswersToOptions(matchedQuestion.正确答案, currentOptions);
+            if (mapping.unmappedAnswers.length > 0 || mapping.mappedAnswers.length === 0) continue;
+            if ((typeName === '单选题' || typeName === '判断题') && mapping.mappedAnswers.length !== 1) continue;
+            candidates.push({
+                bankName: storageKey.substring(12),
+                answers: mapping.mappedAnswers,
+                answerKey: getNormComboStr(mapping.mappedAnswers)
+            });
+        } catch (_) {}
+    }
+
+    if (!candidates.length) return { status: 'missing', answers: [], bankNames: [] };
+    const answerKeys = [...new Set(candidates.map(candidate => candidate.answerKey).filter(Boolean))];
+    if (answerKeys.length !== 1) {
+        return { status: 'conflict', answers: [], bankNames: candidates.map(candidate => candidate.bankName), candidates };
+    }
+    return {
+        status: 'found',
+        answers: candidates[0].answers,
+        bankNames: candidates.map(candidate => candidate.bankName),
+        candidates
+    };
+};
 let currentStatusKey = 'ready';
 function setStatus(key, color) {
     currentStatusKey = key;
@@ -715,6 +886,10 @@ function applyLanguage() {
     document.getElementById('ui-th-question').innerText = t('question');
     document.getElementById('ui-th-options').innerText = t('options');
     document.getElementById('ui-th-count').innerText = t('count');
+    document.getElementById('bank-transfer-title').innerText = t('exportSelectTitle');
+    document.getElementById('bank-transfer-select-all-label').innerText = t('selectAllBanks');
+    document.getElementById('bank-transfer-cancel').innerText = t('cancelTransfer');
+    document.getElementById('bank-transfer-confirm').innerText = t('exportSelected');
     if (modal.style.display === 'flex') renderTable();
 }
 document.getElementById('scraper-lang').onclick = e => {
@@ -813,10 +988,56 @@ function logMsg(msg, colorType = 'default') {
     logEl.appendChild(div); logEl.scrollTop = logEl.scrollHeight;
 }
 
+function renderBankStats() {
+    const typeCounts = { '判断题': 0, '单选题': 0, '多选题': 0 };
+    let confirmedCount = 0; let suggestedOnlyCount = 0; let pendingCount = 0; let errorEvidenceCount = 0;
+    scrapedData.forEach(q => {
+        if (Object.prototype.hasOwnProperty.call(typeCounts, q.题型)) typeCounts[q.题型]++;
+        const hasConfirmed = Array.isArray(q.正确答案) && q.正确答案.length > 0;
+        const hasSuggested = !hasConfirmed && Array.isArray(q.猜测答案) && q.猜测答案.length > 0;
+        const hasErrors = (Array.isArray(q.错误答案) && q.错误答案.length > 0)
+            || (Array.isArray(q.明确错误答案) && q.明确错误答案.length > 0)
+            || (Array.isArray(q.错误组合) && q.错误组合.length > 0);
+        if (hasConfirmed) confirmedCount++;
+        else if (hasSuggested) suggestedOnlyCount++;
+        else pendingCount++;
+        if (hasErrors) errorEvidenceCount++;
+    });
+    const coverage = scrapedData.length ? Math.round(confirmedCount * 100 / scrapedData.length) : 0;
+    const statItems = [
+        { label: t('statsTotal'), value: scrapedData.length, className: '' },
+        { label: t('statsTrueFalse'), value: typeCounts['判断题'], className: '' },
+        { label: t('statsSingle'), value: typeCounts['单选题'], className: '' },
+        { label: t('statsMultiple'), value: typeCounts['多选题'], className: '' },
+        { label: t('statsConfirmed'), value: `${confirmedCount} (${coverage}%)`, className: 'stat-confirmed' },
+        { label: t('statsSuggested'), value: suggestedOnlyCount, className: 'stat-suggested' },
+        { label: t('statsPending'), value: pendingCount, className: 'stat-pending' },
+        { label: t('statsErrors'), value: errorEvidenceCount, className: 'stat-errors' }
+    ];
+    document.getElementById('modal-stats').innerHTML = statItems.map(item =>
+        `<div class="bank-stat-card ${item.className}"><span>${item.label}</span><strong>${item.value}</strong></div>`
+    ).join('');
+}
+
 function renderTable() {
     tbody.innerHTML = ''; document.getElementById('modal-key-display').innerText = getStorageKey();
-    scrapedData.forEach((q, index) => {
+    renderBankStats();
+    const typeOrder = { '判断题': 0, '单选题': 1, '多选题': 2 };
+    const sortedEntries = scrapedData.map((q, index) => ({ q, index })).sort((left, right) => {
+        const typeDiff = (typeOrder[left.q.题型] ?? 99) - (typeOrder[right.q.题型] ?? 99);
+        if (typeDiff !== 0) return typeDiff;
+        const leftNumber = Number(left.q.题号);
+        const rightNumber = Number(right.q.题号);
+        const numberDiff = (Number.isFinite(leftNumber) ? leftNumber : Number.MAX_SAFE_INTEGER)
+            - (Number.isFinite(rightNumber) ? rightNumber : Number.MAX_SAFE_INTEGER);
+        if (numberDiff !== 0) return numberDiff;
+        return normalizeQuestionText(left.q.题目).localeCompare(normalizeQuestionText(right.q.题目));
+    });
+
+    sortedEntries.forEach(({ q, index }) => {
         let tr = document.createElement('tr');
+        tr.dataset.sourceIndex = String(index);
+        tr.dataset.searchText = [q.id || '', q.题目 || '', ...(q.选项 || [])].join(' ').toLowerCase();
         let optionsHtml = q.选项.map((opt, i) => {
             let cleanOpt = cleanOptionText(opt);
             let normOpt = normalizeForCompare(cleanOpt);
@@ -867,13 +1088,8 @@ function renderTable() {
 document.getElementById('modal-search-input').addEventListener('input', (e) => {
     const keyword = e.target.value.trim().toLowerCase();
     const rows = tbody.querySelectorAll('tr');
-    scrapedData.forEach((q, idx) => {
-        const tr = rows[idx];
-        if (!tr) return;
-        const matchId = (q.id || '').toLowerCase().includes(keyword);
-        const matchTitle = (q.题目 || '').toLowerCase().includes(keyword);
-        const matchOpt = (q.选项 || []).some(o => (o || '').toLowerCase().includes(keyword));
-        if (matchId || matchTitle || matchOpt) { tr.style.display = ''; } else { tr.style.display = 'none'; }
+    rows.forEach(tr => {
+        tr.style.display = (tr.dataset.searchText || '').includes(keyword) ? '' : 'none';
     });
 });
 
@@ -900,6 +1116,7 @@ tbody.addEventListener('change', (e) => {
         if (q.正确答案.length > 0) q.猜测答案 = [];
 
         localStorage.setItem(getStorageKey(), JSON.stringify(scrapedData));
+        renderBankStats();
     }
 });
 
@@ -975,7 +1192,9 @@ document.getElementById('btn-start').onclick = async () => {
                     let cleaned = cleanOptionText(opt.innerText);
                     if(cleaned) {
                         optionsText.push(cleaned);
-                        if (isOptionSelected(opt)) checkedOptionsText.push(cleaned);
+                        if ((isReviewMode ? isReviewOptionSelected(opt) : isOptionSelected(opt))) {
+                            checkedOptionsText.push(cleaned);
+                        }
                     }
                 }
 
@@ -992,18 +1211,13 @@ document.getElementById('btn-start').onclick = async () => {
                 let officialAnswers = [];
 
                 if (isReviewMode) {
-                    let resultEl = findShortestVisibleTextElement(/答对了|答错了|遗憾|Congratulations|Wrong answer|Wrong Question|Incorrect/i) ||
-                        getEl(`//*[@id="app"]/div/div/div[1]/div/div[1]/div[2]/div[2]/div/div/div[2]/div[4]/div[1]/span[1]`);
-                    let resText = resultEl ? resultEl.innerText : "";
+                    const reviewResult = detectCurrentReviewResult(titleEl, optionEls);
+                    isCorrectAnswer = reviewResult.status === 'correct';
+                    isWrongAnswer = reviewResult.status === 'wrong';
 
-                    if (resText.includes('答对了') || resText.includes('Congratulations') || (resultEl && resultEl.classList.contains('pass'))) {
-                        isCorrectAnswer = true;
-                    } else if (resText.includes('答错了') || resText.includes('遗憾') || /Wrong answer|Wrong Question|Incorrect/i.test(resText) || (resultEl && resultEl.classList.contains('fail'))) {
-                        isWrongAnswer = true;
-                    }
-
-                    let reviewBlock = findShortestVisibleTextElement(/(?:正确答案|Correct answer)\s*[：:]/i) ||
-                        getEl(`//*[@id="app"]/div/div/div[1]/div/div[1]/div[2]/div[2]/div/div/div[2]/div[4]`);
+                    let reviewBlock = reviewResult.scope
+                        ? (findShortestVisibleTextElement(/(?:正确答案|Correct answer)\s*[：:]/i, reviewResult.scope) || reviewResult.scope)
+                        : null;
                     if (reviewBlock) {
                         let blockText = reviewBlock.innerText || "";
                         // 只读取“正确答案”所在行，避免把下一行说明文字一起吞进答案。
@@ -1094,8 +1308,11 @@ document.getElementById('btn-start').onclick = async () => {
                             const sortedAnswers = [...authoritativeAnswers].sort((a, b) => normalizeForCompare(a).localeCompare(normalizeForCompare(b)));
                             existingQ.正确答案 = sortedAnswers;
                             existingQ.猜测答案 = [];
+                            const correctKey = getNormComboStr(sortedAnswers);
+                            const correctNorms = new Set(sortedAnswers.map(normalizeForCompare));
+                            existingQ.错误答案 = existingQ.错误答案.filter(answer => !correctNorms.has(normalizeForCompare(answer)));
+                            existingQ.错误组合 = existingQ.错误组合.filter(combo => getNormComboStr(combo) !== correctKey);
                             if (typeName === '多选题') {
-                                const correctNorms = new Set(sortedAnswers.map(normalizeForCompare));
                                 existingQ.错误答案 = [];
                                 existingQ.明确错误答案 = optionsText.filter(option => !correctNorms.has(normalizeForCompare(option)));
                             }
@@ -1112,6 +1329,21 @@ document.getElementById('btn-start').onclick = async () => {
 
                     if (isWrongAnswer && checkedOptionsText.length > 0) {
                         const previousGuessKey = getNormComboStr(existingQ.猜测答案 || []);
+                        const confirmedWrongKey = getNormComboStr(checkedOptionsText);
+                        const savedCorrectKey = getNormComboStr(existingQ.正确答案 || []);
+
+                        // 没有官方答案文字时，“本次答错”仍能证明当前选择组合绝不是正确答案。
+                        // 若它恰好等于题库旧答案，必须立即作废旧答案，不能只累计出现次数。
+                        // 判断题会在下方直接反推另一项，因此无需先清空再写入。
+                        if (typeName !== '判断题' && officialAnswers.length === 0 && confirmedWrongKey && confirmedWrongKey === savedCorrectKey) {
+                            existingQ.正确答案 = [];
+                            existingQ.明确错误答案 = [];
+                            logMsg(currentLang === 'zh'
+                                ? `🧹 [题库答案已否定] ${typeName} 第${questionNumber}题：复盘已证明旧答案 ${describeAnswers(checkedOptionsText, optionsText)} 错误，已清空等待重新学习`
+                                : `🧹 [Bank answer invalidated] ${typeLabel(typeName)} question ${questionNumber}: review proved the saved answer ${describeAnswers(checkedOptionsText, optionsText)} was wrong; cleared for relearning.`, 'warn');
+                            learnedSomething = true;
+                        }
+
                         if (typeName === '判断题' && officialAnswers.length === 0 && checkedOptionsText.length === 1) {
                             const wrongAnsNorm = normalizeForCompare(checkedOptionsText[0]);
                             const correctOne = optionsText.find(option => normalizeForCompare(option) !== wrongAnsNorm);
@@ -1145,13 +1377,6 @@ document.getElementById('btn-start').onclick = async () => {
                             const officialKey = getNormComboStr(officialAnswers);
                             if (comboKey && comboKey !== officialKey && !existingQ.错误组合.some(combo => getNormComboStr(combo) === comboKey)) {
                                 existingQ.错误组合.push(sortedWrongCombo);
-                                if (getNormComboStr(existingQ.正确答案) === comboKey) {
-                                    existingQ.正确答案 = [];
-                                    existingQ.明确错误答案 = [];
-                                    logMsg(currentLang === 'zh'
-                                        ? `🧹 [修复历史数据] 已从正确答案中移除这组已证实错误的组合`
-                                        : `🧹 [Data repair] Removed the confirmed-wrong combination from saved correct answers.`, 'warn');
-                                }
                                 logMsg(currentLang === 'zh'
                                     ? `💣 [排除错误答案组合] 多选题 第${questionNumber}题 -> ${describeAnswers(sortedWrongCombo, optionsText)}`
                                     : `💣 [Excluded wrong combination] Multiple-choice question ${questionNumber}: ${describeAnswers(sortedWrongCombo, optionsText)}.`, 'warn');
@@ -1351,7 +1576,7 @@ document.getElementById('btn-auto-answer').onclick = async () => {
 
     const delay = parseInt(document.getElementById('scraper-delay').value) || 500;
     const initialSections = getQuestionSections();
-    let answeredCount = 0; let missedCount = 0; let guessCount = 0;
+    let answeredCount = 0; let missedCount = 0; let guessCount = 0; let crossBankCount = 0;
     if (!initialSections.length) {
         logMsg(currentLang === 'zh' ? '⚠️ 未识别到题型导航区段，已停止以避免按错误题型答题。' : '⚠️ No question sections were detected. Stopped to avoid using the wrong answer strategy.', 'warn');
         isRunning = false;
@@ -1439,24 +1664,41 @@ document.getElementById('btn-auto-answer').onclick = async () => {
                 existingQ.题号 = questionNumber;
             }
 
-            if (existingQ && existingQ.正确答案 && existingQ.正确答案.length > 0) {
-                const answersOnPage = [];
-                const unmappedAnswers = [];
-                for (const answer of existingQ.正确答案) {
-                    const normalizedAnswer = normalizeForCompare(answer);
-                    const matchedOption = currentOptionsCleaned.find(option => {
-                        const normalizedOption = normalizeForCompare(option);
-                        if (normalizedAnswer === normalizedOption) return true;
-                        if (trueEquivs.includes(normalizedAnswer) && trueEquivs.includes(normalizedOption)) return true;
-                        if (falseEquivs.includes(normalizedAnswer) && falseEquivs.includes(normalizedOption)) return true;
-                        return false;
-                    });
-                    if (matchedOption) {
-                        if (!answersOnPage.some(item => normalizeForCompare(item) === normalizeForCompare(matchedOption))) answersOnPage.push(matchedOption);
-                    } else {
-                        unmappedAnswers.push(answer);
+            if (!Array.isArray(existingQ.正确答案)) existingQ.正确答案 = [];
+            if (existingQ.正确答案.length === 0) {
+                const crossBankMatch = findConfirmedAnswerAcrossBanks(typeName, titleText, currentOptionsCleaned, getStorageKey());
+                if (crossBankMatch.status === 'found') {
+                    const crossBankAnswers = [...crossBankMatch.answers]
+                        .sort((a, b) => normalizeForCompare(a).localeCompare(normalizeForCompare(b)));
+                    const answerKey = getNormComboStr(crossBankAnswers);
+                    const answerNorms = new Set(crossBankAnswers.map(normalizeForCompare));
+                    existingQ.正确答案 = crossBankAnswers;
+                    existingQ.猜测答案 = [];
+                    existingQ.错误答案 = (existingQ.错误答案 || []).filter(answer => !answerNorms.has(normalizeForCompare(answer)));
+                    existingQ.错误组合 = (existingQ.错误组合 || []).filter(combo => getNormComboStr(combo) !== answerKey);
+                    if (typeName === '多选题') {
+                        existingQ.错误答案 = [];
+                        existingQ.明确错误答案 = currentOptionsCleaned.filter(option => !answerNorms.has(normalizeForCompare(option)));
                     }
+                    localStorage.setItem(getStorageKey(), JSON.stringify(scrapedData));
+                    crossBankCount++;
+                    logMsg(currentLang === 'zh'
+                        ? `🔗 [跨题库命中] ${typeName} 第${questionNumber}题：从 ${crossBankMatch.bankNames.join('、')} 找到一致答案 -> ${describeAnswers(crossBankAnswers, currentOptionsCleaned)}（已补入当前题库）`
+                        : `🔗 [Cross-bank match] ${typeLabel(typeName)} question ${questionNumber}: consistent answer found in ${crossBankMatch.bankNames.join(', ')} -> ${describeAnswers(crossBankAnswers, currentOptionsCleaned)} (copied into the current bank).`, 'success');
+                } else if (crossBankMatch.status === 'conflict') {
+                    const conflictDetails = crossBankMatch.candidates.map(candidate =>
+                        `${candidate.bankName}: ${describeAnswers(candidate.answers, currentOptionsCleaned)}`
+                    ).join('；');
+                    logMsg(currentLang === 'zh'
+                        ? `⚠️ [跨题库答案冲突] ${typeName} 第${questionNumber}题：${conflictDetails}，已跳过跨库答案`
+                        : `⚠️ [Cross-bank answer conflict] ${typeLabel(typeName)} question ${questionNumber}: ${conflictDetails}; cross-bank answer skipped.`, 'warn');
                 }
+            }
+
+            if (existingQ && existingQ.正确答案 && existingQ.正确答案.length > 0) {
+                const answerMapping = mapSavedAnswersToOptions(existingQ.正确答案, currentOptionsCleaned);
+                const answersOnPage = answerMapping.mappedAnswers;
+                const unmappedAnswers = answerMapping.unmappedAnswers;
 
                 const expectedCount = [...new Set(existingQ.正确答案.map(normalizeForCompare).filter(Boolean))].length;
                 if (unmappedAnswers.length > 0 || answersOnPage.length !== expectedCount) {
@@ -1497,7 +1739,7 @@ document.getElementById('btn-auto-answer').onclick = async () => {
     }
 
     isRunning = false; document.getElementById('btn-start').disabled = false; document.getElementById('btn-auto-answer').disabled = false; document.getElementById('btn-stop').disabled = true; examNameInput.disabled = false; setStatus('stopped', '#ef4444');
-    logMsg(currentLang === 'zh' ? `--- 🏁 答题结束 (确实答对: ${answeredCount}, 技巧蒙猜: ${guessCount}, 跳过: ${missedCount}) ---` : `--- 🏁 Answering finished (matched: ${answeredCount}, guessed: ${guessCount}, skipped: ${missedCount}) ---`, 'info');
+    logMsg(currentLang === 'zh' ? `--- 🏁 答题结束 (题库作答: ${answeredCount}, 跨库补全: ${crossBankCount}, 技巧蒙猜: ${guessCount}, 跳过: ${missedCount}) ---` : `--- 🏁 Answering finished (bank answers: ${answeredCount}, cross-bank fills: ${crossBankCount}, guessed: ${guessCount}, skipped: ${missedCount}) ---`, 'info');
 };
 
 document.getElementById('btn-stop').onclick = () => { isRunning = false; logMsg(t('forceStop')); };
@@ -1512,7 +1754,7 @@ const typeToChinese = type => {
     };
     return map[normalized] || '单选题';
 };
-const exportQuestionBank = () => currentLang === 'zh' ? scrapedData : scrapedData.map(q => ({
+const exportQuestionBank = (questions) => currentLang === 'zh' ? questions : questions.map(q => ({
     id: q.id,
     variantKey: q.variantKey,
     questionType: typeToEnglish(q.题型),
@@ -1529,20 +1771,155 @@ const exportQuestionBank = () => currentLang === 'zh' ? scrapedData : scrapedDat
     definiteWrongAnswers: q.明确错误答案,
     wrongCombinations: q.错误组合
 }));
-document.getElementById('btn-export').onclick = () => {
-    if (scrapedData.length === 0) { alert(t('noData')); return; }
-    let dataStr = JSON.stringify(exportQuestionBank(), null, 2);
-    let blob = new Blob([dataStr], { type: 'application/json' });
-    let url = URL.createObjectURL(blob);
-    let a = document.createElement('a');
+
+const QUESTION_BANK_BACKUP_FORMAT = 'exam-question-bank-backup';
+const QUESTION_BANK_BACKUP_VERSION = 1;
+
+const isValidImportedQuestionArray = (questions) => Array.isArray(questions) && questions.every(q => {
+    if (!q || typeof q !== 'object') return false;
+    const question = q.题目 ?? q.question;
+    const options = q.选项 ?? q.options;
+    return typeof question === 'string' && Array.isArray(options);
+});
+
+const normalizeImportedQuestionArray = (questions) => {
+    if (!isValidImportedQuestionArray(questions)) throw new Error('Invalid question-bank structure');
+    return questions.map(q => {
+        const questionNumber = q.题号 ?? q.questionNumber;
+        const occurrenceCount = q.出现次数 ?? q.occurrenceCount;
+        const options = q.选项 ?? q.options;
+        const correctAnswers = q.正确答案 ?? q.correctAnswers;
+        const suggestedAnswers = q.猜测答案 ?? q.suggestedAnswers;
+        const suggestionCount = q.猜测次数 ?? q.suggestionCount;
+        const suggestionUseCount = q.猜测采用次数 ?? q.suggestionUseCount;
+        const suggestionUpdatedAt = q.猜测更新时间 ?? q.suggestionUpdatedAt;
+        const wrongAnswers = q.错误答案 ?? q.wrongAnswers;
+        const definiteWrongAnswers = q.明确错误答案 ?? q.definiteWrongAnswers;
+        const wrongCombinations = q.错误组合 ?? q.wrongCombinations;
+        const questionType = typeToChinese(q.题型 ?? q.questionType ?? q.type);
+        const questionText = String(q.题目 ?? q.question).trim();
+        const normalizedOptions = options.map(v => String(v));
+        return {
+            id: q.id || generateQID(),
+            variantKey: getQuestionVariantKey(questionType, questionText, normalizedOptions),
+            题型: questionType,
+            题号: Number.isFinite(Number(questionNumber)) ? Number(questionNumber) : 0,
+            题目: questionText,
+            选项: normalizedOptions,
+            出现次数: Number.isFinite(Number(occurrenceCount)) ? Number(occurrenceCount) : 1,
+            正确答案: Array.isArray(correctAnswers) ? correctAnswers.map(v => String(v)) : [],
+            猜测答案: Array.isArray(suggestedAnswers) ? suggestedAnswers.map(v => String(v)) : [],
+            猜测次数: Number.isFinite(Number(suggestionCount)) ? Number(suggestionCount) : 0,
+            猜测采用次数: Number.isFinite(Number(suggestionUseCount)) ? Number(suggestionUseCount) : 0,
+            猜测更新时间: typeof suggestionUpdatedAt === 'string' ? suggestionUpdatedAt : '',
+            错误答案: Array.isArray(wrongAnswers) ? wrongAnswers.map(v => String(v)) : [],
+            明确错误答案: Array.isArray(definiteWrongAnswers) ? definiteWrongAnswers.map(v => String(v)) : [],
+            错误组合: Array.isArray(wrongCombinations) ? wrongCombinations.filter(Array.isArray).map(arr => arr.map(v => String(v))) : []
+        };
+    });
+};
+
+const listStoredQuestionBanks = () => {
+    const banks = [];
+    for (let index = 0; index < localStorage.length; index++) {
+        const storageKey = localStorage.key(index);
+        if (!storageKey || !storageKey.startsWith('ScraperData_')) continue;
+        try {
+            const questions = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            if (!isValidImportedQuestionArray(questions)) continue;
+            banks.push({ storageKey, name: storageKey.substring(12), questions });
+        } catch (_) {}
+    }
+    const currentKey = getStorageKey();
+    return banks.sort((left, right) => {
+        if (left.storageKey === currentKey) return -1;
+        if (right.storageKey === currentKey) return 1;
+        return left.name.localeCompare(right.name);
+    });
+};
+
+const downloadQuestionBankBackup = (banks) => {
+    const backup = {
+        format: QUESTION_BANK_BACKUP_FORMAT,
+        version: QUESTION_BANK_BACKUP_VERSION,
+        exportedAt: new Date().toISOString(),
+        bankCount: banks.length,
+        questionCount: banks.reduce((sum, bank) => sum + bank.questions.length, 0),
+        banks: banks.map(bank => ({ name: bank.name, questions: exportQuestionBank(bank.questions) }))
+    };
+    const dataStr = JSON.stringify(backup, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateText = new Date().toISOString().slice(0, 10);
     a.href = url;
-    a.download = `${examNameInput.value.trim()}_${currentLang === 'zh' ? '题库' : 'question_bank'}.json`;
+    a.download = `${currentLang === 'zh' ? '题库备份' : 'question-bank-backup'}_${banks.length}_${dateText}.json`;
     a.click();
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+};
+
+const syncBankTransferSelection = () => {
+    const checkboxes = [...document.querySelectorAll('.bank-transfer-check')];
+    const selectedCount = checkboxes.filter(checkbox => checkbox.checked).length;
+    const selectAll = document.getElementById('bank-transfer-select-all');
+    selectAll.checked = checkboxes.length > 0 && selectedCount === checkboxes.length;
+    selectAll.indeterminate = selectedCount > 0 && selectedCount < checkboxes.length;
+    document.getElementById('bank-transfer-confirm').disabled = selectedCount === 0;
+};
+
+const openBankExportDialog = () => {
+    const banks = listStoredQuestionBanks();
+    if (!banks.length) { alert(t('noData')); return; }
+    const listEl = document.getElementById('bank-transfer-list');
+    listEl.innerHTML = '';
+    let selectedCurrent = false;
+    banks.forEach((bank, index) => {
+        const item = document.createElement('label');
+        item.className = 'bank-transfer-item';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'bank-transfer-check';
+        checkbox.dataset.storageKey = bank.storageKey;
+        checkbox.checked = bank.storageKey === getStorageKey();
+        if (checkbox.checked) selectedCurrent = true;
+        const nameEl = document.createElement('strong');
+        nameEl.innerText = bank.name;
+        const countEl = document.createElement('small');
+        countEl.innerText = `${bank.questions.length} ${currentLang === 'zh' ? '题' : 'questions'}`;
+        item.append(checkbox, nameEl, countEl);
+        listEl.appendChild(item);
+        if (!selectedCurrent && index === banks.length - 1) {
+            const firstCheckbox = listEl.querySelector('.bank-transfer-check');
+            if (firstCheckbox) firstCheckbox.checked = true;
+        }
+    });
+    bankTransferDialog.style.display = 'flex';
+    syncBankTransferSelection();
+};
+
+document.getElementById('btn-export').onclick = openBankExportDialog;
+document.getElementById('bank-transfer-list').addEventListener('change', syncBankTransferSelection);
+document.getElementById('bank-transfer-select-all').addEventListener('change', event => {
+    document.querySelectorAll('.bank-transfer-check').forEach(checkbox => { checkbox.checked = event.target.checked; });
+    syncBankTransferSelection();
+});
+document.getElementById('bank-transfer-cancel').onclick = () => { bankTransferDialog.style.display = 'none'; };
+bankTransferDialog.addEventListener('click', event => { if (event.target === bankTransferDialog) bankTransferDialog.style.display = 'none'; });
+document.getElementById('bank-transfer-confirm').onclick = () => {
+    const selectedKeys = [...document.querySelectorAll('.bank-transfer-check:checked')]
+        .map(checkbox => checkbox.dataset.storageKey);
+    if (!selectedKeys.length) { alert(t('exportNeedSelect')); return; }
+    const bankMap = new Map(listStoredQuestionBanks().map(bank => [bank.storageKey, bank]));
+    const selectedBanks = selectedKeys.map(key => bankMap.get(key)).filter(Boolean);
+    if (!selectedBanks.length) { alert(t('noData')); return; }
+    downloadQuestionBankBackup(selectedBanks);
+    bankTransferDialog.style.display = 'none';
+    logMsg(currentLang === 'zh'
+        ? `📥 [题库备份] 已导出 ${selectedBanks.length} 个题库，共 ${selectedBanks.reduce((sum, bank) => sum + bank.questions.length, 0)} 题`
+        : `📥 [Question-bank backup] Exported ${selectedBanks.length} bank(s), ${selectedBanks.reduce((sum, bank) => sum + bank.questions.length, 0)} questions.`, 'success');
 };
 const importFileInput = document.getElementById('scraper-import-file');
 document.getElementById('btn-import').onclick = () => {
-    if (!examNameInput.value.trim()) { alert(t('needName')); return; }
     importFileInput.value = '';
     importFileInput.click();
 };
@@ -1551,54 +1928,42 @@ importFileInput.onchange = async () => {
     if (!file) return;
     try {
         const imported = JSON.parse(await file.text());
-        if (!Array.isArray(imported) || !imported.every(q => {
-            if (!q || typeof q !== 'object') return false;
-            const question = q.题目 ?? q.question;
-            const options = q.选项 ?? q.options;
-            return typeof question === 'string' && Array.isArray(options);
-        })) {
-            throw new Error('Invalid question-bank structure');
-        }
-        if (!confirm(t('importConfirm', examNameInput.value.trim()))) return;
+        const isBackupPackage = imported && typeof imported === 'object' && !Array.isArray(imported)
+            && imported.format === QUESTION_BANK_BACKUP_FORMAT
+            && Number(imported.version) === QUESTION_BANK_BACKUP_VERSION
+            && Array.isArray(imported.banks);
 
-        const normalized = imported.map(q => {
-            const questionNumber = q.题号 ?? q.questionNumber;
-            const occurrenceCount = q.出现次数 ?? q.occurrenceCount;
-            const options = q.选项 ?? q.options;
-            const correctAnswers = q.正确答案 ?? q.correctAnswers;
-            const suggestedAnswers = q.猜测答案 ?? q.suggestedAnswers;
-            const suggestionCount = q.猜测次数 ?? q.suggestionCount;
-            const suggestionUseCount = q.猜测采用次数 ?? q.suggestionUseCount;
-            const suggestionUpdatedAt = q.猜测更新时间 ?? q.suggestionUpdatedAt;
-            const wrongAnswers = q.错误答案 ?? q.wrongAnswers;
-            const definiteWrongAnswers = q.明确错误答案 ?? q.definiteWrongAnswers;
-            const wrongCombinations = q.错误组合 ?? q.wrongCombinations;
-            const questionType = typeToChinese(q.题型 ?? q.questionType ?? q.type);
-            const questionText = String(q.题目 ?? q.question).trim();
-            const normalizedOptions = options.map(v => String(v));
-            return {
-                id: q.id || generateQID(),
-                variantKey: getQuestionVariantKey(questionType, questionText, normalizedOptions),
-                题型: questionType,
-                题号: Number.isFinite(Number(questionNumber)) ? Number(questionNumber) : 0,
-                题目: questionText,
-                选项: normalizedOptions,
-                出现次数: Number.isFinite(Number(occurrenceCount)) ? Number(occurrenceCount) : 1,
-                正确答案: Array.isArray(correctAnswers) ? correctAnswers.map(v => String(v)) : [],
-                猜测答案: Array.isArray(suggestedAnswers) ? suggestedAnswers.map(v => String(v)) : [],
-                猜测次数: Number.isFinite(Number(suggestionCount)) ? Number(suggestionCount) : 0,
-                猜测采用次数: Number.isFinite(Number(suggestionUseCount)) ? Number(suggestionUseCount) : 0,
-                猜测更新时间: typeof suggestionUpdatedAt === 'string' ? suggestionUpdatedAt : '',
-                错误答案: Array.isArray(wrongAnswers) ? wrongAnswers.map(v => String(v)) : [],
-                明确错误答案: Array.isArray(definiteWrongAnswers) ? definiteWrongAnswers.map(v => String(v)) : [],
-                错误组合: Array.isArray(wrongCombinations) ? wrongCombinations.filter(Array.isArray).map(arr => arr.map(v => String(v))) : []
-            };
-        });
-        localStorage.setItem(getStorageKey(), JSON.stringify(normalized));
-        loadLocalData();
-        refreshExamList();
-        logMsg(t('importSuccess', normalized.length), 'success');
-        alert(t('importSuccess', normalized.length));
+        if (isBackupPackage) {
+            const normalizedBanks = [];
+            const seenNames = new Set();
+            for (const bank of imported.banks) {
+                const bankName = String(bank && bank.name || '').trim();
+                if (!bankName || bankName.length > 200 || seenNames.has(bankName)) throw new Error('Invalid or duplicate bank name');
+                seenNames.add(bankName);
+                normalizedBanks.push({ name: bankName, questions: normalizeImportedQuestionArray(bank.questions) });
+            }
+            if (!normalizedBanks.length) throw new Error('Empty backup package');
+            const totalQuestions = normalizedBanks.reduce((sum, bank) => sum + bank.questions.length, 0);
+            const bankList = normalizedBanks.map(bank => `• ${bank.name} (${bank.questions.length})`).join('\n');
+            if (!confirm(`${t('importBackupConfirm', normalizedBanks.length, totalQuestions)}\n\n${bankList}`)) return;
+            normalizedBanks.forEach(bank => {
+                localStorage.setItem(`ScraperData_${bank.name}`, JSON.stringify(bank.questions));
+            });
+            loadLocalData();
+            refreshExamList();
+            const successMessage = t('importBackupSuccess', normalizedBanks.length, totalQuestions);
+            logMsg(successMessage, 'success');
+            alert(successMessage);
+        } else {
+            if (!examNameInput.value.trim()) { alert(t('needName')); return; }
+            const normalized = normalizeImportedQuestionArray(imported);
+            if (!confirm(t('importConfirm', examNameInput.value.trim()))) return;
+            localStorage.setItem(getStorageKey(), JSON.stringify(normalized));
+            loadLocalData();
+            refreshExamList();
+            logMsg(t('importSuccess', normalized.length), 'success');
+            alert(t('importSuccess', normalized.length));
+        }
     } catch (error) {
         console.warn('[Exam Scraper] Import failed:', error);
         alert(t('importInvalid'));
