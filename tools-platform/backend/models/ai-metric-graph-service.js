@@ -123,7 +123,7 @@ async function getMetricGraph(options = {}) {
     try {
         const latestSnapshot = await dbGet(reportDb, 'SELECT id, snapshot_id, month, created_at FROM ReportSnapshots ORDER BY id DESC LIMIT 1');
         const month = normalizeMonth(options.month, normalizeMonth(latestSnapshot?.month, new Date().getMonth() + 1));
-        const [groupRows, groupItemRows, targetRows, prefRows, latestMonthSnapshot, historyRows, snapshotStats] = await Promise.all([
+        const [groupRows, groupItemRows, targetRows, prefRows, latestMonthSnapshot, latestMetricRows, historyRows, snapshotStats] = await Promise.all([
             dbAll(toolsDb, 'SELECT id, group_key, name, sort_order FROM sla_groups ORDER BY sort_order, id'),
             dbAll(toolsDb, 'SELECT group_id, item_name, item_sort_order FROM sla_group_items ORDER BY group_id, item_sort_order, id'),
             dbAll(toolsDb, `SELECT target_key, label, target_type, weight, auto_fill, is_percent, exceed_by, bonus, extra_config_json
@@ -131,6 +131,10 @@ async function getMetricGraph(options = {}) {
             dbAll(toolsDb, `SELECT pref_key, payload_json FROM sla_prefs
                             WHERE pref_kind = 'schema' AND payload_json LIKE '%customMetrics%'`),
             dbGet(reportDb, 'SELECT id, snapshot_id, month, created_at, raw_data_json FROM ReportSnapshots WHERE month = ? ORDER BY id DESC LIMIT 1', [month]),
+            dbAll(reportDb, `SELECT metric_label, cat_name, raw_val, target_val, is_failing
+                             FROM ReportMetricData
+                             WHERE snapshot_id = (SELECT snapshot_id FROM ReportSnapshots WHERE month = ? ORDER BY id DESC LIMIT 1)
+                               AND (month = ? OR month IS NULL)`, [month, month]),
             dbAll(reportDb, `SELECT metric_label, cat_name, COUNT(DISTINCT snapshot_id) AS snapshot_count
                              FROM ReportMetricData WHERE month = ? GROUP BY metric_label, cat_name`, [month]),
             dbGet(reportDb, `SELECT COUNT(*) AS snapshot_count, MIN(created_at) AS first_at, MAX(created_at) AS latest_at
@@ -191,6 +195,12 @@ async function getMetricGraph(options = {}) {
             historyCount.set(key, Number(row.snapshot_count) || 0);
             addSubMetric(subMetrics, row.metric_label, row.cat_name);
         });
+        const latestRowsByMetric = new Map();
+        latestMetricRows.forEach(row => {
+            if (!row.metric_label) return;
+            if (!latestRowsByMetric.has(row.metric_label)) latestRowsByMetric.set(row.metric_label, []);
+            latestRowsByMetric.get(row.metric_label).push(row);
+        });
 
         const ungroupedLabels = [...metricLabels].filter(label => !metricGroup.has(label)).sort((a, b) => a.localeCompare(b, 'zh-CN'));
         if (ungroupedLabels.length) groupMetricLabels.set('未分组', ungroupedLabels);
@@ -221,6 +231,8 @@ async function getMetricGraph(options = {}) {
                 const target = selectedTargets.get(metricLabel);
                 const rule = buildRule(target, month);
                 const children = [...(subMetrics.get(metricLabel)?.values() || [])];
+                const currentRows = latestRowsByMetric.get(metricLabel) || [];
+                const judgedRows = currentRows.filter(row => row.is_failing !== null && row.is_failing !== undefined);
                 const metricId = stableId('metric', metricLabel);
                 if (rule) configuredRuleCount += 1;
                 nodes.push({
@@ -231,12 +243,14 @@ async function getMetricGraph(options = {}) {
                     size: 10 + Math.min(8, children.length * 1.4),
                     month,
                     rule,
+                    isFailing: judgedRows.length ? judgedRows.some(row => Number(row.is_failing) === 1) : null,
                     subMetricCount: children.length,
                     historySnapshotCount: Math.max(0, ...historyRows.filter(row => row.metric_label === metricLabel).map(row => Number(row.snapshot_count) || 0))
                 });
                 edges.push({ source: groupId, target: metricId, type: 'contains' });
                 children.forEach(child => {
                     const subId = stableId('submetric', metricLabel, child.category);
+                    const currentRow = currentRows.find(row => String(row.cat_name || '') === String(child.category || ''));
                     subMetricCount += 1;
                     nodes.push({
                         id: subId,
@@ -246,7 +260,9 @@ async function getMetricGraph(options = {}) {
                         metricLabel,
                         group: group.name,
                         size: 5,
-                        latestValue: child.latestValue,
+                        latestValue: hasValue(currentRow?.raw_val) ? currentRow.raw_val : child.latestValue,
+                        latestTarget: currentRow?.target_val ?? null,
+                        isFailing: currentRow?.is_failing === null || currentRow?.is_failing === undefined ? null : Number(currentRow.is_failing) === 1,
                         sourceField: child.sourceField,
                         sourceValue: child.sourceValue,
                         historySnapshotCount: historyCount.get(`${metricLabel}\u0000${child.category}`) || 0

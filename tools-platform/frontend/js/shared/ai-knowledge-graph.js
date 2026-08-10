@@ -83,20 +83,20 @@
         .ai-kg-main { position:relative; flex:1; min-height:0; display:flex; }
         .ai-kg-stage { position:relative; flex:1; min-width:0; overflow:hidden; }
         .ai-kg-overlay[data-dimension="3d"] .ai-kg-stage::before {
-            content:""; position:absolute; inset:0; pointer-events:none;
+            content:""; position:absolute; z-index:1; inset:0; pointer-events:none;
             background:
                 radial-gradient(circle at 22% 16%, rgba(174,194,255,.09), transparent 29%),
                 linear-gradient(145deg, rgba(91,112,191,.025), transparent 42%, rgba(0,0,0,.09));
         }
-        .ai-kg-canvas { width:100%; height:100%; display:block; cursor:grab; touch-action:none; }
+        .ai-kg-canvas { position:relative; z-index:2; width:100%; height:100%; display:block; cursor:grab; touch-action:none; }
         .ai-kg-canvas.dragging { cursor:grabbing; }
         .ai-kg-hint {
-            position:absolute; left:18px; bottom:17px; display:flex; gap:7px; flex-wrap:wrap;
+            position:absolute; z-index:3; left:18px; bottom:17px; display:flex; gap:7px; flex-wrap:wrap;
             color:#6f7b94; font-size:10px; pointer-events:none;
         }
         .ai-kg-hint span { padding:4px 7px; border-radius:7px; background:rgba(17,24,40,.7); border:1px solid rgba(120,135,180,.12); }
         .ai-kg-legend {
-            position:absolute; top:16px; left:18px; display:flex; gap:12px; color:#7f8ba3; font-size:10px;
+            position:absolute; z-index:3; top:16px; left:18px; display:flex; gap:12px; color:#7f8ba3; font-size:10px;
             padding:8px 10px; border-radius:10px; background:rgba(10,15,27,.72); border:1px solid rgba(126,141,184,.13);
         }
         .ai-kg-legend i { width:7px; height:7px; display:inline-block; border-radius:50%; margin-right:5px; }
@@ -122,11 +122,23 @@
         .ai-kg-reset-controls { width:100%; height:32px; margin-top:8px; border-radius:9px; border:1px solid rgba(135,150,198,.18); background:rgba(43,53,83,.46); color:#aeb9d0; cursor:pointer; font-size:10px; }
         .ai-kg-overlay[data-palette="obsidian"] { background:#111; }
         .ai-kg-overlay[data-palette="aurora"] { background:radial-gradient(circle at 18% 18%,rgba(27,141,148,.18),transparent 34%),radial-gradient(circle at 78% 74%,rgba(118,62,168,.2),transparent 38%),#081116; }
+        .ai-kg-overlay[data-palette="galaxy"] { background:radial-gradient(circle at 50% 50%,rgba(18,22,48,.5),transparent 60%),radial-gradient(circle at 80% 20%,rgba(45,20,55,.4),transparent 50%),#05050a; }
         .ai-kg-sidebar {
             width: 350px; flex: 0 0 350px; overflow:auto; box-sizing:border-box;
             border-left:1px solid rgba(134,148,189,.14); padding:18px;
             background:rgba(12,18,31,.8); scrollbar-width:thin;
+            transition:width .24s ease,flex-basis .24s ease,padding .24s ease,border-color .24s ease,transform .24s ease;
         }
+        .ai-kg-main.sidebar-collapsed .ai-kg-sidebar { width:0; flex-basis:0; padding-left:0; padding-right:0; border-left-color:transparent; overflow:hidden; }
+        .ai-kg-sidebar-toggle {
+            position:absolute; z-index:6; top:50%; right:350px; width:24px; height:54px;
+            padding:0; transform:translateY(-50%); border:1px solid rgba(133,149,199,.28);
+            border-right:0; border-radius:10px 0 0 10px; color:#9ba8c4;
+            background:rgba(19,27,45,.92); box-shadow:-6px 0 18px rgba(0,0,0,.2);
+            cursor:pointer; font-size:18px; line-height:1; transition:right .24s ease,background .16s,color .16s;
+        }
+        .ai-kg-sidebar-toggle:hover { color:#fff; background:rgba(47,59,96,.96); }
+        .ai-kg-main.sidebar-collapsed .ai-kg-sidebar-toggle { right:0; }
         .ai-kg-side-empty { color:#758199; font-size:12px; line-height:1.7; padding:20px 4px; }
         .ai-kg-node-type { color:#8491ac; font-size:10px; text-transform:uppercase; letter-spacing:.1em; }
         .ai-kg-node-title { margin-top:6px; color:#f4f6fb; font-size:17px; font-weight:720; word-break:break-word; }
@@ -171,6 +183,9 @@
             .ai-kg-search-wrap { order:3; max-width:none; flex-basis:100%; }
             .ai-kg-sidebar { position:absolute; right:0; bottom:0; width:min(88vw,350px); height:48%; border-top:1px solid rgba(134,148,189,.14); }
             .ai-kg-sidebar.compact { display:none; }
+            .ai-kg-sidebar-toggle { right:min(88vw,350px); }
+            .ai-kg-main.sidebar-collapsed .ai-kg-sidebar { width:min(88vw,350px); padding:18px; border-left-color:rgba(134,148,189,.14); transform:translateX(100%); }
+            .ai-kg-main.sidebar-collapsed .ai-kg-sidebar-toggle { right:0; }
         }
     `;
     document.head.appendChild(style);
@@ -203,6 +218,7 @@
                 <button class="ai-kg-btn motion" id="aiKgMotion" type="button" aria-pressed="true" title="开启或暂停力导向仿真">动态仿真</button>
                 <button class="ai-kg-btn icon" id="aiKgControls" type="button" aria-pressed="false" title="外观与力度">☷</button>
                 <button class="ai-kg-btn icon" id="aiKgFit" title="重置视图">◎</button>
+                <button class="ai-kg-btn icon" id="aiKgFullscreen" type="button" aria-pressed="false" title="全屏">⛶</button>
                 <button class="ai-kg-btn icon" id="aiKgClose" title="关闭">×</button>
             </div>
         </div>
@@ -214,7 +230,7 @@
                     <div class="ai-kg-control-head"><span data-kg-control-title>外观与力度</span><button class="ai-kg-control-close" type="button" aria-label="关闭">×</button></div>
                     <div class="ai-kg-control-section">
                         <div class="ai-kg-control-section-title" data-kg-appearance-title>外观</div>
-                        <label class="ai-kg-control-row"><span data-kg-palette-label>颜色主题</span><select class="ai-kg-control-select" data-setting="palette"><option value="cosmic">星云</option><option value="obsidian">Obsidian</option><option value="aurora">极光</option></select></label>
+                        <label class="ai-kg-control-row"><span data-kg-palette-label>颜色主题</span><select class="ai-kg-control-select" data-setting="palette"><option value="galaxy">银河</option><option value="cosmic">星云</option><option value="obsidian">Obsidian</option><option value="aurora">极光</option></select></label>
                         <label class="ai-kg-control-row"><span data-kg-node-size-label>节点大小</span><output data-output="nodeScale"></output><input type="range" min="0.45" max="1.15" step="0.05" data-setting="nodeScale"></label>
                         <label class="ai-kg-control-row"><span data-kg-line-width-label>连线粗细</span><output data-output="lineScale"></output><input type="range" min="0.5" max="2" step="0.1" data-setting="lineScale"></label>
                         <label class="ai-kg-control-row"><span data-kg-label-density-label>标签密度</span><output data-output="labelDensity"></output><input type="range" min="0.3" max="1.5" step="0.1" data-setting="labelDensity"></label>
@@ -236,13 +252,16 @@
                 <div class="ai-kg-loading" id="aiKgLoading"><div class="ai-kg-loading-card">正在构建知识关系…</div></div>
             </div>
             <aside class="ai-kg-sidebar" id="aiKgSidebar"><div class="ai-kg-side-empty">点击图谱中的模块或文件，可查看索引时间、知识片段和文件关系。</div></aside>
+            <button class="ai-kg-sidebar-toggle" id="aiKgSidebarToggle" type="button" aria-expanded="true">›</button>
         </div>
     `;
     document.body.appendChild(overlay);
 
     const canvas = overlay.querySelector('#aiKgCanvas');
+    const main = overlay.querySelector('.ai-kg-main');
     const stage = overlay.querySelector('#aiKgStage');
     const sidebar = overlay.querySelector('#aiKgSidebar');
+    const sidebarToggle = overlay.querySelector('#aiKgSidebarToggle');
     const loading = overlay.querySelector('#aiKgLoading');
     const statuses = overlay.querySelector('#aiKgStatuses');
     const searchInput = overlay.querySelector('#aiKgSearch');
@@ -255,13 +274,18 @@
     const refreshButton = overlay.querySelector('#aiKgRefresh');
     const motionButton = overlay.querySelector('#aiKgMotion');
     const controlsButton = overlay.querySelector('#aiKgControls');
+    const fullscreenButton = overlay.querySelector('#aiKgFullscreen');
     const controlPanel = overlay.querySelector('#aiKgControlPanel');
     const growButton = overlay.querySelector('#aiKgGrow');
     const ctx = canvas.getContext('2d');
-    const DEFAULT_SETTINGS = Object.freeze({ palette:'cosmic', nodeScale:0.72, lineScale:1, labelDensity:1, labelOpacity:1, growthSpeed:1, centerForce:1, repulsion:1, attraction:1, linkLength:1, drift:1 });
+    const DEFAULT_SETTINGS = Object.freeze({ palette:'galaxy', nodeScale:0.72, lineScale:1, labelDensity:1, labelOpacity:1, growthSpeed:1, centerForce:1, repulsion:1, attraction:1, linkLength:1, drift:1 });
     function loadSettings() {
         try { return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem('ai_kg_preferences') || '{}') }; }
         catch (_error) { return { ...DEFAULT_SETTINGS }; }
+    }
+    function loadSidebarCollapsed() {
+        try { return localStorage.getItem('ai_kg_sidebar_collapsed') === '1'; }
+        catch (_error) { return false; }
     }
     const state = {
         data: null,
@@ -280,6 +304,10 @@
         cameraYaw: -0.55,
         cameraPitch: 0.34,
         cameraDistance: 920,
+        orbitTargetId: null,
+        orbitPivot: { x:0, y:0, z:0 },
+        orbitTransition: null,
+        sidebarCollapsed: loadSidebarCollapsed(),
         hovered: null,
         hoverCandidate: null,
         hoverTimer: 0,
@@ -295,17 +323,19 @@
         searchMatches: new Set(),
         flatPositions: new Map(),
         settings: loadSettings(),
+        stars: [],
+        hasFailingMetricAlerts: false,
         growth: { active:false, startedAt:0, duration:0, nodeOrder:new Map() }
     };
 
     const KG_TEXT = {
         zh: {
             view: '图谱视图', knowledge: '项目知识', metrics: '指标体系', ruleMonth: '规则月份', refreshKnowledge: '刷新知识库', refreshMetrics: '刷新指标',
-            refreshKnowledgeTitle: '重建变化的知识文件', refreshMetricsTitle: '重新读取指标规则与历史快照', motion: '动态仿真', motionPaused: '仿真已暂停', motionTitle: '开启或暂停力导向仿真', fit: '重置视图', close: '关闭',
+            refreshKnowledgeTitle: '重建变化的知识文件', refreshMetricsTitle: '重新读取指标规则与历史快照', motion: '动态仿真', motionPaused: '仿真已暂停', motionTitle: '开启或暂停力导向仿真', fit: '重置视图', fullscreen: '全屏', exitFullscreen: '退出全屏', sidebarCollapse: '收起详情栏', sidebarExpand: '展开详情栏', close: '关闭',
             knowledgeTitle: '✦ 项目知识关系图谱', metricTitle: '◈ 运营指标体系图谱', knowledgeSubtitle: '项目 → 模块 / 工具 / 数据库 → 文件 / 表 · 细线为代码、查询和资源依赖', metricSubtitle: '月份规则 → 指标分类 → 指标 → 子指标 · 点击查看历史入库值',
             searchKnowledge: '搜索 README、工具、数据库表、接口、AI 助手…', searchMetrics: '搜索分类、指标、子指标…',
             hints: ['拖动画布','滚轮缩放','放大显示文件名','点击节点查看','拖动节点可拉扯关系','松手保留惯性'],
-            hints3d: ['左键拖动空白处旋转','按住滚轮拖动平移','滚轮缩放','点击节点查看','左键拖动节点'],
+            hints3d: ['左键拖动空白处旋转','双击节点设为旋转中心','按住滚轮拖动平移','滚轮缩放','点击节点查看','左键拖动节点'],
             dimension: '图谱维度',
             project: '项目', module: '模块', knowledgeFile: '知识文件', toolData: '工具/数据资产', monthRules: '月份规则', category: '指标分类', metric: '指标', submetric: '子指标',
             files: '文件', chunks: '片段', dependencies: '依赖', recentUpdated: '最近更新', tools: '工具', databases: '数据库', tables: '数据表', snapshots: '历史快照',
@@ -314,15 +344,15 @@
             assetCategory: '资产分类', htmlTool: 'HTML 工具', database: '数据库', table: '数据表', toolFile: '工具目录文件', related: '关联节点', contained: '下级节点', fileSize: '文件大小', updatedAt: '更新时间', publicAccess: '公开访问', yes: '是', no: '否', columns: '字段', schema: '表结构',
             empty: '点击图谱中的模块、工具、文件、数据库或表，可查看详细关系。', moduleFiles: '模块文件', indexTime: '索引时间', viewChunks: '可点击查看的知识片段', readingFile: '正在读取文件节点', unnamedChunk: '未命名片段',
             graphLoadFailed: '知识图谱加载失败', metricLoadFailed: '指标图谱加载失败', refreshFailed: '刷新失败',
-            controls: '外观与力度', appearance: '外观', force: '力度', palette: '颜色主题', cosmic: '星云', obsidian: 'Obsidian', aurora: '极光', nodeSize: '节点大小', lineWidth: '连线粗细', labelDensity: '标签密度', labelOpacity: '文本透明度', growthSpeed: '生长速度', playGrowth: '播放生长动画', stopGrowth: '停止动画', centerForce: '图谱向心力', repulsion: '节点排斥力', attraction: '相连节点吸引力', linkLength: '连线长度', drift: '漂浮力度', resetControls: '恢复默认参数'
+            controls: '外观与力度', appearance: '外观', force: '力度', palette: '颜色主题', galaxy: '银河', cosmic: '星云', obsidian: 'Obsidian', aurora: '极光', nodeSize: '节点大小', lineWidth: '连线粗细', labelDensity: '标签密度', labelOpacity: '文本透明度', growthSpeed: '生长速度', playGrowth: '播放生长动画', stopGrowth: '停止动画', centerForce: '图谱向心力', repulsion: '节点排斥力', attraction: '相连节点吸引力', linkLength: '连线长度', drift: '漂浮力度', resetControls: '恢复默认参数'
         },
         en: {
             view: 'Graph view', knowledge: 'Project Knowledge', metrics: 'Metric System', ruleMonth: 'Rule month', refreshKnowledge: 'Refresh Knowledge', refreshMetrics: 'Refresh Metrics',
-            refreshKnowledgeTitle: 'Re-index changed knowledge files', refreshMetricsTitle: 'Reload metric rules and snapshots', motion: 'Live Simulation', motionPaused: 'Simulation Paused', motionTitle: 'Start or pause force simulation', fit: 'Reset view', close: 'Close',
+            refreshKnowledgeTitle: 'Re-index changed knowledge files', refreshMetricsTitle: 'Reload metric rules and snapshots', motion: 'Live Simulation', motionPaused: 'Simulation Paused', motionTitle: 'Start or pause force simulation', fit: 'Reset view', fullscreen: 'Fullscreen', exitFullscreen: 'Exit fullscreen', sidebarCollapse: 'Collapse details', sidebarExpand: 'Expand details', close: 'Close',
             knowledgeTitle: '✦ Project Knowledge Graph', metricTitle: '◈ Operations Metric Graph', knowledgeSubtitle: 'Project → modules / tools / databases → files / tables · thin lines show code, query, and asset dependencies', metricSubtitle: 'Monthly rules → categories → metrics → submetrics · click to inspect historical values',
             searchKnowledge: 'Search README, tools, database tables, APIs, AI assistant…', searchMetrics: 'Search categories, metrics, submetrics…',
             hints: ['Drag canvas','Wheel to zoom','Zoom in for filenames','Click a node for details','Drag nodes to pull relations','Release to keep inertia'],
-            hints3d: ['Left-drag empty space to orbit','Middle-drag to pan','Wheel to zoom','Click a node for details','Left-drag a node to reposition'],
+            hints3d: ['Left-drag empty space to orbit','Double-click a node to orbit around it','Middle-drag to pan','Wheel to zoom','Click a node for details','Left-drag a node to reposition'],
             dimension: 'Graph dimension',
             project: 'Project', module: 'Module', knowledgeFile: 'Knowledge File', toolData: 'Tool/Data Asset', monthRules: 'Monthly Rules', category: 'Metric Category', metric: 'Metric', submetric: 'Submetric',
             files: 'files', chunks: 'chunks', dependencies: 'dependencies', recentUpdated: 'Recently updated', tools: 'tools', databases: 'databases', tables: 'tables', snapshots: 'snapshots',
@@ -331,7 +361,7 @@
             assetCategory: 'Asset Category', htmlTool: 'HTML Tool', database: 'Database', table: 'Table', toolFile: 'Tool Directory File', related: 'Related Nodes', contained: 'Child Nodes', fileSize: 'File Size', updatedAt: 'Updated', publicAccess: 'Public Access', yes: 'Yes', no: 'No', columns: 'Columns', schema: 'Table Schema',
             empty: 'Click a module, tool, file, database, or table to inspect its relationships.', moduleFiles: 'Module Files', indexTime: 'Indexed At', viewChunks: 'Indexed Knowledge Chunks', readingFile: 'Loading File Node', unnamedChunk: 'Untitled Chunk',
             graphLoadFailed: 'Failed to load the knowledge graph', metricLoadFailed: 'Failed to load the metric graph', refreshFailed: 'Refresh failed',
-            controls: 'Appearance & Forces', appearance: 'Appearance', force: 'Forces', palette: 'Color Theme', cosmic: 'Cosmic', obsidian: 'Obsidian', aurora: 'Aurora', nodeSize: 'Node Size', lineWidth: 'Line Width', labelDensity: 'Label Density', labelOpacity: 'Text Opacity', growthSpeed: 'Growth Speed', playGrowth: 'Play Growth Animation', stopGrowth: 'Stop Animation', centerForce: 'Center Force', repulsion: 'Node Repulsion', attraction: 'Linked Attraction', linkLength: 'Link Length', drift: 'Drift Force', resetControls: 'Reset Defaults'
+            controls: 'Appearance & Forces', appearance: 'Appearance', force: 'Forces', palette: 'Color Theme', galaxy: 'Galaxy', cosmic: 'Cosmic', obsidian: 'Obsidian', aurora: 'Aurora', nodeSize: 'Node Size', lineWidth: 'Line Width', labelDensity: 'Label Density', labelOpacity: 'Text Opacity', growthSpeed: 'Growth Speed', playGrowth: 'Play Growth Animation', stopGrowth: 'Stop Animation', centerForce: 'Center Force', repulsion: 'Node Repulsion', attraction: 'Linked Attraction', linkLength: 'Link Length', drift: 'Drift Force', resetControls: 'Reset Defaults'
         }
     };
     function kgLang() {
@@ -373,6 +403,7 @@
         for (const char of String(group || 'other')) hash = ((hash << 5) - hash + char.charCodeAt(0)) | 0;
         const palette = state.settings.palette;
         if (palette === 'obsidian') return `hsla(0, 0%, ${52 + Math.abs(hash) % 28}%, ${alpha})`;
+        if (palette === 'galaxy') return `hsla(${((Math.abs(hash) % 160) + 220) % 360}, 85%, 72%, ${alpha})`;
         const hue = palette === 'aurora'
             ? ((Math.abs(hash) % 155) + 128) % 360
             : ((Math.abs(hash) % 170) + 205) % 360;
@@ -382,6 +413,7 @@
     function accentColor(alpha = 1) {
         if (state.settings.palette === 'obsidian') return `rgba(226,226,226,${alpha})`;
         if (state.settings.palette === 'aurora') return `rgba(57,218,188,${alpha})`;
+        if (state.settings.palette === 'galaxy') return `rgba(168,135,255,${alpha})`;
         return `rgba(139,92,246,${alpha})`;
     }
 
@@ -470,6 +502,7 @@
             motionPhase: [...String(item.id || '')].reduce((sum, char) => sum + char.charCodeAt(0), 0) * 0.73
         }));
         state.nodeMap = new Map(state.nodes.map(item => [item.id, item]));
+        state.hasFailingMetricAlerts = state.nodes.some(node => node.isFailing === true);
         state.edges = data.edges.map(edge => ({ ...edge, sourceNode: state.nodeMap.get(edge.source), targetNode: state.nodeMap.get(edge.target) }))
             .filter(edge => edge.sourceNode && edge.targetNode);
         const placeDescendants = (parent, baseAngle, depth = 1, visited = new Set()) => {
@@ -531,6 +564,14 @@
         const root = state.nodeMap.get(isMetricMode() ? 'metric-root' : 'root');
         if (root) { root.x = 0; root.y = 0; root.z = 0; root.fixed = true; }
         state.flatPositions = new Map(state.nodes.map(node => [node.id, { x:node.x, y:node.y }]));
+        state.stars = Array.from({ length: 450 }, () => ({
+            x: (Math.random() - 0.5) * 6000,
+            y: (Math.random() - 0.5) * 6000,
+            z: (Math.random() - 0.5) * 6000,
+            size: Math.random() * 1.8 + 0.4,
+            alpha: Math.random() * 0.7 + 0.1,
+            phase: Math.random() * Math.PI * 2
+        }));
         state.alpha = 1;
         state.running = state.motionEnabled;
         resetView();
@@ -558,6 +599,9 @@
         state.panY = 0;
         state.cameraYaw = -0.55;
         state.cameraPitch = 0.34;
+        state.orbitTargetId = null;
+        state.orbitPivot = { x:0, y:0, z:0 };
+        state.orbitTransition = null;
         render();
     }
 
@@ -648,23 +692,29 @@
             const sinYaw = Math.sin(state.cameraYaw);
             const cosPitch = Math.cos(state.cameraPitch);
             const sinPitch = Math.sin(state.cameraPitch);
-            const rotatedX = node.x * cosYaw - node.z * sinYaw;
-            const yawDepth = node.x * sinYaw + node.z * cosYaw;
-            const rotatedY = node.y * cosPitch - yawDepth * sinPitch;
-            const depth = node.y * sinPitch + yawDepth * cosPitch;
-            const perspective = Math.max(0.42, Math.min(1.8, state.cameraDistance / (state.cameraDistance + depth)));
+            const relativeX = node.x - state.orbitPivot.x;
+            const relativeY = node.y - state.orbitPivot.y;
+            const relativeZ = node.z - state.orbitPivot.z;
+            const rotatedX = relativeX * cosYaw - relativeZ * sinYaw;
+            const yawDepth = relativeX * sinYaw + relativeZ * cosYaw;
+            const rotatedY = relativeY * cosPitch - yawDepth * sinPitch;
+            const depth = relativeY * sinPitch + yawDepth * cosPitch;
+            const cameraDepth = state.cameraDistance + depth;
+            const perspective = Math.max(0.42, Math.min(1.8, state.cameraDistance / Math.max(1, cameraDepth)));
             return {
                 x: state.width / 2 + state.panX + rotatedX * state.scale * perspective,
                 y: state.height / 2 + state.panY + rotatedY * state.scale * perspective,
                 depth,
-                perspective
+                perspective,
+                visible: cameraDepth > 0
             };
         }
         return {
             x: state.width / 2 + state.panX + node.x * state.scale,
             y: state.height / 2 + state.panY + node.y * state.scale,
             depth: 0,
-            perspective: 1
+            perspective: 1,
+            visible: true
         };
     }
 
@@ -693,7 +743,7 @@
     }
 
     function nodeBaseColor(node, alpha = 1) {
-        if (isRootNode(node)) return `rgba(247,248,255,${alpha})`;
+        if (isRootNode(node)) return state.settings.palette === 'galaxy' ? `rgba(255,255,255,${alpha})` : `rgba(247,248,255,${alpha})`;
         if (isGroupNode(node)) return colorForGroup(node.group, alpha);
         if (node.type === 'metric') return colorForGroup(node.group, Math.min(alpha, 0.96));
         return colorForGroup(node.group, Math.min(alpha, 0.78));
@@ -701,6 +751,36 @@
 
     function drawLitSphere(node, point, radius, emphasized) {
         const sphereRadius = Math.max(.08, radius + (emphasized ? 1.25 : 0));
+
+        if (state.settings.palette === 'galaxy') {
+            ctx.save();
+            const root = isRootNode(node);
+            const glowMultiplier = root
+                ? (emphasized ? 2.15 : 1.7)
+                : (emphasized ? 2.55 : 1.9);
+            const glowSize = sphereRadius * glowMultiplier;
+            const gradient = ctx.createRadialGradient(point.x, point.y, 0, point.x, point.y, glowSize);
+            gradient.addColorStop(0, `rgba(255,255,255,${root ? 0.68 : 0.82})`);
+            gradient.addColorStop(0.14, nodeBaseColor(node, root ? 0.58 : 0.68));
+            gradient.addColorStop(0.42, nodeBaseColor(node, emphasized ? 0.28 : 0.13));
+            gradient.addColorStop(1, 'transparent');
+
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, glowSize, 0, Math.PI * 2);
+            ctx.fill();
+
+            if ((isRootNode(node) || isGroupNode(node)) && sphereRadius > 3) {
+                ctx.beginPath();
+                ctx.ellipse(point.x, point.y, sphereRadius * 2.2, sphereRadius * 0.6, -0.3, 0, Math.PI * 2);
+                ctx.strokeStyle = nodeBaseColor(node, emphasized ? 0.7 : 0.25);
+                ctx.lineWidth = 1 * state.scale;
+                ctx.stroke();
+            }
+            ctx.restore();
+            return;
+        }
+
         const lightX = point.x - sphereRadius * 0.34;
         const lightY = point.y - sphereRadius * 0.38;
 
@@ -1066,6 +1146,31 @@
         ctx.textBaseline = 'alphabetic';
     }
 
+    function shouldAnimateMetricAlerts() {
+        return isMetricMode()
+            && state.hasFailingMetricAlerts
+            && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    }
+
+    function drawFailingMetricHalo(node, point, radius, now) {
+        const phase = Number(node.motionPhase || 0) * 0.17;
+        const pulse = shouldAnimateMetricAlerts() ? 0.5 + Math.sin(now * 0.0022 + phase) * 0.5 : 0.5;
+        const strength = node.type === 'metric' ? 1 : 0.68;
+        const innerRadius = Math.max(1, radius * 1.04);
+        const outerRadius = Math.max(innerRadius + 6, radius * (2.18 + pulse * 0.46) + 5);
+        const gradient = ctx.createRadialGradient(point.x, point.y, innerRadius, point.x, point.y, outerRadius);
+        gradient.addColorStop(0, `rgba(255,126,158,${(0.2 + pulse * 0.07) * strength})`);
+        gradient.addColorStop(0.5, `rgba(231,87,140,${(0.11 + pulse * 0.045) * strength})`);
+        gradient.addColorStop(1, 'rgba(190,55,120,0)');
+        ctx.save();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, outerRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
     function render() {
         ctx.clearRect(0, 0, state.width, state.height);
         if (!state.nodes.length) return;
@@ -1085,6 +1190,23 @@
             });
         }
         ctx.lineCap = 'round';
+        if (state.dimension === '3d' && state.settings.palette === 'galaxy') {
+            const time = now * 0.0003;
+            ctx.save();
+            for (const star of state.stars) {
+                const rotatedX = star.x * Math.cos(time) - star.z * Math.sin(time);
+                const rotatedZ = star.x * Math.sin(time) + star.z * Math.cos(time);
+                const projected = worldToScreen({ x: rotatedX, y: star.y, z: rotatedZ });
+                if (projected.visible && projected.x > 0 && projected.x < state.width && projected.y > 0 && projected.y < state.height) {
+                    ctx.globalAlpha = star.alpha * (0.6 + 0.4 * Math.sin(now * 0.002 + star.phase)) * Math.min(1, projected.perspective * 1.5);
+                    ctx.fillStyle = '#fff';
+                    ctx.beginPath();
+                    ctx.arc(projected.x, projected.y, star.size * projected.perspective * state.scale, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            ctx.restore();
+        }
         const orderedEdges = [...state.edges].sort((a, b) => {
             const aActive = focusNode && (a.source === focusNode.id || a.target === focusNode.id);
             const bActive = focusNode && (b.source === focusNode.id || b.target === focusNode.id);
@@ -1152,6 +1274,7 @@
                 ctx.arc(point.x, point.y, radius + (isSelected || isHovered ? 1.4 : 0), 0, Math.PI * 2);
                 ctx.fill();
             }
+            if (isMetricMode() && node.isFailing === true) drawFailingMetricHalo(node, point, radius, now);
             ctx.shadowBlur = 0;
             ctx.globalAlpha = 1;
         }
@@ -1163,6 +1286,7 @@
         state.frame = requestAnimationFrame(timestamp => {
             state.frame = 0;
             updateHoverTransition(timestamp);
+            updateOrbitTransition(timestamp);
             const elapsed = state.lastFrameTime ? Math.min(2, Math.max(0.5, (timestamp - state.lastFrameTime) / 16.67)) : 1;
             state.lastFrameTime = timestamp;
             if (state.growth.active && timestamp - state.growth.startedAt > state.growth.duration + 520) {
@@ -1173,7 +1297,7 @@
                 simulate(elapsed);
             }
             render();
-            if ((state.growth.active || state.hoverTransition || state.running && state.motionEnabled) && overlay.classList.contains('open')) scheduleFrame();
+            if ((state.growth.active || state.hoverTransition || state.orbitTransition || state.running && state.motionEnabled || shouldAnimateMetricAlerts()) && overlay.classList.contains('open')) scheduleFrame();
         });
     }
 
@@ -1362,11 +1486,67 @@
         }
     }
 
+    function orbitTargetNode() {
+        return state.orbitTargetId ? state.nodeMap.get(state.orbitTargetId) : null;
+    }
+
+    function setOrbitTarget(node, { animate = true } = {}) {
+        if (state.dimension !== '3d') return;
+        const target = node || null;
+        const targetId = target?.id || null;
+        const targetPoint = target ? { x:target.x, y:target.y, z:target.z } : { x:0, y:0, z:0 };
+        state.orbitTargetId = targetId;
+        if (!animate) {
+            state.orbitPivot = targetPoint;
+            state.panX = 0;
+            state.panY = 0;
+            state.orbitTransition = null;
+            render();
+            return;
+        }
+        state.orbitTransition = {
+            startedAt: performance.now(),
+            duration: 360,
+            from: { ...state.orbitPivot },
+            fromPanX: state.panX,
+            fromPanY: state.panY
+        };
+        scheduleFrame();
+    }
+
+    function updateOrbitTransition(now) {
+        const transition = state.orbitTransition;
+        const target = orbitTargetNode();
+        const targetPoint = target ? { x:target.x, y:target.y, z:target.z } : { x:0, y:0, z:0 };
+        if (!transition) {
+            if (state.orbitTargetId && target) state.orbitPivot = targetPoint;
+            return;
+        }
+        const progress = Math.max(0, Math.min(1, (now - transition.startedAt) / transition.duration));
+        const eased = 1 - Math.pow(1 - progress, 3);
+        state.orbitPivot = {
+            x: transition.from.x + (targetPoint.x - transition.from.x) * eased,
+            y: transition.from.y + (targetPoint.y - transition.from.y) * eased,
+            z: transition.from.z + (targetPoint.z - transition.from.z) * eased
+        };
+        state.panX = transition.fromPanX * (1 - eased);
+        state.panY = transition.fromPanY * (1 - eased);
+        if (progress >= 1) {
+            state.orbitPivot = targetPoint;
+            state.panX = 0;
+            state.panY = 0;
+            state.orbitTransition = null;
+        }
+    }
+
     function focusNode(node) {
         if (!node) return;
-        const projected = worldToScreen(node);
-        state.panX += state.width / 2 - projected.x;
-        state.panY += state.height / 2 - projected.y;
+        if (state.dimension === '3d') setOrbitTarget(node);
+        else {
+            const projected = worldToScreen(node);
+            state.panX += state.width / 2 - projected.x;
+            state.panY += state.height / 2 - projected.y;
+        }
         selectNode(node);
         render();
     }
@@ -1413,6 +1593,7 @@
         controlPanel.querySelector('[data-kg-attraction-label]').textContent = kgT('attraction');
         controlPanel.querySelector('[data-kg-link-length-label]').textContent = kgT('linkLength');
         controlPanel.querySelector('[data-kg-drift-label]').textContent = kgT('drift');
+        controlPanel.querySelector('option[value="galaxy"]').textContent = kgT('galaxy');
         controlPanel.querySelector('option[value="cosmic"]').textContent = kgT('cosmic');
         controlPanel.querySelector('option[value="obsidian"]').textContent = kgT('obsidian');
         controlPanel.querySelector('option[value="aurora"]').textContent = kgT('aurora');
@@ -1420,6 +1601,8 @@
         controlPanel.querySelector('.ai-kg-control-close').setAttribute('aria-label', kgT('close'));
         setGrowthButtonState();
         overlay.querySelector('#aiKgFit').title = kgT('fit');
+        updateFullscreenButton();
+        syncSidebarToggle();
         overlay.querySelector('#aiKgClose').title = kgT('close');
         overlay.querySelector('#aiKgHint').innerHTML = kgT(state.dimension === '3d' ? 'hints3d' : 'hints').map(item => `<span>${escapeHtml(item)}</span>`).join('');
         if (state.data) {
@@ -1564,12 +1747,21 @@
         if (pointer && pointer.node && !pointer.moved) selectNode(pointer.node);
         else if (pointer && !pointer.node && !pointer.moved && pointer.button !== 1) {
             state.selected = null;
+            setOrbitTarget(null);
             render();
         }
         try { canvas.releasePointerCapture(event.pointerId); } catch (_error) {}
     });
     canvas.addEventListener('auxclick', event => {
         if (event.button === 1) event.preventDefault();
+    });
+    canvas.addEventListener('dblclick', event => {
+        if (state.dimension !== '3d') return;
+        const node = nodeAt(event.clientX, event.clientY);
+        if (!node) return;
+        event.preventDefault();
+        setOrbitTarget(node);
+        selectNode(node);
     });
     canvas.addEventListener('pointerleave', () => { if (!state.pointer) clearHoverIntent(); });
     canvas.addEventListener('wheel', event => {
@@ -1650,6 +1842,59 @@
             render();
         }
     };
+
+    function fullscreenElement() {
+        return document.fullscreenElement || document.webkitFullscreenElement || null;
+    }
+
+    function isGraphFullscreen() {
+        return fullscreenElement() === overlay;
+    }
+
+    function updateFullscreenButton() {
+        const active = isGraphFullscreen();
+        fullscreenButton.textContent = active ? '⤡' : '⛶';
+        fullscreenButton.title = kgT(active ? 'exitFullscreen' : 'fullscreen');
+        fullscreenButton.setAttribute('aria-label', fullscreenButton.title);
+        fullscreenButton.setAttribute('aria-pressed', String(active));
+    }
+
+    async function toggleFullscreen() {
+        try {
+            if (isGraphFullscreen()) {
+                const exit = document.exitFullscreen || document.webkitExitFullscreen;
+                if (exit) await exit.call(document);
+            } else {
+                const enter = overlay.requestFullscreen || overlay.webkitRequestFullscreen;
+                if (enter) await enter.call(overlay);
+            }
+        } catch (_error) {
+            // The graph overlay already fills the viewport when browser fullscreen is unavailable.
+        } finally {
+            updateFullscreenButton();
+            requestAnimationFrame(resize);
+        }
+    }
+
+    fullscreenButton.onclick = toggleFullscreen;
+
+    function syncSidebarToggle() {
+        main.classList.toggle('sidebar-collapsed', state.sidebarCollapsed);
+        sidebarToggle.textContent = state.sidebarCollapsed ? '‹' : '›';
+        sidebarToggle.setAttribute('aria-expanded', String(!state.sidebarCollapsed));
+        const label = kgT(state.sidebarCollapsed ? 'sidebarExpand' : 'sidebarCollapse');
+        sidebarToggle.title = label;
+        sidebarToggle.setAttribute('aria-label', label);
+    }
+
+    function setSidebarCollapsed(collapsed) {
+        state.sidebarCollapsed = Boolean(collapsed);
+        try { localStorage.setItem('ai_kg_sidebar_collapsed', state.sidebarCollapsed ? '1' : '0'); } catch (_error) {}
+        syncSidebarToggle();
+        requestAnimationFrame(resize);
+    }
+
+    sidebarToggle.onclick = () => setSidebarCollapsed(!state.sidebarCollapsed);
     overlay.querySelector('#aiKgClose').onclick = () => window.AIKnowledgeGraph.close();
     refreshButton.onclick = async event => {
         const button = event.currentTarget;
@@ -1670,7 +1915,15 @@
         }
     };
     document.addEventListener('keydown', event => {
-        if (event.key === 'Escape' && overlay.classList.contains('open')) window.AIKnowledgeGraph.close();
+        if (event.key === 'Escape' && overlay.classList.contains('open') && !isGraphFullscreen()) window.AIKnowledgeGraph.close();
+    });
+    document.addEventListener('fullscreenchange', () => {
+        updateFullscreenButton();
+        requestAnimationFrame(resize);
+    });
+    document.addEventListener('webkitfullscreenchange', () => {
+        updateFullscreenButton();
+        requestAnimationFrame(resize);
     });
     new ResizeObserver(resize).observe(stage);
     window.addEventListener('tools:languagechange', applyGraphLanguage);
@@ -1688,6 +1941,10 @@
             setTimeout(() => searchInput.focus(), 100);
         },
         close() {
+            if (isGraphFullscreen()) {
+                const exit = document.exitFullscreen || document.webkitExitFullscreen;
+                if (exit) Promise.resolve(exit.call(document)).catch(() => {});
+            }
             overlay.classList.remove('open');
             document.body.classList.remove('ai-kg-open');
             state.running = false;
