@@ -672,6 +672,26 @@
         return Math.max(minimum, Number(node.size || 5) * Math.sqrt(state.scale) * state.settings.nodeScale * (point.perspective || 1));
     }
 
+    function screenDeltaToWorld(node, screenDx, screenDy) {
+        if (state.dimension !== '3d') {
+            return { x:screenDx / state.scale, y:screenDy / state.scale, z:0 };
+        }
+        const projection = worldToScreen(node);
+        const projectionScale = Math.max(.001, state.scale * (projection.perspective || 1));
+        const cameraX = screenDx / projectionScale;
+        const cameraY = screenDy / projectionScale;
+        const cosYaw = Math.cos(state.cameraYaw);
+        const sinYaw = Math.sin(state.cameraYaw);
+        const cosPitch = Math.cos(state.cameraPitch);
+        const sinPitch = Math.sin(state.cameraPitch);
+        const yawDepth = -sinPitch * cameraY;
+        return {
+            x: cosYaw * cameraX + sinYaw * yawDepth,
+            y: cosPitch * cameraY,
+            z: -sinYaw * cameraX + cosYaw * yawDepth
+        };
+    }
+
     function nodeBaseColor(node, alpha = 1) {
         if (isRootNode(node)) return `rgba(247,248,255,${alpha})`;
         if (isGroupNode(node)) return colorForGroup(node.group, alpha);
@@ -1486,7 +1506,7 @@
         const navigation = middlePan ? 'pan' : state.dimension === '3d' && !node ? 'orbit' : node ? 'node' : 'pan';
         event.preventDefault();
         clearHoverIntent({ immediate: true });
-        state.pointer = { x: event.clientX, y: event.clientY, panX: state.panX, panY: state.panY, yaw: state.cameraYaw, pitch: state.cameraPitch, button:event.button, navigation, node, moved: false, lastTime: performance.now(), velocityX: 0, velocityY: 0 };
+        state.pointer = { x: event.clientX, y: event.clientY, panX: state.panX, panY: state.panY, yaw: state.cameraYaw, pitch: state.cameraPitch, button:event.button, navigation, node, moved: false, lastTime: performance.now(), velocityX: 0, velocityY: 0, velocityZ: 0 };
         if (node && !node.fixed) node.dragging = true;
         if (node) reheat(0.82);
         canvas.setPointerCapture(event.pointerId);
@@ -1497,16 +1517,20 @@
             const dx = event.clientX - state.pointer.x;
             const dy = event.clientY - state.pointer.y;
             if (Math.hypot(dx, dy) > 3) state.pointer.moved = true;
-            if (state.pointer.node && state.pointer.moved) {
+            if (state.pointer.node && !state.pointer.node.fixed && state.pointer.moved) {
                 const now = performance.now();
                 const elapsedMs = Math.max(8, now - state.pointer.lastTime);
-                state.pointer.node.x += dx / state.scale;
-                state.pointer.node.y += dy / state.scale;
-                state.pointer.velocityX = (dx / state.scale) * (16.67 / elapsedMs);
-                state.pointer.velocityY = (dy / state.scale) * (16.67 / elapsedMs);
+                const movement = screenDeltaToWorld(state.pointer.node, dx, dy);
+                const velocityScale = 16.67 / elapsedMs;
+                state.pointer.node.x += movement.x;
+                state.pointer.node.y += movement.y;
+                state.pointer.node.z += movement.z;
+                state.pointer.velocityX = movement.x * velocityScale;
+                state.pointer.velocityY = movement.y * velocityScale;
+                state.pointer.velocityZ = movement.z * velocityScale;
                 state.pointer.x = event.clientX; state.pointer.y = event.clientY;
                 state.pointer.lastTime = now;
-                state.pointer.node.vx = 0; state.pointer.node.vy = 0;
+                state.pointer.node.vx = 0; state.pointer.node.vy = 0; state.pointer.node.vz = 0;
                 reheat(0.78);
             } else if (!state.pointer.node) {
                 if (state.pointer.navigation === 'orbit') {
@@ -1533,6 +1557,7 @@
             if (pointer.moved) {
                 pointer.node.vx = Math.max(-12, Math.min(12, pointer.velocityX || 0));
                 pointer.node.vy = Math.max(-12, Math.min(12, pointer.velocityY || 0));
+                pointer.node.vz = Math.max(-12, Math.min(12, pointer.velocityZ || 0));
                 reheat(0.68);
             }
         }

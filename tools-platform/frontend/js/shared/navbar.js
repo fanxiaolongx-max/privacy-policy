@@ -3869,7 +3869,7 @@ window.openToolsKnowledgeGraph = function () {
             script.addEventListener('load', handleLoad, { once: true });
             script.addEventListener('error', handleError, { once: true });
             if (!existing) {
-                script.src = '/js/shared/ai-knowledge-graph.js?v=20260810-3d5';
+                script.src = '/js/shared/ai-knowledge-graph.js?v=20260810-3d6';
                 document.body.appendChild(script);
             }
         }).catch(error => {
