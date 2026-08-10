@@ -13,6 +13,7 @@ let metricCountTrendData = null;
 let metricCountTrendLoading = null;
 let expiringWarningTrendData = null;
 let expiringWarningTrendLoading = null;
+const inheritedTargetSavePromises = new Map();
 
 function rt(key, params = {}) {
     if (window.ReportI18n && typeof window.ReportI18n.t === 'function') {
@@ -1463,6 +1464,27 @@ function buildLabelTargetMap() {
     }
 }
 
+function applyManualMetricTargetAutoFill(targetMonth) {
+    const helper = window.ReportTargetAutoFill;
+    if (!helper || typeof helper.inheritLatestTargets !== 'function' || !globalConfig.targets) return;
+
+    Object.entries(globalConfig.targets).forEach(([targetKey, targetData]) => {
+        if (!targetKey.startsWith('manual_') || !targetData || !targetData.label || !targetData.autoFill) return;
+        const result = helper.inheritLatestTargets(targetData, targetMonth, categories);
+        if (!result.changed) return;
+
+        const saveKey = `${targetKey}:${targetMonth}`;
+        if (inheritedTargetSavePromises.has(saveKey)) return;
+        const savePromise = patchSlaTarget(targetKey, targetData)
+            .catch(error => {
+                console.error('Manual metric target auto-fill save error:', error);
+                showToast(rt('report.toast.saveFailed'), 'error');
+            })
+            .finally(() => inheritedTargetSavePromises.delete(saveKey));
+        inheritedTargetSavePromises.set(saveKey, savePromise);
+    });
+}
+
 window.loadSelectedSnapshot = function () {
     const id = document.getElementById('snapshot-select').value;
     currentSnapshot = snapshots.find(s => s.id === id);
@@ -1829,6 +1851,7 @@ function renderReport(snap) {
     const content = document.getElementById('report-content');
     const { topMetrics } = snap;
     const targetMonth = document.getElementById('target-month-select').value;
+    applyManualMetricTargetAutoFill(targetMonth);
     const previousMetricValues = buildPreviousMetricValueMap(getPreviousReportSnapshot(snap));
 
     let metricCols = [...(topMetrics || [])];
