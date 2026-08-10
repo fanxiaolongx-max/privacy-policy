@@ -5064,7 +5064,7 @@ window.confirmYuxiangExport = async function () {
     btn.disabled = true;
 
     try {
-        const monthStr = document.getElementById('target-month-select').value || '未知';
+        const monthStr = document.getElementById('target-month-select').value || '';
         const token = localStorage.getItem('tools_token');
         const headers = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -5086,7 +5086,10 @@ window.confirmYuxiangExport = async function () {
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = url;
-        a.download = `每月赛马-分网络_${monthStr}.xlsx`;
+        const filenameHelper = window.ReportExportFilenames;
+        a.download = filenameHelper
+            ? filenameHelper.buildHorseRacingExcelFilename(monthStr, currentSnapshot && currentSnapshot.timestamp)
+            : 'Egypt SPM Horse Racing Monthly Report.xlsx';
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);

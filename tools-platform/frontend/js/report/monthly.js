@@ -40,7 +40,7 @@ function hasCategoryTargets(targetData, month) {
 
 const i18n = {
     zh: {
-        title: '月度运营质量与合规分析报告 <span id="monthlyFrontendVersion" style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v加载中</span>',
+        title: '埃及维护运营月度报告 <span id="monthlyFrontendVersion" style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">v加载中</span>',
         date_range_loading: '分析周期: 加载中...',
         filter_7_days: '最近 7 天',
         filter_30_days: '最近 30 天',
@@ -155,7 +155,7 @@ const i18n = {
         title_required: '中英文月报标题均不能为空'
     },
     en: {
-        title: 'Monthly Quality & Compliance Analysis <span id="monthlyFrontendVersion" style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">vLoading</span>',
+        title: 'Egypt Maintenance Operation Monthly Report <span id="monthlyFrontendVersion" style="font-size:14px;color:#94a3b8;font-weight:normal;margin-left:8px;">vLoading</span>',
         date_range_loading: 'Analysis Period: Loading...',
         filter_7_days: 'Last 7 Days',
         filter_30_days: 'Last 30 Days',
@@ -313,16 +313,23 @@ function escapeHTML(str) {
 }
 
 const DEFAULT_MONTHLY_REPORT_TITLES = {
-    zh: '月度运营质量与合规分析报告',
-    en: 'Monthly Quality & Compliance Analysis'
+    zh: '埃及维护运营月度报告',
+    en: 'Egypt Maintenance Operation Monthly Report'
 };
+const LEGACY_MONTHLY_REPORT_TITLES = [
+    { zh: '月度运营质量与合规分析报告', en: 'Monthly Quality & Compliance Analysis' }
+];
 let monthlyReportTitles = { ...DEFAULT_MONTHLY_REPORT_TITLES };
 
 function normalizeMonthlyReportTitles(value) {
     const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+    const sourceZh = typeof source.zh === 'string' ? source.zh.trim() : '';
+    const sourceEn = typeof source.en === 'string' ? source.en.trim() : '';
+    const isLegacyDefault = LEGACY_MONTHLY_REPORT_TITLES.some(item => item.zh === sourceZh && item.en === sourceEn);
+    if (isLegacyDefault) return { ...DEFAULT_MONTHLY_REPORT_TITLES };
     return {
-        zh: typeof source.zh === 'string' && source.zh.trim() ? source.zh.trim() : DEFAULT_MONTHLY_REPORT_TITLES.zh,
-        en: typeof source.en === 'string' && source.en.trim() ? source.en.trim() : DEFAULT_MONTHLY_REPORT_TITLES.en
+        zh: sourceZh || DEFAULT_MONTHLY_REPORT_TITLES.zh,
+        en: sourceEn || DEFAULT_MONTHLY_REPORT_TITLES.en
     };
 }
 
@@ -556,6 +563,18 @@ function getMonthlyDateFilters() {
         startDate: startDateInput ? startDateInput.value : '',
         endDate: endDateInput ? endDateInput.value : ''
     };
+}
+
+function getMonthlyExportReferenceDate() {
+    if (currentLatest && currentLatest.raw_data_json) {
+        try {
+            const rawSnapshot = JSON.parse(currentLatest.raw_data_json);
+            if (rawSnapshot.timestamp) return rawSnapshot.timestamp;
+        } catch (e) { }
+    }
+    if (currentLatest && currentLatest.created_at) return currentLatest.created_at;
+    if (currentTrends && currentTrends.length) return currentTrends[currentTrends.length - 1].date;
+    return new Date();
 }
 
 async function loadData(startDate, endDate) {
@@ -2359,8 +2378,12 @@ window.exportToPDF = async function () {
         // Add image to cover the entire custom-sized page
         pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
 
-        let dateStr = document.getElementById('latest-snapshot-date').innerText || 'Latest';
-        pdf.save(`Monthly_Report_${dateStr}.pdf`);
+        const filenameHelper = window.ReportExportFilenames;
+        const targetMonth = getMonthlyTargetMonth();
+        const fileName = filenameHelper
+            ? filenameHelper.buildMonthlyPdfFilename(targetMonth, getMonthlyExportReferenceDate())
+            : 'Egypt Maintenance Operation Monthly Report.pdf';
+        pdf.save(fileName);
 
         btnContainer.style.display = 'flex';
         showToast(t('msg_export_pdf_success'), 'success');

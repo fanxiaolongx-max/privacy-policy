@@ -25,7 +25,7 @@
 
     const BIGSCREEN_I18N = {
         'zh-CN': {
-            title: 'EG运营质量综合看板',
+            title: '埃及维护运营质量看板',
             loadingSubtitle: '数据来自月报页面与报表看板入库结果，正在加载...',
             noDataSubtitle: '当前筛选范围内暂无入库数据。',
             subtitle: '分析周期 {start} 至 {end}，最新快照 {snapshot}，目标月份 {month}',
@@ -168,7 +168,7 @@
             sourceRefreshNoData: '等待入库数据，数据源来自 NetcareCloud / 看板 / 3MS / IBMS / iSales'
         },
         'en-US': {
-            title: 'EG Operational Quality Dashboard',
+            title: 'Egypt Maintenance Operation Quality Dashboard',
             loadingSubtitle: 'Loading data from monthly trends and saved report snapshots...',
             noDataSubtitle: 'No saved data is available for the selected range.',
             subtitle: 'Analysis period {start} to {end}; latest snapshot {snapshot}; target month {month}',
@@ -379,6 +379,11 @@
         if (!raw || typeof raw !== 'object') return defaults;
         const zh = String(raw.zh || raw.zhCN || raw['zh-CN'] || raw.title || '').trim();
         const en = String(raw.en || raw.enUS || raw['en-US'] || '').trim();
+        const legacyDefaults = [
+            { zh: 'EG运营质量综合看板', en: 'EG Operational Quality Dashboard' },
+            { zh: 'EG护网行动运营质量综合看板', en: 'EG Operational Quality Dashboard' }
+        ];
+        if (legacyDefaults.some(item => item.zh === zh && item.en === en)) return defaults;
         return {
             zh: zh || defaults.zh,
             en: en || defaults.en
