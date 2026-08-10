@@ -36,6 +36,9 @@
         .ai-kg-view-switch { display:flex; padding:3px; border-radius:11px; background:rgba(31,40,66,.72); border:1px solid rgba(143,157,207,.16); }
         .ai-kg-view-btn { height:30px; padding:0 10px; border:0; border-radius:8px; background:transparent; color:#8491aa; font-size:11px; cursor:pointer; white-space:nowrap; }
         .ai-kg-view-btn.active { color:#fff; background:linear-gradient(135deg,rgba(83,105,217,.86),rgba(118,83,189,.82)); box-shadow:0 5px 14px rgba(34,43,93,.28); }
+        .ai-kg-dimension-switch { display:flex; padding:3px; border-radius:11px; background:rgba(18,25,43,.72); border:1px solid rgba(143,157,207,.16); }
+        .ai-kg-dimension-btn { width:36px; height:30px; padding:0; border:0; border-radius:8px; background:transparent; color:#8491aa; font-size:11px; font-weight:750; cursor:pointer; }
+        .ai-kg-dimension-btn.active { color:#fff; background:rgba(91,108,204,.62); box-shadow:0 4px 12px rgba(24,31,72,.28); }
         .ai-kg-month-wrap { display:none; align-items:center; gap:6px; color:#8290aa; font-size:10px; white-space:nowrap; }
         .ai-kg-month-wrap.visible { display:flex; }
         .ai-kg-month { height:34px; padding:0 25px 0 9px; border-radius:9px; border:1px solid rgba(143,157,207,.2); outline:none; background:#1a2238; color:#e4e9f5; font-size:11px; }
@@ -79,6 +82,12 @@
         .ai-kg-btn.icon { width:36px; padding:0; font-size:17px; }
         .ai-kg-main { position:relative; flex:1; min-height:0; display:flex; }
         .ai-kg-stage { position:relative; flex:1; min-width:0; overflow:hidden; }
+        .ai-kg-overlay[data-dimension="3d"] .ai-kg-stage::before {
+            content:""; position:absolute; inset:0; pointer-events:none;
+            background:
+                radial-gradient(circle at 22% 16%, rgba(174,194,255,.09), transparent 29%),
+                linear-gradient(145deg, rgba(91,112,191,.025), transparent 42%, rgba(0,0,0,.09));
+        }
         .ai-kg-canvas { width:100%; height:100%; display:block; cursor:grab; touch-action:none; }
         .ai-kg-canvas.dragging { cursor:grabbing; }
         .ai-kg-hint {
@@ -178,6 +187,10 @@
                 <button class="ai-kg-view-btn active" type="button" data-kg-mode="knowledge">项目知识</button>
                 <button class="ai-kg-view-btn" type="button" data-kg-mode="metrics">指标体系</button>
             </div>
+            <div class="ai-kg-dimension-switch" id="aiKgDimensionSwitch" aria-label="图谱维度">
+                <button class="ai-kg-dimension-btn active" type="button" data-kg-dimension="2d" aria-pressed="true">2D</button>
+                <button class="ai-kg-dimension-btn" type="button" data-kg-dimension="3d" aria-pressed="false">3D</button>
+            </div>
             <label class="ai-kg-month-wrap" id="aiKgMonthWrap">规则月份<select class="ai-kg-month" id="aiKgMonth"></select></label>
             <div class="ai-kg-statuses" id="aiKgStatuses"></div>
             <div class="ai-kg-search-wrap">
@@ -253,6 +266,7 @@
     const state = {
         data: null,
         mode: 'knowledge',
+        dimension: '2d',
         month: null,
         nodes: [],
         nodeMap: new Map(),
@@ -263,6 +277,9 @@
         scale: 0.82,
         panX: 0,
         panY: 0,
+        cameraYaw: -0.55,
+        cameraPitch: 0.34,
+        cameraDistance: 920,
         hovered: null,
         hoverCandidate: null,
         hoverTimer: 0,
@@ -276,6 +293,7 @@
         alphaTarget: 0.035,
         lastFrameTime: 0,
         searchMatches: new Set(),
+        flatPositions: new Map(),
         settings: loadSettings(),
         growth: { active:false, startedAt:0, duration:0, nodeOrder:new Map() }
     };
@@ -287,6 +305,8 @@
             knowledgeTitle: '✦ 项目知识关系图谱', metricTitle: '◈ 运营指标体系图谱', knowledgeSubtitle: '项目 → 模块 / 工具 / 数据库 → 文件 / 表 · 细线为代码、查询和资源依赖', metricSubtitle: '月份规则 → 指标分类 → 指标 → 子指标 · 点击查看历史入库值',
             searchKnowledge: '搜索 README、工具、数据库表、接口、AI 助手…', searchMetrics: '搜索分类、指标、子指标…',
             hints: ['拖动画布','滚轮缩放','放大显示文件名','点击节点查看','拖动节点可拉扯关系','松手保留惯性'],
+            hints3d: ['左键拖动空白处旋转','按住滚轮拖动平移','滚轮缩放','点击节点查看','左键拖动节点'],
+            dimension: '图谱维度',
             project: '项目', module: '模块', knowledgeFile: '知识文件', toolData: '工具/数据资产', monthRules: '月份规则', category: '指标分类', metric: '指标', submetric: '子指标',
             files: '文件', chunks: '片段', dependencies: '依赖', recentUpdated: '最近更新', tools: '工具', databases: '数据库', tables: '数据表', snapshots: '历史快照',
             loadingKnowledge: '正在读取项目知识库…', loadingMetrics: '正在读取指标规则与历史快照…', refreshLoading: '正在刷新…', count: n => `${n} 个`, unknown: '未知',
@@ -302,6 +322,8 @@
             knowledgeTitle: '✦ Project Knowledge Graph', metricTitle: '◈ Operations Metric Graph', knowledgeSubtitle: 'Project → modules / tools / databases → files / tables · thin lines show code, query, and asset dependencies', metricSubtitle: 'Monthly rules → categories → metrics → submetrics · click to inspect historical values',
             searchKnowledge: 'Search README, tools, database tables, APIs, AI assistant…', searchMetrics: 'Search categories, metrics, submetrics…',
             hints: ['Drag canvas','Wheel to zoom','Zoom in for filenames','Click a node for details','Drag nodes to pull relations','Release to keep inertia'],
+            hints3d: ['Left-drag empty space to orbit','Middle-drag to pan','Wheel to zoom','Click a node for details','Left-drag a node to reposition'],
+            dimension: 'Graph dimension',
             project: 'Project', module: 'Module', knowledgeFile: 'Knowledge File', toolData: 'Tool/Data Asset', monthRules: 'Monthly Rules', category: 'Metric Category', metric: 'Metric', submetric: 'Submetric',
             files: 'files', chunks: 'chunks', dependencies: 'dependencies', recentUpdated: 'Recently updated', tools: 'tools', databases: 'databases', tables: 'tables', snapshots: 'snapshots',
             loadingKnowledge: 'Loading project knowledge…', loadingMetrics: 'Loading metric rules and snapshots…', refreshLoading: 'Refreshing…', count: n => `${n}`, unknown: 'Unknown',
@@ -441,8 +463,10 @@
             ...item,
             x: 0,
             y: 0,
+            z: 0,
             vx: 0,
             vy: 0,
+            vz: 0,
             motionPhase: [...String(item.id || '')].reduce((sum, char) => sum + char.charCodeAt(0), 0) * 0.73
         }));
         state.nodeMap = new Map(state.nodes.map(item => [item.id, item]));
@@ -461,6 +485,7 @@
                 const radius = 58 + ring * 34 + depth * 13;
                 child.x = parent.x + Math.cos(angle) * radius;
                 child.y = parent.y + Math.sin(angle) * radius;
+                child.z = parent.z + Math.sin(angle * 1.7 + child.motionPhase) * (32 + depth * 8);
                 placeDescendants(child, angle, depth + 1, visited);
             });
         };
@@ -471,6 +496,7 @@
             const groupRadiusY = isMetricMode() ? 270 : 235;
             group.x = Math.cos(angle) * groupRadiusX;
             group.y = Math.sin(angle) * groupRadiusY;
+            group.z = Math.sin(angle * 2 + group.motionPhase * 0.08) * (isMetricMode() ? 150 : 125);
             const children = state.edges
                 .filter(edge => edge.source === group.id)
                 .map(edge => edge.targetNode)
@@ -484,6 +510,7 @@
                 const radius = (isMetricMode() ? 94 : 74) + ring * (isMetricMode() ? 56 : 42);
                 child.x = group.x + Math.cos(localAngle) * radius;
                 child.y = group.y + Math.sin(localAngle) * radius;
+                child.z = group.z + Math.sin(localAngle * 1.45 + child.motionPhase) * (isMetricMode() ? 82 : 68);
                 if (child.type === 'metric') {
                     const subMetrics = state.edges
                         .filter(edge => edge.source === child.id)
@@ -494,6 +521,7 @@
                         const subRadius = 48 + Math.floor(subIndex / 8) * 24;
                         subMetric.x = child.x + Math.cos(subAngle) * subRadius;
                         subMetric.y = child.y + Math.sin(subAngle) * subRadius;
+                        subMetric.z = child.z + Math.sin(subAngle * 1.8 + subMetric.motionPhase) * 44;
                     });
                 } else if (!isMetricMode()) {
                     placeDescendants(child, localAngle, 1, new Set());
@@ -501,7 +529,8 @@
             });
         });
         const root = state.nodeMap.get(isMetricMode() ? 'metric-root' : 'root');
-        if (root) { root.x = 0; root.y = 0; root.fixed = true; }
+        if (root) { root.x = 0; root.y = 0; root.z = 0; root.fixed = true; }
+        state.flatPositions = new Map(state.nodes.map(node => [node.id, { x:node.x, y:node.y }]));
         state.alpha = 1;
         state.running = state.motionEnabled;
         resetView();
@@ -527,6 +556,8 @@
         state.scale = Math.max(0.32, Math.min(1, Math.min(state.width / contentWidth, state.height / contentHeight)));
         state.panX = 0;
         state.panY = 0;
+        state.cameraYaw = -0.55;
+        state.cameraPitch = 0.34;
         render();
     }
 
@@ -554,7 +585,8 @@
             const b = edge.targetNode;
             const dx = b.x - a.x;
             const dy = b.y - a.y;
-            const distance = Math.max(1, Math.hypot(dx, dy));
+            const dz = state.dimension === '3d' ? b.z - a.z : 0;
+            const distance = Math.max(1, Math.hypot(dx, dy, dz));
             const desiredBase = edge.type === 'contains'
                 ? (isRootNode(a) ? (isMetricMode() ? 305 : 250) : a.type === 'metricCategory' ? 112 : a.type === 'metric' ? 56 : a.type === 'tool' || a.type === 'database' ? 72 : a.type === 'assetCategory' ? 108 : 86)
                 : 145;
@@ -563,8 +595,9 @@
             const force = (distance - desired) * strength * alpha * elapsed;
             const fx = dx / distance * force;
             const fy = dy / distance * force;
-            if (!a.fixed) { a.vx += fx; a.vy += fy; }
-            if (!b.fixed) { b.vx -= fx; b.vy -= fy; }
+            const fz = dz / distance * force;
+            if (!a.fixed) { a.vx += fx; a.vy += fy; if (state.dimension === '3d') a.vz += fz; }
+            if (!b.fixed) { b.vx -= fx; b.vy -= fy; if (state.dimension === '3d') b.vz -= fz; }
         }
         for (let i = 0; i < nodes.length; i += 1) {
             const a = nodes[i];
@@ -572,8 +605,9 @@
                 const b = nodes[j];
                 const dx = b.x - a.x;
                 const dy = b.y - a.y;
-                const distanceSq = dx * dx + dy * dy + 0.01;
-                if (distanceSq > 25600) continue;
+                const dz = state.dimension === '3d' ? b.z - a.z : 0;
+                const distanceSq = dx * dx + dy * dy + dz * dz + 0.01;
+                if (distanceSq > (state.dimension === '3d' ? 40000 : 25600)) continue;
                 const distance = Math.sqrt(distanceSq);
                 const minDistance = nodePhysicsRadius(a) + nodePhysicsRadius(b) + (isLeafNode(a) && isLeafNode(b) ? 3 : 8);
                 const overlap = Math.max(0, minDistance - distance);
@@ -581,33 +615,131 @@
                 const collision = overlap * 0.075 * alpha;
                 const fx = dx / distance * (repel + collision) * elapsed;
                 const fy = dy / distance * (repel + collision) * elapsed;
-                if (!a.fixed) { a.vx -= fx; a.vy -= fy; }
-                if (!b.fixed) { b.vx += fx; b.vy += fy; }
+                const fz = dz / distance * (repel + collision) * elapsed;
+                if (!a.fixed) { a.vx -= fx; a.vy -= fy; if (state.dimension === '3d') a.vz -= fz; }
+                if (!b.fixed) { b.vx += fx; b.vy += fy; if (state.dimension === '3d') b.vz += fz; }
             }
         }
         for (const node of nodes) {
             if (node.fixed || node.dragging) continue;
             node.vx += -node.x * 0.000045 * state.settings.centerForce * alpha * elapsed;
             node.vy += -node.y * 0.000045 * state.settings.centerForce * alpha * elapsed;
+            if (state.dimension === '3d') node.vz += -node.z * 0.000045 * state.settings.centerForce * alpha * elapsed;
             if (state.motionEnabled && isLeafNode(node)) {
                 const phase = Number(node.motionPhase || 0);
                 node.vx += Math.sin(time * 0.00072 + phase) * 0.002 * state.settings.drift * elapsed;
                 node.vy += Math.cos(time * 0.00061 + phase * 1.37) * 0.002 * state.settings.drift * elapsed;
+                if (state.dimension === '3d') node.vz += Math.sin(time * 0.00053 + phase * 0.91) * 0.002 * state.settings.drift * elapsed;
             }
             const damping = Math.pow(0.89, elapsed);
             node.vx *= damping;
             node.vy *= damping;
+            node.vz *= damping;
             node.x += node.vx * elapsed;
             node.y += node.vy * elapsed;
+            if (state.dimension === '3d') node.z += node.vz * elapsed;
         }
         state.alpha += (state.alphaTarget - state.alpha) * 0.035 * elapsed;
     }
 
     function worldToScreen(node) {
+        if (state.dimension === '3d') {
+            const cosYaw = Math.cos(state.cameraYaw);
+            const sinYaw = Math.sin(state.cameraYaw);
+            const cosPitch = Math.cos(state.cameraPitch);
+            const sinPitch = Math.sin(state.cameraPitch);
+            const rotatedX = node.x * cosYaw - node.z * sinYaw;
+            const yawDepth = node.x * sinYaw + node.z * cosYaw;
+            const rotatedY = node.y * cosPitch - yawDepth * sinPitch;
+            const depth = node.y * sinPitch + yawDepth * cosPitch;
+            const perspective = Math.max(0.42, Math.min(1.8, state.cameraDistance / (state.cameraDistance + depth)));
+            return {
+                x: state.width / 2 + state.panX + rotatedX * state.scale * perspective,
+                y: state.height / 2 + state.panY + rotatedY * state.scale * perspective,
+                depth,
+                perspective
+            };
+        }
         return {
             x: state.width / 2 + state.panX + node.x * state.scale,
-            y: state.height / 2 + state.panY + node.y * state.scale
+            y: state.height / 2 + state.panY + node.y * state.scale,
+            depth: 0,
+            perspective: 1
         };
+    }
+
+    function screenNodeRadius(node, point = worldToScreen(node), minimum = 1.5) {
+        return Math.max(minimum, Number(node.size || 5) * Math.sqrt(state.scale) * state.settings.nodeScale * (point.perspective || 1));
+    }
+
+    function nodeBaseColor(node, alpha = 1) {
+        if (isRootNode(node)) return `rgba(247,248,255,${alpha})`;
+        if (isGroupNode(node)) return colorForGroup(node.group, alpha);
+        if (node.type === 'metric') return colorForGroup(node.group, Math.min(alpha, 0.96));
+        return colorForGroup(node.group, Math.min(alpha, 0.78));
+    }
+
+    function drawLitSphere(node, point, radius, emphasized) {
+        const sphereRadius = Math.max(.08, radius + (emphasized ? 1.25 : 0));
+        const lightX = point.x - sphereRadius * 0.34;
+        const lightY = point.y - sphereRadius * 0.38;
+
+        ctx.save();
+        if (emphasized) {
+            ctx.shadowColor = nodeBaseColor(node, .72);
+            ctx.shadowBlur = Math.max(8, sphereRadius * 1.35);
+        }
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, sphereRadius, 0, Math.PI * 2);
+        ctx.fillStyle = nodeBaseColor(node, .96);
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, sphereRadius, 0, Math.PI * 2);
+        ctx.clip();
+
+        const diffuse = ctx.createRadialGradient(
+            lightX, lightY, Math.max(.2, sphereRadius * .04),
+            lightX, lightY, sphereRadius * 2.05
+        );
+        diffuse.addColorStop(0, 'rgba(255,255,255,.46)');
+        diffuse.addColorStop(.24, 'rgba(255,255,255,.18)');
+        diffuse.addColorStop(.48, 'rgba(255,255,255,0)');
+        diffuse.addColorStop(.76, 'rgba(4,8,18,.14)');
+        diffuse.addColorStop(1, 'rgba(2,5,12,.42)');
+        ctx.fillStyle = diffuse;
+        ctx.fillRect(point.x - sphereRadius, point.y - sphereRadius, sphereRadius * 2, sphereRadius * 2);
+
+        const ambientBounce = ctx.createLinearGradient(point.x, point.y, point.x, point.y + sphereRadius);
+        ambientBounce.addColorStop(0, 'rgba(104,129,202,0)');
+        ambientBounce.addColorStop(1, 'rgba(104,129,202,.13)');
+        ctx.fillStyle = ambientBounce;
+        ctx.fillRect(point.x - sphereRadius, point.y, sphereRadius * 2, sphereRadius);
+
+        if (sphereRadius >= 4) {
+            ctx.fillStyle = 'rgba(255,255,255,.34)';
+            ctx.beginPath();
+            ctx.ellipse(
+                point.x - sphereRadius * .3,
+                point.y - sphereRadius * .34,
+                sphereRadius * .12,
+                sphereRadius * .065,
+                -.55, 0, Math.PI * 2
+            );
+            ctx.fill();
+        }
+        ctx.restore();
+
+        if (sphereRadius > .72) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, sphereRadius - .3, .72 * Math.PI, 1.7 * Math.PI);
+            ctx.lineWidth = Math.max(.45, sphereRadius * .055);
+            ctx.strokeStyle = 'rgba(224,233,255,.2)';
+            ctx.stroke();
+            ctx.restore();
+        }
     }
 
     function shortenFileLabel(value, limit) {
@@ -794,6 +926,20 @@
             if (state.hovered && state.hoverTransition?.to !== 0) beginHoverTransition(0, 240);
             return;
         }
+        if (node.id === state.selected?.id) {
+            if (state.hoverTimer) window.clearTimeout(state.hoverTimer);
+            state.hoverTimer = 0;
+            state.hoverCandidate = null;
+            if (state.hovered?.id === node.id) {
+                state.hovered = null;
+                state.hoverIntensity = 0;
+                state.hoverTransition = null;
+                render();
+            } else if (state.hovered && state.hoverTransition?.to !== 0) {
+                beginHoverTransition(0, 150);
+            }
+            return;
+        }
         if (node.id === state.hovered?.id) {
             if (state.hoverTimer) window.clearTimeout(state.hoverTimer);
             state.hoverTimer = 0;
@@ -805,7 +951,7 @@
         if (state.hoverTimer) window.clearTimeout(state.hoverTimer);
         state.hoverTimer = 0;
         state.hoverCandidate = node;
-        const delay = hoverIntentDelay(node);
+        const delay = state.selected ? Math.min(180, hoverIntentDelay(node)) : hoverIntentDelay(node);
         if (state.hovered) beginHoverTransition(0, Math.max(70, Math.min(150, delay)));
         const candidateId = node.id;
         state.hoverTimer = window.setTimeout(() => {
@@ -843,7 +989,7 @@
             .sort((a, b) => b.priority - a.priority);
         const occupied = state.nodes.filter(node => growthNodeProgress(node, now) > 0.2).map(node => {
             const point = worldToScreen(node);
-            const radius = Math.max(2.2, Number(node.size || 5) * Math.sqrt(state.scale) * state.settings.nodeScale);
+            const radius = screenNodeRadius(node, point, 2.2);
             return { nodeId: node.id, left: point.x - radius - 2, right: point.x + radius + 2, top: point.y - radius - 2, bottom: point.y + radius + 2 };
         });
         const charLimit = state.scale >= 2 ? 34 : state.scale >= 1.45 ? 24 : state.scale >= 1 ? 18 : 15;
@@ -857,7 +1003,7 @@
             const pill = tier >= 2;
             const width = Math.ceil(ctx.measureText(label).width) + (pill ? 12 : 4);
             const height = pill ? 18 : 16;
-            const radius = Math.max(2.2, Number(node.size || 5) * Math.sqrt(state.scale) * state.settings.nodeScale);
+            const radius = screenNodeRadius(node, point, 2.2);
             const placements = [
                 { x: point.x - width / 2, y: point.y + radius + 5 },
                 { x: point.x + radius + 5, y: point.y - height / 2 },
@@ -922,11 +1068,23 @@
         const orderedEdges = [...state.edges].sort((a, b) => {
             const aActive = focusNode && (a.source === focusNode.id || a.target === focusNode.id);
             const bActive = focusNode && (b.source === focusNode.id || b.target === focusNode.id);
-            return Number(aActive) - Number(bActive);
+            if (aActive !== bActive) return Number(aActive) - Number(bActive);
+            if (state.dimension === '3d') {
+                const aDepth = (worldToScreen(a.sourceNode).depth + worldToScreen(a.targetNode).depth) / 2;
+                const bDepth = (worldToScreen(b.sourceNode).depth + worldToScreen(b.targetNode).depth) / 2;
+                return bDepth - aDepth;
+            }
+            return 0;
         });
         for (const edge of orderedEdges) {
             const a = worldToScreen(edge.sourceNode);
             const b = worldToScreen(edge.targetNode);
+            const depthOpacity = state.dimension === '3d'
+                ? Math.max(.52, Math.min(1.12, ((a.perspective || 1) + (b.perspective || 1)) / 2))
+                : 1;
+            const depthWidth = state.dimension === '3d'
+                ? Math.max(.72, Math.min(1.18, ((a.perspective || 1) + (b.perspective || 1)) / 2))
+                : 1;
             const growthProgress = growthEdgeProgress(edge, now);
             if (growthProgress <= 0) continue;
             const drawX = a.x + (b.x - a.x) * growthProgress;
@@ -936,19 +1094,21 @@
                 const baseAlpha = edge.type !== 'contains' ? .11 : .22;
                 const activeAlpha = baseAlpha + (.88 - baseAlpha) * focusStrength;
                 const inactiveAlpha = baseAlpha + (.025 - baseAlpha) * focusStrength;
-                ctx.strokeStyle = active ? accentColor(activeAlpha) : `rgba(94,108,145,${inactiveAlpha})`;
-                ctx.lineWidth = (active ? .9 + .55 * focusStrength : .9 - .35 * focusStrength) * state.settings.lineScale;
+                ctx.strokeStyle = active ? accentColor(Math.min(1, activeAlpha * depthOpacity)) : `rgba(94,108,145,${inactiveAlpha * depthOpacity})`;
+                ctx.lineWidth = (active ? .9 + .55 * focusStrength : .9 - .35 * focusStrength) * state.settings.lineScale * depthWidth;
                 ctx.shadowColor = active ? accentColor(.72 * focusStrength) : 'transparent';
                 ctx.shadowBlur = active ? 5 * focusStrength : 0;
             } else {
-                ctx.strokeStyle = edge.type !== 'contains' ? 'rgba(117,132,173,.11)' : 'rgba(133,147,187,.22)';
-                ctx.lineWidth = (edge.type !== 'contains' ? 0.65 : 0.9) * state.settings.lineScale;
+                ctx.strokeStyle = edge.type !== 'contains' ? `rgba(117,132,173,${.11 * depthOpacity})` : `rgba(133,147,187,${.22 * depthOpacity})`;
+                ctx.lineWidth = (edge.type !== 'contains' ? 0.65 : 0.9) * state.settings.lineScale * depthWidth;
                 ctx.shadowBlur = 0;
             }
             ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(drawX, drawY); ctx.stroke();
         }
         ctx.shadowBlur = 0;
-        const ordered = [...state.nodes].sort((a, b) => (isLeafNode(a) ? 0 : 1) - (isLeafNode(b) ? 0 : 1));
+        const ordered = [...state.nodes].sort((a, b) => state.dimension === '3d'
+            ? worldToScreen(b).depth - worldToScreen(a).depth
+            : (isLeafNode(a) ? 0 : 1) - (isLeafNode(b) ? 0 : 1));
         for (const node of ordered) {
             const growthProgress = growthNodeProgress(node, now);
             if (growthProgress <= 0) continue;
@@ -957,20 +1117,21 @@
             const isHovered = state.hovered?.id === node.id;
             const isSearch = state.searchMatches.has(node.id);
             const dimmed = focusNode && !highlighted.has(node.id);
-            const radius = Math.max(1.5, Number(node.size || 5) * Math.sqrt(state.scale) * state.settings.nodeScale * growthNodeScale(growthProgress));
+            const radius = screenNodeRadius(node, point) * growthNodeScale(growthProgress);
             ctx.globalAlpha = (dimmed ? 1 - .88 * focusStrength : 1) * Math.min(1, growthProgress * 1.5);
-            ctx.fillStyle = isRootNode(node)
-                ? '#f7f8ff'
-                : isGroupNode(node)
-                    ? colorForGroup(node.group)
-                    : node.type === 'metric'
-                        ? colorForGroup(node.group, 0.96)
-                        : colorForGroup(node.group, 0.72);
-            if (isSelected || isHovered || isSearch || focusNode && highlighted.has(node.id)) {
+            const emphasized = Boolean(isSelected || isHovered || isSearch || focusNode && highlighted.has(node.id));
+            if (emphasized) {
                 ctx.shadowColor = isRootNode(node) ? '#fff' : colorForGroup(node.group, .85);
                 ctx.shadowBlur = isSelected || isHovered ? 18 : 8;
             }
-            ctx.beginPath(); ctx.arc(point.x, point.y, radius + (isSelected || isHovered ? 1.4 : 0), 0, Math.PI * 2); ctx.fill();
+            if (state.dimension === '3d') {
+                drawLitSphere(node, point, radius, emphasized);
+            } else {
+                ctx.fillStyle = nodeBaseColor(node);
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, radius + (isSelected || isHovered ? 1.4 : 0), 0, Math.PI * 2);
+                ctx.fill();
+            }
             ctx.shadowBlur = 0;
             ctx.globalAlpha = 1;
         }
@@ -1002,12 +1163,18 @@
         const y = clientY - rect.top;
         let found = null;
         let best = Infinity;
+        let nearestDepth = Infinity;
         for (const node of state.nodes) {
             if (growthNodeProgress(node) < 0.28) continue;
             const point = worldToScreen(node);
             const distance = Math.hypot(point.x - x, point.y - y);
-            const threshold = Math.max(7, Number(node.size || 5) * Math.sqrt(state.scale) * state.settings.nodeScale + 4);
-            if (distance <= threshold && distance < best) { found = node; best = distance; }
+            const threshold = Math.max(7, screenNodeRadius(node, point) + 4);
+            const visuallyCloser = state.dimension === '3d' && Math.abs(distance - best) < 2 && point.depth < nearestDepth;
+            if (distance <= threshold && (distance < best || visuallyCloser)) {
+                found = node;
+                best = distance;
+                nearestDepth = point.depth;
+            }
         }
         return found;
     }
@@ -1177,8 +1344,9 @@
 
     function focusNode(node) {
         if (!node) return;
-        state.panX = -node.x * state.scale;
-        state.panY = -node.y * state.scale;
+        const projected = worldToScreen(node);
+        state.panX += state.width / 2 - projected.x;
+        state.panY += state.height / 2 - projected.y;
         selectNode(node);
         render();
     }
@@ -1203,6 +1371,7 @@
 
     function applyGraphLanguage() {
         overlay.querySelector('#aiKgViewSwitch').setAttribute('aria-label', kgT('view'));
+        overlay.querySelector('#aiKgDimensionSwitch').setAttribute('aria-label', kgT('dimension'));
         overlay.querySelector('[data-kg-mode="knowledge"]').textContent = kgT('knowledge');
         overlay.querySelector('[data-kg-mode="metrics"]').textContent = kgT('metrics');
         monthWrap.childNodes[0].nodeValue = kgT('ruleMonth');
@@ -1232,7 +1401,7 @@
         setGrowthButtonState();
         overlay.querySelector('#aiKgFit').title = kgT('fit');
         overlay.querySelector('#aiKgClose').title = kgT('close');
-        overlay.querySelector('#aiKgHint').innerHTML = kgT('hints').map(item => `<span>${escapeHtml(item)}</span>`).join('');
+        overlay.querySelector('#aiKgHint').innerHTML = kgT(state.dimension === '3d' ? 'hints3d' : 'hints').map(item => `<span>${escapeHtml(item)}</span>`).join('');
         if (state.data) {
             updateModeChrome(state.data);
             renderStatuses(state.data);
@@ -1281,10 +1450,43 @@
         await loadGraph();
     }
 
-    canvas.addEventListener('pointerdown', event => {
-        const node = nodeAt(event.clientX, event.clientY);
+    function switchDimension(dimension) {
+        if (!['2d', '3d'].includes(dimension) || dimension === state.dimension) return;
+        if (dimension === '3d') {
+            state.flatPositions = new Map(state.nodes.map(node => [node.id, { x:node.x, y:node.y }]));
+        } else {
+            state.nodes.forEach(node => {
+                const flat = state.flatPositions.get(node.id);
+                if (flat) { node.x = flat.x; node.y = flat.y; }
+            });
+        }
+        state.dimension = dimension;
+        overlay.dataset.dimension = dimension;
+        overlay.querySelectorAll('[data-kg-dimension]').forEach(button => {
+            const active = button.dataset.kgDimension === dimension;
+            button.classList.toggle('active', active);
+            button.setAttribute('aria-pressed', String(active));
+        });
         clearHoverIntent({ immediate: true });
-        state.pointer = { x: event.clientX, y: event.clientY, panX: state.panX, panY: state.panY, node, moved: false, lastTime: performance.now(), velocityX: 0, velocityY: 0 };
+        state.pointer = null;
+        state.nodes.forEach(node => {
+            node.vx = 0;
+            node.vy = 0;
+            node.vz = 0;
+        });
+        resetView();
+        reheat(0.72);
+        overlay.querySelector('#aiKgHint').innerHTML = kgT(dimension === '3d' ? 'hints3d' : 'hints').map(item => `<span>${escapeHtml(item)}</span>`).join('');
+        render();
+    }
+
+    canvas.addEventListener('pointerdown', event => {
+        const middlePan = state.dimension === '3d' && event.button === 1;
+        const node = middlePan ? null : nodeAt(event.clientX, event.clientY);
+        const navigation = middlePan ? 'pan' : state.dimension === '3d' && !node ? 'orbit' : node ? 'node' : 'pan';
+        event.preventDefault();
+        clearHoverIntent({ immediate: true });
+        state.pointer = { x: event.clientX, y: event.clientY, panX: state.panX, panY: state.panY, yaw: state.cameraYaw, pitch: state.cameraPitch, button:event.button, navigation, node, moved: false, lastTime: performance.now(), velocityX: 0, velocityY: 0 };
         if (node && !node.fixed) node.dragging = true;
         if (node) reheat(0.82);
         canvas.setPointerCapture(event.pointerId);
@@ -1307,8 +1509,13 @@
                 state.pointer.node.vx = 0; state.pointer.node.vy = 0;
                 reheat(0.78);
             } else if (!state.pointer.node) {
-                state.panX = state.pointer.panX + dx;
-                state.panY = state.pointer.panY + dy;
+                if (state.pointer.navigation === 'orbit') {
+                    state.cameraYaw = state.pointer.yaw + dx * 0.006;
+                    state.cameraPitch = Math.max(-1.25, Math.min(1.25, state.pointer.pitch + dy * 0.006));
+                } else {
+                    state.panX = state.pointer.panX + dx;
+                    state.panY = state.pointer.panY + dy;
+                }
             }
             render();
             return;
@@ -1330,11 +1537,14 @@
             }
         }
         if (pointer && pointer.node && !pointer.moved) selectNode(pointer.node);
-        else if (pointer && !pointer.node && !pointer.moved) {
+        else if (pointer && !pointer.node && !pointer.moved && pointer.button !== 1) {
             state.selected = null;
             render();
         }
         try { canvas.releasePointerCapture(event.pointerId); } catch (_error) {}
+    });
+    canvas.addEventListener('auxclick', event => {
+        if (event.button === 1) event.preventDefault();
     });
     canvas.addEventListener('pointerleave', () => { if (!state.pointer) clearHoverIntent(); });
     canvas.addEventListener('wheel', event => {
@@ -1370,6 +1580,9 @@
     });
     overlay.querySelectorAll('[data-kg-mode]').forEach(button => {
         button.onclick = () => switchMode(button.dataset.kgMode);
+    });
+    overlay.querySelectorAll('[data-kg-dimension]').forEach(button => {
+        button.onclick = () => switchDimension(button.dataset.kgDimension);
     });
     monthSelect.onchange = async () => {
         state.month = Number(monthSelect.value);
