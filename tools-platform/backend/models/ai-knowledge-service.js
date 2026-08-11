@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 const { ensureDataDir, DATA_DIR } = require('./store');
+const { REPORT_DATA_DIR } = require('./report-store');
 const customToolsRepo = require('./custom-tools-repository');
 
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
@@ -55,6 +56,8 @@ const SOURCE_RULES = [
     { root: path.join(PROJECT_ROOT, 'backend'), single: 'server.js' },
     { root: path.join(PROJECT_ROOT, 'frontend', 'js'), extensions: new Set(['.js']) },
     { root: path.join(PROJECT_ROOT, 'frontend', 'pages'), extensions: new Set(['.html']) },
+    { root: customToolsRepo.BUILTIN_TOOLS_DIR, extensions: new Set(['.html', '.htm', '.js', '.css', '.json', '.md', '.txt']) },
+    { root: customToolsRepo.CUSTOM_TOOLS_DIR, extensions: new Set(['.html', '.htm', '.js', '.css', '.json', '.md', '.txt']), allowData: true },
     { root: PROJECT_ROOT, single: 'package.json' },
     { root: path.join(PROJECT_ROOT, 'backend'), single: 'package.json' }
 ];
@@ -77,23 +80,25 @@ function toProjectPath(filePath) {
     return path.relative(PROJECT_ROOT, filePath).split(path.sep).join('/');
 }
 
-function isSafeSourcePath(filePath) {
+function isSafeSourcePath(filePath, { allowData = false } = {}) {
     const relative = toProjectPath(filePath);
     if (!relative || relative.startsWith('..')) return false;
     const parts = relative.split('/');
-    if (parts.some(part => SKIP_PATH_PARTS.has(part))) return false;
+    if (parts.some(part => SKIP_PATH_PARTS.has(part) && part !== 'data')) return false;
+    if (parts.includes('data') && !(allowData && relative.startsWith('backend/data/custom-tools/'))) return false;
     return !SKIP_FILE_RE.test(relative);
 }
 
-function walkFiles(root, extensions, output) {
+function walkFiles(root, extensions, output, options = {}) {
     if (!fs.existsSync(root) || output.length >= MAX_FILES) return;
     const entries = fs.readdirSync(root, { withFileTypes: true });
     for (const entry of entries) {
         if (output.length >= MAX_FILES) break;
+        if (entry.name.startsWith('.')) continue;
         const fullPath = path.join(root, entry.name);
-        if (!isSafeSourcePath(fullPath)) continue;
+        if (!isSafeSourcePath(fullPath, options)) continue;
         if (entry.isDirectory()) {
-            walkFiles(fullPath, extensions, output);
+            walkFiles(fullPath, extensions, output, options);
         } else if (entry.isFile() && extensions.has(path.extname(entry.name).toLowerCase())) {
             output.push(fullPath);
         }
@@ -105,9 +110,9 @@ function listSourceFiles() {
     for (const rule of SOURCE_RULES) {
         if (rule.single) {
             const candidate = path.join(rule.root, rule.single);
-            if (fs.existsSync(candidate) && isSafeSourcePath(candidate)) files.push(candidate);
+            if (fs.existsSync(candidate) && isSafeSourcePath(candidate, rule)) files.push(candidate);
         } else {
-            walkFiles(rule.root, rule.extensions, files);
+            walkFiles(rule.root, rule.extensions, files, rule);
         }
     }
     return [...new Set(files)].slice(0, MAX_FILES).sort();
@@ -322,7 +327,8 @@ const DOMAIN_ALIASES = [
     [/权限|登录|鉴权/, ['auth', 'checkauth', 'requireadmin']],
     [/备份|恢复/, ['backup', 'global-backup']],
     [/需求广场|需求管理/, ['requirements', 'requirements.db']],
-    [/实现|代码|接口/, ['router', 'module.exports', 'function']]
+    [/实现|代码|接口/, ['backend/routes', 'backend/models', 'frontend/js']],
+    [/流式|stream/i, ['requeststreamingchat', 'ondelta', 'streamgeneratecontent', 'application/x-ndjson']]
 ];
 
 function extractSearchTerms(query) {
@@ -379,17 +385,25 @@ function intentPathBoost(queryText, documentPath, content) {
     return score;
 }
 
-async function search(query, { limit = 7 } = {}) {
+async function search(query, { limit = 7, pathHints = [] } = {}) {
     await refreshIndex();
     const terms = extractSearchTerms(query);
     if (!terms.length) return [];
-    const where = terms.map(() => 'search_text LIKE ?').join(' OR ');
+    const normalizedPathHints = (Array.isArray(pathHints) ? pathHints : [])
+        .map(item => String(item || '').trim().toLowerCase())
+        .filter(Boolean);
+    const whereParts = terms.map(() => '(search_text LIKE ? OR LOWER(document_path) LIKE ? OR LOWER(title) LIKE ?)');
+    const whereParams = terms.flatMap(term => [`%${term}%`, `%${term}%`, `%${term}%`]);
+    normalizedPathHints.forEach(hint => {
+        whereParts.push('LOWER(document_path) = ?');
+        whereParams.push(hint);
+    });
     const rows = await all(
         `SELECT document_path, title, start_line, end_line, content, search_text
          FROM ai_knowledge_chunks
-         WHERE ${where}
+         WHERE ${whereParts.join(' OR ')}
          LIMIT ?`,
-        [...terms.map(term => `%${term}%`), MAX_SEARCH_CANDIDATES]
+        [...whereParams, MAX_SEARCH_CANDIDATES]
     );
     const queryText = String(query || '').toLowerCase();
     const ranked = rows.map(row => {
@@ -404,16 +418,24 @@ async function search(query, { limit = 7 } = {}) {
         if (row.search_text.includes(queryText) && queryText.length >= 4) score += 20;
         if (row.document_path === 'README.md') score += 2;
         score += intentPathBoost(queryText, row.document_path, row.content);
+        for (const hint of normalizedPathHints) {
+            if (pathText === hint) score += 70;
+            else if (pathText.endsWith(hint) || hint.endsWith(pathText)) score += 34;
+        }
         return { ...row, score: Number(score.toFixed(2)) };
     }).sort((a, b) => b.score - a.score);
 
     const selected = [];
     const perDocument = new Map();
+    const selectedContentHashes = new Set();
     const safeLimit = Math.max(1, Math.min(Number(limit) || 7, 10));
     for (const row of ranked) {
         const used = perDocument.get(row.document_path) || 0;
         if (used >= 2) continue;
+        const contentHash = sha256(row.content);
+        if (selectedContentHashes.has(contentHash)) continue;
         selected.push(row);
+        selectedContentHashes.add(contentHash);
         perDocument.set(row.document_path, used + 1);
         if (selected.length >= safeLimit) break;
     }
@@ -451,7 +473,13 @@ function groupForDocument(documentPath) {
     if (documentPath.startsWith('frontend/js/uivf12/')) return { key: 'frontend-uiv', label: '数据抓取', labelEn: 'Data Capture' };
     if (documentPath.startsWith('frontend/js/shared/')) return { key: 'frontend-shared', label: '前端公共能力', labelEn: 'Shared Frontend' };
     if (documentPath.startsWith('frontend/js/')) return { key: 'frontend-other', label: '其他前端模块', labelEn: 'Other Frontend' };
+    if (documentPath.startsWith('backend/builtin-tools/')) return { key: 'builtin-tools', label: '自带 HTML 工具', labelEn: 'Built-in HTML Tools' };
+    if (documentPath.startsWith('backend/data/custom-tools/')) return { key: 'custom-tools', label: '自定义 HTML 工具', labelEn: 'Custom HTML Tools' };
     return { key: 'other', label: '其他知识', labelEn: 'Other Knowledge' };
+}
+
+function isToolAssetKnowledgePath(documentPath) {
+    return documentPath.startsWith('backend/builtin-tools/') || documentPath.startsWith('backend/data/custom-tools/');
 }
 
 function resolveDocumentReference(sourcePath, reference, documentSet) {
@@ -513,11 +541,33 @@ function queryDatabaseSchema(filePath) {
                  ORDER BY name`,
                 [],
                 (queryError, rows) => {
-                    handle.close(() => resolve(queryError ? [] : rows || []));
+                    if (queryError || !rows?.length) return handle.close(() => resolve([]));
+                    Promise.all(rows.map(row => new Promise(done => {
+                        const tableName = String(row.name || '').replace(/"/g, '""');
+                        handle.all(`PRAGMA foreign_key_list("${tableName}")`, [], (foreignKeyError, foreignKeys) => {
+                            done({ ...row, foreignKeys: foreignKeyError ? [] : foreignKeys || [] });
+                        });
+                    }))).then(result => handle.close(() => resolve(result)));
                 }
             );
         });
     });
+}
+
+function listLiveDatabaseFiles() {
+    const files = [];
+    if (fs.existsSync(DATA_DIR)) {
+        fs.readdirSync(DATA_DIR, { withFileTypes: true })
+            .filter(item => item.isFile() && /\.(?:db|sqlite)$/i.test(item.name))
+            .filter(item => !/(?:before|backup|corrupt|repaired)/i.test(item.name))
+            .filter(item => !(path.resolve(REPORT_DATA_DIR) !== path.resolve(DATA_DIR) && item.name.toLowerCase() === 'report.db'))
+            .map(item => path.join(DATA_DIR, item.name))
+            .filter(filePath => fs.statSync(filePath).size > 0)
+            .forEach(filePath => files.push(filePath));
+    }
+    const reportDbPath = path.join(REPORT_DATA_DIR, 'report.db');
+    if (fs.existsSync(reportDbPath) && fs.statSync(reportDbPath).size > 0) files.push(reportDbPath);
+    return [...new Set(files.map(filePath => path.resolve(filePath)))];
 }
 
 function extractRelativeAssetReferences(sourcePath, content, fileSet) {
@@ -601,47 +651,71 @@ async function buildAssetGraph(contentByDocument, documentSet) {
         });
     }
 
-    const databaseFiles = fs.existsSync(DATA_DIR)
-        ? fs.readdirSync(DATA_DIR, { withFileTypes: true })
-            .filter(item => item.isFile() && /\.(?:db|sqlite)$/i.test(item.name) && !/(?:before|backup|corrupt|repaired)/i.test(item.name))
-            .map(item => path.join(DATA_DIR, item.name))
-        : [];
+    const databaseFiles = listLiveDatabaseFiles();
     const tableNodesByName = new Map();
+    const tableNodesByDatabaseAndName = new Map();
+    const databaseIdsByName = new Map();
+    const databaseNameByTableId = new Map();
+    const pendingForeignKeys = [];
     let tableCount = 0;
     let databaseCount = 0;
+    let tableRelationCount = 0;
     for (const databasePath of databaseFiles) {
         const databaseName = path.basename(databasePath);
+        const databaseProjectPath = toProjectPath(databasePath);
         const tables = await queryDatabaseSchema(databasePath);
         if (!tables.length) continue;
         const stat = fs.statSync(databasePath);
         databaseCount += 1;
-        const databaseId = `database:${databaseName}`;
-        nodes.push({ id: databaseId, type: 'database', label: databaseName, labelEn: databaseName, path: toProjectPath(databasePath), group: 'databases', tableCount: tables.length, bytes: stat.size, size: 9 + Math.min(8, Math.sqrt(tables.length) * 1.7) });
+        const databaseId = `database:${databaseProjectPath}`;
+        nodes.push({ id: databaseId, type: 'database', label: databaseName, labelEn: databaseName, path: databaseProjectPath, group: 'databases', tableCount: tables.length, bytes: stat.size, size: 9 + Math.min(8, Math.sqrt(tables.length) * 1.7) });
         addEdge('asset-category:databases', databaseId, 'contains');
+        const databaseNameKey = databaseName.toLowerCase();
+        if (!databaseIdsByName.has(databaseNameKey)) databaseIdsByName.set(databaseNameKey, []);
+        databaseIdsByName.get(databaseNameKey).push(databaseId);
         for (const table of tables) {
             tableCount += 1;
-            const tableId = `table:${databaseName}:${table.name}`;
+            const tableId = `table:${databaseProjectPath}:${table.name}`;
             const columns = [...String(table.sql || '').matchAll(/(?:^|,)\s*[`"\[]?([A-Za-z_][\w$]*)[`"\]]?\s+[A-Z]/g)].map(match => match[1]).slice(0, 30);
-            nodes.push({ id: tableId, type: 'table', label: table.name, labelEn: table.name, database: databaseName, path: `${toProjectPath(databasePath)}#${table.name}`, group: 'databases', columns, schema: String(table.sql || '').slice(0, 1200), size: 5 });
+            nodes.push({ id: tableId, type: 'table', label: table.name, labelEn: table.name, database: databaseName, databasePath: databaseProjectPath, path: `${databaseProjectPath}#${table.name}`, group: 'databases', columns, schema: String(table.sql || '').slice(0, 1200), foreignKeys: table.foreignKeys || [], size: 5 });
             addEdge(databaseId, tableId, 'contains');
             const key = String(table.name).toLowerCase();
             if (!tableNodesByName.has(key)) tableNodesByName.set(key, []);
             tableNodesByName.get(key).push(tableId);
+            tableNodesByDatabaseAndName.set(`${databaseId}\0${key}`, tableId);
+            databaseNameByTableId.set(tableId, databaseNameKey);
+            (table.foreignKeys || []).forEach(foreignKey => pendingForeignKeys.push({ databaseId, tableId, foreignKey }));
         }
     }
+    pendingForeignKeys.forEach(({ databaseId, tableId, foreignKey }) => {
+        const targetId = tableNodesByDatabaseAndName.get(`${databaseId}\0${String(foreignKey.table || '').toLowerCase()}`);
+        if (!targetId) return;
+        tableRelationCount += 1;
+        addEdge(tableId, targetId, 'references');
+    });
     for (const [documentPath, content] of contentByDocument) {
         const referencedTables = new Set();
+        const referencedDatabases = new Set(
+            [...String(content || '').matchAll(/\b([A-Za-z0-9_-]+\.(?:db|sqlite))\b/gi)].map(match => match[1].toLowerCase())
+        );
+        referencedDatabases.forEach(databaseName => {
+            for (const databaseId of databaseIdsByName.get(databaseName) || []) addEdge(`doc:${documentPath}`, databaseId, 'usesDatabase');
+        });
         const sqlPattern = /\b(?:from|join|into|update|table(?:\s+if\s+not\s+exists)?)\s+[`"\[]?([A-Za-z_][\w$]*)/gi;
         let match;
         while ((match = sqlPattern.exec(content)) !== null && referencedTables.size < 80) referencedTables.add(match[1].toLowerCase());
         for (const tableName of referencedTables) {
-            for (const tableId of tableNodesByName.get(tableName) || []) addEdge(`doc:${documentPath}`, tableId, 'queries');
+            const candidates = tableNodesByName.get(tableName) || [];
+            const scopedCandidates = referencedDatabases.size
+                ? candidates.filter(tableId => referencedDatabases.has(databaseNameByTableId.get(tableId)))
+                : candidates;
+            for (const tableId of scopedCandidates.length ? scopedCandidates : candidates) addEdge(`doc:${documentPath}`, tableId, 'queries');
         }
     }
-    const signature = sha256(nodes.map(node => `${node.id}:${node.label || ''}:${node.updatedAt || ''}:${node.bytes || 0}:${node.mtimeMs || 0}:${node.tableCount || 0}:${node.schema || ''}`).join('|'));
+    const signature = sha256(`${nodes.map(node => `${node.id}:${node.label || ''}:${node.updatedAt || ''}:${node.bytes || 0}:${node.mtimeMs || 0}:${node.tableCount || 0}:${node.schema || ''}`).join('|')}|${edges.map(edge => `${edge.source}:${edge.target}:${edge.type}`).join('|')}`);
     return {
         nodes, edges, signature,
-        stats: { builtInTools: builtInToolCount, customTools: customToolCount, assetFiles: assetFileCount, databases: databaseCount, tables: tableCount }
+        stats: { builtInTools: builtInToolCount, customTools: customToolCount, assetFiles: assetFileCount, databases: databaseCount, tables: tableCount, tableRelations: tableRelationCount }
     };
 }
 
@@ -654,6 +728,7 @@ async function getGraph() {
          ORDER BY path ASC
          LIMIT 500`
     );
+    const graphDocuments = documents.filter(document => !isToolAssetKnowledgePath(document.path));
     const documentSet = new Set(documents.map(item => item.path));
     const contentRows = await all(
         `SELECT document_path, content
@@ -669,7 +744,7 @@ async function getGraph() {
     if (graphCache && graphCache.key === cacheKey) return graphCache.value;
 
     const groupCounts = new Map();
-    documents.forEach(document => {
+    graphDocuments.forEach(document => {
         const group = groupForDocument(document.path);
         groupCounts.set(group.key, { ...group, count: (groupCounts.get(group.key)?.count || 0) + 1 });
     });
@@ -681,7 +756,7 @@ async function getGraph() {
         nodes.push({ id: groupId, type: 'group', label: group.label, labelEn: group.labelEn, group: group.key, count: group.count, size: 12 + Math.sqrt(group.count) * 2.2 });
         edges.push({ source: 'root', target: groupId, type: 'contains' });
     }
-    for (const document of documents) {
+    for (const document of graphDocuments) {
         const group = groupForDocument(document.path);
         const documentId = `doc:${document.path}`;
         nodes.push({
@@ -702,7 +777,7 @@ async function getGraph() {
     edges.push({ source: 'root', target: 'group:tool-data-assets', type: 'contains' }, ...assets.edges);
 
     let dependencyEdges = 0;
-    for (const document of documents) {
+    for (const document of graphDocuments) {
         const references = extractDocumentReferences(document.path, contentByDocument.get(document.path) || '', documentSet);
         for (const target of references) {
             edges.push({ source: `doc:${document.path}`, target: `doc:${target}`, type: 'depends' });

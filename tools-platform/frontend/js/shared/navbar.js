@@ -3855,9 +3855,9 @@ window.openUserModal = async function () {
 // 全局注入 AI 客服助手
 // ==========================================
 let toolsKnowledgeGraphLoader = null;
-window.openToolsKnowledgeGraph = function () {
+window.openToolsKnowledgeGraph = function (options = {}) {
     if (window.AIKnowledgeGraph?.open) {
-        window.AIKnowledgeGraph.open();
+        window.AIKnowledgeGraph.open(options);
         return Promise.resolve();
     }
     if (!toolsKnowledgeGraphLoader) {
@@ -3869,7 +3869,7 @@ window.openToolsKnowledgeGraph = function () {
             script.addEventListener('load', handleLoad, { once: true });
             script.addEventListener('error', handleError, { once: true });
             if (!existing) {
-                script.src = '/js/shared/ai-knowledge-graph.js?v=20260810-sidebar1';
+                script.src = '/js/shared/ai-knowledge-graph.js?v=20260811-mode6';
                 document.body.appendChild(script);
             }
         }).catch(error => {
@@ -3879,7 +3879,7 @@ window.openToolsKnowledgeGraph = function () {
     }
     return toolsKnowledgeGraphLoader.then(() => {
         if (!window.AIKnowledgeGraph?.open) throw new Error('知识图谱组件初始化失败');
-        window.AIKnowledgeGraph.open();
+        window.AIKnowledgeGraph.open(options);
     });
 };
 
@@ -3892,7 +3892,7 @@ window.openToolsKnowledgeGraph = function () {
     // 确保不重复加载
     if (!document.querySelector('script[src^="/js/shared/ai-assistant.js"]')) {
         const aiScript = document.createElement('script');
-        aiScript.src = '/js/shared/ai-assistant.js?v=20260809-15';
+        aiScript.src = '/js/shared/ai-assistant.js?v=20260811-11';
         document.body.appendChild(aiScript);
     }
 })();

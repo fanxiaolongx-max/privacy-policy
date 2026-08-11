@@ -7,6 +7,7 @@ const aiProviderClient = require('../models/ai-provider-client');
 const aiKnowledgeService = require('../models/ai-knowledge-service');
 const aiReportAnalysisService = require('../models/ai-report-analysis-service');
 const aiMetricGraphService = require('../models/ai-metric-graph-service');
+const aiBusinessConfigService = require('../models/ai-business-config-service');
 
 console.log('[AI] AI Assistant route loaded. Runtime config will be read from settings, with provider-specific env fallback.');
 
@@ -17,12 +18,14 @@ const SUMMARY_MAX_CHARS = 6000;
 const PAGE_CONTEXT_MAX_CHARS = 12000;
 const KNOWLEDGE_CONTEXT_MAX_CHARS = 17000;
 const DATA_CONTEXT_MAX_CHARS = 17000;
+const BUSINESS_CONFIG_CONTEXT_MAX_CHARS = 18000;
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function isTransientAiError(error) {
+    if (error && error.partialOutput) return false;
     const status = error && (error.status || error.statusCode);
     const msg = String(error && error.message || '');
     return status === 503 || /Service Unavailable|high demand|temporar/i.test(msg);
@@ -64,19 +67,123 @@ function estimateMessagesChars(messages = []) {
     return messages.reduce((sum, msg) => sum + String(msg.content || '').length, 0);
 }
 
-async function buildExpertGrounding(question, { pageTitle = '', pagePath = '' } = {}) {
-    const knowledgeQuery = `${question || ''}\n当前页面: ${pageTitle || ''} ${pagePath || ''}`.trim();
-    const [knowledgeResult, dataResult] = await Promise.allSettled([
-        aiKnowledgeService.search(knowledgeQuery, { limit: 7 }),
-        aiReportAnalysisService.analyzeQuestion(question)
+function planProjectKnowledgeSearch(question, pagePath = '') {
+    const text = String(question || '');
+    const implementationIntent = /怎么实现|实现逻辑|代码|文件|接口|api|路由|模块|数据源|存在哪|读取逻辑|计算逻辑|readme|项目结构|脚本实现/i.test(text);
+    const operationalDataIntent = /指标|子指标|报表|月报|得分|排名|快照|目标|权重|达标/i.test(text)
+        && /当前|最新|实际|多少|哪些|每个月|分月|\d{1,2}\s*月|趋势|差距|对比/i.test(text);
+    const pageIntent = /这个页面|当前页面|本页|核心功能|如何使用|怎么用/i.test(text);
+    const projectIntent = /项目|客服|助手|功能|页面|前端|后端|数据库|配置文件/i.test(text);
+    const performed = implementationIntent || pageIntent || (!operationalDataIntent && projectIntent);
+    const normalizedPath = String(pagePath || '').split('?')[0].replace(/^\/+|\/+$/g, '');
+    const pageFile = !normalizedPath
+        ? 'frontend/index.html'
+        : `frontend/pages/${normalizedPath.split('/').pop()}.html`;
+    return { performed, pathHints: pageIntent ? [pageFile] : [] };
+}
+
+function selectRelevantKnowledge(candidates = []) {
+    if (!candidates.length) return { items: [], threshold: null, topScore: null };
+    const topScore = Math.max(0, Number(candidates[0]?.score) || 0);
+    const threshold = Math.max(16, topScore * 0.62);
+    const items = candidates.filter(item => Number(item.score) >= threshold).slice(0, 5);
+    return { items, threshold: Number(threshold.toFixed(2)), topScore };
+}
+
+function metricLabelFromConfigResult(item) {
+    if (!['metric-target', 'custom-metric'].includes(item?.kind)) return '';
+    return String(item.title || '').replace(/^(?:指标目标规则|自定义指标)：/, '').trim();
+}
+
+async function buildMetricGraphGrounding(question, dataAnalysis, businessConfig) {
+    const matchedMetrics = dataAnalysis?.available && Array.isArray(dataAnalysis.current?.matchedMetrics)
+        ? dataAnalysis.current.matchedMetrics
+        : [];
+    let labels = [...new Set(matchedMetrics.map(item => String(item.metric || '').trim()).filter(Boolean))];
+    if (!labels.length && dataAnalysis?.metricDiscovery?.requested && dataAnalysis.current?.suggestedValuedMetric?.metric) {
+        labels = [String(dataAnalysis.current.suggestedValuedMetric.metric).trim()];
+    }
+    if (!labels.length) {
+        const candidates = (businessConfig?.results || [])
+            .filter(item => metricLabelFromConfigResult(item))
+            .sort((a, b) => Number(b.score || 0) - Number(a.score || 0));
+        if (!candidates.length) return null;
+        const topScore = Number(candidates[0]?.score) || 0;
+        const confident = candidates.filter(item => Number(item.score || 0) >= Math.max(70, topScore * 0.68));
+        const candidateLabels = [...new Set(confident.map(metricLabelFromConfigResult).filter(Boolean))];
+        labels = aiReportAnalysisService.findMatchedMetricLabels(candidateLabels, question);
+        if (!labels.length && candidateLabels.length === 1) labels = candidateLabels;
+    }
+    if (!labels.length) return null;
+    const month = dataAnalysis?.current?.snapshot?.month
+        || dataAnalysis?.requestedMonth
+        || aiReportAnalysisService.parseRequestedMonth(question)
+        || undefined;
+    try {
+        const graph = await aiMetricGraphService.getMetricGraph({ month });
+        const metricNodes = graph.nodes.filter(node => node.type === 'metric');
+        const references = labels.map(label => {
+            const metricNode = metricNodes.find(node => node.label === label);
+            if (!metricNode) return null;
+            const matched = matchedMetrics.find(item => item.metric === label);
+            const requestedCategories = new Set((matched?.customerGroups || []).map(item => String(item.customerGroup || '')).filter(Boolean));
+            const subMetrics = graph.nodes
+                .filter(node => node.type === 'submetric' && node.metricLabel === label)
+                .filter(node => !requestedCategories.size || requestedCategories.has(String(node.category || '')))
+                .map(node => ({ nodeId: node.id, label: node.label, category: node.category }));
+            return {
+                nodeId: metricNode.id,
+                label: metricNode.label,
+                group: metricNode.group,
+                subMetrics
+            };
+        }).filter(Boolean);
+        if (!references.length) return null;
+        return {
+            mode: 'metrics',
+            month: graph.month,
+            snapshotId: graph.snapshot?.snapshotId || null,
+            snapshotCreatedAt: graph.snapshot?.createdAt || null,
+            references,
+            source: graph.source,
+            historicalRule: graph.historicalRule,
+            readOnly: true
+        };
+    } catch (error) {
+        console.warn('[AI] metric graph grounding skipped:', error.message || error);
+        return null;
+    }
+}
+
+async function buildExpertGrounding(question, {
+    pageTitle = '',
+    pagePath = '',
+    contextQuestion = '',
+    contextTimeQuestion = ''
+} = {}) {
+    const knowledgePlan = planProjectKnowledgeSearch(question, pagePath);
+    const knowledgeQuery = String(question || '').trim();
+    const [knowledgeResult, dataResult, businessConfigResult] = await Promise.allSettled([
+        knowledgePlan.performed
+            ? aiKnowledgeService.search(knowledgeQuery, { limit: 10, pathHints: knowledgePlan.pathHints })
+            : Promise.resolve([]),
+        aiReportAnalysisService.analyzeQuestion(question, { contextQuestion, contextTimeQuestion }),
+        aiBusinessConfigService.search(question, { limit: 7 })
     ]);
-    const knowledge = knowledgeResult.status === 'fulfilled' ? knowledgeResult.value : [];
+    const knowledgeCandidates = knowledgeResult.status === 'fulfilled' ? knowledgeResult.value : [];
+    const selectedKnowledge = selectRelevantKnowledge(knowledgeCandidates);
+    const knowledge = selectedKnowledge.items;
     const dataAnalysis = dataResult.status === 'fulfilled' ? dataResult.value : null;
+    const businessConfig = businessConfigResult.status === 'fulfilled' ? businessConfigResult.value : { results: [], status: null };
+    const metricGraph = await buildMetricGraphGrounding(question, dataAnalysis, businessConfig);
     if (knowledgeResult.status === 'rejected') {
         console.warn('[AI] project knowledge retrieval skipped:', knowledgeResult.reason?.message || knowledgeResult.reason);
     }
     if (dataResult.status === 'rejected') {
         console.warn('[AI] report analysis skipped:', dataResult.reason?.message || dataResult.reason);
+    }
+    if (businessConfigResult.status === 'rejected') {
+        console.warn('[AI] business config retrieval skipped:', businessConfigResult.reason?.message || businessConfigResult.reason);
     }
     let knowledgeStatus = null;
     try {
@@ -86,10 +193,21 @@ async function buildExpertGrounding(question, { pageTitle = '', pagePath = '' } 
     }
     return {
         knowledge,
+        knowledgeSearch: {
+            performed: knowledgePlan.performed,
+            candidateCount: knowledgeCandidates.length,
+            referencedCount: knowledge.length,
+            threshold: selectedKnowledge.threshold,
+            topScore: selectedKnowledge.topScore
+        },
         knowledgeStatus,
         dataAnalysis,
+        businessConfig,
+        metricGraph,
         knowledgePrompt: aiKnowledgeService.formatResultsForPrompt(knowledge).slice(0, KNOWLEDGE_CONTEXT_MAX_CHARS),
-        dataPrompt: aiReportAnalysisService.formatAnalysisForPrompt(dataAnalysis).slice(0, DATA_CONTEXT_MAX_CHARS)
+        dataPrompt: aiReportAnalysisService.formatAnalysisForPrompt(dataAnalysis).slice(0, DATA_CONTEXT_MAX_CHARS),
+        businessConfigPrompt: aiBusinessConfigService.formatResultsForPrompt(businessConfig).slice(0, BUSINESS_CONFIG_CONTEXT_MAX_CHARS),
+        metricGraphPrompt: metricGraph ? JSON.stringify(metricGraph, null, 2).slice(0, 12000) : ''
     };
 }
 
@@ -101,11 +219,23 @@ function buildGroundingMetadata(grounding) {
         endLine: item.end_line
     }));
     const current = grounding.dataAnalysis?.available ? grounding.dataAnalysis.current?.snapshot : null;
+    const liveManual = grounding.dataAnalysis?.liveDashboard?.manualAdjustments || null;
     return {
         knowledgeSources,
+        configSources: (grounding.businessConfig?.results || []).map(item => ({
+            kind: item.kind,
+            source: item.source,
+            title: item.title,
+            updatedAt: item.updatedAt || null
+        })),
+        configStatus: grounding.businessConfig?.status || null,
+        metricGraph: grounding.metricGraph || null,
         knowledgeCache: {
-            state: grounding.knowledge.length ? 'hit' : 'miss',
+            state: !grounding.knowledgeSearch?.performed ? 'not_needed' : (grounding.knowledge.length ? 'hit' : 'miss'),
             hitCount: grounding.knowledge.length,
+            candidateCount: grounding.knowledgeSearch?.candidateCount || 0,
+            relevanceThreshold: grounding.knowledgeSearch?.threshold || null,
+            topScore: grounding.knowledgeSearch?.topScore || null,
             documentCount: grounding.knowledgeStatus?.documentCount || 0,
             chunkCount: grounding.knowledgeStatus?.chunkCount || 0,
             lastIndexedAt: grounding.knowledgeStatus?.lastIndexedAt || null,
@@ -118,6 +248,9 @@ function buildGroundingMetadata(grounding) {
             snapshotId: current?.snapshotId || null,
             month: current?.month || grounding.dataAnalysis.requestedMonth || null,
             createdAt: current?.createdAt || null,
+            liveSnapshotId: liveManual?.snapshotId || null,
+            liveSnapshotTime: liveManual?.snapshotTime || null,
+            liveUpdatedAt: liveManual?.updatedAt || null,
             historicalSavedResult: Boolean(grounding.dataAnalysis.available)
         } : null
     };
@@ -224,15 +357,33 @@ ${formatMessagesForSummary(messages)}`;
     return String(result.text || '').trim().slice(0, SUMMARY_MAX_CHARS);
 }
 
-async function compressSessionIfNeeded({ client, sessionId, pageTitle }) {
-    if (!sessionId) return null;
+async function compressSessionIfNeeded({ client, sessionId, pageTitle, onStatus }) {
+    if (!sessionId) return { session: null, compression: { performed: false, reason: 'no-session' } };
     const payload = await aiChatRepo.getMessagesForCompression(sessionId, RECENT_CONTEXT_MESSAGES);
-    if (!payload.session || !payload.messages.length) return payload.session;
+    if (!payload.session || !payload.messages.length) {
+        return { session: payload.session, compression: { performed: false, reason: 'no-compressible-messages' } };
+    }
     const chars = estimateMessagesChars(payload.messages);
     if (payload.messages.length < COMPRESS_TRIGGER_MESSAGES && chars < COMPRESS_TRIGGER_CHARS) {
-        return payload.session;
+        return {
+            session: payload.session,
+            compression: {
+                performed: false,
+                reason: 'below-threshold',
+                eligibleMessages: payload.messages.length,
+                eligibleChars: chars
+            }
+        };
     }
 
+    const started = {
+        kind: 'context-compression',
+        phase: 'start',
+        eligibleMessages: payload.messages.length,
+        eligibleChars: chars,
+        retainedRecentMessages: RECENT_CONTEXT_MESSAGES
+    };
+    onStatus?.(started);
     try {
         const summary = await generateRollingSummary(client, {
             previousSummary: payload.session.summary || '',
@@ -244,16 +395,35 @@ async function compressSessionIfNeeded({ client, sessionId, pageTitle }) {
                 summary,
                 summaryUntilMessageId: payload.cutoffMessageId
             });
+            const compression = {
+                ...started,
+                phase: 'done',
+                performed: true,
+                compressedMessages: payload.messages.length,
+                summaryChars: summary.length
+            };
+            onStatus?.(compression);
             return {
-                ...payload.session,
-                summary,
-                summary_until_message_id: payload.cutoffMessageId
+                session: {
+                    ...payload.session,
+                    summary,
+                    summary_until_message_id: payload.cutoffMessageId
+                },
+                compression
             };
         }
     } catch (err) {
         console.warn('[AI] session compression skipped:', err.message || err);
+        const compression = {
+            ...started,
+            phase: 'failed',
+            performed: false,
+            reason: 'summary-generation-failed'
+        };
+        onStatus?.(compression);
+        return { session: payload.session, compression };
     }
-    return payload.session;
+    return { session: payload.session, compression: { ...started, phase: 'skipped', performed: false, reason: 'empty-summary' } };
 }
 
 async function buildEffectiveMessages({ sessionId, incomingMessages, lastMessage }) {
@@ -273,6 +443,32 @@ async function buildEffectiveMessages({ sessionId, incomingMessages, lastMessage
         effective.push(lastMessage);
     }
     return effective;
+}
+
+function getFollowUpContext(messages, currentQuestion) {
+    const text = String(currentQuestion || '').trim();
+    const timeOnlyFollowUp = /(?:(?:20\d{2}\s*年\s*)?\d{1,2}\s*月(?:\s*\d{1,2}\s*日)?|20\d{2}[-/.]\d{1,2}(?:[-/.]\d{1,2})?).{0,12}(?:数据|表现|情况|怎么样|如何|呢)/i.test(text)
+        && !/指标|得分|排名|客户群|手动加减分|人工调整/i.test(text);
+    const referencedMetricFollowUp = /(?:这个|这些|这(?:几|两|三|四|五|六|七|八|九|十|\d+)个|该|上述|前面(?:的)?|刚才(?:的)?)\s*(?:指标|数据).{0,16}(?:当前值|实际值|变化|趋势|表现|情况|怎么样|如何|对比|分析)/i.test(text);
+    const isEllipticalFollowUp = text.length <= 48
+        && (timeOnlyFollowUp || referencedMetricFollowUp || /(?:呢|那么|那.+呢|这个|它|同样|类似|换成|再看|还有.+)[？?。！!]*$/i.test(text));
+    if (!isEllipticalFollowUp) return { matchingContext: '', timeContext: '' };
+    let previousUserQuestion = '';
+    let previousAssistantAnswer = '';
+    for (let index = messages.length - 2; index >= 0; index -= 1) {
+        const item = messages[index];
+        const content = String(item?.content || '').trim();
+        if (!content) continue;
+        if (!previousAssistantAnswer && item?.role === 'model') previousAssistantAnswer = content.slice(0, 8000);
+        if (!previousUserQuestion && item?.role === 'user') previousUserQuestion = content;
+        if (previousUserQuestion && previousAssistantAnswer) break;
+    }
+    return {
+        matchingContext: [previousUserQuestion, previousAssistantAnswer].filter(Boolean).join('\n上一次助手回答：\n'),
+        // Never derive a follow-up month from the assistant's prose: an answer
+        // can mention a 1–12 month target table even when the user asks for current data.
+        timeContext: previousUserQuestion
+    };
 }
 
 function fallbackPptActions(instruction, operationContext) {
@@ -326,6 +522,13 @@ function fallbackPptActions(instruction, operationContext) {
  * 接收对话历史和页面上下文，返回 Gemini 响应
  */
 router.post('/chat', checkAuth, async (req, res) => {
+    let streamStarted = false;
+    let streamHasDelta = false;
+    let providerAbortController = null;
+    const writeStreamEvent = payload => {
+        if (!streamStarted || res.destroyed || res.writableEnded) return;
+        res.write(`${JSON.stringify(payload)}\n`);
+    };
     try {
         const aiSettings = await aiSettingsRepo.getRuntimeSettings();
         if (!aiSettings.hasApiKey) {
@@ -339,7 +542,8 @@ router.post('/chat', checkAuth, async (req, res) => {
             });
         }
 
-        const { messages, context, pageTitle, pagePath, sessionId, persist, uiLanguage } = req.body;
+        const { messages, context, pageTitle, pagePath, sessionId, persist, uiLanguage, stream } = req.body;
+        const streamRequested = stream === true;
         const responseLanguage = String(uiLanguage || '').toLowerCase().startsWith('en') ? 'English' : '简体中文';
         
         if (!messages || !Array.isArray(messages)) {
@@ -362,18 +566,42 @@ router.post('/chat', checkAuth, async (req, res) => {
         }
 
         const aiClient = aiProviderClient.createClient(aiSettings);
-        const compressedSession = persist !== false
-            ? await compressSessionIfNeeded({ client: aiClient, sessionId: savedSessionId, pageTitle })
-            : null;
-        const sessionSummary = compressedSession && compressedSession.summary ? compressedSession.summary : '';
+        if (streamRequested) {
+            res.status(200);
+            res.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8');
+            res.setHeader('Cache-Control', 'no-cache, no-transform');
+            res.setHeader('Connection', 'keep-alive');
+            res.setHeader('X-Accel-Buffering', 'no');
+            if (typeof res.flushHeaders === 'function') res.flushHeaders();
+            streamStarted = true;
+            providerAbortController = new AbortController();
+            res.on('close', () => {
+                if (!res.writableEnded) providerAbortController.abort();
+            });
+            writeStreamEvent({ type: 'start', sessionId: savedSessionId });
+        }
+        const compressionResult = persist !== false
+            ? await compressSessionIfNeeded({
+                client: aiClient,
+                sessionId: savedSessionId,
+                pageTitle,
+                onStatus: status => writeStreamEvent({ type: 'status', status })
+            })
+            : { session: null, compression: { performed: false, reason: 'persistence-disabled' } };
+        const compressedSession = compressionResult.session;
+        const conversationCompression = compressionResult.compression;
+        const sessionSummary = compressedSession?.summary || '';
         const effectiveMessages = await buildEffectiveMessages({
             sessionId: savedSessionId,
             incomingMessages: messages,
             lastMessage
         });
+        const followUpContext = getFollowUpContext(effectiveMessages, lastMessage.content);
         const expertGrounding = await buildExpertGrounding(lastMessage.content, {
             pageTitle,
-            pagePath: normalizedPath
+            pagePath: normalizedPath,
+            contextQuestion: followUpContext.matchingContext,
+            contextTimeQuestion: followUpContext.timeContext
         });
 
         // 构造 System Instruction
@@ -388,24 +616,53 @@ ${context ? context.substring(0, PAGE_CONTEXT_MAX_CHARS) : '未提供'}
 ---
 ${expertGrounding.knowledgePrompt}
 ---
+${expertGrounding.businessConfigPrompt ? `\n与用户问题相关的只读业务配置（脚本、指标规则、平台配置）：\n---\n${expertGrounding.businessConfigPrompt}\n---\n` : ''}
 ${expertGrounding.dataPrompt ? `\n只读报表分析工具结果：\n---\n${expertGrounding.dataPrompt}\n---\n` : ''}
+${expertGrounding.metricGraphPrompt ? `\n与本次问题相关的运营指标体系图谱节点：\n---\n${expertGrounding.metricGraphPrompt}\n---\n` : ''}
 ${sessionSummary ? `\n历史会话滚动摘要：\n---\n${sessionSummary}\n---\n` : ''}
 **核心要求**：
 1. 默认使用${responseLanguage}回答，并与当前界面语言保持一致；用户明确指定其他语言时遵从用户要求。先直接回答结论，再根据问题难度给出必要细节；保持专业、清晰，不强制所有回答都极端简短。
 2. 项目实现类结论必须优先依据检索到的文件，并用“来源：文件路径:行号”标注关键依据。不要声称读过未提供的文件。
-3. 数据问题只能使用只读工具结果作为事实，明确说明月份、快照和数据时间。工具返回无数据时，不得估算或编造。
-4. 历史报表使用入库时保存的得分和计分状态，不得用当前目标或规则重算。
-5. 把事实、基于数据的解读和可能原因分开。没有证据的原因必须标记为“可能”或“建议进一步核查”。
-6. 你没有修改业务数据的权限，不得声称已修改、删除或入库任何数据。
-7. 如果用户的提问超出系统功能范畴，礼貌说明你专注于本工具中台。
+3. 脚本配置、指标目标、权重、月份规则、子指标、字典和平台配置必须优先依据“只读业务配置”结果，并标注“来源：数据库:表#记录（更新时间）”。配置检索无结果时，不得用代码默认值冒充当前数据库配置。
+3.1 用户询问“每个月/分月/某月的目标值”时，这是当前目标配置问题：必须读取具体“指标目标规则”中 monthlyAndCategoryRules 的数字月份键，按月份完整列出；未出现的月份明确说“未配置”。不得用报表快照、历史入库值或其他同名指标替代。
+3.2 本次检索到的实时业务配置优先级高于历史对话、滚动摘要和之前的助手回答；如有冲突，应明确纠正旧答案。
+3.3 当只读业务配置返回“全部指标目标规则明细”时，表示用户已明确要求完整列表。必须输出全部记录，每条至少包含指标名、方向、权重和 1–12 月目标；使用紧凑的 Markdown 表格，不得因为普通检索上限而省略。
+4. 数据问题只能使用只读工具结果作为事实，明确说明月份、快照和数据时间。工具返回无数据时，不得估算或编造。
+4.1 用户询问某个具体指标的当前/实际值时，必须优先读取只读报表分析中 current.matchedMetrics：globalValue 是入库快照保存的全局值，customerGroups 是各客户群/系统部实际值。只要 matchedMetrics 已返回该指标，不得声称“没有返回当前值”；应同时列出全局值和所有已保存的分组值，无论该分组达标还是未达标，不得只列异常项。customerGroups 中 missing=true 或 actual=“--”表示未入库数值，必须显示为“无值”，不得解读为 0。
+4.2 “某指标呢/那么某指标呢”类省略式追问会继承上一个用户问题的查询意图和月份，但指标主体必须以当前追问为准，不得混入上一个指标的数值。
+4.3 如果提供了“运营指标体系图谱节点”，回答必须使用其中的月份、指标、分类和子指标归属来校验口径；不得把近似名指标当成同一节点。界面会自动附上可点击的图谱引用，正文无需伪造链接。
+4.4 用户询问指定指标“最近几次/历次快照/变化趋势”时，必须读取只读报表分析中的 metricHistory.points。历史口径为 daily-latest：同一自然日有多次入库时只取当天最后一次，“最近几次”代表最近几个有值日期，不得把同一天的多次原始入库分别列出。用户说“整月、全月、逐日、每一天”时，coverageMode=full-month-available-days，必须使用返回的全部 points，按日期从旧到新展示或概括完整阶段变化；returnedPoints 是实际有入库的日期数，没有入库的日子不得补值。如果只引用头尾，应同时说明中间阶段的重要拐点，不能把头尾两个点说成“整月只有两个点”。有 globalValue 时按日期列出并根据 changeFromOldestToNewest 判断变化；globalValue 为空但 customerGroups 有值时，必须按客户群列出每日值，并使用 customerGroupChanges 总结各组趋势，不得因没有全局值而声称无法判断。如果 points 已返回，不得声称“没有返回逐日值”。“有值”查询只展示 hasValue=true 的日期。
+4.5 用户说“随便找个指标”、“找个有值的指标”等指标发现问题时，必须使用只读报表分析 current.suggestedValuedMetric 作答，列出其 globalValue 和非空 customerGroups 实际值，并说明月份、快照 ID 和时间。不得从目标配置中随便挑选，也不得把 target 当成实际值。如果 suggestedValuedMetric 已返回，不得声称“未返回实际值”。
+4.6 用户询问手动加减分项目时，规则说明读取只读业务配置，当前发生次数和实际加减分优先读取只读报表分析 liveDashboard.manualAdjustments；指定月份或日期时读取 current.manualAdjustments。必须说明快照 ID、月份/日期和数据时间。询问某个具体项目时列出各客户群的 count 与 score，包括 0 次/0 分；询问“哪个扣分最多/最频繁/排行”时必须读取 rankings.deductionByOccurrences，询问加分则读取 rankings.bonusByOccurrences，并明确排行按发生次数而不是按规则单次分值。如果对应排行是空数组，应回答“该时间点没有发生扣分/加分”，不得误报为无法读取。不得在 manualAdjustments 已返回时声称“只找到规则、没有当前发生次数”。只有用户明确询问“最近几次、历史、趋势、变化”时才读取 manualAdjustmentHistory；“最近哪个扣分最频繁”表示最新可用快照排行，不等于缺少历史。历史使用各次入库快照当时保存的项目规则、发生次数和客户群汇总分，严禁套用当前规则重算。当前快照和历史入库快照是两个数据状态，回答中应明确区分。
+4.7 用户问题中明确写出的月份、年月或具体日期，优先级高于当前页面所选月份、上一轮回答和会话摘要。只读报表分析的 requestedMonth/requestedDate 与 current.snapshot 是本次时间口径；如果 current.snapshot.targetMonth/month 为 6，就不得引用 7 月目标月份的图谱或数值。createdAt/snapshotCreatedAt 表示快照生成时间，不表示数据所属目标月份。例如 targetMonth=6、snapshotCreatedAt=2026-07-04 时，必须表述为“目标月份：6月；快照生成时间：2026-07-04；这是月末后生成的6月口径快照”，不得笼统写成容易误解的“数据时间：7月4日”。类似“6月数据怎么样”的省略式追问会沿用上一条用户问题的指标主体，但时间必须改为本条明确指定的 6 月。查询无需用户先切换报表页面月份。
+4.8 如果只读报表分析中 current.metricMatch.ambiguous=true，说明用户的指标简称对应多个指标；必须列出 candidates 请用户选择，不得擅自挑选其中一个，也不得退回 topFailures 把异常项冒充用户询问的指标。
+5. 历史报表使用入库时保存的得分和计分状态，不得用当前目标或计分规则重算。
+6. 把事实、基于数据的解读和可能原因分开。没有证据的原因必须标记为“可能”或“建议进一步核查”。
+7. 你没有修改业务数据的权限，不得声称已修改、删除或入库任何数据。
+8. 如果用户的提问超出系统功能范畴，礼貌说明你专注于本工具中台。
 ${aiSettings.systemPrompt ? `\n**管理员补充要求**：\n${aiSettings.systemPrompt}` : ''}`;
 
-        const result = await runAiWithRetry(() => aiClient.generateChat({
-            systemInstruction,
-            messages: effectiveMessages,
-            maxOutputTokens: aiSettings.maxOutputTokens,
-            temperature: aiSettings.temperature
-        }));
+        const fullTargetListRequested = expertGrounding.businessConfig?.mode === 'full-target-list';
+        const result = await runAiWithRetry(async () => {
+            try {
+                return await aiClient.generateChat({
+                    systemInstruction,
+                    messages: effectiveMessages,
+                    maxOutputTokens: fullTargetListRequested
+                        ? Math.min(Math.max(Number(aiSettings.maxOutputTokens) || 2048, 8192), 8192)
+                        : aiSettings.maxOutputTokens,
+                    temperature: aiSettings.temperature,
+                    signal: providerAbortController?.signal,
+                    onDelta: streamRequested ? delta => {
+                        streamHasDelta = true;
+                        writeStreamEvent({ type: 'delta', delta });
+                    } : undefined
+                });
+            } catch (error) {
+                if (streamHasDelta) error.partialOutput = true;
+                throw error;
+            }
+        });
         const responseText = result.text;
         
         let totalTokens = 0;
@@ -451,15 +708,35 @@ ${aiSettings.systemPrompt ? `\n**管理员补充要求**：\n${aiSettings.system
             }
         }
 
-        res.json({
+        const responsePayload = {
             reply: responseText,
             tokens: totalTokens,
             cost: costMao,
             sessionId: savedSessionId,
+            conversationCompression,
             grounding: buildGroundingMetadata(expertGrounding)
-        });
+        };
+        if (streamRequested) {
+            writeStreamEvent({ type: 'done', ...responsePayload });
+            res.end();
+        } else {
+            res.json(responsePayload);
+        }
     } catch (error) {
+        if (providerAbortController?.signal.aborted && error?.name === 'AbortError') return;
         console.error('[AI] Chat error:', error);
+        if (streamStarted) {
+            if (!res.destroyed && !res.writableEnded) {
+                writeStreamEvent({
+                    type: 'error',
+                    error: isTransientAiError(error)
+                        ? 'AI 服务当前繁忙，已自动重试但仍未成功。请稍后再试，或在全局设置中临时切换其他可用模型。'
+                        : 'AI 思考时出现异常: ' + error.message
+                });
+                res.end();
+            }
+            return;
+        }
         if (isTransientAiError(error)) {
             return res.status(503).json({
                 error: 'AI 服务当前繁忙，已自动重试但仍未成功。请稍后再试，或在全局设置中临时切换其他可用模型。'

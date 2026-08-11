@@ -354,6 +354,23 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+        button.ai-grounding-item {
+            display: block;
+            width: 100%;
+            padding: 2px 4px;
+            border: 0;
+            border-radius: 5px;
+            background: transparent;
+            color: inherit;
+            font: inherit;
+            line-height: inherit;
+            text-align: left;
+            cursor: pointer;
+        }
+        button.ai-grounding-item:hover {
+            color: #4f5db2;
+            background: #f1f3ff;
+        }
         .ai-grounding-graph {
             width: 100%;
             margin: 0 0 4px;
@@ -371,6 +388,16 @@
             border-color: #bfc8ee;
             background: #eef1ff;
             color: #4653a4;
+        }
+        .ai-grounding-graph.metric-reference {
+            border-color: #d8ccf6;
+            background: linear-gradient(135deg, #f7f4ff, #f1f3ff);
+            color: #674ca8;
+        }
+        .ai-grounding-graph.metric-reference:hover {
+            border-color: #b9a5ed;
+            background: linear-gradient(135deg, #f0eaff, #e9edff);
+            color: #573b99;
         }
         .ai-input-area {
             display: flex;
@@ -420,6 +447,28 @@
             background: #5a6fd6;
             transform: scale(1.05);
         }
+        .ai-send-btn.is-generating {
+            background: #ef6678;
+            box-shadow: 0 7px 18px rgba(239,102,120,0.28);
+        }
+        .ai-send-btn.is-generating .ai-stop-square {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            background: currentColor;
+        }
+        .ai-msg.ai.streaming::after {
+            content: "";
+            display: inline-block;
+            width: 7px;
+            height: 15px;
+            margin-left: 3px;
+            vertical-align: -2px;
+            border-radius: 2px;
+            background: #667eea;
+            animation: ai-stream-caret 0.9s steps(1, end) infinite;
+        }
+        @keyframes ai-stream-caret { 50% { opacity: 0.18; } }
         .ai-typing {
             font-size: 12px;
             color: #94a3b8;
@@ -429,6 +478,24 @@
             display: none;
             padding: 0 16px;
         }
+        .ai-context-notice {
+            align-self: center;
+            max-width: calc(100% - 44px);
+            margin: 2px auto 8px;
+            padding: 7px 12px;
+            border: 1px solid #d9def8;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #f5f7ff, #f0efff);
+            color: #626b91;
+            font-size: 11px;
+            line-height: 1.4;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(78,70,160,0.07);
+        }
+        .ai-context-notice.is-working { animation: ai-context-pulse 1.25s ease-in-out infinite; }
+        .ai-context-notice.is-done { border-color: #cce7dc; background: #f1fbf6; color: #39745e; }
+        .ai-context-notice.is-failed { border-color: #f0d6b5; background: #fff8ed; color: #94662e; }
+        @keyframes ai-context-pulse { 50% { opacity: 0.62; transform: translateY(-1px); } }
         .ai-suggestions {
             display: grid;
             grid-auto-flow: column;
@@ -570,29 +637,31 @@
         zh: {
             open: '打开智能客服助手', title: '智能客服助手', subtitle: '项目知识 · 数据分析 · 运营建议',
             graph: '知识与指标图谱', history: '历史问答', expand: '放大窗口', restore: '恢复默认大小',
-            fullscreen: '全屏聊天', exitFullscreen: '退出全屏', close: '关闭', send: '发送消息',
+            fullscreen: '全屏聊天', exitFullscreen: '退出全屏', close: '关闭', send: '发送消息', stop: '停止生成',
             welcome: '👋 你好！我是您的专属智能助手，正在为您加载页面上下文...', thinking: 'AI 正在思考...',
             placeholder: '向 AI 提问有关本页面的内容...', graphLoadFailed: '知识图谱组件加载失败',
             historyLoading: '正在加载历史问答...', historyEmpty: '暂无历史问答', unnamed: '未命名对话',
             messages: '条', historyFailed: '历史问答加载失败：', historyRestoreFailed: '历史问答恢复失败：',
             initPrompt: '你好，请用简短的话总结一下这个页面的核心功能以及如何使用它。',
             connectFailed: '连接 AI 服务失败：', error: '错误：', answerBasis: '本次回答依据',
-            openGraph: '打开知识关系图谱', cache: '知识缓存', hitChunks: n => `命中 ${n} 个片段`, cacheMiss: '本次未命中',
-            files: '文件', chunks: '片段', latestMonth: '最新月份', storedData: '入库数据', data: '数据', unknownFile: '未知文件',
+            openGraph: '打开知识关系图谱', cache: '项目知识', hitChunks: n => `引用 ${n} 个相关片段`, cacheMiss: '未找到足够相关的项目片段', knowledgeNotNeeded: '本题未使用项目文档', knowledgeLibrary: '知识库', candidates: '候选',
+            files: '文件', chunks: '片段', latestMonth: '最新月份', storedData: '入库数据', data: '数据', unknownFile: '未知文件', businessConfig: '实时业务配置', metricGraphReference: '运营指标图谱', metricsReferenced: n => `引用 ${n} 个指标`, submetricsReferenced: n => `${n} 个子指标`,
+            contextCompressing: '对话较长，正在自动整理早期上下文…', contextCompressed: (n, kept) => `已压缩 ${n} 条早期消息，并保留最近 ${kept} 条与关键摘要`, contextCompressionFailed: '上下文整理未完成，本次将继续使用最近消息',
             current: '本次', total: '累计', approxCost: n => `(约${n}毛)`, totalCost: n => `(总计${n}毛)`
         },
         en: {
             open: 'Open AI Support Assistant', title: 'AI Support Assistant', subtitle: 'Project knowledge · Data analysis · Operations',
             graph: 'Knowledge & Metrics Graph', history: 'Chat history', expand: 'Expand window', restore: 'Restore default size',
-            fullscreen: 'Full-screen chat', exitFullscreen: 'Exit full screen', close: 'Close', send: 'Send message',
+            fullscreen: 'Full-screen chat', exitFullscreen: 'Exit full screen', close: 'Close', send: 'Send message', stop: 'Stop generating',
             welcome: '👋 Hi! I’m your AI assistant. Loading the current page context…', thinking: 'AI is thinking…',
             placeholder: 'Ask AI about this page or the project…', graphLoadFailed: 'Failed to load the knowledge graph',
             historyLoading: 'Loading chat history…', historyEmpty: 'No chat history yet', unnamed: 'Untitled conversation',
             messages: 'messages', historyFailed: 'Failed to load chat history: ', historyRestoreFailed: 'Failed to restore chat history: ',
             initPrompt: 'Please briefly summarize the core purpose of this page and how to use it.',
             connectFailed: 'Could not connect to the AI service: ', error: 'Error: ', answerBasis: 'Sources for this answer',
-            openGraph: 'Open knowledge graph', cache: 'Knowledge cache', hitChunks: n => `${n} matching chunks`, cacheMiss: 'No match this time',
-            files: 'files', chunks: 'chunks', latestMonth: 'latest month', storedData: 'Stored data', data: 'Data', unknownFile: 'Unknown file',
+            openGraph: 'Open knowledge graph', cache: 'Project knowledge', hitChunks: n => `${n} relevant chunks cited`, cacheMiss: 'No sufficiently relevant project chunks found', knowledgeNotNeeded: 'Project documents were not used for this question', knowledgeLibrary: 'library', candidates: 'candidates',
+            files: 'files', chunks: 'chunks', latestMonth: 'latest month', storedData: 'Stored data', data: 'Data', unknownFile: 'Unknown file', businessConfig: 'Live business config', metricGraphReference: 'Operations metric graph', metricsReferenced: n => `${n} metrics referenced`, submetricsReferenced: n => `${n} submetrics`,
+            contextCompressing: 'This conversation is long. Condensing earlier context…', contextCompressed: (n, kept) => `Condensed ${n} earlier messages; kept the latest ${kept} plus a key summary`, contextCompressionFailed: 'Context condensation did not finish; continuing with recent messages',
             current: 'This reply', total: 'Total', approxCost: n => `(approx. ${n} mao)`, totalCost: n => `(total ${n} mao)`
         }
     };
@@ -683,7 +752,7 @@
         setActionText(expandBtn, panel.classList.contains('expanded') ? aiT('restore') : aiT('expand'));
         setActionText(fullscreenBtn, panel.classList.contains('fullscreen') ? aiT('exitFullscreen') : aiT('fullscreen'));
         setActionText(panel.querySelector('.ai-close'), aiT('close'));
-        setActionText(sendBtn, aiT('send'));
+        setActionText(sendBtn, activeChatController ? aiT('stop') : aiT('send'));
         input.placeholder = aiT('placeholder');
         typing.textContent = aiT('thinking');
         if (isFirstOpen && initialMessage) initialMessage.textContent = aiT('welcome');
@@ -695,27 +764,29 @@
     let cumulativeTokens = 0;
     let cumulativeCost = 0;
     let knowledgeGraphLoader = null;
+    let activeChatController = null;
+    const sendButtonDefaultHtml = sendBtn.innerHTML;
     const particleFab = createParticleFab(fab);
-    function openKnowledgeGraph() {
+    function openKnowledgeGraph(options = {}) {
         if (window.openToolsKnowledgeGraph) {
-            window.openToolsKnowledgeGraph().catch(error => appendMessage(`⚠️ ${error.message}`, 'ai'));
+            window.openToolsKnowledgeGraph(options).catch(error => appendMessage(`⚠️ ${error.message}`, 'ai'));
             return;
         }
         if (window.AIKnowledgeGraph?.open) {
-            window.AIKnowledgeGraph.open();
+            window.AIKnowledgeGraph.open(options);
             return;
         }
         if (!knowledgeGraphLoader) {
             knowledgeGraphLoader = new Promise((resolve, reject) => {
                 const script = document.createElement('script');
-                script.src = '/js/shared/ai-knowledge-graph.js?v=20260810-sidebar1';
+                script.src = '/js/shared/ai-knowledge-graph.js?v=20260811-mode6';
                 script.onload = resolve;
                 script.onerror = () => reject(new Error(aiT('graphLoadFailed')));
                 document.body.appendChild(script);
             });
         }
         knowledgeGraphLoader
-            .then(() => window.AIKnowledgeGraph?.open?.())
+            .then(() => window.AIKnowledgeGraph?.open?.(options))
             .catch(error => appendMessage(`⚠️ ${error.message}`, 'ai'));
     }
 
@@ -955,7 +1026,7 @@
         setActionText(fullscreenBtn, fullscreen ? aiT('exitFullscreen') : aiT('fullscreen'));
         setTimeout(() => input.focus(), 120);
     };
-    panel.querySelector('.ai-knowledge-graph').onclick = openKnowledgeGraph;
+    panel.querySelector('.ai-knowledge-graph').onclick = () => openKnowledgeGraph({ mode: 'knowledge' });
     panel.querySelector('.ai-history').onclick = async () => {
         historyPanel.classList.toggle('open');
         if (historyPanel.classList.contains('open')) {
@@ -1137,12 +1208,16 @@
         if (!grounding || typeof grounding !== 'object') return '';
         const items = [];
         let cacheHtml = '';
+        let metricGraphHtml = '';
         const knowledgeCache = grounding.knowledgeCache;
         if (knowledgeCache) {
             const hitText = knowledgeCache.state === 'hit'
                 ? aiT('hitChunks', Number(knowledgeCache.hitCount) || 0)
-                : aiT('cacheMiss');
-            cacheHtml = `<button type="button" class="ai-grounding-graph" data-open-knowledge-graph="true" title="${escapeHtml(aiT('openGraph'))}">🧠 ${escapeHtml(aiT('cache'))}: ${escapeHtml(hitText)} · ${Number(knowledgeCache.documentCount) || 0} ${escapeHtml(aiT('files'))} / ${Number(knowledgeCache.chunkCount) || 0} ${escapeHtml(aiT('chunks'))}</button>`;
+                : knowledgeCache.state === 'not_needed'
+                    ? aiT('knowledgeNotNeeded')
+                    : aiT('cacheMiss');
+            const diagnostic = `${aiT('openGraph')} · ${aiT('candidates')}: ${Number(knowledgeCache.candidateCount) || 0}${knowledgeCache.relevanceThreshold ? ` · threshold: ${knowledgeCache.relevanceThreshold}` : ''}`;
+            cacheHtml = `<button type="button" class="ai-grounding-graph" data-open-knowledge-graph="true" title="${escapeHtml(diagnostic)}">🧠 ${escapeHtml(aiT('cache'))}: ${escapeHtml(hitText)} · ${escapeHtml(aiT('knowledgeLibrary'))} ${Number(knowledgeCache.documentCount) || 0} ${escapeHtml(aiT('files'))} / ${Number(knowledgeCache.chunkCount) || 0} ${escapeHtml(aiT('chunks'))}</button>`;
         }
         const dataSource = grounding.dataSource;
         if (dataSource) {
@@ -1150,18 +1225,42 @@
                 const month = dataSource.month ? (getAiLang() === 'en' ? `Month ${dataSource.month}` : `${dataSource.month}月`) : aiT('latestMonth');
                 const snapshot = dataSource.snapshotId ? ` · ${dataSource.snapshotId}` : '';
                 const createdAt = dataSource.createdAt ? ` · ${dataSource.createdAt}` : '';
-                items.push(`📊 ${aiT('storedData')}: ${month}${snapshot}${createdAt}`);
+                items.push({ text: `📊 ${aiT('storedData')}: ${month}${snapshot}${createdAt}` });
             } else if (dataSource.reason) {
-                items.push(`📊 ${aiT('data')}: ${dataSource.reason}`);
+                items.push({ text: `📊 ${aiT('data')}: ${dataSource.reason}` });
             }
         }
         const sources = Array.isArray(grounding.knowledgeSources) ? grounding.knowledgeSources : [];
         sources.slice(0, 4).forEach(source => {
             const line = source.startLine ? `:${source.startLine}` : '';
-            items.push(`📄 ${source.path || aiT('unknownFile')}${line}`);
+            items.push({
+                text: `📄 ${source.path || aiT('unknownFile')}${line}`,
+                source
+            });
         });
-        if (!items.length && !cacheHtml) return '';
-        return `<div class="ai-grounding"><div class="ai-grounding-title">${escapeHtml(aiT('answerBasis'))}</div>${cacheHtml}${items.map(item => `<div class="ai-grounding-item" title="${escapeHtml(item)}">${escapeHtml(item)}</div>`).join('')}</div>`;
+        const configSources = Array.isArray(grounding.configSources) ? grounding.configSources : [];
+        configSources.slice(0, 4).forEach(source => {
+            const updatedAt = source.updatedAt ? ` · ${source.updatedAt}` : '';
+            items.push({ text: `⚙️ ${aiT('businessConfig')}: ${source.title || source.source}${updatedAt}` });
+        });
+        const metricGraph = grounding.metricGraph;
+        if (metricGraph && Array.isArray(metricGraph.references) && metricGraph.references.length) {
+            const subMetricCount = metricGraph.references.reduce((sum, item) => sum + (Array.isArray(item.subMetrics) ? item.subMetrics.length : 0), 0);
+            const monthLabel = metricGraph.month ? (getAiLang() === 'en' ? `Month ${metricGraph.month}` : `${metricGraph.month}月`) : aiT('latestMonth');
+            const details = [aiT('metricsReferenced', metricGraph.references.length), subMetricCount ? aiT('submetricsReferenced', subMetricCount) : '', monthLabel].filter(Boolean).join(' · ');
+            const graphOptions = {
+                mode: 'metrics',
+                month: metricGraph.month || null,
+                metricReferences: metricGraph.references
+            };
+            metricGraphHtml = `<button type="button" class="ai-grounding-graph metric-reference" data-open-knowledge-graph="true" data-graph-options="${escapeHtml(JSON.stringify(graphOptions))}" title="${escapeHtml(aiT('openGraph'))}">📈 ${escapeHtml(aiT('metricGraphReference'))}: ${escapeHtml(details)}</button>`;
+        }
+        if (!items.length && !cacheHtml && !metricGraphHtml) return '';
+        const sourcePayload = escapeHtml(JSON.stringify(sources));
+        if (cacheHtml && sources.length) cacheHtml = cacheHtml.replace('data-open-knowledge-graph="true"', `data-open-knowledge-graph="true" data-knowledge-sources="${sourcePayload}"`);
+        return `<div class="ai-grounding"><div class="ai-grounding-title">${escapeHtml(aiT('answerBasis'))}</div>${cacheHtml}${metricGraphHtml}${items.map(item => item.source
+            ? `<button type="button" class="ai-grounding-item" data-open-knowledge-graph="true" data-knowledge-sources="${escapeHtml(JSON.stringify([item.source]))}" title="${escapeHtml(item.text)}">${escapeHtml(item.text)}</button>`
+            : `<div class="ai-grounding-item" title="${escapeHtml(item.text)}">${escapeHtml(item.text)}</div>`).join('')}</div>`;
     }
 
     function appendMessage(text, role, tokens = 0, cost = 0, grounding = null) {
@@ -1181,10 +1280,21 @@
         msgDiv.innerHTML = contentHtml;
         chatBody.insertBefore(msgDiv, typing);
         chatBody.scrollTop = chatBody.scrollHeight;
+        return msgDiv;
     }
 
     chatBody.addEventListener('click', event => {
-        if (event.target.closest('[data-open-knowledge-graph]')) openKnowledgeGraph();
+        const trigger = event.target.closest('[data-open-knowledge-graph]');
+        if (!trigger) return;
+        if (trigger.dataset.graphOptions) {
+            try {
+                openKnowledgeGraph(JSON.parse(trigger.dataset.graphOptions));
+                return;
+            } catch (_error) {}
+        }
+        let sources = [];
+        try { sources = JSON.parse(trigger.dataset.knowledgeSources || '[]'); } catch (_error) {}
+        openKnowledgeGraph({ mode: 'knowledge', sources });
     });
 
     function getPageContext() {
@@ -1211,6 +1321,148 @@
             'Content-Type': 'application/json',
             'Authorization': token ? ('Bearer ' + token) : ''
         };
+    }
+
+    function setGeneratingState(active) {
+        sendBtn.classList.toggle('is-generating', active);
+        sendBtn.innerHTML = active ? '<span class="ai-stop-square" aria-hidden="true"></span>' : sendButtonDefaultHtml;
+        setActionText(sendBtn, active ? aiT('stop') : aiT('send'));
+        sendBtn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    }
+
+    function shouldFollowStream() {
+        return chatBody.scrollHeight - chatBody.scrollTop - chatBody.clientHeight < 110;
+    }
+
+    function createSmoothStreamRenderer(msgDiv) {
+        let received = '';
+        let visible = '';
+        let timer = null;
+        msgDiv.classList.add('streaming');
+
+        const paint = () => {
+            timer = null;
+            const pending = received.length - visible.length;
+            if (pending <= 0) return;
+            const follow = shouldFollowStream();
+            const step = pending > 800 ? 120 : pending > 240 ? 42 : pending > 60 ? 16 : Math.max(1, Math.ceil(pending / 3));
+            visible = received.slice(0, visible.length + step);
+            msgDiv.innerHTML = renderMarkdownLike(visible) || '&nbsp;';
+            if (follow) chatBody.scrollTop = chatBody.scrollHeight;
+            if (visible.length < received.length) timer = window.setTimeout(paint, 28);
+        };
+
+        return {
+            append(delta) {
+                received += String(delta || '');
+                if (!timer) timer = window.setTimeout(paint, 16);
+            },
+            finish(finalText) {
+                if (timer) window.clearTimeout(timer);
+                timer = null;
+                received = String(finalText || received);
+                visible = received;
+                msgDiv.classList.remove('streaming');
+                return received;
+            },
+            current() { return received; }
+        };
+    }
+
+    function createCompressionStatusHandler(anchorNode) {
+        let notice = null;
+        return status => {
+            if (!status || status.kind !== 'context-compression') return;
+            if (!notice) {
+                notice = document.createElement('div');
+                notice.className = 'ai-context-notice';
+                chatBody.insertBefore(notice, anchorNode || typing);
+            }
+            notice.classList.remove('is-working', 'is-done', 'is-failed');
+            if (status.phase === 'start') {
+                notice.classList.add('is-working');
+                notice.textContent = aiT('contextCompressing');
+                typing.textContent = aiT('contextCompressing');
+                typing.style.display = 'block';
+            } else if (status.phase === 'done') {
+                notice.classList.add('is-done');
+                notice.textContent = aiT('contextCompressed', Number(status.compressedMessages) || 0, Number(status.retainedRecentMessages) || 0);
+                typing.textContent = aiT('thinking');
+            } else if (status.phase === 'failed') {
+                notice.classList.add('is-failed');
+                notice.textContent = aiT('contextCompressionFailed');
+                typing.textContent = aiT('thinking');
+            }
+            chatBody.scrollTop = chatBody.scrollHeight;
+        };
+    }
+
+    function finalizeStreamMessage(msgDiv, text, data = {}) {
+        let contentHtml = renderMarkdownLike(text);
+        const tokens = Number(data.tokens) || 0;
+        const cost = Number(data.cost) || 0;
+        if (tokens > 0) {
+            cumulativeTokens += tokens;
+            cumulativeCost += cost;
+            const fmtCost = cost > 0 ? aiT('approxCost', cost.toFixed(4)) : '';
+            const fmtTotal = cumulativeCost > 0 ? aiT('totalCost', cumulativeCost.toFixed(3)) : '';
+            contentHtml += `<div class="ai-token-usage">${aiT('current')}: ${tokens} ${fmtCost} | ${aiT('total')}: ${cumulativeTokens} ${fmtTotal}</div>`;
+        }
+        contentHtml += renderGrounding(data.grounding);
+        msgDiv.classList.remove('streaming');
+        msgDiv.innerHTML = contentHtml;
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    async function requestStreamingChat(payload, { signal, onDelta, onStatus }) {
+        const res = await fetch('/api/ai/chat', {
+            method: 'POST',
+            headers: { ...getAuthHeaders(), Accept: 'application/x-ndjson' },
+            body: JSON.stringify({ ...payload, stream: true }),
+            signal
+        });
+        const contentType = String(res.headers.get('content-type') || '');
+        if (!res.ok) {
+            let message = `${res.status} ${res.statusText}`;
+            try {
+                const errorData = await res.json();
+                message = errorData.error || message;
+            } catch (_error) {}
+            throw new Error(message);
+        }
+        if (!contentType.includes('application/x-ndjson')) {
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+            if (data.conversationCompression?.performed) onStatus?.(data.conversationCompression);
+            if (data.reply) onDelta(data.reply);
+            return data;
+        }
+        if (!res.body || typeof res.body.getReader !== 'function') throw new Error('当前浏览器不支持流式响应');
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let finalPayload = null;
+        const consumeLine = line => {
+            const raw = String(line || '').trim();
+            if (!raw) return;
+            let event;
+            try { event = JSON.parse(raw); } catch (_error) { return; }
+            if (event.type === 'delta') onDelta(event.delta || '');
+            else if (event.type === 'status') onStatus?.(event.status || {});
+            else if (event.type === 'done') finalPayload = event;
+            else if (event.type === 'error') throw new Error(event.error || 'AI 流式输出失败');
+        };
+        while (true) {
+            const { value, done } = await reader.read();
+            buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+            const lines = buffer.split(/\r?\n/);
+            buffer = lines.pop() || '';
+            lines.forEach(consumeLine);
+            if (done) break;
+        }
+        if (buffer.trim()) consumeLine(buffer);
+        if (!finalPayload) throw new Error('AI 流式连接在完成前中断');
+        return finalPayload;
     }
 
     async function loadSuggestions() {
@@ -1295,46 +1547,60 @@
     }
 
     async function initChat() {
+        if (activeChatController) return;
         typing.style.display = 'block';
         chatBody.scrollTop = chatBody.scrollHeight;
 
         const { pageTitle, context } = getPageContext();
 
         // 隐式发送初始消息，要求总结
-        messages.push({ role: 'user', content: aiT('initPrompt') });
-        
+        const initPrompt = aiT('initPrompt');
+        messages.push({ role: 'user', content: initPrompt });
+        const controller = new AbortController();
+        activeChatController = controller;
+        setGeneratingState(true);
+        const initialNode = chatBody.children[0];
+        initialNode.innerHTML = '';
+        const streamRenderer = createSmoothStreamRenderer(initialNode);
+
         try {
-            const res = await fetch('/api/ai/chat', {
-                method: 'POST',
-                headers: getAuthHeaders(),
-                body: JSON.stringify({ messages, context, pageTitle, pagePath: getPagePath(), uiLanguage: getAiLang(), persist: false })
+            const data = await requestStreamingChat({
+                messages,
+                context,
+                pageTitle,
+                pagePath: getPagePath(),
+                uiLanguage: getAiLang(),
+                persist: false
+            }, {
+                signal: controller.signal,
+                onDelta: delta => {
+                    if (!delta) return;
+                    typing.style.display = 'none';
+                    streamRenderer.append(delta);
+                }
             });
-            const data = await res.json();
-            
-            if (data.error) throw new Error(data.error);
-            
-            messages.push({ role: 'model', content: data.reply });
-            
-            // 替换掉第一条加载提示消息
-            let contentHtml = renderMarkdownLike(data.reply);
-            if (data.tokens > 0) {
-                cumulativeTokens += data.tokens;
-                cumulativeCost += data.cost || 0;
-                const fmtCost = (data.cost || 0) > 0 ? aiT('approxCost', data.cost.toFixed(4)) : '';
-                const fmtTotal = cumulativeCost > 0 ? aiT('totalCost', cumulativeCost.toFixed(3)) : '';
-                contentHtml += `<div class="ai-token-usage">${aiT('current')}: ${data.tokens} ${fmtCost} | ${aiT('total')}: ${cumulativeTokens} ${fmtTotal}</div>`;
-            }
-            contentHtml += renderGrounding(data.grounding);
-            chatBody.children[0].innerHTML = contentHtml;
-            chatBody.scrollTop = chatBody.scrollHeight;
+            const finalText = streamRenderer.finish(data.reply || streamRenderer.current());
+            messages.push({ role: 'model', content: finalText });
+            finalizeStreamMessage(initialNode, finalText, data);
         } catch (e) {
-            chatBody.children[0].textContent = `⚠️ ${aiT('connectFailed')}${e.message}`;
+            const partialText = streamRenderer.finish();
+            if (partialText) {
+                messages.push({ role: 'model', content: partialText });
+                finalizeStreamMessage(initialNode, partialText);
+            } else {
+                const last = messages[messages.length - 1];
+                if (last && last.role === 'user' && last.content === initPrompt) messages.pop();
+                initialNode.textContent = e?.name === 'AbortError' ? aiT('welcome') : `⚠️ ${aiT('connectFailed')}${e.message}`;
+            }
         } finally {
             typing.style.display = 'none';
+            if (activeChatController === controller) activeChatController = null;
+            setGeneratingState(false);
         }
     }
 
     async function sendMessage(presetText) {
+        if (activeChatController) return;
         const text = String(presetText || input.value || '').trim();
         if (!text) return;
 
@@ -1348,41 +1614,70 @@
         chatBody.scrollTop = chatBody.scrollHeight;
         
         const { pageTitle, context } = getPageContext();
+        const controller = new AbortController();
+        activeChatController = controller;
+        setGeneratingState(true);
+        const streamMessage = appendMessage('', 'ai');
+        const streamRenderer = createSmoothStreamRenderer(streamMessage);
+        const handleCompressionStatus = createCompressionStatusHandler(streamMessage);
 
         try {
-            const res = await fetch('/api/ai/chat', {
-                method: 'POST',
-                headers: getAuthHeaders(),
-                body: JSON.stringify({
-                    messages,
-                    context,
-                    pageTitle,
-                    pagePath: getPagePath(),
-                    uiLanguage: getAiLang(),
-                    sessionId: currentSessionId
-                })
+            const data = await requestStreamingChat({
+                messages,
+                context,
+                pageTitle,
+                pagePath: getPagePath(),
+                uiLanguage: getAiLang(),
+                sessionId: currentSessionId
+            }, {
+                signal: controller.signal,
+                onDelta: delta => {
+                    if (!delta) return;
+                    typing.style.display = 'none';
+                    streamRenderer.append(delta);
+                },
+                onStatus: handleCompressionStatus
             });
-            const data = await res.json();
-            
-            if (data.error) throw new Error(data.error);
-            
+
             if (data.sessionId) currentSessionId = data.sessionId;
-            messages.push({ role: 'model', content: data.reply });
-            appendMessage(data.reply, 'ai', data.tokens || 0, data.cost || 0, data.grounding);
+            const finalText = streamRenderer.finish(data.reply || streamRenderer.current());
+            messages.push({ role: 'model', content: finalText });
+            finalizeStreamMessage(streamMessage, finalText, data);
             loadSuggestions();
         } catch (e) {
-            const last = messages[messages.length - 1];
-            if (last && last.role === 'user' && last.content === text) {
-                messages.pop();
+            const partialText = streamRenderer.finish();
+            if (e && e.name === 'AbortError') {
+                if (partialText) {
+                    messages.push({ role: 'model', content: partialText });
+                    finalizeStreamMessage(streamMessage, partialText);
+                } else {
+                    streamMessage.remove();
+                }
+            } else {
+                if (partialText) {
+                    finalizeStreamMessage(streamMessage, `${partialText}\n\n> ⚠️ ${aiT('error')}${e.message}`);
+                } else {
+                    streamMessage.remove();
+                    const last = messages[messages.length - 1];
+                    if (last && last.role === 'user' && last.content === text) messages.pop();
+                    appendMessage(`⚠️ ${aiT('error')}${e.message}`, 'ai');
+                }
             }
-            appendMessage(`⚠️ ${aiT('error')}${e.message}`, 'ai');
         } finally {
             typing.style.display = 'none';
+            if (activeChatController === controller) activeChatController = null;
+            setGeneratingState(false);
             input.focus();
         }
     }
 
-    sendBtn.onclick = () => sendMessage();
+    sendBtn.onclick = () => {
+        if (activeChatController) {
+            activeChatController.abort();
+            return;
+        }
+        sendMessage();
+    };
     input.addEventListener('input', () => {
         if (input.value.trim()) suggestionsEl.classList.add('is-collapsed');
     });

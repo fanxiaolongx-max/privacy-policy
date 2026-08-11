@@ -36,6 +36,11 @@ function extractGeminiText(data) {
     return Array.isArray(parts) ? parts.map(part => part.text || '').join('').trim() : '';
 }
 
+function extractGeminiDeltaText(data) {
+    const parts = data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts;
+    return Array.isArray(parts) ? parts.map(part => part.text || '').join('') : '';
+}
+
 function extractAnthropicText(data) {
     const parts = Array.isArray(data && data.content) ? data.content : [];
     return parts.map(part => part && part.type === 'text' ? part.text || '' : '').join('').trim();
@@ -119,6 +124,51 @@ async function readProviderJson(res) {
     }
 }
 
+async function readSseResponse(res, onData) {
+    if (!res.body || typeof res.body.getReader !== 'function') {
+        const error = new Error('AI provider did not return a readable stream');
+        error.code = 'AI_STREAM_UNSUPPORTED';
+        throw error;
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    const consumeBlock = block => {
+        const data = block.split(/\r?\n/)
+            .filter(line => line.startsWith('data:'))
+            .map(line => line.slice(5).trimStart())
+            .join('\n');
+        if (data) onData(data);
+    };
+    try {
+        while (true) {
+            const { value, done } = await reader.read();
+            buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+            const blocks = buffer.split(/\r?\n\r?\n/);
+            buffer = blocks.pop() || '';
+            blocks.forEach(consumeBlock);
+            if (done) break;
+        }
+        if (buffer.trim()) consumeBlock(buffer);
+    } finally {
+        reader.releaseLock();
+    }
+}
+
+function openAiDeltaText(delta) {
+    const content = delta && delta.content;
+    if (typeof content === 'string') return content;
+    if (!Array.isArray(content)) return '';
+    return content.map(item => typeof item === 'string' ? item : (item && (item.text || item.content) || '')).join('');
+}
+
+function assertStreamProducedText(text) {
+    if (String(text || '')) return;
+    const error = new Error('AI provider accepted the request but did not return streamed text');
+    error.code = 'AI_STREAM_UNSUPPORTED';
+    throw error;
+}
+
 class AiProviderClient {
     constructor(settings = {}) {
         this.settings = settings;
@@ -137,17 +187,50 @@ class AiProviderClient {
             || (this.provider === 'openai-compatible' && (/minimax/i.test(this.baseUrl) || /^MiniMax-/i.test(this.model)));
     }
 
-    async generateText({ prompt, systemInstruction = '', messages = null, maxOutputTokens, temperature, responseMimeType, json, thinkingBudget, onRetry } = {}) {
+    async generateText({ prompt, systemInstruction = '', messages = null, maxOutputTokens, temperature, responseMimeType, json, thinkingBudget, onRetry, onDelta, signal } = {}) {
         const finalMessages = messages ? normalizeMessages(messages) : [{ role: 'user', content: String(prompt || '') }];
+        const regularRequest = async () => {
+            if (this.usesMiniMaxProtocol) {
+                return this.generateMiniMax({ messages: finalMessages, systemInstruction, maxOutputTokens, temperature, onRetry, signal });
+            }
+            if (this.provider === 'openai' || this.provider === 'openai-compatible') {
+                return this.generateOpenAi({ messages: finalMessages, systemInstruction, maxOutputTokens, temperature, responseMimeType, json, signal });
+            }
+            if (this.provider === 'anthropic') {
+                return this.generateAnthropic({ messages: finalMessages, systemInstruction, maxOutputTokens, temperature, signal });
+            }
+            return this.generateGemini({ messages: finalMessages, systemInstruction, maxOutputTokens, temperature, responseMimeType, json, thinkingBudget, signal });
+        };
         let result;
-        if (this.usesMiniMaxProtocol) {
-            result = await this.generateMiniMax({ messages: finalMessages, systemInstruction, maxOutputTokens, temperature, onRetry });
-        } else if (this.provider === 'openai' || this.provider === 'openai-compatible') {
-            result = await this.generateOpenAi({ messages: finalMessages, systemInstruction, maxOutputTokens, temperature, responseMimeType, json });
-        } else if (this.provider === 'anthropic') {
-            result = await this.generateAnthropic({ messages: finalMessages, systemInstruction, maxOutputTokens, temperature });
+        const wantsStream = typeof onDelta === 'function' && !isJsonMode({ responseMimeType, json });
+        if (wantsStream) {
+            let emitted = false;
+            const emit = delta => {
+                const text = String(delta || '');
+                if (!text) return;
+                emitted = true;
+                onDelta(text);
+            };
+            try {
+                if (this.usesMiniMaxProtocol) {
+                    result = await this.generateMiniMaxStream({ messages: finalMessages, systemInstruction, maxOutputTokens, temperature, onDelta: emit, signal });
+                } else if (this.provider === 'openai' || this.provider === 'openai-compatible') {
+                    result = await this.generateOpenAiStream({ messages: finalMessages, systemInstruction, maxOutputTokens, temperature, onDelta: emit, signal });
+                } else if (this.provider === 'anthropic') {
+                    result = await this.generateAnthropicStream({ messages: finalMessages, systemInstruction, maxOutputTokens, temperature, onDelta: emit, signal });
+                } else {
+                    result = await this.generateGeminiStream({ messages: finalMessages, systemInstruction, maxOutputTokens, temperature, thinkingBudget, onDelta: emit, signal });
+                }
+            } catch (error) {
+                const status = Number(error && (error.status || error.statusCode));
+                const canFallback = !emitted && !signal?.aborted && ([400, 404, 405, 415, 422, 501].includes(status) || error?.code === 'AI_STREAM_UNSUPPORTED');
+                if (!canFallback) throw error;
+                console.warn(`[AI] ${this.provider} stream unavailable; falling back to buffered response: ${error.message}`);
+                result = await regularRequest();
+                emit(result.text);
+            }
         } else {
-            result = await this.generateGemini({ messages: finalMessages, systemInstruction, maxOutputTokens, temperature, responseMimeType, json, thinkingBudget });
+            result = await regularRequest();
         }
         try {
             const usage = result?.usage || {};
@@ -171,11 +254,11 @@ class AiProviderClient {
         return result;
     }
 
-    async generateChat({ messages, systemInstruction = '', maxOutputTokens, temperature, responseMimeType, json, thinkingBudget } = {}) {
-        return this.generateText({ messages, systemInstruction, maxOutputTokens, temperature, responseMimeType, json, thinkingBudget });
+    async generateChat({ messages, systemInstruction = '', maxOutputTokens, temperature, responseMimeType, json, thinkingBudget, onDelta, signal } = {}) {
+        return this.generateText({ messages, systemInstruction, maxOutputTokens, temperature, responseMimeType, json, thinkingBudget, onDelta, signal });
     }
 
-    async generateGemini({ messages, systemInstruction, maxOutputTokens, temperature, responseMimeType, json, thinkingBudget }) {
+    async generateGemini({ messages, systemInstruction, maxOutputTokens, temperature, responseMimeType, json, thinkingBudget, signal }) {
         const url = `${this.baseUrl}/models/${encodeURIComponent(this.model)}:generateContent?key=${encodeURIComponent(this.apiKey)}`;
         const body = {
             contents: normalizeMessages(messages).map(msg => ({
@@ -196,7 +279,8 @@ class AiProviderClient {
         const res = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
+            body: JSON.stringify(body),
+            signal
         });
         if (!res.ok) await parseErrorResponse(res);
         const data = await readProviderJson(res);
@@ -214,7 +298,7 @@ class AiProviderClient {
         };
     }
 
-    async generateOpenAi({ messages, systemInstruction, maxOutputTokens, temperature, responseMimeType, json }) {
+    async generateOpenAi({ messages, systemInstruction, maxOutputTokens, temperature, responseMimeType, json, signal }) {
         const bodyMessages = [];
         if (systemInstruction) bodyMessages.push({ role: 'system', content: systemInstruction });
         normalizeMessages(messages).forEach(msg => {
@@ -234,7 +318,8 @@ class AiProviderClient {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${this.apiKey}`
             },
-            body: JSON.stringify(body)
+            body: JSON.stringify(body),
+            signal
         });
         if (!res.ok) await parseErrorResponse(res);
         const data = await readProviderJson(res);
@@ -252,7 +337,168 @@ class AiProviderClient {
         };
     }
 
-    async generateMiniMax({ messages, systemInstruction, maxOutputTokens, temperature, onRetry }) {
+    async generateOpenAiStream({ messages, systemInstruction, maxOutputTokens, temperature, onDelta, signal }) {
+        const bodyMessages = [];
+        if (systemInstruction) bodyMessages.push({ role: 'system', content: systemInstruction });
+        normalizeMessages(messages).forEach(msg => {
+            bodyMessages.push({ role: msg.role === 'model' ? 'assistant' : 'user', content: msg.content });
+        });
+        const body = {
+            model: this.model,
+            messages: bodyMessages,
+            max_tokens: Math.round(Number(maxOutputTokens || this.settings.maxOutputTokens || 2048)),
+            temperature: Number(temperature ?? this.settings.temperature ?? 0.7),
+            stream: true
+        };
+        if (this.provider === 'openai') body.stream_options = { include_usage: true };
+        const res = await fetch(`${this.baseUrl}/chat/completions`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'text/event-stream',
+                Authorization: `Bearer ${this.apiKey}`
+            },
+            body: JSON.stringify(body),
+            signal
+        });
+        if (!res.ok) await parseErrorResponse(res);
+        let text = '';
+        let finishReason = '';
+        let usage = {};
+        await readSseResponse(res, payload => {
+            if (payload === '[DONE]') return;
+            let data;
+            try { data = JSON.parse(payload); } catch (_error) { return; }
+            if (data.usage) usage = data.usage;
+            const choice = data.choices && data.choices[0];
+            if (choice && choice.finish_reason) finishReason = String(choice.finish_reason);
+            const delta = openAiDeltaText(choice && choice.delta);
+            if (delta) {
+                text += delta;
+                onDelta(delta);
+            }
+        });
+        assertStreamProducedText(text);
+        return {
+            text: stripReasoningText(text),
+            usage: {
+                promptTokens: usage.prompt_tokens || 0,
+                outputTokens: usage.completion_tokens || 0,
+                totalTokens: usage.total_tokens || 0
+            },
+            finishReason,
+            raw: null
+        };
+    }
+
+    async generateGeminiStream({ messages, systemInstruction, maxOutputTokens, temperature, thinkingBudget, onDelta, signal }) {
+        const url = `${this.baseUrl}/models/${encodeURIComponent(this.model)}:streamGenerateContent?alt=sse&key=${encodeURIComponent(this.apiKey)}`;
+        const body = {
+            contents: normalizeMessages(messages).map(msg => ({
+                role: msg.role === 'model' ? 'model' : 'user',
+                parts: [{ text: msg.content }]
+            })),
+            generationConfig: {
+                maxOutputTokens: Math.round(Number(maxOutputTokens || this.settings.maxOutputTokens || 2048)),
+                temperature: Number(temperature ?? this.settings.temperature ?? 0.7)
+            }
+        };
+        if (Number.isFinite(Number(thinkingBudget)) && /gemini-2\.5/i.test(this.model)) {
+            body.generationConfig.thinkingConfig = { thinkingBudget: Math.max(0, Math.round(Number(thinkingBudget))) };
+        }
+        if (systemInstruction) body.systemInstruction = { parts: [{ text: systemInstruction }] };
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+            body: JSON.stringify(body),
+            signal
+        });
+        if (!res.ok) await parseErrorResponse(res);
+        let text = '';
+        let finishReason = '';
+        let usage = {};
+        await readSseResponse(res, payload => {
+            let data;
+            try { data = JSON.parse(payload); } catch (_error) { return; }
+            if (data.usageMetadata) usage = data.usageMetadata;
+            const candidate = data.candidates && data.candidates[0];
+            if (candidate && candidate.finishReason) finishReason = String(candidate.finishReason);
+            const delta = extractGeminiDeltaText(data);
+            if (delta) {
+                text += delta;
+                onDelta(delta);
+            }
+        });
+        assertStreamProducedText(text);
+        return {
+            text: stripReasoningText(text),
+            usage: {
+                promptTokens: usage.promptTokenCount || 0,
+                outputTokens: usage.candidatesTokenCount || 0,
+                totalTokens: usage.totalTokenCount || 0
+            },
+            finishReason,
+            raw: null
+        };
+    }
+
+    async generateMiniMaxStream({ messages, systemInstruction, maxOutputTokens, temperature, onDelta, signal }) {
+        const bodyMessages = [];
+        if (systemInstruction) bodyMessages.push({ role: 'system', content: systemInstruction });
+        normalizeMessages(messages).forEach(msg => {
+            bodyMessages.push({ role: msg.role === 'model' ? 'assistant' : 'user', content: msg.content });
+        });
+        const configuredLimit = Math.round(Number(maxOutputTokens || this.settings.maxOutputTokens || 2048));
+        const body = {
+            model: this.model,
+            messages: bodyMessages,
+            max_completion_tokens: Math.min(Math.max(configuredLimit, 8192), 32768),
+            temperature: Number(temperature ?? this.settings.temperature ?? 0.7),
+            reasoning_split: true,
+            stream: true
+        };
+        const res = await fetch(`${this.baseUrl}/chat/completions`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'text/event-stream',
+                Authorization: `Bearer ${this.apiKey}`
+            },
+            body: JSON.stringify(body),
+            signal
+        });
+        if (!res.ok) await parseErrorResponse(res);
+        let text = '';
+        let finishReason = '';
+        let usage = {};
+        await readSseResponse(res, payload => {
+            if (payload === '[DONE]') return;
+            let data;
+            try { data = JSON.parse(payload); } catch (_error) { return; }
+            if (data.usage) usage = data.usage;
+            const choice = data.choices && data.choices[0];
+            if (choice && choice.finish_reason) finishReason = String(choice.finish_reason);
+            const delta = openAiDeltaText(choice && choice.delta);
+            if (delta) {
+                text += delta;
+                onDelta(delta);
+            }
+        });
+        assertStreamProducedText(text);
+        return {
+            text: stripReasoningText(text),
+            usage: {
+                promptTokens: usage.prompt_tokens || 0,
+                outputTokens: usage.completion_tokens || 0,
+                totalTokens: usage.total_tokens || 0,
+                reasoningTokens: Number(usage.completion_tokens_details && usage.completion_tokens_details.reasoning_tokens || 0)
+            },
+            finishReason,
+            raw: null
+        };
+    }
+
+    async generateMiniMax({ messages, systemInstruction, maxOutputTokens, temperature, onRetry, signal }) {
         const bodyMessages = [];
         if (systemInstruction) bodyMessages.push({ role: 'system', content: systemInstruction });
         normalizeMessages(messages).forEach(msg => {
@@ -282,7 +528,8 @@ class AiProviderClient {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${this.apiKey}`
                 },
-                body: JSON.stringify(body)
+                body: JSON.stringify(body),
+                signal
             });
             if (!res.ok) await parseErrorResponse(res);
             const data = await readProviderJson(res);
@@ -332,7 +579,7 @@ class AiProviderClient {
         throw error;
     }
 
-    async generateAnthropic({ messages, systemInstruction, maxOutputTokens, temperature }) {
+    async generateAnthropic({ messages, systemInstruction, maxOutputTokens, temperature, signal }) {
         const body = {
             model: this.model,
             max_tokens: Math.round(Number(maxOutputTokens || this.settings.maxOutputTokens || 2048)),
@@ -351,7 +598,8 @@ class AiProviderClient {
                 'x-api-key': this.apiKey,
                 'anthropic-version': '2023-06-01'
             },
-            body: JSON.stringify(body)
+            body: JSON.stringify(body),
+            signal
         });
         if (!res.ok) await parseErrorResponse(res);
         const data = await readProviderJson(res);
@@ -365,6 +613,63 @@ class AiProviderClient {
             },
             finishReason: String(data.stop_reason || ''),
             raw: data
+        };
+    }
+
+    async generateAnthropicStream({ messages, systemInstruction, maxOutputTokens, temperature, onDelta, signal }) {
+        const body = {
+            model: this.model,
+            max_tokens: Math.round(Number(maxOutputTokens || this.settings.maxOutputTokens || 2048)),
+            temperature: Number(temperature ?? this.settings.temperature ?? 0.7),
+            stream: true,
+            messages: normalizeMessages(messages).map(msg => ({
+                role: msg.role === 'model' ? 'assistant' : 'user',
+                content: msg.content
+            }))
+        };
+        if (systemInstruction) body.system = systemInstruction;
+        const res = await fetch(`${this.baseUrl}/messages`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'text/event-stream',
+                'x-api-key': this.apiKey,
+                'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify(body),
+            signal
+        });
+        if (!res.ok) await parseErrorResponse(res);
+        let text = '';
+        let finishReason = '';
+        let inputTokens = 0;
+        let outputTokens = 0;
+        await readSseResponse(res, payload => {
+            let data;
+            try { data = JSON.parse(payload); } catch (_error) { return; }
+            if (data.type === 'message_start') inputTokens = Number(data.message?.usage?.input_tokens || 0);
+            if (data.type === 'message_delta') {
+                outputTokens = Number(data.usage?.output_tokens || outputTokens);
+                if (data.delta?.stop_reason) finishReason = String(data.delta.stop_reason);
+            }
+            const delta = data.type === 'content_block_delta' && data.delta?.type === 'text_delta'
+                ? String(data.delta.text || '')
+                : '';
+            if (delta) {
+                text += delta;
+                onDelta(delta);
+            }
+        });
+        assertStreamProducedText(text);
+        return {
+            text: stripReasoningText(text),
+            usage: {
+                promptTokens: inputTokens,
+                outputTokens,
+                totalTokens: inputTokens + outputTokens
+            },
+            finishReason,
+            raw: null
         };
     }
 }

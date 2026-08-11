@@ -135,9 +135,16 @@ async function getMetricGraph(options = {}) {
                              FROM ReportMetricData
                              WHERE snapshot_id = (SELECT snapshot_id FROM ReportSnapshots WHERE month = ? ORDER BY id DESC LIMIT 1)
                                AND (month = ? OR month IS NULL)`, [month, month]),
-            dbAll(reportDb, `SELECT metric_label, cat_name, COUNT(DISTINCT snapshot_id) AS snapshot_count
-                             FROM ReportMetricData WHERE month = ? GROUP BY metric_label, cat_name`, [month]),
-            dbGet(reportDb, `SELECT COUNT(*) AS snapshot_count, MIN(created_at) AS first_at, MAX(created_at) AS latest_at
+            dbAll(reportDb, `SELECT m.metric_label, m.cat_name, COUNT(*) AS snapshot_count
+                             FROM ReportSnapshots s
+                             INNER JOIN (
+                                 SELECT DATE(created_at) AS snapshot_day, MAX(id) AS max_id
+                                 FROM ReportSnapshots WHERE month = ? GROUP BY DATE(created_at)
+                             ) daily ON s.id = daily.max_id
+                             INNER JOIN ReportMetricData m
+                               ON m.snapshot_id = s.snapshot_id AND (m.month = s.month OR m.month IS NULL)
+                             GROUP BY m.metric_label, m.cat_name`, [month]),
+            dbGet(reportDb, `SELECT COUNT(DISTINCT DATE(created_at)) AS snapshot_count, MIN(created_at) AS first_at, MAX(created_at) AS latest_at
                              FROM ReportSnapshots WHERE month = ?`, [month])
         ]);
 
@@ -289,7 +296,7 @@ async function getMetricGraph(options = {}) {
                 snapshotId: latestMonthSnapshot.snapshot_id,
                 createdAt: latestMonthSnapshot.created_at
             } : null,
-            historicalRule: '历史值读取 ReportMetricData 已保存快照；当前月份规则只用于展示，不重算历史结果。',
+            historicalRule: '历史值按有值日期读取 ReportMetricData 每天最后一次已保存入库；当前月份规则只用于展示，不重算历史结果。',
             source: 'backend/data/tools.db + data/report.db',
             readOnly: true
         };
@@ -327,7 +334,7 @@ async function getMetricHistory(options = {}) {
     const reportDb = await openReadOnlyDb(REPORT_DB_PATH);
     if (!reportDb) return { metric, category: category || null, month, series: [], snapshots: 0, source: 'data/report.db', readOnly: true };
     try {
-        const params = [metric, month];
+        const params = [month, metric];
         let categorySql = '';
         if (category) {
             categorySql = ' AND m.cat_name = ?';
@@ -339,17 +346,26 @@ async function getMetricHistory(options = {}) {
                        m.cat_name, m.raw_val, m.num_val, m.target_val, m.is_failing,
                        m.earned_score, m.proportional_scoring, m.completion_ratio
                 FROM ReportSnapshots s
+                INNER JOIN (
+                    SELECT DATE(created_at) AS snapshot_day, MAX(id) AS max_id
+                    FROM ReportSnapshots WHERE month = ? GROUP BY DATE(created_at)
+                ) daily ON s.id = daily.max_id
                 JOIN ReportMetricData m
                   ON m.snapshot_id = s.snapshot_id AND (m.month = s.month OR m.month IS NULL)
-                WHERE m.metric_label = ? AND s.month = ?${categorySql}
+                WHERE m.metric_label = ?${categorySql}
                 ORDER BY s.id DESC, m.cat_name
                 LIMIT 320
             ) ORDER BY snapshot_order ASC, cat_name`, params);
         let series = historyRowsToPayload(rows);
 
         if (!series.length) {
-            const snapshots = await dbAll(reportDb, `SELECT snapshot_id, month, created_at, raw_data_json
-                                                      FROM ReportSnapshots WHERE month = ? ORDER BY id ASC LIMIT 80`, [month]);
+            const snapshots = await dbAll(reportDb, `SELECT s.snapshot_id, s.month, s.created_at, s.raw_data_json
+                                                      FROM ReportSnapshots s
+                                                      INNER JOIN (
+                                                          SELECT DATE(created_at) AS snapshot_day, MAX(id) AS max_id
+                                                          FROM ReportSnapshots WHERE month = ? GROUP BY DATE(created_at)
+                                                      ) daily ON s.id = daily.max_id
+                                                      ORDER BY s.id ASC LIMIT 80`, [month]);
             const fallbackRows = [];
             snapshots.forEach(snapshot => {
                 const raw = safeJson(snapshot.raw_data_json, {});
@@ -372,7 +388,9 @@ async function getMetricHistory(options = {}) {
             month,
             series,
             snapshots: snapshotIds.size,
-            historicalRule: '展示入库时保存的原始值、目标、达标状态和得分，不按当前规则重算。',
+            granularity: 'daily-latest',
+            dailySelectionRule: '同一自然日只取最后一次报表入库。',
+            historicalRule: '按有值日期展示每天最后一次入库时保存的原始值、目标、达标状态和得分，不按当前规则重算。',
             source: 'data/report.db: ReportSnapshots, ReportMetricData',
             readOnly: true
         };

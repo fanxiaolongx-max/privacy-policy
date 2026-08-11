@@ -150,6 +150,7 @@
         .ai-kg-section-title { margin:19px 0 9px; color:#aeb8ce; font-size:11px; font-weight:700; }
         .ai-kg-chunk { margin-bottom:8px; padding:10px; border-radius:10px; background:rgba(31,40,64,.55); border:1px solid rgba(116,130,174,.13); cursor:pointer; }
         .ai-kg-chunk:hover { border-color:rgba(117,134,214,.42); }
+        .ai-kg-chunk.answer-citation { border-color:rgba(151,120,255,.4); background:rgba(79,62,139,.26); }
         .ai-kg-chunk-title { color:#dfe5f2; font-size:11px; font-weight:650; }
         .ai-kg-chunk-lines { color:#71809e; font-size:9px; margin-top:3px; }
         .ai-kg-chunk-preview { color:#8e9ab1; font-size:10px; line-height:1.55; margin-top:7px; white-space:pre-wrap; max-height:76px; overflow:hidden; }
@@ -287,9 +288,17 @@
         try { return localStorage.getItem('ai_kg_sidebar_collapsed') === '1'; }
         catch (_error) { return false; }
     }
+    function loadPreferredMode() {
+        try {
+            const mode = localStorage.getItem('ai_kg_preferred_mode');
+            return ['knowledge', 'metrics'].includes(mode) ? mode : 'knowledge';
+        } catch (_error) { return 'knowledge'; }
+    }
+    const preferredMode = loadPreferredMode();
     const state = {
         data: null,
-        mode: 'knowledge',
+        mode: preferredMode,
+        preferredMode,
         dimension: '2d',
         month: null,
         nodes: [],
@@ -320,7 +329,10 @@
         alpha: 1,
         alphaTarget: 0.035,
         lastFrameTime: 0,
+        loadSequence: 0,
         searchMatches: new Set(),
+        answerFocus: null,
+        pendingFocus: null,
         flatPositions: new Map(),
         settings: loadSettings(),
         stars: [],
@@ -332,17 +344,17 @@
         zh: {
             view: '图谱视图', knowledge: '项目知识', metrics: '指标体系', ruleMonth: '规则月份', refreshKnowledge: '刷新知识库', refreshMetrics: '刷新指标',
             refreshKnowledgeTitle: '重建变化的知识文件', refreshMetricsTitle: '重新读取指标规则与历史快照', motion: '动态仿真', motionPaused: '仿真已暂停', motionTitle: '开启或暂停力导向仿真', fit: '重置视图', fullscreen: '全屏', exitFullscreen: '退出全屏', sidebarCollapse: '收起详情栏', sidebarExpand: '展开详情栏', close: '关闭',
-            knowledgeTitle: '✦ 项目知识关系图谱', metricTitle: '◈ 运营指标体系图谱', knowledgeSubtitle: '项目 → 模块 / 工具 / 数据库 → 文件 / 表 · 细线为代码、查询和资源依赖', metricSubtitle: '月份规则 → 指标分类 → 指标 → 子指标 · 点击查看历史入库值',
+            knowledgeTitle: '✦ 项目知识关系图谱', metricTitle: '◈ 运营指标体系图谱', knowledgeSubtitle: '项目 → 模块 / 工具 / 数据库 → 文件 / 表 · 细线为代码、查询和资源依赖', metricSubtitle: '月份规则 → 指标分类 → 指标 → 子指标 · 点击查看每日最新历史值',
             searchKnowledge: '搜索 README、工具、数据库表、接口、AI 助手…', searchMetrics: '搜索分类、指标、子指标…',
-            hints: ['拖动画布','滚轮缩放','放大显示文件名','点击节点查看','拖动节点可拉扯关系','松手保留惯性'],
-            hints3d: ['左键拖动空白处旋转','双击节点设为旋转中心','按住滚轮拖动平移','滚轮缩放','点击节点查看','左键拖动节点'],
+            hints: ['拖动画布','滚轮缩放','放大显示文件名','点击节点查看','点击空白取消高亮','拖动节点可拉扯关系'],
+            hints3d: ['左键拖动空白处旋转','双击节点设为旋转中心','按住滚轮拖动平移','滚轮缩放','点击节点查看','点击空白取消高亮'],
             dimension: '图谱维度',
             project: '项目', module: '模块', knowledgeFile: '知识文件', toolData: '工具/数据资产', monthRules: '月份规则', category: '指标分类', metric: '指标', submetric: '子指标',
-            files: '文件', chunks: '片段', dependencies: '依赖', recentUpdated: '最近更新', tools: '工具', databases: '数据库', tables: '数据表', snapshots: '历史快照',
+            files: '文件', chunks: '片段', dependencies: '依赖', recentUpdated: '最近更新', tools: '工具', databases: '数据库', tables: '数据表', tableRelations: '表关系', snapshots: '历史日期',
             loadingKnowledge: '正在读取项目知识库…', loadingMetrics: '正在读取指标规则与历史快照…', refreshLoading: '正在刷新…', count: n => `${n} 个`, unknown: '未知',
             rootType: '项目根节点', businessModules: '业务模块', codeDependencies: '代码依赖', assetFiles: '资产文件', builtInTools: '自带工具', customTools: '自定义工具',
             assetCategory: '资产分类', htmlTool: 'HTML 工具', database: '数据库', table: '数据表', toolFile: '工具目录文件', related: '关联节点', contained: '下级节点', fileSize: '文件大小', updatedAt: '更新时间', publicAccess: '公开访问', yes: '是', no: '否', columns: '字段', schema: '表结构',
-            empty: '点击图谱中的模块、工具、文件、数据库或表，可查看详细关系。', moduleFiles: '模块文件', indexTime: '索引时间', viewChunks: '可点击查看的知识片段', readingFile: '正在读取文件节点', unnamedChunk: '未命名片段',
+            empty: '点击图谱中的模块、工具、文件、数据库或表，可查看详细关系。', moduleFiles: '模块文件', indexTime: '索引时间', viewChunks: '可点击查看的知识片段', readingFile: '正在读取文件节点', unnamedChunk: '未命名片段', answerSources: '本次回答引用路径', citedChunk: '引用片段', citedFiles: '引用文件', answerMetrics: '本次回答引用指标', referencedMetrics: '个引用指标',
             graphLoadFailed: '知识图谱加载失败', metricLoadFailed: '指标图谱加载失败', refreshFailed: '刷新失败',
             controls: '外观与力度', appearance: '外观', force: '力度', palette: '颜色主题', galaxy: '银河', cosmic: '星云', obsidian: 'Obsidian', aurora: '极光', nodeSize: '节点大小', lineWidth: '连线粗细', labelDensity: '标签密度', labelOpacity: '文本透明度', growthSpeed: '生长速度', playGrowth: '播放生长动画', stopGrowth: '停止动画', centerForce: '图谱向心力', repulsion: '节点排斥力', attraction: '相连节点吸引力', linkLength: '连线长度', drift: '漂浮力度', resetControls: '恢复默认参数'
         },
@@ -351,15 +363,15 @@
             refreshKnowledgeTitle: 'Re-index changed knowledge files', refreshMetricsTitle: 'Reload metric rules and snapshots', motion: 'Live Simulation', motionPaused: 'Simulation Paused', motionTitle: 'Start or pause force simulation', fit: 'Reset view', fullscreen: 'Fullscreen', exitFullscreen: 'Exit fullscreen', sidebarCollapse: 'Collapse details', sidebarExpand: 'Expand details', close: 'Close',
             knowledgeTitle: '✦ Project Knowledge Graph', metricTitle: '◈ Operations Metric Graph', knowledgeSubtitle: 'Project → modules / tools / databases → files / tables · thin lines show code, query, and asset dependencies', metricSubtitle: 'Monthly rules → categories → metrics → submetrics · click to inspect historical values',
             searchKnowledge: 'Search README, tools, database tables, APIs, AI assistant…', searchMetrics: 'Search categories, metrics, submetrics…',
-            hints: ['Drag canvas','Wheel to zoom','Zoom in for filenames','Click a node for details','Drag nodes to pull relations','Release to keep inertia'],
-            hints3d: ['Left-drag empty space to orbit','Double-click a node to orbit around it','Middle-drag to pan','Wheel to zoom','Click a node for details','Left-drag a node to reposition'],
+            hints: ['Drag canvas','Wheel to zoom','Zoom in for filenames','Click a node for details','Click empty space to clear focus','Drag nodes to pull relations'],
+            hints3d: ['Left-drag empty space to orbit','Double-click a node to orbit around it','Middle-drag to pan','Wheel to zoom','Click a node for details','Click empty space to clear focus'],
             dimension: 'Graph dimension',
             project: 'Project', module: 'Module', knowledgeFile: 'Knowledge File', toolData: 'Tool/Data Asset', monthRules: 'Monthly Rules', category: 'Metric Category', metric: 'Metric', submetric: 'Submetric',
-            files: 'files', chunks: 'chunks', dependencies: 'dependencies', recentUpdated: 'Recently updated', tools: 'tools', databases: 'databases', tables: 'tables', snapshots: 'snapshots',
+            files: 'files', chunks: 'chunks', dependencies: 'dependencies', recentUpdated: 'Recently updated', tools: 'tools', databases: 'databases', tables: 'tables', tableRelations: 'table relations', snapshots: 'history days',
             loadingKnowledge: 'Loading project knowledge…', loadingMetrics: 'Loading metric rules and snapshots…', refreshLoading: 'Refreshing…', count: n => `${n}`, unknown: 'Unknown',
             rootType: 'Project Root', businessModules: 'Business Modules', codeDependencies: 'Code Dependencies', assetFiles: 'asset files', builtInTools: 'built-in tools', customTools: 'custom tools',
             assetCategory: 'Asset Category', htmlTool: 'HTML Tool', database: 'Database', table: 'Table', toolFile: 'Tool Directory File', related: 'Related Nodes', contained: 'Child Nodes', fileSize: 'File Size', updatedAt: 'Updated', publicAccess: 'Public Access', yes: 'Yes', no: 'No', columns: 'Columns', schema: 'Table Schema',
-            empty: 'Click a module, tool, file, database, or table to inspect its relationships.', moduleFiles: 'Module Files', indexTime: 'Indexed At', viewChunks: 'Indexed Knowledge Chunks', readingFile: 'Loading File Node', unnamedChunk: 'Untitled Chunk',
+            empty: 'Click a module, tool, file, database, or table to inspect its relationships.', moduleFiles: 'Module Files', indexTime: 'Indexed At', viewChunks: 'Indexed Knowledge Chunks', readingFile: 'Loading File Node', unnamedChunk: 'Untitled Chunk', answerSources: 'Sources used by this answer', citedChunk: 'Cited chunk', citedFiles: 'cited files', answerMetrics: 'Metrics used by this answer', referencedMetrics: 'referenced metrics',
             graphLoadFailed: 'Failed to load the knowledge graph', metricLoadFailed: 'Failed to load the metric graph', refreshFailed: 'Refresh failed',
             controls: 'Appearance & Forces', appearance: 'Appearance', force: 'Forces', palette: 'Color Theme', galaxy: 'Galaxy', cosmic: 'Cosmic', obsidian: 'Obsidian', aurora: 'Aurora', nodeSize: 'Node Size', lineWidth: 'Line Width', labelDensity: 'Label Density', labelOpacity: 'Text Opacity', growthSpeed: 'Growth Speed', playGrowth: 'Play Growth Animation', stopGrowth: 'Stop Animation', centerForce: 'Center Force', repulsion: 'Node Repulsion', attraction: 'Linked Attraction', linkLength: 'Link Length', drift: 'Drift Force', resetControls: 'Reset Defaults'
         }
@@ -439,7 +451,7 @@
     }
 
     function isLeafNode(node) {
-        return ['document', 'submetric', 'assetFile', 'table'].includes(node?.type);
+        return ['document', 'citation', 'submetric', 'assetFile', 'table'].includes(node?.type);
     }
 
     function isMetricMode() {
@@ -483,7 +495,9 @@
             <span class="ai-kg-status"><strong>${Number(data.stats?.documents) || 0}</strong> ${kgT('files')}</span>
             <span class="ai-kg-status"><strong>${Number(data.stats?.chunks) || 0}</strong> ${kgT('chunks')}</span>
             <span class="ai-kg-status"><strong>${Number(data.stats?.builtInTools || 0) + Number(data.stats?.customTools || 0)}</strong> ${kgT('tools')}</span>
+            <span class="ai-kg-status"><strong>${Number(data.stats?.databases) || 0}</strong> ${kgT('databases')}</span>
             <span class="ai-kg-status"><strong>${Number(data.stats?.tables) || 0}</strong> ${kgT('tables')}</span>
+            <span class="ai-kg-status"><strong>${Number(data.stats?.tableRelations) || 0}</strong> ${kgT('tableRelations')}</span>
             <span class="ai-kg-status">${kgT('recentUpdated')} <strong>${changed}</strong> ${kgT('files')}</span>
             <span class="ai-kg-status">${escapeHtml(formatTime(data.status?.lastIndexedAt))}</span>
         `;
@@ -631,11 +645,13 @@
             const dy = b.y - a.y;
             const dz = state.dimension === '3d' ? b.z - a.z : 0;
             const distance = Math.max(1, Math.hypot(dx, dy, dz));
-            const desiredBase = edge.type === 'contains'
+            const desiredBase = edge.type === 'citation'
+                ? 42
+                : edge.type === 'contains'
                 ? (isRootNode(a) ? (isMetricMode() ? 305 : 250) : a.type === 'metricCategory' ? 112 : a.type === 'metric' ? 56 : a.type === 'tool' || a.type === 'database' ? 72 : a.type === 'assetCategory' ? 108 : 86)
                 : 145;
             const desired = desiredBase * state.settings.linkLength;
-            const strength = (edge.type === 'contains' ? 0.014 : 0.0022) * state.settings.attraction;
+            const strength = (edge.type === 'citation' ? 0.02 : edge.type === 'contains' ? 0.014 : 0.0022) * state.settings.attraction;
             const force = (distance - desired) * strength * alpha * elapsed;
             const fx = dx / distance * force;
             const fy = dy / distance * force;
@@ -744,6 +760,7 @@
 
     function nodeBaseColor(node, alpha = 1) {
         if (isRootNode(node)) return state.settings.palette === 'galaxy' ? `rgba(255,255,255,${alpha})` : `rgba(247,248,255,${alpha})`;
+        if (node?.type === 'citation') return accentColor(Math.min(alpha, 0.98));
         if (isGroupNode(node)) return colorForGroup(node.group, alpha);
         if (node.type === 'metric') return colorForGroup(node.group, Math.min(alpha, 0.96));
         return colorForGroup(node.group, Math.min(alpha, 0.78));
@@ -1065,13 +1082,14 @@
     }
 
     function renderHierarchyLabels(highlighted, focusNode, focusStrength, selectedNextLevel) {
+        const hasFocus = Boolean(focusNode || state.answerFocus);
         const zoomThreshold = [0, 0.42, 0.92, 1.42];
         const maxLabels = Math.round((state.scale < 0.7 ? 12 : state.scale < 1.05 ? 20 : state.scale < 1.45 ? 38 : state.scale < 2 ? 72 : 120) * state.settings.labelDensity);
         const now = performance.now();
         const candidates = state.nodes.map(node => {
             const tier = nodeLabelTier(node);
             const isNextLevel = selectedNextLevel.has(node.id);
-            const forced = node.id === focusNode?.id || state.searchMatches.has(node.id) || isNextLevel;
+            const forced = node.id === focusNode?.id || state.searchMatches.has(node.id) || isNextLevel || Boolean(state.answerFocus?.nodeIds.has(node.id));
             const visibleByFocus = highlighted.has(node.id) && (tier <= 2 || state.scale >= 1.1);
             const priority = (node.id === focusNode?.id ? 50000 : 0)
                 + (isNextLevel ? 42000 : 0)
@@ -1083,7 +1101,7 @@
         })
             .filter(item => item.growthProgress >= 0.82)
             .filter(item => item.point.x > -100 && item.point.x < state.width + 100 && item.point.y > -50 && item.point.y < state.height + 50)
-            .filter(item => focusNode
+            .filter(item => hasFocus
                 ? item.forced || item.visibleByFocus
                 : item.forced || state.scale >= zoomThreshold[item.tier])
             .sort((a, b) => b.priority - a.priority);
@@ -1122,9 +1140,10 @@
             if (!placement) continue;
             const rect = { nodeId: `label:${node.id}`, left: placement.x, right: placement.x + width, top: placement.y, bottom: placement.y + height };
             occupied.push(rect);
-            const dimmed = focusNode && !highlighted.has(node.id);
+            const dimmed = hasFocus && !highlighted.has(node.id);
             const normalAlpha = forced ? 1 : tier === 3 ? 0.72 : 0.9;
-            ctx.globalAlpha = (dimmed ? normalAlpha * (1 - .88 * focusStrength) : normalAlpha) * state.settings.labelOpacity;
+            const dimmedLabelAlpha = state.answerFocus ? .035 : (1 - .88 * focusStrength);
+            ctx.globalAlpha = (dimmed ? normalAlpha * dimmedLabelAlpha : normalAlpha) * state.settings.labelOpacity;
             if (pill) {
                 roundedRectPath(placement.x, placement.y, width, height, 6);
                 ctx.fillStyle = node.id === focusNode?.id ? 'rgba(72,54,130,.94)' : 'rgba(10,16,29,.82)';
@@ -1177,11 +1196,14 @@
         const now = performance.now();
         const hoverStrength = state.hovered ? state.hoverIntensity : 0;
         const focusNode = hoverStrength > 0.015 ? state.hovered : state.selected;
-        const focusStrength = focusNode === state.hovered ? hoverStrength : (focusNode ? 1 : 0);
+        const answerFocus = !focusNode ? state.answerFocus : null;
+        const hasFocus = Boolean(focusNode || answerFocus);
+        const focusStrength = focusNode === state.hovered ? hoverStrength : (hasFocus ? 1 : 0);
         const selectedNextLevel = new Set(state.selected
             ? state.edges.filter(edge => edge.type === 'contains' && edge.source === state.selected.id).map(edge => edge.target)
             : []);
         const highlighted = new Set();
+        if (answerFocus) answerFocus.nodeIds.forEach(id => highlighted.add(id));
         if (focusNode) {
             highlighted.add(focusNode.id);
             state.edges.forEach(edge => {
@@ -1189,6 +1211,9 @@
                 if (edge.target === focusNode.id) highlighted.add(edge.source);
             });
         }
+        const edgeIsActive = edge => focusNode
+            ? edge.source === focusNode.id || edge.target === focusNode.id
+            : Boolean(answerFocus?.edgeKeys.has(graphEdgeKey(edge.source, edge.target)));
         ctx.lineCap = 'round';
         if (state.dimension === '3d' && state.settings.palette === 'galaxy') {
             const time = now * 0.0003;
@@ -1208,8 +1233,8 @@
             ctx.restore();
         }
         const orderedEdges = [...state.edges].sort((a, b) => {
-            const aActive = focusNode && (a.source === focusNode.id || a.target === focusNode.id);
-            const bActive = focusNode && (b.source === focusNode.id || b.target === focusNode.id);
+            const aActive = edgeIsActive(a);
+            const bActive = edgeIsActive(b);
             if (aActive !== bActive) return Number(aActive) - Number(bActive);
             if (state.dimension === '3d') {
                 const aDepth = (worldToScreen(a.sourceNode).depth + worldToScreen(a.targetNode).depth) / 2;
@@ -1231,19 +1256,32 @@
             if (growthProgress <= 0) continue;
             const drawX = a.x + (b.x - a.x) * growthProgress;
             const drawY = a.y + (b.y - a.y) * growthProgress;
-            const active = Boolean(focusNode && (edge.source === focusNode.id || edge.target === focusNode.id));
-            if (focusNode) {
+            const active = edgeIsActive(edge);
+            const answerActive = Boolean(answerFocus && active);
+            if (hasFocus) {
                 const baseAlpha = edge.type !== 'contains' ? .11 : .22;
-                const activeAlpha = baseAlpha + (.88 - baseAlpha) * focusStrength;
-                const inactiveAlpha = baseAlpha + (.025 - baseAlpha) * focusStrength;
+                const activeTarget = answerFocus ? .98 : .88;
+                const inactiveTarget = answerFocus ? .008 : .025;
+                const activeAlpha = baseAlpha + (activeTarget - baseAlpha) * focusStrength;
+                const inactiveAlpha = baseAlpha + (inactiveTarget - baseAlpha) * focusStrength;
                 ctx.strokeStyle = active ? accentColor(Math.min(1, activeAlpha * depthOpacity)) : `rgba(94,108,145,${inactiveAlpha * depthOpacity})`;
-                ctx.lineWidth = (active ? .9 + .55 * focusStrength : .9 - .35 * focusStrength) * state.settings.lineScale * depthWidth;
-                ctx.shadowColor = active ? accentColor(.72 * focusStrength) : 'transparent';
-                ctx.shadowBlur = active ? 5 * focusStrength : 0;
+                ctx.lineWidth = (active ? (answerFocus ? 2.2 : .9 + .55 * focusStrength) : .9 - .35 * focusStrength) * state.settings.lineScale * depthWidth;
+                ctx.shadowColor = active ? accentColor((answerFocus ? .96 : .72) * focusStrength) : 'transparent';
+                ctx.shadowBlur = active ? (answerFocus ? 12 : 5) * focusStrength : 0;
             } else {
                 ctx.strokeStyle = edge.type !== 'contains' ? `rgba(117,132,173,${.11 * depthOpacity})` : `rgba(133,147,187,${.22 * depthOpacity})`;
                 ctx.lineWidth = (edge.type !== 'contains' ? 0.65 : 0.9) * state.settings.lineScale * depthWidth;
                 ctx.shadowBlur = 0;
+            }
+            if (answerActive) {
+                ctx.save();
+                ctx.globalAlpha = Math.min(1, growthProgress * 1.35);
+                ctx.strokeStyle = accentColor(.2 * depthOpacity);
+                ctx.lineWidth = 6.2 * state.settings.lineScale * depthWidth;
+                ctx.shadowColor = accentColor(.9);
+                ctx.shadowBlur = 18;
+                ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(drawX, drawY); ctx.stroke();
+                ctx.restore();
             }
             ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(drawX, drawY); ctx.stroke();
         }
@@ -1258,13 +1296,15 @@
             const isSelected = state.selected?.id === node.id;
             const isHovered = state.hovered?.id === node.id;
             const isSearch = state.searchMatches.has(node.id);
-            const dimmed = focusNode && !highlighted.has(node.id);
-            const radius = screenNodeRadius(node, point) * growthNodeScale(growthProgress);
-            ctx.globalAlpha = (dimmed ? 1 - .88 * focusStrength : 1) * Math.min(1, growthProgress * 1.5);
-            const emphasized = Boolean(isSelected || isHovered || isSearch || focusNode && highlighted.has(node.id));
+            const dimmed = hasFocus && !highlighted.has(node.id);
+            const isAnswerHighlighted = Boolean(answerFocus && highlighted.has(node.id));
+            const radius = screenNodeRadius(node, point) * growthNodeScale(growthProgress) * (isAnswerHighlighted ? 1.14 : 1);
+            const dimmedNodeAlpha = answerFocus ? .035 : (1 - .88 * focusStrength);
+            ctx.globalAlpha = (dimmed ? dimmedNodeAlpha : 1) * Math.min(1, growthProgress * 1.5);
+            const emphasized = Boolean(isSelected || isHovered || isSearch || hasFocus && highlighted.has(node.id));
             if (emphasized) {
                 ctx.shadowColor = isRootNode(node) ? '#fff' : colorForGroup(node.group, .85);
-                ctx.shadowBlur = isSelected || isHovered ? 18 : 8;
+                ctx.shadowBlur = isAnswerHighlighted ? 22 : (isSelected || isHovered ? 18 : 8);
             }
             if (state.dimension === '3d') {
                 drawLitSphere(node, point, radius, emphasized);
@@ -1273,6 +1313,19 @@
                 ctx.beginPath();
                 ctx.arc(point.x, point.y, radius + (isSelected || isHovered ? 1.4 : 0), 0, Math.PI * 2);
                 ctx.fill();
+            }
+            if (isAnswerHighlighted) {
+                const pulse = .5 + Math.sin(now * .0032 + Number(node.motionPhase || 0)) * .5;
+                ctx.save();
+                ctx.globalAlpha = Math.min(1, growthProgress * 1.5);
+                ctx.strokeStyle = accentColor(.92);
+                ctx.lineWidth = node.type === 'metric' ? 2.4 : 1.7;
+                ctx.shadowColor = accentColor(.96);
+                ctx.shadowBlur = 16 + pulse * 6;
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, radius + 3.2 + pulse * 1.4, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
             }
             if (isMetricMode() && node.isFailing === true) drawFailingMetricHalo(node, point, radius, now);
             ctx.shadowBlur = 0;
@@ -1389,7 +1442,7 @@
         }
         const stats = state.data?.stats || {};
         if (node.type === 'metricRoot') {
-            sidebar.innerHTML = `<div class="ai-kg-node-type">指标体系根节点</div><div class="ai-kg-node-title">${state.month}月指标规则</div><div class="ai-kg-node-stats"><div class="ai-kg-stat-card"><b>${stats.categories || 0}</b><span>指标分类</span></div><div class="ai-kg-stat-card"><b>${stats.metrics || 0}</b><span>指标</span></div><div class="ai-kg-stat-card"><b>${stats.subMetrics || 0}</b><span>子指标</span></div><div class="ai-kg-stat-card"><b>${stats.snapshots || 0}</b><span>历史快照</span></div></div><div class="ai-kg-section-title">数据口径</div><div class="ai-kg-node-path">${escapeHtml(state.data?.historicalRule || '')}</div>`;
+            sidebar.innerHTML = `<div class="ai-kg-node-type">指标体系根节点</div><div class="ai-kg-node-title">${state.month}月指标规则</div><div class="ai-kg-node-stats"><div class="ai-kg-stat-card"><b>${stats.categories || 0}</b><span>指标分类</span></div><div class="ai-kg-stat-card"><b>${stats.metrics || 0}</b><span>指标</span></div><div class="ai-kg-stat-card"><b>${stats.subMetrics || 0}</b><span>子指标</span></div><div class="ai-kg-stat-card"><b>${stats.snapshots || 0}</b><span>历史日期</span></div></div><div class="ai-kg-section-title">数据口径</div><div class="ai-kg-node-path">${escapeHtml(state.data?.historicalRule || '')}</div>`;
             return;
         }
         if (node.type === 'metricCategory') {
@@ -1405,9 +1458,9 @@
         const rule = metricNode.rule;
         const childNodes = state.edges.filter(edge => edge.source === metricNode.id && edge.targetNode?.type === 'submetric').map(edge => edge.targetNode);
         const subMetricHtml = node.type === 'metric' && childNodes.length
-            ? `<div class="ai-kg-section-title">子指标</div>${childNodes.map(item => `<div class="ai-kg-chunk" data-node-id="${escapeHtml(item.id)}"><div class="ai-kg-chunk-title">${escapeHtml(item.label)}</div><div class="ai-kg-chunk-lines">${escapeHtml(formatRuleTarget(rule, item.category))} · 最新 ${escapeHtml(item.latestValue ?? '--')} · ${Number(item.historySnapshotCount) || 0} 个快照</div></div>`).join('')}`
+            ? `<div class="ai-kg-section-title">子指标</div>${childNodes.map(item => `<div class="ai-kg-chunk" data-node-id="${escapeHtml(item.id)}"><div class="ai-kg-chunk-title">${escapeHtml(item.label)}</div><div class="ai-kg-chunk-lines">${escapeHtml(formatRuleTarget(rule, item.category))} · 最新 ${escapeHtml(item.latestValue ?? '--')} · ${Number(item.historySnapshotCount) || 0} 个有值日期</div></div>`).join('')}`
             : '';
-        sidebar.innerHTML = `<div class="ai-kg-node-type">${node.type === 'submetric' ? '子指标' : '指标'}</div><div class="ai-kg-node-title">${escapeHtml(node.label)}</div><div class="ai-kg-node-path">${escapeHtml(metricNode.group)} · ${state.month}月规则</div><div class="ai-kg-rule"><div class="ai-kg-rule-main">${escapeHtml(formatRuleTarget(rule, category))}</div><div class="ai-kg-rule-meta">指标：${escapeHtml(metricNode.label)} · 权重 ${escapeHtml(rule?.weight ?? '--')} · ${rule?.proportionalScoring ? '比例计分' : '标准计分'}${category ? ` · 子指标 ${escapeHtml(category)}` : ''}</div></div>${subMetricHtml}<div class="ai-kg-section-title">12个月规则</div>${renderMonthlyRules(rule)}<div class="ai-kg-section-title">历史录入快照</div><div class="ai-kg-side-empty ai-kg-history-loading">正在读取已保存历史值…</div>`;
+        sidebar.innerHTML = `<div class="ai-kg-node-type">${node.type === 'submetric' ? '子指标' : '指标'}</div><div class="ai-kg-node-title">${escapeHtml(node.label)}</div><div class="ai-kg-node-path">${escapeHtml(metricNode.group)} · ${state.month}月规则</div><div class="ai-kg-rule"><div class="ai-kg-rule-main">${escapeHtml(formatRuleTarget(rule, category))}</div><div class="ai-kg-rule-meta">指标：${escapeHtml(metricNode.label)} · 权重 ${escapeHtml(rule?.weight ?? '--')} · ${rule?.proportionalScoring ? '比例计分' : '标准计分'}${category ? ` · 子指标 ${escapeHtml(category)}` : ''}</div></div>${subMetricHtml}<div class="ai-kg-section-title">12个月规则</div>${renderMonthlyRules(rule)}<div class="ai-kg-section-title">历史有值日期（每日最新）</div><div class="ai-kg-side-empty ai-kg-history-loading">正在读取已保存历史值…</div>`;
         try {
             const query = new URLSearchParams({ metric: metricNode.label, month: String(state.month) });
             if (category) query.set('category', category);
@@ -1435,6 +1488,24 @@
             sidebar.innerHTML = `<div class="ai-kg-side-empty">${escapeHtml(kgT('empty'))}</div>`;
             return;
         }
+        if (node.type === 'citation') {
+            const source = node.citation || {};
+            const range = source.startLine ? `L${source.startLine}${source.endLine && source.endLine !== source.startLine ? `–${source.endLine}` : ''}` : kgT('citedChunk');
+            sidebar.innerHTML = `<div class="ai-kg-node-type">${escapeHtml(kgT('citedChunk'))}</div><div class="ai-kg-node-title">${escapeHtml(source.title || node.path)}</div><div class="ai-kg-node-path">${escapeHtml(node.path)} · ${escapeHtml(range)}</div><div class="ai-kg-side-empty">${kgLang() === 'en' ? 'Loading the cited content…' : '正在读取引用内容…'}</div>`;
+            try {
+                const response = await fetch(`/api/ai/knowledge/document?path=${encodeURIComponent(node.path)}`, { headers: authHeaders() });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || '读取失败');
+                if (state.selected?.id !== node.id) return;
+                const startLine = Number(source.startLine) || 0;
+                const endLine = Number(source.endLine || source.startLine) || startLine;
+                const chunks = (data.chunks || []).filter(chunk => !startLine || Number(chunk.end_line) >= startLine && Number(chunk.start_line) <= endLine);
+                sidebar.innerHTML = `<div class="ai-kg-node-type">${escapeHtml(kgT('citedChunk'))}</div><div class="ai-kg-node-title">${escapeHtml(source.title || node.path)}</div><div class="ai-kg-node-path">${escapeHtml(node.path)} · ${escapeHtml(range)}</div><div class="ai-kg-section-title">${escapeHtml(kgT('viewChunks'))}</div>${(chunks.length ? chunks : data.chunks || []).slice(0, 3).map(chunk => `<div class="ai-kg-chunk answer-citation"><div class="ai-kg-chunk-title">${escapeHtml(chunk.title || kgT('unnamedChunk'))}</div><div class="ai-kg-chunk-lines">${escapeHtml(data.path)}:${chunk.start_line}-${chunk.end_line}</div><div class="ai-kg-chunk-preview">${escapeHtml(chunk.content)}</div></div>`).join('')}`;
+            } catch (error) {
+                if (state.selected?.id === node.id) sidebar.insertAdjacentHTML('beforeend', `<div class="ai-kg-side-empty">⚠️ ${escapeHtml(error.message)}</div>`);
+            }
+            return;
+        }
         if (node.type === 'root') {
             const stats = state.data?.stats || {};
             sidebar.innerHTML = `<div class="ai-kg-node-type">${kgT('rootType')}</div><div class="ai-kg-node-title">Tools Platform</div><div class="ai-kg-node-stats"><div class="ai-kg-stat-card"><b>${stats.documents || 0}</b><span>${kgT('knowledgeFile')}</span></div><div class="ai-kg-stat-card"><b>${stats.chunks || 0}</b><span>${kgT('chunks')}</span></div><div class="ai-kg-stat-card"><b>${Number(stats.builtInTools || 0) + Number(stats.customTools || 0)}</b><span>${kgT('tools')}</span></div><div class="ai-kg-stat-card"><b>${stats.tables || 0}</b><span>${kgT('tables')}</span></div></div>`;
@@ -1459,7 +1530,7 @@
         if (node.type === 'group') {
             if (node.group === 'tool-data-assets') {
                 const children = state.edges.filter(edge => edge.type === 'contains' && edge.source === node.id).map(edge => edge.targetNode).filter(Boolean);
-                sidebar.innerHTML = `<div class="ai-kg-node-type">${kgT('toolData')}</div><div class="ai-kg-node-title">${escapeHtml(nodeLabel(node))}</div><div class="ai-kg-node-stats"><div class="ai-kg-stat-card"><b>${state.data?.stats?.builtInTools || 0}</b><span>${kgT('builtInTools')}</span></div><div class="ai-kg-stat-card"><b>${state.data?.stats?.customTools || 0}</b><span>${kgT('customTools')}</span></div><div class="ai-kg-stat-card"><b>${state.data?.stats?.databases || 0}</b><span>${kgT('databases')}</span></div><div class="ai-kg-stat-card"><b>${state.data?.stats?.tables || 0}</b><span>${kgT('tables')}</span></div></div><div class="ai-kg-section-title">${kgT('contained')}</div>${children.map(item => `<div class="ai-kg-chunk" data-node-id="${escapeHtml(item.id)}"><div class="ai-kg-chunk-title">${escapeHtml(nodeLabel(item))}</div></div>`).join('')}`;
+                sidebar.innerHTML = `<div class="ai-kg-node-type">${kgT('toolData')}</div><div class="ai-kg-node-title">${escapeHtml(nodeLabel(node))}</div><div class="ai-kg-node-stats"><div class="ai-kg-stat-card"><b>${state.data?.stats?.builtInTools || 0}</b><span>${kgT('builtInTools')}</span></div><div class="ai-kg-stat-card"><b>${state.data?.stats?.customTools || 0}</b><span>${kgT('customTools')}</span></div><div class="ai-kg-stat-card"><b>${state.data?.stats?.databases || 0}</b><span>${kgT('databases')}</span></div><div class="ai-kg-stat-card"><b>${state.data?.stats?.tables || 0}</b><span>${kgT('tables')}</span></div><div class="ai-kg-stat-card"><b>${state.data?.stats?.tableRelations || 0}</b><span>${kgT('tableRelations')}</span></div></div><div class="ai-kg-section-title">${kgT('contained')}</div>${children.map(item => `<div class="ai-kg-chunk" data-node-id="${escapeHtml(item.id)}"><div class="ai-kg-chunk-title">${escapeHtml(nodeLabel(item))}</div></div>`).join('')}`;
                 return;
             }
             const docs = state.nodes.filter(item => item.type === 'document' && item.group === node.group);
@@ -1617,7 +1688,157 @@
         render();
     }
 
+    function normalizeKnowledgePath(value) {
+        return String(value || '').replace(/\\/g, '/').replace(/^\.\//, '').replace(/^\//, '');
+    }
+
+    function graphEdgeKey(source, target) {
+        return `${source}\u0000${target}`;
+    }
+
+    function renderAnswerFocusSidebar(focus) {
+        const rows = focus.citations.map(item => {
+            const source = item.source;
+            const range = source.startLine
+                ? `L${source.startLine}${source.endLine && source.endLine !== source.startLine ? `–${source.endLine}` : ''}`
+                : kgT('citedChunk');
+            return `<div class="ai-kg-chunk answer-citation" data-node-id="${escapeHtml(item.node.id)}"><div class="ai-kg-chunk-title">${escapeHtml(source.title || item.document.label || item.document.path)}</div><div class="ai-kg-chunk-lines">${escapeHtml(item.document.path)} · ${escapeHtml(range)}</div></div>`;
+        }).join('');
+        sidebar.innerHTML = `<div class="ai-kg-node-type">${escapeHtml(kgT('answerSources'))}</div><div class="ai-kg-node-title">${focus.citations.length} ${escapeHtml(kgT('citedFiles'))}</div><div class="ai-kg-node-path">${kgLang() === 'en' ? 'Highlighted nodes are temporary cited chunks; bright links trace each chunk back to the project root.' : '发光节点为本次回答的临时引用片段，高亮连线会从片段逐级回溯到项目根节点。'}</div><div class="ai-kg-section-title">${escapeHtml(kgT('viewChunks'))}</div>${rows}`;
+    }
+
+    function fitFocusedNodes(nodes) {
+        if (!nodes.length || state.dimension === '3d') return;
+        const minX = Math.min(...nodes.map(node => node.x));
+        const maxX = Math.max(...nodes.map(node => node.x));
+        const minY = Math.min(...nodes.map(node => node.y));
+        const maxY = Math.max(...nodes.map(node => node.y));
+        const availableWidth = Math.max(280, state.width - (state.sidebarCollapsed ? 80 : 430));
+        const availableHeight = Math.max(260, state.height - 150);
+        const width = Math.max(170, maxX - minX + 150);
+        const height = Math.max(150, maxY - minY + 130);
+        state.scale = Math.max(0.62, Math.min(1.55, Math.min(availableWidth / width, availableHeight / height)));
+        state.panX = -(minX + maxX) / 2 * state.scale - (state.sidebarCollapsed ? 0 : 90);
+        state.panY = -(minY + maxY) / 2 * state.scale;
+    }
+
+    function fitAnswerFocus(focus) {
+        fitFocusedNodes(focus.citations.flatMap(item => [item.document, item.node]));
+    }
+
+    function addFocusPath(startNodeId, nodeIds, edgeKeys) {
+        nodeIds.add(startNodeId);
+        const visited = new Set([startNodeId]);
+        let frontier = [startNodeId];
+        while (frontier.length) {
+            const parents = [];
+            frontier.forEach(childId => {
+                state.edges.forEach(edge => {
+                    if (edge.type !== 'contains' || edge.target !== childId || visited.has(edge.source)) return;
+                    visited.add(edge.source);
+                    nodeIds.add(edge.source);
+                    edgeKeys.add(graphEdgeKey(edge.source, edge.target));
+                    parents.push(edge.source);
+                });
+            });
+            frontier = parents;
+        }
+    }
+
+    function renderMetricAnswerFocusSidebar(focus) {
+        const rows = focus.metrics.map(item => {
+            const rule = item.node.rule;
+            const subText = item.subNodes.length
+                ? `${item.subNodes.length} ${kgT('submetric')}`
+                : kgT('metric');
+            return `<div class="ai-kg-chunk answer-citation" data-node-id="${escapeHtml(item.node.id)}"><div class="ai-kg-chunk-title">${escapeHtml(nodeLabel(item.node))}</div><div class="ai-kg-chunk-lines">${escapeHtml(item.node.group || '')} · ${escapeHtml(formatRuleTarget(rule))} · ${escapeHtml(subText)}</div></div>`;
+        }).join('');
+        sidebar.innerHTML = `<div class="ai-kg-node-type">${escapeHtml(kgT('answerMetrics'))}</div><div class="ai-kg-node-title">${focus.metrics.length} ${escapeHtml(kgT('referencedMetrics'))}</div><div class="ai-kg-node-path">${kgLang() === 'en' ? `The highlighted paths show Month ${state.month} rules → categories → metrics → referenced submetrics. Click a metric to inspect saved history.` : `高亮路径展示 ${state.month}月规则 → 指标分类 → 指标 → 本次引用子指标。点击指标可查看已入库历史值。`}</div><div class="ai-kg-section-title">${escapeHtml(kgT('metric'))}</div>${rows}`;
+    }
+
+    function applyMetricAnswerFocus(options) {
+        const references = Array.isArray(options?.metricReferences) ? options.metricReferences : [];
+        state.answerFocus = null;
+        if (!isMetricMode() || !references.length) return false;
+        const metrics = references.map(reference => {
+            const node = state.nodeMap.get(reference.nodeId)
+                || state.nodes.find(item => item.type === 'metric' && item.label === reference.label);
+            if (!node) return null;
+            const requestedSubIds = new Set((reference.subMetrics || []).map(item => item.nodeId).filter(Boolean));
+            const requestedCategories = new Set((reference.subMetrics || []).map(item => String(item.category || '')).filter(Boolean));
+            const subNodes = state.nodes.filter(item => item.type === 'submetric' && item.metricLabel === node.label)
+                .filter(item => !requestedSubIds.size && !requestedCategories.size
+                    ? false
+                    : requestedSubIds.has(item.id) || requestedCategories.has(String(item.category || '')));
+            return { reference, node, subNodes };
+        }).filter(Boolean);
+        if (!metrics.length) return false;
+        const nodeIds = new Set();
+        const edgeKeys = new Set();
+        metrics.forEach(item => {
+            addFocusPath(item.node.id, nodeIds, edgeKeys);
+            item.subNodes.forEach(node => addFocusPath(node.id, nodeIds, edgeKeys));
+        });
+        state.answerFocus = { metrics, nodeIds, edgeKeys };
+        fitFocusedNodes(metrics.flatMap(item => [item.node, ...item.subNodes]));
+        renderMetricAnswerFocusSidebar(state.answerFocus);
+        reheat(0.46);
+        return true;
+    }
+
+    function applyAnswerFocus(options) {
+        const sources = Array.isArray(options?.sources) ? options.sources.filter(source => source?.path) : [];
+        state.answerFocus = null;
+        if (isMetricMode() || !sources.length) return false;
+        const documentNodes = state.nodes.filter(node => node.type === 'document');
+        const citations = [];
+        sources.forEach((source, index) => {
+            const path = normalizeKnowledgePath(source.path);
+            const documentNode = state.nodeMap.get(`doc:${path}`)
+                || documentNodes.find(node => normalizeKnowledgePath(node.path) === path)
+                || documentNodes.find(node => path.endsWith(normalizeKnowledgePath(node.path)) || normalizeKnowledgePath(node.path).endsWith(path));
+            if (!documentNode) return;
+            const angle = (index * 2.399963229728653) + Number(documentNode.motionPhase || 0) * 0.01;
+            const citationNode = {
+                id: `citation:${path}:${source.startLine || 0}:${source.endLine || source.startLine || 0}:${index}`,
+                type: 'citation',
+                label: source.startLine ? `L${source.startLine}${source.endLine && source.endLine !== source.startLine ? `–${source.endLine}` : ''}` : kgT('citedChunk'),
+                labelEn: source.startLine ? `L${source.startLine}${source.endLine && source.endLine !== source.startLine ? `–${source.endLine}` : ''}` : KG_TEXT.en.citedChunk,
+                title: source.title || '',
+                path: documentNode.path,
+                group: documentNode.group,
+                size: 4.8,
+                citation: source,
+                x: documentNode.x + Math.cos(angle) * 42,
+                y: documentNode.y + Math.sin(angle) * 42,
+                z: documentNode.z + Math.sin(angle * 1.7) * 24,
+                vx: 0, vy: 0, vz: 0,
+                motionPhase: Number(documentNode.motionPhase || 0) + index * 17
+            };
+            state.nodes.push(citationNode);
+            state.nodeMap.set(citationNode.id, citationNode);
+            const citationEdge = { source: documentNode.id, target: citationNode.id, type: 'citation', sourceNode: documentNode, targetNode: citationNode };
+            state.edges.push(citationEdge);
+            citations.push({ source, document: documentNode, node: citationNode, edge: citationEdge });
+        });
+        if (!citations.length) return false;
+        const nodeIds = new Set();
+        const edgeKeys = new Set();
+        citations.forEach(item => {
+            nodeIds.add(item.node.id);
+            nodeIds.add(item.document.id);
+            edgeKeys.add(graphEdgeKey(item.edge.source, item.edge.target));
+            addFocusPath(item.document.id, nodeIds, edgeKeys);
+        });
+        state.answerFocus = { citations, nodeIds, edgeKeys };
+        fitAnswerFocus(state.answerFocus);
+        renderAnswerFocusSidebar(state.answerFocus);
+        reheat(0.46);
+        return true;
+    }
+
     async function loadGraph() {
+        const loadSequence = ++state.loadSequence;
         setLoading(isMetricMode() ? kgT('loadingMetrics') : kgT('loadingKnowledge'), true);
         try {
             const endpoint = isMetricMode()
@@ -1625,6 +1846,7 @@
                 : '/api/ai/knowledge/graph';
             const response = await fetch(endpoint, { headers: authHeaders() });
             const data = await response.json();
+            if (loadSequence !== state.loadSequence) return;
             if (!response.ok) throw new Error(data.error || (isMetricMode() ? kgT('metricLoadFailed') : kgT('graphLoadFailed')));
             updateModeChrome(data);
             renderStatuses(data);
@@ -1637,11 +1859,25 @@
             searchCount.textContent = '';
             initializeLayout(data);
             setLoading('', false);
+            if (applyMetricAnswerFocus(state.pendingFocus)) {
+                state.pendingFocus = null;
+                state.selected = null;
+                render();
+                return;
+            }
+            if (applyAnswerFocus(state.pendingFocus)) {
+                state.pendingFocus = null;
+                state.selected = null;
+                render();
+                return;
+            }
+            state.pendingFocus = null;
             const rootNode = state.nodeMap.get(isMetricMode() ? 'metric-root' : 'root');
             await selectNode(rootNode);
             state.selected = null;
             render();
         } catch (error) {
+            if (loadSequence !== state.loadSequence) return;
             showError(error.message);
         }
     }
@@ -1649,6 +1885,8 @@
     async function switchMode(mode) {
         if (!['knowledge', 'metrics'].includes(mode) || mode === state.mode) return;
         state.mode = mode;
+        state.preferredMode = mode;
+        try { localStorage.setItem('ai_kg_preferred_mode', mode); } catch (_error) {}
         state.month = mode === 'metrics' ? state.month : null;
         await loadGraph();
     }
@@ -1747,7 +1985,14 @@
         if (pointer && pointer.node && !pointer.moved) selectNode(pointer.node);
         else if (pointer && !pointer.node && !pointer.moved && pointer.button !== 1) {
             state.selected = null;
+            state.answerFocus = null;
+            state.searchMatches = new Set();
+            searchInput.value = '';
+            searchCount.textContent = '';
+            clearHoverIntent({ immediate: true });
             setOrbitTarget(null);
+            if (isMetricMode()) selectMetricNode(null);
+            else sidebar.innerHTML = `<div class="ai-kg-side-empty">${escapeHtml(kgT('empty'))}</div>`;
             render();
         }
         try { canvas.releasePointerCapture(event.pointerId); } catch (_error) {}
@@ -1931,7 +2176,19 @@
     applyGraphLanguage();
 
     window.AIKnowledgeGraph = {
-        open() {
+        open(options = {}) {
+            state.pendingFocus = options && typeof options === 'object' ? options : null;
+            const requestedMode = options?.mode;
+            if (requestedMode === 'metrics') {
+                state.mode = requestedMode;
+                const requestedMonth = Number(options.month);
+                if (Number.isInteger(requestedMonth) && requestedMonth >= 1 && requestedMonth <= 12) state.month = requestedMonth;
+            } else if (requestedMode === 'knowledge') {
+                state.mode = requestedMode;
+                state.month = null;
+            } else {
+                state.mode = state.preferredMode;
+            }
             overlay.classList.add('open');
             document.body.classList.add('ai-kg-open');
             resize();
