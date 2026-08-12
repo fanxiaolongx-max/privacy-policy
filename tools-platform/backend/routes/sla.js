@@ -517,17 +517,29 @@ router.put('/snapshots/:id', async (req, res) => {
 });
 
 // POST /api/sla/snapshots/cleanup-redundant
-// 清理最近 N 天内同一天的冗余快照，只保留每天最新一份。
+// 清理 SLA 源快照。支持彻底清理（只保留最新一份）、按天保留，
+// 并保留旧版“最近 N 天去重”请求的兼容性。
 router.post('/snapshots/cleanup-redundant', async (req, res) => {
     try {
         const result = await snapshotsRepo.cleanupRedundantDailySnapshots({
             days: req.body?.days,
+            mode: req.body?.mode,
             dryRun: req.body?.dryRun
         });
         console.log(
-            `[SLA SNAPSHOT CLEANUP] days=${result.days}, dryRun=${result.dryRun}, ` +
+            `[SLA SNAPSHOT CLEANUP] mode=${result.mode}, days=${result.days}, dryRun=${result.dryRun}, ` +
             `before=${result.beforeCount}, after=${result.afterCount}, removed=${result.removedCount}`
         );
+        if (!result.dryRun) {
+            await writeAudit(req, 'snapshot_cleanup', {
+                mode: result.mode,
+                days: result.days,
+                beforeCount: result.beforeCount,
+                afterCount: result.afterCount,
+                removedCount: result.removedCount,
+                latestSnapshotId: result.latestSnapshotId
+            });
+        }
         res.json(result);
     } catch (err) {
         console.error('[POST /api/sla/snapshots/cleanup-redundant] failed:', err);

@@ -1,0 +1,19 @@
+{
+  "✅ 代码已复制到剪贴板！": "✅ Code copied to clipboard!",
+  "✅ 脚本已触发下载！": "✅ Script download started!",
+  "✅ 配置已应用，请在下方检查或修改代码！": "✅ Configuration applied. Review or edit the code below!",
+  "❌ 代码框为空，请先生成！": "❌ The code box is empty. Generate the code first!",
+  "❌ 复制失败，请手动全选复制！": "❌ Copy failed. Please select all and copy manually!",
+  "⬇️ 应用上方配置并生成脚本": "⬇️ Apply the configuration above and generate the script",
+  "💾 下载为 .user.js 文件": "💾 Download as a .user.js file",
+  "📋 一键复制代码": "📋 Copy code",
+  "🛠️ 3MS 博客爬虫脚本生成与维护工具": "🛠️ 3MS Blog Crawler Script Generation and Maintenance Tool",
+  "3MS 爬虫脚本维护与生成工具": "3MS Crawler Script Maintenance and Generation Tool",
+  "操作成功！": "Operation successful!",
+  "脚本版本号 (@version)": "Script version (@version)",
+  "树状目录接口前缀 (Tree API)": "Tree directory API prefix (Tree API)",
+  "提示：应用后会覆盖下方编辑框的内容。若网页底层逻辑大改，请直接在下方框内手敲代码修改。": "Note: Applying the configuration will overwrite the contents of the editor below. If the website's underlying logic changes significantly, edit the code manually in the box below.",
+  "文章列表接口路径 (Blogs API)": "Blog list API path (Blogs API)",
+  "最大请求间隔 (maxDelay, 毫秒)": "Maximum request interval (maxDelay, milliseconds)",
+  "最小请求间隔 (minDelay, 毫秒)": "Minimum request interval (minDelay, milliseconds)"
+}

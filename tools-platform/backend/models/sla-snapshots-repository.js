@@ -141,16 +141,27 @@ function getSnapshotDateKey(item) {
     return new Date(time).toISOString().slice(0, 10);
 }
 
-async function cleanupRedundantDailySnapshots({ days = 30, dryRun = false } = {}) {
+function compareSnapshotsDesc(a, b) {
+    const timeDiff = getSnapshotTime(b) - getSnapshotTime(a);
+    if (timeDiff) return timeDiff;
+    return String(b && b.id || '').localeCompare(String(a && a.id || ''));
+}
+
+function planSnapshotCleanup(items, { days = 30, mode = 'dedupe-recent', now = Date.now() } = {}) {
     const safeDays = Math.max(1, Math.min(3650, parseInt(days, 10) || 30));
-    const cutoffTime = Date.now() - safeDays * 24 * 60 * 60 * 1000;
-    const { items, source } = await listSnapshots({ mode: 'auto' });
-    const snapshots = normalizeSnapshots(items);
+    const safeMode = ['latest-only', 'retain-days', 'dedupe-recent'].includes(mode)
+        ? mode
+        : 'dedupe-recent';
+    const cutoffTime = Number(now) - safeDays * 24 * 60 * 60 * 1000;
+    const snapshots = normalizeSnapshots(items).slice().sort(compareSnapshotsDesc);
+    const latestSnapshot = snapshots.find(item => getSnapshotTime(item) > 0) || snapshots[0] || null;
     const latestByDate = new Map();
 
     snapshots.forEach(item => {
         const time = getSnapshotTime(item);
-        if (!time || time < cutoffTime) return;
+        if (!time) return;
+        if (safeMode !== 'latest-only' && safeMode !== 'dedupe-recent' && time < cutoffTime) return;
+        if (safeMode === 'dedupe-recent' && time < cutoffTime) return;
         const key = getSnapshotDateKey(item);
         const current = latestByDate.get(key);
         if (!current || getSnapshotTime(item) > getSnapshotTime(current)) {
@@ -158,39 +169,78 @@ async function cleanupRedundantDailySnapshots({ days = 30, dryRun = false } = {}
         }
     });
 
-    const keepIds = new Set(Array.from(latestByDate.values()).map(item => item.id));
+    const keepIds = new Set();
+    if (safeMode === 'latest-only') {
+        if (latestSnapshot) keepIds.add(latestSnapshot.id);
+    } else {
+        Array.from(latestByDate.values()).forEach(item => keepIds.add(item.id));
+        // A stale data set must never be cleaned down to zero. Keep its newest
+        // snapshot so the report dashboard can still open after retention cleanup.
+        if (safeMode === 'retain-days' && latestSnapshot) keepIds.add(latestSnapshot.id);
+    }
+
     const removed = [];
     const kept = [];
 
     snapshots.forEach(item => {
         const time = getSnapshotTime(item);
-        if (!time || time < cutoffTime || keepIds.has(item.id)) {
+        const isLegacyProtected = safeMode === 'dedupe-recent' && (!time || time < cutoffTime);
+        if (isLegacyProtected || keepIds.has(item.id)) {
             kept.push(item);
         } else {
             removed.push({
                 id: item.id,
                 timestamp: item.timestamp,
-                date: getSnapshotDateKey(item)
+                date: getSnapshotDateKey(item),
+                reason: !time
+                    ? 'invalid-timestamp'
+                    : safeMode === 'latest-only'
+                        ? 'older-than-latest'
+                        : time < cutoffTime
+                            ? 'outside-retention'
+                            : 'same-day-duplicate'
             });
         }
     });
 
-    kept.sort((a, b) => getSnapshotTime(b) - getSnapshotTime(a) || String(b.id || '').localeCompare(String(a.id || '')));
+    kept.sort(compareSnapshotsDesc);
 
-    if (!dryRun && removed.length) {
-        await replaceSnapshots(kept);
+    return {
+        mode: safeMode,
+        days: safeDays,
+        cutoff: safeMode === 'latest-only' ? null : new Date(cutoffTime).toISOString(),
+        beforeCount: snapshots.length,
+        afterCount: kept.length,
+        removedCount: removed.length,
+        keptDailyCount: latestByDate.size,
+        latestSnapshotId: latestSnapshot && latestSnapshot.id || null,
+        invalidRemovedCount: removed.filter(item => item.reason === 'invalid-timestamp').length,
+        kept,
+        removed
+    };
+}
+
+async function cleanupRedundantDailySnapshots({ days = 30, mode = 'dedupe-recent', dryRun = false } = {}) {
+    const { items, source } = await listSnapshots();
+    const plan = planSnapshotCleanup(items, { days, mode });
+
+    if (!dryRun && plan.removed.length) {
+        await replaceSnapshots(plan.kept);
     }
 
     return {
         source,
         dryRun: Boolean(dryRun),
-        days: safeDays,
-        cutoff: new Date(cutoffTime).toISOString(),
-        beforeCount: snapshots.length,
-        afterCount: kept.length,
-        removedCount: removed.length,
-        keptDailyCount: latestByDate.size,
-        removed
+        mode: plan.mode,
+        days: plan.days,
+        cutoff: plan.cutoff,
+        beforeCount: plan.beforeCount,
+        afterCount: plan.afterCount,
+        removedCount: plan.removedCount,
+        keptDailyCount: plan.keptDailyCount,
+        latestSnapshotId: plan.latestSnapshotId,
+        invalidRemovedCount: plan.invalidRemovedCount,
+        removed: plan.removed
     };
 }
 
@@ -202,5 +252,6 @@ module.exports = {
     deleteSnapshot,
     updateSnapshot,
     replaceSnapshots,
+    planSnapshotCleanup,
     cleanupRedundantDailySnapshots
 };

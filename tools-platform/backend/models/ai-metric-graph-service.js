@@ -65,6 +65,22 @@ function hasMetricValue(value) {
     return hasValue(value) && !['--', '-'].includes(String(value).trim());
 }
 
+function cleanTranslation(value) {
+    return String(value || '').replace(/<[^>]+>/g, '').trim();
+}
+
+function translateText(value, i18nMap) {
+    const text = String(value || '').trim();
+    if (!text) return '';
+    const direct = cleanTranslation(i18nMap[text]);
+    if (direct) return direct;
+    if (text.includes(' · ')) {
+        const translated = text.split(' · ').map(part => cleanTranslation(i18nMap[part]) || part).join(' · ');
+        if (translated !== text) return translated;
+    }
+    return text;
+}
+
 function normalizeMonth(value, fallback) {
     const month = Number(value);
     return Number.isInteger(month) && month >= 1 && month <= 12 ? month : fallback;
@@ -123,13 +139,14 @@ async function getMetricGraph(options = {}) {
     try {
         const latestSnapshot = await dbGet(reportDb, 'SELECT id, snapshot_id, month, created_at FROM ReportSnapshots ORDER BY id DESC LIMIT 1');
         const month = normalizeMonth(options.month, normalizeMonth(latestSnapshot?.month, new Date().getMonth() + 1));
-        const [groupRows, groupItemRows, targetRows, prefRows, latestMonthSnapshot, latestMetricRows, historyRows, snapshotStats] = await Promise.all([
+        const [groupRows, groupItemRows, targetRows, prefRows, dictionaryRows, latestMonthSnapshot, latestMetricRows, historyRows, snapshotStats] = await Promise.all([
             dbAll(toolsDb, 'SELECT id, group_key, name, sort_order FROM sla_groups ORDER BY sort_order, id'),
             dbAll(toolsDb, 'SELECT group_id, item_name, item_sort_order FROM sla_group_items ORDER BY group_id, item_sort_order, id'),
             dbAll(toolsDb, `SELECT target_key, label, target_type, weight, auto_fill, is_percent, exceed_by, bonus, extra_config_json
                             FROM sla_targets WHERE label IS NOT NULL AND TRIM(label) <> '' ORDER BY label, target_key`),
             dbAll(toolsDb, `SELECT pref_key, payload_json FROM sla_prefs
                             WHERE pref_kind = 'schema' AND payload_json LIKE '%customMetrics%'`),
+            dbAll(toolsDb, `SELECT dict_key, dict_value FROM sys_dictionaries WHERE category = 'i18n'`),
             dbGet(reportDb, 'SELECT id, snapshot_id, month, created_at, raw_data_json FROM ReportSnapshots WHERE month = ? ORDER BY id DESC LIMIT 1', [month]),
             dbAll(reportDb, `SELECT metric_label, cat_name, raw_val, target_val, is_failing
                              FROM ReportMetricData
@@ -147,6 +164,7 @@ async function getMetricGraph(options = {}) {
             dbGet(reportDb, `SELECT COUNT(DISTINCT DATE(created_at)) AS snapshot_count, MIN(created_at) AS first_at, MAX(created_at) AS latest_at
                              FROM ReportSnapshots WHERE month = ?`, [month])
         ]);
+        const i18nMap = Object.fromEntries(dictionaryRows.map(row => [row.dict_key, row.dict_value]));
 
         const groupByDbId = new Map(groupRows.map(row => [row.id, row]));
         const groupMetricLabels = new Map(groupRows.map(row => [row.name, []]));
@@ -220,6 +238,7 @@ async function getMetricGraph(options = {}) {
             id: 'metric-root',
             type: 'metricRoot',
             label: `${month}月指标规则`,
+            labelEn: `Month ${month} Metric Rules`,
             month,
             size: 34
         }];
@@ -232,7 +251,7 @@ async function getMetricGraph(options = {}) {
                 .filter(label => metricGroup.get(label) === group.name || group.name === '未分组');
             if (!labels.length) return;
             const groupId = stableId('metric-category', group.name);
-            nodes.push({ id: groupId, type: 'metricCategory', label: group.name, group: group.name, size: 18 + Math.min(12, labels.length) });
+            nodes.push({ id: groupId, type: 'metricCategory', label: group.name, labelEn: translateText(group.name, i18nMap), group: group.name, size: 18 + Math.min(12, labels.length) });
             edges.push({ source: 'metric-root', target: groupId, type: 'contains' });
             labels.forEach(metricLabel => {
                 const target = selectedTargets.get(metricLabel);
@@ -246,6 +265,7 @@ async function getMetricGraph(options = {}) {
                     id: metricId,
                     type: 'metric',
                     label: metricLabel,
+                    labelEn: translateText(metricLabel, i18nMap),
                     group: group.name,
                     size: 10 + Math.min(8, children.length * 1.4),
                     month,
@@ -263,6 +283,7 @@ async function getMetricGraph(options = {}) {
                         id: subId,
                         type: 'submetric',
                         label: child.label || child.category,
+                        labelEn: translateText(child.label || child.category, i18nMap),
                         category: child.category,
                         metricLabel,
                         group: group.name,
@@ -297,6 +318,7 @@ async function getMetricGraph(options = {}) {
                 createdAt: latestMonthSnapshot.created_at
             } : null,
             historicalRule: '历史值按有值日期读取 ReportMetricData 每天最后一次已保存入库；当前月份规则只用于展示，不重算历史结果。',
+            translations: Object.fromEntries(Object.entries(i18nMap).map(([key, value]) => [key, cleanTranslation(value)])),
             source: 'backend/data/tools.db + data/report.db',
             readOnly: true
         };

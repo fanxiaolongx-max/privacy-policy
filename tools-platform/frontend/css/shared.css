@@ -2473,7 +2473,12 @@ body {
     font-weight: 800;
 }
 
-.nav-report-cleanup-field input {
+.nav-report-cleanup-field[hidden] {
+    display: none;
+}
+
+.nav-report-cleanup-field input,
+.nav-report-cleanup-field select {
     width: 92px;
     height: 32px;
     border-radius: 8px;
@@ -2483,6 +2488,10 @@ body {
     padding: 0 10px;
     font-size: 13px;
     font-weight: 800;
+}
+
+.nav-report-cleanup-field select {
+    width: min(100%, 360px);
 }
 
 .nav-report-cleanup-result {

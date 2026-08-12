@@ -18,6 +18,7 @@ const { repairStartupDatabases } = require('./models/sqlite-integrity-repair');
 
 const express = require('express');
 const cors = require('cors');
+const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const appPackage = require('../package.json');
@@ -43,6 +44,7 @@ const slideDesignRoutes = require('./routes/slide-design');
 const surveysRoutes = require('./routes/surveys');
 const externalMetricsRoutes = require('./routes/external-metrics');
 const customToolsRepo = require('./models/custom-tools-repository');
+const customToolI18nService = require('./models/custom-tool-i18n-service');
 const { initializeBuiltinTools } = require('./models/builtin-tools-sync');
 const { DATA_DIR } = require('./models/store');
 const navSettingsRoutes = require('./routes/nav-settings');
@@ -380,18 +382,31 @@ app.get('/custom-tools/:slug/index.html', async (req, res, next) => {
         const tool = await customToolsRepo.getTool(req.params.slug);
         const filePath = await customToolsRepo.getToolFilePath(req.params.slug);
         if (!tool || !filePath) return res.status(404).send('Custom tool not found');
+        const html = fs.readFileSync(filePath, 'utf8');
         if (req.query.download === '1') {
             const filename = `${String(tool.name || tool.slug).replace(/[\\/:*?"<>|]+/g, '_')}.html`;
-            return res.download(filePath, filename);
+            const standaloneHtml = customToolI18nService.injectLanguageRuntime(html, tool.slug, { inlineRuntime: true, standalone: true });
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`);
+            return res.send(standaloneHtml);
         }
-        res.sendFile(filePath);
+        res.type('html').send(customToolI18nService.injectLanguageRuntime(html, tool.slug));
     } catch (err) {
         next(err);
     }
 });
 app.use('/custom-tools/:slug', (req, res, next) => {
-    const assetPath = customToolsRepo.getToolAssetPath(req.params.slug, req.path);
+    const requestedPath = req.path.endsWith('/') ? `${req.path}index.html` : req.path;
+    const assetPath = customToolsRepo.getToolAssetPath(req.params.slug, requestedPath);
     if (!assetPath) return next();
+    if (/\.html?$/i.test(assetPath)) {
+        try {
+            const html = fs.readFileSync(assetPath, 'utf8');
+            return res.type('html').send(customToolI18nService.injectLanguageRuntime(html, req.params.slug));
+        } catch (error) {
+            return next(error);
+        }
+    }
     res.sendFile(assetPath);
 });
 app.use('/custom-tools', express.static(customToolsRepo.CUSTOM_TOOLS_DIR));

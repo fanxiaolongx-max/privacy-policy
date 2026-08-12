@@ -779,7 +779,7 @@
         if (!knowledgeGraphLoader) {
             knowledgeGraphLoader = new Promise((resolve, reject) => {
                 const script = document.createElement('script');
-                script.src = '/js/shared/ai-knowledge-graph.js?v=20260811-mode6';
+                script.src = '/js/shared/ai-knowledge-graph.js?v=20260812-metric-i18n1';
                 script.onload = resolve;
                 script.onerror = () => reject(new Error(aiT('graphLoadFailed')));
                 document.body.appendChild(script);

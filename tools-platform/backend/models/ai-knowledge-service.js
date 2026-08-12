@@ -621,9 +621,9 @@ async function buildAssetGraph(contentByDocument, documentSet) {
         const manifest = readJsonFile(path.join(toolDir, customToolsRepo.TOOL_MANIFEST_FILE));
         const files = listAssetFiles(toolDir).filter(item => item.path !== customToolsRepo.TOOL_MANIFEST_FILE);
         nodes.push({
-            id: toolId, type: 'tool', label: tool.name || tool.slug, labelEn: tool.name || tool.slug,
+            id: toolId, type: 'tool', label: tool.name || tool.slug, labelEn: tool.nameEn || tool.name || tool.slug,
             slug: tool.slug, group: builtIn ? 'builtin-tools' : 'custom-tools', builtIn,
-            description: tool.description || '', href: tool.href, publicAccess: tool.publicAccess,
+            description: tool.description || '', descriptionEn: tool.descriptionEn || tool.description || '', href: tool.href, publicAccess: tool.publicAccess,
             fileCount: files.length, updatedAt: tool.updatedAt, size: 8 + Math.min(8, Math.sqrt(files.length) * 1.8),
             managed: Boolean(manifest?.builtIn)
         });
@@ -712,7 +712,7 @@ async function buildAssetGraph(contentByDocument, documentSet) {
             for (const tableId of scopedCandidates.length ? scopedCandidates : candidates) addEdge(`doc:${documentPath}`, tableId, 'queries');
         }
     }
-    const signature = sha256(`${nodes.map(node => `${node.id}:${node.label || ''}:${node.updatedAt || ''}:${node.bytes || 0}:${node.mtimeMs || 0}:${node.tableCount || 0}:${node.schema || ''}`).join('|')}|${edges.map(edge => `${edge.source}:${edge.target}:${edge.type}`).join('|')}`);
+    const signature = sha256(`${nodes.map(node => `${node.id}:${node.label || ''}:${node.labelEn || ''}:${node.descriptionEn || ''}:${node.updatedAt || ''}:${node.bytes || 0}:${node.mtimeMs || 0}:${node.tableCount || 0}:${node.schema || ''}`).join('|')}|${edges.map(edge => `${edge.source}:${edge.target}:${edge.type}`).join('|')}`);
     return {
         nodes, edges, signature,
         stats: { builtInTools: builtInToolCount, customTools: customToolCount, assetFiles: assetFileCount, databases: databaseCount, tables: tableCount, tableRelations: tableRelationCount }

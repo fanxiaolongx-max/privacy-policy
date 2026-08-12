@@ -61,7 +61,7 @@ const NAV_DEFAULT_SETTINGS = {
     ]
 };
 
-const NAV_BOOTSTRAP_CACHE_KEY = 'tools_nav_bootstrap_v1';
+const NAV_BOOTSTRAP_CACHE_KEY = 'tools_nav_bootstrap_v3';
 const NAV_BOOTSTRAP_CACHE_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 
 let navState = {
@@ -130,6 +130,7 @@ function navT(key, params) {
 }
 
 function getNavLabel(item) {
+    if (window.ToolsI18n?.getLanguage?.() === 'en-US' && item.labelEn) return item.labelEn;
     return item.labelKey && window.ToolsI18n ? navT(item.labelKey) : item.label;
 }
 
@@ -240,20 +241,27 @@ function registerNavbarI18n() {
             'nav.page.home.public': '允许免登录新窗口访问',
             'nav.page.home.private': '需要登录',
             'nav.page.home.empty': '暂无自定义 HTML 工具。',
-            'nav.page.report.help': '清理“历史快照 (Snapshot)”中最近 X 天内的同日冗余快照，仅保留每天最新一份。较早日期和每天最新快照都会保留，不影响月报、一键催办等按日读取最新快照的业务。',
+            'nav.page.report.help': '清理报表看板“历史快照”下拉列表使用的 SLA 源快照。可彻底删除全部旧快照，只保留最新一份；也可按天数保留。已入库的月报/报表档案不在此清理范围内。',
             'nav.page.report.title': '历史快照冗余清理',
-            'nav.page.report.desc': '建议先“预览影响”，确认要删除的数量后再执行清理。',
-            'nav.page.report.cleanLast': '清理最近',
-            'nav.page.report.days': '天内冗余快照',
+            'nav.page.report.desc': '默认彻底清理，仅保留最新快照，保证看板仍可正常打开。请先预览影响再执行。',
+            'nav.page.report.mode': '清理方式',
+            'nav.page.report.modeLatest': '彻底清理（仅保留最新 1 份）',
+            'nav.page.report.modeRetain': '按保留期清理（每天仅保留最新 1 份）',
+            'nav.page.report.retainLast': '保留最近',
+            'nav.page.report.days': '天',
             'nav.page.report.btnPreview': '预览影响',
             'nav.page.report.btnRun': '执行清理',
             'nav.page.report.wait': '等待预览。',
             'nav.page.report.res.preview': '预览结果',
             'nav.page.report.res.done': '清理完成',
-            'nav.page.report.res.summary': '范围：最近 {days} 天；清理前 {beforeCount} 条，清理后 {afterCount} 条，预计/实际删除 {removedCount} 条。',
-            'nav.page.report.res.kept': '保留的最近日期每日最新快照：{keptDailyCount} 天。',
+            'nav.page.report.res.summaryLatest': '范围：全部 SLA 源快照；清理前 {beforeCount} 条，清理后 {afterCount} 条，预计/实际删除 {removedCount} 条。',
+            'nav.page.report.res.summaryRetain': '保留期：最近 {days} 天；清理前 {beforeCount} 条，清理后 {afterCount} 条，预计/实际删除 {removedCount} 条。',
+            'nav.page.report.res.keptLatest': '保留的最新快照 ID：{latestSnapshotId}。',
+            'nav.page.report.res.archiveSafe': '月报/报表入库档案和已生成的导出文件不会被删除。',
             'nav.page.report.res.empty': '没有需要清理的冗余快照。',
             'nav.page.report.res.more': '仅展示前 8 条，剩余 {remaining} 条未展开。',
+            'nav.page.report.confirmLatest': '确定删除 {count} 条历史快照，仅保留最新 1 份吗？\n\n这会改变报表看板的“历史快照”列表，但不删除月报/报表入库档案。',
+            'nav.page.report.confirmRetain': '确定删除 {count} 条超出 {days} 天保留期或同日重复的快照吗？',
 
             'nav.ai.empty': '正在加载 AI 助手配置...',
             'nav.ai.help': '这里管理智能客服与后台 AI 分析使用的模型方案。支持 Gemini、OpenAI、Anthropic、MiniMax 和 OpenAI 兼容网关；Token 保存于服务端，前端只显示脱敏状态。',
@@ -568,20 +576,27 @@ function registerNavbarI18n() {
             'nav.page.home.public': 'Allow public new-window access',
             'nav.page.home.private': 'Sign-in required',
             'nav.page.home.empty': 'No custom HTML tools yet.',
-            'nav.page.report.help': 'Clean up redundant same-day historical snapshots from the last X days, keeping only the latest snapshot per day. Older dates and daily latest snapshots are retained to ensure daily-read business metrics are unaffected.',
+            'nav.page.report.help': 'Clean the SLA source snapshots used by the Report Dashboard history selector. You can remove every older snapshot and keep only the latest one, or apply a retention period. Saved monthly/report archives are outside this cleanup scope.',
             'nav.page.report.title': 'Redundant Historical Snapshot Cleanup',
-            'nav.page.report.desc': 'We recommend "Previewing Impact" to confirm the deletion count before executing cleanup.',
-            'nav.page.report.cleanLast': 'Clean up the last',
-            'nav.page.report.days': 'days of redundant snapshots',
+            'nav.page.report.desc': 'Complete cleanup is selected by default and retains the latest snapshot so the dashboard remains usable. Preview the impact before execution.',
+            'nav.page.report.mode': 'Cleanup Mode',
+            'nav.page.report.modeLatest': 'Complete cleanup (keep latest 1 only)',
+            'nav.page.report.modeRetain': 'Retention cleanup (keep latest 1 per day)',
+            'nav.page.report.retainLast': 'Keep the last',
+            'nav.page.report.days': 'days',
             'nav.page.report.btnPreview': 'Preview Impact',
             'nav.page.report.btnRun': 'Execute Cleanup',
             'nav.page.report.wait': 'Waiting for preview.',
             'nav.page.report.res.preview': 'Preview Result',
             'nav.page.report.res.done': 'Cleanup Complete',
-            'nav.page.report.res.summary': 'Scope: last {days} days; Before: {beforeCount}, After: {afterCount}, Removed (est./actual): {removedCount}.',
-            'nav.page.report.res.kept': 'Retained daily latest snapshots for recent dates: {keptDailyCount} days.',
+            'nav.page.report.res.summaryLatest': 'Scope: all SLA source snapshots; Before: {beforeCount}, After: {afterCount}, Removed (est./actual): {removedCount}.',
+            'nav.page.report.res.summaryRetain': 'Retention: last {days} days; Before: {beforeCount}, After: {afterCount}, Removed (est./actual): {removedCount}.',
+            'nav.page.report.res.keptLatest': 'Latest retained snapshot ID: {latestSnapshotId}.',
+            'nav.page.report.res.archiveSafe': 'Saved monthly/report archives and generated export files are not deleted.',
             'nav.page.report.res.empty': 'No redundant snapshots to clean up.',
             'nav.page.report.res.more': 'Only showing the first 8 items, {remaining} items hidden.',
+            'nav.page.report.confirmLatest': 'Delete {count} historical snapshots and keep only the latest one?\n\nThis changes the Report Dashboard history list but does not delete saved monthly/report archives.',
+            'nav.page.report.confirmRetain': 'Delete {count} snapshots outside the {days}-day retention period or duplicated on the same day?',
 
             'nav.ai.empty': 'Loading AI configuration...',
             'nav.ai.help': 'Manage model profiles for the AI Assistant and background analysis. Supports Gemini, OpenAI, Anthropic, MiniMax, and OpenAI-compatible gateways. Tokens are stored on the server and masked in the UI.',
@@ -845,6 +860,7 @@ function getAllNavItems() {
         href: tool.href,
         icon: tool.icon || '🧩',
         label: tool.name || navT('nav.customTool'),
+        labelEn: tool.nameEn || '',
         defaultCategory: 'custom',
         match: p => p === tool.href || p.startsWith(`${tool.href}/`),
         createdAt: tool.createdAt
@@ -1039,10 +1055,6 @@ function updateResponsiveNavbar() {
 }
 
 async function loadNavigationData() {
-    if (!hasNavAuthToken()) {
-        renderNavLinksFromState();
-        return;
-    }
     try {
         const [settingsRes, toolsRes] = await Promise.all([
             fetch('/api/nav-settings', { headers: getAuthHeaderForNav() }),
@@ -3136,7 +3148,14 @@ function renderReportPageSettings(content) {
                 <div class="nav-backup-panel-title">${navEscape(navT('nav.page.report.title'))}</div>
                 <div class="nav-backup-panel-desc">${navEscape(navT('nav.page.report.desc'))}</div>
                 <label class="nav-report-cleanup-field">
-                    <span>${navEscape(navT('nav.page.report.cleanLast'))}</span>
+                    <span>${navEscape(navT('nav.page.report.mode'))}</span>
+                    <select id="reportSnapshotCleanupMode" onchange="updateReportSnapshotCleanupFields()">
+                        <option value="latest-only">${navEscape(navT('nav.page.report.modeLatest'))}</option>
+                        <option value="retain-days">${navEscape(navT('nav.page.report.modeRetain'))}</option>
+                    </select>
+                </label>
+                <label id="reportSnapshotCleanupDaysField" class="nav-report-cleanup-field" hidden>
+                    <span>${navEscape(navT('nav.page.report.retainLast'))}</span>
                     <input id="reportSnapshotCleanupDays" type="number" min="1" max="3650" step="1" value="30">
                     <span>${navEscape(navT('nav.page.report.days'))}</span>
                 </label>
@@ -3155,6 +3174,16 @@ function getReportSnapshotCleanupDays() {
     return Math.max(1, Math.min(3650, parseInt(input?.value, 10) || 30));
 }
 
+function getReportSnapshotCleanupMode() {
+    const select = document.getElementById('reportSnapshotCleanupMode');
+    return select?.value === 'retain-days' ? 'retain-days' : 'latest-only';
+}
+
+window.updateReportSnapshotCleanupFields = function () {
+    const field = document.getElementById('reportSnapshotCleanupDaysField');
+    if (field) field.hidden = getReportSnapshotCleanupMode() !== 'retain-days';
+};
+
 function renderReportSnapshotCleanupResult(result) {
     const el = document.getElementById('reportSnapshotCleanupResult');
     if (!el) return;
@@ -3162,9 +3191,12 @@ function renderReportSnapshotCleanupResult(result) {
         .map(item => `<li>${navEscape(item.date || '-')} · ${navEscape(item.timestamp || '-')} · ${navEscape(item.id || '-')}</li>`)
         .join('');
     const titleText = result.dryRun ? navT('nav.page.report.res.preview') : navT('nav.page.report.res.done');
-    const summaryText = navT('nav.page.report.res.summary', { days: result.days, beforeCount: result.beforeCount, afterCount: result.afterCount, removedCount: result.removedCount })
+    const summaryKey = result.mode === 'latest-only'
+        ? 'nav.page.report.res.summaryLatest'
+        : 'nav.page.report.res.summaryRetain';
+    const summaryText = navT(summaryKey, { days: result.days, beforeCount: result.beforeCount, afterCount: result.afterCount, removedCount: result.removedCount })
         .replace('{days}', result.days).replace('{beforeCount}', result.beforeCount).replace('{afterCount}', result.afterCount).replace('{removedCount}', result.removedCount);
-    const keptText = navT('nav.page.report.res.kept', { keptDailyCount: result.keptDailyCount }).replace('{keptDailyCount}', result.keptDailyCount);
+    const keptText = navT('nav.page.report.res.keptLatest', { latestSnapshotId: result.latestSnapshotId || '-' }).replace('{latestSnapshotId}', result.latestSnapshotId || '-');
     const emptyText = navT('nav.page.report.res.empty');
     const moreText = result.removedCount > 8 ? navT('nav.page.report.res.more', { remaining: result.removedCount - 8 }).replace('{remaining}', result.removedCount - 8) : '';
 
@@ -3172,6 +3204,7 @@ function renderReportSnapshotCleanupResult(result) {
         <div><strong>${navEscape(titleText)}</strong></div>
         <div>${navEscape(summaryText)}</div>
         <div>${navEscape(keptText)}</div>
+        <div>${navEscape(navT('nav.page.report.res.archiveSafe'))}</div>
         ${removedPreview ? `<ul>${removedPreview}</ul>` : `<div>${navEscape(emptyText)}</div>`}
         ${moreText ? `<div>${navEscape(moreText)}</div>` : ''}
     `;
@@ -3186,6 +3219,7 @@ async function requestReportSnapshotCleanup(dryRun) {
         },
         body: JSON.stringify({
             days: getReportSnapshotCleanupDays(),
+            mode: getReportSnapshotCleanupMode(),
             dryRun
         })
     });
@@ -3204,10 +3238,17 @@ window.previewReportSnapshotCleanup = async function () {
 
 window.runReportSnapshotCleanup = async function () {
     const days = getReportSnapshotCleanupDays();
+    const mode = getReportSnapshotCleanupMode();
     const preview = await requestReportSnapshotCleanup(true);
     renderReportSnapshotCleanupResult(preview);
-    if (!preview.removedCount) return alert('没有需要清理的冗余快照。');
-    const ok = confirm(`确定清理最近 ${days} 天内的 ${preview.removedCount} 条冗余快照吗？\n\n规则：每天只保留最新一份快照。`);
+    if (!preview.removedCount) return alert(navT('nav.page.report.res.empty'));
+    const confirmKey = mode === 'latest-only'
+        ? 'nav.page.report.confirmLatest'
+        : 'nav.page.report.confirmRetain';
+    const confirmText = navT(confirmKey, { count: preview.removedCount, days })
+        .replace('{count}', preview.removedCount)
+        .replace('{days}', days);
+    const ok = confirm(confirmText);
     if (!ok) return;
     await runGlobalBackupAction('正在清理冗余快照...', async () => {
         const result = await requestReportSnapshotCleanup(false);
@@ -3869,7 +3910,7 @@ window.openToolsKnowledgeGraph = function (options = {}) {
             script.addEventListener('load', handleLoad, { once: true });
             script.addEventListener('error', handleError, { once: true });
             if (!existing) {
-                script.src = '/js/shared/ai-knowledge-graph.js?v=20260811-mode6';
+                script.src = '/js/shared/ai-knowledge-graph.js?v=20260812-graph-i18n-zoom2';
                 document.body.appendChild(script);
             }
         }).catch(error => {

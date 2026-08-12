@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tools Platform - 工具中台</title>
     <meta name="description" content="统一工具平台入口：UIVF12 抓取引擎 & Task SLA 风险监控台">
-    <link rel="stylesheet" href="/css/shared.css?v=20260809-01">
+    <link rel="stylesheet" href="/css/shared.css?v=20260812-01">
     <style>
         body { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); min-height: 100vh; }
         .home-content { padding-top: calc(var(--navbar-h) + 60px); max-width: 1100px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
@@ -104,7 +104,7 @@
         .friend-links-list {
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             flex-wrap: wrap;
             gap: 7px;
             min-width: 0;
@@ -1303,12 +1303,20 @@
                         <input class="tool-import-input" id="customToolIcon" name="icon" value="🧩" maxlength="8">
                     </div>
                     <div class="tool-import-field">
-                        <label for="customToolName" id="customToolNameLabel">工具名称 <span>*</span></label>
+                        <label for="customToolName" id="customToolNameLabel">中文工具名 <span>*</span></label>
                         <input class="tool-import-input" id="customToolName" name="name" maxlength="80" autocomplete="off" required>
                     </div>
                     <div class="tool-import-field full">
-                        <label for="customToolDescription" id="customToolDescriptionLabel">工具简介</label>
+                        <label for="customToolNameEn" id="customToolNameEnLabel">英文工具名</label>
+                        <input class="tool-import-input" id="customToolNameEn" name="nameEn" maxlength="120" autocomplete="off">
+                    </div>
+                    <div class="tool-import-field full">
+                        <label for="customToolDescription" id="customToolDescriptionLabel">中文简介</label>
                         <textarea class="tool-import-textarea" id="customToolDescription" name="description" maxlength="500"></textarea>
+                    </div>
+                    <div class="tool-import-field full">
+                        <label for="customToolDescriptionEn" id="customToolDescriptionEnLabel">英文简介</label>
+                        <textarea class="tool-import-textarea" id="customToolDescriptionEn" name="descriptionEn" maxlength="1000"></textarea>
                     </div>
                     <div class="tool-import-field full">
                         <label for="customToolTags" id="customToolTagsLabel">标签</label>
@@ -1328,7 +1336,7 @@
     <script src="/js/shared/migration-status.js?v=20260626-01"></script>
     <script src="/js/shared/toast.js?v=20260530-03"></script>
     <script src="/js/shared/i18n.js?v=20260610-01"></script>
-    <script src="/js/shared/navbar.js?v=20260811-11"></script>
+    <script src="/js/shared/navbar.js?v=20260812-04"></script>
     <script src="/js/shared/jszip.min.js?v=3.10.1"></script>
     <script>
         const historyState = {
@@ -1424,8 +1432,10 @@
                 'home.import.fileTitle': '选择 HTML / ZIP 文件',
                 'home.import.fileHint': 'HTML 或 ZIP，ZIP 最大 35 MB',
                 'home.import.icon': '图标',
-                'home.import.name': '工具名称',
-                'home.import.description': '工具简介',
+                'home.import.name': '中文工具名',
+                'home.import.nameEn': '英文工具名',
+                'home.import.description': '中文简介',
+                'home.import.descriptionEn': '英文简介',
                 'home.import.tags': '标签',
                 'home.import.tagsPlaceholder': '用逗号分隔，最多 8 个',
                 'home.import.cancel': '取消',
@@ -1434,7 +1444,7 @@
                 'home.import.fileRequired': '请先选择 HTML 或 ZIP 文件',
                 'home.import.fileSelected': '已选择：{name} · {size}',
                 'home.import.aiAnalyzing': '正在用 AI 分析工具用途并生成信息…',
-                'home.import.aiComplete': 'AI 已自动生成名称、简介和标签，你可以继续修改',
+                'home.import.aiComplete': 'AI 已自动生成中英文名称、简介和标签，你可以继续修改',
                 'home.import.aiUnavailable': 'AI 自动生成不可用，已保留默认信息，可手动修改',
                 'home.import.zipHtmlMissing': 'ZIP 中没有找到 HTML 入口文件',
                 'home.arrow.tool': '进入工具 →',
@@ -1533,7 +1543,10 @@
                 'home.custom.defaultDesc': '由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。',
                 'home.custom.defaultTag1': '自定义 HTML',
                 'home.custom.defaultTag2': '平台入口',
-                'home.custom.download': '下载 HTML',
+                'home.custom.download': '下载完整工具包',
+                'home.custom.downloadedHtml': '已下载可独立运行的 HTML',
+                'home.custom.downloadedZip': '已下载完整 ZIP 工具包（{count} 个文件）',
+                'home.custom.downloadFailed': '下载工具包失败：{message}',
                 'home.custom.rename': '修改工具名称',
                 'home.custom.delete': '删除自定义工具'
             },
@@ -1612,8 +1625,10 @@
                 'home.import.fileTitle': 'Choose HTML / ZIP file',
                 'home.import.fileHint': 'HTML or ZIP; ZIP up to 35 MB',
                 'home.import.icon': 'Icon',
-                'home.import.name': 'Tool name',
-                'home.import.description': 'Description',
+                'home.import.name': 'Chinese tool name',
+                'home.import.nameEn': 'English tool name',
+                'home.import.description': 'Chinese description',
+                'home.import.descriptionEn': 'English description',
                 'home.import.tags': 'Tags',
                 'home.import.tagsPlaceholder': 'Comma-separated, up to 8 tags',
                 'home.import.cancel': 'Cancel',
@@ -1622,7 +1637,7 @@
                 'home.import.fileRequired': 'Choose an HTML or ZIP file first',
                 'home.import.fileSelected': 'Selected: {name} · {size}',
                 'home.import.aiAnalyzing': 'AI is analyzing the tool and generating its details…',
-                'home.import.aiComplete': 'AI generated the name, description, and tags. You can still edit them.',
+                'home.import.aiComplete': 'AI generated the Chinese and English names, descriptions, and tags. You can still edit them.',
                 'home.import.aiUnavailable': 'AI generation is unavailable. Default details were kept for manual editing.',
                 'home.import.zipHtmlMissing': 'No HTML entry file was found in the ZIP package',
                 'home.arrow.tool': 'Open Tool →',
@@ -1721,7 +1736,10 @@
                 'home.custom.defaultDesc': 'A standalone HTML tool imported into the platform and available from the unified entry points.',
                 'home.custom.defaultTag1': 'Custom HTML',
                 'home.custom.defaultTag2': 'Platform Entry',
-                'home.custom.download': 'Download HTML',
+                'home.custom.download': 'Download complete package',
+                'home.custom.downloadedHtml': 'Standalone HTML downloaded',
+                'home.custom.downloadedZip': 'Complete ZIP package downloaded ({count} files)',
+                'home.custom.downloadFailed': 'Failed to download tool package: {message}',
                 'home.custom.rename': 'Rename tool',
                 'home.custom.delete': 'Delete custom tool'
             }
@@ -2327,7 +2345,9 @@
             setText('#customToolIconLabel', t('home.import.icon'));
             const importNameLabel = document.getElementById('customToolNameLabel');
             if (importNameLabel) importNameLabel.innerHTML = `${escapeHtml(t('home.import.name'))} <span>*</span>`;
+            setText('#customToolNameEnLabel', t('home.import.nameEn'));
             setText('#customToolDescriptionLabel', t('home.import.description'));
+            setText('#customToolDescriptionEnLabel', t('home.import.descriptionEn'));
             setText('#customToolTagsLabel', t('home.import.tags'));
             setText('#customToolImportCancel', t('home.import.cancel'));
             const importSubmit = document.getElementById('customToolImportSubmit');
@@ -2559,6 +2579,9 @@
             grid.querySelectorAll('[data-custom-tool-card="1"]').forEach(el => el.remove());
             const role = localStorage.getItem('tools_role');
             (tools || []).forEach((tool, index) => {
+                const isEnglish = window.ToolsI18n?.getLanguage?.() === 'en-US';
+                const displayName = isEnglish && tool.nameEn ? tool.nameEn : tool.name;
+                const displayDescription = isEnglish && tool.descriptionEn ? tool.descriptionEn : tool.description;
                 const tags = Array.isArray(tool.tags) && tool.tags.length ? tool.tags : [t('home.custom.defaultTag1'), t('home.custom.defaultTag2')];
                 const card = document.createElement('a');
                 card.href = tool.href;
@@ -2576,10 +2599,10 @@
                     </div>
                     <div class="card-icon">${escapeHtml(tool.icon || '🧩')}</div>
                     <div class="card-title">
-                        ${escapeHtml(tool.name || t('home.custom.defaultName'))}
+                        ${escapeHtml(displayName || t('home.custom.defaultName'))}
                         ${tool.createdAt && (Date.now() - new Date(tool.createdAt).getTime() < 3 * 24 * 3600 * 1000) ? '<span class="new-badge">NEW!</span>' : ''}
                     </div>
-                    <div class="card-desc">${escapeHtml(tool.description || t('home.custom.defaultDesc'))}</div>
+                    <div class="card-desc">${escapeHtml(displayDescription || t('home.custom.defaultDesc'))}</div>
                     <div class="card-features">
                         ${tags.map(tag => `<span class="feature-tag">${escapeHtml(tag)}</span>`).join('')}
                     </div>
@@ -2618,8 +2641,10 @@
             const filePicker = document.getElementById('customToolFilePicker');
             const fileName = document.getElementById('customToolFileName');
             const nameInput = document.getElementById('customToolName');
+            const nameEnInput = document.getElementById('customToolNameEn');
             const iconInput = document.getElementById('customToolIcon');
             const descriptionInput = document.getElementById('customToolDescription');
+            const descriptionEnInput = document.getElementById('customToolDescriptionEn');
             const tagsInput = document.getElementById('customToolTags');
             const errorBox = document.getElementById('customToolImportError');
             const submitBtn = document.getElementById('customToolImportSubmit');
@@ -2660,7 +2685,11 @@
                 if (!window.JSZip) throw new Error('ZIP 解析组件未加载');
                 const zip = await window.JSZip.loadAsync(await file.arrayBuffer());
                 const htmlEntries = Object.values(zip.files)
-                    .filter(entry => !entry.dir && /\.html?$/i.test(entry.name))
+                    .filter(entry => {
+                        const parts = String(entry.name || '').replace(/\\/g, '/').split('/').filter(Boolean);
+                        const macMetadata = parts.some(part => part === '__MACOSX' || part === '.DS_Store' || part.startsWith('._'));
+                        return !entry.dir && !macMetadata && /\.html?$/i.test(entry.name);
+                    })
                     .sort((a, b) => {
                         const aIndex = /(^|\/)index\.html?$/i.test(a.name) ? 0 : 1;
                         const bIndex = /(^|\/)index\.html?$/i.test(b.name) ? 0 : 1;
@@ -2673,7 +2702,9 @@
                 const generation = ++metadataGeneration;
                 const baseline = {
                     name: nameInput.value,
+                    nameEn: nameEnInput.value,
                     description: descriptionInput.value,
+                    descriptionEn: descriptionEnInput.value,
                     tags: tagsInput.value
                 };
                 setAiStatus(t('home.import.aiAnalyzing'), 'loading');
@@ -2688,7 +2719,9 @@
                     });
                     if (generation !== metadataGeneration) return;
                     if (nameInput.value === baseline.name && metadata.name) nameInput.value = metadata.name;
+                    if (nameEnInput.value === baseline.nameEn && metadata.nameEn) nameEnInput.value = metadata.nameEn;
                     if (descriptionInput.value === baseline.description && metadata.description) descriptionInput.value = metadata.description;
+                    if (descriptionEnInput.value === baseline.descriptionEn && metadata.descriptionEn) descriptionEnInput.value = metadata.descriptionEn;
                     if (tagsInput.value === baseline.tags && Array.isArray(metadata.tags)) tagsInput.value = metadata.tags.join(', ');
                     setAiStatus(t('home.import.aiComplete'), 'success');
                 } catch (error) {
@@ -2702,7 +2735,8 @@
                 form.reset();
                 input.value = '';
                 iconInput.value = '🧩';
-                descriptionInput.value = t('home.custom.defaultDesc');
+                descriptionInput.value = '';
+                descriptionEnInput.value = '';
                 tagsInput.value = `${t('home.custom.defaultTag1')}, ${t('home.custom.defaultTag2')}`;
                 nameInput.dataset.autoValue = '';
                 fileName.textContent = '';
@@ -2769,8 +2803,10 @@
                     submitBtn.textContent = t('home.import.submitting');
                     const payload = {
                         name,
+                        nameEn: nameEnInput.value.trim(),
                         icon: iconInput.value.trim() || '🧩',
                         description: descriptionInput.value.trim(),
+                        descriptionEn: descriptionEnInput.value.trim(),
                         tags: tagsInput.value.split(/[,，]/).map(tag => tag.trim()).filter(Boolean).slice(0, 8)
                     };
                     if (isZip) {
@@ -2801,8 +2837,36 @@
             });
         }
 
-        function downloadCustomTool(slug) {
-            window.location.href = `/custom-tools/${encodeURIComponent(slug)}/index.html?download=1`;
+        async function downloadCustomTool(slug) {
+            try {
+                const token = localStorage.getItem('tools_token');
+                const response = await fetch(`/api/custom-tools/${encodeURIComponent(slug)}/export`, {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {}
+                });
+                if (!response.ok) {
+                    const body = await response.json().catch(() => ({}));
+                    throw new Error(body.error || `HTTP ${response.status}`);
+                }
+                const blob = await response.blob();
+                const encodedName = response.headers.get('X-Tool-Export-Filename') || `${slug}.zip`;
+                let filename = encodedName;
+                try { filename = decodeURIComponent(encodedName); } catch (_) {}
+                const link = document.createElement('a');
+                const objectUrl = URL.createObjectURL(blob);
+                link.href = objectUrl;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1500);
+                const exportType = response.headers.get('X-Tool-Export-Type');
+                const fileCount = response.headers.get('X-Tool-Export-File-Count') || '1';
+                showToast(exportType === 'zip'
+                    ? t('home.custom.downloadedZip', { count: fileCount })
+                    : t('home.custom.downloadedHtml'));
+            } catch (error) {
+                showToast(t('home.custom.downloadFailed', { message: error.message }), 'error');
+            }
         }
 
         async function renameCustomTool(slug) {

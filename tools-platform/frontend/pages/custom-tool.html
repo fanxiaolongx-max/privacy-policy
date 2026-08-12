@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>自定义工具 - Tools Platform</title>
-    <link rel="stylesheet" href="/css/shared.css?v=20260809-01">
+    <link rel="stylesheet" href="/css/shared.css?v=20260812-01">
     <style>
         body {
             margin: 0;
@@ -94,7 +94,7 @@
             </div>
             <div class="custom-tool-actions">
                 <a class="tool-action" id="openRawTool" href="#" target="_blank" rel="noopener">新窗口打开</a>
-                <button class="tool-action" onclick="location.reload()">刷新</button>
+                <button class="tool-action" id="refreshToolButton" onclick="location.reload()">刷新</button>
             </div>
         </div>
         <div id="toolFrameHost" class="custom-tool-empty">正在加载自定义工具...</div>
@@ -102,8 +102,36 @@
 
     <script src="/js/shared/api.js?v=20260710-01"></script>
     <script src="/js/shared/toast.js?v=20260530-03"></script>
-    <script src="/js/shared/navbar.js?v=20260811-11"></script>
+    <script src="/js/shared/navbar.js?v=20260812-04"></script>
     <script>
+        let currentCustomTool = null;
+
+        function isEnglishToolShell() {
+            return (window.ToolsI18n?.getLanguage?.() || localStorage.getItem('tools_lang')) === 'en-US';
+        }
+
+        function shellText(zh, en) {
+            return isEnglishToolShell() ? en : zh;
+        }
+
+        function getCustomToolDisplayName(tool) {
+            return isEnglishToolShell() && tool?.nameEn ? tool.nameEn : (tool?.name || shellText('自定义工具', 'Custom Tool'));
+        }
+
+        function applyCustomToolShellLanguage() {
+            const displayName = getCustomToolDisplayName(currentCustomTool);
+            document.documentElement.lang = isEnglishToolShell() ? 'en-US' : 'zh-CN';
+            document.title = `${displayName} - Tools Platform`;
+            document.getElementById('toolName').textContent = displayName;
+            document.getElementById('openRawTool').textContent = shellText('新窗口打开', 'Open in New Window');
+            document.getElementById('refreshToolButton').textContent = shellText('刷新', 'Refresh');
+            const frame = document.querySelector('.custom-tool-frame');
+            if (frame) {
+                frame.title = displayName;
+                frame.contentWindow?.postMessage({ type: 'tools-platform-language', lang: isEnglishToolShell() ? 'en-US' : 'zh-CN' }, window.location.origin);
+            }
+        }
+
         function getToolSlug() {
             const parts = window.location.pathname.split('/').filter(Boolean);
             return parts[0] === 'tools' ? parts[1] : '';
@@ -116,23 +144,35 @@
                 const tools = await API.get('/api/custom-tools');
                 const tool = (tools || []).find(item => item.slug === slug);
                 if (!tool) {
-                    host.textContent = '未找到该自定义工具。';
+                    host.textContent = shellText('未找到该自定义工具。', 'Custom tool not found.');
                     return;
                 }
-                document.title = `${tool.name} - Tools Platform`;
+                currentCustomTool = tool;
+                const displayName = getCustomToolDisplayName(tool);
                 document.getElementById('toolIcon').textContent = tool.icon || '🧩';
-                document.getElementById('toolName').textContent = tool.name || '自定义工具';
                 document.getElementById('openRawTool').href = tool.filePath;
                 host.className = '';
                 const allowedFeatures = tool.slug === 'optical-transfer'
                     ? 'camera; autoplay; fullscreen; microphone; display-capture'
                     : 'autoplay; fullscreen; microphone; display-capture';
-                host.innerHTML = `<iframe class="custom-tool-frame" src="${tool.filePath}" title="${tool.name || 'Custom Tool'}" allow="${allowedFeatures}"></iframe>`;
+                const frame = document.createElement('iframe');
+                frame.className = 'custom-tool-frame';
+                frame.src = tool.filePath;
+                frame.title = displayName;
+                frame.allow = allowedFeatures;
+                frame.addEventListener('load', applyCustomToolShellLanguage, { once: true });
+                host.replaceChildren(frame);
+                applyCustomToolShellLanguage();
             } catch (err) {
-                host.textContent = `加载自定义工具失败：${err.message}`;
+                host.textContent = `${shellText('加载自定义工具失败', 'Failed to load custom tool')}：${err.message}`;
             }
         }
 
+        window.addEventListener('tools:languagechange', applyCustomToolShellLanguage);
+        window.addEventListener('message', event => {
+            if (event.origin !== window.location.origin || event.data?.type !== 'tools-custom-tool-language') return;
+            window.ToolsI18n?.setLanguage?.(event.data.lang);
+        });
         document.addEventListener('DOMContentLoaded', loadCustomTool);
     </script>
 </body>

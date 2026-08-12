@@ -25,6 +25,7 @@
     "files": [
       "backend/**/*",
       "frontend/**/*",
+      "scripts/generate-custom-tool-i18n.js",
       "electron-main.js",
       "electron-preload.js",
       "desktop-license-client.js",

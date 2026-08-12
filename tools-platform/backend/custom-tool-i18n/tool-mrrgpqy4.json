@@ -1,0 +1,23 @@
+{
+  "↶ 撤销": "↶ Undo",
+  "+ 来了 1 人": "+ 1 Person Arrived",
+  "− 减 1": "− Subtract 1",
+  "撤销上一步": "Undo Last Action",
+  "当前人数": "Current Count",
+  "当前已经是 0": "The current count is already 0",
+  "关闭网页或刷新都不会丢失。建议添加到手机桌面，使用起来更方便。": "Your data won't be lost if you close or refresh the page. For easier access, add it to your phone's Home Screen.",
+  "减少 1 人": "Subtract 1 Person",
+  "开始时间": "Start Time",
+  "来一个人就按一下，数据会自动保存在当前手机里。": "Tap once for each person who arrives. Data is automatically saved on this phone.",
+  "清零": "Reset",
+  "确定清零吗？当前人数为": "Are you sure you want to reset? Current count:",
+  "人数计数器": "People Counter",
+  "人数已经是 0": "The count is already 0",
+  "尚未开始计数": "Counting hasn't started yet",
+  "已撤销": "Undone",
+  "已清零": "Reset complete",
+  "已自动保存 ·": "Automatically saved ·",
+  "暂无可撤销操作": "Nothing to undo",
+  "增加 1 人": "Add 1 Person",
+  "最近操作": "Recent Actions"
+}

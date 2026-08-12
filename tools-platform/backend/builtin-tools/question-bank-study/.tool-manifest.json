@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "tool": {
+    "slug": "question-bank-study",
+    "name": "题库学习与 Excel 转换",
+    "icon": "📚",
+    "description": "导入题库与答题助手导出的单题库或多题库 JSON，在页面中搜索学习并转换为 Excel。",
+    "tags": ["题库", "JSON", "Excel", "学习"],
+    "href": "/tools/question-bank-study",
+    "filePath": "/custom-tools/question-bank-study/index.html",
+    "publicAccess": false,
+    "createdAt": "2026-08-12T00:00:00.000Z",
+    "updatedAt": "2026-08-12T00:00:00.000Z"
+  },
+  "history": null
+}

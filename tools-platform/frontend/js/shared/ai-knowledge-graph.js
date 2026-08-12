@@ -355,6 +355,7 @@
             rootType: '项目根节点', businessModules: '业务模块', codeDependencies: '代码依赖', assetFiles: '资产文件', builtInTools: '自带工具', customTools: '自定义工具',
             assetCategory: '资产分类', htmlTool: 'HTML 工具', database: '数据库', table: '数据表', toolFile: '工具目录文件', related: '关联节点', contained: '下级节点', fileSize: '文件大小', updatedAt: '更新时间', publicAccess: '公开访问', yes: '是', no: '否', columns: '字段', schema: '表结构',
             empty: '点击图谱中的模块、工具、文件、数据库或表，可查看详细关系。', moduleFiles: '模块文件', indexTime: '索引时间', viewChunks: '可点击查看的知识片段', readingFile: '正在读取文件节点', unnamedChunk: '未命名片段', answerSources: '本次回答引用路径', citedChunk: '引用片段', citedFiles: '引用文件', answerMetrics: '本次回答引用指标', referencedMetrics: '个引用指标',
+            metricRootType: '指标体系根节点', dataMethod: '数据口径', categoryMetrics: '分类指标', weight: '权重', latest: '最新', valuedDays: '个有值日期', twelveMonthRules: '12个月规则', dailyLatestHistory: '历史有值日期（每日最新）', loadingSavedHistory: '正在读取已保存历史值…', standardScoring: '标准计分', proportionalScoring: '比例计分', noValue: '无值', failing: '未达标', passing: '达标', undetermined: '未判定', noSavedHistory: '这个月份还没有已保存的历史录入快照。', nonNumericHistory: '历史值不是连续数值，已在下方按快照列出。', noRule: '当前指标尚未配置月份目标规则。', bySubmetric: '分子指标', metricHelp: '点击分类、指标或子指标，可查看月份规则和历史录入快照。', metricHistoryRule: '历史值按有值日期读取 ReportMetricData 每天最后一次已保存入库；当前月份规则只用于展示，不重算历史结果。', metricHistoryLoadFailed: '历史快照读取失败', historyTrend: '历史快照趋势', monthRule: n => `${n}月规则`, monthLabel: n => `${n}月`, rootMetricRule: n => `${n}月指标规则`,
             graphLoadFailed: '知识图谱加载失败', metricLoadFailed: '指标图谱加载失败', refreshFailed: '刷新失败',
             controls: '外观与力度', appearance: '外观', force: '力度', palette: '颜色主题', galaxy: '银河', cosmic: '星云', obsidian: 'Obsidian', aurora: '极光', nodeSize: '节点大小', lineWidth: '连线粗细', labelDensity: '标签密度', labelOpacity: '文本透明度', growthSpeed: '生长速度', playGrowth: '播放生长动画', stopGrowth: '停止动画', centerForce: '图谱向心力', repulsion: '节点排斥力', attraction: '相连节点吸引力', linkLength: '连线长度', drift: '漂浮力度', resetControls: '恢复默认参数'
         },
@@ -372,6 +373,7 @@
             rootType: 'Project Root', businessModules: 'Business Modules', codeDependencies: 'Code Dependencies', assetFiles: 'asset files', builtInTools: 'built-in tools', customTools: 'custom tools',
             assetCategory: 'Asset Category', htmlTool: 'HTML Tool', database: 'Database', table: 'Table', toolFile: 'Tool Directory File', related: 'Related Nodes', contained: 'Child Nodes', fileSize: 'File Size', updatedAt: 'Updated', publicAccess: 'Public Access', yes: 'Yes', no: 'No', columns: 'Columns', schema: 'Table Schema',
             empty: 'Click a module, tool, file, database, or table to inspect its relationships.', moduleFiles: 'Module Files', indexTime: 'Indexed At', viewChunks: 'Indexed Knowledge Chunks', readingFile: 'Loading File Node', unnamedChunk: 'Untitled Chunk', answerSources: 'Sources used by this answer', citedChunk: 'Cited chunk', citedFiles: 'cited files', answerMetrics: 'Metrics used by this answer', referencedMetrics: 'referenced metrics',
+            metricRootType: 'Metric System Root', dataMethod: 'Data Methodology', categoryMetrics: 'Category Metrics', weight: 'Weight', latest: 'Latest', valuedDays: 'valued days', twelveMonthRules: '12-Month Rules', dailyLatestHistory: 'Historical Values (Latest Saved per Day)', loadingSavedHistory: 'Loading saved historical values…', standardScoring: 'Standard Scoring', proportionalScoring: 'Proportional Scoring', noValue: 'No Value', failing: 'Below Target', passing: 'On Target', undetermined: 'Undetermined', noSavedHistory: 'No saved historical snapshots are available for this month.', nonNumericHistory: 'Historical values are not a continuous numeric series; snapshots are listed below.', noRule: 'No monthly target rule is configured for this metric.', bySubmetric: 'By Submetric', metricHelp: 'Click a category, metric, or submetric to inspect monthly rules and historical snapshots.', metricHistoryRule: 'Historical values use the last saved ReportMetricData entry for each day with data. Current monthly rules are display-only and do not recalculate historical results.', metricHistoryLoadFailed: 'Failed to load historical snapshots', historyTrend: 'Historical Snapshot Trend', monthRule: n => `Month ${n} rule`, monthLabel: n => `Month ${n}`, rootMetricRule: n => `Month ${n} Metric Rules`,
             graphLoadFailed: 'Failed to load the knowledge graph', metricLoadFailed: 'Failed to load the metric graph', refreshFailed: 'Refresh failed',
             controls: 'Appearance & Forces', appearance: 'Appearance', force: 'Forces', palette: 'Color Theme', galaxy: 'Galaxy', cosmic: 'Cosmic', obsidian: 'Obsidian', aurora: 'Aurora', nodeSize: 'Node Size', lineWidth: 'Line Width', labelDensity: 'Label Density', labelOpacity: 'Text Opacity', growthSpeed: 'Growth Speed', playGrowth: 'Play Growth Animation', stopGrowth: 'Stop Animation', centerForce: 'Center Force', repulsion: 'Node Repulsion', attraction: 'Linked Attraction', linkLength: 'Link Length', drift: 'Drift Force', resetControls: 'Reset Defaults'
         }
@@ -385,6 +387,12 @@
         return typeof value === 'function' ? value(...args) : value;
     }
     function nodeLabel(node) { return kgLang() === 'en' && node?.labelEn ? node.labelEn : (node?.label || ''); }
+    function nodeDescription(node) { return kgLang() === 'en' && node?.descriptionEn ? node.descriptionEn : (node?.description || ''); }
+    function metricText(value) {
+        const text = String(value ?? '');
+        if (kgLang() !== 'en') return text;
+        return state.data?.translations?.[text] || text;
+    }
 
     function saveSettings() {
         try { localStorage.setItem('ai_kg_preferences', JSON.stringify(state.settings)); } catch (_error) {}
@@ -459,10 +467,12 @@
     }
 
     function formatRuleTarget(rule, category = '') {
-        if (!rule) return '未配置';
+        if (!rule) return kgLang() === 'en' ? 'Not configured' : '未配置';
         const categoryValue = category ? rule.categoryTargets?.[String(state.month)]?.[category] : undefined;
         const value = categoryValue ?? rule.monthTarget;
-        if (value === null || value === undefined || value === '') return category ? '未配置' : '按子指标配置';
+        if (value === null || value === undefined || value === '') return category
+            ? (kgLang() === 'en' ? 'Not configured' : '未配置')
+            : (kgLang() === 'en' ? 'Configured by submetric' : '按子指标配置');
         const sign = rule.condition === 'lte' ? '≤' : '≥';
         const suffix = rule.isPercent && !String(value).includes('%') ? '%' : '';
         return `${sign} ${value}${suffix}`;
@@ -1378,7 +1388,7 @@
 
     function formatShortTime(value) {
         const date = new Date(String(value || '').replace(' ', 'T'));
-        if (Number.isNaN(date.getTime())) return String(value || '未知');
+        if (Number.isNaN(date.getTime())) return String(value || kgT('unknown'));
         return `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
     }
 
@@ -1387,7 +1397,7 @@
         const hasNumericValue = point => point.numericValue !== null && point.numericValue !== undefined && point.numericValue !== '' && Number.isFinite(Number(point.numericValue));
         const series = (data.series || []).filter(item => item.points.some(hasNumericValue));
         const values = series.flatMap(item => item.points.filter(hasNumericValue).map(point => Number(point.numericValue)));
-        if (!values.length) return '<div class="ai-kg-side-empty">历史值不是连续数值，已在下方按快照列出。</div>';
+        if (!values.length) return `<div class="ai-kg-side-empty">${escapeHtml(kgT('nonNumericHistory'))}</div>`;
         let min = Math.min(...values);
         let max = Math.max(...values);
         const padding = Math.max(1, (max - min) * 0.16);
@@ -1408,46 +1418,46 @@
             const lastX = numericPoints.length <= 1 ? (left + right) / 2 : right;
             return `<path d="${path}" fill="none" stroke="${colors[seriesIndex % colors.length]}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${lastX}" cy="${y(Number(last.numericValue)).toFixed(1)}" r="3" fill="${colors[seriesIndex % colors.length]}"/>`;
         }).join('');
-        const legend = series.map((item, index) => `<span><i style="background:${colors[index % colors.length]}"></i>${escapeHtml(item.category)}</span>`).join('');
-        return `<svg class="ai-kg-trend" viewBox="0 0 320 126" role="img" aria-label="历史快照趋势"><line x1="28" y1="104" x2="306" y2="104" stroke="rgba(132,148,190,.2)"/><line x1="28" y1="14" x2="28" y2="104" stroke="rgba(132,148,190,.2)"/><text x="5" y="18" fill="#73819d" font-size="8">${escapeHtml(Number(max.toFixed(2)))}</text><text x="5" y="104" fill="#73819d" font-size="8">${escapeHtml(Number(min.toFixed(2)))}</text>${paths}</svg><div class="ai-kg-series-legend">${legend}</div>`;
+        const legend = series.map((item, index) => `<span><i style="background:${colors[index % colors.length]}"></i>${escapeHtml(metricText(item.category))}</span>`).join('');
+        return `<svg class="ai-kg-trend" viewBox="0 0 320 126" role="img" aria-label="${escapeHtml(kgT('historyTrend'))}"><line x1="28" y1="104" x2="306" y2="104" stroke="rgba(132,148,190,.2)"/><line x1="28" y1="14" x2="28" y2="104" stroke="rgba(132,148,190,.2)"/><text x="5" y="18" fill="#73819d" font-size="8">${escapeHtml(Number(max.toFixed(2)))}</text><text x="5" y="104" fill="#73819d" font-size="8">${escapeHtml(Number(min.toFixed(2)))}</text>${paths}</svg><div class="ai-kg-series-legend">${legend}</div>`;
     }
 
     function renderHistoryRows(data) {
         const rows = (data.series || []).flatMap(item => item.points.map(point => ({ ...point, category: item.category })))
             .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))
             .slice(0, 24);
-        if (!rows.length) return '<div class="ai-kg-side-empty">这个月份还没有已保存的历史录入快照。</div>';
+        if (!rows.length) return `<div class="ai-kg-side-empty">${escapeHtml(kgT('noSavedHistory'))}</div>`;
         return `<div class="ai-kg-history-list">${rows.map(item => {
             const missingValue = item.value === null || item.value === undefined || ['', '--', '-'].includes(String(item.value).trim());
             const stateClass = missingValue || item.isFailing === null ? 'unknown' : item.isFailing === true ? 'fail' : '';
-            const stateText = missingValue ? '无值' : item.isFailing === true ? '未达标' : item.isFailing === false ? '达标' : '未判定';
-            return `<div class="ai-kg-history-row" title="${escapeHtml(item.snapshotId)}"><span class="ai-kg-history-time">${escapeHtml(formatShortTime(item.createdAt))}</span><span class="ai-kg-history-value">${escapeHtml(item.category)} · ${escapeHtml(item.value ?? '--')}</span><span class="ai-kg-history-state ${stateClass}">${stateText}</span></div>`;
+            const stateText = kgT(missingValue ? 'noValue' : item.isFailing === true ? 'failing' : item.isFailing === false ? 'passing' : 'undetermined');
+            return `<div class="ai-kg-history-row" title="${escapeHtml(item.snapshotId)}"><span class="ai-kg-history-time">${escapeHtml(formatShortTime(item.createdAt))}</span><span class="ai-kg-history-value">${escapeHtml(metricText(item.category))} · ${escapeHtml(item.value ?? '--')}</span><span class="ai-kg-history-state ${stateClass}">${escapeHtml(stateText)}</span></div>`;
         }).join('')}</div>`;
     }
 
     function renderMonthlyRules(rule) {
-        if (!rule) return '<div class="ai-kg-side-empty">当前指标尚未配置月份目标规则。</div>';
+        if (!rule) return `<div class="ai-kg-side-empty">${escapeHtml(kgT('noRule'))}</div>`;
         return `<div class="ai-kg-month-grid">${Array.from({ length: 12 }, (_, index) => index + 1).map(month => {
             const value = rule.monthlyTargets?.[month];
             const categoryValues = rule.categoryTargets?.[String(month)];
-            const text = value !== undefined ? value : categoryValues && Object.keys(categoryValues).length ? '分子指标' : '--';
-            return `<div class="ai-kg-month-cell ${month === state.month ? 'active' : ''}" title="${escapeHtml(month)}月规则"><span>${month}月</span><b>${escapeHtml(text)}</b></div>`;
+            const text = value !== undefined ? value : categoryValues && Object.keys(categoryValues).length ? kgT('bySubmetric') : '--';
+            return `<div class="ai-kg-month-cell ${month === state.month ? 'active' : ''}" title="${escapeHtml(kgT('monthRule', month))}"><span>${escapeHtml(kgT('monthLabel', month))}</span><b>${escapeHtml(text)}</b></div>`;
         }).join('')}</div>`;
     }
 
     async function selectMetricNode(node) {
         if (!node) {
-            sidebar.innerHTML = '<div class="ai-kg-side-empty">点击分类、指标或子指标，可查看月份规则和历史录入快照。</div>';
+            sidebar.innerHTML = `<div class="ai-kg-side-empty">${escapeHtml(kgT('metricHelp'))}</div>`;
             return;
         }
         const stats = state.data?.stats || {};
         if (node.type === 'metricRoot') {
-            sidebar.innerHTML = `<div class="ai-kg-node-type">指标体系根节点</div><div class="ai-kg-node-title">${state.month}月指标规则</div><div class="ai-kg-node-stats"><div class="ai-kg-stat-card"><b>${stats.categories || 0}</b><span>指标分类</span></div><div class="ai-kg-stat-card"><b>${stats.metrics || 0}</b><span>指标</span></div><div class="ai-kg-stat-card"><b>${stats.subMetrics || 0}</b><span>子指标</span></div><div class="ai-kg-stat-card"><b>${stats.snapshots || 0}</b><span>历史日期</span></div></div><div class="ai-kg-section-title">数据口径</div><div class="ai-kg-node-path">${escapeHtml(state.data?.historicalRule || '')}</div>`;
+            sidebar.innerHTML = `<div class="ai-kg-node-type">${escapeHtml(kgT('metricRootType'))}</div><div class="ai-kg-node-title">${escapeHtml(nodeLabel(node) || kgT('rootMetricRule', state.month))}</div><div class="ai-kg-node-stats"><div class="ai-kg-stat-card"><b>${stats.categories || 0}</b><span>${escapeHtml(kgT('category'))}</span></div><div class="ai-kg-stat-card"><b>${stats.metrics || 0}</b><span>${escapeHtml(kgT('metric'))}</span></div><div class="ai-kg-stat-card"><b>${stats.subMetrics || 0}</b><span>${escapeHtml(kgT('submetric'))}</span></div><div class="ai-kg-stat-card"><b>${stats.snapshots || 0}</b><span>${escapeHtml(kgT('snapshots'))}</span></div></div><div class="ai-kg-section-title">${escapeHtml(kgT('dataMethod'))}</div><div class="ai-kg-node-path">${escapeHtml(kgT('metricHistoryRule'))}</div>`;
             return;
         }
         if (node.type === 'metricCategory') {
             const metrics = state.nodes.filter(item => item.type === 'metric' && item.group === node.group);
-            sidebar.innerHTML = `<div class="ai-kg-node-type">指标分类</div><div class="ai-kg-node-title">${escapeHtml(node.label)}</div><div class="ai-kg-node-stats"><div class="ai-kg-stat-card"><b>${metrics.length}</b><span>指标</span></div><div class="ai-kg-stat-card"><b>${metrics.reduce((sum, item) => sum + Number(item.subMetricCount || 0), 0)}</b><span>子指标</span></div></div><div class="ai-kg-section-title">分类指标</div>${metrics.map(item => `<div class="ai-kg-chunk" data-node-id="${escapeHtml(item.id)}"><div class="ai-kg-chunk-title">${escapeHtml(item.label)}</div><div class="ai-kg-chunk-lines">${escapeHtml(formatRuleTarget(item.rule))} · 权重 ${escapeHtml(item.rule?.weight ?? '--')}</div></div>`).join('')}`;
+            sidebar.innerHTML = `<div class="ai-kg-node-type">${escapeHtml(kgT('category'))}</div><div class="ai-kg-node-title">${escapeHtml(nodeLabel(node))}</div><div class="ai-kg-node-stats"><div class="ai-kg-stat-card"><b>${metrics.length}</b><span>${escapeHtml(kgT('metric'))}</span></div><div class="ai-kg-stat-card"><b>${metrics.reduce((sum, item) => sum + Number(item.subMetricCount || 0), 0)}</b><span>${escapeHtml(kgT('submetric'))}</span></div></div><div class="ai-kg-section-title">${escapeHtml(kgT('categoryMetrics'))}</div>${metrics.map(item => `<div class="ai-kg-chunk" data-node-id="${escapeHtml(item.id)}"><div class="ai-kg-chunk-title">${escapeHtml(nodeLabel(item))}</div><div class="ai-kg-chunk-lines">${escapeHtml(formatRuleTarget(item.rule))} · ${escapeHtml(kgT('weight'))} ${escapeHtml(item.rule?.weight ?? '--')}</div></div>`).join('')}`;
             return;
         }
         const metricNode = node.type === 'metric'
@@ -1458,20 +1468,20 @@
         const rule = metricNode.rule;
         const childNodes = state.edges.filter(edge => edge.source === metricNode.id && edge.targetNode?.type === 'submetric').map(edge => edge.targetNode);
         const subMetricHtml = node.type === 'metric' && childNodes.length
-            ? `<div class="ai-kg-section-title">子指标</div>${childNodes.map(item => `<div class="ai-kg-chunk" data-node-id="${escapeHtml(item.id)}"><div class="ai-kg-chunk-title">${escapeHtml(item.label)}</div><div class="ai-kg-chunk-lines">${escapeHtml(formatRuleTarget(rule, item.category))} · 最新 ${escapeHtml(item.latestValue ?? '--')} · ${Number(item.historySnapshotCount) || 0} 个有值日期</div></div>`).join('')}`
+            ? `<div class="ai-kg-section-title">${escapeHtml(kgT('submetric'))}</div>${childNodes.map(item => `<div class="ai-kg-chunk" data-node-id="${escapeHtml(item.id)}"><div class="ai-kg-chunk-title">${escapeHtml(nodeLabel(item))}</div><div class="ai-kg-chunk-lines">${escapeHtml(formatRuleTarget(rule, item.category))} · ${escapeHtml(kgT('latest'))} ${escapeHtml(item.latestValue ?? '--')} · ${Number(item.historySnapshotCount) || 0} ${escapeHtml(kgT('valuedDays'))}</div></div>`).join('')}`
             : '';
-        sidebar.innerHTML = `<div class="ai-kg-node-type">${node.type === 'submetric' ? '子指标' : '指标'}</div><div class="ai-kg-node-title">${escapeHtml(node.label)}</div><div class="ai-kg-node-path">${escapeHtml(metricNode.group)} · ${state.month}月规则</div><div class="ai-kg-rule"><div class="ai-kg-rule-main">${escapeHtml(formatRuleTarget(rule, category))}</div><div class="ai-kg-rule-meta">指标：${escapeHtml(metricNode.label)} · 权重 ${escapeHtml(rule?.weight ?? '--')} · ${rule?.proportionalScoring ? '比例计分' : '标准计分'}${category ? ` · 子指标 ${escapeHtml(category)}` : ''}</div></div>${subMetricHtml}<div class="ai-kg-section-title">12个月规则</div>${renderMonthlyRules(rule)}<div class="ai-kg-section-title">历史有值日期（每日最新）</div><div class="ai-kg-side-empty ai-kg-history-loading">正在读取已保存历史值…</div>`;
+        sidebar.innerHTML = `<div class="ai-kg-node-type">${escapeHtml(kgT(node.type === 'submetric' ? 'submetric' : 'metric'))}</div><div class="ai-kg-node-title">${escapeHtml(nodeLabel(node))}</div><div class="ai-kg-node-path">${escapeHtml(metricText(metricNode.group))} · ${escapeHtml(kgT('monthRule', state.month))}</div><div class="ai-kg-rule"><div class="ai-kg-rule-main">${escapeHtml(formatRuleTarget(rule, category))}</div><div class="ai-kg-rule-meta">${escapeHtml(kgT('metric'))}: ${escapeHtml(nodeLabel(metricNode))} · ${escapeHtml(kgT('weight'))} ${escapeHtml(rule?.weight ?? '--')} · ${escapeHtml(kgT(rule?.proportionalScoring ? 'proportionalScoring' : 'standardScoring'))}${category ? ` · ${escapeHtml(kgT('submetric'))} ${escapeHtml(metricText(category))}` : ''}</div></div>${subMetricHtml}<div class="ai-kg-section-title">${escapeHtml(kgT('twelveMonthRules'))}</div>${renderMonthlyRules(rule)}<div class="ai-kg-section-title">${escapeHtml(kgT('dailyLatestHistory'))}</div><div class="ai-kg-side-empty ai-kg-history-loading">${escapeHtml(kgT('loadingSavedHistory'))}</div>`;
         try {
             const query = new URLSearchParams({ metric: metricNode.label, month: String(state.month) });
             if (category) query.set('category', category);
             const response = await fetch(`/api/ai/knowledge/metric-history?${query}`, { headers: authHeaders() });
             const data = await response.json();
-            if (!response.ok) throw new Error(data.error || '历史快照读取失败');
+            if (!response.ok) throw new Error(data.error || kgT('metricHistoryLoadFailed'));
             if (state.selected?.id !== node.id) return;
             const loadingText = sidebar.querySelector('.ai-kg-history-loading');
             if (loadingText) loadingText.remove();
             const hasHistory = (data.series || []).some(item => item.points?.length);
-            sidebar.insertAdjacentHTML('beforeend', `${hasHistory ? renderHistoryTrend(data) : ''}${renderHistoryRows(data)}<div class="ai-kg-node-path" style="margin-top:10px">${escapeHtml(data.historicalRule || '')}</div>`);
+            sidebar.insertAdjacentHTML('beforeend', `${hasHistory ? renderHistoryTrend(data) : ''}${renderHistoryRows(data)}<div class="ai-kg-node-path" style="margin-top:10px">${escapeHtml(kgT('metricHistoryRule'))}</div>`);
         } catch (error) {
             if (state.selected?.id === node.id) sidebar.insertAdjacentHTML('beforeend', `<div class="ai-kg-side-empty">⚠️ ${escapeHtml(error.message)}</div>`);
         }
@@ -1524,7 +1534,7 @@
             if (node.type === 'table') statCards.push([node.columns?.length || 0, kgT('columns')], [node.database || '—', kgT('database')]);
             const childrenHtml = childEdges.slice(0, 80).map(edge => `<div class="ai-kg-chunk" data-node-id="${escapeHtml(edge.targetNode.id)}"><div class="ai-kg-chunk-title">${escapeHtml(nodeLabel(edge.targetNode))}</div><div class="ai-kg-chunk-lines">${escapeHtml(edge.targetNode.path || edge.targetNode.type || '')}</div></div>`).join('');
             const relatedHtml = related.slice(0, 40).map(item => `<div class="ai-kg-chunk" data-node-id="${escapeHtml(item.id)}"><div class="ai-kg-chunk-title">${escapeHtml(nodeLabel(item))}</div><div class="ai-kg-chunk-lines">${escapeHtml(item.path || item.type || '')}</div></div>`).join('');
-            sidebar.innerHTML = `<div class="ai-kg-node-type">${escapeHtml(typeLabel)}</div><div class="ai-kg-node-title">${escapeHtml(nodeLabel(node))}</div>${node.path ? `<div class="ai-kg-node-path">${escapeHtml(node.path)}</div>` : ''}${node.description ? `<div class="ai-kg-node-path">${escapeHtml(node.description)}</div>` : ''}<div class="ai-kg-node-stats">${statCards.map(([value,label]) => `<div class="ai-kg-stat-card"><b>${escapeHtml(value)}</b><span>${escapeHtml(label)}</span></div>`).join('')}</div>${node.updatedAt ? `<div class="ai-kg-section-title">${kgT('updatedAt')}</div><div class="ai-kg-node-path">${escapeHtml(formatTime(node.updatedAt))}</div>` : ''}${node.type === 'tool' ? `<div class="ai-kg-section-title">${kgT('publicAccess')}</div><div class="ai-kg-node-path">${node.publicAccess ? kgT('yes') : kgT('no')}</div>` : ''}${node.columns?.length ? `<div class="ai-kg-section-title">${kgT('columns')}</div><div class="ai-kg-node-path">${escapeHtml(node.columns.join(' · '))}</div>` : ''}${node.schema ? `<div class="ai-kg-section-title">${kgT('schema')}</div><div class="ai-kg-chunk-preview">${escapeHtml(node.schema)}</div>` : ''}${childrenHtml ? `<div class="ai-kg-section-title">${kgT('contained')}</div>${childrenHtml}` : ''}${relatedHtml ? `<div class="ai-kg-section-title">${kgT('related')}</div>${relatedHtml}` : ''}`;
+            sidebar.innerHTML = `<div class="ai-kg-node-type">${escapeHtml(typeLabel)}</div><div class="ai-kg-node-title">${escapeHtml(nodeLabel(node))}</div>${node.path ? `<div class="ai-kg-node-path">${escapeHtml(node.path)}</div>` : ''}${nodeDescription(node) ? `<div class="ai-kg-node-path">${escapeHtml(nodeDescription(node))}</div>` : ''}<div class="ai-kg-node-stats">${statCards.map(([value,label]) => `<div class="ai-kg-stat-card"><b>${escapeHtml(value)}</b><span>${escapeHtml(label)}</span></div>`).join('')}</div>${node.updatedAt ? `<div class="ai-kg-section-title">${kgT('updatedAt')}</div><div class="ai-kg-node-path">${escapeHtml(formatTime(node.updatedAt))}</div>` : ''}${node.type === 'tool' ? `<div class="ai-kg-section-title">${kgT('publicAccess')}</div><div class="ai-kg-node-path">${node.publicAccess ? kgT('yes') : kgT('no')}</div>` : ''}${node.columns?.length ? `<div class="ai-kg-section-title">${kgT('columns')}</div><div class="ai-kg-node-path">${escapeHtml(node.columns.join(' · '))}</div>` : ''}${node.schema ? `<div class="ai-kg-section-title">${kgT('schema')}</div><div class="ai-kg-chunk-preview">${escapeHtml(node.schema)}</div>` : ''}${childrenHtml ? `<div class="ai-kg-section-title">${kgT('contained')}</div>${childrenHtml}` : ''}${relatedHtml ? `<div class="ai-kg-section-title">${kgT('related')}</div>${relatedHtml}` : ''}`;
             return;
         }
         if (node.type === 'group') {
@@ -2015,7 +2025,10 @@
         const mouseX = event.clientX - rect.left - state.width / 2;
         const mouseY = event.clientY - rect.top - state.height / 2;
         const oldScale = state.scale;
-        const nextScale = Math.max(0.22, Math.min(2.8, oldScale * Math.exp(-event.deltaY * 0.0012)));
+        // 2D can tolerate a little more enlargement; 3D keeps a tighter cap so
+        // perspective and near-camera nodes never become disorientingly large.
+        const maxScale = state.dimension === '3d' ? 3.8 : 4.25;
+        const nextScale = Math.max(0.22, Math.min(maxScale, oldScale * Math.exp(-event.deltaY * 0.0012)));
         const ratio = nextScale / oldScale;
         state.panX = mouseX - (mouseX - state.panX) * ratio;
         state.panY = mouseY - (mouseY - state.panY) * ratio;

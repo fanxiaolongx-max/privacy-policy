@@ -5,6 +5,7 @@ const JSZip = require('jszip');
 const { DATA_DIR, ensureDataDir } = require('./store');
 const { run, get, all } = require('./app-db');
 const historyRepo = require('./upload-history-repository');
+const customToolI18nDefaults = require('./custom-tool-i18n-defaults');
 
 const CUSTOM_TOOLS_DIR = path.join(DATA_DIR, 'custom-tools');
 const BUILTIN_TOOLS_DIR = path.join(__dirname, '../builtin-tools');
@@ -55,11 +56,14 @@ function rowToTool(row) {
         const parsed = JSON.parse(row.tags_json || '[]');
         if (Array.isArray(parsed)) tags = parsed;
     } catch (_) {}
+    const i18nFallback = customToolI18nDefaults[row.slug] || {};
     return {
         slug: row.slug,
         name: row.name,
+        nameEn: row.name_en || i18nFallback.nameEn || '',
         icon: row.icon,
         description: row.description || '',
+        descriptionEn: row.description_en || i18nFallback.descriptionEn || '',
         tags,
         href: row.href,
         filePath: row.file_path,
@@ -73,8 +77,10 @@ function toolRowParams(tool, sortOrder = 0) {
     return [
         tool.slug,
         tool.name,
+        tool.nameEn || '',
         tool.icon || '🧩',
         tool.description || '',
+        tool.descriptionEn || '',
         JSON.stringify(Array.isArray(tool.tags) ? tool.tags : []),
         tool.href || `/tools/${tool.slug}`,
         tool.filePath || `/custom-tools/${tool.slug}/index.html`,
@@ -88,13 +94,15 @@ function toolRowParams(tool, sortOrder = 0) {
 async function insertOrReplaceToolRow(tool, sortOrder = 0) {
     await run(
         `INSERT INTO custom_tools (
-            slug, name, icon, description, tags_json, href, file_path,
+            slug, name, name_en, icon, description, description_en, tags_json, href, file_path,
             public_access, created_at, updated_at, sort_order
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(slug) DO UPDATE SET
             name = excluded.name,
+            name_en = excluded.name_en,
             icon = excluded.icon,
             description = excluded.description,
+            description_en = excluded.description_en,
             tags_json = excluded.tags_json,
             href = excluded.href,
             file_path = excluded.file_path,
@@ -107,7 +115,7 @@ async function insertOrReplaceToolRow(tool, sortOrder = 0) {
 }
 
 async function listToolRows() {
-    return all(`SELECT slug, name, icon, description, tags_json, href, file_path,
+    return all(`SELECT slug, name, name_en, icon, description, description_en, tags_json, href, file_path,
                        public_access, created_at, updated_at, sort_order
                 FROM custom_tools
                 ORDER BY sort_order ASC, created_at ASC, slug ASC`);
@@ -124,8 +132,10 @@ async function ensureRegistryReady() {
             await run(`CREATE TABLE IF NOT EXISTS custom_tools (
                 slug TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
+                name_en TEXT NOT NULL DEFAULT '',
                 icon TEXT NOT NULL DEFAULT '🧩',
                 description TEXT NOT NULL DEFAULT '',
+                description_en TEXT NOT NULL DEFAULT '',
                 tags_json TEXT NOT NULL DEFAULT '[]',
                 href TEXT NOT NULL,
                 file_path TEXT NOT NULL,
@@ -134,6 +144,10 @@ async function ensureRegistryReady() {
                 updated_at TEXT NOT NULL,
                 sort_order INTEGER NOT NULL DEFAULT 0
             )`);
+            const columns = await all('PRAGMA table_info(custom_tools)');
+            const columnNames = new Set(columns.map(column => column.name));
+            if (!columnNames.has('name_en')) await run("ALTER TABLE custom_tools ADD COLUMN name_en TEXT NOT NULL DEFAULT ''");
+            if (!columnNames.has('description_en')) await run("ALTER TABLE custom_tools ADD COLUMN description_en TEXT NOT NULL DEFAULT ''");
             await run('CREATE INDEX IF NOT EXISTS idx_custom_tools_sort_order ON custom_tools(sort_order, created_at, slug)');
             const countRow = await get('SELECT COUNT(*) AS count FROM custom_tools');
             if (Number(countRow && countRow.count || 0) === 0) {
@@ -187,8 +201,10 @@ function normalizeToolRecord(raw, slug) {
     return {
         slug,
         name: String(raw.name || slug).trim().slice(0, 80) || slug,
+        nameEn: String(raw.nameEn || '').trim().slice(0, 120),
         icon: String(raw.icon || '🧩').trim().slice(0, 8) || '🧩',
         description: String(raw.description || '').trim(),
+        descriptionEn: String(raw.descriptionEn || '').trim(),
         tags: Array.isArray(raw.tags) ? raw.tags.map(String).filter(Boolean).slice(0, 8) : [],
         href: `/tools/${slug}`,
         filePath: `/custom-tools/${slug}/index.html`,
@@ -228,7 +244,7 @@ function readToolManifest(slug) {
 async function getTool(slug) {
     await ensureRegistryReady();
     const row = await get(
-        `SELECT slug, name, icon, description, tags_json, href, file_path,
+        `SELECT slug, name, name_en, icon, description, description_en, tags_json, href, file_path,
                 public_access, created_at, updated_at, sort_order
          FROM custom_tools WHERE slug = ?`,
         [slug]
@@ -421,13 +437,21 @@ function normalizeArchivePath(value) {
     return parts.join('/');
 }
 
+function isMacArchiveMetadata(value) {
+    const parts = String(value || '').replace(/\\/g, '/').split('/').filter(Boolean);
+    return parts.some(part => part === '__MACOSX' || part === '.DS_Store' || part.startsWith('._'));
+}
+
 async function readZipFiles(archiveBase64) {
     let archive;
     try {
         archive = Buffer.from(String(archiveBase64 || ''), 'base64');
         if (!archive.length || archive.length > 35 * 1024 * 1024) throw new Error('ZIP 文件不能超过 35 MB');
         const zip = await JSZip.loadAsync(archive, { checkCRC32: true });
-        const entries = Object.values(zip.files).filter(entry => !entry.dir);
+        // Finder adds AppleDouble files (for example __MACOSX/._page.html)
+        // that are not real web assets. Ignoring them also prevents a saved
+        // webpage archive from being misdetected as a multi-entry HTML app.
+        const entries = Object.values(zip.files).filter(entry => !entry.dir && !isMacArchiveMetadata(entry.name));
         if (!entries.length) throw new Error('ZIP 压缩包为空');
         if (entries.length > 500) throw new Error('ZIP 内文件数量不能超过 500 个');
 
@@ -501,9 +525,15 @@ async function verifyCreatedTool(tool, expectedHtmlContent) {
 
 async function createTool(payload) {
     const name = String(payload.name || '').trim();
+    const nameEn = String(payload.nameEn || '').trim();
     const htmlContent = String(payload.htmlContent || '');
     if (!name) {
         const err = new Error('工具名称不能为空');
+        err.status = 400;
+        throw err;
+    }
+    if (name.length > 80 || nameEn.length > 120) {
+        const err = new Error('中英文工具名称长度超出限制');
         err.status = 400;
         throw err;
     }
@@ -542,8 +572,10 @@ async function createTool(payload) {
         const tool = {
             slug,
             name,
+            nameEn: nameEn.slice(0, 120),
             icon: String(payload.icon || '🧩').trim().slice(0, 8) || '🧩',
             description: String(payload.description || '').trim(),
+            descriptionEn: String(payload.descriptionEn || '').trim().slice(0, 1000),
             tags: Array.isArray(payload.tags) ? payload.tags.map(String).filter(Boolean).slice(0, 8) : [],
             href: `/tools/${slug}`,
             filePath: `/custom-tools/${slug}/index.html`,
@@ -751,6 +783,7 @@ module.exports = {
     getToolFilePath,
     getToolRootDir,
     getToolAssetPath,
+    readZipFiles,
     BUILTIN_TOOLS_DIR,
     CUSTOM_TOOLS_DIR,
     TOOL_MANIFEST_FILE
