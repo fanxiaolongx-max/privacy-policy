@@ -1083,6 +1083,82 @@ body {
     background: linear-gradient(135deg, #c2410c, #9a3412);
 }
 
+.nav-confirm-submit:disabled,
+.nav-confirm-submit:disabled:hover {
+    cursor: not-allowed;
+    transform: none;
+    border-color: #cbd5e1;
+    background: #cbd5e1;
+    color: #f8fafc;
+    box-shadow: none;
+    opacity: 0.78;
+}
+
+.nav-confirm-modal-danger .nav-confirm-dialog {
+    width: min(560px, calc(100vw - 32px));
+    border: 2px solid #dc2626;
+    box-shadow: 0 32px 90px rgba(127, 29, 29, 0.4);
+}
+
+.nav-confirm-modal-danger .nav-confirm-dialog::before {
+    height: 7px;
+    background: linear-gradient(90deg, #991b1b, #ef4444, #991b1b);
+}
+
+.nav-confirm-danger-label {
+    margin: 4px 0 16px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #b91c1c;
+    color: #fff;
+    font-size: 22px;
+    font-weight: 900;
+    line-height: 1.25;
+    text-align: center;
+    letter-spacing: 0.02em;
+}
+
+.nav-confirm-modal-danger .nav-confirm-dialog h3 {
+    color: #991b1b;
+    font-size: 26px;
+    font-weight: 900;
+}
+
+.nav-confirm-modal-danger .nav-confirm-dialog p {
+    color: #7f1d1d;
+    font-size: 16px;
+    font-weight: 750;
+    line-height: 1.7;
+}
+
+.nav-confirm-modal-danger .nav-confirm-hint {
+    border-color: #fecaca;
+    background: #fff1f2;
+    color: #991b1b;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.nav-confirm-type-input {
+    width: 100%;
+    height: 48px;
+    box-sizing: border-box;
+    margin-top: 14px;
+    padding: 0 14px;
+    border: 2px solid #fca5a5;
+    border-radius: 11px;
+    outline: none;
+    background: #fff;
+    color: #7f1d1d;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.nav-confirm-type-input:focus {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.13);
+}
+
 .nav-logout-link {
     width: 62px;
     color: #fca5a5;

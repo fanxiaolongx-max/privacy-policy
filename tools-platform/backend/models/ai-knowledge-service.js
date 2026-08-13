@@ -11,6 +11,7 @@ const MAX_FILE_BYTES = 320 * 1024;
 const MAX_FILES = 800;
 const CHUNK_MAX_CHARS = 2200;
 const CHUNK_OVERLAP_LINES = 8;
+const MAX_ANALYSIS_CONTENT_CHARS = 200 * 1024;
 const MAX_SEARCH_CANDIDATES = 2500;
 const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 const KNOWLEDGE_DB_PATH = path.join(DATA_DIR, 'ai-knowledge.db');
@@ -828,6 +829,39 @@ async function getDocumentDetails(documentPath) {
     };
 }
 
+async function getDocumentAnalysisContent(documentPath, { startLine, endLine } = {}) {
+    await ensureReady();
+    const safePath = String(documentPath || '').trim();
+    if (!safePath || safePath.includes('..') || path.isAbsolute(safePath)) return null;
+    const document = await get(
+        `SELECT path, size_bytes, mtime_ms, chunk_count, indexed_at
+         FROM ai_knowledge_documents WHERE path = ?`,
+        [safePath]
+    );
+    if (!document) return null;
+    const resolvedPath = path.resolve(PROJECT_ROOT, safePath);
+    if (!resolvedPath.startsWith(PROJECT_ROOT + path.sep) || !fs.existsSync(resolvedPath)) return null;
+    const fullSource = fs.readFileSync(resolvedPath, 'utf8');
+    const firstLine = Math.max(1, Number.parseInt(startLine, 10) || 1);
+    const lastLine = Math.max(firstLine, Number.parseInt(endLine, 10) || firstLine);
+    const hasLineRange = startLine !== undefined || endLine !== undefined;
+    const selectedRawSource = hasLineRange
+        ? fullSource.split(/\r?\n/).slice(firstLine - 1, lastLine).join('\n')
+        : fullSource;
+    const selectedSource = redactSensitiveText(selectedRawSource);
+    const content = selectedSource.slice(0, MAX_ANALYSIS_CONTENT_CHARS);
+    return {
+        ...document,
+        content,
+        content_chars: selectedSource.length,
+        included_chars: content.length,
+        truncated: content.length < selectedSource.length,
+        start_line: hasLineRange ? firstLine : null,
+        end_line: hasLineRange ? lastLine : null,
+        max_analysis_chars: MAX_ANALYSIS_CONTENT_CHARS
+    };
+}
+
 function formatResultsForPrompt(results) {
     if (!results.length) return '未检索到相关项目文档或代码片段。';
     return results.map((item, index) => [
@@ -846,6 +880,7 @@ module.exports = {
     getStatus,
     getGraph,
     getDocumentDetails,
+    getDocumentAnalysisContent,
     formatResultsForPrompt,
     extractSearchTerms,
     chunkDocument,

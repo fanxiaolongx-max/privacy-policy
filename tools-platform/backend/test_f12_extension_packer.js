@@ -62,6 +62,14 @@ function testAdvancedOptionsAreOptIn() {
     ]);
 }
 
+function testStorePackageOmitsManifestKey() {
+    const extensionKey = Buffer.alloc(162, 7).toString('base64');
+    const result = packer.buildPackage(baseOptions({ extensionKey, packageTarget: 'store' }));
+    assert.strictEqual(Object.prototype.hasOwnProperty.call(result.manifest, 'key'), false,
+        'Microsoft Edge 商店包必须移除 manifest.key');
+    assert.strictEqual(result.validation.options.packageTarget, 'store');
+}
+
 function testValidationAndDiagnostics() {
     assert.strictEqual(packer.isValidVersion('1.0.0'), true);
     assert.strictEqual(packer.isValidVersion('1.01'), false);
@@ -181,7 +189,12 @@ function testExamAssistantBuiltinCompatibility() {
     assert.ok(indexHtml.includes('SV/CFC 满意度监控（原内置）'), '必须保留原内置脚本选项');
     assert.ok(indexHtml.includes('题库与答题助手'), '必须提供题库助手内置脚本选项');
     assert.ok(indexHtml.includes('载入内置脚本'), '必须提供内置脚本载入按钮');
-    assert.ok(indexHtml.includes('id="extObfuscate" type="checkbox" checked'));
+    assert.ok(indexHtml.includes('id="extObfuscate" type="checkbox" class='), '商店包应默认关闭混淆');
+    assert.ok(indexHtml.includes('id="extPackageTarget"'), '必须提供商店包与本地包选择');
+    assert.ok(indexHtml.includes("packageTarget: document.getElementById('extPackageTarget').value"));
+    assert.ok(indexHtml.includes('obfuscateInput.disabled = storePackage'), '商店模式必须禁用混淆选项');
+    assert.ok(indexHtml.includes("document.getElementById('extPackageTarget').value !== 'store'"), '收集参数时必须再次阻止商店包混淆');
+    assert.ok(indexHtml.includes('updatePackageTargetUI();'), '页面初始化时必须锁定商店包混淆选项');
     assert.ok(indexHtml.includes('id="extLicense" type="checkbox" checked'));
     assert.ok(indexHtml.includes('可完全离线验证'), 'License 说明必须明确支持完全离线验签');
     assert.ok(indexHtml.includes('id="manageLicensesBtn"'), '必须提供 License 管理入口');
@@ -203,7 +216,7 @@ function testExamAssistantBuiltinCompatibility() {
     assert.ok(indexHtml.includes('incrementExtensionVersion(previousVersion)'), '每次打包前必须生成递增版本');
     assert.ok(indexHtml.includes('packer-core.js?v='), '核心脚本必须带缓存失效版本参数');
     assert.ok(indexHtml.includes('rememberPackedVersion(options.name, options.version)'), '成功打包后必须推进版本记录');
-    assert.ok(indexHtml.includes('"-v" + options.version + ".zip"'), 'ZIP 文件名必须包含扩展版本');
+    assert.ok(indexHtml.includes('"-v" + options.version + targetSuffix + ".zip"'), 'ZIP 文件名必须包含扩展版本和打包用途');
 }
 
 function testManualLaunchAndLicensePackage() {
@@ -263,6 +276,7 @@ async function testZipRoundTrip() {
 async function main() {
     testDefaultCompatibility();
     testAdvancedOptionsAreOptIn();
+    testStorePackageOmitsManifestKey();
     testValidationAndDiagnostics();
     testGeneratedMarkupIsEscaped();
     testExamAssistantBuiltinCompatibility();

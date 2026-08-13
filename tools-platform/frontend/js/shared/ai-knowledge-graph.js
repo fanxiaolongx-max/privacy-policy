@@ -142,6 +142,8 @@
         .ai-kg-side-empty { color:#758199; font-size:12px; line-height:1.7; padding:20px 4px; }
         .ai-kg-node-type { color:#8491ac; font-size:10px; text-transform:uppercase; letter-spacing:.1em; }
         .ai-kg-node-title { margin-top:6px; color:#f4f6fb; font-size:17px; font-weight:720; word-break:break-word; }
+        .ai-kg-node-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-top:6px; }
+        .ai-kg-node-heading .ai-kg-node-title { min-width:0; margin-top:0; }
         .ai-kg-node-path { margin-top:7px; color:#8fa0c6; font-size:11px; line-height:1.5; word-break:break-all; }
         .ai-kg-node-stats { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:15px; }
         .ai-kg-stat-card { padding:10px; border-radius:10px; background:rgba(42,52,81,.46); border:1px solid rgba(120,135,180,.13); }
@@ -154,6 +156,19 @@
         .ai-kg-chunk-title { color:#dfe5f2; font-size:11px; font-weight:650; }
         .ai-kg-chunk-lines { color:#71809e; font-size:9px; margin-top:3px; }
         .ai-kg-chunk-preview { color:#8e9ab1; font-size:10px; line-height:1.55; margin-top:7px; white-space:pre-wrap; max-height:76px; overflow:hidden; }
+        .ai-kg-chunk[data-chunk-detail] { position:relative; }
+        .ai-kg-chunk[data-chunk-detail] .ai-kg-chunk-title { padding-right:72px; }
+        .ai-kg-chunk[data-chunk-detail]:focus-visible { outline:2px solid rgba(126,145,238,.72); outline-offset:2px; }
+        .ai-kg-chunk[data-chunk-detail].expanded .ai-kg-chunk-preview { max-height:none; overflow:visible; color:#b5bfd2; user-select:text; }
+        .ai-kg-chunk-toggle { margin-top:7px; color:#8292bf; font-size:9px; text-align:right; }
+        .ai-kg-chunk[data-chunk-detail]:hover .ai-kg-chunk-toggle { color:#b8c5ef; }
+        .ai-kg-analyze-btn {
+            flex:0 0 auto; height:25px; padding:0 8px; border-radius:7px;
+            border:1px solid rgba(132,151,235,.3); background:rgba(80,96,177,.2);
+            color:#b9c7ff; cursor:pointer; font-size:9px; font-weight:700; white-space:nowrap;
+        }
+        .ai-kg-analyze-btn:hover { border-color:rgba(153,173,255,.62); background:rgba(91,110,207,.4); color:#fff; }
+        .ai-kg-chunk > .ai-kg-analyze-btn { position:absolute; top:8px; right:8px; }
         .ai-kg-rule { margin-top:10px; padding:10px; border-radius:10px; background:rgba(42,52,81,.42); border:1px solid rgba(120,135,180,.14); }
         .ai-kg-rule-main { color:#edf1fb; font-size:13px; font-weight:700; }
         .ai-kg-rule-meta { margin-top:5px; color:#8492ae; font-size:10px; line-height:1.55; }
@@ -337,6 +352,7 @@
         settings: loadSettings(),
         stars: [],
         hasFailingMetricAlerts: false,
+        sidebarDocument: null,
         growth: { active:false, startedAt:0, duration:0, nodeOrder:new Map() }
     };
 
@@ -354,7 +370,7 @@
             loadingKnowledge: '正在读取项目知识库…', loadingMetrics: '正在读取指标规则与历史快照…', refreshLoading: '正在刷新…', count: n => `${n} 个`, unknown: '未知',
             rootType: '项目根节点', businessModules: '业务模块', codeDependencies: '代码依赖', assetFiles: '资产文件', builtInTools: '自带工具', customTools: '自定义工具',
             assetCategory: '资产分类', htmlTool: 'HTML 工具', database: '数据库', table: '数据表', toolFile: '工具目录文件', related: '关联节点', contained: '下级节点', fileSize: '文件大小', updatedAt: '更新时间', publicAccess: '公开访问', yes: '是', no: '否', columns: '字段', schema: '表结构',
-            empty: '点击图谱中的模块、工具、文件、数据库或表，可查看详细关系。', moduleFiles: '模块文件', indexTime: '索引时间', viewChunks: '可点击查看的知识片段', readingFile: '正在读取文件节点', unnamedChunk: '未命名片段', answerSources: '本次回答引用路径', citedChunk: '引用片段', citedFiles: '引用文件', answerMetrics: '本次回答引用指标', referencedMetrics: '个引用指标',
+            empty: '点击图谱中的模块、工具、文件、数据库或表，可查看详细关系。', moduleFiles: '模块文件', indexTime: '索引时间', viewChunks: '可点击查看的知识片段', readingFile: '正在读取文件节点', unnamedChunk: '未命名片段', expandChunk: '展开全文', collapseChunk: '收起详情', aiAnalyze: 'AI 分析', analyzeFile: '分析代码文件', analyzeChunk: '分析代码片段', answerSources: '本次回答引用路径', citedChunk: '引用片段', citedFiles: '引用文件', answerMetrics: '本次回答引用指标', referencedMetrics: '个引用指标',
             metricRootType: '指标体系根节点', dataMethod: '数据口径', categoryMetrics: '分类指标', weight: '权重', latest: '最新', valuedDays: '个有值日期', twelveMonthRules: '12个月规则', dailyLatestHistory: '历史有值日期（每日最新）', loadingSavedHistory: '正在读取已保存历史值…', standardScoring: '标准计分', proportionalScoring: '比例计分', noValue: '无值', failing: '未达标', passing: '达标', undetermined: '未判定', noSavedHistory: '这个月份还没有已保存的历史录入快照。', nonNumericHistory: '历史值不是连续数值，已在下方按快照列出。', noRule: '当前指标尚未配置月份目标规则。', bySubmetric: '分子指标', metricHelp: '点击分类、指标或子指标，可查看月份规则和历史录入快照。', metricHistoryRule: '历史值按有值日期读取 ReportMetricData 每天最后一次已保存入库；当前月份规则只用于展示，不重算历史结果。', metricHistoryLoadFailed: '历史快照读取失败', historyTrend: '历史快照趋势', monthRule: n => `${n}月规则`, monthLabel: n => `${n}月`, rootMetricRule: n => `${n}月指标规则`,
             graphLoadFailed: '知识图谱加载失败', metricLoadFailed: '指标图谱加载失败', refreshFailed: '刷新失败',
             controls: '外观与力度', appearance: '外观', force: '力度', palette: '颜色主题', galaxy: '银河', cosmic: '星云', obsidian: 'Obsidian', aurora: '极光', nodeSize: '节点大小', lineWidth: '连线粗细', labelDensity: '标签密度', labelOpacity: '文本透明度', growthSpeed: '生长速度', playGrowth: '播放生长动画', stopGrowth: '停止动画', centerForce: '图谱向心力', repulsion: '节点排斥力', attraction: '相连节点吸引力', linkLength: '连线长度', drift: '漂浮力度', resetControls: '恢复默认参数'
@@ -372,7 +388,7 @@
             loadingKnowledge: 'Loading project knowledge…', loadingMetrics: 'Loading metric rules and snapshots…', refreshLoading: 'Refreshing…', count: n => `${n}`, unknown: 'Unknown',
             rootType: 'Project Root', businessModules: 'Business Modules', codeDependencies: 'Code Dependencies', assetFiles: 'asset files', builtInTools: 'built-in tools', customTools: 'custom tools',
             assetCategory: 'Asset Category', htmlTool: 'HTML Tool', database: 'Database', table: 'Table', toolFile: 'Tool Directory File', related: 'Related Nodes', contained: 'Child Nodes', fileSize: 'File Size', updatedAt: 'Updated', publicAccess: 'Public Access', yes: 'Yes', no: 'No', columns: 'Columns', schema: 'Table Schema',
-            empty: 'Click a module, tool, file, database, or table to inspect its relationships.', moduleFiles: 'Module Files', indexTime: 'Indexed At', viewChunks: 'Indexed Knowledge Chunks', readingFile: 'Loading File Node', unnamedChunk: 'Untitled Chunk', answerSources: 'Sources used by this answer', citedChunk: 'Cited chunk', citedFiles: 'cited files', answerMetrics: 'Metrics used by this answer', referencedMetrics: 'referenced metrics',
+            empty: 'Click a module, tool, file, database, or table to inspect its relationships.', moduleFiles: 'Module Files', indexTime: 'Indexed At', viewChunks: 'Indexed Knowledge Chunks', readingFile: 'Loading File Node', unnamedChunk: 'Untitled Chunk', expandChunk: 'Expand full text', collapseChunk: 'Collapse details', aiAnalyze: 'AI Analyze', analyzeFile: 'Analyze code file', analyzeChunk: 'Analyze code chunk', answerSources: 'Sources used by this answer', citedChunk: 'Cited chunk', citedFiles: 'cited files', answerMetrics: 'Metrics used by this answer', referencedMetrics: 'referenced metrics',
             metricRootType: 'Metric System Root', dataMethod: 'Data Methodology', categoryMetrics: 'Category Metrics', weight: 'Weight', latest: 'Latest', valuedDays: 'valued days', twelveMonthRules: '12-Month Rules', dailyLatestHistory: 'Historical Values (Latest Saved per Day)', loadingSavedHistory: 'Loading saved historical values…', standardScoring: 'Standard Scoring', proportionalScoring: 'Proportional Scoring', noValue: 'No Value', failing: 'Below Target', passing: 'On Target', undetermined: 'Undetermined', noSavedHistory: 'No saved historical snapshots are available for this month.', nonNumericHistory: 'Historical values are not a continuous numeric series; snapshots are listed below.', noRule: 'No monthly target rule is configured for this metric.', bySubmetric: 'By Submetric', metricHelp: 'Click a category, metric, or submetric to inspect monthly rules and historical snapshots.', metricHistoryRule: 'Historical values use the last saved ReportMetricData entry for each day with data. Current monthly rules are display-only and do not recalculate historical results.', metricHistoryLoadFailed: 'Failed to load historical snapshots', historyTrend: 'Historical Snapshot Trend', monthRule: n => `Month ${n} rule`, monthLabel: n => `Month ${n}`, rootMetricRule: n => `Month ${n} Metric Rules`,
             graphLoadFailed: 'Failed to load the knowledge graph', metricLoadFailed: 'Failed to load the metric graph', refreshFailed: 'Refresh failed',
             controls: 'Appearance & Forces', appearance: 'Appearance', force: 'Forces', palette: 'Color Theme', galaxy: 'Galaxy', cosmic: 'Cosmic', obsidian: 'Obsidian', aurora: 'Aurora', nodeSize: 'Node Size', lineWidth: 'Line Width', labelDensity: 'Label Density', labelOpacity: 'Text Opacity', growthSpeed: 'Growth Speed', playGrowth: 'Play Growth Animation', stopGrowth: 'Stop Animation', centerForce: 'Center Force', repulsion: 'Node Repulsion', attraction: 'Linked Attraction', linkLength: 'Link Length', drift: 'Drift Force', resetControls: 'Reset Defaults'
@@ -414,8 +430,32 @@
         return { ...extra, 'Authorization': token ? `Bearer ${token}` : '' };
     }
 
+    async function readJsonResponse(response, fallbackMessage) {
+        const body = await response.text();
+        let data;
+        try {
+            data = body ? JSON.parse(body) : {};
+        } catch (_error) {
+            const receivedHtml = /^\s*</.test(body);
+            throw new Error(receivedHtml
+                ? `${fallbackMessage}：后端尚未加载完整代码接口，请重启 Tools Platform 服务后重试`
+                : `${fallbackMessage}：服务器返回了无法识别的响应`);
+        }
+        if (!response.ok) throw new Error(data.error || `${fallbackMessage} (${response.status})`);
+        return data;
+    }
+
     function escapeHtml(value) {
-        return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function renderAnalyzeButton(scope, chunkIndex = '') {
+        const title = kgT(scope === 'file' ? 'analyzeFile' : 'analyzeChunk');
+        return `<button type="button" class="ai-kg-analyze-btn" data-ai-analyze="${scope}"${scope === 'chunk' ? ` data-chunk-index="${escapeHtml(chunkIndex)}"` : ''} title="${escapeHtml(title)}">✦ ${escapeHtml(kgT('aiAnalyze'))}</button>`;
+    }
+
+    function renderKnowledgeChunk(chunk, documentPath, { citation = false } = {}) {
+        return `<div class="ai-kg-chunk${citation ? ' answer-citation' : ''}" data-chunk-detail role="button" tabindex="0" aria-expanded="false">${renderAnalyzeButton('chunk', chunk.chunk_index)}<div class="ai-kg-chunk-title">${escapeHtml(chunk.title || kgT('unnamedChunk'))}</div><div class="ai-kg-chunk-lines">${escapeHtml(documentPath)}:${chunk.start_line}-${chunk.end_line}</div><div class="ai-kg-chunk-preview">${escapeHtml(chunk.content)}</div><div class="ai-kg-chunk-toggle">${escapeHtml(kgT('expandChunk'))}</div></div>`;
     }
 
     function colorForGroup(group, alpha = 1) {
@@ -1489,6 +1529,7 @@
 
     async function selectNode(node) {
         state.selected = node;
+        state.sidebarDocument = null;
         render();
         if (isMetricMode()) {
             await selectMetricNode(node);
@@ -1510,7 +1551,8 @@
                 const startLine = Number(source.startLine) || 0;
                 const endLine = Number(source.endLine || source.startLine) || startLine;
                 const chunks = (data.chunks || []).filter(chunk => !startLine || Number(chunk.end_line) >= startLine && Number(chunk.start_line) <= endLine);
-                sidebar.innerHTML = `<div class="ai-kg-node-type">${escapeHtml(kgT('citedChunk'))}</div><div class="ai-kg-node-title">${escapeHtml(source.title || node.path)}</div><div class="ai-kg-node-path">${escapeHtml(node.path)} · ${escapeHtml(range)}</div><div class="ai-kg-section-title">${escapeHtml(kgT('viewChunks'))}</div>${(chunks.length ? chunks : data.chunks || []).slice(0, 3).map(chunk => `<div class="ai-kg-chunk answer-citation"><div class="ai-kg-chunk-title">${escapeHtml(chunk.title || kgT('unnamedChunk'))}</div><div class="ai-kg-chunk-lines">${escapeHtml(data.path)}:${chunk.start_line}-${chunk.end_line}</div><div class="ai-kg-chunk-preview">${escapeHtml(chunk.content)}</div></div>`).join('')}`;
+                state.sidebarDocument = data;
+                sidebar.innerHTML = `<div class="ai-kg-node-type">${escapeHtml(kgT('citedChunk'))}</div><div class="ai-kg-node-heading"><div class="ai-kg-node-title">${escapeHtml(source.title || node.path)}</div>${renderAnalyzeButton('file')}</div><div class="ai-kg-node-path">${escapeHtml(node.path)} · ${escapeHtml(range)}</div><div class="ai-kg-section-title">${escapeHtml(kgT('viewChunks'))}</div>${(chunks.length ? chunks : data.chunks || []).slice(0, 3).map(chunk => renderKnowledgeChunk(chunk, data.path, { citation:true })).join('')}`;
             } catch (error) {
                 if (state.selected?.id === node.id) sidebar.insertAdjacentHTML('beforeend', `<div class="ai-kg-side-empty">⚠️ ${escapeHtml(error.message)}</div>`);
             }
@@ -1553,14 +1595,15 @@
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || '读取失败');
             if (state.selected?.id !== node.id) return;
+            state.sidebarDocument = data;
             sidebar.innerHTML = `
                 <div class="ai-kg-node-type">${escapeHtml(data.group?.label || '知识文件')}</div>
-                <div class="ai-kg-node-title">${escapeHtml(nodeLabel(node))}</div>
+                <div class="ai-kg-node-heading"><div class="ai-kg-node-title">${escapeHtml(nodeLabel(node))}</div>${renderAnalyzeButton('file')}</div>
                 <div class="ai-kg-node-path">${escapeHtml(data.path)}</div>
                 <div class="ai-kg-node-stats"><div class="ai-kg-stat-card"><b>${data.chunk_count || 0}</b><span>${kgT('chunks')}</span></div><div class="ai-kg-stat-card"><b>${formatBytes(data.size_bytes)}</b><span>${kgT('fileSize')}</span></div></div>
                 <div class="ai-kg-section-title">${kgT('indexTime')}</div><div class="ai-kg-node-path">${escapeHtml(formatTime(data.indexed_at))}</div>
                 <div class="ai-kg-section-title">${kgT('viewChunks')}</div>
-                ${(data.chunks || []).map(chunk => `<div class="ai-kg-chunk"><div class="ai-kg-chunk-title">${escapeHtml(chunk.title || kgT('unnamedChunk'))}</div><div class="ai-kg-chunk-lines">${data.path}:${chunk.start_line}-${chunk.end_line}</div><div class="ai-kg-chunk-preview">${escapeHtml(chunk.content)}</div></div>`).join('')}
+                ${(data.chunks || []).map(chunk => renderKnowledgeChunk(chunk, data.path)).join('')}
             `;
         } catch (error) {
             sidebar.innerHTML += `<div class="ai-kg-side-empty">⚠️ ${escapeHtml(error.message)}</div>`;
@@ -2049,9 +2092,73 @@
         const first = state.nodes.find(node => state.searchMatches.has(node.id));
         if (first) focusNode(first);
     });
+    function toggleChunkDetail(item) {
+        const expanded = item.classList.toggle('expanded');
+        item.setAttribute('aria-expanded', String(expanded));
+        const label = item.querySelector('.ai-kg-chunk-toggle');
+        if (label) label.textContent = kgT(expanded ? 'collapseChunk' : 'expandChunk');
+    }
+    async function analyzeSidebarCode(button) {
+        sidebar.querySelectorAll('.ai-kg-analysis-error').forEach(item => item.remove());
+        const documentData = state.sidebarDocument;
+        if (!documentData || !Array.isArray(documentData.chunks)) return;
+        const scope = button.dataset.aiAnalyze;
+        const chunk = scope === 'chunk'
+            ? documentData.chunks.find(item => String(item.chunk_index) === String(button.dataset.chunkIndex))
+            : null;
+        button.disabled = true;
+        try {
+            const contentQuery = new URLSearchParams({ path:documentData.path });
+            if (chunk) {
+                contentQuery.set('startLine', chunk.start_line);
+                contentQuery.set('endLine', chunk.end_line);
+            }
+            const response = await fetch(`/api/ai/knowledge/document-content?${contentQuery}`, { headers: authHeaders() });
+            const source = await readJsonResponse(response, '读取代码内容失败');
+            const code = String(source.content || '');
+            if (!code.trim()) throw new Error('当前范围没有可分析的代码');
+            const range = chunk ? `:${chunk.start_line}-${chunk.end_line}` : '';
+            const completeness = source.truncated
+                ? (kgLang() === 'en' ? `The source has ${source.content_chars} characters; the first ${source.included_chars} characters are included due to the analysis safety limit.` : `源文件共 ${source.content_chars} 个字符；受分析安全上限限制，本次包含前 ${source.included_chars} 个字符。`)
+                : (kgLang() === 'en' ? 'The complete source content is included.' : '本次已包含该源文件的全部内容。');
+            const prompt = kgLang() === 'en'
+                ? `Analyze the following code from ${documentData.path}${range}. ${completeness} For this FIRST reply only, give a very concise overview in no more than 3 bullets and 100 words total: (1) purpose, (2) main flow, and (3) only the most important caveat if one exists. Do not translate line by line, enumerate utilities, or restate the source path. Keep this exact code context for follow-up questions. For later follow-ups, the first-reply length limit no longer applies; answer at the depth requested by the user.\n\n${code}`
+                : `请分析以下来自 ${documentData.path}${range} 的代码。${completeness}仅限首次回答：请用最多 3 个要点、180 字以内做极简概述，只说①主要作用、②核心流程、③最值得注意的一个问题（若无可省略）。不要逐行翻译、不要罗列所有工具函数、不要重复文件路径。请保留这份精确代码上下文。用户后续追问时，不再受首次字数限制，应按用户问题的深度详细回答。\n\n${code}`;
+            const displayText = `${kgT(scope === 'chunk' ? 'analyzeChunk' : 'analyzeFile')}：${documentData.path}${range}${source.truncated && !chunk ? ' · 已按上限截取' : ''}`;
+            if (typeof window.openToolsAIAssistant !== 'function') throw new Error('AI 助手尚未就绪');
+            if (isGraphFullscreen()) {
+                const exit = document.exitFullscreen || document.webkitExitFullscreen;
+                if (exit) await exit.call(document);
+            }
+            await window.openToolsAIAssistant({ prompt, displayText, context:'' });
+        } catch (error) {
+            sidebar.insertAdjacentHTML('afterbegin', `<div class="ai-kg-side-empty ai-kg-analysis-error">⚠️ ${escapeHtml(error.message)}</div>`);
+        } finally {
+            button.disabled = false;
+        }
+    }
     sidebar.addEventListener('click', event => {
+        const analyzeButton = event.target.closest('[data-ai-analyze]');
+        if (analyzeButton) {
+            event.stopPropagation();
+            analyzeSidebarCode(analyzeButton);
+            return;
+        }
         const item = event.target.closest('[data-node-id]');
-        if (item) focusNode(state.nodeMap.get(item.getAttribute('data-node-id')));
+        if (item) {
+            focusNode(state.nodeMap.get(item.getAttribute('data-node-id')));
+            return;
+        }
+        const chunk = event.target.closest('[data-chunk-detail]');
+        if (chunk) toggleChunkDetail(chunk);
+    });
+    sidebar.addEventListener('keydown', event => {
+        if (event.target.closest('[data-ai-analyze]')) return;
+        if (!['Enter', ' '].includes(event.key)) return;
+        const chunk = event.target.closest('[data-chunk-detail]');
+        if (!chunk) return;
+        event.preventDefault();
+        toggleChunkDetail(chunk);
     });
     overlay.querySelectorAll('[data-kg-mode]').forEach(button => {
         button.onclick = () => switchMode(button.dataset.kgMode);

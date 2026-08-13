@@ -1,8 +1,9 @@
 const { run, get, all } = require('./app-db');
 const { v4: uuidv4 } = require('uuid');
 
-const MAX_MESSAGES = 1000;
 const RECENT_CONTEXT_MESSAGES = 8;
+const MAX_ACTIVE_SESSIONS_PER_PAGE = 30;
+const AUTO_ARCHIVE_AFTER_DAYS = 30;
 const DEFAULT_QUESTIONS = [
     '这个页面主要看什么？',
     '当前有哪些关键指标？',
@@ -36,6 +37,8 @@ async function ensureReady() {
             await addColumnIfMissing('ai_chat_sessions', 'summary', "TEXT NOT NULL DEFAULT ''");
             await addColumnIfMissing('ai_chat_sessions', 'summary_until_message_id', "TEXT NOT NULL DEFAULT ''");
             await addColumnIfMissing('ai_chat_sessions', 'summary_updated_at', 'DATETIME');
+            await addColumnIfMissing('ai_chat_sessions', 'is_archived', 'INTEGER NOT NULL DEFAULT 0');
+            await addColumnIfMissing('ai_chat_sessions', 'archived_at', 'DATETIME');
             await run(`
                 CREATE TABLE IF NOT EXISTS ai_chat_messages (
                     id TEXT PRIMARY KEY,
@@ -66,6 +69,7 @@ async function ensureReady() {
             `);
             await run('CREATE INDEX IF NOT EXISTS idx_ai_chat_messages_session ON ai_chat_messages(session_id, created_at)');
             await run('CREATE INDEX IF NOT EXISTS idx_ai_chat_sessions_page ON ai_chat_sessions(page_path, updated_at)');
+            await run('CREATE INDEX IF NOT EXISTS idx_ai_chat_sessions_archive ON ai_chat_sessions(is_archived, archived_at, updated_at)');
             await run('CREATE INDEX IF NOT EXISTS idx_ai_question_suggestions_page ON ai_question_suggestions(page_path, enabled, hit_count, last_used_at)');
         })().catch(err => {
             initPromise = null;
@@ -121,7 +125,7 @@ async function getOrCreateSession({ sessionId, pagePath, pageTitle }) {
         if (existing) {
             await run(
                 `UPDATE ai_chat_sessions
-                 SET page_path = ?, page_title = ?, updated_at = CURRENT_TIMESTAMP
+                 SET page_path = ?, page_title = ?, is_archived = 0, archived_at = NULL, updated_at = CURRENT_TIMESTAMP
                  WHERE id = ?`,
                 [normalizedPath, cleanTitle, sessionId]
             );
@@ -157,7 +161,7 @@ async function addMessage({ sessionId, pagePath, pageTitle, role, content, token
         ]
     );
     await run('UPDATE ai_chat_sessions SET updated_at = CURRENT_TIMESTAMP WHERE id = ?', [finalSessionId]);
-    await trimMessages();
+    await autoArchiveSessions();
     return finalSessionId;
 }
 
@@ -195,23 +199,39 @@ async function recordQuestion({ pagePath, question }) {
     return id;
 }
 
-async function trimMessages() {
+async function autoArchiveSessions() {
+    const ageModifier = `-${AUTO_ARCHIVE_AFTER_DAYS} days`;
     await run(`
-        DELETE FROM ai_chat_messages
-        WHERE id NOT IN (
-            SELECT id
-            FROM ai_chat_messages
-            ORDER BY created_at DESC, rowid DESC
-            LIMIT ?
-        )
-    `, [MAX_MESSAGES]);
+        UPDATE ai_chat_sessions
+        SET is_archived = 1, archived_at = COALESCE(archived_at, CURRENT_TIMESTAMP)
+        WHERE is_archived = 0
+          AND updated_at < datetime('now', ?)
+    `, [ageModifier]);
+    const pages = await all(`SELECT DISTINCT page_path FROM ai_chat_sessions WHERE is_archived = 0`);
+    for (const page of pages) {
+        await run(`
+            UPDATE ai_chat_sessions
+            SET is_archived = 1, archived_at = COALESCE(archived_at, CURRENT_TIMESTAMP)
+            WHERE id IN (
+                SELECT id FROM ai_chat_sessions
+                WHERE page_path = ? AND is_archived = 0
+                ORDER BY updated_at DESC, rowid DESC
+                LIMIT -1 OFFSET ?
+            )
+        `, [page.page_path, MAX_ACTIVE_SESSIONS_PER_PAGE]);
+    }
+}
+
+async function setSessionArchived(sessionId, archived = true) {
+    await ensureReady();
     await run(`
-        DELETE FROM ai_chat_sessions
-        WHERE id NOT IN (
-            SELECT DISTINCT session_id FROM ai_chat_messages
-        )
-        AND updated_at < datetime('now', '-1 day')
-    `);
+        UPDATE ai_chat_sessions
+        SET is_archived = ?,
+            archived_at = CASE WHEN ? = 1 THEN COALESCE(archived_at, CURRENT_TIMESTAMP) ELSE NULL END,
+            updated_at = CASE WHEN ? = 1 THEN updated_at ELSE CURRENT_TIMESTAMP END
+        WHERE id = ?
+    `, [archived ? 1 : 0, archived ? 1 : 0, archived ? 1 : 0, sessionId]);
+    return getSession(sessionId);
 }
 
 async function listSuggestions({ pagePath, limit = 8 } = {}) {
@@ -253,6 +273,7 @@ async function listSuggestions({ pagePath, limit = 8 } = {}) {
 
 async function listSessions({ pagePath, limit = 20 } = {}) {
     await ensureReady();
+    await autoArchiveSessions();
     const normalizedPath = normalizePagePath(pagePath);
     const safeLimit = Math.max(1, Math.min(Number(limit) || 20, 50));
     const rows = await all(
@@ -267,7 +288,7 @@ async function listSessions({ pagePath, limit = 20 } = {}) {
                 ) AS last_question
          FROM ai_chat_sessions s
          LEFT JOIN ai_chat_messages m ON m.session_id = s.id
-         WHERE s.page_path = ?
+         WHERE s.page_path = ? AND s.is_archived = 0
          GROUP BY s.id
          HAVING message_count > 0
          ORDER BY s.updated_at DESC, s.rowid DESC
@@ -278,6 +299,46 @@ async function listSessions({ pagePath, limit = 20 } = {}) {
         ...row,
         last_question: String(row.last_question || '').slice(0, 120)
     }));
+}
+
+async function listArchivedSessions({ query = '', limit = 60, offset = 0 } = {}) {
+    await ensureReady();
+    await autoArchiveSessions();
+    const safeLimit = Math.max(1, Math.min(Number(limit) || 60, 200));
+    const safeOffset = Math.max(0, Number(offset) || 0);
+    const cleanQuery = String(query || '').trim().slice(0, 120);
+    const pattern = `%${cleanQuery}%`;
+    const filterSql = cleanQuery
+        ? `AND (s.page_title LIKE ? OR s.page_path LIKE ? OR EXISTS (
+              SELECT 1 FROM ai_chat_messages sm
+              WHERE sm.session_id = s.id AND sm.content LIKE ?
+          ))`
+        : '';
+    const params = cleanQuery ? [pattern, pattern, pattern] : [];
+    const totalRow = await get(
+        `SELECT COUNT(1) AS count FROM ai_chat_sessions s WHERE s.is_archived = 1 ${filterSql}`,
+        params
+    );
+    const rows = await all(
+        `SELECT s.id, s.page_path, s.page_title, s.created_at, s.updated_at, s.archived_at,
+                COUNT(m.id) AS message_count,
+                (
+                    SELECT content FROM ai_chat_messages um
+                    WHERE um.session_id = s.id AND um.role = 'user'
+                    ORDER BY um.created_at DESC, um.rowid DESC LIMIT 1
+                ) AS last_question
+         FROM ai_chat_sessions s
+         LEFT JOIN ai_chat_messages m ON m.session_id = s.id
+         WHERE s.is_archived = 1 ${filterSql}
+         GROUP BY s.id
+         ORDER BY s.archived_at DESC, s.updated_at DESC, s.rowid DESC
+         LIMIT ? OFFSET ?`,
+        [...params, safeLimit, safeOffset]
+    );
+    return {
+        total: Number(totalRow?.count) || 0,
+        items: rows.map(row => ({ ...row, last_question: String(row.last_question || '').slice(0, 160) }))
+    };
 }
 
 async function listMessages(sessionId) {
@@ -295,7 +356,8 @@ async function getSession(sessionId) {
     await ensureReady();
     if (!sessionId) return null;
     return get(
-        `SELECT id, page_path, page_title, summary, summary_until_message_id, summary_updated_at, created_at, updated_at
+        `SELECT id, page_path, page_title, summary, summary_until_message_id, summary_updated_at,
+                is_archived, archived_at, created_at, updated_at
          FROM ai_chat_sessions
          WHERE id = ?`,
         [sessionId]
@@ -365,8 +427,11 @@ module.exports = {
     recordQuestion,
     listSuggestions,
     listSessions,
+    listArchivedSessions,
     listMessages,
     getSession,
+    setSessionArchived,
+    autoArchiveSessions,
     getMessagesForCompression,
     updateSessionSummary,
     getRecentMessagesForContext,

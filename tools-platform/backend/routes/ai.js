@@ -804,6 +804,19 @@ router.get('/knowledge/document', checkAuth, async (req, res) => {
     }
 });
 
+router.get('/knowledge/document-content', checkAuth, async (req, res) => {
+    try {
+        const item = await aiKnowledgeService.getDocumentAnalysisContent(req.query.path, {
+            startLine: req.query.startLine,
+            endLine: req.query.endLine
+        });
+        if (!item) return res.status(404).json({ error: '知识文件不存在' });
+        res.json(item);
+    } catch (err) {
+        res.status(500).json({ error: '读取知识文件完整内容失败: ' + err.message });
+    }
+});
+
 router.get('/suggestions', checkAuth, async (req, res) => {
     try {
         const items = await aiChatRepo.listSuggestions({
@@ -827,6 +840,39 @@ router.get('/sessions', checkAuth, async (req, res) => {
     } catch (err) {
         console.error('[AI] sessions failed:', err);
         res.status(500).json({ error: '读取历史问答失败: ' + err.message });
+    }
+});
+
+router.get('/sessions-archive', checkAuth, async (req, res) => {
+    try {
+        res.json(await aiChatRepo.listArchivedSessions({
+            query: req.query.query,
+            limit: req.query.limit,
+            offset: req.query.offset
+        }));
+    } catch (err) {
+        console.error('[AI] archived sessions failed:', err);
+        res.status(500).json({ error: '读取归档会话失败: ' + err.message });
+    }
+});
+
+router.post('/sessions/:sessionId/archive', checkAuth, async (req, res) => {
+    try {
+        const session = await aiChatRepo.setSessionArchived(req.params.sessionId, true);
+        if (!session) return res.status(404).json({ error: '会话不存在' });
+        res.json({ session });
+    } catch (err) {
+        res.status(500).json({ error: '归档会话失败: ' + err.message });
+    }
+});
+
+router.post('/sessions/:sessionId/unarchive', checkAuth, async (req, res) => {
+    try {
+        const session = await aiChatRepo.setSessionArchived(req.params.sessionId, false);
+        if (!session) return res.status(404).json({ error: '会话不存在' });
+        res.json({ session });
+    } catch (err) {
+        res.status(500).json({ error: '恢复归档会话失败: ' + err.message });
     }
 });
 

@@ -9,7 +9,7 @@
         /* AI Assistant 样式定义 */
         .ai-fab {
             position: fixed;
-            bottom: 40px;
+            bottom: 48px;
             right: 40px;
             width: 64px;
             height: 64px;
@@ -108,6 +108,7 @@
             opacity: 1;
             pointer-events: auto;
         }
+        body.ai-kg-open .ai-panel.open { z-index: 100300; }
         .ai-panel.expanded {
             width: min(760px, calc(100vw - 80px));
             height: min(820px, calc(100vh - 80px));
@@ -165,6 +166,7 @@
             line-height: 1.2;
             font-weight: 700;
             letter-spacing: 0.01em;
+            white-space: nowrap;
         }
         .ai-brand-subtitle {
             margin-top: 3px;
@@ -174,6 +176,20 @@
             font-weight: 500;
             white-space: nowrap;
         }
+        .ai-brand-title-compact,
+        .ai-brand-subtitle-compact { display:none; }
+        .ai-panel:not(.expanded):not(.fullscreen) .ai-header {
+            min-height:60px;
+            padding:9px 10px 9px 14px;
+        }
+        .ai-panel:not(.expanded):not(.fullscreen) .ai-brand { gap:8px; }
+        .ai-panel:not(.expanded):not(.fullscreen) .ai-brand-mark { width:30px; height:30px; border-radius:9px; }
+        .ai-panel:not(.expanded):not(.fullscreen) .ai-brand-title { font-size:13px; line-height:1.05; }
+        .ai-panel:not(.expanded):not(.fullscreen) .ai-brand-subtitle { margin-top:3px; font-size:8px; line-height:1.05; }
+        .ai-panel:not(.expanded):not(.fullscreen) .ai-brand-title-full,
+        .ai-panel:not(.expanded):not(.fullscreen) .ai-brand-subtitle-full { display:none; }
+        .ai-panel:not(.expanded):not(.fullscreen) .ai-brand-title-compact,
+        .ai-panel:not(.expanded):not(.fullscreen) .ai-brand-subtitle-compact { display:inline; }
         .ai-header-actions {
             display: flex;
             align-items: center;
@@ -497,27 +513,25 @@
         .ai-context-notice.is-failed { border-color: #f0d6b5; background: #fff8ed; color: #94662e; }
         @keyframes ai-context-pulse { 50% { opacity: 0.62; transform: translateY(-1px); } }
         .ai-suggestions {
-            display: grid;
-            grid-auto-flow: column;
-            grid-template-rows: repeat(2, 28px);
-            grid-auto-columns: 138px;
-            column-gap: 8px;
-            row-gap: 8px;
-            padding: 12px 16px 14px;
+            display:flex;
+            align-items:center;
+            gap:8px;
+            padding:10px 16px 12px;
+            box-sizing:border-box;
             background: #fff;
             border-top: 1px solid #edf0f5;
-            height: 82px;
-            max-height: 82px;
+            height:50px;
+            max-height:50px;
             overflow-x: auto;
             overflow-y: hidden;
-            align-content: start;
             flex: 0 0 auto;
-            scrollbar-width: thin;
+            scrollbar-width:none;
             overscroll-behavior-x: contain;
             -webkit-overflow-scrolling: touch;
             opacity: 1;
             transition: max-height 0.22s ease, height 0.22s ease, padding 0.22s ease, opacity 0.16s ease, border-color 0.16s;
         }
+        .ai-suggestions::-webkit-scrollbar { display:none; }
         .ai-suggestions.is-collapsed {
             height: 0;
             max-height: 0;
@@ -529,8 +543,9 @@
             pointer-events: none;
         }
         .ai-suggestion-chip {
-            width: 100%;
-            max-width: none;
+            flex:0 0 auto;
+            width:auto;
+            max-width:168px;
             min-width: 0;
             border: 1px solid #dfe4f4;
             background: #f6f7fc;
@@ -546,10 +561,7 @@
             cursor: pointer;
         }
         .ai-panel:not(.expanded) .ai-suggestion-chip {
-            max-width: none;
-        }
-        .ai-panel.expanded .ai-suggestions {
-            grid-auto-columns: 168px;
+            max-width:138px;
         }
         .ai-panel.fullscreen .ai-suggestions,
         .ai-panel.fullscreen .ai-input-area {
@@ -598,10 +610,103 @@
             color: #94a3b8;
             margin-top: 4px;
         }
+        .ai-archive-overlay {
+            position:fixed; inset:0; z-index:100500; display:none; place-items:center; padding:20px;
+            box-sizing:border-box; background:rgba(15,23,42,.48); backdrop-filter:blur(10px);
+        }
+        .ai-archive-overlay.open { display:grid; }
+        .ai-archive-window {
+            width:min(1120px,calc(100vw - 40px)); height:min(780px,calc(100vh - 40px));
+            display:flex; flex-direction:column; overflow:hidden; border-radius:20px;
+            border:1px solid #dce2ed; background:#f7f9fd; color:#334155;
+            box-shadow:0 32px 100px rgba(15,23,42,.38);
+        }
+        .ai-archive-header { min-height:66px; padding:0 20px; display:flex; align-items:center; gap:14px; color:#fff; background:linear-gradient(135deg,#25356f,#594394 64%,#684598); }
+        .ai-archive-heading { min-width:0; flex:1; }
+        .ai-archive-title { font-size:17px; font-weight:760; }
+        .ai-archive-subtitle { margin-top:3px; color:rgba(237,242,255,.72); font-size:10px; }
+        .ai-archive-close { width:34px; height:34px; border-radius:10px; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.12); color:#fff; cursor:pointer; font-size:20px; }
+        .ai-archive-toolbar { display:flex; align-items:center; gap:12px; padding:14px 18px; border-bottom:1px solid #e3e8f1; background:#fff; }
+        .ai-archive-search { flex:1; height:40px; padding:0 14px; border:1px solid #d8dfeb; border-radius:11px; outline:none; background:#f7f9fc; color:#243247; }
+        .ai-archive-search:focus { border-color:#7585e8; box-shadow:0 0 0 3px rgba(102,126,234,.11); }
+        .ai-archive-count { color:#7b879b; font-size:11px; white-space:nowrap; }
+        .ai-archive-content { flex:1; min-height:0; display:grid; grid-template-columns:350px minmax(0,1fr); }
+        .ai-archive-list { overflow:auto; padding:12px; border-right:1px solid #e3e8f1; background:#f2f5fa; }
+        .ai-archive-item { width:100%; margin-bottom:9px; padding:12px; border:1px solid #dce2ed; border-radius:12px; background:#fff; color:#334155; text-align:left; cursor:pointer; }
+        .ai-archive-item:hover,.ai-archive-item.active { border-color:#9caaee; background:#f4f6ff; }
+        .ai-archive-item-title { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; font-weight:700; }
+        .ai-archive-item-question { margin-top:6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#64748b; font-size:11px; }
+        .ai-archive-item-meta { margin-top:7px; color:#94a3b8; font-size:9px; }
+        .ai-archive-preview { min-width:0; overflow:auto; padding:22px; background:#f8fafd; }
+        .ai-archive-preview-head { display:flex; align-items:flex-start; gap:12px; margin-bottom:18px; }
+        .ai-archive-preview-heading { min-width:0; flex:1; }
+        .ai-archive-preview-title { color:#1f2d44; font-size:16px; font-weight:740; word-break:break-word; }
+        .ai-archive-preview-path { margin-top:5px; color:#8491a7; font-size:10px; word-break:break-all; }
+        .ai-archive-restore { height:34px; padding:0 12px; border:0; border-radius:10px; background:linear-gradient(135deg,#556ee6,#7259c8); color:#fff; cursor:pointer; font-size:11px; font-weight:700; }
+        .ai-archive-message { max-width:88%; margin-bottom:12px; padding:11px 14px; border-radius:13px; font-size:12px; line-height:1.6; word-break:break-word; }
+        .ai-archive-message.user { margin-left:auto; color:#fff; background:linear-gradient(135deg,#556ee6,#7259c8); border-bottom-right-radius:5px; }
+        .ai-archive-message.ai { color:#334155; background:#fff; border:1px solid #e4e9f1; border-bottom-left-radius:5px; }
+        .ai-archive-message p { margin:0 0 8px; }
+        .ai-archive-message p:last-child { margin-bottom:0; }
+        .ai-archive-message pre { overflow:auto; padding:10px; border-radius:8px; background:#f2f5fa; }
+        .ai-archive-message code { padding:1px 4px; border-radius:4px; background:#edf1f7; }
+        .ai-archive-message ul,.ai-archive-message ol { margin:6px 0; padding-left:20px; }
+        .ai-archive-empty { display:grid; place-items:center; min-height:220px; color:#8491a7; font-size:12px; text-align:center; line-height:1.7; }
+        .ai-archive-overlay[data-theme="graph"] { background:rgba(3,7,15,.66); }
+        .ai-archive-overlay[data-theme="graph"] .ai-archive-window { border-color:rgba(137,152,201,.25); background:#0d1422; color:#cbd5e1; box-shadow:0 34px 110px rgba(0,0,0,.68); }
+        .ai-archive-overlay[data-theme="graph"] .ai-archive-header { background:radial-gradient(circle at 16% 0%,rgba(91,112,211,.2),transparent 34%),linear-gradient(135deg,#111a2c,#151b30 62%,#211938); }
+        .ai-archive-overlay[data-theme="graph"] .ai-archive-toolbar { background:#0f1726; border-color:rgba(132,147,194,.17); }
+        .ai-archive-overlay[data-theme="graph"] .ai-archive-search { background:#111a2b; color:#e4e9f5; border-color:rgba(136,152,207,.3); }
+        .ai-archive-overlay[data-theme="graph"] .ai-archive-list { background:#0a101b; border-color:rgba(132,147,194,.17); }
+        .ai-archive-overlay[data-theme="graph"] .ai-archive-item { background:#151e31; color:#dfe5f2; border-color:rgba(132,147,194,.18); }
+        .ai-archive-overlay[data-theme="graph"] .ai-archive-item:hover,.ai-archive-overlay[data-theme="graph"] .ai-archive-item.active { background:#1b2740; border-color:rgba(130,148,232,.5); }
+        .ai-archive-overlay[data-theme="graph"] .ai-archive-item-question { color:#94a3b8; }
+        .ai-archive-overlay[data-theme="graph"] .ai-archive-preview { background:#0d1422; }
+        .ai-archive-overlay[data-theme="graph"] .ai-archive-preview-title { color:#edf1fb; }
+        .ai-archive-overlay[data-theme="graph"] .ai-archive-message.ai { color:#cbd5e1; background:#151e31; border-color:rgba(132,147,194,.18); }
+        .ai-archive-overlay[data-theme="graph"] .ai-archive-message.ai h1,.ai-archive-overlay[data-theme="graph"] .ai-archive-message.ai h2,.ai-archive-overlay[data-theme="graph"] .ai-archive-message.ai h3 { color:#edf1fb; }
+        .ai-archive-overlay[data-theme="graph"] .ai-archive-message.ai pre,.ai-archive-overlay[data-theme="graph"] .ai-archive-message.ai code { background:#0d1422; color:#b9c8ff; }
+        .ai-panel[data-theme="graph"] {
+            background:#0d1422 !important; color:#cbd5e1 !important;
+            border-color:rgba(137,152,201,.28); border-radius:16px;
+            box-shadow:0 28px 90px rgba(0,0,0,.58),0 0 0 1px rgba(102,120,194,.12),inset 0 1px 0 rgba(255,255,255,.05);
+        }
+        .ai-panel:not(.fullscreen) .ai-header { cursor:grab; touch-action:none; user-select:none; }
+        .ai-panel.dragging { transition:none; }
+        .ai-panel.dragging .ai-header { cursor:grabbing; }
+        .ai-panel.fullscreen .ai-header { cursor:default; }
+        .ai-panel[data-theme="graph"].dragging { box-shadow:0 34px 100px rgba(0,0,0,.66),0 0 0 1px rgba(126,145,222,.28); }
+        .ai-panel[data-theme="graph"] .ai-header {
+            border-bottom:1px solid rgba(137,152,201,.18);
+            background:radial-gradient(circle at 16% 0%,rgba(91,112,211,.2),transparent 34%),linear-gradient(135deg,#111a2c,#151b30 62%,#211938);
+        }
+        .ai-panel[data-theme="graph"] .ai-brand-mark { background:#151d31; border-color:rgba(153,169,224,.25); }
+        .ai-panel[data-theme="graph"] .ai-chat-body {
+            background:radial-gradient(circle at 14% 0%,rgba(86,104,196,.08),transparent 34%),linear-gradient(180deg,#0d1422,#0a101b);
+        }
+        .ai-panel[data-theme="graph"] .ai-msg.ai { background:#151e31; color:#cbd5e1; border-color:rgba(132,147,194,.18); box-shadow:0 10px 28px rgba(0,0,0,.18); }
+        .ai-panel[data-theme="graph"] .ai-msg.user { background:linear-gradient(135deg,#5065c7,#7653b8); box-shadow:0 9px 24px rgba(54,63,142,.3); }
+        .ai-panel[data-theme="graph"] .ai-msg h1, .ai-panel[data-theme="graph"] .ai-msg h2, .ai-panel[data-theme="graph"] .ai-msg h3, .ai-panel[data-theme="graph"] .ai-msg h4 { color:#edf1fb; }
+        .ai-panel[data-theme="graph"] .ai-msg code { background:rgba(102,119,184,.2); color:#b9c8ff; }
+        .ai-panel[data-theme="graph"] .ai-msg pre, .ai-panel[data-theme="graph"] .ai-msg blockquote { background:#101827; color:#aeb9d0; border-color:#6678cf; }
+        .ai-panel[data-theme="graph"] .ai-token-usage, .ai-panel[data-theme="graph"] .ai-grounding { color:#7886a2; border-color:rgba(137,152,201,.2); }
+        .ai-panel[data-theme="graph"] .ai-grounding-title { color:#aeb9d0; }
+        .ai-panel[data-theme="graph"] .ai-grounding-graph { background:#111a2c; color:#9eaff2; border-color:rgba(132,148,207,.22); }
+        .ai-panel[data-theme="graph"] .ai-suggestions, .ai-panel[data-theme="graph"] .ai-input-area, .ai-panel[data-theme="graph"] .ai-history-panel { background:#0f1726; border-color:rgba(132,147,194,.17); }
+        .ai-panel[data-theme="graph"] .ai-suggestion-chip, .ai-panel[data-theme="graph"] .ai-history-item { background:#151e31; color:#aebcf0; border-color:rgba(132,147,194,.2); }
+        .ai-panel[data-theme="graph"] .ai-suggestion-chip:hover, .ai-panel[data-theme="graph"] .ai-history-item:hover { background:#1b2740; border-color:rgba(130,148,232,.48); }
+        .ai-panel[data-theme="graph"] .ai-history-title { color:#dfe5f2; }
+        .ai-panel[data-theme="graph"] .ai-input { background:#111a2b; color:#e4e9f5 !important; border-color:rgba(136,152,207,.3); }
+        .ai-panel[data-theme="graph"] .ai-input:focus { background:#151e31; border-color:#7081e4; box-shadow:0 0 0 3px rgba(99,102,241,.16); }
+        .ai-panel[data-theme="graph"] .ai-send-btn { background:linear-gradient(135deg,#5369d9,#7653bd); }
+        .ai-panel[data-theme="graph"] .ai-table-wrap, .ai-panel[data-theme="graph"] .ai-markdown-table { background:#111a2b; border-color:rgba(132,147,194,.2); }
+        .ai-panel[data-theme="graph"] .ai-markdown-table th { background:#182239; color:#dfe5f2; border-color:rgba(132,147,194,.2); }
+        .ai-panel[data-theme="graph"] .ai-markdown-table td { color:#aeb9d0; border-color:rgba(132,147,194,.13); }
+        .ai-panel[data-theme="graph"] .ai-markdown-table tbody tr:nth-child(even) td, .ai-panel[data-theme="graph"] .ai-markdown-table tbody tr:hover td { background:#141e31; }
         @media (max-width: 520px) {
             .ai-fab {
                 right: 18px;
-                bottom: 20px;
+                bottom: 28px;
                 width: 60px;
                 height: 60px;
             }
@@ -622,6 +727,15 @@
             .ai-brand-subtitle { display: none; }
             .ai-header { padding-left: 12px; padding-right: 10px; }
             .ai-header-actions { gap: 4px; }
+            .ai-archive-overlay { padding:0; }
+            .ai-archive-window { width:100vw; height:100vh; border-radius:0; }
+            .ai-archive-content { grid-template-columns:1fr; }
+            .ai-archive-list { max-height:38vh; border-right:0; border-bottom:1px solid #e3e8f1; }
+        }
+        @media (max-width: 400px) {
+            .ai-brand-copy { display:none; }
+            .ai-header-actions { gap:3px; }
+            .ai-action-btn { width:30px; height:30px; }
         }
         @media (prefers-reduced-motion: reduce) {
             .ai-fab,
@@ -635,13 +749,16 @@
 
     const AI_TEXT = {
         zh: {
-            open: '打开智能客服助手', title: '智能客服助手', subtitle: '项目知识 · 数据分析 · 运营建议',
-            graph: '知识与指标图谱', history: '历史问答', expand: '放大窗口', restore: '恢复默认大小',
+            open: '打开智能客服助手', title: '智能客服助手', titleCompact: '智能客服', subtitle: '项目知识 · 数据分析 · 运营建议', subtitleCompact: '知识 · 数据 · 运营',
+            graph: '知识与指标图谱', history: '历史问答', archive: '查看归档会话', graphTheme: '切换图谱深色主题', lightTheme: '切换明亮主题', expand: '放大窗口', restore: '恢复默认大小',
             fullscreen: '全屏聊天', exitFullscreen: '退出全屏', close: '关闭', send: '发送消息', stop: '停止生成',
             welcome: '👋 你好！我是您的专属智能助手，正在为您加载页面上下文...', thinking: 'AI 正在思考...',
             placeholder: '向 AI 提问有关本页面的内容...', graphLoadFailed: '知识图谱组件加载失败',
             historyLoading: '正在加载历史问答...', historyEmpty: '暂无历史问答', unnamed: '未命名对话',
             messages: '条', historyFailed: '历史问答加载失败：', historyRestoreFailed: '历史问答恢复失败：',
+            archiveTitle: '归档会话', archiveSubtitle: '跨页面查看、搜索和恢复历史对话', archiveSearch: '搜索页面、路径或对话内容…',
+            archiveSelect: '选择左侧会话查看完整记录', archiveLoading: '正在加载归档会话…', archiveEmpty: '暂无归档会话',
+            archiveCount: n => `共 ${n} 个归档`, archiveFailed: '归档会话加载失败：', restoreArchive: '恢复并继续对话', restoringArchive: '正在恢复…',
             initPrompt: '你好，请用简短的话总结一下这个页面的核心功能以及如何使用它。',
             connectFailed: '连接 AI 服务失败：', error: '错误：', answerBasis: '本次回答依据',
             openGraph: '打开知识关系图谱', cache: '项目知识', hitChunks: n => `引用 ${n} 个相关片段`, cacheMiss: '未找到足够相关的项目片段', knowledgeNotNeeded: '本题未使用项目文档', knowledgeLibrary: '知识库', candidates: '候选',
@@ -650,13 +767,16 @@
             current: '本次', total: '累计', approxCost: n => `(约${n}毛)`, totalCost: n => `(总计${n}毛)`
         },
         en: {
-            open: 'Open AI Support Assistant', title: 'AI Support Assistant', subtitle: 'Project knowledge · Data analysis · Operations',
-            graph: 'Knowledge & Metrics Graph', history: 'Chat history', expand: 'Expand window', restore: 'Restore default size',
+            open: 'Open AI Support Assistant', title: 'AI Support Assistant', titleCompact: 'AI Support', subtitle: 'Project knowledge · Data analysis · Operations', subtitleCompact: 'Knowledge · Data · Ops',
+            graph: 'Knowledge & Metrics Graph', history: 'Chat history', archive: 'View archived chats', graphTheme: 'Switch to graph dark theme', lightTheme: 'Switch to light theme', expand: 'Expand window', restore: 'Restore default size',
             fullscreen: 'Full-screen chat', exitFullscreen: 'Exit full screen', close: 'Close', send: 'Send message', stop: 'Stop generating',
             welcome: '👋 Hi! I’m your AI assistant. Loading the current page context…', thinking: 'AI is thinking…',
             placeholder: 'Ask AI about this page or the project…', graphLoadFailed: 'Failed to load the knowledge graph',
             historyLoading: 'Loading chat history…', historyEmpty: 'No chat history yet', unnamed: 'Untitled conversation',
             messages: 'messages', historyFailed: 'Failed to load chat history: ', historyRestoreFailed: 'Failed to restore chat history: ',
+            archiveTitle: 'Archived chats', archiveSubtitle: 'Browse, search, and restore conversations across pages', archiveSearch: 'Search pages, paths, or messages…',
+            archiveSelect: 'Select a conversation to view its full history', archiveLoading: 'Loading archived chats…', archiveEmpty: 'No archived chats yet',
+            archiveCount: n => `${n} archived`, archiveFailed: 'Failed to load archived chats: ', restoreArchive: 'Restore and continue', restoringArchive: 'Restoring…',
             initPrompt: 'Please briefly summarize the core purpose of this page and how to use it.',
             connectFailed: 'Could not connect to the AI service: ', error: 'Error: ', answerBasis: 'Sources for this answer',
             openGraph: 'Open knowledge graph', cache: 'Project knowledge', hitChunks: n => `${n} relevant chunks cited`, cacheMiss: 'No sufficiently relevant project chunks found', knowledgeNotNeeded: 'Project documents were not used for this question', knowledgeLibrary: 'library', candidates: 'candidates',
@@ -692,8 +812,8 @@
             <div class="ai-brand">
                 <div class="ai-brand-mark" aria-hidden="true"><img src="/assets/ai-assistant-spark-50.gif?v=20260809-01" alt=""></div>
                 <div class="ai-brand-copy">
-                    <div class="ai-brand-title">智能客服助手</div>
-                    <div class="ai-brand-subtitle">项目知识 · 数据分析 · 运营建议</div>
+                    <div class="ai-brand-title"><span class="ai-brand-title-full">智能客服助手</span><span class="ai-brand-title-compact">智能客服</span></div>
+                    <div class="ai-brand-subtitle"><span class="ai-brand-subtitle-full">项目知识 · 数据分析 · 运营建议</span><span class="ai-brand-subtitle-compact">知识 · 数据 · 运营</span></div>
                 </div>
             </div>
             <div class="ai-header-actions">
@@ -702,6 +822,12 @@
                 </button>
                 <button class="ai-action-btn ai-history" type="button" title="历史问答" aria-label="历史问答">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>
+                </button>
+                <button class="ai-action-btn ai-archive" type="button" title="归档会话" aria-label="归档会话">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16v13H4z"/><path d="M3 3h18v4H3zM9 11h6"/></svg>
+                </button>
+                <button class="ai-action-btn ai-theme-toggle" type="button" title="切换图谱深色主题" aria-label="切换图谱深色主题" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z"/><path d="M17.5 3.5v3M16 5h3"/></svg>
                 </button>
                 <button class="ai-action-btn ai-expand" type="button" title="放大窗口" aria-label="放大窗口" aria-pressed="false">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 5V3h12v12h-2"/></svg>
@@ -729,12 +855,31 @@
     `;
     document.body.appendChild(panel);
 
+    const archiveOverlay = document.createElement('div');
+    archiveOverlay.className = 'ai-archive-overlay';
+    archiveOverlay.innerHTML = `
+        <section class="ai-archive-window" role="dialog" aria-modal="true" aria-labelledby="aiArchiveTitle">
+            <header class="ai-archive-header">
+                <div class="ai-archive-heading"><div class="ai-archive-title" id="aiArchiveTitle">归档会话</div><div class="ai-archive-subtitle">跨页面查看、搜索和恢复历史对话</div></div>
+                <button type="button" class="ai-archive-close" aria-label="关闭">×</button>
+            </header>
+            <div class="ai-archive-toolbar"><input class="ai-archive-search" type="search" placeholder="搜索页面、路径或对话内容…"><span class="ai-archive-count"></span></div>
+            <div class="ai-archive-content"><div class="ai-archive-list"></div><div class="ai-archive-preview"><div class="ai-archive-empty">选择左侧会话查看完整记录</div></div></div>
+        </section>`;
+    document.body.appendChild(archiveOverlay);
+
     const chatBody = document.getElementById('aiChatBody');
     const input = document.getElementById('aiInput');
     const sendBtn = document.getElementById('aiSendBtn');
     const typing = document.getElementById('aiTyping');
     const suggestionsEl = document.getElementById('aiSuggestions');
     const historyPanel = document.getElementById('aiHistoryPanel');
+    const archiveBtn = panel.querySelector('.ai-archive');
+    const archiveList = archiveOverlay.querySelector('.ai-archive-list');
+    const archivePreview = archiveOverlay.querySelector('.ai-archive-preview');
+    const archiveSearch = archiveOverlay.querySelector('.ai-archive-search');
+    const archiveCount = archiveOverlay.querySelector('.ai-archive-count');
+    const themeBtn = panel.querySelector('.ai-theme-toggle');
     const expandBtn = panel.querySelector('.ai-expand');
     const fullscreenBtn = panel.querySelector('.ai-fullscreen');
     const initialMessage = panel.querySelector('#aiInitialMessage');
@@ -743,15 +888,48 @@
         element?.setAttribute('title', text);
         element?.setAttribute('aria-label', text);
     }
+    const AI_THEME_KEY = 'tools_ai_assistant_theme';
+    let assistantTheme = (() => {
+        try {
+            const saved = localStorage.getItem(AI_THEME_KEY);
+            if (['light', 'graph'].includes(saved)) return saved;
+        } catch (_error) {}
+        return document.body.classList.contains('ai-kg-open') ? 'graph' : 'light';
+    })();
+    function applyAssistantTheme(theme, { persist = false } = {}) {
+        assistantTheme = theme === 'graph' ? 'graph' : 'light';
+        panel.dataset.theme = assistantTheme;
+        archiveOverlay.dataset.theme = assistantTheme;
+        themeBtn.setAttribute('aria-pressed', String(assistantTheme === 'graph'));
+        setActionText(themeBtn, aiT(assistantTheme === 'graph' ? 'lightTheme' : 'graphTheme'));
+        if (persist) {
+            try { localStorage.setItem(AI_THEME_KEY, assistantTheme); } catch (_error) {}
+        }
+    }
+    function applyContextTheme() {
+        let hasSavedTheme = false;
+        try { hasSavedTheme = ['light', 'graph'].includes(localStorage.getItem(AI_THEME_KEY)); } catch (_error) {}
+        if (!hasSavedTheme && document.body.classList.contains('ai-kg-open')) applyAssistantTheme('graph');
+    }
     function applyAiLanguage() {
         setActionText(fab, aiT('open'));
-        panel.querySelector('.ai-brand-title').textContent = aiT('title');
-        panel.querySelector('.ai-brand-subtitle').textContent = aiT('subtitle');
+        panel.querySelector('.ai-brand-title-full').textContent = aiT('title');
+        panel.querySelector('.ai-brand-title-compact').textContent = aiT('titleCompact');
+        panel.querySelector('.ai-brand-subtitle-full').textContent = aiT('subtitle');
+        panel.querySelector('.ai-brand-subtitle-compact').textContent = aiT('subtitleCompact');
         setActionText(panel.querySelector('.ai-knowledge-graph'), aiT('graph'));
         setActionText(panel.querySelector('.ai-history'), aiT('history'));
+        setActionText(archiveBtn, aiT('archive'));
+        setActionText(themeBtn, aiT(assistantTheme === 'graph' ? 'lightTheme' : 'graphTheme'));
         setActionText(expandBtn, panel.classList.contains('expanded') ? aiT('restore') : aiT('expand'));
         setActionText(fullscreenBtn, panel.classList.contains('fullscreen') ? aiT('exitFullscreen') : aiT('fullscreen'));
         setActionText(panel.querySelector('.ai-close'), aiT('close'));
+        archiveOverlay.querySelector('.ai-archive-title').textContent = aiT('archiveTitle');
+        archiveOverlay.querySelector('.ai-archive-subtitle').textContent = aiT('archiveSubtitle');
+        archiveOverlay.querySelector('.ai-archive-close').setAttribute('aria-label', aiT('close'));
+        archiveSearch.placeholder = aiT('archiveSearch');
+        const archiveEmpty = archivePreview.querySelector('.ai-archive-empty');
+        if (archiveEmpty && !archiveOverlay.classList.contains('loading')) archiveEmpty.textContent = aiT('archiveSelect');
         setActionText(sendBtn, activeChatController ? aiT('stop') : aiT('send'));
         input.placeholder = aiT('placeholder');
         typing.textContent = aiT('thinking');
@@ -779,7 +957,7 @@
         if (!knowledgeGraphLoader) {
             knowledgeGraphLoader = new Promise((resolve, reject) => {
                 const script = document.createElement('script');
-                script.src = '/js/shared/ai-knowledge-graph.js?v=20260812-metric-i18n1';
+                script.src = '/js/shared/ai-knowledge-graph.js?v=20260813-code-analysis4';
                 script.onload = resolve;
                 script.onerror = () => reject(new Error(aiT('graphLoadFailed')));
                 document.body.appendChild(script);
@@ -984,6 +1162,7 @@
         panel.classList.toggle('open');
         fab.setAttribute('aria-expanded', panel.classList.contains('open') ? 'true' : 'false');
         if (panel.classList.contains('open')) {
+            applyContextTheme();
             if (isFirstOpen) {
                 isFirstOpen = false;
                 initChat();
@@ -1004,6 +1183,14 @@
         particleFab.pulse();
         openOrClosePanel();
     };
+
+    function restorePanelDragPosition() {
+        if (!panel.dataset.dragLeft) return;
+        panel.style.left = panel.dataset.dragLeft;
+        panel.style.top = panel.dataset.dragTop;
+        panel.style.right = panel.dataset.dragRight;
+        panel.style.bottom = panel.dataset.dragBottom;
+    }
     
     panel.querySelector('.ai-close').onclick = () => {
         panel.classList.remove('open');
@@ -1011,6 +1198,7 @@
         document.body.classList.remove('ai-chat-fullscreen');
         fullscreenBtn.setAttribute('aria-pressed', 'false');
         setActionText(fullscreenBtn, aiT('fullscreen'));
+        restorePanelDragPosition();
         fab.setAttribute('aria-expanded', 'false');
         fab.focus();
     };
@@ -1018,9 +1206,25 @@
         const expanded = panel.classList.toggle('expanded');
         expandBtn.setAttribute('aria-pressed', expanded ? 'true' : 'false');
         setActionText(expandBtn, expanded ? aiT('restore') : aiT('expand'));
+        if (panel.style.left) requestAnimationFrame(() => {
+            const rect = panel.getBoundingClientRect();
+            const position = clampPanelPosition(rect.left, rect.top);
+            panel.style.left = `${position.left}px`;
+            panel.style.top = `${position.top}px`;
+        });
     };
     fullscreenBtn.onclick = () => {
         const fullscreen = panel.classList.toggle('fullscreen');
+        if (fullscreen) {
+            panel.dataset.dragLeft = panel.style.left || '';
+            panel.dataset.dragTop = panel.style.top || '';
+            panel.dataset.dragRight = panel.style.right || '';
+            panel.dataset.dragBottom = panel.style.bottom || '';
+            panel.style.left = '';
+            panel.style.top = '';
+            panel.style.right = '';
+            panel.style.bottom = '';
+        } else restorePanelDragPosition();
         document.body.classList.toggle('ai-chat-fullscreen', fullscreen);
         fullscreenBtn.setAttribute('aria-pressed', fullscreen ? 'true' : 'false');
         setActionText(fullscreenBtn, fullscreen ? aiT('exitFullscreen') : aiT('fullscreen'));
@@ -1033,17 +1237,78 @@
             await loadHistorySessions();
         }
     };
+    archiveBtn.onclick = openArchiveBrowser;
+    archiveOverlay.querySelector('.ai-archive-close').onclick = closeArchiveBrowser;
+    archiveOverlay.addEventListener('click', event => {
+        if (event.target === archiveOverlay) closeArchiveBrowser();
+    });
+    let archiveSearchTimer = null;
+    archiveSearch.addEventListener('input', () => {
+        clearTimeout(archiveSearchTimer);
+        archiveSearchTimer = setTimeout(() => loadArchivedSessions(archiveSearch.value), 260);
+    });
+    themeBtn.onclick = () => applyAssistantTheme(assistantTheme === 'graph' ? 'light' : 'graph', { persist:true });
+
+    let panelDrag = null;
+    function clampPanelPosition(left, top) {
+        const margin = 10;
+        const width = panel.offsetWidth;
+        const height = panel.offsetHeight;
+        return {
+            left: Math.max(margin, Math.min(window.innerWidth - width - margin, left)),
+            top: Math.max(margin, Math.min(window.innerHeight - height - margin, top))
+        };
+    }
+    panel.querySelector('.ai-header').addEventListener('pointerdown', event => {
+        if (panel.classList.contains('fullscreen')) return;
+        if (event.button !== 0 || event.target.closest('button, input, a')) return;
+        const rect = panel.getBoundingClientRect();
+        panelDrag = { pointerId:event.pointerId, offsetX:event.clientX - rect.left, offsetY:event.clientY - rect.top };
+        panel.style.left = `${rect.left}px`;
+        panel.style.top = `${rect.top}px`;
+        panel.style.right = 'auto';
+        panel.style.bottom = 'auto';
+        panel.classList.add('dragging');
+        panel.querySelector('.ai-header').setPointerCapture(event.pointerId);
+        event.preventDefault();
+    });
+    panel.querySelector('.ai-header').addEventListener('pointermove', event => {
+        if (!panelDrag || event.pointerId !== panelDrag.pointerId) return;
+        const position = clampPanelPosition(event.clientX - panelDrag.offsetX, event.clientY - panelDrag.offsetY);
+        panel.style.left = `${position.left}px`;
+        panel.style.top = `${position.top}px`;
+    });
+    function finishPanelDrag(event) {
+        if (!panelDrag || event.pointerId !== panelDrag.pointerId) return;
+        panelDrag = null;
+        panel.classList.remove('dragging');
+        try { panel.querySelector('.ai-header').releasePointerCapture(event.pointerId); } catch (_error) {}
+    }
+    panel.querySelector('.ai-header').addEventListener('pointerup', finishPanelDrag);
+    panel.querySelector('.ai-header').addEventListener('pointercancel', finishPanelDrag);
     
     window.addEventListener('resize', () => {
+        if (panel.style.left && !panel.classList.contains('fullscreen')) {
+            const rect = panel.getBoundingClientRect();
+            const position = clampPanelPosition(rect.left, rect.top);
+            panel.style.left = `${position.left}px`;
+            panel.style.top = `${position.top}px`;
+        }
         notifyFabPosition();
     }, { passive: true });
 
     document.addEventListener('keydown', event => {
-        if (event.key !== 'Escape' || !panel.classList.contains('fullscreen')) return;
+        if (event.key !== 'Escape') return;
+        if (archiveOverlay.classList.contains('open')) {
+            closeArchiveBrowser();
+            return;
+        }
+        if (!panel.classList.contains('fullscreen')) return;
         panel.classList.remove('fullscreen');
         document.body.classList.remove('ai-chat-fullscreen');
         fullscreenBtn.setAttribute('aria-pressed', 'false');
         setActionText(fullscreenBtn, aiT('fullscreen'));
+        restorePanelDragPosition();
         input.focus();
     });
     
@@ -1465,6 +1730,49 @@
         return finalPayload;
     }
 
+    let suggestionScrollFrame = 0;
+    let suggestionScrollPaused = false;
+    let suggestionScrollResumeAt = 0;
+
+    function startSuggestionAutoScroll() {
+        cancelAnimationFrame(suggestionScrollFrame);
+        suggestionsEl.scrollLeft = 0;
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        let lastTime = performance.now();
+        suggestionScrollResumeAt = lastTime + 1400;
+        const step = now => {
+            const elapsed = Math.min(50, now - lastTime);
+            lastTime = now;
+            const maxScroll = Math.max(0, suggestionsEl.scrollWidth - suggestionsEl.clientWidth);
+            if (maxScroll > 2 && panel.classList.contains('open') && !suggestionScrollPaused && now >= suggestionScrollResumeAt) {
+                if (suggestionsEl.scrollLeft >= maxScroll - 1) {
+                    suggestionsEl.scrollTo({ left:0, behavior:'smooth' });
+                    suggestionScrollResumeAt = now + 1600;
+                } else {
+                    suggestionsEl.scrollLeft = Math.min(maxScroll, suggestionsEl.scrollLeft + elapsed * 0.026);
+                }
+            }
+            suggestionScrollFrame = requestAnimationFrame(step);
+        };
+        suggestionScrollFrame = requestAnimationFrame(step);
+    }
+
+    suggestionsEl.addEventListener('pointerenter', () => { suggestionScrollPaused = true; });
+    suggestionsEl.addEventListener('pointerleave', () => {
+        suggestionScrollPaused = false;
+        suggestionScrollResumeAt = performance.now() + 900;
+    });
+    suggestionsEl.addEventListener('focusin', () => { suggestionScrollPaused = true; });
+    suggestionsEl.addEventListener('focusout', () => {
+        suggestionScrollPaused = false;
+        suggestionScrollResumeAt = performance.now() + 900;
+    });
+    suggestionsEl.addEventListener('touchstart', () => { suggestionScrollPaused = true; }, { passive:true });
+    suggestionsEl.addEventListener('touchend', () => {
+        suggestionScrollPaused = false;
+        suggestionScrollResumeAt = performance.now() + 1200;
+    }, { passive:true });
+
     async function loadSuggestions() {
         try {
             const token = localStorage.getItem('tools_token') || sessionStorage.getItem('tools_token');
@@ -1481,8 +1789,105 @@
             suggestionsEl.querySelectorAll('.ai-suggestion-chip').forEach(btn => {
                 btn.onclick = () => sendMessage(btn.getAttribute('data-question') || '');
             });
+            startSuggestionAutoScroll();
         } catch (e) {
+            cancelAnimationFrame(suggestionScrollFrame);
             suggestionsEl.innerHTML = '';
+        }
+    }
+
+    let archiveLoadSequence = 0;
+    function closeArchiveBrowser() {
+        archiveOverlay.classList.remove('open', 'loading');
+        archiveBtn.focus();
+    }
+
+    async function openArchiveBrowser() {
+        applyAssistantTheme(assistantTheme);
+        archiveOverlay.classList.add('open');
+        archiveSearch.value = '';
+        archivePreview.innerHTML = `<div class="ai-archive-empty">${escapeHtml(aiT('archiveSelect'))}</div>`;
+        await loadArchivedSessions('');
+        setTimeout(() => archiveSearch.focus(), 80);
+    }
+
+    async function loadArchivedSessions(query = '') {
+        const sequence = ++archiveLoadSequence;
+        archiveOverlay.classList.add('loading');
+        archiveList.innerHTML = `<div class="ai-archive-empty">${escapeHtml(aiT('archiveLoading'))}</div>`;
+        archiveCount.textContent = '';
+        try {
+            const res = await fetch(`/api/ai/sessions-archive?query=${encodeURIComponent(query)}&limit=200`, {
+                headers: getAuthHeaders()
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || `${res.status}`);
+            if (sequence !== archiveLoadSequence) return;
+            const items = Array.isArray(data.items) ? data.items : [];
+            archiveCount.textContent = aiT('archiveCount', Number(data.total) || items.length);
+            if (!items.length) {
+                archiveList.innerHTML = `<div class="ai-archive-empty">${escapeHtml(aiT('archiveEmpty'))}</div>`;
+                archivePreview.innerHTML = `<div class="ai-archive-empty">${escapeHtml(aiT('archiveEmpty'))}</div>`;
+                return;
+            }
+            archiveList.innerHTML = items.map(item => `
+                <button type="button" class="ai-archive-item" data-session-id="${escapeHtml(item.id)}">
+                    <div class="ai-archive-item-title">${escapeHtml(item.page_title || item.page_path || aiT('unnamed'))}</div>
+                    <div class="ai-archive-item-question">${escapeHtml(item.last_question || aiT('unnamed'))}</div>
+                    <div class="ai-archive-item-meta">${escapeHtml(`${item.archived_at || item.updated_at || ''} · ${item.message_count || 0} ${aiT('messages')}`)}</div>
+                </button>`).join('');
+            archiveList.querySelectorAll('.ai-archive-item').forEach((element, index) => {
+                element.onclick = () => previewArchivedSession(items[index], element);
+            });
+            archiveList.querySelector('.ai-archive-item')?.click();
+        } catch (error) {
+            if (sequence !== archiveLoadSequence) return;
+            archiveList.innerHTML = `<div class="ai-archive-empty">⚠️ ${escapeHtml(aiT('archiveFailed') + error.message)}</div>`;
+        } finally {
+            if (sequence === archiveLoadSequence) archiveOverlay.classList.remove('loading');
+        }
+    }
+
+    async function previewArchivedSession(session, element) {
+        archiveList.querySelectorAll('.ai-archive-item').forEach(item => item.classList.toggle('active', item === element));
+        archivePreview.innerHTML = `<div class="ai-archive-empty">${escapeHtml(aiT('archiveLoading'))}</div>`;
+        try {
+            const res = await fetch(`/api/ai/sessions/${encodeURIComponent(session.id)}/messages`, { headers: getAuthHeaders() });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || `${res.status}`);
+            const items = Array.isArray(data.items) ? data.items : [];
+            archivePreview.innerHTML = `
+                <div class="ai-archive-preview-head">
+                    <div class="ai-archive-preview-heading">
+                        <div class="ai-archive-preview-title">${escapeHtml(session.page_title || aiT('unnamed'))}</div>
+                        <div class="ai-archive-preview-path">${escapeHtml(session.page_path || '')}</div>
+                    </div>
+                    <button type="button" class="ai-archive-restore">${escapeHtml(aiT('restoreArchive'))}</button>
+                </div>
+                <div class="ai-archive-messages">${items.map(item => `<div class="ai-archive-message ${item.role === 'model' ? 'ai' : 'user'}">${renderMarkdownLike(item.content || '')}</div>`).join('')}</div>`;
+            archivePreview.querySelector('.ai-archive-restore').onclick = event => restoreArchivedSession(session.id, event.currentTarget);
+        } catch (error) {
+            archivePreview.innerHTML = `<div class="ai-archive-empty">⚠️ ${escapeHtml(aiT('archiveFailed') + error.message)}</div>`;
+        }
+    }
+
+    async function restoreArchivedSession(sessionId, button) {
+        button.disabled = true;
+        button.textContent = aiT('restoringArchive');
+        try {
+            const res = await fetch(`/api/ai/sessions/${encodeURIComponent(sessionId)}/unarchive`, {
+                method: 'POST', headers: getAuthHeaders(), body: '{}'
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || `${res.status}`);
+            closeArchiveBrowser();
+            if (!panel.classList.contains('open')) openOrClosePanel();
+            await restoreHistorySession(sessionId);
+            await loadHistorySessions();
+        } catch (error) {
+            button.disabled = false;
+            button.textContent = aiT('restoreArchive');
+            archivePreview.insertAdjacentHTML('beforeend', `<div class="ai-archive-empty">⚠️ ${escapeHtml(aiT('historyRestoreFailed') + error.message)}</div>`);
         }
     }
 
@@ -1599,21 +2004,24 @@
         }
     }
 
-    async function sendMessage(presetText) {
+    async function sendMessage(presetText, options = {}) {
         if (activeChatController) return;
         const text = String(presetText || input.value || '').trim();
         if (!text) return;
+        const displayText = String(options.displayText || text).trim();
 
         suggestionsEl.classList.add('is-collapsed');
         
-        appendMessage(text, 'user');
+        appendMessage(displayText, 'user');
         input.value = '';
         messages.push({ role: 'user', content: text });
         
         typing.style.display = 'block';
         chatBody.scrollTop = chatBody.scrollHeight;
         
-        const { pageTitle, context } = getPageContext();
+        const pageContext = getPageContext();
+        const pageTitle = pageContext.pageTitle;
+        const context = options.context === undefined ? pageContext.context : String(options.context || '');
         const controller = new AbortController();
         activeChatController = controller;
         setGeneratingState(true);
@@ -1686,5 +2094,36 @@
         event.preventDefault();
         sendMessage();
     };
+
+    async function openAssistant(options = {}) {
+        applyContextTheme();
+        panel.classList.add('open');
+        fab.setAttribute('aria-expanded', 'true');
+        loadSuggestions();
+        const prompt = String(options.prompt || '').trim();
+        if (prompt) {
+            if (isFirstOpen) {
+                isFirstOpen = false;
+                initialMessage?.remove();
+            }
+            while (activeChatController) {
+                await new Promise(resolve => window.setTimeout(resolve, 100));
+            }
+            await sendMessage(prompt, { displayText: options.displayText, context: options.context });
+        } else if (isFirstOpen) {
+            isFirstOpen = false;
+            await initChat();
+        }
+        setTimeout(() => input.focus(), 120);
+    }
+
+    window.ToolsAIAssistant = {
+        open: openAssistant,
+        ask(prompt, options = {}) {
+            return openAssistant({ ...options, prompt });
+        }
+    };
+
+    applyAssistantTheme(assistantTheme);
 
 })();

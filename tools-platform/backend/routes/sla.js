@@ -521,10 +521,15 @@ router.put('/snapshots/:id', async (req, res) => {
 // 并保留旧版“最近 N 天去重”请求的兼容性。
 router.post('/snapshots/cleanup-redundant', async (req, res) => {
     try {
+        const requestedMode = req.body?.mode;
+        const dryRun = Boolean(req.body?.dryRun);
+        if (requestedMode === 'latest-only' && !dryRun && req.body?.confirmationText !== '确认删除') {
+            return res.status(400).json({ error: '彻底清理前必须输入“确认删除”' });
+        }
         const result = await snapshotsRepo.cleanupRedundantDailySnapshots({
             days: req.body?.days,
-            mode: req.body?.mode,
-            dryRun: req.body?.dryRun
+            mode: requestedMode,
+            dryRun
         });
         console.log(
             `[SLA SNAPSHOT CLEANUP] mode=${result.mode}, days=${result.days}, dryRun=${result.dryRun}, ` +

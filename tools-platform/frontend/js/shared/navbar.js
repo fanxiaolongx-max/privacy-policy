@@ -92,6 +92,7 @@ let navState = {
     }
 };
 let navConfirmResolver = null;
+let navTypedConfirmResolver = null;
 
 function readNavigationBootstrapCache() {
     try {
@@ -261,6 +262,11 @@ function registerNavbarI18n() {
             'nav.page.report.res.empty': '没有需要清理的冗余快照。',
             'nav.page.report.res.more': '仅展示前 8 条，剩余 {remaining} 条未展开。',
             'nav.page.report.confirmLatest': '确定删除 {count} 条历史快照，仅保留最新 1 份吗？\n\n这会改变报表看板的“历史快照”列表，但不删除月报/报表入库档案。',
+            'nav.page.report.confirmLatestTitle': '高危操作：将永久删除历史快照',
+            'nav.page.report.confirmLatestWarning': '本次将删除 {count} 条 SLA 历史快照，并且只保留最新 1 条。报表看板将无法再切换这些快照。',
+            'nav.page.report.confirmLatestHint': '请在下方完整输入“确认删除”，然后才能点击确认删除。',
+            'nav.page.report.confirmLatestPlaceholder': '输入：确认删除',
+            'nav.page.report.confirmLatestAction': '确认删除',
             'nav.page.report.confirmRetain': '确定删除 {count} 条超出 {days} 天保留期或同日重复的快照吗？',
 
             'nav.ai.empty': '正在加载 AI 助手配置...',
@@ -596,6 +602,11 @@ function registerNavbarI18n() {
             'nav.page.report.res.empty': 'No redundant snapshots to clean up.',
             'nav.page.report.res.more': 'Only showing the first 8 items, {remaining} items hidden.',
             'nav.page.report.confirmLatest': 'Delete {count} historical snapshots and keep only the latest one?\n\nThis changes the Report Dashboard history list but does not delete saved monthly/report archives.',
+            'nav.page.report.confirmLatestTitle': 'DANGER: Historical snapshots will be permanently deleted',
+            'nav.page.report.confirmLatestWarning': 'This will delete {count} SLA historical snapshots and keep only the latest one. They will no longer be selectable in the Report Dashboard.',
+            'nav.page.report.confirmLatestHint': 'Type “确认删除” exactly below to enable the destructive action.',
+            'nav.page.report.confirmLatestPlaceholder': 'Type: 确认删除',
+            'nav.page.report.confirmLatestAction': 'Delete snapshots',
             'nav.page.report.confirmRetain': 'Delete {count} snapshots outside the {days}-day retention period or duplicated on the same day?',
 
             'nav.ai.empty': 'Loading AI configuration...',
@@ -3210,7 +3221,7 @@ function renderReportSnapshotCleanupResult(result) {
     `;
 }
 
-async function requestReportSnapshotCleanup(dryRun) {
+async function requestReportSnapshotCleanup(dryRun, confirmationText = '') {
     const res = await fetch('/api/sla/snapshots/cleanup-redundant', {
         method: 'POST',
         headers: {
@@ -3220,7 +3231,8 @@ async function requestReportSnapshotCleanup(dryRun) {
         body: JSON.stringify({
             days: getReportSnapshotCleanupDays(),
             mode: getReportSnapshotCleanupMode(),
-            dryRun
+            dryRun,
+            confirmationText
         })
     });
     const data = await res.json().catch(() => ({}));
@@ -3242,19 +3254,103 @@ window.runReportSnapshotCleanup = async function () {
     const preview = await requestReportSnapshotCleanup(true);
     renderReportSnapshotCleanupResult(preview);
     if (!preview.removedCount) return alert(navT('nav.page.report.res.empty'));
-    const confirmKey = mode === 'latest-only'
-        ? 'nav.page.report.confirmLatest'
-        : 'nav.page.report.confirmRetain';
-    const confirmText = navT(confirmKey, { count: preview.removedCount, days })
-        .replace('{count}', preview.removedCount)
-        .replace('{days}', days);
-    const ok = confirm(confirmText);
+    let confirmationText = '';
+    let ok = false;
+    if (mode === 'latest-only') {
+        ok = await showNavbarTypedConfirm({
+            title: navT('nav.page.report.confirmLatestTitle'),
+            message: navT('nav.page.report.confirmLatestWarning', { count: preview.removedCount }).replace('{count}', preview.removedCount),
+            hint: navT('nav.page.report.confirmLatestHint'),
+            placeholder: navT('nav.page.report.confirmLatestPlaceholder'),
+            requiredText: '确认删除',
+            cancelText: navT('nav.set.restore.cancel'),
+            confirmText: navT('nav.page.report.confirmLatestAction')
+        });
+        confirmationText = ok ? '确认删除' : '';
+    } else {
+        const confirmText = navT('nav.page.report.confirmRetain', { count: preview.removedCount, days })
+            .replace('{count}', preview.removedCount)
+            .replace('{days}', days);
+        ok = confirm(confirmText);
+    }
     if (!ok) return;
     await runGlobalBackupAction('正在清理冗余快照...', async () => {
-        const result = await requestReportSnapshotCleanup(false);
+        const result = await requestReportSnapshotCleanup(false, confirmationText);
         renderReportSnapshotCleanupResult(result);
         return result;
     });
+};
+
+function ensureNavbarTypedConfirmDialog() {
+    let modal = document.getElementById('navbarTypedConfirmModal');
+    if (modal) return modal;
+    modal = document.createElement('div');
+    modal.id = 'navbarTypedConfirmModal';
+    modal.className = 'nav-confirm-modal nav-confirm-modal-danger';
+    modal.setAttribute('aria-hidden', 'true');
+    modal.innerHTML = `
+        <div class="nav-confirm-backdrop" onclick="resolveNavbarTypedConfirm(false)"></div>
+        <section class="nav-confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="navbarTypedConfirmTitle" aria-describedby="navbarTypedConfirmMessage navbarTypedConfirmHint">
+            <div class="nav-confirm-danger-label">⚠ 不可撤销的删除操作</div>
+            <div class="nav-confirm-copy">
+                <h3 id="navbarTypedConfirmTitle"></h3>
+                <p id="navbarTypedConfirmMessage"></p>
+                <div class="nav-confirm-hint" id="navbarTypedConfirmHint"></div>
+                <input id="navbarTypedConfirmInput" class="nav-confirm-type-input" type="text" autocomplete="off" spellcheck="false">
+            </div>
+            <div class="nav-confirm-actions">
+                <button type="button" class="nav-confirm-cancel" onclick="resolveNavbarTypedConfirm(false)"></button>
+                <button type="button" class="nav-confirm-submit" onclick="resolveNavbarTypedConfirm(true)" disabled></button>
+            </div>
+        </section>`;
+    modal.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            window.resolveNavbarTypedConfirm(false);
+        }
+    });
+    document.body.appendChild(modal);
+    return modal;
+}
+
+function showNavbarTypedConfirm({ title, message, hint, placeholder, requiredText, cancelText, confirmText }) {
+    const modal = ensureNavbarTypedConfirmDialog();
+    if (navTypedConfirmResolver) {
+        navTypedConfirmResolver(false);
+        navTypedConfirmResolver = null;
+    }
+    modal.querySelector('#navbarTypedConfirmTitle').textContent = title || '';
+    modal.querySelector('#navbarTypedConfirmMessage').textContent = message || '';
+    modal.querySelector('#navbarTypedConfirmHint').textContent = hint || '';
+    const input = modal.querySelector('#navbarTypedConfirmInput');
+    const submit = modal.querySelector('.nav-confirm-submit');
+    input.value = '';
+    input.placeholder = placeholder || '';
+    submit.textContent = confirmText || '确认删除';
+    submit.disabled = true;
+    input.oninput = () => { submit.disabled = input.value.trim() !== requiredText; };
+    input.onkeydown = event => {
+        if (event.key === 'Enter' && !submit.disabled) {
+            event.preventDefault();
+            window.resolveNavbarTypedConfirm(true);
+        }
+    };
+    modal.querySelector('.nav-confirm-cancel').textContent = cancelText || '取消';
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    requestAnimationFrame(() => input.focus());
+    return new Promise(resolve => { navTypedConfirmResolver = resolve; });
+}
+
+window.resolveNavbarTypedConfirm = function (confirmed) {
+    const modal = document.getElementById('navbarTypedConfirmModal');
+    const submit = modal?.querySelector('.nav-confirm-submit');
+    if (confirmed && submit?.disabled) return;
+    modal?.classList.remove('open');
+    modal?.setAttribute('aria-hidden', 'true');
+    const resolve = navTypedConfirmResolver;
+    navTypedConfirmResolver = null;
+    if (resolve) resolve(Boolean(confirmed));
 };
 
 function formatAlertTime(value) {
@@ -3910,7 +4006,7 @@ window.openToolsKnowledgeGraph = function (options = {}) {
             script.addEventListener('load', handleLoad, { once: true });
             script.addEventListener('error', handleError, { once: true });
             if (!existing) {
-                script.src = '/js/shared/ai-knowledge-graph.js?v=20260812-graph-i18n-zoom2';
+                script.src = '/js/shared/ai-knowledge-graph.js?v=20260813-code-analysis4';
                 document.body.appendChild(script);
             }
         }).catch(error => {
@@ -3924,6 +4020,30 @@ window.openToolsKnowledgeGraph = function (options = {}) {
     });
 };
 
+let toolsAiAssistantLoader = null;
+window.openToolsAIAssistant = function (options = {}) {
+    if (window.ToolsAIAssistant?.open) return window.ToolsAIAssistant.open(options);
+    if (!toolsAiAssistantLoader) {
+        toolsAiAssistantLoader = new Promise((resolve, reject) => {
+            const existing = document.querySelector('script[src^="/js/shared/ai-assistant.js"]');
+            const script = existing || document.createElement('script');
+            script.addEventListener('load', resolve, { once: true });
+            script.addEventListener('error', () => reject(new Error('AI 助手组件加载失败')), { once: true });
+            if (!existing) {
+                script.src = '/js/shared/ai-assistant.js?v=20260813-compact-header-scroll1';
+                document.body.appendChild(script);
+            }
+        }).catch(error => {
+            toolsAiAssistantLoader = null;
+            throw error;
+        });
+    }
+    return toolsAiAssistantLoader.then(() => {
+        if (!window.ToolsAIAssistant?.open) throw new Error('AI 助手组件初始化失败');
+        return window.ToolsAIAssistant.open(options);
+    });
+};
+
 (function () {
     // 华子胶片设计工具内置了自己的 AI 助手，避免重复显示全局悬浮入口。
     if (window.location.pathname.startsWith('/tools/network_safety_meeting_summary')) return;
@@ -3933,7 +4053,7 @@ window.openToolsKnowledgeGraph = function (options = {}) {
     // 确保不重复加载
     if (!document.querySelector('script[src^="/js/shared/ai-assistant.js"]')) {
         const aiScript = document.createElement('script');
-        aiScript.src = '/js/shared/ai-assistant.js?v=20260811-11';
+        aiScript.src = '/js/shared/ai-assistant.js?v=20260813-compact-header-scroll1';
         document.body.appendChild(aiScript);
     }
 })();

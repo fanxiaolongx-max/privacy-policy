@@ -76,7 +76,7 @@
           <p class="mt-1.5 text-[11px] leading-relaxed text-slate-500">
             上一个版本：<span id="previousVersion" class="text-slate-300">1.0.0（默认基线）</span><br>
             本次新版本：<span id="nextVersion" class="font-semibold text-cyan-300">1.0.1</span><br>
-            <span class="text-violet-300">固定扩展 ID：按扩展名称永久复用 Manifest Key</span>
+            <span id="identityHint" class="text-violet-300">商店包由 Microsoft 分配扩展 ID，不写入 Manifest Key</span>
           </p>
         </div>
       </div>
@@ -84,6 +84,15 @@
       <div>
         <label class="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wide">描述</label>
         <input type="text" id="extDesc" value="监控 SV/CFC 餐厅满意度，分析问卷明细并复核评分。" class="input-field w-full rounded-lg px-3 py-2.5 text-sm">
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wide">打包用途</label>
+        <select id="extPackageTarget" class="input-field w-full rounded-lg px-3 py-2.5 text-sm">
+          <option value="store" selected>Microsoft Edge 插件商店提交包（移除 manifest.key）</option>
+          <option value="local">本地安装 / 企业分发包（保留固定扩展 ID）</option>
+        </select>
+        <p id="packageTargetHint" class="mt-1.5 text-[11px] leading-relaxed text-emerald-300">Microsoft 商店禁止 manifest.key；此校验与是否混淆无关。</p>
       </div>
 
       <div>
@@ -140,8 +149,8 @@
           <span class="block text-xs font-semibold text-slate-300 mb-2">代码保护与启动</span>
           <div class="space-y-2 text-xs text-slate-300">
             <label class="flex items-start gap-2">
-              <input id="extObfuscate" type="checkbox" checked class="mt-0.5 accent-indigo-500">
-              <span>默认混淆代码 <small class="block text-slate-500">提高阅读和复制难度，但不能保证源码绝对不可见。</small></span>
+              <input id="extObfuscate" type="checkbox" class="mt-0.5 accent-indigo-500">
+              <span>混淆代码（商店提交建议关闭） <small class="block text-slate-500">只提高阅读难度；不会解决 manifest 校验，也可能增加商店人工审核难度。</small></span>
             </label>
             <label class="flex items-start gap-2">
               <input id="extLicense" type="checkbox" checked class="mt-0.5 accent-indigo-500">
@@ -239,7 +248,7 @@
     </section>
   </div>
 
-  <script src="./packer-core.js?v=20260806-auto-version-1"></script>
+  <script src="./packer-core.js?v=20260813-store-package-1"></script>
   <script>
     const BUILTIN_SCRIPTS = {
       'sv-cfc-monitor': {
@@ -352,6 +361,7 @@
 
     window.addEventListener('DOMContentLoaded', async () => {
       refreshVersionPreview();
+      updatePackageTargetUI();
       try {
         await loadBuiltinScript('sv-cfc-monitor', false);
       } catch (e) {
@@ -378,7 +388,9 @@
         world: document.getElementById('extWorld').value,
         includePopup: document.getElementById('extPopup').value === 'yes',
         manualLaunch: document.getElementById('extManualLaunch').checked,
-        obfuscateRequested: document.getElementById('extObfuscate').checked,
+        packageTarget: document.getElementById('extPackageTarget').value,
+        obfuscateRequested: document.getElementById('extPackageTarget').value !== 'store'
+          && document.getElementById('extObfuscate').checked,
         licenseRequested: document.getElementById('extLicense').checked,
         licenseLabel: document.getElementById('licenseLabel').value.trim(),
         runAt: document.getElementById('extRunAt').value,
@@ -631,6 +643,19 @@
         document.getElementById('extPopup').value = 'yes';
       }
     });
+    function updatePackageTargetUI() {
+      const storePackage = document.getElementById('extPackageTarget').value === 'store';
+      const obfuscateInput = document.getElementById('extObfuscate');
+      if (storePackage) obfuscateInput.checked = false;
+      obfuscateInput.disabled = storePackage;
+      document.getElementById('identityHint').textContent = storePackage
+        ? '商店包由 Microsoft 分配扩展 ID，不写入 Manifest Key'
+        : '固定扩展 ID：按扩展名称永久复用 Manifest Key';
+      document.getElementById('packageTargetHint').textContent = storePackage
+        ? 'Microsoft 商店禁止 manifest.key；商店模式同时强制关闭代码混淆。'
+        : '本地包保留 key 以维持扩展 ID，不可直接上传 Microsoft 商店。';
+    }
+    document.getElementById('extPackageTarget').addEventListener('change', updatePackageTargetUI);
     document.getElementById('extManualLaunch').addEventListener('change', event => {
       if (event.target.checked) document.getElementById('extPopup').value = 'yes';
     });
@@ -681,7 +706,8 @@
         const zip = new JSZip();
         Object.entries(generated.files).forEach(([fileName, content]) => zip.file(fileName, content));
         const content = await zip.generateAsync({ type: "blob" });
-        const fileName = "extension-" + options.name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase() + "-v" + options.version + ".zip";
+        const targetSuffix = options.packageTarget === 'store' ? '-edge-store' : '-local';
+        const fileName = "extension-" + options.name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase() + "-v" + options.version + targetSuffix + ".zip";
         saveAs(content, fileName);
         rememberPackedVersion(options.name, options.version);
         refreshVersionPreview();
