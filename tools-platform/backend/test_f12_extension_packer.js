@@ -210,12 +210,13 @@ function testExamAssistantBuiltinCompatibility() {
     assert.ok(indexHtml.includes('includePopup: true'));
     assert.ok(indexHtml.includes('id="previousVersion"'), '界面必须显示上一个版本');
     assert.ok(indexHtml.includes('id="nextVersion"'), '界面必须显示本次新版本');
-    assert.ok(indexHtml.includes('f12ExtensionPackerVersionHistoryV1'), '必须按扩展名称持久化版本历史');
-    assert.ok(indexHtml.includes('function incrementExtensionVersion(version)'), '页面必须提供版本递增缓存兼容回退');
-    assert.ok(indexHtml.includes('typeof F12ExtensionPacker.incrementVersion === \'function\''), '新版核心可用时必须使用统一版本递增函数');
-    assert.ok(indexHtml.includes('incrementExtensionVersion(previousVersion)'), '每次打包前必须生成递增版本');
+    assert.ok(indexHtml.includes('f12ExtensionPackerVersionHistoryV1'), '必须兼容迁移浏览器已有版本历史');
+    assert.ok(indexHtml.includes('/f12-to-extension/version/preview'), '必须从服务器读取扩展版本');
+    assert.ok(indexHtml.includes('/f12-to-extension/version/reserve'), '打包前必须由服务器分配下一版本');
+    assert.ok(indexHtml.includes('versionReservation.allocatedVersion'), '打包内容必须使用服务器分配的版本');
+    assert.ok(indexHtml.includes('版本由服务器保存，打包下载时自动递增'), '界面必须说明服务器持久化规则');
     assert.ok(indexHtml.includes('packer-core.js?v='), '核心脚本必须带缓存失效版本参数');
-    assert.ok(indexHtml.includes('rememberPackedVersion(options.name, options.version)'), '成功打包后必须推进版本记录');
+    assert.ok(!indexHtml.includes('rememberPackedVersion(options.name, options.version)'), '不得继续把新版本只写入浏览器');
     assert.ok(indexHtml.includes('"-v" + options.version + targetSuffix + ".zip"'), 'ZIP 文件名必须包含扩展版本和打包用途');
 }
 

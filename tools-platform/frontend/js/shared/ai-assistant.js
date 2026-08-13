@@ -957,7 +957,7 @@
         if (!knowledgeGraphLoader) {
             knowledgeGraphLoader = new Promise((resolve, reject) => {
                 const script = document.createElement('script');
-                script.src = '/js/shared/ai-knowledge-graph.js?v=20260813-code-analysis4';
+                script.src = '/js/shared/ai-knowledge-graph.js?v=20260813-02';
                 script.onload = resolve;
                 script.onerror = () => reject(new Error(aiT('graphLoadFailed')));
                 document.body.appendChild(script);

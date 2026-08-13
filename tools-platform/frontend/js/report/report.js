@@ -1281,6 +1281,9 @@ function removeManualMetricFromGroups(label) {
 }
 
 function getTargetMonthDefaultByDay(date = new Date()) {
+    if (window.ReportSnapshotTargetMonth && typeof window.ReportSnapshotTargetMonth.inferFromDate === 'function') {
+        return window.ReportSnapshotTargetMonth.inferFromDate(date);
+    }
     const currentMonth = date.getMonth() + 1;
     if (date.getDate() < 10) {
         return currentMonth === 1 ? 12 : currentMonth - 1;
@@ -1313,8 +1316,13 @@ function setReportTargetMonth(month) {
 }
 
 function getSnapshotSuggestedTargetMonth(snapshot) {
+    if (window.ReportSnapshotTargetMonth && typeof window.ReportSnapshotTargetMonth.resolve === 'function') {
+        return window.ReportSnapshotTargetMonth.resolve(snapshot);
+    }
     const month = parseInt(snapshot && snapshot.selectedTargetMonth, 10);
-    return month >= 1 && month <= 12 ? month : null;
+    if (month >= 1 && month <= 12) return month;
+    const timestamp = snapshot && (snapshot.timestamp || snapshot.created_at || snapshot.createdAt);
+    return timestamp ? getTargetMonthDefaultByDay(new Date(timestamp)) : null;
 }
 
 function renderReportMonthOptions(preserveValue = true) {
@@ -1490,8 +1498,9 @@ window.loadSelectedSnapshot = function () {
     currentSnapshot = snapshots.find(s => s.id === id);
     if (currentSnapshot) {
         const monthSel = document.getElementById('target-month-select');
-        if (monthSel && monthSel.dataset.userChanged !== 'true') {
+        if (monthSel) {
             monthSel.value = getSnapshotSuggestedTargetMonth(currentSnapshot) || getDefaultTargetMonth();
+            monthSel.dataset.userChanged = 'false';
         }
         renderReport(currentSnapshot);
     }

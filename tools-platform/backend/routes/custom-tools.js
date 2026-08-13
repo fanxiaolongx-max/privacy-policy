@@ -12,6 +12,7 @@ const aiProviderClient = require('../models/ai-provider-client');
 const f12LicenseService = require('../models/f12-license-service');
 const f12LicenseRegistry = require('../models/f12-license-registry');
 const f12ExtensionIdentityService = require('../models/f12-extension-identity-service');
+const f12ExtensionVersionService = require('../models/f12-extension-version-service');
 const { DATA_DIR } = require('../models/store');
 const { requireAdmin } = require('../middleware/auth');
 const customToolI18nGenerator = require('../../scripts/generate-custom-tool-i18n');
@@ -101,6 +102,30 @@ router.get('/f12-to-extension/license-config', requireAdmin, (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ error: error.message || '读取 License 打包配置失败' });
+    }
+});
+
+router.post('/f12-to-extension/version/preview', requireAdmin, (req, res) => {
+    try {
+        const info = f12ExtensionVersionService.previewVersion(req.body && req.body.productId, {
+            legacyVersion: req.body && req.body.legacyVersion
+        });
+        res.setHeader('Cache-Control', 'no-store');
+        res.json({ success: true, ...info });
+    } catch (error) {
+        res.status(400).json({ error: error.message || '读取扩展版本失败' });
+    }
+});
+
+router.post('/f12-to-extension/version/reserve', requireAdmin, (req, res) => {
+    try {
+        const info = f12ExtensionVersionService.reserveNextVersion(req.body && req.body.productId, {
+            legacyVersion: req.body && req.body.legacyVersion
+        });
+        res.setHeader('Cache-Control', 'no-store');
+        res.json({ success: true, ...info });
+    } catch (error) {
+        res.status(400).json({ error: error.message || '分配扩展版本失败' });
     }
 });
 

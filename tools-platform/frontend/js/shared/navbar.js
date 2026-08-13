@@ -4006,7 +4006,7 @@ window.openToolsKnowledgeGraph = function (options = {}) {
             script.addEventListener('load', handleLoad, { once: true });
             script.addEventListener('error', handleError, { once: true });
             if (!existing) {
-                script.src = '/js/shared/ai-knowledge-graph.js?v=20260813-code-analysis4';
+                script.src = '/js/shared/ai-knowledge-graph.js?v=20260813-02';
                 document.body.appendChild(script);
             }
         }).catch(error => {
@@ -4030,7 +4030,7 @@ window.openToolsAIAssistant = function (options = {}) {
             script.addEventListener('load', resolve, { once: true });
             script.addEventListener('error', () => reject(new Error('AI 助手组件加载失败')), { once: true });
             if (!existing) {
-                script.src = '/js/shared/ai-assistant.js?v=20260813-compact-header-scroll1';
+                script.src = '/js/shared/ai-assistant.js?v=20260813-01';
                 document.body.appendChild(script);
             }
         }).catch(error => {
@@ -4053,7 +4053,7 @@ window.openToolsAIAssistant = function (options = {}) {
     // 确保不重复加载
     if (!document.querySelector('script[src^="/js/shared/ai-assistant.js"]')) {
         const aiScript = document.createElement('script');
-        aiScript.src = '/js/shared/ai-assistant.js?v=20260813-compact-header-scroll1';
+        aiScript.src = '/js/shared/ai-assistant.js?v=20260813-01';
         document.body.appendChild(aiScript);
     }
 })();

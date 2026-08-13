@@ -68,6 +68,7 @@
             height: 36px; min-width: 36px; padding: 0 10px; border-radius: 10px;
             border: 1px solid rgba(144,158,207,.2); background: rgba(52,63,98,.54);
             color: #dce2f1; cursor: pointer; font-size: 12px;
+            display:inline-flex; align-items:center; justify-content:center; line-height:1;
             transition: background .16s, border-color .16s, transform .16s;
         }
         .ai-kg-btn:hover { background: rgba(76,90,141,.65); border-color: rgba(150,163,222,.42); transform: translateY(-1px); }
@@ -78,6 +79,13 @@
             background:#8fa3ff; box-shadow:0 0 10px rgba(143,163,255,.9); vertical-align:1px;
             animation:ai-kg-pulse 1.4s ease-in-out infinite;
         }
+        .ai-kg-btn.tour { display:none; }
+        .ai-kg-overlay[data-dimension="3d"] .ai-kg-btn.tour { display:inline-flex; }
+        .ai-kg-btn.tour[aria-pressed="true"] {
+            color:#fff; border-color:rgba(131,153,255,.48);
+            background:linear-gradient(135deg,rgba(69,91,190,.74),rgba(117,72,175,.72));
+            box-shadow:0 0 20px rgba(101,116,231,.2);
+        }
         @keyframes ai-kg-pulse { 50% { opacity:.42; transform:scale(.76); } }
         .ai-kg-btn.icon { width:36px; padding:0; font-size:17px; }
         .ai-kg-main { position:relative; flex:1; min-height:0; display:flex; }
@@ -86,7 +94,14 @@
             content:""; position:absolute; z-index:1; inset:0; pointer-events:none;
             background:
                 radial-gradient(circle at 22% 16%, rgba(174,194,255,.09), transparent 29%),
+                radial-gradient(ellipse at 52% 56%, transparent 20%, rgba(5,8,18,.18) 68%, rgba(2,4,10,.48) 100%),
                 linear-gradient(145deg, rgba(91,112,191,.025), transparent 42%, rgba(0,0,0,.09));
+        }
+        .ai-kg-overlay[data-dimension="3d"] .ai-kg-stage::after {
+            content:""; position:absolute; z-index:1; inset:0; pointer-events:none;
+            background:linear-gradient(90deg,rgba(255,255,255,.012) 1px,transparent 1px),linear-gradient(rgba(255,255,255,.01) 1px,transparent 1px);
+            background-size:72px 72px; opacity:.18;
+            mask-image:radial-gradient(ellipse at center,#000 5%,transparent 72%);
         }
         .ai-kg-canvas { position:relative; z-index:2; width:100%; height:100%; display:block; cursor:grab; touch-action:none; }
         .ai-kg-canvas.dragging { cursor:grabbing; }
@@ -232,6 +247,7 @@
             <div class="ai-kg-actions">
                 <button class="ai-kg-btn" id="aiKgRefresh" title="重建变化的知识文件">刷新知识库</button>
                 <button class="ai-kg-btn motion" id="aiKgMotion" type="button" aria-pressed="true" title="开启或暂停力导向仿真">动态仿真</button>
+                <button class="ai-kg-btn tour" id="aiKgTour" type="button" aria-pressed="false" title="3D 演示巡航">演示巡航</button>
                 <button class="ai-kg-btn icon" id="aiKgControls" type="button" aria-pressed="false" title="外观与力度">☷</button>
                 <button class="ai-kg-btn icon" id="aiKgFit" title="重置视图">◎</button>
                 <button class="ai-kg-btn icon" id="aiKgFullscreen" type="button" aria-pressed="false" title="全屏">⛶</button>
@@ -289,6 +305,7 @@
     const monthSelect = overlay.querySelector('#aiKgMonth');
     const refreshButton = overlay.querySelector('#aiKgRefresh');
     const motionButton = overlay.querySelector('#aiKgMotion');
+    const tourButton = overlay.querySelector('#aiKgTour');
     const controlsButton = overlay.querySelector('#aiKgControls');
     const fullscreenButton = overlay.querySelector('#aiKgFullscreen');
     const controlPanel = overlay.querySelector('#aiKgControlPanel');
@@ -331,6 +348,7 @@
         orbitTargetId: null,
         orbitPivot: { x:0, y:0, z:0 },
         orbitTransition: null,
+        cameraTransition: null,
         sidebarCollapsed: loadSidebarCollapsed(),
         hovered: null,
         hoverCandidate: null,
@@ -352,6 +370,7 @@
         settings: loadSettings(),
         stars: [],
         hasFailingMetricAlerts: false,
+        tour: { active:false, index:0, nextAt:0, nodeIds:[] },
         sidebarDocument: null,
         growth: { active:false, startedAt:0, duration:0, nodeOrder:new Map() }
     };
@@ -359,11 +378,11 @@
     const KG_TEXT = {
         zh: {
             view: '图谱视图', knowledge: '项目知识', metrics: '指标体系', ruleMonth: '规则月份', refreshKnowledge: '刷新知识库', refreshMetrics: '刷新指标',
-            refreshKnowledgeTitle: '重建变化的知识文件', refreshMetricsTitle: '重新读取指标规则与历史快照', motion: '动态仿真', motionPaused: '仿真已暂停', motionTitle: '开启或暂停力导向仿真', fit: '重置视图', fullscreen: '全屏', exitFullscreen: '退出全屏', sidebarCollapse: '收起详情栏', sidebarExpand: '展开详情栏', close: '关闭',
+            refreshKnowledgeTitle: '重建变化的知识文件', refreshMetricsTitle: '重新读取指标规则与历史快照', motion: '动态仿真', motionPaused: '仿真已暂停', motionTitle: '开启或暂停力导向仿真', tour: '演示巡航', tourStop: '停止巡航', tourTitle: '自动巡航重要节点，任意操作即停止', fit: '重置视图', fullscreen: '全屏', exitFullscreen: '退出全屏', sidebarCollapse: '收起详情栏', sidebarExpand: '展开详情栏', close: '关闭',
             knowledgeTitle: '✦ 项目知识关系图谱', metricTitle: '◈ 运营指标体系图谱', knowledgeSubtitle: '项目 → 模块 / 工具 / 数据库 → 文件 / 表 · 细线为代码、查询和资源依赖', metricSubtitle: '月份规则 → 指标分类 → 指标 → 子指标 · 点击查看每日最新历史值',
             searchKnowledge: '搜索 README、工具、数据库表、接口、AI 助手…', searchMetrics: '搜索分类、指标、子指标…',
             hints: ['拖动画布','滚轮缩放','放大显示文件名','点击节点查看','点击空白取消高亮','拖动节点可拉扯关系'],
-            hints3d: ['左键拖动空白处旋转','双击节点设为旋转中心','按住滚轮拖动平移','滚轮缩放','点击节点查看','点击空白取消高亮'],
+            hints3d: ['左键拖动空白处旋转','点击节点镜头聚焦','双击设为旋转中心','按住滚轮拖动平移','滚轮缩放','手动操作停止巡航'],
             dimension: '图谱维度',
             project: '项目', module: '模块', knowledgeFile: '知识文件', toolData: '工具/数据资产', monthRules: '月份规则', category: '指标分类', metric: '指标', submetric: '子指标',
             files: '文件', chunks: '片段', dependencies: '依赖', recentUpdated: '最近更新', tools: '工具', databases: '数据库', tables: '数据表', tableRelations: '表关系', snapshots: '历史日期',
@@ -377,11 +396,11 @@
         },
         en: {
             view: 'Graph view', knowledge: 'Project Knowledge', metrics: 'Metric System', ruleMonth: 'Rule month', refreshKnowledge: 'Refresh Knowledge', refreshMetrics: 'Refresh Metrics',
-            refreshKnowledgeTitle: 'Re-index changed knowledge files', refreshMetricsTitle: 'Reload metric rules and snapshots', motion: 'Live Simulation', motionPaused: 'Simulation Paused', motionTitle: 'Start or pause force simulation', fit: 'Reset view', fullscreen: 'Fullscreen', exitFullscreen: 'Exit fullscreen', sidebarCollapse: 'Collapse details', sidebarExpand: 'Expand details', close: 'Close',
+            refreshKnowledgeTitle: 'Re-index changed knowledge files', refreshMetricsTitle: 'Reload metric rules and snapshots', motion: 'Live Simulation', motionPaused: 'Simulation Paused', motionTitle: 'Start or pause force simulation', tour: 'Guided Tour', tourStop: 'Stop Tour', tourTitle: 'Automatically tour important nodes; any interaction stops it', fit: 'Reset view', fullscreen: 'Fullscreen', exitFullscreen: 'Exit fullscreen', sidebarCollapse: 'Collapse details', sidebarExpand: 'Expand details', close: 'Close',
             knowledgeTitle: '✦ Project Knowledge Graph', metricTitle: '◈ Operations Metric Graph', knowledgeSubtitle: 'Project → modules / tools / databases → files / tables · thin lines show code, query, and asset dependencies', metricSubtitle: 'Monthly rules → categories → metrics → submetrics · click to inspect historical values',
             searchKnowledge: 'Search README, tools, database tables, APIs, AI assistant…', searchMetrics: 'Search categories, metrics, submetrics…',
             hints: ['Drag canvas','Wheel to zoom','Zoom in for filenames','Click a node for details','Click empty space to clear focus','Drag nodes to pull relations'],
-            hints3d: ['Left-drag empty space to orbit','Double-click a node to orbit around it','Middle-drag to pan','Wheel to zoom','Click a node for details','Click empty space to clear focus'],
+            hints3d: ['Left-drag empty space to orbit','Click a node to focus camera','Double-click to set orbit center','Middle-drag to pan','Wheel to zoom','Manual input stops the tour'],
             dimension: 'Graph dimension',
             project: 'Project', module: 'Module', knowledgeFile: 'Knowledge File', toolData: 'Tool/Data Asset', monthRules: 'Monthly Rules', category: 'Metric Category', metric: 'Metric', submetric: 'Submetric',
             files: 'files', chunks: 'chunks', dependencies: 'dependencies', recentUpdated: 'Recently updated', tools: 'tools', databases: 'databases', tables: 'tables', tableRelations: 'table relations', snapshots: 'history days',
@@ -627,6 +646,28 @@
         });
         const root = state.nodeMap.get(isMetricMode() ? 'metric-root' : 'root');
         if (root) { root.x = 0; root.y = 0; root.z = 0; root.fixed = true; }
+        const hierarchyLevel = new Map();
+        if (root) hierarchyLevel.set(root.id, 0);
+        let frontier = root ? [root.id] : [];
+        while (frontier.length) {
+            const next = [];
+            frontier.forEach(parentId => {
+                const level = hierarchyLevel.get(parentId) || 0;
+                state.edges.forEach(edge => {
+                    if (edge.type !== 'contains' || edge.source !== parentId || hierarchyLevel.has(edge.target)) return;
+                    hierarchyLevel.set(edge.target, level + 1);
+                    next.push(edge.target);
+                });
+            });
+            frontier = next;
+        }
+        const layerSpacing = isMetricMode() ? 118 : 104;
+        state.nodes.forEach(node => {
+            const fallbackLevel = isRootNode(node) ? 0 : isGroupNode(node) ? 1 : ['metric','tool','database','document'].includes(node.type) ? 2 : 3;
+            node.hierarchyLevel = Math.min(4, hierarchyLevel.get(node.id) ?? fallbackLevel);
+            node.layerZ = node.hierarchyLevel === 0 ? 0 : (node.hierarchyLevel - 1.15) * layerSpacing;
+            if (!isRootNode(node)) node.z = node.layerZ + node.z * 0.32;
+        });
         state.flatPositions = new Map(state.nodes.map(node => [node.id, { x:node.x, y:node.y }]));
         state.stars = Array.from({ length: 450 }, () => ({
             x: (Math.random() - 0.5) * 6000,
@@ -666,6 +707,8 @@
         state.orbitTargetId = null;
         state.orbitPivot = { x:0, y:0, z:0 };
         state.orbitTransition = null;
+        state.cameraTransition = null;
+        stopTour({ keepView:true });
         render();
     }
 
@@ -735,6 +778,9 @@
             node.vx += -node.x * 0.000045 * state.settings.centerForce * alpha * elapsed;
             node.vy += -node.y * 0.000045 * state.settings.centerForce * alpha * elapsed;
             if (state.dimension === '3d') node.vz += -node.z * 0.000045 * state.settings.centerForce * alpha * elapsed;
+            if (state.dimension === '3d' && Number.isFinite(node.layerZ)) {
+                node.vz += (node.layerZ - node.z) * 0.00022 * state.settings.centerForce * Math.max(.22, alpha) * elapsed;
+            }
             if (state.motionEnabled && isLeafNode(node)) {
                 const phase = Number(node.motionPhase || 0);
                 node.vx += Math.sin(time * 0.00072 + phase) * 0.002 * state.settings.drift * elapsed;
@@ -1282,6 +1328,21 @@
             }
             ctx.restore();
         }
+        if (state.dimension === '3d') {
+            const center = worldToScreen(state.orbitPivot);
+            ctx.save();
+            ctx.translate(center.x, center.y);
+            ctx.rotate(-state.cameraYaw * .16);
+            [150, 285, 430].forEach((radius, index) => {
+                ctx.beginPath();
+                ctx.ellipse(0, 0, radius * state.scale, radius * state.scale * (.22 + Math.abs(Math.cos(state.cameraPitch)) * .13), 0, 0, Math.PI * 2);
+                ctx.strokeStyle = `rgba(118,139,216,${.055 - index * .012})`;
+                ctx.lineWidth = .7;
+                ctx.setLineDash([2 + index * 2, 8 + index * 3]);
+                ctx.stroke();
+            });
+            ctx.restore();
+        }
         const orderedEdges = [...state.edges].sort((a, b) => {
             const aActive = edgeIsActive(a);
             const bActive = edgeIsActive(b);
@@ -1297,7 +1358,7 @@
             const a = worldToScreen(edge.sourceNode);
             const b = worldToScreen(edge.targetNode);
             const depthOpacity = state.dimension === '3d'
-                ? Math.max(.52, Math.min(1.12, ((a.perspective || 1) + (b.perspective || 1)) / 2))
+                ? Math.max(.26, Math.min(1.12, Math.pow(((a.perspective || 1) + (b.perspective || 1)) / 2, 1.28)))
                 : 1;
             const depthWidth = state.dimension === '3d'
                 ? Math.max(.72, Math.min(1.18, ((a.perspective || 1) + (b.perspective || 1)) / 2))
@@ -1335,6 +1396,31 @@
             }
             ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(drawX, drawY); ctx.stroke();
         }
+        if (state.dimension === '3d') {
+            const particleStride = Math.max(1, Math.ceil(state.edges.length / 110));
+            ctx.save();
+            state.edges.forEach((edge, index) => {
+                if (index % particleStride || growthEdgeProgress(edge, now) < .98) return;
+                const active = edgeIsActive(edge);
+                if (hasFocus && !active) return;
+                const a = worldToScreen(edge.sourceNode);
+                const b = worldToScreen(edge.targetNode);
+                if (!a.visible || !b.visible) return;
+                const seed = [...`${edge.source}:${edge.target}`].reduce((sum, char) => sum + char.charCodeAt(0), 0);
+                const speed = active ? .0002 : .000085;
+                const t = (now * speed + (seed % 97) / 97) % 1;
+                const x = a.x + (b.x - a.x) * t;
+                const y = a.y + (b.y - a.y) * t;
+                const perspective = a.perspective + (b.perspective - a.perspective) * t;
+                const radius = Math.max(.8, (active ? 2.15 : 1.2) * perspective * Math.sqrt(state.scale));
+                ctx.globalAlpha = active ? .95 : .32;
+                ctx.fillStyle = active ? accentColor(.96) : colorForGroup(edge.targetNode.group, .72);
+                ctx.shadowColor = active ? accentColor(.95) : colorForGroup(edge.targetNode.group, .55);
+                ctx.shadowBlur = active ? 12 : 5;
+                ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill();
+            });
+            ctx.restore();
+        }
         ctx.shadowBlur = 0;
         const ordered = [...state.nodes].sort((a, b) => state.dimension === '3d'
             ? worldToScreen(b).depth - worldToScreen(a).depth
@@ -1350,7 +1436,8 @@
             const isAnswerHighlighted = Boolean(answerFocus && highlighted.has(node.id));
             const radius = screenNodeRadius(node, point) * growthNodeScale(growthProgress) * (isAnswerHighlighted ? 1.14 : 1);
             const dimmedNodeAlpha = answerFocus ? .035 : (1 - .88 * focusStrength);
-            ctx.globalAlpha = (dimmed ? dimmedNodeAlpha : 1) * Math.min(1, growthProgress * 1.5);
+            const depthAlpha = state.dimension === '3d' ? Math.max(.36, Math.min(1, Math.pow(point.perspective || 1, 1.22))) : 1;
+            ctx.globalAlpha = (dimmed ? dimmedNodeAlpha : 1) * Math.min(1, growthProgress * 1.5) * depthAlpha;
             const emphasized = Boolean(isSelected || isHovered || isSearch || hasFocus && highlighted.has(node.id));
             if (emphasized) {
                 ctx.shadowColor = isRootNode(node) ? '#fff' : colorForGroup(node.group, .85);
@@ -1392,6 +1479,8 @@
             updateOrbitTransition(timestamp);
             const elapsed = state.lastFrameTime ? Math.min(2, Math.max(0.5, (timestamp - state.lastFrameTime) / 16.67)) : 1;
             state.lastFrameTime = timestamp;
+            updateCameraTransition(timestamp);
+            updateTour(timestamp, elapsed);
             if (state.growth.active && timestamp - state.growth.startedAt > state.growth.duration + 520) {
                 state.growth.active = false;
                 setGrowthButtonState();
@@ -1400,7 +1489,7 @@
                 simulate(elapsed);
             }
             render();
-            if ((state.growth.active || state.hoverTransition || state.orbitTransition || state.running && state.motionEnabled || shouldAnimateMetricAlerts()) && overlay.classList.contains('open')) scheduleFrame();
+            if ((state.growth.active || state.hoverTransition || state.orbitTransition || state.cameraTransition || state.tour.active || state.dimension === '3d' || state.running && state.motionEnabled || shouldAnimateMetricAlerts()) && overlay.classList.contains('open')) scheduleFrame();
         });
     }
 
@@ -1614,7 +1703,7 @@
         return state.orbitTargetId ? state.nodeMap.get(state.orbitTargetId) : null;
     }
 
-    function setOrbitTarget(node, { animate = true } = {}) {
+    function setOrbitTarget(node, { animate = true, duration = 620 } = {}) {
         if (state.dimension !== '3d') return;
         const target = node || null;
         const targetId = target?.id || null;
@@ -1630,12 +1719,83 @@
         }
         state.orbitTransition = {
             startedAt: performance.now(),
-            duration: 360,
+            duration,
             from: { ...state.orbitPivot },
             fromPanX: state.panX,
             fromPanY: state.panY
         };
         scheduleFrame();
+    }
+
+    function startCameraTransition({ scale = state.scale, yaw = state.cameraYaw, pitch = state.cameraPitch, duration = 760 } = {}) {
+        if (state.dimension !== '3d') return;
+        state.cameraTransition = {
+            startedAt: performance.now(), duration,
+            fromScale:state.scale, toScale:scale,
+            fromYaw:state.cameraYaw, toYaw:yaw,
+            fromPitch:state.cameraPitch, toPitch:pitch
+        };
+        scheduleFrame();
+    }
+
+    function updateCameraTransition(now) {
+        const transition = state.cameraTransition;
+        if (!transition) return;
+        const progress = Math.max(0, Math.min(1, (now - transition.startedAt) / transition.duration));
+        const eased = progress < .5 ? 4 * progress * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+        state.scale = transition.fromScale + (transition.toScale - transition.fromScale) * eased;
+        state.cameraYaw = transition.fromYaw + (transition.toYaw - transition.fromYaw) * eased;
+        state.cameraPitch = transition.fromPitch + (transition.toPitch - transition.fromPitch) * eased;
+        if (progress >= 1) state.cameraTransition = null;
+    }
+
+    function buildTourNodeIds() {
+        const rootId = isMetricMode() ? 'metric-root' : 'root';
+        const priority = [
+            state.nodeMap.get(rootId),
+            ...state.nodes.filter(isGroupNode),
+            ...state.nodes.filter(node => isMetricMode() ? node.type === 'metric' : ['tool','database'].includes(node.type))
+        ].filter(Boolean);
+        const seen = new Set();
+        return priority.filter(node => !seen.has(node.id) && seen.add(node.id)).slice(0, 12).map(node => node.id);
+    }
+
+    function syncTourButton() {
+        tourButton.setAttribute('aria-pressed', String(state.tour.active));
+        tourButton.textContent = kgT(state.tour.active ? 'tourStop' : 'tour');
+        tourButton.title = kgT('tourTitle');
+    }
+
+    function stopTour({ keepView = true } = {}) {
+        state.tour.active = false;
+        state.tour.nextAt = 0;
+        if (!keepView) {
+            state.cameraTransition = null;
+            setOrbitTarget(null, { animate:false });
+        }
+        syncTourButton();
+    }
+
+    function startTour() {
+        if (state.dimension !== '3d' || !state.nodes.length) return;
+        state.tour.nodeIds = buildTourNodeIds();
+        state.tour.index = 0;
+        state.tour.active = Boolean(state.tour.nodeIds.length);
+        state.tour.nextAt = performance.now();
+        syncTourButton();
+        scheduleFrame();
+    }
+
+    function updateTour(now, elapsed) {
+        if (!state.tour.active || state.dimension !== '3d') return;
+        if (!state.cameraTransition && !state.pointer) state.cameraYaw += 0.0002 * Math.min(32, elapsed * 16.67);
+        if (now < state.tour.nextAt) return;
+        const nodeId = state.tour.nodeIds[state.tour.index % state.tour.nodeIds.length];
+        const node = state.nodeMap.get(nodeId);
+        state.tour.index += 1;
+        state.tour.nextAt = now + 4600;
+        if (!node) return;
+        focusNode(node, { fromTour:true });
     }
 
     function updateOrbitTransition(now) {
@@ -1663,9 +1823,23 @@
         }
     }
 
-    function focusNode(node) {
+    function focusNode(node, { fromTour = false } = {}) {
         if (!node) return;
-        if (state.dimension === '3d') setOrbitTarget(node);
+        if (!fromTour) stopTour({ keepView:true });
+        if (state.dimension === '3d') {
+            setOrbitTarget(node, { duration:fromTour ? 1100 : 720 });
+            const targetScale = fromTour
+                ? (isRootNode(node) ? 1.18 : isGroupNode(node) ? 1.5 : 1.72)
+                : isRootNode(node) ? Math.max(.72, Math.min(1.05, state.scale * 1.08))
+                    : isGroupNode(node) ? Math.max(.92, Math.min(1.34, state.scale * 1.32))
+                        : Math.max(1.08, Math.min(1.62, state.scale * 1.42));
+            startCameraTransition({
+                scale:targetScale,
+                yaw:state.cameraYaw + (fromTour ? .32 : .12),
+                pitch:Math.max(-.72, Math.min(.72, state.cameraPitch * .72)),
+                duration:fromTour ? 1250 : 760
+            });
+        }
         else {
             const projected = worldToScreen(node);
             state.panX += state.width / 2 - projected.x;
@@ -1701,6 +1875,7 @@
         monthWrap.childNodes[0].nodeValue = kgT('ruleMonth');
         motionButton.textContent = state.motionEnabled ? kgT('motion') : kgT('motionPaused');
         motionButton.title = kgT('motionTitle');
+        syncTourButton();
         controlsButton.title = kgT('controls');
         controlsButton.setAttribute('aria-label', kgT('controls'));
         controlPanel.querySelector('[data-kg-control-title]').textContent = kgT('controls');
@@ -1946,6 +2121,7 @@
 
     function switchDimension(dimension) {
         if (!['2d', '3d'].includes(dimension) || dimension === state.dimension) return;
+        stopTour({ keepView:true });
         if (dimension === '3d') {
             state.flatPositions = new Map(state.nodes.map(node => [node.id, { x:node.x, y:node.y }]));
         } else {
@@ -1975,6 +2151,8 @@
     }
 
     canvas.addEventListener('pointerdown', event => {
+        stopTour({ keepView:true });
+        state.cameraTransition = null;
         const middlePan = state.dimension === '3d' && event.button === 1;
         const node = middlePan ? null : nodeAt(event.clientX, event.clientY);
         const navigation = middlePan ? 'pan' : state.dimension === '3d' && !node ? 'orbit' : node ? 'node' : 'pan';
@@ -2035,7 +2213,10 @@
                 reheat(0.68);
             }
         }
-        if (pointer && pointer.node && !pointer.moved) selectNode(pointer.node);
+        if (pointer && pointer.node && !pointer.moved) {
+            if (state.dimension === '3d') focusNode(pointer.node);
+            else selectNode(pointer.node);
+        }
         else if (pointer && !pointer.node && !pointer.moved && pointer.button !== 1) {
             state.selected = null;
             state.answerFocus = null;
@@ -2064,6 +2245,8 @@
     canvas.addEventListener('pointerleave', () => { if (!state.pointer) clearHoverIntent(); });
     canvas.addEventListener('wheel', event => {
         event.preventDefault();
+        stopTour({ keepView:true });
+        state.cameraTransition = null;
         const rect = canvas.getBoundingClientRect();
         const mouseX = event.clientX - rect.left - state.width / 2;
         const mouseY = event.clientY - rect.top - state.height / 2;
@@ -2171,6 +2354,10 @@
         await loadGraph();
     };
     overlay.querySelector('#aiKgFit').onclick = resetView;
+    tourButton.onclick = () => {
+        if (state.tour.active) stopTour({ keepView:true });
+        else startTour();
+    };
     controlsButton.onclick = () => {
         const open = controlPanel.classList.toggle('open');
         controlsButton.setAttribute('aria-pressed', String(open));
@@ -2324,6 +2511,9 @@
             }
             overlay.classList.remove('open');
             document.body.classList.remove('ai-kg-open');
+            stopTour({ keepView:true });
+            state.cameraTransition = null;
+            state.orbitTransition = null;
             state.running = false;
             if (state.frame) cancelAnimationFrame(state.frame);
             state.frame = 0;

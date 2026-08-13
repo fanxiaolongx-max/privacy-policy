@@ -17,11 +17,14 @@
         i18nMap: {},
         contactInfo: null,
         dashboardTitle: null,
-        rankScoreTheme: 'flap'
+        rankScoreTheme: 'flap',
+        autoLanguageTimer: null,
+        languageTransitioning: false
     };
 
     const RANK_SCORE_THEME_KEY = 'tools.bigscreen.rankScoreTheme';
     const RANK_SCORE_THEMES = ['flap', 'neon', 'plain'];
+    const AUTO_LANGUAGE_SECONDS_KEY = 'tools.bigscreen.autoLanguageSeconds';
 
     const BIGSCREEN_I18N = {
         'zh-CN': {
@@ -38,6 +41,10 @@
             exportingHtml: '导出中',
             syncing: '同步中',
             ownerConfig: '责任人配置',
+            autoLanguage: '语言轮播',
+            stopAutoLanguage: '停止轮播',
+            autoLanguageSeconds: '语言切换间隔（秒）',
+            secondsUnit: '秒',
             fullscreen: '全屏',
             exitFullscreen: '退出全屏',
             fullscreenTitle: '全屏显示',
@@ -181,6 +188,10 @@
             exportingHtml: 'Exporting',
             syncing: 'Syncing',
             ownerConfig: 'Owner Config',
+            autoLanguage: 'Language Loop',
+            stopAutoLanguage: 'Stop Loop',
+            autoLanguageSeconds: 'Language switch interval (seconds)',
+            secondsUnit: 's',
             fullscreen: 'Fullscreen',
             exitFullscreen: 'Exit Fullscreen',
             fullscreenTitle: 'Enter fullscreen',
@@ -454,6 +465,7 @@
         }
         const ownerBtn = $('ownerConfigBtn');
         if (ownerBtn) ownerBtn.textContent = tr('ownerConfig');
+        syncAutoLanguageControls();
         const refreshBtn = $('refreshBtn');
         if (refreshBtn) refreshBtn.textContent = state.isRefreshing ? tr('syncing') : tr('refresh');
         const exportBtn = $('exportHtmlBtn');
@@ -644,7 +656,7 @@
     }
 
     function getCurrentRange() {
-        const range = $('rangeSelect') ? $('rangeSelect').value : '30';
+        const range = $('rangeSelect') ? $('rangeSelect').value : '90';
         const params = new URLSearchParams();
         if (range === 'all') return { range, query: '' };
 
@@ -2477,6 +2489,15 @@
         if ($('refreshBtn')) $('refreshBtn').addEventListener('click', () => loadBigscreenData({ source: 'manual' }));
         if ($('ownerConfigBtn')) $('ownerConfigBtn').addEventListener('click', openOwnerModal);
         if ($('exportHtmlBtn')) $('exportHtmlBtn').addEventListener('click', exportStandaloneHtml);
+        if ($('autoLanguageBtn')) $('autoLanguageBtn').addEventListener('click', toggleAutoLanguage);
+        if ($('autoLanguageSeconds')) {
+            $('autoLanguageSeconds').addEventListener('change', () => {
+                const seconds = readAutoLanguageSeconds();
+                $('autoLanguageSeconds').value = seconds;
+                localStorage.setItem(AUTO_LANGUAGE_SECONDS_KEY, String(seconds));
+                if (state.autoLanguageTimer) startAutoLanguage();
+            });
+        }
         if ($('ownerAvatarInput')) $('ownerAvatarInput').addEventListener('change', handleOwnerAvatarChange);
         if ($('rankList')) {
             $('rankList').addEventListener('click', event => {
@@ -2507,6 +2528,59 @@
         window.addEventListener('resize', () => {
             Object.values(state.charts).forEach(chart => chart && chart.resize && chart.resize());
         });
+    }
+
+    function readAutoLanguageSeconds() {
+        const input = $('autoLanguageSeconds');
+        const seconds = Number.parseInt(input && input.value, 10);
+        return Math.max(5, Math.min(300, Number.isFinite(seconds) ? seconds : 20));
+    }
+
+    function syncAutoLanguageControls() {
+        const button = $('autoLanguageBtn');
+        const input = $('autoLanguageSeconds');
+        const unit = $('autoLanguageUnit');
+        const active = Boolean(state.autoLanguageTimer);
+        if (button) {
+            button.textContent = active ? tr('stopAutoLanguage') : tr('autoLanguage');
+            button.setAttribute('aria-pressed', String(active));
+        }
+        if (input) {
+            input.setAttribute('aria-label', tr('autoLanguageSeconds'));
+            input.title = tr('autoLanguageSeconds');
+        }
+        if (unit) unit.textContent = tr('secondsUnit');
+    }
+
+    function switchLanguageWithTransition() {
+        if (state.languageTransitioning || document.hidden || !window.ToolsI18n) return;
+        state.languageTransitioning = true;
+        const screen = document.querySelector('.bigscreen');
+        if (screen) screen.classList.add('language-transitioning');
+        window.setTimeout(() => window.ToolsI18n.toggleLanguage(), 180);
+        window.setTimeout(() => {
+            if (screen) screen.classList.remove('language-transitioning');
+            state.languageTransitioning = false;
+        }, 420);
+    }
+
+    function stopAutoLanguage() {
+        if (state.autoLanguageTimer) window.clearInterval(state.autoLanguageTimer);
+        state.autoLanguageTimer = null;
+        syncAutoLanguageControls();
+    }
+
+    function startAutoLanguage() {
+        stopAutoLanguage();
+        const seconds = readAutoLanguageSeconds();
+        localStorage.setItem(AUTO_LANGUAGE_SECONDS_KEY, String(seconds));
+        state.autoLanguageTimer = window.setInterval(switchLanguageWithTransition, seconds * 1000);
+        syncAutoLanguageControls();
+    }
+
+    function toggleAutoLanguage() {
+        if (state.autoLanguageTimer) stopAutoLanguage();
+        else startAutoLanguage();
     }
 
     window.BigscreenOwners = {
@@ -2649,6 +2723,10 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         loadRankScoreTheme();
+        const savedLanguageSeconds = Number.parseInt(localStorage.getItem(AUTO_LANGUAGE_SECONDS_KEY), 10);
+        if ($('autoLanguageSeconds') && Number.isFinite(savedLanguageSeconds)) {
+            $('autoLanguageSeconds').value = Math.max(5, Math.min(300, savedLanguageSeconds));
+        }
         window.API.get('/api/db/config/bigscreen_title').then(res => {
             state.dashboardTitle = normalizeDashboardTitle(res);
             renderDashboardTitle();
