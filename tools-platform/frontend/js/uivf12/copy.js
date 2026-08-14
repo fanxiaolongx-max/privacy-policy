@@ -1291,7 +1291,7 @@ function buildUivProgressPanelScript(state) {
             'padding:8px 10px',
             'backdrop-filter:blur(10px)'
         ].join(';');
-        controlHint.innerHTML = 'UIVF12 CONTROL ACTIVE<br><span style="color:#93c5fd;">页面自动化接管中 · 右下角面板显示进度</span>';
+        controlHint.innerHTML = 'UIVF12 CONTROL ACTIVE<br><span style="color:#93c5fd;">页面自动化接管中 · 右下角面板显示进度</span><br><span style="color:#fde68a;font-weight:800;">' + state.tenantWarning + '</span>';
         const pct = (done, total) => total ? Math.round((done / total) * 100) : 0;
         const generatedLogs = Array.isArray(state.logs) ? state.logs : [];
         const controlLogs = Array.isArray(control.logs) ? control.logs : [];
@@ -1358,6 +1358,7 @@ function buildUivProgressPanelScript(state) {
                     '<button id="uivf12-batch-close" type="button" title="关闭浮窗（任务继续运行）" style="width:26px;height:26px;border-radius:7px;border:1px solid rgba(148,163,184,.28);background:rgba(15,23,42,.72);color:#cbd5e1;cursor:pointer;font-size:17px;line-height:1;">×</button>' +
                 '</div>' +
             '</div>' +
+            '<div style="margin:0 0 11px;padding:9px 10px;border:1px solid rgba(251,191,36,.38);border-radius:9px;background:rgba(146,64,14,.2);color:#fef3c7;font-size:11px;font-weight:750;line-height:1.5;">' + state.tenantWarning + '</div>' +
             '<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px;">' +
                 '<div style="font-size:28px;line-height:1;font-weight:900;color:#ffffff;">' + pct(state.done, state.total) + '%</div>' +
                 '<div style="font-size:12px;color:#bae6fd;">总进度 ' + state.done + '/' + state.total + '</div>' +
@@ -1611,6 +1612,7 @@ function buildUivCompletionDialogScript(summary) {
                     '<button type="button" id="uivf12-completion-close" style="border:0;background:transparent;color:#94a3b8;font-size:24px;cursor:pointer;line-height:1;">×</button>' +
                 '</div>' +
                 '<div style="padding:18px 22px;">' +
+                    '<div style="margin-bottom:14px;padding:11px 13px;border:1px solid rgba(251,191,36,.42);border-radius:10px;background:rgba(146,64,14,.2);color:#fef3c7;font-size:12px;font-weight:800;line-height:1.55;">' + summary.tenantWarning + '</div>' +
                     '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px;">' +
                         '<div style="border:1px solid rgba(103,232,249,.18);border-radius:10px;padding:10px;background:rgba(8,47,73,.28);"><div style="font-size:10px;color:#7dd3fc;text-transform:uppercase;">脚本任务</div><div style="font-size:22px;font-weight:900;">' + summary.taskCount + '</div></div>' +
                         '<div style="border:1px solid rgba(103,232,249,.18);border-radius:10px;padding:10px;background:rgba(8,47,73,.28);"><div style="font-size:10px;color:#7dd3fc;text-transform:uppercase;">实际文件</div><div style="font-size:22px;font-weight:900;">' + (hasActualFiles ? actualFiles.length : '未检测') + '</div></div>' +
@@ -2123,6 +2125,7 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
     }
 
     const groupedScripts = groupUivScriptsByOpenUrl(usableScripts);
+    const tenantWarning = UIVT('uiv.repo.batchTenantWarning');
     const siteStates = groupedScripts.map((group, index) => ({
         label: `${index + 1}. ${group.openUrl}`,
         total: group.scripts.length,
@@ -2145,6 +2148,7 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
                 done: runIndex,
                 sites: siteStates,
                 logs: panelLogs,
+                tenantWarning,
                 activeTaskId: activeTask ? activeTask.id : '',
                 activeTaskName: activeTask ? activeTask.name : ''
             }),
@@ -2294,6 +2298,7 @@ function buildUivBatchMacro(scriptsToRun, groupName, options = {}) {
             groupName,
             taskCount: usableScripts.length,
             finishedAt: new Date().toLocaleString('zh-CN', { hour12: false }),
+            tenantWarning: UIVT('uiv.repo.batchTenantCompletionWarning'),
             autoImport
         }),
         Value: '',
@@ -2440,7 +2445,7 @@ async function runAllUivScriptsDirect(options = {}) {
             if (options.scheduled) showToast('⚠️ 定时运行被浏览器拦截，请先手动点击一次“运行批脚本”并允许弹窗。', 'error');
             return false;
         }
-        showToast(`✅ 已打开 UI.Vision 批量阵列启动页：${scope.scripts.length} 个任务`, 'success');
+        showToast(UIVT('uiv.repo.batchTenantWarning'), 'warning');
         console.info('[UIVF12 Direct Run]', { mode: 'local-runner', url: runnerUrl, commands: macro.Commands.length, speed, scripts: scope.scripts.length, excludedCategories: scope.excluded });
         return true;
     } catch (error) {
@@ -2471,6 +2476,7 @@ async function runTestUivScriptsDirect() {
         const macro = buildUivBatchMacro(sampledScripts, '测试批脚本-每站点2个', { speed, autoImportSessionId, autoImportToken });
         const runnerUrl = await openLocalUivRunner(macro);
         showToast(`✅ 已打开 UI.Vision 测试批脚本：${sampledScripts.length} 个任务`, 'success');
+        showToast(UIVT('uiv.repo.batchTenantWarning'), 'warning');
         console.info('[UIVF12 Direct Test Run]', { mode: 'local-runner', url: runnerUrl, commands: macro.Commands.length, speed, scripts: sampledScripts.map(s => s.name) });
     } catch (error) {
         showToast(`❌ 测试批脚本启动失败：${error.message}`, 'error');

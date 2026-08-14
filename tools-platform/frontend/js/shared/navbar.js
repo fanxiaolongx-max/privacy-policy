@@ -384,7 +384,7 @@ function registerNavbarI18n() {
             'nav.tenant.name': '租户名称',
             'nav.tenant.id': '租户标识（可选）',
             'nav.tenant.description': '说明',
-            'nav.tenant.save': '保存',
+            'nav.tenant.edit': '编辑',
             'nav.tenant.archive': '归档',
             'nav.tenant.archiveConfirm': '归档租户“{name}”？该租户将无法继续进入，但数据目录会保留。',
             'nav.tenant.activeGroup': '启用中的租户',
@@ -803,7 +803,7 @@ function registerNavbarI18n() {
             'nav.tenant.name': 'Tenant name',
             'nav.tenant.id': 'Tenant ID (optional)',
             'nav.tenant.description': 'Description',
-            'nav.tenant.save': 'Save',
+            'nav.tenant.edit': 'Edit',
             'nav.tenant.archive': 'Archive',
             'nav.tenant.archiveConfirm': 'Archive tenant “{name}”? It will become unavailable while its data directory is retained.',
             'nav.tenant.activeGroup': 'Active tenants',
@@ -2924,7 +2924,7 @@ async function renderTenantSettings(content) {
                 <p>${navEscape(tenant.description || '')}</p>
             </div>
             <div class="nav-backup-toolbar">
-                <button type="button" onclick="editTenantInfo('${navEscape(tenant.id)}')">${navEscape(navT('nav.tenant.save'))}</button>
+                <button type="button" onclick="editTenantInfo('${navEscape(tenant.id)}')">${navEscape(navT('nav.tenant.edit'))}</button>
                 ${archived
                     ? `<button type="button" onclick="restoreArchivedTenantInfo('${navEscape(tenant.id)}')">${navEscape(navT('nav.tenant.restore'))}</button>
                        <button type="button" class="danger" onclick="deleteTenantData('${navEscape(tenant.id)}')">${navEscape(navT('nav.tenant.delete'))}</button>`

@@ -671,7 +671,11 @@ async function importUivAutoSession() {
     const mainWrapper = document.getElementById('main-wrapper');
     const summaryNav = document.getElementById('summary-nav-area');
     if (summaryNav) summaryNav.style.display = 'none';
-    if (mainWrapper) mainWrapper.innerHTML = `<div class="loading-text">⏳ 正在接收 UIVF12 抓取文件并自动导入...</div>`;
+    if (mainWrapper) mainWrapper.innerHTML = `
+        <div class="loading-text">${SLAT('sla.upload.uivAutoLoading')}</div>
+        <div style="max-width:720px;margin:14px auto;padding:12px 14px;border:1px solid #f59e0b;border-radius:10px;background:#fffbeb;color:#92400e;font-size:13px;font-weight:800;line-height:1.6;text-align:center;">
+            ${SLAT('sla.upload.uivTenantWarning')}
+        </div>`;
     try {
         const metaUrl = `/api/uiv-auto-import/${encodeURIComponent(params.sessionId)}?token=${encodeURIComponent(params.token)}`;
         const meta = await fetch(metaUrl, { cache: 'no-store' }).then(res => {
