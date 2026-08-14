@@ -53,6 +53,7 @@ const globalBackupRoutes = require('./routes/global-backup');
 const alertCenterRoutes = require('./routes/alert-center');
 const platformMetricsRoutes = require('./routes/platform-metrics');
 const friendLinksRoutes = require('./routes/friend-links');
+const onboardingRoutes = require('./routes/onboarding');
 const friendLinksService = require('./models/friend-links-service');
 const serviceStatusRepo = require('./models/service-status-repository');
 const globalBackupRepo = require('./models/global-backup-repository');
@@ -311,6 +312,7 @@ app.use('/api/external/metrics', externalMetricsRoutes); // 外部/移动端只�
 app.use('/api/alert-center', alertCenterRoutes); // 系统告警台 API
 app.use('/api/platform-metrics', platformMetricsRoutes); // 首页效能与使用量统计
 app.use('/api/friend-links', friendLinksRoutes); // 首页友情链接配置与轻量可用性探测
+app.use('/api/onboarding', onboardingRoutes); // 首次启动默认脚本/指标规则可选导入
 if (desktopLicenseAdminRoutes) app.use('/api/desktop-licenses', requireAdmin, desktopLicenseAdminRoutes);
 
 // ============================================================

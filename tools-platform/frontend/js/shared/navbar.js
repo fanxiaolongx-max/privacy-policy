@@ -4830,6 +4830,7 @@ async function checkBuiltinToolsSync() {
         || isBuiltinToolsSyncSnoozedToday()
         || typeof API === 'undefined'
         || document.getElementById('builtinToolsSyncModal')
+        || document.getElementById('defaultQuickStartModal')
     ) return;
     builtinToolsSyncChecking = true;
     try {
@@ -4866,4 +4867,12 @@ if (!document.querySelector('script[data-desktop-license-badge]')) {
     desktopLicenseBadgeScript.src = '/js/shared/desktop-license-badge.js?v=20260805-01';
     desktopLicenseBadgeScript.dataset.desktopLicenseBadge = '1';
     document.head.appendChild(desktopLicenseBadgeScript);
+}
+
+// 源码启动、Windows 安装版和绿色版共用同一个服务端首次启动状态。
+if (!document.querySelector('script[data-first-run-onboarding]')) {
+    const firstRunOnboardingScript = document.createElement('script');
+    firstRunOnboardingScript.src = '/js/shared/first-run-onboarding.js?v=20260814-01';
+    firstRunOnboardingScript.dataset.firstRunOnboarding = '1';
+    document.head.appendChild(firstRunOnboardingScript);
 }
