@@ -75,15 +75,23 @@ function createId(value, explicit = false) {
     return `tenant-${Date.now().toString(36)}-${crypto.randomBytes(2).toString('hex')}`;
 }
 
-async function createTenant(input) {
+async function createTenant(input, options = {}) {
+    const onProgress = typeof options?.onProgress === 'function' ? options.onProgress : null;
+    const progress = entry => {
+        if (!onProgress) return;
+        try { onProgress(entry); } catch (_) {}
+    };
+    progress({ stage: 'validate', percent: 4, message: '正在校验租户名称与稳定标识', messageEn: 'Validating the tenant name and stable ID' });
     await ensureReady();
     const name = String(input?.name || '').trim();
     if (!name) throw tenantError('租户名称不能为空');
     const requestedId = String(input?.id || '').trim();
     const id = createId(requestedId || name, Boolean(requestedId));
     if (await get('SELECT id FROM tenants WHERE id=?', [id])) throw tenantError('租户标识已存在', 409);
-    await initializeTenantStorage(id);
+    progress({ stage: 'validated', percent: 8, level: 'success', message: `租户标识 ${id} 可用，开始初始化独立存储`, messageEn: `Tenant ID ${id} is available; initializing isolated storage` });
+    await initializeTenantStorage(id, progress);
     try {
+        progress({ stage: 'registry', percent: 94, message: '正在写入全局租户登记表', messageEn: 'Registering the tenant in the global control plane' });
         await run('BEGIN IMMEDIATE');
         await run(`INSERT INTO tenants (id,name,description,status) VALUES (?,?,?,'active')`, [id, name, String(input?.description || '').trim()]);
         await run('COMMIT');
@@ -92,9 +100,14 @@ async function createTenant(input) {
         fs.rmSync(getDataDir(id), { recursive: true, force: true });
         throw error;
     }
-    require('./global-backup-repository').startTenantAutoBackupScheduler(id).catch(error => {
+    progress({ stage: 'scheduler', percent: 98, message: '正在启动租户独立备份调度', messageEn: 'Starting the tenant-specific backup scheduler' });
+    try {
+        await require('./global-backup-repository').startTenantAutoBackupScheduler(id);
+    } catch (error) {
         console.warn(`[tenants] 启动租户 ${id} 自动备份调度失败：${error.message}`);
-    });
+        progress({ stage: 'scheduler-warning', percent: 99, level: 'warn', message: `租户已创建，但备份调度启动失败：${error.message}`, messageEn: `The tenant was created, but its backup scheduler could not start: ${error.message}` });
+    }
+    progress({ stage: 'completed', percent: 100, level: 'success', message: `租户 ${name}（${id}）创建完成`, messageEn: `Tenant ${name} (${id}) was created successfully` });
     return publicTenant(await get('SELECT * FROM tenants WHERE id=?', [id]));
 }
 

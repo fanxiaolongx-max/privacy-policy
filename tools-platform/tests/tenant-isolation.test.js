@@ -47,8 +47,15 @@ test('tenant storage uses independent databases and directories without moving d
     await appDb.run("INSERT INTO isolated_business_data (value) VALUES ('default-only')");
     await proxyRun(defaultReport, "INSERT INTO isolated_report_data (value) VALUES ('default-report')");
 
-    const created = await tenantsRepo.createTenant({ id: 'acme', name: 'Acme' }, 'admin');
+    const progressEntries = [];
+    const created = await tenantsRepo.createTenant({ id: 'acme', name: 'Acme' }, { onProgress: entry => progressEntries.push(entry) });
     assert.equal(created.id, 'acme');
+    assert.deepEqual(progressEntries.map(entry => entry.stage), [
+        'validate', 'validated', 'storage-staging', 'schema-tools', 'schema-requirements', 'schema-ai',
+        'schema-report', 'directories', 'builtin-tools', 'storage-commit', 'storage-ready', 'registry',
+        'scheduler', 'completed'
+    ]);
+    assert.equal(progressEntries.at(-1).percent, 100);
     assert.equal(getDataDir('default'), process.env.TOOLS_DATA_DIR);
     assert.equal(getReportDataDir('default'), process.env.TOOLS_REPORT_DATA_DIR);
     assert.notEqual(getDataDir('acme'), getDataDir('default'));

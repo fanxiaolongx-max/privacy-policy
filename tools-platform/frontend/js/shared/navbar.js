@@ -2951,6 +2951,8 @@ async function renderTenantSettings(content) {
 
 window.createTenantInfo = async function (event) {
     event.preventDefault();
+    const form = event.currentTarget;
+    const submitButton = form.querySelector('button[type="submit"]');
     const body = Object.fromEntries(new FormData(event.currentTarget).entries());
     body.name = String(body.name || '').trim();
     body.id = String(body.id || '').trim();
@@ -2959,10 +2961,34 @@ window.createTenantInfo = async function (event) {
     if (body.id && !/^[a-zA-Z0-9_-]+$/.test(body.id)) {
         return showNavbarNotice({ title: navT('nav.dialog.notice'), message: navT('nav.tenant.idInvalid'), tone: 'info' });
     }
-    const response = await fetch('/api/tenants', { method: 'POST', headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() }, body: JSON.stringify(body) });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) return showNavbarNotice({ title: navT('nav.dialog.error'), message: data.error || `HTTP ${response.status}`, tone: 'error' });
-    await renderTenantSettings(document.getElementById('navSettingsContent'));
+    const operationId = `tenant_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+    startBackupOperationConsole(navLocaleText('新增租户初始化', 'New tenant initialization'), '/api/tenants/operations', operationId);
+    appendBackupConsoleEntry(navLocaleText(`正在创建租户“${body.name}”`, `Creating tenant “${body.name}”`), 'info');
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = navLocaleText('创建中…', 'Creating…');
+    }
+    try {
+        const response = await fetch('/api/tenants', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Tenant-Operation-Id': operationId, ...getAuthHeaderForNav() },
+            body: JSON.stringify(body)
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+        appendBackupConsoleEntry(navLocaleText('客户端已收到创建完成响应', 'The client received the completion response'), 'success');
+        setBackupConsoleProgress(100, 'COMPLETED');
+        await renderTenantSettings(document.getElementById('navSettingsContent'));
+    } catch (error) {
+        appendBackupConsoleEntry(navLocaleText(`创建失败：${error.message}`, `Creation failed: ${error.message}`), 'error');
+        setBackupConsoleProgress(100, 'FAILED');
+        await showNavbarNotice({ title: navT('nav.dialog.error'), message: error.message, tone: 'error' });
+    } finally {
+        if (submitButton?.isConnected) {
+            submitButton.disabled = false;
+            submitButton.textContent = navT('nav.tenant.create');
+        }
+    }
 };
 
 window.editTenantInfo = async function (tenantId) {
@@ -3614,37 +3640,42 @@ function stopBackupConsolePolling() {
     }
 }
 
-async function pollBackupOperation(operationId) {
+async function pollBackupOperation(operationId, operationEndpoint = '/api/global-backup/operations') {
     stopBackupConsolePolling();
     try {
-        const res = await fetch(`/api/global-backup/operations/${encodeURIComponent(operationId)}`, {
+        const res = await fetch(`${operationEndpoint}/${encodeURIComponent(operationId)}`, {
             headers: getAuthHeaderForNav()
         });
         if (res.ok) {
             const operation = await res.json();
             const entries = Array.isArray(operation.entries) ? operation.entries : [];
             entries.slice(backupConsoleSeenEntries).forEach(entry => {
-                appendBackupConsoleEntry(entry.message, entry.level, entry.detail, entry.timestamp);
+                const message = navLocaleText(entry.message, entry.messageEn || entry.message);
+                appendBackupConsoleEntry(message, entry.level, entry.detail, entry.timestamp);
             });
             backupConsoleSeenEntries = entries.length;
-            setBackupConsoleProgress(operation.status === 'completed' ? 100 : operation.status === 'failed' ? 100 : 72, operation.status.toUpperCase());
+            const reportedProgress = Number(operation.progress);
+            const progress = operation.status === 'completed' || operation.status === 'failed'
+                ? 100
+                : Number.isFinite(reportedProgress) ? reportedProgress : 72;
+            setBackupConsoleProgress(progress, operation.status.toUpperCase());
             if (operation.status === 'completed' || operation.status === 'failed') return;
         }
     } catch (e) {
         // The service may be restarting after a successful restore.
     }
-    backupConsolePollTimer = setTimeout(() => pollBackupOperation(operationId), 650);
+    backupConsolePollTimer = setTimeout(() => pollBackupOperation(operationId, operationEndpoint), 650);
 }
 
-function startBackupOperationConsole(title) {
+function startBackupOperationConsole(title, operationEndpoint = '/api/global-backup/operations', suppliedOperationId = '') {
     stopBackupConsolePolling();
     ensureBackupOperationConsole(title);
     document.getElementById('backupConsoleBody').innerHTML = '';
     backupConsoleSeenEntries = 0;
     setBackupConsoleProgress(4, 'STARTING');
-    const operationId = createBackupOperationId();
-    appendBackupConsoleEntry('任务已创建，正在连接服务端', 'info');
-    pollBackupOperation(operationId);
+    const operationId = suppliedOperationId || createBackupOperationId();
+    appendBackupConsoleEntry(navLocaleText('任务已创建，正在连接服务端', 'Task created; connecting to the server'), 'info');
+    pollBackupOperation(operationId, operationEndpoint);
     return operationId;
 }
 
