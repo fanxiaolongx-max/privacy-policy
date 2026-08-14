@@ -1,370 +1,849 @@
 # Tools Platform
 
-Tools Platform 是一个面向运维数据抓取、SLA 指标导入、报表看板、月报分析、催办、PR 审计、自定义工具和需求管理的本地/内网工具中台。
+Tools Platform 是一个面向运维数据抓取、SLA 指标导入、报表看板、月报分析、一键催办、胶片设计/PPT 素材库、PR 审计、FRT 核算、需求广场、问卷调研、系统告警与 AI 智能知识图谱的综合性本地/内网工具中台。
 
-项目采用 Express + 多页面静态前端 + SQLite 的轻量架构，同时提供 Windows Electron 安装版。安装版主要作为托盘常驻壳使用：启动本地服务、用默认浏览器打开 Web 主页、检查更新、查看运行日志，不再承载业务登录主页面。
+项目采用 **Express + 原生多页面静态前端 + SQLite** 的轻量高效架构，同时提供 Windows Electron 托盘常驻安装版/绿色免安装版，并配套 iOS/KMP 移动端工程生态。
 
-## 当前能力
+---
 
-- 数据抓取：UIVF12 脚本仓库、F12 脚本、UI.Vision 批脚本、直接运行批脚本、测试批脚本、抓取进度悬浮面板。
-- 自动化导入：UI.Vision 抓取完成后可自动打开 SLA 数据导入页，并以结构化 rows 方式触发智能分流合并，不上传原始 CSV。
-- SLA 数据导入：风险、整改、CPT、SR、漏洞、红线、业务比对、日志稽查、图形化拦截等多类表自动识别、合并、快照和历史上传。
-- 指标规则管理：全量指标规则总览、编辑、批量复制、快速映射、提取/统计/占比模式、搜索和目标预警配置。
-- 报表看板：指标入库、比例计分、Others 额外监控分组、不计入总分指标展示、历史快照、额外监控指标说明。
-- 月报页面：客户群/代表处/区域透视、短板矩阵、不达标项、Others 灰色弱化和说明区。
-- 一键催办：基于报表快照生成催办视图，并带可读解释说明。
-- 大屏看板：达标/未达标客户群、指标巡检、统计数量展示。
-- 外部指标 API：提供移动端/外部系统只读读取入库指标、快照、异常指标和总览数据。
-- PR 审计：PR 稽查配置、抽查导入、审计报表、截图和导出能力。
-- FRT 核算：FRT 数据导入、快照和 KPI 自动核算。
-- 需求广场：需求记录、状态流转、日志追踪。
-- 数据探索：SQLite 数据浏览、最近日志收集并压缩下载。
-- 存储迁移状态台：JSON -> SQLite 迁移状态检查、遗留 JSON 清理入口。
-- 全局设置：顶部导航配置、更多工具分类、AI 助手配置、账号管理、备份恢复、程序更新提示。
-- 自定义工具：上传/管理 HTML 工具，并通过独立入口访问。
-- AI 助手：支持项目知识检索、只读报表分析、知识/指标双图谱、历史快照查看、token 成本估算和设置中心配置。
+## 目录
 
-## 常用入口
+1. [系统架构与全景数据流](#1-系统架构与全景数据流)
+2. [核心业务与功能详析 (含业务流程图)](#2-核心业务与功能详析-含业务流程图)
+   - [2.1 自动化数据抓取与 UIVF12 AI 网站适配器](#21-自动化数据抓取与-uivf12-ai-网站适配器)
+   - [2.2 SLA 数据合控与指标规则引擎](#22-sla-数据合控与指标规则引擎)
+   - [2.3 报表看板、月报与运营大屏](#23-报表看板月报与运营大屏)
+   - [2.4 一键精准催办与导出](#24-一键精准催办与导出)
+   - [2.5 胶片设计与 PPT 素材库](#25-胶片设计与-ppt-素材库)
+   - [2.6 专项治理工具链 (PR审计 / FRT / 需求广场 / 问卷调研)](#26-专项治理工具链-pr审计--frt--需求广场--问卷调研)
+   - [2.7 平台效能大盘、服务监控与友情链接](#27-平台效能大盘服务监控与友情链接)
+   - [2.8 自定义工具与内置工具同步生态](#28-自定义工具与内置工具同步生态)
+   - [2.9 智能客服 AI 与 2D/3D 双视图知识图谱](#29-智能客服-ai-与-2d3d-双视图知识图谱)
+3. [安全授权与双轨 License 体系 (含安全基线与脱敏)](#3-安全授权与双轨-license-体系)
+4. [数据存储、启动自愈与 Schema 字典](#4-数据存储启动自愈与迁移治理)
+5. [备份恢复与远端主站同步](#5-备份恢复与远端主站同步)
+6. [高可用设计、性能基准与全链路可观测性](#6-高可用设计性能基准与全链路可观测性)
+7. [常用页面入口清单](#7-常用页面入口清单)
+8. [主要 API 路由全景表](#8-主要-api-路由全景表)
+9. [移动端生态 (iOS / KMP)](#9-移动端生态-ios--kmp)
+10. [目录结构详解](#10-目录结构详解)
+11. [环境变量与配置字典](#11-环境变量与配置字典)
+12. [多系统部署、Windows 客户端与新手配置指引](#12-多系统部署windows-客户端与新手配置指引)
+13. [CI/CD 自动化发布与客户端平滑升级机制](#13-cicd-自动化发布与客户端平滑升级机制)
+14. [开发约定与排障 FAQ](#14-开发约定与排障-faq)
 
-默认端口为 `3030`。
+---
 
-| 页面 | 路径 | 用途 |
-| --- | --- | --- |
-| 首页 | `/` | 工具中台入口 |
-| 登录页 | `/login.html` | 用户登录 |
-| 数据抓取 | `/uivf12` | UIVF12/F12/UI.Vision 脚本仓库和批量运行 |
-| 数据导入 | `/sla` | SLA 数据导入、规则配置、快照上传 |
-| 报表看板 | `/report` | 指标看板、入库、比例计分 |
-| 月报页面 | `/monthly` | 月度报告、短板矩阵、趋势分析 |
-| 一键催办 | `/expedite` | 基于快照生成催办视图 |
-| 大屏看板 | `/bigscreen` | 大屏展示 |
-| PR 审计 | `/praudit` | PR 稽查和审计 |
-| FRT 核算 | `/frt` | FRT KPI 自动核算 |
-| 需求广场 | `/requirements` | 需求管理 |
-| 存储迁移 | `/storage` | SQLite/JSON 迁移状态和清理 |
-| 数据探索 | `/db-explorer` | SQLite 浏览和日志导出 |
-| 自定义工具 | `/custom-tool` | 自定义工具管理 |
-| 隐私政策/条款 | `/privacy`, `/terms` | 静态说明页，登录页也支持弹窗查看 |
+## 1. 系统架构与全景数据流
 
-## 目录结构
+平台整体架构以“数据采集自动化、指标计算规则化、报告呈现多维化、治理工具标准化”为核心原则设计，全链路数据流转如下图所示：
 
-```text
-tools-platform/
-  backend/                 Express 服务、API、SQLite 仓储、迁移工具
-    routes/                API 路由
-    models/                数据模型和 SQLite/JSON 仓储
-    middleware/            鉴权中间件
-    logger/                按日归档日志
-    data/                  后端数据、tools.db、自定义工具
-    logs/                  PM2/开发环境日志
-  frontend/                多页面静态前端
-    index.html             首页
-    pages/                 各业务页面
-    js/shared/             顶部导航、API、AI 助手等公共能力
-    js/uivf12/             数据抓取脚本仓库
-    js/sla/                数据导入
-    js/report/             报表、大屏、月报相关脚本
-  data/                    report.db、requirements.db、图片/导出文件
-  electron-main.js         Windows 桌面托盘壳主进程
-  electron-preload.js      桌面更新/日志桥接
-  package.json             Electron 打包配置
+```mermaid
+flowchart TD
+    subgraph 采集层["1. 自动化采集与适配"]
+        A1["UI.Vision 宏 / F12 控制台脚本"] --> A3["提取结构化 Rows"]
+        A2["UIV AI 网站适配器 (AST/LLM)"] --> A3
+        A3 --> A4["临时桥接会话 (/api/uiv-auto-import)"]
+    end
+
+    subgraph 合控层["2. 数据合控与指标规则"]
+        A4 --> B1["SLA 数据导入页 (/sla)"]
+        B2["手动上传 (Excel / CSV)"] --> B1
+        B1 --> B3["多表识别与智能分流合并 (风险/整改/CPT/SR等)"]
+        B3 --> B4["指标规则引擎 (提取/统计/占比/分月目标/加减分)"]
+        B4 --> B5["沉淀历史快照 (report.db)"]
+    end
+
+    subgraph 展现与应用层["3. 展现与业务应用"]
+        B5 --> C1["报表看板 (/report)<br/>(健康度排名/比例计分/短板透视)"]
+        B5 --> C2["月度质量报告 (/monthly)<br/>(多月演进趋势/环比分析)"]
+        B5 --> C3["运营大屏 (/bigscreen)<br/>(会议室态势驾驶舱)"]
+        B5 --> C4["一键催办 (/expedite)<br/>(文案组装/全屏截图/Excel导出)"]
+        B5 --> C5["移动端 API (/api/external/metrics)<br/>(iOS / KMP App 只读查看)"]
+    end
+
+    subgraph 支撑与治理层["4. 专项工具与中台支撑"]
+        D1["胶片素材库 (/api/slide-design)"]
+        D2["PR 审计与 PDF 导出 (/praudit)"]
+        D3["FRT KPI 自动核算 (/frt)"]
+        D4["需求广场与问卷调研 (/requirements, /surveys)"]
+        D5["系统告警中心 & AI分析 (/alert-center)"]
+        D6["AI客服与2D/3D知识图谱 (/api/ai)"]
+        D7["自定义工具与内置工具同步 (/custom-tools)"]
+    end
 ```
 
-## 本地启动
+---
 
-推荐环境：
+## 2. 核心业务与功能详析 (含业务流程图)
 
-- Node.js 20 LTS 优先；当前开发机可运行更高版本，但遇到 `sqlite3` 原生依赖问题时建议回到 Node 20 LTS。
-- npm 9+
-- Windows 如需本地安装 `sqlite3`，建议安装 Visual Studio Build Tools 2022，并勾选 `Desktop development with C++`。
+### 2.1 自动化数据抓取与 UIVF12 AI 网站适配器
 
-### 启动 Web 服务
+```mermaid
+flowchart LR
+    subgraph 抓取与推断["抓取端 / 适配器"]
+        U1["用户 / 自动化调度"] --> U2["运行 UI.Vision / F12 脚本"]
+        U2 --> U3["自动嗅探 CPC/NID / 翻页抓取"]
+        U4["抓包样本 (cURL/Fetch)"] --> U5["AST 语法解析 + AI 推断"]
+        U5 --> U2
+    end
+    subgraph 免传流转["结构化会话桥接"]
+        U3 --> U6["浏览器端解析为 rows 数据"]
+        U6 --> U7["写入临时 Session (/api/uiv-auto-import)"]
+        U7 --> U8["自动新开标签页打开 /sla 导入页"]
+        U8 --> U9["触发智能分流合并 (无需传 CSV)"]
+    end
+```
 
-Web 服务可独立在 `backend/` 下运行：
+- **脚本工程仓库**：集中维护生产级 UI.Vision Macro JSON 和 F12 控制台脚本，实现按系统模块分类、版本迭代、语法高亮与快速检索。
+- **调度引擎特性**：
+  - **智能 CPC/NID 嗅探**：动态识别当前登录账号权限、所属组织节点与大区上下文。
+  - **分页与重试机制**：自动注入防掉登探测、网络波动自动重试、批量连续翻页与跨大区阵列调度。
+  - **双月裂变执行**：在跨月窗口期自动分裂为当月与上月两条抓取任务线。
+- **UIV AI 网站适配器 (`/api/uiv-ai-adapter`)**：
+  - 将抓包请求（Fetch/cURL）输入后，后端结合 **AST 语法树解析 (Acorn)** 与大模型，自动分析请求结构并严格脱敏敏感头 (`Authorization/Cookie`)，生成可执行代码。
+- **免上传自动导入流转 (`/api/uiv-auto-import`)**：
+  - 抓取完成后，直接将 rows 数据送入服务端临时会话并唤起 `/sla`，彻底免去手动下载和上传 CSV。
 
+---
+
+### 2.2 SLA 数据合控与指标规则引擎
+
+```mermaid
+flowchart TD
+    A["多源原始表格输入 (风险/整改/CPT/SR/漏洞等)"] --> B["特征识别与智能列映射"]
+    B --> C{"规则计算引擎"}
+    C -->|提取模式| D1["提取关键数值/文本"]
+    C -->|统计模式| D2["条件匹配计数统计"]
+    C -->|占比模式| D3["达成率/超时率计算"]
+    C -->|加减分统筹| D4["对比 1~12 月基线目标计分"]
+    D1 & D2 & D3 & D4 --> E["计算 Others 弱化项 (只监控不计总分)"]
+    E --> F["计算最终总分与健康度排名"]
+    F --> G["沉淀入库快照 (report.db)"]
+```
+
+- **多源数据特征自动识别**：
+  - 自动识别日常运维中的 8 大类表格：**风险表、整改表、CPT任务表、SR工单表、漏洞表、红线表、业务比对表、日志稽查表**等。
+  - 采用智能列名归一化与相似度算法，支持异构表格列自动映射。
+- **指标与子指标规则引擎**：
+  - **计算模式**：支持提取值、计数统计、占比百分比、加减分统筹等多种计算逻辑。
+  - **分月目标基线**：支持针对 1~12 个月分别设定差异化的目标基线值。
+  - **预警呼吸灯与倒计时**：基于剩余处理时间与 SLA 阈值，前端动态渲染红/黄/绿呼吸灯与倒计时标签。
+- **偏好持久化与快照管理**：
+  - 用户配置的列宽、显隐、冻结列、排序、计算开关保存在 `tools.db`；入库历史快照沉淀至 `report.db`。
+
+---
+
+### 2.3 报表看板、月报与运营大屏
+- **报表看板 (`/report`)**：
+  - **客户群健康度排名**：汇总各维度加减分，动态生成客户群/代表处健康度积分与梯队排名。
+  - **比例计分系统**：根据实际达成值相对于目标基线的偏移比例动态计分。
+  - **Others 额外监控弱化机制**：部分指标仅作为日常监控参考，在看板与月报中以弱化样式呈现，**自动不计入总分**，避免干扰主绩效。
+  - **短板透视矩阵**：直接定位扣分严重、不达标频次最高的客户群与责任指标。
+- **月度质量报告 (`/monthly`)**：
+  - 深度读取 `report.db` 入库快照，支持按月份、代表处、客户群进行多维交叉透视。
+  - 跨月长期演进趋势折线图，直观展现同比、环比波动与短板攻坚改善效果。
+- **运营质量大屏 (`/bigscreen`)**：
+  - 专为会议室全屏展示与运维中枢大屏设计，包含态势总览、达标巡检雷达、风险客户群排行榜、短板指标分布与实时数据探针。
+
+---
+
+### 2.4 一键精准催办与导出
+
+```mermaid
+flowchart LR
+    S1["读取最新报表快照 (report.db)"] --> S2["提取短板项与超时未达标指标"]
+    S2 --> S3["应用豁免名单 / 关键词过滤"]
+    S3 --> S4["组装所选催办模板 (高层/业务群/责任人)"]
+    S4 --> S5["生成文案 + 关联长截图 / 原生 Excel"]
+    S5 --> S6["一键复制粘贴推送到业务群"]
+```
+
+- **一键精准催办 (`/expedite`)**：
+  - 基于当前最新报表快照，自动提取扣分短板与超时未达标项，一键组装高优先级跟进催办文案。
+  - **关键词过滤**：支持自定义忽略特定关键词或豁免客户群。
+  - **多模板配置**：支持按业务群、高层汇报、责任人催办等多种风格模板一键切换。
+  - **全屏截图与原生导出**：一键生成全屏高清长截图，支持导出带公式的原生 Excel 报表。
+
+---
+
+### 2.5 胶片设计与 PPT 素材库
+
+```mermaid
+flowchart TD
+    P1["上传 PPTX 文件 (最高 200MB / 100页)"] --> P2["OpenXML 结构解析与媒体分离"]
+    P2 --> P3["渲染单页高清缩略图"]
+    P3 --> P4["智能分类与标签体系 (架构/时序/看板/矩阵等)"]
+    P4 --> P5["用户自由挑选页面 (跨项目多选)"]
+    P5 --> P6["清洗 Presentation 关联 / 合并媒体包"]
+    P6 --> P7["一键组装打包导出全新 PPTX"]
+```
+
+- **PPTX 智能拆解与解析 (`/api/slide-design`)**：
+  - 支持上传最高 200MB 的 PPTX（单文件最多 100 页），深度解析底层 OpenXML，拆解单页 Slide、提取多媒体资源并自动渲染高清缩略图。
+- **素材分类体系重组与标签复用**：
+  - 建立统一的胶片素材库（架构图、时序图、数据看板、对比矩阵等），支持分类预览与标签复用检索。
+- **页面自由挑选与打包重组**：
+  - 用户多选所需单页后，服务端自动清洗 presentation 结构并组装打包为全新的标准 PPTX 文件。
+
+---
+
+### 2.6 专项治理工具链 (PR审计 / FRT / 需求广场 / 问卷调研)
+- **PR 进展审计 (`/praudit`)**：
+  - 审计级批量自检系统，检查 PR 进展附件记录是否完整合规，支持导入 Excel 校验并导出双语 PDF 报告。
+- **FRT KPI 自动核算 (`/frt`)**：
+  - 基于动态规则引擎，智能提取 SR 类型，多周期自动化核算 FRT KPI 达成率并诊断扣分项。
+- **全民需求广场 (`/requirements`)**：
+  - 平台需求全民提交入口，提供待评审 -> 评估中 -> 开发中 -> 已上线 -> 已驳回的可视化流转看板。
+- **可配置问卷调研系统 (`/surveys`)**：
+  - 自由定义调研表单字段，支持针对特定管理角色进行统计分析，收集提交并一键导出 Excel。
+
+---
+
+### 2.7 平台效能大盘、服务监控与友情链接
+- **平台效能总览**：
+  - 首页动态实时统计：已完成指标检查量、累计服务次数、等效人工工时、累计节约工时与效率提升百分比。
+- **服务状态与链路追踪 (`/api/platform-metrics/service-status`)**：
+  - 自动记录全量 API 响应码、耗时、IP、UA，保留 180 天异常失败日志，敏感字段全程脱敏。
+- **友情链接与可用性自动探测 (`/api/friend-links`)**：
+  - 首页友情链接矩阵，后台常驻定时探活服务，动态以“正常 (绿) / 告警 (黄) / 离线 (红)”展示健康状态。
+
+---
+
+### 2.8 自定义工具与内置工具同步生态
+
+```mermaid
+flowchart TD
+    subgraph 工具接入["工具注册与部署"]
+        T1["内置系统工具 (builtin-tools/)"] -->|启动自检与版本比对| T3["统一挂载与安全沙箱"]
+        T2["上传自定义工具 (HTML / ZIP)"] -->|解压与校验清单| T3
+    end
+    subgraph 运行时与分发["多语言与导出"]
+        T3 --> T4["生成首页卡片与导航入口 (/tools/:slug)"]
+        T4 --> T5["动态注入 i18n 多语言运行时"]
+        T5 --> T6["在线交互使用 (随中台切换中英文)"]
+        T5 --> T7["下载单文件离线版 (嵌入完整 i18n runtime)"]
+    end
+```
+
+- **自定义 HTML 工具 (`/custom-tools`)**：
+  - 上传 HTML 或 ZIP 工具包后自动解压校验并挂载独立 URL (`/tools/:slug`)，生成首页卡片与导航。
+- **内置系统工具自动同步 (`builtin-tools-sync.js`)**：
+  - 服务启动时自动扫描 `backend/builtin-tools/`，对比哈希并自动安装缺失的系统工具。
+- **多语言 (i18n) 运行时注入**：
+  - 动态注入 `custom-tool-i18n-runtime.js`，支持单文件离线导出。
+
+---
+
+### 2.9 智能客服 AI 与 2D/3D 双视图知识图谱
+
+```mermaid
+flowchart TD
+    Q["用户输入问题"] --> INT{"意图识别分类"}
+    INT -->|源码/文档/开发问答| K1["代码与文档向量/BM25 增量知识库"]
+    INT -->|指标/月报/排名业务数据| K2["只读数据检索器 (只读访问 report.db)"]
+    K1 --> SEC["敏感数据过滤与脱敏 (密码/Token/私钥)"]
+    K2 --> SEC
+    SEC --> LLM["统一大模型客户端 (Gemini/OpenAI/Claude/MiniMax)"]
+    LLM --> OUT["流式 Chunk 输出 + 前端打字机渲染 + 精准依据来源展示"]
+```
+
+- **多模型提供商接入与流式体验**：
+  - 原生适配 **Google Gemini、OpenAI / Azure OpenAI、Anthropic Claude、MiniMax** 以及兼容 OpenAI 接口规范的各大内外部大模型。
+  - 后端通过 `ai-provider-client.js` 统一适配，支持真实的 Server-Sent Events / Chunk 流式输出与前端打字机渲染，支持用户中途主动中断生成。
+  - 设置中心支持配置不同模型的 API Token、模型标识、系统提示词与输入/输出 Token 单价，前端对话实时显示 **Token 消耗量与成本费用估算**。
+
+- **双引擎只读安全检索架构**：
+  - **项目源码与文档增量知识库**：
+    - 自动对 `README.md`、`docs/*.md`、前后端核心源码、UIV 脚本及自带/自定义 HTML 工具源码建立增量向量与 BM25 索引。
+    - 回答底部附带“本次回答依据”卡片，严格区分“知识库规模”、“检索候选”与“实际引用”，仅将通过动态相关度门槛的片段作为证据，并精准展示文件相对路径、起始行号与代码片段。
+  - **业务数据受限只读分析**：
+    - 针对指标当前值、分月得分、客户群排名或扣分矩阵等业务问题，通过专用只读配置与数据检索器定向查询 `data/report.db` 快照数据，**严禁大模型执行自由 SQL 或进行任何业务数据写操作**。
+    - 涉及历史月报分析时，严格读取历史入库当时保存的得分状态，不按当前规则重算旧数据。
+
+- **2D / 3D 双视图智能知识图谱**：
+
+```mermaid
+graph TD
+    subgraph 视图一["1. 项目知识图谱 (Project Graph)"]
+        R1["根节点 (Tools Platform)"] --> C1["功能分类 (数据抓取 / SLA / 报表 / 专项工具)"]
+        C1 --> M1["业务工具与页面 (/sla, /report, /uivf12)"]
+        M1 --> S1["源码依赖与服务路由 (routes/*.js, models/*.js)"]
+        S1 --> T1["底层数据库与物理表 (tools.db, report.db)"]
+        R1 --> C2["工具与数据资产分支 (自带/自定义 HTML 工具)"]
+    end
+
+    subgraph 视图二["2. 指标体系图谱 (Metrics Graph)"]
+        R2["月份规则"] --> C3["指标分类 (风险/整改/CPT/SR等)"]
+        C3 --> M2["核心指标 (达成率 / 超时率)"]
+        M2 --> S2["子指标与考核明细"]
+        S2 --> D2["历史快照穿透 (实际值 / 目标值 / 得分)"]
+    end
+```
+
+  - **项目知识图谱分支与拓扑关联**：
+    - 完整展现平台根节点、功能模块、页面入口、服务路由、代码文件与底层 SQLite 物理表的拓扑网络。
+    - 包含独立的“工具与数据资产”分支，按“自带 HTML 工具 / 自定义 HTML 工具 / 数据库与表”层层展开。
+  - **智能层级渲染与碰撞避让**：
+    - 标签文字按“根节点 → 分类 → 业务节点 → 文件/子指标”随缩放级别逐级出现，内置数量上限控制与标签碰撞避让算法。
+    - **单节点聚焦与一跳高亮**：悬浮或点击节点时仅高亮其一跳直接邻居与关联线，避免根节点点亮整张图造成视觉干扰；单击后高亮锁定保留，支持悬浮临时预览其他节点关系。
+  - **分层生长动画与外观/力导向控制面板**：
+    - 支持按真实 `contains` 归属层级重播生长动画：根节点、分类、指标/工具、文件依次生长，归属线先展开、跨模块依赖线渐次绘制。
+    - 提供外观与力导向实时控制面板：可调多种**空间主题配色**、节点尺寸、连线粗细、标签密度、动画速度、向心力、排斥力、连接吸引力、连线长度与漂浮阻尼，偏好实时保存在浏览器本地。
+  - **3D 空间透视引擎与相机反投影拖拽**：
+    - 顶部工具栏支持一键在 2D 平面图谱与 3D 空间透视视角间无缝切换。
+    - **3D 景深与光照**：通过深度分层减少密集连线交叉，利用固定左上方柔和环境光呈现球体节点漫反射、小范围高光与景深衰减。
+    - **3D 视角交互**：鼠标左键拖动空白处旋转视角，按住鼠标滚轮拖动平移视角，滚轮滚动缩放视角。
+    - **相机反投影节点拖拽算法**：节点拖拽时，系统根据当前相机的水平角 (Yaw)、俯仰角 (Pitch) 和透视投影比例，将屏幕二维位移实时反投影为 3D 世界坐标，确保旋转任意视角后节点依然随鼠标同向位移，释放时沿当前相机视平面保留平滑物理惯性。
+  - **指标体系图谱动态仿真**：
+    - 按“月份规则 → 指标分类 → 核心指标 → 子指标”展示，支持月份动态切换与仿真推演；点击指标节点可穿透查看已保存的历史录入值、基线目标、扣分明细与达标状态。
+  - **全局多语言实时联动**：
+    - 智能客服与知识图谱深度订阅全局语言切换事件；顶部导航切换为英文后，客服界面、图谱节点、连线关系与 AI 默认回答语言均同步切换为英文。
+
+---
+
+## 3. 安全授权与双轨 License 体系
+
+为了保证安装包与扩展在企业内网的安全合规分发，平台构建了严密的**双轨非对称加密授权体系**：
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as 用户 / 客户端
+    participant Client as 桌面客户端 (Client)
+    participant Server as 授权服务器 (/api/public/desktop-license)
+    participant Admin as 管理后台 (/desktop-license-admin)
+
+    Note over Admin,Server: 1. 签发阶段 (服务端私钥签名)
+    Admin->>Server: 签发通用 License (设定有效期)
+    Server->>Server: ECDSA P-256 私钥签名 (生成 DSKL1-xxx)
+    Server-->>Admin: 返回 License 密钥文本
+
+    Note over User,Client: 2. 客户端首次激活 / 启动
+    User->>Client: 输入 DSKL1 License 密钥
+    Client->>Client: 使用内置可信公钥验签 (检查生效/到期时间)
+    alt 离线状态
+        Client-->>User: 本地验签通过，允许启动本地服务
+    else 在线状态
+        Client->>Server: 发送随机 Nonce + License 摘要
+        Server->>Server: 校验吊销台账与防重放
+        Server-->>Client: 返回可信时间戳与在线确认签名
+        Client-->>User: 验证通过，常驻托盘并打开主页
+    end
+```
+
+### 3.1 核心授权机制与安全设计
+1. **ECDSA P-256 算法**：采用行业标准椭圆曲线数字签名算法，签名内容包含产品标识、生效时间与精确到期时间戳。
+2. **离线高可用**：客户端内置公钥配置 (`frontend/desktop-license-client-config.json`)，即使完全无外网也能永久在有效期内核验合法性。
+3. **打包安全隔离**：
+   - 签发权威私钥 (`desktop-license-signing-key.json`)、授权台账 (`desktop-license-registry.json`)、管理员签发路由与管理页面，**在 electron-builder 打包配置中被严格排除 (`!backend/...`)**，绝不随客户端分发。
+4. **F12 浏览器扩展 License**：
+   - 针对浏览器扩展提供独立公钥验签与打包接口 (`/api/public/f12-license`)。
+
+---
+
+### 3.2 企业级安全基线与全链路数据脱敏
+
+平台严格遵循企业级内网安全规范与数据隐私保护原则：
+
+```mermaid
+flowchart LR
+    REQ["客户端请求 (带业务数据/Token)"] --> REDACT["请求日志脱敏过滤器"]
+    REDACT -->|"自动替换密码/Token/Cookie/密钥为 [REDACTED]"| LOG["按日安全日志 (logs/YYYY-MM-DD)"]
+    REQ --> HANDLER["业务路由处理"]
+    HANDLER --> RESP["响应体与异常捕获"]
+    RESP --> REDACT2["响应日志脱敏过滤器"]
+    REDACT2 --> DB_LOG["服务状态链路记录 (service_status_failures)"]
+```
+
+1. **全链路动态脱敏过滤器 (`sanitizeOriginalUrl` / `redactForLog`)**：
+   - 无论是控制台输出、按日应用日志，还是失败链路追踪库 (`service_status_failures`)，系统均自动拦截并脱敏所有敏感字段。
+   - 脱敏匹配键集合：`authorization`, `password`, `token`, `access_token`, `refresh_token`, `api_key`, `apikey`, `secret` 等；URL query 参数与 JSON 深度嵌套对象全程递归脱敏为 `[REDACTED]`。
+2. **多层级访问控制与静态资源保护 (`shouldProtectHtmlEntry`)**：
+   - 业务 HTML 页面全部受 JWT Session 强校验保护，未登录拦截重定向至登录页，防止退出登录后页面因浏览器缓存闪现。
+   - 公开资源白名单严格受限：仅限登录页、隐私声明、服务条款及非敏感静态资源 (`.css`, `.js`, `.png`, `.ico`)。
+   - 自定义 HTML 工具按 `publicAccess` 字段实施细粒度权限隔离，支持管理员灵活开放免密公开访问或强制登录访问。
+3. **数据隐私驻留合规 (Data Privacy by Design)**：
+   - 平台采用纯本地/私有化部署架构，所有业务指标、快照数据与分析结论完全驻留于企业内网数据库，绝不向任何外部第三方服务器外发原始数据。
+
+---
+
+## 4. 数据存储、启动自愈与迁移治理
+
+### 4.1 物理存储分布与职责
+
+| 数据库 / 存储文件 | 宿主目录 | 存储内容与核心表 |
+| :--- | :--- | :--- |
+| **`tools.db`** | `backend/data/` | 账号鉴权 (`users`, `sessions`)、UIV 脚本仓库 (`uiv_categories`, `uiv_scripts`)、SLA 规则配置 (`sla_targets`, `sla_prefs`, `sla_groups`, `sla_snapshots`)、FRT 规则、PR 审计配置、告警事件 (`alert_events`)、服务状态指标等 |
+| **`report.db`** | `data/` | 报表看板入库历史快照、各代表处/客户群月度得分、全量指标计算明细数据、月报读取主库 |
+| **`requirements.db`** | `data/` | 需求广场提议记录 (`requirements`)、需求流转状态变更日志与评论 |
+| **`ai-knowledge.db`** | `backend/data/` | AI 客服代码与项目文档增量向量/BM25 索引缓存（可随源码更新随时重建） |
+| **`custom-tools/`** | `backend/data/` | 所有上传的自定义 HTML 工具与静态资源文件 |
+| **`images/`** | `data/` | 报表全屏高清截图、导出 Excel/PDF 临时缓存文件 |
+
+### 4.2 启动期完整性自检与自愈 (`sqlite-integrity-repair.js`)
+
+```mermaid
+flowchart TD
+    START["后端服务启动"] --> CHK["执行 PRAGMA integrity_check"]
+    CHK -->|完整性正常 (ok)| RUN["正常启动 Express 业务监听"]
+    CHK -->|检测到损坏/异常| BAK["备份当前库 -> backups/*-before-repair.db"]
+    BAK --> VAC["执行 VACUUM INTO 导出修复副本"]
+    VAC --> VERIFY{"校验修复副本完整性"}
+    VERIFY -->|校验通过| SWAP["安全原子替换原数据库文件"]
+    SWAP --> RUN
+    VERIFY -->|修复失败| ERR["记录严重错误日志并阻止异常启动"]
+```
+
+### 4.3 配置变更指纹监控 (`config-change-monitor.js`)
+- 后台常驻定时计算 SLA 指标规则、分月目标、权重与表格偏好的 SHA-256 结构指纹。
+- 当检测到指标规则异常减少、目标被外部修改时，自动向**系统告警中心**投递 Warning 级别告警，并记录变更前后差异与请求来源。
+
+### 4.4 存储迁移治理台 (`/storage`)
+- 提供从历史 JSON 配置向 SQLite 数据库迁移的全程可视化状态台。
+- 支持实时执行 **Parity 一致性校验**，精准比对 JSON 与 SQLite 中的数据条数与内容差异；确认迁移无损后，支持管理员一键安全清理遗留 JSON 文件。
+
+### 4.5 核心数据库物理表 Schema 字典
+
+平台采用领域驱动划分 SQLite 数据库边界，主要核心物理表设计如下：
+
+#### 1. `backend/data/tools.db` (中台核心配置与运行库)
+| 表名 | 核心字段 | 业务用途与说明 |
+| :--- | :--- | :--- |
+| `users` | `username` (PK), `password_hash`, `role`, `created_at` | 用户身份认证、哈希密码存储与角色权限 |
+| `sessions` | `token` (PK), `username`, `expires_at`, `created_at` | 登录态 Session 凭据管理 |
+| `uiv_categories` | `id` (PK), `name`, `icon`, `sort_order` | UIVF12 抓取脚本分类体系 |
+| `uiv_scripts` | `id` (PK), `category_id`, `name`, `code`, `console_code`, `payload` | UI.Vision 宏与 F12 抓取脚本实体与版本 |
+| `sla_targets` | `metric_key` (PK), `target_json`, `weight`, `updated_at` | SLA 各指标 1~12 月基线目标与权重配置 |
+| `sla_prefs` | `pref_key` (PK), `pref_json`, `updated_at` | 每张表的显示列、排序、冻结列与计算模式偏好 |
+| `sla_groups` | `id` (PK), `name`, `metrics_json`, `sort_order` | 指标大类与分组聚合配置 |
+| `sla_snapshots` | `id` (PK), `month`, `snapshot_name`, `data_json`, `created_at` | SLA 上传与计算的历史快照沉淀 |
+| `alert_events` | `id` (PK), `event_type`, `severity`, `status`, `title`, `message`, `detail_json` | 系统告警事件、AI 诊断建议回填与流转记录 |
+| `service_status_daily` | `service_key`, `status_date` (PK), `request_count`, `success_count`, `duration_ms` | 平台 API 服务可用性与耗时统计日聚合表 |
+| `service_status_failures` | `id` (PK), `service_key`, `request_at`, `method`, `path`, `status_code`, `detail` | 4xx/5xx 异常链路追踪明细（自动脱敏） |
+| `config_fingerprints` | `scope` (PK), `hash`, `summary_json`, `updated_at` | 核心配置 SHA-256 指纹监控基准表 |
+
+#### 2. `data/report.db` (报表看板与月报分析库)
+| 表名 | 核心字段 | 业务用途与说明 |
+| :--- | :--- | :--- |
+| `PlatformConfig` | `key` (PK), `value_json`, `updated_at` | 月报中英文标题、看板全局参数等中台配置 |
+| `snapshots` | `id` (PK), `month`, `snapshot_name`, `summary_json`, `created_at` | 月度质量入库基准快照 |
+| `metrics_data` | `snapshot_id`, `rep_office`, `customer_group`, `metric_key`, `score` | 客户群各维度指标计算得分与扣分明细 |
+
+#### 3. `data/requirements.db` (需求广场与协作流转库)
+| 表名 | 核心字段 | 业务用途与说明 |
+| :--- | :--- | :--- |
+| `requirements` | `id` (PK), `title`, `description`, `status`, `submitter`, `created_at` | 全民需求提议与流转状态 |
+| `requirement_logs` | `id` (PK), `requirement_id`, `actor`, `action`, `comment`, `created_at` | 需求评审、评估、开发与上线审计留痕 |
+
+---
+
+## 5. 备份恢复与远端主站同步
+
+### 5.1 全局数据备份 (`/api/global-backup`)
+- **覆盖范围**：一键将全量 SQLite 数据库 (`tools.db`, `report.db`, `requirements.db`)、核心 JSON 配置文件、自定义工具目录与业务附件统一打包为标准 ZIP 归档。
+- **自动备份调度**：后台常驻 `globalBackupRepo.startAutoBackupScheduler()`，支持按计划自动轮转备份并清理过期历史归档。
+- **排除原则**：临时图片目录 (`images/`) 与 PPT 素材库大文件 (`slide-library`) 不计入轻量备份包；数据恢复时采用智能合并策略保护服务器现有素材。
+
+### 5.2 远端主站自动同步 (`remote-backup-sync-repository.js`)
+- 针对多节点部署或备用站点场景，服务启动时可自动触发 `runStartupRemoteSync()`，从远端主站拉取最新基线数据与配置，确保集群或灾备环境的数据一致性。
+
+---
+
+## 6. 高可用设计、性能基准与全链路可观测性
+
+平台为工业级稳定运行设计了全方位的韧性架构与可观测性体系：
+
+```mermaid
+flowchart TD
+    subgraph 韧性守护["1. 韧性守护机制"]
+        H1["PM2 256MB 软限制自动重启"]
+        H2["SQLite 启动自检与 VACUUM INTO 修复"]
+        H3["配置指纹 SHA-256 变动探针"]
+    end
+
+    subgraph 链路追踪["2. 全链路可观测性"]
+        O1["全局 Request ID 注入 (X-Request-Id)"]
+        O2["7大服务域耗时与状态聚合 (90/180天)"]
+        O3["异常调用链路自动捕获 (service_status_failures)"]
+    end
+
+    subgraph 探针体系["3. 外部探针端点"]
+        P1["/api/health (存活/就绪探针)"]
+        P2["/api/app-version (版本一致性校验)"]
+        P3["/api/migration-status (启动迁移诊断)"]
+    end
+```
+
+### 6.1 性能基准与高并发设计
+1. **轻量毫秒级响应**：
+   - 前端采用原生 HTML/JS 静态分发，无 SSR 构建开销；后端路由经过深度优化，常规 API 平均响应时间控制在 **< 15ms**。
+2. **SQLite WAL 高性能读写**：
+   - 数据库全面启用 WAL (Write-Ahead Logging) 模式，实现高并发场景下“读写互不阻塞”，单库轻松支撑百级运维并发吞吐。
+3. **内存与连接池自动回收**：
+   - Node.js 内存占用通过 PM2 设置 256MB 软限制自动平滑重启；数据库操作采用受控连接生命周期与自动关闭机制，杜绝连接泄露。
+
+### 6.2 全链路追踪与健康探针体系
+1. **统一链路追踪 ID (`X-Request-Id`)**：
+   - 每个进入系统的 HTTP 请求自动分配全局唯一 `requestId`（如 `req_m7x9k2_a1b2c3d4`），在响应头和日志中全程透传，便于多系统日志联合排障。
+2. **7 大服务域健康监控 (`service-status-repository`)**：
+   - 自动将 API 划分为 `core` (平台核心)、`auth` (账号授权)、`automation` (抓取自动化)、`data` (数据报表)、`ai` (AI服务)、`tools` (自定义工具)、`operations` (运维告警) 七大域，按天统计请求量、成功率、P99/平均耗时。
+3. **标准运维探针端点**：
+   - **`/api/health`**：标准健康检查接口，用于 Kubernetes Liveness/Readiness 探针或 Nginx upstream 健康检查。
+   - **`/api/app-version`**：免鉴权读取版本号，用于桌面端与集群多节点版本一致性对比。
+   - **`/api/migration-status`**：免鉴权获取数据自检与 JSON $\rightarrow$ SQLite 迁移诊断报告。
+
+---
+
+## 7. 常用页面入口清单
+
+默认服务端口为 `3030`。
+
+| 页面名称 | 访问路径 | 访问权限 | 核心功能与业务场景 |
+| :--- | :--- | :--- | :--- |
+| **首页大中台** | `/` | 需登录 | 平台主入口、效能大盘、工具卡片矩阵、友情链接、知识图谱入口 |
+| **登录页** | `/login.html` | 公开 | 用户账号密码登录，支持弹窗查看隐私政策与服务条款 |
+| **数据抓取** | `/uivf12` | 需登录 | UIVF12 脚本仓库、UI.Vision 批量调度与 F12 抓取控制台 |
+| **数据导入** | `/sla` | 需登录 (修改需Admin) | SLA 多表数据合并、列映射、指标规则管理与历史快照上传 |
+| **报表看板** | `/report` | 需登录 | 客户群健康度排名、比例计分、入库计算、短板透视矩阵 |
+| **月报页面** | `/monthly` | 需登录 | 跨月历史指标演进趋势比对、同比环比分析、月度质量报告归档 |
+| **一键催办** | `/expedite` | 需登录 | 基于快照自动生成催办跟例文案、全屏长截图与 Excel 导出 |
+| **大屏看板** | `/bigscreen` | 需登录 | 全屏运营态势驾驶舱、短板风险分布、雷达巡检 |
+| **PR 审计** | `/praudit` | 需登录 | PR 进展附件审计、Excel 导入校验与双语 PDF 报告导出 |
+| **FRT 核算** | `/frt` | 需登录 | FRT 动态规则引擎与 KPI 自动化核算平台 |
+| **需求广场** | `/requirements`| 需登录 | 平台功能需求提议、流转状态看板与评论日志追踪 |
+| **存储迁移** | `/storage` | 需登录 (修改需Admin) | SQLite/JSON 迁移进度核对、数据一致性 Parity 校验与安全清理 |
+| **数据探索** | `/db-explorer` | 需登录 (修改需Admin) | SQLite 底层物理表可视化查询与多日日志打包导出 |
+| **自定义工具** | `/custom-tool` / `/tools/:slug` | 按工具配置 | 运行与管理自定义 HTML/ZIP 工具 |
+| **License 管理** | `/desktop-license-admin` | 管理员专有 | 管理员签发、续期、失效与归档客户端 License（服务端专有） |
+| **合规与隐私** | `/privacy`, `/terms` | 公开 | 平台合规静态说明页，支持独立或弹窗访问 |
+
+---
+
+## 8. 主要 API 路由全景表
+
+平台后端由 27 个高内聚业务路由模块构成：
+
+| 路由前缀 | 对应文件 | 鉴权要求 | 核心职责与接口描述 |
+| :--- | :--- | :--- | :--- |
+| `/api/auth` | `auth.js` | 部分公开 | 用户登录、退出、Session 状态校验、修改密码与账号管理 |
+| `/api/nav-settings` | `nav-settings.js` | 需登录 (写需Admin) | 顶部导航栏配置、分类及菜单显隐排序 |
+| `/api/ai-settings` | `ai-settings.js` | 需登录 (写需Admin) | 智能客服模型提供商 (Gemini/OpenAI/Claude/MiniMax)、Token 与提示词配置 |
+| `/api/ai` | `ai.js` | 需登录 | 流式聊天对话、代码/文档增量知识库检索、只读报表分析、知识图谱数据 |
+| `/api/uiv` | `uiv.js` | 需登录 (写需Admin) | UIVF12 脚本仓库 CRUD 与 UI.Vision Macro 临时 runner 调度 |
+| `/api/uiv-ai-adapter` | `uiv-ai-adapter.js` | 需登录 (写需Admin) | 目标站点抓取请求 AST 分析与 AI 规则自动推断 |
+| `/api/uiv-auto-import` | `uiv-auto-import.js`| 需登录 | 抓取后自动导入的结构化 rows 临时桥接会话 |
+| `/api/sla` | `sla.js` | 需登录 (写需Admin) | SLA 指标规则、分月目标、列映射偏好、合并入库与快照管理 |
+| `/api/upload` | `upload.js` | 需登录 | 上传文件历史记录与临时附件处理 |
+| `/api/db` | `db.js` | 需登录 (写需Admin) | 报表看板计算、客户群得分、月报指标读取与配置存储 |
+| `/api/external/metrics`| `external-metrics.js` | 需登录/Token | 面向移动端 (iOS/KMP) 和外部系统的只读指标 OpenAPI |
+| `/api/praudit` | `praudit.js` | 需登录 (写需Admin) | PR 进展审计规则配置、抽查数据校验与 PDF 报告生成 |
+| `/api/frt` | `frt.js` | 需登录 (写需Admin) | FRT 动态核算规则配置与 KPI 历史快照计算 |
+| `/api/requirements` | `requirements.js` | 需登录 | 需求广场提议发布、流转状态变更与评论日志 |
+| `/api/slide-design` | `slide-design.js` | 需登录 | PPTX 胶片拆解、缩略图渲染、分类重组、标签复用与重组打包导出 |
+| `/api/surveys` | `surveys.js` | 需登录 (写需Admin) | 可配置问卷调研模板维护、提交记录与 Excel 导出 |
+| `/api/alert-center` | `alert-center.js` | 需登录 (写需Admin) | 系统告警事件列表、状态标记与 AI 智能告警分析回填 |
+| `/api/platform-metrics`| `platform-metrics.js`| 需登录 | 首页效能大盘统计指标与 API 服务请求状态监控追踪 |
+| `/api/friend-links` | `friend-links.js` | 需登录 (写需Admin) | 首页友情链接维护与后台定时可用性探活 |
+| `/api/custom-tools` | `custom-tools.js` | 需登录 (写需Admin) | 自定义 HTML/ZIP 工具上传、状态恢复与内置工具同步 |
+| `/api/global-backup` | `global-backup.js` | 需登录 (写需Admin) | 全局数据备份包生成、自动备份调度与数据恢复 |
+| `/api/storage` | `storage.js` | 需登录 (写需Admin) | SQLite/JSON 存储迁移状态、读源切换与遗留 JSON 安全清理 |
+| `/api/db-explorer` | `db-explorer.js` | 需登录 (写需Admin) | SQLite 物理表结构查询、数据探针与日志文件打包下载 |
+| `/api/desktop-license` | `desktop-license-local.js` | 需登录 | 桌面客户端本地 License 授权状态检查 |
+| `/api/public/desktop-license` | `desktop-license-public.js` | 公开 | 桌面端 License 激活、心跳验签与离线凭据签发 |
+| `/api/public/f12-license` | `f12-license-public.js` | 公开 | F12 浏览器扩展 License 验签、可信时间与打包服务 |
+| `/api/desktop-licenses` | `desktop-license-admin.js` | 管理员专有 | 管理员专用：桌面 License 签发、续期、吊销与台账管理 |
+
+---
+
+## 9. 移动端生态 (iOS / KMP)
+
+平台在 `tools-platform/iosapp/` 提供了配套的移动端工程，实现多端协同：
+- **工程架构**：基于 **Kotlin Multiplatform (KMP)** + **Compose Multiplatform** 构建跨平台共享逻辑，包含 iOS 原生 Xcode 工程包装。
+- **数据对接**：移动端直接调用后端的 `/api/external/metrics` 只读接口，支持随时随地在 iPhone/iPad 上查看：
+  - 各代表处/客户群月度排名与得分变化。
+  - 重点短板指标与未达标项。
+  - SLA 预警与大屏关键态势数据。
+
+---
+
+## 10. 目录结构详解
+
+```text
+privacy-policy/
+├── README.md                              # 根目录索引导航与快捷入口
+└── tools-platform/                        # 中台主工程根目录
+    ├── package.json                       # Electron 桌面端打包与根构建配置
+    ├── electron-main.js                   # Windows 桌面托盘壳主进程
+    ├── electron-preload.js                # 桌面端 IPC 与日志桥接脚本
+    ├── desktop-license-client.js          # 桌面端 License 离线/在线验签客户端
+    ├── desktop-license-preload.js         # License 激活页面预加载脚本
+    │
+    ├── backend/                           # Express 后端核心服务
+    │   ├── server.js                      # 后端服务主入口、中间件装配、自检与后台任务调度
+    │   ├── preflight.js                   # 启动前端口与系统环境预检
+    │   ├── ecosystem.config.js            # PM2 生产运维配置文件
+    │   ├── package.json                   # 后端依赖配置
+    │   ├── routes/                        # 27 个业务 API 路由模块
+    │   ├── models/                        # 数据库仓储 (app-db, report-store)、业务引擎与 AI 适配器
+    │   ├── middleware/                    # JWT 鉴权与管理员权限控制中间件
+    │   ├── logger/                        # 日志按日轮转与格式化输出
+    │   ├── builtin-tools/                 # 系统内置标准 HTML 工具包 (启动自动同步)
+    │   └── data/                          # 后端运行数据库与配置 (tools.db, ai-knowledge.db 等)
+    │
+    ├── frontend/                          # 原生多页面静态前端
+    │   ├── index.html                     # 首页大中台主页面
+    │   ├── pages/                         # 各独立业务页面 (uivf12, sla, report, monthly 等)
+    │   ├── css/                           # 全局样式、设计系统与暗黑主题
+    │   ├── js/                            # 前端业务逻辑
+    │   │   ├── shared/                    # 公共组件 (navbar, api, ai-assistant, 2D/3D知识图谱等)
+    │   │   ├── uivf12/                    # 抓取脚本工程业务代码
+    │   │   ├── sla/                       # SLA 导入与规则引擎
+    │   │   └── report/                    # 报表看板与月报交互
+    │   └── assets/                        # 图标、免安装 Splash 与静态资源
+    │
+    ├── data/                              # 业务数据主目录 (report.db, requirements.db, images/ 等)
+    ├── docs/                              # 专项开发与 API 文档
+    │   ├── external-metrics-api.md        # 外部指标 OpenAPI 调用文档
+    │   └── tools-platform-feature-overview-bilingual.html # 中英双语全景特性文档
+    ├── iosapp/                            # 配套 iOS / Kotlin Multiplatform 移动端工程
+    ├── scripts/                           # 运维、License 密钥同步与构建辅助脚本
+    └── tests/                             # 自动化单元测试与集成测试
+```
+
+---
+
+## 11. 环境变量与配置字典
+
+后端支持通过环境变量进行灵活定制与容器化部署：
+
+| 环境变量名 | 默认值 | 说明与取值范围 |
+| :--- | :--- | :--- |
+| `PORT` | `3030` | HTTP 服务监听端口 |
+| `TOOLS_DATA_DIR` | `backend/data/` | 后端核心数据存储目录（桌面版自动重定向至系统用户数据目录） |
+| `REPORT_DATA_DIR` | `data/` | 报表核心数据存储目录 (`report.db`) |
+| `SLIDE_IMPORT_MAX_MB` | `200` | PPTX 胶片包上传大小上限（单位：MB，支持 10~2048） |
+| `TOOLS_DAILY_LOGS` | `1` (生产) / `0` (桌面) | 是否开启按日归档日志写入 |
+| `TOOLS_DESKTOP_RUNTIME` | `0` | 是否处于 Windows Electron 桌面壳运行时环境 |
+| `GEMINI_API_KEY` | - | Google Gemini AI 默认 API Key（设置中心配置优先于此变量） |
+| `NODE_ENV` | `development` | 运行环境（`production` / `development`） |
+
+---
+
+## 12. 多系统部署、Windows 客户端与新手配置指引
+
+### 12.1 跨操作系统基础环境准备
+
+推荐运行环境为 **Node.js 20 LTS** 与 **npm 9+**。
+
+#### 1. Linux (Ubuntu / Debian / CentOS / RHEL) 部署
 ```bash
+# 1. 安装 Node.js 20 LTS (以 Ubuntu 为例)
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs build-essential
+
+# 2. 拉取代码并安装后端依赖
+cd /opt/tools-platform/backend
+npm install --production
+
+# 3. 运行环境与启动自检
+npm run doctor
+
+# 4. 独立启动 (默认 3030 端口)
+PORT=3030 npm start
+```
+
+#### 2. macOS 部署
+```bash
+# 1. 推荐使用 nvm 或 brew 安装 Node 20
+brew install node@20
+brew link node@20
+
+# 2. 安装依赖并启动
 cd tools-platform/backend
 npm install
 npm run doctor
 npm start
 ```
 
-开发模式：
-
-```bash
-cd tools-platform/backend
-npm install
-npm run dev
-```
-
-指定端口：
-
-```bash
-PORT=3030 npm start
-```
-
-Windows PowerShell：
-
+#### 3. Windows (Node.js 原生运行)
 ```powershell
-$env:PORT=3030
-npm start
-```
-
-### 生产运行 PM2
-
-```bash
-cd tools-platform/backend
-pm2 start ecosystem.config.js
-pm2 save
-pm2 startup
-```
-
-常用命令：
-
-```bash
-pm2 restart tools-platform
-pm2 logs tools-platform --lines 100
-pm2 status
-```
-
-`backend/ecosystem.config.js` 默认：
-
-- 进程名：`tools-platform`
-- 端口：`3030`
-- 最大内存自动重启：`256MB`
-- PM2 日志：`backend/logs/out.log`、`backend/logs/error.log`
-- 按日应用日志：`backend/logs/YYYY-MM-DD/out.log`、`backend/logs/YYYY-MM-DD/error.log`
-
-## Windows 安装版
-
-安装版使用 Electron + electron-builder + NSIS。现在的定位是“Windows 托盘常驻服务壳”：
-
-- 启动本地 Express 服务。
-- 用默认浏览器打开 Tools Platform Web 主页。
-- 托盘单击/双击打开默认浏览器主页。
-- 托盘菜单可打开数据抓取、数据导入、报表看板。
-- 托盘菜单可检查更新、下载更新、重启安装。
-- 托盘菜单可打开实时日志/更新进度窗口。
-- 托盘菜单可开启/关闭开机自启动。
-- 托盘“重启本地服务”会重启当前应用。
-
-Windows 日志位置：
-
-- Electron 和安装版后端日志写到系统用户数据目录下的 `logs/YYYY-MM-DD/out.log`、`error.log`。
-- 安装版不会再尝试写入 `app.asar/backend/logs`，避免 `ENOTDIR`。
-- 托盘“查看实时日志/更新进度”优先打开 Windows 原生 WinForms 窗口；如果 PowerShell/WinForms 启动失败，会自动回退到备用窗口并显示错误原因。
-
-本地打包验证：
-
-```bash
-cd tools-platform
+# 1. 确保安装 Visual Studio Build Tools (勾选 Desktop development with C++)
+# 2. 在 PowerShell 中进入后端目录安装依赖并启动
+cd tools-platform\backend
 npm install
-npm run build:win
+npm run doctor
+
+# 指定端口启动
+$env:PORT=3030; npm start
 ```
 
-GitHub Actions 当前会同时构建两种 Windows 版本，不再构建 macOS `.dmg`：
+---
 
-- `Tools-Platform-Setup-X.Y.Z.exe`：NSIS 安装版，支持快捷方式、卸载和应用内更新。
-- `Tools-Platform-Portable-X.Y.Z.exe`：绿色免安装版，双击即用，不创建安装/卸载注册表项、快捷方式或开机自启动；更新时需从 GitHub Releases 手动下载新 EXE。
+### 12.2 生产环境 PM2 常驻部署指引
 
-两种版本共用 Windows 当前用户数据目录，因此更换绿色版 EXE 不会丢失原有数据。推送到 `main` 后会自动递增 patch 版本、创建 `vX.Y.Z` tag，并发布两个 `.exe` 以及安装版所需的 `latest.yml` 和 `.blockmap` 到 GitHub Releases。
+生产服务器强烈建议使用 **PM2** 进行进程守护、自动重启与集群监控。
 
-### EXE License
+```mermaid
+flowchart LR
+    M1["pm2 start ecosystem.config.js"] --> M2["主服务常驻 (端口 3030)"]
+    M2 --> M3["崩溃/内存超 256MB 自动重启"]
+    M2 --> M4["按日日志轮转 (logs/YYYY-MM-DD/)"]
+    M2 --> M5["pm2 startup (开机自启)"]
+```
 
-- 首次启动安装版或绿色版时，Electron 会在启动本地服务前要求输入 `DSKL1` License。
-- License 为公司通用授权，不绑定设备；安装版与绿色版共用系统用户数据目录中的授权状态。
-- 新版 License 内含经 ECDSA P-256 签名的生效和到期时间；无网络时可直接在本地验签，不再受 24 小时离线缓存限制。
-- 有网络时依然通过随机 nonce、License 摘要、可信时间和服务器签名检查是否被提前失效。
-- 续期会换发包含新到期时间的密钥；旧密钥保留至原到期时间，用户需输入新密钥获得延长后的离线有效期。
-- 服务器管理员在 `/desktop-license-admin` 签发、续期、失效、恢复和归档 License。
-- `desktop-license-authority.js`、服务器管理路由、管理页、台账与私钥均由 electron-builder 排除，不进入安装版或绿色版。
-- `backend/data/desktop-license-signing-key.json` 是长期签发私钥，必须纳入加密备份；遗失或替换后，已发布客户端将无法验证新响应。
-- `frontend/desktop-license-client-config.json` 是可公开的验签配置。仅在授权服务器上明确初始化/轮换密钥时执行 `npm run license:sync-desktop-key`；CI 打包不会自动生成新密钥。
+#### 1. 安装与初始化 PM2
+```bash
+npm install -g pm2
+cd tools-platform/backend
+```
 
-## 数据存储
+#### 2. `ecosystem.config.js` 核心配置解析
+```javascript
+module.exports = {
+  apps: [{
+    name: 'tools-platform',
+    script: './server.js',
+    instances: 1,
+    autorestart: true,
+    max_memory_restart: '256M', // 内存超过 256MB 自动平滑重启
+    env: {
+      NODE_ENV: 'production',
+      PORT: 3030
+    },
+    error_file: './logs/error.log',
+    out_file: './logs/out.log',
+    time: true
+  }]
+};
+```
 
-项目正在从历史 JSON 文件存储逐步迁移到 SQLite。现在原则是：
+#### 3. 常用 PM2 运维命令
+```bash
+pm2 start ecosystem.config.js   # 启动服务
+pm2 save                        # 保存当前进程列表
+pm2 startup                     # 生成并配置操作系统开机自启脚本
+pm2 status                      # 查看服务状态、CPU与内存占用
+pm2 logs tools-platform         # 实时跟踪输出日志
+pm2 restart tools-platform      # 平滑重启服务
+pm2 stop tools-platform         # 停止服务
+```
 
-- 业务数据优先以 SQLite 为准。
-- 新功能尽量不再 fallback 到 JSON。
-- 旧 Windows 安装版升级到新版本时，如只有 JSON 无 SQLite，应通过启动迁移流程自动迁移。
-- 存储迁移状态台用于检查迁移状态、查看迁移结果、清理确认可删除的 JSON 文件。
+---
 
-主要存储位置：
+### 12.3 Windows 桌面客户端指引 (安装版 vs 绿色版)
 
-| 位置 | 用途 |
-| --- | --- |
-| `backend/data/tools.db` | 账号、session、UIV 脚本、SLA 配置/目标/偏好/快照、上传历史、FRT、PR 审计配置等 |
-| `backend/data/ai-knowledge.db` | AI 项目知识索引的可重建缓存，不存放报表或 SLA 业务数据 |
-| `data/report.db` | 报表看板入库数据、客户群得分、指标明细、月报读取数据 |
-| `data/requirements.db` | 需求广场和流转日志 |
-| `backend/data/custom-tools/` | 自定义 HTML 工具文件 |
-| `data/images/` | 报表截图、Excel 等导出产物 |
-| `backend/backups/` | 全局备份包 |
-| `backend/data/*.json` | 历史数据、部分仍未迁移的配置、迁移前数据来源 |
+平台通过 GitHub Actions 自动构建并发布两种 Windows 客户端：
 
-仍需特别理解的 JSON：
+| 特性维度 | NSIS 安装版 (`Setup.exe`) | 绿色免安装版 (`Portable.exe`) |
+| :--- | :--- | :--- |
+| **文件名格式** | `Tools-Platform-Setup-X.Y.Z.exe` | `Tools-Platform-Portable-X.Y.Z.exe` |
+| **安装方式** | 标准 Windows 安装向导，可自定义安装路径 | 单文件 EXE，双击直接运行，无需安装 |
+| **快捷方式** | 自动创建桌面与开始菜单快捷方式 | 不创建快捷方式，可手动发送快捷方式到桌面 |
+| **版本升级** | **支持应用内检测更新与静默自动升级** | 需从 GitHub Releases 手动下载新 EXE 替换 |
+| **开机自启** | 托盘菜单可直接一键勾选开机自启动 | 不写注册表启动项，纯绿色便携 |
+| **数据存储** | 共用当前用户数据目录 (`%APPDATA%/tools-platform/data`) | 共用相同用户数据目录，更换 EXE **数据不丢失** |
+| **使用场景** | **推荐主力办公机安装使用** | 临时调试、U盘便携、无管理员安装权限机器 |
 
-- `ai_settings.json`、`custom_tools.json`、部分导航/页面配置属于轻量配置或历史配置，不等同于原始业务指标数据。
-- SQLite 表中的 `*_json` 字段是数据库内容，只是字段内容是 JSON 字符串，不是文件 fallback。
-- 清理 JSON 前应先确认 SQLite 已有相同或更多数据，再使用存储迁移状态台清理。
+#### 客户端获取与激活步骤：
+1. **下载客户端**：从 GitHub Releases 下载最新的 `Tools-Platform-Setup-X.Y.Z.exe` 或 `Tools-Platform-Portable-X.Y.Z.exe`。
+2. **首次启动激活**：
+   - 首次双击打开程序，将弹出 License 激活窗口。
+   - 输入管理员分配的通用授权码（以 `DSKL1-` 开头）。
+   - 客户端核验成功后，将在后台自动拉起本地服务并在右下角系统托盘常驻。
+3. **打开主页**：双击托盘图标，程序将自动调用系统默认浏览器打开 `http://localhost:3030`。
 
-## 数据抓取到自动导入
+---
 
-UIVF12 支持两条链路：
+### 12.4 新手入门：安装登录后需要做啥 (Day 1 Checklist)
 
-1. 手动链路：用户运行 F12/UI.Vision 脚本，文件下载到浏览器下载目录，再在 `/sla` 手动一键批量导入。
-2. 自动链路：点击“运行批脚本”后，脚本抓取 CSV 内容，浏览器端解析为结构化 rows，写入临时桥接会话，完成后在新标签页打开 `/sla` 并触发智能分流合并。
+首次完成部署或安装并登录系统后，推荐按照以下顺序完成初始化配置：
 
-自动链路注意事项：
+```mermaid
+flowchart TD
+    STEP1["1. 登录管理员账号<br/>(默认账号 admin)"] --> STEP2["2. 检查与调整顶部导航<br/>(按需显隐模块与排序)"]
+    STEP2 --> STEP3["3. 配置 AI 智能客服<br/>(填入 Gemini/OpenAI Key)"]
+    STEP3 --> STEP4["4. 导入首份业务数据<br/>(在 /sla 上传表格建立基线)"]
+    STEP4 --> STEP5["5. 探索全景知识图谱<br/>(点击首页图谱查看全貌)"]
+```
 
-- 不上传原始 CSV 文件。
-- 自动导入只发送解析后的结构化 rows 和必要元信息。
-- 抓取报告会显示脚本任务数、实际文件数、自动导入数、失败文件和错误详情。
-- 同名文件会按类似 Windows 下载命名策略区分，避免覆盖。
-- 目标月份可在抓取完成报告页选择；不选则使用 SLA 页面默认月份。
-- 批脚本运行时会显示悬浮进度面板、站点登录探测日志、各站点进度和总进度。
+1. **第一步：登录账号**
+   - 打开 `http://localhost:3030/login.html`。
+   - 输入管理员账号登录（默认账号密码或联系运维管理员获取），登录后建议立即在“账号管理”中修改密码。
+2. **第二步：配置顶部导航与分类 (`/api/nav-settings`)**
+   - 点击右上角设置菜单中的“全局设置” $\rightarrow$ “顶部导航配置”。
+   - 根据团队实际业务需求，调整常用工具的显隐状态、排序权重以及“更多工具”下拉分类。
+3. **第三步：激活 AI 智能客服 (`/api/ai-settings`)**
+   - 在“全局设置” $\rightarrow$ “AI 助手配置”中，选择模型提供商（推荐 Google Gemini 或 OpenAI 兼容模型）。
+   - 填入对应 API Token 并保存，即可在右下角开启具备上下文感知的智能客服助理与只读报表分析。
+4. **第四步：导入首份 SLA 数据并生成快照 (`/sla`)**
+   - 进入“数据导入”页，拖入当月的多表数据（如风险表、整改表或工单表）。
+   - 核对指标映射与达标阈值，点击“一键入库”，沉淀首份历史快照。
+   - 前往“报表看板” (`/report`) 与“月报页面” (`/monthly`) 查阅自动生成的健康度排名与短板透视矩阵。
+5. **第五步：体验 2D/3D 知识图谱**
+   - 点击首页 Hero 区域的“项目知识图谱”按钮，探索平台模块拓扑、源码链路与指标体系。
 
-UI.Vision 相关建议：
+---
 
-- 运行批脚本前建议安装并启用 UI.Vision 扩展。
-- XModules 是可选增强能力；未安装/未启用时，下载仍按浏览器默认下载目录处理。
-- 不同浏览器 Chrome/Edge 均可，只要对应浏览器安装 UI.Vision 并允许 embedded macro。
+## 13. CI/CD 自动化发布与客户端平滑升级机制
 
-## 报表与月报口径
+平台配置了工业级 **GitHub Actions 自动化流水线**，实现了“主分支代码推送 -> 自动打标/语义化升级 -> Windows 双版本交叉编译 -> 发布 GitHub Releases -> 客户端差量增量更新”的闭环发布生命周期：
 
-报表看板 `/report` 负责计算和入库，月报 `/monthly` 主要读取入库后的历史结果。
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Dev as 开发者 / Git Push
+    participant CI as GitHub Actions (CI Runner)
+    participant GH as GitHub Releases
+    participant Client as 已安装桌面客户端
 
-关键口径：
+    Dev->>CI: Push 代码至 main 分支
+    CI->>CI: 1. 自动执行 npm version patch
+    CI->>CI: 2. 自动打 Git Tag (vX.Y.Z) 并推回仓库
+    CI->>CI: 3. Windows 环境构建 Setup.exe 与 Portable.exe
+    CI->>CI: 4. 生成 latest.yml 与 .blockmap 差量索引
+    CI->>GH: 5. 自动上传产物并发布 Release
+    Note over Client,GH: 客户端后台自动感知与更新
+    Client->>GH: 托盘定期拉取 latest.yml 比对版本
+    GH-->>Client: 发现新版本，按 Blockmap 仅下载差异增量字节
+    Client-->>Client: 托盘提示“新版本已就绪”，用户确认后重启平滑应用
+```
 
-- 入库时总分已经考虑 Others 额外监控分组不计入总分。
-- 历史入库分数以入库当时计算结果为准。
-- Others 分组指标在报表看板、月报和短板矩阵中以弱化样式展示，表示只监控、不计总分。
-- “比例计分”支持常规指标和 Others 额外监控指标。
-- 月报底部和一键催办底部包含用户容易疑惑点的解释说明。
+### 13.1 语义化版本与自动化 Release 流水线 (`.github/workflows/build.yml`)
+1. **自动 Patch 版本递增**：
+   - 开发者向 `main` 分支提交代码后，CI 流水线第一阶段 (`prepare-release`) 自动在 `tools-platform/package.json` 中自增 patch 版本号。
+   - 自动提交 `chore: release vX.Y.Z [skip ci]` 并打上对应 `vX.Y.Z` 的 Git Tag，随后推回 GitHub 仓库。
+2. **多版本自动交叉编译**：
+   - 第二阶段 (`build`) 在 `windows-latest` 环境下拉取最新 Tag。
+   - 执行 `npm run build:win`，同时构建 NSIS 安装包 (`Setup.exe`) 与绿色免安装单文件 (`Portable.exe`)。
+3. **Release 资产自动归档**：
+   - 自动生成 NSIS 升级所需的 `latest.yml` 校验清单与 `.blockmap` 文件。
+   - 通过 `softprops/action-gh-release` 自动将双版本 `.exe` 及升级资产发布至 GitHub Releases。
 
-## 主要 API
+### 13.2 客户端平滑增量更新机制 (Electron-Updater)
+1. **Blockmap 差量增量下载**：
+   - 安装版客户端内置 `electron-updater`，启动时或托盘右键手动“检查更新”时，自动向 GitHub Releases 拉取 `latest.yml`。
+   - 比对本地版本号与远程版本号；若发现新版本，利用 `.blockmap` 索引仅下载变动的二进制 Block 数据，**节省 80%+ 的网络流量消耗**。
+2. **托盘日志与进度可视化**：
+   - 下载进度实时推送到 Windows 托盘与原生的 WinForms 进度监控窗口。
+   - 下载完成后弹出“重启安装新版本”提示，用户点击后自动退出、平滑覆盖并重启恢复服务。
 
-| 路由 | 模块 |
-| --- | --- |
-| `/api/auth` | 登录、退出、账号和 session |
-| `/api/nav-settings` | 顶部导航和全局设置 |
-| `/api/ai-settings` | AI 助手配置 |
-| `/api/ai/chat` | Gemini AI 聊天 |
-| `/api/uiv` | UIVF12 脚本仓库和 UI.Vision runner |
-| `/api/uiv-auto-import` | 抓取后自动导入桥接会话 |
-| `/api/sla` | SLA 配置、目标、分组、快照 |
-| `/api/upload` | 上传历史和导入历史 |
-| `/api/db` | 报表看板、月报、大屏相关数据 |
-| `/api/external/metrics` | 外部/移动端只读指标 API，调用文档见 `docs/external-metrics-api.md` |
-| `/api/praudit` | PR 审计 |
-| `/api/frt` | FRT 快照和核算 |
-| `/api/requirements` | 需求广场 |
-| `/api/custom-tools` | 自定义工具 |
-| `/api/global-backup` | 全局备份恢复 |
-| `/api/storage` | 存储迁移状态和 JSON 清理 |
-| `/api/db-explorer` | 数据探索和日志导出 |
+---
 
-## 鉴权与权限
+## 14. 开发约定与排障 FAQ
 
-- `/login.html` 和登录接口公开。
-- 大部分 HTML 页面需要登录后访问，避免退出后页面先闪现再跳登录。
-- 大部分 `/api/*` 需要登录。
-- 非 GET 修改类请求默认要求管理员权限，部分业务路由内部还有额外校验。
-- 登录页的隐私政策、服务条款通过弹窗展示，不强制跳转离开登录页。
+### 开发约定规范
+1. **轻量静态原则**：前端保持原生 HTML/JS/CSS 架构，严禁随意引入庞大且不必要的重型前端打包构建链。
+2. **SQLite 规范**：新增任何业务模型一律优先设计 SQLite 数据表并编写自愈脚本，严禁新增裸 JSON 文件读写。
+3. **版本防缓存机制**：修改 `frontend/js/` 或 `frontend/css/` 中的静态文件后，必须在引用该文件的 HTML 页面中同步递增版本戳（如 `navbar.js?v=1.0.176`）。
+4. **安全与脱敏原则**：所有包含密码、Token、Secret、Cookie、私钥的请求与响应体必须经过统一脱敏拦截器过滤后再打印到日志或投递到 AI 模型。
 
-## 全局设置与 AI 助手
-
-全局设置包括：
-
-- 顶部菜单显示、排序和更多工具分类。
-- AI 助手 API Token、模型、费用参数和系统提示词。
-- 账号管理。
-- 备份恢复。
-- 程序更新说明。
-- 页面级配置入口。
-
-AI 助手：
-
-- 前端收集当前页面可见上下文。
-- 后端对 `README.md`、`docs/*.md`、核心前后端源码，以及自带/自定义 HTML 工具中的 HTML、JS、CSS、JSON、Markdown 和文本文件建立增量项目知识索引，根据问题只检索相关片段。
-- 客服问答通过专用只读配置检索器读取 `backend/data/tools.db` 中的 UIVF12 脚本正文与分类、指标分类、指标/子指标、目标、权重、月份规则、计分开关、SLA 偏好、字典及 HTML 工具注册信息，并读取 `data/report.db` 的 `PlatformConfig`。配置结果按问题召回，不会整库塞入模型。
-- 业务配置回答会附带数据库、表、记录键和更新时间；数据库/WAL 变化后自动失效短期缓存。密码、Token、Secret、Authorization 和私钥内容在进入模型前脱敏。
-- 涉及报表、月报、指标、趋势或排名的数据问题使用 `data/report.db` 只读分析，不向 AI 开放自由 SQL 或业务数据写入。
-- 历史月报分析优先使用入库时保存的得分和计分状态，不按当前目标或规则重算。
-- 回答会返回相关文件路径、行号以及报表月份/快照时间，前端在消息底部展示“本次回答依据”。
-- 客服对话使用真实流式输出：Gemini、OpenAI/OpenAI-Compatible、MiniMax 和 Anthropic 的文本片段由后端逐段转发，前端平滑渲染并支持停止生成；不支持流式的兼容接口自动回退到完整响应。
-- 回答依据区分“知识库规模”、“检索候选”与“实际引用”，只将通过动态相关度门槛的片段计为引用。指标当前值、分月目标等纯业务数据问题不强制检索项目文档；客服标题栏的图谱入口提供“项目知识”和“指标体系”双视图。
-- 智能客服助手及知识图谱订阅全局语言切换事件；导航栏切换英文后，界面控件和 AI 默认回答语言会同步切换为英文。
-- 项目知识图谱包含独立的“工具与数据资产”分支，按“自带 HTML 工具 / 自定义 HTML 工具 / 数据库与表”展开，并关联工具目录文件、静态资源依赖、服务路由、数据服务代码及其访问的 SQLite 表。
-- 图谱标签按“根节点 → 分类 → 业务节点 → 文件/子指标”随缩放逐级出现，并执行数量限制和碰撞避让；悬浮或选中节点时只聚焦一跳邻居和关联线，根节点不会再点亮整张图。
-- 单击节点后高亮持续保留；离开或重新经过同一已选节点不重复触发淡入淡出。不点击其他节点也可通过悬浮临时预览其高亮关系，移开后自动恢复原已选节点。
-- 图谱支持按真实 `contains` 层级重播生长动画：根节点、分类、指标/工具、文件/子指标依次出现，归属线先展开、跨模块依赖线稍后绘制。外观与力度面板可调颜色主题、节点大小、连线粗细、标签密度/透明度、动画速度、向心力、排斥力、连接吸引力、连线长度和漂浮力度，偏好保存在当前浏览器本地。
-- 图谱默认使用 2D 平面视图，顶部可随时切换到 3D 透视视图；3D 模式通过深度分层降低密集连线的平面交叉，使用固定左上前方的柔和环境光呈现球体节点、漫反射、小范围高光与景深衰减。左键拖动空白处旋转视角，按住鼠标滚轮拖动可平移视角，滚轮滚动用于缩放；节点选择、拖动、搜索、侧栏详情和聚焦高亮保持可用。
-- 3D 节点拖动会将屏幕位移按当前相机水平角、俯仰角和透视比例反投影到世界坐标，旋转视角后仍保持节点与鼠标同方向移动，并沿相机视平面保留释放惯性。
-- 指标体系图谱按“月份规则 → 指标分类 → 指标 → 子指标”展示，支持月份切换、动态仿真、搜索和点击指标/子指标查看已保存的历史录入值、目标、得分与达标状态。
-- 指标历史严格读取 `data/report.db` 入库快照；`backend/data/tools.db` 中的当前规则只用于展示，不会据此重算旧快照。
-- 项目知识库在首次问答时自动建立，之后按文件内容哈希增量更新；管理员可调用 `POST /api/ai/knowledge/refresh` 强制刷新。
-- 后端调用全局设置中当前激活的 Gemini、OpenAI、Anthropic、MiniMax 或 OpenAI 兼容模型配置。
-- 设置中心保存的 Token 优先于环境变量 `GEMINI_API_KEY`。
-- 对 Gemini 503/high demand 有重试，但 503 本质上通常是模型高峰或服务端临时不可用。
-
-## 备份恢复
-
-全局备份覆盖：
-
-- SQLite 数据库。
-- 关键 JSON 配置。
-- 自定义工具。
-- 上传附件和运行所需数据。
-
-素材库 `backend/data/slide-library` 和图片目录 `backend/data/images` 不进入全局备份；恢复时会保留服务器上的现有目录。恢复会覆盖其他当前数据，建议先生成备份包再操作。远端主站同步会使用 `backend/runtime` 存储本机同步状态，该目录不作为业务数据备份主体。
-
-## 日志
-
-开发/PM2 环境：
-
-- `backend/logs/out.log`
-- `backend/logs/error.log`
-- `backend/logs/YYYY-MM-DD/out.log`
-- `backend/logs/YYYY-MM-DD/error.log`
-
-Windows 安装版：
-
-- 用户数据目录下的 `logs/YYYY-MM-DD/out.log`
-- 用户数据目录下的 `logs/YYYY-MM-DD/error.log`
-- 托盘菜单可打开日志目录或实时日志/更新进度窗口。
-
-数据探索页 `/db-explorer` 也支持收集最近 N 天日志并压缩下载。
-
-## 常见问题
-
-### 1. 数据导入页某些请求重复两次？
-
-目前部分页面初始化会先加载基础配置，再根据目标月份/快照/页面状态做二次刷新。重复请求不一定是 bug，优化前需要确认两次请求的调用目的和返回差异。
-
-### 2. Gemini 503 是什么？
-
-通常是 Gemini 服务端高峰或模型暂时不可用。后端已有短暂重试；如果仍失败，可稍后重试或切换模型。
-
-### 3. Windows 安装版为什么不在 Electron 主窗口登录？
-
-为了贴近 Windows 用户习惯，安装版只做托盘常驻、更新、日志和本地服务管理。业务页面统一在默认浏览器中打开，这样也更方便使用已登录浏览器、扩展和 UI.Vision。
-
-### 4. 旧 Windows 用户只有 JSON 没 SQLite 怎么办？
-
-新版本启动时应通过迁移流程把旧 JSON 写入 SQLite。迁移结果可在存储迁移状态台查看；如果迁移失败，应保留 JSON 并查看启动日志。
-
-### 5. 可以直接删除 JSON 吗？
-
-不要手工直接删。应先在存储迁移状态台确认 SQLite 已有相同或更多数据，再使用清理按钮。
-
-## 开发约定
-
-- 前端优先保持多页面静态架构，不引入复杂构建链。
-- 新数据优先写 SQLite。
-- 不再新增页面级“强制切换 JSON”入口。
-- 迁移和清理必须可观测：有状态、有明细、有成功/失败结果。
-- 涉及前端静态 JS 改动时，同步更新页面引用版本号，避免浏览器缓存旧脚本。
-- 涉及后端或静态资源服务改动后，本地 PM2 环境需要 `pm2 restart tools-platform`。
-- Windows 安装版行为改动需要重新打包发布后才会在用户机器生效。
+### 排障 FAQ
+- **Q: 启动报端口已被占用 (`EADDRINUSE`)？**
+  - A: 指定新端口启动即可：`PORT=3031 npm start`（PowerShell: `$env:PORT=3031; npm start`）。
+- **Q: 数据库出现死锁或损坏提示？**
+  - A: 服务在 `server.js` 启动时已集成 `repairStartupDatabases()` 自动检测与修复，可在 `backend/data/backups/` 中查看自动修复前后的 `.db` 副本。
+- **Q: Windows 安装版无法启动本地服务？**
+  - A: 右键托盘图标打开“查看实时日志/更新进度”，检查系统用户数据目录下的 `logs/YYYY-MM-DD/error.log`。
+- **Q: 绿色版与安装版如何共存或迁移？**
+  - A: 两者数据均存储在当前用户的 `%APPDATA%/tools-platform/data` 目录下，直接关闭旧版本运行新版本 EXE 即可，数据完全无缝继承。
