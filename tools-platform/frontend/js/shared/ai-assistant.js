@@ -957,7 +957,7 @@
         if (!knowledgeGraphLoader) {
             knowledgeGraphLoader = new Promise((resolve, reject) => {
                 const script = document.createElement('script');
-                script.src = '/js/shared/ai-knowledge-graph.js?v=20260813-02';
+                script.src = '/js/shared/ai-knowledge-graph-spatial-themes-v5.js?v=20260814-10';
                 script.onload = resolve;
                 script.onerror = () => reject(new Error(aiT('graphLoadFailed')));
                 document.body.appendChild(script);
