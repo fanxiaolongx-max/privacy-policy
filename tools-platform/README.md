@@ -30,6 +30,11 @@ Tools Platform 是一个面向运维数据抓取、SLA 指标导入、报表看�
 10. [目录结构详解](#10-目录结构详解)
 11. [环境变量与配置字典](#11-环境变量与配置字典)
 12. [多系统部署、Windows 客户端与新手配置指引](#12-多系统部署windows-客户端与新手配置指引)
+    - [12.1 跨操作系统基础环境准备](#121-跨操作系统基础环境准备)
+    - [12.2 生产环境 PM2 常驻部署指引](#122-生产环境-pm2-常驻部署指引)
+    - [12.3 Windows 桌面客户端指引 (安装版 vs 绿色版)](#123-windows-桌面客户端指引-安装版-vs-绿色版)
+    - [12.4 Windows 客户端本地生成文件与目录全景字典 (Setup vs Portable)](#124-windows-客户端本地生成文件与目录全景字典-setup-vs-portable)
+    - [12.5 新手入门：安装登录后需要做啥 (Day 1 Checklist)](#125-新手入门安装登录后需要做啥-day-1-checklist)
 13. [CI/CD 自动化发布与客户端平滑升级机制](#13-cicd-自动化发布与客户端平滑升级机制)
 14. [开发约定与排障 FAQ](#14-开发约定与排障-faq)
 
@@ -138,10 +143,22 @@ flowchart TD
 
 项目第一次启动后（Windows 安装版、绿色免安装版和源代码启动一致），超级管理员首次进入页面会看到一次性引导，可分别选择导入“默认智能调度脚本仓库”和“全量指标规则”，也可两项都不导入。选择保存在当前运行数据目录的 `first-run-defaults.json`，不依赖浏览器缓存，因此各启动形态行为一致。
 
+首次没有手动选择过语言时，引导界面会优先跟随浏览器语言：英文浏览器显示英文，其他语言默认显示中文；用户通过顶部语言按钮做出的选择优先级最高。
+
+![首次启动开箱即用默认内容导入界面](docs/images/first-run-quick-start.png)
+
+> 首次启动界面会直接列出默认脚本仓库、全量指标规则和“不抢占现有配置”的导入策略；管理员可只选其中一项，也可暂不导入直接使用。
+
 - 导入策略是 **只补齐、不覆盖**：现有同名脚本、同 ID/同名分组和同 key 指标规则保留用户版本。
 - 真正写入前会在 `backups/first-run-defaults/` 生成 JSON 备份；任一步失败会尝试回滚。
 - 默认包是可版本化的静态快照，发布前运行 `npm run defaults:export` 可用当前 `tools.db` 重新生成。
 - 脚本不携带固定 Cookie、Authorization 或口令；运行时从用户已登录的目标系统会话动态取得令牌。使用前仍需确认目标系统授权、地区/代表处参数和数据合规要求。
+
+管理员后续可进入 **全局设置 → 初始化**：
+
+- **启动开箱即用模式**：再次补齐仓库内置脚本和全量指标规则，仍采用“只补齐、不覆盖”，适合首次跳过或后续默认包升级后使用。
+- **彻底初始化程序数据**：要求输入 `RESET` 二次确认；系统先生成 `pre-factory-reset` 安全备份，再把运行数据整体移动到相邻的 `factory-reset-archives/` 目录，然后建立干净数据库。当前管理员账号密码、桌面授权和 F12 授权文件保留，其余业务数据、配置、附件、自定义工具及当前浏览器 localStorage/sessionStorage 会重置。程序退出后重新启动，首次导入引导会再次出现。
+- 如果需要恢复初始化前状态，可从“备份恢复”使用安全备份，或由管理员从 `factory-reset-archives/` 完整归档人工恢复。执行期间不要强制结束初始化工作进程。
 
 本版默认包摘要：**43** 个脚本、**6** 个脚本分类、**58** 条目标/权重规则、**72** 份偏好与数据源规则、**9** 个指标分组、**4** 个客户类别和 **137** 个双语字典词条。
 
@@ -767,7 +784,7 @@ flowchart TD
 | `/api/alert-center` | `alert-center.js` | 需登录 (写需Admin) | 系统告警事件列表、状态标记与 AI 智能告警分析回填 |
 | `/api/platform-metrics`| `platform-metrics.js`| 需登录 | 首页效能大盘统计指标与 API 服务请求状态监控追踪 |
 | `/api/friend-links` | `friend-links.js` | 需登录 (写需Admin) | 首页友情链接维护与后台定时可用性探活 |
-| `/api/onboarding` | `onboarding.js` | 需登录 (写需Admin) | 首次启动默认脚本仓库/全量指标规则预览、导入或跳过决策 |
+| `/api/onboarding` | `onboarding.js` | 需登录 (写需Admin) | 首次启动默认内容预览/决策、从全局设置重新补齐默认内容，以及带安全备份与完整归档的程序数据初始化 |
 | `/api/custom-tools` | `custom-tools.js` | 需登录 (写需Admin) | 自定义 HTML/ZIP 工具上传、状态恢复与内置工具同步 |
 | `/api/global-backup` | `global-backup.js` | 需登录 (写需Admin) | 全局数据备份包生成、自动备份调度与数据恢复 |
 | `/api/storage` | `storage.js` | 需登录 (写需Admin) | SQLite/JSON 存储迁移状态、读源切换与遗留 JSON 安全清理 |
@@ -978,7 +995,119 @@ pm2 stop tools-platform         # 停止服务
 
 ---
 
-### 12.4 新手入门：安装登录后需要做啥 (Day 1 Checklist)
+### 12.4 Windows 客户端本地生成文件与目录全景字典 (Setup vs Portable)
+
+为方便运维审计、数据迁移、备份及排障分析，以下详细列出 `Tools-Platform-Setup-X.Y.Z.exe`（安装版）与 `Tools-Platform-Portable-X.Y.Z.exe`（绿色便携版）在 Windows 系统中落地生成的所有目录、文件及其具体用途。
+
+#### 12.4.1 安装版 vs 绿色版落地特征概览
+
+```mermaid
+flowchart LR
+    subgraph SetupVer["Tools-Platform-Setup-X.Y.Z.exe (安装版)"]
+        S1["安装目录:<br/>%LocalAppData%\Programs\tools-platform"]
+        S2["桌面/开始菜单快捷方式 (.lnk)"]
+        S3["注册表卸载项 (Uninstall)"]
+        S4["自动更新缓存:<br/>%LOCALAPPDATA%\tools-platform-updater"]
+    end
+
+    subgraph PortableVer["Tools-Platform-Portable-X.Y.Z.exe (绿色便携版)"]
+        P1["单文件便携运行 (支持 U 盘)"]
+        P2["运行临时解压目录:<br/>%TEMP%\electron-builder-portable\...<br/>(退出自动清理)"]
+        P3["0 注册表写入 / 0 快捷方式残留"]
+    end
+
+    subgraph SharedData["共享持久化用户数据目录 (%APPDATA%\Tools Platform\)"]
+        D1["核心 SQLite 数据库<br/>(tools.db / report.db / requirements.db)"]
+        D2["授权凭证 (desktop-license.json)"]
+        D3["每日运行日志 (logs/YYYY-MM-DD/...)"]
+        D4["自定义扩展工具生态 (custom-tools/)"]
+        D5["系统与媒体素材 (images/ / backups/)"]
+    end
+
+    SetupVer --> SharedData
+    PortableVer --> SharedData
+```
+
+#### 12.4.2 客户端安装与执行层目录 (Program & Temp Files)
+
+| 适用版本 | 默认物理路径 | 生成文件清单 | 作用与生命周期说明 |
+| :--- | :--- | :--- | :--- |
+| **安装版 (Setup)** | `%LocalAppData%\Programs\tools-platform\`<br/>*(自定义安装则为用户指定路径)* | • `Tools Platform.exe`<br/>• `Uninstall Tools Platform.exe`<br/>• `resources\app.asar`<br/>• `resources\elevate.exe`<br/>• 核心运行依赖库 (`ffmpeg.dll`, `d3dcompiler_47.dll`, `v8_context_snapshot.bin`, `locales\*.pak` 等) | **程序主程序与运行依赖库**。<br/>包含全部前后端源码（打包于 asar）、Node.js 与 Chromium 核心执行环境。运行卸载程序或覆盖安装时更新。 |
+| **安装版 (Setup)** | `%USERPROFILE%\Desktop\`<br/>`%APPDATA%\Microsoft\Windows\Start Menu\Programs\` | • `Tools Platform.lnk` | **桌面与开始菜单快捷方式**。<br/>便于用户快速启动托盘客户端，卸载时自动移除。 |
+| **安装版 (Setup)** | `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\com.toolsplatform.app` | • 注册表项（DisplayName, DisplayVersion, UninstallString 等） | **控制面板卸载注册项**。<br/>让应用正常展示在 Windows“设置 $\rightarrow$ 应用 $\rightarrow$ 已安装的应用”中。 |
+| **安装版 (Setup)** | `%LOCALAPPDATA%\tools-platform-updater\` | • `latest.yml`<br/>• `*.blockmap`<br/>• `Tools-Platform-Setup-*.exe` | **自动更新增量下载缓存**。<br/>应用内后台检测到新版本时，按差量 Blockmap 仅拉取变更块，升级安装完成后自动清理。 |
+| **绿色版 (Portable)** | `%TEMP%\electron-builder-portable\tools-platform-*\`<br/>*(或 `%LOCALAPPDATA%\Temp\...`)* | • 临时解包的 EXE 运行载荷与 asar 资源 | **绿色版临时自解压运行目录**。<br/>启动时解压运行依赖，**客户端退出时自动清理**，不污染主机。 |
+
+#### 12.4.3 持久化用户数据目录 (%APPDATA%\Tools Platform\)
+
+> [!IMPORTANT]
+> **无论使用安装版还是绿色版，所有业务数据、配置、授权凭证均统一持久化存储于当前用户的 `%APPDATA%\Tools Platform\` 目录下**。
+> 这意味着在安装版与绿色版之间互相切换、或直接下载新版 Portable.exe 替换旧版时，**所有业务数据均 100% 自动继承且绝对不会丢失**。
+
+##### 用户数据目录完整拓扑结构：
+```text
+%APPDATA%\Tools Platform\ (即 C:\Users\<Username>\AppData\Roaming\Tools Platform\)
+├── desktop-license.json                 # [授权] 客户端本地离线激活状态与硬件签名凭证
+├── desktop-license-public-status.json   # [授权] 授权只读状态镜像 (供前端安全调用展示)
+├── launch-state.json                    # [运行] 启动时间戳、窗口坐标与上次状态缓存
+├── tools-platform-runtime-monitor.ps1   # [监控] Windows 原生托盘状态探针 PowerShell 脚本
+├── logs\                                # [日志] 系统运行日志与运行时进程监控
+│   ├── YYYY-MM-DD\                      #       按日期分目录归档
+│   │   ├── out.log                      #       标准输出日志 (后端启动流水、API 访问日志)
+│   │   └── error.log                    #       异常报错日志 (崩溃堆栈、异常捕获、网络超时)
+│   ├── runtime-status.json              #       实时运行时快照 (PID、端口 3030、内存驻留、心跳)
+│   └── runtime-command.json             #       托盘控制与主服务双向 IPC 调度通信文件
+├── data\                                # [核心数据] 平台核心数据目录 (TOOLS_DATA_DIR)
+│   ├── tools.db                         # [SQLite] 平台主数据库 (配置、账号、导航、AI Key、调度、偏好)
+│   ├── report.db                        # [SQLite] 报表与月报库 (SLA 快照、指标明细、健康度计分)
+│   ├── requirements.db                  # [SQLite] 需求广场库 (专项治理协作需求与工单流转)
+│   ├── ai-knowledge.db                  # [SQLite] AI 知识图谱向量库 (本地问答切片与检索索引)
+│   ├── *.db-wal / *.db-shm              # [SQLite] WAL 模式高并发读写临时预写日志与索引
+│   ├── custom-tools\                    # [生态] 自定义工具目录 (每个微工具的 HTML/JS/manifest/.i18n)
+│   ├── builtin-tools-sync-decisions.json# [生态] 内置工具升级冲突判定记录 (保护本地修改)
+│   ├── backups\                         # [备份] 升级安全备份与数据库全量快照
+│   │   └── builtin-tools\               #       内置工具官方升级前的自动镜像归档 (支持一键回滚)
+│   ├── images\                          # [素材] 胶片 PPT 切图、报表配图、知识库附件图片
+│   └── tmp\                             # [暂存] 临时中转目录 (解压、大文件上传、UIV 抓取中间数据)
+└── Cache\ / Code Cache\ / Local Storage # [引擎缓存] Chromium 渲染引擎与离线本地前端状态缓存
+```
+
+##### 核心业务文件功能字典：
+
+| 文件 / 目录路径 | 文件类型 | 存储内容与核心功能 | 丢失或误删影响 |
+| :--- | :--- | :--- | :--- |
+| `desktop-license.json` | JSON | 存储客户端激活码（`DSKL1-` 开头）、机器指纹 Hash、签名认证及离线授权有效期。 | 需在下次启动时重新输入授权码激活。 |
+| `desktop-license-public-status.json` | JSON | 授权脱敏公开状态（有效期、授权状态、租户名），供前端安全展示。 | 重启后由主进程自动重新生成。 |
+| `launch-state.json` | JSON | 记录上次启动时间、端口分配、窗口尺寸与位置缓存。 | 重启后由程序重新生成默认窗口位置。 |
+| `logs/YYYY-MM-DD/out.log` / `error.log` | Log 文本 | 记录本地后台运行流水与异常报错堆栈，支持托盘右键一键打开分析。 | 无影响，日志按日自动归档。 |
+| `logs/runtime-status.json` | JSON | 实时运行时快照（进程 PID、本地服务端口 3030、心跳状态）。 | 由主进程定时刷新写入。 |
+| `data/tools.db` | SQLite 数据库 | **平台核心总控数据库**。包含管理员账号密码、顶部导航配置、AI 助手 API Key 与模型参数、定时任务 (`uiv_scripts`)、SLA 目标与偏好规则 (`sla_targets`/`sla_prefs`/`sla_groups`)、自定义工具注册表。 | **极高**。丢失将导致系统重置为默认空配置。 |
+| `data/report.db` | SQLite 数据库 | **报表看板与月报分析库**。包含历史月度快照、指标合控计算结果、各维度健康度计分、短板排名明细。 | **极高**。丢失将失去所有历史月报与数据看板记录。 |
+| `data/requirements.db` | SQLite 数据库 | **需求广场流转库**。包含专项治理需求提单、流转进度与反馈工单。 | **高**。丢失将清空需求广场数据。 |
+| `data/custom-tools/` | 文件夹 | 存放用户自行开发或导入的自定义小工具全部静态源码与多语言字典。 | 丢失将无法打开自建的扩展微工具。 |
+| `data/backups/builtin-tools/` | 文件夹 | 每次内置工具随版本升级前自动创建的安全备份副本。 | 无影响，仅在需要回滚旧版内置工具时使用。 |
+| `data/images/` | 图片媒体文件 | 胶片设计素材库切图、PPT 页面图片、报表生成的缩略图与图表资产。 | 相关 PPT 素材与图片无法正常展示预览。 |
+
+#### 12.4.4 用户主动导出文件目录 (Downloads)
+
+- **默认导出路径**：`%USERPROFILE%\Downloads\`（即 Windows 系统的“下载”文件夹）。
+- **常见导出文件**：
+  - `月度运营报告_YYYY-MM.xlsx`：月报分析导出的多维度 Excel 表格。
+  - `SLA_催办提醒_*.html` / `*.txt`：一键催办生成的结构化邮件/即时通信模版。
+  - `tools-platform-backup-*.zip`：在“存储与备份”中导出的全局全量数据备份包。
+  - `custom-tool-*.zip`：在“自定义工具”中导出的独立微工具包。
+
+#### 12.4.5 客户端数据清理、迁移与出厂重置指引
+
+| 运维场景 | 推荐操作步骤 | 预期结果与注意事项 |
+| :--- | :--- | :--- |
+| **仅卸载主程序 (保留业务数据)** | 通过 Windows“设置 $\rightarrow$ 应用 $\rightarrow$ 卸载”运行卸载向导，或直接删除 Portable.exe。 | 仅清理安装目录和快捷方式，`%APPDATA%\Tools Platform` 完整保留，后续重装可直接复用全部数据。 |
+| **全量迁移至新电脑** | 1. 退出旧电脑的 Tools Platform。<br/>2. 复制旧电脑的 `%APPDATA%\Tools Platform\data\` 文件夹到新电脑的对应路径。<br/>3. 在新电脑安装启动客户端并输入授权码。 | 新电脑无缝恢复所有配置、账号、历史月报、自定义工具与媒体素材。 |
+| **彻底清除数据 / 恢复出厂设置** | 1. 退出托盘客户端进程。<br/>2. 直接删除整个 `%APPDATA%\Tools Platform\` 文件夹。 | 清除所有本地数据与授权状态，下次启动时将进入全新首次初始化与激活向导。 |
+
+---
+
+### 12.5 新手入门：安装登录后需要做啥 (Day 1 Checklist)
 
 首次完成部署或安装并登录系统后，推荐按照以下顺序完成初始化配置：
 

@@ -137,7 +137,7 @@ async function applyDecision(options = {}) {
     const bundle = loadBundle(bundlePath);
     const repositories = options.repositories || DEFAULT_REPOSITORIES;
     const existingState = readJson(statePath);
-    if (existingState) {
+    if (existingState && options.allowRepeat !== true) {
         const error = new Error('首次启动选择已完成，不会重复导入');
         error.statusCode = 409;
         throw error;
@@ -233,6 +233,7 @@ async function applyDecision(options = {}) {
         decision: action,
         decidedAt: new Date().toISOString(),
         decidedBy: options.actor || '',
+        source: options.source || 'first-run',
         bundleVersion: bundle.bundleVersion,
         imported: { scripts: importScripts, metricRules: importMetricRules },
         mergePolicy: 'preserve-existing',
@@ -243,9 +244,19 @@ async function applyDecision(options = {}) {
     return stateSummary(state);
 }
 
+async function applyBundledDefaults(options = {}) {
+    return applyDecision({
+        ...options,
+        action: 'import',
+        allowRepeat: true,
+        source: 'global-settings'
+    });
+}
+
 module.exports = {
     DEFAULT_BUNDLE_PATH,
     DEFAULT_STATE_PATH,
+    applyBundledDefaults,
     applyDecision,
     getStatus,
     loadBundle,

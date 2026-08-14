@@ -11,6 +11,31 @@ if (!runPreflight({ port: PORT })) {
     process.exit(1);
 }
 
+// A factory-reset worker runs after the previous process exits so Windows can
+// release SQLite file locks. Process managers may restart immediately; wait
+// briefly for the pending plan to finish before any database is opened.
+function waitForPendingFactoryReset(maxWaitMs = 45000) {
+    const fs = require('fs');
+    const path = require('path');
+    const dataDir = process.env.TOOLS_DATA_DIR || path.join(__dirname, 'data');
+    const resetRoot = path.resolve(dataDir, '../factory-reset-archives');
+    if (!fs.existsSync(resetRoot)) return;
+    const pendingPlans = () => fs.readdirSync(resetRoot).filter(name => /^pending-.*\.json$/.test(name));
+    const deadline = Date.now() + maxWaitMs;
+    let pending = pendingPlans();
+    if (pending.length) console.log('[FACTORY RESET] Waiting for the pending reset worker to finish...');
+    while (pending.length && Date.now() < deadline) {
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 100);
+        pending = pendingPlans();
+    }
+    if (pending.length) {
+        console.warn(`[FACTORY RESET] Pending reset did not finish within ${maxWaitMs}ms; check ${resetRoot} before using the service.`);
+        process.exit(1);
+    }
+}
+
+waitForPendingFactoryReset();
+
 const { repairStartupDatabases } = require('./models/sqlite-integrity-repair');
 
 (async () => {

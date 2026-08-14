@@ -145,6 +145,34 @@ test('skip records the choice without changing repositories', async t => {
     assert.equal(fs.existsSync(fixture.backupDir), false);
 });
 
+test('global settings can safely reapply bundled defaults after first-run decision', async t => {
+    const fixture = makeFixture();
+    t.after(() => fs.rmSync(fixture.root, { recursive: true, force: true }));
+
+    await service.applyDecision({
+        action: 'skip',
+        actor: 'admin',
+        bundlePath: fixture.bundlePath,
+        statePath: fixture.statePath,
+        backupDir: fixture.backupDir,
+        repositories: fixture.repositories
+    });
+    const state = await service.applyBundledDefaults({
+        importScripts: true,
+        importMetricRules: true,
+        actor: 'admin',
+        bundlePath: fixture.bundlePath,
+        statePath: fixture.statePath,
+        backupDir: fixture.backupDir,
+        repositories: fixture.repositories
+    });
+
+    assert.equal(state.decision, 'import');
+    assert.equal(state.result.scriptsAdded, 1);
+    assert.equal(fixture.data.targets.same.weight, 99);
+    assert(fixture.data.scripts.some(item => item.id === 'new-id'));
+});
+
 test('non-admin status never requests a global import decision', async t => {
     const fixture = makeFixture();
     t.after(() => fs.rmSync(fixture.root, { recursive: true, force: true }));

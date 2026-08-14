@@ -707,10 +707,10 @@ function createStartupWindow() {
     startupWindowLoaded = false;
     startupWindowCreatedAt = Date.now();
     startupWindow = new BrowserWindow({
-        width: 560,
-        height: 338,
-        minWidth: 560,
-        minHeight: 338,
+        width: 600,
+        height: 378,
+        minWidth: 600,
+        minHeight: 378,
         frame: false,
         transparent: true,
         resizable: false,

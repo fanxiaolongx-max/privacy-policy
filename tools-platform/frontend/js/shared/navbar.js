@@ -192,6 +192,7 @@ function registerNavbarI18n() {
             'nav.set.tab.ai': 'AI 助手',
             'nav.set.tab.update': '程序更新',
             'nav.set.tab.backup': '备份恢复',
+            'nav.set.tab.initialize': '初始化',
             'nav.set.tab.customBackup': '自定义工具备份',
             'nav.set.tab.accounts': '账号管理',
             'nav.set.tab.security': '安全策略',
@@ -207,6 +208,7 @@ function registerNavbarI18n() {
             'nav.set.sub.ai': '修改后会自动保存，并立即影响智能客服助手配置。',
             'nav.set.sub.update': '检查、下载并安装桌面客户端更新。',
             'nav.set.sub.backup': '备份和恢复会覆盖全局配置、数据库、上传附件与自定义工具数据。',
+            'nav.set.sub.initialize': '补齐开箱即用内容，或在安全备份和完整归档后恢复到首次使用状态。',
             'nav.set.sub.customBackup': '单独备份和恢复自定义工具文件、注册信息、服务端状态及可识别的浏览器本地数据。',
             'nav.set.sub.accounts': '修改后会自动保存，并立即影响账号权限。',
             'nav.set.sub.security': '配置登录失败锁定、会话过期和安全告警策略。',
@@ -230,6 +232,28 @@ function registerNavbarI18n() {
             'nav.set.restore.restoring': '正在恢复系统默认...',
             'nav.set.restore.success': '已恢复系统默认，并保留 {tools} 个非系统工具、{categories} 个自建分类',
             'nav.set.restore.fail': '恢复失败: ',
+            'nav.init.help': '这里的两种操作用途不同：开箱即用只补齐缺失的默认内容；彻底初始化会清空业务数据并要求重启。',
+            'nav.init.quickTitle': '启动开箱即用模式',
+            'nav.init.quickDesc': '重新导入仓库内置的智能调度脚本和全量指标规则。仅补齐缺失项，不覆盖同名脚本、规则或用户配置；导入前会生成配置快照。',
+            'nav.init.quickButton': '启动开箱即用模式',
+            'nav.init.quickConfirmTitle': '导入开箱即用默认内容？',
+            'nav.init.quickConfirmMessage': '系统将补齐内置智能调度脚本和全量指标规则。',
+            'nav.init.quickConfirmHint': '已有同名内容会保留，不会被默认版本覆盖。',
+            'nav.init.quickRunning': '正在导入默认内容...',
+            'nav.init.quickSuccess': '导入完成：新增脚本 {scripts} 个、指标规则 {rules} 条、指标分组 {groups} 个。',
+            'nav.init.dangerLabel': '危险区域',
+            'nav.init.resetTitle': '彻底初始化程序数据',
+            'nav.init.resetDesc': '先自动生成安全备份，再完整归档当前数据并建立干净数据库。当前管理员账号与桌面/F12 授权文件会保留，其他业务数据、配置、附件和自定义工具会被重置。',
+            'nav.init.resetArchive': '旧数据会整体保存在 factory-reset-archives 目录；重启后还会再次出现首次启动导入提示。',
+            'nav.init.resetButton': '彻底初始化',
+            'nav.init.resetConfirmTitle': '高危操作：彻底初始化程序数据',
+            'nav.init.resetConfirmMessage': '当前业务数据、配置、附件和自定义工具将从运行目录移出。系统会先创建安全备份和完整旧数据归档，并保留当前管理员账号及授权文件。',
+            'nav.init.resetConfirmHint': '请在下方完整输入 RESET，然后才能执行初始化。',
+            'nav.init.resetPlaceholder': '输入：RESET',
+            'nav.init.resetAction': '确认初始化并退出',
+            'nav.init.resetRunning': '正在创建安全备份并准备初始化...',
+            'nav.init.resetSuccess': '安全备份 {backup} 已创建。程序即将退出；请重新启动，初始化会在退出后自动完成。',
+            'nav.init.failed': '操作失败：',
             'nav.set.emptyItems': '暂无更多工具菜单。',
             'nav.set.placeholder.zh': '中文名称',
             'nav.set.placeholder.en': 'English Name',
@@ -532,6 +556,7 @@ function registerNavbarI18n() {
             'nav.set.tab.ai': 'AI Assistant',
             'nav.set.tab.update': 'App Updates',
             'nav.set.tab.backup': 'Backup & Restore',
+            'nav.set.tab.initialize': 'Initialization',
             'nav.set.tab.customBackup': 'Custom Tool Backup',
             'nav.set.tab.accounts': 'Accounts',
             'nav.set.tab.security': 'Security',
@@ -547,6 +572,7 @@ function registerNavbarI18n() {
             'nav.set.sub.ai': 'Changes are saved automatically and immediately applied to the AI Assistant configuration.',
             'nav.set.sub.update': 'Check, download, and install desktop client updates.',
             'nav.set.sub.backup': 'Backup and restore will overwrite global configuration, database, uploaded files, and custom tools data.',
+            'nav.set.sub.initialize': 'Add the Quick Start defaults or return to a clean first-run state after a safety backup and full archive.',
             'nav.set.sub.customBackup': 'Back up and restore custom tool files, registry data, server state, and detectable browser-local data independently.',
             'nav.set.sub.accounts': 'Changes are saved automatically and immediately applied to account permissions.',
             'nav.set.sub.security': 'Configure login lockouts, session expiry, and security alert severity.',
@@ -570,6 +596,28 @@ function registerNavbarI18n() {
             'nav.set.restore.restoring': 'Restoring system defaults...',
             'nav.set.restore.success': 'Defaults restored; preserved {tools} non-system tool(s) and {categories} custom category/categories',
             'nav.set.restore.fail': 'Restore failed: ',
+            'nav.init.help': 'These actions are different: Quick Start only adds missing defaults; Factory Reset clears business data and requires a restart.',
+            'nav.init.quickTitle': 'Enable Quick Start Mode',
+            'nav.init.quickDesc': 'Re-import the bundled smart-scheduling scripts and complete metric rules. Missing items are added without overwriting same-name scripts, rules, or user settings; a configuration snapshot is created first.',
+            'nav.init.quickButton': 'Enable Quick Start Mode',
+            'nav.init.quickConfirmTitle': 'Import the Quick Start defaults?',
+            'nav.init.quickConfirmMessage': 'The bundled smart-scheduling scripts and complete metric rules will be added.',
+            'nav.init.quickConfirmHint': 'Existing same-name content is preserved and will not be overwritten.',
+            'nav.init.quickRunning': 'Importing default content...',
+            'nav.init.quickSuccess': 'Import complete: {scripts} scripts, {rules} metric rules, and {groups} metric groups added.',
+            'nav.init.dangerLabel': 'Danger Zone',
+            'nav.init.resetTitle': 'Factory Reset Program Data',
+            'nav.init.resetDesc': 'Creates a safety backup first, fully archives the current data, and builds a clean database. The current administrator account and desktop/F12 license files are preserved; other business data, settings, attachments, and custom tools are reset.',
+            'nav.init.resetArchive': 'Old data remains in factory-reset-archives. The first-run import prompt appears again after restart.',
+            'nav.init.resetButton': 'Factory Reset',
+            'nav.init.resetConfirmTitle': 'DANGER: Factory reset all program data',
+            'nav.init.resetConfirmMessage': 'Business data, settings, attachments, and custom tools will be moved out of the live data directory. A safety backup and full data archive are created first; the current administrator and license files are preserved.',
+            'nav.init.resetConfirmHint': 'Type RESET exactly below to enable factory reset.',
+            'nav.init.resetPlaceholder': 'Type: RESET',
+            'nav.init.resetAction': 'Reset and Exit',
+            'nav.init.resetRunning': 'Creating a safety backup and preparing reset...',
+            'nav.init.resetSuccess': 'Safety backup {backup} was created. The app will exit; launch it again after the reset completes.',
+            'nav.init.failed': 'Operation failed: ',
             'nav.set.emptyItems': 'No more tools available.',
             'nav.set.placeholder.zh': 'Chinese Name',
             'nav.set.placeholder.en': 'English Name',
@@ -1276,6 +1324,7 @@ function renderNavSettingsSidebar() {
         <button class="nav-settings-tab ${t === 'ai' ? 'active' : ''}" data-tab="ai" onclick="switchNavSettingsTab('ai')">${navEscape(navT('nav.set.tab.ai'))}</button>
         <button class="nav-settings-tab ${t === 'update' ? 'active' : ''}" data-tab="update" onclick="switchNavSettingsTab('update')">${navEscape(navT('nav.set.tab.update'))}</button>
         <button class="nav-settings-tab ${t === 'backup' ? 'active' : ''}" data-tab="backup" onclick="switchNavSettingsTab('backup')">${navEscape(navT('nav.set.tab.backup'))}</button>
+        <button class="nav-settings-tab ${t === 'initialize' ? 'active' : ''}" data-tab="initialize" onclick="switchNavSettingsTab('initialize')">${navEscape(navT('nav.set.tab.initialize'))}</button>
         <button class="nav-settings-tab ${t === 'customBackup' ? 'active' : ''}" data-tab="customBackup" onclick="switchNavSettingsTab('customBackup')">${navEscape(navT('nav.set.tab.customBackup'))}</button>
         <button class="nav-settings-tab ${t === 'accounts' ? 'active' : ''}" data-tab="accounts" onclick="switchNavSettingsTab('accounts')">${navEscape(navT('nav.set.tab.accounts'))}</button>
         <button class="nav-settings-tab ${t === 'security' ? 'active' : ''}" data-tab="security" onclick="switchNavSettingsTab('security')">${navEscape(navT('nav.set.tab.security'))}</button>
@@ -1341,6 +1390,7 @@ function getNavSettingsTitle() {
     if (navState.settingsTab === 'ai') return navT('nav.set.tab.ai');
     if (navState.settingsTab === 'update') return navT('nav.set.tab.update');
     if (navState.settingsTab === 'backup') return navT('nav.set.tab.backup');
+    if (navState.settingsTab === 'initialize') return navT('nav.set.tab.initialize');
     if (navState.settingsTab === 'customBackup') return navT('nav.set.tab.customBackup');
     if (navState.settingsTab === 'categories') return navT('nav.set.tab.categories');
     if (navState.settingsTab === 'items') return navT('nav.set.tab.items');
@@ -1358,6 +1408,7 @@ function getNavSettingsSubtitle() {
     if (navState.settingsTab === 'ai') return navT('nav.set.sub.ai');
     if (navState.settingsTab === 'update') return navT('nav.set.sub.update');
     if (navState.settingsTab === 'backup') return navT('nav.set.sub.backup');
+    if (navState.settingsTab === 'initialize') return navT('nav.set.sub.initialize');
     if (navState.settingsTab === 'customBackup') return navT('nav.set.sub.customBackup');
     if (navState.settingsTab === 'categories') return navT('nav.set.sub.categories');
     if (navState.settingsTab === 'items') return navT('nav.set.sub.items');
@@ -1383,6 +1434,7 @@ function renderNavSettingsContent() {
     if (navState.settingsTab === 'ai') return renderAiSettings(content);
     if (navState.settingsTab === 'update') return renderUpdaterSettings(content);
     if (navState.settingsTab === 'backup') return renderBackupSettings(content);
+    if (navState.settingsTab === 'initialize') return renderInitializationSettings(content);
     if (navState.settingsTab === 'customBackup') return renderCustomToolBackupSettings(content);
     if (navState.settingsTab === 'categories') return renderCategorySettings(content);
     if (navState.settingsTab === 'items') return renderItemCategorySettings(content);
@@ -2437,6 +2489,93 @@ async function renderBackupSettings(content) {
         content.innerHTML = `<div class="nav-settings-empty">${navEscape(navT('nav.bk.fail'))}${navEscape(e.message)}</div>`;
     }
 }
+
+function renderInitializationSettings(content) {
+    content.innerHTML = `
+        <div class="nav-settings-help">${navEscape(navT('nav.init.help'))}</div>
+        <section class="nav-init-card">
+            <div>
+                <div class="nav-backup-panel-title">🚀 ${navEscape(navT('nav.init.quickTitle'))}</div>
+                <div class="nav-backup-panel-desc">${navEscape(navT('nav.init.quickDesc'))}</div>
+            </div>
+            <button type="button" onclick="enableQuickStartMode()">${navEscape(navT('nav.init.quickButton'))}</button>
+        </section>
+        <section class="nav-init-card danger-zone">
+            <div>
+                <div class="nav-init-danger-label">⚠ ${navEscape(navT('nav.init.dangerLabel'))}</div>
+                <div class="nav-backup-panel-title">${navEscape(navT('nav.init.resetTitle'))}</div>
+                <div class="nav-backup-panel-desc">${navEscape(navT('nav.init.resetDesc'))}</div>
+                <div class="nav-init-note">${navEscape(navT('nav.init.resetArchive'))}</div>
+            </div>
+            <button type="button" class="danger" onclick="factoryResetProgramData()">${navEscape(navT('nav.init.resetButton'))}</button>
+        </section>
+        <div id="navInitializationStatus" class="nav-init-status" role="status"></div>
+    `;
+}
+
+function setInitializationStatus(message, tone = '') {
+    const element = document.getElementById('navInitializationStatus');
+    if (!element) return;
+    element.textContent = message || '';
+    element.className = `nav-init-status ${tone}`.trim();
+}
+
+window.enableQuickStartMode = async function () {
+    const confirmed = await showNavbarConfirm({
+        title: navT('nav.init.quickConfirmTitle'),
+        message: navT('nav.init.quickConfirmMessage'),
+        hint: navT('nav.init.quickConfirmHint'),
+        cancelText: navT('nav.set.restore.cancel'),
+        confirmText: navT('nav.init.quickButton')
+    });
+    if (!confirmed) return;
+    setInitializationStatus(navT('nav.init.quickRunning'));
+    try {
+        const response = await fetch('/api/onboarding/defaults/apply', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() },
+            body: JSON.stringify({ importScripts: true, importMetricRules: true })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+        const result = data.state?.result || {};
+        const message = navT('nav.init.quickSuccess')
+            .replace('{scripts}', result.scriptsAdded || 0)
+            .replace('{rules}', (result.targetsAdded || 0) + (result.preferencesAdded || 0))
+            .replace('{groups}', result.groupsAdded || 0);
+        setInitializationStatus(message, 'success');
+    } catch (error) {
+        setInitializationStatus(navT('nav.init.failed') + error.message, 'error');
+    }
+};
+
+window.factoryResetProgramData = async function () {
+    const confirmed = await showNavbarTypedConfirm({
+        title: navT('nav.init.resetConfirmTitle'),
+        message: navT('nav.init.resetConfirmMessage'),
+        hint: navT('nav.init.resetConfirmHint'),
+        placeholder: navT('nav.init.resetPlaceholder'),
+        requiredText: 'RESET',
+        cancelText: navT('nav.set.restore.cancel'),
+        confirmText: navT('nav.init.resetAction')
+    });
+    if (!confirmed) return;
+    setInitializationStatus(navT('nav.init.resetRunning'));
+    try {
+        const response = await fetch('/api/onboarding/factory-reset', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() },
+            body: JSON.stringify({ confirmation: 'RESET' })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+        setInitializationStatus(navT('nav.init.resetSuccess').replace('{backup}', data.backup || '-'), 'success');
+        localStorage.clear();
+        sessionStorage.clear();
+    } catch (error) {
+        setInitializationStatus(navT('nav.init.failed') + error.message, 'error');
+    }
+};
 
 function customToolBackupText(key, values = {}) {
     let text = navT(key);
@@ -4872,7 +5011,7 @@ if (!document.querySelector('script[data-desktop-license-badge]')) {
 // 源码启动、Windows 安装版和绿色版共用同一个服务端首次启动状态。
 if (!document.querySelector('script[data-first-run-onboarding]')) {
     const firstRunOnboardingScript = document.createElement('script');
-    firstRunOnboardingScript.src = '/js/shared/first-run-onboarding.js?v=20260814-01';
+    firstRunOnboardingScript.src = '/js/shared/first-run-onboarding.js?v=20260814-02';
     firstRunOnboardingScript.dataset.firstRunOnboarding = '1';
     document.head.appendChild(firstRunOnboardingScript);
 }

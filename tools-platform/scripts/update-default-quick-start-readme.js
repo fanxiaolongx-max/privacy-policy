@@ -125,10 +125,22 @@ const section = `${startMarker}
 
 项目第一次启动后（Windows 安装版、绿色免安装版和源代码启动一致），超级管理员首次进入页面会看到一次性引导，可分别选择导入“默认智能调度脚本仓库”和“全量指标规则”，也可两项都不导入。选择保存在当前运行数据目录的 \`first-run-defaults.json\`，不依赖浏览器缓存，因此各启动形态行为一致。
 
+首次没有手动选择过语言时，引导界面会优先跟随浏览器语言：英文浏览器显示英文，其他语言默认显示中文；用户通过顶部语言按钮做出的选择优先级最高。
+
+![首次启动开箱即用默认内容导入界面](docs/images/first-run-quick-start.png)
+
+> 首次启动界面会直接列出默认脚本仓库、全量指标规则和“不抢占现有配置”的导入策略；管理员可只选其中一项，也可暂不导入直接使用。
+
 - 导入策略是 **只补齐、不覆盖**：现有同名脚本、同 ID/同名分组和同 key 指标规则保留用户版本。
 - 真正写入前会在 \`backups/first-run-defaults/\` 生成 JSON 备份；任一步失败会尝试回滚。
 - 默认包是可版本化的静态快照，发布前运行 \`npm run defaults:export\` 可用当前 \`tools.db\` 重新生成。
 - 脚本不携带固定 Cookie、Authorization 或口令；运行时从用户已登录的目标系统会话动态取得令牌。使用前仍需确认目标系统授权、地区/代表处参数和数据合规要求。
+
+管理员后续可进入 **全局设置 → 初始化**：
+
+- **启动开箱即用模式**：再次补齐仓库内置脚本和全量指标规则，仍采用“只补齐、不覆盖”，适合首次跳过或后续默认包升级后使用。
+- **彻底初始化程序数据**：要求输入 \`RESET\` 二次确认；系统先生成 \`pre-factory-reset\` 安全备份，再把运行数据整体移动到相邻的 \`factory-reset-archives/\` 目录，然后建立干净数据库。当前管理员账号密码、桌面授权和 F12 授权文件保留，其余业务数据、配置、附件、自定义工具及当前浏览器 localStorage/sessionStorage 会重置。程序退出后重新启动，首次导入引导会再次出现。
+- 如果需要恢复初始化前状态，可从“备份恢复”使用安全备份，或由管理员从 \`factory-reset-archives/\` 完整归档人工恢复。执行期间不要强制结束初始化工作进程。
 
 本版默认包摘要：**${bundle.summary.scriptCount}** 个脚本、**${bundle.summary.scriptCategoryCount}** 个脚本分类、**${bundle.summary.targetCount}** 条目标/权重规则、**${bundle.summary.preferenceCount}** 份偏好与数据源规则、**${bundle.summary.metricGroupCount}** 个指标分组、**${bundle.summary.metricCategoryCount}** 个客户类别和 **${bundle.summary.dictionaryCount}** 个双语字典词条。
 

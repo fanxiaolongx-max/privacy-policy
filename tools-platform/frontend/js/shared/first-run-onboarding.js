@@ -8,7 +8,7 @@
     const README_URL = 'https://github.com/fanxiaolongx-max/privacy-policy#默认快速上手包';
 
     function isEnglish() {
-        const value = localStorage.getItem('tools_lang') || document.documentElement.lang || navigator.language || '';
+        const value = localStorage.getItem('tools_lang') || navigator.language || document.documentElement.lang || '';
         return /^en/i.test(value);
     }
 
