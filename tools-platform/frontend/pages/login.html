@@ -926,6 +926,7 @@
                 localStorage.setItem('tools_token', data.token);
                 localStorage.setItem('tools_user', data.username);
                 localStorage.setItem('tools_role', data.role);
+                localStorage.setItem('tools_tenant_id', data.tenantId || 'default');
 
                 btn.innerHTML = '登录成功';
                 btn.removeAttribute('aria-busy');

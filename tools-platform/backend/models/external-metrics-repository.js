@@ -1,14 +1,12 @@
 const path = require('path');
-const sqlite3 = require('sqlite3').verbose();
-
-const { ensureReportDataDir, REPORT_DATA_DIR } = require('./report-store');
+const { ensureReportDataDir } = require('./report-store');
+const { createDatabaseProxy } = require('./tenant-sqlite-pool');
 const prefsRepo = require('./sla-prefs-repository');
 const targetsRepo = require('./sla-targets-repository');
 
 ensureReportDataDir();
 
-const dbPath = path.join(REPORT_DATA_DIR, 'report.db');
-const db = new sqlite3.Database(dbPath);
+const db = createDatabaseProxy('report.db', 'report');
 
 db.serialize(() => {
     db.run('ALTER TABLE ReportSnapshots ADD COLUMN stored_at DATETIME', () => {});
@@ -1220,14 +1218,7 @@ async function getSchema(filters = {}) {
     };
 }
 
-function closeDatabase() {
-    return new Promise((resolve, reject) => {
-        db.close(err => {
-            if (err && err.code !== 'SQLITE_MISUSE') return reject(err);
-            resolve();
-        });
-    });
-}
+async function closeDatabase() {}
 
 module.exports = {
     getSummary,

@@ -1,11 +1,12 @@
 const fs = require('fs');
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
-const { DATA_DIR } = require('./store');
-const { REPORT_DATA_DIR } = require('./report-store');
+const { getDataDir } = require('./store');
+const { getReportDataDir } = require('./report-store');
+const { getTenantId } = require('./tenant-context');
 
-const TOOLS_DB_PATH = path.join(DATA_DIR, 'tools.db');
-const REPORT_DB_PATH = path.join(REPORT_DATA_DIR, 'report.db');
+const getToolsDbPath = () => path.join(getDataDir(), 'tools.db');
+const getReportDbPath = () => path.join(getReportDataDir(), 'report.db');
 const MAX_RESULT_CONTENT = 5200;
 const MAX_CANDIDATES = 900;
 const CACHE_TTL_MS = 30 * 1000;
@@ -60,7 +61,7 @@ function databaseSignature(filePath) {
 }
 
 function currentSignature() {
-    return `${databaseSignature(TOOLS_DB_PATH)}|${databaseSignature(REPORT_DB_PATH)}`;
+    return `${getTenantId()}|${getToolsDbPath()}|${databaseSignature(getToolsDbPath())}|${getReportDbPath()}|${databaseSignature(getReportDbPath())}`;
 }
 
 function openReadOnlyDatabase(filePath) {
@@ -379,8 +380,8 @@ function buildPlatformConfigDocuments(rows) {
 async function loadDocuments() {
     const signature = currentSignature();
     if (cache.signature === signature && cache.expiresAt > Date.now()) return cache;
-    const toolsDb = await openReadOnlyDatabase(TOOLS_DB_PATH);
-    const reportDb = await openReadOnlyDatabase(REPORT_DB_PATH);
+    const toolsDb = await openReadOnlyDatabase(getToolsDbPath());
+    const reportDb = await openReadOnlyDatabase(getReportDbPath());
     try {
         const [scripts, scriptCategories, toolRegistry, targets, groups, groupItems, prefs, categories, dictionaries, platformConfig] = await Promise.all([
             dbAll(toolsDb, 'SELECT id, name, category, url, payload_json, updated_at FROM uiv_scripts ORDER BY updated_at DESC, rowid DESC'),
@@ -512,8 +513,8 @@ function clearCache() {
 }
 
 module.exports = {
-    TOOLS_DB_PATH,
-    REPORT_DB_PATH,
+    get TOOLS_DB_PATH() { return getToolsDbPath(); },
+    get REPORT_DB_PATH() { return getReportDbPath(); },
     search,
     formatResultsForPrompt,
     clearCache

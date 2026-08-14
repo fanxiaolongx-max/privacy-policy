@@ -2,12 +2,12 @@ const { readKV, writeKV } = require('./kv-store');
 const fs = require('fs');
 const path = require('path');
 const JSZip = require('jszip');
-const { DATA_DIR, ensureDataDir } = require('./store');
+const { ensureDataDir, getDataDir } = require('./store');
 const { run, get, all } = require('./app-db');
 const historyRepo = require('./upload-history-repository');
 const customToolI18nDefaults = require('./custom-tool-i18n-defaults');
 
-const CUSTOM_TOOLS_DIR = path.join(DATA_DIR, 'custom-tools');
+function getCustomToolsDir() { return path.join(getDataDir(), 'custom-tools'); }
 const BUILTIN_TOOLS_DIR = path.join(__dirname, '../builtin-tools');
 const TOOL_MANIFEST_FILE = '.tool-manifest.json';
 let registryMutationQueue = Promise.resolve();
@@ -21,7 +21,7 @@ function withRegistryMutation(task) {
 
 function ensureCustomToolsDir() {
     ensureDataDir();
-    fs.mkdirSync(CUSTOM_TOOLS_DIR, { recursive: true });
+    fs.mkdirSync(getCustomToolsDir(), { recursive: true });
 }
 
 function normalizeSlug(value) {
@@ -45,7 +45,7 @@ function createSlug(name, existingSlugs = new Set()) {
 
 function listToolDirs() {
     ensureCustomToolsDir();
-    return fs.readdirSync(CUSTOM_TOOLS_DIR, { withFileTypes: true })
+    return fs.readdirSync(getCustomToolsDir(), { withFileTypes: true })
         .filter(item => item.isDirectory())
         .map(item => item.name);
 }
@@ -195,7 +195,7 @@ async function replaceAllTools(items) {
 }
 
 function normalizeToolRecord(raw, slug) {
-    const indexPath = path.join(CUSTOM_TOOLS_DIR, slug, 'index.html');
+    const indexPath = path.join(getCustomToolsDir(), slug, 'index.html');
     const stat = fs.statSync(indexPath);
     const createdAt = raw.createdAt || stat.birthtime.toISOString();
     return {
@@ -215,7 +215,7 @@ function normalizeToolRecord(raw, slug) {
 }
 
 function manifestPath(slug) {
-    return path.join(CUSTOM_TOOLS_DIR, slug, TOOL_MANIFEST_FILE);
+    return path.join(getCustomToolsDir(), slug, TOOL_MANIFEST_FILE);
 }
 
 function writeToolManifest(tool, options = {}) {
@@ -412,8 +412,8 @@ async function deleteToolHistory(slug, historyId) {
 
 function saveToolFiles(slug, files) {
     ensureCustomToolsDir();
-    const toolDir = path.join(CUSTOM_TOOLS_DIR, slug);
-    const tempDir = path.join(CUSTOM_TOOLS_DIR, `.${slug}.${Date.now().toString(36)}.tmp`);
+    const toolDir = path.join(getCustomToolsDir(), slug);
+    const tempDir = path.join(getCustomToolsDir(), `.${slug}.${Date.now().toString(36)}.tmp`);
     fs.mkdirSync(tempDir, { recursive: true });
     try {
         for (const [relativePath, content] of files) {
@@ -499,7 +499,7 @@ async function readZipFiles(archiveBase64) {
 }
 
 function removeToolDir(slug) {
-    fs.rmSync(path.join(CUSTOM_TOOLS_DIR, slug), { recursive: true, force: true });
+    fs.rmSync(path.join(getCustomToolsDir(), slug), { recursive: true, force: true });
 }
 
 async function verifyCreatedTool(tool, expectedHtmlContent) {
@@ -507,7 +507,7 @@ async function verifyCreatedTool(tool, expectedHtmlContent) {
     const registered = latestTools.find(item => item.slug === tool.slug);
     if (!registered) throw new Error('自定义工具注册表写入后校验失败');
 
-    const filePath = path.join(CUSTOM_TOOLS_DIR, tool.slug, 'index.html');
+    const filePath = path.join(getCustomToolsDir(), tool.slug, 'index.html');
     if (!fs.existsSync(filePath)) throw new Error('自定义工具 HTML 文件写入后校验失败');
 
     const stat = fs.statSync(filePath);
@@ -621,7 +621,7 @@ async function recoverToolFromDisk(slugValue, metadata = {}) {
     const slug = normalizeSlug(slugValue);
     if (!slug || slug !== slugValue) throw new Error('自定义工具标识不合法');
     return withRegistryMutation(async () => {
-        const indexPath = path.join(CUSTOM_TOOLS_DIR, slug, 'index.html');
+        const indexPath = path.join(getCustomToolsDir(), slug, 'index.html');
         if (!fs.existsSync(indexPath) || !fs.statSync(indexPath).isFile()) {
             throw new Error(`自定义工具入口文件不存在：${slug}`);
         }
@@ -679,7 +679,7 @@ async function reconcileToolsFromDisk() {
         const unregistered = [];
 
         for (const tool of tools) {
-            const indexPath = path.join(CUSTOM_TOOLS_DIR, tool.slug, 'index.html');
+            const indexPath = path.join(getCustomToolsDir(), tool.slug, 'index.html');
             if (!fs.existsSync(indexPath)) continue;
             if (!readToolManifest(tool.slug)) writeToolManifest(tool);
         }
@@ -687,7 +687,7 @@ async function reconcileToolsFromDisk() {
         for (const slug of listToolDirs()) {
             if (registered.has(slug)) continue;
             const manifest = readToolManifest(slug);
-            const indexPath = path.join(CUSTOM_TOOLS_DIR, slug, 'index.html');
+            const indexPath = path.join(getCustomToolsDir(), slug, 'index.html');
             if (!manifest || !fs.existsSync(indexPath)) {
                 unregistered.push(slug);
                 continue;
@@ -722,7 +722,7 @@ async function getToolFilePath(slug) {
 function getToolRootDir(slug) {
     const safeSlug = normalizeSlug(slug);
     if (!safeSlug || safeSlug !== slug) return null;
-    const runtimeRoot = path.join(CUSTOM_TOOLS_DIR, safeSlug);
+    const runtimeRoot = path.join(getCustomToolsDir(), safeSlug);
     const runtimeIndex = path.join(runtimeRoot, 'index.html');
     if (fs.existsSync(runtimeIndex) && fs.statSync(runtimeIndex).isFile()) return runtimeRoot;
 
@@ -764,6 +764,7 @@ function getToolAssetPath(slug, relativePath) {
 }
 
 module.exports = {
+    ensureRegistryReady,
     listTools,
     getTool,
     createTool,
@@ -785,6 +786,7 @@ module.exports = {
     getToolAssetPath,
     readZipFiles,
     BUILTIN_TOOLS_DIR,
-    CUSTOM_TOOLS_DIR,
+    getCustomToolsDir,
+    get CUSTOM_TOOLS_DIR() { return getCustomToolsDir(); },
     TOOL_MANIFEST_FILE
 };

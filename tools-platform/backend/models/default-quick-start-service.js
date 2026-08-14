@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { DATA_DIR, ensureDataDir } = require('./store');
+const { DATA_DIR, ensureDataDir, getDataDir } = require('./store');
 const scriptsRepo = require('./uiv-scripts-repository');
 const uivCategoriesRepo = require('./uiv-categories-repository');
 const targetsRepo = require('./sla-targets-repository');
@@ -111,7 +111,7 @@ function stateSummary(state) {
 
 async function getStatus(options = {}) {
     const bundlePath = options.bundlePath || DEFAULT_BUNDLE_PATH;
-    const statePath = options.statePath || DEFAULT_STATE_PATH;
+    const statePath = options.statePath || path.join(getDataDir(), 'first-run-defaults.json');
     const bundle = loadBundle(bundlePath);
     const state = readJson(statePath);
     const isAdmin = options.role === 'admin';
@@ -132,8 +132,8 @@ async function getStatus(options = {}) {
 
 async function applyDecision(options = {}) {
     const bundlePath = options.bundlePath || DEFAULT_BUNDLE_PATH;
-    const statePath = options.statePath || DEFAULT_STATE_PATH;
-    const backupDir = options.backupDir || path.join(DATA_DIR, 'backups/first-run-defaults');
+    const statePath = options.statePath || path.join(getDataDir(), 'first-run-defaults.json');
+    const backupDir = options.backupDir || path.join(getDataDir(), 'backups/first-run-defaults');
     const bundle = loadBundle(bundlePath);
     const repositories = options.repositories || DEFAULT_REPOSITORIES;
     const existingState = readJson(statePath);

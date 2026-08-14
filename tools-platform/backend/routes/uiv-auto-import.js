@@ -9,7 +9,7 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { DATA_DIR, ensureDataDir } = require('../models/store');
+const { ensureDataDir, getDataDir } = require('../models/store');
 
 const router = express.Router();
 const SESSION_TTL_MS = 48 * 60 * 60 * 1000;
@@ -17,7 +17,7 @@ let lastCleanupAt = 0;
 
 function getRootDir() {
     ensureDataDir();
-    const root = path.join(DATA_DIR, '../tmp/uiv-auto-import');
+    const root = path.join(getDataDir(), 'tmp/uiv-auto-import');
     fs.mkdirSync(root, { recursive: true });
     cleanupOldSessions(root);
     return root;

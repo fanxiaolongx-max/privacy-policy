@@ -2,11 +2,11 @@ const sqlite3 = require('sqlite3').verbose();
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-const { DATA_DIR } = require('./store');
-const { REPORT_DATA_DIR } = require('./report-store');
+const { getDataDir } = require('./store');
+const { getReportDataDir } = require('./report-store');
 
-const TOOLS_DB_PATH = path.join(DATA_DIR, 'tools.db');
-const REPORT_DB_PATH = path.join(REPORT_DATA_DIR, 'report.db');
+const getToolsDbPath = () => path.join(getDataDir(), 'tools.db');
+const getReportDbPath = () => path.join(getReportDataDir(), 'report.db');
 const MONTHS = Array.from({ length: 12 }, (_, index) => index + 1);
 
 function openReadOnlyDb(filePath) {
@@ -134,8 +134,8 @@ function addSubMetric(map, metricLabel, category, details = {}) {
 }
 
 async function getMetricGraph(options = {}) {
-    const toolsDb = await openReadOnlyDb(TOOLS_DB_PATH);
-    const reportDb = await openReadOnlyDb(REPORT_DB_PATH);
+    const toolsDb = await openReadOnlyDb(getToolsDbPath());
+    const reportDb = await openReadOnlyDb(getReportDbPath());
     try {
         const latestSnapshot = await dbGet(reportDb, 'SELECT id, snapshot_id, month, created_at FROM ReportSnapshots ORDER BY id DESC LIMIT 1');
         const month = normalizeMonth(options.month, normalizeMonth(latestSnapshot?.month, new Date().getMonth() + 1));
@@ -353,7 +353,7 @@ async function getMetricHistory(options = {}) {
     if (!metric || metric.length > 180) throw new Error('指标名称无效');
     const category = String(options.category || '').trim();
     const month = normalizeMonth(options.month, new Date().getMonth() + 1);
-    const reportDb = await openReadOnlyDb(REPORT_DB_PATH);
+    const reportDb = await openReadOnlyDb(getReportDbPath());
     if (!reportDb) return { metric, category: category || null, month, series: [], snapshots: 0, source: 'data/report.db', readOnly: true };
     try {
         const params = [month, metric];
@@ -422,8 +422,8 @@ async function getMetricHistory(options = {}) {
 }
 
 module.exports = {
-    TOOLS_DB_PATH,
-    REPORT_DB_PATH,
+    get TOOLS_DB_PATH() { return getToolsDbPath(); },
+    get REPORT_DB_PATH() { return getReportDbPath(); },
     getMetricGraph,
     getMetricHistory
 };

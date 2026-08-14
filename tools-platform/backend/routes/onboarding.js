@@ -49,7 +49,7 @@ router.post('/factory-reset', async (req, res) => {
             confirmation: req.body && req.body.confirmation,
             actor: req.user && req.user.username
         });
-        if (process.env.TOOLS_FACTORY_RESET_AUTO_EXIT !== 'false') {
+        if (result.needsRestart && process.env.TOOLS_FACTORY_RESET_AUTO_EXIT !== 'false') {
             res.on('finish', () => setTimeout(() => process.exit(0), 800));
         }
         res.json(result);

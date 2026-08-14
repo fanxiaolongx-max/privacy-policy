@@ -84,6 +84,9 @@ let navState = {
     updaterStatus: null,
     updaterVersion: null,
     updaterUnsubscribe: null,
+    tenants: [],
+    managedTenants: [],
+    activeTenantId: localStorage.getItem('tools_tenant_id') || 'default',
     alertCenter: {
         events: [],
         summary: null,
@@ -93,10 +96,41 @@ let navState = {
 };
 let navConfirmResolver = null;
 let navTypedConfirmResolver = null;
+let navFormDialogResolver = null;
+let navDialogPreviousFocus = null;
+
+function tenantNavCacheKey() {
+    return `${NAV_BOOTSTRAP_CACHE_KEY}:${localStorage.getItem('tools_tenant_id') || 'default'}`;
+}
+
+const TENANT_BROWSER_STATE_PREFIX = 'tools_tenant_browser_state:';
+const TENANT_BROWSER_GLOBAL_KEYS = new Set([
+    'tools_token', 'tools_user', 'tools_role', 'tools_tenant_id', 'tools_lang', 'tools_language'
+]);
+
+function switchTenantBrowserState(fromTenantId, toTenantId) {
+    const snapshot = {};
+    for (let index = 0; index < localStorage.length; index += 1) {
+        const key = localStorage.key(index);
+        if (!key || TENANT_BROWSER_GLOBAL_KEYS.has(key) || key.startsWith(TENANT_BROWSER_STATE_PREFIX) || key.startsWith(NAV_BOOTSTRAP_CACHE_KEY)) continue;
+        snapshot[key] = localStorage.getItem(key);
+    }
+    try {
+        localStorage.setItem(`${TENANT_BROWSER_STATE_PREFIX}${fromTenantId || 'default'}`, JSON.stringify(snapshot));
+    } catch (error) {
+        console.warn('[Tenant] browser state snapshot could not be saved:', error);
+    }
+    Object.keys(snapshot).forEach(key => localStorage.removeItem(key));
+    try {
+        const target = JSON.parse(localStorage.getItem(`${TENANT_BROWSER_STATE_PREFIX}${toTenantId || 'default'}`) || '{}');
+        Object.entries(target || {}).forEach(([key, value]) => localStorage.setItem(key, String(value)));
+    } catch (_) {}
+    sessionStorage.clear();
+}
 
 function readNavigationBootstrapCache() {
     try {
-        const cached = JSON.parse(localStorage.getItem(NAV_BOOTSTRAP_CACHE_KEY) || 'null');
+        const cached = JSON.parse(localStorage.getItem(tenantNavCacheKey()) || 'null');
         if (!cached || typeof cached !== 'object') return null;
         if (!Number.isFinite(cached.savedAt) || Date.now() - cached.savedAt > NAV_BOOTSTRAP_CACHE_MAX_AGE) return null;
         if (!cached.settings || !Array.isArray(cached.customTools)) return null;
@@ -108,7 +142,7 @@ function readNavigationBootstrapCache() {
 
 function writeNavigationBootstrapCache() {
     try {
-        localStorage.setItem(NAV_BOOTSTRAP_CACHE_KEY, JSON.stringify({
+        localStorage.setItem(tenantNavCacheKey(), JSON.stringify({
             settings: navState.settings,
             customTools: navState.customTools,
             savedAt: Date.now()
@@ -130,6 +164,10 @@ function navT(key, params) {
     return window.ToolsI18n ? window.ToolsI18n.t(key, params) : key;
 }
 
+function navLocaleText(zh, en) {
+    return window.ToolsI18n?.getLanguage?.() === 'en-US' ? en : zh;
+}
+
 function getNavLabel(item) {
     if (window.ToolsI18n?.getLanguage?.() === 'en-US' && item.labelEn) return item.labelEn;
     return item.labelKey && window.ToolsI18n ? navT(item.labelKey) : item.label;
@@ -144,6 +182,132 @@ function getNavCategoryName(cat) {
     if (inferred !== inferredKey) return inferred;
     if (lang === 'en-US' && cat.nameEn) return cat.nameEn;
     return cat.name;
+}
+
+// 导航搜索在浏览器本地完成，避免绿色版或离线环境依赖外部拼音服务。
+// 词表覆盖内置功能、默认自定义工具和常见命名；未收录汉字仍可通过拼音排序规则推断首字母。
+const NAV_PINYIN_SYLLABLES = Object.freeze({
+    工: 'gong', 具: 'ju', 中: 'zhong', 台: 'tai', 数: 'shu', 据: 'ju', 抓: 'zhua', 取: 'qu',
+    导: 'dao', 入: 'ru', 报: 'bao', 表: 'biao', 看: 'kan', 板: 'ban', 一: 'yi', 键: 'jian',
+    催: 'cui', 办: 'ban', 月: 'yue', 页: 'ye', 面: 'mian', 大: 'da', 屏: 'ping', 核: 'he',
+    算: 'suan', 稽: 'ji', 查: 'cha', 迁: 'qian', 移: 'yi', 状: 'zhuang', 态: 'tai', 探: 'tan',
+    索: 'suo', 审: 'shen', 计: 'ji', 与: 'yu', 系: 'xi', 统: 'tong', 治: 'zhi', 理: 'li',
+    五: 'wu', 个: 'ge', 端: 'duan', 到: 'dao', 实: 'shi', 用: 'yong', 网: 'wang', 络: 'luo',
+    安: 'an', 全: 'quan', 汇: 'hui', 呈: 'cheng', 现: 'xian', 自: 'zi', 定: 'ding', 义: 'yi',
+    行: 'xing', 政: 'zheng', 餐: 'can', 饮: 'yin', 休: 'xiu', 闲: 'xian', 娱: 'yu', 乐: 'yu',
+    重: 'zhong', 急: 'ji', 收: 'shou', 编: 'bian', 临: 'lin', 时: 'shi', 胶: 'jiao', 片: 'pian',
+    设: 'she', 六: 'liu', 博: 'bo', 客: 'ke', 爬: 'pa', 虫: 'chong', 上: 'shang', 传: 'chuan',
+    指: 'zhi', 南: 'nan', 膳: 'shan', 食: 'shi', 手: 'shou', 册: 'ce', 日: 'ri', 程: 'cheng',
+    排: 'pai', 透: 'tou', 视: 'shi', 欠: 'qian', 款: 'kuan', 对: 'dui', 账: 'zhang', 刷: 'shua',
+    卡: 'ka', 粒: 'li', 子: 'zi', 特: 'te', 效: 'xiao', 人: 'ren', 点: 'dian', 通: 'tong',
+    知: 'zhi', 平: 'ping', 介: 'jie', 绍: 'shao', 满: 'man', 意: 'yi', 度: 'du', 啊: 'a',
+    旅: 'lu', 游: 'you', 激: 'ji', 励: 'li', 扩: 'kuo', 展: 'zhan', 打: 'da', 包: 'bao',
+    外: 'wai', 三: 'san', 方: 'fang', 软: 'ruan', 件: 'jian', 分: 'fen', 析: 'xi', 要: 'yao',
+    求: 'qiu', 会: 'hui', 议: 'yi', 考: 'kao', 勤: 'qin', 光: 'guang', 码: 'ma', 文: 'wen',
+    景: 'jing', 题: 'ti', 库: 'ku', 助: 'zhu', 隐: 'yin', 私: 'si', 策: 'ce', 学: 'xue',
+    习: 'xi', 转: 'zhuan', 换: 'huan', 档: 'dang', 整: 'zheng', 辑: 'ji', 智: 'zhi',
+    能: 'neng', 调: 'diao', 脚: 'jiao', 本: 'ben', 仓: 'cang', 默: 'mo', 认: 'ren', 规: 'gui',
+    则: 'ze', 量: 'liang', 标: 'biao', 获: 'huo', 采: 'cai', 集: 'ji', 监: 'jian', 控: 'kong',
+    任: 'ren', 务: 'wu', 风: 'feng', 险: 'xian', 质: 'zhi', 生: 'sheng', 成: 'cheng', 合: 'he',
+    并: 'bing', 组: 'zu', 清: 'qing', 单: 'dan', 检: 'jian', 测: 'ce', 维: 'wei', 护: 'hu',
+    备: 'bei', 份: 'fen', 恢: 'hui', 复: 'fu', 记: 'ji', 录: 'lu', 志: 'zhi', 消: 'xiao',
+    息: 'xi', 告: 'gao', 警: 'jing', 资: 'zi', 产: 'chan', 户: 'hu', 员: 'yuan', 设: 'she',
+    部: 'bu', 门: 'men', 配: 'pei', 置: 'zhi', 管: 'guan', 服: 'fu', 心: 'xin', 总: 'zong',
+    览: 'lan', 快: 'kuai', 速: 'su', 搜: 'sou', 出: 'chu', 批: 'pi', 动: 'dong', 流: 'liu',
+    模: 'mo', 询: 'xun', 应: 'ying', 开: 'kai', 发: 'fa', 试: 'shi', 订: 'ding', 交: 'jiao',
+    付: 'fu', 改: 'gai', 洞: 'dong', 察: 'cha', 处: 'chu', 下: 'xia', 载: 'zai', 图: 'tu',
+    频: 'pin', 音: 'yin', 号: 'hao', 租: 'zu', 权: 'quan', 限: 'xian', 略: 'lue', 源: 'yuan',
+    健: 'jian', 康: 'kang', 完: 'wan', 性: 'xing', 修: 'xiu', 初: 'chu', 始: 'shi', 化: 'hua',
+    箱: 'xiang', 即: 'ji', 识: 'shi', 谱: 'pu', 示: 'shi', 提: 'ti', 醒: 'xing'
+});
+
+const NAV_PINYIN_INITIAL_BOUNDARIES = Object.freeze([
+    ['a', '阿'], ['b', '八'], ['c', '擦'], ['d', '搭'], ['e', '蛾'], ['f', '发'],
+    ['g', '噶'], ['h', '哈'], ['j', '击'], ['k', '喀'], ['l', '拉'], ['m', '妈'],
+    ['n', '拿'], ['o', '哦'], ['p', '啪'], ['q', '期'], ['r', '然'], ['s', '撒'],
+    ['t', '塌'], ['w', '挖'], ['x', '昔'], ['y', '压'], ['z', '匝']
+]);
+const NAV_PINYIN_COLLATOR = typeof Intl !== 'undefined' && Intl.Collator
+    ? new Intl.Collator('zh-Hans-CN-u-co-pinyin')
+    : null;
+
+function normalizeNavSearchTerm(value) {
+    return String(value ?? '')
+        .normalize('NFKC')
+        .toLocaleLowerCase()
+        .replace(/[^a-z0-9\u3400-\u9fff]+/g, '');
+}
+
+function inferNavPinyinInitial(char) {
+    if (!NAV_PINYIN_COLLATOR || !/[\u3400-\u9fff]/.test(char)) return '';
+    for (let index = NAV_PINYIN_INITIAL_BOUNDARIES.length - 1; index >= 0; index -= 1) {
+        const [initial, boundary] = NAV_PINYIN_INITIAL_BOUNDARIES[index];
+        if (NAV_PINYIN_COLLATOR.compare(char, boundary) >= 0) return initial;
+    }
+    return '';
+}
+
+function getNavPinyinAliases(value) {
+    const source = String(value ?? '').normalize('NFKC');
+    let fullPinyin = '';
+    let expandedInitials = '';
+    let compactInitials = '';
+
+    for (let index = 0; index < source.length;) {
+        const asciiMatch = source.slice(index).match(/^[a-z0-9]+/i);
+        if (asciiMatch) {
+            const rawToken = asciiMatch[0];
+            const token = rawToken.toLocaleLowerCase();
+            fullPinyin += token;
+            expandedInitials += token;
+            compactInitials += /^[A-Z0-9]+$/.test(rawToken) && rawToken.length <= 5 ? token : token[0];
+            index += rawToken.length;
+            continue;
+        }
+
+        const char = source[index];
+        const syllable = NAV_PINYIN_SYLLABLES[char];
+        const initial = syllable?.[0] || inferNavPinyinInitial(char);
+        if (syllable) fullPinyin += syllable;
+        if (initial) {
+            expandedInitials += initial;
+            compactInitials += initial;
+        }
+        index += 1;
+    }
+
+    return [fullPinyin, expandedInitials, compactInitials]
+        .map(normalizeNavSearchTerm)
+        .filter(Boolean);
+}
+
+function buildNavSearchIndex(item) {
+    const values = [item.label, item.labelEn, getNavLabel(item), item.id, item.href].filter(Boolean);
+    const aliases = new Set();
+    values.forEach(value => {
+        const normalized = normalizeNavSearchTerm(value);
+        if (normalized) aliases.add(normalized);
+        getNavPinyinAliases(value).forEach(alias => aliases.add(alias));
+    });
+    return Array.from(aliases).join('|');
+}
+
+function isNavSearchSubsequence(query, candidate) {
+    if (query.length < 2 || query.length > candidate.length) return false;
+    let queryIndex = 0;
+    for (const char of candidate) {
+        if (char === query[queryIndex]) queryIndex += 1;
+        if (queryIndex === query.length) return true;
+    }
+    return false;
+}
+
+function matchesNavSearch(searchIndex, query) {
+    const normalizedQuery = normalizeNavSearchTerm(query);
+    if (!normalizedQuery) return true;
+    return String(searchIndex || '').split('|').some(candidate =>
+        candidate.includes(normalizedQuery) || isNavSearchSubsequence(normalizedQuery, candidate)
+    );
 }
 
 function registerNavbarI18n() {
@@ -163,7 +327,7 @@ function registerNavbarI18n() {
             'nav.dbExplorer': '数据探索',
             'nav.f12packer': 'F12扩展打包',
             'nav.more': '更多工具',
-            'nav.moreSearch': '搜索工具...',
+            'nav.moreSearch': '搜索工具、拼音或首字母...',
             'nav.moreSearchLabel': '搜索更多工具',
             'nav.moreAll': '全部',
             'nav.moreRecent': '最近使用',
@@ -193,6 +357,7 @@ function registerNavbarI18n() {
             'nav.set.tab.update': '程序更新',
             'nav.set.tab.backup': '备份恢复',
             'nav.set.tab.initialize': '初始化',
+            'nav.set.tab.tenants': '租户管理',
             'nav.set.tab.customBackup': '自定义工具备份',
             'nav.set.tab.accounts': '账号管理',
             'nav.set.tab.security': '安全策略',
@@ -207,8 +372,37 @@ function registerNavbarI18n() {
             'nav.set.sub.items': '修改后会自动保存，并立即影响“更多工具”的分组与排序。',
             'nav.set.sub.ai': '修改后会自动保存，并立即影响智能客服助手配置。',
             'nav.set.sub.update': '检查、下载并安装桌面客户端更新。',
-            'nav.set.sub.backup': '备份和恢复会覆盖全局配置、数据库、上传附件与自定义工具数据。',
+            'nav.set.sub.backup': '备份与恢复仅作用于当前租户的数据库、附件和自定义工具，不会覆盖其他租户。',
             'nav.set.sub.initialize': '补齐开箱即用内容，或在安全备份和完整归档后恢复到首次使用状态。',
+            'nav.set.sub.tenants': '管理独立业务空间。每个租户拥有自己的脚本、规则、数据库、附件和自定义工具。',
+            'nav.tenant.current': '当前租户',
+            'nav.tenant.switch': '切换租户',
+            'nav.tenant.manage': '管理租户',
+            'nav.tenant.loading': '正在读取租户...',
+            'nav.tenant.empty': '暂无可用租户',
+            'nav.tenant.create': '新增租户',
+            'nav.tenant.name': '租户名称',
+            'nav.tenant.id': '租户标识（可选）',
+            'nav.tenant.description': '说明',
+            'nav.tenant.save': '保存',
+            'nav.tenant.archive': '归档',
+            'nav.tenant.archiveConfirm': '归档租户“{name}”？该租户将无法继续进入，但数据目录会保留。',
+            'nav.tenant.activeGroup': '启用中的租户',
+            'nav.tenant.archivedGroup': '已归档租户',
+            'nav.tenant.archivedEmpty': '暂无已归档租户',
+            'nav.tenant.archivedBadge': '已归档',
+            'nav.tenant.restore': '恢复启用',
+            'nav.tenant.restoreConfirm': '恢复租户“{name}”？恢复后用户可重新进入，原数据目录保持不变。',
+            'nav.tenant.delete': '彻底删除',
+            'nav.tenant.deleteTitle': '彻底删除租户数据',
+            'nav.tenant.deleteMessage': '将永久删除租户“{name}”（ID: {id}）的数据库、脚本、规则、附件、自定义工具和租户备份。',
+            'nav.tenant.deleteHint': '此操作不可撤销。请输入租户 ID “{id}”确认。',
+            'nav.tenant.deletePlaceholder': '输入租户 ID：{id}',
+            'nav.tenant.deleteDone': '租户“{name}”及其数据已彻底删除。',
+            'nav.tenant.defaultHint': '现有业务数据位于默认租户；新租户创建后为空白初始化状态。',
+            'nav.tenant.defaultName': '默认租户',
+            'nav.tenant.nameRequired': '请填写租户名称。',
+            'nav.tenant.idInvalid': '租户标识只能包含英文字母、数字、下划线和短横线。',
             'nav.set.sub.customBackup': '单独备份和恢复自定义工具文件、注册信息、服务端状态及可识别的浏览器本地数据。',
             'nav.set.sub.accounts': '修改后会自动保存，并立即影响账号权限。',
             'nav.set.sub.security': '配置登录失败锁定、会话过期和安全告警策略。',
@@ -232,7 +426,7 @@ function registerNavbarI18n() {
             'nav.set.restore.restoring': '正在恢复系统默认...',
             'nav.set.restore.success': '已恢复系统默认，并保留 {tools} 个非系统工具、{categories} 个自建分类',
             'nav.set.restore.fail': '恢复失败: ',
-            'nav.init.help': '这里的两种操作用途不同：开箱即用只补齐缺失的默认内容；彻底初始化会清空业务数据并要求重启。',
+            'nav.init.help': '这里的两种操作都只作用于当前租户：开箱即用只补齐缺失默认内容；彻底初始化会清空当前租户业务数据。',
             'nav.init.quickTitle': '启动开箱即用模式',
             'nav.init.quickDesc': '重新导入仓库内置的智能调度脚本和全量指标规则。仅补齐缺失项，不覆盖同名脚本、规则或用户配置；导入前会生成配置快照。',
             'nav.init.quickButton': '启动开箱即用模式',
@@ -242,17 +436,18 @@ function registerNavbarI18n() {
             'nav.init.quickRunning': '正在导入默认内容...',
             'nav.init.quickSuccess': '导入完成：新增脚本 {scripts} 个、指标规则 {rules} 条、指标分组 {groups} 个。',
             'nav.init.dangerLabel': '危险区域',
-            'nav.init.resetTitle': '彻底初始化程序数据',
-            'nav.init.resetDesc': '先自动生成安全备份，再完整归档当前数据并建立干净数据库。当前管理员账号与桌面/F12 授权文件会保留，其他业务数据、配置、附件和自定义工具会被重置。',
-            'nav.init.resetArchive': '旧数据会整体保存在 factory-reset-archives 目录；重启后还会再次出现首次启动导入提示。',
-            'nav.init.resetButton': '彻底初始化',
-            'nav.init.resetConfirmTitle': '高危操作：彻底初始化程序数据',
-            'nav.init.resetConfirmMessage': '当前业务数据、配置、附件和自定义工具将从运行目录移出。系统会先创建安全备份和完整旧数据归档，并保留当前管理员账号及授权文件。',
+            'nav.init.resetTitle': '彻底初始化当前租户',
+            'nav.init.resetDesc': '先自动生成当前租户安全备份，再完整归档其数据并建立干净数据库。账号、其他租户及桌面/F12 授权不会受影响。',
+            'nav.init.resetArchive': '旧租户数据会整体保存在 factory-reset-archives 目录；初始化后会再次出现首次启动导入提示。',
+            'nav.init.resetButton': '初始化当前租户',
+            'nav.init.resetConfirmTitle': '高危操作：彻底初始化当前租户',
+            'nav.init.resetConfirmMessage': '当前租户的业务数据、配置、附件和自定义工具将从运行目录移出。系统会先创建安全备份和完整旧数据归档，其他租户不受影响。',
             'nav.init.resetConfirmHint': '请在下方完整输入 RESET，然后才能执行初始化。',
             'nav.init.resetPlaceholder': '输入：RESET',
-            'nav.init.resetAction': '确认初始化并退出',
+            'nav.init.resetAction': '确认初始化',
             'nav.init.resetRunning': '正在创建安全备份并准备初始化...',
             'nav.init.resetSuccess': '安全备份 {backup} 已创建。程序即将退出；请重新启动，初始化会在退出后自动完成。',
+            'nav.init.resetSuccessNoRestart': '安全备份 {backup} 已创建，当前租户已恢复为空白状态；正在返回登录页。',
             'nav.init.failed': '操作失败：',
             'nav.set.emptyItems': '暂无更多工具菜单。',
             'nav.set.placeholder.zh': '中文名称',
@@ -361,7 +556,7 @@ function registerNavbarI18n() {
             'nav.up.state.dev-unavailable': '开发模式不可用',
 
             'nav.bk.empty': '正在加载备份列表...',
-            'nav.bk.help': '覆盖范围：{target}。包含全局配置、JSON 数据、SQLite 数据库、上传附件、自定义工具 HTML 等运行数据。',
+            'nav.bk.help': '当前租户“{tenant}”（ID: {tenantId}）的完整备份范围：{target}。不会包含或覆盖其他租户的数据。',
             'nav.ctbk.help': '独立备份不会覆盖其他业务模块。导出包包含工具全部文件、注册信息、服务端状态与快照、可识别的 localStorage 数据，以及逐文件 SHA-256 完整性清单。',
             'nav.ctbk.loading': '正在扫描自定义工具依赖...',
             'nav.ctbk.empty': '当前没有可备份的自定义工具。',
@@ -393,7 +588,7 @@ function registerNavbarI18n() {
             'nav.ctbk.dependencyWarn': '其中 {count} 个工具仍依赖公共平台 API、外部接口或 IndexedDB，请确保目标环境具备相同服务。',
             'nav.ctbk.fail': '加载自定义工具备份功能失败：',
             'nav.bk.remoteTitle': '远端主站同步',
-            'nav.bk.remoteDesc': '适合分站/Windows 本地启动时，从主站自动拉取最新全局备份并恢复。配置只保存在当前机器，不会被备份包覆盖。',
+            'nav.bk.remoteDesc': '远端同步严格按租户 ID 执行，不比较显示名称：当前租户只会拉取远端相同 ID 的备份；远端不存在时会安全终止。',
             'nav.bk.enable': '启用',
             'nav.bk.remoteDomain': '远端网站域名',
             'nav.bk.remoteUser': '账号',
@@ -402,12 +597,17 @@ function registerNavbarI18n() {
             'nav.bk.optCompare': '比较备份新旧，未更新则跳过',
             'nav.bk.optPull': '拉取前请求主站立即生成备份',
             'nav.bk.optAuto': '启动时自动恢复最新备份',
+            'nav.bk.optAutoDefaultOnly': '启动自动恢复仅用于默认租户；其他租户请手动检查和恢复。',
             'nav.bk.scheduleTitle': '定时备份',
-            'nav.bk.scheduleDesc': '默认每天凌晨 2 点自动生成服务器备份，并仅清理超过保留天数的自动备份。',
+            'nav.bk.scheduleDesc': '当前租户独立调度；默认每天凌晨 2 点生成该租户备份，并仅清理该租户超过保留天数的自动备份。',
             'nav.bk.scheduleEnabled': '开启定时备份',
             'nav.bk.scheduleTime': '执行时间',
             'nav.bk.scheduleRetention': '保留天数',
             'nav.bk.scheduleDays': '天',
+            'nav.bk.scheduleCapacity': '备份总容量上限',
+            'nav.bk.scheduleGB': 'GB',
+            'nav.bk.scheduleUsage': '当前容量：{used} / {limit}',
+            'nav.bk.scheduleOver': '最新单个备份已超过容量上限，系统仍保留至少一个恢复点。',
             'nav.bk.scheduleNext': '下次执行：',
             'nav.bk.scheduleLast': '最近成功：',
             'nav.bk.scheduleLastFile': '最近文件：',
@@ -426,11 +626,11 @@ function registerNavbarI18n() {
             'nav.bk.btnForce': '强制恢复远端最新',
             'nav.bk.btnClearPwd': '清除密码',
             'nav.bk.svrTitle': '服务器备份',
-            'nav.bk.svrDesc': '生成后会保存在服务器，也可以直接下载到本地留档。',
+            'nav.bk.svrDesc': '仅备份当前租户，生成后保存在该租户自己的备份目录，也可以下载留档。',
             'nav.bk.btnCreate': '生成服务器备份',
             'nav.bk.btnCreateDL': '生成并下载',
             'nav.bk.upTitle': '上传备份包恢复',
-            'nav.bk.upDesc': '仅接受平台生成的全局备份 zip 包；恢复前会自动创建 pre-restore 安全备份。',
+            'nav.bk.upDesc': '优先恢复同租户 ID 的备份；ID 不一致时会安全拦截并显示来源与目标，管理员确认后可强制恢复。',
             'nav.bk.btnUp': '上传并恢复',
             'nav.bk.badgeSync': '外部同步触发',
             'nav.bk.badgeSafe': '恢复前安全备份',
@@ -457,6 +657,25 @@ function registerNavbarI18n() {
             'nav.acc.fail': '加载账号失败：',
             'nav.acc.btnDel': '删除',
             'nav.acc.btnReset': '重置密码',
+            'nav.acc.required': '请完整填写用户名和密码。',
+            'nav.acc.added': '账号已添加',
+            'nav.acc.addedDesc': '新账号“{user}”已创建并立即生效。',
+            'nav.acc.deleteTitle': '删除账号',
+            'nav.acc.deleteDesc': '确定删除账号“{user}”吗？删除后该账号将无法继续登录。',
+            'nav.acc.resetTitle': '重置账号密码',
+            'nav.acc.resetDesc': '为账号“{user}”设置一个新密码。保存后旧密码立即失效。',
+            'nav.acc.newPassword': '新密码',
+            'nav.acc.resetDone': '密码已重置',
+            'nav.acc.resetDoneDesc': '账号“{user}”的新密码已立即生效。',
+
+            'nav.dialog.notice': '操作提示',
+            'nav.dialog.success': '操作成功',
+            'nav.dialog.warning': '请确认操作',
+            'nav.dialog.error': '操作未完成',
+            'nav.dialog.confirm': '确定',
+            'nav.dialog.cancel': '取消',
+            'nav.dialog.close': '知道了',
+            'nav.dialog.save': '保存',
 
             'nav.sec.empty': '正在加载安全策略...',
             'nav.sec.help': '登录失败后会按账号、来源 IP、同一 IP 多账号尝试三类规则递进锁定；触发锁定时会按配置级别上报告警台。',
@@ -527,7 +746,7 @@ function registerNavbarI18n() {
             'nav.dbExplorer': 'Data Explorer',
             'nav.f12packer': 'F12 Packer',
             'nav.more': 'More Tools',
-            'nav.moreSearch': 'Search tools...',
+            'nav.moreSearch': 'Search tools, pinyin, or initials...',
             'nav.moreSearchLabel': 'Search more tools',
             'nav.moreAll': 'All',
             'nav.moreRecent': 'Recently used',
@@ -557,6 +776,7 @@ function registerNavbarI18n() {
             'nav.set.tab.update': 'App Updates',
             'nav.set.tab.backup': 'Backup & Restore',
             'nav.set.tab.initialize': 'Initialization',
+            'nav.set.tab.tenants': 'Tenants',
             'nav.set.tab.customBackup': 'Custom Tool Backup',
             'nav.set.tab.accounts': 'Accounts',
             'nav.set.tab.security': 'Security',
@@ -571,8 +791,37 @@ function registerNavbarI18n() {
             'nav.set.sub.items': 'Changes are saved automatically and immediately applied to the grouping and ordering in "More Tools".',
             'nav.set.sub.ai': 'Changes are saved automatically and immediately applied to the AI Assistant configuration.',
             'nav.set.sub.update': 'Check, download, and install desktop client updates.',
-            'nav.set.sub.backup': 'Backup and restore will overwrite global configuration, database, uploaded files, and custom tools data.',
+            'nav.set.sub.backup': 'Backup and restore only affect the current tenant\'s databases, attachments, and custom tools, without overwriting other tenants.',
             'nav.set.sub.initialize': 'Add the Quick Start defaults or return to a clean first-run state after a safety backup and full archive.',
+            'nav.set.sub.tenants': 'Manage isolated workspaces. Each tenant has separate scripts, rules, databases, attachments, and custom tools.',
+            'nav.tenant.current': 'Current tenant',
+            'nav.tenant.switch': 'Switch tenant',
+            'nav.tenant.manage': 'Manage tenants',
+            'nav.tenant.loading': 'Loading tenants...',
+            'nav.tenant.empty': 'No tenants available',
+            'nav.tenant.create': 'Add tenant',
+            'nav.tenant.name': 'Tenant name',
+            'nav.tenant.id': 'Tenant ID (optional)',
+            'nav.tenant.description': 'Description',
+            'nav.tenant.save': 'Save',
+            'nav.tenant.archive': 'Archive',
+            'nav.tenant.archiveConfirm': 'Archive tenant “{name}”? It will become unavailable while its data directory is retained.',
+            'nav.tenant.activeGroup': 'Active tenants',
+            'nav.tenant.archivedGroup': 'Archived tenants',
+            'nav.tenant.archivedEmpty': 'No archived tenants',
+            'nav.tenant.archivedBadge': 'Archived',
+            'nav.tenant.restore': 'Restore',
+            'nav.tenant.restoreConfirm': 'Restore tenant “{name}”? Users can enter it again and its existing data directory will be retained.',
+            'nav.tenant.delete': 'Delete permanently',
+            'nav.tenant.deleteTitle': 'Permanently delete tenant data',
+            'nav.tenant.deleteMessage': 'This permanently deletes tenant “{name}” (ID: {id}), including its databases, scripts, rules, attachments, custom tools, and tenant backups.',
+            'nav.tenant.deleteHint': 'This cannot be undone. Enter tenant ID “{id}” to confirm.',
+            'nav.tenant.deletePlaceholder': 'Enter tenant ID: {id}',
+            'nav.tenant.deleteDone': 'Tenant “{name}” and its data were permanently deleted.',
+            'nav.tenant.defaultHint': 'Existing business data remains in the default tenant. New tenants start with a clean initialized workspace.',
+            'nav.tenant.defaultName': 'Default Tenant',
+            'nav.tenant.nameRequired': 'Enter a tenant name.',
+            'nav.tenant.idInvalid': 'Tenant ID may contain only letters, numbers, underscores, and hyphens.',
             'nav.set.sub.customBackup': 'Back up and restore custom tool files, registry data, server state, and detectable browser-local data independently.',
             'nav.set.sub.accounts': 'Changes are saved automatically and immediately applied to account permissions.',
             'nav.set.sub.security': 'Configure login lockouts, session expiry, and security alert severity.',
@@ -596,7 +845,7 @@ function registerNavbarI18n() {
             'nav.set.restore.restoring': 'Restoring system defaults...',
             'nav.set.restore.success': 'Defaults restored; preserved {tools} non-system tool(s) and {categories} custom category/categories',
             'nav.set.restore.fail': 'Restore failed: ',
-            'nav.init.help': 'These actions are different: Quick Start only adds missing defaults; Factory Reset clears business data and requires a restart.',
+            'nav.init.help': 'Both actions affect only the current tenant: Quick Start adds missing defaults, while Factory Reset clears this tenant’s business data.',
             'nav.init.quickTitle': 'Enable Quick Start Mode',
             'nav.init.quickDesc': 'Re-import the bundled smart-scheduling scripts and complete metric rules. Missing items are added without overwriting same-name scripts, rules, or user settings; a configuration snapshot is created first.',
             'nav.init.quickButton': 'Enable Quick Start Mode',
@@ -606,17 +855,18 @@ function registerNavbarI18n() {
             'nav.init.quickRunning': 'Importing default content...',
             'nav.init.quickSuccess': 'Import complete: {scripts} scripts, {rules} metric rules, and {groups} metric groups added.',
             'nav.init.dangerLabel': 'Danger Zone',
-            'nav.init.resetTitle': 'Factory Reset Program Data',
-            'nav.init.resetDesc': 'Creates a safety backup first, fully archives the current data, and builds a clean database. The current administrator account and desktop/F12 license files are preserved; other business data, settings, attachments, and custom tools are reset.',
-            'nav.init.resetArchive': 'Old data remains in factory-reset-archives. The first-run import prompt appears again after restart.',
-            'nav.init.resetButton': 'Factory Reset',
-            'nav.init.resetConfirmTitle': 'DANGER: Factory reset all program data',
-            'nav.init.resetConfirmMessage': 'Business data, settings, attachments, and custom tools will be moved out of the live data directory. A safety backup and full data archive are created first; the current administrator and license files are preserved.',
+            'nav.init.resetTitle': 'Factory Reset Current Tenant',
+            'nav.init.resetDesc': 'Creates a tenant-scoped safety backup, archives this tenant, and builds a clean database. Accounts, other tenants, and desktop/F12 licenses are unaffected.',
+            'nav.init.resetArchive': 'Old tenant data remains in factory-reset-archives. The first-run import prompt appears again after initialization.',
+            'nav.init.resetButton': 'Reset Current Tenant',
+            'nav.init.resetConfirmTitle': 'DANGER: Factory reset current tenant',
+            'nav.init.resetConfirmMessage': 'This tenant’s business data, settings, attachments, and custom tools will be moved out of the live directory after a safety backup. Other tenants are unaffected.',
             'nav.init.resetConfirmHint': 'Type RESET exactly below to enable factory reset.',
             'nav.init.resetPlaceholder': 'Type: RESET',
-            'nav.init.resetAction': 'Reset and Exit',
+            'nav.init.resetAction': 'Reset Tenant',
             'nav.init.resetRunning': 'Creating a safety backup and preparing reset...',
             'nav.init.resetSuccess': 'Safety backup {backup} was created. The app will exit; launch it again after the reset completes.',
+            'nav.init.resetSuccessNoRestart': 'Safety backup {backup} was created and the current tenant is clean. Returning to sign in.',
             'nav.init.failed': 'Operation failed: ',
             'nav.set.emptyItems': 'No more tools available.',
             'nav.set.placeholder.zh': 'Chinese Name',
@@ -725,7 +975,7 @@ function registerNavbarI18n() {
             'nav.up.state.dev-unavailable': 'Unavailable in Development',
 
             'nav.bk.empty': 'Loading backup list...',
-            'nav.bk.help': 'Scope: {target}. Includes global configuration, JSON data, SQLite databases, uploaded files, and custom tool HTML.',
+            'nav.bk.help': 'Complete backup for the current tenant “{tenant}” (ID: {tenantId}): {target}. Other tenants are never included or overwritten.',
             'nav.ctbk.help': 'Independent backups do not overwrite other business modules. Packages include all tool files, registry metadata, server state and snapshots, detectable localStorage data, and per-file SHA-256 integrity records.',
             'nav.ctbk.loading': 'Scanning custom tool dependencies...',
             'nav.ctbk.empty': 'There are no custom tools to back up.',
@@ -757,7 +1007,7 @@ function registerNavbarI18n() {
             'nav.ctbk.dependencyWarn': '{count} restored tools still depend on platform APIs, external endpoints, or IndexedDB. Ensure the target environment provides the same services.',
             'nav.ctbk.fail': 'Failed to load custom tool backup: ',
             'nav.bk.remoteTitle': 'Remote Main Site Sync',
-            'nav.bk.remoteDesc': 'Suitable for local branch syncs from the main site. Settings are saved locally and not overwritten by backups.',
+            'nav.bk.remoteDesc': 'Remote sync requires matching tenant IDs: the current tenant only pulls the same tenant from the remote site. Missing tenants fail safely. Connection settings stay on this machine.',
             'nav.bk.enable': 'Enable',
             'nav.bk.remoteDomain': 'Remote Domain',
             'nav.bk.remoteUser': 'Username',
@@ -766,12 +1016,17 @@ function registerNavbarI18n() {
             'nav.bk.optCompare': 'Compare before restore, skip if not updated',
             'nav.bk.optPull': 'Request immediate backup generation on main site before pulling',
             'nav.bk.optAuto': 'Auto-restore latest backup on startup',
+            'nav.bk.optAutoDefaultOnly': 'Startup auto-restore is available only for the default tenant. Restore other tenants manually.',
             'nav.bk.scheduleTitle': 'Scheduled Backup',
-            'nav.bk.scheduleDesc': 'By default, creates a server backup every day at 02:00 and only prunes scheduled backups older than the retention window.',
+            'nav.bk.scheduleDesc': 'Scheduled independently for the current tenant; by default runs daily at 02:00 and prunes only this tenant’s expired scheduled backups.',
             'nav.bk.scheduleEnabled': 'Enable scheduled backup',
             'nav.bk.scheduleTime': 'Run Time',
             'nav.bk.scheduleRetention': 'Retention',
             'nav.bk.scheduleDays': 'days',
+            'nav.bk.scheduleCapacity': 'Total backup capacity',
+            'nav.bk.scheduleGB': 'GB',
+            'nav.bk.scheduleUsage': 'Current usage: {used} / {limit}',
+            'nav.bk.scheduleOver': 'The newest backup alone exceeds the limit, so one recovery point is still retained.',
             'nav.bk.scheduleNext': 'Next Run: ',
             'nav.bk.scheduleLast': 'Last Success: ',
             'nav.bk.scheduleLastFile': 'Last File: ',
@@ -790,11 +1045,11 @@ function registerNavbarI18n() {
             'nav.bk.btnForce': 'Force Restore Remote Latest',
             'nav.bk.btnClearPwd': 'Clear Password',
             'nav.bk.svrTitle': 'Server Backup',
-            'nav.bk.svrDesc': 'Backups are saved on the server and can be downloaded locally.',
+            'nav.bk.svrDesc': 'Backs up only the current tenant and stores the package in that tenant’s backup directory. It can also be downloaded.',
             'nav.bk.btnCreate': 'Create Server Backup',
             'nav.bk.btnCreateDL': 'Create & Download',
             'nav.bk.upTitle': 'Restore from Upload',
-            'nav.bk.upDesc': 'Accepts only platform-generated backup zip files. Creates a pre-restore safety backup.',
+            'nav.bk.upDesc': 'Backups with the same tenant ID restore directly. A mismatch is safely blocked and shows source and target details before an admin can force restore.',
             'nav.bk.btnUp': 'Upload & Restore',
             'nav.bk.badgeSync': 'Remote Sync',
             'nav.bk.badgeSafe': 'Safety Backup',
@@ -821,6 +1076,25 @@ function registerNavbarI18n() {
             'nav.acc.fail': 'Failed to load accounts: ',
             'nav.acc.btnDel': 'Delete',
             'nav.acc.btnReset': 'Reset Password',
+            'nav.acc.required': 'Enter both a username and password.',
+            'nav.acc.added': 'Account added',
+            'nav.acc.addedDesc': 'The new account “{user}” is ready to use.',
+            'nav.acc.deleteTitle': 'Delete account',
+            'nav.acc.deleteDesc': 'Delete account “{user}”? This account will no longer be able to sign in.',
+            'nav.acc.resetTitle': 'Reset account password',
+            'nav.acc.resetDesc': 'Set a new password for “{user}”. The old password will stop working immediately.',
+            'nav.acc.newPassword': 'New password',
+            'nav.acc.resetDone': 'Password reset',
+            'nav.acc.resetDoneDesc': 'The new password for “{user}” is now active.',
+
+            'nav.dialog.notice': 'Notice',
+            'nav.dialog.success': 'Completed',
+            'nav.dialog.warning': 'Confirm action',
+            'nav.dialog.error': 'Action failed',
+            'nav.dialog.confirm': 'Confirm',
+            'nav.dialog.cancel': 'Cancel',
+            'nav.dialog.close': 'Close',
+            'nav.dialog.save': 'Save',
 
             'nav.sec.empty': 'Loading security policy...',
             'nav.sec.help': 'Failed logins are progressively locked by account, source IP, and multi-account attempts from the same IP. Lock events are reported to the alert center with the configured severity.',
@@ -949,7 +1223,7 @@ function renderNavItem(item, className) {
         content += `<span class="new-badge">NEW!</span>`;
     }
         
-    return `<a href="${item.href}" class="${className} ${item.match(path) ? 'active' : ''}" data-nav-item-id="${navEscape(item.id)}" data-nav-search="${navEscape(getNavLabel(item).toLocaleLowerCase())}">${content}</a>`;
+    return `<a href="${item.href}" class="${className} ${item.match(path) ? 'active' : ''}" data-nav-item-id="${navEscape(item.id)}" data-nav-search="${navEscape(buildNavSearchIndex(item))}">${content}</a>`;
 }
 
 function renderNavLinksFromState() {
@@ -1012,12 +1286,11 @@ function renderNavLinksFromState() {
 function filterNavMoreItems(query = '') {
     const menu = document.getElementById('navMoreMenu');
     if (!menu) return;
-    const normalizedQuery = query.trim().toLocaleLowerCase();
     let visibleItemCount = 0;
     menu.querySelectorAll('.nav-more-category').forEach(category => {
         let categoryCount = 0;
         category.querySelectorAll('.nav-more-item').forEach(item => {
-            const matches = !normalizedQuery || (item.dataset.navSearch || '').includes(normalizedQuery);
+            const matches = matchesNavSearch(item.dataset.navSearch, query);
             item.hidden = !matches;
             if (matches) categoryCount += 1;
         });
@@ -1129,6 +1402,79 @@ async function loadNavigationData() {
     if (document.getElementById('navSettingsModal')) renderNavSettingsContent();
 }
 
+function activeTenantName() {
+    if (navState.activeTenantId === 'default') return navT('nav.tenant.defaultName');
+    return navState.tenants.find(item => item.id === navState.activeTenantId)?.name || navState.activeTenantId || 'default';
+}
+
+function displayTenantName(tenant) {
+    const name = tenant?.name || tenant?.id || '';
+    return tenant?.id === 'default' && (!name || name === '默认租户' || name === 'Default Tenant')
+        ? navT('nav.tenant.defaultName')
+        : name;
+}
+
+async function loadTenantNavigation() {
+    if (!hasNavAuthToken()) return;
+    try {
+        const response = await fetch('/api/tenants', { headers: getAuthHeaderForNav() });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+        navState.tenants = Array.isArray(data.tenants) ? data.tenants : [];
+        navState.activeTenantId = data.activeTenantId || 'default';
+        localStorage.setItem('tools_tenant_id', navState.activeTenantId);
+        const label = document.getElementById('navActiveTenantName');
+        if (label) label.textContent = activeTenantName();
+        renderTenantSwitchMenu();
+    } catch (error) {
+        console.warn('[Tenant] load failed:', error);
+    }
+}
+
+async function loadManagedTenants() {
+    const response = await fetch('/api/tenants?includeArchived=1', { headers: getAuthHeaderForNav() });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+    navState.managedTenants = Array.isArray(data.tenants) ? data.tenants : [];
+}
+
+function renderTenantSwitchMenu() {
+    const menu = document.getElementById('navTenantMenu');
+    if (!menu) return;
+    menu.innerHTML = `
+        <div class="nav-tenant-menu-label">${navEscape(navT('nav.tenant.current'))}</div>
+        ${(navState.tenants || []).map(tenant => `<button type="button" class="nav-tenant-option ${tenant.id === navState.activeTenantId ? 'active' : ''}" onclick="switchActiveTenant('${navEscape(tenant.id)}')"><span>${navEscape(displayTenantName(tenant))}</span>${tenant.id === navState.activeTenantId ? '<span>✓</span>' : ''}</button>`).join('') || `<div class="nav-tenant-empty">${navEscape(navT('nav.tenant.empty'))}</div>`}
+        ${localStorage.getItem('tools_role') === 'admin' ? `<button type="button" class="nav-tenant-manage" onclick="openTenantSettings()">⚙ ${navEscape(navT('nav.tenant.manage'))}</button>` : ''}
+    `;
+}
+
+window.toggleTenantMenu = function (event) {
+    event?.stopPropagation();
+    document.getElementById('navTenantMenu')?.classList.toggle('open');
+};
+
+window.switchActiveTenant = async function (tenantId) {
+    if (!tenantId || tenantId === navState.activeTenantId) return;
+    const response = await fetch('/api/tenants/switch', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() }, body: JSON.stringify({ tenantId })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return showNavbarNotice({
+        title: navT('nav.dialog.error'),
+        message: data.error || `HTTP ${response.status}`,
+        tone: 'error'
+    });
+    switchTenantBrowserState(navState.activeTenantId, tenantId);
+    localStorage.setItem('tools_tenant_id', tenantId);
+    window.location.reload();
+};
+
+window.openTenantSettings = function () {
+    document.getElementById('navTenantMenu')?.classList.remove('open');
+    openNavSettingsModal();
+    switchNavSettingsTab('tenants');
+};
+
 function renderNavbar() {
     const role = localStorage.getItem('tools_role');
     const user = localStorage.getItem('tools_user');
@@ -1156,7 +1502,8 @@ function renderNavbar() {
         <div class="nav-divider"></div>
         <div class="nav-links"></div>
         <div class="nav-more" id="navMore">
-            <button type="button" class="nav-more-btn" id="navMoreBtn" onclick="toggleNavMore(event)">${navEscape(navT('nav.more'))} ▾</button>
+            <button type="button" class="nav-more-btn" id="navMoreBtn" aria-expanded="false" aria-controls="navMoreMenu" onclick="toggleNavMore(event)">${navEscape(navT('nav.more'))} ▾</button>
+            <div class="nav-more-backdrop" aria-hidden="true"></div>
             <div class="nav-more-menu" id="navMoreMenu"></div>
         </div>
         <div style="flex:1"></div>
@@ -1178,7 +1525,10 @@ function renderNavbar() {
                     <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21h-4v-.09A1.7 1.7 0 0 0 9 19.36a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.64 15a1.7 1.7 0 0 0-1.55-1.03H3v-4h.09A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.64a1.7 1.7 0 0 0 1.03-1.55V3h4v.09A1.7 1.7 0 0 0 15 4.64a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.36 9a1.7 1.7 0 0 0 1.55 1.03H21v4h-.09A1.7 1.7 0 0 0 19.4 15z"></path>
                 </svg>
             </button>` : ''}
-            <span class="nav-user-chip" title="${navEscape(user || '未登录')}"><span class="nav-action-icon">👤</span><span class="nav-action-text">${navEscape(user || '未登录')}</span></span>
+            <div class="nav-tenant-switcher">
+                <button type="button" class="nav-user-chip" onclick="toggleTenantMenu(event)" title="${navEscape(navT('nav.tenant.switch'))}"><span class="nav-action-icon">👤</span><span class="nav-action-text">${navEscape(user || '未登录')} · <span id="navActiveTenantName">${navEscape(activeTenantName())}</span></span><span>▾</span></button>
+                <div class="nav-tenant-menu" id="navTenantMenu"></div>
+            </div>
             <a href="#" class="nav-logout-link" onclick="doLogout()" title="${navEscape(navT('nav.logout'))}"><span class="nav-action-icon">↩</span><span class="nav-action-text">${navEscape(navT('nav.logout'))}</span></a>
         </div>
 
@@ -1209,6 +1559,7 @@ function renderNavbar() {
     }
 
     renderNavLinksFromState();
+    loadTenantNavigation();
 }
 
 window.refreshCustomToolNavLinks = loadNavigationData;
@@ -1241,6 +1592,7 @@ window.toggleNavMore = function (event) {
     if (!more) return;
     const isOpening = !more.classList.contains('open');
     more.classList.toggle('open', isOpening);
+    document.getElementById('navMoreBtn')?.setAttribute('aria-expanded', String(isOpening));
     if (isOpening) {
         const menu = document.getElementById('navMoreMenu');
         const buttonRect = document.getElementById('navMoreBtn')?.getBoundingClientRect();
@@ -1260,16 +1612,27 @@ window.toggleNavMore = function (event) {
 
 document.addEventListener('keydown', event => {
     if (event.key !== 'Escape') return;
+    document.getElementById('navTenantMenu')?.classList.remove('open');
     const more = document.getElementById('navMore');
     if (!more?.classList.contains('open')) return;
     more.classList.remove('open');
+    document.getElementById('navMoreBtn')?.setAttribute('aria-expanded', 'false');
     document.getElementById('navMoreBtn')?.focus();
 });
 
-document.addEventListener('click', (event) => {
+// 捕获阶段可绕过业务页面的 stopPropagation；透明遮罩还能覆盖 iframe 页面区域。
+document.addEventListener('pointerdown', (event) => {
     const more = document.getElementById('navMore');
-    if (more && !more.contains(event.target)) more.classList.remove('open');
-});
+    const clickedMoreBackdrop = event.target instanceof Element && event.target.classList.contains('nav-more-backdrop');
+    if (more && (clickedMoreBackdrop || !more.contains(event.target))) {
+        more.classList.remove('open');
+        document.getElementById('navMoreBtn')?.setAttribute('aria-expanded', 'false');
+    }
+    const tenantSwitcher = document.querySelector('.nav-tenant-switcher');
+    if (tenantSwitcher && !tenantSwitcher.contains(event.target)) {
+        document.getElementById('navTenantMenu')?.classList.remove('open');
+    }
+}, true);
 
 function scheduleNavSettingsSave() {
     renderNavLinksFromState();
@@ -1325,6 +1688,7 @@ function renderNavSettingsSidebar() {
         <button class="nav-settings-tab ${t === 'update' ? 'active' : ''}" data-tab="update" onclick="switchNavSettingsTab('update')">${navEscape(navT('nav.set.tab.update'))}</button>
         <button class="nav-settings-tab ${t === 'backup' ? 'active' : ''}" data-tab="backup" onclick="switchNavSettingsTab('backup')">${navEscape(navT('nav.set.tab.backup'))}</button>
         <button class="nav-settings-tab ${t === 'initialize' ? 'active' : ''}" data-tab="initialize" onclick="switchNavSettingsTab('initialize')">${navEscape(navT('nav.set.tab.initialize'))}</button>
+        <button class="nav-settings-tab ${t === 'tenants' ? 'active' : ''}" data-tab="tenants" onclick="switchNavSettingsTab('tenants')">${navEscape(navT('nav.set.tab.tenants'))}</button>
         <button class="nav-settings-tab ${t === 'customBackup' ? 'active' : ''}" data-tab="customBackup" onclick="switchNavSettingsTab('customBackup')">${navEscape(navT('nav.set.tab.customBackup'))}</button>
         <button class="nav-settings-tab ${t === 'accounts' ? 'active' : ''}" data-tab="accounts" onclick="switchNavSettingsTab('accounts')">${navEscape(navT('nav.set.tab.accounts'))}</button>
         <button class="nav-settings-tab ${t === 'security' ? 'active' : ''}" data-tab="security" onclick="switchNavSettingsTab('security')">${navEscape(navT('nav.set.tab.security'))}</button>
@@ -1391,6 +1755,7 @@ function getNavSettingsTitle() {
     if (navState.settingsTab === 'update') return navT('nav.set.tab.update');
     if (navState.settingsTab === 'backup') return navT('nav.set.tab.backup');
     if (navState.settingsTab === 'initialize') return navT('nav.set.tab.initialize');
+    if (navState.settingsTab === 'tenants') return navT('nav.set.tab.tenants');
     if (navState.settingsTab === 'customBackup') return navT('nav.set.tab.customBackup');
     if (navState.settingsTab === 'categories') return navT('nav.set.tab.categories');
     if (navState.settingsTab === 'items') return navT('nav.set.tab.items');
@@ -1409,6 +1774,7 @@ function getNavSettingsSubtitle() {
     if (navState.settingsTab === 'update') return navT('nav.set.sub.update');
     if (navState.settingsTab === 'backup') return navT('nav.set.sub.backup');
     if (navState.settingsTab === 'initialize') return navT('nav.set.sub.initialize');
+    if (navState.settingsTab === 'tenants') return navT('nav.set.sub.tenants');
     if (navState.settingsTab === 'customBackup') return navT('nav.set.sub.customBackup');
     if (navState.settingsTab === 'categories') return navT('nav.set.sub.categories');
     if (navState.settingsTab === 'items') return navT('nav.set.sub.items');
@@ -1435,6 +1801,7 @@ function renderNavSettingsContent() {
     if (navState.settingsTab === 'update') return renderUpdaterSettings(content);
     if (navState.settingsTab === 'backup') return renderBackupSettings(content);
     if (navState.settingsTab === 'initialize') return renderInitializationSettings(content);
+    if (navState.settingsTab === 'tenants') return renderTenantSettings(content);
     if (navState.settingsTab === 'customBackup') return renderCustomToolBackupSettings(content);
     if (navState.settingsTab === 'categories') return renderCategorySettings(content);
     if (navState.settingsTab === 'items') return renderItemCategorySettings(content);
@@ -1983,7 +2350,15 @@ window.activateAiProfile = async function () {
 
 window.deleteAiProfile = async function () {
     const profile = currentAiProfile();
-    if (!profile || !window.confirm(`确定删除 AI 配置“${profile.name}”吗？`)) return;
+    if (!profile) return;
+    const confirmed = await showNavbarConfirm({
+        title: navLocaleText('删除 AI 配置', 'Delete AI profile'),
+        message: navLocaleText(`确定删除 AI 配置“${profile.name}”吗？`, `Delete the AI profile “${profile.name}”?`),
+        hint: navLocaleText('删除后无法恢复，当前业务调用不会自动切换到该配置。', 'This cannot be undone. Active requests will no longer use this profile.'),
+        tone: 'danger',
+        confirmText: navLocaleText('删除配置', 'Delete profile')
+    });
+    if (!confirmed) return;
     const indicator = document.getElementById('navSettingsSaveState');
     try {
         clearTimeout(navState.aiSaveTimer);
@@ -2312,6 +2687,7 @@ async function fetchScheduleBackupSettings() {
             enabled: true,
             time: '02:00',
             retentionDays: 90,
+            maxTotalSizeGB: 10,
             nextRunAt: null,
             lastSuccessAt: null,
             lastBackupName: '',
@@ -2353,6 +2729,13 @@ function renderScheduleBackupSettings(settings = {}) {
                         <em>${navEscape(navT('nav.bk.scheduleDays'))}</em>
                     </div>
                 </label>
+                <label>
+                    <span>${navEscape(navT('nav.bk.scheduleCapacity'))}</span>
+                    <div class="nav-schedule-retention-row">
+                        <input id="scheduleBackupMaxTotalSizeGB" type="number" min="0.1" max="10240" step="0.1" class="nav-settings-input" value="${navEscape(settings.maxTotalSizeGB || 10)}" oninput="scheduleBackupSettingsSave()">
+                        <em>${navEscape(navT('nav.bk.scheduleGB'))}</em>
+                    </div>
+                </label>
                 <div class="nav-backup-toolbar nav-remote-backup-actions">
                     <button type="button" onclick="runScheduledBackupNow()">${navEscape(navT('nav.bk.scheduleRun'))}</button>
                 </div>
@@ -2360,6 +2743,7 @@ function renderScheduleBackupSettings(settings = {}) {
             <div class="nav-remote-backup-status">
                 <span>${navEscape(navT('nav.bk.scheduleNext'))}${navEscape(nextRunText)}</span>
                 <span>${navEscape(navT('nav.bk.scheduleLast'))}${navEscape(lastSuccessText)}</span>
+                <span id="scheduleBackupCapacityStatus" class="${settings.capacityExceeded ? 'warning' : ''}">${navEscape(navT('nav.bk.scheduleUsage', { used: formatBackupSize(settings.currentTotalBytes || 0), limit: formatBackupSize(settings.maxTotalBytes || (Number(settings.maxTotalSizeGB || 10) * 1024 * 1024 * 1024)) }))}${settings.capacityExceeded ? ` · ${navEscape(navT('nav.bk.scheduleOver'))}` : ''}</span>
                 ${settings.lastBackupName ? `<span>${navEscape(navT('nav.bk.scheduleLastFile'))}${navEscape(settings.lastBackupName)}</span>` : ''}
                 ${settings.lastError ? `<span class="warning">${navEscape(navT('nav.bk.scheduleError'))}${navEscape(settings.lastError)}</span>` : ''}
             </div>
@@ -2406,8 +2790,9 @@ function renderRemoteBackupSyncSettings(settings = {}) {
                 <div class="nav-remote-checks">
                     <label><input id="remoteBackupCompare" type="checkbox" ${settings.compareBeforeRestore !== false ? 'checked' : ''} onchange="scheduleRemoteBackupSettingsSave()"> ${navEscape(navT('nav.bk.optCompare'))}</label>
                     <label><input id="remoteBackupCreateBeforePull" type="checkbox" ${settings.createRemoteBackupBeforePull !== false ? 'checked' : ''} onchange="scheduleRemoteBackupSettingsSave()"> ${navEscape(navT('nav.bk.optPull'))}</label>
-                    <label><input id="remoteBackupAutoRestore" type="checkbox" ${settings.autoRestore ? 'checked' : ''} onchange="scheduleRemoteBackupSettingsSave()"> ${navEscape(navT('nav.bk.optAuto'))}</label>
+                    <label title="${settings.startupAutoRestoreSupported === false ? navEscape(navT('nav.bk.optAutoDefaultOnly')) : ''}"><input id="remoteBackupAutoRestore" type="checkbox" ${settings.autoRestore ? 'checked' : ''} ${settings.startupAutoRestoreSupported === false ? 'disabled' : ''} onchange="scheduleRemoteBackupSettingsSave()"> ${navEscape(navT('nav.bk.optAuto'))}</label>
                 </div>
+                ${settings.startupAutoRestoreSupported === false ? `<div class="nav-backup-panel-desc">${navEscape(navT('nav.bk.optAutoDefaultOnly'))}</div>` : ''}
             </div>
             <div class="nav-remote-backup-status">
                 <span>${navEscape(navT('nav.bk.stLocal', { tz: getLocalTimeZoneLabel() }))}</span>
@@ -2433,13 +2818,19 @@ async function renderBackupSettings(content) {
             fetchRemoteBackupSettings(),
             fetchScheduleBackupSettings()
         ]);
+        if (data.tenantId && data.tenantId !== (navState.activeTenantId || 'default')) {
+            throw new Error(navLocaleText(
+                `页面租户已发生变化（页面：${navState.activeTenantId || 'default'}，服务端：${data.tenantId}），请刷新页面后再操作备份。`,
+                `The active tenant changed (page: ${navState.activeTenantId || 'default'}, server: ${data.tenantId}). Refresh before using backup actions.`
+            ));
+        }
         navState.remoteBackupSettings = remoteSettings;
         navState.scheduleBackupSettings = scheduleSettings;
         const targetText = (data.targets || []).map(item => item.relPath || item.path).join('、') || 'backend/data、data';
         const rows = (data.backups || []).map(item => `
             <tr>
                 <td>
-                    <div class="nav-backup-name">
+                    <div class="nav-backup-name" title="${navEscape(item.name)}">
                         ${navEscape(item.name)}
                         ${item.triggerType === 'remote-sync-request' ? `<span class="nav-backup-badge remote">${navEscape(navT('nav.bk.badgeSync'))}</span>` : ''}
                         ${item.triggerType === 'pre-restore' ? `<span class="nav-backup-badge safety">${navEscape(navT('nav.bk.badgeSafe'))}</span>` : ''}
@@ -2448,16 +2839,18 @@ async function renderBackupSettings(content) {
                     <div class="nav-backup-meta">${formatBackupTime(item.modifiedAt)} · ${formatBackupSize(item.size)}</div>
                     ${item.reason ? `<div class="nav-backup-meta">Reason: ${navEscape(item.reason)}</div>` : ''}
                 </td>
-                <td class="nav-backup-actions" style="display:flex; gap:6px; justify-content:flex-end;">
-                    <button onclick="downloadGlobalBackup('${navEscape(item.name)}')" title="${navEscape(navT('nav.bk.dlTitle'))}" style="padding:4px 8px; font-size:13px; min-width:auto;">⬇️</button>
-                    <button class="danger" onclick="restoreGlobalBackupFromServer('${navEscape(item.name)}')" title="${navEscape(navT('nav.bk.rsTitle'))}" style="padding:4px 8px; font-size:13px; min-width:auto;">⏪</button>
-                    <button class="danger" style="background:#fff3e0; color:#e65100; border-color:#ffe0b2; padding:4px 8px; font-size:13px; min-width:auto;" onclick="deleteGlobalBackup('${navEscape(item.name)}')" title="${navEscape(navT('nav.bk.delTitle'))}">🗑️</button>
+                <td class="nav-backup-action-cell">
+                    <div class="nav-backup-actions">
+                        <button onclick="downloadGlobalBackup('${navEscape(item.name)}')" title="${navEscape(navT('nav.bk.dlTitle'))}">⬇️</button>
+                        <button class="danger" onclick="restoreGlobalBackupFromServer('${navEscape(item.name)}')" title="${navEscape(navT('nav.bk.rsTitle'))}">⏪</button>
+                        <button class="danger delete" onclick="deleteGlobalBackup('${navEscape(item.name)}')" title="${navEscape(navT('nav.bk.delTitle'))}">🗑️</button>
+                    </div>
                 </td>
             </tr>
         `).join('');
 
         content.innerHTML = `
-            <div class="nav-settings-help">${navEscape(navT('nav.bk.help', { target: targetText }))}</div>
+            <div class="nav-settings-help">${navEscape(navT('nav.bk.help', { tenant: activeTenantName(), tenantId: navState.activeTenantId || 'default', target: targetText }))}</div>
             ${renderScheduleBackupSettings(scheduleSettings)}
             ${renderRemoteBackupSyncSettings(remoteSettings)}
             <div class="nav-backup-panel">
@@ -2512,6 +2905,150 @@ function renderInitializationSettings(content) {
         <div id="navInitializationStatus" class="nav-init-status" role="status"></div>
     `;
 }
+
+async function renderTenantSettings(content) {
+    content.innerHTML = `<div class="nav-settings-empty">${navEscape(navT('nav.tenant.loading'))}</div>`;
+    try {
+        await Promise.all([loadTenantNavigation(), loadManagedTenants()]);
+    } catch (error) {
+        content.innerHTML = `<div class="nav-settings-empty">${navEscape(error.message)}</div>`;
+        return;
+    }
+    const activeTenants = navState.managedTenants.filter(tenant => tenant.status === 'active');
+    const archivedTenants = navState.managedTenants.filter(tenant => tenant.status === 'archived');
+    const tenantRow = (tenant, archived = false) => `
+        <div class="nav-tenant-admin-row ${archived ? 'archived' : ''}" data-tenant-id="${navEscape(tenant.id)}">
+            <div>
+                <strong>${navEscape(displayTenantName(tenant))}</strong><span>${navEscape(tenant.id)}</span>
+                ${archived ? `<em class="nav-tenant-status-badge">${navEscape(navT('nav.tenant.archivedBadge'))}</em>` : ''}
+                <p>${navEscape(tenant.description || '')}</p>
+            </div>
+            <div class="nav-backup-toolbar">
+                <button type="button" onclick="editTenantInfo('${navEscape(tenant.id)}')">${navEscape(navT('nav.tenant.save'))}</button>
+                ${archived
+                    ? `<button type="button" onclick="restoreArchivedTenantInfo('${navEscape(tenant.id)}')">${navEscape(navT('nav.tenant.restore'))}</button>
+                       <button type="button" class="danger" onclick="deleteTenantData('${navEscape(tenant.id)}')">${navEscape(navT('nav.tenant.delete'))}</button>`
+                    : tenant.id !== 'default' ? `<button type="button" class="danger" onclick="archiveTenantInfo('${navEscape(tenant.id)}')">${navEscape(navT('nav.tenant.archive'))}</button>` : ''}
+            </div>
+        </div>`;
+    content.innerHTML = `
+        <div class="nav-settings-help">${navEscape(navT('nav.tenant.defaultHint'))}</div>
+        <form class="nav-tenant-create" novalidate onsubmit="createTenantInfo(event)">
+            <input name="name" required maxlength="80" placeholder="${navEscape(navT('nav.tenant.name'))}">
+            <input name="id" maxlength="63" pattern="[a-zA-Z0-9_-]+" placeholder="${navEscape(navT('nav.tenant.id'))}">
+            <input name="description" maxlength="240" placeholder="${navEscape(navT('nav.tenant.description'))}">
+            <button type="submit">${navEscape(navT('nav.tenant.create'))}</button>
+        </form>
+        <section class="nav-tenant-section">
+            <div class="nav-tenant-section-head">${navEscape(navT('nav.tenant.activeGroup'))}<span>${activeTenants.length}</span></div>
+            <div class="nav-tenant-admin-list">${activeTenants.map(tenant => tenantRow(tenant)).join('')}</div>
+        </section>
+        <section class="nav-tenant-section">
+            <div class="nav-tenant-section-head">${navEscape(navT('nav.tenant.archivedGroup'))}<span>${archivedTenants.length}</span></div>
+            <div class="nav-tenant-admin-list">${archivedTenants.map(tenant => tenantRow(tenant, true)).join('') || `<div class="nav-settings-empty">${navEscape(navT('nav.tenant.archivedEmpty'))}</div>`}</div>
+        </section>`;
+}
+
+window.createTenantInfo = async function (event) {
+    event.preventDefault();
+    const body = Object.fromEntries(new FormData(event.currentTarget).entries());
+    body.name = String(body.name || '').trim();
+    body.id = String(body.id || '').trim();
+    body.description = String(body.description || '').trim();
+    if (!body.name) return showNavbarNotice({ title: navT('nav.dialog.notice'), message: navT('nav.tenant.nameRequired'), tone: 'info' });
+    if (body.id && !/^[a-zA-Z0-9_-]+$/.test(body.id)) {
+        return showNavbarNotice({ title: navT('nav.dialog.notice'), message: navT('nav.tenant.idInvalid'), tone: 'info' });
+    }
+    const response = await fetch('/api/tenants', { method: 'POST', headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() }, body: JSON.stringify(body) });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return showNavbarNotice({ title: navT('nav.dialog.error'), message: data.error || `HTTP ${response.status}`, tone: 'error' });
+    await renderTenantSettings(document.getElementById('navSettingsContent'));
+};
+
+window.editTenantInfo = async function (tenantId) {
+    const tenant = navState.managedTenants.find(item => item.id === tenantId) || navState.tenants.find(item => item.id === tenantId);
+    if (!tenant) return;
+    const values = await showNavbarFormDialog({
+        title: navLocaleText('编辑租户信息', 'Edit tenant'),
+        message: navLocaleText(`正在编辑“${displayTenantName(tenant)}”。租户标识 ${tenant.id} 不会改变。`, `Editing “${displayTenantName(tenant)}”. Tenant ID ${tenant.id} will not change.`),
+        fields: [
+            { name: 'name', label: navT('nav.tenant.name'), value: tenant.name, required: true, maxLength: 80 },
+            { name: 'description', label: navT('nav.tenant.description'), value: tenant.description || '', maxLength: 240, multiline: true }
+        ],
+        confirmText: navT('nav.dialog.save')
+    });
+    if (!values) return;
+    const response = await fetch(`/api/tenants/${encodeURIComponent(tenantId)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() }, body: JSON.stringify(values) });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return showNavbarNotice({ title: navT('nav.dialog.error'), message: data.error || `HTTP ${response.status}`, tone: 'error' });
+    await renderTenantSettings(document.getElementById('navSettingsContent'));
+};
+
+window.archiveTenantInfo = async function (tenantId) {
+    const tenant = navState.managedTenants.find(item => item.id === tenantId) || navState.tenants.find(item => item.id === tenantId);
+    if (!tenant) return;
+    const confirmed = await showNavbarConfirm({
+        title: navLocaleText('归档租户', 'Archive tenant'),
+        message: navT('nav.tenant.archiveConfirm').replace('{name}', tenant.name),
+        hint: navLocaleText('租户数据目录会完整保留，但该租户将无法继续进入。', 'The tenant data directory will be retained, but users will no longer be able to enter it.'),
+        tone: 'danger',
+        confirmText: navT('nav.tenant.archive')
+    });
+    if (!confirmed) return;
+    const response = await fetch(`/api/tenants/${encodeURIComponent(tenantId)}`, { method: 'DELETE', headers: getAuthHeaderForNav() });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return showNavbarNotice({ title: navT('nav.dialog.error'), message: data.error || `HTTP ${response.status}`, tone: 'error' });
+    if (tenantId === navState.activeTenantId) {
+        switchTenantBrowserState(tenantId, 'default');
+        localStorage.setItem('tools_tenant_id', 'default');
+        window.location.reload();
+        return;
+    }
+    await renderTenantSettings(document.getElementById('navSettingsContent'));
+};
+
+window.restoreArchivedTenantInfo = async function (tenantId) {
+    const tenant = navState.managedTenants.find(item => item.id === tenantId);
+    if (!tenant) return;
+    const confirmed = await showNavbarConfirm({
+        title: navLocaleText('恢复已归档租户', 'Restore archived tenant'),
+        message: navT('nav.tenant.restoreConfirm').replace('{name}', displayTenantName(tenant)),
+        hint: navLocaleText('恢复只会重新启用租户，不会覆盖或初始化原有数据。', 'Restore only re-enables the tenant; it does not overwrite or initialize existing data.'),
+        confirmText: navT('nav.tenant.restore')
+    });
+    if (!confirmed) return;
+    const response = await fetch(`/api/tenants/${encodeURIComponent(tenantId)}/restore`, { method: 'POST', headers: getAuthHeaderForNav() });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return showNavbarNotice({ title: navT('nav.dialog.error'), message: data.error || `HTTP ${response.status}`, tone: 'error' });
+    await renderTenantSettings(document.getElementById('navSettingsContent'));
+};
+
+window.deleteTenantData = async function (tenantId) {
+    const tenant = navState.managedTenants.find(item => item.id === tenantId);
+    if (!tenant) return;
+    const name = displayTenantName(tenant);
+    const confirmed = await showNavbarTypedConfirm({
+        title: navT('nav.tenant.deleteTitle'),
+        message: navT('nav.tenant.deleteMessage').replace('{name}', name).replace('{id}', tenant.id),
+        hint: navT('nav.tenant.deleteHint').replace('{id}', tenant.id),
+        placeholder: navT('nav.tenant.deletePlaceholder').replace('{id}', tenant.id),
+        requiredText: tenant.id,
+        cancelText: navT('nav.set.restore.cancel'),
+        confirmText: navT('nav.tenant.delete')
+    });
+    if (!confirmed) return;
+    const response = await fetch(`/api/tenants/${encodeURIComponent(tenantId)}/permanent`, { method: 'DELETE', headers: getAuthHeaderForNav() });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return showNavbarNotice({ title: navT('nav.dialog.error'), message: data.error || `HTTP ${response.status}`, tone: 'error' });
+    localStorage.removeItem(`${TENANT_BROWSER_STATE_PREFIX}${tenantId}`);
+    localStorage.removeItem(`${NAV_BOOTSTRAP_CACHE_KEY}:${tenantId}`);
+    await renderTenantSettings(document.getElementById('navSettingsContent'));
+    await showNavbarNotice({
+        title: navLocaleText('删除完成', 'Deletion complete'),
+        message: navT('nav.tenant.deleteDone').replace('{name}', name),
+        tone: 'success'
+    });
+};
 
 function setInitializationStatus(message, tone = '') {
     const element = document.getElementById('navInitializationStatus');
@@ -2569,9 +3106,11 @@ window.factoryResetProgramData = async function () {
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
-        setInitializationStatus(navT('nav.init.resetSuccess').replace('{backup}', data.backup || '-'), 'success');
+        const successKey = data.needsRestart === false ? 'nav.init.resetSuccessNoRestart' : 'nav.init.resetSuccess';
+        setInitializationStatus(navT(successKey).replace('{backup}', data.backup || '-'), 'success');
         localStorage.clear();
         sessionStorage.clear();
+        if (data.needsRestart === false) setTimeout(() => { window.location.href = '/login.html'; }, 900);
     } catch (error) {
         setInitializationStatus(navT('nav.init.failed') + error.message, 'error');
     }
@@ -2697,7 +3236,7 @@ function collectCustomToolBrowserState(selectedSlugs) {
 
 window.exportCustomToolBackup = async function () {
     const slugs = Array.from(document.querySelectorAll('[data-custom-backup-slug]:checked')).map(box => box.dataset.customBackupSlug);
-    if (!slugs.length) return alert(navT('nav.ctbk.noSelection'));
+    if (!slugs.length) return showNavbarNotice({ title: navT('nav.dialog.notice'), message: navT('nav.ctbk.noSelection'), tone: 'info' });
     await runGlobalBackupAction(navT('nav.ctbk.exporting'), async () => {
         const res = await fetch('/api/custom-tools/backup/export', {
             method: 'POST',
@@ -2727,11 +3266,18 @@ window.exportCustomToolBackup = async function () {
 window.restoreCustomToolBackup = async function () {
     const input = document.getElementById('customToolBackupRestoreInput');
     const file = input?.files?.[0];
-    if (!file) return alert(navT('nav.ctbk.noFile'));
+    if (!file) return showNavbarNotice({ title: navT('nav.dialog.notice'), message: navT('nav.ctbk.noFile'), tone: 'info' });
     const strategy = document.getElementById('customToolBackupConflictStrategy')?.value === 'skip' ? 'skip' : 'replace';
     const strategyLabel = strategy === 'skip' ? navT('nav.ctbk.strategySkip') : navT('nav.ctbk.strategyReplace');
     const message = customToolBackupText('nav.ctbk.restoreConfirm', { file: file.name, strategy: strategyLabel });
-    if (!confirm(message)) return;
+    const confirmed = await showNavbarConfirm({
+        title: navLocaleText('恢复自定义工具备份', 'Restore custom-tool backup'),
+        message,
+        hint: navLocaleText('请确认冲突处理策略和备份文件无误后继续。', 'Verify the backup file and conflict strategy before continuing.'),
+        tone: 'warning',
+        confirmText: navLocaleText('开始恢复', 'Restore')
+    });
+    if (!confirmed) return;
     const result = await runGlobalBackupAction(navT('nav.ctbk.restoring'), async () => {
         const form = new FormData();
         form.append('backup', file);
@@ -2752,7 +3298,7 @@ window.restoreCustomToolBackup = async function () {
             skipped: data.skipped?.length || 0
         });
         if (dependencyCount) done += `\n\n${customToolBackupText('nav.ctbk.dependencyWarn', { count: dependencyCount })}`;
-        alert(done);
+        await showNavbarNotice({ title: navT('nav.dialog.success'), message: done, tone: 'success' });
         return data;
     });
     if (result) {
@@ -2789,7 +3335,8 @@ function collectScheduleBackupSettings() {
     return {
         enabled: Boolean(document.getElementById('scheduleBackupEnabled')?.checked),
         time: document.getElementById('scheduleBackupTime')?.value || '02:00',
-        retentionDays: parseInt(document.getElementById('scheduleBackupRetentionDays')?.value || '90', 10)
+        retentionDays: parseInt(document.getElementById('scheduleBackupRetentionDays')?.value || '90', 10),
+        maxTotalSizeGB: parseFloat(document.getElementById('scheduleBackupMaxTotalSizeGB')?.value || '10')
     };
 }
 
@@ -2805,8 +3352,18 @@ async function saveScheduleBackupSettingsNow() {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
     navState.scheduleBackupSettings = data;
+    const capacityStatus = document.getElementById('scheduleBackupCapacityStatus');
+    if (capacityStatus) {
+        capacityStatus.textContent = navT('nav.bk.scheduleUsage', {
+            used: formatBackupSize(data.currentTotalBytes || 0),
+            limit: formatBackupSize(data.maxTotalBytes || 0)
+        }) + (data.capacityExceeded ? ` · ${navT('nav.bk.scheduleOver')}` : '');
+        capacityStatus.classList.toggle('warning', Boolean(data.capacityExceeded));
+    }
     const indicator = document.getElementById('navSettingsSaveState');
-    if (indicator) indicator.textContent = navT('nav.bk.scheduleSaved');
+    if (indicator) indicator.textContent = data.capacityCleanup?.removedCount
+        ? `${navT('nav.bk.scheduleSaved')} · ${navLocaleText(`已清理 ${data.capacityCleanup.removedCount} 个旧备份`, `Removed ${data.capacityCleanup.removedCount} old backup(s)`)}`
+        : navT('nav.bk.scheduleSaved');
     return data;
 }
 
@@ -2888,14 +3445,24 @@ window.checkRemoteBackupNow = async function () {
         return data;
     });
     const latest = result.latest || {};
-    alert(`远端连接成功。\n\n${result.remoteCreatedBackup?.name ? `已请求主站生成新备份：${result.remoteCreatedBackup.name}\n` : ''}备份数量：${result.backups?.length || 0}\n最新备份：${latest.name || '-'}\n时间：${formatBackupTime(latest.modifiedAt || latest.createdAt)}`);
+    await showNavbarNotice({
+        title: navLocaleText('远端连接成功', 'Remote connection successful'),
+        message: `${result.remoteCreatedBackup?.name ? `${navLocaleText('已请求主站生成新备份', 'Requested a new remote backup')}：${result.remoteCreatedBackup.name}\n` : ''}${navLocaleText('备份数量', 'Backups')}：${result.backups?.length || 0}\n${navLocaleText('最新备份', 'Latest backup')}：${latest.name || '-'}\n${navLocaleText('时间', 'Time')}：${formatBackupTime(latest.modifiedAt || latest.createdAt)}`,
+        tone: 'success'
+    });
     renderNavSettingsContent();
 };
 
 window.pullRemoteBackupNow = async function (force) {
     clearTimeout(navState.remoteBackupSaveTimer);
     await saveRemoteBackupSettingsNow();
-    const ok = confirm(`${force ? '确定要强制恢复远端最新备份吗？' : '确定要按规则拉取并恢复远端备份吗？'}\n\n此操作会覆盖当前全部本地数据。恢复成功后服务会自动重启或需要手动重启。`);
+    const ok = await showNavbarConfirm({
+        title: force ? navLocaleText('强制恢复远端备份', 'Force remote restore') : navLocaleText('拉取并恢复远端备份', 'Pull and restore remote backup'),
+        message: force ? navLocaleText('确定要强制恢复远端最新备份吗？', 'Force restore the latest remote backup?') : navLocaleText('确定要按规则拉取并恢复远端备份吗？', 'Pull and restore a remote backup using the configured rules?'),
+        hint: navLocaleText('此操作只会覆盖当前租户的本地业务数据，不影响其他租户。恢复成功后服务会自动重启，手动启动方式可能需要重新启动服务。', 'This only overwrites local business data for the current tenant and does not affect other tenants. The service restarts automatically when possible; manual deployments may need a restart.'),
+        tone: 'danger',
+        confirmText: navLocaleText('确认恢复', 'Restore')
+    });
     if (!ok) return;
     await runGlobalBackupAction('正在拉取远端备份并恢复...', async () => {
         const res = await fetch('/api/global-backup/remote-pull', {
@@ -2909,9 +3476,17 @@ window.pullRemoteBackupNow = async function (force) {
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
         if (data.restored) {
-            alert(`远端备份恢复完成：${data.latest?.name || '-'}\n\n服务将自动重启；如果是手动 npm start，请重新启动服务。`);
+            await showNavbarNotice({
+                title: navLocaleText('远端备份恢复完成', 'Remote backup restored'),
+                message: `${data.latest?.name || '-'}\n\n${navLocaleText('服务将自动重启；如果是手动 npm start，请重新启动服务。', 'The service will restart automatically. If it was started manually with npm start, restart it yourself.')}`,
+                tone: 'success'
+            });
         } else {
-            alert(data.message || '远端备份未更新，未执行恢复。');
+            await showNavbarNotice({
+                title: navT('nav.dialog.notice'),
+                message: data.message || navLocaleText('远端备份未更新，未执行恢复。', 'The remote backup is unchanged; no restore was performed.'),
+                tone: 'info'
+            });
         }
         return data;
     });
@@ -2934,9 +3509,41 @@ async function runGlobalBackupAction(actionText, action) {
             appendBackupConsoleEntry(`操作失败：${e.message}`, 'error');
             setBackupConsoleProgress(100, 'FAILED');
         }
-        alert(`操作失败：${e.message}`);
+        if (e.code !== 'BACKUP_TENANT_MISMATCH') {
+            await showNavbarNotice({ title: navT('nav.dialog.error'), message: e.message, tone: 'error' });
+        }
         throw e;
     }
+}
+
+function createBackupApiError(data = {}, status = 500) {
+    const error = new Error(data.error || `HTTP ${status}`);
+    error.status = status;
+    Object.assign(error, data);
+    return error;
+}
+
+async function confirmCrossTenantRestore(error) {
+    const sourceName = error.backupTenantName || error.backupTenantId || '-';
+    const sourceId = error.backupTenantId || '-';
+    const targetName = error.currentTenantName || activeTenantName();
+    const targetId = error.currentTenantId || navState.activeTenantId || 'default';
+    return showNavbarConfirm({
+        eyebrow: navLocaleText('跨租户数据恢复', 'CROSS-TENANT RESTORE'),
+        title: navLocaleText('租户标识不一致，是否强制恢复？', 'Tenant IDs differ. Force restore?'),
+        message: navLocaleText(
+            `当前目标：${targetName}（ID: ${targetId}）\n备份来源：${sourceName}（ID: ${sourceId}）`,
+            `Target: ${targetName} (ID: ${targetId})\nBackup source: ${sourceName} (ID: ${sourceId})`
+        ),
+        hint: navLocaleText(
+            '确认后，来源租户的脚本、规则、数据库、附件和自定义工具将写入当前目标租户。目标租户现有业务数据会先生成安全备份；账号、登录会话、租户清单和其他租户不会被覆盖。',
+            'The source tenant’s scripts, rules, databases, attachments, and custom tools will be written into the current target tenant. A safety backup of the target is created first. Accounts, sessions, the tenant registry, and other tenants are not overwritten.'
+        ),
+        icon: '⇄',
+        tone: 'danger',
+        cancelText: navLocaleText('取消恢复', 'Cancel'),
+        confirmText: navLocaleText('确认强制恢复', 'Force restore')
+    });
 }
 
 let backupConsolePollTimer = null;
@@ -3051,7 +3658,7 @@ window.clearBackupOperationConsole = function () {
 };
 
 window.createGlobalBackup = async function (downloadAfterCreate) {
-    const operationId = startBackupOperationConsole('生成全局备份');
+    const operationId = startBackupOperationConsole('生成当前租户备份');
     const result = await runGlobalBackupAction('正在生成备份...', async () => {
         const res = await fetch('/api/global-backup/create', {
             method: 'POST',
@@ -3121,7 +3728,13 @@ window.downloadGlobalBackup = async function (name) {
 };
 
 window.deleteGlobalBackup = async function (name) {
-    const ok = confirm(`确定要永久删除备份文件吗？\n\n${name}`);
+    const ok = await showNavbarConfirm({
+        title: navLocaleText('永久删除备份', 'Permanently delete backup'),
+        message: name,
+        hint: navLocaleText('删除后无法恢复，请确认该备份已经不再需要。', 'This cannot be undone. Make sure this backup is no longer needed.'),
+        tone: 'danger',
+        confirmText: navLocaleText('永久删除', 'Delete permanently')
+    });
     if (!ok) return;
     await runGlobalBackupAction('正在删除备份...', async () => {
         const res = await fetch(`/api/global-backup/delete/${encodeURIComponent(name)}`, {
@@ -3137,39 +3750,67 @@ window.deleteGlobalBackup = async function (name) {
 
 function getGlobalRestoreCompletionMessage(data = {}) {
     const missing = Array.isArray(data.missingTargets) ? data.missingTargets : [];
+    const crossTenantText = data.forcedCrossTenant
+        ? `\n\n已强制跨租户恢复：${data.sourceTenant?.name || data.sourceTenant?.id || '-'}（${data.sourceTenant?.id || '-'}） → ${data.targetTenant?.name || data.targetTenant?.id || '-'}（${data.targetTenant?.id || '-'}）。`
+        : '';
     const partialText = data.partialRestore
         ? `\n\n注意：这是旧版或不完整备份，未包含：${missing.join('、')}。对应的现有数据未被覆盖。`
         : '';
-    return `恢复完成。恢复前安全备份：${data.safetyBackup?.name || '-'}${partialText}\n\n建议重启服务或刷新页面，确保 SQLite 连接重新加载。`;
+    return `恢复完成。恢复前安全备份：${data.safetyBackup?.name || '-'}${crossTenantText}${partialText}\n\n建议重启服务或刷新页面，确保 SQLite 连接重新加载。`;
 }
 
-window.restoreGlobalBackupFromServer = async function (name) {
-    const ok = confirm(`确定要从服务器备份恢复吗？\n\n${name}\n\n此操作会覆盖当前全局配置和全部数据。系统会先自动生成恢复前安全备份。`);
-    if (!ok) return;
-    const operationId = startBackupOperationConsole('恢复服务器备份');
-    await runGlobalBackupAction('正在从服务器备份恢复...', async () => {
+async function performServerBackupRestore(name, forceCrossTenant = false) {
+    const operationId = startBackupOperationConsole(forceCrossTenant ? '强制跨租户恢复服务器备份' : '恢复服务器备份');
+    return runGlobalBackupAction('正在从服务器备份恢复...', async () => {
         const res = await fetch(`/api/global-backup/restore/server/${encodeURIComponent(name)}`, {
             method: 'POST',
             headers: {
+                'Content-Type': 'application/json',
                 'X-Backup-Operation-Id': operationId,
                 ...getAuthHeaderForNav()
-            }
+            },
+            body: JSON.stringify({ forceCrossTenant, targetTenantId: navState.activeTenantId || 'default' })
         });
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-        alert(getGlobalRestoreCompletionMessage(data));
+        if (!res.ok) throw createBackupApiError(data, res.status);
+        await showNavbarNotice({ title: navT('nav.dialog.success'), message: getGlobalRestoreCompletionMessage(data), tone: 'success' });
         return data;
     });
+}
+
+window.restoreGlobalBackupFromServer = async function (name) {
+    const ok = await showNavbarConfirm({
+        title: navLocaleText('从服务器备份恢复', 'Restore server backup'),
+        message: name,
+        hint: navLocaleText('此操作只会覆盖当前租户的业务数据，不影响其他租户。系统会先自动生成当前租户的恢复前安全备份。', 'This only overwrites business data for the current tenant and does not affect other tenants. A safety backup for the current tenant is created first.'),
+        tone: 'danger',
+        confirmText: navLocaleText('开始恢复', 'Restore')
+    });
+    if (!ok) return;
+    try {
+        await performServerBackupRestore(name, false);
+    } catch (error) {
+        if (error.code !== 'BACKUP_TENANT_MISMATCH') throw error;
+        if (await confirmCrossTenantRestore(error)) await performServerBackupRestore(name, true);
+    }
     renderNavSettingsContent();
 };
 
-window.restoreGlobalBackupFromUpload = async function () {
+window.restoreGlobalBackupFromUpload = async function (forceCrossTenant = false, skipInitialConfirm = false) {
     const input = document.getElementById('globalBackupUploadInput');
     const file = input && input.files && input.files[0];
-    if (!file) return alert('请先选择备份 zip 包');
-    const ok = confirm(`确定要上传并恢复这个备份包吗？\n\n${file.name}\n\n此操作会覆盖当前全局配置和全部数据。系统会先自动生成恢复前安全备份。`);
-    if (!ok) return;
-    const operationId = startBackupOperationConsole('上传并恢复备份');
+    if (!file) return showNavbarNotice({ title: navT('nav.dialog.notice'), message: navLocaleText('请先选择备份 zip 包。', 'Select a backup ZIP package first.'), tone: 'info' });
+    if (!skipInitialConfirm) {
+        const ok = await showNavbarConfirm({
+            title: navLocaleText('上传并恢复备份', 'Upload and restore backup'),
+            message: file.name,
+            hint: navLocaleText('系统会先校验备份租户 ID；如与当前租户不同，会在不修改数据的情况下暂停并要求再次确认。', 'The tenant ID is checked first. If it differs from the current tenant, the restore pauses without changing data and asks for another confirmation.'),
+            tone: 'danger',
+            confirmText: navLocaleText('上传并校验', 'Upload and validate')
+        });
+        if (!ok) return;
+    }
+    const operationId = startBackupOperationConsole(forceCrossTenant ? '强制跨租户上传恢复' : '上传并恢复备份');
     appendBackupConsoleEntry(`已选择文件：${file.name}`, 'info', { size: formatBackupSize(file.size) });
 
     const indicator = document.getElementById('navSettingsSaveState');
@@ -3179,6 +3820,8 @@ window.restoreGlobalBackupFromUpload = async function () {
         const data = await new Promise((resolve, reject) => {
             const form = new FormData();
             form.append('backup', file);
+            form.append('forceCrossTenant', forceCrossTenant ? 'true' : 'false');
+            form.append('targetTenantId', navState.activeTenantId || 'default');
             let uploadCompleteLogged = false;
 
             const xhr = new XMLHttpRequest();
@@ -3208,7 +3851,7 @@ window.restoreGlobalBackupFromUpload = async function () {
                 if (xhr.status >= 200 && xhr.status < 300) {
                     resolve(resData);
                 } else {
-                    reject(new Error(resData.error || `HTTP ${xhr.status}`));
+                    reject(createBackupApiError(resData, xhr.status));
                 }
             };
 
@@ -3219,12 +3862,18 @@ window.restoreGlobalBackupFromUpload = async function () {
         if (indicator) indicator.textContent = '操作完成';
         appendBackupConsoleEntry('客户端已收到恢复完成响应', 'success');
         setBackupConsoleProgress(100, 'COMPLETED');
-        alert(getGlobalRestoreCompletionMessage(data));
+        await showNavbarNotice({ title: navT('nav.dialog.success'), message: getGlobalRestoreCompletionMessage(data), tone: 'success' });
     } catch (e) {
         if (indicator) indicator.textContent = `操作失败: ${e.message}`;
         appendBackupConsoleEntry(`恢复失败：${e.message}`, 'error');
         setBackupConsoleProgress(100, 'FAILED');
-        alert(`操作失败：${e.message}`);
+        if (e.code === 'BACKUP_TENANT_MISMATCH' && !forceCrossTenant) {
+            if (await confirmCrossTenantRestore(e)) {
+                return window.restoreGlobalBackupFromUpload(true, true);
+            }
+        } else {
+            await showNavbarNotice({ title: navT('nav.dialog.error'), message: e.message, tone: 'error' });
+        }
     }
     renderNavSettingsContent();
 };
@@ -3392,7 +4041,7 @@ window.runReportSnapshotCleanup = async function () {
     const mode = getReportSnapshotCleanupMode();
     const preview = await requestReportSnapshotCleanup(true);
     renderReportSnapshotCleanupResult(preview);
-    if (!preview.removedCount) return alert(navT('nav.page.report.res.empty'));
+    if (!preview.removedCount) return showNavbarNotice({ title: navT('nav.dialog.notice'), message: navT('nav.page.report.res.empty'), tone: 'info' });
     let confirmationText = '';
     let ok = false;
     if (mode === 'latest-only') {
@@ -3410,7 +4059,13 @@ window.runReportSnapshotCleanup = async function () {
         const confirmText = navT('nav.page.report.confirmRetain', { count: preview.removedCount, days })
             .replace('{count}', preview.removedCount)
             .replace('{days}', days);
-        ok = confirm(confirmText);
+        ok = await showNavbarConfirm({
+            title: navLocaleText('清理报表快照', 'Clean report snapshots'),
+            message: confirmText,
+            hint: navLocaleText('系统将按照当前保留策略删除冗余快照。', 'Redundant snapshots will be deleted using the current retention policy.'),
+            tone: 'danger',
+            confirmText: navLocaleText('确认清理', 'Clean snapshots')
+        });
     }
     if (!ok) return;
     await runGlobalBackupAction('正在清理冗余快照...', async () => {
@@ -3561,9 +4216,9 @@ function ensureNavbarConfirmDialog() {
     modal.innerHTML = `
         <div class="nav-confirm-backdrop" onclick="resolveNavbarConfirm(false)"></div>
         <section class="nav-confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="navbarConfirmTitle" aria-describedby="navbarConfirmMessage navbarConfirmHint">
-            <div class="nav-confirm-icon" aria-hidden="true">⇣</div>
+            <div class="nav-confirm-icon" aria-hidden="true">!</div>
             <div class="nav-confirm-copy">
-                <span class="nav-confirm-eyebrow">${navEscape(navT('nav.alert.title'))}</span>
+                <span class="nav-confirm-eyebrow"></span>
                 <h3 id="navbarConfirmTitle"></h3>
                 <p id="navbarConfirmMessage"></p>
                 <div class="nav-confirm-hint" id="navbarConfirmHint"></div>
@@ -3584,23 +4239,36 @@ function ensureNavbarConfirmDialog() {
     return modal;
 }
 
-function showNavbarConfirm({ title, message, hint, cancelText, confirmText }) {
+function showNavbarConfirm({ title, message, hint, cancelText, confirmText, eyebrow, icon, tone = 'warning', notice = false }) {
     const modal = ensureNavbarConfirmDialog();
     if (navConfirmResolver) {
         navConfirmResolver(false);
         navConfirmResolver = null;
     }
+    navDialogPreviousFocus = document.activeElement;
+    modal.dataset.tone = tone;
+    modal.querySelector('.nav-confirm-icon').textContent = icon || ({ success: '✓', error: '!', danger: '!', info: 'i' }[tone] || '?');
+    modal.querySelector('.nav-confirm-eyebrow').textContent = eyebrow || navT(`nav.dialog.${tone === 'danger' ? 'warning' : tone}`);
     modal.querySelector('#navbarConfirmTitle').textContent = title || '';
     modal.querySelector('#navbarConfirmMessage').textContent = message || '';
-    modal.querySelector('#navbarConfirmHint').textContent = hint || '';
-    modal.querySelector('.nav-confirm-cancel').textContent = cancelText || 'Cancel';
-    modal.querySelector('.nav-confirm-submit').textContent = confirmText || 'Confirm';
+    const hintElement = modal.querySelector('#navbarConfirmHint');
+    hintElement.textContent = hint || '';
+    hintElement.hidden = !hint;
+    const cancel = modal.querySelector('.nav-confirm-cancel');
+    const submit = modal.querySelector('.nav-confirm-submit');
+    cancel.hidden = notice;
+    cancel.textContent = cancelText || navT('nav.dialog.cancel');
+    submit.textContent = confirmText || navT(notice ? 'nav.dialog.close' : 'nav.dialog.confirm');
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
-    requestAnimationFrame(() => modal.querySelector('.nav-confirm-cancel')?.focus());
+    requestAnimationFrame(() => (notice ? submit : cancel)?.focus());
     return new Promise(resolve => {
         navConfirmResolver = resolve;
     });
+}
+
+function showNavbarNotice({ title, message, hint = '', tone = 'info', confirmText, eyebrow, icon }) {
+    return showNavbarConfirm({ title, message, hint, tone, confirmText, eyebrow, icon, notice: true });
 }
 
 window.resolveNavbarConfirm = function (confirmed) {
@@ -3610,6 +4278,111 @@ window.resolveNavbarConfirm = function (confirmed) {
     const resolve = navConfirmResolver;
     navConfirmResolver = null;
     if (resolve) resolve(Boolean(confirmed));
+    if (navDialogPreviousFocus instanceof HTMLElement && document.contains(navDialogPreviousFocus)) {
+        navDialogPreviousFocus.focus();
+    }
+    navDialogPreviousFocus = null;
+};
+
+function ensureNavbarFormDialog() {
+    let modal = document.getElementById('navbarFormDialogModal');
+    if (modal) return modal;
+    modal = document.createElement('div');
+    modal.id = 'navbarFormDialogModal';
+    modal.className = 'nav-confirm-modal nav-form-dialog-modal';
+    modal.setAttribute('aria-hidden', 'true');
+    modal.innerHTML = `
+        <div class="nav-confirm-backdrop" onclick="resolveNavbarFormDialog(false)"></div>
+        <section class="nav-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="navbarFormDialogTitle" aria-describedby="navbarFormDialogMessage">
+            <div class="nav-confirm-icon" aria-hidden="true">✎</div>
+            <div class="nav-confirm-copy">
+                <span class="nav-confirm-eyebrow"></span>
+                <h3 id="navbarFormDialogTitle"></h3>
+                <p id="navbarFormDialogMessage"></p>
+                <form class="nav-dialog-fields" id="navbarFormDialogFields" novalidate></form>
+                <div class="nav-confirm-hint" id="navbarFormDialogHint"></div>
+            </div>
+            <div class="nav-confirm-actions">
+                <button type="button" class="nav-confirm-cancel" onclick="resolveNavbarFormDialog(false)"></button>
+                <button type="button" class="nav-confirm-submit" onclick="resolveNavbarFormDialog(true)"></button>
+            </div>
+        </section>`;
+    modal.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            window.resolveNavbarFormDialog(false);
+        }
+    });
+    modal.querySelector('#navbarFormDialogFields').addEventListener('submit', event => {
+        event.preventDefault();
+        window.resolveNavbarFormDialog(true);
+    });
+    document.body.appendChild(modal);
+    return modal;
+}
+
+function showNavbarFormDialog({ title, message = '', hint = '', fields = [], cancelText, confirmText, eyebrow, icon = '✎', tone = 'info' }) {
+    const modal = ensureNavbarFormDialog();
+    if (navFormDialogResolver) {
+        navFormDialogResolver(null);
+        navFormDialogResolver = null;
+    }
+    navDialogPreviousFocus = document.activeElement;
+    modal.dataset.tone = tone;
+    modal.querySelector('.nav-confirm-icon').textContent = icon;
+    modal.querySelector('.nav-confirm-eyebrow').textContent = eyebrow || navT('nav.dialog.notice');
+    modal.querySelector('#navbarFormDialogTitle').textContent = title || '';
+    const messageElement = modal.querySelector('#navbarFormDialogMessage');
+    messageElement.textContent = message;
+    messageElement.hidden = !message;
+    const hintElement = modal.querySelector('#navbarFormDialogHint');
+    hintElement.textContent = hint;
+    hintElement.hidden = !hint;
+    const form = modal.querySelector('#navbarFormDialogFields');
+    form.innerHTML = fields.map((field, index) => {
+        const id = `navbarFormField${index}`;
+        const tag = field.multiline ? 'textarea' : 'input';
+        const attrs = [
+            `id="${id}"`, `name="${navEscape(field.name || `field${index}`)}"`,
+            `placeholder="${navEscape(field.placeholder || '')}"`,
+            field.required ? 'required' : '',
+            field.maxLength ? `maxlength="${Number(field.maxLength)}"` : '',
+            !field.multiline ? `type="${navEscape(field.type || 'text')}"` : '',
+            `autocomplete="${navEscape(field.autocomplete || 'off')}"`
+        ].filter(Boolean).join(' ');
+        const value = navEscape(field.value || '');
+        return `<label class="nav-dialog-field" for="${id}"><span>${navEscape(field.label || '')}</span>${tag === 'textarea' ? `<textarea ${attrs}>${value}</textarea>` : `<input ${attrs} value="${value}">`}</label>`;
+    }).join('');
+    const cancel = modal.querySelector('.nav-confirm-cancel');
+    const submit = modal.querySelector('.nav-confirm-submit');
+    cancel.textContent = cancelText || navT('nav.dialog.cancel');
+    submit.textContent = confirmText || navT('nav.dialog.save');
+    const validate = () => { submit.disabled = !form.checkValidity(); };
+    form.oninput = validate;
+    validate();
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    requestAnimationFrame(() => form.querySelector('input, textarea')?.focus());
+    return new Promise(resolve => { navFormDialogResolver = resolve; });
+}
+
+window.resolveNavbarFormDialog = function (confirmed) {
+    const modal = document.getElementById('navbarFormDialogModal');
+    const form = modal?.querySelector('#navbarFormDialogFields');
+    if (confirmed && form && !form.checkValidity()) {
+        form.querySelector(':invalid')?.focus();
+        return;
+    }
+    const values = confirmed && form ? Object.fromEntries(new FormData(form).entries()) : null;
+    modal?.classList.remove('open');
+    modal?.setAttribute('aria-hidden', 'true');
+    const resolve = navFormDialogResolver;
+    navFormDialogResolver = null;
+    if (resolve) resolve(values);
+    if (navDialogPreviousFocus instanceof HTMLElement && document.contains(navDialogPreviousFocus)) {
+        navDialogPreviousFocus.focus();
+    }
+    navDialogPreviousFocus = null;
 };
 
 async function refreshAlertCenterBadge() {
@@ -4043,10 +4816,12 @@ window.doLogout = async function () {
             headers: { 'Authorization': 'Bearer ' + localStorage.getItem('tools_token') }
         });
     } catch (e) { }
-    localStorage.removeItem('tools_token');
-    localStorage.removeItem('tools_user');
-    localStorage.removeItem('tools_role');
-    localStorage.removeItem(NAV_BOOTSTRAP_CACHE_KEY);
+    const language = localStorage.getItem('tools_language');
+    const legacyLanguage = localStorage.getItem('tools_lang');
+    localStorage.clear();
+    if (language) localStorage.setItem('tools_language', language);
+    if (legacyLanguage) localStorage.setItem('tools_lang', legacyLanguage);
+    sessionStorage.clear();
     document.cookie = 'tools_token=; path=/; max-age=0';
     window.location.href = '/login.html';
 };
@@ -4123,7 +4898,11 @@ window.openUserModal = async function () {
         `;
         m.style.display = 'flex';
     } catch (e) {
-        alert('获取用户列表失败: ' + e.message);
+        await showNavbarNotice({
+            title: navT('nav.dialog.error'),
+            message: navLocaleText('获取用户列表失败：', 'Failed to load accounts: ') + e.message,
+            tone: 'error'
+        });
     }
 };
 
@@ -4198,32 +4977,67 @@ window.openToolsAIAssistant = function (options = {}) {
 })();
 
 window.addUser = async function () {
-    const username = document.getElementById('nu_name').value;
+    const username = document.getElementById('nu_name').value.trim();
     const password = document.getElementById('nu_pwd').value;
     const role = document.getElementById('nu_role').value;
-    if (!username || !password) return alert('需填写完整');
+    if (!username || !password) return showNavbarNotice({ title: navT('nav.dialog.notice'), message: navT('nav.acc.required'), tone: 'info' });
     try {
         await API.post('/api/auth/users', { username, password, role });
-        alert('添加成功');
+        await showNavbarNotice({
+            title: navT('nav.acc.added'),
+            message: navT('nav.acc.addedDesc').replace('{user}', username),
+            tone: 'success'
+        });
         if (document.getElementById('navSettingsModal')?.style.display === 'flex') renderNavSettingsContent();
         else openUserModal();
-    } catch (e) { alert(e.message); }
+    } catch (e) {
+        await showNavbarNotice({ title: navT('nav.dialog.error'), message: e.message, tone: 'error' });
+    }
 };
 window.deleteUser = async function (u) {
-    if (!confirm('确定删除?')) return;
+    const confirmed = await showNavbarConfirm({
+        title: navT('nav.acc.deleteTitle'),
+        message: navT('nav.acc.deleteDesc').replace('{user}', u),
+        hint: navLocaleText('账号删除不会清理其历史操作记录。', 'Deleting the account does not remove its historical audit records.'),
+        tone: 'danger',
+        confirmText: navT('nav.acc.btnDel')
+    });
+    if (!confirmed) return;
     try {
         await API.delete('/api/auth/users/' + u);
         if (document.getElementById('navSettingsModal')?.style.display === 'flex') renderNavSettingsContent();
         else openUserModal();
-    } catch (e) { alert(e.message); }
+    } catch (e) {
+        await showNavbarNotice({ title: navT('nav.dialog.error'), message: e.message, tone: 'error' });
+    }
 };
 window.resetPwd = async function (u) {
-    const password = prompt('请输入新密码:');
-    if (!password) return;
+    const values = await showNavbarFormDialog({
+        title: navT('nav.acc.resetTitle'),
+        message: navT('nav.acc.resetDesc').replace('{user}', u),
+        fields: [{
+            name: 'password',
+            label: navT('nav.acc.newPassword'),
+            placeholder: navT('nav.acc.plhPwd'),
+            type: 'password',
+            autocomplete: 'new-password',
+            required: true,
+            maxLength: 200
+        }],
+        icon: '●',
+        confirmText: navT('nav.acc.btnReset')
+    });
+    if (!values?.password) return;
     try {
-        await API.put('/api/auth/users/' + u + '/password', { password });
-        alert('重置成功');
-    } catch (e) { alert(e.message); }
+        await API.put('/api/auth/users/' + u + '/password', { password: values.password });
+        await showNavbarNotice({
+            title: navT('nav.acc.resetDone'),
+            message: navT('nav.acc.resetDoneDesc').replace('{user}', u),
+            tone: 'success'
+        });
+    } catch (e) {
+        await showNavbarNotice({ title: navT('nav.dialog.error'), message: e.message, tone: 'error' });
+    }
 };
 
 // 检查服务状态

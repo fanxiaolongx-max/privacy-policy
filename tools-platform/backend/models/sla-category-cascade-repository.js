@@ -1,13 +1,10 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
-
 const toolsDb = require('./app-db');
-const { ensureReportDataDir, REPORT_DATA_DIR } = require('./report-store');
+const { ensureReportDataDir } = require('./report-store');
+const { createDatabaseProxy } = require('./tenant-sqlite-pool');
 
 ensureReportDataDir();
 
-const reportDbPath = path.join(REPORT_DATA_DIR, 'report.db');
-const reportDb = new sqlite3.Database(reportDbPath);
+const reportDb = createDatabaseProxy('report.db', 'report');
 
 function reportAll(sql, params = []) {
     return new Promise((resolve, reject) => {

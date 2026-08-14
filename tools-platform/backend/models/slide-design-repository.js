@@ -3,9 +3,9 @@ const fs = require('fs');
 const path = require('path');
 
 const { run, get, all } = require('./app-db');
-const { DATA_DIR, ensureDataDir } = require('./store');
+const { ensureDataDir, getDataDir } = require('./store');
 
-const LIBRARY_DIR = path.join(DATA_DIR, 'slide-library');
+function getLibraryDir() { return path.join(getDataDir(), 'slide-library'); }
 let readyPromise = null;
 
 function makeId(prefix) {
@@ -41,7 +41,7 @@ async function ensureReady() {
     if (!readyPromise) {
         readyPromise = (async () => {
             ensureDataDir();
-            fs.mkdirSync(LIBRARY_DIR, { recursive: true });
+            fs.mkdirSync(getLibraryDir(), { recursive: true });
             await run(`CREATE TABLE IF NOT EXISTS slide_design_projects (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -229,8 +229,8 @@ async function getAssetFile(id) {
     await ensureReady();
     const row = await get('SELECT * FROM slide_library_assets WHERE id = ?', [id]);
     if (!row) return null;
-    const absolutePath = path.resolve(LIBRARY_DIR, row.relative_path);
-    const root = `${path.resolve(LIBRARY_DIR)}${path.sep}`;
+    const absolutePath = path.resolve(getLibraryDir(), row.relative_path);
+    const root = `${path.resolve(getLibraryDir())}${path.sep}`;
     if (!absolutePath.startsWith(root)) throw new Error('素材文件路径非法');
     return { asset: rowToAsset(row), absolutePath };
 }
@@ -239,16 +239,16 @@ async function getAssetThumbnail(id) {
     await ensureReady();
     const row = await get('SELECT * FROM slide_library_assets WHERE id = ?', [id]);
     if (!row || !row.thumbnail_path) return null;
-    const absolutePath = path.resolve(LIBRARY_DIR, row.thumbnail_path);
-    const root = `${path.resolve(LIBRARY_DIR)}${path.sep}`;
+    const absolutePath = path.resolve(getLibraryDir(), row.thumbnail_path);
+    const root = `${path.resolve(getLibraryDir())}${path.sep}`;
     if (!absolutePath.startsWith(root)) throw new Error('缩略图路径非法');
     return { asset: rowToAsset(row), absolutePath };
 }
 
 function resolveLibraryFile(relativePath, label) {
     if (!relativePath) return null;
-    const absolutePath = path.resolve(LIBRARY_DIR, relativePath);
-    const root = `${path.resolve(LIBRARY_DIR)}${path.sep}`;
+    const absolutePath = path.resolve(getLibraryDir(), relativePath);
+    const root = `${path.resolve(getLibraryDir())}${path.sep}`;
     if (!absolutePath.startsWith(root)) throw new Error(`${label}路径非法`);
     return absolutePath;
 }
@@ -561,7 +561,8 @@ async function getClassificationVocabulary({ topicLimit = 30 } = {}) {
 }
 
 module.exports = {
-    LIBRARY_DIR,
+    getLibraryDir,
+    get LIBRARY_DIR() { return getLibraryDir(); },
     makeId,
     cleanTag,
     cleanTags,

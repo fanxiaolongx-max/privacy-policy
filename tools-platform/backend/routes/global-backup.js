@@ -5,21 +5,52 @@ const multer = require('multer');
 const repo = require('../models/global-backup-repository');
 const remoteRepo = require('../models/remote-backup-sync-repository');
 
-const { DATA_DIR } = require('../models/store');
+const { getDataDir } = require('../models/store');
+const { DEFAULT_TENANT_ID, getTenantId, normalizeTenantId, runWithTenant } = require('../models/tenant-context');
 
 const router = express.Router();
-const uploadDir = path.join(DATA_DIR, '../tmp/uploads');
-fs.mkdirSync(uploadDir, { recursive: true });
 const operationLogs = new Map();
 const MAX_OPERATION_LOGS = 60;
 
 const upload = multer({
-    dest: uploadDir,
+    storage: multer.diskStorage({
+        destination(_req, _file, callback) {
+            const dir = path.join(getDataDir(), 'tmp/uploads');
+            fs.mkdirSync(dir, { recursive: true });
+            callback(null, dir);
+        },
+        filename(_req, _file, callback) { callback(null, `${Date.now()}-${Math.random().toString(36).slice(2)}.zip`); }
+    }),
     limits: { fileSize: 1024 * 1024 * 1024 }
 });
 
 function handleError(res, err, fallback) {
-    res.status(err.statusCode || 500).json({ error: err.message || fallback });
+    const payload = { error: err.message || fallback };
+    ['code', 'backupTenantId', 'backupTenantName', 'currentTenantId', 'currentTenantName', 'requestedTenantId'].forEach(key => {
+        if (err[key] !== undefined) payload[key] = err[key];
+    });
+    res.status(err.statusCode || 500).json(payload);
+}
+
+function requestFlag(value) {
+    return value === true || value === 1 || String(value || '').toLowerCase() === 'true';
+}
+
+function requireRestoreTarget(req) {
+    const sessionTenantId = normalizeTenantId(req.user?.tenantId || DEFAULT_TENANT_ID);
+    const requestedValue = String(req.body?.targetTenantId || '').trim();
+    if (requestedValue) {
+        const requestedTenantId = normalizeTenantId(requestedValue);
+        if (requestedTenantId !== sessionTenantId || requestedTenantId !== requestedValue.toLowerCase()) {
+            const error = new Error(`页面选择的目标租户“${requestedValue}”与当前登录 Session 租户“${sessionTenantId}”不一致。为避免恢复到错误租户，已停止操作，请刷新页面后重新选择租户。`);
+            error.statusCode = 409;
+            error.code = 'ACTIVE_TENANT_CHANGED';
+            error.requestedTenantId = requestedValue;
+            error.currentTenantId = sessionTenantId;
+            throw error;
+        }
+    }
+    return sessionTenantId;
 }
 
 function getOperationId(req) {
@@ -38,7 +69,7 @@ function startOperation(req, type) {
         updatedAt: new Date().toISOString(),
         entries: []
     };
-    operationLogs.set(id, operation);
+    operationLogs.set(`${getTenantId()}:${id}`, operation);
     while (operationLogs.size > MAX_OPERATION_LOGS) {
         operationLogs.delete(operationLogs.keys().next().value);
     }
@@ -71,7 +102,7 @@ function finishOperation(operation, status, message) {
 }
 
 router.get('/operations/:id', (req, res) => {
-    const operation = operationLogs.get(req.params.id);
+    const operation = operationLogs.get(`${getTenantId()}:${req.params.id}`);
     if (!operation) return res.status(404).json({ error: '备份任务日志不存在或已过期' });
     res.json(operation);
 });
@@ -86,7 +117,13 @@ function scheduleProcessExitAfterRestore(res, source) {
 
 router.get('/list', (req, res) => {
     try {
-        res.json({ backups: repo.listBackups(), targets: repo.DATA_TARGETS });
+        res.json({
+            backups: repo.listBackups(),
+            targets: repo.DATA_TARGETS,
+            scope: 'single-tenant',
+            tenantId: getTenantId(),
+            includesAllTenants: false
+        });
     } catch (err) {
         handleError(res, err, '获取备份列表失败');
     }
@@ -153,10 +190,14 @@ router.delete('/delete/:name', (req, res) => {
 router.post('/restore/server/:name', async (req, res) => {
     const operation = startOperation(req, 'restore-server');
     try {
+        const targetTenantId = requireRestoreTarget(req);
         appendOperation(operation, { stage: 'start', message: `准备恢复服务器备份：${req.params.name}` });
-        const filePath = repo.getBackupPath(req.params.name);
-        const result = await repo.restoreFromZip(filePath, {
-            onProgress: entry => appendOperation(operation, entry)
+        const result = await runWithTenant(targetTenantId, () => {
+            const filePath = repo.getBackupPath(req.params.name);
+            return repo.restoreFromZip(filePath, {
+                forceCrossTenant: requestFlag(req.body?.forceCrossTenant),
+                onProgress: entry => appendOperation(operation, entry)
+            });
         });
         finishOperation(operation, 'completed', '恢复任务完成，服务即将重启');
         scheduleProcessExitAfterRestore(res, `server backup ${req.params.name}`);
@@ -171,14 +212,16 @@ router.post('/restore/upload', upload.single('backup'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: '请上传备份包' });
     const operation = startOperation(req, 'restore-upload');
     try {
+        const targetTenantId = requireRestoreTarget(req);
         appendOperation(operation, {
             stage: 'upload-received',
             message: `备份包上传完成：${req.file.originalname || req.file.filename}`,
             detail: { size: req.file.size }
         });
-        const result = await repo.restoreFromZip(req.file.path, {
+        const result = await runWithTenant(targetTenantId, () => repo.restoreFromZip(req.file.path, {
+            forceCrossTenant: requestFlag(req.body?.forceCrossTenant),
             onProgress: entry => appendOperation(operation, entry)
-        });
+        }));
         finishOperation(operation, 'completed', '恢复任务完成，服务即将重启');
         scheduleProcessExitAfterRestore(res, `uploaded backup ${req.file.originalname || req.file.filename}`);
         res.json(result);

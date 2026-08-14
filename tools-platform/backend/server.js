@@ -79,6 +79,9 @@ const alertCenterRoutes = require('./routes/alert-center');
 const platformMetricsRoutes = require('./routes/platform-metrics');
 const friendLinksRoutes = require('./routes/friend-links');
 const onboardingRoutes = require('./routes/onboarding');
+const tenantsRoutes = require('./routes/tenants');
+const { DEFAULT_TENANT_ID, runWithTenant, tenantMiddleware } = require('./models/tenant-context');
+const { initializeDefaultBusinessSchema } = require('./models/business-schema-initializer');
 const friendLinksService = require('./models/friend-links-service');
 const serviceStatusRepo = require('./models/service-status-repository');
 const globalBackupRepo = require('./models/global-backup-repository');
@@ -293,17 +296,16 @@ app.get('/api/migration-status', (req, res) => {
     res.json(legacyJsonMigration.getLastMigrationReport());
 });
 
-// 开放静态图片访问，跳过 JWT 鉴权 (浏览器 <img> 标签不带 Auth header)
-const { REPORT_DATA_DIR } = require('./models/report-store');
-app.use('/api/db/images', express.static(path.join(REPORT_DATA_DIR, 'images')));
 app.use('/api/uiv-auto-import', uivAutoImportRoutes);
 app.use('/api/public/f12-license', f12LicensePublicRoutes);
 
 app.use('/api', checkAuth); // Protect all /api/* (except login, which is handled inside checkAuth)
+app.use('/api', tenantMiddleware);
 
 // Protect modifications: requireAdmin for all non-GET requests under uiv, sla, upload
 app.use('/api', (req, res, next) => {
     if (req.path.startsWith('/auth/')) return next();
+    if (req.method === 'POST' && req.path === '/tenants/switch') return next();
     if (req.path.startsWith('/requirements')) return next(); // 需求管理内部自行控制权限
     if (req.path.startsWith('/surveys')) return next(); // 调查模板和提交由模块内部控制权限
     if (req.method === 'POST' && req.path === '/db/config/monthly_report_titles') return next(); // 登录用户可编辑月报中英文标题，路由内继续校验数据
@@ -332,12 +334,13 @@ app.use('/api/slide-design', slideDesignRoutes); // 胶片设计项目与 PPT �
 app.use('/api/surveys', surveysRoutes); // 可配置调查模板与提交记录 API
 app.use('/api/nav-settings', navSettingsRoutes); // 顶部导航全局设置 API
 app.use('/api/ai-settings', aiSettingsRoutes); // 智能客服助手模型配置 API
-app.use('/api/global-backup', globalBackupRoutes); // 全局数据备份与恢复 API
+app.use('/api/global-backup', globalBackupRoutes); // 当前租户核心数据备份与恢复 API（保留历史路由名）
 app.use('/api/external/metrics', externalMetricsRoutes); // 外部/移动端只读指标 API
 app.use('/api/alert-center', alertCenterRoutes); // 系统告警台 API
 app.use('/api/platform-metrics', platformMetricsRoutes); // 首页效能与使用量统计
 app.use('/api/friend-links', friendLinksRoutes); // 首页友情链接配置与轻量可用性探测
 app.use('/api/onboarding', onboardingRoutes); // 首次启动默认脚本/指标规则可选导入
+app.use('/api/tenants', tenantsRoutes); // 租户清单、切换与管理
 if (desktopLicenseAdminRoutes) app.use('/api/desktop-licenses', requireAdmin, desktopLicenseAdminRoutes);
 
 // ============================================================
@@ -395,14 +398,19 @@ app.get('/tools/:slug', checkHtmlAuth, (req, res) => {
     res.sendFile(path.join(FRONTEND_DIR, 'pages/custom-tool.html'));
 });
 app.use('/custom-tools', async (req, res, next) => {
-    try {
-        const slug = String(req.path || '').split('/').filter(Boolean)[0] || '';
-        const tool = slug ? await customToolsRepo.getTool(slug) : null;
-        if (tool && tool.publicAccess === true) return next();
-        return checkHtmlAuth(req, res, next);
-    } catch (err) {
-        next(err);
-    }
+    const hasSessionCookie = String(req.headers.cookie || '').split(';')
+        .some(item => item.trim().startsWith('tools_token='));
+    if (hasSessionCookie) return checkHtmlAuth(req, res, next);
+    return runWithTenant(DEFAULT_TENANT_ID, async () => {
+        try {
+            const slug = String(req.path || '').split('/').filter(Boolean)[0] || '';
+            const tool = slug ? await customToolsRepo.getTool(slug) : null;
+            if (tool && tool.publicAccess === true) return next();
+            return checkHtmlAuth(req, res, next);
+        } catch (err) {
+            return next(err);
+        }
+    });
 });
 app.get('/custom-tools/:slug/index.html', async (req, res, next) => {
     try {
@@ -436,7 +444,7 @@ app.use('/custom-tools/:slug', (req, res, next) => {
     }
     res.sendFile(assetPath);
 });
-app.use('/custom-tools', express.static(customToolsRepo.CUSTOM_TOOLS_DIR));
+app.use('/custom-tools', (req, res, next) => express.static(customToolsRepo.getCustomToolsDir())(req, res, next));
 
 
 // ── 全局错误兜底
@@ -447,6 +455,7 @@ app.use((err, req, res, next) => {
 
 async function startServer() {
     await legacyJsonMigration.runStartupLegacyJsonMigration();
+    await initializeDefaultBusinessSchema();
     try {
         const initialized = initializeBuiltinTools({
             sourceDir: path.join(__dirname, 'builtin-tools'),

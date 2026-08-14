@@ -1,16 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 
-const { ensureDataDir, DATA_DIR } = require('../models/store');
+const { ensureDataDir } = require('../models/store');
+const { createDatabaseProxy } = require('../models/tenant-sqlite-pool');
 
-const dataDir = DATA_DIR;
 ensureDataDir();
-
-const dbPath = path.join(dataDir, 'requirements.db');
-const db = new sqlite3.Database(dbPath);
+const db = createDatabaseProxy('requirements.db');
 
 // 初始化表结构
 db.serialize(() => {
@@ -187,13 +184,6 @@ router.delete('/:id', (req, res) => {
     });
 });
 
-router.closeDatabase = function closeDatabase() {
-    return new Promise((resolve, reject) => {
-        db.close(err => {
-            if (err && err.code !== 'SQLITE_MISUSE') return reject(err);
-            resolve();
-        });
-    });
-};
+router.closeDatabase = async function closeDatabase() {};
 
 module.exports = router;

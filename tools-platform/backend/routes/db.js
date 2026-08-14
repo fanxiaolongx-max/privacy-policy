@@ -1,18 +1,15 @@
 const express = require('express');
 const router = express.require ? express.Router() : require('express').Router();
-const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 const zlib = require('zlib');
 
-const { ensureReportDataDir, REPORT_DATA_DIR } = require('../models/report-store');
+const { ensureReportDataDir, getReportDataDir } = require('../models/report-store');
+const { createDatabaseProxy } = require('../models/tenant-sqlite-pool');
 const configChangeMonitor = require('../models/config-change-monitor');
 
-const dataDir = REPORT_DATA_DIR;
 ensureReportDataDir();
-
-const dbPath = path.join(dataDir, 'report.db');
-const db = new sqlite3.Database(dbPath);
+const db = createDatabaseProxy('report.db', 'report');
 
 // Initialize DB schema
 db.serialize(() => {
@@ -85,9 +82,10 @@ db.serialize(() => {
     )`);
 });
 
-const imagesDir = path.join(dataDir, 'images');
-if (!fs.existsSync(imagesDir)) {
+function getImagesDir() {
+    const imagesDir = path.join(getReportDataDir(), 'images');
     fs.mkdirSync(imagesDir, { recursive: true });
+    return imagesDir;
 }
 
 function markSqliteSource(res, routeLabel) {
@@ -133,7 +131,11 @@ function expandCompressedReportPayload(body) {
 }
 
 // Serve static images
-router.use('/images', express.static(imagesDir));
+router.use('/images', (req, res, next) => {
+    const relative = String(req.path || '').replace(/^\/+/, '');
+    if (!relative || relative.includes('..')) return next();
+    res.sendFile(path.join(getImagesDir(), relative), error => error ? next() : undefined);
+});
 
 router.post('/save', (req, res) => {
     let body;
@@ -160,7 +162,7 @@ router.post('/save', (req, res) => {
     let image_path = null;
     if (image_data && image_data.startsWith('data:image/')) {
         const base64Data = image_data.replace(/^data:image\/\w+;base64,/, "");
-        const filePath = path.join(imagesDir, `${snapshot_id}_${month}.png`);
+        const filePath = path.join(getImagesDir(), `${snapshot_id}_${month}.png`);
         fs.writeFileSync(filePath, base64Data, 'base64');
         image_path = `/api/db/images/${snapshot_id}_${month}.png`;
     }
@@ -180,7 +182,7 @@ router.post('/save', (req, res) => {
             if (matches && matches.length === 3) {
                 const buffer = Buffer.from(matches[2], 'base64');
                 const filename = `${snapshot_id}_${month}.xlsx`;
-                const fullPath = path.join(imagesDir, filename);
+                const fullPath = path.join(getImagesDir(), filename);
                 fs.writeFileSync(fullPath, buffer);
                 excel_path = `/api/db/images/${filename}`;
             }
@@ -929,13 +931,6 @@ router.post('/bigscreen_owners', (req, res) => {
     });
 });
 
-router.closeDatabase = function closeDatabase() {
-    return new Promise((resolve, reject) => {
-        db.close(err => {
-            if (err && err.code !== 'SQLITE_MISUSE') return reject(err);
-            resolve();
-        });
-    });
-};
+router.closeDatabase = async function closeDatabase() {};
 
 module.exports = router;

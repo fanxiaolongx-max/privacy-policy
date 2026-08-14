@@ -2,14 +2,20 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const JSZip = require('jszip');
+const sqlite3 = require('sqlite3').verbose();
 
-const { DATA_DIR } = require('./store');
-const { REPORT_DATA_DIR } = require('./report-store');
+const { getDataDir } = require('./store');
+const { getReportDataDir } = require('./report-store');
+const { DEFAULT_TENANT_ID, getTenantId, runWithTenant } = require('./tenant-context');
 const { readKV, writeKV } = require('./kv-store');
 
-const BACKUP_DIR = path.join(DATA_DIR, '../backups');
-const RESTORE_TMP_DIR = path.join(DATA_DIR, '../tmp/restores');
-const BACKUP_VERSION = 2; // bumped version for the new path structure
+function getBackupDir() {
+    return getTenantId() === DEFAULT_TENANT_ID ? path.join(getDataDir(), '../backups') : path.join(getDataDir(), 'backups');
+}
+function getRestoreTmpDir() {
+    return getTenantId() === DEFAULT_TENANT_ID ? path.join(getDataDir(), '../tmp/restores') : path.join(getDataDir(), 'tmp/restores');
+}
+const BACKUP_VERSION = 3; // v3 adds tenant identity and a lean tenant-scoped payload
 const SCHEDULE_KV_CATEGORY = 'global_backup';
 const SCHEDULE_KV_KEY = 'auto_schedule';
 const AUTO_BACKUP_REASON = 'scheduled-auto';
@@ -17,39 +23,55 @@ const DEFAULT_SCHEDULE_SETTINGS = {
     enabled: true,
     time: '02:00',
     retentionDays: 90,
+    maxTotalSizeGB: 10,
     lastRunAt: null,
     lastSuccessAt: null,
     lastBackupName: '',
     lastError: ''
 };
 
-let schedulerTimer = null;
-let schedulerRunning = false;
+const schedulerTimers = new Map();
+const schedulerRunning = new Set();
 
 const REPORT_OWNED_FILES = ['report.db', 'report.db-wal', 'report.db-shm'];
 const PRIMARY_SQLITE_SIDECARS = ['tools.db-wal', 'tools.db-shm'];
-const PRIMARY_PRESERVED_DIRS = ['images', 'slide-library'];
-const HAS_SPLIT_REPORT_DATA = path.resolve(REPORT_DATA_DIR) !== path.resolve(DATA_DIR);
-const DATA_TARGETS = [
-    {
+const CONTROL_PLANE_TABLES = ['auth_users', 'tenants', 'user_tenants', 'auth_sessions'];
+// `tenants` is a sibling workspace collection when operating on the legacy
+// default tenant. A backup/restore for one tenant must never absorb or replace it.
+const PRIMARY_PRESERVED_DIRS = ['images', 'slide-library', 'tenants'];
+// Operational history, caches and temporary imports are not business source
+// data. Excluding these also prevents a backup from recursively carrying older
+// backup copies and large abandoned upload files.
+const PRIMARY_OPERATIONAL_DIRS = ['backups', 'tmp', 'quarantine', 'runtime'];
+const DEFAULT_MACHINE_FILES = [
+    'desktop-license-registry.json',
+    'desktop-license-signing-key.json',
+    'f12-extension-identities.json',
+    'f12-extension-versions.json',
+    'f12-license-registry.json',
+    'f12-license-signing-key.json'
+];
+function getPrimaryPreservedNames() {
+    return [
+        ...PRIMARY_PRESERVED_DIRS,
+        ...PRIMARY_OPERATIONAL_DIRS,
+        ...(getTenantId() === DEFAULT_TENANT_ID ? DEFAULT_MACHINE_FILES : [])
+    ];
+}
+function hasSplitReportData() { return path.resolve(getReportDataDir()) !== path.resolve(getDataDir()); }
+function getDataTargets() {
+    const targets = [{
         id: 'primary_data',
-        absPath: DATA_DIR,
+        absPath: getDataDir(),
         relPath: process.env.TOOLS_DATA_DIR ? 'data' : 'backend/data',
         excludeTopLevel: [
-            ...PRIMARY_PRESERVED_DIRS,
+            ...getPrimaryPreservedNames(),
             ...PRIMARY_SQLITE_SIDECARS,
-            ...(HAS_SPLIT_REPORT_DATA ? REPORT_OWNED_FILES : [])
+            ...(hasSplitReportData() ? REPORT_OWNED_FILES : [])
         ]
-    }
-];
-
-if (HAS_SPLIT_REPORT_DATA) {
-    DATA_TARGETS.push({
-        id: 'report_data',
-        absPath: REPORT_DATA_DIR,
-        relPath: 'data（不含 images）',
-        includeTopLevel: REPORT_OWNED_FILES
-    });
+    }];
+    if (hasSplitReportData()) targets.push({ id: 'report_data', absPath: getReportDataDir(), relPath: 'data（不含 images）', includeTopLevel: REPORT_OWNED_FILES });
+    return targets;
 }
 
 function ensureDir(dir) {
@@ -70,6 +92,66 @@ function reportProgress(options, stage, message, detail = null, level = 'info') 
         options.onProgress({ stage, message, detail, level, timestamp: new Date().toISOString() });
     } catch (err) {
         console.warn('[GLOBAL BACKUP] Progress reporter failed:', err.message);
+    }
+}
+
+async function snapshotTenantControlPlane() {
+    const tenantDb = getTenantId() === DEFAULT_TENANT_ID ? require('./platform-db') : require('./app-db');
+    const placeholders = CONTROL_PLANE_TABLES.map(() => '?').join(',');
+    const schema = await tenantDb.all(`SELECT type,name,tbl_name,sql FROM sqlite_master
+        WHERE sql IS NOT NULL AND (name IN (${placeholders}) OR tbl_name IN (${placeholders}))
+        ORDER BY CASE type WHEN 'table' THEN 0 WHEN 'index' THEN 1 ELSE 2 END`, [...CONTROL_PLANE_TABLES, ...CONTROL_PLANE_TABLES]);
+    const existing = new Set(schema.filter(item => item.type === 'table').map(item => item.name));
+    const rows = {};
+    for (const table of CONTROL_PLANE_TABLES) {
+        if (existing.has(table)) rows[table] = await tenantDb.all(`SELECT * FROM "${table}"`);
+    }
+    return { schema, rows };
+}
+
+function sqliteRun(db, sql, params = []) {
+    return new Promise((resolve, reject) => db.run(sql, params, error => error ? reject(error) : resolve()));
+}
+
+function sqliteClose(db) {
+    return new Promise((resolve, reject) => db.close(error => error ? reject(error) : resolve()));
+}
+
+async function restoreTenantControlPlane(snapshot) {
+    if (!snapshot) return false;
+    const dbPath = path.join(getDataDir(), 'tools.db');
+    const db = new sqlite3.Database(dbPath);
+    try {
+        await sqliteRun(db, 'PRAGMA foreign_keys = OFF');
+        await sqliteRun(db, 'BEGIN IMMEDIATE');
+        try {
+            for (const table of [...CONTROL_PLANE_TABLES].reverse()) {
+                await sqliteRun(db, `DROP TABLE IF EXISTS "${table}"`);
+            }
+            for (const item of snapshot.schema.filter(entry => entry.type === 'table')) {
+                await sqliteRun(db, item.sql);
+            }
+            for (const table of CONTROL_PLANE_TABLES) {
+                const rows = snapshot.rows[table] || [];
+                for (const row of rows) {
+                    const columns = Object.keys(row);
+                    if (!columns.length) continue;
+                    const names = columns.map(name => `"${name}"`).join(',');
+                    const placeholders = columns.map(() => '?').join(',');
+                    await sqliteRun(db, `INSERT INTO "${table}" (${names}) VALUES (${placeholders})`, columns.map(name => row[name]));
+                }
+            }
+            for (const item of snapshot.schema.filter(entry => entry.type !== 'table')) {
+                await sqliteRun(db, item.sql);
+            }
+            await sqliteRun(db, 'COMMIT');
+        } catch (error) {
+            await sqliteRun(db, 'ROLLBACK').catch(() => {});
+            throw error;
+        }
+        return true;
+    } finally {
+        await sqliteClose(db);
     }
 }
 
@@ -100,8 +182,8 @@ function countFilesAndBytes(dir, options = {}) {
     return result;
 }
 
-function getManifest(reason = 'manual') {
-    const targets = DATA_TARGETS.map(target => {
+function getManifest(reason = 'manual', tenant = null) {
+    const targets = getDataTargets().map(target => {
         const absPath = target.absPath;
         return {
             id: target.id,
@@ -119,6 +201,10 @@ function getManifest(reason = 'manual') {
     return {
         type: 'tools-platform-global-backup',
         version: BACKUP_VERSION,
+        scope: 'single-tenant',
+        tenantId: getTenantId(),
+        tenantName: tenant?.name || getTenantId(),
+        includesAllTenants: false,
         createdAt: new Date().toISOString(),
         reason,
         targets,
@@ -143,12 +229,17 @@ function normalizeScheduleSettings(raw = {}) {
     const timeRaw = String(raw.time || DEFAULT_SCHEDULE_SETTINGS.time).trim();
     const time = /^([01]\d|2[0-3]):[0-5]\d$/.test(timeRaw) ? timeRaw : DEFAULT_SCHEDULE_SETTINGS.time;
     const retentionDays = Math.max(1, Math.min(3650, parseInt(raw.retentionDays, 10) || DEFAULT_SCHEDULE_SETTINGS.retentionDays));
+    const parsedMaxTotalSizeGB = Number(raw.maxTotalSizeGB);
+    const maxTotalSizeGB = Number.isFinite(parsedMaxTotalSizeGB)
+        ? Math.max(0.1, Math.min(10240, parsedMaxTotalSizeGB))
+        : DEFAULT_SCHEDULE_SETTINGS.maxTotalSizeGB;
     return {
         ...DEFAULT_SCHEDULE_SETTINGS,
         ...raw,
         enabled: raw.enabled !== false,
         time,
         retentionDays,
+        maxTotalSizeGB,
         lastRunAt: raw.lastRunAt || null,
         lastSuccessAt: raw.lastSuccessAt || null,
         lastBackupName: raw.lastBackupName || '',
@@ -157,11 +248,11 @@ function normalizeScheduleSettings(raw = {}) {
 }
 
 function listBackups() {
-    ensureDir(BACKUP_DIR);
-    return fs.readdirSync(BACKUP_DIR)
+    ensureDir(getBackupDir());
+    return fs.readdirSync(getBackupDir())
         .filter(name => name.endsWith('.zip'))
         .map(name => {
-            const filePath = path.join(BACKUP_DIR, name);
+            const filePath = path.join(getBackupDir(), name);
             const stat = fs.statSync(filePath);
             const reason = getReasonFromBackupName(name);
             return {
@@ -179,8 +270,8 @@ function listBackups() {
 
 function getBackupPath(name) {
     const cleaned = safeName(name);
-    const fullPath = path.join(BACKUP_DIR, cleaned);
-    if (!fullPath.startsWith(BACKUP_DIR + path.sep)) {
+    const fullPath = path.join(getBackupDir(), cleaned);
+    if (!fullPath.startsWith(getBackupDir() + path.sep)) {
         throw new Error('非法备份文件名');
     }
     if (!fs.existsSync(fullPath)) {
@@ -254,7 +345,7 @@ function addPathToZip(zip, absPath, relPath, target) {
 
 async function writeZip(outputPath, manifest) {
     const zip = new JSZip();
-    DATA_TARGETS.forEach(target => {
+    getDataTargets().forEach(target => {
         const absPath = target.absPath;
         if (fs.existsSync(absPath)) {
             addPathToZip(zip, absPath, target.id, target);
@@ -295,6 +386,7 @@ function closeSqliteDatabase(label, closeFn) {
 
 async function closeRuntimeDatabases() {
     const appDb = require('./app-db');
+    const tenantSqlitePool = require('./tenant-sqlite-pool');
     const reportRoute = require('../routes/db');
     const externalMetricsRepo = require('./external-metrics-repository');
     const requirementsRoute = require('../routes/requirements');
@@ -303,14 +395,19 @@ async function closeRuntimeDatabases() {
     results.push(await closeSqliteDatabase('report.db', reportRoute.closeDatabase));
     results.push(await closeSqliteDatabase('external metrics report.db', externalMetricsRepo.closeDatabase));
     results.push(await closeSqliteDatabase('requirements.db', requirementsRoute.closeDatabase));
+    results.push(await closeSqliteDatabase('tenant sqlite pools', tenantSqlitePool.closeAll));
+    if (getTenantId() === DEFAULT_TENANT_ID) {
+        const platformDb = require('./platform-db');
+        results.push(await closeSqliteDatabase('platform tools.db', platformDb.closeDatabase));
+    }
     return results;
 }
 
 async function createBackup(options = {}) {
-    ensureDir(BACKUP_DIR);
+    ensureDir(getBackupDir());
     const reason = options.reason || 'manual';
     const filename = `tools-platform-backup_${timestampForFile()}_${safeName(reason)}.zip`;
-    const outputPath = path.join(BACKUP_DIR, filename);
+    const outputPath = path.join(getBackupDir(), filename);
     reportProgress(options, 'checkpoint', '正在固化 SQLite WAL 数据');
     const appDb = require('./app-db');
     const checkpoint = await appDb.all('PRAGMA wal_checkpoint(TRUNCATE)');
@@ -320,7 +417,8 @@ async function createBackup(options = {}) {
     }
     reportProgress(options, 'checkpoint-ready', 'SQLite WAL 已安全写入主数据库', checkpointState || null, 'success');
     reportProgress(options, 'scan', '正在扫描备份数据目录');
-    const manifest = getManifest(reason);
+    const tenant = await require('./tenants-repository').getTenantById(getTenantId()).catch(() => null);
+    const manifest = getManifest(reason, tenant);
     reportProgress(options, 'manifest', `已生成清单：${manifest.totalFiles} 个文件，${manifest.totalBytes} 字节`, {
         targets: manifest.targets.map(item => ({ id: item.id, files: item.files, bytes: item.bytes }))
     });
@@ -329,13 +427,26 @@ async function createBackup(options = {}) {
         reportProgress(options, 'compress', '正在压缩备份数据');
         await writeZip(outputPath, manifest);
         const stat = fs.statSync(outputPath);
+        let capacityCleanup = null;
+        if (options.skipCapacityPrune !== true) {
+            const settings = await getScheduleSettings();
+            capacityCleanup = pruneBackupsByCapacity(settings.maxTotalSizeGB, { protectNames: [filename] });
+            if (capacityCleanup.removedCount) {
+                reportProgress(options, 'capacity-cleanup', `容量上限清理了 ${capacityCleanup.removedCount} 个旧备份`, {
+                    removed: capacityCleanup.removed,
+                    totalBytes: capacityCleanup.totalBytes,
+                    maxTotalBytes: capacityCleanup.maxTotalBytes
+                }, 'warn');
+            }
+        }
         reportProgress(options, 'backup-ready', `备份包生成完成：${filename}`, { size: stat.size }, 'success');
         return {
             name: filename,
             size: stat.size,
             createdAt: stat.birthtime.toISOString(),
             modifiedAt: stat.mtime.toISOString(),
-            manifest
+            manifest,
+            capacityCleanup
         };
     } catch (err) {
         fs.rmSync(outputPath, { force: true });
@@ -345,7 +456,7 @@ async function createBackup(options = {}) {
 }
 
 function pruneScheduledBackups(retentionDays = DEFAULT_SCHEDULE_SETTINGS.retentionDays) {
-    ensureDir(BACKUP_DIR);
+    ensureDir(getBackupDir());
     const days = Math.max(1, Math.min(3650, parseInt(retentionDays, 10) || DEFAULT_SCHEDULE_SETTINGS.retentionDays));
     const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
     const removed = [];
@@ -364,6 +475,41 @@ function pruneScheduledBackups(retentionDays = DEFAULT_SCHEDULE_SETTINGS.retenti
     return { retentionDays: days, removedCount: removed.length, removed };
 }
 
+function pruneBackupsByCapacity(maxTotalSizeGB = DEFAULT_SCHEDULE_SETTINGS.maxTotalSizeGB, options = {}) {
+    ensureDir(getBackupDir());
+    const parsed = Number(maxTotalSizeGB);
+    const normalizedGB = Number.isFinite(parsed)
+        ? Math.max(0.1, Math.min(10240, parsed))
+        : DEFAULT_SCHEDULE_SETTINGS.maxTotalSizeGB;
+    const maxTotalBytes = Math.floor(normalizedGB * 1024 * 1024 * 1024);
+    const protectedNames = new Set(options.protectNames || []);
+    const backups = listBackups();
+    let totalBytes = backups.reduce((sum, item) => sum + item.size, 0);
+    const removed = [];
+
+    // listBackups is newest-first. Delete from the oldest end while keeping at
+    // least one valid recovery point and never deleting the backup just made.
+    for (let index = backups.length - 1; index >= 0 && totalBytes > maxTotalBytes; index -= 1) {
+        const item = backups[index];
+        if (backups.length - removed.length <= 1 || protectedNames.has(item.name)) continue;
+        try {
+            fs.rmSync(getBackupPath(item.name), { force: true });
+            totalBytes -= item.size;
+            removed.push(item.name);
+        } catch (err) {
+            console.warn('[GLOBAL BACKUP] Failed to prune backup by capacity:', item.name, err.message);
+        }
+    }
+    return {
+        maxTotalSizeGB: normalizedGB,
+        maxTotalBytes,
+        totalBytes: Math.max(0, totalBytes),
+        capacityExceeded: totalBytes > maxTotalBytes,
+        removedCount: removed.length,
+        removed
+    };
+}
+
 async function getScheduleSettings() {
     return normalizeScheduleSettings(await readKV(SCHEDULE_KV_CATEGORY, SCHEDULE_KV_KEY, DEFAULT_SCHEDULE_SETTINGS));
 }
@@ -372,8 +518,9 @@ async function saveScheduleSettings(nextSettings = {}) {
     const current = await getScheduleSettings();
     const normalized = normalizeScheduleSettings({ ...current, ...nextSettings });
     await writeKV(SCHEDULE_KV_CATEGORY, SCHEDULE_KV_KEY, normalized);
+    const capacityCleanup = pruneBackupsByCapacity(normalized.maxTotalSizeGB);
     scheduleNextAutoBackup(normalized);
-    return getScheduleStatus(normalized);
+    return { ...getScheduleStatus(normalized), capacityCleanup };
 }
 
 function getNextRunAt(settings = normalizeScheduleSettings()) {
@@ -388,19 +535,36 @@ function getNextRunAt(settings = normalizeScheduleSettings()) {
 }
 
 function getScheduleStatus(settings = normalizeScheduleSettings()) {
+    const tenantId = getTenantId();
     const normalized = normalizeScheduleSettings(settings);
+    const backups = listBackups();
+    const currentTotalBytes = backups.reduce((sum, item) => sum + item.size, 0);
+    const maxTotalBytes = Math.floor(normalized.maxTotalSizeGB * 1024 * 1024 * 1024);
     return {
         ...normalized,
         nextRunAt: normalized.enabled ? getNextRunAt(normalized).toISOString() : null,
-        running: schedulerRunning
+        running: schedulerRunning.has(tenantId),
+        currentTotalBytes,
+        maxTotalBytes,
+        capacityExceeded: currentTotalBytes > maxTotalBytes
     };
 }
 
 function clearAutoBackupTimer() {
-    if (schedulerTimer) {
-        clearTimeout(schedulerTimer);
-        schedulerTimer = null;
+    const tenantId = getTenantId();
+    const timer = schedulerTimers.get(tenantId);
+    if (timer) {
+        clearTimeout(timer);
+        schedulerTimers.delete(tenantId);
     }
+}
+
+function stopAutoBackupScheduler(tenantId = getTenantId()) {
+    const timer = schedulerTimers.get(tenantId);
+    if (!timer) return false;
+    clearTimeout(timer);
+    schedulerTimers.delete(tenantId);
+    return true;
 }
 
 function scheduleNextAutoBackup(settings = normalizeScheduleSettings()) {
@@ -412,27 +576,31 @@ function scheduleNextAutoBackup(settings = normalizeScheduleSettings()) {
     }
     const nextRunAt = getNextRunAt(normalized);
     const delay = Math.max(1000, nextRunAt.getTime() - Date.now());
-    schedulerTimer = setTimeout(() => {
+    const tenantId = getTenantId();
+    const timer = setTimeout(() => {
         runScheduledBackup({ source: 'timer' }).catch(err => {
             console.error('[GLOBAL BACKUP] Scheduled backup failed:', err);
         });
     }, delay);
-    if (schedulerTimer.unref) schedulerTimer.unref();
-    console.log(`[GLOBAL BACKUP] Next scheduled backup: ${nextRunAt.toLocaleString('zh-CN', { hour12: false })}`);
+    schedulerTimers.set(tenantId, timer);
+    if (timer.unref) timer.unref();
+    console.log(`[GLOBAL BACKUP] Tenant ${tenantId} next scheduled backup: ${nextRunAt.toLocaleString('zh-CN', { hour12: false })}`);
 }
 
 async function runScheduledBackup(options = {}) {
-    if (schedulerRunning) {
+    const tenantId = getTenantId();
+    if (schedulerRunning.has(tenantId)) {
         const settings = await getScheduleSettings();
         return { skipped: true, reason: 'already-running', schedule: getScheduleStatus(settings) };
     }
-    schedulerRunning = true;
+    schedulerRunning.add(tenantId);
     const settings = await getScheduleSettings();
     const startedAt = new Date().toISOString();
     let nextSettings = { ...settings, lastRunAt: startedAt, lastError: '' };
     try {
         const backup = await createBackup({ reason: options.reason || AUTO_BACKUP_REASON });
-        const cleanup = pruneScheduledBackups(settings.retentionDays);
+        const retentionCleanup = pruneScheduledBackups(settings.retentionDays);
+        const capacityCleanup = pruneBackupsByCapacity(settings.maxTotalSizeGB, { protectNames: [backup.name] });
         nextSettings = {
             ...nextSettings,
             lastSuccessAt: new Date().toISOString(),
@@ -440,13 +608,13 @@ async function runScheduledBackup(options = {}) {
             lastError: ''
         };
         await writeKV(SCHEDULE_KV_CATEGORY, SCHEDULE_KV_KEY, normalizeScheduleSettings(nextSettings));
-        return { success: true, backup, cleanup, schedule: getScheduleStatus(nextSettings) };
+        return { success: true, backup, cleanup: { retention: retentionCleanup, capacity: capacityCleanup }, schedule: getScheduleStatus(nextSettings) };
     } catch (err) {
         nextSettings = { ...nextSettings, lastError: err.message || String(err) };
         await writeKV(SCHEDULE_KV_CATEGORY, SCHEDULE_KV_KEY, normalizeScheduleSettings(nextSettings));
         throw err;
     } finally {
-        schedulerRunning = false;
+        schedulerRunning.delete(tenantId);
         if (options.reschedule !== false) {
             scheduleNextAutoBackup(await getScheduleSettings());
         }
@@ -454,9 +622,26 @@ async function runScheduledBackup(options = {}) {
 }
 
 async function startAutoBackupScheduler() {
-    const settings = await getScheduleSettings();
-    scheduleNextAutoBackup(settings);
-    return getScheduleStatus(settings);
+    const tenants = await require('./tenants-repository').listTenantsForUser('', 'admin');
+    const statuses = [];
+    for (const tenant of tenants) {
+        statuses.push(await runWithTenant(tenant.id, async () => {
+            const settings = await getScheduleSettings();
+            pruneBackupsByCapacity(settings.maxTotalSizeGB);
+            scheduleNextAutoBackup(settings);
+            return { tenantId: tenant.id, ...getScheduleStatus(settings) };
+        }));
+    }
+    return statuses;
+}
+
+async function startTenantAutoBackupScheduler(tenantId) {
+    return runWithTenant(tenantId, async () => {
+        const settings = await getScheduleSettings();
+        pruneBackupsByCapacity(settings.maxTotalSizeGB);
+        scheduleNextAutoBackup(settings);
+        return { tenantId, ...getScheduleStatus(settings) };
+    });
 }
 
 function removeRestoreDirBestEffort(extractDir, options = {}) {
@@ -482,9 +667,9 @@ function removeRestoreDirBestEffort(extractDir, options = {}) {
 }
 
 async function extractBackup(zipPath) {
-    ensureDir(RESTORE_TMP_DIR);
+    ensureDir(getRestoreTmpDir());
     const extractId = `restore_${Date.now().toString(36)}_${crypto.randomBytes(4).toString('hex')}`;
-    const extractDir = path.join(RESTORE_TMP_DIR, extractId);
+    const extractDir = path.join(getRestoreTmpDir(), extractId);
     ensureDir(extractDir);
 
     try {
@@ -495,7 +680,7 @@ async function extractBackup(zipPath) {
             throw new Error('备份包缺少 manifest.json，已拒绝恢复。');
         }
         const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-        if (manifest.type !== 'tools-platform-global-backup' || manifest.version !== BACKUP_VERSION) {
+        if (manifest.type !== 'tools-platform-global-backup' || ![2, BACKUP_VERSION].includes(Number(manifest.version))) {
             throw new Error('备份包类型或版本不匹配，已拒绝恢复。');
         }
         return { extractDir, manifest };
@@ -559,20 +744,45 @@ function syncOwnedFiles(src, dest, fileNames) {
 
 async function restoreFromZip(zipPath, options = {}) {
     reportProgress(options, 'restore-start', '开始恢复备份', { source: path.basename(zipPath) });
-    reportProgress(options, 'safety-backup', '正在生成恢复前安全备份');
-    const safetyBackup = options.skipSafetyBackup ? null : await createBackup({
-        reason: 'pre-restore',
-        onProgress: options.onProgress
-    });
     reportProgress(options, 'extract', '正在校验并解压备份包');
     const { extractDir, manifest } = await extractBackup(zipPath);
-    reportProgress(options, 'manifest-verified', `备份清单校验通过（版本 ${manifest.version}）`, {
-        targets: (manifest.targets || []).map(item => item.id)
-    }, 'success');
-    reportProgress(options, 'database-close', '正在安全关闭 SQLite 数据库连接');
-    const closedDatabases = await closeRuntimeDatabases();
-    reportProgress(options, 'database-closed', 'SQLite 数据库连接已关闭', { closedDatabases }, 'success');
     try {
+        const currentTenantId = getTenantId();
+        // Version 2 packages created before tenant metadata existed belong to
+        // the legacy default tenant. Cross-tenant restore always needs an
+        // explicit administrator override after the first safe rejection.
+        const backupTenantId = String(manifest.tenantId || DEFAULT_TENANT_ID).trim().toLowerCase();
+        const tenantMismatch = backupTenantId !== currentTenantId;
+        const currentTenant = await require('./tenants-repository').getTenantById(currentTenantId).catch(() => null);
+        const backupTenant = await require('./tenants-repository').getTenantById(backupTenantId).catch(() => null);
+        const backupTenantName = String(manifest.tenantName || backupTenant?.name || backupTenantId).trim();
+        const currentTenantName = String(currentTenant?.name || currentTenantId).trim();
+        if (tenantMismatch && options.forceCrossTenant !== true) {
+            const error = new Error(`备份包属于租户“${backupTenantId}”，当前租户为“${currentTenantId}”。为避免跨租户覆盖，已拒绝恢复。`);
+            error.statusCode = 409;
+            error.code = 'BACKUP_TENANT_MISMATCH';
+            error.backupTenantId = backupTenantId;
+            error.backupTenantName = backupTenantName;
+            error.currentTenantId = currentTenantId;
+            error.currentTenantName = currentTenantName;
+            throw error;
+        }
+        reportProgress(options, 'manifest-verified', `备份清单校验通过（版本 ${manifest.version}，来源租户 ${backupTenantId}${tenantMismatch ? `，强制恢复到 ${currentTenantId}` : ''}）`, {
+            tenantId: backupTenantId,
+            currentTenantId,
+            forcedCrossTenant: tenantMismatch,
+            targets: (manifest.targets || []).map(item => item.id)
+        }, tenantMismatch ? 'warn' : 'success');
+        reportProgress(options, 'safety-backup', '正在生成恢复前安全备份');
+        const safetyBackup = options.skipSafetyBackup ? null : await createBackup({
+            reason: 'pre-restore',
+            skipCapacityPrune: true,
+            onProgress: options.onProgress
+        });
+        const controlPlaneSnapshot = await snapshotTenantControlPlane();
+        reportProgress(options, 'database-close', '正在安全关闭 SQLite 数据库连接');
+        const closedDatabases = await closeRuntimeDatabases();
+        reportProgress(options, 'database-closed', 'SQLite 数据库连接已关闭', { closedDatabases }, 'success');
         const restoredTargets = [];
         const missingTargets = [];
         const primarySrc = path.join(extractDir, 'primary_data');
@@ -587,11 +797,15 @@ async function restoreFromZip(zipPath, options = {}) {
             // These directories are intentionally outside global backups.
             // Preserve the server's current copies instead of deleting them
             // while synchronizing a restored primary_data snapshot.
-            const primaryExcludes = new Set(PRIMARY_PRESERVED_DIRS);
-            if (HAS_SPLIT_REPORT_DATA || hasReport || !packageUsesUnifiedData) {
+            const primaryExcludes = new Set(getPrimaryPreservedNames());
+            if (hasSplitReportData() || hasReport || !packageUsesUnifiedData) {
                 REPORT_OWNED_FILES.forEach(name => primaryExcludes.add(name));
             }
-            syncDirRecursive(primarySrc, DATA_DIR, { excludeNames: Array.from(primaryExcludes) });
+            syncDirRecursive(primarySrc, getDataDir(), { excludeNames: Array.from(primaryExcludes) });
+            if (controlPlaneSnapshot) {
+                await restoreTenantControlPlane(controlPlaneSnapshot);
+                reportProgress(options, 'control-plane-preserved', '账号、Session 与租户登记表结构及数据已保留当前版本', null, 'success');
+            }
             restoredTargets.push('primary_data');
             reportProgress(options, 'primary-restored', '主业务数据恢复完成', null, 'success');
         } else {
@@ -601,16 +815,16 @@ async function restoreFromZip(zipPath, options = {}) {
 
         if (hasReport) {
             reportProgress(options, 'report-restore', '正在恢复报表数据库 report_data/report.db');
-            syncOwnedFiles(reportSrc, REPORT_DATA_DIR, REPORT_OWNED_FILES);
+            syncOwnedFiles(reportSrc, getReportDataDir(), REPORT_OWNED_FILES);
             restoredTargets.push('report_data');
             reportProgress(options, 'report-restored', '报表数据库恢复完成', null, 'success');
-        } else if (HAS_SPLIT_REPORT_DATA && packageUsesUnifiedData && hasPrimary) {
+        } else if (hasSplitReportData() && packageUsesUnifiedData && hasPrimary) {
             // Windows backups store report.db inside primary_data. Split it back
             // into the dedicated report directory when restoring on Mac/PM2.
-            syncOwnedFiles(primarySrc, REPORT_DATA_DIR, REPORT_OWNED_FILES);
+            syncOwnedFiles(primarySrc, getReportDataDir(), REPORT_OWNED_FILES);
             restoredTargets.push('report_data:from-primary_data');
             reportProgress(options, 'report-remapped', '已将 Windows 统一目录中的报表库映射到独立报表目录', null, 'success');
-        } else if (HAS_SPLIT_REPORT_DATA || !packageUsesUnifiedData) {
+        } else if (hasSplitReportData() || !packageUsesUnifiedData) {
             // Old Mac backups did not contain report_data. Preserve the current
             // report database and make the partial restore explicit.
             missingTargets.push('report_data');
@@ -629,6 +843,9 @@ async function restoreFromZip(zipPath, options = {}) {
             restoredTargets,
             missingTargets,
             partialRestore: missingTargets.length > 0,
+            forcedCrossTenant: tenantMismatch,
+            sourceTenant: { id: backupTenantId, name: backupTenantName },
+            targetTenant: { id: currentTenantId, name: currentTenantName },
             needsRestart: true
         };
     } finally {
@@ -647,8 +864,10 @@ function deleteBackup(name) {
 }
 
 module.exports = {
-    BACKUP_DIR,
-    DATA_TARGETS,
+    get BACKUP_DIR() { return getBackupDir(); },
+    get DATA_TARGETS() { return getDataTargets(); },
+    getBackupDir,
+    getDataTargets,
     createBackup,
     listBackups,
     getBackupPath,
@@ -659,5 +878,8 @@ module.exports = {
     getScheduleStatus,
     runScheduledBackup,
     startAutoBackupScheduler,
-    pruneScheduledBackups
+    startTenantAutoBackupScheduler,
+    stopAutoBackupScheduler,
+    pruneScheduledBackups,
+    pruneBackupsByCapacity
 };

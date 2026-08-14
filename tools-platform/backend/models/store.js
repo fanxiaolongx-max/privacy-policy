@@ -1,17 +1,20 @@
 const fs = require('fs');
 const path = require('path');
 
-const DATA_DIR = process.env.TOOLS_DATA_DIR || path.join(__dirname, '../data');
+const { BASE_DATA_DIR, getDataDir } = require('./tenant-context');
+const DATA_DIR = BASE_DATA_DIR;
 
-function ensureDataDir() {
-    if (!fs.existsSync(DATA_DIR)) {
-        fs.mkdirSync(DATA_DIR, { recursive: true });
+function ensureDataDir(tenantId) {
+    const dataDir = getDataDir(tenantId);
+    if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
     }
+    return dataDir;
 }
 
 function readJSON(filename, fallback) {
     ensureDataDir();
-    const filePath = path.isAbsolute(filename) ? filename : path.join(DATA_DIR, filename);
+    const filePath = path.isAbsolute(filename) ? filename : path.join(getDataDir(), filename);
     try {
         if (!fs.existsSync(filePath)) return fallback;
         return JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -24,5 +27,6 @@ function readJSON(filename, fallback) {
 module.exports = {
     ensureDataDir,
     DATA_DIR,
+    getDataDir,
     readJSON
 };

@@ -9,11 +9,11 @@ async function checkAuth(req, res, next) {
     if (req.method === 'GET' && /^\/uiv\/uivision-runner\/[a-f0-9]{32}$/.test(req.path)) return next();
 
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const cookieToken = String(req.headers.cookie || '').split(';').map(item => item.trim()).find(item => item.startsWith('tools_token='))?.slice('tools_token='.length);
+    const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : cookieToken;
+    if (!token) {
         return res.status(401).json({ error: '请先登录' });
     }
-
-    const token = authHeader.split(' ')[1];
 
     try {
         const session = await authSessionsRepo.getSession(token);
@@ -26,6 +26,7 @@ async function checkAuth(req, res, next) {
         }
 
         req.user = session.user; // { username, role }
+        req.authToken = token;
         next();
     } catch (err) {
         if (err && err.code === 'SQLITE_MISUSE') {
@@ -68,7 +69,8 @@ async function checkHtmlAuth(req, res, next) {
             return res.redirect('/login.html');
         }
         req.user = session.user;
-        next();
+        const { runWithTenant } = require('../models/tenant-context');
+        runWithTenant(session.user.tenantId, next);
     } catch (err) {
         console.error('HTML Auth check error:', err);
         return res.redirect('/login.html');

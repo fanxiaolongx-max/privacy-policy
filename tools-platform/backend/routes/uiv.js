@@ -12,7 +12,7 @@ const crypto = require('crypto');
 const { execFile, execFileSync } = require('child_process');
 const categoriesRepo = require('../models/uiv-categories-repository');
 const scriptsRepo = require('../models/uiv-scripts-repository');
-const { DATA_DIR, ensureDataDir } = require('../models/store');
+const { ensureDataDir, getDataDir } = require('../models/store');
 const configChangeMonitor = require('../models/config-change-monitor');
 
 const DEFAULT_CATEGORIES = categoriesRepo.DEFAULT_CATEGORIES;
@@ -223,7 +223,7 @@ function launchBrowser(browser, url) {
 
 function getUiVisionRunDir() {
     ensureDataDir();
-    const runDir = path.join(DATA_DIR, '../tmp/uivision-runs');
+    const runDir = path.join(getDataDir(), 'tmp/uivision-runs');
     fs.mkdirSync(runDir, { recursive: true });
     return runDir;
 }

@@ -1,4 +1,4 @@
-const { run, get, all } = require('./app-db');
+const { run, get, all } = require('./platform-db');
 const { hashPassword } = require('../middleware/auth');
 
 let initPromise = null;

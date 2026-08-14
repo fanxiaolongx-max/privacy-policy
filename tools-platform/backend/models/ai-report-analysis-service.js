@@ -1,11 +1,11 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
-const { REPORT_DATA_DIR } = require('./report-store');
-const { DATA_DIR } = require('./store');
+const { getReportDataDir } = require('./report-store');
+const { getDataDir } = require('./store');
 
-const REPORT_DB_PATH = path.join(REPORT_DATA_DIR, 'report.db');
-const TOOLS_DB_PATH = path.join(DATA_DIR, 'tools.db');
+const getReportDbPath = () => path.join(getReportDataDir(), 'report.db');
+const getToolsDbPath = () => path.join(getDataDir(), 'tools.db');
 const MAX_METRIC_ROWS = 5000;
 const MAX_HISTORY_POINTS = 62;
 const DATA_SCOPE_RE = /报表|月报|指标|目标|得分|排名|趋势|差距|gap|快照|客户群|合规率|运营|异常|短板|(?:20\d{2}\s*年\s*)?\d{1,2}\s*月(?:\s*\d{1,2}\s*日)?(?:的)?数据/i;
@@ -21,8 +21,8 @@ const MANUAL_ADJUST_HISTORY_RE = /(?:最近|近)\s*(?:\d+|几|两|三|四|五|�
 
 function openReadOnlyDb() {
     return new Promise((resolve, reject) => {
-        if (!fs.existsSync(REPORT_DB_PATH)) return resolve(null);
-        const db = new sqlite3.Database(REPORT_DB_PATH, sqlite3.OPEN_READONLY, error => {
+        if (!fs.existsSync(getReportDbPath())) return resolve(null);
+        const db = new sqlite3.Database(getReportDbPath(), sqlite3.OPEN_READONLY, error => {
             if (error) return reject(error);
             resolve(db);
         });
@@ -31,8 +31,8 @@ function openReadOnlyDb() {
 
 function openReadOnlyToolsDb() {
     return new Promise((resolve, reject) => {
-        if (!fs.existsSync(TOOLS_DB_PATH)) return resolve(null);
-        const db = new sqlite3.Database(TOOLS_DB_PATH, sqlite3.OPEN_READONLY, error => {
+        if (!fs.existsSync(getToolsDbPath())) return resolve(null);
+        const db = new sqlite3.Database(getToolsDbPath(), sqlite3.OPEN_READONLY, error => {
             if (error) return reject(error);
             resolve(db);
         });
@@ -939,7 +939,7 @@ function formatAnalysisForPrompt(analysis) {
 }
 
 module.exports = {
-    REPORT_DB_PATH,
+    get REPORT_DB_PATH() { return getReportDbPath(); },
     shouldAnalyze,
     parseRequestedMonth,
     parseRequestedDate,

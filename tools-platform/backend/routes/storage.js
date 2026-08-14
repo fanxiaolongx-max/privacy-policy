@@ -4,7 +4,7 @@ const JSZip = require('jszip');
 const express = require('express');
 const router = express.Router();
 
-const { DATA_DIR, readJSON } = require('../models/store');
+const { getDataDir, readJSON } = require('../models/store');
 const uploadHistoryRepo = require('../models/upload-history-repository');
 const uivCategoriesRepo = require('../models/uiv-categories-repository');
 const uivScriptsRepo = require('../models/uiv-scripts-repository');
@@ -181,7 +181,7 @@ function summarizeAlignedDiff(jsonValue, sqliteValue, { alignByStableKey = false
 }
 
 function legacyJsonExists(filename) {
-    return fs.existsSync(path.join(DATA_DIR, filename));
+    return fs.existsSync(path.join(getDataDir(), filename));
 }
 
 function readLegacyJson(filename, fallback) {
@@ -189,11 +189,12 @@ function readLegacyJson(filename, fallback) {
 }
 
 function listTopLevelJsonFiles() {
-    if (!fs.existsSync(DATA_DIR)) return [];
-    return fs.readdirSync(DATA_DIR, { withFileTypes: true })
+    const dataDir = getDataDir();
+    if (!fs.existsSync(dataDir)) return [];
+    return fs.readdirSync(dataDir, { withFileTypes: true })
         .filter(entry => entry.isFile() && entry.name.toLowerCase().endsWith('.json'))
         .map(entry => {
-            const absPath = path.join(DATA_DIR, entry.name);
+            const absPath = path.join(dataDir, entry.name);
             const stat = fs.statSync(absPath);
             return {
                 name: entry.name,
@@ -363,6 +364,7 @@ router.get('/status', async (req, res) => {
 
 router.post('/cleanup-json', async (req, res) => {
     try {
+        const dataDir = getDataDir();
         const files = listTopLevelJsonFiles();
         if (!files.length) {
             return res.json({
@@ -370,7 +372,7 @@ router.post('/cleanup-json', async (req, res) => {
                 deletedCount: 0,
                 deletedFiles: [],
                 backupFile: null,
-                dataDir: DATA_DIR,
+                dataDir,
                 message: '未发现可清理的 JSON 文件。'
             });
         }
@@ -379,7 +381,7 @@ router.post('/cleanup-json', async (req, res) => {
         const manifest = {
             type: 'tools-platform-json-cleanup-backup',
             createdAt: new Date().toISOString(),
-            dataDir: DATA_DIR,
+            dataDir,
             files: files.map(file => ({
                 name: file.name,
                 bytes: file.bytes,
@@ -393,7 +395,7 @@ router.post('/cleanup-json', async (req, res) => {
         }
 
         const backupName = `legacy_json_cleanup_${timestampForFile()}.zip`;
-        const backupPath = path.join(DATA_DIR, backupName);
+        const backupPath = path.join(dataDir, backupName);
         const content = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
         fs.writeFileSync(backupPath, content);
 
@@ -410,7 +412,7 @@ router.post('/cleanup-json', async (req, res) => {
             deletedFiles,
             backupFile: backupName,
             backupPath,
-            dataDir: DATA_DIR,
+            dataDir,
             message: `已备份并删除 ${deletedFiles.length} 个 JSON 文件。`
         });
     } catch (err) {

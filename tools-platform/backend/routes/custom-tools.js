@@ -13,18 +13,21 @@ const f12LicenseService = require('../models/f12-license-service');
 const f12LicenseRegistry = require('../models/f12-license-registry');
 const f12ExtensionIdentityService = require('../models/f12-extension-identity-service');
 const f12ExtensionVersionService = require('../models/f12-extension-version-service');
-const { DATA_DIR } = require('../models/store');
+const { getDataDir } = require('../models/store');
 const { requireAdmin } = require('../middleware/auth');
 const customToolI18nGenerator = require('../../scripts/generate-custom-tool-i18n');
 const customToolExportService = require('../models/custom-tool-export-service');
 
-const backupUploadDir = path.join(DATA_DIR, '../tmp/custom-tool-backups');
 const builtinToolsSourceDir = path.join(__dirname, '../builtin-tools');
-const builtinToolsStateFile = path.join(DATA_DIR, 'builtin-tools-sync-decisions.json');
-const builtinToolsBackupRoot = path.join(DATA_DIR, 'backups/builtin-tools');
-fs.mkdirSync(backupUploadDir, { recursive: true });
 const backupUpload = multer({
-    dest: backupUploadDir,
+    storage: multer.diskStorage({
+        destination(_req, _file, callback) {
+            const dir = path.join(getDataDir(), 'tmp/custom-tool-backups');
+            fs.mkdirSync(dir, { recursive: true });
+            callback(null, dir);
+        },
+        filename(_req, _file, callback) { callback(null, `${Date.now()}-${Math.random().toString(36).slice(2)}.zip`); }
+    }),
     limits: { fileSize: 512 * 1024 * 1024, files: 1 }
 });
 
@@ -238,7 +241,7 @@ router.get('/builtin-sync/preview', requireAdmin, (req, res) => {
         const preview = builtinToolsSync.previewBuiltinTools({
             sourceDir: builtinToolsSourceDir,
             targetDir: repo.CUSTOM_TOOLS_DIR,
-            stateFile: builtinToolsStateFile,
+            stateFile: path.join(getDataDir(), 'builtin-tools-sync-decisions.json'),
             includeSkipped: req.query.includeSkipped === '1'
         });
         res.setHeader('Cache-Control', 'no-store');
@@ -254,8 +257,8 @@ router.post('/builtin-sync/apply', requireAdmin, async (req, res) => {
         const result = builtinToolsSync.applyBuiltinToolDecisions({
             sourceDir: builtinToolsSourceDir,
             targetDir: repo.CUSTOM_TOOLS_DIR,
-            stateFile: builtinToolsStateFile,
-            backupRoot: builtinToolsBackupRoot,
+            stateFile: path.join(getDataDir(), 'builtin-tools-sync-decisions.json'),
+            backupRoot: path.join(getDataDir(), 'backups/builtin-tools'),
             applySlugs: Array.isArray(body.applySlugs) ? body.applySlugs : [],
             skipSlugs: Array.isArray(body.skipSlugs) ? body.skipSlugs : [],
             expectedFingerprints: body.expectedFingerprints && typeof body.expectedFingerprints === 'object'

@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { DATA_DIR } = require('./store');
+const { getDataDir } = require('./store');
 
 const TRANSLATIONS_DIR = path.join(__dirname, '../custom-tool-i18n');
 const RUNTIME_FILE = path.join(__dirname, '../../frontend/js/shared/custom-tool-i18n-runtime.js');
@@ -14,7 +14,7 @@ function safeJson(value) {
 
 function readTranslations(slug) {
     const candidates = [
-        path.join(DATA_DIR, 'custom-tools', slug, '.i18n.json'),
+        path.join(getDataDir(), 'custom-tools', slug, '.i18n.json'),
         path.join(TRANSLATIONS_DIR, `${slug}.json`)
     ];
     for (const file of candidates) {

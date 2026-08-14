@@ -6,6 +6,7 @@ const authUsersRepo = require('../models/auth-users-repository');
 const authSessionsRepo = require('../models/auth-sessions-repository');
 const authSecurityMonitor = require('../models/auth-security-monitor');
 const authSecuritySettingsRepo = require('../models/auth-security-settings-repository');
+const tenantsRepo = require('../models/tenants-repository');
 
 const DEFAULT_SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -65,7 +66,10 @@ router.post('/login', async (req, res) => {
         
         const sessionMaxAgeMs = await getSessionMaxAgeMs();
         const expiresAt = Date.now() + sessionMaxAgeMs;
-        await authSessionsRepo.saveSession(token, username, user.role, expiresAt);
+        await tenantsRepo.ensureReady();
+        const availableTenants = await tenantsRepo.listTenantsForUser(username, user.role);
+        const tenantId = availableTenants[0]?.id || tenantsRepo.DEFAULT_TENANT_ID;
+        await authSessionsRepo.saveSession(token, username, user.role, expiresAt, tenantId);
         authSecurityMonitor.recordLoginAttempt(req, {
             username,
             success: true,
@@ -74,7 +78,7 @@ router.post('/login', async (req, res) => {
         authSecurityMonitor.clearSuccessfulLoginState(req, username);
         
         res.cookie('tools_token', token, getAuthCookieOptions(req, { maxAge: sessionMaxAgeMs }));
-        res.json({ success: true, token, role: user.role, username });
+        res.json({ success: true, token, role: user.role, username, tenantId });
     } catch (err) {
         console.error('Login error:', err);
         res.status(500).json({ error: '登录失败' });
@@ -84,8 +88,7 @@ router.post('/login', async (req, res) => {
 // POST /api/auth/logout
 router.post('/logout', checkAuth, async (req, res) => {
     try {
-        const token = req.headers.authorization.split(' ')[1];
-        await authSessionsRepo.deleteSession(token);
+        await authSessionsRepo.deleteSession(req.authToken);
         res.clearCookie('tools_token', getAuthCookieOptions(req));
         res.json({ success: true });
     } catch (err) {

@@ -5,7 +5,7 @@ const path = require('path');
 const multer = require('multer');
 const JSZip = require('jszip');
 
-const { DATA_DIR, ensureDataDir } = require('../models/store');
+const { ensureDataDir, getDataDir } = require('../models/store');
 const slideRepo = require('../models/slide-design-repository');
 const { combineSingleSlidePptx, removePresentationSections, sanitizePptxPackage } = require('../models/pptx-package');
 const {
@@ -15,7 +15,6 @@ const {
 const slideAnalyzer = require('../models/slide-content-analyzer');
 
 const router = express.Router();
-const uploadDir = path.join(DATA_DIR, 'tmp', 'slide-imports');
 const importTasks = new Map();
 const classificationPreviewSessions = new Map();
 const classificationTasks = new Map();
@@ -26,11 +25,15 @@ const MAX_PPTX_UPLOAD_MB = Number.isInteger(configuredUploadMb) && configuredUpl
     : 200;
 const MAX_PPTX_UPLOAD_BYTES = MAX_PPTX_UPLOAD_MB * 1024 * 1024;
 const MAX_PPTX_SLIDES = 100;
-ensureDataDir();
-fs.mkdirSync(uploadDir, { recursive: true });
-
 const pptUpload = multer({
-    dest: uploadDir,
+    storage: multer.diskStorage({
+        destination(_req, _file, callback) {
+            const uploadDir = path.join(getDataDir(), 'tmp', 'slide-imports');
+            fs.mkdirSync(uploadDir, { recursive: true });
+            callback(null, uploadDir);
+        },
+        filename(_req, file, callback) { callback(null, `${Date.now()}-${crypto.randomBytes(5).toString('hex')}-${path.basename(file.originalname || 'upload.pptx')}`); }
+    }),
     limits: { fileSize: MAX_PPTX_UPLOAD_BYTES, files: 1 }
 });
 
@@ -566,7 +569,7 @@ router.post('/assets/:id/regenerate-thumbnail', async (req, res) => {
         if (!renderedPreview || !fs.existsSync(renderedPreview)) throw new Error('渲染引擎没有返回缩略图文件');
         const previewAbsolutePath = path.join(path.dirname(result.absolutePath), `${result.asset.id}_preview.png`);
         fs.copyFileSync(renderedPreview, previewAbsolutePath);
-        const thumbnailPath = path.relative(slideRepo.LIBRARY_DIR, previewAbsolutePath).split(path.sep).join('/');
+        const thumbnailPath = path.relative(slideRepo.getLibraryDir(), previewAbsolutePath).split(path.sep).join('/');
         const asset = await slideRepo.updateAssetThumbnail(result.asset.id, thumbnailPath);
         res.json({ asset: decorateAssetPermissions(asset, req.user), engine: rendered.engine, logs });
     } catch (error) {
@@ -697,7 +700,7 @@ router.post('/import-pptx', handlePptUpload, async (req, res) => {
         const importedAt = new Date().toISOString();
         const dateFolder = importedAt.slice(0, 10);
         const dateToken = dateFolder.replace(/-/g, '');
-        const absoluteFolder = path.join(slideRepo.LIBRARY_DIR, dateFolder);
+        const absoluteFolder = path.join(slideRepo.getLibraryDir(), dateFolder);
         fs.mkdirSync(absoluteFolder, { recursive: true });
         const pendingAssets = [];
         for (let slideIndex = 0; slideIndex < slides.length; slideIndex += 1) {

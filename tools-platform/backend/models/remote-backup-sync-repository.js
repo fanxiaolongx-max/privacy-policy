@@ -3,12 +3,31 @@ const path = require('path');
 const crypto = require('crypto');
 
 const globalBackupRepo = require('./global-backup-repository');
-const { DATA_DIR } = require('./store');
+const { getDataDir } = require('./store');
+const { BASE_DATA_DIR, DEFAULT_TENANT_ID, getTenantId } = require('./tenant-context');
 
-const RUNTIME_DIR = path.join(DATA_DIR, '../runtime');
-const DOWNLOAD_DIR = path.join(DATA_DIR, '../tmp/remote-backups');
-const SETTINGS_FILE = path.join(RUNTIME_DIR, 'remote_backup_sync_settings.json');
-const STATE_FILE = path.join(RUNTIME_DIR, 'remote_backup_sync_state.json');
+function getRuntimeDir() {
+    return getTenantId() === DEFAULT_TENANT_ID
+        ? path.join(getDataDir(), '../runtime')
+        : path.join(getDataDir(), 'runtime');
+}
+
+function getDownloadDir() {
+    return getTenantId() === DEFAULT_TENANT_ID
+        ? path.join(getDataDir(), '../tmp/remote-backups')
+        : path.join(getDataDir(), 'tmp/remote-backups');
+}
+
+function getSettingsFile() {
+    // Connection credentials describe this machine's remote endpoint and are
+    // shared operational settings. Restore state and downloaded files remain
+    // tenant-scoped below so comparisons can never leak across tenants.
+    return path.join(BASE_DATA_DIR, '../runtime', 'remote_backup_sync_settings.json');
+}
+
+function getStateFile() {
+    return path.join(getRuntimeDir(), 'remote_backup_sync_state.json');
+}
 
 const DEFAULT_SETTINGS = {
     enabled: false,
@@ -66,13 +85,15 @@ function maskSecret(value) {
 }
 
 function getSettings() {
-    return normalizeSettings(readJSON(SETTINGS_FILE, DEFAULT_SETTINGS));
+    return normalizeSettings(readJSON(getSettingsFile(), DEFAULT_SETTINGS));
 }
 
 function getPublicSettings() {
     const settings = getSettings();
     const state = getState();
     return {
+        tenantId: getTenantId(),
+        startupAutoRestoreSupported: getTenantId() === DEFAULT_TENANT_ID,
         enabled: settings.enabled,
         baseUrl: settings.baseUrl,
         username: settings.username,
@@ -96,17 +117,17 @@ function saveSettings(payload = {}) {
         nextPayload.password = current.password;
     }
     const normalized = normalizeSettings(nextPayload, current);
-    writeJSON(SETTINGS_FILE, normalized);
+    writeJSON(getSettingsFile(), normalized);
     return getPublicSettings();
 }
 
 function getState() {
-    return readJSON(STATE_FILE, {});
+    return readJSON(getStateFile(), {});
 }
 
 function saveState(patch) {
     const next = { ...getState(), ...patch, updatedAt: new Date().toISOString() };
-    writeJSON(STATE_FILE, next);
+    writeJSON(getStateFile(), next);
     return next;
 }
 
@@ -142,6 +163,22 @@ async function loginRemote(settings) {
         body: JSON.stringify({ username: settings.username, password: settings.password })
     });
     if (!data.token) throw new Error('远端登录成功但未返回 token');
+    const tenantId = getTenantId();
+    if (tenantId !== DEFAULT_TENANT_ID) {
+        try {
+            await fetchJson(`${settings.baseUrl}/api/tenants/switch`, {
+                method: 'POST',
+                timeoutMs: 20000,
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${data.token}`
+                },
+                body: JSON.stringify({ tenantId })
+            });
+        } catch (error) {
+            throw new Error(`远端不存在或无权访问相同 ID 的租户“${tenantId}”，为避免跨租户覆盖，已取消远端同步：${error.message}`);
+        }
+    }
     return data.token;
 }
 
@@ -209,9 +246,10 @@ function shouldSkipLatest(settings, latest, options = {}) {
 }
 
 async function downloadRemoteBackup(settings, token, backup) {
-    ensureDir(DOWNLOAD_DIR);
+    const downloadDir = getDownloadDir();
+    ensureDir(downloadDir);
     const safeName = String(backup.name || `remote_${Date.now()}.zip`).replace(/[^a-zA-Z0-9._-]+/g, '_');
-    const outputPath = path.join(DOWNLOAD_DIR, `${Date.now()}_${crypto.randomBytes(3).toString('hex')}_${safeName}`);
+    const outputPath = path.join(downloadDir, `${Date.now()}_${crypto.randomBytes(3).toString('hex')}_${safeName}`);
     const res = await fetchWithTimeout(`${settings.baseUrl}/api/global-backup/download/${encodeURIComponent(backup.name)}`, {
         timeoutMs: 120000,
         headers: { Authorization: `Bearer ${token}` }

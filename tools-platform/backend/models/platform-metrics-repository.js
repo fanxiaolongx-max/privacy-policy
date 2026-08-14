@@ -1,13 +1,13 @@
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 const { run, get, all } = require('./app-db');
-const { DATA_DIR } = require('./store');
-const { REPORT_DATA_DIR } = require('./report-store');
+const { getDataDir } = require('./store');
+const { getReportDataDir } = require('./report-store');
 const customToolsRepo = require('./custom-tools-repository');
 
 const BUILTIN_TOOL_COUNT = 11;
-const REPORT_DB_PATH = path.join(REPORT_DATA_DIR, 'report.db');
-const REQUIREMENTS_DB_PATH = path.join(DATA_DIR, 'requirements.db');
+const getReportDbPath = () => path.join(getReportDataDir(), 'report.db');
+const getRequirementsDbPath = () => path.join(getDataDir(), 'requirements.db');
 
 let initPromise = null;
 
@@ -122,14 +122,14 @@ async function getSummary() {
             SUM(CASE WHEN ai_status = 'fallback_done' THEN 1 ELSE 0 END) AS rule_analyzed
             FROM alert_center_events
             WHERE ai_analyzed_at IS NOT NULL`),
-        queryExternalDb(REPORT_DB_PATH, `SELECT
+        queryExternalDb(getReportDbPath(), `SELECT
             (SELECT COUNT(1) FROM ReportMetricData) AS metric_checks,
             (SELECT COUNT(1) FROM ReportMetricData WHERE is_failing = 1) AS failing_checks,
             (SELECT COUNT(DISTINCT cat_name) FROM ReportMetricData) AS customer_groups,
             (SELECT COUNT(DISTINCT month) FROM ReportMetricData) AS report_months,
             (SELECT COUNT(1) FROM ReportSnapshots) AS report_snapshots,
             (SELECT COUNT(1) FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%') AS table_count`),
-        queryExternalDb(REQUIREMENTS_DB_PATH, `SELECT
+        queryExternalDb(getRequirementsDbPath(), `SELECT
             COUNT(1) AS count,
             SUM(CASE WHEN status IN ('完成','已完成','关闭','已关闭') THEN 1 ELSE 0 END) AS completed,
             (SELECT COUNT(1) FROM RequirementLogs) AS transitions

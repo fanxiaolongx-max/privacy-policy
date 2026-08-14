@@ -2,9 +2,13 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 const { DATA_DIR } = require('./store');
-const { REPORT_DATA_DIR } = require('./report-store');
 const backupRepo = require('./global-backup-repository');
 const usersRepo = require('./auth-users-repository');
+const appDb = require('./app-db');
+const tenantSqlitePool = require('./tenant-sqlite-pool');
+const platformDb = require('./platform-db');
+const { initializeTenantStorage } = require('./tenant-storage-initializer');
+const { DEFAULT_TENANT_ID, getDataDir, getReportDataDir, getTenantId } = require('./tenant-context');
 
 const CONFIRMATION_TEXT = 'RESET';
 const RESET_ROOT = path.resolve(DATA_DIR, '../factory-reset-archives');
@@ -34,15 +38,49 @@ async function prepareFactoryReset(options = {}) {
         throw error;
     }
 
+    const tenantId = getTenantId();
+    if (tenantId === DEFAULT_TENANT_ID) {
+        const tenantCount = await platformDb.get('SELECT COUNT(*) AS count FROM tenants').catch(() => ({ count: 1 }));
+        if (Number(tenantCount?.count || 0) > 1) {
+            const error = new Error('为保护其他租户，默认租户存在其他租户记录时不能执行整库初始化；请切换到目标非默认租户后初始化该租户。');
+            error.statusCode = 409;
+            throw error;
+        }
+    }
+
     const backup = await backupRepo.createBackup({ reason: 'pre-factory-reset' });
     const archiveDir = path.join(RESET_ROOT, timestampForFile());
+
+    if (tenantId !== DEFAULT_TENANT_ID) {
+        const tenantDataDir = path.resolve(getDataDir(tenantId));
+        const archivedDataDir = path.join(archiveDir, 'tenant-data');
+        await appDb.closeDatabase();
+        await tenantSqlitePool.closeAll();
+        fs.mkdirSync(archiveDir, { recursive: true });
+        fs.renameSync(tenantDataDir, archivedDataDir);
+        try {
+            await initializeTenantStorage(tenantId);
+            const archivedBackup = path.join(archivedDataDir, 'backups', backup.name);
+            if (fs.existsSync(archivedBackup)) {
+                const liveBackupDir = path.join(tenantDataDir, 'backups');
+                fs.mkdirSync(liveBackupDir, { recursive: true });
+                fs.copyFileSync(archivedBackup, path.join(liveBackupDir, backup.name));
+            }
+        } catch (error) {
+            fs.rmSync(tenantDataDir, { recursive: true, force: true });
+            fs.renameSync(archivedDataDir, tenantDataDir);
+            throw error;
+        }
+        return { success: true, backup: backup.name, archiveDir, needsRestart: false, tenantId };
+    }
+
     const planPath = path.join(RESET_ROOT, `pending-${process.pid}-${Date.now()}.json`);
     writePrivateJson(planPath, {
         schemaVersion: 1,
         parentPid: process.pid,
         createdAt: new Date().toISOString(),
-        dataDir: path.resolve(DATA_DIR),
-        reportDataDir: path.resolve(REPORT_DATA_DIR),
+        dataDir: path.resolve(getDataDir()),
+        reportDataDir: path.resolve(getReportDataDir()),
         archiveDir,
         admin: { username, role: 'admin', passwordHash: admin.passwordHash }
     });

@@ -2,8 +2,10 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
-const { ensureDataDir, DATA_DIR } = require('./store');
-const { REPORT_DATA_DIR } = require('./report-store');
+const { ensureDataDir, getDataDir } = require('./store');
+const { getReportDataDir } = require('./report-store');
+const { createDatabaseProxy } = require('./tenant-sqlite-pool');
+const { getTenantId } = require('./tenant-context');
 const customToolsRepo = require('./custom-tools-repository');
 
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
@@ -14,10 +16,10 @@ const CHUNK_OVERLAP_LINES = 8;
 const MAX_ANALYSIS_CONTENT_CHARS = 200 * 1024;
 const MAX_SEARCH_CANDIDATES = 2500;
 const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
-const KNOWLEDGE_DB_PATH = path.join(DATA_DIR, 'ai-knowledge.db');
+const getKnowledgeDbPath = () => path.join(getDataDir(), 'ai-knowledge.db');
 
 ensureDataDir();
-const db = new sqlite3.Database(KNOWLEDGE_DB_PATH);
+const db = createDatabaseProxy('ai-knowledge.db');
 db.serialize(() => {
     db.run('PRAGMA journal_mode = WAL');
     db.run('PRAGMA foreign_keys = ON');
@@ -44,11 +46,11 @@ function all(sql, params = []) {
     });
 }
 
-function closeDatabase() {
-    return new Promise(resolve => db.close(() => resolve()));
-}
+// Connections are owned by tenant-sqlite-pool and are closed centrally during
+// restore/shutdown. Closing the proxy here would leave a closed handle cached.
+async function closeDatabase() {}
 
-const SOURCE_RULES = [
+function getSourceRules() { return [
     { root: PROJECT_ROOT, single: 'README.md' },
     { root: path.join(PROJECT_ROOT, 'docs'), extensions: new Set(['.md']) },
     { root: path.join(PROJECT_ROOT, 'backend', 'routes'), extensions: new Set(['.js']) },
@@ -58,19 +60,19 @@ const SOURCE_RULES = [
     { root: path.join(PROJECT_ROOT, 'frontend', 'js'), extensions: new Set(['.js']) },
     { root: path.join(PROJECT_ROOT, 'frontend', 'pages'), extensions: new Set(['.html']) },
     { root: customToolsRepo.BUILTIN_TOOLS_DIR, extensions: new Set(['.html', '.htm', '.js', '.css', '.json', '.md', '.txt']) },
-    { root: customToolsRepo.CUSTOM_TOOLS_DIR, extensions: new Set(['.html', '.htm', '.js', '.css', '.json', '.md', '.txt']), allowData: true },
+    { root: customToolsRepo.getCustomToolsDir(), extensions: new Set(['.html', '.htm', '.js', '.css', '.json', '.md', '.txt']), allowedRoot: customToolsRepo.getCustomToolsDir() },
     { root: PROJECT_ROOT, single: 'package.json' },
     { root: path.join(PROJECT_ROOT, 'backend'), single: 'package.json' }
-];
+]; }
 
 const SKIP_PATH_PARTS = new Set([
     'node_modules', '.git', 'data', 'backups', 'logs', 'runtime', 'coverage', 'dist', 'build'
 ]);
 const SKIP_FILE_RE = /(?:^|\/)(?:test_|tmp|fix_|patch_|update_|reconstructed_|parse_log)|\.min\.js$/i;
 
-let initPromise = null;
-let refreshPromise = null;
-let lastRefreshCheckAt = 0;
+const initPromises = new Map();
+const refreshPromises = new Map();
+const lastRefreshCheckAt = new Map();
 let graphCache = null;
 
 function sha256(value) {
@@ -78,10 +80,22 @@ function sha256(value) {
 }
 
 function toProjectPath(filePath) {
+    const customRoot = path.resolve(customToolsRepo.getCustomToolsDir());
+    const relativeCustomPath = path.relative(customRoot, path.resolve(filePath));
+    if (relativeCustomPath && !relativeCustomPath.startsWith('..') && !path.isAbsolute(relativeCustomPath)) {
+        return `backend/data/custom-tools/${relativeCustomPath.split(path.sep).join('/')}`;
+    }
     return path.relative(PROJECT_ROOT, filePath).split(path.sep).join('/');
 }
 
-function isSafeSourcePath(filePath, { allowData = false } = {}) {
+function isSafeSourcePath(filePath, options = {}) {
+    const { allowData = false, allowedRoot } = options;
+    if (allowedRoot) {
+        const relativeToAllowed = path.relative(path.resolve(allowedRoot), path.resolve(filePath));
+        if (relativeToAllowed && !relativeToAllowed.startsWith('..') && !path.isAbsolute(relativeToAllowed)) {
+            return !SKIP_FILE_RE.test(relativeToAllowed);
+        }
+    }
     const relative = toProjectPath(filePath);
     if (!relative || relative.startsWith('..')) return false;
     const parts = relative.split('/');
@@ -108,7 +122,7 @@ function walkFiles(root, extensions, output, options = {}) {
 
 function listSourceFiles() {
     const files = [];
-    for (const rule of SOURCE_RULES) {
+    for (const rule of getSourceRules()) {
         if (rule.single) {
             const candidate = path.join(rule.root, rule.single);
             if (fs.existsSync(candidate) && isSafeSourcePath(candidate, rule)) files.push(candidate);
@@ -176,8 +190,9 @@ function chunkDocument(relativePath, content) {
 }
 
 async function ensureReady() {
-    if (!initPromise) {
-        initPromise = (async () => {
+    const tenantId = getTenantId();
+    if (!initPromises.has(tenantId)) {
+        const promise = (async () => {
             await run(`
                 CREATE TABLE IF NOT EXISTS ai_knowledge_documents (
                     path TEXT PRIMARY KEY,
@@ -212,11 +227,12 @@ async function ensureReady() {
                 )
             `);
         })().catch(error => {
-            initPromise = null;
+            initPromises.delete(tenantId);
             throw error;
         });
+        initPromises.set(tenantId, promise);
     }
-    return initPromise;
+    return initPromises.get(tenantId);
 }
 
 async function indexFile(filePath) {
@@ -254,12 +270,13 @@ async function indexFile(filePath) {
 
 async function refreshIndex({ force = false } = {}) {
     await ensureReady();
-    if (refreshPromise) return refreshPromise;
+    const tenantId = getTenantId();
+    if (refreshPromises.has(tenantId)) return refreshPromises.get(tenantId);
     const now = Date.now();
-    if (!force && now - lastRefreshCheckAt < REFRESH_INTERVAL_MS) return getStatus();
-    lastRefreshCheckAt = now;
+    if (!force && now - (lastRefreshCheckAt.get(tenantId) || 0) < REFRESH_INTERVAL_MS) return getStatus();
+    lastRefreshCheckAt.set(tenantId, now);
 
-    refreshPromise = (async () => {
+    const promise = (async () => {
         const files = listSourceFiles();
         const activePaths = new Set(files.map(toProjectPath));
         let indexedFiles = 0;
@@ -312,9 +329,10 @@ async function refreshIndex({ force = false } = {}) {
         graphCache = null;
         return { ...status, ...summary };
     })().finally(() => {
-        refreshPromise = null;
+        refreshPromises.delete(tenantId);
     });
-    return refreshPromise;
+    refreshPromises.set(tenantId, promise);
+    return promise;
 }
 
 const STOP_TERMS = new Set(['这个', '那个', '怎么', '什么', '项目', '功能', '如何', '可以', '帮我', '看看', '一下', 'the', 'and', 'for', 'with', 'this', 'that']);
@@ -557,16 +575,16 @@ function queryDatabaseSchema(filePath) {
 
 function listLiveDatabaseFiles() {
     const files = [];
-    if (fs.existsSync(DATA_DIR)) {
-        fs.readdirSync(DATA_DIR, { withFileTypes: true })
+    if (fs.existsSync(getDataDir())) {
+        fs.readdirSync(getDataDir(), { withFileTypes: true })
             .filter(item => item.isFile() && /\.(?:db|sqlite)$/i.test(item.name))
             .filter(item => !/(?:before|backup|corrupt|repaired)/i.test(item.name))
-            .filter(item => !(path.resolve(REPORT_DATA_DIR) !== path.resolve(DATA_DIR) && item.name.toLowerCase() === 'report.db'))
-            .map(item => path.join(DATA_DIR, item.name))
+            .filter(item => !(path.resolve(getReportDataDir()) !== path.resolve(getDataDir()) && item.name.toLowerCase() === 'report.db'))
+            .map(item => path.join(getDataDir(), item.name))
             .filter(filePath => fs.statSync(filePath).size > 0)
             .forEach(filePath => files.push(filePath));
     }
-    const reportDbPath = path.join(REPORT_DATA_DIR, 'report.db');
+    const reportDbPath = path.join(getReportDataDir(), 'report.db');
     if (fs.existsSync(reportDbPath) && fs.statSync(reportDbPath).size > 0) files.push(reportDbPath);
     return [...new Set(files.map(filePath => path.resolve(filePath)))];
 }
@@ -741,7 +759,7 @@ async function getGraph() {
         contentByDocument.set(row.document_path, `${contentByDocument.get(row.document_path) || ''}\n${row.content}`);
     }
     const assets = await buildAssetGraph(contentByDocument, documentSet);
-    const cacheKey = `${status.documentCount}:${status.chunkCount}:${status.lastIndexedAt || ''}:${assets.signature}`;
+    const cacheKey = `${getTenantId()}:${status.documentCount}:${status.chunkCount}:${status.lastIndexedAt || ''}:${assets.signature}`;
     if (graphCache && graphCache.key === cacheKey) return graphCache.value;
 
     const groupCounts = new Map();
@@ -873,7 +891,7 @@ function formatResultsForPrompt(results) {
 
 module.exports = {
     PROJECT_ROOT,
-    KNOWLEDGE_DB_PATH,
+    get KNOWLEDGE_DB_PATH() { return getKnowledgeDbPath(); },
     ensureReady,
     refreshIndex,
     search,

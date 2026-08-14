@@ -1,18 +1,20 @@
 const fs = require('fs');
 const path = require('path');
 
-const { DATA_DIR } = require('./store');
+const { BASE_REPORT_DATA_DIR, getReportDataDir } = require('./tenant-context');
 
-const REPORT_DATA_DIR = process.env.TOOLS_REPORT_DATA_DIR
-    || (process.env.TOOLS_DATA_DIR ? DATA_DIR : path.join(__dirname, '../../data'));
+const REPORT_DATA_DIR = BASE_REPORT_DATA_DIR;
 
-function ensureReportDataDir() {
-    if (!fs.existsSync(REPORT_DATA_DIR)) {
-        fs.mkdirSync(REPORT_DATA_DIR, { recursive: true });
+function ensureReportDataDir(tenantId) {
+    const reportDir = getReportDataDir(tenantId);
+    if (!fs.existsSync(reportDir)) {
+        fs.mkdirSync(reportDir, { recursive: true });
     }
+    return reportDir;
 }
 
 module.exports = {
     REPORT_DATA_DIR,
+    getReportDataDir,
     ensureReportDataDir
 };
