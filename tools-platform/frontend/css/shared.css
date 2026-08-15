@@ -3064,6 +3064,19 @@ body.service-status-open { overflow: hidden; }
     background: #fff;
     border-bottom: 1px solid #e1e6eb;
 }
+.service-status-tabs,
+.service-status-toolbar-actions { display: flex; align-items: center; gap: 8px; }
+.service-status-tabs button {
+    padding: 7px 10px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    color: #667085;
+    font: 700 12px inherit;
+    cursor: pointer;
+}
+.service-status-tabs button:hover { color: #16865d; }
+.service-status-tabs button.active { color: #16865d; border-bottom-color: #16865d; }
 .service-status-range { display: flex; gap: 6px; }
 .service-status-range button,
 .service-status-refresh {
@@ -3189,6 +3202,55 @@ body.service-status-open { overflow: hidden; }
 .service-status-error strong { color: #b4232d; font-size: 15px; }
 .service-status-error p { margin: 0; }
 .service-status-error button { padding: 7px 13px; border: 1px solid #d8dee6; border-radius: 8px; background: #fff; cursor: pointer; }
+.service-runtime-log-panel { display: grid; gap: 11px; }
+.service-runtime-log-filter { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 11px; border: 1px solid #dce2e8; border-radius: 11px; background: #fff; }
+.service-runtime-search { min-width: min(100%, 285px); flex: 1 1 285px; display: flex; align-items: center; gap: 6px; padding: 0 9px; border: 1px solid #d8dee6; border-radius: 8px; color: #8490a0; }
+.service-runtime-search:focus-within { border-color: #16865d; box-shadow: 0 0 0 3px rgba(22, 134, 93, .11); }
+.service-runtime-search input { width: 100%; min-width: 0; height: 32px; border: 0; outline: 0; color: #344054; font: 12px inherit; }
+.service-runtime-levels { display: flex; align-items: center; gap: 3px; padding: 3px; border: 1px solid #d8dee6; border-radius: 8px; background: #f7f9fb; }
+.service-runtime-levels label { cursor: pointer; }
+.service-runtime-levels input { position: absolute; opacity: 0; pointer-events: none; }
+.service-runtime-levels span { display: block; padding: 5px 7px; border: 1px solid transparent; border-radius: 5px; color: #98a2b3; font: 800 9px ui-monospace, SFMono-Regular, Consolas, monospace; transition: .15s ease; }
+.service-runtime-levels label:has(input:focus-visible) span { outline: 2px solid #16865d; outline-offset: 1px; }
+.service-runtime-levels label:has(input:checked).debug span { color: #7047a5; border-color: #d9c6ef; background: #f3ebfc; }
+.service-runtime-levels label:has(input:checked).info span { color: #1769aa; border-color: #bedcf4; background: #eaf4ff; }
+.service-runtime-levels label:has(input:checked).log span { color: #475467; border-color: #d5dbe3; background: #fff; }
+.service-runtime-levels label:has(input:checked).warn span { color: #985b00; border-color: #efd58e; background: #fff0cb; }
+.service-runtime-levels label:has(input:checked).error span { color: #af2636; border-color: #efb8bf; background: #ffe1e4; }
+.service-runtime-date { height: 34px; display: flex; align-items: center; gap: 5px; padding: 0 7px; border: 1px solid #d8dee6; border-radius: 8px; color: #7a8493; background: #fff; font-size: 10px; white-space: nowrap; }
+.service-runtime-date input { min-width: 112px; border: 0; outline: 0; color: #475467; background: transparent; font: 11px inherit; }
+.service-runtime-query, .service-runtime-log-pagination button { padding: 8px 12px; border: 1px solid #16865d; border-radius: 8px; color: #fff; background: #16865d; font: 700 12px inherit; cursor: pointer; }
+.service-runtime-query:hover { background: #10724d; }
+.service-runtime-reset { padding: 8px 9px; border: 1px solid #d8dee6; border-radius: 8px; color: #596579; background: #fff; font: 12px inherit; cursor: pointer; }
+.service-runtime-reset:hover { border-color: #98a2b3; background: #f7f9fb; }
+.service-runtime-follow { display: flex; align-items: center; gap: 3px; color: #596579; font-size: 11px; white-space: nowrap; cursor: pointer; }
+.service-runtime-follow input { accent-color: #16865d; }
+.service-runtime-log-summary { color: #7a8493; font-size: 11px; }
+.service-runtime-log-list { max-height: 490px; overflow: auto; border: 1px solid #dce2e8; border-radius: 11px; background: #fff; }
+.service-runtime-log-header, .service-runtime-log-row summary { display: grid; grid-template-columns: 158px 52px minmax(160px, .8fr) minmax(250px, 1.8fr) minmax(130px, .7fr); align-items: center; gap: 10px; min-width: 850px; }
+.service-runtime-log-header { position: sticky; top: 0; z-index: 2; padding: 7px 12px 7px 15px; border-bottom: 1px solid #dce2e8; color: #7a8493; background: rgba(247, 249, 251, .96); font-size: 9px; font-weight: 800; letter-spacing: .04em; backdrop-filter: blur(8px); }
+.service-runtime-log-row { min-width: 850px; border-bottom: 1px solid #edf0f3; border-left: 3px solid #8b95a5; background: linear-gradient(90deg, #f8f9fb, #fff 18%); font-size: 11px; }
+.service-runtime-log-row summary { padding: 10px 12px; cursor: pointer; list-style: none; }
+.service-runtime-log-row summary::-webkit-details-marker { display: none; }
+.service-runtime-log-row:last-child { border-bottom: 0; }
+.service-runtime-log-row.debug { border-left-color: #8b5fc1; background: linear-gradient(90deg, #faf7fd, #fff 18%); }
+.service-runtime-log-row.info { border-left-color: #4a9dff; background: linear-gradient(90deg, #f7fbff, #fff 18%); }
+.service-runtime-log-row.log { border-left-color: #8b95a5; }
+.service-runtime-log-row.warn { border-left-color: #e2a119; background: linear-gradient(90deg, #fffaf0, #fff 18%); }
+.service-runtime-log-row.error { border-left-color: #dc4655; background: linear-gradient(90deg, #fff5f5, #fff 18%); }
+.service-runtime-log-row time, .service-runtime-log-meta { color: #667085; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.service-runtime-log-row code { overflow: hidden; color: #3d647d; font: 10px/1.3 ui-monospace, SFMono-Regular, Consolas, monospace; text-overflow: ellipsis; white-space: nowrap; }
+.service-runtime-log-row p { overflow: hidden; margin: 0; color: #344054; font: 11px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace; text-overflow: ellipsis; white-space: nowrap; }
+.service-runtime-log-row pre { margin: 0; padding: 10px 14px 12px 225px; border-top: 1px dashed #e2e7ec; color: #344054; background: rgba(247, 249, 251, .75); font: 11px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
+.service-runtime-log-level { justify-self: start; min-width: 43px; padding: 3px 5px; border-radius: 5px; color: #475467; background: #edf0f3; font: 800 9px ui-monospace, SFMono-Regular, Consolas, monospace; text-align: center; }
+.service-runtime-log-row.debug .service-runtime-log-level { color: #7047a5; background: #f0e5fb; }
+.service-runtime-log-row.info .service-runtime-log-level { color: #1769aa; background: #eaf4ff; }
+.service-runtime-log-row.warn .service-runtime-log-level { color: #985b00; background: #fff0cb; }
+.service-runtime-log-row.error .service-runtime-log-level { color: #af2636; background: #ffe1e4; }
+.service-runtime-log-pagination { display: flex; justify-content: flex-end; align-items: center; gap: 9px; color: #667085; font-size: 11px; }
+.service-runtime-log-pagination button:disabled { border-color: #d8dee6; color: #aab2bd; background: #f5f7f9; cursor: not-allowed; }
+.service-runtime-log-loading, .service-runtime-log-empty { min-height: 180px; display: grid; place-items: center; color: #7a8493; font-size: 12px; }
+.service-runtime-log-empty.error { color: #b4232d; }
 .service-failure-modal {
     position: fixed;
     inset: 0;
@@ -3245,12 +3307,20 @@ body.service-status-open { overflow: hidden; }
     .service-status-head { padding: 18px 16px 13px; }
     .service-status-head h2 { font-size: 21px; }
     .service-status-toolbar { padding: 10px 16px; }
+    .service-status-toolbar { align-items: flex-start; flex-direction: column; }
+    .service-status-toolbar-actions { width: 100%; justify-content: space-between; }
     .service-status-content { padding: 14px 12px 18px; }
     .service-status-grid { grid-template-columns: 1fr; }
     .service-status-overview { grid-template-columns: 1fr 1fr; }
     .service-status-stat strong { font-size: 17px; }
     .service-status-refresh span { display: none; }
     .service-status-legend em { width: 100%; margin-left: 0; }
+    .service-runtime-log-filter { align-items: stretch; }
+    .service-runtime-levels { max-width: 100%; overflow-x: auto; }
+    .service-runtime-date { flex: 1 1 135px; }
+    .service-runtime-date input { width: 100%; }
+    .service-runtime-query { flex: 1; }
+    .service-runtime-log-row pre { padding-left: 14px; }
     .service-failure-modal { padding: 0; }
     .service-failure-dialog { width: 100vw; max-height: 100vh; border-radius: 0; }
     .service-failure-item summary { grid-template-columns: auto minmax(0, 1fr) auto; }

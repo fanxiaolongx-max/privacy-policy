@@ -5090,6 +5090,10 @@ async function checkServerStatus() {
 }
 
 let serviceStatusDays = 90;
+let serviceStatusView = 'overview';
+let serviceRuntimeLogPage = 1;
+let serviceRuntimeLogTimer = null;
+let serviceRuntimeLogRequestSeq = 0;
 
 function serviceStatusBi(zh, en) {
     return window.ToolsI18n?.getLanguage?.() === 'en-US' ? en : zh;
@@ -5173,8 +5177,14 @@ function ensureServiceStatusModal() {
                 <button type="button" class="service-status-close" onclick="closeServiceStatusModal()" aria-label="Close">×</button>
             </div>
             <div class="service-status-toolbar">
-                <div class="service-status-range" id="serviceStatusRange"></div>
-                <button type="button" class="service-status-refresh" onclick="loadServiceStatusHistory()">↻ <span>${serviceStatusBi('刷新', 'Refresh')}</span></button>
+                <div class="service-status-tabs">
+                    <button type="button" id="serviceStatusOverviewTab" onclick="setServiceStatusView('overview')">${serviceStatusBi('状态概览', 'Overview')}</button>
+                    <button type="button" id="serviceStatusLogsTab" onclick="setServiceStatusView('logs')">${serviceStatusBi('运行日志', 'Runtime logs')}</button>
+                </div>
+                <div class="service-status-toolbar-actions">
+                    <div class="service-status-range" id="serviceStatusRange"></div>
+                    <button type="button" class="service-status-refresh" onclick="refreshServiceStatusView()">↻ <span>${serviceStatusBi('刷新', 'Refresh')}</span></button>
+                </div>
             </div>
             <div class="service-status-content" id="serviceStatusContent"></div>
         </div>`;
@@ -5259,13 +5269,141 @@ window.openServiceStatusModal = function () {
     document.body.classList.add('service-status-open');
     document.getElementById('serviceStatusTitle').textContent = serviceStatusBi('服务状态中心', 'Service Status Center');
     document.getElementById('serviceStatusSubtitle').textContent = serviceStatusBi('基于平台真实 API 请求返回结果生成', 'Generated from actual platform API responses');
-    window.loadServiceStatusHistory();
+    const runtimeLogsTab = document.getElementById('serviceStatusLogsTab');
+    if (runtimeLogsTab) runtimeLogsTab.hidden = !canInspectServiceFailures();
+    window.setServiceStatusView('overview');
 };
 
 window.closeServiceStatusModal = function () {
     const modal = document.getElementById('serviceStatusModal');
     if (modal) modal.style.display = 'none';
     document.body.classList.remove('service-status-open');
+    window.clearServiceRuntimeLogPolling();
+};
+
+window.setServiceStatusView = function (view) {
+    serviceStatusView = view === 'logs' && canInspectServiceFailures() ? 'logs' : 'overview';
+    document.getElementById('serviceStatusOverviewTab')?.classList.toggle('active', serviceStatusView === 'overview');
+    document.getElementById('serviceStatusLogsTab')?.classList.toggle('active', serviceStatusView === 'logs');
+    const subtitle = document.getElementById('serviceStatusSubtitle');
+    if (subtitle) subtitle.textContent = serviceStatusView === 'logs'
+        ? serviceStatusBi('后台全量控制台日志 · 自动脱敏', 'Complete backend console · automatically redacted')
+        : serviceStatusBi('基于平台真实 API 请求返回结果生成', 'Generated from actual platform API responses');
+    if (serviceStatusView === 'logs') {
+        window.renderServiceRuntimeLogShell();
+        window.loadServiceRuntimeLogs(1);
+    } else {
+        window.clearServiceRuntimeLogPolling();
+        window.loadServiceStatusHistory();
+    }
+};
+
+window.refreshServiceStatusView = function () {
+    if (serviceStatusView === 'logs') window.loadServiceRuntimeLogs(serviceRuntimeLogPage);
+    else window.loadServiceStatusHistory();
+};
+
+window.clearServiceRuntimeLogPolling = function () {
+    if (serviceRuntimeLogTimer) window.clearInterval(serviceRuntimeLogTimer);
+    serviceRuntimeLogTimer = null;
+};
+
+function runtimeLogFilters() {
+    const levels = [...document.querySelectorAll('.service-runtime-levels input:checked')].map(input => input.value);
+    return {
+        q: document.getElementById('serviceRuntimeLogSearch')?.value.trim() || '',
+        levels: levels.length ? levels.join(',') : '__none__',
+        startDate: document.getElementById('serviceRuntimeLogStartDate')?.value || '',
+        endDate: document.getElementById('serviceRuntimeLogEndDate')?.value || ''
+    };
+}
+
+window.clearServiceRuntimeLogFilters = function () {
+    const search = document.getElementById('serviceRuntimeLogSearch');
+    const startDate = document.getElementById('serviceRuntimeLogStartDate');
+    const endDate = document.getElementById('serviceRuntimeLogEndDate');
+    if (search) search.value = '';
+    if (startDate) startDate.value = '';
+    if (endDate) endDate.value = '';
+    document.querySelectorAll('.service-runtime-levels input').forEach(input => { input.checked = true; });
+    window.loadServiceRuntimeLogs(1);
+};
+
+window.renderServiceRuntimeLogShell = function () {
+    const content = document.getElementById('serviceStatusContent');
+    const range = document.getElementById('serviceStatusRange');
+    if (!content || !range) return;
+    range.innerHTML = '';
+    content.innerHTML = `
+        <section class="service-runtime-log-panel">
+            <div class="service-runtime-log-filter">
+                <label class="service-runtime-search"><span>⌕</span><input id="serviceRuntimeLogSearch" type="search" placeholder="${serviceStatusBi('搜索详情、代码位置或请求 ID', 'Search detail, source or request ID')}" onkeydown="if(event.key==='Enter') loadServiceRuntimeLogs(1)"></label>
+                <div class="service-runtime-levels" role="group" aria-label="${serviceStatusBi('日志等级（可多选）', 'Log levels (multi-select)')}">
+                    ${['DEBUG', 'INFO', 'LOG', 'WARN', 'ERROR'].map(level => `<label class="${level.toLowerCase()}"><input type="checkbox" value="${level}" checked onchange="loadServiceRuntimeLogs(1)"><span>${level}</span></label>`).join('')}
+                </div>
+                <label class="service-runtime-date"><span>${serviceStatusBi('从', 'From')}</span><input id="serviceRuntimeLogStartDate" type="date" onchange="loadServiceRuntimeLogs(1)"></label>
+                <label class="service-runtime-date"><span>${serviceStatusBi('到', 'To')}</span><input id="serviceRuntimeLogEndDate" type="date" onchange="loadServiceRuntimeLogs(1)"></label>
+                <button type="button" class="service-runtime-query" onclick="loadServiceRuntimeLogs(1)">${serviceStatusBi('查询', 'Search')}</button>
+                <button type="button" class="service-runtime-reset" onclick="clearServiceRuntimeLogFilters()">${serviceStatusBi('重置', 'Reset')}</button>
+                <label class="service-runtime-follow"><input id="serviceRuntimeLogFollow" type="checkbox" checked onchange="toggleServiceRuntimeLogPolling()"> ${serviceStatusBi('实时跟随', 'Follow live')}</label>
+            </div>
+            <div class="service-runtime-log-summary" id="serviceRuntimeLogSummary"></div>
+            <div class="service-runtime-log-list" id="serviceRuntimeLogList" aria-live="polite"></div>
+            <div class="service-runtime-log-pagination" id="serviceRuntimeLogPagination"></div>
+        </section>`;
+    window.toggleServiceRuntimeLogPolling();
+};
+
+window.toggleServiceRuntimeLogPolling = function () {
+    window.clearServiceRuntimeLogPolling();
+    const follow = document.getElementById('serviceRuntimeLogFollow');
+    if (serviceStatusView !== 'logs' || !follow?.checked) return;
+    serviceRuntimeLogTimer = window.setInterval(() => {
+        if (document.getElementById('serviceStatusModal')?.style.display === 'flex') window.loadServiceRuntimeLogs(1, true);
+    }, 3000);
+};
+
+window.loadServiceRuntimeLogs = async function (page = 1, isLiveRefresh = false) {
+    if (serviceStatusView !== 'logs') return;
+    const list = document.getElementById('serviceRuntimeLogList');
+    const summary = document.getElementById('serviceRuntimeLogSummary');
+    const pagination = document.getElementById('serviceRuntimeLogPagination');
+    if (!list || !summary || !pagination) return;
+    if (!isLiveRefresh && Number(page) > 1) {
+        const follow = document.getElementById('serviceRuntimeLogFollow');
+        if (follow) follow.checked = false;
+        window.toggleServiceRuntimeLogPolling();
+    }
+    const requestSeq = ++serviceRuntimeLogRequestSeq;
+    const filters = runtimeLogFilters();
+    if (!isLiveRefresh) list.innerHTML = `<div class="service-runtime-log-loading">${serviceStatusBi('正在读取程序运行日志…', 'Loading runtime logs…')}</div>`;
+    const query = new URLSearchParams({ ...filters, page: String(page), pageSize: '50' });
+    try {
+        const data = await serviceStatusRequest(`/api/platform-metrics/service-status/logs?${query}`);
+        if (requestSeq !== serviceRuntimeLogRequestSeq || serviceStatusView !== 'logs') return;
+        serviceRuntimeLogPage = data.page || page;
+        const logs = data.logs || [];
+        summary.textContent = `${serviceStatusBi('共', 'Total')} ${Number(data.total || 0).toLocaleString()} ${serviceStatusBi('条 · 保留最近', 'entries · last')} ${data.retentionDays || 30} ${serviceStatusBi('天 · 每 3 秒刷新', 'days · refreshes every 3 seconds')}`;
+        list.innerHTML = logs.length ? `<div class="service-runtime-log-header"><span>${serviceStatusBi('时间', 'Time')}</span><span>${serviceStatusBi('等级', 'Level')}</span><span>${serviceStatusBi('代码位置', 'Source')}</span><span>${serviceStatusBi('详情', 'Detail')}</span><span>${serviceStatusBi('上下文', 'Context')}</span></div>${logs.map(log => {
+            const context = log.requestId
+                ? `${log.statusCode == null ? '—' : `HTTP ${Number(log.statusCode)}`} · ${log.durationMs == null ? '—' : `${Number(log.durationMs)}ms`} · ${navEscape(log.requestId)}`
+                : serviceStatusBi('后台控制台', 'Backend console');
+            return `<details class="service-runtime-log-row ${String(log.level || 'LOG').toLowerCase()}"><summary>
+                <time>${navEscape(new Date(log.timestamp).toLocaleString())}</time>
+                <span class="service-runtime-log-level">${navEscape(log.level)}</span>
+                <code title="${navEscape(log.source)}">${navEscape(log.source)}</code>
+                <p title="${navEscape(log.detail)}">${navEscape(log.detail)}</p>
+                <span class="service-runtime-log-meta">${context}</span>
+            </summary><pre>${navEscape(log.detail)}</pre></details>`;
+        }).join('')}` : `<div class="service-runtime-log-empty">${serviceStatusBi('没有匹配的运行日志', 'No matching runtime logs')}</div>`;
+        const previousDisabled = data.page <= 1 ? 'disabled' : '';
+        const nextDisabled = data.page >= data.totalPages ? 'disabled' : '';
+        pagination.innerHTML = `<button type="button" ${previousDisabled} onclick="loadServiceRuntimeLogs(${Math.max(1, data.page - 1)})">${serviceStatusBi('上一页', 'Previous')}</button><span>${data.page} / ${data.totalPages}</span><button type="button" ${nextDisabled} onclick="loadServiceRuntimeLogs(${Math.min(data.totalPages, data.page + 1)})">${serviceStatusBi('下一页', 'Next')}</button>`;
+        if (isLiveRefresh && document.getElementById('serviceRuntimeLogFollow')?.checked) list.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (error) {
+        if (requestSeq !== serviceRuntimeLogRequestSeq) return;
+        list.innerHTML = `<div class="service-runtime-log-empty error">${navEscape(error.message || serviceStatusBi('日志读取失败', 'Unable to load logs'))}</div>`;
+    }
 };
 
 window.setServiceStatusDays = function (days) {

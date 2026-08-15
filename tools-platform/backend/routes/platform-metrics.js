@@ -32,6 +32,25 @@ router.get('/service-status/failures', requireAdmin, async (req, res) => {
     }
 });
 
+router.get('/service-status/logs', requireAdmin, async (req, res) => {
+    try {
+        res.setHeader('Cache-Control', 'no-store');
+        res.json(await serviceStatusRepo.getRuntimeLogs({
+            q: req.query.q,
+            level: req.query.level,
+            levels: req.query.levels,
+            date: req.query.date,
+            startDate: req.query.startDate,
+            endDate: req.query.endDate,
+            page: req.query.page,
+            pageSize: req.query.pageSize
+        }));
+    } catch (err) {
+        console.error('[platform-metrics] runtime logs failed:', err);
+        res.status(500).json({ error: '读取程序运行日志失败' });
+    }
+});
+
 router.get('/summary', async (req, res) => {
     try {
         res.setHeader('Cache-Control', 'no-store');

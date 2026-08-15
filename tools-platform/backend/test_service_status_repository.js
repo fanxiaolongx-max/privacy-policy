@@ -7,7 +7,9 @@ const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tools-platform-service-st
 process.env.TOOLS_DATA_DIR = tempDir;
 
 const repo = require('./models/service-status-repository');
+const runtimeConsole = require('./logger/daily-file-console');
 const { closeDatabase } = require('./models/app-db');
+const { runWithTenant } = require('./models/tenant-context');
 
 async function main() {
     const dateAt = daysAgo => {
@@ -24,6 +26,10 @@ async function main() {
     assert.strictEqual(repo.shouldTrackRequest('OPTIONS', '/api/health'), false);
     assert.strictEqual(repo.shouldTrackRequest('GET', '/api/platform-metrics/service-status?days=90'), false);
     assert.strictEqual(repo.shouldTrackRequest('GET', '/api/platform-metrics/service-status/failures'), false);
+    assert.strictEqual(repo.shouldTrackRequest('GET', '/api/platform-metrics/service-status/logs'), false);
+    assert.ok(runtimeConsole.captureSourceLocation().includes('backend/test_service_status_repository.js:'));
+    assert.ok(runtimeConsole.formatConsoleDetail([{ password: 'plain-text', nested: { apiKey: 'abc' } }]).includes('[REDACTED]'));
+    assert.ok(!runtimeConsole.formatConsoleDetail(['Authorization: Bearer abc.def']).includes('abc.def'));
 
     const now = Date.now();
     assert.strictEqual(repo.summarizeLicenseStatus({ enabled: false }, now).state, 'not-applicable');
@@ -67,6 +73,26 @@ async function main() {
     const clientFailures = await repo.getFailures({ serviceKey: 'core', date: dayKey(1), statusClass: '4xx' });
     assert.strictEqual(clientFailures.failures.length, 1);
     assert.strictEqual(clientFailures.failures[0].path, '/api/health?probe=missing');
+
+    await repo.recordRuntimeLog({ timestamp: dateAt(0), level: 'INFO', source: 'backend/server.js:request-logger', detail: 'GET /api/health → HTTP 200 · 12ms', requestId: 'req_log_health', statusCode: 200, durationMs: 12 });
+    await repo.recordRuntimeLog({ timestamp: dateAt(0), level: 'ERROR', source: 'backend/routes/ai.js:chat', detail: 'POST /api/ai/chat → HTTP 503 · 140ms', requestId: 'req_log_ai', statusCode: 503, durationMs: 140 });
+    await repo.recordRuntimeLog({ timestamp: dateAt(0), level: 'DEBUG', source: 'backend/models/backup.js:42', detail: 'backup scan complete' });
+    await repo.recordRuntimeLog({ timestamp: dateAt(0), level: 'WARN', source: 'backend/models/backup.js:51', detail: 'backup target unavailable' });
+    const runtimeLogs = await repo.getRuntimeLogs({ q: 'ai/chat', level: 'ERROR', page: 1, pageSize: 10 });
+    assert.strictEqual(runtimeLogs.total, 1);
+    assert.strictEqual(runtimeLogs.logs[0].requestId, 'req_log_ai');
+    assert.strictEqual(runtimeLogs.logs[0].source, 'backend/routes/ai.js:chat');
+    const selectedLevels = await repo.getRuntimeLogs({ levels: 'DEBUG,WARN', page: 1, pageSize: 10 });
+    assert.strictEqual(selectedLevels.total, 2);
+    assert.deepStrictEqual(new Set(selectedLevels.logs.map(log => log.level)), new Set(['DEBUG', 'WARN']));
+    assert.ok(selectedLevels.logs.every(log => log.statusCode === null && log.durationMs === null));
+    await runWithTenant('tenant-log-isolation', async () => {
+        await repo.recordRuntimeLog({ timestamp: dateAt(0), level: 'LOG', source: 'backend/tenant-task.js:9', detail: 'tenant-only-log' });
+        const tenantLogs = await repo.getRuntimeLogs({ q: 'tenant-only-log' });
+        assert.strictEqual(tenantLogs.total, 1);
+    });
+    const defaultTenantLogs = await repo.getRuntimeLogs({ q: 'tenant-only-log' });
+    assert.strictEqual(defaultTenantLogs.total, 0);
 
     const fallback = await repo.getHistory(365);
     assert.strictEqual(fallback.days, 90);

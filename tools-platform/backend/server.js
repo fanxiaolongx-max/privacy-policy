@@ -2,7 +2,8 @@
  * Tools Platform - 主服务入口
  * 统一管理 UIVF12 Catcher 和 Task SLA Killer 的后端 API
  */
-require('./logger/daily-file-console').installDailyFileConsole();
+const dailyFileConsole = require('./logger/daily-file-console');
+dailyFileConsole.installDailyFileConsole();
 const { runPreflight } = require('./preflight');
 
 const PORT = process.env.PORT || 3030;
@@ -84,6 +85,19 @@ const { DEFAULT_TENANT_ID, runWithTenant, tenantMiddleware } = require('./models
 const { initializeDefaultBusinessSchema } = require('./models/business-schema-initializer');
 const friendLinksService = require('./models/friend-links-service');
 const serviceStatusRepo = require('./models/service-status-repository');
+dailyFileConsole.setRuntimeLogSink(event => {
+    if (String(event.detail || '').includes('/api/platform-metrics/service-status/logs')) return null;
+    const apiMatch = String(event.detail || '').match(/\]\s+(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\s+(\S+)\s+#(\S+).*?→\s+(\d{3})\s+\((\d+)ms\)/);
+    const apiStatus = apiMatch ? Number(apiMatch[4]) : null;
+    return serviceStatusRepo.recordRuntimeLog({
+        ...event,
+        level: apiStatus >= 500 ? 'ERROR' : apiStatus >= 400 ? 'WARN' : event.level,
+        requestId: apiMatch?.[3] || '',
+        serviceKey: apiMatch ? serviceStatusRepo.resolveService(apiMatch[2]).id : '',
+        statusCode: apiStatus,
+        durationMs: apiMatch ? Number(apiMatch[5]) : null
+    });
+});
 const globalBackupRepo = require('./models/global-backup-repository');
 const remoteBackupSyncRepo = require('./models/remote-backup-sync-repository');
 const legacyJsonMigration = require('./models/legacy-json-migration');
@@ -116,6 +130,7 @@ app.use((req, res, next) => {
     if (
         req.path === '/api/desktop-license/status'
         || req.path === '/api/platform-metrics/service-status'
+        || req.path === '/api/platform-metrics/service-status/logs'
         || req.path === '/api/health'
     ) return next();
     const ext = path.extname(req.path).toLowerCase();
@@ -210,7 +225,10 @@ app.use((req, res, next) => {
         const bodySize = req.headers['content-length'] ? `(body: ${req.headers['content-length']}B)` : '';
         const querySummary = Object.keys(safeQuery).length ? ` query=${JSON.stringify(safeQuery)}` : '';
         const externalTag = safeUrl.startsWith('/api/external/metrics') ? ' [external-metrics]' : '';
-        console.log(`${color}[${ts}] ${req.method} ${safeUrl} #${req.requestId}${externalTag} → ${status} (${dur}ms) ${bodySize}${querySummary} ip=${client} ua="${userAgent.substring(0, 120)}"${reset}`);
+        const isRuntimeLogViewerRequest = safeUrl.startsWith('/api/platform-metrics/service-status/logs');
+        if (!isRuntimeLogViewerRequest) {
+            console.log(`${color}[${ts}] ${req.method} ${safeUrl} #${req.requestId}${externalTag} → ${status} (${dur}ms) ${bodySize}${querySummary} ip=${client} ua="${userAgent.substring(0, 120)}"${reset}`);
+        }
         serviceStatusRepo.trackRequest({
             method: req.method,
             pathname: safeUrl,

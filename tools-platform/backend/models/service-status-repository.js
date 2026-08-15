@@ -1,4 +1,4 @@
-const { run, all } = require('./app-db');
+const { run, all, getDbPath } = require('./app-db');
 
 const ALLOWED_WINDOWS = new Set([30, 90, 180]);
 const LICENSE_WARNING_MS = 7 * 24 * 60 * 60 * 1000;
@@ -6,6 +6,8 @@ const LICENSE_CRITICAL_MS = 24 * 60 * 60 * 1000;
 const FAILURE_RETENTION_DAYS = 180;
 const FAILURE_DETAIL_LIMIT = 16000;
 const MAX_FAILURE_RECORDS = 5000;
+const RUNTIME_LOG_RETENTION_DAYS = 30;
+const MAX_RUNTIME_LOG_RECORDS = 50000;
 
 const SERVICE_DEFINITIONS = [
     {
@@ -66,11 +68,13 @@ const SERVICE_DEFINITIONS = [
     }
 ];
 
-let initPromise = null;
+const initPromises = new Map();
+const nextRuntimeLogCleanupAt = new Map();
 
 async function ensureReady() {
-    if (!initPromise) {
-        initPromise = (async () => {
+    const dbPath = getDbPath();
+    if (!initPromises.has(dbPath)) {
+        const promise = (async () => {
             await run(`CREATE TABLE IF NOT EXISTS service_status_daily (
                 service_key TEXT NOT NULL,
                 status_date TEXT NOT NULL,
@@ -98,12 +102,26 @@ async function ensureReady() {
             )`);
             await run(`CREATE INDEX IF NOT EXISTS idx_service_status_failures_lookup
                 ON service_status_failures (request_at DESC, service_key, status_code)`);
+            await run(`CREATE TABLE IF NOT EXISTS service_runtime_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                logged_at TEXT NOT NULL,
+                level TEXT NOT NULL,
+                source TEXT NOT NULL,
+                detail TEXT NOT NULL,
+                request_id TEXT,
+                service_key TEXT,
+                status_code INTEGER,
+                duration_ms INTEGER
+            )`);
+            await run(`CREATE INDEX IF NOT EXISTS idx_service_runtime_logs_lookup
+                ON service_runtime_logs (logged_at DESC, id DESC)`);
         })().catch(error => {
-            initPromise = null;
+            initPromises.delete(dbPath);
             throw error;
         });
+        initPromises.set(dbPath, promise);
     }
-    return initPromise;
+    return initPromises.get(dbPath);
 }
 
 function pathnameOf(value) {
@@ -230,6 +248,97 @@ async function getFailures(filters = {}) {
             requestBody: row.request_body || '',
             responseBody: row.response_body || ''
         }))
+    };
+}
+
+function normalizeRuntimeLogLevel(value) {
+    const level = String(value || '').toUpperCase();
+    return ['DEBUG', 'INFO', 'LOG', 'WARN', 'ERROR'].includes(level) ? level : 'LOG';
+}
+
+function nullableRuntimeLogNumber(value, { duration = false } = {}) {
+    if (value == null || value === '') return null;
+    const number = Number(value);
+    if (!Number.isFinite(number)) return null;
+    return duration ? Math.max(0, Math.round(number)) : number;
+}
+
+async function recordRuntimeLog({ timestamp = new Date(), level, source, detail, requestId, serviceKey, statusCode, durationMs }) {
+    await ensureReady();
+    const loggedAt = timestamp instanceof Date ? timestamp : new Date(timestamp);
+    const safeTime = Number.isFinite(loggedAt.getTime()) ? loggedAt : new Date();
+    await run(`INSERT INTO service_runtime_logs (
+        logged_at, level, source, detail, request_id, service_key, status_code, duration_ms
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, [
+        safeTime.toISOString(),
+        normalizeRuntimeLogLevel(level),
+        String(source || 'backend/unknown'),
+        String(detail || ''),
+        String(requestId || ''),
+        String(serviceKey || ''),
+        nullableRuntimeLogNumber(statusCode),
+        nullableRuntimeLogNumber(durationMs, { duration: true })
+    ]);
+    const dbPath = getDbPath();
+    if (Date.now() >= Number(nextRuntimeLogCleanupAt.get(dbPath) || 0)) {
+        nextRuntimeLogCleanupAt.set(dbPath, Date.now() + 60 * 60 * 1000);
+        const cutoff = new Date(safeTime.getTime() - RUNTIME_LOG_RETENTION_DAYS * 86400000).toISOString();
+        await run('DELETE FROM service_runtime_logs WHERE logged_at < ?', [cutoff]);
+        await run(`DELETE FROM service_runtime_logs WHERE id IN (
+            SELECT id FROM service_runtime_logs
+            ORDER BY logged_at DESC, id DESC
+            LIMIT -1 OFFSET ?
+        )`, [MAX_RUNTIME_LOG_RECORDS]);
+    }
+}
+
+async function getRuntimeLogs(filters = {}) {
+    await ensureReady();
+    const where = ['logged_at >= ?'];
+    const params = [new Date(Date.now() - RUNTIME_LOG_RETENTION_DAYS * 86400000).toISOString()];
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(String(filters.date || '')) ? String(filters.date) : '';
+    const startDate = /^\d{4}-\d{2}-\d{2}$/.test(String(filters.startDate || '')) ? String(filters.startDate) : '';
+    const endDate = /^\d{4}-\d{2}-\d{2}$/.test(String(filters.endDate || '')) ? String(filters.endDate) : '';
+    if (date) {
+        where.push('logged_at >= ? AND logged_at < ?');
+        params.push(`${date}T00:00:00.000Z`, `${date}T23:59:59.999Z`);
+    } else {
+        if (startDate) { where.push('logged_at >= ?'); params.push(`${startDate}T00:00:00.000Z`); }
+        if (endDate) { where.push('logged_at < ?'); params.push(`${endDate}T23:59:59.999Z`); }
+    }
+    const rawLevels = String(filters.levels || filters.level || '').trim();
+    if (rawLevels) {
+        const allowedLevels = new Set(['DEBUG', 'INFO', 'LOG', 'WARN', 'ERROR']);
+        const levels = [...new Set(rawLevels.split(',').map(value => value.trim().toUpperCase()).filter(value => allowedLevels.has(value)))];
+        if (levels.length) {
+            where.push(`level IN (${levels.map(() => '?').join(', ')})`);
+            params.push(...levels);
+        } else {
+            where.push('1 = 0');
+        }
+    }
+    const keyword = String(filters.q || '').trim().slice(0, 200);
+    if (keyword) {
+        const pattern = `%${keyword.replace(/[\\%_]/g, '\\$&')}%`;
+        where.push("(source LIKE ? ESCAPE '\\' OR detail LIKE ? ESCAPE '\\' OR request_id LIKE ? ESCAPE '\\')");
+        params.push(pattern, pattern, pattern);
+    }
+    const pageSize = Math.min(100, Math.max(10, Number(filters.pageSize) || 50));
+    const page = Math.max(1, Number(filters.page) || 1);
+    const countRows = await all(`SELECT COUNT(*) AS total FROM service_runtime_logs WHERE ${where.join(' AND ')}`, params);
+    const total = Number(countRows[0]?.total || 0);
+    const rows = await all(`SELECT id, logged_at, level, source, detail, request_id, service_key, status_code, duration_ms
+        FROM service_runtime_logs WHERE ${where.join(' AND ')}
+        ORDER BY logged_at DESC, id DESC LIMIT ? OFFSET ?`, [...params, pageSize, (page - 1) * pageSize]);
+    return {
+        logs: rows.map(row => ({
+            id: Number(row.id), timestamp: row.logged_at, level: row.level, source: row.source,
+            detail: row.detail, requestId: row.request_id || '', serviceKey: row.service_key || '',
+            statusCode: row.status_code == null ? null : Number(row.status_code),
+            durationMs: row.duration_ms == null ? null : Number(row.duration_ms)
+        })),
+        page, pageSize, total, totalPages: Math.max(1, Math.ceil(total / pageSize)),
+        retentionDays: RUNTIME_LOG_RETENTION_DAYS
     };
 }
 
@@ -373,9 +482,11 @@ module.exports = {
     resolveService,
     shouldTrackRequest,
     trackRequest,
+    recordRuntimeLog,
     classifyDay,
     summarizeRows,
     summarizeLicenseStatus,
     getHistory,
-    getFailures
+    getFailures,
+    getRuntimeLogs
 };
