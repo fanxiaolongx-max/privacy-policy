@@ -354,8 +354,9 @@ async function testChromeCaptureTemplateCompatibility() {
     const popupTheme = fs.readFileSync(path.join(toolDir, 'chrome-capture-pro/layout/styles/popup_theme.css'), 'utf8');
     assert.ok(popupHtml.includes('overflow: hidden'), 'Chrome Capture Popup 应保持单屏固定布局');
     assert.ok(popupTheme.includes('body.cc-license-badge-in-footer'), 'Popup 必须为 Footer 内的 License 状态腾出原品牌区域');
-    assert.ok(licenseGuard.includes("const popupFooter = document.querySelector('#mountNode"), 'License 状态必须定位 Popup Footer');
-    assert.ok(licenseGuard.includes("popupFooter.append(badge)"), 'License 状态必须复用 Footer 高度而不是增加 Popup 高度');
+    assert.ok(licenseGuard.includes("const isPopup = Boolean(document.getElementById('mountNode'))"), 'License 状态必须可靠识别 Popup，不得依赖 React Footer 渲染时序');
+    assert.ok(licenseGuard.includes('position: fixed; left: 10px; right: 92px; bottom: 7px'), 'Popup License 状态必须固定覆盖 Footer 左侧');
+    assert.ok(licenseGuard.includes("document.body.append(badge)"), 'License 状态必须脱离页面流，不得增加 Popup 高度');
     assert.ok(licenseGuard.includes('const nonce = randomNonce()'), 'Chrome Capture 在线校验必须生成 nonce');
     assert.ok(licenseGuard.includes('productId: config.productId,\n          nonce'), 'Chrome Capture 在线校验必须发送 nonce');
     assert.ok(licenseGuard.includes('payload.nonce !== nonce'), '必须校验服务端证明中的 nonce');

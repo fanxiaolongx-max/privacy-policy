@@ -518,9 +518,9 @@
     const isUrgent = daysLeft <= 1;
     const isWarn = daysLeft <= 3;
 
-    const popupFooter = document.querySelector('#mountNode > div[class*="container"] > div:last-child > div');
-    const popupBadgeStyles = popupFooter ? `
-      position: absolute; left: 10px; right: 92px; top: 7px; height: 38px; z-index: 3;
+    const isPopup = Boolean(document.getElementById('mountNode'));
+    const popupBadgeStyles = isPopup ? `
+      position: fixed; left: 10px; right: 92px; bottom: 7px; height: 38px; z-index: 2147483646;
       padding: 4px 8px; margin: 0;
     ` : `
       padding: 6px 12px; margin: 6px 10px;
@@ -529,7 +529,7 @@
     badge.style.cssText = `
       display: flex; align-items: center; justify-content: space-between; gap: 6px;
       ${popupBadgeStyles}
-      border-radius: 8px; font-size: ${popupFooter ? '10px' : '11px'}; font-weight: 500;
+      border-radius: 8px; font-size: ${isPopup ? '10px' : '11px'}; font-weight: 500;
       background: ${isUrgent ? 'rgba(239,68,68,0.2)' : isWarn ? 'rgba(245,158,11,0.2)' : 'rgba(99,102,241,0.15)'};
       border: 1px solid ${isUrgent ? 'rgba(239,68,68,0.5)' : isWarn ? 'rgba(245,158,11,0.5)' : 'rgba(99,102,241,0.35)'};
       color: ${isUrgent ? '#fca5a5' : isWarn ? '#fcd34d' : '#c7d2fe'};
@@ -540,10 +540,10 @@
       <span style="font-size: 10px; opacity: 0.8; cursor: pointer;" id="cc-badge-renew">${t('updateLicense')}</span>
     `;
 
-    if (popupFooter) {
+    if (isPopup) {
       badge.classList.add('cc-license-badge--popup');
       document.body.classList.add('cc-license-badge-in-footer');
-      popupFooter.append(badge);
+      document.body.append(badge);
     } else {
       containerElement.prepend(badge);
     }
