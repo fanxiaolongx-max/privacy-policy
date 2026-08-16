@@ -10,7 +10,7 @@
     "default_title": "__MSG_extension_name__"
   },
   "background": {
-    "service_worker": "dist/background/bundle.js",
+    "service_worker": "capture-background.js",
     "type": "module"
   },
   "commands": {
