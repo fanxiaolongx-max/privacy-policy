@@ -1,0 +1,1691 @@
+{
+  "account_modal_free_plan": {
+    "description": "You are on the free plan",
+    "message": "您当前使用的是免费版方案"
+  },
+  "account_modal_manage_subscription_button": {
+    "description": "Manage Subscription",
+    "message": "管理订阅"
+  },
+  "account_modal_not_signed_in": {
+    "description": "You are not signed in",
+    "message": "您尚未登录"
+  },
+  "account_modal_premium_plan": {
+    "description": "You are on the premium plan",
+    "message": "您当前使用的是高级版方案"
+  },
+  "account_modal_premium_pro_plan": {
+    "description": "You are on the Premium Pro plan",
+    "message": "已激活 Dragon Pro 旗舰方案"
+  },
+  "account_modal_request_feature_button": {
+    "description": "Request Feature",
+    "message": "请求功能"
+  },
+  "account_modal_request_support_button": {
+    "description": "Request Support",
+    "message": "请求支持"
+  },
+  "account_modal_stats_heading": {
+    "description": "Your stats:",
+    "message": "使用统计"
+  },
+  "alert_text": {
+    "description": "Unable to run selected area capture on this website. Please use full screen recording or try another website.\n\n(╯°□°）╯︵ ┻━┻",
+    "message": "无法在此网站上运行选区截图。请使用全屏录制或尝试其他网站。\n\n(╯°□°）╯︵ ┻━┻"
+  },
+  "click_indicator_size_color_text": {
+    "description": "Click animation size & color",
+    "message": "点击动画大小和颜色"
+  },
+  "close_btn_text": {
+    "description": "Close",
+    "message": "关闭"
+  },
+  "confirm_dialog_cancel_btn_text": {
+    "description": "Cancel",
+    "message": "取消"
+  },
+  "confirm_dialog_confirm_btn_text": {
+    "description": "Confirm",
+    "message": "确认"
+  },
+  "confirm_fps_update_text": {
+    "description": "Changing the fps will remove all frame specific edits such as edited or deleted frames. Do you want to continue?",
+    "message": "更改 FPS 将移除所有帧特定编辑（例如已编辑或已删除的帧）。您想继续吗？"
+  },
+  "copy_text": {
+    "description": "Copy to clipboard",
+    "message": "复制到剪贴板"
+  },
+  "cursor_size_and_color_text": {
+    "description": "Cursor dot size & color",
+    "message": "光标指示点大小和颜色"
+  },
+  "dither_text": {
+    "description": "Apply dither",
+    "message": "应用抖动"
+  },
+  "download_filename_text": {
+    "description": "Download filename format",
+    "message": "下载文件名格式"
+  },
+  "download_text": {
+    "description": "Download",
+    "message": "下载"
+  },
+  "draw_size_and_color_text": {
+    "description": "Drawing size & color",
+    "message": "绘图大小和颜色"
+  },
+  "duration": {
+    "description": "Label for a field indicating a length of time.",
+    "message": "时长"
+  },
+  "editor_action_add_icon": {
+    "description": "Add icon",
+    "message": "添加图标"
+  },
+  "editor_action_add_text": {
+    "description": "Add text",
+    "message": "添加文本"
+  },
+  "editor_action_blur_rectangle": {
+    "description": "Blur area",
+    "message": "模糊区域"
+  },
+  "editor_action_copy": {
+    "description": "Copy to clipboard",
+    "message": "复制到剪贴板"
+  },
+  "editor_action_crop": {
+    "description": "Crop",
+    "message": "裁剪"
+  },
+  "editor_action_draw_arrow": {
+    "description": "Draw arrow",
+    "message": "绘制箭头"
+  },
+  "editor_action_draw_ellipse": {
+    "description": "Draw ellipse",
+    "message": "绘制椭圆"
+  },
+  "editor_action_draw_line": {
+    "description": "Draw line",
+    "message": "绘制直线"
+  },
+  "editor_action_draw_rectangle": {
+    "description": "Draw rectangle",
+    "message": "绘制矩形"
+  },
+  "editor_action_free_draw": {
+    "description": "Free draw",
+    "message": "自由绘制"
+  },
+  "editor_action_highlight": {
+    "description": "Highlight",
+    "message": "高亮"
+  },
+  "editor_action_numbered_step": {
+    "description": "Action label for adding a numbered step annotation.",
+    "message": "编号步骤"
+  },
+  "editor_action_pan": {
+    "description": "Pan",
+    "message": "平移"
+  },
+  "editor_action_profile_account": {
+    "description": "Account",
+    "message": "账户"
+  },
+  "editor_action_redo": {
+    "description": "Redo",
+    "message": "重做"
+  },
+  "editor_action_save": {
+    "description": "Save",
+    "message": "保存"
+  },
+  "editor_action_select": {
+    "description": "Select, move, resize",
+    "message": "选择、移动、调整大小"
+  },
+  "editor_action_settings": {
+    "description": "Settings",
+    "message": "设置"
+  },
+  "editor_action_undo": {
+    "description": "Undo",
+    "message": "撤销"
+  },
+  "editor_action_undo_all": {
+    "description": "Undo all",
+    "message": "全部撤销"
+  },
+  "editor_add_text_default": {
+    "description": "start typing...",
+    "message": "开始输入..."
+  },
+  "editor_browse_file_system": {
+    "description": "Browse file system",
+    "message": "浏览文件系统"
+  },
+  "editor_drag_and_drop": {
+    "description": "Drag and drop image/GIF or ",
+    "message": "拖放图像/GIF 文件或"
+  },
+  "editor_file_downloaded": {
+    "description": "File saved to downloads folder.",
+    "message": "文件已保存到“下载”文件夹。"
+  },
+  "editor_file_downloaded_selected_location": {
+    "description": "File saved to selected location.",
+    "message": "文件已保存到所选位置。"
+  },
+  "editor_frame_selector_apply_edits": {
+    "description": "Apply edits to selected",
+    "message": "将编辑应用于所选帧"
+  },
+  "editor_frame_selector_delete": {
+    "description": "Delete",
+    "message": "删除"
+  },
+  "editor_frame_selector_delete_every_second": {
+    "description": "Delete every second frame",
+    "message": "每隔一帧删除一帧"
+  },
+  "editor_frame_selector_delete_selected": {
+    "description": "Delete selected",
+    "message": "删除所选帧"
+  },
+  "editor_frame_selector_remove_edits": {
+    "description": "Remove edits from selected",
+    "message": "移除所选帧的编辑"
+  },
+  "editor_frame_selector_restore": {
+    "description": "Restore",
+    "message": "恢复"
+  },
+  "editor_frame_selector_restore_all": {
+    "description": "Restore All",
+    "message": "全部恢复"
+  },
+  "editor_frame_selector_restore_selected": {
+    "description": "Restore selected",
+    "message": "恢复所选帧"
+  },
+  "editor_frame_selector_select_next": {
+    "description": "Select next frames",
+    "message": "选择后面的帧"
+  },
+  "editor_frame_selector_select_previous": {
+    "description": "Select previous frames",
+    "message": "选择前面的帧"
+  },
+  "editor_frame_selector_unselect_all": {
+    "description": "Unselect All",
+    "message": "全部取消选择"
+  },
+  "editor_image_copied": {
+    "description": "Image copied to clipboard.",
+    "message": "图像已复制到剪贴板。"
+  },
+  "editor_image_copied_failed": {
+    "description": "Failed to copy image to clipboard, it may be too large.",
+    "message": "无法将图像复制到剪贴板，可能文件过大。"
+  },
+  "editor_link_copied": {
+    "description": "Link copied to clipboard.",
+    "message": "链接已复制到剪贴板。"
+  },
+  "editor_max_time_reached_dialog_description1": {
+    "description": "You have reached the max recording length time of $maxlength$ seconds for GIFs. Premium users can update this from the settings page.",
+    "message": "您的 GIF 文件已达到 $maxlength$ 秒的最大录制时长限制。高级版用户可以从设置页面修改此限制。",
+    "placeholders": {
+      "maxlength": {
+        "content": "$1"
+      }
+    }
+  },
+  "editor_max_time_reached_dialog_description2": {
+    "description": "GIFs are intended for short recordings. If you require full length videos we recommend our free screen recorder: ",
+    "message": "GIF 适用于短片段录制。如果您需要录制完整视频，我们推荐使用我们的免费录屏工具："
+  },
+  "editor_max_time_reached_dialog_description3": {
+    "description": "Premium users can update this from the settings page.",
+    "message": "高级版用户可以从设置页面修改此限制。"
+  },
+  "editor_max_time_reached_dialog_settings_button": {
+    "description": "Open settings",
+    "message": "打开设置"
+  },
+  "editor_max_time_reached_dialog_title": {
+    "description": "Recording suddenly stopped?",
+    "message": "录制意外停止？"
+  },
+  "editor_premium_options_color": {
+    "description": "Color",
+    "message": "颜色"
+  },
+  "editor_premium_options_draw_size": {
+    "description": "Draw Size",
+    "message": "绘图大小"
+  },
+  "editor_premium_options_font": {
+    "description": "Font",
+    "message": "字体"
+  },
+  "editor_premium_options_playback_speed": {
+    "description": "Playback Speed",
+    "message": "播放速度"
+  },
+  "editor_premium_options_special_effect": {
+    "description": "Special Effect",
+    "message": "特效"
+  },
+  "editor_premium_options_title": {
+    "description": "Premium Options",
+    "message": "绘制与文本选项"
+  },
+  "editor_save_dialog_advanced_encoding_options": {
+    "description": "Title for a section containing advanced, technical options for encoding a file.",
+    "message": "高级编码选项"
+  },
+  "editor_save_dialog_alert_title": {
+    "description": "Warning",
+    "message": "警告"
+  },
+  "editor_save_dialog_aspect_ratio": {
+    "description": "lock aspect ratio",
+    "message": "锁定宽高比"
+  },
+  "editor_save_dialog_cancel": {
+    "description": "Cancel",
+    "message": "取消"
+  },
+  "editor_save_dialog_chip_animated_image": {
+    "description": "Chip label indicating an animated image format (e.g. GIF, AVIF).",
+    "message": "动态图像"
+  },
+  "editor_save_dialog_chip_large_file": {
+    "description": "Chip label indicating the format produces a large file size.",
+    "message": "大文件"
+  },
+  "editor_save_dialog_chip_limited_support": {
+    "description": "Chip label indicating the format has limited browser/app support.",
+    "message": "支持有限"
+  },
+  "editor_save_dialog_chip_small_file": {
+    "description": "Chip label indicating the format produces a small file size.",
+    "message": "小文件"
+  },
+  "editor_save_dialog_chip_video": {
+    "description": "Chip label indicating a video format (e.g. WebM, MP4).",
+    "message": "视频"
+  },
+  "editor_save_dialog_chip_widely_supported": {
+    "description": "Chip label indicating the format is widely supported.",
+    "message": "广泛支持"
+  },
+  "editor_save_dialog_compress": {
+    "description": "Compress & optimize GIF",
+    "message": "压缩并优化 GIF"
+  },
+  "editor_save_dialog_compress_tooltip": {
+    "description": "Apply GIF compression algorthm to greatly reduce GIF file size and in some cases improve quality. Highly recommeded.",
+    "message": "应用 GIF 压缩算法以大幅减小 GIF 文件大小，并在某些情况下提高质量。强烈推荐。"
+  },
+  "editor_save_dialog_dither_tooltip": {
+    "description": "Apply dither algorithm to frames. Try toggling this option if you experience color quality issues.",
+    "message": "对帧应用抖动算法。如果您遇到颜色质量问题，请尝试开启/关闭此选项。"
+  },
+  "editor_save_dialog_download_raw_recording": {
+    "description": "Download raw recording",
+    "message": "下载原始录制文件"
+  },
+  "editor_save_dialog_estimated_size": {
+    "description": "Estimated GIF Size: ",
+    "message": "预计 GIF 大小："
+  },
+  "editor_save_dialog_export_sound": {
+    "description": "Include sound (beta)",
+    "message": "包含声音 (Beta)"
+  },
+  "editor_save_dialog_export_sound_tooltip": {
+    "description": "Enable this option to include sound in the video.",
+    "message": "启用此选项可在视频中包含声音。"
+  },
+  "editor_save_dialog_frames": {
+    "description": "Frames: ",
+    "message": "帧数："
+  },
+  "editor_save_dialog_frames_alert": {
+    "description": "There are currently selected frames, saving will only output these selected frames - ",
+    "message": "当前已选中部分帧，保存将仅输出这些选中的帧 - "
+  },
+  "editor_save_dialog_frames_alert_button": {
+    "description": "Click here to unselect all frames",
+    "message": "点击此处取消选择所有帧"
+  },
+  "editor_save_dialog_frames_alert_title": {
+    "description": "Playback Speed",
+    "message": "播放速度"
+  },
+  "editor_save_dialog_frames_processing": {
+    "description": "Processing Frames: ",
+    "message": "正在处理帧："
+  },
+  "editor_save_dialog_height_helper": {
+    "description": "Recorded height is ",
+    "message": "录制的高度为 "
+  },
+  "editor_save_dialog_lossy_compression": {
+    "description": "Label for a setting that controls the level of lossy compression, from 0 to 100 percent.",
+    "message": "有损压缩 (0 - 100%)"
+  },
+  "editor_save_dialog_number_min_max_validation": {
+    "description": "A value between $minSize$ and $maxSize$ is required.",
+    "message": "需要介于 $minSize$ 和 $maxSize$ 之间的值。",
+    "placeholders": {
+      "maxSize": {
+        "content": "$2"
+      },
+      "minSize": {
+        "content": "$1"
+      }
+    }
+  },
+  "editor_save_dialog_processing_alert": {
+    "description": "Processing this recording will require a lot of memory and processing power. Unless you have a high spec PC it is recommended to do one or more of the following:",
+    "message": "处理此录制文件将需要大量内存和计算资源。除非您拥有高配置电脑，否则建议执行以下一项或多项操作："
+  },
+  "editor_save_dialog_processing_alert_memory": {
+    "description": "Please note if the resulting GIF is blank then you ran out of memory.",
+    "message": "请注意，如果生成的 GIF 为空白，则表示内存不足。"
+  },
+  "editor_save_dialog_processing_alert_point_1": {
+    "description": "Compress and optimize GIF",
+    "message": "压缩并优化 GIF"
+  },
+  "editor_save_dialog_processing_alert_point_2": {
+    "description": "Reduce the width & height",
+    "message": "减小宽度和高度"
+  },
+  "editor_save_dialog_processing_alert_point_3": {
+    "description": "Reduce FPS or delete frames",
+    "message": "降低 FPS 或删除帧"
+  },
+  "editor_save_dialog_purchase_dialog_compression_description": {
+    "description": "Free users are limited to 3 high quality GIF compressions per day. Upgrade to Premium to have no restrictions.",
+    "message": "免费版用户每天限制使用 3 次高质量 GIF 压缩。升级到高级版即可无限制使用。"
+  },
+  "editor_save_dialog_quantization_algorithm": {
+    "description": "Label for a dropdown to select a quantization algorithm.",
+    "message": "量化算法"
+  },
+  "editor_save_dialog_quantization_algorithm_new_alpha": {
+    "description": "An option for the quantization algorithm setting, indicating a new version in Alpha.",
+    "message": "新版 (Alpha)"
+  },
+  "editor_save_dialog_quantization_algorithm_new_beta": {
+    "description": "An option for the quantization algorithm setting, indicating a new version in Beta.",
+    "message": "新版 (Beta)"
+  },
+  "editor_save_dialog_quantization_algorithm_old": {
+    "description": "An option for the quantization algorithm setting, indicating an older version.",
+    "message": "旧版"
+  },
+  "editor_save_dialog_recording_quality_alert": {
+    "description": "GIF quality is limited for non premium users. To output high quality recordings you can do one of the following:",
+    "message": "非高级版用户的 GIF 质量受限。要输出高质量录制文件，您可以执行以下操作之一："
+  },
+  "editor_save_dialog_recording_quality_alert_option_1": {
+    "description": "Purchase premium",
+    "message": "购买高级版"
+  },
+  "editor_save_dialog_recording_quality_alert_option_2": {
+    "description": "Save as a WebM file",
+    "message": "另存为 WebM 文件"
+  },
+  "editor_save_dialog_reduce_width": {
+    "description": "Reduce width & height",
+    "message": "减小宽度和高度"
+  },
+  "editor_save_dialog_reduce_width_tooltip": {
+    "description": "Reduce GIF width and height/quality to improve processing time and produce a smaller file.",
+    "message": "减小 GIF 宽度和高度/质量以缩短处理时间并生成更小的文件。"
+  },
+  "editor_save_dialog_save": {
+    "description": "Save",
+    "message": "保存"
+  },
+  "editor_save_dialog_save_by": {
+    "description": "Save by",
+    "message": "保存方式："
+  },
+  "editor_save_dialog_save_by_download": {
+    "description": "Download file",
+    "message": "下载文件"
+  },
+  "editor_save_dialog_save_by_google_drive": {
+    "description": "Upload to Google Drive & copy link",
+    "message": "上传到 Google Drive 并复制链接"
+  },
+  "editor_save_dialog_save_location": {
+    "description": "Save location",
+    "message": "保存位置"
+  },
+  "editor_save_dialog_save_location_downloads": {
+    "description": "Downloads folder",
+    "message": "“下载”文件夹"
+  },
+  "editor_save_dialog_save_location_downloads_subfolder": {
+    "description": "Downloads subfolder",
+    "message": "“下载”文件夹中的子文件夹"
+  },
+  "editor_save_dialog_save_location_select": {
+    "description": "Manually select location",
+    "message": "手动选择位置"
+  },
+  "editor_save_dialog_title": {
+    "description": "Save",
+    "message": "保存"
+  },
+  "editor_save_dialog_title_processing": {
+    "description": "Processing...",
+    "message": "处理中..."
+  },
+  "editor_save_dialog_title_uploading": {
+    "description": "Uploading...",
+    "message": "上传中..."
+  },
+  "editor_save_dialog_width_helper": {
+    "description": "Recorded width is ",
+    "message": "录制的宽度为 "
+  },
+  "editor_text": {
+    "description": "Open in editor",
+    "message": "在编辑器中打开"
+  },
+  "editor_tip_delete_items": {
+    "description": "Pro tip: Delete added items by selecting the item and pressing the delete key.",
+    "message": "专业提示：选中要删除的项目后按 Delete 键即可删除。"
+  },
+  "editor_tip_edit_specific_frames": {
+    "description": "Pro tip: You can edit specific frames by using the 'Apply edits to selected option'",
+    "message": "专业提示：您可以使用“将编辑应用于所选帧”选项来编辑特定帧。"
+  },
+  "editor_tip_scroll": {
+    "description": "Pro tip: Scroll when hovering the screenshot/recording to zoom.",
+    "message": "专业提示：鼠标悬停在截图/录制文件上时滚动可缩放。"
+  },
+  "editor_tip_shift_multiple_items": {
+    "description": "Pro tip: When using the selecting tool hold down shift to select more than one item.",
+    "message": "专业提示：使用选择工具时，按住 Shift 键可选择多个项目。"
+  },
+  "editor_tip_update_multiple_items": {
+    "description": "Pro tip: You can scale, rotate, move and delete multiple items at once.",
+    "message": "专业提示：您可以同时缩放、旋转、移动和删除多个项目。"
+  },
+  "editor_tip_update_text": {
+    "description": "Pro tip: Double click on text to edit it.",
+    "message": "专业提示：双击文本可进行编辑。"
+  },
+  "editor_upload_dialog_alert_copy_failed_message": {
+    "description": "This may have occurred due to the window not being focused.",
+    "message": "这可能是由于窗口未获得焦点导致的。"
+  },
+  "editor_upload_dialog_alert_copy_failed_title": {
+    "description": "Copy to clipboard failed",
+    "message": "复制到剪贴板失败"
+  },
+  "editor_upload_dialog_alert_copy_success_title": {
+    "description": "Copied to clipboard",
+    "message": "已复制到剪贴板"
+  },
+  "editor_upload_dialog_alert_upload_failed": {
+    "description": "Upload Failed",
+    "message": "上传失败"
+  },
+  "editor_upload_dialog_alert_upload_failed_link": {
+    "description": "Try again.",
+    "message": "重试。"
+  },
+  "editor_upload_dialog_alert_upload_failed_message": {
+    "description": "Please make sure you are connected to the internet and have accepted Google Drive permissions.",
+    "message": "请确保您已连接到网络并已授予 Google Drive 权限。"
+  },
+  "editor_upload_dialog_cancel_and_download": {
+    "description": "Cancel and download file",
+    "message": "取消并下载文件"
+  },
+  "editor_upload_dialog_close": {
+    "description": "Close",
+    "message": "关闭"
+  },
+  "editor_upload_dialog_copy_link": {
+    "description": "Copy link",
+    "message": "复制链接"
+  },
+  "editor_upload_dialog_link_public": {
+    "description": "Allow anyone with the link to view.",
+    "message": "允许任何知道链接的人查看。"
+  },
+  "editor_zoom_crop_animation_animated": {
+    "description": "Sub-label indicating an animation type is animated.",
+    "message": "动画"
+  },
+  "editor_zoom_crop_animation_crop": {
+    "description": "Animation type option for static cropping without animation.",
+    "message": "裁剪"
+  },
+  "editor_zoom_crop_animation_static": {
+    "description": "Sub-label indicating an animation type is static (no animation).",
+    "message": "静态"
+  },
+  "editor_zoom_crop_animation_type": {
+    "description": "Label for the animation type selection section.",
+    "message": "动画类型"
+  },
+  "editor_zoom_crop_animation_zoom_in": {
+    "description": "Animation type option for zooming in on the selected area.",
+    "message": "放大"
+  },
+  "editor_zoom_crop_animation_zoom_out": {
+    "description": "Animation type option for zooming out from the selected area.",
+    "message": "缩小"
+  },
+  "editor_zoom_crop_apply": {
+    "description": "Apply button in zoom/crop dialog.",
+    "message": "应用"
+  },
+  "editor_zoom_crop_cancel": {
+    "description": "Cancel button in zoom/crop dialog.",
+    "message": "取消"
+  },
+  "editor_zoom_crop_change_area": {
+    "description": "Tooltip text for button to change the selected crop area.",
+    "message": "更改区域"
+  },
+  "editor_zoom_crop_dialog_title": {
+    "description": "Title for the zoom and crop dialog in the editor.",
+    "message": "缩放和裁剪"
+  },
+  "editor_zoom_crop_draw_instruction": {
+    "description": "Instruction text for the user to draw a crop area on the frame preview.",
+    "message": "在帧上绘制选择"
+  },
+  "editor_zoom_crop_frame_end": {
+    "description": "Label for the end frame number.",
+    "message": "结束"
+  },
+  "editor_zoom_crop_frame_range": {
+    "description": "Label for the frame range selection section.",
+    "message": "帧范围"
+  },
+  "editor_zoom_crop_frame_start": {
+    "description": "Label for the start frame number.",
+    "message": "开始"
+  },
+  "editor_zoom_crop_frames_menu": {
+    "description": "Menu item label for zoom/crop frames feature.",
+    "message": "缩放/裁剪帧"
+  },
+  "editor_zoom_crop_no_area_selected": {
+    "description": "Message displayed when no crop area has been selected.",
+    "message": "未选择区域"
+  },
+  "editor_zoom_crop_select_area": {
+    "description": "Button text to select a crop area on the frame.",
+    "message": "选择区域"
+  },
+  "editor_zoom_crop_smooth_animation": {
+    "description": "Checkbox label for smoothing animation by interpolating frames.",
+    "message": "通过添加帧来平滑动画"
+  },
+  "editor_zoom_crop_transition": {
+    "description": "Label for the transition duration section (number of frames for animation).",
+    "message": "过渡"
+  },
+  "enable_drawing_text": {
+    "description": "Enable drawing",
+    "message": "启用绘图"
+  },
+  "enable_drawing_tooltip_text": {
+    "description": "This option allows users to draw in the selected area while holding down the ctrl key.",
+    "message": "此选项允许用户在按住 Ctrl 键的同时在所选区域内绘图。"
+  },
+  "extension_description": {
+    "description": "Take screenshots & record GIFs instantly! Edit & share seamlessly. Your all-in-one screenshot and screen recording solution.",
+    "message": "即时屏幕截图和 GIF 录制！轻松编辑和分享。您的一站式截图与录屏解决方案。"
+  },
+  "extension_name": {
+    "description": "Chrome Capture - screenshot & GIF",
+    "message": "Chrome Capture Pro (by Dragon)"
+  },
+  "extension_short_name": {
+    "description": "Chrome Capture",
+    "message": "Capture Pro (Dragon)"
+  },
+  "file_access_text": {
+    "description": "After screenshot action",
+    "message": "截图后操作"
+  },
+  "filename_text": {
+    "description": "Filename",
+    "message": "文件名"
+  },
+  "frames_per_sec_short_text": {
+    "description": "FPS",
+    "message": "FPS"
+  },
+  "frames_per_sec_text": {
+    "description": "Frames per second (fps)",
+    "message": "帧率 (FPS)"
+  },
+  "frames_text": {
+    "description": "frames",
+    "message": "帧"
+  },
+  "free_settings_text": {
+    "description": "Free Settings",
+    "message": "常规参数设置"
+  },
+  "fullscreen_info_modal_cancel": {
+    "description": "Cancel",
+    "message": "取消"
+  },
+  "fullscreen_info_modal_continue": {
+    "description": "Are you sure you want to continue with full screen capture?",
+    "message": "您确定要继续全屏截图吗？"
+  },
+  "fullscreen_info_modal_do_not_show": {
+    "description": "Do not show this again",
+    "message": "不再显示此消息"
+  },
+  "fullscreen_info_modal_message": {
+    "description": "You have used a Chrome Capture shortcut without the cropping tool, this will capture in full screen mode.",
+    "message": "您使用了未带裁剪工具的 Chrome Capture 快捷键，将以全屏模式截图。"
+  },
+  "fullscreen_info_modal_open_cropping": {
+    "description": "Open cropping tool",
+    "message": "打开裁剪工具"
+  },
+  "fullscreen_info_modal_shortcut_cropping_tool": {
+    "description": "Alt + C: Open/close Chrome Capture cropping tool",
+    "message": "Alt + C：打开/关闭 Chrome Capture 裁剪工具"
+  },
+  "fullscreen_info_modal_shortcut_fullpage_screenshot": {
+    "description": "Alt + Shift + S: Full webpage screenshot (beta)",
+    "message": "Alt + Shift + S：完整网页截图 (Beta)"
+  },
+  "fullscreen_info_modal_shortcut_linkt": {
+    "description": "You can configure these here: ",
+    "message": "您可在此配置快捷键："
+  },
+  "fullscreen_info_modal_shortcut_recording": {
+    "description": "Alt + R: Start/stop recording",
+    "message": "Alt + R：开始/停止录制"
+  },
+  "fullscreen_info_modal_shortcut_screenshot": {
+    "description": "Alt + S: Visible area screenshot",
+    "message": "Alt + S：可见区域截图"
+  },
+  "fullscreen_info_modal_shortcuts": {
+    "description": "Default shortcuts are: ",
+    "message": "默认快捷键为："
+  },
+  "fullscreen_info_modal_start": {
+    "description": "Start full screen capture",
+    "message": "开始全屏截图"
+  },
+  "fullscreen_info_modal_title": {
+    "description": "Full screen capture",
+    "message": "全屏截图"
+  },
+  "general_not_available": {
+    "description": "N/A",
+    "message": "不适用"
+  },
+  "get_premium": {
+    "description": "Get Premium",
+    "message": "获取高级版"
+  },
+  "height_text": {
+    "description": "Width (px)",
+    "message": "高度 (px)"
+  },
+  "hi": {
+    "description": "Hi",
+    "message": "您好"
+  },
+  "internet_connection_required": {
+    "description": "Internet connection is required to upgrade to premium.",
+    "message": "升级到高级版需要网络连接。"
+  },
+  "manage_subscription_access_until_date": {
+    "description": "Your plan will not renew. You can access premium features until $date$.",
+    "message": "您的方案将不会续订。您可以在 $date$ 前使用高级功能。",
+    "placeholders": {
+      "date": {
+        "content": "$1"
+      }
+    }
+  },
+  "manage_subscription_cancel_button": {
+    "description": "Cancel subscription",
+    "message": "取消订阅"
+  },
+  "manage_subscription_cancel_confirm_cancel_button": {
+    "description": "Keep Premium",
+    "message": "保留 Premium"
+  },
+  "manage_subscription_cancel_confirm_confirm_button": {
+    "description": "Continue to cancel",
+    "message": "继续取消"
+  },
+  "manage_subscription_cancel_confirm_description": {
+    "description": "You will lose access to Premium features and Premium options will be reset.",
+    "message": "您将失去对高级功能的访问权限，并且高级选项将被重置。"
+  },
+  "manage_subscription_cancel_confirm_title": {
+    "description": "Are you sure you want to cancel your subscription?",
+    "message": "您确定要取消订阅吗？"
+  },
+  "manage_subscription_ended_on_date": {
+    "description": "Subscription ended on $date$.",
+    "message": "订阅已于 $date$ 结束。",
+    "placeholders": {
+      "date": {
+        "content": "$1"
+      }
+    }
+  },
+  "manage_subscription_ends_on_date": {
+    "description": "Subscription ends on $date$.",
+    "message": "订阅将于 $date$ 结束。",
+    "placeholders": {
+      "date": {
+        "content": "$1"
+      }
+    }
+  },
+  "manage_subscription_next_payment_full": {
+    "description": "Next payment: $price$ on $date$",
+    "message": "下次付款：$date$ 支付 $price$",
+    "placeholders": {
+      "date": {
+        "content": "$2"
+      },
+      "price": {
+        "content": "$1"
+      }
+    }
+  },
+  "manage_subscription_paid_full": {
+    "description": "Paid: $billingCycle$",
+    "message": "已支付：$billingCycle$",
+    "placeholders": {
+      "billingCycle": {
+        "content": "$1"
+      }
+    }
+  },
+  "manage_subscription_resubscribe_prompt": {
+    "description": " To use premium features again, please upgrade.",
+    "message": " 要再次使用高级功能，请升级。"
+  },
+  "manage_subscription_update_payment_button": {
+    "description": "Update payment method",
+    "message": "更新付款方式"
+  },
+  "max_recording_dimension_size_text": {
+    "description": "Max recording resolution/quality",
+    "message": "最大录制分辨率/质量"
+  },
+  "no_limit_text": {
+    "description": "No limit",
+    "message": "无限制"
+  },
+  "open_text": {
+    "description": "Open",
+    "message": "打开"
+  },
+  "options_default_action": {
+    "description": "Extension icon click action",
+    "message": "扩展图标点击操作"
+  },
+  "options_dimension_size_1000": {
+    "description": "1000 pixels",
+    "message": "1000 像素"
+  },
+  "options_dimension_size_1080p": {
+    "description": "1920 pixels (1080p)",
+    "message": "1920 像素 (1080p)"
+  },
+  "options_dimension_size_480p": {
+    "description": "640 pixels (480p)",
+    "message": "640 像素 (480p)"
+  },
+  "options_dimension_size_4k": {
+    "description": "3840 pixels (4K)",
+    "message": "3840 像素 (4K)"
+  },
+  "options_dimension_size_720p": {
+    "description": "1280 pixels (720p)",
+    "message": "1280 像素 (720p)"
+  },
+  "options_embedded_options_permission_warning": {
+    "description": "Cursor highlighting, click effects, and drawing tools will only work until the page reloads or changes. To keep them active after reloads or redirects, you'll need to grant an extra permission.",
+    "message": "光标突出显示、点击效果和绘图工具仅在页面重新加载或更改之前有效。要在重新加载或重定向后保持其活动状态，您需要授予额外的权限。"
+  },
+  "options_enable_notifications": {
+    "description": "Enable notifications",
+    "message": "启用通知"
+  },
+  "options_enable_notifications_tooltip": {
+    "description": "Display notifications when full screen recording starts and processing recordings in the background.",
+    "message": "在全屏录制开始以及在后台处理录制文件时显示通知。"
+  },
+  "options_enable_subfolder_downloads": {
+    "description": "Download files into subfolder",
+    "message": "将文件下载到子文件夹"
+  },
+  "options_enable_subfolder_downloads_tooltip": {
+    "description": "Download files into a subfolder of your choice inside the downloads folder. This option is useful for organising your captures.",
+    "message": "将文件下载到“下载”文件夹内您所选择的子文件夹中。此选项有助于整理您的截图/录制文件。"
+  },
+  "options_how_to_use_btn": {
+    "description": "How to use",
+    "message": "使用说明"
+  },
+  "options_language": {
+    "description": "Language",
+    "message": "语言"
+  },
+  "options_open_containing_folder_on_save": {
+    "description": "Open containing folder after saving",
+    "message": "保存后打开所在文件夹"
+  },
+  "options_open_popup": {
+    "description": "Open popup",
+    "message": "打开弹出窗口"
+  },
+  "options_open_selected_area": {
+    "description": "Open selected area capture",
+    "message": "开始选区截图"
+  },
+  "options_section_general": {
+    "description": "Title for the General settings section in the options page",
+    "message": "常规设置"
+  },
+  "options_section_output": {
+    "description": "Title for the Output and Saving settings section in the options page",
+    "message": "输出与保存"
+  },
+  "options_section_recording": {
+    "description": "Title for the Recording settings section in the options page",
+    "message": "录制设置"
+  },
+  "options_section_visuals": {
+    "description": "Title for the Cursor and Interaction Visuals settings section in the options page",
+    "message": "光标与交互视觉效果"
+  },
+  "options_shortcuts_btn": {
+    "description": "Shortcuts",
+    "message": "快捷键"
+  },
+  "options_subfolder_downloads_name": {
+    "description": "Subfolder name:",
+    "message": "子文件夹名称："
+  },
+  "options_support_btn": {
+    "description": "Support",
+    "message": "支持"
+  },
+  "overlay_help_text": {
+    "description": "Click and drag to choose your selected area. \nRight click to snap to an element, hold shift for multiple.",
+    "message": "点击并拖动以选择区域。\n右键点击可吸附到元素，按住 Shift 键可选择多个元素。"
+  },
+  "plan_billing_annually": {
+    "description": "Annually",
+    "message": "按年"
+  },
+  "plan_billing_monthly": {
+    "description": "Monthly",
+    "message": "按月"
+  },
+  "plan_name_custom": {
+    "description": "Custom Plan",
+    "message": "自定义方案"
+  },
+  "popup_capture_tab": {
+    "description": "Capture",
+    "message": "截图"
+  },
+  "popup_desktop_screenshot_tooltip": {
+    "description": "Capture the entire screen, desktop, or any open application.",
+    "message": "截取整个屏幕、桌面或任何打开的应用程序窗口。"
+  },
+  "popup_editor_icon_tooltip": {
+    "description": "Open Editor",
+    "message": "打开编辑器"
+  },
+  "popup_full_page_screenshot_tooltip": {
+    "description": "Capture the current tab full webpage, including content beyond the visible area.",
+    "message": "截取当前标签页的完整网页，包括可见区域以外的内容。"
+  },
+  "popup_full_webpage": {
+    "description": "Full webpage",
+    "message": "完整网页"
+  },
+  "popup_no_scripts_alert": {
+    "description": "Selected area and full webpage screenshots are not possible here. These features are available on other websites.",
+    "message": "在此页面无法进行选区截图和完整网页截图。这些功能在其他网站上可用。"
+  },
+  "popup_record_tab": {
+    "description": "Record",
+    "message": "录制"
+  },
+  "popup_recording_limit_alert": {
+    "description": "Record up to $seconds$ seconds per GIF. Premium users can update this from the ",
+    "message": "每个 GIF 文件最长可录制 $seconds$ 秒。高级版用户可从",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_recording_limit_settings_link": {
+    "description": "settings page.",
+    "message": "设置页面修改。"
+  },
+  "popup_screen_or_app": {
+    "description": "Full screen or app",
+    "message": "全屏或应用程序窗口"
+  },
+  "popup_selected_area": {
+    "description": "Selected area",
+    "message": "选定区域"
+  },
+  "popup_selected_area_screenshot_tooltip": {
+    "description": "Capture a specific area of the current tab.",
+    "message": "截取当前标签页的特定区域。"
+  },
+  "popup_set_shortcut": {
+    "description": "set shortcut",
+    "message": "设置快捷键"
+  },
+  "popup_settings_icon_tooltip": {
+    "description": "Open Settings",
+    "message": "打开设置"
+  },
+  "popup_tab_screenshot_tooltip": {
+    "description": "Capture the visible part of the current tab.",
+    "message": "截取当前标签页的可见部分。"
+  },
+  "popup_this_tab": {
+    "description": "This tab",
+    "message": "当前标签页"
+  },
+  "popup_waiting_for_desktop_selection_alert": {
+    "description": "FULL SCREEN OR APP capture did not start because you did not select an option from the popup dialog. If you have multiple monitors it may have opened on another monitor.",
+    "message": "全屏或应用程序窗口截图未启动，因为您没有在弹出对话框中选择选项。如果您有多个显示器，该对话框可能已在其他显示器上打开。"
+  },
+  "premium_settings_text": {
+    "description": "Premium Settings",
+    "message": "高级参数设置"
+  },
+  "purchase_btn_text": {
+    "description": "Get Premium!",
+    "message": "获取高级版！"
+  },
+  "purchase_description_limited_time_text": {
+    "description": "Lock in this price now - limited time offer before we switch to subscriptions!",
+    "message": "立即锁定此价格 - 在我们切换到订阅模式之前的限时优惠！"
+  },
+  "purchase_description_text": {
+    "description": "Just one payment unlocks all premium features forever. No recurring fees!",
+    "message": "一次性付款即可永久解锁所有高级功能。无重复收费！"
+  },
+  "purchase_feature_30fps": {
+    "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+    "message": "丝滑流畅的 30 FPS 录制"
+  },
+  "purchase_feature_4K": {
+    "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+    "message": "水晶般清晰的 4K 录制"
+  },
+  "purchase_feature_alter_frame_rate": {
+    "description": "Feature that goes in $feature$ placeholder.",
+    "message": "自定义帧率"
+  },
+  "purchase_feature_alter_playback_speed": {
+    "description": "Feature that goes in $feature$ placeholder.",
+    "message": "慢动作和延时摄影效果"
+  },
+  "purchase_feature_blur": {
+    "description": "Feature that goes in $feature$ placeholder.",
+    "message": "模糊工具"
+  },
+  "purchase_feature_crop_recording": {
+    "description": "Feature that goes in $feature$ placeholder.",
+    "message": "精确的 GIF 裁剪"
+  },
+  "purchase_feature_default": {
+    "description": "Feature that goes in $feature$ placeholder. Default fallback.",
+    "message": "此功能"
+  },
+  "purchase_feature_frame_edits": {
+    "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+    "message": "强大的逐帧编辑"
+  },
+  "purchase_feature_highlight": {
+    "description": "Feature that goes in $feature$ placeholder.",
+    "message": "高亮工具"
+  },
+  "purchase_feature_no_duration_limit": {
+    "description": "Feature that goes in $feature$ placeholder.",
+    "message": "无限录制时长"
+  },
+  "purchase_feature_special_effect": {
+    "description": "Feature that goes in $feature$ placeholder.",
+    "message": "特效"
+  },
+  "purchase_feature_step_tool": {
+    "description": "Feature that goes in $feature$ placeholder.",
+    "message": "步骤工具"
+  },
+  "purchase_feature_svg": {
+    "description": "Feature that goes in $feature$ placeholder.",
+    "message": "添加自定义图标和徽标"
+  },
+  "purchase_feature_text_and_annotation_customization": {
+    "description": "Feature that goes in $feature$ placeholder.",
+    "message": "对文本和注释的完全控制"
+  },
+  "purchase_feature_unlimited_gif_compression": {
+    "description": "Feature that goes in $feature$ placeholder.",
+    "message": "无限高级 GIF 压缩"
+  },
+  "purchase_feature_update_end_time": {
+    "description": "Feature that goes in $feature$ placeholder.",
+    "message": "自定义录制时间"
+  },
+  "purchase_login_dialog_closed_by_user_alert": {
+    "description": "Looks like you closed the sign in dialog, premium users must sign in so you don't lose premium access.",
+    "message": "您似乎关闭了登录对话框。高级版用户必须登录才能保留高级版访问权限。"
+  },
+  "purchase_login_dialog_google_button": {
+    "description": "Sign in with Google",
+    "message": "使用 Google 账号登录"
+  },
+  "purchase_login_dialog_title": {
+    "description": "Sign in required",
+    "message": "需要登录"
+  },
+  "purchase_login_text": {
+    "description": "Sign in with Google to link your purchase to your account.",
+    "message": "使用 Google 登录，将您的购买关联到您的帐户。"
+  },
+  "purchase_login_text_window_opened": {
+    "description": "Sign into Google in the popup window.",
+    "message": "请在弹出的窗口中登录 Google 账号。"
+  },
+  "purchase_subscription_title_text": {
+    "description": "Choose the plan that fits your needs.",
+    "message": "选择适合您需求的方案。"
+  },
+  "purchase_title_text": {
+    "description": "Get Lifetime Premium Access Today!",
+    "message": "立即获取终身高级访问权限！"
+  },
+  "purchase_title_text_blocked_feature": {
+    "description": "That feature requires Premium",
+    "message": "该功能需要高级版"
+  },
+  "purchase_title_text_blocked_pro_feature": {
+    "description": "That feature requires Premium Pro",
+    "message": "该功能需要 Premium Pro"
+  },
+  "purchase_title_text_blocked_pro_specific_feature": {
+    "description": "Title text when a specific feature is blocked by the Premium Pro paywall.",
+    "message": "使用高级专业版解锁“$feature$”",
+    "placeholders": {
+      "feature": {
+        "content": "$1"
+      }
+    }
+  },
+  "purchase_title_text_blocked_specific_feature": {
+    "description": "Title text when a specific feature is blocked by the Premium paywall.",
+    "message": "使用高级版解锁“$feature$”",
+    "placeholders": {
+      "feature": {
+        "content": "$1"
+      }
+    }
+  },
+  "purchases_already_premium_user": {
+    "description": "Already a premium user?",
+    "message": "已经是高级版用户？"
+  },
+  "purchases_bill_me": {
+    "description": "Bill me:",
+    "message": "向我收费："
+  },
+  "purchases_checkout_unavailable_message": {
+    "description": "Message shown when checkout could not be started.",
+    "message": "目前无法启动升级流程。请再试一次。"
+  },
+  "purchases_compare_12_fps": {
+    "description": "12FPS",
+    "message": "12FPS"
+  },
+  "purchases_compare_3_per_day": {
+    "description": "3 per day",
+    "message": "每天 3 次"
+  },
+  "purchases_compare_add_custom_shape_tool": {
+    "description": "Add custom shape/icon tool",
+    "message": "添加自定义形状/图标工具"
+  },
+  "purchases_compare_benefits": {
+    "description": "Benefits",
+    "message": "权益"
+  },
+  "purchases_compare_blur_tool": {
+    "description": "Blur tool",
+    "message": "模糊工具"
+  },
+  "purchases_compare_close_button_label": {
+    "description": "Close",
+    "message": "关闭"
+  },
+  "purchases_compare_compression": {
+    "description": "High quality GIF compression",
+    "message": "高质量 GIF 压缩"
+  },
+  "purchases_compare_core_capture_features": {
+    "description": "Core Capture Features",
+    "message": "核心捕捉功能"
+  },
+  "purchases_compare_crop_recordings": {
+    "description": "Crop recordings",
+    "message": "裁剪录制"
+  },
+  "purchases_compare_customize_editing_tools": {
+    "description": "Customize editing tools (font, size color)",
+    "message": "自定义编辑工具（字体、大小、颜色）"
+  },
+  "purchases_compare_drawing": {
+    "description": "Draw while recording",
+    "message": "录制时绘图"
+  },
+  "purchases_compare_early_access": {
+    "description": "Early access to new features",
+    "message": "抢先体验新功能"
+  },
+  "purchases_compare_editing": {
+    "description": "Edit captures",
+    "message": "编辑截图/录制文件"
+  },
+  "purchases_compare_editing_free": {
+    "description": "basic editing",
+    "message": "基本编辑"
+  },
+  "purchases_compare_editing_suite": {
+    "description": "Editing Suite",
+    "message": "编辑套件"
+  },
+  "purchases_compare_frame_editing": {
+    "description": "Frame editing",
+    "message": "帧编辑"
+  },
+  "purchases_compare_frame_rate": {
+    "description": "Adjust Frame Rate",
+    "message": "调整帧率"
+  },
+  "purchases_compare_frame_specific_edits": {
+    "description": "Frame specific edits",
+    "message": "特定帧编辑"
+  },
+  "purchases_compare_free_draw_tools": {
+    "description": "Free draw, line, arrow, rectangle, circle, text tools",
+    "message": "自由绘制、线条、箭头、矩形、圆形、文本工具"
+  },
+  "purchases_compare_full_webpage_screenshots": {
+    "description": "Unlimited full page screenshots.",
+    "message": "无限完整网页截图"
+  },
+  "purchases_compare_highlight_tool": {
+    "description": "Highlight tool",
+    "message": "高亮工具"
+  },
+  "purchases_compare_live_recording_tools": {
+    "description": "Live Recording Tools",
+    "message": "实时录制工具"
+  },
+  "purchases_compare_mouse": {
+    "description": "Click and mouse indication",
+    "message": "点击与光标指示"
+  },
+  "purchases_compare_plans": {
+    "description": "Compare plans",
+    "message": "比较方案"
+  },
+  "purchases_compare_plans_premium_button": {
+    "description": "Upgrade to Premium",
+    "message": "升级到高级版"
+  },
+  "purchases_compare_playback_speed": {
+    "description": "Tune recording playback speed",
+    "message": "调整录制文件播放速度"
+  },
+  "purchases_compare_priority_support": {
+    "description": "Priority support and feature requests",
+    "message": "优先支持和功能请求"
+  },
+  "purchases_compare_recording": {
+    "description": "Unlimited GIF recordings.",
+    "message": "无限 GIF 录制"
+  },
+  "purchases_compare_recording_free": {
+    "description": "15sec limit per GIF",
+    "message": "每个 GIF 限长 15 秒"
+  },
+  "purchases_compare_recording_quality": {
+    "description": "High quality GIFs",
+    "message": "高质量 GIF"
+  },
+  "purchases_compare_recording_quality_control": {
+    "description": "Recording Quality & Control",
+    "message": "录制质量和控制"
+  },
+  "purchases_compare_recording_quality_free": {
+    "description": "1000 pixels max",
+    "message": "最大 1000 像素"
+  },
+  "purchases_compare_screenshots": {
+    "description": "Unlimited screenshots.",
+    "message": "无限截图"
+  },
+  "purchases_compare_special_effects": {
+    "description": "Recording special effects",
+    "message": "录制特效"
+  },
+  "purchases_compare_up_to_1080p": {
+    "description": "Up to 1080p",
+    "message": "高达 1080p"
+  },
+  "purchases_compare_up_to_24_fps": {
+    "description": "Up to 24FPS",
+    "message": "高达 24FPS"
+  },
+  "purchases_compare_up_to_30_fps": {
+    "description": "Up to 30FPS",
+    "message": "高达 30FPS"
+  },
+  "purchases_compare_up_to_4k_plus": {
+    "description": "Up to 4K+",
+    "message": "高达 4K+"
+  },
+  "purchases_current_plan": {
+    "description": "Current plan",
+    "message": "当前方案"
+  },
+  "purchases_features": {
+    "description": "Features",
+    "message": "功能"
+  },
+  "purchases_free": {
+    "description": "Free",
+    "message": "免费版"
+  },
+  "purchases_free_button": {
+    "description": "Free to use",
+    "message": "免费使用"
+  },
+  "purchases_free_feature_editing": {
+    "description": "Basic editing",
+    "message": "基本编辑"
+  },
+  "purchases_free_feature_recording": {
+    "description": "Basic GIF recording",
+    "message": "基本 GIF 录制"
+  },
+  "purchases_free_feature_screenshots": {
+    "description": "Unlimited screenshots",
+    "message": "无限屏幕截图"
+  },
+  "purchases_free_plan_description": {
+    "description": "Get started with our essential capture tools. Completely free for basic everyday use.",
+    "message": "从我们的基本捕捉工具开始。完全免费，可用于基本的日常使用。"
+  },
+  "purchases_plan_save_up_to_percentage": {
+    "description": "Save up to",
+    "message": "最高可省"
+  },
+  "purchases_premium": {
+    "description": "Premium",
+    "message": "高级版"
+  },
+  "purchases_premium_billed_annually": {
+    "description": "Billed annually",
+    "message": "按年计费"
+  },
+  "purchases_premium_button": {
+    "description": "Get lifetime access",
+    "message": "获取终身访问权限"
+  },
+  "purchases_premium_feature_compression": {
+    "description": "High quality GIF compression",
+    "message": "高质量 GIF 压缩"
+  },
+  "purchases_premium_feature_editing": {
+    "description": "Feature rich editing",
+    "message": "功能丰富的编辑"
+  },
+  "purchases_premium_feature_free": {
+    "description": "Everything from free plan",
+    "message": "包含免费版所有功能"
+  },
+  "purchases_premium_feature_marked_with_star": {
+    "description": "All features marked with a star",
+    "message": "所有带星号标记的功能"
+  },
+  "purchases_premium_feature_recording": {
+    "description": "Unlimited high quality GIF recording",
+    "message": "无限高质量 GIF 录制"
+  },
+  "purchases_premium_feature_recording_1080p": {
+    "description": "High quality GIF recording, up to 1080p, 24fps",
+    "message": "高质量 GIF 录制，高达 1080p，24fps"
+  },
+  "purchases_premium_feature_refundable": {
+    "description": "Fully refundable",
+    "message": "支持全额退款"
+  },
+  "purchases_premium_feature_risk_free": {
+    "description": "Risk-free: 7 day trial, cancel anytime",
+    "message": "无风险：7 天试用，随时取消"
+  },
+  "purchases_premium_feature_unlimited_length": {
+    "description": "Unlimited GIF recording length",
+    "message": "不限 GIF 录制时长"
+  },
+  "purchases_premium_price_info": {
+    "description": "one time fee",
+    "message": "一次性费用"
+  },
+  "purchases_premium_price_per_month": {
+    "description": "/ month",
+    "message": "/月"
+  },
+  "purchases_premium_pro": {
+    "description": "Premium Pro",
+    "message": "Premium Pro"
+  },
+  "purchases_premium_pro_editing_tools": {
+    "description": "Advanced editing tools (blurring, special effects, etc.)",
+    "message": "高级编辑工具（模糊、特效等）"
+  },
+  "purchases_premium_pro_feature_early_access": {
+    "description": "Early access to new features",
+    "message": "抢先体验新功能"
+  },
+  "purchases_premium_pro_feature_marked_with_crown": {
+    "description": "All features marked with a star and crown",
+    "message": "所有带星号和皇冠标记的功能"
+  },
+  "purchases_premium_pro_feature_premium_plan": {
+    "description": "Everything from Premium plan",
+    "message": "包含 Premium 方案的所有内容"
+  },
+  "purchases_premium_pro_feature_quality": {
+    "description": "Max resolution recording, 4K+ and 30fps",
+    "message": "最高分辨率录制，4K+ 和 30fps"
+  },
+  "purchases_premium_pro_feature_support": {
+    "description": "Priority support and feature requests",
+    "message": "优先支持和功能请求"
+  },
+  "purchases_premium_pro_upgrade": {
+    "description": "Upgrade to Pro",
+    "message": "升级到 Pro"
+  },
+  "purchases_premium_save_percentage": {
+    "description": "save $savingsPercentage$%",
+    "message": "节省 $savingsPercentage$%",
+    "placeholders": {
+      "savingsPercentage": {
+        "content": "$1"
+      }
+    }
+  },
+  "purchases_premium_try_for_free": {
+    "description": "Try for free",
+    "message": "免费试用"
+  },
+  "purchases_price_unavailable": {
+    "description": "Label shown in place of a price when it is unavailable.",
+    "message": "价格不可用"
+  },
+  "purchases_pricing_unavailable_message": {
+    "description": "Message shown when the Premium pricing request was blocked or failed.",
+    "message": "Premium 价格请求被阻止或失败了。当工作网络、VPN、广告拦截器、隐私扩展或防火墙阻止 Paddle 时，可能会发生这种情况。"
+  },
+  "purchases_pricing_unavailable_title": {
+    "description": "Title shown when Premium pricing could not be loaded.",
+    "message": "无法加载 Premium 价格"
+  },
+  "purchases_pricing_unavailable_troubleshooting_extensions": {
+    "description": "Troubleshooting step telling the user to disable VPN or privacy tools temporarily.",
+    "message": "暂时禁用 VPN、广告拦截器或隐私扩展，然后再试一次。"
+  },
+  "purchases_pricing_unavailable_troubleshooting_intro": {
+    "description": "Intro text for troubleshooting steps when pricing is unavailable.",
+    "message": "可以尝试以下操作："
+  },
+  "purchases_pricing_unavailable_troubleshooting_network": {
+    "description": "Troubleshooting step telling the user to try another network or browser profile.",
+    "message": "尝试使用其他网络，或在其他 Chrome 配置文件中打开该扩展。"
+  },
+  "purchases_pricing_unavailable_troubleshooting_workplace": {
+    "description": "Troubleshooting step telling the user workplace policy may be blocking Paddle.",
+    "message": "如果你使用的是工作设备，你的网络或浏览器策略可能正在阻止 Paddle。"
+  },
+  "purchases_sign_in_here": {
+    "description": "Sign in here",
+    "message": "在此登录"
+  },
+  "purchases_start_trial_cancel_anytime": {
+    "description": "Call to action to start a free trial.",
+    "message": "开始 7 天免费试用以继续。可随时取消。"
+  },
+  "purchases_try_premium_for_free": {
+    "description": "Try Premium for Free",
+    "message": "免费试用 Premium"
+  },
+  "purchases_try_premium_pro_for_free": {
+    "description": "Try Premium Pro for Free",
+    "message": "免费试用 Premium Pro"
+  },
+  "purchases_upgrade_premium_to_pro": {
+    "description": "To use this feature and access all Pro benefits, upgrade your plan.",
+    "message": "要使用此功能并享受所有 Pro 权益，请升级您的方案。"
+  },
+  "purchases_upgrade_to_premium_pro": {
+    "description": "Upgrade to Premium Pro",
+    "message": "升级到 Premium Pro"
+  },
+  "quality_text": {
+    "description": "Recording quality (10 = best)",
+    "message": "录制质量 (10 = 最佳)"
+  },
+  "rate_bad_rating_text": {
+    "description": "We are continuously trying our hardest to improve Chrome Capture, please share what needs improvement by emailing us at ",
+    "message": "我们一直在努力改进 Chrome Capture，请将需要改进之处通过邮件分享给我们，邮箱地址："
+  },
+  "rate_bad_title_text": {
+    "description": "😞 We are sorry!",
+    "message": "😞 非常抱歉！"
+  },
+  "rate_close_btn_text": {
+    "description": "Close",
+    "message": "关闭"
+  },
+  "rate_confirm_btn_text": {
+    "description": "Confirm",
+    "message": "确认"
+  },
+  "rate_description_text": {
+    "description": "If you've found this extension useful please leave a rating or review. \n\nBy leaving a rating you can help us reach more users which will help fund continual improvements and keep general usage free.",
+    "message": "如果您觉得此扩展程序有用，请留下评分或评价。\n\n您的评分可以帮助我们触达更多用户，这将有助于资助持续改进并保持基本功能的免费使用。"
+  },
+  "rate_description_text_purchased": {
+    "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+    "message": "我们非常感谢您购买高级版，并希望听到您的任何反馈，以帮助我们改进产品并触达更多用户。"
+  },
+  "rate_good_rating_text": {
+    "description": "Your reviews keep our small team motivated to make Chrome Capture even better!",
+    "message": "感谢支持！作者 Dragon 将持续保持工具的纯净与高效！"
+  },
+  "rate_good_rating_text_purchased": {
+    "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+    "message": "我们非常感谢您购买高级版，并希望听到您的任何反馈，以帮助我们改进产品并触达更多用户。"
+  },
+  "rate_good_title_text": {
+    "description": "😍 Review in the web store?",
+    "message": "😍 在应用商店留下评价？"
+  },
+  "rate_maybe_later_btn_text": {
+    "description": "Maybe later",
+    "message": "稍后再说"
+  },
+  "rate_no_btn_text": {
+    "description": "No thanks",
+    "message": "不用了，谢谢"
+  },
+  "rate_send_email_btn_text": {
+    "description": "Send Email",
+    "message": "发送邮件"
+  },
+  "rate_thank_you_title_text": {
+    "description": "Thank you! 😍",
+    "message": "谢谢！😍"
+  },
+  "rate_title_text": {
+    "description": "How are we doing?",
+    "message": "您觉得我们做得怎么样？"
+  },
+  "rate_yes_btn_text": {
+    "description": "Ok, sure",
+    "message": "好的"
+  },
+  "recommended": {
+    "description": "recommended",
+    "message": "推荐"
+  },
+  "record_length_text": {
+    "description": "Max record length",
+    "message": "最大录制时长"
+  },
+  "recordings_taken": {
+    "description": "Recordings taken:",
+    "message": "已完成录制："
+  },
+  "save_as_screenshot_text": {
+    "description": "Save screenshot as",
+    "message": "屏幕截图另存为..."
+  },
+  "save_as_text": {
+    "description": "Save recording as",
+    "message": "录制文件另存为..."
+  },
+  "screenshots_taken": {
+    "description": "Screenshots taken:",
+    "message": "已完成截图："
+  },
+  "seconds_text": {
+    "description": "secs",
+    "message": "秒"
+  },
+  "shortcut": {
+    "description": "Shortcut:",
+    "message": "快捷键："
+  },
+  "show_click_indicator_text": {
+    "description": "Show click animation",
+    "message": "显示点击动画"
+  },
+  "show_click_indicator_tooltip_text": {
+    "description": "This option draws a circle animation around the click location.",
+    "message": "此选项会在点击位置周围绘制一个圆圈动画。"
+  },
+  "show_cursor_text": {
+    "description": "Show dot at cursor location",
+    "message": "显示光标位置指示点"
+  },
+  "show_cursor_tooltip_text": {
+    "description": "This option draws a small circle to indicate where the mouse is located.",
+    "message": "此选项会绘制一个小圆圈来指示光标位置。"
+  },
+  "sign_in": {
+    "description": "Sign In",
+    "message": "登录"
+  },
+  "sign_out": {
+    "description": "Sign Out",
+    "message": "退出登录"
+  },
+  "subscription_past_due_warning": {
+    "description": "Warning message shown when a user subscription payment has failed or is past its due date.",
+    "message": "订阅付款已逾期，请点击此处更新您的付款信息。"
+  },
+  "subscription_premium_plan_description": {
+    "description": "Go beyond basics: HD quality & limits unlocked. Craft pro content with enhanced features.",
+    "message": "超越基础：高清画质和无限制。利用增强功能打造专业内容。"
+  },
+  "subscription_premium_pro_plan_description": {
+    "description": "Experience peak performance: 4K+ and all features. Full editing suite with early access.",
+    "message": "体验巅峰性能：4K+ 及所有功能。附带抢先体验的完整编辑套件。"
+  },
+  "subscription_status_active": {
+    "description": "Active",
+    "message": "有效"
+  },
+  "subscription_status_ending_soon": {
+    "description": "Ending Soon",
+    "message": "即将结束"
+  },
+  "subscription_status_expired": {
+    "description": "Expired",
+    "message": "已过期"
+  },
+  "subscription_status_past_due": {
+    "description": "Past Due",
+    "message": "已逾期"
+  },
+  "subscription_status_paused": {
+    "description": "Paused",
+    "message": "已暂停"
+  },
+  "subscription_status_unknown": {
+    "description": "Unknown",
+    "message": "未知"
+  },
+  "unable_to_capture_website_alert": {
+    "description": "Unable to capture this website. Please use full screen/application capture or try capture another website.\n\n(╯°□°）╯︵ ┻━┻",
+    "message": "无法在此网站上截图。请使用全屏/应用程序截图或尝试在其他网站截图。\n\n(╯°□°）╯︵ ┻━┻"
+  },
+  "view_permission": {
+    "description": "View permission.",
+    "message": "查看权限。"
+  },
+  "width_text": {
+    "description": "Height (px)",
+    "message": "宽度 (px)"
+  }
+}

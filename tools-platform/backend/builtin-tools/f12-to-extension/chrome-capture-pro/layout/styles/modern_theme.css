@@ -1,0 +1,446 @@
+/* Modern Ultra-Premium Dark Theme for Chrome Capture Pro (by Dragon) */
+
+:root {
+  --bg-main: #0c1017;
+  --bg-gradient: linear-gradient(155deg, #0b0f19 0%, #111827 50%, #080c14 100%);
+  --card-bg: rgba(255, 255, 255, 0.045);
+  --card-bg-hover: linear-gradient(135deg, rgba(99, 102, 241, 0.18) 0%, rgba(139, 92, 246, 0.1) 100%);
+  --card-border: rgba(255, 255, 255, 0.09);
+  --card-border-hover: rgba(99, 102, 241, 0.6);
+  --primary-accent: #6366f1;
+  --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-hover: 0 10px 28px -4px rgba(0, 0, 0, 0.6), 0 0 20px 2px rgba(99, 102, 241, 0.35);
+}
+
+* {
+  box-sizing: border-box !important;
+}
+
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif !important;
+  background: var(--bg-gradient) !important;
+  background-color: var(--bg-main) !important;
+  color: var(--text-main) !important;
+  -webkit-font-smoothing: antialiased !important;
+  user-select: none !important;
+  width: 100% !important;
+}
+
+/* App Main Container: full height flex */
+#mountNode {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+#mountNode > div[class*="container"] {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  background: transparent !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+}
+
+/* Tabs Header Container */
+.MuiTabs-root {
+  background: rgba(0, 0, 0, 0.45) !important;
+  border-radius: 12px !important;
+  margin: 12px 14px 4px 14px !important;
+  padding: 4px !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5) !important;
+  min-height: 44px !important;
+  width: calc(100% - 24px) !important;
+  margin: 12px 12px 4px 12px !important;
+  flex-shrink: 0 !important;
+}
+
+.MuiTabs-scroller {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.MuiTabs-flexContainer {
+  width: 100% !important;
+  gap: 4px !important;
+}
+
+/* Tab Item */
+.MuiTab-root {
+  min-height: 36px !important;
+  height: 36px !important;
+  padding: 0 10px !important;
+  border-radius: 9px !important;
+  color: var(--text-muted) !important;
+  font-weight: 500 !important;
+  font-size: 0.84rem !important;
+  text-transform: none !important;
+  transition: all 0.22s ease !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+}
+
+.MuiTab-root svg {
+  width: 17px !important;
+  height: 17px !important;
+  margin: 0 !important;
+  color: inherit !important;
+}
+
+.MuiTab-root.Mui-selected {
+  background: var(--primary-gradient) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+}
+
+.MuiTab-root:not(.Mui-selected):hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #ffffff !important;
+}
+
+.MuiTabs-indicator {
+  display: none !important;
+}
+
+/* Middle Content Area */
+div[class*="innerContainer"] {
+  padding: 10px 12px 12px 12px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  flex: 1 0 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+}
+
+/* MUI Grid Fixes */
+.MuiGrid-container {
+  margin: 0 !important;
+  width: 100% !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  box-sizing: border-box !important;
+}
+
+.MuiGrid-item {
+  padding: 5px !important;
+  box-sizing: border-box !important;
+}
+
+/* Action Card Buttons */
+.MuiButton-root.MuiButton-contained {
+  background: var(--card-bg) !important;
+  background-color: var(--card-bg) !important;
+  border: 1px solid var(--card-border) !important;
+  border-radius: 14px !important;
+  box-shadow: var(--shadow-card) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  color: var(--text-main) !important;
+  font-weight: 600 !important;
+  font-size: 0.84rem !important;
+  white-space: nowrap !important;
+  text-transform: none !important;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.MuiButton-root.MuiButton-contained::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 10% !important;
+  right: 10% !important;
+  height: 1px !important;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent) !important;
+  pointer-events: none !important;
+}
+
+.MuiButton-root.MuiButton-contained:hover {
+  background: var(--card-bg-hover) !important;
+  border-color: var(--card-border-hover) !important;
+  box-shadow: var(--shadow-hover) !important;
+  transform: translateY(-2px) !important;
+  color: #ffffff !important;
+}
+
+.MuiButton-root.MuiButton-contained:active {
+  transform: translateY(0px) scale(0.98) !important;
+}
+
+.MuiButton-root.MuiButton-contained .MuiButton-startIcon svg {
+  color: #a5b4fc !important;
+  filter: drop-shadow(0 2px 8px rgba(99, 102, 241, 0.45)) !important;
+  transition: transform 0.22s ease !important;
+}
+
+.MuiButton-root.MuiButton-contained:hover .MuiButton-startIcon svg {
+  transform: scale(1.08) !important;
+  color: #ffffff !important;
+}
+
+/* Shortcut Badges */
+span[class*="key"],
+.MuiButton-root span[class*="key"] {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 6px !important;
+  padding: 1px 5px !important;
+  font-size: 0.64rem !important;
+  font-weight: 600 !important;
+  color: #f1f5f9 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+  letter-spacing: 0.04em !important;
+}
+
+button[class*="shortcutLinkButton"] {
+  background: rgba(99, 102, 241, 0.18) !important;
+  border: 1px solid rgba(99, 102, 241, 0.35) !important;
+  border-radius: 6px !important;
+  padding: 2px 6px !important;
+  color: #c7d2fe !important;
+  font-size: 0.65rem !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+}
+
+/* ==================================================== */
+/* Footer Bar: Pinned at bottom & Larger Square Buttons */
+/* ==================================================== */
+#mountNode > div > div:last-child {
+  margin-top: auto !important;
+  width: 100% !important;
+  background: rgba(10, 14, 23, 0.95) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.09) !important;
+  flex-shrink: 0 !important;
+}
+
+#mountNode > div > div:last-child > div {
+  min-height: 52px !important;
+  height: 52px !important;
+  padding: 0 14px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  position: relative !important;
+  width: 100% !important;
+}
+
+#mountNode > div > div:last-child > div::before {
+  content: "⚡ DRAGON PRO" !important;
+  font-size: 0.76rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.07em !important;
+  background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  filter: drop-shadow(0 2px 6px rgba(129, 140, 248, 0.4)) !important;
+}
+
+/* Larger, Modern Rounded-Square Action Buttons */
+#mountNode > div > div:last-child svg {
+  color: #c7d2fe !important;
+  width: 36px !important;
+  height: 36px !important;
+  padding: 7px !important;
+  margin-right: 0 !important;
+  margin-left: 8px !important;
+  border-radius: 10px !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  cursor: pointer !important;
+}
+
+#mountNode > div > div:last-child svg:hover {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.25) 100%) !important;
+  border-color: rgba(99, 102, 241, 0.6) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4) !important;
+}
+
+#mountNode > div > div:last-child svg:active {
+  transform: translateY(0) scale(0.94) !important;
+}
+
+/* ========================================= */
+/* Options & Settings Modern Page Layout     */
+/* ========================================= */
+#header {
+  background: rgba(13, 17, 23, 0.92) !important;
+  backdrop-filter: blur(16px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  height: 72px !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 8% !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+#header span[class*="headerText"] {
+  height: 72px !important;
+  line-height: 72px !important;
+  margin-left: 0 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 1.45rem !important;
+  background: linear-gradient(135deg, #ffffff 0%, #c7d2fe 60%, #818cf8 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  letter-spacing: -0.02em !important;
+}
+
+#header span[class*="headerText"]::after {
+  content: "⚡ Dragon Pro" !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  vertical-align: middle !important;
+  margin-left: 14px !important;
+  padding: 3px 10px !important;
+  border-radius: 8px !important;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(139, 92, 246, 0.2) 100%) !important;
+  border: 1px solid rgba(99, 102, 241, 0.45) !important;
+  color: #c7d2fe !important;
+  -webkit-text-fill-color: #c7d2fe !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+}
+
+.MuiCard-root {
+  background: rgba(255, 255, 255, 0.035) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35) !important;
+  backdrop-filter: blur(20px) !important;
+  margin-bottom: 24px !important;
+}
+
+.MuiListSubheader-root {
+  background: transparent !important;
+  color: #a5b4fc !important;
+  font-weight: 600 !important;
+  font-size: 1.05rem !important;
+  padding-left: 20px !important;
+  padding-top: 16px !important;
+}
+
+.MuiOutlinedInput-root {
+  border-radius: 10px !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: #f1f5f9 !important;
+}
+
+.MuiOutlinedInput-notchedOutline {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.MuiSwitch-switchBase.Mui-checked {
+  color: #6366f1 !important;
+}
+
+.MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track {
+  background-color: #6366f1 !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+}
+
+/* ==================================================== */
+/* Fix Floating Input Labels and Select Fields          */
+/* ==================================================== */
+.MuiInputLabel-root {
+  color: #94a3b8 !important;
+  font-size: 0.82rem !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.01em !important;
+  z-index: 2 !important;
+}
+
+.MuiInputLabel-root.MuiInputLabel-shrink {
+  transform: translate(14px, -8px) scale(0.78) !important;
+  background: #1e293b !important;
+  padding: 0 5px !important;
+  border-radius: 4px !important;
+  color: #a5b4fc !important;
+  font-weight: 600 !important;
+}
+
+.MuiInputLabel-root.Mui-focused {
+  color: #818cf8 !important;
+}
+
+.MuiOutlinedInput-root {
+  border-radius: 10px !important;
+  background: rgba(255, 255, 255, 0.035) !important;
+  color: #ffffff !important;
+  transition: border-color 0.2s ease !important;
+}
+
+.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: rgba(99, 102, 241, 0.5) !important;
+}
+
+.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #818cf8 !important;
+  border-width: 1.5px !important;
+}
+
+.MuiOutlinedInput-input {
+  color: #ffffff !important;
+  font-size: 0.86rem !important;
+  padding: 9px 12px !important;
+  box-sizing: border-box !important;
+}
+
+.MuiSelect-select {
+  color: #ffffff !important;
+  padding-right: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.MuiSelect-icon {
+  color: #94a3b8 !important;
+}
+
+/* Floating Tool Panels in Editor */
+.MuiAccordion-root,
+div[class*="panel"] {
+  background: rgba(15, 23, 42, 0.95) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}

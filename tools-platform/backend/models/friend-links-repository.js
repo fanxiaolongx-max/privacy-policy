@@ -3,7 +3,7 @@ const { readKV, writeKV } = require('./kv-store');
 
 const CONFIG_KEY = 'friend_links_config';
 const STATUS_KEY = 'friend_links_status';
-const CONFIG_SCHEMA_VERSION = 5;
+const CONFIG_SCHEMA_VERSION = 6;
 const DEFAULT_INTERVAL_MINUTES = 30;
 const MIN_INTERVAL_MINUTES = 10;
 const MAX_INTERVAL_MINUTES = 1440;
@@ -11,8 +11,14 @@ const MAX_INTERVAL_MINUTES = 1440;
 const DEFAULT_API_RELAY = {
     baseUrl: 'https://api.fanxiaolong.uk',
     apiKey: 'xxxx',
-    defaultModel: 'gemini-3-1-flash',
-    fastModel: 'gemini-2-5-flash'
+    openAiModel: 'gemini-3-flash',
+    defaultModel: 'claude-3-5-sonnet-20241022',
+    fastModel: 'gemini-2.5-flash'
+};
+
+const LEGACY_API_RELAY_MODELS = {
+    'gemini-3-1-flash': 'gemini-3-flash',
+    'gemini-2-5-flash': 'gemini-2.5-flash'
 };
 
 const DEFAULT_LINKS = [
@@ -91,10 +97,24 @@ function normalizeApiRelay(input = {}) {
     baseUrl = baseUrl.replace(/\/+$/, '');
     const apiKey = String(source.apiKey ?? DEFAULT_API_RELAY.apiKey).trim().slice(0, 512);
     if (!apiKey) throw new Error('API 密钥不能为空');
+    const openAiModel = String(source.openAiModel || DEFAULT_API_RELAY.openAiModel).trim().slice(0, 120);
     const defaultModel = String(source.defaultModel || DEFAULT_API_RELAY.defaultModel).trim().slice(0, 120);
     const fastModel = String(source.fastModel || DEFAULT_API_RELAY.fastModel).trim().slice(0, 120);
-    if (!defaultModel || !fastModel) throw new Error('模型名称不能为空');
-    return { baseUrl, apiKey, defaultModel, fastModel };
+    if (!openAiModel || !defaultModel || !fastModel) throw new Error('模型名称不能为空');
+    return { baseUrl, apiKey, openAiModel, defaultModel, fastModel };
+}
+
+function migrateLegacyApiRelayModels(input = {}) {
+    const source = input && typeof input === 'object' ? input : {};
+    const legacyDefault = LEGACY_API_RELAY_MODELS[source.defaultModel] || source.defaultModel;
+    return {
+        ...source,
+        openAiModel: source.openAiModel || legacyDefault || DEFAULT_API_RELAY.openAiModel,
+        defaultModel: source.defaultModel === 'gemini-3-1-flash'
+            ? DEFAULT_API_RELAY.defaultModel
+            : source.defaultModel,
+        fastModel: LEGACY_API_RELAY_MODELS[source.fastModel] || source.fastModel
+    };
 }
 
 async function getConfig() {
@@ -124,7 +144,8 @@ async function getConfig() {
                 if (renamed) Object.assign(link, { icon: renamed.icon, name: renamed.name, nameEn: renamed.nameEn });
             }
         }
-        const migrated = normalizeConfig({ ...stored, links });
+        const apiRelay = storedVersion < 6 ? migrateLegacyApiRelayModels(stored.apiRelay) : stored.apiRelay;
+        const migrated = normalizeConfig({ ...stored, links, apiRelay });
         await writeKV('sys', CONFIG_KEY, migrated);
         return migrated;
     }
@@ -163,6 +184,7 @@ module.exports = {
     normalizeUrl,
     normalizeLink,
     normalizeApiRelay,
+    migrateLegacyApiRelayModels,
     normalizeConfig,
     getConfig,
     saveConfig,

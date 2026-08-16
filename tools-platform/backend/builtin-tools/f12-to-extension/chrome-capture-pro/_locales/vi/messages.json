@@ -1,0 +1,1691 @@
+{
+   "account_modal_free_plan": {
+      "description": "You are on the free plan",
+      "message": "Bạn đang ở trong kế hoạch miễn phí"
+   },
+   "account_modal_manage_subscription_button": {
+      "description": "Manage Subscription",
+      "message": "Quản lý đăng ký"
+   },
+   "account_modal_not_signed_in": {
+      "description": "You are not signed in",
+      "message": "Bạn không đăng nhập"
+   },
+   "account_modal_premium_plan": {
+      "description": "You are on the premium plan",
+      "message": "Bạn đang ở trong kế hoạch cao cấp"
+   },
+   "account_modal_premium_pro_plan": {
+      "description": "You are on the Premium Pro plan",
+      "message": "Bạn đang ở gói Premium Pro"
+   },
+   "account_modal_request_feature_button": {
+      "description": "Request Feature",
+      "message": "Yêu cầu tính năng"
+   },
+   "account_modal_request_support_button": {
+      "description": "Request Support",
+      "message": "Yêu cầu hỗ trợ"
+   },
+   "account_modal_stats_heading": {
+      "description": "Your stats:",
+      "message": "Số liệu thống kê của bạn:"
+   },
+   "alert_text": {
+      "description": "Unable to run selected area capture on this website. Please use full screen recording or try another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "Không thể chạy Chụp khu vực đã chọn trên trang web này. Vui lòng sử dụng quay toàn màn hình hoặc thử một trang web khác. \n\n (° ° □ °) ╯("
+   },
+   "click_indicator_size_color_text": {
+      "description": "Click animation size & color",
+      "message": "Nhấp vào Kích thước & Màu sắc Hoạt hình"
+   },
+   "close_btn_text": {
+      "description": "Close",
+      "message": "Đóng"
+   },
+   "confirm_dialog_cancel_btn_text": {
+      "description": "Cancel",
+      "message": "Hủy bỏ"
+   },
+   "confirm_dialog_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "Xác nhận"
+   },
+   "confirm_fps_update_text": {
+      "description": "Changing the fps will remove all frame specific edits such as edited or deleted frames. Do you want to continue?",
+      "message": "Thay đổi FPS sẽ xóa tất cả các chỉnh sửa cụ thể hình ảnh như các khung đã được chỉnh sửa hoặc đã xóa. Bạn có muốn tiếp tục?"
+   },
+   "copy_text": {
+      "description": "Copy to clipboard",
+      "message": "Sao chép vào clipboard"
+   },
+   "cursor_size_and_color_text": {
+      "description": "Cursor dot size & color",
+      "message": "CONSOR DOT SIZE & MÀU"
+   },
+   "dither_text": {
+      "description": "Apply dither",
+      "message": "Áp dụng dút"
+   },
+   "download_filename_text": {
+      "description": "Download filename format",
+      "message": "Tải xuống định dạng tên tệp"
+   },
+   "download_text": {
+      "description": "Download",
+      "message": "Tải xuống"
+   },
+   "draw_size_and_color_text": {
+      "description": "Drawing size & color",
+      "message": "Kích thước vẽ & màu sắc"
+   },
+   "duration": {
+      "description": "Label for a field indicating a length of time.",
+      "message": "Thời lượng"
+   },
+   "editor_action_add_icon": {
+      "description": "Add icon",
+      "message": "Thêm biểu tượng"
+   },
+   "editor_action_add_text": {
+      "description": "Add text",
+      "message": "Chèn văn bản"
+   },
+   "editor_action_blur_rectangle": {
+      "description": "Blur area",
+      "message": "Làm mờ vùng"
+   },
+   "editor_action_copy": {
+      "description": "Copy to clipboard",
+      "message": "Sao chép vào clipboard"
+   },
+   "editor_action_crop": {
+      "description": "Crop",
+      "message": "Mùa vụ"
+   },
+   "editor_action_draw_arrow": {
+      "description": "Draw arrow",
+      "message": "Vẽ mũi tên"
+   },
+   "editor_action_draw_ellipse": {
+      "description": "Draw ellipse",
+      "message": "Vẽ hình elip."
+   },
+   "editor_action_draw_line": {
+      "description": "Draw line",
+      "message": "Vẽ đường thẳng"
+   },
+   "editor_action_draw_rectangle": {
+      "description": "Draw rectangle",
+      "message": "Vẽ hình chữ nhật."
+   },
+   "editor_action_free_draw": {
+      "description": "Free draw",
+      "message": "Vẽ miễn phí"
+   },
+   "editor_action_highlight": {
+      "description": "Highlight",
+      "message": "Điểm nổi bật"
+   },
+   "editor_action_numbered_step": {
+      "description": "Action label for adding a numbered step annotation.",
+      "message": "Bước được đánh số"
+   },
+   "editor_action_pan": {
+      "description": "Pan",
+      "message": "Di chuyển"
+   },
+   "editor_action_profile_account": {
+      "description": "Account",
+      "message": "Tài khoản"
+   },
+   "editor_action_redo": {
+      "description": "Redo",
+      "message": "Làm lại"
+   },
+   "editor_action_save": {
+      "description": "Save",
+      "message": "Tiết kiệm"
+   },
+   "editor_action_select": {
+      "description": "Select, move, resize",
+      "message": "Chọn, di chuyển, thay đổi kích thước"
+   },
+   "editor_action_settings": {
+      "description": "Settings",
+      "message": "Cài đặt"
+   },
+   "editor_action_undo": {
+      "description": "Undo",
+      "message": "Hoàn tác"
+   },
+   "editor_action_undo_all": {
+      "description": "Undo all",
+      "message": "Hoàn tác tất cả"
+   },
+   "editor_add_text_default": {
+      "description": "start typing...",
+      "message": "bắt đầu gõ..."
+   },
+   "editor_browse_file_system": {
+      "description": "Browse file system",
+      "message": "Duyệt hệ thống tập tin"
+   },
+   "editor_drag_and_drop": {
+      "description": "Drag and drop image/GIF or ",
+      "message": "Kéo và thả hình ảnh / GIF hoặc"
+   },
+   "editor_file_downloaded": {
+      "description": "File saved to downloads folder.",
+      "message": "Tập tin được lưu vào thư mục tải xuống."
+   },
+   "editor_file_downloaded_selected_location": {
+      "description": "File saved to selected location.",
+      "message": "Tệp lưu vào vị trí được chọn."
+   },
+   "editor_frame_selector_apply_edits": {
+      "description": "Apply edits to selected",
+      "message": "Áp dụng chỉnh sửa cho đã chọn"
+   },
+   "editor_frame_selector_delete": {
+      "description": "Delete",
+      "message": "Xóa bỏ"
+   },
+   "editor_frame_selector_delete_every_second": {
+      "description": "Delete every second frame",
+      "message": "Xóa mỗi khung thứ hai"
+   },
+   "editor_frame_selector_delete_selected": {
+      "description": "Delete selected",
+      "message": "Xóa đã chọn"
+   },
+   "editor_frame_selector_remove_edits": {
+      "description": "Remove edits from selected",
+      "message": "Xóa chỉnh sửa khỏi đã chọn"
+   },
+   "editor_frame_selector_restore": {
+      "description": "Restore",
+      "message": "Khôi phục"
+   },
+   "editor_frame_selector_restore_all": {
+      "description": "Restore All",
+      "message": "Khôi phục lại tất cả"
+   },
+   "editor_frame_selector_restore_selected": {
+      "description": "Restore selected",
+      "message": "Khôi phục đã chọn"
+   },
+   "editor_frame_selector_select_next": {
+      "description": "Select next frames",
+      "message": "Chọn hình ảnh tiếp theo"
+   },
+   "editor_frame_selector_select_previous": {
+      "description": "Select previous frames",
+      "message": "Chọn hình ảnh trước đó"
+   },
+   "editor_frame_selector_unselect_all": {
+      "description": "Unselect All",
+      "message": "Bỏ chọn tất cả"
+   },
+   "editor_image_copied": {
+      "description": "Image copied to clipboard.",
+      "message": "Hình ảnh được sao chép vào clipboard."
+   },
+   "editor_image_copied_failed": {
+      "description": "Failed to copy image to clipboard, it may be too large.",
+      "message": "Không thể sao chép hình ảnh vào clipboard, nó có thể quá lớn."
+   },
+   "editor_link_copied": {
+      "description": "Link copied to clipboard.",
+      "message": "Liên kết được sao chép vào khay nhớ tạm."
+   },
+   "editor_max_time_reached_dialog_description1": {
+      "description": "You have reached the max recording length time of $maxlength$ seconds for GIFs. Premium users can update this from the settings page.",
+      "message": "Bạn đã đạt được độ dài ghi tối đa thời gian của $maxlength$ giây cho GIF. Người dùng cao cấp có thể cập nhật điều này từ trang Cài đặt.",
+      "placeholders": {
+         "maxlength": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_max_time_reached_dialog_description2": {
+      "description": "GIFs are intended for short recordings. If you require full length videos we recommend our free screen recorder: ",
+      "message": "GIF được dự định cho các bản ghi ngắn. Nếu bạn yêu cầu video dài đầy đủ, chúng tôi khuyên bạn nên sử dụng máy ghi màn hình miễn phí:"
+   },
+   "editor_max_time_reached_dialog_description3": {
+      "description": "Premium users can update this from the settings page.",
+      "message": "Người dùng cao cấp có thể cập nhật điều này từ trang Cài đặt."
+   },
+   "editor_max_time_reached_dialog_settings_button": {
+      "description": "Open settings",
+      "message": "Mở cài đặt"
+   },
+   "editor_max_time_reached_dialog_title": {
+      "description": "Recording suddenly stopped?",
+      "message": "Ghi âm đột ngột dừng lại?"
+   },
+   "editor_premium_options_color": {
+      "description": "Color",
+      "message": "Màu sắc"
+   },
+   "editor_premium_options_draw_size": {
+      "description": "Draw Size",
+      "message": "Vẽ cỡ"
+   },
+   "editor_premium_options_font": {
+      "description": "Font",
+      "message": "Nét chữ"
+   },
+   "editor_premium_options_playback_speed": {
+      "description": "Playback Speed",
+      "message": "Tốc độ phát lại"
+   },
+   "editor_premium_options_special_effect": {
+      "description": "Special Effect",
+      "message": "Hiệu ứng đặc biệt"
+   },
+   "editor_premium_options_title": {
+      "description": "Premium Options",
+      "message": "Tùy chọn cao cấp"
+   },
+   "editor_save_dialog_advanced_encoding_options": {
+      "description": "Title for a section containing advanced, technical options for encoding a file.",
+      "message": "Tùy chọn mã hóa nâng cao"
+   },
+   "editor_save_dialog_alert_title": {
+      "description": "Warning",
+      "message": "Cảnh báo"
+   },
+   "editor_save_dialog_aspect_ratio": {
+      "description": "lock aspect ratio",
+      "message": "Khóa tỷ lệ khung hình"
+   },
+   "editor_save_dialog_cancel": {
+      "description": "Cancel",
+      "message": "Hủy bỏ"
+   },
+   "editor_save_dialog_chip_animated_image": {
+      "description": "Chip label indicating an animated image format (e.g. GIF, AVIF).",
+      "message": "hình ảnh động"
+   },
+   "editor_save_dialog_chip_large_file": {
+      "description": "Chip label indicating the format produces a large file size.",
+      "message": "tệp lớn"
+   },
+   "editor_save_dialog_chip_limited_support": {
+      "description": "Chip label indicating the format has limited browser/app support.",
+      "message": "hỗ trợ hạn chế"
+   },
+   "editor_save_dialog_chip_small_file": {
+      "description": "Chip label indicating the format produces a small file size.",
+      "message": "tệp nhỏ"
+   },
+   "editor_save_dialog_chip_video": {
+      "description": "Chip label indicating a video format (e.g. WebM, MP4).",
+      "message": "video"
+   },
+   "editor_save_dialog_chip_widely_supported": {
+      "description": "Chip label indicating the format is widely supported.",
+      "message": "được hỗ trợ rộng rãi"
+   },
+   "editor_save_dialog_compress": {
+      "description": "Compress & optimize GIF",
+      "message": "Nén và tối ưu hóa GIF"
+   },
+   "editor_save_dialog_compress_tooltip": {
+      "description": "Apply GIF compression algorthm to greatly reduce GIF file size and in some cases improve quality. Highly recommeded.",
+      "message": "Áp dụng thuật toán nén GIF để giảm đáng kể kích thước tệp GIF và trong một số trường hợp cải thiện chất lượng. Rất khuyến khích."
+   },
+   "editor_save_dialog_dither_tooltip": {
+      "description": "Apply dither algorithm to frames. Try toggling this option if you experience color quality issues.",
+      "message": "Áp dụng thuật toán Phiên cho hình ảnh. Hãy thử chuyển đổi tùy chọn này nếu bạn trải nghiệm các vấn đề về chất lượng màu sắc."
+   },
+   "editor_save_dialog_download_raw_recording": {
+      "description": "Download raw recording",
+      "message": "Tải xuống bản ghi thô"
+   },
+   "editor_save_dialog_estimated_size": {
+      "description": "Estimated GIF Size: ",
+      "message": "Kích thước gif ước tính:"
+   },
+   "editor_save_dialog_export_sound": {
+      "description": "Include sound (beta)",
+      "message": "Bao gồm âm thanh (beta)"
+   },
+   "editor_save_dialog_export_sound_tooltip": {
+      "description": "Enable this option to include sound in the video.",
+      "message": "Kích hoạt tùy chọn này để bao gồm âm thanh trong video."
+   },
+   "editor_save_dialog_frames": {
+      "description": "Frames: ",
+      "message": "Hình ảnh:"
+   },
+   "editor_save_dialog_frames_alert": {
+      "description": "There are currently selected frames, saving will only output these selected frames - ",
+      "message": "Hiện tại có những hình ảnh được chọn, lưu sẽ chỉ xuất các khung được chọn này -"
+   },
+   "editor_save_dialog_frames_alert_button": {
+      "description": "Click here to unselect all frames",
+      "message": "Nhấn vào đây để hủy bỏ tất cả các hình ảnh"
+   },
+   "editor_save_dialog_frames_alert_title": {
+      "description": "Playback Speed",
+      "message": "Tốc độ phát lại"
+   },
+   "editor_save_dialog_frames_processing": {
+      "description": "Processing Frames: ",
+      "message": "Hình ảnh xử lý:"
+   },
+   "editor_save_dialog_height_helper": {
+      "description": "Recorded height is ",
+      "message": "Chiều cao được ghi là"
+   },
+   "editor_save_dialog_lossy_compression": {
+      "description": "Label for a setting that controls the level of lossy compression, from 0 to 100 percent.",
+      "message": "Nén có tổn hao (0 - 100%)"
+   },
+   "editor_save_dialog_number_min_max_validation": {
+      "description": "A value between $minSize$ and $maxSize$ is required.",
+      "message": "Một giá trị giữa $minSize$ và $maxSize$ là bắt buộc.",
+      "placeholders": {
+         "maxSize": {
+            "content": "$2"
+         },
+         "minSize": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_save_dialog_processing_alert": {
+      "description": "Processing this recording will require a lot of memory and processing power. Unless you have a high spec PC it is recommended to do one or more of the following:",
+      "message": "Xử lý bản ghi này sẽ yêu cầu rất nhiều bộ nhớ và sức mạnh xử lý. Trừ khi bạn có một PC thông số cao, nên thực hiện một hoặc nhiều thao tác sau:"
+   },
+   "editor_save_dialog_processing_alert_memory": {
+      "description": "Please note if the resulting GIF is blank then you ran out of memory.",
+      "message": "Xin lưu ý nếu gif kết quả trống thì bạn đã hết bộ nhớ."
+   },
+   "editor_save_dialog_processing_alert_point_1": {
+      "description": "Compress and optimize GIF",
+      "message": "Nén và tối ưu hóa gif"
+   },
+   "editor_save_dialog_processing_alert_point_2": {
+      "description": "Reduce the width & height",
+      "message": "Giảm chiều rộng & chiều cao"
+   },
+   "editor_save_dialog_processing_alert_point_3": {
+      "description": "Reduce FPS or delete frames",
+      "message": "Giảm FPS hoặc xóa hình ảnh"
+   },
+   "editor_save_dialog_purchase_dialog_compression_description": {
+      "description": "Free users are limited to 3 high quality GIF compressions per day. Upgrade to Premium to have no restrictions.",
+      "message": "Người dùng miễn phí được giới hạn trong 3 lần nén GIF chất lượng cao mỗi ngày. Nâng cấp lên phí bảo hiểm để không có hạn chế."
+   },
+   "editor_save_dialog_quantization_algorithm": {
+      "description": "Label for a dropdown to select a quantization algorithm.",
+      "message": "Thuật toán lượng tử hóa"
+   },
+   "editor_save_dialog_quantization_algorithm_new_alpha": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Alpha.",
+      "message": "Mới (Alpha)"
+   },
+   "editor_save_dialog_quantization_algorithm_new_beta": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Beta.",
+      "message": "Mới (Beta)"
+   },
+   "editor_save_dialog_quantization_algorithm_old": {
+      "description": "An option for the quantization algorithm setting, indicating an older version.",
+      "message": "Cũ"
+   },
+   "editor_save_dialog_recording_quality_alert": {
+      "description": "GIF quality is limited for non premium users. To output high quality recordings you can do one of the following:",
+      "message": "Chất lượng GIF bị giới hạn cho người dùng không cao cấp. Để xuất bản ghi chất lượng cao, bạn có thể thực hiện một trong những điều sau đây:"
+   },
+   "editor_save_dialog_recording_quality_alert_option_1": {
+      "description": "Purchase premium",
+      "message": "Mua phí bảo hiểm"
+   },
+   "editor_save_dialog_recording_quality_alert_option_2": {
+      "description": "Save as a WebM file",
+      "message": "Lưu dước dạng tệp webm"
+   },
+   "editor_save_dialog_reduce_width": {
+      "description": "Reduce width & height",
+      "message": "Giảm chiều rộng & chiều cao"
+   },
+   "editor_save_dialog_reduce_width_tooltip": {
+      "description": "Reduce GIF width and height/quality to improve processing time and produce a smaller file.",
+      "message": "Giảm chiều rộng GIF và chiều cao/chất lượng để cải thiện thời gian xử lý và tạo ra một tệp nhỏ hơn."
+   },
+   "editor_save_dialog_save": {
+      "description": "Save",
+      "message": "Tiết kiệm"
+   },
+   "editor_save_dialog_save_by": {
+      "description": "Save by",
+      "message": "Lưu theo"
+   },
+   "editor_save_dialog_save_by_download": {
+      "description": "Download file",
+      "message": "Tải tập tin"
+   },
+   "editor_save_dialog_save_by_google_drive": {
+      "description": "Upload to Google Drive & copy link",
+      "message": "Tải lên liên kết Google Drive & Sao chép"
+   },
+   "editor_save_dialog_save_location": {
+      "description": "Save location",
+      "message": "Lưu vị trí"
+   },
+   "editor_save_dialog_save_location_downloads": {
+      "description": "Downloads folder",
+      "message": "Tải xuống thư mục"
+   },
+   "editor_save_dialog_save_location_downloads_subfolder": {
+      "description": "Downloads subfolder",
+      "message": "Tải xuống thư mục con"
+   },
+   "editor_save_dialog_save_location_select": {
+      "description": "Manually select location",
+      "message": "Chọn vị trí theo cách thủ công"
+   },
+   "editor_save_dialog_title": {
+      "description": "Save",
+      "message": "Tiết kiệm"
+   },
+   "editor_save_dialog_title_processing": {
+      "description": "Processing...",
+      "message": "Xử lý..."
+   },
+   "editor_save_dialog_title_uploading": {
+      "description": "Uploading...",
+      "message": "Tải lên ..."
+   },
+   "editor_save_dialog_width_helper": {
+      "description": "Recorded width is ",
+      "message": "Chiều rộng được ghi lại là"
+   },
+   "editor_text": {
+      "description": "Open in editor",
+      "message": "Mở trong biên tập viên"
+   },
+   "editor_tip_delete_items": {
+      "description": "Pro tip: Delete added items by selecting the item and pressing the delete key.",
+      "message": "Mẹo chuyên nghiệp: Xóa các mục đã thêm bằng cách chọn mục và nhấn phím XÓA."
+   },
+   "editor_tip_edit_specific_frames": {
+      "description": "Pro tip: You can edit specific frames by using the 'Apply edits to selected option'",
+      "message": "Mẹo chuyên nghiệp: Bạn có thể chỉnh sửa hình ảnh cụ thể bằng cách sử dụng 'Áp dụng chỉnh sửa cho tùy chọn đã chọn'"
+   },
+   "editor_tip_scroll": {
+      "description": "Pro tip: Scroll when hovering the screenshot/recording to zoom.",
+      "message": "PRO Mẹo: Cuộn khi lơ lửng ảnh chụp màn hình / Ghi để thu phóng."
+   },
+   "editor_tip_shift_multiple_items": {
+      "description": "Pro tip: When using the selecting tool hold down shift to select more than one item.",
+      "message": "Mẹo chuyên nghiệp: Khi sử dụng công cụ chọn giữ phím Shift để chọn nhiều mục."
+   },
+   "editor_tip_update_multiple_items": {
+      "description": "Pro tip: You can scale, rotate, move and delete multiple items at once.",
+      "message": "Mẹo chuyên nghiệp: Bạn có thể chia tỷ lệ, xoay, di chuyển và xóa nhiều mục cùng một lúc."
+   },
+   "editor_tip_update_text": {
+      "description": "Pro tip: Double click on text to edit it.",
+      "message": "Mẹo chuyên nghiệp: Nhấp đúp chuột vào văn bản để chỉnh sửa nó."
+   },
+   "editor_upload_dialog_alert_copy_failed_message": {
+      "description": "This may have occurred due to the window not being focused.",
+      "message": "Điều này có thể đã xảy ra do cửa sổ không được tập trung."
+   },
+   "editor_upload_dialog_alert_copy_failed_title": {
+      "description": "Copy to clipboard failed",
+      "message": "Sao chép vào bảng tạm không thành công"
+   },
+   "editor_upload_dialog_alert_copy_success_title": {
+      "description": "Copied to clipboard",
+      "message": "Sao chép vào clipboard"
+   },
+   "editor_upload_dialog_alert_upload_failed": {
+      "description": "Upload Failed",
+      "message": "Tải lên không thành công"
+   },
+   "editor_upload_dialog_alert_upload_failed_link": {
+      "description": "Try again.",
+      "message": "Thử lại."
+   },
+   "editor_upload_dialog_alert_upload_failed_message": {
+      "description": "Please make sure you are connected to the internet and have accepted Google Drive permissions.",
+      "message": "Vui lòng đảm bảo rằng bạn được kết nối với Internet và đã chấp nhận quyền của Google Drive."
+   },
+   "editor_upload_dialog_cancel_and_download": {
+      "description": "Cancel and download file",
+      "message": "Hủy và tải xuống tệp"
+   },
+   "editor_upload_dialog_close": {
+      "description": "Close",
+      "message": "Đóng"
+   },
+   "editor_upload_dialog_copy_link": {
+      "description": "Copy link",
+      "message": "Sao chép đường dẫn"
+   },
+   "editor_upload_dialog_link_public": {
+      "description": "Allow anyone with the link to view.",
+      "message": "Cho phép bất cứ ai có liên kết để xem."
+   },
+   "editor_zoom_crop_animation_animated": {
+      "description": "Sub-label indicating an animation type is animated.",
+      "message": "Hoạt động"
+   },
+   "editor_zoom_crop_animation_crop": {
+      "description": "Animation type option for static cropping without animation.",
+      "message": "Cắt"
+   },
+   "editor_zoom_crop_animation_static": {
+      "description": "Sub-label indicating an animation type is static (no animation).",
+      "message": "Tĩnh"
+   },
+   "editor_zoom_crop_animation_type": {
+      "description": "Label for the animation type selection section.",
+      "message": "Loại hoạt hình"
+   },
+   "editor_zoom_crop_animation_zoom_in": {
+      "description": "Animation type option for zooming in on the selected area.",
+      "message": "Phóng to"
+   },
+   "editor_zoom_crop_animation_zoom_out": {
+      "description": "Animation type option for zooming out from the selected area.",
+      "message": "Thu nhỏ"
+   },
+   "editor_zoom_crop_apply": {
+      "description": "Apply button in zoom/crop dialog.",
+      "message": "Áp dụng"
+   },
+   "editor_zoom_crop_cancel": {
+      "description": "Cancel button in zoom/crop dialog.",
+      "message": "Hủy bỏ"
+   },
+   "editor_zoom_crop_change_area": {
+      "description": "Tooltip text for button to change the selected crop area.",
+      "message": "Thay đổi khu vực"
+   },
+   "editor_zoom_crop_dialog_title": {
+      "description": "Title for the zoom and crop dialog in the editor.",
+      "message": "Phóng to và cắt"
+   },
+   "editor_zoom_crop_draw_instruction": {
+      "description": "Instruction text for the user to draw a crop area on the frame preview.",
+      "message": "Vẽ lựa chọn trên khung hình"
+   },
+   "editor_zoom_crop_frame_end": {
+      "description": "Label for the end frame number.",
+      "message": "Kết thúc"
+   },
+   "editor_zoom_crop_frame_range": {
+      "description": "Label for the frame range selection section.",
+      "message": "Phạm vi khung hình"
+   },
+   "editor_zoom_crop_frame_start": {
+      "description": "Label for the start frame number.",
+      "message": "Bắt đầu"
+   },
+   "editor_zoom_crop_frames_menu": {
+      "description": "Menu item label for zoom/crop frames feature.",
+      "message": "Phóng to/Cắt khung hình"
+   },
+   "editor_zoom_crop_no_area_selected": {
+      "description": "Message displayed when no crop area has been selected.",
+      "message": "Không có khu vực nào được chọn"
+   },
+   "editor_zoom_crop_select_area": {
+      "description": "Button text to select a crop area on the frame.",
+      "message": "Chọn khu vực"
+   },
+   "editor_zoom_crop_smooth_animation": {
+      "description": "Checkbox label for smoothing animation by interpolating frames.",
+      "message": "Làm mềm mượt hoạt hình bằng cách thêm khung hình"
+   },
+   "editor_zoom_crop_transition": {
+      "description": "Label for the transition duration section (number of frames for animation).",
+      "message": "Chuyển tiếp"
+   },
+   "enable_drawing_text": {
+      "description": "Enable drawing",
+      "message": "Cho phép vẽ"
+   },
+   "enable_drawing_tooltip_text": {
+      "description": "This option allows users to draw in the selected area while holding down the ctrl key.",
+      "message": "Tùy chọn này cho phép người dùng vẽ trong khu vực đã chọn trong khi giữ phím Ctrl."
+   },
+   "extension_description": {
+      "description": "Take screenshots & record GIFs instantly! Edit & share seamlessly. Your all-in-one screenshot and screen recording solution.",
+      "message": "Chụp ảnh màn hình & ghi lại GIF ngay lập tức! Chỉnh sửa & chia sẻ liền mạch. Ảnh chụp màn hình tất cả trong một của bạn và giải pháp ghi màn hình."
+   },
+   "extension_name": {
+      "description": "Chrome Capture - screenshot & GIF",
+      "message": "Chụp Chrome - Ảnh chụp màn hình & GIF"
+   },
+   "extension_short_name": {
+      "description": "Chrome Capture",
+      "message": "Chrome chụp"
+   },
+   "file_access_text": {
+      "description": "After screenshot action",
+      "message": "Hành động sau khi chụp ảnh màn hình"
+   },
+   "filename_text": {
+      "description": "Filename",
+      "message": "Tên tệp"
+   },
+   "frames_per_sec_short_text": {
+      "description": "FPS",
+      "message": "Khung hình / giây"
+   },
+   "frames_per_sec_text": {
+      "description": "Frames per second (fps)",
+      "message": "Hình ảnh mỗi giây (FPS)"
+   },
+   "frames_text": {
+      "description": "frames",
+      "message": "Hình ảnh"
+   },
+   "free_settings_text": {
+      "description": "Free Settings",
+      "message": "Cài đặt miễn phí"
+   },
+   "fullscreen_info_modal_cancel": {
+      "description": "Cancel",
+      "message": "Hủy bỏ"
+   },
+   "fullscreen_info_modal_continue": {
+      "description": "Are you sure you want to continue with full screen capture?",
+      "message": "Bạn có chắc chắn muốn tiếp tục chụp toàn màn hình?"
+   },
+   "fullscreen_info_modal_do_not_show": {
+      "description": "Do not show this again",
+      "message": "Đừng Hiện lại lần nữa"
+   },
+   "fullscreen_info_modal_message": {
+      "description": "You have used a Chrome Capture shortcut without the cropping tool, this will capture in full screen mode.",
+      "message": "Bạn đã sử dụng một phím tắt chụp Chrome mà không cần công cụ cắt xén, điều này sẽ chụp ở chế độ toàn màn hình."
+   },
+   "fullscreen_info_modal_open_cropping": {
+      "description": "Open cropping tool",
+      "message": "Mở công cụ cắt xén"
+   },
+   "fullscreen_info_modal_shortcut_cropping_tool": {
+      "description": "Alt + C: Open/close Chrome Capture cropping tool",
+      "message": "Alt + C: Mở / Đóng Chrome Capture Cắt lát Công cụ"
+   },
+   "fullscreen_info_modal_shortcut_fullpage_screenshot": {
+      "description": "Alt + Shift + S: Full webpage screenshot (beta)",
+      "message": "Alt + Shift + S: Ảnh chụp màn hình trang web đầy đủ (beta)"
+   },
+   "fullscreen_info_modal_shortcut_linkt": {
+      "description": "You can configure these here: ",
+      "message": "Bạn có thể định cấu hình chúng ở đây:"
+   },
+   "fullscreen_info_modal_shortcut_recording": {
+      "description": "Alt + R: Start/stop recording",
+      "message": "Alt + R: Bắt đầu / dừng ghi âm"
+   },
+   "fullscreen_info_modal_shortcut_screenshot": {
+      "description": "Alt + S: Visible area screenshot",
+      "message": "Alt + S: Ảnh chụp màn hình khu vực có thể nhìn thấy"
+   },
+   "fullscreen_info_modal_shortcuts": {
+      "description": "Default shortcuts are: ",
+      "message": "Các phím tắt mặc định là:"
+   },
+   "fullscreen_info_modal_start": {
+      "description": "Start full screen capture",
+      "message": "Bắt đầu chụp toàn màn hình"
+   },
+   "fullscreen_info_modal_title": {
+      "description": "Full screen capture",
+      "message": "Chụp toàn màn hình"
+   },
+   "general_not_available": {
+      "description": "N/A",
+      "message": "Không có sẵn"
+   },
+   "get_premium": {
+      "description": "Get Premium",
+      "message": "Lấy tiền thưởng"
+   },
+   "height_text": {
+      "description": "Width (px)",
+      "message": "Chiều rộng (px)"
+   },
+   "hi": {
+      "description": "Hi",
+      "message": "CHÀO"
+   },
+   "internet_connection_required": {
+      "description": "Internet connection is required to upgrade to premium.",
+      "message": "Kết nối Internet là cần thiết để nâng cấp lên phí bảo hiểm."
+   },
+   "manage_subscription_access_until_date": {
+      "description": "Your plan will not renew. You can access premium features until $date$.",
+      "message": "Gói của bạn sẽ không được gia hạn. Bạn có thể truy cập các tính năng premium cho đến ngày $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_cancel_button": {
+      "description": "Cancel subscription",
+      "message": "Hủy đăng ký"
+   },
+   "manage_subscription_cancel_confirm_cancel_button": {
+      "description": "Keep Premium",
+      "message": "Giữ lại Premium"
+   },
+   "manage_subscription_cancel_confirm_confirm_button": {
+      "description": "Continue to cancel",
+      "message": "Tiếp tục hủy"
+   },
+   "manage_subscription_cancel_confirm_description": {
+      "description": "You will lose access to Premium features and Premium options will be reset.",
+      "message": "Bạn sẽ mất quyền truy cập vào các tính năng Premium và các tùy chọn Premium sẽ được đặt lại."
+   },
+   "manage_subscription_cancel_confirm_title": {
+      "description": "Are you sure you want to cancel your subscription?",
+      "message": "Bạn có chắc chắn muốn hủy đăng ký không?"
+   },
+   "manage_subscription_ended_on_date": {
+      "description": "Subscription ended on $date$.",
+      "message": "Đăng ký đã kết thúc vào $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_ends_on_date": {
+      "description": "Subscription ends on $date$.",
+      "message": "Đăng ký kết thúc vào $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_next_payment_full": {
+      "description": "Next payment: $price$ on $date$",
+      "message": "Thanh toán tiếp theo: $price$ vào $date$",
+      "placeholders": {
+         "date": {
+            "content": "$2"
+         },
+         "price": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_paid_full": {
+      "description": "Paid: $billingCycle$",
+      "message": "Đã thanh toán: $billingCycle$",
+      "placeholders": {
+         "billingCycle": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_resubscribe_prompt": {
+      "description": " To use premium features again, please upgrade.",
+      "message": " Để sử dụng lại các tính năng premium, vui lòng nâng cấp."
+   },
+   "manage_subscription_update_payment_button": {
+      "description": "Update payment method",
+      "message": "Cập nhật phương thức thanh toán"
+   },
+   "max_recording_dimension_size_text": {
+      "description": "Max recording resolution/quality",
+      "message": "Độ phân giải / chất lượng thu âm tối đa"
+   },
+   "no_limit_text": {
+      "description": "No limit",
+      "message": "Không giới hạn"
+   },
+   "open_text": {
+      "description": "Open",
+      "message": "Mở"
+   },
+   "options_default_action": {
+      "description": "Extension icon click action",
+      "message": "Hành động nhấp vào biểu tượng tiện ích mở rộng"
+   },
+   "options_dimension_size_1000": {
+      "description": "1000 pixels",
+      "message": "1000 pixel"
+   },
+   "options_dimension_size_1080p": {
+      "description": "1920 pixels (1080p)",
+      "message": "1920 pixel (1080p)"
+   },
+   "options_dimension_size_480p": {
+      "description": "640 pixels (480p)",
+      "message": "640 pixel (480p)"
+   },
+   "options_dimension_size_4k": {
+      "description": "3840 pixels (4K)",
+      "message": "3840 pixel (4K)"
+   },
+   "options_dimension_size_720p": {
+      "description": "1280 pixels (720p)",
+      "message": "1280 pixel (720p)"
+   },
+   "options_embedded_options_permission_warning": {
+      "description": "Cursor highlighting, click effects, and drawing tools will only work until the page reloads or changes. To keep them active after reloads or redirects, you'll need to grant an extra permission.",
+      "message": "Công cụ tô sáng con trỏ, hiệu ứng nhấp chuột và công cụ vẽ sẽ chỉ hoạt động cho đến khi trang tải lại hoặc thay đổi. Để giữ chúng hoạt động sau khi tải lại hoặc chuyển hướng, bạn cần cấp thêm quyền."
+   },
+   "options_enable_notifications": {
+      "description": "Enable notifications",
+      "message": "Bật thông báo"
+   },
+   "options_enable_notifications_tooltip": {
+      "description": "Display notifications when full screen recording starts and processing recordings in the background.",
+      "message": "Hiển thị thông báo Khi ghi toàn màn hình bắt đầu và xử lý bản ghi trong nền."
+   },
+   "options_enable_subfolder_downloads": {
+      "description": "Download files into subfolder",
+      "message": "Tải tập tin vào thư mục con"
+   },
+   "options_enable_subfolder_downloads_tooltip": {
+      "description": "Download files into a subfolder of your choice inside the downloads folder. This option is useful for organising your captures.",
+      "message": "Tải xuống các tệp vào một thư mục con mà bạn chọn bên trong thư mục tải xuống. Tùy chọn này rất hữu ích để tổ chức các lần bắt giữ của bạn."
+   },
+   "options_how_to_use_btn": {
+      "description": "How to use",
+      "message": "Cách sử dụng"
+   },
+   "options_language": {
+      "description": "Language",
+      "message": "Ngôn ngữ"
+   },
+   "options_open_containing_folder_on_save": {
+      "description": "Open containing folder after saving",
+      "message": "Mở thư mục chứa sau khi lưu"
+   },
+   "options_open_popup": {
+      "description": "Open popup",
+      "message": "Mở cửa sổ bật lên"
+   },
+   "options_open_selected_area": {
+      "description": "Open selected area capture",
+      "message": "Mở Chụp khu vực được chọn"
+   },
+   "options_section_general": {
+      "description": "Title for the General settings section in the options page",
+      "message": "Cài đặt Chung"
+   },
+   "options_section_output": {
+      "description": "Title for the Output and Saving settings section in the options page",
+      "message": "Đầu ra & Lưu trữ"
+   },
+   "options_section_recording": {
+      "description": "Title for the Recording settings section in the options page",
+      "message": "Cài đặt Ghi hình"
+   },
+   "options_section_visuals": {
+      "description": "Title for the Cursor and Interaction Visuals settings section in the options page",
+      "message": "Hình ảnh Con trỏ & Tương tác"
+   },
+   "options_shortcuts_btn": {
+      "description": "Shortcuts",
+      "message": "Phím tắt."
+   },
+   "options_subfolder_downloads_name": {
+      "description": "Subfolder name:",
+      "message": "Tên thư mục con:"
+   },
+   "options_support_btn": {
+      "description": "Support",
+      "message": "Hỗ trợ"
+   },
+   "overlay_help_text": {
+      "description": "Click and drag to choose your selected area. \nRight click to snap to an element, hold shift for multiple.",
+      "message": "Nhấp và kéo để chọn khu vực đã chọn của bạn. \n Nhấp chuột phải để chụp vào một phần tử, giữ Shift cho nhiều."
+   },
+   "plan_billing_annually": {
+      "description": "Annually",
+      "message": "Hàng năm"
+   },
+   "plan_billing_monthly": {
+      "description": "Monthly",
+      "message": "Hàng tháng"
+   },
+   "plan_name_custom": {
+      "description": "Custom Plan",
+      "message": "Gói tùy chỉnh"
+   },
+   "popup_capture_tab": {
+      "description": "Capture",
+      "message": "Chiếm lấy"
+   },
+   "popup_desktop_screenshot_tooltip": {
+      "description": "Capture the entire screen, desktop, or any open application.",
+      "message": "Chụp toàn bộ màn hình, máy tính để bàn hoặc bất kỳ ứng dụng mở nào."
+   },
+   "popup_editor_icon_tooltip": {
+      "description": "Open Editor",
+      "message": "Open Editor."
+   },
+   "popup_full_page_screenshot_tooltip": {
+      "description": "Capture the current tab full webpage, including content beyond the visible area.",
+      "message": "Ghi lại tab hiện tại đầy đủ trang web, bao gồm nội dung ngoài khu vực có thể nhìn thấy."
+   },
+   "popup_full_webpage": {
+      "description": "Full webpage",
+      "message": "Trang web đầy đủ"
+   },
+   "popup_no_scripts_alert": {
+      "description": "Selected area and full webpage screenshots are not possible here. These features are available on other websites.",
+      "message": "Khu vực được chọn và ảnh chụp màn hình trang web đầy đủ là không thể ở đây. Các tính năng này có sẵn trên các trang web khác."
+   },
+   "popup_record_tab": {
+      "description": "Record",
+      "message": "Ghi"
+   },
+   "popup_recording_limit_alert": {
+      "description": "Record up to $seconds$ seconds per GIF. Premium users can update this from the ",
+      "message": "Ghi lại lên đến $seconds$ giây mỗi GIF. Người dùng cao cấp có thể cập nhật điều này từ",
+      "placeholders": {
+         "seconds": {
+            "content": "$1"
+         }
+      }
+   },
+   "popup_recording_limit_settings_link": {
+      "description": "settings page.",
+      "message": "Trang Cài đặt."
+   },
+   "popup_screen_or_app": {
+      "description": "Full screen or app",
+      "message": "Toàn màn hình hoặc ứng dụng"
+   },
+   "popup_selected_area": {
+      "description": "Selected area",
+      "message": "Khu vực được chọn"
+   },
+   "popup_selected_area_screenshot_tooltip": {
+      "description": "Capture a specific area of the current tab.",
+      "message": "Chụp một khu vực cụ thể của tab hiện tại."
+   },
+   "popup_set_shortcut": {
+      "description": "set shortcut",
+      "message": "Đặt phím tắt"
+   },
+   "popup_settings_icon_tooltip": {
+      "description": "Open Settings",
+      "message": "Mở cài đặt"
+   },
+   "popup_tab_screenshot_tooltip": {
+      "description": "Capture the visible part of the current tab.",
+      "message": "Chụp phần có thể nhìn thấy của tab hiện tại."
+   },
+   "popup_this_tab": {
+      "description": "This tab",
+      "message": "Tab này"
+   },
+   "popup_waiting_for_desktop_selection_alert": {
+      "description": "FULL SCREEN OR APP capture did not start because you did not select an option from the popup dialog. If you have multiple monitors it may have opened on another monitor.",
+      "message": "Màn hình đầy đủ hoặc chụp ứng dụng không bắt đầu vì bạn không chọn tùy chọn từ hộp thoại bật lên. Nếu bạn có nhiều màn hình, nó có thể đã mở trên một màn hình khác."
+   },
+   "premium_settings_text": {
+      "description": "Premium Settings",
+      "message": "Cài đặt cao cấp"
+   },
+   "purchase_btn_text": {
+      "description": "Get Premium!",
+      "message": "Lấy tiền thưởng!"
+   },
+   "purchase_description_limited_time_text": {
+      "description": "Lock in this price now - limited time offer before we switch to subscriptions!",
+      "message": "Giữ mức giá này ngay bây giờ - ưu đãi trong thời gian giới hạn trước khi chúng tôi chuyển sang đăng ký!"
+   },
+   "purchase_description_text": {
+      "description": "Just one payment unlocks all premium features forever. No recurring fees!",
+      "message": "Chỉ một lần thanh toán mở khóa tất cả các tính năng cao cấp trọn đời. Không có phí định kỳ!"
+   },
+   "purchase_feature_30fps": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "ghi hình 30 FPS mượt mà"
+   },
+   "purchase_feature_4K": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "ghi hình 4K sắc nét"
+   },
+   "purchase_feature_alter_frame_rate": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "tốc độ khung hình tùy chỉnh"
+   },
+   "purchase_feature_alter_playback_speed": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "hiệu ứng quay chậm và tua nhanh thời gian"
+   },
+   "purchase_feature_blur": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "công cụ làm mờ"
+   },
+   "purchase_feature_crop_recording": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "cắt GIF chính xác"
+   },
+   "purchase_feature_default": {
+      "description": "Feature that goes in $feature$ placeholder. Default fallback.",
+      "message": "tính năng này"
+   },
+   "purchase_feature_frame_edits": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "chỉnh sửa từng khung hình mạnh mẽ"
+   },
+   "purchase_feature_highlight": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "công cụ tô sáng"
+   },
+   "purchase_feature_no_duration_limit": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "thời lượng ghi hình không giới hạn"
+   },
+   "purchase_feature_special_effect": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "hiệu ứng đặc biệt"
+   },
+   "purchase_feature_step_tool": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "công cụ đánh số bước"
+   },
+   "purchase_feature_svg": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "thêm biểu tượng và logo tùy chỉnh"
+   },
+   "purchase_feature_text_and_annotation_customization": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "toàn quyền kiểm soát văn bản và chú thích"
+   },
+   "purchase_feature_unlimited_gif_compression": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "nén GIF nâng cao không giới hạn"
+   },
+   "purchase_feature_update_end_time": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "thời gian ghi hình tùy chỉnh"
+   },
+   "purchase_login_dialog_closed_by_user_alert": {
+      "description": "Looks like you closed the sign in dialog, premium users must sign in so you don't lose premium access.",
+      "message": "Có vẻ như bạn đã đóng hộp thoại dấu hiệu, người dùng cao cấp phải đăng nhập để bạn không mất quyền truy cập cao cấp."
+   },
+   "purchase_login_dialog_google_button": {
+      "description": "Sign in with Google",
+      "message": "Đăng nhập bằng Google"
+   },
+   "purchase_login_dialog_title": {
+      "description": "Sign in required",
+      "message": "Cần đăng nhập"
+   },
+   "purchase_login_text": {
+      "description": "Sign in with Google to link your purchase to your account.",
+      "message": "Đăng nhập bằng Google để liên kết giao dịch mua với tài khoản của bạn."
+   },
+   "purchase_login_text_window_opened": {
+      "description": "Sign into Google in the popup window.",
+      "message": "Đăng nhập vào Google trong cửa sổ bật lên."
+   },
+   "purchase_subscription_title_text": {
+      "description": "Choose the plan that fits your needs.",
+      "message": "Chọn gói phù hợp với nhu cầu của bạn."
+   },
+   "purchase_title_text": {
+      "description": "Get Lifetime Premium Access Today!",
+      "message": "Nhận Quyền truy cập Premium Trọn đời Ngay hôm nay!"
+   },
+   "purchase_title_text_blocked_feature": {
+      "description": "That feature requires Premium",
+      "message": "Tính năng đó yêu cầu Premium"
+   },
+   "purchase_title_text_blocked_pro_feature": {
+      "description": "That feature requires Premium Pro",
+      "message": "Tính năng đó yêu cầu Premium Pro"
+   },
+   "purchase_title_text_blocked_pro_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium Pro paywall.",
+      "message": "Mở khóa $feature$ với Premium Pro",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchase_title_text_blocked_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium paywall.",
+      "message": "Mở khóa $feature$ với Premium",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_already_premium_user": {
+      "description": "Already a premium user?",
+      "message": "Đã là người dùng cao cấp?"
+   },
+   "purchases_bill_me": {
+      "description": "Bill me:",
+      "message": "Lập hóa đơn cho tôi:"
+   },
+   "purchases_checkout_unavailable_message": {
+      "description": "Message shown when checkout could not be started.",
+      "message": "Không thể bắt đầu quy trình nâng cấp ngay lúc này. Vui lòng thử lại."
+   },
+   "purchases_compare_12_fps": {
+      "description": "12FPS",
+      "message": "12 khung hình/giây"
+   },
+   "purchases_compare_3_per_day": {
+      "description": "3 per day",
+      "message": "3 lượt mỗi ngày"
+   },
+   "purchases_compare_add_custom_shape_tool": {
+      "description": "Add custom shape/icon tool",
+      "message": "Công cụ thêm hình dạng/biểu tượng tùy chỉnh"
+   },
+   "purchases_compare_benefits": {
+      "description": "Benefits",
+      "message": "Lợi ích"
+   },
+   "purchases_compare_blur_tool": {
+      "description": "Blur tool",
+      "message": "Công cụ làm mờ"
+   },
+   "purchases_compare_close_button_label": {
+      "description": "Close",
+      "message": "Đóng"
+   },
+   "purchases_compare_compression": {
+      "description": "High quality GIF compression",
+      "message": "Nén gif chất lượng cao"
+   },
+   "purchases_compare_core_capture_features": {
+      "description": "Core Capture Features",
+      "message": "Tính năng Ghi lại Cốt lõi"
+   },
+   "purchases_compare_crop_recordings": {
+      "description": "Crop recordings",
+      "message": "Cắt video đã ghi"
+   },
+   "purchases_compare_customize_editing_tools": {
+      "description": "Customize editing tools (font, size color)",
+      "message": "Tùy chỉnh công cụ chỉnh sửa (phông chữ, kích thước, màu sắc)"
+   },
+   "purchases_compare_drawing": {
+      "description": "Draw while recording",
+      "message": "Vẽ trong khi ghi âm"
+   },
+   "purchases_compare_early_access": {
+      "description": "Early access to new features",
+      "message": "Truy cập sớm các tính năng mới"
+   },
+   "purchases_compare_editing": {
+      "description": "Edit captures",
+      "message": "Chỉnh sửa ghi lại."
+   },
+   "purchases_compare_editing_free": {
+      "description": "basic editing",
+      "message": "Chỉnh sửa cơ bản"
+   },
+   "purchases_compare_editing_suite": {
+      "description": "Editing Suite",
+      "message": "Bộ công cụ chỉnh sửa"
+   },
+   "purchases_compare_frame_editing": {
+      "description": "Frame editing",
+      "message": "Chỉnh sửa khung"
+   },
+   "purchases_compare_frame_rate": {
+      "description": "Adjust Frame Rate",
+      "message": "Điều chỉnh Tốc độ khung hình (FPS)"
+   },
+   "purchases_compare_frame_specific_edits": {
+      "description": "Frame specific edits",
+      "message": "Chỉnh sửa theo từng khung hình"
+   },
+   "purchases_compare_free_draw_tools": {
+      "description": "Free draw, line, arrow, rectangle, circle, text tools",
+      "message": "Công cụ vẽ tự do, đường thẳng, mũi tên, hình chữ nhật, hình tròn, văn bản"
+   },
+   "purchases_compare_full_webpage_screenshots": {
+      "description": "Unlimited full page screenshots.",
+      "message": "Không giới hạn Ảnh đầy đủ Ảnh chụp màn hình."
+   },
+   "purchases_compare_highlight_tool": {
+      "description": "Highlight tool",
+      "message": "Công cụ đánh dấu"
+   },
+   "purchases_compare_live_recording_tools": {
+      "description": "Live Recording Tools",
+      "message": "Công cụ ghi hình trực tiếp"
+   },
+   "purchases_compare_mouse": {
+      "description": "Click and mouse indication",
+      "message": "Nhấp chuột và chỉ dẫn chuột"
+   },
+   "purchases_compare_plans": {
+      "description": "Compare plans",
+      "message": "So sánh kế hoạch."
+   },
+   "purchases_compare_plans_premium_button": {
+      "description": "Upgrade to Premium",
+      "message": "Nâng cấp lên Premium"
+   },
+   "purchases_compare_playback_speed": {
+      "description": "Tune recording playback speed",
+      "message": "Tune ghi tốc độ phát lại"
+   },
+   "purchases_compare_priority_support": {
+      "description": "Priority support and feature requests",
+      "message": "Hỗ trợ ưu tiên và yêu cầu tính năng"
+   },
+   "purchases_compare_recording": {
+      "description": "Unlimited GIF recordings.",
+      "message": "Bản ghi GIF không giới hạn."
+   },
+   "purchases_compare_recording_free": {
+      "description": "15sec limit per GIF",
+      "message": "Giới hạn 15 giây trên mỗi gif"
+   },
+   "purchases_compare_recording_quality": {
+      "description": "High quality GIFs",
+      "message": "GIF chất lượng cao."
+   },
+   "purchases_compare_recording_quality_control": {
+      "description": "Recording Quality & Control",
+      "message": "Chất lượng & Kiểm soát ghi hình"
+   },
+   "purchases_compare_recording_quality_free": {
+      "description": "1000 pixels max",
+      "message": "Tối đa 1000 pixel"
+   },
+   "purchases_compare_screenshots": {
+      "description": "Unlimited screenshots.",
+      "message": "Ảnh chụp màn hình không giới hạn."
+   },
+   "purchases_compare_special_effects": {
+      "description": "Recording special effects",
+      "message": "Ghi âm các hiệu ứng đặc biệt"
+   },
+   "purchases_compare_up_to_1080p": {
+      "description": "Up to 1080p",
+      "message": "Lên đến 1080p"
+   },
+   "purchases_compare_up_to_24_fps": {
+      "description": "Up to 24FPS",
+      "message": "Lên đến 24 khung hình/giây"
+   },
+   "purchases_compare_up_to_30_fps": {
+      "description": "Up to 30FPS",
+      "message": "Lên đến 30 khung hình/giây"
+   },
+   "purchases_compare_up_to_4k_plus": {
+      "description": "Up to 4K+",
+      "message": "Lên đến 4K+"
+   },
+   "purchases_current_plan": {
+      "description": "Current plan",
+      "message": "Gói hiện tại"
+   },
+   "purchases_features": {
+      "description": "Features",
+      "message": "Tính năng"
+   },
+   "purchases_free": {
+      "description": "Free",
+      "message": "Miễn phí"
+   },
+   "purchases_free_button": {
+      "description": "Free to use",
+      "message": "Sử dụng miễn phí"
+   },
+   "purchases_free_feature_editing": {
+      "description": "Basic editing",
+      "message": "Chỉnh sửa cơ bản"
+   },
+   "purchases_free_feature_recording": {
+      "description": "Basic GIF recording",
+      "message": "Ghi âm GIF cơ bản"
+   },
+   "purchases_free_feature_screenshots": {
+      "description": "Unlimited screenshots",
+      "message": "Ảnh chụp màn hình không giới hạn"
+   },
+   "purchases_free_plan_description": {
+      "description": "Get started with our essential capture tools. Completely free for basic everyday use.",
+      "message": "Bắt đầu với các công cụ ghi lại thiết yếu của chúng tôi. Hoàn toàn miễn phí cho việc sử dụng cơ bản hàng ngày."
+   },
+   "purchases_plan_save_up_to_percentage": {
+      "description": "Save up to",
+      "message": "Tiết kiệm đến"
+   },
+   "purchases_premium": {
+      "description": "Premium",
+      "message": "Phần thưởng"
+   },
+   "purchases_premium_billed_annually": {
+      "description": "Billed annually",
+      "message": "Thanh toán hàng năm"
+   },
+   "purchases_premium_button": {
+      "description": "Get lifetime access",
+      "message": "Nhận quyền truy cập trọn đời"
+   },
+   "purchases_premium_feature_compression": {
+      "description": "High quality GIF compression",
+      "message": "Nén gif chất lượng cao"
+   },
+   "purchases_premium_feature_editing": {
+      "description": "Feature rich editing",
+      "message": "Tính năng chỉnh sửa phong phú"
+   },
+   "purchases_premium_feature_free": {
+      "description": "Everything from free plan",
+      "message": "Bao gồm các tính năng của gói miễn phí"
+   },
+   "purchases_premium_feature_marked_with_star": {
+      "description": "All features marked with a star",
+      "message": "Tất cả các tính năng được đánh dấu bằng một ngôi sao"
+   },
+   "purchases_premium_feature_recording": {
+      "description": "Unlimited high quality GIF recording",
+      "message": "Ghi âm GIF không giới hạn chất lượng cao"
+   },
+   "purchases_premium_feature_recording_1080p": {
+      "description": "High quality GIF recording, up to 1080p, 24fps",
+      "message": "Ghi hình GIF chất lượng cao, lên đến 1080p, 24fps"
+   },
+   "purchases_premium_feature_refundable": {
+      "description": "Fully refundable",
+      "message": "Hoàn lại hoàn toàn"
+   },
+   "purchases_premium_feature_risk_free": {
+      "description": "Risk-free: 7 day trial, cancel anytime",
+      "message": "Không rủi ro: 7 ngày dùng thử, hủy bất kỳ lúc nào"
+   },
+   "purchases_premium_feature_unlimited_length": {
+      "description": "Unlimited GIF recording length",
+      "message": "Thời lượng ghi hình GIF không giới hạn"
+   },
+   "purchases_premium_price_info": {
+      "description": "one time fee",
+      "message": "Phí một lần"
+   },
+   "purchases_premium_price_per_month": {
+      "description": "/ month",
+      "message": "/ tháng"
+   },
+   "purchases_premium_pro": {
+      "description": "Premium Pro",
+      "message": "Premium Pro"
+   },
+   "purchases_premium_pro_editing_tools": {
+      "description": "Advanced editing tools (blurring, special effects, etc.)",
+      "message": "Công cụ chỉnh sửa nâng cao (làm mờ, hiệu ứng đặc biệt, v.v.)"
+   },
+   "purchases_premium_pro_feature_early_access": {
+      "description": "Early access to new features",
+      "message": "Truy cập sớm các tính năng mới"
+   },
+   "purchases_premium_pro_feature_marked_with_crown": {
+      "description": "All features marked with a star and crown",
+      "message": "Tất cả các tính năng được đánh dấu bằng một ngôi sao và vương miện"
+   },
+   "purchases_premium_pro_feature_premium_plan": {
+      "description": "Everything from Premium plan",
+      "message": "Mọi thứ từ gói Premium"
+   },
+   "purchases_premium_pro_feature_quality": {
+      "description": "Max resolution recording, 4K+ and 30fps",
+      "message": "Ghi hình độ phân giải tối đa, 4K+ và 30fps"
+   },
+   "purchases_premium_pro_feature_support": {
+      "description": "Priority support and feature requests",
+      "message": "Hỗ trợ ưu tiên và yêu cầu tính năng"
+   },
+   "purchases_premium_pro_upgrade": {
+      "description": "Upgrade to Pro",
+      "message": "Nâng cấp lên Pro"
+   },
+   "purchases_premium_save_percentage": {
+      "description": "save $savingsPercentage$%",
+      "message": "tiết kiệm $savingsPercentage$%",
+      "placeholders": {
+         "savingsPercentage": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_premium_try_for_free": {
+      "description": "Try for free",
+      "message": "Dùng thử miễn phí"
+   },
+   "purchases_price_unavailable": {
+      "description": "Label shown in place of a price when it is unavailable.",
+      "message": "Không có giá"
+   },
+   "purchases_pricing_unavailable_message": {
+      "description": "Message shown when the Premium pricing request was blocked or failed.",
+      "message": "Yêu cầu tải giá Premium đã bị chặn hoặc thất bại. Điều này có thể xảy ra khi mạng nơi làm việc, VPN, trình chặn quảng cáo, tiện ích quyền riêng tư hoặc tường lửa chặn Paddle."
+   },
+   "purchases_pricing_unavailable_title": {
+      "description": "Title shown when Premium pricing could not be loaded.",
+      "message": "Không thể tải giá Premium"
+   },
+   "purchases_pricing_unavailable_troubleshooting_extensions": {
+      "description": "Troubleshooting step telling the user to disable VPN or privacy tools temporarily.",
+      "message": "Tạm thời tắt VPN, trình chặn quảng cáo hoặc tiện ích quyền riêng tư rồi thử lại."
+   },
+   "purchases_pricing_unavailable_troubleshooting_intro": {
+      "description": "Intro text for troubleshooting steps when pricing is unavailable.",
+      "message": "Những điều nên thử:"
+   },
+   "purchases_pricing_unavailable_troubleshooting_network": {
+      "description": "Troubleshooting step telling the user to try another network or browser profile.",
+      "message": "Hãy thử mạng khác hoặc mở tiện ích trong hồ sơ Chrome khác."
+   },
+   "purchases_pricing_unavailable_troubleshooting_workplace": {
+      "description": "Troubleshooting step telling the user workplace policy may be blocking Paddle.",
+      "message": "Nếu bạn đang dùng thiết bị công ty, chính sách mạng hoặc trình duyệt của bạn có thể đang chặn Paddle."
+   },
+   "purchases_sign_in_here": {
+      "description": "Sign in here",
+      "message": "Đăng nhập tại đây"
+   },
+   "purchases_start_trial_cancel_anytime": {
+      "description": "Call to action to start a free trial.",
+      "message": "Bắt đầu 7 ngày dùng thử miễn phí để tiếp tục. Hủy bất cứ lúc nào."
+   },
+   "purchases_try_premium_for_free": {
+      "description": "Try Premium for Free",
+      "message": "Dùng thử Premium miễn phí"
+   },
+   "purchases_try_premium_pro_for_free": {
+      "description": "Try Premium Pro for Free",
+      "message": "Dùng thử Premium Pro miễn phí"
+   },
+   "purchases_upgrade_premium_to_pro": {
+      "description": "To use this feature and access all Pro benefits, upgrade your plan.",
+      "message": "Để sử dụng tính năng này và truy cập tất cả các lợi ích của Pro, hãy nâng cấp gói của bạn."
+   },
+   "purchases_upgrade_to_premium_pro": {
+      "description": "Upgrade to Premium Pro",
+      "message": "Nâng cấp lên Premium Pro"
+   },
+   "quality_text": {
+      "description": "Recording quality (10 = best)",
+      "message": "Chất lượng ghi âm (10 = tốt nhất)"
+   },
+   "rate_bad_rating_text": {
+      "description": "We are continuously trying our hardest to improve Chrome Capture, please share what needs improvement by emailing us at ",
+      "message": "Chúng tôi liên tục cố gắng hết sức để cải thiện Chrome Capture, vui lòng chia sẻ những gì cần cải thiện bằng cách gửi email cho chúng tôi tại"
+   },
+   "rate_bad_title_text": {
+      "description": "😞 We are sorry!",
+      "message": "Chúng tôi xin lỗi!"
+   },
+   "rate_close_btn_text": {
+      "description": "Close",
+      "message": "Đóng"
+   },
+   "rate_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "Xác nhận"
+   },
+   "rate_description_text": {
+      "description": "If you've found this extension useful please leave a rating or review. \n\nBy leaving a rating you can help us reach more users which will help fund continual improvements and keep general usage free.",
+      "message": "Nếu bạn đã tìm thấy tiện ích mở rộng này hữu ích, vui lòng để lại xếp hạng hoặc đánh giá. \n\n Bằng cách để lại một đánh giá, bạn có thể giúp chúng tôi tiếp cận nhiều người dùng sẽ giúp tài trợ cho việc cải tiến liên tục và giữ cho việc sử dụng chung miễn phí."
+   },
+   "rate_description_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "Chúng tôi đánh giá cao bạn mua phí bảo hiểm và rất thích nghe bất kỳ phản hồi nào bạn phải giúp chúng tôi cải thiện sản phẩm và tiếp cận nhiều người dùng hơn."
+   },
+   "rate_good_rating_text": {
+      "description": "Your reviews keep our small team motivated to make Chrome Capture even better!",
+      "message": "Đánh giá của bạn giữ cho đội nhỏ của chúng tôi có động lực để thực hiện Chrome Capture thậm chí còn tốt hơn!"
+   },
+   "rate_good_rating_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "Chúng tôi đánh giá cao bạn mua phí bảo hiểm và rất thích nghe bất kỳ phản hồi nào bạn phải giúp chúng tôi cải thiện sản phẩm và tiếp cận nhiều người dùng hơn."
+   },
+   "rate_good_title_text": {
+      "description": "😍 Review in the web store?",
+      "message": "Đánh giá trong cửa hàng web?"
+   },
+   "rate_maybe_later_btn_text": {
+      "description": "Maybe later",
+      "message": "Có lẽ sau này"
+   },
+   "rate_no_btn_text": {
+      "description": "No thanks",
+      "message": "Không, cám ơn"
+   },
+   "rate_send_email_btn_text": {
+      "description": "Send Email",
+      "message": "Gửi email"
+   },
+   "rate_thank_you_title_text": {
+      "description": "Thank you! 😍",
+      "message": "Cảm ơn bạn! 😍."
+   },
+   "rate_title_text": {
+      "description": "How are we doing?",
+      "message": "Làm thế nào chúng ta đang làm gì?"
+   },
+   "rate_yes_btn_text": {
+      "description": "Ok, sure",
+      "message": "OK chắc chắn"
+   },
+   "recommended": {
+      "description": "recommended",
+      "message": "khuyến khích"
+   },
+   "record_length_text": {
+      "description": "Max record length",
+      "message": "Độ dài hồ sơ tối đa"
+   },
+   "recordings_taken": {
+      "description": "Recordings taken:",
+      "message": "Ghi âm được thực hiện:"
+   },
+   "save_as_screenshot_text": {
+      "description": "Save screenshot as",
+      "message": "Lưu ảnh chụp màn hình As."
+   },
+   "save_as_text": {
+      "description": "Save recording as",
+      "message": "Lưu ghi âm như"
+   },
+   "screenshots_taken": {
+      "description": "Screenshots taken:",
+      "message": "Ảnh chụp màn hình được chụp:"
+   },
+   "seconds_text": {
+      "description": "secs",
+      "message": "giây"
+   },
+   "shortcut": {
+      "description": "Shortcut:",
+      "message": "Lối tắt:"
+   },
+   "show_click_indicator_text": {
+      "description": "Show click animation",
+      "message": "Hiển thị hình ảnh động"
+   },
+   "show_click_indicator_tooltip_text": {
+      "description": "This option draws a circle animation around the click location.",
+      "message": "Tùy chọn này vẽ một hình động vòng tròn xung quanh vị trí nhấp chuột."
+   },
+   "show_cursor_text": {
+      "description": "Show dot at cursor location",
+      "message": "Hiển thị dấu chấm tại vị trí con trỏ"
+   },
+   "show_cursor_tooltip_text": {
+      "description": "This option draws a small circle to indicate where the mouse is located.",
+      "message": "Tùy chọn này vẽ một vòng tròn nhỏ để cho biết nơi chuột được đặt ở đâu."
+   },
+   "sign_in": {
+      "description": "Sign In",
+      "message": "Đăng nhập"
+   },
+   "sign_out": {
+      "description": "Sign Out",
+      "message": "Đăng xuất"
+   },
+   "subscription_past_due_warning": {
+      "description": "Warning message shown when a user subscription payment has failed or is past its due date.",
+      "message": "Thanh toán đăng ký đã quá hạn, nhấp vào đây để cập nhật thông tin thanh toán của bạn."
+   },
+   "subscription_premium_plan_description": {
+      "description": "Go beyond basics: HD quality & limits unlocked. Craft pro content with enhanced features.",
+      "message": "Vượt xa những điều cơ bản: Chất lượng HD & giới hạn được mở khóa. Tạo nội dung chuyên nghiệp với các tính năng nâng cao."
+   },
+   "subscription_premium_pro_plan_description": {
+      "description": "Experience peak performance: 4K+ and all features. Full editing suite with early access.",
+      "message": "Trải nghiệm hiệu suất đỉnh cao: 4K+ và tất cả các tính năng. Bộ chỉnh sửa đầy đủ với quyền truy cập sớm."
+   },
+   "subscription_status_active": {
+      "description": "Active",
+      "message": "Hoạt động"
+   },
+   "subscription_status_ending_soon": {
+      "description": "Ending Soon",
+      "message": "Sắp kết thúc"
+   },
+   "subscription_status_expired": {
+      "description": "Expired",
+      "message": "Đã hết hạn"
+   },
+   "subscription_status_past_due": {
+      "description": "Past Due",
+      "message": "Quá hạn"
+   },
+   "subscription_status_paused": {
+      "description": "Paused",
+      "message": "Đã tạm dừng"
+   },
+   "subscription_status_unknown": {
+      "description": "Unknown",
+      "message": "Không xác định"
+   },
+   "unable_to_capture_website_alert": {
+      "description": "Unable to capture this website. Please use full screen/application capture or try capture another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "Không thể nắm bắt trang web này. Vui lòng sử dụng toàn bộ màn hình/ứng dụng hoặc thử chụp một trang web khác. \n\n (╯ ° □ °） ╯︵"
+   },
+   "view_permission": {
+      "description": "View permission.",
+      "message": "Xem quyền."
+   },
+   "width_text": {
+      "description": "Height (px)",
+      "message": "Chiều cao (px)"
+   }
+}

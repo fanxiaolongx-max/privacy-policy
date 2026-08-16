@@ -1,0 +1,1691 @@
+{
+   "account_modal_free_plan": {
+      "description": "You are on the free plan",
+      "message": "ÜCRETSİZ Plantasın"
+   },
+   "account_modal_manage_subscription_button": {
+      "description": "Manage Subscription",
+      "message": "Aboneliği Yönet"
+   },
+   "account_modal_not_signed_in": {
+      "description": "You are not signed in",
+      "message": "Oturumsuz değilsin"
+   },
+   "account_modal_premium_plan": {
+      "description": "You are on the premium plan",
+      "message": "Premium Plantasın"
+   },
+   "account_modal_premium_pro_plan": {
+      "description": "You are on the Premium Pro plan",
+      "message": "Premium Pro planındasınız"
+   },
+   "account_modal_request_feature_button": {
+      "description": "Request Feature",
+      "message": "Özellik İste"
+   },
+   "account_modal_request_support_button": {
+      "description": "Request Support",
+      "message": "Destek İste"
+   },
+   "account_modal_stats_heading": {
+      "description": "Your stats:",
+      "message": "İstatistikleriniz:"
+   },
+   "alert_text": {
+      "description": "Unable to run selected area capture on this website. Please use full screen recording or try another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "Bu web sitesinde seçilen alan yakalama çalıştırılamıyor. Lütfen tam ekran kaydı kullanın veya başka bir web sitesi deneyin. \n\n (╯ ° □ °) ╯( ┻━┻"
+   },
+   "click_indicator_size_color_text": {
+      "description": "Click animation size & color",
+      "message": "Animasyon Boyutu ve Renk'i tıklayın"
+   },
+   "close_btn_text": {
+      "description": "Close",
+      "message": "Kapat"
+   },
+   "confirm_dialog_cancel_btn_text": {
+      "description": "Cancel",
+      "message": "İptal etmek"
+   },
+   "confirm_dialog_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "Onaylamak"
+   },
+   "confirm_fps_update_text": {
+      "description": "Changing the fps will remove all frame specific edits such as edited or deleted frames. Do you want to continue?",
+      "message": "FPS'nin değiştirilmesi, düzenlenmiş veya silinmiş çerçeveler gibi tüm görüntüye özgü düzenlemeleri kaldırır. Devam etmek istiyor musun?"
+   },
+   "copy_text": {
+      "description": "Copy to clipboard",
+      "message": "Panoya kopyala"
+   },
+   "cursor_size_and_color_text": {
+      "description": "Cursor dot size & color",
+      "message": "İmleç nokta boyutu ve renk"
+   },
+   "dither_text": {
+      "description": "Apply dither",
+      "message": "Uyarmak"
+   },
+   "download_filename_text": {
+      "description": "Download filename format",
+      "message": "Dosya adı formatını indirin"
+   },
+   "download_text": {
+      "description": "Download",
+      "message": "İndirmek"
+   },
+   "draw_size_and_color_text": {
+      "description": "Drawing size & color",
+      "message": "Çizim boyutu ve renk"
+   },
+   "duration": {
+      "description": "Label for a field indicating a length of time.",
+      "message": "Süre"
+   },
+   "editor_action_add_icon": {
+      "description": "Add icon",
+      "message": "Simge ekle"
+   },
+   "editor_action_add_text": {
+      "description": "Add text",
+      "message": "Yazı ekle"
+   },
+   "editor_action_blur_rectangle": {
+      "description": "Blur area",
+      "message": "Alanı bulanıklaştır"
+   },
+   "editor_action_copy": {
+      "description": "Copy to clipboard",
+      "message": "Panoya kopyala"
+   },
+   "editor_action_crop": {
+      "description": "Crop",
+      "message": "Mahsul"
+   },
+   "editor_action_draw_arrow": {
+      "description": "Draw arrow",
+      "message": "Ok çizmek"
+   },
+   "editor_action_draw_ellipse": {
+      "description": "Draw ellipse",
+      "message": "Elips çizmek"
+   },
+   "editor_action_draw_line": {
+      "description": "Draw line",
+      "message": "Çizgi çiz"
+   },
+   "editor_action_draw_rectangle": {
+      "description": "Draw rectangle",
+      "message": "Dikdörtgen çizmek"
+   },
+   "editor_action_free_draw": {
+      "description": "Free draw",
+      "message": "Ücretsiz çizmek"
+   },
+   "editor_action_highlight": {
+      "description": "Highlight",
+      "message": "Vurgulamak"
+   },
+   "editor_action_numbered_step": {
+      "description": "Action label for adding a numbered step annotation.",
+      "message": "Numaralı adım"
+   },
+   "editor_action_pan": {
+      "description": "Pan",
+      "message": "Kaydır"
+   },
+   "editor_action_profile_account": {
+      "description": "Account",
+      "message": "Hesap"
+   },
+   "editor_action_redo": {
+      "description": "Redo",
+      "message": "Yinelemek"
+   },
+   "editor_action_save": {
+      "description": "Save",
+      "message": "Kayıt etmek"
+   },
+   "editor_action_select": {
+      "description": "Select, move, resize",
+      "message": "Seç, Taşı, Yeniden Boyutlandır"
+   },
+   "editor_action_settings": {
+      "description": "Settings",
+      "message": "Ayarlar"
+   },
+   "editor_action_undo": {
+      "description": "Undo",
+      "message": "Geri alma"
+   },
+   "editor_action_undo_all": {
+      "description": "Undo all",
+      "message": "Hepsini geri al"
+   },
+   "editor_add_text_default": {
+      "description": "start typing...",
+      "message": "Yazmaya başla ..."
+   },
+   "editor_browse_file_system": {
+      "description": "Browse file system",
+      "message": "Dosya sistemine göz atın"
+   },
+   "editor_drag_and_drop": {
+      "description": "Drag and drop image/GIF or ",
+      "message": "Görüntüyü / GIF'i sürükleyip bırakın veya"
+   },
+   "editor_file_downloaded": {
+      "description": "File saved to downloads folder.",
+      "message": "İndirme klasörüne kaydedilen dosya."
+   },
+   "editor_file_downloaded_selected_location": {
+      "description": "File saved to selected location.",
+      "message": "Dosya seçilen konuma kaydedildi."
+   },
+   "editor_frame_selector_apply_edits": {
+      "description": "Apply edits to selected",
+      "message": "Düzenlemeleri Seçilen'e Uygula"
+   },
+   "editor_frame_selector_delete": {
+      "description": "Delete",
+      "message": "Silmek"
+   },
+   "editor_frame_selector_delete_every_second": {
+      "description": "Delete every second frame",
+      "message": "Her ikinci kareyi sil"
+   },
+   "editor_frame_selector_delete_selected": {
+      "description": "Delete selected",
+      "message": "Silme seçildi"
+   },
+   "editor_frame_selector_remove_edits": {
+      "description": "Remove edits from selected",
+      "message": "Seçilen düzenlemeleri kaldır"
+   },
+   "editor_frame_selector_restore": {
+      "description": "Restore",
+      "message": "Eski haline getirmek"
+   },
+   "editor_frame_selector_restore_all": {
+      "description": "Restore All",
+      "message": "Her şeyi eski haline getir"
+   },
+   "editor_frame_selector_restore_selected": {
+      "description": "Restore selected",
+      "message": "Seçili Geri Yükle"
+   },
+   "editor_frame_selector_select_next": {
+      "description": "Select next frames",
+      "message": "Sonraki Resimleri Seçin"
+   },
+   "editor_frame_selector_select_previous": {
+      "description": "Select previous frames",
+      "message": "Önceki resimleri seçin"
+   },
+   "editor_frame_selector_unselect_all": {
+      "description": "Unselect All",
+      "message": "Hepsini seçmemek"
+   },
+   "editor_image_copied": {
+      "description": "Image copied to clipboard.",
+      "message": "Görüntü panoya kopyalandı."
+   },
+   "editor_image_copied_failed": {
+      "description": "Failed to copy image to clipboard, it may be too large.",
+      "message": "Resim panoya kopyalanamadı, çok büyük olabilir."
+   },
+   "editor_link_copied": {
+      "description": "Link copied to clipboard.",
+      "message": "Link kopyalandı."
+   },
+   "editor_max_time_reached_dialog_description1": {
+      "description": "You have reached the max recording length time of $maxlength$ seconds for GIFs. Premium users can update this from the settings page.",
+      "message": "GIF'ler için $maxlength$ saniyelerinin maksimum kayıt uzunluğuna ulaştınız. Premium kullanıcılar bunu Ayarlar sayfasından güncelleyebilir.",
+      "placeholders": {
+         "maxlength": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_max_time_reached_dialog_description2": {
+      "description": "GIFs are intended for short recordings. If you require full length videos we recommend our free screen recorder: ",
+      "message": "GIF'ler kısa kayıtlara yöneliktir. Tam uzunlukta videolara ihtiyacınız varsa, ücretsiz ekran kaydedicimizi öneririz:"
+   },
+   "editor_max_time_reached_dialog_description3": {
+      "description": "Premium users can update this from the settings page.",
+      "message": "Premium kullanıcılar bunu Ayarlar sayfasından güncelleyebilir."
+   },
+   "editor_max_time_reached_dialog_settings_button": {
+      "description": "Open settings",
+      "message": "Ayarları aç"
+   },
+   "editor_max_time_reached_dialog_title": {
+      "description": "Recording suddenly stopped?",
+      "message": "Kayıt aniden durdu mu?"
+   },
+   "editor_premium_options_color": {
+      "description": "Color",
+      "message": "Renk"
+   },
+   "editor_premium_options_draw_size": {
+      "description": "Draw Size",
+      "message": "Çizmek"
+   },
+   "editor_premium_options_font": {
+      "description": "Font",
+      "message": "Yazı tipi"
+   },
+   "editor_premium_options_playback_speed": {
+      "description": "Playback Speed",
+      "message": "Oynatma hızı"
+   },
+   "editor_premium_options_special_effect": {
+      "description": "Special Effect",
+      "message": "Özel efekt"
+   },
+   "editor_premium_options_title": {
+      "description": "Premium Options",
+      "message": "Premium Seçenekler"
+   },
+   "editor_save_dialog_advanced_encoding_options": {
+      "description": "Title for a section containing advanced, technical options for encoding a file.",
+      "message": "Gelişmiş Kodlama Seçenekleri"
+   },
+   "editor_save_dialog_alert_title": {
+      "description": "Warning",
+      "message": "Uyarı"
+   },
+   "editor_save_dialog_aspect_ratio": {
+      "description": "lock aspect ratio",
+      "message": "En Boy Oranı Kilitleme"
+   },
+   "editor_save_dialog_cancel": {
+      "description": "Cancel",
+      "message": "İptal"
+   },
+   "editor_save_dialog_chip_animated_image": {
+      "description": "Chip label indicating an animated image format (e.g. GIF, AVIF).",
+      "message": "hareketli görüntü"
+   },
+   "editor_save_dialog_chip_large_file": {
+      "description": "Chip label indicating the format produces a large file size.",
+      "message": "büyük dosya"
+   },
+   "editor_save_dialog_chip_limited_support": {
+      "description": "Chip label indicating the format has limited browser/app support.",
+      "message": "sınırlı destek"
+   },
+   "editor_save_dialog_chip_small_file": {
+      "description": "Chip label indicating the format produces a small file size.",
+      "message": "küçük dosya"
+   },
+   "editor_save_dialog_chip_video": {
+      "description": "Chip label indicating a video format (e.g. WebM, MP4).",
+      "message": "video"
+   },
+   "editor_save_dialog_chip_widely_supported": {
+      "description": "Chip label indicating the format is widely supported.",
+      "message": "yaygın olarak desteklenir"
+   },
+   "editor_save_dialog_compress": {
+      "description": "Compress & optimize GIF",
+      "message": "Sıkıştır ve GIF Optimize Et"
+   },
+   "editor_save_dialog_compress_tooltip": {
+      "description": "Apply GIF compression algorthm to greatly reduce GIF file size and in some cases improve quality. Highly recommeded.",
+      "message": "GIF dosya boyutunu büyük ölçüde azaltmak ve bazı durumlarda kaliteyi iyileştirmek için GIF Sıkıştırma Algorthm uygulayın. Şiddetle tavsiye edildi."
+   },
+   "editor_save_dialog_dither_tooltip": {
+      "description": "Apply dither algorithm to frames. Try toggling this option if you experience color quality issues.",
+      "message": "Görüntülere algoritma uygulayın. Renk kalitesi sorunları yaşıyorsanız bu seçeneği değiştirmeyi deneyin."
+   },
+   "editor_save_dialog_download_raw_recording": {
+      "description": "Download raw recording",
+      "message": "RAW Kayıt İndir"
+   },
+   "editor_save_dialog_estimated_size": {
+      "description": "Estimated GIF Size: ",
+      "message": "Tahmini GIF boyutu:"
+   },
+   "editor_save_dialog_export_sound": {
+      "description": "Include sound (beta)",
+      "message": "Ses ekleyin (beta)"
+   },
+   "editor_save_dialog_export_sound_tooltip": {
+      "description": "Enable this option to include sound in the video.",
+      "message": "Videoya ses eklemek için bu seçeneğin etkinleştirilmesi."
+   },
+   "editor_save_dialog_frames": {
+      "description": "Frames: ",
+      "message": "Görüntüler:"
+   },
+   "editor_save_dialog_frames_alert": {
+      "description": "There are currently selected frames, saving will only output these selected frames - ",
+      "message": "Şu anda seçilen resimler var, tasarruf yalnızca bu seçilen çerçeveleri çıkaracak -"
+   },
+   "editor_save_dialog_frames_alert_button": {
+      "description": "Click here to unselect all frames",
+      "message": "Tüm resimleri seçmek için buraya tıklayın"
+   },
+   "editor_save_dialog_frames_alert_title": {
+      "description": "Playback Speed",
+      "message": "Oynatma hızı"
+   },
+   "editor_save_dialog_frames_processing": {
+      "description": "Processing Frames: ",
+      "message": "İşleme görüntüleri:"
+   },
+   "editor_save_dialog_height_helper": {
+      "description": "Recorded height is ",
+      "message": "Kaydedilen yükseklik"
+   },
+   "editor_save_dialog_lossy_compression": {
+      "description": "Label for a setting that controls the level of lossy compression, from 0 to 100 percent.",
+      "message": "Kayıplı sıkıştırma (%0 - 100)"
+   },
+   "editor_save_dialog_number_min_max_validation": {
+      "description": "A value between $minSize$ and $maxSize$ is required.",
+      "message": "$minSize$ ve $maxSize$ arasında bir değer gereklidir.",
+      "placeholders": {
+         "maxSize": {
+            "content": "$2"
+         },
+         "minSize": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_save_dialog_processing_alert": {
+      "description": "Processing this recording will require a lot of memory and processing power. Unless you have a high spec PC it is recommended to do one or more of the following:",
+      "message": "Bu kaydın işlenmesi, çok fazla bellek ve işleme gücü gerektirecektir. Yüksek spec pc'iniz yoksa, aşağıdakilerden birini veya birkaçını yapmanız önerilir:"
+   },
+   "editor_save_dialog_processing_alert_memory": {
+      "description": "Please note if the resulting GIF is blank then you ran out of memory.",
+      "message": "Sonuç olarak ortaya çıkan GIF boşsa, bellekten kaçındıysanız."
+   },
+   "editor_save_dialog_processing_alert_point_1": {
+      "description": "Compress and optimize GIF",
+      "message": "GIF'i sıkıştırın ve optimize edin"
+   },
+   "editor_save_dialog_processing_alert_point_2": {
+      "description": "Reduce the width & height",
+      "message": "Genişlik ve yüksekliği azaltın"
+   },
+   "editor_save_dialog_processing_alert_point_3": {
+      "description": "Reduce FPS or delete frames",
+      "message": "FPS'yi azaltın veya resimleri sil"
+   },
+   "editor_save_dialog_purchase_dialog_compression_description": {
+      "description": "Free users are limited to 3 high quality GIF compressions per day. Upgrade to Premium to have no restrictions.",
+      "message": "Ücretsiz kullanıcılar günde 3 yüksek kaliteli GIF kompresyonu ile sınırlıdır. Kısıtlamaları olmak için premium'a yükseltin."
+   },
+   "editor_save_dialog_quantization_algorithm": {
+      "description": "Label for a dropdown to select a quantization algorithm.",
+      "message": "Kuantizasyon algoritması"
+   },
+   "editor_save_dialog_quantization_algorithm_new_alpha": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Alpha.",
+      "message": "Yeni (Alfa)"
+   },
+   "editor_save_dialog_quantization_algorithm_new_beta": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Beta.",
+      "message": "Yeni (Beta)"
+   },
+   "editor_save_dialog_quantization_algorithm_old": {
+      "description": "An option for the quantization algorithm setting, indicating an older version.",
+      "message": "Eski"
+   },
+   "editor_save_dialog_recording_quality_alert": {
+      "description": "GIF quality is limited for non premium users. To output high quality recordings you can do one of the following:",
+      "message": "GIF kalitesi premium olmayan kullanıcılar için sınırlıdır. Yüksek kaliteli kayıtlar çıkarmak için aşağıdakilerden birini yapabilirsiniz:"
+   },
+   "editor_save_dialog_recording_quality_alert_option_1": {
+      "description": "Purchase premium",
+      "message": "Satın Al"
+   },
+   "editor_save_dialog_recording_quality_alert_option_2": {
+      "description": "Save as a WebM file",
+      "message": "WebM dosyası olarak kaydedin"
+   },
+   "editor_save_dialog_reduce_width": {
+      "description": "Reduce width & height",
+      "message": "Genişlik ve Yüksekliği Azaltın"
+   },
+   "editor_save_dialog_reduce_width_tooltip": {
+      "description": "Reduce GIF width and height/quality to improve processing time and produce a smaller file.",
+      "message": "İşleme süresini iyileştirmek ve daha küçük bir dosya üretmek için GIF genişliğini ve yüksekliği/kalitesini azaltın."
+   },
+   "editor_save_dialog_save": {
+      "description": "Save",
+      "message": "Kayıt etmek"
+   },
+   "editor_save_dialog_save_by": {
+      "description": "Save by",
+      "message": "Kurtarmak"
+   },
+   "editor_save_dialog_save_by_download": {
+      "description": "Download file",
+      "message": "Dosyayı indir"
+   },
+   "editor_save_dialog_save_by_google_drive": {
+      "description": "Upload to Google Drive & copy link",
+      "message": "Google Drive & Copy bağlantısına yükleyin"
+   },
+   "editor_save_dialog_save_location": {
+      "description": "Save location",
+      "message": "Konumu kaydet"
+   },
+   "editor_save_dialog_save_location_downloads": {
+      "description": "Downloads folder",
+      "message": "İndirme klasörü"
+   },
+   "editor_save_dialog_save_location_downloads_subfolder": {
+      "description": "Downloads subfolder",
+      "message": "İndirmeler alt klasör"
+   },
+   "editor_save_dialog_save_location_select": {
+      "description": "Manually select location",
+      "message": "Konumu manuel olarak seçin"
+   },
+   "editor_save_dialog_title": {
+      "description": "Save",
+      "message": "Kayıt etmek"
+   },
+   "editor_save_dialog_title_processing": {
+      "description": "Processing...",
+      "message": "İşleme..."
+   },
+   "editor_save_dialog_title_uploading": {
+      "description": "Uploading...",
+      "message": "Yükleme ..."
+   },
+   "editor_save_dialog_width_helper": {
+      "description": "Recorded width is ",
+      "message": "Kaydedilen genişlik"
+   },
+   "editor_text": {
+      "description": "Open in editor",
+      "message": "Editörde açın"
+   },
+   "editor_tip_delete_items": {
+      "description": "Pro tip: Delete added items by selecting the item and pressing the delete key.",
+      "message": "Pro İpucu: Öğeyi seçerek ve Sil tuşuna basarak eklenen öğeleri silin."
+   },
+   "editor_tip_edit_specific_frames": {
+      "description": "Pro tip: You can edit specific frames by using the 'Apply edits to selected option'",
+      "message": "Profesyonel İpucu: 'Seçilen seçeneğe düzenlemeleri Uygula' kullanarak belirli görüntüleri düzenleyebilirsiniz."
+   },
+   "editor_tip_scroll": {
+      "description": "Pro tip: Scroll when hovering the screenshot/recording to zoom.",
+      "message": "Pro İpucu: Yakınlaştırmak için ekran görüntüsünü / kaydını gezdirirken kaydırın."
+   },
+   "editor_tip_shift_multiple_items": {
+      "description": "Pro tip: When using the selecting tool hold down shift to select more than one item.",
+      "message": "Pro İpucu: Seçme aracını kullanırken, birden fazla öğeyi seçmek için Shift tuşunu basılı tutun."
+   },
+   "editor_tip_update_multiple_items": {
+      "description": "Pro tip: You can scale, rotate, move and delete multiple items at once.",
+      "message": "Pro İpucu: Birden fazla öğeyi bir kerede ölçeklendirebilir, döndürebilir, taşıyabilir ve silebilirsiniz."
+   },
+   "editor_tip_update_text": {
+      "description": "Pro tip: Double click on text to edit it.",
+      "message": "Pro İpucu: Düzenlemek için metne çift tıklayın."
+   },
+   "editor_upload_dialog_alert_copy_failed_message": {
+      "description": "This may have occurred due to the window not being focused.",
+      "message": "Bu, pencerenin odaklanmaması nedeniyle meydana gelmiş olabilir."
+   },
+   "editor_upload_dialog_alert_copy_failed_title": {
+      "description": "Copy to clipboard failed",
+      "message": "Panoya Kopyala Başarısız Oldu"
+   },
+   "editor_upload_dialog_alert_copy_success_title": {
+      "description": "Copied to clipboard",
+      "message": "Panoya kopyalandı"
+   },
+   "editor_upload_dialog_alert_upload_failed": {
+      "description": "Upload Failed",
+      "message": "Yükleme başarısız"
+   },
+   "editor_upload_dialog_alert_upload_failed_link": {
+      "description": "Try again.",
+      "message": "Tekrar deneyin."
+   },
+   "editor_upload_dialog_alert_upload_failed_message": {
+      "description": "Please make sure you are connected to the internet and have accepted Google Drive permissions.",
+      "message": "Lütfen internete bağlı olduğunuzdan ve Google Drive izinlerini kabul ettiğinizden emin olun."
+   },
+   "editor_upload_dialog_cancel_and_download": {
+      "description": "Cancel and download file",
+      "message": "Dosyayı iptal edin ve indir"
+   },
+   "editor_upload_dialog_close": {
+      "description": "Close",
+      "message": "Kapat"
+   },
+   "editor_upload_dialog_copy_link": {
+      "description": "Copy link",
+      "message": "Bağlantıyı kopyala"
+   },
+   "editor_upload_dialog_link_public": {
+      "description": "Allow anyone with the link to view.",
+      "message": "Bağlantı olan herkesin görüntülenmesine izin verin."
+   },
+   "editor_zoom_crop_animation_animated": {
+      "description": "Sub-label indicating an animation type is animated.",
+      "message": "Hareketli"
+   },
+   "editor_zoom_crop_animation_crop": {
+      "description": "Animation type option for static cropping without animation.",
+      "message": "Kırp"
+   },
+   "editor_zoom_crop_animation_static": {
+      "description": "Sub-label indicating an animation type is static (no animation).",
+      "message": "Statik"
+   },
+   "editor_zoom_crop_animation_type": {
+      "description": "Label for the animation type selection section.",
+      "message": "Animasyon Türü"
+   },
+   "editor_zoom_crop_animation_zoom_in": {
+      "description": "Animation type option for zooming in on the selected area.",
+      "message": "Yakınlaştır"
+   },
+   "editor_zoom_crop_animation_zoom_out": {
+      "description": "Animation type option for zooming out from the selected area.",
+      "message": "Uzaklaştır"
+   },
+   "editor_zoom_crop_apply": {
+      "description": "Apply button in zoom/crop dialog.",
+      "message": "Uygula"
+   },
+   "editor_zoom_crop_cancel": {
+      "description": "Cancel button in zoom/crop dialog.",
+      "message": "İptal"
+   },
+   "editor_zoom_crop_change_area": {
+      "description": "Tooltip text for button to change the selected crop area.",
+      "message": "Alanı Değiştir"
+   },
+   "editor_zoom_crop_dialog_title": {
+      "description": "Title for the zoom and crop dialog in the editor.",
+      "message": "Yakınlaştır ve Kırp"
+   },
+   "editor_zoom_crop_draw_instruction": {
+      "description": "Instruction text for the user to draw a crop area on the frame preview.",
+      "message": "Çerçeveye Seçimi Çiz"
+   },
+   "editor_zoom_crop_frame_end": {
+      "description": "Label for the end frame number.",
+      "message": "Bitir"
+   },
+   "editor_zoom_crop_frame_range": {
+      "description": "Label for the frame range selection section.",
+      "message": "Çerçeve Aralığı"
+   },
+   "editor_zoom_crop_frame_start": {
+      "description": "Label for the start frame number.",
+      "message": "Başlat"
+   },
+   "editor_zoom_crop_frames_menu": {
+      "description": "Menu item label for zoom/crop frames feature.",
+      "message": "Çerçeveleri Yakınlaştır/Kırp"
+   },
+   "editor_zoom_crop_no_area_selected": {
+      "description": "Message displayed when no crop area has been selected.",
+      "message": "Alan Seçilmedi"
+   },
+   "editor_zoom_crop_select_area": {
+      "description": "Button text to select a crop area on the frame.",
+      "message": "Alanı Seç"
+   },
+   "editor_zoom_crop_smooth_animation": {
+      "description": "Checkbox label for smoothing animation by interpolating frames.",
+      "message": "Çerçeve Ekleyerek Animasyonu Düzelt"
+   },
+   "editor_zoom_crop_transition": {
+      "description": "Label for the transition duration section (number of frames for animation).",
+      "message": "Geçiş"
+   },
+   "enable_drawing_text": {
+      "description": "Enable drawing",
+      "message": "Çizimi Etkinleştir"
+   },
+   "enable_drawing_tooltip_text": {
+      "description": "This option allows users to draw in the selected area while holding down the ctrl key.",
+      "message": "Bu seçenek, kullanıcıların CTRL tuşunu basılı tutarken seçilen alanda çizmelerini sağlar."
+   },
+   "extension_description": {
+      "description": "Take screenshots & record GIFs instantly! Edit & share seamlessly. Your all-in-one screenshot and screen recording solution.",
+      "message": "Ekran görüntüleri alın ve anında gifleri kaydedin! Düzenleyin ve sorunsuz bir şekilde paylaşın. Hepsi bir arada ekran görüntüsü ve ekran kayıt çözümünüz."
+   },
+   "extension_name": {
+      "description": "Chrome Capture - screenshot & GIF",
+      "message": "Chrome Capture - Ekran görüntüsü ve GIF"
+   },
+   "extension_short_name": {
+      "description": "Chrome Capture",
+      "message": "Krom yakalama"
+   },
+   "file_access_text": {
+      "description": "After screenshot action",
+      "message": "Ekran görüntüsü sonrası eylem"
+   },
+   "filename_text": {
+      "description": "Filename",
+      "message": "Dosya adı"
+   },
+   "frames_per_sec_short_text": {
+      "description": "FPS",
+      "message": "FPS"
+   },
+   "frames_per_sec_text": {
+      "description": "Frames per second (fps)",
+      "message": "Saniyede Görüntüler (FPS)"
+   },
+   "frames_text": {
+      "description": "frames",
+      "message": "Görüntüler"
+   },
+   "free_settings_text": {
+      "description": "Free Settings",
+      "message": "Ücretsiz ayarlar"
+   },
+   "fullscreen_info_modal_cancel": {
+      "description": "Cancel",
+      "message": "İptal"
+   },
+   "fullscreen_info_modal_continue": {
+      "description": "Are you sure you want to continue with full screen capture?",
+      "message": "Tam ekran yakalamaya devam etmek istediğinize emin misiniz?"
+   },
+   "fullscreen_info_modal_do_not_show": {
+      "description": "Do not show this again",
+      "message": "Bunu tekrar gösterme"
+   },
+   "fullscreen_info_modal_message": {
+      "description": "You have used a Chrome Capture shortcut without the cropping tool, this will capture in full screen mode.",
+      "message": "Kırpma aracı olmadan bir krom yakalama kısayolu kullandınız, bu tam ekran modunda yakalayacaktır."
+   },
+   "fullscreen_info_modal_open_cropping": {
+      "description": "Open cropping tool",
+      "message": "Açık Kırpma Aracı"
+   },
+   "fullscreen_info_modal_shortcut_cropping_tool": {
+      "description": "Alt + C: Open/close Chrome Capture cropping tool",
+      "message": "ALT + C: OPEN / COPROM KAPTIK KAPILAMA ARACI"
+   },
+   "fullscreen_info_modal_shortcut_fullpage_screenshot": {
+      "description": "Alt + Shift + S: Full webpage screenshot (beta)",
+      "message": "Alt + Shift + S: Tam Web Sayfası Ekran Görüntüsü (Beta)"
+   },
+   "fullscreen_info_modal_shortcut_linkt": {
+      "description": "You can configure these here: ",
+      "message": "Bunları burada yapılandırabilirsiniz:"
+   },
+   "fullscreen_info_modal_shortcut_recording": {
+      "description": "Alt + R: Start/stop recording",
+      "message": "ALT + R: Kayıt başlat / durdur"
+   },
+   "fullscreen_info_modal_shortcut_screenshot": {
+      "description": "Alt + S: Visible area screenshot",
+      "message": "Alt + S: Görünür Alan Ekran Görüntüsü"
+   },
+   "fullscreen_info_modal_shortcuts": {
+      "description": "Default shortcuts are: ",
+      "message": "Varsayılan kısayollar:"
+   },
+   "fullscreen_info_modal_start": {
+      "description": "Start full screen capture",
+      "message": "Tam Ekran Yakalama Başlat"
+   },
+   "fullscreen_info_modal_title": {
+      "description": "Full screen capture",
+      "message": "Tam ekran yakalama"
+   },
+   "general_not_available": {
+      "description": "N/A",
+      "message": "Yok"
+   },
+   "get_premium": {
+      "description": "Get Premium",
+      "message": "Premium almak"
+   },
+   "height_text": {
+      "description": "Width (px)",
+      "message": "Genişlik (PX)"
+   },
+   "hi": {
+      "description": "Hi",
+      "message": "MERHABA"
+   },
+   "internet_connection_required": {
+      "description": "Internet connection is required to upgrade to premium.",
+      "message": "Premium'a yükseltmek için internet bağlantısı gerekir."
+   },
+   "manage_subscription_access_until_date": {
+      "description": "Your plan will not renew. You can access premium features until $date$.",
+      "message": "Planınız yenilenmeyecek. Premium özelliklere $date$ tarihine kadar erişebilirsiniz.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_cancel_button": {
+      "description": "Cancel subscription",
+      "message": "Aboneliği iptal et"
+   },
+   "manage_subscription_cancel_confirm_cancel_button": {
+      "description": "Keep Premium",
+      "message": "Premium'u Koru"
+   },
+   "manage_subscription_cancel_confirm_confirm_button": {
+      "description": "Continue to cancel",
+      "message": "İptal etmeye devam et"
+   },
+   "manage_subscription_cancel_confirm_description": {
+      "description": "You will lose access to Premium features and Premium options will be reset.",
+      "message": "Premium özelliklere erişiminizi kaybedeceksiniz ve Premium seçenekleri sıfırlanacak."
+   },
+   "manage_subscription_cancel_confirm_title": {
+      "description": "Are you sure you want to cancel your subscription?",
+      "message": "Aboneliğinizi iptal etmek istediğinizden emin misiniz?"
+   },
+   "manage_subscription_ended_on_date": {
+      "description": "Subscription ended on $date$.",
+      "message": "Abonelik $date$ tarihinde sona erdi.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_ends_on_date": {
+      "description": "Subscription ends on $date$.",
+      "message": "Abonelik $date$ tarihinde sona eriyor.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_next_payment_full": {
+      "description": "Next payment: $price$ on $date$",
+      "message": "Sonraki ödeme: $date$ tarihinde $price$",
+      "placeholders": {
+         "date": {
+            "content": "$2"
+         },
+         "price": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_paid_full": {
+      "description": "Paid: $billingCycle$",
+      "message": "Ödendi: $billingCycle$",
+      "placeholders": {
+         "billingCycle": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_resubscribe_prompt": {
+      "description": " To use premium features again, please upgrade.",
+      "message": " Premium özellikleri tekrar kullanmak için lütfen yükseltme yapın."
+   },
+   "manage_subscription_update_payment_button": {
+      "description": "Update payment method",
+      "message": "Ödeme yöntemini güncelle"
+   },
+   "max_recording_dimension_size_text": {
+      "description": "Max recording resolution/quality",
+      "message": "Maksimum kayıt çözünürlüğü / kalite"
+   },
+   "no_limit_text": {
+      "description": "No limit",
+      "message": "Limit yok"
+   },
+   "open_text": {
+      "description": "Open",
+      "message": "Açık"
+   },
+   "options_default_action": {
+      "description": "Extension icon click action",
+      "message": "Uzantı simgesi tıklama eylemi"
+   },
+   "options_dimension_size_1000": {
+      "description": "1000 pixels",
+      "message": "1000 piksel"
+   },
+   "options_dimension_size_1080p": {
+      "description": "1920 pixels (1080p)",
+      "message": "1920 piksel (1080p)"
+   },
+   "options_dimension_size_480p": {
+      "description": "640 pixels (480p)",
+      "message": "640 piksel (480p)"
+   },
+   "options_dimension_size_4k": {
+      "description": "3840 pixels (4K)",
+      "message": "3840 piksel (4k)"
+   },
+   "options_dimension_size_720p": {
+      "description": "1280 pixels (720p)",
+      "message": "1280 piksel (720p)"
+   },
+   "options_embedded_options_permission_warning": {
+      "description": "Cursor highlighting, click effects, and drawing tools will only work until the page reloads or changes. To keep them active after reloads or redirects, you'll need to grant an extra permission.",
+      "message": "İmleç vurgulama, tıklama efektleri ve çizim araçları yalnızca sayfa yeniden yüklenene veya değişene kadar çalışır. Yeniden yüklemelerden veya yönlendirmelerden sonra etkin kalmalarını sağlamak için ek bir izin vermeniz gerekir."
+   },
+   "options_enable_notifications": {
+      "description": "Enable notifications",
+      "message": "Bildirimleri Etkinleştir"
+   },
+   "options_enable_notifications_tooltip": {
+      "description": "Display notifications when full screen recording starts and processing recordings in the background.",
+      "message": "Tam ekran kaydı başladığında ve arka planda kayıtları işlerken bildirimleri görüntüleyin."
+   },
+   "options_enable_subfolder_downloads": {
+      "description": "Download files into subfolder",
+      "message": "Dosyaları alt klasöre indirin"
+   },
+   "options_enable_subfolder_downloads_tooltip": {
+      "description": "Download files into a subfolder of your choice inside the downloads folder. This option is useful for organising your captures.",
+      "message": "İndirme klasörünün içindeki seçtiğiniz bir alt klasöre dosyaları indirin. Bu seçenek, çekimlerinizi düzenlemek için kullanışlıdır."
+   },
+   "options_how_to_use_btn": {
+      "description": "How to use",
+      "message": "Nasıl kullanılır"
+   },
+   "options_language": {
+      "description": "Language",
+      "message": "Dil"
+   },
+   "options_open_containing_folder_on_save": {
+      "description": "Open containing folder after saving",
+      "message": "Kaydettikten sonra içeren klasörü aç"
+   },
+   "options_open_popup": {
+      "description": "Open popup",
+      "message": "Açılır pencere açmak"
+   },
+   "options_open_selected_area": {
+      "description": "Open selected area capture",
+      "message": "Seçilen alan yakalamasını açın"
+   },
+   "options_section_general": {
+      "description": "Title for the General settings section in the options page",
+      "message": "Genel Ayarlar"
+   },
+   "options_section_output": {
+      "description": "Title for the Output and Saving settings section in the options page",
+      "message": "Çıktı ve Kaydetme"
+   },
+   "options_section_recording": {
+      "description": "Title for the Recording settings section in the options page",
+      "message": "Kayıt Ayarları"
+   },
+   "options_section_visuals": {
+      "description": "Title for the Cursor and Interaction Visuals settings section in the options page",
+      "message": "İmleç ve Etkileşim Görselleri"
+   },
+   "options_shortcuts_btn": {
+      "description": "Shortcuts",
+      "message": "Kısayollar"
+   },
+   "options_subfolder_downloads_name": {
+      "description": "Subfolder name:",
+      "message": "Alt klasör adı:"
+   },
+   "options_support_btn": {
+      "description": "Support",
+      "message": "Destek"
+   },
+   "overlay_help_text": {
+      "description": "Click and drag to choose your selected area. \nRight click to snap to an element, hold shift for multiple.",
+      "message": "Seçtiğiniz alanı seçmek için tıklayın ve sürükleyin. \n Bir öğeye geçmek için sağ tıklayın, birden fazla vites değiştirin."
+   },
+   "plan_billing_annually": {
+      "description": "Annually",
+      "message": "Yıllık"
+   },
+   "plan_billing_monthly": {
+      "description": "Monthly",
+      "message": "Aylık"
+   },
+   "plan_name_custom": {
+      "description": "Custom Plan",
+      "message": "Özel Plan"
+   },
+   "popup_capture_tab": {
+      "description": "Capture",
+      "message": "Ele geçirmek"
+   },
+   "popup_desktop_screenshot_tooltip": {
+      "description": "Capture the entire screen, desktop, or any open application.",
+      "message": "Tüm ekranı, masaüstünü veya herhangi bir açık uygulamayı yakalayın."
+   },
+   "popup_editor_icon_tooltip": {
+      "description": "Open Editor",
+      "message": "Açık düzenleyici"
+   },
+   "popup_full_page_screenshot_tooltip": {
+      "description": "Capture the current tab full webpage, including content beyond the visible area.",
+      "message": "Görünür alanın ötesinde içerik de dahil olmak üzere geçerli sekme tam web sayfasını yakalayın."
+   },
+   "popup_full_webpage": {
+      "description": "Full webpage",
+      "message": "Tam web sayfası"
+   },
+   "popup_no_scripts_alert": {
+      "description": "Selected area and full webpage screenshots are not possible here. These features are available on other websites.",
+      "message": "Burada seçilen alan ve tam web sayfası ekran görüntüleri burada mümkün değildir. Bu özellikler diğer web sitelerinde mevcuttur."
+   },
+   "popup_record_tab": {
+      "description": "Record",
+      "message": "Kayıt"
+   },
+   "popup_recording_limit_alert": {
+      "description": "Record up to $seconds$ seconds per GIF. Premium users can update this from the ",
+      "message": "GIF başına $seconds$ saniyeye kadar kaydedin. Premium kullanıcılar bunu şuradan güncelleyebilir",
+      "placeholders": {
+         "seconds": {
+            "content": "$1"
+         }
+      }
+   },
+   "popup_recording_limit_settings_link": {
+      "description": "settings page.",
+      "message": "Ayarlar sayfası."
+   },
+   "popup_screen_or_app": {
+      "description": "Full screen or app",
+      "message": "Tam ekran veya uygulama"
+   },
+   "popup_selected_area": {
+      "description": "Selected area",
+      "message": "Seçilen alan"
+   },
+   "popup_selected_area_screenshot_tooltip": {
+      "description": "Capture a specific area of the current tab.",
+      "message": "Geçerli sekmenin belirli bir alanını yakalayın."
+   },
+   "popup_set_shortcut": {
+      "description": "set shortcut",
+      "message": "Kısayol ayarlayın"
+   },
+   "popup_settings_icon_tooltip": {
+      "description": "Open Settings",
+      "message": "Ayarları aç"
+   },
+   "popup_tab_screenshot_tooltip": {
+      "description": "Capture the visible part of the current tab.",
+      "message": "Geçerli sekmenin görünür kısmını yakalayın."
+   },
+   "popup_this_tab": {
+      "description": "This tab",
+      "message": "Bu sekme"
+   },
+   "popup_waiting_for_desktop_selection_alert": {
+      "description": "FULL SCREEN OR APP capture did not start because you did not select an option from the popup dialog. If you have multiple monitors it may have opened on another monitor.",
+      "message": "Açılır iletişim kutusundan bir seçenek seçmediğiniz için tam ekran veya uygulama yakalama başlamadı. Birden fazla monitörünüz varsa, başka bir monitörde açılmış olabilir."
+   },
+   "premium_settings_text": {
+      "description": "Premium Settings",
+      "message": "Premium Ayarlar"
+   },
+   "purchase_btn_text": {
+      "description": "Get Premium!",
+      "message": "Premium alın!"
+   },
+   "purchase_description_limited_time_text": {
+      "description": "Lock in this price now - limited time offer before we switch to subscriptions!",
+      "message": "Bu fiyatı şimdi güvence altına alın - aboneliklere geçmeden önce sınırlı süreli teklif!"
+   },
+   "purchase_description_text": {
+      "description": "Just one payment unlocks all premium features forever. No recurring fees!",
+      "message": "Tek bir ödeme tüm premium özellikleri ömür boyu açar. Yinelenen ücret yok!"
+   },
+   "purchase_feature_30fps": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "ipek pürüzsüzlüğünde 30 FPS kayıt"
+   },
+   "purchase_feature_4K": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "kristal netliğinde 4K kayıt"
+   },
+   "purchase_feature_alter_frame_rate": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "özel kare hızları"
+   },
+   "purchase_feature_alter_playback_speed": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ağır çekim ve hızlandırılmış çekim efektleri"
+   },
+   "purchase_feature_blur": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "bulanıklaştırma aracı"
+   },
+   "purchase_feature_crop_recording": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "hassas GIF kırpma"
+   },
+   "purchase_feature_default": {
+      "description": "Feature that goes in $feature$ placeholder. Default fallback.",
+      "message": "bu özellik"
+   },
+   "purchase_feature_frame_edits": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "güçlü kare kare düzenleme"
+   },
+   "purchase_feature_highlight": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "vurgulama aracı"
+   },
+   "purchase_feature_no_duration_limit": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "sınırsız kayıt süresi"
+   },
+   "purchase_feature_special_effect": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "özel efektler"
+   },
+   "purchase_feature_step_tool": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "adım aracı"
+   },
+   "purchase_feature_svg": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "özel simgeler ve logolar ekleme"
+   },
+   "purchase_feature_text_and_annotation_customization": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "metin ve ek açıklamalar üzerinde tam kontrol"
+   },
+   "purchase_feature_unlimited_gif_compression": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "sınırsız gelişmiş GIF sıkıştırma"
+   },
+   "purchase_feature_update_end_time": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "özelleştirilmiş kayıt süresi"
+   },
+   "purchase_login_dialog_closed_by_user_alert": {
+      "description": "Looks like you closed the sign in dialog, premium users must sign in so you don't lose premium access.",
+      "message": "Görünüşe göre işaretini kapattınız, premium erişimini kaybetmemeniz için premium kullanıcıların oturum açması gerekir."
+   },
+   "purchase_login_dialog_google_button": {
+      "description": "Sign in with Google",
+      "message": "Google ile giriş yap"
+   },
+   "purchase_login_dialog_title": {
+      "description": "Sign in required",
+      "message": "Gerekiyor"
+   },
+   "purchase_login_text": {
+      "description": "Sign in with Google to link your purchase to your account.",
+      "message": "Satın alımınızı hesabınıza bağlamak için Google ile oturum açın."
+   },
+   "purchase_login_text_window_opened": {
+      "description": "Sign into Google in the popup window.",
+      "message": "Açılır pencerede Google'da oturum açın."
+   },
+   "purchase_subscription_title_text": {
+      "description": "Choose the plan that fits your needs.",
+      "message": "İhtiyaçlarınıza uygun planı seçin."
+   },
+   "purchase_title_text": {
+      "description": "Get Lifetime Premium Access Today!",
+      "message": "Bugün Ömür Boyu Premium Erişimi Alın!"
+   },
+   "purchase_title_text_blocked_feature": {
+      "description": "That feature requires Premium",
+      "message": "Bu özellik Premium gerektirir"
+   },
+   "purchase_title_text_blocked_pro_feature": {
+      "description": "That feature requires Premium Pro",
+      "message": "Bu özellik Premium Pro gerektirir"
+   },
+   "purchase_title_text_blocked_pro_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium Pro paywall.",
+      "message": "$feature$ özelliğini Premium Pro ile açın",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchase_title_text_blocked_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium paywall.",
+      "message": "$feature$ özelliğini Premium ile açın",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_already_premium_user": {
+      "description": "Already a premium user?",
+      "message": "Zaten birinci sınıf bir kullanıcı?"
+   },
+   "purchases_bill_me": {
+      "description": "Bill me:",
+      "message": "Beni faturalandır:"
+   },
+   "purchases_checkout_unavailable_message": {
+      "description": "Message shown when checkout could not be started.",
+      "message": "Yükseltme akışı şu anda başlatılamadı. Lütfen tekrar deneyin."
+   },
+   "purchases_compare_12_fps": {
+      "description": "12FPS",
+      "message": "12 FPS"
+   },
+   "purchases_compare_3_per_day": {
+      "description": "3 per day",
+      "message": "Günde 3"
+   },
+   "purchases_compare_add_custom_shape_tool": {
+      "description": "Add custom shape/icon tool",
+      "message": "Özel şekil/simge ekleme aracı"
+   },
+   "purchases_compare_benefits": {
+      "description": "Benefits",
+      "message": "Avantajlar"
+   },
+   "purchases_compare_blur_tool": {
+      "description": "Blur tool",
+      "message": "Bulanıklaştırma aracı"
+   },
+   "purchases_compare_close_button_label": {
+      "description": "Close",
+      "message": "Kapat"
+   },
+   "purchases_compare_compression": {
+      "description": "High quality GIF compression",
+      "message": "Yüksek kaliteli GIF sıkıştırma"
+   },
+   "purchases_compare_core_capture_features": {
+      "description": "Core Capture Features",
+      "message": "Temel Yakalama Özellikleri"
+   },
+   "purchases_compare_crop_recordings": {
+      "description": "Crop recordings",
+      "message": "Kayıtları kırp"
+   },
+   "purchases_compare_customize_editing_tools": {
+      "description": "Customize editing tools (font, size color)",
+      "message": "Düzenleme araçlarını özelleştirin (yazı tipi, boyut, renk)"
+   },
+   "purchases_compare_drawing": {
+      "description": "Draw while recording",
+      "message": "Kayıt yaparken çizin"
+   },
+   "purchases_compare_early_access": {
+      "description": "Early access to new features",
+      "message": "Yeni özelliklere erken erişim"
+   },
+   "purchases_compare_editing": {
+      "description": "Edit captures",
+      "message": "Yakalayıcıları Düzenle"
+   },
+   "purchases_compare_editing_free": {
+      "description": "basic editing",
+      "message": "Temel Düzenleme"
+   },
+   "purchases_compare_editing_suite": {
+      "description": "Editing Suite",
+      "message": "Düzenleme Paketi"
+   },
+   "purchases_compare_frame_editing": {
+      "description": "Frame editing",
+      "message": "Çerçeve düzenleme"
+   },
+   "purchases_compare_frame_rate": {
+      "description": "Adjust Frame Rate",
+      "message": "Kare Hızını Ayarla (FPS)"
+   },
+   "purchases_compare_frame_specific_edits": {
+      "description": "Frame specific edits",
+      "message": "Kareye özgü düzenlemeler"
+   },
+   "purchases_compare_free_draw_tools": {
+      "description": "Free draw, line, arrow, rectangle, circle, text tools",
+      "message": "Serbest çizim, çizgi, ok, dikdörtgen, daire, metin araçları"
+   },
+   "purchases_compare_full_webpage_screenshots": {
+      "description": "Unlimited full page screenshots.",
+      "message": "Sınırsız tam sayfa ekran görüntüleri."
+   },
+   "purchases_compare_highlight_tool": {
+      "description": "Highlight tool",
+      "message": "Vurgulama aracı"
+   },
+   "purchases_compare_live_recording_tools": {
+      "description": "Live Recording Tools",
+      "message": "Canlı Kayıt Araçları"
+   },
+   "purchases_compare_mouse": {
+      "description": "Click and mouse indication",
+      "message": "Tıklayın ve fare göstergesi"
+   },
+   "purchases_compare_plans": {
+      "description": "Compare plans",
+      "message": "Planları karşılaştırmak"
+   },
+   "purchases_compare_plans_premium_button": {
+      "description": "Upgrade to Premium",
+      "message": "Premium'a Yükselt"
+   },
+   "purchases_compare_playback_speed": {
+      "description": "Tune recording playback speed",
+      "message": "Kayıt oynatma hızını ayarlama"
+   },
+   "purchases_compare_priority_support": {
+      "description": "Priority support and feature requests",
+      "message": "Öncelikli destek ve özellik talepleri"
+   },
+   "purchases_compare_recording": {
+      "description": "Unlimited GIF recordings.",
+      "message": "Sınırsız GIF kayıtları."
+   },
+   "purchases_compare_recording_free": {
+      "description": "15sec limit per GIF",
+      "message": "GIF başına 15 saniye sınırı"
+   },
+   "purchases_compare_recording_quality": {
+      "description": "High quality GIFs",
+      "message": "Yüksek kaliteli gifler"
+   },
+   "purchases_compare_recording_quality_control": {
+      "description": "Recording Quality & Control",
+      "message": "Kayıt Kalitesi ve Kontrolü"
+   },
+   "purchases_compare_recording_quality_free": {
+      "description": "1000 pixels max",
+      "message": "1000 piksel maksimum"
+   },
+   "purchases_compare_screenshots": {
+      "description": "Unlimited screenshots.",
+      "message": "Sınırsız ekran görüntüleri."
+   },
+   "purchases_compare_special_effects": {
+      "description": "Recording special effects",
+      "message": "Özel efektler kaydetme"
+   },
+   "purchases_compare_up_to_1080p": {
+      "description": "Up to 1080p",
+      "message": "1080p'ye kadar"
+   },
+   "purchases_compare_up_to_24_fps": {
+      "description": "Up to 24FPS",
+      "message": "24 FPS'ye kadar"
+   },
+   "purchases_compare_up_to_30_fps": {
+      "description": "Up to 30FPS",
+      "message": "30 FPS'ye kadar"
+   },
+   "purchases_compare_up_to_4k_plus": {
+      "description": "Up to 4K+",
+      "message": "4K+ üzeri"
+   },
+   "purchases_current_plan": {
+      "description": "Current plan",
+      "message": "Mevcut plan"
+   },
+   "purchases_features": {
+      "description": "Features",
+      "message": "Özellikler"
+   },
+   "purchases_free": {
+      "description": "Free",
+      "message": "Özgür"
+   },
+   "purchases_free_button": {
+      "description": "Free to use",
+      "message": "Kullanmak için ücretsiz"
+   },
+   "purchases_free_feature_editing": {
+      "description": "Basic editing",
+      "message": "Temel Düzenleme"
+   },
+   "purchases_free_feature_recording": {
+      "description": "Basic GIF recording",
+      "message": "Temel GIF Kayıt"
+   },
+   "purchases_free_feature_screenshots": {
+      "description": "Unlimited screenshots",
+      "message": "Sınırsız Screenshots"
+   },
+   "purchases_free_plan_description": {
+      "description": "Get started with our essential capture tools. Completely free for basic everyday use.",
+      "message": "Temel yakalama araçlarımızla başlayın. Temel günlük kullanım için tamamen ücretsiz."
+   },
+   "purchases_plan_save_up_to_percentage": {
+      "description": "Save up to",
+      "message": "Tasarruf edin"
+   },
+   "purchases_premium": {
+      "description": "Premium",
+      "message": "Ödül"
+   },
+   "purchases_premium_billed_annually": {
+      "description": "Billed annually",
+      "message": "Yıllık faturalandırılır"
+   },
+   "purchases_premium_button": {
+      "description": "Get lifetime access",
+      "message": "Ömür boyu erişim alın"
+   },
+   "purchases_premium_feature_compression": {
+      "description": "High quality GIF compression",
+      "message": "Yüksek kaliteli GIF sıkıştırma"
+   },
+   "purchases_premium_feature_editing": {
+      "description": "Feature rich editing",
+      "message": "Zengin düzenleme özelliği"
+   },
+   "purchases_premium_feature_free": {
+      "description": "Everything from free plan",
+      "message": "Ücretsiz planın özelliklerini içerir"
+   },
+   "purchases_premium_feature_marked_with_star": {
+      "description": "All features marked with a star",
+      "message": "Yıldızla işaretlenmiş tüm özellikler"
+   },
+   "purchases_premium_feature_recording": {
+      "description": "Unlimited high quality GIF recording",
+      "message": "Sınırsız Yüksek Kalite GIF Kayıt"
+   },
+   "purchases_premium_feature_recording_1080p": {
+      "description": "High quality GIF recording, up to 1080p, 24fps",
+      "message": "Yüksek kaliteli GIF kaydı, 1080p'ye kadar, 24fps"
+   },
+   "purchases_premium_feature_refundable": {
+      "description": "Fully refundable",
+      "message": "Tamamen iade edilebilir"
+   },
+   "purchases_premium_feature_risk_free": {
+      "description": "Risk-free: 7 day trial, cancel anytime",
+      "message": "Risksiz: 7 günlük deneme, istediğiniz zaman iptal edin"
+   },
+   "purchases_premium_feature_unlimited_length": {
+      "description": "Unlimited GIF recording length",
+      "message": "Sınırsız GIF kayıt uzunluğu"
+   },
+   "purchases_premium_price_info": {
+      "description": "one time fee",
+      "message": "bir zaman ücreti"
+   },
+   "purchases_premium_price_per_month": {
+      "description": "/ month",
+      "message": "/ ay"
+   },
+   "purchases_premium_pro": {
+      "description": "Premium Pro",
+      "message": "Premium Pro"
+   },
+   "purchases_premium_pro_editing_tools": {
+      "description": "Advanced editing tools (blurring, special effects, etc.)",
+      "message": "Gelişmiş düzenleme araçları (bulanıklaştırma, özel efektler vb.)"
+   },
+   "purchases_premium_pro_feature_early_access": {
+      "description": "Early access to new features",
+      "message": "Yeni özelliklere erken erişim"
+   },
+   "purchases_premium_pro_feature_marked_with_crown": {
+      "description": "All features marked with a star and crown",
+      "message": "Yıldız ve taç ile işaretlenmiş tüm özellikler"
+   },
+   "purchases_premium_pro_feature_premium_plan": {
+      "description": "Everything from Premium plan",
+      "message": "Premium plandaki her şey"
+   },
+   "purchases_premium_pro_feature_quality": {
+      "description": "Max resolution recording, 4K+ and 30fps",
+      "message": "Maksimum çözünürlükte kayıt, 4K+ ve 30fps"
+   },
+   "purchases_premium_pro_feature_support": {
+      "description": "Priority support and feature requests",
+      "message": "Öncelikli destek ve özellik talepleri"
+   },
+   "purchases_premium_pro_upgrade": {
+      "description": "Upgrade to Pro",
+      "message": "Pro'ya Yükselt"
+   },
+   "purchases_premium_save_percentage": {
+      "description": "save $savingsPercentage$%",
+      "message": "$savingsPercentage$% tasarruf edin",
+      "placeholders": {
+         "savingsPercentage": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_premium_try_for_free": {
+      "description": "Try for free",
+      "message": "Ücretsiz dene"
+   },
+   "purchases_price_unavailable": {
+      "description": "Label shown in place of a price when it is unavailable.",
+      "message": "Fiyat kullanılamıyor"
+   },
+   "purchases_pricing_unavailable_message": {
+      "description": "Message shown when the Premium pricing request was blocked or failed.",
+      "message": "Premium fiyatları isteği engellendi veya başarısız oldu. İş yeri ağı, VPN, reklam engelleyici, gizlilik uzantısı veya güvenlik duvarı Paddle’ı engellediğinde bu olabilir."
+   },
+   "purchases_pricing_unavailable_title": {
+      "description": "Title shown when Premium pricing could not be loaded.",
+      "message": "Premium fiyatları yüklenemedi"
+   },
+   "purchases_pricing_unavailable_troubleshooting_extensions": {
+      "description": "Troubleshooting step telling the user to disable VPN or privacy tools temporarily.",
+      "message": "VPN, reklam engelleyici veya gizlilik uzantılarını geçici olarak devre dışı bırakıp tekrar deneyin."
+   },
+   "purchases_pricing_unavailable_troubleshooting_intro": {
+      "description": "Intro text for troubleshooting steps when pricing is unavailable.",
+      "message": "Deneyebileceğiniz şeyler:"
+   },
+   "purchases_pricing_unavailable_troubleshooting_network": {
+      "description": "Troubleshooting step telling the user to try another network or browser profile.",
+      "message": "Başka bir ağ deneyin veya uzantıyı farklı bir Chrome profilinde açın."
+   },
+   "purchases_pricing_unavailable_troubleshooting_workplace": {
+      "description": "Troubleshooting step telling the user workplace policy may be blocking Paddle.",
+      "message": "İş cihazı kullanıyorsanız ağ veya tarayıcı politikanız Paddle’ı engelliyor olabilir."
+   },
+   "purchases_sign_in_here": {
+      "description": "Sign in here",
+      "message": "Oturum açın"
+   },
+   "purchases_start_trial_cancel_anytime": {
+      "description": "Call to action to start a free trial.",
+      "message": "Devam etmek için 7 günlük ücretsiz deneme sürenizi başlatın. İstediğiniz zaman iptal edebilirsiniz."
+   },
+   "purchases_try_premium_for_free": {
+      "description": "Try Premium for Free",
+      "message": "Premium'u Ücretsiz Deneyin"
+   },
+   "purchases_try_premium_pro_for_free": {
+      "description": "Try Premium Pro for Free",
+      "message": "Premium Pro'yu Ücretsiz Deneyin"
+   },
+   "purchases_upgrade_premium_to_pro": {
+      "description": "To use this feature and access all Pro benefits, upgrade your plan.",
+      "message": "Bu özelliği kullanmak ve tüm Pro avantajlarına erişmek için planınızı yükseltin."
+   },
+   "purchases_upgrade_to_premium_pro": {
+      "description": "Upgrade to Premium Pro",
+      "message": "Premium Pro'ya Yükselt"
+   },
+   "quality_text": {
+      "description": "Recording quality (10 = best)",
+      "message": "Kayıt kalitesi (10 = en iyi)"
+   },
+   "rate_bad_rating_text": {
+      "description": "We are continuously trying our hardest to improve Chrome Capture, please share what needs improvement by emailing us at ",
+      "message": "Krom yakalamayı geliştirmek için sürekli olarak çalışırız, lütfen bize e-posta göndererek iyileştirme ne gerekiyorsa paylaşmak"
+   },
+   "rate_bad_title_text": {
+      "description": "😞 We are sorry!",
+      "message": "😞 Üzgünüz!"
+   },
+   "rate_close_btn_text": {
+      "description": "Close",
+      "message": "Kapat"
+   },
+   "rate_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "Onaylamak"
+   },
+   "rate_description_text": {
+      "description": "If you've found this extension useful please leave a rating or review. \n\nBy leaving a rating you can help us reach more users which will help fund continual improvements and keep general usage free.",
+      "message": "Bu uzantıyı faydalı bulduysanız, lütfen bir derecelendirme veya inceleme bırakın. \n\n Bir derecelendirmeyi bırakarak, sürekli iyileştirmeleri finanse etmenize ve genel kullanımdan uzak durmanıza yardımcı olacak daha fazla kullanıcıya ulaşmamıza yardımcı olabilirsiniz."
+   },
+   "rate_description_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "Sizleri satın aldığınız için teşekkür ederiz ve ürünü iyileştirmemize ve daha fazla kullanıcıya ulaşmak için herhangi bir geri bildirim duymayı çok isteriz."
+   },
+   "rate_good_rating_text": {
+      "description": "Your reviews keep our small team motivated to make Chrome Capture even better!",
+      "message": "Yorumlarınız küçük ekibimizin kromu daha da iyi hale getirmesi için motive olmasını sağlar!"
+   },
+   "rate_good_rating_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "Sizleri satın aldığınız için teşekkür ederiz ve ürünü iyileştirmemize ve daha fazla kullanıcıya ulaşmak için herhangi bir geri bildirim duymayı çok isteriz."
+   },
+   "rate_good_title_text": {
+      "description": "😍 Review in the web store?",
+      "message": "😍 Web Mağazasında İnceleme?"
+   },
+   "rate_maybe_later_btn_text": {
+      "description": "Maybe later",
+      "message": "Belki sonra"
+   },
+   "rate_no_btn_text": {
+      "description": "No thanks",
+      "message": "Hayır, teşekkürler"
+   },
+   "rate_send_email_btn_text": {
+      "description": "Send Email",
+      "message": "Eposta gönder"
+   },
+   "rate_thank_you_title_text": {
+      "description": "Thank you! 😍",
+      "message": "Teşekkür ederim! 😍"
+   },
+   "rate_title_text": {
+      "description": "How are we doing?",
+      "message": "Nasıl yapıyoruz?"
+   },
+   "rate_yes_btn_text": {
+      "description": "Ok, sure",
+      "message": "Tabii olur"
+   },
+   "recommended": {
+      "description": "recommended",
+      "message": "önerilen"
+   },
+   "record_length_text": {
+      "description": "Max record length",
+      "message": "Maksimum kayıt uzunluğu"
+   },
+   "recordings_taken": {
+      "description": "Recordings taken:",
+      "message": "Alınan kayıtlar:"
+   },
+   "save_as_screenshot_text": {
+      "description": "Save screenshot as",
+      "message": "Ekran görüntüsünü kaydet"
+   },
+   "save_as_text": {
+      "description": "Save recording as",
+      "message": "Kaydetme olarak kaydet"
+   },
+   "screenshots_taken": {
+      "description": "Screenshots taken:",
+      "message": "Alınan ekran görüntüleri:"
+   },
+   "seconds_text": {
+      "description": "secs",
+      "message": "secs"
+   },
+   "shortcut": {
+      "description": "Shortcut:",
+      "message": "Kısayol:"
+   },
+   "show_click_indicator_text": {
+      "description": "Show click animation",
+      "message": "Tıklama animasyonu göster"
+   },
+   "show_click_indicator_tooltip_text": {
+      "description": "This option draws a circle animation around the click location.",
+      "message": "Bu seçenek tıklama konumu etrafında bir daire animasyonu çizer."
+   },
+   "show_cursor_text": {
+      "description": "Show dot at cursor location",
+      "message": "İmleç konumda nokta göster"
+   },
+   "show_cursor_tooltip_text": {
+      "description": "This option draws a small circle to indicate where the mouse is located.",
+      "message": "Bu seçenek, farenin nerede olduğunu belirtmek için küçük bir daire çizer."
+   },
+   "sign_in": {
+      "description": "Sign In",
+      "message": "Kayıt olmak"
+   },
+   "sign_out": {
+      "description": "Sign Out",
+      "message": "Oturumu Kapat"
+   },
+   "subscription_past_due_warning": {
+      "description": "Warning message shown when a user subscription payment has failed or is past its due date.",
+      "message": "Abonelik ödemenizin vadesi geçti. Ödeme bilgilerinizi güncellemek için buraya tıklayın."
+   },
+   "subscription_premium_plan_description": {
+      "description": "Go beyond basics: HD quality & limits unlocked. Craft pro content with enhanced features.",
+      "message": "Temel özelliklerin ötesine geçin: HD kalitesi ve kilitsiz sınırlar. Gelişmiş özelliklerle profesyonel içerikler oluşturun."
+   },
+   "subscription_premium_pro_plan_description": {
+      "description": "Experience peak performance: 4K+ and all features. Full editing suite with early access.",
+      "message": "Zirve performansı deneyimleyin: 4K+ ve tüm özellikler. Erken erişimli tam düzenleme paketi."
+   },
+   "subscription_status_active": {
+      "description": "Active",
+      "message": "Aktif"
+   },
+   "subscription_status_ending_soon": {
+      "description": "Ending Soon",
+      "message": "Yakında Sona Eriyor"
+   },
+   "subscription_status_expired": {
+      "description": "Expired",
+      "message": "Süresi Doldu"
+   },
+   "subscription_status_past_due": {
+      "description": "Past Due",
+      "message": "Vadesi Geçmiş"
+   },
+   "subscription_status_paused": {
+      "description": "Paused",
+      "message": "Duraklatıldı"
+   },
+   "subscription_status_unknown": {
+      "description": "Unknown",
+      "message": "Bilinmiyor"
+   },
+   "unable_to_capture_website_alert": {
+      "description": "Unable to capture this website. Please use full screen/application capture or try capture another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "Bu web sitesini yakalayamıyor. Lütfen tam ekran/uygulama yakalama kullanın veya başka bir web sitesini yakalamayı deneyin. \n\n (╯ ° □ °） ╯︵ ┻━┻"
+   },
+   "view_permission": {
+      "description": "View permission.",
+      "message": "İzni görüntüle."
+   },
+   "width_text": {
+      "description": "Height (px)",
+      "message": "Yükseklik (PX)"
+   }
+}

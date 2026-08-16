@@ -1,0 +1,1691 @@
+{
+   "account_modal_free_plan": {
+      "description": "You are on the free plan",
+      "message": "Esteu al pla gratuït"
+   },
+   "account_modal_manage_subscription_button": {
+      "description": "Manage Subscription",
+      "message": "Gestiona la subscripció"
+   },
+   "account_modal_not_signed_in": {
+      "description": "You are not signed in",
+      "message": "No esteu iniciant la sessió"
+   },
+   "account_modal_premium_plan": {
+      "description": "You are on the premium plan",
+      "message": "Esteu al pla premium"
+   },
+   "account_modal_premium_pro_plan": {
+      "description": "You are on the Premium Pro plan",
+      "message": "Teniu el pla Premium Pro"
+   },
+   "account_modal_request_feature_button": {
+      "description": "Request Feature",
+      "message": "Sol·licita una funció"
+   },
+   "account_modal_request_support_button": {
+      "description": "Request Support",
+      "message": "Sol·licita suport"
+   },
+   "account_modal_stats_heading": {
+      "description": "Your stats:",
+      "message": "Les vostres estadístiques:"
+   },
+   "alert_text": {
+      "description": "Unable to run selected area capture on this website. Please use full screen recording or try another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "No es pot executar la captura d'àrea seleccionada en aquest lloc web. Utilitzeu l'enregistrament de pantalla completa o proveu un altre lloc web. \n\n (° □ °) ╯( ┻━┻"
+   },
+   "click_indicator_size_color_text": {
+      "description": "Click animation size & color",
+      "message": "Feu clic a Mida i color d'animació"
+   },
+   "close_btn_text": {
+      "description": "Close",
+      "message": "Tanca"
+   },
+   "confirm_dialog_cancel_btn_text": {
+      "description": "Cancel",
+      "message": "Cancel · lar"
+   },
+   "confirm_dialog_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "Confirmar"
+   },
+   "confirm_fps_update_text": {
+      "description": "Changing the fps will remove all frame specific edits such as edited or deleted frames. Do you want to continue?",
+      "message": "El canvi de FPS eliminarà totes les edicions específiques de la imatge, com ara els fotogrames editats o eliminats. Vols continuar?"
+   },
+   "copy_text": {
+      "description": "Copy to clipboard",
+      "message": "Copiar al portapapers"
+   },
+   "cursor_size_and_color_text": {
+      "description": "Cursor dot size & color",
+      "message": "Talla i color del cursor del cursor"
+   },
+   "dither_text": {
+      "description": "Apply dither",
+      "message": "Aplica Dither"
+   },
+   "download_filename_text": {
+      "description": "Download filename format",
+      "message": "Baixa el format del nom de fitxer"
+   },
+   "download_text": {
+      "description": "Download",
+      "message": "descarregar"
+   },
+   "draw_size_and_color_text": {
+      "description": "Drawing size & color",
+      "message": "Talla i color de dibuix"
+   },
+   "duration": {
+      "description": "Label for a field indicating a length of time.",
+      "message": "Durada"
+   },
+   "editor_action_add_icon": {
+      "description": "Add icon",
+      "message": "Afegir icona"
+   },
+   "editor_action_add_text": {
+      "description": "Add text",
+      "message": "Afegir text"
+   },
+   "editor_action_blur_rectangle": {
+      "description": "Blur area",
+      "message": "Desenfocar àrea"
+   },
+   "editor_action_copy": {
+      "description": "Copy to clipboard",
+      "message": "Copiar al portapapers"
+   },
+   "editor_action_crop": {
+      "description": "Crop",
+      "message": "Collita"
+   },
+   "editor_action_draw_arrow": {
+      "description": "Draw arrow",
+      "message": "Dibuixa la fletxa"
+   },
+   "editor_action_draw_ellipse": {
+      "description": "Draw ellipse",
+      "message": "Dibuixa el·lipse"
+   },
+   "editor_action_draw_line": {
+      "description": "Draw line",
+      "message": "Dibuixa la línia"
+   },
+   "editor_action_draw_rectangle": {
+      "description": "Draw rectangle",
+      "message": "Dibuixa el rectangle"
+   },
+   "editor_action_free_draw": {
+      "description": "Free draw",
+      "message": "Dibuix gratuït"
+   },
+   "editor_action_highlight": {
+      "description": "Highlight",
+      "message": "Ressaltar"
+   },
+   "editor_action_numbered_step": {
+      "description": "Action label for adding a numbered step annotation.",
+      "message": "Pas numerat"
+   },
+   "editor_action_pan": {
+      "description": "Pan",
+      "message": "Desplaçar"
+   },
+   "editor_action_profile_account": {
+      "description": "Account",
+      "message": "Compte"
+   },
+   "editor_action_redo": {
+      "description": "Redo",
+      "message": "Refer"
+   },
+   "editor_action_save": {
+      "description": "Save",
+      "message": "Estalviar"
+   },
+   "editor_action_select": {
+      "description": "Select, move, resize",
+      "message": "Seleccioneu, moveu-vos, redimensiona"
+   },
+   "editor_action_settings": {
+      "description": "Settings",
+      "message": "Parada"
+   },
+   "editor_action_undo": {
+      "description": "Undo",
+      "message": "Desfer"
+   },
+   "editor_action_undo_all": {
+      "description": "Undo all",
+      "message": "Desfer-ho tot"
+   },
+   "editor_add_text_default": {
+      "description": "start typing...",
+      "message": "Comenceu a escriure ..."
+   },
+   "editor_browse_file_system": {
+      "description": "Browse file system",
+      "message": "Navegueu pel sistema de fitxers"
+   },
+   "editor_drag_and_drop": {
+      "description": "Drag and drop image/GIF or ",
+      "message": "Arrossegar i deixar anar la imatge / gif o"
+   },
+   "editor_file_downloaded": {
+      "description": "File saved to downloads folder.",
+      "message": "Fitxer desat a la carpeta de descàrregues."
+   },
+   "editor_file_downloaded_selected_location": {
+      "description": "File saved to selected location.",
+      "message": "Fitxer desat a la ubicació seleccionada."
+   },
+   "editor_frame_selector_apply_edits": {
+      "description": "Apply edits to selected",
+      "message": "Apliqueu edicions a seleccionat"
+   },
+   "editor_frame_selector_delete": {
+      "description": "Delete",
+      "message": "Esborrar"
+   },
+   "editor_frame_selector_delete_every_second": {
+      "description": "Delete every second frame",
+      "message": "Suprimeix cada segon marc"
+   },
+   "editor_frame_selector_delete_selected": {
+      "description": "Delete selected",
+      "message": "Suprimeix seleccionat"
+   },
+   "editor_frame_selector_remove_edits": {
+      "description": "Remove edits from selected",
+      "message": "Traieu les edicions de seleccionat"
+   },
+   "editor_frame_selector_restore": {
+      "description": "Restore",
+      "message": "Retornar"
+   },
+   "editor_frame_selector_restore_all": {
+      "description": "Restore All",
+      "message": "Restaurar tots"
+   },
+   "editor_frame_selector_restore_selected": {
+      "description": "Restore selected",
+      "message": "Restaureu seleccionat"
+   },
+   "editor_frame_selector_select_next": {
+      "description": "Select next frames",
+      "message": "Seleccioneu les següents imatges"
+   },
+   "editor_frame_selector_select_previous": {
+      "description": "Select previous frames",
+      "message": "Seleccioneu imatges anteriors"
+   },
+   "editor_frame_selector_unselect_all": {
+      "description": "Unselect All",
+      "message": "Desmarqueu-ho tot"
+   },
+   "editor_image_copied": {
+      "description": "Image copied to clipboard.",
+      "message": "Imatge copiada al porta-retalls."
+   },
+   "editor_image_copied_failed": {
+      "description": "Failed to copy image to clipboard, it may be too large.",
+      "message": "No s'ha pogut copiar la imatge al porta-retalls, pot ser massa gran."
+   },
+   "editor_link_copied": {
+      "description": "Link copied to clipboard.",
+      "message": "Enllaç copiat al porta -retalls."
+   },
+   "editor_max_time_reached_dialog_description1": {
+      "description": "You have reached the max recording length time of $maxlength$ seconds for GIFs. Premium users can update this from the settings page.",
+      "message": "Heu arribat al temps màxim de gravació de $maxlength$ segons per als GIF. Els usuaris de Premium poden actualitzar -ho des de la pàgina de configuració.",
+      "placeholders": {
+         "maxlength": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_max_time_reached_dialog_description2": {
+      "description": "GIFs are intended for short recordings. If you require full length videos we recommend our free screen recorder: ",
+      "message": "Els GIF estan destinats a enregistraments breus. Si necessiteu vídeos de longitud completa, us recomanem la nostra gravadora de pantalla gratuïta:"
+   },
+   "editor_max_time_reached_dialog_description3": {
+      "description": "Premium users can update this from the settings page.",
+      "message": "Els usuaris de Premium poden actualitzar -ho des de la pàgina de configuració."
+   },
+   "editor_max_time_reached_dialog_settings_button": {
+      "description": "Open settings",
+      "message": "Configuració oberta"
+   },
+   "editor_max_time_reached_dialog_title": {
+      "description": "Recording suddenly stopped?",
+      "message": "La gravació es va aturar de sobte?"
+   },
+   "editor_premium_options_color": {
+      "description": "Color",
+      "message": "Color"
+   },
+   "editor_premium_options_draw_size": {
+      "description": "Draw Size",
+      "message": "Dibuixa la mida"
+   },
+   "editor_premium_options_font": {
+      "description": "Font",
+      "message": "Font"
+   },
+   "editor_premium_options_playback_speed": {
+      "description": "Playback Speed",
+      "message": "Velocitat de reproducció"
+   },
+   "editor_premium_options_special_effect": {
+      "description": "Special Effect",
+      "message": "Efecte especial"
+   },
+   "editor_premium_options_title": {
+      "description": "Premium Options",
+      "message": "Opcions premium"
+   },
+   "editor_save_dialog_advanced_encoding_options": {
+      "description": "Title for a section containing advanced, technical options for encoding a file.",
+      "message": "Opcions de codificació avançades"
+   },
+   "editor_save_dialog_alert_title": {
+      "description": "Warning",
+      "message": "Advertència"
+   },
+   "editor_save_dialog_aspect_ratio": {
+      "description": "lock aspect ratio",
+      "message": "Ràtio d'aspecte de bloqueig"
+   },
+   "editor_save_dialog_cancel": {
+      "description": "Cancel",
+      "message": "Cancel · lar"
+   },
+   "editor_save_dialog_chip_animated_image": {
+      "description": "Chip label indicating an animated image format (e.g. GIF, AVIF).",
+      "message": "imatge animada"
+   },
+   "editor_save_dialog_chip_large_file": {
+      "description": "Chip label indicating the format produces a large file size.",
+      "message": "fitxer gran"
+   },
+   "editor_save_dialog_chip_limited_support": {
+      "description": "Chip label indicating the format has limited browser/app support.",
+      "message": "compatibilitat limitada"
+   },
+   "editor_save_dialog_chip_small_file": {
+      "description": "Chip label indicating the format produces a small file size.",
+      "message": "fitxer petit"
+   },
+   "editor_save_dialog_chip_video": {
+      "description": "Chip label indicating a video format (e.g. WebM, MP4).",
+      "message": "vídeo"
+   },
+   "editor_save_dialog_chip_widely_supported": {
+      "description": "Chip label indicating the format is widely supported.",
+      "message": "àmpliament compatible"
+   },
+   "editor_save_dialog_compress": {
+      "description": "Compress & optimize GIF",
+      "message": "Comprimir i optimitzar GIF"
+   },
+   "editor_save_dialog_compress_tooltip": {
+      "description": "Apply GIF compression algorthm to greatly reduce GIF file size and in some cases improve quality. Highly recommeded.",
+      "message": "Apliqueu l'algortm de compressió GIF per reduir molt la mida del fitxer GIF i en alguns casos milloreu la qualitat. Molt recomanat."
+   },
+   "editor_save_dialog_dither_tooltip": {
+      "description": "Apply dither algorithm to frames. Try toggling this option if you experience color quality issues.",
+      "message": "Apliqueu l'algoritme Dither a les imatges. Proveu de commutar aquesta opció si teniu problemes de qualitat del color."
+   },
+   "editor_save_dialog_download_raw_recording": {
+      "description": "Download raw recording",
+      "message": "Descarregueu la gravació RAW"
+   },
+   "editor_save_dialog_estimated_size": {
+      "description": "Estimated GIF Size: ",
+      "message": "Mida GIF estimada:"
+   },
+   "editor_save_dialog_export_sound": {
+      "description": "Include sound (beta)",
+      "message": "Inclou el so (beta)"
+   },
+   "editor_save_dialog_export_sound_tooltip": {
+      "description": "Enable this option to include sound in the video.",
+      "message": "Activa aquesta opció per incloure el so al vídeo."
+   },
+   "editor_save_dialog_frames": {
+      "description": "Frames: ",
+      "message": "Imatges:"
+   },
+   "editor_save_dialog_frames_alert": {
+      "description": "There are currently selected frames, saving will only output these selected frames - ",
+      "message": "Actualment hi ha imatges seleccionades, desar només sortiran aquests fotogrames seleccionats -"
+   },
+   "editor_save_dialog_frames_alert_button": {
+      "description": "Click here to unselect all frames",
+      "message": "Feu clic aquí per desseleccionar totes les imatges"
+   },
+   "editor_save_dialog_frames_alert_title": {
+      "description": "Playback Speed",
+      "message": "Velocitat de reproducció"
+   },
+   "editor_save_dialog_frames_processing": {
+      "description": "Processing Frames: ",
+      "message": "Imatges de processament:"
+   },
+   "editor_save_dialog_height_helper": {
+      "description": "Recorded height is ",
+      "message": "L’alçada gravada és"
+   },
+   "editor_save_dialog_lossy_compression": {
+      "description": "Label for a setting that controls the level of lossy compression, from 0 to 100 percent.",
+      "message": "Compressió amb pèrdua (0 - 100%)"
+   },
+   "editor_save_dialog_number_min_max_validation": {
+      "description": "A value between $minSize$ and $maxSize$ is required.",
+      "message": "Cal un valor entre $minSize$ i $maxSize$.",
+      "placeholders": {
+         "maxSize": {
+            "content": "$2"
+         },
+         "minSize": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_save_dialog_processing_alert": {
+      "description": "Processing this recording will require a lot of memory and processing power. Unless you have a high spec PC it is recommended to do one or more of the following:",
+      "message": "Processament Aquesta gravació requerirà molta memòria i potència de processament. A menys que tingueu un PC d'alta especificació, es recomana fer un o més dels següents:"
+   },
+   "editor_save_dialog_processing_alert_memory": {
+      "description": "Please note if the resulting GIF is blank then you ran out of memory.",
+      "message": "Tingueu en compte que el GIF resultant està en blanc, llavors heu quedat sense memòria."
+   },
+   "editor_save_dialog_processing_alert_point_1": {
+      "description": "Compress and optimize GIF",
+      "message": "Comprimir i optimitzar gif"
+   },
+   "editor_save_dialog_processing_alert_point_2": {
+      "description": "Reduce the width & height",
+      "message": "Reduïu l'amplada i l'alçada"
+   },
+   "editor_save_dialog_processing_alert_point_3": {
+      "description": "Reduce FPS or delete frames",
+      "message": "Reduir les imatges FPS o eliminar les imatges"
+   },
+   "editor_save_dialog_purchase_dialog_compression_description": {
+      "description": "Free users are limited to 3 high quality GIF compressions per day. Upgrade to Premium to have no restrictions.",
+      "message": "Els usuaris gratuïts estan limitats a 3 compressions GIF d’alta qualitat al dia. Actualitzeu a Premium per no tenir restriccions."
+   },
+   "editor_save_dialog_quantization_algorithm": {
+      "description": "Label for a dropdown to select a quantization algorithm.",
+      "message": "Algorisme de quantificació"
+   },
+   "editor_save_dialog_quantization_algorithm_new_alpha": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Alpha.",
+      "message": "Nou (Alfa)"
+   },
+   "editor_save_dialog_quantization_algorithm_new_beta": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Beta.",
+      "message": "Nou (Beta)"
+   },
+   "editor_save_dialog_quantization_algorithm_old": {
+      "description": "An option for the quantization algorithm setting, indicating an older version.",
+      "message": "Antic"
+   },
+   "editor_save_dialog_recording_quality_alert": {
+      "description": "GIF quality is limited for non premium users. To output high quality recordings you can do one of the following:",
+      "message": "La qualitat del GIF és limitada per als usuaris no premium. Per produir enregistraments d'alta qualitat, podeu fer un dels següents:"
+   },
+   "editor_save_dialog_recording_quality_alert_option_1": {
+      "description": "Purchase premium",
+      "message": "Compra Premium"
+   },
+   "editor_save_dialog_recording_quality_alert_option_2": {
+      "description": "Save as a WebM file",
+      "message": "Desa com a fitxer webm"
+   },
+   "editor_save_dialog_reduce_width": {
+      "description": "Reduce width & height",
+      "message": "Reduïu l'amplada i l'alçada"
+   },
+   "editor_save_dialog_reduce_width_tooltip": {
+      "description": "Reduce GIF width and height/quality to improve processing time and produce a smaller file.",
+      "message": "Reduïu l'amplada i l'alçada/qualitat del GIF per millorar el temps de processament i produir un fitxer més petit."
+   },
+   "editor_save_dialog_save": {
+      "description": "Save",
+      "message": "Estalviar"
+   },
+   "editor_save_dialog_save_by": {
+      "description": "Save by",
+      "message": "Estalviar"
+   },
+   "editor_save_dialog_save_by_download": {
+      "description": "Download file",
+      "message": "Descarrega l'arxiu"
+   },
+   "editor_save_dialog_save_by_google_drive": {
+      "description": "Upload to Google Drive & copy link",
+      "message": "Carregueu a Google Drive i Copieu enllaç"
+   },
+   "editor_save_dialog_save_location": {
+      "description": "Save location",
+      "message": "Ubicació de desar"
+   },
+   "editor_save_dialog_save_location_downloads": {
+      "description": "Downloads folder",
+      "message": "Carpeta de descàrregues"
+   },
+   "editor_save_dialog_save_location_downloads_subfolder": {
+      "description": "Downloads subfolder",
+      "message": "Descàrregues Subfolder"
+   },
+   "editor_save_dialog_save_location_select": {
+      "description": "Manually select location",
+      "message": "Seleccioneu manualment la ubicació"
+   },
+   "editor_save_dialog_title": {
+      "description": "Save",
+      "message": "Estalviar"
+   },
+   "editor_save_dialog_title_processing": {
+      "description": "Processing...",
+      "message": "Processament ..."
+   },
+   "editor_save_dialog_title_uploading": {
+      "description": "Uploading...",
+      "message": "Pujar ..."
+   },
+   "editor_save_dialog_width_helper": {
+      "description": "Recorded width is ",
+      "message": "L'amplada gravada és"
+   },
+   "editor_text": {
+      "description": "Open in editor",
+      "message": "Obert a l'editor"
+   },
+   "editor_tip_delete_items": {
+      "description": "Pro tip: Delete added items by selecting the item and pressing the delete key.",
+      "message": "Pro Tip: Suprimeix els elements afegits seleccionant l'element i prement la tecla Suprimeix."
+   },
+   "editor_tip_edit_specific_frames": {
+      "description": "Pro tip: You can edit specific frames by using the 'Apply edits to selected option'",
+      "message": "Suggeriment Pro: podeu editar imatges específiques mitjançant l'opció \"Aplica els edicions a l'opció seleccionada\""
+   },
+   "editor_tip_scroll": {
+      "description": "Pro tip: Scroll when hovering the screenshot/recording to zoom.",
+      "message": "Pro Tip: Desplaceu-vos en flotar la captura de pantalla / gravació per ampliar zoom."
+   },
+   "editor_tip_shift_multiple_items": {
+      "description": "Pro tip: When using the selecting tool hold down shift to select more than one item.",
+      "message": "Pro Consell: quan utilitzeu la selecció de l'eina Manteniu premuda la tecla Maj per seleccionar més d'un element."
+   },
+   "editor_tip_update_multiple_items": {
+      "description": "Pro tip: You can scale, rotate, move and delete multiple items at once.",
+      "message": "Pro Consell: podeu escalar, girar, moure i suprimir diversos elements alhora."
+   },
+   "editor_tip_update_text": {
+      "description": "Pro tip: Double click on text to edit it.",
+      "message": "Pro Consell: feu doble clic al text per editar-lo."
+   },
+   "editor_upload_dialog_alert_copy_failed_message": {
+      "description": "This may have occurred due to the window not being focused.",
+      "message": "Això pot haver -se produït a causa de que la finestra no es centri."
+   },
+   "editor_upload_dialog_alert_copy_failed_title": {
+      "description": "Copy to clipboard failed",
+      "message": "Copia al porta -retalls que ha fallat"
+   },
+   "editor_upload_dialog_alert_copy_success_title": {
+      "description": "Copied to clipboard",
+      "message": "Copiat al porta -retalls"
+   },
+   "editor_upload_dialog_alert_upload_failed": {
+      "description": "Upload Failed",
+      "message": "La càrrega ha fallat"
+   },
+   "editor_upload_dialog_alert_upload_failed_link": {
+      "description": "Try again.",
+      "message": "Torneu -ho a provar."
+   },
+   "editor_upload_dialog_alert_upload_failed_message": {
+      "description": "Please make sure you are connected to the internet and have accepted Google Drive permissions.",
+      "message": "Assegureu -vos que esteu connectats a Internet i que hagueu acceptat els permisos de Google Drive."
+   },
+   "editor_upload_dialog_cancel_and_download": {
+      "description": "Cancel and download file",
+      "message": "Cancel·la i descarrega el fitxer"
+   },
+   "editor_upload_dialog_close": {
+      "description": "Close",
+      "message": "Tanca"
+   },
+   "editor_upload_dialog_copy_link": {
+      "description": "Copy link",
+      "message": "Enllaç de còpia"
+   },
+   "editor_upload_dialog_link_public": {
+      "description": "Allow anyone with the link to view.",
+      "message": "Permet que qualsevol persona amb l'enllaç pugui veure."
+   },
+   "editor_zoom_crop_animation_animated": {
+      "description": "Sub-label indicating an animation type is animated.",
+      "message": "Animat"
+   },
+   "editor_zoom_crop_animation_crop": {
+      "description": "Animation type option for static cropping without animation.",
+      "message": "Retallar"
+   },
+   "editor_zoom_crop_animation_static": {
+      "description": "Sub-label indicating an animation type is static (no animation).",
+      "message": "Estàtic"
+   },
+   "editor_zoom_crop_animation_type": {
+      "description": "Label for the animation type selection section.",
+      "message": "Tipus d'Animació"
+   },
+   "editor_zoom_crop_animation_zoom_in": {
+      "description": "Animation type option for zooming in on the selected area.",
+      "message": "Ampliar"
+   },
+   "editor_zoom_crop_animation_zoom_out": {
+      "description": "Animation type option for zooming out from the selected area.",
+      "message": "Reduir"
+   },
+   "editor_zoom_crop_apply": {
+      "description": "Apply button in zoom/crop dialog.",
+      "message": "Aplicar"
+   },
+   "editor_zoom_crop_cancel": {
+      "description": "Cancel button in zoom/crop dialog.",
+      "message": "Cancel·lar"
+   },
+   "editor_zoom_crop_change_area": {
+      "description": "Tooltip text for button to change the selected crop area.",
+      "message": "Canviar Àrea"
+   },
+   "editor_zoom_crop_dialog_title": {
+      "description": "Title for the zoom and crop dialog in the editor.",
+      "message": "Zoom i Retall"
+   },
+   "editor_zoom_crop_draw_instruction": {
+      "description": "Instruction text for the user to draw a crop area on the frame preview.",
+      "message": "Dibuixa la Selecció al Fotograma"
+   },
+   "editor_zoom_crop_frame_end": {
+      "description": "Label for the end frame number.",
+      "message": "Final"
+   },
+   "editor_zoom_crop_frame_range": {
+      "description": "Label for the frame range selection section.",
+      "message": "Rang de Fotogrames"
+   },
+   "editor_zoom_crop_frame_start": {
+      "description": "Label for the start frame number.",
+      "message": "Inici"
+   },
+   "editor_zoom_crop_frames_menu": {
+      "description": "Menu item label for zoom/crop frames feature.",
+      "message": "Zoom/Retallar Fotogrames"
+   },
+   "editor_zoom_crop_no_area_selected": {
+      "description": "Message displayed when no crop area has been selected.",
+      "message": "Cap Àrea Seleccionada"
+   },
+   "editor_zoom_crop_select_area": {
+      "description": "Button text to select a crop area on the frame.",
+      "message": "Seleccionar Àrea"
+   },
+   "editor_zoom_crop_smooth_animation": {
+      "description": "Checkbox label for smoothing animation by interpolating frames.",
+      "message": "Animació Suau Afegint Fotogrames"
+   },
+   "editor_zoom_crop_transition": {
+      "description": "Label for the transition duration section (number of frames for animation).",
+      "message": "Transició"
+   },
+   "enable_drawing_text": {
+      "description": "Enable drawing",
+      "message": "Activa el dibuix"
+   },
+   "enable_drawing_tooltip_text": {
+      "description": "This option allows users to draw in the selected area while holding down the ctrl key.",
+      "message": "Aquesta opció permet als usuaris dibuixar a l'àrea seleccionada mentre manteniu premuda la tecla Ctrl."
+   },
+   "extension_description": {
+      "description": "Take screenshots & record GIFs instantly! Edit & share seamlessly. Your all-in-one screenshot and screen recording solution.",
+      "message": "Feu captures de pantalla i registreu GIF a l’instant. Edita i comparteix perfectament. La vostra captura de pantalla i una solució de gravació de pantalla tot en un."
+   },
+   "extension_name": {
+      "description": "Chrome Capture - screenshot & GIF",
+      "message": "Captura de Chrome: captura de pantalla i GIF"
+   },
+   "extension_short_name": {
+      "description": "Chrome Capture",
+      "message": "Captura de crom"
+   },
+   "file_access_text": {
+      "description": "After screenshot action",
+      "message": "Acció després de la captura de pantalla"
+   },
+   "filename_text": {
+      "description": "Filename",
+      "message": "Nom de l'arxiu"
+   },
+   "frames_per_sec_short_text": {
+      "description": "FPS",
+      "message": "Fps"
+   },
+   "frames_per_sec_text": {
+      "description": "Frames per second (fps)",
+      "message": "Imatges per segon (fps)"
+   },
+   "frames_text": {
+      "description": "frames",
+      "message": "imatges"
+   },
+   "free_settings_text": {
+      "description": "Free Settings",
+      "message": "Configuració lliure"
+   },
+   "fullscreen_info_modal_cancel": {
+      "description": "Cancel",
+      "message": "Cancel · lar"
+   },
+   "fullscreen_info_modal_continue": {
+      "description": "Are you sure you want to continue with full screen capture?",
+      "message": "Esteu segur que voleu continuar amb la captura de pantalla completa?"
+   },
+   "fullscreen_info_modal_do_not_show": {
+      "description": "Do not show this again",
+      "message": "No tornis a mostrar això"
+   },
+   "fullscreen_info_modal_message": {
+      "description": "You have used a Chrome Capture shortcut without the cropping tool, this will capture in full screen mode.",
+      "message": "Heu utilitzat una drecera de captura de Chrome sense l'eina de cultiu, això capturarà en mode de pantalla completa."
+   },
+   "fullscreen_info_modal_open_cropping": {
+      "description": "Open cropping tool",
+      "message": "Eina de cultiu obert"
+   },
+   "fullscreen_info_modal_shortcut_cropping_tool": {
+      "description": "Alt + C: Open/close Chrome Capture cropping tool",
+      "message": "Alt + C: Obriu / Tancar l'eina de cultiu de captura de crom"
+   },
+   "fullscreen_info_modal_shortcut_fullpage_screenshot": {
+      "description": "Alt + Shift + S: Full webpage screenshot (beta)",
+      "message": "Alt + Maj + S: Captura de pantalla completa de la pàgina web (Beta)"
+   },
+   "fullscreen_info_modal_shortcut_linkt": {
+      "description": "You can configure these here: ",
+      "message": "Podeu configurar-los aquí:"
+   },
+   "fullscreen_info_modal_shortcut_recording": {
+      "description": "Alt + R: Start/stop recording",
+      "message": "Alt + R: Inici / Atura la gravació"
+   },
+   "fullscreen_info_modal_shortcut_screenshot": {
+      "description": "Alt + S: Visible area screenshot",
+      "message": "Alt + S: Captura de pantalla de la zona visible"
+   },
+   "fullscreen_info_modal_shortcuts": {
+      "description": "Default shortcuts are: ",
+      "message": "Les dreceres predeterminades són:"
+   },
+   "fullscreen_info_modal_start": {
+      "description": "Start full screen capture",
+      "message": "Inicieu la captura de pantalla completa"
+   },
+   "fullscreen_info_modal_title": {
+      "description": "Full screen capture",
+      "message": "Captura de pantalla completa"
+   },
+   "general_not_available": {
+      "description": "N/A",
+      "message": "N/D"
+   },
+   "get_premium": {
+      "description": "Get Premium",
+      "message": "Obtenir premium"
+   },
+   "height_text": {
+      "description": "Width (px)",
+      "message": "Amplada (px)"
+   },
+   "hi": {
+      "description": "Hi",
+      "message": "Apuntar"
+   },
+   "internet_connection_required": {
+      "description": "Internet connection is required to upgrade to premium.",
+      "message": "La connexió a Internet és necessària per actualitzar-se a Premium."
+   },
+   "manage_subscription_access_until_date": {
+      "description": "Your plan will not renew. You can access premium features until $date$.",
+      "message": "El vostre pla no es renovarà. Podeu accedir a les funcions premium fins al $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_cancel_button": {
+      "description": "Cancel subscription",
+      "message": "Cancel·la la subscripció"
+   },
+   "manage_subscription_cancel_confirm_cancel_button": {
+      "description": "Keep Premium",
+      "message": "Mantenir Premium"
+   },
+   "manage_subscription_cancel_confirm_confirm_button": {
+      "description": "Continue to cancel",
+      "message": "Continua per cancel·lar"
+   },
+   "manage_subscription_cancel_confirm_description": {
+      "description": "You will lose access to Premium features and Premium options will be reset.",
+      "message": "Perdreu l'accés a les funcions Premium i les opcions Premium es restabliran."
+   },
+   "manage_subscription_cancel_confirm_title": {
+      "description": "Are you sure you want to cancel your subscription?",
+      "message": "Esteu segur que voleu cancel·lar la subscripció?"
+   },
+   "manage_subscription_ended_on_date": {
+      "description": "Subscription ended on $date$.",
+      "message": "La subscripció va finalitzar el $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_ends_on_date": {
+      "description": "Subscription ends on $date$.",
+      "message": "La subscripció finalitza el $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_next_payment_full": {
+      "description": "Next payment: $price$ on $date$",
+      "message": "Pròxim pagament: $price$ el $date$",
+      "placeholders": {
+         "date": {
+            "content": "$2"
+         },
+         "price": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_paid_full": {
+      "description": "Paid: $billingCycle$",
+      "message": "Pagat: $billingCycle$",
+      "placeholders": {
+         "billingCycle": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_resubscribe_prompt": {
+      "description": " To use premium features again, please upgrade.",
+      "message": " Per tornar a utilitzar les funcions premium, actualitzeu."
+   },
+   "manage_subscription_update_payment_button": {
+      "description": "Update payment method",
+      "message": "Actualitza la forma de pagament"
+   },
+   "max_recording_dimension_size_text": {
+      "description": "Max recording resolution/quality",
+      "message": "Resolució / qualitat de gravació màxima"
+   },
+   "no_limit_text": {
+      "description": "No limit",
+      "message": "Sense límit"
+   },
+   "open_text": {
+      "description": "Open",
+      "message": "Obert"
+   },
+   "options_default_action": {
+      "description": "Extension icon click action",
+      "message": "Acció en fer clic a la icona de l'extensió"
+   },
+   "options_dimension_size_1000": {
+      "description": "1000 pixels",
+      "message": "1000 píxels"
+   },
+   "options_dimension_size_1080p": {
+      "description": "1920 pixels (1080p)",
+      "message": "1920 píxels (1080p)"
+   },
+   "options_dimension_size_480p": {
+      "description": "640 pixels (480p)",
+      "message": "640 píxels (480p)"
+   },
+   "options_dimension_size_4k": {
+      "description": "3840 pixels (4K)",
+      "message": "3840 píxels (4K)"
+   },
+   "options_dimension_size_720p": {
+      "description": "1280 pixels (720p)",
+      "message": "1280 píxels (720p)"
+   },
+   "options_embedded_options_permission_warning": {
+      "description": "Cursor highlighting, click effects, and drawing tools will only work until the page reloads or changes. To keep them active after reloads or redirects, you'll need to grant an extra permission.",
+      "message": "El ressaltat del cursor, els efectes de clic i les eines de dibuix només funcionaran fins que la pàgina es torni a carregar o canviï. Per mantenir-los actius després de tornar a carregar o redirigir, haureu de concedir un permís addicional."
+   },
+   "options_enable_notifications": {
+      "description": "Enable notifications",
+      "message": "Activa les notificacions"
+   },
+   "options_enable_notifications_tooltip": {
+      "description": "Display notifications when full screen recording starts and processing recordings in the background.",
+      "message": "Mostra les notificacions quan s’inicia la gravació de pantalla completa i es processa enregistraments en segon pla."
+   },
+   "options_enable_subfolder_downloads": {
+      "description": "Download files into subfolder",
+      "message": "Descarregueu fitxers a la subfoldera"
+   },
+   "options_enable_subfolder_downloads_tooltip": {
+      "description": "Download files into a subfolder of your choice inside the downloads folder. This option is useful for organising your captures.",
+      "message": "Descarregueu els fitxers en un subcarpolós que escolliu a la carpeta de descàrregues. Aquesta opció és útil per organitzar les vostres captures."
+   },
+   "options_how_to_use_btn": {
+      "description": "How to use",
+      "message": "Com utilitzar"
+   },
+   "options_language": {
+      "description": "Language",
+      "message": "Llengua"
+   },
+   "options_open_containing_folder_on_save": {
+      "description": "Open containing folder after saving",
+      "message": "Obrir la carpeta contenidora després de desar"
+   },
+   "options_open_popup": {
+      "description": "Open popup",
+      "message": "Obrir popup"
+   },
+   "options_open_selected_area": {
+      "description": "Open selected area capture",
+      "message": "Obriu la captura de l'àrea seleccionada"
+   },
+   "options_section_general": {
+      "description": "Title for the General settings section in the options page",
+      "message": "Configuració general"
+   },
+   "options_section_output": {
+      "description": "Title for the Output and Saving settings section in the options page",
+      "message": "Sortida i desat"
+   },
+   "options_section_recording": {
+      "description": "Title for the Recording settings section in the options page",
+      "message": "Configuració de gravació"
+   },
+   "options_section_visuals": {
+      "description": "Title for the Cursor and Interaction Visuals settings section in the options page",
+      "message": "Visuals del cursor i interacció"
+   },
+   "options_shortcuts_btn": {
+      "description": "Shortcuts",
+      "message": "Dreceres"
+   },
+   "options_subfolder_downloads_name": {
+      "description": "Subfolder name:",
+      "message": "Nom del subcarnador:"
+   },
+   "options_support_btn": {
+      "description": "Support",
+      "message": "Ajut"
+   },
+   "overlay_help_text": {
+      "description": "Click and drag to choose your selected area. \nRight click to snap to an element, hold shift for multiple.",
+      "message": "Feu clic i arrossegueu per triar l'àrea seleccionada. \n Feu clic amb el botó dret per ajustar-vos a un element, manteniu premut el canvi per a múltiples."
+   },
+   "plan_billing_annually": {
+      "description": "Annually",
+      "message": "Anual"
+   },
+   "plan_billing_monthly": {
+      "description": "Monthly",
+      "message": "Mensual"
+   },
+   "plan_name_custom": {
+      "description": "Custom Plan",
+      "message": "Pla personalitzat"
+   },
+   "popup_capture_tab": {
+      "description": "Capture",
+      "message": "Capturar"
+   },
+   "popup_desktop_screenshot_tooltip": {
+      "description": "Capture the entire screen, desktop, or any open application.",
+      "message": "Captura tota la pantalla, l'escriptori o qualsevol aplicació oberta."
+   },
+   "popup_editor_icon_tooltip": {
+      "description": "Open Editor",
+      "message": "Editor obert"
+   },
+   "popup_full_page_screenshot_tooltip": {
+      "description": "Capture the current tab full webpage, including content beyond the visible area.",
+      "message": "Captura la pàgina web completa de la pestanya actual, inclòs contingut més enllà de la zona visible."
+   },
+   "popup_full_webpage": {
+      "description": "Full webpage",
+      "message": "Pàgina web completa"
+   },
+   "popup_no_scripts_alert": {
+      "description": "Selected area and full webpage screenshots are not possible here. These features are available on other websites.",
+      "message": "Les captures de pantalla de la zona seleccionada i la pàgina web completa no són possibles aquí. Aquestes funcions estan disponibles en altres llocs web."
+   },
+   "popup_record_tab": {
+      "description": "Record",
+      "message": "Historial"
+   },
+   "popup_recording_limit_alert": {
+      "description": "Record up to $seconds$ seconds per GIF. Premium users can update this from the ",
+      "message": "Registra fins a $seconds$ segons per gif. Els usuaris premium poden actualitzar -ho des del",
+      "placeholders": {
+         "seconds": {
+            "content": "$1"
+         }
+      }
+   },
+   "popup_recording_limit_settings_link": {
+      "description": "settings page.",
+      "message": "Pàgina de configuració."
+   },
+   "popup_screen_or_app": {
+      "description": "Full screen or app",
+      "message": "Pantalla o aplicació completa"
+   },
+   "popup_selected_area": {
+      "description": "Selected area",
+      "message": "Àrea seleccionada"
+   },
+   "popup_selected_area_screenshot_tooltip": {
+      "description": "Capture a specific area of the current tab.",
+      "message": "Captura una àrea específica de la pestanya actual."
+   },
+   "popup_set_shortcut": {
+      "description": "set shortcut",
+      "message": "Estableix drecera"
+   },
+   "popup_settings_icon_tooltip": {
+      "description": "Open Settings",
+      "message": "Configuració oberta"
+   },
+   "popup_tab_screenshot_tooltip": {
+      "description": "Capture the visible part of the current tab.",
+      "message": "Captura la part visible de la pestanya actual."
+   },
+   "popup_this_tab": {
+      "description": "This tab",
+      "message": "Aquesta pestanya"
+   },
+   "popup_waiting_for_desktop_selection_alert": {
+      "description": "FULL SCREEN OR APP capture did not start because you did not select an option from the popup dialog. If you have multiple monitors it may have opened on another monitor.",
+      "message": "La pantalla completa o la captura d'aplicacions no van començar perquè no heu seleccionat una opció del diàleg emergent. Si teniu diversos monitors, pot haver -se obert en un altre monitor."
+   },
+   "premium_settings_text": {
+      "description": "Premium Settings",
+      "message": "Configuració premium"
+   },
+   "purchase_btn_text": {
+      "description": "Get Premium!",
+      "message": "Obteniu Premium!"
+   },
+   "purchase_description_limited_time_text": {
+      "description": "Lock in this price now - limited time offer before we switch to subscriptions!",
+      "message": "Assegura aquest preu ara: oferta per temps limitat abans de canviar a subscripcions!"
+   },
+   "purchase_description_text": {
+      "description": "Just one payment unlocks all premium features forever. No recurring fees!",
+      "message": "Un sol pagament desbloqueja totes les funcions premium per a tota la vida. Sense quotes recurrents!"
+   },
+   "purchase_feature_30fps": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "enregistrament a 30 FPS suau com la seda"
+   },
+   "purchase_feature_4K": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "enregistrament 4K nítid"
+   },
+   "purchase_feature_alter_frame_rate": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "freqüències de fotogrames personalitzades"
+   },
+   "purchase_feature_alter_playback_speed": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "efectes de càmera lenta i time-lapse"
+   },
+   "purchase_feature_blur": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "l'eina de desenfocament"
+   },
+   "purchase_feature_crop_recording": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "retallada precisa de GIF"
+   },
+   "purchase_feature_default": {
+      "description": "Feature that goes in $feature$ placeholder. Default fallback.",
+      "message": "aquesta funcionalitat"
+   },
+   "purchase_feature_frame_edits": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "potent edició fotograma a fotograma"
+   },
+   "purchase_feature_highlight": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "l'eina de ressaltat"
+   },
+   "purchase_feature_no_duration_limit": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "durada d'enregistrament il·limitada"
+   },
+   "purchase_feature_special_effect": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "efectes especials"
+   },
+   "purchase_feature_step_tool": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "l'eina de passos"
+   },
+   "purchase_feature_svg": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "afegir icones i logotips personalitzats"
+   },
+   "purchase_feature_text_and_annotation_customization": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "control total sobre el text i les anotacions"
+   },
+   "purchase_feature_unlimited_gif_compression": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "compressió GIF avançada il·limitada"
+   },
+   "purchase_feature_update_end_time": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "temps d'enregistrament personalitzat"
+   },
+   "purchase_login_dialog_closed_by_user_alert": {
+      "description": "Looks like you closed the sign in dialog, premium users must sign in so you don't lose premium access.",
+      "message": "Sembla que heu tancat el quadre de diàleg, els usuaris de Premium han d’inscriure’s perquè no perdeu l’accés premium."
+   },
+   "purchase_login_dialog_google_button": {
+      "description": "Sign in with Google",
+      "message": "Inicieu la sessió amb Google"
+   },
+   "purchase_login_dialog_title": {
+      "description": "Sign in required",
+      "message": "Inicieu la sessió necessària"
+   },
+   "purchase_login_text": {
+      "description": "Sign in with Google to link your purchase to your account.",
+      "message": "Inicia sessió amb Google per enllaçar la teva compra al teu compte."
+   },
+   "purchase_login_text_window_opened": {
+      "description": "Sign into Google in the popup window.",
+      "message": "Inicieu la sessió a Google a la finestra emergent."
+   },
+   "purchase_subscription_title_text": {
+      "description": "Choose the plan that fits your needs",
+      "message": "Trieu el pla que s'ajusti a les vostres necessitats"
+   },
+   "purchase_title_text": {
+      "description": "Get Lifetime Premium Access Today!",
+      "message": "Obtén Accés Premium Vitalici Avui!"
+   },
+   "purchase_title_text_blocked_feature": {
+      "description": "That feature requires Premium",
+      "message": "Aquesta funcionalitat requereix Premium"
+   },
+   "purchase_title_text_blocked_pro_feature": {
+      "description": "That feature requires Premium Pro",
+      "message": "Aquesta funció requereix Premium Pro"
+   },
+   "purchase_title_text_blocked_pro_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium Pro paywall.",
+      "message": "Desbloqueja $feature$ amb Premium Pro",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchase_title_text_blocked_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium paywall.",
+      "message": "Desbloqueja $feature$ amb Premium",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_already_premium_user": {
+      "description": "Already a premium user?",
+      "message": "Ja és un usuari premium?"
+   },
+   "purchases_bill_me": {
+      "description": "Bill me:",
+      "message": "Factureu-me:"
+   },
+   "purchases_checkout_unavailable_message": {
+      "description": "Message shown when checkout could not be started.",
+      "message": "Ara mateix no s’ha pogut iniciar el procés d’actualització. Torneu-ho a provar."
+   },
+   "purchases_compare_12_fps": {
+      "description": "12FPS",
+      "message": "12FPS"
+   },
+   "purchases_compare_3_per_day": {
+      "description": "3 per day",
+      "message": "3 al dia"
+   },
+   "purchases_compare_add_custom_shape_tool": {
+      "description": "Add custom shape/icon tool",
+      "message": "Eina per afegir formes/icones personalitzades"
+   },
+   "purchases_compare_benefits": {
+      "description": "Benefits",
+      "message": "Avantatges"
+   },
+   "purchases_compare_blur_tool": {
+      "description": "Blur tool",
+      "message": "Eina de desenfocament"
+   },
+   "purchases_compare_close_button_label": {
+      "description": "Close",
+      "message": "Tancar"
+   },
+   "purchases_compare_compression": {
+      "description": "High quality GIF compression",
+      "message": "Compressió GIF d'alta qualitat"
+   },
+   "purchases_compare_core_capture_features": {
+      "description": "Core Capture Features",
+      "message": "Funcions de captura principals"
+   },
+   "purchases_compare_crop_recordings": {
+      "description": "Crop recordings",
+      "message": "Retalleu els enregistraments"
+   },
+   "purchases_compare_customize_editing_tools": {
+      "description": "Customize editing tools (font, size color)",
+      "message": "Personalitzeu les eines d'edició (tipus de lletra, mida, color)"
+   },
+   "purchases_compare_drawing": {
+      "description": "Draw while recording",
+      "message": "Dibuixa durant la gravació"
+   },
+   "purchases_compare_early_access": {
+      "description": "Early access to new features",
+      "message": "Accés anticipat a les noves funcions"
+   },
+   "purchases_compare_editing": {
+      "description": "Edit captures",
+      "message": "Edita captures"
+   },
+   "purchases_compare_editing_free": {
+      "description": "basic editing",
+      "message": "Edició bàsica"
+   },
+   "purchases_compare_editing_suite": {
+      "description": "Editing Suite",
+      "message": "Suite d'edició"
+   },
+   "purchases_compare_frame_editing": {
+      "description": "Frame editing",
+      "message": "Edició de marc"
+   },
+   "purchases_compare_frame_rate": {
+      "description": "Adjust Frame Rate",
+      "message": "Ajusta la Cadència d'Imatges"
+   },
+   "purchases_compare_frame_specific_edits": {
+      "description": "Frame specific edits",
+      "message": "Edicions específiques per a fotogrames"
+   },
+   "purchases_compare_free_draw_tools": {
+      "description": "Free draw, line, arrow, rectangle, circle, text tools",
+      "message": "Eines de dibuix lliure, línia, fletxa, rectangle, cercle i text"
+   },
+   "purchases_compare_full_webpage_screenshots": {
+      "description": "Unlimited full page screenshots.",
+      "message": "Captures de pantalla de pàgines completes il·limitades."
+   },
+   "purchases_compare_highlight_tool": {
+      "description": "Highlight tool",
+      "message": "Eina de ressaltat"
+   },
+   "purchases_compare_live_recording_tools": {
+      "description": "Live Recording Tools",
+      "message": "Eines d'enregistrament en directe"
+   },
+   "purchases_compare_mouse": {
+      "description": "Click and mouse indication",
+      "message": "Feu clic i indicació del ratolí"
+   },
+   "purchases_compare_plans": {
+      "description": "Compare plans",
+      "message": "Compara els plans"
+   },
+   "purchases_compare_plans_premium_button": {
+      "description": "Upgrade to Premium",
+      "message": "Actualitza a Premium"
+   },
+   "purchases_compare_playback_speed": {
+      "description": "Tune recording playback speed",
+      "message": "Sintonitza la velocitat de reproducció"
+   },
+   "purchases_compare_priority_support": {
+      "description": "Priority support and feature requests",
+      "message": "Suport prioritari i sol·licituds de funcions"
+   },
+   "purchases_compare_recording": {
+      "description": "Unlimited GIF recordings.",
+      "message": "Enregistraments GIF il·limitats."
+   },
+   "purchases_compare_recording_free": {
+      "description": "15sec limit per GIF",
+      "message": "Límit de 15 segons per gif"
+   },
+   "purchases_compare_recording_quality": {
+      "description": "High quality GIFs",
+      "message": "Gifs d'alta qualitat"
+   },
+   "purchases_compare_recording_quality_control": {
+      "description": "Recording Quality & Control",
+      "message": "Qualitat i control de l'enregistrament"
+   },
+   "purchases_compare_recording_quality_free": {
+      "description": "1000 pixels max",
+      "message": "1000 píxels max"
+   },
+   "purchases_compare_screenshots": {
+      "description": "Unlimited screenshots.",
+      "message": "Captures de pantalla il·limitades."
+   },
+   "purchases_compare_special_effects": {
+      "description": "Recording special effects",
+      "message": "Gravació d'efectes especials"
+   },
+   "purchases_compare_up_to_1080p": {
+      "description": "Up to 1080p",
+      "message": "Fins a 1080p"
+   },
+   "purchases_compare_up_to_24_fps": {
+      "description": "Up to 24FPS",
+      "message": "Fins a 24FPS"
+   },
+   "purchases_compare_up_to_30_fps": {
+      "description": "Up to 30FPS",
+      "message": "Fins a 30FPS"
+   },
+   "purchases_compare_up_to_4k_plus": {
+      "description": "Up to 4K+",
+      "message": "Fins a 4K+"
+   },
+   "purchases_current_plan": {
+      "description": "Current plan",
+      "message": "Pla actual"
+   },
+   "purchases_features": {
+      "description": "Features",
+      "message": "Característiques"
+   },
+   "purchases_free": {
+      "description": "Free",
+      "message": "Lliure"
+   },
+   "purchases_free_button": {
+      "description": "Free to use",
+      "message": "Lliure d'utilitzar"
+   },
+   "purchases_free_feature_editing": {
+      "description": "Basic editing",
+      "message": "Edició bàsica"
+   },
+   "purchases_free_feature_recording": {
+      "description": "Basic GIF recording",
+      "message": "Gravació bàsica GIF"
+   },
+   "purchases_free_feature_screenshots": {
+      "description": "Unlimited screenshots",
+      "message": "Captures de pantalla il·limitades"
+   },
+   "purchases_free_plan_description": {
+      "description": "Get started with our essential capture tools. Completely free for basic everyday use.",
+      "message": "Comenceu amb les nostres eines de captura essencials. Completament gratuït per a un ús diari bàsic."
+   },
+   "purchases_plan_save_up_to_percentage": {
+      "description": "Save up to",
+      "message": "Estalvieu fins a"
+   },
+   "purchases_premium": {
+      "description": "Premium",
+      "message": "Premi"
+   },
+   "purchases_premium_billed_annually": {
+      "description": "Billed annually",
+      "message": "Facturació anual"
+   },
+   "purchases_premium_button": {
+      "description": "Get lifetime access",
+      "message": "Obtén accés vitalici"
+   },
+   "purchases_premium_feature_compression": {
+      "description": "High quality GIF compression",
+      "message": "Compressió GIF d'alta qualitat"
+   },
+   "purchases_premium_feature_editing": {
+      "description": "Feature rich editing",
+      "message": "Característiques d'edició rica"
+   },
+   "purchases_premium_feature_free": {
+      "description": "Everything from free plan",
+      "message": "Inclou les funcionalitats del pla gratuït"
+   },
+   "purchases_premium_feature_marked_with_star": {
+      "description": "All features marked with a star",
+      "message": "Totes les funcions marcades amb una estrella"
+   },
+   "purchases_premium_feature_recording": {
+      "description": "Unlimited high quality GIF recording",
+      "message": "Gravació de GIF d'alta qualitat il·limitat"
+   },
+   "purchases_premium_feature_recording_1080p": {
+      "description": "High quality GIF recording, up to 1080p, 24fps",
+      "message": "Enregistrament de GIF d'alta qualitat, fins a 1080p, 24fps"
+   },
+   "purchases_premium_feature_refundable": {
+      "description": "Fully refundable",
+      "message": "Totalment reemborsable"
+   },
+   "purchases_premium_feature_risk_free": {
+      "description": "Risk-free: 7 day trial, cancel anytime",
+      "message": "Sense riscos: prova de 7 dies, cancel·leu en qualsevol moment"
+   },
+   "purchases_premium_feature_unlimited_length": {
+      "description": "Unlimited GIF recording length",
+      "message": "Durada d'enregistrament de GIF il·limitada"
+   },
+   "purchases_premium_price_info": {
+      "description": "one time fee",
+      "message": "una tarifa de temps"
+   },
+   "purchases_premium_price_per_month": {
+      "description": "/ month",
+      "message": "/ mes"
+   },
+   "purchases_premium_pro": {
+      "description": "Premium Pro",
+      "message": "Premium Pro"
+   },
+   "purchases_premium_pro_editing_tools": {
+      "description": "Advanced editing tools (blurring, special effects, etc.)",
+      "message": "Eines d'edició avançades (desenfocament, efectes especials, etc.)"
+   },
+   "purchases_premium_pro_feature_early_access": {
+      "description": "Early access to new features",
+      "message": "Accés anticipat a les noves funcions"
+   },
+   "purchases_premium_pro_feature_marked_with_crown": {
+      "description": "All features marked with a star and crown",
+      "message": "Totes les funcions marcades amb una estrella i una corona"
+   },
+   "purchases_premium_pro_feature_premium_plan": {
+      "description": "Everything from Premium plan",
+      "message": "Tot el del pla Premium"
+   },
+   "purchases_premium_pro_feature_quality": {
+      "description": "Max resolution recording, 4K+ and 30fps",
+      "message": "Enregistrament de màxima resolució, 4K+ i 30fps"
+   },
+   "purchases_premium_pro_feature_support": {
+      "description": "Priority support and feature requests",
+      "message": "Suport prioritari i sol·licituds de funcions"
+   },
+   "purchases_premium_pro_upgrade": {
+      "description": "Upgrade to Pro",
+      "message": "Actualitza a Pro"
+   },
+   "purchases_premium_save_percentage": {
+      "description": "save $savingsPercentage$%",
+      "message": "estalvieu un $savingsPercentage$%",
+      "placeholders": {
+         "savingsPercentage": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_premium_try_for_free": {
+      "description": "Try for free",
+      "message": "Proveu-ho gratuïtament"
+   },
+   "purchases_price_unavailable": {
+      "description": "Label shown in place of a price when it is unavailable.",
+      "message": "Preu no disponible"
+   },
+   "purchases_pricing_unavailable_message": {
+      "description": "Message shown when the Premium pricing request was blocked or failed.",
+      "message": "La sol·licitud del preu de Premium s’ha bloquejat o ha fallat. Això pot passar si una xarxa de feina, una VPN, un bloquejador d’anuncis, una extensió de privadesa o un tallafoc bloqueja Paddle."
+   },
+   "purchases_pricing_unavailable_title": {
+      "description": "Title shown when Premium pricing could not be loaded.",
+      "message": "No s’ha pogut carregar el preu de Premium"
+   },
+   "purchases_pricing_unavailable_troubleshooting_extensions": {
+      "description": "Troubleshooting step telling the user to disable VPN or privacy tools temporarily.",
+      "message": "Desactiveu temporalment la VPN, el bloquejador d’anuncis o les extensions de privadesa i torneu-ho a provar."
+   },
+   "purchases_pricing_unavailable_troubleshooting_intro": {
+      "description": "Intro text for troubleshooting steps when pricing is unavailable.",
+      "message": "Coses que podeu provar:"
+   },
+   "purchases_pricing_unavailable_troubleshooting_network": {
+      "description": "Troubleshooting step telling the user to try another network or browser profile.",
+      "message": "Proveu una altra xarxa o obriu l’extensió en un perfil de Chrome diferent."
+   },
+   "purchases_pricing_unavailable_troubleshooting_workplace": {
+      "description": "Troubleshooting step telling the user workplace policy may be blocking Paddle.",
+      "message": "Si utilitzeu un dispositiu de feina, la política de la xarxa o del navegador pot estar bloquejant Paddle."
+   },
+   "purchases_sign_in_here": {
+      "description": "Sign in here",
+      "message": "Inicieu la sessió aquí"
+   },
+   "purchases_start_trial_cancel_anytime": {
+      "description": "Call to action to start a free trial.",
+      "message": "Inicia la teva prova gratuïta de 7 dies per continuar. Cancel·la quan vulguis."
+   },
+   "purchases_try_premium_for_free": {
+      "description": "Try Premium for Free",
+      "message": "Proveu Premium gratuïtament"
+   },
+   "purchases_try_premium_pro_for_free": {
+      "description": "Try Premium Pro for Free",
+      "message": "Proveu Premium Pro gratuïtament"
+   },
+   "purchases_upgrade_premium_to_pro": {
+      "description": "To use this feature and access all Pro benefits, upgrade your plan.",
+      "message": "Per utilitzar aquesta funció i accedir a tots els avantatges de Pro, actualitzeu el vostre pla."
+   },
+   "purchases_upgrade_to_premium_pro": {
+      "description": "Upgrade to Premium Pro",
+      "message": "Actualitza a Premium Pro"
+   },
+   "quality_text": {
+      "description": "Recording quality (10 = best)",
+      "message": "Qualitat de gravació (10 = millor)"
+   },
+   "rate_bad_rating_text": {
+      "description": "We are continuously trying our hardest to improve Chrome Capture, please share what needs improvement by emailing us at ",
+      "message": "Estem intentant contínuament el nostre més dur per millorar la captura de Chrome, compartiu el que necessita millora enviant-nos un correu electrònic a"
+   },
+   "rate_bad_title_text": {
+      "description": "😞 We are sorry!",
+      "message": "😞 Ho sentim!"
+   },
+   "rate_close_btn_text": {
+      "description": "Close",
+      "message": "Tanca"
+   },
+   "rate_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "Confirmar"
+   },
+   "rate_description_text": {
+      "description": "If you've found this extension useful please leave a rating or review. \n\nBy leaving a rating you can help us reach more users which will help fund continual improvements and keep general usage free.",
+      "message": "Si heu trobat aquesta extensió útil, deixeu una valoració o una revisió. \n\n Si deixeu una valoració, podeu ajudar-nos a arribar a més usuaris que ajudin a finançar millores contínues i mantenir l'ús general gratuït."
+   },
+   "rate_description_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "Apreciem molt la compra de primes i m'agradaria escoltar qualsevol comentari que hàgiu d'ajudar a millorar el producte i arribar a més usuaris."
+   },
+   "rate_good_rating_text": {
+      "description": "Your reviews keep our small team motivated to make Chrome Capture even better!",
+      "message": "Les vostres opinions Manteniu el nostre petit equip motivat per fer que Chrome Capture encara millor!"
+   },
+   "rate_good_rating_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "Apreciem molt la compra de primes i m'agradaria escoltar qualsevol comentari que hàgiu d'ajudar a millorar el producte i arribar a més usuaris."
+   },
+   "rate_good_title_text": {
+      "description": "😍 Review in the web store?",
+      "message": "😍 Revisió a la botiga web?"
+   },
+   "rate_maybe_later_btn_text": {
+      "description": "Maybe later",
+      "message": "Potser després"
+   },
+   "rate_no_btn_text": {
+      "description": "No thanks",
+      "message": "No gràcies"
+   },
+   "rate_send_email_btn_text": {
+      "description": "Send Email",
+      "message": "Envia un correu electrònic"
+   },
+   "rate_thank_you_title_text": {
+      "description": "Thank you! 😍",
+      "message": "Gràcies! 😍"
+   },
+   "rate_title_text": {
+      "description": "How are we doing?",
+      "message": "Com estem fent?"
+   },
+   "rate_yes_btn_text": {
+      "description": "Ok, sure",
+      "message": "D'acord, segur"
+   },
+   "recommended": {
+      "description": "recommended",
+      "message": "recomanat"
+   },
+   "record_length_text": {
+      "description": "Max record length",
+      "message": "Longitud màxima de registre"
+   },
+   "recordings_taken": {
+      "description": "Recordings taken:",
+      "message": "Enregistraments presos:"
+   },
+   "save_as_screenshot_text": {
+      "description": "Save screenshot as",
+      "message": "Desa la captura de pantalla com"
+   },
+   "save_as_text": {
+      "description": "Save recording as",
+      "message": "Desa la gravació com"
+   },
+   "screenshots_taken": {
+      "description": "Screenshots taken:",
+      "message": "Captures de pantalla preses:"
+   },
+   "seconds_text": {
+      "description": "secs",
+      "message": "secs"
+   },
+   "shortcut": {
+      "description": "Shortcut:",
+      "message": "Drecera:"
+   },
+   "show_click_indicator_text": {
+      "description": "Show click animation",
+      "message": "Mostra Animació de clic"
+   },
+   "show_click_indicator_tooltip_text": {
+      "description": "This option draws a circle animation around the click location.",
+      "message": "Aquesta opció dibuixa una animació de cercle al voltant de la ubicació de clic."
+   },
+   "show_cursor_text": {
+      "description": "Show dot at cursor location",
+      "message": "Mostra el punt a la ubicació del cursor"
+   },
+   "show_cursor_tooltip_text": {
+      "description": "This option draws a small circle to indicate where the mouse is located.",
+      "message": "Aquesta opció dibuixa un cercle petit per indicar on es troba el ratolí."
+   },
+   "sign_in": {
+      "description": "Sign In",
+      "message": "Inicieu la sessió"
+   },
+   "sign_out": {
+      "description": "Sign Out",
+      "message": "Iniciejar"
+   },
+   "subscription_past_due_warning": {
+      "description": "Warning message shown when a user subscription payment has failed or is past its due date.",
+      "message": "El pagament de la subscripció està vençut. Feu clic aquí per actualitzar la vostra informació de pagament."
+   },
+   "subscription_premium_plan_description": {
+      "description": "Go beyond basics: HD quality & limits unlocked. Craft pro content with enhanced features.",
+      "message": "Aneu més enllà del bàsic: qualitat HD i límits desbloquejats. Creeu contingut professional amb funcions millorades."
+   },
+   "subscription_premium_pro_plan_description": {
+      "description": "Experience peak performance: 4K+ and all features. Full editing suite with early access.",
+      "message": "Experimenteu el màxim rendiment: 4K+ i totes les funcions. Suite d'edició completa amb accés anticipat."
+   },
+   "subscription_status_active": {
+      "description": "Active",
+      "message": "Actiu"
+   },
+   "subscription_status_ending_soon": {
+      "description": "Ending Soon",
+      "message": "Acaba aviat"
+   },
+   "subscription_status_expired": {
+      "description": "Expired",
+      "message": "Expirat"
+   },
+   "subscription_status_past_due": {
+      "description": "Past Due",
+      "message": "Vençut"
+   },
+   "subscription_status_paused": {
+      "description": "Paused",
+      "message": "Pausat"
+   },
+   "subscription_status_unknown": {
+      "description": "Unknown",
+      "message": "Desconegut"
+   },
+   "unable_to_capture_website_alert": {
+      "description": "Unable to capture this website. Please use full screen/application capture or try capture another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "No es pot capturar aquest lloc web. Utilitzeu captura de pantalla completa/aplicació o proveu capturar un altre lloc web. \n\n (╯ ° □ °） ╯︵ ┻━┻"
+   },
+   "view_permission": {
+      "description": "View permission.",
+      "message": "Mostra el permís."
+   },
+   "width_text": {
+      "description": "Height (px)",
+      "message": "Alçada (px)"
+   }
+}

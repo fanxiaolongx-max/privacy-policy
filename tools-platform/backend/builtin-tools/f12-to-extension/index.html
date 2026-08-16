@@ -184,15 +184,23 @@
           </label>
           <div class="flex items-center gap-2">
             <label for="builtinScriptSelect" class="sr-only">选择内置脚本</label>
-            <select id="builtinScriptSelect" class="input-field max-w-[220px] rounded-lg px-2.5 py-2 text-xs">
-              <option value="sv-cfc-monitor">SV/CFC 满意度监控（原内置）</option>
-              <option value="exam-question-bank">题库与答题助手</option>
+            <select id="builtinScriptSelect" class="input-field max-w-[260px] rounded-lg px-2.5 py-2 text-xs">
+              <option value="__new__">新脚本（未保存）</option>
+              <optgroup label="系统内置脚本">
+                <option value="sv-cfc-monitor" selected>SV/CFC 满意度监控（原内置）</option>
+                <option value="exam-question-bank">题库与答题助手</option>
+                <option value="chrome-capture-pro">Chrome Capture Pro 屏幕录制与截图增强版</option>
+              </optgroup>
+              <optgroup id="serverScriptOptions" label="服务器保存脚本"></optgroup>
             </select>
             <button id="loadBuiltinBtn" type="button" class="rounded-lg border border-indigo-400/40 bg-indigo-500/15 px-3 py-2 text-xs font-semibold text-indigo-100 transition hover:bg-indigo-500/30">
-              载入内置脚本
+              载入脚本
             </button>
+            <button id="newScriptBtn" type="button" class="rounded-lg border border-slate-400/40 bg-slate-500/15 px-3 py-2 text-xs font-semibold text-slate-100 transition hover:bg-slate-500/30">新建</button>
+            <button id="saveServerScriptBtn" type="button" class="rounded-lg border border-emerald-400/40 bg-emerald-500/15 px-3 py-2 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-500/30">保存到服务器</button>
           </div>
         </div>
+        <div id="scriptLibraryStatus" class="mb-2 text-right text-[11px] text-slate-400"></div>
         
         <!-- Editor Wrapper -->
         <div class="relative flex-grow h-[350px] lg:h-[450px]">
@@ -249,7 +257,7 @@
     </section>
   </div>
 
-  <script src="./packer-core.js?v=20260813-01"></script>
+  <script src="./packer-core.js?v=20260816-01"></script>
   <script>
     const BUILTIN_SCRIPTS = {
       'sv-cfc-monitor': {
@@ -268,6 +276,26 @@
         world: 'MAIN',
         includePopup: true,
         manualLaunch: true
+      },
+      'chrome-capture-pro': {
+        type: 'template',
+        templateZip: './chrome-capture-pro.template.zip',
+        name: 'Chrome Capture Pro',
+        description: '全功能屏幕录制、区域与长截图、GIF/视频编辑及画板标注工具。',
+        matches: '<all_urls>',
+        world: 'MAIN',
+        includePopup: true,
+        manualLaunch: false,
+        isFullExtension: true,
+        overviewCode: `// ========================================================
+// 📸 Chrome Capture Pro (Dragon Edition)
+// --------------------------------------------------------
+// 全功能专业级浏览器屏幕录制与截图套件：
+// • 区域截图 (Alt+C) / 可视区域截图 (Alt+S) / 滚动长截图 (Alt+Shift+S)
+// • 标签页录屏 (Alt+R) / 桌面录屏 / 60FPS / 4K超清画质
+// • 内置专业 GIF / 视频多轨帧编辑器与 Fabric.js 画板涂鸦
+// • 本地离线 ECDSA P-256 License 签名授权与在线管理
+// ========================================================`
       }
     };
 
@@ -276,6 +304,100 @@
       preview: '/api/custom-tools/f12-to-extension/version/preview',
       reserve: '/api/custom-tools/f12-to-extension/version/reserve'
     };
+    const SCRIPT_LIBRARY_API = '/api/custom-tools/f12-to-extension/scripts';
+    let serverScripts = [];
+    let activeScriptRef = null;
+
+    function setScriptLibraryStatus(message, tone = 'text-slate-400') {
+      const status = document.getElementById('scriptLibraryStatus');
+      status.textContent = message;
+      status.className = `mb-2 text-right text-[11px] ${tone}`;
+    }
+
+    function setActiveScript(kind, id) {
+      activeScriptRef = kind && id ? { kind, id } : null;
+      document.getElementById('saveServerScriptBtn').textContent = kind === 'server'
+        ? '更新服务器脚本'
+        : '保存到服务器';
+    }
+
+    function setOptionalPermissions(permissions = []) {
+      const selected = new Set(permissions);
+      document.querySelectorAll('[data-extra-permission]').forEach(input => {
+        input.checked = selected.has(input.dataset.extraPermission);
+      });
+    }
+
+    function applyScriptMetadata(script) {
+      document.getElementById('extName').value = script.name || '';
+      document.getElementById('extDesc').value = script.description || '';
+      document.getElementById('extMatch').value = script.matches || '';
+      document.getElementById('extWorld').value = script.world || 'MAIN';
+      document.getElementById('extPopup').value = script.includePopup === false ? 'no' : 'yes';
+      document.getElementById('extManualLaunch').checked = script.manualLaunch === true;
+      document.getElementById('extRunAt').value = script.runAt || 'document_idle';
+      document.getElementById('extAllFrames').checked = script.allFrames === true;
+      setOptionalPermissions(script.optionalPermissions);
+    }
+
+    function startNewScript({ clearCode = true, reason = '' } = {}) {
+      setActiveScript(null, null);
+      document.getElementById('builtinScriptSelect').value = '__new__';
+      document.getElementById('extName').value = '';
+      document.getElementById('extVersion').value = '';
+      document.getElementById('previousVersion').textContent = '请先填写名称';
+      document.getElementById('nextVersion').textContent = '—';
+      document.getElementById('extDesc').value = '';
+      document.getElementById('extMatch').value = '';
+      document.getElementById('extWorld').value = 'MAIN';
+      document.getElementById('extPopup').value = 'yes';
+      document.getElementById('extRunAt').value = 'document_idle';
+      document.getElementById('extAllFrames').checked = false;
+      document.getElementById('extPackageTarget').value = 'store';
+      document.getElementById('extObfuscate').checked = false;
+      document.getElementById('extLicense').checked = true;
+      document.getElementById('extManualLaunch').checked = true;
+      document.getElementById('licenseLabel').value = '';
+      document.getElementById('licenseResult').classList.add('hidden');
+      setOptionalPermissions();
+      if (clearCode) document.getElementById('extCode').value = '';
+      document.getElementById('compatReport').classList.add('hidden');
+      updatePackageTargetUI();
+      setScriptLibraryStatus(reason || '已开始新脚本，请填写左侧打包信息。', 'text-cyan-300');
+    }
+
+    function renderServerScriptOptions(selectedId = '') {
+      const group = document.getElementById('serverScriptOptions');
+      group.replaceChildren(...serverScripts.map(script => {
+        const option = document.createElement('option');
+        option.value = `server:${script.id}`;
+        option.textContent = script.name;
+        return option;
+      }));
+      if (selectedId) document.getElementById('builtinScriptSelect').value = `server:${selectedId}`;
+    }
+
+    async function scriptLibraryRequest(path = '', options = {}) {
+      const token = localStorage.getItem('tools_token');
+      const response = await fetch(`${SCRIPT_LIBRARY_API}${path}`, {
+        ...options,
+        headers: {
+          ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(options.headers || {})
+        }
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.error || `请求失败（HTTP ${response.status}）`);
+      return body;
+    }
+
+    async function refreshServerScripts(selectedId = '') {
+      const body = await scriptLibraryRequest();
+      serverScripts = Array.isArray(body.scripts) ? body.scripts : [];
+      renderServerScriptOptions(selectedId);
+      return serverScripts;
+    }
 
     function getVersionHistoryKey(name) {
       return String(name || 'My Extension').trim().normalize('NFKC').toLowerCase();
@@ -318,8 +440,14 @@
 
     let versionPreviewRequestId = 0;
     async function refreshVersionPreview() {
-      const name = document.getElementById('extName').value.trim() || 'My Extension';
+      const name = document.getElementById('extName').value.trim();
       const requestId = ++versionPreviewRequestId;
+      if (!name) {
+        document.getElementById('extVersion').value = '';
+        document.getElementById('previousVersion').textContent = '请先填写名称';
+        document.getElementById('nextVersion').textContent = '—';
+        return null;
+      }
       document.getElementById('previousVersion').textContent = '读取中…';
       document.getElementById('nextVersion').textContent = '读取中…';
       try {
@@ -353,19 +481,23 @@
       button.disabled = true;
       button.textContent = '载入中…';
       try {
+        if (preset.type === 'template' || preset.isFullExtension) {
+          document.getElementById('extCode').value = preset.overviewCode || '// 完整扩展工程模板已就绪';
+          if (applyPreset) applyScriptMetadata(preset);
+          setActiveScript('builtin', scriptId);
+          await refreshVersionPreview();
+          const validation = F12ExtensionPacker.validateOptions(collectOptions());
+          renderReport(validation);
+          button.textContent = '已载入';
+          return;
+        }
         const res = await fetch(preset.file + '?t=' + Date.now());
         if (!res.ok) throw new Error(`脚本读取失败（HTTP ${res.status}）`);
         const code = await res.text();
         if (!code.trim()) throw new Error('内置脚本内容为空。');
         document.getElementById('extCode').value = code;
-        if (applyPreset) {
-          document.getElementById('extName').value = preset.name;
-          document.getElementById('extDesc').value = preset.description;
-          document.getElementById('extMatch').value = preset.matches;
-          document.getElementById('extWorld').value = preset.world;
-          document.getElementById('extPopup').value = preset.includePopup ? 'yes' : 'no';
-          document.getElementById('extManualLaunch').checked = preset.manualLaunch === true;
-        }
+        if (applyPreset) applyScriptMetadata(preset);
+        setActiveScript('builtin', scriptId);
         await refreshVersionPreview();
         const validation = F12ExtensionPacker.validateOptions(collectOptions());
         renderReport(validation);
@@ -384,13 +516,89 @@
       } catch (e) {
         console.log('No default F12 script found, using placeholder.');
       }
+      try {
+        await refreshServerScripts();
+      } catch (error) {
+        setScriptLibraryStatus(`服务器脚本列表读取失败：${error.message}`, 'text-amber-300');
+      }
     });
 
     document.getElementById('loadBuiltinBtn').addEventListener('click', async () => {
       try {
-        await loadBuiltinScript(document.getElementById('builtinScriptSelect').value);
+        const selected = document.getElementById('builtinScriptSelect').value;
+        if (selected === '__new__') {
+          startNewScript();
+          return;
+        }
+        if (selected.startsWith('server:')) {
+          const scriptId = selected.slice('server:'.length);
+          const script = serverScripts.find(item => item.id === scriptId);
+          if (!script) throw new Error('服务器脚本不存在，请刷新页面');
+          document.getElementById('extCode').value = script.code;
+          applyScriptMetadata(script);
+          setActiveScript('server', script.id);
+          await refreshVersionPreview();
+          renderReport(F12ExtensionPacker.validateOptions(collectOptions()));
+          setScriptLibraryStatus(`已载入服务器脚本：${script.name}`, 'text-emerald-300');
+          return;
+        }
+        await loadBuiltinScript(selected);
+        setScriptLibraryStatus('已载入系统内置脚本。', 'text-emerald-300');
       } catch (error) {
-        alert('载入内置脚本失败: ' + error.message);
+        alert('载入脚本失败: ' + error.message);
+      }
+    });
+
+    document.getElementById('newScriptBtn').addEventListener('click', () => startNewScript());
+
+    document.getElementById('extCode').addEventListener('paste', event => {
+      const editor = event.currentTarget;
+      const replacesWholeScript = editor.selectionStart === 0 && editor.selectionEnd === editor.value.length;
+      if (activeScriptRef && replacesWholeScript) {
+        startNewScript({
+          clearCode: false,
+          reason: '检测到粘贴新脚本，已自动清空上一个脚本的打包信息。'
+        });
+      }
+    });
+
+    document.getElementById('saveServerScriptBtn').addEventListener('click', async () => {
+      const button = document.getElementById('saveServerScriptBtn');
+      const options = collectOptions();
+      const name = document.getElementById('extName').value.trim();
+      if (!name) return alert('请先填写扩展名称。');
+      if (!options.matches.trim()) return alert('请先填写至少一个匹配网址。');
+      if (!options.code.trim()) return alert('请先粘贴脚本内容。');
+      const payload = {
+        name,
+        description: document.getElementById('extDesc').value.trim(),
+        matches: options.matches,
+        world: options.world,
+        includePopup: options.includePopup,
+        manualLaunch: options.manualLaunch,
+        runAt: options.runAt,
+        allFrames: options.allFrames,
+        optionalPermissions: options.optionalPermissions,
+        code: options.code
+      };
+      const updatingId = activeScriptRef && activeScriptRef.kind === 'server' ? activeScriptRef.id : '';
+      button.disabled = true;
+      button.textContent = updatingId ? '更新中…' : '保存中…';
+      try {
+        const body = await scriptLibraryRequest(updatingId ? `/${encodeURIComponent(updatingId)}` : '', {
+          method: updatingId ? 'PUT' : 'POST',
+          body: JSON.stringify(payload)
+        });
+        await refreshServerScripts(body.script.id);
+        setActiveScript('server', body.script.id);
+        setScriptLibraryStatus(`已保存到服务器：${body.script.name}`, 'text-emerald-300');
+      } catch (error) {
+        alert('保存服务器脚本失败: ' + error.message);
+      } finally {
+        button.disabled = false;
+        button.textContent = activeScriptRef && activeScriptRef.kind === 'server'
+          ? '更新服务器脚本'
+          : '保存到服务器';
       }
     });
 
@@ -728,15 +936,43 @@
         document.getElementById('extVersion').value = options.version;
         document.getElementById('previousVersion').textContent = versionReservation.previousVersion;
         document.getElementById('nextVersion').textContent = options.version;
-        const generated = F12ExtensionPacker.buildPackage(options);
-        const zip = new JSZip();
-        Object.entries(generated.files).forEach(([fileName, content]) => zip.file(fileName, content));
-        const content = await zip.generateAsync({ type: "blob" });
-        const targetSuffix = options.packageTarget === 'store' ? '-edge-store' : '-local';
-        const fileName = "extension-" + options.name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase() + "-v" + options.version + targetSuffix + ".zip";
-        saveAs(content, fileName);
-        await refreshVersionPreview();
-        packedSuccessfully = true;
+        const isChromeCapture = activeScriptRef
+          && activeScriptRef.kind === 'builtin'
+          && activeScriptRef.id === 'chrome-capture-pro';
+
+        if (isChromeCapture) {
+          const templateZipRes = await fetch('./chrome-capture-pro.template.zip?v=' + Date.now());
+          if (!templateZipRes.ok) throw new Error('读取 ChromeCapture 模板包失败');
+          const templateBlob = await templateZipRes.blob();
+          const zip = await JSZip.loadAsync(templateBlob);
+
+          const manifestFile = zip.file('manifest.json');
+          if (manifestFile) {
+            const originalManifest = JSON.parse(await manifestFile.async('string'));
+            const transformedManifest = F12ExtensionPacker.transformChromeCaptureManifest(originalManifest, options);
+            zip.file('manifest.json', JSON.stringify(transformedManifest, null, 2));
+          }
+
+          const licenseConfigData = F12ExtensionPacker.createChromeCaptureLicenseConfig(options);
+          zip.file('license-config.json', JSON.stringify(licenseConfigData, null, 2));
+
+          const content = await zip.generateAsync({ type: "blob" });
+          const targetSuffix = options.packageTarget === 'store' ? '-edge-store' : '-local';
+          const fileName = "extension-" + options.name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase() + "-v" + options.version + targetSuffix + ".zip";
+          saveAs(content, fileName);
+          await refreshVersionPreview();
+          packedSuccessfully = true;
+        } else {
+          const generated = F12ExtensionPacker.buildPackage(options);
+          const zip = new JSZip();
+          Object.entries(generated.files).forEach(([fileName, content]) => zip.file(fileName, content));
+          const content = await zip.generateAsync({ type: "blob" });
+          const targetSuffix = options.packageTarget === 'store' ? '-edge-store' : '-local';
+          const fileName = "extension-" + options.name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase() + "-v" + options.version + targetSuffix + ".zip";
+          saveAs(content, fileName);
+          await refreshVersionPreview();
+          packedSuccessfully = true;
+        }
         
         // Show success state on button
         const originalHtml = btn.innerHTML;

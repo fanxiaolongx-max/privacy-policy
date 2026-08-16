@@ -1,0 +1,1691 @@
+{
+   "account_modal_free_plan": {
+      "description": "You are on the free plan",
+      "message": "U bent op het gratis plan"
+   },
+   "account_modal_manage_subscription_button": {
+      "description": "Manage Subscription",
+      "message": "Abonnement beheren"
+   },
+   "account_modal_not_signed_in": {
+      "description": "You are not signed in",
+      "message": "U bent niet aangemeld"
+   },
+   "account_modal_premium_plan": {
+      "description": "You are on the premium plan",
+      "message": "U bent op het premiumplan"
+   },
+   "account_modal_premium_pro_plan": {
+      "description": "You are on the Premium Pro plan",
+      "message": "U heeft het Premium Pro-abonnement"
+   },
+   "account_modal_request_feature_button": {
+      "description": "Request Feature",
+      "message": "Functie aanvragen"
+   },
+   "account_modal_request_support_button": {
+      "description": "Request Support",
+      "message": "Ondersteuning aanvragen"
+   },
+   "account_modal_stats_heading": {
+      "description": "Your stats:",
+      "message": "Uw statistieken:"
+   },
+   "alert_text": {
+      "description": "Unable to run selected area capture on this website. Please use full screen recording or try another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "Kan het selectiegebied op deze website niet uitvoeren. Gebruik alstublieft het volledige schermopname of probeer een andere website. \n\n (╯ ° □ °) ╯( ┻━┻"
+   },
+   "click_indicator_size_color_text": {
+      "description": "Click animation size & color",
+      "message": "Klik op Animatiegrootte en -kleur"
+   },
+   "close_btn_text": {
+      "description": "Close",
+      "message": "Dichtbij"
+   },
+   "confirm_dialog_cancel_btn_text": {
+      "description": "Cancel",
+      "message": "Annuleren"
+   },
+   "confirm_dialog_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "Bevestigen"
+   },
+   "confirm_fps_update_text": {
+      "description": "Changing the fps will remove all frame specific edits such as edited or deleted frames. Do you want to continue?",
+      "message": "Het wijzigen van de FPS verwijdert alle beeldspecifieke bewerkingen zoals bewerkte of verwijderde frames. Wil je doorgaan?"
+   },
+   "copy_text": {
+      "description": "Copy to clipboard",
+      "message": "Kopieer naar klembord"
+   },
+   "cursor_size_and_color_text": {
+      "description": "Cursor dot size & color",
+      "message": "Cursor Dot Size & Color"
+   },
+   "dither_text": {
+      "description": "Apply dither",
+      "message": "Pas dither toe"
+   },
+   "download_filename_text": {
+      "description": "Download filename format",
+      "message": "Download FileName-indeling"
+   },
+   "download_text": {
+      "description": "Download",
+      "message": "Gedownload"
+   },
+   "draw_size_and_color_text": {
+      "description": "Drawing size & color",
+      "message": "Tekening grootte en kleur"
+   },
+   "duration": {
+      "description": "Label for a field indicating a length of time.",
+      "message": "Duur"
+   },
+   "editor_action_add_icon": {
+      "description": "Add icon",
+      "message": "Pictogram toevoegen"
+   },
+   "editor_action_add_text": {
+      "description": "Add text",
+      "message": "Voeg tekst toe"
+   },
+   "editor_action_blur_rectangle": {
+      "description": "Blur area",
+      "message": "Gebied vervagen"
+   },
+   "editor_action_copy": {
+      "description": "Copy to clipboard",
+      "message": "Kopieer naar klembord"
+   },
+   "editor_action_crop": {
+      "description": "Crop",
+      "message": "Bijsnijden"
+   },
+   "editor_action_draw_arrow": {
+      "description": "Draw arrow",
+      "message": "Pijlpijl"
+   },
+   "editor_action_draw_ellipse": {
+      "description": "Draw ellipse",
+      "message": "Teken ellips"
+   },
+   "editor_action_draw_line": {
+      "description": "Draw line",
+      "message": "Teken lijn"
+   },
+   "editor_action_draw_rectangle": {
+      "description": "Draw rectangle",
+      "message": "Rechthoek tekenen"
+   },
+   "editor_action_free_draw": {
+      "description": "Free draw",
+      "message": "Gratis tekenen"
+   },
+   "editor_action_highlight": {
+      "description": "Highlight",
+      "message": "Highlight"
+   },
+   "editor_action_numbered_step": {
+      "description": "Action label for adding a numbered step annotation.",
+      "message": "Genummerde stap"
+   },
+   "editor_action_pan": {
+      "description": "Pan",
+      "message": "Pannen"
+   },
+   "editor_action_profile_account": {
+      "description": "Account",
+      "message": "Account"
+   },
+   "editor_action_redo": {
+      "description": "Redo",
+      "message": "Opnieuw doen"
+   },
+   "editor_action_save": {
+      "description": "Save",
+      "message": "Opslaan"
+   },
+   "editor_action_select": {
+      "description": "Select, move, resize",
+      "message": "Selecteren, verplaatsen, formaat wijzigen"
+   },
+   "editor_action_settings": {
+      "description": "Settings",
+      "message": "Instellingen"
+   },
+   "editor_action_undo": {
+      "description": "Undo",
+      "message": "Ongedaan maken"
+   },
+   "editor_action_undo_all": {
+      "description": "Undo all",
+      "message": "Maak alles ongedaan"
+   },
+   "editor_add_text_default": {
+      "description": "start typing...",
+      "message": "Beginnen met typen..."
+   },
+   "editor_browse_file_system": {
+      "description": "Browse file system",
+      "message": "Blader door het bestandssysteem"
+   },
+   "editor_drag_and_drop": {
+      "description": "Drag and drop image/GIF or ",
+      "message": "Sleep de afbeelding / gif of"
+   },
+   "editor_file_downloaded": {
+      "description": "File saved to downloads folder.",
+      "message": "Bestand opgeslagen om de map te downloaden."
+   },
+   "editor_file_downloaded_selected_location": {
+      "description": "File saved to selected location.",
+      "message": "Bestand opgeslagen op geselecteerde locatie."
+   },
+   "editor_frame_selector_apply_edits": {
+      "description": "Apply edits to selected",
+      "message": "Pas bewerkingen toe op geselecteerde"
+   },
+   "editor_frame_selector_delete": {
+      "description": "Delete",
+      "message": "Verwijderen"
+   },
+   "editor_frame_selector_delete_every_second": {
+      "description": "Delete every second frame",
+      "message": "Verwijder elk tweede frame"
+   },
+   "editor_frame_selector_delete_selected": {
+      "description": "Delete selected",
+      "message": "Verwijder geselecteerde"
+   },
+   "editor_frame_selector_remove_edits": {
+      "description": "Remove edits from selected",
+      "message": "Verwijder bewerkingen van geselecteerd"
+   },
+   "editor_frame_selector_restore": {
+      "description": "Restore",
+      "message": "Herstellen"
+   },
+   "editor_frame_selector_restore_all": {
+      "description": "Restore All",
+      "message": "Herstel alles"
+   },
+   "editor_frame_selector_restore_selected": {
+      "description": "Restore selected",
+      "message": "Herstellen geselecteerd"
+   },
+   "editor_frame_selector_select_next": {
+      "description": "Select next frames",
+      "message": "Selecteer volgende afbeeldingen"
+   },
+   "editor_frame_selector_select_previous": {
+      "description": "Select previous frames",
+      "message": "Selecteer eerdere afbeeldingen"
+   },
+   "editor_frame_selector_unselect_all": {
+      "description": "Unselect All",
+      "message": "Alles verwijderen"
+   },
+   "editor_image_copied": {
+      "description": "Image copied to clipboard.",
+      "message": "Afbeelding gekopieerd naar klembord."
+   },
+   "editor_image_copied_failed": {
+      "description": "Failed to copy image to clipboard, it may be too large.",
+      "message": "Mislukt om het beeld naar het klembord te kopiëren, kan het te groot zijn."
+   },
+   "editor_link_copied": {
+      "description": "Link copied to clipboard.",
+      "message": "Link gekopieerd naar klembord."
+   },
+   "editor_max_time_reached_dialog_description1": {
+      "description": "You have reached the max recording length time of $maxlength$ seconds for GIFs. Premium users can update this from the settings page.",
+      "message": "U hebt de maximale opnamedoguste tijd van $maxlength$ seconden bereikt voor GIF's. Premium -gebruikers kunnen dit bijwerken op de pagina Instellingen.",
+      "placeholders": {
+         "maxlength": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_max_time_reached_dialog_description2": {
+      "description": "GIFs are intended for short recordings. If you require full length videos we recommend our free screen recorder: ",
+      "message": "GIF's zijn bedoeld voor korte opnames. Als u video's van volledige lengte nodig heeft, raden we onze gratis schermrecorder aan:"
+   },
+   "editor_max_time_reached_dialog_description3": {
+      "description": "Premium users can update this from the settings page.",
+      "message": "Premium -gebruikers kunnen dit bijwerken op de pagina Instellingen."
+   },
+   "editor_max_time_reached_dialog_settings_button": {
+      "description": "Open settings",
+      "message": "Open instellingen"
+   },
+   "editor_max_time_reached_dialog_title": {
+      "description": "Recording suddenly stopped?",
+      "message": "Het opnemen van plotseling stopte?"
+   },
+   "editor_premium_options_color": {
+      "description": "Color",
+      "message": "Kleur"
+   },
+   "editor_premium_options_draw_size": {
+      "description": "Draw Size",
+      "message": "Draw-maat"
+   },
+   "editor_premium_options_font": {
+      "description": "Font",
+      "message": "Doopvont"
+   },
+   "editor_premium_options_playback_speed": {
+      "description": "Playback Speed",
+      "message": "Afspeelsnelheid"
+   },
+   "editor_premium_options_special_effect": {
+      "description": "Special Effect",
+      "message": "Special effect"
+   },
+   "editor_premium_options_title": {
+      "description": "Premium Options",
+      "message": "Premium-opties"
+   },
+   "editor_save_dialog_advanced_encoding_options": {
+      "description": "Title for a section containing advanced, technical options for encoding a file.",
+      "message": "Geavanceerde coderingsopties"
+   },
+   "editor_save_dialog_alert_title": {
+      "description": "Warning",
+      "message": "Waarschuwing"
+   },
+   "editor_save_dialog_aspect_ratio": {
+      "description": "lock aspect ratio",
+      "message": "vergrendelingsbeeldverhouding"
+   },
+   "editor_save_dialog_cancel": {
+      "description": "Cancel",
+      "message": "Annuleren"
+   },
+   "editor_save_dialog_chip_animated_image": {
+      "description": "Chip label indicating an animated image format (e.g. GIF, AVIF).",
+      "message": "geanimeerde afbeelding"
+   },
+   "editor_save_dialog_chip_large_file": {
+      "description": "Chip label indicating the format produces a large file size.",
+      "message": "groot bestand"
+   },
+   "editor_save_dialog_chip_limited_support": {
+      "description": "Chip label indicating the format has limited browser/app support.",
+      "message": "beperkte ondersteuning"
+   },
+   "editor_save_dialog_chip_small_file": {
+      "description": "Chip label indicating the format produces a small file size.",
+      "message": "klein bestand"
+   },
+   "editor_save_dialog_chip_video": {
+      "description": "Chip label indicating a video format (e.g. WebM, MP4).",
+      "message": "video"
+   },
+   "editor_save_dialog_chip_widely_supported": {
+      "description": "Chip label indicating the format is widely supported.",
+      "message": "breed ondersteund"
+   },
+   "editor_save_dialog_compress": {
+      "description": "Compress & optimize GIF",
+      "message": "Comprimeren en optimaliseren van GIF"
+   },
+   "editor_save_dialog_compress_tooltip": {
+      "description": "Apply GIF compression algorthm to greatly reduce GIF file size and in some cases improve quality. Highly recommeded.",
+      "message": "Pas GIF -compressie -algorthm toe om de GIF -bestandsgrootte aanzienlijk te verminderen en in sommige gevallen de kwaliteit te verbeteren. Sterk aanbevolen."
+   },
+   "editor_save_dialog_dither_tooltip": {
+      "description": "Apply dither algorithm to frames. Try toggling this option if you experience color quality issues.",
+      "message": "Breng dither -algoritme aan op afbeeldingen. Probeer deze optie te schakelen als u problemen met kleurkwaliteit ervaart."
+   },
+   "editor_save_dialog_download_raw_recording": {
+      "description": "Download raw recording",
+      "message": "Download RAW -opname"
+   },
+   "editor_save_dialog_estimated_size": {
+      "description": "Estimated GIF Size: ",
+      "message": "Geschatte GIF-maat:"
+   },
+   "editor_save_dialog_export_sound": {
+      "description": "Include sound (beta)",
+      "message": "Inclusief geluid (bèta)"
+   },
+   "editor_save_dialog_export_sound_tooltip": {
+      "description": "Enable this option to include sound in the video.",
+      "message": "Schakel deze optie in om geluid in de video op te nemen."
+   },
+   "editor_save_dialog_frames": {
+      "description": "Frames: ",
+      "message": "Afbeeldingen:"
+   },
+   "editor_save_dialog_frames_alert": {
+      "description": "There are currently selected frames, saving will only output these selected frames - ",
+      "message": "Er zijn momenteel geselecteerde afbeeldingen, opslaan zal alleen deze geselecteerde frames uitvoeren -"
+   },
+   "editor_save_dialog_frames_alert_button": {
+      "description": "Click here to unselect all frames",
+      "message": "Klik hier om alle afbeeldingen niet teselecteren"
+   },
+   "editor_save_dialog_frames_alert_title": {
+      "description": "Playback Speed",
+      "message": "Afspeelsnelheid"
+   },
+   "editor_save_dialog_frames_processing": {
+      "description": "Processing Frames: ",
+      "message": "Het verwerken van afbeeldingen:"
+   },
+   "editor_save_dialog_height_helper": {
+      "description": "Recorded height is ",
+      "message": "Opgenomen hoogte is"
+   },
+   "editor_save_dialog_lossy_compression": {
+      "description": "Label for a setting that controls the level of lossy compression, from 0 to 100 percent.",
+      "message": "Compressie met verlies (0 - 100%)"
+   },
+   "editor_save_dialog_number_min_max_validation": {
+      "description": "A value between $minSize$ and $maxSize$ is required.",
+      "message": "Een waarde tussen $minSize$ en $maxSize$ is vereist.",
+      "placeholders": {
+         "maxSize": {
+            "content": "$2"
+         },
+         "minSize": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_save_dialog_processing_alert": {
+      "description": "Processing this recording will require a lot of memory and processing power. Unless you have a high spec PC it is recommended to do one or more of the following:",
+      "message": "Verwerking van deze opname vereist veel geheugen- en verwerkingsvermogen. Tenzij u een pc heeft, wordt het aanbevolen om een of meer van de volgende dingen te doen:"
+   },
+   "editor_save_dialog_processing_alert_memory": {
+      "description": "Please note if the resulting GIF is blank then you ran out of memory.",
+      "message": "Let op als het resulterende GIF leeg is, dan liep u buiten het geheugen."
+   },
+   "editor_save_dialog_processing_alert_point_1": {
+      "description": "Compress and optimize GIF",
+      "message": "Comprimeer en optimaliseer GIF"
+   },
+   "editor_save_dialog_processing_alert_point_2": {
+      "description": "Reduce the width & height",
+      "message": "Verminder de breedte en hoogte"
+   },
+   "editor_save_dialog_processing_alert_point_3": {
+      "description": "Reduce FPS or delete frames",
+      "message": "Verminder FPS of verwijder afbeeldingen"
+   },
+   "editor_save_dialog_purchase_dialog_compression_description": {
+      "description": "Free users are limited to 3 high quality GIF compressions per day. Upgrade to Premium to have no restrictions.",
+      "message": "Gratis gebruikers zijn beperkt tot 3 GIF -compressies van hoge kwaliteit per dag. Upgrade naar premium om geen beperkingen te hebben."
+   },
+   "editor_save_dialog_quantization_algorithm": {
+      "description": "Label for a dropdown to select a quantization algorithm.",
+      "message": "Kwantisatie-algoritme"
+   },
+   "editor_save_dialog_quantization_algorithm_new_alpha": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Alpha.",
+      "message": "Nieuw (Alfa)"
+   },
+   "editor_save_dialog_quantization_algorithm_new_beta": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Beta.",
+      "message": "Nieuw (Bèta)"
+   },
+   "editor_save_dialog_quantization_algorithm_old": {
+      "description": "An option for the quantization algorithm setting, indicating an older version.",
+      "message": "Oud"
+   },
+   "editor_save_dialog_recording_quality_alert": {
+      "description": "GIF quality is limited for non premium users. To output high quality recordings you can do one of the following:",
+      "message": "GIF -kwaliteit is beperkt voor niet -premium gebruikers. Om opnames van hoge kwaliteit uit te voeren, kunt u een van de volgende dingen doen:"
+   },
+   "editor_save_dialog_recording_quality_alert_option_1": {
+      "description": "Purchase premium",
+      "message": "Koop premie"
+   },
+   "editor_save_dialog_recording_quality_alert_option_2": {
+      "description": "Save as a WebM file",
+      "message": "Opslaan als een WebM -bestand"
+   },
+   "editor_save_dialog_reduce_width": {
+      "description": "Reduce width & height",
+      "message": "Verminder de breedte en hoogte"
+   },
+   "editor_save_dialog_reduce_width_tooltip": {
+      "description": "Reduce GIF width and height/quality to improve processing time and produce a smaller file.",
+      "message": "Verminder GIF -breedte en hoogte/kwaliteit om de verwerkingstijd te verbeteren en een kleiner bestand te produceren."
+   },
+   "editor_save_dialog_save": {
+      "description": "Save",
+      "message": "Opslaan"
+   },
+   "editor_save_dialog_save_by": {
+      "description": "Save by",
+      "message": "Bewaren door"
+   },
+   "editor_save_dialog_save_by_download": {
+      "description": "Download file",
+      "message": "Download bestand"
+   },
+   "editor_save_dialog_save_by_google_drive": {
+      "description": "Upload to Google Drive & copy link",
+      "message": "Upload naar Google Drive & Copy Link"
+   },
+   "editor_save_dialog_save_location": {
+      "description": "Save location",
+      "message": "Bewaar locatie"
+   },
+   "editor_save_dialog_save_location_downloads": {
+      "description": "Downloads folder",
+      "message": "Downloads map"
+   },
+   "editor_save_dialog_save_location_downloads_subfolder": {
+      "description": "Downloads subfolder",
+      "message": "Downloads submap"
+   },
+   "editor_save_dialog_save_location_select": {
+      "description": "Manually select location",
+      "message": "Selecteer de locatie handmatig"
+   },
+   "editor_save_dialog_title": {
+      "description": "Save",
+      "message": "Opslaan"
+   },
+   "editor_save_dialog_title_processing": {
+      "description": "Processing...",
+      "message": "Verwerken..."
+   },
+   "editor_save_dialog_title_uploading": {
+      "description": "Uploading...",
+      "message": "Uploaden ..."
+   },
+   "editor_save_dialog_width_helper": {
+      "description": "Recorded width is ",
+      "message": "Opgenomen breedte is"
+   },
+   "editor_text": {
+      "description": "Open in editor",
+      "message": "Open in de editor"
+   },
+   "editor_tip_delete_items": {
+      "description": "Pro tip: Delete added items by selecting the item and pressing the delete key.",
+      "message": "Pro Tip: Toegevoegde items verwijderen door het item te selecteren en op de Delete-toets te drukken."
+   },
+   "editor_tip_edit_specific_frames": {
+      "description": "Pro tip: You can edit specific frames by using the 'Apply edits to selected option'",
+      "message": "Pro -tip: u kunt specifieke afbeeldingen bewerken met behulp van de 'bewerkingen toepassen op geselecteerde optie'"
+   },
+   "editor_tip_scroll": {
+      "description": "Pro tip: Scroll when hovering the screenshot/recording to zoom.",
+      "message": "Pro Tip: scroll bij het zweven van de schermafbeelding / opname om in te zoomen."
+   },
+   "editor_tip_shift_multiple_items": {
+      "description": "Pro tip: When using the selecting tool hold down shift to select more than one item.",
+      "message": "Pro Tip: bij gebruik van de selecteergereedschap Houd Shift ingedrukt om meer dan één artikel te selecteren."
+   },
+   "editor_tip_update_multiple_items": {
+      "description": "Pro tip: You can scale, rotate, move and delete multiple items at once.",
+      "message": "PRO TIP: U kunt meerdere items in één keer schalen, draaien, verplaatsen en verwijderen."
+   },
+   "editor_tip_update_text": {
+      "description": "Pro tip: Double click on text to edit it.",
+      "message": "Pro Tip: dubbelklik op tekst om het te bewerken."
+   },
+   "editor_upload_dialog_alert_copy_failed_message": {
+      "description": "This may have occurred due to the window not being focused.",
+      "message": "Dit kan hebben plaatsgevonden omdat het raam niet gefocust is."
+   },
+   "editor_upload_dialog_alert_copy_failed_title": {
+      "description": "Copy to clipboard failed",
+      "message": "Kopiëren naar klembord mislukt"
+   },
+   "editor_upload_dialog_alert_copy_success_title": {
+      "description": "Copied to clipboard",
+      "message": "Gekopieerd naar het klembord"
+   },
+   "editor_upload_dialog_alert_upload_failed": {
+      "description": "Upload Failed",
+      "message": "Upload mislukt"
+   },
+   "editor_upload_dialog_alert_upload_failed_link": {
+      "description": "Try again.",
+      "message": "Probeer het nog eens."
+   },
+   "editor_upload_dialog_alert_upload_failed_message": {
+      "description": "Please make sure you are connected to the internet and have accepted Google Drive permissions.",
+      "message": "Zorg ervoor dat u verbonden bent met internet en heeft Google Drive -machtigingen geaccepteerd."
+   },
+   "editor_upload_dialog_cancel_and_download": {
+      "description": "Cancel and download file",
+      "message": "Annuleer en download het bestand"
+   },
+   "editor_upload_dialog_close": {
+      "description": "Close",
+      "message": "Dichtbij"
+   },
+   "editor_upload_dialog_copy_link": {
+      "description": "Copy link",
+      "message": "Kopieer link"
+   },
+   "editor_upload_dialog_link_public": {
+      "description": "Allow anyone with the link to view.",
+      "message": "Laat iedereen met de link bekijken."
+   },
+   "editor_zoom_crop_animation_animated": {
+      "description": "Sub-label indicating an animation type is animated.",
+      "message": "Geanimeerd"
+   },
+   "editor_zoom_crop_animation_crop": {
+      "description": "Animation type option for static cropping without animation.",
+      "message": "Bijsnijden"
+   },
+   "editor_zoom_crop_animation_static": {
+      "description": "Sub-label indicating an animation type is static (no animation).",
+      "message": "Statisch"
+   },
+   "editor_zoom_crop_animation_type": {
+      "description": "Label for the animation type selection section.",
+      "message": "Animatietype"
+   },
+   "editor_zoom_crop_animation_zoom_in": {
+      "description": "Animation type option for zooming in on the selected area.",
+      "message": "Inzoomen"
+   },
+   "editor_zoom_crop_animation_zoom_out": {
+      "description": "Animation type option for zooming out from the selected area.",
+      "message": "Uitzoomen"
+   },
+   "editor_zoom_crop_apply": {
+      "description": "Apply button in zoom/crop dialog.",
+      "message": "Toepassen"
+   },
+   "editor_zoom_crop_cancel": {
+      "description": "Cancel button in zoom/crop dialog.",
+      "message": "Annuleren"
+   },
+   "editor_zoom_crop_change_area": {
+      "description": "Tooltip text for button to change the selected crop area.",
+      "message": "Gebied wijzigen"
+   },
+   "editor_zoom_crop_dialog_title": {
+      "description": "Title for the zoom and crop dialog in the editor.",
+      "message": "Zoomen en bijsnijden"
+   },
+   "editor_zoom_crop_draw_instruction": {
+      "description": "Instruction text for the user to draw a crop area on the frame preview.",
+      "message": "Teken een selectie op het frame"
+   },
+   "editor_zoom_crop_frame_end": {
+      "description": "Label for the end frame number.",
+      "message": "Einde"
+   },
+   "editor_zoom_crop_frame_range": {
+      "description": "Label for the frame range selection section.",
+      "message": "Framebereik"
+   },
+   "editor_zoom_crop_frame_start": {
+      "description": "Label for the start frame number.",
+      "message": "Begin"
+   },
+   "editor_zoom_crop_frames_menu": {
+      "description": "Menu item label for zoom/crop frames feature.",
+      "message": "Zoomen/Bijsnijden frames"
+   },
+   "editor_zoom_crop_no_area_selected": {
+      "description": "Message displayed when no crop area has been selected.",
+      "message": "Geen gebied geselecteerd"
+   },
+   "editor_zoom_crop_select_area": {
+      "description": "Button text to select a crop area on the frame.",
+      "message": "Selecteer gebied"
+   },
+   "editor_zoom_crop_smooth_animation": {
+      "description": "Checkbox label for smoothing animation by interpolating frames.",
+      "message": "Animatie vloeiend maken door frames toe te voegen"
+   },
+   "editor_zoom_crop_transition": {
+      "description": "Label for the transition duration section (number of frames for animation).",
+      "message": "Overgang"
+   },
+   "enable_drawing_text": {
+      "description": "Enable drawing",
+      "message": "Tekening inschakelen"
+   },
+   "enable_drawing_tooltip_text": {
+      "description": "This option allows users to draw in the selected area while holding down the ctrl key.",
+      "message": "Met deze optie kunnen gebruikers in het geselecteerde gebied tekenen terwijl u de CTRL-toets ingedrukt houdt."
+   },
+   "extension_description": {
+      "description": "Take screenshots & record GIFs instantly! Edit & share seamlessly. Your all-in-one screenshot and screen recording solution.",
+      "message": "Maak direct screenshots en neem GIF's op! Bewerk en deel naadloos. Uw alles-in-één screenshot- en schermopname-oplossing."
+   },
+   "extension_name": {
+      "description": "Chrome Capture - screenshot & GIF",
+      "message": "Chrome Capture - Screenshot & GIF"
+   },
+   "extension_short_name": {
+      "description": "Chrome Capture",
+      "message": "Chrome Capture"
+   },
+   "file_access_text": {
+      "description": "After screenshot action",
+      "message": "Actie na schermafbeelding"
+   },
+   "filename_text": {
+      "description": "Filename",
+      "message": "Bestandsnaam"
+   },
+   "frames_per_sec_short_text": {
+      "description": "FPS",
+      "message": "FPS"
+   },
+   "frames_per_sec_text": {
+      "description": "Frames per second (fps)",
+      "message": "Afbeeldingen per seconde (FPS)"
+   },
+   "frames_text": {
+      "description": "frames",
+      "message": "afbeeldingen"
+   },
+   "free_settings_text": {
+      "description": "Free Settings",
+      "message": "Gratis instellingen"
+   },
+   "fullscreen_info_modal_cancel": {
+      "description": "Cancel",
+      "message": "Annuleren"
+   },
+   "fullscreen_info_modal_continue": {
+      "description": "Are you sure you want to continue with full screen capture?",
+      "message": "Weet je zeker dat je wilt doorgaan met Capture Full Screen?"
+   },
+   "fullscreen_info_modal_do_not_show": {
+      "description": "Do not show this again",
+      "message": "Laat dit niet nog eens zien"
+   },
+   "fullscreen_info_modal_message": {
+      "description": "You have used a Chrome Capture shortcut without the cropping tool, this will capture in full screen mode.",
+      "message": "U hebt een snelkoppeling van Chrome Capture gebruikt zonder de bijsnijdgereedschap, dit wordt vastgelegd in de modus Volledig scherm."
+   },
+   "fullscreen_info_modal_open_cropping": {
+      "description": "Open cropping tool",
+      "message": "Open Cropping Tool"
+   },
+   "fullscreen_info_modal_shortcut_cropping_tool": {
+      "description": "Alt + C: Open/close Chrome Capture cropping tool",
+      "message": "Alt + C: Open / Sluiten Chrome Capture Cropping Tool"
+   },
+   "fullscreen_info_modal_shortcut_fullpage_screenshot": {
+      "description": "Alt + Shift + S: Full webpage screenshot (beta)",
+      "message": "Alt + Shift + S: volledige webpagina screenshot (bèta)"
+   },
+   "fullscreen_info_modal_shortcut_linkt": {
+      "description": "You can configure these here: ",
+      "message": "U kunt deze hier configureren:"
+   },
+   "fullscreen_info_modal_shortcut_recording": {
+      "description": "Alt + R: Start/stop recording",
+      "message": "Alt + R: Start / Stop opnemen"
+   },
+   "fullscreen_info_modal_shortcut_screenshot": {
+      "description": "Alt + S: Visible area screenshot",
+      "message": "Alt + S: zichtbaar gebied screenshot"
+   },
+   "fullscreen_info_modal_shortcuts": {
+      "description": "Default shortcuts are: ",
+      "message": "Standaard snelkoppelingen zijn:"
+   },
+   "fullscreen_info_modal_start": {
+      "description": "Start full screen capture",
+      "message": "Start op volledig scherm vastleggen"
+   },
+   "fullscreen_info_modal_title": {
+      "description": "Full screen capture",
+      "message": "Volledig scherm vastleggen"
+   },
+   "general_not_available": {
+      "description": "N/A",
+      "message": "N.v.t."
+   },
+   "get_premium": {
+      "description": "Get Premium",
+      "message": "Get Premium"
+   },
+   "height_text": {
+      "description": "Width (px)",
+      "message": "Breedte (PX)"
+   },
+   "hi": {
+      "description": "Hi",
+      "message": "Hoi"
+   },
+   "internet_connection_required": {
+      "description": "Internet connection is required to upgrade to premium.",
+      "message": "Internetverbinding is vereist om te upgraden naar premie."
+   },
+   "manage_subscription_access_until_date": {
+      "description": "Your plan will not renew. You can access premium features until $date$.",
+      "message": "Uw abonnement wordt niet verlengd. U heeft toegang tot premiumfuncties tot $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_cancel_button": {
+      "description": "Cancel subscription",
+      "message": "Abonnement opzeggen"
+   },
+   "manage_subscription_cancel_confirm_cancel_button": {
+      "description": "Keep Premium",
+      "message": "Premium behouden"
+   },
+   "manage_subscription_cancel_confirm_confirm_button": {
+      "description": "Continue to cancel",
+      "message": "Doorgaan om op te zeggen"
+   },
+   "manage_subscription_cancel_confirm_description": {
+      "description": "You will lose access to Premium features and Premium options will be reset.",
+      "message": "U verliest de toegang tot Premium-functies en de Premium-opties worden gereset."
+   },
+   "manage_subscription_cancel_confirm_title": {
+      "description": "Are you sure you want to cancel your subscription?",
+      "message": "Weet u zeker dat u uw abonnement wilt opzeggen?"
+   },
+   "manage_subscription_ended_on_date": {
+      "description": "Subscription ended on $date$.",
+      "message": "Abonnement beëindigd op $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_ends_on_date": {
+      "description": "Subscription ends on $date$.",
+      "message": "Abonnement eindigt op $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_next_payment_full": {
+      "description": "Next payment: $price$ on $date$",
+      "message": "Volgende betaling: $price$ op $date$",
+      "placeholders": {
+         "date": {
+            "content": "$2"
+         },
+         "price": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_paid_full": {
+      "description": "Paid: $billingCycle$",
+      "message": "Betaald: $billingCycle$",
+      "placeholders": {
+         "billingCycle": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_resubscribe_prompt": {
+      "description": " To use premium features again, please upgrade.",
+      "message": " Upgrade om premiumfuncties opnieuw te gebruiken."
+   },
+   "manage_subscription_update_payment_button": {
+      "description": "Update payment method",
+      "message": "Betaalmethode bijwerken"
+   },
+   "max_recording_dimension_size_text": {
+      "description": "Max recording resolution/quality",
+      "message": "MAX OPNAME RESOLUTIE / KWALITEIT"
+   },
+   "no_limit_text": {
+      "description": "No limit",
+      "message": "Geen limiet"
+   },
+   "open_text": {
+      "description": "Open",
+      "message": "Open"
+   },
+   "options_default_action": {
+      "description": "Extension icon click action",
+      "message": "Actie bij klikken op extensiepictogram"
+   },
+   "options_dimension_size_1000": {
+      "description": "1000 pixels",
+      "message": "1000 pixels"
+   },
+   "options_dimension_size_1080p": {
+      "description": "1920 pixels (1080p)",
+      "message": "1920 pixels (1080p)"
+   },
+   "options_dimension_size_480p": {
+      "description": "640 pixels (480p)",
+      "message": "640 pixels (480p)"
+   },
+   "options_dimension_size_4k": {
+      "description": "3840 pixels (4K)",
+      "message": "3840 pixels (4k)"
+   },
+   "options_dimension_size_720p": {
+      "description": "1280 pixels (720p)",
+      "message": "1280 pixels (720p)"
+   },
+   "options_embedded_options_permission_warning": {
+      "description": "Cursor highlighting, click effects, and drawing tools will only work until the page reloads or changes. To keep them active after reloads or redirects, you'll need to grant an extra permission.",
+      "message": "Cursoraccentuering, klik-effecten en tekengereedschappen werken alleen totdat de pagina opnieuw wordt geladen of verandert. Om ze actief te houden na het opnieuw laden of omleiden, moet u extra toestemming verlenen."
+   },
+   "options_enable_notifications": {
+      "description": "Enable notifications",
+      "message": "Notificaties aanzetten"
+   },
+   "options_enable_notifications_tooltip": {
+      "description": "Display notifications when full screen recording starts and processing recordings in the background.",
+      "message": "Meldingen weergeven bij het opnemen van het volledige scherm start en verwerken opnames op de achtergrond."
+   },
+   "options_enable_subfolder_downloads": {
+      "description": "Download files into subfolder",
+      "message": "Download bestanden naar submap"
+   },
+   "options_enable_subfolder_downloads_tooltip": {
+      "description": "Download files into a subfolder of your choice inside the downloads folder. This option is useful for organising your captures.",
+      "message": "Download bestanden naar een submap van uw keuze in de map Downloads. Deze optie is handig voor het organiseren van uw opnames."
+   },
+   "options_how_to_use_btn": {
+      "description": "How to use",
+      "message": "Hoe te gebruiken"
+   },
+   "options_language": {
+      "description": "Language",
+      "message": "Taal"
+   },
+   "options_open_containing_folder_on_save": {
+      "description": "Open containing folder after saving",
+      "message": "Map openen na opslaan"
+   },
+   "options_open_popup": {
+      "description": "Open popup",
+      "message": "Open pop-up"
+   },
+   "options_open_selected_area": {
+      "description": "Open selected area capture",
+      "message": "Open geselecteerd gebied vastleggen"
+   },
+   "options_section_general": {
+      "description": "Title for the General settings section in the options page",
+      "message": "Algemene instellingen"
+   },
+   "options_section_output": {
+      "description": "Title for the Output and Saving settings section in the options page",
+      "message": "Uitvoer en opslaan"
+   },
+   "options_section_recording": {
+      "description": "Title for the Recording settings section in the options page",
+      "message": "Opname-instellingen"
+   },
+   "options_section_visuals": {
+      "description": "Title for the Cursor and Interaction Visuals settings section in the options page",
+      "message": "Cursor- en interactievisuals"
+   },
+   "options_shortcuts_btn": {
+      "description": "Shortcuts",
+      "message": "Snelkoppelingen"
+   },
+   "options_subfolder_downloads_name": {
+      "description": "Subfolder name:",
+      "message": "Submapnaam:"
+   },
+   "options_support_btn": {
+      "description": "Support",
+      "message": "Steun"
+   },
+   "overlay_help_text": {
+      "description": "Click and drag to choose your selected area. \nRight click to snap to an element, hold shift for multiple.",
+      "message": "Klik en sleep om het geselecteerde gebied te selecteren. \n Klik met de rechtermuisknop om naar een element te klikken, hold Shift voor multiple."
+   },
+   "plan_billing_annually": {
+      "description": "Annually",
+      "message": "Jaarlijks"
+   },
+   "plan_billing_monthly": {
+      "description": "Monthly",
+      "message": "Maandelijks"
+   },
+   "plan_name_custom": {
+      "description": "Custom Plan",
+      "message": "Aangepast abonnement"
+   },
+   "popup_capture_tab": {
+      "description": "Capture",
+      "message": "Gevangen nemen"
+   },
+   "popup_desktop_screenshot_tooltip": {
+      "description": "Capture the entire screen, desktop, or any open application.",
+      "message": "Leg het hele scherm, desktop of elke open applicatie vast."
+   },
+   "popup_editor_icon_tooltip": {
+      "description": "Open Editor",
+      "message": "Open Editor"
+   },
+   "popup_full_page_screenshot_tooltip": {
+      "description": "Capture the current tab full webpage, including content beyond the visible area.",
+      "message": "Leg de huidige Tab Volledige webpagina vast, inclusief inhoud buiten het zichtbare gebied."
+   },
+   "popup_full_webpage": {
+      "description": "Full webpage",
+      "message": "Volledige webpagina"
+   },
+   "popup_no_scripts_alert": {
+      "description": "Selected area and full webpage screenshots are not possible here. These features are available on other websites.",
+      "message": "Geselecteerde gebied en volledige webpagina -screenshots zijn hier niet mogelijk. Deze functies zijn beschikbaar op andere websites."
+   },
+   "popup_record_tab": {
+      "description": "Record",
+      "message": "Vermelding"
+   },
+   "popup_recording_limit_alert": {
+      "description": "Record up to $seconds$ seconds per GIF. Premium users can update this from the ",
+      "message": "Noteer tot $seconds$ seconden per gif. Premium -gebruikers kunnen dit bijwerken van de",
+      "placeholders": {
+         "seconds": {
+            "content": "$1"
+         }
+      }
+   },
+   "popup_recording_limit_settings_link": {
+      "description": "settings page.",
+      "message": "Instellingenpagina."
+   },
+   "popup_screen_or_app": {
+      "description": "Full screen or app",
+      "message": "Volledig scherm of app"
+   },
+   "popup_selected_area": {
+      "description": "Selected area",
+      "message": "Geselecteerd gebied"
+   },
+   "popup_selected_area_screenshot_tooltip": {
+      "description": "Capture a specific area of the current tab.",
+      "message": "Leg een specifiek gebied van het huidige tabblad vast."
+   },
+   "popup_set_shortcut": {
+      "description": "set shortcut",
+      "message": "Stel snelkoppel"
+   },
+   "popup_settings_icon_tooltip": {
+      "description": "Open Settings",
+      "message": "Open instellingen"
+   },
+   "popup_tab_screenshot_tooltip": {
+      "description": "Capture the visible part of the current tab.",
+      "message": "Leg het zichtbare deel van het huidige tabblad vast."
+   },
+   "popup_this_tab": {
+      "description": "This tab",
+      "message": "Dit tabblad"
+   },
+   "popup_waiting_for_desktop_selection_alert": {
+      "description": "FULL SCREEN OR APP capture did not start because you did not select an option from the popup dialog. If you have multiple monitors it may have opened on another monitor.",
+      "message": "Volledig scherm of app -opname is niet begonnen omdat u geen optie hebt geselecteerd in het pop -updialoogvenster. Als u meerdere monitoren heeft, is dit mogelijk op een andere monitor geopend."
+   },
+   "premium_settings_text": {
+      "description": "Premium Settings",
+      "message": "Premium-instellingen"
+   },
+   "purchase_btn_text": {
+      "description": "Get Premium!",
+      "message": "Get Premium!"
+   },
+   "purchase_description_limited_time_text": {
+      "description": "Lock in this price now - limited time offer before we switch to subscriptions!",
+      "message": "Verzeker u nu van deze prijs - tijdelijke aanbieding voordat we overstappen op abonnementen!"
+   },
+   "purchase_description_text": {
+      "description": "Just one payment unlocks all premium features forever. No recurring fees!",
+      "message": "Eén betaling ontgrendelt alle premiumfuncties levenslang. Geen terugkerende kosten!"
+   },
+   "purchase_feature_30fps": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "zijdezachte 30 fps-opname"
+   },
+   "purchase_feature_4K": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "kristalheldere 4K-opname"
+   },
+   "purchase_feature_alter_frame_rate": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "aangepaste framesnelheden"
+   },
+   "purchase_feature_alter_playback_speed": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "slowmotion- en time-lapse-effecten"
+   },
+   "purchase_feature_blur": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "de vervagingstool"
+   },
+   "purchase_feature_crop_recording": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "nauwkeurig GIF's bijsnijden"
+   },
+   "purchase_feature_default": {
+      "description": "Feature that goes in $feature$ placeholder. Default fallback.",
+      "message": "deze functie"
+   },
+   "purchase_feature_frame_edits": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "krachtige frame-voor-frame-bewerking"
+   },
+   "purchase_feature_highlight": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "de markeerstift"
+   },
+   "purchase_feature_no_duration_limit": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "onbeperkte opnameduur"
+   },
+   "purchase_feature_special_effect": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "speciale effecten"
+   },
+   "purchase_feature_step_tool": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "de stap-tool"
+   },
+   "purchase_feature_svg": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "aangepaste pictogrammen en logo's toevoegen"
+   },
+   "purchase_feature_text_and_annotation_customization": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "volledige controle over tekst en annotaties"
+   },
+   "purchase_feature_unlimited_gif_compression": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "onbeperkte geavanceerde GIF-compressie"
+   },
+   "purchase_feature_update_end_time": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "aangepaste opnametijd"
+   },
+   "purchase_login_dialog_closed_by_user_alert": {
+      "description": "Looks like you closed the sign in dialog, premium users must sign in so you don't lose premium access.",
+      "message": "Het lijkt erop dat je het dialoogvenster van het teken hebt gesloten, premium gebruikers moeten zich aanmelden, zodat je geen premium toegang verliest."
+   },
+   "purchase_login_dialog_google_button": {
+      "description": "Sign in with Google",
+      "message": "Log in met Google"
+   },
+   "purchase_login_dialog_title": {
+      "description": "Sign in required",
+      "message": "Inloggen vereist"
+   },
+   "purchase_login_text": {
+      "description": "Sign in with Google to link your purchase to your account.",
+      "message": "Log in met Google om uw aankoop aan uw account te koppelen."
+   },
+   "purchase_login_text_window_opened": {
+      "description": "Sign into Google in the popup window.",
+      "message": "Log in op Google in het pop -upvenster."
+   },
+   "purchase_subscription_title_text": {
+      "description": "Choose the plan that fits your needs.",
+      "message": "Kies het abonnement dat bij uw behoeften past."
+   },
+   "purchase_title_text": {
+      "description": "Get Lifetime Premium Access Today!",
+      "message": "Krijg vandaag nog levenslange premium toegang!"
+   },
+   "purchase_title_text_blocked_feature": {
+      "description": "That feature requires Premium",
+      "message": "Die functie vereist Premium"
+   },
+   "purchase_title_text_blocked_pro_feature": {
+      "description": "That feature requires Premium Pro",
+      "message": "Die functie vereist Premium Pro"
+   },
+   "purchase_title_text_blocked_pro_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium Pro paywall.",
+      "message": "Ontgrendel $feature$ met Premium Pro",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchase_title_text_blocked_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium paywall.",
+      "message": "Ontgrendel $feature$ met Premium",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_already_premium_user": {
+      "description": "Already a premium user?",
+      "message": "Al een premiumgebruiker?"
+   },
+   "purchases_bill_me": {
+      "description": "Bill me:",
+      "message": "Factureer mij:"
+   },
+   "purchases_checkout_unavailable_message": {
+      "description": "Message shown when checkout could not be started.",
+      "message": "De upgradeprocedure kon nu niet worden gestart. Probeer het opnieuw."
+   },
+   "purchases_compare_12_fps": {
+      "description": "12FPS",
+      "message": "12 fps"
+   },
+   "purchases_compare_3_per_day": {
+      "description": "3 per day",
+      "message": "3 per dag"
+   },
+   "purchases_compare_add_custom_shape_tool": {
+      "description": "Add custom shape/icon tool",
+      "message": "Tool voor aangepaste vorm/icoon toevoegen"
+   },
+   "purchases_compare_benefits": {
+      "description": "Benefits",
+      "message": "Voordelen"
+   },
+   "purchases_compare_blur_tool": {
+      "description": "Blur tool",
+      "message": "Vervagingstool"
+   },
+   "purchases_compare_close_button_label": {
+      "description": "Close",
+      "message": "Sluiten"
+   },
+   "purchases_compare_compression": {
+      "description": "High quality GIF compression",
+      "message": "GIF-compressie van hoge kwaliteit"
+   },
+   "purchases_compare_core_capture_features": {
+      "description": "Core Capture Features",
+      "message": "Kernfuncties voor opnemen"
+   },
+   "purchases_compare_crop_recordings": {
+      "description": "Crop recordings",
+      "message": "Opnamen bijsnijden"
+   },
+   "purchases_compare_customize_editing_tools": {
+      "description": "Customize editing tools (font, size color)",
+      "message": "Bewerkingstools aanpassen (lettertype, grootte, kleur)"
+   },
+   "purchases_compare_drawing": {
+      "description": "Draw while recording",
+      "message": "Teken tijdens het opnemen"
+   },
+   "purchases_compare_early_access": {
+      "description": "Early access to new features",
+      "message": "Vroege toegang tot nieuwe functies"
+   },
+   "purchases_compare_editing": {
+      "description": "Edit captures",
+      "message": "Bewerk vangingen"
+   },
+   "purchases_compare_editing_free": {
+      "description": "basic editing",
+      "message": "basisbewerking"
+   },
+   "purchases_compare_editing_suite": {
+      "description": "Editing Suite",
+      "message": "Bewerkingssuite"
+   },
+   "purchases_compare_frame_editing": {
+      "description": "Frame editing",
+      "message": "Frame bewerken"
+   },
+   "purchases_compare_frame_rate": {
+      "description": "Adjust Frame Rate",
+      "message": "Framesnelheid aanpassen (FPS)"
+   },
+   "purchases_compare_frame_specific_edits": {
+      "description": "Frame specific edits",
+      "message": "Frame-specifieke bewerkingen"
+   },
+   "purchases_compare_free_draw_tools": {
+      "description": "Free draw, line, arrow, rectangle, circle, text tools",
+      "message": "Vrij tekenen, lijn-, pijl-, rechthoek-, cirkel-, tekstgereedschap"
+   },
+   "purchases_compare_full_webpage_screenshots": {
+      "description": "Unlimited full page screenshots.",
+      "message": "Onbeperkte schermafbeeldingen op volledige pagina's."
+   },
+   "purchases_compare_highlight_tool": {
+      "description": "Highlight tool",
+      "message": "Markeerstift"
+   },
+   "purchases_compare_live_recording_tools": {
+      "description": "Live Recording Tools",
+      "message": "Live-opnametools"
+   },
+   "purchases_compare_mouse": {
+      "description": "Click and mouse indication",
+      "message": "Klik en muisindicatie"
+   },
+   "purchases_compare_plans": {
+      "description": "Compare plans",
+      "message": "Vergelijk plannen"
+   },
+   "purchases_compare_plans_premium_button": {
+      "description": "Upgrade to Premium",
+      "message": "Upgraden naar Premium"
+   },
+   "purchases_compare_playback_speed": {
+      "description": "Tune recording playback speed",
+      "message": "Stem het afspeelsnelheid af"
+   },
+   "purchases_compare_priority_support": {
+      "description": "Priority support and feature requests",
+      "message": "Prioriteitsondersteuning en functieverzoeken"
+   },
+   "purchases_compare_recording": {
+      "description": "Unlimited GIF recordings.",
+      "message": "Onbeperkte GIF-opnames."
+   },
+   "purchases_compare_recording_free": {
+      "description": "15sec limit per GIF",
+      "message": "15 sec limiet per GIF"
+   },
+   "purchases_compare_recording_quality": {
+      "description": "High quality GIFs",
+      "message": "GIF's van hoge kwaliteit"
+   },
+   "purchases_compare_recording_quality_control": {
+      "description": "Recording Quality & Control",
+      "message": "Opnamekwaliteit en -bediening"
+   },
+   "purchases_compare_recording_quality_free": {
+      "description": "1000 pixels max",
+      "message": "1000 pixels Max"
+   },
+   "purchases_compare_screenshots": {
+      "description": "Unlimited screenshots.",
+      "message": "Onbeperkte screenshots."
+   },
+   "purchases_compare_special_effects": {
+      "description": "Recording special effects",
+      "message": "Speciale effecten opnemen"
+   },
+   "purchases_compare_up_to_1080p": {
+      "description": "Up to 1080p",
+      "message": "Tot 1080p"
+   },
+   "purchases_compare_up_to_24_fps": {
+      "description": "Up to 24FPS",
+      "message": "Tot 24 fps"
+   },
+   "purchases_compare_up_to_30_fps": {
+      "description": "Up to 30FPS",
+      "message": "Tot 30 fps"
+   },
+   "purchases_compare_up_to_4k_plus": {
+      "description": "Up to 4K+",
+      "message": "Tot 4K+"
+   },
+   "purchases_current_plan": {
+      "description": "Current plan",
+      "message": "Huidig abonnement"
+   },
+   "purchases_features": {
+      "description": "Features",
+      "message": "Functies"
+   },
+   "purchases_free": {
+      "description": "Free",
+      "message": "Vrij"
+   },
+   "purchases_free_button": {
+      "description": "Free to use",
+      "message": "Gratis om te gebruiken"
+   },
+   "purchases_free_feature_editing": {
+      "description": "Basic editing",
+      "message": "Basisbewerking"
+   },
+   "purchases_free_feature_recording": {
+      "description": "Basic GIF recording",
+      "message": "Basic GIF-opname"
+   },
+   "purchases_free_feature_screenshots": {
+      "description": "Unlimited screenshots",
+      "message": "Onbeperkte screenshots"
+   },
+   "purchases_free_plan_description": {
+      "description": "Get started with our essential capture tools. Completely free for basic everyday use.",
+      "message": "Ga aan de slag met onze essentiële opnametools. Volledig gratis voor eenvoudig dagelijks gebruik."
+   },
+   "purchases_plan_save_up_to_percentage": {
+      "description": "Save up to",
+      "message": "Bespaar tot"
+   },
+   "purchases_premium": {
+      "description": "Premium",
+      "message": "Premie"
+   },
+   "purchases_premium_billed_annually": {
+      "description": "Billed annually",
+      "message": "Jaarlijks gefactureerd"
+   },
+   "purchases_premium_button": {
+      "description": "Get lifetime access",
+      "message": "Krijg levenslange toegang"
+   },
+   "purchases_premium_feature_compression": {
+      "description": "High quality GIF compression",
+      "message": "GIF-compressie van hoge kwaliteit"
+   },
+   "purchases_premium_feature_editing": {
+      "description": "Feature rich editing",
+      "message": "Feature Rich Bewerken"
+   },
+   "purchases_premium_feature_free": {
+      "description": "Everything from free plan",
+      "message": "Bevat functies uit het gratis abonnement"
+   },
+   "purchases_premium_feature_marked_with_star": {
+      "description": "All features marked with a star",
+      "message": "Alle functies gemarkeerd met een ster"
+   },
+   "purchases_premium_feature_recording": {
+      "description": "Unlimited high quality GIF recording",
+      "message": "Onbeperkte GIF-opname van hoge kwaliteit"
+   },
+   "purchases_premium_feature_recording_1080p": {
+      "description": "High quality GIF recording, up to 1080p, 24fps",
+      "message": "Hoge kwaliteit GIF-opname, tot 1080p, 24 fps"
+   },
+   "purchases_premium_feature_refundable": {
+      "description": "Fully refundable",
+      "message": "Volledig terugbetaalbaar"
+   },
+   "purchases_premium_feature_risk_free": {
+      "description": "Risk-free: 7 day trial, cancel anytime",
+      "message": "Zonder risico: 7 dagen proefversie, op elk moment opzegbaar"
+   },
+   "purchases_premium_feature_unlimited_length": {
+      "description": "Unlimited GIF recording length",
+      "message": "Onbeperkte GIF-opnameduur"
+   },
+   "purchases_premium_price_info": {
+      "description": "one time fee",
+      "message": "eenmalige vergoeding"
+   },
+   "purchases_premium_price_per_month": {
+      "description": "/ month",
+      "message": "/ maand"
+   },
+   "purchases_premium_pro": {
+      "description": "Premium Pro",
+      "message": "Premium Pro"
+   },
+   "purchases_premium_pro_editing_tools": {
+      "description": "Advanced editing tools (blurring, special effects, etc.)",
+      "message": "Geavanceerde bewerkingstools (vervaging, speciale effecten, enz.)"
+   },
+   "purchases_premium_pro_feature_early_access": {
+      "description": "Early access to new features",
+      "message": "Vroege toegang tot new functies"
+   },
+   "purchases_premium_pro_feature_marked_with_crown": {
+      "description": "All features marked with a star and crown",
+      "message": "Alle functies gemarkeerd met een ster en kroon"
+   },
+   "purchases_premium_pro_feature_premium_plan": {
+      "description": "Everything from Premium plan",
+      "message": "Alles uit het Premium-abonnement"
+   },
+   "purchases_premium_pro_feature_quality": {
+      "description": "Max resolution recording, 4K+ and 30fps",
+      "message": "Opname in maximale resolutie, 4K+ en 30 fps"
+   },
+   "purchases_premium_pro_feature_support": {
+      "description": "Priority support and feature requests",
+      "message": "Prioriteitsondersteuning en functieverzoeken"
+   },
+   "purchases_premium_pro_upgrade": {
+      "description": "Upgrade to Pro",
+      "message": "Upgraden naar Pro"
+   },
+   "purchases_premium_save_percentage": {
+      "description": "save $savingsPercentage$%",
+      "message": "bespaar $savingsPercentage$%",
+      "placeholders": {
+         "savingsPercentage": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_premium_try_for_free": {
+      "description": "Try for free",
+      "message": "Gratis proberen"
+   },
+   "purchases_price_unavailable": {
+      "description": "Label shown in place of a price when it is unavailable.",
+      "message": "Prijs niet beschikbaar"
+   },
+   "purchases_pricing_unavailable_message": {
+      "description": "Message shown when the Premium pricing request was blocked or failed.",
+      "message": "De aanvraag voor Premium-prijzen is geblokkeerd of mislukt. Dit kan gebeuren wanneer een bedrijfsnetwerk, VPN, advertentieblokker, privacy-extensie of firewall Paddle blokkeert."
+   },
+   "purchases_pricing_unavailable_title": {
+      "description": "Title shown when Premium pricing could not be loaded.",
+      "message": "Premium-prijzen konden niet worden geladen"
+   },
+   "purchases_pricing_unavailable_troubleshooting_extensions": {
+      "description": "Troubleshooting step telling the user to disable VPN or privacy tools temporarily.",
+      "message": "Schakel VPN, advertentieblokker of privacy-extensies tijdelijk uit en probeer het opnieuw."
+   },
+   "purchases_pricing_unavailable_troubleshooting_intro": {
+      "description": "Intro text for troubleshooting steps when pricing is unavailable.",
+      "message": "Dingen om te proberen:"
+   },
+   "purchases_pricing_unavailable_troubleshooting_network": {
+      "description": "Troubleshooting step telling the user to try another network or browser profile.",
+      "message": "Probeer een ander netwerk of open de extensie in een ander Chrome-profiel."
+   },
+   "purchases_pricing_unavailable_troubleshooting_workplace": {
+      "description": "Troubleshooting step telling the user workplace policy may be blocking Paddle.",
+      "message": "Als u een werkapparaat gebruikt, kan uw netwerk- of browserbeleid Paddle blokkeren."
+   },
+   "purchases_sign_in_here": {
+      "description": "Sign in here",
+      "message": "Meld je hier aan"
+   },
+   "purchases_start_trial_cancel_anytime": {
+      "description": "Call to action to start a free trial.",
+      "message": "Start je gratis proefperiode van 7 dagen om door te gaan. Annuleer op elk moment."
+   },
+   "purchases_try_premium_for_free": {
+      "description": "Try Premium for Free",
+      "message": "Probeer Premium gratis"
+   },
+   "purchases_try_premium_pro_for_free": {
+      "description": "Try Premium Pro for Free",
+      "message": "Probeer Premium Pro gratis"
+   },
+   "purchases_upgrade_premium_to_pro": {
+      "description": "To use this feature and access all Pro benefits, upgrade your plan.",
+      "message": "Upgrade uw abonnement om deze functie te gebruiken en toegang te krijgen tot alle Pro-voordelen."
+   },
+   "purchases_upgrade_to_premium_pro": {
+      "description": "Upgrade to Premium Pro",
+      "message": "Upgraden naar Premium Pro"
+   },
+   "quality_text": {
+      "description": "Recording quality (10 = best)",
+      "message": "Opnamekwaliteit (10 = beste)"
+   },
+   "rate_bad_rating_text": {
+      "description": "We are continuously trying our hardest to improve Chrome Capture, please share what needs improvement by emailing us at ",
+      "message": "We proberen voortdurend ons het hardst te verbeteren om het chroomafname te verbeteren, deel alstublieft wat verbetering nodig heeft door ons te e-mailen"
+   },
+   "rate_bad_title_text": {
+      "description": "😞 We are sorry!",
+      "message": "😞 Sorry!"
+   },
+   "rate_close_btn_text": {
+      "description": "Close",
+      "message": "Dichtbij"
+   },
+   "rate_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "Bevestigen"
+   },
+   "rate_description_text": {
+      "description": "If you've found this extension useful please leave a rating or review. \n\nBy leaving a rating you can help us reach more users which will help fund continual improvements and keep general usage free.",
+      "message": "Als u deze extensie nuttig hebt gevonden, laat dan een beoordeling of beoordeling achter. \n\n Door een beoordeling achter te laten, kunt u ons helpen meer gebruikers te bereiken die de voortdurende verbeteringen zullen helpen financieren en het algemene gebruik van het gebruik vrij te houden."
+   },
+   "rate_description_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "We stellen u ten zeerste op prijs dat u premium koopt en graag een feedback hoort dat u ons moet helpen het product te verbeteren en meer gebruikers te bereiken."
+   },
+   "rate_good_rating_text": {
+      "description": "Your reviews keep our small team motivated to make Chrome Capture even better!",
+      "message": "Uw beoordelingen houden ons kleine team gemotiveerd om Chrome-opname nog beter te maken!"
+   },
+   "rate_good_rating_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "We stellen u ten zeerste op prijs dat u premium koopt en graag een feedback hoort dat u ons moet helpen het product te verbeteren en meer gebruikers te bereiken."
+   },
+   "rate_good_title_text": {
+      "description": "😍 Review in the web store?",
+      "message": "😍 Review in The Web Store?"
+   },
+   "rate_maybe_later_btn_text": {
+      "description": "Maybe later",
+      "message": "Misschien later"
+   },
+   "rate_no_btn_text": {
+      "description": "No thanks",
+      "message": "Nee bedankt"
+   },
+   "rate_send_email_btn_text": {
+      "description": "Send Email",
+      "message": "Stuur e-mail"
+   },
+   "rate_thank_you_title_text": {
+      "description": "Thank you! 😍",
+      "message": "Dank u! 😍"
+   },
+   "rate_title_text": {
+      "description": "How are we doing?",
+      "message": "Hoe gaat het met ons?"
+   },
+   "rate_yes_btn_text": {
+      "description": "Ok, sure",
+      "message": "OK zeker"
+   },
+   "recommended": {
+      "description": "recommended",
+      "message": "aanbevolen"
+   },
+   "record_length_text": {
+      "description": "Max record length",
+      "message": "Max Record Length"
+   },
+   "recordings_taken": {
+      "description": "Recordings taken:",
+      "message": "Opnamen genomen:"
+   },
+   "save_as_screenshot_text": {
+      "description": "Save screenshot as",
+      "message": "Bespaar screenshot als"
+   },
+   "save_as_text": {
+      "description": "Save recording as",
+      "message": "Opslaan opslaan als"
+   },
+   "screenshots_taken": {
+      "description": "Screenshots taken:",
+      "message": "Screenshots gemaakt:"
+   },
+   "seconds_text": {
+      "description": "secs",
+      "message": "sec"
+   },
+   "shortcut": {
+      "description": "Shortcut:",
+      "message": "Snelkoppeling:"
+   },
+   "show_click_indicator_text": {
+      "description": "Show click animation",
+      "message": "Show Click Animation"
+   },
+   "show_click_indicator_tooltip_text": {
+      "description": "This option draws a circle animation around the click location.",
+      "message": "Deze optie trekt een cirkelanimatie rond de kliklocatie."
+   },
+   "show_cursor_text": {
+      "description": "Show dot at cursor location",
+      "message": "Toon punt op cursorlocatie"
+   },
+   "show_cursor_tooltip_text": {
+      "description": "This option draws a small circle to indicate where the mouse is located.",
+      "message": "Deze optie trekt een kleine cirkel om aan te geven waar de muis zich bevindt."
+   },
+   "sign_in": {
+      "description": "Sign In",
+      "message": "Inloggen"
+   },
+   "sign_out": {
+      "description": "Sign Out",
+      "message": "Uitmelden"
+   },
+   "subscription_past_due_warning": {
+      "description": "Warning message shown when a user subscription payment has failed or is past its due date.",
+      "message": "De abonnementsbetaling is achterstallig. Klik hier om uw betalingsgegevens bij te werken."
+   },
+   "subscription_premium_plan_description": {
+      "description": "Go beyond basics: HD quality & limits unlocked. Craft pro content with enhanced features.",
+      "message": "Ga verder dan de basis: HD-kwaliteit en ontgrendelde limieten. Maak professionele content met verbeterde functies."
+   },
+   "subscription_premium_pro_plan_description": {
+      "description": "Experience peak performance: 4K+ and all features. Full editing suite with early access.",
+      "message": "Ervaar topprestaties: 4K+ en alle functies. Volledige bewerkingssuite met vroege toegang."
+   },
+   "subscription_status_active": {
+      "description": "Active",
+      "message": "Actief"
+   },
+   "subscription_status_ending_soon": {
+      "description": "Ending Soon",
+      "message": "Eindigt binnenkort"
+   },
+   "subscription_status_expired": {
+      "description": "Expired",
+      "message": "Verlopen"
+   },
+   "subscription_status_past_due": {
+      "description": "Past Due",
+      "message": "Achterstallig"
+   },
+   "subscription_status_paused": {
+      "description": "Paused",
+      "message": "Gepauzeerd"
+   },
+   "subscription_status_unknown": {
+      "description": "Unknown",
+      "message": "Onbekend"
+   },
+   "unable_to_capture_website_alert": {
+      "description": "Unable to capture this website. Please use full screen/application capture or try capture another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "Kan deze website niet vastleggen. Gebruik het volledige scherm/applicatie -opname of probeer een andere website vast te leggen. \n\n (╯ ° □ °） ╯︵ ┻━┻ ┻━┻"
+   },
+   "view_permission": {
+      "description": "View permission.",
+      "message": "Toestemming bekijken."
+   },
+   "width_text": {
+      "description": "Height (px)",
+      "message": "Hoogte (PX)"
+   }
+}

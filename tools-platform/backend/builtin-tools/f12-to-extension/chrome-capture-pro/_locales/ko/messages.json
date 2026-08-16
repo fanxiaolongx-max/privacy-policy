@@ -1,0 +1,1691 @@
+{
+   "account_modal_free_plan": {
+      "description": "You are on the free plan",
+      "message": "무료 플랜 사용 중"
+   },
+   "account_modal_manage_subscription_button": {
+      "description": "Manage Subscription",
+      "message": "구독 관리"
+   },
+   "account_modal_not_signed_in": {
+      "description": "You are not signed in",
+      "message": "로그인되지 않음"
+   },
+   "account_modal_premium_plan": {
+      "description": "You are on the premium plan",
+      "message": "프리미엄 플랜 사용 중"
+   },
+   "account_modal_premium_pro_plan": {
+      "description": "You are on the Premium Pro plan",
+      "message": "Premium Pro 요금제를 사용 중입니다"
+   },
+   "account_modal_request_feature_button": {
+      "description": "Request Feature",
+      "message": "기능 요청"
+   },
+   "account_modal_request_support_button": {
+      "description": "Request Support",
+      "message": "지원 요청"
+   },
+   "account_modal_stats_heading": {
+      "description": "Your stats:",
+      "message": "내 통계:"
+   },
+   "alert_text": {
+      "description": "Unable to run selected area capture on this website. Please use full screen recording or try another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "이 웹사이트에서는 선택 영역 캡처를 실행할 수 없습니다. 전체 화면 녹화를 사용하거나 다른 웹사이트에서 시도해 주세요.\n\n(╯°□°）╯︵ ┻━┻"
+   },
+   "click_indicator_size_color_text": {
+      "description": "Click animation size & color",
+      "message": "클릭 애니메이션 크기 및 색상"
+   },
+   "close_btn_text": {
+      "description": "Close",
+      "message": "닫기"
+   },
+   "confirm_dialog_cancel_btn_text": {
+      "description": "Cancel",
+      "message": "취소"
+   },
+   "confirm_dialog_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "확인"
+   },
+   "confirm_fps_update_text": {
+      "description": "Changing the fps will remove all frame specific edits such as edited or deleted frames. Do you want to continue?",
+      "message": "FPS를 변경하면 편집되거나 삭제된 프레임과 같은 모든 프레임별 편집 내용이 제거됩니다. 계속하시겠습니까?"
+   },
+   "copy_text": {
+      "description": "Copy to clipboard",
+      "message": "클립보드에 복사"
+   },
+   "cursor_size_and_color_text": {
+      "description": "Cursor dot size & color",
+      "message": "커서 점 크기 및 색상"
+   },
+   "dither_text": {
+      "description": "Apply dither",
+      "message": "디더링 적용"
+   },
+   "download_filename_text": {
+      "description": "Download filename format",
+      "message": "다운로드 파일 이름 형식"
+   },
+   "download_text": {
+      "description": "Download",
+      "message": "다운로드"
+   },
+   "draw_size_and_color_text": {
+      "description": "Drawing size & color",
+      "message": "그리기 크기 및 색상"
+   },
+   "duration": {
+      "description": "Label for a field indicating a length of time.",
+      "message": "시간"
+   },
+   "editor_action_add_icon": {
+      "description": "Add icon",
+      "message": "아이콘 추가"
+   },
+   "editor_action_add_text": {
+      "description": "Add text",
+      "message": "텍스트 추가"
+   },
+   "editor_action_blur_rectangle": {
+      "description": "Blur area",
+      "message": "영역 흐리게"
+   },
+   "editor_action_copy": {
+      "description": "Copy to clipboard",
+      "message": "클립보드에 복사"
+   },
+   "editor_action_crop": {
+      "description": "Crop",
+      "message": "자르기"
+   },
+   "editor_action_draw_arrow": {
+      "description": "Draw arrow",
+      "message": "화살표 그리기"
+   },
+   "editor_action_draw_ellipse": {
+      "description": "Draw ellipse",
+      "message": "타원 그리기"
+   },
+   "editor_action_draw_line": {
+      "description": "Draw line",
+      "message": "선 그리기"
+   },
+   "editor_action_draw_rectangle": {
+      "description": "Draw rectangle",
+      "message": "사각형 그리기"
+   },
+   "editor_action_free_draw": {
+      "description": "Free draw",
+      "message": "자유 그리기"
+   },
+   "editor_action_highlight": {
+      "description": "Highlight",
+      "message": "강조 표시"
+   },
+   "editor_action_numbered_step": {
+      "description": "Action label for adding a numbered step annotation.",
+      "message": "번호 매기기"
+   },
+   "editor_action_pan": {
+      "description": "Pan",
+      "message": "이동"
+   },
+   "editor_action_profile_account": {
+      "description": "Account",
+      "message": "계정"
+   },
+   "editor_action_redo": {
+      "description": "Redo",
+      "message": "다시 실행"
+   },
+   "editor_action_save": {
+      "description": "Save",
+      "message": "저장"
+   },
+   "editor_action_select": {
+      "description": "Select, move, resize",
+      "message": "선택, 이동, 크기 조정"
+   },
+   "editor_action_settings": {
+      "description": "Settings",
+      "message": "설정"
+   },
+   "editor_action_undo": {
+      "description": "Undo",
+      "message": "실행 취소"
+   },
+   "editor_action_undo_all": {
+      "description": "Undo all",
+      "message": "모두 실행 취소"
+   },
+   "editor_add_text_default": {
+      "description": "start typing...",
+      "message": "입력 시작..."
+   },
+   "editor_browse_file_system": {
+      "description": "Browse file system",
+      "message": "파일 시스템 찾아보기"
+   },
+   "editor_drag_and_drop": {
+      "description": "Drag and drop image/GIF or ",
+      "message": "이미지/GIF를 드래그 앤 드롭하거나"
+   },
+   "editor_file_downloaded": {
+      "description": "File saved to downloads folder.",
+      "message": "파일이 '다운로드' 폴더에 저장되었습니다."
+   },
+   "editor_file_downloaded_selected_location": {
+      "description": "File saved to selected location.",
+      "message": "파일이 선택한 위치에 저장되었습니다."
+   },
+   "editor_frame_selector_apply_edits": {
+      "description": "Apply edits to selected",
+      "message": "선택 항목에 편집 적용"
+   },
+   "editor_frame_selector_delete": {
+      "description": "Delete",
+      "message": "삭제"
+   },
+   "editor_frame_selector_delete_every_second": {
+      "description": "Delete every second frame",
+      "message": "두 프레임마다 하나씩 삭제"
+   },
+   "editor_frame_selector_delete_selected": {
+      "description": "Delete selected",
+      "message": "선택 항목 삭제"
+   },
+   "editor_frame_selector_remove_edits": {
+      "description": "Remove edits from selected",
+      "message": "선택 항목에서 편집 제거"
+   },
+   "editor_frame_selector_restore": {
+      "description": "Restore",
+      "message": "복원"
+   },
+   "editor_frame_selector_restore_all": {
+      "description": "Restore All",
+      "message": "모두 복원"
+   },
+   "editor_frame_selector_restore_selected": {
+      "description": "Restore selected",
+      "message": "선택 항목 복원"
+   },
+   "editor_frame_selector_select_next": {
+      "description": "Select next frames",
+      "message": "다음 프레임 선택"
+   },
+   "editor_frame_selector_select_previous": {
+      "description": "Select previous frames",
+      "message": "이전 프레임 선택"
+   },
+   "editor_frame_selector_unselect_all": {
+      "description": "Unselect All",
+      "message": "모두 선택 해제"
+   },
+   "editor_image_copied": {
+      "description": "Image copied to clipboard.",
+      "message": "이미지가 클립보드에 복사되었습니다."
+   },
+   "editor_image_copied_failed": {
+      "description": "Failed to copy image to clipboard, it may be too large.",
+      "message": "클립보드에 이미지를 복사하지 못했습니다. 파일이 너무 클 수 있습니다."
+   },
+   "editor_link_copied": {
+      "description": "Link copied to clipboard.",
+      "message": "링크가 클립보드에 복사되었습니다."
+   },
+   "editor_max_time_reached_dialog_description1": {
+      "description": "You have reached the max recording length time of $maxlength$ seconds for GIFs. Premium users can update this from the settings page.",
+      "message": "GIF의 최대 녹화 길이인 $maxlength$초에 도달했습니다. 프리미엄 사용자는 설정 페이지에서 이를 업데이트할 수 있습니다.",
+      "placeholders": {
+         "maxlength": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_max_time_reached_dialog_description2": {
+      "description": "GIFs are intended for short recordings. If you require full length videos we recommend our free screen recorder: ",
+      "message": "GIF는 짧은 녹화용입니다. 전체 길이 영상이 필요한 경우, 무료 화면 녹화기를 권장합니다:"
+   },
+   "editor_max_time_reached_dialog_description3": {
+      "description": "Premium users can update this from the settings page.",
+      "message": "프리미엄 사용자는 설정 페이지에서 이를 업데이트할 수 있습니다."
+   },
+   "editor_max_time_reached_dialog_settings_button": {
+      "description": "Open settings",
+      "message": "설정 열기"
+   },
+   "editor_max_time_reached_dialog_title": {
+      "description": "Recording suddenly stopped?",
+      "message": "녹화가 갑자기 중지되었나요?"
+   },
+   "editor_premium_options_color": {
+      "description": "Color",
+      "message": "색상"
+   },
+   "editor_premium_options_draw_size": {
+      "description": "Draw Size",
+      "message": "그리기 크기"
+   },
+   "editor_premium_options_font": {
+      "description": "Font",
+      "message": "글꼴"
+   },
+   "editor_premium_options_playback_speed": {
+      "description": "Playback Speed",
+      "message": "재생 속도"
+   },
+   "editor_premium_options_special_effect": {
+      "description": "Special Effect",
+      "message": "특수 효과"
+   },
+   "editor_premium_options_title": {
+      "description": "Premium Options",
+      "message": "프리미엄 옵션"
+   },
+   "editor_save_dialog_advanced_encoding_options": {
+      "description": "Title for a section containing advanced, technical options for encoding a file.",
+      "message": "고급 인코딩 옵션"
+   },
+   "editor_save_dialog_alert_title": {
+      "description": "Warning",
+      "message": "경고"
+   },
+   "editor_save_dialog_aspect_ratio": {
+      "description": "lock aspect ratio",
+      "message": "종횡비 고정"
+   },
+   "editor_save_dialog_cancel": {
+      "description": "Cancel",
+      "message": "취소"
+   },
+   "editor_save_dialog_chip_animated_image": {
+      "description": "Chip label indicating an animated image format (e.g. GIF, AVIF).",
+      "message": "애니메이션 이미지"
+   },
+   "editor_save_dialog_chip_large_file": {
+      "description": "Chip label indicating the format produces a large file size.",
+      "message": "큰 파일"
+   },
+   "editor_save_dialog_chip_limited_support": {
+      "description": "Chip label indicating the format has limited browser/app support.",
+      "message": "제한된 지원"
+   },
+   "editor_save_dialog_chip_small_file": {
+      "description": "Chip label indicating the format produces a small file size.",
+      "message": "작은 파일"
+   },
+   "editor_save_dialog_chip_video": {
+      "description": "Chip label indicating a video format (e.g. WebM, MP4).",
+      "message": "동영상"
+   },
+   "editor_save_dialog_chip_widely_supported": {
+      "description": "Chip label indicating the format is widely supported.",
+      "message": "널리 지원됨"
+   },
+   "editor_save_dialog_compress": {
+      "description": "Compress & optimize GIF",
+      "message": "GIF 압축 및 최적화"
+   },
+   "editor_save_dialog_compress_tooltip": {
+      "description": "Apply GIF compression algorthm to greatly reduce GIF file size and in some cases improve quality. Highly recommeded.",
+      "message": "GIF 압축 알고리즘을 적용하여 GIF 파일 크기를 크게 줄이고 경우에 따라 품질을 향상시킵니다. 적극 권장합니다."
+   },
+   "editor_save_dialog_dither_tooltip": {
+      "description": "Apply dither algorithm to frames. Try toggling this option if you experience color quality issues.",
+      "message": "프레임에 디더링 알고리즘을 적용합니다. 색상 품질 문제가 발생하면 이 옵션을 켜거나 꺼보세요."
+   },
+   "editor_save_dialog_download_raw_recording": {
+      "description": "Download raw recording",
+      "message": "원본 녹화 파일 다운로드"
+   },
+   "editor_save_dialog_estimated_size": {
+      "description": "Estimated GIF Size: ",
+      "message": "예상 GIF 크기:"
+   },
+   "editor_save_dialog_export_sound": {
+      "description": "Include sound (beta)",
+      "message": "소리 포함 (베타)"
+   },
+   "editor_save_dialog_export_sound_tooltip": {
+      "description": "Enable this option to include sound in the video.",
+      "message": "비디오에 소리를 포함하려면 이 옵션을 활성화하세요."
+   },
+   "editor_save_dialog_frames": {
+      "description": "Frames: ",
+      "message": "프레임 수:"
+   },
+   "editor_save_dialog_frames_alert": {
+      "description": "There are currently selected frames, saving will only output these selected frames - ",
+      "message": "현재 일부 프레임이 선택되어 있습니다. 저장 시 이 선택된 프레임만 출력됩니다 -"
+   },
+   "editor_save_dialog_frames_alert_button": {
+      "description": "Click here to unselect all frames",
+      "message": "여기를 클릭하여 모든 프레임 선택 해제"
+   },
+   "editor_save_dialog_frames_alert_title": {
+      "description": "Playback Speed",
+      "message": "재생 속도"
+   },
+   "editor_save_dialog_frames_processing": {
+      "description": "Processing Frames: ",
+      "message": "프레임 처리 중:"
+   },
+   "editor_save_dialog_height_helper": {
+      "description": "Recorded height is ",
+      "message": "녹화된 높이: "
+   },
+   "editor_save_dialog_lossy_compression": {
+      "description": "Label for a setting that controls the level of lossy compression, from 0 to 100 percent.",
+      "message": "손실 압축 (0 - 100%)"
+   },
+   "editor_save_dialog_number_min_max_validation": {
+      "description": "A value between $minSize$ and $maxSize$ is required.",
+      "message": "$minSize$와 $maxSize$ 사이의 값이 필요합니다.",
+      "placeholders": {
+         "maxSize": {
+            "content": "$2"
+         },
+         "minSize": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_save_dialog_processing_alert": {
+      "description": "Processing this recording will require a lot of memory and processing power. Unless you have a high spec PC it is recommended to do one or more of the following:",
+      "message": "이 녹화 파일을 처리하려면 많은 메모리와 처리 능력이 필요합니다. 고사양 PC가 아니라면 다음 중 하나 이상을 수행하는 것이 좋습니다:"
+   },
+   "editor_save_dialog_processing_alert_memory": {
+      "description": "Please note if the resulting GIF is blank then you ran out of memory.",
+      "message": "참고: 결과 GIF가 비어 있다면 메모리가 부족했기 때문입니다."
+   },
+   "editor_save_dialog_processing_alert_point_1": {
+      "description": "Compress and optimize GIF",
+      "message": "GIF 압축 및 최적화"
+   },
+   "editor_save_dialog_processing_alert_point_2": {
+      "description": "Reduce the width & height",
+      "message": "너비 및 높이 줄이기"
+   },
+   "editor_save_dialog_processing_alert_point_3": {
+      "description": "Reduce FPS or delete frames",
+      "message": "FPS 줄이기 또는 프레임 삭제"
+   },
+   "editor_save_dialog_purchase_dialog_compression_description": {
+      "description": "Free users are limited to 3 high quality GIF compressions per day. Upgrade to Premium to have no restrictions.",
+      "message": "무료 사용자는 하루에 3개의 고품질 GIF 압축으로 제한됩니다. 제한 없이 사용하려면 프리미엄으로 업그레이드하세요."
+   },
+   "editor_save_dialog_quantization_algorithm": {
+      "description": "Label for a dropdown to select a quantization algorithm.",
+      "message": "양자화 알고리즘"
+   },
+   "editor_save_dialog_quantization_algorithm_new_alpha": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Alpha.",
+      "message": "새 버전 (알파)"
+   },
+   "editor_save_dialog_quantization_algorithm_new_beta": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Beta.",
+      "message": "새 버전 (베타)"
+   },
+   "editor_save_dialog_quantization_algorithm_old": {
+      "description": "An option for the quantization algorithm setting, indicating an older version.",
+      "message": "이전"
+   },
+   "editor_save_dialog_recording_quality_alert": {
+      "description": "GIF quality is limited for non premium users. To output high quality recordings you can do one of the following:",
+      "message": "비-프리미엄 사용자의 경우 GIF 품질이 제한됩니다. 고품질 녹화 파일을 출력하려면 다음 중 하나를 수행할 수 있습니다:"
+   },
+   "editor_save_dialog_recording_quality_alert_option_1": {
+      "description": "Purchase premium",
+      "message": "프리미엄 구매"
+   },
+   "editor_save_dialog_recording_quality_alert_option_2": {
+      "description": "Save as a WebM file",
+      "message": "WebM 파일로 저장"
+   },
+   "editor_save_dialog_reduce_width": {
+      "description": "Reduce width & height",
+      "message": "너비 및 높이 줄이기"
+   },
+   "editor_save_dialog_reduce_width_tooltip": {
+      "description": "Reduce GIF width and height/quality to improve processing time and produce a smaller file.",
+      "message": "GIF 너비와 높이/품질을 줄여 처리 시간을 개선하고 파일 크기를 줄입니다."
+   },
+   "editor_save_dialog_save": {
+      "description": "Save",
+      "message": "저장"
+   },
+   "editor_save_dialog_save_by": {
+      "description": "Save by",
+      "message": "저장 방식:"
+   },
+   "editor_save_dialog_save_by_download": {
+      "description": "Download file",
+      "message": "파일 다운로드"
+   },
+   "editor_save_dialog_save_by_google_drive": {
+      "description": "Upload to Google Drive & copy link",
+      "message": "Google Drive에 업로드 & 링크 복사"
+   },
+   "editor_save_dialog_save_location": {
+      "description": "Save location",
+      "message": "저장 위치"
+   },
+   "editor_save_dialog_save_location_downloads": {
+      "description": "Downloads folder",
+      "message": "'다운로드' 폴더"
+   },
+   "editor_save_dialog_save_location_downloads_subfolder": {
+      "description": "Downloads subfolder",
+      "message": "'다운로드' 하위 폴더"
+   },
+   "editor_save_dialog_save_location_select": {
+      "description": "Manually select location",
+      "message": "수동으로 위치 선택"
+   },
+   "editor_save_dialog_title": {
+      "description": "Save",
+      "message": "저장"
+   },
+   "editor_save_dialog_title_processing": {
+      "description": "Processing...",
+      "message": "처리 중..."
+   },
+   "editor_save_dialog_title_uploading": {
+      "description": "Uploading...",
+      "message": "업로드 중..."
+   },
+   "editor_save_dialog_width_helper": {
+      "description": "Recorded width is ",
+      "message": "녹화된 너비: "
+   },
+   "editor_text": {
+      "description": "Open in editor",
+      "message": "편집기에서 열기"
+   },
+   "editor_tip_delete_items": {
+      "description": "Pro tip: Delete added items by selecting the item and pressing the delete key.",
+      "message": "프로 팁: 항목을 선택하고 Delete 키를 눌러 추가된 항목을 삭제하세요."
+   },
+   "editor_tip_edit_specific_frames": {
+      "description": "Pro tip: You can edit specific frames by using the 'Apply edits to selected option'",
+      "message": "프로 팁: '선택한 프레임에 편집 적용' 옵션을 사용하여 특정 프레임을 편집할 수 있습니다."
+   },
+   "editor_tip_scroll": {
+      "description": "Pro tip: Scroll when hovering the screenshot/recording to zoom.",
+      "message": "프로 팁: 스크린샷/녹화 파일 위에 마우스 오버 시 스크롤하여 확대/축소할 수 있습니다."
+   },
+   "editor_tip_shift_multiple_items": {
+      "description": "Pro tip: When using the selecting tool hold down shift to select more than one item.",
+      "message": "프로 팁: 선택 도구를 사용할 때 Shift 키를 누른 채로 여러 항목을 선택할 수 있습니다."
+   },
+   "editor_tip_update_multiple_items": {
+      "description": "Pro tip: You can scale, rotate, move and delete multiple items at once.",
+      "message": "프로 팁: 여러 항목을 동시에 크기 조절, 회전, 이동 및 삭제할 수 있습니다."
+   },
+   "editor_tip_update_text": {
+      "description": "Pro tip: Double click on text to edit it.",
+      "message": "프로 팁: 텍스트를 더블 클릭하여 편집하세요."
+   },
+   "editor_upload_dialog_alert_copy_failed_message": {
+      "description": "This may have occurred due to the window not being focused.",
+      "message": "창에 포커스가 맞지 않아 발생했을 수 있습니다."
+   },
+   "editor_upload_dialog_alert_copy_failed_title": {
+      "description": "Copy to clipboard failed",
+      "message": "클립보드 복사 실패"
+   },
+   "editor_upload_dialog_alert_copy_success_title": {
+      "description": "Copied to clipboard",
+      "message": "클립보드에 복사됨"
+   },
+   "editor_upload_dialog_alert_upload_failed": {
+      "description": "Upload Failed",
+      "message": "업로드 실패"
+   },
+   "editor_upload_dialog_alert_upload_failed_link": {
+      "description": "Try again.",
+      "message": "다시 시도하세요."
+   },
+   "editor_upload_dialog_alert_upload_failed_message": {
+      "description": "Please make sure you are connected to the internet and have accepted Google Drive permissions.",
+      "message": "인터넷에 연결되어 있고 Google Drive 권한을 수락했는지 확인하세요."
+   },
+   "editor_upload_dialog_cancel_and_download": {
+      "description": "Cancel and download file",
+      "message": "취소 및 파일 다운로드"
+   },
+   "editor_upload_dialog_close": {
+      "description": "Close",
+      "message": "닫기"
+   },
+   "editor_upload_dialog_copy_link": {
+      "description": "Copy link",
+      "message": "링크 복사"
+   },
+   "editor_upload_dialog_link_public": {
+      "description": "Allow anyone with the link to view.",
+      "message": "링크가 있는 모든 사용자에게 보기 허용"
+   },
+   "editor_zoom_crop_animation_animated": {
+      "description": "Sub-label indicating an animation type is animated.",
+      "message": "애니메이션화"
+   },
+   "editor_zoom_crop_animation_crop": {
+      "description": "Animation type option for static cropping without animation.",
+      "message": "자르기"
+   },
+   "editor_zoom_crop_animation_static": {
+      "description": "Sub-label indicating an animation type is static (no animation).",
+      "message": "정적"
+   },
+   "editor_zoom_crop_animation_type": {
+      "description": "Label for the animation type selection section.",
+      "message": "애니메이션 유형"
+   },
+   "editor_zoom_crop_animation_zoom_in": {
+      "description": "Animation type option for zooming in on the selected area.",
+      "message": "확대"
+   },
+   "editor_zoom_crop_animation_zoom_out": {
+      "description": "Animation type option for zooming out from the selected area.",
+      "message": "축소"
+   },
+   "editor_zoom_crop_apply": {
+      "description": "Apply button in zoom/crop dialog.",
+      "message": "적용"
+   },
+   "editor_zoom_crop_cancel": {
+      "description": "Cancel button in zoom/crop dialog.",
+      "message": "취소"
+   },
+   "editor_zoom_crop_change_area": {
+      "description": "Tooltip text for button to change the selected crop area.",
+      "message": "영역 변경"
+   },
+   "editor_zoom_crop_dialog_title": {
+      "description": "Title for the zoom and crop dialog in the editor.",
+      "message": "줌 및 자르기"
+   },
+   "editor_zoom_crop_draw_instruction": {
+      "description": "Instruction text for the user to draw a crop area on the frame preview.",
+      "message": "프레임에서 선택 영역 그리기"
+   },
+   "editor_zoom_crop_frame_end": {
+      "description": "Label for the end frame number.",
+      "message": "끝"
+   },
+   "editor_zoom_crop_frame_range": {
+      "description": "Label for the frame range selection section.",
+      "message": "프레임 범위"
+   },
+   "editor_zoom_crop_frame_start": {
+      "description": "Label for the start frame number.",
+      "message": "시작"
+   },
+   "editor_zoom_crop_frames_menu": {
+      "description": "Menu item label for zoom/crop frames feature.",
+      "message": "프레임 줌/자르기"
+   },
+   "editor_zoom_crop_no_area_selected": {
+      "description": "Message displayed when no crop area has been selected.",
+      "message": "선택된 영역 없음"
+   },
+   "editor_zoom_crop_select_area": {
+      "description": "Button text to select a crop area on the frame.",
+      "message": "영역 선택"
+   },
+   "editor_zoom_crop_smooth_animation": {
+      "description": "Checkbox label for smoothing animation by interpolating frames.",
+      "message": "프레임 추가로 애니메이션 부드럽게 하기"
+   },
+   "editor_zoom_crop_transition": {
+      "description": "Label for the transition duration section (number of frames for animation).",
+      "message": "전환"
+   },
+   "enable_drawing_text": {
+      "description": "Enable drawing",
+      "message": "그리기 활성화"
+   },
+   "enable_drawing_tooltip_text": {
+      "description": "This option allows users to draw in the selected area while holding down the ctrl key.",
+      "message": "이 옵션을 사용하면 Ctrl 키를 누른 상태에서 선택한 영역에 그릴 수 있습니다."
+   },
+   "extension_description": {
+      "description": "Take screenshots & record GIFs instantly! Edit & share seamlessly. Your all-in-one screenshot and screen recording solution.",
+      "message": "스크린샷을 찍고 GIF를 즉시 녹화하세요! 손쉽게 편집하고 공유하세요. 올인원 스크린샷 및 화면 녹화 솔루션입니다."
+   },
+   "extension_name": {
+      "description": "Chrome Capture - screenshot & GIF",
+      "message": "Chrome Capture - 스크린샷 & GIF"
+   },
+   "extension_short_name": {
+      "description": "Chrome Capture",
+      "message": "Chrome Capture"
+   },
+   "file_access_text": {
+      "description": "After screenshot action",
+      "message": "스크린샷 후 작업"
+   },
+   "filename_text": {
+      "description": "Filename",
+      "message": "파일 이름"
+   },
+   "frames_per_sec_short_text": {
+      "description": "FPS",
+      "message": "FPS"
+   },
+   "frames_per_sec_text": {
+      "description": "Frames per second (fps)",
+      "message": "초당 프레임 (FPS)"
+   },
+   "frames_text": {
+      "description": "frames",
+      "message": "프레임"
+   },
+   "free_settings_text": {
+      "description": "Free Settings",
+      "message": "무료 버전 설정"
+   },
+   "fullscreen_info_modal_cancel": {
+      "description": "Cancel",
+      "message": "취소"
+   },
+   "fullscreen_info_modal_continue": {
+      "description": "Are you sure you want to continue with full screen capture?",
+      "message": "전체 화면 캡처를 계속하시겠습니까?"
+   },
+   "fullscreen_info_modal_do_not_show": {
+      "description": "Do not show this again",
+      "message": "다시 표시 안 함"
+   },
+   "fullscreen_info_modal_message": {
+      "description": "You have used a Chrome Capture shortcut without the cropping tool, this will capture in full screen mode.",
+      "message": "자르기 도구 없이 Chrome Capture 단축키를 사용했습니다. 전체 화면 모드로 캡처됩니다."
+   },
+   "fullscreen_info_modal_open_cropping": {
+      "description": "Open cropping tool",
+      "message": "자르기 도구 열기"
+   },
+   "fullscreen_info_modal_shortcut_cropping_tool": {
+      "description": "Alt + C: Open/close Chrome Capture cropping tool",
+      "message": "Alt + C: Chrome Capture 자르기 도구 열기/닫기"
+   },
+   "fullscreen_info_modal_shortcut_fullpage_screenshot": {
+      "description": "Alt + Shift + S: Full webpage screenshot (beta)",
+      "message": "Alt + Shift + S: 전체 웹페이지 스크린샷 (베타)"
+   },
+   "fullscreen_info_modal_shortcut_linkt": {
+      "description": "You can configure these here: ",
+      "message": "여기서 설정할 수 있습니다:"
+   },
+   "fullscreen_info_modal_shortcut_recording": {
+      "description": "Alt + R: Start/stop recording",
+      "message": "Alt + R: 녹화 시작/중지"
+   },
+   "fullscreen_info_modal_shortcut_screenshot": {
+      "description": "Alt + S: Visible area screenshot",
+      "message": "Alt + S: 보이는 영역 스크린샷"
+   },
+   "fullscreen_info_modal_shortcuts": {
+      "description": "Default shortcuts are: ",
+      "message": "기본 단축키:"
+   },
+   "fullscreen_info_modal_start": {
+      "description": "Start full screen capture",
+      "message": "전체 화면 캡처 시작"
+   },
+   "fullscreen_info_modal_title": {
+      "description": "Full screen capture",
+      "message": "전체 화면 캡처"
+   },
+   "general_not_available": {
+      "description": "N/A",
+      "message": "해당 없음"
+   },
+   "get_premium": {
+      "description": "Get Premium",
+      "message": "프리미엄 이용하기"
+   },
+   "height_text": {
+      "description": "Width (px)",
+      "message": "높이 (픽셀)"
+   },
+   "hi": {
+      "description": "Hi",
+      "message": "안녕하세요"
+   },
+   "internet_connection_required": {
+      "description": "Internet connection is required to upgrade to premium.",
+      "message": "프리미엄으로 업그레이드하려면 인터넷 연결이 필요합니다."
+   },
+   "manage_subscription_access_until_date": {
+      "description": "Your plan will not renew. You can access premium features until $date$.",
+      "message": "요금제는 갱신되지 않습니다. $date$까지 프리미엄 기능을 이용할 수 있습니다.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_cancel_button": {
+      "description": "Cancel subscription",
+      "message": "구독 취소"
+   },
+   "manage_subscription_cancel_confirm_cancel_button": {
+      "description": "Keep Premium",
+      "message": "Premium 유지"
+   },
+   "manage_subscription_cancel_confirm_confirm_button": {
+      "description": "Continue to cancel",
+      "message": "취소 계속"
+   },
+   "manage_subscription_cancel_confirm_description": {
+      "description": "You will lose access to Premium features and Premium options will be reset.",
+      "message": "Premium 기능에 대한 액세스 권한을 잃게 되며 Premium 옵션이 재설정됩니다."
+   },
+   "manage_subscription_cancel_confirm_title": {
+      "description": "Are you sure you want to cancel your subscription?",
+      "message": "구독을 취소하시겠습니까?"
+   },
+   "manage_subscription_ended_on_date": {
+      "description": "Subscription ended on $date$.",
+      "message": "구독이 $date$에 종료되었습니다.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_ends_on_date": {
+      "description": "Subscription ends on $date$.",
+      "message": "구독이 $date$에 종료됩니다.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_next_payment_full": {
+      "description": "Next payment: $price$ on $date$",
+      "message": "다음 결제: $date$에 $price$",
+      "placeholders": {
+         "date": {
+            "content": "$2"
+         },
+         "price": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_paid_full": {
+      "description": "Paid: $billingCycle$",
+      "message": "결제: $billingCycle$",
+      "placeholders": {
+         "billingCycle": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_resubscribe_prompt": {
+      "description": " To use premium features again, please upgrade.",
+      "message": " 프리미엄 기능을 다시 사용하려면 업그레이드하십시오."
+   },
+   "manage_subscription_update_payment_button": {
+      "description": "Update payment method",
+      "message": "결제 수단 업데이트"
+   },
+   "max_recording_dimension_size_text": {
+      "description": "Max recording resolution/quality",
+      "message": "최대 녹화 해상도 / 품질"
+   },
+   "no_limit_text": {
+      "description": "No limit",
+      "message": "제한 없음"
+   },
+   "open_text": {
+      "description": "Open",
+      "message": "열기"
+   },
+   "options_default_action": {
+      "description": "Extension icon click action",
+      "message": "확장 프로그램 아이콘 클릭 시 동작"
+   },
+   "options_dimension_size_1000": {
+      "description": "1000 pixels",
+      "message": "1000 픽셀"
+   },
+   "options_dimension_size_1080p": {
+      "description": "1920 pixels (1080p)",
+      "message": "1920 픽셀 (1080p)"
+   },
+   "options_dimension_size_480p": {
+      "description": "640 pixels (480p)",
+      "message": "640 픽셀 (480p)"
+   },
+   "options_dimension_size_4k": {
+      "description": "3840 pixels (4K)",
+      "message": "3840 픽셀 (4K)"
+   },
+   "options_dimension_size_720p": {
+      "description": "1280 pixels (720p)",
+      "message": "1280 픽셀 (720p)"
+   },
+   "options_embedded_options_permission_warning": {
+      "description": "Cursor highlighting, click effects, and drawing tools will only work until the page reloads or changes. To keep them active after reloads or redirects, you'll need to grant an extra permission.",
+      "message": "커서 강조 표시, 클릭 효과 및 그리기 도구는 페이지가 새로고침되거나 변경될 때까지만 작동합니다. 새로고침 또는 리디렉션 후에도 활성 상태를 유지하려면 추가 권한을 부여해야 합니다."
+   },
+   "options_enable_notifications": {
+      "description": "Enable notifications",
+      "message": "알림 활성화"
+   },
+   "options_enable_notifications_tooltip": {
+      "description": "Display notifications when full screen recording starts and processing recordings in the background.",
+      "message": "전체 화면 녹화 시작 시 및 백그라운드에서 녹화 처리 시 알림 표시."
+   },
+   "options_enable_subfolder_downloads": {
+      "description": "Download files into subfolder",
+      "message": "파일을 하위 폴더에 다운로드"
+   },
+   "options_enable_subfolder_downloads_tooltip": {
+      "description": "Download files into a subfolder of your choice inside the downloads folder. This option is useful for organising your captures.",
+      "message": "'다운로드' 폴더 내에서 선택한 하위 폴더로 파일을 다운로드합니다. 이 옵션은 캡처 파일을 정리하는 데 유용합니다."
+   },
+   "options_how_to_use_btn": {
+      "description": "How to use",
+      "message": "사용 방법"
+   },
+   "options_language": {
+      "description": "Language",
+      "message": "언어"
+   },
+   "options_open_containing_folder_on_save": {
+      "description": "Open containing folder after saving",
+      "message": "저장 후 포함된 폴더 열기"
+   },
+   "options_open_popup": {
+      "description": "Open popup",
+      "message": "팝업 열기"
+   },
+   "options_open_selected_area": {
+      "description": "Open selected area capture",
+      "message": "선택 영역 캡처 시작"
+   },
+   "options_section_general": {
+      "description": "Title for the General settings section in the options page",
+      "message": "일반 설정"
+   },
+   "options_section_output": {
+      "description": "Title for the Output and Saving settings section in the options page",
+      "message": "출력 및 저장"
+   },
+   "options_section_recording": {
+      "description": "Title for the Recording settings section in the options page",
+      "message": "녹화 설정"
+   },
+   "options_section_visuals": {
+      "description": "Title for the Cursor and Interaction Visuals settings section in the options page",
+      "message": "커서 및 상호 작용 시각 효과"
+   },
+   "options_shortcuts_btn": {
+      "description": "Shortcuts",
+      "message": "단축키"
+   },
+   "options_subfolder_downloads_name": {
+      "description": "Subfolder name:",
+      "message": "하위 폴더 이름:"
+   },
+   "options_support_btn": {
+      "description": "Support",
+      "message": "지원"
+   },
+   "overlay_help_text": {
+      "description": "Click and drag to choose your selected area. \nRight click to snap to an element, hold shift for multiple.",
+      "message": "클릭하고 드래그하여 영역을 선택하세요.\n마우스 오른쪽 버튼을 클릭하여 요소에 스냅하고, Shift 키를 누른 채로 여러 개를 선택할 수 있습니다."
+   },
+   "plan_billing_annually": {
+      "description": "Annually",
+      "message": "매년"
+   },
+   "plan_billing_monthly": {
+      "description": "Monthly",
+      "message": "매월"
+   },
+   "plan_name_custom": {
+      "description": "Custom Plan",
+      "message": "사용자 지정 요금제"
+   },
+   "popup_capture_tab": {
+      "description": "Capture",
+      "message": "캡처"
+   },
+   "popup_desktop_screenshot_tooltip": {
+      "description": "Capture the entire screen, desktop, or any open application.",
+      "message": "전체 화면, 데스크톱 또는 열려 있는 앱 창을 캡처합니다."
+   },
+   "popup_editor_icon_tooltip": {
+      "description": "Open Editor",
+      "message": "편집기 열기"
+   },
+   "popup_full_page_screenshot_tooltip": {
+      "description": "Capture the current tab full webpage, including content beyond the visible area.",
+      "message": "보이는 영역 너머의 콘텐츠를 포함하여 현재 탭의 전체 웹페이지를 캡처합니다."
+   },
+   "popup_full_webpage": {
+      "description": "Full webpage",
+      "message": "전체 웹페이지"
+   },
+   "popup_no_scripts_alert": {
+      "description": "Selected area and full webpage screenshots are not possible here. These features are available on other websites.",
+      "message": "여기서는 선택 영역 및 전체 웹페이지 스크린샷을 사용할 수 없습니다. 이 기능은 다른 웹사이트에서 사용할 수 있습니다."
+   },
+   "popup_record_tab": {
+      "description": "Record",
+      "message": "녹화"
+   },
+   "popup_recording_limit_alert": {
+      "description": "Record up to $seconds$ seconds per GIF. Premium users can update this from the ",
+      "message": "GIF당 최대 $seconds$초까지 녹화하세요. 프리미엄 사용자는 다음에서 업데이트할 수 있습니다:",
+      "placeholders": {
+         "seconds": {
+            "content": "$1"
+         }
+      }
+   },
+   "popup_recording_limit_settings_link": {
+      "description": "settings page.",
+      "message": "설정 페이지."
+   },
+   "popup_screen_or_app": {
+      "description": "Full screen or app",
+      "message": "전체 화면 또는 앱 창"
+   },
+   "popup_selected_area": {
+      "description": "Selected area",
+      "message": "선택 영역"
+   },
+   "popup_selected_area_screenshot_tooltip": {
+      "description": "Capture a specific area of the current tab.",
+      "message": "현재 탭의 특정 영역을 캡처합니다."
+   },
+   "popup_set_shortcut": {
+      "description": "set shortcut",
+      "message": "단축키 설정"
+   },
+   "popup_settings_icon_tooltip": {
+      "description": "Open Settings",
+      "message": "설정 열기"
+   },
+   "popup_tab_screenshot_tooltip": {
+      "description": "Capture the visible part of the current tab.",
+      "message": "현재 탭의 보이는 부분을 캡처합니다."
+   },
+   "popup_this_tab": {
+      "description": "This tab",
+      "message": "현재 탭"
+   },
+   "popup_waiting_for_desktop_selection_alert": {
+      "description": "FULL SCREEN OR APP capture did not start because you did not select an option from the popup dialog. If you have multiple monitors it may have opened on another monitor.",
+      "message": "팝업 대화 상자에서 옵션을 선택하지 않았기 때문에 전체 화면 또는 앱 캡처가 시작되지 않았습니다. 여러 모니터가 있는 경우 다른 모니터에서 열렸을 수 있습니다."
+   },
+   "premium_settings_text": {
+      "description": "Premium Settings",
+      "message": "프리미엄 설정"
+   },
+   "purchase_btn_text": {
+      "description": "Get Premium!",
+      "message": "프리미엄 이용하기!"
+   },
+   "purchase_description_limited_time_text": {
+      "description": "Lock in this price now - limited time offer before we switch to subscriptions!",
+      "message": "지금 이 가격으로 구매하세요! 구독으로 전환하기 전 한정 기간 제공됩니다!"
+   },
+   "purchase_description_text": {
+      "description": "Just one payment unlocks all premium features forever. No recurring fees!",
+      "message": "한 번만 결제하면 모든 프리미엄 기능을 평생 이용할 수 있습니다. 반복 결제는 없습니다!"
+   },
+   "purchase_feature_30fps": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "실크처럼 부드러운 30FPS 녹화"
+   },
+   "purchase_feature_4K": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "선명한 4K 녹화"
+   },
+   "purchase_feature_alter_frame_rate": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "사용자 지정 프레임 속도"
+   },
+   "purchase_feature_alter_playback_speed": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "슬로우 모션 및 타임랩스 효과"
+   },
+   "purchase_feature_blur": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "블러 도구"
+   },
+   "purchase_feature_crop_recording": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "정확한 GIF 자르기"
+   },
+   "purchase_feature_default": {
+      "description": "Feature that goes in $feature$ placeholder. Default fallback.",
+      "message": "이 기능"
+   },
+   "purchase_feature_frame_edits": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "강력한 프레임별 편집"
+   },
+   "purchase_feature_highlight": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "하이라이트 도구"
+   },
+   "purchase_feature_no_duration_limit": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "무제한 녹화 시간"
+   },
+   "purchase_feature_special_effect": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "특수 효과"
+   },
+   "purchase_feature_step_tool": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "스텝 도구"
+   },
+   "purchase_feature_svg": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "사용자 지정 아이콘 및 로고 추가"
+   },
+   "purchase_feature_text_and_annotation_customization": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "텍스트 및 주석에 대한 완벽한 제어"
+   },
+   "purchase_feature_unlimited_gif_compression": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "무제한 고급 GIF 압축"
+   },
+   "purchase_feature_update_end_time": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "사용자 지정 녹화 시간"
+   },
+   "purchase_login_dialog_closed_by_user_alert": {
+      "description": "Looks like you closed the sign in dialog, premium users must sign in so you don't lose premium access.",
+      "message": "로그인 대화 상자를 닫으신 것 같습니다. 프리미엄 사용자는 프리미엄 접근 권한을 잃지 않도록 로그인해야 합니다."
+   },
+   "purchase_login_dialog_google_button": {
+      "description": "Sign in with Google",
+      "message": "Google 계정으로 로그인"
+   },
+   "purchase_login_dialog_title": {
+      "description": "Sign in required",
+      "message": "로그인 필요"
+   },
+   "purchase_login_text": {
+      "description": "Sign in with Google to link your purchase to your account.",
+      "message": "Google 계정으로 로그인하여 구매 내역을 계정에 연결하세요."
+   },
+   "purchase_login_text_window_opened": {
+      "description": "Sign into Google in the popup window.",
+      "message": "팝업 창에서 Google 계정으로 로그인하세요."
+   },
+   "purchase_subscription_title_text": {
+      "description": "Choose the plan that fits your needs.",
+      "message": "필요에 맞는 요금제를 선택하세요."
+   },
+   "purchase_title_text": {
+      "description": "Get Lifetime Premium Access Today!",
+      "message": "지금 평생 프리미엄 이용권을 받으세요!"
+   },
+   "purchase_title_text_blocked_feature": {
+      "description": "That feature requires Premium",
+      "message": "해당 기능은 프리미엄이 필요합니다"
+   },
+   "purchase_title_text_blocked_pro_feature": {
+      "description": "That feature requires Premium Pro",
+      "message": "해당 기능은 Premium Pro가 필요합니다"
+   },
+   "purchase_title_text_blocked_pro_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium Pro paywall.",
+      "message": "프리미엄 프로로 $feature$ 잠금 해제",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchase_title_text_blocked_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium paywall.",
+      "message": "프리미엄으로 $feature$ 잠금 해제",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_already_premium_user": {
+      "description": "Already a premium user?",
+      "message": "이미 프리미엄 사용자이신가요?"
+   },
+   "purchases_bill_me": {
+      "description": "Bill me:",
+      "message": "청구:"
+   },
+   "purchases_checkout_unavailable_message": {
+      "description": "Message shown when checkout could not be started.",
+      "message": "지금은 업그레이드 절차를 시작할 수 없습니다. 다시 시도해 주세요."
+   },
+   "purchases_compare_12_fps": {
+      "description": "12FPS",
+      "message": "12FPS"
+   },
+   "purchases_compare_3_per_day": {
+      "description": "3 per day",
+      "message": "하루 3회"
+   },
+   "purchases_compare_add_custom_shape_tool": {
+      "description": "Add custom shape/icon tool",
+      "message": "사용자 지정 모양/아이콘 도구 추가"
+   },
+   "purchases_compare_benefits": {
+      "description": "Benefits",
+      "message": "혜택"
+   },
+   "purchases_compare_blur_tool": {
+      "description": "Blur tool",
+      "message": "흐림 도구"
+   },
+   "purchases_compare_close_button_label": {
+      "description": "Close",
+      "message": "닫기"
+   },
+   "purchases_compare_compression": {
+      "description": "High quality GIF compression",
+      "message": "고품질 GIF 압축"
+   },
+   "purchases_compare_core_capture_features": {
+      "description": "Core Capture Features",
+      "message": "핵심 캡처 기능"
+   },
+   "purchases_compare_crop_recordings": {
+      "description": "Crop recordings",
+      "message": "녹화 자르기"
+   },
+   "purchases_compare_customize_editing_tools": {
+      "description": "Customize editing tools (font, size color)",
+      "message": "편집 도구 사용자 지정(글꼴, 크기, 색상)"
+   },
+   "purchases_compare_drawing": {
+      "description": "Draw while recording",
+      "message": "녹화 중 그리기"
+   },
+   "purchases_compare_early_access": {
+      "description": "Early access to new features",
+      "message": "새로운 기능에 대한 얼리 액세스"
+   },
+   "purchases_compare_editing": {
+      "description": "Edit captures",
+      "message": "캡처 편집"
+   },
+   "purchases_compare_editing_free": {
+      "description": "basic editing",
+      "message": "기본 편집"
+   },
+   "purchases_compare_editing_suite": {
+      "description": "Editing Suite",
+      "message": "편집 제품군"
+   },
+   "purchases_compare_frame_editing": {
+      "description": "Frame editing",
+      "message": "프레임 편집"
+   },
+   "purchases_compare_frame_rate": {
+      "description": "Adjust Frame Rate",
+      "message": "프레임 속도 조정"
+   },
+   "purchases_compare_frame_specific_edits": {
+      "description": "Frame specific edits",
+      "message": "프레임별 편집"
+   },
+   "purchases_compare_free_draw_tools": {
+      "description": "Free draw, line, arrow, rectangle, circle, text tools",
+      "message": "자유 그리기, 선, 화살표, 사각형, 원, 텍스트 도구"
+   },
+   "purchases_compare_full_webpage_screenshots": {
+      "description": "Unlimited full page screenshots.",
+      "message": "무제한 전체 페이지 스크린샷."
+   },
+   "purchases_compare_highlight_tool": {
+      "description": "Highlight tool",
+      "message": "강조 도구"
+   },
+   "purchases_compare_live_recording_tools": {
+      "description": "Live Recording Tools",
+      "message": "라이브 녹화 도구"
+   },
+   "purchases_compare_mouse": {
+      "description": "Click and mouse indication",
+      "message": "클릭 및 마우스 커서 표시"
+   },
+   "purchases_compare_plans": {
+      "description": "Compare plans",
+      "message": "플랜 비교"
+   },
+   "purchases_compare_plans_premium_button": {
+      "description": "Upgrade to Premium",
+      "message": "프리미엄으로 업그레이드"
+   },
+   "purchases_compare_playback_speed": {
+      "description": "Tune recording playback speed",
+      "message": "녹화 재생 속도 조정"
+   },
+   "purchases_compare_priority_support": {
+      "description": "Priority support and feature requests",
+      "message": "우선 지원 및 기능 요청"
+   },
+   "purchases_compare_recording": {
+      "description": "Unlimited GIF recordings.",
+      "message": "무제한 GIF 녹화."
+   },
+   "purchases_compare_recording_free": {
+      "description": "15sec limit per GIF",
+      "message": "GIF당 15초 제한"
+   },
+   "purchases_compare_recording_quality": {
+      "description": "High quality GIFs",
+      "message": "고품질 GIF"
+   },
+   "purchases_compare_recording_quality_control": {
+      "description": "Recording Quality & Control",
+      "message": "녹화 품질 및 제어"
+   },
+   "purchases_compare_recording_quality_free": {
+      "description": "1000 pixels max",
+      "message": "최대 1000 픽셀"
+   },
+   "purchases_compare_screenshots": {
+      "description": "Unlimited screenshots.",
+      "message": "무제한 스크린샷."
+   },
+   "purchases_compare_special_effects": {
+      "description": "Recording special effects",
+      "message": "특수 효과 녹화"
+   },
+   "purchases_compare_up_to_1080p": {
+      "description": "Up to 1080p",
+      "message": "최대 1080p"
+   },
+   "purchases_compare_up_to_24_fps": {
+      "description": "Up to 24FPS",
+      "message": "최대 24FPS"
+   },
+   "purchases_compare_up_to_30_fps": {
+      "description": "Up to 30FPS",
+      "message": "최대 30FPS"
+   },
+   "purchases_compare_up_to_4k_plus": {
+      "description": "Up to 4K+",
+      "message": "최대 4K+"
+   },
+   "purchases_current_plan": {
+      "description": "Current plan",
+      "message": "현재 요금제"
+   },
+   "purchases_features": {
+      "description": "Features",
+      "message": "기능"
+   },
+   "purchases_free": {
+      "description": "Free",
+      "message": "무료"
+   },
+   "purchases_free_button": {
+      "description": "Free to use",
+      "message": "무료로 사용"
+   },
+   "purchases_free_feature_editing": {
+      "description": "Basic editing",
+      "message": "기본 편집"
+   },
+   "purchases_free_feature_recording": {
+      "description": "Basic GIF recording",
+      "message": "기본 GIF 녹화"
+   },
+   "purchases_free_feature_screenshots": {
+      "description": "Unlimited screenshots",
+      "message": "무제한 스크린샷"
+   },
+   "purchases_free_plan_description": {
+      "description": "Get started with our essential capture tools. Completely free for basic everyday use.",
+      "message": "필수 캡처 도구로 시작해 보세요. 기본적인 일상 사용에 완전히 무료입니다."
+   },
+   "purchases_plan_save_up_to_percentage": {
+      "description": "Save up to",
+      "message": "최대"
+   },
+   "purchases_premium": {
+      "description": "Premium",
+      "message": "프리미엄"
+   },
+   "purchases_premium_billed_annually": {
+      "description": "Billed annually",
+      "message": "연간 청구"
+   },
+   "purchases_premium_button": {
+      "description": "Get lifetime access",
+      "message": "평생 이용권 받기"
+   },
+   "purchases_premium_feature_compression": {
+      "description": "High quality GIF compression",
+      "message": "고품질 GIF 압축"
+   },
+   "purchases_premium_feature_editing": {
+      "description": "Feature rich editing",
+      "message": "풍부한 편집 기능"
+   },
+   "purchases_premium_feature_free": {
+      "description": "Everything from free plan",
+      "message": "무료 플랜 기능 포함"
+   },
+   "purchases_premium_feature_marked_with_star": {
+      "description": "All features marked with a star",
+      "message": "별표로 표시된 모든 기능"
+   },
+   "purchases_premium_feature_recording": {
+      "description": "Unlimited high quality GIF recording",
+      "message": "무제한 고품질 GIF 녹화"
+   },
+   "purchases_premium_feature_recording_1080p": {
+      "description": "High quality GIF recording, up to 1080p, 24fps",
+      "message": "고품질 GIF 녹화, 최대 1080p, 24fps"
+   },
+   "purchases_premium_feature_refundable": {
+      "description": "Fully refundable",
+      "message": "전액 환불 가능"
+   },
+   "purchases_premium_feature_risk_free": {
+      "description": "Risk-free: 7 day trial, cancel anytime",
+      "message": "무위험: 7일 평가판, 언제든지 취소 가능"
+   },
+   "purchases_premium_feature_unlimited_length": {
+      "description": "Unlimited GIF recording length",
+      "message": "무제한 GIF 녹화 길이"
+   },
+   "purchases_premium_price_info": {
+      "description": "one time fee",
+      "message": "일회성 비용"
+   },
+   "purchases_premium_price_per_month": {
+      "description": "/ month",
+      "message": "/월"
+   },
+   "purchases_premium_pro": {
+      "description": "Premium Pro",
+      "message": "프리미엄 프로"
+   },
+   "purchases_premium_pro_editing_tools": {
+      "description": "Advanced editing tools (blurring, special effects, etc.)",
+      "message": "고급 편집 도구(흐림 효과, 특수 효과 등)"
+   },
+   "purchases_premium_pro_feature_early_access": {
+      "description": "Early access to new features",
+      "message": "새로운 기능에 대한 얼리 액세스"
+   },
+   "purchases_premium_pro_feature_marked_with_crown": {
+      "description": "All features marked with a star and crown",
+      "message": "별과 왕관으로 표시된 모든 기능"
+   },
+   "purchases_premium_pro_feature_premium_plan": {
+      "description": "Everything from Premium plan",
+      "message": "Premium 요금제의 모든 것"
+   },
+   "purchases_premium_pro_feature_quality": {
+      "description": "Max resolution recording, 4K+ and 30fps",
+      "message": "최대 해상도 녹화, 4K+ 및 30fps"
+   },
+   "purchases_premium_pro_feature_support": {
+      "description": "Priority support and feature requests",
+      "message": "우선 지원 및 기능 요청"
+   },
+   "purchases_premium_pro_upgrade": {
+      "description": "Upgrade to Pro",
+      "message": "Pro로 업그레이드"
+   },
+   "purchases_premium_save_percentage": {
+      "description": "save $savingsPercentage$%",
+      "message": "$savingsPercentage$% 절약",
+      "placeholders": {
+         "savingsPercentage": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_premium_try_for_free": {
+      "description": "Try for free",
+      "message": "무료로 사용해 보세요"
+   },
+   "purchases_price_unavailable": {
+      "description": "Label shown in place of a price when it is unavailable.",
+      "message": "가격을 사용할 수 없음"
+   },
+   "purchases_pricing_unavailable_message": {
+      "description": "Message shown when the Premium pricing request was blocked or failed.",
+      "message": "Premium 가격 요청이 차단되었거나 실패했습니다. 회사 네트워크, VPN, 광고 차단기, 개인정보 보호 확장 프로그램 또는 방화벽이 Paddle을 차단할 때 이런 일이 발생할 수 있습니다."
+   },
+   "purchases_pricing_unavailable_title": {
+      "description": "Title shown when Premium pricing could not be loaded.",
+      "message": "Premium 가격을 불러올 수 없습니다"
+   },
+   "purchases_pricing_unavailable_troubleshooting_extensions": {
+      "description": "Troubleshooting step telling the user to disable VPN or privacy tools temporarily.",
+      "message": "VPN, 광고 차단기 또는 개인정보 보호 확장 프로그램을 일시적으로 끄고 다시 시도하세요."
+   },
+   "purchases_pricing_unavailable_troubleshooting_intro": {
+      "description": "Intro text for troubleshooting steps when pricing is unavailable.",
+      "message": "시도해 볼 사항:"
+   },
+   "purchases_pricing_unavailable_troubleshooting_network": {
+      "description": "Troubleshooting step telling the user to try another network or browser profile.",
+      "message": "다른 네트워크를 사용하거나 다른 Chrome 프로필에서 확장 프로그램을 열어 보세요."
+   },
+   "purchases_pricing_unavailable_troubleshooting_workplace": {
+      "description": "Troubleshooting step telling the user workplace policy may be blocking Paddle.",
+      "message": "업무용 기기를 사용 중이라면 네트워크 또는 브라우저 정책이 Paddle을 차단하고 있을 수 있습니다."
+   },
+   "purchases_sign_in_here": {
+      "description": "Sign in here",
+      "message": "여기서 로그인하세요"
+   },
+   "purchases_start_trial_cancel_anytime": {
+      "description": "Call to action to start a free trial.",
+      "message": "계속하려면 7일 무료 체험을 시작하세요. 언제든지 취소할 수 있습니다."
+   },
+   "purchases_try_premium_for_free": {
+      "description": "Try Premium for Free",
+      "message": "Premium 무료 체험"
+   },
+   "purchases_try_premium_pro_for_free": {
+      "description": "Try Premium Pro for Free",
+      "message": "Premium Pro 무료 체험"
+   },
+   "purchases_upgrade_premium_to_pro": {
+      "description": "To use this feature and access all Pro benefits, upgrade your plan.",
+      "message": "이 기능을 사용하고 모든 Pro 혜택을 이용하려면 요금제를 업그레이드하세요."
+   },
+   "purchases_upgrade_to_premium_pro": {
+      "description": "Upgrade to Premium Pro",
+      "message": "Premium Pro로 업그레이드"
+   },
+   "quality_text": {
+      "description": "Recording quality (10 = best)",
+      "message": "녹화 품질 (10 = 최고)"
+   },
+   "rate_bad_rating_text": {
+      "description": "We are continuously trying our hardest to improve Chrome Capture, please share what needs improvement by emailing us at ",
+      "message": "저희는 Chrome Capture를 개선하기 위해 끊임없이 노력하고 있습니다. 개선이 필요한 점이 있다면 다음 이메일 주소로 의견을 보내주세요:"
+   },
+   "rate_bad_title_text": {
+      "description": "😞 We are sorry!",
+      "message": "😞 죄송합니다!"
+   },
+   "rate_close_btn_text": {
+      "description": "Close",
+      "message": "닫기"
+   },
+   "rate_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "확인"
+   },
+   "rate_description_text": {
+      "description": "If you've found this extension useful please leave a rating or review. \n\nBy leaving a rating you can help us reach more users which will help fund continual improvements and keep general usage free.",
+      "message": "이 확장 프로그램이 유용했다면 평점이나 리뷰를 남겨주세요.\n\n평점을 남겨주시면 더 많은 사용자에게 도달하는 데 도움이 되며, 이는 지속적인 개선 자금을 마련하고 기본 기능의 무료 사용을 유지하는 데 기여합니다."
+   },
+   "rate_description_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "프리미엄 버전을 구매해 주셔서 감사합니다. 제품을 개선하고 더 많은 사용자에게 다가갈 수 있도록 피드백을 보내주시면 감사하겠습니다."
+   },
+   "rate_good_rating_text": {
+      "description": "Your reviews keep our small team motivated to make Chrome Capture even better!",
+      "message": "여러분의 리뷰는 저희 소규모 팀이 Chrome Capture를 더욱 발전시키는 데 큰 힘이 됩니다!"
+   },
+   "rate_good_rating_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "프리미엄 버전을 구매해 주셔서 감사합니다. 제품을 개선하고 더 많은 사용자에게 다가갈 수 있도록 피드백을 보내주시면 감사하겠습니다."
+   },
+   "rate_good_title_text": {
+      "description": "😍 Review in the web store?",
+      "message": "😍 웹 스토어에서 리뷰를 남기시겠어요?"
+   },
+   "rate_maybe_later_btn_text": {
+      "description": "Maybe later",
+      "message": "나중에"
+   },
+   "rate_no_btn_text": {
+      "description": "No thanks",
+      "message": "아니요, 괜찮습니다"
+   },
+   "rate_send_email_btn_text": {
+      "description": "Send Email",
+      "message": "이메일 보내기"
+   },
+   "rate_thank_you_title_text": {
+      "description": "Thank you! 😍",
+      "message": "감사합니다! 😍"
+   },
+   "rate_title_text": {
+      "description": "How are we doing?",
+      "message": "저희는 잘 하고 있나요?"
+   },
+   "rate_yes_btn_text": {
+      "description": "Ok, sure",
+      "message": "네, 좋아요"
+   },
+   "recommended": {
+      "description": "recommended",
+      "message": "권장"
+   },
+   "record_length_text": {
+      "description": "Max record length",
+      "message": "최대 녹화 길이"
+   },
+   "recordings_taken": {
+      "description": "Recordings taken:",
+      "message": "만든 녹화:"
+   },
+   "save_as_screenshot_text": {
+      "description": "Save screenshot as",
+      "message": "스크린샷 다른 이름으로 저장..."
+   },
+   "save_as_text": {
+      "description": "Save recording as",
+      "message": "녹화 파일 다른 이름으로 저장..."
+   },
+   "screenshots_taken": {
+      "description": "Screenshots taken:",
+      "message": "촬영한 스크린샷:"
+   },
+   "seconds_text": {
+      "description": "secs",
+      "message": "초"
+   },
+   "shortcut": {
+      "description": "Shortcut:",
+      "message": "단축키:"
+   },
+   "show_click_indicator_text": {
+      "description": "Show click animation",
+      "message": "클릭 애니메이션 표시"
+   },
+   "show_click_indicator_tooltip_text": {
+      "description": "This option draws a circle animation around the click location.",
+      "message": "이 옵션은 클릭 위치 주변에 원 애니메이션을 그립니다."
+   },
+   "show_cursor_text": {
+      "description": "Show dot at cursor location",
+      "message": "커서 위치에 점 표시"
+   },
+   "show_cursor_tooltip_text": {
+      "description": "This option draws a small circle to indicate where the mouse is located.",
+      "message": "이 옵션은 커서 위치를 나타내는 작은 원을 그립니다."
+   },
+   "sign_in": {
+      "description": "Sign In",
+      "message": "로그인"
+   },
+   "sign_out": {
+      "description": "Sign Out",
+      "message": "로그아웃"
+   },
+   "subscription_past_due_warning": {
+      "description": "Warning message shown when a user subscription payment has failed or is past its due date.",
+      "message": "구독료 결제가 연체되었습니다. 결제 정보를 업데이트하려면 여기를 클릭하세요."
+   },
+   "subscription_premium_plan_description": {
+      "description": "Go beyond basics: HD quality & limits unlocked. Craft pro content with enhanced features.",
+      "message": "기본을 넘어서: HD 화질 및 제한 해제. 향상된 기능으로 전문가 수준의 콘텐츠를 만드세요."
+   },
+   "subscription_premium_pro_plan_description": {
+      "description": "Experience peak performance: 4K+ and all features. Full editing suite with early access.",
+      "message": "최고의 성능을 경험하세요: 4K+ 및 모든 기능. 얼리 액세스가 포함된 전체 편집 제품군."
+   },
+   "subscription_status_active": {
+      "description": "Active",
+      "message": "활성"
+   },
+   "subscription_status_ending_soon": {
+      "description": "Ending Soon",
+      "message": "곧 종료됨"
+   },
+   "subscription_status_expired": {
+      "description": "Expired",
+      "message": "만료됨"
+   },
+   "subscription_status_past_due": {
+      "description": "Past Due",
+      "message": "연체"
+   },
+   "subscription_status_paused": {
+      "description": "Paused",
+      "message": "일시 중지됨"
+   },
+   "subscription_status_unknown": {
+      "description": "Unknown",
+      "message": "알 수 없음"
+   },
+   "unable_to_capture_website_alert": {
+      "description": "Unable to capture this website. Please use full screen/application capture or try capture another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "이 웹사이트를 캡처할 수 없습니다. 전체 화면/애플리케이션 캡처를 사용하거나 다른 웹사이트에서 시도하세요.\n\n(╯°□°）╯︵ ┻━┻"
+   },
+   "view_permission": {
+      "description": "View permission.",
+      "message": "권한 보기."
+   },
+   "width_text": {
+      "description": "Height (px)",
+      "message": "너비 (픽셀)"
+   }
+}

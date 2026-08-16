@@ -1,0 +1,1691 @@
+{
+   "account_modal_free_plan": {
+      "description": "You are on the free plan",
+      "message": "У вас бесплатный план"
+   },
+   "account_modal_manage_subscription_button": {
+      "description": "Manage Subscription",
+      "message": "Управление подпиской"
+   },
+   "account_modal_not_signed_in": {
+      "description": "You are not signed in",
+      "message": "Вы не вошли в систему"
+   },
+   "account_modal_premium_plan": {
+      "description": "You are on the premium plan",
+      "message": "У вас Премиум-план"
+   },
+   "account_modal_premium_pro_plan": {
+      "description": "You are on the Premium Pro plan",
+      "message": "Вы используете план Premium Pro"
+   },
+   "account_modal_request_feature_button": {
+      "description": "Request Feature",
+      "message": "Запросить функцию"
+   },
+   "account_modal_request_support_button": {
+      "description": "Request Support",
+      "message": "Запросить поддержку"
+   },
+   "account_modal_stats_heading": {
+      "description": "Your stats:",
+      "message": "Ваша статистика:"
+   },
+   "alert_text": {
+      "description": "Unable to run selected area capture on this website. Please use full screen recording or try another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "Невозможно выполнить съемку выбранной области на этом сайте. Пожалуйста, используйте запись всего экрана или попробуйте на другом сайте.\n\n(╯°□°）╯︵ ┻━┻"
+   },
+   "click_indicator_size_color_text": {
+      "description": "Click animation size & color",
+      "message": "Размер и цвет анимации клика"
+   },
+   "close_btn_text": {
+      "description": "Close",
+      "message": "Закрыть"
+   },
+   "confirm_dialog_cancel_btn_text": {
+      "description": "Cancel",
+      "message": "Отмена"
+   },
+   "confirm_dialog_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "Подтвердить"
+   },
+   "confirm_fps_update_text": {
+      "description": "Changing the fps will remove all frame specific edits such as edited or deleted frames. Do you want to continue?",
+      "message": "Изменение FPS удалит все специфичные для кадров правки, такие как отредактированные или удаленные кадры. Хотите продолжить?"
+   },
+   "copy_text": {
+      "description": "Copy to clipboard",
+      "message": "Копировать в буфер обмена"
+   },
+   "cursor_size_and_color_text": {
+      "description": "Cursor dot size & color",
+      "message": "Размер и цвет точки курсора"
+   },
+   "dither_text": {
+      "description": "Apply dither",
+      "message": "Применить дизеринг"
+   },
+   "download_filename_text": {
+      "description": "Download filename format",
+      "message": "Формат имени скачиваемого файла"
+   },
+   "download_text": {
+      "description": "Download",
+      "message": "Скачать"
+   },
+   "draw_size_and_color_text": {
+      "description": "Drawing size & color",
+      "message": "Размер и цвет рисования"
+   },
+   "duration": {
+      "description": "Label for a field indicating a length of time.",
+      "message": "Длительность"
+   },
+   "editor_action_add_icon": {
+      "description": "Add icon",
+      "message": "Добавить значок"
+   },
+   "editor_action_add_text": {
+      "description": "Add text",
+      "message": "Добавить текст"
+   },
+   "editor_action_blur_rectangle": {
+      "description": "Blur area",
+      "message": "Размыть область"
+   },
+   "editor_action_copy": {
+      "description": "Copy to clipboard",
+      "message": "Копировать в буфер обмена"
+   },
+   "editor_action_crop": {
+      "description": "Crop",
+      "message": "Обрезать"
+   },
+   "editor_action_draw_arrow": {
+      "description": "Draw arrow",
+      "message": "Нарисовать стрелку"
+   },
+   "editor_action_draw_ellipse": {
+      "description": "Draw ellipse",
+      "message": "Нарисовать эллипс"
+   },
+   "editor_action_draw_line": {
+      "description": "Draw line",
+      "message": "Нарисовать линию"
+   },
+   "editor_action_draw_rectangle": {
+      "description": "Draw rectangle",
+      "message": "Нарисовать прямоугольник"
+   },
+   "editor_action_free_draw": {
+      "description": "Free draw",
+      "message": "Свободное рисование"
+   },
+   "editor_action_highlight": {
+      "description": "Highlight",
+      "message": "Выделить"
+   },
+   "editor_action_numbered_step": {
+      "description": "Action label for adding a numbered step annotation.",
+      "message": "Нумерованный шаг"
+   },
+   "editor_action_pan": {
+      "description": "Pan",
+      "message": "Панорамирование"
+   },
+   "editor_action_profile_account": {
+      "description": "Account",
+      "message": "Аккаунт"
+   },
+   "editor_action_redo": {
+      "description": "Redo",
+      "message": "Повторить"
+   },
+   "editor_action_save": {
+      "description": "Save",
+      "message": "Сохранить"
+   },
+   "editor_action_select": {
+      "description": "Select, move, resize",
+      "message": "Выбрать, переместить, изменить размер"
+   },
+   "editor_action_settings": {
+      "description": "Settings",
+      "message": "Настройки"
+   },
+   "editor_action_undo": {
+      "description": "Undo",
+      "message": "Отменить"
+   },
+   "editor_action_undo_all": {
+      "description": "Undo all",
+      "message": "Отменить все"
+   },
+   "editor_add_text_default": {
+      "description": "start typing...",
+      "message": "Начните вводить текст..."
+   },
+   "editor_browse_file_system": {
+      "description": "Browse file system",
+      "message": "Обзор файловой системы"
+   },
+   "editor_drag_and_drop": {
+      "description": "Drag and drop image/GIF or ",
+      "message": "Перетащите изображение/GIF или"
+   },
+   "editor_file_downloaded": {
+      "description": "File saved to downloads folder.",
+      "message": "Файл сохранен в папку \"Загрузки\"."
+   },
+   "editor_file_downloaded_selected_location": {
+      "description": "File saved to selected location.",
+      "message": "Файл сохранен в выбранное место."
+   },
+   "editor_frame_selector_apply_edits": {
+      "description": "Apply edits to selected",
+      "message": "Применить изменения к выбранным"
+   },
+   "editor_frame_selector_delete": {
+      "description": "Delete",
+      "message": "Удалить"
+   },
+   "editor_frame_selector_delete_every_second": {
+      "description": "Delete every second frame",
+      "message": "Удалить каждый второй кадр"
+   },
+   "editor_frame_selector_delete_selected": {
+      "description": "Delete selected",
+      "message": "Удалить выбранные"
+   },
+   "editor_frame_selector_remove_edits": {
+      "description": "Remove edits from selected",
+      "message": "Удалить правки у выбранных"
+   },
+   "editor_frame_selector_restore": {
+      "description": "Restore",
+      "message": "Восстановить"
+   },
+   "editor_frame_selector_restore_all": {
+      "description": "Restore All",
+      "message": "Восстановить все"
+   },
+   "editor_frame_selector_restore_selected": {
+      "description": "Restore selected",
+      "message": "Восстановить выбранные"
+   },
+   "editor_frame_selector_select_next": {
+      "description": "Select next frames",
+      "message": "Выбрать следующие кадры"
+   },
+   "editor_frame_selector_select_previous": {
+      "description": "Select previous frames",
+      "message": "Выбрать предыдущие кадры"
+   },
+   "editor_frame_selector_unselect_all": {
+      "description": "Unselect All",
+      "message": "Снять выделение со всех"
+   },
+   "editor_image_copied": {
+      "description": "Image copied to clipboard.",
+      "message": "Изображение скопировано в буфер обмена."
+   },
+   "editor_image_copied_failed": {
+      "description": "Failed to copy image to clipboard, it may be too large.",
+      "message": "Не удалось скопировать изображение в буфер обмена. Возможно, оно слишком большое."
+   },
+   "editor_link_copied": {
+      "description": "Link copied to clipboard.",
+      "message": "Ссылка скопирована в буфер обмена."
+   },
+   "editor_max_time_reached_dialog_description1": {
+      "description": "You have reached the max recording length time of $maxlength$ seconds for GIFs. Premium users can update this from the settings page.",
+      "message": "Достигнута максимальная длительность записи GIF: $maxlength$ секунд(ы). Премиум-пользователи могут изменить это на странице настроек.",
+      "placeholders": {
+         "maxlength": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_max_time_reached_dialog_description2": {
+      "description": "GIFs are intended for short recordings. If you require full length videos we recommend our free screen recorder: ",
+      "message": "GIF-файлы предназначены для коротких записей. Если вам нужны полноценные видео, мы рекомендуем наш бесплатный рекордер экрана:"
+   },
+   "editor_max_time_reached_dialog_description3": {
+      "description": "Premium users can update this from the settings page.",
+      "message": "Премиум-пользователи могут изменить это на странице настроек."
+   },
+   "editor_max_time_reached_dialog_settings_button": {
+      "description": "Open settings",
+      "message": "Открыть настройки"
+   },
+   "editor_max_time_reached_dialog_title": {
+      "description": "Recording suddenly stopped?",
+      "message": "Запись внезапно остановилась?"
+   },
+   "editor_premium_options_color": {
+      "description": "Color",
+      "message": "Цвет"
+   },
+   "editor_premium_options_draw_size": {
+      "description": "Draw Size",
+      "message": "Размер кисти"
+   },
+   "editor_premium_options_font": {
+      "description": "Font",
+      "message": "Шрифт"
+   },
+   "editor_premium_options_playback_speed": {
+      "description": "Playback Speed",
+      "message": "Скорость воспроизведения"
+   },
+   "editor_premium_options_special_effect": {
+      "description": "Special Effect",
+      "message": "Спецэффекты"
+   },
+   "editor_premium_options_title": {
+      "description": "Premium Options",
+      "message": "Премиум-опции"
+   },
+   "editor_save_dialog_advanced_encoding_options": {
+      "description": "Title for a section containing advanced, technical options for encoding a file.",
+      "message": "Расширенные параметры кодирования"
+   },
+   "editor_save_dialog_alert_title": {
+      "description": "Warning",
+      "message": "Предупреждение"
+   },
+   "editor_save_dialog_aspect_ratio": {
+      "description": "lock aspect ratio",
+      "message": "Сохранять пропорции"
+   },
+   "editor_save_dialog_cancel": {
+      "description": "Cancel",
+      "message": "Отмена"
+   },
+   "editor_save_dialog_chip_animated_image": {
+      "description": "Chip label indicating an animated image format (e.g. GIF, AVIF).",
+      "message": "анимированное изображение"
+   },
+   "editor_save_dialog_chip_large_file": {
+      "description": "Chip label indicating the format produces a large file size.",
+      "message": "большой файл"
+   },
+   "editor_save_dialog_chip_limited_support": {
+      "description": "Chip label indicating the format has limited browser/app support.",
+      "message": "ограниченная поддержка"
+   },
+   "editor_save_dialog_chip_small_file": {
+      "description": "Chip label indicating the format produces a small file size.",
+      "message": "маленький файл"
+   },
+   "editor_save_dialog_chip_video": {
+      "description": "Chip label indicating a video format (e.g. WebM, MP4).",
+      "message": "видео"
+   },
+   "editor_save_dialog_chip_widely_supported": {
+      "description": "Chip label indicating the format is widely supported.",
+      "message": "широко поддерживается"
+   },
+   "editor_save_dialog_compress": {
+      "description": "Compress & optimize GIF",
+      "message": "Сжать и оптимизировать GIF"
+   },
+   "editor_save_dialog_compress_tooltip": {
+      "description": "Apply GIF compression algorthm to greatly reduce GIF file size and in some cases improve quality. Highly recommeded.",
+      "message": "Применить алгоритм сжатия GIF, чтобы значительно уменьшить размер файла GIF и в некоторых случаях улучшить качество. Настоятельно рекомендуется."
+   },
+   "editor_save_dialog_dither_tooltip": {
+      "description": "Apply dither algorithm to frames. Try toggling this option if you experience color quality issues.",
+      "message": "Применить алгоритм дизеринга к кадрам. Попробуйте включить/выключить эту опцию, если возникают проблемы с качеством цвета."
+   },
+   "editor_save_dialog_download_raw_recording": {
+      "description": "Download raw recording",
+      "message": "Скачать исходную запись"
+   },
+   "editor_save_dialog_estimated_size": {
+      "description": "Estimated GIF Size: ",
+      "message": "Примерный размер GIF:"
+   },
+   "editor_save_dialog_export_sound": {
+      "description": "Include sound (beta)",
+      "message": "Включить звук (бета)"
+   },
+   "editor_save_dialog_export_sound_tooltip": {
+      "description": "Enable this option to include sound in the video.",
+      "message": "Включите эту опцию, чтобы добавить звук в видео."
+   },
+   "editor_save_dialog_frames": {
+      "description": "Frames: ",
+      "message": "Кадры:"
+   },
+   "editor_save_dialog_frames_alert": {
+      "description": "There are currently selected frames, saving will only output these selected frames - ",
+      "message": "В настоящее время выбраны некоторые кадры. Сохранение выведет только эти выбранные кадры -"
+   },
+   "editor_save_dialog_frames_alert_button": {
+      "description": "Click here to unselect all frames",
+      "message": "Нажмите здесь, чтобы снять выделение со всех кадров"
+   },
+   "editor_save_dialog_frames_alert_title": {
+      "description": "Playback Speed",
+      "message": "Скорость воспроизведения"
+   },
+   "editor_save_dialog_frames_processing": {
+      "description": "Processing Frames: ",
+      "message": "Обработка кадров:"
+   },
+   "editor_save_dialog_height_helper": {
+      "description": "Recorded height is ",
+      "message": "Высота записи: "
+   },
+   "editor_save_dialog_lossy_compression": {
+      "description": "Label for a setting that controls the level of lossy compression, from 0 to 100 percent.",
+      "message": "Сжатие с потерями (0–100 %)"
+   },
+   "editor_save_dialog_number_min_max_validation": {
+      "description": "A value between $minSize$ and $maxSize$ is required.",
+      "message": "Требуется значение от $minSize$ до $maxSize$.",
+      "placeholders": {
+         "maxSize": {
+            "content": "$2"
+         },
+         "minSize": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_save_dialog_processing_alert": {
+      "description": "Processing this recording will require a lot of memory and processing power. Unless you have a high spec PC it is recommended to do one or more of the following:",
+      "message": "Обработка этой записи потребует много памяти и вычислительной мощности. Если у вас нет высокопроизводительного ПК, рекомендуется выполнить одно или несколько из следующих действий:"
+   },
+   "editor_save_dialog_processing_alert_memory": {
+      "description": "Please note if the resulting GIF is blank then you ran out of memory.",
+      "message": "Обратите внимание: если итоговый GIF пуст, значит, вам не хватило памяти."
+   },
+   "editor_save_dialog_processing_alert_point_1": {
+      "description": "Compress and optimize GIF",
+      "message": "Сжать и оптимизировать GIF"
+   },
+   "editor_save_dialog_processing_alert_point_2": {
+      "description": "Reduce the width & height",
+      "message": "Уменьшить ширину и высоту"
+   },
+   "editor_save_dialog_processing_alert_point_3": {
+      "description": "Reduce FPS or delete frames",
+      "message": "Уменьшить FPS или удалить кадры"
+   },
+   "editor_save_dialog_purchase_dialog_compression_description": {
+      "description": "Free users are limited to 3 high quality GIF compressions per day. Upgrade to Premium to have no restrictions.",
+      "message": "Бесплатные пользователи ограничены 3 сжатиями GIF высокого качества в день. Перейдите на Премиум, чтобы снять ограничения."
+   },
+   "editor_save_dialog_quantization_algorithm": {
+      "description": "Label for a dropdown to select a quantization algorithm.",
+      "message": "Алгоритм квантования"
+   },
+   "editor_save_dialog_quantization_algorithm_new_alpha": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Alpha.",
+      "message": "Новый (Альфа)"
+   },
+   "editor_save_dialog_quantization_algorithm_new_beta": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Beta.",
+      "message": "Новый (Бета)"
+   },
+   "editor_save_dialog_quantization_algorithm_old": {
+      "description": "An option for the quantization algorithm setting, indicating an older version.",
+      "message": "Старый"
+   },
+   "editor_save_dialog_recording_quality_alert": {
+      "description": "GIF quality is limited for non premium users. To output high quality recordings you can do one of the following:",
+      "message": "Качество GIF ограничено для не-премиум пользователей. Чтобы вывести записи высокого качества, вы можете сделать одно из следующего:"
+   },
+   "editor_save_dialog_recording_quality_alert_option_1": {
+      "description": "Purchase premium",
+      "message": "Купить Премиум"
+   },
+   "editor_save_dialog_recording_quality_alert_option_2": {
+      "description": "Save as a WebM file",
+      "message": "Сохранить как файл WebM"
+   },
+   "editor_save_dialog_reduce_width": {
+      "description": "Reduce width & height",
+      "message": "Уменьшить ширину и высоту"
+   },
+   "editor_save_dialog_reduce_width_tooltip": {
+      "description": "Reduce GIF width and height/quality to improve processing time and produce a smaller file.",
+      "message": "Уменьшите ширину и высоту/качество GIF, чтобы сократить время обработки и получить файл меньшего размера."
+   },
+   "editor_save_dialog_save": {
+      "description": "Save",
+      "message": "Сохранить"
+   },
+   "editor_save_dialog_save_by": {
+      "description": "Save by",
+      "message": "Сохранить через:"
+   },
+   "editor_save_dialog_save_by_download": {
+      "description": "Download file",
+      "message": "Скачать файл"
+   },
+   "editor_save_dialog_save_by_google_drive": {
+      "description": "Upload to Google Drive & copy link",
+      "message": "Загрузить на Google Drive и скопировать ссылку"
+   },
+   "editor_save_dialog_save_location": {
+      "description": "Save location",
+      "message": "Место сохранения"
+   },
+   "editor_save_dialog_save_location_downloads": {
+      "description": "Downloads folder",
+      "message": "Папка \"Загрузки\""
+   },
+   "editor_save_dialog_save_location_downloads_subfolder": {
+      "description": "Downloads subfolder",
+      "message": "Подпапка в \"Загрузках\""
+   },
+   "editor_save_dialog_save_location_select": {
+      "description": "Manually select location",
+      "message": "Выбрать место вручную"
+   },
+   "editor_save_dialog_title": {
+      "description": "Save",
+      "message": "Сохранить"
+   },
+   "editor_save_dialog_title_processing": {
+      "description": "Processing...",
+      "message": "Обработка..."
+   },
+   "editor_save_dialog_title_uploading": {
+      "description": "Uploading...",
+      "message": "Загрузка..."
+   },
+   "editor_save_dialog_width_helper": {
+      "description": "Recorded width is ",
+      "message": "Ширина записи: "
+   },
+   "editor_text": {
+      "description": "Open in editor",
+      "message": "Открыть в редакторе"
+   },
+   "editor_tip_delete_items": {
+      "description": "Pro tip: Delete added items by selecting the item and pressing the delete key.",
+      "message": "СОВЕТ ПРОФИ: Чтобы удалить добавленные элементы, выберите элемент и нажмите клавишу Delete."
+   },
+   "editor_tip_edit_specific_frames": {
+      "description": "Pro tip: You can edit specific frames by using the 'Apply edits to selected option'",
+      "message": "СОВЕТ ПРОФИ: Вы можете редактировать конкретные кадры, используя опцию \"Применить изменения к выбранным кадрам\"."
+   },
+   "editor_tip_scroll": {
+      "description": "Pro tip: Scroll when hovering the screenshot/recording to zoom.",
+      "message": "СОВЕТ ПРОФИ: При наведении на скриншот/запись прокручивайте колесико для масштабирования."
+   },
+   "editor_tip_shift_multiple_items": {
+      "description": "Pro tip: When using the selecting tool hold down shift to select more than one item.",
+      "message": "СОВЕТ ПРОФИ: При использовании инструмента выделения удерживайте клавишу Shift, чтобы выбрать более одного элемента."
+   },
+   "editor_tip_update_multiple_items": {
+      "description": "Pro tip: You can scale, rotate, move and delete multiple items at once.",
+      "message": "СОВЕТ ПРОФИ: Вы можете одновременно масштабировать, вращать, перемещать и удалять несколько элементов."
+   },
+   "editor_tip_update_text": {
+      "description": "Pro tip: Double click on text to edit it.",
+      "message": "СОВЕТ ПРОФИ: Дважды щелкните текст, чтобы отредактировать его."
+   },
+   "editor_upload_dialog_alert_copy_failed_message": {
+      "description": "This may have occurred due to the window not being focused.",
+      "message": "Это могло произойти из-за того, что окно не было в фокусе."
+   },
+   "editor_upload_dialog_alert_copy_failed_title": {
+      "description": "Copy to clipboard failed",
+      "message": "Ошибка копирования в буфер обмена"
+   },
+   "editor_upload_dialog_alert_copy_success_title": {
+      "description": "Copied to clipboard",
+      "message": "Скопировано в буфер обмена"
+   },
+   "editor_upload_dialog_alert_upload_failed": {
+      "description": "Upload Failed",
+      "message": "Ошибка загрузки"
+   },
+   "editor_upload_dialog_alert_upload_failed_link": {
+      "description": "Try again.",
+      "message": "Попробовать снова."
+   },
+   "editor_upload_dialog_alert_upload_failed_message": {
+      "description": "Please make sure you are connected to the internet and have accepted Google Drive permissions.",
+      "message": "Убедитесь, что вы подключены к Интернету и предоставили разрешения для Google Drive."
+   },
+   "editor_upload_dialog_cancel_and_download": {
+      "description": "Cancel and download file",
+      "message": "Отменить и скачать файл"
+   },
+   "editor_upload_dialog_close": {
+      "description": "Close",
+      "message": "Закрыть"
+   },
+   "editor_upload_dialog_copy_link": {
+      "description": "Copy link",
+      "message": "Скопировать ссылку"
+   },
+   "editor_upload_dialog_link_public": {
+      "description": "Allow anyone with the link to view.",
+      "message": "Разрешить просмотр всем, у кого есть ссылка."
+   },
+   "editor_zoom_crop_animation_animated": {
+      "description": "Sub-label indicating an animation type is animated.",
+      "message": "Анимированный"
+   },
+   "editor_zoom_crop_animation_crop": {
+      "description": "Animation type option for static cropping without animation.",
+      "message": "Обрезка"
+   },
+   "editor_zoom_crop_animation_static": {
+      "description": "Sub-label indicating an animation type is static (no animation).",
+      "message": "Статический"
+   },
+   "editor_zoom_crop_animation_type": {
+      "description": "Label for the animation type selection section.",
+      "message": "Тип анимации"
+   },
+   "editor_zoom_crop_animation_zoom_in": {
+      "description": "Animation type option for zooming in on the selected area.",
+      "message": "Увеличить"
+   },
+   "editor_zoom_crop_animation_zoom_out": {
+      "description": "Animation type option for zooming out from the selected area.",
+      "message": "Уменьшить"
+   },
+   "editor_zoom_crop_apply": {
+      "description": "Apply button in zoom/crop dialog.",
+      "message": "Применить"
+   },
+   "editor_zoom_crop_cancel": {
+      "description": "Cancel button in zoom/crop dialog.",
+      "message": "Отмена"
+   },
+   "editor_zoom_crop_change_area": {
+      "description": "Tooltip text for button to change the selected crop area.",
+      "message": "Изменить область"
+   },
+   "editor_zoom_crop_dialog_title": {
+      "description": "Title for the zoom and crop dialog in the editor.",
+      "message": "Масштабирование и обрезка"
+   },
+   "editor_zoom_crop_draw_instruction": {
+      "description": "Instruction text for the user to draw a crop area on the frame preview.",
+      "message": "Нарисуйте выделение на кадре"
+   },
+   "editor_zoom_crop_frame_end": {
+      "description": "Label for the end frame number.",
+      "message": "Конец"
+   },
+   "editor_zoom_crop_frame_range": {
+      "description": "Label for the frame range selection section.",
+      "message": "Диапазон кадров"
+   },
+   "editor_zoom_crop_frame_start": {
+      "description": "Label for the start frame number.",
+      "message": "Начало"
+   },
+   "editor_zoom_crop_frames_menu": {
+      "description": "Menu item label for zoom/crop frames feature.",
+      "message": "Масштабирование/обрезка кадров"
+   },
+   "editor_zoom_crop_no_area_selected": {
+      "description": "Message displayed when no crop area has been selected.",
+      "message": "Область не выбрана"
+   },
+   "editor_zoom_crop_select_area": {
+      "description": "Button text to select a crop area on the frame.",
+      "message": "Выбрать область"
+   },
+   "editor_zoom_crop_smooth_animation": {
+      "description": "Checkbox label for smoothing animation by interpolating frames.",
+      "message": "Плавная анимация с добавлением кадров"
+   },
+   "editor_zoom_crop_transition": {
+      "description": "Label for the transition duration section (number of frames for animation).",
+      "message": "Переход"
+   },
+   "enable_drawing_text": {
+      "description": "Enable drawing",
+      "message": "Включить рисование"
+   },
+   "enable_drawing_tooltip_text": {
+      "description": "This option allows users to draw in the selected area while holding down the ctrl key.",
+      "message": "Эта опция позволяет пользователям рисовать в выбранной области, удерживая клавишу Ctrl."
+   },
+   "extension_description": {
+      "description": "Take screenshots & record GIFs instantly! Edit & share seamlessly. Your all-in-one screenshot and screen recording solution.",
+      "message": "Мгновенно делайте скриншоты и записывайте GIF! Редактируйте и делитесь легко. Ваше универсальное решение для скриншотов и записи экрана."
+   },
+   "extension_name": {
+      "description": "Chrome Capture - screenshot & GIF",
+      "message": "Chrome Capture - Скриншоты и GIF"
+   },
+   "extension_short_name": {
+      "description": "Chrome Capture",
+      "message": "Chrome Capture"
+   },
+   "file_access_text": {
+      "description": "After screenshot action",
+      "message": "Действие после снимка экрана"
+   },
+   "filename_text": {
+      "description": "Filename",
+      "message": "Имя файла"
+   },
+   "frames_per_sec_short_text": {
+      "description": "FPS",
+      "message": "FPS"
+   },
+   "frames_per_sec_text": {
+      "description": "Frames per second (fps)",
+      "message": "Кадров в секунду (FPS)"
+   },
+   "frames_text": {
+      "description": "frames",
+      "message": "Кадры"
+   },
+   "free_settings_text": {
+      "description": "Free Settings",
+      "message": "Настройки бесплатной версии"
+   },
+   "fullscreen_info_modal_cancel": {
+      "description": "Cancel",
+      "message": "Отмена"
+   },
+   "fullscreen_info_modal_continue": {
+      "description": "Are you sure you want to continue with full screen capture?",
+      "message": "Вы уверены, что хотите продолжить съемку всего экрана?"
+   },
+   "fullscreen_info_modal_do_not_show": {
+      "description": "Do not show this again",
+      "message": "Больше не показывать"
+   },
+   "fullscreen_info_modal_message": {
+      "description": "You have used a Chrome Capture shortcut without the cropping tool, this will capture in full screen mode.",
+      "message": "Вы использовали горячую клавишу Chrome Capture без инструмента обрезки. Снимок будет сделан в полноэкранном режиме."
+   },
+   "fullscreen_info_modal_open_cropping": {
+      "description": "Open cropping tool",
+      "message": "Открыть инструмент обрезки"
+   },
+   "fullscreen_info_modal_shortcut_cropping_tool": {
+      "description": "Alt + C: Open/close Chrome Capture cropping tool",
+      "message": "Alt + C: Открыть/закрыть инструмент обрезки Chrome Capture"
+   },
+   "fullscreen_info_modal_shortcut_fullpage_screenshot": {
+      "description": "Alt + Shift + S: Full webpage screenshot (beta)",
+      "message": "Alt + Shift + S: Скриншот всей веб-страницы (бета)"
+   },
+   "fullscreen_info_modal_shortcut_linkt": {
+      "description": "You can configure these here: ",
+      "message": "Настроить их можно здесь:"
+   },
+   "fullscreen_info_modal_shortcut_recording": {
+      "description": "Alt + R: Start/stop recording",
+      "message": "Alt + R: Начать/остановить запись"
+   },
+   "fullscreen_info_modal_shortcut_screenshot": {
+      "description": "Alt + S: Visible area screenshot",
+      "message": "Alt + S: Скриншот видимой области"
+   },
+   "fullscreen_info_modal_shortcuts": {
+      "description": "Default shortcuts are: ",
+      "message": "Горячие клавиши по умолчанию:"
+   },
+   "fullscreen_info_modal_start": {
+      "description": "Start full screen capture",
+      "message": "Начать съемку всего экрана"
+   },
+   "fullscreen_info_modal_title": {
+      "description": "Full screen capture",
+      "message": "Снимок всего экрана"
+   },
+   "general_not_available": {
+      "description": "N/A",
+      "message": "Н/Д"
+   },
+   "get_premium": {
+      "description": "Get Premium",
+      "message": "Получить Премиум"
+   },
+   "height_text": {
+      "description": "Width (px)",
+      "message": "Высота (пикс.)"
+   },
+   "hi": {
+      "description": "Hi",
+      "message": "Привет"
+   },
+   "internet_connection_required": {
+      "description": "Internet connection is required to upgrade to premium.",
+      "message": "Для перехода на Премиум требуется подключение к Интернету."
+   },
+   "manage_subscription_access_until_date": {
+      "description": "Your plan will not renew. You can access premium features until $date$.",
+      "message": "Ваш план не будет продлен. Вы можете получить доступ к премиум-функциям до $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_cancel_button": {
+      "description": "Cancel subscription",
+      "message": "Отменить подписку"
+   },
+   "manage_subscription_cancel_confirm_cancel_button": {
+      "description": "Keep Premium",
+      "message": "Сохранить Premium"
+   },
+   "manage_subscription_cancel_confirm_confirm_button": {
+      "description": "Continue to cancel",
+      "message": "Продолжить отмену"
+   },
+   "manage_subscription_cancel_confirm_description": {
+      "description": "You will lose access to Premium features and Premium options will be reset.",
+      "message": "Вы потеряете доступ к функциям Premium, и настройки Premium будут сброшены."
+   },
+   "manage_subscription_cancel_confirm_title": {
+      "description": "Are you sure you want to cancel your subscription?",
+      "message": "Вы уверены, что хотите отменить подписку?"
+   },
+   "manage_subscription_ended_on_date": {
+      "description": "Subscription ended on $date$.",
+      "message": "Подписка закончилась $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_ends_on_date": {
+      "description": "Subscription ends on $date$.",
+      "message": "Подписка заканчивается $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_next_payment_full": {
+      "description": "Next payment: $price$ on $date$",
+      "message": "Следующий платеж: $price$ в дату $date$",
+      "placeholders": {
+         "date": {
+            "content": "$2"
+         },
+         "price": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_paid_full": {
+      "description": "Paid: $billingCycle$",
+      "message": "Оплачено: $billingCycle$",
+      "placeholders": {
+         "billingCycle": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_resubscribe_prompt": {
+      "description": " To use premium features again, please upgrade.",
+      "message": " Чтобы снова использовать премиум-функции, пожалуйста, обновите подписку."
+   },
+   "manage_subscription_update_payment_button": {
+      "description": "Update payment method",
+      "message": "Обновить способ оплаты"
+   },
+   "max_recording_dimension_size_text": {
+      "description": "Max recording resolution/quality",
+      "message": "Макс. разрешение/качество записи"
+   },
+   "no_limit_text": {
+      "description": "No limit",
+      "message": "Без ограничений"
+   },
+   "open_text": {
+      "description": "Open",
+      "message": "Открыть"
+   },
+   "options_default_action": {
+      "description": "Extension icon click action",
+      "message": "Действие при нажатии на значок расширения"
+   },
+   "options_dimension_size_1000": {
+      "description": "1000 pixels",
+      "message": "1000 пикселей"
+   },
+   "options_dimension_size_1080p": {
+      "description": "1920 pixels (1080p)",
+      "message": "1920 пикселей (1080p)"
+   },
+   "options_dimension_size_480p": {
+      "description": "640 pixels (480p)",
+      "message": "640 пикселей (480p)"
+   },
+   "options_dimension_size_4k": {
+      "description": "3840 pixels (4K)",
+      "message": "3840 пикселей (4K)"
+   },
+   "options_dimension_size_720p": {
+      "description": "1280 pixels (720p)",
+      "message": "1280 пикселей (720p)"
+   },
+   "options_embedded_options_permission_warning": {
+      "description": "Cursor highlighting, click effects, and drawing tools will only work until the page reloads or changes. To keep them active after reloads or redirects, you'll need to grant an extra permission.",
+      "message": "Подсветка курсора, эффекты щелчков и инструменты рисования будут работать только до перезагрузки или изменения страницы. Чтобы они оставались активными после перезагрузок или переадресаций, вам необходимо предоставить дополнительное разрешение."
+   },
+   "options_enable_notifications": {
+      "description": "Enable notifications",
+      "message": "Включить уведомления"
+   },
+   "options_enable_notifications_tooltip": {
+      "description": "Display notifications when full screen recording starts and processing recordings in the background.",
+      "message": "Показывать уведомления при запуске записи всего экрана и при обработке записей в фоновом режиме."
+   },
+   "options_enable_subfolder_downloads": {
+      "description": "Download files into subfolder",
+      "message": "Скачивать файлы в подпапку"
+   },
+   "options_enable_subfolder_downloads_tooltip": {
+      "description": "Download files into a subfolder of your choice inside the downloads folder. This option is useful for organising your captures.",
+      "message": "Скачивать файлы в подпапку по вашему выбору внутри папки \"Загрузки\". Эта опция полезна для организации ваших снимков/записей."
+   },
+   "options_how_to_use_btn": {
+      "description": "How to use",
+      "message": "Инструкция"
+   },
+   "options_language": {
+      "description": "Language",
+      "message": "Язык"
+   },
+   "options_open_containing_folder_on_save": {
+      "description": "Open containing folder after saving",
+      "message": "Открыть папку после сохранения"
+   },
+   "options_open_popup": {
+      "description": "Open popup",
+      "message": "Открыть всплывающее окно"
+   },
+   "options_open_selected_area": {
+      "description": "Open selected area capture",
+      "message": "Сделать снимок выбранной области"
+   },
+   "options_section_general": {
+      "description": "Title for the General settings section in the options page",
+      "message": "Общие настройки"
+   },
+   "options_section_output": {
+      "description": "Title for the Output and Saving settings section in the options page",
+      "message": "Вывод и сохранение"
+   },
+   "options_section_recording": {
+      "description": "Title for the Recording settings section in the options page",
+      "message": "Настройки записи"
+   },
+   "options_section_visuals": {
+      "description": "Title for the Cursor and Interaction Visuals settings section in the options page",
+      "message": "Визуальные эффекты курсора и взаимодействия"
+   },
+   "options_shortcuts_btn": {
+      "description": "Shortcuts",
+      "message": "Горячие клавиши"
+   },
+   "options_subfolder_downloads_name": {
+      "description": "Subfolder name:",
+      "message": "Имя подпапки:"
+   },
+   "options_support_btn": {
+      "description": "Support",
+      "message": "Поддержка"
+   },
+   "overlay_help_text": {
+      "description": "Click and drag to choose your selected area. \nRight click to snap to an element, hold shift for multiple.",
+      "message": "Нажмите и перетащите, чтобы выбрать область.\nЩёлкните правой кнопкой мыши, чтобы привязаться к элементу, удерживайте клавишу Shift для выбора нескольких."
+   },
+   "plan_billing_annually": {
+      "description": "Annually",
+      "message": "Ежегодно"
+   },
+   "plan_billing_monthly": {
+      "description": "Monthly",
+      "message": "Ежемесячно"
+   },
+   "plan_name_custom": {
+      "description": "Custom Plan",
+      "message": "Пользовательский план"
+   },
+   "popup_capture_tab": {
+      "description": "Capture",
+      "message": "Снимок"
+   },
+   "popup_desktop_screenshot_tooltip": {
+      "description": "Capture the entire screen, desktop, or any open application.",
+      "message": "Сделать снимок всего экрана, рабочего стола или любого открытого приложения."
+   },
+   "popup_editor_icon_tooltip": {
+      "description": "Open Editor",
+      "message": "Открыть редактор"
+   },
+   "popup_full_page_screenshot_tooltip": {
+      "description": "Capture the current tab full webpage, including content beyond the visible area.",
+      "message": "Сделать снимок всей веб-страницы текущей вкладки, включая содержимое за пределами видимой области."
+   },
+   "popup_full_webpage": {
+      "description": "Full webpage",
+      "message": "Вся веб-страница"
+   },
+   "popup_no_scripts_alert": {
+      "description": "Selected area and full webpage screenshots are not possible here. These features are available on other websites.",
+      "message": "На этом сайте невозможно сделать снимок выбранной области или снимок всей веб-страницы. Эти функции доступны на других сайтах."
+   },
+   "popup_record_tab": {
+      "description": "Record",
+      "message": "Запись"
+   },
+   "popup_recording_limit_alert": {
+      "description": "Record up to $seconds$ seconds per GIF. Premium users can update this from the ",
+      "message": "Запись до $seconds$ секунд на GIF. Премиум-пользователи могут изменить это на",
+      "placeholders": {
+         "seconds": {
+            "content": "$1"
+         }
+      }
+   },
+   "popup_recording_limit_settings_link": {
+      "description": "settings page.",
+      "message": "странице настроек."
+   },
+   "popup_screen_or_app": {
+      "description": "Full screen or app",
+      "message": "Весь экран или окно приложения"
+   },
+   "popup_selected_area": {
+      "description": "Selected area",
+      "message": "Выбранная область"
+   },
+   "popup_selected_area_screenshot_tooltip": {
+      "description": "Capture a specific area of the current tab.",
+      "message": "Сделать снимок определенной области текущей вкладки."
+   },
+   "popup_set_shortcut": {
+      "description": "set shortcut",
+      "message": "Задать горячую клавишу"
+   },
+   "popup_settings_icon_tooltip": {
+      "description": "Open Settings",
+      "message": "Открыть настройки"
+   },
+   "popup_tab_screenshot_tooltip": {
+      "description": "Capture the visible part of the current tab.",
+      "message": "Сделать снимок видимой части текущей вкладки."
+   },
+   "popup_this_tab": {
+      "description": "This tab",
+      "message": "Эта вкладка"
+   },
+   "popup_waiting_for_desktop_selection_alert": {
+      "description": "FULL SCREEN OR APP capture did not start because you did not select an option from the popup dialog. If you have multiple monitors it may have opened on another monitor.",
+      "message": "Запись всего экрана или окна приложения не началась, так как вы не выбрали опцию в диалоговом окне. Если у вас несколько мониторов, оно могло открыться на другом мониторе."
+   },
+   "premium_settings_text": {
+      "description": "Premium Settings",
+      "message": "Настройки Премиум-версии"
+   },
+   "purchase_btn_text": {
+      "description": "Get Premium!",
+      "message": "Получить Премиум!"
+   },
+   "purchase_description_limited_time_text": {
+      "description": "Lock in this price now - limited time offer before we switch to subscriptions!",
+      "message": "Зафиксируйте эту цену сейчас - ограниченное по времени предложение перед переходом на подписку!"
+   },
+   "purchase_description_text": {
+      "description": "Just one payment unlocks all premium features forever. No recurring fees!",
+      "message": "Всего один платеж открывает все премиум-функции пожизненно. Без регулярных платежей!"
+   },
+   "purchase_feature_30fps": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "невероятно плавная запись в 30 FPS"
+   },
+   "purchase_feature_4K": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "кристально чистая запись в 4K"
+   },
+   "purchase_feature_alter_frame_rate": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "пользовательские частоты кадров"
+   },
+   "purchase_feature_alter_playback_speed": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "эффекты замедленной съёмки и таймлапса"
+   },
+   "purchase_feature_blur": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "инструмент размытия"
+   },
+   "purchase_feature_crop_recording": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "точная обрезка GIF"
+   },
+   "purchase_feature_default": {
+      "description": "Feature that goes in $feature$ placeholder. Default fallback.",
+      "message": "эту функцию"
+   },
+   "purchase_feature_frame_edits": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "мощное покадровое редактирование"
+   },
+   "purchase_feature_highlight": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "инструмент выделения"
+   },
+   "purchase_feature_no_duration_limit": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "неограниченная длительность записи"
+   },
+   "purchase_feature_special_effect": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "спецэффекты"
+   },
+   "purchase_feature_step_tool": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "инструмент «Шаги»"
+   },
+   "purchase_feature_svg": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "добавление пользовательских значков и логотипов"
+   },
+   "purchase_feature_text_and_annotation_customization": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "полный контроль над текстом и аннотациями"
+   },
+   "purchase_feature_unlimited_gif_compression": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "неограниченное расширенное сжатие GIF"
+   },
+   "purchase_feature_update_end_time": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "настраиваемое время записи"
+   },
+   "purchase_login_dialog_closed_by_user_alert": {
+      "description": "Looks like you closed the sign in dialog, premium users must sign in so you don't lose premium access.",
+      "message": "Похоже, вы закрыли диалоговое окно входа. Премиум-пользователи должны войти в систему, чтобы не потерять премиум-доступ."
+   },
+   "purchase_login_dialog_google_button": {
+      "description": "Sign in with Google",
+      "message": "Войти через Google"
+   },
+   "purchase_login_dialog_title": {
+      "description": "Sign in required",
+      "message": "Требуется вход"
+   },
+   "purchase_login_text": {
+      "description": "Sign in with Google to link your purchase to your account.",
+      "message": "Войдите через Google, чтобы привязать покупку к вашему аккаунту."
+   },
+   "purchase_login_text_window_opened": {
+      "description": "Sign into Google in the popup window.",
+      "message": "Войдите в аккаунт Google во всплывающем окне."
+   },
+   "purchase_subscription_title_text": {
+      "description": "Choose the plan that fits your needs.",
+      "message": "Выберите план, который соответствует вашим потребностям."
+   },
+   "purchase_title_text": {
+      "description": "Get Lifetime Premium Access Today!",
+      "message": "Получите Пожизненный Премиум-Доступ Сегодня!"
+   },
+   "purchase_title_text_blocked_feature": {
+      "description": "That feature requires Premium",
+      "message": "Эта функция требует Premium"
+   },
+   "purchase_title_text_blocked_pro_feature": {
+      "description": "That feature requires Premium Pro",
+      "message": "Для этой функции требуется Premium Pro"
+   },
+   "purchase_title_text_blocked_pro_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium Pro paywall.",
+      "message": "Разблокируйте «$feature$» с Premium Pro",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchase_title_text_blocked_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium paywall.",
+      "message": "Разблокируйте «$feature$» с Premium",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_already_premium_user": {
+      "description": "Already a premium user?",
+      "message": "Уже Премиум-пользователь?"
+   },
+   "purchases_bill_me": {
+      "description": "Bill me:",
+      "message": "Выставить счет:"
+   },
+   "purchases_checkout_unavailable_message": {
+      "description": "Message shown when checkout could not be started.",
+      "message": "Сейчас не удалось запустить процесс обновления. Пожалуйста, попробуйте снова."
+   },
+   "purchases_compare_12_fps": {
+      "description": "12FPS",
+      "message": "12 кадров/с"
+   },
+   "purchases_compare_3_per_day": {
+      "description": "3 per day",
+      "message": "3 в день"
+   },
+   "purchases_compare_add_custom_shape_tool": {
+      "description": "Add custom shape/icon tool",
+      "message": "Инструмент для добавления пользовательской фигуры/значка"
+   },
+   "purchases_compare_benefits": {
+      "description": "Benefits",
+      "message": "Преимущества"
+   },
+   "purchases_compare_blur_tool": {
+      "description": "Blur tool",
+      "message": "Инструмент размытия"
+   },
+   "purchases_compare_close_button_label": {
+      "description": "Close",
+      "message": "Закрыть"
+   },
+   "purchases_compare_compression": {
+      "description": "High quality GIF compression",
+      "message": "Сжатие GIF высокого качества"
+   },
+   "purchases_compare_core_capture_features": {
+      "description": "Core Capture Features",
+      "message": "Основные функции захвата"
+   },
+   "purchases_compare_crop_recordings": {
+      "description": "Crop recordings",
+      "message": "Обрезать записи"
+   },
+   "purchases_compare_customize_editing_tools": {
+      "description": "Customize editing tools (font, size color)",
+      "message": "Настройка инструментов редактирования (шрифт, размер, цвет)"
+   },
+   "purchases_compare_drawing": {
+      "description": "Draw while recording",
+      "message": "Рисование во время записи"
+   },
+   "purchases_compare_early_access": {
+      "description": "Early access to new features",
+      "message": "Ранний доступ к новым функциям"
+   },
+   "purchases_compare_editing": {
+      "description": "Edit captures",
+      "message": "Редактирование снимков/записей"
+   },
+   "purchases_compare_editing_free": {
+      "description": "basic editing",
+      "message": "Базовое редактирование"
+   },
+   "purchases_compare_editing_suite": {
+      "description": "Editing Suite",
+      "message": "Набор для редактирования"
+   },
+   "purchases_compare_frame_editing": {
+      "description": "Frame editing",
+      "message": "Редактирование кадров"
+   },
+   "purchases_compare_frame_rate": {
+      "description": "Adjust Frame Rate",
+      "message": "Настроить Частоту Кадров (FPS)"
+   },
+   "purchases_compare_frame_specific_edits": {
+      "description": "Frame specific edits",
+      "message": "Редактирование отдельных кадров"
+   },
+   "purchases_compare_free_draw_tools": {
+      "description": "Free draw, line, arrow, rectangle, circle, text tools",
+      "message": "Инструменты для свободного рисования, линий, стрелок, прямоугольников, кругов, текста"
+   },
+   "purchases_compare_full_webpage_screenshots": {
+      "description": "Unlimited full page screenshots.",
+      "message": "Неограниченные скриншоты всей страницы."
+   },
+   "purchases_compare_highlight_tool": {
+      "description": "Highlight tool",
+      "message": "Инструмент выделения"
+   },
+   "purchases_compare_live_recording_tools": {
+      "description": "Live Recording Tools",
+      "message": "Инструменты для записи в реальном времени"
+   },
+   "purchases_compare_mouse": {
+      "description": "Click and mouse indication",
+      "message": "Индикация клика и курсора"
+   },
+   "purchases_compare_plans": {
+      "description": "Compare plans",
+      "message": "Сравнить планы"
+   },
+   "purchases_compare_plans_premium_button": {
+      "description": "Upgrade to Premium",
+      "message": "Перейти на Premium"
+   },
+   "purchases_compare_playback_speed": {
+      "description": "Tune recording playback speed",
+      "message": "Настройка скорости воспроизведения записи"
+   },
+   "purchases_compare_priority_support": {
+      "description": "Priority support and feature requests",
+      "message": "Приоритетная поддержка и запросы на добавление функций"
+   },
+   "purchases_compare_recording": {
+      "description": "Unlimited GIF recordings.",
+      "message": "Неограниченная запись GIF."
+   },
+   "purchases_compare_recording_free": {
+      "description": "15sec limit per GIF",
+      "message": "Лимит 15 сек на GIF"
+   },
+   "purchases_compare_recording_quality": {
+      "description": "High quality GIFs",
+      "message": "Высококачественные GIF"
+   },
+   "purchases_compare_recording_quality_control": {
+      "description": "Recording Quality & Control",
+      "message": "Качество и управление записью"
+   },
+   "purchases_compare_recording_quality_free": {
+      "description": "1000 pixels max",
+      "message": "Макс. 1000 пикселей"
+   },
+   "purchases_compare_screenshots": {
+      "description": "Unlimited screenshots.",
+      "message": "Неограниченные скриншоты."
+   },
+   "purchases_compare_special_effects": {
+      "description": "Recording special effects",
+      "message": "Запись спецэффектов"
+   },
+   "purchases_compare_up_to_1080p": {
+      "description": "Up to 1080p",
+      "message": "До 1080p"
+   },
+   "purchases_compare_up_to_24_fps": {
+      "description": "Up to 24FPS",
+      "message": "До 24 кадров/с"
+   },
+   "purchases_compare_up_to_30_fps": {
+      "description": "Up to 30FPS",
+      "message": "До 30 кадров/с"
+   },
+   "purchases_compare_up_to_4k_plus": {
+      "description": "Up to 4K+",
+      "message": "До 4K+"
+   },
+   "purchases_current_plan": {
+      "description": "Current plan",
+      "message": "Текущий план"
+   },
+   "purchases_features": {
+      "description": "Features",
+      "message": "Функции"
+   },
+   "purchases_free": {
+      "description": "Free",
+      "message": "Бесплатная"
+   },
+   "purchases_free_button": {
+      "description": "Free to use",
+      "message": "Использовать бесплатно"
+   },
+   "purchases_free_feature_editing": {
+      "description": "Basic editing",
+      "message": "Базовое редактирование"
+   },
+   "purchases_free_feature_recording": {
+      "description": "Basic GIF recording",
+      "message": "Базовая запись GIF"
+   },
+   "purchases_free_feature_screenshots": {
+      "description": "Unlimited screenshots",
+      "message": "Неограниченные скриншоты"
+   },
+   "purchases_free_plan_description": {
+      "description": "Get started with our essential capture tools. Completely free for basic everyday use.",
+      "message": "Начните с наших основных инструментов для захвата. Совершенно бесплатно для базового повседневного использования."
+   },
+   "purchases_plan_save_up_to_percentage": {
+      "description": "Save up to",
+      "message": "Экономия до"
+   },
+   "purchases_premium": {
+      "description": "Premium",
+      "message": "Премиум"
+   },
+   "purchases_premium_billed_annually": {
+      "description": "Billed annually",
+      "message": "Оплата ежегодно"
+   },
+   "purchases_premium_button": {
+      "description": "Get lifetime access",
+      "message": "Получить пожизненный доступ"
+   },
+   "purchases_premium_feature_compression": {
+      "description": "High quality GIF compression",
+      "message": "Сжатие GIF высокого качества"
+   },
+   "purchases_premium_feature_editing": {
+      "description": "Feature rich editing",
+      "message": "Расширенные функции редактирования"
+   },
+   "purchases_premium_feature_free": {
+      "description": "Everything from free plan",
+      "message": "Включает функции бесплатного плана"
+   },
+   "purchases_premium_feature_marked_with_star": {
+      "description": "All features marked with a star",
+      "message": "Все функции, отмеченные звездочкой"
+   },
+   "purchases_premium_feature_recording": {
+      "description": "Unlimited high quality GIF recording",
+      "message": "Неограниченная запись GIF высокого качества"
+   },
+   "purchases_premium_feature_recording_1080p": {
+      "description": "High quality GIF recording, up to 1080p, 24fps",
+      "message": "Высококачественная запись GIF, до 1080p, 24 кадра/с"
+   },
+   "purchases_premium_feature_refundable": {
+      "description": "Fully refundable",
+      "message": "Полный возврат средств"
+   },
+   "purchases_premium_feature_risk_free": {
+      "description": "Risk-free: 7 day trial, cancel anytime",
+      "message": "Без риска: 7-дневный пробный период, отмена в любое время"
+   },
+   "purchases_premium_feature_unlimited_length": {
+      "description": "Unlimited GIF recording length",
+      "message": "Неограниченная длина записи GIF"
+   },
+   "purchases_premium_price_info": {
+      "description": "one time fee",
+      "message": "единоразовая плата"
+   },
+   "purchases_premium_price_per_month": {
+      "description": "/ month",
+      "message": "/ месяц"
+   },
+   "purchases_premium_pro": {
+      "description": "Premium Pro",
+      "message": "Premium Pro"
+   },
+   "purchases_premium_pro_editing_tools": {
+      "description": "Advanced editing tools (blurring, special effects, etc.)",
+      "message": "Расширенные инструменты редактирования (размытие, спецэффекты и т. д.)"
+   },
+   "purchases_premium_pro_feature_early_access": {
+      "description": "Early access to new features",
+      "message": "Ранний доступ к новым функциям"
+   },
+   "purchases_premium_pro_feature_marked_with_crown": {
+      "description": "All features marked with a star and crown",
+      "message": "Все функции, отмеченные звездочкой и короной"
+   },
+   "purchases_premium_pro_feature_premium_plan": {
+      "description": "Everything from Premium plan",
+      "message": "Все из плана Premium"
+   },
+   "purchases_premium_pro_feature_quality": {
+      "description": "Max resolution recording, 4K+ and 30fps",
+      "message": "Запись в максимальном разрешении, 4K+ и 30 кадров/с"
+   },
+   "purchases_premium_pro_feature_support": {
+      "description": "Priority support and feature requests",
+      "message": "Приоритетная поддержка и запросы на добавление функций"
+   },
+   "purchases_premium_pro_upgrade": {
+      "description": "Upgrade to Pro",
+      "message": "Обновить до Pro"
+   },
+   "purchases_premium_save_percentage": {
+      "description": "save $savingsPercentage$%",
+      "message": "сэкономьте $savingsPercentage$%",
+      "placeholders": {
+         "savingsPercentage": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_premium_try_for_free": {
+      "description": "Try for free",
+      "message": "Попробовать бесплатно"
+   },
+   "purchases_price_unavailable": {
+      "description": "Label shown in place of a price when it is unavailable.",
+      "message": "Цена недоступна"
+   },
+   "purchases_pricing_unavailable_message": {
+      "description": "Message shown when the Premium pricing request was blocked or failed.",
+      "message": "Запрос цен Premium был заблокирован или завершился ошибкой. Это может произойти, если рабочая сеть, VPN, блокировщик рекламы, расширение конфиденциальности или брандмауэр блокируют Paddle."
+   },
+   "purchases_pricing_unavailable_title": {
+      "description": "Title shown when Premium pricing could not be loaded.",
+      "message": "Не удалось загрузить цены Premium"
+   },
+   "purchases_pricing_unavailable_troubleshooting_extensions": {
+      "description": "Troubleshooting step telling the user to disable VPN or privacy tools temporarily.",
+      "message": "Временно отключите VPN, блокировщик рекламы или расширения конфиденциальности и попробуйте снова."
+   },
+   "purchases_pricing_unavailable_troubleshooting_intro": {
+      "description": "Intro text for troubleshooting steps when pricing is unavailable.",
+      "message": "Что можно попробовать:"
+   },
+   "purchases_pricing_unavailable_troubleshooting_network": {
+      "description": "Troubleshooting step telling the user to try another network or browser profile.",
+      "message": "Попробуйте другую сеть или откройте расширение в другом профиле Chrome."
+   },
+   "purchases_pricing_unavailable_troubleshooting_workplace": {
+      "description": "Troubleshooting step telling the user workplace policy may be blocking Paddle.",
+      "message": "Если вы используете рабочее устройство, сетевые или браузерные политики могут блокировать Paddle."
+   },
+   "purchases_sign_in_here": {
+      "description": "Sign in here",
+      "message": "Войдите здесь"
+   },
+   "purchases_start_trial_cancel_anytime": {
+      "description": "Call to action to start a free trial.",
+      "message": "Начните 7-дневный бесплатный пробный период, чтобы продолжить. Отменить можно в любое время."
+   },
+   "purchases_try_premium_for_free": {
+      "description": "Try Premium for Free",
+      "message": "Попробовать Premium бесплатно"
+   },
+   "purchases_try_premium_pro_for_free": {
+      "description": "Try Premium Pro for Free",
+      "message": "Попробовать Premium Pro бесплатно"
+   },
+   "purchases_upgrade_premium_to_pro": {
+      "description": "To use this feature and access all Pro benefits, upgrade your plan.",
+      "message": "Чтобы использовать эту функцию и получить доступ ко всем преимуществам Pro, обновите свой план."
+   },
+   "purchases_upgrade_to_premium_pro": {
+      "description": "Upgrade to Premium Pro",
+      "message": "Обновить до Premium Pro"
+   },
+   "quality_text": {
+      "description": "Recording quality (10 = best)",
+      "message": "Качество записи (10 = лучшее)"
+   },
+   "rate_bad_rating_text": {
+      "description": "We are continuously trying our hardest to improve Chrome Capture, please share what needs improvement by emailing us at ",
+      "message": "Мы постоянно прилагаем все усилия для улучшения Chrome Capture. Пожалуйста, поделитесь тем, что нуждается в улучшении, написав нам на адрес:"
+   },
+   "rate_bad_title_text": {
+      "description": "😞 We are sorry!",
+      "message": "😞 Нам очень жаль!"
+   },
+   "rate_close_btn_text": {
+      "description": "Close",
+      "message": "Закрыть"
+   },
+   "rate_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "Подтвердить"
+   },
+   "rate_description_text": {
+      "description": "If you've found this extension useful please leave a rating or review. \n\nBy leaving a rating you can help us reach more users which will help fund continual improvements and keep general usage free.",
+      "message": "Если вы нашли это расширение полезным, пожалуйста, оставьте оценку или отзыв.\n\nОставив оценку, вы поможете нам охватить больше пользователей, что будет способствовать финансированию постоянных улучшений и позволит сохранить базовые функции бесплатными."
+   },
+   "rate_description_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "Мы очень ценим приобретение вами Премиум-версии и хотели бы получить от вас любую обратную связь, чтобы помочь нам улучшить продукт и охватить больше пользователей."
+   },
+   "rate_good_rating_text": {
+      "description": "Your reviews keep our small team motivated to make Chrome Capture even better!",
+      "message": "Ваши отзывы мотивируют нашу небольшую команду делать Chrome Capture еще лучше!"
+   },
+   "rate_good_rating_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "Мы очень ценим приобретение вами Премиум-версии и хотели бы получить от вас любую обратную связь, чтобы помочь нам улучшить продукт и охватить больше пользователей."
+   },
+   "rate_good_title_text": {
+      "description": "😍 Review in the web store?",
+      "message": "😍 Оставить отзыв в веб-магазине?"
+   },
+   "rate_maybe_later_btn_text": {
+      "description": "Maybe later",
+      "message": "Может быть, позже"
+   },
+   "rate_no_btn_text": {
+      "description": "No thanks",
+      "message": "Нет, спасибо"
+   },
+   "rate_send_email_btn_text": {
+      "description": "Send Email",
+      "message": "Отправить письмо"
+   },
+   "rate_thank_you_title_text": {
+      "description": "Thank you! 😍",
+      "message": "Спасибо! 😍"
+   },
+   "rate_title_text": {
+      "description": "How are we doing?",
+      "message": "Как вам наша работа?"
+   },
+   "rate_yes_btn_text": {
+      "description": "Ok, sure",
+      "message": "Да, конечно"
+   },
+   "recommended": {
+      "description": "recommended",
+      "message": "Рекомендуется"
+   },
+   "record_length_text": {
+      "description": "Max record length",
+      "message": "Макс. длительность записи"
+   },
+   "recordings_taken": {
+      "description": "Recordings taken:",
+      "message": "Сделано записей:"
+   },
+   "save_as_screenshot_text": {
+      "description": "Save screenshot as",
+      "message": "Сохранить скриншот как..."
+   },
+   "save_as_text": {
+      "description": "Save recording as",
+      "message": "Сохранить запись как..."
+   },
+   "screenshots_taken": {
+      "description": "Screenshots taken:",
+      "message": "Сделано скриншотов:"
+   },
+   "seconds_text": {
+      "description": "secs",
+      "message": "сек"
+   },
+   "shortcut": {
+      "description": "Shortcut:",
+      "message": "Горячая клавиша:"
+   },
+   "show_click_indicator_text": {
+      "description": "Show click animation",
+      "message": "Показывать анимацию клика"
+   },
+   "show_click_indicator_tooltip_text": {
+      "description": "This option draws a circle animation around the click location.",
+      "message": "Эта опция рисует круговую анимацию вокруг места клика."
+   },
+   "show_cursor_text": {
+      "description": "Show dot at cursor location",
+      "message": "Показывать точку в месте курсора"
+   },
+   "show_cursor_tooltip_text": {
+      "description": "This option draws a small circle to indicate where the mouse is located.",
+      "message": "Эта опция рисует небольшой круг, чтобы указать, где находится курсор."
+   },
+   "sign_in": {
+      "description": "Sign In",
+      "message": "Войти"
+   },
+   "sign_out": {
+      "description": "Sign Out",
+      "message": "Выйти"
+   },
+   "subscription_past_due_warning": {
+      "description": "Warning message shown when a user subscription payment has failed or is past its due date.",
+      "message": "Платеж по подписке просрочен. Нажмите здесь, чтобы обновить платежную информацию."
+   },
+   "subscription_premium_plan_description": {
+      "description": "Go beyond basics: HD quality & limits unlocked. Craft pro content with enhanced features.",
+      "message": "Выйдите за рамки основ: качество HD и разблокированные лимиты. Создавайте профессиональный контент с расширенными функциями."
+   },
+   "subscription_premium_pro_plan_description": {
+      "description": "Experience peak performance: 4K+ and all features. Full editing suite with early access.",
+      "message": "Оцените максимальную производительность: 4K+ и все функции. Полный набор для редактирования с ранним доступом."
+   },
+   "subscription_status_active": {
+      "description": "Active",
+      "message": "Активен"
+   },
+   "subscription_status_ending_soon": {
+      "description": "Ending Soon",
+      "message": "Скоро заканчивается"
+   },
+   "subscription_status_expired": {
+      "description": "Expired",
+      "message": "Истек срок"
+   },
+   "subscription_status_past_due": {
+      "description": "Past Due",
+      "message": "Просрочено"
+   },
+   "subscription_status_paused": {
+      "description": "Paused",
+      "message": "Приостановлено"
+   },
+   "subscription_status_unknown": {
+      "description": "Unknown",
+      "message": "Неизвестно"
+   },
+   "unable_to_capture_website_alert": {
+      "description": "Unable to capture this website. Please use full screen/application capture or try capture another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "Невозможно сделать снимок этого сайта. Пожалуйста, используйте запись всего экрана/приложения или попробуйте сделать снимок другого сайта.\n\n(╯°□°）╯︵ ┻━┻"
+   },
+   "view_permission": {
+      "description": "View permission.",
+      "message": "Просмотреть разрешение."
+   },
+   "width_text": {
+      "description": "Height (px)",
+      "message": "Ширина (пикс.)"
+   }
+}

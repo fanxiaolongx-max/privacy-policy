@@ -1,0 +1,1691 @@
+{
+   "account_modal_free_plan": {
+      "description": "You are on the free plan",
+      "message": "Ste na brezplačnem načrtu"
+   },
+   "account_modal_manage_subscription_button": {
+      "description": "Manage Subscription",
+      "message": "Upravljaj naročnino"
+   },
+   "account_modal_not_signed_in": {
+      "description": "You are not signed in",
+      "message": "Niste prijavljeni"
+   },
+   "account_modal_premium_plan": {
+      "description": "You are on the premium plan",
+      "message": "Ste na načrtu premium"
+   },
+   "account_modal_premium_pro_plan": {
+      "description": "You are on the Premium Pro plan",
+      "message": "Ste na načrtu Premium Pro"
+   },
+   "account_modal_request_feature_button": {
+      "description": "Request Feature",
+      "message": "Zahtevaj funkcijo"
+   },
+   "account_modal_request_support_button": {
+      "description": "Request Support",
+      "message": "Zahtevaj podporo"
+   },
+   "account_modal_stats_heading": {
+      "description": "Your stats:",
+      "message": "Vaša statistika:"
+   },
+   "alert_text": {
+      "description": "Unable to run selected area capture on this website. Please use full screen recording or try another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "Na tej spletni strani ni mogoče zagnati izbranega območja. Prosimo, uporabite celoten posnetek zaslona ali poskusite drugo spletno stran. \n\n (° ° ° °) ╯( ┻━┻"
+   },
+   "click_indicator_size_color_text": {
+      "description": "Click animation size & color",
+      "message": "Kliknite Animacija Velikost & Color"
+   },
+   "close_btn_text": {
+      "description": "Close",
+      "message": "Zapri"
+   },
+   "confirm_dialog_cancel_btn_text": {
+      "description": "Cancel",
+      "message": "Odpovedati"
+   },
+   "confirm_dialog_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "Potrdite"
+   },
+   "confirm_fps_update_text": {
+      "description": "Changing the fps will remove all frame specific edits such as edited or deleted frames. Do you want to continue?",
+      "message": "Spreminjanje FPS bo odstranilo vse slike, ki so določene v sliki, kot so urejeni ali izbrisani okviri. Ali želite nadaljevati?"
+   },
+   "copy_text": {
+      "description": "Copy to clipboard",
+      "message": "Kopirati v odložišče"
+   },
+   "cursor_size_and_color_text": {
+      "description": "Cursor dot size & color",
+      "message": "Cursor Dot Velikost & Color"
+   },
+   "dither_text": {
+      "description": "Apply dither",
+      "message": "Uporabite dit"
+   },
+   "download_filename_text": {
+      "description": "Download filename format",
+      "message": "Prenesite Format datoteke"
+   },
+   "download_text": {
+      "description": "Download",
+      "message": "Prenesi"
+   },
+   "draw_size_and_color_text": {
+      "description": "Drawing size & color",
+      "message": "Velikost risbe in barve"
+   },
+   "duration": {
+      "description": "Label for a field indicating a length of time.",
+      "message": "Trajanje"
+   },
+   "editor_action_add_icon": {
+      "description": "Add icon",
+      "message": "Dodaj ikono"
+   },
+   "editor_action_add_text": {
+      "description": "Add text",
+      "message": "Dodaj besedilo"
+   },
+   "editor_action_blur_rectangle": {
+      "description": "Blur area",
+      "message": "Zamegli območje"
+   },
+   "editor_action_copy": {
+      "description": "Copy to clipboard",
+      "message": "Kopirati v odložišče"
+   },
+   "editor_action_crop": {
+      "description": "Crop",
+      "message": "Crop."
+   },
+   "editor_action_draw_arrow": {
+      "description": "Draw arrow",
+      "message": "Draw arrow."
+   },
+   "editor_action_draw_ellipse": {
+      "description": "Draw ellipse",
+      "message": "Narišite ellipse."
+   },
+   "editor_action_draw_line": {
+      "description": "Draw line",
+      "message": "Narišite vrstico"
+   },
+   "editor_action_draw_rectangle": {
+      "description": "Draw rectangle",
+      "message": "Narišite pravokotnik"
+   },
+   "editor_action_free_draw": {
+      "description": "Free draw",
+      "message": "Brezplačno Draw."
+   },
+   "editor_action_highlight": {
+      "description": "Highlight",
+      "message": "Highlight."
+   },
+   "editor_action_numbered_step": {
+      "description": "Action label for adding a numbered step annotation.",
+      "message": "Oštevilčen korak"
+   },
+   "editor_action_pan": {
+      "description": "Pan",
+      "message": "Premakni"
+   },
+   "editor_action_profile_account": {
+      "description": "Account",
+      "message": "Račun"
+   },
+   "editor_action_redo": {
+      "description": "Redo",
+      "message": "Redo."
+   },
+   "editor_action_save": {
+      "description": "Save",
+      "message": "Shrani"
+   },
+   "editor_action_select": {
+      "description": "Select, move, resize",
+      "message": "Izberite, Premakni, spremeni velikost"
+   },
+   "editor_action_settings": {
+      "description": "Settings",
+      "message": "Nastavitve"
+   },
+   "editor_action_undo": {
+      "description": "Undo",
+      "message": "UNDO."
+   },
+   "editor_action_undo_all": {
+      "description": "Undo all",
+      "message": "Undo vse"
+   },
+   "editor_add_text_default": {
+      "description": "start typing...",
+      "message": "Začnite tipkanje ..."
+   },
+   "editor_browse_file_system": {
+      "description": "Browse file system",
+      "message": "Prebrskajte datotečni sistem"
+   },
+   "editor_drag_and_drop": {
+      "description": "Drag and drop image/GIF or ",
+      "message": "Povlecite in spustite sliko / GIF ali"
+   },
+   "editor_file_downloaded": {
+      "description": "File saved to downloads folder.",
+      "message": "Datoteka shranjena v mapo za prenos."
+   },
+   "editor_file_downloaded_selected_location": {
+      "description": "File saved to selected location.",
+      "message": "Datoteka shranjena na izbrano lokacijo."
+   },
+   "editor_frame_selector_apply_edits": {
+      "description": "Apply edits to selected",
+      "message": "Uporabite urejene urejene"
+   },
+   "editor_frame_selector_delete": {
+      "description": "Delete",
+      "message": "Izbrisati"
+   },
+   "editor_frame_selector_delete_every_second": {
+      "description": "Delete every second frame",
+      "message": "Izbrišite vsak drugi okvir"
+   },
+   "editor_frame_selector_delete_selected": {
+      "description": "Delete selected",
+      "message": "Izbriši izbrano"
+   },
+   "editor_frame_selector_remove_edits": {
+      "description": "Remove edits from selected",
+      "message": "Odstranite urejene urejene"
+   },
+   "editor_frame_selector_restore": {
+      "description": "Restore",
+      "message": "Obnoviti"
+   },
+   "editor_frame_selector_restore_all": {
+      "description": "Restore All",
+      "message": "Obnovi vse"
+   },
+   "editor_frame_selector_restore_selected": {
+      "description": "Restore selected",
+      "message": "Obnovite izbrano"
+   },
+   "editor_frame_selector_select_next": {
+      "description": "Select next frames",
+      "message": "Izberite naslednje slike"
+   },
+   "editor_frame_selector_select_previous": {
+      "description": "Select previous frames",
+      "message": "Izberite prejšnje slike"
+   },
+   "editor_frame_selector_unselect_all": {
+      "description": "Unselect All",
+      "message": "Neizberi vse"
+   },
+   "editor_image_copied": {
+      "description": "Image copied to clipboard.",
+      "message": "Slika kopirana v odložišče."
+   },
+   "editor_image_copied_failed": {
+      "description": "Failed to copy image to clipboard, it may be too large.",
+      "message": "Slika ni uspela kopirati v odložišče, je lahko prevelika."
+   },
+   "editor_link_copied": {
+      "description": "Link copied to clipboard.",
+      "message": "Povezava, kopirana z odložiščem."
+   },
+   "editor_max_time_reached_dialog_description1": {
+      "description": "You have reached the max recording length time of $maxlength$ seconds for GIFs. Premium users can update this from the settings page.",
+      "message": "Dosegli ste največji čas snemanja $maxlength$ sekunde za GIF. Premium uporabniki lahko to posodobijo na strani z nastavitvami.",
+      "placeholders": {
+         "maxlength": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_max_time_reached_dialog_description2": {
+      "description": "GIFs are intended for short recordings. If you require full length videos we recommend our free screen recorder: ",
+      "message": "GIF -ji so namenjeni kratkim posnetkom. Če potrebujete videoposnetke v celotni dolžini, priporočamo naš brezplačni snemalnik zaslona:"
+   },
+   "editor_max_time_reached_dialog_description3": {
+      "description": "Premium users can update this from the settings page.",
+      "message": "Premium uporabniki lahko to posodobijo na strani z nastavitvami."
+   },
+   "editor_max_time_reached_dialog_settings_button": {
+      "description": "Open settings",
+      "message": "Odprite nastavitve"
+   },
+   "editor_max_time_reached_dialog_title": {
+      "description": "Recording suddenly stopped?",
+      "message": "Snemanje se je nenadoma ustavilo?"
+   },
+   "editor_premium_options_color": {
+      "description": "Color",
+      "message": "Barva"
+   },
+   "editor_premium_options_draw_size": {
+      "description": "Draw Size",
+      "message": "Velikost risanja"
+   },
+   "editor_premium_options_font": {
+      "description": "Font",
+      "message": "Font."
+   },
+   "editor_premium_options_playback_speed": {
+      "description": "Playback Speed",
+      "message": "Hitrost predvajanja"
+   },
+   "editor_premium_options_special_effect": {
+      "description": "Special Effect",
+      "message": "Poseben učinek"
+   },
+   "editor_premium_options_title": {
+      "description": "Premium Options",
+      "message": "Možnosti premija"
+   },
+   "editor_save_dialog_advanced_encoding_options": {
+      "description": "Title for a section containing advanced, technical options for encoding a file.",
+      "message": "Napredne možnosti kodiranja"
+   },
+   "editor_save_dialog_alert_title": {
+      "description": "Warning",
+      "message": "Opozorilo"
+   },
+   "editor_save_dialog_aspect_ratio": {
+      "description": "lock aspect ratio",
+      "message": "Razmerje ključavnice"
+   },
+   "editor_save_dialog_cancel": {
+      "description": "Cancel",
+      "message": "Prekliči"
+   },
+   "editor_save_dialog_chip_animated_image": {
+      "description": "Chip label indicating an animated image format (e.g. GIF, AVIF).",
+      "message": "animirana slika"
+   },
+   "editor_save_dialog_chip_large_file": {
+      "description": "Chip label indicating the format produces a large file size.",
+      "message": "velika datoteka"
+   },
+   "editor_save_dialog_chip_limited_support": {
+      "description": "Chip label indicating the format has limited browser/app support.",
+      "message": "omejena podpora"
+   },
+   "editor_save_dialog_chip_small_file": {
+      "description": "Chip label indicating the format produces a small file size.",
+      "message": "majhna datoteka"
+   },
+   "editor_save_dialog_chip_video": {
+      "description": "Chip label indicating a video format (e.g. WebM, MP4).",
+      "message": "video"
+   },
+   "editor_save_dialog_chip_widely_supported": {
+      "description": "Chip label indicating the format is widely supported.",
+      "message": "široko podprto"
+   },
+   "editor_save_dialog_compress": {
+      "description": "Compress & optimize GIF",
+      "message": "Stiskanje in optimizacija gif"
+   },
+   "editor_save_dialog_compress_tooltip": {
+      "description": "Apply GIF compression algorthm to greatly reduce GIF file size and in some cases improve quality. Highly recommeded.",
+      "message": "Uporabite algorthm za stiskanje GIF, da močno zmanjšate velikost datoteke GIF in v nekaterih primerih izboljšajo kakovost. Toplo priporočljivo."
+   },
+   "editor_save_dialog_dither_tooltip": {
+      "description": "Apply dither algorithm to frames. Try toggling this option if you experience color quality issues.",
+      "message": "Uporabite algoritem ditherja na slike. Poskusite preklopiti to možnost, če imate težave s kakovostjo barve."
+   },
+   "editor_save_dialog_download_raw_recording": {
+      "description": "Download raw recording",
+      "message": "Prenesite surovo snemanje"
+   },
+   "editor_save_dialog_estimated_size": {
+      "description": "Estimated GIF Size: ",
+      "message": "Ocenjena velikost GIF:"
+   },
+   "editor_save_dialog_export_sound": {
+      "description": "Include sound (beta)",
+      "message": "Vključi zvok (beta)"
+   },
+   "editor_save_dialog_export_sound_tooltip": {
+      "description": "Enable this option to include sound in the video.",
+      "message": "Omogočite to možnost, da v videoposnetek vključi zvok."
+   },
+   "editor_save_dialog_frames": {
+      "description": "Frames: ",
+      "message": "Slike:"
+   },
+   "editor_save_dialog_frames_alert": {
+      "description": "There are currently selected frames, saving will only output these selected frames - ",
+      "message": "Trenutno obstajajo izbrane slike, shranjevanje bo samo te izbrane okvirje -"
+   },
+   "editor_save_dialog_frames_alert_button": {
+      "description": "Click here to unselect all frames",
+      "message": "Kliknite tukaj, da ne razberete vseh slik"
+   },
+   "editor_save_dialog_frames_alert_title": {
+      "description": "Playback Speed",
+      "message": "Hitrost predvajanja"
+   },
+   "editor_save_dialog_frames_processing": {
+      "description": "Processing Frames: ",
+      "message": "Obdelava slik:"
+   },
+   "editor_save_dialog_height_helper": {
+      "description": "Recorded height is ",
+      "message": "Zabeležena višina je"
+   },
+   "editor_save_dialog_lossy_compression": {
+      "description": "Label for a setting that controls the level of lossy compression, from 0 to 100 percent.",
+      "message": "Izguba stiskanja (0 - 100%)"
+   },
+   "editor_save_dialog_number_min_max_validation": {
+      "description": "A value between $minSize$ and $maxSize$ is required.",
+      "message": "Zahteva se vrednost med $minSize$ in $maxSize$.",
+      "placeholders": {
+         "maxSize": {
+            "content": "$2"
+         },
+         "minSize": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_save_dialog_processing_alert": {
+      "description": "Processing this recording will require a lot of memory and processing power. Unless you have a high spec PC it is recommended to do one or more of the following:",
+      "message": "Obdelava tega posnetka bo zahtevala veliko pomnilnika in obdelave. Razen če imate visok specifikacijski računalnik, je priporočljivo narediti eno ali več od naslednjih možnosti:"
+   },
+   "editor_save_dialog_processing_alert_memory": {
+      "description": "Please note if the resulting GIF is blank then you ran out of memory.",
+      "message": "Prosimo, upoštevajte, če je nastalo gif prazen, potem ste zmanjkali pomnilnika."
+   },
+   "editor_save_dialog_processing_alert_point_1": {
+      "description": "Compress and optimize GIF",
+      "message": "Stiskanje in optimizacijo gif"
+   },
+   "editor_save_dialog_processing_alert_point_2": {
+      "description": "Reduce the width & height",
+      "message": "Zmanjšajte širino in višino"
+   },
+   "editor_save_dialog_processing_alert_point_3": {
+      "description": "Reduce FPS or delete frames",
+      "message": "Zmanjšajte FPS ali izbrišite slike"
+   },
+   "editor_save_dialog_purchase_dialog_compression_description": {
+      "description": "Free users are limited to 3 high quality GIF compressions per day. Upgrade to Premium to have no restrictions.",
+      "message": "Brezplačni uporabniki so omejeni na 3 visokokakovostne GIF kompresije na dan. Nadgradite na premijo, da nimajo omejitev."
+   },
+   "editor_save_dialog_quantization_algorithm": {
+      "description": "Label for a dropdown to select a quantization algorithm.",
+      "message": "Algoritem kvantizacije"
+   },
+   "editor_save_dialog_quantization_algorithm_new_alpha": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Alpha.",
+      "message": "Novo (Alpha)"
+   },
+   "editor_save_dialog_quantization_algorithm_new_beta": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Beta.",
+      "message": "Novo (Beta)"
+   },
+   "editor_save_dialog_quantization_algorithm_old": {
+      "description": "An option for the quantization algorithm setting, indicating an older version.",
+      "message": "Staro"
+   },
+   "editor_save_dialog_recording_quality_alert": {
+      "description": "GIF quality is limited for non premium users. To output high quality recordings you can do one of the following:",
+      "message": "Kakovost GIF je za uporabnike, ki niso premium, omejena. Če želite izdati visoko kakovostne posnetke, lahko naredite eno od naslednjih:"
+   },
+   "editor_save_dialog_recording_quality_alert_option_1": {
+      "description": "Purchase premium",
+      "message": "Nakup premije"
+   },
+   "editor_save_dialog_recording_quality_alert_option_2": {
+      "description": "Save as a WebM file",
+      "message": "Shrani kot datoteka spletnega"
+   },
+   "editor_save_dialog_reduce_width": {
+      "description": "Reduce width & height",
+      "message": "Zmanjšajte širino in višino"
+   },
+   "editor_save_dialog_reduce_width_tooltip": {
+      "description": "Reduce GIF width and height/quality to improve processing time and produce a smaller file.",
+      "message": "Zmanjšajte širino GIF in višino/kakovost, da izboljšate čas obdelave in ustvarite manjšo datoteko."
+   },
+   "editor_save_dialog_save": {
+      "description": "Save",
+      "message": "Shrani"
+   },
+   "editor_save_dialog_save_by": {
+      "description": "Save by",
+      "message": "Shrani s"
+   },
+   "editor_save_dialog_save_by_download": {
+      "description": "Download file",
+      "message": "Prenos datoteke"
+   },
+   "editor_save_dialog_save_by_google_drive": {
+      "description": "Upload to Google Drive & copy link",
+      "message": "Naložite na povezavo Google Drive & Copy"
+   },
+   "editor_save_dialog_save_location": {
+      "description": "Save location",
+      "message": "Shrani lokacijo"
+   },
+   "editor_save_dialog_save_location_downloads": {
+      "description": "Downloads folder",
+      "message": "Prenosi mapa"
+   },
+   "editor_save_dialog_save_location_downloads_subfolder": {
+      "description": "Downloads subfolder",
+      "message": "Prenosi podmapo"
+   },
+   "editor_save_dialog_save_location_select": {
+      "description": "Manually select location",
+      "message": "Ročno izberite lokacijo"
+   },
+   "editor_save_dialog_title": {
+      "description": "Save",
+      "message": "Shrani"
+   },
+   "editor_save_dialog_title_processing": {
+      "description": "Processing...",
+      "message": "Obravnavati..."
+   },
+   "editor_save_dialog_title_uploading": {
+      "description": "Uploading...",
+      "message": "Nalaganje ..."
+   },
+   "editor_save_dialog_width_helper": {
+      "description": "Recorded width is ",
+      "message": "Zabeležena širina je"
+   },
+   "editor_text": {
+      "description": "Open in editor",
+      "message": "Odpri v urejevalniku"
+   },
+   "editor_tip_delete_items": {
+      "description": "Pro tip: Delete added items by selecting the item and pressing the delete key.",
+      "message": "PRO Nasvet: Izbrišite dodane elemente tako, da izberete element in pritisnete tipko DELETE."
+   },
+   "editor_tip_edit_specific_frames": {
+      "description": "Pro tip: You can edit specific frames by using the 'Apply edits to selected option'",
+      "message": "Nasvet za profesionalce: Določene slike lahko uredite s pomočjo \"Uporabi EDITS na izbrano možnost\""
+   },
+   "editor_tip_scroll": {
+      "description": "Pro tip: Scroll when hovering the screenshot/recording to zoom.",
+      "message": "PRO Nasvet: Pomaknite se, ko lebdite posnetek zaslona / snemanje v Zoom."
+   },
+   "editor_tip_shift_multiple_items": {
+      "description": "Pro tip: When using the selecting tool hold down shift to select more than one item.",
+      "message": "PRO Nasvet: Ko uporabljate orodje za izbiro, držite tipko Shift, da izberete več kot en element."
+   },
+   "editor_tip_update_multiple_items": {
+      "description": "Pro tip: You can scale, rotate, move and delete multiple items at once.",
+      "message": "PRO Nasvet: Lahko se meriš, zavrtite, premaknete in izbrišete več elementov naenkrat."
+   },
+   "editor_tip_update_text": {
+      "description": "Pro tip: Double click on text to edit it.",
+      "message": "PRO Nasvet: Dvokliknite na besedilo, da ga uredite."
+   },
+   "editor_upload_dialog_alert_copy_failed_message": {
+      "description": "This may have occurred due to the window not being focused.",
+      "message": "To se je lahko zgodilo, ker okno ni osredotočeno."
+   },
+   "editor_upload_dialog_alert_copy_failed_title": {
+      "description": "Copy to clipboard failed",
+      "message": "Kopiraj v odložišče ni uspelo"
+   },
+   "editor_upload_dialog_alert_copy_success_title": {
+      "description": "Copied to clipboard",
+      "message": "Kopirano v odložišče"
+   },
+   "editor_upload_dialog_alert_upload_failed": {
+      "description": "Upload Failed",
+      "message": "Nalaganje ni uspelo"
+   },
+   "editor_upload_dialog_alert_upload_failed_link": {
+      "description": "Try again.",
+      "message": "Poskusi ponovno."
+   },
+   "editor_upload_dialog_alert_upload_failed_message": {
+      "description": "Please make sure you are connected to the internet and have accepted Google Drive permissions.",
+      "message": "Prepričajte se, da ste povezani z internetom in ste sprejeli dovoljenja za Google Drive."
+   },
+   "editor_upload_dialog_cancel_and_download": {
+      "description": "Cancel and download file",
+      "message": "Prekliči in prenos datoteke"
+   },
+   "editor_upload_dialog_close": {
+      "description": "Close",
+      "message": "Blizu"
+   },
+   "editor_upload_dialog_copy_link": {
+      "description": "Copy link",
+      "message": "Kopirajte povezavo"
+   },
+   "editor_upload_dialog_link_public": {
+      "description": "Allow anyone with the link to view.",
+      "message": "Dovolite vsem, ki imajo povezavo ogled."
+   },
+   "editor_zoom_crop_animation_animated": {
+      "description": "Sub-label indicating an animation type is animated.",
+      "message": "Animirano"
+   },
+   "editor_zoom_crop_animation_crop": {
+      "description": "Animation type option for static cropping without animation.",
+      "message": "Obreži"
+   },
+   "editor_zoom_crop_animation_static": {
+      "description": "Sub-label indicating an animation type is static (no animation).",
+      "message": "Statično"
+   },
+   "editor_zoom_crop_animation_type": {
+      "description": "Label for the animation type selection section.",
+      "message": "Vrsta Animacije"
+   },
+   "editor_zoom_crop_animation_zoom_in": {
+      "description": "Animation type option for zooming in on the selected area.",
+      "message": "Povečaj"
+   },
+   "editor_zoom_crop_animation_zoom_out": {
+      "description": "Animation type option for zooming out from the selected area.",
+      "message": "Pomanjšaj"
+   },
+   "editor_zoom_crop_apply": {
+      "description": "Apply button in zoom/crop dialog.",
+      "message": "Uporabi"
+   },
+   "editor_zoom_crop_cancel": {
+      "description": "Cancel button in zoom/crop dialog.",
+      "message": "Prekliči"
+   },
+   "editor_zoom_crop_change_area": {
+      "description": "Tooltip text for button to change the selected crop area.",
+      "message": "Spremeni Območje"
+   },
+   "editor_zoom_crop_dialog_title": {
+      "description": "Title for the zoom and crop dialog in the editor.",
+      "message": "Povečava in Obrezovanje"
+   },
+   "editor_zoom_crop_draw_instruction": {
+      "description": "Instruction text for the user to draw a crop area on the frame preview.",
+      "message": "Nariši Izbor na Sličico"
+   },
+   "editor_zoom_crop_frame_end": {
+      "description": "Label for the end frame number.",
+      "message": "Konec"
+   },
+   "editor_zoom_crop_frame_range": {
+      "description": "Label for the frame range selection section.",
+      "message": "Razpon Sličic"
+   },
+   "editor_zoom_crop_frame_start": {
+      "description": "Label for the start frame number.",
+      "message": "Začetek"
+   },
+   "editor_zoom_crop_frames_menu": {
+      "description": "Menu item label for zoom/crop frames feature.",
+      "message": "Povečava/Obrezovanje Sličic"
+   },
+   "editor_zoom_crop_no_area_selected": {
+      "description": "Message displayed when no crop area has been selected.",
+      "message": "Ni Izbranega Območja"
+   },
+   "editor_zoom_crop_select_area": {
+      "description": "Button text to select a crop area on the frame.",
+      "message": "Izberi Območje"
+   },
+   "editor_zoom_crop_smooth_animation": {
+      "description": "Checkbox label for smoothing animation by interpolating frames.",
+      "message": "Gladka Animacija z Dodajanjem Sličic"
+   },
+   "editor_zoom_crop_transition": {
+      "description": "Label for the transition duration section (number of frames for animation).",
+      "message": "Prehod"
+   },
+   "enable_drawing_text": {
+      "description": "Enable drawing",
+      "message": "Omogoči risanje"
+   },
+   "enable_drawing_tooltip_text": {
+      "description": "This option allows users to draw in the selected area while holding down the ctrl key.",
+      "message": "Ta možnost uporabnikom omogoča navijanje na izbranem območju, medtem ko držijo tipko CTRL."
+   },
+   "extension_description": {
+      "description": "Take screenshots & record GIFs instantly! Edit & share seamlessly. Your all-in-one screenshot and screen recording solution.",
+      "message": "Takoj posnamete posnetke zaslona in zapišite GIF! Uredite in delite brezhibno. Vaš posnetek zaslona in posnetek zaslona v celoti."
+   },
+   "extension_name": {
+      "description": "Chrome Capture - screenshot & GIF",
+      "message": "Chrome Capture - posnetek zaslona in gif"
+   },
+   "extension_short_name": {
+      "description": "Chrome Capture",
+      "message": "Chrome Capture."
+   },
+   "file_access_text": {
+      "description": "After screenshot action",
+      "message": "Dejanje po posnetku zaslona"
+   },
+   "filename_text": {
+      "description": "Filename",
+      "message": "Ime datoteke"
+   },
+   "frames_per_sec_short_text": {
+      "description": "FPS",
+      "message": "Fps"
+   },
+   "frames_per_sec_text": {
+      "description": "Frames per second (fps)",
+      "message": "Slike na sekundo (fps)"
+   },
+   "frames_text": {
+      "description": "frames",
+      "message": "slike"
+   },
+   "free_settings_text": {
+      "description": "Free Settings",
+      "message": "Brezplačne nastavitve"
+   },
+   "fullscreen_info_modal_cancel": {
+      "description": "Cancel",
+      "message": "Prekliči"
+   },
+   "fullscreen_info_modal_continue": {
+      "description": "Are you sure you want to continue with full screen capture?",
+      "message": "Ste prepričani, da želite nadaljevati s celotnim zaslonom?"
+   },
+   "fullscreen_info_modal_do_not_show": {
+      "description": "Do not show this again",
+      "message": "Ne kaži več tega"
+   },
+   "fullscreen_info_modal_message": {
+      "description": "You have used a Chrome Capture shortcut without the cropping tool, this will capture in full screen mode.",
+      "message": "Uporabili ste bližnjico Chrome Capture brez orodja za obrezovanje, to bo zajemalo v celozaslonskem načinu."
+   },
+   "fullscreen_info_modal_open_cropping": {
+      "description": "Open cropping tool",
+      "message": "Open Croaping Tool."
+   },
+   "fullscreen_info_modal_shortcut_cropping_tool": {
+      "description": "Alt + C: Open/close Chrome Capture cropping tool",
+      "message": "ALT + C: ODPRTO / ZAPRTO KROME CROMPURE TOOL"
+   },
+   "fullscreen_info_modal_shortcut_fullpage_screenshot": {
+      "description": "Alt + Shift + S: Full webpage screenshot (beta)",
+      "message": "ALT + SHIFT + S: Polna spletna stran Screenshot (beta)"
+   },
+   "fullscreen_info_modal_shortcut_linkt": {
+      "description": "You can configure these here: ",
+      "message": "Tega lahko konfigurirate tukaj:"
+   },
+   "fullscreen_info_modal_shortcut_recording": {
+      "description": "Alt + R: Start/stop recording",
+      "message": "ALT + R: START / STOP Snemanje"
+   },
+   "fullscreen_info_modal_shortcut_screenshot": {
+      "description": "Alt + S: Visible area screenshot",
+      "message": "ALT + S: Vidno območje Screenshot"
+   },
+   "fullscreen_info_modal_shortcuts": {
+      "description": "Default shortcuts are: ",
+      "message": "Privzete bližnjice so:"
+   },
+   "fullscreen_info_modal_start": {
+      "description": "Start full screen capture",
+      "message": "Zaženite celoten zaslon zajemanje"
+   },
+   "fullscreen_info_modal_title": {
+      "description": "Full screen capture",
+      "message": "Celoten zaslon"
+   },
+   "general_not_available": {
+      "description": "N/A",
+      "message": "Ni na voljo"
+   },
+   "get_premium": {
+      "description": "Get Premium",
+      "message": "Dobite premium"
+   },
+   "height_text": {
+      "description": "Width (px)",
+      "message": "Širina (px)"
+   },
+   "hi": {
+      "description": "Hi",
+      "message": "Živjo"
+   },
+   "internet_connection_required": {
+      "description": "Internet connection is required to upgrade to premium.",
+      "message": "Internetna povezava je potrebna za nadgradnjo na premijo."
+   },
+   "manage_subscription_access_until_date": {
+      "description": "Your plan will not renew. You can access premium features until $date$.",
+      "message": "Vaš načrt se ne bo podaljšal. Do premium funkcij lahko dostopate do $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_cancel_button": {
+      "description": "Cancel subscription",
+      "message": "Prekliči naročnino"
+   },
+   "manage_subscription_cancel_confirm_cancel_button": {
+      "description": "Keep Premium",
+      "message": "Obdrži Premium"
+   },
+   "manage_subscription_cancel_confirm_confirm_button": {
+      "description": "Continue to cancel",
+      "message": "Nadaljuj s preklicem"
+   },
+   "manage_subscription_cancel_confirm_description": {
+      "description": "You will lose access to Premium features and Premium options will be reset.",
+      "message": "Izgubili boste dostop do funkcij Premium in možnosti Premium bodo ponastavljene."
+   },
+   "manage_subscription_cancel_confirm_title": {
+      "description": "Are you sure you want to cancel your subscription?",
+      "message": "Ali ste prepričani, da želite preklicati naročnino?"
+   },
+   "manage_subscription_ended_on_date": {
+      "description": "Subscription ended on $date$.",
+      "message": "Naročnina se je končala $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_ends_on_date": {
+      "description": "Subscription ends on $date$.",
+      "message": "Naročnina se konča $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_next_payment_full": {
+      "description": "Next payment: $price$ on $date$",
+      "message": "Naslednje plačilo: $price$ na dan $date$",
+      "placeholders": {
+         "date": {
+            "content": "$2"
+         },
+         "price": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_paid_full": {
+      "description": "Paid: $billingCycle$",
+      "message": "Plačano: $billingCycle$",
+      "placeholders": {
+         "billingCycle": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_resubscribe_prompt": {
+      "description": " To use premium features again, please upgrade.",
+      "message": " Če želite ponovno uporabljati premium funkcije, prosimo, nadgradite."
+   },
+   "manage_subscription_update_payment_button": {
+      "description": "Update payment method",
+      "message": "Posodobi način plačila"
+   },
+   "max_recording_dimension_size_text": {
+      "description": "Max recording resolution/quality",
+      "message": "MAX Snemanje ločljivosti / kakovost"
+   },
+   "no_limit_text": {
+      "description": "No limit",
+      "message": "Ni omejitev"
+   },
+   "open_text": {
+      "description": "Open",
+      "message": "Odprto"
+   },
+   "options_default_action": {
+      "description": "Extension icon click action",
+      "message": "Dejanje ob kliku ikone razširitve"
+   },
+   "options_dimension_size_1000": {
+      "description": "1000 pixels",
+      "message": "1000 slikovnih pik"
+   },
+   "options_dimension_size_1080p": {
+      "description": "1920 pixels (1080p)",
+      "message": "1920 slikovnih pik (1080p)"
+   },
+   "options_dimension_size_480p": {
+      "description": "640 pixels (480p)",
+      "message": "640 slikovnih pik (480p)"
+   },
+   "options_dimension_size_4k": {
+      "description": "3840 pixels (4K)",
+      "message": "3840 slikovnih pik (4K)"
+   },
+   "options_dimension_size_720p": {
+      "description": "1280 pixels (720p)",
+      "message": "1280 slikovnih pik (720p)"
+   },
+   "options_embedded_options_permission_warning": {
+      "description": "Cursor highlighting, click effects, and drawing tools will only work until the page reloads or changes. To keep them active after reloads or redirects, you'll need to grant an extra permission.",
+      "message": "Označevanje kazalke, učinki klikov in orodja za risanje bodo delovali samo, dokler se stran ponovno ne naloži ali spremeni. Da ostanejo aktivni po ponovnem nalaganju ali preusmeritvah, boste morali podeliti dodatno dovoljenje."
+   },
+   "options_enable_notifications": {
+      "description": "Enable notifications",
+      "message": "Omogoči obvestila"
+   },
+   "options_enable_notifications_tooltip": {
+      "description": "Display notifications when full screen recording starts and processing recordings in the background.",
+      "message": "Obvestila prikažite, ko se snemanje na celotnem zaslonu začne in obdelate posnetke v ozadju."
+   },
+   "options_enable_subfolder_downloads": {
+      "description": "Download files into subfolder",
+      "message": "Prenesite datoteke v podmapo"
+   },
+   "options_enable_subfolder_downloads_tooltip": {
+      "description": "Download files into a subfolder of your choice inside the downloads folder. This option is useful for organising your captures.",
+      "message": "Prenesite datoteke v podmapo po vaši izbiri znotraj mape za prenos. Ta možnost je uporabna za organizacijo zajetja."
+   },
+   "options_how_to_use_btn": {
+      "description": "How to use",
+      "message": "Kako uporabiti"
+   },
+   "options_language": {
+      "description": "Language",
+      "message": "Jezik"
+   },
+   "options_open_containing_folder_on_save": {
+      "description": "Open containing folder after saving",
+      "message": "Odpri mapo po shranjevanju"
+   },
+   "options_open_popup": {
+      "description": "Open popup",
+      "message": "Odpri Popup."
+   },
+   "options_open_selected_area": {
+      "description": "Open selected area capture",
+      "message": "Odpri izbrano območje zajemanje"
+   },
+   "options_section_general": {
+      "description": "Title for the General settings section in the options page",
+      "message": "Splošne nastavitve"
+   },
+   "options_section_output": {
+      "description": "Title for the Output and Saving settings section in the options page",
+      "message": "Izhod in shranjevanje"
+   },
+   "options_section_recording": {
+      "description": "Title for the Recording settings section in the options page",
+      "message": "Nastavitve snemanja"
+   },
+   "options_section_visuals": {
+      "description": "Title for the Cursor and Interaction Visuals settings section in the options page",
+      "message": "Vizualni elementi kazalca in interakcije"
+   },
+   "options_shortcuts_btn": {
+      "description": "Shortcuts",
+      "message": "Bližnjice"
+   },
+   "options_subfolder_downloads_name": {
+      "description": "Subfolder name:",
+      "message": "Ime podmapa:"
+   },
+   "options_support_btn": {
+      "description": "Support",
+      "message": "Podpora"
+   },
+   "overlay_help_text": {
+      "description": "Click and drag to choose your selected area. \nRight click to snap to an element, hold shift for multiple.",
+      "message": "Kliknite in povlecite, da izberete izbrano območje. \n Z desnim klikom kliknite za snap na element, držite Shift za več."
+   },
+   "plan_billing_annually": {
+      "description": "Annually",
+      "message": "Letno"
+   },
+   "plan_billing_monthly": {
+      "description": "Monthly",
+      "message": "Mesečno"
+   },
+   "plan_name_custom": {
+      "description": "Custom Plan",
+      "message": "Načrt po meri"
+   },
+   "popup_capture_tab": {
+      "description": "Capture",
+      "message": "Capture."
+   },
+   "popup_desktop_screenshot_tooltip": {
+      "description": "Capture the entire screen, desktop, or any open application.",
+      "message": "Zajemajte celoten zaslon, namizje ali katero koli odprto aplikacijo."
+   },
+   "popup_editor_icon_tooltip": {
+      "description": "Open Editor",
+      "message": "Odpri urednik"
+   },
+   "popup_full_page_screenshot_tooltip": {
+      "description": "Capture the current tab full webpage, including content beyond the visible area.",
+      "message": "Zapišite trenutno celotno spletno stran zavihka, vključno z vsebino zunaj vidnega območja."
+   },
+   "popup_full_webpage": {
+      "description": "Full webpage",
+      "message": "Celotna spletna stran"
+   },
+   "popup_no_scripts_alert": {
+      "description": "Selected area and full webpage screenshots are not possible here. These features are available on other websites.",
+      "message": "Izbrane površine in celotne posnetke zaslona spletnih strani tukaj niso mogoči. Te funkcije so na voljo na drugih spletnih mestih."
+   },
+   "popup_record_tab": {
+      "description": "Record",
+      "message": "Record."
+   },
+   "popup_recording_limit_alert": {
+      "description": "Record up to $seconds$ seconds per GIF. Premium users can update this from the ",
+      "message": "Zapišite do $seconds$ sekunde na GIF. Premium uporabniki lahko to posodobijo iz",
+      "placeholders": {
+         "seconds": {
+            "content": "$1"
+         }
+      }
+   },
+   "popup_recording_limit_settings_link": {
+      "description": "settings page.",
+      "message": "Stran nastavitve."
+   },
+   "popup_screen_or_app": {
+      "description": "Full screen or app",
+      "message": "Celoten zaslon ali aplikacija"
+   },
+   "popup_selected_area": {
+      "description": "Selected area",
+      "message": "Izbrano območje"
+   },
+   "popup_selected_area_screenshot_tooltip": {
+      "description": "Capture a specific area of the current tab.",
+      "message": "Zajemite določeno območje trenutnega zavihka."
+   },
+   "popup_set_shortcut": {
+      "description": "set shortcut",
+      "message": "Set bližnjica"
+   },
+   "popup_settings_icon_tooltip": {
+      "description": "Open Settings",
+      "message": "Odprite nastavitve"
+   },
+   "popup_tab_screenshot_tooltip": {
+      "description": "Capture the visible part of the current tab.",
+      "message": "Zajemite vidni del trenutnega zavihkov."
+   },
+   "popup_this_tab": {
+      "description": "This tab",
+      "message": "Ta zavihek"
+   },
+   "popup_waiting_for_desktop_selection_alert": {
+      "description": "FULL SCREEN OR APP capture did not start because you did not select an option from the popup dialog. If you have multiple monitors it may have opened on another monitor.",
+      "message": "Celo zaslon ali zajem aplikacije se ni začel, ker v pogovornem oknu niste izbrali možnosti. Če imate več monitorjev, se je morda odprl na drugem monitorju."
+   },
+   "premium_settings_text": {
+      "description": "Premium Settings",
+      "message": "Nastavitve premije"
+   },
+   "purchase_btn_text": {
+      "description": "Get Premium!",
+      "message": "Pridobite premijo!"
+   },
+   "purchase_description_limited_time_text": {
+      "description": "Lock in this price now - limited time offer before we switch to subscriptions!",
+      "message": "Zagotovite si to ceno zdaj - omejena ponudba, preden preklopimo na naročnine!"
+   },
+   "purchase_description_text": {
+      "description": "Just one payment unlocks all premium features forever. No recurring fees!",
+      "message": "Eno plačilo za vedno odklene vse premium funkcije. Brez ponavljajočih se stroškov!"
+   },
+   "purchase_feature_30fps": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "svilnato gladko 30 FPS snemanje"
+   },
+   "purchase_feature_4K": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "kristalno čisto 4K snemanje"
+   },
+   "purchase_feature_alter_frame_rate": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "hitrosti sličic po meri"
+   },
+   "purchase_feature_alter_playback_speed": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "učinki počasnega posnetka in časovnega preskoka"
+   },
+   "purchase_feature_blur": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "orodje za zameglitev"
+   },
+   "purchase_feature_crop_recording": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "natančno obrezovanje GIF-ov"
+   },
+   "purchase_feature_default": {
+      "description": "Feature that goes in $feature$ placeholder. Default fallback.",
+      "message": "to funkcijo"
+   },
+   "purchase_feature_frame_edits": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "zmogljivo urejanje sličico za sličico"
+   },
+   "purchase_feature_highlight": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "orodje za poudarjanje"
+   },
+   "purchase_feature_no_duration_limit": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "neomejena dolžina snemanja"
+   },
+   "purchase_feature_special_effect": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "posebni učinki"
+   },
+   "purchase_feature_step_tool": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "orodje za korake"
+   },
+   "purchase_feature_svg": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "dodajanje ikon in logotipov po meri"
+   },
+   "purchase_feature_text_and_annotation_customization": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "popoln nadzor nad besedilom in opombami"
+   },
+   "purchase_feature_unlimited_gif_compression": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "neomejeno napredno stiskanje GIF"
+   },
+   "purchase_feature_update_end_time": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "prilagojen čas snemanja"
+   },
+   "purchase_login_dialog_closed_by_user_alert": {
+      "description": "Looks like you closed the sign in dialog, premium users must sign in so you don't lose premium access.",
+      "message": "Zdi se, da ste zaprli v pogovoru za prijavo, uporabniki premium se morajo prijaviti, da ne boste izgubili premijskega dostopa."
+   },
+   "purchase_login_dialog_google_button": {
+      "description": "Sign in with Google",
+      "message": "Prijavite se z Googlom"
+   },
+   "purchase_login_dialog_title": {
+      "description": "Sign in required",
+      "message": "Prijavite se"
+   },
+   "purchase_login_text": {
+      "description": "Sign in with Google to link your purchase to your account.",
+      "message": "Prijavite se z Googlom, da povežete nakup s svojim računom."
+   },
+   "purchase_login_text_window_opened": {
+      "description": "Sign into Google in the popup window.",
+      "message": "Prijavite se v Google v pojavnem oknu."
+   },
+   "purchase_subscription_title_text": {
+      "description": "Choose the plan that fits your needs.",
+      "message": "Izberite načrt, ki ustreza vašim potrebam."
+   },
+   "purchase_title_text": {
+      "description": "Get Lifetime Premium Access Today!",
+      "message": "Pridobite doživljenjski Premium dostop danes!"
+   },
+   "purchase_title_text_blocked_feature": {
+      "description": "That feature requires Premium",
+      "message": "Ta funkcija zahteva Premium"
+   },
+   "purchase_title_text_blocked_pro_feature": {
+      "description": "That feature requires Premium Pro",
+      "message": "Ta funkcija zahteva Premium Pro"
+   },
+   "purchase_title_text_blocked_pro_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium Pro paywall.",
+      "message": "Odklenite $feature$ s Premium Pro",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchase_title_text_blocked_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium paywall.",
+      "message": "Odklenite $feature$ s Premium",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_already_premium_user": {
+      "description": "Already a premium user?",
+      "message": "Že uporabnik Premium?"
+   },
+   "purchases_bill_me": {
+      "description": "Bill me:",
+      "message": "Zaračunaj mi:"
+   },
+   "purchases_checkout_unavailable_message": {
+      "description": "Message shown when checkout could not be started.",
+      "message": "Trenutno ni bilo mogoče začeti postopka nadgradnje. Poskusite znova."
+   },
+   "purchases_compare_12_fps": {
+      "description": "12FPS",
+      "message": "12 sličic/s"
+   },
+   "purchases_compare_3_per_day": {
+      "description": "3 per day",
+      "message": "3 na dan"
+   },
+   "purchases_compare_add_custom_shape_tool": {
+      "description": "Add custom shape/icon tool",
+      "message": "Orodje za dodajanje oblike/ikone po meri"
+   },
+   "purchases_compare_benefits": {
+      "description": "Benefits",
+      "message": "Koristi"
+   },
+   "purchases_compare_blur_tool": {
+      "description": "Blur tool",
+      "message": "Orodje za zameglitev"
+   },
+   "purchases_compare_close_button_label": {
+      "description": "Close",
+      "message": "Zapri"
+   },
+   "purchases_compare_compression": {
+      "description": "High quality GIF compression",
+      "message": "Visoka kakovost GIF stiskanje"
+   },
+   "purchases_compare_core_capture_features": {
+      "description": "Core Capture Features",
+      "message": "Osnovne funkcije zajema"
+   },
+   "purchases_compare_crop_recordings": {
+      "description": "Crop recordings",
+      "message": "Obreži posnetke"
+   },
+   "purchases_compare_customize_editing_tools": {
+      "description": "Customize editing tools (font, size color)",
+      "message": "Prilagodite orodja za urejanje (pisava, velikost, barva)"
+   },
+   "purchases_compare_drawing": {
+      "description": "Draw while recording",
+      "message": "Narišite med snemanjem"
+   },
+   "purchases_compare_early_access": {
+      "description": "Early access to new features",
+      "message": "Zgodnji dostop do novih funkcij"
+   },
+   "purchases_compare_editing": {
+      "description": "Edit captures",
+      "message": "Uredi zajemanje"
+   },
+   "purchases_compare_editing_free": {
+      "description": "basic editing",
+      "message": "Osnovno urejanje"
+   },
+   "purchases_compare_editing_suite": {
+      "description": "Editing Suite",
+      "message": "Urejevalni paket"
+   },
+   "purchases_compare_frame_editing": {
+      "description": "Frame editing",
+      "message": "Urejanje okvirja"
+   },
+   "purchases_compare_frame_rate": {
+      "description": "Adjust Frame Rate",
+      "message": "Prilagodi Hitrost Sličic (FPS)"
+   },
+   "purchases_compare_frame_specific_edits": {
+      "description": "Frame specific edits",
+      "message": "Urejanje posameznih sličic"
+   },
+   "purchases_compare_free_draw_tools": {
+      "description": "Free draw, line, arrow, rectangle, circle, text tools",
+      "message": "Orodja za prostoročno risanje, črto, puščico, pravokotnik, krog, besedilo"
+   },
+   "purchases_compare_full_webpage_screenshots": {
+      "description": "Unlimited full page screenshots.",
+      "message": "Neomejeno Posnetki posnetkov polne strani."
+   },
+   "purchases_compare_highlight_tool": {
+      "description": "Highlight tool",
+      "message": "Orodje za poudarjanje"
+   },
+   "purchases_compare_live_recording_tools": {
+      "description": "Live Recording Tools",
+      "message": "Orodja za snemanje v živo"
+   },
+   "purchases_compare_mouse": {
+      "description": "Click and mouse indication",
+      "message": "Kliknite indikacija miške"
+   },
+   "purchases_compare_plans": {
+      "description": "Compare plans",
+      "message": "Primerjajte načrte"
+   },
+   "purchases_compare_plans_premium_button": {
+      "description": "Upgrade to Premium",
+      "message": "Nadgradi na Premium"
+   },
+   "purchases_compare_playback_speed": {
+      "description": "Tune recording playback speed",
+      "message": "TUNE Snemanje predvajanja"
+   },
+   "purchases_compare_priority_support": {
+      "description": "Priority support and feature requests",
+      "message": "Prednostna podpora in zahteve za funkcije"
+   },
+   "purchases_compare_recording": {
+      "description": "Unlimited GIF recordings.",
+      "message": "Neomejeno GIF posnetke."
+   },
+   "purchases_compare_recording_free": {
+      "description": "15sec limit per GIF",
+      "message": "Omejitev 15sec na gif"
+   },
+   "purchases_compare_recording_quality": {
+      "description": "High quality GIFs",
+      "message": "Visokokakovostni gif."
+   },
+   "purchases_compare_recording_quality_control": {
+      "description": "Recording Quality & Control",
+      "message": "Kakovost in nadzor snemanja"
+   },
+   "purchases_compare_recording_quality_free": {
+      "description": "1000 pixels max",
+      "message": "1000 slikovnih pik max."
+   },
+   "purchases_compare_screenshots": {
+      "description": "Unlimited screenshots.",
+      "message": "Neomejene posnetke zaslona."
+   },
+   "purchases_compare_special_effects": {
+      "description": "Recording special effects",
+      "message": "Snemanje posebnih učinkov"
+   },
+   "purchases_compare_up_to_1080p": {
+      "description": "Up to 1080p",
+      "message": "Do 1080p"
+   },
+   "purchases_compare_up_to_24_fps": {
+      "description": "Up to 24FPS",
+      "message": "Do 24 sličic/s"
+   },
+   "purchases_compare_up_to_30_fps": {
+      "description": "Up to 30FPS",
+      "message": "Do 30 sličic/s"
+   },
+   "purchases_compare_up_to_4k_plus": {
+      "description": "Up to 4K+",
+      "message": "Do 4K+"
+   },
+   "purchases_current_plan": {
+      "description": "Current plan",
+      "message": "Trenutni načrt"
+   },
+   "purchases_features": {
+      "description": "Features",
+      "message": "Funkcije"
+   },
+   "purchases_free": {
+      "description": "Free",
+      "message": "prost"
+   },
+   "purchases_free_button": {
+      "description": "Free to use",
+      "message": "Brezplačno uporabo"
+   },
+   "purchases_free_feature_editing": {
+      "description": "Basic editing",
+      "message": "Osnovno urejanje"
+   },
+   "purchases_free_feature_recording": {
+      "description": "Basic GIF recording",
+      "message": "Osnovni snemanje GIF."
+   },
+   "purchases_free_feature_screenshots": {
+      "description": "Unlimited screenshots",
+      "message": "Neomejeno zaslona"
+   },
+   "purchases_free_plan_description": {
+      "description": "Get started with our essential capture tools. Completely free for basic everyday use.",
+      "message": "Začnite z našimi osnovnimi orodji za zajem. Popolnoma brezplačno za osnovno vsakodnevno uporabo."
+   },
+   "purchases_plan_save_up_to_percentage": {
+      "description": "Save up to",
+      "message": "Prihranite do"
+   },
+   "purchases_premium": {
+      "description": "Premium",
+      "message": "Premium"
+   },
+   "purchases_premium_billed_annually": {
+      "description": "Billed annually",
+      "message": "Letni obračun"
+   },
+   "purchases_premium_button": {
+      "description": "Get lifetime access",
+      "message": "Pridobite doživljenjski dostop"
+   },
+   "purchases_premium_feature_compression": {
+      "description": "High quality GIF compression",
+      "message": "Visoka kakovost GIF stiskanje"
+   },
+   "purchases_premium_feature_editing": {
+      "description": "Feature rich editing",
+      "message": "Imajo bogato urejanje"
+   },
+   "purchases_premium_feature_free": {
+      "description": "Everything from free plan",
+      "message": "Vključuje funkcije brezplačnega načrta"
+   },
+   "purchases_premium_feature_marked_with_star": {
+      "description": "All features marked with a star",
+      "message": "Vse funkcije, označene z zvezdico"
+   },
+   "purchases_premium_feature_recording": {
+      "description": "Unlimited high quality GIF recording",
+      "message": "Neomejeno visoko kakovostno snemanje GIF"
+   },
+   "purchases_premium_feature_recording_1080p": {
+      "description": "High quality GIF recording, up to 1080p, 24fps",
+      "message": "Visokokakovostno snemanje GIF, do 1080p, 24 sličic na sekundo"
+   },
+   "purchases_premium_feature_refundable": {
+      "description": "Fully refundable",
+      "message": "Popolnoma povrne"
+   },
+   "purchases_premium_feature_risk_free": {
+      "description": "Risk-free: 7 day trial, cancel anytime",
+      "message": "Brez tveganja: 7-dnevni preizkus, prekličite kadarkoli"
+   },
+   "purchases_premium_feature_unlimited_length": {
+      "description": "Unlimited GIF recording length",
+      "message": "Neomejena dolžina snemanja GIF"
+   },
+   "purchases_premium_price_info": {
+      "description": "one time fee",
+      "message": "enkratno pristojbino"
+   },
+   "purchases_premium_price_per_month": {
+      "description": "/ month",
+      "message": "/ mesec"
+   },
+   "purchases_premium_pro": {
+      "description": "Premium Pro",
+      "message": "Premium Pro"
+   },
+   "purchases_premium_pro_editing_tools": {
+      "description": "Advanced editing tools (blurring, special effects, etc.)",
+      "message": "Napredna orodja za urejanje (zameglitev, posebni učinki itd.)"
+   },
+   "purchases_premium_pro_feature_early_access": {
+      "description": "Early access to new features",
+      "message": "Zgodnji dostop do novih funkcij"
+   },
+   "purchases_premium_pro_feature_marked_with_crown": {
+      "description": "All features marked with a star and crown",
+      "message": "Vse funkcije, označene z zvezdico in krono"
+   },
+   "purchases_premium_pro_feature_premium_plan": {
+      "description": "Everything from Premium plan",
+      "message": "Vse iz načrta Premium"
+   },
+   "purchases_premium_pro_feature_quality": {
+      "description": "Max resolution recording, 4K+ and 30fps",
+      "message": "Snemanje z največjo ločljivostjo, 4K+ in 30 sličic na sekundo"
+   },
+   "purchases_premium_pro_feature_support": {
+      "description": "Priority support and feature requests",
+      "message": "Prednostna podpora in zahteve za funkcije"
+   },
+   "purchases_premium_pro_upgrade": {
+      "description": "Upgrade to Pro",
+      "message": "Nadgradi na Pro"
+   },
+   "purchases_premium_save_percentage": {
+      "description": "save $savingsPercentage$%",
+      "message": "prihranite $savingsPercentage$ %",
+      "placeholders": {
+         "savingsPercentage": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_premium_try_for_free": {
+      "description": "Try for free",
+      "message": "Preizkusite brezplačno"
+   },
+   "purchases_price_unavailable": {
+      "description": "Label shown in place of a price when it is unavailable.",
+      "message": "Cena ni na voljo"
+   },
+   "purchases_pricing_unavailable_message": {
+      "description": "Message shown when the Premium pricing request was blocked or failed.",
+      "message": "Zahteva za cene Premium je bila blokirana ali neuspešna. To se lahko zgodi, ko službeno omrežje, VPN, blokator oglasov, razširitev za zasebnost ali požarni zid blokira Paddle."
+   },
+   "purchases_pricing_unavailable_title": {
+      "description": "Title shown when Premium pricing could not be loaded.",
+      "message": "Cen Premium ni bilo mogoče naložiti"
+   },
+   "purchases_pricing_unavailable_troubleshooting_extensions": {
+      "description": "Troubleshooting step telling the user to disable VPN or privacy tools temporarily.",
+      "message": "Začasno onemogočite VPN, blokator oglasov ali razširitve za zasebnost in poskusite znova."
+   },
+   "purchases_pricing_unavailable_troubleshooting_intro": {
+      "description": "Intro text for troubleshooting steps when pricing is unavailable.",
+      "message": "Poskusite naslednje:"
+   },
+   "purchases_pricing_unavailable_troubleshooting_network": {
+      "description": "Troubleshooting step telling the user to try another network or browser profile.",
+      "message": "Poskusite drugo omrežje ali odprite razširitev v drugem profilu Chrome."
+   },
+   "purchases_pricing_unavailable_troubleshooting_workplace": {
+      "description": "Troubleshooting step telling the user workplace policy may be blocking Paddle.",
+      "message": "Če uporabljate službeno napravo, lahko vaša omrežna ali brskalniška politika blokira Paddle."
+   },
+   "purchases_sign_in_here": {
+      "description": "Sign in here",
+      "message": "Prijavite se tukaj"
+   },
+   "purchases_start_trial_cancel_anytime": {
+      "description": "Call to action to start a free trial.",
+      "message": "Začnite 7-dnevni brezplačni preizkus, da nadaljujete. Prekličite kadarkoli."
+   },
+   "purchases_try_premium_for_free": {
+      "description": "Try Premium for Free",
+      "message": "Preizkusite Premium brezplačno"
+   },
+   "purchases_try_premium_pro_for_free": {
+      "description": "Try Premium Pro for Free",
+      "message": "Preizkusite Premium Pro brezplačno"
+   },
+   "purchases_upgrade_premium_to_pro": {
+      "description": "To use this feature and access all Pro benefits, upgrade your plan.",
+      "message": "Za uporabo te funkcije in dostop do vseh ugodnosti Pro, nadgradite svoj načrt."
+   },
+   "purchases_upgrade_to_premium_pro": {
+      "description": "Upgrade to Premium Pro",
+      "message": "Nadgradi na Premium Pro"
+   },
+   "quality_text": {
+      "description": "Recording quality (10 = best)",
+      "message": "Kakovost snemanja (10 = najboljše)"
+   },
+   "rate_bad_rating_text": {
+      "description": "We are continuously trying our hardest to improve Chrome Capture, please share what needs improvement by emailing us at ",
+      "message": "Nenehno poskušamo, da bi izboljšali Chrome Capture, prosim delite, kaj potrebuje izboljšanje, ki nam ga pošljete"
+   },
+   "rate_bad_title_text": {
+      "description": "😞 We are sorry!",
+      "message": "Oprostite!"
+   },
+   "rate_close_btn_text": {
+      "description": "Close",
+      "message": "Zapri"
+   },
+   "rate_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "Potrdite"
+   },
+   "rate_description_text": {
+      "description": "If you've found this extension useful please leave a rating or review. \n\nBy leaving a rating you can help us reach more users which will help fund continual improvements and keep general usage free.",
+      "message": "Če ste našli to razširitev, prosim pustite oceno ali pregled. \n\n Z zapuščanjem ocene nam lahko pomagate doseči več uporabnikov, ki bodo pomagali financirati nenehne izboljšave in ohraniti splošno uporabo."
+   },
+   "rate_description_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "Zelo cenimo, da kupujete premijo in bi radi slišali vse povratne informacije, ki vam jih morate pomagati izboljšati izdelek in doseči več uporabnikov."
+   },
+   "rate_good_rating_text": {
+      "description": "Your reviews keep our small team motivated to make Chrome Capture even better!",
+      "message": "Vaše ocene ohranjajo našo majhno ekipo, ki je motivirana, da bi Chrome Capture še bolje!"
+   },
+   "rate_good_rating_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "Zelo cenimo, da kupujete premijo in bi radi slišali vse povratne informacije, ki vam jih morate pomagati izboljšati izdelek in doseči več uporabnikov."
+   },
+   "rate_good_title_text": {
+      "description": "😍 Review in the web store?",
+      "message": "😍 Pregled v spletni trgovini?"
+   },
+   "rate_maybe_later_btn_text": {
+      "description": "Maybe later",
+      "message": "Mogoče kasneje"
+   },
+   "rate_no_btn_text": {
+      "description": "No thanks",
+      "message": "Ne hvala"
+   },
+   "rate_send_email_btn_text": {
+      "description": "Send Email",
+      "message": "Pošlji sporočilo"
+   },
+   "rate_thank_you_title_text": {
+      "description": "Thank you! 😍",
+      "message": "Hvala vam! 😍."
+   },
+   "rate_title_text": {
+      "description": "How are we doing?",
+      "message": "Kako delamo?"
+   },
+   "rate_yes_btn_text": {
+      "description": "Ok, sure",
+      "message": "OK, zagotovo"
+   },
+   "recommended": {
+      "description": "recommended",
+      "message": "priporočljivo"
+   },
+   "record_length_text": {
+      "description": "Max record length",
+      "message": "Najvišja dolžina zapisa"
+   },
+   "recordings_taken": {
+      "description": "Recordings taken:",
+      "message": "Posnetki:"
+   },
+   "save_as_screenshot_text": {
+      "description": "Save screenshot as",
+      "message": "Shrani screenshot as."
+   },
+   "save_as_text": {
+      "description": "Save recording as",
+      "message": "Shranite snemanje"
+   },
+   "screenshots_taken": {
+      "description": "Screenshots taken:",
+      "message": "Posneti posnetki zaslona:"
+   },
+   "seconds_text": {
+      "description": "secs",
+      "message": "secs."
+   },
+   "shortcut": {
+      "description": "Shortcut:",
+      "message": "Bližnjica:"
+   },
+   "show_click_indicator_text": {
+      "description": "Show click animation",
+      "message": "Prikaži animacijo kliknite"
+   },
+   "show_click_indicator_tooltip_text": {
+      "description": "This option draws a circle animation around the click location.",
+      "message": "Ta možnost nariše krožno animacijo okoli lokacije klik."
+   },
+   "show_cursor_text": {
+      "description": "Show dot at cursor location",
+      "message": "Prikaži piko na lokaciji kurzorja"
+   },
+   "show_cursor_tooltip_text": {
+      "description": "This option draws a small circle to indicate where the mouse is located.",
+      "message": "Ta možnost nariše majhen krog, ki označuje, kje se nahaja miška."
+   },
+   "sign_in": {
+      "description": "Sign In",
+      "message": "Prijava"
+   },
+   "sign_out": {
+      "description": "Sign Out",
+      "message": "Odjava"
+   },
+   "subscription_past_due_warning": {
+      "description": "Warning message shown when a user subscription payment has failed or is past its due date.",
+      "message": "Plačilo naročnine je zapadlo. Kliknite tukaj, da posodobite svoje podatke o plačilu."
+   },
+   "subscription_premium_plan_description": {
+      "description": "Go beyond basics: HD quality & limits unlocked. Craft pro content with enhanced features.",
+      "message": "Presezite osnove: HD kakovost in odklenjene omejitve. Ustvarjajte profesionalno vsebino z izboljšanimi funkcijami."
+   },
+   "subscription_premium_pro_plan_description": {
+      "description": "Experience peak performance: 4K+ and all features. Full editing suite with early access.",
+      "message": "Izkusite vrhunsko zmogljivost: 4K+ in vse funkcije. Celoten urejevalni paket z zgodnjim dostopom."
+   },
+   "subscription_status_active": {
+      "description": "Active",
+      "message": "Aktivno"
+   },
+   "subscription_status_ending_soon": {
+      "description": "Ending Soon",
+      "message": "Kmalu se konča"
+   },
+   "subscription_status_expired": {
+      "description": "Expired",
+      "message": "Poteklo"
+   },
+   "subscription_status_past_due": {
+      "description": "Past Due",
+      "message": "Zapadlo"
+   },
+   "subscription_status_paused": {
+      "description": "Paused",
+      "message": "Začasno ustavljeno"
+   },
+   "subscription_status_unknown": {
+      "description": "Unknown",
+      "message": "Neznano"
+   },
+   "unable_to_capture_website_alert": {
+      "description": "Unable to capture this website. Please use full screen/application capture or try capture another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "Tega spletnega mesta ni mogoče zajeti. Prosimo, uporabite zajem celotnega zaslona/aplikacije ali poskusite zajeti drugo spletno mesto. \n\n (╯ ° □ °） ╯︵ ┻━┻"
+   },
+   "view_permission": {
+      "description": "View permission.",
+      "message": "Ogled dovoljenja."
+   },
+   "width_text": {
+      "description": "Height (px)",
+      "message": "Višina (px)"
+   }
+}

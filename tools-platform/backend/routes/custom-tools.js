@@ -13,6 +13,7 @@ const f12LicenseService = require('../models/f12-license-service');
 const f12LicenseRegistry = require('../models/f12-license-registry');
 const f12ExtensionIdentityService = require('../models/f12-extension-identity-service');
 const f12ExtensionVersionService = require('../models/f12-extension-version-service');
+const f12ScriptPresetsRepository = require('../models/f12-script-presets-repository');
 const { getDataDir } = require('../models/store');
 const { requireAdmin } = require('../middleware/auth');
 const customToolI18nGenerator = require('../../scripts/generate-custom-tool-i18n');
@@ -105,6 +106,36 @@ router.get('/f12-to-extension/license-config', requireAdmin, (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ error: error.message || '读取 License 打包配置失败' });
+    }
+});
+
+router.get('/f12-to-extension/scripts', requireAdmin, async (_req, res) => {
+    try {
+        res.setHeader('Cache-Control', 'no-store');
+        res.json({ success: true, scripts: await f12ScriptPresetsRepository.listPresets() });
+    } catch (error) {
+        res.status(500).json({ error: error.message || '读取服务器脚本列表失败' });
+    }
+});
+
+router.post('/f12-to-extension/scripts', requireAdmin, async (req, res) => {
+    try {
+        const script = await f12ScriptPresetsRepository.savePreset(req.body || {});
+        res.status(201).json({ success: true, script });
+    } catch (error) {
+        const duplicateName = error && error.code === 'SQLITE_CONSTRAINT';
+        res.status(400).json({ error: duplicateName ? '已存在同名的服务器脚本' : (error.message || '保存服务器脚本失败') });
+    }
+});
+
+router.put('/f12-to-extension/scripts/:scriptId', requireAdmin, async (req, res) => {
+    try {
+        const script = await f12ScriptPresetsRepository.savePreset(req.body || {}, req.params.scriptId);
+        if (!script) return res.status(404).json({ error: '服务器脚本不存在' });
+        res.json({ success: true, script });
+    } catch (error) {
+        const duplicateName = error && error.code === 'SQLITE_CONSTRAINT';
+        res.status(400).json({ error: duplicateName ? '已存在同名的服务器脚本' : (error.message || '更新服务器脚本失败') });
     }
 });
 

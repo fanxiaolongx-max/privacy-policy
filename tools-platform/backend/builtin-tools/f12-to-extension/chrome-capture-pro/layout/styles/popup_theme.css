@@ -1,0 +1,252 @@
+/* Chrome Capture Pro - Popup Theme (by Dragon) */
+:root {
+  --bg-main: #0c1017;
+  --bg-gradient: linear-gradient(155deg, #0b0f19 0%, #111827 50%, #080c14 100%);
+  --card-bg: rgba(255, 255, 255, 0.045);
+  --card-bg-hover: linear-gradient(135deg, rgba(99, 102, 241, 0.18) 0%, rgba(139, 92, 246, 0.1) 100%);
+  --card-border: rgba(255, 255, 255, 0.09);
+  --card-border-hover: rgba(99, 102, 241, 0.6);
+  --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-hover: 0 10px 28px -4px rgba(0, 0, 0, 0.6), 0 0 20px 2px rgba(99, 102, 241, 0.35);
+}
+
+* {
+  box-sizing: border-box !important;
+}
+
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 360px !important;
+  min-width: 360px !important;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif !important;
+  background: var(--bg-gradient) !important;
+  background-color: var(--bg-main) !important;
+  color: var(--text-main) !important;
+  -webkit-font-smoothing: antialiased !important;
+  user-select: none !important;
+  overflow: hidden !important;
+}
+
+#mountNode {
+  width: 360px !important;
+  min-width: 360px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+#mountNode > div[class*="container"] {
+  width: 100% !important;
+  background: transparent !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+}
+
+/* Tabs Header */
+.MuiTabs-root {
+  background: rgba(0, 0, 0, 0.45) !important;
+  border-radius: 12px !important;
+  margin: 12px 12px 4px 12px !important;
+  padding: 4px !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5) !important;
+  min-height: 44px !important;
+  width: calc(100% - 24px) !important;
+}
+
+.MuiTabs-flexContainer {
+  width: 100% !important;
+  gap: 4px !important;
+}
+
+.MuiTab-root {
+  min-height: 36px !important;
+  height: 36px !important;
+  padding: 0 10px !important;
+  border-radius: 9px !important;
+  color: var(--text-muted) !important;
+  font-weight: 500 !important;
+  font-size: 0.84rem !important;
+  text-transform: none !important;
+  transition: all 0.22s ease !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+}
+
+.MuiTab-root svg {
+  width: 17px !important;
+  height: 17px !important;
+  margin: 0 !important;
+  color: inherit !important;
+}
+
+.MuiTab-root.Mui-selected {
+  background: var(--primary-gradient) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+}
+
+.MuiTab-root:not(.Mui-selected):hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #ffffff !important;
+}
+
+.MuiTabs-indicator {
+  display: none !important;
+}
+
+/* Inner Grid */
+div[class*="innerContainer"] {
+  padding: 10px 12px 12px 12px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.MuiGrid-container {
+  margin: 0 !important;
+  width: 100% !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  box-sizing: border-box !important;
+}
+
+.MuiGrid-item {
+  padding: 5px !important;
+  box-sizing: border-box !important;
+}
+
+/* Card Buttons */
+.MuiButton-root.MuiButton-contained {
+  background: var(--card-bg) !important;
+  background-color: var(--card-bg) !important;
+  border: 1px solid var(--card-border) !important;
+  border-radius: 14px !important;
+  box-shadow: var(--shadow-card) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  color: var(--text-main) !important;
+  font-weight: 600 !important;
+  font-size: 0.84rem !important;
+  white-space: nowrap !important;
+  text-transform: none !important;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.MuiButton-root.MuiButton-contained:hover {
+  background: var(--card-bg-hover) !important;
+  border-color: var(--card-border-hover) !important;
+  box-shadow: var(--shadow-hover) !important;
+  transform: translateY(-2px) !important;
+  color: #ffffff !important;
+}
+
+.MuiButton-root.MuiButton-contained:active {
+  transform: translateY(0px) scale(0.98) !important;
+}
+
+.MuiButton-root.MuiButton-contained .MuiButton-startIcon svg {
+  color: #a5b4fc !important;
+  filter: drop-shadow(0 2px 8px rgba(99, 102, 241, 0.45)) !important;
+  transition: transform 0.22s ease !important;
+}
+
+.MuiButton-root.MuiButton-contained:hover .MuiButton-startIcon svg {
+  transform: scale(1.08) !important;
+  color: #ffffff !important;
+}
+
+/* Shortcut Badges */
+span[class*="key"] {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 6px !important;
+  padding: 1px 5px !important;
+  font-size: 0.64rem !important;
+  font-weight: 600 !important;
+  color: #f1f5f9 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+  letter-spacing: 0.04em !important;
+}
+
+button[class*="shortcutLinkButton"] {
+  background: rgba(99, 102, 241, 0.18) !important;
+  border: 1px solid rgba(99, 102, 241, 0.35) !important;
+  border-radius: 6px !important;
+  padding: 2px 6px !important;
+  color: #c7d2fe !important;
+  font-size: 0.65rem !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+}
+
+/* Footer Bar */
+#mountNode > div[class*="container"] > div:last-child {
+  margin-top: auto !important;
+  width: 100% !important;
+  background: rgba(10, 14, 23, 0.95) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.09) !important;
+}
+
+#mountNode > div[class*="container"] > div:last-child > div {
+  min-height: 52px !important;
+  height: 52px !important;
+  padding: 0 14px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  position: relative !important;
+  width: 100% !important;
+}
+
+#mountNode > div[class*="container"] > div:last-child > div::before {
+  content: "⚡ DRAGON PRO" !important;
+  font-size: 0.76rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.07em !important;
+  white-space: nowrap !important;
+  background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  filter: drop-shadow(0 2px 6px rgba(129, 140, 248, 0.4)) !important;
+}
+
+body.cc-license-badge-in-footer #mountNode > div[class*="container"] > div:last-child > div::before {
+  visibility: hidden !important;
+}
+
+#mountNode > div[class*="container"] > div:last-child svg {
+  color: #c7d2fe !important;
+  width: 36px !important;
+  height: 36px !important;
+  padding: 7px !important;
+  margin-left: 8px !important;
+  border-radius: 10px !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  transition: all 0.22s ease !important;
+  cursor: pointer !important;
+}
+
+#mountNode > div[class*="container"] > div:last-child svg:hover {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.25) 100%) !important;
+  border-color: rgba(99, 102, 241, 0.6) !important;
+  transform: translateY(-2px) !important;
+}

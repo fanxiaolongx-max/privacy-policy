@@ -34,6 +34,7 @@ outputs/
 *.tar
 *.tar.gz
 *.zip
+!backend/builtin-tools/f12-to-extension/chrome-capture-pro.template.zip
 
 # OS/editor noise
 .DS_Store

@@ -1,0 +1,1691 @@
+{
+   "account_modal_free_plan": {
+      "description": "You are on the free plan",
+      "message": "आपण विनामूल्य योजनेवर आहात"
+   },
+   "account_modal_manage_subscription_button": {
+      "description": "Manage Subscription",
+      "message": "सदस्यता व्यवस्थापित करा"
+   },
+   "account_modal_not_signed_in": {
+      "description": "You are not signed in",
+      "message": "आपण साइन इन केले नाही"
+   },
+   "account_modal_premium_plan": {
+      "description": "You are on the premium plan",
+      "message": "आपण प्रीमियम योजनेवर आहात"
+   },
+   "account_modal_premium_pro_plan": {
+      "description": "You are on the Premium Pro plan",
+      "message": "तुम्ही प्रीमियम प्रो प्लॅनवर आहात"
+   },
+   "account_modal_request_feature_button": {
+      "description": "Request Feature",
+      "message": "वैशिष्ट्याची विनंती करा"
+   },
+   "account_modal_request_support_button": {
+      "description": "Request Support",
+      "message": "समर्थनाची विनंती करा"
+   },
+   "account_modal_stats_heading": {
+      "description": "Your stats:",
+      "message": "आपली आकडेवारी:"
+   },
+   "alert_text": {
+      "description": "Unable to run selected area capture on this website. Please use full screen recording or try another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "या वेबसाइटवर निवडलेल्या क्षेत्र कॅप्चर चालविण्यात अक्षम. कृपया पूर्ण स्क्रीन रेकॉर्डिंग वापरा किंवा दुसर्या वेबसाइटचा प्रयत्न करा. \n\n (╯ ° □ °) ╯ (┻━┻"
+   },
+   "click_indicator_size_color_text": {
+      "description": "Click animation size & color",
+      "message": "अॅनिमेशन आकार आणि रंग क्लिक करा"
+   },
+   "close_btn_text": {
+      "description": "Close",
+      "message": "बंद"
+   },
+   "confirm_dialog_cancel_btn_text": {
+      "description": "Cancel",
+      "message": "रद्द करा"
+   },
+   "confirm_dialog_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "पुष्टी"
+   },
+   "confirm_fps_update_text": {
+      "description": "Changing the fps will remove all frame specific edits such as edited or deleted frames. Do you want to continue?",
+      "message": "एफपीएस बदलल्यास संपादित किंवा हटविलेल्या फ्रेम सारख्या सर्व प्रतिमा विशिष्ट संपादने काढतील. आपण सुरू ठेवू इच्छिता?"
+   },
+   "copy_text": {
+      "description": "Copy to clipboard",
+      "message": "क्लिपबोर्डवर कॉपी करा"
+   },
+   "cursor_size_and_color_text": {
+      "description": "Cursor dot size & color",
+      "message": "कर्सर डॉट आकार आणि रंग"
+   },
+   "dither_text": {
+      "description": "Apply dither",
+      "message": "आता लागू करा"
+   },
+   "download_filename_text": {
+      "description": "Download filename format",
+      "message": "फाइलनाव स्वरूप डाउनलोड करा"
+   },
+   "download_text": {
+      "description": "Download",
+      "message": "डाउनलोड"
+   },
+   "draw_size_and_color_text": {
+      "description": "Drawing size & color",
+      "message": "रेखांकन आकार आणि रंग"
+   },
+   "duration": {
+      "description": "Label for a field indicating a length of time.",
+      "message": "कालावधी"
+   },
+   "editor_action_add_icon": {
+      "description": "Add icon",
+      "message": "चिन्ह जोडा"
+   },
+   "editor_action_add_text": {
+      "description": "Add text",
+      "message": "मजकूर जोडा"
+   },
+   "editor_action_blur_rectangle": {
+      "description": "Blur area",
+      "message": "क्षेत्र अस्पष्ट करा"
+   },
+   "editor_action_copy": {
+      "description": "Copy to clipboard",
+      "message": "क्लिपबोर्डवर कॉपी करा"
+   },
+   "editor_action_crop": {
+      "description": "Crop",
+      "message": "पीक"
+   },
+   "editor_action_draw_arrow": {
+      "description": "Draw arrow",
+      "message": "बाण काढा"
+   },
+   "editor_action_draw_ellipse": {
+      "description": "Draw ellipse",
+      "message": "Ellipse काढा"
+   },
+   "editor_action_draw_line": {
+      "description": "Draw line",
+      "message": "रेखा ओळ"
+   },
+   "editor_action_draw_rectangle": {
+      "description": "Draw rectangle",
+      "message": "आयत काढा"
+   },
+   "editor_action_free_draw": {
+      "description": "Free draw",
+      "message": "फ्री ड्रॉ"
+   },
+   "editor_action_highlight": {
+      "description": "Highlight",
+      "message": "हायलाइट करा"
+   },
+   "editor_action_numbered_step": {
+      "description": "Action label for adding a numbered step annotation.",
+      "message": "क्रमांकित पायरी"
+   },
+   "editor_action_pan": {
+      "description": "Pan",
+      "message": "पॅन करा"
+   },
+   "editor_action_profile_account": {
+      "description": "Account",
+      "message": "खाते"
+   },
+   "editor_action_redo": {
+      "description": "Redo",
+      "message": "पुन्हा"
+   },
+   "editor_action_save": {
+      "description": "Save",
+      "message": "जतन करा"
+   },
+   "editor_action_select": {
+      "description": "Select, move, resize",
+      "message": "निवडा, हलवा, आकार बदलणे"
+   },
+   "editor_action_settings": {
+      "description": "Settings",
+      "message": "सेटिंग्ज"
+   },
+   "editor_action_undo": {
+      "description": "Undo",
+      "message": "पूर्ववत करणे"
+   },
+   "editor_action_undo_all": {
+      "description": "Undo all",
+      "message": "सर्व पूर्ववत करा"
+   },
+   "editor_add_text_default": {
+      "description": "start typing...",
+      "message": "टाइपिंग सुरू करा ..."
+   },
+   "editor_browse_file_system": {
+      "description": "Browse file system",
+      "message": "फाइल सिस्टम ब्राउझ करा"
+   },
+   "editor_drag_and_drop": {
+      "description": "Drag and drop image/GIF or ",
+      "message": "प्रतिमा / जीआयएफ ड्रॅग आणि ड्रॉप करा"
+   },
+   "editor_file_downloaded": {
+      "description": "File saved to downloads folder.",
+      "message": "फाइल डाउनलोड फोल्डरमध्ये जतन केली."
+   },
+   "editor_file_downloaded_selected_location": {
+      "description": "File saved to selected location.",
+      "message": "निवडलेल्या स्थानावर फाइल जतन केली."
+   },
+   "editor_frame_selector_apply_edits": {
+      "description": "Apply edits to selected",
+      "message": "निवडलेल्या संपादने लागू करा"
+   },
+   "editor_frame_selector_delete": {
+      "description": "Delete",
+      "message": "हटवा"
+   },
+   "editor_frame_selector_delete_every_second": {
+      "description": "Delete every second frame",
+      "message": "प्रत्येक सेकंद फ्रेम हटवा"
+   },
+   "editor_frame_selector_delete_selected": {
+      "description": "Delete selected",
+      "message": "निवडलेला हटवा"
+   },
+   "editor_frame_selector_remove_edits": {
+      "description": "Remove edits from selected",
+      "message": "निवडलेल्या संपादने काढा"
+   },
+   "editor_frame_selector_restore": {
+      "description": "Restore",
+      "message": "पुनर्संचयित"
+   },
+   "editor_frame_selector_restore_all": {
+      "description": "Restore All",
+      "message": "सर्व पुनर्संचयित करा"
+   },
+   "editor_frame_selector_restore_selected": {
+      "description": "Restore selected",
+      "message": "निवडलेले पुनर्संचयित करा"
+   },
+   "editor_frame_selector_select_next": {
+      "description": "Select next frames",
+      "message": "पुढील प्रतिमा निवडा"
+   },
+   "editor_frame_selector_select_previous": {
+      "description": "Select previous frames",
+      "message": "मागील प्रतिमा निवडा"
+   },
+   "editor_frame_selector_unselect_all": {
+      "description": "Unselect All",
+      "message": "निवडलेले सर्व काढा"
+   },
+   "editor_image_copied": {
+      "description": "Image copied to clipboard.",
+      "message": "क्लिपबोर्डवर कॉपी केलेली प्रतिमा."
+   },
+   "editor_image_copied_failed": {
+      "description": "Failed to copy image to clipboard, it may be too large.",
+      "message": "प्रतिमा क्लिपबोर्डवर कॉपी करण्यात अयशस्वी, ते खूप मोठे असू शकते."
+   },
+   "editor_link_copied": {
+      "description": "Link copied to clipboard.",
+      "message": "क्लिपबोर्डवर कॉपी केलेला दुवा."
+   },
+   "editor_max_time_reached_dialog_description1": {
+      "description": "You have reached the max recording length time of $maxlength$ seconds for GIFs. Premium users can update this from the settings page.",
+      "message": "GIF-കൾക്കായി നിങ്ങൾ പരമാവധി റെക്കോർഡിംഗ് ദൈർഘ്യം $maxlength$ സെക്കൻഡിൽ എത്തി. പ്രീമിയം ഉപയോക്താക്കൾക്ക് ക്രമീകരണ പേജിൽ നിന്ന് അപ്ഡേറ്റ് ചെയ്യാം.",
+      "placeholders": {
+         "maxlength": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_max_time_reached_dialog_description2": {
+      "description": "GIFs are intended for short recordings. If you require full length videos we recommend our free screen recorder: ",
+      "message": "जीआयएफ लहान रेकॉर्डिंगसाठी आहेत. आपल्याला पूर्ण लांबीचे व्हिडिओ आवश्यक असल्यास आम्ही आमच्या विनामूल्य स्क्रीन रेकॉर्डरची शिफारस करतो:"
+   },
+   "editor_max_time_reached_dialog_description3": {
+      "description": "Premium users can update this from the settings page.",
+      "message": "प्रीमियम वापरकर्ते हे सेटिंग्ज पृष्ठावरून अद्यतनित करू शकतात."
+   },
+   "editor_max_time_reached_dialog_settings_button": {
+      "description": "Open settings",
+      "message": "सेटिंग्ज उघडा"
+   },
+   "editor_max_time_reached_dialog_title": {
+      "description": "Recording suddenly stopped?",
+      "message": "रेकॉर्डिंग अचानक थांबले?"
+   },
+   "editor_premium_options_color": {
+      "description": "Color",
+      "message": "रंग"
+   },
+   "editor_premium_options_draw_size": {
+      "description": "Draw Size",
+      "message": "आकार काढा"
+   },
+   "editor_premium_options_font": {
+      "description": "Font",
+      "message": "फॉन्ट"
+   },
+   "editor_premium_options_playback_speed": {
+      "description": "Playback Speed",
+      "message": "प्लेबॅक वेग"
+   },
+   "editor_premium_options_special_effect": {
+      "description": "Special Effect",
+      "message": "विशेष प्रभाव"
+   },
+   "editor_premium_options_title": {
+      "description": "Premium Options",
+      "message": "प्रीमियम पर्याय"
+   },
+   "editor_save_dialog_advanced_encoding_options": {
+      "description": "Title for a section containing advanced, technical options for encoding a file.",
+      "message": "प्रगत एन्कोडिंग पर्याय"
+   },
+   "editor_save_dialog_alert_title": {
+      "description": "Warning",
+      "message": "चेतावणी"
+   },
+   "editor_save_dialog_aspect_ratio": {
+      "description": "lock aspect ratio",
+      "message": "लॉक पैलू गुणोत्तर"
+   },
+   "editor_save_dialog_cancel": {
+      "description": "Cancel",
+      "message": "रद्द करा"
+   },
+   "editor_save_dialog_chip_animated_image": {
+      "description": "Chip label indicating an animated image format (e.g. GIF, AVIF).",
+      "message": "अ‍ॅनिमेटेड प्रतिमा"
+   },
+   "editor_save_dialog_chip_large_file": {
+      "description": "Chip label indicating the format produces a large file size.",
+      "message": "मोठी फाइल"
+   },
+   "editor_save_dialog_chip_limited_support": {
+      "description": "Chip label indicating the format has limited browser/app support.",
+      "message": "मर्यादित समर्थन"
+   },
+   "editor_save_dialog_chip_small_file": {
+      "description": "Chip label indicating the format produces a small file size.",
+      "message": "लहान फाइल"
+   },
+   "editor_save_dialog_chip_video": {
+      "description": "Chip label indicating a video format (e.g. WebM, MP4).",
+      "message": "व्हिडिओ"
+   },
+   "editor_save_dialog_chip_widely_supported": {
+      "description": "Chip label indicating the format is widely supported.",
+      "message": "मोठ्या प्रमाणावर समर्थित"
+   },
+   "editor_save_dialog_compress": {
+      "description": "Compress & optimize GIF",
+      "message": "जीआयएफ कॉम्प्रेस आणि ऑप्टिमाइझ करा"
+   },
+   "editor_save_dialog_compress_tooltip": {
+      "description": "Apply GIF compression algorthm to greatly reduce GIF file size and in some cases improve quality. Highly recommeded.",
+      "message": "जीआयएफ फाईलचा आकार मोठ्या प्रमाणात कमी करण्यासाठी आणि काही प्रकरणांमध्ये गुणवत्ता सुधारण्यासाठी जीआयएफ कॉम्प्रेशन अल्गॉर्थम लागू करा. अत्यंत शिफारसीय."
+   },
+   "editor_save_dialog_dither_tooltip": {
+      "description": "Apply dither algorithm to frames. Try toggling this option if you experience color quality issues.",
+      "message": "प्रतिमांवर diter अल्गोरिदम लागू करा. आपल्याला रंग गुणवत्तेच्या समस्येचा अनुभव असल्यास हा पर्याय टॉगल करण्याचा प्रयत्न करा."
+   },
+   "editor_save_dialog_download_raw_recording": {
+      "description": "Download raw recording",
+      "message": "कच्चे रेकॉर्डिंग डाउनलोड करा"
+   },
+   "editor_save_dialog_estimated_size": {
+      "description": "Estimated GIF Size: ",
+      "message": "अंदाजे जीआयएफ आकार:"
+   },
+   "editor_save_dialog_export_sound": {
+      "description": "Include sound (beta)",
+      "message": "ध्वनी (बीटा) समाविष्ट करा"
+   },
+   "editor_save_dialog_export_sound_tooltip": {
+      "description": "Enable this option to include sound in the video.",
+      "message": "व्हिडिओमध्ये ध्वनी समाविष्ट करण्यासाठी हा पर्याय सक्षम करा."
+   },
+   "editor_save_dialog_frames": {
+      "description": "Frames: ",
+      "message": "प्रतिमा:"
+   },
+   "editor_save_dialog_frames_alert": {
+      "description": "There are currently selected frames, saving will only output these selected frames - ",
+      "message": "सध्या निवडलेल्या प्रतिमा आहेत, बचत केवळ या निवडलेल्या फ्रेम आउटपुट करेल -"
+   },
+   "editor_save_dialog_frames_alert_button": {
+      "description": "Click here to unselect all frames",
+      "message": "सर्व प्रतिमा निवडण्यासाठी येथे क्लिक करा"
+   },
+   "editor_save_dialog_frames_alert_title": {
+      "description": "Playback Speed",
+      "message": "प्लेबॅक वेग"
+   },
+   "editor_save_dialog_frames_processing": {
+      "description": "Processing Frames: ",
+      "message": "प्रक्रिया प्रतिमा:"
+   },
+   "editor_save_dialog_height_helper": {
+      "description": "Recorded height is ",
+      "message": "रेकॉर्ड केलेली उंची आहे"
+   },
+   "editor_save_dialog_lossy_compression": {
+      "description": "Label for a setting that controls the level of lossy compression, from 0 to 100 percent.",
+      "message": "लॉसी कॉम्प्रेशन (० - १००%)"
+   },
+   "editor_save_dialog_number_min_max_validation": {
+      "description": "A value between $minSize$ and $maxSize$ is required.",
+      "message": "$minSize$ आणि $maxSize$ मधील मूल्य आवश्यक आहे.",
+      "placeholders": {
+         "maxSize": {
+            "content": "$2"
+         },
+         "minSize": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_save_dialog_processing_alert": {
+      "description": "Processing this recording will require a lot of memory and processing power. Unless you have a high spec PC it is recommended to do one or more of the following:",
+      "message": "या रेकॉर्डिंगवर प्रक्रिया करणे आवश्यक आहे खूप मेमरी आणि प्रक्रिया शक्ती आवश्यक आहे. आपल्याकडे उच्च स्पेस पीसी नसल्यास खालीलपैकी एक किंवा अधिक करण्याची शिफारस केली जाते:"
+   },
+   "editor_save_dialog_processing_alert_memory": {
+      "description": "Please note if the resulting GIF is blank then you ran out of memory.",
+      "message": "कृपया लक्षात घ्या की परिणामी जीआयएफ रिक्त असेल तर आपण मेमरी संपली."
+   },
+   "editor_save_dialog_processing_alert_point_1": {
+      "description": "Compress and optimize GIF",
+      "message": "गिफ संकुचित आणि ऑप्टिमाइझ करा"
+   },
+   "editor_save_dialog_processing_alert_point_2": {
+      "description": "Reduce the width & height",
+      "message": "रुंदी आणि उंची कमी करा"
+   },
+   "editor_save_dialog_processing_alert_point_3": {
+      "description": "Reduce FPS or delete frames",
+      "message": "एफपीएस कमी करा किंवा प्रतिमा हटवा"
+   },
+   "editor_save_dialog_purchase_dialog_compression_description": {
+      "description": "Free users are limited to 3 high quality GIF compressions per day. Upgrade to Premium to have no restrictions.",
+      "message": "विनामूल्य वापरकर्ते दररोज 3 उच्च गुणवत्तेच्या जीआयएफ कॉम्प्रेशन्सपुरते मर्यादित असतात. कोणतेही प्रतिबंध नसण्यासाठी प्रीमियमवर श्रेणीसुधारित करा."
+   },
+   "editor_save_dialog_quantization_algorithm": {
+      "description": "Label for a dropdown to select a quantization algorithm.",
+      "message": "क्वांटायझेशन अल्गोरिदम"
+   },
+   "editor_save_dialog_quantization_algorithm_new_alpha": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Alpha.",
+      "message": "नवीन (अल्फा)"
+   },
+   "editor_save_dialog_quantization_algorithm_new_beta": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Beta.",
+      "message": "नवीन (बीटा)"
+   },
+   "editor_save_dialog_quantization_algorithm_old": {
+      "description": "An option for the quantization algorithm setting, indicating an older version.",
+      "message": "जुने"
+   },
+   "editor_save_dialog_recording_quality_alert": {
+      "description": "GIF quality is limited for non premium users. To output high quality recordings you can do one of the following:",
+      "message": "प्रीमियम नसलेल्या वापरकर्त्यांसाठी जीआयएफ गुणवत्ता मर्यादित आहे. उच्च गुणवत्तेच्या रेकॉर्डिंग आउटपुट करण्यासाठी आपण खालीलपैकी एक करू शकता:"
+   },
+   "editor_save_dialog_recording_quality_alert_option_1": {
+      "description": "Purchase premium",
+      "message": "प्रीमियम खरेदी करा"
+   },
+   "editor_save_dialog_recording_quality_alert_option_2": {
+      "description": "Save as a WebM file",
+      "message": "वेबएम फाईल म्हणून जतन करा"
+   },
+   "editor_save_dialog_reduce_width": {
+      "description": "Reduce width & height",
+      "message": "रुंदी आणि उंची कमी करा"
+   },
+   "editor_save_dialog_reduce_width_tooltip": {
+      "description": "Reduce GIF width and height/quality to improve processing time and produce a smaller file.",
+      "message": "प्रक्रिया वेळ सुधारण्यासाठी जीआयएफ रुंदी आणि उंची/गुणवत्ता कमी करा आणि एक लहान फाईल तयार करा."
+   },
+   "editor_save_dialog_save": {
+      "description": "Save",
+      "message": "जतन करा"
+   },
+   "editor_save_dialog_save_by": {
+      "description": "Save by",
+      "message": "द्वारा जतन करा"
+   },
+   "editor_save_dialog_save_by_download": {
+      "description": "Download file",
+      "message": "फाईल डाउनलोड करा"
+   },
+   "editor_save_dialog_save_by_google_drive": {
+      "description": "Upload to Google Drive & copy link",
+      "message": "Google ड्राइव्ह आणि कॉपी दुव्यावर अपलोड करा"
+   },
+   "editor_save_dialog_save_location": {
+      "description": "Save location",
+      "message": "स्थान जतन करा"
+   },
+   "editor_save_dialog_save_location_downloads": {
+      "description": "Downloads folder",
+      "message": "डाउनलोड फोल्डर"
+   },
+   "editor_save_dialog_save_location_downloads_subfolder": {
+      "description": "Downloads subfolder",
+      "message": "डाउनलोड सबफोल्डर"
+   },
+   "editor_save_dialog_save_location_select": {
+      "description": "Manually select location",
+      "message": "व्यक्तिचलितपणे स्थान निवडा"
+   },
+   "editor_save_dialog_title": {
+      "description": "Save",
+      "message": "जतन करा"
+   },
+   "editor_save_dialog_title_processing": {
+      "description": "Processing...",
+      "message": "प्रक्रिया ..."
+   },
+   "editor_save_dialog_title_uploading": {
+      "description": "Uploading...",
+      "message": "अपलोड करीत आहे ..."
+   },
+   "editor_save_dialog_width_helper": {
+      "description": "Recorded width is ",
+      "message": "रेकॉर्ड केलेली रुंदी आहे"
+   },
+   "editor_text": {
+      "description": "Open in editor",
+      "message": "संपादक मध्ये उघडा"
+   },
+   "editor_tip_delete_items": {
+      "description": "Pro tip: Delete added items by selecting the item and pressing the delete key.",
+      "message": "प्रो टिप: आयटम निवडून आणि हटवा की दाबून जोडलेले आयटम हटवा."
+   },
+   "editor_tip_edit_specific_frames": {
+      "description": "Pro tip: You can edit specific frames by using the 'Apply edits to selected option'",
+      "message": "प्रो टीपः आपण 'निवडलेल्या पर्यायावर संपादने लागू करा' वापरून विशिष्ट प्रतिमा संपादित करू शकता"
+   },
+   "editor_tip_scroll": {
+      "description": "Pro tip: Scroll when hovering the screenshot/recording to zoom.",
+      "message": "प्रो टीप: स्क्रीनशॉट / रेकॉर्डिंगवर झूम करण्यासाठी स्क्रोल करा."
+   },
+   "editor_tip_shift_multiple_items": {
+      "description": "Pro tip: When using the selecting tool hold down shift to select more than one item.",
+      "message": "प्रो टीप: निवडणे टूल वापरताना एकापेक्षा जास्त आयटम निवडण्यासाठी शिफ्ट ठेवते."
+   },
+   "editor_tip_update_multiple_items": {
+      "description": "Pro tip: You can scale, rotate, move and delete multiple items at once.",
+      "message": "प्रो टीप: आपण एकाच वेळी एकाधिक आयटम स्केल, फिरवा, हलवू शकता आणि हटवू शकता."
+   },
+   "editor_tip_update_text": {
+      "description": "Pro tip: Double click on text to edit it.",
+      "message": "प्रो टीप: ते संपादित करण्यासाठी मजकूर वर डबल क्लिक करा."
+   },
+   "editor_upload_dialog_alert_copy_failed_message": {
+      "description": "This may have occurred due to the window not being focused.",
+      "message": "विंडो लक्ष केंद्रित न केल्यामुळे हे उद्भवू शकते."
+   },
+   "editor_upload_dialog_alert_copy_failed_title": {
+      "description": "Copy to clipboard failed",
+      "message": "क्लिपबोर्डवर कॉपी अयशस्वी"
+   },
+   "editor_upload_dialog_alert_copy_success_title": {
+      "description": "Copied to clipboard",
+      "message": "क्लिपबोर्डवर कॉपी केली"
+   },
+   "editor_upload_dialog_alert_upload_failed": {
+      "description": "Upload Failed",
+      "message": "अपलोड अयशस्वी"
+   },
+   "editor_upload_dialog_alert_upload_failed_link": {
+      "description": "Try again.",
+      "message": "पुन्हा प्रयत्न करा."
+   },
+   "editor_upload_dialog_alert_upload_failed_message": {
+      "description": "Please make sure you are connected to the internet and have accepted Google Drive permissions.",
+      "message": "कृपया आपण इंटरनेटशी कनेक्ट केलेले असल्याचे सुनिश्चित करा आणि Google ड्राइव्ह परवानग्या स्वीकारल्या आहेत."
+   },
+   "editor_upload_dialog_cancel_and_download": {
+      "description": "Cancel and download file",
+      "message": "फाईल रद्द करा आणि डाउनलोड करा"
+   },
+   "editor_upload_dialog_close": {
+      "description": "Close",
+      "message": "बंद"
+   },
+   "editor_upload_dialog_copy_link": {
+      "description": "Copy link",
+      "message": "कॉपी दुवा"
+   },
+   "editor_upload_dialog_link_public": {
+      "description": "Allow anyone with the link to view.",
+      "message": "दुव्यासह कोणालाही पाहण्याची परवानगी द्या."
+   },
+   "editor_zoom_crop_animation_animated": {
+      "description": "Sub-label indicating an animation type is animated.",
+      "message": "अ्यानिमेटेड"
+   },
+   "editor_zoom_crop_animation_crop": {
+      "description": "Animation type option for static cropping without animation.",
+      "message": "क्रॉप"
+   },
+   "editor_zoom_crop_animation_static": {
+      "description": "Sub-label indicating an animation type is static (no animation).",
+      "message": "स्थिर"
+   },
+   "editor_zoom_crop_animation_type": {
+      "description": "Label for the animation type selection section.",
+      "message": "अ्यानिमेशन प्रकार"
+   },
+   "editor_zoom_crop_animation_zoom_in": {
+      "description": "Animation type option for zooming in on the selected area.",
+      "message": "जूम इन करा"
+   },
+   "editor_zoom_crop_animation_zoom_out": {
+      "description": "Animation type option for zooming out from the selected area.",
+      "message": "जूम आउट करा"
+   },
+   "editor_zoom_crop_apply": {
+      "description": "Apply button in zoom/crop dialog.",
+      "message": "लागू करा"
+   },
+   "editor_zoom_crop_cancel": {
+      "description": "Cancel button in zoom/crop dialog.",
+      "message": "रद्द करा"
+   },
+   "editor_zoom_crop_change_area": {
+      "description": "Tooltip text for button to change the selected crop area.",
+      "message": "क्षेत्र बदला"
+   },
+   "editor_zoom_crop_dialog_title": {
+      "description": "Title for the zoom and crop dialog in the editor.",
+      "message": "जूम आणि क्रॉप"
+   },
+   "editor_zoom_crop_draw_instruction": {
+      "description": "Instruction text for the user to draw a crop area on the frame preview.",
+      "message": "फ्रेमवर निवड रेखा काढा"
+   },
+   "editor_zoom_crop_frame_end": {
+      "description": "Label for the end frame number.",
+      "message": "शेवट"
+   },
+   "editor_zoom_crop_frame_range": {
+      "description": "Label for the frame range selection section.",
+      "message": "फ्रेम श्रेणी"
+   },
+   "editor_zoom_crop_frame_start": {
+      "description": "Label for the start frame number.",
+      "message": "सुरुवात"
+   },
+   "editor_zoom_crop_frames_menu": {
+      "description": "Menu item label for zoom/crop frames feature.",
+      "message": "फ्रेम जूम/क्रॉप करा"
+   },
+   "editor_zoom_crop_no_area_selected": {
+      "description": "Message displayed when no crop area has been selected.",
+      "message": "कोणताही क्षेत्र निवडलेला नाही"
+   },
+   "editor_zoom_crop_select_area": {
+      "description": "Button text to select a crop area on the frame.",
+      "message": "क्षेत्र निवडा"
+   },
+   "editor_zoom_crop_smooth_animation": {
+      "description": "Checkbox label for smoothing animation by interpolating frames.",
+      "message": "फ्रेम जोडून अ्यानिमेशन मसृण करा"
+   },
+   "editor_zoom_crop_transition": {
+      "description": "Label for the transition duration section (number of frames for animation).",
+      "message": "संक्रमण"
+   },
+   "enable_drawing_text": {
+      "description": "Enable drawing",
+      "message": "रेखाचित्र सक्षम करा"
+   },
+   "enable_drawing_tooltip_text": {
+      "description": "This option allows users to draw in the selected area while holding down the ctrl key.",
+      "message": "हे पर्याय वापरकर्त्यांना Ctrl की दाबून निवडलेल्या क्षेत्रात काढण्याची परवानगी देते."
+   },
+   "extension_description": {
+      "description": "Take screenshots & record GIFs instantly! Edit & share seamlessly. Your all-in-one screenshot and screen recording solution.",
+      "message": "स्क्रीनशॉट घ्या आणि त्वरित जीआयएफ रेकॉर्ड करा! अखंडपणे संपादित करा आणि सामायिक करा. आपला सर्व-इन-वन स्क्रीनशॉट आणि स्क्रीन रेकॉर्डिंग सोल्यूशन."
+   },
+   "extension_name": {
+      "description": "Chrome Capture - screenshot & GIF",
+      "message": "क्रोम कॅप्चर - स्क्रीनशॉट आणि जीआयएफ"
+   },
+   "extension_short_name": {
+      "description": "Chrome Capture",
+      "message": "क्रोम कॅप्चर"
+   },
+   "file_access_text": {
+      "description": "After screenshot action",
+      "message": "स्क्रीनशॉट नंतरची क्रिया"
+   },
+   "filename_text": {
+      "description": "Filename",
+      "message": "फाईलचे नाव"
+   },
+   "frames_per_sec_short_text": {
+      "description": "FPS",
+      "message": "एफपीएस"
+   },
+   "frames_per_sec_text": {
+      "description": "Frames per second (fps)",
+      "message": "प्रतिमा प्रति सेकंद (एफपीएस)"
+   },
+   "frames_text": {
+      "description": "frames",
+      "message": "प्रतिमा"
+   },
+   "free_settings_text": {
+      "description": "Free Settings",
+      "message": "विनामूल्य सेटिंग्ज"
+   },
+   "fullscreen_info_modal_cancel": {
+      "description": "Cancel",
+      "message": "रद्द करा"
+   },
+   "fullscreen_info_modal_continue": {
+      "description": "Are you sure you want to continue with full screen capture?",
+      "message": "आपणास खात्री आहे की आपण पूर्ण स्क्रीन कॅप्चर सुरू ठेवू इच्छिता?"
+   },
+   "fullscreen_info_modal_do_not_show": {
+      "description": "Do not show this again",
+      "message": "पुन्हा हे दर्शवू नका"
+   },
+   "fullscreen_info_modal_message": {
+      "description": "You have used a Chrome Capture shortcut without the cropping tool, this will capture in full screen mode.",
+      "message": "आपण क्रॉपिंग साधनाविना Chrome कॅप्चर शॉर्टकट वापरला आहे, हे पूर्ण स्क्रीन मोडमध्ये कॅप्चर करेल."
+   },
+   "fullscreen_info_modal_open_cropping": {
+      "description": "Open cropping tool",
+      "message": "उघडा क्रॉपिंग साधन"
+   },
+   "fullscreen_info_modal_shortcut_cropping_tool": {
+      "description": "Alt + C: Open/close Chrome Capture cropping tool",
+      "message": "Alt + C: rome कॅप्चर क्रॉपिंग साधन उघडा / बंद करा"
+   },
+   "fullscreen_info_modal_shortcut_fullpage_screenshot": {
+      "description": "Alt + Shift + S: Full webpage screenshot (beta)",
+      "message": "Alt + Shift + S: पूर्ण वेबपृष्ठ स्क्रीनशॉट (बीटा)"
+   },
+   "fullscreen_info_modal_shortcut_linkt": {
+      "description": "You can configure these here: ",
+      "message": "आपण येथे हे कॉन्फिगर करू शकता:"
+   },
+   "fullscreen_info_modal_shortcut_recording": {
+      "description": "Alt + R: Start/stop recording",
+      "message": "Alt + R: रेकॉर्डिंग सुरू / थांबवा"
+   },
+   "fullscreen_info_modal_shortcut_screenshot": {
+      "description": "Alt + S: Visible area screenshot",
+      "message": "Alt + S: दृश्यमान क्षेत्र स्क्रीनशॉट"
+   },
+   "fullscreen_info_modal_shortcuts": {
+      "description": "Default shortcuts are: ",
+      "message": "डीफॉल्ट शॉर्टकट आहेत:"
+   },
+   "fullscreen_info_modal_start": {
+      "description": "Start full screen capture",
+      "message": "पूर्ण स्क्रीन कॅप्चर सुरू करा"
+   },
+   "fullscreen_info_modal_title": {
+      "description": "Full screen capture",
+      "message": "पूर्ण स्क्रीन कॅप्चर"
+   },
+   "general_not_available": {
+      "description": "N/A",
+      "message": "लागू नाही"
+   },
+   "get_premium": {
+      "description": "Get Premium",
+      "message": "प्रीमियम मिळवा"
+   },
+   "height_text": {
+      "description": "Width (px)",
+      "message": "रुंदी (पीएक्स)"
+   },
+   "hi": {
+      "description": "Hi",
+      "message": "हाय"
+   },
+   "internet_connection_required": {
+      "description": "Internet connection is required to upgrade to premium.",
+      "message": "प्रीमियममध्ये सुधारणा करण्यासाठी इंटरनेट कनेक्शन आवश्यक आहे."
+   },
+   "manage_subscription_access_until_date": {
+      "description": "Your plan will not renew. You can access premium features until $date$.",
+      "message": "तुमचा प्लॅन नूतनीकरण होणार नाही. तुम्ही $date$ पर्यंत प्रीमियम वैशिष्ट्ये वापरू शकता.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_cancel_button": {
+      "description": "Cancel subscription",
+      "message": "सदस्यता रद्द करा"
+   },
+   "manage_subscription_cancel_confirm_cancel_button": {
+      "description": "Keep Premium",
+      "message": "प्रीमियम ठेवा"
+   },
+   "manage_subscription_cancel_confirm_confirm_button": {
+      "description": "Continue to cancel",
+      "message": "रद्द करण्यासाठी सुरू ठेवा"
+   },
+   "manage_subscription_cancel_confirm_description": {
+      "description": "You will lose access to Premium features and Premium options will be reset.",
+      "message": "तुम्ही प्रीमियम वैशिष्ट्यांमध्ये प्रवेश गमावाल आणि प्रीमियम पर्याय रीसेट केले जातील."
+   },
+   "manage_subscription_cancel_confirm_title": {
+      "description": "Are you sure you want to cancel your subscription?",
+      "message": "तुम्ही तुमची सदस्यता रद्द करू इच्छिता याची खात्री आहे का?"
+   },
+   "manage_subscription_ended_on_date": {
+      "description": "Subscription ended on $date$.",
+      "message": "सदस्यता $date$ रोजी संपली.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_ends_on_date": {
+      "description": "Subscription ends on $date$.",
+      "message": "सदस्यता $date$ रोजी संपेल.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_next_payment_full": {
+      "description": "Next payment: $price$ on $date$",
+      "message": "पुढील पेमेंट: $date$ रोजी $price$",
+      "placeholders": {
+         "date": {
+            "content": "$2"
+         },
+         "price": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_paid_full": {
+      "description": "Paid: $billingCycle$",
+      "message": "भरलेले: $billingCycle$",
+      "placeholders": {
+         "billingCycle": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_resubscribe_prompt": {
+      "description": " To use premium features again, please upgrade.",
+      "message": " प्रीमियम वैशिष्ट्ये पुन्हा वापरण्यासाठी, कृपया श्रेणीसुधारित करा."
+   },
+   "manage_subscription_update_payment_button": {
+      "description": "Update payment method",
+      "message": "पेमेंट पद्धत अद्यतनित करा"
+   },
+   "max_recording_dimension_size_text": {
+      "description": "Max recording resolution/quality",
+      "message": "मॅक्स रेकॉर्डिंग रेझोल्यूशन / गुणवत्ता"
+   },
+   "no_limit_text": {
+      "description": "No limit",
+      "message": "मर्यादा नाही"
+   },
+   "open_text": {
+      "description": "Open",
+      "message": "उघडा"
+   },
+   "options_default_action": {
+      "description": "Extension icon click action",
+      "message": "एक्सटेंशन आयकॉन क्लिक क्रिया"
+   },
+   "options_dimension_size_1000": {
+      "description": "1000 pixels",
+      "message": "1000 पिक्सेल"
+   },
+   "options_dimension_size_1080p": {
+      "description": "1920 pixels (1080p)",
+      "message": "1 9 20 पिक्सेल (1080 पी)"
+   },
+   "options_dimension_size_480p": {
+      "description": "640 pixels (480p)",
+      "message": "640 पिक्सेल (480 पी)"
+   },
+   "options_dimension_size_4k": {
+      "description": "3840 pixels (4K)",
+      "message": "3840 पिक्सेल (4 के)"
+   },
+   "options_dimension_size_720p": {
+      "description": "1280 pixels (720p)",
+      "message": "1280 पिक्सेल (720 पी)"
+   },
+   "options_embedded_options_permission_warning": {
+      "description": "Cursor highlighting, click effects, and drawing tools will only work until the page reloads or changes. To keep them active after reloads or redirects, you'll need to grant an extra permission.",
+      "message": "कर्सर हायलाइटिंग, क्लिक इफेक्ट्स आणि ड्रॉइंग टूल्स केवळ पेज रीलोड होईपर्यंत किंवा बदलेपर्यंतच काम करतील. रीलोड किंवा रीडायरेक्टनंतर त्यांना सक्रिय ठेवण्यासाठी, तुम्हाला अतिरिक्त परवानगी देण्याची आवश्यकता असेल."
+   },
+   "options_enable_notifications": {
+      "description": "Enable notifications",
+      "message": "सूचना सक्षम करा"
+   },
+   "options_enable_notifications_tooltip": {
+      "description": "Display notifications when full screen recording starts and processing recordings in the background.",
+      "message": "पूर्ण स्क्रीन रेकॉर्डिंग सुरू होते आणि पार्श्वभूमीवर रेकॉर्डिंगवर प्रक्रिया करते तेव्हा सूचना दर्शवा."
+   },
+   "options_enable_subfolder_downloads": {
+      "description": "Download files into subfolder",
+      "message": "सबफोल्डरमध्ये फायली डाउनलोड करा"
+   },
+   "options_enable_subfolder_downloads_tooltip": {
+      "description": "Download files into a subfolder of your choice inside the downloads folder. This option is useful for organising your captures.",
+      "message": "डाउनलोड फोल्डरमध्ये आपल्या आवडीच्या सबफोल्डरमध्ये फायली डाउनलोड करा. हा पर्याय आपले कॅप्चर आयोजित करण्यासाठी उपयुक्त आहे."
+   },
+   "options_how_to_use_btn": {
+      "description": "How to use",
+      "message": "कसे वापरावे"
+   },
+   "options_language": {
+      "description": "Language",
+      "message": "भाषा"
+   },
+   "options_open_containing_folder_on_save": {
+      "description": "Open containing folder after saving",
+      "message": "जतन केल्यानंतर फोल्डर उघडा"
+   },
+   "options_open_popup": {
+      "description": "Open popup",
+      "message": "उघडा पॉपअप"
+   },
+   "options_open_selected_area": {
+      "description": "Open selected area capture",
+      "message": "निवडलेले क्षेत्र कॅप्चर उघडा"
+   },
+   "options_section_general": {
+      "description": "Title for the General settings section in the options page",
+      "message": "सामान्य सेटिंग्ज"
+   },
+   "options_section_output": {
+      "description": "Title for the Output and Saving settings section in the options page",
+      "message": "आउटपुट आणि सेव्हिंग"
+   },
+   "options_section_recording": {
+      "description": "Title for the Recording settings section in the options page",
+      "message": "रेकॉर्डिंग सेटिंग्ज"
+   },
+   "options_section_visuals": {
+      "description": "Title for the Cursor and Interaction Visuals settings section in the options page",
+      "message": "कर्सर आणि परस्परसंवाद व्हिज्युअल"
+   },
+   "options_shortcuts_btn": {
+      "description": "Shortcuts",
+      "message": "शॉर्टकट"
+   },
+   "options_subfolder_downloads_name": {
+      "description": "Subfolder name:",
+      "message": "सबफोल्डर नाव:"
+   },
+   "options_support_btn": {
+      "description": "Support",
+      "message": "समर्थन"
+   },
+   "overlay_help_text": {
+      "description": "Click and drag to choose your selected area. \nRight click to snap to an element, hold shift for multiple.",
+      "message": "आपले निवडलेले क्षेत्र निवडण्यासाठी क्लिक आणि ड्रॅग करा. \n घटकावर स्नॅप करण्यासाठी उजवे क्लिक करा, एकाधिक स्थानांतरित करा."
+   },
+   "plan_billing_annually": {
+      "description": "Annually",
+      "message": "वार्षिक"
+   },
+   "plan_billing_monthly": {
+      "description": "Monthly",
+      "message": "मासिक"
+   },
+   "plan_name_custom": {
+      "description": "Custom Plan",
+      "message": "सानुकूल प्लॅन"
+   },
+   "popup_capture_tab": {
+      "description": "Capture",
+      "message": "कॅप्चर"
+   },
+   "popup_desktop_screenshot_tooltip": {
+      "description": "Capture the entire screen, desktop, or any open application.",
+      "message": "संपूर्ण स्क्रीन, डेस्कटॉप किंवा कोणताही मुक्त अनुप्रयोग कॅप्चर करा."
+   },
+   "popup_editor_icon_tooltip": {
+      "description": "Open Editor",
+      "message": "उघडा संपादक"
+   },
+   "popup_full_page_screenshot_tooltip": {
+      "description": "Capture the current tab full webpage, including content beyond the visible area.",
+      "message": "दृश्यमान क्षेत्राच्या पलीकडे असलेल्या सामग्रीसह वर्तमान टॅब पूर्ण वेबपृष्ठ कॅप्चर करा."
+   },
+   "popup_full_webpage": {
+      "description": "Full webpage",
+      "message": "पूर्ण वेबपृष्ठ"
+   },
+   "popup_no_scripts_alert": {
+      "description": "Selected area and full webpage screenshots are not possible here. These features are available on other websites.",
+      "message": "निवडलेले क्षेत्र आणि संपूर्ण वेबपृष्ठ स्क्रीनशॉट येथे शक्य नाहीत. ही वैशिष्ट्ये इतर वेबसाइटवर उपलब्ध आहेत."
+   },
+   "popup_record_tab": {
+      "description": "Record",
+      "message": "विक्रम"
+   },
+   "popup_recording_limit_alert": {
+      "description": "Record up to $seconds$ seconds per GIF. Premium users can update this from the ",
+      "message": "प्रति जीआयएफ $seconds$ सेकंदांपर्यंत रेकॉर्ड करा. प्रीमियम वापरकर्ते हे वरून अद्यतनित करू शकतात",
+      "placeholders": {
+         "seconds": {
+            "content": "$1"
+         }
+      }
+   },
+   "popup_recording_limit_settings_link": {
+      "description": "settings page.",
+      "message": "सेटिंग्ज पृष्ठ."
+   },
+   "popup_screen_or_app": {
+      "description": "Full screen or app",
+      "message": "पूर्ण स्क्रीन किंवा अॅप"
+   },
+   "popup_selected_area": {
+      "description": "Selected area",
+      "message": "निवडलेले क्षेत्र"
+   },
+   "popup_selected_area_screenshot_tooltip": {
+      "description": "Capture a specific area of the current tab.",
+      "message": "सध्याच्या टॅबचे विशिष्ट क्षेत्र कॅप्चर करा."
+   },
+   "popup_set_shortcut": {
+      "description": "set shortcut",
+      "message": "शॉर्टकट सेट करा"
+   },
+   "popup_settings_icon_tooltip": {
+      "description": "Open Settings",
+      "message": "उघडा सेटिंग्ज"
+   },
+   "popup_tab_screenshot_tooltip": {
+      "description": "Capture the visible part of the current tab.",
+      "message": "सध्याच्या टॅबचा दृश्यमान भाग कॅप्चर करा."
+   },
+   "popup_this_tab": {
+      "description": "This tab",
+      "message": "हे टॅब"
+   },
+   "popup_waiting_for_desktop_selection_alert": {
+      "description": "FULL SCREEN OR APP capture did not start because you did not select an option from the popup dialog. If you have multiple monitors it may have opened on another monitor.",
+      "message": "पूर्ण स्क्रीन किंवा अ‍ॅप कॅप्चर सुरू झाले नाही कारण आपण पॉपअप संवादातून एखादा पर्याय निवडला नाही. आपल्याकडे एकाधिक मॉनिटर्स असल्यास ते दुसर्‍या मॉनिटरवर उघडले असेल."
+   },
+   "premium_settings_text": {
+      "description": "Premium Settings",
+      "message": "प्रीमियम सेटिंग्ज"
+   },
+   "purchase_btn_text": {
+      "description": "Get Premium!",
+      "message": "प्रीमियम मिळवा!"
+   },
+   "purchase_description_limited_time_text": {
+      "description": "Lock in this price now - limited time offer before we switch to subscriptions!",
+      "message": "आता ही किंमत मिळवा - आम्ही सदस्यतेवर स्विच करण्यापूर्वी मर्यादित वेळेची ऑफर!"
+   },
+   "purchase_description_text": {
+      "description": "Just one payment unlocks all premium features forever. No recurring fees!",
+      "message": "फक्त एक पेमेंट सर्व प्रीमियम वैशिष्ट्ये आजीवन अनलॉक करते. कोणतीही आवर्ती फी नाही!"
+   },
+   "purchase_feature_30fps": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": " रेशमी-गुळगुळीत 30 FPS रेकॉर्डिंग"
+   },
+   "purchase_feature_4K": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "स्फटिक-स्पष्ट 4K रेकॉर्डिंग"
+   },
+   "purchase_feature_alter_frame_rate": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "सानुकूल फ्रेम दर"
+   },
+   "purchase_feature_alter_playback_speed": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "स्लो-मोशन आणि टाइम-लॅप्स प्रभाव"
+   },
+   "purchase_feature_blur": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ब्लर टूल"
+   },
+   "purchase_feature_crop_recording": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "अचूक GIF क्रॉपिंग"
+   },
+   "purchase_feature_default": {
+      "description": "Feature that goes in $feature$ placeholder. Default fallback.",
+      "message": "हे वैशिष्ट्य"
+   },
+   "purchase_feature_frame_edits": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "शक्तिशाली फ्रेम-दर-फ्रेम संपादन"
+   },
+   "purchase_feature_highlight": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "हायलाइट टूल"
+   },
+   "purchase_feature_no_duration_limit": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "अमर्याद रेकॉर्डिंग लांबी"
+   },
+   "purchase_feature_special_effect": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "विशेष प्रभाव"
+   },
+   "purchase_feature_step_tool": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "स्टेप टूल"
+   },
+   "purchase_feature_svg": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "सानुकूल चिन्ह आणि लोगो जोडणे"
+   },
+   "purchase_feature_text_and_annotation_customization": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "मजकूर आणि भाष्यांवर संपूर्ण नियंत्रण"
+   },
+   "purchase_feature_unlimited_gif_compression": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "अमर्याद प्रगत GIF कॉम्प्रेशन"
+   },
+   "purchase_feature_update_end_time": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "सानुकूलित रेकॉर्डिंग वेळ"
+   },
+   "purchase_login_dialog_closed_by_user_alert": {
+      "description": "Looks like you closed the sign in dialog, premium users must sign in so you don't lose premium access.",
+      "message": "आपण साइन इन डायलॉग बंद केल्यासारखे दिसते आहे, प्रीमियम वापरकर्त्यांनी साइन इन केले पाहिजे जेणेकरून आपण प्रीमियम प्रवेश गमावू नका."
+   },
+   "purchase_login_dialog_google_button": {
+      "description": "Sign in with Google",
+      "message": "Google सह साइन इन करा"
+   },
+   "purchase_login_dialog_title": {
+      "description": "Sign in required",
+      "message": "आवश्यक साइन इन करा"
+   },
+   "purchase_login_text": {
+      "description": "Sign in with Google to link your purchase to your account.",
+      "message": "तुमची खरेदी तुमच्या खात्याशी लिंक करण्यासाठी Google ने साइन इन करा."
+   },
+   "purchase_login_text_window_opened": {
+      "description": "Sign into Google in the popup window.",
+      "message": "पॉपअप विंडोमध्ये Google मध्ये साइन इन करा."
+   },
+   "purchase_subscription_title_text": {
+      "description": "Choose the plan that fits your needs.",
+      "message": "तुमच्या गरजेनुसार प्लॅन निवडा."
+   },
+   "purchase_title_text": {
+      "description": "Get Lifetime Premium Access Today!",
+      "message": "आजच आजीवन प्रीमियम प्रवेश मिळवा!"
+   },
+   "purchase_title_text_blocked_feature": {
+      "description": "That feature requires Premium",
+      "message": "त्या वैशिष्ट्यासाठी प्रीमियम आवश्यक आहे"
+   },
+   "purchase_title_text_blocked_pro_feature": {
+      "description": "That feature requires Premium Pro",
+      "message": "त्या वैशिष्ट्यासाठी Premium Pro आवश्यक आहे"
+   },
+   "purchase_title_text_blocked_pro_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium Pro paywall.",
+      "message": "प्रीमियम प्रोसह $feature$ अनलॉक करा",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchase_title_text_blocked_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium paywall.",
+      "message": "प्रीमियमसह $feature$ अनलॉक करा",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_already_premium_user": {
+      "description": "Already a premium user?",
+      "message": "आधीच एक प्रीमियम वापरकर्ता?"
+   },
+   "purchases_bill_me": {
+      "description": "Bill me:",
+      "message": "मला बिल करा:"
+   },
+   "purchases_checkout_unavailable_message": {
+      "description": "Message shown when checkout could not be started.",
+      "message": "सध्या अपग्रेड प्रक्रिया सुरू करता आली नाही. कृपया पुन्हा प्रयत्न करा."
+   },
+   "purchases_compare_12_fps": {
+      "description": "12FPS",
+      "message": "12FPS"
+   },
+   "purchases_compare_3_per_day": {
+      "description": "3 per day",
+      "message": "दिवसाला ३"
+   },
+   "purchases_compare_add_custom_shape_tool": {
+      "description": "Add custom shape/icon tool",
+      "message": "सानुकूल आकार/चिन्ह साधन जोडा"
+   },
+   "purchases_compare_benefits": {
+      "description": "Benefits",
+      "message": "फायदे"
+   },
+   "purchases_compare_blur_tool": {
+      "description": "Blur tool",
+      "message": "अस्पष्ट साधन"
+   },
+   "purchases_compare_close_button_label": {
+      "description": "Close",
+      "message": "बंद करा"
+   },
+   "purchases_compare_compression": {
+      "description": "High quality GIF compression",
+      "message": "उच्च गुणवत्ता जीआयएफ कम्प्रेशन"
+   },
+   "purchases_compare_core_capture_features": {
+      "description": "Core Capture Features",
+      "message": "मुख्य कॅप्चर वैशिष्ट्ये"
+   },
+   "purchases_compare_crop_recordings": {
+      "description": "Crop recordings",
+      "message": "रेकॉर्डिंग्ज क्रॉप करा"
+   },
+   "purchases_compare_customize_editing_tools": {
+      "description": "Customize editing tools (font, size color)",
+      "message": "संपादन साधने सानुकूलित करा (फॉन्ट, आकार, रंग)"
+   },
+   "purchases_compare_drawing": {
+      "description": "Draw while recording",
+      "message": "रेकॉर्डिंग करताना काढा"
+   },
+   "purchases_compare_early_access": {
+      "description": "Early access to new features",
+      "message": "नवीन वैशिष्ट्यांसाठी लवकर प्रवेश"
+   },
+   "purchases_compare_editing": {
+      "description": "Edit captures",
+      "message": "कॅप्चर संपादित करा"
+   },
+   "purchases_compare_editing_free": {
+      "description": "basic editing",
+      "message": "मूलभूत संपादन"
+   },
+   "purchases_compare_editing_suite": {
+      "description": "Editing Suite",
+      "message": "संपादन संच"
+   },
+   "purchases_compare_frame_editing": {
+      "description": "Frame editing",
+      "message": "फ्रेम संपादन"
+   },
+   "purchases_compare_frame_rate": {
+      "description": "Adjust Frame Rate",
+      "message": "फ्रेम रेट समायोजित करा"
+   },
+   "purchases_compare_frame_specific_edits": {
+      "description": "Frame specific edits",
+      "message": "फ्रेम विशिष्ट संपादन"
+   },
+   "purchases_compare_free_draw_tools": {
+      "description": "Free draw, line, arrow, rectangle, circle, text tools",
+      "message": "फ्री ड्रॉ, रेषा, बाण, आयत, वर्तुळ, मजकूर साधने"
+   },
+   "purchases_compare_full_webpage_screenshots": {
+      "description": "Unlimited full page screenshots.",
+      "message": "अमर्यादित पूर्ण पृष्ठ स्क्रीनशॉट."
+   },
+   "purchases_compare_highlight_tool": {
+      "description": "Highlight tool",
+      "message": "हायलाइट साधन"
+   },
+   "purchases_compare_live_recording_tools": {
+      "description": "Live Recording Tools",
+      "message": "लाइव्ह रेकॉर्डिंग साधने"
+   },
+   "purchases_compare_mouse": {
+      "description": "Click and mouse indication",
+      "message": "क्लिक आणि माऊस संकेत क्लिक करा"
+   },
+   "purchases_compare_plans": {
+      "description": "Compare plans",
+      "message": "योजनांची तुलना करा"
+   },
+   "purchases_compare_plans_premium_button": {
+      "description": "Upgrade to Premium",
+      "message": "प्रीमियममध्ये श्रेणीसुधारित करा"
+   },
+   "purchases_compare_playback_speed": {
+      "description": "Tune recording playback speed",
+      "message": "प्लेबॅक वेग रेकॉर्डिंग ट्यून करा"
+   },
+   "purchases_compare_priority_support": {
+      "description": "Priority support and feature requests",
+      "message": "प्राधान्य समर्थन आणि वैशिष्ट्य विनंत्या"
+   },
+   "purchases_compare_recording": {
+      "description": "Unlimited GIF recordings.",
+      "message": "अमर्यादित जीआयएफ रेकॉर्डिंग."
+   },
+   "purchases_compare_recording_free": {
+      "description": "15sec limit per GIF",
+      "message": "प्रति जीआयएफ 15 सेकंद मर्यादा"
+   },
+   "purchases_compare_recording_quality": {
+      "description": "High quality GIFs",
+      "message": "उच्च गुणवत्ता gifs"
+   },
+   "purchases_compare_recording_quality_control": {
+      "description": "Recording Quality & Control",
+      "message": "रेकॉर्डिंग गुणवत्ता आणि नियंत्रण"
+   },
+   "purchases_compare_recording_quality_free": {
+      "description": "1000 pixels max",
+      "message": "1000 पिक्सेल मॅक्स"
+   },
+   "purchases_compare_screenshots": {
+      "description": "Unlimited screenshots.",
+      "message": "अमर्यादित स्क्रीनशॉट."
+   },
+   "purchases_compare_special_effects": {
+      "description": "Recording special effects",
+      "message": "विशेष प्रभाव रेकॉर्डिंग"
+   },
+   "purchases_compare_up_to_1080p": {
+      "description": "Up to 1080p",
+      "message": "1080p पर्यंत"
+   },
+   "purchases_compare_up_to_24_fps": {
+      "description": "Up to 24FPS",
+      "message": "24FPS पर्यंत"
+   },
+   "purchases_compare_up_to_30_fps": {
+      "description": "Up to 30FPS",
+      "message": "30FPS पर्यंत"
+   },
+   "purchases_compare_up_to_4k_plus": {
+      "description": "Up to 4K+",
+      "message": "4K+ पर्यंत"
+   },
+   "purchases_current_plan": {
+      "description": "Current plan",
+      "message": "सध्याचा प्लॅन"
+   },
+   "purchases_features": {
+      "description": "Features",
+      "message": "वैशिष्ट्ये"
+   },
+   "purchases_free": {
+      "description": "Free",
+      "message": "फुकट"
+   },
+   "purchases_free_button": {
+      "description": "Free to use",
+      "message": "वापरण्यासाठी विनामूल्य"
+   },
+   "purchases_free_feature_editing": {
+      "description": "Basic editing",
+      "message": "मूलभूत संपादन"
+   },
+   "purchases_free_feature_recording": {
+      "description": "Basic GIF recording",
+      "message": "मूलभूत जीआयएफ रेकॉर्डिंग"
+   },
+   "purchases_free_feature_screenshots": {
+      "description": "Unlimited screenshots",
+      "message": "अमर्यादित स्क्रीनशॉट"
+   },
+   "purchases_free_plan_description": {
+      "description": "Get started with our essential capture tools. Completely free for basic everyday use.",
+      "message": "आमच्या आवश्यक कॅप्चर साधनांसह प्रारंभ करा. मूलभूत दैनंदिन वापरासाठी पूर्णपणे विनामूल्य."
+   },
+   "purchases_plan_save_up_to_percentage": {
+      "description": "Save up to",
+      "message": "पर्यंत वाचवा"
+   },
+   "purchases_premium": {
+      "description": "Premium",
+      "message": "प्रीमियम"
+   },
+   "purchases_premium_billed_annually": {
+      "description": "Billed annually",
+      "message": "वार्षिक बिल केले"
+   },
+   "purchases_premium_button": {
+      "description": "Get lifetime access",
+      "message": "आजीवन प्रवेश मिळवा"
+   },
+   "purchases_premium_feature_compression": {
+      "description": "High quality GIF compression",
+      "message": "उच्च गुणवत्ता जीआयएफ कम्प्रेशन"
+   },
+   "purchases_premium_feature_editing": {
+      "description": "Feature rich editing",
+      "message": "वैशिष्ट्यपूर्ण संपादन वैशिष्ट्य"
+   },
+   "purchases_premium_feature_free": {
+      "description": "Everything from free plan",
+      "message": "मोफत प्लॅनची ​​वैशिष्ट्ये समाविष्ट आहेत"
+   },
+   "purchases_premium_feature_marked_with_star": {
+      "description": "All features marked with a star",
+      "message": "ताऱ्याने चिन्हांकित केलेली सर्व वैशिष्ट्ये"
+   },
+   "purchases_premium_feature_recording": {
+      "description": "Unlimited high quality GIF recording",
+      "message": "अमर्यादित उच्च गुणवत्ता जीआयएफ रेकॉर्डिंग"
+   },
+   "purchases_premium_feature_recording_1080p": {
+      "description": "High quality GIF recording, up to 1080p, 24fps",
+      "message": "उच्च दर्जाचे GIF रेकॉर्डिंग, 1080p पर्यंत, 24fps"
+   },
+   "purchases_premium_feature_refundable": {
+      "description": "Fully refundable",
+      "message": "पूर्णपणे परत करण्यायोग्य"
+   },
+   "purchases_premium_feature_risk_free": {
+      "description": "Risk-free: 7 day trial, cancel anytime",
+      "message": "जोखीम-मुक्त: 7 दिवसांची चाचणी, कधीही रद्द करा"
+   },
+   "purchases_premium_feature_unlimited_length": {
+      "description": "Unlimited GIF recording length",
+      "message": "अमर्याद GIF रेकॉर्डिंग लांबी"
+   },
+   "purchases_premium_price_info": {
+      "description": "one time fee",
+      "message": "एक वेळ शुल्क"
+   },
+   "purchases_premium_price_per_month": {
+      "description": "/ month",
+      "message": "/ महिना"
+   },
+   "purchases_premium_pro": {
+      "description": "Premium Pro",
+      "message": "प्रीमियम प्रो"
+   },
+   "purchases_premium_pro_editing_tools": {
+      "description": "Advanced editing tools (blurring, special effects, etc.)",
+      "message": "प्रगत संपादन साधने (अस्पष्ट करणे, विशेष प्रभाव इ.)"
+   },
+   "purchases_premium_pro_feature_early_access": {
+      "description": "Early access to new features",
+      "message": "नवीन वैशिष्ट्यांसाठी लवकर प्रवेश"
+   },
+   "purchases_premium_pro_feature_marked_with_crown": {
+      "description": "All features marked with a star and crown",
+      "message": "तारा आणि मुकुटाने चिन्हांकित केलेली सर्व वैशिष्ट्ये"
+   },
+   "purchases_premium_pro_feature_premium_plan": {
+      "description": "Everything from Premium plan",
+      "message": "प्रीमियम प्लॅनमधून सर्व काही"
+   },
+   "purchases_premium_pro_feature_quality": {
+      "description": "Max resolution recording, 4K+ and 30fps",
+      "message": "कमाल रिझोल्यूशन रेकॉर्डिंग, 4K+ आणि 30fps"
+   },
+   "purchases_premium_pro_feature_support": {
+      "description": "Priority support and feature requests",
+      "message": "प्राधान्य समर्थन आणि वैशिष्ट्य विनंत्या"
+   },
+   "purchases_premium_pro_upgrade": {
+      "description": "Upgrade to Pro",
+      "message": "प्रो वर श्रेणीसुधारित करा"
+   },
+   "purchases_premium_save_percentage": {
+      "description": "save $savingsPercentage$%",
+      "message": "$savingsPercentage$% वाचवा",
+      "placeholders": {
+         "savingsPercentage": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_premium_try_for_free": {
+      "description": "Try for free",
+      "message": "विनामूल्य प्रयत्न करा"
+   },
+   "purchases_price_unavailable": {
+      "description": "Label shown in place of a price when it is unavailable.",
+      "message": "किंमत उपलब्ध नाही"
+   },
+   "purchases_pricing_unavailable_message": {
+      "description": "Message shown when the Premium pricing request was blocked or failed.",
+      "message": "Premium किंमतींसाठीची विनंती ब्लॉक झाली किंवा अयशस्वी झाली. कार्यस्थळाचे नेटवर्क, VPN, जाहिरात अवरोधक, गोपनीयता एक्स्टेन्शन किंवा फायरवॉल Paddle ला ब्लॉक करत असल्यास असे होऊ शकते."
+   },
+   "purchases_pricing_unavailable_title": {
+      "description": "Title shown when Premium pricing could not be loaded.",
+      "message": "Premium ची किंमत लोड करता आली नाही"
+   },
+   "purchases_pricing_unavailable_troubleshooting_extensions": {
+      "description": "Troubleshooting step telling the user to disable VPN or privacy tools temporarily.",
+      "message": "VPN, जाहिरात अवरोधक किंवा गोपनीयता एक्स्टेन्शन तात्पुरते बंद करून पुन्हा प्रयत्न करा."
+   },
+   "purchases_pricing_unavailable_troubleshooting_intro": {
+      "description": "Intro text for troubleshooting steps when pricing is unavailable.",
+      "message": "हे करून पाहा:"
+   },
+   "purchases_pricing_unavailable_troubleshooting_network": {
+      "description": "Troubleshooting step telling the user to try another network or browser profile.",
+      "message": "दुसरे नेटवर्क वापरून पहा किंवा एक्स्टेन्शन दुसऱ्या Chrome प्रोफाइलमध्ये उघडा."
+   },
+   "purchases_pricing_unavailable_troubleshooting_workplace": {
+      "description": "Troubleshooting step telling the user workplace policy may be blocking Paddle.",
+      "message": "जर तुम्ही कामाच्या डिव्हाइसवर असाल, तर तुमचे नेटवर्क किंवा ब्राउझर धोरण Paddle ला ब्लॉक करत असू शकते."
+   },
+   "purchases_sign_in_here": {
+      "description": "Sign in here",
+      "message": "येथे साइन इन करा"
+   },
+   "purchases_start_trial_cancel_anytime": {
+      "description": "Call to action to start a free trial.",
+      "message": "सुरू ठेवण्यासाठी तुमची ७-दिवसांची विनामूल्य चाचणी सुरू करा. कधीही रद्द करा."
+   },
+   "purchases_try_premium_for_free": {
+      "description": "Try Premium for Free",
+      "message": "प्रीमियम विनामूल्य वापरून पहा"
+   },
+   "purchases_try_premium_pro_for_free": {
+      "description": "Try Premium Pro for Free",
+      "message": "प्रीमियम प्रो विनामूल्य वापरून पहा"
+   },
+   "purchases_upgrade_premium_to_pro": {
+      "description": "To use this feature and access all Pro benefits, upgrade your plan.",
+      "message": "हे वैशिष्ट्य वापरण्यासाठी आणि सर्व प्रो लाभांमध्ये प्रवेश करण्यासाठी, आपला प्लॅन अपग्रेड करा."
+   },
+   "purchases_upgrade_to_premium_pro": {
+      "description": "Upgrade to Premium Pro",
+      "message": "प्रीमियम प्रो वर श्रेणीसुधारित करा"
+   },
+   "quality_text": {
+      "description": "Recording quality (10 = best)",
+      "message": "रेकॉर्डिंग गुणवत्ता (10 = सर्वोत्तम)"
+   },
+   "rate_bad_rating_text": {
+      "description": "We are continuously trying our hardest to improve Chrome Capture, please share what needs improvement by emailing us at ",
+      "message": "Chrome कॅप्चर सुधारण्यासाठी आम्ही सतत आमचे सर्वात कठिण प्रयत्न करीत आहोत, कृपया आम्हाला ईमेल करून कशाची आवश्यकता आहे ते सामायिक करा"
+   },
+   "rate_bad_title_text": {
+      "description": "😞 We are sorry!",
+      "message": "😞 आम्हाला माफ करा!"
+   },
+   "rate_close_btn_text": {
+      "description": "Close",
+      "message": "बंद"
+   },
+   "rate_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "पुष्टी"
+   },
+   "rate_description_text": {
+      "description": "If you've found this extension useful please leave a rating or review. \n\nBy leaving a rating you can help us reach more users which will help fund continual improvements and keep general usage free.",
+      "message": "आपल्याला हा विस्तार उपयुक्त असल्यास कृपया रेटिंग किंवा पुनरावलोकन सोडा. \n\n रेटिंग सोडून आपण आम्हाला अधिक वापरकर्त्यांपर्यंत पोहोचण्यास मदत करू शकता जे सतत सुधारणा नियंत्रित करण्यात आणि सामान्य वापर विनामूल्य ठेवेल."
+   },
+   "rate_description_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "आम्ही प्रीमियम खरेदी करत आहोत आणि उत्पादन सुधारण्यासाठी आणि अधिक वापरकर्त्यांपर्यंत पोहोचण्यासाठी आपल्याला मदत करण्यासाठी आपल्याला कोणतीही अभिप्राय ऐकण्यास आवडेल."
+   },
+   "rate_good_rating_text": {
+      "description": "Your reviews keep our small team motivated to make Chrome Capture even better!",
+      "message": "आपली पुनरावलोकने आपल्या छोट्या टीमला Chrome कॅप्चर करण्यास प्रेरित करतात!"
+   },
+   "rate_good_rating_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "आम्ही प्रीमियम खरेदी करत आहोत आणि उत्पादन सुधारण्यासाठी आणि अधिक वापरकर्त्यांपर्यंत पोहोचण्यासाठी आपल्याला मदत करण्यासाठी आपल्याला कोणतीही अभिप्राय ऐकण्यास आवडेल."
+   },
+   "rate_good_title_text": {
+      "description": "😍 Review in the web store?",
+      "message": "😍 वेब स्टोअरमध्ये पुनरावलोकन?"
+   },
+   "rate_maybe_later_btn_text": {
+      "description": "Maybe later",
+      "message": "कदाचित नंतर"
+   },
+   "rate_no_btn_text": {
+      "description": "No thanks",
+      "message": "नको धन्यवाद"
+   },
+   "rate_send_email_btn_text": {
+      "description": "Send Email",
+      "message": "ई - मेल पाठवा"
+   },
+   "rate_thank_you_title_text": {
+      "description": "Thank you! 😍",
+      "message": "धन्यवाद! 😍"
+   },
+   "rate_title_text": {
+      "description": "How are we doing?",
+      "message": "आम्ही कसे करत आहोत?"
+   },
+   "rate_yes_btn_text": {
+      "description": "Ok, sure",
+      "message": "ठीक आहे नक्की"
+   },
+   "recommended": {
+      "description": "recommended",
+      "message": "शिफारस केली"
+   },
+   "record_length_text": {
+      "description": "Max record length",
+      "message": "कमाल रेकॉर्ड लांबी"
+   },
+   "recordings_taken": {
+      "description": "Recordings taken:",
+      "message": "रेकॉर्डिंग घेतले:"
+   },
+   "save_as_screenshot_text": {
+      "description": "Save screenshot as",
+      "message": "म्हणून स्क्रीनशॉट जतन करा"
+   },
+   "save_as_text": {
+      "description": "Save recording as",
+      "message": "रेकॉर्डिंग जतन करा"
+   },
+   "screenshots_taken": {
+      "description": "Screenshots taken:",
+      "message": "स्क्रीनशॉट घेतले:"
+   },
+   "seconds_text": {
+      "description": "secs",
+      "message": "सेकंद"
+   },
+   "shortcut": {
+      "description": "Shortcut:",
+      "message": "शॉर्टकट:"
+   },
+   "show_click_indicator_text": {
+      "description": "Show click animation",
+      "message": "क्लिक अॅनिमेशन दर्शवा"
+   },
+   "show_click_indicator_tooltip_text": {
+      "description": "This option draws a circle animation around the click location.",
+      "message": "हा पर्याय क्लिकच्या स्थानाजवळ एक वर्तुळ अॅनिमेशन काढतो."
+   },
+   "show_cursor_text": {
+      "description": "Show dot at cursor location",
+      "message": "कर्सर स्थानावरील शो डॉट"
+   },
+   "show_cursor_tooltip_text": {
+      "description": "This option draws a small circle to indicate where the mouse is located.",
+      "message": "माऊस कुठे आहे हे दर्शविण्यासाठी हा पर्याय एक लहान वर्तुळ काढतो."
+   },
+   "sign_in": {
+      "description": "Sign In",
+      "message": "साइन इन करा"
+   },
+   "sign_out": {
+      "description": "Sign Out",
+      "message": "साइन आउट करा"
+   },
+   "subscription_past_due_warning": {
+      "description": "Warning message shown when a user subscription payment has failed or is past its due date.",
+      "message": "सदस्यता पेमेंटची मुदत उलटून गेली आहे, तुमची पेमेंट माहिती अपडेट करण्यासाठी येथे क्लिक करा."
+   },
+   "subscription_premium_plan_description": {
+      "description": "Go beyond basics: HD quality & limits unlocked. Craft pro content with enhanced features.",
+      "message": "मूलभूत गोष्टींच्या पलीकडे जा: HD गुणवत्ता आणि मर्यादा अनलॉक केल्या. वर्धित वैशिष्ट्यांसह प्रो सामग्री तयार करा."
+   },
+   "subscription_premium_pro_plan_description": {
+      "description": "Experience peak performance: 4K+ and all features. Full editing suite with early access.",
+      "message": "उत्कृष्ट कामगिरीचा अनुभव घ्या: 4K+ आणि सर्व वैशिष्ट्ये. लवकर प्रवेशासह पूर्ण संपादन संच."
+   },
+   "subscription_status_active": {
+      "description": "Active",
+      "message": "सक्रिय"
+   },
+   "subscription_status_ending_soon": {
+      "description": "Ending Soon",
+      "message": "लवकरच संपणार आहे"
+   },
+   "subscription_status_expired": {
+      "description": "Expired",
+      "message": "कालबाह्य झाले"
+   },
+   "subscription_status_past_due": {
+      "description": "Past Due",
+      "message": "मुदत उलटलेली"
+   },
+   "subscription_status_paused": {
+      "description": "Paused",
+      "message": "विराम दिला"
+   },
+   "subscription_status_unknown": {
+      "description": "Unknown",
+      "message": "अज्ञात"
+   },
+   "unable_to_capture_website_alert": {
+      "description": "Unable to capture this website. Please use full screen/application capture or try capture another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "ही वेबसाइट कॅप्चर करण्यात अक्षम. कृपया संपूर्ण स्क्रीन/अनुप्रयोग कॅप्चर वापरा किंवा दुसरी वेबसाइट कॅप्चर करण्याचा प्रयत्न करा. \n\n (╯ ° □ °） ┻━┻ ┻━┻"
+   },
+   "view_permission": {
+      "description": "View permission.",
+      "message": "परवानगी पहा."
+   },
+   "width_text": {
+      "description": "Height (px)",
+      "message": "उंची (पीएक्स)"
+   }
+}

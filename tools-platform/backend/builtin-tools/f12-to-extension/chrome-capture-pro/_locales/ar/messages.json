@@ -1,0 +1,1691 @@
+{
+   "account_modal_free_plan": {
+      "description": "You are on the free plan",
+      "message": "أنت في الخطة المجانية"
+   },
+   "account_modal_manage_subscription_button": {
+      "description": "Manage Subscription",
+      "message": "إدارة الاشتراك"
+   },
+   "account_modal_not_signed_in": {
+      "description": "You are not signed in",
+      "message": "أنت لم يتم تسجيل الدخول"
+   },
+   "account_modal_premium_plan": {
+      "description": "You are on the premium plan",
+      "message": "أنت في الخطة الممتازة"
+   },
+   "account_modal_premium_pro_plan": {
+      "description": "You are on the Premium Pro plan",
+      "message": "أنت مشترك في خطة Premium Pro"
+   },
+   "account_modal_request_feature_button": {
+      "description": "Request Feature",
+      "message": "طلب ميزة"
+   },
+   "account_modal_request_support_button": {
+      "description": "Request Support",
+      "message": "طلب دعم"
+   },
+   "account_modal_stats_heading": {
+      "description": "Your stats:",
+      "message": "إحصائياتك:"
+   },
+   "alert_text": {
+      "description": "Unable to run selected area capture on this website. Please use full screen recording or try another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "غير قادر على تشغيل منطقة محددة التقاط على هذا الموقع. يرجى استخدام تسجيل ملء الشاشة أو جرب موقع ويب آخر. \n\n (° ° □ °) ╯( ┻━┻"
+   },
+   "click_indicator_size_color_text": {
+      "description": "Click animation size & color",
+      "message": "انقر فوق حجم الرسوم المتحركة واللون"
+   },
+   "close_btn_text": {
+      "description": "Close",
+      "message": "يغلق"
+   },
+   "confirm_dialog_cancel_btn_text": {
+      "description": "Cancel",
+      "message": "يلغي"
+   },
+   "confirm_dialog_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "يتأكد"
+   },
+   "confirm_fps_update_text": {
+      "description": "Changing the fps will remove all frame specific edits such as edited or deleted frames. Do you want to continue?",
+      "message": "سيؤدي تغيير FPS إلى إزالة جميع التعديلات الخاصة بالصورة مثل الإطارات المحرجة أو المحذوفة. هل تريد الاستمرار؟"
+   },
+   "copy_text": {
+      "description": "Copy to clipboard",
+      "message": "نسخ إلى الحافظة"
+   },
+   "cursor_size_and_color_text": {
+      "description": "Cursor dot size & color",
+      "message": "مؤشر دوت الحجم واللون"
+   },
+   "dither_text": {
+      "description": "Apply dither",
+      "message": "تطبيق DITTER."
+   },
+   "download_filename_text": {
+      "description": "Download filename format",
+      "message": "قم بتنزيل تنسيق اسم الملف"
+   },
+   "download_text": {
+      "description": "Download",
+      "message": "تحميل"
+   },
+   "draw_size_and_color_text": {
+      "description": "Drawing size & color",
+      "message": "حجم الرسم واللون"
+   },
+   "duration": {
+      "description": "Label for a field indicating a length of time.",
+      "message": "المدة"
+   },
+   "editor_action_add_icon": {
+      "description": "Add icon",
+      "message": "أضف أيقونة"
+   },
+   "editor_action_add_text": {
+      "description": "Add text",
+      "message": "إضافة نص"
+   },
+   "editor_action_blur_rectangle": {
+      "description": "Blur area",
+      "message": "تمويه المنطقة"
+   },
+   "editor_action_copy": {
+      "description": "Copy to clipboard",
+      "message": "نسخ إلى الحافظة"
+   },
+   "editor_action_crop": {
+      "description": "Crop",
+      "message": "ا & قتصاص"
+   },
+   "editor_action_draw_arrow": {
+      "description": "Draw arrow",
+      "message": "ارسم السهم"
+   },
+   "editor_action_draw_ellipse": {
+      "description": "Draw ellipse",
+      "message": "رسم القطع الناقص"
+   },
+   "editor_action_draw_line": {
+      "description": "Draw line",
+      "message": "ارسم خطا"
+   },
+   "editor_action_draw_rectangle": {
+      "description": "Draw rectangle",
+      "message": "رسم المستطيل"
+   },
+   "editor_action_free_draw": {
+      "description": "Free draw",
+      "message": "السحب الحرة"
+   },
+   "editor_action_highlight": {
+      "description": "Highlight",
+      "message": "تسليط الضوء"
+   },
+   "editor_action_numbered_step": {
+      "description": "Action label for adding a numbered step annotation.",
+      "message": "خطوة مرقمة"
+   },
+   "editor_action_pan": {
+      "description": "Pan",
+      "message": "تحريك"
+   },
+   "editor_action_profile_account": {
+      "description": "Account",
+      "message": "الحساب"
+   },
+   "editor_action_redo": {
+      "description": "Redo",
+      "message": "إعادة"
+   },
+   "editor_action_save": {
+      "description": "Save",
+      "message": "يحفظ"
+   },
+   "editor_action_select": {
+      "description": "Select, move, resize",
+      "message": "حدد، نقل، تغيير الحجم"
+   },
+   "editor_action_settings": {
+      "description": "Settings",
+      "message": "إعدادات"
+   },
+   "editor_action_undo": {
+      "description": "Undo",
+      "message": "الغاء التحميل"
+   },
+   "editor_action_undo_all": {
+      "description": "Undo all",
+      "message": "التراجع"
+   },
+   "editor_add_text_default": {
+      "description": "start typing...",
+      "message": "ابدأ الطباعة..."
+   },
+   "editor_browse_file_system": {
+      "description": "Browse file system",
+      "message": "تصفح نظام الملفات"
+   },
+   "editor_drag_and_drop": {
+      "description": "Drag and drop image/GIF or ",
+      "message": "سحب وإسقاط الصورة / GIF أو"
+   },
+   "editor_file_downloaded": {
+      "description": "File saved to downloads folder.",
+      "message": "تم حفظ الملف إلى مجلد التنزيلات."
+   },
+   "editor_file_downloaded_selected_location": {
+      "description": "File saved to selected location.",
+      "message": "تم حفظ الملف إلى الموقع المحدد."
+   },
+   "editor_frame_selector_apply_edits": {
+      "description": "Apply edits to selected",
+      "message": "تطبيق التعديلات على المحددة"
+   },
+   "editor_frame_selector_delete": {
+      "description": "Delete",
+      "message": "يمسح"
+   },
+   "editor_frame_selector_delete_every_second": {
+      "description": "Delete every second frame",
+      "message": "حذف كل إطار ثان"
+   },
+   "editor_frame_selector_delete_selected": {
+      "description": "Delete selected",
+      "message": "احذف المختار"
+   },
+   "editor_frame_selector_remove_edits": {
+      "description": "Remove edits from selected",
+      "message": "إزالة التعديلات من المحددة"
+   },
+   "editor_frame_selector_restore": {
+      "description": "Restore",
+      "message": "يعيد"
+   },
+   "editor_frame_selector_restore_all": {
+      "description": "Restore All",
+      "message": "استعادة كل"
+   },
+   "editor_frame_selector_restore_selected": {
+      "description": "Restore selected",
+      "message": "استعادة المختارة"
+   },
+   "editor_frame_selector_select_next": {
+      "description": "Select next frames",
+      "message": "حدد الصور التالية"
+   },
+   "editor_frame_selector_select_previous": {
+      "description": "Select previous frames",
+      "message": "حدد الصور السابقة"
+   },
+   "editor_frame_selector_unselect_all": {
+      "description": "Unselect All",
+      "message": "إلغاء تحديد الكل"
+   },
+   "editor_image_copied": {
+      "description": "Image copied to clipboard.",
+      "message": "نسخ الصورة إلى الحافظة."
+   },
+   "editor_image_copied_failed": {
+      "description": "Failed to copy image to clipboard, it may be too large.",
+      "message": "فشل نسخ الصورة إلى الحافظة، قد يكون كبيرا جدا."
+   },
+   "editor_link_copied": {
+      "description": "Link copied to clipboard.",
+      "message": "تم نسخ الرابط إلى الحافظة."
+   },
+   "editor_max_time_reached_dialog_description1": {
+      "description": "You have reached the max recording length time of $maxlength$ seconds for GIFs. Premium users can update this from the settings page.",
+      "message": "لقد وصلت إلى مدة التسجيل القصوى من ثواني $maxlength$ لـ GIFs. يمكن للمستخدمين الممتازين تحديث هذا من صفحة الإعدادات.",
+      "placeholders": {
+         "maxlength": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_max_time_reached_dialog_description2": {
+      "description": "GIFs are intended for short recordings. If you require full length videos we recommend our free screen recorder: ",
+      "message": "مصور GIF مخصص للتسجيلات القصيرة. إذا كنت بحاجة إلى مقاطع فيديو كاملة الطول ، فإننا نوصي مسجل الشاشة المجاني لدينا:"
+   },
+   "editor_max_time_reached_dialog_description3": {
+      "description": "Premium users can update this from the settings page.",
+      "message": "يمكن للمستخدمين الممتازين تحديث هذا من صفحة الإعدادات."
+   },
+   "editor_max_time_reached_dialog_settings_button": {
+      "description": "Open settings",
+      "message": "أفتح الإعدادات"
+   },
+   "editor_max_time_reached_dialog_title": {
+      "description": "Recording suddenly stopped?",
+      "message": "توقف التسجيل فجأة؟"
+   },
+   "editor_premium_options_color": {
+      "description": "Color",
+      "message": "اللون"
+   },
+   "editor_premium_options_draw_size": {
+      "description": "Draw Size",
+      "message": "رسم الحجم"
+   },
+   "editor_premium_options_font": {
+      "description": "Font",
+      "message": "الخط"
+   },
+   "editor_premium_options_playback_speed": {
+      "description": "Playback Speed",
+      "message": "سرعة التشغيل"
+   },
+   "editor_premium_options_special_effect": {
+      "description": "Special Effect",
+      "message": "تأثير خاص"
+   },
+   "editor_premium_options_title": {
+      "description": "Premium Options",
+      "message": "خيارات متميزة"
+   },
+   "editor_save_dialog_advanced_encoding_options": {
+      "description": "Title for a section containing advanced, technical options for encoding a file.",
+      "message": "خيارات الترميز المتقدمة"
+   },
+   "editor_save_dialog_alert_title": {
+      "description": "Warning",
+      "message": "تحذير"
+   },
+   "editor_save_dialog_aspect_ratio": {
+      "description": "lock aspect ratio",
+      "message": "تأمين نسبة الارتفاع"
+   },
+   "editor_save_dialog_cancel": {
+      "description": "Cancel",
+      "message": "يلغي"
+   },
+   "editor_save_dialog_chip_animated_image": {
+      "description": "Chip label indicating an animated image format (e.g. GIF, AVIF).",
+      "message": "صورة متحركة"
+   },
+   "editor_save_dialog_chip_large_file": {
+      "description": "Chip label indicating the format produces a large file size.",
+      "message": "ملف كبير"
+   },
+   "editor_save_dialog_chip_limited_support": {
+      "description": "Chip label indicating the format has limited browser/app support.",
+      "message": "دعم محدود"
+   },
+   "editor_save_dialog_chip_small_file": {
+      "description": "Chip label indicating the format produces a small file size.",
+      "message": "ملف صغير"
+   },
+   "editor_save_dialog_chip_video": {
+      "description": "Chip label indicating a video format (e.g. WebM, MP4).",
+      "message": "فيديو"
+   },
+   "editor_save_dialog_chip_widely_supported": {
+      "description": "Chip label indicating the format is widely supported.",
+      "message": "مدعوم على نطاق واسع"
+   },
+   "editor_save_dialog_compress": {
+      "description": "Compress & optimize GIF",
+      "message": "ضغط وتحسين GIF"
+   },
+   "editor_save_dialog_compress_tooltip": {
+      "description": "Apply GIF compression algorthm to greatly reduce GIF file size and in some cases improve quality. Highly recommeded.",
+      "message": "تطبيق ضغط GIF ALGORTHM لتقليل حجم ملف GIF بشكل كبير وفي بعض الحالات تحسين الجودة. أوصت بشدة."
+   },
+   "editor_save_dialog_dither_tooltip": {
+      "description": "Apply dither algorithm to frames. Try toggling this option if you experience color quality issues.",
+      "message": "تطبيق خوارزمية dither على الصور. حاول تبديل هذا الخيار إذا واجهت مشكلات جودة الألوان."
+   },
+   "editor_save_dialog_download_raw_recording": {
+      "description": "Download raw recording",
+      "message": "تنزيل التسجيل الخام"
+   },
+   "editor_save_dialog_estimated_size": {
+      "description": "Estimated GIF Size: ",
+      "message": "حجم GIF المقدر:"
+   },
+   "editor_save_dialog_export_sound": {
+      "description": "Include sound (beta)",
+      "message": "تشمل الصوت (بيتا)"
+   },
+   "editor_save_dialog_export_sound_tooltip": {
+      "description": "Enable this option to include sound in the video.",
+      "message": "قم بتمكين هذا الخيار لتضمين الصوت في الفيديو."
+   },
+   "editor_save_dialog_frames": {
+      "description": "Frames: ",
+      "message": "الصور:"
+   },
+   "editor_save_dialog_frames_alert": {
+      "description": "There are currently selected frames, saving will only output these selected frames - ",
+      "message": "هناك صور محددة حاليًا ، سيؤدي الحفظ إلى إخراج هذه الإطارات المحددة فقط -"
+   },
+   "editor_save_dialog_frames_alert_button": {
+      "description": "Click here to unselect all frames",
+      "message": "انقر هنا لإلغاء تحديد كل الصور"
+   },
+   "editor_save_dialog_frames_alert_title": {
+      "description": "Playback Speed",
+      "message": "سرعة التشغيل"
+   },
+   "editor_save_dialog_frames_processing": {
+      "description": "Processing Frames: ",
+      "message": "معالجة الصور:"
+   },
+   "editor_save_dialog_height_helper": {
+      "description": "Recorded height is ",
+      "message": "الارتفاع المسجل هو"
+   },
+   "editor_save_dialog_lossy_compression": {
+      "description": "Label for a setting that controls the level of lossy compression, from 0 to 100 percent.",
+      "message": "ضغط مع فقدان البيانات (0 - 100%)"
+   },
+   "editor_save_dialog_number_min_max_validation": {
+      "description": "A value between $minSize$ and $maxSize$ is required.",
+      "message": "هناك حاجة إلى قيمة بين $minSize$ و $maxSize$.",
+      "placeholders": {
+         "maxSize": {
+            "content": "$2"
+         },
+         "minSize": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_save_dialog_processing_alert": {
+      "description": "Processing this recording will require a lot of memory and processing power. Unless you have a high spec PC it is recommended to do one or more of the following:",
+      "message": "سيطلب معالجة هذا التسجيل الكثير من الذاكرة وقوة المعالجة. ما لم يكن لديك جهاز كمبيوتر مثالي عالي المواصفات، فمن المستحسن القيام به واحد أو أكثر مما يلي:"
+   },
+   "editor_save_dialog_processing_alert_memory": {
+      "description": "Please note if the resulting GIF is blank then you ran out of memory.",
+      "message": "يرجى ملاحظة أنه إذا كان GIF الناتج فارغا ثم نفدت الذاكرة."
+   },
+   "editor_save_dialog_processing_alert_point_1": {
+      "description": "Compress and optimize GIF",
+      "message": "ضغط وتحسين GIF"
+   },
+   "editor_save_dialog_processing_alert_point_2": {
+      "description": "Reduce the width & height",
+      "message": "تقليل العرض والارتفاع"
+   },
+   "editor_save_dialog_processing_alert_point_3": {
+      "description": "Reduce FPS or delete frames",
+      "message": "تقليل FPS أو حذف الصور"
+   },
+   "editor_save_dialog_purchase_dialog_compression_description": {
+      "description": "Free users are limited to 3 high quality GIF compressions per day. Upgrade to Premium to have no restrictions.",
+      "message": "يقتصر المستخدمون الأحرار على 3 ضغطات GIF عالية الجودة يوميًا. ترقية إلى قسط لعدم وجود قيود."
+   },
+   "editor_save_dialog_quantization_algorithm": {
+      "description": "Label for a dropdown to select a quantization algorithm.",
+      "message": "خوارزمية التكميم"
+   },
+   "editor_save_dialog_quantization_algorithm_new_alpha": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Alpha.",
+      "message": "جديد (ألفا)"
+   },
+   "editor_save_dialog_quantization_algorithm_new_beta": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Beta.",
+      "message": "جديد (تجريبي)"
+   },
+   "editor_save_dialog_quantization_algorithm_old": {
+      "description": "An option for the quantization algorithm setting, indicating an older version.",
+      "message": "قديم"
+   },
+   "editor_save_dialog_recording_quality_alert": {
+      "description": "GIF quality is limited for non premium users. To output high quality recordings you can do one of the following:",
+      "message": "جودة GIF محدودة للمستخدمين غير الممتازين. لإخراج تسجيلات عالية الجودة ، يمكنك القيام بواحد مما يلي:"
+   },
+   "editor_save_dialog_recording_quality_alert_option_1": {
+      "description": "Purchase premium",
+      "message": "شراء قسط"
+   },
+   "editor_save_dialog_recording_quality_alert_option_2": {
+      "description": "Save as a WebM file",
+      "message": "حفظ كملف ويب"
+   },
+   "editor_save_dialog_reduce_width": {
+      "description": "Reduce width & height",
+      "message": "تقليل العرض والارتفاع"
+   },
+   "editor_save_dialog_reduce_width_tooltip": {
+      "description": "Reduce GIF width and height/quality to improve processing time and produce a smaller file.",
+      "message": "تقليل عرض GIF والارتفاع/الجودة لتحسين وقت المعالجة وإنتاج ملف أصغر."
+   },
+   "editor_save_dialog_save": {
+      "description": "Save",
+      "message": "يحفظ"
+   },
+   "editor_save_dialog_save_by": {
+      "description": "Save by",
+      "message": "حفظ بواسطة"
+   },
+   "editor_save_dialog_save_by_download": {
+      "description": "Download file",
+      "message": "تحميل الملف"
+   },
+   "editor_save_dialog_save_by_google_drive": {
+      "description": "Upload to Google Drive & copy link",
+      "message": "تحميل إلى Google Drive و Copy Link"
+   },
+   "editor_save_dialog_save_location": {
+      "description": "Save location",
+      "message": "حفظ الموقع"
+   },
+   "editor_save_dialog_save_location_downloads": {
+      "description": "Downloads folder",
+      "message": "مجلد التنزيلات"
+   },
+   "editor_save_dialog_save_location_downloads_subfolder": {
+      "description": "Downloads subfolder",
+      "message": "تنزيل المجلد الفرعي"
+   },
+   "editor_save_dialog_save_location_select": {
+      "description": "Manually select location",
+      "message": "حدد الموقع يدويًا"
+   },
+   "editor_save_dialog_title": {
+      "description": "Save",
+      "message": "يحفظ"
+   },
+   "editor_save_dialog_title_processing": {
+      "description": "Processing...",
+      "message": "معالجة..."
+   },
+   "editor_save_dialog_title_uploading": {
+      "description": "Uploading...",
+      "message": "تحميل ..."
+   },
+   "editor_save_dialog_width_helper": {
+      "description": "Recorded width is ",
+      "message": "العرض المسجل هو"
+   },
+   "editor_text": {
+      "description": "Open in editor",
+      "message": "فتح في المحرر"
+   },
+   "editor_tip_delete_items": {
+      "description": "Pro tip: Delete added items by selecting the item and pressing the delete key.",
+      "message": "نصيحة PRO: حذف عناصر إضافية عن طريق تحديد العنصر والضغط على مفتاح الحذف."
+   },
+   "editor_tip_edit_specific_frames": {
+      "description": "Pro tip: You can edit specific frames by using the 'Apply edits to selected option'",
+      "message": "نصيحة للمحترفين: يمكنك تحرير صور محددة باستخدام \"تطبيق التعديلات على الخيار المحدد\""
+   },
+   "editor_tip_scroll": {
+      "description": "Pro tip: Scroll when hovering the screenshot/recording to zoom.",
+      "message": "نصيحة PRO: قم بالتمرير عند تحوم Screenshot / التسجيل للتكبير."
+   },
+   "editor_tip_shift_multiple_items": {
+      "description": "Pro tip: When using the selecting tool hold down shift to select more than one item.",
+      "message": "نصيحة برو: عند استخدام أداة تحديد تعليق أسفل التحول لتحديد أكثر من عنصر واحد."
+   },
+   "editor_tip_update_multiple_items": {
+      "description": "Pro tip: You can scale, rotate, move and delete multiple items at once.",
+      "message": "نصيحة برو: يمكنك قياس وتدوير ونقل وحذف عناصر متعددة في وقت واحد."
+   },
+   "editor_tip_update_text": {
+      "description": "Pro tip: Double click on text to edit it.",
+      "message": "نصيحة PRO: انقر نقرا مزدوجا على النص لتحريره."
+   },
+   "editor_upload_dialog_alert_copy_failed_message": {
+      "description": "This may have occurred due to the window not being focused.",
+      "message": "قد يكون هذا قد حدث بسبب عدم تركيز النافذة."
+   },
+   "editor_upload_dialog_alert_copy_failed_title": {
+      "description": "Copy to clipboard failed",
+      "message": "النسخ إلى الحافظة فشل"
+   },
+   "editor_upload_dialog_alert_copy_success_title": {
+      "description": "Copied to clipboard",
+      "message": "نسخ إلى الحافظة"
+   },
+   "editor_upload_dialog_alert_upload_failed": {
+      "description": "Upload Failed",
+      "message": "التحميل فشل"
+   },
+   "editor_upload_dialog_alert_upload_failed_link": {
+      "description": "Try again.",
+      "message": "حاول مرة أخري."
+   },
+   "editor_upload_dialog_alert_upload_failed_message": {
+      "description": "Please make sure you are connected to the internet and have accepted Google Drive permissions.",
+      "message": "يرجى التأكد من أنك متصل بالإنترنت وقبلت أذونات Google Drive."
+   },
+   "editor_upload_dialog_cancel_and_download": {
+      "description": "Cancel and download file",
+      "message": "إلغاء الملف وتنزيله"
+   },
+   "editor_upload_dialog_close": {
+      "description": "Close",
+      "message": "يغلق"
+   },
+   "editor_upload_dialog_copy_link": {
+      "description": "Copy link",
+      "message": "انسخ الرابط"
+   },
+   "editor_upload_dialog_link_public": {
+      "description": "Allow anyone with the link to view.",
+      "message": "السماح لأي شخص لديه رابط للعرض."
+   },
+   "editor_zoom_crop_animation_animated": {
+      "description": "Sub-label indicating an animation type is animated.",
+      "message": "متحرك"
+   },
+   "editor_zoom_crop_animation_crop": {
+      "description": "Animation type option for static cropping without animation.",
+      "message": "القص"
+   },
+   "editor_zoom_crop_animation_static": {
+      "description": "Sub-label indicating an animation type is static (no animation).",
+      "message": "ثابت"
+   },
+   "editor_zoom_crop_animation_type": {
+      "description": "Label for the animation type selection section.",
+      "message": "نوع الرسم المتحرك"
+   },
+   "editor_zoom_crop_animation_zoom_in": {
+      "description": "Animation type option for zooming in on the selected area.",
+      "message": "تكبير"
+   },
+   "editor_zoom_crop_animation_zoom_out": {
+      "description": "Animation type option for zooming out from the selected area.",
+      "message": "تصغير"
+   },
+   "editor_zoom_crop_apply": {
+      "description": "Apply button in zoom/crop dialog.",
+      "message": "تطبيق"
+   },
+   "editor_zoom_crop_cancel": {
+      "description": "Cancel button in zoom/crop dialog.",
+      "message": "إلغاء"
+   },
+   "editor_zoom_crop_change_area": {
+      "description": "Tooltip text for button to change the selected crop area.",
+      "message": "تغيير المنطقة"
+   },
+   "editor_zoom_crop_dialog_title": {
+      "description": "Title for the zoom and crop dialog in the editor.",
+      "message": "التكبير والقص"
+   },
+   "editor_zoom_crop_draw_instruction": {
+      "description": "Instruction text for the user to draw a crop area on the frame preview.",
+      "message": "ارسم التحديد على الإطار"
+   },
+   "editor_zoom_crop_frame_end": {
+      "description": "Label for the end frame number.",
+      "message": "انتهاء"
+   },
+   "editor_zoom_crop_frame_range": {
+      "description": "Label for the frame range selection section.",
+      "message": "نطاق الإطار"
+   },
+   "editor_zoom_crop_frame_start": {
+      "description": "Label for the start frame number.",
+      "message": "ابدأ"
+   },
+   "editor_zoom_crop_frames_menu": {
+      "description": "Menu item label for zoom/crop frames feature.",
+      "message": "تكبير/قص الإطارات"
+   },
+   "editor_zoom_crop_no_area_selected": {
+      "description": "Message displayed when no crop area has been selected.",
+      "message": "لم يتم تحديد منطقة"
+   },
+   "editor_zoom_crop_select_area": {
+      "description": "Button text to select a crop area on the frame.",
+      "message": "حدد المنطقة"
+   },
+   "editor_zoom_crop_smooth_animation": {
+      "description": "Checkbox label for smoothing animation by interpolating frames.",
+      "message": "تنعيم الرسم المتحرك بإضافة إطارات"
+   },
+   "editor_zoom_crop_transition": {
+      "description": "Label for the transition duration section (number of frames for animation).",
+      "message": "الانتقال"
+   },
+   "enable_drawing_text": {
+      "description": "Enable drawing",
+      "message": "تمكين الرسم"
+   },
+   "enable_drawing_tooltip_text": {
+      "description": "This option allows users to draw in the selected area while holding down the ctrl key.",
+      "message": "يتيح هذا الخيار للمستخدمين السحب في المنطقة المحددة أثناء الضغط باستمرار على مفتاح CTRL."
+   },
+   "extension_description": {
+      "description": "Take screenshots & record GIFs instantly! Edit & share seamlessly. Your all-in-one screenshot and screen recording solution.",
+      "message": "خذ لقطات الشاشة وتسجيل صور GIF على الفور! تحرير ومشاركة بسلاسة. لقطة الشاشة الكل في واحد وحل تسجيل الشاشة."
+   },
+   "extension_name": {
+      "description": "Chrome Capture - screenshot & GIF",
+      "message": "التقاط الكروم - لقطة الشاشة و GIF"
+   },
+   "extension_short_name": {
+      "description": "Chrome Capture",
+      "message": "التقاط الكروم"
+   },
+   "file_access_text": {
+      "description": "After screenshot action",
+      "message": "الإجراء بعد التقاط لقطة الشاشة"
+   },
+   "filename_text": {
+      "description": "Filename",
+      "message": "اسم الملف"
+   },
+   "frames_per_sec_short_text": {
+      "description": "FPS",
+      "message": "FPS"
+   },
+   "frames_per_sec_text": {
+      "description": "Frames per second (fps)",
+      "message": "صور في الثانية (FPS)"
+   },
+   "frames_text": {
+      "description": "frames",
+      "message": "الصور"
+   },
+   "free_settings_text": {
+      "description": "Free Settings",
+      "message": "إعدادات مجانية"
+   },
+   "fullscreen_info_modal_cancel": {
+      "description": "Cancel",
+      "message": "يلغي"
+   },
+   "fullscreen_info_modal_continue": {
+      "description": "Are you sure you want to continue with full screen capture?",
+      "message": "هل أنت متأكد أنك تريد الاستمرار في الالتقاط ملء الشاشة؟"
+   },
+   "fullscreen_info_modal_do_not_show": {
+      "description": "Do not show this again",
+      "message": "لا تظهر هذا مجددا"
+   },
+   "fullscreen_info_modal_message": {
+      "description": "You have used a Chrome Capture shortcut without the cropping tool, this will capture in full screen mode.",
+      "message": "لقد استخدمت اختصار الالتقاط بالكروم بدون أداة زراعة الاقتصاص، وسوف يلتقط هذا في وضع ملء الشاشة."
+   },
+   "fullscreen_info_modal_open_cropping": {
+      "description": "Open cropping tool",
+      "message": "فتح أداة زراعة"
+   },
+   "fullscreen_info_modal_shortcut_cropping_tool": {
+      "description": "Alt + C: Open/close Chrome Capture cropping tool",
+      "message": "Alt + C: فتح / إغلاق كروم التقاط أداة زراعة"
+   },
+   "fullscreen_info_modal_shortcut_fullpage_screenshot": {
+      "description": "Alt + Shift + S: Full webpage screenshot (beta)",
+      "message": "ALT + SHIFT + S: شاشة صفحات الويب الكاملة (بيتا)"
+   },
+   "fullscreen_info_modal_shortcut_linkt": {
+      "description": "You can configure these here: ",
+      "message": "يمكنك تكوين هذه هنا:"
+   },
+   "fullscreen_info_modal_shortcut_recording": {
+      "description": "Alt + R: Start/stop recording",
+      "message": "Alt + R: بدء / إيقاف التسجيل"
+   },
+   "fullscreen_info_modal_shortcut_screenshot": {
+      "description": "Alt + S: Visible area screenshot",
+      "message": "ALT + S: منطقة مرئية لقطة شاشة"
+   },
+   "fullscreen_info_modal_shortcuts": {
+      "description": "Default shortcuts are: ",
+      "message": "الاختصارات الافتراضية هي:"
+   },
+   "fullscreen_info_modal_start": {
+      "description": "Start full screen capture",
+      "message": "بدء الالتقاط ملء الشاشة"
+   },
+   "fullscreen_info_modal_title": {
+      "description": "Full screen capture",
+      "message": "التقاط كامل الشاشة"
+   },
+   "general_not_available": {
+      "description": "N/A",
+      "message": "غير متاح"
+   },
+   "get_premium": {
+      "description": "Get Premium",
+      "message": "إحصل على الأفضل"
+   },
+   "height_text": {
+      "description": "Width (px)",
+      "message": "العرض (PX)"
+   },
+   "hi": {
+      "description": "Hi",
+      "message": "أهلاً"
+   },
+   "internet_connection_required": {
+      "description": "Internet connection is required to upgrade to premium.",
+      "message": "مطلوب اتصال بالإنترنت للترقية إلى Premium."
+   },
+   "manage_subscription_access_until_date": {
+      "description": "Your plan will not renew. You can access premium features until $date$.",
+      "message": "خطتك لن تتجدد. يمكنك الوصول إلى الميزات المميزة حتى $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_cancel_button": {
+      "description": "Cancel subscription",
+      "message": "إلغاء الاشتراك"
+   },
+   "manage_subscription_cancel_confirm_cancel_button": {
+      "description": "Keep Premium",
+      "message": "الاحتفاظ بـ Premium"
+   },
+   "manage_subscription_cancel_confirm_confirm_button": {
+      "description": "Continue to cancel",
+      "message": "متابعة للإلغاء"
+   },
+   "manage_subscription_cancel_confirm_description": {
+      "description": "You will lose access to Premium features and Premium options will be reset.",
+      "message": "ستفقد الوصول إلى ميزات Premium وسيتم إعادة تعيين خيارات Premium."
+   },
+   "manage_subscription_cancel_confirm_title": {
+      "description": "Are you sure you want to cancel your subscription?",
+      "message": "هل أنت متأكد أنك تريد إلغاء اشتراكك؟"
+   },
+   "manage_subscription_ended_on_date": {
+      "description": "Subscription ended on $date$.",
+      "message": "انتهى الاشتراك في $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_ends_on_date": {
+      "description": "Subscription ends on $date$.",
+      "message": "ينتهي الاشتراك في $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_next_payment_full": {
+      "description": "Next payment: $price$ on $date$",
+      "message": "الدفعة التالية: $price$ في $date$",
+      "placeholders": {
+         "date": {
+            "content": "$2"
+         },
+         "price": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_paid_full": {
+      "description": "Paid: $billingCycle$",
+      "message": "مدفوع: $billingCycle$",
+      "placeholders": {
+         "billingCycle": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_resubscribe_prompt": {
+      "description": " To use premium features again, please upgrade.",
+      "message": " لاستخدام الميزات المميزة مرة أخرى، يرجى الترقية."
+   },
+   "manage_subscription_update_payment_button": {
+      "description": "Update payment method",
+      "message": "تحديث طريقة الدفع"
+   },
+   "max_recording_dimension_size_text": {
+      "description": "Max recording resolution/quality",
+      "message": "دقة تسجيل أقصى / جودة"
+   },
+   "no_limit_text": {
+      "description": "No limit",
+      "message": "لا حدود"
+   },
+   "open_text": {
+      "description": "Open",
+      "message": "افتح"
+   },
+   "options_default_action": {
+      "description": "Extension icon click action",
+      "message": "إجراء النقر على أيقونة الامتداد"
+   },
+   "options_dimension_size_1000": {
+      "description": "1000 pixels",
+      "message": "1000 بكسل"
+   },
+   "options_dimension_size_1080p": {
+      "description": "1920 pixels (1080p)",
+      "message": "1920 بكسل (1080P)"
+   },
+   "options_dimension_size_480p": {
+      "description": "640 pixels (480p)",
+      "message": "640 بكسل (480P)"
+   },
+   "options_dimension_size_4k": {
+      "description": "3840 pixels (4K)",
+      "message": "3840 بكسل (4K)"
+   },
+   "options_dimension_size_720p": {
+      "description": "1280 pixels (720p)",
+      "message": "1280 بكسل (720P)"
+   },
+   "options_embedded_options_permission_warning": {
+      "description": "Cursor highlighting, click effects, and drawing tools will only work until the page reloads or changes. To keep them active after reloads or redirects, you'll need to grant an extra permission.",
+      "message": "تسليط الضوء على المؤشر وتأثيرات النقر وأدوات الرسم لن تعمل إلا حتى يتم إعادة تحميل الصفحة أو تغييرها. لإبقائها نشطة بعد إعادة التحميل أو إعادة التوجيه، ستحتاج إلى منح إذن إضافي."
+   },
+   "options_enable_notifications": {
+      "description": "Enable notifications",
+      "message": "تمكين الإخطارات"
+   },
+   "options_enable_notifications_tooltip": {
+      "description": "Display notifications when full screen recording starts and processing recordings in the background.",
+      "message": "عرض الإخطارات عند بدء تسجيل شاشة ملء الشاشة ومعالجة التسجيلات في الخلفية."
+   },
+   "options_enable_subfolder_downloads": {
+      "description": "Download files into subfolder",
+      "message": "قم بتنزيل الملفات في المجلد الفرعي"
+   },
+   "options_enable_subfolder_downloads_tooltip": {
+      "description": "Download files into a subfolder of your choice inside the downloads folder. This option is useful for organising your captures.",
+      "message": "قم بتنزيل الملفات إلى مقلع فرعي من اختيارك داخل مجلد التنزيلات. هذا الخيار مفيد لتنظيم التقاطاتك."
+   },
+   "options_how_to_use_btn": {
+      "description": "How to use",
+      "message": "كيف تستعمل"
+   },
+   "options_language": {
+      "description": "Language",
+      "message": "لغة"
+   },
+   "options_open_containing_folder_on_save": {
+      "description": "Open containing folder after saving",
+      "message": "فتح المجلد المحتوي بعد الحفظ"
+   },
+   "options_open_popup": {
+      "description": "Open popup",
+      "message": "فتح المنبثقة"
+   },
+   "options_open_selected_area": {
+      "description": "Open selected area capture",
+      "message": "فتح المنطقة المحددة التقاط"
+   },
+   "options_section_general": {
+      "description": "Title for the General settings section in the options page",
+      "message": "إعدادات عامة"
+   },
+   "options_section_output": {
+      "description": "Title for the Output and Saving settings section in the options page",
+      "message": "الإخراج والحفظ"
+   },
+   "options_section_recording": {
+      "description": "Title for the Recording settings section in the options page",
+      "message": "إعدادات التسجيل"
+   },
+   "options_section_visuals": {
+      "description": "Title for the Cursor and Interaction Visuals settings section in the options page",
+      "message": "مؤثرات المؤشر والتفاعل المرئية"
+   },
+   "options_shortcuts_btn": {
+      "description": "Shortcuts",
+      "message": "اختصارات"
+   },
+   "options_subfolder_downloads_name": {
+      "description": "Subfolder name:",
+      "message": "اسم المجلد الفرعي:"
+   },
+   "options_support_btn": {
+      "description": "Support",
+      "message": "الدعم"
+   },
+   "overlay_help_text": {
+      "description": "Click and drag to choose your selected area. \nRight click to snap to an element, hold shift for multiple.",
+      "message": "انقر واسحب لاختيار المنطقة المحددة. \n انقر بزر الماوس الأيمن للاضيق إلى عنصر، مع الاستمرار على التحول لعدة."
+   },
+   "plan_billing_annually": {
+      "description": "Annually",
+      "message": "سنويًا"
+   },
+   "plan_billing_monthly": {
+      "description": "Monthly",
+      "message": "شهريًا"
+   },
+   "plan_name_custom": {
+      "description": "Custom Plan",
+      "message": "خطة مخصصة"
+   },
+   "popup_capture_tab": {
+      "description": "Capture",
+      "message": "يأسر"
+   },
+   "popup_desktop_screenshot_tooltip": {
+      "description": "Capture the entire screen, desktop, or any open application.",
+      "message": "التقاط الشاشة بالكامل أو سطح المكتب أو أي تطبيق مفتوح."
+   },
+   "popup_editor_icon_tooltip": {
+      "description": "Open Editor",
+      "message": "محرر مفتوح"
+   },
+   "popup_full_page_screenshot_tooltip": {
+      "description": "Capture the current tab full webpage, including content beyond the visible area.",
+      "message": "التقاط صفحة الويب الكاملة لعلامة التبويب الحالية ، بما في ذلك المحتوى خارج المنطقة المرئية."
+   },
+   "popup_full_webpage": {
+      "description": "Full webpage",
+      "message": "صفحة ويب كاملة"
+   },
+   "popup_no_scripts_alert": {
+      "description": "Selected area and full webpage screenshots are not possible here. These features are available on other websites.",
+      "message": "المنطقة المحددة ولقطات شاشة ويب كاملة غير ممكنة هنا. هذه الميزات متوفرة على مواقع الويب الأخرى."
+   },
+   "popup_record_tab": {
+      "description": "Record",
+      "message": "سجل"
+   },
+   "popup_recording_limit_alert": {
+      "description": "Record up to $seconds$ seconds per GIF. Premium users can update this from the ",
+      "message": "سجل ما يصل إلى $seconds$ Seconds لكل GIF. يمكن للمستخدمين الممتازين تحديث هذا من",
+      "placeholders": {
+         "seconds": {
+            "content": "$1"
+         }
+      }
+   },
+   "popup_recording_limit_settings_link": {
+      "description": "settings page.",
+      "message": "صفحة الإعدادات."
+   },
+   "popup_screen_or_app": {
+      "description": "Full screen or app",
+      "message": "ملء الشاشة أو التطبيق"
+   },
+   "popup_selected_area": {
+      "description": "Selected area",
+      "message": "المنطقة المختارة"
+   },
+   "popup_selected_area_screenshot_tooltip": {
+      "description": "Capture a specific area of the current tab.",
+      "message": "التقاط مساحة محددة من علامة التبويب الحالية."
+   },
+   "popup_set_shortcut": {
+      "description": "set shortcut",
+      "message": "تعيين اختصار"
+   },
+   "popup_settings_icon_tooltip": {
+      "description": "Open Settings",
+      "message": "أفتح الإعدادات"
+   },
+   "popup_tab_screenshot_tooltip": {
+      "description": "Capture the visible part of the current tab.",
+      "message": "التقاط الجزء المرئي من علامة التبويب الحالية."
+   },
+   "popup_this_tab": {
+      "description": "This tab",
+      "message": "هذه التبويب"
+   },
+   "popup_waiting_for_desktop_selection_alert": {
+      "description": "FULL SCREEN OR APP capture did not start because you did not select an option from the popup dialog. If you have multiple monitors it may have opened on another monitor.",
+      "message": "لم تبدأ شاشة ملء الشاشة أو التطبيق لأنك لم تحدد خيارًا من مربع الحوار المنبثقة. إذا كان لديك شاشات متعددة قد تكون قد فتحت على شاشة أخرى."
+   },
+   "premium_settings_text": {
+      "description": "Premium Settings",
+      "message": "إعدادات متميزة"
+   },
+   "purchase_btn_text": {
+      "description": "Get Premium!",
+      "message": "إحصل على الأفضل!"
+   },
+   "purchase_description_limited_time_text": {
+      "description": "Lock in this price now - limited time offer before we switch to subscriptions!",
+      "message": "احجز هذا السعر الآن - عرض لفترة محدودة قبل أن نتحول إلى الاشتراكات!"
+   },
+   "purchase_description_text": {
+      "description": "Just one payment unlocks all premium features forever. No recurring fees!",
+      "message": "دفعة واحدة تفتح جميع الميزات المميزة مدى الحياة. لا توجد رسوم متكررة!"
+   },
+   "purchase_feature_30fps": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "تسجيل فائق السلاسة بمعدل 30 إطارًا في الثانية"
+   },
+   "purchase_feature_4K": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "تسجيل 4K فائق الوضوح"
+   },
+   "purchase_feature_alter_frame_rate": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "معدلات إطارات مخصصة"
+   },
+   "purchase_feature_alter_playback_speed": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "مؤثرات الحركة البطيئة والتايم لابس"
+   },
+   "purchase_feature_blur": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "أداة التمويه"
+   },
+   "purchase_feature_crop_recording": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "اقتصاص دقيق لملفات GIF"
+   },
+   "purchase_feature_default": {
+      "description": "Feature that goes in $feature$ placeholder. Default fallback.",
+      "message": "هذه الميزة"
+   },
+   "purchase_feature_frame_edits": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "تحرير قوي لكل إطار على حدة"
+   },
+   "purchase_feature_highlight": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "أداة التظليل"
+   },
+   "purchase_feature_no_duration_limit": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "مدة تسجيل غير محدودة"
+   },
+   "purchase_feature_special_effect": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "المؤثرات الخاصة"
+   },
+   "purchase_feature_step_tool": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "أداة الخطوات"
+   },
+   "purchase_feature_svg": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "إضافة أيقونات وشعارات مخصصة"
+   },
+   "purchase_feature_text_and_annotation_customization": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "التحكم الكامل في النصوص والتعليقات"
+   },
+   "purchase_feature_unlimited_gif_compression": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ضغط GIF متقدم غير محدود"
+   },
+   "purchase_feature_update_end_time": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "وقت تسجيل مخصص"
+   },
+   "purchase_login_dialog_closed_by_user_alert": {
+      "description": "Looks like you closed the sign in dialog, premium users must sign in so you don't lose premium access.",
+      "message": "يبدو أنك أغلقت مربع حوار تسجيل الدخول ، يجب على المستخدمين الممتازين تسجيل الدخول حتى لا تفقد الوصول المتميز."
+   },
+   "purchase_login_dialog_google_button": {
+      "description": "Sign in with Google",
+      "message": "الدخول مع جوجل"
+   },
+   "purchase_login_dialog_title": {
+      "description": "Sign in required",
+      "message": "تسجيل الدخول المطلوب"
+   },
+   "purchase_login_text": {
+      "description": "Sign in with Google to link your purchase to your account.",
+      "message": "سجّل الدخول باستخدام جوجل لربط عملية الشراء بحسابك."
+   },
+   "purchase_login_text_window_opened": {
+      "description": "Sign into Google in the popup window.",
+      "message": "تسجيل الدخول إلى Google في النافذة المنبثقة."
+   },
+   "purchase_subscription_title_text": {
+      "description": "Choose the plan that fits your needs",
+      "message": "اختر الخطة التي تناسب احتياجاتك"
+   },
+   "purchase_title_text": {
+      "description": "Get Lifetime Premium Access Today!",
+      "message": "احصل على وصول بريميوم مدى الحياة اليوم!"
+   },
+   "purchase_title_text_blocked_feature": {
+      "description": "That feature requires Premium",
+      "message": "هذه الميزة تتطلب بريميوم"
+   },
+   "purchase_title_text_blocked_pro_feature": {
+      "description": "That feature requires Premium Pro",
+      "message": "هذه الميزة تتطلب Premium Pro"
+   },
+   "purchase_title_text_blocked_pro_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium Pro paywall.",
+      "message": "افتح $feature$ مع بريميوم برو",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchase_title_text_blocked_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium paywall.",
+      "message": "افتح $feature$ مع بريميوم",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_already_premium_user": {
+      "description": "Already a premium user?",
+      "message": "بالفعل مستخدم متميز؟"
+   },
+   "purchases_bill_me": {
+      "description": "Bill me:",
+      "message": "فوترني:"
+   },
+   "purchases_checkout_unavailable_message": {
+      "description": "Message shown when checkout could not be started.",
+      "message": "تعذر بدء عملية الترقية الآن. يُرجى المحاولة مرة أخرى."
+   },
+   "purchases_compare_12_fps": {
+      "description": "12FPS",
+      "message": "12 إطارًا في الثانية"
+   },
+   "purchases_compare_3_per_day": {
+      "description": "3 per day",
+      "message": "3 في اليوم"
+   },
+   "purchases_compare_add_custom_shape_tool": {
+      "description": "Add custom shape/icon tool",
+      "message": "أداة إضافة شكل/أيقونة مخصصة"
+   },
+   "purchases_compare_benefits": {
+      "description": "Benefits",
+      "message": "المزايا"
+   },
+   "purchases_compare_blur_tool": {
+      "description": "Blur tool",
+      "message": "أداة التمويه"
+   },
+   "purchases_compare_close_button_label": {
+      "description": "Close",
+      "message": "إغلاق"
+   },
+   "purchases_compare_compression": {
+      "description": "High quality GIF compression",
+      "message": "جودة عالية ضغط GIF"
+   },
+   "purchases_compare_core_capture_features": {
+      "description": "Core Capture Features",
+      "message": "ميزات الالتقاط الأساسية"
+   },
+   "purchases_compare_crop_recordings": {
+      "description": "Crop recordings",
+      "message": "قص التسجيلات"
+   },
+   "purchases_compare_customize_editing_tools": {
+      "description": "Customize editing tools (font, size color)",
+      "message": "تخصيص أدوات التحرير (الخط، الحجم، اللون)"
+   },
+   "purchases_compare_drawing": {
+      "description": "Draw while recording",
+      "message": "ارسم أثناء التسجيل"
+   },
+   "purchases_compare_early_access": {
+      "description": "Early access to new features",
+      "message": "وصول مبكر إلى الميزات الجديدة"
+   },
+   "purchases_compare_editing": {
+      "description": "Edit captures",
+      "message": "تحرير القبض"
+   },
+   "purchases_compare_editing_free": {
+      "description": "basic editing",
+      "message": "التحرير الأساسي"
+   },
+   "purchases_compare_editing_suite": {
+      "description": "Editing Suite",
+      "message": "مجموعة التحرير"
+   },
+   "purchases_compare_frame_editing": {
+      "description": "Frame editing",
+      "message": "تحرير الإطار"
+   },
+   "purchases_compare_frame_rate": {
+      "description": "Adjust Frame Rate",
+      "message": "ضبط معدل الإطارات"
+   },
+   "purchases_compare_frame_specific_edits": {
+      "description": "Frame specific edits",
+      "message": "تعديلات محددة للإطار"
+   },
+   "purchases_compare_free_draw_tools": {
+      "description": "Free draw, line, arrow, rectangle, circle, text tools",
+      "message": "أدوات الرسم الحر، الخط، السهم، المستطيل، الدائرة، النص"
+   },
+   "purchases_compare_full_webpage_screenshots": {
+      "description": "Unlimited full page screenshots.",
+      "message": "صفحة كاملة غير محدودة لقطات الشاشة."
+   },
+   "purchases_compare_highlight_tool": {
+      "description": "Highlight tool",
+      "message": "أداة التمييز"
+   },
+   "purchases_compare_live_recording_tools": {
+      "description": "Live Recording Tools",
+      "message": "أدوات التسجيل المباشر"
+   },
+   "purchases_compare_mouse": {
+      "description": "Click and mouse indication",
+      "message": "انقر وإشارة الماوس"
+   },
+   "purchases_compare_plans": {
+      "description": "Compare plans",
+      "message": "قارن بين الخطط"
+   },
+   "purchases_compare_plans_premium_button": {
+      "description": "Upgrade to Premium",
+      "message": "الترقية إلى بريميوم"
+   },
+   "purchases_compare_playback_speed": {
+      "description": "Tune recording playback speed",
+      "message": "لحن تسجيل سرعة التشغيل"
+   },
+   "purchases_compare_priority_support": {
+      "description": "Priority support and feature requests",
+      "message": "دعم ذو أولوية وطلبات ميزات"
+   },
+   "purchases_compare_recording": {
+      "description": "Unlimited GIF recordings.",
+      "message": "تسجيلات GIF غير محدودة."
+   },
+   "purchases_compare_recording_free": {
+      "description": "15sec limit per GIF",
+      "message": "حد 15SEC لكل GIF"
+   },
+   "purchases_compare_recording_quality": {
+      "description": "High quality GIFs",
+      "message": "صور متحركة عالية الجودة"
+   },
+   "purchases_compare_recording_quality_control": {
+      "description": "Recording Quality & Control",
+      "message": "جودة التسجيل والتحكم"
+   },
+   "purchases_compare_recording_quality_free": {
+      "description": "1000 pixels max",
+      "message": "1000 بكسل ماكس"
+   },
+   "purchases_compare_screenshots": {
+      "description": "Unlimited screenshots.",
+      "message": "لقطات غير محدودة."
+   },
+   "purchases_compare_special_effects": {
+      "description": "Recording special effects",
+      "message": "تسجيل المؤثرات الخاصة"
+   },
+   "purchases_compare_up_to_1080p": {
+      "description": "Up to 1080p",
+      "message": "حتى 1080p"
+   },
+   "purchases_compare_up_to_24_fps": {
+      "description": "Up to 24FPS",
+      "message": "حتى 24 إطارًا في الثانية"
+   },
+   "purchases_compare_up_to_30_fps": {
+      "description": "Up to 30FPS",
+      "message": "حتى 30 إطارًا في الثانية"
+   },
+   "purchases_compare_up_to_4k_plus": {
+      "description": "Up to 4K+",
+      "message": "حتى 4K+"
+   },
+   "purchases_current_plan": {
+      "description": "Current plan",
+      "message": "الخطة الحالية"
+   },
+   "purchases_features": {
+      "description": "Features",
+      "message": "الميزات"
+   },
+   "purchases_free": {
+      "description": "Free",
+      "message": "حر"
+   },
+   "purchases_free_button": {
+      "description": "Free to use",
+      "message": "مجانا للاستخدام"
+   },
+   "purchases_free_feature_editing": {
+      "description": "Basic editing",
+      "message": "التحرير الأساسي"
+   },
+   "purchases_free_feature_recording": {
+      "description": "Basic GIF recording",
+      "message": "تسجيل GIF الأساسي"
+   },
+   "purchases_free_feature_screenshots": {
+      "description": "Unlimited screenshots",
+      "message": "غير محدود Screenshots."
+   },
+   "purchases_free_plan_description": {
+      "description": "Get started with our essential capture tools. Completely free for basic everyday use.",
+      "message": "ابدأ باستخدام أدوات الالتقاط الأساسية لدينا. مجانية تمامًا للاستخدام اليومي الأساسي."
+   },
+   "purchases_plan_save_up_to_percentage": {
+      "description": "Save up to",
+      "message": "وفر حتى"
+   },
+   "purchases_premium": {
+      "description": "Premium",
+      "message": "الممتازة"
+   },
+   "purchases_premium_billed_annually": {
+      "description": "Billed annually",
+      "message": "تتم الفوترة سنويًا"
+   },
+   "purchases_premium_button": {
+      "description": "Get lifetime access",
+      "message": "احصل على وصول مدى الحياة"
+   },
+   "purchases_premium_feature_compression": {
+      "description": "High quality GIF compression",
+      "message": "جودة عالية ضغط GIF"
+   },
+   "purchases_premium_feature_editing": {
+      "description": "Feature rich editing",
+      "message": "ميزة التحرير الغني"
+   },
+   "purchases_premium_feature_free": {
+      "description": "Everything from free plan",
+      "message": "يتضمن كل ميزات الخطة المجانية"
+   },
+   "purchases_premium_feature_marked_with_star": {
+      "description": "All features marked with a star",
+      "message": "جميع الميزات المميزة بنجمة"
+   },
+   "purchases_premium_feature_recording": {
+      "description": "Unlimited high quality GIF recording",
+      "message": "غير محدود جودة عالية تسجيل GIF"
+   },
+   "purchases_premium_feature_recording_1080p": {
+      "description": "High quality GIF recording, up to 1080p, 24fps",
+      "message": "تسجيل GIF عالي الجودة، حتى 1080p، 24 إطارًا في الثانية"
+   },
+   "purchases_premium_feature_refundable": {
+      "description": "Fully refundable",
+      "message": "قابلة للاسترداد الكامل"
+   },
+   "purchases_premium_feature_risk_free": {
+      "description": "Risk-free: 7 day trial, cancel anytime",
+      "message": "بدون مخاطر: تجربة لمدة 7 أيام، يمكنك الإلغاء في أي وقت"
+   },
+   "purchases_premium_feature_unlimited_length": {
+      "description": "Unlimited GIF recording length",
+      "message": "مدة تسجيل GIF غير محدودة"
+   },
+   "purchases_premium_price_info": {
+      "description": "one time fee",
+      "message": "رسوم تدفع مرة واحدة"
+   },
+   "purchases_premium_price_per_month": {
+      "description": "/ month",
+      "message": "/ شهر"
+   },
+   "purchases_premium_pro": {
+      "description": "Premium Pro",
+      "message": "Premium Pro"
+   },
+   "purchases_premium_pro_editing_tools": {
+      "description": "Advanced editing tools (blurring, special effects, etc.)",
+      "message": "أدوات تحرير متقدمة (تمويه، مؤثرات خاصة، إلخ)"
+   },
+   "purchases_premium_pro_feature_early_access": {
+      "description": "Early access to new features",
+      "message": "وصول مبكر إلى الميزات الجديدة"
+   },
+   "purchases_premium_pro_feature_marked_with_crown": {
+      "description": "All features marked with a star and crown",
+      "message": "جميع الميزات المميزة بنجمة وتاج"
+   },
+   "purchases_premium_pro_feature_premium_plan": {
+      "description": "Everything from Premium plan",
+      "message": "كل شيء من خطة Premium"
+   },
+   "purchases_premium_pro_feature_quality": {
+      "description": "Max resolution recording, 4K+ and 30fps",
+      "message": "تسجيل بأقصى دقة، 4K+ و 30 إطارًا في الثانية"
+   },
+   "purchases_premium_pro_feature_support": {
+      "description": "Priority support and feature requests",
+      "message": "دعم ذو أولوية وطلبات ميزات"
+   },
+   "purchases_premium_pro_upgrade": {
+      "description": "Upgrade to Pro",
+      "message": "الترقية إلى Pro"
+   },
+   "purchases_premium_save_percentage": {
+      "description": "save $savingsPercentage$%",
+      "message": "وفر $savingsPercentage$%",
+      "placeholders": {
+         "savingsPercentage": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_premium_try_for_free": {
+      "description": "Try for free",
+      "message": "جرب مجانًا"
+   },
+   "purchases_price_unavailable": {
+      "description": "Label shown in place of a price when it is unavailable.",
+      "message": "السعر غير متاح"
+   },
+   "purchases_pricing_unavailable_message": {
+      "description": "Message shown when the Premium pricing request was blocked or failed.",
+      "message": "تم حظر طلب أسعار Premium أو فشل. قد يحدث هذا عندما تحظر شبكة العمل أو VPN أو مانع الإعلانات أو إضافة الخصوصية أو جدار الحماية خدمة Paddle."
+   },
+   "purchases_pricing_unavailable_title": {
+      "description": "Title shown when Premium pricing could not be loaded.",
+      "message": "تعذر تحميل أسعار Premium"
+   },
+   "purchases_pricing_unavailable_troubleshooting_extensions": {
+      "description": "Troubleshooting step telling the user to disable VPN or privacy tools temporarily.",
+      "message": "قم بتعطيل VPN أو مانع الإعلانات أو إضافات الخصوصية مؤقتًا ثم حاول مرة أخرى."
+   },
+   "purchases_pricing_unavailable_troubleshooting_intro": {
+      "description": "Intro text for troubleshooting steps when pricing is unavailable.",
+      "message": "أشياء يمكنك تجربتها:"
+   },
+   "purchases_pricing_unavailable_troubleshooting_network": {
+      "description": "Troubleshooting step telling the user to try another network or browser profile.",
+      "message": "جرّب شبكة أخرى، أو افتح الإضافة في ملف تعريف Chrome مختلف."
+   },
+   "purchases_pricing_unavailable_troubleshooting_workplace": {
+      "description": "Troubleshooting step telling the user workplace policy may be blocking Paddle.",
+      "message": "إذا كنت تستخدم جهاز عمل، فقد تكون سياسة الشبكة أو المتصفح لديك تحظر Paddle."
+   },
+   "purchases_sign_in_here": {
+      "description": "Sign in here",
+      "message": "تسجيل الدخول هنا"
+   },
+   "purchases_start_trial_cancel_anytime": {
+      "description": "Call to action to start a free trial.",
+      "message": "ابدأ تجربتك المجانية لمدة 7 أيام للمتابعة. يمكنك الإلغاء في أي وقت."
+   },
+   "purchases_try_premium_for_free": {
+      "description": "Try Premium for Free",
+      "message": "جرّب Premium مجانًا"
+   },
+   "purchases_try_premium_pro_for_free": {
+      "description": "Try Premium Pro for Free",
+      "message": "جرّب Premium Pro مجانًا"
+   },
+   "purchases_upgrade_premium_to_pro": {
+      "description": "To use this feature and access all Pro benefits, upgrade your plan.",
+      "message": "لاستخدام هذه الميزة والوصول إلى جميع مزايا Pro، قم بترقية خطتك."
+   },
+   "purchases_upgrade_to_premium_pro": {
+      "description": "Upgrade to Premium Pro",
+      "message": "الترقية إلى Premium Pro"
+   },
+   "quality_text": {
+      "description": "Recording quality (10 = best)",
+      "message": "جودة تسجيل (10 = أفضل)"
+   },
+   "rate_bad_rating_text": {
+      "description": "We are continuously trying our hardest to improve Chrome Capture, please share what needs improvement by emailing us at ",
+      "message": "نحن نحاول باستمرار صفعنا لتحسين التقاط الكروم، يرجى مشاركة ما يحتاج إلى تحسين عبر البريد الإلكتروني لنا في"
+   },
+   "rate_bad_title_text": {
+      "description": "😞 We are sorry!",
+      "message": "😞 نحن آسفون!"
+   },
+   "rate_close_btn_text": {
+      "description": "Close",
+      "message": "يغلق"
+   },
+   "rate_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "يتأكد"
+   },
+   "rate_description_text": {
+      "description": "If you've found this extension useful please leave a rating or review. \n\nBy leaving a rating you can help us reach more users which will help fund continual improvements and keep general usage free.",
+      "message": "إذا وجدت هذا التمديد مفيد، يرجى ترك تصنيف أو مراجعة. \n\n من خلال ترك تصنيف، يمكنك مساعدتنا في الوصول إلى المزيد من المستخدمين الذين سيساعدون في تمويل التحسينات المستمرة والحفاظ على الاستخدام العام مجانا."
+   },
+   "rate_description_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "نحن نقدر بشدة لك شراء قسط وأحب أن أسمع أي ردود فعل يجب عليك مساعدتنا في تحسين المنتج والوصول إلى المزيد من المستخدمين."
+   },
+   "rate_good_rating_text": {
+      "description": "Your reviews keep our small team motivated to make Chrome Capture even better!",
+      "message": "مراجعاتك تبقي فريقنا الصغير دوافع لجعل كروم التقاط أفضل!"
+   },
+   "rate_good_rating_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "نحن نقدر بشدة لك شراء قسط وأحب أن أسمع أي ردود فعل يجب عليك مساعدتنا في تحسين المنتج والوصول إلى المزيد من المستخدمين."
+   },
+   "rate_good_title_text": {
+      "description": "😍 Review in the web store?",
+      "message": "😍 مراجعة في متجر الويب؟"
+   },
+   "rate_maybe_later_btn_text": {
+      "description": "Maybe later",
+      "message": "ربما في وقت لاحق"
+   },
+   "rate_no_btn_text": {
+      "description": "No thanks",
+      "message": "لا شكرا"
+   },
+   "rate_send_email_btn_text": {
+      "description": "Send Email",
+      "message": "ارسل بريد الكتروني"
+   },
+   "rate_thank_you_title_text": {
+      "description": "Thank you! 😍",
+      "message": "شكرا لك! 😍."
+   },
+   "rate_title_text": {
+      "description": "How are we doing?",
+      "message": "كيف نفعل؟"
+   },
+   "rate_yes_btn_text": {
+      "description": "Ok, sure",
+      "message": "حسنا بالطبع"
+   },
+   "recommended": {
+      "description": "recommended",
+      "message": "مستحسن"
+   },
+   "record_length_text": {
+      "description": "Max record length",
+      "message": "ماكس طول الرقم القياسي"
+   },
+   "recordings_taken": {
+      "description": "Recordings taken:",
+      "message": "التسجيلات التي اتخذت:"
+   },
+   "save_as_screenshot_text": {
+      "description": "Save screenshot as",
+      "message": "حفظ لقطة الشاشة"
+   },
+   "save_as_text": {
+      "description": "Save recording as",
+      "message": "حفظ التسجيل كما"
+   },
+   "screenshots_taken": {
+      "description": "Screenshots taken:",
+      "message": "لقطات شاشة:"
+   },
+   "seconds_text": {
+      "description": "secs",
+      "message": "Secs."
+   },
+   "shortcut": {
+      "description": "Shortcut:",
+      "message": "اختصار:"
+   },
+   "show_click_indicator_text": {
+      "description": "Show click animation",
+      "message": "عرض انقر فوق الرسوم المتحركة"
+   },
+   "show_click_indicator_tooltip_text": {
+      "description": "This option draws a circle animation around the click location.",
+      "message": "يرسم هذا الخيار رسوم متحركة دائرة حول موقع Click."
+   },
+   "show_cursor_text": {
+      "description": "Show dot at cursor location",
+      "message": "عرض نقطة في مؤشر الموقع"
+   },
+   "show_cursor_tooltip_text": {
+      "description": "This option draws a small circle to indicate where the mouse is located.",
+      "message": "يرسم هذا الخيار دائرة صغيرة للإشارة إلى المكان الذي يوجد فيه الماوس."
+   },
+   "sign_in": {
+      "description": "Sign In",
+      "message": "تسجيل الدخول"
+   },
+   "sign_out": {
+      "description": "Sign Out",
+      "message": "تسجيل الخروج"
+   },
+   "subscription_past_due_warning": {
+      "description": "Warning message shown when a user subscription payment has failed or is past its due date.",
+      "message": "دفع الاشتراك متأخر، انقر هنا لتحديث معلومات الدفع الخاصة بك."
+   },
+   "subscription_premium_plan_description": {
+      "description": "Go beyond basics: HD quality & limits unlocked. Craft pro content with enhanced features.",
+      "message": "تجاوز الأساسيات: جودة HD وحدود مفتوحة. أنشئ محتوى احترافيًا بميزات محسنة."
+   },
+   "subscription_premium_pro_plan_description": {
+      "description": "Experience peak performance: 4K+ and all features. Full editing suite with early access.",
+      "message": "جرب أقصى أداء: 4K+ وجميع الميزات. مجموعة تحرير كاملة مع وصول مبكر."
+   },
+   "subscription_status_active": {
+      "description": "Active",
+      "message": "نشط"
+   },
+   "subscription_status_ending_soon": {
+      "description": "Ending Soon",
+      "message": "ينتهي قريبًا"
+   },
+   "subscription_status_expired": {
+      "description": "Expired",
+      "message": "منتهي الصلاحية"
+   },
+   "subscription_status_past_due": {
+      "description": "Past Due",
+      "message": "متأخر السداد"
+   },
+   "subscription_status_paused": {
+      "description": "Paused",
+      "message": "متوقف مؤقتًا"
+   },
+   "subscription_status_unknown": {
+      "description": "Unknown",
+      "message": "غير معروف"
+   },
+   "unable_to_capture_website_alert": {
+      "description": "Unable to capture this website. Please use full screen/application capture or try capture another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "غير قادر على التقاط هذا الموقع. يرجى استخدام ملء الشاشة/التقاط التطبيق أو محاولة التقاط موقع ويب آخر. \n\n (╯ ° □ °） ╯︵ ┻━┻"
+   },
+   "view_permission": {
+      "description": "View permission.",
+      "message": "عرض الإذن."
+   },
+   "width_text": {
+      "description": "Height (px)",
+      "message": "الارتفاع (PX)"
+   }
+}

@@ -722,15 +722,54 @@ initializePopup();`;
     return { manifest, files, validation };
   }
 
+  const BUILTIN_TEMPLATES = {
+    "chrome-capture-pro": {
+      id: "chrome-capture-pro",
+      name: "Chrome Capture Pro",
+      defaultVersion: "3.3.8",
+      description: "全功能屏幕录制、区域与长截图、GIF/视频编辑及画板标注工具。",
+      matches: ["<all_urls>"],
+      isFullExtension: true,
+      templateZip: "./chrome-capture-pro.template.zip"
+    }
+  };
+
+  function transformChromeCaptureManifest(manifestJson, options) {
+    const manifest = typeof manifestJson === "string" ? JSON.parse(manifestJson) : { ...manifestJson };
+    const settings = normalizeOptions(options);
+    if (settings.name) manifest.name = settings.name;
+    if (settings.version) manifest.version = settings.version;
+    if (settings.description) manifest.description = settings.description;
+    if (settings.packageTarget === "store") {
+      delete manifest.key;
+    } else if (settings.packageTarget === "local" && settings.extensionKey) {
+      manifest.key = settings.extensionKey;
+    }
+    return manifest;
+  }
+
+  function createChromeCaptureLicenseConfig(options) {
+    const settings = normalizeOptions(options);
+    return {
+      enabled: settings.license.enabled === true,
+      productId: settings.license.productId || settings.name || "Chrome Capture Pro",
+      validationUrl: settings.license.validationUrl || "",
+      publicKeyJwk: settings.license.publicKeyJwk || null
+    };
+  }
+
   return {
     DEFAULT_PERMISSIONS,
+    BUILTIN_TEMPLATES,
     analyzeCode,
     buildPackage,
+    createChromeCaptureLicenseConfig,
     incrementVersion,
     isValidManifestKey,
     isValidMatchPattern,
     isValidVersion,
     parseList,
+    transformChromeCaptureManifest,
     validateOptions
   };
 });

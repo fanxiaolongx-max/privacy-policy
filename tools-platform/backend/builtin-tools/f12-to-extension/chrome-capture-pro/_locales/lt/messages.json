@@ -1,0 +1,1691 @@
+{
+   "account_modal_free_plan": {
+      "description": "You are on the free plan",
+      "message": "Jūs vykdote nemokamą planą"
+   },
+   "account_modal_manage_subscription_button": {
+      "description": "Manage Subscription",
+      "message": "Tvarkyti prenumeratą"
+   },
+   "account_modal_not_signed_in": {
+      "description": "You are not signed in",
+      "message": "Jūs nesate pasirašytas"
+   },
+   "account_modal_premium_plan": {
+      "description": "You are on the premium plan",
+      "message": "Jūs esate „Premium“ plane"
+   },
+   "account_modal_premium_pro_plan": {
+      "description": "You are on the Premium Pro plan",
+      "message": "Jūs naudojatės „Premium Pro“ planu"
+   },
+   "account_modal_request_feature_button": {
+      "description": "Request Feature",
+      "message": "Pateikti funkcijos užklausą"
+   },
+   "account_modal_request_support_button": {
+      "description": "Request Support",
+      "message": "Pateikti palaikymo užklausą"
+   },
+   "account_modal_stats_heading": {
+      "description": "Your stats:",
+      "message": "Jūsų statistika:"
+   },
+   "alert_text": {
+      "description": "Unable to run selected area capture on this website. Please use full screen recording or try another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "Nepavyko paleisti pasirinktos srities surinkimo šioje svetainėje. Prašome naudoti visą ekraną įrašymą arba išbandyti kitą svetainę. \n\n (╯ ° □ °) ╯( ┻━┻"
+   },
+   "click_indicator_size_color_text": {
+      "description": "Click animation size & color",
+      "message": "Spustelėkite Animacijos dydis ir spalva"
+   },
+   "close_btn_text": {
+      "description": "Close",
+      "message": "Uždaryti"
+   },
+   "confirm_dialog_cancel_btn_text": {
+      "description": "Cancel",
+      "message": "Atšaukti"
+   },
+   "confirm_dialog_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "Patvirtinti"
+   },
+   "confirm_fps_update_text": {
+      "description": "Changing the fps will remove all frame specific edits such as edited or deleted frames. Do you want to continue?",
+      "message": "FPS keitimas pašalins visus vaizdo specifinius redagavimo priemones, tokius kaip redaguoti ar ištrinti rėmai. Ar norite tęsti?"
+   },
+   "copy_text": {
+      "description": "Copy to clipboard",
+      "message": "Nukopijuoti į iškarpinę"
+   },
+   "cursor_size_and_color_text": {
+      "description": "Cursor dot size & color",
+      "message": "\"Cursor Dot\" dydis ir spalva"
+   },
+   "dither_text": {
+      "description": "Apply dither",
+      "message": "Taikyti"
+   },
+   "download_filename_text": {
+      "description": "Download filename format",
+      "message": "Atsisiųsti failo pavadinimo formatą"
+   },
+   "download_text": {
+      "description": "Download",
+      "message": "parsisiųsti"
+   },
+   "draw_size_and_color_text": {
+      "description": "Drawing size & color",
+      "message": "Piešimo dydis ir spalva"
+   },
+   "duration": {
+      "description": "Label for a field indicating a length of time.",
+      "message": "Trukmė"
+   },
+   "editor_action_add_icon": {
+      "description": "Add icon",
+      "message": "Pridėti piktogramą"
+   },
+   "editor_action_add_text": {
+      "description": "Add text",
+      "message": "Pridėti tekstą"
+   },
+   "editor_action_blur_rectangle": {
+      "description": "Blur area",
+      "message": "Sulieti sritį"
+   },
+   "editor_action_copy": {
+      "description": "Copy to clipboard",
+      "message": "Nukopijuoti į iškarpinę"
+   },
+   "editor_action_crop": {
+      "description": "Crop",
+      "message": "Pasėlių"
+   },
+   "editor_action_draw_arrow": {
+      "description": "Draw arrow",
+      "message": "Nupieškite rodyklę"
+   },
+   "editor_action_draw_ellipse": {
+      "description": "Draw ellipse",
+      "message": "Nupieškite elipsą"
+   },
+   "editor_action_draw_line": {
+      "description": "Draw line",
+      "message": "Nupieškite liniją"
+   },
+   "editor_action_draw_rectangle": {
+      "description": "Draw rectangle",
+      "message": "Nupieškite stačiakampį"
+   },
+   "editor_action_free_draw": {
+      "description": "Free draw",
+      "message": "Nemokamas piešti"
+   },
+   "editor_action_highlight": {
+      "description": "Highlight",
+      "message": "Pažymėkite"
+   },
+   "editor_action_numbered_step": {
+      "description": "Action label for adding a numbered step annotation.",
+      "message": "Numeruotas žingsnis"
+   },
+   "editor_action_pan": {
+      "description": "Pan",
+      "message": "Slinkti"
+   },
+   "editor_action_profile_account": {
+      "description": "Account",
+      "message": "Paskyra"
+   },
+   "editor_action_redo": {
+      "description": "Redo",
+      "message": "Redo."
+   },
+   "editor_action_save": {
+      "description": "Save",
+      "message": "Sutaupyti"
+   },
+   "editor_action_select": {
+      "description": "Select, move, resize",
+      "message": "Pasirinkite, perkelkite, keiskite dydį"
+   },
+   "editor_action_settings": {
+      "description": "Settings",
+      "message": "Nustatymai. \\ T"
+   },
+   "editor_action_undo": {
+      "description": "Undo",
+      "message": "Atšaukti"
+   },
+   "editor_action_undo_all": {
+      "description": "Undo all",
+      "message": "Atšaukti visą laiką"
+   },
+   "editor_add_text_default": {
+      "description": "start typing...",
+      "message": "Pradėkite rašyti ..."
+   },
+   "editor_browse_file_system": {
+      "description": "Browse file system",
+      "message": "Naršyti failų sistemą"
+   },
+   "editor_drag_and_drop": {
+      "description": "Drag and drop image/GIF or ",
+      "message": "Vilkite ir nuleiskite vaizdą / gif arba"
+   },
+   "editor_file_downloaded": {
+      "description": "File saved to downloads folder.",
+      "message": "Failas išsaugotas atsisiuntimo aplanke."
+   },
+   "editor_file_downloaded_selected_location": {
+      "description": "File saved to selected location.",
+      "message": "Failas išsaugotas pasirinktoje vietoje."
+   },
+   "editor_frame_selector_apply_edits": {
+      "description": "Apply edits to selected",
+      "message": "Taikykite pasirinktus redagavimus"
+   },
+   "editor_frame_selector_delete": {
+      "description": "Delete",
+      "message": "Ištrinti"
+   },
+   "editor_frame_selector_delete_every_second": {
+      "description": "Delete every second frame",
+      "message": "Ištrinti kiekvieną antrą rėmelį"
+   },
+   "editor_frame_selector_delete_selected": {
+      "description": "Delete selected",
+      "message": "Išštrinti pasirinktus"
+   },
+   "editor_frame_selector_remove_edits": {
+      "description": "Remove edits from selected",
+      "message": "Pašalinkite redagavimus iš pasirinktų"
+   },
+   "editor_frame_selector_restore": {
+      "description": "Restore",
+      "message": "Atkurti"
+   },
+   "editor_frame_selector_restore_all": {
+      "description": "Restore All",
+      "message": "Atkurti visus"
+   },
+   "editor_frame_selector_restore_selected": {
+      "description": "Restore selected",
+      "message": "Atkurti pasirinktą"
+   },
+   "editor_frame_selector_select_next": {
+      "description": "Select next frames",
+      "message": "Pasirinkite kitus vaizdus"
+   },
+   "editor_frame_selector_select_previous": {
+      "description": "Select previous frames",
+      "message": "Pasirinkite ankstesnius vaizdus"
+   },
+   "editor_frame_selector_unselect_all": {
+      "description": "Unselect All",
+      "message": "Unselect All."
+   },
+   "editor_image_copied": {
+      "description": "Image copied to clipboard.",
+      "message": "Vaizdas nukopijuojamas į iškarpinę."
+   },
+   "editor_image_copied_failed": {
+      "description": "Failed to copy image to clipboard, it may be too large.",
+      "message": "Nepavyko kopijuoti vaizdo iki iškarpinės, tai gali būti per didelė."
+   },
+   "editor_link_copied": {
+      "description": "Link copied to clipboard.",
+      "message": "Nuoroda nukopijuota į mainų sritį."
+   },
+   "editor_max_time_reached_dialog_description1": {
+      "description": "You have reached the max recording length time of $maxlength$ seconds for GIFs. Premium users can update this from the settings page.",
+      "message": "GIFS pasiekėte maksimalų įrašymo ilgio laiką $maxlength$ sekundes. „Premium“ vartotojai tai gali atnaujinti iš „Nustatymų“ puslapio.",
+      "placeholders": {
+         "maxlength": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_max_time_reached_dialog_description2": {
+      "description": "GIFs are intended for short recordings. If you require full length videos we recommend our free screen recorder: ",
+      "message": "GIF yra skirtos trumpiems įrašams. Jei jums reikia viso ilgio vaizdo įrašų, mes rekomenduojame nemokamą ekrano įrašymą:"
+   },
+   "editor_max_time_reached_dialog_description3": {
+      "description": "Premium users can update this from the settings page.",
+      "message": "„Premium“ vartotojai tai gali atnaujinti iš „Nustatymų“ puslapio."
+   },
+   "editor_max_time_reached_dialog_settings_button": {
+      "description": "Open settings",
+      "message": "Atidaryti nustatymai"
+   },
+   "editor_max_time_reached_dialog_title": {
+      "description": "Recording suddenly stopped?",
+      "message": "Įrašymas staiga sustojo?"
+   },
+   "editor_premium_options_color": {
+      "description": "Color",
+      "message": "Spalva. \\ T"
+   },
+   "editor_premium_options_draw_size": {
+      "description": "Draw Size",
+      "message": "Atkreipti dydį"
+   },
+   "editor_premium_options_font": {
+      "description": "Font",
+      "message": "Šriftas"
+   },
+   "editor_premium_options_playback_speed": {
+      "description": "Playback Speed",
+      "message": "Atkūrimo greitis"
+   },
+   "editor_premium_options_special_effect": {
+      "description": "Special Effect",
+      "message": "Specialus efektas"
+   },
+   "editor_premium_options_title": {
+      "description": "Premium Options",
+      "message": "Premium parinktys"
+   },
+   "editor_save_dialog_advanced_encoding_options": {
+      "description": "Title for a section containing advanced, technical options for encoding a file.",
+      "message": "Išplėstinės kodavimo parinktys"
+   },
+   "editor_save_dialog_alert_title": {
+      "description": "Warning",
+      "message": "ĮSPĖJIMAS"
+   },
+   "editor_save_dialog_aspect_ratio": {
+      "description": "lock aspect ratio",
+      "message": "Užrakto krašto santykis"
+   },
+   "editor_save_dialog_cancel": {
+      "description": "Cancel",
+      "message": "Atšaukti"
+   },
+   "editor_save_dialog_chip_animated_image": {
+      "description": "Chip label indicating an animated image format (e.g. GIF, AVIF).",
+      "message": "animuotas vaizdas"
+   },
+   "editor_save_dialog_chip_large_file": {
+      "description": "Chip label indicating the format produces a large file size.",
+      "message": "didelis failas"
+   },
+   "editor_save_dialog_chip_limited_support": {
+      "description": "Chip label indicating the format has limited browser/app support.",
+      "message": "ribotas palaikymas"
+   },
+   "editor_save_dialog_chip_small_file": {
+      "description": "Chip label indicating the format produces a small file size.",
+      "message": "mažas failas"
+   },
+   "editor_save_dialog_chip_video": {
+      "description": "Chip label indicating a video format (e.g. WebM, MP4).",
+      "message": "vaizdo įrašas"
+   },
+   "editor_save_dialog_chip_widely_supported": {
+      "description": "Chip label indicating the format is widely supported.",
+      "message": "plačiai palaikomas"
+   },
+   "editor_save_dialog_compress": {
+      "description": "Compress & optimize GIF",
+      "message": "Suspausti ir optimizuoti gif"
+   },
+   "editor_save_dialog_compress_tooltip": {
+      "description": "Apply GIF compression algorthm to greatly reduce GIF file size and in some cases improve quality. Highly recommeded.",
+      "message": "Norėdami žymiai sumažinti GIF failo dydį, pritaikykite GIF kompresinį „Algorthm“ ir kai kuriais atvejais pagerinkite kokybę. Labai rekomenduojama."
+   },
+   "editor_save_dialog_dither_tooltip": {
+      "description": "Apply dither algorithm to frames. Try toggling this option if you experience color quality issues.",
+      "message": "Taikykite vaizdams algoritmą. Pabandykite perjungti šią parinktį, jei patiriate spalvų kokybės problemas."
+   },
+   "editor_save_dialog_download_raw_recording": {
+      "description": "Download raw recording",
+      "message": "Atsisiųskite neapdorotą įrašą"
+   },
+   "editor_save_dialog_estimated_size": {
+      "description": "Estimated GIF Size: ",
+      "message": "Numatomas GIF dydis:"
+   },
+   "editor_save_dialog_export_sound": {
+      "description": "Include sound (beta)",
+      "message": "Įtraukite garsą (beta)"
+   },
+   "editor_save_dialog_export_sound_tooltip": {
+      "description": "Enable this option to include sound in the video.",
+      "message": "Įgalinkite šią parinktį į vaizdo įrašą įtraukti garsą."
+   },
+   "editor_save_dialog_frames": {
+      "description": "Frames: ",
+      "message": "Vaizdai:"
+   },
+   "editor_save_dialog_frames_alert": {
+      "description": "There are currently selected frames, saving will only output these selected frames - ",
+      "message": "Šiuo metu yra pasirinktų vaizdų, taupymas išves tik šiuos pasirinktus kadrus -"
+   },
+   "editor_save_dialog_frames_alert_button": {
+      "description": "Click here to unselect all frames",
+      "message": "Spustelėkite čia, kad nepasirinktumėte visų vaizdų"
+   },
+   "editor_save_dialog_frames_alert_title": {
+      "description": "Playback Speed",
+      "message": "Atkūrimo greitis"
+   },
+   "editor_save_dialog_frames_processing": {
+      "description": "Processing Frames: ",
+      "message": "Vaizdų apdorojimas:"
+   },
+   "editor_save_dialog_height_helper": {
+      "description": "Recorded height is ",
+      "message": "Įrašytas aukštis yra"
+   },
+   "editor_save_dialog_lossy_compression": {
+      "description": "Label for a setting that controls the level of lossy compression, from 0 to 100 percent.",
+      "message": "Glaudinimas su praradimais (0–100 %)"
+   },
+   "editor_save_dialog_number_min_max_validation": {
+      "description": "A value between $minSize$ and $maxSize$ is required.",
+      "message": "Reikia reikšmės tarp $minSize$ ir $maxSize$.",
+      "placeholders": {
+         "maxSize": {
+            "content": "$2"
+         },
+         "minSize": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_save_dialog_processing_alert": {
+      "description": "Processing this recording will require a lot of memory and processing power. Unless you have a high spec PC it is recommended to do one or more of the following:",
+      "message": "Šio įrašymo apdorojimas reikalauja daug atminties ir perdirbimo galios. Jei neturite didelio spec kompiuterio, rekomenduojama atlikti vieną ar daugiau iš šių veiksmų:"
+   },
+   "editor_save_dialog_processing_alert_memory": {
+      "description": "Please note if the resulting GIF is blank then you ran out of memory.",
+      "message": "Atkreipkite dėmesį, jei gauta GIF yra tuščia, jūs pritrūko atminties."
+   },
+   "editor_save_dialog_processing_alert_point_1": {
+      "description": "Compress and optimize GIF",
+      "message": "Suspausti ir optimizuoti gif"
+   },
+   "editor_save_dialog_processing_alert_point_2": {
+      "description": "Reduce the width & height",
+      "message": "Sumažinkite plotį ir aukštį"
+   },
+   "editor_save_dialog_processing_alert_point_3": {
+      "description": "Reduce FPS or delete frames",
+      "message": "Sumažinkite FPS arba ištrinkite vaizdus"
+   },
+   "editor_save_dialog_purchase_dialog_compression_description": {
+      "description": "Free users are limited to 3 high quality GIF compressions per day. Upgrade to Premium to have no restrictions.",
+      "message": "Nemokami vartotojai yra apriboti iki 3 aukštos kokybės GIF suspaudimų per dieną. Atnaujinkite į „Premium“, kad neturėtumėte apribojimų."
+   },
+   "editor_save_dialog_quantization_algorithm": {
+      "description": "Label for a dropdown to select a quantization algorithm.",
+      "message": "Kvantavimo algoritmas"
+   },
+   "editor_save_dialog_quantization_algorithm_new_alpha": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Alpha.",
+      "message": "Naujas (alfa)"
+   },
+   "editor_save_dialog_quantization_algorithm_new_beta": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Beta.",
+      "message": "Naujas (beta)"
+   },
+   "editor_save_dialog_quantization_algorithm_old": {
+      "description": "An option for the quantization algorithm setting, indicating an older version.",
+      "message": "Senas"
+   },
+   "editor_save_dialog_recording_quality_alert": {
+      "description": "GIF quality is limited for non premium users. To output high quality recordings you can do one of the following:",
+      "message": "GIF kokybė yra ribota ne „Premium“ vartotojams. Norėdami išvesti aukštos kokybės įrašus, galite padaryti vieną iš šių dalykų:"
+   },
+   "editor_save_dialog_recording_quality_alert_option_1": {
+      "description": "Purchase premium",
+      "message": "Įsigykite priemoką"
+   },
+   "editor_save_dialog_recording_quality_alert_option_2": {
+      "description": "Save as a WebM file",
+      "message": "Išsaugokite kaip „WebM“ failas"
+   },
+   "editor_save_dialog_reduce_width": {
+      "description": "Reduce width & height",
+      "message": "Sumažinkite plotį ir aukštį"
+   },
+   "editor_save_dialog_reduce_width_tooltip": {
+      "description": "Reduce GIF width and height/quality to improve processing time and produce a smaller file.",
+      "message": "Sumažinkite GIF plotį ir aukštį/kokybę, kad pagerintumėte apdorojimo laiką ir sukurtumėte mažesnį failą."
+   },
+   "editor_save_dialog_save": {
+      "description": "Save",
+      "message": "Sutaupyti"
+   },
+   "editor_save_dialog_save_by": {
+      "description": "Save by",
+      "message": "Išsaugoti"
+   },
+   "editor_save_dialog_save_by_download": {
+      "description": "Download file",
+      "message": "Atsisiųsti failą"
+   },
+   "editor_save_dialog_save_by_google_drive": {
+      "description": "Upload to Google Drive & copy link",
+      "message": "Įkelkite į „Google Drive“ ir kopijavimo nuorodą"
+   },
+   "editor_save_dialog_save_location": {
+      "description": "Save location",
+      "message": "Išsaugoti vietą"
+   },
+   "editor_save_dialog_save_location_downloads": {
+      "description": "Downloads folder",
+      "message": "Atsisiųsti aplanką"
+   },
+   "editor_save_dialog_save_location_downloads_subfolder": {
+      "description": "Downloads subfolder",
+      "message": "Atsisiuntimo povandeninis"
+   },
+   "editor_save_dialog_save_location_select": {
+      "description": "Manually select location",
+      "message": "Rankiniu būdu pasirinkite vietą"
+   },
+   "editor_save_dialog_title": {
+      "description": "Save",
+      "message": "Sutaupyti"
+   },
+   "editor_save_dialog_title_processing": {
+      "description": "Processing...",
+      "message": "Apdorojimas..."
+   },
+   "editor_save_dialog_title_uploading": {
+      "description": "Uploading...",
+      "message": "Įkėlimas ..."
+   },
+   "editor_save_dialog_width_helper": {
+      "description": "Recorded width is ",
+      "message": "Įrašytas plotis yra"
+   },
+   "editor_text": {
+      "description": "Open in editor",
+      "message": "Atvira redaktoriuje"
+   },
+   "editor_tip_delete_items": {
+      "description": "Pro tip: Delete added items by selecting the item and pressing the delete key.",
+      "message": "Pro Patarimas: ištrinti pridėtus elementus pasirinkdami elementą ir paspausdami mygtuką \"Delete\"."
+   },
+   "editor_tip_edit_specific_frames": {
+      "description": "Pro tip: You can edit specific frames by using the 'Apply edits to selected option'",
+      "message": "Pro patarimas: konkrečius vaizdus galite redaguoti naudodamiesi „Taikykite parinktį“ „Taikykite redagavimus“"
+   },
+   "editor_tip_scroll": {
+      "description": "Pro tip: Scroll when hovering the screenshot/recording to zoom.",
+      "message": "Pro Patarimas: slinkite, kai priartinate ekrano kopiją / įrašymą."
+   },
+   "editor_tip_shift_multiple_items": {
+      "description": "Pro tip: When using the selecting tool hold down shift to select more than one item.",
+      "message": "Pro Patarimas: Naudojant atrankos įrankį laikykite nuspaudę perėjimą, kad pasirinktumėte daugiau nei vieną elementą."
+   },
+   "editor_tip_update_multiple_items": {
+      "description": "Pro tip: You can scale, rotate, move and delete multiple items at once.",
+      "message": "Pro Patarimas: galite vienu metu galite skalę, pasukti, perkelti ir ištrinti kelis elementus vienu metu."
+   },
+   "editor_tip_update_text": {
+      "description": "Pro tip: Double click on text to edit it.",
+      "message": "Pro Patarimas: dukart spustelėkite ant teksto, kad jį redaguotumėte."
+   },
+   "editor_upload_dialog_alert_copy_failed_message": {
+      "description": "This may have occurred due to the window not being focused.",
+      "message": "Tai galėjo įvykti dėl to, kad langas nebuvo sutelktas."
+   },
+   "editor_upload_dialog_alert_copy_failed_title": {
+      "description": "Copy to clipboard failed",
+      "message": "Nepavyko kopijuoti į mainų sritį"
+   },
+   "editor_upload_dialog_alert_copy_success_title": {
+      "description": "Copied to clipboard",
+      "message": "Nukopijuota į mainų sritį"
+   },
+   "editor_upload_dialog_alert_upload_failed": {
+      "description": "Upload Failed",
+      "message": "Įkelti nepavyko"
+   },
+   "editor_upload_dialog_alert_upload_failed_link": {
+      "description": "Try again.",
+      "message": "Bandyk iš naujo."
+   },
+   "editor_upload_dialog_alert_upload_failed_message": {
+      "description": "Please make sure you are connected to the internet and have accepted Google Drive permissions.",
+      "message": "Įsitikinkite, kad esate prisijungę prie interneto, ir priėmėte „Google“ disko leidimus."
+   },
+   "editor_upload_dialog_cancel_and_download": {
+      "description": "Cancel and download file",
+      "message": "Atšaukti ir atsisiųsti failą"
+   },
+   "editor_upload_dialog_close": {
+      "description": "Close",
+      "message": "Uždaryti"
+   },
+   "editor_upload_dialog_copy_link": {
+      "description": "Copy link",
+      "message": "Nukopijuoti nuorodą"
+   },
+   "editor_upload_dialog_link_public": {
+      "description": "Allow anyone with the link to view.",
+      "message": "Leiskite visiems, turintiems nuorodą, peržiūrėti."
+   },
+   "editor_zoom_crop_animation_animated": {
+      "description": "Sub-label indicating an animation type is animated.",
+      "message": "Animuota"
+   },
+   "editor_zoom_crop_animation_crop": {
+      "description": "Animation type option for static cropping without animation.",
+      "message": "Apkarpymas"
+   },
+   "editor_zoom_crop_animation_static": {
+      "description": "Sub-label indicating an animation type is static (no animation).",
+      "message": "Statinė"
+   },
+   "editor_zoom_crop_animation_type": {
+      "description": "Label for the animation type selection section.",
+      "message": "Animacijos tipas"
+   },
+   "editor_zoom_crop_animation_zoom_in": {
+      "description": "Animation type option for zooming in on the selected area.",
+      "message": "Priartinti"
+   },
+   "editor_zoom_crop_animation_zoom_out": {
+      "description": "Animation type option for zooming out from the selected area.",
+      "message": "Nutolinti"
+   },
+   "editor_zoom_crop_apply": {
+      "description": "Apply button in zoom/crop dialog.",
+      "message": "Taikyti"
+   },
+   "editor_zoom_crop_cancel": {
+      "description": "Cancel button in zoom/crop dialog.",
+      "message": "Atšaukti"
+   },
+   "editor_zoom_crop_change_area": {
+      "description": "Tooltip text for button to change the selected crop area.",
+      "message": "Keisti sritį"
+   },
+   "editor_zoom_crop_dialog_title": {
+      "description": "Title for the zoom and crop dialog in the editor.",
+      "message": "Priartinimas ir apkarpymas"
+   },
+   "editor_zoom_crop_draw_instruction": {
+      "description": "Instruction text for the user to draw a crop area on the frame preview.",
+      "message": "Nubręžkite pasirinkimą ant kadro"
+   },
+   "editor_zoom_crop_frame_end": {
+      "description": "Label for the end frame number.",
+      "message": "Pabaiga"
+   },
+   "editor_zoom_crop_frame_range": {
+      "description": "Label for the frame range selection section.",
+      "message": "Kadrų diapazonas"
+   },
+   "editor_zoom_crop_frame_start": {
+      "description": "Label for the start frame number.",
+      "message": "Pradžia"
+   },
+   "editor_zoom_crop_frames_menu": {
+      "description": "Menu item label for zoom/crop frames feature.",
+      "message": "Priartinti/apkirpti kadrus"
+   },
+   "editor_zoom_crop_no_area_selected": {
+      "description": "Message displayed when no crop area has been selected.",
+      "message": "Nėra pasirinktos srities"
+   },
+   "editor_zoom_crop_select_area": {
+      "description": "Button text to select a crop area on the frame.",
+      "message": "Pasirinkti sritį"
+   },
+   "editor_zoom_crop_smooth_animation": {
+      "description": "Checkbox label for smoothing animation by interpolating frames.",
+      "message": "Sulieti animaciją pridedant kadrų"
+   },
+   "editor_zoom_crop_transition": {
+      "description": "Label for the transition duration section (number of frames for animation).",
+      "message": "Perėjimas"
+   },
+   "enable_drawing_text": {
+      "description": "Enable drawing",
+      "message": "Įgalinti brėžinį"
+   },
+   "enable_drawing_tooltip_text": {
+      "description": "This option allows users to draw in the selected area while holding down the ctrl key.",
+      "message": "Ši parinktis leidžia vartotojams piešti į pasirinktą sritį, laikydami CTRL klavišą."
+   },
+   "extension_description": {
+      "description": "Take screenshots & record GIFs instantly! Edit & share seamlessly. Your all-in-one screenshot and screen recording solution.",
+      "message": "Paimkite ekrano kopijas ir iškart įrašykite GIF! Redaguoti ir dalintis sklandžiai. Jūsų „viskas viename“ ekrano kopijos ir ekrano įrašymo sprendimas."
+   },
+   "extension_name": {
+      "description": "Chrome Capture - screenshot & GIF",
+      "message": "„Chrome“ fiksavimas - ekrano kopija ir GIF"
+   },
+   "extension_short_name": {
+      "description": "Chrome Capture",
+      "message": "\"Chrome Capture\""
+   },
+   "file_access_text": {
+      "description": "After screenshot action",
+      "message": "Veiksmas po ekrano kopijos"
+   },
+   "filename_text": {
+      "description": "Filename",
+      "message": "Failo pavadinimas"
+   },
+   "frames_per_sec_short_text": {
+      "description": "FPS",
+      "message": "FPS"
+   },
+   "frames_per_sec_text": {
+      "description": "Frames per second (fps)",
+      "message": "Vaizdai per sekundę (FPS)"
+   },
+   "frames_text": {
+      "description": "frames",
+      "message": "vaizdai"
+   },
+   "free_settings_text": {
+      "description": "Free Settings",
+      "message": "Nemokami parametrai"
+   },
+   "fullscreen_info_modal_cancel": {
+      "description": "Cancel",
+      "message": "Atšaukti"
+   },
+   "fullscreen_info_modal_continue": {
+      "description": "Are you sure you want to continue with full screen capture?",
+      "message": "Ar tikrai norite tęsti visą ekraną?"
+   },
+   "fullscreen_info_modal_do_not_show": {
+      "description": "Do not show this again",
+      "message": "Nerodyti tai dar kartą"
+   },
+   "fullscreen_info_modal_message": {
+      "description": "You have used a Chrome Capture shortcut without the cropping tool, this will capture in full screen mode.",
+      "message": "Jūs naudojote chromo fiksavimo nuorodą be apkarpymo įrankio, tai bus užfiksuotas viso ekrano režimu."
+   },
+   "fullscreen_info_modal_open_cropping": {
+      "description": "Open cropping tool",
+      "message": "Atviras apkarpymo įrankis"
+   },
+   "fullscreen_info_modal_shortcut_cropping_tool": {
+      "description": "Alt + C: Open/close Chrome Capture cropping tool",
+      "message": "ALT + C: Atidarykite / uždarykite \"Chrome\" fiksavimo įrankį"
+   },
+   "fullscreen_info_modal_shortcut_fullpage_screenshot": {
+      "description": "Alt + Shift + S: Full webpage screenshot (beta)",
+      "message": "Alt + Shift + S: pilnas tinklalapio ekrano kopija (beta)"
+   },
+   "fullscreen_info_modal_shortcut_linkt": {
+      "description": "You can configure these here: ",
+      "message": "Galite konfigūruoti šiuos čia:"
+   },
+   "fullscreen_info_modal_shortcut_recording": {
+      "description": "Alt + R: Start/stop recording",
+      "message": "ALT + R: Pradėti / sustabdyti įrašymą"
+   },
+   "fullscreen_info_modal_shortcut_screenshot": {
+      "description": "Alt + S: Visible area screenshot",
+      "message": "ALT + S: matomas plotas ekrano kopija"
+   },
+   "fullscreen_info_modal_shortcuts": {
+      "description": "Default shortcuts are: ",
+      "message": "Numatytieji nuorodos yra:"
+   },
+   "fullscreen_info_modal_start": {
+      "description": "Start full screen capture",
+      "message": "Pradėkite visą ekrano užfiksavimą"
+   },
+   "fullscreen_info_modal_title": {
+      "description": "Full screen capture",
+      "message": "Visas ekrano užfiksavimas"
+   },
+   "general_not_available": {
+      "description": "N/A",
+      "message": "N/A"
+   },
+   "get_premium": {
+      "description": "Get Premium",
+      "message": "Gaukite \"Premium\""
+   },
+   "height_text": {
+      "description": "Width (px)",
+      "message": "Plotis (px)"
+   },
+   "hi": {
+      "description": "Hi",
+      "message": "Labas"
+   },
+   "internet_connection_required": {
+      "description": "Internet connection is required to upgrade to premium.",
+      "message": "Reikia atnaujinti interneto ryšį."
+   },
+   "manage_subscription_access_until_date": {
+      "description": "Your plan will not renew. You can access premium features until $date$.",
+      "message": "Jūsų planas nebus atnaujintas. „Premium“ funkcijomis galite naudotis iki $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_cancel_button": {
+      "description": "Cancel subscription",
+      "message": "Atšaukti prenumeratą"
+   },
+   "manage_subscription_cancel_confirm_cancel_button": {
+      "description": "Keep Premium",
+      "message": "Pasilikti „Premium“"
+   },
+   "manage_subscription_cancel_confirm_confirm_button": {
+      "description": "Continue to cancel",
+      "message": "Tęsti atšaukimą"
+   },
+   "manage_subscription_cancel_confirm_description": {
+      "description": "You will lose access to Premium features and Premium options will be reset.",
+      "message": "Prarasite prieigą prie „Premium“ funkcijų, o „Premium“ parinktys bus nustatytos iš naujo."
+   },
+   "manage_subscription_cancel_confirm_title": {
+      "description": "Are you sure you want to cancel your subscription?",
+      "message": "Ar tikrai norite atšaukti savo prenumeratą?"
+   },
+   "manage_subscription_ended_on_date": {
+      "description": "Subscription ended on $date$.",
+      "message": "Prenumerata baigėsi $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_ends_on_date": {
+      "description": "Subscription ends on $date$.",
+      "message": "Prenumerata baigsis $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_next_payment_full": {
+      "description": "Next payment: $price$ on $date$",
+      "message": "Kitas mokėjimas: $price$ dieną $date$",
+      "placeholders": {
+         "date": {
+            "content": "$2"
+         },
+         "price": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_paid_full": {
+      "description": "Paid: $billingCycle$",
+      "message": "Apmokėta: $billingCycle$",
+      "placeholders": {
+         "billingCycle": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_resubscribe_prompt": {
+      "description": " To use premium features again, please upgrade.",
+      "message": " Norėdami vėl naudotis „premium“ funkcijomis, atnaujinkite."
+   },
+   "manage_subscription_update_payment_button": {
+      "description": "Update payment method",
+      "message": "Atnaujinti mokėjimo metodą"
+   },
+   "max_recording_dimension_size_text": {
+      "description": "Max recording resolution/quality",
+      "message": "Maksimali įrašymo sprendimas / kokybė"
+   },
+   "no_limit_text": {
+      "description": "No limit",
+      "message": "Nėra ribos"
+   },
+   "open_text": {
+      "description": "Open",
+      "message": "Atviras"
+   },
+   "options_default_action": {
+      "description": "Extension icon click action",
+      "message": "Plėtinio piktogramos paspaudimo veiksmas"
+   },
+   "options_dimension_size_1000": {
+      "description": "1000 pixels",
+      "message": "1000 pikselių"
+   },
+   "options_dimension_size_1080p": {
+      "description": "1920 pixels (1080p)",
+      "message": "1920 pikselių (1080p)"
+   },
+   "options_dimension_size_480p": {
+      "description": "640 pixels (480p)",
+      "message": "640 pikselių (480p)"
+   },
+   "options_dimension_size_4k": {
+      "description": "3840 pixels (4K)",
+      "message": "3840 pikselių (4k)"
+   },
+   "options_dimension_size_720p": {
+      "description": "1280 pixels (720p)",
+      "message": "1280 pikselių (720p)"
+   },
+   "options_embedded_options_permission_warning": {
+      "description": "Cursor highlighting, click effects, and drawing tools will only work until the page reloads or changes. To keep them active after reloads or redirects, you'll need to grant an extra permission.",
+      "message": "Žymeklio paryškinimas, paspaudimų efektai ir piešimo įrankiai veiks tik tol, kol puslapis bus įkeltas iš naujo arba pasikeis. Kad jie liktų aktyvūs po perkrovimų ar peradresavimų, turėsite suteikti papildomą leidimą."
+   },
+   "options_enable_notifications": {
+      "description": "Enable notifications",
+      "message": "Įgalinti pranešimus"
+   },
+   "options_enable_notifications_tooltip": {
+      "description": "Display notifications when full screen recording starts and processing recordings in the background.",
+      "message": "Rodyti pranešimus, kai prasideda viso ekrano įrašymas ir apdorojimo įrašai fone."
+   },
+   "options_enable_subfolder_downloads": {
+      "description": "Download files into subfolder",
+      "message": "Atsisiųskite failus į „Soonfolder“"
+   },
+   "options_enable_subfolder_downloads_tooltip": {
+      "description": "Download files into a subfolder of your choice inside the downloads folder. This option is useful for organising your captures.",
+      "message": "Atsisiųskite failus į pasirinktą poaplankį, esantį aplanke „Atsisiuntimo“. Ši parinktis yra naudinga organizuojant jūsų fiksavimą."
+   },
+   "options_how_to_use_btn": {
+      "description": "How to use",
+      "message": "Kaip naudoti"
+   },
+   "options_language": {
+      "description": "Language",
+      "message": "Kalba"
+   },
+   "options_open_containing_folder_on_save": {
+      "description": "Open containing folder after saving",
+      "message": "Atidaryti aplanką po išsaugojimo"
+   },
+   "options_open_popup": {
+      "description": "Open popup",
+      "message": "Atidarykite iššokantį langą"
+   },
+   "options_open_selected_area": {
+      "description": "Open selected area capture",
+      "message": "Atidarykite pasirinktą ploto užfiksavimą"
+   },
+   "options_section_general": {
+      "description": "Title for the General settings section in the options page",
+      "message": "Bendrieji nustatymai"
+   },
+   "options_section_output": {
+      "description": "Title for the Output and Saving settings section in the options page",
+      "message": "Išvestis ir įrašymas"
+   },
+   "options_section_recording": {
+      "description": "Title for the Recording settings section in the options page",
+      "message": "Įrašymo nustatymai"
+   },
+   "options_section_visuals": {
+      "description": "Title for the Cursor and Interaction Visuals settings section in the options page",
+      "message": "Žymeklio ir sąveikos vaizdai"
+   },
+   "options_shortcuts_btn": {
+      "description": "Shortcuts",
+      "message": "Nuorodos"
+   },
+   "options_subfolder_downloads_name": {
+      "description": "Subfolder name:",
+      "message": "Poaplaukio vardas:"
+   },
+   "options_support_btn": {
+      "description": "Support",
+      "message": "Pagalba"
+   },
+   "overlay_help_text": {
+      "description": "Click and drag to choose your selected area. \nRight click to snap to an element, hold shift for multiple.",
+      "message": "Spustelėkite ir vilkite, kad pasirinktumėte pasirinktą sritį. \n Dešiniuoju pelės mygtuku spustelėkite, jei norite užfiksuoti elementą, laikykite \"Shift\"."
+   },
+   "plan_billing_annually": {
+      "description": "Annually",
+      "message": "Kasmet"
+   },
+   "plan_billing_monthly": {
+      "description": "Monthly",
+      "message": "Kas mėnesį"
+   },
+   "plan_name_custom": {
+      "description": "Custom Plan",
+      "message": "Individualus planas"
+   },
+   "popup_capture_tab": {
+      "description": "Capture",
+      "message": "Užfiksuoti"
+   },
+   "popup_desktop_screenshot_tooltip": {
+      "description": "Capture the entire screen, desktop, or any open application.",
+      "message": "Užfiksuokite visą ekraną, darbalaukį ar bet kokią atvirą programą."
+   },
+   "popup_editor_icon_tooltip": {
+      "description": "Open Editor",
+      "message": "Atviras redaktorius"
+   },
+   "popup_full_page_screenshot_tooltip": {
+      "description": "Capture the current tab full webpage, including content beyond the visible area.",
+      "message": "Užfiksuokite dabartinį „Tab Full“ tinklalapį, įskaitant turinį, esantį už matomos srities."
+   },
+   "popup_full_webpage": {
+      "description": "Full webpage",
+      "message": "Visas tinklalapis"
+   },
+   "popup_no_scripts_alert": {
+      "description": "Selected area and full webpage screenshots are not possible here. These features are available on other websites.",
+      "message": "Pasirinkta sritis ir visos tinklalapio ekrano kopijos čia neįmanoma. Šias funkcijas galima rasti kitose svetainėse."
+   },
+   "popup_record_tab": {
+      "description": "Record",
+      "message": "Įrašas"
+   },
+   "popup_recording_limit_alert": {
+      "description": "Record up to $seconds$ seconds per GIF. Premium users can update this from the ",
+      "message": "Įrašykite iki $seconds$ sekundžių per GIF. „Premium“ vartotojai gali tai atnaujinti iš",
+      "placeholders": {
+         "seconds": {
+            "content": "$1"
+         }
+      }
+   },
+   "popup_recording_limit_settings_link": {
+      "description": "settings page.",
+      "message": "Nustatymų puslapis."
+   },
+   "popup_screen_or_app": {
+      "description": "Full screen or app",
+      "message": "Visas ekranas arba programa"
+   },
+   "popup_selected_area": {
+      "description": "Selected area",
+      "message": "Pasirinkta sritis"
+   },
+   "popup_selected_area_screenshot_tooltip": {
+      "description": "Capture a specific area of the current tab.",
+      "message": "Užfiksuokite konkrečią dabartinio skirtuko sritį."
+   },
+   "popup_set_shortcut": {
+      "description": "set shortcut",
+      "message": "Nustatykite nuorodą"
+   },
+   "popup_settings_icon_tooltip": {
+      "description": "Open Settings",
+      "message": "Atidaryti nustatymus"
+   },
+   "popup_tab_screenshot_tooltip": {
+      "description": "Capture the visible part of the current tab.",
+      "message": "Užfiksuokite matomą dabartinio skirtuko dalį."
+   },
+   "popup_this_tab": {
+      "description": "This tab",
+      "message": "Šis skirtukas"
+   },
+   "popup_waiting_for_desktop_selection_alert": {
+      "description": "FULL SCREEN OR APP capture did not start because you did not select an option from the popup dialog. If you have multiple monitors it may have opened on another monitor.",
+      "message": "Viso ekrano ar programos fiksavimas neprasidėjo, nes iš iššokančiojo dialogo lango nepasirinkote parinkties. Jei turite kelis monitorius, jis galėjo būti atidarytas kitame monitoriuje."
+   },
+   "premium_settings_text": {
+      "description": "Premium Settings",
+      "message": "Premium nustatymai"
+   },
+   "purchase_btn_text": {
+      "description": "Get Premium!",
+      "message": "Gaukite Premium!"
+   },
+   "purchase_description_limited_time_text": {
+      "description": "Lock in this price now - limited time offer before we switch to subscriptions!",
+      "message": "Užsitikrinkite šią kainą dabar – riboto laiko pasiūlymas, kol pereisime prie prenumeratų!"
+   },
+   "purchase_description_text": {
+      "description": "Just one payment unlocks all premium features forever. No recurring fees!",
+      "message": "Vienas mokėjimas atrakina visas „Premium“ funkcijas visam gyvenimui. Jokių pasikartojančių mokesčių!"
+   },
+   "purchase_feature_30fps": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "švelnus kaip šilkas 30 FPS įrašymas"
+   },
+   "purchase_feature_4K": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "krištolo skaidrumo 4K įrašymas"
+   },
+   "purchase_feature_alter_frame_rate": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "pasirinktiniai kadrų dažniai"
+   },
+   "purchase_feature_alter_playback_speed": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "sulėtinto judesio ir „time-lapse“ efektai"
+   },
+   "purchase_feature_blur": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "suliejimo įrankis"
+   },
+   "purchase_feature_crop_recording": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "tikslus GIF apkarpymas"
+   },
+   "purchase_feature_default": {
+      "description": "Feature that goes in $feature$ placeholder. Default fallback.",
+      "message": "ši funkcija"
+   },
+   "purchase_feature_frame_edits": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "galingas redagavimas po vieną kadrą"
+   },
+   "purchase_feature_highlight": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "paryškinimo įrankis"
+   },
+   "purchase_feature_no_duration_limit": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "neribota įrašymo trukmė"
+   },
+   "purchase_feature_special_effect": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "specialieji efektai"
+   },
+   "purchase_feature_step_tool": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "žingsnių įrankis"
+   },
+   "purchase_feature_svg": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "pasirinktinių piktogramų ir logotipų pridėjimas"
+   },
+   "purchase_feature_text_and_annotation_customization": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "visiška teksto ir anotacijų kontrolė"
+   },
+   "purchase_feature_unlimited_gif_compression": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "neribotas išplėstinis GIF glaudinimas"
+   },
+   "purchase_feature_update_end_time": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "pritaikytas įrašymo laikas"
+   },
+   "purchase_login_dialog_closed_by_user_alert": {
+      "description": "Looks like you closed the sign in dialog, premium users must sign in so you don't lose premium access.",
+      "message": "Panašu, kad uždarėte ženklą dialogo lange, priemokos vartotojai turi prisijungti, kad neprarastumėte prieigos prie „Premium“."
+   },
+   "purchase_login_dialog_google_button": {
+      "description": "Sign in with Google",
+      "message": "Prisijunkite naudodami „Google“"
+   },
+   "purchase_login_dialog_title": {
+      "description": "Sign in required",
+      "message": "Prisijunkite būtini"
+   },
+   "purchase_login_text": {
+      "description": "Sign in with Google to link your purchase to your account.",
+      "message": "Prisijunkite per „Google“, kad susietumėte pirkinį su savo paskyra."
+   },
+   "purchase_login_text_window_opened": {
+      "description": "Sign into Google in the popup window.",
+      "message": "Prisijunkite prie „Google“ lango lange."
+   },
+   "purchase_subscription_title_text": {
+      "description": "Choose the plan that fits your needs.",
+      "message": "Pasirinkite planą, atitinkantį jūsų poreikius."
+   },
+   "purchase_title_text": {
+      "description": "Get Lifetime Premium Access Today!",
+      "message": "Gaukite viso gyvenimo „Premium“ prieigą šiandien!"
+   },
+   "purchase_title_text_blocked_feature": {
+      "description": "That feature requires Premium",
+      "message": "Šiai funkcijai reikalingas „Premium“"
+   },
+   "purchase_title_text_blocked_pro_feature": {
+      "description": "That feature requires Premium Pro",
+      "message": "Šiai funkcijai reikalingas „Premium Pro“"
+   },
+   "purchase_title_text_blocked_pro_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium Pro paywall.",
+      "message": "Atrakinkite „$feature$“ su „Premium Pro“",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchase_title_text_blocked_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium paywall.",
+      "message": "Atrakinkite „$feature$“ su „Premium“",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_already_premium_user": {
+      "description": "Already a premium user?",
+      "message": "Jau yra aukščiausios kokybės vartotojas?"
+   },
+   "purchases_bill_me": {
+      "description": "Bill me:",
+      "message": "Išrašyti man sąskaitą:"
+   },
+   "purchases_checkout_unavailable_message": {
+      "description": "Message shown when checkout could not be started.",
+      "message": "Šiuo metu nepavyko pradėti atnaujinimo proceso. Bandykite dar kartą."
+   },
+   "purchases_compare_12_fps": {
+      "description": "12FPS",
+      "message": "12 kadrų/s"
+   },
+   "purchases_compare_3_per_day": {
+      "description": "3 per day",
+      "message": "3 per dieną"
+   },
+   "purchases_compare_add_custom_shape_tool": {
+      "description": "Add custom shape/icon tool",
+      "message": "Pridėti pasirinktinės formos / piktogramos įrankį"
+   },
+   "purchases_compare_benefits": {
+      "description": "Benefits",
+      "message": "Privalumai"
+   },
+   "purchases_compare_blur_tool": {
+      "description": "Blur tool",
+      "message": "Suliejimo įrankis"
+   },
+   "purchases_compare_close_button_label": {
+      "description": "Close",
+      "message": "Uždaryti"
+   },
+   "purchases_compare_compression": {
+      "description": "High quality GIF compression",
+      "message": "Aukštos kokybės GIF suspaudimas"
+   },
+   "purchases_compare_core_capture_features": {
+      "description": "Core Capture Features",
+      "message": "Pagrindinės fiksavimo funkcijos"
+   },
+   "purchases_compare_crop_recordings": {
+      "description": "Crop recordings",
+      "message": "Apkarpyti įrašus"
+   },
+   "purchases_compare_customize_editing_tools": {
+      "description": "Customize editing tools (font, size color)",
+      "message": "Tinkinti redagavimo įrankius (šriftas, dydis, spalva)"
+   },
+   "purchases_compare_drawing": {
+      "description": "Draw while recording",
+      "message": "Įrašyti"
+   },
+   "purchases_compare_early_access": {
+      "description": "Early access to new features",
+      "message": "Ankstyva prieiga prie naujų funkcijų"
+   },
+   "purchases_compare_editing": {
+      "description": "Edit captures",
+      "message": "Redaguoti užfiksuokite"
+   },
+   "purchases_compare_editing_free": {
+      "description": "basic editing",
+      "message": "Pagrindinis redagavimas"
+   },
+   "purchases_compare_editing_suite": {
+      "description": "Editing Suite",
+      "message": "Redagavimo rinkinys"
+   },
+   "purchases_compare_frame_editing": {
+      "description": "Frame editing",
+      "message": "Rėmo redagavimas"
+   },
+   "purchases_compare_frame_rate": {
+      "description": "Adjust Frame Rate",
+      "message": "Reguliuoti kadrų dažnį (FPS)"
+   },
+   "purchases_compare_frame_specific_edits": {
+      "description": "Frame specific edits",
+      "message": "Konkrečių kadrų redagavimas"
+   },
+   "purchases_compare_free_draw_tools": {
+      "description": "Free draw, line, arrow, rectangle, circle, text tools",
+      "message": "Laisvo piešimo, linijos, rodyklės, stačiakampio, apskritimo, teksto įrankiai"
+   },
+   "purchases_compare_full_webpage_screenshots": {
+      "description": "Unlimited full page screenshots.",
+      "message": "Neribotas pilno puslapio ekrano."
+   },
+   "purchases_compare_highlight_tool": {
+      "description": "Highlight tool",
+      "message": "Paryškinimo įrankis"
+   },
+   "purchases_compare_live_recording_tools": {
+      "description": "Live Recording Tools",
+      "message": "Tiesioginio įrašymo įrankiai"
+   },
+   "purchases_compare_mouse": {
+      "description": "Click and mouse indication",
+      "message": "Spustelėkite ir pelės nuoroda"
+   },
+   "purchases_compare_plans": {
+      "description": "Compare plans",
+      "message": "Palyginkite planus"
+   },
+   "purchases_compare_plans_premium_button": {
+      "description": "Upgrade to Premium",
+      "message": "Naujovinti į „Premium“"
+   },
+   "purchases_compare_playback_speed": {
+      "description": "Tune recording playback speed",
+      "message": "Tune įrašymo atkūrimo greitis"
+   },
+   "purchases_compare_priority_support": {
+      "description": "Priority support and feature requests",
+      "message": "Prioritetinis palaikymas ir funkcijų užklausos"
+   },
+   "purchases_compare_recording": {
+      "description": "Unlimited GIF recordings.",
+      "message": "Neribota GIF įrašai."
+   },
+   "purchases_compare_recording_free": {
+      "description": "15sec limit per GIF",
+      "message": "15 sekundžių limitas vienam GIF"
+   },
+   "purchases_compare_recording_quality": {
+      "description": "High quality GIFs",
+      "message": "Aukštos kokybės Gif"
+   },
+   "purchases_compare_recording_quality_control": {
+      "description": "Recording Quality & Control",
+      "message": "Įrašymo kokybė ir valdymas"
+   },
+   "purchases_compare_recording_quality_free": {
+      "description": "1000 pixels max",
+      "message": "1000 pikselių max."
+   },
+   "purchases_compare_screenshots": {
+      "description": "Unlimited screenshots.",
+      "message": "Neribotos ekrano kopijos."
+   },
+   "purchases_compare_special_effects": {
+      "description": "Recording special effects",
+      "message": "Įrašykite specialius efektus"
+   },
+   "purchases_compare_up_to_1080p": {
+      "description": "Up to 1080p",
+      "message": "Iki 1080p"
+   },
+   "purchases_compare_up_to_24_fps": {
+      "description": "Up to 24FPS",
+      "message": "Iki 24 kadrų/s"
+   },
+   "purchases_compare_up_to_30_fps": {
+      "description": "Up to 30FPS",
+      "message": "Iki 30 kadrų/s"
+   },
+   "purchases_compare_up_to_4k_plus": {
+      "description": "Up to 4K+",
+      "message": "Iki 4K+"
+   },
+   "purchases_current_plan": {
+      "description": "Current plan",
+      "message": "Dabartinis planas"
+   },
+   "purchases_features": {
+      "description": "Features",
+      "message": "Funkcijos"
+   },
+   "purchases_free": {
+      "description": "Free",
+      "message": "Laisvas"
+   },
+   "purchases_free_button": {
+      "description": "Free to use",
+      "message": "Laisvai naudoti"
+   },
+   "purchases_free_feature_editing": {
+      "description": "Basic editing",
+      "message": "Pagrindinis redagavimas"
+   },
+   "purchases_free_feature_recording": {
+      "description": "Basic GIF recording",
+      "message": "Pagrindinis GIF įrašymas"
+   },
+   "purchases_free_feature_screenshots": {
+      "description": "Unlimited screenshots",
+      "message": "Neribotos ekrano kopijos"
+   },
+   "purchases_free_plan_description": {
+      "description": "Get started with our essential capture tools. Completely free for basic everyday use.",
+      "message": "Pradėkite nuo mūsų pagrindinių fiksavimo įrankių. Visiškai nemokama kasdieniam naudojimui."
+   },
+   "purchases_plan_save_up_to_percentage": {
+      "description": "Save up to",
+      "message": "Sutaupykite iki"
+   },
+   "purchases_premium": {
+      "description": "Premium",
+      "message": "Premija"
+   },
+   "purchases_premium_billed_annually": {
+      "description": "Billed annually",
+      "message": "Atsiskaitoma kasmet"
+   },
+   "purchases_premium_button": {
+      "description": "Get lifetime access",
+      "message": "Gaukite prieigą visam gyvenimui"
+   },
+   "purchases_premium_feature_compression": {
+      "description": "High quality GIF compression",
+      "message": "Aukštos kokybės GIF suspaudimas"
+   },
+   "purchases_premium_feature_editing": {
+      "description": "Feature rich editing",
+      "message": "Yra turtingas redagavimas"
+   },
+   "purchases_premium_feature_free": {
+      "description": "Everything from free plan",
+      "message": "Apima nemokamo plano funkcijas"
+   },
+   "purchases_premium_feature_marked_with_star": {
+      "description": "All features marked with a star",
+      "message": "Visos žvaigždute pažymėtos funkcijos"
+   },
+   "purchases_premium_feature_recording": {
+      "description": "Unlimited high quality GIF recording",
+      "message": "Neribota aukštos kokybės GIF įrašymas"
+   },
+   "purchases_premium_feature_recording_1080p": {
+      "description": "High quality GIF recording, up to 1080p, 24fps",
+      "message": "Aukštos kokybės GIF įrašymas, iki 1080p, 24 kadrų per sekundę"
+   },
+   "purchases_premium_feature_refundable": {
+      "description": "Fully refundable",
+      "message": "Visiškai grąžinama"
+   },
+   "purchases_premium_feature_risk_free": {
+      "description": "Risk-free: 7 day trial, cancel anytime",
+      "message": "Be rizikos: 7 dienų bandomasis laikotarpis, atšaukite bet kada"
+   },
+   "purchases_premium_feature_unlimited_length": {
+      "description": "Unlimited GIF recording length",
+      "message": "Neribota GIF įrašymo trukmė"
+   },
+   "purchases_premium_price_info": {
+      "description": "one time fee",
+      "message": "Vienkartinis mokestis"
+   },
+   "purchases_premium_price_per_month": {
+      "description": "/ month",
+      "message": "/ mėn."
+   },
+   "purchases_premium_pro": {
+      "description": "Premium Pro",
+      "message": "Premium Pro"
+   },
+   "purchases_premium_pro_editing_tools": {
+      "description": "Advanced editing tools (blurring, special effects, etc.)",
+      "message": "Išplėstiniai redagavimo įrankiai (suliejimas, specialieji efektai ir kt.)"
+   },
+   "purchases_premium_pro_feature_early_access": {
+      "description": "Early access to new features",
+      "message": "Ankstyva prieiga prie naujų funkcijų"
+   },
+   "purchases_premium_pro_feature_marked_with_crown": {
+      "description": "All features marked with a star and crown",
+      "message": "Visos žvaigždute ir karūna pažymėtos funkcijos"
+   },
+   "purchases_premium_pro_feature_premium_plan": {
+      "description": "Everything from Premium plan",
+      "message": "Viskas iš „Premium“ plano"
+   },
+   "purchases_premium_pro_feature_quality": {
+      "description": "Max resolution recording, 4K+ and 30fps",
+      "message": "Maksimalios raiškos įrašymas, 4K+ ir 30 kadrų per sekundę"
+   },
+   "purchases_premium_pro_feature_support": {
+      "description": "Priority support and feature requests",
+      "message": "Prioritetinis palaikymas ir funkcijų užklausos"
+   },
+   "purchases_premium_pro_upgrade": {
+      "description": "Upgrade to Pro",
+      "message": "Atnaujinti į „Pro“"
+   },
+   "purchases_premium_save_percentage": {
+      "description": "save $savingsPercentage$%",
+      "message": "sutaupykite $savingsPercentage$ %",
+      "placeholders": {
+         "savingsPercentage": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_premium_try_for_free": {
+      "description": "Try for free",
+      "message": "Išbandykite nemokamai"
+   },
+   "purchases_price_unavailable": {
+      "description": "Label shown in place of a price when it is unavailable.",
+      "message": "Kaina nepasiekiama"
+   },
+   "purchases_pricing_unavailable_message": {
+      "description": "Message shown when the Premium pricing request was blocked or failed.",
+      "message": "Premium kainų užklausa buvo užblokuota arba nepavyko. Taip gali nutikti, kai darbo tinklas, VPN, reklamų blokatorius, privatumo plėtinys ar ugniasienė blokuoja Paddle."
+   },
+   "purchases_pricing_unavailable_title": {
+      "description": "Title shown when Premium pricing could not be loaded.",
+      "message": "Nepavyko įkelti Premium kainų"
+   },
+   "purchases_pricing_unavailable_troubleshooting_extensions": {
+      "description": "Troubleshooting step telling the user to disable VPN or privacy tools temporarily.",
+      "message": "Laikinai išjunkite VPN, reklamų blokatorių ar privatumo plėtinius ir pabandykite dar kartą."
+   },
+   "purchases_pricing_unavailable_troubleshooting_intro": {
+      "description": "Intro text for troubleshooting steps when pricing is unavailable.",
+      "message": "Pabandykite šiuos veiksmus:"
+   },
+   "purchases_pricing_unavailable_troubleshooting_network": {
+      "description": "Troubleshooting step telling the user to try another network or browser profile.",
+      "message": "Pabandykite kitą tinklą arba atidarykite plėtinį kitame Chrome profilyje."
+   },
+   "purchases_pricing_unavailable_troubleshooting_workplace": {
+      "description": "Troubleshooting step telling the user workplace policy may be blocking Paddle.",
+      "message": "Jei naudojate darbo įrenginį, jūsų tinklo ar naršyklės politika gali blokuoti Paddle."
+   },
+   "purchases_sign_in_here": {
+      "description": "Sign in here",
+      "message": "Prisijunkite čia"
+   },
+   "purchases_start_trial_cancel_anytime": {
+      "description": "Call to action to start a free trial.",
+      "message": "Norėdami tęsti, pradėkite 7 dienų nemokamą bandomąjį laikotarpį. Atšaukite bet kada."
+   },
+   "purchases_try_premium_for_free": {
+      "description": "Try Premium for Free",
+      "message": "Išbandykite „Premium“ nemokamai"
+   },
+   "purchases_try_premium_pro_for_free": {
+      "description": "Try Premium Pro for Free",
+      "message": "Išbandykite „Premium Pro“ nemokamai"
+   },
+   "purchases_upgrade_premium_to_pro": {
+      "description": "To use this feature and access all Pro benefits, upgrade your plan.",
+      "message": "Norėdami naudotis šia funkcija ir gauti visus „Pro“ privalumus, atnaujinkite savo planą."
+   },
+   "purchases_upgrade_to_premium_pro": {
+      "description": "Upgrade to Premium Pro",
+      "message": "Atnaujinti į „Premium Pro“"
+   },
+   "quality_text": {
+      "description": "Recording quality (10 = best)",
+      "message": "Įrašymo kokybė (10 = geriausia)"
+   },
+   "rate_bad_rating_text": {
+      "description": "We are continuously trying our hardest to improve Chrome Capture, please share what needs improvement by emailing us at ",
+      "message": "Mes nuolat stengiamės pagerinti \"Chrome\" užfiksavimą, prašome pasidalinti tai, ko reikia tobulinti elektroniniu paštu mums adresu"
+   },
+   "rate_bad_title_text": {
+      "description": "😞 We are sorry!",
+      "message": "😞 Atsiprašome!"
+   },
+   "rate_close_btn_text": {
+      "description": "Close",
+      "message": "Uždaryti"
+   },
+   "rate_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "Patvirtinti"
+   },
+   "rate_description_text": {
+      "description": "If you've found this extension useful please leave a rating or review. \n\nBy leaving a rating you can help us reach more users which will help fund continual improvements and keep general usage free.",
+      "message": "Jei radote šį pratęsimą naudinga, palikite įvertinimą arba peržiūrą. \n\n Palikdami reitingą, galite padėti mums pasiekti daugiau vartotojų, kurie padės finansuoti nuolatinius patobulinimus ir nuolat naudoti nemokamą naudojimą."
+   },
+   "rate_description_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "Mes labai vertiname jus perkant priemoką ir norėčiau išgirsti bet kokį atsiliepimą, kurį turite padėti mums pagerinti produktą ir pasiekti daugiau vartotojų."
+   },
+   "rate_good_rating_text": {
+      "description": "Your reviews keep our small team motivated to make Chrome Capture even better!",
+      "message": "Jūsų atsiliepimai saugo mūsų mažą komandą motyvuotai padaryti chromo fiksuoti dar geriau!"
+   },
+   "rate_good_rating_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "Mes labai vertiname jus perkant priemoką ir norėčiau išgirsti bet kokį atsiliepimą, kurį turite padėti mums pagerinti produktą ir pasiekti daugiau vartotojų."
+   },
+   "rate_good_title_text": {
+      "description": "😍 Review in the web store?",
+      "message": "😍 Peržiūrėkite internetinę parduotuvę?"
+   },
+   "rate_maybe_later_btn_text": {
+      "description": "Maybe later",
+      "message": "Galbūt vėliau"
+   },
+   "rate_no_btn_text": {
+      "description": "No thanks",
+      "message": "Ne, ačiū"
+   },
+   "rate_send_email_btn_text": {
+      "description": "Send Email",
+      "message": "Siųsti laišką"
+   },
+   "rate_thank_you_title_text": {
+      "description": "Thank you! 😍",
+      "message": "Ačiū! 😍."
+   },
+   "rate_title_text": {
+      "description": "How are we doing?",
+      "message": "Kaip mes darome?"
+   },
+   "rate_yes_btn_text": {
+      "description": "Ok, sure",
+      "message": "Gerai žinoma"
+   },
+   "recommended": {
+      "description": "recommended",
+      "message": "Rekomenduojamas"
+   },
+   "record_length_text": {
+      "description": "Max record length",
+      "message": "Maksimalus įrašo ilgis"
+   },
+   "recordings_taken": {
+      "description": "Recordings taken:",
+      "message": "Įrašai imami:"
+   },
+   "save_as_screenshot_text": {
+      "description": "Save screenshot as",
+      "message": "Išsaugoti ekrano kopiją AS"
+   },
+   "save_as_text": {
+      "description": "Save recording as",
+      "message": "Išsaugokite įrašymą kaip"
+   },
+   "screenshots_taken": {
+      "description": "Screenshots taken:",
+      "message": "Paimtos ekrano kopijos:"
+   },
+   "seconds_text": {
+      "description": "secs",
+      "message": "sek"
+   },
+   "shortcut": {
+      "description": "Shortcut:",
+      "message": "Nuoroda:"
+   },
+   "show_click_indicator_text": {
+      "description": "Show click animation",
+      "message": "Rodyti spustelėkite animaciją"
+   },
+   "show_click_indicator_tooltip_text": {
+      "description": "This option draws a circle animation around the click location.",
+      "message": "Ši parinktis atkreipia apskritimo animaciją aplink paspaudimo vietą."
+   },
+   "show_cursor_text": {
+      "description": "Show dot at cursor location",
+      "message": "Rodyti tašką žymeklio vietoje"
+   },
+   "show_cursor_tooltip_text": {
+      "description": "This option draws a small circle to indicate where the mouse is located.",
+      "message": "Ši parinktis atkreipia nedidelį ratą, nurodant, kur yra pelė."
+   },
+   "sign_in": {
+      "description": "Sign In",
+      "message": "Prisijunkite"
+   },
+   "sign_out": {
+      "description": "Sign Out",
+      "message": "Išsirašykite"
+   },
+   "subscription_past_due_warning": {
+      "description": "Warning message shown when a user subscription payment has failed or is past its due date.",
+      "message": "Prenumeratos mokėjimas pradelstas. Spustelėkite čia, kad atnaujintumėte savo mokėjimo informaciją."
+   },
+   "subscription_premium_plan_description": {
+      "description": "Go beyond basics: HD quality & limits unlocked. Craft pro content with enhanced features.",
+      "message": "Perženkite pagrindus: HD kokybė ir atrakinti limitai. Kurkite profesionalų turinį su patobulintomis funkcijomis."
+   },
+   "subscription_premium_pro_plan_description": {
+      "description": "Experience peak performance: 4K+ and all features. Full editing suite with early access.",
+      "message": "Patirkite didžiausią našumą: 4K+ ir visos funkcijos. Pilnas redagavimo rinkinys su ankstyva prieiga."
+   },
+   "subscription_status_active": {
+      "description": "Active",
+      "message": "Aktyvus"
+   },
+   "subscription_status_ending_soon": {
+      "description": "Ending Soon",
+      "message": "Greitai baigsis"
+   },
+   "subscription_status_expired": {
+      "description": "Expired",
+      "message": "Pasibaigęs"
+   },
+   "subscription_status_past_due": {
+      "description": "Past Due",
+      "message": "Pradelstas"
+   },
+   "subscription_status_paused": {
+      "description": "Paused",
+      "message": "Pristabdyta"
+   },
+   "subscription_status_unknown": {
+      "description": "Unknown",
+      "message": "Nežinoma"
+   },
+   "unable_to_capture_website_alert": {
+      "description": "Unable to capture this website. Please use full screen/application capture or try capture another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "Nepavyko užfiksuoti šios svetainės. Naudokite visą ekraną/programų fiksavimą arba pabandykite užfiksuoti kitą svetainę. \n\n (╯ ° □ °） ╯︵ ┻━┻"
+   },
+   "view_permission": {
+      "description": "View permission.",
+      "message": "Peržiūrėti leidimą."
+   },
+   "width_text": {
+      "description": "Height (px)",
+      "message": "Aukštis (PX)"
+   }
+}

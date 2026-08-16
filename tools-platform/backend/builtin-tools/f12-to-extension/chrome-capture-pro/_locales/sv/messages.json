@@ -1,0 +1,1691 @@
+{
+   "account_modal_free_plan": {
+      "description": "You are on the free plan",
+      "message": "Du är på gratisplanen"
+   },
+   "account_modal_manage_subscription_button": {
+      "description": "Manage Subscription",
+      "message": "Hantera prenumeration"
+   },
+   "account_modal_not_signed_in": {
+      "description": "You are not signed in",
+      "message": "Du är inte inloggad"
+   },
+   "account_modal_premium_plan": {
+      "description": "You are on the premium plan",
+      "message": "Du är på premiumplanen"
+   },
+   "account_modal_premium_pro_plan": {
+      "description": "You are on the Premium Pro plan",
+      "message": "Du har Premium Pro-planen"
+   },
+   "account_modal_request_feature_button": {
+      "description": "Request Feature",
+      "message": "Begär funktion"
+   },
+   "account_modal_request_support_button": {
+      "description": "Request Support",
+      "message": "Begär support"
+   },
+   "account_modal_stats_heading": {
+      "description": "Your stats:",
+      "message": "Din statistik:"
+   },
+   "alert_text": {
+      "description": "Unable to run selected area capture on this website. Please use full screen recording or try another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "Det gick inte att köra valda området Capture på den här webbplatsen. Vänligen använd helskärmsinspelning eller prova en annan webbplats. \n\n (╯ ° □ °) ╯( ┻━┻"
+   },
+   "click_indicator_size_color_text": {
+      "description": "Click animation size & color",
+      "message": "Klicka på Animation Storlek & Färg"
+   },
+   "close_btn_text": {
+      "description": "Close",
+      "message": "Stänga"
+   },
+   "confirm_dialog_cancel_btn_text": {
+      "description": "Cancel",
+      "message": "Annullera"
+   },
+   "confirm_dialog_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "Bekräfta"
+   },
+   "confirm_fps_update_text": {
+      "description": "Changing the fps will remove all frame specific edits such as edited or deleted frames. Do you want to continue?",
+      "message": "Ändra FPS tar bort alla bildspecifika redigeringar som redigerade eller raderade ramar. Vill du fortsätta?"
+   },
+   "copy_text": {
+      "description": "Copy to clipboard",
+      "message": "Kopiera till urklipp"
+   },
+   "cursor_size_and_color_text": {
+      "description": "Cursor dot size & color",
+      "message": "Markör Dot Storlek & Färg"
+   },
+   "dither_text": {
+      "description": "Apply dither",
+      "message": "Applicera dither"
+   },
+   "download_filename_text": {
+      "description": "Download filename format",
+      "message": "Ladda ner filnamnformat"
+   },
+   "download_text": {
+      "description": "Download",
+      "message": "Ladda ner"
+   },
+   "draw_size_and_color_text": {
+      "description": "Drawing size & color",
+      "message": "Ritstorlek och färg"
+   },
+   "duration": {
+      "description": "Label for a field indicating a length of time.",
+      "message": "Varaktighet"
+   },
+   "editor_action_add_icon": {
+      "description": "Add icon",
+      "message": "Lägg till ikon"
+   },
+   "editor_action_add_text": {
+      "description": "Add text",
+      "message": "Lägg till text"
+   },
+   "editor_action_blur_rectangle": {
+      "description": "Blur area",
+      "message": "Sudda område"
+   },
+   "editor_action_copy": {
+      "description": "Copy to clipboard",
+      "message": "Kopiera till urklipp"
+   },
+   "editor_action_crop": {
+      "description": "Crop",
+      "message": "Beskära"
+   },
+   "editor_action_draw_arrow": {
+      "description": "Draw arrow",
+      "message": "Rita pilen"
+   },
+   "editor_action_draw_ellipse": {
+      "description": "Draw ellipse",
+      "message": "Rita ellips"
+   },
+   "editor_action_draw_line": {
+      "description": "Draw line",
+      "message": "Rita linje"
+   },
+   "editor_action_draw_rectangle": {
+      "description": "Draw rectangle",
+      "message": "Dra rektangel"
+   },
+   "editor_action_free_draw": {
+      "description": "Free draw",
+      "message": "Fri rita"
+   },
+   "editor_action_highlight": {
+      "description": "Highlight",
+      "message": "Markera"
+   },
+   "editor_action_numbered_step": {
+      "description": "Action label for adding a numbered step annotation.",
+      "message": "Numrerat steg"
+   },
+   "editor_action_pan": {
+      "description": "Pan",
+      "message": "Panorera"
+   },
+   "editor_action_profile_account": {
+      "description": "Account",
+      "message": "Konto"
+   },
+   "editor_action_redo": {
+      "description": "Redo",
+      "message": "Göra om"
+   },
+   "editor_action_save": {
+      "description": "Save",
+      "message": "Spara"
+   },
+   "editor_action_select": {
+      "description": "Select, move, resize",
+      "message": "Välj, flytta, ändra storlek"
+   },
+   "editor_action_settings": {
+      "description": "Settings",
+      "message": "inställningar"
+   },
+   "editor_action_undo": {
+      "description": "Undo",
+      "message": "Ångra"
+   },
+   "editor_action_undo_all": {
+      "description": "Undo all",
+      "message": "Ångra alla"
+   },
+   "editor_add_text_default": {
+      "description": "start typing...",
+      "message": "börja skriva..."
+   },
+   "editor_browse_file_system": {
+      "description": "Browse file system",
+      "message": "Bläddra filsystem"
+   },
+   "editor_drag_and_drop": {
+      "description": "Drag and drop image/GIF or ",
+      "message": "Dra och släpp bild / gif eller"
+   },
+   "editor_file_downloaded": {
+      "description": "File saved to downloads folder.",
+      "message": "File sparad för att ladda ner mappen."
+   },
+   "editor_file_downloaded_selected_location": {
+      "description": "File saved to selected location.",
+      "message": "Fil sparad på vald plats."
+   },
+   "editor_frame_selector_apply_edits": {
+      "description": "Apply edits to selected",
+      "message": "Ansök redigeringar på valda"
+   },
+   "editor_frame_selector_delete": {
+      "description": "Delete",
+      "message": "Radera"
+   },
+   "editor_frame_selector_delete_every_second": {
+      "description": "Delete every second frame",
+      "message": "Ta bort varje andra ram"
+   },
+   "editor_frame_selector_delete_selected": {
+      "description": "Delete selected",
+      "message": "Radera valda"
+   },
+   "editor_frame_selector_remove_edits": {
+      "description": "Remove edits from selected",
+      "message": "Ta bort redigeringar från valda"
+   },
+   "editor_frame_selector_restore": {
+      "description": "Restore",
+      "message": "Återställ"
+   },
+   "editor_frame_selector_restore_all": {
+      "description": "Restore All",
+      "message": "Återställa allt"
+   },
+   "editor_frame_selector_restore_selected": {
+      "description": "Restore selected",
+      "message": "Återställa vald"
+   },
+   "editor_frame_selector_select_next": {
+      "description": "Select next frames",
+      "message": "Välj nästa bilder"
+   },
+   "editor_frame_selector_select_previous": {
+      "description": "Select previous frames",
+      "message": "Välj tidigare bilder"
+   },
+   "editor_frame_selector_unselect_all": {
+      "description": "Unselect All",
+      "message": "Avmarkera alla"
+   },
+   "editor_image_copied": {
+      "description": "Image copied to clipboard.",
+      "message": "Bild kopieras till Urklipp."
+   },
+   "editor_image_copied_failed": {
+      "description": "Failed to copy image to clipboard, it may be too large.",
+      "message": "Misslyckades med att kopiera bild till urklipp, det kan vara för stort."
+   },
+   "editor_link_copied": {
+      "description": "Link copied to clipboard.",
+      "message": "Länk kopieras till Urklipp."
+   },
+   "editor_max_time_reached_dialog_description1": {
+      "description": "You have reached the max recording length time of $maxlength$ seconds for GIFs. Premium users can update this from the settings page.",
+      "message": "Du har nått den maximala inspelningslängden på $maxlength$ sekunder för GIF. Premiumanvändare kan uppdatera detta från inställningssidan.",
+      "placeholders": {
+         "maxlength": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_max_time_reached_dialog_description2": {
+      "description": "GIFs are intended for short recordings. If you require full length videos we recommend our free screen recorder: ",
+      "message": "GIF är avsedda för korta inspelningar. Om du behöver videor i full längd rekommenderar vi vår gratis skärminspelare:"
+   },
+   "editor_max_time_reached_dialog_description3": {
+      "description": "Premium users can update this from the settings page.",
+      "message": "Premiumanvändare kan uppdatera detta från inställningssidan."
+   },
+   "editor_max_time_reached_dialog_settings_button": {
+      "description": "Open settings",
+      "message": "Öppna Inställningar"
+   },
+   "editor_max_time_reached_dialog_title": {
+      "description": "Recording suddenly stopped?",
+      "message": "Inspelningen slutade plötsligt?"
+   },
+   "editor_premium_options_color": {
+      "description": "Color",
+      "message": "Färg"
+   },
+   "editor_premium_options_draw_size": {
+      "description": "Draw Size",
+      "message": "Rita"
+   },
+   "editor_premium_options_font": {
+      "description": "Font",
+      "message": "Font"
+   },
+   "editor_premium_options_playback_speed": {
+      "description": "Playback Speed",
+      "message": "Uppspelningshastighet"
+   },
+   "editor_premium_options_special_effect": {
+      "description": "Special Effect",
+      "message": "Special effekt"
+   },
+   "editor_premium_options_title": {
+      "description": "Premium Options",
+      "message": "Premium-alternativ"
+   },
+   "editor_save_dialog_advanced_encoding_options": {
+      "description": "Title for a section containing advanced, technical options for encoding a file.",
+      "message": "Avancerade kodningsalternativ"
+   },
+   "editor_save_dialog_alert_title": {
+      "description": "Warning",
+      "message": "Varning"
+   },
+   "editor_save_dialog_aspect_ratio": {
+      "description": "lock aspect ratio",
+      "message": "Låsas bildförhållande"
+   },
+   "editor_save_dialog_cancel": {
+      "description": "Cancel",
+      "message": "Annullera"
+   },
+   "editor_save_dialog_chip_animated_image": {
+      "description": "Chip label indicating an animated image format (e.g. GIF, AVIF).",
+      "message": "animerad bild"
+   },
+   "editor_save_dialog_chip_large_file": {
+      "description": "Chip label indicating the format produces a large file size.",
+      "message": "stor fil"
+   },
+   "editor_save_dialog_chip_limited_support": {
+      "description": "Chip label indicating the format has limited browser/app support.",
+      "message": "begränsat stöd"
+   },
+   "editor_save_dialog_chip_small_file": {
+      "description": "Chip label indicating the format produces a small file size.",
+      "message": "liten fil"
+   },
+   "editor_save_dialog_chip_video": {
+      "description": "Chip label indicating a video format (e.g. WebM, MP4).",
+      "message": "video"
+   },
+   "editor_save_dialog_chip_widely_supported": {
+      "description": "Chip label indicating the format is widely supported.",
+      "message": "brett stödd"
+   },
+   "editor_save_dialog_compress": {
+      "description": "Compress & optimize GIF",
+      "message": "Komprimera och optimera gif"
+   },
+   "editor_save_dialog_compress_tooltip": {
+      "description": "Apply GIF compression algorthm to greatly reduce GIF file size and in some cases improve quality. Highly recommeded.",
+      "message": "Applicera GIF -kompressionsalgorthm för att minska GIF -filstorleken kraftigt och förbättra kvaliteten i vissa fall. Rekommenderas starkt."
+   },
+   "editor_save_dialog_dither_tooltip": {
+      "description": "Apply dither algorithm to frames. Try toggling this option if you experience color quality issues.",
+      "message": "Tillämpa DITER -algoritm på bilder. Försök att växla det här alternativet om du upplever färgkvalitetsproblem."
+   },
+   "editor_save_dialog_download_raw_recording": {
+      "description": "Download raw recording",
+      "message": "Ladda ner råinspelning"
+   },
+   "editor_save_dialog_estimated_size": {
+      "description": "Estimated GIF Size: ",
+      "message": "Beräknad GIF-storlek:"
+   },
+   "editor_save_dialog_export_sound": {
+      "description": "Include sound (beta)",
+      "message": "Inkludera ljud (beta)"
+   },
+   "editor_save_dialog_export_sound_tooltip": {
+      "description": "Enable this option to include sound in the video.",
+      "message": "Aktivera det här alternativet att inkludera ljud i videon."
+   },
+   "editor_save_dialog_frames": {
+      "description": "Frames: ",
+      "message": "Bilder:"
+   },
+   "editor_save_dialog_frames_alert": {
+      "description": "There are currently selected frames, saving will only output these selected frames - ",
+      "message": "Det finns för närvarande utvalda bilder, spara kommer bara att mata ut dessa utvalda ramar -"
+   },
+   "editor_save_dialog_frames_alert_button": {
+      "description": "Click here to unselect all frames",
+      "message": "Klicka här för att avmarkera alla bilder"
+   },
+   "editor_save_dialog_frames_alert_title": {
+      "description": "Playback Speed",
+      "message": "Uppspelningshastighet"
+   },
+   "editor_save_dialog_frames_processing": {
+      "description": "Processing Frames: ",
+      "message": "Bearbetningsbilder:"
+   },
+   "editor_save_dialog_height_helper": {
+      "description": "Recorded height is ",
+      "message": "Inspelad höjd är"
+   },
+   "editor_save_dialog_lossy_compression": {
+      "description": "Label for a setting that controls the level of lossy compression, from 0 to 100 percent.",
+      "message": "Förstörande komprimering (0–100 %)"
+   },
+   "editor_save_dialog_number_min_max_validation": {
+      "description": "A value between $minSize$ and $maxSize$ is required.",
+      "message": "Ett värde mellan $minSize$ och $maxSize$ krävs.",
+      "placeholders": {
+         "maxSize": {
+            "content": "$2"
+         },
+         "minSize": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_save_dialog_processing_alert": {
+      "description": "Processing this recording will require a lot of memory and processing power. Unless you have a high spec PC it is recommended to do one or more of the following:",
+      "message": "Bearbetning av denna inspelning kräver mycket minne och bearbetningseffekt. Om du inte har en hög spec-dator rekommenderas det att göra ett eller flera av följande:"
+   },
+   "editor_save_dialog_processing_alert_memory": {
+      "description": "Please note if the resulting GIF is blank then you ran out of memory.",
+      "message": "Observera om den resulterande GIF är tom då du sprang ur minnet."
+   },
+   "editor_save_dialog_processing_alert_point_1": {
+      "description": "Compress and optimize GIF",
+      "message": "Komprimera och optimera GIF"
+   },
+   "editor_save_dialog_processing_alert_point_2": {
+      "description": "Reduce the width & height",
+      "message": "Minska bredden och höjden"
+   },
+   "editor_save_dialog_processing_alert_point_3": {
+      "description": "Reduce FPS or delete frames",
+      "message": "Minska FPS eller ta bort bilder"
+   },
+   "editor_save_dialog_purchase_dialog_compression_description": {
+      "description": "Free users are limited to 3 high quality GIF compressions per day. Upgrade to Premium to have no restrictions.",
+      "message": "Gratis användare är begränsade till 3 högkvalitativa GIF -kompressioner per dag. Uppgradera till premium för att inte ha några begränsningar."
+   },
+   "editor_save_dialog_quantization_algorithm": {
+      "description": "Label for a dropdown to select a quantization algorithm.",
+      "message": "Kvantiseringsalgoritm"
+   },
+   "editor_save_dialog_quantization_algorithm_new_alpha": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Alpha.",
+      "message": "Ny (Alfa)"
+   },
+   "editor_save_dialog_quantization_algorithm_new_beta": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Beta.",
+      "message": "Ny (Beta)"
+   },
+   "editor_save_dialog_quantization_algorithm_old": {
+      "description": "An option for the quantization algorithm setting, indicating an older version.",
+      "message": "Gammal"
+   },
+   "editor_save_dialog_recording_quality_alert": {
+      "description": "GIF quality is limited for non premium users. To output high quality recordings you can do one of the following:",
+      "message": "GIF -kvalitet är begränsad för icke -premiumanvändare. För att mata ut inspelningar av hög kvalitet kan du göra något av följande:"
+   },
+   "editor_save_dialog_recording_quality_alert_option_1": {
+      "description": "Purchase premium",
+      "message": "Köppremie"
+   },
+   "editor_save_dialog_recording_quality_alert_option_2": {
+      "description": "Save as a WebM file",
+      "message": "Spara som en webbfil"
+   },
+   "editor_save_dialog_reduce_width": {
+      "description": "Reduce width & height",
+      "message": "Minska bredd och höjd"
+   },
+   "editor_save_dialog_reduce_width_tooltip": {
+      "description": "Reduce GIF width and height/quality to improve processing time and produce a smaller file.",
+      "message": "Minska GIF -bredd och höjd/kvalitet för att förbättra behandlingstiden och producera en mindre fil."
+   },
+   "editor_save_dialog_save": {
+      "description": "Save",
+      "message": "Spara"
+   },
+   "editor_save_dialog_save_by": {
+      "description": "Save by",
+      "message": "Avfrigande"
+   },
+   "editor_save_dialog_save_by_download": {
+      "description": "Download file",
+      "message": "Nedladdning fil"
+   },
+   "editor_save_dialog_save_by_google_drive": {
+      "description": "Upload to Google Drive & copy link",
+      "message": "Ladda upp till Google Drive & Copy Link"
+   },
+   "editor_save_dialog_save_location": {
+      "description": "Save location",
+      "message": "Spara plats"
+   },
+   "editor_save_dialog_save_location_downloads": {
+      "description": "Downloads folder",
+      "message": "Nedladdningsmapp"
+   },
+   "editor_save_dialog_save_location_downloads_subfolder": {
+      "description": "Downloads subfolder",
+      "message": "Nedladdningar undermapp"
+   },
+   "editor_save_dialog_save_location_select": {
+      "description": "Manually select location",
+      "message": "Välj manuellt plats"
+   },
+   "editor_save_dialog_title": {
+      "description": "Save",
+      "message": "Spara"
+   },
+   "editor_save_dialog_title_processing": {
+      "description": "Processing...",
+      "message": "Bearbetning ..."
+   },
+   "editor_save_dialog_title_uploading": {
+      "description": "Uploading...",
+      "message": "Ladda upp ..."
+   },
+   "editor_save_dialog_width_helper": {
+      "description": "Recorded width is ",
+      "message": "Inspelad bredd är"
+   },
+   "editor_text": {
+      "description": "Open in editor",
+      "message": "Öppna i redaktör"
+   },
+   "editor_tip_delete_items": {
+      "description": "Pro tip: Delete added items by selecting the item and pressing the delete key.",
+      "message": "Pro Tips: Ta bort tillagda objekt genom att välja objektet och trycka på DELETE-tangenten."
+   },
+   "editor_tip_edit_specific_frames": {
+      "description": "Pro tip: You can edit specific frames by using the 'Apply edits to selected option'",
+      "message": "Pro Tip: Du kan redigera specifika bilder genom att använda 'Apply Edits på valda alternativ'"
+   },
+   "editor_tip_scroll": {
+      "description": "Pro tip: Scroll when hovering the screenshot/recording to zoom.",
+      "message": "Pro Tips: Bläddra när du sveerar skärmdumpen / inspelningen för att zooma."
+   },
+   "editor_tip_shift_multiple_items": {
+      "description": "Pro tip: When using the selecting tool hold down shift to select more than one item.",
+      "message": "Pro Tips: När du använder valverktyget håller du nedskiftet för att välja mer än ett objekt."
+   },
+   "editor_tip_update_multiple_items": {
+      "description": "Pro tip: You can scale, rotate, move and delete multiple items at once.",
+      "message": "Pro Tips: Du kan skala, rotera, flytta och ta bort flera objekt samtidigt."
+   },
+   "editor_tip_update_text": {
+      "description": "Pro tip: Double click on text to edit it.",
+      "message": "Pro Tips: Dubbelklicka på text för att redigera den."
+   },
+   "editor_upload_dialog_alert_copy_failed_message": {
+      "description": "This may have occurred due to the window not being focused.",
+      "message": "Detta kan ha inträffat på grund av att fönstret inte är fokuserat."
+   },
+   "editor_upload_dialog_alert_copy_failed_title": {
+      "description": "Copy to clipboard failed",
+      "message": "Kopia till Urklipp misslyckades"
+   },
+   "editor_upload_dialog_alert_copy_success_title": {
+      "description": "Copied to clipboard",
+      "message": "Kopierad till urklipp"
+   },
+   "editor_upload_dialog_alert_upload_failed": {
+      "description": "Upload Failed",
+      "message": "Uppladdningen misslyckades"
+   },
+   "editor_upload_dialog_alert_upload_failed_link": {
+      "description": "Try again.",
+      "message": "Försök igen."
+   },
+   "editor_upload_dialog_alert_upload_failed_message": {
+      "description": "Please make sure you are connected to the internet and have accepted Google Drive permissions.",
+      "message": "Se till att du är ansluten till Internet och har accepterat Google Drive -behörigheter."
+   },
+   "editor_upload_dialog_cancel_and_download": {
+      "description": "Cancel and download file",
+      "message": "Avbryt och ladda ner filen"
+   },
+   "editor_upload_dialog_close": {
+      "description": "Close",
+      "message": "Stänga"
+   },
+   "editor_upload_dialog_copy_link": {
+      "description": "Copy link",
+      "message": "Kopiera länk"
+   },
+   "editor_upload_dialog_link_public": {
+      "description": "Allow anyone with the link to view.",
+      "message": "Låt vem som helst med länken."
+   },
+   "editor_zoom_crop_animation_animated": {
+      "description": "Sub-label indicating an animation type is animated.",
+      "message": "Animerad"
+   },
+   "editor_zoom_crop_animation_crop": {
+      "description": "Animation type option for static cropping without animation.",
+      "message": "Beskär"
+   },
+   "editor_zoom_crop_animation_static": {
+      "description": "Sub-label indicating an animation type is static (no animation).",
+      "message": "Statisk"
+   },
+   "editor_zoom_crop_animation_type": {
+      "description": "Label for the animation type selection section.",
+      "message": "Animationstyp"
+   },
+   "editor_zoom_crop_animation_zoom_in": {
+      "description": "Animation type option for zooming in on the selected area.",
+      "message": "Zooma in"
+   },
+   "editor_zoom_crop_animation_zoom_out": {
+      "description": "Animation type option for zooming out from the selected area.",
+      "message": "Zooma ut"
+   },
+   "editor_zoom_crop_apply": {
+      "description": "Apply button in zoom/crop dialog.",
+      "message": "Tillämpa"
+   },
+   "editor_zoom_crop_cancel": {
+      "description": "Cancel button in zoom/crop dialog.",
+      "message": "Avbryt"
+   },
+   "editor_zoom_crop_change_area": {
+      "description": "Tooltip text for button to change the selected crop area.",
+      "message": "Ändra område"
+   },
+   "editor_zoom_crop_dialog_title": {
+      "description": "Title for the zoom and crop dialog in the editor.",
+      "message": "Zooma och beskär"
+   },
+   "editor_zoom_crop_draw_instruction": {
+      "description": "Instruction text for the user to draw a crop area on the frame preview.",
+      "message": "Rita ett urval på bildrutan"
+   },
+   "editor_zoom_crop_frame_end": {
+      "description": "Label for the end frame number.",
+      "message": "Slut"
+   },
+   "editor_zoom_crop_frame_range": {
+      "description": "Label for the frame range selection section.",
+      "message": "Bildruteintervall"
+   },
+   "editor_zoom_crop_frame_start": {
+      "description": "Label for the start frame number.",
+      "message": "Start"
+   },
+   "editor_zoom_crop_frames_menu": {
+      "description": "Menu item label for zoom/crop frames feature.",
+      "message": "Zooma/beskär bildrutor"
+   },
+   "editor_zoom_crop_no_area_selected": {
+      "description": "Message displayed when no crop area has been selected.",
+      "message": "Inget område valt"
+   },
+   "editor_zoom_crop_select_area": {
+      "description": "Button text to select a crop area on the frame.",
+      "message": "Välj område"
+   },
+   "editor_zoom_crop_smooth_animation": {
+      "description": "Checkbox label for smoothing animation by interpolating frames.",
+      "message": "Smidig animering genom att lägga till bildrutor"
+   },
+   "editor_zoom_crop_transition": {
+      "description": "Label for the transition duration section (number of frames for animation).",
+      "message": "Övergång"
+   },
+   "enable_drawing_text": {
+      "description": "Enable drawing",
+      "message": "Aktivera ritning"
+   },
+   "enable_drawing_tooltip_text": {
+      "description": "This option allows users to draw in the selected area while holding down the ctrl key.",
+      "message": "Det här alternativet tillåter användare att dra i det valda området medan du håller ner CTRL-tangenten."
+   },
+   "extension_description": {
+      "description": "Take screenshots & record GIFs instantly! Edit & share seamlessly. Your all-in-one screenshot and screen recording solution.",
+      "message": "Ta skärmdumpar och spela in GIFs direkt! Redigera och dela sömlöst. Din allt-i-ett-skärmdump och skärminspelningslösning."
+   },
+   "extension_name": {
+      "description": "Chrome Capture - screenshot & GIF",
+      "message": "Chrome Capture - Screenshot & Gif"
+   },
+   "extension_short_name": {
+      "description": "Chrome Capture",
+      "message": "Chrome Capture"
+   },
+   "file_access_text": {
+      "description": "After screenshot action",
+      "message": "Åtgärd efter skärmdump"
+   },
+   "filename_text": {
+      "description": "Filename",
+      "message": "Filnamn"
+   },
+   "frames_per_sec_short_text": {
+      "description": "FPS",
+      "message": "Fps"
+   },
+   "frames_per_sec_text": {
+      "description": "Frames per second (fps)",
+      "message": "Bilder per sekund (FPS)"
+   },
+   "frames_text": {
+      "description": "frames",
+      "message": "bilder"
+   },
+   "free_settings_text": {
+      "description": "Free Settings",
+      "message": "Gratis inställningar"
+   },
+   "fullscreen_info_modal_cancel": {
+      "description": "Cancel",
+      "message": "Annullera"
+   },
+   "fullscreen_info_modal_continue": {
+      "description": "Are you sure you want to continue with full screen capture?",
+      "message": "Är du säker på att du vill fortsätta med Full Screen Capture?"
+   },
+   "fullscreen_info_modal_do_not_show": {
+      "description": "Do not show this again",
+      "message": "Visa inte det här igen"
+   },
+   "fullscreen_info_modal_message": {
+      "description": "You have used a Chrome Capture shortcut without the cropping tool, this will capture in full screen mode.",
+      "message": "Du har använt en Chrome Capture-genväg utan beskärningsverktyget, det här kommer att fånga i helskärmsläge."
+   },
+   "fullscreen_info_modal_open_cropping": {
+      "description": "Open cropping tool",
+      "message": "Öppet beskärningsverktyg"
+   },
+   "fullscreen_info_modal_shortcut_cropping_tool": {
+      "description": "Alt + C: Open/close Chrome Capture cropping tool",
+      "message": "Alt + C: Öppet / nära Chrome Capture Cropping Tool"
+   },
+   "fullscreen_info_modal_shortcut_fullpage_screenshot": {
+      "description": "Alt + Shift + S: Full webpage screenshot (beta)",
+      "message": "Alt + Shift + S: Full webbsida Skärmdump (Beta)"
+   },
+   "fullscreen_info_modal_shortcut_linkt": {
+      "description": "You can configure these here: ",
+      "message": "Du kan konfigurera dessa här:"
+   },
+   "fullscreen_info_modal_shortcut_recording": {
+      "description": "Alt + R: Start/stop recording",
+      "message": "Alt + R: Start / Sluta inspelning"
+   },
+   "fullscreen_info_modal_shortcut_screenshot": {
+      "description": "Alt + S: Visible area screenshot",
+      "message": "Alt + S: Synligt område Skärmdump"
+   },
+   "fullscreen_info_modal_shortcuts": {
+      "description": "Default shortcuts are: ",
+      "message": "Standardgenvägar är:"
+   },
+   "fullscreen_info_modal_start": {
+      "description": "Start full screen capture",
+      "message": "Starta Full Screen Capture"
+   },
+   "fullscreen_info_modal_title": {
+      "description": "Full screen capture",
+      "message": "Fullskärmsfångst"
+   },
+   "general_not_available": {
+      "description": "N/A",
+      "message": "Ej tillgängligt"
+   },
+   "get_premium": {
+      "description": "Get Premium",
+      "message": "Få premie"
+   },
+   "height_text": {
+      "description": "Width (px)",
+      "message": "Bredd (px)"
+   },
+   "hi": {
+      "description": "Hi",
+      "message": "Hej"
+   },
+   "internet_connection_required": {
+      "description": "Internet connection is required to upgrade to premium.",
+      "message": "Internetanslutning krävs för att uppgradera till Premium."
+   },
+   "manage_subscription_access_until_date": {
+      "description": "Your plan will not renew. You can access premium features until $date$.",
+      "message": "Din plan kommer inte att förnyas. Du kan komma åt premiumfunktioner fram till den $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_cancel_button": {
+      "description": "Cancel subscription",
+      "message": "Avbryt prenumeration"
+   },
+   "manage_subscription_cancel_confirm_cancel_button": {
+      "description": "Keep Premium",
+      "message": "Behåll Premium"
+   },
+   "manage_subscription_cancel_confirm_confirm_button": {
+      "description": "Continue to cancel",
+      "message": "Fortsätt för att avbryta"
+   },
+   "manage_subscription_cancel_confirm_description": {
+      "description": "You will lose access to Premium features and Premium options will be reset.",
+      "message": "Du förlorar åtkomst till Premium-funktioner och Premium-alternativen kommer att återställas."
+   },
+   "manage_subscription_cancel_confirm_title": {
+      "description": "Are you sure you want to cancel your subscription?",
+      "message": "Är du säker på att du vill avbryta din prenumeration?"
+   },
+   "manage_subscription_ended_on_date": {
+      "description": "Subscription ended on $date$.",
+      "message": "Prenumerationen avslutades den $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_ends_on_date": {
+      "description": "Subscription ends on $date$.",
+      "message": "Prenumerationen avslutas den $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_next_payment_full": {
+      "description": "Next payment: $price$ on $date$",
+      "message": "Nästa betalning: $price$ den $date$",
+      "placeholders": {
+         "date": {
+            "content": "$2"
+         },
+         "price": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_paid_full": {
+      "description": "Paid: $billingCycle$",
+      "message": "Betald: $billingCycle$",
+      "placeholders": {
+         "billingCycle": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_resubscribe_prompt": {
+      "description": " To use premium features again, please upgrade.",
+      "message": " För att använda premiumfunktioner igen, vänligen uppgradera."
+   },
+   "manage_subscription_update_payment_button": {
+      "description": "Update payment method",
+      "message": "Uppdatera betalningsmetod"
+   },
+   "max_recording_dimension_size_text": {
+      "description": "Max recording resolution/quality",
+      "message": "Max inspelning Upplösning / kvalitet"
+   },
+   "no_limit_text": {
+      "description": "No limit",
+      "message": "Ingen gräns"
+   },
+   "open_text": {
+      "description": "Open",
+      "message": "Öppet"
+   },
+   "options_default_action": {
+      "description": "Extension icon click action",
+      "message": "Åtgärd vid klick på tilläggsikonen"
+   },
+   "options_dimension_size_1000": {
+      "description": "1000 pixels",
+      "message": "1000 pixlar"
+   },
+   "options_dimension_size_1080p": {
+      "description": "1920 pixels (1080p)",
+      "message": "1920 pixlar (1080p)"
+   },
+   "options_dimension_size_480p": {
+      "description": "640 pixels (480p)",
+      "message": "640 pixlar (480p)"
+   },
+   "options_dimension_size_4k": {
+      "description": "3840 pixels (4K)",
+      "message": "3840 pixlar (4k)"
+   },
+   "options_dimension_size_720p": {
+      "description": "1280 pixels (720p)",
+      "message": "1280 pixlar (720p)"
+   },
+   "options_embedded_options_permission_warning": {
+      "description": "Cursor highlighting, click effects, and drawing tools will only work until the page reloads or changes. To keep them active after reloads or redirects, you'll need to grant an extra permission.",
+      "message": "Marköröverstrykning, klickeffekter och ritverktyg fungerar bara tills sidan laddas om eller ändras. För att hålla dem aktiva efter omladdningar eller omdirigeringar måste du bevilja extra behörighet."
+   },
+   "options_enable_notifications": {
+      "description": "Enable notifications",
+      "message": "Aktivera aviseringar"
+   },
+   "options_enable_notifications_tooltip": {
+      "description": "Display notifications when full screen recording starts and processing recordings in the background.",
+      "message": "Visa aviseringar när inspelning av helskärm startar och bearbetar inspelningar i bakgrunden."
+   },
+   "options_enable_subfolder_downloads": {
+      "description": "Download files into subfolder",
+      "message": "Ladda ner filer till undermappen"
+   },
+   "options_enable_subfolder_downloads_tooltip": {
+      "description": "Download files into a subfolder of your choice inside the downloads folder. This option is useful for organising your captures.",
+      "message": "Ladda ner filer till en undermapp som du väljer i mappen Downloads. Det här alternativet är användbart för att organisera dina fångar."
+   },
+   "options_how_to_use_btn": {
+      "description": "How to use",
+      "message": "Hur man använder"
+   },
+   "options_language": {
+      "description": "Language",
+      "message": "Språk"
+   },
+   "options_open_containing_folder_on_save": {
+      "description": "Open containing folder after saving",
+      "message": "Öppna mappen som innehåller efter att ha sparat"
+   },
+   "options_open_popup": {
+      "description": "Open popup",
+      "message": "Öppen popup"
+   },
+   "options_open_selected_area": {
+      "description": "Open selected area capture",
+      "message": "Öppna valda området Capture"
+   },
+   "options_section_general": {
+      "description": "Title for the General settings section in the options page",
+      "message": "Allmänna inställningar"
+   },
+   "options_section_output": {
+      "description": "Title for the Output and Saving settings section in the options page",
+      "message": "Utdata och sparande"
+   },
+   "options_section_recording": {
+      "description": "Title for the Recording settings section in the options page",
+      "message": "Inspelningsinställningar"
+   },
+   "options_section_visuals": {
+      "description": "Title for the Cursor and Interaction Visuals settings section in the options page",
+      "message": "Markör- och interaktionsvisualiseringar"
+   },
+   "options_shortcuts_btn": {
+      "description": "Shortcuts",
+      "message": "Genvägar"
+   },
+   "options_subfolder_downloads_name": {
+      "description": "Subfolder name:",
+      "message": "Undermappnamn:"
+   },
+   "options_support_btn": {
+      "description": "Support",
+      "message": "Stöd"
+   },
+   "overlay_help_text": {
+      "description": "Click and drag to choose your selected area. \nRight click to snap to an element, hold shift for multiple.",
+      "message": "Klicka och dra för att välja ditt valda område. \n Högerklicka för att snäppa till ett element, håll Shift för flera."
+   },
+   "plan_billing_annually": {
+      "description": "Annually",
+      "message": "Årligen"
+   },
+   "plan_billing_monthly": {
+      "description": "Monthly",
+      "message": "Månadsvis"
+   },
+   "plan_name_custom": {
+      "description": "Custom Plan",
+      "message": "Anpassad plan"
+   },
+   "popup_capture_tab": {
+      "description": "Capture",
+      "message": "Fånga"
+   },
+   "popup_desktop_screenshot_tooltip": {
+      "description": "Capture the entire screen, desktop, or any open application.",
+      "message": "Fånga hela skärmen, skrivbordet eller någon öppen applikation."
+   },
+   "popup_editor_icon_tooltip": {
+      "description": "Open Editor",
+      "message": "Öppen redaktör"
+   },
+   "popup_full_page_screenshot_tooltip": {
+      "description": "Capture the current tab full webpage, including content beyond the visible area.",
+      "message": "Fånga den aktuella fliken på hela webbsidan, inklusive innehåll utöver det synliga området."
+   },
+   "popup_full_webpage": {
+      "description": "Full webpage",
+      "message": "Fullsida"
+   },
+   "popup_no_scripts_alert": {
+      "description": "Selected area and full webpage screenshots are not possible here. These features are available on other websites.",
+      "message": "Valt område och hela skärmdumpar på webbsidan är inte möjliga här. Dessa funktioner finns tillgängliga på andra webbplatser."
+   },
+   "popup_record_tab": {
+      "description": "Record",
+      "message": "Spela in"
+   },
+   "popup_recording_limit_alert": {
+      "description": "Record up to $seconds$ seconds per GIF. Premium users can update this from the ",
+      "message": "Spela upp till $seconds$ sekunder per GIF. Premiumanvändare kan uppdatera detta från",
+      "placeholders": {
+         "seconds": {
+            "content": "$1"
+         }
+      }
+   },
+   "popup_recording_limit_settings_link": {
+      "description": "settings page.",
+      "message": "inställningssidan."
+   },
+   "popup_screen_or_app": {
+      "description": "Full screen or app",
+      "message": "Fullskärm eller app"
+   },
+   "popup_selected_area": {
+      "description": "Selected area",
+      "message": "Valt område"
+   },
+   "popup_selected_area_screenshot_tooltip": {
+      "description": "Capture a specific area of the current tab.",
+      "message": "Fånga ett specifikt område på den aktuella fliken."
+   },
+   "popup_set_shortcut": {
+      "description": "set shortcut",
+      "message": "sätta genväg"
+   },
+   "popup_settings_icon_tooltip": {
+      "description": "Open Settings",
+      "message": "Öppna Inställningar"
+   },
+   "popup_tab_screenshot_tooltip": {
+      "description": "Capture the visible part of the current tab.",
+      "message": "Fånga den synliga delen av den aktuella fliken."
+   },
+   "popup_this_tab": {
+      "description": "This tab",
+      "message": "Den här fliken"
+   },
+   "popup_waiting_for_desktop_selection_alert": {
+      "description": "FULL SCREEN OR APP capture did not start because you did not select an option from the popup dialog. If you have multiple monitors it may have opened on another monitor.",
+      "message": "Helskärm eller appfångst startade inte eftersom du inte valde ett alternativ från popup -dialogen. Om du har flera bildskärmar kan det ha öppnat på en annan bildskärm."
+   },
+   "premium_settings_text": {
+      "description": "Premium Settings",
+      "message": "Premium-inställningar"
+   },
+   "purchase_btn_text": {
+      "description": "Get Premium!",
+      "message": "Få Premium!"
+   },
+   "purchase_description_limited_time_text": {
+      "description": "Lock in this price now - limited time offer before we switch to subscriptions!",
+      "message": "Säkra detta pris nu - begränsat erbjudande innan vi byter till prenumerationer!"
+   },
+   "purchase_description_text": {
+      "description": "Just one payment unlocks all premium features forever. No recurring fees!",
+      "message": "En betalning låser upp alla premiumfunktioner på livstid. Inga återkommande avgifter!"
+   },
+   "purchase_feature_30fps": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "silkeslen 30 FPS-inspelning"
+   },
+   "purchase_feature_4K": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "kristallklar 4K-inspelning"
+   },
+   "purchase_feature_alter_frame_rate": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "anpassade bildhastigheter"
+   },
+   "purchase_feature_alter_playback_speed": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "slowmotion- och time-lapse-effekter"
+   },
+   "purchase_feature_blur": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "suddighetsverktyget"
+   },
+   "purchase_feature_crop_recording": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "exakt GIF-beskärning"
+   },
+   "purchase_feature_default": {
+      "description": "Feature that goes in $feature$ placeholder. Default fallback.",
+      "message": "denna funktion"
+   },
+   "purchase_feature_frame_edits": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "kraftfull bild-för-bild-redigering"
+   },
+   "purchase_feature_highlight": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "markeringsverktyget"
+   },
+   "purchase_feature_no_duration_limit": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "obegränsad inspelningslängd"
+   },
+   "purchase_feature_special_effect": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "specialeffekter"
+   },
+   "purchase_feature_step_tool": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "stegverktyget"
+   },
+   "purchase_feature_svg": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "lägga till anpassade ikoner och logotyper"
+   },
+   "purchase_feature_text_and_annotation_customization": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "full kontroll över text och anteckningar"
+   },
+   "purchase_feature_unlimited_gif_compression": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "obegränsad avancerad GIF-komprimering"
+   },
+   "purchase_feature_update_end_time": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "anpassad inspelningstid"
+   },
+   "purchase_login_dialog_closed_by_user_alert": {
+      "description": "Looks like you closed the sign in dialog, premium users must sign in so you don't lose premium access.",
+      "message": "Det verkar som om du stängde inloggningsdialogen, premiumanvändare måste logga in så att du inte tappar premiumåtkomst."
+   },
+   "purchase_login_dialog_google_button": {
+      "description": "Sign in with Google",
+      "message": "Logga in med Google"
+   },
+   "purchase_login_dialog_title": {
+      "description": "Sign in required",
+      "message": "Logga in krävs"
+   },
+   "purchase_login_text": {
+      "description": "Sign in with Google to link your purchase to your account.",
+      "message": "Logga in med Google för att länka ditt köp till ditt konto."
+   },
+   "purchase_login_text_window_opened": {
+      "description": "Sign into Google in the popup window.",
+      "message": "Logga in på Google i popup -fönstret."
+   },
+   "purchase_subscription_title_text": {
+      "description": "Choose the plan that fits your needs.",
+      "message": "Välj den plan som passar dina behov."
+   },
+   "purchase_title_text": {
+      "description": "Get Lifetime Premium Access Today!",
+      "message": "Få livstids premiumåtkomst idag!"
+   },
+   "purchase_title_text_blocked_feature": {
+      "description": "That feature requires Premium",
+      "message": "Den funktionen kräver Premium"
+   },
+   "purchase_title_text_blocked_pro_feature": {
+      "description": "That feature requires Premium Pro",
+      "message": "Den funktionen kräver Premium Pro"
+   },
+   "purchase_title_text_blocked_pro_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium Pro paywall.",
+      "message": "Lås upp $feature$ med Premium Pro",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchase_title_text_blocked_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium paywall.",
+      "message": "Lås upp $feature$ med Premium",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_already_premium_user": {
+      "description": "Already a premium user?",
+      "message": "Redan en premium användare?"
+   },
+   "purchases_bill_me": {
+      "description": "Bill me:",
+      "message": "Fakturera mig:"
+   },
+   "purchases_checkout_unavailable_message": {
+      "description": "Message shown when checkout could not be started.",
+      "message": "Uppgraderingsflödet kunde inte startas just nu. Försök igen."
+   },
+   "purchases_compare_12_fps": {
+      "description": "12FPS",
+      "message": "12 bilder/s"
+   },
+   "purchases_compare_3_per_day": {
+      "description": "3 per day",
+      "message": "3 per dag"
+   },
+   "purchases_compare_add_custom_shape_tool": {
+      "description": "Add custom shape/icon tool",
+      "message": "Lägg till verktyg för anpassad form/ikon"
+   },
+   "purchases_compare_benefits": {
+      "description": "Benefits",
+      "message": "Förmåner"
+   },
+   "purchases_compare_blur_tool": {
+      "description": "Blur tool",
+      "message": "Oskärpeverktyg"
+   },
+   "purchases_compare_close_button_label": {
+      "description": "Close",
+      "message": "Stäng"
+   },
+   "purchases_compare_compression": {
+      "description": "High quality GIF compression",
+      "message": "Högkvalitativ GIF-komprimering"
+   },
+   "purchases_compare_core_capture_features": {
+      "description": "Core Capture Features",
+      "message": "Grundläggande inspelningsfunktioner"
+   },
+   "purchases_compare_crop_recordings": {
+      "description": "Crop recordings",
+      "message": "Beskär inspelningar"
+   },
+   "purchases_compare_customize_editing_tools": {
+      "description": "Customize editing tools (font, size color)",
+      "message": "Anpassa redigeringsverktyg (teckensnitt, storlek, färg)"
+   },
+   "purchases_compare_drawing": {
+      "description": "Draw while recording",
+      "message": "Rita under inspelning"
+   },
+   "purchases_compare_early_access": {
+      "description": "Early access to new features",
+      "message": "Tidig åtkomst till nya funktioner"
+   },
+   "purchases_compare_editing": {
+      "description": "Edit captures",
+      "message": "Redigera fångar"
+   },
+   "purchases_compare_editing_free": {
+      "description": "basic editing",
+      "message": "grundläggande redigering"
+   },
+   "purchases_compare_editing_suite": {
+      "description": "Editing Suite",
+      "message": "Redigeringssvit"
+   },
+   "purchases_compare_frame_editing": {
+      "description": "Frame editing",
+      "message": "Ramredigering"
+   },
+   "purchases_compare_frame_rate": {
+      "description": "Adjust Frame Rate",
+      "message": "Justera bildfrekvens (FPS)"
+   },
+   "purchases_compare_frame_specific_edits": {
+      "description": "Frame specific edits",
+      "message": "Bildspecifika redigeringar"
+   },
+   "purchases_compare_free_draw_tools": {
+      "description": "Free draw, line, arrow, rectangle, circle, text tools",
+      "message": "Friformsritning, linje, pil, rektangel, cirkel, textverktyg"
+   },
+   "purchases_compare_full_webpage_screenshots": {
+      "description": "Unlimited full page screenshots.",
+      "message": "Obegränsad fullsidiga skärmdumpar."
+   },
+   "purchases_compare_highlight_tool": {
+      "description": "Highlight tool",
+      "message": "Markeringsverktyg"
+   },
+   "purchases_compare_live_recording_tools": {
+      "description": "Live Recording Tools",
+      "message": "Verktyg för liveinspelning"
+   },
+   "purchases_compare_mouse": {
+      "description": "Click and mouse indication",
+      "message": "Klicka och musindikering"
+   },
+   "purchases_compare_plans": {
+      "description": "Compare plans",
+      "message": "Jämföra planer"
+   },
+   "purchases_compare_plans_premium_button": {
+      "description": "Upgrade to Premium",
+      "message": "Uppgradera till Premium"
+   },
+   "purchases_compare_playback_speed": {
+      "description": "Tune recording playback speed",
+      "message": "TUNE RECORDING PLAYBACK SPEED"
+   },
+   "purchases_compare_priority_support": {
+      "description": "Priority support and feature requests",
+      "message": "Prioriterad support och funktionsförfrågningar"
+   },
+   "purchases_compare_recording": {
+      "description": "Unlimited GIF recordings.",
+      "message": "Obegränsade GIF-inspelningar."
+   },
+   "purchases_compare_recording_free": {
+      "description": "15sec limit per GIF",
+      "message": "15 sekgräns per gif"
+   },
+   "purchases_compare_recording_quality": {
+      "description": "High quality GIFs",
+      "message": "Högkvalitativa gifs"
+   },
+   "purchases_compare_recording_quality_control": {
+      "description": "Recording Quality & Control",
+      "message": "Inspelningskvalitet och kontroll"
+   },
+   "purchases_compare_recording_quality_free": {
+      "description": "1000 pixels max",
+      "message": "1000 pixlar max"
+   },
+   "purchases_compare_screenshots": {
+      "description": "Unlimited screenshots.",
+      "message": "Obegränsade skärmdumpar."
+   },
+   "purchases_compare_special_effects": {
+      "description": "Recording special effects",
+      "message": "Inspelning av specialeffekter"
+   },
+   "purchases_compare_up_to_1080p": {
+      "description": "Up to 1080p",
+      "message": "Upp till 1080p"
+   },
+   "purchases_compare_up_to_24_fps": {
+      "description": "Up to 24FPS",
+      "message": "Upp till 24 bilder/s"
+   },
+   "purchases_compare_up_to_30_fps": {
+      "description": "Up to 30FPS",
+      "message": "Upp till 30 bilder/s"
+   },
+   "purchases_compare_up_to_4k_plus": {
+      "description": "Up to 4K+",
+      "message": "Upp till 4K+"
+   },
+   "purchases_current_plan": {
+      "description": "Current plan",
+      "message": "Nuvarande plan"
+   },
+   "purchases_features": {
+      "description": "Features",
+      "message": "Funktioner"
+   },
+   "purchases_free": {
+      "description": "Free",
+      "message": "Fri"
+   },
+   "purchases_free_button": {
+      "description": "Free to use",
+      "message": "Fri att använda"
+   },
+   "purchases_free_feature_editing": {
+      "description": "Basic editing",
+      "message": "Grundläggande redigering"
+   },
+   "purchases_free_feature_recording": {
+      "description": "Basic GIF recording",
+      "message": "Basic GIF-inspelning"
+   },
+   "purchases_free_feature_screenshots": {
+      "description": "Unlimited screenshots",
+      "message": "Obegränsade skärmdumpar"
+   },
+   "purchases_free_plan_description": {
+      "description": "Get started with our essential capture tools. Completely free for basic everyday use.",
+      "message": "Kom igång med våra grundläggande inspelningsverktyg. Helt gratis för grundläggande daglig användning."
+   },
+   "purchases_plan_save_up_to_percentage": {
+      "description": "Save up to",
+      "message": "Spara upp till"
+   },
+   "purchases_premium": {
+      "description": "Premium",
+      "message": "Premie"
+   },
+   "purchases_premium_billed_annually": {
+      "description": "Billed annually",
+      "message": "Faktureras årligen"
+   },
+   "purchases_premium_button": {
+      "description": "Get lifetime access",
+      "message": "Få livstidsåtkomst"
+   },
+   "purchases_premium_feature_compression": {
+      "description": "High quality GIF compression",
+      "message": "Högkvalitativ GIF-komprimering"
+   },
+   "purchases_premium_feature_editing": {
+      "description": "Feature rich editing",
+      "message": "Funktion rik redigering"
+   },
+   "purchases_premium_feature_free": {
+      "description": "Everything from free plan",
+      "message": "Inkluderar funktioner från gratisplanen"
+   },
+   "purchases_premium_feature_marked_with_star": {
+      "description": "All features marked with a star",
+      "message": "Alla funktioner markerade med en stjärna"
+   },
+   "purchases_premium_feature_recording": {
+      "description": "Unlimited high quality GIF recording",
+      "message": "Obegränsad högkvalitativ GIF-inspelning"
+   },
+   "purchases_premium_feature_recording_1080p": {
+      "description": "High quality GIF recording, up to 1080p, 24fps",
+      "message": "Högkvalitativ GIF-inspelning, upp till 1080p, 24fps"
+   },
+   "purchases_premium_feature_refundable": {
+      "description": "Fully refundable",
+      "message": "Fullt återbetalningsbar"
+   },
+   "purchases_premium_feature_risk_free": {
+      "description": "Risk-free: 7 day trial, cancel anytime",
+      "message": "Riskfritt: 7 dagars provperiod, avbryt när som helst"
+   },
+   "purchases_premium_feature_unlimited_length": {
+      "description": "Unlimited GIF recording length",
+      "message": "Obegränsad GIF-inspelningslängd"
+   },
+   "purchases_premium_price_info": {
+      "description": "one time fee",
+      "message": "engångsavgift"
+   },
+   "purchases_premium_price_per_month": {
+      "description": "/ month",
+      "message": "/ månad"
+   },
+   "purchases_premium_pro": {
+      "description": "Premium Pro",
+      "message": "Premium Pro"
+   },
+   "purchases_premium_pro_editing_tools": {
+      "description": "Advanced editing tools (blurring, special effects, etc.)",
+      "message": "Avancerade redigeringsverktyg (oskärpa, specialeffekter, etc.)"
+   },
+   "purchases_premium_pro_feature_early_access": {
+      "description": "Early access to new features",
+      "message": "Tidig åtkomst till nya funktioner"
+   },
+   "purchases_premium_pro_feature_marked_with_crown": {
+      "description": "All features marked with a star and crown",
+      "message": "Alla funktioner markerade med en stjärna och krona"
+   },
+   "purchases_premium_pro_feature_premium_plan": {
+      "description": "Everything from Premium plan",
+      "message": "Allt från Premium-planen"
+   },
+   "purchases_premium_pro_feature_quality": {
+      "description": "Max resolution recording, 4K+ and 30fps",
+      "message": "Inspelning med maximal upplösning, 4K+ och 30fps"
+   },
+   "purchases_premium_pro_feature_support": {
+      "description": "Priority support and feature requests",
+      "message": "Prioriterad support och funktionsförfrågningar"
+   },
+   "purchases_premium_pro_upgrade": {
+      "description": "Upgrade to Pro",
+      "message": "Uppgradera till Pro"
+   },
+   "purchases_premium_save_percentage": {
+      "description": "save $savingsPercentage$%",
+      "message": "spara $savingsPercentage$ %",
+      "placeholders": {
+         "savingsPercentage": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_premium_try_for_free": {
+      "description": "Try for free",
+      "message": "Prova gratis"
+   },
+   "purchases_price_unavailable": {
+      "description": "Label shown in place of a price when it is unavailable.",
+      "message": "Pris ej tillgängligt"
+   },
+   "purchases_pricing_unavailable_message": {
+      "description": "Message shown when the Premium pricing request was blocked or failed.",
+      "message": "Begäran om Premium-priser blockerades eller misslyckades. Detta kan hända när ett arbetsnätverk, VPN, annonsblockerare, integritetstillägg eller brandvägg blockerar Paddle."
+   },
+   "purchases_pricing_unavailable_title": {
+      "description": "Title shown when Premium pricing could not be loaded.",
+      "message": "Premium-priser kunde inte läsas in"
+   },
+   "purchases_pricing_unavailable_troubleshooting_extensions": {
+      "description": "Troubleshooting step telling the user to disable VPN or privacy tools temporarily.",
+      "message": "Inaktivera tillfälligt VPN, annonsblockerare eller integritetstillägg och försök igen."
+   },
+   "purchases_pricing_unavailable_troubleshooting_intro": {
+      "description": "Intro text for troubleshooting steps when pricing is unavailable.",
+      "message": "Saker att prova:"
+   },
+   "purchases_pricing_unavailable_troubleshooting_network": {
+      "description": "Troubleshooting step telling the user to try another network or browser profile.",
+      "message": "Prova ett annat nätverk eller öppna tillägget i en annan Chrome-profil."
+   },
+   "purchases_pricing_unavailable_troubleshooting_workplace": {
+      "description": "Troubleshooting step telling the user workplace policy may be blocking Paddle.",
+      "message": "Om du använder en arbetsenhet kan nätverks- eller webbläsarpolicyn blockera Paddle."
+   },
+   "purchases_sign_in_here": {
+      "description": "Sign in here",
+      "message": "Logga in här"
+   },
+   "purchases_start_trial_cancel_anytime": {
+      "description": "Call to action to start a free trial.",
+      "message": "Starta din 7-dagars kostnadsfria provperiod för att fortsätta. Avbryt när som helst."
+   },
+   "purchases_try_premium_for_free": {
+      "description": "Try Premium for Free",
+      "message": "Prova Premium gratis"
+   },
+   "purchases_try_premium_pro_for_free": {
+      "description": "Try Premium Pro for Free",
+      "message": "Prova Premium Pro gratis"
+   },
+   "purchases_upgrade_premium_to_pro": {
+      "description": "To use this feature and access all Pro benefits, upgrade your plan.",
+      "message": "För att använda den här funktionen och få tillgång till alla Pro-fördelar, uppgradera din plan."
+   },
+   "purchases_upgrade_to_premium_pro": {
+      "description": "Upgrade to Premium Pro",
+      "message": "Uppgradera till Premium Pro"
+   },
+   "quality_text": {
+      "description": "Recording quality (10 = best)",
+      "message": "Inspelningskvalitet (10 = bästa)"
+   },
+   "rate_bad_rating_text": {
+      "description": "We are continuously trying our hardest to improve Chrome Capture, please share what needs improvement by emailing us at ",
+      "message": "Vi försöker kontinuerligt vårt svåraste för att förbättra Chrome Capture, var vänlig och dela med dig av vad som behövs för att maila oss på"
+   },
+   "rate_bad_title_text": {
+      "description": "😞 We are sorry!",
+      "message": "😞 Vi är ledsna!"
+   },
+   "rate_close_btn_text": {
+      "description": "Close",
+      "message": "Stänga"
+   },
+   "rate_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "Bekräfta"
+   },
+   "rate_description_text": {
+      "description": "If you've found this extension useful please leave a rating or review. \n\nBy leaving a rating you can help us reach more users which will help fund continual improvements and keep general usage free.",
+      "message": "Om du har hittat den här förlängningen, vänligen lämna ett betyg eller recension. \n\n Genom att lämna ett betyg kan du hjälpa oss att nå fler användare som hjälper till att finansiera ständiga förbättringar och hålla allmän användning gratis."
+   },
+   "rate_description_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "Vi uppskattar att du köper Premium och skulle älska att höra eventuell feedback som du måste hjälpa oss att förbättra produkten och nå fler användare."
+   },
+   "rate_good_rating_text": {
+      "description": "Your reviews keep our small team motivated to make Chrome Capture even better!",
+      "message": "Dina recensioner håller vårt lilla lag motiverat för att göra Chrome Capture ännu bättre!"
+   },
+   "rate_good_rating_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "Vi uppskattar att du köper Premium och skulle älska att höra eventuell feedback som du måste hjälpa oss att förbättra produkten och nå fler användare."
+   },
+   "rate_good_title_text": {
+      "description": "😍 Review in the web store?",
+      "message": "😍 Recension i webbutiken?"
+   },
+   "rate_maybe_later_btn_text": {
+      "description": "Maybe later",
+      "message": "Kanske senare"
+   },
+   "rate_no_btn_text": {
+      "description": "No thanks",
+      "message": "Nej tack"
+   },
+   "rate_send_email_btn_text": {
+      "description": "Send Email",
+      "message": "Skicka epost"
+   },
+   "rate_thank_you_title_text": {
+      "description": "Thank you! 😍",
+      "message": "Tack! 😍"
+   },
+   "rate_title_text": {
+      "description": "How are we doing?",
+      "message": "Hur går det för oss?"
+   },
+   "rate_yes_btn_text": {
+      "description": "Ok, sure",
+      "message": "Ok, säkert"
+   },
+   "recommended": {
+      "description": "recommended",
+      "message": "rekommenderad"
+   },
+   "record_length_text": {
+      "description": "Max record length",
+      "message": "Max rekordlängd"
+   },
+   "recordings_taken": {
+      "description": "Recordings taken:",
+      "message": "Inspelningar tagna:"
+   },
+   "save_as_screenshot_text": {
+      "description": "Save screenshot as",
+      "message": "Spara skärmdump som"
+   },
+   "save_as_text": {
+      "description": "Save recording as",
+      "message": "Spara inspelning som"
+   },
+   "screenshots_taken": {
+      "description": "Screenshots taken:",
+      "message": "Skärmdumpar tagna:"
+   },
+   "seconds_text": {
+      "description": "secs",
+      "message": "sek"
+   },
+   "shortcut": {
+      "description": "Shortcut:",
+      "message": "Genväg:"
+   },
+   "show_click_indicator_text": {
+      "description": "Show click animation",
+      "message": "Visa klicka på Animation"
+   },
+   "show_click_indicator_tooltip_text": {
+      "description": "This option draws a circle animation around the click location.",
+      "message": "Det här alternativet drar en cirkelanimering runt klickplatsen."
+   },
+   "show_cursor_text": {
+      "description": "Show dot at cursor location",
+      "message": "Visa punkt på markörens läge"
+   },
+   "show_cursor_tooltip_text": {
+      "description": "This option draws a small circle to indicate where the mouse is located.",
+      "message": "Det här alternativet drar en liten cirkel för att ange var musen är belägen."
+   },
+   "sign_in": {
+      "description": "Sign In",
+      "message": "Logga in"
+   },
+   "sign_out": {
+      "description": "Sign Out",
+      "message": "Utfärda"
+   },
+   "subscription_past_due_warning": {
+      "description": "Warning message shown when a user subscription payment has failed or is past its due date.",
+      "message": "Prenumerationsbetalningen är försenad. Klicka här för att uppdatera din betalningsinformation."
+   },
+   "subscription_premium_plan_description": {
+      "description": "Go beyond basics: HD quality & limits unlocked. Craft pro content with enhanced features.",
+      "message": "Gå bortom grunderna: HD-kvalitet och upplåsta gränser. Skapa professionellt innehåll med förbättrade funktioner."
+   },
+   "subscription_premium_pro_plan_description": {
+      "description": "Experience peak performance: 4K+ and all features. Full editing suite with early access.",
+      "message": "Upplev topprestanda: 4K+ och alla funktioner. Fullständig redigeringssvit med tidig åtkomst."
+   },
+   "subscription_status_active": {
+      "description": "Active",
+      "message": "Aktiv"
+   },
+   "subscription_status_ending_soon": {
+      "description": "Ending Soon",
+      "message": "Slutar snart"
+   },
+   "subscription_status_expired": {
+      "description": "Expired",
+      "message": "Utgånget"
+   },
+   "subscription_status_past_due": {
+      "description": "Past Due",
+      "message": "Förfallen"
+   },
+   "subscription_status_paused": {
+      "description": "Paused",
+      "message": "Pausad"
+   },
+   "subscription_status_unknown": {
+      "description": "Unknown",
+      "message": "Okänd"
+   },
+   "unable_to_capture_website_alert": {
+      "description": "Unable to capture this website. Please use full screen/application capture or try capture another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "Det går inte att fånga denna webbplats. Använd Full Screen/Application Capture eller prova att fånga en annan webbplats. \n\n (╯ ° □ °） ╯︵ ┻━┻"
+   },
+   "view_permission": {
+      "description": "View permission.",
+      "message": "Visa behörighet."
+   },
+   "width_text": {
+      "description": "Height (px)",
+      "message": "Höjd (px)"
+   }
+}

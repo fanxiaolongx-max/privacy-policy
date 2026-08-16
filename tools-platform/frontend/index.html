@@ -311,7 +311,7 @@
             cursor: pointer;
         }
         .api-relay-icon-btn:hover { color: #fff; border-color: rgba(99,102,241,.4); background: rgba(99,102,241,.12); }
-        .api-relay-models { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+        .api-relay-models { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
         .api-relay-protocols {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -324,11 +324,17 @@
             border: 1px solid rgba(148,163,184,.14);
             border-radius: 12px;
             background: rgba(255,255,255,.025);
+            cursor: pointer;
+            transition: border-color .16s ease, background .16s ease, box-shadow .16s ease;
         }
+        .api-protocol-card:hover { border-color: var(--protocol-color); background: rgba(255,255,255,.045); }
+        .api-protocol-card.selected { border-color: var(--protocol-color); background: rgba(96,165,250,.08); box-shadow: 0 0 0 2px rgba(96,165,250,.08); }
+        .api-protocol-card:focus-within { outline: 2px solid var(--protocol-color); outline-offset: 2px; }
         .api-protocol-card.openai { --protocol-color:#60a5fa; }
         .api-protocol-card.anthropic { --protocol-color:#c084fc; }
         .api-protocol-card.gemini { --protocol-color:#4ade80; }
         .api-protocol-title { display: flex; justify-content: space-between; gap: 8px; color: var(--protocol-color); font-size: 12px; font-weight: 850; }
+        .api-protocol-select { min-width: 0; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
         .api-protocol-copy { border: 0; background: transparent; color: #9aaac0; font-size: 10px; cursor: pointer; }
         .api-protocol-copy:hover { color: #fff; }
         .api-protocol-paths { display: grid; gap: 6px; margin-top: 10px; color: #8d9bb0; font: 10px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
@@ -1205,7 +1211,7 @@
             <div class="friend-links-dialog-head">
                 <div>
                     <h2 class="friend-links-dialog-title" id="apiRelayModalTitle">⚡ AI API 中转配置</h2>
-                    <p class="friend-links-dialog-subtitle">一个公网地址兼容 OpenAI、Anthropic 和 Gemini 协议，可复制到各类 AI 客户端。</p>
+                    <p class="friend-links-dialog-subtitle">OpenAI、Anthropic 可直接使用；Gemini 模型默认走稳定的 OpenAI 兼容通道。</p>
                 </div>
                 <button type="button" class="friend-links-close" id="apiRelayCloseBtn" aria-label="关闭">×</button>
             </div>
@@ -1229,32 +1235,36 @@
                 </div>
                 <div class="api-relay-models">
                     <div class="api-relay-field">
-                        <label for="apiRelayDefaultModel">默认模型</label>
-                        <input class="api-relay-input" id="apiRelayDefaultModel" value="gemini-3-1-flash" spellcheck="false">
+                        <label for="apiRelayOpenAiModel">OpenAI / Gemini 模型</label>
+                        <input class="api-relay-input" id="apiRelayOpenAiModel" value="gemini-3-flash" spellcheck="false">
                     </div>
                     <div class="api-relay-field">
-                        <label for="apiRelayFastModel">快速模型</label>
-                        <input class="api-relay-input" id="apiRelayFastModel" value="gemini-2-5-flash" spellcheck="false">
+                        <label for="apiRelayDefaultModel">Anthropic / Claude 主模型</label>
+                        <input class="api-relay-input" id="apiRelayDefaultModel" value="claude-3-5-sonnet-20241022" spellcheck="false">
+                    </div>
+                    <div class="api-relay-field">
+                        <label for="apiRelayFastModel">Claude 快速模型</label>
+                        <input class="api-relay-input" id="apiRelayFastModel" value="gemini-2.5-flash" spellcheck="false">
                     </div>
                 </div>
                 <div class="api-relay-protocols">
-                    <section class="api-protocol-card openai">
-                        <div class="api-protocol-title"><span>OpenAI 协议</span><button type="button" class="api-protocol-copy" data-api-copy-protocol="openai">⧉ 复制 BASE</button></div>
+                    <section class="api-protocol-card openai selected" data-api-protocol="openai">
+                        <div class="api-protocol-title"><button type="button" class="api-protocol-select" aria-pressed="true">OpenAI 协议</button><button type="button" class="api-protocol-copy" data-api-copy-protocol="openai">⧉ 复制 BASE</button></div>
                         <div class="api-protocol-paths"><code>/v1/chat/completions</code><code>/v1/completions</code><code>/v1/responses</code></div>
                     </section>
-                    <section class="api-protocol-card anthropic">
-                        <div class="api-protocol-title"><span>Anthropic 协议</span><button type="button" class="api-protocol-copy" data-api-copy-protocol="anthropic">⧉ 复制 BASE</button></div>
+                    <section class="api-protocol-card anthropic" data-api-protocol="anthropic">
+                        <div class="api-protocol-title"><button type="button" class="api-protocol-select" aria-pressed="false">Anthropic 协议</button><button type="button" class="api-protocol-copy" data-api-copy-protocol="anthropic">⧉ 复制 BASE</button></div>
                         <div class="api-protocol-paths"><code>/v1/messages</code><code>ANTHROPIC_BASE_URL</code><code>ANTHROPIC_AUTH_TOKEN</code></div>
                     </section>
-                    <section class="api-protocol-card gemini">
-                        <div class="api-protocol-title"><span>Gemini 协议</span><button type="button" class="api-protocol-copy" data-api-copy-protocol="gemini">⧉ 复制 BASE</button></div>
-                        <div class="api-protocol-paths"><code>/v1beta/models/...</code><code>:generateContent</code><code>x-goog-api-key</code></div>
+                    <section class="api-protocol-card gemini" data-api-protocol="gemini">
+                        <div class="api-protocol-title"><button type="button" class="api-protocol-select" aria-pressed="false">Gemini 模型</button><button type="button" class="api-protocol-copy" data-api-copy-protocol="gemini">⧉ 复制 BASE</button></div>
+                        <div class="api-protocol-paths"><code>/v1/chat/completions</code><code>OpenAI 兼容 REST</code><code>原生 /v1beta 配额受限</code></div>
                     </section>
                 </div>
                 <div class="api-relay-tabs" role="tablist" aria-label="集成示例">
                     <button type="button" class="api-relay-tab active" data-api-tab="openai">Python · OpenAI</button>
                     <button type="button" class="api-relay-tab" data-api-tab="anthropic">Python · Anthropic</button>
-                    <button type="button" class="api-relay-tab" data-api-tab="gemini">Gemini REST</button>
+                    <button type="button" class="api-relay-tab" data-api-tab="gemini">Gemini · OpenAI REST</button>
                     <button type="button" class="api-relay-tab" data-api-tab="claude">Claude Code</button>
                 </div>
                 <div class="api-relay-code-wrap">
@@ -1406,11 +1416,12 @@
                 'home.links.status.offline': '不可达',
                 'home.links.status.unknown': '未检测',
                 'home.apiRelay.title': '⚡ AI API 中转配置',
-                'home.apiRelay.subtitle': '一个公网地址兼容 OpenAI、Anthropic 和 Gemini 协议，可复制到各类 AI 客户端。',
+                'home.apiRelay.subtitle': 'OpenAI、Anthropic 可直接使用；Gemini 模型默认走稳定的 OpenAI 兼容通道。',
                 'home.apiRelay.publicBase': '公网 BASE URL',
                 'home.apiRelay.apiKey': 'API 密钥',
-                'home.apiRelay.defaultModel': '默认模型',
-                'home.apiRelay.fastModel': '快速模型',
+                'home.apiRelay.openAiModel': 'OpenAI / Gemini 模型',
+                'home.apiRelay.defaultModel': 'Anthropic / Claude 主模型',
+                'home.apiRelay.fastModel': 'Claude 快速模型',
                 'home.apiRelay.copyCurrent': '⧉ 复制当前示例',
                 'home.apiRelay.copyAll': '⧉ 一键复制全部对接信息',
                 'home.apiRelay.installClaude': '＋ 自动添加到 Claude Code',
@@ -1599,11 +1610,12 @@
                 'home.links.status.offline': 'Unavailable',
                 'home.links.status.unknown': 'Unchecked',
                 'home.apiRelay.title': '⚡ AI API Relay Setup',
-                'home.apiRelay.subtitle': 'One public endpoint compatible with OpenAI, Anthropic, and Gemini protocols.',
+                'home.apiRelay.subtitle': 'OpenAI and Anthropic work directly; Gemini models use the stable OpenAI-compatible route by default.',
                 'home.apiRelay.publicBase': 'Public BASE URL',
                 'home.apiRelay.apiKey': 'API key',
-                'home.apiRelay.defaultModel': 'Default model',
-                'home.apiRelay.fastModel': 'Fast model',
+                'home.apiRelay.openAiModel': 'OpenAI / Gemini model',
+                'home.apiRelay.defaultModel': 'Anthropic / Claude model',
+                'home.apiRelay.fastModel': 'Claude fast model',
                 'home.apiRelay.copyCurrent': '⧉ Copy Current Example',
                 'home.apiRelay.copyAll': '⧉ Copy All Integration Details',
                 'home.apiRelay.installClaude': '＋ Add to Claude Code',
@@ -2096,8 +2108,9 @@
             return {
                 baseUrl: String(document.getElementById('apiRelayBaseUrl')?.value || fallback.baseUrl || 'https://api.fanxiaolong.uk').trim().replace(/\/+$/, ''),
                 apiKey: String(document.getElementById('apiRelayApiKey')?.value || fallback.apiKey || 'xxxx').trim(),
-                defaultModel: String(document.getElementById('apiRelayDefaultModel')?.value || fallback.defaultModel || 'gemini-3-1-flash').trim(),
-                fastModel: String(document.getElementById('apiRelayFastModel')?.value || fallback.fastModel || 'gemini-2-5-flash').trim()
+                openAiModel: String(document.getElementById('apiRelayOpenAiModel')?.value || fallback.openAiModel || 'gemini-3-flash').trim(),
+                defaultModel: String(document.getElementById('apiRelayDefaultModel')?.value || fallback.defaultModel || 'claude-3-5-sonnet-20241022').trim(),
+                fastModel: String(document.getElementById('apiRelayFastModel')?.value || fallback.fastModel || 'gemini-2.5-flash').trim()
             };
         }
 
@@ -2105,9 +2118,9 @@
             const base = config.baseUrl.replace(/\/+$/, '');
             const openAiBase = `${base}/v1`;
             return {
-                openai: `from openai import OpenAI\n\nclient = OpenAI(\n    base_url="${openAiBase}",\n    api_key="${config.apiKey}"\n)\n\nresponse = client.chat.completions.create(\n    model="${config.defaultModel}",\n    messages=[{"role": "user", "content": "Hello!"}]\n)\n\nprint(response.choices[0].message.content)`,
+                openai: `from openai import OpenAI\n\nclient = OpenAI(\n    base_url="${openAiBase}",\n    api_key="${config.apiKey}"\n)\n\nresponse = client.chat.completions.create(\n    model="${config.openAiModel}",\n    messages=[{"role": "user", "content": "Hello!"}]\n)\n\nprint(response.choices[0].message.content)`,
                 anthropic: `from anthropic import Anthropic\n\nclient = Anthropic(\n    base_url="${base}",\n    api_key="${config.apiKey}"\n)\n\nresponse = client.messages.create(\n    model="${config.defaultModel}",\n    max_tokens=1024,\n    messages=[{"role": "user", "content": "Hello!"}]\n)\n\nprint(response.content[0].text)`,
-                gemini: `curl -X POST \\\n  "${base}/v1beta/models/${config.defaultModel}:generateContent" \\\n  -H "Content-Type: application/json" \\\n  -H "x-goog-api-key: ${config.apiKey}" \\\n  -d '{\n    "contents": [{\n      "parts": [{"text": "Hello!"}]\n    }]\n  }'`,
+                gemini: `# Gemini 原生 /v1beta 当前配额受限，改用已验证的 OpenAI 兼容 REST\ncurl -X POST \\\n  "${openAiBase}/chat/completions" \\\n  -H "Content-Type: application/json" \\\n  -H "Authorization: Bearer ${config.apiKey}" \\\n  -d '{\n    "model": "${config.openAiModel}",\n    "messages": [{"role": "user", "content": "Hello!"}]\n  }'`,
                 claude: `// ~/.claude/settings.json\n${JSON.stringify({
                     env: {
                         ANTHROPIC_BASE_URL: base,
@@ -2122,9 +2135,21 @@
         function renderApiRelayExample() {
             const examples = buildApiRelayExamples();
             const tab = examples[friendLinksState.apiRelayTab] ? friendLinksState.apiRelayTab : 'openai';
+            const protocol = tab === 'claude' ? 'anthropic' : tab;
             const code = document.getElementById('apiRelayCode');
             if (code) code.textContent = examples[tab];
             document.querySelectorAll('[data-api-tab]').forEach(button => button.classList.toggle('active', button.dataset.apiTab === tab));
+            document.querySelectorAll('[data-api-protocol]').forEach(card => {
+                const selected = card.dataset.apiProtocol === protocol;
+                card.classList.toggle('selected', selected);
+                card.querySelector('.api-protocol-select')?.setAttribute('aria-pressed', String(selected));
+            });
+        }
+
+        function selectApiRelayProtocol(protocol) {
+            if (!['openai', 'anthropic', 'gemini'].includes(protocol)) return;
+            friendLinksState.apiRelayTab = protocol;
+            renderApiRelayExample();
         }
 
         function buildAllApiRelayInfo(config = getApiRelayValues()) {
@@ -2135,7 +2160,8 @@
                 '',
                 `公网地址: ${base}`,
                 `API 密钥: ${config.apiKey}`,
-                `默认模型: ${config.defaultModel}`,
+                `OpenAI / Gemini 模型: ${config.openAiModel}`,
+                `Anthropic / Claude 主模型: ${config.defaultModel}`,
                 `快速模型: ${config.fastModel}`,
                 '',
                 `OpenAI BASE: ${base}/v1`,
@@ -2143,13 +2169,14 @@
                 `OpenAI Responses: ${base}/v1/responses`,
                 `Anthropic BASE: ${base}`,
                 `Anthropic Messages: ${base}/v1/messages`,
-                `Gemini BASE: ${base}/v1beta`,
+                `Gemini 模型（OpenAI 兼容 REST）: ${base}/v1/chat/completions`,
+                `Gemini 原生通道: ${base}/v1beta（当前配额受限）`,
                 '',
                 '--- Python / OpenAI ---', examples.openai,
                 '',
                 '--- Python / Anthropic ---', examples.anthropic,
                 '',
-                '--- Gemini REST ---', examples.gemini,
+                '--- Gemini / OpenAI-compatible REST ---', examples.gemini,
                 '',
                 '--- Claude Code settings.json ---', examples.claude
             ].join('\n');
@@ -2197,12 +2224,13 @@
         async function openApiRelayModal() {
             if (!friendLinksState.snapshot) await loadFriendLinks();
             const config = friendLinksState.snapshot?.apiRelay || {
-                baseUrl: 'https://api.fanxiaolong.uk', apiKey: 'xxxx', defaultModel: 'gemini-3-1-flash', fastModel: 'gemini-2-5-flash'
+                baseUrl: 'https://api.fanxiaolong.uk', apiKey: 'xxxx', openAiModel: 'gemini-3-flash', defaultModel: 'claude-3-5-sonnet-20241022', fastModel: 'gemini-2.5-flash'
             };
             const isAdmin = localStorage.getItem('tools_role') === 'admin';
             const fields = {
                 apiRelayBaseUrl: config.baseUrl,
                 apiRelayApiKey: config.apiKey,
+                apiRelayOpenAiModel: config.openAiModel,
                 apiRelayDefaultModel: config.defaultModel,
                 apiRelayFastModel: config.fastModel
             };
@@ -2280,7 +2308,11 @@
                 friendLinksState.apiRelayTab = button.dataset.apiTab;
                 renderApiRelayExample();
             }));
-            ['apiRelayBaseUrl', 'apiRelayApiKey', 'apiRelayDefaultModel', 'apiRelayFastModel'].forEach(id => {
+            document.querySelectorAll('[data-api-protocol]').forEach(card => card.addEventListener('click', event => {
+                if (event.target.closest('[data-api-copy-protocol]')) return;
+                selectApiRelayProtocol(card.dataset.apiProtocol);
+            }));
+            ['apiRelayBaseUrl', 'apiRelayApiKey', 'apiRelayOpenAiModel', 'apiRelayDefaultModel', 'apiRelayFastModel'].forEach(id => {
                 document.getElementById(id)?.addEventListener('input', () => {
                     friendLinksState.apiRelayDirty = true;
                     renderApiRelayExample();
@@ -2296,7 +2328,7 @@
             document.getElementById('apiRelayCopyAllBtn')?.addEventListener('click', () => copyApiRelayText(buildAllApiRelayInfo()));
             document.querySelectorAll('[data-api-copy-protocol]').forEach(button => button.addEventListener('click', () => {
                 const config = getApiRelayValues();
-                const bases = { openai: `${config.baseUrl}/v1`, anthropic: config.baseUrl, gemini: `${config.baseUrl}/v1beta` };
+                const bases = { openai: `${config.baseUrl}/v1`, anthropic: config.baseUrl, gemini: `${config.baseUrl}/v1` };
                 copyApiRelayText(bases[button.dataset.apiCopyProtocol]);
             }));
             document.getElementById('apiRelaySaveBtn')?.addEventListener('click', saveApiRelayConfig);
@@ -2327,6 +2359,7 @@
             setText('#apiRelayModalTitle + .friend-links-dialog-subtitle', t('home.apiRelay.subtitle'));
             setText('label[for="apiRelayBaseUrl"]', t('home.apiRelay.publicBase'));
             setText('label[for="apiRelayApiKey"]', t('home.apiRelay.apiKey'));
+            setText('label[for="apiRelayOpenAiModel"]', t('home.apiRelay.openAiModel'));
             setText('label[for="apiRelayDefaultModel"]', t('home.apiRelay.defaultModel'));
             setText('label[for="apiRelayFastModel"]', t('home.apiRelay.fastModel'));
             setText('#apiRelayCopyCodeBtn', t('home.apiRelay.copyCurrent'));

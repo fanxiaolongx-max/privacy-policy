@@ -1,0 +1,202 @@
+/* Chrome Capture Pro - Options Page Theme (by Dragon) */
+:root {
+  --bg-main: #0c1017;
+  --bg-gradient: linear-gradient(160deg, #0b0f19 0%, #111827 50%, #080c14 100%);
+  --card-bg: rgba(22, 27, 34, 0.85);
+  --card-border: rgba(255, 255, 255, 0.1);
+  --card-border-hover: rgba(99, 102, 241, 0.45);
+  --primary-accent: #6366f1;
+  --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+}
+
+* {
+  box-sizing: border-box !important;
+}
+
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  background: var(--bg-gradient) !important;
+  background-color: var(--bg-main) !important;
+  color: var(--text-main) !important;
+  min-height: 100vh !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+/* Options Header Navbar */
+#header {
+  background: rgba(13, 17, 23, 0.92) !important;
+  backdrop-filter: blur(16px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  height: 72px !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 40px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 100 !important;
+}
+
+#header span[class*="headerText"] {
+  height: 72px !important;
+  line-height: 72px !important;
+  margin-left: 0 !important;
+  font-weight: 700 !important;
+  font-size: 1.45rem !important;
+  background: linear-gradient(135deg, #ffffff 0%, #c7d2fe 60%, #818cf8 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  letter-spacing: -0.02em !important;
+}
+
+#header span[class*="headerText"]::after {
+  content: "⚡ Dragon Pro" !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  vertical-align: middle !important;
+  margin-left: 14px !important;
+  padding: 3px 10px !important;
+  border-radius: 8px !important;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(139, 92, 246, 0.2) 100%) !important;
+  border: 1px solid rgba(99, 102, 241, 0.45) !important;
+  color: #c7d2fe !important;
+  -webkit-text-fill-color: #c7d2fe !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+}
+
+/* Centered Responsive Container */
+.MuiGrid-container {
+  max-width: 1080px !important;
+  margin: 20px auto !important;
+  padding: 0 16px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: center !important;
+  align-items: flex-start !important;
+  gap: 24px !important;
+}
+
+.MuiGrid-item {
+  flex: 1 1 480px !important;
+  max-width: 520px !important;
+  min-width: 360px !important;
+}
+
+/* Cards */
+.MuiCard-root {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--card-border) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease !important;
+  margin-bottom: 24px !important;
+}
+
+.MuiCard-root:hover {
+  border-color: var(--card-border-hover) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 25px rgba(99, 102, 241, 0.15) !important;
+}
+
+/* Card Section Headers */
+.MuiListSubheader-root {
+  background: transparent !important;
+  color: #a5b4fc !important;
+  font-weight: 700 !important;
+  font-size: 1.05rem !important;
+  padding: 16px 20px 8px 20px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Section Title text above cards */
+.MuiTypography-root {
+  color: #e2e8f0 !important;
+}
+
+/* Form Inputs & Selects */
+.MuiOutlinedInput-root {
+  border-radius: 10px !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: #ffffff !important;
+}
+
+.MuiOutlinedInput-notchedOutline {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: rgba(99, 102, 241, 0.5) !important;
+}
+
+.MuiInputLabel-root {
+  color: #94a3b8 !important;
+}
+
+.MuiInputLabel-root.MuiInputLabel-shrink {
+  background: #1e293b !important;
+  padding: 0 5px !important;
+  border-radius: 4px !important;
+  color: #a5b4fc !important;
+}
+
+.MuiSelect-select {
+  color: #ffffff !important;
+}
+
+.MuiSelect-icon {
+  color: #94a3b8 !important;
+}
+
+/* Switches */
+.MuiSwitch-switchBase.Mui-checked {
+  color: #6366f1 !important;
+}
+
+.MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track {
+  background-color: #6366f1 !important;
+}
+
+/* Bottom Shortcut Button */
+div[class*="linkContainer"] {
+  display: flex !important;
+  justify-content: center !important;
+  margin: 30px auto 60px auto !important;
+  width: 100% !important;
+}
+
+div[class*="linkContainer"] .MuiButton-contained {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  border-radius: 10px !important;
+  padding: 8px 24px !important;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4) !important;
+  transition: all 0.22s ease !important;
+}
+
+div[class*="linkContainer"] .MuiButton-contained:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.5) !important;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.5);
+}

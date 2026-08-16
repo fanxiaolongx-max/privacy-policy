@@ -1,0 +1,1691 @@
+{
+   "account_modal_free_plan": {
+      "description": "You are on the free plan",
+      "message": "คุณอยู่ในแผนฟรี"
+   },
+   "account_modal_manage_subscription_button": {
+      "description": "Manage Subscription",
+      "message": "จัดการการสมัครสมาชิก"
+   },
+   "account_modal_not_signed_in": {
+      "description": "You are not signed in",
+      "message": "คุณไม่ได้ลงชื่อเข้าใช้"
+   },
+   "account_modal_premium_plan": {
+      "description": "You are on the premium plan",
+      "message": "คุณอยู่ในแผนพรีเมี่ยม"
+   },
+   "account_modal_premium_pro_plan": {
+      "description": "You are on the Premium Pro plan",
+      "message": "คุณอยู่ในแผน Premium Pro"
+   },
+   "account_modal_request_feature_button": {
+      "description": "Request Feature",
+      "message": "ขอคุณสมบัติ"
+   },
+   "account_modal_request_support_button": {
+      "description": "Request Support",
+      "message": "ขอความช่วยเหลือ"
+   },
+   "account_modal_stats_heading": {
+      "description": "Your stats:",
+      "message": "สถิติของคุณ:"
+   },
+   "alert_text": {
+      "description": "Unable to run selected area capture on this website. Please use full screen recording or try another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "ไม่สามารถเรียกใช้พื้นที่ที่เลือกในเว็บไซต์นี้ โปรดใช้การบันทึกแบบเต็มหน้าจอหรือลองเว็บไซต์อื่น \n\n (╯°□°) ╯(┻━┻"
+   },
+   "click_indicator_size_color_text": {
+      "description": "Click animation size & color",
+      "message": "คลิกขนาดภาพเคลื่อนไหวและสี"
+   },
+   "close_btn_text": {
+      "description": "Close",
+      "message": "ปิด I"
+   },
+   "confirm_dialog_cancel_btn_text": {
+      "description": "Cancel",
+      "message": "ยกเลิก"
+   },
+   "confirm_dialog_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "ยืนยัน"
+   },
+   "confirm_fps_update_text": {
+      "description": "Changing the fps will remove all frame specific edits such as edited or deleted frames. Do you want to continue?",
+      "message": "การเปลี่ยน FPS จะลบการแก้ไขเฉพาะภาพทั้งหมดเช่นเฟรมที่แก้ไขหรือลบ คุณต้องการดำเนินการต่อหรือไม่?"
+   },
+   "copy_text": {
+      "description": "Copy to clipboard",
+      "message": "คัดลอกไปยังคลิปบอร์ด"
+   },
+   "cursor_size_and_color_text": {
+      "description": "Cursor dot size & color",
+      "message": "เคอร์เซอร์ Dot ขนาด & สี"
+   },
+   "dither_text": {
+      "description": "Apply dither",
+      "message": "ใช้ D Orer"
+   },
+   "download_filename_text": {
+      "description": "Download filename format",
+      "message": "ดาวน์โหลด Filename Format"
+   },
+   "download_text": {
+      "description": "Download",
+      "message": "ดาวน์โหลด"
+   },
+   "draw_size_and_color_text": {
+      "description": "Drawing size & color",
+      "message": "ขนาดการวาดภาพและสี"
+   },
+   "duration": {
+      "description": "Label for a field indicating a length of time.",
+      "message": "ระยะเวลา"
+   },
+   "editor_action_add_icon": {
+      "description": "Add icon",
+      "message": "เพิ่มไอคอน"
+   },
+   "editor_action_add_text": {
+      "description": "Add text",
+      "message": "เพิ่มข้อความ"
+   },
+   "editor_action_blur_rectangle": {
+      "description": "Blur area",
+      "message": "เบลอพื้นที่"
+   },
+   "editor_action_copy": {
+      "description": "Copy to clipboard",
+      "message": "คัดลอกไปยังคลิปบอร์ด"
+   },
+   "editor_action_crop": {
+      "description": "Crop",
+      "message": "พืชผล"
+   },
+   "editor_action_draw_arrow": {
+      "description": "Draw arrow",
+      "message": "วาดลูกศร"
+   },
+   "editor_action_draw_ellipse": {
+      "description": "Draw ellipse",
+      "message": "จับวงรี"
+   },
+   "editor_action_draw_line": {
+      "description": "Draw line",
+      "message": "วาดเส้น"
+   },
+   "editor_action_draw_rectangle": {
+      "description": "Draw rectangle",
+      "message": "วาดสี่เหลี่ยมผืนผ้า"
+   },
+   "editor_action_free_draw": {
+      "description": "Free draw",
+      "message": "ฟรี"
+   },
+   "editor_action_highlight": {
+      "description": "Highlight",
+      "message": "จุดเด่น"
+   },
+   "editor_action_numbered_step": {
+      "description": "Action label for adding a numbered step annotation.",
+      "message": "ขั้นตอนที่มีหมายเลข"
+   },
+   "editor_action_pan": {
+      "description": "Pan",
+      "message": "เลื่อน"
+   },
+   "editor_action_profile_account": {
+      "description": "Account",
+      "message": "บัญชี"
+   },
+   "editor_action_redo": {
+      "description": "Redo",
+      "message": "ทำซ้ำ"
+   },
+   "editor_action_save": {
+      "description": "Save",
+      "message": "บันทึก"
+   },
+   "editor_action_select": {
+      "description": "Select, move, resize",
+      "message": "เลือกย้ายปรับขนาด"
+   },
+   "editor_action_settings": {
+      "description": "Settings",
+      "message": "การตั้งค่า"
+   },
+   "editor_action_undo": {
+      "description": "Undo",
+      "message": "เลิกทำ"
+   },
+   "editor_action_undo_all": {
+      "description": "Undo all",
+      "message": "เลิกทำทั้งหมด"
+   },
+   "editor_add_text_default": {
+      "description": "start typing...",
+      "message": "เริ่มพิมพ์ ..."
+   },
+   "editor_browse_file_system": {
+      "description": "Browse file system",
+      "message": "เรียกดูระบบไฟล์"
+   },
+   "editor_drag_and_drop": {
+      "description": "Drag and drop image/GIF or ",
+      "message": "ลากและวางภาพ / gif หรือ"
+   },
+   "editor_file_downloaded": {
+      "description": "File saved to downloads folder.",
+      "message": "ไฟล์บันทึกไปยังโฟลเดอร์ดาวน์โหลด"
+   },
+   "editor_file_downloaded_selected_location": {
+      "description": "File saved to selected location.",
+      "message": "ไฟล์บันทึกไปยังตำแหน่งที่เลือก"
+   },
+   "editor_frame_selector_apply_edits": {
+      "description": "Apply edits to selected",
+      "message": "ใช้การแก้ไขเพื่อเลือก"
+   },
+   "editor_frame_selector_delete": {
+      "description": "Delete",
+      "message": "ลบ"
+   },
+   "editor_frame_selector_delete_every_second": {
+      "description": "Delete every second frame",
+      "message": "ลบทุกเฟรมที่สอง"
+   },
+   "editor_frame_selector_delete_selected": {
+      "description": "Delete selected",
+      "message": "ลบที่เลือก"
+   },
+   "editor_frame_selector_remove_edits": {
+      "description": "Remove edits from selected",
+      "message": "ลบการแก้ไขจากที่เลือก"
+   },
+   "editor_frame_selector_restore": {
+      "description": "Restore",
+      "message": "คืนค่า"
+   },
+   "editor_frame_selector_restore_all": {
+      "description": "Restore All",
+      "message": "คืนค่าทั้งหมด"
+   },
+   "editor_frame_selector_restore_selected": {
+      "description": "Restore selected",
+      "message": "เรียกคืนที่เลือก"
+   },
+   "editor_frame_selector_select_next": {
+      "description": "Select next frames",
+      "message": "เลือกภาพถัดไป"
+   },
+   "editor_frame_selector_select_previous": {
+      "description": "Select previous frames",
+      "message": "เลือกภาพก่อนหน้า"
+   },
+   "editor_frame_selector_unselect_all": {
+      "description": "Unselect All",
+      "message": "ไม่เลือกทั้งหมด"
+   },
+   "editor_image_copied": {
+      "description": "Image copied to clipboard.",
+      "message": "คัดลอกภาพไปยังคลิปบอร์ด"
+   },
+   "editor_image_copied_failed": {
+      "description": "Failed to copy image to clipboard, it may be too large.",
+      "message": "ไม่สามารถคัดลอกภาพไปยังคลิปบอร์ดอาจมีขนาดใหญ่เกินไป"
+   },
+   "editor_link_copied": {
+      "description": "Link copied to clipboard.",
+      "message": "ลิงค์คัดลอกไปยังคลิปบอร์ด"
+   },
+   "editor_max_time_reached_dialog_description1": {
+      "description": "You have reached the max recording length time of $maxlength$ seconds for GIFs. Premium users can update this from the settings page.",
+      "message": "คุณมาถึงระยะเวลาการบันทึกสูงสุดของ $maxlength$ วินาทีสำหรับ GIF ผู้ใช้พรีเมี่ยมสามารถอัปเดตสิ่งนี้ได้จากหน้าการตั้งค่า",
+      "placeholders": {
+         "maxlength": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_max_time_reached_dialog_description2": {
+      "description": "GIFs are intended for short recordings. If you require full length videos we recommend our free screen recorder: ",
+      "message": "GIF มีไว้สำหรับการบันทึกสั้น ๆ หากคุณต้องการวิดีโอที่มีความยาวเต็มรูปแบบเราขอแนะนำเครื่องบันทึกหน้าจอฟรีของเรา:"
+   },
+   "editor_max_time_reached_dialog_description3": {
+      "description": "Premium users can update this from the settings page.",
+      "message": "ผู้ใช้พรีเมี่ยมสามารถอัปเดตสิ่งนี้ได้จากหน้าการตั้งค่า"
+   },
+   "editor_max_time_reached_dialog_settings_button": {
+      "description": "Open settings",
+      "message": "เปิดการตั้งค่า"
+   },
+   "editor_max_time_reached_dialog_title": {
+      "description": "Recording suddenly stopped?",
+      "message": "การบันทึกหยุดทันที?"
+   },
+   "editor_premium_options_color": {
+      "description": "Color",
+      "message": "สี"
+   },
+   "editor_premium_options_draw_size": {
+      "description": "Draw Size",
+      "message": "ขนาดดึง"
+   },
+   "editor_premium_options_font": {
+      "description": "Font",
+      "message": "ตัวอักษร"
+   },
+   "editor_premium_options_playback_speed": {
+      "description": "Playback Speed",
+      "message": "ความเร็วในการเล่น"
+   },
+   "editor_premium_options_special_effect": {
+      "description": "Special Effect",
+      "message": "เทคนิคพิเศษ"
+   },
+   "editor_premium_options_title": {
+      "description": "Premium Options",
+      "message": "ตัวเลือกพรีเมี่ยม"
+   },
+   "editor_save_dialog_advanced_encoding_options": {
+      "description": "Title for a section containing advanced, technical options for encoding a file.",
+      "message": "ตัวเลือกการเข้ารหัสขั้นสูง"
+   },
+   "editor_save_dialog_alert_title": {
+      "description": "Warning",
+      "message": "คำเตือน"
+   },
+   "editor_save_dialog_aspect_ratio": {
+      "description": "lock aspect ratio",
+      "message": "อัตราส่วนล็อค"
+   },
+   "editor_save_dialog_cancel": {
+      "description": "Cancel",
+      "message": "ยกเลิก"
+   },
+   "editor_save_dialog_chip_animated_image": {
+      "description": "Chip label indicating an animated image format (e.g. GIF, AVIF).",
+      "message": "ภาพเคลื่อนไหว"
+   },
+   "editor_save_dialog_chip_large_file": {
+      "description": "Chip label indicating the format produces a large file size.",
+      "message": "ไฟล์ขนาดใหญ่"
+   },
+   "editor_save_dialog_chip_limited_support": {
+      "description": "Chip label indicating the format has limited browser/app support.",
+      "message": "รองรับจำกัด"
+   },
+   "editor_save_dialog_chip_small_file": {
+      "description": "Chip label indicating the format produces a small file size.",
+      "message": "ไฟล์ขนาดเล็ก"
+   },
+   "editor_save_dialog_chip_video": {
+      "description": "Chip label indicating a video format (e.g. WebM, MP4).",
+      "message": "วิดีโอ"
+   },
+   "editor_save_dialog_chip_widely_supported": {
+      "description": "Chip label indicating the format is widely supported.",
+      "message": "รองรับอย่างกว้างขวาง"
+   },
+   "editor_save_dialog_compress": {
+      "description": "Compress & optimize GIF",
+      "message": "บีบอัดและปรับให้เหมาะสม GIF"
+   },
+   "editor_save_dialog_compress_tooltip": {
+      "description": "Apply GIF compression algorthm to greatly reduce GIF file size and in some cases improve quality. Highly recommeded.",
+      "message": "ใช้การบีบอัด GIF Algorthm เพื่อลดขนาดไฟล์ GIF อย่างมากและในบางกรณีปรับปรุงคุณภาพ แนะนำเป็นอย่างยิ่ง"
+   },
+   "editor_save_dialog_dither_tooltip": {
+      "description": "Apply dither algorithm to frames. Try toggling this option if you experience color quality issues.",
+      "message": "ใช้อัลกอริทึมกับภาพ ลองสลับตัวเลือกนี้หากคุณพบปัญหาคุณภาพสี"
+   },
+   "editor_save_dialog_download_raw_recording": {
+      "description": "Download raw recording",
+      "message": "ดาวน์โหลดการบันทึกดิบ"
+   },
+   "editor_save_dialog_estimated_size": {
+      "description": "Estimated GIF Size: ",
+      "message": "ขนาด gif โดยประมาณ:"
+   },
+   "editor_save_dialog_export_sound": {
+      "description": "Include sound (beta)",
+      "message": "รวมเสียง (เบต้า)"
+   },
+   "editor_save_dialog_export_sound_tooltip": {
+      "description": "Enable this option to include sound in the video.",
+      "message": "เปิดใช้งานตัวเลือกนี้เพื่อรวมเสียงในวิดีโอ"
+   },
+   "editor_save_dialog_frames": {
+      "description": "Frames: ",
+      "message": "รูปภาพ:"
+   },
+   "editor_save_dialog_frames_alert": {
+      "description": "There are currently selected frames, saving will only output these selected frames - ",
+      "message": "ขณะนี้มีรูปภาพที่เลือกไว้การบันทึกจะส่งออกเฟรมที่เลือกเหล่านี้เท่านั้น -"
+   },
+   "editor_save_dialog_frames_alert_button": {
+      "description": "Click here to unselect all frames",
+      "message": "คลิกที่นี่เพื่อยกเลิกการเลือกรูปภาพทั้งหมด"
+   },
+   "editor_save_dialog_frames_alert_title": {
+      "description": "Playback Speed",
+      "message": "ความเร็วในการเล่น"
+   },
+   "editor_save_dialog_frames_processing": {
+      "description": "Processing Frames: ",
+      "message": "การประมวลผลภาพ:"
+   },
+   "editor_save_dialog_height_helper": {
+      "description": "Recorded height is ",
+      "message": "ความสูงที่บันทึกไว้คือ"
+   },
+   "editor_save_dialog_lossy_compression": {
+      "description": "Label for a setting that controls the level of lossy compression, from 0 to 100 percent.",
+      "message": "การบีบอัดแบบสูญเสียข้อมูล (0 - 100%)"
+   },
+   "editor_save_dialog_number_min_max_validation": {
+      "description": "A value between $minSize$ and $maxSize$ is required.",
+      "message": "จำเป็นต้องมีค่าระหว่าง $minSize$ และ $maxSize$",
+      "placeholders": {
+         "maxSize": {
+            "content": "$2"
+         },
+         "minSize": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_save_dialog_processing_alert": {
+      "description": "Processing this recording will require a lot of memory and processing power. Unless you have a high spec PC it is recommended to do one or more of the following:",
+      "message": "การประมวลผลการบันทึกนี้จะต้องใช้หน่วยความจำและกำลังการประมวลผลจำนวนมาก ยกเว้นว่าคุณมีพีซีข้อมูลจำเพาะสูงขอแนะนำให้ทำอย่างน้อยหนึ่งอย่างต่อไปนี้:"
+   },
+   "editor_save_dialog_processing_alert_memory": {
+      "description": "Please note if the resulting GIF is blank then you ran out of memory.",
+      "message": "โปรดทราบว่า GIF ที่เกิดขึ้นนั้นว่างเปล่าแล้วคุณก็หมดหน่วยความจำ"
+   },
+   "editor_save_dialog_processing_alert_point_1": {
+      "description": "Compress and optimize GIF",
+      "message": "บีบอัดและปรับให้เหมาะสม GIF"
+   },
+   "editor_save_dialog_processing_alert_point_2": {
+      "description": "Reduce the width & height",
+      "message": "ลดความกว้างและความสูง"
+   },
+   "editor_save_dialog_processing_alert_point_3": {
+      "description": "Reduce FPS or delete frames",
+      "message": "ลด FPS หรือลบภาพ"
+   },
+   "editor_save_dialog_purchase_dialog_compression_description": {
+      "description": "Free users are limited to 3 high quality GIF compressions per day. Upgrade to Premium to have no restrictions.",
+      "message": "ผู้ใช้ฟรีจะถูก จำกัด ไว้ที่ 3 การบีบอัด GIF คุณภาพสูงต่อวัน อัพเกรดเป็นพรีเมี่ยมที่ไม่มีข้อ จำกัด"
+   },
+   "editor_save_dialog_quantization_algorithm": {
+      "description": "Label for a dropdown to select a quantization algorithm.",
+      "message": "อัลกอริทึมการประมาณค่า"
+   },
+   "editor_save_dialog_quantization_algorithm_new_alpha": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Alpha.",
+      "message": "ใหม่ (อัลฟ่า)"
+   },
+   "editor_save_dialog_quantization_algorithm_new_beta": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Beta.",
+      "message": "ใหม่ (เบต้า)"
+   },
+   "editor_save_dialog_quantization_algorithm_old": {
+      "description": "An option for the quantization algorithm setting, indicating an older version.",
+      "message": "เก่า"
+   },
+   "editor_save_dialog_recording_quality_alert": {
+      "description": "GIF quality is limited for non premium users. To output high quality recordings you can do one of the following:",
+      "message": "คุณภาพของ GIF นั้น จำกัด สำหรับผู้ใช้ที่ไม่ใช่พรีเมี่ยม ในการส่งออกการบันทึกคุณภาพสูงคุณสามารถทำได้อย่างใดอย่างหนึ่งต่อไปนี้:"
+   },
+   "editor_save_dialog_recording_quality_alert_option_1": {
+      "description": "Purchase premium",
+      "message": "ซื้อพรีเมี่ยม"
+   },
+   "editor_save_dialog_recording_quality_alert_option_2": {
+      "description": "Save as a WebM file",
+      "message": "บันทึกเป็นไฟล์ webm"
+   },
+   "editor_save_dialog_reduce_width": {
+      "description": "Reduce width & height",
+      "message": "ลดความกว้างและความสูง"
+   },
+   "editor_save_dialog_reduce_width_tooltip": {
+      "description": "Reduce GIF width and height/quality to improve processing time and produce a smaller file.",
+      "message": "ลดความกว้างและความสูง/คุณภาพของ GIF เพื่อปรับปรุงเวลาในการประมวลผลและสร้างไฟล์ที่เล็กลง"
+   },
+   "editor_save_dialog_save": {
+      "description": "Save",
+      "message": "บันทึก"
+   },
+   "editor_save_dialog_save_by": {
+      "description": "Save by",
+      "message": "บันทึกโดย"
+   },
+   "editor_save_dialog_save_by_download": {
+      "description": "Download file",
+      "message": "ดาวน์โหลดไฟล์"
+   },
+   "editor_save_dialog_save_by_google_drive": {
+      "description": "Upload to Google Drive & copy link",
+      "message": "อัปโหลดไปยังลิงค์ Google Drive & Copy"
+   },
+   "editor_save_dialog_save_location": {
+      "description": "Save location",
+      "message": "บันทึกตำแหน่ง"
+   },
+   "editor_save_dialog_save_location_downloads": {
+      "description": "Downloads folder",
+      "message": "ดาวน์โหลดโฟลเดอร์"
+   },
+   "editor_save_dialog_save_location_downloads_subfolder": {
+      "description": "Downloads subfolder",
+      "message": "ดาวน์โหลดโฟลเดอร์ย่อย"
+   },
+   "editor_save_dialog_save_location_select": {
+      "description": "Manually select location",
+      "message": "เลือกตำแหน่งด้วยตนเอง"
+   },
+   "editor_save_dialog_title": {
+      "description": "Save",
+      "message": "บันทึก"
+   },
+   "editor_save_dialog_title_processing": {
+      "description": "Processing...",
+      "message": "กำลังประมวลผล..."
+   },
+   "editor_save_dialog_title_uploading": {
+      "description": "Uploading...",
+      "message": "อัปโหลด ..."
+   },
+   "editor_save_dialog_width_helper": {
+      "description": "Recorded width is ",
+      "message": "ความกว้างที่บันทึกไว้คือ"
+   },
+   "editor_text": {
+      "description": "Open in editor",
+      "message": "เปิดในบรรณาธิการ"
+   },
+   "editor_tip_delete_items": {
+      "description": "Pro tip: Delete added items by selecting the item and pressing the delete key.",
+      "message": "เคล็ดลับโปร: ลบรายการที่เพิ่มโดยเลือกรายการและกดปุ่ม DELETE"
+   },
+   "editor_tip_edit_specific_frames": {
+      "description": "Pro tip: You can edit specific frames by using the 'Apply edits to selected option'",
+      "message": "เคล็ดลับ PRO: คุณสามารถแก้ไขภาพเฉพาะได้โดยใช้ 'การแก้ไขใช้กับตัวเลือกที่เลือก'"
+   },
+   "editor_tip_scroll": {
+      "description": "Pro tip: Scroll when hovering the screenshot/recording to zoom.",
+      "message": "เคล็ดลับโปร: เลื่อนเมื่อโฉบหน้าจอ / บันทึกเพื่อซูม"
+   },
+   "editor_tip_shift_multiple_items": {
+      "description": "Pro tip: When using the selecting tool hold down shift to select more than one item.",
+      "message": "เคล็ดลับโปร: เมื่อใช้เครื่องมือการเลือกกด Shift ค้างไว้เพื่อเลือกมากกว่าหนึ่งรายการ"
+   },
+   "editor_tip_update_multiple_items": {
+      "description": "Pro tip: You can scale, rotate, move and delete multiple items at once.",
+      "message": "เคล็ดลับโปร: คุณสามารถปรับขนาดหมุนย้ายและลบหลายรายการพร้อมกัน"
+   },
+   "editor_tip_update_text": {
+      "description": "Pro tip: Double click on text to edit it.",
+      "message": "เคล็ดลับโปร: ดับเบิลคลิกที่ข้อความเพื่อแก้ไข"
+   },
+   "editor_upload_dialog_alert_copy_failed_message": {
+      "description": "This may have occurred due to the window not being focused.",
+      "message": "สิ่งนี้อาจเกิดขึ้นเนื่องจากหน้าต่างไม่ได้มุ่งเน้น"
+   },
+   "editor_upload_dialog_alert_copy_failed_title": {
+      "description": "Copy to clipboard failed",
+      "message": "คัดลอกไปยังคลิปบอร์ดล้มเหลว"
+   },
+   "editor_upload_dialog_alert_copy_success_title": {
+      "description": "Copied to clipboard",
+      "message": "คัดลอกไปยังคลิปบอร์ด"
+   },
+   "editor_upload_dialog_alert_upload_failed": {
+      "description": "Upload Failed",
+      "message": "การอัพโหลดล้มเหลว"
+   },
+   "editor_upload_dialog_alert_upload_failed_link": {
+      "description": "Try again.",
+      "message": "ลองอีกครั้ง."
+   },
+   "editor_upload_dialog_alert_upload_failed_message": {
+      "description": "Please make sure you are connected to the internet and have accepted Google Drive permissions.",
+      "message": "โปรดตรวจสอบให้แน่ใจว่าคุณเชื่อมต่อกับอินเทอร์เน็ตและยอมรับสิทธิ์ของ Google Drive"
+   },
+   "editor_upload_dialog_cancel_and_download": {
+      "description": "Cancel and download file",
+      "message": "ยกเลิกและดาวน์โหลดไฟล์"
+   },
+   "editor_upload_dialog_close": {
+      "description": "Close",
+      "message": "ปิด I"
+   },
+   "editor_upload_dialog_copy_link": {
+      "description": "Copy link",
+      "message": "คัดลอกลิงค์"
+   },
+   "editor_upload_dialog_link_public": {
+      "description": "Allow anyone with the link to view.",
+      "message": "อนุญาตให้ทุกคนที่มีลิงก์เพื่อดู"
+   },
+   "editor_zoom_crop_animation_animated": {
+      "description": "Sub-label indicating an animation type is animated.",
+      "message": "ไฟม์ภาพ"
+   },
+   "editor_zoom_crop_animation_crop": {
+      "description": "Animation type option for static cropping without animation.",
+      "message": "ตัดขอบ"
+   },
+   "editor_zoom_crop_animation_static": {
+      "description": "Sub-label indicating an animation type is static (no animation).",
+      "message": "หนึ่งแห่งเพียง"
+   },
+   "editor_zoom_crop_animation_type": {
+      "description": "Label for the animation type selection section.",
+      "message": "ประเภทการเคลื่อนไหว"
+   },
+   "editor_zoom_crop_animation_zoom_in": {
+      "description": "Animation type option for zooming in on the selected area.",
+      "message": "ขยายเข้า"
+   },
+   "editor_zoom_crop_animation_zoom_out": {
+      "description": "Animation type option for zooming out from the selected area.",
+      "message": "ขยายออก"
+   },
+   "editor_zoom_crop_apply": {
+      "description": "Apply button in zoom/crop dialog.",
+      "message": "นำมาใช้"
+   },
+   "editor_zoom_crop_cancel": {
+      "description": "Cancel button in zoom/crop dialog.",
+      "message": "ยกเลิก"
+   },
+   "editor_zoom_crop_change_area": {
+      "description": "Tooltip text for button to change the selected crop area.",
+      "message": "เปลี่ยนพื้นที่"
+   },
+   "editor_zoom_crop_dialog_title": {
+      "description": "Title for the zoom and crop dialog in the editor.",
+      "message": "ขยายและตัดขอบ"
+   },
+   "editor_zoom_crop_draw_instruction": {
+      "description": "Instruction text for the user to draw a crop area on the frame preview.",
+      "message": "วาดพื้นที่บนแฟรม"
+   },
+   "editor_zoom_crop_frame_end": {
+      "description": "Label for the end frame number.",
+      "message": "จบปลาย"
+   },
+   "editor_zoom_crop_frame_range": {
+      "description": "Label for the frame range selection section.",
+      "message": "ภาพย่อหน้อย"
+   },
+   "editor_zoom_crop_frame_start": {
+      "description": "Label for the start frame number.",
+      "message": "เริ่มต้น"
+   },
+   "editor_zoom_crop_frames_menu": {
+      "description": "Menu item label for zoom/crop frames feature.",
+      "message": "ขยาย/ตัดสินไฟม์"
+   },
+   "editor_zoom_crop_no_area_selected": {
+      "description": "Message displayed when no crop area has been selected.",
+      "message": "ไม่มีพื้นที่ที่ถูกเลือก"
+   },
+   "editor_zoom_crop_select_area": {
+      "description": "Button text to select a crop area on the frame.",
+      "message": "เลือกพื้นที่"
+   },
+   "editor_zoom_crop_smooth_animation": {
+      "description": "Checkbox label for smoothing animation by interpolating frames.",
+      "message": "สร้างไฟม์ภาพโดยการเพิ่มภาพ"
+   },
+   "editor_zoom_crop_transition": {
+      "description": "Label for the transition duration section (number of frames for animation).",
+      "message": "ความปั่งว่างค่อย"
+   },
+   "enable_drawing_text": {
+      "description": "Enable drawing",
+      "message": "เปิดใช้งานการวาดภาพ"
+   },
+   "enable_drawing_tooltip_text": {
+      "description": "This option allows users to draw in the selected area while holding down the ctrl key.",
+      "message": "ตัวเลือกนี้ช่วยให้ผู้ใช้วาดในพื้นที่ที่เลือกในขณะที่กดปุ่ม CTRL ค้างไว้"
+   },
+   "extension_description": {
+      "description": "Take screenshots & record GIFs instantly! Edit & share seamlessly. Your all-in-one screenshot and screen recording solution.",
+      "message": "ถ่ายภาพหน้าจอและบันทึก GIF ทันที! แก้ไขและแบ่งปันได้อย่างราบรื่น ภาพหน้าจอ all-in-one ของคุณและโซลูชันการบันทึกหน้าจอ"
+   },
+   "extension_name": {
+      "description": "Chrome Capture - screenshot & GIF",
+      "message": "Chrome Capture - สกรีนช็อต & GIF"
+   },
+   "extension_short_name": {
+      "description": "Chrome Capture",
+      "message": "การจับโครเมี่ยม"
+   },
+   "file_access_text": {
+      "description": "After screenshot action",
+      "message": "การดำเนินการหลังจากจับภาพหน้าจอ"
+   },
+   "filename_text": {
+      "description": "Filename",
+      "message": "ชื่อไฟล์"
+   },
+   "frames_per_sec_short_text": {
+      "description": "FPS",
+      "message": "FPS"
+   },
+   "frames_per_sec_text": {
+      "description": "Frames per second (fps)",
+      "message": "รูปภาพต่อวินาที (FPS)"
+   },
+   "frames_text": {
+      "description": "frames",
+      "message": "ภาพ"
+   },
+   "free_settings_text": {
+      "description": "Free Settings",
+      "message": "การตั้งค่าฟรี"
+   },
+   "fullscreen_info_modal_cancel": {
+      "description": "Cancel",
+      "message": "ยกเลิก"
+   },
+   "fullscreen_info_modal_continue": {
+      "description": "Are you sure you want to continue with full screen capture?",
+      "message": "คุณแน่ใจหรือว่าต้องการถ่ายภาพแบบเต็มหน้าจอ"
+   },
+   "fullscreen_info_modal_do_not_show": {
+      "description": "Do not show this again",
+      "message": "อย่าแสดงอีกครั้ง"
+   },
+   "fullscreen_info_modal_message": {
+      "description": "You have used a Chrome Capture shortcut without the cropping tool, this will capture in full screen mode.",
+      "message": "คุณใช้ทางลัดจับโครเมี่ยมโดยไม่มีเครื่องมือครอบตัดนี่จะจับภาพในโหมดเต็มหน้าจอ"
+   },
+   "fullscreen_info_modal_open_cropping": {
+      "description": "Open cropping tool",
+      "message": "เครื่องมือครอบตัดแบบเปิด"
+   },
+   "fullscreen_info_modal_shortcut_cropping_tool": {
+      "description": "Alt + C: Open/close Chrome Capture cropping tool",
+      "message": "Alt + C: เปิด / ปิดเครื่องมือการครอบตัดโครเมี่ยม"
+   },
+   "fullscreen_info_modal_shortcut_fullpage_screenshot": {
+      "description": "Alt + Shift + S: Full webpage screenshot (beta)",
+      "message": "Alt + Shift + S: หน้าจอเว็บเพจแบบเต็ม (เบต้า)"
+   },
+   "fullscreen_info_modal_shortcut_linkt": {
+      "description": "You can configure these here: ",
+      "message": "คุณสามารถกำหนดค่าเหล่านี้ได้ที่นี่:"
+   },
+   "fullscreen_info_modal_shortcut_recording": {
+      "description": "Alt + R: Start/stop recording",
+      "message": "Alt + R: เริ่ม / หยุดการบันทึก"
+   },
+   "fullscreen_info_modal_shortcut_screenshot": {
+      "description": "Alt + S: Visible area screenshot",
+      "message": "ภาพหน้าจอของ Alt + S: พื้นที่ที่มองเห็นได้"
+   },
+   "fullscreen_info_modal_shortcuts": {
+      "description": "Default shortcuts are: ",
+      "message": "ทางลัดเริ่มต้นคือ:"
+   },
+   "fullscreen_info_modal_start": {
+      "description": "Start full screen capture",
+      "message": "เริ่มจับภาพเต็มหน้าจอ"
+   },
+   "fullscreen_info_modal_title": {
+      "description": "Full screen capture",
+      "message": "จับภาพเต็มหน้าจอ"
+   },
+   "general_not_available": {
+      "description": "N/A",
+      "message": "ไม่มี"
+   },
+   "get_premium": {
+      "description": "Get Premium",
+      "message": "รับพรีเมี่ยม"
+   },
+   "height_text": {
+      "description": "Width (px)",
+      "message": "ความกว้าง (px)"
+   },
+   "hi": {
+      "description": "Hi",
+      "message": "สวัสดี"
+   },
+   "internet_connection_required": {
+      "description": "Internet connection is required to upgrade to premium.",
+      "message": "การเชื่อมต่ออินเทอร์เน็ตจะต้องอัปเกรดเป็นพรีเมี่ยม"
+   },
+   "manage_subscription_access_until_date": {
+      "description": "Your plan will not renew. You can access premium features until $date$.",
+      "message": "แผนของคุณจะไม่ต่ออายุ คุณสามารถเข้าถึงคุณสมบัติพรีเมียมได้จนถึงวันที่ $date$",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_cancel_button": {
+      "description": "Cancel subscription",
+      "message": "ยกเลิกการสมัครสมาชิก"
+   },
+   "manage_subscription_cancel_confirm_cancel_button": {
+      "description": "Keep Premium",
+      "message": "เก็บ Premium ไว้"
+   },
+   "manage_subscription_cancel_confirm_confirm_button": {
+      "description": "Continue to cancel",
+      "message": "ดำเนินการยกเลิกต่อ"
+   },
+   "manage_subscription_cancel_confirm_description": {
+      "description": "You will lose access to Premium features and Premium options will be reset.",
+      "message": "คุณจะสูญเสียการเข้าถึงคุณสมบัติ Premium และตัวเลือก Premium จะถูกรีเซ็ต"
+   },
+   "manage_subscription_cancel_confirm_title": {
+      "description": "Are you sure you want to cancel your subscription?",
+      "message": "คุณแน่ใจหรือไม่ว่าต้องการยกเลิกการสมัครสมาชิก"
+   },
+   "manage_subscription_ended_on_date": {
+      "description": "Subscription ended on $date$.",
+      "message": "การสมัครสมาชิกสิ้นสุดในวันที่ $date$",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_ends_on_date": {
+      "description": "Subscription ends on $date$.",
+      "message": "การสมัครสมาชิกจะสิ้นสุดในวันที่ $date$",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_next_payment_full": {
+      "description": "Next payment: $price$ on $date$",
+      "message": "การชำระเงินครั้งถัดไป: $price$ ในวันที่ $date$",
+      "placeholders": {
+         "date": {
+            "content": "$2"
+         },
+         "price": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_paid_full": {
+      "description": "Paid: $billingCycle$",
+      "message": "ชำระแล้ว: $billingCycle$",
+      "placeholders": {
+         "billingCycle": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_resubscribe_prompt": {
+      "description": " To use premium features again, please upgrade.",
+      "message": " หากต้องการใช้คุณสมบัติพรีเมียมอีกครั้ง โปรดอัปเกรด"
+   },
+   "manage_subscription_update_payment_button": {
+      "description": "Update payment method",
+      "message": "อัปเดตวิธีการชำระเงิน"
+   },
+   "max_recording_dimension_size_text": {
+      "description": "Max recording resolution/quality",
+      "message": "ความละเอียดการบันทึกสูงสุด / คุณภาพ"
+   },
+   "no_limit_text": {
+      "description": "No limit",
+      "message": "ไม่มีขีด จำกัด"
+   },
+   "open_text": {
+      "description": "Open",
+      "message": "เปิด"
+   },
+   "options_default_action": {
+      "description": "Extension icon click action",
+      "message": "การดำเนินการเมื่อคลิกไอคอนส่วนขยาย"
+   },
+   "options_dimension_size_1000": {
+      "description": "1000 pixels",
+      "message": "1,000 พิกเซล"
+   },
+   "options_dimension_size_1080p": {
+      "description": "1920 pixels (1080p)",
+      "message": "1920 พิกเซล (1080p)"
+   },
+   "options_dimension_size_480p": {
+      "description": "640 pixels (480p)",
+      "message": "640 พิกเซล (480p)"
+   },
+   "options_dimension_size_4k": {
+      "description": "3840 pixels (4K)",
+      "message": "3840 พิกเซล (4K)"
+   },
+   "options_dimension_size_720p": {
+      "description": "1280 pixels (720p)",
+      "message": "1280 พิกเซล (720p)"
+   },
+   "options_embedded_options_permission_warning": {
+      "description": "Cursor highlighting, click effects, and drawing tools will only work until the page reloads or changes. To keep them active after reloads or redirects, you'll need to grant an extra permission.",
+      "message": "การไฮไลต์เคอร์เซอร์ เอฟเฟกต์การคลิก และเครื่องมือวาดภาพจะทำงานจนกว่าหน้าจะโหลดใหม่หรือเปลี่ยนแปลงเท่านั้น หากต้องการให้ทำงานต่อไปหลังจากโหลดซ้ำหรือเปลี่ยนเส้นทาง คุณจะต้องให้สิทธิ์เพิ่มเติม"
+   },
+   "options_enable_notifications": {
+      "description": "Enable notifications",
+      "message": "เปิดใช้งานการแจ้งเตือน"
+   },
+   "options_enable_notifications_tooltip": {
+      "description": "Display notifications when full screen recording starts and processing recordings in the background.",
+      "message": "แสดงการแจ้งเตือนเมื่อการบันทึกแบบเต็มหน้าจอเริ่มต้นและประมวลผลการบันทึกในพื้นหลัง"
+   },
+   "options_enable_subfolder_downloads": {
+      "description": "Download files into subfolder",
+      "message": "ดาวน์โหลดไฟล์ลงในโฟลเดอร์ย่อย"
+   },
+   "options_enable_subfolder_downloads_tooltip": {
+      "description": "Download files into a subfolder of your choice inside the downloads folder. This option is useful for organising your captures.",
+      "message": "ดาวน์โหลดไฟล์ลงในโฟลเดอร์ย่อยที่คุณเลือกภายในโฟลเดอร์ดาวน์โหลด ตัวเลือกนี้มีประโยชน์สำหรับการจัดระเบียบการจับภาพของคุณ"
+   },
+   "options_how_to_use_btn": {
+      "description": "How to use",
+      "message": "วิธีใช้"
+   },
+   "options_language": {
+      "description": "Language",
+      "message": "ภาษา"
+   },
+   "options_open_containing_folder_on_save": {
+      "description": "Open containing folder after saving",
+      "message": "เปิดโฟลเดอร์ที่มีหลังจากบันทึก"
+   },
+   "options_open_popup": {
+      "description": "Open popup",
+      "message": "ป๊อปอัพเปิด"
+   },
+   "options_open_selected_area": {
+      "description": "Open selected area capture",
+      "message": "เปิดการจับพื้นที่ที่เลือก"
+   },
+   "options_section_general": {
+      "description": "Title for the General settings section in the options page",
+      "message": "การตั้งค่าทั่วไป"
+   },
+   "options_section_output": {
+      "description": "Title for the Output and Saving settings section in the options page",
+      "message": "เอาต์พุตและการบันทึก"
+   },
+   "options_section_recording": {
+      "description": "Title for the Recording settings section in the options page",
+      "message": "การตั้งค่าการบันทึก"
+   },
+   "options_section_visuals": {
+      "description": "Title for the Cursor and Interaction Visuals settings section in the options page",
+      "message": "การแสดงผลเคอร์เซอร์และการโต้ตอบ"
+   },
+   "options_shortcuts_btn": {
+      "description": "Shortcuts",
+      "message": "ทางลัด"
+   },
+   "options_subfolder_downloads_name": {
+      "description": "Subfolder name:",
+      "message": "ชื่อโฟลเดอร์ย่อย:"
+   },
+   "options_support_btn": {
+      "description": "Support",
+      "message": "สนับสนุน"
+   },
+   "overlay_help_text": {
+      "description": "Click and drag to choose your selected area. \nRight click to snap to an element, hold shift for multiple.",
+      "message": "คลิกและลากเพื่อเลือกพื้นที่ที่คุณเลือก \n คลิกขวาเพื่อสแน็ปลงไปที่องค์ประกอบกด Shift สำหรับหลาย ๆ"
+   },
+   "plan_billing_annually": {
+      "description": "Annually",
+      "message": "รายปี"
+   },
+   "plan_billing_monthly": {
+      "description": "Monthly",
+      "message": "รายเดือน"
+   },
+   "plan_name_custom": {
+      "description": "Custom Plan",
+      "message": "แผนที่กำหนดเอง"
+   },
+   "popup_capture_tab": {
+      "description": "Capture",
+      "message": "การจับกุม"
+   },
+   "popup_desktop_screenshot_tooltip": {
+      "description": "Capture the entire screen, desktop, or any open application.",
+      "message": "จับภาพทั้งหน้าจอเดสก์ท็อปหรือแอปพลิเคชันที่เปิดอยู่"
+   },
+   "popup_editor_icon_tooltip": {
+      "description": "Open Editor",
+      "message": "เปิดบรรณาธิการ"
+   },
+   "popup_full_page_screenshot_tooltip": {
+      "description": "Capture the current tab full webpage, including content beyond the visible area.",
+      "message": "จับภาพหน้าเว็บเต็มหน้าเว็บปัจจุบันรวมถึงเนื้อหานอกเหนือจากพื้นที่ที่มองเห็นได้"
+   },
+   "popup_full_webpage": {
+      "description": "Full webpage",
+      "message": "หน้าเว็บเต็มรูปแบบ"
+   },
+   "popup_no_scripts_alert": {
+      "description": "Selected area and full webpage screenshots are not possible here. These features are available on other websites.",
+      "message": "พื้นที่ที่เลือกและภาพหน้าจอเต็มหน้าไม่สามารถทำได้ที่นี่ คุณสมบัติเหล่านี้มีอยู่ในเว็บไซต์อื่น ๆ"
+   },
+   "popup_record_tab": {
+      "description": "Record",
+      "message": "บันทึก"
+   },
+   "popup_recording_limit_alert": {
+      "description": "Record up to $seconds$ seconds per GIF. Premium users can update this from the ",
+      "message": "บันทึกถึง $seconds$ วินาทีต่อ GIF ผู้ใช้พรีเมี่ยมสามารถอัปเดตได้จากไฟล์",
+      "placeholders": {
+         "seconds": {
+            "content": "$1"
+         }
+      }
+   },
+   "popup_recording_limit_settings_link": {
+      "description": "settings page.",
+      "message": "หน้าการตั้งค่า"
+   },
+   "popup_screen_or_app": {
+      "description": "Full screen or app",
+      "message": "เต็มหน้าจอหรือแอป"
+   },
+   "popup_selected_area": {
+      "description": "Selected area",
+      "message": "พื้นที่ที่เลือก"
+   },
+   "popup_selected_area_screenshot_tooltip": {
+      "description": "Capture a specific area of the current tab.",
+      "message": "จับพื้นที่เฉพาะของแท็บปัจจุบัน"
+   },
+   "popup_set_shortcut": {
+      "description": "set shortcut",
+      "message": "ตั้งทางลัด"
+   },
+   "popup_settings_icon_tooltip": {
+      "description": "Open Settings",
+      "message": "เปิดการตั้งค่า"
+   },
+   "popup_tab_screenshot_tooltip": {
+      "description": "Capture the visible part of the current tab.",
+      "message": "จับส่วนที่มองเห็นได้ของแท็บปัจจุบัน"
+   },
+   "popup_this_tab": {
+      "description": "This tab",
+      "message": "แท็บนี้"
+   },
+   "popup_waiting_for_desktop_selection_alert": {
+      "description": "FULL SCREEN OR APP capture did not start because you did not select an option from the popup dialog. If you have multiple monitors it may have opened on another monitor.",
+      "message": "การจับภาพเต็มหน้าจอหรือแอปไม่ได้เริ่มต้นเนื่องจากคุณไม่ได้เลือกตัวเลือกจากกล่องโต้ตอบป๊อปอัพ หากคุณมีจอมอนิเตอร์หลายตัวมันอาจเปิดบนจอภาพอื่น"
+   },
+   "premium_settings_text": {
+      "description": "Premium Settings",
+      "message": "การตั้งค่าพรีเมี่ยม"
+   },
+   "purchase_btn_text": {
+      "description": "Get Premium!",
+      "message": "รับพรีเมี่ยม!"
+   },
+   "purchase_description_limited_time_text": {
+      "description": "Lock in this price now - limited time offer before we switch to subscriptions!",
+      "message": "รับราคานี้ตอนนี้ - ข้อเสนอเวลาจำกัดก่อนที่เราจะเปลี่ยนไปใช้การสมัครสมาชิก!"
+   },
+   "purchase_description_text": {
+      "description": "Just one payment unlocks all premium features forever. No recurring fees!",
+      "message": "การชำระเงินเพียงครั้งเดียวปลดล็อกฟีเจอร์พรีเมียมทั้งหมดตลอดชีพ ไม่มีค่าธรรมเนียมที่เกิดขึ้นประจำ!"
+   },
+   "purchase_feature_30fps": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "การบันทึก 30 FPS ที่ลื่นไหลดุจแพรไหม"
+   },
+   "purchase_feature_4K": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "การบันทึก 4K ที่คมชัดดุจคริสตัล"
+   },
+   "purchase_feature_alter_frame_rate": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "อัตราเฟรมที่กำหนดเอง"
+   },
+   "purchase_feature_alter_playback_speed": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "เอฟเฟกต์สโลว์โมชันและไทม์แลปส์"
+   },
+   "purchase_feature_blur": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "เครื่องมือเบลอ"
+   },
+   "purchase_feature_crop_recording": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "การครอบตัด GIF ที่แม่นยำ"
+   },
+   "purchase_feature_default": {
+      "description": "Feature that goes in $feature$ placeholder. Default fallback.",
+      "message": "ฟีเจอร์นี้"
+   },
+   "purchase_feature_frame_edits": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "การตัดต่อทีละเฟรมที่ทรงพลัง"
+   },
+   "purchase_feature_highlight": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "เครื่องมือไฮไลต์"
+   },
+   "purchase_feature_no_duration_limit": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ความยาวการบันทึกไม่จำกัด"
+   },
+   "purchase_feature_special_effect": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "เอฟเฟกต์พิเศษ"
+   },
+   "purchase_feature_step_tool": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "เครื่องมือขั้นตอน"
+   },
+   "purchase_feature_svg": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "การเพิ่มไอคอนและโลโก้ที่กำหนดเอง"
+   },
+   "purchase_feature_text_and_annotation_customization": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ควบคุมข้อความและคำอธิบายประกอบได้เต็มรูปแบบ"
+   },
+   "purchase_feature_unlimited_gif_compression": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "การบีบอัด GIF ขั้นสูงไม่จำกัด"
+   },
+   "purchase_feature_update_end_time": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "เวลาบันทึกที่กำหนดเอง"
+   },
+   "purchase_login_dialog_closed_by_user_alert": {
+      "description": "Looks like you closed the sign in dialog, premium users must sign in so you don't lose premium access.",
+      "message": "ดูเหมือนว่าคุณจะปิดกล่องโต้ตอบลงชื่อเข้าใช้ผู้ใช้ระดับพรีเมี่ยมจะต้องลงชื่อเข้าใช้เพื่อให้คุณไม่สูญเสียการเข้าถึงระดับพรีเมี่ยม"
+   },
+   "purchase_login_dialog_google_button": {
+      "description": "Sign in with Google",
+      "message": "ลงชื่อเข้าใช้กับ Google"
+   },
+   "purchase_login_dialog_title": {
+      "description": "Sign in required",
+      "message": "ต้องลงชื่อเข้าใช้"
+   },
+   "purchase_login_text": {
+      "description": "Sign in with Google to link your purchase to your account.",
+      "message": "ลงชื่อเข้าใช้ด้วย Google เพื่อเชื่อมโยงการซื้อของคุณกับบัญชีของคุณ"
+   },
+   "purchase_login_text_window_opened": {
+      "description": "Sign into Google in the popup window.",
+      "message": "ลงชื่อเข้าใช้ Google ในหน้าต่างป๊อปอัป"
+   },
+   "purchase_subscription_title_text": {
+      "description": "Choose the plan that fits your needs.",
+      "message": "เลือกแผนที่เหมาะกับความต้องการของคุณ"
+   },
+   "purchase_title_text": {
+      "description": "Get Lifetime Premium Access Today!",
+      "message": "รับสิทธิ์การเข้าถึงพรีเมียมตลอดชีพวันนี้!"
+   },
+   "purchase_title_text_blocked_feature": {
+      "description": "That feature requires Premium",
+      "message": "ฟีเจอร์นั้นต้องใช้ Premium"
+   },
+   "purchase_title_text_blocked_pro_feature": {
+      "description": "That feature requires Premium Pro",
+      "message": "คุณสมบัตินั้นต้องใช้ Premium Pro"
+   },
+   "purchase_title_text_blocked_pro_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium Pro paywall.",
+      "message": "ปลดล็อก $feature$ ด้วยพรีเมียมโปร",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchase_title_text_blocked_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium paywall.",
+      "message": "ปลดล็อก $feature$ ด้วยพรีเมียม",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_already_premium_user": {
+      "description": "Already a premium user?",
+      "message": "เป็นผู้ใช้พรีเมี่ยมแล้ว?"
+   },
+   "purchases_bill_me": {
+      "description": "Bill me:",
+      "message": "เรียกเก็บเงินฉัน:"
+   },
+   "purchases_checkout_unavailable_message": {
+      "description": "Message shown when checkout could not be started.",
+      "message": "ไม่สามารถเริ่มขั้นตอนการอัปเกรดได้ในขณะนี้ โปรดลองอีกครั้ง"
+   },
+   "purchases_compare_12_fps": {
+      "description": "12FPS",
+      "message": "12FPS"
+   },
+   "purchases_compare_3_per_day": {
+      "description": "3 per day",
+      "message": "3 ครั้งต่อวัน"
+   },
+   "purchases_compare_add_custom_shape_tool": {
+      "description": "Add custom shape/icon tool",
+      "message": "เครื่องมือเพิ่มรูปร่าง/ไอคอนที่กำหนดเอง"
+   },
+   "purchases_compare_benefits": {
+      "description": "Benefits",
+      "message": "สิทธิประโยชน์"
+   },
+   "purchases_compare_blur_tool": {
+      "description": "Blur tool",
+      "message": "เครื่องมือเบลอ"
+   },
+   "purchases_compare_close_button_label": {
+      "description": "Close",
+      "message": "ปิด"
+   },
+   "purchases_compare_compression": {
+      "description": "High quality GIF compression",
+      "message": "การบีบอัด GIF คุณภาพสูง"
+   },
+   "purchases_compare_core_capture_features": {
+      "description": "Core Capture Features",
+      "message": "คุณสมบัติหลักในการจับภาพ"
+   },
+   "purchases_compare_crop_recordings": {
+      "description": "Crop recordings",
+      "message": "ครอบตัดการบันทึก"
+   },
+   "purchases_compare_customize_editing_tools": {
+      "description": "Customize editing tools (font, size color)",
+      "message": "ปรับแต่งเครื่องมือแก้ไข (แบบอักษร, ขนาด, สี)"
+   },
+   "purchases_compare_drawing": {
+      "description": "Draw while recording",
+      "message": "วาดในขณะที่บันทึก"
+   },
+   "purchases_compare_early_access": {
+      "description": "Early access to new features",
+      "message": "สิทธิ์เข้าถึงคุณสมบัติใหม่ก่อนใคร"
+   },
+   "purchases_compare_editing": {
+      "description": "Edit captures",
+      "message": "แก้ไขการจับภาพ"
+   },
+   "purchases_compare_editing_free": {
+      "description": "basic editing",
+      "message": "การแก้ไขขั้นพื้นฐาน"
+   },
+   "purchases_compare_editing_suite": {
+      "description": "Editing Suite",
+      "message": "ชุดเครื่องมือแก้ไข"
+   },
+   "purchases_compare_frame_editing": {
+      "description": "Frame editing",
+      "message": "การตัดต่อเฟรม"
+   },
+   "purchases_compare_frame_rate": {
+      "description": "Adjust Frame Rate",
+      "message": "ปรับอัตราเฟรม (FPS)"
+   },
+   "purchases_compare_frame_specific_edits": {
+      "description": "Frame specific edits",
+      "message": "การแก้ไขเฉพาะเฟรม"
+   },
+   "purchases_compare_free_draw_tools": {
+      "description": "Free draw, line, arrow, rectangle, circle, text tools",
+      "message": "เครื่องมือวาดฟรี, เส้น, ลูกศร, สี่เหลี่ยมผืนผ้า, วงกลม, ข้อความ"
+   },
+   "purchases_compare_full_webpage_screenshots": {
+      "description": "Unlimited full page screenshots.",
+      "message": "ภาพหน้าจอเต็มหน้าแบบไม่ จำกัด"
+   },
+   "purchases_compare_highlight_tool": {
+      "description": "Highlight tool",
+      "message": "เครื่องมือไฮไลต์"
+   },
+   "purchases_compare_live_recording_tools": {
+      "description": "Live Recording Tools",
+      "message": "เครื่องมือบันทึกสด"
+   },
+   "purchases_compare_mouse": {
+      "description": "Click and mouse indication",
+      "message": "คลิกและตัวบ่งชี้ของเมาส์"
+   },
+   "purchases_compare_plans": {
+      "description": "Compare plans",
+      "message": "เปรียบเทียบแผน"
+   },
+   "purchases_compare_plans_premium_button": {
+      "description": "Upgrade to Premium",
+      "message": "อัปเกรดเป็น Premium"
+   },
+   "purchases_compare_playback_speed": {
+      "description": "Tune recording playback speed",
+      "message": "ปรับแต่งความเร็วในการเล่นการบันทึก"
+   },
+   "purchases_compare_priority_support": {
+      "description": "Priority support and feature requests",
+      "message": "การสนับสนุนพิเศษและคำขอคุณสมบัติ"
+   },
+   "purchases_compare_recording": {
+      "description": "Unlimited GIF recordings.",
+      "message": "การบันทึก GIF ไม่ จำกัด"
+   },
+   "purchases_compare_recording_free": {
+      "description": "15sec limit per GIF",
+      "message": "15 วินาที จำกัด ต่อ GIF"
+   },
+   "purchases_compare_recording_quality": {
+      "description": "High quality GIFs",
+      "message": "gif คุณภาพสูง"
+   },
+   "purchases_compare_recording_quality_control": {
+      "description": "Recording Quality & Control",
+      "message": "คุณภาพและการควบคุมการบันทึก"
+   },
+   "purchases_compare_recording_quality_free": {
+      "description": "1000 pixels max",
+      "message": "สูงสุด 1,000 พิกเซล"
+   },
+   "purchases_compare_screenshots": {
+      "description": "Unlimited screenshots.",
+      "message": "สกรีนช็อตไม่ จำกัด"
+   },
+   "purchases_compare_special_effects": {
+      "description": "Recording special effects",
+      "message": "บันทึกเทคนิคพิเศษ"
+   },
+   "purchases_compare_up_to_1080p": {
+      "description": "Up to 1080p",
+      "message": "สูงสุด 1080p"
+   },
+   "purchases_compare_up_to_24_fps": {
+      "description": "Up to 24FPS",
+      "message": "สูงสุด 24FPS"
+   },
+   "purchases_compare_up_to_30_fps": {
+      "description": "Up to 30FPS",
+      "message": "สูงสุด 30FPS"
+   },
+   "purchases_compare_up_to_4k_plus": {
+      "description": "Up to 4K+",
+      "message": "สูงสุด 4K+"
+   },
+   "purchases_current_plan": {
+      "description": "Current plan",
+      "message": "แผนปัจจุบัน"
+   },
+   "purchases_features": {
+      "description": "Features",
+      "message": "คุณสมบัติ"
+   },
+   "purchases_free": {
+      "description": "Free",
+      "message": "ฟรี"
+   },
+   "purchases_free_button": {
+      "description": "Free to use",
+      "message": "ฟรีที่จะใช้"
+   },
+   "purchases_free_feature_editing": {
+      "description": "Basic editing",
+      "message": "การแก้ไขขั้นพื้นฐาน"
+   },
+   "purchases_free_feature_recording": {
+      "description": "Basic GIF recording",
+      "message": "การบันทึก GIF ขั้นพื้นฐาน"
+   },
+   "purchases_free_feature_screenshots": {
+      "description": "Unlimited screenshots",
+      "message": "สกรีนช็อตไม่ จำกัด"
+   },
+   "purchases_free_plan_description": {
+      "description": "Get started with our essential capture tools. Completely free for basic everyday use.",
+      "message": "เริ่มต้นด้วยเครื่องมือจับภาพที่จำเป็นของเรา ฟรีโดยสมบูรณ์สำหรับการใช้งานพื้นฐานในชีวิตประจำวัน"
+   },
+   "purchases_plan_save_up_to_percentage": {
+      "description": "Save up to",
+      "message": "ประหยัดสูงสุด"
+   },
+   "purchases_premium": {
+      "description": "Premium",
+      "message": "พรีเมี่ยม"
+   },
+   "purchases_premium_billed_annually": {
+      "description": "Billed annually",
+      "message": "เรียกเก็บเงินรายปี"
+   },
+   "purchases_premium_button": {
+      "description": "Get lifetime access",
+      "message": "รับสิทธิ์การเข้าถึงตลอดชีพ"
+   },
+   "purchases_premium_feature_compression": {
+      "description": "High quality GIF compression",
+      "message": "การบีบอัด GIF คุณภาพสูง"
+   },
+   "purchases_premium_feature_editing": {
+      "description": "Feature rich editing",
+      "message": "คุณสมบัติการตัดต่อที่หลากหลาย"
+   },
+   "purchases_premium_feature_free": {
+      "description": "Everything from free plan",
+      "message": "รวมคุณสมบัติจากแผนฟรี"
+   },
+   "purchases_premium_feature_marked_with_star": {
+      "description": "All features marked with a star",
+      "message": "คุณสมบัติทั้งหมดที่ทำเครื่องหมายด้วยดาว"
+   },
+   "purchases_premium_feature_recording": {
+      "description": "Unlimited high quality GIF recording",
+      "message": "การบันทึก GIF คุณภาพสูงไม่ จำกัด"
+   },
+   "purchases_premium_feature_recording_1080p": {
+      "description": "High quality GIF recording, up to 1080p, 24fps",
+      "message": "การบันทึก GIF คุณภาพสูง, สูงสุด 1080p, 24fps"
+   },
+   "purchases_premium_feature_refundable": {
+      "description": "Fully refundable",
+      "message": "คืนเงินได้อย่างเต็มที่"
+   },
+   "purchases_premium_feature_risk_free": {
+      "description": "Risk-free: 7 day trial, cancel anytime",
+      "message": "ไม่มีความเสี่ยง: ทดลองใช้ 7 วัน, ยกเลิกได้ตลอดเวลา"
+   },
+   "purchases_premium_feature_unlimited_length": {
+      "description": "Unlimited GIF recording length",
+      "message": "ความยาวในการบันทึก GIF ไม่จำกัด"
+   },
+   "purchases_premium_price_info": {
+      "description": "one time fee",
+      "message": "ค่าธรรมเนียมหนึ่งครั้ง"
+   },
+   "purchases_premium_price_per_month": {
+      "description": "/ month",
+      "message": "/ เดือน"
+   },
+   "purchases_premium_pro": {
+      "description": "Premium Pro",
+      "message": "พรีเมียมโปร"
+   },
+   "purchases_premium_pro_editing_tools": {
+      "description": "Advanced editing tools (blurring, special effects, etc.)",
+      "message": "เครื่องมือแก้ไขขั้นสูง (การเบลอ, เอฟเฟกต์พิเศษ, ฯลฯ)"
+   },
+   "purchases_premium_pro_feature_early_access": {
+      "description": "Early access to new features",
+      "message": "สิทธิ์เข้าถึงคุณสมบัติใหม่ก่อนใคร"
+   },
+   "purchases_premium_pro_feature_marked_with_crown": {
+      "description": "All features marked with a star and crown",
+      "message": "คุณสมบัติทั้งหมดที่ทำเครื่องหมายด้วยดาวและมงกุฎ"
+   },
+   "purchases_premium_pro_feature_premium_plan": {
+      "description": "Everything from Premium plan",
+      "message": "ทุกอย่างจากแผน Premium"
+   },
+   "purchases_premium_pro_feature_quality": {
+      "description": "Max resolution recording, 4K+ and 30fps",
+      "message": "การบันทึกความละเอียดสูงสุด 4K+ และ 30fps"
+   },
+   "purchases_premium_pro_feature_support": {
+      "description": "Priority support and feature requests",
+      "message": "การสนับสนุนพิเศษและคำขอคุณสมบัติ"
+   },
+   "purchases_premium_pro_upgrade": {
+      "description": "Upgrade to Pro",
+      "message": "อัปเกรดเป็น Pro"
+   },
+   "purchases_premium_save_percentage": {
+      "description": "save $savingsPercentage$%",
+      "message": "ประหยัด $savingsPercentage$%",
+      "placeholders": {
+         "savingsPercentage": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_premium_try_for_free": {
+      "description": "Try for free",
+      "message": "ลองใช้ฟรี"
+   },
+   "purchases_price_unavailable": {
+      "description": "Label shown in place of a price when it is unavailable.",
+      "message": "ไม่สามารถแสดงราคาได้"
+   },
+   "purchases_pricing_unavailable_message": {
+      "description": "Message shown when the Premium pricing request was blocked or failed.",
+      "message": "คำขอราคาสำหรับ Premium ถูกบล็อกหรือล้มเหลว ซึ่งอาจเกิดขึ้นเมื่อเครือข่ายที่ทำงาน, VPN, ตัวบล็อกโฆษณา, ส่วนขยายความเป็นส่วนตัว หรือไฟร์วอลล์บล็อก Paddle"
+   },
+   "purchases_pricing_unavailable_title": {
+      "description": "Title shown when Premium pricing could not be loaded.",
+      "message": "ไม่สามารถโหลดราคา Premium ได้"
+   },
+   "purchases_pricing_unavailable_troubleshooting_extensions": {
+      "description": "Troubleshooting step telling the user to disable VPN or privacy tools temporarily.",
+      "message": "ปิด VPN ตัวบล็อกโฆษณา หรือส่วนขยายความเป็นส่วนตัวชั่วคราว แล้วลองอีกครั้ง"
+   },
+   "purchases_pricing_unavailable_troubleshooting_intro": {
+      "description": "Intro text for troubleshooting steps when pricing is unavailable.",
+      "message": "สิ่งที่ลองได้:"
+   },
+   "purchases_pricing_unavailable_troubleshooting_network": {
+      "description": "Troubleshooting step telling the user to try another network or browser profile.",
+      "message": "ลองใช้เครือข่ายอื่น หรือเปิดส่วนขยายในโปรไฟล์ Chrome อื่น"
+   },
+   "purchases_pricing_unavailable_troubleshooting_workplace": {
+      "description": "Troubleshooting step telling the user workplace policy may be blocking Paddle.",
+      "message": "หากคุณใช้เครื่องที่ทำงาน นโยบายเครือข่ายหรือเบราว์เซอร์ของคุณอาจกำลังบล็อก Paddle"
+   },
+   "purchases_sign_in_here": {
+      "description": "Sign in here",
+      "message": "ลงชื่อเข้าใช้ที่นี่"
+   },
+   "purchases_start_trial_cancel_anytime": {
+      "description": "Call to action to start a free trial.",
+      "message": "เริ่มทดลองใช้งานฟรี 7 วันเพื่อดำเนินการต่อ ยกเลิกได้ตลอดเวลา"
+   },
+   "purchases_try_premium_for_free": {
+      "description": "Try Premium for Free",
+      "message": "ลองใช้ Premium ฟรี"
+   },
+   "purchases_try_premium_pro_for_free": {
+      "description": "Try Premium Pro for Free",
+      "message": "ลองใช้ Premium Pro ฟรี"
+   },
+   "purchases_upgrade_premium_to_pro": {
+      "description": "To use this feature and access all Pro benefits, upgrade your plan.",
+      "message": "หากต้องการใช้คุณสมบัตินี้และเข้าถึงสิทธิประโยชน์ทั้งหมดของ Pro โปรดอัปเกรดแผนของคุณ"
+   },
+   "purchases_upgrade_to_premium_pro": {
+      "description": "Upgrade to Premium Pro",
+      "message": "อัปเกรดเป็น Premium Pro"
+   },
+   "quality_text": {
+      "description": "Recording quality (10 = best)",
+      "message": "คุณภาพการบันทึก (10 = ดีที่สุด)"
+   },
+   "rate_bad_rating_text": {
+      "description": "We are continuously trying our hardest to improve Chrome Capture, please share what needs improvement by emailing us at ",
+      "message": "เราพยายามอย่างต่อเนื่องเพื่อปรับปรุงการจับโครเมี่ยมโปรดแบ่งปันสิ่งที่ต้องการการปรับปรุงโดยส่งอีเมลถึงเราที่"
+   },
+   "rate_bad_title_text": {
+      "description": "😞 We are sorry!",
+      "message": "😞เราขออภัย!"
+   },
+   "rate_close_btn_text": {
+      "description": "Close",
+      "message": "ปิด I"
+   },
+   "rate_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "ยืนยัน"
+   },
+   "rate_description_text": {
+      "description": "If you've found this extension useful please leave a rating or review. \n\nBy leaving a rating you can help us reach more users which will help fund continual improvements and keep general usage free.",
+      "message": "หากคุณพบส่วนขยายนี้มีประโยชน์กรุณาให้คะแนนหรือตรวจสอบ \n\n เมื่อออกจากการให้คะแนนคุณสามารถช่วยให้เราเข้าถึงผู้ใช้มากขึ้นซึ่งจะช่วยให้กองทุนปรับปรุงอย่างต่อเนื่องและให้การใช้งานทั่วไปฟรี"
+   },
+   "rate_description_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "เราขอขอบคุณที่คุณซื้อพรีเมี่ยมและชอบที่จะได้ยินข้อเสนอแนะใด ๆ ที่คุณต้องช่วยเราปรับปรุงผลิตภัณฑ์และเข้าถึงผู้ใช้มากขึ้น"
+   },
+   "rate_good_rating_text": {
+      "description": "Your reviews keep our small team motivated to make Chrome Capture even better!",
+      "message": "ความคิดเห็นของคุณทำให้ทีมเล็กของเรามีแรงจูงใจที่จะทำให้ Chrome จับได้ดียิ่งขึ้น!"
+   },
+   "rate_good_rating_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "เราขอขอบคุณที่คุณซื้อพรีเมี่ยมและชอบที่จะได้ยินข้อเสนอแนะใด ๆ ที่คุณต้องช่วยเราปรับปรุงผลิตภัณฑ์และเข้าถึงผู้ใช้มากขึ้น"
+   },
+   "rate_good_title_text": {
+      "description": "😍 Review in the web store?",
+      "message": "😍รีวิวในเว็บสโตร์?"
+   },
+   "rate_maybe_later_btn_text": {
+      "description": "Maybe later",
+      "message": "ไว้ก่อน"
+   },
+   "rate_no_btn_text": {
+      "description": "No thanks",
+      "message": "ไม่เป็นไรขอบคุณ"
+   },
+   "rate_send_email_btn_text": {
+      "description": "Send Email",
+      "message": "ส่งอีเมล"
+   },
+   "rate_thank_you_title_text": {
+      "description": "Thank you! 😍",
+      "message": "ขอขอบคุณ! 😍"
+   },
+   "rate_title_text": {
+      "description": "How are we doing?",
+      "message": "เราเป็นอย่างไรบ้าง"
+   },
+   "rate_yes_btn_text": {
+      "description": "Ok, sure",
+      "message": "ตกลงแน่นอน"
+   },
+   "recommended": {
+      "description": "recommended",
+      "message": "ที่แนะนำ"
+   },
+   "record_length_text": {
+      "description": "Max record length",
+      "message": "ความยาวสูงสุดบันทึก"
+   },
+   "recordings_taken": {
+      "description": "Recordings taken:",
+      "message": "บันทึกที่ดำเนินการ:"
+   },
+   "save_as_screenshot_text": {
+      "description": "Save screenshot as",
+      "message": "บันทึกภาพหน้าจอเป็น"
+   },
+   "save_as_text": {
+      "description": "Save recording as",
+      "message": "บันทึกการบันทึกเป็น"
+   },
+   "screenshots_taken": {
+      "description": "Screenshots taken:",
+      "message": "ถ่ายภาพหน้าจอ:"
+   },
+   "seconds_text": {
+      "description": "secs",
+      "message": "ก.ล.ต."
+   },
+   "shortcut": {
+      "description": "Shortcut:",
+      "message": "ทางลัด:"
+   },
+   "show_click_indicator_text": {
+      "description": "Show click animation",
+      "message": "แสดงภาพเคลื่อนไหวคลิก"
+   },
+   "show_click_indicator_tooltip_text": {
+      "description": "This option draws a circle animation around the click location.",
+      "message": "ตัวเลือกนี้ดึงภาพเคลื่อนไหววงกลมรอบตำแหน่งคลิก"
+   },
+   "show_cursor_text": {
+      "description": "Show dot at cursor location",
+      "message": "แสดงจุดที่ตำแหน่งเคอร์เซอร์"
+   },
+   "show_cursor_tooltip_text": {
+      "description": "This option draws a small circle to indicate where the mouse is located.",
+      "message": "ตัวเลือกนี้ใช้วงกลมขนาดเล็กเพื่อระบุตำแหน่งของเมาส์ที่อยู่"
+   },
+   "sign_in": {
+      "description": "Sign In",
+      "message": "ลงชื่อเข้าใช้"
+   },
+   "sign_out": {
+      "description": "Sign Out",
+      "message": "ลงชื่อเข้าใช้"
+   },
+   "subscription_past_due_warning": {
+      "description": "Warning message shown when a user subscription payment has failed or is past its due date.",
+      "message": "การชำระค่าสมาชิกเลยกำหนดชำระแล้ว โปรดคลิกที่นี่เพื่ออัปเดตข้อมูลการชำระเงินของคุณ"
+   },
+   "subscription_premium_plan_description": {
+      "description": "Go beyond basics: HD quality & limits unlocked. Craft pro content with enhanced features.",
+      "message": "เหนือกว่าพื้นฐาน: คุณภาพ HD และปลดล็อกขีดจำกัด สร้างเนื้อหา chuyên nghiệpด้วยคุณสมบัติที่ได้รับการปรับปรุง"
+   },
+   "subscription_premium_pro_plan_description": {
+      "description": "Experience peak performance: 4K+ and all features. Full editing suite with early access.",
+      "message": "สัมผัสประสบการณ์ประสิทธิภาพสูงสุด: 4K+ และคุณสมบัติทั้งหมด ชุดตัดต่อเต็มรูปแบบพร้อมสิทธิ์เข้าถึงก่อนใคร"
+   },
+   "subscription_status_active": {
+      "description": "Active",
+      "message": "ใช้งานอยู่"
+   },
+   "subscription_status_ending_soon": {
+      "description": "Ending Soon",
+      "message": "จะสิ้นสุดในเร็วๆ นี้"
+   },
+   "subscription_status_expired": {
+      "description": "Expired",
+      "message": "หมดอายุ"
+   },
+   "subscription_status_past_due": {
+      "description": "Past Due",
+      "message": "เกินกำหนดชำระ"
+   },
+   "subscription_status_paused": {
+      "description": "Paused",
+      "message": "หยุดชั่วคราว"
+   },
+   "subscription_status_unknown": {
+      "description": "Unknown",
+      "message": "ไม่ทราบ"
+   },
+   "unable_to_capture_website_alert": {
+      "description": "Unable to capture this website. Please use full screen/application capture or try capture another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "ไม่สามารถจับภาพเว็บไซต์นี้ได้ โปรดใช้การจับภาพเต็มหน้าจอ/แอปพลิเคชันหรือลองจับภาพเว็บไซต์อื่น \n\n (╯°□°） ╯︵ ┻━┻"
+   },
+   "view_permission": {
+      "description": "View permission.",
+      "message": "ดูการอนุญาต"
+   },
+   "width_text": {
+      "description": "Height (px)",
+      "message": "ความสูง (PX)"
+   }
+}

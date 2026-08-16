@@ -1,0 +1,1421 @@
+{
+  "account_modal_free_plan": {
+    "message": "You are on the free plan"
+  },
+  "account_modal_manage_subscription_button": {
+    "description": "Manage Subscription",
+    "message": "Manage Subscription"
+  },
+  "account_modal_not_signed_in": {
+    "message": "You are not signed in"
+  },
+  "account_modal_premium_plan": {
+    "message": "You are on the Premium plan"
+  },
+  "account_modal_premium_pro_plan": {
+    "description": "You are on the Premium Pro plan",
+    "message": "Dragon Pro Plan Active"
+  },
+  "account_modal_request_feature_button": {
+    "description": "Request Feature",
+    "message": "Request Feature"
+  },
+  "account_modal_request_support_button": {
+    "description": "Request Support",
+    "message": "Request Support"
+  },
+  "account_modal_stats_heading": {
+    "message": "Usage Stats"
+  },
+  "alert_text": {
+    "message": "Unable to run selected area capture on this website. Please use full screen recording or try another website.\n\n(╯°□°）╯︵ ┻━┻"
+  },
+  "click_indicator_size_color_text": {
+    "message": "Click animation size & color"
+  },
+  "close_btn_text": {
+    "message": "Close"
+  },
+  "confirm_dialog_cancel_btn_text": {
+    "message": "Cancel"
+  },
+  "confirm_dialog_confirm_btn_text": {
+    "message": "Confirm"
+  },
+  "confirm_fps_update_text": {
+    "message": "Changing the fps will remove all frame specific edits such as edited or deleted frames. Do you want to continue?"
+  },
+  "copy_text": {
+    "message": "Copy to clipboard"
+  },
+  "cursor_size_and_color_text": {
+    "message": "Cursor dot size & color"
+  },
+  "dither_text": {
+    "message": "Apply dither"
+  },
+  "download_filename_text": {
+    "message": "Download filename format"
+  },
+  "download_text": {
+    "message": "Download"
+  },
+  "draw_size_and_color_text": {
+    "message": "Drawing size & color"
+  },
+  "duration": {
+    "description": "Label for a field indicating a length of time.",
+    "message": "Duration"
+  },
+  "editor_action_add_icon": {
+    "message": "Add icon"
+  },
+  "editor_action_add_text": {
+    "message": "Add text"
+  },
+  "editor_action_blur_rectangle": {
+    "message": "Blur area"
+  },
+  "editor_action_copy": {
+    "message": "Copy to clipboard"
+  },
+  "editor_action_crop": {
+    "message": "Crop"
+  },
+  "editor_action_draw_arrow": {
+    "message": "Draw arrow"
+  },
+  "editor_action_draw_ellipse": {
+    "message": "Draw ellipse"
+  },
+  "editor_action_draw_line": {
+    "message": "Draw line"
+  },
+  "editor_action_draw_rectangle": {
+    "message": "Draw rectangle"
+  },
+  "editor_action_free_draw": {
+    "message": "Free draw"
+  },
+  "editor_action_highlight": {
+    "message": "Highlight"
+  },
+  "editor_action_numbered_step": {
+    "description": "Action label for adding a numbered step annotation.",
+    "message": "Numbered step"
+  },
+  "editor_action_pan": {
+    "description": "Pan",
+    "message": "Pan"
+  },
+  "editor_action_profile_account": {
+    "message": "Account"
+  },
+  "editor_action_redo": {
+    "message": "Redo"
+  },
+  "editor_action_save": {
+    "message": "Save"
+  },
+  "editor_action_select": {
+    "message": "Select, move, resize"
+  },
+  "editor_action_settings": {
+    "message": "Settings"
+  },
+  "editor_action_undo": {
+    "message": "Undo"
+  },
+  "editor_action_undo_all": {
+    "message": "Undo all"
+  },
+  "editor_add_text_default": {
+    "message": "start typing..."
+  },
+  "editor_browse_file_system": {
+    "message": "Browse file system"
+  },
+  "editor_drag_and_drop": {
+    "message": "Drag and drop image/GIF or "
+  },
+  "editor_file_downloaded": {
+    "message": "File saved to downloads folder."
+  },
+  "editor_file_downloaded_selected_location": {
+    "message": "File saved to selected location."
+  },
+  "editor_frame_selector_apply_edits": {
+    "message": "Apply edits to selected"
+  },
+  "editor_frame_selector_delete": {
+    "message": "Delete"
+  },
+  "editor_frame_selector_delete_every_second": {
+    "message": "Delete every second frame"
+  },
+  "editor_frame_selector_delete_selected": {
+    "message": "Delete selected"
+  },
+  "editor_frame_selector_remove_edits": {
+    "message": "Remove edits from selected"
+  },
+  "editor_frame_selector_restore": {
+    "message": "Restore"
+  },
+  "editor_frame_selector_restore_all": {
+    "message": "Restore All"
+  },
+  "editor_frame_selector_restore_selected": {
+    "message": "Restore selected"
+  },
+  "editor_frame_selector_select_next": {
+    "message": "Select next frames"
+  },
+  "editor_frame_selector_select_previous": {
+    "message": "Select previous frames"
+  },
+  "editor_frame_selector_unselect_all": {
+    "message": "Unselect All"
+  },
+  "editor_image_copied": {
+    "message": "Image copied to clipboard."
+  },
+  "editor_image_copied_failed": {
+    "message": "Failed to copy image to clipboard, it may be too large."
+  },
+  "editor_link_copied": {
+    "message": "Link copied to clipboard."
+  },
+  "editor_max_time_reached_dialog_description1": {
+    "message": "You have reached the max recording length time of $maxlength$ seconds for GIFs. Premium users can update this from the settings page.",
+    "placeholders": {
+      "maxlength": {
+        "content": "$1"
+      }
+    }
+  },
+  "editor_max_time_reached_dialog_description2": {
+    "message": "GIFs are intended for short recordings. If you require full length videos we recommend our free screen recorder: "
+  },
+  "editor_max_time_reached_dialog_settings_button": {
+    "message": "Open settings"
+  },
+  "editor_max_time_reached_dialog_title": {
+    "message": "Recording suddenly stopped?"
+  },
+  "editor_premium_options_color": {
+    "message": "Color"
+  },
+  "editor_premium_options_draw_size": {
+    "message": "Size"
+  },
+  "editor_premium_options_font": {
+    "message": "Font"
+  },
+  "editor_premium_options_playback_speed": {
+    "message": "Playback Speed"
+  },
+  "editor_premium_options_special_effect": {
+    "message": "Special Effect"
+  },
+  "editor_premium_options_title": {
+    "message": "Drawing & Text Options"
+  },
+  "editor_save_dialog_advanced_encoding_options": {
+    "description": "Title for a section containing advanced, technical options for encoding a file.",
+    "message": "Advanced Encoding Options"
+  },
+  "editor_save_dialog_alert_title": {
+    "message": "Warning"
+  },
+  "editor_save_dialog_aspect_ratio": {
+    "message": "lock aspect ratio"
+  },
+  "editor_save_dialog_cancel": {
+    "message": "Cancel"
+  },
+  "editor_save_dialog_chip_animated_image": {
+    "description": "Chip label indicating an animated image format (e.g. GIF, AVIF).",
+    "message": "animated image"
+  },
+  "editor_save_dialog_chip_large_file": {
+    "description": "Chip label indicating the format produces a large file size.",
+    "message": "large file"
+  },
+  "editor_save_dialog_chip_limited_support": {
+    "description": "Chip label indicating the format has limited browser/app support.",
+    "message": "limited support"
+  },
+  "editor_save_dialog_chip_small_file": {
+    "description": "Chip label indicating the format produces a small file size.",
+    "message": "small file"
+  },
+  "editor_save_dialog_chip_video": {
+    "description": "Chip label indicating a video format (e.g. WebM, MP4).",
+    "message": "video"
+  },
+  "editor_save_dialog_chip_widely_supported": {
+    "description": "Chip label indicating the format is widely supported.",
+    "message": "widely supported"
+  },
+  "editor_save_dialog_compress": {
+    "message": "Compress & optimize GIF"
+  },
+  "editor_save_dialog_compress_tooltip": {
+    "message": "Apply GIF compression algorthm to greatly reduce GIF file size and in some cases improve quality. Highly recommeded."
+  },
+  "editor_save_dialog_dither_tooltip": {
+    "message": "Apply dither algorithm to frames. Try toggling this option if you experience color quality issues."
+  },
+  "editor_save_dialog_download_raw_recording": {
+    "message": "Download raw recording"
+  },
+  "editor_save_dialog_estimated_size": {
+    "message": "Estimated GIF Size: "
+  },
+  "editor_save_dialog_export_sound": {
+    "message": "Include sound (beta)"
+  },
+  "editor_save_dialog_export_sound_tooltip": {
+    "message": "Enable this option to include sound in the video."
+  },
+  "editor_save_dialog_frames": {
+    "message": "Frames: "
+  },
+  "editor_save_dialog_frames_alert": {
+    "message": "There are currently selected frames, saving will only output these selected frames - "
+  },
+  "editor_save_dialog_frames_alert_button": {
+    "message": "Click here to unselect all frames"
+  },
+  "editor_save_dialog_frames_alert_title": {
+    "message": "Playback Speed"
+  },
+  "editor_save_dialog_frames_processing": {
+    "message": "Processing Frames: "
+  },
+  "editor_save_dialog_height_helper": {
+    "message": "Recorded height is "
+  },
+  "editor_save_dialog_lossy_compression": {
+    "description": "Label for a setting that controls the level of lossy compression, from 0 to 100 percent.",
+    "message": "Lossy compression (0 - 100%)"
+  },
+  "editor_save_dialog_number_min_max_validation": {
+    "message": "A value between $minSize$ and $maxSize$ is required.",
+    "placeholders": {
+      "maxSize": {
+        "content": "$2"
+      },
+      "minSize": {
+        "content": "$1"
+      }
+    }
+  },
+  "editor_save_dialog_processing_alert": {
+    "message": "Processing this recording will require a lot of memory and processing power. Unless you have a high spec PC it is recommended to do one or more of the following:"
+  },
+  "editor_save_dialog_processing_alert_memory": {
+    "message": "Please note if the resulting GIF is blank then you ran out of memory."
+  },
+  "editor_save_dialog_processing_alert_point_1": {
+    "message": "Compress and optimize GIF"
+  },
+  "editor_save_dialog_processing_alert_point_2": {
+    "message": "Reduce the width & height"
+  },
+  "editor_save_dialog_processing_alert_point_3": {
+    "message": "Reduce FPS or delete frames"
+  },
+  "editor_save_dialog_purchase_dialog_compression_description": {
+    "message": "Free users are limited to 3 high quality GIF compressions per day. Upgrade to Premium to have no restrictions."
+  },
+  "editor_save_dialog_quantization_algorithm": {
+    "description": "Label for a dropdown to select a quantization algorithm.",
+    "message": "Quantization algorithm"
+  },
+  "editor_save_dialog_quantization_algorithm_new_alpha": {
+    "description": "An option for the quantization algorithm setting, indicating a new version in Alpha.",
+    "message": "New (Alpha)"
+  },
+  "editor_save_dialog_quantization_algorithm_new_beta": {
+    "description": "An option for the quantization algorithm setting, indicating a new version in Beta.",
+    "message": "New (Beta)"
+  },
+  "editor_save_dialog_quantization_algorithm_old": {
+    "description": "An option for the quantization algorithm setting, indicating an older version.",
+    "message": "Old"
+  },
+  "editor_save_dialog_recording_quality_alert": {
+    "message": "GIF quality is limited for non Premium Pro users. To output higher quality recordings you can do one of the following:"
+  },
+  "editor_save_dialog_recording_quality_alert_option_1": {
+    "message": "Upgrade to Premium/Premium Pro"
+  },
+  "editor_save_dialog_recording_quality_alert_option_2": {
+    "message": "Save as a WebM file"
+  },
+  "editor_save_dialog_reduce_width": {
+    "message": "Reduce width & height"
+  },
+  "editor_save_dialog_reduce_width_tooltip": {
+    "message": "Reduce GIF width and height/quality to improve processing time and produce a smaller file."
+  },
+  "editor_save_dialog_save": {
+    "message": "Save"
+  },
+  "editor_save_dialog_save_by": {
+    "message": "Save by"
+  },
+  "editor_save_dialog_save_by_download": {
+    "message": "Download file"
+  },
+  "editor_save_dialog_save_by_google_drive": {
+    "message": "Upload to Google Drive & copy link"
+  },
+  "editor_save_dialog_save_location": {
+    "message": "Save location"
+  },
+  "editor_save_dialog_save_location_downloads": {
+    "message": "Downloads folder"
+  },
+  "editor_save_dialog_save_location_downloads_subfolder": {
+    "message": "Downloads subfolder"
+  },
+  "editor_save_dialog_save_location_select": {
+    "message": "Manually select location"
+  },
+  "editor_save_dialog_title": {
+    "message": "Save"
+  },
+  "editor_save_dialog_title_processing": {
+    "message": "Processing..."
+  },
+  "editor_save_dialog_title_uploading": {
+    "message": "Uploading..."
+  },
+  "editor_save_dialog_whole_number_validation": {
+    "message": "Value must be a whole number"
+  },
+  "editor_save_dialog_width_helper": {
+    "message": "Recorded width is "
+  },
+  "editor_text": {
+    "message": "Open in editor"
+  },
+  "editor_tip_delete_items": {
+    "message": "Pro tip: Delete added items by selecting the item and pressing the delete key."
+  },
+  "editor_tip_edit_specific_frames": {
+    "message": "Pro tip: You can edit specific frames by using the 'Apply edits to selected option'"
+  },
+  "editor_tip_scroll": {
+    "message": "Pro tip: Scroll when hovering the screenshot/recording to zoom."
+  },
+  "editor_tip_shift_multiple_items": {
+    "message": "Pro tip: When using the selecting tool hold down shift to select more than one item."
+  },
+  "editor_tip_update_multiple_items": {
+    "message": "Pro tip: You can scale, rotate, move and delete multiple items at once."
+  },
+  "editor_tip_update_text": {
+    "message": "Pro tip: Double click on text to edit it."
+  },
+  "editor_upload_dialog_alert_copy_failed_message": {
+    "message": "This may have occurred due to the window not being focused."
+  },
+  "editor_upload_dialog_alert_copy_failed_title": {
+    "message": "Copy to clipboard failed"
+  },
+  "editor_upload_dialog_alert_copy_success_title": {
+    "message": "Copied to clipboard"
+  },
+  "editor_upload_dialog_alert_upload_failed": {
+    "message": "Upload Failed"
+  },
+  "editor_upload_dialog_alert_upload_failed_link": {
+    "message": "Try again."
+  },
+  "editor_upload_dialog_alert_upload_failed_message": {
+    "message": "Please make sure you are connected to the internet and have accepted Google Drive permissions."
+  },
+  "editor_upload_dialog_cancel_and_download": {
+    "message": "Cancel and download file"
+  },
+  "editor_upload_dialog_close": {
+    "message": "Close"
+  },
+  "editor_upload_dialog_copy_link": {
+    "message": "Copy link"
+  },
+  "editor_upload_dialog_link_public": {
+    "message": "Allow anyone with the link to view."
+  },
+  "editor_zoom_crop_animation_animated": {
+    "description": "Sub-label indicating an animation type is animated.",
+    "message": "Animated"
+  },
+  "editor_zoom_crop_animation_crop": {
+    "description": "Animation type option for static cropping without animation.",
+    "message": "Crop"
+  },
+  "editor_zoom_crop_animation_static": {
+    "description": "Sub-label indicating an animation type is static (no animation).",
+    "message": "Static"
+  },
+  "editor_zoom_crop_animation_type": {
+    "description": "Label for the animation type selection section.",
+    "message": "Animation Type"
+  },
+  "editor_zoom_crop_animation_zoom_in": {
+    "description": "Animation type option for zooming in on the selected area.",
+    "message": "Zoom In"
+  },
+  "editor_zoom_crop_animation_zoom_out": {
+    "description": "Animation type option for zooming out from the selected area.",
+    "message": "Zoom Out"
+  },
+  "editor_zoom_crop_apply": {
+    "description": "Apply button in zoom/crop dialog.",
+    "message": "Apply"
+  },
+  "editor_zoom_crop_cancel": {
+    "description": "Cancel button in zoom/crop dialog.",
+    "message": "Cancel"
+  },
+  "editor_zoom_crop_change_area": {
+    "description": "Tooltip text for button to change the selected crop area.",
+    "message": "Change area"
+  },
+  "editor_zoom_crop_dialog_title": {
+    "description": "Title for the zoom and crop dialog in the editor.",
+    "message": "Zoom & Crop"
+  },
+  "editor_zoom_crop_draw_instruction": {
+    "description": "Instruction text for the user to draw a crop area on the frame preview.",
+    "message": "Draw a selection on the frame"
+  },
+  "editor_zoom_crop_frame_end": {
+    "description": "Label for the end frame number.",
+    "message": "End"
+  },
+  "editor_zoom_crop_frame_range": {
+    "description": "Label for the frame range selection section.",
+    "message": "Frame Range"
+  },
+  "editor_zoom_crop_frame_start": {
+    "description": "Label for the start frame number.",
+    "message": "Start"
+  },
+  "editor_zoom_crop_frames_menu": {
+    "description": "Menu item label for zoom/crop frames feature.",
+    "message": "Zoom/Crop Frames"
+  },
+  "editor_zoom_crop_no_area_selected": {
+    "description": "Message displayed when no crop area has been selected.",
+    "message": "No area selected"
+  },
+  "editor_zoom_crop_select_area": {
+    "description": "Button text to select a crop area on the frame.",
+    "message": "Select Area"
+  },
+  "editor_zoom_crop_smooth_animation": {
+    "description": "Checkbox label for smoothing animation by interpolating frames.",
+    "message": "Smooth animation by adding frames"
+  },
+  "editor_zoom_crop_transition": {
+    "description": "Label for the transition duration section (number of frames for animation).",
+    "message": "Transition"
+  },
+  "enable_drawing_text": {
+    "message": "Enable drawing"
+  },
+  "enable_drawing_tooltip_text": {
+    "message": "This option allows users to draw in the selected area while holding down the ctrl key."
+  },
+  "extension_description": {
+    "message": "All-in-one screenshot + GIF capture! Take screenshots (area, full page), record screen & edit instantly."
+  },
+  "extension_name": {
+    "message": "Chrome Capture Pro (by Dragon)"
+  },
+  "extension_short_name": {
+    "message": "Capture Pro (Dragon)"
+  },
+  "file_access_text": {
+    "message": "After screenshot action"
+  },
+  "filename_text": {
+    "message": "Filename"
+  },
+  "frames_per_sec_short_text": {
+    "message": "FPS"
+  },
+  "frames_per_sec_text": {
+    "message": "Frames per second (fps)"
+  },
+  "frames_text": {
+    "message": "frames"
+  },
+  "free_settings_text": {
+    "message": "General Settings"
+  },
+  "fullscreen_info_modal_cancel": {
+    "message": "Cancel"
+  },
+  "fullscreen_info_modal_continue": {
+    "message": "Are you sure you want to continue with full screen capture?"
+  },
+  "fullscreen_info_modal_do_not_show": {
+    "message": "Do not show this again"
+  },
+  "fullscreen_info_modal_message": {
+    "message": "You have used a Chrome Capture shortcut without the cropping tool, this will capture in full screen mode."
+  },
+  "fullscreen_info_modal_open_cropping": {
+    "message": "Open cropping tool"
+  },
+  "fullscreen_info_modal_shortcut_cropping_tool": {
+    "message": "Alt + C: Open/close Chrome Capture cropping tool"
+  },
+  "fullscreen_info_modal_shortcut_fullpage_screenshot": {
+    "message": "Alt + Shift + S: Full webpage screenshot (beta)"
+  },
+  "fullscreen_info_modal_shortcut_linkt": {
+    "message": "You can configure these here: "
+  },
+  "fullscreen_info_modal_shortcut_recording": {
+    "message": "Alt + R: Start/stop recording"
+  },
+  "fullscreen_info_modal_shortcut_screenshot": {
+    "message": "Alt + S: Visible area screenshot"
+  },
+  "fullscreen_info_modal_shortcuts": {
+    "message": "Default shortcuts are: "
+  },
+  "fullscreen_info_modal_start": {
+    "message": "Start full screen capture"
+  },
+  "fullscreen_info_modal_title": {
+    "message": "Full screen capture"
+  },
+  "general_not_available": {
+    "description": "N/A",
+    "message": "N/A"
+  },
+  "get_premium": {
+    "message": "Upgrade"
+  },
+  "height_text": {
+    "message": "Width (px)"
+  },
+  "hi": {
+    "message": "Hi"
+  },
+  "internet_connection_required": {
+    "message": "Internet connection is required to upgrade to premium."
+  },
+  "manage_subscription_access_until_date": {
+    "description": "Your plan will not renew. You can access premium features until $date$.",
+    "message": "Your plan will not renew. You can access premium features until $date$.",
+    "placeholders": {
+      "date": {
+        "content": "$1"
+      }
+    }
+  },
+  "manage_subscription_cancel_button": {
+    "description": "Cancel subscription",
+    "message": "Cancel subscription"
+  },
+  "manage_subscription_cancel_confirm_cancel_button": {
+    "description": "Keep Premium",
+    "message": "Keep Premium"
+  },
+  "manage_subscription_cancel_confirm_confirm_button": {
+    "description": "Continue to cancel",
+    "message": "Continue to cancel"
+  },
+  "manage_subscription_cancel_confirm_description": {
+    "description": "You will lose access to Premium features and Premium options will be reset.",
+    "message": "You will lose access to Premium features and Premium options will be reset."
+  },
+  "manage_subscription_cancel_confirm_title": {
+    "description": "Are you sure you want to cancel your subscription?",
+    "message": "Are you sure you want to cancel your subscription?"
+  },
+  "manage_subscription_ended_on_date": {
+    "description": "Subscription ended on $date$.",
+    "message": "Subscription ended on $date$.",
+    "placeholders": {
+      "date": {
+        "content": "$1"
+      }
+    }
+  },
+  "manage_subscription_ends_on_date": {
+    "description": "Subscription ends on $date$.",
+    "message": "Subscription ends on $date$.",
+    "placeholders": {
+      "date": {
+        "content": "$1"
+      }
+    }
+  },
+  "manage_subscription_next_payment_full": {
+    "description": "Next payment: $price$ on $date$",
+    "message": "Next payment: $price$ on $date$",
+    "placeholders": {
+      "date": {
+        "content": "$2"
+      },
+      "price": {
+        "content": "$1"
+      }
+    }
+  },
+  "manage_subscription_paid_full": {
+    "description": "Paid: $billingCycle$",
+    "message": "Paid: $billingCycle$",
+    "placeholders": {
+      "billingCycle": {
+        "content": "$1"
+      }
+    }
+  },
+  "manage_subscription_resubscribe_prompt": {
+    "description": " To use premium features again, please upgrade.",
+    "message": " To use premium features again, please upgrade."
+  },
+  "manage_subscription_update_payment_button": {
+    "description": "Update payment method",
+    "message": "Update payment method"
+  },
+  "max_recording_dimension_size_text": {
+    "message": "Default recording resolution"
+  },
+  "no_limit_text": {
+    "message": "No limit"
+  },
+  "open_text": {
+    "message": "Open"
+  },
+  "options_default_action": {
+    "message": "Extension icon click action"
+  },
+  "options_dimension_size_1000": {
+    "message": "1000 pixels"
+  },
+  "options_dimension_size_1080p": {
+    "message": "1920 pixels (1080p)"
+  },
+  "options_dimension_size_480p": {
+    "message": "640 pixels (480p)"
+  },
+  "options_dimension_size_4k": {
+    "message": "3840 pixels (4K)"
+  },
+  "options_dimension_size_720p": {
+    "message": "1280 pixels (720p)"
+  },
+  "options_embedded_options_permission_warning": {
+    "message": "Cursor highlighting, click effects, and drawing tools will only work until the page reloads or changes. To keep them active after reloads or redirects, you'll need to grant an extra permission."
+  },
+  "options_enable_notifications": {
+    "message": "Enable notifications"
+  },
+  "options_enable_notifications_tooltip": {
+    "message": "Display notifications when full screen recording starts and processing recordings in the background."
+  },
+  "options_enable_subfolder_downloads": {
+    "message": "Download files into subfolder"
+  },
+  "options_enable_subfolder_downloads_tooltip": {
+    "message": "Download files into a subfolder of your choice inside the downloads folder. This option is useful for organising your captures."
+  },
+  "options_how_to_use_btn": {
+    "message": "How to use"
+  },
+  "options_language": {
+    "message": "Language"
+  },
+  "options_open_containing_folder_on_save": {
+    "message": "Open containing folder after saving"
+  },
+  "options_open_popup": {
+    "message": "Open popup"
+  },
+  "options_open_selected_area": {
+    "message": "Open selected area capture"
+  },
+  "options_section_general": {
+    "message": "General Settings"
+  },
+  "options_section_output": {
+    "message": "Output & Saving"
+  },
+  "options_section_recording": {
+    "message": "Recording Settings"
+  },
+  "options_section_visuals": {
+    "message": "Cursor & Interaction Visuals"
+  },
+  "options_shortcuts_btn": {
+    "message": "Shortcuts"
+  },
+  "options_subfolder_downloads_name": {
+    "message": "Subfolder name:"
+  },
+  "options_support_btn": {
+    "message": "Support"
+  },
+  "overlay_help_text": {
+    "message": "Click and drag to choose your selected area. \nRight click to snap to an element, hold shift for multiple."
+  },
+  "plan_billing_annually": {
+    "description": "Annually",
+    "message": "Annually"
+  },
+  "plan_billing_monthly": {
+    "description": "Monthly",
+    "message": "Monthly"
+  },
+  "plan_name_custom": {
+    "description": "Custom Plan",
+    "message": "Custom Plan"
+  },
+  "popup_capture_tab": {
+    "message": "Capture"
+  },
+  "popup_desktop_screenshot_tooltip": {
+    "message": "Capture the entire screen, desktop, or any open application."
+  },
+  "popup_editor_icon_tooltip": {
+    "message": "Open Editor"
+  },
+  "popup_full_page_screenshot_tooltip": {
+    "message": "Capture the current tab full webpage, including content beyond the visible area."
+  },
+  "popup_full_webpage": {
+    "message": "Full webpage"
+  },
+  "popup_no_scripts_alert": {
+    "message": "Selected area and full webpage screenshots are not possible here. These features are available on other websites."
+  },
+  "popup_record_tab": {
+    "message": "Record"
+  },
+  "popup_recording_limit_alert": {
+    "message": "Record up to $seconds$ seconds per GIF. Premium users can update this from the ",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_recording_limit_settings_link": {
+    "message": "settings page."
+  },
+  "popup_screen_or_app": {
+    "message": "Full screen or app"
+  },
+  "popup_selected_area": {
+    "message": "Selected area"
+  },
+  "popup_selected_area_screenshot_tooltip": {
+    "message": "Capture a specific area of the current tab."
+  },
+  "popup_set_shortcut": {
+    "message": "set shortcut"
+  },
+  "popup_settings_icon_tooltip": {
+    "message": "Open Settings"
+  },
+  "popup_tab_screenshot_tooltip": {
+    "message": "Capture the visible part of the current tab."
+  },
+  "popup_this_tab": {
+    "message": "Visible tab"
+  },
+  "popup_waiting_for_desktop_selection_alert": {
+    "message": "FULL SCREEN OR APP capture did not start because you did not select an option from the popup dialog. If you have multiple monitors it may have opened on another monitor."
+  },
+  "premium_settings_text": {
+    "message": "Advanced Settings"
+  },
+  "purchase_btn_text": {
+    "message": "Get Premium!"
+  },
+  "purchase_description_limited_time_text": {
+    "message": "Lock in this price now - limited time offer before we switch to subscriptions!"
+  },
+  "purchase_description_text": {
+    "message": "Just one payment unlocks all premium features forever. No recurring fees!"
+  },
+  "purchase_feature_30fps": {
+    "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+    "message": "silky-smooth 30 FPS recording"
+  },
+  "purchase_feature_4K": {
+    "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+    "message": "crystal-clear 4K recording"
+  },
+  "purchase_feature_alter_frame_rate": {
+    "description": "Feature that goes in $feature$ placeholder.",
+    "message": "custom frame rates"
+  },
+  "purchase_feature_alter_playback_speed": {
+    "description": "Feature that goes in $feature$ placeholder.",
+    "message": "slow-motion & time-lapse effects"
+  },
+  "purchase_feature_blur": {
+    "description": "Feature that goes in $feature$ placeholder.",
+    "message": "the blur tool"
+  },
+  "purchase_feature_crop_recording": {
+    "description": "Feature that goes in $feature$ placeholder.",
+    "message": "precise GIF cropping"
+  },
+  "purchase_feature_default": {
+    "description": "Feature that goes in $feature$ placeholder. Default fallback.",
+    "message": "this feature"
+  },
+  "purchase_feature_frame_edits": {
+    "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+    "message": "powerful frame-by-frame editing"
+  },
+  "purchase_feature_highlight": {
+    "description": "Feature that goes in $feature$ placeholder.",
+    "message": "the highlight tool"
+  },
+  "purchase_feature_no_duration_limit": {
+    "description": "Feature that goes in $feature$ placeholder.",
+    "message": "unlimited recording length"
+  },
+  "purchase_feature_special_effect": {
+    "description": "Feature that goes in $feature$ placeholder.",
+    "message": "special effects"
+  },
+  "purchase_feature_step_tool": {
+    "description": "Feature that goes in $feature$ placeholder.",
+    "message": "the step tool"
+  },
+  "purchase_feature_svg": {
+    "description": "Feature that goes in $feature$ placeholder.",
+    "message": "adding custom icons & logos"
+  },
+  "purchase_feature_text_and_annotation_customization": {
+    "description": "Feature that goes in $feature$ placeholder.",
+    "message": "full control over text & annotations"
+  },
+  "purchase_feature_unlimited_gif_compression": {
+    "description": "Feature that goes in $feature$ placeholder.",
+    "message": "unlimited advanced GIF compression"
+  },
+  "purchase_feature_update_end_time": {
+    "description": "Feature that goes in $feature$ placeholder.",
+    "message": "customized recording time"
+  },
+  "purchase_login_dialog_closed_by_user_alert": {
+    "message": "Looks like you closed the sign in dialog, premium users must sign in so you don't lose premium access."
+  },
+  "purchase_login_dialog_google_button": {
+    "message": "Sign in with Google"
+  },
+  "purchase_login_dialog_title": {
+    "message": "Sign in required"
+  },
+  "purchase_login_text": {
+    "message": "Sign in with Google to link your plan to your account."
+  },
+  "purchase_login_text_window_opened": {
+    "message": "Sign into Google in the popup window."
+  },
+  "purchase_subscription_title_text": {
+    "description": "Choose the plan that fits your needs",
+    "message": "Choose the plan that fits your needs"
+  },
+  "purchase_title_text": {
+    "message": "Get Lifetime Premium Access Today!"
+  },
+  "purchase_title_text_blocked_feature": {
+    "message": "That feature requires Premium"
+  },
+  "purchase_title_text_blocked_pro_feature": {
+    "description": "That feature requires Premium Pro",
+    "message": "That feature requires Premium Pro"
+  },
+  "purchase_title_text_blocked_pro_specific_feature": {
+    "description": "Title text when a specific feature is blocked by the Premium Pro paywall.",
+    "message": "Unlock $feature$ with Premium Pro",
+    "placeholders": {
+      "feature": {
+        "content": "$1"
+      }
+    }
+  },
+  "purchase_title_text_blocked_specific_feature": {
+    "description": "Title text when a specific feature is blocked by the Premium paywall.",
+    "message": "Unlock $feature$ with Premium",
+    "placeholders": {
+      "feature": {
+        "content": "$1"
+      }
+    }
+  },
+  "purchases_already_premium_user": {
+    "message": "Already a premium user?"
+  },
+  "purchases_bill_me": {
+    "description": "Bill me:",
+    "message": "Bill me:"
+  },
+  "purchases_checkout_unavailable_message": {
+    "description": "Message shown when checkout could not be started.",
+    "message": "The upgrade flow could not be started right now. Please try again."
+  },
+  "purchases_compare_12_fps": {
+    "description": "12FPS",
+    "message": "12FPS"
+  },
+  "purchases_compare_3_per_day": {
+    "description": "3 per day",
+    "message": "3 per day"
+  },
+  "purchases_compare_add_custom_shape_tool": {
+    "description": "Add custom shape/icon tool",
+    "message": "Add custom shape/icon tool"
+  },
+  "purchases_compare_benefits": {
+    "description": "Benefits",
+    "message": "Benefits"
+  },
+  "purchases_compare_blur_tool": {
+    "description": "Blur tool",
+    "message": "Blur tool"
+  },
+  "purchases_compare_close_button_label": {
+    "description": "Close",
+    "message": "Close"
+  },
+  "purchases_compare_compression": {
+    "message": "High quality GIF compression"
+  },
+  "purchases_compare_core_capture_features": {
+    "description": "Core Capture Features",
+    "message": "Core Capture Features"
+  },
+  "purchases_compare_crop_recordings": {
+    "description": "Crop recordings",
+    "message": "Crop recordings"
+  },
+  "purchases_compare_customize_editing_tools": {
+    "description": "Customize editing tools (font, size color)",
+    "message": "Customize editing tools (font, size color)"
+  },
+  "purchases_compare_drawing": {
+    "message": "Draw while recording"
+  },
+  "purchases_compare_early_access": {
+    "description": "Early access to new features",
+    "message": "Early access to new features"
+  },
+  "purchases_compare_editing": {
+    "message": "Edit captures"
+  },
+  "purchases_compare_editing_free": {
+    "message": "basic editing"
+  },
+  "purchases_compare_editing_suite": {
+    "description": "Editing Suite",
+    "message": "Editing Suite"
+  },
+  "purchases_compare_frame_editing": {
+    "message": "Frame editing"
+  },
+  "purchases_compare_frame_rate": {
+    "message": "Adjust Frame Rate"
+  },
+  "purchases_compare_frame_specific_edits": {
+    "description": "Frame specific edits",
+    "message": "Frame specific edits"
+  },
+  "purchases_compare_free_draw_tools": {
+    "description": "Free draw, line, arrow, rectangle, circle, text tools",
+    "message": "Free draw, line, arrow, rectangle, circle, text tools"
+  },
+  "purchases_compare_full_webpage_screenshots": {
+    "message": "Unlimited full page screenshots."
+  },
+  "purchases_compare_highlight_tool": {
+    "description": "Highlight tool",
+    "message": "Highlight tool"
+  },
+  "purchases_compare_live_recording_tools": {
+    "description": "Live Recording Tools",
+    "message": "Live Recording Tools"
+  },
+  "purchases_compare_mouse": {
+    "message": "Click and mouse indication"
+  },
+  "purchases_compare_plans": {
+    "message": "Compare plans"
+  },
+  "purchases_compare_plans_premium_button": {
+    "message": "Upgrade to Premium"
+  },
+  "purchases_compare_playback_speed": {
+    "message": "Tune recording playback speed"
+  },
+  "purchases_compare_priority_support": {
+    "description": "Priority support and feature requests",
+    "message": "Priority support and feature requests"
+  },
+  "purchases_compare_recording": {
+    "message": "Unlimited GIF recordings."
+  },
+  "purchases_compare_recording_free": {
+    "message": "15sec limit per GIF"
+  },
+  "purchases_compare_recording_quality": {
+    "message": "High quality GIFs"
+  },
+  "purchases_compare_recording_quality_control": {
+    "description": "Recording Quality & Control",
+    "message": "Recording Quality & Control"
+  },
+  "purchases_compare_recording_quality_free": {
+    "message": "Up to 720p"
+  },
+  "purchases_compare_screenshots": {
+    "message": "Unlimited screenshots."
+  },
+  "purchases_compare_special_effects": {
+    "message": "Recording special effects"
+  },
+  "purchases_compare_up_to_1080p": {
+    "description": "Up to 1080p",
+    "message": "Up to 1080p"
+  },
+  "purchases_compare_up_to_24_fps": {
+    "description": "Up to 24FPS",
+    "message": "Up to 24FPS"
+  },
+  "purchases_compare_up_to_30_fps": {
+    "description": "Up to 30FPS",
+    "message": "Up to 30FPS"
+  },
+  "purchases_compare_up_to_4k_plus": {
+    "description": "Up to 4K+",
+    "message": "Up to 4K+"
+  },
+  "purchases_current_plan": {
+    "description": "Current plan",
+    "message": "Current plan"
+  },
+  "purchases_features": {
+    "message": "Features"
+  },
+  "purchases_free": {
+    "message": "Free"
+  },
+  "purchases_free_button": {
+    "message": "Free to use"
+  },
+  "purchases_free_feature_editing": {
+    "message": "Basic editing"
+  },
+  "purchases_free_feature_recording": {
+    "message": "Basic GIF recording"
+  },
+  "purchases_free_feature_screenshots": {
+    "message": "Unlimited screenshots"
+  },
+  "purchases_free_plan_description": {
+    "description": "Get started with our essential capture tools. Completely free for basic everyday use.",
+    "message": "Get started with our essential capture tools. Completely free for basic everyday use."
+  },
+  "purchases_plan_save_up_to_percentage": {
+    "description": "Save up to",
+    "message": "Save up to"
+  },
+  "purchases_premium": {
+    "message": "Premium"
+  },
+  "purchases_premium_billed_annually": {
+    "description": "Billed annually",
+    "message": "Billed annually"
+  },
+  "purchases_premium_button": {
+    "message": "Get lifetime access"
+  },
+  "purchases_premium_feature_compression": {
+    "message": "High quality GIF compression"
+  },
+  "purchases_premium_feature_editing": {
+    "message": "Feature rich editing (cropping, highlight, fine tuning, etc.)"
+  },
+  "purchases_premium_feature_free": {
+    "message": "Everything from Free plan"
+  },
+  "purchases_premium_feature_marked_with_star": {
+    "description": "All features marked with a star",
+    "message": "All features marked with a star"
+  },
+  "purchases_premium_feature_recording": {
+    "message": "Unlimited high quality GIF recording"
+  },
+  "purchases_premium_feature_recording_1080p": {
+    "description": "High quality GIF recording, up to 1080p, 24fps",
+    "message": "High quality GIF recording, up to 1080p, 24fps"
+  },
+  "purchases_premium_feature_refundable": {
+    "message": "Risk-free: 14-Day money-back guarantee"
+  },
+  "purchases_premium_feature_risk_free": {
+    "description": "Risk-free: 7 day trial, cancel anytime",
+    "message": "Risk-free: 7 day trial, cancel anytime"
+  },
+  "purchases_premium_feature_unlimited_length": {
+    "description": "Unlimited GIF recording length",
+    "message": "Unlimited GIF recording length"
+  },
+  "purchases_premium_price_info": {
+    "message": "one time fee"
+  },
+  "purchases_premium_price_per_month": {
+    "description": "/ month",
+    "message": "/ month"
+  },
+  "purchases_premium_pro": {
+    "description": "Premium Pro",
+    "message": "Premium Pro"
+  },
+  "purchases_premium_pro_editing_tools": {
+    "description": "Advanced editing tools (blurring, special effects, etc.)",
+    "message": "Advanced editing tools (blurring, special effects, etc.)"
+  },
+  "purchases_premium_pro_feature_early_access": {
+    "description": "Early access to new features",
+    "message": "Early access to new features"
+  },
+  "purchases_premium_pro_feature_marked_with_crown": {
+    "description": "All features marked with a star and crown",
+    "message": "All features marked with a star and crown"
+  },
+  "purchases_premium_pro_feature_premium_plan": {
+    "description": "Everything from Premium plan",
+    "message": "Everything from Premium plan"
+  },
+  "purchases_premium_pro_feature_quality": {
+    "description": "Max resolution recording, 4K+ and 30fps",
+    "message": "Max resolution recording, 4K+ and 30fps"
+  },
+  "purchases_premium_pro_feature_support": {
+    "description": "Priority support and feature requests",
+    "message": "Priority support and feature requests"
+  },
+  "purchases_premium_pro_upgrade": {
+    "description": "Upgrade to Pro",
+    "message": "Upgrade to Pro"
+  },
+  "purchases_premium_save_percentage": {
+    "description": "save $savingsPercentage$%",
+    "message": "save $savingsPercentage$%",
+    "placeholders": {
+      "savingsPercentage": {
+        "content": "$1"
+      }
+    }
+  },
+  "purchases_premium_try_for_free": {
+    "description": "Try for free",
+    "message": "Try for free"
+  },
+  "purchases_price_unavailable": {
+    "description": "Label shown in place of a price when it is unavailable.",
+    "message": "Price unavailable"
+  },
+  "purchases_pricing_unavailable_message": {
+    "description": "Message shown when the Premium pricing request was blocked or failed.",
+    "message": "The request for Premium pricing was blocked or failed. This can happen when a workplace network, VPN, ad blocker, privacy extension, or firewall blocks Paddle."
+  },
+  "purchases_pricing_unavailable_title": {
+    "description": "Title shown when Premium pricing could not be loaded.",
+    "message": "Premium pricing could not be loaded"
+  },
+  "purchases_pricing_unavailable_troubleshooting_extensions": {
+    "description": "Troubleshooting step telling the user to disable VPN or privacy tools temporarily.",
+    "message": "Temporarily disable VPN, ad blocker, or privacy extensions and try again."
+  },
+  "purchases_pricing_unavailable_troubleshooting_intro": {
+    "description": "Intro text for troubleshooting steps when pricing is unavailable.",
+    "message": "Things to try:"
+  },
+  "purchases_pricing_unavailable_troubleshooting_network": {
+    "description": "Troubleshooting step telling the user to try another network or browser profile.",
+    "message": "Try another network, or open the extension in a different Chrome profile."
+  },
+  "purchases_pricing_unavailable_troubleshooting_workplace": {
+    "description": "Troubleshooting step telling the user workplace policy may be blocking Paddle.",
+    "message": "If you are on a work device, your network or browser policy may be blocking Paddle."
+  },
+  "purchases_sign_in_here": {
+    "message": "Sign in here"
+  },
+  "purchases_start_trial_cancel_anytime": {
+    "description": "Call to action to start a free trial.",
+    "message": "Start your 7-day free trial to continue. Cancel anytime."
+  },
+  "purchases_try_premium_for_free": {
+    "description": "Try Premium for Free",
+    "message": "Try Premium for Free"
+  },
+  "purchases_try_premium_pro_for_free": {
+    "description": "Try Premium Pro for Free",
+    "message": "Try Premium Pro for Free"
+  },
+  "purchases_upgrade_premium_to_pro": {
+    "description": "To use this feature and access all Pro benefits, upgrade your plan.",
+    "message": "To use this feature and access all Pro benefits, upgrade your plan."
+  },
+  "purchases_upgrade_to_premium_pro": {
+    "description": "Upgrade to Premium Pro",
+    "message": "Upgrade to Premium Pro"
+  },
+  "quality_text": {
+    "message": "Recording quality (10 = best)"
+  },
+  "rate_bad_rating_text": {
+    "message": "We are continuously trying our hardest to improve Chrome Capture, please share what needs improvement by emailing us at "
+  },
+  "rate_bad_title_text": {
+    "message": "😞 We are sorry!"
+  },
+  "rate_close_btn_text": {
+    "message": "Close"
+  },
+  "rate_confirm_btn_text": {
+    "message": "Confirm"
+  },
+  "rate_description_text": {
+    "message": "If you've found this extension useful please leave a rating or review. \n\nBy leaving a rating you can help us reach more users which will help fund continual improvements and keep general usage free."
+  },
+  "rate_description_text_purchased": {
+    "message": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users."
+  },
+  "rate_good_rating_text": {
+    "message": "Thank you for your support! Created by Dragon."
+  },
+  "rate_good_rating_text_purchased": {
+    "message": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users."
+  },
+  "rate_good_title_text": {
+    "message": "😍 Review in the web store?"
+  },
+  "rate_maybe_later_btn_text": {
+    "message": "Maybe later"
+  },
+  "rate_no_btn_text": {
+    "message": "No thanks"
+  },
+  "rate_send_email_btn_text": {
+    "message": "Send Email"
+  },
+  "rate_thank_you_title_text": {
+    "message": "Thank you! 😍"
+  },
+  "rate_title_text": {
+    "message": "How are we doing?"
+  },
+  "rate_yes_btn_text": {
+    "message": "Ok, sure"
+  },
+  "recommended": {
+    "message": "Recommended"
+  },
+  "record_length_text": {
+    "message": "Auto-stop recording after (seconds)"
+  },
+  "recordings_taken": {
+    "message": "Recordings taken:"
+  },
+  "save_as_screenshot_text": {
+    "message": "Save screenshot as"
+  },
+  "save_as_text": {
+    "message": "Save recording as"
+  },
+  "screenshots_taken": {
+    "message": "Screenshots taken:"
+  },
+  "seconds_text": {
+    "message": "secs"
+  },
+  "shortcut": {
+    "message": "Shortcut:"
+  },
+  "show_click_indicator_text": {
+    "message": "Show click animation"
+  },
+  "show_click_indicator_tooltip_text": {
+    "message": "This option draws a circle animation around the click location."
+  },
+  "show_cursor_text": {
+    "message": "Show dot at cursor location"
+  },
+  "show_cursor_tooltip_text": {
+    "message": "This option draws a small circle to indicate where the mouse is located."
+  },
+  "sign_in": {
+    "message": "Sign In"
+  },
+  "sign_out": {
+    "message": "Sign Out"
+  },
+  "subscription_past_due_warning": {
+    "description": "Warning message shown when a user subscription payment has failed or is past its due date.",
+    "message": "Subscription payment is past due, click here to update your payment information."
+  },
+  "subscription_premium_plan_description": {
+    "description": "Go beyond basics: HD quality & limits unlocked. Craft pro content with enhanced features.",
+    "message": "Go beyond basics: HD quality & limits unlocked. Craft pro content with enhanced features."
+  },
+  "subscription_premium_pro_plan_description": {
+    "description": "Experience peak performance: 4K+ and all features. Full editing suite with early access.",
+    "message": "Experience peak performance: 4K+ and all features. Full editing suite with early access."
+  },
+  "subscription_status_active": {
+    "description": "Active",
+    "message": "Active"
+  },
+  "subscription_status_ending_soon": {
+    "description": "Ending Soon",
+    "message": "Ending Soon"
+  },
+  "subscription_status_expired": {
+    "description": "Expired",
+    "message": "Expired"
+  },
+  "subscription_status_past_due": {
+    "description": "Past Due",
+    "message": "Past Due"
+  },
+  "subscription_status_paused": {
+    "description": "Paused",
+    "message": "Paused"
+  },
+  "subscription_status_unknown": {
+    "description": "Unknown",
+    "message": "Unknown"
+  },
+  "unable_to_capture_website_alert": {
+    "message": "Unable to capture this website. Please use full screen/application capture or try capture another website.\n\n(╯°□°）╯︵ ┻━┻"
+  },
+  "view_permission": {
+    "message": "View permission."
+  },
+  "width_text": {
+    "message": "Height (px)"
+  }
+}

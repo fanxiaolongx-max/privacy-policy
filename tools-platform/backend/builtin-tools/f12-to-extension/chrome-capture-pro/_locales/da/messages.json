@@ -1,0 +1,1583 @@
+{
+   "account_modal_free_plan": {
+      "description": "You are on the free plan",
+      "message": "Du er på den gratis plan"
+   },
+   "account_modal_manage_subscription_button": {
+      "description": "Manage Subscription",
+      "message": "Administrer abonnement"
+   },
+   "account_modal_not_signed_in": {
+      "description": "You are not signed in",
+      "message": "Du er ikke logget ind"
+   },
+   "account_modal_premium_plan": {
+      "description": "You are on the premium plan",
+      "message": "Du er på premium -planen"
+   },
+   "account_modal_premium_pro_plan": {
+      "description": "You are on the Premium Pro plan",
+      "message": "Du er på Premium Pro-planen"
+   },
+   "account_modal_request_feature_button": {
+      "description": "Request Feature",
+      "message": "Anmod om funktion"
+   },
+   "account_modal_request_support_button": {
+      "description": "Request Support",
+      "message": "Anmod om support"
+   },
+   "account_modal_stats_heading": {
+      "description": "Your stats:",
+      "message": "Din statistik:"
+   },
+   "alert_text": {
+      "description": "Unable to run selected area capture on this website. Please use full screen recording or try another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "Kan ikke køre det valgte områdefangst på denne hjemmeside. Brug venligst fuld skærmoptagelse eller prøv en anden hjemmeside. \n\n (╯ ° □ °) ╯ (┻━┻"
+   },
+   "click_indicator_size_color_text": {
+      "description": "Click animation size & color",
+      "message": "Klik på Animationsstørrelse og farve"
+   },
+   "close_btn_text": {
+      "description": "Close",
+      "message": "Tæt"
+   },
+   "confirm_dialog_cancel_btn_text": {
+      "description": "Cancel",
+      "message": "Afbestille"
+   },
+   "confirm_dialog_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "Bekræfte"
+   },
+   "confirm_fps_update_text": {
+      "description": "Changing the fps will remove all frame specific edits such as edited or deleted frames. Do you want to continue?",
+      "message": "Ændring af FPS fjerner alle billedspecifikke redigeringer såsom redigerede eller slettede rammer. Vil du fortsætte?"
+   },
+   "copy_text": {
+      "description": "Copy to clipboard",
+      "message": "Kopier til udklipsholder"
+   },
+   "cursor_size_and_color_text": {
+      "description": "Cursor dot size & color",
+      "message": "Cursor Dot Størrelse & Farve"
+   },
+   "dither_text": {
+      "description": "Apply dither",
+      "message": "Påfør dither"
+   },
+   "download_filename_text": {
+      "description": "Download filename format",
+      "message": "Download filnavn format."
+   },
+   "download_text": {
+      "description": "Download",
+      "message": "Hent"
+   },
+   "draw_size_and_color_text": {
+      "description": "Drawing size & color",
+      "message": "Tegning størrelse og farve"
+   },
+   "duration": {
+      "description": "Label for a field indicating a length of time.",
+      "message": "Varighed"
+   },
+   "editor_action_add_icon": {
+      "description": "Add icon",
+      "message": "Tilføj ikon"
+   },
+   "editor_action_add_text": {
+      "description": "Add text",
+      "message": "Tilføj tekst."
+   },
+   "editor_action_blur_rectangle": {
+      "description": "Blur area",
+      "message": "Slør område"
+   },
+   "editor_action_copy": {
+      "description": "Copy to clipboard",
+      "message": "Kopier til udklipsholder"
+   },
+   "editor_action_crop": {
+      "description": "Crop",
+      "message": "Afgrøde"
+   },
+   "editor_action_draw_arrow": {
+      "description": "Draw arrow",
+      "message": "Tegn pil"
+   },
+   "editor_action_draw_line": {
+      "description": "Draw line",
+      "message": "Tegn linje."
+   },
+   "editor_action_free_draw": {
+      "description": "Free draw",
+      "message": "Gratis Draw"
+   },
+   "editor_action_highlight": {
+      "description": "Highlight",
+      "message": "Fremhæve"
+   },
+   "editor_action_numbered_step": {
+      "description": "Action label for adding a numbered step annotation.",
+      "message": "Nummereret trin"
+   },
+   "editor_action_pan": {
+      "description": "Pan",
+      "message": "Panorér"
+   },
+   "editor_action_profile_account": {
+      "description": "Account",
+      "message": "Konto"
+   },
+   "editor_action_save": {
+      "description": "Save",
+      "message": "Gemme"
+   },
+   "editor_action_select": {
+      "description": "Select, move, resize",
+      "message": "Vælg, Flyt, Ændre størrelse"
+   },
+   "editor_action_settings": {
+      "description": "Settings",
+      "message": "Indstillinger."
+   },
+   "editor_action_undo_all": {
+      "description": "Undo all",
+      "message": "Fortryd alt."
+   },
+   "editor_add_text_default": {
+      "description": "start typing...",
+      "message": "Begynd at skrive ..."
+   },
+   "editor_browse_file_system": {
+      "description": "Browse file system",
+      "message": "Gennemse filsystem"
+   },
+   "editor_drag_and_drop": {
+      "description": "Drag and drop image/GIF or ",
+      "message": "Træk og slip billede / gif eller"
+   },
+   "editor_file_downloaded": {
+      "description": "File saved to downloads folder.",
+      "message": "Fil gemt i mappen Downloads."
+   },
+   "editor_file_downloaded_selected_location": {
+      "description": "File saved to selected location.",
+      "message": "Fil gemt til den valgte placering."
+   },
+   "editor_frame_selector_delete_selected": {
+      "description": "Delete selected",
+      "message": "Slet valgt"
+   },
+   "editor_frame_selector_remove_edits": {
+      "description": "Remove edits from selected",
+      "message": "Fjern redigeringer fra valgte"
+   },
+   "editor_frame_selector_restore_selected": {
+      "description": "Restore selected",
+      "message": "Gendan valgt"
+   },
+   "editor_frame_selector_select_next": {
+      "description": "Select next frames",
+      "message": "Vælg næste billeder"
+   },
+   "editor_frame_selector_select_previous": {
+      "description": "Select previous frames",
+      "message": "Vælg tidligere billeder"
+   },
+   "editor_image_copied": {
+      "description": "Image copied to clipboard.",
+      "message": "Billede kopieret til udklipsholder."
+   },
+   "editor_image_copied_failed": {
+      "description": "Failed to copy image to clipboard, it may be too large.",
+      "message": "Kunne ikke kopiere billede til udklipsholder, det kan være for stort."
+   },
+   "editor_max_time_reached_dialog_description1": {
+      "description": "You have reached the max recording length time of $maxlength$ seconds for GIFs. Premium users can update this from the settings page.",
+      "message": "Du har nået den maksimale optagelsestid for $maxlength$ sekunder for GIF'er. Premium -brugere kan opdatere dette fra siden Indstillinger.",
+      "placeholders": {
+         "maxlength": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_max_time_reached_dialog_description2": {
+      "description": "GIFs are intended for short recordings. If you require full length videos we recommend our free screen recorder: ",
+      "message": "GIF'er er beregnet til korte optagelser. Hvis du har brug for videoer i fuld længde, anbefaler vi vores gratis skærmoptager:"
+   },
+   "editor_max_time_reached_dialog_description3": {
+      "description": "Premium users can update this from the settings page.",
+      "message": "Premium -brugere kan opdatere dette fra siden Indstillinger."
+   },
+   "editor_max_time_reached_dialog_settings_button": {
+      "description": "Open settings",
+      "message": "Åbne indstillinger"
+   },
+   "editor_max_time_reached_dialog_title": {
+      "description": "Recording suddenly stopped?",
+      "message": "Optagelse stoppede pludselig?"
+   },
+   "editor_premium_options_color": {
+      "description": "Color",
+      "message": "Farve"
+   },
+   "editor_premium_options_draw_size": {
+      "description": "Draw Size",
+      "message": "Tegne størrelse"
+   },
+   "editor_premium_options_font": {
+      "description": "Font",
+      "message": "Skrifttype"
+   },
+   "editor_premium_options_playback_speed": {
+      "description": "Playback Speed",
+      "message": "Afspilningshastighed"
+   },
+   "editor_premium_options_special_effect": {
+      "description": "Special Effect",
+      "message": "Speciel effekt"
+   },
+   "editor_premium_options_title": {
+      "description": "Premium Options",
+      "message": "Premium muligheder."
+   },
+   "editor_save_dialog_advanced_encoding_options": {
+      "description": "Title for a section containing advanced, technical options for encoding a file.",
+      "message": "Avancerede indkodningsindstillinger"
+   },
+   "editor_save_dialog_alert_title": {
+      "description": "Warning",
+      "message": "Advarsel"
+   },
+   "editor_save_dialog_aspect_ratio": {
+      "description": "lock aspect ratio",
+      "message": "Låsformatforhold"
+   },
+   "editor_save_dialog_chip_animated_image": {
+      "description": "Chip label indicating an animated image format (e.g. GIF, AVIF).",
+      "message": "animeret billede"
+   },
+   "editor_save_dialog_chip_large_file": {
+      "description": "Chip label indicating the format produces a large file size.",
+      "message": "stor fil"
+   },
+   "editor_save_dialog_chip_limited_support": {
+      "description": "Chip label indicating the format has limited browser/app support.",
+      "message": "begrænset understøttelse"
+   },
+   "editor_save_dialog_chip_small_file": {
+      "description": "Chip label indicating the format produces a small file size.",
+      "message": "lille fil"
+   },
+   "editor_save_dialog_chip_video": {
+      "description": "Chip label indicating a video format (e.g. WebM, MP4).",
+      "message": "video"
+   },
+   "editor_save_dialog_chip_widely_supported": {
+      "description": "Chip label indicating the format is widely supported.",
+      "message": "bredt understøttet"
+   },
+   "editor_save_dialog_compress": {
+      "description": "Compress & optimize GIF",
+      "message": "Komprimer og optimer GIF"
+   },
+   "editor_save_dialog_compress_tooltip": {
+      "description": "Apply GIF compression algorthm to greatly reduce GIF file size and in some cases improve quality. Highly recommeded.",
+      "message": "Påfør GIF -komprimeringsalgortm for at reducere GIF -filstørrelsen kraftigt og i nogle tilfælde forbedre kvaliteten. Højt anbefales."
+   },
+   "editor_save_dialog_dither_tooltip": {
+      "description": "Apply dither algorithm to frames. Try toggling this option if you experience color quality issues.",
+      "message": "Påfør dither algoritme på billeder. Prøv at skifte denne mulighed, hvis du oplever farvekvalitetsproblemer."
+   },
+   "editor_save_dialog_download_raw_recording": {
+      "description": "Download raw recording",
+      "message": "Download rå optagelse"
+   },
+   "editor_save_dialog_estimated_size": {
+      "description": "Estimated GIF Size: ",
+      "message": "Anslået GIF-størrelse:"
+   },
+   "editor_save_dialog_export_sound": {
+      "description": "Include sound (beta)",
+      "message": "Inkluderer lyd (beta)"
+   },
+   "editor_save_dialog_export_sound_tooltip": {
+      "description": "Enable this option to include sound in the video.",
+      "message": "Aktivér denne mulighed for at inkludere lyd i videoen."
+   },
+   "editor_save_dialog_frames": {
+      "description": "Frames: ",
+      "message": "Billeder:"
+   },
+   "editor_save_dialog_frames_alert": {
+      "description": "There are currently selected frames, saving will only output these selected frames - ",
+      "message": "Der er i øjeblikket valgte billeder, gemte udsender kun disse valgte rammer -"
+   },
+   "editor_save_dialog_frames_alert_button": {
+      "description": "Click here to unselect all frames",
+      "message": "Klik her for at fjerne alle billeder"
+   },
+   "editor_save_dialog_frames_alert_title": {
+      "description": "Playback Speed",
+      "message": "Afspilningshastighed"
+   },
+   "editor_save_dialog_frames_processing": {
+      "description": "Processing Frames: ",
+      "message": "Behandling af billeder:"
+   },
+   "editor_save_dialog_height_helper": {
+      "description": "Recorded height is ",
+      "message": "Optaget højde er"
+   },
+   "editor_save_dialog_lossy_compression": {
+      "description": "Label for a setting that controls the level of lossy compression, from 0 to 100 percent.",
+      "message": "Tabsgivende komprimering (0 - 100 %)"
+   },
+   "editor_save_dialog_number_min_max_validation": {
+      "description": "A value between $minSize$ and $maxSize$ is required.",
+      "message": "En værdi mellem $minSize$ og $maxSize$ er påkrævet.",
+      "placeholders": {
+         "maxSize": {
+            "content": "$2"
+         },
+         "minSize": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_save_dialog_processing_alert": {
+      "description": "Processing this recording will require a lot of memory and processing power. Unless you have a high spec PC it is recommended to do one or more of the following:",
+      "message": "Behandling Denne optagelse kræver en masse hukommelse og behandlingskraft. Medmindre du har en høj spec pc, anbefales det at gøre et eller flere af følgende:"
+   },
+   "editor_save_dialog_processing_alert_memory": {
+      "description": "Please note if the resulting GIF is blank then you ran out of memory.",
+      "message": "Bemærk venligst, om det resulterende GIF er tomt, så du løb tør for hukommelsen."
+   },
+   "editor_save_dialog_processing_alert_point_1": {
+      "description": "Compress and optimize GIF",
+      "message": "Komprimere og optimere gif"
+   },
+   "editor_save_dialog_processing_alert_point_2": {
+      "description": "Reduce the width & height",
+      "message": "Reducer bredden og højden"
+   },
+   "editor_save_dialog_processing_alert_point_3": {
+      "description": "Reduce FPS or delete frames",
+      "message": "Reducer FPS eller slet billeder"
+   },
+   "editor_save_dialog_purchase_dialog_compression_description": {
+      "description": "Free users are limited to 3 high quality GIF compressions per day. Upgrade to Premium to have no restrictions.",
+      "message": "Gratis brugere er begrænset til 3 GIF -komprimeringer af høj kvalitet om dagen. Opgrader til Premium for at have nogen begrænsninger."
+   },
+   "editor_save_dialog_quantization_algorithm": {
+      "description": "Label for a dropdown to select a quantization algorithm.",
+      "message": "Kvantiseringsalgoritme"
+   },
+   "editor_save_dialog_quantization_algorithm_new_alpha": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Alpha.",
+      "message": "Ny (Alpha)"
+   },
+   "editor_save_dialog_quantization_algorithm_new_beta": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Beta.",
+      "message": "Ny (Beta)"
+   },
+   "editor_save_dialog_quantization_algorithm_old": {
+      "description": "An option for the quantization algorithm setting, indicating an older version.",
+      "message": "Gammel"
+   },
+   "editor_save_dialog_recording_quality_alert": {
+      "description": "GIF quality is limited for non premium users. To output high quality recordings you can do one of the following:",
+      "message": "GIF -kvalitet er begrænset for ikke -premium -brugere. For at udsende optagelser af høj kvalitet kan du gøre et af følgende:"
+   },
+   "editor_save_dialog_recording_quality_alert_option_1": {
+      "description": "Purchase premium",
+      "message": "Købspræmie"
+   },
+   "editor_save_dialog_recording_quality_alert_option_2": {
+      "description": "Save as a WebM file",
+      "message": "Gem som en webm -fil"
+   },
+   "editor_save_dialog_reduce_width": {
+      "description": "Reduce width and height/quality to improve processing time and produce a smaller file.",
+      "message": "Reducer bredde og højde/kvalitet for at forbedre behandlingstiden og producere en mindre fil."
+   },
+   "editor_save_dialog_reduce_width_tooltip": {
+      "description": "Reduce GIF width and height/quality to improve processing time and produce a smaller file.",
+      "message": "Reducer GIF -bredde og højde/kvalitet for at forbedre behandlingstiden og producere en mindre fil."
+   },
+   "editor_save_dialog_save_location": {
+      "description": "Save location",
+      "message": "Gem placering"
+   },
+   "editor_save_dialog_save_location_downloads": {
+      "description": "Downloads folder",
+      "message": "Downloads mappe"
+   },
+   "editor_save_dialog_save_location_downloads_subfolder": {
+      "description": "Downloads subfolder",
+      "message": "Downloads undermappe"
+   },
+   "editor_save_dialog_save_location_select": {
+      "description": "Manually select location",
+      "message": "Vælg manuelt placering"
+   },
+   "editor_save_dialog_title": {
+      "description": "Save",
+      "message": "Gemme"
+   },
+   "editor_save_dialog_title_processing": {
+      "description": "Processing...",
+      "message": "Forarbejdning..."
+   },
+   "editor_save_dialog_width_helper": {
+      "description": "Recorded width is ",
+      "message": "Registreret bredde er"
+   },
+   "editor_text": {
+      "description": "Open in editor",
+      "message": "Åben i editor"
+   },
+   "editor_tip_delete_items": {
+      "description": "Pro tip: Delete added items by selecting the item and pressing the delete key.",
+      "message": "Pro Tip: Slet tilføjede elementer ved at vælge elementet og trykke på DELETE-tasten."
+   },
+   "editor_tip_edit_specific_frames": {
+      "description": "Pro tip: You can edit specific frames by using the 'Apply edits to selected option'",
+      "message": "Pro tip: Du kan redigere specifikke billeder ved at bruge 'Anvend redigeringer til valgt mulighed'"
+   },
+   "editor_tip_scroll": {
+      "description": "Pro tip: Scroll when hovering the screenshot/recording to zoom.",
+      "message": "Pro Tip: Rul når du svæver screenshot / optagelse for at zoome."
+   },
+   "editor_tip_shift_multiple_items": {
+      "description": "Pro tip: When using the selecting tool hold down shift to select more than one item.",
+      "message": "Pro Tip: Når du bruger valgværktøjet, skal du holde nede Shift for at vælge mere end et element."
+   },
+   "editor_tip_update_multiple_items": {
+      "description": "Pro tip: You can scale, rotate, move and delete multiple items at once.",
+      "message": "Pro Tip: Du kan skala, rotere, flytte og slette flere elementer på én gang."
+   },
+   "editor_tip_update_text": {
+      "description": "Pro tip: Double click on text to edit it.",
+      "message": "Pro Tip: Dobbeltklik på tekst for at redigere det."
+   },
+   "editor_zoom_crop_animation_animated": {
+      "description": "Sub-label indicating an animation type is animated.",
+      "message": "Animeret"
+   },
+   "editor_zoom_crop_animation_crop": {
+      "description": "Animation type option for static cropping without animation.",
+      "message": "Beskær"
+   },
+   "editor_zoom_crop_animation_static": {
+      "description": "Sub-label indicating an animation type is static (no animation).",
+      "message": "Statisk"
+   },
+   "editor_zoom_crop_animation_type": {
+      "description": "Label for the animation type selection section.",
+      "message": "Animationstype"
+   },
+   "editor_zoom_crop_animation_zoom_in": {
+      "description": "Animation type option for zooming in on the selected area.",
+      "message": "Zoom ind"
+   },
+   "editor_zoom_crop_animation_zoom_out": {
+      "description": "Animation type option for zooming out from the selected area.",
+      "message": "Zoom ud"
+   },
+   "editor_zoom_crop_apply": {
+      "description": "Apply button in zoom/crop dialog.",
+      "message": "Anvend"
+   },
+   "editor_zoom_crop_cancel": {
+      "description": "Cancel button in zoom/crop dialog.",
+      "message": "Annullér"
+   },
+   "editor_zoom_crop_change_area": {
+      "description": "Tooltip text for button to change the selected crop area.",
+      "message": "Ændre område"
+   },
+   "editor_zoom_crop_dialog_title": {
+      "description": "Title for the zoom and crop dialog in the editor.",
+      "message": "Zoom og beskær"
+   },
+   "editor_zoom_crop_draw_instruction": {
+      "description": "Instruction text for the user to draw a crop area on the frame preview.",
+      "message": "Tegn et valg på billedet"
+   },
+   "editor_zoom_crop_frame_end": {
+      "description": "Label for the end frame number.",
+      "message": "Slut"
+   },
+   "editor_zoom_crop_frame_range": {
+      "description": "Label for the frame range selection section.",
+      "message": "Billedinterval"
+   },
+   "editor_zoom_crop_frame_start": {
+      "description": "Label for the start frame number.",
+      "message": "Start"
+   },
+   "editor_zoom_crop_frames_menu": {
+      "description": "Menu item label for zoom/crop frames feature.",
+      "message": "Zoom/Beskær billeder"
+   },
+   "editor_zoom_crop_no_area_selected": {
+      "description": "Message displayed when no crop area has been selected.",
+      "message": "Intet område valgt"
+   },
+   "editor_zoom_crop_select_area": {
+      "description": "Button text to select a crop area on the frame.",
+      "message": "Vælg område"
+   },
+   "editor_zoom_crop_smooth_animation": {
+      "description": "Checkbox label for smoothing animation by interpolating frames.",
+      "message": "Jævn animation ved at tilføje billeder"
+   },
+   "editor_zoom_crop_transition": {
+      "description": "Label for the transition duration section (number of frames for animation).",
+      "message": "Overgang"
+   },
+   "enable_drawing_text": {
+      "description": "Enable drawing",
+      "message": "Aktivér tegning"
+   },
+   "enable_drawing_tooltip_text": {
+      "description": "This option allows users to draw in the selected area while holding down the ctrl key.",
+      "message": "Denne indstilling giver brugerne mulighed for at tegne i det valgte område, mens du holder CTRL-tasten nede."
+   },
+   "extension_description": {
+      "description": "Take screenshots & record GIFs instantly! Edit & share seamlessly. Your all-in-one screenshot and screen recording solution.",
+      "message": "Tag øjeblikkeligt skærmbilleder og optag GIFS! Rediger & del problemfrit. Din alt-i-en skærmbillede og skærmoptagelsesløsning."
+   },
+   "extension_name": {
+      "description": "Chrome Capture - screenshot & GIF",
+      "message": "Chrome Capture - Screenshot & Gif"
+   },
+   "extension_short_name": {
+      "description": "Chrome Capture",
+      "message": "Chrome capture."
+   },
+   "file_access_text": {
+      "description": "After screenshot action",
+      "message": "Handling efter skærmbillede"
+   },
+   "filename_text": {
+      "description": "Filename",
+      "message": "Filnavn"
+   },
+   "frames_per_sec_short_text": {
+      "description": "FPS",
+      "message": "FPS"
+   },
+   "frames_per_sec_text": {
+      "description": "Frames per second (fps)",
+      "message": "Billeder pr. Sekund (FPS)"
+   },
+   "frames_text": {
+      "description": "frames",
+      "message": "billeder"
+   },
+   "free_settings_text": {
+      "description": "Free Settings",
+      "message": "Gratis indstillinger."
+   },
+   "fullscreen_info_modal_cancel": {
+      "description": "Cancel",
+      "message": "Afbestille"
+   },
+   "fullscreen_info_modal_continue": {
+      "description": "Are you sure you want to continue with full screen capture?",
+      "message": "Er du sikker på, at du vil fortsætte med fuld skærmfangst?"
+   },
+   "fullscreen_info_modal_do_not_show": {
+      "description": "Do not show this again",
+      "message": "Vis ikke dette igen"
+   },
+   "fullscreen_info_modal_message": {
+      "description": "You have used a Chrome Capture shortcut without the cropping tool, this will capture in full screen mode.",
+      "message": "Du har brugt en Chrome Capture genvej uden beskæringsværktøjet, dette vil fange i fuldskærmstilstand."
+   },
+   "fullscreen_info_modal_open_cropping": {
+      "description": "Open cropping tool",
+      "message": "Open Cropping Tool"
+   },
+   "fullscreen_info_modal_shortcut_cropping_tool": {
+      "description": "Alt + C: Open/close Chrome Capture cropping tool",
+      "message": "Alt + C: Åbn / Luk Chrome Capture Cropping Tool"
+   },
+   "fullscreen_info_modal_shortcut_fullpage_screenshot": {
+      "description": "Alt + Shift + S: Full webpage screenshot (beta)",
+      "message": "Alt + Shift + S: Full Webpage Screenshot (Beta)"
+   },
+   "fullscreen_info_modal_shortcut_linkt": {
+      "description": "You can configure these here: ",
+      "message": "Du kan konfigurere disse her:"
+   },
+   "fullscreen_info_modal_shortcut_recording": {
+      "description": "Alt + R: Start/stop recording",
+      "message": "Alt + R: Start / Stop optagelse"
+   },
+   "fullscreen_info_modal_shortcut_screenshot": {
+      "description": "Alt + S: Visible area screenshot",
+      "message": "ALT + S: Synligt område screenshot"
+   },
+   "fullscreen_info_modal_shortcuts": {
+      "description": "Default shortcuts are: ",
+      "message": "Standardgenveje er:"
+   },
+   "fullscreen_info_modal_start": {
+      "description": "Start full screen capture",
+      "message": "Start fuld skærmfangst"
+   },
+   "fullscreen_info_modal_title": {
+      "description": "Full screen capture",
+      "message": "Full Screen Capture."
+   },
+   "general_not_available": {
+      "description": "N/A",
+      "message": "Ikke tilgængelig"
+   },
+   "get_premium": {
+      "description": "Get Premium",
+      "message": "Få Premium."
+   },
+   "height_text": {
+      "description": "Width (px)",
+      "message": "Bredde (PX)"
+   },
+   "hi": {
+      "description": "Hi",
+      "message": "Hej"
+   },
+   "internet_connection_required": {
+      "description": "Internet connection is required to upgrade to premium.",
+      "message": "Internetforbindelse er nødvendig for at opgradere til Premium."
+   },
+   "manage_subscription_access_until_date": {
+      "description": "Your plan will not renew. You can access premium features until $date$.",
+      "message": "Din plan vil ikke blive fornyet. Du kan få adgang til premium-funktioner indtil $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_cancel_button": {
+      "description": "Cancel subscription",
+      "message": "Annuller abonnement"
+   },
+   "manage_subscription_cancel_confirm_cancel_button": {
+      "description": "Keep Premium",
+      "message": "Behold Premium"
+   },
+   "manage_subscription_cancel_confirm_confirm_button": {
+      "description": "Continue to cancel",
+      "message": "Fortsæt for at annullere"
+   },
+   "manage_subscription_cancel_confirm_description": {
+      "description": "You will lose access to Premium features and Premium options will be reset.",
+      "message": "Du mister adgang til Premium-funktioner, og Premium-indstillinger nulstilles."
+   },
+   "manage_subscription_cancel_confirm_title": {
+      "description": "Are you sure you want to cancel your subscription?",
+      "message": "Er du sikker på, at du vil annullere dit abonnement?"
+   },
+   "manage_subscription_ended_on_date": {
+      "description": "Subscription ended on $date$.",
+      "message": "Abonnementet sluttede den $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_ends_on_date": {
+      "description": "Subscription ends on $date$.",
+      "message": "Abonnementet slutter den $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_next_payment_full": {
+      "description": "Next payment: $price$ on $date$",
+      "message": "Næste betaling: $price$ den $date$",
+      "placeholders": {
+         "date": {
+            "content": "$2"
+         },
+         "price": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_paid_full": {
+      "description": "Paid: $billingCycle$",
+      "message": "Betalt: $billingCycle$",
+      "placeholders": {
+         "billingCycle": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_resubscribe_prompt": {
+      "description": " To use premium features again, please upgrade.",
+      "message": " For at bruge premium-funktioner igen, bedes du opgradere."
+   },
+   "manage_subscription_update_payment_button": {
+      "description": "Update payment method",
+      "message": "Opdater betalingsmetode"
+   },
+   "max_recording_dimension_size_text": {
+      "description": "Max recording resolution/quality",
+      "message": "Maks. Optagelsesopløsning / kvalitet"
+   },
+   "no_limit_text": {
+      "description": "No limit",
+      "message": "Ingen grænse"
+   },
+   "open_text": {
+      "description": "Open",
+      "message": "Åben"
+   },
+   "options_default_action": {
+      "description": "Extension icon click action",
+      "message": "Handling ved klik på udvidelsesikon"
+   },
+   "options_dimension_size_1000": {
+      "description": "1000 pixels",
+      "message": "1000 pixels."
+   },
+   "options_dimension_size_1080p": {
+      "description": "1920 pixels (1080p)",
+      "message": "1920 pixels (1080p)"
+   },
+   "options_dimension_size_480p": {
+      "description": "640 pixels (480p)",
+      "message": "640 pixels (480p)"
+   },
+   "options_dimension_size_4k": {
+      "description": "3840 pixels (4K)",
+      "message": "3840 pixels (4k)"
+   },
+   "options_dimension_size_720p": {
+      "description": "1280 pixels (720p)",
+      "message": "1280 pixels (720p)"
+   },
+   "options_embedded_options_permission_warning": {
+      "description": "Cursor highlighting, click effects, and drawing tools will only work until the page reloads or changes. To keep them active after reloads or redirects, you'll need to grant an extra permission.",
+      "message": "Markering af markør, klik-effekter og tegneværktøjer virker kun, indtil siden genindlæses eller ændres. For at holde dem aktive efter genindlæsninger eller omdirigeringer, skal du give en ekstra tilladelse."
+   },
+   "options_enable_notifications": {
+      "description": "Enable notifications",
+      "message": "Aktivér meddelelser"
+   },
+   "options_enable_notifications_tooltip": {
+      "description": "Display notifications when full screen recording starts and processing recordings in the background.",
+      "message": "Vis underretninger, når optagelsen af fuld skærm starter og behandler optagelser i baggrunden."
+   },
+   "options_enable_subfolder_downloads": {
+      "description": "Download files into subfolder",
+      "message": "Download filer til undermappen"
+   },
+   "options_enable_subfolder_downloads_tooltip": {
+      "description": "Download files into a subfolder of your choice inside the downloads folder. This option is useful for organising your captures.",
+      "message": "Download filer til en undermappe efter eget valg inde i mappen Downloads. Denne mulighed er nyttig til at organisere dine optagelser."
+   },
+   "options_how_to_use_btn": {
+      "description": "How to use",
+      "message": "Sådan bruges"
+   },
+   "options_language": {
+      "description": "Language",
+      "message": "Sprog"
+   },
+   "options_open_containing_folder_on_save": {
+      "description": "Open containing folder after saving",
+      "message": "Åbn indeholdende mappe efter gemning"
+   },
+   "options_open_popup": {
+      "description": "Open popup",
+      "message": "Åben popup."
+   },
+   "options_open_selected_area": {
+      "description": "Open selected area capture",
+      "message": "Åbn valgt områdefangst"
+   },
+   "options_section_general": {
+      "description": "Title for the General settings section in the options page",
+      "message": "Generelle indstillinger"
+   },
+   "options_section_output": {
+      "description": "Title for the Output and Saving settings section in the options page",
+      "message": "Output og lagring"
+   },
+   "options_section_recording": {
+      "description": "Title for the Recording settings section in the options page",
+      "message": "Optagelsesindstillinger"
+   },
+   "options_section_visuals": {
+      "description": "Title for the Cursor and Interaction Visuals settings section in the options page",
+      "message": "Markør og interaktionsvisuelt"
+   },
+   "options_shortcuts_btn": {
+      "description": "Shortcuts",
+      "message": "Genvejstaster."
+   },
+   "options_subfolder_downloads_name": {
+      "description": "Subfolder name:",
+      "message": "Undermappen Navn:"
+   },
+   "options_support_btn": {
+      "description": "Support",
+      "message": "Support"
+   },
+   "overlay_help_text": {
+      "description": "Click and drag to choose your selected area. \nRight click to snap to an element, hold shift for multiple.",
+      "message": "Klik og træk for at vælge dit valgte område. \n Højreklik for at snappe til et element, hold skift til flere."
+   },
+   "plan_billing_annually": {
+      "description": "Annually",
+      "message": "Årligt"
+   },
+   "plan_billing_monthly": {
+      "description": "Monthly",
+      "message": "Månedlig"
+   },
+   "plan_name_custom": {
+      "description": "Custom Plan",
+      "message": "Brugerdefineret plan"
+   },
+   "popup_capture_tab": {
+      "description": "Capture",
+      "message": "Fange"
+   },
+   "popup_desktop_screenshot_tooltip": {
+      "description": "Capture the entire screen, desktop, or any open application.",
+      "message": "Fang hele skærmen, desktop eller enhver åben applikation."
+   },
+   "popup_editor_icon_tooltip": {
+      "description": "Open Editor",
+      "message": "Open Editor."
+   },
+   "popup_full_page_screenshot_tooltip": {
+      "description": "Capture the current tab full webpage, including content beyond the visible area.",
+      "message": "Fang den aktuelle fane fuld webside, inklusive indhold ud over det synlige område."
+   },
+   "popup_full_webpage": {
+      "description": "Full webpage",
+      "message": "Fuld webside"
+   },
+   "popup_no_scripts_alert": {
+      "description": "Selected area and full webpage screenshots are not possible here. These features are available on other websites.",
+      "message": "Udvalgte areal- og fulde websideskærmbilleder er ikke mulige her. Disse funktioner er tilgængelige på andre websteder."
+   },
+   "popup_record_tab": {
+      "description": "Record",
+      "message": "Optage"
+   },
+   "popup_recording_limit_alert": {
+      "description": "Record up to $seconds$ seconds per GIF. Premium users can update this from the ",
+      "message": "Optag op til $seconds$ sekunder pr. GIF. Premium -brugere kan opdatere dette fra",
+      "placeholders": {
+         "seconds": {
+            "content": "$1"
+         }
+      }
+   },
+   "popup_recording_limit_settings_link": {
+      "description": "settings page.",
+      "message": "Side -indstillinger."
+   },
+   "popup_screen_or_app": {
+      "description": "Full screen or app",
+      "message": "Fuld skærm eller app"
+   },
+   "popup_selected_area": {
+      "description": "Selected area",
+      "message": "Valgt område."
+   },
+   "popup_selected_area_screenshot_tooltip": {
+      "description": "Capture a specific area of the current tab.",
+      "message": "Fang et specifikt område på den aktuelle fane."
+   },
+   "popup_set_shortcut": {
+      "description": "set shortcut",
+      "message": "Indstil genvej"
+   },
+   "popup_settings_icon_tooltip": {
+      "description": "Open Settings",
+      "message": "Åbn indstillinger."
+   },
+   "popup_tab_screenshot_tooltip": {
+      "description": "Capture the visible part of the current tab.",
+      "message": "Fang den synlige del af den aktuelle fane."
+   },
+   "popup_this_tab": {
+      "description": "This tab",
+      "message": "Denne TAB."
+   },
+   "popup_waiting_for_desktop_selection_alert": {
+      "description": "FULL SCREEN OR APP capture did not start because you did not select an option from the popup dialog. If you have multiple monitors it may have opened on another monitor.",
+      "message": "Fuld skærm eller appoptagelse startede ikke, fordi du ikke valgte en mulighed i popup -dialogen. Hvis du har flere skærme, kan det have åbnet på en anden skærm."
+   },
+   "premium_settings_text": {
+      "description": "Premium Settings",
+      "message": "Premiumindstillinger."
+   },
+   "purchase_btn_text": {
+      "description": "Get Premium!",
+      "message": "Få Premium!"
+   },
+   "purchase_description_limited_time_text": {
+      "description": "Lock in this price now - limited time offer before we switch to subscriptions!",
+      "message": "Sikre denne pris nu - begrænset tilbud, før vi skifter til abonnementer!"
+   },
+   "purchase_description_text": {
+      "description": "Just one payment unlocks all premium features forever. No recurring fees!",
+      "message": "Én betaling låser op for alle premium-funktioner på livstid. Ingen tilbagevendende gebyrer!"
+   },
+   "purchase_feature_30fps": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "silkeblød 30 FPS-optagelse"
+   },
+   "purchase_feature_4K": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "krystalklar 4K-optagelse"
+   },
+   "purchase_feature_alter_frame_rate": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "brugerdefinerede billedhastigheder"
+   },
+   "purchase_feature_alter_playback_speed": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "slowmotion- og time-lapse-effekter"
+   },
+   "purchase_feature_blur": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "sløringsværktøjet"
+   },
+   "purchase_feature_crop_recording": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "præcis GIF-beskæring"
+   },
+   "purchase_feature_default": {
+      "description": "Feature that goes in $feature$ placeholder. Default fallback.",
+      "message": "denne funktion"
+   },
+   "purchase_feature_frame_edits": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "kraftfuld redigering billede for billede"
+   },
+   "purchase_feature_highlight": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "fremhævningsværktøjet"
+   },
+   "purchase_feature_no_duration_limit": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ubegrænset optagelseslængde"
+   },
+   "purchase_feature_special_effect": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "specialeffekter"
+   },
+   "purchase_feature_step_tool": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "trinværktøjet"
+   },
+   "purchase_feature_svg": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "tilføjelse af brugerdefinerede ikoner og logoer"
+   },
+   "purchase_feature_text_and_annotation_customization": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "fuld kontrol over tekst og anmærkninger"
+   },
+   "purchase_feature_unlimited_gif_compression": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ubegrænset avanceret GIF-komprimering"
+   },
+   "purchase_feature_update_end_time": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "tilpasset optagelsestid"
+   },
+   "purchase_login_dialog_closed_by_user_alert": {
+      "description": "Looks like you closed the sign in dialog, premium users must sign in so you don't lose premium access.",
+      "message": "Det ser ud til, at du lukkede skilt i dialogen, premium -brugere skal logge ind, så du ikke mister premium -adgang."
+   },
+   "purchase_login_dialog_google_button": {
+      "description": "Sign in with Google",
+      "message": "Log ind med Google"
+   },
+   "purchase_login_dialog_title": {
+      "description": "Sign in required",
+      "message": "Log på påkrævet"
+   },
+   "purchase_login_text": {
+      "description": "Sign in with Google to link your purchase to your account.",
+      "message": "Log ind med Google for at knytte dit køb til din konto."
+   },
+   "purchase_login_text_window_opened": {
+      "description": "Sign into Google in the popup window.",
+      "message": "Log ind på Google i popup -vinduet."
+   },
+   "purchase_subscription_title_text": {
+      "description": "Choose the plan that fits your needs",
+      "message": "Vælg den plan, der passer til dine behov"
+   },
+   "purchase_title_text": {
+      "description": "Get Lifetime Premium Access Today!",
+      "message": "Få livstids premium-adgang i dag!"
+   },
+   "purchase_title_text_blocked_feature": {
+      "description": "That feature requires Premium",
+      "message": "Den funktion kræver Premium"
+   },
+   "purchase_title_text_blocked_pro_feature": {
+      "description": "That feature requires Premium Pro",
+      "message": "Denne funktion kræver Premium Pro"
+   },
+   "purchase_title_text_blocked_pro_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium Pro paywall.",
+      "message": "Lås $feature$ op med Premium Pro",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchase_title_text_blocked_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium paywall.",
+      "message": "Lås $feature$ op med Premium",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_already_premium_user": {
+      "description": "Already a premium user?",
+      "message": "Allerede en premium bruger?"
+   },
+   "purchases_bill_me": {
+      "description": "Bill me:",
+      "message": "Fakturer mig:"
+   },
+   "purchases_checkout_unavailable_message": {
+      "description": "Message shown when checkout could not be started.",
+      "message": "Opgraderingsforløbet kunne ikke startes lige nu. Prøv venligst igen."
+   },
+   "purchases_compare_12_fps": {
+      "description": "12FPS",
+      "message": "12 fps"
+   },
+   "purchases_compare_3_per_day": {
+      "description": "3 per day",
+      "message": "3 om dagen"
+   },
+   "purchases_compare_add_custom_shape_tool": {
+      "description": "Add custom shape/icon tool",
+      "message": "Tilføj værktøj til brugerdefineret form/ikon"
+   },
+   "purchases_compare_benefits": {
+      "description": "Benefits",
+      "message": "Fordele"
+   },
+   "purchases_compare_blur_tool": {
+      "description": "Blur tool",
+      "message": "Sløringsværktøj"
+   },
+   "purchases_compare_close_button_label": {
+      "description": "Close",
+      "message": "Luk"
+   },
+   "purchases_compare_compression": {
+      "description": "High quality GIF compression",
+      "message": "Højkvalitets GIF-kompression"
+   },
+   "purchases_compare_core_capture_features": {
+      "description": "Core Capture Features",
+      "message": "Kerneoptagelsesfunktioner"
+   },
+   "purchases_compare_crop_recordings": {
+      "description": "Crop recordings",
+      "message": "Beskær optagelser"
+   },
+   "purchases_compare_customize_editing_tools": {
+      "description": "Customize editing tools (font, size color)",
+      "message": "Tilpas redigeringsværktøjer (skrifttype, størrelse, farve)"
+   },
+   "purchases_compare_drawing": {
+      "description": "Draw while recording",
+      "message": "Tegn under optagelse."
+   },
+   "purchases_compare_early_access": {
+      "description": "Early access to new features",
+      "message": "Tidlig adgang til nye funktioner"
+   },
+   "purchases_compare_editing": {
+      "description": "Edit captures",
+      "message": "Rediger captures."
+   },
+   "purchases_compare_editing_free": {
+      "description": "basic editing",
+      "message": "Grundlæggende redigering"
+   },
+   "purchases_compare_editing_suite": {
+      "description": "Editing Suite",
+      "message": "Redigeringspakke"
+   },
+   "purchases_compare_frame_editing": {
+      "description": "Frame editing",
+      "message": "Rammedigering"
+   },
+   "purchases_compare_frame_rate": {
+      "description": "Adjust Frame Rate",
+      "message": "Juster billedfrekvens"
+   },
+   "purchases_compare_frame_specific_edits": {
+      "description": "Frame specific edits",
+      "message": "Rammespecifikke redigeringer"
+   },
+   "purchases_compare_free_draw_tools": {
+      "description": "Free draw, line, arrow, rectangle, circle, text tools",
+      "message": "Frihåndstegning, linje, pil, rektangel, cirkel, tekstværktøjer"
+   },
+   "purchases_compare_full_webpage_screenshots": {
+      "description": "Unlimited full page screenshots.",
+      "message": "Ubegrænset Fuld Page Skærmbilleder."
+   },
+   "purchases_compare_highlight_tool": {
+      "description": "Highlight tool",
+      "message": "Fremhævningsværktøj"
+   },
+   "purchases_compare_live_recording_tools": {
+      "description": "Live Recording Tools",
+      "message": "Live-optagelsesværktøjer"
+   },
+   "purchases_compare_mouse": {
+      "description": "Click and mouse indication",
+      "message": "Klik og musindikation"
+   },
+   "purchases_compare_plans": {
+      "description": "Compare plans",
+      "message": "Sammenlign planer"
+   },
+   "purchases_compare_plans_premium_button": {
+      "description": "Upgrade to Premium",
+      "message": "Opgrader til Premium"
+   },
+   "purchases_compare_playback_speed": {
+      "description": "Tune recording playback speed",
+      "message": "Indstil optagelse afspilningshastighed"
+   },
+   "purchases_compare_priority_support": {
+      "description": "Priority support and feature requests",
+      "message": "Prioriteret support og funktionsanmodninger"
+   },
+   "purchases_compare_recording": {
+      "description": "Unlimited GIF recordings.",
+      "message": "Ubegrænset GIF-optagelser."
+   },
+   "purchases_compare_recording_free": {
+      "description": "15sec limit per GIF",
+      "message": "15 sekunder grænse pr. Gif"
+   },
+   "purchases_compare_recording_quality": {
+      "description": "High quality GIFs",
+      "message": "Høj kvalitet gifs."
+   },
+   "purchases_compare_recording_quality_control": {
+      "description": "Recording Quality & Control",
+      "message": "Optagelseskvalitet og -kontrol"
+   },
+   "purchases_compare_recording_quality_free": {
+      "description": "1000 pixels max",
+      "message": "1000 pixels Max."
+   },
+   "purchases_compare_screenshots": {
+      "description": "Unlimited screenshots.",
+      "message": "Ubegrænsede screenshots."
+   },
+   "purchases_compare_special_effects": {
+      "description": "Recording special effects",
+      "message": "Optagelse af specielle effekter"
+   },
+   "purchases_compare_up_to_1080p": {
+      "description": "Up to 1080p",
+      "message": "Op til 1080p"
+   },
+   "purchases_compare_up_to_24_fps": {
+      "description": "Up to 24FPS",
+      "message": "Op til 24 fps"
+   },
+   "purchases_compare_up_to_30_fps": {
+      "description": "Up to 30FPS",
+      "message": "Op til 30 fps"
+   },
+   "purchases_compare_up_to_4k_plus": {
+      "description": "Up to 4K+",
+      "message": "Op til 4K+"
+   },
+   "purchases_current_plan": {
+      "description": "Current plan",
+      "message": "Nuværende plan"
+   },
+   "purchases_features": {
+      "description": "Features",
+      "message": "Funktioner"
+   },
+   "purchases_free": {
+      "description": "Free",
+      "message": "Ledig"
+   },
+   "purchases_free_button": {
+      "description": "Free to use",
+      "message": "Fri til brug"
+   },
+   "purchases_free_feature_editing": {
+      "description": "Basic editing",
+      "message": "Grundlæggende redigering"
+   },
+   "purchases_free_feature_recording": {
+      "description": "Basic GIF recording",
+      "message": "Basic GIF-optagelse."
+   },
+   "purchases_free_feature_screenshots": {
+      "description": "Unlimited screenshots",
+      "message": "Ubegrænsede screenshots."
+   },
+   "purchases_free_plan_description": {
+      "description": "Get started with our essential capture tools. Completely free for basic everyday use.",
+      "message": "Kom i gang med vores essentielle optagelsesværktøjer. Helt gratis til grundlæggende daglig brug."
+   },
+   "purchases_plan_save_up_to_percentage": {
+      "description": "Save up to",
+      "message": "Spar op til"
+   },
+   "purchases_premium": {
+      "description": "Premium",
+      "message": "Præmie"
+   },
+   "purchases_premium_billed_annually": {
+      "description": "Billed annually",
+      "message": "Faktureres årligt"
+   },
+   "purchases_premium_button": {
+      "description": "Get lifetime access",
+      "message": "Få livstidsadgang"
+   },
+   "purchases_premium_feature_compression": {
+      "description": "High quality GIF compression",
+      "message": "Højkvalitets GIF-kompression"
+   },
+   "purchases_premium_feature_editing": {
+      "description": "Feature rich editing",
+      "message": "Feature Rich Editing."
+   },
+   "purchases_premium_feature_free": {
+      "description": "Everything from free plan",
+      "message": "Inkluderer funktioner fra gratis plan"
+   },
+   "purchases_premium_feature_marked_with_star": {
+      "description": "All features marked with a star",
+      "message": "Alle funktioner markeret med en stjerne"
+   },
+   "purchases_premium_feature_recording": {
+      "description": "Unlimited high quality GIF recording",
+      "message": "Ubegrænset GIF-optagelse af høj kvalitet"
+   },
+   "purchases_premium_feature_recording_1080p": {
+      "description": "High quality GIF recording, up to 1080p, 24fps",
+      "message": "Højkvalitets GIF-optagelse, op til 1080p, 24 fps"
+   },
+   "purchases_premium_feature_refundable": {
+      "description": "Fully refundable",
+      "message": "Fuldt refunderes"
+   },
+   "purchases_premium_feature_risk_free": {
+      "description": "Risk-free: 7 day trial, cancel anytime",
+      "message": "Risikofrit: 7 dages prøveperiode, annuller når som helst"
+   },
+   "purchases_premium_feature_unlimited_length": {
+      "description": "Unlimited GIF recording length",
+      "message": "Ubegrænset GIF-optagelseslængde"
+   },
+   "purchases_premium_price_info": {
+      "description": "one time fee",
+      "message": "et tidspunkt gebyr"
+   },
+   "purchases_premium_price_per_month": {
+      "description": "/ month",
+      "message": "/ måned"
+   },
+   "purchases_premium_pro": {
+      "description": "Premium Pro",
+      "message": "Premium Pro"
+   },
+   "purchases_premium_pro_editing_tools": {
+      "description": "Advanced editing tools (blurring, special effects, etc.)",
+      "message": "Avancerede redigeringsværktøjer (sløring, specialeffekter osv.)"
+   },
+   "purchases_premium_pro_feature_early_access": {
+      "description": "Early access to new features",
+      "message": "Tidlig adgang til nye funktioner"
+   },
+   "purchases_premium_pro_feature_marked_with_crown": {
+      "description": "All features marked with a star and crown",
+      "message": "Alle funktioner markeret med en stjerne og krone"
+   },
+   "purchases_premium_pro_feature_premium_plan": {
+      "description": "Everything from Premium plan",
+      "message": "Alt fra Premium-planen"
+   },
+   "purchases_premium_pro_feature_quality": {
+      "description": "Max resolution recording, 4K+ and 30fps",
+      "message": "Maksimal opløsning optagelse, 4K+ og 30fps"
+   },
+   "purchases_premium_pro_feature_support": {
+      "description": "Priority support and feature requests",
+      "message": "Prioriteret support og funktionsanmodninger"
+   },
+   "purchases_premium_pro_upgrade": {
+      "description": "Upgrade to Pro",
+      "message": "Opgrader til Pro"
+   },
+   "purchases_premium_save_percentage": {
+      "description": "save $savingsPercentage$%",
+      "message": "spar $savingsPercentage$%",
+      "placeholders": {
+         "savingsPercentage": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_premium_try_for_free": {
+      "description": "Try for free",
+      "message": "Prøv gratis"
+   },
+   "purchases_price_unavailable": {
+      "description": "Label shown in place of a price when it is unavailable.",
+      "message": "Pris ikke tilgængelig"
+   },
+   "purchases_pricing_unavailable_message": {
+      "description": "Message shown when the Premium pricing request was blocked or failed.",
+      "message": "Anmodningen om Premium-priser blev blokeret eller mislykkedes. Dette kan ske, hvis et arbejdsnetværk, VPN, annonceblokering, privatlivsudvidelse eller firewall blokerer Paddle."
+   },
+   "purchases_pricing_unavailable_title": {
+      "description": "Title shown when Premium pricing could not be loaded.",
+      "message": "Premium-priser kunne ikke indlæses"
+   },
+   "purchases_pricing_unavailable_troubleshooting_extensions": {
+      "description": "Troubleshooting step telling the user to disable VPN or privacy tools temporarily.",
+      "message": "Deaktiver midlertidigt VPN, annonceblokering eller privatlivsudvidelser, og prøv igen."
+   },
+   "purchases_pricing_unavailable_troubleshooting_intro": {
+      "description": "Intro text for troubleshooting steps when pricing is unavailable.",
+      "message": "Prøv dette:"
+   },
+   "purchases_pricing_unavailable_troubleshooting_network": {
+      "description": "Troubleshooting step telling the user to try another network or browser profile.",
+      "message": "Prøv et andet netværk, eller åbn udvidelsen i en anden Chrome-profil."
+   },
+   "purchases_pricing_unavailable_troubleshooting_workplace": {
+      "description": "Troubleshooting step telling the user workplace policy may be blocking Paddle.",
+      "message": "Hvis du er på en arbejdsenhed, kan dit netværk eller dine browserpolitikker blokere Paddle."
+   },
+   "purchases_sign_in_here": {
+      "description": "Sign in here",
+      "message": "Log ind her."
+   },
+   "purchases_start_trial_cancel_anytime": {
+      "description": "Call to action to start a free trial.",
+      "message": "Start din 7-dages gratis prøveperiode for at fortsætte. Annuller når som helst."
+   },
+   "purchases_try_premium_for_free": {
+      "description": "Try Premium for Free",
+      "message": "Prøv Premium gratis"
+   },
+   "purchases_try_premium_pro_for_free": {
+      "description": "Try Premium Pro for Free",
+      "message": "Prøv Premium Pro gratis"
+   },
+   "purchases_upgrade_premium_to_pro": {
+      "description": "To use this feature and access all Pro benefits, upgrade your plan.",
+      "message": "For at bruge denne funktion og få adgang til alle Pro-fordele skal du opgradere din plan."
+   },
+   "purchases_upgrade_to_premium_pro": {
+      "description": "Upgrade to Premium Pro",
+      "message": "Opgrader til Premium Pro"
+   },
+   "quality_text": {
+      "description": "Recording quality (10 = best)",
+      "message": "Optagelseskvalitet (10 = BEST)"
+   },
+   "rate_bad_rating_text": {
+      "description": "We are continuously trying our hardest to improve Chrome Capture, please share what needs improvement by emailing us at ",
+      "message": "Vi forsøger løbende vores sværeste at forbedre Chrome Capture, venligst del, hvad der skal forbedres ved at sende os en e-mail til"
+   },
+   "rate_bad_title_text": {
+      "description": "😞 We are sorry!",
+      "message": "😞 Vi beklager!"
+   },
+   "rate_close_btn_text": {
+      "description": "Close",
+      "message": "Tæt"
+   },
+   "rate_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "Bekræfte"
+   },
+   "rate_description_text": {
+      "description": "If you've found this extension useful please leave a rating or review. \n\nBy leaving a rating you can help us reach more users which will help fund continual improvements and keep general usage free.",
+      "message": "Hvis du har fundet denne udvidelse nyttig, bedes du forlade en bedømmelse eller en anmeldelse. \n\n Ved at forlade en rating kan du hjælpe os med at nå flere brugere, som vil hjælpe med at finansiere løbende forbedringer og holde generel brugsfri."
+   },
+   "rate_description_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "Vi sætter stor pris på, at du køber Premium og vil elske at høre nogen feedback, du skal hjælpe os med at forbedre produktet og nå flere brugere."
+   },
+   "rate_good_rating_text": {
+      "description": "Your reviews keep our small team motivated to make Chrome Capture even better!",
+      "message": "Dine anmeldelser Hold vores lille team motiveret til at gøre Chrome Capture endnu bedre!"
+   },
+   "rate_good_rating_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "Vi sætter stor pris på, at du køber Premium og vil elske at høre nogen feedback, du skal hjælpe os med at forbedre produktet og nå flere brugere."
+   },
+   "rate_good_title_text": {
+      "description": "😍 Review in the web store?",
+      "message": "😍 Anmeldelse i webshoppen?"
+   },
+   "rate_maybe_later_btn_text": {
+      "description": "Maybe later",
+      "message": "Måske senere"
+   },
+   "rate_no_btn_text": {
+      "description": "No thanks",
+      "message": "Nej tak"
+   },
+   "rate_send_email_btn_text": {
+      "description": "Send Email",
+      "message": "Send e-mail"
+   },
+   "rate_thank_you_title_text": {
+      "description": "Thank you! 😍",
+      "message": "Tak skal du have! 😍"
+   },
+   "rate_title_text": {
+      "description": "How are we doing?",
+      "message": "Hvordan har vi det?"
+   },
+   "rate_yes_btn_text": {
+      "description": "Ok, sure",
+      "message": "Ok fint"
+   },
+   "recommended": {
+      "description": "recommended",
+      "message": "anbefalede"
+   },
+   "record_length_text": {
+      "description": "Max record length",
+      "message": "Max rekordlængde"
+   },
+   "recordings_taken": {
+      "description": "Recordings taken:",
+      "message": "Optagelser taget:"
+   },
+   "save_as_screenshot_text": {
+      "description": "Save screenshot as",
+      "message": "Gem screenshot As."
+   },
+   "save_as_text": {
+      "description": "Save recording as",
+      "message": "Gem optagelse som"
+   },
+   "screenshots_taken": {
+      "description": "Screenshots taken:",
+      "message": "Skærmbilleder taget:"
+   },
+   "seconds_text": {
+      "description": "secs",
+      "message": "Secs."
+   },
+   "shortcut": {
+      "description": "Shortcut:",
+      "message": "Genvej:"
+   },
+   "show_click_indicator_text": {
+      "description": "Show click animation",
+      "message": "Vis klik animation"
+   },
+   "show_click_indicator_tooltip_text": {
+      "description": "This option draws a circle animation around the click location.",
+      "message": "Denne mulighed trækker en cirkel animation omkring klikstedet."
+   },
+   "show_cursor_text": {
+      "description": "Show dot at cursor location",
+      "message": "Vis dot på Cursor Placering"
+   },
+   "show_cursor_tooltip_text": {
+      "description": "This option draws a small circle to indicate where the mouse is located.",
+      "message": "Denne mulighed trækker en lille cirkel for at angive, hvor musen er placeret."
+   },
+   "sign_in": {
+      "description": "Sign In",
+      "message": "Log ind"
+   },
+   "sign_out": {
+      "description": "Sign Out",
+      "message": "Log ud"
+   },
+   "subscription_past_due_warning": {
+      "description": "Warning message shown when a user subscription payment has failed or is past its due date.",
+      "message": "Abonnementsbetaling er forfalden. Klik her for at opdatere dine betalingsoplysninger."
+   },
+   "subscription_premium_plan_description": {
+      "description": "Go beyond basics: HD quality & limits unlocked. Craft pro content with enhanced features.",
+      "message": "Gå ud over det grundlæggende: HD-kvalitet og ubegrænsede grænser. Skab professionelt indhold med forbedrede funktioner."
+   },
+   "subscription_premium_pro_plan_description": {
+      "description": "Experience peak performance: 4K+ and all features. Full editing suite with early access.",
+      "message": "Oplev topydelse: 4K+ og alle funktioner. Fuld redigeringspakke med tidlig adgang."
+   },
+   "subscription_status_active": {
+      "description": "Active",
+      "message": "Aktiv"
+   },
+   "subscription_status_ending_soon": {
+      "description": "Ending Soon",
+      "message": "Slutter snart"
+   },
+   "subscription_status_expired": {
+      "description": "Expired",
+      "message": "Udløbet"
+   },
+   "subscription_status_past_due": {
+      "description": "Past Due",
+      "message": "Forfalden"
+   },
+   "subscription_status_paused": {
+      "description": "Paused",
+      "message": "Sat på pause"
+   },
+   "subscription_status_unknown": {
+      "description": "Unknown",
+      "message": "Ukendt"
+   },
+   "unable_to_capture_website_alert": {
+      "description": "Unable to capture this website. Please use full screen/application capture or try capture another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "Kan ikke fange dette websted. Brug venligst fuld skærm/applikationsfangst, eller prøv at fange et andet websted. \n\n (╯ ° □ °） ╯︵ ┻━┻"
+   },
+   "view_permission": {
+      "description": "View permission.",
+      "message": "Vis tilladelse."
+   },
+   "width_text": {
+      "description": "Height (px)",
+      "message": "Højde (PX)"
+   }
+}

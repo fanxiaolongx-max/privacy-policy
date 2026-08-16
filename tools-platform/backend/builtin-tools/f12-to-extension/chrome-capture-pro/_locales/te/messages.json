@@ -1,0 +1,1691 @@
+{
+   "account_modal_free_plan": {
+      "description": "You are on the free plan",
+      "message": "మీరు ఉచిత ప్రణాళికలో ఉన్నారు"
+   },
+   "account_modal_manage_subscription_button": {
+      "description": "Manage Subscription",
+      "message": "సభ్యత్వాన్ని నిర్వహించండి"
+   },
+   "account_modal_not_signed_in": {
+      "description": "You are not signed in",
+      "message": "మీరు సైన్ ఇన్ చేయబడలేదు"
+   },
+   "account_modal_premium_plan": {
+      "description": "You are on the premium plan",
+      "message": "మీరు ప్రీమియం ప్రణాళికలో ఉన్నారు"
+   },
+   "account_modal_premium_pro_plan": {
+      "description": "You are on the Premium Pro plan",
+      "message": "మీరు ప్రీమియం ప్రో ప్లాన్‌లో ఉన్నారు"
+   },
+   "account_modal_request_feature_button": {
+      "description": "Request Feature",
+      "message": "ఫీచర్‌ను అభ్యర్థించండి"
+   },
+   "account_modal_request_support_button": {
+      "description": "Request Support",
+      "message": "మద్దతును అభ్యర్థించండి"
+   },
+   "account_modal_stats_heading": {
+      "description": "Your stats:",
+      "message": "మీ గణాంకాలు:"
+   },
+   "alert_text": {
+      "description": "Unable to run selected area capture on this website. Please use full screen recording or try another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "ఈ వెబ్సైట్లో ఎంచుకున్న ప్రాంతాన్ని సంగ్రహించడం సాధ్యం కాదు. దయచేసి పూర్తి స్క్రీన్ రికార్డింగ్ను ఉపయోగించండి లేదా మరొక వెబ్సైట్ని ప్రయత్నించండి. \n\n (° ° °) ╯ ┻━┻ ┻━┻"
+   },
+   "click_indicator_size_color_text": {
+      "description": "Click animation size & color",
+      "message": "యానిమేషన్ పరిమాణం & రంగు క్లిక్ చేయండి"
+   },
+   "close_btn_text": {
+      "description": "Close",
+      "message": "దగ్గరగా"
+   },
+   "confirm_dialog_cancel_btn_text": {
+      "description": "Cancel",
+      "message": "రద్దు చేయండి"
+   },
+   "confirm_dialog_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "నిర్ధారించండి"
+   },
+   "confirm_fps_update_text": {
+      "description": "Changing the fps will remove all frame specific edits such as edited or deleted frames. Do you want to continue?",
+      "message": "FPS ను మార్చడం సవరించిన లేదా తొలగించిన ఫ్రేమ్‌లు వంటి అన్ని చిత్ర నిర్దిష్ట సవరణలను తొలగిస్తుంది. మీరు కొనసాగించాలనుకుంటున్నారా?"
+   },
+   "copy_text": {
+      "description": "Copy to clipboard",
+      "message": "క్లిప్‌బోర్డ్‌కు కాపీ చేయండి"
+   },
+   "cursor_size_and_color_text": {
+      "description": "Cursor dot size & color",
+      "message": "కర్సర్ డాట్ పరిమాణం & రంగు"
+   },
+   "dither_text": {
+      "description": "Apply dither",
+      "message": "Dither వర్తించు"
+   },
+   "download_filename_text": {
+      "description": "Download filename format",
+      "message": "ఫైల్ పేరు ఫార్మాట్ డౌన్లోడ్"
+   },
+   "download_text": {
+      "description": "Download",
+      "message": "డౌన్లోడ్"
+   },
+   "draw_size_and_color_text": {
+      "description": "Drawing size & color",
+      "message": "డ్రాయింగ్ పరిమాణం & రంగు"
+   },
+   "duration": {
+      "description": "Label for a field indicating a length of time.",
+      "message": "వ్యవధి"
+   },
+   "editor_action_add_icon": {
+      "description": "Add icon",
+      "message": "చిహ్నాన్ని జోడించండి"
+   },
+   "editor_action_add_text": {
+      "description": "Add text",
+      "message": "టెక్స్ట్ని జోడించండి"
+   },
+   "editor_action_blur_rectangle": {
+      "description": "Blur area",
+      "message": "ప్రాంతాన్ని అస్పష్టం చేయండి"
+   },
+   "editor_action_copy": {
+      "description": "Copy to clipboard",
+      "message": "క్లిప్బోర్డ్కు కాపీ చేయండి"
+   },
+   "editor_action_crop": {
+      "description": "Crop",
+      "message": "పంట"
+   },
+   "editor_action_draw_arrow": {
+      "description": "Draw arrow",
+      "message": "బాణం డ్రా"
+   },
+   "editor_action_draw_ellipse": {
+      "description": "Draw ellipse",
+      "message": "ఎలిప్స్కి గీయండి"
+   },
+   "editor_action_draw_line": {
+      "description": "Draw line",
+      "message": "లైన్ గీయండి"
+   },
+   "editor_action_draw_rectangle": {
+      "description": "Draw rectangle",
+      "message": "దీర్ఘచతురస్రాన్ని గీయండి"
+   },
+   "editor_action_free_draw": {
+      "description": "Free draw",
+      "message": "ఉచిత డ్రా"
+   },
+   "editor_action_highlight": {
+      "description": "Highlight",
+      "message": "హైలైట్"
+   },
+   "editor_action_numbered_step": {
+      "description": "Action label for adding a numbered step annotation.",
+      "message": "సంఖ్య గల దశ"
+   },
+   "editor_action_pan": {
+      "description": "Pan",
+      "message": "పాన్"
+   },
+   "editor_action_profile_account": {
+      "description": "Account",
+      "message": "ఖాతా"
+   },
+   "editor_action_redo": {
+      "description": "Redo",
+      "message": "పునరావృతం"
+   },
+   "editor_action_save": {
+      "description": "Save",
+      "message": "సేవ్"
+   },
+   "editor_action_select": {
+      "description": "Select, move, resize",
+      "message": "ఎంచుకోండి, తరలించు, పునఃపరిమాణం"
+   },
+   "editor_action_settings": {
+      "description": "Settings",
+      "message": "సెట్టింగులు"
+   },
+   "editor_action_undo": {
+      "description": "Undo",
+      "message": "అన్డు"
+   },
+   "editor_action_undo_all": {
+      "description": "Undo all",
+      "message": "అన్డు"
+   },
+   "editor_add_text_default": {
+      "description": "start typing...",
+      "message": "టైప్ చేయడాన్ని ప్రారంభించండి ..."
+   },
+   "editor_browse_file_system": {
+      "description": "Browse file system",
+      "message": "ఫైల్ సిస్టమ్ను బ్రౌజ్ చేయండి"
+   },
+   "editor_drag_and_drop": {
+      "description": "Drag and drop image/GIF or ",
+      "message": "చిత్రం / gif లేదా డ్రాప్ లేదా డ్రాప్"
+   },
+   "editor_file_downloaded": {
+      "description": "File saved to downloads folder.",
+      "message": "ఫైల్ డౌన్‌లోడ్ ఫోల్డర్‌కు సేవ్ చేయబడింది."
+   },
+   "editor_file_downloaded_selected_location": {
+      "description": "File saved to selected location.",
+      "message": "ఫైల్ ఎంచుకున్న స్థానానికి సేవ్ చేయబడింది."
+   },
+   "editor_frame_selector_apply_edits": {
+      "description": "Apply edits to selected",
+      "message": "ఎంచుకున్నవారికి సవరణలను వర్తించండి"
+   },
+   "editor_frame_selector_delete": {
+      "description": "Delete",
+      "message": "తొలగించు"
+   },
+   "editor_frame_selector_delete_every_second": {
+      "description": "Delete every second frame",
+      "message": "ప్రతి రెండవ ఫ్రేమ్ను తొలగించండి"
+   },
+   "editor_frame_selector_delete_selected": {
+      "description": "Delete selected",
+      "message": "ఎంచుకున్నవాటిని రద్దు చేయుట"
+   },
+   "editor_frame_selector_remove_edits": {
+      "description": "Remove edits from selected",
+      "message": "ఎంచుకున్న నుండి సవరణలను తొలగించండి"
+   },
+   "editor_frame_selector_restore": {
+      "description": "Restore",
+      "message": "పునరుద్ధరించండి"
+   },
+   "editor_frame_selector_restore_all": {
+      "description": "Restore All",
+      "message": "అన్ని పునరుద్ధరించండి"
+   },
+   "editor_frame_selector_restore_selected": {
+      "description": "Restore selected",
+      "message": "ఎంచుకున్న పునరుద్ధరణ"
+   },
+   "editor_frame_selector_select_next": {
+      "description": "Select next frames",
+      "message": "తదుపరి చిత్రాలను ఎంచుకోండి"
+   },
+   "editor_frame_selector_select_previous": {
+      "description": "Select previous frames",
+      "message": "మునుపటి చిత్రాలను ఎంచుకోండి"
+   },
+   "editor_frame_selector_unselect_all": {
+      "description": "Unselect All",
+      "message": "ఎంచుకున్నవన్నీ తొలగించు"
+   },
+   "editor_image_copied": {
+      "description": "Image copied to clipboard.",
+      "message": "చిత్రం క్లిప్బోర్డ్కు కాపీ చేయబడింది."
+   },
+   "editor_image_copied_failed": {
+      "description": "Failed to copy image to clipboard, it may be too large.",
+      "message": "క్లిప్బోర్డ్కు చిత్రాన్ని కాపీ చేయడంలో విఫలమైంది, ఇది చాలా పెద్దది కావచ్చు."
+   },
+   "editor_link_copied": {
+      "description": "Link copied to clipboard.",
+      "message": "లింక్ క్లిప్‌బోర్డ్‌కు కాపీ చేయబడింది."
+   },
+   "editor_max_time_reached_dialog_description1": {
+      "description": "You have reached the max recording length time of $maxlength$ seconds for GIFs. Premium users can update this from the settings page.",
+      "message": "మీరు GIF ల కోసం $maxlength$ సెకన్ల గరిష్ట రికార్డింగ్ పొడవు సమయానికి చేరుకున్నారు. ప్రీమియం వినియోగదారులు దీన్ని సెట్టింగుల పేజీ నుండి నవీకరించవచ్చు.",
+      "placeholders": {
+         "maxlength": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_max_time_reached_dialog_description2": {
+      "description": "GIFs are intended for short recordings. If you require full length videos we recommend our free screen recorder: ",
+      "message": "GIF లు చిన్న రికార్డింగ్‌ల కోసం ఉద్దేశించబడ్డాయి. మీకు పూర్తి పొడవు వీడియోలు అవసరమైతే మేము మా ఉచిత స్క్రీన్ రికార్డర్‌ను సిఫార్సు చేస్తున్నాము:"
+   },
+   "editor_max_time_reached_dialog_description3": {
+      "description": "Premium users can update this from the settings page.",
+      "message": "ప్రీమియం వినియోగదారులు దీన్ని సెట్టింగుల పేజీ నుండి నవీకరించవచ్చు."
+   },
+   "editor_max_time_reached_dialog_settings_button": {
+      "description": "Open settings",
+      "message": "సెట్టింగులు తెరవండి"
+   },
+   "editor_max_time_reached_dialog_title": {
+      "description": "Recording suddenly stopped?",
+      "message": "రికార్డింగ్ అకస్మాత్తుగా ఆగిపోయింది?"
+   },
+   "editor_premium_options_color": {
+      "description": "Color",
+      "message": "రంగు"
+   },
+   "editor_premium_options_draw_size": {
+      "description": "Draw Size",
+      "message": "పరిమాణాన్ని గీయండి"
+   },
+   "editor_premium_options_font": {
+      "description": "Font",
+      "message": "ఫాంట్"
+   },
+   "editor_premium_options_playback_speed": {
+      "description": "Playback Speed",
+      "message": "ప్లేబ్యాక్ వేగం"
+   },
+   "editor_premium_options_special_effect": {
+      "description": "Special Effect",
+      "message": "ప్రత్యేకమైన ప్రభావం"
+   },
+   "editor_premium_options_title": {
+      "description": "Premium Options",
+      "message": "ప్రీమియం ఎంపికలు"
+   },
+   "editor_save_dialog_advanced_encoding_options": {
+      "description": "Title for a section containing advanced, technical options for encoding a file.",
+      "message": "అధునాతన ఎన్‌కోడింగ్ ఎంపికలు"
+   },
+   "editor_save_dialog_alert_title": {
+      "description": "Warning",
+      "message": "హెచ్చరిక"
+   },
+   "editor_save_dialog_aspect_ratio": {
+      "description": "lock aspect ratio",
+      "message": "లాక్ కారక నిష్పత్తి"
+   },
+   "editor_save_dialog_cancel": {
+      "description": "Cancel",
+      "message": "రద్దు చేయండి"
+   },
+   "editor_save_dialog_chip_animated_image": {
+      "description": "Chip label indicating an animated image format (e.g. GIF, AVIF).",
+      "message": "యానిమేటెడ్ చిత్రం"
+   },
+   "editor_save_dialog_chip_large_file": {
+      "description": "Chip label indicating the format produces a large file size.",
+      "message": "పెద్ద ఫైల్"
+   },
+   "editor_save_dialog_chip_limited_support": {
+      "description": "Chip label indicating the format has limited browser/app support.",
+      "message": "పరిమిత మద్దతు"
+   },
+   "editor_save_dialog_chip_small_file": {
+      "description": "Chip label indicating the format produces a small file size.",
+      "message": "చిన్న ఫైల్"
+   },
+   "editor_save_dialog_chip_video": {
+      "description": "Chip label indicating a video format (e.g. WebM, MP4).",
+      "message": "వీడియో"
+   },
+   "editor_save_dialog_chip_widely_supported": {
+      "description": "Chip label indicating the format is widely supported.",
+      "message": "విస్తృతంగా మద్దతు ఉంది"
+   },
+   "editor_save_dialog_compress": {
+      "description": "Compress & optimize GIF",
+      "message": "కంప్రెస్ & ఆప్టిమైజ్ GIF"
+   },
+   "editor_save_dialog_compress_tooltip": {
+      "description": "Apply GIF compression algorthm to greatly reduce GIF file size and in some cases improve quality. Highly recommeded.",
+      "message": "GIF ఫైల్ పరిమాణాన్ని బాగా తగ్గించడానికి GIF కంప్రెషన్ అల్గోర్త్‌ను వర్తించండి మరియు కొన్ని సందర్భాల్లో నాణ్యతను మెరుగుపరుస్తుంది. బాగా సిఫార్సు చేయబడింది."
+   },
+   "editor_save_dialog_dither_tooltip": {
+      "description": "Apply dither algorithm to frames. Try toggling this option if you experience color quality issues.",
+      "message": "చిత్రాలకు డిథర్ అల్గోరిథం వర్తించండి. మీరు రంగు నాణ్యత సమస్యలను ఎదుర్కొంటే ఈ ఎంపికను టోగుల్ చేయడానికి ప్రయత్నించండి."
+   },
+   "editor_save_dialog_download_raw_recording": {
+      "description": "Download raw recording",
+      "message": "ముడి రికార్డింగ్‌ను డౌన్‌లోడ్ చేయండి"
+   },
+   "editor_save_dialog_estimated_size": {
+      "description": "Estimated GIF Size: ",
+      "message": "అంచనా GIF పరిమాణం:"
+   },
+   "editor_save_dialog_export_sound": {
+      "description": "Include sound (beta)",
+      "message": "ధ్వనిని చేర్చండి (బీటా)"
+   },
+   "editor_save_dialog_export_sound_tooltip": {
+      "description": "Enable this option to include sound in the video.",
+      "message": "వీడియోలో ధ్వనిని చేర్చడానికి ఈ ఎంపికను ప్రారంభించండి."
+   },
+   "editor_save_dialog_frames": {
+      "description": "Frames: ",
+      "message": "చిత్రాలు:"
+   },
+   "editor_save_dialog_frames_alert": {
+      "description": "There are currently selected frames, saving will only output these selected frames - ",
+      "message": "ప్రస్తుతం ఎంచుకున్న చిత్రాలు ఉన్నాయి, సేవింగ్ ఈ ఎంచుకున్న ఫ్రేమ్‌లను మాత్రమే అవుట్పుట్ చేస్తుంది -"
+   },
+   "editor_save_dialog_frames_alert_button": {
+      "description": "Click here to unselect all frames",
+      "message": "అన్ని చిత్రాలను ఎంపిక చేయటానికి ఇక్కడ క్లిక్ చేయండి"
+   },
+   "editor_save_dialog_frames_alert_title": {
+      "description": "Playback Speed",
+      "message": "ప్లేబ్యాక్ వేగం"
+   },
+   "editor_save_dialog_frames_processing": {
+      "description": "Processing Frames: ",
+      "message": "చిత్రాలను ప్రాసెస్ చేయడం:"
+   },
+   "editor_save_dialog_height_helper": {
+      "description": "Recorded height is ",
+      "message": "రికార్డ్ చేసిన ఎత్తు"
+   },
+   "editor_save_dialog_lossy_compression": {
+      "description": "Label for a setting that controls the level of lossy compression, from 0 to 100 percent.",
+      "message": "లాసీ కంప్రెషన్ (0 - 100%)"
+   },
+   "editor_save_dialog_number_min_max_validation": {
+      "description": "A value between $minSize$ and $maxSize$ is required.",
+      "message": "$minSize$ మరియు $maxSize$ మధ్య విలువ అవసరం.",
+      "placeholders": {
+         "maxSize": {
+            "content": "$2"
+         },
+         "minSize": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_save_dialog_processing_alert": {
+      "description": "Processing this recording will require a lot of memory and processing power. Unless you have a high spec PC it is recommended to do one or more of the following:",
+      "message": "ఈ రికార్డింగ్ను ప్రాసెస్ చేయడం చాలా మెమరీ మరియు ప్రాసెసింగ్ శక్తిని కలిగి ఉంటుంది. మీరు ఒక హై స్పెక్ PC కలిగి తప్ప అది క్రింది ఒకటి లేదా ఎక్కువ చేయాలని సిఫార్సు:"
+   },
+   "editor_save_dialog_processing_alert_memory": {
+      "description": "Please note if the resulting GIF is blank then you ran out of memory.",
+      "message": "ఫలితంగా GIF ఖాళీగా ఉంటే దయచేసి మీరు మెమరీ నుండి అయిపోయింది."
+   },
+   "editor_save_dialog_processing_alert_point_1": {
+      "description": "Compress and optimize GIF",
+      "message": "GIF కుదించుము మరియు ఆప్టిమైజ్ చేయండి"
+   },
+   "editor_save_dialog_processing_alert_point_2": {
+      "description": "Reduce the width & height",
+      "message": "వెడల్పు & ఎత్తు తగ్గించండి"
+   },
+   "editor_save_dialog_processing_alert_point_3": {
+      "description": "Reduce FPS or delete frames",
+      "message": "FPS ను తగ్గించండి లేదా చిత్రాలను తొలగించండి"
+   },
+   "editor_save_dialog_purchase_dialog_compression_description": {
+      "description": "Free users are limited to 3 high quality GIF compressions per day. Upgrade to Premium to have no restrictions.",
+      "message": "ఉచిత వినియోగదారులు రోజుకు 3 అధిక నాణ్యత గల GIF కంప్రెషన్లకు పరిమితం. ఎటువంటి పరిమితులు లేనందున ప్రీమియానికి అప్‌గ్రేడ్ చేయండి."
+   },
+   "editor_save_dialog_quantization_algorithm": {
+      "description": "Label for a dropdown to select a quantization algorithm.",
+      "message": "క్వాంటైజేషన్ అల్గోరిథం"
+   },
+   "editor_save_dialog_quantization_algorithm_new_alpha": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Alpha.",
+      "message": "కొత్త (ఆల్ఫా)"
+   },
+   "editor_save_dialog_quantization_algorithm_new_beta": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Beta.",
+      "message": "కొత్త (బేటా)"
+   },
+   "editor_save_dialog_quantization_algorithm_old": {
+      "description": "An option for the quantization algorithm setting, indicating an older version.",
+      "message": "పాత"
+   },
+   "editor_save_dialog_recording_quality_alert": {
+      "description": "GIF quality is limited for non premium users. To output high quality recordings you can do one of the following:",
+      "message": "ప్రీమియం కాని వినియోగదారులకు GIF నాణ్యత పరిమితం. అధిక నాణ్యత రికార్డింగ్‌లను అవుట్పుట్ చేయడానికి మీరు ఈ క్రింది వాటిలో ఒకదాన్ని చేయవచ్చు:"
+   },
+   "editor_save_dialog_recording_quality_alert_option_1": {
+      "description": "Purchase premium",
+      "message": "కొనుగోలు ప్రీమియం"
+   },
+   "editor_save_dialog_recording_quality_alert_option_2": {
+      "description": "Save as a WebM file",
+      "message": "వెబ్‌ఎం ఫైల్‌గా సేవ్ చేయండి"
+   },
+   "editor_save_dialog_reduce_width": {
+      "description": "Reduce width & height",
+      "message": "వెడల్పు & ఎత్తు తగ్గించండి"
+   },
+   "editor_save_dialog_reduce_width_tooltip": {
+      "description": "Reduce GIF width and height/quality to improve processing time and produce a smaller file.",
+      "message": "ప్రాసెసింగ్ సమయాన్ని మెరుగుపరచడానికి మరియు చిన్న ఫైల్‌ను ఉత్పత్తి చేయడానికి GIF వెడల్పు మరియు ఎత్తు/నాణ్యతను తగ్గించండి."
+   },
+   "editor_save_dialog_save": {
+      "description": "Save",
+      "message": "సేవ్"
+   },
+   "editor_save_dialog_save_by": {
+      "description": "Save by",
+      "message": "ద్వారా సేవ్ చేయండి"
+   },
+   "editor_save_dialog_save_by_download": {
+      "description": "Download file",
+      "message": "డౌన్‌లోడ్ ఫైల్"
+   },
+   "editor_save_dialog_save_by_google_drive": {
+      "description": "Upload to Google Drive & copy link",
+      "message": "గూగుల్ డ్రైవ్ & కాపీ లింక్‌కు అప్‌లోడ్ చేయండి"
+   },
+   "editor_save_dialog_save_location": {
+      "description": "Save location",
+      "message": "స్థానాన్ని సేవ్ చేయండి"
+   },
+   "editor_save_dialog_save_location_downloads": {
+      "description": "Downloads folder",
+      "message": "డౌన్‌లోడ్ ఫోల్డర్"
+   },
+   "editor_save_dialog_save_location_downloads_subfolder": {
+      "description": "Downloads subfolder",
+      "message": "డౌన్‌లోడ్ సబ్ ఫోల్డర్"
+   },
+   "editor_save_dialog_save_location_select": {
+      "description": "Manually select location",
+      "message": "మాన్యువల్‌గా స్థానాన్ని ఎంచుకోండి"
+   },
+   "editor_save_dialog_title": {
+      "description": "Save",
+      "message": "సేవ్"
+   },
+   "editor_save_dialog_title_processing": {
+      "description": "Processing...",
+      "message": "ప్రాసెసింగ్ ..."
+   },
+   "editor_save_dialog_title_uploading": {
+      "description": "Uploading...",
+      "message": "అప్‌లోడ్ ..."
+   },
+   "editor_save_dialog_width_helper": {
+      "description": "Recorded width is ",
+      "message": "రికార్డ్ చేసిన వెడల్పు"
+   },
+   "editor_text": {
+      "description": "Open in editor",
+      "message": "ఎడిటర్లో తెరవండి"
+   },
+   "editor_tip_delete_items": {
+      "description": "Pro tip: Delete added items by selecting the item and pressing the delete key.",
+      "message": "ప్రో చిట్కా: అంశాన్ని ఎంచుకుని, తొలగింపు కీని నొక్కడం ద్వారా జోడించబడిన అంశాలను తొలగించండి."
+   },
+   "editor_tip_edit_specific_frames": {
+      "description": "Pro tip: You can edit specific frames by using the 'Apply edits to selected option'",
+      "message": "ప్రో చిట్కా: మీరు 'ఎంచుకున్న ఎంపికకు సవరణలను వర్తింపజేయడం' ద్వారా నిర్దిష్ట చిత్రాలను సవరించవచ్చు"
+   },
+   "editor_tip_scroll": {
+      "description": "Pro tip: Scroll when hovering the screenshot/recording to zoom.",
+      "message": "ప్రో చిట్కా: జూమ్ చేయడానికి స్క్రీన్షాట్ / రికార్డింగ్ను కదిలించేటప్పుడు స్క్రోల్ చేయండి."
+   },
+   "editor_tip_shift_multiple_items": {
+      "description": "Pro tip: When using the selecting tool hold down shift to select more than one item.",
+      "message": "ప్రో చిట్కా: ఎంచుకున్న సాధనాన్ని ఉపయోగించినప్పుడు ఒకటి కంటే ఎక్కువ అంశాలని ఎంచుకోవడానికి షిఫ్ట్ను నొక్కి ఉంచండి."
+   },
+   "editor_tip_update_multiple_items": {
+      "description": "Pro tip: You can scale, rotate, move and delete multiple items at once.",
+      "message": "ప్రో చిట్కా: మీరు స్కేల్ చేయవచ్చు, రొటేట్, తరలించడానికి మరియు ఒకేసారి బహుళ అంశాలను తొలగించవచ్చు."
+   },
+   "editor_tip_update_text": {
+      "description": "Pro tip: Double click on text to edit it.",
+      "message": "ప్రో చిట్కా: దానిని సవరించడానికి టెక్స్ట్ మీద డబుల్ క్లిక్ చేయండి."
+   },
+   "editor_upload_dialog_alert_copy_failed_message": {
+      "description": "This may have occurred due to the window not being focused.",
+      "message": "విండో దృష్టి పెట్టకపోవడం వల్ల ఇది సంభవించి ఉండవచ్చు."
+   },
+   "editor_upload_dialog_alert_copy_failed_title": {
+      "description": "Copy to clipboard failed",
+      "message": "క్లిప్‌బోర్డ్‌కు కాపీ విఫలమైంది"
+   },
+   "editor_upload_dialog_alert_copy_success_title": {
+      "description": "Copied to clipboard",
+      "message": "క్లిప్‌బోర్డ్‌కు కాపీ చేయబడింది"
+   },
+   "editor_upload_dialog_alert_upload_failed": {
+      "description": "Upload Failed",
+      "message": "అప్లోడ్ విఫలమైంది"
+   },
+   "editor_upload_dialog_alert_upload_failed_link": {
+      "description": "Try again.",
+      "message": "మళ్ళీ ప్రయత్నించండి."
+   },
+   "editor_upload_dialog_alert_upload_failed_message": {
+      "description": "Please make sure you are connected to the internet and have accepted Google Drive permissions.",
+      "message": "దయచేసి మీరు ఇంటర్నెట్‌కు కనెక్ట్ అయ్యారని మరియు గూగుల్ డ్రైవ్ అనుమతులను అంగీకరించారని నిర్ధారించుకోండి."
+   },
+   "editor_upload_dialog_cancel_and_download": {
+      "description": "Cancel and download file",
+      "message": "ఫైల్‌ను రద్దు చేసి డౌన్‌లోడ్ చేయండి"
+   },
+   "editor_upload_dialog_close": {
+      "description": "Close",
+      "message": "దగ్గరగా"
+   },
+   "editor_upload_dialog_copy_link": {
+      "description": "Copy link",
+      "message": "లింక్ను కాపీ చేయండి"
+   },
+   "editor_upload_dialog_link_public": {
+      "description": "Allow anyone with the link to view.",
+      "message": "లింక్ ఉన్నవారిని వీక్షించడానికి అనుమతించండి."
+   },
+   "editor_zoom_crop_animation_animated": {
+      "description": "Sub-label indicating an animation type is animated.",
+      "message": "యానిమేటెడ్"
+   },
+   "editor_zoom_crop_animation_crop": {
+      "description": "Animation type option for static cropping without animation.",
+      "message": "క్రాప్ చేయండి"
+   },
+   "editor_zoom_crop_animation_static": {
+      "description": "Sub-label indicating an animation type is static (no animation).",
+      "message": "స్థితిస్థాపక"
+   },
+   "editor_zoom_crop_animation_type": {
+      "description": "Label for the animation type selection section.",
+      "message": "యానిమేషన్ రకం"
+   },
+   "editor_zoom_crop_animation_zoom_in": {
+      "description": "Animation type option for zooming in on the selected area.",
+      "message": "జూమ్ ఇన్ చేయండి"
+   },
+   "editor_zoom_crop_animation_zoom_out": {
+      "description": "Animation type option for zooming out from the selected area.",
+      "message": "జూమ్ అవుట్ చేయండి"
+   },
+   "editor_zoom_crop_apply": {
+      "description": "Apply button in zoom/crop dialog.",
+      "message": "వర్తించండి"
+   },
+   "editor_zoom_crop_cancel": {
+      "description": "Cancel button in zoom/crop dialog.",
+      "message": "రద్దు చేయండి"
+   },
+   "editor_zoom_crop_change_area": {
+      "description": "Tooltip text for button to change the selected crop area.",
+      "message": "ప్రాంతాన్ని మార్చండి"
+   },
+   "editor_zoom_crop_dialog_title": {
+      "description": "Title for the zoom and crop dialog in the editor.",
+      "message": "జూమ్ మరియు క్రాప్"
+   },
+   "editor_zoom_crop_draw_instruction": {
+      "description": "Instruction text for the user to draw a crop area on the frame preview.",
+      "message": "ఫ్రేమ్‌పై ఎంపిక గీయండి"
+   },
+   "editor_zoom_crop_frame_end": {
+      "description": "Label for the end frame number.",
+      "message": "ముగ్గు"
+   },
+   "editor_zoom_crop_frame_range": {
+      "description": "Label for the frame range selection section.",
+      "message": "ఫ్రేమ్ రేంజ్"
+   },
+   "editor_zoom_crop_frame_start": {
+      "description": "Label for the start frame number.",
+      "message": "ప్రారంభం"
+   },
+   "editor_zoom_crop_frames_menu": {
+      "description": "Menu item label for zoom/crop frames feature.",
+      "message": "ఫ్రేమ్‌లను జూమ్/క్రాప్ చేయండి"
+   },
+   "editor_zoom_crop_no_area_selected": {
+      "description": "Message displayed when no crop area has been selected.",
+      "message": "ప్రాంతం ఎంచుకోబడలేదు"
+   },
+   "editor_zoom_crop_select_area": {
+      "description": "Button text to select a crop area on the frame.",
+      "message": "ప్రాంతాన్ని ఎంచుకోండి"
+   },
+   "editor_zoom_crop_smooth_animation": {
+      "description": "Checkbox label for smoothing animation by interpolating frames.",
+      "message": "ఫ్రేమ్‌లను జోడించడం ద్వారా యానిమేషన్‌ను మృదువుగా చేయండి"
+   },
+   "editor_zoom_crop_transition": {
+      "description": "Label for the transition duration section (number of frames for animation).",
+      "message": "పరివర్తన"
+   },
+   "enable_drawing_text": {
+      "description": "Enable drawing",
+      "message": "డ్రాయింగ్ను ప్రారంభించండి"
+   },
+   "enable_drawing_tooltip_text": {
+      "description": "This option allows users to draw in the selected area while holding down the ctrl key.",
+      "message": "Ctrl కీని పట్టుకుని ఎంచుకున్న ప్రాంతంలో వినియోగదారులు ఎంచుకోవడానికి ఈ ఎంపికను అనుమతిస్తుంది."
+   },
+   "extension_description": {
+      "description": "Take screenshots & record GIFs instantly! Edit & share seamlessly. Your all-in-one screenshot and screen recording solution.",
+      "message": "స్క్రీన్‌షాట్‌లను తీసుకోండి & GIF లను తక్షణమే రికార్డ్ చేయండి! సవరించండి & సజావుగా భాగస్వామ్యం చేయండి. మీ ఆల్ ఇన్ వన్ స్క్రీన్ షాట్ మరియు స్క్రీన్ రికార్డింగ్ పరిష్కారం."
+   },
+   "extension_name": {
+      "description": "Chrome Capture - screenshot & GIF",
+      "message": "Chrome క్యాప్చర్ - స్క్రీన్ షాట్ & GIF"
+   },
+   "extension_short_name": {
+      "description": "Chrome Capture",
+      "message": "Chrome క్యాప్చర్"
+   },
+   "file_access_text": {
+      "description": "After screenshot action",
+      "message": "స్క్రీన్‌షాట్ తర్వాత చర్య"
+   },
+   "filename_text": {
+      "description": "Filename",
+      "message": "ఫైల్ పేరు"
+   },
+   "frames_per_sec_short_text": {
+      "description": "FPS",
+      "message": "Fps"
+   },
+   "frames_per_sec_text": {
+      "description": "Frames per second (fps)",
+      "message": "సెకనుకు చిత్రాలు (FPS)"
+   },
+   "frames_text": {
+      "description": "frames",
+      "message": "చిత్రాలు"
+   },
+   "free_settings_text": {
+      "description": "Free Settings",
+      "message": "ఉచిత సెట్టింగ్లు"
+   },
+   "fullscreen_info_modal_cancel": {
+      "description": "Cancel",
+      "message": "రద్దు చేయండి"
+   },
+   "fullscreen_info_modal_continue": {
+      "description": "Are you sure you want to continue with full screen capture?",
+      "message": "మీరు పూర్తి స్క్రీన్ సంగ్రహంతో కొనసాగించాలనుకుంటున్నారా?"
+   },
+   "fullscreen_info_modal_do_not_show": {
+      "description": "Do not show this again",
+      "message": "దీన్ని మళ్లీ చూపించవద్దు"
+   },
+   "fullscreen_info_modal_message": {
+      "description": "You have used a Chrome Capture shortcut without the cropping tool, this will capture in full screen mode.",
+      "message": "మీరు పంట సాధనం లేకుండా క్రోమ్ క్యాప్చర్ సత్వరమార్గాన్ని ఉపయోగించారు, ఇది పూర్తి స్క్రీన్ రీతిలో బంధిస్తుంది."
+   },
+   "fullscreen_info_modal_open_cropping": {
+      "description": "Open cropping tool",
+      "message": "తెరువు పంట సాధనం"
+   },
+   "fullscreen_info_modal_shortcut_cropping_tool": {
+      "description": "Alt + C: Open/close Chrome Capture cropping tool",
+      "message": "Alt + C: ఓపెన్ / క్లోజ్ Chrome క్యాప్చర్ పంట సాధనం"
+   },
+   "fullscreen_info_modal_shortcut_fullpage_screenshot": {
+      "description": "Alt + Shift + S: Full webpage screenshot (beta)",
+      "message": "ALT + SHIFT + S: పూర్తి వెబ్పేజీ స్క్రీన్షాట్ (బీటా)"
+   },
+   "fullscreen_info_modal_shortcut_linkt": {
+      "description": "You can configure these here: ",
+      "message": "మీరు దీన్ని ఇక్కడ కాన్ఫిగర్ చేయవచ్చు:"
+   },
+   "fullscreen_info_modal_shortcut_recording": {
+      "description": "Alt + R: Start/stop recording",
+      "message": "ALT + R: రికార్డింగ్ ప్రారంభించండి"
+   },
+   "fullscreen_info_modal_shortcut_screenshot": {
+      "description": "Alt + S: Visible area screenshot",
+      "message": "ALT + S: కనిపించే ప్రాంతం స్క్రీన్షాట్"
+   },
+   "fullscreen_info_modal_shortcuts": {
+      "description": "Default shortcuts are: ",
+      "message": "డిఫాల్ట్ సత్వరమార్గాలు:"
+   },
+   "fullscreen_info_modal_start": {
+      "description": "Start full screen capture",
+      "message": "పూర్తి స్క్రీన్ క్యాప్చర్ను ప్రారంభించండి"
+   },
+   "fullscreen_info_modal_title": {
+      "description": "Full screen capture",
+      "message": "పూర్తి స్క్రీన్ క్యాప్చర్"
+   },
+   "general_not_available": {
+      "description": "N/A",
+      "message": "వర్తించదు"
+   },
+   "get_premium": {
+      "description": "Get Premium",
+      "message": "ప్రీమియం పొందండి"
+   },
+   "height_text": {
+      "description": "Width (px)",
+      "message": "వెడల్పు (px)"
+   },
+   "hi": {
+      "description": "Hi",
+      "message": "హాయ్"
+   },
+   "internet_connection_required": {
+      "description": "Internet connection is required to upgrade to premium.",
+      "message": "ప్రీమియ్కు అప్గ్రేడ్ చేయడానికి ఇంటర్నెట్ కనెక్షన్ అవసరం."
+   },
+   "manage_subscription_access_until_date": {
+      "description": "Your plan will not renew. You can access premium features until $date$.",
+      "message": "మీ ప్లాన్ పునరుద్ధరించబడదు. మీరు $date$ వరకు ప్రీమియం ఫీచర్‌లను యాక్సెస్ చేయవచ్చు.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_cancel_button": {
+      "description": "Cancel subscription",
+      "message": "సభ్యత్వాన్ని రద్దు చేయండి"
+   },
+   "manage_subscription_cancel_confirm_cancel_button": {
+      "description": "Keep Premium",
+      "message": "ప్రీమియంను ఉంచుకోండి"
+   },
+   "manage_subscription_cancel_confirm_confirm_button": {
+      "description": "Continue to cancel",
+      "message": "రద్దు చేయడానికి కొనసాగించండి"
+   },
+   "manage_subscription_cancel_confirm_description": {
+      "description": "You will lose access to Premium features and Premium options will be reset.",
+      "message": "మీరు ప్రీమియం ఫీచర్లకు యాక్సెస్‌ను కోల్పోతారు మరియు ప్రీమియం ఎంపికలు రీసెట్ చేయబడతాయి."
+   },
+   "manage_subscription_cancel_confirm_title": {
+      "description": "Are you sure you want to cancel your subscription?",
+      "message": "మీరు మీ సభ్యత్వాన్ని రద్దు చేయాలనుకుంటున్నారని మీకు ఖచ్చితంగా తెలుసా?"
+   },
+   "manage_subscription_ended_on_date": {
+      "description": "Subscription ended on $date$.",
+      "message": "సభ్యత్వం $date$న ముగిసింది.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_ends_on_date": {
+      "description": "Subscription ends on $date$.",
+      "message": "సభ్యత్వం $date$న ముగుస్తుంది.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_next_payment_full": {
+      "description": "Next payment: $price$ on $date$",
+      "message": "తదుపరి చెల్లింపు: $date$న $price$",
+      "placeholders": {
+         "date": {
+            "content": "$2"
+         },
+         "price": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_paid_full": {
+      "description": "Paid: $billingCycle$",
+      "message": "చెల్లించబడింది: $billingCycle$",
+      "placeholders": {
+         "billingCycle": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_resubscribe_prompt": {
+      "description": " To use premium features again, please upgrade.",
+      "message": " ప్రీమియం ఫీచర్లను మళ్లీ ఉపయోగించడానికి, దయచేసి అప్‌గ్రేడ్ చేయండి."
+   },
+   "manage_subscription_update_payment_button": {
+      "description": "Update payment method",
+      "message": "చెల్లింపు పద్ధతిని నవీకరించండి"
+   },
+   "max_recording_dimension_size_text": {
+      "description": "Max recording resolution/quality",
+      "message": "మాక్స్ రికార్డింగ్ రిజల్యూషన్ / నాణ్యత"
+   },
+   "no_limit_text": {
+      "description": "No limit",
+      "message": "పరిమితి లేకుండా"
+   },
+   "open_text": {
+      "description": "Open",
+      "message": "తెరవండి"
+   },
+   "options_default_action": {
+      "description": "Extension icon click action",
+      "message": "పొడిగింపు ఐకాన్ క్లిక్ చర్య"
+   },
+   "options_dimension_size_1000": {
+      "description": "1000 pixels",
+      "message": "1000 పిక్సెల్స్"
+   },
+   "options_dimension_size_1080p": {
+      "description": "1920 pixels (1080p)",
+      "message": "1920 పిక్సెల్స్ (1080p)"
+   },
+   "options_dimension_size_480p": {
+      "description": "640 pixels (480p)",
+      "message": "640 పిక్సెళ్ళు (480p)"
+   },
+   "options_dimension_size_4k": {
+      "description": "3840 pixels (4K)",
+      "message": "3840 పిక్సెల్స్ (4K)"
+   },
+   "options_dimension_size_720p": {
+      "description": "1280 pixels (720p)",
+      "message": "1280 పిక్సెల్స్ (720p)"
+   },
+   "options_embedded_options_permission_warning": {
+      "description": "Cursor highlighting, click effects, and drawing tools will only work until the page reloads or changes. To keep them active after reloads or redirects, you'll need to grant an extra permission.",
+      "message": "కర్సర్ హైలైటింగ్, క్లిక్ ఎఫెక్ట్‌లు మరియు డ్రాయింగ్ సాధనాలు పేజీ రీలోడ్ అయ్యే వరకు లేదా మారే వరకు మాత్రమే పని చేస్తాయి. రీలోడ్‌లు లేదా దారిమార్పుల తర్వాత వాటిని యాక్టివ్‌గా ఉంచడానికి, మీరు అదనపు అనుమతిని మంజూరు చేయాలి."
+   },
+   "options_enable_notifications": {
+      "description": "Enable notifications",
+      "message": "నోటిఫికేషన్‌లను ప్రారంభించండి"
+   },
+   "options_enable_notifications_tooltip": {
+      "description": "Display notifications when full screen recording starts and processing recordings in the background.",
+      "message": "పూర్తి స్క్రీన్ రికార్డింగ్ ప్రారంభమైనప్పుడు మరియు నేపథ్యంలో రికార్డింగ్‌లను ప్రాసెస్ చేసినప్పుడు నోటిఫికేషన్‌లను ప్రదర్శించండి."
+   },
+   "options_enable_subfolder_downloads": {
+      "description": "Download files into subfolder",
+      "message": "ఫైళ్ళను సబ్‌ఫోల్డర్‌లోకి డౌన్‌లోడ్ చేయండి"
+   },
+   "options_enable_subfolder_downloads_tooltip": {
+      "description": "Download files into a subfolder of your choice inside the downloads folder. This option is useful for organising your captures.",
+      "message": "డౌన్‌లోడ్ ఫోల్డర్ లోపల మీకు నచ్చిన సబ్‌ఫోల్డర్‌లో ఫైల్‌లను డౌన్‌లోడ్ చేయండి. మీ క్యాప్చర్లను నిర్వహించడానికి ఈ ఎంపిక ఉపయోగపడుతుంది."
+   },
+   "options_how_to_use_btn": {
+      "description": "How to use",
+      "message": "ఎలా ఉపయోగించాలి"
+   },
+   "options_language": {
+      "description": "Language",
+      "message": "భాష"
+   },
+   "options_open_containing_folder_on_save": {
+      "description": "Open containing folder after saving",
+      "message": "సేవ్ చేసిన తర్వాత ఫోల్డర్‌ను తెరవండి"
+   },
+   "options_open_popup": {
+      "description": "Open popup",
+      "message": "పాపప్ తెరవండి"
+   },
+   "options_open_selected_area": {
+      "description": "Open selected area capture",
+      "message": "ఎంచుకున్న ప్రాంతం సంగ్రహాన్ని తెరవండి"
+   },
+   "options_section_general": {
+      "description": "Title for the General settings section in the options page",
+      "message": "సాధారణ సెట్టింగ్‌లు"
+   },
+   "options_section_output": {
+      "description": "Title for the Output and Saving settings section in the options page",
+      "message": "అవుట్‌పుట్ & సేవింగ్"
+   },
+   "options_section_recording": {
+      "description": "Title for the Recording settings section in the options page",
+      "message": "రికార్డింగ్ సెట్టింగ్‌లు"
+   },
+   "options_section_visuals": {
+      "description": "Title for the Cursor and Interaction Visuals settings section in the options page",
+      "message": "కర్సర్ & ఇంటరాక్షన్ విజువల్స్"
+   },
+   "options_shortcuts_btn": {
+      "description": "Shortcuts",
+      "message": "సత్వరమార్గములు"
+   },
+   "options_subfolder_downloads_name": {
+      "description": "Subfolder name:",
+      "message": "సబ్ ఫోల్డర్ పేరు:"
+   },
+   "options_support_btn": {
+      "description": "Support",
+      "message": "మద్దతు"
+   },
+   "overlay_help_text": {
+      "description": "Click and drag to choose your selected area. \nRight click to snap to an element, hold shift for multiple.",
+      "message": "మీ ఎంచుకున్న ప్రాంతాన్ని ఎంచుకోవడానికి క్లిక్ చేసి లాగండి. \n ఒక మూలకం కు స్నాప్ చేయడానికి కుడి క్లిక్ చేయండి, బహుళ కోసం షిఫ్ట్ను పట్టుకోండి."
+   },
+   "plan_billing_annually": {
+      "description": "Annually",
+      "message": "వార్షికంగా"
+   },
+   "plan_billing_monthly": {
+      "description": "Monthly",
+      "message": "నెలవారీ"
+   },
+   "plan_name_custom": {
+      "description": "Custom Plan",
+      "message": "అనుకూల ప్లాన్"
+   },
+   "popup_capture_tab": {
+      "description": "Capture",
+      "message": "క్యాప్చర్"
+   },
+   "popup_desktop_screenshot_tooltip": {
+      "description": "Capture the entire screen, desktop, or any open application.",
+      "message": "మొత్తం స్క్రీన్, డెస్క్‌టాప్ లేదా ఏదైనా ఓపెన్ అప్లికేషన్‌ను సంగ్రహించండి."
+   },
+   "popup_editor_icon_tooltip": {
+      "description": "Open Editor",
+      "message": "ఓపెన్ ఎడిటర్"
+   },
+   "popup_full_page_screenshot_tooltip": {
+      "description": "Capture the current tab full webpage, including content beyond the visible area.",
+      "message": "కనిపించే ప్రాంతానికి మించిన కంటెంట్‌తో సహా ప్రస్తుత టాబ్ పూర్తి వెబ్‌పేజీని సంగ్రహించండి."
+   },
+   "popup_full_webpage": {
+      "description": "Full webpage",
+      "message": "పూర్తి వెబ్‌పేజీ"
+   },
+   "popup_no_scripts_alert": {
+      "description": "Selected area and full webpage screenshots are not possible here. These features are available on other websites.",
+      "message": "ఎంచుకున్న ప్రాంతం మరియు పూర్తి వెబ్‌పేజీ స్క్రీన్‌షాట్‌లు ఇక్కడ సాధ్యం కాదు. ఈ లక్షణాలు ఇతర వెబ్‌సైట్లలో అందుబాటులో ఉన్నాయి."
+   },
+   "popup_record_tab": {
+      "description": "Record",
+      "message": "రికార్డు"
+   },
+   "popup_recording_limit_alert": {
+      "description": "Record up to $seconds$ seconds per GIF. Premium users can update this from the ",
+      "message": "GIF కి $seconds$ సెకన్ల వరకు రికార్డ్ చేయండి. ప్రీమియం వినియోగదారులు దీన్ని నుండి నవీకరించవచ్చు",
+      "placeholders": {
+         "seconds": {
+            "content": "$1"
+         }
+      }
+   },
+   "popup_recording_limit_settings_link": {
+      "description": "settings page.",
+      "message": "సెట్టింగుల పేజీ."
+   },
+   "popup_screen_or_app": {
+      "description": "Full screen or app",
+      "message": "పూర్తి స్క్రీన్ లేదా అనువర్తనం"
+   },
+   "popup_selected_area": {
+      "description": "Selected area",
+      "message": "ఎంచుకున్న ప్రాంతం"
+   },
+   "popup_selected_area_screenshot_tooltip": {
+      "description": "Capture a specific area of the current tab.",
+      "message": "ప్రస్తుత టాబ్ యొక్క నిర్దిష్ట ప్రాంతాన్ని సంగ్రహించండి."
+   },
+   "popup_set_shortcut": {
+      "description": "set shortcut",
+      "message": "సత్వరమార్గాన్ని సెట్ చేయండి"
+   },
+   "popup_settings_icon_tooltip": {
+      "description": "Open Settings",
+      "message": "ఓపెన్ సెట్టింగ్లు"
+   },
+   "popup_tab_screenshot_tooltip": {
+      "description": "Capture the visible part of the current tab.",
+      "message": "ప్రస్తుత టాబ్ యొక్క కనిపించే భాగాన్ని సంగ్రహించండి."
+   },
+   "popup_this_tab": {
+      "description": "This tab",
+      "message": "ఈ టాబ్"
+   },
+   "popup_waiting_for_desktop_selection_alert": {
+      "description": "FULL SCREEN OR APP capture did not start because you did not select an option from the popup dialog. If you have multiple monitors it may have opened on another monitor.",
+      "message": "మీరు పాపప్ డైలాగ్ నుండి ఎంపికను ఎంచుకోనందున పూర్తి స్క్రీన్ లేదా అనువర్తన సంగ్రహణ ప్రారంభించబడలేదు. మీకు బహుళ మానిటర్లు ఉంటే అది మరొక మానిటర్‌లో తెరిచి ఉండవచ్చు."
+   },
+   "premium_settings_text": {
+      "description": "Premium Settings",
+      "message": "ప్రీమియం సెట్టింగులు"
+   },
+   "purchase_btn_text": {
+      "description": "Get Premium!",
+      "message": "ప్రీమియం పొందండి!"
+   },
+   "purchase_description_limited_time_text": {
+      "description": "Lock in this price now - limited time offer before we switch to subscriptions!",
+      "message": "ఇప్పుడే ఈ ధరను పొందండి - మేము సబ్‌స్క్రిప్షన్‌లకు మారడానికి ముందు పరిమిత కాల ఆఫర్!"
+   },
+   "purchase_description_text": {
+      "description": "Just one payment unlocks all premium features forever. No recurring fees!",
+      "message": "కేవలం ఒక చెల్లింపు జీవితకాలం అన్ని ప్రీమియం ఫీచర్లను అన్‌లాక్ చేస్తుంది. పునరావృత రుసుములు లేవు!"
+   },
+   "purchase_feature_30fps": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "మృదువైన 30 FPS రికార్డింగ్"
+   },
+   "purchase_feature_4K": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "క్రిస్టల్-క్లియర్ 4K రికార్డింగ్"
+   },
+   "purchase_feature_alter_frame_rate": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "అనుకూల ఫ్రేమ్ రేట్లు"
+   },
+   "purchase_feature_alter_playback_speed": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "నెమ్మది-కదలిక & టైమ్-లాప్స్ ప్రభావాలు"
+   },
+   "purchase_feature_blur": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "బ్లర్ సాధనం"
+   },
+   "purchase_feature_crop_recording": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ఖచ్చితమైన GIF క్రాపింగ్"
+   },
+   "purchase_feature_default": {
+      "description": "Feature that goes in $feature$ placeholder. Default fallback.",
+      "message": "ఈ ఫీచర్"
+   },
+   "purchase_feature_frame_edits": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "శక్తివంతమైన ఫ్రేమ్-ద్వారా-ఫ్రేమ్ ఎడిటింగ్"
+   },
+   "purchase_feature_highlight": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "హైలైట్ సాధనం"
+   },
+   "purchase_feature_no_duration_limit": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "అపరిమిత రికార్డింగ్ నిడివి"
+   },
+   "purchase_feature_special_effect": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ప్రత్యేక ప్రభావాలు"
+   },
+   "purchase_feature_step_tool": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "స్టెప్ సాధనం"
+   },
+   "purchase_feature_svg": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "అనుకూల చిహ్నాలు & లోగోలను జోడించడం"
+   },
+   "purchase_feature_text_and_annotation_customization": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "టెక్స్ట్ & ఉల్లేఖనాలపై పూర్తి నియంత్రణ"
+   },
+   "purchase_feature_unlimited_gif_compression": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "అపరిమిత అధునాతన GIF కుదింపు"
+   },
+   "purchase_feature_update_end_time": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "అనుకూలీకరించిన రికార్డింగ్ సమయం"
+   },
+   "purchase_login_dialog_closed_by_user_alert": {
+      "description": "Looks like you closed the sign in dialog, premium users must sign in so you don't lose premium access.",
+      "message": "మీరు సైన్ ఇన్ డైలాగ్‌ను మూసివేసినట్లు కనిపిస్తోంది, ప్రీమియం వినియోగదారులు తప్పనిసరిగా సైన్ ఇన్ చేయాలి కాబట్టి మీరు ప్రీమియం ప్రాప్యతను కోల్పోరు."
+   },
+   "purchase_login_dialog_google_button": {
+      "description": "Sign in with Google",
+      "message": "గూగుల్‌తో సైన్ ఇన్ చేయండి"
+   },
+   "purchase_login_dialog_title": {
+      "description": "Sign in required",
+      "message": "అవసరమైన సైన్ ఇన్"
+   },
+   "purchase_login_text": {
+      "description": "Sign in with Google to link your purchase to your account.",
+      "message": "మీ కొనుగోలును మీ ఖాతాకు లింక్ చేయడానికి Googleతో సైన్ ఇన్ చేయండి."
+   },
+   "purchase_login_text_window_opened": {
+      "description": "Sign into Google in the popup window.",
+      "message": "పాపప్ విండోలో గూగుల్‌లోకి సైన్ ఇన్ చేయండి."
+   },
+   "purchase_subscription_title_text": {
+      "description": "Choose the plan that fits your needs.",
+      "message": "మీ అవసరాలకు సరిపోయే ప్లాన్‌ను ఎంచుకోండి."
+   },
+   "purchase_title_text": {
+      "description": "Get Lifetime Premium Access Today!",
+      "message": "ఈరోజే లైఫ్‌టైమ్ ప్రీమియం యాక్సెస్‌ని పొందండి!"
+   },
+   "purchase_title_text_blocked_feature": {
+      "description": "That feature requires Premium",
+      "message": "ఆ ఫీచర్‌కు ప్రీమియం అవసరం"
+   },
+   "purchase_title_text_blocked_pro_feature": {
+      "description": "That feature requires Premium Pro",
+      "message": "ఆ ఫీచర్‌కు Premium Pro అవసరం"
+   },
+   "purchase_title_text_blocked_pro_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium Pro paywall.",
+      "message": "ప్రీమియం ప్రోతో $feature$ అన్‌లాక్ చేయండి",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchase_title_text_blocked_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium paywall.",
+      "message": "ప్రీమియంతో $feature$ అన్‌లాక్ చేయండి",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_already_premium_user": {
+      "description": "Already a premium user?",
+      "message": "ఇప్పటికే ప్రీమియం వినియోగదారు?"
+   },
+   "purchases_bill_me": {
+      "description": "Bill me:",
+      "message": "నాకు బిల్లు చేయండి:"
+   },
+   "purchases_checkout_unavailable_message": {
+      "description": "Message shown when checkout could not be started.",
+      "message": "ప్రస్తుతం అప్‌గ్రేడ్ ప్రక్రియను ప్రారంభించలేకపోయాము. దయచేసి మళ్లీ ప్రయత్నించండి."
+   },
+   "purchases_compare_12_fps": {
+      "description": "12FPS",
+      "message": "12FPS"
+   },
+   "purchases_compare_3_per_day": {
+      "description": "3 per day",
+      "message": "రోజుకు 3"
+   },
+   "purchases_compare_add_custom_shape_tool": {
+      "description": "Add custom shape/icon tool",
+      "message": "అనుకూల ఆకారం/ఐకాన్ సాధనాన్ని జోడించండి"
+   },
+   "purchases_compare_benefits": {
+      "description": "Benefits",
+      "message": "ప్రయోజనాలు"
+   },
+   "purchases_compare_blur_tool": {
+      "description": "Blur tool",
+      "message": "బ్లర్ సాధనం"
+   },
+   "purchases_compare_close_button_label": {
+      "description": "Close",
+      "message": "మూసివేయండి"
+   },
+   "purchases_compare_compression": {
+      "description": "High quality GIF compression",
+      "message": "అధిక నాణ్యత GIF కుదింపు"
+   },
+   "purchases_compare_core_capture_features": {
+      "description": "Core Capture Features",
+      "message": "ప్రధాన క్యాప్చర్ ఫీచర్లు"
+   },
+   "purchases_compare_crop_recordings": {
+      "description": "Crop recordings",
+      "message": "రికార్డింగ్‌లను క్రాప్ చేయండి"
+   },
+   "purchases_compare_customize_editing_tools": {
+      "description": "Customize editing tools (font, size color)",
+      "message": "ఎడిటింగ్ సాధనాలను అనుకూలీకరించండి (ఫాంట్, పరిమాణం, రంగు)"
+   },
+   "purchases_compare_drawing": {
+      "description": "Draw while recording",
+      "message": "రికార్డింగ్ సమయంలో డ్రా"
+   },
+   "purchases_compare_early_access": {
+      "description": "Early access to new features",
+      "message": "కొత్త ఫీచర్‌లకు ముందస్తు యాక్సెస్"
+   },
+   "purchases_compare_editing": {
+      "description": "Edit captures",
+      "message": "సంగ్రహాలను సవరించండి"
+   },
+   "purchases_compare_editing_free": {
+      "description": "basic editing",
+      "message": "ప్రాథమిక ఎడిటింగ్"
+   },
+   "purchases_compare_editing_suite": {
+      "description": "Editing Suite",
+      "message": "ఎడిటింగ్ సూట్"
+   },
+   "purchases_compare_frame_editing": {
+      "description": "Frame editing",
+      "message": "ఫ్రేమ్ ఎడిటింగ్"
+   },
+   "purchases_compare_frame_rate": {
+      "description": "Adjust Frame Rate",
+      "message": "ఫ్రేమ్ రేట్‌ను సర్దుబాటు చేయండి (FPS)"
+   },
+   "purchases_compare_frame_specific_edits": {
+      "description": "Frame specific edits",
+      "message": "ఫ్రేమ్ నిర్దిష్ట సవరణలు"
+   },
+   "purchases_compare_free_draw_tools": {
+      "description": "Free draw, line, arrow, rectangle, circle, text tools",
+      "message": "ఫ్రీ డ్రా, లైన్, బాణం, దీర్ఘచతురస్రం, వృత్తం, టెక్స్ట్ సాధనాలు"
+   },
+   "purchases_compare_full_webpage_screenshots": {
+      "description": "Unlimited full page screenshots.",
+      "message": "అపరిమిత పూర్తి పేజీ స్క్రీన్షాట్లు."
+   },
+   "purchases_compare_highlight_tool": {
+      "description": "Highlight tool",
+      "message": "హైలైట్ సాధనం"
+   },
+   "purchases_compare_live_recording_tools": {
+      "description": "Live Recording Tools",
+      "message": "ప్రత్యక్ష రికార్డింగ్ సాధనాలు"
+   },
+   "purchases_compare_mouse": {
+      "description": "Click and mouse indication",
+      "message": "క్లిక్ చేయండి మరియు మౌస్ సూచన"
+   },
+   "purchases_compare_plans": {
+      "description": "Compare plans",
+      "message": "ప్రణాళికలను సరిపోల్చండి"
+   },
+   "purchases_compare_plans_premium_button": {
+      "description": "Upgrade to Premium",
+      "message": "ప్రీమియంకు అప్‌గ్రేడ్ చేయండి"
+   },
+   "purchases_compare_playback_speed": {
+      "description": "Tune recording playback speed",
+      "message": "ట్యూన్ రికార్డింగ్ వేగం"
+   },
+   "purchases_compare_priority_support": {
+      "description": "Priority support and feature requests",
+      "message": "ప్రాధాన్యత మద్దతు మరియు ఫీచర్ అభ్యర్థనలు"
+   },
+   "purchases_compare_recording": {
+      "description": "Unlimited GIF recordings.",
+      "message": "అపరిమిత GIF రికార్డింగ్."
+   },
+   "purchases_compare_recording_free": {
+      "description": "15sec limit per GIF",
+      "message": "GIF కి 15 సెకన్ల పరిమితి"
+   },
+   "purchases_compare_recording_quality": {
+      "description": "High quality GIFs",
+      "message": "అధిక నాణ్యత gifs."
+   },
+   "purchases_compare_recording_quality_control": {
+      "description": "Recording Quality & Control",
+      "message": "రికార్డింగ్ నాణ్యత & నియంత్రణ"
+   },
+   "purchases_compare_recording_quality_free": {
+      "description": "1000 pixels max",
+      "message": "1000 పిక్సెల్స్ మాక్స్"
+   },
+   "purchases_compare_screenshots": {
+      "description": "Unlimited screenshots.",
+      "message": "అపరిమిత స్క్రీన్షాట్లు."
+   },
+   "purchases_compare_special_effects": {
+      "description": "Recording special effects",
+      "message": "స్పెషల్ ఎఫెక్ట్స్ రికార్డింగ్"
+   },
+   "purchases_compare_up_to_1080p": {
+      "description": "Up to 1080p",
+      "message": "1080p వరకు"
+   },
+   "purchases_compare_up_to_24_fps": {
+      "description": "Up to 24FPS",
+      "message": "24FPS వరకు"
+   },
+   "purchases_compare_up_to_30_fps": {
+      "description": "Up to 30FPS",
+      "message": "30FPS వరకు"
+   },
+   "purchases_compare_up_to_4k_plus": {
+      "description": "Up to 4K+",
+      "message": "4K+ వరకు"
+   },
+   "purchases_current_plan": {
+      "description": "Current plan",
+      "message": "ప్రస్తుత ప్లాన్"
+   },
+   "purchases_features": {
+      "description": "Features",
+      "message": "ఫీచర్లు"
+   },
+   "purchases_free": {
+      "description": "Free",
+      "message": "ఉచితం"
+   },
+   "purchases_free_button": {
+      "description": "Free to use",
+      "message": "ఉపయోగించడానికి ఉచితం"
+   },
+   "purchases_free_feature_editing": {
+      "description": "Basic editing",
+      "message": "ప్రాథమిక ఎడిటింగ్"
+   },
+   "purchases_free_feature_recording": {
+      "description": "Basic GIF recording",
+      "message": "ప్రాథమిక GIF రికార్డింగ్"
+   },
+   "purchases_free_feature_screenshots": {
+      "description": "Unlimited screenshots",
+      "message": "అపరిమిత స్క్రీన్షాట్లు"
+   },
+   "purchases_free_plan_description": {
+      "description": "Get started with our essential capture tools. Completely free for basic everyday use.",
+      "message": "మా ప్రాథమిక క్యాప్చర్ సాధనాలతో ప్రారంభించండి. ప్రాథమిక రోజువారీ ఉపయోగం కోసం పూర్తిగా ఉచితం."
+   },
+   "purchases_plan_save_up_to_percentage": {
+      "description": "Save up to",
+      "message": "వరకు ఆదా చేయండి"
+   },
+   "purchases_premium": {
+      "description": "Premium",
+      "message": "ప్రీమియం"
+   },
+   "purchases_premium_billed_annually": {
+      "description": "Billed annually",
+      "message": "వార్షికంగా బిల్ చేయబడింది"
+   },
+   "purchases_premium_button": {
+      "description": "Get lifetime access",
+      "message": "జీవితకాల యాక్సెస్ పొందండి"
+   },
+   "purchases_premium_feature_compression": {
+      "description": "High quality GIF compression",
+      "message": "అధిక నాణ్యత GIF కుదింపు"
+   },
+   "purchases_premium_feature_editing": {
+      "description": "Feature rich editing",
+      "message": "ఫీచర్ రిచ్ ఎడిటింగ్"
+   },
+   "purchases_premium_feature_free": {
+      "description": "Everything from free plan",
+      "message": "ఉచిత ప్లాన్ నుండి ఫీచర్లను కలిగి ఉంటుంది"
+   },
+   "purchases_premium_feature_marked_with_star": {
+      "description": "All features marked with a star",
+      "message": "ఒక నక్షత్రంతో గుర్తించబడిన అన్ని ఫీచర్లు"
+   },
+   "purchases_premium_feature_recording": {
+      "description": "Unlimited high quality GIF recording",
+      "message": "అపరిమిత హై క్వాలిటీ GIF రికార్డింగ్"
+   },
+   "purchases_premium_feature_recording_1080p": {
+      "description": "High quality GIF recording, up to 1080p, 24fps",
+      "message": "అధిక నాణ్యత గల GIF రికార్డింగ్, 1080p వరకు, 24fps"
+   },
+   "purchases_premium_feature_refundable": {
+      "description": "Fully refundable",
+      "message": "పూర్తిగా వాపసు"
+   },
+   "purchases_premium_feature_risk_free": {
+      "description": "Risk-free: 7 day trial, cancel anytime",
+      "message": "ప్రమాద-రహితం: 7 రోజుల ట్రయల్, ఎప్పుడైనా రద్దు చేయండి"
+   },
+   "purchases_premium_feature_unlimited_length": {
+      "description": "Unlimited GIF recording length",
+      "message": "అపరిమిత GIF రికార్డింగ్ పొడవు"
+   },
+   "purchases_premium_price_info": {
+      "description": "one time fee",
+      "message": "ఒక సమయం రుసుము"
+   },
+   "purchases_premium_price_per_month": {
+      "description": "/ month",
+      "message": "/ నెలకు"
+   },
+   "purchases_premium_pro": {
+      "description": "Premium Pro",
+      "message": "ప్రీమియం ప్రో"
+   },
+   "purchases_premium_pro_editing_tools": {
+      "description": "Advanced editing tools (blurring, special effects, etc.)",
+      "message": "అధునాతన ఎడిటింగ్ సాధనాలు (బ్లరింగ్, స్పెషల్ ఎఫెక్ట్స్, మొదలైనవి)"
+   },
+   "purchases_premium_pro_feature_early_access": {
+      "description": "Early access to new features",
+      "message": "కొత్త ఫీచర్‌లకు ముందస్తు యాక్సెస్"
+   },
+   "purchases_premium_pro_feature_marked_with_crown": {
+      "description": "All features marked with a star and crown",
+      "message": "ఒక నక్షత్రం మరియు కిరీటంతో గుర్తించబడిన అన్ని ఫీచర్లు"
+   },
+   "purchases_premium_pro_feature_premium_plan": {
+      "description": "Everything from Premium plan",
+      "message": "ప్రీమియం ప్లాన్ నుండి ప్రతిదీ"
+   },
+   "purchases_premium_pro_feature_quality": {
+      "description": "Max resolution recording, 4K+ and 30fps",
+      "message": "గరిష్ట రిజల్యూషన్ రికార్డింగ్, 4K+ మరియు 30fps"
+   },
+   "purchases_premium_pro_feature_support": {
+      "description": "Priority support and feature requests",
+      "message": "ప్రాధాన్యత మద్దతు మరియు ఫీచర్ అభ్యర్థనలు"
+   },
+   "purchases_premium_pro_upgrade": {
+      "description": "Upgrade to Pro",
+      "message": "ప్రోకి అప్‌గ్రేడ్ చేయండి"
+   },
+   "purchases_premium_save_percentage": {
+      "description": "save $savingsPercentage$%",
+      "message": "$savingsPercentage$% ఆదా చేయండి",
+      "placeholders": {
+         "savingsPercentage": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_premium_try_for_free": {
+      "description": "Try for free",
+      "message": "ఉచితంగా ప్రయత్నించండి"
+   },
+   "purchases_price_unavailable": {
+      "description": "Label shown in place of a price when it is unavailable.",
+      "message": "ధర అందుబాటులో లేదు"
+   },
+   "purchases_pricing_unavailable_message": {
+      "description": "Message shown when the Premium pricing request was blocked or failed.",
+      "message": "Premium ధరల కోసం చేసిన అభ్యర్థన బ్లాక్ చేయబడింది లేదా విఫలమైంది. కార్యాలయ నెట్‌వర్క్, VPN, ప్రకటన నిరోధకము, గోప్యతా విస్తరణ లేదా ఫైర్‌వాల్ Paddle ను బ్లాక్ చేసినప్పుడు ఇది జరగవచ్చు."
+   },
+   "purchases_pricing_unavailable_title": {
+      "description": "Title shown when Premium pricing could not be loaded.",
+      "message": "Premium ధరలను లోడ్ చేయలేకపోయాము"
+   },
+   "purchases_pricing_unavailable_troubleshooting_extensions": {
+      "description": "Troubleshooting step telling the user to disable VPN or privacy tools temporarily.",
+      "message": "VPN, ప్రకటన నిరోధకము లేదా గోప్యతా విస్తరణలను తాత్కాలికంగా ఆపి మళ్లీ ప్రయత్నించండి."
+   },
+   "purchases_pricing_unavailable_troubleshooting_intro": {
+      "description": "Intro text for troubleshooting steps when pricing is unavailable.",
+      "message": "ప్రయత్నించాల్సినవి:"
+   },
+   "purchases_pricing_unavailable_troubleshooting_network": {
+      "description": "Troubleshooting step telling the user to try another network or browser profile.",
+      "message": "ఇతర నెట్‌వర్క్‌ను ప్రయత్నించండి లేదా వేరే Chrome ప్రొఫైల్‌లో ఎక్స్‌టెన్షన్‌ను తెరవండి."
+   },
+   "purchases_pricing_unavailable_troubleshooting_workplace": {
+      "description": "Troubleshooting step telling the user workplace policy may be blocking Paddle.",
+      "message": "మీరు కార్యాలయ పరికరాన్ని ఉపయోగిస్తున్నట్లయితే, మీ నెట్‌వర్క్ లేదా బ్రౌజర్ విధానం Paddle ను బ్లాక్ చేస్తుండవచ్చు."
+   },
+   "purchases_sign_in_here": {
+      "description": "Sign in here",
+      "message": "ఇక్కడ సైన్ ఇన్ చేయండి"
+   },
+   "purchases_start_trial_cancel_anytime": {
+      "description": "Call to action to start a free trial.",
+      "message": "కొనసాగించడానికి మీ 7-రోజుల ఉచిత ట్రయల్‌ను ప్రారంభించండి. ఎప్పుడైనా రద్దు చేయండి."
+   },
+   "purchases_try_premium_for_free": {
+      "description": "Try Premium for Free",
+      "message": "ప్రీమియంను ఉచితంగా ప్రయత్నించండి"
+   },
+   "purchases_try_premium_pro_for_free": {
+      "description": "Try Premium Pro for Free",
+      "message": "ప్రీమియం ప్రోను ఉచితంగా ప్రయత్నించండి"
+   },
+   "purchases_upgrade_premium_to_pro": {
+      "description": "To use this feature and access all Pro benefits, upgrade your plan.",
+      "message": "ఈ ఫీచర్‌ను ఉపయోగించడానికి మరియు అన్ని ప్రో ప్రయోజనాలను యాక్సెస్ చేయడానికి, మీ ప్లాన్‌ను అప్‌గ్రేడ్ చేయండి."
+   },
+   "purchases_upgrade_to_premium_pro": {
+      "description": "Upgrade to Premium Pro",
+      "message": "ప్రీమియం ప్రోకి అప్‌గ్రేడ్ చేయండి"
+   },
+   "quality_text": {
+      "description": "Recording quality (10 = best)",
+      "message": "రికార్డింగ్ నాణ్యత (10 = ఉత్తమ)"
+   },
+   "rate_bad_rating_text": {
+      "description": "We are continuously trying our hardest to improve Chrome Capture, please share what needs improvement by emailing us at ",
+      "message": "మేము క్రోమ్ క్యాప్చర్ను మెరుగుపరచడానికి నిరంతరం మా కష్టతరమైన ప్రయత్నం చేస్తున్నాము, దయచేసి మాకు ఇమెయిల్ పంపడం ద్వారా మెరుగుదల అవసరం లేదు"
+   },
+   "rate_bad_title_text": {
+      "description": "😞 We are sorry!",
+      "message": "😞 మమ్మల్ని క్షమించండి!"
+   },
+   "rate_close_btn_text": {
+      "description": "Close",
+      "message": "దగ్గరగా"
+   },
+   "rate_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "నిర్ధారించండి"
+   },
+   "rate_description_text": {
+      "description": "If you've found this extension useful please leave a rating or review. \n\nBy leaving a rating you can help us reach more users which will help fund continual improvements and keep general usage free.",
+      "message": "మీరు ఈ పొడిగింపును ఉపయోగించినట్లయితే, దయచేసి రేటింగ్ లేదా సమీక్షను వదిలివేయండి. \n\n ఒక రేటింగ్ను వదిలివేయడం ద్వారా మీరు నిరంతర మెరుగుదలలను నిధి మరియు సాధారణ వినియోగాన్ని ఉచితంగా ఉంచడంలో సహాయపడే మరిన్ని వినియోగదారులను చేరుకోవడానికి సహాయపడుతుంది."
+   },
+   "rate_description_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "మేము ప్రీమియంను కొనుగోలు చేస్తున్నాము మరియు మీరు ఉత్పత్తిని మెరుగుపరచడానికి మరియు మరిన్ని వినియోగదారులను చేరుకోవడానికి మీకు సహాయం చేయాలనే అభిప్రాయాన్ని వినడానికి ఇష్టపడుతున్నాము."
+   },
+   "rate_good_rating_text": {
+      "description": "Your reviews keep our small team motivated to make Chrome Capture even better!",
+      "message": "మీ సమీక్షలు క్రోమ్ను మరింత మెరుగ్గా చేయడానికి మా చిన్న బృందాన్ని ప్రేరేపిస్తాయి!"
+   },
+   "rate_good_rating_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "మేము ప్రీమియంను కొనుగోలు చేస్తున్నాము మరియు మీరు ఉత్పత్తిని మెరుగుపరచడానికి మరియు మరిన్ని వినియోగదారులను చేరుకోవడానికి మీకు సహాయం చేయాలనే అభిప్రాయాన్ని వినడానికి ఇష్టపడుతున్నాము."
+   },
+   "rate_good_title_text": {
+      "description": "😍 Review in the web store?",
+      "message": "😍 వెబ్ స్టోర్లో సమీక్ష?"
+   },
+   "rate_maybe_later_btn_text": {
+      "description": "Maybe later",
+      "message": "తర్వాత చూద్దాం"
+   },
+   "rate_no_btn_text": {
+      "description": "No thanks",
+      "message": "కృతజ్ఞతలు లేవు"
+   },
+   "rate_send_email_btn_text": {
+      "description": "Send Email",
+      "message": "ఈ మెయిల్ పంపించండి"
+   },
+   "rate_thank_you_title_text": {
+      "description": "Thank you! 😍",
+      "message": "ధన్యవాదాలు! 😍."
+   },
+   "rate_title_text": {
+      "description": "How are we doing?",
+      "message": "మేము ఎలా చేస్తున్నాము?"
+   },
+   "rate_yes_btn_text": {
+      "description": "Ok, sure",
+      "message": "అలాగే తప్పకుండా"
+   },
+   "recommended": {
+      "description": "recommended",
+      "message": "సిఫార్సు చేయబడింది"
+   },
+   "record_length_text": {
+      "description": "Max record length",
+      "message": "గరిష్ట రికార్డు పొడవు"
+   },
+   "recordings_taken": {
+      "description": "Recordings taken:",
+      "message": "తీసుకున్న రికార్డింగ్‌లు:"
+   },
+   "save_as_screenshot_text": {
+      "description": "Save screenshot as",
+      "message": "స్క్రీన్షాట్ను సేవ్ చేయండి"
+   },
+   "save_as_text": {
+      "description": "Save recording as",
+      "message": "రికార్డింగ్ను సేవ్ చేయండి"
+   },
+   "screenshots_taken": {
+      "description": "Screenshots taken:",
+      "message": "తీసిన స్క్రీన్షాట్లు:"
+   },
+   "seconds_text": {
+      "description": "secs",
+      "message": "క్షణాలు"
+   },
+   "shortcut": {
+      "description": "Shortcut:",
+      "message": "సత్వరమార్గం:"
+   },
+   "show_click_indicator_text": {
+      "description": "Show click animation",
+      "message": "క్లిక్ యానిమేషన్ చూపించు"
+   },
+   "show_click_indicator_tooltip_text": {
+      "description": "This option draws a circle animation around the click location.",
+      "message": "ఈ ఐచ్ఛికం క్లిక్ స్థానం చుట్టూ ఒక సర్కిల్ యానిమేషన్ను ఆకర్షిస్తుంది."
+   },
+   "show_cursor_text": {
+      "description": "Show dot at cursor location",
+      "message": "కర్సర్ స్థానం వద్ద డాట్ చూపించు"
+   },
+   "show_cursor_tooltip_text": {
+      "description": "This option draws a small circle to indicate where the mouse is located.",
+      "message": "ఈ ఐచ్ఛికం మౌస్ ఎక్కడ ఉన్నదో సూచించడానికి ఒక చిన్న సర్కిల్ను ఆకర్షిస్తుంది."
+   },
+   "sign_in": {
+      "description": "Sign In",
+      "message": "సైన్ ఇన్"
+   },
+   "sign_out": {
+      "description": "Sign Out",
+      "message": "సైన్ అవుట్"
+   },
+   "subscription_past_due_warning": {
+      "description": "Warning message shown when a user subscription payment has failed or is past its due date.",
+      "message": "చందా చెల్లింపు గడువు ముగిసింది, మీ చెల్లింపు సమాచారాన్ని నవీకరించడానికి ఇక్కడ క్లిక్ చేయండి."
+   },
+   "subscription_premium_plan_description": {
+      "description": "Go beyond basics: HD quality & limits unlocked. Craft pro content with enhanced features.",
+      "message": "ప్రాథమికాలను దాటి వెళ్లండి: HD నాణ్యత & అన్‌లాక్ చేయబడిన పరిమితులు. మెరుగైన ఫీచర్‌లతో ప్రో కంటెంట్‌ను రూపొందించండి."
+   },
+   "subscription_premium_pro_plan_description": {
+      "description": "Experience peak performance: 4K+ and all features. Full editing suite with early access.",
+      "message": "అత్యుత్తమ పనితీరును అనుభవించండి: 4K+ మరియు అన్ని ఫీచర్‌లు. ముందస్తు యాక్సెస్‌తో పూర్తి ఎడిటింగ్ సూట్."
+   },
+   "subscription_status_active": {
+      "description": "Active",
+      "message": "క్రియాశీలం"
+   },
+   "subscription_status_ending_soon": {
+      "description": "Ending Soon",
+      "message": "త్వరలో ముగుస్తుంది"
+   },
+   "subscription_status_expired": {
+      "description": "Expired",
+      "message": "గడువు ముగిసింది"
+   },
+   "subscription_status_past_due": {
+      "description": "Past Due",
+      "message": "గడువు ముగిసింది"
+   },
+   "subscription_status_paused": {
+      "description": "Paused",
+      "message": "పాజ్ చేయబడింది"
+   },
+   "subscription_status_unknown": {
+      "description": "Unknown",
+      "message": "తెలియదు"
+   },
+   "unable_to_capture_website_alert": {
+      "description": "Unable to capture this website. Please use full screen/application capture or try capture another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "ఈ వెబ్‌సైట్‌ను సంగ్రహించలేకపోయింది. దయచేసి పూర్తి స్క్రీన్/అప్లికేషన్ క్యాప్చర్ ఉపయోగించండి లేదా మరొక వెబ్‌సైట్‌ను సంగ్రహించడానికి ప్రయత్నించండి. \n\n (╯ ° □ ° °） ╯︵ ┻━┻ ┻━┻"
+   },
+   "view_permission": {
+      "description": "View permission.",
+      "message": "అనుమతిని చూడండి."
+   },
+   "width_text": {
+      "description": "Height (px)",
+      "message": "ఎత్తు (px)"
+   }
+}

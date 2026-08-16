@@ -1,0 +1,6 @@
+{
+  "enabled": true,
+  "productId": "Chrome Capture Pro",
+  "validationUrl": "/api/public/f12-license/validate",
+  "publicKeyJwk": null
+}

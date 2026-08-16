@@ -1,0 +1,1691 @@
+{
+   "account_modal_free_plan": {
+      "description": "You are on the free plan",
+      "message": "നിങ്ങൾ സ plan ജന്യ പ്ലാനിൽ ഉണ്ട്"
+   },
+   "account_modal_manage_subscription_button": {
+      "description": "Manage Subscription",
+      "message": "സബ്സ്ക്രിപ്ഷൻ നിയന്ത്രിക്കുക"
+   },
+   "account_modal_not_signed_in": {
+      "description": "You are not signed in",
+      "message": "നിങ്ങൾ സൈൻ ഇൻ ചെയ്തിട്ടില്ല"
+   },
+   "account_modal_premium_plan": {
+      "description": "You are on the premium plan",
+      "message": "നിങ്ങൾ പ്രീമിയം പ്ലാനിലാണ്"
+   },
+   "account_modal_premium_pro_plan": {
+      "description": "You are on the Premium Pro plan",
+      "message": "നിങ്ങൾ പ്രീമിയം പ്രോ പ്ലാനിലാണ്"
+   },
+   "account_modal_request_feature_button": {
+      "description": "Request Feature",
+      "message": "ഫീച്ചർ അഭ്യർത്ഥിക്കുക"
+   },
+   "account_modal_request_support_button": {
+      "description": "Request Support",
+      "message": "പിന്തുണ അഭ്യർത്ഥിക്കുക"
+   },
+   "account_modal_stats_heading": {
+      "description": "Your stats:",
+      "message": "നിങ്ങളുടെ സ്ഥിതിവിവരക്കണക്കുകൾ:"
+   },
+   "alert_text": {
+      "description": "Unable to run selected area capture on this website. Please use full screen recording or try another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "ഈ വെബ്സൈറ്റിൽ തിരഞ്ഞെടുത്ത പ്രദേശം ക്യാപ്ചർ പ്രവർത്തിപ്പിക്കാൻ കഴിയില്ല. പൂർണ്ണ സ്ക്രീൻ റെക്കോർഡിംഗ് ഉപയോഗിക്കുക അല്ലെങ്കിൽ മറ്റൊരു വെബ്സൈറ്റ് പരീക്ഷിക്കുക. \n\n (╯ ° □ م °) ╯("
+   },
+   "click_indicator_size_color_text": {
+      "description": "Click animation size & color",
+      "message": "ആനിമേഷൻ വലുപ്പവും നിറവും ക്ലിക്കുചെയ്യുക"
+   },
+   "close_btn_text": {
+      "description": "Close",
+      "message": "അടയ്ക്കുക"
+   },
+   "confirm_dialog_cancel_btn_text": {
+      "description": "Cancel",
+      "message": "റദ്ദാക്കുക"
+   },
+   "confirm_dialog_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "ഉറപ്പിക്കുക"
+   },
+   "confirm_fps_update_text": {
+      "description": "Changing the fps will remove all frame specific edits such as edited or deleted frames. Do you want to continue?",
+      "message": "എഫ്പിഎസ് മാറ്റുന്നത് എല്ലാ ഇമേജ് നിർദ്ദിഷ്ട എഡിറ്റുകളും എഡിറ്റുചെയ്തതോ ഇല്ലാതാക്കിയ ഫ്രെയിമുകൾ നീക്കംചെയ്യും. നിങ്ങൾ തുടരാൻ ആഗ്രഹിക്കുന്നുവോ?"
+   },
+   "copy_text": {
+      "description": "Copy to clipboard",
+      "message": "ക്ലിപ്പ്ബോർഡിലേയ്ക്ക് പകർത്തുക"
+   },
+   "cursor_size_and_color_text": {
+      "description": "Cursor dot size & color",
+      "message": "കഴ്സർ ഡോട്ട് വലുപ്പവും നിറവും"
+   },
+   "dither_text": {
+      "description": "Apply dither",
+      "message": "ഇറ്റ് പ്രയോഗിക്കുക"
+   },
+   "download_filename_text": {
+      "description": "Download filename format",
+      "message": "ഫയൽനാമ ഫോർമാറ്റ് ഡൗൺലോഡുചെയ്യുക"
+   },
+   "download_text": {
+      "description": "Download",
+      "message": "ഡൗൺലോഡ്"
+   },
+   "draw_size_and_color_text": {
+      "description": "Drawing size & color",
+      "message": "വലുപ്പവും നിറവും വരയ്ക്കുന്നു"
+   },
+   "duration": {
+      "description": "Label for a field indicating a length of time.",
+      "message": "ദൈർഘ്യം"
+   },
+   "editor_action_add_icon": {
+      "description": "Add icon",
+      "message": "ഐക്കൺ ചേർക്കുക"
+   },
+   "editor_action_add_text": {
+      "description": "Add text",
+      "message": "വാചകം ചേർക്കുക"
+   },
+   "editor_action_blur_rectangle": {
+      "description": "Blur area",
+      "message": "ഏരിയ മങ്ങിക്കുക"
+   },
+   "editor_action_copy": {
+      "description": "Copy to clipboard",
+      "message": "ക്ലിപ്പ്ബോർഡിലേയ്ക്ക് പകർത്തുക"
+   },
+   "editor_action_crop": {
+      "description": "Crop",
+      "message": "വിള"
+   },
+   "editor_action_draw_arrow": {
+      "description": "Draw arrow",
+      "message": "അമ്പടയാളം വരയ്ക്കുക"
+   },
+   "editor_action_draw_ellipse": {
+      "description": "Draw ellipse",
+      "message": "ദീർഘവൃത്തങ്ങൾ വരയ്ക്കുക"
+   },
+   "editor_action_draw_line": {
+      "description": "Draw line",
+      "message": "വരയ്ക്കുക"
+   },
+   "editor_action_draw_rectangle": {
+      "description": "Draw rectangle",
+      "message": "ദീർഘചതുരം വരയ്ക്കുക"
+   },
+   "editor_action_free_draw": {
+      "description": "Free draw",
+      "message": "സ R ജന്യ നറുക്കെടുപ്പ്"
+   },
+   "editor_action_highlight": {
+      "description": "Highlight",
+      "message": "ഹൈലൈറ്റ് ചെയ്യുക"
+   },
+   "editor_action_numbered_step": {
+      "description": "Action label for adding a numbered step annotation.",
+      "message": "നമ്പർ ചെയ്ത ഘട്ടം"
+   },
+   "editor_action_pan": {
+      "description": "Pan",
+      "message": "പാൻ ചെയ്യുക"
+   },
+   "editor_action_profile_account": {
+      "description": "Account",
+      "message": "അക്കൗണ്ട്"
+   },
+   "editor_action_redo": {
+      "description": "Redo",
+      "message": "വീണ്ടുംോ"
+   },
+   "editor_action_save": {
+      "description": "Save",
+      "message": "രക്ഷിക്കും"
+   },
+   "editor_action_select": {
+      "description": "Select, move, resize",
+      "message": "തിരഞ്ഞെടുക്കുക, നീക്കുക, വലുപ്പം മാറ്റുക"
+   },
+   "editor_action_settings": {
+      "description": "Settings",
+      "message": "ക്രമീകരണങ്ങൾ"
+   },
+   "editor_action_undo": {
+      "description": "Undo",
+      "message": "പഴയപടിയാക്കുക"
+   },
+   "editor_action_undo_all": {
+      "description": "Undo all",
+      "message": "എല്ലാം പഴയപടിയാക്കുക"
+   },
+   "editor_add_text_default": {
+      "description": "start typing...",
+      "message": "ടൈപ്പിംഗ് ആരംഭിക്കുക ..."
+   },
+   "editor_browse_file_system": {
+      "description": "Browse file system",
+      "message": "ഫയൽ സിസ്റ്റം ബ്ര rowse സ് ചെയ്യുക"
+   },
+   "editor_drag_and_drop": {
+      "description": "Drag and drop image/GIF or ",
+      "message": "ചിത്രം / gif അല്ലെങ്കിൽ ഡ്രോപ്പ് ചെയ്ത് ഡ്രോപ്പ് ചെയ്യുക"
+   },
+   "editor_file_downloaded": {
+      "description": "File saved to downloads folder.",
+      "message": "ഡ download ൺലോഡുകൾ ഫോൾഡറിലേക്ക് ഫയൽ സംരക്ഷിച്ചു."
+   },
+   "editor_file_downloaded_selected_location": {
+      "description": "File saved to selected location.",
+      "message": "തിരഞ്ഞെടുത്ത ലൊക്കേഷനിലേക്ക് ഫയൽ സംരക്ഷിച്ചു."
+   },
+   "editor_frame_selector_apply_edits": {
+      "description": "Apply edits to selected",
+      "message": "തിരഞ്ഞെടുത്തതിന് എഡിറ്റുകൾ പ്രയോഗിക്കുക"
+   },
+   "editor_frame_selector_delete": {
+      "description": "Delete",
+      "message": "ഇല്ലാതാക്കുക"
+   },
+   "editor_frame_selector_delete_every_second": {
+      "description": "Delete every second frame",
+      "message": "ഓരോ രണ്ടാമത്തെ ഫ്രെയിമും ഇല്ലാതാക്കുക"
+   },
+   "editor_frame_selector_delete_selected": {
+      "description": "Delete selected",
+      "message": "തിരഞ്ഞെടുത്ത ഇല്ലാതാക്കുക"
+   },
+   "editor_frame_selector_remove_edits": {
+      "description": "Remove edits from selected",
+      "message": "തിരഞ്ഞെടുത്തതിൽ നിന്ന് എഡിറ്റുകൾ നീക്കംചെയ്യുക"
+   },
+   "editor_frame_selector_restore": {
+      "description": "Restore",
+      "message": "വീണ്ടെടുക്കുക"
+   },
+   "editor_frame_selector_restore_all": {
+      "description": "Restore All",
+      "message": "എല്ലാം പുന ore സ്ഥാപിക്കുക"
+   },
+   "editor_frame_selector_restore_selected": {
+      "description": "Restore selected",
+      "message": "പുന ore സ്ഥാപിക്കുക തിരഞ്ഞെടുത്തു"
+   },
+   "editor_frame_selector_select_next": {
+      "description": "Select next frames",
+      "message": "അടുത്ത ചിത്രങ്ങൾ തിരഞ്ഞെടുക്കുക"
+   },
+   "editor_frame_selector_select_previous": {
+      "description": "Select previous frames",
+      "message": "മുമ്പത്തെ ഇമേജുകൾ തിരഞ്ഞെടുക്കുക"
+   },
+   "editor_frame_selector_unselect_all": {
+      "description": "Unselect All",
+      "message": "എല്ലാം തിരഞ്ഞെടുത്തത് തിരഞ്ഞെടുക്കുക"
+   },
+   "editor_image_copied": {
+      "description": "Image copied to clipboard.",
+      "message": "ചിത്രം ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി."
+   },
+   "editor_image_copied_failed": {
+      "description": "Failed to copy image to clipboard, it may be too large.",
+      "message": "ചിത്രം ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തുന്നതിൽ പരാജയപ്പെട്ടു, അത് വളരെ വലുതായിരിക്കാം."
+   },
+   "editor_link_copied": {
+      "description": "Link copied to clipboard.",
+      "message": "ലിങ്ക് ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി."
+   },
+   "editor_max_time_reached_dialog_description1": {
+      "description": "You have reached the max recording length time of $maxlength$ seconds for GIFs. Premium users can update this from the settings page.",
+      "message": "G_E_S_T സെക്കൻഡ് G_E_S_T സെക്കൻഡ് സമയങ്ങളിൽ നിങ്ങൾ ഗിഫുകൾക്കായി എത്തിയിരിക്കുന്നു. പ്രീമിയം ഉപയോക്താക്കൾക്ക് ഇത് ക്രമീകരണ പേജിൽ നിന്ന് ഇത് അപ്ഡേറ്റ് ചെയ്യാൻ കഴിയും.",
+      "placeholders": {
+         "maxlength": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_max_time_reached_dialog_description2": {
+      "description": "GIFs are intended for short recordings. If you require full length videos we recommend our free screen recorder: ",
+      "message": "ഹ്രസ്വ റെക്കോർഡിംഗുകൾക്കായി GIFS ഉദ്ദേശിച്ചുള്ളതാണ്. നിങ്ങൾക്ക് പൂർണ്ണ ദൈർഘ്യ വീഡിയോകൾ ആവശ്യമുണ്ടെങ്കിൽ ഞങ്ങളുടെ സ s ജന്യ സ്ക്രീൻ റെക്കോർഡർ ഞങ്ങൾ ശുപാർശ ചെയ്യുന്നു:"
+   },
+   "editor_max_time_reached_dialog_description3": {
+      "description": "Premium users can update this from the settings page.",
+      "message": "പ്രീമിയം ഉപയോക്താക്കൾക്ക് ഇത് ക്രമീകരണ പേജിൽ നിന്ന് ഇത് അപ്ഡേറ്റ് ചെയ്യാൻ കഴിയും."
+   },
+   "editor_max_time_reached_dialog_settings_button": {
+      "description": "Open settings",
+      "message": "ക്രമീകരണങ്ങൾ തുറക്കുക"
+   },
+   "editor_max_time_reached_dialog_title": {
+      "description": "Recording suddenly stopped?",
+      "message": "റെക്കോർഡിംഗ് പെട്ടെന്ന് നിർത്തി?"
+   },
+   "editor_premium_options_color": {
+      "description": "Color",
+      "message": "നിറം"
+   },
+   "editor_premium_options_draw_size": {
+      "description": "Draw Size",
+      "message": "വലുപ്പം വരയ്ക്കുക"
+   },
+   "editor_premium_options_font": {
+      "description": "Font",
+      "message": "ഫോണ്ട്"
+   },
+   "editor_premium_options_playback_speed": {
+      "description": "Playback Speed",
+      "message": "പ്ലേബാക്ക് വേഗത"
+   },
+   "editor_premium_options_special_effect": {
+      "description": "Special Effect",
+      "message": "പ്രത്യേക പ്രഭാവം"
+   },
+   "editor_premium_options_title": {
+      "description": "Premium Options",
+      "message": "പ്രീമിയം ഓപ്ഷനുകൾ"
+   },
+   "editor_save_dialog_advanced_encoding_options": {
+      "description": "Title for a section containing advanced, technical options for encoding a file.",
+      "message": "വിപുലമായ എൻകോഡിംഗ് ഓപ്ഷനുകൾ"
+   },
+   "editor_save_dialog_alert_title": {
+      "description": "Warning",
+      "message": "മുന്നറിയിപ്പ്"
+   },
+   "editor_save_dialog_aspect_ratio": {
+      "description": "lock aspect ratio",
+      "message": "വീക്ഷണാനുപാതം ലോക്ക് ചെയ്യുക"
+   },
+   "editor_save_dialog_cancel": {
+      "description": "Cancel",
+      "message": "റദ്ദാക്കുക"
+   },
+   "editor_save_dialog_chip_animated_image": {
+      "description": "Chip label indicating an animated image format (e.g. GIF, AVIF).",
+      "message": "ആനിമേറ്റഡ് ചിത്രം"
+   },
+   "editor_save_dialog_chip_large_file": {
+      "description": "Chip label indicating the format produces a large file size.",
+      "message": "വലിയ ഫയൽ"
+   },
+   "editor_save_dialog_chip_limited_support": {
+      "description": "Chip label indicating the format has limited browser/app support.",
+      "message": "പരിമിത പിന്തുണ"
+   },
+   "editor_save_dialog_chip_small_file": {
+      "description": "Chip label indicating the format produces a small file size.",
+      "message": "ചെറിയ ഫയൽ"
+   },
+   "editor_save_dialog_chip_video": {
+      "description": "Chip label indicating a video format (e.g. WebM, MP4).",
+      "message": "വീഡിയോ"
+   },
+   "editor_save_dialog_chip_widely_supported": {
+      "description": "Chip label indicating the format is widely supported.",
+      "message": "വ്യാപകമായി പിന്തുണയ്ക്കുന്നു"
+   },
+   "editor_save_dialog_compress": {
+      "description": "Compress & optimize GIF",
+      "message": "ഗംഭീരവും GIF ഒപ്റ്റിമൈസ് ചെയ്യുക"
+   },
+   "editor_save_dialog_compress_tooltip": {
+      "description": "Apply GIF compression algorthm to greatly reduce GIF file size and in some cases improve quality. Highly recommeded.",
+      "message": "GIF ഫയൽ വലുപ്പവും ചില സന്ദർഭങ്ങളിലും ഗുണനിലവാരം വളരെയധികം കുറയ്ക്കുന്നതിന് ജിഐഎഫ് കംപ്രഷൻ അൽഗോർത്ത് അമർത്തുക. വളരെ ശുപാർശ ചെയ്തു."
+   },
+   "editor_save_dialog_dither_tooltip": {
+      "description": "Apply dither algorithm to frames. Try toggling this option if you experience color quality issues.",
+      "message": "ഇമേജുകൾക്ക് ഡാവിക്ക് അൽഗോരിതം പ്രയോഗിക്കുക. നിങ്ങൾക്ക് വർണ്ണ നിലവാരമുള്ള പ്രശ്നങ്ങൾ അനുഭവപ്പെടുകയാണെങ്കിൽ ഈ ഓപ്ഷൻ ടോഗിൾ ചെയ്യാൻ ശ്രമിക്കുക."
+   },
+   "editor_save_dialog_download_raw_recording": {
+      "description": "Download raw recording",
+      "message": "അസംസ്കൃത റെക്കോർഡിംഗ് ഡൗൺലോഡുചെയ്യുക"
+   },
+   "editor_save_dialog_estimated_size": {
+      "description": "Estimated GIF Size: ",
+      "message": "കണക്കാക്കിയ ജിഫ് വലുപ്പം:"
+   },
+   "editor_save_dialog_export_sound": {
+      "description": "Include sound (beta)",
+      "message": "ശബ്ദം ഉൾപ്പെടുത്തുക (ബീറ്റ)"
+   },
+   "editor_save_dialog_export_sound_tooltip": {
+      "description": "Enable this option to include sound in the video.",
+      "message": "വീഡിയോയിൽ ശബ്ദം ഉൾപ്പെടുത്തുന്നതിന് ഈ ഓപ്ഷൻ പ്രാപ്തമാക്കുക."
+   },
+   "editor_save_dialog_frames": {
+      "description": "Frames: ",
+      "message": "ചിത്രങ്ങൾ:"
+   },
+   "editor_save_dialog_frames_alert": {
+      "description": "There are currently selected frames, saving will only output these selected frames - ",
+      "message": "നിലവിൽ തിരഞ്ഞെടുത്ത ഇമേജുകൾ നിലവിൽ തിരഞ്ഞെടുക്കുന്നു, സേവിംഗ് ചെയ്യുന്നത് ഈ തിരഞ്ഞെടുത്ത ഫ്രെയിമുകൾ output ട്ട്പുട്ട് മാത്രമേ നൽകൂ -"
+   },
+   "editor_save_dialog_frames_alert_button": {
+      "description": "Click here to unselect all frames",
+      "message": "എല്ലാ ചിത്രങ്ങളും തിരഞ്ഞെടുക്കുന്നതിന് ഇവിടെ ക്ലിക്കുചെയ്യുക"
+   },
+   "editor_save_dialog_frames_alert_title": {
+      "description": "Playback Speed",
+      "message": "പ്ലേബാക്ക് വേഗത"
+   },
+   "editor_save_dialog_frames_processing": {
+      "description": "Processing Frames: ",
+      "message": "ഇമേജുകൾ പ്രോസസ്സ് ചെയ്യുന്നു:"
+   },
+   "editor_save_dialog_height_helper": {
+      "description": "Recorded height is ",
+      "message": "റെക്കോർഡുചെയ്ത ഉയരം"
+   },
+   "editor_save_dialog_lossy_compression": {
+      "description": "Label for a setting that controls the level of lossy compression, from 0 to 100 percent.",
+      "message": "നഷ്ടമുള്ള കംപ്രഷൻ (0 - 100%)"
+   },
+   "editor_save_dialog_number_min_max_validation": {
+      "description": "A value between $minSize$ and $maxSize$ is required.",
+      "message": "$minSize$, $maxSize$ എന്നിവ തമ്മിലുള്ള ഒരു മൂല്യം ആവശ്യമാണ്.",
+      "placeholders": {
+         "maxSize": {
+            "content": "$2"
+         },
+         "minSize": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_save_dialog_processing_alert": {
+      "description": "Processing this recording will require a lot of memory and processing power. Unless you have a high spec PC it is recommended to do one or more of the following:",
+      "message": "ഈ റെക്കോർഡിംഗിനെ പ്രോസസ്സ് ചെയ്യുന്നത് വളരെയധികം മെമ്മറിയും പ്രോസസ്സിംഗ് പവറും ആവശ്യമാണ്. നിങ്ങൾക്ക് ഒരു ഉയർന്ന സവിശേഷത പിസി ഇല്ലെങ്കിൽ ഇനിപ്പറയുന്നവയിൽ ഒന്നോ അതിലധികമോ ചെയ്യാൻ ശുപാർശ ചെയ്യുന്നു:"
+   },
+   "editor_save_dialog_processing_alert_memory": {
+      "description": "Please note if the resulting GIF is blank then you ran out of memory.",
+      "message": "തത്ഫലമായുണ്ടാകുന്ന ജിഫ് ശൂന്യമാണെന്ന് ദയവായി ശ്രദ്ധിക്കുക, തുടർന്ന് നിങ്ങൾ മെമ്മറി തീർന്നു."
+   },
+   "editor_save_dialog_processing_alert_point_1": {
+      "description": "Compress and optimize GIF",
+      "message": "കംപ്രസ്സുചെയ്ത് GIF ഒപ്റ്റിമൈസ് ചെയ്യുക"
+   },
+   "editor_save_dialog_processing_alert_point_2": {
+      "description": "Reduce the width & height",
+      "message": "വീതിയും ഉയരവും കുറയ്ക്കുക"
+   },
+   "editor_save_dialog_processing_alert_point_3": {
+      "description": "Reduce FPS or delete frames",
+      "message": "എഫ്പിഎസ് അല്ലെങ്കിൽ ഇമേജുകൾ ഇല്ലാതാക്കുക"
+   },
+   "editor_save_dialog_purchase_dialog_compression_description": {
+      "description": "Free users are limited to 3 high quality GIF compressions per day. Upgrade to Premium to have no restrictions.",
+      "message": "ഫ്രീ ഉപയോക്താക്കൾ പ്രതിദിനം 3 ഉയർന്ന നിലവാരമുള്ള ജിഐഎഫ് കംപ്രഷനുകളിൽ പരിമിതപ്പെടുത്തിയിരിക്കുന്നു. നിയന്ത്രണങ്ങളില്ലാത്ത പ്രീമിയത്തിലേക്ക് അപ്ഗ്രേഡുചെയ്യുക."
+   },
+   "editor_save_dialog_quantization_algorithm": {
+      "description": "Label for a dropdown to select a quantization algorithm.",
+      "message": "ക്വാണ്ടൈസേഷൻ അൽഗോരിതം"
+   },
+   "editor_save_dialog_quantization_algorithm_new_alpha": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Alpha.",
+      "message": "പുതിയത് (ആൽഫ)"
+   },
+   "editor_save_dialog_quantization_algorithm_new_beta": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Beta.",
+      "message": "പുതിയത് (ബീറ്റ)"
+   },
+   "editor_save_dialog_quantization_algorithm_old": {
+      "description": "An option for the quantization algorithm setting, indicating an older version.",
+      "message": "പഴയത്"
+   },
+   "editor_save_dialog_recording_quality_alert": {
+      "description": "GIF quality is limited for non premium users. To output high quality recordings you can do one of the following:",
+      "message": "പ്രീമിയം ഇതര ഉപയോക്താക്കൾക്ക് ജിഐഎഫ് നിലവാരം പരിമിതപ്പെടുത്തിയിരിക്കുന്നു. ഉയർന്ന നിലവാരമുള്ള റെക്കോർഡിംഗുകൾ output ട്ട്പുട്ട് ചെയ്യുന്നതിന് നിങ്ങൾക്ക് ഇനിപ്പറയുന്നവയിൽ ഒന്ന് ചെയ്യാൻ കഴിയും:"
+   },
+   "editor_save_dialog_recording_quality_alert_option_1": {
+      "description": "Purchase premium",
+      "message": "പ്രീമിയം വാങ്ങുക"
+   },
+   "editor_save_dialog_recording_quality_alert_option_2": {
+      "description": "Save as a WebM file",
+      "message": "ഒരു വെബ് എം ഫയലായി സംരക്ഷിക്കുക"
+   },
+   "editor_save_dialog_reduce_width": {
+      "description": "Reduce width & height",
+      "message": "വീതിയും ഉയരവും കുറയ്ക്കുക"
+   },
+   "editor_save_dialog_reduce_width_tooltip": {
+      "description": "Reduce GIF width and height/quality to improve processing time and produce a smaller file.",
+      "message": "പ്രോസസ്സിംഗ് സമയം മെച്ചപ്പെടുത്തുന്നതിനും ഒരു ചെറിയ ഫയൽ നിർമ്മിക്കുന്നതിനും GIF വീതിയും ഉയരവും കുറയ്ക്കുക."
+   },
+   "editor_save_dialog_save": {
+      "description": "Save",
+      "message": "രക്ഷിക്കും"
+   },
+   "editor_save_dialog_save_by": {
+      "description": "Save by",
+      "message": "രക്ഷിക്കുക"
+   },
+   "editor_save_dialog_save_by_download": {
+      "description": "Download file",
+      "message": "ഫയൽ ഡൗൺലോഡുചെയ്യുക"
+   },
+   "editor_save_dialog_save_by_google_drive": {
+      "description": "Upload to Google Drive & copy link",
+      "message": "Google ഡ്രൈവിലേക്കും പകർപ്പിലേക്കും അപ്ലോഡുചെയ്യുക"
+   },
+   "editor_save_dialog_save_location": {
+      "description": "Save location",
+      "message": "ലൊക്കേഷൻ സംരക്ഷിക്കുക"
+   },
+   "editor_save_dialog_save_location_downloads": {
+      "description": "Downloads folder",
+      "message": "ഡൗൺലോഡുകൾ ഫോൾഡർ"
+   },
+   "editor_save_dialog_save_location_downloads_subfolder": {
+      "description": "Downloads subfolder",
+      "message": "ഡ download ൺലോഡ്സ് സബ്ഫോൾഡർ"
+   },
+   "editor_save_dialog_save_location_select": {
+      "description": "Manually select location",
+      "message": "സ്ഥാനം സ്വമേധയാ തിരഞ്ഞെടുക്കുക"
+   },
+   "editor_save_dialog_title": {
+      "description": "Save",
+      "message": "രക്ഷിക്കും"
+   },
+   "editor_save_dialog_title_processing": {
+      "description": "Processing...",
+      "message": "പ്രോസസ്സിംഗ് ..."
+   },
+   "editor_save_dialog_title_uploading": {
+      "description": "Uploading...",
+      "message": "അപ്ലോഡുചെയ്യുന്നു ..."
+   },
+   "editor_save_dialog_width_helper": {
+      "description": "Recorded width is ",
+      "message": "റെക്കോർഡുചെയ്ത വീതി"
+   },
+   "editor_text": {
+      "description": "Open in editor",
+      "message": "എഡിറ്ററിൽ തുറക്കുക"
+   },
+   "editor_tip_delete_items": {
+      "description": "Pro tip: Delete added items by selecting the item and pressing the delete key.",
+      "message": "പ്രോ നുത്രം: ഇനം തിരഞ്ഞെടുത്ത് ഇല്ലാതാക്കുക, ഇല്ലാതാക്കൽ കീ അമർത്തുക."
+   },
+   "editor_tip_edit_specific_frames": {
+      "description": "Pro tip: You can edit specific frames by using the 'Apply edits to selected option'",
+      "message": "പ്രോ നുത്രം: 'തിരഞ്ഞെടുത്ത ഓപ്ഷനിലേക്ക് എഡിറ്റുകൾ പ്രയോഗിക്കുക' ഉപയോഗിച്ച് നിങ്ങൾക്ക് നിർദ്ദിഷ്ട ഇമേജുകൾ എഡിറ്റുചെയ്യാനാകും"
+   },
+   "editor_tip_scroll": {
+      "description": "Pro tip: Scroll when hovering the screenshot/recording to zoom.",
+      "message": "പ്രോ നുറുങ്ങ്: സ്ക്രീൻഷോട്ട് / റെക്കോർഡിംഗ് തുടരുമ്പോൾ സ്ക്രോൾ ചെയ്യുക."
+   },
+   "editor_tip_shift_multiple_items": {
+      "description": "Pro tip: When using the selecting tool hold down shift to select more than one item.",
+      "message": "പ്രോ നുത്രം: തിരഞ്ഞെടുക്കൽ ഉപകരണം ഉപയോഗിക്കുമ്പോൾ ഒന്നിൽ കൂടുതൽ ഇനം തിരഞ്ഞെടുക്കുന്നതിന് ഷിഫ്റ്റ് അമർത്തിപ്പിടിക്കുക."
+   },
+   "editor_tip_update_multiple_items": {
+      "description": "Pro tip: You can scale, rotate, move and delete multiple items at once.",
+      "message": "പ്രോ നുത്രം: നിങ്ങൾക്ക് ഒന്നിലധികം ഇനങ്ങൾ ഒരേസമയം അളക്കാനും തിരിക്കുകയും നീക്കുകയും ഇല്ലാതാക്കുകയും ചെയ്യാം."
+   },
+   "editor_tip_update_text": {
+      "description": "Pro tip: Double click on text to edit it.",
+      "message": "പ്രോ നുത്രം: അത് എഡിറ്റുചെയ്യുന്നതിന് വാചകത്തിൽ ഇരട്ട ക്ലിക്കുചെയ്യുക."
+   },
+   "editor_upload_dialog_alert_copy_failed_message": {
+      "description": "This may have occurred due to the window not being focused.",
+      "message": "ജാലകം ശ്രദ്ധ കേന്ദ്രീകരിക്കാത്തതിനാൽ ഇത് സംഭവിച്ചേക്കാം."
+   },
+   "editor_upload_dialog_alert_copy_failed_title": {
+      "description": "Copy to clipboard failed",
+      "message": "ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തുക പരാജയപ്പെട്ടു"
+   },
+   "editor_upload_dialog_alert_copy_success_title": {
+      "description": "Copied to clipboard",
+      "message": "ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി"
+   },
+   "editor_upload_dialog_alert_upload_failed": {
+      "description": "Upload Failed",
+      "message": "അപ്ലോഡ് പരാജയപ്പെട്ടു"
+   },
+   "editor_upload_dialog_alert_upload_failed_link": {
+      "description": "Try again.",
+      "message": "വീണ്ടും ശ്രമിക്ക്."
+   },
+   "editor_upload_dialog_alert_upload_failed_message": {
+      "description": "Please make sure you are connected to the internet and have accepted Google Drive permissions.",
+      "message": "നിങ്ങൾ ഇന്റർനെറ്റുമായി ബന്ധിപ്പിച്ച് Google ഡ്രൈവ് അനുമതികൾ സ്വീകരിച്ചുവെന്ന് ഉറപ്പാക്കുക."
+   },
+   "editor_upload_dialog_cancel_and_download": {
+      "description": "Cancel and download file",
+      "message": "ഫയൽ റദ്ദാക്കി ഫയൽ"
+   },
+   "editor_upload_dialog_close": {
+      "description": "Close",
+      "message": "അടയ്ക്കുക"
+   },
+   "editor_upload_dialog_copy_link": {
+      "description": "Copy link",
+      "message": "ലിങ്ക് പകർത്തുക"
+   },
+   "editor_upload_dialog_link_public": {
+      "description": "Allow anyone with the link to view.",
+      "message": "കാഴ്ചയിലേക്ക് ലിങ്ക് ഉപയോഗിച്ച് ആരെയും അനുവദിക്കുക."
+   },
+   "editor_zoom_crop_animation_animated": {
+      "description": "Sub-label indicating an animation type is animated.",
+      "message": "ആനിമേറ്റ് ചെയ്ത"
+   },
+   "editor_zoom_crop_animation_crop": {
+      "description": "Animation type option for static cropping without animation.",
+      "message": "ട്രിം ചെയ്യുക"
+   },
+   "editor_zoom_crop_animation_static": {
+      "description": "Sub-label indicating an animation type is static (no animation).",
+      "message": "സ്ഥിരമായ"
+   },
+   "editor_zoom_crop_animation_type": {
+      "description": "Label for the animation type selection section.",
+      "message": "ആനിമേഷൻ തരം"
+   },
+   "editor_zoom_crop_animation_zoom_in": {
+      "description": "Animation type option for zooming in on the selected area.",
+      "message": "സൂം ഇൻ ചെയ്യുക"
+   },
+   "editor_zoom_crop_animation_zoom_out": {
+      "description": "Animation type option for zooming out from the selected area.",
+      "message": "സൂം ഔട്ട് ചെയ്യുക"
+   },
+   "editor_zoom_crop_apply": {
+      "description": "Apply button in zoom/crop dialog.",
+      "message": "പ്രയോഗിക്കുക"
+   },
+   "editor_zoom_crop_cancel": {
+      "description": "Cancel button in zoom/crop dialog.",
+      "message": "റദ്ദാക്കുക"
+   },
+   "editor_zoom_crop_change_area": {
+      "description": "Tooltip text for button to change the selected crop area.",
+      "message": "പ്രദേശം മാറ്റുക"
+   },
+   "editor_zoom_crop_dialog_title": {
+      "description": "Title for the zoom and crop dialog in the editor.",
+      "message": "സൂം ചെയ്യുക കൂടാതെ ട്രിം ചെയ്യുക"
+   },
+   "editor_zoom_crop_draw_instruction": {
+      "description": "Instruction text for the user to draw a crop area on the frame preview.",
+      "message": "ഫ്രെയിമിൽ തിരഞ്ഞെടുപ്പ് വരയ്ക്കുക"
+   },
+   "editor_zoom_crop_frame_end": {
+      "description": "Label for the end frame number.",
+      "message": "അവസാനം"
+   },
+   "editor_zoom_crop_frame_range": {
+      "description": "Label for the frame range selection section.",
+      "message": "ഫ്രെയിം ശ്രേണി"
+   },
+   "editor_zoom_crop_frame_start": {
+      "description": "Label for the start frame number.",
+      "message": "ആരംഭം"
+   },
+   "editor_zoom_crop_frames_menu": {
+      "description": "Menu item label for zoom/crop frames feature.",
+      "message": "ഫ്രെയിം സൂം/ട്രിം ചെയ്യുക"
+   },
+   "editor_zoom_crop_no_area_selected": {
+      "description": "Message displayed when no crop area has been selected.",
+      "message": "പ്രദേശം തിരഞ്ഞെടുത്തിട്ടില്ല"
+   },
+   "editor_zoom_crop_select_area": {
+      "description": "Button text to select a crop area on the frame.",
+      "message": "പ്രദേശം തിരഞ്ഞെടുക്കുക"
+   },
+   "editor_zoom_crop_smooth_animation": {
+      "description": "Checkbox label for smoothing animation by interpolating frames.",
+      "message": "ഫ്രെയിം ചേർത്ത് ആനിമേഷൻ മിനുസമാക്കുക"
+   },
+   "editor_zoom_crop_transition": {
+      "description": "Label for the transition duration section (number of frames for animation).",
+      "message": "സംക്രമണം"
+   },
+   "enable_drawing_text": {
+      "description": "Enable drawing",
+      "message": "ഡ്രോയിംഗ് പ്രാപ്തമാക്കുക"
+   },
+   "enable_drawing_tooltip_text": {
+      "description": "This option allows users to draw in the selected area while holding down the ctrl key.",
+      "message": "Ctrl കീ അമർത്തിപ്പിടിക്കുമ്പോൾ തിരഞ്ഞെടുത്ത പ്രദേശത്ത് ഉപയോക്താക്കളെ ഈ ഓപ്ഷൻ അനുവദിക്കുന്നു."
+   },
+   "extension_description": {
+      "description": "Take screenshots & record GIFs instantly! Edit & share seamlessly. Your all-in-one screenshot and screen recording solution.",
+      "message": "സ്ക്രീൻഷോട്ടുകൾ എടുത്ത് GIFS റെക്കോർഡുചെയ്യുക! തടസ്സമില്ലാതെ പങ്കിടുക & പങ്കിടുക. നിങ്ങളുടെ ഓൾ-ഇൻ-വൺ സ്ക്രീൻഷോട്ടും സ്ക്രീൻ റെക്കോർഡിംഗ് പരിഹാരവും."
+   },
+   "extension_name": {
+      "description": "Chrome Capture - screenshot & GIF",
+      "message": "ക്രോം ക്യാപ്ചർ - സ്ക്രീൻഷോട്ട് & ജിഫ്"
+   },
+   "extension_short_name": {
+      "description": "Chrome Capture",
+      "message": "ക്രോം ക്യാപ്ചർ"
+   },
+   "file_access_text": {
+      "description": "After screenshot action",
+      "message": "സ്ക്രീൻഷോട്ടിന് ശേഷമുള്ള പ്രവർത്തനം"
+   },
+   "filename_text": {
+      "description": "Filename",
+      "message": "ഫയലിന്റെ പേര്"
+   },
+   "frames_per_sec_short_text": {
+      "description": "FPS",
+      "message": "എഫ്പിഎസ്"
+   },
+   "frames_per_sec_text": {
+      "description": "Frames per second (fps)",
+      "message": "സെക്കൻഡിൽ (എഫ്പിഎസ്)"
+   },
+   "frames_text": {
+      "description": "frames",
+      "message": "ചിത്രങ്ങൾ"
+   },
+   "free_settings_text": {
+      "description": "Free Settings",
+      "message": "സ) ക്രമീകരണങ്ങൾ"
+   },
+   "fullscreen_info_modal_cancel": {
+      "description": "Cancel",
+      "message": "റദ്ദാക്കുക"
+   },
+   "fullscreen_info_modal_continue": {
+      "description": "Are you sure you want to continue with full screen capture?",
+      "message": "പൂർണ്ണ സ്ക്രീൻ ക്യാപ്ചർ തുടരാൻ നിങ്ങൾ ആഗ്രഹിക്കുന്നുണ്ടോ?"
+   },
+   "fullscreen_info_modal_do_not_show": {
+      "description": "Do not show this again",
+      "message": "ഇത് വീണ്ടും കാണിക്കരുത്"
+   },
+   "fullscreen_info_modal_message": {
+      "description": "You have used a Chrome Capture shortcut without the cropping tool, this will capture in full screen mode.",
+      "message": "ക്രോപ്പിംഗ് ടൂളില്ലാതെ നിങ്ങൾ ഒരു Chrome ക്യാപ്ചർ കുറുക്കുവഴി ഉപയോഗിച്ചു, ഇത് പൂർണ്ണ സ്ക്രീൻ മോഡിൽ ക്യാപ്ചർ ചെയ്യും."
+   },
+   "fullscreen_info_modal_open_cropping": {
+      "description": "Open cropping tool",
+      "message": "വിളവെടുപ്പ് ഉപകരണം തുറക്കുക"
+   },
+   "fullscreen_info_modal_shortcut_cropping_tool": {
+      "description": "Alt + C: Open/close Chrome Capture cropping tool",
+      "message": "Alt + C: തുറക്കുക / അടയ്ക്കുക ക്രോപ്പ് ക്രോപ്പിംഗ് ഉപകരണം"
+   },
+   "fullscreen_info_modal_shortcut_fullpage_screenshot": {
+      "description": "Alt + Shift + S: Full webpage screenshot (beta)",
+      "message": "Alt + Shift + S: പൂർണ്ണ വെബ്പേജ് സ്ക്രീൻഷോട്ട് (ബീറ്റ)"
+   },
+   "fullscreen_info_modal_shortcut_linkt": {
+      "description": "You can configure these here: ",
+      "message": "നിങ്ങൾക്ക് ഇവ ഇവിടെ ക്രമീകരിക്കാൻ കഴിയും:"
+   },
+   "fullscreen_info_modal_shortcut_recording": {
+      "description": "Alt + R: Start/stop recording",
+      "message": "Alt + R: റെക്കോർഡിംഗ് ആരംഭിക്കുക / നിർത്തുക"
+   },
+   "fullscreen_info_modal_shortcut_screenshot": {
+      "description": "Alt + S: Visible area screenshot",
+      "message": "Alt + s: ദൃശ്യമായ ഏരിയ സ്ക്രീൻഷോട്ട്"
+   },
+   "fullscreen_info_modal_shortcuts": {
+      "description": "Default shortcuts are: ",
+      "message": "സ്ഥിരസ്ഥിതി കുറുക്കുവഴികൾ ഇവയാണ്:"
+   },
+   "fullscreen_info_modal_start": {
+      "description": "Start full screen capture",
+      "message": "പൂർണ്ണ സ്ക്രീൻ ക്യാപ്ചർ ആരംഭിക്കുക"
+   },
+   "fullscreen_info_modal_title": {
+      "description": "Full screen capture",
+      "message": "പൂർണ്ണ സ്ക്രീൻ ക്യാപ്ചർ"
+   },
+   "general_not_available": {
+      "description": "N/A",
+      "message": "ലഭ്യമല്ല"
+   },
+   "get_premium": {
+      "description": "Get Premium",
+      "message": "പ്രീമിയം നേടുക"
+   },
+   "height_text": {
+      "description": "Width (px)",
+      "message": "വീതി (പിഎക്സ്)"
+   },
+   "hi": {
+      "description": "Hi",
+      "message": "ധികം"
+   },
+   "internet_connection_required": {
+      "description": "Internet connection is required to upgrade to premium.",
+      "message": "പ്രീമിയത്തിലേക്ക് അപ്ഗ്രേഡുചെയ്യാൻ ഇന്റർനെറ്റ് കണക്ഷൻ ആവശ്യമാണ്."
+   },
+   "manage_subscription_access_until_date": {
+      "description": "Your plan will not renew. You can access premium features until $date$.",
+      "message": "നിങ്ങളുടെ പ്ലാൻ പുതുക്കില്ല. നിങ്ങൾക്ക് $date$ വരെ പ്രീമിയം ഫീച്ചറുകൾ ആക്‌സസ് ചെയ്യാം.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_cancel_button": {
+      "description": "Cancel subscription",
+      "message": "സബ്സ്ക്രിപ്ഷൻ റദ്ദാക്കുക"
+   },
+   "manage_subscription_cancel_confirm_cancel_button": {
+      "description": "Keep Premium",
+      "message": "പ്രീമിയം നിലനിർത്തുക"
+   },
+   "manage_subscription_cancel_confirm_confirm_button": {
+      "description": "Continue to cancel",
+      "message": "റദ്ദാക്കാൻ തുടരുക"
+   },
+   "manage_subscription_cancel_confirm_description": {
+      "description": "You will lose access to Premium features and Premium options will be reset.",
+      "message": "നിങ്ങൾക്ക് പ്രീമിയം ഫീച്ചറുകളിലേക്കുള്ള ആക്‌സസ് നഷ്ടപ്പെടും, പ്രീമിയം ഓപ്ഷനുകൾ പുനഃസജ്ജീകരിക്കും."
+   },
+   "manage_subscription_cancel_confirm_title": {
+      "description": "Are you sure you want to cancel your subscription?",
+      "message": "നിങ്ങളുടെ സബ്സ്ക്രിപ്ഷൻ റദ്ദാക്കാൻ നിങ്ങൾ ആഗ്രഹിക്കുന്നുവെന്ന് ഉറപ്പാണോ?"
+   },
+   "manage_subscription_ended_on_date": {
+      "description": "Subscription ended on $date$.",
+      "message": "സബ്സ്ക്രിപ്ഷൻ $date$-ന് അവസാനിച്ചു.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_ends_on_date": {
+      "description": "Subscription ends on $date$.",
+      "message": "സബ്സ്ക്രിപ്ഷൻ $date$-ന് അവസാനിക്കും.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_next_payment_full": {
+      "description": "Next payment: $price$ on $date$",
+      "message": "അടുത്ത പേയ്‌മെന്റ്: $date$-ന് $price$",
+      "placeholders": {
+         "date": {
+            "content": "$2"
+         },
+         "price": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_paid_full": {
+      "description": "Paid: $billingCycle$",
+      "message": "അടച്ചത്: $billingCycle$",
+      "placeholders": {
+         "billingCycle": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_resubscribe_prompt": {
+      "description": " To use premium features again, please upgrade.",
+      "message": " പ്രീമിയം ഫീച്ചറുകൾ വീണ്ടും ഉപയോഗിക്കുന്നതിന്, ദയവായി അപ്‌ഗ്രേഡ് ചെയ്യുക."
+   },
+   "manage_subscription_update_payment_button": {
+      "description": "Update payment method",
+      "message": "പേയ്‌മെന്റ് രീതി അപ്‌ഡേറ്റ് ചെയ്യുക"
+   },
+   "max_recording_dimension_size_text": {
+      "description": "Max recording resolution/quality",
+      "message": "പരമാവധി റെക്കോർഡിംഗ് മിഴിവ് / ഗുണമേന്മ"
+   },
+   "no_limit_text": {
+      "description": "No limit",
+      "message": "പരിധിയില്ല"
+   },
+   "open_text": {
+      "description": "Open",
+      "message": "തുറക്കുക"
+   },
+   "options_default_action": {
+      "description": "Extension icon click action",
+      "message": "എക്സ്റ്റൻഷൻ ഐക്കൺ ക്ലിക്ക് പ്രവർത്തനം"
+   },
+   "options_dimension_size_1000": {
+      "description": "1000 pixels",
+      "message": "1000 പിക്സലുകൾ"
+   },
+   "options_dimension_size_1080p": {
+      "description": "1920 pixels (1080p)",
+      "message": "1920 പിക്സലുകൾ (1080p)"
+   },
+   "options_dimension_size_480p": {
+      "description": "640 pixels (480p)",
+      "message": "640 പിക്സലുകൾ (480p)"
+   },
+   "options_dimension_size_4k": {
+      "description": "3840 pixels (4K)",
+      "message": "3840 പിക്സലുകൾ (4 കെ)"
+   },
+   "options_dimension_size_720p": {
+      "description": "1280 pixels (720p)",
+      "message": "1280 പിക്സലുകൾ (720p)"
+   },
+   "options_embedded_options_permission_warning": {
+      "description": "Cursor highlighting, click effects, and drawing tools will only work until the page reloads or changes. To keep them active after reloads or redirects, you'll need to grant an extra permission.",
+      "message": "പേജ് റീലോഡ് ചെയ്യുകയോ മാറുകയോ ചെയ്യുന്നത് വരെ മാത്രമേ കഴ്‌സർ ഹൈലൈറ്റിംഗ്, ക്ലിക്ക് ഇഫക്റ്റുകൾ, ഡ്രോയിംഗ് ടൂളുകൾ എന്നിവ പ്രവർത്തിക്കൂ. റീലോഡുകൾക്കോ റീഡയറക്‌ടുകൾക്കോ ശേഷവും അവ സജീവമായി നിലനിർത്താൻ, നിങ്ങൾ ഒരു അധിക അനുമതി നൽകേണ്ടതുണ്ട്."
+   },
+   "options_enable_notifications": {
+      "description": "Enable notifications",
+      "message": "അറിയിപ്പുകൾ പ്രാപ്തമാക്കുക"
+   },
+   "options_enable_notifications_tooltip": {
+      "description": "Display notifications when full screen recording starts and processing recordings in the background.",
+      "message": "പൂർണ്ണ സ്ക്രീൻ റെക്കോർഡിംഗ് പശ്ചാത്തലത്തിൽ റെക്കോർഡിംഗുകൾ പ്രോസസ്സ് ചെയ്യുന്നപ്പോൾ അറിയിപ്പുകൾ പ്രദർശിപ്പിക്കുക."
+   },
+   "options_enable_subfolder_downloads": {
+      "description": "Download files into subfolder",
+      "message": "ഫയലുകൾ സബ്ഫോൾഡറിലേക്ക് ഡൗൺലോഡുചെയ്യുക"
+   },
+   "options_enable_subfolder_downloads_tooltip": {
+      "description": "Download files into a subfolder of your choice inside the downloads folder. This option is useful for organising your captures.",
+      "message": "ഡ download ൺലോഡ് ഫോൾഡറിനുള്ളിൽ നിങ്ങളുടെ ചോയിസിന്റെ ഒരു സബ്ഫോൾഡറിലേക്ക് ഫയലുകൾ ഡൗൺലോഡുചെയ്യുക. നിങ്ങളുടെ ക്യാപ്ചറുകൾ ഓർഗനൈസുചെയ്യുന്നതിന് ഈ ഓപ്ഷൻ ഉപയോഗപ്രദമാണ്."
+   },
+   "options_how_to_use_btn": {
+      "description": "How to use",
+      "message": "എങ്ങനെ ഉപയോഗിക്കാം"
+   },
+   "options_language": {
+      "description": "Language",
+      "message": "ഭാഷ"
+   },
+   "options_open_containing_folder_on_save": {
+      "description": "Open containing folder after saving",
+      "message": "സംരക്ഷിച്ചതിന് ശേഷം അടങ്ങിയിരിക്കുന്ന ഫോൾഡർ തുറക്കുക"
+   },
+   "options_open_popup": {
+      "description": "Open popup",
+      "message": "പോപ്പ്അപ്പ് തുറക്കുക"
+   },
+   "options_open_selected_area": {
+      "description": "Open selected area capture",
+      "message": "തിരഞ്ഞെടുത്ത ഏരിയ ക്യാപ്ചർ തുറക്കുക"
+   },
+   "options_section_general": {
+      "description": "Title for the General settings section in the options page",
+      "message": "പൊതുവായ ക്രമീകരണങ്ങൾ"
+   },
+   "options_section_output": {
+      "description": "Title for the Output and Saving settings section in the options page",
+      "message": "ഔട്ട്‌പുട്ടും സേവിംഗും"
+   },
+   "options_section_recording": {
+      "description": "Title for the Recording settings section in the options page",
+      "message": "റെക്കോർഡിംഗ് ക്രമീകരണങ്ങൾ"
+   },
+   "options_section_visuals": {
+      "description": "Title for the Cursor and Interaction Visuals settings section in the options page",
+      "message": "കേഴ്സറും പ്രതിപ്രവർത്തന വിഷ്വലുകളും"
+   },
+   "options_shortcuts_btn": {
+      "description": "Shortcuts",
+      "message": "കുറുക്കുവഴികൾ"
+   },
+   "options_subfolder_downloads_name": {
+      "description": "Subfolder name:",
+      "message": "സബ്ഫോൾഡറിന്റെ പേര്:"
+   },
+   "options_support_btn": {
+      "description": "Support",
+      "message": "പിന്താങ്ങുക"
+   },
+   "overlay_help_text": {
+      "description": "Click and drag to choose your selected area. \nRight click to snap to an element, hold shift for multiple.",
+      "message": "നിങ്ങളുടെ തിരഞ്ഞെടുത്ത പ്രദേശം തിരഞ്ഞെടുക്കാൻ ക്ലിക്കുചെയ്ത് വലിച്ചിടുക. \n ഒരു മൂലകത്തിലേക്ക് സ്നാപ്പ് ചെയ്യുന്നതിന് വലത് ക്ലിക്കുചെയ്യുക, ഒന്നിലധികം ഷിഫ്റ്റ് പിടിക്കുക."
+   },
+   "plan_billing_annually": {
+      "description": "Annually",
+      "message": "വാർഷികമായി"
+   },
+   "plan_billing_monthly": {
+      "description": "Monthly",
+      "message": "പ്രതിമാസം"
+   },
+   "plan_name_custom": {
+      "description": "Custom Plan",
+      "message": "ഇഷ്ടാനുസൃത പ്ലാൻ"
+   },
+   "popup_capture_tab": {
+      "description": "Capture",
+      "message": "കീഴടക്കല്"
+   },
+   "popup_desktop_screenshot_tooltip": {
+      "description": "Capture the entire screen, desktop, or any open application.",
+      "message": "മുഴുവൻ സ്ക്രീനും ഡെസ്ക്ടോപ്പ് അല്ലെങ്കിൽ ഏതെങ്കിലും ഓപ്പൺ ആപ്ലിക്കേഷൻ മുഴുവൻ ക്യാപ്ചർ ചെയ്യുക."
+   },
+   "popup_editor_icon_tooltip": {
+      "description": "Open Editor",
+      "message": "ഓപ്പൺ എഡിറ്റർ"
+   },
+   "popup_full_page_screenshot_tooltip": {
+      "description": "Capture the current tab full webpage, including content beyond the visible area.",
+      "message": "ദൃശ്യമായ പ്രദേശത്തിന് അപ്പുറത്തുള്ള ഉള്ളടക്കം ഉൾപ്പെടെ നിലവിലെ ടാബ് പൂർണ്ണ വെബ്പേജ് ക്യാപ്ചർ ചെയ്യുക."
+   },
+   "popup_full_webpage": {
+      "description": "Full webpage",
+      "message": "പൂർണ്ണ വെബ്പേജ്"
+   },
+   "popup_no_scripts_alert": {
+      "description": "Selected area and full webpage screenshots are not possible here. These features are available on other websites.",
+      "message": "തിരഞ്ഞെടുത്ത പ്രദേശം, പൂർണ്ണ വെബ്പേജ് സ്ക്രീൻഷോട്ടുകൾ ഇവിടെ സാധ്യമല്ല. ഈ സവിശേഷതകൾ മറ്റ് വെബ്സൈറ്റുകളിൽ ലഭ്യമാണ്."
+   },
+   "popup_record_tab": {
+      "description": "Record",
+      "message": "രേഖ"
+   },
+   "popup_recording_limit_alert": {
+      "description": "Record up to $seconds$ seconds per GIF. Premium users can update this from the ",
+      "message": "ഓരോ GIF-നും $seconds$ സെക്കൻഡ് വരെ റെക്കോർഡ് ചെയ്യുക. പ്രീമിയം ഉപയോക്താക്കൾക്ക് ഇത് അപ്ഡേറ്റ് ചെയ്യാം",
+      "placeholders": {
+         "seconds": {
+            "content": "$1"
+         }
+      }
+   },
+   "popup_recording_limit_settings_link": {
+      "description": "settings page.",
+      "message": "ക്രമീകരണ പേജ്."
+   },
+   "popup_screen_or_app": {
+      "description": "Full screen or app",
+      "message": "പൂർണ്ണ സ്ക്രീനോ അപ്ലിക്കേഷനോ"
+   },
+   "popup_selected_area": {
+      "description": "Selected area",
+      "message": "തിരഞ്ഞെടുത്ത ഏരിയ"
+   },
+   "popup_selected_area_screenshot_tooltip": {
+      "description": "Capture a specific area of the current tab.",
+      "message": "നിലവിലെ ടാബിന്റെ ഒരു നിർദ്ദിഷ്ട പ്രദേശം പകർത്തുക."
+   },
+   "popup_set_shortcut": {
+      "description": "set shortcut",
+      "message": "കുറുക്കുവഴി സജ്ജമാക്കുക"
+   },
+   "popup_settings_icon_tooltip": {
+      "description": "Open Settings",
+      "message": "ക്രമീകരണങ്ങൾ തുറക്കുക"
+   },
+   "popup_tab_screenshot_tooltip": {
+      "description": "Capture the visible part of the current tab.",
+      "message": "നിലവിലെ ടാബിന്റെ ദൃശ്യമായ ഭാഗം പകർത്തുക."
+   },
+   "popup_this_tab": {
+      "description": "This tab",
+      "message": "ഈ ടാബ്"
+   },
+   "popup_waiting_for_desktop_selection_alert": {
+      "description": "FULL SCREEN OR APP capture did not start because you did not select an option from the popup dialog. If you have multiple monitors it may have opened on another monitor.",
+      "message": "നിങ്ങൾ പോപ്പ്അപ്പ് ഡയലോഗിൽ നിന്ന് ഒരു ഓപ്ഷൻ തിരഞ്ഞെടുത്തില്ലാത്തതിനാൽ പൂർണ്ണ സ്ക്രീൻ അല്ലെങ്കിൽ അപ്ലിക്കേഷൻ ക്യാപ്ചർ ആരംഭിച്ചില്ല. നിങ്ങൾക്ക് ഒന്നിലധികം മോണിറ്ററുകൾ ഉണ്ടെങ്കിൽ അത് മറ്റൊരു മോണിറ്ററിൽ തുറന്നിരിക്കാം."
+   },
+   "premium_settings_text": {
+      "description": "Premium Settings",
+      "message": "പ്രീമിയം ക്രമീകരണങ്ങൾ"
+   },
+   "purchase_btn_text": {
+      "description": "Get Premium!",
+      "message": "പ്രീമിയം നേടുക!"
+   },
+   "purchase_description_limited_time_text": {
+      "description": "Lock in this price now - limited time offer before we switch to subscriptions!",
+      "message": "ഈ വില ഇപ്പോൾ സുരക്ഷിതമാക്കൂ - ഞങ്ങൾ സബ്‌സ്‌ക്രിപ്‌ഷനുകളിലേക്ക് മാറുന്നതിന് മുമ്പ് പരിമിത സമയ ഓഫർ!"
+   },
+   "purchase_description_text": {
+      "description": "Just one payment unlocks all premium features forever. No recurring fees!",
+      "message": "ഒരു പേയ്‌മെന്റ് ആജീവനാന്തം എല്ലാ പ്രീമിയം ഫീച്ചറുകളും അൺലോക്ക് ചെയ്യുന്നു. ആവർത്തന ഫീസുകളില്ല!"
+   },
+   "purchase_feature_30fps": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "മിനുസമാർന്ന 30 FPS റെക്കോർഡിംഗ്"
+   },
+   "purchase_feature_4K": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "ക്രിസ്റ്റൽ ക്ലിയർ 4K റെക്കോർഡിംഗ്"
+   },
+   "purchase_feature_alter_frame_rate": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ഇഷ്ടാനുസൃത ഫ്രെയിം റേറ്റുകൾ"
+   },
+   "purchase_feature_alter_playback_speed": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "സ്ലോ-മോഷൻ & ടൈം-ലാപ്‌സ് ഇഫക്റ്റുകൾ"
+   },
+   "purchase_feature_blur": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ബ്ലർ ടൂൾ"
+   },
+   "purchase_feature_crop_recording": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "കൃത്യമായ GIF ക്രോപ്പിംഗ്"
+   },
+   "purchase_feature_default": {
+      "description": "Feature that goes in $feature$ placeholder. Default fallback.",
+      "message": "ഈ ഫീച്ചർ"
+   },
+   "purchase_feature_frame_edits": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "ശക്തമായ ഫ്രെയിം-ബൈ-ഫ്രെയിം എഡിറ്റിംഗ്"
+   },
+   "purchase_feature_highlight": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ഹൈലൈറ്റ് ടൂൾ"
+   },
+   "purchase_feature_no_duration_limit": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "പരിധിയില്ലാത്ത റെക്കോർഡിംഗ് ദൈർഘ്യം"
+   },
+   "purchase_feature_special_effect": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "പ്രത്യേക ഇഫക്റ്റുകൾ"
+   },
+   "purchase_feature_step_tool": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "സ്റ്റെപ്പ് ടൂൾ"
+   },
+   "purchase_feature_svg": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ഇഷ്ടാനുസൃത ഐക്കണുകളും ലോഗോകളും ചേർക്കുന്നു"
+   },
+   "purchase_feature_text_and_annotation_customization": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ടെക്സ്റ്റ് & വ്യാഖ്യാനങ്ങളിൽ പൂർണ്ണ നിയന്ത്രണം"
+   },
+   "purchase_feature_unlimited_gif_compression": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "പരിധിയില്ലാത്ത വിപുലമായ GIF കംപ്രഷൻ"
+   },
+   "purchase_feature_update_end_time": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ഇഷ്ടാനുസൃതമാക്കിയ റെക്കോർഡിംഗ് സമയം"
+   },
+   "purchase_login_dialog_closed_by_user_alert": {
+      "description": "Looks like you closed the sign in dialog, premium users must sign in so you don't lose premium access.",
+      "message": "നിങ്ങൾ സൈൻ ഇൻ ഡയലോഗിൽ അടച്ചതായി തോന്നുന്നു, പ്രീമിയം ഉപയോക്താക്കൾ സൈൻ ഇൻ ചെയ്യരുത്, അതിനാൽ നിങ്ങൾക്ക് പ്രീമിയം ആക്സസ്സിനെ നഷ്ടപ്പെടുത്തരുത്."
+   },
+   "purchase_login_dialog_google_button": {
+      "description": "Sign in with Google",
+      "message": "Google ഉപയോഗിച്ച് പ്രവേശിക്കുക"
+   },
+   "purchase_login_dialog_title": {
+      "description": "Sign in required",
+      "message": "പ്രവേശിക്കുക ആവശ്യമാണ്"
+   },
+   "purchase_login_text": {
+      "description": "Sign in with Google to link your purchase to your account.",
+      "message": "നിങ്ങളുടെ വാങ്ങൽ അക്കൗണ്ടുമായി ലിങ്ക് ചെയ്യുന്നതിന് Google ഉപയോഗിച്ച് സൈൻ ഇൻ ചെയ്യുക."
+   },
+   "purchase_login_text_window_opened": {
+      "description": "Sign into Google in the popup window.",
+      "message": "പോപ്പ്അപ്പ് വിൻഡോയിൽ Google- ലേക്ക് പ്രവേശിക്കുക."
+   },
+   "purchase_subscription_title_text": {
+      "description": "Choose the plan that fits your needs.",
+      "message": "നിങ്ങളുടെ ആവശ്യങ്ങൾക്ക് അനുയോജ്യമായ പ്ലാൻ തിരഞ്ഞെടുക്കുക."
+   },
+   "purchase_title_text": {
+      "description": "Get Lifetime Premium Access Today!",
+      "message": "ഇന്ന് ആജീവനാന്ത പ്രീമിയം ആക്സസ് നേടൂ!"
+   },
+   "purchase_title_text_blocked_feature": {
+      "description": "That feature requires Premium",
+      "message": "ആ ഫീച്ചറിന് പ്രീമിയം ആവശ്യമാണ്"
+   },
+   "purchase_title_text_blocked_pro_feature": {
+      "description": "That feature requires Premium Pro",
+      "message": "ആ ഫീച്ചറിന് Premium Pro ആവശ്യമാണ്"
+   },
+   "purchase_title_text_blocked_pro_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium Pro paywall.",
+      "message": "പ്രീമിയം പ്രോ ഉപയോഗിച്ച് $feature$ അൺലോക്ക് ചെയ്യുക",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchase_title_text_blocked_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium paywall.",
+      "message": "പ്രീമിയം ഉപയോഗിച്ച് $feature$ അൺലോക്ക് ചെയ്യുക",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_already_premium_user": {
+      "description": "Already a premium user?",
+      "message": "ഇതിനകം ഒരു പ്രീമിയം ഉപയോക്താക്കണോ?"
+   },
+   "purchases_bill_me": {
+      "description": "Bill me:",
+      "message": "എനിക്ക് ബിൽ ചെയ്യുക:"
+   },
+   "purchases_checkout_unavailable_message": {
+      "description": "Message shown when checkout could not be started.",
+      "message": "ഇപ്പോൾ അപ്‌ഗ്രേഡ് പ്രക്രിയ ആരംഭിക്കാനായില്ല. ദയവായി വീണ്ടും ശ്രമിക്കുക."
+   },
+   "purchases_compare_12_fps": {
+      "description": "12FPS",
+      "message": "12FPS"
+   },
+   "purchases_compare_3_per_day": {
+      "description": "3 per day",
+      "message": "ദിവസത്തിൽ 3 എണ്ണം"
+   },
+   "purchases_compare_add_custom_shape_tool": {
+      "description": "Add custom shape/icon tool",
+      "message": "ഇഷ്ടാനുസൃത രൂപം/ഐക്കൺ ടൂൾ ചേർക്കുക"
+   },
+   "purchases_compare_benefits": {
+      "description": "Benefits",
+      "message": "പ്രയോജനങ്ങൾ"
+   },
+   "purchases_compare_blur_tool": {
+      "description": "Blur tool",
+      "message": "ബ്ലർ ടൂൾ"
+   },
+   "purchases_compare_close_button_label": {
+      "description": "Close",
+      "message": "അടയ്ക്കുക"
+   },
+   "purchases_compare_compression": {
+      "description": "High quality GIF compression",
+      "message": "ഉയർന്ന നിലവാരമുള്ള ജിഐഎഫ് കംപ്രഷൻ"
+   },
+   "purchases_compare_core_capture_features": {
+      "description": "Core Capture Features",
+      "message": "പ്രധാന ക്യാപ്‌ചർ ഫീച്ചറുകൾ"
+   },
+   "purchases_compare_crop_recordings": {
+      "description": "Crop recordings",
+      "message": "റെക്കോർഡിംഗുകൾ ക്രോപ്പ് ചെയ്യുക"
+   },
+   "purchases_compare_customize_editing_tools": {
+      "description": "Customize editing tools (font, size color)",
+      "message": "എഡിറ്റിംഗ് ടൂളുകൾ ഇഷ്ടാനുസൃതമാക്കുക (ഫോണ്ട്, വലുപ്പം, നിറം)"
+   },
+   "purchases_compare_drawing": {
+      "description": "Draw while recording",
+      "message": "റെക്കോർഡുചെയ്യുമ്പോൾ വരയ്ക്കുക"
+   },
+   "purchases_compare_early_access": {
+      "description": "Early access to new features",
+      "message": "പുതിയ ഫീച്ചറുകളിലേക്കുള്ള ആദ്യകാല ആക്സസ്"
+   },
+   "purchases_compare_editing": {
+      "description": "Edit captures",
+      "message": "ക്യാപ്ചറുകൾ എഡിറ്റുചെയ്യുക"
+   },
+   "purchases_compare_editing_free": {
+      "description": "basic editing",
+      "message": "അടിസ്ഥാന എഡിറ്റിംഗ്"
+   },
+   "purchases_compare_editing_suite": {
+      "description": "Editing Suite",
+      "message": "എഡിറ്റിംഗ് സ്യൂട്ട്"
+   },
+   "purchases_compare_frame_editing": {
+      "description": "Frame editing",
+      "message": "ഫ്രെയിം എഡിറ്റിംഗ്"
+   },
+   "purchases_compare_frame_rate": {
+      "description": "Adjust Frame Rate",
+      "message": "ഫ്രെയിം റേറ്റ് ക്രമീകരിക്കുക"
+   },
+   "purchases_compare_frame_specific_edits": {
+      "description": "Frame specific edits",
+      "message": "ഫ്രെയിം നിർദ്ദിഷ്ട എഡിറ്റുകൾ"
+   },
+   "purchases_compare_free_draw_tools": {
+      "description": "Free draw, line, arrow, rectangle, circle, text tools",
+      "message": "ഫ്രീ ഡ്രോ, ലൈൻ, ആരോ, ദീർഘചതുരം, വൃത്തം, ടെക്സ്റ്റ് ടൂളുകൾ"
+   },
+   "purchases_compare_full_webpage_screenshots": {
+      "description": "Unlimited full page screenshots.",
+      "message": "പരിധിയില്ലാത്ത മുഴുവൻ പേജ് സ്ക്രീൻഷോട്ടുകൾ."
+   },
+   "purchases_compare_highlight_tool": {
+      "description": "Highlight tool",
+      "message": "ഹൈലൈറ്റ് ടൂൾ"
+   },
+   "purchases_compare_live_recording_tools": {
+      "description": "Live Recording Tools",
+      "message": "ലൈവ് റെക്കോർഡിംഗ് ടൂളുകൾ"
+   },
+   "purchases_compare_mouse": {
+      "description": "Click and mouse indication",
+      "message": "ക്ലിക്കുചെയ്യുക, മ mouse സ് സൂചന"
+   },
+   "purchases_compare_plans": {
+      "description": "Compare plans",
+      "message": "പദ്ധതികൾ താരതമ്യം ചെയ്യുക"
+   },
+   "purchases_compare_plans_premium_button": {
+      "description": "Upgrade to Premium",
+      "message": "പ്രീമിയത്തിലേക്ക് അപ്‌ഗ്രേഡ് ചെയ്യുക"
+   },
+   "purchases_compare_playback_speed": {
+      "description": "Tune recording playback speed",
+      "message": "ട്യൂൺ റെക്കോർഡിംഗ് പ്ലേബാക്ക് വേഗത"
+   },
+   "purchases_compare_priority_support": {
+      "description": "Priority support and feature requests",
+      "message": "മുൻഗണനാ പിന്തുണയും ഫീച്ചർ അഭ്യർത്ഥനകളും"
+   },
+   "purchases_compare_recording": {
+      "description": "Unlimited GIF recordings.",
+      "message": "പരിധിയില്ലാത്ത ജിഫ് റെക്കോർഡിംഗുകൾ."
+   },
+   "purchases_compare_recording_free": {
+      "description": "15sec limit per GIF",
+      "message": "ഒരു GIF ന് 15 എസ്ഇസി പരിധി"
+   },
+   "purchases_compare_recording_quality": {
+      "description": "High quality GIFs",
+      "message": "ഉയർന്ന നിലവാരമുള്ള gifs"
+   },
+   "purchases_compare_recording_quality_control": {
+      "description": "Recording Quality & Control",
+      "message": "റെക്കോർഡിംഗ് ഗുണനിലവാരവും നിയന്ത്രണവും"
+   },
+   "purchases_compare_recording_quality_free": {
+      "description": "1000 pixels max",
+      "message": "1000 പിക്സലുകൾ പരമാവധി"
+   },
+   "purchases_compare_screenshots": {
+      "description": "Unlimited screenshots.",
+      "message": "പരിധിയില്ലാത്ത സ്ക്രീൻഷോട്ടുകൾ."
+   },
+   "purchases_compare_special_effects": {
+      "description": "Recording special effects",
+      "message": "പ്രത്യേക ഇഫക്റ്റുകൾ റെക്കോർഡുചെയ്യുന്നു"
+   },
+   "purchases_compare_up_to_1080p": {
+      "description": "Up to 1080p",
+      "message": "1080p വരെ"
+   },
+   "purchases_compare_up_to_24_fps": {
+      "description": "Up to 24FPS",
+      "message": "24FPS വരെ"
+   },
+   "purchases_compare_up_to_30_fps": {
+      "description": "Up to 30FPS",
+      "message": "30FPS വരെ"
+   },
+   "purchases_compare_up_to_4k_plus": {
+      "description": "Up to 4K+",
+      "message": "4K+ വരെ"
+   },
+   "purchases_current_plan": {
+      "description": "Current plan",
+      "message": "നിലവിലെ പ്ലാൻ"
+   },
+   "purchases_features": {
+      "description": "Features",
+      "message": "ഫീച്ചറുകൾ"
+   },
+   "purchases_free": {
+      "description": "Free",
+      "message": "സൗ ജന്യം"
+   },
+   "purchases_free_button": {
+      "description": "Free to use",
+      "message": "ഉപയോഗിക്കാൻ സ free ജന്യമാണ്"
+   },
+   "purchases_free_feature_editing": {
+      "description": "Basic editing",
+      "message": "അടിസ്ഥാന എഡിറ്റിംഗ്"
+   },
+   "purchases_free_feature_recording": {
+      "description": "Basic GIF recording",
+      "message": "അടിസ്ഥാന GIF റെക്കോർഡിംഗ്"
+   },
+   "purchases_free_feature_screenshots": {
+      "description": "Unlimited screenshots",
+      "message": "പരിധിയില്ലാത്ത സ്ക്രീൻഷോട്ടുകൾ"
+   },
+   "purchases_free_plan_description": {
+      "description": "Get started with our essential capture tools. Completely free for basic everyday use.",
+      "message": "ഞങ്ങളുടെ അത്യാവശ്യ ക്യാപ്‌ചർ ടൂളുകൾ ഉപയോഗിച്ച് ആരംഭിക്കുക. അടിസ്ഥാനപരമായ ദൈനംദിന ഉപയോഗത്തിന് പൂർണ്ണമായും സൗജന്യം."
+   },
+   "purchases_plan_save_up_to_percentage": {
+      "description": "Save up to",
+      "message": "ഇതുവരെ സംരക്ഷിക്കുക"
+   },
+   "purchases_premium": {
+      "description": "Premium",
+      "message": "പ്രീമിയം"
+   },
+   "purchases_premium_billed_annually": {
+      "description": "Billed annually",
+      "message": "വാർഷികമായി ബിൽ ചെയ്യുന്നു"
+   },
+   "purchases_premium_button": {
+      "description": "Get lifetime access",
+      "message": "ആജീവനാന്ത ആക്സസ് നേടുക"
+   },
+   "purchases_premium_feature_compression": {
+      "description": "High quality GIF compression",
+      "message": "ഉയർന്ന നിലവാരമുള്ള ജിഐഎഫ് കംപ്രഷൻ"
+   },
+   "purchases_premium_feature_editing": {
+      "description": "Feature rich editing",
+      "message": "സമ്പന്നമായ എഡിറ്റിംഗ് സവിശേഷത"
+   },
+   "purchases_premium_feature_free": {
+      "description": "Everything from free plan",
+      "message": "സൗജന്യ പ്ലാനിലെ ഫീച്ചറുകൾ ഉൾപ്പെടുന്നു"
+   },
+   "purchases_premium_feature_marked_with_star": {
+      "description": "All features marked with a star",
+      "message": "നക്ഷത്രചിഹ്നമിട്ട എല്ലാ ഫീച്ചറുകളും"
+   },
+   "purchases_premium_feature_recording": {
+      "description": "Unlimited high quality GIF recording",
+      "message": "പരിധിയില്ലാത്ത ഉയർന്ന നിലവാരമുള്ള GIF റെക്കോർഡിംഗ്"
+   },
+   "purchases_premium_feature_recording_1080p": {
+      "description": "High quality GIF recording, up to 1080p, 24fps",
+      "message": "ഉയർന്ന നിലവാരമുള്ള GIF റെക്കോർഡിംഗ്, 1080p വരെ, 24fps"
+   },
+   "purchases_premium_feature_refundable": {
+      "description": "Fully refundable",
+      "message": "പൂർണ്ണമായ റീഫണ്ട്"
+   },
+   "purchases_premium_feature_risk_free": {
+      "description": "Risk-free: 7 day trial, cancel anytime",
+      "message": "അപകടസാധ്യതയില്ലാതെ: 7 ദിവസത്തെ ട്രയൽ, എപ്പോൾ വേണമെങ്കിലും റദ്ദാക്കാം"
+   },
+   "purchases_premium_feature_unlimited_length": {
+      "description": "Unlimited GIF recording length",
+      "message": "പരിധിയില്ലാത്ത GIF റെക്കോർഡിംഗ് ദൈർഘ്യം"
+   },
+   "purchases_premium_price_info": {
+      "description": "one time fee",
+      "message": "ഒറ്റത്തവണ ഫീസ്"
+   },
+   "purchases_premium_price_per_month": {
+      "description": "/ month",
+      "message": "/ മാസം"
+   },
+   "purchases_premium_pro": {
+      "description": "Premium Pro",
+      "message": "പ്രീമിയം പ്രോ"
+   },
+   "purchases_premium_pro_editing_tools": {
+      "description": "Advanced editing tools (blurring, special effects, etc.)",
+      "message": "വിപുലമായ എഡിറ്റിംഗ് ടൂളുകൾ (ബ്ലർ ചെയ്യൽ, പ്രത്യേക ഇഫക്റ്റുകൾ തുടങ്ങിയവ)"
+   },
+   "purchases_premium_pro_feature_early_access": {
+      "description": "Early access to new features",
+      "message": "പുതിയ ഫീച്ചറുകളിലേക്കുള്ള ആദ്യകാല ആക്സസ്"
+   },
+   "purchases_premium_pro_feature_marked_with_crown": {
+      "description": "All features marked with a star and crown",
+      "message": "നക്ഷത്രവും കിരീടവും കൊണ്ട് അടയാളപ്പെടുത്തിയ എല്ലാ ഫീച്ചറുകളും"
+   },
+   "purchases_premium_pro_feature_premium_plan": {
+      "description": "Everything from Premium plan",
+      "message": "പ്രീമിയം പ്ലാനിൽ നിന്നുള്ള എല്ലാം"
+   },
+   "purchases_premium_pro_feature_quality": {
+      "description": "Max resolution recording, 4K+ and 30fps",
+      "message": "പരമാവധി റെസല്യൂഷൻ റെക്കോർഡിംഗ്, 4K+ ഉം 30fps ഉം"
+   },
+   "purchases_premium_pro_feature_support": {
+      "description": "Priority support and feature requests",
+      "message": "മുൻഗണനാ പിന്തുണയും ഫീച്ചർ അഭ്യർത്ഥനകളും"
+   },
+   "purchases_premium_pro_upgrade": {
+      "description": "Upgrade to Pro",
+      "message": "പ്രോയിലേക്ക് അപ്ഗ്രേഡ് ചെയ്യുക"
+   },
+   "purchases_premium_save_percentage": {
+      "description": "save $savingsPercentage$%",
+      "message": "$savingsPercentage$% ലാഭിക്കൂ",
+      "placeholders": {
+         "savingsPercentage": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_premium_try_for_free": {
+      "description": "Try for free",
+      "message": "സൗജന്യമായി ശ്രമിക്കുക"
+   },
+   "purchases_price_unavailable": {
+      "description": "Label shown in place of a price when it is unavailable.",
+      "message": "വില ലഭ്യമല്ല"
+   },
+   "purchases_pricing_unavailable_message": {
+      "description": "Message shown when the Premium pricing request was blocked or failed.",
+      "message": "Premium വിലകൾക്കായുള്ള അഭ്യർത്ഥന തടയപ്പെട്ടതോ പരാജയപ്പെട്ടതോ ആണ്. ജോലി സ്ഥലത്തെ നെറ്റ്‌വർക്ക്, VPN, പരസ്യ തടയണി, സ്വകാര്യതാ വിപുലീകരണം, അല്ലെങ്കിൽ ഫയർവാൾ Paddle നെ തടയുമ്പോൾ ഇത് സംഭവിക്കാം."
+   },
+   "purchases_pricing_unavailable_title": {
+      "description": "Title shown when Premium pricing could not be loaded.",
+      "message": "Premium വിലകൾ ലോഡ് ചെയ്യാനായില്ല"
+   },
+   "purchases_pricing_unavailable_troubleshooting_extensions": {
+      "description": "Troubleshooting step telling the user to disable VPN or privacy tools temporarily.",
+      "message": "VPN, പരസ്യ തടയണി, അല്ലെങ്കിൽ സ്വകാര്യതാ വിപുലീകരണങ്ങൾ താൽക്കാലികമായി പ്രവർത്തനരഹിതമാക്കി വീണ്ടും ശ്രമിക്കുക."
+   },
+   "purchases_pricing_unavailable_troubleshooting_intro": {
+      "description": "Intro text for troubleshooting steps when pricing is unavailable.",
+      "message": "ശ്രമിക്കാവുന്ന കാര്യങ്ങൾ:"
+   },
+   "purchases_pricing_unavailable_troubleshooting_network": {
+      "description": "Troubleshooting step telling the user to try another network or browser profile.",
+      "message": "മറ്റൊരു നെറ്റ്‌വർക്ക് പരീക്ഷിക്കൂ, അല്ലെങ്കിൽ വേറൊരു Chrome പ്രൊഫൈലിൽ വിപുലീകരണം തുറക്കൂ."
+   },
+   "purchases_pricing_unavailable_troubleshooting_workplace": {
+      "description": "Troubleshooting step telling the user workplace policy may be blocking Paddle.",
+      "message": "നിങ്ങൾ ജോലിസ്ഥലത്തെ ഉപകരണം ഉപയോഗിക്കുന്നുവെങ്കിൽ, നിങ്ങളുടെ നെറ്റ്‌വർക്ക് അല്ലെങ്കിൽ ബ്രൗസർ നയം Paddle നെ തടയുന്നുണ്ടാകാം."
+   },
+   "purchases_sign_in_here": {
+      "description": "Sign in here",
+      "message": "ഇവിടെ പ്രവേശിക്കുക"
+   },
+   "purchases_start_trial_cancel_anytime": {
+      "description": "Call to action to start a free trial.",
+      "message": "തുടരുന്നതിന് നിങ്ങളുടെ 7 ദിവസത്തെ സൗജന്യ ട്രയൽ ആരംഭിക്കുക. എപ്പോൾ വേണമെങ്കിലും റദ്ദാക്കാം."
+   },
+   "purchases_try_premium_for_free": {
+      "description": "Try Premium for Free",
+      "message": "പ്രീമിയം സൗജന്യമായി പരീക്ഷിക്കുക"
+   },
+   "purchases_try_premium_pro_for_free": {
+      "description": "Try Premium Pro for Free",
+      "message": "പ്രീമിയം പ്രോ സൗജന്യമായി പരീക്ഷിക്കുക"
+   },
+   "purchases_upgrade_premium_to_pro": {
+      "description": "To use this feature and access all Pro benefits, upgrade your plan.",
+      "message": "ഈ ഫീച്ചർ ഉപയോഗിക്കാനും എല്ലാ പ്രോ ആനുകൂല്യങ്ങളും ആക്‌സസ് ചെയ്യാനും, നിങ്ങളുടെ പ്ലാൻ അപ്‌ഗ്രേഡ് ചെയ്യുക."
+   },
+   "purchases_upgrade_to_premium_pro": {
+      "description": "Upgrade to Premium Pro",
+      "message": "പ്രീമിയം പ്രോയിലേക്ക് അപ്ഗ്രേഡ് ചെയ്യുക"
+   },
+   "quality_text": {
+      "description": "Recording quality (10 = best)",
+      "message": "റെക്കോർഡിംഗ് നിലവാരം (10 = മികച്ചത്)"
+   },
+   "rate_bad_rating_text": {
+      "description": "We are continuously trying our hardest to improve Chrome Capture, please share what needs improvement by emailing us at ",
+      "message": "Chrome ക്യാപ്ചർ മെച്ചപ്പെടുത്താൻ ഞങ്ങളുടെ ഏറ്റവും കഠിനമായത് ഞങ്ങൾ തുടർച്ചയായി പരീക്ഷിക്കുന്നു, ദയവായി ഞങ്ങളെ ഇമെയിൽ ചെയ്യുക"
+   },
+   "rate_bad_title_text": {
+      "description": "😞 We are sorry!",
+      "message": "ക്ഷമിക്കണം!"
+   },
+   "rate_close_btn_text": {
+      "description": "Close",
+      "message": "അടയ്ക്കുക"
+   },
+   "rate_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "ഉറപ്പിക്കുക"
+   },
+   "rate_description_text": {
+      "description": "If you've found this extension useful please leave a rating or review. \n\nBy leaving a rating you can help us reach more users which will help fund continual improvements and keep general usage free.",
+      "message": "നിങ്ങൾ ഈ വിപുലീകരണം ഉപയോഗപ്രദമാണെങ്കിൽ ഒരു റേറ്റിംഗ് അല്ലെങ്കിൽ അവലോകനം ഉപേക്ഷിക്കുക. \n\n ഒരു റേറ്റിംഗ് ഉപേക്ഷിക്കുന്നതിലൂടെ കൂടുതൽ ഉപയോക്താക്കളെ എത്താൻ ഞങ്ങളെ സഹായിക്കാൻ സഹായിക്കും, അത് ഫണ്ട് തുടർച്ചയായ മെച്ചപ്പെടുത്തലുകളെ സഹായിക്കുകയും പൊതുവായ ഉപയോഗം സ്വതന്ത്രരാക്കുകയും ചെയ്യും."
+   },
+   "rate_description_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "പ്രീമിയം വാങ്ങുന്നത് ഞങ്ങൾ വളരെയധികം അഭിനന്ദിക്കുന്നു, മാത്രമല്ല ഉൽപ്പന്നം മെച്ചപ്പെടുത്താനും കൂടുതൽ ഉപയോക്താക്കളെ എത്തുന്ന ഏത് ഫീഡ്ബാക്കും ഞങ്ങൾ ആഗ്രഹിക്കുന്നു."
+   },
+   "rate_good_rating_text": {
+      "description": "Your reviews keep our small team motivated to make Chrome Capture even better!",
+      "message": "നിങ്ങളുടെ അവലോകനങ്ങൾ ഞങ്ങളുടെ ചെറിയ ടീമിനെ മികച്ചതാക്കാൻ പ്രേരിപ്പിക്കുന്നു!"
+   },
+   "rate_good_rating_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "പ്രീമിയം വാങ്ങുന്നത് ഞങ്ങൾ വളരെയധികം അഭിനന്ദിക്കുന്നു, മാത്രമല്ല ഉൽപ്പന്നം മെച്ചപ്പെടുത്താനും കൂടുതൽ ഉപയോക്താക്കളെ എത്തുന്ന ഏത് ഫീഡ്ബാക്കും ഞങ്ങൾ ആഗ്രഹിക്കുന്നു."
+   },
+   "rate_good_title_text": {
+      "description": "😍 Review in the web store?",
+      "message": "😍 വെബ് സ്റ്റോറിൽ അവലോകനം ചെയ്യണോ?"
+   },
+   "rate_maybe_later_btn_text": {
+      "description": "Maybe later",
+      "message": "ഒരു പക്ഷെ പിന്നീട്"
+   },
+   "rate_no_btn_text": {
+      "description": "No thanks",
+      "message": "വേണ്ട, നന്ദി"
+   },
+   "rate_send_email_btn_text": {
+      "description": "Send Email",
+      "message": "ഇമെയിൽ അയയ്ക്കുക"
+   },
+   "rate_thank_you_title_text": {
+      "description": "Thank you! 😍",
+      "message": "നന്ദി! പതനം"
+   },
+   "rate_title_text": {
+      "description": "How are we doing?",
+      "message": "ഞങ്ങൾ എങ്ങനെ ചെയ്യുന്നു?"
+   },
+   "rate_yes_btn_text": {
+      "description": "Ok, sure",
+      "message": "തീർച്ചയായും"
+   },
+   "recommended": {
+      "description": "recommended",
+      "message": "ശുപാർശ ചെയ്ത"
+   },
+   "record_length_text": {
+      "description": "Max record length",
+      "message": "പരമാവധി റെക്കോർഡ് ദൈർഘ്യം"
+   },
+   "recordings_taken": {
+      "description": "Recordings taken:",
+      "message": "റെക്കോർഡിംഗുകൾ എടുത്തത്:"
+   },
+   "save_as_screenshot_text": {
+      "description": "Save screenshot as",
+      "message": "സ്ക്രീൻഷോട്ട് സംരക്ഷിക്കുക"
+   },
+   "save_as_text": {
+      "description": "Save recording as",
+      "message": "റെക്കോർഡിംഗ് ഇതായി സംരക്ഷിക്കുക"
+   },
+   "screenshots_taken": {
+      "description": "Screenshots taken:",
+      "message": "സ്ക്രീൻഷോട്ടുകൾ എടുത്തത്:"
+   },
+   "seconds_text": {
+      "description": "secs",
+      "message": "സെക്കൻഡ്"
+   },
+   "shortcut": {
+      "description": "Shortcut:",
+      "message": "കുറുക്കുവഴി:"
+   },
+   "show_click_indicator_text": {
+      "description": "Show click animation",
+      "message": "ആനിമേഷൻ ക്ലിക്കുചെയ്യുക"
+   },
+   "show_click_indicator_tooltip_text": {
+      "description": "This option draws a circle animation around the click location.",
+      "message": "ക്ലിക്ക് ലൊക്കേഷനുകൾക്ക് ചുറ്റും ഈ ഓപ്ഷൻ ഒരു സർക്കിൾ ആനിമേഷൻ വരയ്ക്കുന്നു."
+   },
+   "show_cursor_text": {
+      "description": "Show dot at cursor location",
+      "message": "കഴ്സർ ലൊക്കേഷനിൽ ഡോട്ട് കാണിക്കുക"
+   },
+   "show_cursor_tooltip_text": {
+      "description": "This option draws a small circle to indicate where the mouse is located.",
+      "message": "മൗസ് എവിടെയാണെന്ന് സൂചിപ്പിക്കാൻ ഈ ഓപ്ഷൻ ഒരു ചെറിയ സർക്കിൾ വരയ്ക്കുന്നു."
+   },
+   "sign_in": {
+      "description": "Sign In",
+      "message": "സൈൻ ഇൻ"
+   },
+   "sign_out": {
+      "description": "Sign Out",
+      "message": "സൈൻ ഔട്ട്"
+   },
+   "subscription_past_due_warning": {
+      "description": "Warning message shown when a user subscription payment has failed or is past its due date.",
+      "message": "സബ്‌സ്‌ക്രിപ്‌ഷൻ പേയ്‌മെന്റ് കാലാവധി കഴിഞ്ഞു, നിങ്ങളുടെ പേയ്‌മെന്റ് വിവരങ്ങൾ അപ്‌ഡേറ്റ് ചെയ്യാൻ ഇവിടെ ക്ലിക്ക് ചെയ്യുക."
+   },
+   "subscription_premium_plan_description": {
+      "description": "Go beyond basics: HD quality & limits unlocked. Craft pro content with enhanced features.",
+      "message": "അടിസ്ഥാനങ്ങൾക്കപ്പുറത്തേക്ക് പോകുക: HD ഗുണനിലവാരവും പരിധികളും അൺലോക്ക് ചെയ്തു. മെച്ചപ്പെടുത്തിയ ഫീച്ചറുകൾ ഉപയോഗിച്ച് പ്രൊഫഷണൽ ഉള്ളടക്കം നിർമ്മിക്കുക."
+   },
+   "subscription_premium_pro_plan_description": {
+      "description": "Experience peak performance: 4K+ and all features. Full editing suite with early access.",
+      "message": "ഏറ്റവും മികച്ച പ്രകടനം അനുഭവിക്കുക: 4K+ ഉം എല്ലാ ഫീച്ചറുകളും. നേരത്തെയുള്ള ആക്‌സസ്സോടുകൂടിയ പൂർണ്ണ എഡിറ്റിംഗ് സ്യൂട്ട്."
+   },
+   "subscription_status_active": {
+      "description": "Active",
+      "message": "സജീവം"
+   },
+   "subscription_status_ending_soon": {
+      "description": "Ending Soon",
+      "message": "ഉടൻ അവസാനിക്കുന്നു"
+   },
+   "subscription_status_expired": {
+      "description": "Expired",
+      "message": "കാലഹരണപ്പെട്ടു"
+   },
+   "subscription_status_past_due": {
+      "description": "Past Due",
+      "message": "കാലഹരണപ്പെട്ടു"
+   },
+   "subscription_status_paused": {
+      "description": "Paused",
+      "message": "താൽക്കാലികമായി നിർത്തി"
+   },
+   "subscription_status_unknown": {
+      "description": "Unknown",
+      "message": "അജ്ഞാതം"
+   },
+   "unable_to_capture_website_alert": {
+      "description": "Unable to capture this website. Please use full screen/application capture or try capture another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "ഈ വെബ്സൈറ്റ് പകർത്താൻ കഴിയില്ല. പൂർണ്ണ സ്ക്രീൻ / ആപ്ലിക്കേഷൻ ക്യാപ്ചർ ഉപയോഗിക്കുക അല്ലെങ്കിൽ മറ്റൊരു വെബ്സൈറ്റ് പകർത്താൻ ശ്രമിക്കുക. \n\n (╯ ° □ م °) ╯("
+   },
+   "view_permission": {
+      "description": "View permission.",
+      "message": "അനുമതി കാണുക."
+   },
+   "width_text": {
+      "description": "Height (px)",
+      "message": "ഉയരം (പിഎക്സ്)"
+   }
+}

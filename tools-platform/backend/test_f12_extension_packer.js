@@ -188,7 +188,15 @@ function testExamAssistantBuiltinCompatibility() {
     const indexHtml = fs.readFileSync(path.join(toolDir, 'index.html'), 'utf8');
     assert.ok(indexHtml.includes('SV/CFC 满意度监控（原内置）'), '必须保留原内置脚本选项');
     assert.ok(indexHtml.includes('题库与答题助手'), '必须提供题库助手内置脚本选项');
-    assert.ok(indexHtml.includes('载入内置脚本'), '必须提供内置脚本载入按钮');
+    assert.ok(indexHtml.includes('id="loadBuiltinBtn"'), '必须提供脚本载入按钮');
+    assert.ok(indexHtml.includes('id="serverScriptOptions"'), '必须展示服务器保存脚本列表');
+    assert.ok(indexHtml.includes('id="saveServerScriptBtn"'), '必须提供保存到服务器操作');
+    assert.ok(indexHtml.includes("addEventListener('paste'"), '粘贴新脚本时必须切换到新脚本状态');
+    assert.ok(indexHtml.includes('const replacesWholeScript = editor.selectionStart === 0'), '只有整体替换脚本时才能自动清空元数据');
+    assert.ok(indexHtml.includes('检测到粘贴新脚本，已自动清空'), '必须明确提示旧打包信息已清空');
+    assert.ok(indexHtml.includes('/f12-to-extension/scripts'), '必须使用服务器脚本库 API');
+    assert.ok(indexHtml.includes("activeScriptRef.id === 'chrome-capture-pro'"), 'Chrome Capture 模板必须按内置脚本 ID 识别');
+    assert.ok(!indexHtml.includes("options.name.toLowerCase().includes('chrome capture')"), '不得根据用户填写的名称误判模板');
     assert.ok(indexHtml.includes('id="extObfuscate" type="checkbox" class='), '商店包应默认关闭混淆');
     assert.ok(indexHtml.includes('id="extPackageTarget"'), '必须提供商店包与本地包选择');
     assert.ok(indexHtml.includes("packageTarget: document.getElementById('extPackageTarget').value"));
@@ -274,6 +282,80 @@ async function testZipRoundTrip() {
     });
 }
 
+async function testChromeCaptureTemplateCompatibility() {
+    assert.ok(packer.BUILTIN_TEMPLATES['chrome-capture-pro'], '必须导出 chrome-capture-pro 模板信息');
+    assert.strictEqual(packer.BUILTIN_TEMPLATES['chrome-capture-pro'].isFullExtension, true);
+
+    const rawManifest = {
+        name: 'Original Capture',
+        version: '3.3.7',
+        key: 'ORIGINAL_KEY_BASE64'
+    };
+
+    const storeTransformed = packer.transformChromeCaptureManifest(rawManifest, {
+        name: 'Chrome Capture Pro',
+        version: '3.3.8',
+        packageTarget: 'store'
+    });
+    assert.strictEqual(storeTransformed.name, 'Chrome Capture Pro');
+    assert.strictEqual(storeTransformed.version, '3.3.8');
+    assert.strictEqual(storeTransformed.key, undefined, '商店包必须移除 key');
+
+    const localTransformed = packer.transformChromeCaptureManifest(rawManifest, {
+        name: 'Chrome Capture Pro',
+        version: '3.3.8',
+        packageTarget: 'local',
+        extensionKey: 'STABLE_ENTERPRISE_KEY'
+    });
+    assert.strictEqual(localTransformed.key, 'STABLE_ENTERPRISE_KEY', '本地包必须保留固定 key');
+
+    const licenseConfig = packer.createChromeCaptureLicenseConfig({
+        name: 'Chrome Capture Pro',
+        license: {
+            enabled: true,
+            productId: 'Chrome Capture Pro',
+            validationUrl: 'https://tools.example.com/api/public/f12-license/validate',
+            publicKeyJwk: { kty: 'EC', crv: 'P-256', x: 'x-val', y: 'y-val' }
+        }
+    });
+    assert.strictEqual(licenseConfig.enabled, true);
+    assert.strictEqual(licenseConfig.productId, 'Chrome Capture Pro');
+    assert.strictEqual(licenseConfig.publicKeyJwk.crv, 'P-256');
+
+    // Test template zip round trip
+    const templateZipPath = path.join(toolDir, 'chrome-capture-pro.template.zip');
+    assert.ok(fs.existsSync(templateZipPath), 'chrome-capture-pro.template.zip 模板包必须存在');
+    const zipData = fs.readFileSync(templateZipPath);
+    const opened = await JSZip.loadAsync(zipData);
+    assert.ok(opened.file('manifest.json'), '模板包必须包含 manifest.json');
+    assert.ok(opened.file('license-guard.js'), '模板包必须包含 license-guard.js');
+    assert.ok(opened.file('license-config.json'), '模板包必须包含 license-config.json');
+    assert.ok(opened.file('layout/popup.html'), '模板包必须包含 layout/popup.html');
+    assert.ok(opened.file('dist/background/bundle.js'), '模板包必须包含 background worker');
+    const licenseGuard = fs.readFileSync(path.join(toolDir, 'chrome-capture-pro/license-guard.js'), 'utf8');
+    const popupHtml = fs.readFileSync(path.join(toolDir, 'chrome-capture-pro/layout/popup.html'), 'utf8');
+    const popupTheme = fs.readFileSync(path.join(toolDir, 'chrome-capture-pro/layout/styles/popup_theme.css'), 'utf8');
+    assert.ok(popupHtml.includes('overflow: hidden'), 'Chrome Capture Popup 应保持单屏固定布局');
+    assert.ok(popupTheme.includes('body.cc-license-badge-in-footer'), 'Popup 必须为 Footer 内的 License 状态腾出原品牌区域');
+    assert.ok(licenseGuard.includes("const popupFooter = document.querySelector('#mountNode"), 'License 状态必须定位 Popup Footer');
+    assert.ok(licenseGuard.includes("popupFooter.append(badge)"), 'License 状态必须复用 Footer 高度而不是增加 Popup 高度');
+    assert.ok(licenseGuard.includes('const nonce = randomNonce()'), 'Chrome Capture 在线校验必须生成 nonce');
+    assert.ok(licenseGuard.includes('productId: config.productId,\n          nonce'), 'Chrome Capture 在线校验必须发送 nonce');
+    assert.ok(licenseGuard.includes('payload.nonce !== nonce'), '必须校验服务端证明中的 nonce');
+    assert.ok(licenseGuard.includes('payload.tokenDigest !== expectedDigest'), '必须校验服务端证明绑定的 License');
+    assert.ok(licenseGuard.includes('payload.valid === true'), '必须从签名证明载荷读取校验结果');
+    assert.ok(licenseGuard.includes('attestationPayload.checkedAt'), '必须使用服务端返回的可信时间字段');
+
+    const zippedLicenseGuard = await opened.file('license-guard.js').async('string');
+    assert.strictEqual(zippedLicenseGuard, licenseGuard, '模板 ZIP 中的 License Guard 必须与源码同步');
+
+    const indexHtml = fs.readFileSync(path.join(toolDir, 'index.html'), 'utf8');
+    assert.ok(indexHtml.includes('Chrome Capture Pro 屏幕录制与截图增强版'), '页面必须包含 Chrome Capture Pro 预设');
+    assert.ok(indexHtml.includes('chrome-capture-pro.template.zip'), '页面必须引用模板压缩包');
+    assert.ok(indexHtml.includes('transformChromeCaptureManifest'), '页面打包必须调用 manifest 转换');
+    assert.ok(indexHtml.includes('packer-core.js?v=20260816-01'), '页面必须刷新 packer-core 缓存版本');
+}
+
 async function main() {
     testDefaultCompatibility();
     testAdvancedOptionsAreOptIn();
@@ -282,6 +364,7 @@ async function main() {
     testGeneratedMarkupIsEscaped();
     testExamAssistantBuiltinCompatibility();
     testManualLaunchAndLicensePackage();
+    await testChromeCaptureTemplateCompatibility();
     await testZipRoundTrip();
     console.log('F12 extension packer tests passed');
 }

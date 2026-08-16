@@ -1,0 +1,1691 @@
+{
+   "account_modal_free_plan": {
+      "description": "You are on the free plan",
+      "message": "ನೀವು ಉಚಿತ ಯೋಜನೆಯಲ್ಲಿದ್ದೀರಿ"
+   },
+   "account_modal_manage_subscription_button": {
+      "description": "Manage Subscription",
+      "message": "ಚಂದಾದಾರಿಕೆಯನ್ನು ನಿರ್ವಹಿಸಿ"
+   },
+   "account_modal_not_signed_in": {
+      "description": "You are not signed in",
+      "message": "ನೀವು ಸೈನ್ ಇನ್ ಆಗಿಲ್ಲ"
+   },
+   "account_modal_premium_plan": {
+      "description": "You are on the premium plan",
+      "message": "ನೀವು ಪ್ರೀಮಿಯಂ ಯೋಜನೆಯಲ್ಲಿದ್ದೀರಿ"
+   },
+   "account_modal_premium_pro_plan": {
+      "description": "You are on the Premium Pro plan",
+      "message": "ನೀವು ಪ್ರೀಮಿಯಂ ಪ್ರೊ ಯೋಜನೆಯಲ್ಲಿದ್ದೀರಿ"
+   },
+   "account_modal_request_feature_button": {
+      "description": "Request Feature",
+      "message": "ವೈಶಿಷ್ಟ್ಯವನ್ನು ವಿನಂತಿಸಿ"
+   },
+   "account_modal_request_support_button": {
+      "description": "Request Support",
+      "message": "ಬೆಂಬಲವನ್ನು ವಿನಂತಿಸಿ"
+   },
+   "account_modal_stats_heading": {
+      "description": "Your stats:",
+      "message": "ನಿಮ್ಮ ಅಂಕಿಅಂಶಗಳು:"
+   },
+   "alert_text": {
+      "description": "Unable to run selected area capture on this website. Please use full screen recording or try another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "ಈ ವೆಬ್ಸೈಟ್ನಲ್ಲಿ ಆಯ್ದ ಪ್ರದೇಶ ಕ್ಯಾಪ್ಚರ್ ಅನ್ನು ಚಲಾಯಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ. ದಯವಿಟ್ಟು ಪೂರ್ಣ ಸ್ಕ್ರೀನ್ ರೆಕಾರ್ಡಿಂಗ್ ಬಳಸಿ ಅಥವಾ ಇನ್ನೊಂದು ವೆಬ್ಸೈಟ್ ಅನ್ನು ಪ್ರಯತ್ನಿಸಿ. \n\n (╯ ° □ °) ╯( ┻━┻"
+   },
+   "click_indicator_size_color_text": {
+      "description": "Click animation size & color",
+      "message": "ಅನಿಮೇಷನ್ ಗಾತ್ರ ಮತ್ತು ಬಣ್ಣವನ್ನು ಕ್ಲಿಕ್ ಮಾಡಿ"
+   },
+   "close_btn_text": {
+      "description": "Close",
+      "message": "ಮುಚ್ಚು"
+   },
+   "confirm_dialog_cancel_btn_text": {
+      "description": "Cancel",
+      "message": "ರದ್ದುಮಾಡು"
+   },
+   "confirm_dialog_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "ದೃ confirmಿಸು"
+   },
+   "confirm_fps_update_text": {
+      "description": "Changing the fps will remove all frame specific edits such as edited or deleted frames. Do you want to continue?",
+      "message": "ಎಫ್‌ಪಿಎಸ್ ಅನ್ನು ಬದಲಾಯಿಸುವುದರಿಂದ ಸಂಪಾದಿತ ಅಥವಾ ಅಳಿಸಲಾದ ಫ್ರೇಮ್‌ಗಳಂತಹ ಎಲ್ಲಾ ಚಿತ್ರ ನಿರ್ದಿಷ್ಟ ಸಂಪಾದನೆಗಳನ್ನು ತೆಗೆದುಹಾಕುತ್ತದೆ. ನೀವು ಮುಂದುವರಿಸಲು ಬಯಸುತ್ತೀರಾ?"
+   },
+   "copy_text": {
+      "description": "Copy to clipboard",
+      "message": "ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಿ"
+   },
+   "cursor_size_and_color_text": {
+      "description": "Cursor dot size & color",
+      "message": "ಕರ್ಸರ್ ಡಾಟ್ ಗಾತ್ರ ಮತ್ತು ಬಣ್ಣ"
+   },
+   "dither_text": {
+      "description": "Apply dither",
+      "message": "ಡಿಡರ್ ಅನ್ನು ಅನ್ವಯಿಸಿ"
+   },
+   "download_filename_text": {
+      "description": "Download filename format",
+      "message": "ಫೈಲ್ ಹೆಸರಿನ ಸ್ವರೂಪವನ್ನು ಡೌನ್ಲೋಡ್ ಮಾಡಿ"
+   },
+   "download_text": {
+      "description": "Download",
+      "message": "ಡೌನ್ಲೋಡ್"
+   },
+   "draw_size_and_color_text": {
+      "description": "Drawing size & color",
+      "message": "ರೇಖಾಚಿತ್ರ ಗಾತ್ರ ಮತ್ತು ಬಣ್ಣ"
+   },
+   "duration": {
+      "description": "Label for a field indicating a length of time.",
+      "message": "ಅವಧಿ"
+   },
+   "editor_action_add_icon": {
+      "description": "Add icon",
+      "message": "ಐಕಾನ್ ಸೇರಿಸಿ"
+   },
+   "editor_action_add_text": {
+      "description": "Add text",
+      "message": "ಪಠ್ಯವನ್ನು ಸೇರಿಸಿ"
+   },
+   "editor_action_blur_rectangle": {
+      "description": "Blur area",
+      "message": "ಪ್ರದೇಶವನ್ನು ಮಸುಕುಗೊಳಿಸಿ"
+   },
+   "editor_action_copy": {
+      "description": "Copy to clipboard",
+      "message": "ಕ್ಲಿಪ್ಬೋರ್ಡ್ಗೆ ನಕಲಿಸಿ"
+   },
+   "editor_action_crop": {
+      "description": "Crop",
+      "message": "ಬೆಳೆ"
+   },
+   "editor_action_draw_arrow": {
+      "description": "Draw arrow",
+      "message": "ಡ್ರಾ ಬಾಣ"
+   },
+   "editor_action_draw_ellipse": {
+      "description": "Draw ellipse",
+      "message": "ದೀರ್ಘವೃತ್ತವನ್ನು ರಚಿಸಿ"
+   },
+   "editor_action_draw_line": {
+      "description": "Draw line",
+      "message": "ಎಳೆಯಿರಿ"
+   },
+   "editor_action_draw_rectangle": {
+      "description": "Draw rectangle",
+      "message": "ಆಯತವನ್ನು ಎಳೆಯಿರಿ"
+   },
+   "editor_action_free_draw": {
+      "description": "Free draw",
+      "message": "ಉಚಿತ ಡ್ರಾ"
+   },
+   "editor_action_highlight": {
+      "description": "Highlight",
+      "message": "ಹೈಲೈಟ್"
+   },
+   "editor_action_numbered_step": {
+      "description": "Action label for adding a numbered step annotation.",
+      "message": "ಸಂಖ್ಯೆಯ ಹಂತ"
+   },
+   "editor_action_pan": {
+      "description": "Pan",
+      "message": "ಪ್ಯಾನ್"
+   },
+   "editor_action_profile_account": {
+      "description": "Account",
+      "message": "ಖಾತೆ"
+   },
+   "editor_action_redo": {
+      "description": "Redo",
+      "message": "ಪುನಃಮಾಡು"
+   },
+   "editor_action_save": {
+      "description": "Save",
+      "message": "ಉಳಿಸು"
+   },
+   "editor_action_select": {
+      "description": "Select, move, resize",
+      "message": "ಆಯ್ಕೆ, ಸರಿಸಿ, ಮರುಗಾತ್ರಗೊಳಿಸಿ"
+   },
+   "editor_action_settings": {
+      "description": "Settings",
+      "message": "ಸಂಯೋಜನೆಗಳು"
+   },
+   "editor_action_undo": {
+      "description": "Undo",
+      "message": "ರದ್ದುಗೊಳಿಸು"
+   },
+   "editor_action_undo_all": {
+      "description": "Undo all",
+      "message": "ಎಲ್ಲವನ್ನೂ ರದ್ದುಗೊಳಿಸಿ"
+   },
+   "editor_add_text_default": {
+      "description": "start typing...",
+      "message": "ಟೈಪ್ ಪ್ರಾರಂಭಿಸಿ ..."
+   },
+   "editor_browse_file_system": {
+      "description": "Browse file system",
+      "message": "ಫೈಲ್ ಸಿಸ್ಟಮ್ ಬ್ರೌಸ್ ಮಾಡಿ"
+   },
+   "editor_drag_and_drop": {
+      "description": "Drag and drop image/GIF or ",
+      "message": "ಡ್ರ್ಯಾಗ್ ಮತ್ತು ಡ್ರಾಪ್ ಇಮೇಜ್ / GIF ಅಥವಾ"
+   },
+   "editor_file_downloaded": {
+      "description": "File saved to downloads folder.",
+      "message": "ಫೈಲ್ ಅನ್ನು ಡೌನ್‌ಲೋಡ್ ಮಾಡುವ ಫೋಲ್ಡರ್‌ಗೆ ಉಳಿಸಲಾಗಿದೆ."
+   },
+   "editor_file_downloaded_selected_location": {
+      "description": "File saved to selected location.",
+      "message": "ಆಯ್ದ ಸ್ಥಳಕ್ಕೆ ಫೈಲ್ ಉಳಿಸಲಾಗಿದೆ."
+   },
+   "editor_frame_selector_apply_edits": {
+      "description": "Apply edits to selected",
+      "message": "ಆಯ್ದ ಸಂಪಾದನೆಗಳನ್ನು ಅನ್ವಯಿಸಿ"
+   },
+   "editor_frame_selector_delete": {
+      "description": "Delete",
+      "message": "ಅಳಿಸು"
+   },
+   "editor_frame_selector_delete_every_second": {
+      "description": "Delete every second frame",
+      "message": "ಪ್ರತಿ ಎರಡನೇ ಫ್ರೇಮ್ ಅಳಿಸಿ"
+   },
+   "editor_frame_selector_delete_selected": {
+      "description": "Delete selected",
+      "message": "ಆಯ್ಕೆ ಮಾಡಲಾಗಿದೆ"
+   },
+   "editor_frame_selector_remove_edits": {
+      "description": "Remove edits from selected",
+      "message": "ಆಯ್ದ ಸಂಪಾದನೆಗಳನ್ನು ತೆಗೆದುಹಾಕಿ"
+   },
+   "editor_frame_selector_restore": {
+      "description": "Restore",
+      "message": "ಪುನಃಸ್ಥಾಪಿಸು"
+   },
+   "editor_frame_selector_restore_all": {
+      "description": "Restore All",
+      "message": "ಎಲ್ಲವನ್ನೂ ಮರುಸ್ಥಾಪಿಸಿ"
+   },
+   "editor_frame_selector_restore_selected": {
+      "description": "Restore selected",
+      "message": "ಆಯ್ದ ಮರುಸ್ಥಾಪನೆ"
+   },
+   "editor_frame_selector_select_next": {
+      "description": "Select next frames",
+      "message": "ಮುಂದಿನ ಚಿತ್ರಗಳನ್ನು ಆಯ್ಕೆಮಾಡಿ"
+   },
+   "editor_frame_selector_select_previous": {
+      "description": "Select previous frames",
+      "message": "ಹಿಂದಿನ ಚಿತ್ರಗಳನ್ನು ಆಯ್ಕೆಮಾಡಿ"
+   },
+   "editor_frame_selector_unselect_all": {
+      "description": "Unselect All",
+      "message": "ಎಲ್ಲವನ್ನೂ ಆಯ್ಕೆ ಮಾಡಿ"
+   },
+   "editor_image_copied": {
+      "description": "Image copied to clipboard.",
+      "message": "ಚಿತ್ರ ಕ್ಲಿಪ್ಬೋರ್ಡ್ಗೆ ನಕಲಿಸಲಾಗಿದೆ."
+   },
+   "editor_image_copied_failed": {
+      "description": "Failed to copy image to clipboard, it may be too large.",
+      "message": "ಚಿತ್ರವನ್ನು ಕ್ಲಿಪ್ಬೋರ್ಡ್ಗೆ ನಕಲಿಸಲು ವಿಫಲವಾಗಿದೆ, ಅದು ತುಂಬಾ ದೊಡ್ಡದಾಗಿರಬಹುದು."
+   },
+   "editor_link_copied": {
+      "description": "Link copied to clipboard.",
+      "message": "ಲಿಂಕ್ ಅನ್ನು ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ."
+   },
+   "editor_max_time_reached_dialog_description1": {
+      "description": "You have reached the max recording length time of $maxlength$ seconds for GIFs. Premium users can update this from the settings page.",
+      "message": "GIFS ಗಾಗಿ ನೀವು $maxlength$ ಸೆಕೆಂಡುಗಳ ಗರಿಷ್ಠ ರೆಕಾರ್ಡಿಂಗ್ ಉದ್ದವನ್ನು ತಲುಪಿದ್ದೀರಿ. ಪ್ರೀಮಿಯಂ ಬಳಕೆದಾರರು ಇದನ್ನು ಸೆಟ್ಟಿಂಗ್‌ಗಳ ಪುಟದಿಂದ ನವೀಕರಿಸಬಹುದು.",
+      "placeholders": {
+         "maxlength": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_max_time_reached_dialog_description2": {
+      "description": "GIFs are intended for short recordings. If you require full length videos we recommend our free screen recorder: ",
+      "message": "GIF ಗಳನ್ನು ಸಣ್ಣ ರೆಕಾರ್ಡಿಂಗ್‌ಗಾಗಿ ಉದ್ದೇಶಿಸಲಾಗಿದೆ. ನಿಮಗೆ ಪೂರ್ಣ ಉದ್ದದ ವೀಡಿಯೊಗಳು ಅಗತ್ಯವಿದ್ದರೆ ನಾವು ನಮ್ಮ ಉಚಿತ ಸ್ಕ್ರೀನ್ ರೆಕಾರ್ಡರ್ ಅನ್ನು ಶಿಫಾರಸು ಮಾಡುತ್ತೇವೆ:"
+   },
+   "editor_max_time_reached_dialog_description3": {
+      "description": "Premium users can update this from the settings page.",
+      "message": "ಪ್ರೀಮಿಯಂ ಬಳಕೆದಾರರು ಇದನ್ನು ಸೆಟ್ಟಿಂಗ್‌ಗಳ ಪುಟದಿಂದ ನವೀಕರಿಸಬಹುದು."
+   },
+   "editor_max_time_reached_dialog_settings_button": {
+      "description": "Open settings",
+      "message": "ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ತೆರೆಯಿರಿ"
+   },
+   "editor_max_time_reached_dialog_title": {
+      "description": "Recording suddenly stopped?",
+      "message": "ರೆಕಾರ್ಡಿಂಗ್ ಇದ್ದಕ್ಕಿದ್ದಂತೆ ನಿಂತುಹೋಯಿತು?"
+   },
+   "editor_premium_options_color": {
+      "description": "Color",
+      "message": "ಬಣ್ಣ"
+   },
+   "editor_premium_options_draw_size": {
+      "description": "Draw Size",
+      "message": "ಗಾತ್ರವನ್ನು ಬರೆಯಿರಿ"
+   },
+   "editor_premium_options_font": {
+      "description": "Font",
+      "message": "ಫಾಂಟ್"
+   },
+   "editor_premium_options_playback_speed": {
+      "description": "Playback Speed",
+      "message": "ಪ್ಲೇಬ್ಯಾಕ್ ಸ್ಪೀಡ್"
+   },
+   "editor_premium_options_special_effect": {
+      "description": "Special Effect",
+      "message": "ವಿಶೇಷ ಪರಿಣಾಮ"
+   },
+   "editor_premium_options_title": {
+      "description": "Premium Options",
+      "message": "ಪ್ರೀಮಿಯಂ ಆಯ್ಕೆಗಳು"
+   },
+   "editor_save_dialog_advanced_encoding_options": {
+      "description": "Title for a section containing advanced, technical options for encoding a file.",
+      "message": "ಸುಧಾರಿತ ಎನ್ಕೋಡಿಂಗ್ ಆಯ್ಕೆಗಳು"
+   },
+   "editor_save_dialog_alert_title": {
+      "description": "Warning",
+      "message": "ಎಚ್ಚರಿಕೆ"
+   },
+   "editor_save_dialog_aspect_ratio": {
+      "description": "lock aspect ratio",
+      "message": "ಆಕಾರ ಅನುಪಾತವನ್ನು ಲಾಕ್ ಮಾಡಿ"
+   },
+   "editor_save_dialog_cancel": {
+      "description": "Cancel",
+      "message": "ರದ್ದುಮಾಡು"
+   },
+   "editor_save_dialog_chip_animated_image": {
+      "description": "Chip label indicating an animated image format (e.g. GIF, AVIF).",
+      "message": "ಅನಿಮೇಟೆಡ್ ಚಿತ್ರ"
+   },
+   "editor_save_dialog_chip_large_file": {
+      "description": "Chip label indicating the format produces a large file size.",
+      "message": "ದೊಡ್ಡ ಫೈಲ್"
+   },
+   "editor_save_dialog_chip_limited_support": {
+      "description": "Chip label indicating the format has limited browser/app support.",
+      "message": "ಸೀಮಿತ ಬೆಂಬಲ"
+   },
+   "editor_save_dialog_chip_small_file": {
+      "description": "Chip label indicating the format produces a small file size.",
+      "message": "ಸಣ್ಣ ಫೈಲ್"
+   },
+   "editor_save_dialog_chip_video": {
+      "description": "Chip label indicating a video format (e.g. WebM, MP4).",
+      "message": "ವೀಡಿಯೊ"
+   },
+   "editor_save_dialog_chip_widely_supported": {
+      "description": "Chip label indicating the format is widely supported.",
+      "message": "ವ್ಯಾಪಕವಾಗಿ ಬೆಂಬಲಿತ"
+   },
+   "editor_save_dialog_compress": {
+      "description": "Compress & optimize GIF",
+      "message": "GIF ಅನ್ನು ಕುಗ್ಗಿಸಿ ಮತ್ತು ಆಪ್ಟಿಮೈಜ್ ಮಾಡಿ"
+   },
+   "editor_save_dialog_compress_tooltip": {
+      "description": "Apply GIF compression algorthm to greatly reduce GIF file size and in some cases improve quality. Highly recommeded.",
+      "message": "GIF ಫೈಲ್ ಗಾತ್ರವನ್ನು ಹೆಚ್ಚು ಕಡಿಮೆ ಮಾಡಲು GIF ಕಂಪ್ರೆಷನ್ ALGORTHM ಅನ್ನು ಅನ್ವಯಿಸಿ ಮತ್ತು ಕೆಲವು ಸಂದರ್ಭಗಳಲ್ಲಿ ಗುಣಮಟ್ಟವನ್ನು ಸುಧಾರಿಸಿ. ಹೆಚ್ಚು ಶಿಫಾರಸು ಮಾಡಲಾಗಿದೆ."
+   },
+   "editor_save_dialog_dither_tooltip": {
+      "description": "Apply dither algorithm to frames. Try toggling this option if you experience color quality issues.",
+      "message": "ಚಿತ್ರಗಳಿಗೆ ಡಿಥರ್ ಅಲ್ಗಾರಿದಮ್ ಅನ್ನು ಅನ್ವಯಿಸಿ. ನೀವು ಬಣ್ಣ ಗುಣಮಟ್ಟದ ಸಮಸ್ಯೆಗಳನ್ನು ಅನುಭವಿಸಿದರೆ ಈ ಆಯ್ಕೆಯನ್ನು ಟಾಗಲ್ ಮಾಡಲು ಪ್ರಯತ್ನಿಸಿ."
+   },
+   "editor_save_dialog_download_raw_recording": {
+      "description": "Download raw recording",
+      "message": "ಕಚ್ಚಾ ರೆಕಾರ್ಡಿಂಗ್ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ"
+   },
+   "editor_save_dialog_estimated_size": {
+      "description": "Estimated GIF Size: ",
+      "message": "ಅಂದಾಜು GIF ಗಾತ್ರ:"
+   },
+   "editor_save_dialog_export_sound": {
+      "description": "Include sound (beta)",
+      "message": "ಧ್ವನಿ (ಬೀಟಾ) ಸೇರಿಸಿ"
+   },
+   "editor_save_dialog_export_sound_tooltip": {
+      "description": "Enable this option to include sound in the video.",
+      "message": "ವೀಡಿಯೊದಲ್ಲಿ ಧ್ವನಿಯನ್ನು ಸೇರಿಸಲು ಈ ಆಯ್ಕೆಯನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ."
+   },
+   "editor_save_dialog_frames": {
+      "description": "Frames: ",
+      "message": "ಚಿತ್ರಗಳು:"
+   },
+   "editor_save_dialog_frames_alert": {
+      "description": "There are currently selected frames, saving will only output these selected frames - ",
+      "message": "ಪ್ರಸ್ತುತ ಆಯ್ಕೆಮಾಡಿದ ಚಿತ್ರಗಳಿವೆ, ಉಳಿತಾಯವು ಈ ಆಯ್ದ ಚೌಕಟ್ಟುಗಳನ್ನು ಮಾತ್ರ output ಟ್‌ಪುಟ್ ಮಾಡುತ್ತದೆ -"
+   },
+   "editor_save_dialog_frames_alert_button": {
+      "description": "Click here to unselect all frames",
+      "message": "ಎಲ್ಲಾ ಚಿತ್ರಗಳನ್ನು ಆಯ್ಕೆ ಮಾಡಲು ಇಲ್ಲಿ ಕ್ಲಿಕ್ ಮಾಡಿ"
+   },
+   "editor_save_dialog_frames_alert_title": {
+      "description": "Playback Speed",
+      "message": "ಪ್ಲೇಬ್ಯಾಕ್ ಸ್ಪೀಡ್"
+   },
+   "editor_save_dialog_frames_processing": {
+      "description": "Processing Frames: ",
+      "message": "ಚಿತ್ರಗಳನ್ನು ಪ್ರಕ್ರಿಯೆಗೊಳಿಸುವುದು:"
+   },
+   "editor_save_dialog_height_helper": {
+      "description": "Recorded height is ",
+      "message": "ದಾಖಲಾದ ಎತ್ತರ"
+   },
+   "editor_save_dialog_lossy_compression": {
+      "description": "Label for a setting that controls the level of lossy compression, from 0 to 100 percent.",
+      "message": "ನಷ್ಟದ ಸಂಕುಚನ (0 - 100%)"
+   },
+   "editor_save_dialog_number_min_max_validation": {
+      "description": "A value between $minSize$ and $maxSize$ is required.",
+      "message": "$minSize$ ಮತ್ತು $maxSize$ ನಡುವಿನ ಮೌಲ್ಯದ ಅಗತ್ಯವಿದೆ.",
+      "placeholders": {
+         "maxSize": {
+            "content": "$2"
+         },
+         "minSize": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_save_dialog_processing_alert": {
+      "description": "Processing this recording will require a lot of memory and processing power. Unless you have a high spec PC it is recommended to do one or more of the following:",
+      "message": "ಈ ರೆಕಾರ್ಡಿಂಗ್ ಪ್ರಕ್ರಿಯೆಗೆ ಬಹಳಷ್ಟು ಮೆಮೊರಿ ಮತ್ತು ಸಂಸ್ಕರಣಾ ಶಕ್ತಿ ಅಗತ್ಯವಿರುತ್ತದೆ. ನೀವು ಹೆಚ್ಚಿನ ಸ್ಪೆಕ್ ಪಿಸಿ ಹೊಂದಿದ್ದರೆ ಹೊರತು ಕೆಳಗಿನವುಗಳಲ್ಲಿ ಒಂದಕ್ಕಿಂತ ಹೆಚ್ಚು ಅಥವಾ ಹೆಚ್ಚಿನದನ್ನು ಮಾಡಲು ಸೂಚಿಸಲಾಗುತ್ತದೆ:"
+   },
+   "editor_save_dialog_processing_alert_memory": {
+      "description": "Please note if the resulting GIF is blank then you ran out of memory.",
+      "message": "ಪರಿಣಾಮವಾಗಿ GIF ಖಾಲಿಯಾಗಿದ್ದರೆ ನೀವು ನೆನಪಿನಲ್ಲಿಟ್ಟುಕೊಂಡಿದ್ದರೆ ದಯವಿಟ್ಟು ಗಮನಿಸಿ."
+   },
+   "editor_save_dialog_processing_alert_point_1": {
+      "description": "Compress and optimize GIF",
+      "message": "GIF ಅನ್ನು ಕುಗ್ಗಿಸಿ ಮತ್ತು ಆಪ್ಟಿಮೈಜ್ ಮಾಡಿ"
+   },
+   "editor_save_dialog_processing_alert_point_2": {
+      "description": "Reduce the width & height",
+      "message": "ಅಗಲ ಮತ್ತು ಎತ್ತರವನ್ನು ಕಡಿಮೆ ಮಾಡಿ"
+   },
+   "editor_save_dialog_processing_alert_point_3": {
+      "description": "Reduce FPS or delete frames",
+      "message": "ಎಫ್‌ಪಿಎಸ್ ಅನ್ನು ಕಡಿಮೆ ಮಾಡಿ ಅಥವಾ ಚಿತ್ರಗಳನ್ನು ಅಳಿಸಿ"
+   },
+   "editor_save_dialog_purchase_dialog_compression_description": {
+      "description": "Free users are limited to 3 high quality GIF compressions per day. Upgrade to Premium to have no restrictions.",
+      "message": "ಉಚಿತ ಬಳಕೆದಾರರು ದಿನಕ್ಕೆ 3 ಉತ್ತಮ ಗುಣಮಟ್ಟದ ಜಿಐಎಫ್ ಸಂಕೋಚನಗಳಿಗೆ ಸೀಮಿತರಾಗಿದ್ದಾರೆ. ಯಾವುದೇ ನಿರ್ಬಂಧಗಳನ್ನು ಹೊಂದಲು ಪ್ರೀಮಿಯಂಗೆ ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಿ."
+   },
+   "editor_save_dialog_quantization_algorithm": {
+      "description": "Label for a dropdown to select a quantization algorithm.",
+      "message": "ಪ್ರಮಾಣೀಕರಣ ಅಲ್ಗಾರಿದಮ್"
+   },
+   "editor_save_dialog_quantization_algorithm_new_alpha": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Alpha.",
+      "message": "ಹೊಸದು (ಆಲ್ಫಾ)"
+   },
+   "editor_save_dialog_quantization_algorithm_new_beta": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Beta.",
+      "message": "ಹೊಸದು (ಬೇಟಾ)"
+   },
+   "editor_save_dialog_quantization_algorithm_old": {
+      "description": "An option for the quantization algorithm setting, indicating an older version.",
+      "message": "ಹಳೆಯದು"
+   },
+   "editor_save_dialog_recording_quality_alert": {
+      "description": "GIF quality is limited for non premium users. To output high quality recordings you can do one of the following:",
+      "message": "ಪ್ರೀಮಿಯಂ ಅಲ್ಲದ ಬಳಕೆದಾರರಿಗೆ ಜಿಐಎಫ್ ಗುಣಮಟ್ಟ ಸೀಮಿತವಾಗಿದೆ. ಉತ್ತಮ ಗುಣಮಟ್ಟದ ರೆಕಾರ್ಡಿಂಗ್‌ಗಳನ್ನು output ಟ್‌ಪುಟ್ ಮಾಡಲು ನೀವು ಈ ಕೆಳಗಿನವುಗಳಲ್ಲಿ ಒಂದನ್ನು ಮಾಡಬಹುದು:"
+   },
+   "editor_save_dialog_recording_quality_alert_option_1": {
+      "description": "Purchase premium",
+      "message": "ಪ್ರೀಮಿಯಂ ಖರೀದಿಸಿ"
+   },
+   "editor_save_dialog_recording_quality_alert_option_2": {
+      "description": "Save as a WebM file",
+      "message": "ವೆಬ್‌ಎಂ ಫೈಲ್ ಆಗಿ ಉಳಿಸಿ"
+   },
+   "editor_save_dialog_reduce_width": {
+      "description": "Reduce width & height",
+      "message": "ಅಗಲ ಮತ್ತು ಎತ್ತರವನ್ನು ಕಡಿಮೆ ಮಾಡಿ"
+   },
+   "editor_save_dialog_reduce_width_tooltip": {
+      "description": "Reduce GIF width and height/quality to improve processing time and produce a smaller file.",
+      "message": "ಸಂಸ್ಕರಣಾ ಸಮಯವನ್ನು ಸುಧಾರಿಸಲು ಮತ್ತು ಸಣ್ಣ ಫೈಲ್ ಅನ್ನು ಉತ್ಪಾದಿಸಲು GIF ಅಗಲ ಮತ್ತು ಎತ್ತರ/ಗುಣಮಟ್ಟವನ್ನು ಕಡಿಮೆ ಮಾಡಿ."
+   },
+   "editor_save_dialog_save": {
+      "description": "Save",
+      "message": "ಉಳಿಸು"
+   },
+   "editor_save_dialog_save_by": {
+      "description": "Save by",
+      "message": "ಮೂಲಕ ಉಳಿಸಿ"
+   },
+   "editor_save_dialog_save_by_download": {
+      "description": "Download file",
+      "message": "ಡೌನ್‌ಲೋಡ್ ಫೈಲ್"
+   },
+   "editor_save_dialog_save_by_google_drive": {
+      "description": "Upload to Google Drive & copy link",
+      "message": "Google ಡ್ರೈವ್ ಮತ್ತು ನಕಲು ಲಿಂಕ್‌ಗೆ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ"
+   },
+   "editor_save_dialog_save_location": {
+      "description": "Save location",
+      "message": "ಸ್ಥಳವನ್ನು ಉಳಿಸಿ"
+   },
+   "editor_save_dialog_save_location_downloads": {
+      "description": "Downloads folder",
+      "message": "ಫೋಲ್ಡರ್ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ"
+   },
+   "editor_save_dialog_save_location_downloads_subfolder": {
+      "description": "Downloads subfolder",
+      "message": "ಡೌನ್‌ಲೋಡ್ ಸಬ್‌ಫೋಲ್ಡರ್"
+   },
+   "editor_save_dialog_save_location_select": {
+      "description": "Manually select location",
+      "message": "ಸ್ಥಳವನ್ನು ಹಸ್ತಚಾಲಿತವಾಗಿ ಆರಿಸಿ"
+   },
+   "editor_save_dialog_title": {
+      "description": "Save",
+      "message": "ಉಳಿಸು"
+   },
+   "editor_save_dialog_title_processing": {
+      "description": "Processing...",
+      "message": "ಸಂಸ್ಕರಣೆ ..."
+   },
+   "editor_save_dialog_title_uploading": {
+      "description": "Uploading...",
+      "message": "ಅಪ್‌ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ ..."
+   },
+   "editor_save_dialog_width_helper": {
+      "description": "Recorded width is ",
+      "message": "ರೆಕಾರ್ಡ್ ಮಾಡಿದ ಅಗಲ"
+   },
+   "editor_text": {
+      "description": "Open in editor",
+      "message": "ಸಂಪಾದಕದಲ್ಲಿ ತೆರೆಯಿರಿ"
+   },
+   "editor_tip_delete_items": {
+      "description": "Pro tip: Delete added items by selecting the item and pressing the delete key.",
+      "message": "ಪ್ರೊ ಸುಳಿವು: ಐಟಂ ಅನ್ನು ಆಯ್ಕೆಮಾಡಿ ಮತ್ತು ಅಳಿಸು ಕೀಲಿಯನ್ನು ಒತ್ತುವ ಮೂಲಕ ಹೆಚ್ಚುವರಿ ಐಟಂಗಳನ್ನು ಅಳಿಸಿ."
+   },
+   "editor_tip_edit_specific_frames": {
+      "description": "Pro tip: You can edit specific frames by using the 'Apply edits to selected option'",
+      "message": "ಪ್ರೊ ಸುಳಿವು: 'ಆಯ್ದ ಆಯ್ಕೆಗೆ ಸಂಪಾದನೆಗಳನ್ನು ಅನ್ವಯಿಸಿ' ಬಳಸಿ ನೀವು ನಿರ್ದಿಷ್ಟ ಚಿತ್ರಗಳನ್ನು ಸಂಪಾದಿಸಬಹುದು"
+   },
+   "editor_tip_scroll": {
+      "description": "Pro tip: Scroll when hovering the screenshot/recording to zoom.",
+      "message": "ಪ್ರೊ ತುದಿ: ಸ್ಕ್ರೀನ್ಶಾಟ್ / ರೆಕಾರ್ಡಿಂಗ್ ಅನ್ನು ಝೂಮ್ ಮಾಡಲು ಸ್ಕ್ರಾಲ್ ಮಾಡಿ."
+   },
+   "editor_tip_shift_multiple_items": {
+      "description": "Pro tip: When using the selecting tool hold down shift to select more than one item.",
+      "message": "ಪ್ರೊ ತುದಿ: ಆಯ್ದ ಉಪಕರಣವನ್ನು ಬಳಸುವಾಗ ಒಂದಕ್ಕಿಂತ ಹೆಚ್ಚು ಐಟಂ ಅನ್ನು ಆಯ್ಕೆ ಮಾಡಲು ಶಿಫ್ಟ್ ಅನ್ನು ಹಿಡಿದಿಟ್ಟುಕೊಳ್ಳಿ."
+   },
+   "editor_tip_update_multiple_items": {
+      "description": "Pro tip: You can scale, rotate, move and delete multiple items at once.",
+      "message": "ಪ್ರೊ ತುದಿ: ನೀವು ಏಕಕಾಲದಲ್ಲಿ ಅನೇಕ ವಸ್ತುಗಳನ್ನು ಸರಿಹೊಂದಿಸಬಹುದು, ತಿರುಗಿಸಿ, ಸರಿಸಬಹುದು ಮತ್ತು ಅಳಿಸಬಹುದು."
+   },
+   "editor_tip_update_text": {
+      "description": "Pro tip: Double click on text to edit it.",
+      "message": "ಪ್ರೊ ತುದಿ: ಅದನ್ನು ಸಂಪಾದಿಸಲು ಪಠ್ಯವನ್ನು ಡಬಲ್ ಕ್ಲಿಕ್ ಮಾಡಿ."
+   },
+   "editor_upload_dialog_alert_copy_failed_message": {
+      "description": "This may have occurred due to the window not being focused.",
+      "message": "ಕಿಟಕಿ ಕೇಂದ್ರೀಕರಿಸದ ಕಾರಣ ಇದು ಸಂಭವಿಸಿರಬಹುದು."
+   },
+   "editor_upload_dialog_alert_copy_failed_title": {
+      "description": "Copy to clipboard failed",
+      "message": "ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಿ ವಿಫಲವಾಗಿದೆ"
+   },
+   "editor_upload_dialog_alert_copy_success_title": {
+      "description": "Copied to clipboard",
+      "message": "ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ"
+   },
+   "editor_upload_dialog_alert_upload_failed": {
+      "description": "Upload Failed",
+      "message": "ಅಪ್‌ಲೋಡ್ ವಿಫಲವಾಗಿದೆ"
+   },
+   "editor_upload_dialog_alert_upload_failed_link": {
+      "description": "Try again.",
+      "message": "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸು."
+   },
+   "editor_upload_dialog_alert_upload_failed_message": {
+      "description": "Please make sure you are connected to the internet and have accepted Google Drive permissions.",
+      "message": "ದಯವಿಟ್ಟು ನೀವು ಇಂಟರ್ನೆಟ್ಗೆ ಸಂಪರ್ಕ ಹೊಂದಿದ್ದೀರಿ ಮತ್ತು ಗೂಗಲ್ ಡ್ರೈವ್ ಅನುಮತಿಗಳನ್ನು ಸ್ವೀಕರಿಸಿದ್ದೀರಿ ಎಂದು ಖಚಿತಪಡಿಸಿಕೊಳ್ಳಿ."
+   },
+   "editor_upload_dialog_cancel_and_download": {
+      "description": "Cancel and download file",
+      "message": "ಫೈಲ್ ಅನ್ನು ರದ್ದುಗೊಳಿಸಿ ಮತ್ತು ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ"
+   },
+   "editor_upload_dialog_close": {
+      "description": "Close",
+      "message": "ಮುಚ್ಚಿಡು"
+   },
+   "editor_upload_dialog_copy_link": {
+      "description": "Copy link",
+      "message": "ನಕಲಿಸಿ ಲಿಂಕ್"
+   },
+   "editor_upload_dialog_link_public": {
+      "description": "Allow anyone with the link to view.",
+      "message": "ಲಿಂಕ್ ಹೊಂದಿರುವ ಯಾರಿಗಾದರೂ ವೀಕ್ಷಿಸಲು ಅನುಮತಿಸಿ."
+   },
+   "editor_zoom_crop_animation_animated": {
+      "description": "Sub-label indicating an animation type is animated.",
+      "message": "ಅ್ಯಾನಿಮೇಟೆಡ್"
+   },
+   "editor_zoom_crop_animation_crop": {
+      "description": "Animation type option for static cropping without animation.",
+      "message": "ಕ್ರಾಪ್"
+   },
+   "editor_zoom_crop_animation_static": {
+      "description": "Sub-label indicating an animation type is static (no animation).",
+      "message": "ಸ್ಥಿರ"
+   },
+   "editor_zoom_crop_animation_type": {
+      "description": "Label for the animation type selection section.",
+      "message": "ಅ್ಯಾನಿಮೇಷನ್ ಪ್ರಕಾರ"
+   },
+   "editor_zoom_crop_animation_zoom_in": {
+      "description": "Animation type option for zooming in on the selected area.",
+      "message": "ಜೂಮ್ ಇನ್"
+   },
+   "editor_zoom_crop_animation_zoom_out": {
+      "description": "Animation type option for zooming out from the selected area.",
+      "message": "ಜೂಮ್ ಔಟ್"
+   },
+   "editor_zoom_crop_apply": {
+      "description": "Apply button in zoom/crop dialog.",
+      "message": "ಅನ್ವಯಿಸಿ"
+   },
+   "editor_zoom_crop_cancel": {
+      "description": "Cancel button in zoom/crop dialog.",
+      "message": "ರದ್ದುಮಾಡಿ"
+   },
+   "editor_zoom_crop_change_area": {
+      "description": "Tooltip text for button to change the selected crop area.",
+      "message": "ಪ್ರದೇಶವನ್ನು ಬದಲಾಯಿಸಿ"
+   },
+   "editor_zoom_crop_dialog_title": {
+      "description": "Title for the zoom and crop dialog in the editor.",
+      "message": "ಜೂಮ್ ಮತ್ತು ಕ್ರಾಪ್"
+   },
+   "editor_zoom_crop_draw_instruction": {
+      "description": "Instruction text for the user to draw a crop area on the frame preview.",
+      "message": "ಫ್ರೇಮ್ ಮೇಲೆ ಆರಿಸಿ ಎಳೆಯಿರಿ"
+   },
+   "editor_zoom_crop_frame_end": {
+      "description": "Label for the end frame number.",
+      "message": "ಅಂತ್ಯ"
+   },
+   "editor_zoom_crop_frame_range": {
+      "description": "Label for the frame range selection section.",
+      "message": "ಫ್ರೇಮ್ ವ್ಯಾಪ್ತಿ"
+   },
+   "editor_zoom_crop_frame_start": {
+      "description": "Label for the start frame number.",
+      "message": "ಆರಂಭ"
+   },
+   "editor_zoom_crop_frames_menu": {
+      "description": "Menu item label for zoom/crop frames feature.",
+      "message": "ಫ್ರೇಮ್ ಜೂಮ್/ಕ್ರಾಪ್"
+   },
+   "editor_zoom_crop_no_area_selected": {
+      "description": "Message displayed when no crop area has been selected.",
+      "message": "ಪ್ರದೇಶವನ್ನು ಆರಿಸಲಾಗಿಲ್ಲ"
+   },
+   "editor_zoom_crop_select_area": {
+      "description": "Button text to select a crop area on the frame.",
+      "message": "ಪ್ರದೇಶವನ್ನು ಆರಿಸಿ"
+   },
+   "editor_zoom_crop_smooth_animation": {
+      "description": "Checkbox label for smoothing animation by interpolating frames.",
+      "message": "ಫ್ರೇಮ್ ಸೇರಿಸುವ ಮೂಲಕ ಅ್ಯಾನಿಮೇಷನ್ ನಯವಾಗಿ ಮಾಡಿ"
+   },
+   "editor_zoom_crop_transition": {
+      "description": "Label for the transition duration section (number of frames for animation).",
+      "message": "ಪರಿವರ್ತನ"
+   },
+   "enable_drawing_text": {
+      "description": "Enable drawing",
+      "message": "ರೇಖಾಚಿತ್ರವನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ"
+   },
+   "enable_drawing_tooltip_text": {
+      "description": "This option allows users to draw in the selected area while holding down the ctrl key.",
+      "message": "Ctrl ಕೀಲಿಯನ್ನು ಹಿಡಿದಿಟ್ಟುಕೊಳ್ಳುವಾಗ ಈ ಆಯ್ಕೆಯು ಆಯ್ದ ಪ್ರದೇಶದಲ್ಲಿ ಸೆಳೆಯಲು ಅನುಮತಿಸುತ್ತದೆ."
+   },
+   "extension_description": {
+      "description": "Take screenshots & record GIFs instantly! Edit & share seamlessly. Your all-in-one screenshot and screen recording solution.",
+      "message": "ಸ್ಕ್ರೀನ್‌ಶಾಟ್‌ಗಳನ್ನು ತೆಗೆದುಕೊಳ್ಳಿ ಮತ್ತು ಜಿಐಎಫ್‌ಗಳನ್ನು ತಕ್ಷಣ ರೆಕಾರ್ಡ್ ಮಾಡಿ! ಮನಬಂದಂತೆ ಸಂಪಾದಿಸಿ ಮತ್ತು ಹಂಚಿಕೊಳ್ಳಿ. ನಿಮ್ಮ ಆಲ್-ಇನ್-ಒನ್ ಸ್ಕ್ರೀನ್‌ಶಾಟ್ ಮತ್ತು ಸ್ಕ್ರೀನ್ ರೆಕಾರ್ಡಿಂಗ್ ಪರಿಹಾರ."
+   },
+   "extension_name": {
+      "description": "Chrome Capture - screenshot & GIF",
+      "message": "ಕ್ರೋಮ್ ಕ್ಯಾಪ್ಚರ್ - ಸ್ಕ್ರೀನ್‌ಶಾಟ್ ಮತ್ತು ಜಿಐಎಫ್"
+   },
+   "extension_short_name": {
+      "description": "Chrome Capture",
+      "message": "ಕ್ರೋಮ್ ಕ್ಯಾಪ್ಚರ್"
+   },
+   "file_access_text": {
+      "description": "After screenshot action",
+      "message": "ಸ್ಕ್ರೀನ್‌ಶಾಟ್ ನಂತರದ ಕ್ರಿಯೆ"
+   },
+   "filename_text": {
+      "description": "Filename",
+      "message": "ಕಡತದ ಹೆಸರು"
+   },
+   "frames_per_sec_short_text": {
+      "description": "FPS",
+      "message": "ಎಫ್‌ಪಿಎಸ್"
+   },
+   "frames_per_sec_text": {
+      "description": "Frames per second (fps)",
+      "message": "ಸೆಕೆಂಡಿಗೆ ಚಿತ್ರಗಳು (ಎಫ್‌ಪಿಎಸ್)"
+   },
+   "frames_text": {
+      "description": "frames",
+      "message": "ಚಿತ್ರ"
+   },
+   "free_settings_text": {
+      "description": "Free Settings",
+      "message": "ಉಚಿತ ಸೆಟ್ಟಿಂಗ್ಗಳು"
+   },
+   "fullscreen_info_modal_cancel": {
+      "description": "Cancel",
+      "message": "ರದ್ದುಮಾಡು"
+   },
+   "fullscreen_info_modal_continue": {
+      "description": "Are you sure you want to continue with full screen capture?",
+      "message": "ನೀವು ಪೂರ್ಣ ಸ್ಕ್ರೀನ್ ಕ್ಯಾಪ್ಚರ್ ಮುಂದುವರಿಸಲು ಬಯಸುವಿರಾ?"
+   },
+   "fullscreen_info_modal_do_not_show": {
+      "description": "Do not show this again",
+      "message": "ಇದನ್ನು ಮತ್ತೆ ತೋರಿಸಬೇಡ"
+   },
+   "fullscreen_info_modal_message": {
+      "description": "You have used a Chrome Capture shortcut without the cropping tool, this will capture in full screen mode.",
+      "message": "ನೀವು ಕ್ರಾಪ್ ಉಪಕರಣವಿಲ್ಲದೆ ಕ್ರೋಮ್ ಕ್ಯಾಪ್ಚರ್ ಶಾರ್ಟ್ಕಟ್ ಅನ್ನು ಬಳಸಿದ್ದೀರಿ, ಇದು ಪೂರ್ಣ ಸ್ಕ್ರೀನ್ ಮೋಡ್ನಲ್ಲಿ ಸೆರೆಹಿಡಿಯುತ್ತದೆ."
+   },
+   "fullscreen_info_modal_open_cropping": {
+      "description": "Open cropping tool",
+      "message": "ಓಪನ್ ಕ್ರಾಪಿಂಗ್ ಟೂಲ್"
+   },
+   "fullscreen_info_modal_shortcut_cropping_tool": {
+      "description": "Alt + C: Open/close Chrome Capture cropping tool",
+      "message": "Alt + C: ಕ್ರೋಮ್ ಕ್ಯಾಪ್ಚರ್ ಕ್ರಾಪಿಂಗ್ ಟೂಲ್ ಅನ್ನು ತೆರೆಯಿರಿ / ಮುಚ್ಚಿ"
+   },
+   "fullscreen_info_modal_shortcut_fullpage_screenshot": {
+      "description": "Alt + Shift + S: Full webpage screenshot (beta)",
+      "message": "ALT + SHIFT + S: ಪೂರ್ಣ ವೆಬ್ಪುಜ್ ಸ್ಕ್ರೀನ್ಶಾಟ್ (ಬೀಟಾ)"
+   },
+   "fullscreen_info_modal_shortcut_linkt": {
+      "description": "You can configure these here: ",
+      "message": "ನೀವು ಇದನ್ನು ಇಲ್ಲಿ ಸಂರಚಿಸಬಹುದು:"
+   },
+   "fullscreen_info_modal_shortcut_recording": {
+      "description": "Alt + R: Start/stop recording",
+      "message": "ALT + R: ರೆಕಾರ್ಡಿಂಗ್ ಅನ್ನು ಪ್ರಾರಂಭಿಸಿ / ನಿಲ್ಲಿಸಿ"
+   },
+   "fullscreen_info_modal_shortcut_screenshot": {
+      "description": "Alt + S: Visible area screenshot",
+      "message": "ALT + S: ಗೋಚರ ಪ್ರದೇಶ ಸ್ಕ್ರೀನ್ಶಾಟ್"
+   },
+   "fullscreen_info_modal_shortcuts": {
+      "description": "Default shortcuts are: ",
+      "message": "ಡೀಫಾಲ್ಟ್ ಶಾರ್ಟ್ಕಟ್ಗಳು:"
+   },
+   "fullscreen_info_modal_start": {
+      "description": "Start full screen capture",
+      "message": "ಪೂರ್ಣ ಸ್ಕ್ರೀನ್ ಕ್ಯಾಪ್ಚರ್ ಪ್ರಾರಂಭಿಸಿ"
+   },
+   "fullscreen_info_modal_title": {
+      "description": "Full screen capture",
+      "message": "ಪೂರ್ಣ ಸ್ಕ್ರೀನ್ ಕ್ಯಾಪ್ಚರ್"
+   },
+   "general_not_available": {
+      "description": "N/A",
+      "message": "ಲಭ್ಯವಿಲ್ಲ"
+   },
+   "get_premium": {
+      "description": "Get Premium",
+      "message": "ಪ್ರೀಮಿಯಂ ಪಡೆಯಿರಿ"
+   },
+   "height_text": {
+      "description": "Width (px)",
+      "message": "ಅಗಲ (px)"
+   },
+   "hi": {
+      "description": "Hi",
+      "message": "ನಮಸ್ತೆ"
+   },
+   "internet_connection_required": {
+      "description": "Internet connection is required to upgrade to premium.",
+      "message": "ಪ್ರೀಮಿಯಂಗೆ ಅಪ್ಗ್ರೇಡ್ ಮಾಡಲು ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಅಗತ್ಯವಿದೆ."
+   },
+   "manage_subscription_access_until_date": {
+      "description": "Your plan will not renew. You can access premium features until $date$.",
+      "message": "ನಿಮ್ಮ ಯೋಜನೆ ನವೀಕರಣಗೊಳ್ಳುವುದಿಲ್ಲ. ನೀವು $date$ ವರೆಗೆ ಪ್ರೀಮಿಯಂ ವೈಶಿಷ್ಟ್ಯಗಳನ್ನು ಪ್ರವೇಶಿಸಬಹುದು.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_cancel_button": {
+      "description": "Cancel subscription",
+      "message": "ಚಂದಾದಾರಿಕೆಯನ್ನು ರದ್ದುಮಾಡಿ"
+   },
+   "manage_subscription_cancel_confirm_cancel_button": {
+      "description": "Keep Premium",
+      "message": "ಪ್ರೀಮಿಯಂ ಇರಿಸಿಕೊಳ್ಳಿ"
+   },
+   "manage_subscription_cancel_confirm_confirm_button": {
+      "description": "Continue to cancel",
+      "message": "ರದ್ದುಗೊಳಿಸಲು ಮುಂದುವರಿಸಿ"
+   },
+   "manage_subscription_cancel_confirm_description": {
+      "description": "You will lose access to Premium features and Premium options will be reset.",
+      "message": "ನೀವು ಪ್ರೀಮಿಯಂ ವೈಶಿಷ್ಟ್ಯಗಳಿಗೆ ಪ್ರವೇಶವನ್ನು ಕಳೆದುಕೊಳ್ಳುತ್ತೀರಿ ಮತ್ತು ಪ್ರೀಮಿಯಂ ಆಯ್ಕೆಗಳನ್ನು ಮರುಹೊಂದಿಸಲಾಗುತ್ತದೆ."
+   },
+   "manage_subscription_cancel_confirm_title": {
+      "description": "Are you sure you want to cancel your subscription?",
+      "message": "ನಿಮ್ಮ ಚಂದಾದಾರಿಕೆಯನ್ನು ರದ್ದುಮಾಡಲು ನೀವು ಖಚಿತವಾಗಿದ್ದೀರಾ?"
+   },
+   "manage_subscription_ended_on_date": {
+      "description": "Subscription ended on $date$.",
+      "message": "ಚಂದಾದಾರಿಕೆ $date$ ರಂದು ಕೊನೆಗೊಂಡಿದೆ.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_ends_on_date": {
+      "description": "Subscription ends on $date$.",
+      "message": "ಚಂದಾದಾರಿಕೆ $date$ ರಂದು ಕೊನೆಗೊಳ್ಳುತ್ತದೆ.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_next_payment_full": {
+      "description": "Next payment: $price$ on $date$",
+      "message": "ಮುಂದಿನ ಪಾವತಿ: $date$ ರಂದು $price$",
+      "placeholders": {
+         "date": {
+            "content": "$2"
+         },
+         "price": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_paid_full": {
+      "description": "Paid: $billingCycle$",
+      "message": "ಪಾವತಿಸಲಾಗಿದೆ: $billingCycle$",
+      "placeholders": {
+         "billingCycle": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_resubscribe_prompt": {
+      "description": " To use premium features again, please upgrade.",
+      "message": " ಪ್ರೀಮಿಯಂ ವೈಶಿಷ್ಟ್ಯಗಳನ್ನು ಮತ್ತೊಮ್ಮೆ ಬಳಸಲು, ದಯವಿಟ್ಟು ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಿ."
+   },
+   "manage_subscription_update_payment_button": {
+      "description": "Update payment method",
+      "message": "ಪಾವತಿ ವಿಧಾನವನ್ನು ನವೀಕರಿಸಿ"
+   },
+   "max_recording_dimension_size_text": {
+      "description": "Max recording resolution/quality",
+      "message": "ಮ್ಯಾಕ್ಸ್ ರೆಕಾರ್ಡಿಂಗ್ ರೆಸಲ್ಯೂಶನ್ / ಗುಣಮಟ್ಟ"
+   },
+   "no_limit_text": {
+      "description": "No limit",
+      "message": "ಮಿತಿ ಇಲ್ಲ"
+   },
+   "open_text": {
+      "description": "Open",
+      "message": "ತೆರೆ"
+   },
+   "options_default_action": {
+      "description": "Extension icon click action",
+      "message": "ವಿಸ್ತರಣೆ ಐಕಾನ್ ಕ್ಲಿಕ್ ಕ್ರಿಯೆ"
+   },
+   "options_dimension_size_1000": {
+      "description": "1000 pixels",
+      "message": "1000 ಪಿಕ್ಸೆಲ್ಗಳು"
+   },
+   "options_dimension_size_1080p": {
+      "description": "1920 pixels (1080p)",
+      "message": "1920 ಪಿಕ್ಸೆಲ್ಗಳು (1080 ಪಿ)"
+   },
+   "options_dimension_size_480p": {
+      "description": "640 pixels (480p)",
+      "message": "640 ಪಿಕ್ಸೆಲ್ಗಳು (480 ಪಿ)"
+   },
+   "options_dimension_size_4k": {
+      "description": "3840 pixels (4K)",
+      "message": "3840 ಪಿಕ್ಸೆಲ್ಗಳು (4 ಕೆ)"
+   },
+   "options_dimension_size_720p": {
+      "description": "1280 pixels (720p)",
+      "message": "1280 ಪಿಕ್ಸೆಲ್ಗಳು (720 ಪಿ)"
+   },
+   "options_embedded_options_permission_warning": {
+      "description": "Cursor highlighting, click effects, and drawing tools will only work until the page reloads or changes. To keep them active after reloads or redirects, you'll need to grant an extra permission.",
+      "message": "ಕರ್ಸರ್ ಹೈಲೈಟಿಂಗ್, ಕ್ಲಿಕ್ ಪರಿಣಾಮಗಳು, ಮತ್ತು ಡ್ರಾಯಿಂಗ್ ಉಪಕರಣಗಳು ಪುಟವನ್ನು ಮರುಲೋಡ್ ಮಾಡುವ ಅಥವಾ ಬದಲಾಯಿಸುವವರೆಗೆ ಮಾತ್ರ ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತವೆ. ಮರುಲೋಡ್‌ಗಳು ಅಥವಾ ಮರುನಿರ್ದೇಶನಗಳ ನಂತರ ಅವುಗಳನ್ನು ಸಕ್ರಿಯವಾಗಿರಿಸಲು, ನೀವು ಹೆಚ್ಚುವರಿ ಅನುಮತಿಯನ್ನು ನೀಡಬೇಕಾಗುತ್ತದೆ."
+   },
+   "options_enable_notifications": {
+      "description": "Enable notifications",
+      "message": "ಅಧಿಸೂಚನೆಗಳನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ"
+   },
+   "options_enable_notifications_tooltip": {
+      "description": "Display notifications when full screen recording starts and processing recordings in the background.",
+      "message": "ಪೂರ್ಣ ಸ್ಕ್ರೀನ್ ರೆಕಾರ್ಡಿಂಗ್ ಪ್ರಾರಂಭವಾದಾಗ ಮತ್ತು ಹಿನ್ನೆಲೆಯಲ್ಲಿ ರೆಕಾರ್ಡಿಂಗ್‌ಗಳನ್ನು ಸಂಸ್ಕರಿಸುವಾಗ ಅಧಿಸೂಚನೆಗಳನ್ನು ಪ್ರದರ್ಶಿಸಿ."
+   },
+   "options_enable_subfolder_downloads": {
+      "description": "Download files into subfolder",
+      "message": "ಫೈಲ್‌ಗಳನ್ನು ಸಬ್‌ಫೋಲ್ಡರ್‌ಗೆ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ"
+   },
+   "options_enable_subfolder_downloads_tooltip": {
+      "description": "Download files into a subfolder of your choice inside the downloads folder. This option is useful for organising your captures.",
+      "message": "ಡೌನ್‌ಲೋಡ್‌ಗಳ ಫೋಲ್ಡರ್ ಒಳಗೆ ನಿಮ್ಮ ಆಯ್ಕೆಯ ಸಬ್‌ಫೋಲ್ಡರ್‌ಗೆ ಫೈಲ್‌ಗಳನ್ನು ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ. ನಿಮ್ಮ ಸೆರೆಹಿಡಿಯುವಿಕೆಗಳನ್ನು ಸಂಘಟಿಸಲು ಈ ಆಯ್ಕೆಯು ಉಪಯುಕ್ತವಾಗಿದೆ."
+   },
+   "options_how_to_use_btn": {
+      "description": "How to use",
+      "message": "ಬಳಸುವುದು ಹೇಗೆ"
+   },
+   "options_language": {
+      "description": "Language",
+      "message": "ಭಾಷೆ"
+   },
+   "options_open_containing_folder_on_save": {
+      "description": "Open containing folder after saving",
+      "message": "ಉಳಿಸಿದ ನಂತರ ಫೋಲ್ಡರ್ ತೆರೆಯಿರಿ"
+   },
+   "options_open_popup": {
+      "description": "Open popup",
+      "message": "ಪಾಪ್ಅಪ್ ತೆರೆಯಿರಿ"
+   },
+   "options_open_selected_area": {
+      "description": "Open selected area capture",
+      "message": "ಆಯ್ಕೆಮಾಡಿದ ಪ್ರದೇಶ ಕ್ಯಾಪ್ಚರ್ ತೆರೆಯಿರಿ"
+   },
+   "options_section_general": {
+      "description": "Title for the General settings section in the options page",
+      "message": "ಸಾಮಾನ್ಯ ಸೆಟ್ಟಿಂಗ್‌ಗಳು"
+   },
+   "options_section_output": {
+      "description": "Title for the Output and Saving settings section in the options page",
+      "message": "ಔಟ್‌ಪುಟ್ ಮತ್ತು ಉಳಿಸಲಾಗುತ್ತಿದೆ"
+   },
+   "options_section_recording": {
+      "description": "Title for the Recording settings section in the options page",
+      "message": "ರೆಕಾರ್ಡಿಂಗ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳು"
+   },
+   "options_section_visuals": {
+      "description": "Title for the Cursor and Interaction Visuals settings section in the options page",
+      "message": "ಕರ್ಸರ್ ಮತ್ತು ಸಂವಹನ ದೃಶ್ಯಗಳು"
+   },
+   "options_shortcuts_btn": {
+      "description": "Shortcuts",
+      "message": "ಶಾರ್ಟ್ಕಟ್ಗಳು"
+   },
+   "options_subfolder_downloads_name": {
+      "description": "Subfolder name:",
+      "message": "ಸಬ್‌ಫೋಲ್ಡರ್ ಹೆಸರು:"
+   },
+   "options_support_btn": {
+      "description": "Support",
+      "message": "ಬೆಂಬಲ"
+   },
+   "overlay_help_text": {
+      "description": "Click and drag to choose your selected area. \nRight click to snap to an element, hold shift for multiple.",
+      "message": "ನಿಮ್ಮ ಆಯ್ಕೆಮಾಡಿದ ಪ್ರದೇಶವನ್ನು ಆಯ್ಕೆ ಮಾಡಲು ಕ್ಲಿಕ್ ಮಾಡಿ ಮತ್ತು ಎಳೆಯಿರಿ. \n ಒಂದು ಅಂಶಕ್ಕೆ ಸ್ನ್ಯಾಪ್ ಮಾಡಲು ರೈಟ್ ಕ್ಲಿಕ್ ಮಾಡಿ, ಬಹುಪಾಲು ಶಿಫ್ಟ್ ಅನ್ನು ಹಿಡಿದುಕೊಳ್ಳಿ."
+   },
+   "plan_billing_annually": {
+      "description": "Annually",
+      "message": "ವಾರ್ಷಿಕವಾಗಿ"
+   },
+   "plan_billing_monthly": {
+      "description": "Monthly",
+      "message": "ಮಾಸಿಕ"
+   },
+   "plan_name_custom": {
+      "description": "Custom Plan",
+      "message": "ಕಸ್ಟಮ್ ಯೋಜನೆ"
+   },
+   "popup_capture_tab": {
+      "description": "Capture",
+      "message": "ಸೆರೆಹಿಡಿಯುವುದು"
+   },
+   "popup_desktop_screenshot_tooltip": {
+      "description": "Capture the entire screen, desktop, or any open application.",
+      "message": "ಸಂಪೂರ್ಣ ಪರದೆ, ಡೆಸ್ಕ್‌ಟಾಪ್ ಅಥವಾ ಯಾವುದೇ ತೆರೆದ ಅಪ್ಲಿಕೇಶನ್ ಅನ್ನು ಸೆರೆಹಿಡಿಯಿರಿ."
+   },
+   "popup_editor_icon_tooltip": {
+      "description": "Open Editor",
+      "message": "ತೆರೆದ ಸಂಪಾದಕ"
+   },
+   "popup_full_page_screenshot_tooltip": {
+      "description": "Capture the current tab full webpage, including content beyond the visible area.",
+      "message": "ಗೋಚರ ಪ್ರದೇಶವನ್ನು ಮೀರಿದ ವಿಷಯವನ್ನು ಒಳಗೊಂಡಂತೆ ಪ್ರಸ್ತುತ ಟ್ಯಾಬ್ ಪೂರ್ಣ ವೆಬ್‌ಪುಟವನ್ನು ಸೆರೆಹಿಡಿಯಿರಿ."
+   },
+   "popup_full_webpage": {
+      "description": "Full webpage",
+      "message": "ಪೂರ್ಣ ವೆಬ್‌ಪುಟ"
+   },
+   "popup_no_scripts_alert": {
+      "description": "Selected area and full webpage screenshots are not possible here. These features are available on other websites.",
+      "message": "ಆಯ್ದ ಪ್ರದೇಶ ಮತ್ತು ಪೂರ್ಣ ವೆಬ್‌ಪುಟ ಸ್ಕ್ರೀನ್‌ಶಾಟ್‌ಗಳು ಇಲ್ಲಿ ಸಾಧ್ಯವಿಲ್ಲ. ಈ ವೈಶಿಷ್ಟ್ಯಗಳು ಇತರ ವೆಬ್‌ಸೈಟ್‌ಗಳಲ್ಲಿ ಲಭ್ಯವಿದೆ."
+   },
+   "popup_record_tab": {
+      "description": "Record",
+      "message": "ದಾಖಲೆ"
+   },
+   "popup_recording_limit_alert": {
+      "description": "Record up to $seconds$ seconds per GIF. Premium users can update this from the ",
+      "message": "ಪ್ರತಿ GIF ಗೆ $seconds$ ಸೆಕೆಂಡುಗಳವರೆಗೆ ರೆಕಾರ್ಡ್ ಮಾಡಿ. ಪ್ರೀಮಿಯಂ ಬಳಕೆದಾರರು ಇದನ್ನು ನವೀಕರಿಸಬಹುದು",
+      "placeholders": {
+         "seconds": {
+            "content": "$1"
+         }
+      }
+   },
+   "popup_recording_limit_settings_link": {
+      "description": "settings page.",
+      "message": "ಸೆಟ್ಟಿಂಗ್‌ಗಳ ಪುಟ."
+   },
+   "popup_screen_or_app": {
+      "description": "Full screen or app",
+      "message": "ಪೂರ್ಣ ಸ್ಕ್ರೀನ್ ಅಥವಾ ಅಪ್ಲಿಕೇಶನ್"
+   },
+   "popup_selected_area": {
+      "description": "Selected area",
+      "message": "ಆಯ್ದ ಪ್ರದೇಶ"
+   },
+   "popup_selected_area_screenshot_tooltip": {
+      "description": "Capture a specific area of the current tab.",
+      "message": "ಪ್ರಸ್ತುತ ಟ್ಯಾಬ್‌ನ ನಿರ್ದಿಷ್ಟ ಪ್ರದೇಶವನ್ನು ಸೆರೆಹಿಡಿಯಿರಿ."
+   },
+   "popup_set_shortcut": {
+      "description": "set shortcut",
+      "message": "ಶಾರ್ಟ್‌ಕಟ್ ಹೊಂದಿಸಿ"
+   },
+   "popup_settings_icon_tooltip": {
+      "description": "Open Settings",
+      "message": "ತೆರೆದ ಸೆಟ್ಟಿಂಗ್ಗಳು"
+   },
+   "popup_tab_screenshot_tooltip": {
+      "description": "Capture the visible part of the current tab.",
+      "message": "ಪ್ರಸ್ತುತ ಟ್ಯಾಬ್‌ನ ಗೋಚರ ಭಾಗವನ್ನು ಸೆರೆಹಿಡಿಯಿರಿ."
+   },
+   "popup_this_tab": {
+      "description": "This tab",
+      "message": "ಈ ಟ್ಯಾಬ್"
+   },
+   "popup_waiting_for_desktop_selection_alert": {
+      "description": "FULL SCREEN OR APP capture did not start because you did not select an option from the popup dialog. If you have multiple monitors it may have opened on another monitor.",
+      "message": "ಪಾಪ್ಅಪ್ ಸಂವಾದದಿಂದ ನೀವು ಆಯ್ಕೆಯನ್ನು ಆರಿಸದ ಕಾರಣ ಪೂರ್ಣ ಪರದೆ ಅಥವಾ ಅಪ್ಲಿಕೇಶನ್ ಕ್ಯಾಪ್ಚರ್ ಪ್ರಾರಂಭವಾಗಲಿಲ್ಲ. ನೀವು ಬಹು ಮಾನಿಟರ್‌ಗಳನ್ನು ಹೊಂದಿದ್ದರೆ ಅದು ಮತ್ತೊಂದು ಮಾನಿಟರ್‌ನಲ್ಲಿ ತೆರೆದಿರಬಹುದು."
+   },
+   "premium_settings_text": {
+      "description": "Premium Settings",
+      "message": "ಪ್ರೀಮಿಯಂ ಸೆಟ್ಟಿಂಗ್ಗಳು"
+   },
+   "purchase_btn_text": {
+      "description": "Get Premium!",
+      "message": "ಪ್ರೀಮಿಯಂ ಪಡೆಯಿರಿ!"
+   },
+   "purchase_description_limited_time_text": {
+      "description": "Lock in this price now - limited time offer before we switch to subscriptions!",
+      "message": "ಈಗ ಈ ಬೆಲೆಯನ್ನು ಪಡೆದುಕೊಳ್ಳಿ - ನಾವು ಚಂದಾದಾರಿಕೆಗಳಿಗೆ ಬದಲಾಯಿಸುವ ಮೊದಲು ಸೀಮಿತ ಅವಧಿಯ ಕೊಡುಗೆ!"
+   },
+   "purchase_description_text": {
+      "description": "Just one payment unlocks all premium features forever. No recurring fees!",
+      "message": "ಕೇವಲ ಒಂದು ಪಾವತಿಯು ಎಲ್ಲಾ ಪ್ರೀಮಿಯಂ ವೈಶಿಷ್ಟ್ಯಗಳನ್ನು ಜೀವಮಾನವಿಡೀ ಅನ್ಲಾಕ್ ಮಾಡುತ್ತದೆ. ಯಾವುದೇ ಪುನರಾವರ್ತಿತ ಶುಲ್ಕಗಳಿಲ್ಲ!"
+   },
+   "purchase_feature_30fps": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "ರೇಷ್ಮೆಯಂತಹ ನಯವಾದ 30 FPS ರೆಕಾರ್ಡಿಂಗ್"
+   },
+   "purchase_feature_4K": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "ಸ್ಫಟಿಕ-ಸ್ಪಷ್ಟ 4K ರೆಕಾರ್ಡಿಂಗ್"
+   },
+   "purchase_feature_alter_frame_rate": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ಕಸ್ಟಮ್ ಫ್ರೇಮ್ ದರಗಳು"
+   },
+   "purchase_feature_alter_playback_speed": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ನಿಧಾನ-ಚಲನೆ ಮತ್ತು ಸಮಯ-ಕಳೆದುಹೋದ ಪರಿಣಾಮಗಳು"
+   },
+   "purchase_feature_blur": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ಬ್ಲರ್ ಉಪಕರಣ"
+   },
+   "purchase_feature_crop_recording": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ನಿಖರವಾದ GIF ಕ್ರಾಪಿಂಗ್"
+   },
+   "purchase_feature_default": {
+      "description": "Feature that goes in $feature$ placeholder. Default fallback.",
+      "message": "ಈ ವೈಶಿಷ್ಟ್ಯ"
+   },
+   "purchase_feature_frame_edits": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "ಶಕ್ತಿಯುತ ಫ್ರೇಮ್-ಬೈ-ಫ್ರೇಮ್ ಸಂಪಾದನೆ"
+   },
+   "purchase_feature_highlight": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ಹೈಲೈಟ್ ಉಪಕರಣ"
+   },
+   "purchase_feature_no_duration_limit": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ಅನಿಯಮಿತ ರೆಕಾರ್ಡಿಂಗ್ ಉದ್ದ"
+   },
+   "purchase_feature_special_effect": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ವಿಶೇಷ ಪರಿಣಾಮಗಳು"
+   },
+   "purchase_feature_step_tool": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ಹಂತ ಉಪಕರಣ"
+   },
+   "purchase_feature_svg": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ಕಸ್ಟಮ್ ಐಕಾನ್‌ಗಳು ಮತ್ತು ಲೋಗೊಗಳನ್ನು ಸೇರಿಸುವುದು"
+   },
+   "purchase_feature_text_and_annotation_customization": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ಪಠ್ಯ ಮತ್ತು ಟಿಪ್ಪಣಿಗಳ ಮೇಲೆ ಪೂರ್ಣ ನಿಯಂತ್ರಣ"
+   },
+   "purchase_feature_unlimited_gif_compression": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ಅನಿಯಮಿತ ಸುಧಾರಿತ GIF ಸಂಕುಚನ"
+   },
+   "purchase_feature_update_end_time": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ಕಸ್ಟಮೈಸ್ ಮಾಡಿದ ರೆಕಾರ್ಡಿಂಗ್ ಸಮಯ"
+   },
+   "purchase_login_dialog_closed_by_user_alert": {
+      "description": "Looks like you closed the sign in dialog, premium users must sign in so you don't lose premium access.",
+      "message": "ನೀವು ಸೈನ್ ಇನ್ ಡೈಲಾಗ್ ಅನ್ನು ಮುಚ್ಚಿದಂತೆ ತೋರುತ್ತಿದೆ, ಪ್ರೀಮಿಯಂ ಬಳಕೆದಾರರು ಸೈನ್ ಇನ್ ಮಾಡಬೇಕು ಆದ್ದರಿಂದ ನೀವು ಪ್ರೀಮಿಯಂ ಪ್ರವೇಶವನ್ನು ಕಳೆದುಕೊಳ್ಳುವುದಿಲ್ಲ."
+   },
+   "purchase_login_dialog_google_button": {
+      "description": "Sign in with Google",
+      "message": "Google ನೊಂದಿಗೆ ಸೈನ್ ಇನ್ ಮಾಡಿ"
+   },
+   "purchase_login_dialog_title": {
+      "description": "Sign in required",
+      "message": "ಸೈನ್ ಇನ್ ಅಗತ್ಯವಿದೆ"
+   },
+   "purchase_login_text": {
+      "description": "Sign in with Google to link your purchase to your account.",
+      "message": "ನಿಮ್ಮ ಖಾತೆಗೆ ನಿಮ್ಮ ಖರೀದಿಯನ್ನು ಲಿಂಕ್ ಮಾಡಲು Google ನೊಂದಿಗೆ ಸೈನ್ ಇನ್ ಮಾಡಿ."
+   },
+   "purchase_login_text_window_opened": {
+      "description": "Sign into Google in the popup window.",
+      "message": "ಪಾಪ್ಅಪ್ ವಿಂಡೋದಲ್ಲಿ Google ಗೆ ಸೈನ್ ಇನ್ ಮಾಡಿ."
+   },
+   "purchase_subscription_title_text": {
+      "description": "Choose the plan that fits your needs.",
+      "message": "ನಿಮ್ಮ ಅಗತ್ಯಗಳಿಗೆ ಸರಿಹೊಂದುವ ಯೋಜನೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ."
+   },
+   "purchase_title_text": {
+      "description": "Get Lifetime Premium Access Today!",
+      "message": "ಇಂದೇ ಜೀವಮಾನದ ಪ್ರೀಮಿಯಂ ಪ್ರವೇಶ ಪಡೆಯಿರಿ!"
+   },
+   "purchase_title_text_blocked_feature": {
+      "description": "That feature requires Premium",
+      "message": "ಆ ವೈಶಿಷ್ಟ್ಯಕ್ಕೆ ಪ್ರೀಮಿಯಂ ಅಗತ್ಯವಿದೆ"
+   },
+   "purchase_title_text_blocked_pro_feature": {
+      "description": "That feature requires Premium Pro",
+      "message": "ಆ ವೈಶಿಷ್ಟ್ಯಕ್ಕೆ Premium Pro ಅಗತ್ಯವಿದೆ"
+   },
+   "purchase_title_text_blocked_pro_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium Pro paywall.",
+      "message": "ಪ್ರೀಮಿಯಂ ಪ್ರೊನೊಂದಿಗೆ $feature$ ಅನ್‌ಲಾಕ್ ಮಾಡಿ",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchase_title_text_blocked_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium paywall.",
+      "message": "ಪ್ರೀಮಿಯಂನೊಂದಿಗೆ $feature$ ಅನ್‌ಲಾಕ್ ಮಾಡಿ",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_already_premium_user": {
+      "description": "Already a premium user?",
+      "message": "ಈಗಾಗಲೇ ಪ್ರೀಮಿಯಂ ಬಳಕೆದಾರ?"
+   },
+   "purchases_bill_me": {
+      "description": "Bill me:",
+      "message": "ನನಗೆ ಬಿಲ್ ಮಾಡಿ:"
+   },
+   "purchases_checkout_unavailable_message": {
+      "description": "Message shown when checkout could not be started.",
+      "message": "ಈಗ ಅಪ್‌ಗ್ರೇಡ್ ಪ್ರಕ್ರಿಯೆಯನ್ನು ಪ್ರಾರಂಭಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
+   },
+   "purchases_compare_12_fps": {
+      "description": "12FPS",
+      "message": "12FPS"
+   },
+   "purchases_compare_3_per_day": {
+      "description": "3 per day",
+      "message": "ದಿನಕ್ಕೆ 3"
+   },
+   "purchases_compare_add_custom_shape_tool": {
+      "description": "Add custom shape/icon tool",
+      "message": "ಕಸ್ಟಮ್ ಆಕಾರ/ಐಕಾನ್ ಉಪಕರಣವನ್ನು ಸೇರಿಸಿ"
+   },
+   "purchases_compare_benefits": {
+      "description": "Benefits",
+      "message": "ಪ್ರಯೋಜನಗಳು"
+   },
+   "purchases_compare_blur_tool": {
+      "description": "Blur tool",
+      "message": "ಮಸುಕುಗೊಳಿಸುವ ಉಪಕರಣ"
+   },
+   "purchases_compare_close_button_label": {
+      "description": "Close",
+      "message": "ಮುಚ್ಚಿ"
+   },
+   "purchases_compare_compression": {
+      "description": "High quality GIF compression",
+      "message": "ಉತ್ತಮ ಗುಣಮಟ್ಟದ ಗಿಫ್ ಕಂಪ್ರೆಷನ್"
+   },
+   "purchases_compare_core_capture_features": {
+      "description": "Core Capture Features",
+      "message": "ಕೋರ್ ಕ್ಯಾಪ್ಚರ್ ವೈಶಿಷ್ಟ್ಯಗಳು"
+   },
+   "purchases_compare_crop_recordings": {
+      "description": "Crop recordings",
+      "message": "ರೆಕಾರ್ಡಿಂಗ್‌ಗಳನ್ನು ಕ್ರಾಪ್ ಮಾಡಿ"
+   },
+   "purchases_compare_customize_editing_tools": {
+      "description": "Customize editing tools (font, size color)",
+      "message": "ಸಂಪಾದನಾ ಪರಿಕರಗಳನ್ನು ಕಸ್ಟಮೈಸ್ ಮಾಡಿ (ಫಾಂಟ್, ಗಾತ್ರ, ಬಣ್ಣ)"
+   },
+   "purchases_compare_drawing": {
+      "description": "Draw while recording",
+      "message": "ರೆಕಾರ್ಡಿಂಗ್ ಮಾಡುವಾಗ ಸೆಳೆಯಿರಿ"
+   },
+   "purchases_compare_early_access": {
+      "description": "Early access to new features",
+      "message": "ಹೊಸ ವೈಶಿಷ್ಟ್ಯಗಳಿಗೆ ಆರಂಭಿಕ ಪ್ರವೇಶ"
+   },
+   "purchases_compare_editing": {
+      "description": "Edit captures",
+      "message": "ಸೆರೆಹಿಡಿಯುವಿಕೆಯನ್ನು ಸಂಪಾದಿಸಿ"
+   },
+   "purchases_compare_editing_free": {
+      "description": "basic editing",
+      "message": "ಮೂಲಭೂತ ಸಂಪಾದನೆ"
+   },
+   "purchases_compare_editing_suite": {
+      "description": "Editing Suite",
+      "message": "ಸಂಪಾದನಾ ಸೂಟ್"
+   },
+   "purchases_compare_frame_editing": {
+      "description": "Frame editing",
+      "message": "ಫ್ರೇಮ್ ಎಡಿಟಿಂಗ್"
+   },
+   "purchases_compare_frame_rate": {
+      "description": "Adjust Frame Rate",
+      "message": "ಫ್ರೇಮ್ ದರವನ್ನು ಹೊಂದಿಸಿ (FPS)"
+   },
+   "purchases_compare_frame_specific_edits": {
+      "description": "Frame specific edits",
+      "message": "ಫ್ರೇಮ್ ನಿರ್ದಿಷ್ಟ ಸಂಪಾದನೆಗಳು"
+   },
+   "purchases_compare_free_draw_tools": {
+      "description": "Free draw, line, arrow, rectangle, circle, text tools",
+      "message": "ಫ್ರೀ ಡ್ರಾ, ಲೈನ್, ಬಾಣ, ಆಯತ, ವೃತ್ತ, ಪಠ್ಯ ಉಪಕರಣಗಳು"
+   },
+   "purchases_compare_full_webpage_screenshots": {
+      "description": "Unlimited full page screenshots.",
+      "message": "ಅನ್ಲಿಮಿಟೆಡ್ ಪೂರ್ಣ ಪುಟ ಸ್ಕ್ರೀನ್ಶಾಟ್ಗಳು."
+   },
+   "purchases_compare_highlight_tool": {
+      "description": "Highlight tool",
+      "message": "ಹೈಲೈಟ್ ಉಪಕರಣ"
+   },
+   "purchases_compare_live_recording_tools": {
+      "description": "Live Recording Tools",
+      "message": "ಲೈವ್ ರೆಕಾರ್ಡಿಂಗ್ ಪರಿಕರಗಳು"
+   },
+   "purchases_compare_mouse": {
+      "description": "Click and mouse indication",
+      "message": "ಕ್ಲಿಕ್ ಮಾಡಿ ಮತ್ತು ಮೌಸ್ ಸೂಚನೆ"
+   },
+   "purchases_compare_plans": {
+      "description": "Compare plans",
+      "message": "ಯೋಜನೆಗಳನ್ನು ಹೋಲಿಸಿ"
+   },
+   "purchases_compare_plans_premium_button": {
+      "description": "Upgrade to Premium",
+      "message": "ಪ್ರೀಮಿಯಂಗೆ ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಿ"
+   },
+   "purchases_compare_playback_speed": {
+      "description": "Tune recording playback speed",
+      "message": "ಟ್ಯೂನ್ ರೆಕಾರ್ಡಿಂಗ್ ಪ್ಲೇಬ್ಯಾಕ್ ವೇಗ"
+   },
+   "purchases_compare_priority_support": {
+      "description": "Priority support and feature requests",
+      "message": "ಆದ್ಯತೆಯ ಬೆಂಬಲ ಮತ್ತು ವೈಶಿಷ್ಟ್ಯ ವಿನಂತಿಗಳು"
+   },
+   "purchases_compare_recording": {
+      "description": "Unlimited GIF recordings.",
+      "message": "ಅನ್ಲಿಮಿಟೆಡ್ ಜಿಐಎಫ್ ರೆಕಾರ್ಡಿಂಗ್."
+   },
+   "purchases_compare_recording_free": {
+      "description": "15sec limit per GIF",
+      "message": "ಪ್ರತಿ ಜಿಐಎಫ್‌ಗೆ 15 ಸೆಕೆಂಡ್ ಮಿತಿ"
+   },
+   "purchases_compare_recording_quality": {
+      "description": "High quality GIFs",
+      "message": "ಉತ್ತಮ ಗುಣಮಟ್ಟದ gifs"
+   },
+   "purchases_compare_recording_quality_control": {
+      "description": "Recording Quality & Control",
+      "message": "ರೆಕಾರ್ಡಿಂಗ್ ಗುಣಮಟ್ಟ ಮತ್ತು ನಿಯಂತ್ರಣ"
+   },
+   "purchases_compare_recording_quality_free": {
+      "description": "1000 pixels max",
+      "message": "1000 ಪಿಕ್ಸೆಲ್ಗಳು ಗರಿಷ್ಠ"
+   },
+   "purchases_compare_screenshots": {
+      "description": "Unlimited screenshots.",
+      "message": "ಅನ್ಲಿಮಿಟೆಡ್ ಸ್ಕ್ರೀನ್ಶಾಟ್ಗಳು."
+   },
+   "purchases_compare_special_effects": {
+      "description": "Recording special effects",
+      "message": "ವಿಶೇಷ ಪರಿಣಾಮಗಳನ್ನು ರೆಕಾರ್ಡಿಂಗ್"
+   },
+   "purchases_compare_up_to_1080p": {
+      "description": "Up to 1080p",
+      "message": "1080p ವರೆಗೆ"
+   },
+   "purchases_compare_up_to_24_fps": {
+      "description": "Up to 24FPS",
+      "message": "24FPS ವರೆಗೆ"
+   },
+   "purchases_compare_up_to_30_fps": {
+      "description": "Up to 30FPS",
+      "message": "30FPS ವರೆಗೆ"
+   },
+   "purchases_compare_up_to_4k_plus": {
+      "description": "Up to 4K+",
+      "message": "4K+ ವರೆಗೆ"
+   },
+   "purchases_current_plan": {
+      "description": "Current plan",
+      "message": "ಪ್ರಸ್ತುತ ಯೋಜನೆ"
+   },
+   "purchases_features": {
+      "description": "Features",
+      "message": "ವೈಶಿಷ್ಟ್ಯಗಳು"
+   },
+   "purchases_free": {
+      "description": "Free",
+      "message": "ಉಚಿತವಾಗಿ"
+   },
+   "purchases_free_button": {
+      "description": "Free to use",
+      "message": "ಬಳಸಲು ಉಚಿತ"
+   },
+   "purchases_free_feature_editing": {
+      "description": "Basic editing",
+      "message": "ಮೂಲಭೂತ ಸಂಪಾದನೆ"
+   },
+   "purchases_free_feature_recording": {
+      "description": "Basic GIF recording",
+      "message": "ಮೂಲ gif ರೆಕಾರ್ಡಿಂಗ್"
+   },
+   "purchases_free_feature_screenshots": {
+      "description": "Unlimited screenshots",
+      "message": "ಅನ್ಲಿಮಿಟೆಡ್ ಸ್ಕ್ರೀನ್ಶಾಟ್ಗಳು"
+   },
+   "purchases_free_plan_description": {
+      "description": "Get started with our essential capture tools. Completely free for basic everyday use.",
+      "message": "ನಮ್ಮ ಅಗತ್ಯ ಕ್ಯಾಪ್ಚರ್ ಉಪಕರಣಗಳೊಂದಿಗೆ ಪ್ರಾರಂಭಿಸಿ. ಮೂಲಭೂತ ದೈನಂದಿನ ಬಳಕೆಗೆ ಸಂಪೂರ್ಣವಾಗಿ ಉಚಿತ."
+   },
+   "purchases_plan_save_up_to_percentage": {
+      "description": "Save up to",
+      "message": "ವರೆಗೆ ಉಳಿಸಿ"
+   },
+   "purchases_premium": {
+      "description": "Premium",
+      "message": "ಪ್ರೀಮಿಯಂ"
+   },
+   "purchases_premium_billed_annually": {
+      "description": "Billed annually",
+      "message": "ವಾರ್ಷಿಕವಾಗಿ ಬಿಲ್ ಮಾಡಲಾಗುತ್ತದೆ"
+   },
+   "purchases_premium_button": {
+      "description": "Get lifetime access",
+      "message": "ಜೀವಮಾನದ ಪ್ರವೇಶ ಪಡೆಯಿರಿ"
+   },
+   "purchases_premium_feature_compression": {
+      "description": "High quality GIF compression",
+      "message": "ಉತ್ತಮ ಗುಣಮಟ್ಟದ ಗಿಫ್ ಕಂಪ್ರೆಷನ್"
+   },
+   "purchases_premium_feature_editing": {
+      "description": "Feature rich editing",
+      "message": "ವೈಶಿಷ್ಟ್ಯ ಸಮೃದ್ಧ ಸಂಪಾದನೆ"
+   },
+   "purchases_premium_feature_free": {
+      "description": "Everything from free plan",
+      "message": "ಉಚಿತ ಯೋಜನೆಯ ವೈಶಿಷ್ಟ್ಯಗಳನ್ನು ಒಳಗೊಂಡಿದೆ"
+   },
+   "purchases_premium_feature_marked_with_star": {
+      "description": "All features marked with a star",
+      "message": "ನಕ್ಷತ್ರದಿಂದ ಗುರುತಿಸಲಾದ ಎಲ್ಲಾ ವೈಶಿಷ್ಟ್ಯಗಳು"
+   },
+   "purchases_premium_feature_recording": {
+      "description": "Unlimited high quality GIF recording",
+      "message": "ಅನ್ಲಿಮಿಟೆಡ್ ಹೈ ಗುಣಮಟ್ಟ gif ರೆಕಾರ್ಡಿಂಗ್"
+   },
+   "purchases_premium_feature_recording_1080p": {
+      "description": "High quality GIF recording, up to 1080p, 24fps",
+      "message": "ಉತ್ತಮ ಗುಣಮಟ್ಟದ GIF ರೆಕಾರ್ಡಿಂಗ್, 1080p ವರೆಗೆ, 24fps"
+   },
+   "purchases_premium_feature_refundable": {
+      "description": "Fully refundable",
+      "message": "ಸಂಪೂರ್ಣವಾಗಿ ಮರುಪಾವತಿಸಬಹುದಾದ"
+   },
+   "purchases_premium_feature_risk_free": {
+      "description": "Risk-free: 7 day trial, cancel anytime",
+      "message": "ಅಪಾಯ-ಮುಕ್ತ: 7 ದಿನಗಳ ಪ್ರಯೋಗ, ಯಾವುದೇ ಸಮಯದಲ್ಲಿ ರದ್ದುಗೊಳಿಸಿ"
+   },
+   "purchases_premium_feature_unlimited_length": {
+      "description": "Unlimited GIF recording length",
+      "message": "ಅನಿಯಮಿತ GIF ರೆಕಾರ್ಡಿಂಗ್ ಉದ್ದ"
+   },
+   "purchases_premium_price_info": {
+      "description": "one time fee",
+      "message": "ಒಂದು ಬಾರಿ ಶುಲ್ಕ"
+   },
+   "purchases_premium_price_per_month": {
+      "description": "/ month",
+      "message": "/ ತಿಂಗಳು"
+   },
+   "purchases_premium_pro": {
+      "description": "Premium Pro",
+      "message": "ಪ್ರೀಮಿಯಂ ಪ್ರೊ"
+   },
+   "purchases_premium_pro_editing_tools": {
+      "description": "Advanced editing tools (blurring, special effects, etc.)",
+      "message": "ಸುಧಾರಿತ ಸಂಪಾದನಾ ಪರಿಕರಗಳು (ಮಸುಕುಗೊಳಿಸುವಿಕೆ, ವಿಶೇಷ ಪರಿಣಾಮಗಳು, ಇತ್ಯಾದಿ)"
+   },
+   "purchases_premium_pro_feature_early_access": {
+      "description": "Early access to new features",
+      "message": "ಹೊಸ ವೈಶಿಷ್ಟ್ಯಗಳಿಗೆ ಆರಂಭಿಕ ಪ್ರವೇಶ"
+   },
+   "purchases_premium_pro_feature_marked_with_crown": {
+      "description": "All features marked with a star and crown",
+      "message": "ನಕ್ಷತ್ರ ಮತ್ತು ಕಿರೀಟದಿಂದ ಗುರುತಿಸಲಾದ ಎಲ್ಲಾ ವೈಶಿಷ್ಟ್ಯಗಳು"
+   },
+   "purchases_premium_pro_feature_premium_plan": {
+      "description": "Everything from Premium plan",
+      "message": "ಪ್ರೀಮಿಯಂ ಯೋಜನೆಯಿಂದ ಎಲ್ಲವೂ"
+   },
+   "purchases_premium_pro_feature_quality": {
+      "description": "Max resolution recording, 4K+ and 30fps",
+      "message": "ಗರಿಷ್ಠ ರೆಸಲ್ಯೂಶನ್ ರೆಕಾರ್ಡಿಂಗ್, 4K+ ಮತ್ತು 30fps"
+   },
+   "purchases_premium_pro_feature_support": {
+      "description": "Priority support and feature requests",
+      "message": "ಆದ್ಯತೆಯ ಬೆಂಬಲ ಮತ್ತು ವೈಶಿಷ್ಟ್ಯ ವಿನಂತಿಗಳು"
+   },
+   "purchases_premium_pro_upgrade": {
+      "description": "Upgrade to Pro",
+      "message": "ಪ್ರೊಗೆ ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಿ"
+   },
+   "purchases_premium_save_percentage": {
+      "description": "save $savingsPercentage$%",
+      "message": "$savingsPercentage$% ಉಳಿಸಿ",
+      "placeholders": {
+         "savingsPercentage": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_premium_try_for_free": {
+      "description": "Try for free",
+      "message": "ಉಚಿತವಾಗಿ ಪ್ರಯತ್ನಿಸಿ"
+   },
+   "purchases_price_unavailable": {
+      "description": "Label shown in place of a price when it is unavailable.",
+      "message": "ಬೆಲೆ ಲಭ್ಯವಿಲ್ಲ"
+   },
+   "purchases_pricing_unavailable_message": {
+      "description": "Message shown when the Premium pricing request was blocked or failed.",
+      "message": "Premium ಬೆಲೆಗಳ ವಿನಂತಿ ತಡೆಗಟ್ಟಲ್ಪಟ್ಟಿದೆ ಅಥವಾ ವಿಫಲವಾಗಿದೆ. ಕೆಲಸದ ಜಾಲ, VPN, ಜಾಹೀರಾತು ತಡೆಗಾರ, ಗೌಪ್ಯತಾ ವಿಸ್ತರಣೆ ಅಥವಾ ಫೈರ್‌ವಾಲ್ Paddle ಅನ್ನು ತಡೆಗಟ್ಟಿದಾಗ ಇದು ಸಂಭವಿಸಬಹುದು."
+   },
+   "purchases_pricing_unavailable_title": {
+      "description": "Title shown when Premium pricing could not be loaded.",
+      "message": "Premium ಬೆಲೆಗಳನ್ನು ಲೋಡ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ"
+   },
+   "purchases_pricing_unavailable_troubleshooting_extensions": {
+      "description": "Troubleshooting step telling the user to disable VPN or privacy tools temporarily.",
+      "message": "VPN, ಜಾಹೀರಾತು ತಡೆಗಾರ ಅಥವಾ ಗೌಪ್ಯತಾ ವಿಸ್ತರಣೆಗಳನ್ನು ತಾತ್ಕಾಲಿಕವಾಗಿ ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
+   },
+   "purchases_pricing_unavailable_troubleshooting_intro": {
+      "description": "Intro text for troubleshooting steps when pricing is unavailable.",
+      "message": "ಪ್ರಯತ್ನಿಸಬಹುದಾದವು:"
+   },
+   "purchases_pricing_unavailable_troubleshooting_network": {
+      "description": "Troubleshooting step telling the user to try another network or browser profile.",
+      "message": "ಬೇರೆ ಜಾಲತಾಣವನ್ನು ಪ್ರಯತ್ನಿಸಿ, ಅಥವಾ ವಿಸ್ತರಣೆಯನ್ನು ಬೇರೆ Chrome ಪ್ರೊಫೈಲ್‌ನಲ್ಲಿ ತೆರೆಯಿರಿ."
+   },
+   "purchases_pricing_unavailable_troubleshooting_workplace": {
+      "description": "Troubleshooting step telling the user workplace policy may be blocking Paddle.",
+      "message": "ನೀವು ಕಾರ್ಯಾಲಯದ ಸಾಧನದಲ್ಲಿ ಇದ್ದರೆ, ನಿಮ್ಮ ಜಾಲ ಅಥವಾ ಬ್ರೌಸರ್ ನೀತಿ Paddle ಅನ್ನು ತಡೆಗಟ್ಟುತ್ತಿರಬಹುದು."
+   },
+   "purchases_sign_in_here": {
+      "description": "Sign in here",
+      "message": "ಇಲ್ಲಿ ಸೈನ್ ಇನ್ ಮಾಡಿ"
+   },
+   "purchases_start_trial_cancel_anytime": {
+      "description": "Call to action to start a free trial.",
+      "message": "ಮುಂದುವರಿಸಲು ನಿಮ್ಮ 7-ದಿನದ ಉಚಿತ ಪ್ರಯೋಗವನ್ನು ಪ್ರಾರಂಭಿಸಿ. ಯಾವುದೇ ಸಮಯದಲ್ಲಿ ರದ್ದುಗೊಳಿಸಿ."
+   },
+   "purchases_try_premium_for_free": {
+      "description": "Try Premium for Free",
+      "message": "ಪ್ರೀಮಿಯಂ ಅನ್ನು ಉಚಿತವಾಗಿ ಪ್ರಯತ್ನಿಸಿ"
+   },
+   "purchases_try_premium_pro_for_free": {
+      "description": "Try Premium Pro for Free",
+      "message": "ಪ್ರೀಮಿಯಂ ಪ್ರೊ ಅನ್ನು ಉಚಿತವಾಗಿ ಪ್ರಯತ್ನಿಸಿ"
+   },
+   "purchases_upgrade_premium_to_pro": {
+      "description": "To use this feature and access all Pro benefits, upgrade your plan.",
+      "message": "ಈ ವೈಶಿಷ್ಟ್ಯವನ್ನು ಬಳಸಲು ಮತ್ತು ಎಲ್ಲಾ ಪ್ರೊ ಪ್ರಯೋಜನಗಳನ್ನು ಪ್ರವೇಶಿಸಲು, ನಿಮ್ಮ ಯೋಜನೆಯನ್ನು ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಿ."
+   },
+   "purchases_upgrade_to_premium_pro": {
+      "description": "Upgrade to Premium Pro",
+      "message": "ಪ್ರೀಮಿಯಂ ಪ್ರೊಗೆ ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಿ"
+   },
+   "quality_text": {
+      "description": "Recording quality (10 = best)",
+      "message": "ರೆಕಾರ್ಡಿಂಗ್ ಗುಣಮಟ್ಟ (10 = ಅತ್ಯುತ್ತಮ)"
+   },
+   "rate_bad_rating_text": {
+      "description": "We are continuously trying our hardest to improve Chrome Capture, please share what needs improvement by emailing us at ",
+      "message": "Chrome ಕ್ಯಾಪ್ಚರ್ ಅನ್ನು ಸುಧಾರಿಸಲು ನಾವು ನಿರಂತರವಾಗಿ ಪ್ರಯತ್ನಿಸುತ್ತಿದ್ದೇವೆ, ದಯವಿಟ್ಟು ನಮ್ಮನ್ನು ಇಮೇಲ್ ಮಾಡುವ ಮೂಲಕ ಸುಧಾರಣೆ ಅಗತ್ಯಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಿ"
+   },
+   "rate_bad_title_text": {
+      "description": "😞 We are sorry!",
+      "message": "😞 ಕ್ಷಮಿಸಿ!"
+   },
+   "rate_close_btn_text": {
+      "description": "Close",
+      "message": "ಮುಚ್ಚು"
+   },
+   "rate_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "ದೃಢೀಕರಿಸಿ"
+   },
+   "rate_description_text": {
+      "description": "If you've found this extension useful please leave a rating or review. \n\nBy leaving a rating you can help us reach more users which will help fund continual improvements and keep general usage free.",
+      "message": "ನೀವು ಈ ವಿಸ್ತರಣೆಯನ್ನು ಉಪಯುಕ್ತವೆಂದು ನೀವು ಕಂಡುಕೊಂಡರೆ ದಯವಿಟ್ಟು ರೇಟಿಂಗ್ ಅಥವಾ ವಿಮರ್ಶೆಯನ್ನು ಬಿಡಿ. \n\n ರೇಟಿಂಗ್ ಅನ್ನು ಬಿಡುವ ಮೂಲಕ ನೀವು ಹೆಚ್ಚಿನ ಬಳಕೆದಾರರನ್ನು ತಲುಪಲು ಸಹಾಯ ಮಾಡಬಹುದು, ಇದು ನಿಧಿ ನಿರಂತರ ಸುಧಾರಣೆಗಳಿಗೆ ಸಹಾಯ ಮಾಡುತ್ತದೆ ಮತ್ತು ಸಾಮಾನ್ಯ ಬಳಕೆಯನ್ನು ಉಚಿತವಾಗಿ ಇರಿಸಿಕೊಳ್ಳುತ್ತದೆ."
+   },
+   "rate_description_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "ನಾವು ಪ್ರೀಮಿಯಂ ಅನ್ನು ಖರೀದಿಸುತ್ತಿದ್ದೇವೆ ಮತ್ತು ಉತ್ಪನ್ನವನ್ನು ಸುಧಾರಿಸಲು ಮತ್ತು ಹೆಚ್ಚಿನ ಬಳಕೆದಾರರನ್ನು ತಲುಪಲು ನಿಮಗೆ ಸಹಾಯ ಮಾಡಬೇಕಾದ ಯಾವುದೇ ಪ್ರತಿಕ್ರಿಯೆಯನ್ನು ಕೇಳಲು ನಾವು ಇಷ್ಟಪಡುತ್ತೇವೆ."
+   },
+   "rate_good_rating_text": {
+      "description": "Your reviews keep our small team motivated to make Chrome Capture even better!",
+      "message": "ನಿಮ್ಮ ವಿಮರ್ಶೆಗಳು Chrome ಅನ್ನು ಉತ್ತಮವಾಗಿ ಸೆರೆಹಿಡಿಯಲು ನಮ್ಮ ಸಣ್ಣ ತಂಡವನ್ನು ಪ್ರೇರೇಪಿಸಿವೆ!"
+   },
+   "rate_good_rating_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "ನಾವು ಪ್ರೀಮಿಯಂ ಅನ್ನು ಖರೀದಿಸುತ್ತಿದ್ದೇವೆ ಮತ್ತು ಉತ್ಪನ್ನವನ್ನು ಸುಧಾರಿಸಲು ಮತ್ತು ಹೆಚ್ಚಿನ ಬಳಕೆದಾರರನ್ನು ತಲುಪಲು ನಿಮಗೆ ಸಹಾಯ ಮಾಡಬೇಕಾದ ಯಾವುದೇ ಪ್ರತಿಕ್ರಿಯೆಯನ್ನು ಕೇಳಲು ನಾವು ಇಷ್ಟಪಡುತ್ತೇವೆ."
+   },
+   "rate_good_title_text": {
+      "description": "😍 Review in the web store?",
+      "message": "↑ ವೆಬ್ ಸ್ಟೋರ್ನಲ್ಲಿ ಪರಿಶೀಲಿಸಿ?"
+   },
+   "rate_maybe_later_btn_text": {
+      "description": "Maybe later",
+      "message": "ಬಹುಶಃ ನಂತರ"
+   },
+   "rate_no_btn_text": {
+      "description": "No thanks",
+      "message": "ಬೇಡ ಧನ್ಯವಾದಗಳು"
+   },
+   "rate_send_email_btn_text": {
+      "description": "Send Email",
+      "message": "ಇಮೇಲ್ ಕಳುಹಿಸಿ"
+   },
+   "rate_thank_you_title_text": {
+      "description": "Thank you! 😍",
+      "message": "ಧನ್ಯವಾದಗಳು! 😍"
+   },
+   "rate_title_text": {
+      "description": "How are we doing?",
+      "message": "ನಾವು ಹೇಗೆ ಮಾಡುತ್ತಿದ್ದೇವೆ?"
+   },
+   "rate_yes_btn_text": {
+      "description": "Ok, sure",
+      "message": "ಸರಿ, ಖಚಿತ"
+   },
+   "recommended": {
+      "description": "recommended",
+      "message": "ಶಿಫಾರಸು ಮಾಡಿದ"
+   },
+   "record_length_text": {
+      "description": "Max record length",
+      "message": "ಮ್ಯಾಕ್ಸ್ ರೆಕಾರ್ಡ್ ಉದ್ದ"
+   },
+   "recordings_taken": {
+      "description": "Recordings taken:",
+      "message": "ತೆಗೆದುಕೊಂಡ ರೆಕಾರ್ಡಿಂಗ್‌ಗಳು:"
+   },
+   "save_as_screenshot_text": {
+      "description": "Save screenshot as",
+      "message": "ಸ್ಕ್ರೀನ್ಶಾಟ್ ಅನ್ನು ಉಳಿಸಿ"
+   },
+   "save_as_text": {
+      "description": "Save recording as",
+      "message": "ರೆಕಾರ್ಡಿಂಗ್ ಅನ್ನು ಉಳಿಸಿ"
+   },
+   "screenshots_taken": {
+      "description": "Screenshots taken:",
+      "message": "ತೆಗೆದುಕೊಂಡ ಸ್ಕ್ರೀನ್‌ಶಾಟ್‌ಗಳು:"
+   },
+   "seconds_text": {
+      "description": "secs",
+      "message": "ಸೆಕ್ಸ್"
+   },
+   "shortcut": {
+      "description": "Shortcut:",
+      "message": "ಶಾರ್ಟ್‌ಕಟ್:"
+   },
+   "show_click_indicator_text": {
+      "description": "Show click animation",
+      "message": "ತೋರಿಸು ಅನಿಮೇಷನ್ ಕ್ಲಿಕ್ ಮಾಡಿ"
+   },
+   "show_click_indicator_tooltip_text": {
+      "description": "This option draws a circle animation around the click location.",
+      "message": "ಈ ಆಯ್ಕೆಯು ಕ್ಲಿಕ್ ಸ್ಥಳದ ಸುತ್ತಲಿನ ವೃತ್ತದ ಅನಿಮೇಶನ್ ಅನ್ನು ಸೆಳೆಯುತ್ತದೆ."
+   },
+   "show_cursor_text": {
+      "description": "Show dot at cursor location",
+      "message": "ಕರ್ಸರ್ ಸ್ಥಳದಲ್ಲಿ ಡಾಟ್ ತೋರಿಸಿ"
+   },
+   "show_cursor_tooltip_text": {
+      "description": "This option draws a small circle to indicate where the mouse is located.",
+      "message": "ಈ ಆಯ್ಕೆಯು ಮೌಸ್ ಎಲ್ಲಿದೆ ಎಂಬುದನ್ನು ಸೂಚಿಸಲು ಸಣ್ಣ ವೃತ್ತವನ್ನು ಸೆಳೆಯುತ್ತದೆ."
+   },
+   "sign_in": {
+      "description": "Sign In",
+      "message": "ಸೈನ್ ಇನ್ ಮಾಡಿ"
+   },
+   "sign_out": {
+      "description": "Sign Out",
+      "message": "ಸೈನ್ out ಟ್"
+   },
+   "subscription_past_due_warning": {
+      "description": "Warning message shown when a user subscription payment has failed or is past its due date.",
+      "message": "ಚಂದಾದಾರಿಕೆ ಪಾವತಿ ಬಾಕಿಯಿದೆ, ನಿಮ್ಮ ಪಾವತಿ ಮಾಹಿತಿಯನ್ನು ನವೀಕರಿಸಲು ಇಲ್ಲಿ ಕ್ಲಿಕ್ ಮಾಡಿ."
+   },
+   "subscription_premium_plan_description": {
+      "description": "Go beyond basics: HD quality & limits unlocked. Craft pro content with enhanced features.",
+      "message": "ಮೂಲಭೂತ ಅಂಶಗಳನ್ನು ಮೀರಿ: HD ಗುಣಮಟ್ಟ ಮತ್ತು ಮಿತಿಗಳನ್ನು ಅನ್ಲಾಕ್ ಮಾಡಲಾಗಿದೆ. ವರ್ಧಿತ ವೈಶಿಷ್ಟ್ಯಗಳೊಂದಿಗೆ ವೃತ್ತಿಪರ ವಿಷಯವನ್ನು ರಚಿಸಿ."
+   },
+   "subscription_premium_pro_plan_description": {
+      "description": "Experience peak performance: 4K+ and all features. Full editing suite with early access.",
+      "message": "ಗರಿಷ್ಠ ಕಾರ್ಯಕ್ಷಮತೆಯನ್ನು ಅನುಭವಿಸಿ: 4K+ ಮತ್ತು ಎಲ್ಲಾ ವೈಶಿಷ್ಟ್ಯಗಳು. ಆರಂಭಿಕ ಪ್ರವೇಶದೊಂದಿಗೆ ಪೂರ್ಣ ಸಂಪಾದನಾ ಸೂಟ್."
+   },
+   "subscription_status_active": {
+      "description": "Active",
+      "message": "ಸಕ್ರಿಯ"
+   },
+   "subscription_status_ending_soon": {
+      "description": "Ending Soon",
+      "message": "ಶೀಘ್ರದಲ್ಲೇ ಕೊನೆಗೊಳ್ಳಲಿದೆ"
+   },
+   "subscription_status_expired": {
+      "description": "Expired",
+      "message": "காலாவಧಿಯಾಗಿದೆ"
+   },
+   "subscription_status_past_due": {
+      "description": "Past Due",
+      "message": "గడువు ముగిసింది"
+   },
+   "subscription_status_paused": {
+      "description": "Paused",
+      "message": "ವಿರಾಮಗೊಳಿಸಲಾಗಿದೆ"
+   },
+   "subscription_status_unknown": {
+      "description": "Unknown",
+      "message": "ಅಪರಿಚಿತ"
+   },
+   "unable_to_capture_website_alert": {
+      "description": "Unable to capture this website. Please use full screen/application capture or try capture another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "ಈ ವೆಬ್‌ಸೈಟ್ ಅನ್ನು ಸೆರೆಹಿಡಿಯಲು ಸಾಧ್ಯವಿಲ್ಲ. ದಯವಿಟ್ಟು ಪೂರ್ಣ ಪರದೆ/ಅಪ್ಲಿಕೇಶನ್ ಕ್ಯಾಪ್ಚರ್ ಬಳಸಿ ಅಥವಾ ಇನ್ನೊಂದು ವೆಬ್‌ಸೈಟ್ ಅನ್ನು ಸೆರೆಹಿಡಿಯಲು ಪ್ರಯತ್ನಿಸಿ. \n\n (╯ ° □） ╯︵ ╯︵ ┻━┻"
+   },
+   "view_permission": {
+      "description": "View permission.",
+      "message": "ಅನುಮತಿಯನ್ನು ವೀಕ್ಷಿಸಿ."
+   },
+   "width_text": {
+      "description": "Height (px)",
+      "message": "ಎತ್ತರ (px)"
+   }
+}

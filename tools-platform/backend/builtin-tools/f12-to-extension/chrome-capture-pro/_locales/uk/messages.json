@@ -1,0 +1,1691 @@
+{
+   "account_modal_free_plan": {
+      "description": "You are on the free plan",
+      "message": "Ви використовуєте Безкоштовний план"
+   },
+   "account_modal_manage_subscription_button": {
+      "description": "Manage Subscription",
+      "message": "Керувати підпискою"
+   },
+   "account_modal_not_signed_in": {
+      "description": "You are not signed in",
+      "message": "Ви не увійшли в систему"
+   },
+   "account_modal_premium_plan": {
+      "description": "You are on the premium plan",
+      "message": "Ви використовуєте Преміум-план"
+   },
+   "account_modal_premium_pro_plan": {
+      "description": "You are on the Premium Pro plan",
+      "message": "Ви користуєтеся планом Premium Pro"
+   },
+   "account_modal_request_feature_button": {
+      "description": "Request Feature",
+      "message": "Запросити функцію"
+   },
+   "account_modal_request_support_button": {
+      "description": "Request Support",
+      "message": "Запросити підтримку"
+   },
+   "account_modal_stats_heading": {
+      "description": "Your stats:",
+      "message": "Ваша статистика:"
+   },
+   "alert_text": {
+      "description": "Unable to run selected area capture on this website. Please use full screen recording or try another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "Неможливо виконати зйомку вибраної ділянки на цьому сайті. Будь ласка, використовуйте запис усього екрана або спробуйте на іншому сайті.\n\n(╯°□°）╯︵ ┻━┻"
+   },
+   "click_indicator_size_color_text": {
+      "description": "Click animation size & color",
+      "message": "Розмір і колір анімації кліку"
+   },
+   "close_btn_text": {
+      "description": "Close",
+      "message": "Закрити"
+   },
+   "confirm_dialog_cancel_btn_text": {
+      "description": "Cancel",
+      "message": "Скасувати"
+   },
+   "confirm_dialog_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "Підтвердити"
+   },
+   "confirm_fps_update_text": {
+      "description": "Changing the fps will remove all frame specific edits such as edited or deleted frames. Do you want to continue?",
+      "message": "Зміна FPS видалить усі специфічні для кадрів зміни, такі як відредаговані або видалені кадри. Бажаєте продовжити?"
+   },
+   "copy_text": {
+      "description": "Copy to clipboard",
+      "message": "Копіювати в буфер обміну"
+   },
+   "cursor_size_and_color_text": {
+      "description": "Cursor dot size & color",
+      "message": "Розмір і колір точки курсора"
+   },
+   "dither_text": {
+      "description": "Apply dither",
+      "message": "Застосувати дизеринг"
+   },
+   "download_filename_text": {
+      "description": "Download filename format",
+      "message": "Формат імені файлу для завантаження"
+   },
+   "download_text": {
+      "description": "Download",
+      "message": "Завантажити"
+   },
+   "draw_size_and_color_text": {
+      "description": "Drawing size & color",
+      "message": "Розмір і колір малювання"
+   },
+   "duration": {
+      "description": "Label for a field indicating a length of time.",
+      "message": "Тривалість"
+   },
+   "editor_action_add_icon": {
+      "description": "Add icon",
+      "message": "Додати іконку"
+   },
+   "editor_action_add_text": {
+      "description": "Add text",
+      "message": "Додати текст"
+   },
+   "editor_action_blur_rectangle": {
+      "description": "Blur area",
+      "message": "Розмити область"
+   },
+   "editor_action_copy": {
+      "description": "Copy to clipboard",
+      "message": "Копіювати в буфер обміну"
+   },
+   "editor_action_crop": {
+      "description": "Crop",
+      "message": "Обрізати"
+   },
+   "editor_action_draw_arrow": {
+      "description": "Draw arrow",
+      "message": "Намалювати стрілку"
+   },
+   "editor_action_draw_ellipse": {
+      "description": "Draw ellipse",
+      "message": "Намалювати еліпс"
+   },
+   "editor_action_draw_line": {
+      "description": "Draw line",
+      "message": "Намалювати лінію"
+   },
+   "editor_action_draw_rectangle": {
+      "description": "Draw rectangle",
+      "message": "Намалювати прямокутник"
+   },
+   "editor_action_free_draw": {
+      "description": "Free draw",
+      "message": "Довільне малювання"
+   },
+   "editor_action_highlight": {
+      "description": "Highlight",
+      "message": "Виділити"
+   },
+   "editor_action_numbered_step": {
+      "description": "Action label for adding a numbered step annotation.",
+      "message": "Нумерований крок"
+   },
+   "editor_action_pan": {
+      "description": "Pan",
+      "message": "Панорамування"
+   },
+   "editor_action_profile_account": {
+      "description": "Account",
+      "message": "Обліковий запис"
+   },
+   "editor_action_redo": {
+      "description": "Redo",
+      "message": "Повторити"
+   },
+   "editor_action_save": {
+      "description": "Save",
+      "message": "Зберегти"
+   },
+   "editor_action_select": {
+      "description": "Select, move, resize",
+      "message": "Вибрати, перемістити, змінити розмір"
+   },
+   "editor_action_settings": {
+      "description": "Settings",
+      "message": "Налаштування"
+   },
+   "editor_action_undo": {
+      "description": "Undo",
+      "message": "Скасувати"
+   },
+   "editor_action_undo_all": {
+      "description": "Undo all",
+      "message": "Скасувати все"
+   },
+   "editor_add_text_default": {
+      "description": "start typing...",
+      "message": "Почніть вводити..."
+   },
+   "editor_browse_file_system": {
+      "description": "Browse file system",
+      "message": "Огляд файлової системи"
+   },
+   "editor_drag_and_drop": {
+      "description": "Drag and drop image/GIF or ",
+      "message": "Перетягніть зображення/GIF або"
+   },
+   "editor_file_downloaded": {
+      "description": "File saved to downloads folder.",
+      "message": "Файл збережено до папки \"Завантаження\"."
+   },
+   "editor_file_downloaded_selected_location": {
+      "description": "File saved to selected location.",
+      "message": "Файл збережено у вибране місце."
+   },
+   "editor_frame_selector_apply_edits": {
+      "description": "Apply edits to selected",
+      "message": "Застосувати зміни до вибраних"
+   },
+   "editor_frame_selector_delete": {
+      "description": "Delete",
+      "message": "Видалити"
+   },
+   "editor_frame_selector_delete_every_second": {
+      "description": "Delete every second frame",
+      "message": "Видалити кожен другий кадр"
+   },
+   "editor_frame_selector_delete_selected": {
+      "description": "Delete selected",
+      "message": "Видалити вибране"
+   },
+   "editor_frame_selector_remove_edits": {
+      "description": "Remove edits from selected",
+      "message": "Видалити зміни з вибраних"
+   },
+   "editor_frame_selector_restore": {
+      "description": "Restore",
+      "message": "Відновити"
+   },
+   "editor_frame_selector_restore_all": {
+      "description": "Restore All",
+      "message": "Відновити все"
+   },
+   "editor_frame_selector_restore_selected": {
+      "description": "Restore selected",
+      "message": "Відновити вибране"
+   },
+   "editor_frame_selector_select_next": {
+      "description": "Select next frames",
+      "message": "Вибрати наступні кадри"
+   },
+   "editor_frame_selector_select_previous": {
+      "description": "Select previous frames",
+      "message": "Вибрати попередні кадри"
+   },
+   "editor_frame_selector_unselect_all": {
+      "description": "Unselect All",
+      "message": "Скасувати вибір усіх"
+   },
+   "editor_image_copied": {
+      "description": "Image copied to clipboard.",
+      "message": "Зображення скопійовано до буфера обміну."
+   },
+   "editor_image_copied_failed": {
+      "description": "Failed to copy image to clipboard, it may be too large.",
+      "message": "Не вдалося скопіювати зображення до буфера обміну. Можливо, воно занадто велике."
+   },
+   "editor_link_copied": {
+      "description": "Link copied to clipboard.",
+      "message": "Посилання скопійовано в буфер обміну."
+   },
+   "editor_max_time_reached_dialog_description1": {
+      "description": "You have reached the max recording length time of $maxlength$ seconds for GIFs. Premium users can update this from the settings page.",
+      "message": "Ви досягли максимальної тривалості запису $maxlength$ секунд для GIF. Преміум-користувачі можуть змінити це на сторінці налаштувань.",
+      "placeholders": {
+         "maxlength": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_max_time_reached_dialog_description2": {
+      "description": "GIFs are intended for short recordings. If you require full length videos we recommend our free screen recorder: ",
+      "message": "GIF призначені для коротких записів. Якщо вам потрібні відео повної довжини, ми рекомендуємо наш безкоштовний записувач екрана:"
+   },
+   "editor_max_time_reached_dialog_description3": {
+      "description": "Premium users can update this from the settings page.",
+      "message": "Преміум-користувачі можуть змінити це на сторінці налаштувань."
+   },
+   "editor_max_time_reached_dialog_settings_button": {
+      "description": "Open settings",
+      "message": "Відкрити налаштування"
+   },
+   "editor_max_time_reached_dialog_title": {
+      "description": "Recording suddenly stopped?",
+      "message": "Запис раптово зупинився?"
+   },
+   "editor_premium_options_color": {
+      "description": "Color",
+      "message": "Колір"
+   },
+   "editor_premium_options_draw_size": {
+      "description": "Draw Size",
+      "message": "Розмір малювання"
+   },
+   "editor_premium_options_font": {
+      "description": "Font",
+      "message": "Шрифт"
+   },
+   "editor_premium_options_playback_speed": {
+      "description": "Playback Speed",
+      "message": "Швидкість відтворення"
+   },
+   "editor_premium_options_special_effect": {
+      "description": "Special Effect",
+      "message": "Спецефекти"
+   },
+   "editor_premium_options_title": {
+      "description": "Premium Options",
+      "message": "Преміум-опції"
+   },
+   "editor_save_dialog_advanced_encoding_options": {
+      "description": "Title for a section containing advanced, technical options for encoding a file.",
+      "message": "Розширені параметри кодування"
+   },
+   "editor_save_dialog_alert_title": {
+      "description": "Warning",
+      "message": "Увага"
+   },
+   "editor_save_dialog_aspect_ratio": {
+      "description": "lock aspect ratio",
+      "message": "Блокувати співвідношення сторін"
+   },
+   "editor_save_dialog_cancel": {
+      "description": "Cancel",
+      "message": "Скасувати"
+   },
+   "editor_save_dialog_chip_animated_image": {
+      "description": "Chip label indicating an animated image format (e.g. GIF, AVIF).",
+      "message": "анімоване зображення"
+   },
+   "editor_save_dialog_chip_large_file": {
+      "description": "Chip label indicating the format produces a large file size.",
+      "message": "великий файл"
+   },
+   "editor_save_dialog_chip_limited_support": {
+      "description": "Chip label indicating the format has limited browser/app support.",
+      "message": "обмежена підтримка"
+   },
+   "editor_save_dialog_chip_small_file": {
+      "description": "Chip label indicating the format produces a small file size.",
+      "message": "малий файл"
+   },
+   "editor_save_dialog_chip_video": {
+      "description": "Chip label indicating a video format (e.g. WebM, MP4).",
+      "message": "відео"
+   },
+   "editor_save_dialog_chip_widely_supported": {
+      "description": "Chip label indicating the format is widely supported.",
+      "message": "широко підтримується"
+   },
+   "editor_save_dialog_compress": {
+      "description": "Compress & optimize GIF",
+      "message": "Стиснути та оптимізувати GIF"
+   },
+   "editor_save_dialog_compress_tooltip": {
+      "description": "Apply GIF compression algorthm to greatly reduce GIF file size and in some cases improve quality. Highly recommeded.",
+      "message": "Застосувати алгоритм стиснення GIF, щоб значно зменшити розмір файлу GIF, а в деяких випадках покращити якість. Настійно рекомендується."
+   },
+   "editor_save_dialog_dither_tooltip": {
+      "description": "Apply dither algorithm to frames. Try toggling this option if you experience color quality issues.",
+      "message": "Застосувати алгоритм дизерингу до кадрів. Спробуйте ввімкнути/вимкнути цю опцію, якщо виникають проблеми з якістю кольору."
+   },
+   "editor_save_dialog_download_raw_recording": {
+      "description": "Download raw recording",
+      "message": "Завантажити необроблений запис"
+   },
+   "editor_save_dialog_estimated_size": {
+      "description": "Estimated GIF Size: ",
+      "message": "Орієнтовний розмір GIF:"
+   },
+   "editor_save_dialog_export_sound": {
+      "description": "Include sound (beta)",
+      "message": "Включити звук (бета)"
+   },
+   "editor_save_dialog_export_sound_tooltip": {
+      "description": "Enable this option to include sound in the video.",
+      "message": "Увімкніть цю опцію, щоб включити звук у відео."
+   },
+   "editor_save_dialog_frames": {
+      "description": "Frames: ",
+      "message": "Кадри:"
+   },
+   "editor_save_dialog_frames_alert": {
+      "description": "There are currently selected frames, saving will only output these selected frames - ",
+      "message": "Наразі вибрано деякі кадри. Збереження виведе лише ці вибрані кадри -"
+   },
+   "editor_save_dialog_frames_alert_button": {
+      "description": "Click here to unselect all frames",
+      "message": "Натисніть тут, щоб скасувати вибір усіх кадрів"
+   },
+   "editor_save_dialog_frames_alert_title": {
+      "description": "Playback Speed",
+      "message": "Швидкість відтворення"
+   },
+   "editor_save_dialog_frames_processing": {
+      "description": "Processing Frames: ",
+      "message": "Обробка кадрів:"
+   },
+   "editor_save_dialog_height_helper": {
+      "description": "Recorded height is ",
+      "message": "Записана висота: "
+   },
+   "editor_save_dialog_lossy_compression": {
+      "description": "Label for a setting that controls the level of lossy compression, from 0 to 100 percent.",
+      "message": "Стиснення з втратами (0–100 %)"
+   },
+   "editor_save_dialog_number_min_max_validation": {
+      "description": "A value between $minSize$ and $maxSize$ is required.",
+      "message": "Потрібне значення між $minSize$ та $maxSize$.",
+      "placeholders": {
+         "maxSize": {
+            "content": "$2"
+         },
+         "minSize": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_save_dialog_processing_alert": {
+      "description": "Processing this recording will require a lot of memory and processing power. Unless you have a high spec PC it is recommended to do one or more of the following:",
+      "message": "Обробка цього запису вимагатиме багато пам'яті та обчислювальної потужності. Якщо у вас немає ПК високої продуктивності, рекомендується виконати одну або кілька з наступних дій:"
+   },
+   "editor_save_dialog_processing_alert_memory": {
+      "description": "Please note if the resulting GIF is blank then you ran out of memory.",
+      "message": "Будь ласка, зверніть увагу: якщо отриманий GIF порожній, це означає, що не вистачило пам'яті."
+   },
+   "editor_save_dialog_processing_alert_point_1": {
+      "description": "Compress and optimize GIF",
+      "message": "Стиснути та оптимізувати GIF"
+   },
+   "editor_save_dialog_processing_alert_point_2": {
+      "description": "Reduce the width & height",
+      "message": "Зменшити ширину та висоту"
+   },
+   "editor_save_dialog_processing_alert_point_3": {
+      "description": "Reduce FPS or delete frames",
+      "message": "Зменшити FPS або видалити кадри"
+   },
+   "editor_save_dialog_purchase_dialog_compression_description": {
+      "description": "Free users are limited to 3 high quality GIF compressions per day. Upgrade to Premium to have no restrictions.",
+      "message": "Безкоштовні користувачі обмежені 3 стисненнями GIF високої якості на день. Перейдіть на Преміум, щоб не мати обмежень."
+   },
+   "editor_save_dialog_quantization_algorithm": {
+      "description": "Label for a dropdown to select a quantization algorithm.",
+      "message": "Алгоритм квантування"
+   },
+   "editor_save_dialog_quantization_algorithm_new_alpha": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Alpha.",
+      "message": "Новий (альфа-версія)"
+   },
+   "editor_save_dialog_quantization_algorithm_new_beta": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Beta.",
+      "message": "Новий (бета-версія)"
+   },
+   "editor_save_dialog_quantization_algorithm_old": {
+      "description": "An option for the quantization algorithm setting, indicating an older version.",
+      "message": "Старий"
+   },
+   "editor_save_dialog_recording_quality_alert": {
+      "description": "GIF quality is limited for non premium users. To output high quality recordings you can do one of the following:",
+      "message": "Якість GIF обмежена для непреміальних користувачів. Щоб вивести високоякісні записи, ви можете зробити одне з наступного:"
+   },
+   "editor_save_dialog_recording_quality_alert_option_1": {
+      "description": "Purchase premium",
+      "message": "Придбати Преміум"
+   },
+   "editor_save_dialog_recording_quality_alert_option_2": {
+      "description": "Save as a WebM file",
+      "message": "Зберегти як файл WebM"
+   },
+   "editor_save_dialog_reduce_width": {
+      "description": "Reduce width & height",
+      "message": "Зменшити ширину та висоту"
+   },
+   "editor_save_dialog_reduce_width_tooltip": {
+      "description": "Reduce GIF width and height/quality to improve processing time and produce a smaller file.",
+      "message": "Зменшіть ширину та висоту/якість GIF, щоб покращити час обробки та створити менший файл."
+   },
+   "editor_save_dialog_save": {
+      "description": "Save",
+      "message": "Зберегти"
+   },
+   "editor_save_dialog_save_by": {
+      "description": "Save by",
+      "message": "Зберегти через:"
+   },
+   "editor_save_dialog_save_by_download": {
+      "description": "Download file",
+      "message": "Завантажити файл"
+   },
+   "editor_save_dialog_save_by_google_drive": {
+      "description": "Upload to Google Drive & copy link",
+      "message": "Вивантажити на Google Drive та скопіювати посилання"
+   },
+   "editor_save_dialog_save_location": {
+      "description": "Save location",
+      "message": "Місце збереження"
+   },
+   "editor_save_dialog_save_location_downloads": {
+      "description": "Downloads folder",
+      "message": "Папка \"Завантаження\""
+   },
+   "editor_save_dialog_save_location_downloads_subfolder": {
+      "description": "Downloads subfolder",
+      "message": "Підпапка \"Завантаження\""
+   },
+   "editor_save_dialog_save_location_select": {
+      "description": "Manually select location",
+      "message": "Вибрати місце вручну"
+   },
+   "editor_save_dialog_title": {
+      "description": "Save",
+      "message": "Зберегти"
+   },
+   "editor_save_dialog_title_processing": {
+      "description": "Processing...",
+      "message": "Обробка..."
+   },
+   "editor_save_dialog_title_uploading": {
+      "description": "Uploading...",
+      "message": "Вивантаження..."
+   },
+   "editor_save_dialog_width_helper": {
+      "description": "Recorded width is ",
+      "message": "Записана ширина: "
+   },
+   "editor_text": {
+      "description": "Open in editor",
+      "message": "Відкрити в редакторі"
+   },
+   "editor_tip_delete_items": {
+      "description": "Pro tip: Delete added items by selecting the item and pressing the delete key.",
+      "message": "ПОРАДА ПРОФІ: Щоб видалити додані елементи, виберіть елемент та натисніть клавішу Delete."
+   },
+   "editor_tip_edit_specific_frames": {
+      "description": "Pro tip: You can edit specific frames by using the 'Apply edits to selected option'",
+      "message": "ПОРАДА ПРОФІ: Ви можете редагувати окремі кадри, використовуючи опцію \"Застосувати зміни до вибраних кадрів\"."
+   },
+   "editor_tip_scroll": {
+      "description": "Pro tip: Scroll when hovering the screenshot/recording to zoom.",
+      "message": "ПОРАДА ПРОФІ: Прокручуйте при наведенні курсора на скріншот/запис для масштабування."
+   },
+   "editor_tip_shift_multiple_items": {
+      "description": "Pro tip: When using the selecting tool hold down shift to select more than one item.",
+      "message": "ПОРАДА ПРОФІ: При використанні інструмента виділення утримуйте клавішу Shift, щоб вибрати більше одного елемента."
+   },
+   "editor_tip_update_multiple_items": {
+      "description": "Pro tip: You can scale, rotate, move and delete multiple items at once.",
+      "message": "ПОРАДА ПРОФІ: Ви можете одночасно масштабувати, обертати, переміщувати та видаляти кілька елементів."
+   },
+   "editor_tip_update_text": {
+      "description": "Pro tip: Double click on text to edit it.",
+      "message": "ПОРАДА ПРОФІ: Двічі клацніть на текст, щоб його відредагувати."
+   },
+   "editor_upload_dialog_alert_copy_failed_message": {
+      "description": "This may have occurred due to the window not being focused.",
+      "message": "Це могло статися через те, що вікно не було у фокусі."
+   },
+   "editor_upload_dialog_alert_copy_failed_title": {
+      "description": "Copy to clipboard failed",
+      "message": "Не вдалося скопіювати в буфер обміну"
+   },
+   "editor_upload_dialog_alert_copy_success_title": {
+      "description": "Copied to clipboard",
+      "message": "Скопійовано в буфер обміну"
+   },
+   "editor_upload_dialog_alert_upload_failed": {
+      "description": "Upload Failed",
+      "message": "Не вдалося вивантажити"
+   },
+   "editor_upload_dialog_alert_upload_failed_link": {
+      "description": "Try again.",
+      "message": "Спробувати ще раз."
+   },
+   "editor_upload_dialog_alert_upload_failed_message": {
+      "description": "Please make sure you are connected to the internet and have accepted Google Drive permissions.",
+      "message": "Будь ласка, переконайтеся, що ви підключені до Інтернету та надали дозволи для Google Drive."
+   },
+   "editor_upload_dialog_cancel_and_download": {
+      "description": "Cancel and download file",
+      "message": "Скасувати та завантажити файл"
+   },
+   "editor_upload_dialog_close": {
+      "description": "Close",
+      "message": "Закрити"
+   },
+   "editor_upload_dialog_copy_link": {
+      "description": "Copy link",
+      "message": "Скопіювати посилання"
+   },
+   "editor_upload_dialog_link_public": {
+      "description": "Allow anyone with the link to view.",
+      "message": "Дозволити перегляд усім, хто має посилання."
+   },
+   "editor_zoom_crop_animation_animated": {
+      "description": "Sub-label indicating an animation type is animated.",
+      "message": "Анімоване"
+   },
+   "editor_zoom_crop_animation_crop": {
+      "description": "Animation type option for static cropping without animation.",
+      "message": "Кадрування"
+   },
+   "editor_zoom_crop_animation_static": {
+      "description": "Sub-label indicating an animation type is static (no animation).",
+      "message": "Статичне"
+   },
+   "editor_zoom_crop_animation_type": {
+      "description": "Label for the animation type selection section.",
+      "message": "Тип Анімації"
+   },
+   "editor_zoom_crop_animation_zoom_in": {
+      "description": "Animation type option for zooming in on the selected area.",
+      "message": "Наближення"
+   },
+   "editor_zoom_crop_animation_zoom_out": {
+      "description": "Animation type option for zooming out from the selected area.",
+      "message": "Віддалення"
+   },
+   "editor_zoom_crop_apply": {
+      "description": "Apply button in zoom/crop dialog.",
+      "message": "Застосувати"
+   },
+   "editor_zoom_crop_cancel": {
+      "description": "Cancel button in zoom/crop dialog.",
+      "message": "Скасувати"
+   },
+   "editor_zoom_crop_change_area": {
+      "description": "Tooltip text for button to change the selected crop area.",
+      "message": "Змінити Область"
+   },
+   "editor_zoom_crop_dialog_title": {
+      "description": "Title for the zoom and crop dialog in the editor.",
+      "message": "Масштаб і Кадрування"
+   },
+   "editor_zoom_crop_draw_instruction": {
+      "description": "Instruction text for the user to draw a crop area on the frame preview.",
+      "message": "Намалюйте Виділення на Кадрі"
+   },
+   "editor_zoom_crop_frame_end": {
+      "description": "Label for the end frame number.",
+      "message": "Кінець"
+   },
+   "editor_zoom_crop_frame_range": {
+      "description": "Label for the frame range selection section.",
+      "message": "Діапазон Кадрів"
+   },
+   "editor_zoom_crop_frame_start": {
+      "description": "Label for the start frame number.",
+      "message": "Початок"
+   },
+   "editor_zoom_crop_frames_menu": {
+      "description": "Menu item label for zoom/crop frames feature.",
+      "message": "Масштаб/Кадрування Кадрів"
+   },
+   "editor_zoom_crop_no_area_selected": {
+      "description": "Message displayed when no crop area has been selected.",
+      "message": "Область Не Вибрана"
+   },
+   "editor_zoom_crop_select_area": {
+      "description": "Button text to select a crop area on the frame.",
+      "message": "Вибрати Область"
+   },
+   "editor_zoom_crop_smooth_animation": {
+      "description": "Checkbox label for smoothing animation by interpolating frames.",
+      "message": "Плавна Анімація з Додаванням Кадрів"
+   },
+   "editor_zoom_crop_transition": {
+      "description": "Label for the transition duration section (number of frames for animation).",
+      "message": "Перехід"
+   },
+   "enable_drawing_text": {
+      "description": "Enable drawing",
+      "message": "Увімкнути малювання"
+   },
+   "enable_drawing_tooltip_text": {
+      "description": "This option allows users to draw in the selected area while holding down the ctrl key.",
+      "message": "Ця опція дозволяє користувачам малювати у вибраній ділянці, утримуючи клавішу Ctrl."
+   },
+   "extension_description": {
+      "description": "Take screenshots & record GIFs instantly! Edit & share seamlessly. Your all-in-one screenshot and screen recording solution.",
+      "message": "Миттєво робіть скріншоти та записуйте GIF! Редагуйте та діліться легко. Ваше універсальне рішення для знімків та запису екрана."
+   },
+   "extension_name": {
+      "description": "Chrome Capture - screenshot & GIF",
+      "message": "Chrome Capture - скріншот & GIF"
+   },
+   "extension_short_name": {
+      "description": "Chrome Capture",
+      "message": "Chrome Capture"
+   },
+   "file_access_text": {
+      "description": "After screenshot action",
+      "message": "Дія після знімка екрана"
+   },
+   "filename_text": {
+      "description": "Filename",
+      "message": "Ім'я файлу"
+   },
+   "frames_per_sec_short_text": {
+      "description": "FPS",
+      "message": "FPS"
+   },
+   "frames_per_sec_text": {
+      "description": "Frames per second (fps)",
+      "message": "Кадрів за секунду (FPS)"
+   },
+   "frames_text": {
+      "description": "frames",
+      "message": "Кадри"
+   },
+   "free_settings_text": {
+      "description": "Free Settings",
+      "message": "Безкоштовні налаштування"
+   },
+   "fullscreen_info_modal_cancel": {
+      "description": "Cancel",
+      "message": "Скасувати"
+   },
+   "fullscreen_info_modal_continue": {
+      "description": "Are you sure you want to continue with full screen capture?",
+      "message": "Ви впевнені, що хочете продовжити зйомку всього екрана?"
+   },
+   "fullscreen_info_modal_do_not_show": {
+      "description": "Do not show this again",
+      "message": "Більше не показувати"
+   },
+   "fullscreen_info_modal_message": {
+      "description": "You have used a Chrome Capture shortcut without the cropping tool, this will capture in full screen mode.",
+      "message": "Ви використали гарячу клавішу Chrome Capture без інструмента обрізки. Зйомка буде виконана в повноекранному режимі."
+   },
+   "fullscreen_info_modal_open_cropping": {
+      "description": "Open cropping tool",
+      "message": "Відкрити інструмент обрізки"
+   },
+   "fullscreen_info_modal_shortcut_cropping_tool": {
+      "description": "Alt + C: Open/close Chrome Capture cropping tool",
+      "message": "Alt + C: Відкрити/закрити інструмент обрізки Chrome Capture"
+   },
+   "fullscreen_info_modal_shortcut_fullpage_screenshot": {
+      "description": "Alt + Shift + S: Full webpage screenshot (beta)",
+      "message": "Alt + Shift + S: Знімок усієї веб-сторінки (бета)"
+   },
+   "fullscreen_info_modal_shortcut_linkt": {
+      "description": "You can configure these here: ",
+      "message": "Ви можете налаштувати їх тут:"
+   },
+   "fullscreen_info_modal_shortcut_recording": {
+      "description": "Alt + R: Start/stop recording",
+      "message": "Alt + R: Почати/зупинити запис"
+   },
+   "fullscreen_info_modal_shortcut_screenshot": {
+      "description": "Alt + S: Visible area screenshot",
+      "message": "Alt + S: Знімок видимої ділянки"
+   },
+   "fullscreen_info_modal_shortcuts": {
+      "description": "Default shortcuts are: ",
+      "message": "Гарячі клавіші за замовчуванням:"
+   },
+   "fullscreen_info_modal_start": {
+      "description": "Start full screen capture",
+      "message": "Почати зйомку всього екрана"
+   },
+   "fullscreen_info_modal_title": {
+      "description": "Full screen capture",
+      "message": "Зйомка всього екрана"
+   },
+   "general_not_available": {
+      "description": "N/A",
+      "message": "Н/Д"
+   },
+   "get_premium": {
+      "description": "Get Premium",
+      "message": "Отримати Преміум"
+   },
+   "height_text": {
+      "description": "Width (px)",
+      "message": "Висота (пікс.)"
+   },
+   "hi": {
+      "description": "Hi",
+      "message": "Привіт"
+   },
+   "internet_connection_required": {
+      "description": "Internet connection is required to upgrade to premium.",
+      "message": "Для переходу на Преміум потрібне підключення до Інтернету."
+   },
+   "manage_subscription_access_until_date": {
+      "description": "Your plan will not renew. You can access premium features until $date$.",
+      "message": "Ваш план не буде поновлено. Ви можете користуватися преміум-функціями до $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_cancel_button": {
+      "description": "Cancel subscription",
+      "message": "Скасувати підписку"
+   },
+   "manage_subscription_cancel_confirm_cancel_button": {
+      "description": "Keep Premium",
+      "message": "Залишити Premium"
+   },
+   "manage_subscription_cancel_confirm_confirm_button": {
+      "description": "Continue to cancel",
+      "message": "Продовжити скасування"
+   },
+   "manage_subscription_cancel_confirm_description": {
+      "description": "You will lose access to Premium features and Premium options will be reset.",
+      "message": "Ви втратите доступ до функцій Premium, а параметри Premium буде скинуто."
+   },
+   "manage_subscription_cancel_confirm_title": {
+      "description": "Are you sure you want to cancel your subscription?",
+      "message": "Ви впевнені, що хочете скасувати підписку?"
+   },
+   "manage_subscription_ended_on_date": {
+      "description": "Subscription ended on $date$.",
+      "message": "Підписка закінчилася $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_ends_on_date": {
+      "description": "Subscription ends on $date$.",
+      "message": "Підписка закінчується $date$.",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_next_payment_full": {
+      "description": "Next payment: $price$ on $date$",
+      "message": "Наступний платіж: $price$ дата $date$",
+      "placeholders": {
+         "date": {
+            "content": "$2"
+         },
+         "price": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_paid_full": {
+      "description": "Paid: $billingCycle$",
+      "message": "Сплачено: $billingCycle$",
+      "placeholders": {
+         "billingCycle": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_resubscribe_prompt": {
+      "description": " To use premium features again, please upgrade.",
+      "message": " Щоб знову користуватися преміум-функціями, оновіть свій план."
+   },
+   "manage_subscription_update_payment_button": {
+      "description": "Update payment method",
+      "message": "Оновити спосіб оплати"
+   },
+   "max_recording_dimension_size_text": {
+      "description": "Max recording resolution/quality",
+      "message": "Максимальна роздільна здатність/якість запису"
+   },
+   "no_limit_text": {
+      "description": "No limit",
+      "message": "Без обмежень"
+   },
+   "open_text": {
+      "description": "Open",
+      "message": "Відкрити"
+   },
+   "options_default_action": {
+      "description": "Extension icon click action",
+      "message": "Дія при натисканні на іконку розширення"
+   },
+   "options_dimension_size_1000": {
+      "description": "1000 pixels",
+      "message": "1000 пікселів"
+   },
+   "options_dimension_size_1080p": {
+      "description": "1920 pixels (1080p)",
+      "message": "1920 пікселів (1080p)"
+   },
+   "options_dimension_size_480p": {
+      "description": "640 pixels (480p)",
+      "message": "640 пікселів (480p)"
+   },
+   "options_dimension_size_4k": {
+      "description": "3840 pixels (4K)",
+      "message": "3840 пікселів (4K)"
+   },
+   "options_dimension_size_720p": {
+      "description": "1280 pixels (720p)",
+      "message": "1280 пікселів (720p)"
+   },
+   "options_embedded_options_permission_warning": {
+      "description": "Cursor highlighting, click effects, and drawing tools will only work until the page reloads or changes. To keep them active after reloads or redirects, you'll need to grant an extra permission.",
+      "message": "Підсвічування курсору, ефекти клацання та інструменти малювання працюватимуть лише до перезавантаження або зміни сторінки. Щоб вони залишалися активними після перезавантажень або переспрямувань, вам потрібно надати додатковий дозвіл."
+   },
+   "options_enable_notifications": {
+      "description": "Enable notifications",
+      "message": "Увімкнути сповіщення"
+   },
+   "options_enable_notifications_tooltip": {
+      "description": "Display notifications when full screen recording starts and processing recordings in the background.",
+      "message": "Показувати сповіщення, коли починається запис усього екрана та під час обробки записів у фоновому режимі."
+   },
+   "options_enable_subfolder_downloads": {
+      "description": "Download files into subfolder",
+      "message": "Завантажувати файли в підпапку"
+   },
+   "options_enable_subfolder_downloads_tooltip": {
+      "description": "Download files into a subfolder of your choice inside the downloads folder. This option is useful for organising your captures.",
+      "message": "Завантажувати файли в підпапку за вашим вибором усередині папки \"Завантаження\". Ця опція корисна для організації ваших знімків/записів."
+   },
+   "options_how_to_use_btn": {
+      "description": "How to use",
+      "message": "Інструкція"
+   },
+   "options_language": {
+      "description": "Language",
+      "message": "Мова"
+   },
+   "options_open_containing_folder_on_save": {
+      "description": "Open containing folder after saving",
+      "message": "Відкрити папку після збереження"
+   },
+   "options_open_popup": {
+      "description": "Open popup",
+      "message": "Відкрити спливаюче вікно"
+   },
+   "options_open_selected_area": {
+      "description": "Open selected area capture",
+      "message": "Зробити знімок вибраної ділянки"
+   },
+   "options_section_general": {
+      "description": "Title for the General settings section in the options page",
+      "message": "Загальні налаштування"
+   },
+   "options_section_output": {
+      "description": "Title for the Output and Saving settings section in the options page",
+      "message": "Вивід і збереження"
+   },
+   "options_section_recording": {
+      "description": "Title for the Recording settings section in the options page",
+      "message": "Налаштування запису"
+   },
+   "options_section_visuals": {
+      "description": "Title for the Cursor and Interaction Visuals settings section in the options page",
+      "message": "Візуальні ефекти курсору та взаємодії"
+   },
+   "options_shortcuts_btn": {
+      "description": "Shortcuts",
+      "message": "Гарячі клавіші"
+   },
+   "options_subfolder_downloads_name": {
+      "description": "Subfolder name:",
+      "message": "Назва підпапки:"
+   },
+   "options_support_btn": {
+      "description": "Support",
+      "message": "Підтримка"
+   },
+   "overlay_help_text": {
+      "description": "Click and drag to choose your selected area. \nRight click to snap to an element, hold shift for multiple.",
+      "message": "Натисніть і перетягніть, щоб вибрати ділянку.\nКлацніть правою кнопкою миші, щоб прив'язатися до елемента, утримуйте клавішу Shift для вибору кількох."
+   },
+   "plan_billing_annually": {
+      "description": "Annually",
+      "message": "Щорічно"
+   },
+   "plan_billing_monthly": {
+      "description": "Monthly",
+      "message": "Щомісяця"
+   },
+   "plan_name_custom": {
+      "description": "Custom Plan",
+      "message": "Індивідуальний план"
+   },
+   "popup_capture_tab": {
+      "description": "Capture",
+      "message": "Знімок"
+   },
+   "popup_desktop_screenshot_tooltip": {
+      "description": "Capture the entire screen, desktop, or any open application.",
+      "message": "Зробити знімок усього екрана, робочого столу або будь-якої відкритої програми."
+   },
+   "popup_editor_icon_tooltip": {
+      "description": "Open Editor",
+      "message": "Відкрити редактор"
+   },
+   "popup_full_page_screenshot_tooltip": {
+      "description": "Capture the current tab full webpage, including content beyond the visible area.",
+      "message": "Зробити знімок усієї веб-сторінки поточної вкладки, включаючи вміст за межами видимої області."
+   },
+   "popup_full_webpage": {
+      "description": "Full webpage",
+      "message": "Уся веб-сторінка"
+   },
+   "popup_no_scripts_alert": {
+      "description": "Selected area and full webpage screenshots are not possible here. These features are available on other websites.",
+      "message": "На цьому сайті неможливо зробити знімок вибраної ділянки або знімок усієї веб-сторінки. Ці функції доступні на інших сайтах."
+   },
+   "popup_record_tab": {
+      "description": "Record",
+      "message": "Запис"
+   },
+   "popup_recording_limit_alert": {
+      "description": "Record up to $seconds$ seconds per GIF. Premium users can update this from the ",
+      "message": "Запис до $seconds$ секунд на GIF. Преміум-користувачі можуть змінити це з",
+      "placeholders": {
+         "seconds": {
+            "content": "$1"
+         }
+      }
+   },
+   "popup_recording_limit_settings_link": {
+      "description": "settings page.",
+      "message": "сторінки налаштувань."
+   },
+   "popup_screen_or_app": {
+      "description": "Full screen or app",
+      "message": "Увесь екран або вікно програми"
+   },
+   "popup_selected_area": {
+      "description": "Selected area",
+      "message": "Вибрана ділянка"
+   },
+   "popup_selected_area_screenshot_tooltip": {
+      "description": "Capture a specific area of the current tab.",
+      "message": "Зробити знімок певної ділянки поточної вкладки."
+   },
+   "popup_set_shortcut": {
+      "description": "set shortcut",
+      "message": "Встановити гарячу клавішу"
+   },
+   "popup_settings_icon_tooltip": {
+      "description": "Open Settings",
+      "message": "Відкрити налаштування"
+   },
+   "popup_tab_screenshot_tooltip": {
+      "description": "Capture the visible part of the current tab.",
+      "message": "Зробити знімок видимої частини поточної вкладки."
+   },
+   "popup_this_tab": {
+      "description": "This tab",
+      "message": "Ця вкладка"
+   },
+   "popup_waiting_for_desktop_selection_alert": {
+      "description": "FULL SCREEN OR APP capture did not start because you did not select an option from the popup dialog. If you have multiple monitors it may have opened on another monitor.",
+      "message": "Зйомка всього екрана або програми не розпочалася, оскільки ви не вибрали опцію у спливаючому вікні. Якщо у вас кілька моніторів, воно могло відкритися на іншому моніторі."
+   },
+   "premium_settings_text": {
+      "description": "Premium Settings",
+      "message": "Преміум-налаштування"
+   },
+   "purchase_btn_text": {
+      "description": "Get Premium!",
+      "message": "Отримати Преміум!"
+   },
+   "purchase_description_limited_time_text": {
+      "description": "Lock in this price now - limited time offer before we switch to subscriptions!",
+      "message": "Забезпечте цю ціну зараз - обмежена пропозиція перед переходом на підписки!"
+   },
+   "purchase_description_text": {
+      "description": "Just one payment unlocks all premium features forever. No recurring fees!",
+      "message": "Один платіж розблоковує всі преміум-функції довічно. Без повторюваних платежів!"
+   },
+   "purchase_feature_30fps": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "шовковисто-плавний запис 30 кадрів/с"
+   },
+   "purchase_feature_4K": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "кришталево-чистий запис у 4K"
+   },
+   "purchase_feature_alter_frame_rate": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "власні частоти кадрів"
+   },
+   "purchase_feature_alter_playback_speed": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ефекти уповільненої зйомки та таймлапсу"
+   },
+   "purchase_feature_blur": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "інструмент розмиття"
+   },
+   "purchase_feature_crop_recording": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "точне обрізання GIF"
+   },
+   "purchase_feature_default": {
+      "description": "Feature that goes in $feature$ placeholder. Default fallback.",
+      "message": "цю функцію"
+   },
+   "purchase_feature_frame_edits": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "потужне покадрове редагування"
+   },
+   "purchase_feature_highlight": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "інструмент виділення"
+   },
+   "purchase_feature_no_duration_limit": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "необмежена тривалість запису"
+   },
+   "purchase_feature_special_effect": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "спецефекти"
+   },
+   "purchase_feature_step_tool": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "інструмент «Кроки»"
+   },
+   "purchase_feature_svg": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "додавання власних іконок і логотипів"
+   },
+   "purchase_feature_text_and_annotation_customization": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "повний контроль над текстом і анотаціями"
+   },
+   "purchase_feature_unlimited_gif_compression": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "необмежене розширене стиснення GIF"
+   },
+   "purchase_feature_update_end_time": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "налаштований час запису"
+   },
+   "purchase_login_dialog_closed_by_user_alert": {
+      "description": "Looks like you closed the sign in dialog, premium users must sign in so you don't lose premium access.",
+      "message": "Схоже, ви закрили діалогове вікно входу. Преміум-користувачі повинні увійти, щоб не втратити преміум-доступ."
+   },
+   "purchase_login_dialog_google_button": {
+      "description": "Sign in with Google",
+      "message": "Увійти через Google"
+   },
+   "purchase_login_dialog_title": {
+      "description": "Sign in required",
+      "message": "Потрібно увійти"
+   },
+   "purchase_login_text": {
+      "description": "Sign in with Google to link your purchase to your account.",
+      "message": "Увійдіть через Google, щоб прив'язати покупку до свого облікового запису."
+   },
+   "purchase_login_text_window_opened": {
+      "description": "Sign into Google in the popup window.",
+      "message": "Увійдіть в обліковий запис Google у спливаючому вікні."
+   },
+   "purchase_subscription_title_text": {
+      "description": "Choose the plan that fits your needs.",
+      "message": "Виберіть план, який відповідає вашим потребам."
+   },
+   "purchase_title_text": {
+      "description": "Get Lifetime Premium Access Today!",
+      "message": "Отримайте довічний Преміум-доступ сьогодні!"
+   },
+   "purchase_title_text_blocked_feature": {
+      "description": "That feature requires Premium",
+      "message": "Ця функція потребує Premium"
+   },
+   "purchase_title_text_blocked_pro_feature": {
+      "description": "That feature requires Premium Pro",
+      "message": "Ця функція потребує Premium Pro"
+   },
+   "purchase_title_text_blocked_pro_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium Pro paywall.",
+      "message": "Розблокуйте «$feature$» з Premium Pro",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchase_title_text_blocked_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium paywall.",
+      "message": "Розблокуйте «$feature$» з Premium",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_already_premium_user": {
+      "description": "Already a premium user?",
+      "message": "Вже є Преміум-користувачем?"
+   },
+   "purchases_bill_me": {
+      "description": "Bill me:",
+      "message": "Виставити мені рахунок:"
+   },
+   "purchases_checkout_unavailable_message": {
+      "description": "Message shown when checkout could not be started.",
+      "message": "Зараз не вдалося запустити процес оновлення. Спробуйте ще раз."
+   },
+   "purchases_compare_12_fps": {
+      "description": "12FPS",
+      "message": "12 кадрів/с"
+   },
+   "purchases_compare_3_per_day": {
+      "description": "3 per day",
+      "message": "3 на день"
+   },
+   "purchases_compare_add_custom_shape_tool": {
+      "description": "Add custom shape/icon tool",
+      "message": "Інструмент для додавання власної фігури/іконки"
+   },
+   "purchases_compare_benefits": {
+      "description": "Benefits",
+      "message": "Переваги"
+   },
+   "purchases_compare_blur_tool": {
+      "description": "Blur tool",
+      "message": "Інструмент розмиття"
+   },
+   "purchases_compare_close_button_label": {
+      "description": "Close",
+      "message": "Закрити"
+   },
+   "purchases_compare_compression": {
+      "description": "High quality GIF compression",
+      "message": "Стиснення GIF високої якості"
+   },
+   "purchases_compare_core_capture_features": {
+      "description": "Core Capture Features",
+      "message": "Основні функції захоплення"
+   },
+   "purchases_compare_crop_recordings": {
+      "description": "Crop recordings",
+      "message": "Обрізати записи"
+   },
+   "purchases_compare_customize_editing_tools": {
+      "description": "Customize editing tools (font, size color)",
+      "message": "Налаштувати інструменти редагування (шрифт, розмір, колір)"
+   },
+   "purchases_compare_drawing": {
+      "description": "Draw while recording",
+      "message": "Малювання під час запису"
+   },
+   "purchases_compare_early_access": {
+      "description": "Early access to new features",
+      "message": "Ранній доступ до нових функцій"
+   },
+   "purchases_compare_editing": {
+      "description": "Edit captures",
+      "message": "Редагування знімків/записів"
+   },
+   "purchases_compare_editing_free": {
+      "description": "basic editing",
+      "message": "Базове редагування"
+   },
+   "purchases_compare_editing_suite": {
+      "description": "Editing Suite",
+      "message": "Набір для редагування"
+   },
+   "purchases_compare_frame_editing": {
+      "description": "Frame editing",
+      "message": "Редагування кадрів"
+   },
+   "purchases_compare_frame_rate": {
+      "description": "Adjust Frame Rate",
+      "message": "Налаштувати Частоту Кадрів (FPS)"
+   },
+   "purchases_compare_frame_specific_edits": {
+      "description": "Frame specific edits",
+      "message": "Редагування окремих кадрів"
+   },
+   "purchases_compare_free_draw_tools": {
+      "description": "Free draw, line, arrow, rectangle, circle, text tools",
+      "message": "Інструменти для вільного малювання, ліній, стрілок, прямокутників, кіл, тексту"
+   },
+   "purchases_compare_full_webpage_screenshots": {
+      "description": "Unlimited full page screenshots.",
+      "message": "Необмежені знімки всієї сторінки."
+   },
+   "purchases_compare_highlight_tool": {
+      "description": "Highlight tool",
+      "message": "Інструмент виділення"
+   },
+   "purchases_compare_live_recording_tools": {
+      "description": "Live Recording Tools",
+      "message": "Інструменти для запису в реальному часі"
+   },
+   "purchases_compare_mouse": {
+      "description": "Click and mouse indication",
+      "message": "Індикація кліку та курсора"
+   },
+   "purchases_compare_plans": {
+      "description": "Compare plans",
+      "message": "Порівняти плани"
+   },
+   "purchases_compare_plans_premium_button": {
+      "description": "Upgrade to Premium",
+      "message": "Оновити до Premium"
+   },
+   "purchases_compare_playback_speed": {
+      "description": "Tune recording playback speed",
+      "message": "Налаштування швидкості відтворення запису"
+   },
+   "purchases_compare_priority_support": {
+      "description": "Priority support and feature requests",
+      "message": "Пріоритетна підтримка та запити на нові функції"
+   },
+   "purchases_compare_recording": {
+      "description": "Unlimited GIF recordings.",
+      "message": "Необмежені записи GIF."
+   },
+   "purchases_compare_recording_free": {
+      "description": "15sec limit per GIF",
+      "message": "Обмеження 15 сек на GIF"
+   },
+   "purchases_compare_recording_quality": {
+      "description": "High quality GIFs",
+      "message": "Високоякісні GIF"
+   },
+   "purchases_compare_recording_quality_control": {
+      "description": "Recording Quality & Control",
+      "message": "Якість та керування записом"
+   },
+   "purchases_compare_recording_quality_free": {
+      "description": "1000 pixels max",
+      "message": "Макс. 1000 пікселів"
+   },
+   "purchases_compare_screenshots": {
+      "description": "Unlimited screenshots.",
+      "message": "Необмежені скріншоти."
+   },
+   "purchases_compare_special_effects": {
+      "description": "Recording special effects",
+      "message": "Запис спецефектів"
+   },
+   "purchases_compare_up_to_1080p": {
+      "description": "Up to 1080p",
+      "message": "До 1080p"
+   },
+   "purchases_compare_up_to_24_fps": {
+      "description": "Up to 24FPS",
+      "message": "До 24 кадрів/с"
+   },
+   "purchases_compare_up_to_30_fps": {
+      "description": "Up to 30FPS",
+      "message": "До 30 кадрів/с"
+   },
+   "purchases_compare_up_to_4k_plus": {
+      "description": "Up to 4K+",
+      "message": "До 4K+"
+   },
+   "purchases_current_plan": {
+      "description": "Current plan",
+      "message": "Поточний план"
+   },
+   "purchases_features": {
+      "description": "Features",
+      "message": "Функції"
+   },
+   "purchases_free": {
+      "description": "Free",
+      "message": "Безкоштовний"
+   },
+   "purchases_free_button": {
+      "description": "Free to use",
+      "message": "Користуватися безкоштовно"
+   },
+   "purchases_free_feature_editing": {
+      "description": "Basic editing",
+      "message": "Базове редагування"
+   },
+   "purchases_free_feature_recording": {
+      "description": "Basic GIF recording",
+      "message": "Базовий запис GIF"
+   },
+   "purchases_free_feature_screenshots": {
+      "description": "Unlimited screenshots",
+      "message": "Необмежені скріншоти"
+   },
+   "purchases_free_plan_description": {
+      "description": "Get started with our essential capture tools. Completely free for basic everyday use.",
+      "message": "Почніть з наших основних інструментів захоплення. Повністю безкоштовно для базового щоденного використання."
+   },
+   "purchases_plan_save_up_to_percentage": {
+      "description": "Save up to",
+      "message": "Заощаджуйте до"
+   },
+   "purchases_premium": {
+      "description": "Premium",
+      "message": "Преміум"
+   },
+   "purchases_premium_billed_annually": {
+      "description": "Billed annually",
+      "message": "Оплата щорічно"
+   },
+   "purchases_premium_button": {
+      "description": "Get lifetime access",
+      "message": "Отримайте довічний доступ"
+   },
+   "purchases_premium_feature_compression": {
+      "description": "High quality GIF compression",
+      "message": "Стиснення GIF високої якості"
+   },
+   "purchases_premium_feature_editing": {
+      "description": "Feature rich editing",
+      "message": "Розширені функції редагування"
+   },
+   "purchases_premium_feature_free": {
+      "description": "Everything from free plan",
+      "message": "Включає функції безкоштовного плану"
+   },
+   "purchases_premium_feature_marked_with_star": {
+      "description": "All features marked with a star",
+      "message": "Усі функції, позначені зірочкою"
+   },
+   "purchases_premium_feature_recording": {
+      "description": "Unlimited high quality GIF recording",
+      "message": "Необмежений запис GIF високої якості"
+   },
+   "purchases_premium_feature_recording_1080p": {
+      "description": "High quality GIF recording, up to 1080p, 24fps",
+      "message": "Високоякісний запис GIF, до 1080p, 24 кадри/с"
+   },
+   "purchases_premium_feature_refundable": {
+      "description": "Fully refundable",
+      "message": "Повне повернення коштів"
+   },
+   "purchases_premium_feature_risk_free": {
+      "description": "Risk-free: 7 day trial, cancel anytime",
+      "message": "Без ризику: 7-денний пробний період, скасуйте будь-коли"
+   },
+   "purchases_premium_feature_unlimited_length": {
+      "description": "Unlimited GIF recording length",
+      "message": "Необмежена тривалість запису GIF"
+   },
+   "purchases_premium_price_info": {
+      "description": "one time fee",
+      "message": "одноразова плата"
+   },
+   "purchases_premium_price_per_month": {
+      "description": "/ month",
+      "message": "/ місяць"
+   },
+   "purchases_premium_pro": {
+      "description": "Premium Pro",
+      "message": "Premium Pro"
+   },
+   "purchases_premium_pro_editing_tools": {
+      "description": "Advanced editing tools (blurring, special effects, etc.)",
+      "message": "Розширені інструменти редагування (розмиття, спецефекти тощо)"
+   },
+   "purchases_premium_pro_feature_early_access": {
+      "description": "Early access to new features",
+      "message": "Ранній доступ до нових функцій"
+   },
+   "purchases_premium_pro_feature_marked_with_crown": {
+      "description": "All features marked with a star and crown",
+      "message": "Усі функції, позначені зірочкою та короною"
+   },
+   "purchases_premium_pro_feature_premium_plan": {
+      "description": "Everything from Premium plan",
+      "message": "Все з плану Premium"
+   },
+   "purchases_premium_pro_feature_quality": {
+      "description": "Max resolution recording, 4K+ and 30fps",
+      "message": "Запис у максимальній роздільній здатності, 4K+ та 30 кадрів/с"
+   },
+   "purchases_premium_pro_feature_support": {
+      "description": "Priority support and feature requests",
+      "message": "Пріоритетна підтримка та запити на нові функції"
+   },
+   "purchases_premium_pro_upgrade": {
+      "description": "Upgrade to Pro",
+      "message": "Оновити до Pro"
+   },
+   "purchases_premium_save_percentage": {
+      "description": "save $savingsPercentage$%",
+      "message": "заощаджуйте $savingsPercentage$%",
+      "placeholders": {
+         "savingsPercentage": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_premium_try_for_free": {
+      "description": "Try for free",
+      "message": "Спробувати безкоштовно"
+   },
+   "purchases_price_unavailable": {
+      "description": "Label shown in place of a price when it is unavailable.",
+      "message": "Ціна недоступна"
+   },
+   "purchases_pricing_unavailable_message": {
+      "description": "Message shown when the Premium pricing request was blocked or failed.",
+      "message": "Запит на отримання цін Premium було заблоковано або він завершився помилкою. Це може статися, якщо робоча мережа, VPN, блокувальник реклами, розширення конфіденційності або брандмауер блокують Paddle."
+   },
+   "purchases_pricing_unavailable_title": {
+      "description": "Title shown when Premium pricing could not be loaded.",
+      "message": "Не вдалося завантажити ціни Premium"
+   },
+   "purchases_pricing_unavailable_troubleshooting_extensions": {
+      "description": "Troubleshooting step telling the user to disable VPN or privacy tools temporarily.",
+      "message": "Тимчасово вимкніть VPN, блокувальник реклами або розширення конфіденційності й спробуйте ще раз."
+   },
+   "purchases_pricing_unavailable_troubleshooting_intro": {
+      "description": "Intro text for troubleshooting steps when pricing is unavailable.",
+      "message": "Спробуйте таке:"
+   },
+   "purchases_pricing_unavailable_troubleshooting_network": {
+      "description": "Troubleshooting step telling the user to try another network or browser profile.",
+      "message": "Спробуйте іншу мережу або відкрийте розширення в іншому профілі Chrome."
+   },
+   "purchases_pricing_unavailable_troubleshooting_workplace": {
+      "description": "Troubleshooting step telling the user workplace policy may be blocking Paddle.",
+      "message": "Якщо ви використовуєте робочий пристрій, політика мережі або браузера може блокувати Paddle."
+   },
+   "purchases_sign_in_here": {
+      "description": "Sign in here",
+      "message": "Увійдіть тут"
+   },
+   "purchases_start_trial_cancel_anytime": {
+      "description": "Call to action to start a free trial.",
+      "message": "Почніть 7-денний безкоштовний пробний період, щоб продовжити. Скасувати можна будь-коли."
+   },
+   "purchases_try_premium_for_free": {
+      "description": "Try Premium for Free",
+      "message": "Спробувати Premium безкоштовно"
+   },
+   "purchases_try_premium_pro_for_free": {
+      "description": "Try Premium Pro for Free",
+      "message": "Спробувати Premium Pro безкоштовно"
+   },
+   "purchases_upgrade_premium_to_pro": {
+      "description": "To use this feature and access all Pro benefits, upgrade your plan.",
+      "message": "Щоб використовувати цю функцію та отримати доступ до всіх переваг Pro, оновіть свій план."
+   },
+   "purchases_upgrade_to_premium_pro": {
+      "description": "Upgrade to Premium Pro",
+      "message": "Оновити до Premium Pro"
+   },
+   "quality_text": {
+      "description": "Recording quality (10 = best)",
+      "message": "Якість запису (10 = найкраща)"
+   },
+   "rate_bad_rating_text": {
+      "description": "We are continuously trying our hardest to improve Chrome Capture, please share what needs improvement by emailing us at ",
+      "message": "Ми постійно докладаємо максимум зусиль для покращення Chrome Capture. Будь ласка, поділіться тим, що потребує покращення, надіславши нам листа на адресу:"
+   },
+   "rate_bad_title_text": {
+      "description": "😞 We are sorry!",
+      "message": "😞 Нам дуже шкода!"
+   },
+   "rate_close_btn_text": {
+      "description": "Close",
+      "message": "Закрити"
+   },
+   "rate_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "Підтвердити"
+   },
+   "rate_description_text": {
+      "description": "If you've found this extension useful please leave a rating or review. \n\nBy leaving a rating you can help us reach more users which will help fund continual improvements and keep general usage free.",
+      "message": "Якщо ви вважаєте це розширення корисним, будь ласка, залиште оцінку або відгук.\n\nЗалишивши оцінку, ви допоможете нам охопити більше користувачів, що сприятиме фінансуванню постійних удосконалень та дозволить зберегти базові функції безкоштовними."
+   },
+   "rate_description_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "Ми дуже цінуємо придбання вами Преміум-версії та хотіли б почути будь-які ваші відгуки, щоб допомогти нам покращити продукт та охопити більше користувачів."
+   },
+   "rate_good_rating_text": {
+      "description": "Your reviews keep our small team motivated to make Chrome Capture even better!",
+      "message": "Ваші відгуки мотивують нашу невелику команду робити Chrome Capture ще кращим!"
+   },
+   "rate_good_rating_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "Ми дуже цінуємо придбання вами Преміум-версії та хотіли б почути будь-які ваші відгуки, щоб допомогти нам покращити продукт та охопити більше користувачів."
+   },
+   "rate_good_title_text": {
+      "description": "😍 Review in the web store?",
+      "message": "😍 Залишити відгук у веб-магазині?"
+   },
+   "rate_maybe_later_btn_text": {
+      "description": "Maybe later",
+      "message": "Можливо, пізніше"
+   },
+   "rate_no_btn_text": {
+      "description": "No thanks",
+      "message": "Ні, дякую"
+   },
+   "rate_send_email_btn_text": {
+      "description": "Send Email",
+      "message": "Надіслати лист"
+   },
+   "rate_thank_you_title_text": {
+      "description": "Thank you! 😍",
+      "message": "Дякуємо! 😍"
+   },
+   "rate_title_text": {
+      "description": "How are we doing?",
+      "message": "Як наші справи?"
+   },
+   "rate_yes_btn_text": {
+      "description": "Ok, sure",
+      "message": "Так, звісно"
+   },
+   "recommended": {
+      "description": "recommended",
+      "message": "Рекомендовано"
+   },
+   "record_length_text": {
+      "description": "Max record length",
+      "message": "Максимальна тривалість запису"
+   },
+   "recordings_taken": {
+      "description": "Recordings taken:",
+      "message": "Зроблено записів:"
+   },
+   "save_as_screenshot_text": {
+      "description": "Save screenshot as",
+      "message": "Зберегти скріншот як..."
+   },
+   "save_as_text": {
+      "description": "Save recording as",
+      "message": "Зберегти запис як..."
+   },
+   "screenshots_taken": {
+      "description": "Screenshots taken:",
+      "message": "Зроблено скріншотів:"
+   },
+   "seconds_text": {
+      "description": "secs",
+      "message": "сек"
+   },
+   "shortcut": {
+      "description": "Shortcut:",
+      "message": "Гаряча клавіша:"
+   },
+   "show_click_indicator_text": {
+      "description": "Show click animation",
+      "message": "Показувати анімацію кліку"
+   },
+   "show_click_indicator_tooltip_text": {
+      "description": "This option draws a circle animation around the click location.",
+      "message": "Ця опція малює анімацію кола навколо місця кліку."
+   },
+   "show_cursor_text": {
+      "description": "Show dot at cursor location",
+      "message": "Показувати точку в місці курсора"
+   },
+   "show_cursor_tooltip_text": {
+      "description": "This option draws a small circle to indicate where the mouse is located.",
+      "message": "Ця опція малює невелике коло, щоб вказати розташування курсора."
+   },
+   "sign_in": {
+      "description": "Sign In",
+      "message": "Увійти"
+   },
+   "sign_out": {
+      "description": "Sign Out",
+      "message": "Вийти"
+   },
+   "subscription_past_due_warning": {
+      "description": "Warning message shown when a user subscription payment has failed or is past its due date.",
+      "message": "Платіж за підписку прострочено. Натисніть тут, щоб оновити платіжну інформацію."
+   },
+   "subscription_premium_plan_description": {
+      "description": "Go beyond basics: HD quality & limits unlocked. Craft pro content with enhanced features.",
+      "message": "Вийдіть за межі основ: якість HD та розблоковані ліміти. Створюйте професійний контент із розширеними функціями."
+   },
+   "subscription_premium_pro_plan_description": {
+      "description": "Experience peak performance: 4K+ and all features. Full editing suite with early access.",
+      "message": "Відчуйте максимальну продуктивність: 4K+ та всі функції. Повний набір для редагування з раннім доступом."
+   },
+   "subscription_status_active": {
+      "description": "Active",
+      "message": "Активний"
+   },
+   "subscription_status_ending_soon": {
+      "description": "Ending Soon",
+      "message": "Незабаром закінчується"
+   },
+   "subscription_status_expired": {
+      "description": "Expired",
+      "message": "Термін дії закінчився"
+   },
+   "subscription_status_past_due": {
+      "description": "Past Due",
+      "message": "Прострочено"
+   },
+   "subscription_status_paused": {
+      "description": "Paused",
+      "message": "Призупинено"
+   },
+   "subscription_status_unknown": {
+      "description": "Unknown",
+      "message": "Невідомо"
+   },
+   "unable_to_capture_website_alert": {
+      "description": "Unable to capture this website. Please use full screen/application capture or try capture another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "Неможливо зробити знімок цього сайта. Будь ласка, використовуйте зйомку всього екрана/програми або спробуйте на іншому сайті.\n\n(╯°□°）╯︵ ┻━┻"
+   },
+   "view_permission": {
+      "description": "View permission.",
+      "message": "Переглянути дозвіл."
+   },
+   "width_text": {
+      "description": "Height (px)",
+      "message": "Ширина (пікс.)"
+   }
+}

@@ -1,0 +1,1691 @@
+{
+   "account_modal_free_plan": {
+      "description": "You are on the free plan",
+      "message": "あなたは無料の計画を立てています"
+   },
+   "account_modal_manage_subscription_button": {
+      "description": "Manage Subscription",
+      "message": "サブスクリプションの管理"
+   },
+   "account_modal_not_signed_in": {
+      "description": "You are not signed in",
+      "message": "あなたはサインインされていません"
+   },
+   "account_modal_premium_plan": {
+      "description": "You are on the premium plan",
+      "message": "あなたはプレミアムプランにいます"
+   },
+   "account_modal_premium_pro_plan": {
+      "description": "You are on the Premium Pro plan",
+      "message": "現在、プレミアムプロプランをご利用中です"
+   },
+   "account_modal_request_feature_button": {
+      "description": "Request Feature",
+      "message": "機能をリクエスト"
+   },
+   "account_modal_request_support_button": {
+      "description": "Request Support",
+      "message": "サポートをリクエスト"
+   },
+   "account_modal_stats_heading": {
+      "description": "Your stats:",
+      "message": "あなたの統計："
+   },
+   "alert_text": {
+      "description": "Unable to run selected area capture on this website. Please use full screen recording or try another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "このWebサイトで選択されたエリアキャプチャを実行できません。 フルスクリーン記録を使用するか、別のWebサイトを試してください。 \n\n （╯°□°）╯(┻━┻）"
+   },
+   "click_indicator_size_color_text": {
+      "description": "Click animation size & color",
+      "message": "アニメーションサイズ＆カラーをクリックします"
+   },
+   "close_btn_text": {
+      "description": "Close",
+      "message": "選ぶ"
+   },
+   "confirm_dialog_cancel_btn_text": {
+      "description": "Cancel",
+      "message": "キャンセル"
+   },
+   "confirm_dialog_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "確認する"
+   },
+   "confirm_fps_update_text": {
+      "description": "Changing the fps will remove all frame specific edits such as edited or deleted frames. Do you want to continue?",
+      "message": "FPSを変更すると、編集または削除されたフレームなど、すべての画像固有の編集が削除されます。 続けたいですか？"
+   },
+   "copy_text": {
+      "description": "Copy to clipboard",
+      "message": "クリップボードにコピー"
+   },
+   "cursor_size_and_color_text": {
+      "description": "Cursor dot size & color",
+      "message": "カーソルドットサイズ＆カラー"
+   },
+   "dither_text": {
+      "description": "Apply dither",
+      "message": "ディザーを適用する"
+   },
+   "download_filename_text": {
+      "description": "Download filename format",
+      "message": "ファイル名形式をダウンロードします"
+   },
+   "download_text": {
+      "description": "Download",
+      "message": "ダウンロード"
+   },
+   "draw_size_and_color_text": {
+      "description": "Drawing size & color",
+      "message": "描画サイズ＆カラー"
+   },
+   "duration": {
+      "description": "Label for a field indicating a length of time.",
+      "message": "時間"
+   },
+   "editor_action_add_icon": {
+      "description": "Add icon",
+      "message": "アイコンを追加します"
+   },
+   "editor_action_add_text": {
+      "description": "Add text",
+      "message": "テキストを追加"
+   },
+   "editor_action_blur_rectangle": {
+      "description": "Blur area",
+      "message": "範囲ぼかし"
+   },
+   "editor_action_copy": {
+      "description": "Copy to clipboard",
+      "message": "クリップボードにコピー"
+   },
+   "editor_action_crop": {
+      "description": "Crop",
+      "message": "作物"
+   },
+   "editor_action_draw_arrow": {
+      "description": "Draw arrow",
+      "message": "矢印を描く"
+   },
+   "editor_action_draw_ellipse": {
+      "description": "Draw ellipse",
+      "message": "ellipseを描く"
+   },
+   "editor_action_draw_line": {
+      "description": "Draw line",
+      "message": "描く"
+   },
+   "editor_action_draw_rectangle": {
+      "description": "Draw rectangle",
+      "message": "四角形を描く"
+   },
+   "editor_action_free_draw": {
+      "description": "Free draw",
+      "message": "無料ドロー"
+   },
+   "editor_action_highlight": {
+      "description": "Highlight",
+      "message": "ハイライト"
+   },
+   "editor_action_numbered_step": {
+      "description": "Action label for adding a numbered step annotation.",
+      "message": "番号付きステップ"
+   },
+   "editor_action_pan": {
+      "description": "Pan",
+      "message": "パン"
+   },
+   "editor_action_profile_account": {
+      "description": "Account",
+      "message": "アカウント"
+   },
+   "editor_action_redo": {
+      "description": "Redo",
+      "message": "やり直す"
+   },
+   "editor_action_save": {
+      "description": "Save",
+      "message": "保存"
+   },
+   "editor_action_select": {
+      "description": "Select, move, resize",
+      "message": "選択、移動、サイズ変更"
+   },
+   "editor_action_settings": {
+      "description": "Settings",
+      "message": "設定"
+   },
+   "editor_action_undo": {
+      "description": "Undo",
+      "message": "und"
+   },
+   "editor_action_undo_all": {
+      "description": "Undo all",
+      "message": "元に戻す"
+   },
+   "editor_add_text_default": {
+      "description": "start typing...",
+      "message": "タイピングを開始..."
+   },
+   "editor_browse_file_system": {
+      "description": "Browse file system",
+      "message": "ファイルシステムを参照します"
+   },
+   "editor_drag_and_drop": {
+      "description": "Drag and drop image/GIF or ",
+      "message": "画像/ GIFをドラッグアンドドロップする"
+   },
+   "editor_file_downloaded": {
+      "description": "File saved to downloads folder.",
+      "message": "ダウンロードフォルダーに保存されたファイル。"
+   },
+   "editor_file_downloaded_selected_location": {
+      "description": "File saved to selected location.",
+      "message": "選択した場所に保存されたファイル。"
+   },
+   "editor_frame_selector_apply_edits": {
+      "description": "Apply edits to selected",
+      "message": "選択した編集を適用します"
+   },
+   "editor_frame_selector_delete": {
+      "description": "Delete",
+      "message": "消去"
+   },
+   "editor_frame_selector_delete_every_second": {
+      "description": "Delete every second frame",
+      "message": "毎週フレームを削除します"
+   },
+   "editor_frame_selector_delete_selected": {
+      "description": "Delete selected",
+      "message": "選択を削除します"
+   },
+   "editor_frame_selector_remove_edits": {
+      "description": "Remove edits from selected",
+      "message": "選択した編集を削除します"
+   },
+   "editor_frame_selector_restore": {
+      "description": "Restore",
+      "message": "復元する"
+   },
+   "editor_frame_selector_restore_all": {
+      "description": "Restore All",
+      "message": "すべての復元"
+   },
+   "editor_frame_selector_restore_selected": {
+      "description": "Restore selected",
+      "message": "選択した復元"
+   },
+   "editor_frame_selector_select_next": {
+      "description": "Select next frames",
+      "message": "次の画像を選択します"
+   },
+   "editor_frame_selector_select_previous": {
+      "description": "Select previous frames",
+      "message": "以前の画像を選択します"
+   },
+   "editor_frame_selector_unselect_all": {
+      "description": "Unselect All",
+      "message": "全体の選択を解除します"
+   },
+   "editor_image_copied": {
+      "description": "Image copied to clipboard.",
+      "message": "クリップボードにコピーされたイメージ。"
+   },
+   "editor_image_copied_failed": {
+      "description": "Failed to copy image to clipboard, it may be too large.",
+      "message": "画像をクリップボードにコピーできませんでした、大きすぎる可能性があります。"
+   },
+   "editor_link_copied": {
+      "description": "Link copied to clipboard.",
+      "message": "クリップボードにコピーされたリンク。"
+   },
+   "editor_max_time_reached_dialog_description1": {
+      "description": "You have reached the max recording length time of $maxlength$ seconds for GIFs. Premium users can update this from the settings page.",
+      "message": "GIFの$maxlength$秒の最大記録の長さに達しました。 プレミアムユーザーは、これを設定ページから更新できます。",
+      "placeholders": {
+         "maxlength": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_max_time_reached_dialog_description2": {
+      "description": "GIFs are intended for short recordings. If you require full length videos we recommend our free screen recorder: ",
+      "message": "GIFは、短い記録を目的としています。 フルレングスビデオが必要な場合は、無料のスクリーンレコーダーをお勧めします。"
+   },
+   "editor_max_time_reached_dialog_description3": {
+      "description": "Premium users can update this from the settings page.",
+      "message": "プレミアムユーザーは、これを設定ページから更新できます。"
+   },
+   "editor_max_time_reached_dialog_settings_button": {
+      "description": "Open settings",
+      "message": "設定を開く"
+   },
+   "editor_max_time_reached_dialog_title": {
+      "description": "Recording suddenly stopped?",
+      "message": "録音は突然停止しましたか？"
+   },
+   "editor_premium_options_color": {
+      "description": "Color",
+      "message": "色"
+   },
+   "editor_premium_options_draw_size": {
+      "description": "Draw Size",
+      "message": "サイズを描く"
+   },
+   "editor_premium_options_font": {
+      "description": "Font",
+      "message": "フォント"
+   },
+   "editor_premium_options_playback_speed": {
+      "description": "Playback Speed",
+      "message": "再生速度"
+   },
+   "editor_premium_options_special_effect": {
+      "description": "Special Effect",
+      "message": "特殊効果"
+   },
+   "editor_premium_options_title": {
+      "description": "Premium Options",
+      "message": "プレミアムオプション"
+   },
+   "editor_save_dialog_advanced_encoding_options": {
+      "description": "Title for a section containing advanced, technical options for encoding a file.",
+      "message": "高度なエンコードオプション"
+   },
+   "editor_save_dialog_alert_title": {
+      "description": "Warning",
+      "message": "警告"
+   },
+   "editor_save_dialog_aspect_ratio": {
+      "description": "lock aspect ratio",
+      "message": "ロックアスペクト比"
+   },
+   "editor_save_dialog_cancel": {
+      "description": "Cancel",
+      "message": "キャンセル"
+   },
+   "editor_save_dialog_chip_animated_image": {
+      "description": "Chip label indicating an animated image format (e.g. GIF, AVIF).",
+      "message": "アニメーション画像"
+   },
+   "editor_save_dialog_chip_large_file": {
+      "description": "Chip label indicating the format produces a large file size.",
+      "message": "大きいファイル"
+   },
+   "editor_save_dialog_chip_limited_support": {
+      "description": "Chip label indicating the format has limited browser/app support.",
+      "message": "対応が限定的"
+   },
+   "editor_save_dialog_chip_small_file": {
+      "description": "Chip label indicating the format produces a small file size.",
+      "message": "小さいファイル"
+   },
+   "editor_save_dialog_chip_video": {
+      "description": "Chip label indicating a video format (e.g. WebM, MP4).",
+      "message": "動画"
+   },
+   "editor_save_dialog_chip_widely_supported": {
+      "description": "Chip label indicating the format is widely supported.",
+      "message": "広くサポートされています"
+   },
+   "editor_save_dialog_compress": {
+      "description": "Compress & optimize GIF",
+      "message": "圧縮＆最適化GIF"
+   },
+   "editor_save_dialog_compress_tooltip": {
+      "description": "Apply GIF compression algorthm to greatly reduce GIF file size and in some cases improve quality. Highly recommeded.",
+      "message": "GIF圧縮アルグルトを適用して、GIFファイルサイズを大幅に削減し、場合によっては品質を向上させます。 強くお勧めします。"
+   },
+   "editor_save_dialog_dither_tooltip": {
+      "description": "Apply dither algorithm to frames. Try toggling this option if you experience color quality issues.",
+      "message": "画像にディザーアルゴリズムを適用します。 色の品質の問題が発生した場合は、このオプションを切り替えてみてください。"
+   },
+   "editor_save_dialog_download_raw_recording": {
+      "description": "Download raw recording",
+      "message": "生の録音をダウンロードします"
+   },
+   "editor_save_dialog_estimated_size": {
+      "description": "Estimated GIF Size: ",
+      "message": "推定GIFサイズ："
+   },
+   "editor_save_dialog_export_sound": {
+      "description": "Include sound (beta)",
+      "message": "サウンドを含める（ベータ）"
+   },
+   "editor_save_dialog_export_sound_tooltip": {
+      "description": "Enable this option to include sound in the video.",
+      "message": "このオプションがビデオにサウンドを含めることを有効にします。"
+   },
+   "editor_save_dialog_frames": {
+      "description": "Frames: ",
+      "message": "画像："
+   },
+   "editor_save_dialog_frames_alert": {
+      "description": "There are currently selected frames, saving will only output these selected frames - ",
+      "message": "現在選択されている画像があり、保存はこれらの選択したフレームのみを出力します - "
+   },
+   "editor_save_dialog_frames_alert_button": {
+      "description": "Click here to unselect all frames",
+      "message": "すべての画像を解除するには、ここをクリックしてください"
+   },
+   "editor_save_dialog_frames_alert_title": {
+      "description": "Playback Speed",
+      "message": "再生速度"
+   },
+   "editor_save_dialog_frames_processing": {
+      "description": "Processing Frames: ",
+      "message": "画像の処理："
+   },
+   "editor_save_dialog_height_helper": {
+      "description": "Recorded height is ",
+      "message": "記録された高さは"
+   },
+   "editor_save_dialog_lossy_compression": {
+      "description": "Label for a setting that controls the level of lossy compression, from 0 to 100 percent.",
+      "message": "非可逆圧縮 (0～100%)"
+   },
+   "editor_save_dialog_number_min_max_validation": {
+      "description": "A value between $minSize$ and $maxSize$ is required.",
+      "message": "$minSize$と$maxSize$の間の値が必要です。",
+      "placeholders": {
+         "maxSize": {
+            "content": "$2"
+         },
+         "minSize": {
+            "content": "$1"
+         }
+      }
+   },
+   "editor_save_dialog_processing_alert": {
+      "description": "Processing this recording will require a lot of memory and processing power. Unless you have a high spec PC it is recommended to do one or more of the following:",
+      "message": "この記録の処理には、多くのメモリと処理電力が必要になります。 高仕様PCがない限り、次のうち1つ以上を実行することをお勧めします。"
+   },
+   "editor_save_dialog_processing_alert_memory": {
+      "description": "Please note if the resulting GIF is blank then you ran out of memory.",
+      "message": "結果のGIFが空白の場合は、メモリを使い果たしました。"
+   },
+   "editor_save_dialog_processing_alert_point_1": {
+      "description": "Compress and optimize GIF",
+      "message": "GIFを圧縮して最適化します"
+   },
+   "editor_save_dialog_processing_alert_point_2": {
+      "description": "Reduce the width & height",
+      "message": "幅と身長を減らす"
+   },
+   "editor_save_dialog_processing_alert_point_3": {
+      "description": "Reduce FPS or delete frames",
+      "message": "FPSを削減するか、画像を削除します"
+   },
+   "editor_save_dialog_purchase_dialog_compression_description": {
+      "description": "Free users are limited to 3 high quality GIF compressions per day. Upgrade to Premium to have no restrictions.",
+      "message": "無料のユーザーは、1日に3つの高品質のGIF圧縮に制限されています。 制限がないようにプレミアムにアップグレードします。"
+   },
+   "editor_save_dialog_quantization_algorithm": {
+      "description": "Label for a dropdown to select a quantization algorithm.",
+      "message": "量子化アルゴリズム"
+   },
+   "editor_save_dialog_quantization_algorithm_new_alpha": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Alpha.",
+      "message": "新 (アルファ)"
+   },
+   "editor_save_dialog_quantization_algorithm_new_beta": {
+      "description": "An option for the quantization algorithm setting, indicating a new version in Beta.",
+      "message": "新 (ベータ)"
+   },
+   "editor_save_dialog_quantization_algorithm_old": {
+      "description": "An option for the quantization algorithm setting, indicating an older version.",
+      "message": "旧"
+   },
+   "editor_save_dialog_recording_quality_alert": {
+      "description": "GIF quality is limited for non premium users. To output high quality recordings you can do one of the following:",
+      "message": "GIFの品質は、プレミアムユーザーではない場合が限られています。 高品質の録音を出力するには、次のいずれかを実行できます。"
+   },
+   "editor_save_dialog_recording_quality_alert_option_1": {
+      "description": "Purchase premium",
+      "message": "プレミアムを購入します"
+   },
+   "editor_save_dialog_recording_quality_alert_option_2": {
+      "description": "Save as a WebM file",
+      "message": "Webmファイルとして保存します"
+   },
+   "editor_save_dialog_reduce_width": {
+      "description": "Reduce width & height",
+      "message": "幅と身長を減らす"
+   },
+   "editor_save_dialog_reduce_width_tooltip": {
+      "description": "Reduce GIF width and height/quality to improve processing time and produce a smaller file.",
+      "message": "GIFの幅と高さ/品質を削減して、処理時間を改善し、小さなファイルを生成します。"
+   },
+   "editor_save_dialog_save": {
+      "description": "Save",
+      "message": "保存"
+   },
+   "editor_save_dialog_save_by": {
+      "description": "Save by",
+      "message": "保存します"
+   },
+   "editor_save_dialog_save_by_download": {
+      "description": "Download file",
+      "message": "ダウンロードファイル"
+   },
+   "editor_save_dialog_save_by_google_drive": {
+      "description": "Upload to Google Drive & copy link",
+      "message": "Google Drive＆Copyリンクにアップロードします"
+   },
+   "editor_save_dialog_save_location": {
+      "description": "Save location",
+      "message": "位置を保存"
+   },
+   "editor_save_dialog_save_location_downloads": {
+      "description": "Downloads folder",
+      "message": "フォルダーをダウンロードします"
+   },
+   "editor_save_dialog_save_location_downloads_subfolder": {
+      "description": "Downloads subfolder",
+      "message": "サブフォルダーをダウンロードします"
+   },
+   "editor_save_dialog_save_location_select": {
+      "description": "Manually select location",
+      "message": "手動で選択した場所"
+   },
+   "editor_save_dialog_title": {
+      "description": "Save",
+      "message": "保存"
+   },
+   "editor_save_dialog_title_processing": {
+      "description": "Processing...",
+      "message": "処理..."
+   },
+   "editor_save_dialog_title_uploading": {
+      "description": "Uploading...",
+      "message": "アップロード..."
+   },
+   "editor_save_dialog_width_helper": {
+      "description": "Recorded width is ",
+      "message": "記録された幅はです"
+   },
+   "editor_text": {
+      "description": "Open in editor",
+      "message": "編集者で開く"
+   },
+   "editor_tip_delete_items": {
+      "description": "Pro tip: Delete added items by selecting the item and pressing the delete key.",
+      "message": "Proヒント：アイテムを選択してDeleteキーを押すと、追加された項目を削除します。"
+   },
+   "editor_tip_edit_specific_frames": {
+      "description": "Pro tip: You can edit specific frames by using the 'Apply edits to selected option'",
+      "message": "プロのヒント：「選択したオプションに編集を適用する」を使用して、特定の画像を編集できます。"
+   },
+   "editor_tip_scroll": {
+      "description": "Pro tip: Scroll when hovering the screenshot/recording to zoom.",
+      "message": "PROヒント：スクリーンショット/録画をズームしてスクロールします。"
+   },
+   "editor_tip_shift_multiple_items": {
+      "description": "Pro tip: When using the selecting tool hold down shift to select more than one item.",
+      "message": "PROヒント：選択ツールを使用する場合は、Shiftを押して複数の項目を選択します。"
+   },
+   "editor_tip_update_multiple_items": {
+      "description": "Pro tip: You can scale, rotate, move and delete multiple items at once.",
+      "message": "PROヒント：複数の項目を一度に拡大、回転、移動、移動できます。"
+   },
+   "editor_tip_update_text": {
+      "description": "Pro tip: Double click on text to edit it.",
+      "message": "Proヒント：編集するにはテキストをダブルクリックします。"
+   },
+   "editor_upload_dialog_alert_copy_failed_message": {
+      "description": "This may have occurred due to the window not being focused.",
+      "message": "これは、窓が集中していないために発生した可能性があります。"
+   },
+   "editor_upload_dialog_alert_copy_failed_title": {
+      "description": "Copy to clipboard failed",
+      "message": "クリップボードにコピーが失敗しました"
+   },
+   "editor_upload_dialog_alert_copy_success_title": {
+      "description": "Copied to clipboard",
+      "message": "クリップボードにコピーされました"
+   },
+   "editor_upload_dialog_alert_upload_failed": {
+      "description": "Upload Failed",
+      "message": "アップロードに失敗しました"
+   },
+   "editor_upload_dialog_alert_upload_failed_link": {
+      "description": "Try again.",
+      "message": "再試行。"
+   },
+   "editor_upload_dialog_alert_upload_failed_message": {
+      "description": "Please make sure you are connected to the internet and have accepted Google Drive permissions.",
+      "message": "インターネットに接続されており、Googleドライブの許可を受け入れていることを確認してください。"
+   },
+   "editor_upload_dialog_cancel_and_download": {
+      "description": "Cancel and download file",
+      "message": "ファイルをキャンセルしてダウンロードします"
+   },
+   "editor_upload_dialog_close": {
+      "description": "Close",
+      "message": "選ぶ"
+   },
+   "editor_upload_dialog_copy_link": {
+      "description": "Copy link",
+      "message": "リンクをコピーする"
+   },
+   "editor_upload_dialog_link_public": {
+      "description": "Allow anyone with the link to view.",
+      "message": "リンクを持っている人なら誰でも表示します。"
+   },
+   "editor_zoom_crop_animation_animated": {
+      "description": "Sub-label indicating an animation type is animated.",
+      "message": "アニメーション化"
+   },
+   "editor_zoom_crop_animation_crop": {
+      "description": "Animation type option for static cropping without animation.",
+      "message": "トリミング"
+   },
+   "editor_zoom_crop_animation_static": {
+      "description": "Sub-label indicating an animation type is static (no animation).",
+      "message": "静的"
+   },
+   "editor_zoom_crop_animation_type": {
+      "description": "Label for the animation type selection section.",
+      "message": "アニメーションタイプ"
+   },
+   "editor_zoom_crop_animation_zoom_in": {
+      "description": "Animation type option for zooming in on the selected area.",
+      "message": "ズームイン"
+   },
+   "editor_zoom_crop_animation_zoom_out": {
+      "description": "Animation type option for zooming out from the selected area.",
+      "message": "ズームアウト"
+   },
+   "editor_zoom_crop_apply": {
+      "description": "Apply button in zoom/crop dialog.",
+      "message": "適用"
+   },
+   "editor_zoom_crop_cancel": {
+      "description": "Cancel button in zoom/crop dialog.",
+      "message": "キャンセル"
+   },
+   "editor_zoom_crop_change_area": {
+      "description": "Tooltip text for button to change the selected crop area.",
+      "message": "領域を変更"
+   },
+   "editor_zoom_crop_dialog_title": {
+      "description": "Title for the zoom and crop dialog in the editor.",
+      "message": "ズームとトリミング"
+   },
+   "editor_zoom_crop_draw_instruction": {
+      "description": "Instruction text for the user to draw a crop area on the frame preview.",
+      "message": "フレーム上に選択範囲を描画します"
+   },
+   "editor_zoom_crop_frame_end": {
+      "description": "Label for the end frame number.",
+      "message": "終了"
+   },
+   "editor_zoom_crop_frame_range": {
+      "description": "Label for the frame range selection section.",
+      "message": "フレーム範囲"
+   },
+   "editor_zoom_crop_frame_start": {
+      "description": "Label for the start frame number.",
+      "message": "開始"
+   },
+   "editor_zoom_crop_frames_menu": {
+      "description": "Menu item label for zoom/crop frames feature.",
+      "message": "フレームをズーム/トリミング"
+   },
+   "editor_zoom_crop_no_area_selected": {
+      "description": "Message displayed when no crop area has been selected.",
+      "message": "領域が選択されていません"
+   },
+   "editor_zoom_crop_select_area": {
+      "description": "Button text to select a crop area on the frame.",
+      "message": "領域を選択"
+   },
+   "editor_zoom_crop_smooth_animation": {
+      "description": "Checkbox label for smoothing animation by interpolating frames.",
+      "message": "フレームを追加してアニメーションをスムーズにする"
+   },
+   "editor_zoom_crop_transition": {
+      "description": "Label for the transition duration section (number of frames for animation).",
+      "message": "遷移"
+   },
+   "enable_drawing_text": {
+      "description": "Enable drawing",
+      "message": "図面を有効にします"
+   },
+   "enable_drawing_tooltip_text": {
+      "description": "This option allows users to draw in the selected area while holding down the ctrl key.",
+      "message": "このオプションを使用すると、Ctrlキーを押しながらユーザーが選択した領域に描画できます。"
+   },
+   "extension_description": {
+      "description": "Take screenshots & record GIFs instantly! Edit & share seamlessly. Your all-in-one screenshot and screen recording solution.",
+      "message": "スクリーンショットを取り、GIFを即座に録音してください！ シームレスに編集して共有します。 オールインワンのスクリーンショットとスクリーンの録音ソリューション。"
+   },
+   "extension_name": {
+      "description": "Chrome Capture - screenshot & GIF",
+      "message": "Chrome Capture -Screenshot＆GIF"
+   },
+   "extension_short_name": {
+      "description": "Chrome Capture",
+      "message": "クロームキャプチャー"
+   },
+   "file_access_text": {
+      "description": "After screenshot action",
+      "message": "スクリーンショット後のアクション"
+   },
+   "filename_text": {
+      "description": "Filename",
+      "message": "ファイル名"
+   },
+   "frames_per_sec_short_text": {
+      "description": "FPS",
+      "message": "FPS"
+   },
+   "frames_per_sec_text": {
+      "description": "Frames per second (fps)",
+      "message": "秒あたりの画像（fps）"
+   },
+   "frames_text": {
+      "description": "frames",
+      "message": "画像"
+   },
+   "free_settings_text": {
+      "description": "Free Settings",
+      "message": "無料設定"
+   },
+   "fullscreen_info_modal_cancel": {
+      "description": "Cancel",
+      "message": "キャンセル"
+   },
+   "fullscreen_info_modal_continue": {
+      "description": "Are you sure you want to continue with full screen capture?",
+      "message": "全画面キャプチャを続行しますか？"
+   },
+   "fullscreen_info_modal_do_not_show": {
+      "description": "Do not show this again",
+      "message": "これ、二度とみせないで"
+   },
+   "fullscreen_info_modal_message": {
+      "description": "You have used a Chrome Capture shortcut without the cropping tool, this will capture in full screen mode.",
+      "message": "クロムキャプチャーショートカットをトリミングツールなしで使用しましたが、これは全画面モードでキャプチャします。"
+   },
+   "fullscreen_info_modal_open_cropping": {
+      "description": "Open cropping tool",
+      "message": "オープントリミングツール"
+   },
+   "fullscreen_info_modal_shortcut_cropping_tool": {
+      "description": "Alt + C: Open/close Chrome Capture cropping tool",
+      "message": "ALT + C：Chromeキャプチャトリップツールを開く/閉じる"
+   },
+   "fullscreen_info_modal_shortcut_fullpage_screenshot": {
+      "description": "Alt + Shift + S: Full webpage screenshot (beta)",
+      "message": "ALT + SHIFT + S：フルウェブページスクリーンショット（ベータ版）"
+   },
+   "fullscreen_info_modal_shortcut_linkt": {
+      "description": "You can configure these here: ",
+      "message": "ここに設定できます。"
+   },
+   "fullscreen_info_modal_shortcut_recording": {
+      "description": "Alt + R: Start/stop recording",
+      "message": "ALT + R：録音を開始/停止します"
+   },
+   "fullscreen_info_modal_shortcut_screenshot": {
+      "description": "Alt + S: Visible area screenshot",
+      "message": "Alt + S：目に見える領域のスクリーンショット"
+   },
+   "fullscreen_info_modal_shortcuts": {
+      "description": "Default shortcuts are: ",
+      "message": "デフォルトのショートカットは次のとおりです。"
+   },
+   "fullscreen_info_modal_start": {
+      "description": "Start full screen capture",
+      "message": "フルスクリーンキャプチャを開始します"
+   },
+   "fullscreen_info_modal_title": {
+      "description": "Full screen capture",
+      "message": "フルスクリーンキャプチャー"
+   },
+   "general_not_available": {
+      "description": "N/A",
+      "message": "N/A"
+   },
+   "get_premium": {
+      "description": "Get Premium",
+      "message": "プレミアムになる"
+   },
+   "height_text": {
+      "description": "Width (px)",
+      "message": "幅（PX）"
+   },
+   "hi": {
+      "description": "Hi",
+      "message": "こんにちは"
+   },
+   "internet_connection_required": {
+      "description": "Internet connection is required to upgrade to premium.",
+      "message": "プレミアムにアップグレードするには、インターネット接続が必要です。"
+   },
+   "manage_subscription_access_until_date": {
+      "description": "Your plan will not renew. You can access premium features until $date$.",
+      "message": "プランは更新されません。$date$までプレミアム機能にアクセスできます。",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_cancel_button": {
+      "description": "Cancel subscription",
+      "message": "サブスクリプションをキャンセル"
+   },
+   "manage_subscription_cancel_confirm_cancel_button": {
+      "description": "Keep Premium",
+      "message": "プレミアムを維持"
+   },
+   "manage_subscription_cancel_confirm_confirm_button": {
+      "description": "Continue to cancel",
+      "message": "キャンセルを続行"
+   },
+   "manage_subscription_cancel_confirm_description": {
+      "description": "You will lose access to Premium features and Premium options will be reset.",
+      "message": "プレミアム機能へのアクセス権を失い、プレミアムオプションはリセットされます。"
+   },
+   "manage_subscription_cancel_confirm_title": {
+      "description": "Are you sure you want to cancel your subscription?",
+      "message": "本当にサブスクリプションをキャンセルしますか？"
+   },
+   "manage_subscription_ended_on_date": {
+      "description": "Subscription ended on $date$.",
+      "message": "サブスクリプションは$date$に終了しました。",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_ends_on_date": {
+      "description": "Subscription ends on $date$.",
+      "message": "サブスクリプションは$date$に終了します。",
+      "placeholders": {
+         "date": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_next_payment_full": {
+      "description": "Next payment: $price$ on $date$",
+      "message": "次のお支払い：$date$に$price$",
+      "placeholders": {
+         "date": {
+            "content": "$2"
+         },
+         "price": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_paid_full": {
+      "description": "Paid: $billingCycle$",
+      "message": "支払い：$billingCycle$",
+      "placeholders": {
+         "billingCycle": {
+            "content": "$1"
+         }
+      }
+   },
+   "manage_subscription_resubscribe_prompt": {
+      "description": " To use premium features again, please upgrade.",
+      "message": " 再びプレミアム機能を利用するには、アップグレードしてください。"
+   },
+   "manage_subscription_update_payment_button": {
+      "description": "Update payment method",
+      "message": "支払い方法を更新"
+   },
+   "max_recording_dimension_size_text": {
+      "description": "Max recording resolution/quality",
+      "message": "最大記録解像度/品質"
+   },
+   "no_limit_text": {
+      "description": "No limit",
+      "message": "制限なし"
+   },
+   "open_text": {
+      "description": "Open",
+      "message": "開ける"
+   },
+   "options_default_action": {
+      "description": "Extension icon click action",
+      "message": "拡張機能アイコンクリック時のアクション"
+   },
+   "options_dimension_size_1000": {
+      "description": "1000 pixels",
+      "message": "1000ピクセル"
+   },
+   "options_dimension_size_1080p": {
+      "description": "1920 pixels (1080p)",
+      "message": "1920ピクセル（1080p）"
+   },
+   "options_dimension_size_480p": {
+      "description": "640 pixels (480p)",
+      "message": "640ピクセル（480p）"
+   },
+   "options_dimension_size_4k": {
+      "description": "3840 pixels (4K)",
+      "message": "3840ピクセル（4K）"
+   },
+   "options_dimension_size_720p": {
+      "description": "1280 pixels (720p)",
+      "message": "1280ピクセル（720p）"
+   },
+   "options_embedded_options_permission_warning": {
+      "description": "Cursor highlighting, click effects, and drawing tools will only work until the page reloads or changes. To keep them active after reloads or redirects, you'll need to grant an extra permission.",
+      "message": "カーソルのハイライト、クリック効果、描画ツールは、ページが再読み込みまたは変更されるまでしか機能しません。再読み込みやリダイレクト後もアクティブに保つには、追加の権限を付与する必要があります。"
+   },
+   "options_enable_notifications": {
+      "description": "Enable notifications",
+      "message": "通知を有効にします"
+   },
+   "options_enable_notifications_tooltip": {
+      "description": "Display notifications when full screen recording starts and processing recordings in the background.",
+      "message": "フル画面録画が開始され、バックグラウンドで録音を処理するときに通知が表示されます。"
+   },
+   "options_enable_subfolder_downloads": {
+      "description": "Download files into subfolder",
+      "message": "サブフォルダーにファイルをダウンロードします"
+   },
+   "options_enable_subfolder_downloads_tooltip": {
+      "description": "Download files into a subfolder of your choice inside the downloads folder. This option is useful for organising your captures.",
+      "message": "ダウンロードフォルダー内で選択したサブフォルダーにファイルをダウンロードします。 このオプションは、キャプチャを整理するのに役立ちます。"
+   },
+   "options_how_to_use_btn": {
+      "description": "How to use",
+      "message": "使い方"
+   },
+   "options_language": {
+      "description": "Language",
+      "message": "言語"
+   },
+   "options_open_containing_folder_on_save": {
+      "description": "Open containing folder after saving",
+      "message": "保存後にフォルダーを開く"
+   },
+   "options_open_popup": {
+      "description": "Open popup",
+      "message": "ポップアップを開く"
+   },
+   "options_open_selected_area": {
+      "description": "Open selected area capture",
+      "message": "選択したエリアキャプチャーを開きます"
+   },
+   "options_section_general": {
+      "description": "Title for the General settings section in the options page",
+      "message": "一般設定"
+   },
+   "options_section_output": {
+      "description": "Title for the Output and Saving settings section in the options page",
+      "message": "出力と保存"
+   },
+   "options_section_recording": {
+      "description": "Title for the Recording settings section in the options page",
+      "message": "録画設定"
+   },
+   "options_section_visuals": {
+      "description": "Title for the Cursor and Interaction Visuals settings section in the options page",
+      "message": "カーソルとインタラクションの視覚効果"
+   },
+   "options_shortcuts_btn": {
+      "description": "Shortcuts",
+      "message": "ショートカット"
+   },
+   "options_subfolder_downloads_name": {
+      "description": "Subfolder name:",
+      "message": "サブフォルダー名："
+   },
+   "options_support_btn": {
+      "description": "Support",
+      "message": "サポート"
+   },
+   "overlay_help_text": {
+      "description": "Click and drag to choose your selected area. \nRight click to snap to an element, hold shift for multiple.",
+      "message": "クリックしてドラッグして選択した領域を選択します。 \n 右クリックして要素にスナップして、Shiftキーを押します。"
+   },
+   "plan_billing_annually": {
+      "description": "Annually",
+      "message": "年次"
+   },
+   "plan_billing_monthly": {
+      "description": "Monthly",
+      "message": "月次"
+   },
+   "plan_name_custom": {
+      "description": "Custom Plan",
+      "message": "カスタムプラン"
+   },
+   "popup_capture_tab": {
+      "description": "Capture",
+      "message": "キャプチャー"
+   },
+   "popup_desktop_screenshot_tooltip": {
+      "description": "Capture the entire screen, desktop, or any open application.",
+      "message": "画面全体、デスクトップ、またはオープンアプリケーションをキャプチャします。"
+   },
+   "popup_editor_icon_tooltip": {
+      "description": "Open Editor",
+      "message": "オープンエディタ"
+   },
+   "popup_full_page_screenshot_tooltip": {
+      "description": "Capture the current tab full webpage, including content beyond the visible area.",
+      "message": "目に見える領域を超えたコンテンツを含む、現在のタブ全体のWebページをキャプチャします。"
+   },
+   "popup_full_webpage": {
+      "description": "Full webpage",
+      "message": "完全なWebページ"
+   },
+   "popup_no_scripts_alert": {
+      "description": "Selected area and full webpage screenshots are not possible here. These features are available on other websites.",
+      "message": "ここでは、選択されたエリアと完全なWebページのスクリーンショットは不可能です。 これらの機能は、他のWebサイトで利用できます。"
+   },
+   "popup_record_tab": {
+      "description": "Record",
+      "message": "記録"
+   },
+   "popup_recording_limit_alert": {
+      "description": "Record up to $seconds$ seconds per GIF. Premium users can update this from the ",
+      "message": "GIFごとに$seconds$秒まで記録します。 プレミアムユーザーはこれをから更新できます",
+      "placeholders": {
+         "seconds": {
+            "content": "$1"
+         }
+      }
+   },
+   "popup_recording_limit_settings_link": {
+      "description": "settings page.",
+      "message": "設定ページ。"
+   },
+   "popup_screen_or_app": {
+      "description": "Full screen or app",
+      "message": "全画面またはアプリ"
+   },
+   "popup_selected_area": {
+      "description": "Selected area",
+      "message": "選択された領域"
+   },
+   "popup_selected_area_screenshot_tooltip": {
+      "description": "Capture a specific area of the current tab.",
+      "message": "現在のタブの特定の領域をキャプチャします。"
+   },
+   "popup_set_shortcut": {
+      "description": "set shortcut",
+      "message": "ショートカットを設定します"
+   },
+   "popup_settings_icon_tooltip": {
+      "description": "Open Settings",
+      "message": "オープン設定"
+   },
+   "popup_tab_screenshot_tooltip": {
+      "description": "Capture the visible part of the current tab.",
+      "message": "現在のタブの可視部分をキャプチャします。"
+   },
+   "popup_this_tab": {
+      "description": "This tab",
+      "message": "このタブ"
+   },
+   "popup_waiting_for_desktop_selection_alert": {
+      "description": "FULL SCREEN OR APP capture did not start because you did not select an option from the popup dialog. If you have multiple monitors it may have opened on another monitor.",
+      "message": "ポップアップダイアログからオプションを選択しなかったため、フルスクリーンまたはアプリキャプチャは起動しませんでした。 複数のモニターがある場合は、別のモニターで開いている可能性があります。"
+   },
+   "premium_settings_text": {
+      "description": "Premium Settings",
+      "message": "プレミアム設定"
+   },
+   "purchase_btn_text": {
+      "description": "Get Premium!",
+      "message": "プレミアムを入手！"
+   },
+   "purchase_description_limited_time_text": {
+      "description": "Lock in this price now - limited time offer before we switch to subscriptions!",
+      "message": "今すぐこの価格で確定しましょう！ サブスクリプションに切り替える前の期間限定オファーです！"
+   },
+   "purchase_description_text": {
+      "description": "Just one payment unlocks all premium features forever. No recurring fees!",
+      "message": "一度のお支払いで、すべてのプレミアム機能が永久に利用可能になります。月額料金は不要です！"
+   },
+   "purchase_feature_30fps": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "シルクのように滑らかな30 FPS録画"
+   },
+   "purchase_feature_4K": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "非常にクリアな4K録画"
+   },
+   "purchase_feature_alter_frame_rate": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "カスタムフレームレート"
+   },
+   "purchase_feature_alter_playback_speed": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "スローモーション＆タイムラプス効果"
+   },
+   "purchase_feature_blur": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ぼかしツール"
+   },
+   "purchase_feature_crop_recording": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "正確なGIFの切り抜き"
+   },
+   "purchase_feature_default": {
+      "description": "Feature that goes in $feature$ placeholder. Default fallback.",
+      "message": "この機能"
+   },
+   "purchase_feature_frame_edits": {
+      "description": "Feature that goes in $feature$ placeholder. Marketing text.",
+      "message": "パワフルなフレーム単位の編集"
+   },
+   "purchase_feature_highlight": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ハイライトツール"
+   },
+   "purchase_feature_no_duration_limit": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "無制限の録画時間"
+   },
+   "purchase_feature_special_effect": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "特殊効果"
+   },
+   "purchase_feature_step_tool": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "ステップツール"
+   },
+   "purchase_feature_svg": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "カスタムアイコンとロゴの追加"
+   },
+   "purchase_feature_text_and_annotation_customization": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "テキストと注釈の完全な制御"
+   },
+   "purchase_feature_unlimited_gif_compression": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "無制限の高度なGIF圧縮"
+   },
+   "purchase_feature_update_end_time": {
+      "description": "Feature that goes in $feature$ placeholder.",
+      "message": "カスタマイズされた録画時間"
+   },
+   "purchase_login_dialog_closed_by_user_alert": {
+      "description": "Looks like you closed the sign in dialog, premium users must sign in so you don't lose premium access.",
+      "message": "サインインダイアログを閉じたように見えますが、プレミアムユーザーはプレミアムアクセスを失わないようにサインインする必要があります。"
+   },
+   "purchase_login_dialog_google_button": {
+      "description": "Sign in with Google",
+      "message": "Googleにサインインします"
+   },
+   "purchase_login_dialog_title": {
+      "description": "Sign in required",
+      "message": "必要なサインイン"
+   },
+   "purchase_login_text": {
+      "description": "Sign in with Google to link your purchase to your account.",
+      "message": "Googleでサインインして、購入をアカウントにリンクしてください。"
+   },
+   "purchase_login_text_window_opened": {
+      "description": "Sign into Google in the popup window.",
+      "message": "ポップアップウィンドウでGoogleにサインインします。"
+   },
+   "purchase_subscription_title_text": {
+      "description": "Choose the plan that fits your needs.",
+      "message": "ニーズに合ったプランを選択してください。"
+   },
+   "purchase_title_text": {
+      "description": "Get Lifetime Premium Access Today!",
+      "message": "今すぐ永久プレミアムアクセスを入手！"
+   },
+   "purchase_title_text_blocked_feature": {
+      "description": "That feature requires Premium",
+      "message": "その機能にはプレミアムが必要です"
+   },
+   "purchase_title_text_blocked_pro_feature": {
+      "description": "That feature requires Premium Pro",
+      "message": "その機能にはPremium Proが必要です"
+   },
+   "purchase_title_text_blocked_pro_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium Pro paywall.",
+      "message": "プレミアムプロで「$feature$」をアンロック",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchase_title_text_blocked_specific_feature": {
+      "description": "Title text when a specific feature is blocked by the Premium paywall.",
+      "message": "プレミアムで「$feature$」をアンロック",
+      "placeholders": {
+         "feature": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_already_premium_user": {
+      "description": "Already a premium user?",
+      "message": "すでにプレミアムユーザー？"
+   },
+   "purchases_bill_me": {
+      "description": "Bill me:",
+      "message": "請求先："
+   },
+   "purchases_checkout_unavailable_message": {
+      "description": "Message shown when checkout could not be started.",
+      "message": "現在、アップグレードの処理を開始できませんでした。もう一度お試しください。"
+   },
+   "purchases_compare_12_fps": {
+      "description": "12FPS",
+      "message": "12FPS"
+   },
+   "purchases_compare_3_per_day": {
+      "description": "3 per day",
+      "message": "1日3回"
+   },
+   "purchases_compare_add_custom_shape_tool": {
+      "description": "Add custom shape/icon tool",
+      "message": "カスタムシェイプ/アイコン追加ツール"
+   },
+   "purchases_compare_benefits": {
+      "description": "Benefits",
+      "message": "特典"
+   },
+   "purchases_compare_blur_tool": {
+      "description": "Blur tool",
+      "message": "ぼかしツール"
+   },
+   "purchases_compare_close_button_label": {
+      "description": "Close",
+      "message": "閉じる"
+   },
+   "purchases_compare_compression": {
+      "description": "High quality GIF compression",
+      "message": "高品質GIF圧縮"
+   },
+   "purchases_compare_core_capture_features": {
+      "description": "Core Capture Features",
+      "message": "主なキャプチャ機能"
+   },
+   "purchases_compare_crop_recordings": {
+      "description": "Crop recordings",
+      "message": "録画をクロップ"
+   },
+   "purchases_compare_customize_editing_tools": {
+      "description": "Customize editing tools (font, size color)",
+      "message": "編集ツールのカスタマイズ（フォント、サイズ、色）"
+   },
+   "purchases_compare_drawing": {
+      "description": "Draw while recording",
+      "message": "録音中に描きます"
+   },
+   "purchases_compare_early_access": {
+      "description": "Early access to new features",
+      "message": "新機能への早期アクセス"
+   },
+   "purchases_compare_editing": {
+      "description": "Edit captures",
+      "message": "キャプチャを編集します"
+   },
+   "purchases_compare_editing_free": {
+      "description": "basic editing",
+      "message": "基本編集"
+   },
+   "purchases_compare_editing_suite": {
+      "description": "Editing Suite",
+      "message": "編集スイート"
+   },
+   "purchases_compare_frame_editing": {
+      "description": "Frame editing",
+      "message": "フレーム編集"
+   },
+   "purchases_compare_frame_rate": {
+      "description": "Adjust Frame Rate",
+      "message": "フレームレートを調整"
+   },
+   "purchases_compare_frame_specific_edits": {
+      "description": "Frame specific edits",
+      "message": "フレーム固有の編集"
+   },
+   "purchases_compare_free_draw_tools": {
+      "description": "Free draw, line, arrow, rectangle, circle, text tools",
+      "message": "フリー描画、線、矢印、長方形、円、テキストツール"
+   },
+   "purchases_compare_full_webpage_screenshots": {
+      "description": "Unlimited full page screenshots.",
+      "message": "無制限のフルページのスクリーンショット。"
+   },
+   "purchases_compare_highlight_tool": {
+      "description": "Highlight tool",
+      "message": "ハイライトツール"
+   },
+   "purchases_compare_live_recording_tools": {
+      "description": "Live Recording Tools",
+      "message": "ライブ録画ツール"
+   },
+   "purchases_compare_mouse": {
+      "description": "Click and mouse indication",
+      "message": "クリックしてマウスの表示"
+   },
+   "purchases_compare_plans": {
+      "description": "Compare plans",
+      "message": "プランを比較してください"
+   },
+   "purchases_compare_plans_premium_button": {
+      "description": "Upgrade to Premium",
+      "message": "プレミアムにアップグレード"
+   },
+   "purchases_compare_playback_speed": {
+      "description": "Tune recording playback speed",
+      "message": "録音再生スピードを調整します"
+   },
+   "purchases_compare_priority_support": {
+      "description": "Priority support and feature requests",
+      "message": "優先サポートと機能リクエスト"
+   },
+   "purchases_compare_recording": {
+      "description": "Unlimited GIF recordings.",
+      "message": "無制限のGIF録音"
+   },
+   "purchases_compare_recording_free": {
+      "description": "15sec limit per GIF",
+      "message": "GIFあたり15秒制限"
+   },
+   "purchases_compare_recording_quality": {
+      "description": "High quality GIFs",
+      "message": "高品質のgifs"
+   },
+   "purchases_compare_recording_quality_control": {
+      "description": "Recording Quality & Control",
+      "message": "録画の品質と制御"
+   },
+   "purchases_compare_recording_quality_free": {
+      "description": "1000 pixels max",
+      "message": "最大1000ピクセル"
+   },
+   "purchases_compare_screenshots": {
+      "description": "Unlimited screenshots.",
+      "message": "無制限のスクリーンショット。"
+   },
+   "purchases_compare_special_effects": {
+      "description": "Recording special effects",
+      "message": "特殊効果を記録します"
+   },
+   "purchases_compare_up_to_1080p": {
+      "description": "Up to 1080p",
+      "message": "最大1080p"
+   },
+   "purchases_compare_up_to_24_fps": {
+      "description": "Up to 24FPS",
+      "message": "最大24FPS"
+   },
+   "purchases_compare_up_to_30_fps": {
+      "description": "Up to 30FPS",
+      "message": "最大30FPS"
+   },
+   "purchases_compare_up_to_4k_plus": {
+      "description": "Up to 4K+",
+      "message": "最大4K+"
+   },
+   "purchases_current_plan": {
+      "description": "Current plan",
+      "message": "現在のプラン"
+   },
+   "purchases_features": {
+      "description": "Features",
+      "message": "機能"
+   },
+   "purchases_free": {
+      "description": "Free",
+      "message": "無料"
+   },
+   "purchases_free_button": {
+      "description": "Free to use",
+      "message": "使うことができます"
+   },
+   "purchases_free_feature_editing": {
+      "description": "Basic editing",
+      "message": "基本編集"
+   },
+   "purchases_free_feature_recording": {
+      "description": "Basic GIF recording",
+      "message": "基本的なGIF録音"
+   },
+   "purchases_free_feature_screenshots": {
+      "description": "Unlimited screenshots",
+      "message": "無制限のスクリーンショット"
+   },
+   "purchases_free_plan_description": {
+      "description": "Get started with our essential capture tools. Completely free for basic everyday use.",
+      "message": "基本的なキャプチャツールから始めましょう。基本的な日常使用には完全に無料です。"
+   },
+   "purchases_plan_save_up_to_percentage": {
+      "description": "Save up to",
+      "message": "最大"
+   },
+   "purchases_premium": {
+      "description": "Premium",
+      "message": "保険料"
+   },
+   "purchases_premium_billed_annually": {
+      "description": "Billed annually",
+      "message": "年払い"
+   },
+   "purchases_premium_button": {
+      "description": "Get lifetime access",
+      "message": "永久アクセスを取得"
+   },
+   "purchases_premium_feature_compression": {
+      "description": "High quality GIF compression",
+      "message": "高品質GIF圧縮"
+   },
+   "purchases_premium_feature_editing": {
+      "description": "Feature rich editing",
+      "message": "充実した編集機能"
+   },
+   "purchases_premium_feature_free": {
+      "description": "Everything from free plan",
+      "message": "無料プランの機能を含む"
+   },
+   "purchases_premium_feature_marked_with_star": {
+      "description": "All features marked with a star",
+      "message": "星マークの付いたすべての機能"
+   },
+   "purchases_premium_feature_recording": {
+      "description": "Unlimited high quality GIF recording",
+      "message": "無制限の高品質GIF録音"
+   },
+   "purchases_premium_feature_recording_1080p": {
+      "description": "High quality GIF recording, up to 1080p, 24fps",
+      "message": "高品質GIF録画、最大1080p、24fps"
+   },
+   "purchases_premium_feature_refundable": {
+      "description": "Fully refundable",
+      "message": "完全に返金可能です"
+   },
+   "purchases_premium_feature_risk_free": {
+      "description": "Risk-free: 7 day trial, cancel anytime",
+      "message": "リスクフリー：7日間トライアル、いつでもキャンセル可能"
+   },
+   "purchases_premium_feature_unlimited_length": {
+      "description": "Unlimited GIF recording length",
+      "message": "GIF録画時間無制限"
+   },
+   "purchases_premium_price_info": {
+      "description": "one time fee",
+      "message": "1時間料金"
+   },
+   "purchases_premium_price_per_month": {
+      "description": "/ month",
+      "message": "/ 月"
+   },
+   "purchases_premium_pro": {
+      "description": "Premium Pro",
+      "message": "プレミアムプロ"
+   },
+   "purchases_premium_pro_editing_tools": {
+      "description": "Advanced editing tools (blurring, special effects, etc.)",
+      "message": "高度な編集ツール（ぼかし、特殊効果など）"
+   },
+   "purchases_premium_pro_feature_early_access": {
+      "description": "Early access to new features",
+      "message": "新機能への早期アクセス"
+   },
+   "purchases_premium_pro_feature_marked_with_crown": {
+      "description": "All features marked with a star and crown",
+      "message": "星と王冠マークの付いたすべての機能"
+   },
+   "purchases_premium_pro_feature_premium_plan": {
+      "description": "Everything from Premium plan",
+      "message": "プレミアムプランのすべて"
+   },
+   "purchases_premium_pro_feature_quality": {
+      "description": "Max resolution recording, 4K+ and 30fps",
+      "message": "最大解像度録画、4K+および30fps"
+   },
+   "purchases_premium_pro_feature_support": {
+      "description": "Priority support and feature requests",
+      "message": "優先サポートと機能リクエスト"
+   },
+   "purchases_premium_pro_upgrade": {
+      "description": "Upgrade to Pro",
+      "message": "プロにアップグレード"
+   },
+   "purchases_premium_save_percentage": {
+      "description": "save $savingsPercentage$%",
+      "message": "、$savingsPercentage$%お得",
+      "placeholders": {
+         "savingsPercentage": {
+            "content": "$1"
+         }
+      }
+   },
+   "purchases_premium_try_for_free": {
+      "description": "Try for free",
+      "message": "無料で試す"
+   },
+   "purchases_price_unavailable": {
+      "description": "Label shown in place of a price when it is unavailable.",
+      "message": "価格を利用できません"
+   },
+   "purchases_pricing_unavailable_message": {
+      "description": "Message shown when the Premium pricing request was blocked or failed.",
+      "message": "Premium の価格リクエストがブロックされたか、失敗しました。職場のネットワーク、VPN、広告ブロッカー、プライバシー拡張機能、またはファイアウォールが Paddle をブロックしている場合に発生することがあります。"
+   },
+   "purchases_pricing_unavailable_title": {
+      "description": "Title shown when Premium pricing could not be loaded.",
+      "message": "Premium の価格を読み込めませんでした"
+   },
+   "purchases_pricing_unavailable_troubleshooting_extensions": {
+      "description": "Troubleshooting step telling the user to disable VPN or privacy tools temporarily.",
+      "message": "VPN、広告ブロッカー、またはプライバシー拡張機能を一時的に無効にして、もう一度お試しください。"
+   },
+   "purchases_pricing_unavailable_troubleshooting_intro": {
+      "description": "Intro text for troubleshooting steps when pricing is unavailable.",
+      "message": "試してみること:"
+   },
+   "purchases_pricing_unavailable_troubleshooting_network": {
+      "description": "Troubleshooting step telling the user to try another network or browser profile.",
+      "message": "別のネットワークを試すか、別の Chrome プロファイルで拡張機能を開いてください。"
+   },
+   "purchases_pricing_unavailable_troubleshooting_workplace": {
+      "description": "Troubleshooting step telling the user workplace policy may be blocking Paddle.",
+      "message": "会社の端末を使用している場合、ネットワークまたはブラウザのポリシーによって Paddle がブロックされている可能性があります。"
+   },
+   "purchases_sign_in_here": {
+      "description": "Sign in here",
+      "message": "ここでサインイン"
+   },
+   "purchases_start_trial_cancel_anytime": {
+      "description": "Call to action to start a free trial.",
+      "message": "続行するには7日間の無料トライアルを開始してください。いつでもキャンセルできます。"
+   },
+   "purchases_try_premium_for_free": {
+      "description": "Try Premium for Free",
+      "message": "プレミアムを無料で試す"
+   },
+   "purchases_try_premium_pro_for_free": {
+      "description": "Try Premium Pro for Free",
+      "message": "プレミアムプロを無料で試す"
+   },
+   "purchases_upgrade_premium_to_pro": {
+      "description": "To use this feature and access all Pro benefits, upgrade your plan.",
+      "message": "この機能を使用し、すべてのPro特典にアクセスするには、プランをアップグレードしてください。"
+   },
+   "purchases_upgrade_to_premium_pro": {
+      "description": "Upgrade to Premium Pro",
+      "message": "プレミアムプロにアップグレード"
+   },
+   "quality_text": {
+      "description": "Recording quality (10 = best)",
+      "message": "記録品質（10 =ベスト）"
+   },
+   "rate_bad_rating_text": {
+      "description": "We are continuously trying our hardest to improve Chrome Capture, please share what needs improvement by emailing us at ",
+      "message": "Chrome Captureを改善するために最も難しいことを継続的に試しています。"
+   },
+   "rate_bad_title_text": {
+      "description": "😞 We are sorry!",
+      "message": "←申し訳ありません。"
+   },
+   "rate_close_btn_text": {
+      "description": "Close",
+      "message": "選ぶ"
+   },
+   "rate_confirm_btn_text": {
+      "description": "Confirm",
+      "message": "確認"
+   },
+   "rate_description_text": {
+      "description": "If you've found this extension useful please leave a rating or review. \n\nBy leaving a rating you can help us reach more users which will help fund continual improvements and keep general usage free.",
+      "message": "この拡張機能が役に立つと判断した場合は、評価やレビューを残してください。 \n\n 評価を残すことによって、あなたは私たちが継続的な改善を助けるためにもっと多くのユーザーに到達するのを助けることができ、一般的な使い方を解放するのを助けることができます。"
+   },
+   "rate_description_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "プレミアムを購入して、あなたが私たちが製品を改善し、より多くのユーザーに到達するのを手助けしなければならないフィードバックを聞くのが大好きです。"
+   },
+   "rate_good_rating_text": {
+      "description": "Your reviews keep our small team motivated to make Chrome Capture even better!",
+      "message": "あなたのレビューは私たちの小さなチームをChrome Captureにすることをやる気にさせ続けています！"
+   },
+   "rate_good_rating_text_purchased": {
+      "description": "We highly appreciate you purchasing premium and would love to hear any feedback you have to help us improve the product and reach more users.",
+      "message": "プレミアムを購入して、あなたが私たちが製品を改善し、より多くのユーザーに到達するのを手助けしなければならないフィードバックを聞くのが大好きです。"
+   },
+   "rate_good_title_text": {
+      "description": "😍 Review in the web store?",
+      "message": "✔ウェブストアでレビューしますか？"
+   },
+   "rate_maybe_later_btn_text": {
+      "description": "Maybe later",
+      "message": "たぶん後で"
+   },
+   "rate_no_btn_text": {
+      "description": "No thanks",
+      "message": "結構です"
+   },
+   "rate_send_email_btn_text": {
+      "description": "Send Email",
+      "message": "メールを送る"
+   },
+   "rate_thank_you_title_text": {
+      "description": "Thank you! 😍",
+      "message": "ありがとう！ 😍"
+   },
+   "rate_title_text": {
+      "description": "How are we doing?",
+      "message": "私たちはどのようにやっています？"
+   },
+   "rate_yes_btn_text": {
+      "description": "Ok, sure",
+      "message": "わかりました"
+   },
+   "recommended": {
+      "description": "recommended",
+      "message": "おすすめされた"
+   },
+   "record_length_text": {
+      "description": "Max record length",
+      "message": "最大レコードの長さ"
+   },
+   "recordings_taken": {
+      "description": "Recordings taken:",
+      "message": "録音："
+   },
+   "save_as_screenshot_text": {
+      "description": "Save screenshot as",
+      "message": "スクリーンショットを保存してください"
+   },
+   "save_as_text": {
+      "description": "Save recording as",
+      "message": "録音を保存する"
+   },
+   "screenshots_taken": {
+      "description": "Screenshots taken:",
+      "message": "撮影されたスクリーンショット："
+   },
+   "seconds_text": {
+      "description": "secs",
+      "message": "秒"
+   },
+   "shortcut": {
+      "description": "Shortcut:",
+      "message": "ショートカット："
+   },
+   "show_click_indicator_text": {
+      "description": "Show click animation",
+      "message": "[アニメーション]をクリックします"
+   },
+   "show_click_indicator_tooltip_text": {
+      "description": "This option draws a circle animation around the click location.",
+      "message": "このオプションはクリックの場所の周囲にサークルアニメーションを描画します。"
+   },
+   "show_cursor_text": {
+      "description": "Show dot at cursor location",
+      "message": "カーソルの場所でドットを表示します"
+   },
+   "show_cursor_tooltip_text": {
+      "description": "This option draws a small circle to indicate where the mouse is located.",
+      "message": "このオプションは、マウスがどこにあるかを示すために小さい円を描きます。"
+   },
+   "sign_in": {
+      "description": "Sign In",
+      "message": "サインイン"
+   },
+   "sign_out": {
+      "description": "Sign Out",
+      "message": "サインアウト"
+   },
+   "subscription_past_due_warning": {
+      "description": "Warning message shown when a user subscription payment has failed or is past its due date.",
+      "message": "サブスクリプションの支払いが期限切れです。ここをクリックして支払い情報を更新してください。"
+   },
+   "subscription_premium_plan_description": {
+      "description": "Go beyond basics: HD quality & limits unlocked. Craft pro content with enhanced features.",
+      "message": "基本を超えて：HD品質＆制限解除。強化された機能でプロ級のコンテンツを作成。"
+   },
+   "subscription_premium_pro_plan_description": {
+      "description": "Experience peak performance: 4K+ and all features. Full editing suite with early access.",
+      "message": "最高のパフォーマンスを体験：4K+＆全機能。早期アクセス付きの完全な編集スイート。"
+   },
+   "subscription_status_active": {
+      "description": "Active",
+      "message": "有効"
+   },
+   "subscription_status_ending_soon": {
+      "description": "Ending Soon",
+      "message": "まもなく終了"
+   },
+   "subscription_status_expired": {
+      "description": "Expired",
+      "message": "期限切れ"
+   },
+   "subscription_status_past_due": {
+      "description": "Past Due",
+      "message": "支払い遅延"
+   },
+   "subscription_status_paused": {
+      "description": "Paused",
+      "message": "一時停止中"
+   },
+   "subscription_status_unknown": {
+      "description": "Unknown",
+      "message": "不明"
+   },
+   "unable_to_capture_website_alert": {
+      "description": "Unable to capture this website. Please use full screen/application capture or try capture another website.\n\n(╯°□°）╯︵ ┻━┻",
+      "message": "このウェブサイトをキャプチャできません。 フルスクリーン/アプリケーションキャプチャを使用するか、別のWebサイトをキャプチャしてみてください。 \n\n （╯°□°）┻━┻┻━┻"
+   },
+   "view_permission": {
+      "description": "View permission.",
+      "message": "権限を表示。"
+   },
+   "width_text": {
+      "description": "Height (px)",
+      "message": "高さ（PX）"
+   }
+}

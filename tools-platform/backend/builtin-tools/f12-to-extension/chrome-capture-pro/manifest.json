@@ -1,0 +1,102 @@
+{
+  "action": {
+    "default_icon": {
+      "16": "images/ic_16.png",
+      "32": "images/ic_32.png",
+      "48": "images/ic_48.png",
+      "128": "images/ic_128.png"
+    },
+    "default_popup": "./layout/popup.html",
+    "default_title": "__MSG_extension_name__"
+  },
+  "background": {
+    "service_worker": "dist/background/bundle.js",
+    "type": "module"
+  },
+  "commands": {
+    "desktop_screenshot": {
+      "description": "Take a desktop/app screenshot."
+    },
+    "full_webpage_screenshot": {
+      "description": "Take a full webpage screenshot.",
+      "suggested_key": {
+        "default": "Alt+Shift+S"
+      }
+    },
+    "open_snipping_tool": {
+      "description": "Open snipping tool.",
+      "suggested_key": {
+        "default": "Alt+C"
+      }
+    },
+    "record_desktop": {
+      "description": "Start/stop recording desktop or app."
+    },
+    "record_tab": {
+      "description": "Start/stop recording.",
+      "suggested_key": {
+        "default": "Alt+R"
+      }
+    },
+    "screenshot": {
+      "description": "Take a screenshot.",
+      "suggested_key": {
+        "default": "Alt+S"
+      }
+    }
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; style-src 'unsafe-inline'; img-src 'self' https: data: blob:;",
+    "sandbox": "sandbox allow-forms allow-scripts; script-src 'self';"
+  },
+  "default_locale": "en",
+  "description": "__MSG_extension_description__",
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "icons": {
+    "16": "images/ic_16.png",
+    "32": "images/ic_32.png",
+    "48": "images/ic_48.png",
+    "128": "images/ic_128.png"
+  },
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuCrlddfGIQ586KY5oU39pfTgcPKKKNdBEUzwj2IM3baL/rpBpQWR7rXSUXFHSgrzDHD5NiKcHYNJ/pJcovHtgddpQsRakYGxBvTLgHb95hxAnJ0roB0JvbMir8DucaJ0VX2AjQGETjVIPuUI2y03eV867rbdLQZVGxO9Z+ZGl2f8WKWmk14yCtN3Ah64YqS3NErp7TjfFf9eqOII1fALPlsTQ9ZO9kVITr56GS53HdMNUUFLL/MKenyuWtNHUFhp+l8p5JHhX5gITrdsKwu4poGJ+1833IKgT4n86eywAUaTbFMgvDZityzDQOOyNZSTjwvUNeXWPUh4RUypPAdLZQIDAQAB",
+  "manifest_version": 3,
+  "minimum_chrome_version": "116",
+  "name": "Chrome Capture Pro",
+  "optional_permissions": [
+    "notifications",
+    "downloads"
+  ],
+  "options_page": "./layout/options.html",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "tabCapture",
+    "contextMenus",
+    "desktopCapture",
+    "identity",
+    "scripting",
+    "offscreen",
+    "tabs"
+  ],
+  "sandbox": {
+    "pages": [
+      "/layout/paddle.html"
+    ]
+  },
+  "version": "3.3.7",
+  "web_accessible_resources": [
+    {
+      "matches": [
+        "*://*/*"
+      ],
+      "resources": [
+        "images/*",
+        "_locales/*"
+      ]
+    }
+  ],
+  "author": "Dragon",
+  "short_name": "Capture Pro (Dragon)"
+}
