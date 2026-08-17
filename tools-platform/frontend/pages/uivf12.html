@@ -7,21 +7,13 @@
     <title>UIVF12 抓取引擎 v6.6 - Tools Platform</title>
     <meta name="description" content="UI.Vision 全能抓取引擎，自动化脚本工程中心，脚本云端仓库管理">
     <link rel="stylesheet" href="/css/shared.css?v=20260815-02">
-    <link rel="stylesheet" href="/css/uivf12.css?v=20260803-01">
+    <link rel="stylesheet" href="/css/uivf12.css?v=20260817-03">
     <style>
         .repo-source-panel {
-            margin-bottom: 10px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            align-items: center;
+            display: none !important;
         }
         .repo-source-controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            align-items: center;
-            margin-bottom: 8px;
+            display: none !important;
         }
         .repo-source-badge {
             display: inline-flex;
@@ -63,10 +55,20 @@
 <body id="uiv-page">
     <div class="page-content">
         <div class="uiv-title">
-            <span>🚀 自动化脚本工程中心 <span
-                    id="uivFrontendVersion"
-                    style="font-size:14px;color:var(--text-muted);font-weight:600;margin-left:8px;">v加载中</span></span>
-            <span class="tag">多源融合 + Formula 权威版</span>
+            <div class="uiv-title-left">
+                <span>🚀 自动化脚本工程中心 <span
+                        id="uivFrontendVersion"
+                        style="font-size:14px;color:var(--text-muted);font-weight:600;margin-left:8px;">v加载中</span></span>
+                <span class="tag">多源融合 + Formula 权威版</span>
+            </div>
+            <div class="uiv-title-actions">
+                <button id="btnDownloadUivExtension" type="button" class="btn-uiv-extension"
+                    onclick="UIVExtensionGuide.open()" title="下载 UI.Vision RPA 扩展离线安装包 (v9.6.1) 并查看简易安装步骤">
+                    <span class="btn-icon">🧩</span>
+                    <span class="btn-text">下载 UI.Vision 插件</span>
+                    <span class="btn-badge">v9.6.1</span>
+                </button>
+            </div>
         </div>
 
         <div class="uiv-container">
@@ -80,14 +82,14 @@
                 <div style="font-size:11px; color:var(--text-muted); font-weight:600; margin-bottom:10px; line-height:1.4;">
                     默认清爽折叠，<b>双击回填至工作台</b>。
                 </div>
-                <div class="repo-source-controls">
+                <div class="repo-source-controls" style="display:none;" hidden>
                     <span class="repo-source-note">仓库读源模式:</span>
                     <select id="repoSourceMode" class="repo-source-select">
                         <option value="auto">自动模式</option>
                         <option value="sqlite">强制 SQLite</option>
                     </select>
                 </div>
-                <div id="repoSourcePanel" class="repo-source-panel">
+                <div id="repoSourcePanel" class="repo-source-panel" style="display:none;" hidden>
                     <span class="repo-source-badge">脚本来源: -</span>
                     <span class="repo-source-badge">分类来源: -</span>
                     <span class="repo-source-note">仓库加载后会在这里显示当前真实读源。</span>
@@ -465,6 +467,21 @@
         </div>
     </div>
 
+    <div id="uivCategoryDeleteConfirmOverlay" class="uiv-delete-confirm-overlay" aria-hidden="true">
+        <div class="uiv-delete-confirm-dialog" role="alertdialog" aria-modal="true"
+            aria-labelledby="uivCategoryDeleteConfirmTitle" aria-describedby="uivCategoryDeleteConfirmMessage">
+            <div class="uiv-delete-confirm-icon" aria-hidden="true">🗑</div>
+            <div class="uiv-delete-confirm-eyebrow" id="uivCategoryDeleteConfirmEyebrow">危险操作 · 批量删除</div>
+            <h3 id="uivCategoryDeleteConfirmTitle">确认删除这个分类？</h3>
+            <p id="uivCategoryDeleteConfirmMessage">注意：该分类下的所有脚本也将被一并删除，且无法恢复！</p>
+            <div id="uivCategoryDeleteConfirmName" class="uiv-delete-confirm-name"></div>
+            <div class="uiv-delete-confirm-actions">
+                <button id="uivCategoryDeleteConfirmCancel" type="button" class="uiv-delete-confirm-cancel">先不删除</button>
+                <button id="uivCategoryDeleteConfirmSubmit" type="button" class="uiv-delete-confirm-submit">🗑️ 确认删除</button>
+            </div>
+        </div>
+    </div>
+
     <div id="uivCategoryCreateOverlay" class="uiv-category-create-overlay" aria-hidden="true">
         <div class="uiv-category-create-dialog" role="dialog" aria-modal="true"
             aria-labelledby="uivCategoryCreateTitle" aria-describedby="uivCategoryCreateMessage">
@@ -490,13 +507,120 @@
         </div>
     </div>
 
+    <!-- ── UI.Vision 插件下载与安装指南弹窗 ── -->
+    <div id="uivExtensionGuideOverlay" class="uiv-extension-overlay" aria-hidden="true" onclick="if(event.target===this) UIVExtensionGuide.close()">
+        <div class="uiv-extension-dialog" role="dialog" aria-modal="true" aria-labelledby="uivExtensionModalTitle">
+            <div class="uiv-extension-header">
+                <div class="uiv-extension-header-left">
+                    <div class="uiv-extension-header-icon" aria-hidden="true">🧩</div>
+                    <div>
+                        <div class="uiv-extension-eyebrow">扩展生态 · 离线增强版</div>
+                        <h3 id="uivExtensionModalTitle" class="uiv-extension-title">🧩 UI.Vision RPA 插件下载与安装指南</h3>
+                        <p id="uivExtensionModalSubtitle" class="uiv-extension-subtitle">版本 v9.6.1 离线纯净增强包 · 适用于 Chrome / Edge / 360 / 统信等 Chromium 内核浏览器</p>
+                    </div>
+                </div>
+                <button class="uiv-extension-close" onclick="UIVExtensionGuide.close()" aria-label="关闭">×</button>
+            </div>
+
+            <div class="uiv-extension-body">
+                <!-- 顶部一键下载卡片 -->
+                <div class="uiv-ext-download-hero">
+                    <div class="uiv-ext-hero-info">
+                        <div class="uiv-ext-hero-title">
+                            <span id="uivExtDownloadCardTitle">UI.Vision RPA 离线安装包 (v9.6.1)</span>
+                            <span class="uiv-ext-hero-tag">免魔法直装</span>
+                            <span class="uiv-ext-hero-tag">已优化兼容</span>
+                        </div>
+                        <div id="uivExtDownloadCardMeta" class="uiv-ext-hero-meta">大小：约 8.1 MB · 格式：ZIP 压缩包 · 解压后直接加载文件夹</div>
+                    </div>
+                    <div class="uiv-ext-hero-actions">
+                        <button id="uivExtDownloadDirectBtn" type="button" class="btn-download-primary" onclick="UIVExtensionGuide.download()">
+                            <span>⚡ 立即下载离线安装包 (.zip)</span>
+                        </button>
+                        <a id="uivExtDownloadFallbackBtn" href="/api/uiv/extension-download" class="uiv-ext-fallback-link" download="uivision-extension-9.6.1.zip">备用直接下载</a>
+                    </div>
+                </div>
+
+                <!-- 5 步详细图文指引 -->
+                <div class="uiv-ext-steps-wrap">
+                    <h4 id="uivExtStepsHeading" class="uiv-ext-section-heading">📋 浏览器加载插件简易 5 步指引</h4>
+
+                    <!-- 步骤 1 -->
+                    <div class="uiv-ext-step-card">
+                        <div class="uiv-ext-step-badge">1</div>
+                        <div class="uiv-ext-step-content">
+                            <h5 id="uivExtStep1Title" class="uiv-ext-step-title">下载离线安装包</h5>
+                            <p id="uivExtStep1Desc" class="uiv-ext-step-desc">点击上方「立即下载离线安装包」按钮，将 <code>uivision-extension-9.6.1.zip</code> 文件保存到本地磁盘。</p>
+                        </div>
+                    </div>
+
+                    <!-- 步骤 2 -->
+                    <div class="uiv-ext-step-card">
+                        <div class="uiv-ext-step-badge">2</div>
+                        <div class="uiv-ext-step-content">
+                            <h5 id="uivExtStep2Title" class="uiv-ext-step-title">解压到本地固定文件夹</h5>
+                            <p id="uivExtStep2Desc" class="uiv-ext-step-desc">使用系统的解压功能将 <code>.zip</code> 压缩包解压为一个独立的文件夹（例如解压到 <code>D:\Extensions\uivision-extension-9.6.1</code> 或 <code>~/Documents/uivision-extension-9.6.1</code>）。</p>
+                            <span id="uivExtStep2Warning" class="uiv-ext-step-warning">⚠️ 温馨提醒：浏览器加载该文件夹后，请保留该目录，不要删除或随意移动，否则插件会失效。</span>
+                        </div>
+                    </div>
+
+                    <!-- 步骤 3 -->
+                    <div class="uiv-ext-step-card">
+                        <div class="uiv-ext-step-badge">3</div>
+                        <div class="uiv-ext-step-content">
+                            <h5 id="uivExtStep3Title" class="uiv-ext-step-title">打开扩展管理并开启「开发者模式」</h5>
+                            <p id="uivExtStep3Desc" class="uiv-ext-step-desc">在浏览器地址栏直接输入扩展管理地址，并在页面<b>右上角找到并开启「开发者模式」（Developer mode）</b>开关：</p>
+                            <div class="uiv-ext-btn-row">
+                                <button id="uivExtCopyChromeBtn" type="button" class="uiv-ext-btn-copy" onclick="UIVExtensionGuide.copyUrl('chrome://extensions/', this)">
+                                    📋 复制 chrome://extensions/
+                                </button>
+                                <button id="uivExtCopyEdgeBtn" type="button" class="uiv-ext-btn-copy" onclick="UIVExtensionGuide.copyUrl('edge://extensions/', this)">
+                                    📋 复制 edge://extensions/
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 步骤 4 -->
+                    <div class="uiv-ext-step-card">
+                        <div class="uiv-ext-step-badge">4</div>
+                        <div class="uiv-ext-step-content">
+                            <h5 id="uivExtStep4Title" class="uiv-ext-step-title">点击「加载已解压的扩展程序」</h5>
+                            <p id="uivExtStep4Desc" class="uiv-ext-step-desc">开启开发者模式后，点击扩展页面左上角的<b>「加载已解压的扩展程序」</b>（Edge 浏览器为「加载解压缩的扩展」），在文件选择器中<b>选中刚才解压出的插件根目录</b>（即包含 <code>manifest.json</code> 的文件夹）并确认。</p>
+                        </div>
+                    </div>
+
+                    <!-- 步骤 5 -->
+                    <div class="uiv-ext-step-card">
+                        <div class="uiv-ext-step-badge">5</div>
+                        <div class="uiv-ext-step-content">
+                            <h5 id="uivExtStep5Title" class="uiv-ext-step-title">固定插件并开启必要权限 (推荐)</h5>
+                            <p id="uivExtStep5Desc" class="uiv-ext-step-desc">点击浏览器右上角拼图 🧩 图标将 <b>UI.Vision RPA</b> 钉选到工具栏。进入插件「详细信息」，建议开启<b>「允许访问文件网址」</b>，即可在本页面畅享一键运行自动化抓取！</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="uivExtTipBox" class="uiv-ext-tip-box">
+                    💡 <b>小技巧</b>：安装完成后，回到当前数据抓取工作台，点击左侧智能调度仓库底部的「🚀 运行批脚本」（或「🚀 运行测试批脚本」），即可直接调用 UI.Vision 插件自动抓取与全流程执行！
+                </div>
+            </div>
+
+            <div class="uiv-extension-footer">
+                <button id="uivExtCopyGuideBtn" type="button" class="btn-ext-footer-action" onclick="UIVExtensionGuide.copyAllSteps(this)">📋 复制完整安装步骤文本</button>
+                <div class="uiv-extension-footer-actions">
+                    <button id="uivExtDoneBtn" type="button" class="btn-ext-footer-action btn-ext-footer-primary" onclick="UIVExtensionGuide.close()">我已安装完成</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 共享脚本 -->
     <script src="/js/shared/api.js?v=20260710-01"></script>
     <script src="/js/shared/toast.js?v=20260628-19"></script>
     <script src="/js/shared/i18n.js?v=20260628-19"></script>
     <script src="/js/shared/navbar.js?v=20260815-02"></script>
     <!-- UIVF12 模块 -->
-    <script src="/js/uivf12/i18n.js?v=20260814-01"></script>
+    <script src="/js/uivf12/i18n.js?v=20260817-01"></script>
     <script src="/js/uivf12/workbench.js?v=20260729-01"></script>
     <script src="/js/uivf12/netcare-analysis.js?v=20260804-01"></script>
     <script src="/js/uivf12/copy.js?v=20260814-01"></script>
@@ -506,9 +630,10 @@
     <script src="/js/uivf12/ai-adapter.js?v=20260729-01"></script>
     <script src="/js/uivf12/ai-naming.js?v=20260729-02"></script>
     <script src="/js/uivf12/save.js?v=20260729-03"></script>
-    <script src="/js/uivf12/sidebar.js?v=20260729-01"></script>
+    <script src="/js/uivf12/sidebar.js?v=20260817-01"></script>
     <script src="/js/uivf12/url-assist.js?v=20260729-01"></script>
     <script src="/js/uivf12/analysis.js?v=20260628-19"></script>
+    <script src="/js/uivf12/extension-guide.js?v=20260817-01"></script>
     <script>
         function renderUIVFrontendVersion() {
             const versionEl = document.getElementById('uivFrontendVersion');

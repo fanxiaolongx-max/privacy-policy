@@ -261,7 +261,7 @@ const PUBLIC_ASSET_EXTS = new Set([
     '.css', '.js', '.mjs', '.map',
     '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.ico',
     '.woff', '.woff2', '.ttf', '.otf',
-    '.json', '.txt'
+    '.json', '.txt', '.zip'
 ]);
 
 function shouldProtectHtmlEntry(req) {

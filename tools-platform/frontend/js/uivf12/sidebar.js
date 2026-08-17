@@ -85,6 +85,68 @@ function showScriptDeleteConfirm(scriptName) {
     });
 }
 
+function showCategoryDeleteConfirm(catName, scriptCount = 0) {
+    const overlay = document.getElementById('uivCategoryDeleteConfirmOverlay');
+    const dialog = overlay && overlay.querySelector('.uiv-delete-confirm-dialog');
+    const nameEl = document.getElementById('uivCategoryDeleteConfirmName');
+    const msgEl = document.getElementById('uivCategoryDeleteConfirmMessage');
+    const cancelBtn = document.getElementById('uivCategoryDeleteConfirmCancel');
+    const confirmBtn = document.getElementById('uivCategoryDeleteConfirmSubmit');
+    if (!overlay || !dialog || !nameEl || !cancelBtn || !confirmBtn) {
+        return Promise.resolve(false);
+    }
+
+    nameEl.textContent = scriptCount > 0 
+        ? `${catName} （包含 ${scriptCount} 条脚本）` 
+        : catName;
+    if (msgEl) {
+        msgEl.textContent = scriptCount > 0
+            ? `注意：删除后该分类下的 ${scriptCount} 条脚本也将一并被彻底移除，无法恢复！`
+            : `注意：该分类删除后将从智能调度仓库中移除，无法恢复。`;
+    }
+    const previousFocus = document.activeElement;
+    overlay.classList.add('open');
+    overlay.setAttribute('aria-hidden', 'false');
+
+    return new Promise(resolve => {
+        let settled = false;
+        const finish = confirmed => {
+            if (settled) return;
+            settled = true;
+            overlay.classList.remove('open');
+            overlay.setAttribute('aria-hidden', 'true');
+            overlay.removeEventListener('click', handleOverlayClick);
+            document.removeEventListener('keydown', handleKeydown);
+            cancelBtn.onclick = null;
+            confirmBtn.onclick = null;
+            if (previousFocus && typeof previousFocus.focus === 'function') previousFocus.focus();
+            resolve(confirmed);
+        };
+        const handleOverlayClick = event => {
+            if (event.target === overlay) finish(false);
+        };
+        const handleKeydown = event => {
+            if (event.key === 'Escape') finish(false);
+            if (event.key !== 'Tab') return;
+            if (event.shiftKey && document.activeElement === cancelBtn) {
+                event.preventDefault();
+                confirmBtn.focus();
+            } else if (!event.shiftKey && document.activeElement === confirmBtn) {
+                event.preventDefault();
+                cancelBtn.focus();
+            }
+        };
+
+        cancelBtn.onclick = () => finish(false);
+        confirmBtn.onclick = () => finish(true);
+        overlay.addEventListener('click', handleOverlayClick);
+        document.addEventListener('keydown', handleKeydown);
+        setTimeout(() => {
+            if (!settled) cancelBtn.focus({ preventScroll: true });
+        }, 0);
+    });
+}
+
 function showCategoryCreateDialog() {
     const overlay = document.getElementById('uivCategoryCreateOverlay');
     const input = document.getElementById('uivCategoryCreateInput');
@@ -432,7 +494,9 @@ async function createNewCategory() {
 }
 
 async function deleteCategory(catName) {
-    if (!confirm(UIVT('uiv.confirm.deleteCategory', { name: UIVI18n.categoryLabel(catName) }))) return;
+    const scriptsInCat = (lastScripts || []).filter(s => (s.category || '默认分类') === catName);
+    const confirmed = await showCategoryDeleteConfirm(UIVI18n.categoryLabel(catName), scriptsInCat.length);
+    if (!confirmed) return;
     try {
         await API.delete(`/api/uiv/categories/${encodeURIComponent(catName)}`);
         expandedCategories = expandedCategories.filter(c => c !== catName);

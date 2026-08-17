@@ -535,4 +535,28 @@ router.post('/backup', async (req, res) => {
     }
 });
 
+// GET /api/uiv/extension-download → 下载 UI.Vision RPA 扩展离线安装包 (v9.6.1)
+router.get('/extension-download', (req, res) => {
+    const candidates = [
+        path.join(__dirname, '../../frontend/downloads/uivision-extension-9.6.1.zip'),
+        path.join(__dirname, '../../../uivision-extension-9.6.1.zip'),
+        path.join(process.cwd(), 'frontend/downloads/uivision-extension-9.6.1.zip'),
+        path.join(process.cwd(), '../uivision-extension-9.6.1.zip')
+    ];
+    const zipPath = candidates.find(p => {
+        try { return fs.existsSync(p); } catch (e) { return false; }
+    });
+    if (!zipPath) {
+        return res.status(404).json({ error: 'UI.Vision 扩展安装包不存在，请联系管理员' });
+    }
+    res.setHeader('Content-Type', 'application/zip');
+    res.download(zipPath, 'uivision-extension-9.6.1.zip', (err) => {
+        if (err && !res.headersSent) {
+            console.error('[GET /api/uiv/extension-download] download failed:', err);
+            res.status(500).json({ error: '下载失败' });
+        }
+    });
+});
+
 module.exports = router;
+

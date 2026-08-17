@@ -102,6 +102,8 @@
             'uiv.deleteDialog.message': '删除后，该脚本将从智能调度仓库中移除，并且无法恢复。',
             'uiv.deleteDialog.cancel': '先不删除',
             'uiv.deleteDialog.confirm': '确认删除',
+            'uiv.categoryDeleteDialog.eyebrow': '危险操作 · 批量删除',
+            'uiv.categoryDeleteDialog.title': '确认删除这个分类？',
             'uiv.toast.serverFail': '❌ 无法连接服务器，脚本仓库加载失败',
             'uiv.toast.moveFail': '❌ 移动分类失败',
             'uiv.toast.filled': '✅ [{name}] 配置已回填！',
@@ -193,7 +195,43 @@
             'uiv.generator.localAuth': '本地存储 globalConfig CSRF',
             'uiv.generator.aiAuth': 'AI 适配认证 ({strategy})',
             'uiv.generator.syntaxFail': '生成脚本语法校验失败：{message}',
-            'uiv.generator.outputReady': '脚本内容已写入输出区！UIV + F12 Console 双版均就绪'
+            'uiv.generator.outputReady': '脚本内容已写入输出区！UIV + F12 Console 双版均就绪',
+            'uiv.extension.btnText': '下载 UI.Vision 插件',
+            'uiv.extension.btnTitle': '下载 UI.Vision RPA 扩展离线安装包 (v9.6.1) 并查看简易安装步骤',
+            'uiv.extension.sidebarLink': '🧩 下载/安装 UI.Vision 插件 (v9.6.1)',
+            'uiv.extension.outputTip': '💡 未安装 UI.Vision RPA 插件？点击一键下载并查看 30 秒安装教程',
+            'uiv.extension.modalEyebrow': '扩展生态 · 离线增强版',
+            'uiv.extension.modalTitle': '🧩 UI.Vision RPA 插件下载与安装指南',
+            'uiv.extension.modalSubtitle': '版本 v9.6.1 离线纯净增强包 · 适用于 Chrome / Edge / 360 / 统信等 Chromium 内核浏览器',
+            'uiv.extension.downloadCardTitle': 'UI.Vision RPA 离线安装包 (v9.6.1)',
+            'uiv.extension.downloadCardMeta': '大小：约 8.1 MB · 格式：ZIP · 免翻墙免商店直装 · 已优化自动化兼容',
+            'uiv.extension.downloadBtn': '⚡ 立即下载离线安装包 (.zip)',
+            'uiv.extension.downloadFallbackBtn': '备用直接下载',
+            'uiv.extension.stepsHeading': '📋 浏览器加载插件简易 5 步指引',
+            'uiv.extension.step1Num': '1',
+            'uiv.extension.step1Title': '下载离线安装包',
+            'uiv.extension.step1Desc': '点击上方按钮下载 uivision-extension-9.6.1.zip 文件，并保存在你的电脑本地磁盘。',
+            'uiv.extension.step2Num': '2',
+            'uiv.extension.step2Title': '解压到本地固定文件夹',
+            'uiv.extension.step2Desc': '使用解压软件将下载的 .zip 文件解压至一个固定的本地目录（例如 D:\\Extensions\\uivision-extension-9.6.1 或 ~/Documents/uivision-extension-9.6.1）。',
+            'uiv.extension.step2Warning': '⚠️ 温馨提醒：浏览器加载该文件夹后，请勿删除或随意移动该解压目录，否则扩展会失效。',
+            'uiv.extension.step3Num': '3',
+            'uiv.extension.step3Title': '打开扩展管理并开启「开发者模式」',
+            'uiv.extension.step3Desc': '在浏览器地址栏直接打开扩展管理页面，并在页面右上角找到并开启「开发者模式」（Developer Mode）开关。',
+            'uiv.extension.copyChrome': '📋 复制 chrome://extensions/',
+            'uiv.extension.copyEdge': '📋 复制 edge://extensions/',
+            'uiv.extension.step4Num': '4',
+            'uiv.extension.step4Title': '点击「加载已解压的扩展程序」',
+            'uiv.extension.step4Desc': '开启开发者模式后，点击左上角的「加载已解压的扩展程序」（Edge 浏览器为「加载解压缩的扩展」），在弹出的文件窗口中选中刚才解压出的插件根目录（即包含 manifest.json 的那层文件夹）即可完成载入。',
+            'uiv.extension.step5Num': '5',
+            'uiv.extension.step5Title': '固定插件并开启文件访问权限 (推荐)',
+            'uiv.extension.step5Desc': '点击浏览器右上角拼图 🧩 图标将 UI.Vision 钉选到工具栏。进入插件「详细信息」，建议开启「允许访问文件网址」，即可在本地和网页中畅享一键运行自动化抓取！',
+            'uiv.extension.copyGuideBtn': '📋 复制完整安装步骤文本',
+            'uiv.extension.doneBtn': '我已安装完成',
+            'uiv.extension.toastDownloading': '⚡ UI.Vision v9.6.1 插件包下载已触发！',
+            'uiv.extension.copySuccess': '✅ 扩展管理地址已复制到剪贴板！',
+            'uiv.extension.stepsCopied': '✅ 完整安装指引已复制到剪贴板！',
+            'uiv.extension.tip': '💡 <b>小技巧</b>：安装完成后，回到当前数据抓取工作台，点击左侧智能调度仓库底部的「🚀 运行批脚本」（或「🚀 运行测试批脚本」），即可直接调用 UI.Vision 插件自动抓取与全流程执行！'
         },
         'en-US': {
             'uiv.title': 'UIVF12 Data Capture Engine v6.6 - Tools Platform',
@@ -289,11 +327,13 @@
             'uiv.script.itemTitle': 'Double-click to refill the workbench',
             'uiv.script.deleteAction': 'Delete',
             'uiv.script.deleteTitle': 'Delete script: {name}',
-            'uiv.deleteDialog.eyebrow': 'Destructive action',
+            'uiv.deleteDialog.eyebrow': 'Dangerous Action',
             'uiv.deleteDialog.title': 'Delete this script?',
-            'uiv.deleteDialog.message': 'This script will be permanently removed from the repository and cannot be recovered.',
-            'uiv.deleteDialog.cancel': 'Keep script',
-            'uiv.deleteDialog.confirm': 'Delete script',
+            'uiv.deleteDialog.message': 'Once deleted, this script will be removed from the repository and cannot be recovered.',
+            'uiv.deleteDialog.cancel': 'Keep Script',
+            'uiv.deleteDialog.confirm': 'Delete',
+            'uiv.categoryDeleteDialog.eyebrow': 'Dangerous Action · Batch Delete',
+            'uiv.categoryDeleteDialog.title': 'Delete this category?',
             'uiv.toast.serverFail': '❌ Cannot connect to the server; script repository failed to load',
             'uiv.toast.moveFail': '❌ Failed to move category',
             'uiv.toast.filled': '✅ [{name}] configuration refilled!',
@@ -385,7 +425,43 @@
             'uiv.generator.localAuth': 'localStorage globalConfig CSRF',
             'uiv.generator.aiAuth': 'AI adapter auth ({strategy})',
             'uiv.generator.syntaxFail': 'Generated script syntax validation failed: {message}',
-            'uiv.generator.outputReady': 'Script content written to output areas. UIV + F12 Console are ready.'
+            'uiv.generator.outputReady': 'Script content written to output areas. UIV + F12 Console are ready.',
+            'uiv.extension.btnText': 'Download UI.Vision',
+            'uiv.extension.btnTitle': 'Download UI.Vision RPA offline package (v9.6.1) & installation guide',
+            'uiv.extension.sidebarLink': '🧩 Download / Install UI.Vision (v9.6.1)',
+            'uiv.extension.outputTip': '💡 No UI.Vision extension installed? Click to download and view quick setup guide',
+            'uiv.extension.modalEyebrow': 'Extension Ecosystem · Offline Enhanced',
+            'uiv.extension.modalTitle': '🧩 UI.Vision RPA Extension Download & Installation Guide',
+            'uiv.extension.modalSubtitle': 'Version v9.6.1 Offline Enhanced Package · For Chrome, Edge, 360, and all Chromium browsers',
+            'uiv.extension.downloadCardTitle': 'UI.Vision RPA Offline Package (v9.6.1)',
+            'uiv.extension.downloadCardMeta': 'Size: ~8.1 MB · Format: ZIP · Offline install without Chrome Web Store · Optimized for automation',
+            'uiv.extension.downloadBtn': '⚡ Download Offline Package (.zip)',
+            'uiv.extension.downloadFallbackBtn': 'Direct Download Backup',
+            'uiv.extension.stepsHeading': '📋 5-Step Easy Installation Guide',
+            'uiv.extension.step1Num': '1',
+            'uiv.extension.step1Title': 'Download the Offline Package',
+            'uiv.extension.step1Desc': 'Click the download button above to save uivision-extension-9.6.1.zip to your local computer.',
+            'uiv.extension.step2Num': '2',
+            'uiv.extension.step2Title': 'Unzip to a Permanent Folder',
+            'uiv.extension.step2Desc': 'Unpack the downloaded .zip file into a permanent local directory (e.g., D:\\Extensions\\uivision-extension-9.6.1 or ~/Documents/uivision-extension-9.6.1).',
+            'uiv.extension.step2Warning': '⚠️ Important: Do not delete or move the unzipped folder after loading, otherwise the extension will be disabled.',
+            'uiv.extension.step3Num': '3',
+            'uiv.extension.step3Title': 'Open Extensions Page & Turn On "Developer Mode"',
+            'uiv.extension.step3Desc': 'Navigate to your browser extension management page, and toggle ON "Developer mode" in the top-right corner.',
+            'uiv.extension.copyChrome': '📋 Copy chrome://extensions/',
+            'uiv.extension.copyEdge': '📋 Copy edge://extensions/',
+            'uiv.extension.step4Num': '4',
+            'uiv.extension.step4Title': 'Click "Load Unpacked"',
+            'uiv.extension.step4Desc': 'Click "Load unpacked" on the top left, and in the file browser dialog, select the root folder of the unzipped extension (the directory containing manifest.json).',
+            'uiv.extension.step5Num': '5',
+            'uiv.extension.step5Title': 'Pin Extension & Enable File Access (Recommended)',
+            'uiv.extension.step5Desc': 'Click the puzzle 🧩 icon to pin UI.Vision to your toolbar. In extension Details, toggle on "Allow access to file URLs" for seamless local macros and data extraction!',
+            'uiv.extension.copyGuideBtn': '📋 Copy Full Guide Text',
+            'uiv.extension.doneBtn': 'Done & Close',
+            'uiv.extension.toastDownloading': '⚡ UI.Vision v9.6.1 package download started!',
+            'uiv.extension.copySuccess': '✅ URL copied to clipboard!',
+            'uiv.extension.stepsCopied': '✅ Full guide copied to clipboard!',
+            'uiv.extension.tip': '💡 <b>Tip</b>: After installation, return to the workbench and click <b>🚀 Run Batch</b> (or <b>🚀 Test Batch</b>) at the bottom of the Smart Repository to invoke the UI.Vision extension for automated data capture!'
         }
     };
 
@@ -435,7 +511,7 @@
         const desc = document.querySelector('meta[name="description"]');
         if (desc) desc.setAttribute('content', t('uiv.description'));
 
-        const titleWrap = document.querySelector('.uiv-title > span:first-child');
+        const titleWrap = document.querySelector('.uiv-title-left > span:first-child, .uiv-title > span:first-child');
         const versionEl = document.getElementById('uivFrontendVersion');
         if (titleWrap) {
             titleWrap.textContent = t('uiv.header.title') + ' ';
@@ -541,6 +617,10 @@
         setText('#uivDeleteConfirmMessage', t('uiv.deleteDialog.message'));
         setText('#uivDeleteConfirmCancel', t('uiv.deleteDialog.cancel'));
         setText('#uivDeleteConfirmSubmit', t('uiv.deleteDialog.confirm'));
+        setText('#uivCategoryDeleteConfirmEyebrow', t('uiv.categoryDeleteDialog.eyebrow'));
+        setText('#uivCategoryDeleteConfirmTitle', t('uiv.categoryDeleteDialog.title'));
+        setText('#uivCategoryDeleteConfirmCancel', t('uiv.deleteDialog.cancel'));
+        setText('#uivCategoryDeleteConfirmSubmit', t('uiv.deleteDialog.confirm'));
         setText('.uiv-category-create-eyebrow', t('uiv.categoryDialog.eyebrow'));
         setText('#uivCategoryCreateTitle', t('uiv.categoryDialog.title'));
         setText('#uivCategoryCreateMessage', t('uiv.categoryDialog.message'));
@@ -549,6 +629,7 @@
         setText('.uiv-category-create-hint', t('uiv.categoryDialog.hint'));
         setText('#uivCategoryCreateCancel', t('uiv.categoryDialog.cancel'));
         setText('#uivCategoryCreateSubmit', t('uiv.categoryDialog.confirm'));
+        if (window.UIVExtensionGuide?.refreshI18n) window.UIVExtensionGuide.refreshI18n();
     }
 
     if (window.ToolsI18n) {
@@ -568,5 +649,6 @@
         applyPage();
         if (window.UIVSidebar?.refreshI18n) window.UIVSidebar.refreshI18n();
         if (window.UIVGenLog?.refreshI18n) window.UIVGenLog.refreshI18n();
+        if (window.UIVExtensionGuide?.refreshI18n) window.UIVExtensionGuide.refreshI18n();
     });
 })();
