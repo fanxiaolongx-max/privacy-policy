@@ -52,15 +52,16 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           cd tools-platform
-          npm version patch --no-git-tag-version --ignore-scripts
-          release_version="$(node -p "require('./package.json').version")"
+          while true; do
+            npm version patch --no-git-tag-version --ignore-scripts
+            release_version="$(node -p "require('./package.json').version")"
+            release_tag="v${release_version}"
+            if ! git rev-parse "${release_tag}" >/dev/null 2>&1; then
+              break
+            fi
+            echo "Tag ${release_tag} already exists; trying the next patch version."
+          done
           cd ..
-          release_tag="v${release_version}"
-
-          if git rev-parse "${release_tag}" >/dev/null 2>&1; then
-            echo "Tag ${release_tag} already exists. Bump tools-platform/package.json manually or delete the existing tag." >&2
-            exit 1
-          fi
 
           git add tools-platform/package.json tools-platform/package-lock.json
           git commit -m "chore: release ${release_tag} [skip ci]"
