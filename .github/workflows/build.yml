@@ -104,6 +104,7 @@ jobs:
             tools-platform/dist/*.exe
             tools-platform/dist/*.yml
             tools-platform/dist/*.blockmap
+            tools-platform/frontend/downloads/uivision-extension-9.6.1.zip
 
       - name: Release
         uses: softprops/action-gh-release@v1
@@ -114,5 +115,6 @@ jobs:
             tools-platform/dist/*.exe
             tools-platform/dist/*.yml
             tools-platform/dist/*.blockmap
+            tools-platform/frontend/downloads/uivision-extension-9.6.1.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
