@@ -12,11 +12,12 @@
     "license:verify-desktop-config": "node scripts/verify-desktop-license-client-config.js",
     "defaults:export": "node scripts/export-default-quick-start-bundle.js && node scripts/update-default-quick-start-readme.js",
     "splash:generate": "electron scripts/generate-portable-splash.js",
-    "build:win": "npm run license:verify-desktop-config && npm run build:win:setup && npm run build:win:portable",
+    "build:win": "npm run license:verify-desktop-config && npm run release:verify-assets && npm run build:win:setup && npm run build:win:portable",
     "build:win:setup": "electron-builder --win nsis --x64 -p never",
     "build:win:portable": "electron-builder --win portable --x64 -p never --config.win.icon=frontend/assets/icon-windows-portable.ico",
     "build:win:publish": "npm run license:verify-desktop-config && electron-builder --win nsis --x64 --publish always && electron-builder --win portable --x64 --publish always --config.win.icon=frontend/assets/icon-windows-portable.ico",
-    "build:mac": "npm run license:verify-desktop-config && electron-builder --mac -p never"
+    "build:mac": "npm run license:verify-desktop-config && electron-builder --mac -p never",
+    "release:verify-assets": "node scripts/verify-release-assets.js"
   },
   "build": {
     "appId": "com.toolsplatform.app",

@@ -30,11 +30,13 @@ pnpm-debug.log*
 
 # Backups and generated artifacts
 backups/
+backend/factory-reset-archives/
 outputs/
 *.tar
 *.tar.gz
 *.zip
 !backend/builtin-tools/f12-to-extension/chrome-capture-pro.template.zip
+!frontend/downloads/uivision-extension-9.6.1.zip
 
 # OS/editor noise
 .DS_Store

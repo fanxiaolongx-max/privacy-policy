@@ -4968,7 +4968,7 @@ const KEYS = {
 };
 const PREMIUM_PRODUCT_ID = 'chrome_capture_premium';
 const FIREBASE_CONFIG = {
-  apiKey: 'AIzaSyBpj3P7E9SR8c67F6irBVyrI4Gi9qf8bOc',
+  apiKey: '',
   authDomain: 'chrome-capture.firebaseapp.com',
   projectId: 'chrome-capture',
   storageBucket: 'chrome-capture.appspot.com',
