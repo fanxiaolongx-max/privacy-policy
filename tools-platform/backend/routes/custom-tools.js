@@ -263,7 +263,10 @@ router.post('/ai-metadata', requireAdmin, async (req, res) => {
         res.json({ success: true, ...metadata });
     } catch (err) {
         console.warn('[custom-tools] AI metadata generation failed:', err.message || err);
-        res.status(err.statusCode || err.status || 500).json({ error: err.message || 'AI 生成工具信息失败' });
+        res.status(503).json({
+            error: 'AI 自动生成当前不可用，请手动填写工具信息，不影响继续导入',
+            code: 'AI_METADATA_UNAVAILABLE'
+        });
     }
 });
 

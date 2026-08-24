@@ -100,8 +100,13 @@ function getAuthHeaders() {
 }
 
 async function handleResponse(res, requestMeta = {}) {
-    if (res.status === 401) {
-        // Clear token and redirect to login
+    const body = await res.json().catch(() => ({}));
+    const isPlatformAuthFailure = res.status === 401
+        && ['AUTH_REQUIRED', 'AUTH_EXPIRED'].includes(body.code);
+
+    if (isPlatformAuthFailure) {
+        // Only platform authentication failures may clear the current session.
+        // A downstream service (for example an AI provider) can also return 401.
         localStorage.removeItem('tools_token');
         localStorage.removeItem('tools_user');
         localStorage.removeItem('tools_role');
@@ -121,14 +126,12 @@ async function handleResponse(res, requestMeta = {}) {
     }
     
     if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
         const err = new Error(body.error || `HTTP ${res.status}`);
         err.status = res.status;
         err.body = body;
         throw err;
     }
 
-    const body = await res.json();
     const sourceMeta = extractDataSourceMeta(res, requestMeta.path || '');
     const source = sourceMeta.primary;
 

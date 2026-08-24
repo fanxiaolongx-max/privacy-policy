@@ -1342,7 +1342,7 @@
         </div>
     </div>
 
-    <script src="/js/shared/api.js?v=20260710-01"></script>
+    <script src="/js/shared/api.js?v=20260824-01"></script>
     <script src="/js/shared/migration-status.js?v=20260626-01"></script>
     <script src="/js/shared/toast.js?v=20260530-03"></script>
     <script src="/js/shared/i18n.js?v=20260610-01"></script>
@@ -1456,7 +1456,7 @@
                 'home.import.fileSelected': '已选择：{name} · {size}',
                 'home.import.aiAnalyzing': '正在用 AI 分析工具用途并生成信息…',
                 'home.import.aiComplete': 'AI 已自动生成中英文名称、简介和标签，你可以继续修改',
-                'home.import.aiUnavailable': 'AI 自动生成不可用，已保留默认信息，可手动修改',
+                'home.import.aiUnavailable': 'AI 接口当前不可用，请手动填写下方工具信息；不影响继续导入。',
                 'home.import.zipHtmlMissing': 'ZIP 中没有找到 HTML 入口文件',
                 'home.arrow.tool': '进入工具 →',
                 'home.arrow.module': '进入模块 →',
@@ -1650,7 +1650,7 @@
                 'home.import.fileSelected': 'Selected: {name} · {size}',
                 'home.import.aiAnalyzing': 'AI is analyzing the tool and generating its details…',
                 'home.import.aiComplete': 'AI generated the Chinese and English names, descriptions, and tags. You can still edit them.',
-                'home.import.aiUnavailable': 'AI generation is unavailable. Default details were kept for manual editing.',
+                'home.import.aiUnavailable': 'AI is currently unavailable. Please enter the tool details below manually; you can still continue the import.',
                 'home.import.zipHtmlMissing': 'No HTML entry file was found in the ZIP package',
                 'home.arrow.tool': 'Open Tool →',
                 'home.arrow.module': 'Open Module →',
@@ -2761,6 +2761,7 @@
                     if (generation !== metadataGeneration) return;
                     setAiStatus(t('home.import.aiUnavailable'), 'warning');
                     aiStatus.title = error.message || '';
+                    nameInput.focus();
                 }
             };
             const resetImportForm = () => {

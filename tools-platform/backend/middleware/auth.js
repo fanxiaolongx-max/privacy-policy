@@ -12,7 +12,7 @@ async function checkAuth(req, res, next) {
     const cookieToken = String(req.headers.cookie || '').split(';').map(item => item.trim()).find(item => item.startsWith('tools_token='))?.slice('tools_token='.length);
     const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : cookieToken;
     if (!token) {
-        return res.status(401).json({ error: '请先登录' });
+        return res.status(401).json({ error: '请先登录', code: 'AUTH_REQUIRED' });
     }
 
     try {
@@ -22,7 +22,7 @@ async function checkAuth(req, res, next) {
             if (session) {
                 await authSessionsRepo.deleteSession(token);
             }
-            return res.status(401).json({ error: '登录已过期，请重新登录' });
+            return res.status(401).json({ error: '登录已过期，请重新登录', code: 'AUTH_EXPIRED' });
         }
 
         req.user = session.user; // { username, role }
